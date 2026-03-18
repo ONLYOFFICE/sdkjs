@@ -1047,63 +1047,115 @@
 		this.moveDownButton.icon.src = AscCommon.GlobalSkin.type == 'light' ? arrowDownIcon_dark : arrowDownIcon_light;
 		this.closeButton.icon.src = AscCommon.GlobalSkin.type == 'light' ? closeIcon_dark : closeIcon_light;
 
-		this.label.setLayout(COMMON_LEFT_MARGIN, 0, Math.min(HEADER_LABEL_WIDTH, this.label.cachedMaxWidth), this.getHeight());
-
-		let sPlayButtonText = this.getPlayButtonText();
-		let sPlayButtonIcon = this.getPlayButtonIcon();
-		this.playButton.icon.src = sPlayButtonIcon;
+		let playButtonText = this.getPlayButtonText();
+		let playButtonIcon = this.getPlayButtonIcon();
+		this.playButton.icon.src = playButtonIcon;
 		gap = (PLAY_BUTTON_HEIGHT - PLAY_BUTTON_ICON_SIZE) / 2;
-		this.playButton.icon.setLayout(PLAY_BUTTON_LEFT_PADDING, gap, PLAY_BUTTON_ICON_SIZE, PLAY_BUTTON_ICON_SIZE);
 
-		let oButtonLabel = this.playButton.label;
-		oButtonLabel.setString(sPlayButtonText);
-		let dLabelWidth = oButtonLabel.cachedMaxWidth;
-		oButtonLabel.setLayout(
-			this.playButton.icon.getRight() + PLAY_BUTTON_LABEL_LEFT_MARGIN,
-			0,
-			dLabelWidth,
-			PLAY_BUTTON_HEIGHT
-		);
-		oButtonLabel.recalculate();
+		let buttonLabel = this.playButton.label;
+		buttonLabel.setString(playButtonText);
+		let labelWidth = buttonLabel.cachedMaxWidth;
 
-		this.playButton.setLayout(
-			this.label.getRight() + PLAY_BUTTON_LEFT_MARGIN,
-			(HEADER_HEIGHT - PLAY_BUTTON_HEIGHT) / 2,
-			this.playButton.icon.getRight() + PLAY_BUTTON_LABEL_LEFT_MARGIN + oButtonLabel.getWidth() + PLAY_BUTTON_RIGHT_PADDING,
-			PLAY_BUTTON_HEIGHT
-		);
+		let isRTL = !!(Asc.editor && Asc.editor.isRtlInterface);
+		let containerWidth = this.getWidth();
 
+		let playButtonWidth = PLAY_BUTTON_LEFT_PADDING + PLAY_BUTTON_ICON_SIZE + PLAY_BUTTON_LABEL_LEFT_MARGIN + labelWidth + PLAY_BUTTON_RIGHT_PADDING;
+
+		if (isRTL) {
+			// RTL: LEFT_PADDING | label | LABEL_MARGIN | icon | RIGHT_PADDING
+
+			buttonLabel.setLayout(PLAY_BUTTON_LEFT_PADDING, 0, labelWidth, PLAY_BUTTON_HEIGHT);
+			buttonLabel.recalculate();
+			this.playButton.icon.setLayout(
+				PLAY_BUTTON_LEFT_PADDING + labelWidth + PLAY_BUTTON_LABEL_LEFT_MARGIN,
+				gap,
+				PLAY_BUTTON_ICON_SIZE,
+				PLAY_BUTTON_ICON_SIZE
+			);
+		} else {
+			// LTR: LEFT_PADDING | icon | LABEL_MARGIN | label | RIGHT_PADDING
+
+			this.playButton.icon.setLayout(PLAY_BUTTON_LEFT_PADDING, gap, PLAY_BUTTON_ICON_SIZE, PLAY_BUTTON_ICON_SIZE);
+			buttonLabel.setLayout(
+				PLAY_BUTTON_LEFT_PADDING + PLAY_BUTTON_ICON_SIZE + PLAY_BUTTON_LABEL_LEFT_MARGIN,
+				0,
+				labelWidth,
+				PLAY_BUTTON_HEIGHT
+			);
+			buttonLabel.recalculate();
+		}
+		let labelHeaderWidth = Math.min(HEADER_LABEL_WIDTH, this.label.cachedMaxWidth);
 
 		this.moveUpButton.icon.setLayout(0, 0, MOVE_BUTTON_SIZE, MOVE_BUTTON_SIZE);
-
-		gap = (HEADER_HEIGHT - MOVE_BUTTON_SIZE) / 2;
-		this.moveUpButton.setLayout(
-			this.playButton.getRight() + MOVE_UP_BUTTON_LEFT_MARGIN,
-			gap,
-			MOVE_BUTTON_SIZE,
-			MOVE_BUTTON_SIZE
-		);
-		this.moveUpButton.recalculate();
-
 		this.moveDownButton.icon.setLayout(0, 0, MOVE_BUTTON_SIZE, MOVE_BUTTON_SIZE);
-
-		this.moveDownButton.setLayout(
-			this.moveUpButton.getRight() + MOVE_DOWN_BUTTON_LEFT_MARGIN,
-			gap,
-			MOVE_BUTTON_SIZE,
-			MOVE_BUTTON_SIZE
-		);
-		this.moveDownButton.recalculate();
-
 		this.closeButton.icon.setLayout(0, 0, CLOSE_BUTTON_SIZE, CLOSE_BUTTON_SIZE);
-		gap = (HEADER_HEIGHT - CLOSE_BUTTON_SIZE) / 2;
-		this.closeButton.setLayout(
-			this.getRight() - COMMON_RIGHT_MARGIN - CLOSE_BUTTON_SIZE,
-			gap,
-			CLOSE_BUTTON_SIZE,
-			CLOSE_BUTTON_SIZE
-		);
-		this.closeButton.recalculate();
+
+		if (isRTL) {
+			// RTL: closeBtn | ... | moveDown | moveUp | playBtn | label
+
+			this.label.paraAlign = AscCommon.align_Right;
+			let labelLeft = containerWidth - COMMON_RIGHT_MARGIN - labelHeaderWidth;
+			this.label.setLayout(labelLeft, 0, labelHeaderWidth, this.getHeight());
+
+			let playLeft = labelLeft - PLAY_BUTTON_LEFT_MARGIN - playButtonWidth;
+			this.playButton.setLayout(
+				playLeft,
+				(HEADER_HEIGHT - PLAY_BUTTON_HEIGHT) / 2,
+				playButtonWidth,
+				PLAY_BUTTON_HEIGHT
+			);
+
+			gap = (HEADER_HEIGHT - MOVE_BUTTON_SIZE) / 2;
+			let moveUpLeft = playLeft - MOVE_UP_BUTTON_LEFT_MARGIN - MOVE_BUTTON_SIZE;
+			this.moveUpButton.setLayout(moveUpLeft, gap, MOVE_BUTTON_SIZE, MOVE_BUTTON_SIZE);
+			this.moveUpButton.recalculate();
+
+			let moveDownLeft = moveUpLeft - MOVE_DOWN_BUTTON_LEFT_MARGIN - MOVE_BUTTON_SIZE;
+			this.moveDownButton.setLayout(moveDownLeft, gap, MOVE_BUTTON_SIZE, MOVE_BUTTON_SIZE);
+			this.moveDownButton.recalculate();
+
+			gap = (HEADER_HEIGHT - CLOSE_BUTTON_SIZE) / 2;
+			this.closeButton.setLayout(COMMON_LEFT_MARGIN, gap, CLOSE_BUTTON_SIZE, CLOSE_BUTTON_SIZE);
+			this.closeButton.recalculate();
+		} else {
+			// LTR: label | playBtn | moveUp | moveDown | ... | closeBtn
+
+			this.label.paraAlign = AscCommon.align_Left;
+			this.label.setLayout(COMMON_LEFT_MARGIN, 0, labelHeaderWidth, this.getHeight());
+
+			this.playButton.setLayout(
+				this.label.getRight() + PLAY_BUTTON_LEFT_MARGIN,
+				(HEADER_HEIGHT - PLAY_BUTTON_HEIGHT) / 2,
+				playButtonWidth,
+				PLAY_BUTTON_HEIGHT
+			);
+
+			gap = (HEADER_HEIGHT - MOVE_BUTTON_SIZE) / 2;
+			this.moveUpButton.setLayout(
+				this.playButton.getRight() + MOVE_UP_BUTTON_LEFT_MARGIN,
+				gap,
+				MOVE_BUTTON_SIZE,
+				MOVE_BUTTON_SIZE
+			);
+			this.moveUpButton.recalculate();
+
+			this.moveDownButton.setLayout(
+				this.moveUpButton.getRight() + MOVE_DOWN_BUTTON_LEFT_MARGIN,
+				gap,
+				MOVE_BUTTON_SIZE,
+				MOVE_BUTTON_SIZE
+			);
+			this.moveDownButton.recalculate();
+
+			gap = (HEADER_HEIGHT - CLOSE_BUTTON_SIZE) / 2;
+			this.closeButton.setLayout(
+				this.getRight() - COMMON_RIGHT_MARGIN - CLOSE_BUTTON_SIZE,
+				gap,
+				CLOSE_BUTTON_SIZE,
+				CLOSE_BUTTON_SIZE
+			);
+			this.closeButton.recalculate();
+		}
 	};
 	CAnimPaneHeader.prototype.onMouseMove = function (e, x, y) {
 		const animPane = Asc.editor.WordControl.m_oAnimPaneApi;
@@ -1164,39 +1216,24 @@
 	CTimelineContainer.prototype.recalculateChildrenLayout = function () {
 		this.zoomOutButton.icon.src = AscCommon.GlobalSkin.type == 'light' ? zoomOutIcon_dark : zoomOutIcon_light;
 		this.zoomInButton.icon.src = AscCommon.GlobalSkin.type == 'light' ? zoomInIcon_dark : zoomInIcon_light;
-		this.zoomInButton.setLayout(
-			TIMELINE_SCROLL_ABSOLUTE_LEFT - TIMELINE_HEIGHT + (TIMELINE_HEIGHT - ZOOM_BUTTON_SIZE) / 2,
-			(TIMELINE_HEIGHT - ZOOM_BUTTON_SIZE) / 2,
-			ZOOM_BUTTON_SIZE,
-			ZOOM_BUTTON_SIZE
-		);
 		this.zoomInButton.icon.setLayout(0, 0, ZOOM_BUTTON_SIZE, ZOOM_BUTTON_SIZE);
-
-		const nZoomLabelWidth = Math.min(this.zoomLabel.cachedMaxWidth, ZOOM_LABEL_WIDTH) + 2 * ZOOM_LABEL_MARGIN;
-		this.zoomLabel.setLayout(
-			this.zoomInButton.getLeft() - nZoomLabelWidth,
-			0,
-			nZoomLabelWidth,
-			this.getHeight()
-		);
-
-		this.zoomOutButton.setLayout(
-			this.zoomLabel.getLeft() - ZOOM_BUTTON_SIZE,
-			(TIMELINE_HEIGHT - ZOOM_BUTTON_SIZE) / 2,
-			ZOOM_BUTTON_SIZE,
-			ZOOM_BUTTON_SIZE
-		);
 		this.zoomOutButton.icon.setLayout(0, 0, ZOOM_BUTTON_SIZE, ZOOM_BUTTON_SIZE);
+
+		const isRTL = !!(Asc.editor && Asc.editor.isRtlInterface);
+		const verticalCenter = (TIMELINE_HEIGHT - ZOOM_BUTTON_SIZE) / 2;
+		const nZoomLabelWidth = Math.min(this.zoomLabel.cachedMaxWidth, ZOOM_LABEL_WIDTH) + 2 * ZOOM_LABEL_MARGIN;
 
 		const timelineWidth = this.getWidth() -
 			(COMMON_LEFT_MARGIN + COMMON_RIGHT_MARGIN) -
 			(SCALE_BUTTON_LEFT_MARGIN + SCALE_BUTTON_WIDTH + TIMELINE_SCROLL_LEFT_MARGIN) - (ANIM_ITEM_HEIGHT - MENU_BUTTON_SIZE) / 2;
-		this.timeline.setLayout(
-			TIMELINE_SCROLL_ABSOLUTE_LEFT,
-			(TIMELINE_HEIGHT - TIMELINE_SCROLL_HEIGHT) / 2,
-			timelineWidth,
-			TIMELINE_SCROLL_HEIGHT
-		);
+
+		const leftButton = isRTL ? this.zoomInButton : this.zoomOutButton;
+		const rightButton = isRTL ? this.zoomOutButton : this.zoomInButton;
+
+		rightButton.setLayout(TIMELINE_SCROLL_ABSOLUTE_LEFT - TIMELINE_HEIGHT + verticalCenter, verticalCenter, ZOOM_BUTTON_SIZE, ZOOM_BUTTON_SIZE);
+		this.zoomLabel.setLayout(rightButton.getLeft() - nZoomLabelWidth, 0, nZoomLabelWidth, this.getHeight());
+		leftButton.setLayout(this.zoomLabel.getLeft() - ZOOM_BUTTON_SIZE, verticalCenter, ZOOM_BUTTON_SIZE, ZOOM_BUTTON_SIZE);
+		this.timeline.setLayout(TIMELINE_SCROLL_ABSOLUTE_LEFT, (TIMELINE_HEIGHT - TIMELINE_SCROLL_HEIGHT) / 2, timelineWidth, TIMELINE_SCROLL_HEIGHT);
 	};
 	CTimelineContainer.prototype.draw = function (graphics) {
 		if (!CTopControl.prototype.draw.call(this, graphics)) {
@@ -1894,6 +1931,13 @@
 	CSeqListContainer.prototype.onScroll = function () {
 		this.onUpdate();
 	};
+	CSeqListContainer.prototype.hit = function (x, y) {
+		const tx = this.invertTransform.TransformPointX(x, y);
+		const ty = this.invertTransform.TransformPointY(x, y);
+		const scrollOffset = this.drawer.Scroll * AscCommon.g_dKoef_pix_to_mm;
+		const visibleHeight = this.drawer.GetHeight();
+		return tx >= 0 && tx <= this.extX && ty >= scrollOffset && ty <= scrollOffset + visibleHeight;
+	};
 	CSeqListContainer.prototype.onMouseWheel = function (e, deltaY, X, Y) {
 		return false;
 	};
@@ -2416,7 +2460,7 @@
 		this.effectTypeImage.src = this.getEffectImage().src;
 		this.effectTypeImage.setLayout(this.eventTypeImage.getRight(), 0, EFFECT_TYPE_ICON_SIZE, EFFECT_TYPE_ICON_SIZE);
 
-		const zeroPos = COMMON_LEFT_MARGIN + SCALE_BUTTON_LEFT_MARGIN + SCALE_BUTTON_WIDTH + TIMELINE_SCROLL_LEFT_MARGIN + TIMELINE_SCROLL_BUTTON_SIZE;
+		const zeroPos = TIMELINE_SCROLL_ABSOLUTE_LEFT + TIMELINE_SCROLL_BUTTON_SIZE;
 		const labelWidth = zeroPos - COMMON_LEFT_MARGIN - (nIndexLabelWidth + EVENT_TYPE_ICON_SIZE + EFFECT_TYPE_ICON_SIZE);
 		const gap = (ANIM_ITEM_HEIGHT - EFFECT_BAR_HEIGHT) / 2;
 		this.effectLabel.setLayout(this.effectTypeImage.getRight(), gap, labelWidth, EFFECT_BAR_HEIGHT);
@@ -3050,9 +3094,9 @@
 	const PLAY_BUTTON_LEFT_MARGIN = 30 * AscCommon.g_dKoef_pix_to_mm;
 	const PLAY_BUTTON_LEFT_PADDING = 8 *  AscCommon.g_dKoef_pix_to_mm;
 	const PLAY_BUTTON_RIGHT_PADDING = 12 *  AscCommon.g_dKoef_pix_to_mm;
-	const PLAY_BUTTON_ICON_SIZE = 20 * AscCommon.g_dKoef_pix_to_mm;;
+	const PLAY_BUTTON_ICON_SIZE = 20 * AscCommon.g_dKoef_pix_to_mm;
 	const PLAY_BUTTON_LABEL_FONTSIZE = 9;
-	const PLAY_BUTTON_MAX_LABEL_WIDTH = 100 * g_dKoef_pix_to_mm;
+	const PLAY_BUTTON_MAX_LABEL_WIDTH = 100 * AscCommon.g_dKoef_pix_to_mm;
 	const PLAY_BUTTON_LABEL_LEFT_MARGIN = 4 * AscCommon.g_dKoef_pix_to_mm;
 
 	const MOVE_BUTTON_SIZE = 24 * AscCommon.g_dKoef_pix_to_mm;
@@ -3065,7 +3109,7 @@
 	// TIMELINE
 	const TIMELINE_HEIGHT = 40 * AscCommon.g_dKoef_pix_to_mm;
 	const TIMELINE_SCROLL_HEIGHT = 17 * AscCommon.g_dKoef_pix_to_mm;
-	const TIMELINE_SCROLL_ABSOLUTE_LEFT = 143 * AscCommon.g_dKoef_pix_to_mm;
+	const TIMELINE_SCROLL_ABSOLUTE_LEFT = 160 * AscCommon.g_dKoef_pix_to_mm;
 	const TIMELINE_SCROLL_LEFT_MARGIN = 10 * AscCommon.g_dKoef_pix_to_mm;
 	const TIMELINE_SCROLL_RIGHT_MARGIN = 40 * AscCommon.g_dKoef_pix_to_mm;
 	const TIMELINE_SCROLL_BUTTON_SIZE = 17 * AscCommon.g_dKoef_pix_to_mm;

@@ -1108,6 +1108,12 @@
 		Range.prototype.getHeight = function () {
 			return this.r2 - this.r1 + 1;
 		};
+		Range.prototype.getSize = function () {
+			return {
+				row: this.getHeight(),
+				col: this.getWidth()
+			}
+		};
 		Range.prototype.transpose = function (startCol, startRow) {
 			if (startCol === undefined) {
 				startCol = this.c1;
@@ -2998,6 +3004,7 @@
 			this.hyperlinkModel = null != obj ? obj : new AscCommonExcel.Hyperlink();
 			// Используется только для выдачи наружу и выставлении обратно
 			this.text = null;
+			this.isFromShape = false;
 
 			return this;
 		}
@@ -3007,6 +3014,7 @@
 
 			res.hyperlinkModel = this.hyperlinkModel && this.hyperlinkModel.clone();
 			res.text = this.text;
+			res.isFromShape = this.isFromShape;
 
 			return res;
 		};
@@ -3154,6 +3162,12 @@
 		};
 		asc_CHyperlink.prototype.asc_setText = function (val) {
 			this.text = val;
+		};
+		asc_CHyperlink.prototype.asc_getIsFromShape = function () {
+			return this.isFromShape;
+		};
+		asc_CHyperlink.prototype.asc_setIsFromShape = function (val) {
+			this.isFromShape = val;
 		};
 
 		function CPagePrint() {
@@ -4248,6 +4262,8 @@
 		prot["asc_setSheet"] = prot.asc_setSheet;
 		prot["asc_setRange"] = prot.asc_setRange;
 		prot["asc_setText"] = prot.asc_setText;
+		prot["asc_getIsFromShape"] = prot.asc_getIsFromShape;
+		prot["asc_setIsFromShape"] = prot.asc_setIsFromShape;
 
 		window["AscCommonExcel"].CPagePrint = CPagePrint;
 		window["AscCommonExcel"].CPrintPagesData = CPrintPagesData;

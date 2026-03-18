@@ -165,7 +165,7 @@
             }
                 
             case AscPDF.CHECKBOX_STYLES.diamond: {
-                let nDiamondWidth = Math.min(nWidth - oMargins.left * 1.5, nHeight - oMargins.top * 1.5) / 2;
+                let nDiamondWidth = Math.min(nWidth - oMargins.left, nHeight - oMargins.top) / 1.5;
                 let nCenterX = X + nWidth / 2;
                 let nCenterY = Y + nHeight / 2;
 
@@ -187,10 +187,13 @@
                 
             case AscPDF.CHECKBOX_STYLES.square: {
                 let nDelta = Math.abs(nHeight - nWidth);
-                let nMaxW = Math.min(nWidth, nHeight) * 0.8 - oMargins.bottom * 2;
+				let nScale = 0.65;
+				let nOffset = (1 - nScale) / 2;
 
-                let x = (nWidth > nHeight ? X + nDelta / 2 : X) + oMargins.bottom + Math.min(nWidth, nHeight) * 0.1;
-                let y = (nHeight > nWidth ? Y + nDelta / 2 : Y) + oMargins.bottom + Math.min(nWidth, nHeight) * 0.1;
+				let nMaxW = Math.min(nWidth, nHeight) * nScale - oMargins.bottom * 2;
+				
+				let x = (nWidth > nHeight ? X + nDelta / 2 : X) + oMargins.bottom + Math.min(nWidth, nHeight) * nOffset;
+				let y = (nHeight > nWidth ? Y + nDelta / 2 : Y) + oMargins.bottom + Math.min(nWidth, nHeight) * nOffset;
 
                 oGraphicsPDF.BeginPath();
                 oGraphicsPDF.Rect(x, y, nMaxW, nMaxW);
@@ -201,7 +204,7 @@
             case AscPDF.CHECKBOX_STYLES.star: {
                 let cx    = X + nWidth/2;
                 let cy    = Y + nHeight/2;
-                let R     = Math.min(nWidth, nHeight)/2 - oMargins.bottom - Math.min(nWidth, nHeight)/20;
+                let R     = (Math.min(nWidth, nHeight)/2 - oMargins.bottom - Math.min(nWidth, nHeight)/20) * 0.9;
                 let r     = R/2.5;
                 let pts   = 5;
                 let step  = Math.PI/pts;
@@ -361,7 +364,6 @@
         }
 
         oDrDoc.TargetEnd();
-        this.SetDrawHighlight(false);
         this.DrawPressed();
         
         let oOnFocus = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
@@ -408,25 +410,22 @@
         let oDoc = this.GetDocument();
         let oViewer = oDoc.Viewer;
 
-        if (this.IsReadOnly()) {
+		if (this.IsReadOnly()) {
             return;
-        }
-
-        let oThis = this;
-        let bCommit = false;
-        if (oThis.IsChecked()) {
-            if (oThis.IsNoToggleToOff() == false) {
-                oThis.SetChecked(false);
+        }        let bCommit = false;
+        if (this.IsChecked()) {
+            if (this.IsNoToggleToOff() == false) {
+                this.SetChecked(false);
                 bCommit = true;
             }
         }
         else {
-            oThis.SetChecked(true);
+            this.SetChecked(true);
             bCommit = true;
         }
         
         if (bCommit) {
-            oThis.SetNeedCommit(true);
+            this.SetNeedCommit(true);
         }
         
         this.DrawUnpressed();

@@ -471,23 +471,51 @@ var editor;
     return false;
   };
 
-  spreadsheet_api.prototype.asc_SpecialPaste = function(props) {
-    return AscCommon.g_specialPasteHelper.Special_Paste(props);
+  spreadsheet_api.prototype.asc_SpecialPaste = function(props, isPasteOptions) {
+    return AscCommon.g_specialPasteHelper.Special_Paste(props, isPasteOptions);
   };
 
-  spreadsheet_api.prototype.asc_SpecialPasteData = function(props) {
+  spreadsheet_api.prototype.asc_SpecialPasteData = function(props, isPasteOptions) {
 	if (this.canEdit()) {
-      this.wb.specialPasteData(props);
+		if (isPasteOptions) {
+			let t = this;
+			AscCommon.g_clipboardBase.initSpecialPasteData(function () {
+				let ws = t.wb.getWorksheet();
+				//AscCommon.g_specialPasteHelper.specialPasteData.activeRange = ws.model.selectionRange.clone(ws.model);
+				AscCommon.g_specialPasteHelper.specialPasteData.pasteFromWord = false;
+
+				t.wb.specialPasteData(props, isPasteOptions);
+			});
+		} else {
+			this.wb.specialPasteData(props);
+		}
     }
   };
 
-  spreadsheet_api.prototype.asc_TextImport = function(options, callback, bPaste) {
+  spreadsheet_api.prototype.asc_TextImport = function(options, callback, bPaste, isPasteOptions) {
     //return this.asc_TextFromUrl(null, options, callback);
     //return this.asc_TextFromFile(options, callback);
     if (this.canEdit()) {
       var text;
       if(bPaste) {
-        text = AscCommon.g_specialPasteHelper.GetPastedData(true);
+        if (isPasteOptions) {
+          AscCommon.g_clipboardBase.Get_Clipboard_Data(function (data) {
+            if (!data) {
+              callback("");
+              return;
+            }
+            //onpaste
+            if (data.clipboardData) {
+              callback("");
+            } else {
+              let _text = data[AscCommon.c_oAscClipboardDataFormat.Text];
+              callback(_text ? _text : "");
+            }
+          });
+          return;
+        } else {
+          text = AscCommon.g_specialPasteHelper.GetPastedData(true);
+        }
       } else {
         var ws = this.wb.getWorksheet();
         text = ws.getRangeText();
@@ -496,7 +524,7 @@ var editor;
         //error
         //no data was selected to parse
         this.sendEvent('asc_onError', c_oAscError.ID.NoDataToParse, c_oAscError.Level.NoCritical);
-        callback(false);
+        callback("");
         return;
       }
       callback(text);
@@ -1814,6 +1842,7 @@ var editor;
 		//this.VersionHistory.applyChanges(this);
 	}
 
+	AscCommonExcel.checkSupportDynamicArrays && AscCommonExcel.checkSupportDynamicArrays();
 	this.isOpenOOXInBrowser = this["asc_isSupportFeature"]("ooxml") && AscCommon.checkOOXMLSignature(file.data);
 	if (this.isOpenOOXInBrowser) {
 		this.openOOXInBrowserZip = file.data;
@@ -3431,6 +3460,7 @@ var editor;
 		this.asc_CheckGuiControlColors();
 		this.sendColorThemes(this.wbModel.theme);
 		this.asc_ApplyColorScheme(false);
+		this.updateDarkMode();
 
 		this.sendStandartTextures();
 		this.sendMathToMenu();
@@ -4911,6 +4941,10 @@ var editor;
           }
         }
       } else {
+        if (oWS.model.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
+          this.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+          return;
+        }
         oWS.objectRender.addImageDrawingObject(arrUrls, null);
       }
     }
@@ -4952,7 +4986,7 @@ var editor;
 		}
         AscFormat.DrawingObjectsController.prototype.getAllSignatures2(ret, aSpTree);
         for(var i = 0; i < aSpTree.length; ++i){
-            if(aSpTree[i].signatureLine && aSpTree[i].signatureLine.id === sGuid){
+            if(aSpTree[i].signatureLine && aSpTree[i].signatureLine.isEqualId(sGuid)){
                 return aSpTree[i];
             }
         }
@@ -6195,7 +6229,7 @@ var editor;
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
-		return;
+      return;
     }
     let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
@@ -7334,6 +7368,7 @@ var editor;
         {
             this.openFileCryptCallback(this.openFileCryptBinary);
         }
+		AscBuilder.Cell.init();
 	};
 
 	spreadsheet_api.prototype.asc_OnShowContextMenu = function() {
@@ -8551,12 +8586,22 @@ var editor;
 
     if (this.wb) {
       this.wb.updateSkin();
+      if (this.isDarkMode) {
+          this.wb.updateDarkMode(true);
+      }
       var ws = this.wb.getWorksheet();
       if (ws) {
           this.controller.updateScrollSettings();
 		  ws.draw();
       }
     }
+  };
+
+  spreadsheet_api.prototype.updateDarkMode = function () {
+    if (!this.wb) {
+        return;
+    }
+    this.wb.updateDarkMode(this.isDarkMode);
   };
 
   spreadsheet_api.prototype.turnOffSpecialModes = function() {
@@ -9037,9 +9082,11 @@ var editor;
 
 	spreadsheet_api.prototype.onWorksheetChange = function(props) {
 		let ws = this.wbModel.getActiveWs();
-		if (!ws) {
+		let jsApi = this.getJsApi();
+		if (!ws || !jsApi) {
 			return;
 		}
+		
 		let range = null;
 		let result = null;
 		if (Array.isArray(props)) {
@@ -9048,11 +9095,11 @@ var editor;
 			let arr = props.length <= 1 ? null : props.map(function(r){
 				return ws.getRange3(r.r1, r.c1, r.r2, r.c2);
 			})
-			result = this.private_GetRange(range, arr);
+			result = jsApi.private_GetRange(range, arr);
 		} else {
 			// todo сделать получение листа ещё
 			range = ws.getRange3(props.r1, props.c1, props.r2, props.c2);
-			result = this.private_GetRange(range);
+			result = jsApi.private_GetRange(range);
 		}
 		this.sendEvent('onWorksheetChange', result);
 	};
@@ -9861,8 +9908,118 @@ var editor;
 		this.wb.removeAllInks();
 	};
 
-	spreadsheet_api.prototype.asc_SetIsSupportDynamicArrays = function(val) {
+	spreadsheet_api.prototype.asc_SetIsSupportDynamicArrays = function(val, addToLS) {
 		AscCommonExcel.bIsSupportDynamicArrays = val;
+		if (addToLS) {
+			AscCommon.setLocalStorageItem(AscCommonExcel.dynamicArraysStorageId, {"support": val === false ? "false" : "true"});
+		}
+
+	};
+	spreadsheet_api.prototype.getJsApi = function() {
+		return AscBuilder.Cell.Api;
+	};
+
+	spreadsheet_api.prototype.asc_getPasteOptions = function(callback) {
+		AscCommon.g_clipboardBase.Get_Clipboard_Data(function (data) {
+			if (!data) {
+				callback(null);
+				return;
+			}
+			//onpaste
+			if (data.clipboardData) {
+				callback(null);
+			} else {
+				//data -> navigator.clipboard -> [AscCommon.c_oAscClipboardDataFormat.Internal, AscCommon.c_oAscClipboardDataFormat.Html, AscCommon.c_oAscClipboardDataFormat.Text]
+				let _internal = data[AscCommon.c_oAscClipboardDataFormat.Internal];
+				let _specialPasteShowOptions = new Asc.SpecialPasteShowOptions();
+				let allowedSpecialPasteProps = null;
+				let sProps = Asc.c_oSpecialPasteProps;
+
+				let checkInternal = function (str) {
+					if (str && str.indexOf("xslData;XLSY") > -1) {
+						allowedSpecialPasteProps =
+							[sProps.paste, sProps.pasteOnlyFormula, sProps.formulaNumberFormat, sProps.formulaAllFormatting,
+								sProps.formulaWithoutBorders, sProps.formulaColumnWidth, sProps.pasteOnlyValues,
+								sProps.valueNumberFormat, sProps.valueAllFormating, sProps.pasteOnlyFormating, sProps.comments,
+								sProps.columnWidth];
+
+						//if (!isTablePasted) {
+							//add transpose property
+							allowedSpecialPasteProps.push(sProps.transpose);
+							allowedSpecialPasteProps.push(sProps.link);
+						//}
+
+						_specialPasteShowOptions.asc_setShowPasteSpecial(true);
+					} else {
+						allowedSpecialPasteProps = [sProps.sourceformatting, sProps.destinationFormatting];
+					}
+				};
+
+				if (_internal && _internal !== "" && _internal.indexOf("asc_internalData2;") === 0) {
+					// var isTablePasted = checkTablesPaste();
+					checkInternal(_internal);
+
+					if (data[AscCommon.c_oAscClipboardDataFormat.Image]) {
+						allowedSpecialPasteProps.push(sProps.picture);
+					}
+
+					_specialPasteShowOptions.options = allowedSpecialPasteProps;
+					callback(_specialPasteShowOptions);
+					return;
+					// 	if (isAllowPasteLink(pasteInfo.wb)) {
+					// 		allowedSpecialPasteProps.push(sProps.link);
+					// 	}
+				}
+				let _html = data[AscCommon.c_oAscClipboardDataFormat.Html];
+				if (_html) {
+					checkInternal(_html);
+
+					if (data[AscCommon.c_oAscClipboardDataFormat.Image]) {
+						allowedSpecialPasteProps.push(sProps.picture);
+					}
+
+					_specialPasteShowOptions.options = allowedSpecialPasteProps;
+					callback(_specialPasteShowOptions);
+					return;
+				}
+
+				let _text = data[AscCommon.c_oAscClipboardDataFormat.Text];
+				if (_text) {
+					allowedSpecialPasteProps = [sProps.keepTextOnly, sProps.useTextImport];
+					_specialPasteShowOptions.options = allowedSpecialPasteProps;
+					callback(_specialPasteShowOptions);
+
+					return;
+				}
+
+				callback(null);
+			}
+		});
+	};
+
+	spreadsheet_api.prototype.SetCustomFunctions = function(jsonString, disableSave) {
+		try {
+			if (AscCommon.History.Is_On()) {
+				if (disableSave) {
+					AscCommon.History.AddToWaitingList(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_SetCustomFunctions,
+						null, null, new AscCommonExcel.UndoRedoData_FromTo(this["pluginMethod_GetCustomFunctions"](), jsonString));
+				} else {
+					AscCommon.History.Create_NewPoint();
+					AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_SetCustomFunctions,
+						null, null, new AscCommonExcel.UndoRedoData_FromTo(this["pluginMethod_GetCustomFunctions"](), jsonString));
+				}
+			}
+
+			let customFunctionsStorageId = AscCommon.customFunctionsStorageId;
+			let obj = JSON.parse(jsonString);
+			AscCommon.setLocalStorageItem(AscCommon.customFunctionsStorageId, obj);
+
+			this.wb && this.wb.model && this.wb.model.clearFileCustomFunctions();
+			this.registerCustomFunctionsLibrary(obj);
+		}
+		catch (err) {
+			console.log("SetCustomFunctions method error! Please check your code...");
+		}
 	};
 
   /*
@@ -10485,8 +10642,12 @@ var editor;
   prot["sync_currentSheetCallback"]= prot.sync_currentSheetCallback;
 
   prot["asc_SetIsSupportDynamicArrays"]= prot.asc_SetIsSupportDynamicArrays;
+  prot["asc_getPasteOptions"]= prot.asc_getPasteOptions;
+  prot["getJsApi"]= prot.getJsApi;
 
-
+  prot["SetCustomFunctions"] = prot.SetCustomFunctions;
+  
+  AscCommon['SpreadsheetEditorApi'] = AscCommon.SpreadsheetEditorApi = spreadsheet_api;
 
 
 })(window);

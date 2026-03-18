@@ -179,6 +179,7 @@ function (window, undefined) {
 	AscDFH.changesFactory[AscDFH.historyitem_PathSetFill] = AscDFH.CChangesDrawingsString;
 	AscDFH.changesFactory[AscDFH.historyitem_PathSetPathH] = AscDFH.CChangesDrawingsLong;
 	AscDFH.changesFactory[AscDFH.historyitem_PathSetPathW] = AscDFH.CChangesDrawingsLong;
+	AscDFH.changesFactory[AscDFH.historyitem_PathSetParent] = AscDFH.CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_PathAddPathCommand] = CChangesDrawingsAddPathCommand;
 
 	AscDFH.drawingsChangesMap[AscDFH.historyitem_PathSetStroke] = function (oClass, value) {
@@ -196,6 +197,9 @@ function (window, undefined) {
 	AscDFH.drawingsChangesMap[AscDFH.historyitem_PathSetPathW] = function (oClass, value) {
 		oClass.pathW = value;
 	};
+	AscDFH.drawingsChangesMap[AscDFH.historyitem_PathSetParent] = function (oClass, value) {
+		oClass.parent = value;
+	};
 
 
 	function Path() {
@@ -205,6 +209,7 @@ function (window, undefined) {
 		this.fill = null;
 		this.pathH = null;
 		this.pathW = null;
+		this.parent = null;
 
 		this.ArrPathCommandInfo = [];
 		this.ArrPathCommand = [];
@@ -362,6 +367,13 @@ function (window, undefined) {
 	Path.prototype.setPathW = function (pr) {
 		AscCommon.History.CanAddChanges() && AscCommon.History.Add(new AscDFH.CChangesDrawingsLong(this, AscDFH.historyitem_PathSetPathW, this.pathW, pr));
 		this.pathW = pr;
+	};
+	Path.prototype.setParent = function (parent) {
+		if (AscCommon.History.CanAddChanges()) {
+			const changes = new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_PathSetParent, this.parent, parent);
+			AscCommon.History.Add(changes);
+		}
+		this.parent = parent;
 	};
 	Path.prototype.addPathCommand = function (cmd) {
 		AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsAddPathCommand(this, cmd, this.ArrPathCommandInfo.length));
@@ -2154,7 +2166,7 @@ function (window, undefined) {
 			}
 
 			const firstPoint = firstPointCommand ? { x: firstPointCommand.X, y: firstPointCommand.Y } : null;
-			const lastPoint = getPathEndPoint(this.ArrPathCommand);
+			const lastPoint = this.getEndPoint();
 
 			if (firstPoint && lastPoint && Math.abs(firstPoint.x - lastPoint.x) <= epsilon && Math.abs(firstPoint.y - lastPoint.y) <= epsilon) {
 				return true;
@@ -2268,7 +2280,7 @@ function (window, undefined) {
 					prevPoint,
 					{ x: command.X0, y: command.Y0 },
 					{ x: command.X1, y: command.Y1 },
-					{ x: command.X2, y: command.Y2 },
+					{ x: command.X2, y: command.Y2 }
 				);
 				prevPoint = { x: command.X2, y: command.Y2 };
 			}
@@ -2406,18 +2418,31 @@ function (window, undefined) {
 		return { x: x, y: y, t: t };
 	}
 
-	function getPathEndPoint(commands) {
+	Path.prototype.getEndPoint = function () {
+		const commands = this.ArrPathCommand;
 		for (let i = commands.length - 1; i >= 0; i--) {
 			const command = commands[i];
-			if (command.id === AscFormat.lineTo) {
+			if (command.id === lineTo) {
 				return { x: command.X, y: command.Y };
 			}
-			if (command.id === AscFormat.bezier4) {
+			if (command.id === bezier4) {
 				return { x: command.X2, y: command.Y2 };
 			}
 		}
 		return null;
-	}
+	};
+
+	Path.prototype.getStartPoint = function () {
+		const commands = this.ArrPathCommand;
+		if (commands.length === 0) {
+			return null;
+		}
+		const firstCommand = commands[0];
+		if (firstCommand.id === moveTo) {
+			return { x: firstCommand.X, y: firstCommand.Y };
+		}
+		return null;
+	};
 
 	Path.prototype.getHeadArrowAngle = function (arrowLength) {
 		// This path should contain cubicBezierTo, lineTo, and moveTo commands only,
@@ -2459,7 +2484,7 @@ function (window, undefined) {
 			return null;
 		}
 
-		const pathEndPoint = getPathEndPoint(commands);
+		const pathEndPoint = this.getEndPoint();
 
 		const arrowTipPoint = { x: pathEndPoint.x, y: pathEndPoint.y };
 		const arrowBasePoint = getClosestIntersectionWithPath(arrowTipPoint, arrowLength, commands, true);
@@ -2515,7 +2540,7 @@ function (window, undefined) {
 		this.fill = null;
 		this.pathH = null;
 		this.pathW = null;
-
+		this.parent = null;
 
 		this.startPos = 0;
 
@@ -3696,6 +3721,12 @@ function (window, undefined) {
 	};
 	Path2.prototype.getTailArrowAngle = function (arrowLength) {
 		return this.executeWithPathCommands(Path.prototype.getTailArrowAngle, [arrowLength]);
+	};
+	Path2.prototype.getEndPoint = function () {
+		return this.executeWithPathCommands(Path.prototype.getEndPoint, []);
+	};
+	Path2.prototype.getStartPoint = function () {
+		return this.executeWithPathCommands(Path.prototype.getStartPoint, []);
 	};
 	Path2.prototype.isClosed = function (epsilon) {
 		return this.executeWithPathCommands(Path.prototype.isClosed, [epsilon]);

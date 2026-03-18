@@ -902,6 +902,7 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
         this.rectS = null;
 
         this.parent = null;
+        this.hr = null;
 
         this.bDrawSmart = false;
     }
@@ -967,6 +968,10 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
         {
             g.AddRect(this.rectS.l, this.rectS.t, this.rectS.r, this.rectS.b);
         }
+        if(this.hr)
+        {
+            g.setHR(this.hr.createDuplicate());
+        }
         return g;
     };
 
@@ -980,6 +985,11 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
     {
         AscCommon.History.CanAddChanges() && AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_GeometrySetPreset, this.preset, preset));
         this.preset = preset;
+    };
+
+    Geometry.prototype.setHR = function(hr) {
+        AscCommon.History.CanAddChanges() && AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_GeometrySetHR, this.hr, hr));
+        this.hr = hr;
     };
 
     Geometry.prototype.AddAdj = function(name, formula, x)
@@ -1730,6 +1740,65 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
 		return subpaths;
 	};
 
+    function CHorizontalRule() {
+        AscFormat.CBaseNoIdObject.call(this);
+        this.noshade = null;
+        this.pct = null;
+        this.align = null;
+    }
+    AscFormat.InitClass(CHorizontalRule, AscFormat.CBaseNoIdObject, 0);
+    CHorizontalRule.prototype.Write_ToBinary = function(w) {
+        var nStartPos = w.GetCurPosition();
+        var nFlags = 0;
+        w.WriteLong(0);
+        if (null !== this.noshade) {
+            nFlags |= 1;
+            w.WriteBool(this.noshade);
+        }
+        if (null !== this.pct) {
+            nFlags |= 2;
+            w.WriteDouble2(this.pct);
+        }
+        if (null !== this.align) {
+            nFlags |= 4;
+            w.WriteString2(this.align);
+        }
+        var nEndPos = w.GetCurPosition();
+        w.Seek(nStartPos);
+        w.WriteLong(nFlags);
+        w.Seek(nEndPos);
+    };
+    CHorizontalRule.prototype.Read_FromBinary = function(r) {
+        var nFlags = r.GetLong();
+        if (nFlags & 1) {
+            this.noshade = r.GetBool();
+        }
+        if (nFlags & 2) {
+            this.pct = r.GetDoubleLE();
+        }
+        if (nFlags & 4) {
+            this.align = r.GetString2();
+        }
+    };
+    CHorizontalRule.prototype.getJc = function() {
+        if (this.align === "center")
+            return AscCommon.align_Center;
+        if (this.align === "right")
+            return AscCommon.align_Right;
+        return AscCommon.align_Left;
+    };
+    CHorizontalRule.prototype.createDuplicate = function() {
+        var hr = new CHorizontalRule();
+        hr.noshade = this.noshade;
+        hr.pct = this.pct;
+        hr.align = this.align;
+        return hr;
+    };
+
+    AscDFH.changesFactory[AscDFH.historyitem_GeometrySetHR] = AscDFH.CChangesDrawingsObjectNoId;
+    AscDFH.drawingsChangesMap[AscDFH.historyitem_GeometrySetHR] = function(oClass, value) { oClass.hr = value; };
+    AscDFH.drawingsConstructorsMap[AscDFH.historyitem_GeometrySetHR] = CHorizontalRule;
+
     function CAvLst(oGeometry, bAdjustments) {
         AscFormat.CBaseNoIdObject.call(this);
         this.bAdjustments = bAdjustments;
@@ -1904,6 +1973,7 @@ function GetArrayPolygonsByPaths(dEpsilon, aPathLst)
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].Geometry = Geometry;
+    window['AscFormat'].CHorizontalRule = CHorizontalRule;
     window['AscFormat'].GraphEdge = GraphEdge;
     window['AscFormat'].PathAccumulator = PathAccumulator;
     window['AscFormat'].CGeomPt = CPos;

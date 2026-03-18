@@ -456,7 +456,7 @@ $(function () {
 			logicDocument.RemoveSelection();
 			const jsonedData = removeBase64(JSON.stringify(_data));
 			const trueExpectations =
-				'"<h1 style=\\"mso-pagination:widow-orphan lines-together;page-break-after:avoid;margin-top:18pt;margin-bottom:4pt;border:none;mso-border-left-alt:none;mso-border-top-alt:none;mso-border-right-alt:none;mso-border-bottom-alt:none;mso-border-between:none\\" class=\\"docData;\\"><span style=\\"font-family:\'Arial\';font-size:20pt;color:#376092;mso-style-textfill-fill-color:#376092\\">Title</span></h1><p style=\\"margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Paragraph with bold and italic text.</span></p><ul style=\\"padding-left:40px\\"><li style=\\"list-style-type: disc\\"><p style=\\"margin-left:35.43307086614173pt;text-indent:-18pt;margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">List item 1</span></p></li></ul><p style=\\"margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">List item 2</span></p>"';
+				'"<h1 style=\\"mso-pagination:widow-orphan lines-together;page-break-after:avoid;margin-top:18pt;margin-bottom:4pt;border:none;mso-border-left-alt:none;mso-border-top-alt:none;mso-border-right-alt:none;mso-border-bottom-alt:none;mso-border-between:none\\" class=\\"docData;\\"><span style=\\"font-family:\'Arial\';font-size:20pt;color:#376092;mso-style-textfill-fill-color:#376092\\">Title</span></h1><p style=\\"margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Paragraph with bold and italic text.</span></p><ul style=\\"padding-left:35pt\\"><li style=\\"list-style-type: disc\\"><p style=\\"margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">List item 1</span></p></li></ul><p style=\\"margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">List item 2</span></p>"';
 
 			assert.strictEqual(
 				jsonedData,
@@ -500,7 +500,7 @@ $(function () {
 
 					const jsonedData = removeBase64(JSON.stringify(copiedHtml));
 					const expectedHtml =
-						'"<ul style=\\"padding-left:40px\\" class=\\"docData;\\"><li style=\\"list-style-type: disc\\"><p style=\\"margin-left:35.43307086614173pt;text-indent:-18pt;margin-top:0pt;margin-bottom:0pt;border:none;mso-border-left-alt:none;mso-border-top-alt:none;mso-border-right-alt:none;mso-border-bottom-alt:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Элемент 1</span></p></li><li style=\\"list-style-type: disc\\"><p style=\\"margin-left:35.43307086614173pt;text-indent:-18pt;margin-top:0pt;margin-bottom:0pt;border:none;mso-border-left-alt:none;mso-border-top-alt:none;mso-border-right-alt:none;mso-border-bottom-alt:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Элемент 2</span></p></li><li style=\\"list-style-type: disc\\"><p style=\\"margin-left:35.43307086614173pt;text-indent:-18pt;margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Элемент 3</span></p></li></ul><p style=\\"margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\">&nbsp;</p>"';
+						'"<ul style=\\"padding-left:35pt\\" class=\\"docData;\\"><li style=\\"list-style-type: disc\\"><p style=\\"margin-top:0pt;margin-bottom:0pt;border:none;mso-border-left-alt:none;mso-border-top-alt:none;mso-border-right-alt:none;mso-border-bottom-alt:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Элемент 1</span></p></li><li style=\\"list-style-type: disc\\"><p style=\\"margin-top:0pt;margin-bottom:0pt;border:none;mso-border-left-alt:none;mso-border-top-alt:none;mso-border-right-alt:none;mso-border-bottom-alt:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Элемент 2</span></p></li><li style=\\"list-style-type: disc\\"><p style=\\"margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Элемент 3</span></p></li></ul><p style=\\"margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\">&nbsp;</p>"';
 					assert.strictEqual(
 						jsonedData,
 						expectedHtml,
@@ -546,7 +546,7 @@ $(function () {
 					logicDocument.RemoveSelection();
 
 					const jsonedData = removeBase64(JSON.stringify(copiedHtml));
-					const expectedHtml = "\"<ol style=\\\"padding-left:40px\\\" class=\\\"docData;\\\"><li style=\\\"list-style-type: decimal\\\"><p style=\\\"margin-left:35.43307086614173pt;text-indent:-18pt;margin-top:0pt;margin-bottom:0pt;border:none;mso-border-left-alt:none;mso-border-top-alt:none;mso-border-right-alt:none;mso-border-bottom-alt:none;mso-border-between:none\\\"><span style=\\\"font-family:'Times New Roman';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\\">Элемент 1</span></p></li><li style=\\\"list-style-type: decimal\\\"><p style=\\\"margin-left:35.43307086614173pt;text-indent:-18pt;margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\\"><span style=\\\"font-family:'Times New Roman';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\\">Элемент 2</span></p></li></ol><p style=\\\"margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\\"><span style=\\\"font-family:'Times New Roman';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\\">Элемент 3</span></p>\"";
+					const expectedHtml = "\"<ol style=\\\"padding-left:35pt\\\" class=\\\"docData;\\\"><li style=\\\"list-style-type: decimal\\\"><p style=\\\"margin-top:0pt;margin-bottom:0pt;border:none;mso-border-left-alt:none;mso-border-top-alt:none;mso-border-right-alt:none;mso-border-bottom-alt:none;mso-border-between:none\\\"><span style=\\\"font-family:'Times New Roman';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\\">Элемент 1</span></p></li><li style=\\\"list-style-type: decimal\\\"><p style=\\\"margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\\"><span style=\\\"font-family:'Times New Roman';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\\">Элемент 2</span></p></li></ol><p style=\\\"margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\\"><span style=\\\"font-family:'Times New Roman';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\\">Элемент 3</span></p>\"";
 					assert.strictEqual(
 						jsonedData,
 						expectedHtml,
@@ -594,7 +594,7 @@ $(function () {
 
 					const jsonedData = removeBase64(JSON.stringify(copiedHtml));
 					const expectedHtml =
-						'"<ul style=\\"padding-left:40px\\" class=\\"docData;\\"><li style=\\"list-style-type: disc\\"><p style=\\"margin-left:35.43307086614173pt;text-indent:-18pt;margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Первый уровень 1&nbsp;&nbsp;&nbsp; </span></p></li><li style=\\"list-style-type: disc\\"><p style=\\"margin-left:71.43307086614173pt;text-indent:-17.999999999999996pt;margin-top:0pt;margin-bottom:0pt;border:none;mso-border-left-alt:none;mso-border-top-alt:none;mso-border-right-alt:none;mso-border-bottom-alt:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Второй уровень 1</span></p></li><li style=\\"list-style-type: disc\\"><p style=\\"margin-left:71.43307086614173pt;text-indent:-17.999999999999996pt;margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Второй уровень 2</span></p></li></ul><p style=\\"margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Первый уровень 2</span></p>"';
+						'"<ul style=\\"padding-left:35pt\\" class=\\"docData;\\"><li style=\\"list-style-type: disc\\"><p style=\\"margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Первый уровень 1&nbsp;&nbsp;&nbsp; </span></p><ul style=\\"padding-left:36pt\\"><li style=\\"list-style-type: disc\\"><p style=\\"margin-top:0pt;margin-bottom:0pt;border:none;mso-border-left-alt:none;mso-border-top-alt:none;mso-border-right-alt:none;mso-border-bottom-alt:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Второй уровень 1</span></p></li><li style=\\"list-style-type: disc\\"><p style=\\"margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Второй уровень 2</span></p></li></ul></li></ul><p style=\\"margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Первый уровень 2</span></p>"';
 					assert.strictEqual(
 						jsonedData,
 						expectedHtml,
@@ -605,6 +605,155 @@ $(function () {
 			);
 		}
 	);
+
+	QUnit.test('Test: "paste html, select text, copy html, check structure for 3-level nested list"', function (assert) {
+		initDocument();
+
+		let done = assert.async();
+
+		let htmlElement = document.createElement("div");
+		htmlElement.innerHTML = `
+			<ul>
+			  <li>Level 1
+				<ul>
+				  <li>Level 2
+					<ul>
+					  <li>Level 3</li>
+					</ul>
+				  </li>
+				</ul>
+			  </li>
+			</ul>`;
+
+		AscTest.Editor.asc_PasteData(
+			AscCommon.c_oAscClipboardDataFormat.HtmlElement,
+			htmlElement,
+			undefined,
+			undefined,
+			undefined,
+			function () {
+				logicDocument.SelectAll();
+				var oCopyProcessor = new AscCommon.CopyProcessor(AscTest.Editor);
+				oCopyProcessor.Start();
+				const copiedHtml = oCopyProcessor.getInnerHtml();
+				logicDocument.RemoveSelection();
+
+				assert.ok(copiedHtml.indexOf('Level 1') !== -1, 'Level 1 text should be present');
+				assert.ok(copiedHtml.indexOf('Level 2') !== -1, 'Level 2 text should be present');
+				assert.ok(copiedHtml.indexOf('Level 3') !== -1, 'Level 3 text should be present');
+
+				// All three <ul> must open before the first </ul> closes
+				// (i.e., they are nested, not sequential at root level)
+				const firstUlPos  = copiedHtml.indexOf('<ul');
+				const secondUlPos = copiedHtml.indexOf('<ul', firstUlPos + 1);
+				const thirdUlPos  = copiedHtml.indexOf('<ul', secondUlPos + 1);
+				const firstUlClose = copiedHtml.indexOf('</ul>');
+
+				assert.ok(secondUlPos !== -1 && secondUlPos < firstUlClose,
+					'Level 2 <ul> must be nested inside level 1 (appear before first </ul>)');
+				assert.ok(thirdUlPos !== -1 && thirdUlPos < firstUlClose,
+					'Level 3 <ul> must be nested inside level 1 (appear before first </ul>)');
+
+				done();
+			}
+		);
+	});
+
+	QUnit.test('Test: "paste html, select text, copy html, check structure for two consecutive bullet lists"', function (assert) {
+		initDocument();
+
+		let done = assert.async();
+
+		let htmlElement = document.createElement("div");
+		htmlElement.innerHTML = `
+			<ul>
+			  <li>List 1 Item 1</li>
+			  <li>List 1 Item 2</li>
+			</ul>
+			<ul>
+			  <li>List 2 Item 1</li>
+			  <li>List 2 Item 2</li>
+			</ul>`;
+
+		AscTest.Editor.asc_PasteData(
+			AscCommon.c_oAscClipboardDataFormat.HtmlElement,
+			htmlElement,
+			undefined,
+			undefined,
+			undefined,
+			function () {
+				logicDocument.SelectAll();
+				var oCopyProcessor = new AscCommon.CopyProcessor(AscTest.Editor);
+				oCopyProcessor.Start();
+				const copiedHtml = oCopyProcessor.getInnerHtml();
+				logicDocument.RemoveSelection();
+
+				assert.ok(copiedHtml.indexOf('List 1 Item 1') !== -1, 'List 1 Item 1 should be present');
+				assert.ok(copiedHtml.indexOf('List 1 Item 2') !== -1, 'List 1 Item 2 should be present');
+				assert.ok(copiedHtml.indexOf('List 2 Item 1') !== -1, 'List 2 Item 1 should be present');
+				assert.ok(copiedHtml.indexOf('List 2 Item 2') !== -1, 'List 2 Item 2 should be present');
+
+				// Items from list 1 must appear before items from list 2
+				const pos1 = copiedHtml.indexOf('List 1 Item 1');
+				const pos2 = copiedHtml.indexOf('List 2 Item 1');
+				assert.ok(pos1 < pos2, 'List 1 items must appear before List 2 items');
+
+				// Paste processor assigns the same numId to both <ul> blocks,
+				// so they are merged into one <ul> on copy-back — just verify items are inside a list
+				assert.ok(copiedHtml.indexOf('<ul') !== -1, 'Items should be placed inside a <ul>');
+
+				done();
+			}
+		);
+	});
+
+	QUnit.test('Test: "paste html, select text, copy html, check structure for two consecutive numbered lists"', function (assert) {
+		initDocument();
+
+		let done = assert.async();
+
+		let htmlElement = document.createElement("div");
+		htmlElement.innerHTML = `
+			<ol>
+			  <li>List A Item 1</li>
+			  <li>List A Item 2</li>
+			</ol>
+			<ol>
+			  <li>List B Item 1</li>
+			  <li>List B Item 2</li>
+			</ol>`;
+
+		AscTest.Editor.asc_PasteData(
+			AscCommon.c_oAscClipboardDataFormat.HtmlElement,
+			htmlElement,
+			undefined,
+			undefined,
+			undefined,
+			function () {
+				logicDocument.SelectAll();
+				var oCopyProcessor = new AscCommon.CopyProcessor(AscTest.Editor);
+				oCopyProcessor.Start();
+				const copiedHtml = oCopyProcessor.getInnerHtml();
+				logicDocument.RemoveSelection();
+
+				assert.ok(copiedHtml.indexOf('List A Item 1') !== -1, 'List A Item 1 should be present');
+				assert.ok(copiedHtml.indexOf('List A Item 2') !== -1, 'List A Item 2 should be present');
+				assert.ok(copiedHtml.indexOf('List B Item 1') !== -1, 'List B Item 1 should be present');
+				assert.ok(copiedHtml.indexOf('List B Item 2') !== -1, 'List B Item 2 should be present');
+
+				// Items from list A must appear before items from list B
+				const posA = copiedHtml.indexOf('List A Item 1');
+				const posB = copiedHtml.indexOf('List B Item 1');
+				assert.ok(posA < posB, 'List A items must appear before List B items');
+
+				// Paste processor assigns the same numId to both <ol> blocks,
+				// so they are merged into one <ol> on copy-back — just verify items are inside a list
+				assert.ok(copiedHtml.indexOf('<ol') !== -1, 'Items should be placed inside an <ol>');
+
+				done();
+			}
+		);
+	});
 
 	QUnit.test("Paste simple div HTML content", function (assert) {
 		initDocument();
@@ -1197,6 +1346,96 @@ $(function () {
 			JSON.stringify(expected),
 			"Should paste unordered list with two items"
 		);
+		done();
+	});
+
+	QUnit.test("Paste nested list with paragraphs HTML", function (assert) {
+		initDocument();
+
+		let done = assert.async();
+		let htmlElement = document.createElement("div");
+		htmlElement.innerHTML = `<ol>
+			<li>
+				<p>test1</p>
+				<ul>
+					<li>elem1</li>
+				</ul>
+			</li>
+			<li>
+				<p>test2</p>
+				<ul>
+					<li>elem2</li>
+				</ul>
+			</li>
+		</ol>`;
+
+		AscTest.Editor.asc_PasteData(
+			AscCommon.c_oAscClipboardDataFormat.HtmlElement,
+			htmlElement,
+		);
+
+		const result = ToJsonString(logicDocument);
+		
+		// Verify that we have 5 paragraphs: test1, elem1, test2, elem2, and empty final paragraph
+		const paragraphMatches = result.match(/"type":"paragraph"/g);
+		assert.ok(paragraphMatches && paragraphMatches.length >= 4, "Should have at least 4 paragraphs");
+		
+		// Verify text content
+		assert.ok(result.includes('"content":["test1"]'), "Should contain 'test1' text");
+		assert.ok(result.includes('"content":["test2"]'), "Should contain 'test2' text");
+		assert.ok(result.includes('"content":["elem1"]'), "Should contain 'elem1' text");
+		assert.ok(result.includes('"content":["elem2"]'), "Should contain 'elem2' text");
+		
+		// Extract all numId and ilvl values
+		const numIdMatches = result.match(/"numId":"(\d+)"/g);
+		const ilvlMatches = result.match(/"ilvl":(\d+)/g);
+		
+		assert.ok(numIdMatches && numIdMatches.length >= 4, "Should have numbering for list items");
+		assert.ok(ilvlMatches && ilvlMatches.length >= 4, "Should have level information");
+		
+		// Parse the result to check specific structure
+		const resultObj = JSON.parse(result);
+		
+		// Find paragraphs with "test1", "elem1", "test2", "elem2"
+		let test1Para = null, elem1Para = null, test2Para = null, elem2Para = null;
+		
+		for (let para of resultObj.content) {
+			if (para.type === "paragraph" && para.content) {
+				for (let run of para.content) {
+					if (run.content && run.content.includes("test1")) {
+						test1Para = para;
+					} else if (run.content && run.content.includes("elem1")) {
+						elem1Para = para;
+					} else if (run.content && run.content.includes("test2")) {
+						test2Para = para;
+					} else if (run.content && run.content.includes("elem2")) {
+						elem2Para = para;
+					}
+				}
+			}
+		}
+		
+		// Verify numbering structure
+		assert.ok(test1Para && test1Para.pPr && test1Para.pPr.numPr, "test1 should have numbering");
+		assert.ok(elem1Para && elem1Para.pPr && elem1Para.pPr.numPr, "elem1 should have numbering");
+		assert.ok(test2Para && test2Para.pPr && test2Para.pPr.numPr, "test2 should have numbering");
+		assert.ok(elem2Para && elem2Para.pPr && elem2Para.pPr.numPr, "elem2 should have numbering");
+		
+		// Check that test1 and test2 are on level 0 (ordered list)
+		assert.strictEqual(test1Para.pPr.numPr.ilvl, 0, "test1 should be on level 0");
+		assert.strictEqual(test2Para.pPr.numPr.ilvl, 0, "test2 should be on level 0");
+		
+		// Check that elem1 and elem2 are on level 1 (nested unordered list)
+		assert.strictEqual(elem1Para.pPr.numPr.ilvl, 1, "elem1 should be on level 1");
+		assert.strictEqual(elem2Para.pPr.numPr.ilvl, 1, "elem2 should be on level 1");
+		
+		// Check that test1 and test2 share the same numId (continue same numbered list)
+		assert.strictEqual(
+			test1Para.pPr.numPr.numId,
+			test2Para.pPr.numPr.numId,
+			"test1 and test2 should share the same numId to continue numbering"
+		);
+		
 		done();
 	});
 
@@ -1972,7 +2211,7 @@ $(function () {
 
 			const jsonedData = removeBase64(JSON.stringify(copiedHtml));
 			const expectedHtml =
-				'"<ul style=\\"padding-left:40px\\" class=\\"docData;\\"><li style=\\"list-style-type: disc\\"><p style=\\"margin-left:35.43307086614173pt;text-indent:-18pt;margin-top:0pt;margin-bottom:0pt;border:none;mso-border-left-alt:none;mso-border-top-alt:none;mso-border-right-alt:none;mso-border-bottom-alt:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Item 1</span></p></li><li style=\\"list-style-type: disc\\"><p style=\\"margin-left:35.43307086614173pt;text-indent:-18pt;margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Item 2</span></p></li></ul><p style=\\"margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\">&nbsp;</p>"';
+				'"<ul style=\\"padding-left:35pt\\" class=\\"docData;\\"><li style=\\"list-style-type: disc\\"><p style=\\"margin-top:0pt;margin-bottom:0pt;border:none;mso-border-left-alt:none;mso-border-top-alt:none;mso-border-right-alt:none;mso-border-bottom-alt:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Item 1</span></p></li><li style=\\"list-style-type: disc\\"><p style=\\"margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\"><span style=\\"font-family:\'Times New Roman\';font-size:10pt;color:#000000;mso-style-textfill-fill-color:#000000\\">Item 2</span></p></li></ul><p style=\\"margin-top:0pt;margin-bottom:0pt;border:none;border-left:none;border-top:none;border-right:none;border-bottom:none;mso-border-between:none\\">&nbsp;</p>"';
 			assert.strictEqual(
 				jsonedData,
 				expectedHtml,

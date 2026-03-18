@@ -5982,6 +5982,60 @@ CStyle.prototype =
 
         return true;
     },
+
+	Is_Similar : function(oStyle, bSkipLink)
+    {
+		if (this.BasedOn && oStyle.BasedOn)
+		{
+			let oStyles = this.Parent;
+
+			if (!oStyles.Get(this.BasedOn).Is_Similar(oStyles.Get(oStyle.BasedOn)))
+				return false;
+		}
+		if (this.Next && oStyle.Next)
+		{
+			let oStyles = this.Parent;
+
+			if (!oStyles.Get(this.Next).Is_Similar(oStyles.Get(oStyle.Next)))
+				return false;
+		}
+		if (this.Link && oStyle.Link && bSkipLink !== true)
+		{
+			let oStyles = this.Parent;
+
+			let oLinkStyle1 = oStyles.Get(this.Link);
+			let oLinkStyle2 = oStyles.Get(oStyle.Link);
+
+			if (!oLinkStyle1.Is_Similar(oLinkStyle2, oLinkStyle1.Link == this.Id && oLinkStyle2.Link == oStyle.Id))
+				return false;
+		}
+
+        if (true !== this.TextPr.Is_Equal(oStyle.TextPr)
+            || true !== this.ParaPr.Is_Equal(oStyle.ParaPr)
+            || (styletype_Table === this.Type
+                	&& (true !== this.TablePr.Is_Equal(oStyle.TablePr)
+                    || true !== this.TableRowPr.Is_Equal(oStyle.TableRowPr)
+                    || true !== this.TableCellPr.Is_Equal(oStyle.TableCellPr)
+                    || true !== IsEqualStyleObjects(this.TableBand1Horz , oStyle.TableBand1Horz )
+                    || true !== IsEqualStyleObjects(this.TableBand1Vert , oStyle.TableBand1Vert )
+                    || true !== IsEqualStyleObjects(this.TableBand2Horz , oStyle.TableBand2Horz )
+                    || true !== IsEqualStyleObjects(this.TableBand2Vert , oStyle.TableBand2Vert )
+                    || true !== IsEqualStyleObjects(this.TableFirstCol  , oStyle.TableFirstCol  )
+                    || true !== IsEqualStyleObjects(this.TableFirstRow  , oStyle.TableFirstRow  )
+                    || true !== IsEqualStyleObjects(this.TableLastCol   , oStyle.TableLastCol   )
+                    || true !== IsEqualStyleObjects(this.TableLastRow   , oStyle.TableLastRow   )
+                    || true !== IsEqualStyleObjects(this.TableTLCell    , oStyle.TableTLCell    )
+                    || true !== IsEqualStyleObjects(this.TableTRCell    , oStyle.TableTRCell    )
+                    || true !== IsEqualStyleObjects(this.TableBLCell    , oStyle.TableBLCell    )
+                    || true !== IsEqualStyleObjects(this.TableBRCell    , oStyle.TableBRCell    )
+                    || true !== IsEqualStyleObjects(this.TableWholeTable, oStyle.TableWholeTable)
+                    )
+                )
+            )
+            return false;
+
+        return true;
+    },
 //-----------------------------------------------------------------------------------
 // Undo/Redo функции
 //-----------------------------------------------------------------------------------
@@ -17797,14 +17851,17 @@ window["AscCommonWord"].wrap_NotBeside = wrap_NotBeside;
 window["AscCommonWord"].wrap_Through = wrap_Through;
 window["AscCommonWord"].wrap_Tight = wrap_Tight;
 
-window["AscWord"].CTextPr = CTextPr;
-window["AscWord"].CParaPr = CParaPr;
-window["AscWord"].CStyle  = CStyle;
-window["AscWord"].CNumPr  = CNumPr;
-window["AscWord"].NumPr   = CNumPr;
-window["AscWord"].CBorder = CDocumentBorder;
-window["AscWord"].CShd    = CDocumentShd;
-window["AscWord"].CStyles = CStyles;
+window["AscWord"].CTextPr  = CTextPr;
+window["AscWord"].CParaPr  = CParaPr;
+window["AscWord"].CStyle   = CStyle;
+window["AscWord"].CNumPr   = CNumPr;
+window["AscWord"].NumPr    = CNumPr;
+window["AscWord"].CBorder  = CDocumentBorder;
+window["AscWord"].CShd     = CDocumentShd;
+window["AscWord"].Shd      = CDocumentShd;
+window["AscWord"].CStyles  = CStyles;
+window["AscWord"].CParaInd = CParaInd;
+
 
 
 // Создаем глобальные дефолтовые стили, чтобы быстро можно было отдать дефолтовые настройки

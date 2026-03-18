@@ -938,6 +938,10 @@
 			}
 			return res;
 		},
+		getDefNameFromWorkBook: function (name) {
+			let nameIndex = getDefNameIndex(name);
+			return this.defNames.wb[nameIndex];
+		},
 		getDefNameByNodeId: function(nodeId) {
 			getFromDefNameId(nodeId);
 			return this.getDefNameByName(g_FDNI.name, g_FDNI.sheetId, true);
@@ -1656,6 +1660,8 @@
 			g_cCalcRecursion.clearDiffBetweenIter();
 			g_cCalcRecursion.clearCycleCells();
 			g_cCalcRecursion.clearCheckedCells();
+			g_cCalcRecursion.clearRecheckingFormulaData();
+			g_cCalcRecursion.clearCalculatedArguments();
 			this.changedCell = null;
 			this.changedRange = null;
 			this.updateSharedFormulas();
@@ -1672,6 +1678,7 @@
 			AscCommonExcel.g_oSUMIFSCache.clean();
 			AscCommonExcel.g_oFormulaRangesCache.clean();
 			AscCommonExcel.g_oCountIfCache.clean();
+			AscCommonExcel.g_oSumIfCache.clean();
 		},
 		notifyAllFormulasInChangedWs: function() {
 			let sheetIds = {};
@@ -1851,13 +1858,50 @@
 			}
 		},
 		_broadcastDefName: function(name, notifyData) {
-			var nameIndex = getDefNameIndex(name);
-			var container = this.defNameListeners[nameIndex];
+			const wb = this.wb;
+			let nameIndex = getDefNameIndex(name);
+			let container = this.defNameListeners[nameIndex];
+			let defNameObj = this.getDefNameByName(nameIndex);
 			if (container) {
-				for (var listenerId in container.listeners) {
+				for (let listenerId in container.listeners) {
 					container.listeners[listenerId].notify(notifyData);
 				}
 			}
+
+			let isDefnameTable = defNameObj && defNameObj.type === Asc.c_oAscDefNameType.table;
+			// go through  all intersected listeners only if we do not change the cell inside the table
+			if (isDefnameTable && notifyData.type !== c_oNotifyType.Dirty) {
+				// we are getting table info and notify all range listeners that intersects with the table ref
+				let table = wb.getTableByName(nameIndex);
+				if (table) {
+					let tableRef = table.Ref;
+					let sheetId = defNameObj.parsedRef && defNameObj.parsedRef.outStack && 
+						defNameObj.parsedRef.outStack[0] && defNameObj.parsedRef.outStack[0].getWsId && defNameObj.parsedRef.outStack[0].getWsId();
+					let areaMap = sheetId !== undefined && this.sheetListeners[sheetId] && this.sheetListeners[sheetId].areaMap;
+					let cellMap = sheetId !== undefined && this.sheetListeners[sheetId] && this.sheetListeners[sheetId].cellMap;
+
+					for (let cell in cellMap) {
+						let cellIndex = cellMap[cell].cellIndex;
+						let rowCol = AscCommonExcel.getFromCellIndex(cellIndex, true);
+						//  the index is in the table, check the listeners
+						if (tableRef.contains2(rowCol)) {
+							for (let listenerId in cellMap[cell].listeners) {
+								cellMap[cell].listeners[listenerId].notify(notifyData);
+							}
+						}
+					}
+
+					for (let area in areaMap) {
+						let areabbox = areaMap[area].bbox;
+						if (tableRef.isIntersect(areabbox)) {
+							for (let listenerId in areaMap[area].listeners) {
+								areaMap[area].listeners[listenerId].notify(notifyData);
+							}
+						}
+					}
+				}
+			}
+
 		},
 		_broadcastDefNames: function(notifyData) {
 			if (this.changedDefNameRepeated) {
@@ -2170,7 +2214,7 @@
 		_foreachChanged: function(callback) {
 			var sheetId, changedSheet, ws, bbox;
 			for (sheetId in this.changedCell) {
-				if (this.changedCell.hasOwnProperty(sheetId)) {
+				if (this.changedCell && this.changedCell.hasOwnProperty(sheetId)) {
 					changedSheet = this.changedCell[sheetId];
 					ws = this.wb.getWorksheetById(sheetId);
 					if (changedSheet && ws) {
@@ -2184,7 +2228,7 @@
 				}
 			}
 			for (sheetId in this.changedRange) {
-				if (this.changedRange.hasOwnProperty(sheetId)) {
+				if (this.changedRange && this.changedRange.hasOwnProperty(sheetId)) {
 					changedSheet = this.changedRange[sheetId];
 					ws = this.wb.getWorksheetById(sheetId);
 					if (changedSheet && ws) {
@@ -3076,7 +3120,7 @@
 		if (s1 === s2) {
 			return 0;
 		}
-		return s1.localeCompare(s2, "en");
+		return s1.localeCompare(s2, AscCommon.g_oDefaultCultureInfo ? AscCommon.g_oDefaultCultureInfo.Name : "en");
 	}
 	function ForwardTransformationFormula(elem, formula, parsed) {
 		this.elem = elem;
@@ -3923,6 +3967,11 @@
 			
 			newSheet.copyFromFormulas(renameParams);
 
+			// Regenerate dynamic array indexes when copying between workbooks
+			if (opt_sheet && AscCommonExcel.bIsSupportDynamicArrays) {
+				newSheet.regenerateDynamicArrayIndexes();
+			}
+
 			newSheet.initPostOpen(this.wsHandlers, {}, {});
 			AscCommon.History.TurnOn();
 
@@ -4299,8 +4348,11 @@
 	Workbook.prototype.addDefName = function (name, ref, sheetId, hidden, isTable) {
 		return this.dependencyFormulas.addDefName(name, ref, sheetId, hidden, isTable);
 	};
-	Workbook.prototype.getDefinesNames = function ( name, sheetId ) {
-		return this.dependencyFormulas.getDefNameByName( name, sheetId );
+	Workbook.prototype.getDefinesNames = function ( name, sheetId, isDirectSearch ) {
+		return this.dependencyFormulas.getDefNameByName( name, sheetId, isDirectSearch );
+	};
+	Workbook.prototype.getDefineNameWb = function(name) {
+		return this.dependencyFormulas.getDefNameFromWorkBook(name);
 	};
 	Workbook.prototype.getDefinedName = function(name) {
 		var sheetId = this.getSheetIdByIndex(name.LocalSheetId);
@@ -6725,7 +6777,46 @@
 		}
 		return oMainExternalReference;
 	};
-
+	Workbook.prototype.handleDrawingsOnWorkbookChange = function(aRanges) {
+		if(!Array.isArray(aRanges) || aRanges.length === 0) {
+			return false;
+		}
+		const oApi = this.oApi;
+		var aChartRefsToChange = [];
+		var aCharts = [];
+		let bHandled = false;
+		const fDrawingCallback = function(oDrawing) {
+			switch (oDrawing.getObjectType()) {
+				case AscDFH.historyitem_type_ChartSpace: {
+					const nPrevLength = aChartRefsToChange.length;
+					oDrawing.collectIntersectionRefs(aRanges, aChartRefsToChange);
+					if(aChartRefsToChange.length > nPrevLength) {
+						aCharts.push(oDrawing);
+						bHandled = true;
+					}
+					break;
+				}
+				case AscDFH.historyitem_type_Control: {
+					bHandled |= oDrawing.handleChangeRanges(aRanges);
+					break;
+				}
+				default: {
+					break;
+				}
+			}
+		};
+		this.handleDrawings(fDrawingCallback);
+		oApi.frameManager.handleMainDiagram(fDrawingCallback);
+		if(aChartRefsToChange.length > 0) {
+			for(var nRef = 0; nRef < aChartRefsToChange.length; ++nRef) {
+				aChartRefsToChange[nRef].updateCacheAndCat();
+			}
+			for(var nChart = 0; nChart < aCharts.length; ++nChart) {
+				aCharts[nChart].recalculate();
+			}
+		}
+		return bHandled;
+	}
 	/**
 	 * @constructor
 	 */
@@ -7108,6 +7199,18 @@
 			this.rowBreaks = wsFrom.rowBreaks.clone(this);
 		}
 
+		// Copy allFormulasCountMap only for same-workbook copy
+		// For cross-workbook copy, it will be regenerated with new indexes
+		if (AscCommonExcel.bIsSupportDynamicArrays && wsFrom.dynamicArrayManager && wsFrom.dynamicArrayManager.allFormulasCountMap) {
+			var isCrossWorkbookCopy = (wsFrom.workbook !== this.workbook);
+			if (!isCrossWorkbookCopy) {
+				this.dynamicArrayManager.allFormulasCountMap = {};
+				for (var cmIndex in wsFrom.dynamicArrayManager.allFormulasCountMap) {
+					this.dynamicArrayManager.allFormulasCountMap[cmIndex] = wsFrom.dynamicArrayManager.allFormulasCountMap[cmIndex];
+				}
+			}
+		}
+
 		return renameParams;
 	};
 
@@ -7167,6 +7270,72 @@
 				}
 				cell.setFormulaInternal(parsed, true);
 				t.workbook.dependencyFormulas.addToBuildDependencyCell(cell);
+			}
+		});
+	};
+	Worksheet.prototype.regenerateDynamicArrayIndexes = function() {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			return;
+		}
+		var t = this;
+		var processedFormulas = {}; // Track processed array formulas by listener ID
+		
+		this._forEachCell(function(cell) {
+			if (cell.isFormula()) {
+				var parsed = cell.getFormulaParsed();
+				if (!parsed) {
+					return;
+				}
+				
+				// Check if this is a dynamic array formula (has cm but no cm/vm yet, or is array formula main cell)
+				var arrayFormulaRef = parsed.getArrayFormulaRef();
+				var isMainArrayCell = arrayFormulaRef && parsed.checkFirstCellArray(cell);
+				
+				if (arrayFormulaRef && !isMainArrayCell) {
+					// Skip non-main cells of array formulas
+					return;
+				}
+				
+				if (isMainArrayCell) {
+					// For array formulas, process only once per listener ID
+					var listenerId = parsed.getListenerId();
+					if (processedFormulas[listenerId]) {
+						return;
+					}
+					processedFormulas[listenerId] = true;
+				}
+				
+				// Check if formula is a dynamic array by checking ca (cached array) or ref fields
+				// These fields indicate that the formula creates a dynamic array
+				var ca = parsed.getCa ? parsed.getCa() : parsed.ca;
+				var ref = parsed.getRef ? parsed.getRef() : parsed.ref;
+				
+				if (ca || ref) {
+					// This is a dynamic array formula - generate new metadata
+					var aca = parsed.getAca();
+					var beforeSpillRange = aca === true;
+					
+					// Generate new cm/vm indexes for this workbook
+					var dynamicProps = t.dynamicArrayManager.generateDynamicProps(null, beforeSpillRange);
+					if (dynamicProps) {
+						if (dynamicProps.cmIndex != null) {
+							parsed.setCm(dynamicProps.cmIndex);
+							// Update allFormulasCountMap for the new index
+							if (!t.dynamicArrayManager.allFormulasCountMap) {
+								t.dynamicArrayManager.allFormulasCountMap = {};
+							}
+							if (!t.dynamicArrayManager.allFormulasCountMap[dynamicProps.cmIndex]) {
+								t.dynamicArrayManager.allFormulasCountMap[dynamicProps.cmIndex] = 1;
+							} else {
+								t.dynamicArrayManager.allFormulasCountMap[dynamicProps.cmIndex]++;
+							}
+						}
+						if (dynamicProps.vmIndex != null && beforeSpillRange) {
+							parsed.setVm(dynamicProps.vmIndex);
+							parsed.setAca(true);
+						}
+					}
+				}
 			}
 		});
 	};
@@ -7512,6 +7681,26 @@
 						if (!oRule.dxf) {
 							continue;
 						}
+						let doExpression = function () {
+							bboxCf = oRule.getBBox();
+							compareFunction = getCacheFunction(oRule, (function(rule, formulaCF, formulaParent, rowLT, colLT) {
+								return function(row, col) {
+									var offset = new AscCommon.CellBase(row - rowLT, col - colLT);
+									var bboxCell = new Asc.Range(col, row, col, row);
+									var res = formulaCF && formulaCF.getValue(t, formulaParent, bboxCell, offset, true);
+									if (res && res.tocBool) {
+										res = res.tocBool();
+										if (res && res.toBool) {
+											return res.toBool();
+										}
+									}
+									return false;
+								};
+							})(oRule, oRule.aRuleElements[0],
+								new AscCommonExcel.CConditionalFormattingFormulaParent(this, oRule, true),
+								bboxCf ? bboxCf.r1 : 0, bboxCf ? bboxCf.c1 : 0));
+						};
+
 						switch (oRule.type) {
 							case Asc.ECfType.duplicateValues:
 							case Asc.ECfType.uniqueValues:
@@ -7564,6 +7753,9 @@
 									})(oRule, operator,
 										new AscCommonExcel.CConditionalFormattingFormulaParent(this, oRule, true),
 										bboxCf ? bboxCf.r1 : 0, bboxCf ? bboxCf.c1 : 0));
+								} else if (oRule.aRuleElements && oRule.aRuleElements[0] && oRule.aRuleElements[0]._f && !oRule.aRuleElements[1]) {
+									doExpression();
+									break;
 								} else {
 									compareFunction = (function(rule, operator, v1) {
 										return function(row, col) {
@@ -7683,23 +7875,7 @@
 								}
 								break;
 							case Asc.ECfType.expression:
-								bboxCf = oRule.getBBox();
-								compareFunction = getCacheFunction(oRule, (function(rule, formulaCF, formulaParent, rowLT, colLT) {
-									return function(row, col) {
-										var offset = new AscCommon.CellBase(row - rowLT, col - colLT);
-										var bboxCell = new Asc.Range(col, row, col, row);
-										var res = formulaCF && formulaCF.getValue(t, formulaParent, bboxCell, offset, true);
-										if (res && res.tocBool) {
-											res = res.tocBool();
-											if (res && res.toBool) {
-												return res.toBool();
-											}
-										}
-										return false;
-									};
-								})(oRule, oRule.aRuleElements[0],
-									new AscCommonExcel.CConditionalFormattingFormulaParent(this, oRule, true),
-									bboxCf ? bboxCf.r1 : 0, bboxCf ? bboxCf.c1 : 0));
+								doExpression();
 								break;
 							default:
 								break;
@@ -7788,7 +7964,7 @@
 		if (bOldHidden != hidden) {
 			if (true == this.bHidden && this.getIndex() == wsActive.getIndex()) {
 				oVisibleWs = wb.findSheetNoHidden(this.getIndex());
-			} else if (false == this.bHidden && this.getIndex() !== wsActive.getIndex()) {
+			} else if (false == this.bHidden && this.getIndex() !== wsActive.getIndex() && !wb.bCollaborativeChanges) {
 				oVisibleWs = this;
 			}
 			if (null != oVisibleWs) {
@@ -9420,6 +9596,38 @@
 			}
 		});
 	};
+	Worksheet.prototype._getLockedOnlyXfIndex = function(xfIndex) {
+		// Get the original style by xfIndex
+		let originalXfs = AscCommonExcel.g_StyleCache.getXf(xfIndex);
+		if (!originalXfs) {
+			return null;
+		}
+		
+		// Get protection-related values from the original style (only locked and applyProtection)
+		let lockedValue = originalXfs.getLocked();
+		let applyProtectionValue = originalXfs.getApplyProtection();
+		
+		// If all protection values are default (locked=true/null, applyProtection=null), 
+		// no need to preserve custom style
+		if ((lockedValue === null || lockedValue === true) && 
+			applyProtectionValue === null) {
+			return null;
+		}
+		
+		// Create a minimal style with only protection properties (locked, applyProtection)
+		let newXfs = new AscCommonExcel.CellXfs();
+		if (lockedValue !== null) {
+			newXfs.setLocked(lockedValue);
+		}
+		if (applyProtectionValue !== null) {
+			newXfs.setApplyProtection(applyProtectionValue);
+		}
+		
+		// Register the new style and return its index
+		let registeredXfs = AscCommonExcel.g_StyleCache.addXf(newXfs);
+		return registeredXfs ? registeredXfs.getIndexNumber() : null;
+	};
+	
 	Worksheet.prototype._moveCells = function(oBBoxFrom, oBBoxTo, copyRange, wsTo, offset) {
 		var oThis = this;
 		var nRowsCountNew = 0;
@@ -9427,6 +9635,8 @@
 		var dependencyFormulas = oThis.workbook.dependencyFormulas;
 		var moveToOtherSheet = this !== wsTo;
 		var isClearFromArea = !copyRange || (copyRange && oThis.workbook.bUndoChanges);
+		let isLockedSheet = this.getSheetProtection();
+		var getLockedOnlyXfIndex = isLockedSheet ? this._getLockedOnlyXfIndex : null;
 		var moveCells = function(copyRange, from, to, r1From, r1To, count){
 			var fromData = oThis.getColDataNoEmpty(from);
 			var toData;
@@ -9435,12 +9645,24 @@
 				toData.copyRange(fromData, r1From, r1To, count);
 				if (isClearFromArea) {
 					if(from !== to || moveToOtherSheet) {
-						fromData.clear(r1From, r1From + count);
+						if (isLockedSheet) {
+							fromData.clearExceptLocked(r1From, r1From + count, getLockedOnlyXfIndex);
+						} else {
+							fromData.clear(r1From, r1From + count);
+						}
 					} else {
 						if (r1From < r1To) {
-							fromData.clear(r1From, Math.min(r1From + count, r1To));
+							if (isLockedSheet) {
+								fromData.clearExceptLocked(r1From, Math.min(r1From + count, r1To), getLockedOnlyXfIndex);
+							} else {
+								fromData.clear(r1From, Math.min(r1From + count, r1To));
+							}
 						} else {
-							fromData.clear(Math.max(r1From, r1To + count), r1From + count);
+							if (isLockedSheet) {
+								fromData.clearExceptLocked(Math.max(r1From, r1To + count), r1From + count, getLockedOnlyXfIndex);
+							} else {
+								fromData.clear(Math.max(r1From, r1To + count), r1From + count);
+							}
 						}
 					}
 				}
@@ -16240,6 +16462,7 @@
 	}
 	/**
 	 * Method returns listeners of cell
+	 * @memberOf Cell
 	 * @returns {object}
 	 */
 	Cell.prototype.getListeners = function () {
@@ -16263,13 +16486,19 @@
 			return oSheetListeners.cellMap[nCellIndex];
 		} else if (aOutStack && aOutStack.length && sFunctionName) {
 			for (let nIndex in oSheetListeners.areaMap) {
-				if (oSheetListeners.areaMap[nIndex].bbox.contains(this.nCol, this.nRow)) {
-					return _areaMapIsExcludeFormula(aOutStack, oSheetListeners.areaMap[nIndex]) ? null : oSheetListeners.areaMap[nIndex];
+				const oAreaMap = oSheetListeners.areaMap[nIndex];
+				let bInvalidListener = false;
+				if (oAreaMap.count === 1) {
+					const sListenerId = Object.getOwnPropertyNames(oAreaMap.listeners)[0];
+					const oListener = oAreaMap.listeners[sListenerId];
+					bInvalidListener = oListener.isTable === 1;
+				}
+				if (oAreaMap.bbox.contains(this.nCol, this.nRow) && !bInvalidListener) {
+					return _areaMapIsExcludeFormula(aOutStack, oAreaMap) ? null : oAreaMap;
 				}
 			}
 		}
 	};
-
 	/**
 	 * Iterative extract listeners of a cell
 	 * @param fAction {Function} Action on the listener.
@@ -16385,7 +16614,8 @@
 		}
 		let bContainsInFormula = false;
 		foreachRefElements(function (oRange) {
-			if (oRange.containCell2(oThis)) {
+			const sWsId = oRange.worksheet.getId();
+			if (oRange.containCell2(oThis) && sWsId === oThis.ws.getId()) {
 				bContainsInFormula = true;
 				return true;
 			}
@@ -16394,7 +16624,7 @@
 		return bContainsInFormula;
 	};
 	/**
-	 * Method finds a start cell index of recursion formula.
+	 * Method finds a start cell index of a recursion formula.
 	 * Uses for iterative calculations feature.
 	 * @param {Cell} [oPrevCell] - Previous cell in recursion.
 	 * @param {Cell} [oFirstCell] - First cell in recursion.
@@ -16454,7 +16684,7 @@
 				if (oCellFromListener.compareCellIndex(oThis)) {
 					g_cCalcRecursion.resetRecursionCounter();
 					bBreakFunction = true;
-					return;
+					return true;
 				}
 				let bPassedCell = aPassedCells.some(function (oPassedCell) {
 					let nPassedCellIndex = getCellIndex(oPassedCell.nRow, oPassedCell.nCol);
@@ -16492,30 +16722,6 @@
 	};
 
 	/**
-	 * Function returns an array of reference cells from outStack attribute of parserFormula class.
-	 * @param {parserFormula} oFormulaParsed
-	 * @returns {[]}
-	 * @private
-	 */
-	function _getRefElements(oFormulaParsed) {
-		const aRefElements = [];
-		for (let i = 0, length = oFormulaParsed.getOutStackSize(); i < length; i++) {
-			const oOutStackElem = oFormulaParsed.getOutStackElem(i);
-			const nElemType = oOutStackElem.type;
-			const b3D = nElemType === cElementType.cell3D || nElemType === cElementType.cellsRange3D || nElemType === cElementType.name3D;
-			const bArea = nElemType === cElementType.cellsRange || nElemType === cElementType.name;
-			const bDefName = nElemType === cElementType.name || nElemType === cElementType.name3D;
-			const bTable = nElemType === cElementType.table;
-
-			if (nElemType === cElementType.cell || b3D || bArea || bDefName || bTable) {
-				aRefElements.push(oOutStackElem);
-			}
-		}
-
-		return aRefElements;
-	}
-
-	/**
 	 * Iterative extract reference elements from outStack attribute of parserFormula class.
 	 * @param {Function} fAction - Action with reference element
 	 * @param {[]} aRefElements
@@ -16525,7 +16731,7 @@
 			return;
 		}
 		let nLastIndex = aRefElements.length - 1;
-		for (let i = 0; i < aRefElements.length; i++) {
+		for (let i = 0, length = aRefElements.length; i < length; i++) {
 			const oRefElement = aRefElements[i];
 			const nRefType = oRefElement.type;
 			const b3D = nRefType === cElementType.cell3D || nRefType === cElementType.cellsRange3D;
@@ -16544,12 +16750,12 @@
 				if (!aRef.includes(oElemType)) {
 					return;
 				}
-				oRange = oElemValue.getRange();
+				oRange = oElemValue.getRange && oElemValue.getRange();
 			} else if (nRefType === cElementType.table) {
 				let oRefElem = oRefElement.toRef();
-				oRange = oRefElem.getRange();
+				oRange = oRefElem.getRange && oRefElem.getRange();
 			} else {
-				oRange = oRefElement.getRange();
+				oRange = oRefElement.getRange && oRefElement.getRange();
 			}
 			if (!oRange) {
 				continue;
@@ -16563,16 +16769,18 @@
 
 	/**
 	 * Changes ca flag of cell from listener.
-	 * Function is recursive.
-	 * @param {Cell} oSourceCell
+	 * Method is recursive.
+	 * @param {boolean} bRecursiveCell
 	 * @private
+	 * @memberof Cell
 	 */
-	function _changeCellsFromListener (oSourceCell) {
+	Cell.prototype._changeCaFlagFromListener = function (bRecursiveCell) {
 		if (g_cCalcRecursion.checkRecursionCounter()) {
 			g_cCalcRecursion.resetRecursionCounter();
 			return;
 		}
-		const oCellListeners = oSourceCell.getListeners();
+		const caFlag = !bRecursiveCell ? null : bRecursiveCell;
+		const oCellListeners = this.getListeners();
 		if (!oCellListeners) {
 			g_cCalcRecursion.resetRecursionCounter();
 			return;
@@ -16587,26 +16795,26 @@
 				return;
 			}
 			const oFormulaParsed = oListenerCell.getFormulaParsed();
-			if (oFormulaParsed.ca) {
+			if (oFormulaParsed.ca === caFlag) {
 				return;
 			}
-			oFormulaParsed.ca = true;
+			oFormulaParsed.ca = bRecursiveCell;
 			if (oListenerCell.getListeners()) {
-			g_cCalcRecursion.incRecursionCounter();
-			_changeCellsFromListener(oListenerCell);
+				g_cCalcRecursion.incRecursionCounter();
+				oListenerCell._changeCaFlagFromListener(bRecursiveCell);
 			}
-		}, oSourceCell, oCellListeners);
+		}, this, oCellListeners);
 		g_cCalcRecursion.resetRecursionCounter();
-	}
-
+	};
 	/**
-	 * Method checks is cell has recursive formula.
+	 * Method checks is cell has a recursive formula.
 	 * Recursion method
 	 * @param {CCellWithFormula} oCellWithFormula
 	 * @param {Cell[]} [aPassedCell]
+	 * @param {boolean} [bRecheckFormula] - uses when changing a cell in an already checked chain of cells.
 	 * @returns {boolean}
 	 */
-	Cell.prototype.checkRecursiveFormula = function (oCellWithFormula, aPassedCell) {
+	Cell.prototype.checkRecursiveFormula = function (oCellWithFormula, aPassedCell, bRecheckFormula) {
 		if (g_cCalcRecursion.checkRecursionCounter() || oCellWithFormula == null) {
 			g_cCalcRecursion.resetRecursionCounter();
 			return false;
@@ -16627,7 +16835,7 @@
 			return false;
 		}
 		const oFormulaParsed = this.getFormulaParsed();
-		const aRefElements = _getRefElements(oFormulaParsed);
+		const aRefElements = oFormulaParsed.getRefElements();
 		const oThis = this;
 		let bRecursiveFormula = false;
 		aPassedCell = aPassedCell || [];
@@ -16648,7 +16856,7 @@
 				} else if (!bRecursiveFormula && oCell.isFormula() && !bCellIsPassed) {
 					g_cCalcRecursion.incRecursionCounter();
 					aPassedCell.push(oCell);
-					bRecursiveFormula = oCell.checkRecursiveFormula(oCellWithFormula, aPassedCell);
+					bRecursiveFormula = oCell.checkRecursiveFormula(oCellWithFormula, aPassedCell, bRecheckFormula);
 				}
 				if (bRecursiveFormula) {
 					return true; // break loop
@@ -16663,12 +16871,15 @@
 							oSourceCell = oCell;
 						});
 						if (oSourceCell) {
-							_changeCellsFromListener(oSourceCell);
+							oSourceCell._changeCaFlagFromListener(bRecursiveFormula);
 						}
 					}
 				}
 				oFormulaParsed.ca = true;
 				return true;
+			}
+			if (oFormulaParsed.ca !== bRecursiveFormula && bRecheckFormula) {
+				oFormulaParsed.ca = bRecursiveFormula;
 			}
 		}, aRefElements);
 
@@ -16695,7 +16906,7 @@
 			return;
 		}
 
-		const aRefElements = _getRefElements(oFormulaParsed);
+		const aRefElements = oFormulaParsed.getRefElements();
 		foreachRefElements(function (oRange, nIndex, nLastRefElemIndex) {
 			oRange._foreachNoEmpty(function(oCell) {
 				let nCellIndex = getCellIndex(oCell.nRow, oCell.nCol);
@@ -16777,6 +16988,80 @@
 		g_cCalcRecursion.addRecursiveCells(this, aRecursiveCells);
 	};
 	/**
+	 * Rechecks the cell for the cycle after being calculated.
+	 * @memberof Cell
+	 * @param {[]} calcedElements - calculated elements from outStack
+	 * @param {AscCommonExcel.parserFormula} parsedFormula
+	 */
+	Cell.prototype.recheckCellForCycle = function (calcedElements, parsedFormula) {
+		const t = this;
+		const isEnabledRecursion = g_cCalcRecursion.getIsEnabledRecursion();
+		let isCycleCell = false;
+
+		foreachRefElements(function (range) {
+			if (range.bbox.contains(t.nCol, t.nRow) && range.worksheet.getName() === t.ws.getName()) {
+				if (!parsedFormula.ca) {
+					parsedFormula.ca = true;
+				}
+				isCycleCell = true;
+				!isEnabledRecursion && g_cCalcRecursion.addCycleCell(t);
+			} else {
+				range._foreachNoEmpty(function (cell) {
+					if (cell.isFormula()) {
+						cell.initStartCellForIterCalc();
+						if (g_cCalcRecursion.getStartCellIndex() != null) {
+							if (!cell.getFormulaParsed().ca) {
+								cell.getFormulaParsed().ca = true;
+							}
+							isCycleCell = true;
+							!isEnabledRecursion && g_cCalcRecursion.addCycleCell(cell);
+							g_cCalcRecursion.getStartCellIndex() && g_cCalcRecursion.setStartCellIndex(null);
+							return true;
+						}
+						if (!parsedFormula.ca && g_cCalcRecursion.needRecheckFormulaAfterCalc()) {
+							const bRecheckFormula = g_cCalcRecursion.needRecheckFormulaAfterCalc();
+							const bRecursionFormula = cell.checkRecursiveFormula(parsedFormula.getParent(), [], bRecheckFormula);
+							if (bRecursionFormula) {
+								parsedFormula.ca = true;
+								if (cell.getFormulaParsed().ca !== bRecursionFormula) {
+									cell.getFormulaParsed().ca = bRecursionFormula;
+								}
+								isCycleCell = true;
+								!isEnabledRecursion && g_cCalcRecursion.addCycleCell(cell);
+								return true;
+							}
+
+						}
+					}
+				});
+			}
+			if (isCycleCell) {
+				return true;
+			}
+		}, calcedElements);
+		if (isCycleCell) {
+			if (isEnabledRecursion) {
+				const recursiveCells = g_cCalcRecursion.getRecursiveCells(t);
+				if (!recursiveCells.length) {
+					const cellIndex = {
+						cellId: getCellIndex(t.nRow, t.nCol),
+						wsName: t.ws.getName().toLowerCase()
+					};
+					t.fillRecursiveCells(recursiveCells, cellIndex);
+				}
+
+			} else {
+				parsedFormula.value = null;
+				t.setIsDirty(false);
+				if (t.getType() !== CellValueType.Number) {
+					t.setTypeInternal(CellValueType.Number);
+				}
+				t.setValueNumberInternal(0);
+				g_cCalcRecursion.addCycleCell(t);
+			}
+		}
+	};
+	/**
 	 * Method calculates cells with formula aren't calculated yet.
 	 * @memberof Cell
 	 * @private
@@ -16815,59 +17100,16 @@
 						}
 						if (g_cCalcRecursion.getFunctionsResult().length && g_cCalcRecursion.getIterStep() === 1 && g_cCalcRecursion.getLevel() === 1) {
 							const functionsResult = g_cCalcRecursion.getFunctionsResult();
-							const isEnabledRecursion = g_cCalcRecursion.getIsEnabledRecursion();
-							let isCycleCell = false;
-
-							foreachRefElements(function (range) {
-								if (range.bbox.contains(t.nCol, t.nRow) && range.worksheet.getName() === t.ws.getName()) {
-									if (!parsed.ca) {
-										parsed.ca = true;
-									}
-									isCycleCell = true;
-									!isEnabledRecursion && g_cCalcRecursion.addCycleCell(t);
-								} else {
-									range._foreachNoEmpty(function (cell) {
-										if (cell.isFormula()) {
-											cell.initStartCellForIterCalc();
-											if (g_cCalcRecursion.getStartCellIndex() != null) {
-												if (!cell.getFormulaParsed().ca) {
-													cell.getFormulaParsed().ca = true;
-												}
-												isCycleCell = true;
-												!isEnabledRecursion && g_cCalcRecursion.addCycleCell(cell);
-												g_cCalcRecursion.getStartCellIndex() && g_cCalcRecursion.setStartCellIndex(null);
-												return true;
-											}
-										}
-									});
-								}
-								if (isCycleCell) {
-									return true;
-								}
-							}, functionsResult);
-							if (isCycleCell) {
-								if (isEnabledRecursion) {
-									const recursiveCells = g_cCalcRecursion.getRecursiveCells(t);
-									if (!recursiveCells.length) {
-										const cellIndex = {
-											cellId: getCellIndex(t.nRow, t.nCol),
-											wsName: t.ws.getName().toLowerCase()
-										};
-										t.fillRecursiveCells(recursiveCells, cellIndex);
-									}
-
-								} else {
-									parsed.value = null;
-									t.setIsDirty(false);
-									if (t.getType() !== CellValueType.Number) {
-										t.setTypeInternal(CellValueType.Number);
-									}
-									t.setValueNumberInternal(0);
-								}
-							}
+							t.recheckCellForCycle(functionsResult, parsed);
 						}
 						if (g_cCalcRecursion.getFunctionsResult().length) {
 							g_cCalcRecursion.clearFunctionsResult();
+						}
+						if (g_cCalcRecursion.needRecheckFormulaAfterCalc() && g_cCalcRecursion.hasCalculatedArguments() &&
+							g_cCalcRecursion.getRecheckingFormulaData('parserFormula') && parsed.compare(g_cCalcRecursion.getRecheckingFormulaData('parserFormula'))) {
+							const refElements = parsed.getRefElements();
+							t.recheckCellForCycle(refElements, parsed);
+							g_cCalcRecursion.resetRecheckFormula();
 						}
 					}
 				});
@@ -17054,6 +17296,7 @@
 			AscCommonExcel.g_oSUMIFSCache.remove(this);
 			AscCommonExcel.g_oFormulaRangesCache.remove(this);
 			AscCommonExcel.g_oCountIfCache.remove(this, DataOld, res);
+			AscCommonExcel.g_oSumIfCache.remove(this, DataOld, res);
 		}
 	};
 	Cell.prototype.cleanText = function() {
@@ -22725,6 +22968,7 @@
 		this.nPrevIntDateValue = null;
 		this.bDiffDirectionDateTime = null;
 		this.nCurrentDayValue = null; // Using for Date & Time format for month step mode when day changed.
+		this.bLastDaysInMonth = false;
 
 		this.bOneSelectedCell = false;
 	}
@@ -22994,8 +23238,7 @@
 						//для дат и чисел с префиксом автозаполняются только целочисленные последовательности
 						let nFirstVal = oFirstData.getVal();
 						let bIsNotIntegerSequence = oSequence.a1 !== parseInt(oSequence.a1);
-						let bDateCalcModeHasDiffDay = aDigits.length > 1 && bIsCalcDateMode && this.isDiffDaysForCalcMode(aDigits, nFirstVal);
-						let bDateCalcModeCorrectSeq = bIsCalcDateMode && !bDateCalcModeHasDiffDay && parseInt(nFirstVal) === Math.round(oSequence.a0);
+						let bDateCalcModeCorrectSeq = bIsCalcDateMode && this.hasDateModeCorrectSequence(aDigits, nFirstVal);
 						let sPrefix = oFirstData.getPrefix();
 						let bDelimiter = oFirstData.getDelimiter();
 						// For Date format
@@ -23173,6 +23416,7 @@
 		},
 		/**
 		 * Returns chosen property from context menu.
+		 * @memberof PromoteHelper
 		 * @returns {Asc.c_oAscFillType}
 		 */
 		getFillMenuChosenProp: function () {
@@ -23180,6 +23424,7 @@
 		},
 		/**
 		 * Sets chosen property from context menu.
+		 * @memberof PromoteHelper
 		 * @param {Asc.c_oAscFillType} nFillMenuChosenProp
 		 */
 		setFillMenuChosenProp: function (nFillMenuChosenProp) {
@@ -23187,6 +23432,7 @@
 		},
 		/**
 		 * Returns the last day of a month.
+		 * @memberof PromoteHelper
 		 * @returns {number}
 		 */
 		getLastDayOfMonth: function () {
@@ -23194,6 +23440,7 @@
 		},
 		/**
 		 * Sets the last day of a month taken from ExcelDateValue.
+		 * @memberof PromoteHelper
 		 * @param {number} nExcelDateValue
 		 */
 		setLastDayOfMonth: function (nExcelDateValue) {
@@ -23204,6 +23451,7 @@
 		},
 		/**
 		 * Returns days in year.
+		 * @memberof PromoteHelper
 		 * @returns {number}
 		 */
 		getDaysInYear: function () {
@@ -23211,6 +23459,7 @@
 		},
 		/**
 		 * Sets days in year taken from ExcelDateValue.
+		 * @memberof PromoteHelper
 		 * @param {number} nExcelDateValue
 		 */
 		setDaysInYear: function (nExcelDateValue) {
@@ -23220,6 +23469,7 @@
 		},
 		/**
 		 * Returns previous date value while calculating for modes: "Fill months", "Fill years" and "Fill weekdays".
+		 * @memberof PromoteHelper
 		 * @returns {number}
 		 */
 		getPrevDateValue: function () {
@@ -23227,6 +23477,7 @@
 		},
 		/**
 		 * Sets previous date value while calculating for modes: "Fill months", "Fill years" and "Fill weekdays".
+		 * @memberof PromoteHelper
 		 * @param {number} nPrevDateValue
 		 */
 		setPrevDateValue: function (nPrevDateValue) {
@@ -23235,6 +23486,7 @@
 		/**
 		 * Returns previous integer date value while calculating for modes: "Fill months", "Fill years".
 		 * Using when step is fractional number.
+		 * @memberof PromoteHelper
 		 * @returns {number}
 		 */
 		getPrevIntDateValue: function () {
@@ -23242,7 +23494,8 @@
 		},
 		/**
 		 * Sets previous integer date value while calculating for modes: "Fill months", "Fill years".
-		 * Using when step is fractional number.
+		 * Using when a step is fractional number.
+		 * @memberof PromoteHelper
 		 * @param {number} nPrevIntDateValue
 		 */
 		setPrevIntDateValue: function (nPrevIntDateValue) {
@@ -23250,13 +23503,15 @@
 		},
 		/**
 		 * Returns the current state of the flag recognizing different direction at date and time.
+		 * @memberof PromoteHelper
 		 * @returns {boolean}
 		 */
 		getIsDiffDirectionDateTime: function () {
 			return this.bDiffDirectionDateTime;
 		},
 		/**
-		 * Sets the current state of the flag recognizing different direction at date and time.
+		 * Sets the current state of the flag recognizing a different direction at date and time.
+		 * @memberof PromoteHelper
 		 * @param {boolean} bDiffDirectionDateTime
 		 */
 		setIsDiffDirectionDateTime: function (bDiffDirectionDateTime) {
@@ -23265,6 +23520,7 @@
 		/**
 		 * Returns current day value for Date & Time format.
 		 * Using for month step mode when day changed.
+		 * @memberof PromoteHelper
 		 * @returns {number}
 		 */
 		getCurrentDayValue: function () {
@@ -23273,6 +23529,7 @@
 		/**
 		 * Sets current day value for Date & Time format.
 		 * Using for month step mode when day changed.
+		 * @memberof PromoteHelper
 		 * @param {number} nCurrentDayValue
 		 */
 		setCurrentDayValue: function (nCurrentDayValue) {
@@ -23282,6 +23539,7 @@
 		 * Initializes flag recognizing that date and time have different direction between each other.
 		 * true - date and time have different direction.
 		 * false - date and time have same direction
+		 * @memberof PromoteHelper
 		 * @param {{x:number, y:number}[]} aDigits
 		 */
 		initDiffDirectionDateTime: function (aDigits) {
@@ -23295,49 +23553,98 @@
 			this.setIsDiffDirectionDateTime(bAscTimePart !== bAscDatePart);
 		},
 		/**
-		 * Initializes property of autofill context menu if in default autofill, has the required step to needed mode.
+		 * Initializes property of an autofill context menu if in default autofill has the required step to needed mode.
 		 * Modes: "Fill months", "Fill years".
+		 * @memberof PromoteHelper
 		 * @param {{x:number, y:number}[]} aDigits
 		 * @param {number} nFirstValue
 		 */
 		initFillMenuChosenProp: function (aDigits, nFirstValue) {
-			const SECOND_VALUE_INDEX = 1;
 			const oFillType = Asc.c_oAscFillType;
-			const nSecondValue = aDigits[SECOND_VALUE_INDEX].y;
 			const dtFirstValue = new Asc.cDate().getDateFromExcel(nFirstValue < 60 ? nFirstValue + 1 : nFirstValue);
-			const dtSecondValue = new Asc.cDate().getDateFromExcel(nSecondValue < 60 ? nSecondValue + 1 : nSecondValue);
+			const aDates = aDigits.map(function (oDigit) {
+				return new Asc.cDate().getDateFromExcel(oDigit.y < 60 ? oDigit.y + 1 : oDigit.y);
+			});
+			const bSameDay = aDates.every(function (dtValue) {
+				return (dtValue.getDate() === dtFirstValue.getDate()) || (dtValue.lastDayOfMonth());
+			});
+			const bSameMonth = aDates.every(function (dtValue) {
+				return dtValue.getMonth() === dtFirstValue.getMonth();
+			});
+			const bSameYear = aDates.every(function (dtValue) {
+				return dtValue.getFullYear() === dtFirstValue.getFullYear();
+			});
+			this.setIsLastDayOfMonth(aDates.every(function (dtValue) {
+				return dtValue.lastDayOfMonth();
+			}));
 
-			let nDayFirstValue = dtFirstValue.getDate();
-			let nMonthFirstValue = dtFirstValue.getMonth();
-			let nYearFirstValue = dtFirstValue.getFullYear();
-
-			let nDaySecondValue = dtSecondValue.getDate();
-			let nMonthSecondValue = dtSecondValue.getMonth();
-			let nYearSecondValue = dtSecondValue.getFullYear();
-
-			if (nDayFirstValue === nDaySecondValue && nMonthFirstValue !== nMonthSecondValue) {
+			if (bSameDay && !bSameMonth) {
 				this.setFillMenuChosenProp(oFillType.fillMonths);
-			} else if (nDayFirstValue === nDaySecondValue && nMonthFirstValue === nMonthSecondValue && nYearFirstValue !== nYearSecondValue) {
+			} else if (bSameDay && bSameMonth && !bSameYear) {
 				this.setFillMenuChosenProp(oFillType.fillYears);
 			}
 		},
 		/**
-		 * Checks has different days in the date of the selected range for date calculate modes from the context menu.
-		 * Applies for modes : "Fill months", "Fill years".
+		 * Checks whether the correct sequence for the date calculation mode.
+		 * Applies for modes: "Fill months", "Fill years".
+		 * @memberof PromoteHelper
 		 * @param {{x:number, y:number}[]} aDigits
 		 * @param {number} nFirstValue
 		 * @returns {boolean}
 		 */
-		isDiffDaysForCalcMode: function (aDigits, nFirstValue) {
-			const SECOND_VALUE_INDEX = 1;
-			const nSecondValue = aDigits[SECOND_VALUE_INDEX].y;
-			const dtFirstValue = new Asc.cDate().getDateFromExcel(nFirstValue < 60 ? nFirstValue + 1 : nFirstValue);
-			const dtSecondValue = new Asc.cDate().getDateFromExcel(nSecondValue < 60 ? nSecondValue + 1 : nSecondValue);
+		hasDateModeCorrectSequence: function (aDigits, nFirstValue) {
+			function checkSequence (nCurrentValue, nExpectedStep) {
+				if (nPreviousValue) {
+					const nStep =  nCurrentValue - nPreviousValue;
+					if (nStep !== nExpectedStep) {
+						bSequenceCorrect = false;
+					}
+				}
+				nPreviousValue = nCurrentValue;
+			}
+			if (aDigits.length === 1) {
+				return true;
+			}
 
-			return dtFirstValue.getDate() !== dtSecondValue.getDate();
+			const oFillType = Asc.c_oAscFillType;
+			const oSecondValue = aDigits[1];
+			const dtFirstValue = new Asc.cDate().getDateFromExcel(nFirstValue < 60 ? nFirstValue + 1 : nFirstValue);
+			const dtSecondValue = new Asc.cDate().getDateFromExcel(oSecondValue.y < 60 ? oSecondValue.y + 1 : oSecondValue.y);
+			const aDates = aDigits.map(function (oDigit) {
+				return new Asc.cDate().getDateFromExcel(oDigit.y < 60 ? oDigit.y + 1 : oDigit.y);
+			});
+
+			let bSequenceCorrect = true;
+			let nPreviousValue = null;
+
+			if (this.getFillMenuChosenProp() === oFillType.fillMonths) {
+				const nExpectedStep = dtSecondValue.getMonth() - dtFirstValue.getMonth();
+				if (nExpectedStep === 0) {
+					return false;
+				}
+				for (let i = 1, length = aDates.length; i < length; i++) {
+					const nCurrentValue = aDates[i].getMonth();
+					checkSequence(nCurrentValue, nExpectedStep);
+				}
+				return bSequenceCorrect;
+			}
+			if (this.getFillMenuChosenProp() === oFillType.fillYears) {
+				const nExpectedStep = dtSecondValue.getYear() - dtFirstValue.getYear();
+				if (nExpectedStep === 0) {
+					return false;
+				}
+				for (let i = 1, length = aDates.length; i < length; i++) {
+					const nCurrentValue = aDates[i].getYear();
+					checkSequence(nCurrentValue, nExpectedStep);
+				}
+				return bSequenceCorrect;
+			}
+
+			return false;
 		},
 		/**
 		 * Calculates date based on step and modes: "Fill months", "Fill years" or "Fill weekdays".
+		 * @memberof PromoteHelper
 		 * @param {cDataRow} oDataRow
 		 * @returns {number}
 		 */
@@ -23345,6 +23652,7 @@
 			const DEFAULT_STEP = this.bReverse ? -1 : 1;
 			const oSequence = oDataRow.getSequence();
 			const nChosenMenuItem = this.getFillMenuChosenProp();
+			const bRightClickAutoFill = this.getFillHandleRightClick();
 			let nStep =  null;
 			let nStepDivider = null;
 			let nUnitDate = null;
@@ -23372,7 +23680,7 @@
 					nStepDivider = this.getDaysInYear();
 					break;
 			}
-			if (!this.getIsOneSelectedCell() && nChosenMenuItem !== Asc.c_oAscFillType.fillWeekdays) {
+			if (!this.getIsOneSelectedCell() && nChosenMenuItem !== Asc.c_oAscFillType.fillWeekdays && bRightClickAutoFill) {
 				bUseValFromDataRow =  Math.abs(oSequence.a1) < nStepDivider;
 			}
 			if (bUseValFromDataRow) {
@@ -23382,7 +23690,8 @@
 					dateUnit: nUnitDate,
 					previousValue: oDataRow.getVal(),
 					previousIntValue: oDataRow.getVal(),
-					expectedDayValue: oDataRow.getStartValue()
+					expectedDayValue: oDataRow.getStartValue(),
+					isLastDayOfMonth: this.getIsLastDayOfMonth()
 				};
 				const oResult = _calculateDate(oCellInfo, true);
 				oDataRow.setVal(oResult.previousValue);
@@ -23395,7 +23704,8 @@
 				dateUnit: nUnitDate,
 				previousValue: this.getPrevDateValue(),
 				previousIntValue: this.getPrevIntDateValue(),
-				expectedDayValue: oDataRow.getVal()
+				expectedDayValue: oDataRow.getVal(),
+				isLastDayOfMonth: this.getIsLastDayOfMonth()
 			};
 			if (oDataRow.getIsDateTime() && this.nColLength === 2) {
 				if (oSequence.nX === this.nColLength) { // For first iteration using element from selected range.
@@ -23445,6 +23755,7 @@
 		},
 		/**
 		 * Returns flag that recognizes it as one selected cell.
+		 * @memberof PromoteHelper
 		 * @returns {boolean}
 		 */
 		getIsOneSelectedCell: function () {
@@ -23452,10 +23763,27 @@
 		},
 		/**
 		 * Sets flag that recognizes it as one selected cell.
+		 * @memberof PromoteHelper
 		 * @param {boolean} bOneSelectedCell
 		 */
 		setIsOneSelectedCell: function (bOneSelectedCell) {
 			this.bOneSelectedCell = bOneSelectedCell;
+		},
+		/**
+		 * Sets a flag that recognizes all dates in selected range have last day of month.
+		 * @memberof PromoteHelper
+		 * @param {boolean} bLastDayOfMonth
+		 */
+		setIsLastDayOfMonth: function (bLastDayOfMonth) {
+			this.bLastDaysInMonth = bLastDayOfMonth;
+		},
+		/**
+		 * Returns a flag that recognizes all dates in selected range have last day of month.
+		 * @memberof PromoteHelper
+		 * @returns {boolean}
+		 */
+		getIsLastDayOfMonth: function () {
+			return this.bLastDaysInMonth;
 		}
 	};
 
@@ -24339,7 +24667,7 @@
 
 	/**
 	 * Calculates date for autofill and Series.
-	 * @param {{step:number, dateUnit:c_oAscDateUnitType, previousValue:number, previousIntValue:number, expectedDayValue:number}} oCellInfo
+	 * @param {{step:number, dateUnit:c_oAscDateUnitType, previousValue:number, previousIntValue:number, expectedDayValue:number, isLastDayOfMonth:boolean}} oCellInfo
 	 * @param {boolean} bAutofill
 	 * @returns {{previousValue:number, currentValue:number, previousIntValue:number}}
 	 * @private
@@ -24351,6 +24679,7 @@
 		let nPrevValue = oCellInfo.previousValue;
 		let nPrevIntValue = oCellInfo.previousIntValue;
 		let dtExpectedDayValue = new Asc.cDate().getDateFromExcel(oCellInfo.expectedDayValue < 59 && !bDate1904 ? oCellInfo.expectedDayValue + 1 : oCellInfo.expectedDayValue);
+		let bLastDayInMonth = !!(oCellInfo.isLastDayOfMonth);
 		let oReturn = {};
 
 		// Condition: nPrevVal < 60 is temporary solution for "01/01/1900 - 01/03/1900" dates
@@ -24423,7 +24752,8 @@
 			if (Number.isInteger(nFinalStep)) {
 				oCurrentValDate.addMonths(nFinalStep);
 				let nLastDayOfCurrentMonth = AscCommonExcel.getLastDayInMonth(oCurrentValDate.getExcelDate(), 0).getDate();
-				if (!bNextMonthIsFeb &&  nLastDayOfCurrentMonth >= dtExpectedDayValue.getDate() && dtExpectedDayValue.getDate() !== oCurrentValDate.getDate()) {
+				if (!bNextMonthIsFeb && !bLastDayInMonth && nLastDayOfCurrentMonth >= dtExpectedDayValue.getDate() &&
+					dtExpectedDayValue.getDate() !== oCurrentValDate.getDate()) {
 					oCurrentValDate.setUTCDate(dtExpectedDayValue.getDate());
 				}
 				oReturn.currentValue = oCurrentValDate.getExcelDate();

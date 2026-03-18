@@ -79,6 +79,64 @@ $(function ()
 		assert.strictEqual(apiParagraph.GetShd().IsAutoColor(), true, 'Check shd color set with ApiColor (auto)');
 	});
 	
+	QUnit.test('GetRange', function (assert)
+	{
+		const detachedParagraph = AscTest.JsApi.CreateParagraph();
+		assert.throws(
+			function() { detachedParagraph.GetRange(); },
+			/Paragraph must be attached to document before getting its range/,
+			"GetRange throws when paragraph is not attached to document"
+		);
+		
+		const doc = AscTest.JsApi.GetDocument();
+		const apiParagraph = AscTest.JsApi.CreateParagraph();
+		apiParagraph.AddText("Hello World");
+		doc.Push(apiParagraph);
+		
+		const fullRange = apiParagraph.GetRange();
+		assert.ok(fullRange !== null, "GetRange returns non-null range for attached paragraph");
+		assert.strictEqual(fullRange.GetText(), "Hello World\r\n", "Full range text matches paragraph text");
+		
+		const partialRange = apiParagraph.GetRange(0, 5);
+		assert.ok(partialRange !== null, "GetRange with bounds returns non-null range");
+		assert.strictEqual(partialRange.GetText(), "Hello", "Partial range text matches expected substring");
+	});
+	
+	QUnit.test('Delete', function (assert)
+	{
+		const detachedParagraph = createApiParagraph();
+		assert.strictEqual(detachedParagraph.Delete(), false, "Delete returns false for a detached paragraph");
+
+		const doc = AscTest.JsApi.GetDocument();
+		doc.Push(createApiParagraph());
+		const p = createApiParagraph();
+		p.AddText("To be deleted");
+		doc.Push(p);
+
+		assert.strictEqual(doc.GetElementsCount(), 2, "Document has 2 paragraphs before deletion");
+		assert.strictEqual(p.Delete(), true, "Delete returns true for an attached paragraph");
+		assert.strictEqual(doc.GetElementsCount(), 1, "Document has 1 paragraph after deletion");
+		assert.strictEqual(p.Delete(), false, "Delete returns false — paragraph is already detached");
+		assert.strictEqual(doc.GetElementsCount(), 1, "Document element count unchanged after deleting a detached paragraph");
+	});
+
+	QUnit.test('Delete with TrackRevisions', function (assert)
+	{
+		const doc = AscTest.JsApi.GetDocument();
+		const p = createApiParagraph();
+		const run = p.AddText("To be deleted");
+		doc.Push(p);
+		doc.Push(createApiParagraph());
+		doc.Push(createApiParagraph());
+		
+		AscTest.SetTrackRevisions(true);
+		assert.strictEqual(doc.GetElementsCount(), 3, "Document has 2 paragraphs before deletion");
+		assert.strictEqual(p.Delete(), true, "Delete returns true when TrackRevisions is on");
+		assert.strictEqual(doc.GetElementsCount(), 3, "Paragraph stays in the document as a pending deletion revision");
+		assert.strictEqual(p.Paragraph.GetReviewType(), reviewtype_Remove, "Paragraph is marked as removed in review");
+		assert.strictEqual(run.Run.GetReviewType(), reviewtype_Remove, "Text run inside the paragraph is marked as removed in review");
+	});
+
 	QUnit.test('SetColor, GetColor', function (assert) {
 		const hexColor = AscTest.JsApi.HexColor('#bada55');
 		const themeColor = AscTest.JsApi.ThemeColor('accent2');

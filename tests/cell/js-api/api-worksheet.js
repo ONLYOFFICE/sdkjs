@@ -133,4 +133,26 @@
 		);
 	});
 
+	QUnit.test("GetDrawingsByName", function (assert) {
+		let worksheet = AscTest.JsApi.GetActiveSheet();
+		let workbook = AscTest.JsApi.GetActiveWorkbook();
+
+		const fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(255, 111, 61));
+		const stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+
+		let shape1 = worksheet.AddShape("cube", 3212465, 963295, fill, stroke, 0, 0, 0, 0);
+		let shape2 = worksheet.AddShape("rect", 3212465, 963295, fill, stroke, 0, 0, 0, 0);
+
+		shape1.SetName("Shape1");
+		shape2.SetName("Shape2");
+
+		let drawings = workbook.GetDrawingsByName(["Shape1", "Shape2"]);
+		assert.strictEqual(drawings.length, 2, 'Check GetDrawingsByName returns 2 drawings');
+
+		let drawingsFiltered = workbook.GetDrawingsByName(["Shape1"]);
+		assert.strictEqual(drawingsFiltered.length, 1, 'Check GetDrawingsByName returns 1 drawing');
+		assert.strictEqual(drawingsFiltered[0].GetName(), "Shape1", 'Check filtered drawing has correct name');
+	});
+
 })(window);
+

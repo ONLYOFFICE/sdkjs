@@ -465,7 +465,7 @@ function (window, undefined)
 				cb.apply({}, args);
 			}, delay);
 		};
-		const Api = window.g_asc_plugins.api;
+		const Api = window.g_asc_plugins.api.getJsApi();
 		// clear this field on each run
 		delete Api.parsedJSDoc;
 		// check if we add a custom function into this macros we will parse a jsdoc
@@ -478,6 +478,17 @@ function (window, undefined)
 			if (Api.parsedJSDoc.length > countOfAdding)
 				Api.parsedJSDoc.length = countOfAdding;
 		}
+
+		function _sanitizeCode(value) {
+			if (/\bimport\s*\(/.test(value)) {
+				throw new Error("Security: dynamic import() is not allowed in macros");
+			}
+			if (/\bimport\s+/.test(value)) {
+				throw new Error("Security: static import is not allowed in macros");
+			}
+			return value;
+		}
+		value = _sanitizeCode(value);
 		const result = _safe_eval_closure.call(null, {}, Api, {}, {}, function(){}, {}, customXMLHttpRequest, {}, {}, timeout, interval, value);
 		protoFunc.constructor = normalConstructor;
 		if (protoFuncGen)

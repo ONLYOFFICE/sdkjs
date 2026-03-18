@@ -168,7 +168,7 @@ function (window, undefined) {
 	cCell.prototype.argumentsMax = 2;
 	cCell.prototype.ca = true;
 	cCell.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
-	cCell.prototype.exactTypes = {1: 1};
+	//cCell.prototype.exactTypes = {1: 1};
 	cCell.prototype.argumentsType = [argType.text, argType.reference];
 	cCell.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	/**
@@ -197,6 +197,9 @@ function (window, undefined) {
 				if (str === "contents") {
 					// Save ref for recursion check
 					AscCommonExcel.g_cCalcRecursion.saveFunctionResult(this.name, arg1);
+				}
+				if (cElementType.array === arg1.type) {
+					arg1 = arg1.getElementRowCol(0, 0);
 				}
 
 				let isRangeArg1 = cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type;

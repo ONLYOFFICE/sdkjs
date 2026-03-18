@@ -2047,12 +2047,12 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	asc_docs_api.prototype.asc_SpecialPaste = function(props)
+	asc_docs_api.prototype.asc_SpecialPaste = function(props, isPasteOptions)
 	{
-		return AscCommon.g_specialPasteHelper.Special_Paste(props);
+		return AscCommon.g_specialPasteHelper.Special_Paste(props, isPasteOptions);
 	};
 
-	asc_docs_api.prototype.asc_SpecialPasteData = function(props)
+	asc_docs_api.prototype.asc_SpecialPasteData = function(props, isPasteOptions)
 	{
 		if (AscCommon.CollaborativeEditing.Get_GlobalLock())
 			return;
@@ -2064,20 +2064,128 @@ background-repeat: no-repeat;\
 		//TODO пересмотреть проверку лока и добавление новой точки(AscDFH.historydescription_Document_PasteHotKey)
 		if (false === _logicDoc.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, false))
 		{
-			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
-			window['AscCommon'].g_specialPasteHelper.Special_Paste_Start();
+			if (isPasteOptions) {
+				let oThis = this;
+				AscCommon.g_clipboardBase.initSpecialPasteData(function () {
+					window['AscCommon'].g_specialPasteHelper.isPasteOptions = isPasteOptions;
+					window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
+					window['AscCommon'].g_specialPasteHelper.Special_Paste_Start();
+					_logicDoc.Create_NewHistoryPoint(AscDFH.historydescription_Document_PasteHotKey);
+					AscCommon.Editor_Paste_Exec(oThis, null, null, null, null, props);
+				});
+			} else {
+				window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
+				window['AscCommon'].g_specialPasteHelper.Special_Paste_Start();
 
-			//undo previous action
+				//undo previous action
 
-            this.WordControl.m_oLogicDocument.TurnOffInterfaceEvents = true;
-			this.WordControl.m_oLogicDocument.Document_Undo();
-            this.WordControl.m_oLogicDocument.TurnOffInterfaceEvents = false;
-			//if (!useCurrentPoint) {
-			_logicDoc.Create_NewHistoryPoint(AscDFH.historydescription_Document_PasteHotKey);
-			//}
+				this.WordControl.m_oLogicDocument.TurnOffInterfaceEvents = true;
+				this.WordControl.m_oLogicDocument.Document_Undo();
+				this.WordControl.m_oLogicDocument.TurnOffInterfaceEvents = false;
+				//if (!useCurrentPoint) {
+				_logicDoc.Create_NewHistoryPoint(AscDFH.historydescription_Document_PasteHotKey);
+				//}
 
-			AscCommon.Editor_Paste_Exec(this, null, null, null, null, props);
+				AscCommon.Editor_Paste_Exec(this, null, null, null, null, props);
+			}
 		}
+	};
+
+	asc_docs_api.prototype.asc_getPasteOptions = function(callback) {
+		var t = this;
+		AscCommon.g_clipboardBase.Get_Clipboard_Data(function (data) {
+			if (!data) {
+				callback(null);
+				return;
+			}
+			
+			// Check presentation state (similar to _setSpecialPasteShowOptionsPresentation)
+			var presentation = t.WordControl.m_oLogicDocument;
+			if (!presentation || presentation.IsMasterMode()) {
+				callback(null);
+				return;
+			}
+			
+			// onpaste - real paste event
+			if (data.clipboardData) {
+				callback(null);
+				return;
+			}
+			
+			// data from navigator.clipboard
+			var _internal = data[AscCommon.c_oAscClipboardDataFormat.Internal];
+			var _html = data[AscCommon.c_oAscClipboardDataFormat.Html];
+			var _text = data[AscCommon.c_oAscClipboardDataFormat.Text];
+			var _image = data[AscCommon.c_oAscClipboardDataFormat.Image];
+			
+			var _specialPasteShowOptions = new Asc.SpecialPasteShowOptions();
+			var allowedSpecialPasteProps = null;
+			var sProps = Asc.c_oSpecialPasteProps;
+
+			let checkInternal = function (str) {
+				if (str && str.indexOf("xslData;XLSY") > -1) {
+					allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.keepTextOnly]
+				} else if (str && str.indexOf("docData;DOCY") > -1) {
+					allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.keepTextOnly];
+				} else if (str && str.indexOf("pptData;") > -1) {
+					var pptDataStart = str.indexOf("pptData;") + "pptData;".length;
+					var pptDataEnd = str.indexOf("\"", pptDataStart);
+					var pptStr = pptDataEnd > -1 ? str.substring(pptDataStart, pptDataEnd) : str.substring(pptDataStart);
+					var _stream = AscFormat.CreateBinaryReader(pptStr, 0, pptStr.length);
+					var stream = new AscCommon.FileStream(_stream.data, _stream.size);
+					var p_url = stream.GetString2();
+					var p_theme = stream.GetString2();
+					var p_width = stream.GetULong();
+					var p_height = stream.GetULong();
+					var bIsMultipleContent = stream.GetBool();
+					let multipleParamsCount;
+					if (true === bIsMultipleContent) {
+						multipleParamsCount = stream.GetULong();
+					}
+
+					if (1 === multipleParamsCount || !multipleParamsCount) {
+						allowedSpecialPasteProps = [sProps.destinationFormatting];
+					} else if (2 === multipleParamsCount) {
+						allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.sourceformatting];
+					} else if (3 === multipleParamsCount) {
+						allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.sourceformatting, sProps.picture];
+					}
+				} else {
+					allowedSpecialPasteProps = [sProps.sourceformatting, sProps.keepTextOnly];
+				}
+			};
+
+			//TODO now don't analyze inner pasted content + place of paste. it can be slow. only simple options
+			if (_internal && _internal !== "" && _internal.indexOf("asc_internalData2;") === 0) {
+				checkInternal(_internal);
+				
+				_specialPasteShowOptions.options = allowedSpecialPasteProps;
+				callback(_specialPasteShowOptions);
+				return;
+			}
+			
+			// HTML format (external source - from Excel, Word, browsers)
+			if (_html) {
+				checkInternal(_html);
+				
+				_specialPasteShowOptions.options = allowedSpecialPasteProps;
+				callback(_specialPasteShowOptions);
+				return;
+			}
+			
+			// Text only
+			if (_text) {
+				allowedSpecialPasteProps = [sProps.keepTextOnly];
+				if (_image) {
+					allowedSpecialPasteProps.push(sProps.picture);
+				}
+				_specialPasteShowOptions.options = allowedSpecialPasteProps;
+				callback(_specialPasteShowOptions);
+				return;
+			}
+			
+			callback(null);
+		});
 	};
 
 	asc_docs_api.prototype.asc_IsFocus = function(bIsNaturalFocus)
@@ -4139,7 +4247,12 @@ background-repeat: no-repeat;\
 				{
 					if(!oBorder || !oBorder.Color)
 						return;
-					oBorder.Unifill =  AscFormat.CreateUnifillFromAscColor(oBorder.Color, 0);
+					if(oBorder.Value === AscWord.BorderType.none || oBorder.Value === AscWord.BorderType.nil)
+					{
+						oBorder.Unifill = AscFormat.CreateNoFillUniFill();
+						return;
+					}
+					oBorder.Unifill = AscFormat.CreateUnifillFromAscColor(oBorder.Color, 0);
 				}
 				fCheckBorder(oBorders.Left);
 				fCheckBorder(oBorders.Top);
@@ -5233,7 +5346,7 @@ background-repeat: no-repeat;\
 	};
 	asc_CCommentDataSlide.prototype.asc_putTime         = function(v)
 	{
-		this.m_sTime = v;
+		this.m_sTime = undefined !== v && null !== v ? v : "";
 		this.m_nTimeZoneBias = new Date().getTimezoneOffset();
 	};
 	asc_CCommentDataSlide.prototype.asc_getOnlyOfficeTime         = function()
@@ -5242,7 +5355,7 @@ background-repeat: no-repeat;\
 	};
 	asc_CCommentDataSlide.prototype.asc_putOnlyOfficeTime         = function(v)
 	{
-		this.m_sOOTime = v;
+		this.m_sOOTime = undefined !== v && null !== v ? v : "";
 	};
 	asc_CCommentDataSlide.prototype.asc_getUserId       = function()
 	{
@@ -5553,13 +5666,8 @@ background-repeat: no-repeat;\
 			this.sync_StartAction(undefined === blockType ? c_oAscAsyncActionType.BlockInteraction : blockType, c_oAscAsyncAction.LoadDocumentFonts);
 
 			// заполним прогресс
-			var _progress         = this.OpenDocumentProgress;
-			_progress.Type        = c_oAscAsyncAction.LoadDocumentFonts;
-			_progress.FontsCount  = this.FontLoader.fonts_loading.length;
-			_progress.CurrentFont = 0;
-
+			this.updateOpenDocumentProgress();
 			var _loader_object = this.WordControl.m_oLogicDocument;
-			var _count         = 0;
 			if (_loader_object !== undefined && _loader_object != null)
 			{
 				for (var i in _loader_object.ImageMap)
@@ -5569,12 +5677,8 @@ background-repeat: no-repeat;\
 						var localUrl = _loader_object.ImageMap[i];
 						g_oDocumentUrls.addImageUrl(localUrl, this.documentUrl + 'media/' + localUrl);
 					}
-					++_count;
 				}
 			}
-
-			_progress.ImagesCount  = _count + AscCommon.g_oUserTexturePresets.length;
-			_progress.CurrentImage = 0;
 		}
 	};
 	asc_docs_api.prototype.GenerateStyles                = function()
@@ -5623,7 +5727,7 @@ background-repeat: no-repeat;\
 				this.EndActionLoadImages = 2;
 				this.sync_StartAction(c_oAscAsyncActionType.Information, c_oAscAsyncAction.LoadImage);
 			}
-			const oRequiredSyncImagesMap = this.isSyncLoadFirstSlideImages() && this.isApplyChangesOnOpen ? this.getFirstSlideImagesMap() : null;
+			const oRequiredSyncImagesMap = this.getRequiredSyncImagesOnLoad();
 			this.ImageLoader.LoadDocumentImages(this.saveImageMap, false, oRequiredSyncImagesMap);
 			return;
 		}
@@ -5651,7 +5755,7 @@ background-repeat: no-repeat;\
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.LoadDocumentImages);
 		}
 
-		const oRequiredSyncImagesMap = this.isSyncLoadFirstSlideImages() && !AscCommon.CollaborativeEditing.m_aChanges.length ? this.getFirstSlideImagesMap() : null;
+		const oRequiredSyncImagesMap = this.getRequiredSyncImagesOnLoad();
 		this.ImageLoader.bIsLoadDocumentFirst = true;
 		this.ImageLoader.LoadDocumentImages(_loader_object.ImageMap, false, oRequiredSyncImagesMap);
 	};
@@ -6643,11 +6747,6 @@ background-repeat: no-repeat;\
 		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new asc_CSelectedObject(c_oAscTypeSelectElement.Hyperlink, new Asc.CHyperlinkProperty(hyperProp));
 	};
 
-	asc_docs_api.prototype.sync_HyperlinkClickCallback = function(Url)
-	{
-		this.sendEvent("asc_onHyperlinkClick", Url);
-	};
-
 	asc_docs_api.prototype.sync_CanAddHyperlinkCallback = function(bCanAdd)
 	{
 		//if ( true === CollaborativeEditing.Get_GlobalLock() )
@@ -7473,9 +7572,12 @@ background-repeat: no-repeat;\
 		}
 
 		let presentation = this.private_GetLogicDocument();
-		let allGIFs = presentation.GetAllGIFImageUrls();
-		for (let i = 0; i < allGIFs.length; i++) {
-			this.WordControl.DemonstrationManager.loadGIF(allGIFs[i]);
+		if (presentation) {
+			let allGIFs = presentation.GetAllGIFImageUrls();
+			this.WordControl.DemonstrationManager.cleanGifCache(allGIFs);
+			for (let i = 0; i < allGIFs.length; i++) {
+				this.WordControl.DemonstrationManager.loadGIF(allGIFs[i]);
+			}
 		}
 
 
@@ -8383,6 +8485,7 @@ background-repeat: no-repeat;\
         {
             this.openFileCryptCallback(this.openFileCryptBinary);
         }
+		AscBuilder.Slide.init();
 	};
 	asc_docs_api.prototype.initCollaborativeEditing = function()
 	{
@@ -9439,6 +9542,41 @@ background-repeat: no-repeat;\
 			}
 		}
 	};
+	
+	asc_docs_api.prototype.getJsApi = function()
+	{
+		return AscBuilder.Slide.Api;
+	};
+	asc_docs_api.prototype.getRequiredSyncImagesOnLoad = function() {
+		if (this.ImageLoader.bIsAsyncLoadDocumentImages &&
+			!this.isPasteFonts_Images &&
+			this.isSyncLoadFirstSlideImages() &&
+			!this.isDocumentLoadComplete &&
+			(!AscCommon.CollaborativeEditing.m_aChanges.length || this.isApplyChangesOnOpen)) {
+			return this.getFirstSlideImagesMap();
+		}
+		return null;
+	};
+	asc_docs_api.prototype.updateOpenDocumentProgress = function() {
+		const progress         = this.OpenDocumentProgress;
+		progress.Type        = c_oAscAsyncAction.LoadDocumentFonts;
+		progress.FontsCount  = this.FontLoader.fonts_loading.length;
+		progress.CurrentFont = 0;
+
+		if (this.ImageLoader.bIsAsyncLoadDocumentImages) {
+			const requiredImageMap = this.getRequiredSyncImagesOnLoad();
+			if (requiredImageMap) {
+				progress.ImagesCount = Object.keys(requiredImageMap).length;
+				progress.CurrentImage = 0;
+			}
+		} else {
+			const logicDocument = this.WordControl.m_oLogicDocument;
+			if (logicDocument && logicDocument.ImageMap) {
+				progress.ImagesCount = Object.keys(logicDocument.ImageMap).length + AscCommon.g_oUserTexturePresets.length;
+				progress.CurrentImage = 0;
+			}
+		}
+	};
 
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};
@@ -9968,6 +10106,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["preloadReporter"]						= asc_docs_api.prototype.preloadReporter;
 
 	asc_docs_api.prototype["asc_SpecialPaste"]						= asc_docs_api.prototype.asc_SpecialPaste;
+	asc_docs_api.prototype["asc_getPasteOptions"]					= asc_docs_api.prototype.asc_getPasteOptions;
 
 	// signatures
 	asc_docs_api.prototype["asc_addSignatureLine"] 					= asc_docs_api.prototype.asc_addSignatureLine;
@@ -10026,6 +10165,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_setPreserveSlideMaster"] = asc_docs_api.prototype.asc_setPreserveSlideMaster;
 
 	asc_docs_api.prototype["asc_SetThumbnailsPosition"] = asc_docs_api.prototype.asc_SetThumbnailsPosition;
+	asc_docs_api.prototype["getJsApi"] = asc_docs_api.prototype.getJsApi;
 
 
 	window['Asc']['asc_CCommentDataSlide'] = window['Asc'].asc_CCommentDataSlide = asc_CCommentDataSlide;

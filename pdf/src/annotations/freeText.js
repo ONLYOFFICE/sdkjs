@@ -34,9 +34,9 @@
 (function(){
 
     let FREE_TEXT_INTENT_TYPE = {
-        FreeText:           0,
-        FreeTextCallout:    1,
-        FreeTextTypeWriter: 2
+        freeText:           0,
+        freeTextCallout:    1,
+        freeTextTypeWriter: 2
     }
 
     let CALLOUT_EXIT_POS = {
@@ -60,15 +60,9 @@
         
         this.GraphicObj     = this;
         
-        this._popupOpen     = false;
-        this._popupRect     = undefined;
         this._richContents  = [];
         this._rotate        = 0;
-        this._state         = undefined;
-        this._stateModel    = undefined;
-        this._width         = undefined;
-        this._points        = undefined;
-        this._intent        = undefined;
+        this._intent        = AscPDF.FREE_TEXT_INTENT_TYPE.freeText;
         this._lineEnd       = undefined;
         this._callout       = [];
         this._rectDiff      = [0, 0, 0, 0];
@@ -84,6 +78,55 @@
     CAnnotationFreeText.prototype.constructor = CAnnotationFreeText;
     AscFormat.InitClass(CAnnotationFreeText, AscFormat.CGroupShape, AscDFH.historyitem_type_Pdf_Annot_FreeText);
     Object.assign(CAnnotationFreeText.prototype, AscPDF.CAnnotationBase.prototype);
+
+	CAnnotationFreeText.prototype.private_UpdateRect = function(rect) {
+		AscCommon.History.StartNoHistoryMode();
+		let aCurRect = this.GetRect();
+		let aCurRD = this.GetRectangleDiff().slice();
+		let nLineW = this.GetBorderWidth() * g_dKoef_pt_to_mm;
+		rect && this.SetRect(rect);
+		this.recalcBounds();
+		this.recalcGeometry();
+		this.Recalculate(true);
+		
+		AscCommon.History.EndNoHistoryMode();
+		
+		let oGrBounds = this.bounds;
+		let oShapeBounds = this.getRectBounds();
+
+		if (!rect) {
+			rect = [];
+		}
+
+		rect[0] = (oGrBounds.l) * g_dKoef_mm_to_pt;
+		rect[1] = (oGrBounds.t) * g_dKoef_mm_to_pt;
+		rect[2] = (oGrBounds.r) * g_dKoef_mm_to_pt;
+		rect[3] = (oGrBounds.b) * g_dKoef_mm_to_pt;
+
+		this._rect = aCurRect;
+		this._rectDiff = aCurRD;
+
+		this.SetRect(rect);
+
+		let aNewRD;
+		if (AscPDF.FREE_TEXT_INTENT_TYPE.freeTextCallout == this.GetIntent()) {
+			aNewRD = aCurRD.slice();
+			aNewRD[0] += Math.abs(rect[0] - aCurRect[0]);
+			aNewRD[1] += Math.abs(rect[1] - aCurRect[1]);
+			aNewRD[2] += Math.abs(rect[2] - aCurRect[2]);
+			aNewRD[3] += Math.abs(rect[3] - aCurRect[3]);
+		}
+		else {
+			aNewRD = [
+				(oShapeBounds.l - oGrBounds.l + nLineW) * g_dKoef_mm_to_pt,
+				(oShapeBounds.t - oGrBounds.t + nLineW) * g_dKoef_mm_to_pt,
+				(oGrBounds.r - oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
+				(oGrBounds.b - oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
+			];
+		}
+
+		this.SetRectangleDiff(aNewRD);
+	};
 
     CAnnotationFreeText.prototype.GetCalloutExitPos = function(aTxBoxRect) {
         let aCallout = this.GetCallout();
@@ -167,7 +210,7 @@
         if (!aCallout && !aArrowPts)
             return undefined;
 
-        let nLineWidth = this.GetWidth();
+        let nLineWidth = this.GetBorderWidth();
 
         let oLine = {
             x1: aArrowPts ? aArrowPts[0] : aCallout[1 * 2],
@@ -288,29 +331,22 @@
         let nOpacity = this.GetOpacity();
 
 		AscCommon.ExecuteNoHistory(function() {
-			let aStrokeColor = this.GetStrokeColor();
-			if (!aStrokeColor || aStrokeColor.length == 0) {
-				aStrokeColor = [0, 0, 0];
-			}
+			let oRGB    = this.GetRGBColor(this.GetBorderColor(), true);
+			let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+			oFill.transparent = nOpacity * 100 * 2.55;
 			
-			if (aStrokeColor) {
-				let oRGB    = this.GetRGBColor(aStrokeColor);
-				let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-				oFill.transparent = nOpacity * 100 * 2.55;
-				
-				let oTxBoxShape = this.GetTextBoxShape();
-				let oLine = oTxBoxShape.spPr.ln;
-				if (this.GetWidth() == 0) {
-					oLine.setFill(AscFormat.CreateNoFillUniFill());
-				}
-				else {
-					oLine.setFill(oFill);
-				}
-	
-				for (let i = 0; i < this.spTree.length; i++) {
-					let oLine = this.spTree[i].spPr.ln;
-					oLine.setFill(oFill);
-				}
+			let oTxBoxShape = this.GetTextBoxShape();
+			let oLine = oTxBoxShape.spPr.ln;
+			if (this.GetBorderWidth() == 0) {
+				oLine.setFill(AscFormat.CreateNoFillUniFill());
+			}
+			else {
+				oLine.setFill(oFill);
+			}
+
+			for (let i = 0; i < this.spTree.length; i++) {
+				let oLine = this.spTree[i].spPr.ln;
+				oLine.setFill(oFill);
 			}
 			
 			let aFillColor = this.GetFillColor();
@@ -327,7 +363,7 @@
 				}
 			}
 	
-			let nWidthPt = this.GetWidth();
+			let nWidthPt = this.GetBorderWidth();
 			for (let i = 0; i < this.spTree.length; i++) {
 				let oLine = this.spTree[i].spPr.ln;
 				if (nWidthPt == 0 && this.GetTextBoxShape() !== this.spTree[i]) {
@@ -368,63 +404,60 @@
         return this._callout;
     };
     CAnnotationFreeText.prototype.private_UpdateLn = function() {
-        let nWidthPt = this.GetWidth();
+        let nWidthPt = this.GetBorderWidth();
         
         AscCommon.ExecuteNoHistory(function() {
-			for (let i = 1; i < this.spTree.length; i++) {
+			let oTextBoxShape = this.GetTextBoxShape();
+			let oRGB  = this.GetRGBColor(this.GetBorderColor(), true);
+			let oFill = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+
+			for (let i = 0; i < this.spTree.length; i++) {
 				let oLine = this.spTree[i].spPr.ln;
-				if (nWidthPt == 0 && this.spTree[i] != this.GetTextBoxShape()) {
-					oLine.setW(0.5 * g_dKoef_pt_to_mm * 36000.0);
-				}
-				else {
-					if (nWidthPt == 0) {
-						oLine.setFill(AscFormat.CreateNoFillUniFill());
+
+				if (nWidthPt == 0) {
+					if (this.spTree[i] != oTextBoxShape) {
+						oLine.setW(0.5 * g_dKoef_pt_to_mm * 36000.0);
 					}
 					else {
-						this.SetStrokeColor(this.GetStrokeColor());
+						oLine.setFill(AscFormat.CreateNoFillUniFill());
 					}
-					
+				}
+				else {
+					oLine.setFill(oFill);
 					oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
 				}
 			}
+
+			this.handleUpdateLn();
 		}, undefined, this);
     };
-	CAnnotationFreeText.prototype.SetStrokeColor = function(aColor) {
-		AscCommon.History.Add(new CChangesPDFAnnotStroke(this, this.GetStrokeColor(), aColor));
-		
-		this._strokeColor = aColor;
-		
-		AscCommon.ExecuteNoHistory(function() {
-			let oRGB  = this.GetRGBColor(aColor);
-			let oFill = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-			
-			let oTxBoxShape = this.GetTextBoxShape();
-			let oLine       = oTxBoxShape.spPr.ln;
-			if (this.GetWidth() == 0) {
-				oLine.setFill(AscFormat.CreateNoFillUniFill());
-			}
-			else {
-				oLine.setFill(oFill);
-			}
-			for (let i = 1; i < this.spTree.length; i++) {
-				let oLine = this.spTree[i].spPr.ln;
-				oLine.setFill(oFill);
-			}
-		}, undefined, this);
+	CAnnotationFreeText.prototype.private_UpdateOpacity = function() {
+		const t = this.GetOpacity() * 100 * 2.55;
 
-		this.SetWasChanged(true);
-		this.SetNeedRecalc(true);
+		for (let i = 0; i < this.spTree.length; i++) {
+			const oLine = this.spTree[i].spPr.ln;
+			oLine.Fill.transparent = t;
+
+			const oFill = this.spTree[i].spPr.Fill;
+			if (oFill) {
+				oFill.transparent = t;
+
+				this.spTree[i].handleUpdateLn();
+				this.spTree[i].handleUpdateFill();
+			}
+		}
+
+		this.SetNeedUpdateOpacity(false);
 	};
 	CAnnotationFreeText.prototype.SetFillColor = function(aColor) {
-		AscCommon.History.Add(new CChangesPDFAnnotFill(this, this.GetFillColor(), aColor));
+		AscCommon.History.Add(new CChangesPDFAnnotFill(this, this._fillColor, aColor));
 		
 		this._fillColor = aColor;
 		
 		AscCommon.ExecuteNoHistory(function() {
-			let oRGB  = this.GetRGBColor(aColor);
-			let oFill = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-			for (let i = 0; i < this.spTree.length; i++)
-			{
+			let oRGB    = aColor ? this.GetRGBColor(aColor) : null;
+            let oFill   = oRGB ? AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255) : AscFormat.CreateNoFillUniFill();
+			for (let i = 0; i < this.spTree.length; i++) {
 				this.spTree[i].setFill(oFill);
 			}
 		}, undefined, this);
@@ -447,13 +480,14 @@
         let oCopy = AscPDF.CAnnotationBase.prototype.Copy.call(this, isForMove);
 
         let aCallout = this.GetCallout();
-        let aRC = this.GetRichContents();
+        let aRC = this.GetRichContents(true);
         
         oCopy.SetLineEnd(this.GetLineEnd());
         oCopy.SetAlign(this.GetAlign());
         oCopy.SetRotate(this.GetRotate());
         aCallout && oCopy.SetCallout(aCallout.slice());
         aRC && oCopy.SetRichContents(aRC.slice());
+        oCopy.SetIntent(this.GetIntent());
 
         return oCopy;
     };
@@ -462,7 +496,7 @@
             return;
 
         if (this.IsNeedUpdateOpacity()) {
-            this.UpdateOpacity();
+            this.private_UpdateOpacity();
         }
         
         if (this.IsNeedRecalcSizes()) {
@@ -529,32 +563,34 @@
             y: (aOrigRect[3] - aRD[3]) * g_dKoef_pt_to_mm
         });
 
-        if (aCallout && aCallout.length == 6) {
-            // точка выхода callout
-            aFreeTextLine90.push({
-                x: (aCallout[2 * 2]) * g_dKoef_pt_to_mm,
-                y: (aCallout[2 * 2 + 1]) * g_dKoef_pt_to_mm
-            });
-            aFreeTextLine90.push({
-                x: (aCallout[2 * 1]) * g_dKoef_pt_to_mm,
-                y: (aCallout[2 * 1 + 1]) * g_dKoef_pt_to_mm
-            });
-        }
+		let aCalloutLine = [];
+		if (this.GetIntent() == AscPDF.FREE_TEXT_INTENT_TYPE.freeTextCallout) {
+			if (aCallout && aCallout.length == 6) {
+				// точка выхода callout
+				aFreeTextLine90.push({
+					x: (aCallout[2 * 2]) * g_dKoef_pt_to_mm,
+					y: (aCallout[2 * 2 + 1]) * g_dKoef_pt_to_mm
+				});
+				aFreeTextLine90.push({
+					x: (aCallout[2 * 1]) * g_dKoef_pt_to_mm,
+					y: (aCallout[2 * 1 + 1]) * g_dKoef_pt_to_mm
+				});
+			}
+			
+			if (aCallout.length != 0) {
+				// x2, y2 линии
+				aCalloutLine.push({
+					x: aCallout[1 * 2] * g_dKoef_pt_to_mm,
+					y: (aCallout[1 * 2 + 1]) * g_dKoef_pt_to_mm
+				});
+				// x1, y1 линии
+				aCalloutLine.push({
+					x: aCallout[0 * 2] * g_dKoef_pt_to_mm,
+					y: (aCallout[0 * 2 + 1]) * g_dKoef_pt_to_mm
+				});
+			}
+		}
         
-        let aCalloutLine = [];
-        if (aCallout.length != 0) {
-            // x2, y2 линии
-            aCalloutLine.push({
-                x: aCallout[1 * 2] * g_dKoef_pt_to_mm,
-                y: (aCallout[1 * 2 + 1]) * g_dKoef_pt_to_mm
-            });
-            // x1, y1 линии
-            aCalloutLine.push({
-                x: aCallout[0 * 2] * g_dKoef_pt_to_mm,
-                y: (aCallout[0 * 2 + 1]) * g_dKoef_pt_to_mm
-            });
-        }
-
         aFreeTextPoints.push(aFreeTextRect);
         if (aCalloutLine.length != 0)
             aFreeTextPoints.push(aCalloutLine);
@@ -625,15 +661,16 @@
 
         return false;
     };
-    CAnnotationFreeText.prototype.SetRichContents = function(aRCInfo) {
+	CAnnotationFreeText.prototype.private_UpdateRichContent = function() {
+		let aRCInfo = this.GetRichContents();
+
+		AscCommon.History.StartNoHistoryMode();
+
         let oContent = this.GetDocContent();
         oContent.ClearContent();
         
         let oLastUsedPara   = oContent.GetElement(0);
         oLastUsedPara.RemoveFromContent(0, oLastUsedPara.GetElementsCount());
-
-        AscCommon.History.Add(new CChangesPDFAnnotRC(this, this.GetRichContents(), aRCInfo));
-        this._richContents = aRCInfo;
 
         if (!aRCInfo) {
             this.SetNeedRecalc(true);
@@ -722,74 +759,11 @@
         else {
             _t.SetNeedRecalc(true);
         }
-    };
-    CAnnotationFreeText.prototype.GetRichContents = function(bCalced) {
-        if (!bCalced)
-            return this._richContents;
 
-        let oContent = this.GetDocContent();
-        let aRCInfo = [];
-
-        for (let i = 0, nCount = oContent.GetElementsCount(); i < nCount; i++) {
-            let oPara = oContent.GetElement(i);
-
-            for (let j = 0, nRunsCount = oPara.GetElementsCount(); j < nRunsCount; j++) {
-                let oRun = oPara.GetElement(j);
-                let sText = oRun.GetText();
-                let oUniColor   = oRun.Pr.Unifill;
-                let oRGBA       = oUniColor ? oUniColor.fill.color.color.RGBA : null;
-                let aPdfColor   = oRGBA ? [oRGBA.R / 255, oRGBA.G / 255, oRGBA.B / 255] : [0, 0, 0];
-
-                let sFont   = oRun.Get_RFonts().Ascii.Name;
-                let isEmbed = false;
-                let prefix  = AscFonts.getEmbeddedFontPrefix();
-
-                let nVertAlign;
-                switch (oRun.GetVertAlign()) {
-                    case AscCommon.vertalign_SuperScript:
-                        nVertAlign = 0;
-                        break;
-                    case AscCommon.vertalign_SubScript:
-                        nVertAlign = -0.01;
-                        break;
-                }
-
-                if (sFont.startsWith(prefix)) {
-                    sFont = sFont.substr(prefix.length);
-                    isEmbed = true;
-                }
-                    
-                let oRCInfo = {
-                    "alignment":        AscPDF.getPdfTypeAlignByInternal(oRun.Paragraph.GetParagraphAlign()),
-                    "rtl":              oRun.Paragraph.GetParagraphBidi(),
-                    "bold":             oRun.Get_Bold(),
-                    "italic":           oRun.Get_Italic(),
-                    "strikethrough":    oRun.Get_Strikeout(),
-                    "underlined":       oRun.Get_Underline(),
-                    "size":             oRun.Get_FontSize(),
-                    "color":            aPdfColor,
-                    "text":             sText,
-                    "vertical":         nVertAlign
-                };
-
-                if (isEmbed) {
-                    oRCInfo["name"] = sFont;
-                }
-                else {
-                    oRCInfo["actual"] = sFont;
-                }
-
-                aRCInfo.push(oRCInfo);
-            }
-
-            if (aRCInfo[aRCInfo.length - 1])
-                aRCInfo[aRCInfo.length - 1]["text"] += '\r';
-        }
-
-        return aRCInfo;
+		AscCommon.History.EndNoHistoryMode();
     };
     CAnnotationFreeText.prototype.GetAllFonts = function(fontMap) {
-        let aRCInfo = this.GetRichContents();
+        let aRCInfo = this.GetRichContents(true);
         fontMap = fontMap || {};
 
         if (!aRCInfo) {
@@ -1053,24 +1027,6 @@
 			docContent.RemoveSelection();
 		}
 	};
-    /**
-	 * Removes char in current position by direction.
-	 * @memberof CTextField
-	 * @typeofeditors ["PDF"]
-	 */
-    CAnnotationFreeText.prototype.Remove = function(nDirection, isCtrlKey) {
-        let oContent = this.GetDocContent();
-        oContent.Remove(nDirection, true, false, false, isCtrlKey);
-        oContent.RecalculateCurPos();
-        this.SetNeedRecalc(true);
-
-        if (AscCommon.History.Is_LastPointEmpty()) {
-            AscCommon.History.Remove_LastPoint();
-        }
-        else {
-            this.SetNeedRecalc(true);
-        }
-    };
     CAnnotationFreeText.prototype.SelectAllText = function() {
         this.GetDocContent().SelectAll();
     };
@@ -1092,16 +1048,16 @@
             oDoc.DoAction(function() {
                 this.GetContents() != sText && this.SetContents(sText);
             
-                if (isNeedUpdateRC) {
-                    let aCurRc = this.GetRichContents();
-                    let aNewRc = this.GetRichContents(true);
+				let aCurRc = this.GetRichContents();
+				let aNewRc = this.GetRichContents(true);
                     
-                    this._richContents = aNewRc;
+				this._richContents = aNewRc;
 
+                if (isNeedUpdateRC) {
                     oDoc.History.Add(new CChangesFreeTextCallout(this, this._prevCallout, this.GetCallout()));
                     oDoc.History.Add(new CChangesPDFAnnotRD(this, this._prevRectDiff, this.GetRectangleDiff()));
                     oDoc.History.Add(new CChangesPDFAnnotRect(this, this._prevRect, this.GetRect()));
-                    oDoc.History.Add(new CChangesPDFAnnotRC(this, aCurRc, aNewRc));
+					oDoc.History.Add(new CChangesPDFAnnotRC(this, aCurRc, aNewRc));
                     oDoc.private_UpdateTargetForCollaboration(true);
                 }
             }, AscDFH.historydescription_Pdf_UpdateAnnotRC, this);
@@ -1152,8 +1108,8 @@
             let aNewTextBoxRect = [xMin, yMin, xMax, yMax];
     
             // расширяем рект на ширину линии (или на радиус cloud бордера)
-            let nLineWidth = this.GetWidth();
-            if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud) {
+            let nLineWidth = this.GetBorderWidth();
+            if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.cloud) {
                 aNewTextBoxRect[0] -= this.GetBorderEffectIntensity() * 12;
                 aNewTextBoxRect[1] -= this.GetBorderEffectIntensity() * 12;
                 aNewTextBoxRect[2] += this.GetBorderEffectIntensity() * 12;
@@ -1589,12 +1545,18 @@
             if (!oParentAnnot.spTree[1])
                 oParentAnnot.addToSpTree(1, oLineShape);
         }
+		else if (oParentAnnot.spTree[1]) {
+			oParentAnnot.removeFromSpTree(oParentAnnot.spTree[1].GetId());
+		}
 
         if (arrOfArrPoints[2]) {
             let oConnShape = createConnectorShape(arrOfArrPoints[2], oParentAnnot.spTree[2], oParentAnnot);
             if (!oParentAnnot.spTree[2])
                 oParentAnnot.addToSpTree(2, oConnShape);
         }
+		else if (oParentAnnot.spTree[2]) {
+			oParentAnnot.removeFromSpTree(oParentAnnot.spTree[2].GetId());
+		}
         
         oParentAnnot.x = xMin;
         oParentAnnot.y = yMin;
@@ -1679,36 +1641,36 @@
         let oSize = {width: 0, height: 0};
 
         switch (nType) {
-            case AscPDF.LINE_END_TYPE.None:
+            case AscPDF.LINE_END_TYPE.none:
                 oSize.width = nLineW;
                 oSize.height = nLineW;
-            case AscPDF.LINE_END_TYPE.OpenArrow:
-            case AscPDF.LINE_END_TYPE.ClosedArrow:
+            case AscPDF.LINE_END_TYPE.openArrow:
+            case AscPDF.LINE_END_TYPE.closedArrow:
                 oSize.width = 6 * nLineW;
                 oSize.height = 3 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Diamond:
-            case AscPDF.LINE_END_TYPE.Square:
+            case AscPDF.LINE_END_TYPE.diamond:
+            case AscPDF.LINE_END_TYPE.square:
                 oSize.width = 4 * nLineW;
                 oSize.height = 4 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Circle:
+            case AscPDF.LINE_END_TYPE.circle:
                 oSize.width = 4 * nLineW;
                 oSize.height = 4 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.RClosedArrow:
+            case AscPDF.LINE_END_TYPE.rClosedArrow:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.ROpenArrow:
+            case AscPDF.LINE_END_TYPE.rOpenArrow:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Butt:
+            case AscPDF.LINE_END_TYPE.butt:
                 oSize.width = 5 * nLineW;
                 oSize.height = 1.5 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Slash:
+            case AscPDF.LINE_END_TYPE.slash:
                 oSize.width = 6 * nLineW;
                 oSize.height = 3 * nLineW;
                 break;
@@ -1804,7 +1766,7 @@
         oShape.updateTransformMatrix();
         oShape.brush = AscFormat.CreateNoFillUniFill();
 
-        let bCloudy = oParentAnnot.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud && aPoints.length == 4;
+        let bCloudy = oParentAnnot.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.cloud && aPoints.length == 4;
 
         let geometry = bCloudy ? AscPDF.generateCloudyGeometry(aPoints, aShapeBounds, null, oParentAnnot.GetBorderEffectIntensity()) : generateGeometry(aPoints, [xMin, yMin, xMax, yMax]);
         oShape.spPr.setGeometry(geometry);
@@ -1886,8 +1848,8 @@
 
     window["AscPDF"].CAnnotationFreeText    = CAnnotationFreeText;
     window["AscPDF"].FREE_TEXT_INTENT_TYPE  = window["AscPDF"]["FREE_TEXT_INTENT_TYPE"] = FREE_TEXT_INTENT_TYPE;
-    FREE_TEXT_INTENT_TYPE['FreeText']           = FREE_TEXT_INTENT_TYPE.FreeText;
-    FREE_TEXT_INTENT_TYPE['FreeTextCallout']    = FREE_TEXT_INTENT_TYPE.FreeTextCallout;
+    FREE_TEXT_INTENT_TYPE['freeText']           = FREE_TEXT_INTENT_TYPE.freeText;
+    FREE_TEXT_INTENT_TYPE['freeTextCallout']    = FREE_TEXT_INTENT_TYPE.freeTextCallout;
     
     window["AscPDF"].CALLOUT_EXIT_POS       = CALLOUT_EXIT_POS;
 })();

@@ -1105,6 +1105,9 @@
 			case c_oAscServerError.ForcedViewMode :
 				nRes = Asc.c_oAscError.ID.ForcedViewMode;
 				break;
+			case c_oAscServerError.FileNotAssembled :
+				nRes = Asc.c_oAscError.ID.FileNotAssembled;
+				break;
 			case c_oAscServerError.Storage :
 			case c_oAscServerError.StorageFileNoFound :
 			case c_oAscServerError.StorageRead :
@@ -1704,7 +1707,8 @@
 
 		Password: -180,
 
-		ForcedViewMode: -200
+		ForcedViewMode: -200,
+		FileNotAssembled: -201
 	};
 
 	//todo get from server config
@@ -1779,6 +1783,12 @@
 			case c_oAscFileType.PDFA:
 				return 'pdf';
 				break;
+			case c_oAscFileType.DJVU:
+				return 'djvu';
+				break;
+			case c_oAscFileType.XPS:
+				return 'xps';
+				break;
 			case c_oAscFileType.HTML:
 				return 'html';
 				break;
@@ -1842,6 +1852,9 @@
 				break;
 			case c_oAscFileType.DOCXF:
 				return 'docxf';
+				break;
+			case c_oAscFileType.MD:
+				return 'md';
 				break;
 			case c_oAscFileType.DOCY:
 				return 'doct';
@@ -1917,6 +1930,9 @@
 			case c_oAscFileType.OTP:
 				return 'otp';
 				break;
+			case c_oAscFileType.PPTY:
+				return 'pptt';
+				break;
 			case c_oAscFileType.VSDX:
 				return 'vsdx';
 				break;
@@ -1934,6 +1950,9 @@
 				break;
 			case c_oAscFileType.VSTM:
 				return 'vstm';
+				break;
+			case c_oAscFileType.VSDY:
+				return 'vsdt';
 				break;
 			case c_oAscFileType.IMG:
 				return 'zip';
@@ -4153,7 +4172,7 @@
 				// ToDo убрать эту проверку, заменить на более грамотную после правки функции _searchFilters
 				if (true === wb.getWorksheet().model.autoFilters.isRangeIntersectionTableOrFilter(range)) {
 					return Asc.c_oAscError.ID.AutoFilterDataRangeError;
-				} else if (wb.getWorksheet().intersectionFormulaArray(range, true, true)) {
+				} else if (wb.getWorksheet().intersectionFormulaArray(range, true, true, true)) {
 					return Asc.c_oAscError.ID.MultiCellsInTablesFormulaArray;
 				} else if (range && Asc.c_oAscSelectionType.RangeCells !== range.getType()) {
 					return Asc.c_oAscError.ID.LargeRangeWarning;
@@ -11102,11 +11121,23 @@
 	}
 
 	var g_oUserColorById = {}, g_oUserNextColorIndex = 0;
-	
+	let g_oDefaultUserColor = null; // steel blue for anonymous/unknown user
 	function _getUserColorById(userId, userName, isDark, isNumericValue)
 	{
+		function defaultColor()
+		{
+			if (g_oDefaultUserColor)
+				return g_oDefaultUserColor;
+			
+			g_oDefaultUserColor = new CUserCacheColor(0x4A90D9);
+			return g_oDefaultUserColor;
+		}
+		
 		if ((!userId || "" === userId) && (!userName || "" === userName))
-			return new CColor(0, 0, 0, 255);
+		{
+			let res = defaultColor();
+			return -1 === isDark ? res.Light : true === isDark || 1 === isDark ? res.Dark : res.Normal;
+		}
 
 		var res;
 		if (g_oUserColorById.hasOwnProperty(userId))
@@ -11126,16 +11157,14 @@
 		}
 
 		if (!res)
-			return new CColor(0, 0, 0, 255);
+			res = defaultColor();
 
 		return -1 === isDark ? res.Light : true === isDark || 1 === isDark ? res.Dark : res.Normal;
 	}
-	function setUserColorById(userId, light, dark)
+	function setUserColorById(userId, color)
 	{
-		g_oUserColorById[userId] = {
-			Light : new CColor(light.r, light.g, light.b, 255),
-			Dark : new CColor(dark.r, dark.g, dark.b, 255),
-		};
+		let nColor = typeof color === "number" ? color : ((color.r & 0xFF) << 16) | ((color.g & 0xFF) << 8) | (color.b & 0xFF);
+		g_oUserColorById[userId] = new CUserCacheColor(nColor);
 	}
 	function getUserColorById(userId, userName, isDark, isNumericValue)
 	{
@@ -15232,8 +15261,10 @@
 		let dir = 'ltr';
 		for (let iter = text.getUnicodeIterator(); iter.check(); iter.next()) {
 			let charDir = AscCommon.getCharStrongDir(iter.value());
-			if (charDir === AscBidi.DIRECTION_FLAG.RTL) {
-				dir = 'rtl';
+			if (charDir !== null) {
+				if (charDir === AscBidi.DIRECTION_FLAG.RTL) {
+					dir = 'rtl';
+				}
 				break;
 			}
 		}

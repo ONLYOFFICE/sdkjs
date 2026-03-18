@@ -71,10 +71,7 @@
         }
         else if (bNoCheck !== true) {
             drawingDocument.UpdateTargetTransform(null);
-            let oActiveObj  = this.document.GetActiveObject();
-            let oDocContent = oActiveObj ? oActiveObj.GetDocContent() : null;
-            if (oDocContent == null)
-                drawingDocument.TargetEnd();
+			drawingDocument.TargetEnd();
         }
 
         let oMathTrackHandler   = this.document.MathTrackHandler;
@@ -2057,9 +2054,14 @@
             if (target_text_object.getObjectType() === AscDFH.historyitem_type_GraphicFrame) {
                 target_text_object.graphicObject.Remove(dir, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord);
             } else {
-                let content = this.getTargetDocContent(true);
-                if (content) {
-                    content.Remove(dir, true, bRemoveOnlySelection, bOnTextAdd, isWord)
+                if (target_text_object.Remove) {
+                    target_text_object.Remove(dir, true, bRemoveOnlySelection, bOnTextAdd, isWord);
+                }
+                else {
+                    let content = this.getTargetDocContent(true);
+                    if (content) {
+                        content.Remove(dir, true, bRemoveOnlySelection, bOnTextAdd, isWord)
+                    }
                 }
 
                 bNoCheck !== true && target_text_object.checkExtentsByDocContent && target_text_object.checkExtentsByDocContent();
@@ -2094,6 +2096,15 @@
 		else if (oGroup.getObjectType() === AscDFH.historyitem_type_Pdf_Annot_FreeText) {
 			oGroup.deleteDrawingBase();
 			return true;
+		}
+	};
+
+	CGraphicObjects.prototype.OnMouseDown = function(e, x, y, pageIndex) {
+		this.checkInkState();
+		this.curState.onMouseDown(e, x, y, pageIndex);
+
+		if (this.arrTrackObjects.length === 0) {
+			this.document.GetApi().sendEvent("asc_onSelectionEnd");
 		}
 	};
 

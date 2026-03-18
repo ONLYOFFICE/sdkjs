@@ -267,6 +267,16 @@
 	CGraphicsBase.prototype.b_color2 = function(r, g, b, a)
 	{
 	};
+	
+	CGraphicsBase.prototype.put_PathOffset = function(tx, ty)
+	{
+	};
+	CGraphicsBase.prototype.put_PathScale = function(sx, sy)
+	{
+	};
+	CGraphicsBase.prototype.ResetRotation = function()
+	{
+	};
 
 	// TRANSFORM
 	CGraphicsBase.prototype.grStateIsUseBaseTransform = function()
@@ -531,8 +541,8 @@
 				_y = y - penW / 2;
 			}
 		}
-		this._m(x, y);
-		this._l(r, y);
+		this._m(x, _y);
+		this._l(r, _y);
 
 		this.ds();
 
@@ -806,6 +816,9 @@
 	{
 	};
 	CGraphicsBase.prototype.ClearLastFont = function()
+	{
+	};
+	CGraphicsBase.prototype.ClearCacheProps = function()
 	{
 	};
 

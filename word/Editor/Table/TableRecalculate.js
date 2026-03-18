@@ -280,9 +280,11 @@ CTable.prototype.private_RecalculateGrid = function(pageFields)
 		var arrSumGrid = [];
 		var nTempSum   = 0;
 		arrSumGrid[-1] = 0;
-		for (var nIndex = 0, nCount = this.TableGrid.length; nIndex < nCount; ++nIndex)
+		
+		let tableGrid = this.private_GetAdjustedTableGridToCells();
+		for (var nIndex = 0, nCount = tableGrid.length; nIndex < nCount; ++nIndex)
 		{
-			nTempSum += this.TableGrid[nIndex] * layoutCoeff;
+			nTempSum += tableGrid[nIndex] * layoutCoeff;
 			arrSumGrid[nIndex] = nTempSum;
 		}
 
@@ -810,6 +812,52 @@ CTable.prototype.private_RecalculateGrid = function(pageFields)
 			this.TableSumGrid[nCurCol] = this.TableSumGrid[nCurCol - 1] + this.TableGridCalc[nCurCol];
 	}
 };
+CTable.prototype.private_GetAdjustedTableGridToCells = function()
+{
+	let pctWidth = this.private_RecalculatePercentWidth();
+	let tableGrid = [];
+	
+	// 1. На первом этапе заполним колонки максимальной шириной ячеек с gridSpan = 1
+	for (let iRow = 0, nRows = this.GetRowsCount(); iRow < nRows; ++iRow)
+	{
+		let row = this.GetRow(iRow);
+		let gridCol = row.GetBefore().Grid;
+		for (let iCell = 0, nCells = row.GetCellsCount(); iCell < nCells; ++iCell)
+		{
+			let cell = row.GetCell(iCell);
+			let gridSpan = cell.GetGridSpan();
+			
+			if (vmerge_Restart !== cell.GetVMerge())
+			{
+				gridCol += gridSpan;
+				continue;
+			}
+			
+			if (1 === gridSpan)
+			{
+				while (tableGrid.length <= gridCol)
+					tableGrid.push(0);
+
+				let cellW = cell.GetW().GetCalculatedValue(pctWidth);
+				if (0 !== cellW && cellW > tableGrid[gridCol])
+					tableGrid[gridCol] = cellW;
+			}
+			
+			gridCol += gridSpan;
+		}
+	}
+	
+	while (tableGrid.length < this.TableGrid.length)
+		tableGrid.push(0);
+	
+	// 2. В колонках, где не было желаемой ширины проставим ширины из изначальной сетки
+	for (let gridCol = 0, gridCount = this.TableGrid.length; gridCol < gridCount; ++gridCol)
+	{
+		if (0 === tableGrid[gridCol])
+			tableGrid[gridCol] = this.TableGrid[gridCol];
+	}
+	return tableGrid;
+};
 CTable.prototype.private_RecalculateGridMinContent = function(nPctWidth, arrMinMargins, arrMinContent, arrMaxContent, arrPreferred, arrMinNoPreferred)
 {
 	// Сначала мы высчитываем минимальный и максимальный контент для всех ячеек с GridSpan=1, ячейки
@@ -899,6 +947,12 @@ CTable.prototype.private_RecalculateGridMinContent = function(nPctWidth, arrMinM
 
 			nCellMin += nSpacingAdd;
 			nCellMax += nSpacingAdd;
+			
+			if (vmerge_Restart !== oCell.GetVMerge())
+			{
+				nCurGridCol += nGridSpan;
+				continue;
+			}
 
 			if (1 === nGridSpan)
 			{

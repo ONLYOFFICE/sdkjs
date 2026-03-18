@@ -5151,6 +5151,7 @@ function isAllowPasteLink(pastedWb) {
 
 		var activeNamedSheetView = !isPrint && this.model.getActiveNamedSheetViewId() !== null;
         var ctx = drawingCtx || this.drawingCtx;
+		var ctxOldDarkMode = ctx.isDarkMode; ctx.isDarkMode = false;
         var st = this.settings.header.style[style];
 		var backgroundColor = isPrint ? this.settings.header.printBackground : (activeNamedSheetView ? st.backgroundDark : st.background);
 		var borderColor = isPrint ? this.settings.header.printBorder : st.border;
@@ -5265,6 +5266,7 @@ function isAllowPasteLink(pastedWb) {
 
         // Для невидимых кроме border-а ничего не рисуем
         if (isZeroHeader || -1 === index) {
+			ctx.isDarkMode = ctxOldDarkMode;
             return;
         }
 
@@ -5290,6 +5292,7 @@ function isAllowPasteLink(pastedWb) {
 		this._fillText(ctx, text, textX, textY + Asc.round(tm.baseline * this.getZoom()), undefined, sr.charWidths);
 
 		this._RemoveClipRect(ctx);
+		ctx.isDarkMode = ctxOldDarkMode;
     };
 
 	WorksheetView.prototype.drawHeaderFooter = function (drawingCtx, printPagesData, indexPrintPage, countPrintPages) {
@@ -11414,8 +11417,9 @@ function isAllowPasteLink(pastedWb) {
 			reinitScrollX = oldEnd !== vr.c2;
 		}
 		
+		let _maxCol = this.model.isDefaultWidthHidden() ? this.nColsCount : gc_nMaxCol;
 		if ((reinitScrollX && !this.workbook.getSmoothScrolling()) || (reinitScrollX && this.workbook.getSmoothScrolling() && deltaCorrect !== currentScrollCorrect) ||
-			(0 > delta && initColsCount && this._initColsCount()) || (this.workbook.getSmoothScrolling() && initColsCount && this.nColsCount !== gc_nMaxCol)) {
+			(0 > delta && initColsCount && this._initColsCount()) || (this.workbook.getSmoothScrolling() && initColsCount && this.nColsCount !== _maxCol)) {
 			if (reinitScrollX && (start - cFrozen) === 0 && 0 > delta && initColsCount) {
 				this._initColsCount();
 			}
@@ -11676,7 +11680,9 @@ function isAllowPasteLink(pastedWb) {
         return Math.abs(x2 - x1) <= wEps + 2 && Math.abs(y2 - y1) <= hEps + 2;
     };
     WorksheetView.prototype._hitInRange = function (range, rangeType, vr, x, y, offsetX, offsetY, opt_pageBreakPreviewRange) {
-        var wEps = 2 * AscCommon.global_mouseEvent.KoefPixToMM, hEps = 2 * AscCommon.global_mouseEvent.KoefPixToMM;
+        var wEps = AscCommon.AscBrowser.convertToRetinaValue(2 * AscCommon.global_mouseEvent.KoefPixToMM, true);
+        var hEps = AscCommon.AscBrowser.convertToRetinaValue(2 * AscCommon.global_mouseEvent.KoefPixToMM, true);
+
         var cursor, x1, x2, y1, y2, isResize;
         var col = -1, row = -1;
 
@@ -11977,6 +11983,7 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 	WorksheetView.prototype.getCursorTypeFromXY = function (x, y, fromDoubleClickCall) {
+		var origX = x;
 		if (this.getRightToLeft()) {
 			x = this.getCtxWidth() - x;
 		}
@@ -11996,7 +12003,7 @@ function isAllowPasteLink(pastedWb) {
 		if(this.workbook.Api.isEyedropperStarted()) {
 			return {cursor: AscCommon.Cursors.Eyedropper, target: c_oTargetType.Cells, color: this.workbook.Api.getEyedropperColor(x, y)};
 		}
-		const oPlaceholderCursor = this.objectRender.checkCursorPlaceholder(x, y);
+		const oPlaceholderCursor = this.objectRender.checkCursorPlaceholder(origX, y);
 		if (oPlaceholderCursor) {
 			return {cursor: kCurDefault, target: c_oTargetType.Placeholder, col: -1, row: -1, placeholderType: oPlaceholderCursor.placeholderType};
 		}
@@ -12059,19 +12066,28 @@ function isAllowPasteLink(pastedWb) {
 				if (drawingInfo.hyperlink instanceof ParaHyperlink) {
 					oHyperlink = new AscCommonExcel.Hyperlink();
 					oHyperlink.Tooltip = drawingInfo.hyperlink.ToolTip;
-					var spl = drawingInfo.hyperlink.Value.split("!");
-					if (spl.length === 2) {
-						oHyperlink.setLocation(drawingInfo.hyperlink.Value);
-					} else {
-						oHyperlink.Hyperlink = drawingInfo.hyperlink.Value;
+
+					let hyperlinkValue = drawingInfo.hyperlink.Value;
+					if (typeof hyperlinkValue === 'string' && hyperlinkValue[0] === '#') {
+						hyperlinkValue = hyperlinkValue.slice(1);
 					}
+
+					const spl = hyperlinkValue.split('!');
+					if (spl.length === 2) {
+						oHyperlink.setLocation(hyperlinkValue);
+					} else {
+						oHyperlink.Hyperlink = hyperlinkValue;
+					}
+
+					const hyperlinkResult = new asc_CHyperlink(oHyperlink);
+					hyperlinkResult.asc_setIsFromShape(true);
 
 					cellCursor =
 						{cursor: drawingInfo.cursor, target: c_oTargetType.Cells, col: -1, row: -1, userId: userId};
 					return {
 						cursor: kCurHyperlink,
 						target: c_oTargetType.Hyperlink,
-						hyperlink: new asc_CHyperlink(oHyperlink),
+						hyperlink: hyperlinkResult,
 						cellCursor: cellCursor,
 						userId: userId
 					};
@@ -12874,6 +12890,10 @@ function isAllowPasteLink(pastedWb) {
             d.col = 1;
         }
 
+        if (this.getRightToLeft() && d.col !== 0) {
+            d.col = -d.col;
+        }
+
         var type = ar.getType();
         if (type === c_oAscSelectionType.RangeRow) {
             d.col = 0;
@@ -13239,43 +13259,96 @@ function isAllowPasteLink(pastedWb) {
 
 		let action = function (stopFunc, props) {
 			let _ranges = props && props.ranges ? props.ranges : t.model.selectionRange.ranges;
-			let _oExistCells = props && props.oExistCells ? props.oExistCells : {};
+			let _oExistCells = props && props.oExistCells ? props.oExistCells : new Map();
 			let _oSelectionMathInfo = props.oSelectionMathInfo;
 
 			if (!_oSelectionMathInfo || !_ranges) {
 				return;
 			}
 
-			for (let i = 0; i < _ranges.length; i++) {
-				var cellValue;
-				let item = _ranges[i];
-				var range = t.model.getRange3(item.r1, item.c1, item.r2, item.c2);
-				let needBreak = false;
-				let _col, _row;
-				range._setPropertyNoEmpty(null, null, function (cell, r) {
-					var idCell = cell.nCol + '-' + cell.nRow;
-					if (!_oExistCells[idCell] && !cell.isNullTextString() && 0 < t._getRowHeight(r)) {
-						_oExistCells[idCell] = true;
-						++_oSelectionMathInfo.count;
-						if (CellValueType.Number === cell.getType()) {
-							cellValue = cell.getNumberValue();
-							if (0 === _oSelectionMathInfo.countNumbers) {
-								_oSelectionMathInfo.min = _oSelectionMathInfo.max = cellValue;
-							} else {
-								_oSelectionMathInfo.min = Math.min(_oSelectionMathInfo.min, cellValue);
-								_oSelectionMathInfo.max = Math.max(_oSelectionMathInfo.max, cellValue);
+		const maxCol = AscCommon.gc_nMaxCol0;
+		const hasStopFunc = !!stopFunc;
+		const max_size = 100000;
+		let lastCleanupRow = -1;
+
+		for (let i = 0; i < _ranges.length; i++) {
+			let item = _ranges[i];
+			let range = t.model.getRange3(item.r1, item.c1, item.r2, item.c2);
+			let needBreak = false;
+			let _col, _row;
+			let cachedRowHeight = null;
+			let lastRow = -1;
+
+			range._setPropertyNoEmpty(null, null, function (cell, r) {
+					if (_oExistCells.size > max_size && r > lastCleanupRow + 1000) {
+						let minRowToKeep = r - 500;
+						_oExistCells.forEach(function(value, key){
+							let rowNum = key % maxCol;
+							if (rowNum < minRowToKeep) {
+								_oExistCells.delete(key);
 							}
-							++_oSelectionMathInfo.countNumbers;
-							props.sum += cellValue;
-						}
+						});
+						lastCleanupRow = r;
 					}
 
-					_col = cell.nCol;
-					_row = cell.nRow;
+					let idCell = cell.nCol * maxCol + cell.nRow;
 
-					if (stopFunc && stopFunc()) {
-						needBreak = true;
-						return true;
+					if (_oExistCells.has(idCell) || cell.isNullTextString()) {
+						if (hasStopFunc) {
+							_col = cell.nCol;
+							_row = cell.nRow;
+							if (stopFunc()) {
+								needBreak = true;
+								return true;
+							}
+						}
+						return;
+					}
+
+					if (r !== lastRow) {
+						lastRow = r;
+						cachedRowHeight = t._getRowHeight(r);
+					}
+
+					if (cachedRowHeight <= 0) {
+						if (hasStopFunc) {
+							_col = cell.nCol;
+							_row = cell.nRow;
+							if (stopFunc()) {
+								needBreak = true;
+								return true;
+							}
+						}
+						return;
+					}
+
+					_oExistCells.set(idCell, 1);
+					++_oSelectionMathInfo.count;
+
+					let cellType = cell.getType();
+					if (CellValueType.Number === cellType) {
+						let cellValue = cell.getNumberValue();
+						if (0 === _oSelectionMathInfo.countNumbers) {
+							_oSelectionMathInfo.min = _oSelectionMathInfo.max = cellValue;
+						} else {
+							if (cellValue < _oSelectionMathInfo.min) {
+								_oSelectionMathInfo.min = cellValue;
+							}
+							if (cellValue > _oSelectionMathInfo.max) {
+								_oSelectionMathInfo.max = cellValue;
+							}
+						}
+						++_oSelectionMathInfo.countNumbers;
+						props.sum += cellValue;
+					}
+
+					if (hasStopFunc) {
+						_col = cell.nCol;
+						_row = cell.nRow;
+						if (stopFunc()) {
+							needBreak = true;
+							return true;
+						}
 					}
 				});
 
@@ -13353,7 +13426,7 @@ function isAllowPasteLink(pastedWb) {
 			};
 
 			oAsyncSelectionMathInfo.props = {};
-			oAsyncSelectionMathInfo.props.oExistCells = {};
+			oAsyncSelectionMathInfo.props.oExistCells = new Map();
 			oAsyncSelectionMathInfo.props.oSelectionMathInfo = oSelectionMathInfo;
 			oAsyncSelectionMathInfo.props.sum = 0;
 			let cloneRanges = [];
@@ -13364,7 +13437,7 @@ function isAllowPasteLink(pastedWb) {
 			oAsyncSelectionMathInfo.start();
 
 		} else {
-			let simpleProps = {oSelectionMathInfo: oSelectionMathInfo, sum: 0};
+			let simpleProps = {oSelectionMathInfo: oSelectionMathInfo, sum: 0, oExistCells: new Map()};
 			action(null, simpleProps);
 			afterAction(simpleProps);
 		}
@@ -13834,14 +13907,20 @@ function isAllowPasteLink(pastedWb) {
                 var hyperlink = new AscCommonExcel.Hyperlink();
                 hyperlink.Tooltip = shapeHyperlink.ToolTip;
 
-                var spl = shapeHyperlink.Value.split("!");
-                if (spl.length === 2) {
-                    hyperlink.setLocation(shapeHyperlink.Value);
-                } else {
-                    hyperlink.Hyperlink = shapeHyperlink.Value;
-                }
+				let hyperlinkValue = shapeHyperlink.Value;
+				if (typeof hyperlinkValue === 'string' && hyperlinkValue[0] === '#') {
+					hyperlinkValue = hyperlinkValue.slice(1);
+				}
+
+				const spl = hyperlinkValue.split('!');
+				if (spl.length === 2) {
+					hyperlink.setLocation(hyperlinkValue);
+				} else {
+					hyperlink.Hyperlink = hyperlinkValue;
+				}
 
                 objectInfo.hyperlink = new asc_CHyperlink(hyperlink);
+                objectInfo.hyperlink.asc_setIsFromShape(true);
                 objectInfo.hyperlink.asc_setText(shapeHyperlink.GetSelectedText(true, true));
             }
         }
@@ -13859,6 +13938,7 @@ function isAllowPasteLink(pastedWb) {
 						hyperlink.Tooltip = cNvProps.hlinkClick.tooltip;
 					}
 					objectInfo.hyperlink = new asc_CHyperlink(hyperlink);
+					objectInfo.hyperlink.asc_setIsFromShape(true);
 				}
 			}
 		}
@@ -13984,6 +14064,7 @@ function isAllowPasteLink(pastedWb) {
         this._updateSelectionNameAndInfo();
 
 		window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Update_Position();
+		Asc.editor.addMacroStepData("SelectDrawing", this.objectRender.getSelectedGraphicObjects().slice());
     };
     WorksheetView.prototype.setSelection = function (range, onlyCells) {
     	if (!Array.isArray(range)) {
@@ -14213,8 +14294,7 @@ function isAllowPasteLink(pastedWb) {
 				return;
 			}
 			if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.selectLockedCells)) {
-				var lockedCell = this.model.getLockedCell(newRange.c2, newRange.r2);
-				if (lockedCell || lockedCell === null) {
+				if (this.model.isLockedRange(newRange)) {
 					return;
 				}
 			}
@@ -14259,6 +14339,15 @@ function isAllowPasteLink(pastedWb) {
         if (0 === dc && 0 === dr) {
             return this._calcActiveCellOffset();
         }
+
+		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.selectLockedCells)) {
+			var newRange = this._calcSelectionEndPointByOffset(dc, dr);
+			var lockedCell = this.model.getLockedCell(newRange.c2, newRange.r2);
+			if (lockedCell || lockedCell === null) {
+				return;
+			}
+		}
+
 		res = this._moveActivePointInSelection(dc, dr);
         if (0 === res) {
             return this.changeSelectionStartPoint(dc, dr, /*isCoord*/false, false);
@@ -14898,7 +14987,16 @@ function isAllowPasteLink(pastedWb) {
         return ret;
     };
 
-	/* Функция для применения автозаполнения */
+	/**
+	 * Method applies autofill.
+	 * Initializes data and runs autofill logic.
+	 * @memberof WorksheetView
+	 * @param {number|null} [x]
+	 * @param {number|null} [y]
+	 * @param {boolean|null} [ctrlPress]
+	 * @param {boolean|null} [opt_doNotDraw]
+	 * @param {Function} [callback]
+	 */
 	WorksheetView.prototype.applyFillHandle = function (x, y, ctrlPress, opt_doNotDraw, callback) {
 		let t = this;
 
@@ -14924,6 +15022,24 @@ function isAllowPasteLink(pastedWb) {
 		// Текущее выделение (к нему применится автозаполнение)
 		let arn = t.model.selectionRange.getLast();
 		let range = t.model.getRange3(arn.r1, arn.c1, arn.r2, arn.c2);
+
+		// Check whether the filter is applied to the sheet
+		if (t.model && t.model.isApplyFilterBySheet() && this.fillHandleArea !== 2 && this.fillHandleDirection === 1) {
+			// Change selection to first cell
+			arn = arn.clone();
+			if (this.fillHandleArea === 3) { // From top to bottom
+				arn.r2 = arn.r1;
+				arn.c2 = arn.c1;
+			} else { // From bottom to top
+				arn.r1 = arn.r2;
+				arn.c1 = arn.c2;
+			}
+			range = t.model.getRange3(arn.r1, arn.c1, arn.r2, arn.c2);
+			// Change ctrlPress flag to copy pattern
+			const numFormat = range.getXfs() && range.getXfs().num && range.getXfs().num.getFormat();
+			const dateType = !!(numFormat && AscCommon.oNumFormatCache.get(numFormat).isDateTimeFormat());
+			ctrlPress = !(range.getType() === AscCommon.CellValueType.Number && !dateType);
+		}
 
 		// Были ли изменения
 		let bIsHaveChanges = false;
@@ -16952,8 +17068,8 @@ function isAllowPasteLink(pastedWb) {
 		return startActionMap[prop] ? {nDescription: startActionMap[prop], additional: val} : null;
 	};
 
-	WorksheetView.prototype.specialPaste = function (props) {
-		this.cellPasteHelper.specialPaste(props);
+	WorksheetView.prototype.specialPaste = function (props, isPasteOptions) {
+		this.cellPasteHelper.specialPaste(props, isPasteOptions);
 	};
 
 	WorksheetView.prototype.showSpecialPasteOptions = function (options/*, range, positionShapeContent*/) {
@@ -18947,11 +19063,14 @@ function isAllowPasteLink(pastedWb) {
 
 		let ctrlKey = flags && flags.ctrlKey;
 		let shiftKey = flags && flags.shiftKey;
+		const userCtrlKey = ctrlKey;
+		const userShiftKey = shiftKey;
 		let applyByArray = ctrlKey && shiftKey;
 		//t.model.workbook.dependencyFormulas.lockRecal();
 
 		let arrayCannotExpand; 	// flag, needed to avoid selecting the entire expected dynamic range in situations where the array cannot open
 		let beforeSpillRange;
+		let ctrlEnterWithDynamicArray = false;
 
 		//***array-formula***
 		const changeRangesIfArrayFormula = function() {
@@ -19114,17 +19233,22 @@ function isAllowPasteLink(pastedWb) {
 			if (!applyByArray && AscCommonExcel.bIsSupportDynamicArrays) {
 				/* if we write not through cse, then check the formula for the presence of ref */
 				/* if ref exists, write the formula as an array formula and also find its dimensions for further expansion */
-				dynamicSelectionRange = t.model.dynamicArrayManager.getDynamicRangeByFormula(newFP, calculateResult, true, needReparse);
+				dynamicSelectionRange = t.model.dynamicArrayManager.getDynamicRangeByFormula(newFP, calculateResult, !userCtrlKey, needReparse);
 				if (dynamicSelectionRange) {
-					applyByArray = true;
-					ctrlKey = true;
-					if ((newFP.aca && newFP.ca)) {
-						// array cannot expand
-						// set ref to the first(parent) cell
-						arrayCannotExpand = true;
-					} else if (!ws.dynamicArrayManager.isAutoExpandBBox(dynamicSelectionRange)) {
-						beforeSpillRange = dynamicSelectionRange;
-						dynamicSelectionRange = new Asc.Range(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c1, dynamicSelectionRange.r1);
+					if (userCtrlKey && !userShiftKey) {
+						ctrlEnterWithDynamicArray = true;
+					} else {
+						// Normal Enter or other cases: create single dynamic array
+						applyByArray = true;
+						ctrlKey = true;
+						if ((newFP.aca && newFP.ca)) {
+							// array cannot expand
+							// set ref to the first(parent) cell
+							arrayCannotExpand = true;
+						} else if (!ws.dynamicArrayManager.isAutoExpandBBox(dynamicSelectionRange)) {
+							beforeSpillRange = dynamicSelectionRange;
+							dynamicSelectionRange = new Asc.Range(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c1, dynamicSelectionRange.r1);
+						}
 					}
 				}
 			} else if (!applyByArray && !ctrlKey) {
@@ -19197,9 +19321,66 @@ function isAllowPasteLink(pastedWb) {
 				this.workbook.MacrosAddData(AscDFH.historydescription_Spreadsheet_SetCellValue, AscCommonExcel.getFragmentsText(val));
 			
 			// set the value to the selected range
-			c.setValue(AscCommonExcel.getFragmentsText(val), function (r) {
-				ret = r;
-			}, null, applyByArray ? bbox : ((!applyByArray && ctrlKey) ? null : undefined), null, AscCommonExcel.bIsSupportDynamicArrays && (dynamicSelectionRange || beforeSpillRange) ? {range: dynamicSelectionRange, beforeSpillRange: beforeSpillRange} : null);
+			if (ctrlEnterWithDynamicArray) {
+				var _formula = new AscCommonExcel.parserFormula(AscCommonExcel.getFragmentsText(val).substr(1), null, t.model);
+				if (_formula.parse(true)) {
+					var _selection = t.model.getSelection();
+					var activeCell = _selection.activeCell;
+					var selectionRange = t.getSelectedRange();
+					
+					selectionRange._foreach(function(cell) {
+						if (cell.ws.isUserProtectedRangesIntersectionCell(cell)) {
+							return;
+						}
+						
+						_formula.isParsed = false;
+						_formula.outStack = [];
+						_formula.parse(true);
+						var offset = new AscCommon.CellBase(cell.nRow - activeCell.row, cell.nCol - activeCell.col);
+						var _val = "=" + _formula.changeOffset(offset, null, true).assembleLocale(AscCommonExcel.cFormulaLocaleInfo, true, true);
+						
+						var cellFormula = new AscCommonExcel.parserFormula(_val.substr(1), new AscCommonExcel.CCellWithFormula(t.model, cell.nRow, cell.nCol), t.model);
+						if (cellFormula.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep)) {
+							var cellCalculateResult = new AscCommonExcel.CalculateResult(true);
+							var cellDynamicRange = t.model.dynamicArrayManager.getDynamicRangeByFormula(cellFormula, cellCalculateResult, false, false);
+							
+							var dynamicProps = null;
+							var byRefRange = null;
+							if (cellDynamicRange) {
+								if (!ws.dynamicArrayManager.isAutoExpandBBox(cellDynamicRange)) {
+									dynamicProps = {
+										range: new Asc.Range(cell.nCol, cell.nRow, cell.nCol, cell.nRow),
+										beforeSpillRange: cellDynamicRange
+									};
+									byRefRange = new Asc.Range(cell.nCol, cell.nRow, cell.nCol, cell.nRow);
+								} else {
+									dynamicProps = {
+										range: cellDynamicRange
+									};
+									byRefRange = cellDynamicRange;
+								}
+								
+								var dynamicRangeObj = t.model.getRange3(byRefRange.r1, byRefRange.c1, byRefRange.r2, byRefRange.c2);
+								dynamicRangeObj.setValue(_val, function (r) {
+									if (!r) ret = r;
+								}, null, byRefRange, null, dynamicProps);
+							} else {
+								cell.setValue(_val, function (r) {
+									if (!r) ret = r;
+								}, null, undefined, null, null);
+							}
+						}
+					});
+					
+					if (false == t.model.workbook.bUndoChanges && false == t.model.workbook.bRedoChanges) {
+						t.model.dynamicArrayManager.recalculateVolatileArrays();
+					}
+				}
+			} else {
+				c.setValue(AscCommonExcel.getFragmentsText(val), function (r) {
+					ret = r;
+				}, null, applyByArray ? bbox : ((!applyByArray && ctrlKey) ? null : undefined), null, AscCommonExcel.bIsSupportDynamicArrays && (dynamicSelectionRange || beforeSpillRange) ? {range: dynamicSelectionRange, beforeSpillRange: beforeSpillRange} : null);
+			}
 
 			this.workbook.FinalizeAction();
 			// recalc all volatile arrays on page
@@ -19368,6 +19549,9 @@ function isAllowPasteLink(pastedWb) {
 		var indent = align && align.indent;
 		if (AscCommon.align_Distributed === fl.textAlign) {
 			fl.textAlign = AscCommon.align_Center;
+		}
+		if (align && align.getAlignHorizontal() === null) {
+			fl.textAlign = null;
 		}
 
 		let offset = this._calcActiveCellOffset();
@@ -20903,6 +21087,7 @@ function isAllowPasteLink(pastedWb) {
 		var t = this;
 		var ctx = props.isOverlay ? this.overlayCtx : this.drawingCtx;
 		var isDataValidation = props.isOverlay;
+		var ctxOldDarkMode = ctx.isDarkMode; ctx.isDarkMode = false;
 
 		let isClip = null;
 		if (!isDataValidation && this._clipDrawingRect(ctx, new Asc.Range(props.col, props.row, props.col, props.row), clipType.range)) {
@@ -20914,6 +21099,7 @@ function isAllowPasteLink(pastedWb) {
 			if (isClip) {
 				this._RemoveClipRect(ctx);
 			}
+			ctx.isDarkMode = ctxOldDarkMode;
 			return;
 		}
 
@@ -21138,6 +21324,7 @@ function isAllowPasteLink(pastedWb) {
 		if (isClip) {
 			this._RemoveClipRect(ctx);
 		}
+		ctx.isDarkMode = ctxOldDarkMode;
 	};
 
 
@@ -21449,7 +21636,7 @@ function isAllowPasteLink(pastedWb) {
 			worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
 				c_oAscError.Level.NoCritical);
 			result = false;
-		} else if(styleName && this.intersectionFormulaArray(activeRange, true, true)) {
+		} else if(styleName && this.intersectionFormulaArray(activeRange, true, true, true)) {
 			worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.MultiCellsInTablesFormulaArray, c_oAscError.Level.NoCritical);
 			result = false;
 		}
@@ -28098,6 +28285,8 @@ function isAllowPasteLink(pastedWb) {
 		var specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
 		var specialPasteProps = specialPasteHelper.specialPasteProps;
 
+		let isPasteOptions = window['AscCommon'].g_specialPasteHelper.isPasteOptions;
+
 		if (val.props && val.props.onlyImages === true) {
 			if (!specialPasteHelper.specialPasteStart) {
 				ws.handlers.trigger("showSpecialPasteOptions", [Asc.c_oSpecialPasteProps.picture]);
@@ -28159,6 +28348,32 @@ function isAllowPasteLink(pastedWb) {
 		var pasteRange = AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange;
 		var activeCellsPasteFragment = typeof pasteRange === "string" ?
 			AscCommonExcel.g_oRangeCache.getAscRange(pasteRange) : pasteRange;
+
+		var checkTablesPaste = function () {
+			var _res = false;
+			if (val && val.TableParts && val.TableParts.length && activeCellsPasteFragment) {
+				for (var i = 0; i < val.TableParts.length; i++) {
+					if (activeCellsPasteFragment.containsRange(val.TableParts[i].Ref)) {
+						_res = true;
+						break;
+					}
+				}
+			}
+			return _res;
+		};
+
+		AscCommon.g_specialPasteHelper.buttonInfo && AscCommon.g_specialPasteHelper.buttonInfo.asc_setLastSelectedPasteProperty(null);
+
+		var isTablePasted = fromBinary && checkTablesPaste();
+		var _isAllowPasteLink = fromBinary && pasteInfo && pasteInfo.wb && isAllowPasteLink(pasteInfo.wb);
+
+		if (isPasteOptions && specialPasteProps) {
+			if (specialPasteProps.property === Asc.c_oSpecialPasteProps.link && !_isAllowPasteLink) {
+				specialPasteProps.setBaseOptions(true);
+			} else if (specialPasteProps.property === Asc.c_oSpecialPasteProps.transpose && isTablePasted) {
+				specialPasteProps.setBaseOptions(true);
+			}
+		}
 
 		//для бага 26402 - добавляю возможность продолжения ф/т если вставляем фрагмент по ширине такой же как и ф/т
 		//и имеет хоть одну ячейку с данными
@@ -28346,7 +28561,7 @@ function isAllowPasteLink(pastedWb) {
 		var api = ws.getApi();
 		api.onWorksheetChange(pasteToRange);
 		if (specialPasteHelper.specialPasteStart) {
-			if (window['Asc'].c_oSpecialPasteOperation.none !== specialPasteProps.operation && null !== specialPasteProps.operation) {
+			if (isPasteOptions || (Asc.c_oSpecialPasteOperation.none !== specialPasteProps.operation && null !== specialPasteProps.operation)) {
 				if (pasteInfo && pasteInfo.originalSelectBeforePaste) {
 					specialPasteHelper.selectionRange = pasteInfo.originalSelectBeforePaste;
 				} else {
@@ -28422,26 +28637,12 @@ function isAllowPasteLink(pastedWb) {
 		}
 
 		//for special paste
-		if (!window['AscCommon'].g_specialPasteHelper.specialPasteStart) {
-			var checkTablesPaste = function () {
-				var _res = false;
-				if (val.TableParts && val.TableParts.length && activeCellsPasteFragment) {
-					for (var i = 0; i < val.TableParts.length; i++) {
-						if (activeCellsPasteFragment.containsRange(val.TableParts[i].Ref)) {
-							_res = true;
-							break;
-						}
-					}
-				}
-				return _res;
-			};
-
+		if (!window['AscCommon'].g_specialPasteHelper.specialPasteStart || isPasteOptions) {
 			if (!(pasteInfo && pasteInfo.originalSelectBeforePaste && pasteInfo.originalSelectBeforePaste.ranges && pasteInfo.originalSelectBeforePaste.ranges.length === 1) && ws.isMultiSelect()) {
 				window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
 				window['AscCommon'].g_specialPasteHelper.Special_Paste_Hide_Button();
 			} else {
 				//var specialPasteShowOptions = new Asc.SpecialPasteShowOptions();
-				var isTablePasted = checkTablesPaste();
 				var allowedSpecialPasteProps;
 				var sProps = Asc.c_oSpecialPasteProps;
 				if (fromBinary) {
@@ -28451,7 +28652,7 @@ function isAllowPasteLink(pastedWb) {
 							sProps.valueNumberFormat, sProps.valueAllFormating, sProps.pasteOnlyFormating, sProps.comments,
 							sProps.columnWidth];
 
-					if (isAllowPasteLink(pasteInfo.wb)) {
+					if (_isAllowPasteLink) {
 						allowedSpecialPasteProps.push(sProps.link);
 					}
 					if (!isTablePasted) {
@@ -28473,6 +28674,9 @@ function isAllowPasteLink(pastedWb) {
 
 				window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
 				window['AscCommon'].g_specialPasteHelper.buttonInfo.asc_setOptions(allowedSpecialPasteProps);
+
+				window['AscCommon'].g_specialPasteHelper.buttonInfo.asc_setLastSelectedPasteProperty(isPasteOptions ? specialPasteProps.property : null);
+
 				if (fromBinary) {
 					window['AscCommon'].g_specialPasteHelper.buttonInfo.asc_setShowPasteSpecial(true);
 				}
@@ -30120,7 +30324,7 @@ function isAllowPasteLink(pastedWb) {
 
 		return false;
 	};
-	CCellPasteHelper.prototype.specialPaste = function (props) {
+	CCellPasteHelper.prototype.specialPaste = function (props, isPasteOptions) {
 		var api = window["Asc"]["editor"];
 		var t = this;
 		let ws = this.ws;
@@ -30141,8 +30345,10 @@ function isAllowPasteLink(pastedWb) {
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
 			window['AscCommon'].g_specialPasteHelper.Special_Paste_Start();
 
+			window['AscCommon'].g_specialPasteHelper.isPasteOptions = isPasteOptions;
+
 			//для того, чтобы была возможность делать несколько математических операций подряд
-			var doUndo = true;
+			var doUndo = isPasteOptions ? false : true;
 			if (window['Asc'].c_oSpecialPasteOperation.none !== props.operation && null !== props.operation) {
 				if (window['AscCommon'].g_specialPasteHelper.isAppliedOperation) {
 					doUndo = false;
@@ -30157,7 +30363,7 @@ function isAllowPasteLink(pastedWb) {
 			if (doUndo) {
 				api.asc_Undo();
 			}
-			if (specialPasteHelper.selectionRange) {
+			if (specialPasteHelper.selectionRange && !isPasteOptions) {
 				ws.model.selectionRange = specialPasteHelper.selectionRange.clone();
 			}
 

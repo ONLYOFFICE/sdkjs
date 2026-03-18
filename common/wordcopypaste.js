@@ -235,7 +235,8 @@ function CopyProcessor(api, onlyBinaryCopy)
 
     this.aFootnoteReference = [];
 	this.oRoot = new CopyElement("root");
-    this.listNextNumMap = [];
+    this.listNextNumMap = {};
+    this.oListContext = null;
     this.instructionHyperlinkStart = null;
 }
 CopyProcessor.prototype =
@@ -267,7 +268,7 @@ CopyProcessor.prototype =
             sB = "0" + sB;
         return "#" + sR + sG + sB;
     },
-    Commit_pPr : function(Item, Para, nextElem)
+    Commit_pPr : function(Item, Para, nextElem, oListNumLvl)
     {
         //pPr
         var apPr = [];
@@ -276,12 +277,20 @@ CopyProcessor.prototype =
         if(Item_pPr && Def_pPr)
         {
             //Ind
-            if(Def_pPr.Ind.Left !== Item_pPr.Ind.Left)
-                apPr.push("margin-left:" + (Item_pPr.Ind.Left * g_dKoef_mm_to_pt) + "pt");
+            if (oListNumLvl) {
+                if (oListNumLvl !== true && oListNumLvl.ParaPr) {
+                    var nExtraLeft = Item_pPr.Ind.Left - oListNumLvl.ParaPr.Ind.Left;
+                    if (Math.abs(nExtraLeft) > 0.001)
+                        apPr.push("margin-left:" + (nExtraLeft * g_dKoef_mm_to_pt) + "pt");
+                }
+            } else {
+                if(Def_pPr.Ind.Left !== Item_pPr.Ind.Left)
+                    apPr.push("margin-left:" + (Item_pPr.Ind.Left * g_dKoef_mm_to_pt) + "pt");
+                if(Def_pPr.Ind.FirstLine !== Item_pPr.Ind.FirstLine)
+                    apPr.push("text-indent:" + (Item_pPr.Ind.FirstLine * g_dKoef_mm_to_pt) + "pt");
+            }
             if(Def_pPr.Ind.Right !== Item_pPr.Ind.Right)
                 apPr.push("margin-right:" + ( Item_pPr.Ind.Right * g_dKoef_mm_to_pt) + "pt");
-            if(Def_pPr.Ind.FirstLine !== Item_pPr.Ind.FirstLine)
-                apPr.push("text-indent:" + (Item_pPr.Ind.FirstLine * g_dKoef_mm_to_pt) + "pt");
             //Jc
             if(Def_pPr.Jc !== Item_pPr.Jc){
                 switch(Item_pPr.Jc)
@@ -449,6 +458,8 @@ CopyProcessor.prototype =
             else if(AscCommon.vertalign_SubScript === Value.VertAlign)
                 aProp.push("vertical-align:sub");
         }
+        if (true === Value.SmallCaps)
+            aProp.push("font-variant:small-caps");
 		if(aProp.length > 0)
 			oTarget.oAttributes["style"] = aProp.join(';');
     },
@@ -593,7 +604,7 @@ CopyProcessor.prototype =
     CopyRunContent: function (Container, oTarget, bOmitHyperlink) {
 		var bookmarksStartMap = {};
 		var bookmarkPrviousTargetMap = {};
-		var bookmarkLevel = 0;
+		var bookmarkStack = [];
 
 		var closeBookmarks = function (_level) {
 			var tempTarget = bookmarkPrviousTargetMap[_level];
@@ -627,10 +638,10 @@ CopyProcessor.prototype =
 						bOmitHyperlink = true;
 					} else if (realTarget && !this.instructionHyperlinkStart) {
 						//TODO close all bookmarks before change content. need to reconsider
-						if (bookmarkLevel > 0) {
-							while(bookmarkLevel > 0) {
-								closeBookmarks(bookmarkLevel);
-								bookmarkLevel--;
+						if (bookmarkStack.length > 0) {
+							while(bookmarkStack.length > 0) {
+								var levelToClose = bookmarkStack.pop();
+								closeBookmarks(levelToClose);
 							}
 						}
 						oTarget = realTarget;
@@ -683,26 +694,29 @@ CopyProcessor.prototype =
 				//чтобы заранее не проходиться по всему контенту параграфа в поисках закрытия bookmark - закрываю его после всего цикла
 				//на следующий параграф не переносим
 				if (item.Start) {
-					bookmarkLevel++;
-					bookmarksStartMap[item.BookmarkId] = 1;
+					var bookmarkLevel = bookmarkStack.length + 1;
+					bookmarksStartMap[item.BookmarkId] = bookmarkLevel;
+					bookmarkStack.push(bookmarkLevel);
 					var oBookmark = new CopyElement("a");
 					var name = item.GetBookmarkName();
 					oBookmark.oAttributes["name"] = CopyPasteCorrectString(name);
 					bookmarkPrviousTargetMap[bookmarkLevel] = oTarget;
 					oTarget = oBookmark;
 				} else if (bookmarksStartMap[item.BookmarkId]) {
+					var bookmarkLevel = bookmarksStartMap[item.BookmarkId];
 					bookmarksStartMap[item.BookmarkId] = 0;
-					closeBookmarks(bookmarkLevel);
-					bookmarkLevel--;
+					
+					if (bookmarkStack.length > 0 && bookmarkStack[bookmarkStack.length - 1] === bookmarkLevel) {
+						bookmarkStack.pop();
+						closeBookmarks(bookmarkLevel);
+					}
 				}
 			}
 		}
 
-		if (bookmarkLevel > 0) {
-    		while(bookmarkLevel > 0) {
-				closeBookmarks(bookmarkLevel);
-				bookmarkLevel--;
-			}
+		while(bookmarkStack.length > 0) {
+			var levelToClose = bookmarkStack.pop();
+			closeBookmarks(levelToClose);
 		}
 		if (this.instructionHyperlinkStart) {
 			this.instructionHyperlinkStart = null;
@@ -827,7 +841,10 @@ CopyProcessor.prototype =
             }
         }
         //pPr
-        this.Commit_pPr(Item, Para, nextElem);
+        var oListNumLvl = null;
+        if (!bIsNullNumPr)
+            oListNumLvl = (PasteElementsId.g_bIsDocumentCopyPaste && oNumberingLvl) ? oNumberingLvl : true;
+        this.Commit_pPr(Item, Para, nextElem, oListNumLvl);
 
         if(false === selectedAll)
         {
@@ -840,43 +857,93 @@ CopyProcessor.prototype =
 			//добавляем &nbsp; потому что параграфы без содержимого не копируются
             if(Para.isEmptyChild())
                 Para.addChild(new CopyElement("&nbsp;", true));
-            if(bIsNullNumPr)
-                oDomTarget.addChild( Para );
-			else{
-				var Li = new CopyElement( "li" );
-				Li.oAttributes["style"] = "list-style-type: " + sListStyle;
-				Li.addChild( Para );
-				//пробуем добавить в предыдущий список
-				var oTargetList = null;
-				if(oDomTarget.aChildren.length > 0){
-					var oPrevElem = oDomTarget.aChildren[oDomTarget.aChildren.length - 1];
-					if((bBullet && "ul" === oPrevElem.sName) || (!bBullet && "ol" === oPrevElem.sName))
-						oTargetList = oPrevElem;
-				}
+            if(bIsNullNumPr) {
+                oDomTarget.addChild(Para);
+                this.oListContext = null;
+            } else {
+                var nLvl   = PasteElementsId.g_bIsDocumentCopyPaste ? oNumPr.Lvl   : 0;
+                var nNumId = PasteElementsId.g_bIsDocumentCopyPaste ? oNumPr.NumId : oNumPr.NumId;
 
-				if (!bBullet) {
-					if (!this.listNextNumMap[oNumPr.NumId]) {
-						this.listNextNumMap[oNumPr.NumId] = 1;
-					} else {
-						this.listNextNumMap[oNumPr.NumId]++;
-					}
-				}
-				if (null == oTargetList) {
-					if (bBullet) {
-						oTargetList = new CopyElement("ul");
-					} else {
-						oTargetList = new CopyElement("ol");
-					}
-					oTargetList.oAttributes["style"] = "padding-left:40px";
-					//если список идёт с промежуточными элементами, добавляем аттрибут start
-					if (!bBullet && this.listNextNumMap[oNumPr.NumId] > 1) {
-						oTargetList.oAttributes["start"] = this.listNextNumMap[oNumPr.NumId];
-					}
-					oDomTarget.addChild(oTargetList);
-				}
-				oTargetList.addChild(Li);
-			}
+                var nIndentPt = 30;
+                if (PasteElementsId.g_bIsDocumentCopyPaste && oNum && oNumberingLvl && oNumberingLvl.ParaPr) {
+                    var nAbsPt = oNumberingLvl.ParaPr.Ind.Left * g_dKoef_mm_to_pt;
+                    if (nLvl > 0) {
+                        var oParentLvl = oNum.GetLvl(nLvl - 1);
+                        var nParentPt  = oParentLvl && oParentLvl.ParaPr ? oParentLvl.ParaPr.Ind.Left * g_dKoef_mm_to_pt : 0;
+                        nIndentPt = nAbsPt - nParentPt;
+                    } else {
+                        nIndentPt = nAbsPt;
+                    }
+                    if (nIndentPt <= 0) {
+                        nIndentPt = 30;
+                    }
+                }
+
+                if (!bBullet) {
+                    if (!this.listNextNumMap[nNumId])
+                        this.listNextNumMap[nNumId] = {};
+                    if (!this.listNextNumMap[nNumId][nLvl])
+                        this.listNextNumMap[nNumId][nLvl] = 1;
+                    else
+                        this.listNextNumMap[nNumId][nLvl]++;
+                }
+
+                var Li = new CopyElement("li");
+                Li.oAttributes["style"] = "list-style-type: " + sListStyle;
+                Li.addChild(Para);
+
+                var oTargetList = this._findOrCreateList(oDomTarget, nNumId, nLvl, bBullet, nIndentPt);
+                oTargetList.addChild(Li);
+
+                var oCtxEntry = this.oListContext && this.oListContext.stack[this.oListContext.stack.length - 1];
+                if (oCtxEntry)
+                    oCtxEntry.lastLi = Li;
+            }
         }
+    },
+    _findOrCreateList : function(oDomTarget, numId, lvl, bBullet, nIndentPt)
+    {
+        var ctx = this.oListContext;
+
+        if (ctx && ctx.oDomTarget === oDomTarget) {
+            var stack = ctx.stack;
+            var topEntry = stack[stack.length - 1];
+
+            if (topEntry.lvl === lvl && topEntry.numId === numId) {
+                return topEntry.listElem;
+            } else if (lvl > topEntry.lvl) {
+                var nestedList = this._createListElem(bBullet, numId, lvl, nIndentPt);
+                var parentLi = topEntry.lastLi;
+                if (parentLi)
+                    parentLi.addChild(nestedList);
+                else
+                    oDomTarget.addChild(nestedList);
+                stack.push({lvl: lvl, numId: numId, listElem: nestedList, lastLi: null});
+                return nestedList;
+            } else if (lvl < topEntry.lvl) {
+                while (stack.length > 1 && stack[stack.length - 1].lvl > lvl)
+                    stack.pop();
+                var curEntry = stack[stack.length - 1];
+                if (curEntry.lvl === lvl && curEntry.numId === numId)
+                    return curEntry.listElem;
+            }
+        }
+
+        var newList = this._createListElem(bBullet, numId, lvl, nIndentPt);
+        oDomTarget.addChild(newList);
+        this.oListContext = {
+            oDomTarget: oDomTarget,
+            stack:      [{lvl: lvl, numId: numId, listElem: newList, lastLi: null}]
+        };
+        return newList;
+    },
+    _createListElem : function(bBullet, numId, lvl, nIndentPt)
+    {
+        var elem = new CopyElement(bBullet ? "ul" : "ol");
+        elem.oAttributes["style"] = "padding-left:" + Math.round(nIndentPt || 30) + "pt";
+        if (!bBullet && this.listNextNumMap[numId] && this.listNextNumMap[numId][lvl] > 1)
+            elem.oAttributes["start"] = this.listNextNumMap[numId][lvl];
+        return elem;
     },
     _BorderToStyle : function(border, name)
     {
@@ -3423,7 +3490,7 @@ PasteProcessor.prototype =
 
 
 		var specialPasteShowOptions = !specialPasteHelper.buttonInfo.isClean() ? specialPasteHelper.buttonInfo : null;
-		if(!specialPasteHelper.specialPasteStart)
+		if(!specialPasteHelper.specialPasteStart || window['AscCommon'].g_specialPasteHelper.isPasteOptions)
 		{
 			specialPasteShowOptions = specialPasteHelper.buttonInfo;
 
@@ -3468,6 +3535,7 @@ PasteProcessor.prototype =
 			if(null !== props)
 			{
 				specialPasteShowOptions.asc_setOptions(props);
+				specialPasteShowOptions.asc_setLastSelectedPasteProperty(specialPasteHelper.isPasteOptions ? AscCommon.g_specialPasteHelper.specialPasteProps : null);
 			}
 			else
 			{
@@ -3932,6 +4000,7 @@ PasteProcessor.prototype =
 
 		let specialPasteShowOptions = window['AscCommon'].g_specialPasteHelper.buttonInfo;
 		specialPasteShowOptions.asc_setOptions(props);
+		specialPasteShowOptions.asc_setLastSelectedPasteProperty(window['AscCommon'].g_specialPasteHelper.isPasteOptions ? window['AscCommon'].g_specialPasteHelper.specialPasteProps : null);
 
 		let targetDocContent = presentation.Get_TargetDocContent();
 		if(targetDocContent && targetDocContent.Id) {
@@ -9290,9 +9359,27 @@ PasteProcessor.prototype =
 					//Часть кода скопирована из Document.Set_ParagraphNumbering
 
 					//Смотрим передыдущий параграф, если тип списка совпадает, то берем тип списка из предыдущего параграфа
+					let curLvl = pNoHtmlPr.nLvl != null ? pNoHtmlPr.nLvl : 0;
 					if (this.aContent.length > 1) {
-						var prevElem = this.aContent[this.aContent.length - 2];
-						if (null != prevElem && type_Paragraph === prevElem.GetType()) {
+						let prevElem = null;
+						let bCanContinue = true;
+						for (let iPrev = this.aContent.length - 2; iPrev >= 0; iPrev--) {
+							var tempElem = this.aContent[iPrev];
+							if (null != tempElem && type_Paragraph === tempElem.GetType()) {
+								var TempNumPr = tempElem.GetNumPr();
+								if (null != TempNumPr) {
+									if (curLvl > 0 && TempNumPr.Lvl < curLvl) {
+										bCanContinue = false;
+										break;
+									}
+									if (TempNumPr.Lvl === curLvl) {
+										prevElem = tempElem;
+										break;
+									}
+								}
+							}
+						}
+						if (bCanContinue && null != prevElem) {
 							var PrevNumPr = prevElem.GetNumPr();
 							if (null != PrevNumPr && true === this.oLogicDocument.Numbering.CheckFormat(PrevNumPr.NumId, PrevNumPr.Lvl, num)) {
 								NumId = PrevNumPr.NumId;
@@ -9364,8 +9451,7 @@ PasteProcessor.prototype =
 							}
 						}
 					};
-
-					let curLvl = pNoHtmlPr.nLvl != null ? pNoHtmlPr.nLvl : 0;
+					
 					if (null == NumId && this.pasteInPresentationShape !== true) {
 						// Создаем нумерацию
 						let oNum = this.oLogicDocument.GetNumbering().CreateNum();
@@ -9548,6 +9634,9 @@ PasteProcessor.prototype =
 			var font_style = this._getStyle(node, computedStyle, "font-style");
 			if ("italic" === font_style)
 				rPr.Italic = true;
+			var font_variant = this._getStyle(node, computedStyle, "font-variant");
+			if ("small-caps" === font_variant)
+				rPr.SmallCaps = true;
 			var color = this._getStyle(node, computedStyle, "color");
 			if (color && (color = this._ParseColor(color))) {
 				if (PasteElementsId.g_bIsDocumentCopyPaste) {
@@ -12022,6 +12111,19 @@ PasteProcessor.prototype =
 				return true;
 			}
 
+			if ("sup" === _nodeName || "sub" === _nodeName ||
+				"b" === _nodeName || "strong" === _nodeName ||
+				"i" === _nodeName || "em" === _nodeName ||
+				"u" === _nodeName ||
+				"s" === _nodeName || "strike" === _nodeName || "del" === _nodeName ||
+				"img" === _nodeName) {
+				return true;
+			}
+
+			if ("font" === _nodeName && elem.hasAttributes()) {
+				return true;
+			}
+
 			var sClass = elem.getAttribute("class");
 			var sStyle = elem.getAttribute("style");
 			var sHref = elem.getAttribute("href");
@@ -13286,6 +13388,11 @@ PasteProcessor.prototype =
 
 
 		//рекурсивно вызываем для childNodes
+		var savedNLvl = null;
+		if (("ul" === sNodeName || "ol" === sNodeName) && pPr.nLvl != null) {
+			savedNLvl = pPr.nLvl;
+		}
+		
 		for (var i = 0, length = node.childNodes.length; i < length; i++) {
 			var child = node.childNodes[i];
 			var nodeType = child.nodeType;
@@ -13361,6 +13468,11 @@ PasteProcessor.prototype =
 			node.nodeName.toLowerCase() === "a" && (-1 !== node.name.indexOf("ftn") || -1 !== node.name.indexOf("edn"))) {
 				oThis.bIsForFootEndnote = false;
 			}
+		
+		if (savedNLvl !== null) {
+			pPr.nLvl = savedNLvl;
+		}
+		
 		return bAddParagraph;
 	},
 
@@ -13907,6 +14019,8 @@ function SpecialPasteShowOptions()
 	//показывать или нет дополнительный пункт специальной вставки
 	this.showPasteSpecial = null;
 	this.containTables = null;
+
+	this.lastSelectedPasteProperty = null;
 }
 
 SpecialPasteShowOptions.prototype = {
@@ -13973,6 +14087,12 @@ SpecialPasteShowOptions.prototype = {
 	},
 	asc_setContainTables: function (val) {
 		this.containTables = val;
+	},
+	asc_setLastSelectedPasteProperty: function (val) {
+		this.lastSelectedPasteProperty = val;
+	},
+	asc_getLastSelectedPasteProperty: function () {
+		return this.lastSelectedPasteProperty;
 	}
 };
 
@@ -14372,6 +14492,11 @@ ParseHtmlStyle.prototype.applyStyles = function (textPr) {
 		textPr.Italic = true;
 	}
 
+	var font_variant = map.get("font-variant");
+	if ("small-caps" === font_variant) {
+		textPr.SmallCaps = true;
+	}
+
 	var spacing = map.get("letter-spacing");
 	if (spacing && null != (spacing = AscCommon.valueToMm(spacing))) {
 		textPr.Spacing = spacing;
@@ -14504,6 +14629,7 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
   prot["asc_getOptions"]					= prot.asc_getOptions;
   prot["asc_getShowPasteSpecial"]			= prot.asc_getShowPasteSpecial;
   prot["asc_getContainTables"]			    = prot.asc_getContainTables;
+  prot["asc_getLastSelectedPasteProperty"]	= prot.asc_getLastSelectedPasteProperty;
 
   window["AscCommon"].checkOnlyOneImage = checkOnlyOneImage;
 

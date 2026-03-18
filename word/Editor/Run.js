@@ -3415,7 +3415,10 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 	{
 		isKeepWidth = true;
 		nMaxComb = oTextFormPDF.GetCharLimit();
-		nCombWidth = oTextFormPDF.getFormRelRect().W / nMaxComb;
+		let formRelRect = oTextFormPDF.getFormRelRect();
+		if (formRelRect) {
+			nCombWidth = formRelRect.W / nMaxComb;
+		}
 	}
 
 	if (nCombWidth && nMaxComb > 1)
@@ -6302,7 +6305,7 @@ ParaRun.prototype.RecalculateMinMaxContentWidth = function(MinMax)
                     nWordLen = 0;
                 }
 
-                if ((true === Item.Is_Inline() || true === this.Paragraph.Parent.Is_DrawingShape()) && Item.Width > nMinWidth)
+                if ((true === Item.Is_Inline() || true === this.Paragraph.Parent.Is_DrawingShape() || Item.IsForm()) && Item.Width > nMinWidth)
                 {
                     nMinWidth = Item.Width;
                 }
@@ -6311,7 +6314,7 @@ ParaRun.prototype.RecalculateMinMaxContentWidth = function(MinMax)
 					nMinWidth = Math.max(nMinWidth, Item.getExtX());
                 }
 
-                if ((true === Item.Is_Inline() || true === this.Paragraph.Parent.Is_DrawingShape()) && Item.getHeight() > nMaxHeight)
+                if ((true === Item.Is_Inline() || true === this.Paragraph.Parent.Is_DrawingShape() || Item.IsForm()) && Item.getHeight() > nMaxHeight)
                 {
                     nMaxHeight = Item.getHeight();
                 }
@@ -8028,7 +8031,7 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 
 		if (undefined === IncFontSize)
 		{
-			if (Asc.editor.isPdfEditor())
+			if (Asc.editor.isPdfEditor() && !AscCommon.g_oIdCounter.IsLoad())
 				checkRunPdf(this, TextPr);
 
 			this.Apply_Pr(TextPr);
@@ -8136,7 +8139,7 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 
 				if (undefined === IncFontSize)
 				{
-					if (Asc.editor.isPdfEditor())
+					if (Asc.editor.isPdfEditor() && !AscCommon.g_oIdCounter.IsLoad())
 						checkRunPdf(CRun, TextPr);
 
 					CRun.Apply_Pr(TextPr);
@@ -8227,7 +8230,7 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 
 			if (undefined === IncFontSize)
 			{
-				if (Asc.editor.isPdfEditor())
+				if (Asc.editor.isPdfEditor() && !AscCommon.g_oIdCounter.IsLoad())
 					checkRunPdf(CRun, TextPr);
 
 				CRun.Apply_Pr(TextPr);
@@ -8248,8 +8251,14 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
         return Result;
     }
 
-	function checkRunPdf(run, textPr) {
-		if (!!run.Pr.Bold !== !!textPr.Bold || !!run.Pr.Italic !== !!textPr.Italic || run.Pr.GetFontFamily() !== textPr.GetFontFamily())
+	function checkRunPdf(run, newTextPr)
+	{
+		let fontName = run.Pr.GetFontFamily();
+		let prefix = AscFonts.getEmbeddedFontPrefix();
+		if (!fontName || !fontName.startsWith(prefix))
+			return;
+
+		if (!!run.Pr.Bold !== !!newTextPr.Bold || !!run.Pr.Italic !== !!newTextPr.Italic || (newTextPr.GetFontFamily() && fontName != newTextPr.GetFontFamily()))
 		{
 			for (let i = 0; i < run.Content.length; i++)
 			{
@@ -8260,13 +8269,32 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 					run.Add_ToContent(i, oItem.IsSpace() ? new AscWord.CRunSpace(oItem.Value) : new AscWord.CRunText(oItem.Value));
 				}
 			}
+			
+			let subFontName = Asc.editor.embeddedFontsMap[fontName];
+			newTextPr.RFonts.SetAll(subFontName);
+			newTextPr.SetSpacing(0);
+			
+			let paragraph = run.GetParagraph();
+			let shape     = paragraph ? paragraph.GetParentShape() : null;
+			let pdfDoc    = run.GetLogicDocument();
+			if (pdfDoc && shape
+				&& subFontName
+				&& shape.GetId
+				&& shape.recalcText
+				&& shape.recalculate)
+			{
+				pdfDoc.needRecalcShape[shape.GetId()] = true;
 
-			let fontName = run.Pr.GetFontFamily();
-			let prefix = AscFonts.getEmbeddedFontPrefix();
-
-			if (fontName && fontName.startsWith(prefix)) {
-				let fontInfo = AscFonts.g_fontApplication.GetFontInfo(fontName.substr(prefix.length));
-				textPr.RFonts.SetAll(fontInfo.Name, -1);
+				pdfDoc.checkFonts([subFontName], function(){
+					if (!pdfDoc.needRecalcShape[shape.GetId()])
+						return;
+					
+					delete pdfDoc.needRecalcShape[shape.GetId()];
+					paragraph.RecalcInfo.NeedShapeText();
+					shape.recalcText();
+					shape.recalculate();
+					shape.AddToRedraw();
+				});
 			}
 		}
 	}

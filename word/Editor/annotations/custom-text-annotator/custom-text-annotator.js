@@ -169,7 +169,9 @@
 		this.markSetter.placeMarks(paragraph, ranges, handlerId);
 		
 		let _ranges = [];
-		ranges.forEach(r => _ranges.push([r.start, r.length, r.id]))
+		ranges.forEach(function(r) {
+			_ranges.push([r.start, r.length, r.id]);
+		});
 		//console.log(`Response from handlerId=${handlerId} ParaId=${paraId}; Ranges=${_ranges}`);
 		
 		// TODO: Надо проверить ситуацию, когда меток не было, и они не появились

@@ -357,6 +357,9 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             this.pen = AscFormat.CreatePenBrushForChartTrack().pen;
         }
         this.overlayObject = new AscFormat.OverlayObject(this.geometry, this.resizedExtX, this.resizedExtY, this.brush, this.pen, this.transform);
+        if (originalObject.isHorizontalRule && originalObject.isHorizontalRule()) {
+            this.overlayObject.hr = originalObject.getHorizontalRule();
+        }
 
 
         this.resizeConnector = function(kd1, kd2, e, x, y){
@@ -638,6 +641,9 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             var _new_used_half_width;
             var _new_used_half_height;
             var _temp;
+            var _bHR = this.originalObject.isHorizontalRule && this.originalObject.isHorizontalRule();
+            var _minExtY = _bHR ? 0.05 * 25.4 / 72 : MIN_SHAPE_SIZE;
+            var _hrSnapRange = _bHR ? 0.3 : 0;
 
             if (Asc.editor.isPdfEditor()) {
                 let isFreeText = this.originalObject.group && this.originalObject.group.IsAnnot() && this.originalObject.group.IsFreeText();
@@ -708,16 +714,23 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                     _real_height = this.usedExtY*kd2;
                     _abs_height = Math.abs(_real_height);
 
-                    if(!this.isLine)
+                    if(_bHR && _abs_height < _minExtY + _hrSnapRange)
                     {
-                        this.resizedExtY = _abs_height >= MIN_SHAPE_SIZE  ? _abs_height : MIN_SHAPE_SIZE;
+                        this.resizedExtY = _minExtY;
+                    }
+                    else if(!this.isLine)
+                    {
+                        this.resizedExtY = _abs_height >= _minExtY  ? _abs_height : _minExtY;
                     }
                     else
                     {
-                        this.resizedExtY = _abs_height >= MIN_SHAPE_SIZE  ? _abs_height : 0;
+                        this.resizedExtY = _abs_height >= _minExtY  ? _abs_height : 0;
                     }
 
-                    this.resizedExtY = _abs_height >= MIN_SHAPE_SIZE  || this.isLine  ? _abs_height : MIN_SHAPE_SIZE;
+                    if(!_bHR)
+                    {
+                        this.resizedExtY = _abs_height >= _minExtY  || this.isLine  ? _abs_height : _minExtY;
+                    }
                     if(_real_height < 0 )
                     {
                         this.resizedflipV = !this.originalFlipV;
@@ -770,7 +783,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                         kd1 = _temp;
                         _real_height = this.usedExtY*kd2;
                         _abs_height = Math.abs(_real_height);
-                        this.resizedExtY = _abs_height >= MIN_SHAPE_SIZE  ? _abs_height : (this.isLine ? 0 : MIN_SHAPE_SIZE);
+                        this.resizedExtY = (_bHR && _abs_height < _minExtY + _hrSnapRange) ? _minExtY : (_abs_height >= _minExtY ? _abs_height : (this.isLine ? 0 : _minExtY));
                         if(_real_height < 0 )
                             this.resizedflipV = !this.originalFlipV;
                         else
@@ -846,7 +859,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
 
                     _real_height = this.usedExtY*kd2;
                     _abs_height = Math.abs(_real_height);
-                    this.resizedExtY = _abs_height >= MIN_SHAPE_SIZE  ? _abs_height :  (this.isLine ? 0 : MIN_SHAPE_SIZE);
+                    this.resizedExtY = (_bHR && _abs_height < _minExtY + _hrSnapRange) ? _minExtY : (_abs_height >= _minExtY ? _abs_height : (this.isLine ? 0 : _minExtY));
                     if(_real_height < 0 )
                     {
                         this.resizedflipV = !this.originalFlipV;
@@ -897,7 +910,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                     {
                         _real_height = this.usedExtY*kd1;
                         _abs_height = Math.abs(_real_height);
-                        this.resizedExtY = _abs_height >= MIN_SHAPE_SIZE   ? _abs_height : (this.isLine ? 0 : MIN_SHAPE_SIZE);
+                        this.resizedExtY = (_bHR && _abs_height < _minExtY + _hrSnapRange) ? _minExtY : (_abs_height >= _minExtY ? _abs_height : (this.isLine ? 0 : _minExtY));
                         if(_real_height < 0 )
                             this.resizedflipV = !this.originalFlipV;
                         else
@@ -1021,6 +1034,9 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             }
             var _real_height, _real_width;
             var _abs_height, _abs_width;
+            var _bHR = this.originalObject.isHorizontalRule && this.originalObject.isHorizontalRule();
+            var _minExtY = _bHR ? 0.05 * 25.4 / 72 : MIN_SHAPE_SIZE;
+            var _hrSnapRange = _bHR ? 0.3 : 0;
 
             var isCrop = (this.originalObject.isCrop || !!this.originalObject.cropObject);
             if((ShiftKey === true || window.AscAlwaysSaveAspectOnResizeTrack === true || (!isCrop && this.originalObject.getNoChangeAspect())) && this.bAspect === true)
@@ -1059,7 +1075,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
 
                 _real_height = this.usedExtY*kd2;
                 _abs_height = Math.abs(_real_height);
-                this.resizedExtY = _abs_height >= MIN_SHAPE_SIZE  || this.isLine ? _abs_height : MIN_SHAPE_SIZE;
+                this.resizedExtY = (_bHR && _abs_height < _minExtY + _hrSnapRange) ? _minExtY : (_abs_height >= _minExtY || this.isLine ? _abs_height : _minExtY);
                 this.resizedflipV  = _real_height < 0 ? !this.originalFlipV : this.originalFlipV;
 
 
@@ -1074,7 +1090,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
 
                     _real_height = this.usedExtY*kd2;
                     _abs_height = Math.abs(_real_height);
-                    this.resizedExtY = _abs_height >= MIN_SHAPE_SIZE  || this.isLine ? _abs_height : MIN_SHAPE_SIZE;
+                    this.resizedExtY = (_bHR && _abs_height < _minExtY + _hrSnapRange) ? _minExtY : (_abs_height >= _minExtY || this.isLine ? _abs_height : _minExtY);
                     this.resizedflipV  = _real_height < 0 ? !this.originalFlipV : this.originalFlipV;
 
                 }
@@ -1244,6 +1260,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
 
         this.getBounds = function()
         {
+					const scaleCoefficient = this.originalObject.getScaleCoefficient();
             var boundsChecker = new  AscFormat.CSlideBoundsChecker();
             var tr = null;
             if(this.originalObject && this.originalObject.parent)
@@ -1279,10 +1296,11 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             boundsChecker.Bounds.min_y = Math.min.apply(Math, arr_p_y);
             boundsChecker.Bounds.max_y = Math.max.apply(Math, arr_p_y);
 
-            boundsChecker.Bounds.posX = this.resizedPosX;
-            boundsChecker.Bounds.posY = this.resizedPosY;
-            boundsChecker.Bounds.extX = this.resizedExtX;
-            boundsChecker.Bounds.extY = this.resizedExtY;
+
+            boundsChecker.Bounds.posX = this.resizedPosX / scaleCoefficient;
+            boundsChecker.Bounds.posY = this.resizedPosY / scaleCoefficient;
+            boundsChecker.Bounds.extX = this.resizedExtX / scaleCoefficient;
+            boundsChecker.Bounds.extY = this.resizedExtY / scaleCoefficient;
             return boundsChecker.Bounds;
         };
 
@@ -1388,7 +1406,8 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 }
                 else
                 {
-                    scale_coefficients = {cx: 1, cy: 1};
+									const scaleCoefficient = this.originalObject.getScaleCoefficient();
+                    scale_coefficients = {cx: scaleCoefficient, cy: scaleCoefficient};
                     ch_off_x = 0;
                     ch_off_y = 0;
                     if(bWord)
@@ -1406,20 +1425,6 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                     }, this, []);
                 }
                 var xfrm = this.originalObject.spPr.xfrm;
-                if (this.originalObject.txXfrm) {
-                    var previousTxXfrmX = this.originalObject.txXfrm.offX;
-                    var previousTxXfrmY = this.originalObject.txXfrm.offY;
-                    var previousTxXfrmExtX = this.originalObject.txXfrm.extX;
-                    var previousTxXfrmExtY = this.originalObject.txXfrm.extY;
-                    var currentXfrmX = this.resizedPosX;
-                    var currentXfrmY = this.resizedPosY;
-                    var currentXfrmExtX = this.resizedExtX;
-                    var currentXfrmExtY = this.resizedExtY;
-                    this.originalObject.txXfrm.setOffX( currentXfrmX + (previousTxXfrmX - xfrm.offX));
-                    this.originalObject.txXfrm.setOffY( currentXfrmY + (previousTxXfrmY - xfrm.offY));
-                    this.originalObject.txXfrm.setExtX( previousTxXfrmExtX - (xfrm.extX - currentXfrmExtX));
-                    this.originalObject.txXfrm.setExtY( previousTxXfrmExtY - (xfrm.extY - currentXfrmExtY));
-                }
                 if(this.originalObject.getObjectType() !== AscDFH.historyitem_type_GraphicFrame)
                 {
                     if(!this.originalObject.isCrop)
@@ -1429,6 +1434,27 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                         xfrm.setExtX(this.resizedExtX/scale_coefficients.cx);
                         xfrm.setExtY(this.resizedExtY/scale_coefficients.cy);
 						Asc.editor.addMacroStepData("SetShapeSize", {width: this.resizedExtX, height: this.resizedExtY});
+                        let oHR = this.originalObject.getHorizontalRule && this.originalObject.getHorizontalRule();
+                        if (oHR) {
+                            let oParaDrawing = this.originalObject.parent;
+                            if (oParaDrawing) {
+                                let oParagraph = oParaDrawing.Get_ParentParagraph && oParaDrawing.Get_ParentParagraph();
+                                if (oParagraph) {
+                                    let oSectPr = oParagraph.Get_SectPr();
+                                    if (oSectPr) {
+                                        let nColIdx = oParagraph.ColumnNum || 0;
+                                        let contentWidth = oSectPr.GetColumnWidth(nColIdx);
+                                        let newPct = (this.resizedExtX / scale_coefficients.cx) / contentWidth * 1000;
+                                        let oGeom = this.originalObject.getGeometry();
+                                        if (oGeom) {
+                                            let oNewHR = oHR.createDuplicate();
+                                            oNewHR.pct = newPct;
+                                            oGeom.setHR(oNewHR);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                     else
                     {
@@ -1465,17 +1491,20 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                     this.originalObject.getObjectType() !== AscDFH.historyitem_type_SlicerView)
                 {
 
-                    if(!this.originalObject.isCrop)
+                    if(!(this.originalObject.isHorizontalRule && this.originalObject.isHorizontalRule()))
                     {
-                        xfrm.setFlipH(this.resizedflipH);
-                        xfrm.setFlipV(this.resizedflipV);
-                    }
-                    else
-                    {
-                        AscFormat.ExecuteNoHistory(function () {
+                        if(!this.originalObject.isCrop)
+                        {
                             xfrm.setFlipH(this.resizedflipH);
                             xfrm.setFlipV(this.resizedflipV);
-                        }, this, []);
+                        }
+                        else
+                        {
+                            AscFormat.ExecuteNoHistory(function () {
+                                xfrm.setFlipH(this.resizedflipH);
+                                xfrm.setFlipV(this.resizedflipV);
+                            }, this, []);
+                        }
                     }
                 }
                 if(this.originalObject.getObjectType && this.originalObject.getObjectType() === AscDFH.historyitem_type_OleObject)
@@ -2195,9 +2224,10 @@ function ResizeTrackGroup(originalObject, cardDirection, parentTrack)
                 _kw = kw;
                 _kh = kh;
             }
+						const scaleCoefficient = this.original.getScaleCoefficient();
             var xfrm = this.original.spPr.xfrm;
-            this.extX = xfrm.extX*_kw;
-            this.extY = xfrm.extY*_kh;
+            this.extX = xfrm.extX*_kw * scaleCoefficient;
+            this.extY = xfrm.extY*_kh * scaleCoefficient;
 
             this.x = this.centerDistX*kw + this.parentTrack.extX*0.5 - this.extX*0.5;
             this.y = this.centerDistY*kh + this.parentTrack.extY*0.5 - this.extY*0.5;
@@ -2238,6 +2268,7 @@ function ResizeTrackGroup(originalObject, cardDirection, parentTrack)
         {
             var boundsChecker = new  AscFormat.CSlideBoundsChecker();
             this.draw(boundsChecker);
+					const scaleCoefficient = this.originalObject.getScaleCoefficient();
             var tr = this.transform;
             var arr_p_x = [];
             var arr_p_y = [];
@@ -2260,12 +2291,11 @@ function ResizeTrackGroup(originalObject, cardDirection, parentTrack)
             boundsChecker.Bounds.min_y = Math.min.apply(Math, arr_p_y);
             boundsChecker.Bounds.max_y = Math.max.apply(Math, arr_p_y);
 
+            boundsChecker.Bounds.posX = this.resizedPosX / scaleCoefficient;
+            boundsChecker.Bounds.posY = this.resizedPosY / scaleCoefficient;
 
-            boundsChecker.Bounds.posX = this.resizedPosX;
-            boundsChecker.Bounds.posY = this.resizedPosY;
-
-            boundsChecker.Bounds.extX = this.resizedExtX;
-            boundsChecker.Bounds.extY = this.resizedExtY;
+            boundsChecker.Bounds.extX = this.resizedExtX / scaleCoefficient;
+            boundsChecker.Bounds.extY = this.resizedExtY / scaleCoefficient;
 
             return boundsChecker.Bounds;
         };
@@ -2299,13 +2329,13 @@ function ResizeTrackGroup(originalObject, cardDirection, parentTrack)
                 this.x = 0;
                 this.y = 0;
             }
-
-            xfrm.setOffX(this.x);
-            xfrm.setOffY(this.y);
-            xfrm.setExtX(this.extX);
-            xfrm.setExtY(this.extY);
-            xfrm.setChExtX(this.extX);
-            xfrm.setChExtY(this.extY);
+					const scaleCoefficient = this.originalObject.getScaleCoefficient();
+            xfrm.setOffX(this.x / scaleCoefficient);
+            xfrm.setOffY(this.y / scaleCoefficient);
+            xfrm.setExtX(this.extX / scaleCoefficient);
+            xfrm.setExtY(this.extY / scaleCoefficient);
+            xfrm.setChExtX(this.extX / scaleCoefficient);
+            xfrm.setChExtY(this.extY / scaleCoefficient);
             xfrm.setFlipH(this.flipH);
             xfrm.setFlipV(this.flipV);
             for(var i = 0; i < this.childs.length; ++i)
@@ -2393,10 +2423,6 @@ function ShapeForResizeInGroup(originalObject, parentTrack)
             this.x = this.centerDistX*kw + this.parentTrack.extX*0.5 - this.extX*0.5;
             this.y = this.centerDistY*kh + this.parentTrack.extY*0.5 - this.extY*0.5;
 
-           //if(this.geometry)
-           //{
-           //    this.geometry.Recalculate(this.extX, this.extY);
-           //}
             this.overlayObject.updateExtents(this.extX, this.extY);
             this.transform.Reset();
             var t = this.transform;
@@ -2438,6 +2464,7 @@ function ShapeForResizeInGroup(originalObject, parentTrack)
             }
             var xfrm = this.originalObject.spPr.xfrm;
             var txXfrm = this.originalObject.txXfrm;
+					const scaleCoefficient = this.originalObject.getScaleCoefficient();
             if (txXfrm) {
                 var previousTxXfrmX = txXfrm.offX;
                 var previousTxXfrmY = txXfrm.offY;
@@ -2452,40 +2479,20 @@ function ShapeForResizeInGroup(originalObject, parentTrack)
                 var previousXfrmOffY = this.origY || 0.0001;
                 var previousXfrmExtX = this.origExtX || 0.0001;
                 var previousXfrmExtY = this.origExtY || 0.0001;
-
-                txXfrm.setOffX( previousTxXfrmX * (currentXfrmX / previousXfrmOffX));
-                txXfrm.setOffY(previousTxXfrmY * (currentXfrmY / previousXfrmOffY));
-                txXfrm.setExtX( previousTxXfrmExtX * (currentXfrmExtX / previousXfrmExtX));
-                txXfrm.setExtY( previousTxXfrmExtY * (currentXfrmExtY / previousXfrmExtY));
+								const xScaleCoefficient = currentXfrmExtX / previousXfrmExtX;
+								const yScaleCoefficient = currentXfrmExtY / previousXfrmExtY;
+                txXfrm.setOffX(((previousTxXfrmX - previousXfrmOffX) * xScaleCoefficient + this.x) / scaleCoefficient);
+                txXfrm.setOffY(((previousTxXfrmY - previousXfrmOffY) * yScaleCoefficient + this.y) / scaleCoefficient);
+                txXfrm.setExtX( previousTxXfrmExtX * xScaleCoefficient / scaleCoefficient);
+                txXfrm.setExtY( previousTxXfrmExtY * yScaleCoefficient / scaleCoefficient);
             }
 
-
-            xfrm.setOffX(this.x);
-            xfrm.setOffY(this.y);
-            xfrm.setExtX(this.extX);
-            xfrm.setExtY(this.extY);
+            xfrm.setOffX(this.x / scaleCoefficient);
+            xfrm.setOffY(this.y / scaleCoefficient);
+            xfrm.setExtX(this.extX / scaleCoefficient);
+            xfrm.setExtY(this.extY / scaleCoefficient);
 
             this.originalObject.ResetParametersWithResize();
-        };
-
-        this.updateTransform = function()
-        {
-            this.transform.Reset();
-            var t = this.transform;
-
-            global_MatrixTransformer.TranslateAppend(t, -this.extX*0.5, -this.extY*0.5);
-            if(this.flipH)
-            {
-                global_MatrixTransformer.ScaleAppend(t, -1, 1);
-            }
-            if(this.flipV)
-            {
-                global_MatrixTransformer.ScaleAppend(t, 1, -1);
-            }
-            global_MatrixTransformer.RotateRadAppend(t, -this.rot);
-            global_MatrixTransformer.TranslateAppend(t, this.x + this.extX*0.5, this.y+this.extY*0.5);
-            if(this.parentTrack)
-                global_MatrixTransformer.MultiplyAppend(t, this.parentTrack.transform);
         };
 	    this.checkDrawingPartWithHistory = function () {};
     }, this, []);

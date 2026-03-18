@@ -96,13 +96,13 @@
 		if ( undefined != Spacing.BeforePct )
 		{
 			this.BeforePct = Spacing.BeforePct;
-			this.Before = undefined;
+			this.Before = 0;
 		}
 
 		if ( undefined != Spacing.AfterPct )
 		{
 			this.AfterPct = Spacing.AfterPct;
-			this.After = undefined;
+			this.After = 0;
 		}
 
 		if (undefined !== Spacing.BeforeLines)

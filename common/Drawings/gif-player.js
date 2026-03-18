@@ -182,6 +182,9 @@
 		let elapsedTime = currentTime - this.startTime;
 		let currentFrame = this.gifData.getFrameIndexAtTime(elapsedTime);
 		if (this.lastDrawFrame !== currentFrame) {
+			if (currentFrame < this.lastDrawFrame) {
+				this.lastDrawFrame = -1;
+			}
 			for (let i = this.lastDrawFrame + 1; i <= currentFrame; i++) {
 				this.srcImageData.updateFrame(this.getFrameData(i));
 			}
@@ -228,6 +231,10 @@
 
 		this.canvasCtx = null;
 		this.imageData = null;
+
+		this.prevDisposal = 0;
+		this.prevDims = null;
+		this.savedCanvas = null;
 	}
 	GIFAdapter.prototype.updateFrame = function(rawData) {
 		if (!rawData) {
@@ -271,14 +278,36 @@
 			this.tempCanvas.height = d.height;
 		}
 
-		if (rawData.disposalType === 2 || rawData.idx === 0) {
-			this.canvasCtx.clearRect(d.left, d.top, d.width, d.height);
+		if (this.prevDisposal === 2 && this.prevDims) {
+			this.canvasCtx.clearRect(this.prevDims.left, this.prevDims.top,
+				this.prevDims.width, this.prevDims.height);
+		} else if (this.prevDisposal === 3 && this.savedCanvas) {
+			this.canvasCtx.clearRect(0, 0, this.blipFill.canvas.width, this.blipFill.canvas.height);
+			this.canvasCtx.drawImage(this.savedCanvas, 0, 0);
+		}
+
+		if (rawData.idx === 0) {
+			this.canvasCtx.clearRect(0, 0, rawData.imageWidth, rawData.imageHeight);
+			this.prevDisposal = 0;
+			this.prevDims = null;
+		}
+
+		if (rawData.disposalType === 3) {
+			if (!this.savedCanvas) {
+				this.savedCanvas = document.createElement("canvas");
+			}
+			this.savedCanvas.width = this.blipFill.canvas.width;
+			this.savedCanvas.height = this.blipFill.canvas.height;
+			let savedCtx = this.savedCanvas.getContext("2d");
+			savedCtx.drawImage(this.blipFill.canvas, 0, 0);
 		}
 
 		let imageData = new ImageData(rawData.patch, d.width, d.height);
 		this.tempCtx.putImageData(imageData, 0, 0);
-
 		this.canvasCtx.drawImage(this.tempCanvas, d.left, d.top);
+
+		this.prevDisposal = rawData.disposalType;
+		this.prevDims = { left: d.left, top: d.top, width: d.width, height: d.height };
 	};
 	GIFAdapter.prototype.clearRawData = function() {
 		this.blipFill.rawData = null;
@@ -286,6 +315,9 @@
 		this.canvasCtx = null;
 		this.tempCanvas = null;
 		this.tempCtx = null;
+		this.prevDisposal = 0;
+		this.prevDims = null;
+		this.savedCanvas = null;
 	};
 	window["AscCommon"].GIFAdapter = GIFAdapter;
 

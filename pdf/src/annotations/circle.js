@@ -45,25 +45,54 @@
         this.spPr.setGeometry(AscFormat.CreateGeometry("ellipse"));
         this.setStyle(AscFormat.CreateDefaultShapeStyle("ellipse"));
 
-        this._point         = undefined;
-        this._popupOpen     = false;
-        this._popupRect     = undefined;
-        this._richContents  = undefined;
-        this._rotate        = undefined;
-        this._state         = undefined;
-        this._stateModel    = undefined;
-        this._width         = undefined;
-        this._rectDiff      = [0, 0, 0, 0];
+        this._rectDiff = [0, 0, 0, 0];
     }
 	CAnnotationCircle.prototype.constructor = CAnnotationCircle;
     AscFormat.InitClass(CAnnotationCircle, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Circle);
     Object.assign(CAnnotationCircle.prototype, AscPDF.CAnnotationBase.prototype);
 
+	CAnnotationCircle.prototype.private_UpdateRect = function(rect) {
+		AscCommon.History.StartNoHistoryMode();
+		let aCurRect = this.GetRect();
+		let aCurRD = this.GetRectangleDiff().slice();
+		let nLineW = this.GetBorderWidth() * g_dKoef_pt_to_mm;
+		rect && this.SetRect(rect);
+		this.SetRectangleDiff([0, 0, 0, 0]);
+		this.recalcBounds();
+		this.recalcGeometry();
+		this.Recalculate(true);
+		
+		AscCommon.History.EndNoHistoryMode();
+		
+		let oGrBounds = this.bounds;
+		let oShapeBounds = this.getRectBounds();
+
+		if (!rect) {
+			rect = [];
+		}
+
+		rect[0] = (oGrBounds.l - nLineW) * g_dKoef_mm_to_pt;
+		rect[1] = (oGrBounds.t - nLineW) * g_dKoef_mm_to_pt;
+		rect[2] = (oGrBounds.r + nLineW) * g_dKoef_mm_to_pt;
+		rect[3] = (oGrBounds.b + nLineW) * g_dKoef_mm_to_pt;
+
+		this._rect = aCurRect;
+		this._rectDiff = aCurRD;
+
+		this.SetRect(rect);
+		this.SetRectangleDiff([
+			(oShapeBounds.l - oGrBounds.l + nLineW) * g_dKoef_mm_to_pt,
+			(oShapeBounds.t - oGrBounds.t + nLineW) * g_dKoef_mm_to_pt,
+			(oGrBounds.r - oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
+			(oGrBounds.b - oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
+		]);
+	};
+
     CAnnotationCircle.prototype.IsCircle = function() {
         return true;
     };
     CAnnotationCircle.prototype.RefillGeometry = function(oGeometry, aShapeRectInMM) {
-        if (this.GetBorderEffectStyle() !== AscPDF.BORDER_EFFECT_STYLES.Cloud)
+        if (this.GetBorderEffectStyle() !== AscPDF.BORDER_EFFECT_STYLES.cloud)
             return;
 
         let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0];
@@ -125,6 +154,10 @@
     };
     
     function generateCloudyGeometry(arrPoints, aBounds, oGeometry, nIntensity) {
+		if (nIntensity == undefined) {
+			return;
+		}
+		
         let xMin = aBounds[0];
         let yMin = aBounds[1];
         let xMax = aBounds[2];

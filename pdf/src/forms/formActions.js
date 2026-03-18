@@ -310,8 +310,8 @@
                 break;
             }
             case AscPDF.GOTO_TYPES.fitR: { // fit to rect
-                let nRectW = (this.rect.right - this.rect.left) * nScaleX * AscCommon.AscBrowser.retinaPixelRatio;
-                let nRectH = (this.rect.bottom - this.rect.top) * nScaleY * AscCommon.AscBrowser.retinaPixelRatio;
+                let nRectW = Math.abs((this.rect.right - this.rect.left) * nScaleX * AscCommon.AscBrowser.retinaPixelRatio);
+                let nRectH = Math.abs((this.rect.bottom - this.rect.top) * nScaleY * AscCommon.AscBrowser.retinaPixelRatio);
 
                 let nVerZoom = ((oViewer.canvas.height / (nRectH)) * 100 >> 0) / 100;
                 let nHorZoom = ((oViewer.canvas.width / (nRectW)) * 100 >> 0) / 100;
@@ -430,9 +430,9 @@
             case 4:
             {
                 memory.WriteDouble(this.rect.left);
-                memory.WriteDouble(this.rect.bottom);
-                memory.WriteDouble(this.rect.right);
                 memory.WriteDouble(this.rect.top);
+                memory.WriteDouble(this.rect.right);
+                memory.WriteDouble(this.rect.bottom);
                 break;
             }
         }

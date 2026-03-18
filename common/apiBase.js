@@ -106,8 +106,10 @@
 		this.LongActionCallbacksParams = [];
 		this.IsActionRestrictionCurrent  = 0;
 		this.IsActionRestrictionPrev  = null;
-
-		this.groupActionsCounter = 0;
+		
+		this.groupActionsCounter        = 0;
+		this.groupActionsPr             = {};
+		this.groupActionsExecuteCounter = 0;
 
 		// AutoSave
 		this.autoSaveGap = 0;					// Интервал автосохранения (0 - означает, что автосохранения нет) в милесекундах
@@ -534,6 +536,14 @@
 	{
 		return "";
 	};
+	baseEditorsApi.prototype.isLogPluginCommands = function()
+	{
+		return false;
+	};
+	baseEditorsApi.prototype.log = function(msg)
+	{
+		console.log(msg);
+	};
 
 	// modules
 	baseEditorsApi.prototype._loadModules = function()
@@ -774,6 +784,9 @@
 	baseEditorsApi.prototype.asc_LockScrollToTarget          = function(isLock)
 	{
 		this.isLockScrollToTarget = isLock;
+	};
+	baseEditorsApi.prototype.scrollToTarget              = function()
+	{
 	};
 	baseEditorsApi.prototype.isLiveViewer                     = function()
 	{
@@ -3782,6 +3795,9 @@
 	{
 		return false;
 	};
+	baseEditorsApi.prototype.asc_getPasteOptions          = function()
+	{
+	};
 	baseEditorsApi.prototype.asc_Recalculate       = function()
 	{
 	};
@@ -3991,7 +4007,7 @@
 
 			for (var j = this.signatures.length - 1; j >= 0; j--)
 			{
-				if (this.signatures[j].guid == _sig.id)
+				if (this.signatures[j].isEqualGuid(_sig.id))
 				{
 					_found = true;
 					break;
@@ -4103,7 +4119,7 @@
 		for (var i = _sigs.length - 1; i >= 0; i--)
 		{
 			var _sig = _sigs[i];
-			if (_sig.id == guid)
+			if (_sig.isEqualId(guid))
 			{
 				var _add_sig = new AscCommon.asc_CSignatureLine();
 				_add_sig.guid = _sig.id;
@@ -4117,7 +4133,7 @@
 				for (var j = 0; j < this.signatures.length; j++)
 				{
 					var signDoc = this.signatures[j];
-					if (signDoc.guid == _add_sig.guid)
+					if (signDoc.isEqualGuid(_add_sig.guid))
 					{
 						_add_sig.valid = signDoc.valid;
 						_add_sig.isrequested = false;
@@ -4137,7 +4153,7 @@
 		var count = this.signatures.length;
 		for (var i = 0; i < count; i++)
 		{
-			if (this.signatures[i].guid == sGuid)
+			if (this.signatures[i].isEqualGuid(sGuid))
 				return this.signatures[i].image;
 		}
 		return "";
@@ -6055,7 +6071,7 @@
 	{
 	};
 
-	baseEditorsApi.prototype.startGroupActions = function()
+	baseEditorsApi.prototype.startGroupActions = function(pr)
 	{
 		++this.groupActionsCounter;
 
@@ -6064,6 +6080,18 @@
 		if (this.groupActionsCounter > 1)
 			return;
 		
+		this.groupActionsExecuteCounter = 0;
+		this.groupActionsPr = {};
+		this.groupActionsPr.lockScroll = !!(pr && pr["lockScroll"]);
+
+		if (this.groupActionsPr.lockScroll && !this.isLockScrollToTarget)
+			this.asc_LockScrollToTarget(true);
+		else
+			this.groupActionsPr.lockScroll = false;
+
+		if (!!(pr && pr["keepSelection"]))
+			this._saveGroupActionsState();
+
 		this._onStartGroupActions();
 
 		AscCommon.CollaborativeEditing.Set_GlobalLock(true);
@@ -6085,6 +6113,10 @@
 		if (!this.isGroupActions())
 			return;
 		
+		++this.groupActionsExecuteCounter;
+		if (this.groupActionsExecuteCounter > 1)
+			return;
+		
 		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
 		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
 	};
@@ -6093,10 +6125,14 @@
 		if (!this.isGroupActions())
 			return;
 		
+		--this.groupActionsExecuteCounter;
+		if (this.groupActionsExecuteCounter > 0)
+			return;
+		
 		AscCommon.CollaborativeEditing.Set_GlobalLock(true);
 		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(true);
 	};
-	baseEditorsApi.prototype.cancelGroupActions = function()
+	baseEditorsApi.prototype.cancelGroupActions = function(pr)
 	{
 		if (!this.isGroupActions())
 			return;
@@ -6112,8 +6148,17 @@
 		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
 		
 		this._onEndGroupActions(false);
+
+		if (this.groupActionsPr.selectionState)
+			this._restoreGroupActionsState();
+
+		if (this.groupActionsPr.lockScroll)
+			this.asc_LockScrollToTarget(false);
+
+		if (!pr || false !== pr["scrollToTarget"])
+			this.scrollToTarget();
 	};
-	baseEditorsApi.prototype.endGroupActions = function()
+	baseEditorsApi.prototype.endGroupActions = function(pr)
 	{
 		if (!this.isGroupActions())
 			return;
@@ -6123,11 +6168,20 @@
 
 		if (this.groupActionsCounter > 0)
 			return;
-		
+
 		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
 		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
-		
+
 		this._onEndGroupActions(true);
+
+		if (this.groupActionsPr.selectionState)
+			this._restoreGroupActionsState();
+
+		if (this.groupActionsPr.lockScroll)
+			this.asc_LockScrollToTarget(false);
+
+		if (!pr || false !== pr["scrollToTarget"])
+			this.scrollToTarget();
 	};
 	baseEditorsApi.prototype.isGroupActions = function()
 	{
@@ -6137,6 +6191,12 @@
 	{
 	};
 	baseEditorsApi.prototype._onEndGroupActions = function(isFullEnd)
+	{
+	};
+	baseEditorsApi.prototype._saveGroupActionsState = function()
+	{
+	};
+	baseEditorsApi.prototype._restoreGroupActionsState = function()
 	{
 	};
 	
@@ -6154,6 +6214,11 @@
 	baseEditorsApi.prototype.addMacroStepData = function(type, additional)
 	{
 		return this.macroRecorder.addStepData(type, additional);
+	};
+	
+	baseEditorsApi.prototype.getJsApi = function()
+	{
+		return this;
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------
@@ -6292,5 +6357,7 @@
 	prot['asc_isFinal'] = prot.asc_isFinal = prot.isFinal;
 	prot["getMacroRecorder"] = prot.getMacroRecorder;
 	prot["addMacroStepData"] = prot.addMacroStepData;
+	
+	prot['getJsApi'] = prot.getJsApi;
 
 })(window);

@@ -2046,7 +2046,7 @@ CDocument.prototype.StartAction = function(nDescription, oSelectionState, flags,
 		}
 	}
 	
-	this.Api.getMacroRecorder().onAction(nDescription, additional);
+	this.Api.getMacroRecorder().addStepData(nDescription, additional);
 };
 /**
  * В процессе ли какое-либо действие
@@ -2320,7 +2320,7 @@ CDocument.prototype.FinalizeAction = function(checkEmptyAction, additional)
 	this.Action.UpdateStates = false;
 	
 	this.sendEvent("asc_onUserActionEnd");
-	this.Api.getMacroRecorder().onAction(this.Action.Description, additional);
+	this.Api.getMacroRecorder().addStepData(this.Action.Description, additional);
 	return actionCompleted;
 };
 CDocument.prototype.AddMacroData = function(type, additional)
@@ -2469,7 +2469,7 @@ CDocument.prototype.private_CheckActionLock = function()
 	if (!this.Action.CheckLock || !this.Action.PointsCount || this.Action.CancelAction)
 		return;
 
-	if (!this.StartSelectionLockCheck())
+	if (!this.StartSelectionLockCheck(this.IsFillingFormMode()))
 	{
 		this.Action.CancelAction = true;
 		return;
@@ -4231,7 +4231,8 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
                 this.CurPage = PageIndex; // TODO: переделать
         }
 
-		if (docpostype_Content === this.GetDocPosType() && ((true !== this.Selection.Use && Index === this.CurPos.ContentPos + 1) || (true === this.Selection.Use && Index === (Math.max(this.Selection.EndPos, this.Selection.StartPos) + 1))))
+		let cursorPos = true !== this.Selection.Use ? this.CurPos.ContentPos : Math.max(this.Selection.EndPos, this.Selection.StartPos);
+		if (docpostype_Content === this.GetDocPosType() && (Index === cursorPos + 1 || (cursorPos === Index && cursorPos === Count - 1)))
 			this.UpdateCursorOnRecalculate();
     }
 
@@ -5790,6 +5791,107 @@ CDocument.prototype.AddInlineImage = function(W, H, Img, GraphicObject, bFlow)
     this.TurnOn_InterfaceEvents(true);
 };
 
+CDocument.prototype.AddHorizontalRule = function()
+{
+	let curParagraph = this.GetCurrentParagraph();
+
+	let existingHRDrawing = null;
+	if (curParagraph)
+	{
+		let drawings = curParagraph.GetAllDrawingObjects();
+		for (let i = 0; i < drawings.length; i++)
+		{
+			if (drawings[i].isHorizontalRule && drawings[i].isHorizontalRule())
+			{
+				existingHRDrawing = drawings[i];
+				break;
+			}
+		}
+	}
+
+	if (existingHRDrawing)
+	{
+		curParagraph.MoveCursorToEndPos();
+		this.AddNewParagraph(false);
+		curParagraph = this.GetCurrentParagraph();
+	}
+
+	let prevHRDrawing = existingHRDrawing;
+	if (!prevHRDrawing && curParagraph)
+	{
+		let prevParagraph = curParagraph.Get_DocumentPrev();
+		if (prevParagraph && prevParagraph.GetAllDrawingObjects)
+		{
+			let drawings = prevParagraph.GetAllDrawingObjects();
+			for (let i = 0; i < drawings.length; i++)
+			{
+				if (drawings[i].isHorizontalRule && drawings[i].isHorizontalRule())
+				{
+					prevHRDrawing = drawings[i];
+					break;
+				}
+			}
+		}
+	}
+
+	let sectPr = this.GetCurrentSectPr();
+	let width = sectPr.GetColumnWidth(0);
+	let height = 1.5 * (25.4 / 72);
+
+	let hr = new AscFormat.CHorizontalRule();
+	hr.align = "center";
+
+	let fill = null;
+	let ln = AscFormat.CreateNoFillLine();
+
+	if (prevHRDrawing && prevHRDrawing.GraphicObj)
+	{
+		let srcShape = prevHRDrawing.GraphicObj;
+		let srcHR = srcShape.getHorizontalRule && srcShape.getHorizontalRule();
+		if (srcHR)
+			hr = srcHR.createDuplicate();
+
+		if (srcShape.spPr)
+		{
+			if (srcShape.spPr.xfrm && AscFormat.isRealNumber(srcShape.spPr.xfrm.extY))
+				height = srcShape.spPr.xfrm.extY;
+			if (srcShape.spPr.Fill)
+				fill = srcShape.spPr.Fill.createDuplicate();
+			if (srcShape.spPr.ln)
+				ln = srcShape.spPr.ln.createDuplicate();
+		}
+	}
+
+	let shape = new AscFormat.CShape();
+	shape.setWordShape(true);
+	shape.setBDeleted(false);
+
+	let spPr = new AscFormat.CSpPr();
+	let xfrm = new AscFormat.CXfrm();
+	xfrm.setOffX(0);
+	xfrm.setOffY(0);
+	xfrm.setExtX(width);
+	xfrm.setExtY(height);
+	spPr.setXfrm(xfrm);
+	xfrm.setParent(spPr);
+
+	let geometry = AscFormat.CreateGeometry("rect");
+	geometry.setPreset("rect");
+	geometry.setHR(hr);
+
+	spPr.setGeometry(geometry);
+	spPr.setLn(ln);
+	if (fill)
+		spPr.setFill(fill);
+
+	shape.setSpPr(spPr);
+	spPr.setParent(shape);
+
+	this.AddInlineImage(width, height, null, shape);
+
+	this.Recalculate();
+	this.UpdateInterface();
+};
 CDocument.prototype.AddImages = function(aImages){
     this.Controller.AddImages(aImages);
 };
@@ -9972,7 +10074,10 @@ CDocument.prototype.OnKeyPress = function(e)
 CDocument.prototype.CheckEnterSpaceAction = function()
 {
 	let checkBox = this.GetSelectedElementsInfo().GetCheckBox();
-	if (!checkBox || !this.IsFormFieldEditing())
+	if (!checkBox)
+		return false;
+	
+	if (checkBox.IsForm() && !this.IsFormFieldEditing())
 		return false;
 	
 	let result = false;
@@ -10820,6 +10925,9 @@ CDocument.prototype.private_CheckForbiddenPlaceOnTextAdd = function(codePoints)
 		}
 		else
 		{
+			if (!oCheckBox.IsForm() && ((Array.isArray(codePoints) && 1 === codePoints.length && AscCommon.IsSpace(codePoints[0])) || AscCommon.IsSpace(codePoints)))
+				return true;
+			
 			this.RemoveSelection();
 			oCheckBox.MoveCursorOutsideForm(!oCheckBox.IsForm() && oCheckBox.IsCursorAtBegin());
 		}
@@ -18624,6 +18732,13 @@ CDocument.prototype.getCompositeInput = function()
 	
 	return this.compositeInput;
 };
+CDocument.prototype.UpdateDrawingTextCache = function()
+{
+	if (docpostype_DrawingObjects === this.CurPos.Type)
+	{
+		this.DrawingObjects.updateDrawingTextCache();
+	}
+};
 CDocument.prototype.CheckCurrentTextObjectExtends = function()
 {
 	var oController = this.DrawingObjects;
@@ -19416,13 +19531,6 @@ CDocument.prototype.controller_AddInlineImage = function(W, H, Img, GraphicObjec
 			var Image = this.DrawingObjects.createImage(Img, 0, 0, W, H);
 			Image.setParent(Drawing);
 			Drawing.Set_GraphicObject(Image);
-		}
-		else if (GraphicObject.isSmartArtObject && GraphicObject.isSmartArtObject())
-		{
-			Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
-			GraphicObject.setParent(Drawing);
-			Drawing.Set_GraphicObject(GraphicObject);
-			Drawing.setExtent(GraphicObject.spPr.xfrm.extX, GraphicObject.spPr.xfrm.extY);
 		}
 		else
 		{
@@ -23147,7 +23255,7 @@ CDocument.prototype.CallSignatureDblClickEvent = function(sGuid)
     allSpr = allSpr.concat(allSpr.concat(this.DrawingObjects.getAllSignatures2(ret, this.DrawingObjects.getDrawingArray())));
     for(var i = 0; i < allSpr.length; ++i)
     {
-        if(allSpr[i].getSignatureLineGuid() === sGuid)
+        if(allSpr[i].isEqualSignatureLineGuid(sGuid))
         {
             this.sendEvent("asc_onSignatureDblClick", sGuid, allSpr[i].extX, allSpr[i].extY);
         }
@@ -23687,6 +23795,27 @@ CDocument.prototype.ToggleComplexFieldCodes = function()
 	}
 	
 	fields[fields.length - 1].ToggleFieldCodes();
+};
+CDocument.prototype.GetComplexFieldById = function(fieldId)
+{
+	let field = null;
+	let allFields = this.GetAllFields();
+	for (let index = 0, count = allFields.length; index < count; ++index)
+	{
+		if (allFields[index] instanceof AscWord.CComplexField && allFields[index].GetFieldId() === fieldId)
+		{
+			field = allFields[index];
+			break;
+		}
+	}
+	
+	if (!field)
+		field = this.GetCurrentComplexField();
+	
+	if (!field || !(field instanceof AscWord.CComplexField) || !field.IsValid())
+		return null;
+	
+	return field;
 };
 CDocument.prototype.IsFastCollaborationBeforeViewModeInReview = function()
 {
@@ -24493,6 +24622,9 @@ CDocument.prototype.AddTableOfFigures = function(oPr)
         {
             if (oPr)
             {
+				if (undefined !== oPr.TabLeader && oComplexField.GetInstruction())
+					oComplexField.GetInstruction().ForceTabLeader = oPr.TabLeader;
+				
                 if (isNeedChangeStyles)
                     oStyles.SetTOFStyleType(nStylesType);
                 oComplexField.Update();
@@ -26720,6 +26852,44 @@ CDocument.prototype.ConvertFormFixedType = function(sId, isToFixed)
 	}
 
 	return false;
+};
+/**
+ * Конвертируем
+ * @param formId
+ * @returns {boolean}
+ */
+CDocument.prototype.StretchFormToCell = function(formId)
+{
+	let form = this.GetContentControl(formId);
+	if (!form || !form.IsForm())
+		return false;
+	
+	form = form.GetMainForm();
+	if (!form || form.IsFormLocked())
+		return false;
+	
+	let paragraph = form.GetParagraph();
+	if (!paragraph)
+		return false;
+	
+	if (this.IsSelectionLocked(AscCommon.changestype_None, {
+		Type      : AscCommon.changestype_2_ElementsArray_and_Type,
+		Elements  : [paragraph],
+		CheckType : AscCommon.changestype_Paragraph_Properties
+	}, false, false))
+		return false;
+	
+	this.StartAction(AscDFH.historydescription_Document_StretchFormToCell);
+	
+	form.StretchFormToCell();
+	
+	this.Recalculate();
+	this.UpdateInterface();
+	this.UpdateSelection();
+	this.UpdateTracks();
+	this.FinalizeAction();
+	
+	return true;
 };
 /**
  * Подсвечиваем ли обязательные поля

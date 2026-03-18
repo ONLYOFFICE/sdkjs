@@ -852,6 +852,11 @@ function (window, undefined) {
 		let realZoom = ws.stringRender.drawingCtx.getZoom();
 		ws.stringRender.drawingCtx.changeZoom(1);
 
+		let clipRectUse = ws.stringRender.clipRect && ws.stringRender.clipRect.use;
+		if (clipRectUse != null) {
+			ws.stringRender.clipRect.use = false;
+		}
+
 		let cellEditorWidth = width - 2 * wb.defaults.worksheetView.cells.padding + 1 + 2 * correctCanvasDiff;
 		ws.stringRender.setString(this.fragments, cellFlags);
 		let textMetrics = ws.stringRender._measureChars(cellEditorWidth);
@@ -861,6 +866,9 @@ function (window, undefined) {
 		drawBackground();
 		ws.stringRender.render(drawingCtx, wb.defaults.worksheetView.cells.padding, 0, cellEditorWidth, ws.settings.activeCellBorderColor);
 
+		if (clipRectUse != null) {
+			ws.stringRender.clipRect.use = clipRectUse;
+		}
 		ws.stringRender.drawingCtx.changeZoom(realZoom)
 	};
 	CHeaderFooterEditorSection.prototype.getElem = function () {
@@ -1110,6 +1118,10 @@ function (window, undefined) {
 		this._createAndDrawSections(null, optHeaderFooterProps);
 		this._generatePresetsArr();
 
+		if (this.api.isDarkMode) {
+			this.updateDarkMode(true);
+		}
+
 		//лочим
 		ws._isLockedHeaderFooter();
 	};
@@ -1205,6 +1217,10 @@ function (window, undefined) {
 
 					//временно меняем cellEditor у wb
 					wb.cellEditor = t.cellEditor;
+
+					if (t.api.isDarkMode) {
+						t.cellEditor.updateDarkMode(true);
+					}
 
 					//удаляем z-index для интерфейса
 					t.cellEditor.canvasOuter.style.zIndex = "";
@@ -1306,6 +1322,27 @@ function (window, undefined) {
 		wb.input.disabled = false;
 
 		return true;
+	};
+
+	CHeaderFooterEditor.prototype.updateDarkMode = function (isDarkMode) {
+		for (let i = 0; i < this.canvas.length; i++) {
+			let canvasObj = this.canvas[i];
+			if (!canvasObj || !canvasObj.drawingCtx) continue;
+			if (isDarkMode) {
+				canvasObj.drawingCtx.setDarkMode();
+			} else {
+				canvasObj.drawingCtx.isDarkMode = false;
+			}
+		}
+		for (let type in this.sections) {
+			let row = this.sections[type];
+			for (let pos in row) {
+				let section = row[pos];
+				if (section) {
+					section.drawText();
+				}
+			}
+		}
 	};
 
 	CHeaderFooterEditor.prototype.destroy = function (bSave, opt_objForSave) {

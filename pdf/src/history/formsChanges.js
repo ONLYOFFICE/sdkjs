@@ -253,24 +253,26 @@ CChangesPDFFormKidsContent.prototype.Type = AscDFH.historyitem_Pdf_Form_Add_Kid;
 
 CChangesPDFFormKidsContent.prototype.Undo = function()
 {
-	let oForm	= this.Class;
+	let oParentField	= this.Class;
 	let oDocument = Asc.editor.getPDFDoc();
 	let oDrDoc	= oDocument.GetDrawingDocument();
 	
 	if (this.IsAdd()) {
 		for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex) {
-			let oKid = this.Items[nIndex];
+			let oItem = this.Items[nIndex];
 	
-			oForm.RemoveKid(oKid);
-			oKid.AddToRedraw();
+			oParentField._kids.splice(this.Pos, 1);
+			oItem._parent = null;
+			oItem.AddToRedraw();
 		}
 	}
 	else {
 		for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex) {
-			let oKid = this.Items[nIndex];
+			let oItem = this.Items[nIndex];
 	
-			oForm.AddKid(oKid);
-			oKid.AddToRedraw();
+			oParentField._kids.splice(this.Pos, 0, oItem);
+			oItem._parent = oParentField;
+			oItem.AddToRedraw();
 		}
 	}
 	
@@ -279,24 +281,26 @@ CChangesPDFFormKidsContent.prototype.Undo = function()
 };
 CChangesPDFFormKidsContent.prototype.Redo = function()
 {
-	let oForm	= this.Class;
+	let oParentField	= this.Class;
 	let oDocument = Asc.editor.getPDFDoc();
 	let oDrDoc	= oDocument.GetDrawingDocument();
 	
 	if (this.IsAdd()) {
 		for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex) {
-			let oKid = this.Items[nIndex];
+			let oItem = this.Items[nIndex];
 	
-			oForm.AddKid(oKid);
-			oKid.AddToRedraw();
+			oParentField._kids.splice(this.Pos, 0, oItem);
+			oItem._parent = oParentField;
+			oItem.AddToRedraw();
 		}
 	}
 	else {
 		for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex) {
-			let oKid = this.Items[nIndex];
+			let oItem = this.Items[nIndex];
 	
-			oForm.RemoveKid(oKid);
-			oKid.AddToRedraw();
+			oParentField._kids.splice(this.Pos, 1);
+			oItem._parent = null;
+			oItem.AddToRedraw();
 		}
 	}
 	
@@ -1795,7 +1799,7 @@ CChangesPDFPushbuttonFitBounds.prototype.Type = AscDFH.historyitem_Pdf_Pushbutto
 CChangesPDFPushbuttonFitBounds.prototype.private_SetValue = function(Value)
 {
 	let oForm = this.Class;
-	oForm.SetButtonFitBounds(Value);
+	oForm.SetFitBounds(Value);
 };
 
 /**

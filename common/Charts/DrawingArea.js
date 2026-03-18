@@ -899,7 +899,10 @@ DrawingArea.prototype.drawSelection = function(drawingDocument) {
 		const oDrawingDocument = this.api.getDrawingDocument();
 		if (oDrawingDocument && oDrawingDocument.placeholders.objects.length) {
 			const oRect = {};
-			const nOffsetX = 2 * oWS.cellsLeft - oWS._getColLeft(oWS.visibleRange.c1);
+			let nOffsetX = 2 * oWS.cellsLeft - oWS._getColLeft(oWS.visibleRange.c1);
+			if (oWS.getRightToLeft()) {
+				nOffsetX = -nOffsetX;
+			}
 			const nOffsetY = 2 * oWS.cellsTop - oWS._getRowTop(oWS.visibleRange.r1);
 			oRect.left   = nOffsetX;
 			oRect.right  = nOffsetX + ctx.canvas.width;

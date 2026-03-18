@@ -114,4 +114,185 @@ $(function () {
 		const invalidResult2 = drawing.SetOutLine({});
 		assert.strictEqual(invalidResult2, false, 'SetOutLine should return false with invalid parameter');
 	});
+
+	QUnit.test("Test: GetName", function (assert) {
+		CreateSlide();
+
+		const presentation = AscTest.JsApi.GetPresentation();
+		const slide = presentation.GetSlideByIndex(0);
+		const fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(51, 51, 51));
+		const stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		const drawing = AscTest.JsApi.CreateShape("cube", 150 * 36000, 80 * 36000, fill, stroke);
+
+		drawing.SetPosition(608400, 1267200);
+		slide.AddObject(drawing);
+
+		const name = drawing.GetName();
+		assert.strictEqual(typeof name, 'string', 'Check GetName returns a string');
+		assert.ok(name.length > 0, 'Check drawing name is not empty');
+	});
+
+	QUnit.test("Test: SetName", function (assert) {
+		CreateSlide();
+
+		const presentation = AscTest.JsApi.GetPresentation();
+		const slide = presentation.GetSlideByIndex(0);
+		const fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(51, 51, 51));
+		const stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		const drawing = AscTest.JsApi.CreateShape("cube", 150 * 36000, 80 * 36000, fill, stroke);
+
+		drawing.SetPosition(608400, 1267200);
+		slide.AddObject(drawing);
+
+		let result = drawing.SetName("TestShape");
+		assert.strictEqual(result, true, 'Check SetName returns true');
+		assert.strictEqual(drawing.GetName(), "TestShape", 'Check drawing name is set correctly');
+
+		let result2 = drawing.SetName("");
+		assert.strictEqual(result2, false, 'Check SetName returns false for empty string');
+
+		let result3 = drawing.SetName(null);
+		assert.strictEqual(result3, false, 'Check SetName returns false for null');
+
+		let result4 = drawing.SetName(undefined);
+		assert.strictEqual(result4, false, 'Check SetName returns false for undefined');
+
+		// Test that setting duplicate name causes previous shape to get default name
+		const drawing2 = AscTest.JsApi.CreateShape("rect", 150 * 36000, 80 * 36000, fill, stroke);
+		drawing2.SetPosition(608400, 2267200);
+		slide.AddObject(drawing2);
+
+		drawing.SetName("DuplicateName");
+		const firstDrawingName = drawing.GetName();
+		assert.strictEqual(firstDrawingName, "DuplicateName", 'Check first drawing has duplicate name');
+
+		drawing2.SetName("DuplicateName");
+
+		assert.strictEqual(drawing2.GetName(), "DuplicateName", 'Check second drawing has the duplicate name');
+		assert.notStrictEqual(drawing.GetName(), "DuplicateName", 'Check first drawing name changed from duplicate');
+		assert.notStrictEqual(drawing.GetName(), firstDrawingName, 'Check first drawing has a new default name');
+	});
+
+	QUnit.test("Test: Select", function (assert) {
+		CreateSlide();
+
+		const presentation = AscTest.JsApi.GetPresentation();
+		const slide = presentation.GetSlideByIndex(0);
+		const fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(51, 51, 51));
+		const stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		const drawing = AscTest.JsApi.CreateShape("cube", 150 * 36000, 80 * 36000, fill, stroke);
+
+		drawing.SetPosition(608400, 1267200);
+		slide.AddObject(drawing);
+
+		drawing.Select();
+		assert.ok(true, 'Check Select method works');
+		assert.ok(drawing.Drawing.getDrawingObjectsController().selectedObjects.includes(drawing.Drawing), 'Check drawing is selected in presentation');
+
+		drawing.Select(true);
+		assert.ok(true, 'Check Select with isReplace=true works');
+	});
+
+	QUnit.test("Test: Unselect", function (assert) {
+		CreateSlide();
+
+		const presentation = AscTest.JsApi.GetPresentation();
+		const slide = presentation.GetSlideByIndex(0);
+		const fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(51, 51, 51));
+		const stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		const drawing = AscTest.JsApi.CreateShape("cube", 150 * 36000, 80 * 36000, fill, stroke);
+
+		drawing.SetPosition(608400, 1267200);
+		slide.AddObject(drawing);
+
+		drawing.Select();
+		assert.ok(drawing.Drawing.getDrawingObjectsController().selectedObjects.includes(drawing.Drawing), 'Check drawing is selected before unselect');
+
+		let result = drawing.Unselect();
+		assert.strictEqual(result, true, 'Check Unselect returns true');
+		assert.ok(!drawing.Drawing.getDrawingObjectsController().selectedObjects.includes(drawing.Drawing), 'Check drawing is not selected after unselect');
+	});
+
+	QUnit.test("Test: GetFlipH", function (assert) {
+		CreateSlide();
+
+		const presentation = AscTest.JsApi.GetPresentation();
+		const slide = presentation.GetSlideByIndex(0);
+		const fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(255, 111, 61));
+		const stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		const drawing = AscTest.JsApi.CreateShape("cube", 150 * 36000, 80 * 36000, fill, stroke);
+
+		drawing.SetPosition(608400, 1267200);
+		slide.AddObject(drawing);
+
+		assert.strictEqual(drawing.GetFlipH(), false, 'Check drawing horizontal flip === false');
+		drawing.SetFlipH(true);
+		assert.strictEqual(drawing.GetFlipH(), true, 'Check drawing horizontal flip === true');
+	});
+
+	QUnit.test("Test: GetFlipV", function (assert) {
+		CreateSlide();
+
+		const presentation = AscTest.JsApi.GetPresentation();
+		const slide = presentation.GetSlideByIndex(0);
+		const fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(255, 111, 61));
+		const stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		const drawing = AscTest.JsApi.CreateShape("cube", 150 * 36000, 80 * 36000, fill, stroke);
+
+		drawing.SetPosition(608400, 1267200);
+		slide.AddObject(drawing);
+
+		assert.strictEqual(drawing.GetFlipV(), false, 'Check drawing vertical flip === false');
+		drawing.SetFlipV(true);
+		assert.strictEqual(drawing.GetFlipV(), true, 'Check drawing vertical flip === true');
+	});
+
+	QUnit.test("Test: SetFlipH", function (assert) {
+		CreateSlide();
+
+		const presentation = AscTest.JsApi.GetPresentation();
+		const slide = presentation.GetSlideByIndex(0);
+		const fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(255, 111, 61));
+		const stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		const drawing = AscTest.JsApi.CreateShape("cube", 150 * 36000, 80 * 36000, fill, stroke);
+
+		drawing.SetPosition(608400, 1267200);
+		slide.AddObject(drawing);
+
+		let result = drawing.SetFlipH(true);
+		assert.strictEqual(result, true, 'Check SetFlipH returns true');
+		assert.strictEqual(drawing.GetFlipH(), true, 'Check drawing horizontal flip === true after SetFlipH');
+
+		result = drawing.SetFlipH(false);
+		assert.strictEqual(result, true, 'Check SetFlipH returns true');
+		assert.strictEqual(drawing.GetFlipH(), false, 'Check drawing horizontal flip === false after SetFlipH');
+
+		result = drawing.SetFlipH("invalid");
+		assert.strictEqual(result, false, 'Check SetFlipH returns false for invalid parameter');
+	});
+
+	QUnit.test("Test: SetFlipV", function (assert) {
+		CreateSlide();
+
+		const presentation = AscTest.JsApi.GetPresentation();
+		const slide = presentation.GetSlideByIndex(0);
+		const fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(255, 111, 61));
+		const stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		const drawing = AscTest.JsApi.CreateShape("cube", 150 * 36000, 80 * 36000, fill, stroke);
+
+		drawing.SetPosition(608400, 1267200);
+		slide.AddObject(drawing);
+
+		let result = drawing.SetFlipV(true);
+		assert.strictEqual(result, true, 'Check SetFlipV returns true');
+		assert.strictEqual(drawing.GetFlipV(), true, 'Check drawing vertical flip === true after SetFlipV');
+
+		result = drawing.SetFlipV(false);
+		assert.strictEqual(result, true, 'Check SetFlipV returns true');
+		assert.strictEqual(drawing.GetFlipV(), false, 'Check drawing vertical flip === false after SetFlipV');
+
+		result = drawing.SetFlipV("invalid");
+		assert.strictEqual(result, false, 'Check SetFlipV returns false for invalid parameter');
+	});
 });
+

@@ -143,6 +143,9 @@
 	 */
 	CTrackRevisionsManager.prototype.GetElementChanges = function(sElementId)
 	{
+		flushElementToCheck();
+		this.private_TrackChangesForSingleElement(sElementId);
+		
 		if (this.Changes[sElementId])
 			return this.Changes[sElementId];
 

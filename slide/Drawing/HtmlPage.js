@@ -467,8 +467,10 @@
 			_buttonsContent += ("<button class=\"btn-text-default\" id=\"dem_id_reset\" style=\"left: 85px; bottom: 2px; \">" + this.reporterTranslates[0] + "</button>");
 			_buttonsContent += ("<button class=\"btn-text-default\" id=\"dem_id_end\" style=\"right: 10px; bottom: 2px; \">" + this.reporterTranslates[2] + "</button>");
 
-			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_prev\"  data-tooltip=\"" + this.reporterTranslates[11] + "\" style=\"left: 150px; bottom: 3px; width: 20px; height: 20px;\"><span class=\"btn-prev back_image_buttons\" style=\"width:100%;height:100%;\"></span></button>";
-			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_next\" data-tooltip=\"" + this.reporterTranslates[12] + "\" style=\"left: 170px; bottom: 3px; width: 20px; height: 20px;\"><span class=\"btn-next back_image_buttons\" style=\"width:100%;height:100%;\"></span></button>";
+			const prevIcon = Asc.editor.isRtlInterface ? "btn-next" : "btn-prev";
+			const nextIcon = Asc.editor.isRtlInterface ? "btn-prev" : "btn-next";
+			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_prev\"  data-tooltip=\"" + this.reporterTranslates[11] + "\" style=\"left: 150px; bottom: 3px; width: 20px; height: 20px;\"><span id=\"dem_id_prev_span\" class=\"" + prevIcon + " back_image_buttons\" style=\"width:100%;height:100%;\"></span></button>";
+			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_next\" data-tooltip=\"" + this.reporterTranslates[12] + "\" style=\"left: 170px; bottom: 3px; width: 20px; height: 20px;\"><span id=\"dem_id_next_span\" class=\"" + nextIcon + " back_image_buttons\" style=\"width:100%;height:100%;\"></span></button>";
 
 			_buttonsContent += "<div class=\"separator block_elem_no_select\" id=\"dem_id_sep\" style=\"left: 185px; bottom: 3px;\"></div>";
 
@@ -3374,6 +3376,23 @@
 			var _drawMenu = document.getElementById("dem_id_draw_menu");
 			var _buttonEnd = document.getElementById("dem_id_end");
 
+			const prevSpan = document.getElementById('dem_id_prev_span');
+			const nextSpan = document.getElementById('dem_id_next_span');
+			prevSpan.classList.remove(Asc.editor.isRtlInterface ? 'btn-prev' : 'btn-next');
+			prevSpan.classList.add(Asc.editor.isRtlInterface ? 'btn-next' : 'btn-prev');
+			nextSpan.classList.remove(Asc.editor.isRtlInterface ? 'btn-next' : 'btn-prev');
+			nextSpan.classList.add(Asc.editor.isRtlInterface ? 'btn-prev' : 'btn-next');
+
+			const startSide = Asc.editor.isRtlInterface ? 'right' : 'left';
+			const endSide = Asc.editor.isRtlInterface ? 'left' : 'right';
+			function setHorizontalPosition(element, offset) {
+				element.style[endSide] = '';
+				element.style[startSide] = offset;
+			}
+
+			_buttonEnd.style[startSide] = '';
+			_buttonEnd.style[endSide] = '10px';
+
 			function redrawMenu() {
 				if (_drawMenu.style.display === "block") {
 					var offset = AscCommon.UI.getBoundingClientRect(_buttonDrawMenuTrigger);
@@ -3417,21 +3436,21 @@
 				_buttonReset.style.display = "block";
 				_buttonEnd.style.display = "block";
 
-				_label1.style.left = "10px";
-				_buttonPlay.style.left = (10 + _label1_width + 6) + "px";
-				_buttonReset.style.left = (10 + _label1_width + 6 + 20 + 6) + "px";
+				setHorizontalPosition(_label1, '10px');
+				setHorizontalPosition(_buttonPlay, (10 + _label1_width + 6) + 'px');
+				setHorizontalPosition(_buttonReset, (10 + _label1_width + 6 + 20 + 6) + 'px');
 
 				if (!_is1) {
 					_posCenter = 10 + _label1_width + 6 + 20 + 6 + _buttonReset_width + 10 + ((_width - _test_width1) >> 1);
 				}
 
-				_buttonPrev.style.left = _posCenter + "px";
-				_buttonNext.style.left = (_posCenter + 20) + "px";
-				_buttonSeparator.style.left = (_posCenter + 48 - 10) + "px";
-				_labelMain.style.left = (_posCenter + 55) + "px";
-				_buttonSeparator2.style.left = (_posCenter + 55 + _main_width + 7 - 10) + "px";
-				_buttonPointer.style.left = (_posCenter + 70 + _main_width) + "px";
-				_buttonDrawMenuTrigger.style.left = (_posCenter + 90 + _main_width) + "px";
+				setHorizontalPosition(_buttonPrev, _posCenter + 'px');
+				setHorizontalPosition(_buttonNext, (_posCenter + 20) + 'px');
+				setHorizontalPosition(_buttonSeparator, (_posCenter + 48 - 10) + 'px');
+				setHorizontalPosition(_labelMain, (_posCenter + 55) + 'px');
+				setHorizontalPosition(_buttonSeparator2, (_posCenter + 55 + _main_width + 7 - 10) + 'px');
+				setHorizontalPosition(_buttonPointer, (_posCenter + 70 + _main_width) + 'px');
+				setHorizontalPosition(_buttonDrawMenuTrigger, (_posCenter + 90 + _main_width) + 'px');
 				redrawMenu();
 
 				return;
@@ -3447,13 +3466,13 @@
 				_buttonReset.style.display = "none";
 				_buttonEnd.style.display = "block";
 
-				_buttonPrev.style.left = "10px";
-				_buttonNext.style.left = "30px";
-				_buttonSeparator.style.left = (58 - 10) + "px";
-				_labelMain.style.left = "65px";
-				_buttonSeparator2.style.left = (65 + _main_width + 7 - 10) + "px";
-				_buttonPointer.style.left = (80 + _main_width) + "px";
-				_buttonDrawMenuTrigger.style.left = (100 + _main_width) + "px";
+				setHorizontalPosition(_buttonPrev, '10px');
+				setHorizontalPosition(_buttonNext, '30px');
+				setHorizontalPosition(_buttonSeparator, (58 - 10) + 'px');
+				setHorizontalPosition(_labelMain, '65px');
+				setHorizontalPosition(_buttonSeparator2, (65 + _main_width + 7 - 10) + 'px');
+				setHorizontalPosition(_buttonPointer, (80 + _main_width) + 'px');
+				setHorizontalPosition(_buttonDrawMenuTrigger, (100 + _main_width) + 'px');
 				redrawMenu();
 
 				return;
@@ -3470,13 +3489,13 @@
 			_buttonReset.style.display = "none";
 			_buttonEnd.style.display = "none";
 
-			_buttonPrev.style.left = _posCenter + "px";
-			_buttonNext.style.left = (_posCenter + 20) + "px";
-			_buttonSeparator.style.left = (_posCenter + 48 - 10) + "px";
-			_labelMain.style.left = (_posCenter + 55) + "px";
-			_buttonSeparator2.style.left = (_posCenter + 55 + _main_width + 7 - 10) + "px";
-			_buttonPointer.style.left = (_posCenter + 70 + _main_width) + "px";
-			_buttonDrawMenuTrigger.style.left = (_posCenter + 90 + _main_width) + "px";
+			setHorizontalPosition(_buttonPrev, _posCenter + 'px');
+			setHorizontalPosition(_buttonNext, (_posCenter + 20) + 'px');
+			setHorizontalPosition(_buttonSeparator, (_posCenter + 48 - 10) + 'px');
+			setHorizontalPosition(_labelMain, (_posCenter + 55) + 'px');
+			setHorizontalPosition(_buttonSeparator2, (_posCenter + 55 + _main_width + 7 - 10) + 'px');
+			setHorizontalPosition(_buttonPointer, (_posCenter + 70 + _main_width) + 'px');
+			setHorizontalPosition(_buttonDrawMenuTrigger, (_posCenter + 90 + _main_width) + 'px');
 			redrawMenu();
 		}
 	};
@@ -3856,6 +3875,15 @@
 		oWordControl.m_oLogicDocument.Document_UpdateRulersState();
 
 		oWordControl.EndUpdateOverlay();
+
+		if (AscCommon.check_MouseClickOnUp())
+		{
+			if (window.g_asc_plugins)
+			{
+				let oController = oWordControl.m_oApi.getGraphicController();
+				window.g_asc_plugins.onPluginEvent("onClick", oController ? oController.IsSelectionUse() : false);
+			}
+		}
 	};
 	CEditorPage.prototype.onMouseUpMainSimple = function () {
 		if (false === oThis.m_oApi.bInit_word_control)

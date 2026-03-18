@@ -1249,10 +1249,10 @@ CShapeDrawer.prototype =
     {
         if (Asc.editor.isPdfEditor()) {
             let aDash;
-            if (this.Shape.GetDash)
-                aDash = this.Shape.GetDash();
-            else if (this.Shape.group && this.Shape.group.GetDash)
-                aDash = this.Shape.group.GetDash();
+            if (this.Shape.GetDashPattern)
+                aDash = this.Shape.GetDashPattern();
+            else if (this.Shape.group && this.Shape.group.GetDashPattern)
+                aDash = this.Shape.group.GetDashPattern();
             else if (this.Shape.IsDrawing && this.Shape.IsDrawing()) {
                 if (AscCommon.DashPatternPresets[this.Ln.prstDash]) {
                     aDash = AscCommon.DashPatternPresets[this.Ln.prstDash].slice();
@@ -1631,31 +1631,7 @@ CShapeDrawer.prototype =
 		this.IsArrowsDrawing = true;
 		this.Graphics.p_dash(null);
 
-		const graphicsCtx = this.Graphics.isTrack() && !bIsSaveToPdfMode
-			? this.Graphics.Graphics
-			: this.Graphics;
-
-		const fullTransform = bIsSaveToPdfMode
-			? (this.isPdf() ? this.Graphics.GetTransform() : this.Graphics.m_oFullTransform)
-			: graphicsCtx.m_oFullTransform;
-		const inverseTransform = AscCommon.global_MatrixTransformer.Invert(fullTransform);
-
-		const point1 = { x: fullTransform.TransformPointX(0, 0), y: fullTransform.TransformPointY(0, 0) };
-		const point2 = { x: fullTransform.TransformPointX(1, 1), y: fullTransform.TransformPointY(1, 1) };
-		const transformScaleFactor = Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2)) / Math.sqrt(2);
-
-		const lineSize = bIsSaveToPdfMode
-			? (this.isPdf() ? this.Graphics.GetLineWidth() : graphicsCtx.m_oContext.lineWidth)
-			: graphicsCtx.m_oContext.lineWidth;
-
-		const penWidth = lineSize * transformScaleFactor;
-		const minArrowSize = bIsSaveToPdfMode
-			? 2.5 / AscCommon.g_dKoef_mm_to_pix
-			: null;
-
-		const arrCoef = bIsSaveToPdfMode
-			? 1
-			: this.isArrPix ? (1 / AscCommon.g_dKoef_mm_to_pix) : 1;
+		const params = getArrowDrawingParameters(this, bIsSaveToPdfMode);
 
 		const geometry = this.Shape.getGeometry();
 		const unclosedPaths = geometry.pathLst.filter(function (path) {
@@ -1663,97 +1639,13 @@ CShapeDrawer.prototype =
 		});
 
 		if (this.Ln.headEnd != null) {
-			const arrowLength = this.Ln.headEnd.GetLen(penWidth, minArrowSize);
-			const arrowWidth = this.Ln.headEnd.GetWidth(penWidth, minArrowSize);
-
-			const firstUnclosedPath = unclosedPaths[0];
-			const subPaths = firstUnclosedPath && firstUnclosedPath.stroke ? firstUnclosedPath.getContinuousSubpaths() : [];
-			const unclosedSubPaths = subPaths.filter(function (path) {
-				return !path.isClosed(0);
-			});
-
-			for (let i = 0; i < unclosedSubPaths.length; i++) {
-				const path = unclosedSubPaths[i];
-				const headAngle = path.getHeadArrowAngle(arrowLength / transformScaleFactor);
-
-				if (AscFormat.isRealNumber(headAngle)) {
-					// Each continuous subpath starts with a moveTo command
-					// so we can use the first point of the path as the arrow tip point
-
-					const arrowEndPoint = {
-						x: fullTransform.TransformPointX(path.ArrPathCommand[0].X, path.ArrPathCommand[0].Y),
-						y: fullTransform.TransformPointY(path.ArrPathCommand[0].X, path.ArrPathCommand[0].Y)
-					};
-					const arrowStartPoint = {
-						x: fullTransform.TransformPointX(path.ArrPathCommand[0].X - Math.cos(headAngle * Math.PI / 180), path.ArrPathCommand[0].Y - Math.sin(headAngle * Math.PI / 180)),
-						y: fullTransform.TransformPointY(path.ArrPathCommand[0].X - Math.cos(headAngle * Math.PI / 180), path.ArrPathCommand[0].Y - Math.sin(headAngle * Math.PI / 180))
-					};
-
-					DrawLineEnd(
-						arrowEndPoint.x, arrowEndPoint.y,
-						arrowStartPoint.x, arrowStartPoint.y,
-						this.Ln.headEnd.type,
-						arrCoef * arrowWidth,
-						arrCoef * arrowLength,
-						this, inverseTransform
-					);
-				}
-			}
+			const firstPath = unclosedPaths[0];
+			drawArrowsOnPath(this, firstPath, this.Ln.headEnd, true, params);
 		}
 
 		if (this.Ln.tailEnd != null) {
-			const arrowLength = this.Ln.tailEnd.GetLen(penWidth, minArrowSize);
-			const arrowWidth = this.Ln.tailEnd.GetWidth(penWidth, minArrowSize);
-
-			const lastUnclosedPath = unclosedPaths[unclosedPaths.length - 1];
-			const subPaths = lastUnclosedPath && lastUnclosedPath.stroke ? lastUnclosedPath.getContinuousSubpaths() : [];
-			const unclosedSubPaths = subPaths.filter(function (path) {
-				return !path.isClosed(0);
-			});
-
-			for (let i = 0; i < unclosedSubPaths.length; i++) {
-				const path = unclosedSubPaths[i];
-				const tailAngle = path.getTailArrowAngle(arrowLength / transformScaleFactor);
-
-				if (AscFormat.isRealNumber(tailAngle)) {
-
-					function getPathEndPoint(commands) {
-						for (let i = commands.length - 1; i >= 0; i--) {
-							const command = commands[i];
-							if (command.id === AscFormat.lineTo) {
-								return { x: command.X, y: command.Y };
-							}
-							if (command.id === AscFormat.bezier4) {
-								return { x: command.X2, y: command.Y2 };
-							}
-						}
-						return null;
-					}
-
-					const pathEndPoint = getPathEndPoint(path.ArrPathCommand);
-					if (!pathEndPoint) {
-						continue;
-					}
-
-					const arrowEndPoint = {
-						x: fullTransform.TransformPointX(pathEndPoint.x, pathEndPoint.y),
-						y: fullTransform.TransformPointY(pathEndPoint.x, pathEndPoint.y)
-					};
-					const arrowStartPoint = {
-						x: fullTransform.TransformPointX(pathEndPoint.x - Math.cos(tailAngle * Math.PI / 180), pathEndPoint.y - Math.sin(tailAngle * Math.PI / 180)),
-						y: fullTransform.TransformPointY(pathEndPoint.x - Math.cos(tailAngle * Math.PI / 180), pathEndPoint.y - Math.sin(tailAngle * Math.PI / 180))
-					};
-
-					DrawLineEnd(
-						arrowEndPoint.x, arrowEndPoint.y,
-						arrowStartPoint.x, arrowStartPoint.y,
-						this.Ln.tailEnd.type,
-						arrCoef * arrowWidth,
-						arrCoef * arrowLength,
-						this, inverseTransform
-					);
-				}
-			}
+			const lastPath = unclosedPaths[unclosedPaths.length - 1];
+			drawArrowsOnPath(this, lastPath, this.Ln.tailEnd, false, params);
 		}
 
 		this.IsArrowsDrawing = false;
@@ -1870,7 +1762,8 @@ CShapeDrawer.prototype =
 			scaleY * scaleCoefY,
 			offsetX + alignOffsetX,
 			offsetY + alignOffsetY,
-			flipH, flipV
+			flipH, flipV,
+			this.UniFill.fill.canvas
 		);
 
 		graphics.m_bPenColorInit = false;
@@ -2725,6 +2618,104 @@ function ShapeToImageConverter(shape, pageIndex, sImageFormat)
     if (_canvas.isNativeGraphics === true)
         _canvas.Destroy();
     return _ret;
+}
+
+function getArrowDrawingParameters(drawer, bIsSaveToPdfMode) {
+	let graphics;
+	let fullTransform;
+	let lineSize;
+	let arrCoef;
+
+	if (bIsSaveToPdfMode) {
+		graphics = drawer.Graphics;
+		fullTransform = drawer.isPdf()
+			? graphics.GetTransform()
+			: graphics.m_oFullTransform;
+		lineSize = drawer.isPdf()
+			? graphics.GetLineWidth()
+			: graphics.m_oContext.lineWidth;
+		arrCoef = 1;
+	} else {
+		graphics = drawer.Graphics.isTrack()
+			? drawer.Graphics.Graphics
+			: drawer.Graphics;
+		fullTransform = graphics.m_oFullTransform;
+		lineSize = graphics.m_oContext.lineWidth;
+		arrCoef = drawer.isArrPix
+			? 1 * AscCommon.g_dKoef_pix_to_mm
+			: 1;
+	}
+
+	const inverseTransform = AscCommon.global_MatrixTransformer.Invert(fullTransform);
+
+	const dx = fullTransform.TransformPointX(1, 1) - fullTransform.TransformPointX(0, 0);
+	const dy = fullTransform.TransformPointY(1, 1) - fullTransform.TransformPointY(0, 0);
+	const transformScaleFactor = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2)) / Math.sqrt(2);
+
+	const penWidth = lineSize * transformScaleFactor;
+	const minArrowSize = 2.5 * AscCommon.g_dKoef_pix_to_mm * transformScaleFactor; // Value chosen empirically (2.5 pix)
+
+	return {
+		fullTransform: fullTransform,
+		inverseTransform: inverseTransform,
+		transformScaleFactor: transformScaleFactor,
+		penWidth: penWidth,
+		minArrowSize: minArrowSize,
+		arrCoef: arrCoef
+	};
+}
+
+function getUnclosedSubPaths(geometryPath) {
+	if (!geometryPath || !geometryPath.stroke) {
+		return [];
+	}
+	const subPaths = geometryPath.getContinuousSubpaths();
+	return subPaths.filter(function (path) {
+		return !path.isClosed(0);
+	});
+}
+
+function drawArrowsOnPath(drawer, geometryPath, arrowEnd, isHead, params) {
+	const arrowLength = arrowEnd.GetLen(params.penWidth, params.minArrowSize);
+	const arrowWidth = arrowEnd.GetWidth(params.penWidth, params.minArrowSize);
+
+	const unclosedSubPaths = getUnclosedSubPaths(geometryPath);
+
+	for (let i = 0; i < unclosedSubPaths.length; i++) {
+		const subPath = unclosedSubPaths[i];
+
+		const angle = isHead
+			? subPath.getHeadArrowAngle(arrowLength / params.transformScaleFactor)
+			: subPath.getTailArrowAngle(arrowLength / params.transformScaleFactor);
+
+		if (!AscFormat.isRealNumber(angle)) {
+			continue;
+		}
+
+		const tipPoint = isHead ? subPath.getStartPoint() : subPath.getEndPoint();
+		if (!tipPoint) {
+			continue;
+		}
+
+		const angleRadians = angle * Math.PI / 180;
+		const arrowEndPoint = {
+			x: params.fullTransform.TransformPointX(tipPoint.x, tipPoint.y),
+			y: params.fullTransform.TransformPointY(tipPoint.x, tipPoint.y)
+		};
+		const arrowStartPoint = {
+			x: params.fullTransform.TransformPointX(tipPoint.x - Math.cos(angleRadians), tipPoint.y - Math.sin(angleRadians)),
+			y: params.fullTransform.TransformPointY(tipPoint.x - Math.cos(angleRadians), tipPoint.y - Math.sin(angleRadians))
+		};
+
+		DrawLineEnd(
+			arrowEndPoint.x, arrowEndPoint.y,
+			arrowStartPoint.x, arrowStartPoint.y,
+			arrowEnd.type,
+			params.arrCoef * arrowWidth,
+			params.arrCoef * arrowLength,
+			drawer, params.inverseTransform
+		);
+	}
 }
 
 //------------------------------------------------------------export----------------------------------------------------

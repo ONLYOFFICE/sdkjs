@@ -110,6 +110,7 @@
 		this.document.private_UpdateCursorXY(true, true);
 		
 		// TODO: In some cases underline of composite input isn't automatically cleared
+		this.document.UpdateDrawingTextCache();
 		this.document.Redraw();
 		
 		this.inUse = false;

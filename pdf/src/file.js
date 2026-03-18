@@ -560,9 +560,6 @@ void main() {\n\
         
         this.cacheSelectionQuads([]);
 
-        this.updateCursorType(pageIndex, x, y);
-        this.viewer.drawingDocument.LockCursorType(this.viewer.id_main.style.cursor);
-
         this.onUpdateSelection();
         this.onUpdateOverlay();
     };
@@ -587,6 +584,7 @@ void main() {\n\
             sel.Glyph2 = ret.Glyph;
         }
         
+		this.updateCursorType(pageIndex, x, y);
         this.onUpdateOverlay();
     };
     CFile.prototype.updateCursorType = function(pageIndex, x, y) {
@@ -634,8 +632,6 @@ void main() {\n\
             sel.Glyph2 = ret.Glyph;
         }
 
-        this.viewer.drawingDocument.UnlockCursorType();
-
         oDoc.TextSelectTrackHandler.Update(true);
         this.onUpdateSelection();
         this.onUpdateOverlay();
@@ -668,7 +664,7 @@ void main() {\n\
                     let isTextSelection = !(_t.Selection.startPoint && _t.Selection.endPoint);
                     let aAnnots = oDoc.AddLinkAnnotByQuads(aSelQuads, isTextSelection);
                     if (aAnnots.length > 0) {
-                        Asc.editor.OnAfterAddLinkAnnot(aAnnots.map(function(annot) {
+                        Asc.editor.StartLinkAnnotCreation(aAnnots.map(function(annot) {
                             return annot.GetId();
                         }));
                     }
@@ -1063,6 +1059,7 @@ void main() {\n\
             sel.Page2 = pagesCount - 1;
             sel.Line2 = _numLine;
             sel.Glyph2 = -1;
+			sel.IsSelection = true;
         }
 
         this.onUpdateSelection();

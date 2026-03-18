@@ -453,6 +453,8 @@
 
 		// AscCommon.CColor
 		this.fillColor = new AscCommon.CColor(255, 255, 255);
+
+		this.isDarkMode = false;
 		return this;
 	}
 
@@ -785,6 +787,23 @@
 			this.ctx.setStrokeStyle(_r, _g, _b, _a);
 		}
 		return this;
+	};
+
+	DrawingContext.prototype.setDarkMode = function () {
+		this.isDarkMode = true;
+		if (this.setFillStyle_old)
+			return;
+		function _darkColor(_this, _func) {
+			return function (val) {
+				if (_this.isDarkMode) {
+					var c = AscCommon.darkModeCorrectColor2(val.getR(), val.getG(), val.getB());
+					return _func.call(_this, new AscCommon.CColor(c.R, c.G, c.B, val.getA()));
+				}
+				return _func.call(_this, val);
+			};
+		}
+		this.setFillStyle_old   = this.setFillStyle;   this.setFillStyle   = _darkColor(this, this.setFillStyle_old);
+		this.setStrokeStyle_old = this.setStrokeStyle; this.setStrokeStyle = _darkColor(this, this.setStrokeStyle_old);
 	};
 
 	DrawingContext.prototype.setLineWidth = function (width) {

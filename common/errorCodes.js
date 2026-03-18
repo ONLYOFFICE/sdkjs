@@ -138,6 +138,7 @@
 			Warning  : -101,
 			UpdateVersion : -102,
 			ForcedViewMode : -103,
+			FileNotAssembled : -104,
 
 			PrintMaxPagesCount : -110,
 
@@ -369,6 +370,8 @@
 	prot['UserDrop']                         = prot.UserDrop;
 	prot['Warning']                          = prot.Warning;
 	prot['UpdateVersion']                    = prot.UpdateVersion;
+	prot['ForcedViewMode']                   = prot.ForcedViewMode;
+	prot['FileNotAssembled']                 = prot.FileNotAssembled;
 	prot['PrintMaxPagesCount']               = prot.PrintMaxPagesCount;
 	prot['SessionAbsolute']                  = prot.SessionAbsolute;
 	prot['SessionIdle']                      = prot.SessionIdle;

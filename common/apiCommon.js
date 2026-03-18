@@ -371,6 +371,14 @@ function (window, undefined) {
 		if (this.isvisible == null) this.isvisible = false;
 		if (this.isForm === null) this.isForm = false;
 	};
+	asc_CSignatureLine.prototype.isEqualId = function (sId) {
+		return typeof sId === "string" && typeof this.id === "string"
+			&& this.id.toUpperCase() === sId.toUpperCase();
+	};
+	asc_CSignatureLine.prototype.isEqualGuid = function (sGuid) {
+		return typeof sGuid === "string" && typeof this.guid === "string"
+			&& this.guid.toUpperCase() === sGuid.toUpperCase();
+	};
 	asc_CSignatureLine.prototype.asc_getId = function () {
 		return this.id;
 	};
@@ -1525,6 +1533,9 @@ function (window, undefined) {
 	asc_ChartSettings.prototype.getErrorBarsValueType = function () {
 		return this.errorBarsValueType;
 	};
+	asc_ChartSettings.prototype.getTrendlineType = function () {
+		return this.trendlineType;
+	};
 	asc_ChartSettings.prototype.getType = function () {
 		if (this.chartSpace) {
 			return this.chartSpace.getChartType();
@@ -2472,7 +2483,9 @@ function (window, undefined) {
 		return this.Space;
 	};
 	asc_CTextBorder.prototype.asc_putSpace = function (v) {
-		this.Space = v;
+		// v in range 0..31 pt
+		const maxVal = 639 / 20 / 72 * 25.4 - 0.001;
+		this.Space = Math.min(maxVal, Math.max(0, v));
 	};
 	asc_CTextBorder.prototype.asc_getForSelectedCells = function () {
 		return this.ForSelectedCells;
@@ -4225,7 +4238,7 @@ function (window, undefined) {
 		this.format				= null;
 		this.validate			= null;
 
-		this.options			= null;
+		this.options			= [];
 		this.commitOnSelChange	= undefined;
 		this.editable			= undefined;
 		this.placeholder		= undefined;
@@ -4280,12 +4293,12 @@ function (window, undefined) {
 
 			if (Array.isArray(a)) {
 				if (!Array.isArray(b) || a[0] !== b[0] || a[1] !== b[1]) {
-					this.options = null;
+					this.options = [];
 					break;
 				}
 			}
 			else if (a !== b) {
-				this.options = null;
+				this.options = [];
 				break;
 			}
 		}
@@ -4308,7 +4321,7 @@ function (window, undefined) {
 	///// Listbox field
 	//////////////////////////////////////////////////////////////////
 	function asc_CListboxFieldProperty() {
-		this.options		 	= null;
+		this.options		 	= [];
 		this.commitOnSelChange	= undefined;
 		this.multipleSelection	= undefined;
 	}
@@ -4337,12 +4350,12 @@ function (window, undefined) {
 
 			if (Array.isArray(a)) {
 				if (!Array.isArray(b) || a[0] !== b[0] || a[1] !== b[1]) {
-					this.options = null;
+					this.options = [];
 					break;
 				}
 			}
 			else if (a !== b) {
-				this.options = null;
+				this.options = [];
 				break;
 			}
 		}
@@ -6877,6 +6890,7 @@ function (window, undefined) {
 			let y = (h - hMM) / 2;
 
 			if (window["NATIVE_EDITOR_ENJINE"]) {
+				renderer.ResetRotation();
 				renderer.put_brushTexture(this.imageBase64, 0);
 				renderer.put_BrushTextureAlpha((255 * this.transparent) >> 0);
 				renderer._e();
@@ -7853,6 +7867,9 @@ function (window, undefined) {
 	CButtonData.prototype.get_Properties = function() {
 		return this["pr"];
 	};
+	CButtonData.prototype.asc_getSignatureProps = function(api) {
+		return new Asc.CSignatureFormProps(api, this);
+	};
 
 	function CAscChartProp(obj)
 	{
@@ -8419,6 +8436,7 @@ function (window, undefined) {
 	prot["getLegendPos"] = prot.getLegendPos;
 	prot["getDataLabelsPos"] = prot.getDataLabelsPos;
 	prot["getErrorBarsValueType"] = prot.getErrorBarsValueType;
+	prot["getTrendlineType"] = prot.getTrendlineType;
 	prot["getHorGridLines"] = prot.getHorGridLines;
 	prot["putHorGridLines"] = prot.putHorGridLines;
 	prot["getVertGridLines"] = prot.getVertGridLines;
@@ -9527,6 +9545,7 @@ function (window, undefined) {
 	prot["get_Button"] = prot.get_Button;
 	prot["get_IsForm"] = prot.get_IsForm;
 	prot["get_Properties"] = prot.get_Properties;
+	prot["asc_getSignatureProps"] = prot.asc_getSignatureProps;
 
 	window["AscCommon"]["pix2mm"] = window["AscCommon"].pix2mm = function(pix)
 	{
