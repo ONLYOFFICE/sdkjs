@@ -10411,9 +10411,8 @@ background-repeat: no-repeat;\
 					oLogicDocument.UpdateSelection();
 
 					oResult = oContentControl.GetContentControlPr();
+					oLogicDocument.AddMacroData(AscDFH.historydescription_Document_AddBlockLevelContentControl, oResult.GetPlaceholderText());
 				}
-
-				oLogicDocument.AddMacroData(AscDFH.historydescription_Document_AddBlockLevelContentControl, oResult.PlaceholderText);
 				oLogicDocument.FinalizeAction();
 			}
 		}
@@ -10434,9 +10433,8 @@ background-repeat: no-repeat;\
 					oLogicDocument.UpdateSelection();
 
 					oResult = oContentControl.GetContentControlPr();
+					oLogicDocument.AddMacroData(AscDFH.historydescription_Document_AddInlineLevelContentControl, oResult.GetPlaceholderText());
 				}
-
-				oLogicDocument.AddMacroData(AscDFH.historydescription_Document_AddInlineLevelContentControl, oResult.PlaceholderText);
 				oLogicDocument.FinalizeAction();
 			}
 		}
