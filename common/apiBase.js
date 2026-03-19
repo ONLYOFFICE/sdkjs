@@ -538,7 +538,7 @@
 	};
 	baseEditorsApi.prototype.isLogPluginCommands = function()
 	{
-		return false;
+		return window.localStorage && window.localStorage.getItem("asc_plugin_commands_log") === "true";
 	};
 	baseEditorsApi.prototype.log = function(msg)
 	{
