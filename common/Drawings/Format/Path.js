@@ -2270,9 +2270,7 @@ function (window, undefined) {
 			if (command.id === AscFormat.moveTo || command.id === AscFormat.lineTo) {
 				point = { x: command.X, y: command.Y };
 			} else if (command.id === AscFormat.bezier4) {
-				point = searchFromEnd
-					? { x: command.X0, y: command.Y0 }
-					: { x: command.X2, y: command.Y2 };
+				point = { x: command.X2, y: command.Y2 };
 			}
 
 			if (point) {
