@@ -7508,8 +7508,8 @@ background-repeat: no-repeat;\
 		if (window.g_asc_plugins) {
 
 			window.g_asc_plugins.onPluginEvent('onSlideShowSlideChanged', {
-				slideIndex: slideIndex,
-				previousSlideIndex: previousSlideIndex
+				"slideIndex": slideIndex,
+				"previousSlideIndex": previousSlideIndex
 			});
 
 			const slidesCount = this.getCountPages();
