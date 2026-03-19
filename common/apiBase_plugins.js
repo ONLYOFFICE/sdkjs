@@ -1930,9 +1930,8 @@
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SetButtonDisabled.js
 	 */
 	Api.prototype['pluginMethod_SetButtonDisabled'] = function (index, isDisabled) {
-		isDisabled
-			? this.sendEvent('asc_onPluginSetButtonDisabled', index, true)
-			: this.sendEvent('asc_onPluginSetButtonEnabled', index, false);
+		const eventName = isDisabled ? 'asc_onPluginSetButtonDisabled' : 'asc_onPluginSetButtonEnabled';
+		this.sendEvent(eventName, index);
 	};
 
 	Api.prototype["pluginMethod_GetKeychainStorageInfo"] = function(keys)
