@@ -1386,20 +1386,22 @@
 
 	/**
 	 * Removes page by index from document
+	 * <note> You can't delete last page </note>
 	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} nPos - page position
+	 * @param {number} pos - page position
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/RemovePage.js
 	 */
-	ApiDocument.prototype.RemovePage = function(nPos) {
+	ApiDocument.prototype.RemovePage = function(pos) {
 		let oFile = this.Document.GetFile();
-		if (!oFile.pages[nPos]) {
-			return false;
+
+		pos = AscBuilder.GetNumberParameter(pos, null);
+		if (null == pos || pos < 0 || pos > oFile.pages.length - 1) {
+			AscBuilder.throwException("The pos parameter must be a valid position");
 		}
 
-		this.Document.RemovePage(nPos);
-		return true;
+		return !!this.Document.RemovePage(pos);
 	};
 
 	/**
