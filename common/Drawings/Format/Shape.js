@@ -5575,6 +5575,16 @@
 
 					graphics.ResetBaseTransform();
 					graphics.reset();
+					if (this.pen || this.brush) {
+						graphics.SaveGrState();
+						graphics.transform3(_transform);
+						const shapeDrawer = new AscCommon.CShapeDrawer();
+						shapeDrawer.fromShape2(this, graphics, this.calcGeometry);
+						shapeDrawer.draw(this.calcGeometry);
+						shapeDrawer.Clear();
+						graphics.RestoreGrState();
+					}
+
 				}
 			}
 		};
