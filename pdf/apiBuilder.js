@@ -1418,7 +1418,7 @@
 	 * Gets list of all fields in document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
-	 * @returns {ApiField}
+	 * @returns {ApiField[]}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetAllFields.js
 	 */
 	ApiDocument.prototype.GetAllFields = function() {
@@ -1585,7 +1585,7 @@
 	 * Gets page widgets
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
-	 * @returns {number}
+	 * @returns {ApiWidget[]}
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GetAllWidgets.js
 	 */
 	ApiPage.prototype.GetAllWidgets = function() {
@@ -1628,7 +1628,7 @@
 	 * Gets all annots on page
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
-	 * @returns {ApiBaseAnnotation}
+	 * @returns {ApiBaseAnnotation[]}
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GetAllAnnots.js
 	 */
 	ApiPage.prototype.GetAllAnnots = function() {
@@ -1948,7 +1948,7 @@
 	/**
 	 * Gets array with widgets of the current field.
 	 * @typeofeditors ["PDFE"]
-	 * @returns {?ApiWidget}
+	 * @returns {ApiWidget[]}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseField/Methods/GetAllWidgets.js
 	 */
 	ApiBaseField.prototype.GetAllWidgets = function() {
