@@ -8459,7 +8459,7 @@
 
 			const resizeWatermark = function () {
 				let docContentSize = AscFormat.GetContentOneStringSizes(docContent);
-
+				docContentSize.w = AscFormat.CTextBody.prototype.getContentWidth.call({ content: docContent }) + 0.1;
 				if (needResize) {
 					const sectionProps = doc.Get_SectionProps();
 					const maxWidth = sectionProps.get_W() - sectionProps.get_LeftMargin() - sectionProps.get_RightMargin();
@@ -8489,6 +8489,7 @@
 					docContent.SetApplyToAll(false);
 
 					docContentSize = AscFormat.GetContentOneStringSizes(docContent);
+					docContentSize.w = AscFormat.CTextBody.prototype.getContentWidth.call({ content: docContent }) + 0.1;
 				}
 
 				shape.spPr.xfrm.setExtX(docContentSize.w + 1);
