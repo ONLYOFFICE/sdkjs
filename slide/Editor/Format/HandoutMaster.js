@@ -90,7 +90,6 @@
 
 		this.Theme = null;
 		this.kind = AscFormat.TYPE_KIND.HANDOUT_MASTER;
-		this.m_oContentChanges = new AscCommon.CContentChanges();
 		this.setSlideSize(this.presentation.GetNotesWidthMM(), this.presentation.GetNotesHeightMM());
 		this.recalcInfo = {
 			recalculateBackground: true,

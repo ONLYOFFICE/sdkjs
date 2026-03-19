@@ -81,7 +81,7 @@
     function CNotes() {
         AscCommonSlide.SlideBase.call(this);
         this.showMasterPhAnim = null;
-        this.showMasterSp     = null;
+        this.showMasterSp     = true;
         this.slide            = null;
 
         this.Master      = null;
@@ -444,6 +444,12 @@
 			return;
 		}
 		redrawSlides.addRedrawSlide(this);
+	};
+	CNotes.prototype.recalcBody = function () {
+		const body = this.getBodyShape();
+		if (body) {
+			body.setRecalculateInfo();
+		}
 	};
 
 

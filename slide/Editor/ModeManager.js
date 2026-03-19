@@ -103,7 +103,7 @@
 	SlideModeManagerBase.prototype.getAllSlides = function() {
 		return [];
 	};
-	SlideModeManagerBase.prototype.updateViewMode = function() {
+	SlideModeManagerBase.prototype.updateViewMode = function(oldViewManager) {
 	};
 	SlideModeManagerBase.prototype.setSpecialPasteShowOptions = function(props) {
 	};
@@ -191,7 +191,7 @@
 	}
 
 	AscFormat.InitClassWithoutType(SlideModeManager, SlideModeManagerBase);
-	SlideModeManager.prototype.updateViewMode = function() {
+	SlideModeManager.prototype.updateViewMode = function(oldViewManager) {
 		const wordControl = this.getWordControl();
 		const presentation = this.getPresentation();
 		const api = this.getApi();
@@ -1676,6 +1676,29 @@
 			aIdx.push(slideIndex);
 		}
 		AscFormat.redrawSlide(presentation.notes[aIdx[nStartIdx]], presentation, aIdx, nStartIdx, 0, this.getAllSlides());
+	};
+	NoteModeManager.prototype.updateViewMode = function (oldViewManager) {
+		const wordControl = this.getWordControl();
+		const presentation = this.getPresentation();
+		const api = this.getApi();
+		let oSlide = oldViewManager.getCurrentSlide();
+		let nIdx = 0;
+		if (oSlide) {
+			let nCurIdx = this.getSlideIndex(oSlide.notes);
+			if (nCurIdx !== -1) {
+				nIdx = nCurIdx;
+			}
+		}
+		wordControl.GoToPage(nIdx);
+		for (let i = 0; i < presentation.notes.length; i += 1) {
+			presentation.notes[i].recalcBody();
+		}
+		presentation.Recalculate({Drawings: {All: true, Map: {}}});
+		wordControl.setNotesEnable(false);
+		wordControl.setAnimPaneEnable(false);
+		api.hideMediaControl();
+		api.asc_hideComments();
+		presentation.Document_UpdateInterfaceState();
 	};
 
 	function MasterNoteModeManager(api) {

@@ -6525,7 +6525,7 @@
 
 		CShape.prototype.hitInInnerArea = function (x, y) {
 			if ((this.getObjectType && this.getObjectType() === AscDFH.historyitem_type_ChartSpace || this.getObjectType() === AscDFH.historyitem_type_Title) ||
-				(this.brush != null && this.brush.isVisible() || this.blipFill || (this.isTextBox && this.isTextBox())) && this.checkHitToBounds(x, y)) {
+				(this.brush != null && this.brush.isVisible() || this.blipFill || (this.isTextBox && this.isTextBox()) || this.isSlideImagePlaceholder()) && this.checkHitToBounds(x, y)) {
 				var invert_transform = this.getInvertTransform();
 				if (!invert_transform) {
 					return false;

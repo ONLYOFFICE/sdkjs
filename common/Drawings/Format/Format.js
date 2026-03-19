@@ -6783,6 +6783,69 @@
 			}
 			return null;
 		};
+		CUniFill.prototype.getLnColor = function () {
+			let RGBA = null;
+			switch (this.fill.type)
+			{
+				case c_oAscFill.FILL_TYPE_BLIP:
+				{
+					RGBA = new AscFormat.CUniColor().RGBA;
+					break;
+				}
+				case c_oAscFill.FILL_TYPE_SOLID:
+				{
+					if(this.fill.color)
+					{
+						RGBA = this.fill.color.RGBA;
+					}
+					else
+					{
+						RGBA = new AscFormat.CUniColor().RGBA;
+					}
+					break;
+				}
+				case c_oAscFill.FILL_TYPE_GRAD:
+				{
+					var _c = this.fill.colors;
+					if (_c == 0)
+						RGBA = new AscFormat.CUniColor().RGBA;
+					else
+					{
+						if(this.fill.colors[0].color)
+						{
+							RGBA = this.fill.colors[0].color.RGBA;
+						}
+						else
+						{
+							RGBA = new AscFormat.CUniColor().RGBA;
+						}
+					}
+
+					break;
+				}
+				case c_oAscFill.FILL_TYPE_PATT:
+				{
+					if(this.fill.fgClr)
+					{
+						RGBA = this.fill.fgClr.RGBA;
+					}
+					else
+					{
+						RGBA = new AscFormat.CUniColor().RGBA;
+					}
+					break;
+				}
+				case c_oAscFill.FILL_TYPE_NOFILL:
+				{
+					break;
+				}
+				default:
+				{
+					break;
+				}
+			}
+			return RGBA;
+		};
 
 		function CBuBlip() {
 			CBaseNoIdObject.call(this);

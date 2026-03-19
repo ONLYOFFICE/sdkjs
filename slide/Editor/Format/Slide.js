@@ -186,8 +186,6 @@ function Slide(presentation, slideLayout, slideNum)
 
     this.writecomments = [];
 
-    this.m_oContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
-
     this.commentX = 0;
     this.commentY = 0;
 

@@ -53,7 +53,7 @@
 			recalculateBackground: true,
 			recalculateSpTree:     true
 		};
-
+		this.m_oContentChanges = new AscCommon.CContentChanges();
 		this.deleteLock = new PropLocker(this.Id);
 		this.backgroundLock = new PropLocker(this.Id);
 		this.timingLock = new PropLocker(this.Id);
@@ -373,7 +373,7 @@
 		}
 
 
-		if (_input_reduced_type == AscFormat.phType_sldNum || _input_reduced_type == AscFormat.phType_dt || _input_reduced_type == AscFormat.phType_ftr || _input_reduced_type == AscFormat.phType_hdr) {
+		if (_input_reduced_type == AscFormat.phType_sldNum || _input_reduced_type == AscFormat.phType_dt || _input_reduced_type == AscFormat.phType_ftr || _input_reduced_type == AscFormat.phType_hdr || _input_reduced_type == AscFormat.phType_sldImg) {
 			for (_shape_index = 0; _shape_index < _sp_tree.length; ++_shape_index) {
 				_glyph = _sp_tree[_shape_index];
 				if (_glyph.isPlaceholder()) {

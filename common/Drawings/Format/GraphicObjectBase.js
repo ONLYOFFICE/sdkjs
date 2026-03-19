@@ -1187,7 +1187,7 @@
 					oSpPr.setGeometry(geometry.createDuplicate());
 				}
 				if ((this.getObjectType() === AscDFH.historyitem_type_Shape || this.getObjectType() === AscDFH.historyitem_type_Control)
-					&& (!this.brush || !this.brush.isVisible())) {
+					&& (!this.brush || !this.brush.isVisible()) && !(this.isSlideImagePlaceholder && this.isSlideImagePlaceholder())) {
 					if (this.pen && this.pen.isVisible()) {
 						oSpPr.Fill = AscFormat.CreateNoFillUniFill();
 						oSpPr.ln = this.pen.createDuplicate();
@@ -3084,8 +3084,6 @@
 				break;
 			}
 			case AscFormat.phType_sldImg: {
-				aButtons.push(AscCommon.PlaceholderButtonType.Image);
-				aButtons.push(AscCommon.PlaceholderButtonType.ImageUrl);
 				break;
 			}
 			case AscFormat.phType_sldNum: {

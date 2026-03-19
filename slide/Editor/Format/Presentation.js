@@ -2199,7 +2199,6 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 			}
 			oCalcSlide.recalcText();
 			oCalcSlide.recalculate();
-			oCalcSlide.recalculateNotesShape();
 		}
 	} else {
 		let oCurNotesShape = null;

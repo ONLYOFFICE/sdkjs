@@ -120,7 +120,6 @@ function SlideLayout()
 
     this.Master = null;
 
-    this.m_oContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
     this.bounds = new AscFormat.CGraphicBounds(0.0, 0.0, 0.0, 0.0);
     this.recalcInfo =
     {

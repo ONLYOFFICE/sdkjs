@@ -9317,16 +9317,17 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asc_changePresentationViewMode = function(mode) {
 		if(this.presentationViewManager.type === mode) return;
+		const oldViewManager = this.presentationViewManager;
 		this.presentationViewManager = AscCommon.getViewModeByType(mode, this);
-		this.updateViewMode();
+		this.updateViewMode(oldViewManager);
 		this.sendEvent("asc_onChangeViewMode", mode);
 	};
-	asc_docs_api.prototype.updateViewMode = function() {
+	asc_docs_api.prototype.updateViewMode = function(oldViewManager) {
 		if(!this.WordControl) {
 			return;
 		}
 		window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide(true);
-		this.WordControl.UpdateViewMode();
+		this.WordControl.UpdateViewMode(oldViewManager);
 	};
 
 	asc_docs_api.prototype.asc_getExternalReferences = function() {

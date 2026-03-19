@@ -5177,8 +5177,8 @@
 		let oPlayerData = this.GetMediaPlayerData();
 		console.log(JSON.stringify(oPlayerData))
 	};
-	CEditorPage.prototype.UpdateViewMode = function () {
-		this.m_oApi.presentationViewManager.updateViewMode();
+	CEditorPage.prototype.UpdateViewMode = function (oldViewManager) {
+		this.m_oApi.presentationViewManager.updateViewMode(oldViewManager);
 	};
 	CEditorPage.prototype.getZoomValue = function() {
 		return this.m_nZoomValue / 100;

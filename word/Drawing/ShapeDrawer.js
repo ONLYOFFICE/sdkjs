@@ -1380,67 +1380,11 @@ CShapeDrawer.prototype =
         }
         else
         {
-            var _fill = this.Ln.Fill.fill;
-            switch (_fill.type)
-            {
-                case c_oAscFill.FILL_TYPE_BLIP:
-                {
-                    this.StrokeUniColor = new AscFormat.CUniColor().RGBA;
-                    break;
-                }
-                case c_oAscFill.FILL_TYPE_SOLID:
-                {
-                    if(_fill.color)
-                    {
-                        this.StrokeUniColor = _fill.color.RGBA;
-                    }
-                    else
-                    {
-                        this.StrokeUniColor = new AscFormat.CUniColor().RGBA;
-                    }
-                    break;
-                }
-                case c_oAscFill.FILL_TYPE_GRAD:
-                {
-                    var _c = _fill.colors;
-                    if (_c == 0)
-                        this.StrokeUniColor = new AscFormat.CUniColor().RGBA;
-                    else
-                    {
-                        if(_fill.colors[0].color)
-                        {
-                            this.StrokeUniColor = _fill.colors[0].color.RGBA;
-                        }
-                        else
-                        {
-                            this.StrokeUniColor = new AscFormat.CUniColor().RGBA;
-                        }
-                    }
-
-                    break;
-                }
-                case c_oAscFill.FILL_TYPE_PATT:
-                {
-                    if(_fill.fgClr)
-                    {
-                        this.StrokeUniColor = _fill.fgClr.RGBA;
-                    }
-                    else
-                    {
-                        this.StrokeUniColor = new AscFormat.CUniColor().RGBA;
-                    }
-                    break;
-                }
-                case c_oAscFill.FILL_TYPE_NOFILL:
-                {
-                    this.bIsNoStrokeAttack = true;
-                    break;
-                }
-                default:
-                {
-                    this.bIsNoStrokeAttack = true;
-                    break;
-                }
+            const RGBA = this.Ln.Fill.getLnColor();
+            if (RGBA) {
+                this.StrokeUniColor = RGBA;
+            } else {
+                this.bIsNoStrokeAttack = true;
             }
 
             this.StrokeWidth = (this.Ln.w == null) ? 12700 : parseInt(this.Ln.w);

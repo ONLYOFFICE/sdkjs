@@ -91,7 +91,6 @@
 
 		this.Theme = AscFormat.GenerateDefaultTheme();
 		this.kind = AscFormat.TYPE_KIND.NOTES_MASTER;
-		this.m_oContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
 		this.setSlideSize(this.presentation.GetNotesWidthMM(), this.presentation.GetNotesHeightMM());
 	}
 
