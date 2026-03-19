@@ -768,6 +768,12 @@
 	{
 		return this.copyEnabled;
 	};
+	baseEditorsApi.prototype.asc_setPutImageToClipboard = function(bPutImage)
+	{
+		if (AscCommon.g_clipboardBase) {
+			AscCommon.g_clipboardBase.bPutImage = !!bPutImage;
+		}
+	};
 	baseEditorsApi.prototype.sync_CanCopyCutCallback = function (bCanCopyCut, bCanCut)
 	{
 		this.sendEvent("asc_onCanCopyCut", bCanCopyCut, bCanCut);
@@ -6346,6 +6352,8 @@
 	prot["asc_removeCustomProperty"] = prot.asc_removeCustomProperty;
 	
 	prot["asc_setPdfViewer"] = prot.asc_setPdfViewer;
+
+	prot["asc_setPutImageToClipboard"] = prot.asc_setPutImageToClipboard;
 
 	prot["asc_mergeSelectedShapes"] = prot.asc_mergeSelectedShapes;
 

@@ -116,6 +116,8 @@
 		this.needClearBuffer = false;
 
 		this.canUseNewCopy = null;
+
+		this.bPutImage = true;
 	}
 
 	CClipboardBase.prototype =
@@ -1074,7 +1076,8 @@
 				{
 					this.bCut = isCut;
 
-					this.Api.asc_CheckCopy(copy_data, c_oAscClipboardDataFormat.Text | c_oAscClipboardDataFormat.Html | c_oAscClipboardDataFormat.Internal | c_oAscClipboardDataFormat.Image);
+					let nImageFormat = this.bPutImage ? c_oAscClipboardDataFormat.Image : 0;
+					this.Api.asc_CheckCopy(copy_data, c_oAscClipboardDataFormat.Text | c_oAscClipboardDataFormat.Html | c_oAscClipboardDataFormat.Internal | nImageFormat);
 
 					let clipboardData = {};
 					if (copy_data.data[c_oAscClipboardDataFormat.Text]) {
