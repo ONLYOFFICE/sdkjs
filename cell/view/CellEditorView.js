@@ -426,7 +426,7 @@ function (window, undefined) {
 			var fr = fragments[i];
 			var text = fr.getFragmentText ? fr.getFragmentText() : (fr.text || '');
 			if (!text) continue;
-			var explicitColor = fr.format && fr.format.c;
+			var explicitColor = fr.isFormulaRange && fr.format && fr.format.c;
 			var cssColor = explicitColor ? this._colorToCSS(explicitColor) : '';
 			var escaped = text
 				.replace(/&/g, '&amp;')
@@ -442,7 +442,7 @@ function (window, undefined) {
 	CellEditor.prototype._setInputFragments = function (fragments) {
 		if (!this.input) return;
 		if (this._isContentEditable()) {
-			if (this.isTopLineActive) {
+			if (this.isTopLineActive && this.isFormula()) {
 				this.input.innerHTML = this._buildInputHTML(fragments);
 			} else {
 				this.input.textContent = AscCommonExcel.getFragmentsText(fragments);
@@ -1381,6 +1381,7 @@ function (window, undefined) {
 					if (first && last) {
 						for (k = first.index; k <= last.index; ++k) {
 							fragments[k].format.setColor(AscCommonExcel.c_oAscFormulaRangeBorderColor[colorIndex % lengthColors]);
+							fragments[k].isFormulaRange = true;
 						}
 					}
 				}
@@ -3395,13 +3396,10 @@ function (window, undefined) {
 		AscFonts.FontPickerByCharacter.checkText(checkedText, this, function () {
 			t.loadFonts = false;
 			t.skipTLUpdate = true;
-			var length = t.replaceText(0, t.textRender.getEndOfText(), t._getInputValue());
+			t.replaceText(0, t.textRender.getEndOfText(), t._getInputValue());
 			t._updateCursorByTopLine();
-
-			if (length !== t._getInputValue().length) {
-				t._setInputFragments(t._getRenderFragments());
-				t._updateTopLineCurPos();
-			}
+			t._setInputFragments(t._getRenderFragments());
+			t._updateTopLineCurPos();
 		});
 		return true;
 	};

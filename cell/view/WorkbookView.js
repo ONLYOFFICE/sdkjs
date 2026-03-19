@@ -1552,6 +1552,9 @@
 	}
   	this.keepType = false;
     if (this.selectionDialogMode) {
+      if (this.isFormulaEditMode && this.cellEditor && this.cellEditor.isTopLineActive) {
+        this.cellEditor.restoreFocus();
+      }
       return;
     }
     var formatPainterState = this.Api.getFormatPainterState();
