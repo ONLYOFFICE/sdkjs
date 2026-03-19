@@ -5557,6 +5557,36 @@
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
+	// ApiLinkAnnotation
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a link annotation.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 * @extends {ApiBaseMarkupAnnotation}
+	 */
+	function ApiLinkAnnotation(oAnnot) {
+		ApiBaseMarkupAnnotation.call(this, oAnnot);
+	}
+
+	ApiLinkAnnotation.prototype = Object.create(ApiBaseMarkupAnnotation.prototype);
+	ApiLinkAnnotation.prototype.constructor = ApiLinkAnnotation;
+
+	/**
+	 * Returns a type of the ApiLinkAnnotation class.
+	 * @memberof ApiLinkAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"linkAnnot"}
+	 * @see office-js-api/Examples/{Editor}/ApiLinkAnnotation/Methods/GetClassType.js
+	 */
+	ApiLinkAnnotation.prototype.GetClassType = function() {
+		return "linkAnnot";
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
 	// ApiRichContent
 	//
 	//------------------------------------------------------------------------------------------------------------------
@@ -8042,6 +8072,9 @@
 			case AscPDF.ANNOTATIONS_TYPES.Redact: {
 				return new ApiRedactAnnotation(annot);
 			}
+			case AscPDF.ANNOTATIONS_TYPES.Link: {
+				return new ApiLinkAnnotation(annot);
+			}
 		}
 	}
 
@@ -8556,6 +8589,9 @@
 
 	// ApiRedactAnnotation
 	ApiRedactAnnotation.prototype["GetClassType"]			= ApiRedactAnnotation.prototype.GetClassType;
+	
+	// ApiLinkAnnotation
+	ApiLinkAnnotation.prototype["GetClassType"]				= ApiLinkAnnotation.prototype.GetClassType;
 
 	// ApiRichContent
 	ApiRichContent.prototype["GetClassType"]				= ApiRichContent.prototype.GetClassType;
