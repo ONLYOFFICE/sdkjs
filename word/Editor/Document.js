@@ -12754,7 +12754,7 @@ CDocument.prototype.SetWatermarkPropsAction = function(oProps)
 		if (watermark.GraphicObj.selected)
 			this.RemoveSelection(true);
 		watermark.Remove_FromDocument(false);
-	});
+	}, this);
 	
 	if (Asc.c_oAscWatermarkType.None === oProps.get_Type())
 		return null;
