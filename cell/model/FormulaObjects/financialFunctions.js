@@ -69,18 +69,18 @@ function (window, undefined) {
 		return !((1 + rate) < 0 && (nper - Math.trunc(nper)) !== 0);
 	}
 
-	// аннуитетный фактор - во сколько раз суммарные платежи больше одного платежа
+	// annuity factor - how many times the total payments are greater than one payment
 	function annuityCertainPvFactor(rate, nper, period) {
 		if (rate === 0) return nper;
 		return (1 + rate * period) * (1 - pvFactor(rate, nper)) / rate;
 	}
 
-	// коэффициент дисконтирования
+	// discount factor
 	function fvFactor(rate, nper) {
 		return (1 + rate) ** -nper;
 	}
 
-	// коэффициент наращения
+	// growth factor
 	function pvFactor(rate, nper) {
 		return 1 / fvFactor(rate, nper);
 	}
@@ -104,7 +104,7 @@ function (window, undefined) {
 	function getPMTFinancial(rate, nper, pv, fv, flag) {
 		/*
 			raisable - (1+rate)^nper 
-			annuityCertainPvFactor - проверяем и если получаем 0, то возвращаем ошибку из-за невозможности поделить на 0 в дальнейшем
+			annuityCertainPvFactor - check and if we get 0, then we return an error due to the impossibility of dividing by 0 in the future
 		*/
 		if (!raisable(rate, nper) || 
 			!(rate !== -1 || (rate === -1 && nper > 0 && flag === 0)) ||
@@ -2991,6 +2991,17 @@ function (window, undefined) {
 	cIPMT.prototype.argumentsMax = 6;
 	cIPMT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cIPMT.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number, argType.number, argType.number];
+	/**
+	 * IPMT function
+	 *
+	 * @param {number} Rate - The interest rate for the loan.
+	 * @param {number} Per - The period for which you want to find the interest and must be in the range 1 to nper.
+	 * @param {number} Nper - The total number of payment periods in an annuity.
+	 * @param {number} PV - The present value, or the lump-sum amount that a series of future payments is worth right now.
+	 * @param {number} FV(optional) - The future value, or a cash balance you want to attain after the last payment is made. If fv is omitted, it is assumed to be 0
+	 * @param {number} Type(optional) - The number 0 (zero) or 1 and indicates when payments are due.
+	 * @returns {number} IPMT value
+	 */
 	cIPMT.prototype.Calculate = function (arg) {
 		const PMT_CURRENCY_FORMAT = "[$$-409]#,##0.00_);[Red]\([$$-409]#,##0.00\)";
 		let rate = arg[0], per = arg[1], nper = arg[2], pv = arg[3], fv = arg[4] ? arg[4] : new cNumber(0),
@@ -4410,6 +4421,16 @@ function (window, undefined) {
 	cPMT.prototype.argumentsMax = 5;
 	cPMT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cPMT.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number, argType.number];
+	/**
+	 * PMT function
+	 *
+	 * @param {number} Rate - The interest rate for the loan.
+	 * @param {number} Nper - The total number of payments for the loan.
+	 * @param {number} PV - The present value, or the total amount that a series of future payments is worth now; also known as the principal.
+	 * @param {number} FV(optional) - The future value, or a cash balance you want to attain after the last payment is made. If fv is omitted, it is assumed to be 0 (zero), that is, the future value of a loan is 0.
+	 * @param {number} Type(optional) - The number 0 (zero) or 1 and indicates when payments are due.
+	 * @returns {number} PMT value
+	 */
 	cPMT.prototype.Calculate = function (arg) {
 		const PMT_CURRENCY_FORMAT = "[$$-409]#,##0.00_);[Red]\([$$-409]#,##0.00\)";
 		let rate = arg[0], nper = arg[1], pv = arg[2], fv = arg[3] ? arg[3] : new cNumber(0),
@@ -4511,6 +4532,17 @@ function (window, undefined) {
 	cPPMT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cPPMT.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number, argType.number,
 		argType.number];
+	/**
+	 * PPMT function 
+	 *
+	 * @param {number} Rate - The interest rate per period.
+	 * @param {number} Per - Specifies the period and must be in the range 1 to nper.
+	 * @param {number} Nper - The total number of payment periods in an annuity.
+	 * @param {number} PV - The present value, or the lump-sum amount that a series of future payments is worth right now.
+	 * @param {number} FV(optional) - The future value, or a cash balance you want to attain after the last payment is made. If fv is omitted, it is assumed to be 0
+	 * @param {number} Type(optional) - The number 0 (zero) or 1 and indicates when payments are due.
+	 * @returns {number} Returns the payment on the principal for a given period for an investment based on periodic, constant payments and a constant interest rate.
+	 */
 	cPPMT.prototype.Calculate = function (arg) {
 		let rate = arg[0], per = arg[1], nper = arg[2], pv = arg[3], fv = arg[4] ? arg[4] : new cNumber(0),
 			type = arg[5] ? arg[5] : new cNumber(0);
