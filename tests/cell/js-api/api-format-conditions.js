@@ -297,10 +297,11 @@ $(function () {
             assert.strictEqual(db.PercentMax, 95, "PercentMax set/get");
 
             // CFVO types and values
+            //SetMaxPointValue/SetMinPointValue -> string | number
             db.SetMinPointType("xlConditionValueNumber");
             db.SetMinPointValue("10");
             db.SetMaxPointType("xlConditionValueNumber");
-            db.SetMaxPointValue("90");
+            db.SetMaxPointValue(90);
             assert.strictEqual(db.GetMinPointType(), "xlConditionValueNumber", "Min type set");
             assert.strictEqual(db.GetMaxPointType(), "xlConditionValueNumber", "Max type set");
 
