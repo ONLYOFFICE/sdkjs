@@ -4987,19 +4987,21 @@ background-repeat: no-repeat;\
 			oLogicDocument.FinalizeAction();
         }
     };
-
-    asc_docs_api.prototype.asc_addHorizontalRule = function() {
-        let oLogicDocument = this.WordControl.m_oLogicDocument;
-        if (!oLogicDocument)
-            return;
-
-        if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Document_Content_Add))
-        {
-            oLogicDocument.StartAction(AscDFH.historydescription_Document_InsertHorizontalRule);
-            oLogicDocument.AddHorizontalRule();
-            oLogicDocument.FinalizeAction();
-        }
-    };
+	
+	asc_docs_api.prototype.asc_addHorizontalRule = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+		
+		if (logicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+			return false;
+		
+		logicDocument.StartAction(AscDFH.historydescription_Document_InsertHorizontalRule);
+		let result = logicDocument.AddHorizontalRule();
+		logicDocument.FinalizeAction();
+		return result;
+	};
 
     asc_docs_api.prototype.asc_getAllSignatures = function(){
     	if (!this.WordControl.m_oLogicDocument)
