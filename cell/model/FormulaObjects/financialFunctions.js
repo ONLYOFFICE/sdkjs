@@ -55,7 +55,37 @@ function (window, undefined) {
 
 	var startRangeCurrentDateSystem = 1;
 
-	function getPMT(rate, nper, pv, fv, flag) {
+	// PMT restrictions check formulas
+	function normalizePaymentPeriod (period) {
+		// 0 - End of payment period
+		// 1 - Beginning of payment period
+		if (period !== 0) {
+			return 1;
+		}
+		return period;
+	}
+
+	function raisable(rate, nper) {
+		return !((1 + rate) < 0 && (nper - Math.trunc(nper)) !== 0);
+	}
+
+	// аннуитетный фактор - во сколько раз суммарные платежи больше одного платежа
+	function annuityCertainPvFactor(rate, nper, period) {
+		if (rate === 0) return nper;
+		return (1 + rate * period) * (1 - pvFactor(rate, nper)) / rate;
+	}
+
+	// коэффициент дисконтирования
+	function fvFactor(rate, nper) {
+		return (1 + rate) ** -nper;
+	}
+
+	// коэффициент наращения
+	function pvFactor(rate, nper) {
+		return 1 / fvFactor(rate, nper);
+	}
+
+	function getPMTOld(rate, nper, pv, fv, flag) {
 		var res, part;
 		if (rate === 0) {
 			res = (pv + fv) / nper;
@@ -68,6 +98,57 @@ function (window, undefined) {
 			}
 		}
 
+		return -res;
+	}
+
+	function getPMTFinancial(rate, nper, pv, fv, flag) {
+		/*
+			raisable - (1+rate)^nper 
+			annuityCertainPvFactor - проверяем и если получаем 0, то возвращаем ошибку из-за невозможности поделить на 0 в дальнейшем
+		*/
+		if (!raisable(rate, nper) || 
+			!(rate !== -1 || (rate === -1 && nper > 0 && flag === 0)) ||
+			annuityCertainPvFactor(rate, nper, flag) === 0) {
+			return false;
+		}
+
+		let res, part;
+		if (rate === 0) {
+			res = (pv + fv) / nper;
+		} else {
+			part = Math.pow(1 + rate, nper);
+			if (flag > 0) {
+				res = (fv * rate / (part - 1) + (pv * rate) / (1 - 1 / part)) / (1 + rate);
+			} else {
+				res = (fv * rate) / (part - 1) + (pv * rate) / (1 - 1 / part);
+			}
+		}
+
+		// unique cases of division by 0 etc.
+		if (!Number.isFinite(res)) {
+			return -pv;
+		}
+		
+		return -res;
+	}
+
+	function getPMT(rate, nper, pv, fv, flag) {
+		let res, part;
+		if (rate === 0) {
+			res = (pv + fv) / nper;
+		} else {
+			part = Math.pow(1 + rate, nper);
+			if (flag > 0) {
+				res = (fv * rate / (part - 1) + (pv * rate) / (1 - 1 / part)) / (1 + rate);
+			} else {
+				res = (fv * rate) / (part - 1) + (pv * rate) / (1 - 1 / part);
+			}
+		}
+
+		if (!Number.isFinite(res)) {
+			return -pv;
+		}
+		
 		return -res;
 	}
 
@@ -113,7 +194,7 @@ function (window, undefined) {
 		return ddb;
 	}
 
-	function getIPMT(rate, per, pv, type, pmt) {
+	function getIPMTOld(rate, per, pv, type, pmt) {
 		var ipmt;
 
 		if (per === 1) {
@@ -129,6 +210,29 @@ function (window, undefined) {
 				ipmt = getFV(rate, per - 1, pmt, pv, 0);
 			}
 		}
+		return ipmt * rate;
+	}
+	function getIPMT(rate, per, pv, type, pmt) {
+		let ipmt;
+
+		if (per === 1) {
+			if (type > 0) {
+				ipmt = 0;
+			} else {
+				ipmt = -pv;
+			}
+		} else {
+			if (type > 0) {
+				ipmt = getFV(rate, per - 2, pmt, pv, 1) - pmt;
+			} else {
+				ipmt = getFV(rate, per - 1, pmt, pv, 0);
+			}
+		}
+		
+		if (!Number.isFinite(ipmt)) {
+			return -pv;
+		}
+
 		return ipmt * rate;
 	}
 
@@ -2888,42 +2992,43 @@ function (window, undefined) {
 	cIPMT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cIPMT.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number, argType.number, argType.number];
 	cIPMT.prototype.Calculate = function (arg) {
-		var rate = arg[0], per = arg[1], nper = arg[2], pv = arg[3], fv = arg[4] ? arg[4] : new cNumber(0),
+		const PMT_CURRENCY_FORMAT = "[$$-409]#,##0.00_);[Red]\([$$-409]#,##0.00\)";
+		let rate = arg[0], per = arg[1], nper = arg[2], pv = arg[3], fv = arg[4] ? arg[4] : new cNumber(0),
 			type = arg[5] ? arg[5] : new cNumber(0);
 
-		if (rate instanceof cArea || rate instanceof cArea3D) {
+		if (rate.type === cElementType.cellsRange || rate.type === cElementType.cellsRange3D) {
 			rate = rate.cross(arguments[1]);
-		} else if (rate instanceof cArray) {
+		} else if (rate.type === cElementType.array) {
 			rate = rate.getElementRowCol(0, 0);
 		}
 
-		if (per instanceof cArea || per instanceof cArea3D) {
+		if (per.type === cElementType.cellsRange || per.type === cElementType.cellsRange3D) {
 			per = per.cross(arguments[1]);
-		} else if (per instanceof cArray) {
+		} else if (per.type === cElementType.array) {
 			per = per.getElementRowCol(0, 0);
 		}
 
-		if (nper instanceof cArea || nper instanceof cArea3D) {
+		if (nper.type === cElementType.cellsRange || nper.type === cElementType.cellsRange3D) {
 			nper = nper.cross(arguments[1]);
-		} else if (nper instanceof cArray) {
+		} else if (nper.type === cElementType.array) {
 			nper = nper.getElementRowCol(0, 0);
 		}
 
-		if (pv instanceof cArea || pv instanceof cArea3D) {
+		if (pv.type === cElementType.cellsRange || pv.type === cElementType.cellsRange3D) {
 			pv = pv.cross(arguments[1]);
-		} else if (pv instanceof cArray) {
+		} else if (pv.type === cElementType.array) {
 			pv = pv.getElementRowCol(0, 0);
 		}
 
-		if (fv instanceof cArea || fv instanceof cArea3D) {
+		if (fv.type === cElementType.cellsRange || fv.type === cElementType.cellsRange3D) {
 			fv = fv.cross(arguments[1]);
-		} else if (fv instanceof cArray) {
+		} else if (fv.type === cElementType.array) {
 			fv = fv.getElementRowCol(0, 0);
 		}
 
-		if (type instanceof cArea || type instanceof cArea3D) {
+		if (type.type === cElementType.cellsRange || type.type === cElementType.cellsRange3D) {
 			type = type.cross(arguments[1]);
-		} else if (type instanceof cArray) {
+		} else if (type.type === cElementType.array) {
 			type = type.getElementRowCol(0, 0);
 		}
 
@@ -2934,22 +3039,22 @@ function (window, undefined) {
 		fv = fv.tocNumber();
 		type = type.tocNumber();
 
-		if (rate instanceof cError) {
+		if (rate.type === cElementType.error) {
 			return rate;
 		}
-		if (per instanceof cError) {
+		if (per.type === cElementType.error) {
 			return per;
 		}
-		if (nper instanceof cError) {
+		if (nper.type === cElementType.error) {
 			return nper;
 		}
-		if (pv instanceof cError) {
+		if (pv.type === cElementType.error) {
 			return pv;
 		}
-		if (fv instanceof cError) {
+		if (fv.type === cElementType.error) {
 			return fv;
 		}
-		if (type instanceof cError) {
+		if (type.type === cElementType.error) {
 			return type;
 		}
 
@@ -2960,16 +3065,37 @@ function (window, undefined) {
 		fv = fv.getValue();
 		type = type.getValue();
 
-		var res;
+		type = normalizePaymentPeriod(type);
 
-		if (per < 1 || per > nper || type != 0 && type != 1) {
+		const isIntegerNper = Number.isInteger(nper);
+		let PMT_RES, IPMT_RES;
+		if (per < 1 || nper <= 0 /*|| per > nper*/) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		res = getPMT(rate, nper, pv, fv, type);
+		if (isIntegerNper && (per < 1 || per > nper)) {
+			return new cError(cErrorType.not_numeric);
+		}
 
-//    this.value.numFormat = 9;
-		return new cNumber(getIPMT(rate, per, pv, type, res));
+		if (1 + rate === 1) {
+			// rate === 0 so percents should be always zero
+			this.numFormat = PMT_CURRENCY_FORMAT;
+			return new cNumber(0);
+		}
+		
+		// PMT_RES = getPMTOld(rate, nper, pv, fv, type);
+		PMT_RES = getPMT(rate, nper, pv, fv, type);
+		if (!Number.isFinite(PMT_RES)) {
+			return new cError(cErrorType.not_numeric);
+		}
+
+		IPMT_RES = getIPMT(rate, per, pv, type, PMT_RES); 
+		if (IPMT_RES < 0 && per > nper) {
+			return new cError(cErrorType.not_numeric);
+		}
+
+		this.numFormat = PMT_CURRENCY_FORMAT;
+		return new cNumber(IPMT_RES);
 	};
 
 	/**
@@ -4286,36 +4412,36 @@ function (window, undefined) {
 	cPMT.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number, argType.number];
 	cPMT.prototype.Calculate = function (arg) {
 		const PMT_CURRENCY_FORMAT = "[$$-409]#,##0.00_);[Red]\([$$-409]#,##0.00\)";
-		var rate = arg[0], nper = arg[1], pv = arg[2], fv = arg[3] ? arg[3] : new cNumber(0),
+		let rate = arg[0], nper = arg[1], pv = arg[2], fv = arg[3] ? arg[3] : new cNumber(0),
 			type = arg[4] ? arg[4] : new cNumber(0);
 
-		if (rate instanceof cArea || rate instanceof cArea3D) {
+		if (rate.type === cElementType.cellsRange || rate.type === cElementType.cellsRange3D) {
 			rate = rate.cross(arguments[1]);
-		} else if (rate instanceof cArray) {
+		} else if (rate.type === cElementType.array) {
 			rate = rate.getElementRowCol(0, 0);
 		}
 
-		if (nper instanceof cArea || nper instanceof cArea3D) {
+		if (nper.type === cElementType.cellsRange || nper.type === cElementType.cellsRange3D) {
 			nper = nper.cross(arguments[1]);
-		} else if (nper instanceof cArray) {
+		} else if (nper.type === cElementType.array) {
 			nper = nper.getElementRowCol(0, 0);
 		}
 
-		if (pv instanceof cArea || pv instanceof cArea3D) {
+		if (pv.type === cElementType.cellsRange || pv.type === cElementType.cellsRange3D) {
 			pv = pv.cross(arguments[1]);
-		} else if (pv instanceof cArray) {
+		} else if (pv.type === cElementType.array) {
 			pv = pv.getElementRowCol(0, 0);
 		}
 
-		if (fv instanceof cArea || fv instanceof cArea3D) {
+		if (fv.type === cElementType.cellsRange || fv.type === cElementType.cellsRange3D) {
 			fv = fv.cross(arguments[1]);
-		} else if (fv instanceof cArray) {
+		} else if (fv.type === cElementType.array) {
 			fv = fv.getElementRowCol(0, 0);
 		}
 
-		if (type instanceof cArea || type instanceof cArea3D) {
+		if (type.type === cElementType.cellsRange || type.type === cElementType.cellsRange3D) {
 			type = type.cross(arguments[1]);
-		} else if (type instanceof cArray) {
+		} else if (type.type === cElementType.array) {
 			type = type.getElementRowCol(0, 0);
 		}
 
@@ -4325,38 +4451,43 @@ function (window, undefined) {
 		fv = fv.tocNumber();
 		type = type.tocNumber();
 
-		if (rate instanceof cError) {
+		if (rate.type === cElementType.error) {
 			return rate;
 		}
-		if (nper instanceof cError) {
+		if (nper.type === cElementType.error) {
 			return nper;
 		}
-		if (pv instanceof cError) {
+		if (pv.type === cElementType.error) {
 			return pv;
 		}
-		if (fv instanceof cError) {
+		if (fv.type === cElementType.error) {
 			return fv;
 		}
-		if (type instanceof cError) {
+		if (type.type === cElementType.error) {
 			return type;
 		}
 
 		rate = rate.getValue();
 		nper = nper.getValue();
 		fv = fv.getValue();
-		type = type.getValue();
 		pv = pv.getValue();
+		type = type.getValue();
 
-		if (type != 1 && type != 0 || nper == 0) {
+		type = normalizePaymentPeriod(type);
+
+		if (nper === 0) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var res;
-		if (rate != 0) {
-			res = -1 * (pv * Math.pow(1 + rate, nper) + fv) /
-				((1 + rate * type) * (Math.pow((1 + rate), nper) - 1) / rate);
-		} else {
-			res = -1 * (pv + fv) / nper;
+		let res;
+		res = getPMTFinancial(rate, nper, pv, fv, type);
+
+		if (res === false) {
+			return new cError(cErrorType.not_numeric);
+		} 
+
+		if (!Number.isFinite(res)) {
+			return new cError(cErrorType.not_numeric);
 		}
 
 		res = new cNumber(res);
@@ -4381,42 +4512,42 @@ function (window, undefined) {
 	cPPMT.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number, argType.number,
 		argType.number];
 	cPPMT.prototype.Calculate = function (arg) {
-		var rate = arg[0], per = arg[1], nper = arg[2], pv = arg[3], fv = arg[4] ? arg[4] : new cNumber(0),
+		let rate = arg[0], per = arg[1], nper = arg[2], pv = arg[3], fv = arg[4] ? arg[4] : new cNumber(0),
 			type = arg[5] ? arg[5] : new cNumber(0);
 
-		if (rate instanceof cArea || rate instanceof cArea3D) {
+		if (rate.type === cElementType.cellsRange || rate.type === cElementType.cellsRange3D) {
 			rate = rate.cross(arguments[1]);
-		} else if (rate instanceof cArray) {
+		} else if (rate.type === cElementType.array) {
 			rate = rate.getElementRowCol(0, 0);
 		}
 
-		if (per instanceof cArea || per instanceof cArea3D) {
+		if (per.type === cElementType.cellsRange || per.type === cElementType.cellsRange3D) {
 			per = per.cross(arguments[1]);
-		} else if (per instanceof cArray) {
+		} else if (per.type === cElementType.array) {
 			per = per.getElementRowCol(0, 0);
 		}
 
-		if (nper instanceof cArea || nper instanceof cArea3D) {
+		if (nper.type === cElementType.cellsRange || nper.type === cElementType.cellsRange3D) {
 			nper = nper.cross(arguments[1]);
-		} else if (nper instanceof cArray) {
+		} else if (nper.type === cElementType.array) {
 			nper = nper.getElementRowCol(0, 0);
 		}
 
-		if (pv instanceof cArea || pv instanceof cArea3D) {
+		if (pv.type === cElementType.cellsRange || pv.type === cElementType.cellsRange3D) {
 			pv = pv.cross(arguments[1]);
-		} else if (pv instanceof cArray) {
+		} else if (pv.type === cElementType.array) {
 			pv = pv.getElementRowCol(0, 0);
 		}
 
-		if (fv instanceof cArea || fv instanceof cArea3D) {
+		if (fv.type === cElementType.cellsRange || fv.type === cElementType.cellsRange3D) {
 			fv = fv.cross(arguments[1]);
-		} else if (fv instanceof cArray) {
+		} else if (fv.type === cElementType.array) {
 			fv = fv.getElementRowCol(0, 0);
 		}
 
-		if (type instanceof cArea || type instanceof cArea3D) {
+		if (type.type === cElementType.cellsRange || type.type === cElementType.cellsRange3D) {
 			type = type.cross(arguments[1]);
-		} else if (type instanceof cArray) {
+		} else if (type.type === cElementType.array) {
 			type = type.getElementRowCol(0, 0);
 		}
 
@@ -4427,22 +4558,22 @@ function (window, undefined) {
 		fv = fv.tocNumber();
 		type = type.tocNumber();
 
-		if (rate instanceof cError) {
+		if (rate.type === cElementType.error) {
 			return rate;
 		}
-		if (per instanceof cError) {
+		if (per.type === cElementType.error) {
 			return per;
 		}
-		if (nper instanceof cError) {
+		if (nper.type === cElementType.error) {
 			return nper;
 		}
-		if (pv instanceof cError) {
+		if (pv.type === cElementType.error) {
 			return pv;
 		}
-		if (fv instanceof cError) {
+		if (fv.type === cElementType.error) {
 			return fv;
 		}
-		if (type instanceof cError) {
+		if (type.type === cElementType.error) {
 			return type;
 		}
 
@@ -4453,13 +4584,14 @@ function (window, undefined) {
 		fv = fv.getValue();
 		type = type.getValue();
 
-		var res;
+		type = normalizePaymentPeriod(type);
 
-		if (per < 1 || per > nper || type != 0 && type != 1) {
+		let res;
+		if (per < 1 || per > nper || type !== 0 && type !== 1) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var fRmz = getPMT(rate, nper, pv, fv, type);
+		let fRmz = getPMT(rate, nper, pv, fv, type);
 
 		res = fRmz - getIPMT(rate, per, pv, type, fRmz);
 

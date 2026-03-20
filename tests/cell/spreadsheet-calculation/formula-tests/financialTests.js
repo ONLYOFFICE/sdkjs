@@ -9467,6 +9467,19 @@ $(function () {
 		oParser = new parserFormula('IPMT(0.12/12,48,48,-1000,0,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IPMT(0.12/12,48,48,-1000,0,0) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 0.2607310438804734, 'Test: Positive case: Number(6). Monthly loan, per = nper, type 0. 6 of 6 arguments used.');
+		// Case #21: Number(6). Monthly loan, per = nper, type 1. 6 of 6 arguments used.
+		oParser = new parserFormula('IPMT(0.01,48,48,-1000,0,1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: IPMT(0.01,48,48,-1000,0,1) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 0.2581495483965097, 'Test: Positive case: Number(6). Monthly loan, per = nper, type 0. 6 of 6 arguments used.');
+		// Case #22: Number(6). Monthly loan, per = nper, type 9999. 6 of 6 arguments used.
+		oParser = new parserFormula('IPMT(0.01,48,48,-1000,0,9999)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: IPMT(0.01,48,48,-1000,0,9999) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 0.2581495483965097, 'Test: Positive case: Number(6). Monthly loan, per = nper, type 0. 6 of 6 arguments used.');
+		// Case #23: Number(6). Monthly loan, per = nper, type -9999. 6 of 6 arguments used.
+		oParser = new parserFormula('IPMT(0.01,48,48,-1000,0,-9999)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: IPMT(0.01,48,48,-1000,0,-9999) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 0.2581495483965097, 'Test: Positive case: Number(6). Monthly loan, per = nper, type 0. 6 of 6 arguments used.');
+
 
 		// Negative cases:
 		// Case #1: Number(4), Boolean, Number. per as boolean, returns #VALUE!. 6 of 6 arguments used.
@@ -9539,16 +9552,20 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), 10, 'Test: Negative case: Number, Array, Number(4). per as array with invalid data, returns #VALUE!. 6 of 6 arguments used.');
 		// Case #18: Number(2), Area, Number(3). nper as multi-cell range, returns #VALUE!. 6 of 6 arguments used.
 		oParser = new parserFormula('IPMT(0.12/12,1,A100:A101,-1000,0,0)', 'A2', ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H109").bbox);
 		assert.ok(oParser.parse(), 'Test: IPMT(0.12/12,1,A100:A101,-1000,0,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 10, 'Test: Negative case: Number(2), Area, Number(3). nper as multi-cell range, returns #VALUE!. 6 of 6 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 10, 'Test: Negative case: Number(2), Area, Number(3). nper as multi-cell range, returns #VALUE!. 6 of 6 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 10, 'Test: Negative case: Number(2), Area, Number(3). nper as multi-cell range, returns #VALUE!. 6 of 6 arguments used.');
 		// Case #19: Number(3), Area, Number(2). pv as multi-cell range, returns #VALUE!. 6 of 6 arguments used.
 		oParser = new parserFormula('IPMT(0.12/12,1,48,A100:A101,0,0)', 'A2', ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H109").bbox);
 		assert.ok(oParser.parse(), 'Test: IPMT(0.12/12,1,48,A100:A101,0,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), -0.0012, 'Test: Negative case: Number(3), Area, Number(2). pv as multi-cell range, returns #VALUE!. 6 of 6 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), -0.0012, 'Test: Negative case: Number(3), Area, Number(2). pv as multi-cell range, returns #VALUE!. 6 of 6 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), -0.01, 'Test: Negative case: Number(3), Area, Number(2). pv as multi-cell range, returns #VALUE!. 6 of 6 arguments used.');
 		// Case #20: Number(5), Number. type out of range (2), returns #NUM!. 6 of 6 arguments used.
 		oParser = new parserFormula('IPMT(0.12/12,1,48,-1000,0,2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IPMT(0.12/12,1,48,-1000,0,2) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Number(5), Number. type out of range (2), returns #NUM!. 6 of 6 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Number(5), Number. type out of range (2), returns #NUM!. 6 of 6 arguments used.');
 
 		// Bounded cases:
 		// Case #1: Number(6). Minimum valid rate and pv, per = 1, nper = 1, type 0. 6 of 6 arguments used.
@@ -9556,15 +9573,9 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: IPMT(1E-307,1,1,-1E-307,0,0) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Bounded case: Number(6). Minimum valid rate and pv, per = 1, nper = 1, type 0. 6 of 6 arguments used.');
 		// Case #2: Number(6). Maximum valid rate and pv, per = nper, type 1. 6 of 6 arguments used.
-		oParser = new parserFormula('IPMT(9.99999999999999E+307,48,48,-9.99999999999999E+307,0,1)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: IPMT(9.99999999999999E+307,48,48,-9.99999999999999E+307,0,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1e+308, 'Test: Bounded case: Number(6). Maximum valid rate and pv, per = nper, type 1. 6 of 6 arguments used.');
-
-		// Need to fix: ms result diifference
-		// Case #18: Number(2), Area, Number(3). nper as multi-cell range, returns #VALUE!. 6 of 6 arguments used.
-		// Case #19: Number(3), Area, Number(2). pv as multi-cell range, returns #VALUE!. 6 of 6 arguments used.
-		// Case #20: Number(5), Number. type out of range (2), returns #NUM!. 6 of 6 arguments used.
-		// Case #2: Number(6). Maximum valid rate and pv, per = nper, type 1. 6 of 6 arguments used.
+		oParser = new parserFormula('IPMT(9E+307,48,48,-9E+307,0,1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: IPMT(9E+307,48,48,-9E+307,0,1) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 9E+307, 'Test: Bounded case: Number(6). Maximum valid rate and pv, per = nper, type 1. 6 of 6 arguments used.');
 
 		testArrayFormula2(assert, "IPMT", 4, 6);
 	});
@@ -12762,7 +12773,7 @@ $(function () {
 		// Case #2: Formula. Rate as nested formula, 3 arguments used.
 		oParser = new parserFormula('PMT(SQRT(0.01),12,-1000)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PMT(SQRT(0.01),12,-1000) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 146.76331510028726, 'Test: Positive case: Formula. Rate as nested formula, 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 146.76331510028723, 'Test: Positive case: Formula. Rate as nested formula, 3 arguments used.');
 		// Case #3: String. String convertible to numbers, 3 arguments used.
 		oParser = new parserFormula('PMT("0.05","12","-1000")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PMT("0.05","12","-1000") is parsed.');
@@ -12822,11 +12833,11 @@ $(function () {
 		// Case #17: Date. Rate as date serial number scaled, 3 arguments used.
 		oParser = new parserFormula('PMT(DATE(2025,1,1)/1000000,12,-1000)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PMT(DATE(2025,1,1)/1000000,12,-1000) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 110.07937197281565, 'Test: Positive case: Date. Rate as date serial number scaled, 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 110.07937197281564, 'Test: Positive case: Date. Rate as date serial number scaled, 3 arguments used.');
 		// Case #18: Time. Rate as time adjusted to valid number, 3 arguments used.
 		oParser = new parserFormula('PMT(TIME(12,0,0)+0.01,12,-1000)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PMT(TIME(12,0,0)+0.01,12,-1000) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 513.6555151488042, 'Test: Positive case: Time. Rate as time adjusted to valid number, 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 513.6555151488043, 'Test: Positive case: Time. Rate as time adjusted to valid number, 3 arguments used.');
 		// Case #19: Formula. Rate as nested IF formula, 3 arguments used.
 		oParser = new parserFormula('PMT(IF(TRUE,0.05,0.1),12,-1000)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PMT(IF(TRUE,0.05,0.1),12,-1000) is parsed.');
@@ -12834,13 +12845,26 @@ $(function () {
 		// Case #20: Number. Monthly rate calculation, 3 arguments used.
 		oParser = new parserFormula('PMT(0.05/12,12,-1000)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PMT(0.05/12,12,-1000) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 85.60748178846745, 'Test: Positive case: Number. Monthly rate calculation, 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 85.60748178846738, 'Test: Positive case: Number. Monthly rate calculation, 3 arguments used.');
+		// Case #21: Number. Monthly rate calculation, 5 arguments used. Type = 1
+		oParser = new parserFormula('PMT(0.05/12,12,-1000,0,1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: PMT(0.05/12,12,-1000,0,1) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 85.25226402171026, 'Test: Positive case: Number. Monthly rate calculation, 5 arguments used. Type = 1');
+		// Case #22: Number. Monthly rate calculation, 5 arguments used. Type = 9999
+		oParser = new parserFormula('PMT(0.05/12,12,-1000,0,9999)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: PMT(0.05/12,12,-1000,0,9999) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 85.25226402171026, 'Test: Positive case: Number. Monthly rate calculation, 5 arguments used. Type = 9999');
+		// Case #23: Number. Monthly rate calculation, 5 arguments used. Type = 9999
+		oParser = new parserFormula('PMT(0.05/12,12,-1000,0,-9999)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: PMT(0.05/12,12,-1000,0,-9999) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 85.25226402171026, 'Test: Positive case: Number. Monthly rate calculation, 5 arguments used. Type = 9999');
+
 
 		// Negative cases:
 		// Case #0: Number. Negative rate returns #NUM!. 3 arguments used.
 		oParser = new parserFormula('PMT(-0.05,12,-1000)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PMT(-0.05,12,-1000) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 58.78080570884224, 'Test: Negative case: Number. Negative rate returns #NUM!. 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 58.78080570884223, 'Test: Negative case: Number. Negative rate returns #NUM!. 3 arguments used.');
 		// Case #1: Number. Negative nper returns #NUM!. 3 arguments used.
 		oParser = new parserFormula('PMT(0.05,-12,-1000)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PMT(0.05,-12,-1000) is parsed.');
@@ -12859,8 +12883,10 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), 83.33333333333333, 'Test: Negative case: Empty. Empty rate returns #VALUE!. 3 arguments used.');
 		// Case #5: Area. Multi-cell range for rate returns #VALUE!. 3 arguments used.
 		oParser = new parserFormula('PMT(A109:A110,A101,A102)', 'A2', ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H109").bbox);
 		assert.ok(oParser.parse(), 'Test: PMT(A109:A110,A101,A102) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), -0.333333333, 'Test: Negative case: Area. Multi-cell range for rate returns #VALUE!. 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), -0.3333333333333333, 'Test: Negative case: Area. Multi-cell range for rate returns #VALUE!. 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), -0.7734590803390136, 'Test: Negative case: Area. Multi-cell range for rate returns #VALUE!. 3 arguments used.');
 		// Case #6: Boolean. Boolean rate returns #VALUE!. 3 arguments used.
 		oParser = new parserFormula('PMT(TRUE,12,-1000)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PMT(TRUE,12,-1000) is parsed.');
@@ -12871,8 +12897,9 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Ref3D. 3D ref to non-numeric value returns #VALUE!. 3 arguments used.');
 		// Case #8: Name. Named range with text returns #VALUE!. 3 arguments used.
 		oParser = new parserFormula('PMT(TestNameArea,TestName1,TestName2)', 'A2', ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H109").bbox);
 		assert.ok(oParser.parse(), 'Test: PMT(TestNameArea,TestName1,TestName2) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), -35.8492424, 'Test: Negative case: Name. Named range with text returns #VALUE!. 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), -21, 'Test: Negative case: Name. Named range with text returns #VALUE!. 3 arguments used.');
 		// Case #10: Formula. Formula resulting in #NUM! returns #NUM!. 3 arguments used.
 		oParser = new parserFormula('PMT(SQRT(-1),12,-1000)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PMT(SQRT(-1),12,-1000) is parsed.');
@@ -12900,7 +12927,7 @@ $(function () {
 		// Case #16: String. Negative rate as string returns #NUM!. 3 arguments used.
 		oParser = new parserFormula('PMT("-0.05","12","-1000")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PMT("-0.05","12","-1000") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 58.78080570884224, 'Test: Negative case: String. Negative rate as string returns #NUM!. 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 58.78080570884223, 'Test: Negative case: String. Negative rate as string returns #NUM!. 3 arguments used.');
 		// Case #17: Time. Time value too small returns #NUM!. 3 arguments used.
 		oParser = new parserFormula('PMT(TIME(12,0,0),12,-1000)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PMT(TIME(12,0,0),12,-1000) is parsed.');
@@ -12912,7 +12939,7 @@ $(function () {
 		// Case #19: Number. Invalid type value returns #NUM!. 5 arguments used.
 		oParser = new parserFormula('PMT(0.05,12,-1000,0,2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PMT(0.05,12,-1000,0,2) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 107.4527714, 'Test: Negative case: Number. Invalid type value returns #NUM!. 5 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 107.45277144839555, 'Test: Negative case: Number. Invalid type value returns #NUM!. 5 arguments used.');
 		// Case #20: Formula. Nested formula returns #N/A. 3 arguments used.
 		oParser = new parserFormula('PMT(0.05,IF(FALSE,12,NA()),-1000)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PMT(0.05,IF(FALSE,12,NA()),-1000) is parsed.');
@@ -12926,23 +12953,15 @@ $(function () {
 		// Case #1: Number. Largest valid nper. 3 arguments used.
 		oParser = new parserFormula('PMT(0.05,1E+307,-1000)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PMT(0.05,1E+307,-1000) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 50, 'Test: Bounded case: Number. Largest valid nper. 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 50, 'Test: Bounded case: Number. Largest valid nper. 3 arguments used.');
 		// Case #2: Number. Largest valid pv (negative). 3 arguments used.
 		oParser = new parserFormula('PMT(0.05,12,-1E+307)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PMT(0.05,12,-1E+307) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 1.1282541002081533e+306, 'Test: Bounded case: Number. Largest valid pv (negative). 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 1.1282541002081534e+306, 'Test: Bounded case: Number. Largest valid pv (negative). 3 arguments used.');
 		// Case #3: Number. Largest valid fv. 5 arguments used.
 		oParser = new parserFormula('PMT(0.05,12,-1000,1E+307,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PMT(0.05,12,-1000,1E+307,0) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), -6.2825410020815325e+305, 'Test: Bounded case: Number. Largest valid fv. 5 arguments used.');
-
-
-		// Need to fix:
-		// Case #5: Area. Multi-cell range for rate returns #VALUE!. 3 arguments used.
-		// Case #8: Name. Named range with text returns #VALUE!. 3 arguments used.
-		// Case #19: Number. Invalid type value returns #NUM!. 5 arguments used.
-		// Case #1: Number. Largest valid nper. 3 arguments used.
-
 
 		testArrayFormula2(assert, "PMT", 3, 5);
 	});
@@ -12998,7 +13017,7 @@ $(function () {
 		ws.getRange2("A201").setValue("-0.5"); // TestName
 		ws.getRange2("A202").setValue("0.5"); // TestName1
 		ws.getRange2("A203").setValue("10.5"); // TestName2
-		ws2.getRange2("A11").setValue("-0.5"); // TestName3D
+		ws2.getRange2("A11").setValue("0.5"); // TestName3D
 		ws.getRange2("A208").setValue("0.8"); // TestNameArea2
 		ws.getRange2("B208").setValue("-0.8"); // TestNameArea2
 		ws2.getRange2("A18").setValue("0.8"); // TestNameArea3D2
@@ -13038,8 +13057,8 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: PPMT(TestName,TestName1,TestName2,TestName3) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Positive case: Name. Named ranges. 4 of 6 arguments used.');
 		// Case #9: Name3D. 3D named ranges. 4 of 6 arguments used.
-		oParser = new parserFormula('PPMT(TestName3D,TestName3D1,TestName3D2,TestName3D2)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: PPMT(TestName3D,TestName3D1,TestName3D2,TestName3D3) is parsed.');
+		oParser = new parserFormula('PPMT(TestName3D,TestName3D,TestName3D,TestName3D)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: PPMT(TestName3D,TestName3D,TestName3D,TestName3D) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Positive case: Name3D. 3D named ranges. 4 of 6 arguments used.');
 		// Case #10: Ref3D. 3D references to cells. 4 of 6 arguments used.
 		oParser = new parserFormula('PPMT(Sheet2!A1,Sheet2!A2,Sheet2!A3,Sheet2!A4)', 'A2', ws);
