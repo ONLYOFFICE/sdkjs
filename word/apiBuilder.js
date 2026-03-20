@@ -8728,11 +8728,23 @@
 		let oCommManager = this.Document.GetCommentsManager();
 
 		let aComments = Object.values(oCommManager.GetAllComments());
-		let aApiComments = aComments.map(function(oComment) {
+		aComments.sort(function(c1, c2){
+			let p1 = c1.GetDocumentPosition();
+			let p2 = c2.GetDocumentPosition();
+			
+			if (!p1 && !p2)
+				return 0;
+			if (!p1)
+				return 1;
+			if (!p2)
+				return -1;
+			
+			return AscWord.CompareDocumentPositions(p1, p2);
+		});
+		
+		return aComments.map(function(oComment) {
 			return new ApiComment(oComment);
 		});
-
-		return aApiComments;
 	};
 
 	/**

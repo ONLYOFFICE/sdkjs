@@ -727,7 +727,7 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	 */
 	CComment.prototype.GetDocumentPosition = function()
 	{
-		var oMark = AscCommon.g_oTableId.Get_ById(this.RangeStart);
+		var oMark = AscCommon.g_oTableId.Get_ById(this.RangeEnd);
 
 		if (!oMark || !oMark.IsUseInDocument())
 			return null;
