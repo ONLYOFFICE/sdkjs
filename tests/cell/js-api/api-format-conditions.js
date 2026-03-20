@@ -297,8 +297,9 @@ $(function () {
             assert.strictEqual(db.PercentMax, 95, "PercentMax set/get");
 
             // CFVO types and values
+            //SetMaxPointValue/SetMinPointValue -> string | number
             db.SetMinPointType("xlConditionValueNumber");
-            db.SetMinPointValue(10);
+            db.SetMinPointValue("10");
             db.SetMaxPointType("xlConditionValueNumber");
             db.SetMaxPointValue(90);
             assert.strictEqual(db.GetMinPointType(), "xlConditionValueNumber", "Min type set");
@@ -340,7 +341,7 @@ $(function () {
             // Change one criterion operator/value
             var crit3 = ic.GetIconCriteria();
             crit3[1].SetOperator("xlGreaterEqual");
-            crit3[1].SetValue(50);
+            crit3[1].SetValue("50");
             assert.ok(crit3[1].GetValue() !== null, "Criterion value updated");
         });
 
