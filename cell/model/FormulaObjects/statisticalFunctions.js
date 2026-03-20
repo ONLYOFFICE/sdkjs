@@ -12350,7 +12350,11 @@ function parseStringToCElement (val, cultureInfo) {
 				unshiftIndexesArray.push(r);
 			}
 		});
+		var strPrepend = unshiftDataArrays[cElementType.string] ? unshiftDataArrays[cElementType.string].length : 0;
 		this.unshiftValues(column, unshiftDataArrays, unshiftIndexesArrays);
+		if (strPrepend > 0) {
+			column._rankPrepend = (column._rankPrepend || 0) + strPrepend;
+		}
 	};
 	CountIfTypedCache.prototype.pushValue = function (column, value, index) {
 		const data = column.data;
@@ -12374,7 +12378,10 @@ function parseStringToCElement (val, cultureInfo) {
 			const value = checkTypeCell(cell, true);
 			if (r > column.end) {
 				if (value.type !== cElementType.empty) {
-					t.pushValue(column, value, r)
+					t.pushValue(column, value, r);
+					if (value.type === cElementType.string) {
+						column._rankAppend = (column._rankAppend || 0) + 1;
+					}
 				}
 				column.end = r;
 			}
@@ -12444,47 +12451,386 @@ function parseStringToCElement (val, cultureInfo) {
 		return convertedToNumber;
 	};
 	/**
+	 * Apply deferred string data/indexes array changes in one O(N+K) pass.
+	 * Replaces 1587× individual splice on 94K array (59.7s V8 deopt) with
+	 * a single filter+merge (< 5ms).
+	 *
+	 * Pending changes are stored in column._pendingStrChanges (Map: row → value|null).
+	 *   row → string value : the row should have this string value in the array
+	 *   row → null         : the row should be removed from the array
+	 *
+	 * @param {Object} column - column cache object
+	 */
+	CountIfTypedCache.prototype._applyPendingStringChanges = function(column) {
+		var pending = column._pendingStrChanges;
+		if (!pending || pending.size === 0) { return; }
+
+		var stringData = column.data[cElementType.string] || [];
+		var stringIdx = column.indexes[cElementType.string] || [];
+		var oldDataLen = stringData.length;
+
+		// Fast path: for small batches of in-place value updates, use binary search
+		// instead of walking the entire array. O(K × log N) vs O(N+K).
+		// Typical case: maxBatch=1, all string→string changes at existing rows.
+		if (pending.size <= 4 && stringIdx.length > 0) {
+			var allInPlace = true;
+			pending.forEach(function(val, row) {
+				if (!allInPlace) { return; }
+				if (val === null) { allInPlace = false; return; }
+				var lo = 0, hi = stringIdx.length;
+				while (lo < hi) {
+					var mid = (lo + hi) >>> 1;
+					if (stringIdx[mid] < row) { lo = mid + 1; }
+					else { hi = mid; }
+				}
+				if (lo < stringIdx.length && stringIdx[lo] === row) {
+					stringData[lo] = val;
+					column._lastChangedDataPos = lo;
+				} else {
+					allInPlace = false;
+				}
+			});
+			if (allInPlace) {
+				column._pendingApplyInPlace = true;
+				column._pendingStrChanges = null;
+				return;
+			}
+		}
+
+		// Phase 1: Walk current arrays — apply updates/removals in place.
+		// Collect rows from pending that are NOT in the current array (new inserts).
+		var handledRows = new Set();
+		var writePos = 0;
+		for (var i = 0; i < stringData.length; i++) {
+			var row = stringIdx[i];
+			if (pending.has(row)) {
+				handledRows.add(row);
+				var newVal = pending.get(row);
+				if (newVal !== null) {
+					// Update value at this row (track position for incremental FALLBACK)
+					column._lastChangedDataPos = writePos;
+					stringData[writePos] = newVal;
+					stringIdx[writePos] = row;
+					writePos++;
+				}
+				// else: remove (skip this entry)
+			} else {
+				// Unchanged — keep
+				if (writePos !== i) {
+					stringData[writePos] = stringData[i];
+					stringIdx[writePos] = stringIdx[i];
+				}
+				writePos++;
+			}
+		}
+		stringData.length = writePos;
+		stringIdx.length = writePos;
+
+		// Phase 2: Collect new inserts — rows in pending but not in current array.
+		var newInserts = [];
+		pending.forEach(function(val, row) {
+			if (!handledRows.has(row) && val !== null) {
+				newInserts.push(row);
+			}
+		});
+
+		// Phase 3: Merge new inserts into the arrays (maintain sorted row order).
+		if (newInserts.length > 0) {
+			newInserts.sort(function(a, b) { return a - b; });
+			if (stringData.length === 0) {
+				// Array was empty — just set new data
+				var nd = new Array(newInserts.length);
+				var ni = new Array(newInserts.length);
+				for (var k = 0; k < newInserts.length; k++) {
+					nd[k] = pending.get(newInserts[k]);
+					ni[k] = newInserts[k];
+				}
+				column.data[cElementType.string] = nd;
+				column.indexes[cElementType.string] = ni;
+			} else {
+				// Merge from the end (reverse walk) to build result without shifting.
+				var oldLen = stringData.length;
+				var totalLen = oldLen + newInserts.length;
+				var mergedData = new Array(totalLen);
+				var mergedIdx = new Array(totalLen);
+				var oi = oldLen - 1, nii = newInserts.length - 1, wi = totalLen - 1;
+				while (oi >= 0 && nii >= 0) {
+					if (stringIdx[oi] > newInserts[nii]) {
+						mergedData[wi] = stringData[oi];
+						mergedIdx[wi] = stringIdx[oi];
+						oi--;
+					} else {
+						mergedData[wi] = pending.get(newInserts[nii]);
+						mergedIdx[wi] = newInserts[nii];
+						nii--;
+					}
+					wi--;
+				}
+				while (oi >= 0) { mergedData[wi] = stringData[oi]; mergedIdx[wi] = stringIdx[oi]; oi--; wi--; }
+				while (nii >= 0) { mergedData[wi] = pending.get(newInserts[nii]); mergedIdx[wi] = newInserts[nii]; nii--; wi--; }
+				column.data[cElementType.string] = mergedData;
+				column.indexes[cElementType.string] = mergedIdx;
+			}
+		}
+
+		// Track whether only in-place value updates occurred (no structural changes).
+		// In-place: no entries removed (writePos === oldDataLen) and no new inserts.
+		// When true, old rankArray positions are valid — enables incremental FALLBACK.
+		column._pendingApplyInPlace = (writePos === oldDataLen && newInserts.length === 0);
+		column._pendingStrChanges = null;
+	};
+	/**
 	 * Build (once) a sorted-rank index for a column's string data.
 	 * Stores on the column object:
 	 *   _sortedStrings   — unique string values sorted by stringCompare
 	 *   _stringRankArray — Int32Array: rank[i] = sorted position of stringData[i]
 	 *   _rankLen         — stringData.length at build time (used for staleness check)
-	 * Re-builds automatically when stringData grows or shrinks or _rankDirty is set.
+	 * Two-tier rebuild: _rankDirty → full sort, _rankStale → cheap rank array refresh.
 	 */
 	CountIfTypedCache.prototype._ensureStringRank = function(column) {
+		// Apply deferred string data/indexes changes before accessing string data.
+		this._applyPendingStringChanges(column);
 		const stringData = column.data[cElementType.string];
-		if (!stringData || !stringData.length) {
-			return;
-		}
-		if (!column._rankDirty && column._rankLen === stringData.length) {
-			return; // already valid
-		}
+		if (!stringData || !stringData.length) { return; }
+		const needsFull = column._rankDirty || !column._sortedStrings;
+		const needsSortedRebuild = column._sortedDirty;
+		const needsRefresh = column._rankStale || column._rankLen !== stringData.length;
+		if (!needsFull && !needsSortedRebuild && !needsRefresh) { return; }
 
-		const seen = Object.create(null);
-		const unique = [];
-		for (let i = 0; i < stringData.length; i++) {
-			const s = stringData[i];
-			if (!seen[s]) {
-				seen[s] = true;
-				unique.push(s);
+		// ========== FULL REBUILD: collect unique strings + sort ==========
+		if (needsFull) {
+			const seen = new Set();
+			const unique = [];
+			var counts = Object.create(null);
+			for (let i = 0; i < stringData.length; i++) {
+				const s = stringData[i];
+				counts[s] = (counts[s] || 0) + 1;
+				if (!seen.has(s)) {
+					seen.add(s);
+					unique.push(s);
+				}
+			}
+			unique.sort(function(a, b) { return AscCommonExcel.stringCompare(a, b); });
+			column._sortedStrings = unique;
+			column._stringCounts = counts;
+			column._sortedChanged = null;
+		} else if (needsSortedRebuild) {
+			// ========== SORTED_REBUILD: update _sortedStrings for changed unique strings ==========
+			var sorted = column._sortedStrings;
+			var sCounts = column._stringCounts;
+
+			// Use tracked _sortedChanged Set instead of scanning ALL 92K strings.
+			// changeColumnsData tracks strings whose unique-set status changed.
+			// Cost: K x (hash + binary search + splice) where K=1-2 typical,
+			// vs old: 2 x U full scans (U=92K) = 184K hash lookups per call.
+			var sortedChanged = column._sortedChanged;
+
+			// Handle prepend/append: update _stringCounts and track new uniques.
+			var prepend = column._rankPrepend || 0;
+			var append = column._rankAppend || 0;
+			if ((prepend + append > 0) && sCounts) {
+				if (!sortedChanged) { sortedChanged = new Set(); }
+				for (var pi = 0; pi < prepend; pi++) {
+					var ps = stringData[pi];
+					var oldC = sCounts[ps] || 0;
+					sCounts[ps] = oldC + 1;
+					if (oldC === 0) { sortedChanged.add(ps); }
+				}
+				var appendStart = stringData.length - append;
+				for (var ai = appendStart; ai < stringData.length; ai++) {
+					var as2 = stringData[ai];
+					var oldC2 = sCounts[as2] || 0;
+					sCounts[as2] = oldC2 + 1;
+					if (oldC2 === 0) { sortedChanged.add(as2); }
+				}
+			}
+
+			// Process only changed strings (typically K=1-2 per call).
+			// Save del/add positions for incremental FALLBACK rank-delta approach.
+			var delCount = 0;
+			var addCount = 0;
+			var delOldRank = -1;  // old sorted position of deleted string (from old rankMap)
+			var addNewRank = -1;  // new sorted position of added string (after deletion)
+			if (sortedChanged && sortedChanged.size > 0) {
+				// Separate deletions from additions to enable copyWithin optimization.
+				var toDel = null, toAdd = null;
+				var hasDel = false, hasAdd = false, multiChange = false;
+				sortedChanged.forEach(function(str) {
+					if (multiChange) { return; }
+					if (!sCounts[str]) {
+						if (hasDel) { multiChange = true; return; }
+						toDel = str; hasDel = true;
+					} else {
+						if (hasAdd) { multiChange = true; return; }
+						toAdd = str; hasAdd = true;
+					}
+				});
+
+				if (!multiChange && hasDel && hasAdd) {
+					// Fast path: single del + single add — use copyWithin instead of 2 splices.
+					// Saves ~46K element shifts × 2 → only |dp-ap| shifts per call.
+					var dlo = 0, dhi = sorted.length;
+					while (dlo < dhi) {
+						var dm = (dlo + dhi) >>> 1;
+						if (AscCommonExcel.stringCompare(sorted[dm], toDel) < 0) { dlo = dm + 1; } else { dhi = dm; }
+					}
+					if (dlo < sorted.length && sorted[dlo] === toDel) {
+						delOldRank = dlo;
+						delCount = 1;
+						var alo = 0, ahi = sorted.length;
+						while (alo < ahi) {
+							var am = (alo + ahi) >>> 1;
+							if (AscCommonExcel.stringCompare(sorted[am], toAdd) < 0) { alo = am + 1; } else { ahi = am; }
+						}
+						var eap = alo > dlo ? alo - 1 : alo;
+						if (dlo < eap) {
+							if (sorted.copyWithin) {
+								sorted.copyWithin(dlo, dlo + 1, eap + 1);
+							} else {
+								for (var ci = dlo; ci < eap; ci++) { sorted[ci] = sorted[ci + 1]; }
+							}
+						} else if (dlo > eap) {
+							if (sorted.copyWithin) {
+								sorted.copyWithin(eap + 1, eap, dlo);
+							} else {
+								for (var ci = dlo; ci > eap; ci--) { sorted[ci] = sorted[ci - 1]; }
+							}
+						}
+						sorted[eap] = toAdd;
+						addNewRank = eap;
+						addCount = 1;
+					}
+				} else {
+					// General case: forEach with splices
+					sortedChanged.forEach(function(str) {
+						var lo = 0, hi = sorted.length;
+						while (lo < hi) {
+							var mid = (lo + hi) >>> 1;
+							if (AscCommonExcel.stringCompare(sorted[mid], str) < 0) { lo = mid + 1; }
+							else { hi = mid; }
+						}
+						if (!sCounts[str]) {
+							if (lo < sorted.length && sorted[lo] === str) {
+								delOldRank = lo;
+								sorted.splice(lo, 1);
+								delCount++;
+							}
+						} else if (lo >= sorted.length || sorted[lo] !== str) {
+							sorted.splice(lo, 0, str);
+							addNewRank = lo;
+							addCount++;
+						}
+					});
+				}
+			}
+			column._sortedChanged = null;
+			column._lastDelOldRank = delOldRank;
+			column._lastAddNewRank = addNewRank;
+			column._lastDelCount = delCount;
+			column._lastAddCount = addCount;
+
+		} else if (needsRefresh) {
+			// ========== REFRESH: update _sortedStrings for prepended/appended elements ==========
+			var prepend2 = column._rankPrepend || 0;
+			var append2 = column._rankAppend || 0;
+			var sorted3 = column._sortedStrings;
+			var sCounts2 = column._stringCounts;
+			if (prepend2 + append2 > 0 && sCounts2) {
+				var insertIntoSorted2 = function(str) {
+					sCounts2[str] = (sCounts2[str] || 0) + 1;
+					if (sCounts2[str] === 1) {
+						var lo = 0, hi = sorted3.length;
+						while (lo < hi) {
+							var mid = (lo + hi) >>> 1;
+							if (AscCommonExcel.stringCompare(sorted3[mid], str) < 0) { lo = mid + 1; }
+							else { hi = mid; }
+						}
+						sorted3.splice(lo, 0, str);
+					}
+				};
+				for (var pi2 = 0; pi2 < prepend2; pi2++) {
+					insertIntoSorted2(stringData[pi2]);
+				}
+				var appendStart2 = stringData.length - append2;
+				for (var ai2 = appendStart2; ai2 < stringData.length; ai2++) {
+					insertIntoSorted2(stringData[ai2]);
+				}
 			}
 		}
-		unique.sort(function(a, b) { return AscCommonExcel.stringCompare(a, b); });
 
-		const rankMap = Object.create(null);
-		for (let i = 0; i < unique.length; i++) {
-			rankMap[unique[i]] = i;
+		// ========== FALLBACK: rebuild rankMap + rankArray from _sortedStrings ==========
+		var sorted2 = column._sortedStrings;
+		var needed = stringData.length;
+		var buf = column._rankBuf;
+
+		// Check if incremental rank-delta update is possible.
+		// Conditions: (1) old rankArray exists with matching length,
+		//             (2) data array was only updated in-place (no structural changes),
+		//             (3) exactly 1 deletion + 1 addition in sorted (simple rank shift).
+		var dc = column._lastDelCount || 0;
+		var ac = column._lastAddCount || 0;
+		var canIncremental = needsSortedRebuild
+			&& column._pendingApplyInPlace === true
+			&& buf && column._rankLen === needed
+			&& dc <= 1 && ac <= 1 && (dc + ac) > 0;
+
+		if (canIncremental) {
+			// --- Incremental path: O(N) integer ops, NO _rankMap rebuild ---
+			// Rank delta: deletion at dp shifts ranks > dp down by 1,
+			//             addition at ap shifts ranks >= ap up by 1.
+			var dp = column._lastDelOldRank;
+			var ap = column._lastAddNewRank;
+
+			// 1. Apply rank delta to existing rankArray: O(N) integer comparisons.
+			for (var j = 0; j < needed; j++) {
+				var r = buf[j];
+				if (dc === 1 && dp >= 0 && r > dp) { r--; }
+				if (ac === 1 && ap >= 0 && r >= ap) { r++; }
+				buf[j] = r;
+			}
+
+			// 2. Fix the one position where data value changed via binary search O(log U).
+			// Replaces 92K-entry _rankMap rebuild that was done just for this 1 lookup.
+			var changedPos = column._lastChangedDataPos;
+			if (changedPos !== undefined && changedPos >= 0 && changedPos < needed) {
+				var cv = stringData[changedPos];
+				var clo = 0, chi = sorted2.length;
+				while (clo < chi) {
+					var cmid = (clo + chi) >>> 1;
+					if (AscCommonExcel.stringCompare(sorted2[cmid], cv) < 0) { clo = cmid + 1; }
+					else { chi = cmid; }
+				}
+				buf[changedPos] = clo;
+			}
+			column._lastChangedDataPos = undefined;
+			column._rankMap = null;
+
+		} else {
+			// --- Full rebuild: hash-lookup every entry ---
+			var rm2 = Object.create(null);
+			for (var k = 0; k < sorted2.length; k++) {
+				rm2[sorted2[k]] = k;
+			}
+			column._rankMap = rm2;
+
+			if (!buf || buf.length < needed) {
+				buf = new Int32Array(Math.max(needed, Math.ceil(needed * 1.25)));
+				column._rankBuf = buf;
+			}
+			for (var j = 0; j < needed; j++) {
+				buf[j] = rm2[stringData[j]];
+			}
+
 		}
 
-		const rankArray = new Int32Array(stringData.length);
-		for (let i = 0; i < stringData.length; i++) {
-			rankArray[i] = rankMap[stringData[i]];
-		}
-
-		column._sortedStrings = unique;
-		column._stringRankArray = rankArray;
-		column._rankLen = stringData.length;
+		column._stringRankArray = buf;
+		column._rankLen = needed;
+		column._rankPrepend = 0;
+		column._rankAppend = 0;
 		column._rankDirty = false;
+		column._rankStale = false;
+		column._sortedDirty = false;
+		column._pendingApplyInPlace = undefined;
 	};
 	/**
 	 * Binary-search `searchValue` in a pre-sorted unique-strings array and compute the
@@ -12530,6 +12876,9 @@ function parseStringToCElement (val, cultureInfo) {
 		for (let i = bbox.c1; i <= bbox.c2; i += 1) {
 			this.updateColumnData(ws, i, bbox.r1, bbox.r2);
 			const column = this.data[wsId][i];
+			// Apply deferred string changes before reading data/indexes references.
+			// _applyPendingStringChanges may replace column.data[string]/indexes[string].
+			this._applyPendingStringChanges(column);
 			const typedData = column.data[type];
 			if (!typedData) {
 				continue;
@@ -12575,6 +12924,7 @@ function parseStringToCElement (val, cultureInfo) {
 		for (let i = bbox.c1; i <= bbox.c2; i += 1) {
 			this.updateColumnData(ws, i, bbox.r1, bbox.r2);
 			const column = this.data[wsId][i];
+			this._applyPendingStringChanges(column);
 			for (let type in column.indexes) {
 				const typedIndexes = column.indexes[type];
 				const firstIndex = this.findLowerIndexInTyped(bbox.r1, typedIndexes);
@@ -12593,6 +12943,7 @@ function parseStringToCElement (val, cultureInfo) {
 	 * @returns {boolean}
 	 */
 	CountIfTypedCache.prototype.hasDataAtRow = function(column, row, checkEmptyString) {
+		this._applyPendingStringChanges(column);
 		const indexes = column.indexes;
 		const numIdx = indexes[cElementType.number];
 		if (numIdx) {
@@ -12627,31 +12978,77 @@ function parseStringToCElement (val, cultureInfo) {
 		const data = this.data[wsId];
 		const column = data[columnIndex];
 		if (column && changedIndex >= column.start && changedIndex <= column.end) {
+			// --- Remove old value ---
 			if (oldValue !== null) {
-				const indexesArray = column.indexes[oldType];
-				const dataArray = column.data[oldType];
-				if (dataArray && indexesArray) {
-					const removeIndex = indexesArray.indexOf(changedIndex);
-					if (removeIndex !== -1) {
-						dataArray.splice(removeIndex, 1);
-						indexesArray.splice(removeIndex, 1);
+				if (oldType === cElementType.string) {
+					// Defer string array splice — O(1) Map.set vs O(N) splice on 94K array.
+					// 1587× splice caused 59.7s V8 deoptimization (dictionary mode).
+					if (!column._pendingStrChanges) { column._pendingStrChanges = new Map(); }
+					column._pendingStrChanges.set(changedIndex, null);
+				} else {
+					const indexesArray = column.indexes[oldType];
+					const dataArray = column.data[oldType];
+					if (dataArray && indexesArray) {
+						const removeIndex = indexesArray.indexOf(changedIndex);
+						if (removeIndex !== -1) {
+							dataArray.splice(removeIndex, 1);
+							indexesArray.splice(removeIndex, 1);
+						}
 					}
 				}
 			}
+			// --- Insert new value ---
 			if (newValue !== null && newType !== cElementType.empty) {
-				const indexesArray = column.indexes[newType];
-				const dataArray = column.data[newType];
-				if (dataArray && indexesArray) {
-					const insertIndex = this.findHigherIndexInTyped(changedIndex - 1, indexesArray);
-					dataArray.splice(insertIndex, 0, newValue);
-					indexesArray.splice(insertIndex, 0, changedIndex);
+				if (newType === cElementType.string) {
+					// Defer string array splice.
+					if (!column._pendingStrChanges) { column._pendingStrChanges = new Map(); }
+					column._pendingStrChanges.set(changedIndex, newValue);
 				} else {
-					column.data[newType] = [newValue];
-					column.indexes[newType] = [changedIndex];
+					const indexesArray = column.indexes[newType];
+					const dataArray = column.data[newType];
+					if (dataArray && indexesArray) {
+						const insertIndex = this.findHigherIndexInTyped(changedIndex - 1, indexesArray);
+						dataArray.splice(insertIndex, 0, newValue);
+						indexesArray.splice(insertIndex, 0, changedIndex);
+					} else {
+						column.data[newType] = [newValue];
+						column.indexes[newType] = [changedIndex];
+					}
 				}
 			}
 			if (oldType === cElementType.string || newType === cElementType.string) {
-				column._rankDirty = true;
+				// Update string frequency counts (O(1) per change).
+				var sCounts = column._stringCounts;
+				if (sCounts) {
+					if (oldType === cElementType.string && oldValue !== null) {
+						var c = sCounts[oldValue] || 0;
+						if (c > 1) { sCounts[oldValue] = c - 1; }
+						else { delete sCounts[oldValue]; }
+					}
+					if (newType === cElementType.string && newValue !== null) {
+						sCounts[newValue] = (sCounts[newValue] || 0) + 1;
+					}
+					// Track strings that changed the unique set for targeted SORTED_REBUILD.
+					// Without this, SORTED_REBUILD scans ALL 92K strings each call (45s total).
+					// With this, it processes only K changed strings per call (K=1-2 typical).
+					if (column._sortedStrings) {
+						if (oldType === cElementType.string && oldValue !== null && !sCounts[oldValue]) {
+							if (!column._sortedChanged) { column._sortedChanged = new Set(); }
+							column._sortedChanged.add(oldValue);
+						}
+						if (newType === cElementType.string && newValue !== null && sCounts[newValue] === 1) {
+							if (!column._sortedChanged) { column._sortedChanged = new Set(); }
+							column._sortedChanged.add(newValue);
+						}
+					}
+				}
+				// Defer _sortedStrings rebuild to _ensureStringRank (SORTED_REBUILD path).
+				if (column._sortedStrings) {
+					column._sortedDirty = true;
+					column._rankStale = true;
+				} else {
+					column._rankDirty = true;
+				}
 			}
 		}
 	};

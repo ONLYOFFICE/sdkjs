@@ -5504,6 +5504,8 @@ function (window, undefined) {
 			const sumColumn = sumCache.data[sumRangeWsId][i];
 			const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1; // sumRow = searchRow + rowSumOffset
 
+			this._applyPendingStringChanges(searchColumn);
+
 			// 4 advancing pointers, one per type — amortized O(1) per sum entry to check if search row has ANY data
 			const sNumIdx = searchColumn.indexes[cElementType.number];
 			const sStrIdx = searchColumn.indexes[cElementType.string];
@@ -5595,6 +5597,8 @@ function (window, undefined) {
 			const sumColumn = sumCache.data[sumRangeWsId][i];
 			const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
 
+			this._applyPendingStringChanges(searchColumn);
+
 			const errorIndexes = sumColumn.indexes[cElementType.error];
 			const errorData = sumColumn.data[cElementType.error];
 			if (!errorIndexes) continue;
@@ -5648,6 +5652,8 @@ function (window, undefined) {
 			const searchColumn = this.data[searchRangeWsId][searchColumnIndex];
 			const sumColumn = sumCache.data[sumRangeWsId][i];
 			const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
+
+			this._applyPendingStringChanges(searchColumn);
 
 			const errorIndexes = sumColumn.indexes[cElementType.error];
 			const errorData = sumColumn.data[cElementType.error];
@@ -5759,6 +5765,9 @@ function (window, undefined) {
 
 			const searchColumn = this.data[searchRangeWsId][i];
 			const sumColumn = sumCache.data[sumRangeWsId][sumColumnIndex];
+
+			// Apply deferred string changes before reading data/indexes references.
+			this._applyPendingStringChanges(searchColumn);
 
 			const searchTypedData = searchColumn.data[type];
 			const searchTypedIndexes = searchColumn.indexes[type];
