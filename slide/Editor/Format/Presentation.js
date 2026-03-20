@@ -5260,10 +5260,11 @@ CPresentation.prototype.EnterText = function (value) {
 		return false;
 	}
 	if (!this.IsFocusOnNotes() && oCurSlide.graphicObjects.selectedObjects.length === 0) {
-		let oTitle = oCurSlide.getMatchingShape(AscFormat.phType_title, null);
-		if (oTitle) {
+		const info = {bBadMath: false};
+		let oTitle = oCurSlide.getMatchingShape(AscFormat.phType_title, null, false, info);
+		if (oTitle && !info.bBadMath) {
 			let oDocContent = oTitle.getDocContent && oTitle.getDocContent();
-			if (oDocContent.Is_Empty()) {
+			if (oDocContent && oDocContent.Is_Empty()) {
 				oDocContent.Set_CurrentElement(0, false);
 			} else {
 				return false;
