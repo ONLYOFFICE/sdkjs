@@ -6826,7 +6826,7 @@ CDocument.prototype.SetParagraphBidi = function(isRtl)
 	this.UpdateInterface();
 	this.UpdateSelection();
 };
-CDocument.prototype.SetParagraphAlign = function(Align)
+CDocument.prototype.SetParagraphAlign = function(Align, pr)
 {
 	var SelectedInfo = this.GetSelectedElementsInfo();
 	var Math         = SelectedInfo.GetMath();
@@ -6836,7 +6836,7 @@ CDocument.prototype.SetParagraphAlign = function(Align)
 	}
 	else
 	{
-		this.Controller.SetParagraphAlign(Align);
+		this.Controller.SetParagraphAlign(Align, pr);
 	}
 
 	this.Recalculate();

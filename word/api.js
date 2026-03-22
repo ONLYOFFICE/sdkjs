@@ -4302,7 +4302,7 @@ background-repeat: no-repeat;\
 			return;
 
 		logicDocument.StartAction(AscDFH.historydescription_Document_SetParagraphAlign, undefined, undefined, value);
-		logicDocument.SetParagraphAlign(value);
+		logicDocument.SetParagraphAlign(value, {checkHR : true});
 		logicDocument.UpdateInterface();
 		logicDocument.Recalculate();
 		logicDocument.FinalizeAction();

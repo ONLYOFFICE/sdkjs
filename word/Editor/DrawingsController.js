@@ -269,7 +269,7 @@ CDrawingsController.prototype.MoveCursorToCell = function(bNext)
 {
 	return this.DrawingObjects.cursorMoveToCell(bNext);
 };
-CDrawingsController.prototype.SetParagraphAlign = function(Align)
+CDrawingsController.prototype.SetParagraphAlign = function(Align, pr)
 {
 	if (!this.DrawingObjects.isSelectedText())
 	{
@@ -277,7 +277,7 @@ CDrawingsController.prototype.SetParagraphAlign = function(Align)
 		if (null != ParaDrawing)
 		{
 			let oHR = ParaDrawing.getHorizontalRule();
-			if (oHR)
+			if (pr && pr.checkHR && oHR)
 			{
 				let sHRAlign = "left";
 				if (Align === AscCommon.align_Center)
@@ -294,7 +294,7 @@ CDrawingsController.prototype.SetParagraphAlign = function(Align)
 			}
 			else
 			{
-				let Paragraph = ParaDrawing.Parent;
+				let Paragraph = ParaDrawing.GetParagraph();
 				Paragraph.Set_Align(Align);
 			}
 		}

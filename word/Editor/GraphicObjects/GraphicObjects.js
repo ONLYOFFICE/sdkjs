@@ -2425,7 +2425,6 @@ CGraphicObjects.prototype =
                     editor.Update_ParaInd(oParaPr.Ind, oParaPr.Bidi);
                     editor.sync_PrAlignCallBack(nJc);
                     editor.sync_ParaStyleName(oParaPr.StyleName);
-                    editor.sync_PrPropCallback(oParaPr);
                 }
             }
         }
