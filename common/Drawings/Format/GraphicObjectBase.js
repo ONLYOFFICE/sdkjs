@@ -3365,14 +3365,6 @@
 			this.shdwSp.recalculateBounds();
 			oCopy.checkByOther(this.shdwSp.bounds);
 		}
-		let padding = bMorph ? 0 : 3;
-		if (this.pen) {
-			padding = Math.max(padding, this.pen.getWidthMM() / 2);
-		}
-		oCopy.l -= padding;
-		oCopy.r += padding;
-		oCopy.t -= padding;
-		oCopy.b += padding;
 		oCopy.checkWH();
 		return oCopy;
 	};
