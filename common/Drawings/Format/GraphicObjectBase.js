@@ -3361,25 +3361,18 @@
 	};
 	CGraphicObjectBase.prototype.getBoundsByDrawing = function (bMorph) {
 		const oCopy = this.bounds.copy();
-		if(this.shdwSp) {
+		if (this.shdwSp) {
 			this.shdwSp.recalculateBounds();
 			oCopy.checkByOther(this.shdwSp.bounds);
 		}
-		if(!bMorph) {
-			oCopy.l -= 3;
-			oCopy.r += 3;
-			oCopy.t -= 3;
-			oCopy.b += 3;
-			oCopy.checkWH();
-			return oCopy;//TODO: do not count shape rect
+		let padding = bMorph ? 0 : 3;
+		if (this.pen) {
+			padding = Math.max(padding, this.pen.getWidthMM() / 2);
 		}
-		if(this.pen) {
-			const dCorrection = this.pen.getWidthMM() / 2;
-			oCopy.l -= dCorrection;
-			oCopy.r += dCorrection;
-			oCopy.t -= dCorrection;
-			oCopy.b += dCorrection;
-		}
+		oCopy.l -= padding;
+		oCopy.r += padding;
+		oCopy.t -= padding;
+		oCopy.b += padding;
 		oCopy.checkWH();
 		return oCopy;
 	};

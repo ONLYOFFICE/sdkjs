@@ -5628,6 +5628,9 @@
 					geometry.check_bounds(graphics, this);
 				}
 
+				graphics.CheckLineWidth(this);
+				graphics.CorrectBounds2();
+
 				if (this.txBody) {
 					graphics.SetIntegerGrid(false);
 
