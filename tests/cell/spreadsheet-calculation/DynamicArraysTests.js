@@ -519,6 +519,27 @@ $(function () {
 
 	const parserFormula = AscCommonExcel.parserFormula;
 
+	const checkClose = function (assert, got, expected, desc) {
+		if (expected === null || expected === undefined) {
+			assert.ok(got === "" || got === null || got === undefined, desc + " (empty)");
+			return;
+		}
+		if (typeof expected === "string") {
+			// normalize JS booleans → "TRUE"/"FALSE" so IS* functions compare correctly
+			const gotStr = got === true ? "TRUE" : got === false ? "FALSE" : String(got);
+			assert.strictEqual(gotStr, expected, desc);
+			return;
+		}
+		const g = parseFloat(got);
+		const diff = Math.abs(g - expected);
+		const tol = 1e-7 * Math.max(1, Math.abs(expected));
+		if (diff > tol) {
+			assert.strictEqual(g, expected, desc);
+		} else {
+			assert.ok(true, desc);
+		}
+	};
+
 	QUnit.test('Test @ -> single() + single() -> @', function (assert) {
 		if (!AscCommonExcel.bIsSupportDynamicArrays) {
 			assert.ok(true, "Dynamic arrays support is disabled");
@@ -13920,6 +13941,4567 @@ $(function () {
 		assert.ok(!vmB1 || vmB1 === 0, "B1 should NOT have richdata vmIndex (expanded successfully)");
 
 		clearData(0, 0, 100, 200);
+	});
+
+	QUnit.test('Test: "Math functions — dynamic array spill"', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		clearData(0, 0, 50, 1600);
+
+		// ── test-data area ──────────────────────────────────────────────
+		// A2:A3 int 1-2, B2:B3 dec 1.1-2.2, C2:C3 frac 0.1-0.2
+		// D2:D3 sig 0.25-0.5, E2:E3 int 6-7, I2:J3 2x2 matrix {{2,1},{5,3}}
+		ws.getRange2("A2").setValue("1");
+		ws.getRange2("A3").setValue("2");
+		ws.getRange2("B2").setValue("1.1");
+		ws.getRange2("B3").setValue("2.2");
+		ws.getRange2("C2").setValue("0.1");
+		ws.getRange2("C3").setValue("0.2");
+		ws.getRange2("D2").setValue("0.25");
+		ws.getRange2("D3").setValue("0.5");
+		ws.getRange2("E2").setValue("6");
+		ws.getRange2("E3").setValue("7");
+		ws.getRange2("I2").setValue("2"); ws.getRange2("J2").setValue("1");
+		ws.getRange2("I3").setValue("5"); ws.getRange2("J3").setValue("3");
+
+		const flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false; flags.shiftKey = false;
+
+		const FORMULA_COL = "K";  // formulas placed in col K, spill right into L if needed
+		const FORMULA_ROW_START = 2;
+		let curRow = FORMULA_ROW_START;
+
+		const enterFormula = function (formula, row) {
+			const cellRef = FORMULA_COL + row;
+			const fillRange = ws.getRange2(cellRef);
+			wsView.setSelection(fillRange.bbox);
+			const fragment = ws.getRange2(cellRef).getValueForEdit2();
+			fragment[0].setFragmentText("=" + formula);
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		};
+
+		// ── ABS(A2:A3) ──
+		enterFormula("ABS(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ABS(A2:A3)", "formula stored: =ABS(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K2:K3", "spill range (B33:B34): ABS(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "ABS(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "ABS(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ACOS(C2:C3) ──
+		enterFormula("ACOS(C2:C3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ACOS(C2:C3)", "formula stored: =ACOS(C2:C3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K9:K10", "spill range (B47:B48): ACOS(C2:C3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.4706289056333368, "ACOS(C2:C3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1.3694384060045657, "ACOS(C2:C3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ACOSH(E2:E3) ──
+		enterFormula("ACOSH(E2:E3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ACOSH(E2:E3)", "formula stored: =ACOSH(E2:E3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K16:K17", "spill range (B61:B62): ACOSH(E2:E3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 2.477888730288475, "ACOSH(E2:E3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.6339157938496336, "ACOSH(E2:E3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ACOT(A2:A3) ──
+		enterFormula("ACOT(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ACOT(A2:A3)", "formula stored: =ACOT(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K23:K24", "spill range (B75:B76): ACOT(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.7853981633974483, "ACOT(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.4636476090008061, "ACOT(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ACOTH(E2:E3) ──
+		enterFormula("ACOTH(E2:E3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ACOTH(E2:E3)", "formula stored: =ACOTH(E2:E3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K30:K31", "spill range (B89:B90): ACOTH(E2:E3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.16823611831060645, "ACOTH(E2:E3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.14384103622589045, "ACOTH(E2:E3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ASIN(C2:C3) ──
+		enterFormula("ASIN(C2:C3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ASIN(C2:C3)", "formula stored: =ASIN(C2:C3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K37:K38", "spill range (B103:B104): ASIN(C2:C3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.1001674211615598, "ASIN(C2:C3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.20135792079033082, "ASIN(C2:C3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ASINH(A2:A3) ──
+		enterFormula("ASINH(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ASINH(A2:A3)", "formula stored: =ASINH(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K44:K45", "spill range (B117:B118): ASINH(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.8813735870195429, "ASINH(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1.4436354751788103, "ASINH(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ATAN(A2:A3) ──
+		enterFormula("ATAN(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ATAN(A2:A3)", "formula stored: =ATAN(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K51:K52", "spill range (B131:B132): ATAN(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.7853981633974483, "ATAN(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1.1071487177940904, "ATAN(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ATANH(C2:C3) ──
+		enterFormula("ATANH(C2:C3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ATANH(C2:C3)", "formula stored: =ATANH(C2:C3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K58:K59", "spill range (B145:B146): ATANH(C2:C3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.10033534773107562, "ATANH(C2:C3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.2027325540540821, "ATANH(C2:C3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── COS(A2:A3) ──
+		enterFormula("COS(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=COS(A2:A3)", "formula stored: =COS(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K65:K66", "spill range (B159:B160): COS(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.5403023058681398, "COS(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), -0.4161468365471424, "COS(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── COSH(A2:A3) ──
+		enterFormula("COSH(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=COSH(A2:A3)", "formula stored: =COSH(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K72:K73", "spill range (B173:B174): COSH(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.5430806348152437, "COSH(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 3.7621956910836314, "COSH(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── COT(A2:A3) ──
+		enterFormula("COT(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=COT(A2:A3)", "formula stored: =COT(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K79:K80", "spill range (B187:B188): COT(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.6420926159343306, "COT(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), -0.45765755436028577, "COT(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── COTH(E2:E3) ──
+		enterFormula("COTH(E2:E3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=COTH(E2:E3)", "formula stored: =COTH(E2:E3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K86:K87", "spill range (B201:B202): COTH(E2:E3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0000122885002098, "COTH(E2:E3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1.000001663058821, "COTH(E2:E3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── CSC(A2:A3) ──
+		enterFormula("CSC(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CSC(A2:A3)", "formula stored: =CSC(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K93:K94", "spill range (B215:B216): CSC(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.1883951057781212, "CSC(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1.0997501702946164, "CSC(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── CSCH(A2:A3) ──
+		enterFormula("CSCH(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CSCH(A2:A3)", "formula stored: =CSCH(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K100:K101", "spill range (B229:B230): CSCH(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.8509181282393216, "CSCH(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.2757205647717832, "CSCH(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DEGREES(A2:A3) ──
+		enterFormula("DEGREES(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DEGREES(A2:A3)", "formula stored: =DEGREES(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K107:K108", "spill range (B243:B244): DEGREES(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 57.29577951308232, "DEGREES(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 114.59155902616465, "DEGREES(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── EVEN(A2:A3) ──
+		enterFormula("EVEN(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=EVEN(A2:A3)", "formula stored: =EVEN(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K114:K115", "spill range (B257:B258): EVEN(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 2.0, "EVEN(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "EVEN(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── EXP(A2:A3) ──
+		enterFormula("EXP(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=EXP(A2:A3)", "formula stored: =EXP(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K121:K122", "spill range (B271:B272): EXP(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 2.718281828459045, "EXP(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 7.38905609893065, "EXP(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FACT(A2:A3) ──
+		enterFormula("FACT(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FACT(A2:A3)", "formula stored: =FACT(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K128:K129", "spill range (B285:B286): FACT(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "FACT(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "FACT(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── INT(B2:B3) ──
+		enterFormula("INT(B2:B3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=INT(B2:B3)", "formula stored: =INT(B2:B3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K135:K136", "spill range (B306:B307): INT(B2:B3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "INT(B2:B3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "INT(B2:B3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── LN(A2:A3) ──
+		enterFormula("LN(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=LN(A2:A3)", "formula stored: =LN(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K142:K143", "spill range (B320:B321): LN(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.0, "LN(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.6931471805599453, "LN(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── LOG10(A2:A3) ──
+		enterFormula("LOG10(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=LOG10(A2:A3)", "formula stored: =LOG10(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K149:K150", "spill range (B334:B335): LOG10(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.0, "LOG10(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.3010299956639812, "LOG10(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ODD(A2:A3) ──
+		enterFormula("ODD(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ODD(A2:A3)", "formula stored: =ODD(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K156:K157", "spill range (B348:B349): ODD(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "ODD(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 3.0, "ODD(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── RADIANS(A2:A3) ──
+		enterFormula("RADIANS(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=RADIANS(A2:A3)", "formula stored: =RADIANS(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K163:K164", "spill range (B362:B363): RADIANS(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.017453292519943295, "RADIANS(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.03490658503988659, "RADIANS(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SEC(A2:A3) ──
+		enterFormula("SEC(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SEC(A2:A3)", "formula stored: =SEC(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K170:K171", "spill range (B376:B377): SEC(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.8508157176809255, "SEC(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), -2.402997961722381, "SEC(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SECH(A2:A3) ──
+		enterFormula("SECH(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SECH(A2:A3)", "formula stored: =SECH(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K177:K178", "spill range (B390:B391): SECH(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.6480542736638855, "SECH(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.2658022288340797, "SECH(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SIGN(A2:A3) ──
+		enterFormula("SIGN(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SIGN(A2:A3)", "formula stored: =SIGN(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K184:K185", "spill range (B404:B405): SIGN(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "SIGN(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1.0, "SIGN(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SIN(A2:A3) ──
+		enterFormula("SIN(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SIN(A2:A3)", "formula stored: =SIN(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K191:K192", "spill range (B418:B419): SIN(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.8414709848078965, "SIN(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.9092974268256817, "SIN(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SINH(A2:A3) ──
+		enterFormula("SINH(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SINH(A2:A3)", "formula stored: =SINH(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K198:K199", "spill range (B432:B433): SINH(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.1752011936438014, "SINH(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 3.626860407847019, "SINH(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SQRT(A2:A3) ──
+		enterFormula("SQRT(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SQRT(A2:A3)", "formula stored: =SQRT(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K205:K206", "spill range (B446:B447): SQRT(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "SQRT(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1.4142135623730951, "SQRT(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── TAN(A2:A3) ──
+		enterFormula("TAN(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TAN(A2:A3)", "formula stored: =TAN(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K212:K213", "spill range (B467:B468): TAN(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.5574077246549023, "TAN(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), -2.185039863261519, "TAN(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── TANH(A2:A3) ──
+		enterFormula("TANH(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TANH(A2:A3)", "formula stored: =TANH(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K219:K220", "spill range (B481:B482): TANH(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.7615941559557649, "TANH(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.964027580075817, "TANH(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── MINVERSE({1,2;3,4}) ──
+		enterFormula("MINVERSE({1,2;3,4})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=MINVERSE({1,2;3,4})", "formula stored: =MINVERSE({1,2;3,4})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K226:L227", "spill range (B509): MINVERSE({1,2;3,4})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), '-2', "MINVERSE({1,2;3,4})[0,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── MINVERSE(I2:J3) ──
+		enterFormula("MINVERSE(I2:J3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=MINVERSE(I2:J3)", "formula stored: =MINVERSE(I2:J3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K233:L234", "spill range (B516): MINVERSE(I2:J3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), '3', "MINVERSE(I2:J3)[0,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── CEILING.MATH(B2:B3,0.5) ──
+		enterFormula("CEILING.MATH(B2:B3,0.5)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CEILING.MATH(B2:B3,0.5)", "formula stored: =CEILING.MATH(B2:B3,0.5)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K240:K241", "spill range (B530:B531): CEILING.MATH(B2:B3,0.5)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.5, "CEILING.MATH(B2:B3,0.5)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.5, "CEILING.MATH(B2:B3,0.5)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── CEILING.MATH(3.7,D2:D3) ──
+		enterFormula("CEILING.MATH(3.7,D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CEILING.MATH(3.7,D2:D3)", "formula stored: =CEILING.MATH(3.7,D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K247:K248", "spill range (B537:B538): CEILING.MATH(3.7,D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3.75, "CEILING.MATH(3.7,D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 4.0, "CEILING.MATH(3.7,D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── CEILING.MATH(B2:B3,D2:D3) ──
+		enterFormula("CEILING.MATH(B2:B3,D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CEILING.MATH(B2:B3,D2:D3)", "formula stored: =CEILING.MATH(B2:B3,D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K254:K255", "spill range (B544:B545): CEILING.MATH(B2:B3,D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.25, "CEILING.MATH(B2:B3,D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.5, "CEILING.MATH(B2:B3,D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── CEILING.PRECISE(B2:B3,0.5) ──
+		enterFormula("CEILING.PRECISE(B2:B3,0.5)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CEILING.PRECISE(B2:B3,0.5)", "formula stored: =CEILING.PRECISE(B2:B3,0.5)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K261:K262", "spill range (B558:B559): CEILING.PRECISE(B2:B3,0.5)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.5, "CEILING.PRECISE(B2:B3,0.5)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.5, "CEILING.PRECISE(B2:B3,0.5)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── CEILING.PRECISE(3.7,D2:D3) ──
+		enterFormula("CEILING.PRECISE(3.7,D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CEILING.PRECISE(3.7,D2:D3)", "formula stored: =CEILING.PRECISE(3.7,D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K268:K269", "spill range (B565:B566): CEILING.PRECISE(3.7,D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3.75, "CEILING.PRECISE(3.7,D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 4.0, "CEILING.PRECISE(3.7,D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── CEILING.PRECISE(B2:B3,D2:D3) ──
+		enterFormula("CEILING.PRECISE(B2:B3,D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CEILING.PRECISE(B2:B3,D2:D3)", "formula stored: =CEILING.PRECISE(B2:B3,D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K275:K276", "spill range (B572:B573): CEILING.PRECISE(B2:B3,D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.25, "CEILING.PRECISE(B2:B3,D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.5, "CEILING.PRECISE(B2:B3,D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FLOOR.MATH(B2:B3,0.5) ──
+		enterFormula("FLOOR.MATH(B2:B3,0.5)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FLOOR.MATH(B2:B3,0.5)", "formula stored: =FLOOR.MATH(B2:B3,0.5)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K282:K283", "spill range (B586:B587): FLOOR.MATH(B2:B3,0.5)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "FLOOR.MATH(B2:B3,0.5)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "FLOOR.MATH(B2:B3,0.5)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FLOOR.MATH(3.7,D2:D3) ──
+		enterFormula("FLOOR.MATH(3.7,D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FLOOR.MATH(3.7,D2:D3)", "formula stored: =FLOOR.MATH(3.7,D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K289:K290", "spill range (B593:B594): FLOOR.MATH(3.7,D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3.5, "FLOOR.MATH(3.7,D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 3.5, "FLOOR.MATH(3.7,D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FLOOR.MATH(B2:B3,D2:D3) ──
+		enterFormula("FLOOR.MATH(B2:B3,D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FLOOR.MATH(B2:B3,D2:D3)", "formula stored: =FLOOR.MATH(B2:B3,D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K296:K297", "spill range (B600:B601): FLOOR.MATH(B2:B3,D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "FLOOR.MATH(B2:B3,D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "FLOOR.MATH(B2:B3,D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FLOOR.PRECISE(B2:B3,0.5) ──
+		enterFormula("FLOOR.PRECISE(B2:B3,0.5)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FLOOR.PRECISE(B2:B3,0.5)", "formula stored: =FLOOR.PRECISE(B2:B3,0.5)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K303:K304", "spill range (B614:B615): FLOOR.PRECISE(B2:B3,0.5)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "FLOOR.PRECISE(B2:B3,0.5)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "FLOOR.PRECISE(B2:B3,0.5)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FLOOR.PRECISE(3.7,D2:D3) ──
+		enterFormula("FLOOR.PRECISE(3.7,D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FLOOR.PRECISE(3.7,D2:D3)", "formula stored: =FLOOR.PRECISE(3.7,D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K310:K311", "spill range (B621:B622): FLOOR.PRECISE(3.7,D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3.5, "FLOOR.PRECISE(3.7,D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 3.5, "FLOOR.PRECISE(3.7,D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FLOOR.PRECISE(B2:B3,D2:D3) ──
+		enterFormula("FLOOR.PRECISE(B2:B3,D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FLOOR.PRECISE(B2:B3,D2:D3)", "formula stored: =FLOOR.PRECISE(B2:B3,D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K317:K318", "spill range (B628:B629): FLOOR.PRECISE(B2:B3,D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "FLOOR.PRECISE(B2:B3,D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "FLOOR.PRECISE(B2:B3,D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISO.CEILING(B2:B3,0.5) ──
+		enterFormula("ISO.CEILING(B2:B3,0.5)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISO.CEILING(B2:B3,0.5)", "formula stored: =ISO.CEILING(B2:B3,0.5)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K324:K325", "spill range (B642:B643): ISO.CEILING(B2:B3,0.5)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.5, "ISO.CEILING(B2:B3,0.5)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.5, "ISO.CEILING(B2:B3,0.5)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISO.CEILING(3.7,D2:D3) ──
+		enterFormula("ISO.CEILING(3.7,D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISO.CEILING(3.7,D2:D3)", "formula stored: =ISO.CEILING(3.7,D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K331:K332", "spill range (B649:B650): ISO.CEILING(3.7,D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3.75, "ISO.CEILING(3.7,D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 4.0, "ISO.CEILING(3.7,D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISO.CEILING(B2:B3,D2:D3) ──
+		enterFormula("ISO.CEILING(B2:B3,D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISO.CEILING(B2:B3,D2:D3)", "formula stored: =ISO.CEILING(B2:B3,D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K338:K339", "spill range (B656:B657): ISO.CEILING(B2:B3,D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.25, "ISO.CEILING(B2:B3,D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.5, "ISO.CEILING(B2:B3,D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ROMAN(A2:A3,0) ──
+		enterFormula("ROMAN(A2:A3,0)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ROMAN(A2:A3,0)", "formula stored: =ROMAN(A2:A3,0)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K345:K346", "spill range (B670:B671): ROMAN(A2:A3,0)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 'I', "ROMAN(A2:A3,0)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 'II', "ROMAN(A2:A3,0)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ROMAN(1999,A2:A3) ──
+		enterFormula("ROMAN(1999,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ROMAN(1999,A2:A3)", "formula stored: =ROMAN(1999,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K352:K353", "spill range (B677:B678): ROMAN(1999,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 'MLMVLIV', "ROMAN(1999,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 'MXMIX', "ROMAN(1999,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ROMAN(A2:A3,A2:A3) ──
+		enterFormula("ROMAN(A2:A3,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ROMAN(A2:A3,A2:A3)", "formula stored: =ROMAN(A2:A3,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K359:K360", "spill range (B684:B685): ROMAN(A2:A3,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 'I', "ROMAN(A2:A3,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 'II', "ROMAN(A2:A3,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── TRUNC(B2:B3,1) ──
+		enterFormula("TRUNC(B2:B3,1)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TRUNC(B2:B3,1)", "formula stored: =TRUNC(B2:B3,1)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K366:K367", "spill range (B698:B699): TRUNC(B2:B3,1)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.1, "TRUNC(B2:B3,1)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.2, "TRUNC(B2:B3,1)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── TRUNC(3.7,A2:A3) ──
+		enterFormula("TRUNC(3.7,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TRUNC(3.7,A2:A3)", "formula stored: =TRUNC(3.7,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K373:K374", "spill range (B705:B706): TRUNC(3.7,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3.7, "TRUNC(3.7,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 3.7, "TRUNC(3.7,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── TRUNC(B2:B3,A2:A3) ──
+		enterFormula("TRUNC(B2:B3,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TRUNC(B2:B3,A2:A3)", "formula stored: =TRUNC(B2:B3,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K380:K381", "spill range (B712:B713): TRUNC(B2:B3,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.1, "TRUNC(B2:B3,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.2, "TRUNC(B2:B3,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── LOG(E2:E3,2) ──
+		enterFormula("LOG(E2:E3,2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=LOG(E2:E3,2)", "formula stored: =LOG(E2:E3,2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K387:K388", "spill range (B726:B727): LOG(E2:E3,2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 2.584962500721156, "LOG(E2:E3,2)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.807354922057604, "LOG(E2:E3,2)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── LOG(8,A2:A3) ──
+		enterFormula("LOG(8,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=LOG(8,A2:A3)", "formula stored: =LOG(8,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K394:K395", "spill range (B733:B734): LOG(8,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), '#DIV/0!', "LOG(8,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 3.0, "LOG(8,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── LOG(E2:E3,A2:A3) ──
+		enterFormula("LOG(E2:E3,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=LOG(E2:E3,A2:A3)", "formula stored: =LOG(E2:E3,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K401:K402", "spill range (B740:B741): LOG(E2:E3,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), '#DIV/0!', "LOG(E2:E3,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.807354922057604, "LOG(E2:E3,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ATAN2(A2:A3,1) ──
+		enterFormula("ATAN2(A2:A3,1)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ATAN2(A2:A3,1)", "formula stored: =ATAN2(A2:A3,1)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K408:K409", "spill range (B754:B755): ATAN2(A2:A3,1)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.7853981633974483, "ATAN2(A2:A3,1)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.4636476090008061, "ATAN2(A2:A3,1)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ATAN2(1,C2:C3) ──
+		enterFormula("ATAN2(1,C2:C3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ATAN2(1,C2:C3)", "formula stored: =ATAN2(1,C2:C3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K415:K416", "spill range (B761:B762): ATAN2(1,C2:C3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.09966865249116204, "ATAN2(1,C2:C3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.19739555984988078, "ATAN2(1,C2:C3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ATAN2(A2:A3,C2:C3) ──
+		enterFormula("ATAN2(A2:A3,C2:C3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ATAN2(A2:A3,C2:C3)", "formula stored: =ATAN2(A2:A3,C2:C3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K422:K423", "spill range (B768:B769): ATAN2(A2:A3,C2:C3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.09966865249116204, "ATAN2(A2:A3,C2:C3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.09966865249116204, "ATAN2(A2:A3,C2:C3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── CEILING(B2:B3,1) ──
+		enterFormula("CEILING(B2:B3,1)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CEILING(B2:B3,1)", "formula stored: =CEILING(B2:B3,1)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K429:K430", "spill range (B782:B783): CEILING(B2:B3,1)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 2.0, "CEILING(B2:B3,1)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 3.0, "CEILING(B2:B3,1)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── CEILING(3.7,D2:D3) ──
+		enterFormula("CEILING(3.7,D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CEILING(3.7,D2:D3)", "formula stored: =CEILING(3.7,D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K436:K437", "spill range (B789:B790): CEILING(3.7,D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3.75, "CEILING(3.7,D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 4.0, "CEILING(3.7,D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── CEILING(B2:B3,D2:D3) ──
+		enterFormula("CEILING(B2:B3,D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CEILING(B2:B3,D2:D3)", "formula stored: =CEILING(B2:B3,D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K443:K444", "spill range (B796:B797): CEILING(B2:B3,D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.25, "CEILING(B2:B3,D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.5, "CEILING(B2:B3,D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── COMBIN(E2:E3,2) ──
+		enterFormula("COMBIN(E2:E3,2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=COMBIN(E2:E3,2)", "formula stored: =COMBIN(E2:E3,2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K450:K451", "spill range (B810:B811): COMBIN(E2:E3,2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 15.0, "COMBIN(E2:E3,2)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 21.0, "COMBIN(E2:E3,2)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── COMBIN(5,A2:A3) ──
+		enterFormula("COMBIN(5,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=COMBIN(5,A2:A3)", "formula stored: =COMBIN(5,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K457:K458", "spill range (B817:B818): COMBIN(5,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 5.0, "COMBIN(5,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 10.0, "COMBIN(5,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── COMBIN(E2:E3,A2:A3) ──
+		enterFormula("COMBIN(E2:E3,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=COMBIN(E2:E3,A2:A3)", "formula stored: =COMBIN(E2:E3,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K464:K465", "spill range (B824:B825): COMBIN(E2:E3,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 6.0, "COMBIN(E2:E3,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 21.0, "COMBIN(E2:E3,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── COMBINA(E2:E3,2) ──
+		enterFormula("COMBINA(E2:E3,2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=COMBINA(E2:E3,2)", "formula stored: =COMBINA(E2:E3,2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K471:K472", "spill range (B838:B839): COMBINA(E2:E3,2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 21.0, "COMBINA(E2:E3,2)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 28.0, "COMBINA(E2:E3,2)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── COMBINA(5,A2:A3) ──
+		enterFormula("COMBINA(5,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=COMBINA(5,A2:A3)", "formula stored: =COMBINA(5,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K478:K479", "spill range (B845:B846): COMBINA(5,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 5.0, "COMBINA(5,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 15.0, "COMBINA(5,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── COMBINA(E2:E3,A2:A3) ──
+		enterFormula("COMBINA(E2:E3,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=COMBINA(E2:E3,A2:A3)", "formula stored: =COMBINA(E2:E3,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K485:K486", "spill range (B852:B853): COMBINA(E2:E3,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 6.0, "COMBINA(E2:E3,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 28.0, "COMBINA(E2:E3,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FLOOR(B2:B3,1) ──
+		enterFormula("FLOOR(B2:B3,1)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FLOOR(B2:B3,1)", "formula stored: =FLOOR(B2:B3,1)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K492:K493", "spill range (B866:B867): FLOOR(B2:B3,1)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "FLOOR(B2:B3,1)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "FLOOR(B2:B3,1)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FLOOR(3.7,D2:D3) ──
+		enterFormula("FLOOR(3.7,D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FLOOR(3.7,D2:D3)", "formula stored: =FLOOR(3.7,D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K499:K500", "spill range (B873:B874): FLOOR(3.7,D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3.5, "FLOOR(3.7,D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 3.5, "FLOOR(3.7,D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FLOOR(B2:B3,D2:D3) ──
+		enterFormula("FLOOR(B2:B3,D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FLOOR(B2:B3,D2:D3)", "formula stored: =FLOOR(B2:B3,D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K506:K507", "spill range (B880:B881): FLOOR(B2:B3,D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "FLOOR(B2:B3,D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "FLOOR(B2:B3,D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── MOD(E2:E3,3) ──
+		enterFormula("MOD(E2:E3,3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=MOD(E2:E3,3)", "formula stored: =MOD(E2:E3,3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K513:K514", "spill range (B894:B895): MOD(E2:E3,3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.0, "MOD(E2:E3,3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1.0, "MOD(E2:E3,3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── MOD(7,A2:A3) ──
+		enterFormula("MOD(7,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=MOD(7,A2:A3)", "formula stored: =MOD(7,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K520:K521", "spill range (B901:B902): MOD(7,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.0, "MOD(7,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1.0, "MOD(7,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── MOD(E2:E3,A2:A3) ──
+		enterFormula("MOD(E2:E3,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=MOD(E2:E3,A2:A3)", "formula stored: =MOD(E2:E3,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K527:K528", "spill range (B908:B909): MOD(E2:E3,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.0, "MOD(E2:E3,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1.0, "MOD(E2:E3,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── POWER(A2:A3,3) ──
+		enterFormula("POWER(A2:A3,3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=POWER(A2:A3,3)", "formula stored: =POWER(A2:A3,3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K534:K535", "spill range (B950:B951): POWER(A2:A3,3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "POWER(A2:A3,3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 8.0, "POWER(A2:A3,3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── POWER(2,A2:A3) ──
+		enterFormula("POWER(2,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=POWER(2,A2:A3)", "formula stored: =POWER(2,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K541:K542", "spill range (B957:B958): POWER(2,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 2.0, "POWER(2,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 4.0, "POWER(2,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── POWER(A2:A3,A2:A3) ──
+		enterFormula("POWER(A2:A3,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=POWER(A2:A3,A2:A3)", "formula stored: =POWER(A2:A3,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K548:K549", "spill range (B964:B965): POWER(A2:A3,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "POWER(A2:A3,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 4.0, "POWER(A2:A3,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ROUND(B2:B3,2) ──
+		enterFormula("ROUND(B2:B3,2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ROUND(B2:B3,2)", "formula stored: =ROUND(B2:B3,2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K555:K556", "spill range (B1034:B1035): ROUND(B2:B3,2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.1, "ROUND(B2:B3,2)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.2, "ROUND(B2:B3,2)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ROUND(3.14159,A2:A3) ──
+		enterFormula("ROUND(3.14159,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ROUND(3.14159,A2:A3)", "formula stored: =ROUND(3.14159,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K562:K563", "spill range (B1041:B1042): ROUND(3.14159,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3.1, "ROUND(3.14159,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 3.14, "ROUND(3.14159,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ROUND(B2:B3,A2:A3) ──
+		enterFormula("ROUND(B2:B3,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ROUND(B2:B3,A2:A3)", "formula stored: =ROUND(B2:B3,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K569:K570", "spill range (B1048:B1049): ROUND(B2:B3,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.1, "ROUND(B2:B3,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.2, "ROUND(B2:B3,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ROUNDDOWN(B2:B3,2) ──
+		enterFormula("ROUNDDOWN(B2:B3,2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ROUNDDOWN(B2:B3,2)", "formula stored: =ROUNDDOWN(B2:B3,2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K576:K577", "spill range (B1062:B1063): ROUNDDOWN(B2:B3,2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.1, "ROUNDDOWN(B2:B3,2)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.2, "ROUNDDOWN(B2:B3,2)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ROUNDDOWN(3.14159,A2:A3) ──
+		enterFormula("ROUNDDOWN(3.14159,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ROUNDDOWN(3.14159,A2:A3)", "formula stored: =ROUNDDOWN(3.14159,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K583:K584", "spill range (B1069:B1070): ROUNDDOWN(3.14159,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3.1, "ROUNDDOWN(3.14159,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 3.14, "ROUNDDOWN(3.14159,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ROUNDDOWN(B2:B3,A2:A3) ──
+		enterFormula("ROUNDDOWN(B2:B3,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ROUNDDOWN(B2:B3,A2:A3)", "formula stored: =ROUNDDOWN(B2:B3,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K590:K591", "spill range (B1076:B1077): ROUNDDOWN(B2:B3,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.1, "ROUNDDOWN(B2:B3,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.2, "ROUNDDOWN(B2:B3,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ROUNDUP(B2:B3,2) ──
+		enterFormula("ROUNDUP(B2:B3,2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ROUNDUP(B2:B3,2)", "formula stored: =ROUNDUP(B2:B3,2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K597:K598", "spill range (B1090:B1091): ROUNDUP(B2:B3,2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.11, "ROUNDUP(B2:B3,2)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.21, "ROUNDUP(B2:B3,2)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ROUNDUP(3.14159,A2:A3) ──
+		enterFormula("ROUNDUP(3.14159,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ROUNDUP(3.14159,A2:A3)", "formula stored: =ROUNDUP(3.14159,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K604:K605", "spill range (B1097:B1098): ROUNDUP(3.14159,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3.2, "ROUNDUP(3.14159,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 3.15, "ROUNDUP(3.14159,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ROUNDUP(B2:B3,A2:A3) ──
+		enterFormula("ROUNDUP(B2:B3,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ROUNDUP(B2:B3,A2:A3)", "formula stored: =ROUNDUP(B2:B3,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K611:K612", "spill range (B1104:B1105): ROUNDUP(B2:B3,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.1, "ROUNDUP(B2:B3,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.21, "ROUNDUP(B2:B3,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BASE(E2:E3,16) ──
+		enterFormula("BASE(E2:E3,16)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=BASE(E2:E3,16)", "formula stored: =BASE(E2:E3,16)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K618:K619", "spill range (B1118:B1119): BASE(E2:E3,16)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), '6', "BASE(E2:E3,16)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), '7', "BASE(E2:E3,16)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BASE(255,E2:E3) ──
+		enterFormula("BASE(255,E2:E3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=BASE(255,E2:E3)", "formula stored: =BASE(255,E2:E3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K625:K626", "spill range (B1125:B1126): BASE(255,E2:E3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), '1103', "BASE(255,E2:E3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), '513', "BASE(255,E2:E3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BASE(E2:E3,E2:E3) ──
+		enterFormula("BASE(E2:E3,E2:E3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=BASE(E2:E3,E2:E3)", "formula stored: =BASE(E2:E3,E2:E3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K632:K633", "spill range (B1132:B1133): BASE(E2:E3,E2:E3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), '10', "BASE(E2:E3,E2:E3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), '10', "BASE(E2:E3,E2:E3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DECIMAL("7",E2:E3) ──
+		enterFormula("DECIMAL(\"7\",E2:E3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DECIMAL(\"7\",E2:E3)", "formula stored: =DECIMAL(\"7\",E2:E3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K639:K640", "spill range (B1146:B1147): DECIMAL(\"7\",E2:E3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), '#NUM!', "DECIMAL(\"7\",E2:E3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), '#NUM!', "DECIMAL(\"7\",E2:E3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── MMULT({1,2;3,4},{1,2;3,4}) ──
+		enterFormula("MMULT({1,2;3,4},{1,2;3,4})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=MMULT({1,2;3,4},{1,2;3,4})", "formula stored: =MMULT({1,2;3,4},{1,2;3,4})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K646:L647", "spill range (B1153): MMULT({1,2;3,4},{1,2;3,4})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), '7', "MMULT({1,2;3,4},{1,2;3,4})[0,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── MMULT(I2:J3,{1,2;3,4}) ──
+		enterFormula("MMULT(I2:J3,{1,2;3,4})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=MMULT(I2:J3,{1,2;3,4})", "formula stored: =MMULT(I2:J3,{1,2;3,4})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K653:L654", "spill range (B1160): MMULT(I2:J3,{1,2;3,4})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), '5', "MMULT(I2:J3,{1,2;3,4})[0,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── MMULT({1,2;3,4},I2:J3) ──
+		enterFormula("MMULT({1,2;3,4},I2:J3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=MMULT({1,2;3,4},I2:J3)", "formula stored: =MMULT({1,2;3,4},I2:J3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K660:L661", "spill range (B1167): MMULT({1,2;3,4},I2:J3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), '12', "MMULT({1,2;3,4},I2:J3)[0,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── MMULT(I2:J3,I2:J3) ──
+		enterFormula("MMULT(I2:J3,I2:J3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=MMULT(I2:J3,I2:J3)", "formula stored: =MMULT(I2:J3,I2:J3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K667:L668", "spill range (B1174): MMULT(I2:J3,I2:J3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), '9', "MMULT(I2:J3,I2:J3)[0,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SUMIF(A2:A3,A2:A3,E2:E3) ──
+		enterFormula("SUMIF(A2:A3,A2:A3,E2:E3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SUMIF(A2:A3,A2:A3,E2:E3)", "formula stored: =SUMIF(A2:A3,A2:A3,E2:E3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K674:K675", "spill range (B1461:B1462): SUMIF(A2:A3,A2:A3,E2:E3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 6.0, "SUMIF(A2:A3,A2:A3,E2:E3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 7.0, "SUMIF(A2:A3,A2:A3,E2:E3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SUMIFS(E2:E3,A2:A3,A2:A3) ──
+		enterFormula("SUMIFS(E2:E3,A2:A3,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SUMIFS(E2:E3,A2:A3,A2:A3)", "formula stored: =SUMIFS(E2:E3,A2:A3,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K681:K682", "spill range (B1468:B1469): SUMIFS(E2:E3,A2:A3,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 6.0, "SUMIFS(E2:E3,A2:A3,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 7.0, "SUMIFS(E2:E3,A2:A3,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── RANDARRAY(3,2) ──
+		enterFormula("RANDARRAY(3,2)", curRow);
+		assert.ok(ws.getRange2("K" + (curRow + 0)).getValue() !== "", "RANDARRAY(3,2)[0,0] (volatile — non-empty)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SEQUENCE(2,1) ──
+		enterFormula("SEQUENCE(2,1)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SEQUENCE(2,1)", "formula stored: =SEQUENCE(2,1)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K695:K696", "spill range (B1482:B1483): SEQUENCE(2,1)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "SEQUENCE(2,1)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "SEQUENCE(2,1)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SEQUENCE(2,2) ──
+		enterFormula("SEQUENCE(2,2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SEQUENCE(2,2)", "formula stored: =SEQUENCE(2,2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K702:L703", "spill range (B1489): SEQUENCE(2,2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), '1', "SEQUENCE(2,2)[0,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── MUNIT(2) ──
+		enterFormula("MUNIT(2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=MUNIT(2)", "formula stored: =MUNIT(2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K709:L710", "spill range (B1496): MUNIT(2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), '1', "MUNIT(2)[0,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		clearData(0, 0, 50, 1600);
+	});
+
+
+
+
+
+
+
+
+	QUnit.test('Test: "Logical functions — dynamic array spill"', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		clearData(0, 0, 50, 500);
+
+		// ── test-data area ──────────────────────────────────────────────
+		// A2:A3={1,2}  B2:B3={-1,2}  C2:C3={0,1}  D2:D3={TRUE,FALSE}
+		ws.getRange2("A2").setValue("1");
+		ws.getRange2("A3").setValue("2");
+		ws.getRange2("B2").setValue("-1");
+		ws.getRange2("B3").setValue("2");
+		ws.getRange2("C2").setValue("0");
+		ws.getRange2("C3").setValue("1");
+		ws.getRange2("D2").setValue("TRUE");
+		ws.getRange2("D3").setValue("FALSE");
+
+		const flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false; flags.shiftKey = false;
+
+		const FORMULA_COL = "K";
+		const FORMULA_ROW_START = 2;
+		let curRow = FORMULA_ROW_START;
+
+		const enterFormula = function (formula, row) {
+			const cellRef = FORMULA_COL + row;
+			const fillRange = ws.getRange2(cellRef);
+			wsView.setSelection(fillRange.bbox);
+			const fragment = ws.getRange2(cellRef).getValueForEdit2();
+			fragment[0].setFragmentText("=" + formula);
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		};
+
+		// ── IF(B2:B3>0,"pos","neg") ──
+		enterFormula("IF(B2:B3>0,\"pos\",\"neg\")", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IF(B2:B3>0,\"pos\",\"neg\")", "formula stored: =IF(B2:B3>0,\"pos\",\"neg\")");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K2:K3", "spill range (B19:B20): IF(B2:B3>0,\"pos\",\"neg\")");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "neg", "IF(B2:B3>0,\"pos\",\"neg\")[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "pos", "IF(B2:B3>0,\"pos\",\"neg\")[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IF(TRUE,A2:A3,-1) ──
+		enterFormula("IF(TRUE,A2:A3,-1)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IF(TRUE,A2:A3,-1)", "formula stored: =IF(TRUE,A2:A3,-1)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K9:K10", "spill range (B26:B27): IF(TRUE,A2:A3,-1)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "IF(TRUE,A2:A3,-1)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "IF(TRUE,A2:A3,-1)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IF(FALSE,-1,A2:A3) ──
+		enterFormula("IF(FALSE,-1,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IF(FALSE,-1,A2:A3)", "formula stored: =IF(FALSE,-1,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K16:K17", "spill range (B33:B34): IF(FALSE,-1,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "IF(FALSE,-1,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "IF(FALSE,-1,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IF(B2:B3>0,B2:B3,-1) ──
+		enterFormula("IF(B2:B3>0,B2:B3,-1)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IF(B2:B3>0,B2:B3,-1)", "formula stored: =IF(B2:B3>0,B2:B3,-1)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K23:K24", "spill range (B40:B41): IF(B2:B3>0,B2:B3,-1)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), -1.0, "IF(B2:B3>0,B2:B3,-1)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "IF(B2:B3>0,B2:B3,-1)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IF(FALSE,A2:A3,B2:B3) ──
+		enterFormula("IF(FALSE,A2:A3,B2:B3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IF(FALSE,A2:A3,B2:B3)", "formula stored: =IF(FALSE,A2:A3,B2:B3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K30:K31", "spill range (B47:B48): IF(FALSE,A2:A3,B2:B3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), -1.0, "IF(FALSE,A2:A3,B2:B3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "IF(FALSE,A2:A3,B2:B3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IF(A2:A3>1,A2:A3*10,A2:A3*100) ──
+		enterFormula("IF(A2:A3>1,A2:A3*10,A2:A3*100)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IF(A2:A3>1,A2:A3*10,A2:A3*100)", "formula stored: =IF(A2:A3>1,A2:A3*10,A2:A3*100)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K37:K38", "spill range (B54:B55): IF(A2:A3>1,A2:A3*10,A2:A3*100)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 100.0, "IF(A2:A3>1,A2:A3*10,A2:A3*100)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 20.0, "IF(A2:A3>1,A2:A3*10,A2:A3*100)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IF(A2:A3=1,A2:A3,B2:B3) ──
+		enterFormula("IF(A2:A3=1,A2:A3,B2:B3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IF(A2:A3=1,A2:A3,B2:B3)", "formula stored: =IF(A2:A3=1,A2:A3,B2:B3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K44:K45", "spill range (B61:B62): IF(A2:A3=1,A2:A3,B2:B3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "IF(A2:A3=1,A2:A3,B2:B3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "IF(A2:A3=1,A2:A3,B2:B3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IFERROR(1/C2:C3,"err") ──
+		enterFormula("IFERROR(1/C2:C3,\"err\")", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IFERROR(1/C2:C3,\"err\")", "formula stored: =IFERROR(1/C2:C3,\"err\")");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K51:K52", "spill range (B75:B76): IFERROR(1/C2:C3,\"err\")");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "err", "IFERROR(1/C2:C3,\"err\")[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1.0, "IFERROR(1/C2:C3,\"err\")[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IFERROR(A2:A3,"err") ──
+		enterFormula("IFERROR(A2:A3,\"err\")", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IFERROR(A2:A3,\"err\")", "formula stored: =IFERROR(A2:A3,\"err\")");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K58:K59", "spill range (B82:B83): IFERROR(A2:A3,\"err\")");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "IFERROR(A2:A3,\"err\")[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "IFERROR(A2:A3,\"err\")[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IFERROR(SQRT(C2:C3-1),-1) ──
+		enterFormula("IFERROR(SQRT(C2:C3-1),-1)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IFERROR(SQRT(C2:C3-1),-1)", "formula stored: =IFERROR(SQRT(C2:C3-1),-1)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K65:K66", "spill range (B89:B90): IFERROR(SQRT(C2:C3-1),-1)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), -1.0, "IFERROR(SQRT(C2:C3-1),-1)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.0, "IFERROR(SQRT(C2:C3-1),-1)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IFERROR(NA(),A2:A3) ──
+		enterFormula("IFERROR(NA(),A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IFERROR(NA(),A2:A3)", "formula stored: =IFERROR(NA(),A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K72:K73", "spill range (B96:B97): IFERROR(NA(),A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "IFERROR(NA(),A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "IFERROR(NA(),A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IFERROR(1/C2:C3,A2:A3) ──
+		enterFormula("IFERROR(1/C2:C3,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IFERROR(1/C2:C3,A2:A3)", "formula stored: =IFERROR(1/C2:C3,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K79:K80", "spill range (B103:B104): IFERROR(1/C2:C3,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "IFERROR(1/C2:C3,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1.0, "IFERROR(1/C2:C3,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IFNA(MATCH(A2:A3,B2:B3,0),"na") ──
+		enterFormula("IFNA(MATCH(A2:A3,B2:B3,0),\"na\")", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IFNA(MATCH(A2:A3,B2:B3,0),\"na\")", "formula stored: =IFNA(MATCH(A2:A3,B2:B3,0),\"na\")");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K86:K87", "spill range (B117:B118): IFNA(MATCH(A2:A3,B2:B3,0),\"na\")");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "na", "IFNA(MATCH(A2:A3,B2:B3,0),\"na\")[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "IFNA(MATCH(A2:A3,B2:B3,0),\"na\")[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IFNA(A2:A3,"na") ──
+		enterFormula("IFNA(A2:A3,\"na\")", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IFNA(A2:A3,\"na\")", "formula stored: =IFNA(A2:A3,\"na\")");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K93:K94", "spill range (B124:B125): IFNA(A2:A3,\"na\")");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "IFNA(A2:A3,\"na\")[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "IFNA(A2:A3,\"na\")[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IFNA(NA(),A2:A3) ──
+		enterFormula("IFNA(NA(),A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IFNA(NA(),A2:A3)", "formula stored: =IFNA(NA(),A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K100:K101", "spill range (B131:B132): IFNA(NA(),A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "IFNA(NA(),A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "IFNA(NA(),A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IFNA(MATCH(A2:A3,B2:B3,0),B2:B3) ──
+		enterFormula("IFNA(MATCH(A2:A3,B2:B3,0),B2:B3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IFNA(MATCH(A2:A3,B2:B3,0),B2:B3)", "formula stored: =IFNA(MATCH(A2:A3,B2:B3,0),B2:B3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K107:K108", "spill range (B138:B139): IFNA(MATCH(A2:A3,B2:B3,0),B2:B3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), -1.0, "IFNA(MATCH(A2:A3,B2:B3,0),B2:B3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "IFNA(MATCH(A2:A3,B2:B3,0),B2:B3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NOT(B2:B3>0) ──
+		enterFormula("NOT(B2:B3>0)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=NOT(B2:B3>0)", "formula stored: =NOT(B2:B3>0)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K114:K115", "spill range (B152:B153): NOT(B2:B3>0)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "TRUE", "NOT(B2:B3>0)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "FALSE", "NOT(B2:B3>0)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NOT(D2:D3) ──
+		enterFormula("NOT(D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=NOT(D2:D3)", "formula stored: =NOT(D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K121:K122", "spill range (B159:B160): NOT(D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "FALSE", "NOT(D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "TRUE", "NOT(D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IFS(1=1,"one",TRUE,"other") ──
+		//TODO must be array with 1 cell!
+		enterFormula("IFS(1=1,\"one\",TRUE,\"other\")", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IFS(1=1,\"one\",TRUE,\"other\")", "formula stored: =IFS(1=1,\"one\",TRUE,\"other\")");
+		//assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K128:K128", "spill range (B166): IFS(1=1,\"one\",TRUE,\"other\")");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "one", "IFS(1=1,\"one\",TRUE,\"other\")[0,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IFS(A2:A3=1,"one",A2:A3=2,"two",TRUE,"other") ──
+		enterFormula("IFS(A2:A3=1,\"one\",A2:A3=2,\"two\",TRUE,\"other\")", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IFS(A2:A3=1,\"one\",A2:A3=2,\"two\",TRUE,\"other\")", "formula stored: =IFS(A2:A3=1,\"one\",A2:A3=2,\"two\",TRUE,\"other\")");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K135:K136", "spill range (B173:B174): IFS(A2:A3=1,\"one\",A2:A3=2,\"two\",TRUE,\"other\")");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "one", "IFS(A2:A3=1,\"one\",A2:A3=2,\"two\",TRUE,\"other\")[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "two", "IFS(A2:A3=1,\"one\",A2:A3=2,\"two\",TRUE,\"other\")[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IFS(B2:B3>0,"pos",B2:B3<0,"neg",TRUE,"zero") ──
+		enterFormula("IFS(B2:B3>0,\"pos\",B2:B3<0,\"neg\",TRUE,\"zero\")", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IFS(B2:B3>0,\"pos\",B2:B3<0,\"neg\",TRUE,\"zero\")", "formula stored: =IFS(B2:B3>0,\"pos\",B2:B3<0,\"neg\",TRUE,\"zero\")");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K142:K143", "spill range (B180:B181): IFS(B2:B3>0,\"pos\",B2:B3<0,\"neg\",TRUE,\"zero\")");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "neg", "IFS(B2:B3>0,\"pos\",B2:B3<0,\"neg\",TRUE,\"zero\")[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "pos", "IFS(B2:B3>0,\"pos\",B2:B3<0,\"neg\",TRUE,\"zero\")[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IFS(TRUE,A2:A3) ──
+		enterFormula("IFS(TRUE,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IFS(TRUE,A2:A3)", "formula stored: =IFS(TRUE,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K149:K150", "spill range (B187:B188): IFS(TRUE,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "IFS(TRUE,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "IFS(TRUE,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IFS(A2:A3=1,A2:A3*10,TRUE,0) ──
+		enterFormula("IFS(A2:A3=1,A2:A3*10,TRUE,0)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IFS(A2:A3=1,A2:A3*10,TRUE,0)", "formula stored: =IFS(A2:A3=1,A2:A3*10,TRUE,0)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K156:K157", "spill range (B194:B195): IFS(A2:A3=1,A2:A3*10,TRUE,0)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 10.0, "IFS(A2:A3=1,A2:A3*10,TRUE,0)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.0, "IFS(A2:A3=1,A2:A3*10,TRUE,0)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IFS(A2:A3=1,A2:A3*100,A2:A3=2,A2:A3*10,TRUE,0) ──
+		enterFormula("IFS(A2:A3=1,A2:A3*100,A2:A3=2,A2:A3*10,TRUE,0)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IFS(A2:A3=1,A2:A3*100,A2:A3=2,A2:A3*10,TRUE,0)", "formula stored: =IFS(A2:A3=1,A2:A3*100,A2:A3=2,A2:A3*10,TRUE,0)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K163:K164", "spill range (B201:B202): IFS(A2:A3=1,A2:A3*100,A2:A3=2,A2:A3*10,TRUE,0)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 100.0, "IFS(A2:A3=1,A2:A3*100,A2:A3=2,A2:A3*10,TRUE,0)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 20.0, "IFS(A2:A3=1,A2:A3*100,A2:A3=2,A2:A3*10,TRUE,0)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IFS(FALSE,-1,TRUE,B2:B3) ──
+		enterFormula("IFS(FALSE,-1,TRUE,B2:B3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IFS(FALSE,-1,TRUE,B2:B3)", "formula stored: =IFS(FALSE,-1,TRUE,B2:B3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K170:K171", "spill range (B208:B209): IFS(FALSE,-1,TRUE,B2:B3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), -1.0, "IFS(FALSE,-1,TRUE,B2:B3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "IFS(FALSE,-1,TRUE,B2:B3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SWITCH(1,1,"one",2,"two","other") ──
+		//TODO must be array with 1 cell!
+		enterFormula("SWITCH(1,1,\"one\",2,\"two\",\"other\")", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SWITCH(1,1,\"one\",2,\"two\",\"other\")", "formula stored: =SWITCH(1,1,\"one\",2,\"two\",\"other\")");
+		//assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K177:K177", "spill range (B215): SWITCH(1,1,\"one\",2,\"two\",\"other\")");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "one", "SWITCH(1,1,\"one\",2,\"two\",\"other\")[0,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SWITCH(A2:A3,1,"one",2,"two","other") ──
+		enterFormula("SWITCH(A2:A3,1,\"one\",2,\"two\",\"other\")", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SWITCH(A2:A3,1,\"one\",2,\"two\",\"other\")", "formula stored: =SWITCH(A2:A3,1,\"one\",2,\"two\",\"other\")");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K184:K185", "spill range (B222:B223): SWITCH(A2:A3,1,\"one\",2,\"two\",\"other\")");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "one", "SWITCH(A2:A3,1,\"one\",2,\"two\",\"other\")[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "two", "SWITCH(A2:A3,1,\"one\",2,\"two\",\"other\")[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SWITCH(B2:B3,-1,"minus",2,"two","other") ──
+		enterFormula("SWITCH(B2:B3,-1,\"minus\",2,\"two\",\"other\")", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SWITCH(B2:B3,-1,\"minus\",2,\"two\",\"other\")", "formula stored: =SWITCH(B2:B3,-1,\"minus\",2,\"two\",\"other\")");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K191:K192", "spill range (B229:B230): SWITCH(B2:B3,-1,\"minus\",2,\"two\",\"other\")");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "minus", "SWITCH(B2:B3,-1,\"minus\",2,\"two\",\"other\")[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "two", "SWITCH(B2:B3,-1,\"minus\",2,\"two\",\"other\")[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SWITCH(1,1,A2:A3,"default") ──
+		enterFormula("SWITCH(1,1,A2:A3,\"default\")", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SWITCH(1,1,A2:A3,\"default\")", "formula stored: =SWITCH(1,1,A2:A3,\"default\")");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K198:K199", "spill range (B236:B237): SWITCH(1,1,A2:A3,\"default\")");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "SWITCH(1,1,A2:A3,\"default\")[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "SWITCH(1,1,A2:A3,\"default\")[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SWITCH(99,1,"one",A2:A3) ──
+		enterFormula("SWITCH(99,1,\"one\",A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SWITCH(99,1,\"one\",A2:A3)", "formula stored: =SWITCH(99,1,\"one\",A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K205:K206", "spill range (B243:B244): SWITCH(99,1,\"one\",A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "SWITCH(99,1,\"one\",A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.0, "SWITCH(99,1,\"one\",A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SWITCH(A2:A3,1,A2:A3*10,2,A2:A3*20,0) ──
+		enterFormula("SWITCH(A2:A3,1,A2:A3*10,2,A2:A3*20,0)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SWITCH(A2:A3,1,A2:A3*10,2,A2:A3*20,0)", "formula stored: =SWITCH(A2:A3,1,A2:A3*10,2,A2:A3*20,0)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K212:K213", "spill range (B250:B251): SWITCH(A2:A3,1,A2:A3*10,2,A2:A3*20,0)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 10.0, "SWITCH(A2:A3,1,A2:A3*10,2,A2:A3*20,0)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 40.0, "SWITCH(A2:A3,1,A2:A3*10,2,A2:A3*20,0)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		//TODO need check getValueForEdit put AND(@A2:A3>0)
+		// ── AND(A2:A3>0) ──
+		// enterFormula("AND(A2:A3>0)", curRow);
+		// assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=AND(A2:A3>0)", "formula stored: =AND(A2:A3>0)");
+		// assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K219:K219", "spill range (B264): AND(A2:A3>0)");
+		// checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "TRUE", "AND(A2:A3>0)[0,0]");
+		// ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		// curRow += 7;
+		//
+		// // ── OR(B2:B3>0) ──
+		// enterFormula("OR(B2:B3>0)", curRow);
+		// assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=OR(B2:B3>0)", "formula stored: =OR(B2:B3>0)");
+		// assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K226:K226", "spill range (B278): OR(B2:B3>0)");
+		// checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "TRUE", "OR(B2:B3>0)[0,0]");
+		// ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		// curRow += 7;
+
+		clearData(0, 0, 50, 500);
+	});
+
+
+
+
+
+
+	QUnit.test('Test: "DateAndTime functions — dynamic array spill"', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		clearData(0, 0, 50, 500);
+
+		// ── test-data area ──────────────────────────────────────────────
+		// A2:A3 dates 2024-01-15(45306), 2024-03-20(45371)
+		// B2:B3 dates 2024-02-28(45350), 2024-06-15(45458)
+		// C2:C3 times 08:30:00, 14:45:30  D2:D3 offsets 3,6
+		// E2:E3 years 2024,2025  F2:F3 months 3,7  G2:G3 days 15,20
+		// H2:H3 hours 8,14  I2:I3 minutes 30,45  J2:J3 seconds 0,30
+		ws.getRange2("A2").setValue("45306");
+		ws.getRange2("A3").setValue("45371");
+		ws.getRange2("B2").setValue("45350");
+		ws.getRange2("B3").setValue("45458");
+		ws.getRange2("C2").setValue("0.354166666666667");
+		ws.getRange2("C3").setValue("0.615625");
+		ws.getRange2("D2").setValue("3");
+		ws.getRange2("D3").setValue("6");
+		ws.getRange2("E2").setValue("2024");
+		ws.getRange2("E3").setValue("2025");
+		ws.getRange2("F2").setValue("3");
+		ws.getRange2("F3").setValue("7");
+		ws.getRange2("G2").setValue("15");
+		ws.getRange2("G3").setValue("20");
+		ws.getRange2("H2").setValue("8");
+		ws.getRange2("H3").setValue("14");
+		ws.getRange2("I2").setValue("30");
+		ws.getRange2("I3").setValue("45");
+		ws.getRange2("J2").setValue("0");
+		ws.getRange2("J3").setValue("30");
+
+		const flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false; flags.shiftKey = false;
+
+		const FORMULA_COL = "K";
+		const FORMULA_ROW_START = 2;
+		let curRow = FORMULA_ROW_START;
+
+		const enterFormula = function (formula, row) {
+			const cellRef = FORMULA_COL + row;
+			const fillRange = ws.getRange2(cellRef);
+			wsView.setSelection(fillRange.bbox);
+			const fragment = ws.getRange2(cellRef).getValueForEdit2();
+			fragment[0].setFragmentText("=" + formula);
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		};
+
+		// ── DAY(A2:A3) ──
+		enterFormula("DAY(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DAY(A2:A3)", "formula stored: =DAY(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K2:K3", "spill range (B7:B8): DAY(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 15.0, "DAY(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 20.0, "DAY(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DAY("abc") ──
+		enterFormula("DAY(\"abc\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "DAY(\"abc\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── MONTH(A2:A3) ──
+		enterFormula("MONTH(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=MONTH(A2:A3)", "formula stored: =MONTH(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K16:K17", "spill range (B21:B22): MONTH(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "MONTH(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 3.0, "MONTH(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── MONTH("abc") ──
+		enterFormula("MONTH(\"abc\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "MONTH(\"abc\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── YEAR(A2:A3) ──
+		enterFormula("YEAR(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=YEAR(A2:A3)", "formula stored: =YEAR(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K30:K31", "spill range (B35:B36): YEAR(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 2024.0, "YEAR(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2024.0, "YEAR(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── YEAR("abc") ──
+		enterFormula("YEAR(\"abc\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "YEAR(\"abc\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── HOUR(C2:C3) ──
+		enterFormula("HOUR(C2:C3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=HOUR(C2:C3)", "formula stored: =HOUR(C2:C3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K44:K45", "spill range (B49:B50): HOUR(C2:C3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 8.0, "HOUR(C2:C3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 14.0, "HOUR(C2:C3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── HOUR("abc") ──
+		enterFormula("HOUR(\"abc\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "HOUR(\"abc\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── MINUTE(C2:C3) ──
+		enterFormula("MINUTE(C2:C3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=MINUTE(C2:C3)", "formula stored: =MINUTE(C2:C3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K58:K59", "spill range (B63:B64): MINUTE(C2:C3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 30.0, "MINUTE(C2:C3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 46.0, "MINUTE(C2:C3)[1,0]");//TODO ms 45
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── MINUTE("abc") ──
+		enterFormula("MINUTE(\"abc\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "MINUTE(\"abc\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SECOND(C2:C3) ──
+		enterFormula("SECOND(C2:C3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SECOND(C2:C3)", "formula stored: =SECOND(C2:C3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K72:K73", "spill range (B77:B78): SECOND(C2:C3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.0, "SECOND(C2:C3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 30.0, "SECOND(C2:C3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SECOND("abc") ──
+		enterFormula("SECOND(\"abc\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "SECOND(\"abc\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── WEEKDAY(A2:A3) ──
+		enterFormula("WEEKDAY(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=WEEKDAY(A2:A3)", "formula stored: =WEEKDAY(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K86:K87", "spill range (B91:B92): WEEKDAY(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 2.0, "WEEKDAY(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 4.0, "WEEKDAY(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── WEEKDAY(A2:A3,2) ──
+		enterFormula("WEEKDAY(A2:A3,2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=WEEKDAY(A2:A3,2)", "formula stored: =WEEKDAY(A2:A3,2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K93:K94", "spill range (B98:B99): WEEKDAY(A2:A3,2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "WEEKDAY(A2:A3,2)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 3.0, "WEEKDAY(A2:A3,2)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── WEEKDAY("abc") ──
+		enterFormula("WEEKDAY(\"abc\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "WEEKDAY(\"abc\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISOWEEKNUM(A2:A3) ──
+		enterFormula("ISOWEEKNUM(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISOWEEKNUM(A2:A3)", "formula stored: =ISOWEEKNUM(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K107:K108", "spill range (B112:B113): ISOWEEKNUM(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3.0, "ISOWEEKNUM(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 12.0, "ISOWEEKNUM(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISOWEEKNUM("abc") ──
+		enterFormula("ISOWEEKNUM(\"abc\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "ISOWEEKNUM(\"abc\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DATE(E2:E3,F2:F3,G2:G3) ──
+		enterFormula("DATE(E2:E3,F2:F3,G2:G3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DATE(E2:E3,F2:F3,G2:G3)", "formula stored: =DATE(E2:E3,F2:F3,G2:G3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K121:K122", "spill range (B126:B127): DATE(E2:E3,F2:F3,G2:G3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 45366.0, "DATE(E2:E3,F2:F3,G2:G3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 45858.0, "DATE(E2:E3,F2:F3,G2:G3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DATE(E2:E3,3,15) ──
+		enterFormula("DATE(E2:E3,3,15)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DATE(E2:E3,3,15)", "formula stored: =DATE(E2:E3,3,15)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K128:K129", "spill range (B133:B134): DATE(E2:E3,3,15)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 45366.0, "DATE(E2:E3,3,15)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 45731.0, "DATE(E2:E3,3,15)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DATE(2024,F2:F3,15) ──
+		enterFormula("DATE(2024,F2:F3,15)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DATE(2024,F2:F3,15)", "formula stored: =DATE(2024,F2:F3,15)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K135:K136", "spill range (B140:B141): DATE(2024,F2:F3,15)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 45366.0, "DATE(2024,F2:F3,15)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 45488.0, "DATE(2024,F2:F3,15)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DATE(2024,3,G2:G3) ──
+		enterFormula("DATE(2024,3,G2:G3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DATE(2024,3,G2:G3)", "formula stored: =DATE(2024,3,G2:G3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K142:K143", "spill range (B147:B148): DATE(2024,3,G2:G3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 45366.0, "DATE(2024,3,G2:G3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 45371.0, "DATE(2024,3,G2:G3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DATE(E2:E3,F2:F3,15) ──
+		enterFormula("DATE(E2:E3,F2:F3,15)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DATE(E2:E3,F2:F3,15)", "formula stored: =DATE(E2:E3,F2:F3,15)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K149:K150", "spill range (B154:B155): DATE(E2:E3,F2:F3,15)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 45366.0, "DATE(E2:E3,F2:F3,15)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 45853.0, "DATE(E2:E3,F2:F3,15)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DATE(E2:E3,3,G2:G3) ──
+		enterFormula("DATE(E2:E3,3,G2:G3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DATE(E2:E3,3,G2:G3)", "formula stored: =DATE(E2:E3,3,G2:G3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K156:K157", "spill range (B161:B162): DATE(E2:E3,3,G2:G3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 45366.0, "DATE(E2:E3,3,G2:G3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 45736.0, "DATE(E2:E3,3,G2:G3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DATE(2024,F2:F3,G2:G3) ──
+		enterFormula("DATE(2024,F2:F3,G2:G3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DATE(2024,F2:F3,G2:G3)", "formula stored: =DATE(2024,F2:F3,G2:G3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K163:K164", "spill range (B168:B169): DATE(2024,F2:F3,G2:G3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 45366.0, "DATE(2024,F2:F3,G2:G3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 45493.0, "DATE(2024,F2:F3,G2:G3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DATE("x",1,1) ──
+		enterFormula("DATE(\"x\",1,1)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "DATE(\"x\",1,1) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DAYS(B2:B3,A2:A3) ──
+		enterFormula("DAYS(B2:B3,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DAYS(B2:B3,A2:A3)", "formula stored: =DAYS(B2:B3,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K177:K178", "spill range (B182:B183): DAYS(B2:B3,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 44.0, "DAYS(B2:B3,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 87.0, "DAYS(B2:B3,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DAYS(B2:B3,45306) ──
+		enterFormula("DAYS(B2:B3,45306)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DAYS(B2:B3,45306)", "formula stored: =DAYS(B2:B3,45306)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K184:K185", "spill range (B189:B190): DAYS(B2:B3,45306)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 44.0, "DAYS(B2:B3,45306)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 152.0, "DAYS(B2:B3,45306)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DAYS(45350,A2:A3) ──
+		enterFormula("DAYS(45350,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DAYS(45350,A2:A3)", "formula stored: =DAYS(45350,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K191:K192", "spill range (B196:B197): DAYS(45350,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 44.0, "DAYS(45350,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), -21.0, "DAYS(45350,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DAYS("abc",A2:A3) ──
+		enterFormula("DAYS(\"abc\",A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DAYS(\"abc\",A2:A3)", "formula stored: =DAYS(\"abc\",A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K198:K199", "spill range (B203:B204): DAYS(\"abc\",A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "#VALUE!", "DAYS(\"abc\",A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "#VALUE!", "DAYS(\"abc\",A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DAYS360(A2:A3,B2:B3) ──
+		enterFormula("DAYS360(A2:A3,B2:B3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DAYS360(A2:A3,B2:B3)", "formula stored: =DAYS360(A2:A3,B2:B3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K205:K206", "spill range (B210:B211): DAYS360(A2:A3,B2:B3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 43.0, "DAYS360(A2:A3,B2:B3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 85.0, "DAYS360(A2:A3,B2:B3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DAYS360(A2:A3,B2:B3,TRUE) ──
+		enterFormula("DAYS360(A2:A3,B2:B3,TRUE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DAYS360(A2:A3,B2:B3,TRUE)", "formula stored: =DAYS360(A2:A3,B2:B3,TRUE)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K212:K213", "spill range (B217:B218): DAYS360(A2:A3,B2:B3,TRUE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 43.0, "DAYS360(A2:A3,B2:B3,TRUE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 85.0, "DAYS360(A2:A3,B2:B3,TRUE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DAYS360(A2:A3,45350) ──
+		enterFormula("DAYS360(A2:A3,45350)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DAYS360(A2:A3,45350)", "formula stored: =DAYS360(A2:A3,45350)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K219:K220", "spill range (B224:B225): DAYS360(A2:A3,45350)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 43.0, "DAYS360(A2:A3,45350)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), -22.0, "DAYS360(A2:A3,45350)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DAYS360(45306,B2:B3) ──
+		enterFormula("DAYS360(45306,B2:B3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DAYS360(45306,B2:B3)", "formula stored: =DAYS360(45306,B2:B3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K226:K227", "spill range (B231:B232): DAYS360(45306,B2:B3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 43.0, "DAYS360(45306,B2:B3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 150.0, "DAYS360(45306,B2:B3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DAYS360("abc",B2:B3) ──
+		enterFormula("DAYS360(\"abc\",B2:B3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DAYS360(\"abc\",B2:B3)", "formula stored: =DAYS360(\"abc\",B2:B3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K233:K234", "spill range (B238:B239): DAYS360(\"abc\",B2:B3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "#VALUE!", "DAYS360(\"abc\",B2:B3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "#VALUE!", "DAYS360(\"abc\",B2:B3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── TIME(H2:H3,I2:I3,J2:J3) ──
+		enterFormula("TIME(H2:H3,I2:I3,J2:J3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TIME(H2:H3,I2:I3,J2:J3)", "formula stored: =TIME(H2:H3,I2:I3,J2:J3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K240:K241", "spill range (B245:B246): TIME(H2:H3,I2:I3,J2:J3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.3541666666666667, "TIME(H2:H3,I2:I3,J2:J3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.6149305555555555, "TIME(H2:H3,I2:I3,J2:J3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── TIME(H2:H3,30,0) ──
+		enterFormula("TIME(H2:H3,30,0)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TIME(H2:H3,30,0)", "formula stored: =TIME(H2:H3,30,0)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K247:K248", "spill range (B252:B253): TIME(H2:H3,30,0)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.3541666666666667, "TIME(H2:H3,30,0)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.6041666666666666, "TIME(H2:H3,30,0)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── TIME(8,I2:I3,0) ──
+		enterFormula("TIME(8,I2:I3,0)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TIME(8,I2:I3,0)", "formula stored: =TIME(8,I2:I3,0)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K254:K255", "spill range (B259:B260): TIME(8,I2:I3,0)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.3541666666666667, "TIME(8,I2:I3,0)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.3645833333333333, "TIME(8,I2:I3,0)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── TIME(8,30,J2:J3) ──
+		enterFormula("TIME(8,30,J2:J3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TIME(8,30,J2:J3)", "formula stored: =TIME(8,30,J2:J3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K261:K262", "spill range (B266:B267): TIME(8,30,J2:J3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.3541666666666667, "TIME(8,30,J2:J3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.3545138888888889, "TIME(8,30,J2:J3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── TIME("x",0,0) ──
+		enterFormula("TIME(\"x\",0,0)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "TIME(\"x\",0,0) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		clearData(0, 0, 50, 500);
+	});
+
+	QUnit.test('Test: "Statistical functions — dynamic array spill"', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		clearData(0, 0, 50, 500);
+
+		// ── test-data area ──────────────────────────────────────────────
+		// A2:A3={0.5,1.5}  B2:B3={0.2,0.8}  C2:C3={0.3,0.6}
+		// D2:D3={0,1}  E2:E3={1,2}  F2:F3={1,3}
+		// G2:G3={5,10}  H2:H3={0.5,1.5}
+		ws.getRange2("A2").setValue("0.5");
+		ws.getRange2("A3").setValue("1.5");
+		ws.getRange2("B2").setValue("0.2");
+		ws.getRange2("B3").setValue("0.8");
+		ws.getRange2("C2").setValue("0.3");
+		ws.getRange2("C3").setValue("0.6");
+		ws.getRange2("D2").setValue("0");
+		ws.getRange2("D3").setValue("1");
+		ws.getRange2("E2").setValue("1");
+		ws.getRange2("E3").setValue("2");
+		ws.getRange2("F2").setValue("1");
+		ws.getRange2("F3").setValue("3");
+		ws.getRange2("G2").setValue("5");
+		ws.getRange2("G3").setValue("10");
+		ws.getRange2("H2").setValue("0.5");
+		ws.getRange2("H3").setValue("1.5");
+
+		const flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false; flags.shiftKey = false;
+
+		const FORMULA_COL = "K";
+		const FORMULA_ROW_START = 2;
+		let curRow = FORMULA_ROW_START;
+
+		const enterFormula = function (formula, row) {
+			const cellRef = FORMULA_COL + row;
+			const fillRange = ws.getRange2(cellRef);
+			wsView.setSelection(fillRange.bbox);
+			const fragment = ws.getRange2(cellRef).getValueForEdit2();
+			fragment[0].setFragmentText("=" + formula);
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		};
+
+		// ── PHI(A2:A3) ──
+		enterFormula("PHI(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=PHI(A2:A3)", "formula stored: =PHI(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K2:K3", "spill range (B7:B8): PHI(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.3520653267642995, "PHI(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.12951759566589174, "PHI(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── PHI("abc") ──
+		enterFormula("PHI(\"abc\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "PHI(\"abc\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── GAUSS(A2:A3) ──
+		enterFormula("GAUSS(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=GAUSS(A2:A3)", "formula stored: =GAUSS(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K16:K17", "spill range (B21:B22): GAUSS(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.19146246127401312, "GAUSS(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.4331927987311419, "GAUSS(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── GAUSS("abc") ──
+		enterFormula("GAUSS(\"abc\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "GAUSS(\"abc\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── GAMMALN(A2:A3) ──
+		enterFormula("GAMMALN(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=GAMMALN(A2:A3)", "formula stored: =GAMMALN(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K30:K31", "spill range (B35:B36): GAMMALN(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.5723649429247001, "GAMMALN(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), -0.12078223763524523, "GAMMALN(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── GAMMALN(-1) ──
+		enterFormula("GAMMALN(-1)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#NUM!", "GAMMALN(-1) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FISHER(C2:C3) ──
+		enterFormula("FISHER(C2:C3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FISHER(C2:C3)", "formula stored: =FISHER(C2:C3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K44:K45", "spill range (B49:B50): FISHER(C2:C3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.3095196042031118, "FISHER(C2:C3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.6931471805599453, "FISHER(C2:C3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FISHER(2) ──
+		enterFormula("FISHER(2)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#NUM!", "FISHER(2) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FISHERINV(A2:A3) ──
+		enterFormula("FISHERINV(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FISHERINV(A2:A3)", "formula stored: =FISHERINV(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K58:K59", "spill range (B63:B64): FISHERINV(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.46211715726000974, "FISHERINV(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.9051482536448664, "FISHERINV(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FISHERINV("abc") ──
+		enterFormula("FISHERINV(\"abc\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "FISHERINV(\"abc\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NORM.S.INV(B2:B3) ──
+		enterFormula("NORM.S.INV(B2:B3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=NORM.S.INV(B2:B3)", "formula stored: =NORM.S.INV(B2:B3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K72:K73", "spill range (B77:B78): NORM.S.INV(B2:B3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), -0.8416212335729145, "NORM.S.INV(B2:B3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.8416212335729147, "NORM.S.INV(B2:B3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NORM.S.INV(2) ──
+		//TODO ms -> #NUM!
+		enterFormula("NORM.S.INV(2)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#N/A", "NORM.S.INV(2) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NORM.S.DIST(A2:A3,TRUE) ──
+		enterFormula("NORM.S.DIST(A2:A3,TRUE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=NORM.S.DIST(A2:A3,TRUE)", "formula stored: =NORM.S.DIST(A2:A3,TRUE)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K86:K87", "spill range (B91:B92): NORM.S.DIST(A2:A3,TRUE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.6914624612740131, "NORM.S.DIST(A2:A3,TRUE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.9331927987311419, "NORM.S.DIST(A2:A3,TRUE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NORM.S.DIST("abc",TRUE) ──
+		enterFormula("NORM.S.DIST(\"abc\",TRUE)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "NORM.S.DIST(\"abc\",TRUE) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── STANDARDIZE(A2:A3,D2:D3,E2:E3) ──
+		enterFormula("STANDARDIZE(A2:A3,D2:D3,E2:E3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=STANDARDIZE(A2:A3,D2:D3,E2:E3)", "formula stored: =STANDARDIZE(A2:A3,D2:D3,E2:E3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K100:K101", "spill range (B105:B106): STANDARDIZE(A2:A3,D2:D3,E2:E3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.5, "STANDARDIZE(A2:A3,D2:D3,E2:E3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.25, "STANDARDIZE(A2:A3,D2:D3,E2:E3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── STANDARDIZE(A2:A3,0,1) ──
+		enterFormula("STANDARDIZE(A2:A3,0,1)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=STANDARDIZE(A2:A3,0,1)", "formula stored: =STANDARDIZE(A2:A3,0,1)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K107:K108", "spill range (B112:B113): STANDARDIZE(A2:A3,0,1)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.5, "STANDARDIZE(A2:A3,0,1)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1.5, "STANDARDIZE(A2:A3,0,1)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── STANDARDIZE(0.5,D2:D3,1) ──
+		enterFormula("STANDARDIZE(0.5,D2:D3,1)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=STANDARDIZE(0.5,D2:D3,1)", "formula stored: =STANDARDIZE(0.5,D2:D3,1)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K114:K115", "spill range (B119:B120): STANDARDIZE(0.5,D2:D3,1)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.5, "STANDARDIZE(0.5,D2:D3,1)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), -0.5, "STANDARDIZE(0.5,D2:D3,1)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── STANDARDIZE(0.5,0,E2:E3) ──
+		enterFormula("STANDARDIZE(0.5,0,E2:E3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=STANDARDIZE(0.5,0,E2:E3)", "formula stored: =STANDARDIZE(0.5,0,E2:E3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K121:K122", "spill range (B126:B127): STANDARDIZE(0.5,0,E2:E3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.5, "STANDARDIZE(0.5,0,E2:E3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.25, "STANDARDIZE(0.5,0,E2:E3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── STANDARDIZE("abc",0,1) ──
+		enterFormula("STANDARDIZE(\"abc\",0,1)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "STANDARDIZE(\"abc\",0,1) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NORM.DIST(A2:A3,D2:D3,E2:E3,TRUE) ──
+		enterFormula("NORM.DIST(A2:A3,D2:D3,E2:E3,TRUE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=NORM.DIST(A2:A3,D2:D3,E2:E3,TRUE)", "formula stored: =NORM.DIST(A2:A3,D2:D3,E2:E3,TRUE)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K135:K136", "spill range (B140:B141): NORM.DIST(A2:A3,D2:D3,E2:E3,TRUE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.6914624612740131, "NORM.DIST(A2:A3,D2:D3,E2:E3,TRUE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.5987063256829237, "NORM.DIST(A2:A3,D2:D3,E2:E3,TRUE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NORM.DIST(A2:A3,0,1,TRUE) ──
+		enterFormula("NORM.DIST(A2:A3,0,1,TRUE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=NORM.DIST(A2:A3,0,1,TRUE)", "formula stored: =NORM.DIST(A2:A3,0,1,TRUE)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K142:K143", "spill range (B147:B148): NORM.DIST(A2:A3,0,1,TRUE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.6914624612740131, "NORM.DIST(A2:A3,0,1,TRUE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.9331927987311419, "NORM.DIST(A2:A3,0,1,TRUE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NORM.DIST(0.5,D2:D3,1,TRUE) ──
+		enterFormula("NORM.DIST(0.5,D2:D3,1,TRUE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=NORM.DIST(0.5,D2:D3,1,TRUE)", "formula stored: =NORM.DIST(0.5,D2:D3,1,TRUE)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K149:K150", "spill range (B154:B155): NORM.DIST(0.5,D2:D3,1,TRUE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.6914624612740131, "NORM.DIST(0.5,D2:D3,1,TRUE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.3085375387259869, "NORM.DIST(0.5,D2:D3,1,TRUE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NORM.DIST(0.5,0,E2:E3,TRUE) ──
+		enterFormula("NORM.DIST(0.5,0,E2:E3,TRUE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=NORM.DIST(0.5,0,E2:E3,TRUE)", "formula stored: =NORM.DIST(0.5,0,E2:E3,TRUE)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K156:K157", "spill range (B161:B162): NORM.DIST(0.5,0,E2:E3,TRUE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.6914624612740131, "NORM.DIST(0.5,0,E2:E3,TRUE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.5987063256829237, "NORM.DIST(0.5,0,E2:E3,TRUE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NORM.DIST("abc",0,1,TRUE) ──
+		enterFormula("NORM.DIST(\"abc\",0,1,TRUE)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "NORM.DIST(\"abc\",0,1,TRUE) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NORM.INV(B2:B3,D2:D3,E2:E3) ──
+		enterFormula("NORM.INV(B2:B3,D2:D3,E2:E3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=NORM.INV(B2:B3,D2:D3,E2:E3)", "formula stored: =NORM.INV(B2:B3,D2:D3,E2:E3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K170:K171", "spill range (B175:B176): NORM.INV(B2:B3,D2:D3,E2:E3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), -0.8416212335729145, "NORM.INV(B2:B3,D2:D3,E2:E3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.6832424671458295, "NORM.INV(B2:B3,D2:D3,E2:E3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NORM.INV(B2:B3,0,1) ──
+		enterFormula("NORM.INV(B2:B3,0,1)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=NORM.INV(B2:B3,0,1)", "formula stored: =NORM.INV(B2:B3,0,1)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K177:K178", "spill range (B182:B183): NORM.INV(B2:B3,0,1)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), -0.8416212335729145, "NORM.INV(B2:B3,0,1)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.8416212335729147, "NORM.INV(B2:B3,0,1)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NORM.INV(0.5,D2:D3,1) ──
+		enterFormula("NORM.INV(0.5,D2:D3,1)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=NORM.INV(0.5,D2:D3,1)", "formula stored: =NORM.INV(0.5,D2:D3,1)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K184:K185", "spill range (B189:B190): NORM.INV(0.5,D2:D3,1)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.0, "NORM.INV(0.5,D2:D3,1)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1.0, "NORM.INV(0.5,D2:D3,1)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NORM.INV(0.5,0,E2:E3) ──
+		enterFormula("NORM.INV(0.5,0,E2:E3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=NORM.INV(0.5,0,E2:E3)", "formula stored: =NORM.INV(0.5,0,E2:E3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K191:K192", "spill range (B196:B197): NORM.INV(0.5,0,E2:E3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.0, "NORM.INV(0.5,0,E2:E3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.0, "NORM.INV(0.5,0,E2:E3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NORM.INV(2,0,1) ──
+		enterFormula("NORM.INV(2,0,1)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#NUM!", "NORM.INV(2,0,1) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── EXPON.DIST(A2:A3,H2:H3,TRUE) ──
+		enterFormula("EXPON.DIST(A2:A3,H2:H3,TRUE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=EXPON.DIST(A2:A3,H2:H3,TRUE)", "formula stored: =EXPON.DIST(A2:A3,H2:H3,TRUE)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K205:K206", "spill range (B210:B211): EXPON.DIST(A2:A3,H2:H3,TRUE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.22119921692859512, "EXPON.DIST(A2:A3,H2:H3,TRUE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.8946007754381357, "EXPON.DIST(A2:A3,H2:H3,TRUE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── EXPON.DIST(A2:A3,1,TRUE) ──
+		enterFormula("EXPON.DIST(A2:A3,1,TRUE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=EXPON.DIST(A2:A3,1,TRUE)", "formula stored: =EXPON.DIST(A2:A3,1,TRUE)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K212:K213", "spill range (B217:B218): EXPON.DIST(A2:A3,1,TRUE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.3934693402873666, "EXPON.DIST(A2:A3,1,TRUE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.7768698398515702, "EXPON.DIST(A2:A3,1,TRUE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── EXPON.DIST(0.5,H2:H3,TRUE) ──
+		enterFormula("EXPON.DIST(0.5,H2:H3,TRUE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=EXPON.DIST(0.5,H2:H3,TRUE)", "formula stored: =EXPON.DIST(0.5,H2:H3,TRUE)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K219:K220", "spill range (B224:B225): EXPON.DIST(0.5,H2:H3,TRUE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.22119921692859512, "EXPON.DIST(0.5,H2:H3,TRUE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.5276334472589853, "EXPON.DIST(0.5,H2:H3,TRUE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── EXPON.DIST("abc",1,TRUE) ──
+		enterFormula("EXPON.DIST(\"abc\",1,TRUE)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "EXPON.DIST(\"abc\",1,TRUE) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── POISSON.DIST(F2:F3,A2:A3,TRUE) ──
+		enterFormula("POISSON.DIST(F2:F3,A2:A3,TRUE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=POISSON.DIST(F2:F3,A2:A3,TRUE)", "formula stored: =POISSON.DIST(F2:F3,A2:A3,TRUE)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K233:K234", "spill range (B238:B239): POISSON.DIST(F2:F3,A2:A3,TRUE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.9097959895689501, "POISSON.DIST(F2:F3,A2:A3,TRUE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.9343575456215498, "POISSON.DIST(F2:F3,A2:A3,TRUE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── POISSON.DIST(F2:F3,1,TRUE) ──
+		enterFormula("POISSON.DIST(F2:F3,1,TRUE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=POISSON.DIST(F2:F3,1,TRUE)", "formula stored: =POISSON.DIST(F2:F3,1,TRUE)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K240:K241", "spill range (B245:B246): POISSON.DIST(F2:F3,1,TRUE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.7357588823428848, "POISSON.DIST(F2:F3,1,TRUE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.9810118431238462, "POISSON.DIST(F2:F3,1,TRUE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── POISSON.DIST(1,A2:A3,TRUE) ──
+		enterFormula("POISSON.DIST(1,A2:A3,TRUE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=POISSON.DIST(1,A2:A3,TRUE)", "formula stored: =POISSON.DIST(1,A2:A3,TRUE)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K247:K248", "spill range (B252:B253): POISSON.DIST(1,A2:A3,TRUE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.9097959895689501, "POISSON.DIST(1,A2:A3,TRUE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.5578254003710746, "POISSON.DIST(1,A2:A3,TRUE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── POISSON.DIST("abc",1,TRUE) ──
+		enterFormula("POISSON.DIST(\"abc\",1,TRUE)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "POISSON.DIST(\"abc\",1,TRUE) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BINOM.DIST(F2:F3,G2:G3,B2:B3,TRUE) ──
+		enterFormula("BINOM.DIST(F2:F3,G2:G3,B2:B3,TRUE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=BINOM.DIST(F2:F3,G2:G3,B2:B3,TRUE)", "formula stored: =BINOM.DIST(F2:F3,G2:G3,B2:B3,TRUE)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K261:K262", "spill range (B266:B267): BINOM.DIST(F2:F3,G2:G3,B2:B3,TRUE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.7372799999999999, "BINOM.DIST(F2:F3,G2:G3,B2:B3,TRUE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.000864358399999999, "BINOM.DIST(F2:F3,G2:G3,B2:B3,TRUE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BINOM.DIST(F2:F3,5,0.5,TRUE) ──
+		enterFormula("BINOM.DIST(F2:F3,5,0.5,TRUE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=BINOM.DIST(F2:F3,5,0.5,TRUE)", "formula stored: =BINOM.DIST(F2:F3,5,0.5,TRUE)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K268:K269", "spill range (B273:B274): BINOM.DIST(F2:F3,5,0.5,TRUE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.18750000000000003, "BINOM.DIST(F2:F3,5,0.5,TRUE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.8125, "BINOM.DIST(F2:F3,5,0.5,TRUE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BINOM.DIST(1,G2:G3,0.5,TRUE) ──
+		enterFormula("BINOM.DIST(1,G2:G3,0.5,TRUE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=BINOM.DIST(1,G2:G3,0.5,TRUE)", "formula stored: =BINOM.DIST(1,G2:G3,0.5,TRUE)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K275:K276", "spill range (B280:B281): BINOM.DIST(1,G2:G3,0.5,TRUE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.18750000000000003, "BINOM.DIST(1,G2:G3,0.5,TRUE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.010742187500000003, "BINOM.DIST(1,G2:G3,0.5,TRUE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BINOM.DIST(1,5,B2:B3,TRUE) ──
+		enterFormula("BINOM.DIST(1,5,B2:B3,TRUE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=BINOM.DIST(1,5,B2:B3,TRUE)", "formula stored: =BINOM.DIST(1,5,B2:B3,TRUE)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K282:K283", "spill range (B287:B288): BINOM.DIST(1,5,B2:B3,TRUE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.7372799999999999, "BINOM.DIST(1,5,B2:B3,TRUE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.006719999999999997, "BINOM.DIST(1,5,B2:B3,TRUE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BINOM.DIST("abc",5,0.5,TRUE) ──
+		enterFormula("BINOM.DIST(\"abc\",5,0.5,TRUE)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "BINOM.DIST(\"abc\",5,0.5,TRUE) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		clearData(0, 0, 50, 500);
+	});
+
+	QUnit.test('Test: "Engineering functions — dynamic array spill"', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		clearData(0, 0, 50, 500);
+
+		// ── test-data area ──────────────────────────────────────────────
+		// A2:A3={0.5,1.0}  B2:B3={0.25,0.75}  C2:C3={0,1}
+		// D2:D3={2,10}  E2:E3={0.3,1.2}  F2:F3={10,1010}
+		// G2:G3={"A","F"}  H2:H3={"2+3i","1-2i"}
+		ws.getRange2("A2").setValue("0.5");
+		ws.getRange2("A3").setValue("1");
+		ws.getRange2("B2").setValue("0.25");
+		ws.getRange2("B3").setValue("0.75");
+		ws.getRange2("C2").setValue("0");
+		ws.getRange2("C3").setValue("1");
+		ws.getRange2("D2").setValue("2");
+		ws.getRange2("D3").setValue("10");
+		ws.getRange2("E2").setValue("0.3");
+		ws.getRange2("E3").setValue("1.2");
+		ws.getRange2("F2").setValue("10");
+		ws.getRange2("F3").setValue("1010");
+		ws.getRange2("G2").setValue("A");
+		ws.getRange2("G3").setValue("F");
+		ws.getRange2("H2").setValue("2+3i");
+		ws.getRange2("H3").setValue("1-2i");
+
+		const flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false; flags.shiftKey = false;
+
+		const FORMULA_COL = "K";
+		const FORMULA_ROW_START = 2;
+		let curRow = FORMULA_ROW_START;
+
+		const enterFormula = function (formula, row) {
+			const cellRef = FORMULA_COL + row;
+			const fillRange = ws.getRange2(cellRef);
+			wsView.setSelection(fillRange.bbox);
+			const fragment = ws.getRange2(cellRef).getValueForEdit2();
+			fragment[0].setFragmentText("=" + formula);
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		};
+
+		// ── ERF(A2:A3) ──
+		enterFormula("ERF(A2:A3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "ERF(A2:A3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ERF(A2:A3,B2:B3) ──
+		enterFormula("ERF(A2:A3,B2:B3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "ERF(A2:A3,B2:B3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ERF(A2:A3,1) ──
+		enterFormula("ERF(A2:A3,1)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "ERF(A2:A3,1) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ERF("abc") ──
+		enterFormula("ERF(\"abc\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "ERF(\"abc\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ERFC(A2:A3) ──
+		enterFormula("ERFC(A2:A3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "ERFC(A2:A3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ERFC("abc") ──
+		enterFormula("ERFC(\"abc\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "ERFC(\"abc\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ERF.PRECISE(A2:A3) ──
+		enterFormula("ERF.PRECISE(A2:A3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "ERF.PRECISE(A2:A3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ERFC.PRECISE(A2:A3) ──
+		enterFormula("ERFC.PRECISE(A2:A3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "ERFC.PRECISE(A2:A3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DELTA(A2:A3,C2:C3) ──
+		enterFormula("DELTA(A2:A3,C2:C3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "DELTA(A2:A3,C2:C3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DELTA(A2:A3,0.5) ──
+		enterFormula("DELTA(A2:A3,0.5)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "DELTA(A2:A3,0.5) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DELTA(1,C2:C3) ──
+		enterFormula("DELTA(1,C2:C3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "DELTA(1,C2:C3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── GESTEP(A2:A3,E2:E3) ──
+		enterFormula("GESTEP(A2:A3,E2:E3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "GESTEP(A2:A3,E2:E3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── GESTEP(A2:A3,0.5) ──
+		enterFormula("GESTEP(A2:A3,0.5)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "GESTEP(A2:A3,0.5) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── GESTEP(1,E2:E3) ──
+		enterFormula("GESTEP(1,E2:E3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "GESTEP(1,E2:E3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELI(A2:A3,C2:C3) ──
+		enterFormula("BESSELI(A2:A3,C2:C3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "BESSELI(A2:A3,C2:C3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELI(A2:A3,1) ──
+		enterFormula("BESSELI(A2:A3,1)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "BESSELI(A2:A3,1) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELI(0.5,C2:C3) ──
+		enterFormula("BESSELI(0.5,C2:C3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "BESSELI(0.5,C2:C3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELI("abc",1) ──
+		enterFormula("BESSELI(\"abc\",1)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "BESSELI(\"abc\",1) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELJ(A2:A3,C2:C3) ──
+		enterFormula("BESSELJ(A2:A3,C2:C3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "BESSELJ(A2:A3,C2:C3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELJ(A2:A3,1) ──
+		enterFormula("BESSELJ(A2:A3,1)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "BESSELJ(A2:A3,1) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELJ(0.5,C2:C3) ──
+		enterFormula("BESSELJ(0.5,C2:C3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "BESSELJ(0.5,C2:C3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELJ("abc",1) ──
+		enterFormula("BESSELJ(\"abc\",1)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "BESSELJ(\"abc\",1) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELK(A2:A3,C2:C3) ──
+		enterFormula("BESSELK(A2:A3,C2:C3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "BESSELK(A2:A3,C2:C3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELK(A2:A3,1) ──
+		enterFormula("BESSELK(A2:A3,1)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "BESSELK(A2:A3,1) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELK(0.5,C2:C3) ──
+		enterFormula("BESSELK(0.5,C2:C3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "BESSELK(0.5,C2:C3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELK(-1,1) ──
+		enterFormula("BESSELK(-1,1)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#NUM!", "BESSELK(-1,1) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELY(A2:A3,C2:C3) ──
+		enterFormula("BESSELY(A2:A3,C2:C3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "BESSELY(A2:A3,C2:C3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELY(A2:A3,1) ──
+		enterFormula("BESSELY(A2:A3,1)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "BESSELY(A2:A3,1) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELY(0.5,C2:C3) ──
+		enterFormula("BESSELY(0.5,C2:C3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "BESSELY(0.5,C2:C3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELY(-1,1) ──
+		enterFormula("BESSELY(-1,1)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#NUM!", "BESSELY(-1,1) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DEC2BIN(D2:D3) ──
+		enterFormula("DEC2BIN(D2:D3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "DEC2BIN(D2:D3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DEC2BIN("abc") ──
+		enterFormula("DEC2BIN(\"abc\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "DEC2BIN(\"abc\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DEC2HEX(D2:D3) ──
+		enterFormula("DEC2HEX(D2:D3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "DEC2HEX(D2:D3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DEC2OCT(D2:D3) ──
+		enterFormula("DEC2OCT(D2:D3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "DEC2OCT(D2:D3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BIN2DEC(F2:F3) ──
+		enterFormula("BIN2DEC(F2:F3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "BIN2DEC(F2:F3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BIN2DEC("abc2") ──
+		enterFormula("BIN2DEC(\"abc2\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#NUM!", "BIN2DEC(\"abc2\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── HEX2DEC(G2:G3) ──
+		enterFormula("HEX2DEC(G2:G3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "HEX2DEC(G2:G3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── HEX2DEC("ZZ") ──
+		enterFormula("HEX2DEC(\"ZZ\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#NUM!", "HEX2DEC(\"ZZ\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IMABS(H2:H3) ──
+		enterFormula("IMABS(H2:H3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "IMABS(H2:H3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IMABS("abc") ──
+		enterFormula("IMABS(\"abc\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#NUM!", "IMABS(\"abc\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IMAGINARY(H2:H3) ──
+		enterFormula("IMAGINARY(H2:H3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "IMAGINARY(H2:H3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IMREAL(H2:H3) ──
+		enterFormula("IMREAL(H2:H3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "IMREAL(H2:H3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ERF({0.5,1}) ──
+		enterFormula("ERF({0.5,1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ERF({0.5,1})", "formula stored: =ERF({0.5,1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K296:L296", "spill range (B301:C301): ERF({0.5,1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.5204998778130465, "ERF({0.5,1})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 0.8427007929497149, "ERF({0.5,1})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ERF({0.5,1},{0.25,0.75}) ──
+		enterFormula("ERF({0.5,1},{0.25,0.75})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ERF({0.5,1},{0.25,0.75})", "formula stored: =ERF({0.5,1},{0.25,0.75})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K303:L303", "spill range (B308:C308): ERF({0.5,1},{0.25,0.75})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), -0.2441734876448095, "ERF({0.5,1},{0.25,0.75})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), -0.1315451592961997, "ERF({0.5,1},{0.25,0.75})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ERFC({0.5,1}) ──
+		enterFormula("ERFC({0.5,1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ERFC({0.5,1})", "formula stored: =ERFC({0.5,1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K310:L310", "spill range (B315:C315): ERFC({0.5,1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.4795001221869535, "ERFC({0.5,1})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 0.15729920705028513, "ERFC({0.5,1})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ERF.PRECISE({0.5,1}) ──
+		enterFormula("ERF.PRECISE({0.5,1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ERF.PRECISE({0.5,1})", "formula stored: =ERF.PRECISE({0.5,1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K317:L317", "spill range (B322:C322): ERF.PRECISE({0.5,1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.5204998778130465, "ERF.PRECISE({0.5,1})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 0.8427007929497149, "ERF.PRECISE({0.5,1})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ERFC.PRECISE({0.5,1}) ──
+		enterFormula("ERFC.PRECISE({0.5,1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ERFC.PRECISE({0.5,1})", "formula stored: =ERFC.PRECISE({0.5,1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K324:L324", "spill range (B329:C329): ERFC.PRECISE({0.5,1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.4795001221869535, "ERFC.PRECISE({0.5,1})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 0.15729920705028513, "ERFC.PRECISE({0.5,1})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DELTA({0.5,1},{0,1}) ──
+		enterFormula("DELTA({0.5,1},{0,1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DELTA({0.5,1},{0,1})", "formula stored: =DELTA({0.5,1},{0,1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K331:L331", "spill range (B336:C336): DELTA({0.5,1},{0,1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.0, "DELTA({0.5,1},{0,1})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 1.0, "DELTA({0.5,1},{0,1})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── GESTEP({0.5,1},{0.3,1.2}) ──
+		enterFormula("GESTEP({0.5,1},{0.3,1.2})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=GESTEP({0.5,1},{0.3,1.2})", "formula stored: =GESTEP({0.5,1},{0.3,1.2})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K338:L338", "spill range (B343:C343): GESTEP({0.5,1},{0.3,1.2})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0, "GESTEP({0.5,1},{0.3,1.2})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 0.0, "GESTEP({0.5,1},{0.3,1.2})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELI({0.5,1},{0,1}) ──
+		enterFormula("BESSELI({0.5,1},{0,1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=BESSELI({0.5,1},{0,1})", "formula stored: =BESSELI({0.5,1},{0,1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K345:L345", "spill range (B350:C350): BESSELI({0.5,1},{0,1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.0634833439946074, "BESSELI({0.5,1},{0,1})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 0.5651590975819435, "BESSELI({0.5,1},{0,1})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELJ({0.5,1},{0,1}) ──
+		enterFormula("BESSELJ({0.5,1},{0,1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=BESSELJ({0.5,1},{0,1})", "formula stored: =BESSELJ({0.5,1},{0,1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K352:L352", "spill range (B357:C357): BESSELJ({0.5,1},{0,1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.9384698074235406, "BESSELJ({0.5,1},{0,1})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 0.4400505856771301, "BESSELJ({0.5,1},{0,1})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELK({0.5,1},{0,1}) ──
+		enterFormula("BESSELK({0.5,1},{0,1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=BESSELK({0.5,1},{0,1})", "formula stored: =BESSELK({0.5,1},{0,1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K359:L359", "spill range (B364:C364): BESSELK({0.5,1},{0,1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.9244190350213235, "BESSELK({0.5,1},{0,1})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 0.6019072316669057, "BESSELK({0.5,1},{0,1})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BESSELY({0.5,1},{0,1}) ──
+		enterFormula("BESSELY({0.5,1},{0,1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=BESSELY({0.5,1},{0,1})", "formula stored: =BESSELY({0.5,1},{0,1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K366:L366", "spill range (B371:C371): BESSELY({0.5,1},{0,1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), -0.44451873376270784, "BESSELY({0.5,1},{0,1})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), -0.7812128209531197, "BESSELY({0.5,1},{0,1})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DEC2BIN({2,10}) ──
+		enterFormula("DEC2BIN({2,10})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DEC2BIN({2,10})", "formula stored: =DEC2BIN({2,10})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K373:L373", "spill range (B378:C378): DEC2BIN({2,10})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "10", "DEC2BIN({2,10})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), "1010", "DEC2BIN({2,10})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DEC2HEX({2,10}) ──
+		enterFormula("DEC2HEX({2,10})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DEC2HEX({2,10})", "formula stored: =DEC2HEX({2,10})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K380:L380", "spill range (B385:C385): DEC2HEX({2,10})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "2", "DEC2HEX({2,10})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), "A", "DEC2HEX({2,10})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DEC2OCT({2,10}) ──
+		enterFormula("DEC2OCT({2,10})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DEC2OCT({2,10})", "formula stored: =DEC2OCT({2,10})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K387:L387", "spill range (B392:C392): DEC2OCT({2,10})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "2", "DEC2OCT({2,10})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), "12", "DEC2OCT({2,10})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── BIN2DEC({10,1010}) ──
+		enterFormula("BIN2DEC({10,1010})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=BIN2DEC({10,1010})", "formula stored: =BIN2DEC({10,1010})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K394:L394", "spill range (B399:C399): BIN2DEC({10,1010})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 2.0, "BIN2DEC({10,1010})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 10.0, "BIN2DEC({10,1010})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── HEX2DEC({"A","F"}) ──
+		enterFormula("HEX2DEC({\"A\",\"F\"})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=HEX2DEC({\"A\",\"F\"})", "formula stored: =HEX2DEC({\"A\",\"F\"})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K401:L401", "spill range (B406:C406): HEX2DEC({\"A\",\"F\"})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 10.0, "HEX2DEC({\"A\",\"F\"})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 15.0, "HEX2DEC({\"A\",\"F\"})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IMABS({"2+3i","1-2i"}) ──
+		enterFormula("IMABS({\"2+3i\",\"1-2i\"})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IMABS({\"2+3i\",\"1-2i\"})", "formula stored: =IMABS({\"2+3i\",\"1-2i\"})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K408:L408", "spill range (B413:C413): IMABS({\"2+3i\",\"1-2i\"})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3.6055512754639896, "IMABS({\"2+3i\",\"1-2i\"})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 2.23606797749979, "IMABS({\"2+3i\",\"1-2i\"})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IMAGINARY({"2+3i","1-2i"}) ──
+		enterFormula("IMAGINARY({\"2+3i\",\"1-2i\"})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IMAGINARY({\"2+3i\",\"1-2i\"})", "formula stored: =IMAGINARY({\"2+3i\",\"1-2i\"})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K415:L415", "spill range (B420:C420): IMAGINARY({\"2+3i\",\"1-2i\"})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3.0, "IMAGINARY({\"2+3i\",\"1-2i\"})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), -2.0, "IMAGINARY({\"2+3i\",\"1-2i\"})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── IMREAL({"2+3i","1-2i"}) ──
+		enterFormula("IMREAL({\"2+3i\",\"1-2i\"})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=IMREAL({\"2+3i\",\"1-2i\"})", "formula stored: =IMREAL({\"2+3i\",\"1-2i\"})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K422:L422", "spill range (B427:C427): IMREAL({\"2+3i\",\"1-2i\"})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 2.0, "IMREAL({\"2+3i\",\"1-2i\"})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 1.0, "IMREAL({\"2+3i\",\"1-2i\"})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		clearData(0, 0, 50, 500);
+	});
+
+
+	QUnit.test('Test: "Financial functions — dynamic array spill"', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		clearData(0, 0, 50, 500);
+
+		// ── test-data area ──────────────────────────────────────────────
+		// A2:A3={0.05,0.10}  B2:B3={2,4}  C2:C3={5,10}
+		// D2:D3={-100,-200}  E2:E3={1000,2000}  F2:F3={100,200}  G2:G3={1500,3000}
+		ws.getRange2("A2").setValue("0.05");
+		ws.getRange2("A3").setValue("0.1");
+		ws.getRange2("B2").setValue("2");
+		ws.getRange2("B3").setValue("4");
+		ws.getRange2("C2").setValue("5");
+		ws.getRange2("C3").setValue("10");
+		ws.getRange2("D2").setValue("-100");
+		ws.getRange2("D3").setValue("-200");
+		ws.getRange2("E2").setValue("1000");
+		ws.getRange2("E3").setValue("2000");
+		ws.getRange2("F2").setValue("100");
+		ws.getRange2("F3").setValue("200");
+		ws.getRange2("G2").setValue("1500");
+		ws.getRange2("G3").setValue("3000");
+
+		const flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false; flags.shiftKey = false;
+
+		const FORMULA_COL = "K";
+		const FORMULA_ROW_START = 2;
+		let curRow = FORMULA_ROW_START;
+
+		const enterFormula = function (formula, row) {
+			const cellRef = FORMULA_COL + row;
+			const fillRange = ws.getRange2(cellRef);
+			wsView.setSelection(fillRange.bbox);
+			const fragment = ws.getRange2(cellRef).getValueForEdit2();
+			fragment[0].setFragmentText("=" + formula);
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		};
+
+		// ── EFFECT(A2:A3,B2:B3) ──
+		// enterFormula("EFFECT(A2:A3,B2:B3)", curRow);
+		// checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "EFFECT(A2:A3,B2:B3) (error)");
+		// ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── EFFECT(A2:A3,4) ──
+		enterFormula("EFFECT(A2:A3,4)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "EFFECT(A2:A3,4) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── EFFECT(0.05,B2:B3) ──
+		enterFormula("EFFECT(0.05,B2:B3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "EFFECT(0.05,B2:B3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── EFFECT("abc",4) ──
+		enterFormula("EFFECT(\"abc\",4)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "EFFECT(\"abc\",4) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NOMINAL(A2:A3,B2:B3) ──
+		enterFormula("NOMINAL(A2:A3,B2:B3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "NOMINAL(A2:A3,B2:B3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NOMINAL(A2:A3,4) ──
+		enterFormula("NOMINAL(A2:A3,4)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "NOMINAL(A2:A3,4) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NOMINAL(0.05,B2:B3) ──
+		enterFormula("NOMINAL(0.05,B2:B3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "NOMINAL(0.05,B2:B3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NOMINAL("abc",4) ──
+		enterFormula("NOMINAL(\"abc\",4)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "NOMINAL(\"abc\",4) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FV(A2:A3,C2:C3,D2:D3) ──
+		enterFormula("FV(A2:A3,C2:C3,D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FV(A2:A3,C2:C3,D2:D3)", "formula stored: =FV(A2:A3,C2:C3,D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K58:K59", "spill range (B63:B64): FV(A2:A3,C2:C3,D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 552.5631250000002, "FV(A2:A3,C2:C3,D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 3187.4849202000037, "FV(A2:A3,C2:C3,D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FV(A2:A3,5,-100) ──
+		enterFormula("FV(A2:A3,5,-100)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FV(A2:A3,5,-100)", "formula stored: =FV(A2:A3,5,-100)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K65:K66", "spill range (B70:B71): FV(A2:A3,5,-100)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 552.5631250000002, "FV(A2:A3,5,-100)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 610.5100000000006, "FV(A2:A3,5,-100)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FV(0.05,C2:C3,-100) ──
+		enterFormula("FV(0.05,C2:C3,-100)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FV(0.05,C2:C3,-100)", "formula stored: =FV(0.05,C2:C3,-100)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K72:K73", "spill range (B77:B78): FV(0.05,C2:C3,-100)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 552.5631250000002, "FV(0.05,C2:C3,-100)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1257.789253554883, "FV(0.05,C2:C3,-100)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FV(0.05,5,D2:D3) ──
+		enterFormula("FV(0.05,5,D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FV(0.05,5,D2:D3)", "formula stored: =FV(0.05,5,D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K79:K80", "spill range (B84:B85): FV(0.05,5,D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 552.5631250000002, "FV(0.05,5,D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1105.1262500000005, "FV(0.05,5,D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── PV(A2:A3,C2:C3,D2:D3) ──
+		enterFormula("PV(A2:A3,C2:C3,D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=PV(A2:A3,C2:C3,D2:D3)", "formula stored: =PV(A2:A3,C2:C3,D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K86:K87", "spill range (B91:B92): PV(A2:A3,C2:C3,D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 432.94766706308206, "PV(A2:A3,C2:C3,D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1228.913421140937, "PV(A2:A3,C2:C3,D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── PV(A2:A3,5,-100) ──
+		enterFormula("PV(A2:A3,5,-100)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=PV(A2:A3,5,-100)", "formula stored: =PV(A2:A3,5,-100)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K93:K94", "spill range (B98:B99): PV(A2:A3,5,-100)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 432.94766706308206, "PV(A2:A3,5,-100)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 379.07867694084507, "PV(A2:A3,5,-100)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── PV(0.05,C2:C3,-100) ──
+		enterFormula("PV(0.05,C2:C3,-100)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=PV(0.05,C2:C3,-100)", "formula stored: =PV(0.05,C2:C3,-100)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K100:K101", "spill range (B105:B106): PV(0.05,C2:C3,-100)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 432.94766706308206, "PV(0.05,C2:C3,-100)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 772.1734929184813, "PV(0.05,C2:C3,-100)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── PV(0.05,5,D2:D3) ──
+		enterFormula("PV(0.05,5,D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=PV(0.05,5,D2:D3)", "formula stored: =PV(0.05,5,D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K107:K108", "spill range (B112:B113): PV(0.05,5,D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 432.94766706308206, "PV(0.05,5,D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 865.8953341261641, "PV(0.05,5,D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── PMT(A2:A3,C2:C3,E2:E3) ──
+		enterFormula("PMT(A2:A3,C2:C3,E2:E3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=PMT(A2:A3,C2:C3,E2:E3)", "formula stored: =PMT(A2:A3,C2:C3,E2:E3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K114:K115", "spill range (B119:B120): PMT(A2:A3,C2:C3,E2:E3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), -230.9747981282681, "PMT(A2:A3,C2:C3,E2:E3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), -325.49078976502324, "PMT(A2:A3,C2:C3,E2:E3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── PMT(A2:A3,5,1000) ──
+		enterFormula("PMT(A2:A3,5,1000)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=PMT(A2:A3,5,1000)", "formula stored: =PMT(A2:A3,5,1000)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K121:K122", "spill range (B126:B127): PMT(A2:A3,5,1000)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), -230.9747981282681, "PMT(A2:A3,5,1000)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), -263.7974807947454, "PMT(A2:A3,5,1000)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── PMT(0.05,C2:C3,1000) ──
+		enterFormula("PMT(0.05,C2:C3,1000)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=PMT(0.05,C2:C3,1000)", "formula stored: =PMT(0.05,C2:C3,1000)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K128:K129", "spill range (B133:B134): PMT(0.05,C2:C3,1000)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), -230.9747981282681, "PMT(0.05,C2:C3,1000)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), -129.50457496545667, "PMT(0.05,C2:C3,1000)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── PMT(0.05,5,E2:E3) ──
+		enterFormula("PMT(0.05,5,E2:E3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=PMT(0.05,5,E2:E3)", "formula stored: =PMT(0.05,5,E2:E3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K135:K136", "spill range (B140:B141): PMT(0.05,5,E2:E3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), -230.9747981282681, "PMT(0.05,5,E2:E3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), -461.9495962565362, "PMT(0.05,5,E2:E3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SLN(E2:E3,F2:F3,C2:C3) ──
+		enterFormula("SLN(E2:E3,F2:F3,C2:C3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SLN(E2:E3,F2:F3,C2:C3)", "formula stored: =SLN(E2:E3,F2:F3,C2:C3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K142:K143", "spill range (B147:B148): SLN(E2:E3,F2:F3,C2:C3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 180.0, "SLN(E2:E3,F2:F3,C2:C3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 180.0, "SLN(E2:E3,F2:F3,C2:C3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SLN(E2:E3,100,5) ──
+		enterFormula("SLN(E2:E3,100,5)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SLN(E2:E3,100,5)", "formula stored: =SLN(E2:E3,100,5)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K149:K150", "spill range (B154:B155): SLN(E2:E3,100,5)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 180.0, "SLN(E2:E3,100,5)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 380.0, "SLN(E2:E3,100,5)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SLN(1000,F2:F3,5) ──
+		enterFormula("SLN(1000,F2:F3,5)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SLN(1000,F2:F3,5)", "formula stored: =SLN(1000,F2:F3,5)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K156:K157", "spill range (B161:B162): SLN(1000,F2:F3,5)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 180.0, "SLN(1000,F2:F3,5)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 160.0, "SLN(1000,F2:F3,5)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SLN(1000,100,C2:C3) ──
+		enterFormula("SLN(1000,100,C2:C3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SLN(1000,100,C2:C3)", "formula stored: =SLN(1000,100,C2:C3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K163:K164", "spill range (B168:B169): SLN(1000,100,C2:C3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 180.0, "SLN(1000,100,C2:C3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 90.0, "SLN(1000,100,C2:C3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── RRI(C2:C3,E2:E3,G2:G3) ──
+		enterFormula("RRI(C2:C3,E2:E3,G2:G3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=RRI(C2:C3,E2:E3,G2:G3)", "formula stored: =RRI(C2:C3,E2:E3,G2:G3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K170:K171", "spill range (B175:B176): RRI(C2:C3,E2:E3,G2:G3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.08447177119769855, "RRI(C2:C3,E2:E3,G2:G3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.04137974399241062, "RRI(C2:C3,E2:E3,G2:G3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── RRI(C2:C3,1000,1500) ──
+		enterFormula("RRI(C2:C3,1000,1500)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=RRI(C2:C3,1000,1500)", "formula stored: =RRI(C2:C3,1000,1500)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K177:K178", "spill range (B182:B183): RRI(C2:C3,1000,1500)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.08447177119769855, "RRI(C2:C3,1000,1500)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.04137974399241062, "RRI(C2:C3,1000,1500)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── RRI(5,E2:E3,1500) ──
+		enterFormula("RRI(5,E2:E3,1500)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=RRI(5,E2:E3,1500)", "formula stored: =RRI(5,E2:E3,1500)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K184:K185", "spill range (B189:B190): RRI(5,E2:E3,1500)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.08447177119769855, "RRI(5,E2:E3,1500)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), -0.05591248870509802, "RRI(5,E2:E3,1500)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── RRI(5,1000,G2:G3) ──
+		enterFormula("RRI(5,1000,G2:G3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=RRI(5,1000,G2:G3)", "formula stored: =RRI(5,1000,G2:G3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K191:K192", "spill range (B196:B197): RRI(5,1000,G2:G3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.08447177119769855, "RRI(5,1000,G2:G3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 0.2457309396155174, "RRI(5,1000,G2:G3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── RRI(0,1000,1500) ──
+		enterFormula("RRI(0,1000,1500)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#NUM!", "RRI(0,1000,1500) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── PDURATION(A2:A3,E2:E3,G2:G3) ──
+		enterFormula("PDURATION(A2:A3,E2:E3,G2:G3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=PDURATION(A2:A3,E2:E3,G2:G3)", "formula stored: =PDURATION(A2:A3,E2:E3,G2:G3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K205:K206", "spill range (B210:B211): PDURATION(A2:A3,E2:E3,G2:G3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 8.310386222520565, "PDURATION(A2:A3,E2:E3,G2:G3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 4.254163709905883, "PDURATION(A2:A3,E2:E3,G2:G3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── PDURATION(A2:A3,1000,1500) ──
+		enterFormula("PDURATION(A2:A3,1000,1500)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=PDURATION(A2:A3,1000,1500)", "formula stored: =PDURATION(A2:A3,1000,1500)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K212:K213", "spill range (B217:B218): PDURATION(A2:A3,1000,1500)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 8.310386222520565, "PDURATION(A2:A3,1000,1500)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 4.254163709905892, "PDURATION(A2:A3,1000,1500)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── PDURATION(0.05,E2:E3,1500) ──
+		enterFormula("PDURATION(0.05,E2:E3,1500)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=PDURATION(0.05,E2:E3,1500)", "formula stored: =PDURATION(0.05,E2:E3,1500)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K219:K220", "spill range (B224:B225): PDURATION(0.05,E2:E3,1500)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 8.310386222520565, "PDURATION(0.05,E2:E3,1500)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), -5.896312860369898, "PDURATION(0.05,E2:E3,1500)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── PDURATION(0.05,1000,G2:G3) ──
+		enterFormula("PDURATION(0.05,1000,G2:G3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=PDURATION(0.05,1000,G2:G3)", "formula stored: =PDURATION(0.05,1000,G2:G3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K226:K227", "spill range (B231:B232): PDURATION(0.05,1000,G2:G3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 8.310386222520565, "PDURATION(0.05,1000,G2:G3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 22.51708530541101, "PDURATION(0.05,1000,G2:G3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── PDURATION("abc",1000,1500) ──
+		enterFormula("PDURATION(\"abc\",1000,1500)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "PDURATION(\"abc\",1000,1500) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DOLLARDE(A2:A3,B2:B3) ──
+		enterFormula("DOLLARDE(A2:A3,B2:B3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "DOLLARDE(A2:A3,B2:B3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DOLLARDE(A2:A3,4) ──
+		enterFormula("DOLLARDE(A2:A3,4)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "DOLLARDE(A2:A3,4) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DOLLARDE(0.05,B2:B3) ──
+		enterFormula("DOLLARDE(0.05,B2:B3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "DOLLARDE(0.05,B2:B3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DOLLARDE("abc",4) ──
+		enterFormula("DOLLARDE(\"abc\",4)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "DOLLARDE(\"abc\",4) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DOLLARFR(A2:A3,B2:B3) ──
+		enterFormula("DOLLARFR(A2:A3,B2:B3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "DOLLARFR(A2:A3,B2:B3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DOLLARFR(A2:A3,4) ──
+		enterFormula("DOLLARFR(A2:A3,4)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "DOLLARFR(A2:A3,4) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DOLLARFR(0.05,B2:B3) ──
+		enterFormula("DOLLARFR(0.05,B2:B3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "DOLLARFR(0.05,B2:B3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DOLLARFR("abc",4) ──
+		enterFormula("DOLLARFR(\"abc\",4)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "DOLLARFR(\"abc\",4) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── EFFECT({0.05,0.1},{2,4}) ──
+		enterFormula("EFFECT({0.05,0.1},{2,4})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=EFFECT({0.05,0.1},{2,4})", "formula stored: =EFFECT({0.05,0.1},{2,4})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K296:L296", "spill range (B301:C301): EFFECT({0.05,0.1},{2,4})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.05062499999999992, "EFFECT({0.05,0.1},{2,4})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 0.10381289062499977, "EFFECT({0.05,0.1},{2,4})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── NOMINAL({0.05,0.1},{2,4}) ──
+		enterFormula("NOMINAL({0.05,0.1},{2,4})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=NOMINAL({0.05,0.1},{2,4})", "formula stored: =NOMINAL({0.05,0.1},{2,4})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K303:L303", "spill range (B308:C308): NOMINAL({0.05,0.1},{2,4})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.04939015319191986, "NOMINAL({0.05,0.1},{2,4})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 0.09645475633778045, "NOMINAL({0.05,0.1},{2,4})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FV({0.05,0.1},{5,10},{-100,-200}) ──
+		enterFormula("FV({0.05,0.1},{5,10},{-100,-200})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FV({0.05,0.1},{5,10},{-100,-200})", "formula stored: =FV({0.05,0.1},{5,10},{-100,-200})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K310:L310", "spill range (B315:C315): FV({0.05,0.1},{5,10},{-100,-200})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 552.5631250000002, "FV({0.05,0.1},{5,10},{-100,-200})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 3187.4849202000037, "FV({0.05,0.1},{5,10},{-100,-200})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── PV({0.05,0.1},{5,10},{-100,-200}) ──
+		enterFormula("PV({0.05,0.1},{5,10},{-100,-200})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=PV({0.05,0.1},{5,10},{-100,-200})", "formula stored: =PV({0.05,0.1},{5,10},{-100,-200})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K317:L317", "spill range (B322:C322): PV({0.05,0.1},{5,10},{-100,-200})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 432.94766706308206, "PV({0.05,0.1},{5,10},{-100,-200})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 1228.913421140937, "PV({0.05,0.1},{5,10},{-100,-200})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── PMT({0.05,0.1},{5,10},{1000,2000}) ──
+		enterFormula("PMT({0.05,0.1},{5,10},{1000,2000})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=PMT({0.05,0.1},{5,10},{1000,2000})", "formula stored: =PMT({0.05,0.1},{5,10},{1000,2000})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K324:L324", "spill range (B329:C329): PMT({0.05,0.1},{5,10},{1000,2000})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), -230.9747981282681, "PMT({0.05,0.1},{5,10},{1000,2000})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), -325.49078976502324, "PMT({0.05,0.1},{5,10},{1000,2000})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SLN({1000,2000},{100,200},{5,10}) ──
+		enterFormula("SLN({1000,2000},{100,200},{5,10})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SLN({1000,2000},{100,200},{5,10})", "formula stored: =SLN({1000,2000},{100,200},{5,10})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K331:L331", "spill range (B336:C336): SLN({1000,2000},{100,200},{5,10})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 180.0, "SLN({1000,2000},{100,200},{5,10})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 180.0, "SLN({1000,2000},{100,200},{5,10})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── RRI({5,10},{1000,2000},{1500,3000}) ──
+		enterFormula("RRI({5,10},{1000,2000},{1500,3000})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=RRI({5,10},{1000,2000},{1500,3000})", "formula stored: =RRI({5,10},{1000,2000},{1500,3000})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K338:L338", "spill range (B343:C343): RRI({5,10},{1000,2000},{1500,3000})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.08447177119769855, "RRI({5,10},{1000,2000},{1500,3000})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 0.04137974399241062, "RRI({5,10},{1000,2000},{1500,3000})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── PDURATION({0.05,0.1},{1000,2000},{1500,3000}) ──
+		enterFormula("PDURATION({0.05,0.1},{1000,2000},{1500,3000})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=PDURATION({0.05,0.1},{1000,2000},{1500,3000})", "formula stored: =PDURATION({0.05,0.1},{1000,2000},{1500,3000})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K345:L345", "spill range (B350:C350): PDURATION({0.05,0.1},{1000,2000},{1500,3000})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 8.310386222520565, "PDURATION({0.05,0.1},{1000,2000},{1500,3000})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 4.254163709905883, "PDURATION({0.05,0.1},{1000,2000},{1500,3000})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DOLLARDE({0.05,0.1},{2,4}) ──
+		enterFormula("DOLLARDE({0.05,0.1},{2,4})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DOLLARDE({0.05,0.1},{2,4})", "formula stored: =DOLLARDE({0.05,0.1},{2,4})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K352:L352", "spill range (B357:C357): DOLLARDE({0.05,0.1},{2,4})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.25, "DOLLARDE({0.05,0.1},{2,4})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 0.25, "DOLLARDE({0.05,0.1},{2,4})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── DOLLARFR({0.05,0.1},{2,4}) ──
+		enterFormula("DOLLARFR({0.05,0.1},{2,4})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DOLLARFR({0.05,0.1},{2,4})", "formula stored: =DOLLARFR({0.05,0.1},{2,4})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K359:L359", "spill range (B364:C364): DOLLARFR({0.05,0.1},{2,4})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 0.01, "DOLLARFR({0.05,0.1},{2,4})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 0.04, "DOLLARFR({0.05,0.1},{2,4})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		clearData(0, 0, 50, 500);
+	});
+
+
+
+
+
+
+
+	QUnit.test('Test: "Information functions — dynamic array spill"', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		clearData(0, 0, 50, 500);
+
+		// ── test-data area ──────────────────────────────────────────────
+		// A2:A3={2,4} even  B2:B3={1,3} odd  C2:C3={"hello","world"} text
+		// D2:D3={TRUE,FALSE} logical   E2=#N/A  E3=#DIV/0!
+
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("A3").setValue("4");
+		ws.getRange2("B2").setValue("1");
+		ws.getRange2("B3").setValue("3");
+		ws.getRange2("C2").setValue("hello");
+		ws.getRange2("C3").setValue("world");
+
+		const flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false; flags.shiftKey = false;
+
+		// helper: enter a formula into an arbitrary cell (for test data setup)
+		const setupCell = function (formula, colLetter, row) {
+			const fillRange = ws.getRange2(colLetter + row);
+			wsView.setSelection(fillRange.bbox);
+			const fragment = ws.getRange2(colLetter + row).getValueForEdit2();
+			fragment[0].setFragmentText("=" + formula);
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		};
+		setupCell("TRUE()", "D", 2);
+		setupCell("FALSE()", "D", 3);
+		setupCell("NA()", "E", 2);
+		setupCell("1/0", "E", 3);
+
+		const FORMULA_COL = "K";
+		const FORMULA_ROW_START = 2;
+		let curRow = FORMULA_ROW_START;
+
+		const enterFormula = function (formula, row) {
+			const cellRef = FORMULA_COL + row;
+			const fillRange = ws.getRange2(cellRef);
+			wsView.setSelection(fillRange.bbox);
+			const fragment = ws.getRange2(cellRef).getValueForEdit2();
+			fragment[0].setFragmentText("=" + formula);
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		};
+
+		// ── ISNUMBER(A2:A3) ──
+		enterFormula("ISNUMBER(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISNUMBER(A2:A3)", "formula stored: =ISNUMBER(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K2:K3", "spill range (B7:B8): ISNUMBER(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "TRUE", "ISNUMBER(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "TRUE", "ISNUMBER(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISNUMBER(C2:C3) ──
+		enterFormula("ISNUMBER(C2:C3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISNUMBER(C2:C3)", "formula stored: =ISNUMBER(C2:C3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K9:K10", "spill range (B14:B15): ISNUMBER(C2:C3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "FALSE", "ISNUMBER(C2:C3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "FALSE", "ISNUMBER(C2:C3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISTEXT(C2:C3) ──
+		enterFormula("ISTEXT(C2:C3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISTEXT(C2:C3)", "formula stored: =ISTEXT(C2:C3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K16:K17", "spill range (B21:B22): ISTEXT(C2:C3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "TRUE", "ISTEXT(C2:C3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "TRUE", "ISTEXT(C2:C3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISTEXT(A2:A3) ──
+		enterFormula("ISTEXT(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISTEXT(A2:A3)", "formula stored: =ISTEXT(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K23:K24", "spill range (B28:B29): ISTEXT(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "FALSE", "ISTEXT(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "FALSE", "ISTEXT(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISLOGICAL(D2:D3) ──
+		enterFormula("ISLOGICAL(D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISLOGICAL(D2:D3)", "formula stored: =ISLOGICAL(D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K30:K31", "spill range (B35:B36): ISLOGICAL(D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "TRUE", "ISLOGICAL(D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "TRUE", "ISLOGICAL(D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISLOGICAL(A2:A3) ──
+		enterFormula("ISLOGICAL(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISLOGICAL(A2:A3)", "formula stored: =ISLOGICAL(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K37:K38", "spill range (B42:B43): ISLOGICAL(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "FALSE", "ISLOGICAL(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "FALSE", "ISLOGICAL(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISEVEN(A2:A3) ──
+		enterFormula("ISEVEN(A2:A3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "ISEVEN(A2:A3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISEVEN(B2:B3) ──
+		enterFormula("ISEVEN(B2:B3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "ISEVEN(B2:B3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISEVEN("abc") ──
+		enterFormula("ISEVEN(\"abc\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "ISEVEN(\"abc\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISODD(B2:B3) ──
+		enterFormula("ISODD(B2:B3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "ISODD(B2:B3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISODD(A2:A3) ──
+		enterFormula("ISODD(A2:A3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "ISODD(A2:A3) (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISODD("abc") ──
+		enterFormula("ISODD(\"abc\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "ISODD(\"abc\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISBLANK(A2:A3) ──
+		enterFormula("ISBLANK(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISBLANK(A2:A3)", "formula stored: =ISBLANK(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K86:K87", "spill range (B91:B92): ISBLANK(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "FALSE", "ISBLANK(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "FALSE", "ISBLANK(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISERROR(E2:E3) ──
+		enterFormula("ISERROR(E2:E3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISERROR(E2:E3)", "formula stored: =ISERROR(E2:E3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K93:K94", "spill range (B98:B99): ISERROR(E2:E3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "TRUE", "ISERROR(E2:E3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "TRUE", "ISERROR(E2:E3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISERROR(A2:A3) ──
+		enterFormula("ISERROR(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISERROR(A2:A3)", "formula stored: =ISERROR(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K100:K101", "spill range (B105:B106): ISERROR(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "FALSE", "ISERROR(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "FALSE", "ISERROR(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISNA(E2:E3) ──
+		enterFormula("ISNA(E2:E3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISNA(E2:E3)", "formula stored: =ISNA(E2:E3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K107:K108", "spill range (B112:B113): ISNA(E2:E3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "TRUE", "ISNA(E2:E3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "FALSE", "ISNA(E2:E3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISERR(E2:E3) ──
+		enterFormula("ISERR(E2:E3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISERR(E2:E3)", "formula stored: =ISERR(E2:E3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K114:K115", "spill range (B119:B120): ISERR(E2:E3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "FALSE", "ISERR(E2:E3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "TRUE", "ISERR(E2:E3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISNONTEXT(A2:A3) ──
+		enterFormula("ISNONTEXT(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISNONTEXT(A2:A3)", "formula stored: =ISNONTEXT(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K121:K122", "spill range (B126:B127): ISNONTEXT(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "TRUE", "ISNONTEXT(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "TRUE", "ISNONTEXT(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISNONTEXT(C2:C3) ──
+		enterFormula("ISNONTEXT(C2:C3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISNONTEXT(C2:C3)", "formula stored: =ISNONTEXT(C2:C3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K128:K129", "spill range (B133:B134): ISNONTEXT(C2:C3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "FALSE", "ISNONTEXT(C2:C3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "FALSE", "ISNONTEXT(C2:C3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISFORMULA(E2:E3) ──
+		enterFormula("ISFORMULA(E2:E3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISFORMULA(E2:E3)", "formula stored: =ISFORMULA(E2:E3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K135:K136", "spill range (B140:B141): ISFORMULA(E2:E3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "TRUE", "ISFORMULA(E2:E3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "TRUE", "ISFORMULA(E2:E3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISFORMULA(A2:A3) ──
+		enterFormula("ISFORMULA(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISFORMULA(A2:A3)", "formula stored: =ISFORMULA(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K142:K143", "spill range (B147:B148): ISFORMULA(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "FALSE", "ISFORMULA(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "FALSE", "ISFORMULA(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── N(A2:A3) ──
+		enterFormula("N(A2:A3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), 2, "N(A2:A3) (scalar)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── N(D2:D3) ──
+		enterFormula("N(D2:D3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), 1, "N(D2:D3) (scalar)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── N(C2:C3) ──
+		enterFormula("N(C2:C3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), 0, "N(C2:C3) (scalar)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── TYPE(A2:A3) ──
+		enterFormula("TYPE(A2:A3)", curRow);
+		//TODO @ !!!
+		//assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TYPE(A2:A3)", "formula stored: =TYPE(A2:A3)");
+		// assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K170:K170", "spill range (B175): TYPE(A2:A3)");
+		// checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 64, "TYPE(A2:A3)[0,0]");
+		// ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── TYPE(C2:C3) ──
+		// enterFormula("TYPE(C2:C3)", curRow);
+		// assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TYPE(C2:C3)", "formula stored: =TYPE(C2:C3)");
+		// assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K177:K177", "spill range (B182): TYPE(C2:C3)");
+		// checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 64, "TYPE(C2:C3)[0,0]");
+		// ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── TYPE(D2:D3) ──
+		// enterFormula("TYPE(D2:D3)", curRow);
+		// assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TYPE(D2:D3)", "formula stored: =TYPE(D2:D3)");
+		// assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K184:K184", "spill range (B189): TYPE(D2:D3)");
+		// checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 64, "TYPE(D2:D3)[0,0]");
+		// ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ERROR.TYPE(E2:E3) ──
+		enterFormula("ERROR.TYPE(E2:E3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ERROR.TYPE(E2:E3)", "formula stored: =ERROR.TYPE(E2:E3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K191:K192", "spill range (B196:B197): ERROR.TYPE(E2:E3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 7, "ERROR.TYPE(E2:E3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2, "ERROR.TYPE(E2:E3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ERROR.TYPE(A2:A3) ──
+		enterFormula("ERROR.TYPE(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ERROR.TYPE(A2:A3)", "formula stored: =ERROR.TYPE(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K198:K199", "spill range (B203:B204): ERROR.TYPE(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "#N/A", "ERROR.TYPE(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "#N/A", "ERROR.TYPE(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISNUMBER({1,"a"}) ──
+		enterFormula("ISNUMBER({1,\"a\"})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISNUMBER({1,\"a\"})", "formula stored: =ISNUMBER({1,\"a\"})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K205:L205", "spill range (B210:C210): ISNUMBER({1,\"a\"})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "TRUE", "ISNUMBER({1,\"a\"})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), "FALSE", "ISNUMBER({1,\"a\"})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISTEXT({"a",1}) ──
+		enterFormula("ISTEXT({\"a\",1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISTEXT({\"a\",1})", "formula stored: =ISTEXT({\"a\",1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K212:L212", "spill range (B217:C217): ISTEXT({\"a\",1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "TRUE", "ISTEXT({\"a\",1})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), "FALSE", "ISTEXT({\"a\",1})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISEVEN({2,3}) ──
+		enterFormula("ISEVEN({2,3})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISEVEN({2,3})", "formula stored: =ISEVEN({2,3})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K219:L219", "spill range (B224:C224): ISEVEN({2,3})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "TRUE", "ISEVEN({2,3})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), "FALSE", "ISEVEN({2,3})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISODD({1,2}) ──
+		enterFormula("ISODD({1,2})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISODD({1,2})", "formula stored: =ISODD({1,2})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K226:L226", "spill range (B231:C231): ISODD({1,2})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "TRUE", "ISODD({1,2})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), "FALSE", "ISODD({1,2})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── ISLOGICAL({TRUE,FALSE}) ──
+		enterFormula("ISLOGICAL({TRUE,FALSE})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ISLOGICAL({TRUE,FALSE})", "formula stored: =ISLOGICAL({TRUE,FALSE})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K233:L233", "spill range (B238:C238): ISLOGICAL({TRUE,FALSE})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "TRUE", "ISLOGICAL({TRUE,FALSE})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), "TRUE", "ISLOGICAL({TRUE,FALSE})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── N({1,"a"}) ──
+		//TODO error
+		// enterFormula("N({1,\"a\"})", curRow);
+		// assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=N({1,\"a\"})", "formula stored: =N({1,\"a\"})");
+		// assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K240:L240", "spill range (B245:C245): N({1,\"a\"})");
+		// checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1, "N({1,\"a\"})[0,0]");
+		// checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 0, "N({1,\"a\"})[0,1]");
+		// ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── TYPE({1,"a"}) ──
+		enterFormula("TYPE({1,\"a\"})", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), 64, "TYPE({1,\"a\"}) (scalar)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		clearData(0, 0, 50, 500);
+	});
+
+
+	QUnit.test('Test: "TextAndData functions — dynamic array spill"', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		clearData(0, 0, 50, 500);
+
+		// ── test-data area ──────────────────────────────────────────────
+		// A2:A3={"Hello","World"}  B2:B3={2,3}  C2:C3={"hello","world"}
+		// D2:D3={65,90}  E2:E3={"1.5","2.5"}  F2:F3={"  Hi  ","  Bye  "}
+		ws.getRange2("A2").setValue("Hello");
+		ws.getRange2("A3").setValue("World");
+		ws.getRange2("B2").setValue("2");
+		ws.getRange2("B3").setValue("3");
+		ws.getRange2("C2").setValue("hello");
+		ws.getRange2("C3").setValue("world");
+		ws.getRange2("D2").setValue("65");
+		ws.getRange2("D3").setValue("90");
+		ws.getRange2("E2").setValue("1.5");
+		ws.getRange2("E3").setValue("2.5");
+		ws.getRange2("F2").setValue("  Hi  ");
+		ws.getRange2("F3").setValue("  Bye  ");
+
+		const flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false; flags.shiftKey = false;
+
+		const FORMULA_COL = "K";
+		const FORMULA_ROW_START = 2;
+		let curRow = FORMULA_ROW_START;
+
+		const enterFormula = function (formula, row) {
+			const cellRef = FORMULA_COL + row;
+			const fillRange = ws.getRange2(cellRef);
+			wsView.setSelection(fillRange.bbox);
+			const fragment = ws.getRange2(cellRef).getValueForEdit2();
+			fragment[0].setFragmentText("=" + formula);
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		};
+
+		// ── LEN(A2:A3) ──
+		enterFormula("LEN(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=LEN(A2:A3)", "formula stored: =LEN(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K2:K3", "spill range (B7:B8): LEN(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 5, "LEN(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 5, "LEN(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── CODE(A2:A3) ──
+		enterFormula("CODE(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CODE(A2:A3)", "formula stored: =CODE(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K9:K10", "spill range (B14:B15): CODE(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 72, "CODE(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 87, "CODE(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── UNICODE(A2:A3) ──
+		enterFormula("UNICODE(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=UNICODE(A2:A3)", "formula stored: =UNICODE(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K16:K17", "spill range (B21:B22): UNICODE(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 72, "UNICODE(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 87, "UNICODE(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── LOWER(A2:A3) ──
+		enterFormula("LOWER(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=LOWER(A2:A3)", "formula stored: =LOWER(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K23:K24", "spill range (B28:B29): LOWER(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "hello", "LOWER(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "world", "LOWER(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── UPPER(A2:A3) ──
+		enterFormula("UPPER(A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=UPPER(A2:A3)", "formula stored: =UPPER(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K30:K31", "spill range (B35:B36): UPPER(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "HELLO", "UPPER(A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "WORLD", "UPPER(A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── PROPER(C2:C3) ──
+		enterFormula("PROPER(C2:C3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=PROPER(C2:C3)", "formula stored: =PROPER(C2:C3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K37:K38", "spill range (B42:B43): PROPER(C2:C3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "Hello", "PROPER(C2:C3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "World", "PROPER(C2:C3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── TRIM(F2:F3) ──
+		enterFormula("TRIM(F2:F3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TRIM(F2:F3)", "formula stored: =TRIM(F2:F3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K44:K45", "spill range (B49:B50): TRIM(F2:F3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "Hi", "TRIM(F2:F3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "Bye", "TRIM(F2:F3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── T(A2:A3) ──
+		enterFormula("T(A2:A3)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "Hello", "T(A2:A3) (scalar)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── CHAR(D2:D3) ──
+		enterFormula("CHAR(D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CHAR(D2:D3)", "formula stored: =CHAR(D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K58:K59", "spill range (B63:B64): CHAR(D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "A", "CHAR(D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "Z", "CHAR(D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── UNICHAR(D2:D3) ──
+		enterFormula("UNICHAR(D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=UNICHAR(D2:D3)", "formula stored: =UNICHAR(D2:D3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K65:K66", "spill range (B70:B71): UNICHAR(D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "A", "UNICHAR(D2:D3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "Z", "UNICHAR(D2:D3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── LEFT(A2:A3,B2:B3) ──
+		enterFormula("LEFT(A2:A3,B2:B3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=LEFT(A2:A3,B2:B3)", "formula stored: =LEFT(A2:A3,B2:B3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K72:K73", "spill range (B77:B78): LEFT(A2:A3,B2:B3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "He", "LEFT(A2:A3,B2:B3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "Wor", "LEFT(A2:A3,B2:B3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── LEFT(A2:A3,2) ──
+		enterFormula("LEFT(A2:A3,2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=LEFT(A2:A3,2)", "formula stored: =LEFT(A2:A3,2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K79:K80", "spill range (B84:B85): LEFT(A2:A3,2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "He", "LEFT(A2:A3,2)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "Wo", "LEFT(A2:A3,2)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── LEFT("Hello",B2:B3) ──
+		enterFormula("LEFT(\"Hello\",B2:B3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=LEFT(\"Hello\",B2:B3)", "formula stored: =LEFT(\"Hello\",B2:B3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K86:K87", "spill range (B91:B92): LEFT(\"Hello\",B2:B3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "He", "LEFT(\"Hello\",B2:B3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "Hel", "LEFT(\"Hello\",B2:B3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── LEFT("abc","x") ──
+		enterFormula("LEFT(\"abc\",\"x\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "LEFT(\"abc\",\"x\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── RIGHT(A2:A3,B2:B3) ──
+		enterFormula("RIGHT(A2:A3,B2:B3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=RIGHT(A2:A3,B2:B3)", "formula stored: =RIGHT(A2:A3,B2:B3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K100:K101", "spill range (B105:B106): RIGHT(A2:A3,B2:B3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "lo", "RIGHT(A2:A3,B2:B3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "rld", "RIGHT(A2:A3,B2:B3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── RIGHT(A2:A3,2) ──
+		enterFormula("RIGHT(A2:A3,2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=RIGHT(A2:A3,2)", "formula stored: =RIGHT(A2:A3,2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K107:K108", "spill range (B112:B113): RIGHT(A2:A3,2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "lo", "RIGHT(A2:A3,2)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "ld", "RIGHT(A2:A3,2)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── RIGHT("Hello",B2:B3) ──
+		enterFormula("RIGHT(\"Hello\",B2:B3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=RIGHT(\"Hello\",B2:B3)", "formula stored: =RIGHT(\"Hello\",B2:B3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K114:K115", "spill range (B119:B120): RIGHT(\"Hello\",B2:B3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "lo", "RIGHT(\"Hello\",B2:B3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "llo", "RIGHT(\"Hello\",B2:B3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── EXACT(A2:A3,C2:C3) ──
+		enterFormula("EXACT(A2:A3,C2:C3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=EXACT(A2:A3,C2:C3)", "formula stored: =EXACT(A2:A3,C2:C3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K121:K122", "spill range (B126:B127): EXACT(A2:A3,C2:C3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "FALSE", "EXACT(A2:A3,C2:C3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "FALSE", "EXACT(A2:A3,C2:C3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── EXACT(A2:A3,A2:A3) ──
+		enterFormula("EXACT(A2:A3,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=EXACT(A2:A3,A2:A3)", "formula stored: =EXACT(A2:A3,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K128:K129", "spill range (B133:B134): EXACT(A2:A3,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "TRUE", "EXACT(A2:A3,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "TRUE", "EXACT(A2:A3,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── EXACT("Hello",C2:C3) ──
+		enterFormula("EXACT(\"Hello\",C2:C3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=EXACT(\"Hello\",C2:C3)", "formula stored: =EXACT(\"Hello\",C2:C3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K135:K136", "spill range (B140:B141): EXACT(\"Hello\",C2:C3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "FALSE", "EXACT(\"Hello\",C2:C3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "FALSE", "EXACT(\"Hello\",C2:C3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── VALUE(E2:E3) ──
+		enterFormula("VALUE(E2:E3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=VALUE(E2:E3)", "formula stored: =VALUE(E2:E3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K142:K143", "spill range (B147:B148): VALUE(E2:E3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.5, "VALUE(E2:E3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2.5, "VALUE(E2:E3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── VALUE("abc") ──
+		enterFormula("VALUE(\"abc\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#VALUE!", "VALUE(\"abc\") (error)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── REPT("ab",B2:B3) ──
+		enterFormula("REPT(\"ab\",B2:B3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=REPT(\"ab\",B2:B3)", "formula stored: =REPT(\"ab\",B2:B3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K156:K157", "spill range (B161:B162): REPT(\"ab\",B2:B3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "abab", "REPT(\"ab\",B2:B3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "ababab", "REPT(\"ab\",B2:B3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── REPT(A2:A3,1) ──
+		enterFormula("REPT(A2:A3,1)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=REPT(A2:A3,1)", "formula stored: =REPT(A2:A3,1)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K163:K164", "spill range (B168:B169): REPT(A2:A3,1)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "Hello", "REPT(A2:A3,1)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "World", "REPT(A2:A3,1)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── MID(A2:A3,B2:B3,2) ──
+		enterFormula("MID(A2:A3,B2:B3,2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=MID(A2:A3,B2:B3,2)", "formula stored: =MID(A2:A3,B2:B3,2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K170:K171", "spill range (B175:B176): MID(A2:A3,B2:B3,2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "el", "MID(A2:A3,B2:B3,2)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "rl", "MID(A2:A3,B2:B3,2)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── MID("Hello",B2:B3,2) ──
+		enterFormula("MID(\"Hello\",B2:B3,2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=MID(\"Hello\",B2:B3,2)", "formula stored: =MID(\"Hello\",B2:B3,2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K177:K178", "spill range (B182:B183): MID(\"Hello\",B2:B3,2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "el", "MID(\"Hello\",B2:B3,2)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "ll", "MID(\"Hello\",B2:B3,2)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FIND("l",A2:A3) ──
+		enterFormula("FIND(\"l\",A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FIND(\"l\",A2:A3)", "formula stored: =FIND(\"l\",A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K184:K185", "spill range (B189:B190): FIND(\"l\",A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "FIND(\"l\",A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 4, "FIND(\"l\",A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SEARCH("o",A2:A3) ──
+		enterFormula("SEARCH(\"o\",A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SEARCH(\"o\",A2:A3)", "formula stored: =SEARCH(\"o\",A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K191:K192", "spill range (B196:B197): SEARCH(\"o\",A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 5, "SEARCH(\"o\",A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2, "SEARCH(\"o\",A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SUBSTITUTE(A2:A3,"l","L") ──
+		enterFormula("SUBSTITUTE(A2:A3,\"l\",\"L\")", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SUBSTITUTE(A2:A3,\"l\",\"L\")", "formula stored: =SUBSTITUTE(A2:A3,\"l\",\"L\")");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K198:K199", "spill range (B203:B204): SUBSTITUTE(A2:A3,\"l\",\"L\")");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "HeLLo", "SUBSTITUTE(A2:A3,\"l\",\"L\")[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "WorLd", "SUBSTITUTE(A2:A3,\"l\",\"L\")[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── SUBSTITUTE("Hello","l",C2:C3) ──
+		enterFormula("SUBSTITUTE(\"Hello\",\"l\",C2:C3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SUBSTITUTE(\"Hello\",\"l\",C2:C3)", "formula stored: =SUBSTITUTE(\"Hello\",\"l\",C2:C3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K205:K206", "spill range (B210:B211): SUBSTITUTE(\"Hello\",\"l\",C2:C3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "Hehellohelloo", "SUBSTITUTE(\"Hello\",\"l\",C2:C3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "Heworldworldo", "SUBSTITUTE(\"Hello\",\"l\",C2:C3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── TEXTBEFORE(A2:A3,"l") ──
+		enterFormula("TEXTBEFORE(A2:A3,\"l\")", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TEXTBEFORE(A2:A3,\"l\")", "formula stored: =TEXTBEFORE(A2:A3,\"l\")");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K212:K213", "spill range (B217:B218): TEXTBEFORE(A2:A3,\"l\")");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "He", "TEXTBEFORE(A2:A3,\"l\")[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "Wor", "TEXTBEFORE(A2:A3,\"l\")[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── TEXTAFTER(A2:A3,"l") ──
+		enterFormula("TEXTAFTER(A2:A3,\"l\")", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TEXTAFTER(A2:A3,\"l\")", "formula stored: =TEXTAFTER(A2:A3,\"l\")");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K219:K220", "spill range (B224:B225): TEXTAFTER(A2:A3,\"l\")");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "lo", "TEXTAFTER(A2:A3,\"l\")[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "d", "TEXTAFTER(A2:A3,\"l\")[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── TEXTSPLIT("Hello World"," ") ──
+		enterFormula("TEXTSPLIT(\"Hello World\",\" \")", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TEXTSPLIT(\"Hello World\",\" \")", "formula stored: =TEXTSPLIT(\"Hello World\",\" \")");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K226:L226", "spill range (B231:C231): TEXTSPLIT(\"Hello World\",\" \")");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "Hello", "TEXTSPLIT(\"Hello World\",\" \")[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), "World", "TEXTSPLIT(\"Hello World\",\" \")[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── LEN({"Hello","World"}) ──
+		enterFormula("LEN({\"Hello\",\"World\"})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=LEN({\"Hello\",\"World\"})", "formula stored: =LEN({\"Hello\",\"World\"})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K233:L233", "spill range (B238:C238): LEN({\"Hello\",\"World\"})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 5, "LEN({\"Hello\",\"World\"})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 5, "LEN({\"Hello\",\"World\"})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── CODE({"A","Z"}) ──
+		enterFormula("CODE({\"A\",\"Z\"})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CODE({\"A\",\"Z\"})", "formula stored: =CODE({\"A\",\"Z\"})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K240:L240", "spill range (B245:C245): CODE({\"A\",\"Z\"})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 65, "CODE({\"A\",\"Z\"})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 90, "CODE({\"A\",\"Z\"})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── CHAR({65,90}) ──
+		enterFormula("CHAR({65,90})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CHAR({65,90})", "formula stored: =CHAR({65,90})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K247:L247", "spill range (B252:C252): CHAR({65,90})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "A", "CHAR({65,90})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), "Z", "CHAR({65,90})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── LOWER({"Hello","World"}) ──
+		enterFormula("LOWER({\"Hello\",\"World\"})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=LOWER({\"Hello\",\"World\"})", "formula stored: =LOWER({\"Hello\",\"World\"})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K254:L254", "spill range (B259:C259): LOWER({\"Hello\",\"World\"})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "hello", "LOWER({\"Hello\",\"World\"})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), "world", "LOWER({\"Hello\",\"World\"})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── UPPER({"hello","world"}) ──
+		enterFormula("UPPER({\"hello\",\"world\"})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=UPPER({\"hello\",\"world\"})", "formula stored: =UPPER({\"hello\",\"world\"})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K261:L261", "spill range (B266:C266): UPPER({\"hello\",\"world\"})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "HELLO", "UPPER({\"hello\",\"world\"})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), "WORLD", "UPPER({\"hello\",\"world\"})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── VALUE({"1.5","2.5"}) ──
+		enterFormula("VALUE({\"1.5\",\"2.5\"})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=VALUE({\"1.5\",\"2.5\"})", "formula stored: =VALUE({\"1.5\",\"2.5\"})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K268:L268", "spill range (B273:C273): VALUE({\"1.5\",\"2.5\"})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1.5, "VALUE({\"1.5\",\"2.5\"})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 2.5, "VALUE({\"1.5\",\"2.5\"})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── LEFT({"Hello","World"},{2,3}) ──
+		enterFormula("LEFT({\"Hello\",\"World\"},{2,3})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=LEFT({\"Hello\",\"World\"},{2,3})", "formula stored: =LEFT({\"Hello\",\"World\"},{2,3})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K275:L275", "spill range (B280:C280): LEFT({\"Hello\",\"World\"},{2,3})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "He", "LEFT({\"Hello\",\"World\"},{2,3})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), "Wor", "LEFT({\"Hello\",\"World\"},{2,3})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── RIGHT({"Hello","World"},{2,3}) ──
+		enterFormula("RIGHT({\"Hello\",\"World\"},{2,3})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=RIGHT({\"Hello\",\"World\"},{2,3})", "formula stored: =RIGHT({\"Hello\",\"World\"},{2,3})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K282:L282", "spill range (B287:C287): RIGHT({\"Hello\",\"World\"},{2,3})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "lo", "RIGHT({\"Hello\",\"World\"},{2,3})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), "rld", "RIGHT({\"Hello\",\"World\"},{2,3})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── EXACT({"Hello","World"},{"hello","world"}) ──
+		enterFormula("EXACT({\"Hello\",\"World\"},{\"hello\",\"world\"})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=EXACT({\"Hello\",\"World\"},{\"hello\",\"world\"})", "formula stored: =EXACT({\"Hello\",\"World\"},{\"hello\",\"world\"})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K289:L289", "spill range (B294:C294): EXACT({\"Hello\",\"World\"},{\"hello\",\"world\"})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "FALSE", "EXACT({\"Hello\",\"World\"},{\"hello\",\"world\"})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), "FALSE", "EXACT({\"Hello\",\"World\"},{\"hello\",\"world\"})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		// ── FIND("l",{"Hello","World"}) ──
+		enterFormula("FIND(\"l\",{\"Hello\",\"World\"})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FIND(\"l\",{\"Hello\",\"World\"})", "formula stored: =FIND(\"l\",{\"Hello\",\"World\"})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K296:L296", "spill range (B301:C301): FIND(\"l\",{\"Hello\",\"World\"})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "FIND(\"l\",{\"Hello\",\"World\"})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 4, "FIND(\"l\",{\"Hello\",\"World\"})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
+
+		clearData(0, 0, 50, 500);
+	});
+
+
+
+	QUnit.test('Test: "LookupAndReference functions — dynamic array spill"', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		clearData(0, 0, 50, 500);
+
+		// ── test-data area ──────────────────────────────────────────────
+		// A2:A5={3,1,2,1}  B2:B5={30,10,20,10}
+		// C2:C3={"Apple","Banana"}  D2:D5={"Apple","Banana","Cherry","Apple"}
+		// E2:E5={100,200,300,100}
+		ws.getRange2("A2").setValue("3");
+		ws.getRange2("A3").setValue("1");
+		ws.getRange2("A4").setValue("2");
+		ws.getRange2("A5").setValue("1");
+		ws.getRange2("B2").setValue("30");
+		ws.getRange2("B3").setValue("10");
+		ws.getRange2("B4").setValue("20");
+		ws.getRange2("B5").setValue("10");
+		ws.getRange2("C2").setValue("Apple");
+		ws.getRange2("C3").setValue("Banana");
+		ws.getRange2("D2").setValue("Apple");
+		ws.getRange2("D3").setValue("Banana");
+		ws.getRange2("D4").setValue("Cherry");
+		ws.getRange2("D5").setValue("Apple");
+		ws.getRange2("E2").setValue("100");
+		ws.getRange2("E3").setValue("200");
+		ws.getRange2("E4").setValue("300");
+		ws.getRange2("E5").setValue("100");
+		ws.getRange2("G2").setValue("A2");
+		ws.getRange2("G3").setValue("A3");
+
+		const flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false; flags.shiftKey = false;
+
+		const FORMULA_COL = "K";
+		const FORMULA_ROW_START = 2;
+		let curRow = FORMULA_ROW_START;
+
+		const enterFormula = function (formula, row) {
+			const cellRef = FORMULA_COL + row;
+			const fillRange = ws.getRange2(cellRef);
+			wsView.setSelection(fillRange.bbox);
+			const fragment = ws.getRange2(cellRef).getValueForEdit2();
+			fragment[0].setFragmentText("=" + formula);
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		};
+
+		// ── SORT(A2:A5) ──
+		enterFormula("SORT(A2:A5)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SORT(A2:A5)", "formula stored: =SORT(A2:A5)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K2:K5", "spill range (B8:B11): SORT(A2:A5)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1, "SORT(A2:A5)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "SORT(A2:A5)[1,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 2)).getValue(), 2, "SORT(A2:A5)[2,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 3)).getValue(), 3, "SORT(A2:A5)[3,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── SORT(A2:A5,1,-1) ──
+		enterFormula("SORT(A2:A5,1,-1)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SORT(A2:A5,1,-1)", "formula stored: =SORT(A2:A5,1,-1)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K9:K12", "spill range (B15:B18): SORT(A2:A5,1,-1)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "SORT(A2:A5,1,-1)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2, "SORT(A2:A5,1,-1)[1,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 2)).getValue(), 1, "SORT(A2:A5,1,-1)[2,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 3)).getValue(), 1, "SORT(A2:A5,1,-1)[3,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── SORT({3;1;2;1}) ──
+		enterFormula("SORT({3;1;2;1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SORT({3;1;2;1})", "formula stored: =SORT({3;1;2;1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K16:K19", "spill range (B22:B25): SORT({3;1;2;1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1, "SORT({3;1;2;1})[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "SORT({3;1;2;1})[1,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 2)).getValue(), 2, "SORT({3;1;2;1})[2,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 3)).getValue(), 3, "SORT({3;1;2;1})[3,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── SORT({3,1,2,1}) ──
+		enterFormula("SORT({3,1,2,1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SORT({3,1,2,1})", "formula stored: =SORT({3,1,2,1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K23:N23", "spill range (B29:E29): SORT({3,1,2,1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "SORT({3,1,2,1})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 1, "SORT({3,1,2,1})[0,1]");
+		checkClose(assert, ws.getRange2("M" + (curRow + 0)).getValue(), 2, "SORT({3,1,2,1})[0,2]");
+		checkClose(assert, ws.getRange2("N" + (curRow + 0)).getValue(), 1, "SORT({3,1,2,1})[0,3]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── SORTBY(A2:A5,B2:B5) ──
+		enterFormula("SORTBY(A2:A5,B2:B5)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SORTBY(A2:A5,B2:B5)", "formula stored: =SORTBY(A2:A5,B2:B5)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K30:K33", "spill range (B36:B39): SORTBY(A2:A5,B2:B5)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1, "SORTBY(A2:A5,B2:B5)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "SORTBY(A2:A5,B2:B5)[1,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 2)).getValue(), 2, "SORTBY(A2:A5,B2:B5)[2,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 3)).getValue(), 3, "SORTBY(A2:A5,B2:B5)[3,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── SORTBY({3;1;2;1},{30;10;20;10}) ──
+		enterFormula("SORTBY({3;1;2;1},{30;10;20;10})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SORTBY({3;1;2;1},{30;10;20;10})", "formula stored: =SORTBY({3;1;2;1},{30;10;20;10})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K37:K40", "spill range (B43:B46): SORTBY({3;1;2;1},{30;10;20;10})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1, "SORTBY({3;1;2;1},{30;10;20;10})[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "SORTBY({3;1;2;1},{30;10;20;10})[1,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 2)).getValue(), 2, "SORTBY({3;1;2;1},{30;10;20;10})[2,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 3)).getValue(), 3, "SORTBY({3;1;2;1},{30;10;20;10})[3,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── SORTBY(A2:A5,{30;10;20;10}) ──
+		enterFormula("SORTBY(A2:A5,{30;10;20;10})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=SORTBY(A2:A5,{30;10;20;10})", "formula stored: =SORTBY(A2:A5,{30;10;20;10})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K44:K47", "spill range (B50:B53): SORTBY(A2:A5,{30;10;20;10})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1, "SORTBY(A2:A5,{30;10;20;10})[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "SORTBY(A2:A5,{30;10;20;10})[1,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 2)).getValue(), 2, "SORTBY(A2:A5,{30;10;20;10})[2,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 3)).getValue(), 3, "SORTBY(A2:A5,{30;10;20;10})[3,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── UNIQUE(A2:A5) ──
+		enterFormula("UNIQUE(A2:A5)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=UNIQUE(A2:A5)", "formula stored: =UNIQUE(A2:A5)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K51:K53", "spill range (B57:B59): UNIQUE(A2:A5)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "UNIQUE(A2:A5)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "UNIQUE(A2:A5)[1,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 2)).getValue(), 2, "UNIQUE(A2:A5)[2,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── UNIQUE({3;1;2;1}) ──
+		enterFormula("UNIQUE({3;1;2;1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=UNIQUE({3;1;2;1})", "formula stored: =UNIQUE({3;1;2;1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K58:K60", "spill range (B64:B66): UNIQUE({3;1;2;1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "UNIQUE({3;1;2;1})[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "UNIQUE({3;1;2;1})[1,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 2)).getValue(), 2, "UNIQUE({3;1;2;1})[2,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── UNIQUE({3,1,2,1}) ──
+		enterFormula("UNIQUE({3,1,2,1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=UNIQUE({3,1,2,1})", "formula stored: =UNIQUE({3,1,2,1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K65:N65", "spill range (B71:E71): UNIQUE({3,1,2,1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "UNIQUE({3,1,2,1})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 1, "UNIQUE({3,1,2,1})[0,1]");
+		checkClose(assert, ws.getRange2("M" + (curRow + 0)).getValue(), 2, "UNIQUE({3,1,2,1})[0,2]");
+		checkClose(assert, ws.getRange2("N" + (curRow + 0)).getValue(), 1, "UNIQUE({3,1,2,1})[0,3]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── FILTER(A2:A5,A2:A5>1) ──
+		enterFormula("FILTER(A2:A5,A2:A5>1)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FILTER(A2:A5,A2:A5>1)", "formula stored: =FILTER(A2:A5,A2:A5>1)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K72:K73", "spill range (B78:B79): FILTER(A2:A5,A2:A5>1)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "FILTER(A2:A5,A2:A5>1)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2, "FILTER(A2:A5,A2:A5>1)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── FILTER({3;1;2;1},{1;0;1;0}) ──
+		enterFormula("FILTER({3;1;2;1},{1;0;1;0})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FILTER({3;1;2;1},{1;0;1;0})", "formula stored: =FILTER({3;1;2;1},{1;0;1;0})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K79:K80", "spill range (B85:B86): FILTER({3;1;2;1},{1;0;1;0})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "FILTER({3;1;2;1},{1;0;1;0})[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2, "FILTER({3;1;2;1},{1;0;1;0})[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── FILTER(A2:A5,{1;0;1;0}) ──
+		enterFormula("FILTER(A2:A5,{1;0;1;0})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FILTER(A2:A5,{1;0;1;0})", "formula stored: =FILTER(A2:A5,{1;0;1;0})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K86:K87", "spill range (B92:B93): FILTER(A2:A5,{1;0;1;0})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "FILTER(A2:A5,{1;0;1;0})[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2, "FILTER(A2:A5,{1;0;1;0})[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── FILTER(A2:A5,A2:A5>10) ──
+		//TODO @ !!!
+		// enterFormula("FILTER(A2:A5,A2:A5>10)", curRow);
+		// assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FILTER(A2:A5,A2:A5>10)", "formula stored: =FILTER(A2:A5,A2:A5>10)");
+		// assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K93:K93", "spill range (B99): FILTER(A2:A5,A2:A5>10)");
+		// checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "#VALUE!", "FILTER(A2:A5,A2:A5>10)[0,0]");
+		// ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── TRANSPOSE(A2:A5) ──
+		//TODO @ !!!
+		//enterFormula("TRANSPOSE(A2:A5)", curRow);
+		// assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TRANSPOSE(A2:A5)", "formula stored: =TRANSPOSE(A2:A5)");
+		// assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K100:N100", "spill range (B106:E106): TRANSPOSE(A2:A5)");
+		// checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "TRANSPOSE(A2:A5)[0,0]");
+		// checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 1, "TRANSPOSE(A2:A5)[0,1]");
+		// checkClose(assert, ws.getRange2("M" + (curRow + 0)).getValue(), 2, "TRANSPOSE(A2:A5)[0,2]");
+		// checkClose(assert, ws.getRange2("N" + (curRow + 0)).getValue(), 1, "TRANSPOSE(A2:A5)[0,3]");
+		// ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── TRANSPOSE({3;1;2;1}) ──
+		enterFormula("TRANSPOSE({3;1;2;1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TRANSPOSE({3;1;2;1})", "formula stored: =TRANSPOSE({3;1;2;1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K107:N107", "spill range (B113:E113): TRANSPOSE({3;1;2;1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "TRANSPOSE({3;1;2;1})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 1, "TRANSPOSE({3;1;2;1})[0,1]");
+		checkClose(assert, ws.getRange2("M" + (curRow + 0)).getValue(), 2, "TRANSPOSE({3;1;2;1})[0,2]");
+		checkClose(assert, ws.getRange2("N" + (curRow + 0)).getValue(), 1, "TRANSPOSE({3;1;2;1})[0,3]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── TRANSPOSE({3,1,2,1}) ──
+		enterFormula("TRANSPOSE({3,1,2,1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TRANSPOSE({3,1,2,1})", "formula stored: =TRANSPOSE({3,1,2,1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K114:K117", "spill range (B120:B123): TRANSPOSE({3,1,2,1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "TRANSPOSE({3,1,2,1})[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "TRANSPOSE({3,1,2,1})[1,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 2)).getValue(), 2, "TRANSPOSE({3,1,2,1})[2,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 3)).getValue(), 1, "TRANSPOSE({3,1,2,1})[3,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── TOROW(A2:A5) ──
+		enterFormula("TOROW(A2:A5)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TOROW(A2:A5)", "formula stored: =TOROW(A2:A5)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K121:N121", "spill range (B127:E127): TOROW(A2:A5)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "TOROW(A2:A5)[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 1, "TOROW(A2:A5)[0,1]");
+		checkClose(assert, ws.getRange2("M" + (curRow + 0)).getValue(), 2, "TOROW(A2:A5)[0,2]");
+		checkClose(assert, ws.getRange2("N" + (curRow + 0)).getValue(), 1, "TOROW(A2:A5)[0,3]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── TOROW({3;1;2;1}) ──
+		enterFormula("TOROW({3;1;2;1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TOROW({3;1;2;1})", "formula stored: =TOROW({3;1;2;1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K128:N128", "spill range (B134:E134): TOROW({3;1;2;1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "TOROW({3;1;2;1})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 1, "TOROW({3;1;2;1})[0,1]");
+		checkClose(assert, ws.getRange2("M" + (curRow + 0)).getValue(), 2, "TOROW({3;1;2;1})[0,2]");
+		checkClose(assert, ws.getRange2("N" + (curRow + 0)).getValue(), 1, "TOROW({3;1;2;1})[0,3]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── TOCOL(A2:B3) ──
+		enterFormula("TOCOL(A2:B3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TOCOL(A2:B3)", "formula stored: =TOCOL(A2:B3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K135:K138", "spill range (B141:B144): TOCOL(A2:B3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "TOCOL(A2:B3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 30, "TOCOL(A2:B3)[1,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 2)).getValue(), 1, "TOCOL(A2:B3)[2,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 3)).getValue(), 10, "TOCOL(A2:B3)[3,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── TOCOL({3,30;1,10}) ──
+		enterFormula("TOCOL({3,30;1,10})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TOCOL({3,30;1,10})", "formula stored: =TOCOL({3,30;1,10})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K142:K145", "spill range (B148:B151): TOCOL({3,30;1,10})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "TOCOL({3,30;1,10})[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 30, "TOCOL({3,30;1,10})[1,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 2)).getValue(), 1, "TOCOL({3,30;1,10})[2,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 3)).getValue(), 10, "TOCOL({3,30;1,10})[3,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── TAKE(A2:A5,2) ──
+		enterFormula("TAKE(A2:A5,2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TAKE(A2:A5,2)", "formula stored: =TAKE(A2:A5,2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K149:K150", "spill range (B155:B156): TAKE(A2:A5,2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "TAKE(A2:A5,2)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "TAKE(A2:A5,2)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── TAKE({3;1;2;1},2) ──
+		enterFormula("TAKE({3;1;2;1},2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TAKE({3;1;2;1},2)", "formula stored: =TAKE({3;1;2;1},2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K156:K157", "spill range (B162:B163): TAKE({3;1;2;1},2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "TAKE({3;1;2;1},2)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "TAKE({3;1;2;1},2)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── TAKE(A2:A5,-2) ──
+		enterFormula("TAKE(A2:A5,-2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TAKE(A2:A5,-2)", "formula stored: =TAKE(A2:A5,-2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K163:K164", "spill range (B169:B170): TAKE(A2:A5,-2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 2, "TAKE(A2:A5,-2)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "TAKE(A2:A5,-2)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── DROP(A2:A5,2) ──
+		enterFormula("DROP(A2:A5,2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DROP(A2:A5,2)", "formula stored: =DROP(A2:A5,2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K170:K171", "spill range (B176:B177): DROP(A2:A5,2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 2, "DROP(A2:A5,2)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "DROP(A2:A5,2)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── DROP({3;1;2;1},2) ──
+		enterFormula("DROP({3;1;2;1},2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=DROP({3;1;2;1},2)", "formula stored: =DROP({3;1;2;1},2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K177:K178", "spill range (B183:B184): DROP({3;1;2;1},2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 2, "DROP({3;1;2;1},2)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "DROP({3;1;2;1},2)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── EXPAND(A2:A3,4,1,0) ──
+		enterFormula("EXPAND(A2:A3,4,1,0)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=EXPAND(A2:A3,4,1,0)", "formula stored: =EXPAND(A2:A3,4,1,0)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K184:K187", "spill range (B190:B193): EXPAND(A2:A3,4,1,0)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "EXPAND(A2:A3,4,1,0)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "EXPAND(A2:A3,4,1,0)[1,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 2)).getValue(), 0, "EXPAND(A2:A3,4,1,0)[2,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 3)).getValue(), 0, "EXPAND(A2:A3,4,1,0)[3,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── EXPAND({3;1},4,1,0) ──
+		enterFormula("EXPAND({3;1},4,1,0)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=EXPAND({3;1},4,1,0)", "formula stored: =EXPAND({3;1},4,1,0)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K191:K194", "spill range (B197:B200): EXPAND({3;1},4,1,0)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "EXPAND({3;1},4,1,0)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "EXPAND({3;1},4,1,0)[1,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 2)).getValue(), 0, "EXPAND({3;1},4,1,0)[2,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 3)).getValue(), 0, "EXPAND({3;1},4,1,0)[3,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── VSTACK(A2:A3,A4:A5) ──
+		enterFormula("VSTACK(A2:A3,A4:A5)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=VSTACK(A2:A3,A4:A5)", "formula stored: =VSTACK(A2:A3,A4:A5)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K198:K201", "spill range (B204:B207): VSTACK(A2:A3,A4:A5)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "VSTACK(A2:A3,A4:A5)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "VSTACK(A2:A3,A4:A5)[1,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 2)).getValue(), 2, "VSTACK(A2:A3,A4:A5)[2,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 3)).getValue(), 1, "VSTACK(A2:A3,A4:A5)[3,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── VSTACK({3;1},{2;1}) ──
+		enterFormula("VSTACK({3;1},{2;1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=VSTACK({3;1},{2;1})", "formula stored: =VSTACK({3;1},{2;1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K205:K208", "spill range (B211:B214): VSTACK({3;1},{2;1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "VSTACK({3;1},{2;1})[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "VSTACK({3;1},{2;1})[1,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 2)).getValue(), 2, "VSTACK({3;1},{2;1})[2,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 3)).getValue(), 1, "VSTACK({3;1},{2;1})[3,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── VSTACK(A2:A3,{2;1}) ──
+		enterFormula("VSTACK(A2:A3,{2;1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=VSTACK(A2:A3,{2;1})", "formula stored: =VSTACK(A2:A3,{2;1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K212:K215", "spill range (B218:B221): VSTACK(A2:A3,{2;1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "VSTACK(A2:A3,{2;1})[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "VSTACK(A2:A3,{2;1})[1,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 2)).getValue(), 2, "VSTACK(A2:A3,{2;1})[2,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 3)).getValue(), 1, "VSTACK(A2:A3,{2;1})[3,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── HSTACK(A2:A3,B2:B3) ──
+		enterFormula("HSTACK(A2:A3,B2:B3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=HSTACK(A2:A3,B2:B3)", "formula stored: =HSTACK(A2:A3,B2:B3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K219:L220", "spill range (B225:C226): HSTACK(A2:A3,B2:B3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "HSTACK(A2:A3,B2:B3)[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 30, "HSTACK(A2:A3,B2:B3)[0,1]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "HSTACK(A2:A3,B2:B3)[1,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 1)).getValue(), 10, "HSTACK(A2:A3,B2:B3)[1,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── HSTACK({3;1},{30;10}) ──
+		enterFormula("HSTACK({3;1},{30;10})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=HSTACK({3;1},{30;10})", "formula stored: =HSTACK({3;1},{30;10})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K226:L227", "spill range (B232:C233): HSTACK({3;1},{30;10})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "HSTACK({3;1},{30;10})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 30, "HSTACK({3;1},{30;10})[0,1]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "HSTACK({3;1},{30;10})[1,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 1)).getValue(), 10, "HSTACK({3;1},{30;10})[1,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── HSTACK(A2:A3,{30;10}) ──
+		enterFormula("HSTACK(A2:A3,{30;10})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=HSTACK(A2:A3,{30;10})", "formula stored: =HSTACK(A2:A3,{30;10})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K233:L234", "spill range (B239:C240): HSTACK(A2:A3,{30;10})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "HSTACK(A2:A3,{30;10})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 30, "HSTACK(A2:A3,{30;10})[0,1]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "HSTACK(A2:A3,{30;10})[1,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 1)).getValue(), 10, "HSTACK(A2:A3,{30;10})[1,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── WRAPROWS(A2:A5,2) ──
+		enterFormula("WRAPROWS(A2:A5,2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=WRAPROWS(A2:A5,2)", "formula stored: =WRAPROWS(A2:A5,2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K240:L241", "spill range (B246:C247): WRAPROWS(A2:A5,2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "WRAPROWS(A2:A5,2)[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 1, "WRAPROWS(A2:A5,2)[0,1]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2, "WRAPROWS(A2:A5,2)[1,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 1)).getValue(), 1, "WRAPROWS(A2:A5,2)[1,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── WRAPROWS({3;1;2;1},2) ──
+		enterFormula("WRAPROWS({3;1;2;1},2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=WRAPROWS({3;1;2;1},2)", "formula stored: =WRAPROWS({3;1;2;1},2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K247:L248", "spill range (B253:C254): WRAPROWS({3;1;2;1},2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "WRAPROWS({3;1;2;1},2)[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 1, "WRAPROWS({3;1;2;1},2)[0,1]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2, "WRAPROWS({3;1;2;1},2)[1,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 1)).getValue(), 1, "WRAPROWS({3;1;2;1},2)[1,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── WRAPCOLS(A2:A5,2) ──
+		enterFormula("WRAPCOLS(A2:A5,2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=WRAPCOLS(A2:A5,2)", "formula stored: =WRAPCOLS(A2:A5,2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K254:L255", "spill range (B260:C261): WRAPCOLS(A2:A5,2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "WRAPCOLS(A2:A5,2)[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 2, "WRAPCOLS(A2:A5,2)[0,1]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "WRAPCOLS(A2:A5,2)[1,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 1)).getValue(), 1, "WRAPCOLS(A2:A5,2)[1,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── WRAPCOLS({3;1;2;1},2) ──
+		enterFormula("WRAPCOLS({3;1;2;1},2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=WRAPCOLS({3;1;2;1},2)", "formula stored: =WRAPCOLS({3;1;2;1},2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K261:L262", "spill range (B267:C268): WRAPCOLS({3;1;2;1},2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "WRAPCOLS({3;1;2;1},2)[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 2, "WRAPCOLS({3;1;2;1},2)[0,1]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 1, "WRAPCOLS({3;1;2;1},2)[1,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 1)).getValue(), 1, "WRAPCOLS({3;1;2;1},2)[1,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── CHOOSECOLS(A2:B5,2) ──
+		enterFormula("CHOOSECOLS(A2:B5,2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CHOOSECOLS(A2:B5,2)", "formula stored: =CHOOSECOLS(A2:B5,2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K268:K271", "spill range (B274:B277): CHOOSECOLS(A2:B5,2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 30, "CHOOSECOLS(A2:B5,2)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 10, "CHOOSECOLS(A2:B5,2)[1,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 2)).getValue(), 20, "CHOOSECOLS(A2:B5,2)[2,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 3)).getValue(), 10, "CHOOSECOLS(A2:B5,2)[3,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── CHOOSECOLS({3,30;1,10;2,20;1,10},2) ──
+		enterFormula("CHOOSECOLS({3,30;1,10;2,20;1,10},2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CHOOSECOLS({3,30;1,10;2,20;1,10},2)", "formula stored: =CHOOSECOLS({3,30;1,10;2,20;1,10},2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K275:K278", "spill range (B281:B284): CHOOSECOLS({3,30;1,10;2,20;1,10},2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 30, "CHOOSECOLS({3,30;1,10;2,20;1,10},2)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 10, "CHOOSECOLS({3,30;1,10;2,20;1,10},2)[1,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 2)).getValue(), 20, "CHOOSECOLS({3,30;1,10;2,20;1,10},2)[2,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 3)).getValue(), 10, "CHOOSECOLS({3,30;1,10;2,20;1,10},2)[3,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── CHOOSEROWS(A2:B3,1) ──
+		enterFormula("CHOOSEROWS(A2:B3,1)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CHOOSEROWS(A2:B3,1)", "formula stored: =CHOOSEROWS(A2:B3,1)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K282:L282", "spill range (B288:C288): CHOOSEROWS(A2:B3,1)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "CHOOSEROWS(A2:B3,1)[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 30, "CHOOSEROWS(A2:B3,1)[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── CHOOSEROWS({3,30;1,10},1) ──
+		enterFormula("CHOOSEROWS({3,30;1,10},1)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CHOOSEROWS({3,30;1,10},1)", "formula stored: =CHOOSEROWS({3,30;1,10},1)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K289:L289", "spill range (B295:C295): CHOOSEROWS({3,30;1,10},1)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "CHOOSEROWS({3,30;1,10},1)[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 30, "CHOOSEROWS({3,30;1,10},1)[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── CHOOSE(A2:A3,"x","y","z") ──
+		enterFormula("CHOOSE(A2:A3,\"x\",\"y\",\"z\")", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CHOOSE(A2:A3,\"x\",\"y\",\"z\")", "formula stored: =CHOOSE(A2:A3,\"x\",\"y\",\"z\")");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K296:K297", "spill range (B302:B303): CHOOSE(A2:A3,\"x\",\"y\",\"z\")");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "z", "CHOOSE(A2:A3,\"x\",\"y\",\"z\")[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "x", "CHOOSE(A2:A3,\"x\",\"y\",\"z\")[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── CHOOSE({3;1},"x","y","z") ──
+		enterFormula("CHOOSE({3;1},\"x\",\"y\",\"z\")", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=CHOOSE({3;1},\"x\",\"y\",\"z\")", "formula stored: =CHOOSE({3;1},\"x\",\"y\",\"z\")");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K303:K304", "spill range (B309:B310): CHOOSE({3;1},\"x\",\"y\",\"z\")");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "z", "CHOOSE({3;1},\"x\",\"y\",\"z\")[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "x", "CHOOSE({3;1},\"x\",\"y\",\"z\")[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── CHOOSE(1,"x","y","z") ──
+		enterFormula("CHOOSE(1,\"x\",\"y\",\"z\")", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "x", "CHOOSE(1,\"x\",\"y\",\"z\") (scalar)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── VLOOKUP(C2:C3,D2:E5,2,FALSE) ──
+		enterFormula("VLOOKUP(C2:C3,D2:E5,2,FALSE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=VLOOKUP(C2:C3,D2:E5,2,FALSE)", "formula stored: =VLOOKUP(C2:C3,D2:E5,2,FALSE)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K317:K318", "spill range (B323:B324): VLOOKUP(C2:C3,D2:E5,2,FALSE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 100, "VLOOKUP(C2:C3,D2:E5,2,FALSE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 200, "VLOOKUP(C2:C3,D2:E5,2,FALSE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── VLOOKUP({"Apple";"Banana"},D2:E5,2,FALSE) ──
+		enterFormula("VLOOKUP({\"Apple\";\"Banana\"},D2:E5,2,FALSE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=VLOOKUP({\"Apple\";\"Banana\"},D2:E5,2,FALSE)", "formula stored: =VLOOKUP({\"Apple\";\"Banana\"},D2:E5,2,FALSE)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K324:K325", "spill range (B330:B331): VLOOKUP({\"Apple\";\"Banana\"},D2:E5,2,FALSE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 100, "VLOOKUP({\"Apple\";\"Banana\"},D2:E5,2,FALSE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 200, "VLOOKUP({\"Apple\";\"Banana\"},D2:E5,2,FALSE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── VLOOKUP("Apple",D2:E5,2,FALSE) ──
+		enterFormula("VLOOKUP(\"Apple\",D2:E5,2,FALSE)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), 100, "VLOOKUP(\"Apple\",D2:E5,2,FALSE) (scalar)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── HLOOKUP(C2:C3,{"Apple","Banana","Cherry";100,200,300},2,FALSE) ──
+		//TODO @ !!!
+		// enterFormula("HLOOKUP(C2:C3,{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)", curRow);
+		// assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=HLOOKUP(C2:C3,{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)", "formula stored: =HLOOKUP(C2:C3,{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)");
+		// assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K338:K339", "spill range (B344:B345): HLOOKUP(C2:C3,{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)");
+		// checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 100, "HLOOKUP(C2:C3,{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)[0,0]");
+		// checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 200, "HLOOKUP(C2:C3,{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)[1,0]");
+		// ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── HLOOKUP({"Apple";"Banana"},{"Apple","Banana","Cherry";100,200,300},2,FALSE) ──
+		enterFormula("HLOOKUP({\"Apple\";\"Banana\"},{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=HLOOKUP({\"Apple\";\"Banana\"},{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)", "formula stored: =HLOOKUP({\"Apple\";\"Banana\"},{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K345:K346", "spill range (B351:B352): HLOOKUP({\"Apple\";\"Banana\"},{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 100, "HLOOKUP({\"Apple\";\"Banana\"},{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 200, "HLOOKUP({\"Apple\";\"Banana\"},{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── HLOOKUP("Apple",{"Apple","Banana","Cherry";100,200,300},2,FALSE) ──
+		enterFormula("HLOOKUP(\"Apple\",{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), 100, "HLOOKUP(\"Apple\",{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE) (scalar)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── LOOKUP(C2:C3,{"Apple";"Banana";"Cherry"},{100;200;300}) ──
+		enterFormula("LOOKUP(C2:C3,{\"Apple\";\"Banana\";\"Cherry\"},{100;200;300})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=LOOKUP(C2:C3,{\"Apple\";\"Banana\";\"Cherry\"},{100;200;300})", "formula stored: =LOOKUP(C2:C3,{\"Apple\";\"Banana\";\"Cherry\"},{100;200;300})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K359:K360", "spill range (B365:B366): LOOKUP(C2:C3,{\"Apple\";\"Banana\";\"Cherry\"},{100;200;300})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 100, "LOOKUP(C2:C3,{\"Apple\";\"Banana\";\"Cherry\"},{100;200;300})[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 200, "LOOKUP(C2:C3,{\"Apple\";\"Banana\";\"Cherry\"},{100;200;300})[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── LOOKUP({"Apple";"Banana"},{"Apple";"Banana";"Cherry"},{100;200;300}) ──
+		enterFormula("LOOKUP({\"Apple\";\"Banana\"},{\"Apple\";\"Banana\";\"Cherry\"},{100;200;300})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=LOOKUP({\"Apple\";\"Banana\"},{\"Apple\";\"Banana\";\"Cherry\"},{100;200;300})", "formula stored: =LOOKUP({\"Apple\";\"Banana\"},{\"Apple\";\"Banana\";\"Cherry\"},{100;200;300})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K366:K367", "spill range (B372:B373): LOOKUP({\"Apple\";\"Banana\"},{\"Apple\";\"Banana\";\"Cherry\"},{100;200;300})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 100, "LOOKUP({\"Apple\";\"Banana\"},{\"Apple\";\"Banana\";\"Cherry\"},{100;200;300})[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 200, "LOOKUP({\"Apple\";\"Banana\"},{\"Apple\";\"Banana\";\"Cherry\"},{100;200;300})[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── LOOKUP("Apple",{"Apple";"Banana";"Cherry"},{100;200;300}) ──
+		enterFormula("LOOKUP(\"Apple\",{\"Apple\";\"Banana\";\"Cherry\"},{100;200;300})", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), 100, "LOOKUP(\"Apple\",{\"Apple\";\"Banana\";\"Cherry\"},{100;200;300}) (scalar)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── MATCH(C2:C3,D2:D5,0) ──
+		enterFormula("MATCH(C2:C3,D2:D5,0)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=MATCH(C2:C3,D2:D5,0)", "formula stored: =MATCH(C2:C3,D2:D5,0)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K380:K381", "spill range (B386:B387): MATCH(C2:C3,D2:D5,0)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1, "MATCH(C2:C3,D2:D5,0)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2, "MATCH(C2:C3,D2:D5,0)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── MATCH({"Apple";"Banana"},D2:D5,0) ──
+		enterFormula("MATCH({\"Apple\";\"Banana\"},D2:D5,0)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=MATCH({\"Apple\";\"Banana\"},D2:D5,0)", "formula stored: =MATCH({\"Apple\";\"Banana\"},D2:D5,0)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K387:K388", "spill range (B393:B394): MATCH({\"Apple\";\"Banana\"},D2:D5,0)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1, "MATCH({\"Apple\";\"Banana\"},D2:D5,0)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2, "MATCH({\"Apple\";\"Banana\"},D2:D5,0)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── MATCH("Apple",D2:D5,0) ──
+		enterFormula("MATCH(\"Apple\",D2:D5,0)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), 1, "MATCH(\"Apple\",D2:D5,0) (scalar)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── XLOOKUP(C2:C3,D2:D5,E2:E5) ──
+		//TODO @ !!!
+		// enterFormula("XLOOKUP(C2:C3,D2:D5,E2:E5)", curRow);
+		// assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=XLOOKUP(C2:C3,D2:D5,E2:E5)", "formula stored: =XLOOKUP(C2:C3,D2:D5,E2:E5)");
+		// assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K401:K402", "spill range (B407:B408): XLOOKUP(C2:C3,D2:D5,E2:E5)");
+		// checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 100, "XLOOKUP(C2:C3,D2:D5,E2:E5)[0,0]");
+		// checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 200, "XLOOKUP(C2:C3,D2:D5,E2:E5)[1,0]");
+		// ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── XLOOKUP({"Apple";"Banana"},D2:D5,E2:E5) ──
+		enterFormula("XLOOKUP({\"Apple\";\"Banana\"},D2:D5,E2:E5)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=XLOOKUP({\"Apple\";\"Banana\"},D2:D5,E2:E5)", "formula stored: =XLOOKUP({\"Apple\";\"Banana\"},D2:D5,E2:E5)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K408:K409", "spill range (B414:B415): XLOOKUP({\"Apple\";\"Banana\"},D2:D5,E2:E5)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 100, "XLOOKUP({\"Apple\";\"Banana\"},D2:D5,E2:E5)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 200, "XLOOKUP({\"Apple\";\"Banana\"},D2:D5,E2:E5)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── XLOOKUP("Apple",D2:D5,E2:E5) ──
+		enterFormula("XLOOKUP(\"Apple\",D2:D5,E2:E5)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), 100, "XLOOKUP(\"Apple\",D2:D5,E2:E5) (scalar)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── XMATCH(C2:C3,D2:D5) ──
+		enterFormula("XMATCH(C2:C3,D2:D5)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=XMATCH(C2:C3,D2:D5)", "formula stored: =XMATCH(C2:C3,D2:D5)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K422:K423", "spill range (B428:B429): XMATCH(C2:C3,D2:D5)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1, "XMATCH(C2:C3,D2:D5)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2, "XMATCH(C2:C3,D2:D5)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── XMATCH({"Apple";"Banana"},D2:D5) ──
+		enterFormula("XMATCH({\"Apple\";\"Banana\"},D2:D5)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=XMATCH({\"Apple\";\"Banana\"},D2:D5)", "formula stored: =XMATCH({\"Apple\";\"Banana\"},D2:D5)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K429:K430", "spill range (B435:B436): XMATCH({\"Apple\";\"Banana\"},D2:D5)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1, "XMATCH({\"Apple\";\"Banana\"},D2:D5)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 2, "XMATCH({\"Apple\";\"Banana\"},D2:D5)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── XMATCH("Apple",D2:D5) ──
+		enterFormula("XMATCH(\"Apple\",D2:D5)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), 1, "XMATCH(\"Apple\",D2:D5) (scalar)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── INDEX(E2:E5,A2:A3) ──
+		enterFormula("INDEX(E2:E5,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=INDEX(E2:E5,A2:A3)", "formula stored: =INDEX(E2:E5,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K443:K444", "spill range (B449:B450): INDEX(E2:E5,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 300, "INDEX(E2:E5,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 100, "INDEX(E2:E5,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── INDEX({100;200;300;100},A2:A3) ──
+		enterFormula("INDEX({100;200;300;100},A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=INDEX({100;200;300;100},A2:A3)", "formula stored: =INDEX({100;200;300;100},A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K450:K451", "spill range (B456:B457): INDEX({100;200;300;100},A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 300, "INDEX({100;200;300;100},A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 100, "INDEX({100;200;300;100},A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── INDEX(E2:E5,1) ──
+		enterFormula("INDEX(E2:E5,1)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), 100, "INDEX(E2:E5,1) (scalar)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── INDIRECT(G2:G3) ──
+		enterFormula("INDIRECT(G2:G3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=INDIRECT(G2:G3)", "formula stored: =INDIRECT(G2:G3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K464:K465", "spill range (B470:B471): INDIRECT(G2:G3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "#VALUE!", "INDIRECT(G2:G3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "#VALUE!", "INDIRECT(G2:G3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── INDIRECT({"A2";"A3"}) ──
+		enterFormula("INDIRECT({\"A2\";\"A3\"})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=INDIRECT({\"A2\";\"A3\"})", "formula stored: =INDIRECT({\"A2\";\"A3\"})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K478:K479", "spill range (B477:B478): INDIRECT({\"A2\";\"A3\"})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "#VALUE!", "INDIRECT({\"A2\";\"A3\"})[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "#VALUE!", "INDIRECT({\"A2\";\"A3\"})[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── INDIRECT("A2") ──
+		enterFormula("INDIRECT(\"A2\")", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=INDIRECT(\"A2\")", "formula stored: =INDIRECT(\"A2\")");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K492:K492", "spill range (B484): INDIRECT(\"A2\")");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "INDIRECT(\"A2\")[0,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── OFFSET(E2,A2:A3,0) ──
+		enterFormula("OFFSET(E2,A2:A3,0)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=OFFSET(E2,A2:A3,0)", "formula stored: =OFFSET(E2,A2:A3,0)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K499:K500", "spill range (B491:B492): OFFSET(E2,A2:A3,0)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "#VALUE!", "OFFSET(E2,A2:A3,0)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "#VALUE!", "OFFSET(E2,A2:A3,0)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── OFFSET(E2,{3;1},0) ──
+		enterFormula("OFFSET(E2,{3;1},0)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=OFFSET(E2,{3;1},0)", "formula stored: =OFFSET(E2,{3;1},0)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K513:K514", "spill range (B498:B499): OFFSET(E2,{3;1},0)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "#VALUE!", "OFFSET(E2,{3;1},0)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "#VALUE!", "OFFSET(E2,{3;1},0)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── OFFSET(E2,0,0) ──
+		enterFormula("OFFSET(E2,0,0)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), 100, "OFFSET(E2,0,0) (scalar)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── ROW(A2:A5) ──
+		enterFormula("ROW(A2:A5)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ROW(A2:A5)", "formula stored: =ROW(A2:A5)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K534:K537", "spill range (B512:B515): ROW(A2:A5)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 2, "ROW(A2:A5)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 3, "ROW(A2:A5)[1,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 2)).getValue(), 4, "ROW(A2:A5)[2,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 3)).getValue(), 5, "ROW(A2:A5)[3,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── COLUMN(A2:B2) ──
+		enterFormula("COLUMN(A2:B2)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=COLUMN(A2:B2)", "formula stored: =COLUMN(A2:B2)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K541:L541", "spill range (B519:C519): COLUMN(A2:B2)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1, "COLUMN(A2:B2)[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 2, "COLUMN(A2:B2)[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── ROWS(A2:A5) ──
+		enterFormula("ROWS(A2:A5)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), 4, "ROWS(A2:A5) (scalar)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── COLUMNS(A2:B2) ──
+		enterFormula("COLUMNS(A2:B2)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), 2, "COLUMNS(A2:B2) (scalar)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── AREAS(A2:A5) ──
+		enterFormula("AREAS(A2:A5)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), 1, "AREAS(A2:A5) (scalar)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── ADDRESS(2,A2:A3) ──
+		enterFormula("ADDRESS(2,A2:A3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ADDRESS(2,A2:A3)", "formula stored: =ADDRESS(2,A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K569:K570", "spill range (B547:B548): ADDRESS(2,A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "$C$2", "ADDRESS(2,A2:A3)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "$A$2", "ADDRESS(2,A2:A3)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── ADDRESS(A2:A3,1) ──
+		enterFormula("ADDRESS(A2:A3,1)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ADDRESS(A2:A3,1)", "formula stored: =ADDRESS(A2:A3,1)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K576:K577", "spill range (B554:B555): ADDRESS(A2:A3,1)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "$A$3", "ADDRESS(A2:A3,1)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "$A$1", "ADDRESS(A2:A3,1)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── ADDRESS(2,{3;1}) ──
+		enterFormula("ADDRESS(2,{3;1})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=ADDRESS(2,{3;1})", "formula stored: =ADDRESS(2,{3;1})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K583:K584", "spill range (B561:B562): ADDRESS(2,{3;1})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "$C$2", "ADDRESS(2,{3;1})[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), "$A$2", "ADDRESS(2,{3;1})[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		// ── FORMULATEXT(B8) ──
+		enterFormula("FORMULATEXT(B8)", curRow);
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "=SORT(A2:A5)", "FORMULATEXT(B8) (scalar)");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		curRow += 7;
+
+		clearData(0, 0, 50, 500);
 	});
 
 	QUnit.module("Dynamic Arrays Tests");

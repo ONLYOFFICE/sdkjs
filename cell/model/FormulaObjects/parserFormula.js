@@ -11291,6 +11291,9 @@ function parserFormula( formula, parent, _ws ) {
 				if (oTableArrayArg.type === cElementType.error) {
 					continue;
 				}
+				if (!oTableArrayArg || !oTableArrayArg.clone) {
+					continue;
+				}
 				oTableArrayArg = oTableArrayArg.clone();
 				const oNumber = oIndexNumValue.tocNumber();
 				if (oNumber.type === cElementType.error) {
