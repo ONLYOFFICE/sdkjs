@@ -8061,7 +8061,10 @@ background-repeat: no-repeat;\
 			}
 			oPresentation.UpdateInterface();
 			oPresentation.FinalizeAction();
-			this.SlideTransitionPlay();
+			if (oTransition.get_TransitionType() !== undefined || oTransition.get_TransitionOption() !== undefined)
+			{
+				this.SlideTransitionPlay();
+			}
 		}
 	};
 	asc_docs_api.prototype.SlideTransitionApplyToAll = function()
