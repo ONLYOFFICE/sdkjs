@@ -3486,7 +3486,7 @@
 										}
 										let hrContentWidth = hrColumnWidth;
 										if (oHR.pct != null && oHR.pct > 0) {
-											hrContentWidth = hrColumnWidth * oHR.pct / 1000;
+											hrContentWidth = Math.min(hrColumnWidth, hrColumnWidth * oHR.pct / 1000);
 										}
 										this.extX = hrContentWidth;
 										this.m_dHRColumnWidth = hrColumnWidth;
