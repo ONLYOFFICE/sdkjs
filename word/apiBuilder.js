@@ -12890,14 +12890,101 @@
 	ApiRun.prototype.GetText = function(options)
 	{
 		options = options || {};
-		
+
 		return this.Run.GetText({
 			Text             : "",
 			NewLineSeparator : GetStringParameter(options["NewLineSeparator"], "\r"),
 			TabSymbol        : GetStringParameter(options["TabSymbol"], "\t")
 		});
 	};
-	
+
+	/**
+	 * Returns the inline drawings contained in this run with their character
+	 * positions within the run text.
+	 *
+	 * Each entry contains the {@link ApiDrawing} object and the zero-based
+	 * character index at which it appears in the string returned by
+	 * {@link ApiRun#GetText}. This allows callers to reconstruct the full
+	 * mixed content (text interleaved with drawings) in document order.
+	 *
+	 * Returns an empty array if the run contains no inline drawings.
+	 *
+	 * @memberof ApiRun
+	 * @typeofeditors ["CDE"]
+	 * @returns {Array<{drawing: ApiDrawing, position: number}>}
+	 *
+	 * @example
+	 * // Serialize a paragraph with inline images to markdown.
+	 * // Use GetAllDrawingObjects() on the paragraph first to skip
+	 * // paragraphs without drawings entirely (fast path).
+	 * var paraDrawings = paragraph.GetAllDrawingObjects();
+	 * if (paraDrawings.length === 0) {
+	 *   // No drawings — plain text only
+	 *   for (var i = 0; i < paragraph.GetElementsCount(); i++) {
+	 *     markdown += paragraph.GetElement(i).GetText();
+	 *   }
+	 * } else {
+	 *   // Has drawings — inspect each run for inline drawing positions
+	 *   for (var i = 0; i < paragraph.GetElementsCount(); i++) {
+	 *     var el = paragraph.GetElement(i);
+	 *     if (el.GetClassType() === "run") {
+	 *       var text = el.GetText();
+	 *       var inlineDrawings = el.GetInlineDrawings();
+	 *       if (inlineDrawings.length === 0) {
+	 *         markdown += text;
+	 *       } else {
+	 *         // Split text at drawing positions and interleave placeholders
+	 *         var lastPos = 0;
+	 *         for (var j = 0; j < inlineDrawings.length; j++) {
+	 *           var pos = inlineDrawings[j].position;
+	 *           markdown += text.substring(lastPos, pos);
+	 *           markdown += "{{IMG:" + inlineDrawings[j].drawing.GetName() + "}}";
+	 *           lastPos = pos;
+	 *         }
+	 *         markdown += text.substring(lastPos);
+	 *       }
+	 *     }
+	 *   }
+	 * }
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetInlineDrawings.js
+	 */
+	ApiRun.prototype.GetInlineDrawings = function()
+	{
+		var arrResult   = [];
+		var arrContent  = this.Run.Content;
+		var nCharIndex  = 0;
+
+		for (var nPos = 0, nCount = arrContent.length; nPos < nCount; ++nPos)
+		{
+			var oItem = arrContent[nPos];
+
+			switch (oItem.Type)
+			{
+				case para_Drawing:
+				{
+					arrResult.push({
+						"drawing"  : GetApiDrawing(oItem.GraphicObj) || new ApiDrawing(oItem.GraphicObj),
+						"position" : nCharIndex
+					});
+					break;
+				}
+				case para_Text:
+				case para_Space:
+				case para_Tab:
+				case para_NewLine:
+				case para_Math_Text:
+				case para_Math_BreakOperator:
+				{
+					nCharIndex++;
+					break;
+				}
+			}
+		}
+
+		return arrResult;
+	};
+
 	/**
 	 * Moves a cursor to a specified position of the current text run.
 	 * If the current run is not assigned to any document part, then <b>false</b> is returned. Otherwise, this method returns <b>true</b>.
@@ -29804,6 +29891,7 @@
 	ApiRun.prototype["ToJSON"]                       = ApiRun.prototype.ToJSON;
 	ApiRun.prototype["AddComment"]                   = ApiRun.prototype.AddComment;
 	ApiRun.prototype["GetText"]                      = ApiRun.prototype.GetText;
+	ApiRun.prototype["GetInlineDrawings"]            = ApiRun.prototype.GetInlineDrawings;
 	ApiRun.prototype["MoveCursorToPos"]              = ApiRun.prototype.MoveCursorToPos;
 
 

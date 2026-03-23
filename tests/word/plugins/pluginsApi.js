@@ -295,6 +295,170 @@ $(function () {
 		
 		
 	})
-	
-	
+
+	QUnit.test("Test ApiRun.GetInlineDrawings", function (assert)
+	{
+		// --- Test 1: Run with text only, no drawings ---
+		AscTest.ClearDocument();
+		let p = MoveToNewParagraph();
+		AscTest.EnterText("Hello World");
+
+		let apiPara = Api.CreateParagraph();
+		logicDocument.AddToContent(logicDocument.GetElementsCount(), apiPara.Paragraph);
+		apiPara.Paragraph.SetThisElementCurrent();
+
+		// Get the run that contains "Hello World" from the first paragraph
+		let p1 = logicDocument.GetElement(logicDocument.GetElementsCount() - 2);
+		let apiPara1 = new AscWord.ApiParagraph(p1);
+		let run1 = apiPara1.GetElement(0);
+
+		assert.strictEqual(run1.GetClassType(), "run", "Element is a run");
+		let result1 = run1.GetInlineDrawings();
+		assert.ok(Array.isArray(result1), "GetInlineDrawings returns an array");
+		assert.strictEqual(result1.length, 0, "Text-only run returns empty array");
+
+		// --- Test 2: Run with a drawing only (no text) ---
+		AscTest.ClearDocument();
+		p = MoveToNewParagraph();
+
+		let internalRun2 = new ParaRun(p, false);
+		p.AddToContentToEnd(internalRun2);
+
+		let drawing2 = AscTest.CreateImage(50, 50);
+		internalRun2.Add_ToContent(0, drawing2);
+		drawing2.Set_Parent(internalRun2);
+
+		let apiPara2 = new AscWord.ApiParagraph(p);
+		let apiRun2 = apiPara2.GetElement(0);
+		let result2 = apiRun2.GetInlineDrawings();
+
+		assert.strictEqual(result2.length, 1, "Drawing-only run has 1 inline drawing");
+		assert.strictEqual(result2[0]["position"], 0, "Drawing-only run: position is 0");
+		assert.ok(result2[0]["drawing"], "Drawing-only run: drawing object exists");
+
+		// --- Test 3: Drawing between text ("AB[img]CD") ---
+		AscTest.ClearDocument();
+		p = MoveToNewParagraph();
+
+		let internalRun3 = new ParaRun(p, false);
+		internalRun3.AddText("ABCD");
+		p.AddToContentToEnd(internalRun3);
+
+		let drawing3 = AscTest.CreateImage(50, 50);
+		internalRun3.Add_ToContent(2, drawing3); // After A, B
+		drawing3.Set_Parent(internalRun3);
+
+		let apiPara3 = new AscWord.ApiParagraph(p);
+		let apiRun3 = apiPara3.GetElement(0);
+		let result3 = apiRun3.GetInlineDrawings();
+		let text3 = apiRun3.GetText();
+
+		assert.strictEqual(result3.length, 1, "Drawing between text: 1 inline drawing");
+		assert.strictEqual(result3[0]["position"], 2, "Drawing between text: position is 2 (after AB)");
+		assert.strictEqual(text3, "ABCD", "GetText returns text without drawing");
+
+		// Verify text splitting works correctly
+		let before3 = text3.substring(0, result3[0]["position"]);
+		let after3 = text3.substring(result3[0]["position"]);
+		assert.strictEqual(before3, "AB", "Text before drawing is 'AB'");
+		assert.strictEqual(after3, "CD", "Text after drawing is 'CD'");
+
+		// --- Test 4: Drawing at start ("[img]ABCD") ---
+		AscTest.ClearDocument();
+		p = MoveToNewParagraph();
+
+		let internalRun4 = new ParaRun(p, false);
+		internalRun4.AddText("ABCD");
+		p.AddToContentToEnd(internalRun4);
+
+		let drawing4 = AscTest.CreateImage(50, 50);
+		internalRun4.Add_ToContent(0, drawing4); // At start
+		drawing4.Set_Parent(internalRun4);
+
+		let apiPara4 = new AscWord.ApiParagraph(p);
+		let apiRun4 = apiPara4.GetElement(0);
+		let result4 = apiRun4.GetInlineDrawings();
+
+		assert.strictEqual(result4.length, 1, "Drawing at start: 1 inline drawing");
+		assert.strictEqual(result4[0]["position"], 0, "Drawing at start: position is 0");
+
+		// --- Test 5: Drawing at end ("ABCD[img]") ---
+		AscTest.ClearDocument();
+		p = MoveToNewParagraph();
+
+		let internalRun5 = new ParaRun(p, false);
+		internalRun5.AddText("ABCD");
+		p.AddToContentToEnd(internalRun5);
+
+		let drawing5 = AscTest.CreateImage(50, 50);
+		internalRun5.Add_ToContent(internalRun5.Content.length, drawing5); // At end
+		drawing5.Set_Parent(internalRun5);
+
+		let apiPara5 = new AscWord.ApiParagraph(p);
+		let apiRun5 = apiPara5.GetElement(0);
+		let result5 = apiRun5.GetInlineDrawings();
+
+		assert.strictEqual(result5.length, 1, "Drawing at end: 1 inline drawing");
+		assert.strictEqual(result5[0]["position"], 4, "Drawing at end: position equals text length (4)");
+
+		// --- Test 6: Multiple drawings ("A[img1]B[img2]C") ---
+		AscTest.ClearDocument();
+		p = MoveToNewParagraph();
+
+		let internalRun6 = new ParaRun(p, false);
+		internalRun6.AddText("ABC");
+		p.AddToContentToEnd(internalRun6);
+
+		// Insert second drawing first (at higher index) to avoid shifting
+		let drawing6b = AscTest.CreateImage(50, 50);
+		internalRun6.Add_ToContent(2, drawing6b); // After B: "AB[img2]C"
+		drawing6b.Set_Parent(internalRun6);
+
+		let drawing6a = AscTest.CreateImage(50, 50);
+		internalRun6.Add_ToContent(1, drawing6a); // After A: "A[img1]B[img2]C"
+		drawing6a.Set_Parent(internalRun6);
+
+		let apiPara6 = new AscWord.ApiParagraph(p);
+		let apiRun6 = apiPara6.GetElement(0);
+		let result6 = apiRun6.GetInlineDrawings();
+
+		assert.strictEqual(result6.length, 2, "Multiple drawings: 2 inline drawings");
+		assert.strictEqual(result6[0]["position"], 1, "Multiple drawings: first at position 1");
+		assert.strictEqual(result6[1]["position"], 2, "Multiple drawings: second at position 2");
+
+		// --- Test 7: Verify position matches GetText() index ---
+		AscTest.ClearDocument();
+		p = MoveToNewParagraph();
+
+		let internalRun7 = new ParaRun(p, false);
+		internalRun7.AddText("Hi ");
+		p.AddToContentToEnd(internalRun7);
+
+		let drawing7 = AscTest.CreateImage(50, 50);
+		internalRun7.Add_ToContent(internalRun7.Content.length, drawing7);
+		drawing7.Set_Parent(internalRun7);
+
+		// Add more text after drawing in the same run
+		let textAfter = new AscWord.CRunText(0x0057); // 'W'
+		internalRun7.Add_ToContent(internalRun7.Content.length, textAfter);
+		let textAfter2 = new AscWord.CRunText(0x006F); // 'o'
+		internalRun7.Add_ToContent(internalRun7.Content.length, textAfter2);
+
+		let apiPara7 = new AscWord.ApiParagraph(p);
+		let apiRun7 = apiPara7.GetElement(0);
+		let text7 = apiRun7.GetText();
+		let result7 = apiRun7.GetInlineDrawings();
+
+		assert.strictEqual(text7, "Hi Wo", "GetText returns 'Hi Wo' (3 + 2 chars)");
+		assert.strictEqual(result7.length, 1, "One drawing found");
+		assert.strictEqual(result7[0]["position"], 3, "Drawing at position 3 (after 'Hi ')");
+
+		// Verify splitting produces correct segments
+		let before7 = text7.substring(0, result7[0]["position"]);
+		let after7 = text7.substring(result7[0]["position"]);
+		assert.strictEqual(before7, "Hi ", "Text before drawing is 'Hi '");
+		assert.strictEqual(after7, "Wo", "Text after drawing is 'Wo'");
+	});
+
+
 });
