@@ -184,7 +184,7 @@
         return this.asc_GetBlockChainData();
     };
     /**
-     * Inserts the content control containing data. The data is specified by the JS code for {@link /docbuilder/basic Document Builder}, or by a link to the shared document.
+     * Inserts the content control containing data. The data is specified by the JS code for {@link /docs/office-api/usage-api/text-document-api/ Document Builder}, or by a link to the shared document.
      * @memberof Api
      * @typeofeditors ["CDE"]
      * @alias InsertAndReplaceContentControls

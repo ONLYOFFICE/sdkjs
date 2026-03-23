@@ -82,7 +82,7 @@
  * @memberof Plugin
  * @typeofeditors ["CDE"]
  * @alias onAddComment
- * @description The function called when a comment is added to the document with the {@link /docs/plugins/text-document-api/Methods/AddComment AddComment} method.
+ * @description The function called when a comment is added to the document with the {@link /docs/plugin-and-macros/interacting-with-editors/text-document-api/Methods/AddComment AddComment} method.
  * @param {comment} comment - Defines the comment object containing the comment data.
  * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onAddComment.js
  */
@@ -93,7 +93,7 @@
  * @memberof Plugin
  * @typeofeditors ["CDE"]
  * @alias onChangeCommentData
- * @description The function called when the specified comment is changed with the {@link /docs/plugins/text-document-api/Methods/ChangeComment ChangeComment} method.
+ * @description The function called when the specified comment is changed with the {@link /docs/plugin-and-macros/interacting-with-editors/text-document-api/Methods/ChangeComment ChangeComment} method.
  * @param {comment} comment - Defines the comment object containing the comment data.
  * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onChangeCommentData.js
  */
@@ -115,7 +115,7 @@
  * @memberof Plugin
  * @typeofeditors ["CDE"]
  * @alias onRemoveComment
- * @description The function called when the specified comment is removed with the {@link /docs/plugins/text-document-api/Methods/RemoveComments RemoveComments} method.
+ * @description The function called when the specified comment is removed with the {@link /docs/plugin-and-macros/interacting-with-editors/text-document-api/Methods/RemoveComments RemoveComments} method.
  * @param {comment} comment - Defines the comment object containing the comment data.
  * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onRemoveComment.js
  */

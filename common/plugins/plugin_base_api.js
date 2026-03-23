@@ -151,7 +151,7 @@ window.startPluginApi = function() {
 	 * @memberof Plugin
 	 * @alias init
 	 * @description The function called when the plugin is launched. It defines the data sent to the plugin describing what actions are to be performed and how they must be performed.
-	 * @param {string} text - Defines the data parameter that depends on the {@link /plugin/config#initDataType initDataType} setting specified in the *config.json* file.
+	 * @param {string} text - Defines the data parameter that depends on the {@link /docs/plugin-and-macros/structure/configuration#initDataType initDataType} setting specified in the *config.json* file.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/init.js
 	 */
 
@@ -161,7 +161,7 @@ window.startPluginApi = function() {
 	 * @memberof Plugin
 	 * @alias button
 	 * @description The function called when any of the plugin buttons is clicked. It defines the buttons used with the plugin and the plugin behavior when they are clicked.
-	 * @param {number} buttonIndex - Defines the button index in the {@link /plugin/config#buttons buttons} array of the *config.json* file. If *id == -1*, then the plugin considers that the <b>Close</b> window cross button has been clicked or its operation has been somehow interrupted.
+	 * @param {number} buttonIndex - Defines the button index in the {@link /docs/plugin-and-macros/structure/configuration#buttons buttons} array of the *config.json* file. If *id == -1*, then the plugin considers that the <b>Close</b> window cross button has been clicked or its operation has been somehow interrupted.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/button.js
 	 */
 
