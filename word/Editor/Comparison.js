@@ -3858,27 +3858,27 @@
 		oLogicDocument.LoadDocumentState(oSelectionState);
 	};
 
-    function CompareBinary(oApi, sBinary2, oOptions, bForceApplyChanges)
+    function CompareBinary(sBinary2, oOptions, bForceApplyChanges)
     {
-        const oDoc1 = oApi.WordControl.m_oLogicDocument;
+        const oDoc1 = Asc.editor.WordControl.m_oLogicDocument;
         if(!window['NATIVE_EDITOR_ENJINE'])
         {
             const oCollaborativeEditing = oDoc1.CollaborativeEditing;
             if(oCollaborativeEditing && !oCollaborativeEditing.Is_SingleUser())
             {
-                oApi.sendEvent("asc_onError", Asc.c_oAscError.ID.CannotCompareInCoEditing, c_oAscError.Level.NoCritical);
+                Asc.editor.sendEvent("asc_onError", Asc.c_oAscError.ID.CannotCompareInCoEditing, c_oAscError.Level.NoCritical);
                 return;
             }
         }
-        oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+        Asc.editor.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
 				const oldTrackRevisions = oDoc1.GetLocalTrackRevisions();
 	    oDoc1.SetTrackRevisions(false);
 	    let bHaveRevisons2 = false;
 	    const oDoc2 = AscFormat.ExecuteNoHistory(function(){
             const openParams = {disableRevisions: true, noSendComments: true, noGenerateSmartArts: true};
-            const oTempDocument = new CDocument(oApi.WordControl.m_oDrawingDocument, false);
+            const oTempDocument = new CDocument(Asc.editor.WordControl.m_oDrawingDocument, false);
             const oBinaryFileReader = new AscCommonWord.BinaryFileReader(oTempDocument, openParams);
-            AscCommon.pptx_content_loader.Start_UseFullUrl(oApi.insertDocumentUrlsData);
+            AscCommon.pptx_content_loader.Start_UseFullUrl(Asc.editor.insertDocumentUrlsData);
             if (!oBinaryFileReader.Read(sBinary2))
             {
                 return null;
@@ -3909,10 +3909,10 @@
                 if(oDoc1.TrackRevisionsManager.Have_Changes() || bHaveRevisons2)
                 {
 
-                    oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
-                    oApi.sendEvent("asc_onAcceptChangesBeforeCompare", function (bAccept) {
+                    Asc.editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+                    Asc.editor.sendEvent("asc_onAcceptChangesBeforeCompare", function (bAccept) {
                         if(bAccept){
-                            oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+                            Asc.editor.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
                             fCallback();
                         }
                     })
@@ -3930,15 +3930,21 @@
     }
 
 
-    function CompareDocuments(oApi, oTmpDocument)
+    // TODO: Remove backward compatibility with old signature CompareDocuments(oApi, oTmpDocument) after a few versions
+    function CompareDocuments(oTmpDocument)
     {
-        oApi.insertDocumentUrlsData = {
+        if (oTmpDocument && typeof oTmpDocument["GetBinary"] !== "function")
+        {
+            oTmpDocument = arguments[1];
+        }
+
+        Asc.editor.insertDocumentUrlsData = {
             imageMap: oTmpDocument["GetImageMap"](), documents: [], convertCallback: function (_api, url) {
             }, endCallback: function (_api) {
             }
         };
-        CompareBinary(oApi, oTmpDocument["GetBinary"](), null, true);
-        oApi.insertDocumentUrlsData = null;
+        CompareBinary(oTmpDocument["GetBinary"](), null, true);
+        Asc.editor.insertDocumentUrlsData = null;
     }
 
     function CMoveMarkComparisonManager() {

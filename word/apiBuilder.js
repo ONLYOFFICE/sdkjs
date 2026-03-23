@@ -27858,6 +27858,24 @@
 		return emu * AscCommonWord.g_dKoef_emu_to_mm;
 	};
 
+	/**
+	 * Compares the current document with the specified file.
+	 * @param {object} file - An object containing the information about the document for comparison.
+	 */
+	Api.CompareDocuments = function(file)
+	{
+		AscCommonWord.CompareDocuments(file);
+	};
+
+	/**
+	 * Merges the current document with the specified file.
+	 * @param {object} file - An object containing the information about the document for merging.
+	 */
+	Api.MergeDocuments = function(file)
+	{
+		AscCommonWord.mergeDocuments(file);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiComment
@@ -29544,6 +29562,8 @@
 	Api["EmusToMillimeters"]               = Api.EmusToMillimeters;
 	Api["CreateCustomGeometry"]            = Api.CreateCustomGeometry;
 	Api["CreatePresetGeometry"]            = Api.CreatePresetGeometry;
+	Api["CompareDocuments"]                = Api.CompareDocuments;
+	Api["MergeDocuments"]                  = Api.MergeDocuments;
 
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 	
