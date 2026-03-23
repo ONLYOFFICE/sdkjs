@@ -334,7 +334,7 @@ function CTransitionAnimation(htmlpage)
         // WebGL transitions: route to GL or fallback to Fade
         if (_WebGLTransitionTypes[nType])
         {
-            if (this.CheckWebGLSupport() && typeof CTransitionGL !== "undefined")
+            if (this.CheckWebGLSupport() && typeof AscCommonSlide.CTransitionGL !== "undefined")
             {
                 console.log('[Transition] WebGL path for type=' + nType);
                 this._startGL(nType);
@@ -342,7 +342,6 @@ function CTransitionAnimation(htmlpage)
             }
             else
             {
-                console.warn('[Transition] WebGL fallback to Fade: support=' + this.CheckWebGLSupport() + ' CTransitionGL=' + (typeof CTransitionGL !== "undefined"));
                 nType = c_oAscSlideTransitionTypes.Fade;
                 this.Param = c_oAscSlideTransitionParams.Fade_Smoothly;
             }
@@ -2764,7 +2763,7 @@ function CTransitionAnimation(htmlpage)
     this._startGL = function(nType)
     {
         if (!oThis.GLTransition)
-            oThis.GLTransition = new CTransitionGL(oThis);
+            oThis.GLTransition = new AscCommonSlide.CTransitionGL(oThis);
 
         let _w = oThis.Rect.w;
         let _h = oThis.Rect.h;
