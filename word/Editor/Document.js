@@ -5792,8 +5792,10 @@ CDocument.prototype.AddInlineImage = function(W, H, Img, GraphicObject, bFlow)
 };
 CDocument.prototype.AddHorizontalRule = function()
 {
-	this.RemoveBeforePaste();
-	this.RemoveSelection();
+	if (this.IsTextSelectionUse())
+		this.RemoveBeforePaste();
+	else if (this.IsSelectionUse())
+		this.RemoveSelection();
 	
 	let curParagraph = this.GetCurrentParagraph();
 	if (!curParagraph)
