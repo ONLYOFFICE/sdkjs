@@ -83,6 +83,7 @@
         this.showMasterPhAnim = null;
         this.showMasterSp     = true;
         this.slide            = null;
+		this.clrMap = null;
 
         this.Master      = null;
 			this.recalcInfo =

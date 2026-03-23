@@ -798,7 +798,7 @@
 		return this.presentationViewManager.setSlideImage(bVal);
 	};
 	asc_docs_api.prototype.asc_setBody = function(bVal) {
-		return this.presentationViewManager.setSlideImage(bVal);
+		return this.presentationViewManager.setBody(bVal);
 	};
 	asc_docs_api.prototype.IsNotesSupported = function() {
 		return this.presentationViewManager.isNotesSupported();
@@ -6102,14 +6102,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_SetMathProps = function(MathProps)
 	{
 		this.WordControl.m_oLogicDocument.Set_MathProps(MathProps);
-	};
-
-	asc_docs_api.prototype.asc_SetHFProps = function(HFProps, bAll)
-	{
-		if(this.WordControl && this.WordControl.m_oLogicDocument)
-		{
-			this.WordControl.m_oLogicDocument.setHFProperties(HFProps, bAll);
-		}
 	};
 
 	asc_docs_api.prototype.asyncFontEndLoaded = function(fontinfo)

@@ -848,7 +848,7 @@
 	const PLACEHOLDERSHAPE_WIDTH_COEFFICIENT = 2971800 / 6858000;
 	const PLACEHOLDERSHAPE_HEIGHT_COEFFICIENT = 458787 / 9144000;
 
-	function addHeaderShape(slideObject, x, y, width, height) {
+	function addHeaderShape(slideObject) {
 		var oNvSpPr = new AscFormat.UniNvPr();
 		var oCNvPr = oNvSpPr.cNvPr;
 		oCNvPr.setId(2);
@@ -990,6 +990,12 @@
 		const placeholderHeight = notesHeight * PLACEHOLDERSLIDESHAPE_HEIGHT_COEFFICIENT;
 		const oSp = createPlaceholderShape(oNvSpPr, (notesWidth - placeholderWidth) / 2, notesHeight * PLACEHOLDERSLIDESHAPE_YOFFSET_COEFFICIENT - placeholderHeight, placeholderWidth, placeholderHeight, undefined, AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
 		oSp.setParent(slideObject);
+		const spPr = oSp.spPr;
+		const ln = new AscFormat.CLn();
+		ln.setFill(new AscFormat.CUniFill());
+		ln.Fill.setFill(new AscFormat.CSolidFill());
+		ln.Fill.fill.setColor(AscFormat.builder_CreatePresetColor("black"));
+		spPr.setLn(ln);
 		slideObject.addToSpTreeToPos(slideObject.cSld.spTree.length, oSp);
 	}
 

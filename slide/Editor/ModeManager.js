@@ -97,6 +97,9 @@
 	SlideModeManagerBase.prototype.isSorterMode = function() {
 		return false;
 	};
+	SlideModeManagerBase.prototype.isOutlineMode = function() {
+		return false;
+	};
 	SlideModeManagerBase.prototype.getSlidesCount = function() {
 		return this.getAllSlides().length;
 	};
@@ -807,7 +810,7 @@
 		return true;
 	};
 	SlideModeManager.prototype.isSlideNoteShape = function(shape) {
-		return shape.parent && shape.parent.isNote();
+		return shape.parent && shape.parent.isNote() && shape.getPlaceholderType() === AscFormat.phType_body;
 	};
 	SlideModeManager.prototype.isDrawingSlide = function (slideObject) {
 		return slideObject.isSlide();
@@ -1689,11 +1692,11 @@
 				nIdx = nCurIdx;
 			}
 		}
-		wordControl.GoToPage(nIdx);
 		for (let i = 0; i < presentation.notes.length; i += 1) {
 			presentation.notes[i].recalcBody();
 		}
 		presentation.Recalculate({Drawings: {All: true, Map: {}}});
+		wordControl.GoToPage(nIdx);
 		wordControl.setNotesEnable(false);
 		wordControl.setAnimPaneEnable(false);
 		api.hideMediaControl();
@@ -1719,17 +1722,42 @@
 	MasterNoteModeManager.prototype.isMasterPlaceholderShape = function(shape) {
 		return shape.isPlaceholder && shape.isPlaceholder();
 	};
-	MasterNoteModeManager.prototype.setFooter = MasterHandoutModeManager.prototype.setFooter;
-	MasterNoteModeManager.prototype.setHeader = MasterHandoutModeManager.prototype.setHeader;
-	MasterNoteModeManager.prototype.setDate = MasterHandoutModeManager.prototype.setDate;
-	MasterNoteModeManager.prototype.setNumber = MasterHandoutModeManager.prototype.setNumber;
+	MasterNoteModeManager.prototype.setFooter = function(val) {
+		this.setPlaceholder(val, AscFormat.phType_ftr, AscCommonSlide.addFooterShape);
+	};
+	MasterNoteModeManager.prototype.setHeader = function(val) {
+		this.setPlaceholder(val, AscFormat.phType_hdr, AscCommonSlide.addHeaderShape);
+	};
+	MasterNoteModeManager.prototype.setDate = function(val) {
+		this.setPlaceholder(val, AscFormat.phType_dt, AscCommonSlide.addDateShape);
+	};
+	MasterNoteModeManager.prototype.setPageNumber = function(val) {
+		this.setPlaceholder(val, AscFormat.phType_sldNum, AscCommonSlide.addNumberShape);
+	};
+
 	MasterNoteModeManager.prototype.setBody = function(val) {
 		this.setPlaceholder(val, AscFormat.phType_body, AscCommonSlide.addBodyShape);
 	};
 	MasterNoteModeManager.prototype.setSlideImage = function(val) {
-		this.setPlaceholder(val, AscFormat.phType_body, AscCommonSlide.addSlideImage);
+		this.setPlaceholder(val, AscFormat.phType_sldImg, AscCommonSlide.addSlideImage);
 	};
-	MasterNoteModeManager.prototype.setPlaceholder = MasterHandoutModeManager.prototype.setPlaceholder;
+	MasterNoteModeManager.prototype.setPlaceholder = function(val, type, addCallback) {
+		const slide = this.getCurrentSlide();
+		if (!slide) {
+			return;
+		}
+		this.startAction(0);
+		let shape = slide.getMatchingShape(type, null, type === AscFormat.phType_body);
+		if (!val) {
+			if (shape) {
+				slide.graphicObjects.deselectObject(shape);
+				slide.removeFromSpTreeById(shape.Get_Id());
+			}
+		} else if (!shape) {
+			addCallback(slide);
+		}
+		this.finalizeAction(true);
+	};
 	MasterNoteModeManager.prototype.changeTheme = function(themeInfo, arrInd) {
 		const presentation = this.getPresentation();
 		if (!Array.isArray(arrInd)) {
@@ -1762,6 +1790,18 @@
 	MasterNoteModeManager.prototype.isDrawingSlide = function (slideObject) {
 		return slideObject.isNoteMaster();
 	};
+	MasterNoteModeManager.prototype.updateViewMode = function (oldViewManager) {
+		const wordControl = this.getWordControl();
+		const presentation = this.getPresentation();
+		const api = this.getApi();
+		presentation.Recalculate({Drawings: {All: true, Map: {}}});
+		wordControl.GoToPage(0);
+		wordControl.setNotesEnable(false);
+		wordControl.setAnimPaneEnable(false);
+		api.hideMediaControl();
+		api.asc_hideComments();
+		presentation.Document_UpdateInterfaceState();
+	};
 
 	function MasterHandoutModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -1779,35 +1819,12 @@
 	MasterHandoutModeManager.prototype.isMasterPlaceholderShape = function(shape) {
 		return shape.isPlaceholder && shape.isPlaceholder();
 	};
-	MasterHandoutModeManager.prototype.setPlaceholder = function(val, type, addCallback) {
-		const slide = this.getCurrentSlide();
-		if (!slide) {
-			return;
-		}
-		this.startAction(0);
-		let shape = slide.getMatchingShape(type, null, false, {});
-		if (!val) {
-			if (shape) {
-				slide.graphicObjects.deselectObject(shape);
-				slide.removeFromSpTreeById(shape.Get_Id());
-			}
-		} else if (!shape) {
-			addCallback(slide);
-		}
-		this.finalizeAction(true);
-	};
-	MasterHandoutModeManager.prototype.setFooter = function(val) {
-		this.setPlaceholder(val, AscFormat.phType_ftr, AscCommonSlide.addFooterShape);
-	};
-	MasterHandoutModeManager.prototype.setHeader = function(val) {
-		this.setPlaceholder(val, AscFormat.phType_hdr, AscCommonSlide.addHeaderShape);
-	};
-	MasterHandoutModeManager.prototype.setDate = function(val) {
-		this.setPlaceholder(val, AscFormat.phType_dt, AscCommonSlide.addDateShape);
-	};
-	MasterHandoutModeManager.prototype.setNumber = function(val) {
-		this.setPlaceholder(val, AscFormat.phType_sldNum, AscCommonSlide.addNumberShape);
-	};
+
+	MasterHandoutModeManager.prototype.setFooter = MasterNoteModeManager.prototype.setFooter;
+	MasterHandoutModeManager.prototype.setHeader = MasterNoteModeManager.prototype.setHeader;
+	MasterHandoutModeManager.prototype.setDate = MasterNoteModeManager.prototype.setDate;
+	MasterHandoutModeManager.prototype.setNumber = MasterNoteModeManager.prototype.setNumber;
+	MasterHandoutModeManager.prototype.setPlaceholder = MasterNoteModeManager.prototype.setPlaceholder;
 	MasterHandoutModeManager.prototype.setHandoutPageCount = function(val) {
 		const slide = this.getCurrentSlide();
 		slide && slide.setSlideCount(val);
@@ -1833,6 +1850,7 @@
 		}
 		AscFormat.redrawSlide(presentation.handoutMaster[aIdx[nStartIdx]], presentation, aIdx, nStartIdx, 0, this.getAllSlides());
 	};
+	MasterHandoutModeManager.prototype.updateViewMode = MasterNoteModeManager.prototype.updateViewMode;
 
 	function SorterModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -1842,6 +1860,19 @@
 	AscFormat.InitClassWithoutType(SorterModeManager, SlideModeManagerBase);
 	SorterModeManager.prototype.isSorterMode = function() {
 		return true;
+	};
+
+	function OutlineModeManager(api) {
+		SlideModeManagerBase.call(this, api);
+		this.type = Asc.c_oAscPresentationViewMode.sorter;
+	}
+
+	AscFormat.InitClassWithoutType(OutlineModeManager, SlideModeManagerBase);
+	OutlineModeManager.prototype.isOutlineMode = function() {
+		return true;
+	};
+	OutlineModeManager.prototype.isSlideMode = function() {
+		return false;
 	};
 
 	function getViewModeByType(type, api) {

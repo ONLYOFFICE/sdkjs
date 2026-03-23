@@ -2436,6 +2436,8 @@
 	window['AscDFH'].historyitem_Presentation_ViewPr                      = window['AscDFH'].historyitem_type_Presentation | 14;
 	window['AscDFH'].historyitem_Presentation_NotesSz                     = window['AscDFH'].historyitem_type_Presentation | 15;
 	window['AscDFH'].historyitem_Presentation_AddHandoutMaster            = window['AscDFH'].historyitem_type_Presentation | 16;
+	window['AscDFH'].historyitem_Presentation_AddNotesMaster              = window['AscDFH'].historyitem_type_Presentation | 17;
+	window['AscDFH'].historyitem_Presentation_AddNote                     = window['AscDFH'].historyitem_type_Presentation | 18;
 
 	window['AscDFH'].historyitem_ColorMod_SetName = window['AscDFH'].historyitem_type_ColorMod | 1;
 	window['AscDFH'].historyitem_ColorMod_SetVal  = window['AscDFH'].historyitem_type_ColorMod | 2;

@@ -5327,7 +5327,7 @@
 				return;
 			}
 			var content = this.getDocContent();
-			if (isRealObject(content)) {
+			if (isRealObject(content) && this.invertTransformText) {
 				var tx, ty;
 				tx = this.invertTransformText.TransformPointX(x, y);
 				ty = this.invertTransformText.TransformPointY(x, y);
@@ -5353,7 +5353,7 @@
 				return;
 			}
 			var content = this.getDocContent();
-			if (isRealObject(content)) {
+			if (isRealObject(content) && this.invertTransformText) {
 				var tx, ty;
 				tx = this.invertTransformText.TransformPointX(x, y);
 				ty = this.invertTransformText.TransformPointY(x, y);

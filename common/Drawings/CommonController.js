@@ -1800,7 +1800,7 @@
 				},
 
 				checkTargetSelection: function (oObject, x, y, invertTransform) {
-					if (this.drawingObjects && this.drawingObjects.cSld) {
+					if (this.drawingObjects && this.drawingObjects.cSld && invertTransform) {
 						var t_x = invertTransform.TransformPointX(x, y);
 						var t_y = invertTransform.TransformPointY(x, y);
 						if (oObject.getDocContent().CheckPosInSelection(t_x, t_y, 0, undefined)) {

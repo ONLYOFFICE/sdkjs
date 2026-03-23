@@ -1879,12 +1879,16 @@ CPresentation.prototype.addSlideMaster = function (pos, master) {
 	this.slideMasters.splice(pos, 0, master);
 };
 CPresentation.prototype.addNotesMaster = function (pos, master) {
-	//History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_Presentation_AddSlideMaster, pos, [master], true));
+	History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_Presentation_AddNotesMaster, pos, [master], true));
 	this.notesMasters.splice(pos, 0, master);
 };
 CPresentation.prototype.addHandoutMaster = function (pos, master) {
 	History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_Presentation_AddHandoutMaster, pos, [master], true));
 	this.handoutMasters.splice(pos, 0, master);
+};
+CPresentation.prototype.addNote = function (pos, note) {
+	History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_Presentation_AddNote, pos, [note], true));
+	this.notes.splice(pos, 0, note);
 };
 
 CPresentation.prototype.removeSlideMaster = function (pos, count) {
@@ -8624,6 +8628,9 @@ CPresentation.prototype.insertSlide = function (pos, slide) {
 		this.Api.sync_AddComment(aSlideComments[i].Get_Id(), aSlideComments[i].Data);
 	}
 	slide.setSlideSize(this.GetWidthMM(), this.GetHeightMM());
+	if (slide.notes) {
+		this.addNote(pos, slide.notes);
+	}
 };
 CPresentation.prototype.insertSlideObjectToPos = function (pos, slide) {
 	const view = this.getViewManager();
@@ -10157,16 +10164,18 @@ CPresentation.prototype.createNecessaryObjectsIfNoPresent = function () {
 		oNotesTheme.presentation = this;
 		oNotesMaster.setTheme(oNotesTheme);
 	}
+	this.notes.length = 0;
 	for (let nSlide = 0; nSlide < this.Slides.length; ++nSlide) {
 		let oSlide = this.Slides[nSlide];
 		if (!oSlide.notes) {
-			oSlide.setNotes(AscCommonSlide.CreateNotes());
-			oSlide.notes.setSlide(oSlide);
-			oSlide.notes.setNotesMaster(this.notesMasters[0]);
+			const oNotes = AscCommonSlide.CreateNotes();
+			oSlide.setNotes(oNotes);
 		}
+		oSlide.notes.setSlide(oSlide);
 		if (!oSlide.notes.Master) {
 			oSlide.notes.setNotesMaster(this.notesMasters[0]);
 		}
+		this.addNote(nSlide, oSlide.notes);
 	}
 
 	if (this.handoutMasters.length === 0) {
