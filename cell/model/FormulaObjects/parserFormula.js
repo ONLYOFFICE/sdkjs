@@ -9043,6 +9043,11 @@ function parserFormula( formula, parent, _ws ) {
 				this.outStack.push(operand);
 			}
 		}
+		if (parenthesesNotEnough) {
+			parseResult.setError(c_oAscError.ID.FrmlParenthesesCorrectCount);
+			return this.isParsed = false;
+		}
+
 		if (bConditionalFormula && t.getParent() && t.getParent() instanceof AscCommonExcel.CCellWithFormula && !t.ca && !ignoreErrors) {
 			t.ca = t.isRecursiveCondFormula(levelFuncMap[0].func.name);
 			t.outStack.forEach(function (oOperand) {
@@ -9071,10 +9076,6 @@ function parserFormula( formula, parent, _ws ) {
 				});
 			}
 			t.ca = bRecursiveCell;
-		}
-		if (parenthesesNotEnough) {
-			parseResult.setError(c_oAscError.ID.FrmlParenthesesCorrectCount);
-			return this.isParsed = false;
 		}
 
 		if (0 !== this.outStack.length) {
@@ -11272,18 +11273,24 @@ function parserFormula( formula, parent, _ws ) {
 				if (!oIndexNumValue) {
 					oIndexNumValue = this.getOutStackElem(nIndexNumId);
 				}
+				if (!oIndexNumValue) {
+					continue;
+				}
 				if (oIndexNumValue.type === cElementType.func || oIndexNumValue.type === cElementType.operator) {
 					g_cCalcRecursion.setRecheckFormula(true);
 					g_cCalcRecursion.addRecheckingFormulaData('parserFormula', this);
 					g_cCalcRecursion.addRecheckingFormulaData('formulaName', oOutStackElem.name);
 					continue;
 				}
-				if (oIndexNumValue.type === cElementType.error) {
+				if (oIndexNumValue.type === cElementType.error || oIndexNumValue.type === cElementType.empty) {
 					continue;
 				}
 				if (!oTableArrayArg) {
 					const nTableArrayId = nIndexNumId - 1;
 					oTableArrayArg = this.getOutStackElem(nTableArrayId);
+				}
+				if (!oTableArrayArg) {
+					continue;
 				}
 				if (oTableArrayArg.type === cElementType.func) {
 					g_cCalcRecursion.setRecheckFormula(true);
@@ -11291,7 +11298,7 @@ function parserFormula( formula, parent, _ws ) {
 					g_cCalcRecursion.addRecheckingFormulaData('formulaName', oOutStackElem.name);
 					continue;
 				}
-				if (oTableArrayArg.type === cElementType.error) {
+				if (oTableArrayArg.type === cElementType.error || oTableArrayArg.type === cElementType.empty) {
 					continue;
 				}
 				if (!oTableArrayArg || !oTableArrayArg.clone) {
