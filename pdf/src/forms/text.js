@@ -2359,6 +2359,10 @@
 	CTextField.prototype.getParagraph = function() {
 		return this.content.GetElement(0);
 	};
+	CTextField.prototype.hitInTextRectWord = function (x, y) {
+		let rect = this.getFormRect();
+		return AscFormat.HitToRect(x, y, new AscCommon.CMatrix(), rect.X, rect.Y, rect.W, rect.H);
+	};
 	
     function codePointToRunElement(codePoint)
 	{

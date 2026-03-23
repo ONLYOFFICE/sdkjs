@@ -857,6 +857,7 @@
     CComboBoxField.prototype.DrawMarker             = AscPDF.CTextField.prototype.DrawMarker;
     CComboBoxField.prototype.beforeCompositeInput   = AscPDF.CTextField.prototype.beforeCompositeInput;
     CComboBoxField.prototype.IsCanCommit            = AscPDF.CTextField.prototype.IsCanCommit;
+    CComboBoxField.prototype.hitInTextRectWord      = AscPDF.CTextField.prototype.hitInTextRectWord;
 
 	window["AscPDF"].CComboBoxField = CComboBoxField;
 })();

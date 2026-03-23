@@ -1903,6 +1903,10 @@
         if (bRedraw) {
             function redraw(oContent) {
                 let oObject = oContent.GetParent();
+				if (!oObject) {
+					return;
+				}
+				
                 while (!oObject.AddToRedraw) {
                     if (oObject.GetParent) {
                         oObject = oObject.GetParent();

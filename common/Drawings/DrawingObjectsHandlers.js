@@ -646,7 +646,7 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
 
 function handlePdfTextField(field, drawingObjectsController, e, x, y, group, pageIndex, bWord)
 {
-	if (drawingObjectsController.document.GetActiveObject() == field) {
+	if (drawingObjectsController.document.GetActiveObject() == field && field.hitInTextRectWord(x, y)) {
 		return drawingObjectsController.handleTextHit(field, e, x, y, null, pageIndex, false);
 	}
 }
