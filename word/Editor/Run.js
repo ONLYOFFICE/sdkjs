@@ -6304,6 +6304,9 @@ ParaRun.prototype.RecalculateMinMaxContentWidth = function(MinMax)
                     bWord    = false;
                     nWordLen = 0;
                 }
+				
+				if (Item.getHorizontalRule())
+					break;
 
                 if ((true === Item.Is_Inline() || true === this.Paragraph.Parent.Is_DrawingShape() || Item.IsForm()) && Item.Width > nMinWidth)
                 {
