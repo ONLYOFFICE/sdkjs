@@ -3571,22 +3571,43 @@
 		}
 		return [false, null, null, external, externalLength];
 	};
-	parserHelper.prototype.isNextPtg = function (formula, start_pos, digitDelim)
+	parserHelper.prototype.isNextPtg = function (formula, start_pos)
 	{
+		if (formula[start_pos] !== ' ')
+		{
+			return false;
+		}
+
 		if (this instanceof parserHelper)
 		{
 			this._reset();
 		}
 
-		var subSTR = formula.substring(start_pos), match;
-		if (subSTR.match(rx_RightParentheses) == null && subSTR.match(digitDelim ? rx_Comma : rx_CommaDef) == null &&
-			subSTR.match(rx_operators) == null && (match = subSTR.match(rx_intersect)) != null)
+		var pos = start_pos;
+		var length = formula.length;
+		while (pos < length && formula[pos] === ' ')
 		{
-			this.pCurrPos += match[0].length;
-			this.operand_str = match[0][0];
-			return true;
+			++pos;
 		}
-		return false;
+
+		if (pos === length)
+		{
+			return false;
+		}
+
+		var code = formula.charCodeAt(pos);
+		// )=41  *=42  +=43  ,=44  -=45  /=47  :=58  ;=59  <=60  ==61  >=62  ^=94  &=38  %=37
+		if (code === 41 || code === 44 || code === 59 ||
+			code === 43 || code === 45 || code === 42 || code === 47 ||
+			code === 94 || code === 38 || code === 37 ||
+			code === 60 || code === 61 || code === 62 || code === 58)
+		{
+			return false;
+		}
+
+		this.pCurrPos += (pos - start_pos);
+		this.operand_str = ' ';
+		return true;
 	};
 	parserHelper.prototype.isNumber = function (formula, start_pos, digitDelim)
 	{
