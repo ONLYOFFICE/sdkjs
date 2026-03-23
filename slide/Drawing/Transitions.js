@@ -282,6 +282,7 @@ function CTransitionAnimation(htmlpage)
     _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Plus]           = true;
     _WebGLTransitionTypes[c_oAscSlideTransitionTypes.RandomBar]      = true;
     _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Dissolve]       = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.BoxZoom]        = true;
 
     this.CheckWebGLSupport = function()
     {
@@ -371,7 +372,6 @@ function CTransitionAnimation(htmlpage)
                 this._startClock();
                 break;
             case c_oAscSlideTransitionTypes.Zoom:
-            case c_oAscSlideTransitionTypes.BoxZoom:
                 this._startZoom();
                 break;
             case c_oAscSlideTransitionTypes.Morph:

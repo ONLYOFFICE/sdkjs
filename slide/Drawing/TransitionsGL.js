@@ -487,6 +487,9 @@
             case c_oAscSlideTransitionTypes.Dissolve:
                 this._prepareDissolve();
                 break;
+            case c_oAscSlideTransitionTypes.BoxZoom:
+                this._prepareBoxZoom();
+                break;
             default:
                 this._prepareCrossfade();
                 break;
@@ -557,6 +560,9 @@
                 break;
             case c_oAscSlideTransitionTypes.Dissolve:
                 this._renderDissolve(progress);
+                break;
+            case c_oAscSlideTransitionTypes.BoxZoom:
+                this._renderBoxZoom(progress, param);
                 break;
             default:
                 this._renderCrossfade(progress);
@@ -1906,6 +1912,65 @@
         gl.uniform1i(prog.uniforms['uTexture2'], 1);
 
         gl.uniform1f(prog.uniforms['uProgress'], progress);
+
+        this._bindQuad(prog);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    };
+
+    // ============================================================
+    // Transition: BoxZoom — expanding/shrinking box with soft edges
+    // ============================================================
+
+    let _FRAG_BOXZOOM = [
+        'precision mediump float;',
+        'uniform sampler2D uTexture1;',
+        'uniform sampler2D uTexture2;',
+        'uniform float uProgress;',
+        'uniform float uDirection;',
+        'varying vec2 vTexCoord;',
+        'void main() {',
+        '    vec4 c1 = texture2D(uTexture1, vTexCoord);',
+        '    vec4 c2 = texture2D(uTexture2, vTexCoord);',
+        '    float edgeW = 0.08;',
+        '    float dx = abs(vTexCoord.x - 0.5);',
+        '    float dy = abs(vTexCoord.y - 0.5);',
+        '    float d = max(dx, dy);',
+        '    if (uDirection > 0.5) {',
+        '        float p = uProgress * (0.5 + edgeW);',
+        '        float alpha = smoothstep(p, p - edgeW, d);',
+        '        gl_FragColor = mix(c1, c2, alpha);',
+        '    } else {',
+        '        float p = (1.0 - uProgress) * (0.5 + edgeW);',
+        '        float alpha = smoothstep(p, p - edgeW, d);',
+        '        gl_FragColor = mix(c2, c1, alpha);',
+        '    }',
+        '}'
+    ].join('\n');
+
+    CTransitionGL.prototype._prepareBoxZoom = function()
+    {
+        this.GetProgram('boxzoom', _VERT_QUAD, _FRAG_BOXZOOM);
+    };
+
+    CTransitionGL.prototype._renderBoxZoom = function(progress, param)
+    {
+        let gl = this.gl;
+        let prog = this.programs['boxzoom'];
+        if (!prog) return;
+
+        gl.useProgram(prog.program);
+        gl.disable(gl.DEPTH_TEST);
+
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.textures.slide1);
+        gl.uniform1i(prog.uniforms['uTexture1'], 0);
+
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, this.textures.slide2);
+        gl.uniform1i(prog.uniforms['uTexture2'], 1);
+
+        gl.uniform1f(prog.uniforms['uProgress'], progress);
+        gl.uniform1f(prog.uniforms['uDirection'], param === c_oAscSlideTransitionParams.BoxZoom_Out ? 1.0 : 0.0);
 
         this._bindQuad(prog);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
