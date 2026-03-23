@@ -13318,7 +13318,7 @@ background-repeat: no-repeat;\
 		const oThis = this;
 		this._ConvertDocuments([document], !!document.url, function (stream, imageMap) {
 			oThis.insertDocumentUrlsData.imageMap = imageMap;
-			AscCommonWord.CompareBinary(oThis, stream, oOptions);
+			AscCommonWord.CompareBinary(stream, oOptions);
 		});
 	};
 
@@ -13326,7 +13326,7 @@ background-repeat: no-repeat;\
 		const oThis = this;
 		this._ConvertDocuments([document], !!document.url, function (stream, imageMap) {
 			oThis.insertDocumentUrlsData.imageMap = imageMap;
-			AscCommonWord.mergeBinary(oThis, stream, oOptions);
+			AscCommonWord.mergeBinary(stream, oOptions);
 		});
 	};
 	
@@ -13344,7 +13344,7 @@ background-repeat: no-repeat;\
 		file["GetBinary"] = function() { return AscCommon.getBinaryArray(file_content, file_content_len); };
 		file["GetImageMap"] = function() { return image_map; };
 
-		AscCommonWord["CompareDocuments"](api, file);
+		AscCommonWord["CompareDocuments"](file);
 	};
 
 	window["onDocumentMerge"] = function(folder, file_content, file_content_len, image_map, options) {
@@ -13360,7 +13360,7 @@ background-repeat: no-repeat;\
 		file["GetBinary"] = function() { return AscCommon.getBinaryArray(file_content, file_content_len); };
 		file["GetImageMap"] = function() { return image_map; };
 
-		AscCommonWord["mergeDocuments"](api, file);
+		AscCommonWord["mergeDocuments"](file);
 	};
 
 	window["asc_docs_api"]                                      = asc_docs_api;
