@@ -468,6 +468,15 @@
 		}
 	};
 
+	CGraphicFrame.prototype.GetWidth = function () {
+		this.recalculate();
+		return this.extX;
+	};
+	CGraphicFrame.prototype.GetHeight = function () {
+		this.recalculate();
+		return this.extY;
+	};
+
 	CGraphicFrame.prototype.IsSelectedSingleElement = function () {
 		return true;
 	};
