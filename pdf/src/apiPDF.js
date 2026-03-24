@@ -1280,7 +1280,7 @@
             },
             get: function() {
                 let value = this.field.GetParentValue();
-                let isNumber = /^\d+(\.\d+)?$/.test(value);
+                let isNumber = /^[+-]?\d+(\.\d+)?$/.test(value);
                 return isNumber ? parseFloat(value) : (value != undefined ? value : "");
             }
         },
