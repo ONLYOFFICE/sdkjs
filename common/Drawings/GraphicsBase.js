@@ -910,6 +910,12 @@
 	CGraphicsBase.prototype.SetBorder = function(border)
 	{
 	};
+	CGraphicsBase.prototype.SetBaseTransform = function(m)
+	{
+	};
+	CGraphicsBase.prototype.ResetBaseTransform = function()
+	{
+	};
 
 	//------------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
