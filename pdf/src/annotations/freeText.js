@@ -496,6 +496,9 @@
             return;
 
 		this.bSkipAddToRedraw = true;
+		if (this.IsNeedUpdateLn()) {
+			this.private_UpdateLn();
+		}
         if (this.IsNeedUpdateOpacity()) {
             this.private_UpdateOpacity();
         }
