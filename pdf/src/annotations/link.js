@@ -59,6 +59,73 @@
     AscFormat.InitClass(CAnnotationLink, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Link);
     Object.assign(CAnnotationLink.prototype, AscPDF.CAnnotationBase.prototype);
 
+	CAnnotationLink.prototype.private_UpdateRect = function(rect) {
+		let aQuads = this.GetQuads();	
+		let aCurRect = this.GetRect().slice();
+		let aCurRD = this.GetRectangleDiff().slice();
+		let nLineW = this.GetBorderWidth() * g_dKoef_pt_to_mm;
+
+		if (aQuads.length == 0 || aQuads.length > 1) {
+			if (aQuads.length > 1) {
+				this.SetQuads([]);
+			}
+			
+			AscCommon.History.StartNoHistoryMode();
+			rect && this.SetRect(rect);
+			this.SetRectangleDiff([0, 0, 0, 0]);
+			this.recalcBounds();
+			this.recalcGeometry();
+			this.Recalculate(true);
+			AscCommon.History.EndNoHistoryMode();
+		}
+		else {
+			if (rect) {
+				let aQuadsRect = AscPDF.rotateRect(rect, this.spPr.xfrm.getRot());
+				let aNewQuads = [aQuadsRect];
+				this.SetQuads(aNewQuads);
+			}
+
+			AscCommon.History.StartNoHistoryMode();
+			this.SetRectangleDiff([0, 0, 0, 0]);
+			this.recalcBounds();
+			this.recalcGeometry();
+			this.Recalculate(true);
+			AscCommon.History.EndNoHistoryMode();
+		}
+		
+		if (!rect) {
+			rect = [];
+		}
+		
+		let oGrBounds = this.bounds;
+		let oShapeBounds = this.getRectBounds();
+
+		this._rect = aCurRect;
+		this._rectDiff = aCurRD;
+
+		if (this.GetBorderStyle() == AscPDF.BORDER_TYPES.underline) {
+			rect[0] = Math.round(oShapeBounds.l - nLineW) * g_dKoef_mm_to_pt;
+			rect[1] = Math.round(oShapeBounds.t - nLineW) * g_dKoef_mm_to_pt;
+			rect[2] = Math.round(oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt;
+			rect[3] = Math.round(oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt;
+			this.SetRect(rect);
+		}
+		else {
+			rect[0] = Math.round(oGrBounds.l - nLineW) * g_dKoef_mm_to_pt;
+			rect[1] = Math.round(oGrBounds.t - nLineW) * g_dKoef_mm_to_pt;
+			rect[2] = Math.round(oGrBounds.r + nLineW) * g_dKoef_mm_to_pt;
+			rect[3] = Math.round(oGrBounds.b + nLineW) * g_dKoef_mm_to_pt;
+
+			this.SetRect(rect);
+			this.SetRectangleDiff([
+				Math.round(oShapeBounds.l - oGrBounds.l + nLineW) * g_dKoef_mm_to_pt,
+				Math.round(oShapeBounds.t - oGrBounds.t + nLineW) * g_dKoef_mm_to_pt,
+				Math.round(oGrBounds.r - oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
+				Math.round(oGrBounds.b - oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
+			]);
+		}
+	};
+
     CAnnotationLink.prototype.IsLink = function() {
         return true;
     };
@@ -264,9 +331,12 @@
     };
 
     CAnnotationLink.prototype.RefillGeometry = function() {
-        let aQuads = this.GetQuads();
-        if (aQuads.length == 0 || aQuads.length > 1 || this.GetBorderStyle() !== AscPDF.BORDER_TYPES.underline) {
-            return;
+        if (this.GetBorderStyle() !== AscPDF.BORDER_TYPES.underline) {
+			AscCommon.History.StartNoHistoryMode();
+        	this.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
+			AscCommon.History.EndNoHistoryMode();
+
+			return this.spPr.geometry;
         }
 
         AscCommon.History.StartNoHistoryMode();

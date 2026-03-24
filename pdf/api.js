@@ -3356,6 +3356,17 @@
 							annot.SetBorderWidth(0);
 						}
 						else {
+							if (annot.GetBorderWidth() == 0) {
+								annot.SetBorderWidth(1);
+							}
+
+							if (nComplexType == AscPDF.BORDER_TYPES.dashed) {
+								annot.SetDashPattern(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash1);
+							}
+							else {
+								annot.SetDashPattern(undefined);
+							}
+							
 							annot.SetBorderStyle(nComplexType);
 						}
 						
