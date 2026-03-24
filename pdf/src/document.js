@@ -9946,6 +9946,12 @@ var CPresentation = CPresentation || function(){};
 				oAnnotProps.asc_putBorderWidth(nLineW);
 				break;
 			}
+			case AscPDF.ANNOTATIONS_TYPES.Ink: {
+				oAnnotProps = new Asc.asc_CClosedAnnotProperty();
+				oAnnotProps.asc_putBorderStyle(null);
+				oAnnotProps.asc_putBorderWidth(annot.GetBorderWidth());
+				break;
+			}
         }
         
         oProps.asc_putAnnotProps(oAnnotProps);
