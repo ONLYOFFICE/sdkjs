@@ -5844,7 +5844,12 @@ function CBinaryFileWriter()
             //    group.spPr.WriteXfrm.chExtY = group.spPr.WriteXfrm.extY;
             //}
 
-            //_writer.WriteRecord1(0, group.nvGrpSpPr, oThis.WriteUniNvPr);
+			if (AscCommon.isRealObject(group.nvGrpSpPr)) {
+				group.nvGrpSpPr.locks = group.locks;
+				group.nvGrpSpPr.objectType = group.getObjectType();
+				_writer.WriteRecord1(0, group.nvGrpSpPr, _writer.WriteUniNvPr);
+			}
+
             _writer.WriteRecord1(1, group.spPr, _writer.WriteGrpSpPr);
 
             delete group.spPr.WriteXfrm;

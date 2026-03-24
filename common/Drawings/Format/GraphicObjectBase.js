@@ -1870,22 +1870,44 @@
 		}
 		return false;
 	};
+	CGraphicObjectBase.prototype.getEffectiveCNvProps = function () {
+		if (this.parent && this.parent.docPr) {
+			return this.parent.docPr;
+		}
+		return this.getCNvProps();
+	};
+	CGraphicObjectBase.prototype.collectAllCNvProps = function () {
+		const allProps = [];
+
+		const oCNvPr = this.getCNvProps();
+		if (oCNvPr) {
+			allProps.push(oCNvPr);
+		}
+
+		if (this.parent && this.parent.docPr && this.parent.docPr !== oCNvPr) {
+			allProps.push(this.parent.docPr);
+		}
+
+		return allProps;
+	};
 	CGraphicObjectBase.prototype.setTitle = function (sTitle) {
 		if (undefined === sTitle || null === sTitle) {
 			return;
 		}
-		var oNvPr = this.getCNvProps();
-		if (oNvPr) {
-			oNvPr.setTitle(sTitle ? sTitle : null);
+		this.checkDrawingUniNvPr();
+		const allCNvProps = this.collectAllCNvProps();
+		for (let i = 0; i < allCNvProps.length; i++) {
+			allCNvProps[i].setTitle(sTitle ? sTitle : null);
 		}
 	};
 	CGraphicObjectBase.prototype.setDescription = function (sDescription) {
 		if (undefined === sDescription || null === sDescription) {
 			return;
 		}
-		var oNvPr = this.getCNvProps();
-		if (oNvPr) {
-			oNvPr.setDescr(sDescription ? sDescription : null);
+		this.checkDrawingUniNvPr();
+		const allCNvProps = this.collectAllCNvProps();
+		for (let i = 0; i < allCNvProps.length; i++) {
+			allCNvProps[i].setDescr(sDescription ? sDescription : null);
 		}
 	};
 	CGraphicObjectBase.prototype.setName = function (sName) {
@@ -1893,20 +1915,20 @@
 			return;
 		}
 		this.checkDrawingUniNvPr();
-		var oNvPr = this.getCNvProps();
-		if (oNvPr) {
-			oNvPr.setName(sName ? sName : null);
+		const allCNvProps = this.collectAllCNvProps();
+		for (let i = 0; i < allCNvProps.length; i++) {
+			allCNvProps[i].setName(sName ? sName : null);
 		}
 	};
 	CGraphicObjectBase.prototype.getTitle = function () {
-		var oNvPr = this.getCNvProps();
+		const oNvPr = this.getEffectiveCNvProps();
 		if (oNvPr) {
 			return oNvPr.title ? oNvPr.title : undefined;
 		}
 		return undefined;
 	};
 	CGraphicObjectBase.prototype.getDescription = function () {
-		var oNvPr = this.getCNvProps();
+		const oNvPr = this.getEffectiveCNvProps();
 		if (oNvPr) {
 			return oNvPr.descr ? oNvPr.descr : undefined;
 		}
@@ -3639,7 +3661,7 @@
 		return AscCommon.translateManager.getValue("Graphic Object");
 	};
 	CGraphicObjectBase.prototype.getOwnName = function() {
-		const oCNvPr = this.getCNvProps();
+		const oCNvPr = this.getEffectiveCNvProps();
 		if (oCNvPr && typeof oCNvPr.name === "string" && oCNvPr.name.length > 0) {
 			return oCNvPr.name;
 		}
