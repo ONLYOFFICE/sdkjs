@@ -27808,7 +27808,7 @@
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/PixelsToEmu.js
 	 */
 	Api.PixelsToEmus = function Px2Emu(px) {
-		return Math.round(private_MM2EMU(AscCommon.g_dKoef_pix_to_mm * px));
+		return private_MM2EMU(AscCommon.g_dKoef_pix_to_mm * px);
 	};
 
 	/**
@@ -31308,7 +31308,7 @@
 	
 	function private_MM2EMU(mm)
 	{
-		return mm * 36000.0;
+		return Math.round(mm * 36000.0);
 	}
 
 	function private_GetHps(hps)

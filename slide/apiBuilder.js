@@ -8693,7 +8693,7 @@
     }
     function private_MM2EMU(mm)
 	{
-		return mm * 36000.0;
+		return Math.round(mm * 36000.0);
 	}
 
     function private_GetDrawingLockType(sType)
