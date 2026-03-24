@@ -15235,7 +15235,7 @@ $(function () {
 
 		oParser = new parserFormula("WRAPROWS(A1:B3,3)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#VALUE!");
 
 
 
@@ -15255,11 +15255,11 @@ $(function () {
 		//2.4 аргумент - error
 		oParser = new parserFormula("WRAPROWS(#VALUE!,3)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#VALUE!");
 		//2.5 аргумент - empty
 		oParser = new parserFormula("WRAPROWS(,2)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#VALUE!");
 		//2.6 аргумент - cellsRange
 		//2.7 аргумент - cell
 		oParser = new parserFormula("WRAPROWS(B1, 10)", "A1", ws);
@@ -15280,7 +15280,7 @@ $(function () {
 		//2.2 аргумент - string
 		oParser = new parserFormula("WRAPROWS(1,\"test\")", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#VALUE!");
 		//2.3 аргумент - bool
 		oParser = new parserFormula("WRAPROWS(1,true)", "A1", ws);
 		assert.ok(oParser.parse());
@@ -15288,11 +15288,11 @@ $(function () {
 		//2.4 аргумент - error
 		oParser = new parserFormula("WRAPROWS(1, #VALUE!)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#VALUE!");
 		//2.5 аргумент - empty
 		oParser = new parserFormula("WRAPROWS(1,)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#NUM!");
 
 
 		//2.6 аргумент - cellsRange
@@ -15329,7 +15329,7 @@ $(function () {
 		//2.4 аргумент - error
 		oParser = new parserFormula("WRAPROWS(1,3,#VALUE!)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1);
 		//2.5 аргумент - empty
 		oParser = new parserFormula("WRAPROWS(1,3,)", "A1", ws);
 		assert.ok(oParser.parse());
@@ -15351,19 +15351,19 @@ $(function () {
 
 		oParser = new parserFormula("WRAPROWS(1,0)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#NUM!");
 
 		oParser = new parserFormula("WRAPROWS(1,-100)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#NUM!");
 
 		oParser = new parserFormula("WRAPROWS(1,)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#NUM!");
 
 		oParser = new parserFormula("WRAPROWS(1,\"asd\")", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#VALUE!");
 
 		ws.getRange2("A1:C214").cleanAll();
 		// Data for reference link. Use A100-A111
@@ -15481,7 +15481,13 @@ $(function () {
 		// Case #20: Array,Number,Formula. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.
 		oParser = new parserFormula('WRAPROWS({1,2,3,4,5},2,SQRT(4))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPROWS({1,2,3,4,5},2,SQRT(4)) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Array,Number,Formula. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Array,Number,Formula. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 2, 'Test: Positive case: Array,Number,Formula. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 3, 'Test: Positive case: Array,Number,Formula. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(1,1).getValue(), 4, 'Test: Positive case: Array,Number,Formula. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 5, 'Test: Positive case: Array,Number,Formula. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(2,1).getValue(), 2, 'Test: Positive case: Array,Number,Formula. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
 		// Case #21: Reference link,Formula,Number. Reference to array, formula wrap_count, number pad. 3 arguments used.
 		oParser = new parserFormula('WRAPROWS(A100,IF(TRUE,2,1),0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPROWS(A100,IF(TRUE,2,1),0) is parsed.');
@@ -15490,16 +15496,26 @@ $(function () {
 		oParser = new parserFormula('WRAPROWS({1,2,3},1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPROWS({1,2,3},1) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Number. Array with 3 elements, wrap_count=1. 2 arguments used.');
-
+		// Case #23: Array,Number,Error. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.
+		oParser = new parserFormula('WRAPROWS({1;2;3;4;5},2,1/0)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: WRAPROWS({1;2;3;4;5},2,1/0) is parsed.');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Array,Number,Error. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 2, 'Test: Positive case: Array,Number,Error. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 3, 'Test: Positive case: Array,Number,Error. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(1,1).getValue(), 4, 'Test: Positive case: Array,Number,Error. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 5, 'Test: Positive case: Array,Number,Error. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(2,1).getValue(), "#DIV/0!", 'Test: Positive case: Array,Number,Error. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		
 		// Negative cases:
 		// Case #1: Number. wrap_count=0 returns #NUM!. 2 arguments used.
 		oParser = new parserFormula('WRAPROWS({1,2,3,4},0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPROWS({1,2,3,4},0) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Number. wrap_count=0 returns #NUM!. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '#NUM!', 'Test: Negative case: Number. wrap_count=0 returns #NUM!. 2 arguments used.');
 		// Case #2: Number. Negative wrap_count returns #NUM!. 2 arguments used.
 		oParser = new parserFormula('WRAPROWS({1,2,3,4},-1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPROWS({1,2,3,4},-1) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Number. Negative wrap_count returns #NUM!. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '#NUM!', 'Test: Negative case: Number. Negative wrap_count returns #NUM!. 2 arguments used.');
 		// Case #3: String. Non-array string vector returns #VALUE!. 2 arguments used.
 		oParser = new parserFormula('WRAPROWS("abc",2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPROWS("abc",2) is parsed.');
@@ -15511,7 +15527,7 @@ $(function () {
 		// Case #5: Error. Error vector propagates #N/A. 2 arguments used.
 		oParser = new parserFormula('WRAPROWS(NA(),2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPROWS(NA(),2) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Error. Error vector propagates #N/A. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '#N/A', 'Test: Negative case: Error. Error vector propagates #N/A. 2 arguments used.');
 		// Case #6: Area. Multi-cell range returns #VALUE!. 2 arguments used.
 		oParser = new parserFormula('WRAPROWS(A102:A103,2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPROWS(A102:A103,2) is parsed.');
@@ -15551,23 +15567,27 @@ $(function () {
 		// Case #15: Formula. Formula resulting in #NUM! returns #NUM!. 2 arguments used.
 		oParser = new parserFormula('WRAPROWS(SQRT(-1),2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPROWS(SQRT(-1),2) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Formula resulting in #NUM! returns #NUM!. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '#NUM!', 'Test: Negative case: Formula. Formula resulting in #NUM! returns #NUM!. 2 arguments used.');
 		// Case #17: Number. Single-element array with wrap_count=0 returns #NUM!. 2 arguments used.
 		oParser = new parserFormula('WRAPROWS({1},0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPROWS({1},0) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Number. Single-element array with wrap_count=0 returns #NUM!. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '#NUM!', 'Test: Negative case: Number. Single-element array with wrap_count=0 returns #NUM!. 2 arguments used.');
 		// Case #18: Reference link,Number,Error. Error pad_with propagates #N/A. 3 arguments used.
 		oParser = new parserFormula('WRAPROWS(A100,2,NA())', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPROWS(A100,2,NA()) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0.5, 'Test: Negative case: Reference link,Number,Error. Error pad_with propagates #N/A. 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0.5, 'Test: Negative case: Reference link,Number,Error. Error pad_with propagates #N/A. 3 arguments used.');
 		// Case #19: Array,String. Non-numeric wrap_count returns #VALUE!. 2 arguments used.
 		oParser = new parserFormula('WRAPROWS({1,2,3},"abc")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPROWS({1,2,3},"abc") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array,String. Non-numeric wrap_count returns #VALUE!. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '#VALUE!', 'Test: Negative case: Array,String. Non-numeric wrap_count returns #VALUE!. 2 arguments used.');
 		// Case #20: Array,Number. Boolean array vector returns #VALUE!. 2 arguments used.
 		oParser = new parserFormula('WRAPROWS({TRUE,FALSE},2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPROWS({TRUE,FALSE},2) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 'TRUE', 'Test: Negative case: Array,Number. Boolean array vector returns #VALUE!. 2 arguments used.');
+		// Case #21: Cell,Number. Empty cell reutrns #VALUE!. 2 arguments used.
+		oParser = new parserFormula('WRAPROWS(A103,2)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: WRAPROWS(A103,2) is parsed.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '#VALUE!', 'Test: Negative case: Cell,Number. Empty cell reutrns #VALUE!. 2 arguments used.');
 
 		// Bounded cases:
 		// Case #1: Number. Minimum valid wrap_count=1, single-element vector. 2 arguments used.
@@ -15586,8 +15606,6 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: WRAPROWS({1,2},2,9.99999999999999E+307) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Bounded case: Number. Maximum valid number for pad_with. 3 arguments used.');
 
-		// Need to fix:
-		// Case #18: Reference link,Number,Error. Error pad_with propagates #N/A. 3 arguments used.
 
 	});
 
@@ -15628,7 +15646,7 @@ $(function () {
 
 		oParser = new parserFormula("WRAPCOLS(A1:B3,3)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#VALUE!");
 
 
 
@@ -15648,11 +15666,11 @@ $(function () {
 		//2.4 аргумент - error
 		oParser = new parserFormula("WRAPCOLS(#VALUE!,3)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#VALUE!");
 		//2.5 аргумент - empty
 		oParser = new parserFormula("WRAPCOLS(,2)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#VALUE!");
 		//2.6 аргумент - cellsRange
 		//2.7 аргумент - cell
 		oParser = new parserFormula("WRAPCOLS(B1, 10)", "A1", ws);
@@ -15673,7 +15691,7 @@ $(function () {
 		//2.2 аргумент - string
 		oParser = new parserFormula("WRAPCOLS(1,\"test\")", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#VALUE!");
 		//2.3 аргумент - bool
 		oParser = new parserFormula("WRAPCOLS(1,true)", "A1", ws);
 		assert.ok(oParser.parse());
@@ -15681,11 +15699,11 @@ $(function () {
 		//2.4 аргумент - error
 		oParser = new parserFormula("WRAPCOLS(1, #VALUE!)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#VALUE!");
 		//2.5 аргумент - empty
 		oParser = new parserFormula("WRAPCOLS(1,)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#NUM!");
 
 
 		//2.6 аргумент - cellsRange
@@ -15722,7 +15740,7 @@ $(function () {
 		//2.4 аргумент - error
 		oParser = new parserFormula("WRAPCOLS(1,3,#VALUE!)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1);
 		//2.5 аргумент - empty
 		oParser = new parserFormula("WRAPCOLS(1,3,)", "A1", ws);
 		assert.ok(oParser.parse());
@@ -15744,19 +15762,19 @@ $(function () {
 
 		oParser = new parserFormula("WRAPCOLS(1,0)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#NUM!");
 
 		oParser = new parserFormula("WRAPCOLS(1,-100)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#NUM!");
 
 		oParser = new parserFormula("WRAPCOLS(1,)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#NUM!");
 
 		oParser = new parserFormula("WRAPCOLS(1,\"asd\")", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#VALUE!");
 
 		ws.getRange2("A1:C214").cleanAll();
 		// Data for reference link. Use A100-A111
@@ -15875,7 +15893,13 @@ $(function () {
 		// Case #20: Array,Number,Formula. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.
 		oParser = new parserFormula('WRAPCOLS({1,2,3,4,5},2,SQRT(4))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPCOLS({1,2,3,4,5},2,SQRT(4)) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Array,Number,Formula. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Array,Number,Formula. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 3, 'Test: Positive case: Array,Number,Formula. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 5, 'Test: Positive case: Array,Number,Formula. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 2, 'Test: Positive case: Array,Number,Formula. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(1,1).getValue(), 4, 'Test: Positive case: Array,Number,Formula. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(1,2).getValue(), 2, 'Test: Positive case: Array,Number,Formula. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
 		// Case #21: Reference link,Formula,Number. Reference to array, formula wrap_count, number pad. 3 arguments used.
 		oParser = new parserFormula('WRAPCOLS(A100,IF(TRUE,2,1),0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPCOLS(A100,IF(TRUE,2,1),0) is parsed.');
@@ -15884,16 +15908,26 @@ $(function () {
 		oParser = new parserFormula('WRAPCOLS({1,2,3},1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPCOLS({1,2,3},1) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Number. Array with 3 elements, wrap_count=1. 2 arguments used.');
-
+		// Case #23: Array,Number,Error. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.
+		oParser = new parserFormula('WRAPCOLS({1;2;3;4;5},2,1/0)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: WRAPCOLS({1;2;3;4;5},2,1/0) is parsed.');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Array,Number,Error. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 3, 'Test: Positive case: Array,Number,Error. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), 5, 'Test: Positive case: Array,Number,Error. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 2, 'Test: Positive case: Array,Number,Error. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(1,1).getValue(), 4, 'Test: Positive case: Array,Number,Error. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(1,2).getValue(), "#DIV/0!", 'Test: Positive case: Array,Number,Error. Array with 5 elements, wrap_count=2, formula pad. 3 arguments used.');
+		
 		// Negative cases:
 		// Case #1: Number. wrap_count=0 returns #NUM!. 2 arguments used.
 		oParser = new parserFormula('WRAPCOLS({1,2,3,4},0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPCOLS({1,2,3,4},0) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Number. wrap_count=0 returns #NUM!. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '#NUM!', 'Test: Negative case: Number. wrap_count=0 returns #NUM!. 2 arguments used.');
 		// Case #2: Number. Negative wrap_count returns #NUM!. 2 arguments used.
 		oParser = new parserFormula('WRAPCOLS({1,2,3,4},-1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPCOLS({1,2,3,4},-1) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Number. Negative wrap_count returns #NUM!. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '#NUM!', 'Test: Negative case: Number. Negative wrap_count returns #NUM!. 2 arguments used.');
 		// Case #3: String. Non-array string vector returns #VALUE!. 2 arguments used.
 		oParser = new parserFormula('WRAPCOLS("abc",2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPCOLS("abc",2) is parsed.');
@@ -15905,7 +15939,7 @@ $(function () {
 		// Case #5: Error. Error vector propagates #N/A. 2 arguments used.
 		oParser = new parserFormula('WRAPCOLS(NA(),2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPCOLS(NA(),2) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Error. Error vector propagates #N/A. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '#N/A', 'Test: Negative case: Error. Error vector propagates #N/A. 2 arguments used.');
 		// Case #6: Area. Multi-cell range returns #VALUE!. 2 arguments used.
 		oParser = new parserFormula('WRAPCOLS(A102:A103,2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPCOLS(A102:A103,2) is parsed.');
@@ -15945,23 +15979,27 @@ $(function () {
 		// Case #15: Formula. Formula resulting in #NUM! returns #NUM!. 2 arguments used.
 		oParser = new parserFormula('WRAPCOLS(SQRT(-1),2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPCOLS(SQRT(-1),2) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Formula resulting in #NUM! returns #NUM!. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '#NUM!', 'Test: Negative case: Formula. Formula resulting in #NUM! returns #NUM!. 2 arguments used.');
 		// Case #17: Number. Single-element array with wrap_count=0 returns #NUM!. 2 arguments used.
 		oParser = new parserFormula('WRAPCOLS({1},0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPCOLS({1},0) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Number. Single-element array with wrap_count=0 returns #NUM!. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '#NUM!', 'Test: Negative case: Number. Single-element array with wrap_count=0 returns #NUM!. 2 arguments used.');
 		// Case #18: Reference link,Number,Error. Error pad_with propagates #N/A. 3 arguments used.
 		oParser = new parserFormula('WRAPCOLS(A100,2,NA())', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPCOLS(A100,2,NA()) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0.5, 'Test: Negative case: Reference link,Number,Error. Error pad_with propagates #N/A. 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0.5, 'Test: Negative case: Reference link,Number,Error. Error pad_with propagates #N/A. 3 arguments used.');
 		// Case #19: Array,String. Non-numeric wrap_count returns #VALUE!. 2 arguments used.
 		oParser = new parserFormula('WRAPCOLS({1,2,3},"abc")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPCOLS({1,2,3},"abc") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array,String. Non-numeric wrap_count returns #VALUE!. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '#VALUE!', 'Test: Negative case: Array,String. Non-numeric wrap_count returns #VALUE!. 2 arguments used.');
 		// Case #20: Array,Number. Boolean array vector returns #VALUE!. 2 arguments used.
 		oParser = new parserFormula('WRAPCOLS({TRUE,FALSE},2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPCOLS({TRUE,FALSE},2) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 'TRUE', 'Test: Negative case: Array,Number. Boolean array vector returns #VALUE!. 2 arguments used.');
+		// Case #21: Cell,Number. Empty cell reutrns #VALUE!. 2 arguments used.
+		oParser = new parserFormula('WRAPCOLS(A103,2)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: WRAPCOLS(A103,2) is parsed.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '#VALUE!', 'Test: Negative case: Cell,Number. Empty cell reutrns #VALUE!. 2 arguments used.');
 
 		// Bounded cases:
 		// Case #1: Number. Minimum valid wrap_count=1, single-element vector. 2 arguments used.
@@ -15971,7 +16009,7 @@ $(function () {
 		// Case #2: Number. Maximum valid vector length (Excel row limit), wrap_count=1048576. 2 arguments used.
 		oParser = new parserFormula('WRAPCOLS(SEQUENCE(1048576),1048576)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPCOLS(SEQUENCE(1048576),1048576) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: Number. Maximum valid vector length (Excel row limit), wrap_count=1048576. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Bounded case: Number. Maximum valid vector length (Excel row limit), wrap_count=1048576. 2 arguments used.');
 		// Case #3: Number. Maximum valid number for pad_with. 3 arguments used.
 		oParser = new parserFormula('WRAPCOLS({1,2},2,9.99999999999999E+307)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPCOLS({1,2},2,9.99999999999999E+307) is parsed.');
