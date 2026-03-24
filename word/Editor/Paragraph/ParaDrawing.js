@@ -1285,6 +1285,10 @@ ParaDrawing.prototype.Measure = function()
 		if (oParagraph)
 		{
 			let hrWidth = oParagraph.XLimit - oParagraph.X;
+			let paraInd = oParagraph.Get_CompiledPr2(true).ParaPr.Ind;
+			hrWidth -= paraInd.Left + paraInd.Right;
+			hrWidth = Math.max(0, hrWidth);
+			
 			this.Width = hrWidth;
 			this.WidthVisible = hrWidth;
 			this.GraphicObj.recalcTransform();
