@@ -1297,64 +1297,7 @@ RotateState.prototype =
                                         ]);
                                     }
                                     else if (oAnnot.IsLink()) {
-                                        let aQuads = oAnnot.GetQuads();
-                                        let aCurRect = oAnnot.GetRect().slice();
-                                        let aCurRD = oAnnot.GetRectangleDiff().slice();
-                                        let nLineW = oAnnot.GetBorderWidth() * g_dKoef_pt_to_mm;
-
-                                        if (aQuads.length == 0 || aQuads.length > 1) {
-                                            if (aQuads.length > 1) {
-                                                oAnnot.SetQuads([]);
-                                            }
-                                            
-                                            AscCommon.History.StartNoHistoryMode();
-                                            oAnnot.SetRect(aRect);
-                                            oAnnot.SetRectangleDiff([0, 0, 0, 0]);
-                                            oAnnot.recalcBounds();
-                                            oAnnot.recalcGeometry();
-                                            oAnnot.Recalculate(true);
-                                            AscCommon.History.EndNoHistoryMode();
-                                        }
-                                        else {
-                                            let aQuadsRect = AscPDF.rotateRect(aRect, oAnnot.spPr.xfrm.getRot());
-                                            let aNewQuads = [aQuadsRect];
-                                            oAnnot.SetQuads(aNewQuads);
-
-                                            AscCommon.History.StartNoHistoryMode();
-                                            oAnnot.SetRectangleDiff([0, 0, 0, 0]);
-                                            oAnnot.recalcBounds();
-                                            oAnnot.recalcGeometry();
-                                            oAnnot.Recalculate(true);
-                                            AscCommon.History.EndNoHistoryMode();
-                                        }
-                                        
-                                        let oGrBounds = oAnnot.bounds;
-                                        let oShapeBounds = oAnnot.getRectBounds();
-
-                                        oAnnot._rect = aCurRect;
-                                        oAnnot._rectDiff = aCurRD;
-
-                                        if (oAnnot.GetBorderStyle() == AscPDF.BORDER_TYPES.underline) {
-                                            aRect[0] = Math.round(oShapeBounds.l - nLineW) * g_dKoef_mm_to_pt;
-                                            aRect[1] = Math.round(oShapeBounds.t - nLineW) * g_dKoef_mm_to_pt;
-                                            aRect[2] = Math.round(oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt;
-                                            aRect[3] = Math.round(oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt;
-                                            oAnnot.SetRect(aRect);
-                                        }
-                                        else {
-                                            aRect[0] = Math.round(oGrBounds.l - nLineW) * g_dKoef_mm_to_pt;
-                                            aRect[1] = Math.round(oGrBounds.t - nLineW) * g_dKoef_mm_to_pt;
-                                            aRect[2] = Math.round(oGrBounds.r + nLineW) * g_dKoef_mm_to_pt;
-                                            aRect[3] = Math.round(oGrBounds.b + nLineW) * g_dKoef_mm_to_pt;
-
-                                            oAnnot.SetRect(aRect);
-                                            oAnnot.SetRectangleDiff([
-                                                Math.round(oShapeBounds.l - oGrBounds.l + nLineW) * g_dKoef_mm_to_pt,
-                                                Math.round(oShapeBounds.t - oGrBounds.t + nLineW) * g_dKoef_mm_to_pt,
-                                                Math.round(oGrBounds.r - oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
-                                                Math.round(oGrBounds.b - oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
-                                            ]);
-                                        }
+                                        oAnnot.private_UpdateRect(aRect);
                                     }
                                     else if (oAnnot.IsInk()) {
                                         oAnnot.UpdateGestures(aRect);

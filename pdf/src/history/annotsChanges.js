@@ -468,7 +468,8 @@ CChangesPDFAnnotStrokeWidth.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot._borderWidth = Value;
-	oAnnot.private_UpdateLn();
+	oAnnot.SetNeedUpdateLn(true);
+	oAnnot.SetNeedRecalc(true);
 };
 
 /**
@@ -1449,7 +1450,8 @@ CChangesPDFAnnotBorderType.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot._borderStyle = Value;
-	oAnnot.AddToRedraw();
+	oAnnot.recalcGeometry && oAnnot.recalcGeometry();
+	oAnnot.SetNeedRecalc(true);
 };
 
 /**

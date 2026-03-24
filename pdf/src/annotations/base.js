@@ -312,7 +312,7 @@
         this._dash = aDash;
 
         this.SetWasChanged(true);
-        this.AddToRedraw();
+		this.SetNeedRecalc(true);
     };
     CAnnotationBase.prototype.GetDashPattern = function() {
         return this._dash;
@@ -344,7 +344,7 @@
         this._borderWidth = nWidthPt;
 
         this.SetWasChanged(true);
-        this.private_UpdateLn();
+        this.SetNeedUpdateLn(true);
     };
     CAnnotationBase.prototype.private_UpdateLn = function() {
         let nWidthPt = this.GetBorderWidth();
@@ -490,6 +490,11 @@
 
         AscCommon.History.Add(new CChangesPDFAnnotBorderType(this, this._borderStyle, nType));
         this._borderStyle = nType;
+
+		this.SetWasChanged(true);
+		this.SetNeedUpdateLn(true);
+		this.recalcGeometry && this.recalcGeometry();
+		this.SetNeedRecalc(true);
     };
     CAnnotationBase.prototype.GetBorderStyle = function() {
         return this._borderStyle;
@@ -591,6 +596,12 @@
         this.SetNeedRecalc(true);
         this.SetNeedUpdateOpacity(true);
     };
+	CAnnotationBase.prototype.SetNeedUpdateLn = function(isNeed) {
+		this._needUpdateLn = isNeed;
+	};
+	CAnnotationBase.prototype.IsNeedUpdateLn = function() {
+		return this._needUpdateLn;
+	};
     CAnnotationBase.prototype.SetNeedUpdateOpacity = function(isNeed) {
         this._needUpdateOpacity = isNeed;
     };
@@ -1110,6 +1121,9 @@
         }
 
 		this.bSkipAddToRedraw = true;
+        if (this.IsNeedUpdateLn()) {
+            this.private_UpdateLn();
+        }
         if (this.IsNeedUpdateOpacity()) {
             this.private_UpdateOpacity();
         }
@@ -1509,7 +1523,7 @@
         this.SetWasChanged(true);
 
         if (this.IsShapeBased()) {
-            this.private_UpdateLn();
+            this.SetNeedUpdateLn(true);
             this.SetNeedUpdateOpacity(true);
         }
         else {
