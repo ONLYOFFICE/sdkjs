@@ -826,10 +826,23 @@
         ];
     
         let funcArgs = aArgsNamesToDelete.concat(aArgsNamesPdfApi);
-        funcArgs.push(str);
-    
+        
+		// make document methods global
+		let oApiDoc = oParentDoc.GetDocumentApi();
+		const aOwnMethods = Object.getOwnPropertyNames(AscPDF.ApiDocument.prototype).filter(function(key) {
+			return key !== "constructor" && typeof oApiDoc[key] === 'function';
+		});
+		aArgsNamesPdfApi = aArgsNamesPdfApi.concat(aOwnMethods);
+
+		aOwnMethods.forEach(function(key) {
+			funcArgs.push(key);
+			aArgsPdfApi.push(oApiDoc[key].bind(oApiDoc));
+		});
+
+		funcArgs.push(str);
+
         let func = Function.apply(null, funcArgs);
-        func.bind(oParentDoc.GetDocumentApi()).apply(null, new Array(aArgsNamesToDelete.length - 1).concat(oApiConsole, aArgsPdfApi));
+        func.bind(oApiDoc).apply(null, new Array(aArgsNamesToDelete.length - 1).concat(oApiConsole, aArgsPdfApi));
     }
     
 
