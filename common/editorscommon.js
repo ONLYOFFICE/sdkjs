@@ -3573,7 +3573,7 @@
 	};
 	parserHelper.prototype.isNextPtg = function (formula, start_pos)
 	{
-		if (formula[start_pos] !== ' ')
+		if (formula.charCodeAt(start_pos) !== 32)
 		{
 			return false;
 		}
@@ -3583,16 +3583,18 @@
 			this._reset();
 		}
 
-		var pos = start_pos;
+		var pos = start_pos + 1;
 		var length = formula.length;
-		while (pos < length && formula[pos] === ' ')
+		while (pos < length && formula.charCodeAt(pos) === 32)
 		{
 			++pos;
 		}
 
 		if (pos === length)
 		{
-			return false;
+			this.pCurrPos += (pos - start_pos);
+			this.operand_str = ' ';
+			return true;
 		}
 
 		var code = formula.charCodeAt(pos);
