@@ -3473,13 +3473,13 @@
 								this.m_dHRColumnWidth = 0;
 								let oHRParagraph = oParaDrawing.Get_ParentParagraph();
 								if (oHRParagraph) {
-									let hrColumnWidth = oHRParagraph.XLimit - oHRParagraph.X;
-									let paraInd = oHRParagraph.Get_CompiledPr2(true).ParaPr.Ind;
-									hrColumnWidth -= paraInd.Left + paraInd.Right;
-									hrColumnWidth = Math.max(0, hrColumnWidth);
-									
 									let oHRSectPr = oHRParagraph.Get_SectPr();
 									if (oHRSectPr) {
+										//let hrColumnWidth = oHRParagraph.XLimit - oHRParagraph.X;
+										let hrColumnWidth = oHRSectPr.GetColumnWidth(oHRParagraph.GetAbsoluteColumn(0));
+										let paraInd = oHRParagraph.Get_CompiledPr2(true).ParaPr.Ind;
+										hrColumnWidth -= paraInd.Left + paraInd.Right;
+										hrColumnWidth = Math.max(0, hrColumnWidth);
 										let hrContentWidth = hrColumnWidth;
 										if (oHR.pct != null && oHR.pct > 0) {
 											hrContentWidth = Math.min(hrColumnWidth, hrColumnWidth * oHR.pct / 1000);
