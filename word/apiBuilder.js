@@ -5839,7 +5839,7 @@
 	 */
 	Api.installDeveloperPlugin = Api["installDeveloperPlugin"] = function()
 	{
-		return Asc.editor.installDeveloperPlugin.apply(Asc.editor, arguments);
+		return Asc.editor["installDeveloperPlugin"].apply(Asc.editor, arguments);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
