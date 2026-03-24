@@ -1892,6 +1892,7 @@
 		if (undefined === sName || null === sName) {
 			return;
 		}
+		this.checkDrawingUniNvPr();
 		var oNvPr = this.getCNvProps();
 		if (oNvPr) {
 			oNvPr.setName(sName ? sName : null);
