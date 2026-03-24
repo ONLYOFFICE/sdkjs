@@ -5841,6 +5841,10 @@ CDocument.prototype.AddHorizontalRule = function()
 	
 	curParagraph.SetThisElementCurrent();
 	
+	let numPr = curParagraph.GetNumPr();
+	if (numPr)
+		curParagraph.RemoveNumPr();
+	
 	let prevHRDrawing = null;
 	while (curParagraph && !prevHRDrawing)
 	{
