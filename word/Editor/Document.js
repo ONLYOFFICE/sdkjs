@@ -5840,6 +5840,27 @@ CDocument.prototype.AddHorizontalRule = function()
 	}
 	
 	curParagraph.SetThisElementCurrent();
+	
+	let prevHRDrawing = null;
+	while (curParagraph && !prevHRDrawing)
+	{
+		curParagraph.CheckRunContent(function(run){
+			
+			for (let i = 0; i < run.GetElementsCount(); ++i)
+			{
+				let item = run.GetElement(i);
+				if (item.IsDrawing() && item.getHorizontalRule())
+				{
+					prevHRDrawing = item;
+					return true;
+				}
+			}
+			
+			return false;
+		}, null, null, false, false);
+		
+		curParagraph = curParagraph.GetPrevParagraph();
+	}
 
 	let sectPr = this.GetCurrentSectPr();
 	let width = sectPr.GetColumnWidth(0);
@@ -5850,7 +5871,25 @@ CDocument.prototype.AddHorizontalRule = function()
 
 	let fill = null;
 	let ln = AscFormat.CreateNoFillLine();
-
+	
+	if (prevHRDrawing && prevHRDrawing.GraphicObj)
+	{
+		let srcShape = prevHRDrawing.GraphicObj;
+		let srcHR = srcShape.getHorizontalRule && srcShape.getHorizontalRule();
+		if (srcHR)
+			hr = srcHR.createDuplicate();
+		
+		if (srcShape.spPr)
+		{
+			if (srcShape.spPr.xfrm && AscFormat.isRealNumber(srcShape.spPr.xfrm.extY))
+				height = srcShape.spPr.xfrm.extY;
+			if (srcShape.spPr.Fill)
+				fill = srcShape.spPr.Fill.createDuplicate();
+			if (srcShape.spPr.ln)
+				ln = srcShape.spPr.ln.createDuplicate();
+		}
+	}
+	
 	let shape = new AscFormat.CShape();
 	shape.setWordShape(true);
 	shape.setBDeleted(false);
