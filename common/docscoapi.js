@@ -160,6 +160,9 @@
       this._CoAuthoringApi.onDocumentOpenStandalone = function(data) {
         s.callback_OnDocumentOpen(data);
       };
+      this._CoAuthoringApi.onSaveChanges = function(e, userId, bFirstLoad) {
+        s.callback_OnSaveChanges(e, userId, bFirstLoad);
+      };
     }
   };
 
@@ -221,6 +224,12 @@
     }
 
     return 0;
+  };
+
+  CDocsCoApi.prototype.set_changesJson = function(changes) {
+    setTimeout(() => {
+      this._CoAuthoringApi.updateAuthChangesWithJsonSet(changes)
+    }, 1500);
   };
 
   CDocsCoApi.prototype.openDocument = function(data) {
@@ -718,6 +727,11 @@
     this._saveChangesChunks = [];
     this._authChanges = [];
     this._authOtherChanges = [];
+  }
+
+  DocsCoApi.prototype.updateAuthChangesWithJsonSet = function (data) {
+    this._authChanges = [data];
+      this._updateAuthChanges();
   }
 
   DocsCoApi.prototype.isRightURL = function() {
@@ -1381,7 +1395,7 @@
       if (allServerChanges) {
         for (var i = 0; i < allServerChanges.length; ++i) {
           var change = allServerChanges[i];
-          var changesOneUser = this.binaryChanges ? new Uint8Array(change['change']) : JSON.parse(change['change']);
+          var changesOneUser = this.binaryChanges ? new Uint8Array(change['change']) : change['change'];
           if (changesOneUser) {
             if (change['user'] !== this._userId) {
               this.lastOtherSaveTime = change['time'];

@@ -541,6 +541,10 @@
 		this.isOnLoadLicense = true;
 		this._onEndPermissions();
 	}
+	baseEditorsApi.prototype.asc_set_changesJson = function(changes)
+	{
+		this.CoAuthoringApi.set_changesJson(changes)
+	}
 	baseEditorsApi.prototype.asc_openDocumentForStandalone                  = function(documentInfo)
 	{
 			this.CoAuthoringApi.onDocumentOpen(documentInfo);
