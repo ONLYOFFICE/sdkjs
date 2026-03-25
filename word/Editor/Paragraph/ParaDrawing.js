@@ -3503,6 +3503,16 @@ ParaDrawing.prototype.CheckRunContent = function(fCheck)
 		this.GraphicObj.checkRunContent(fCheck);
 	}
 };
+ParaDrawing.prototype.IsChart = function()
+{
+	let type = this.GraphicObj ? this.GraphicObj.getObjectType() : AscDFH.historyitem_type_Unknown;
+	return AscDFH.historyitem_type_ChartSpace === type || AscDFH.historyitem_type_Chart === type;
+};
+ParaDrawing.prototype.IsSmartArt = function()
+{
+	let type = this.GraphicObj ? this.GraphicObj.getObjectType() : AscDFH.historyitem_type_Unknown;
+	return AscDFH.historyitem_type_SmartArt === type || AscDFH.historyitem_type_SmartArtDrawing === type;
+};
 /**
  * Класс, описывающий текущее положение параграфа при рассчете позиции автофигуры.
  * @constructor

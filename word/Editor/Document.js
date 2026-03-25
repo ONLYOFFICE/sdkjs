@@ -5797,6 +5797,13 @@ CDocument.prototype.AddHorizontalRule = function()
 	else if (this.IsSelectionUse())
 		this.RemoveSelection();
 	
+	if (docpostype_DrawingObjects === this.GetDocPosType())
+	{
+		let paraDrawing = this.DrawingObjects.getMajorParaDrawing();
+		if (paraDrawing && (paraDrawing.IsSmartArt() || paraDrawing.IsChart()))
+			paraDrawing.GoToText(true);
+	}
+	
 	let curParagraph = this.GetCurrentParagraph();
 	if (!curParagraph)
 		return false;
