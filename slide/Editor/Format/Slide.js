@@ -1508,6 +1508,33 @@ Slide.prototype.collectRedrawSlides = function (redrawSlides, force) {
     }
     redrawSlides.addRedrawSlide(this);
 };
+Slide.prototype.getOutlineSlide = function () {
+    const result = new AscCommonSlide.OutlineSlide();
+    for (let i = 0; i < this.cSld.spTree.length; i += 1) {
+        const shape = this.cSld.spTree[i];
+        const placeholderType = shape.getPlaceholderType();
+        switch (placeholderType) {
+            case AscFormat.phType_ctrTitle:
+            case AscFormat.phType_title: {
+                result.setTitle(shape);
+                break;
+            }
+            case AscFormat.phType_subTitle: {
+                result.setSubTitle(shape);
+                break;
+            }
+            case AscFormat.phType_body:
+            case AscFormat.phType_obj: {
+                result.addContent(shape);
+                break;
+            }
+            default: {
+                break;
+            }
+        }
+    }
+    return result;
+};
 
 function fLoadComments(oObject, authors)
 {

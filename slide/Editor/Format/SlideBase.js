@@ -776,6 +776,9 @@
 	SlideBase.prototype.changeBackground = function(bg) {
 	};
 	SlideBase.prototype.collectRedrawSlides = function (redrawSlides, force) {};
+	SlideBase.prototype.getOutlineSlide = function () {
+		return new AscCommonSlide.OutlineSlide();
+	};
 
 	function fAddTextToPhInSlideLikeObject(oSlideLikeObject, nPhType, sText) {
 		if(typeof sText === "string") {

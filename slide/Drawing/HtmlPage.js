@@ -246,7 +246,7 @@
 		this.m_bIsIE = AscCommon.AscBrowser.isIE;
 
 		// thumbnails
-		this.Thumbnails = new CThumbnailsManager(this);
+		this.Thumbnails = new AscCommon.COutlineThumbnailsManager(this);
 
 		// сплиттеры (для табнейлов и для заметок)
 		this.splitters;
