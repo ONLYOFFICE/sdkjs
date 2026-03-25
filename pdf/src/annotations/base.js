@@ -345,6 +345,8 @@
 
         this.SetWasChanged(true);
         this.SetNeedUpdateLn(true);
+		this.SetNeedUpdateOpacity(true);
+		this.SetNeedRecalc(true);
     };
     CAnnotationBase.prototype.private_UpdateLn = function() {
         let nWidthPt = this.GetBorderWidth();
@@ -493,6 +495,7 @@
 
 		this.SetWasChanged(true);
 		this.SetNeedUpdateLn(true);
+		this.SetNeedUpdateOpacity(true);
 		this.recalcGeometry && this.recalcGeometry();
 		this.SetNeedRecalc(true);
     };
