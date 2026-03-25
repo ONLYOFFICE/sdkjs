@@ -210,7 +210,7 @@
 
     CAnnotationLink.prototype.DrawFromStream = function(oGraphicsPDF, oGraphicsWord) {
         let oViewer = editor.getDocumentRenderer();
-        oGraphicsPDF.SetGlobalAlpha(1);
+        oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
         
         let nImgType;
         if (this.IsPressed()) {
