@@ -5791,8 +5791,18 @@
 		{
 			for (let i = 0, len = arguments.length; i < len; i++)
 			{
-				if (types && types[i] && types[i].prototype && types[i].prototype.fromCValue)
-					arguments[i] = types[i].prototype.fromCValue(arguments[i]);
+				if (types && types[i])
+				{
+					if (Array.isArray(types[i]) && Array.isArray(arguments[i]) && types[i][0].prototype && types[i][0].prototype.fromCValue)
+					{
+						for (let j = 0, lenJ = arguments[i].length; j < lenJ; j++)
+						{
+							arguments[i][j] = types[i][0].prototype.fromCValue(arguments[i][j]);
+						}
+					}
+					else if (types[i].prototype && types[i].prototype.fromCValue)
+						arguments[i] = types[i].prototype.fromCValue(arguments[i]);
+				}
 			}
 			if (!this[name])
 				console.log("Wrap unexisted function: " + name);
