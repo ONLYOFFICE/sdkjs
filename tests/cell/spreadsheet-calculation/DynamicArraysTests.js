@@ -17169,27 +17169,29 @@ $(function () {
 
 		// ── TYPE(A2:A3) ──
 		enterFormula("TYPE(A2:A3)", curRow);
-		//TODO @ !!!
-		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TYPE(A2:A3)", "formula stored: =TYPE(A2:A3)");
-		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K170:K170", "spill range (B175): TYPE(A2:A3)");
-		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 64, "TYPE(A2:A3)[0,0]");
+		//TODO must be array with one cell REF
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TYPE(@A2:A3)", "formula stored: =TYPE(@A2:A3)");
+		//assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K170:K170", "spill range (B175): TYPE(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 16, "TYPE(A2:A3)[0,0]");
 		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
 		curRow += 7;
 
 		// ── TYPE(C2:C3) ──
-		// enterFormula("TYPE(C2:C3)", curRow);
-		// assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TYPE(C2:C3)", "formula stored: =TYPE(C2:C3)");
-		// assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K177:K177", "spill range (B182): TYPE(C2:C3)");
-		// checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 64, "TYPE(C2:C3)[0,0]");
-		// ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		//TODO must be array with one cell REF
+		enterFormula("TYPE(C2:C3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TYPE(@C2:C3)", "formula stored: =TYPE(@C2:C3)");
+		//assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K177:K177", "spill range (B182): TYPE(C2:C3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 16, "TYPE(C2:C3)[0,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
 		curRow += 7;
 
 		// ── TYPE(D2:D3) ──
-		// enterFormula("TYPE(D2:D3)", curRow);
-		// assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TYPE(D2:D3)", "formula stored: =TYPE(D2:D3)");
-		// assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K184:K184", "spill range (B189): TYPE(D2:D3)");
-		// checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 64, "TYPE(D2:D3)[0,0]");
-		// ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		//TODO must be array with one cell REF
+		enterFormula("TYPE(D2:D3)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TYPE(@D2:D3)", "formula stored: =TYPE(@D2:D3)");
+		//assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K184:K184", "spill range (B189): TYPE(D2:D3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 16, "TYPE(D2:D3)[0,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
 		curRow += 7;
 
 		// ── ERROR.TYPE(E2:E3) ──

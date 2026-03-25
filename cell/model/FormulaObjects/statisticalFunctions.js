@@ -9326,24 +9326,24 @@ function (window, undefined) {
 		}
 
 		var arg0 = arg[0];
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
 		}
 		arg0 = arg0.tocNumber();
-		if (arg0 instanceof cError) {
+		if (arg0.type === cElementType.error) {
 			return arg0;
-		} else if (arg0 instanceof cArray) {
+		} else if (arg0.type === cElementType.array) {
 			arg0.foreach(function (elem, r, c) {
-				if (elem instanceof cNumber) {
+				if (elem.type === cElementType.number) {
 					var a = normsinv(elem.getValue());
-					this.array[r][c] = (a instanceof cError) ? a : (isNaN(a.getValue()) ? new cError(cErrorType.not_available) : a);
+					this.array[r][c] = (a.type === cElementType.error) ? a : (isNaN(a.getValue()) ? new cError(cErrorType.not_available) : a);
 				} else {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
 			})
 		} else {
 			var a = normsinv(arg0.getValue());
-			return (a instanceof cError) ? a : (isNaN(a.getValue()) ? new cError(cErrorType.not_available) : a);
+			return (a.type === cElementType.error) ? a : (isNaN(a.getValue()) ? new cError(cErrorType.not_available) : a);
 		}
 		return arg0;
 	};
