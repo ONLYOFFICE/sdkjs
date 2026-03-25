@@ -1467,9 +1467,8 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 			let oLine = Paragraph.Lines[LineNum];
 			if (oLine) {
 				let metrics = oLine.Metrics;
-				let lineH = metrics.Ascent + metrics.Descent + metrics.LineGap;
 				let hrH = this.GraphicObj.extY;
-				this.Internal_Position.CalcY = this.Internal_Position.LineTop + (lineH - hrH) / 2;
+				this.Internal_Position.CalcY = this.Internal_Position.LineTop + (metrics.Ascent - hrH) - this.DrawingDocument.GetMMPerDot(1); // 1 px difference with MSWord
 			}
 			let hrExtX = this.GraphicObj.extX;
 			let hrLineW = this.WidthVisible;
