@@ -595,6 +595,7 @@
 
         AscCommon.History.Add(new CChangesPDFAnnotOpacity(this, this._opacity, value));
         this._opacity = value;
+		
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);
         this.SetNeedUpdateOpacity(true);
@@ -689,7 +690,7 @@
             if (this.IsHighlight())
                 AscPDF.startMultiplyMode(oGraphicsPDF.GetContext());
             
-            oGraphicsPDF.SetGlobalAlpha(1);
+            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
             oGraphicsPDF.DrawImageXY(originView, X, Y, undefined, true);
             AscPDF.endMultiplyMode(oGraphicsPDF.GetContext());
         }
