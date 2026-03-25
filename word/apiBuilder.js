@@ -4079,11 +4079,13 @@
 	/**
 	 * The possible values for the base which the relative horizontal size of an object will be calculated from.
 	 * @typedef {("insideMargin" | "leftMargin" | "rightMargin" | "margin" | "outsideMargin" | "page")} SizeRelFromH
+	 * @see office-js-api/Examples/Enumerations/SizeRelFromH.js
 	 */
 
 	/**
 	 * The possible values for the base which the relative vertical size of an object will be calculated from.
 	 * @typedef {("bottomMargin" | "insideMargin" | "topMargin" | "margin" | "outsideMargin" | "page")} SizeRelFromV
+	 * @see office-js-api/Examples/Enumerations/SizeRelFromV.js
 	 */
 
 	/**
