@@ -5813,7 +5813,10 @@ CDocument.prototype.AddHorizontalRule = function()
 	if (!docContent || -1 === posInParent)
 		return false;
 	
-	if (!curParagraph.IsEmpty())
+	let cursorToNext = false;
+	
+	if (!curParagraph.IsEmpty()
+		|| (curParagraph.IsCursorAtBegin() && !curParagraph.GetPrevParagraph()))
 	{
 		if (curParagraph.IsCursorAtBegin())
 		{
@@ -5823,8 +5826,9 @@ CDocument.prototype.AddHorizontalRule = function()
 			newParagraph.Correct_Content();
 			docContent.AddToContent(posInParent, newParagraph);
 			curParagraph = newParagraph;
+			cursorToNext = true;
 		}
-		else if (curParagraph.IsCursorAtEnd())
+		else if (curParagraph.IsCursorAtEnd() && curParagraph.GetNextParagraph())
 		{
 			let newParagraph = new AscWord.Paragraph();
 			curParagraph.SplitContent(newParagraph, true);
@@ -5832,6 +5836,7 @@ CDocument.prototype.AddHorizontalRule = function()
 			newParagraph.Correct_Content();
 			docContent.AddToContent(posInParent + 1, newParagraph);
 			curParagraph = newParagraph;
+			cursorToNext = false;
 		}
 		else
 		{
@@ -5843,10 +5848,17 @@ CDocument.prototype.AddHorizontalRule = function()
 			newParagraph.Correct_Content();
 			docContent.AddToContent(posInParent + 2, newParagraph);
 			curParagraph = lastParagraph;
+			cursorToNext = true;
 		}
 	}
 	
 	curParagraph.SetThisElementCurrent();
+	let hrParagraph = curParagraph;
+	
+	let run = new AscWord.Run();
+	run.SetFontSize(12);
+	curParagraph.AddToContent(0, run);
+	run.SetThisElementCurrentInParagraph();
 	
 	let numPr = curParagraph.GetNumPr();
 	if (numPr)
@@ -5927,6 +5939,20 @@ CDocument.prototype.AddHorizontalRule = function()
 	spPr.setParent(shape);
 
 	this.AddInlineImage(width, height, null, shape);
+	
+	this.RemoveSelection();
+	
+	let nextParagraph = hrParagraph.GetNextParagraph();
+	if (cursorToNext && nextParagraph)
+	{
+		nextParagraph.SetThisElementCurrent();
+		nextParagraph.MoveCursorToStartPos();
+	}
+	else
+	{
+		hrParagraph.SetThisElementCurrent();
+		hrParagraph.MoveCursorToEndPos();
+	}
 
 	this.Recalculate();
 	this.UpdateInterface();
