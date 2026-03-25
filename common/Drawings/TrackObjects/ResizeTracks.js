@@ -1445,6 +1445,9 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                                         let nColIdx = oParagraph.ColumnNum || 0;
                                         let contentWidth = oSectPr.GetColumnWidth(nColIdx);
                                         let newPct = (this.resizedExtX / scale_coefficients.cx) / contentWidth * 1000;
+                                        if (newPct > 1000) {
+                                            newPct = 1000;
+                                        }
                                         let oGeom = this.originalObject.getGeometry();
                                         if (oGeom) {
                                             let oNewHR = oHR.createDuplicate();
