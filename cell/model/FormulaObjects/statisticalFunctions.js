@@ -9336,14 +9336,14 @@ function (window, undefined) {
 			arg0.foreach(function (elem, r, c) {
 				if (elem instanceof cNumber) {
 					var a = normsinv(elem.getValue());
-					this.array[r][c] = isNaN(a) ? new cError(cErrorType.not_available) : new cNumber(a);
+					this.array[r][c] = (a instanceof cError) ? a : (isNaN(a.getValue()) ? new cError(cErrorType.not_available) : a);
 				} else {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
 			})
 		} else {
 			var a = normsinv(arg0.getValue());
-			return isNaN(a) ? new cError(cErrorType.not_available) : new cNumber(a);
+			return (a instanceof cError) ? a : (isNaN(a.getValue()) ? new cError(cErrorType.not_available) : a);
 		}
 		return arg0;
 	};

@@ -15212,14 +15212,13 @@ $(function () {
 		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
 		curRow += 7;
 
-		//TODO need check getValueForEdit put AND(@A2:A3>0)
-		// ── AND(A2:A3>0) ──
-		// enterFormula("AND(A2:A3>0)", curRow);
-		// assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=AND(A2:A3>0)", "formula stored: =AND(A2:A3>0)");
-		// assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K219:K219", "spill range (B264): AND(A2:A3>0)");
-		// checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "TRUE", "AND(A2:A3>0)[0,0]");
-		// ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
-		// curRow += 7;
+		//TODO need get array with one cell
+		enterFormula("AND(A2:A3>0)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=AND(A2:A3>0)", "formula stored: =AND(A2:A3>0)");
+		//assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K219:K219", "spill range (B264): AND(A2:A3>0)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "#VALUE!", "AND(A2:A3>0)[0,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		curRow += 7;
 		//
 		// // ── OR(B2:B3>0) ──
 		// enterFormula("OR(B2:B3>0)", curRow);
@@ -15740,9 +15739,8 @@ $(function () {
 		curRow += 7;
 
 		// ── NORM.S.INV(2) ──
-		//TODO ms -> #NUM!
 		enterFormula("NORM.S.INV(2)", curRow);
-		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#N/A", "NORM.S.INV(2) (error)");
+		checkClose(assert, ws.getRange2(FORMULA_COL + curRow).getValue(), "#NUM!", "NORM.S.INV(2) (error)");
 		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
 		curRow += 7;
 
@@ -17172,10 +17170,10 @@ $(function () {
 		// ── TYPE(A2:A3) ──
 		enterFormula("TYPE(A2:A3)", curRow);
 		//TODO @ !!!
-		//assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TYPE(A2:A3)", "formula stored: =TYPE(A2:A3)");
-		// assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K170:K170", "spill range (B175): TYPE(A2:A3)");
-		// checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 64, "TYPE(A2:A3)[0,0]");
-		// ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TYPE(A2:A3)", "formula stored: =TYPE(A2:A3)");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K170:K170", "spill range (B175): TYPE(A2:A3)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 64, "TYPE(A2:A3)[0,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
 		curRow += 7;
 
 		// ── TYPE(C2:C3) ──
@@ -17258,13 +17256,12 @@ $(function () {
 		curRow += 7;
 
 		// ── N({1,"a"}) ──
-		//TODO error
-		// enterFormula("N({1,\"a\"})", curRow);
-		// assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=N({1,\"a\"})", "formula stored: =N({1,\"a\"})");
-		// assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K240:L240", "spill range (B245:C245): N({1,\"a\"})");
-		// checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1, "N({1,\"a\"})[0,0]");
-		// checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 0, "N({1,\"a\"})[0,1]");
-		// ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
+		enterFormula("N({1,\"a\"})", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=N({1,\"a\"})", "formula stored: =N({1,\"a\"})");
+		assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K240:L240", "spill range (B245:C245): N({1,\"a\"})");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 1, "N({1,\"a\"})[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 0, "N({1,\"a\"})[0,1]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 13).cleanAll();
 		curRow += 7;
 
 		// ── TYPE({1,"a"}) ──
@@ -17883,24 +17880,24 @@ $(function () {
 		curRow += 7;
 
 		// ── FILTER(A2:A5,A2:A5>10) ──
-		//TODO @ !!!
-		// enterFormula("FILTER(A2:A5,A2:A5>10)", curRow);
-		// assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FILTER(A2:A5,A2:A5>10)", "formula stored: =FILTER(A2:A5,A2:A5>10)");
-		// assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K93:K93", "spill range (B99): FILTER(A2:A5,A2:A5>10)");
-		// checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "#VALUE!", "FILTER(A2:A5,A2:A5>10)[0,0]");
-		// ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		//TODO must be formula array width one cell REF
+		enterFormula("FILTER(A2:A5,A2:A5>10)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=FILTER(A2:A5,A2:A5>10)", "formula stored: =FILTER(A2:A5,A2:A5>10)");
+		//assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K93:K93", "spill range (B99): FILTER(A2:A5,A2:A5>10)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), "#VALUE!", "FILTER(A2:A5,A2:A5>10)[0,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
 		curRow += 7;
 
 		// ── TRANSPOSE(A2:A5) ──
-		//TODO @ !!!
-		//enterFormula("TRANSPOSE(A2:A5)", curRow);
-		// assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TRANSPOSE(A2:A5)", "formula stored: =TRANSPOSE(A2:A5)");
-		// assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K100:N100", "spill range (B106:E106): TRANSPOSE(A2:A5)");
-		// checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "TRANSPOSE(A2:A5)[0,0]");
-		// checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 1, "TRANSPOSE(A2:A5)[0,1]");
-		// checkClose(assert, ws.getRange2("M" + (curRow + 0)).getValue(), 2, "TRANSPOSE(A2:A5)[0,2]");
-		// checkClose(assert, ws.getRange2("N" + (curRow + 0)).getValue(), 1, "TRANSPOSE(A2:A5)[0,3]");
-		// ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		//TODO must be formula array width one cell REF
+		enterFormula("TRANSPOSE(A2:A5)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=TRANSPOSE(@A2:A5)", "formula stored: =TRANSPOSE(@A2:A5)");
+		//assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K100:N100", "spill range (B106:E106): TRANSPOSE(A2:A5)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 3, "TRANSPOSE(A2:A5)[0,0]");
+		checkClose(assert, ws.getRange2("L" + (curRow + 0)).getValue(), 1, "TRANSPOSE(A2:A5)[0,1]");
+		checkClose(assert, ws.getRange2("M" + (curRow + 0)).getValue(), 2, "TRANSPOSE(A2:A5)[0,2]");
+		checkClose(assert, ws.getRange2("N" + (curRow + 0)).getValue(), 1, "TRANSPOSE(A2:A5)[0,3]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
 		curRow += 7;
 
 		// ── TRANSPOSE({3;1;2;1}) ──
@@ -18235,13 +18232,13 @@ $(function () {
 		curRow += 7;
 
 		// ── HLOOKUP(C2:C3,{"Apple","Banana","Cherry";100,200,300},2,FALSE) ──
-		//TODO @ !!!
-		// enterFormula("HLOOKUP(C2:C3,{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)", curRow);
-		// assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=HLOOKUP(C2:C3,{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)", "formula stored: =HLOOKUP(C2:C3,{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)");
-		// assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K338:K339", "spill range (B344:B345): HLOOKUP(C2:C3,{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)");
-		// checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 100, "HLOOKUP(C2:C3,{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)[0,0]");
-		// checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 200, "HLOOKUP(C2:C3,{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)[1,0]");
-		// ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		//TODO must be array with one cell ref
+		enterFormula("HLOOKUP(C2:C3,{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=HLOOKUP(@C2:C3,{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)", "formula stored: =HLOOKUP(@C2:C3,{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)");
+		//assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K338:K339", "spill range (B344:B345): HLOOKUP(C2:C3,{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 100, "HLOOKUP(C2:C3,{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 200, "HLOOKUP(C2:C3,{\"Apple\",\"Banana\",\"Cherry\";100,200,300},2,FALSE)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
 		curRow += 7;
 
 		// ── HLOOKUP({"Apple";"Banana"},{"Apple","Banana","Cherry";100,200,300},2,FALSE) ──
@@ -18308,13 +18305,13 @@ $(function () {
 		curRow += 7;
 
 		// ── XLOOKUP(C2:C3,D2:D5,E2:E5) ──
-		//TODO @ !!!
-		// enterFormula("XLOOKUP(C2:C3,D2:D5,E2:E5)", curRow);
-		// assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=XLOOKUP(C2:C3,D2:D5,E2:E5)", "formula stored: =XLOOKUP(C2:C3,D2:D5,E2:E5)");
-		// assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K401:K402", "spill range (B407:B408): XLOOKUP(C2:C3,D2:D5,E2:E5)");
-		// checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 100, "XLOOKUP(C2:C3,D2:D5,E2:E5)[0,0]");
-		// checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 200, "XLOOKUP(C2:C3,D2:D5,E2:E5)[1,0]");
-		// ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
+		//TODO must be array with one cell ref
+		enterFormula("XLOOKUP(C2:C3,D2:D5,E2:E5)", curRow);
+		assert.strictEqual(ws.getRange2(FORMULA_COL + curRow).getValueForEdit(), "=XLOOKUP(@C2:C3,D2:D5,E2:E5)", "formula stored: =XLOOKUP(@C2:C3,D2:D5,E2:E5)");
+		//assert.strictEqual(getCell(ws.getRange2(FORMULA_COL + curRow)).getFormulaParsed().getArrayFormulaRef().getName(), "K401:K402", "spill range (B407:B408): XLOOKUP(C2:C3,D2:D5,E2:E5)");
+		checkClose(assert, ws.getRange2("K" + (curRow + 0)).getValue(), 100, "XLOOKUP(C2:C3,D2:D5,E2:E5)[0,0]");
+		checkClose(assert, ws.getRange2("K" + (curRow + 1)).getValue(), 200, "XLOOKUP(C2:C3,D2:D5,E2:E5)[1,0]");
+		ws.getRange3(curRow - 1, 10, curRow + 7, 14).cleanAll();
 		curRow += 7;
 
 		// ── XLOOKUP({"Apple";"Banana"},D2:D5,E2:E5) ──

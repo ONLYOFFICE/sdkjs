@@ -1766,6 +1766,7 @@ function (window, undefined) {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
 			})
+			return arg0;
 		}
 		if (!(arg0 instanceof cNumber)) {
 			return new cError(cErrorType.not_numeric);
@@ -2226,11 +2227,10 @@ function (window, undefined) {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
 			})
+			return arg0;
 		} else {
 			return new cNumber(Math.floor(arg0.getValue()))
 		}
-
-		return new cNumber(Math.floor(arg0.getValue()));
 	};
 
 	/**
@@ -2478,6 +2478,7 @@ function (window, undefined) {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
 			})
+			return arg0;
 		} else {
 			if (arg0.getValue() <= 0) {
 				return new cError(cErrorType.not_numeric);
@@ -2630,6 +2631,7 @@ function (window, undefined) {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
 			})
+			return arg0;
 		} else {
 			if (arg0.getValue() <= 0) {
 				return new cError(cErrorType.not_numeric);

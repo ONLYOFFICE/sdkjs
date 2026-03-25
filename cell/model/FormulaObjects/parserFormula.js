@@ -10672,12 +10672,15 @@ function parserFormula( formula, parent, _ws ) {
 						args.unshift(stack.pop());
 					}
 				}
-				for (var k = 0; k < args.length; k++) {
-					if (args[k].index === operandIndex) {
-						return {func: elem, funcName: elem.name, argIndex: k};
-					}
-					if (args[k].containsIndices && args[k].containsIndices.indexOf(operandIndex) !== -1) {
-						return {func: elem, funcName: elem.name, argIndex: k};
+				if (elem.type === cElementType.func) {
+					for (var k = 0; k < args.length; k++) {
+						if (args[k].index === operandIndex ||
+							(args[k].containsIndices && args[k].containsIndices.indexOf(operandIndex) !== -1)) {
+							if (elem.name === "SINGLE" || isArgPosEnabledToSingle(elem, k)) {
+								return {func: elem, funcName: elem.name, argIndex: k};
+							}
+							break;
+						}
 					}
 				}
 				var containsIndices = [];

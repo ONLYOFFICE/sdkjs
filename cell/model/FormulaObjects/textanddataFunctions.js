@@ -816,7 +816,7 @@ function (window, undefined) {
 					let b = arg1.getElementRowCol(r, c);
 					if (a instanceof cNumber && b instanceof cNumber) {
 						let res = roundHelper(a.getValue(), b.getValue());
-						this.array[r][c] = toFix(res.toString(), arg2.toBool());
+						this.array[r][c] = new cString(toFix(String(res.getValue()), arg2.toBool()));
 					} else {
 						this.array[r][c] = new cError(cErrorType.wrong_value_type);
 					}
@@ -829,7 +829,7 @@ function (window, undefined) {
 				let b = arg1;
 				if (a instanceof cNumber && b instanceof cNumber) {
 					let res = roundHelper(a.getValue(), b.getValue());
-					this.array[r][c] = toFix(res.toString(), arg2.toBool());
+					this.array[r][c] = new cString(toFix(String(res.getValue()), arg2.toBool()));
 				} else {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
@@ -841,7 +841,7 @@ function (window, undefined) {
 				let b = elem;
 				if (a instanceof cNumber && b instanceof cNumber) {
 					let res = roundHelper(a.getValue(), b.getValue());
-					this.array[r][c] = toFix(res.toString(), arg2.toBool());
+					this.array[r][c] = new cString(toFix(String(res.getValue()), arg2.toBool()));
 				} else {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
@@ -1186,7 +1186,7 @@ function (window, undefined) {
 					var b = arg1.getElementRowCol(r, c);
 					if (a instanceof cNumber && b instanceof cNumber && arg2.toBool) {
 						var res = roundHelper(a.getValue(), b.getValue());
-						this.array[r][c] = toFix(res.toString(), arg2.toBool());
+						this.array[r][c] = new cString(toFix(String(res.getValue()), arg2.toBool()));
 					} else {
 						this.array[r][c] = new cError(cErrorType.wrong_value_type);
 					}
@@ -1199,7 +1199,7 @@ function (window, undefined) {
 				var b = arg1;
 				if (a instanceof cNumber && b instanceof cNumber && arg2.toBool) {
 					var res = roundHelper(a.getValue(), b.getValue());
-					this.array[r][c] = toFix(res.toString(), arg2.toBool());
+					this.array[r][c] = new cString(toFix(String(res.getValue()), arg2.toBool()));
 				} else {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
@@ -1211,7 +1211,7 @@ function (window, undefined) {
 				var b = elem;
 				if (a instanceof cNumber && b instanceof cNumber && arg2.toBool) {
 					var res = roundHelper(a.getValue(), b.getValue());
-					this.array[r][c] = toFix(res.toString(), arg2.toBool());
+					this.array[r][c] = new cString(toFix(String(res.getValue()), arg2.toBool()));
 				} else {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
@@ -2164,17 +2164,26 @@ function (window, undefined) {
 			for (let row = 0; row < maxArray.row; row++) {
 				resArr.addRow();
 				for (let col = 0; col < maxArray.col; col++) {
-					textVal = getValue(text, row, col).tocString();
+					let _text = getValue(text, row, col);
+					let _pattern = getValue(pattern, row, col);
+					let _caseSensitivity = getValue(caseSensitivity, row, col);
+
+					if (_text === undefined || _pattern === undefined || _caseSensitivity === undefined) {
+						resArr.addElement(new cError(cErrorType.not_available));
+						continue;
+					}
+
+					textVal = _text.tocString();
 					if (textVal.type === cElementType.error) {
 						return textVal;
 					}
 
-					patternVal = getValue(pattern, row, col).tocString();
+					patternVal = _pattern.tocString();
 					if (patternVal.type === cElementType.error) {
 						return patternVal;
 					}
 
-					caseSensitivityVal = getValue(caseSensitivity, row, col).tocNumber();
+					caseSensitivityVal = _caseSensitivity.tocNumber();
 					if (caseSensitivityVal.type === cElementType.error) {
 						return caseSensitivityVal;
 					}
@@ -2399,22 +2408,32 @@ function (window, undefined) {
 			for (let row = 0; row < maxArray.row; row++) {
 				resArr.addRow();
 				for (let col = 0; col < maxArray.col; col++) {
-					textVal = getValue(text, row, col).tocString();
+					let _text = getValue(text, row, col);
+					let _pattern = getValue(pattern, row, col);
+					let _returnMode = getValue(returnMode, row, col);
+					let _caseSensitivity = getValue(caseSensitivity, row, col);
+
+					if (_text === undefined || _pattern === undefined || _returnMode === undefined || _caseSensitivity === undefined) {
+						resArr.addElement(new cError(cErrorType.not_available));
+						continue;
+					}
+
+					textVal = _text.tocString();
 					if (textVal.type === cElementType.error) {
 						return textVal;
 					}
 
-					patternVal = getValue(pattern, row, col).tocString();
+					patternVal = _pattern.tocString();
 					if (patternVal.type === cElementType.error) {
 						return patternVal;
 					}
 
-					returnModeVal = getValue(returnMode, row, col).tocNumber();
+					returnModeVal = _returnMode.tocNumber();
 					if (returnModeVal.type === cElementType.error) {
 						return returnModeVal;
 					}
 
-					caseSensitivityVal = getValue(caseSensitivity, row, col).tocNumber();
+					caseSensitivityVal = _caseSensitivity.tocNumber();
 					if (caseSensitivityVal.type === cElementType.error) {
 						return caseSensitivityVal;
 					}
@@ -2637,27 +2656,38 @@ function (window, undefined) {
 			for (let row = 0; row < maxArray.row; row++) {
 				resArr.addRow();
 				for (let col = 0; col < maxArray.col; col++) {
-					textVal = getValue(text, row, col).tocString();
+					let _text = getValue(text, row, col);
+					let _pattern = getValue(pattern, row, col);
+					let _replacement = getValue(replacement, row, col);
+					let _occurence = getValue(occurence, row, col);
+					let _caseSensitivity = getValue(caseSensitivity, row, col);
+
+					if (_text === undefined || _pattern === undefined || _replacement === undefined || _occurence === undefined || _caseSensitivity === undefined) {
+						resArr.addElement(new cError(cErrorType.not_available));
+						continue;
+					}
+
+					textVal = _text.tocString();
 					if (textVal.type === cElementType.error) {
 						return textVal;
 					}
 
-					patternVal = getValue(pattern, row, col).tocString();
+					patternVal = _pattern.tocString();
 					if (patternVal.type === cElementType.error) {
 						return patternVal;
 					}
 
-					replacementVal = getValue(replacement, row, col).tocString();
+					replacementVal = _replacement.tocString();
 					if (replacementVal.type === cElementType.error) {
 						return replacementVal;
 					}
 
-					occurenceVal = getValue(occurence, row, col).tocNumber();
+					occurenceVal = _occurence.tocNumber();
 					if (occurenceVal.type === cElementType.error) {
 						return occurenceVal;
 					}
 
-					caseSensitivityVal = getValue(caseSensitivity, row, col).tocNumber();
+					caseSensitivityVal = _caseSensitivity.tocNumber();
 					if (caseSensitivityVal.type === cElementType.error) {
 						return caseSensitivityVal;
 					}

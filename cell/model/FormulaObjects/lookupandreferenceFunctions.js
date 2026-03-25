@@ -4826,6 +4826,11 @@ function (window, undefined) {
 		if (!arg4) {
 			arg4 = new cNumber(0);
 		}
+		if (cElementType.cellsRange === arg4.type || cElementType.cellsRange3D === arg4.type) {
+			arg4 = arg4.cross(arguments[1]);
+		} else if (cElementType.array === arg4.type) {
+			arg4 = arg4.getElementRowCol(0, 0);
+		}
 		arg4 = arg4.tocNumber();
 		if (cElementType.error === arg4.type) {
 			return arg4;
@@ -4845,6 +4850,11 @@ function (window, undefined) {
 		//-2 - Perform a binary search that relies on lookup_array being sorted in descending order. If not sorted, invalid results will be returned.
 		if (!arg5) {
 			arg5 = new cNumber(1);
+		}
+		if (cElementType.cellsRange === arg5.type || cElementType.cellsRange3D === arg5.type) {
+			arg5 = arg5.cross(arguments[1]);
+		} else if (cElementType.array === arg5.type) {
+			arg5 = arg5.getElementRowCol(0, 0);
 		}
 		arg5 = arg5.tocNumber();
 		if (cElementType.error === arg5.type) {
@@ -5118,6 +5128,9 @@ function (window, undefined) {
 		arg3 = arg3.tocBool();
 		if (arg3.type === cElementType.error) {
 			return arg3;
+		}
+		if (arg3.type !== cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 		arg3 = arg3.toBool();
 

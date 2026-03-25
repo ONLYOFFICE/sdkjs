@@ -885,16 +885,20 @@ function (window, undefined) {
 	cN.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (arg0 instanceof cArray) {
+			var res = new cArray();
 			arg0.foreach(function (elem, r, c) {
+				if (!res.array[r]) {
+					res.addRow();
+				}
 				if (elem instanceof cNumber || elem instanceof cError) {
-					this.array[r][c] = elem;
+					res.addElement(elem);
 				} else if (elem instanceof cBool) {
-					this.array[r][c] = elem.tocNumber();
+					res.addElement(elem.tocNumber());
 				} else {
-					this.array[r][c] = new cNumber(0);
+					res.addElement(new cNumber(0));
 				}
 			});
-			return arg0;
+			return res;
 		} else if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
 			arg0 = arg0.cross(arguments[1]);
 		} else if (arg0 instanceof cRef || arg0 instanceof cRef3D) {
