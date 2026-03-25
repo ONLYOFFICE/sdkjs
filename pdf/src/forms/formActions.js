@@ -792,6 +792,7 @@
             "AFSpecial_KeystrokeEx",
             "AFSimple_Calculate",
             "AFRange_Validate",
+            "AFMakeNumber"
         ];
     
         if (!oParentDoc.globalEventStack) {
@@ -822,7 +823,8 @@
             oApiFunc["AFSpecial_Keystroke"],
             oApiFunc["AFSpecial_KeystrokeEx"],
             oApiFunc["AFSimple_Calculate"],
-            oApiFunc["AFRange_Validate"]
+            oApiFunc["AFRange_Validate"],
+            oApiFunc["AFMakeNumber"]
         ];
     
         let funcArgs = aArgsNamesToDelete.concat(aArgsNamesPdfApi);

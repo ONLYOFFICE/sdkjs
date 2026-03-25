@@ -1161,6 +1161,18 @@
             }
         }
     }
+
+	/**
+	 * Function for convertion field value to number.
+	 * @returns {number}
+	 */
+	function AFMakeNumber(value) {
+		let result = parseInt(value);
+		if (isNaN(result) || ("" + result) !== ("" + value))
+			return defaultValue;
+		
+		return result;
+	}
 	
     function toString(value, defValue) {
         if (value && value.toString) {
@@ -1195,6 +1207,7 @@
         "AFSpecial_KeystrokeEx":  AFSpecial_KeystrokeEx,
         "AFSimple_Calculate":     AFSimple_Calculate,
         "AFRange_Validate":       AFRange_Validate,
+        "AFMakeNumber":           AFMakeNumber
     };
 })();
 
