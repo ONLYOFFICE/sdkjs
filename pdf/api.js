@@ -3369,75 +3369,76 @@
 							
 							annot.SetBorderStyle(nComplexType);
 						}
-						
-						return;
+					}
+					else {
+						switch (nComplexType) {
+							case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.solid: {
+								annot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
+								annot.SetDashPattern([]);
+								annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
+								annot.SetBorderEffectIntensity(0);
+								break;
+							}
+							case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash1: {
+								annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
+								annot.SetDashPattern(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash1);
+								annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
+								annot.SetBorderEffectIntensity(0);
+								break;
+							}
+							case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash2: {
+								annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
+								annot.SetDashPattern(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash2);
+								annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
+								annot.SetBorderEffectIntensity(0);
+								break;
+							}
+							case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash3: {
+								annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
+								annot.SetDashPattern(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash3);
+								annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
+								annot.SetBorderEffectIntensity(0);
+								break;
+							}
+							case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash4: {
+								annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
+								annot.SetDashPattern(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash4);
+								annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
+								annot.SetBorderEffectIntensity(0);
+								break;
+							}
+							case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash5: {
+								annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
+								annot.SetDashPattern(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash5);
+								annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
+								annot.SetBorderEffectIntensity(0);
+								break;
+							}
+							case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash6: {
+								annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
+								annot.SetDashPattern(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash6);
+								annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
+								annot.SetBorderEffectIntensity(0);
+								break;
+							}
+							case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.cloud1: {
+								annot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
+								annot.SetDashPattern([]);
+								annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.cloud);
+								annot.SetBorderEffectIntensity(1);
+								break;
+							}
+							case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.cloud2: {
+								annot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
+								annot.SetDashPattern([]);
+								annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.cloud);
+								annot.SetBorderEffectIntensity(2);
+								break;
+							}
+						}
 					}
 
-					switch (nComplexType) {
-						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.solid: {
-							annot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
-							annot.SetDashPattern([]);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
-							annot.SetBorderEffectIntensity(0);
-							break;
-						}
-						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash1: {
-							annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
-							annot.SetDashPattern(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash1);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
-							annot.SetBorderEffectIntensity(0);
-							break;
-						}
-						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash2: {
-							annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
-							annot.SetDashPattern(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash2);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
-							annot.SetBorderEffectIntensity(0);
-							break;
-						}
-						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash3: {
-							annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
-							annot.SetDashPattern(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash3);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
-							annot.SetBorderEffectIntensity(0);
-							break;
-						}
-						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash4: {
-							annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
-							annot.SetDashPattern(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash4);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
-							annot.SetBorderEffectIntensity(0);
-							break;
-						}
-						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash5: {
-							annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
-							annot.SetDashPattern(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash5);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
-							annot.SetBorderEffectIntensity(0);
-							break;
-						}
-						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash6: {
-							annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
-							annot.SetDashPattern(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash6);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
-							annot.SetBorderEffectIntensity(0);
-							break;
-						}
-						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.cloud1: {
-							annot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
-							annot.SetDashPattern([]);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.cloud);
-							annot.SetBorderEffectIntensity(1);
-							break;
-						}
-						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.cloud2: {
-							annot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
-							annot.SetDashPattern([]);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.cloud);
-							annot.SetBorderEffectIntensity(2);
-							break;
-						}
-					}
+					annot.private_UpdateRect();
 				}
 			});
 
