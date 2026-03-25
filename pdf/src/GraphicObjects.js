@@ -474,7 +474,7 @@
         let target_text_object = AscFormat.getTargetTextObject(this);
         if (target_text_object) {
             let oGroup = target_text_object.getMainGroup && target_text_object.getMainGroup();
-            if (oGroup && oGroup.IsAnnot())
+            if ((oGroup && oGroup.IsAnnot()) || (target_text_object.IsForm && target_text_object.IsForm()))
                 return null;
             
             if (target_text_object.getObjectType() === AscDFH.historyitem_type_GraphicFrame) {

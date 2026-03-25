@@ -5013,10 +5013,6 @@ var CPresentation = CPresentation || function(){};
         this.UpdateTextProps();
         this.UpdateCanAddHyperlinkState();
         
-        let oGroup = oTargetTextObject && oTargetTextObject.getMainGroup && oTargetTextObject.getMainGroup();
-        if (oTargetTextObject && (!oGroup || !oGroup.IsAnnot())) {
-            oTargetDocContent && oTargetDocContent.Document_UpdateInterfaceState();
-        }
         this.Api.sync_pagePropCallback(oCurPage);
         this.Api.sync_EndCatchSelectedElements();
         this.Api.sendEvent('asc_onCanEditPage', oCurPage.IsEditPageLock() || oCurPage.IsRecognized());
@@ -5271,7 +5267,7 @@ var CPresentation = CPresentation || function(){};
             Asc.editor.sync_PrPropCallback(oParaPr);
         }
         else if (oAcitveObj) {
-            if (oAcitveObj.IsForm()) {
+            if (oAcitveObj.IsForm() && this.IsEditFieldsMode()) {
                 let oController = this.GetController();
                 let nAlignType = oAcitveObj.GetAlign();
                 let isRTL = oAcitveObj.IsRTL();
