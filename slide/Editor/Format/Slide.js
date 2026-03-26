@@ -1510,8 +1510,12 @@ Slide.prototype.collectRedrawSlides = function (redrawSlides, force) {
 };
 Slide.prototype.getOutlineSlide = function () {
     const result = new AscCommonSlide.OutlineSlide();
+    result.setSlide(this);
     for (let i = 0; i < this.cSld.spTree.length; i += 1) {
         const shape = this.cSld.spTree[i];
+        if (shape.getObjectType() !== AscDFH.historyitem_type_Shape) {
+            continue;
+        }
         const placeholderType = shape.getPlaceholderType();
         switch (placeholderType) {
             case AscFormat.phType_ctrTitle:

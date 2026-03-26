@@ -36,8 +36,11 @@
 		this.title = null;
 		this.subTitle = null;
 		this.content = [];
+		this.slide = null;
 	}
-
+	OutlineSlide.prototype.setSlide = function (pr) {
+		this.slide = pr;
+	};
 	OutlineSlide.prototype.setTitle = function (pr) {
 		this.title = pr;
 	};
@@ -50,7 +53,7 @@
 	
 	function OutlineView(presentation) {
 		this.presentation = presentation;
-		this.outlineShape = null;
+		this.outlineShapes = null;
 	}
 	OutlineView.prototype.getPresentation = function () {
 		return this.presentation;
@@ -58,7 +61,7 @@
 	OutlineView.prototype.setOutlineShape = function (shape) {
 	this.outlineShape = shape;
 	};
-	OutlineView.prototype.updateAll = function () {
+	OutlineView.prototype.updateAll = function (width, height) {
 		const presentation = this.getPresentation();
 		const outlineSlides = [];
 		for (let i = 0; i < presentation.Slides.length; i += 1) {
@@ -66,33 +69,71 @@
 			const outlineSlide = slide.getOutlineSlide();
 			outlineSlides.push(outlineSlide);
 		}
-		const outlineShape = this.getOutlineShape(outlineSlides);
+		const outlineShape = this.getOutlineShape(outlineSlides, width, height);
 		this.setOutlineShape(outlineShape);
 	};
-	OutlineView.prototype.getOutlineShape = function (outlineSlides) {
-		return AscFormat.ExecuteNoHistory(function () {
-			const oSp = new AscFormat.CShape();
-			oSp.setBDeleted(false);
-			oSp.createTextBody();
-			const oContent = oSp.txBody.content;
-			for (let i = 0; i < outlineSlides.length; i += 1) {
-				const slide = outlineSlides[i];
-				if (slide.title) {
-					const shapeContent = slide.title.txBody.content.Content;
-					for (let i = 0 ; i < shapeContent.length; i += 1) {
-						const paragraph = shapeContent[i];
-						const copyParagraph = this.getCopyParagraph(oContent, paragraph);
-						oContent.AddToContent(oContent.Content.length, copyParagraph);
-					}
-				}
+	OutlineView.prototype.addContentToOutlineShape = function (outlineShape, slideShape, pr) {
+		if (!slideShape) {
+			return;
+		}
+		const outlineContent = outlineShape.txBody.content;
+		const slideContent = slideShape.txBody.content;
+		const paragraphs = slideContent.Content;
+		for (let i = 0 ; i < paragraphs.length; i += 1) {
+			const paragraph = paragraphs[i];
+			const copyParagraph = this.getCopyParagraph(outlineContent, paragraph);
+			outlineContent.AddToContent(outlineContent.Content.length, copyParagraph);
+		}
+	};
+	OutlineView.prototype.fillOutlineShape = function (outlineShape, outlineSlides, width) {
+		for (let i = 0; i < outlineSlides.length; i += 1) {
+			const slide = outlineSlides[i];
+			this.addContentToOutlineShape(outlineShape, slide.title, width);
+			this.addContentToOutlineShape(outlineShape, slide.subTitle, width);
+			for (let j = 0; j < slide.content.length; j += 1) {
+				this.addContentToOutlineShape(outlineShape, slide.content[j], width);
 			}
-			oSp.recalculateContent();
-			return oSp;
+		}
+	}
+	OutlineView.prototype.applyParagraphProps = function (outlineParagraph, slideParagraph) {
+			const compiledPr = slideParagraph.getCompiledPr();
+			const copyParaPr = new CParaPr();
+			if (compiledPr.ParaPr.Bullet) {
+				copyParaPr.Bullet = compiledPr.ParaPr.Bullet.createDuplicate();
+				copyParaPr.Lvl = compiledPr.ParaPr.Lvl;
+				copyParaPr.Ind = compiledPr.ParaPr.Ind.Copy();
+				copyParaPr.Ind.FirstLine *= 0.5;
+				copyParaPr.Ind.Left *= 0.5;
+				copyParaPr.Ind.Right *= 0.5;
+			}
+			outlineParagraph.SetPr(copyParaPr);
+			outlineParagraph.CheckRunContent(function (run) {
+				const textPr = new CTextPr();
+				textPr.SetFontSize(15);
+				run.SetPr(textPr);
+			});
+
+	};
+	OutlineView.prototype.getOutlineShape = function (outlineSlides, width, height) {
+		return AscFormat.ExecuteNoHistory(function () {
+			const outlineShape = new AscFormat.CShape();
+			outlineShape.setBDeleted(false);
+			outlineShape.createTextBody();
+			const outlineContent = outlineShape.txBody.content;
+			outlineContent.ClearContent(false);
+			this.fillOutlineShape(outlineShape, outlineSlides, width);
+			outlineShape.extX = width;
+			outlineShape.extY = 2000;
+			outlineShape.recalculateContent();
+			outlineShape.contentWidth = width;
+			outlineShape.outlineView = this;
+			return outlineShape;
 		}, this, []);
 	};
 	OutlineView.prototype.getCopyParagraph = function (parent, paragraph, props) {
 		return AscFormat.ExecuteNoHistory(function () {
-			const copyParagraph = paragraph.Copy2(parent);
+			const copyParagraph = paragraph.Copy(parent, null, props);
+			this.applyParagraphProps(copyParagraph, paragraph);
 			return copyParagraph;
 		}, this, []);
 	};
