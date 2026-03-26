@@ -4945,7 +4945,7 @@ function (window, undefined) {
 	asc_CFieldRegularFormatProperty.prototype.asc_putRegExp = function (v) {
 		this.regExp = v;
 	};
-	asc_CFieldSpecialFormatProperty.prototype.compare = function (pr) {
+	asc_CFieldRegularFormatProperty.prototype.compare = function (pr) {
 		if (this.regExp !== pr.regExp) {
 			this.regExp = null;
 		}
@@ -4990,7 +4990,7 @@ function (window, undefined) {
 	asc_CFieldValidateProperty.prototype.asc_putLessThen = function (v) {
 		this.lessThen = v;
 	};
-	asc_CFieldSpecialFormatProperty.prototype.compare = function (pr) {
+	asc_CFieldValidateProperty.prototype.compare = function (pr) {
 		if (this.greaterThen !== pr.greaterThen) {
 			this.greaterThen = null;
 		}
