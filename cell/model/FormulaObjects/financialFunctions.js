@@ -5869,20 +5869,29 @@ function (window, undefined) {
 	cXIRR.prototype.arrayIndexes = {0: 1, 1: 1};
 	cXIRR.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cXIRR.prototype.argumentsType = [argType.any, argType.any, argType.any];
+	/**
+	 * XIRR - The Extended Internal Rate of Return is a financial metric used to calculate the annualized return on investments with irregular cash flows
+	 *
+	 * @param {number[]} Values - A series of cash flows that corresponds to a schedule of payments in dates. Positive and newgatie nums are required
+	 * @param {Date[]}   dates - A schedule of payment dates that corresponds to the cash flow payments.
+	 * @param {number}   [guess] - Optional. A number that you guess is close to the result of XIRR.
+	 * @returns {number} Returns the internal rate of return for a schedule of cash flows that is not necessarily periodic
+	 */
 	cXIRR.prototype.Calculate = function (arg) {
+		const MAX_DATE = AscCommonExcel.getMaxDate();
 		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : new cNumber(0.1);
 
 		function xirrFunction(values, dates, rate) {
-			var D_0 = dates[0], r = rate + 1, res = values[0];
-			for (var i = 1; i < values.length; i++) {
+			let D_0 = dates[0], r = rate + 1, res = values[0];
+			for (let i = 1; i < values.length; i++) {
 				res += values[i] / Math.pow(r, (dates[i] - D_0) / 365);
 			}
 			return res;
 		}
 
 		function xirrDeriv(values, dates, rate) {
-			var D_0 = dates[0], r = rate + 1, res = 0, sumDerivI;
-			for (var i = 1, count = values.length; i < count; i++) {
+			let D_0 = dates[0], r = rate + 1, res = 0, sumDerivI;
+			for (let i = 1, count = values.length; i < count; i++) {
 				sumDerivI = (dates[i] - D_0) / 365;
 				res -= sumDerivI * values[i] / Math.pow(r, sumDerivI + 1);
 			}
@@ -5890,46 +5899,44 @@ function (window, undefined) {
 		}
 
 		function xirr2(_values, _dates, _rate) {
-
-			
 			if (_values.length === 0 || _dates.length === 0) {
 				return new cError(cErrorType.not_numeric); 
 			}
 			
 			let arr0 = _values[0], arr1 = _dates[0];
-			
-			if (arr0 instanceof cError) {
+			if (arr0.type === cElementType.error) {
 				return arr0;
 			}
-			if (arr1 instanceof cError) {
+			if (arr1.type === cElementType.error) {
 				return arr1;
 			}
-			if (arr0.getValue() == 0) {
+			if (arr0.getValue() === 0) {
 				return new cError(cErrorType.not_numeric);
 			}
 
-			if (_values.length < 2 || (_dates.length != _values.length)) {
+			if (_values.length === 1 && _dates.length === 1) {
+				return new cError(cErrorType.not_available);
+			} else if (_values.length < 2 || (_dates.length !== _values.length)) {
 				return new cError(cErrorType.not_numeric);
 			}
 
-			var res = _rate.getValue();
+			let res = _rate.getValue();
 			if (res <= -1) {
 				return new cError(cErrorType.not_numeric);
 			}
 
-			var wasNeg = false, wasPos = false;
-
-			for (var i = 0; i < _dates.length; i++) {
+			let wasNeg = false, wasPos = false;
+			for (let i = 0; i < _dates.length; i++) {
 				_dates[i] = _dates[i].tocNumber();
 				_values[i] = _values[i].tocNumber();
-				if (_dates[i] instanceof cError || _values[i] instanceof cError) {
+				if (_dates[i].type === cElementType.error || _values[i].type === cElementType.error) {
 					return new cError(cErrorType.wrong_value_type);
 				}
 				_dates[i] = Math.floor(_dates[i].getValue());
 				_values[i] = _values[i].getValue();
 
-				if (_dates[0] > _dates[i]) {
-					return new cError(cErrorType.not_numeric);
+				if (_dates[0] > _dates[i] || _dates[i] > MAX_DATE) {
+					return new cError(cErrorType.not_numeric);	
 				}
 
 				if (_values[i] < 0) {
@@ -5944,7 +5951,7 @@ function (window, undefined) {
 				return new cError(cErrorType.not_numeric);
 			}
 
-			var g_Eps = 1e-7, nIM = 500, eps = 1, nMC = 0, xN, guess = res, g_Eps2 = g_Eps * 2;
+			let g_Eps = 1e-7, nIM = 500, eps = 1, nMC = 0, xN, guess = res, g_Eps2 = g_Eps * 2;
 
 			while (eps > g_Eps && nMC < nIM) {
 				xN = res - xirrFunction(_values, _dates, res) /
@@ -5954,8 +5961,9 @@ function (window, undefined) {
 				eps = Math.abs(xN - res);
 				res = xN;
 			}
-			if (isNaN(res) || Infinity == Math.abs(res)) {
-				var max = Number.MAX_VALUE, min = -Number.MAX_VALUE, step = 1.6,
+
+			if (isNaN(res) || Infinity === Math.abs(res)) {
+				let max = Number.MAX_VALUE, min = -Number.MAX_VALUE, step = 1.6,
 					low = guess - 0.01 <= min ? min + g_Eps : guess - 0.01,
 					high = guess + 0.01 >= max ? max - g_Eps : guess + 0.01, i, xBegin, xEnd, x, y, currentIter = 0;
 
@@ -5978,13 +5986,11 @@ function (window, undefined) {
 					}
 				}
 
-				if (i == nIM) {
+				if (i === nIM) {
 					return new cError(cErrorType.not_numeric);
 				}
 
-				var fXbegin = xirrFunction(_values, _dates, xBegin), fXend = xirrFunction(_values, _dates, xEnd), fXi,
-					xI;
-
+				let fXbegin = xirrFunction(_values, _dates, xBegin), fXend = xirrFunction(_values, _dates, xEnd), fXi, xI;
 				if (Math.abs(fXbegin) < g_Eps) {
 					return new cNumber(fXbegin);
 				}
@@ -6031,28 +6037,48 @@ function (window, undefined) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 			arg0.foreach2(function (c) {
-				if (c instanceof cNumber) {
-					_values.push(c);
-				} else if (c instanceof cEmpty) {
-					_values.push(c.tocNumber());
-				} else {
-					_values.push(new cError(cErrorType.wrong_value_type));
+				if (c) {
+					if (c.type === cElementType.bool) {
+						_values.push(new cError(cErrorType.wrong_value_type));
+					} else {
+						c = c.tocNumber();
+						if (c.type === cElementType.number) {
+							_values.push(c);
+						} else {
+							_values.push(new cError(cErrorType.wrong_value_type));
+						}
+					}
 				}
 			})
 		} else if (arg0.type === cElementType.array) {
 			arg0.foreach(function (c) {
-				if (c instanceof cNumber) {
-					_values.push(c);
-				} else if (c instanceof cEmpty) {
-					_values.push(c.tocNumber());
-				} else {
-					_values.push(new cError(cErrorType.wrong_value_type));
+				if (c) {
+					if (c.type === cElementType.bool) {
+						_values.push(new cError(cErrorType.wrong_value_type));
+					} else {
+						c = c.tocNumber();
+						if (c.type === cElementType.number) {
+							_values.push(c);
+						} else {
+							_values.push(new cError(cErrorType.wrong_value_type));
+						}
+					}
 				}
 			})
 		} else {
-			if (!(arg0.type === cElementType.number)) {
-				return new cError(cErrorType.wrong_value_type)
+			if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+				arg0 = arg0.getValue();
 			}
+
+			if (arg0.type === cElementType.bool) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			arg0 = arg0.tocNumber();
+			if (!(arg0.type === cElementType.number)) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
 			_values[0] = arg0;
 		}
 
@@ -6061,58 +6087,84 @@ function (window, undefined) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 			arg1.foreach2(function (c) {
-				if (c instanceof cNumber) {
-					_dates.push(c);
-				} else if (c instanceof cEmpty) {
-					_dates.push(c.tocNumber());
-				} else {
-					_dates.push(new cError(cErrorType.wrong_value_type));
+				if (c) {
+					if (c.type === cElementType.bool) {
+						_dates.push(new cError(cErrorType.wrong_value_type));
+					} else {
+						c = c.tocNumber();
+						if (c.type === cElementType.number) {
+							_dates.push(c);
+						} else {
+							_dates.push(new cError(cErrorType.wrong_value_type));
+						}
+					}
 				}
 			})
 		} else if (arg1.type === cElementType.array) {
 			arg1.foreach(function (c) {
-				if (c instanceof cNumber) {
-					_dates.push(c);
-				} else if (c instanceof cEmpty) {
-					_dates.push(c.tocNumber());
-				} else {
-					_dates.push(new cError(cErrorType.wrong_value_type));
+				if (c) {
+					if (c.type === cElementType.bool) {
+						_dates.push(new cError(cErrorType.wrong_value_type));
+					} else {
+						c = c.tocNumber();
+						if (c.type === cElementType.number) {
+							_dates.push(c);
+						} else {
+							_dates.push(new cError(cErrorType.wrong_value_type));
+						}
+					}
 				}
 			})
 		} else {
+			if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+				arg1 = arg1.getValue();
+			}
+
+			if (arg1.type === cElementType.bool) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			arg1 = arg1.tocNumber();
 			if (!(arg1.type === cElementType.number)) {
-				return new cError(cErrorType.wrong_value_type)
+				return new cError(cErrorType.wrong_value_type);
 			}
 			_dates[0] = arg1;
 		}
 
-		if (arg2 instanceof AscCommonExcel.cRef || arg2 instanceof AscCommonExcel.cRef3D) {
+		if (arg2.type === cElementType.cell || arg2.type === cElementType.cell3D) {
 			arg2 = arg2.getValue();
-			if (!(arg2 instanceof cNumber)) {
+			if (!(arg2.type === cElementType.number)) {
 				return new cError(cErrorType.wrong_value_type);
 			}
-		} else if (arg2 instanceof cArea || arg2 instanceof cArea3D) {
+		} else if (arg2.type === cElementType.cellsRange || arg2.type === cElementType.cellsRange3D) {
 			arg2 = arg2.cross(arguments[1]);
-			if (!(arg2 instanceof cNumber)) {
+			if (!(arg2.type === cElementType.number)) {
 				return new cError(cErrorType.wrong_value_type);
 			}
-		} else if (arg2 instanceof cArray) {
+		} else if (arg2.type === cElementType.array) {
 			arg2 = arg2.getElement(0);
-			if (!(arg2 instanceof cNumber)) {
+			if (!(arg2.type === cElementType.number)) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 		}
 
-		arg2 = arg2.tocNumber();
+		if (arg2.type === cElementType.cell || arg2.type === cElementType.cell3D) {
+			arg2 = arg2.getValue();
+		}
 
-		if (arg2 instanceof cError) {
+		if (arg2.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (arg2.type === cElementType.error) {
 			return arg2;
 		}
 
-		let res = xirr2(_values, _dates, arg2);
-		res.numFormat = 9;
-		return res;
+		arg2 = arg2.tocNumber();
+		if (!(arg2.type === cElementType.number)) {
+			return new cError(cErrorType.wrong_value_type);
+		}
 
+		let res = xirr2(_values, _dates, arg2);
+		return res;
 	};
 
 	/**
