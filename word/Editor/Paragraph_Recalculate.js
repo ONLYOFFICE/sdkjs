@@ -2131,13 +2131,22 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 					case AscCommon.align_Distributed:
 					{
 						// Thai Distributed alignment:
-						// Distribute equal letter-spacing across base characters only
-						// (excluding combining marks like Thai vowels above/below).
-						// Applies to every line including the last line.
+						// Equal letter-spacing across all base characters (like CSS letter-spacing).
+						// Last line of paragraph is left-aligned.
 						X = Range.X;
-						var nBaseLetters = PRSC.BaseLetters > 0 ? PRSC.BaseLetters : PRSC.Letters;
-						if (nBaseLetters > 1)
-							JustifyWord = (RangeWidth - Range.W) / (nBaseLetters - 1);
+
+						if (PRSC.ParaEnd)
+						{
+							// Last line of paragraph: left-align, no distribution
+							JustifyWord  = 0;
+							JustifySpace = 0;
+						}
+						else
+						{
+							var nBaseLetters = PRSC.BaseLetters > 0 ? PRSC.BaseLetters : PRSC.Letters;
+							if (nBaseLetters > 1)
+								JustifyWord = (RangeWidth - Range.W) / (nBaseLetters - 1);
+						}
 						break;
 					}
 					default:
@@ -2666,7 +2675,7 @@ Paragraph.prototype.ShapeText = function()
  */
 Paragraph.prototype.SegmentThaiWords = function()
 {
-	if (typeof Intl === 'undefined' || typeof Intl.Segmenter === 'undefined')
+	if (typeof Intl === 'undefined' || typeof Intl['Segmenter'] === 'undefined')
 		return;
 
 	for (var i = 0; i < this.Content.length; i++)
@@ -2719,13 +2728,15 @@ Paragraph.prototype.SegmentThaiWords = function()
 
 Paragraph.prototype.private_ApplyThaiSegmentation = function(run, thaiText, positions)
 {
-	var segmenter = new Intl.Segmenter('th-TH', { granularity: 'word' });
-	var segments = segmenter.segment(thaiText);
+	var segmenter = new Intl['Segmenter']('th-TH', { 'granularity': 'word' });
+	var segments = Array.from(segmenter['segment'](thaiText));
 
 	var charIndex = 0;
-	for (var seg of segments)
+	for (var i = 0; i < segments.length; i++)
 	{
-		var segEnd = charIndex + seg.segment.length - 1;
+		var seg = segments[i];
+		var segText = seg['segment'];
+		var segEnd = charIndex + segText.length - 1;
 
 		// Set SpaceAfter on the last character of each word segment
 		// (but not the very last segment of the Thai sequence)
@@ -2736,7 +2747,7 @@ Paragraph.prototype.private_ApplyThaiSegmentation = function(run, thaiText, posi
 				run.Content[pos].SetSpaceAfter(true);
 		}
 
-		charIndex += seg.segment.length;
+		charIndex += segText.length;
 	}
 };
 Paragraph.prototype.HyphenateText = function()

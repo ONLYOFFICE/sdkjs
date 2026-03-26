@@ -5496,7 +5496,6 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                 else if (PRSA.IsDistributed && Item.IsCombiningMark && Item.IsCombiningMark())
                 {
                     // Thai Distributed: skip combining marks (vowels above/below, tone marks)
-                    // to keep them attached to their base character
                     WidthVisible = Item.GetWidth();
                 }
                 else
