@@ -847,6 +847,127 @@
         func.bind(oApiDoc).apply(null, new Array(aArgsNamesToDelete.length - 1).concat(oApiConsole, aArgsPdfApi));
     }
     
+	function extractArguments(str) {
+		const start = str.indexOf('(');
+		if (start === -1) {
+			return [];
+		}
+
+		let end = -1;
+		let depth = 0;
+		let quote = null;
+		let escaped = false;
+
+		for (let i = start; i < str.length; i++) {
+			const ch = str[i];
+
+			if (quote) {
+				if (escaped) {
+					escaped = false;
+				} else if (ch === '\\') {
+					escaped = true;
+				} else if (ch === quote) {
+					quote = null;
+				}
+				continue;
+			}
+
+			if (ch === '"' || ch === "'") {
+				quote = ch;
+				continue;
+			}
+
+			if (ch === '(') depth++;
+			if (ch === ')') depth--;
+
+			if (depth === 0) {
+				end = i;
+				break;
+			}
+		}
+
+		if (end === -1) {
+			return [];
+		}
+
+		const argsString = str.slice(start + 1, end);
+		const args = splitTopLevel(argsString);
+
+		return args.map(parseArgument);
+	}
+
+	function splitTopLevel(str) {
+		const result = [];
+		let current = '';
+		let quote = null;
+		let escaped = false;
+		let paren = 0;
+		let bracket = 0;
+		let brace = 0;
+
+		for (let i = 0; i < str.length; i++) {
+			const ch = str[i];
+
+			if (quote) {
+				current += ch;
+
+				if (escaped) {
+					escaped = false;
+				} else if (ch === '\\') {
+					escaped = true;
+				} else if (ch === quote) {
+					quote = null;
+				}
+				continue;
+			}
+
+			if (ch === '"' || ch === "'") {
+				quote = ch;
+				current += ch;
+				continue;
+			}
+
+			if (ch === '(') paren++;
+			else if (ch === ')') paren--;
+			else if (ch === '[') bracket++;
+			else if (ch === ']') bracket--;
+			else if (ch === '{') brace++;
+			else if (ch === '}') brace--;
+
+			if (ch === ',' && paren === 0 && bracket === 0 && brace === 0) {
+				result.push(current.trim());
+				current = '';
+				continue;
+			}
+
+			current += ch;
+		}
+
+		if (current.trim() !== '') {
+			result.push(current.trim());
+		}
+
+		return result;
+	}
+
+	function parseArgument(arg) {
+		if (arg === 'true') return true;
+		if (arg === 'false') return false;
+		if (arg === 'null') return null;
+
+		if (arg !== '' && !Number.isNaN(Number(arg))) {
+			return Number(arg);
+		}
+
+		if (
+			(arg.startsWith('"') && arg.endsWith('"')) ||
+			(arg.startsWith("'") && arg.endsWith("'"))
+		) {
+			return arg.slice(1, -1);
+		}
+
+		return arg;
+	}
 
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
@@ -859,6 +980,7 @@
     window["AscPDF"].CActionHideShow    = CActionHideShow;
     window["AscPDF"].CActionReset       = CActionReset;
     window["AscPDF"].CActionRunScript   = CActionRunScript;
+    window["AscPDF"].extractArguments   = extractArguments;
     
     window["AscPDF"].ACTIONS_TYPES          = ACTIONS_TYPES;
     window["AscPDF"].PDF_TRIGGERS_TYPES   = PDF_TRIGGERS_TYPES;

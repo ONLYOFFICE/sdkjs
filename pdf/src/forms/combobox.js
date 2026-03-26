@@ -846,8 +846,6 @@
     CComboBoxField.prototype.GetDateFormat          = AscPDF.CTextField.prototype.GetDateFormat;
     CComboBoxField.prototype.GetFormatType          = AscPDF.CTextField.prototype.GetFormatType;
     CComboBoxField.prototype.GetFormatArgs          = AscPDF.CTextField.prototype.GetFormatArgs;
-    CComboBoxField.prototype.GetValidateType        = AscPDF.CTextField.prototype.GetValidateType;
-    CComboBoxField.prototype.GetValidateArgs        = AscPDF.CTextField.prototype.GetValidateArgs;
     CComboBoxField.prototype.SetPlaceholder         = AscPDF.CTextField.prototype.SetPlaceholder;
     CComboBoxField.prototype.GetPlaceholder         = AscPDF.CTextField.prototype.GetPlaceholder;
     CComboBoxField.prototype.SetRegularExp          = AscPDF.CTextField.prototype.SetRegularExp;

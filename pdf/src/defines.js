@@ -202,29 +202,29 @@
     NegativeStyle["PARENS_BLACK"] = NegativeStyle.PARENS_BLACK;
     NegativeStyle["PARENS_RED"] = NegativeStyle.PARENS_RED;
 
+    const CalculateOperation = {
+        sum:        0,
+        product:    1,
+        average:    2,
+        min:        3,
+        max:        4
+    }
+
+    CalculateOperation["sum"]        = CalculateOperation.sum;
+    CalculateOperation["product"]    = CalculateOperation.product;
+    CalculateOperation["average"]    = CalculateOperation.average;
+    CalculateOperation["min"]        = CalculateOperation.min;
+    CalculateOperation["max"]        = CalculateOperation.max;
+
     const CalculateType = {
-        SUM:        0,
-        PRODUCT:    1,
-        AVERAGE:    2,
-        MIN:        3,
-        MAX:        4
+        common:     0,
+        simpleJs:   1,
+        js:         2
     }
 
-    CalculateType["SUM"]        = CalculateType.SUM;
-    CalculateType["PRODUCT"]    = CalculateType.PRODUCT;
-    CalculateType["AVERAGE"]    = CalculateType.AVERAGE;
-    CalculateType["MIN"]        = CalculateType.MIN;
-    CalculateType["MAX"]        = CalculateType.MAX;
-
-    const ValidateType = {
-        NONE:   -1,
-        NUMBER: 0,
-        CUSTOM: 1
-    }
-
-    ValidateType["NONE"]      = ValidateType.NONE;
-    ValidateType["NUMBER"]    = ValidateType.NUMBER;
-    ValidateType["CUSTOM"]    = ValidateType.CUSTOM;
+    CalculateType["common"]		= CalculateType.common;
+    CalculateType["simpleJs"]	= CalculateType.simpleJs;
+    CalculateType["js"]			= CalculateType.js;
 
     Object.freeze(FIELD_TYPES);
 
@@ -442,8 +442,8 @@
     asc["SeparatorStyle"]               = asc.SeparatorStyle             = SeparatorStyle;
     asc["TimeFormatType"]               = asc.TimeFormatType             = TimeFormatType;
     asc["NegativeStyle"]                = asc.NegativeStyle              = NegativeStyle;
-    asc["CalculateType"]                = asc.CalculateType              = CalculateType;
-    asc["ValidateType"]                 = asc.ValidateType               = ValidateType;
+    asc["CalculateOperation"]           = asc.CalculateOperation         = CalculateOperation;
+    asc["CalculateType"]           		= asc.CalculateType              = CalculateType;
     asc["CHECKBOX_STYLES"]              = asc.CHECKBOX_STYLES            = CHECKBOX_STYLES;
     asc["BORDER_TYPES"]                 = asc.BORDER_TYPES               = BORDER_TYPES;
     asc["ANNOT_COMPLEX_BORDER_TYPES"]   = asc.ANNOT_COMPLEX_BORDER_TYPES = ANNOT_COMPLEX_BORDER_TYPES;
@@ -454,7 +454,7 @@
     asc["DIGITS_TYPES"]                 = asc.DIGITS_TYPES               = DIGITS_TYPES;
     asc["USER_PERMISSIONS"]             = asc.USER_PERMISSIONS           = USER_PERMISSIONS;
     asc["GOTO_TYPES"]                   = asc.GOTO_TYPES                 = GOTO_TYPES;
-    asc["PRINT_CONTENT_TYPES"]         = asc.PRINT_CONTENT_TYPES        = PRINT_CONTENT_TYPES;
+    asc["PRINT_CONTENT_TYPES"]          = asc.PRINT_CONTENT_TYPES        = PRINT_CONTENT_TYPES;
     asc["TEXT_ICONS_TYPES"]             = asc.TEXT_ICONS_TYPES           = TEXT_ICONS_TYPES;
     asc["LINE_END_TYPE"]                = asc.LINE_END_TYPE              = LINE_END_TYPE;
     asc.CommandType                     = CommandType;

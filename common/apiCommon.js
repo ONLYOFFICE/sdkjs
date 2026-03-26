@@ -4123,7 +4123,6 @@ function (window, undefined) {
 	function asc_CTextFieldProperty() {
 		// format
 		this.format				= null;
-		this.validate			= null;
 
 		// text
 		this.defaultValue		= undefined;
@@ -4189,12 +4188,6 @@ function (window, undefined) {
 	asc_CTextFieldProperty.prototype.asc_putFormat = function (v) {
 		this.format = v;
 	};
-	asc_CTextFieldProperty.prototype.asc_getValidate = function () {
-		return this.validate;
-	};
-	asc_CTextFieldProperty.prototype.asc_putValidate = function (v) {
-		this.validate = v;
-	};
 	asc_CTextFieldProperty.prototype.compare = function (pr) {
 		if (this.defaultValue !== pr.defaultValue) {
 			this.defaultValue = null;
@@ -4217,20 +4210,6 @@ function (window, undefined) {
 		if (this.autoFit !== pr.autoFit) {
 			this.autoFit = null;
 		}
-
-		if (this.format && pr.format && this.format.type === pr.format.type) {
-			this.format.compare(pr.format);
-		}
-		else {
-			this.format = null;
-		}
-		
-		if (this.validate && pr.validate && this.validate.type === pr.validate.type) {
-			this.validate.compare(pr.validate);
-		}
-		else {
-			this.validate = null;
-		}
 	};
 
 	//////////////////////////////////////////////////////////////////
@@ -4238,9 +4217,6 @@ function (window, undefined) {
 	//////////////////////////////////////////////////////////////////
 	function asc_CComboboxFieldProperty() {
 		// format
-		this.format				= null;
-		this.validate			= null;
-
 		this.options			= [];
 		this.commitOnSelChange	= undefined;
 		this.editable			= undefined;
@@ -4277,33 +4253,9 @@ function (window, undefined) {
 	asc_CComboboxFieldProperty.prototype.asc_putAutoFit = function (v) {
 		this.autoFit = v;
 	};
-	asc_CComboboxFieldProperty.prototype.asc_getFormat = function () {
-		return this.format;
-	};
-	asc_CComboboxFieldProperty.prototype.asc_putFormat = function (v) {
-		this.format = v;
-	};
-	asc_CComboboxFieldProperty.prototype.asc_getValidate = function () {
-		return this.validate;
-	};
-	asc_CComboboxFieldProperty.prototype.asc_putValidate = function (v) {
-		this.validate = v;
-	};
 	asc_CComboboxFieldProperty.prototype.compare = function (pr) {
-		for (let i = 0; i < this.options.length; i++) {
-			let a = this.options[i];
-			let b = pr.options[i];
-
-			if (Array.isArray(a)) {
-				if (!Array.isArray(b) || a[0] !== b[0] || a[1] !== b[1]) {
-					this.options = [];
-					break;
-				}
-			}
-			else if (a !== b) {
-				this.options = [];
-				break;
-			}
+		if (!AscCommon.isEqualSortedArrays(this.options, pr.options)) {
+			this.options = [];
 		}
 
 		if (this.commitOnSelChange !== pr.commitOnSelChange) {
@@ -4347,20 +4299,8 @@ function (window, undefined) {
 		this.multipleSelection = v;
 	};
 	asc_CListboxFieldProperty.prototype.compare = function (pr) {
-		for (let i = 0; i < this.options.length; i++) {
-			let a = this.options[i];
-			let b = pr.options[i];
-
-			if (Array.isArray(a)) {
-				if (!Array.isArray(b) || a[0] !== b[0] || a[1] !== b[1]) {
-					this.options = [];
-					break;
-				}
-			}
-			else if (a !== b) {
-				this.options = [];
-				break;
-			}
+		if (!AscCommon.isEqualSortedArrays(this.options, pr.options)) {
+			this.options = [];
 		}
 
 		if (this.commitOnSelChange !== pr.commitOnSelChange) {
@@ -4760,6 +4700,62 @@ function (window, undefined) {
 	//////////////////////////////////////////////////////////////////
 	///// Number format
 	//////////////////////////////////////////////////////////////////
+	function asc_CFieldActionsProperty() {
+		this.mouseUp	= undefined;
+		this.mouseDown	= undefined;
+		this.mouseEnter	= undefined;
+		this.mouseExit	= undefined;
+		this.onFocus	= undefined;
+		this.onBlur		= undefined;
+
+		this.format		= null;
+		this.keystroke	= null;
+		this.validate	= null;
+		this.calculate	= null;
+	};
+
+	asc_CFieldActionsProperty.prototype.asc_getFormat = function () {
+		return this.format;
+	};
+	asc_CFieldActionsProperty.prototype.asc_putFormat = function (v) {
+		this.format = v;
+	};
+	asc_CFieldActionsProperty.prototype.asc_getKeystroke = function () {
+		return this.keystroke;
+	};
+	asc_CFieldActionsProperty.prototype.asc_putKeystroke = function (v) {
+		this.keystroke = v;
+	};
+	asc_CFieldActionsProperty.prototype.asc_getValidate = function () {
+		return this.validate;
+	};
+	asc_CFieldActionsProperty.prototype.asc_putValidate = function (v) {
+		this.validate = v;
+	};
+	asc_CFieldActionsProperty.prototype.asc_getCalculate = function () {
+		return this.calculate;
+	};
+	asc_CFieldActionsProperty.prototype.asc_putCalculate = function (v) {
+		this.calculate = v;
+	};
+	asc_CFieldActionsProperty.prototype.compare = function (pr) {
+		if (!this.format.isEqual(pr.format)) {
+			this.format = null;
+		}
+		if (!this.keystroke.isEqual(pr.keystroke)) {
+			this.keystroke = null;
+		}
+		if (!this.validate.isEqual(pr.validate)) {
+			this.validate = null;
+		}
+		if (!this.calculate.isEqual(pr.calculate)) {
+			this.calculate = null;
+		}
+	};
+	
+	//////////////////////////////////////////////////////////////////
+	///// Number format
+	//////////////////////////////////////////////////////////////////
 	function asc_CFieldNumberFormatProperty() {
 		this.type				= AscPDF.FormatType.NUMBER;
 		this.decimals			= undefined;
@@ -4802,23 +4798,50 @@ function (window, undefined) {
 	asc_CFieldNumberFormatProperty.prototype.asc_putCurrencyPrepend = function (v) {
 		this.currencyPrepend = v;
 	};
-	asc_CFieldNumberFormatProperty.prototype.compare = function (pr) {
+	asc_CFieldNumberFormatProperty.prototype.isEqual = function (pr) {
+		if (!pr) {
+			return false;
+		}
+		
 		if (this.decimals !== pr.decimals) {
-			this.decimals = null;
+			return false;
 		}
 		if (this.sepStyle !== pr.sepStyle) {
-			this.sepStyle = null;
+			return false;
 		}
 		if (this.negStyle !== pr.negStyle) {
-			this.negStyle = null;
+			return false;
 		}
 		if (this.currency !== pr.currency) {
-			this.currency = null;
+			return false;
 		}
 		if (this.currencyPrepend !== pr.currencyPrepend) {
-			this.currencyPrepend = null;
+			return false;
 		}
+
+		return true;
 	};
+	asc_CFieldNumberFormatProperty.prototype.getJsonActionInfo = function () {
+		const decimals = this.decimals;
+		const sepStyle = this.sepStyle;
+		const negStyle = this.negStyle;
+		const currStyle = 0;
+		const currency = this.currency;
+		const currencyPrepend = this.currencyPrepend;
+
+		return [{
+			S: 14,
+			JS: 'AFNumber_Format(' +
+				decimals + ', ' +
+				sepStyle + ', ' +
+				negStyle + ', ' +
+				currStyle + ', ' +
+				JSON.stringify(currency) + ', ' +
+				currencyPrepend +
+			');'
+		}];
+	};
+	
 	//////////////////////////////////////////////////////////////////
 	///// Percentage format
 	//////////////////////////////////////////////////////////////////
@@ -4843,13 +4866,31 @@ function (window, undefined) {
 	asc_CFieldPercentageFormatProperty.prototype.asc_putSepStyle = function (v) {
 		this.sepStyle = v;
 	};
-	asc_CFieldPercentageFormatProperty.prototype.compare = function (pr) {
+	asc_CFieldPercentageFormatProperty.prototype.isEqual = function (pr) {
+		if (!pr) {
+			return false;
+		}
+
 		if (this.decimals !== pr.decimals) {
-			this.decimals = null;
+			return false;
 		}
 		if (this.sepStyle !== pr.sepStyle) {
-			this.sepStyle = null;
+			return false;
 		}
+
+		return true;
+	};
+	asc_CFieldPercentageFormatProperty.prototype.getJsonActionInfo = function () {
+		const decimals = this.decimals;
+		const sepStyle = this.sepStyle;
+
+		return [{
+			S: 14,
+			JS: 'AFPercent_Format(' +
+				decimals + ', ' +
+				sepStyle +
+			');'
+		}];
 	};
 
 	//////////////////////////////////////////////////////////////////
@@ -4869,12 +4910,25 @@ function (window, undefined) {
 	asc_CFieldDateFormatProperty.prototype.asc_putFormat = function (v) {
 		this.format = v;
 	};
-	asc_CFieldDateFormatProperty.prototype.compare = function (pr) {
-		if (this.format !== pr.format) {
-			this.format = null;
+	asc_CFieldDateFormatProperty.prototype.isEqual = function (pr) {
+		if (!pr) {
+			return false;
 		}
-	};
 
+		if (this.format !== pr.format) {
+			return false;
+		}
+
+		return true;
+	};
+	asc_CFieldDateFormatProperty.prototype.getJsonActionInfo = function () {
+		const format = this.format;
+
+		return [{
+			S: 14,
+			JS: 'AFDate_Format(' + JSON.stringify(format) + ');'
+		}];
+	};
 	//////////////////////////////////////////////////////////////////
 	///// Time format
 	//////////////////////////////////////////////////////////////////
@@ -4892,10 +4946,24 @@ function (window, undefined) {
 	asc_CFieldTimeFormatProperty.prototype.asc_putFormat = function (v) {
 		this.format = v;
 	};
-	asc_CFieldTimeFormatProperty.prototype.compare = function (pr) {
-		if (this.format !== pr.format) {
-			this.format = null;
+	asc_CFieldTimeFormatProperty.prototype.isEqual = function (pr) {
+		if (!pr) {
+			return false;
 		}
+
+		if (this.format !== pr.format) {
+			return false;
+		}
+
+		return true;
+	};
+	asc_CFieldTimeFormatProperty.prototype.getJsonActionInfo = function () {
+		const format = this.format;
+
+		return [{
+			S: 14,
+			JS: 'AFTime_Format(' + format + ');'
+		}];
 	};
 
 	//////////////////////////////////////////////////////////////////
@@ -4922,13 +4990,19 @@ function (window, undefined) {
 	asc_CFieldSpecialFormatProperty.prototype.asc_putMask = function (v) {
 		this.mask = v;
 	};
-	asc_CFieldSpecialFormatProperty.prototype.compare = function (pr) {
+	asc_CFieldSpecialFormatProperty.prototype.isEqual = function (pr) {
+		if (!pr) {
+			return false;
+		}
+
 		if (this.format !== pr.format) {
-			this.format = null;
+			return false;
 		}
 		if (this.mask !== pr.mask) {
-			this.mask = null;
+			return false;
 		}
+
+		return true;
 	};
 
 	//////////////////////////////////////////////////////////////////
@@ -4948,44 +5022,69 @@ function (window, undefined) {
 	asc_CFieldRegularFormatProperty.prototype.asc_putRegExp = function (v) {
 		this.regExp = v;
 	};
-	asc_CFieldSpecialFormatProperty.prototype.compare = function (pr) {
-		if (this.regExp !== pr.regExp) {
-			this.regExp = null;
+	asc_CFieldSpecialFormatProperty.prototype.isEqual = function (pr) {
+		if (!pr) {
+			return false;
 		}
+
+		if (this.regExp !== pr.regExp) {
+			return false;
+		}
+
+		return true;
 	};
 
 	//////////////////////////////////////////////////////////////////
-	///// Validate format
+	///// Custom format
 	//////////////////////////////////////////////////////////////////
-	function asc_CFieldValidateProperty() {
-		this.type			= undefined;
-		this.greaterThen	= undefined;
-		this.lessThen		= undefined;
+	function asc_CFieldCustomFormatProperty() {
+		this.type		= AscPDF.FormatType.CUSTOM;
+		this.script		= undefined;
 	};
 
-	asc_CFieldValidateProperty.prototype.asc_getType = function () {
+	asc_CFieldCustomFormatProperty.prototype.asc_getType = function () {
 		return this.type;
 	};
-	asc_CFieldValidateProperty.prototype.asc_putType = function (v) {
-		this.type = v;
+	asc_CFieldCustomFormatProperty.prototype.asc_getScript = function () {
+		return this.script;
 	};
-	asc_CFieldValidateProperty.prototype.asc_getBeGreaterThen = function () {
-		return this.bGreaterThen;
+	asc_CFieldCustomFormatProperty.prototype.asc_putScript = function (v) {
+		this.script = v;
 	};
-	asc_CFieldValidateProperty.prototype.asc_putBeGreaterThen = function (v) {
-		this.bGreaterThen = v;
+	asc_CFieldCustomFormatProperty.prototype.isEqual = function (pr) {
+		if (!pr) {
+			return false;
+		}
+
+		if (this.script !== pr.script) {
+			return false;
+		}
+
+		return true;
 	};
+	asc_CFieldCustomFormatProperty.prototype.getJsonActionInfo = function () {
+		const script = this.script;
+
+		return [{
+			S: 14,
+			JS: script
+		}];
+	};
+
+	//////////////////////////////////////////////////////////////////
+	///// Validate
+	//////////////////////////////////////////////////////////////////
+	function asc_CFieldValidateProperty() {
+		this.greaterThen	= undefined;
+		this.lessThen		= undefined;
+		this.script			= undefined;
+	};
+
 	asc_CFieldValidateProperty.prototype.asc_getGreaterThen = function () {
 		return this.greaterThen;
 	};
 	asc_CFieldValidateProperty.prototype.asc_putGreaterThen = function (v) {
 		this.greaterThen = v;
-	};
-	asc_CFieldValidateProperty.prototype.asc_getBeLessThen = function () {
-		return this.bLessThen;
-	};
-	asc_CFieldValidateProperty.prototype.asc_putBeLessThen = function (v) {
-		this.bLessThen = v;
 	};
 	asc_CFieldValidateProperty.prototype.asc_getLessThen = function () {
 		return this.lessThen;
@@ -4993,13 +5092,114 @@ function (window, undefined) {
 	asc_CFieldValidateProperty.prototype.asc_putLessThen = function (v) {
 		this.lessThen = v;
 	};
-	asc_CFieldSpecialFormatProperty.prototype.compare = function (pr) {
+	asc_CFieldValidateProperty.prototype.asc_getScript = function () {
+		return this.script;
+	};
+	asc_CFieldValidateProperty.prototype.asc_putScript = function (v) {
+		this.script = v;
+	};
+	asc_CFieldValidateProperty.prototype.isEqual = function (pr) {
+		if (!pr) {
+			return false;
+		}
+
 		if (this.greaterThen !== pr.greaterThen) {
-			this.greaterThen = null;
+			return false;
 		}
 		if (this.lessThen !== pr.lessThen) {
-			this.lessThen = null;
+			return false;
 		}
+		if (this.script !== pr.script) {
+			return false;
+		}
+
+		return true;
+	};
+	asc_CFieldValidateProperty.prototype.getJsonActionInfo = function () {
+		let script = this.script;
+
+		if (!script) {
+			const hasGreater = this.greaterThen !== undefined && this.greaterThen !== null;
+			const hasLess = this.lessThen !== undefined && this.lessThen !== null;
+
+			const greater = hasGreater ? this.greaterThen : 0;
+			const less = hasLess ? this.lessThen : 0;
+
+			script = 'AFRange_Validate(' +
+				hasGreater + ', ' +
+				greater + ', ' +
+				hasLess + ', ' +
+				less +
+			');';
+		}
+
+		return [{
+			S: 14,
+			JS: script
+		}];
+	};
+
+	//////////////////////////////////////////////////////////////////
+	///// Calculate
+	//////////////////////////////////////////////////////////////////
+	function asc_CFieldCalculateProperty() {
+		this.type			= undefined;
+		this.names			= undefined;
+		this.script			= undefined;
+	};
+
+	asc_CFieldCalculateProperty.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CFieldCalculateProperty.prototype.asc_putType = function (v) {
+		this.type = v;
+	};
+	asc_CFieldCalculateProperty.prototype.asc_getNames = function () {
+		return this.names;
+	};
+	asc_CFieldCalculateProperty.prototype.asc_putNames = function (v) {
+		this.names = v;
+	};
+	asc_CFieldCalculateProperty.prototype.asc_getScript = function () {
+		return this.script;
+	};
+	asc_CFieldCalculateProperty.prototype.asc_putScript = function (v) {
+		this.script = v;
+	};
+	asc_CFieldCalculateProperty.prototype.isEqual = function (pr) {
+		if (!pr) {
+			return false;
+		}
+
+		if (this.type != pr.type) {
+			return false;
+		}
+		if (AscCommon.isEqualSortedArrays(this.names, pr.names)) {
+			return false;
+		}
+		if (this.script !== pr.script) {
+			return false;
+		}
+
+		return true;
+	};
+	asc_CFieldCalculateProperty.prototype.getJsonActionInfo = function () {
+		let script = this.script;
+
+		if (!script) {
+			const type = this.type;
+			const names = this.names;
+
+			script = 'AFSimple_Calculate(' +
+				JSON.stringify(type) + ', ' +
+				JSON.stringify(names) +
+			');';
+		}
+
+		return [{
+			S: 14,
+			JS: script
+		}];
 	};
 
 	/** @constructor */
@@ -8983,10 +9183,6 @@ function (window, undefined) {
 	prot["asc_putAutoFit"]				= prot.asc_putAutoFit;
 	prot["asc_getPassword"]				= prot.asc_getPassword;
 	prot["asc_putPassword"]				= prot.asc_putPassword;
-	prot["asc_getFormat"]				= prot.asc_getFormat;
-	prot["asc_putFormat"]				= prot.asc_putFormat;
-	prot["asc_getValidate"]				= prot.asc_getValidate;
-	prot["asc_putValidate"]				= prot.asc_putValidate;
 
 	window["Asc"]["asc_CComboboxFieldProperty"] = window["Asc"].asc_CComboboxFieldProperty = asc_CComboboxFieldProperty;
 	prot = asc_CComboboxFieldProperty.prototype;
@@ -9000,10 +9196,6 @@ function (window, undefined) {
 	prot["asc_putPlaceholder"]			= prot.asc_putPlaceholder;
 	prot["asc_getAutoFit"]				= prot.asc_getAutoFit;
 	prot["asc_putAutoFit"]				= prot.asc_putAutoFit;
-	prot["asc_getFormat"]				= prot.asc_getFormat;
-	prot["asc_putFormat"]				= prot.asc_putFormat;
-	prot["asc_getValidate"]				= prot.asc_getValidate;
-	prot["asc_putValidate"]				= prot.asc_putValidate;
 
 	window["Asc"]["asc_CListboxFieldProperty"] = window["Asc"].asc_CListboxFieldProperty = asc_CListboxFieldProperty;
 	prot = asc_CListboxFieldProperty.prototype;
@@ -9065,6 +9257,17 @@ function (window, undefined) {
 	prot["put_ImageUrl"]		= prot.put_ImageUrl;
 	prot["showFileDialog"]		= prot.showFileDialog;
 
+	window["Asc"]["asc_CFieldActionsProperty"] = window["Asc"].asc_CFieldActionsProperty = asc_CFieldActionsProperty;
+	prot = asc_CFieldActionsProperty.prototype;
+	prot["asc_getFormat"]		= prot.asc_getFormat;
+	prot["asc_putFormat"]		= prot.asc_putFormat;
+	prot["asc_getKeystroke"]	= prot.asc_getKeystroke;
+	prot["asc_putKeystroke"]	= prot.asc_putKeystroke;
+	prot["asc_getValidate"]		= prot.asc_getValidate;
+	prot["asc_putValidate"]		= prot.asc_putValidate;
+	prot["asc_getCalculate"]	= prot.asc_getCalculate;
+	prot["asc_putCalculate"]	= prot.asc_putCalculate;
+
 	window["Asc"]["asc_CFieldNumberFormatProperty"] = window["Asc"].asc_CFieldNumberFormatProperty = asc_CFieldNumberFormatProperty;
 	prot = asc_CFieldNumberFormatProperty.prototype;
 	prot["asc_getType"]				= prot.asc_getType;
@@ -9114,18 +9317,29 @@ function (window, undefined) {
 	prot["asc_getRegExp"]			= prot.asc_getRegExp;
 	prot["asc_putRegExp"]			= prot.asc_putRegExp;
 
+	window["Asc"]["asc_CFieldCustomFormatProperty"] = window["Asc"].asc_CFieldCustomFormatProperty = asc_CFieldCustomFormatProperty;
+	prot = asc_CFieldCustomFormatProperty.prototype;
+	prot["asc_getType"]				= prot.asc_getType;
+	prot["asc_getScript"]			= prot.asc_getScript;
+	prot["asc_putScript"]			= prot.asc_putScript;
+
 	window["Asc"]["asc_CFieldValidateProperty"] = window["Asc"].asc_CFieldValidateProperty = asc_CFieldValidateProperty;
 	prot = asc_CFieldValidateProperty.prototype;
-	prot["asc_getType"]				= prot.asc_getType;
-	prot["asc_putType"]				= prot.asc_putType;
-	prot["asc_getBeGreaterThen"]	= prot.asc_getBeGreaterThen;
-	prot["asc_putBeGreaterThen"]	= prot.asc_putBeGreaterThen;
 	prot["asc_getGreaterThen"]		= prot.asc_getGreaterThen;
 	prot["asc_putGreaterThen"]		= prot.asc_putGreaterThen;
-	prot["asc_getBeLessThen"]		= prot.asc_getBeLessThen;
-	prot["asc_putBeLessThen"]		= prot.asc_putBeLessThen;
 	prot["asc_getLessThen"]			= prot.asc_getLessThen;
 	prot["asc_putLessThen"]			= prot.asc_putLessThen;
+	prot["asc_getScript"]			= prot.asc_getScript;
+	prot["asc_putScript"]			= prot.asc_putScript;
+
+	window["Asc"]["asc_CFieldCalculateProperty"] = window["Asc"].asc_CFieldCalculateProperty = asc_CFieldCalculateProperty;
+	prot = asc_CFieldCalculateProperty.prototype;
+	prot["asc_getType"]			= prot.asc_getType;
+	prot["asc_putType"]			= prot.asc_putType;
+	prot["asc_getNames"]		= prot.asc_getNames;
+	prot["asc_putNames"]		= prot.asc_putNames;
+	prot["asc_getScript"]		= prot.asc_getScript;
+	prot["asc_putScript"]		= prot.asc_putScript;
 
 	window["Asc"]["asc_CPdfPageProperty"] = window["Asc"].asc_CPdfPageProperty = asc_CPdfPageProperty;
 	prot = asc_CPdfPageProperty.prototype;

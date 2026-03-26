@@ -1721,6 +1721,34 @@
 	PDFEditorApi.prototype.asc_getFieldDateTimeFormatExample = function(nFormat) {
 		return AscPDF.FormatDateValue(new Date().getTime(), nFormat);
 	};
+	PDFEditorApi.prototype.SetFieldActions = function(oActions) {
+		let oDoc = this.getPDFDoc();
+		let oField = oDoc.activeForm;
+		let oController = oDoc.GetController();
+		if (!oField) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			let res = false;
+
+			oController.selectedObjects.forEach(function(shape) {
+				let oField = shape.GetEditField();
+				if (false == [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oField.GetType())) {
+					return;
+				}
+
+				oField.ClearFormat();
+				if (oField.IsCanCommit()) {
+					oField.Commit();
+				}
+
+				res = true;
+			});
+
+			return res;
+		}, AscDFH.historydescription_Pdf_ChangeField, this);
+	};
 	PDFEditorApi.prototype.ClearFieldFormat = function() {
 		let oDoc = this.getPDFDoc();
 		let oField = oDoc.activeForm;
@@ -2088,19 +2116,19 @@
 
 				let sCalcFunc = 'AFSimple_Calculate(';
 				switch (nCalcType) {
-					case AscPDF.CalculateType.SUM:
+					case AscPDF.CalculateOperation.sum:
 						sCalcFunc += '"SUM",';
 						break;
-					case AscPDF.CalculateType.PRODUCT:
+					case AscPDF.CalculateOperation.product:
 						sCalcFunc += '"PRD",';
 						break;
-					case AscPDF.CalculateType.AVERAGE:
+					case AscPDF.CalculateOperation.average:
 						sCalcFunc += '"AVG",';
 						break;
-					case AscPDF.CalculateType.MIN:
+					case AscPDF.CalculateOperation.min:
 						sCalcFunc += '"MIN",';
 						break;
-					case AscPDF.CalculateType.MAX:
+					case AscPDF.CalculateOperation.max:
 						sCalcFunc += '"MAX",';
 						break;
 				}
@@ -2166,6 +2194,47 @@
 		});
 
 		return aNames;
+	};
+	PDFEditorApi.prototype.SetFieldActions = function(nTriggerType, aActions) {
+		let oDoc = this.getPDFDoc();
+		let oField = oDoc.activeForm;
+		let oController = oDoc.GetController();
+		if (!oField) {
+			return false;
+		}
+		
+		let oCalcAction = {
+			type: AscPDF.CalculateType.common,
+			names: [] 
+		}
+
+		return oDoc.DoAction(function() {
+			let res = false;
+
+			oController.selectedObjects.forEach(function(shape) {
+				let oField = shape.GetEditField();
+				if (!oField || false == [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oField.GetType()) || false == oField.IsNumberFormat()) {
+					return false;
+				}
+				
+				if (oField.IsMultiline && oField.IsMultiline()) {
+					oField.ClearFormat();
+					return false;
+				}
+
+				let bGreaterThan	= nGreaterThan != undefined;
+				let bLessThan		= nLessThan != undefined;
+
+				let aActionsValidate = [{
+					"S": AscPDF.ACTIONS_TYPES.JavaScript,
+					"JS": 'AFRange_Validate(' + bGreaterThan +  ',' + nGreaterThan + ',' + bLessThan + ',' + nLessThan +  ');'
+				}];
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Validate, aActionsValidate);
+				res = true;
+			});
+
+			return res;
+		}, AscDFH.historydescription_Pdf_ChangeField, this);
 	};
 	// fields common
 	PDFEditorApi.prototype.SetFieldName = function(sName) {

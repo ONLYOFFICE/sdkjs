@@ -10043,72 +10043,6 @@ var CPresentation = CPresentation || function(){};
         oCommonProps.asc_putStrokeWidth(field.GetBorderWidth());
         oCommonProps.asc_putStrokeStyle(field.GetBorderStyle());
 
-        let oFormatProps;
-        let oValidateProps;
-
-        if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(field.GetType())) {
-            let nFormatType = field.GetFormatType();
-            if (false == [AscPDF.FormatType.NONE, AscPDF.FormatType.CUSTOM].includes(nFormatType)) {
-                let aArgs = field.GetFormatArgs();
-
-                switch (nFormatType) {
-                    case AscPDF.FormatType.NUMBER: {
-                        oFormatProps = new Asc.asc_CFieldNumberFormatProperty();
-                        oFormatProps.asc_putDecimals(aArgs[0]);
-                        oFormatProps.asc_putSepStyle(aArgs[1]);
-                        oFormatProps.asc_putNegStyle(aArgs[2]);
-                        oFormatProps.asc_putCurrency(JSON.parse('"' + aArgs[4] + '"'));
-                        oFormatProps.asc_putCurrencyPrepend(aArgs[5]);
-                        break;
-                    }
-                    case AscPDF.FormatType.PERCENTAGE: {
-                        oFormatProps = new Asc.asc_CFieldPercentageFormatProperty();
-                        oFormatProps.asc_putDecimals(aArgs[0]);
-                        oFormatProps.asc_putSepStyle(aArgs[1]);
-                        break;
-                    }
-                    case AscPDF.FormatType.DATE: {
-                        oFormatProps = new Asc.asc_CFieldDateFormatProperty();
-                        oFormatProps.asc_putFormat(aArgs[0]);
-                        break;
-                    }
-                    case AscPDF.FormatType.TIME: {
-                        oFormatProps = new Asc.asc_CFieldTimeFormatProperty();
-                        oFormatProps.asc_putFormat(aArgs[0]);
-                        break;
-                    }
-                    case AscPDF.FormatType.SPECIAL: {
-                        oFormatProps = new Asc.asc_CFieldSpecialFormatProperty();
-                        if (field.IsSpecialKeystroke()) {
-                            oFormatProps.asc_putMask(aArgs[0]);
-                        }
-                        else {
-                            oFormatProps.asc_putFormat(aArgs[0]);
-                        }
-                        break;
-                    }
-                    // our custom format
-                    case AscPDF.FormatType.REGULAR: {
-                        oFormatProps = new Asc.asc_CFieldRegularFormatProperty();
-                        oFormatProps.asc_putRegExp(aArgs[0]);
-                        break;
-                    }
-                }
-            }
-
-            let nValidateType = field.GetValidateType();
-            if (false == [AscPDF.ValidateType.NONE, AscPDF.ValidateType.CUSTOM].includes(nValidateType)) {
-                let aArgs = field.GetValidateArgs();
-
-                oValidateProps = new Asc.asc_CFieldValidateProperty();
-                oValidateProps.asc_putType(AscPDF.ValidateType.NUMBER);
-                oValidateProps.asc_putBeGreaterThen(aArgs[0]);
-                oValidateProps.asc_putGreaterThen(aArgs[1]);
-                oValidateProps.asc_putBeLessThen(aArgs[2]);
-                oValidateProps.asc_putLessThen(aArgs[3]);
-            }
-        }
-
         let oFieldProps;
         switch (field.GetType()) {
             case AscPDF.FIELD_TYPES.text: {
@@ -10124,8 +10058,6 @@ var CPresentation = CPresentation || function(){};
                 }
                 oFieldProps.asc_putAutoFit(field.GetTextSize() == 0);
                 oFieldProps.asc_putPassword(field.IsPassword());
-                oFieldProps.asc_putFormat(oFormatProps);
-                oFieldProps.asc_putValidate(oValidateProps);
                 break;
             }
             case AscPDF.FIELD_TYPES.combobox: {
@@ -10138,8 +10070,6 @@ var CPresentation = CPresentation || function(){};
                     oFieldProps.asc_putPlaceholder(oMeta['placeholder']);
                 }
                 oFieldProps.asc_putAutoFit(field.GetTextSize() == 0);
-                oFieldProps.asc_putFormat(oFormatProps);
-                oFieldProps.asc_putValidate(oValidateProps);
                 break;
             }
             case AscPDF.FIELD_TYPES.listbox: {
@@ -10220,8 +10150,150 @@ var CPresentation = CPresentation || function(){};
         }
 
         oCommonProps.asc_putFieldProps(oFieldProps);
+
+		let oActionsProperty = CreateAscFieldActionsPropFromObj(field);
         return oCommonProps;
     }
+
+	function CreateAscFieldActionsPropFromObj(field) {
+		let oActionsProperty = new Asc.asc_CFieldActionsProperty();
+
+		let oActions = {};
+		Object.values(AscPDF.PDF_TRIGGERS_TYPES).forEach(function(type) {
+			let aActions = field.GetActions(type);
+			if (aActions.length > 0) {
+				oActions[type] = aActions;
+			}
+		});
+
+		// format
+		if (oActions[AscPDF.PDF_TRIGGERS_TYPES.Format]) {
+
+			function getFormatKeystrokeProps(formatType, args, script) {
+				let oFormatProps;
+
+				switch (formatType) {
+					case AscPDF.FormatType.NUMBER: {
+						oFormatProps = new Asc.asc_CFieldNumberFormatProperty();
+						oFormatProps.asc_putDecimals(args[0]);
+						oFormatProps.asc_putSepStyle(args[1]);
+						oFormatProps.asc_putNegStyle(args[2]);
+						oFormatProps.asc_putCurrency(JSON.parse('"' + args[4] + '"'));
+						oFormatProps.asc_putCurrencyPrepend(args[5]);
+						break;
+					}
+					case AscPDF.FormatType.PERCENTAGE: {
+						oFormatProps = new Asc.asc_CFieldPercentageFormatProperty();
+						oFormatProps.asc_putDecimals(args[0]);
+						oFormatProps.asc_putSepStyle(args[1]);
+						break;
+					}
+					case AscPDF.FormatType.DATE: {
+						oFormatProps = new Asc.asc_CFieldDateFormatProperty();
+						oFormatProps.asc_putFormat(args[0]);
+						break;
+					}
+					case AscPDF.FormatType.TIME: {
+						oFormatProps = new Asc.asc_CFieldTimeFormatProperty();
+						oFormatProps.asc_putFormat(args[0]);
+						break;
+					}
+					case AscPDF.FormatType.SPECIAL: {
+						oFormatProps = new Asc.asc_CFieldSpecialFormatProperty();
+						if (field.IsSpecialKeystroke()) {
+							oFormatProps.asc_putMask(args[0]);
+						}
+						else {
+							oFormatProps.asc_putFormat(args[0]);
+						}
+						break;
+					}
+					case AscPDF.FormatType.CUSTOM: {
+						oFormatProps = new Asc.asc_CFieldCustomFormatProperty();
+						oFormatProps.asc_putScript(script);
+						break;
+					}
+					// our custom format
+					case AscPDF.FormatType.REGULAR: {
+						oFormatProps = new Asc.asc_CFieldRegularFormatProperty();
+						oFormatProps.asc_putRegExp(args[0]);
+						break;
+					}
+				}
+
+				return oFormatProps;
+			}
+
+			let oFormatAction	= oActions[AscPDF.PDF_TRIGGERS_TYPES.Format][0];
+			let sFormatScript	= oFormatAction["JS"];
+			let nFormatType		= field.GetFormatType();
+			let aFormatArgs		= field.GetFormatArgs();
+
+			let oKeystrokeAction= oActions[AscPDF.PDF_TRIGGERS_TYPES.Keystroke][0];
+			let sKeystrokeScript= oKeystrokeAction["JS"];
+			let nKeystrokeType	= field.GetKeystrokeType();
+			let aKeystrokeArgs	= field.GetKeystrokeArgs();
+			
+			let oFormatProps = getFormatKeystrokeProps(nFormatType, aFormatArgs, sFormatScript);
+			let oKeystrokeProps = getFormatKeystrokeProps(nKeystrokeType, aKeystrokeArgs, sKeystrokeScript);
+			
+			oActionsProperty.asc_putFormat(oFormatProps);
+			oActionsProperty.asc_putKeystroke(oKeystrokeProps);
+		}
+
+        // validate
+		if (oActions[AscPDF.PDF_TRIGGERS_TYPES.Validate]) {
+			let oAction = oActions[AscPDF.PDF_TRIGGERS_TYPES.Validate][0];
+			let oValidateProps = new Asc.asc_CFieldValidateProperty();
+			
+			let sScript = oAction["JS"];
+			if (sScript.startsWith('AFRange_Validate')) {
+				let aArgs = AscPDF.extractArguments(sScript);
+				oValidateProps.asc_putGreaterThen(aArgs[1]);
+				oValidateProps.asc_putLessThen(aArgs[3]);
+			}
+			else {
+				oValidateProps.asc_putScript(sScript);
+			}
+
+			oActionsProperty.asc_putValidate(oValidateProps);
+		}
+
+		// calculate
+		if (oActions[AscPDF.PDF_TRIGGERS_TYPES.Calculate]) {
+			let oAction = oActions[AscPDF.PDF_TRIGGERS_TYPES.Calculate][0];
+			let oCalculateProps = new Asc.asc_CFieldCalculateProperty();
+			
+			let nType;
+			function extractBvCalcText(script) {
+				const match = script.match(/BVCALC\s*([\s\S]*?)\s*EVCALC/);
+				return match ? match[1].trim() : null;
+			}
+			
+			let sScript = oAction["JS"];
+			let bvCalcText = extractBvCalcText(sScript);
+
+			if (bvCalcText) {
+				nType = AscPDF.CalculateType.simpleJs;
+				oCalculateProps.asc_putScript(sScript);
+			}
+			else if (sScript.startsWith('AFSimple_Calculate')) {
+				nType = AscPDF.CalculateType.simpleJs;
+				let aArgs = AscPDF.extractArguments(sScript);
+				let aNames = eval(aArgs[1]);
+				oCalculateProps.asc_putNames(aNames);
+			}
+			else {
+				nType = AscPDF.CalculateType.js;
+				oCalculateProps.asc_putScript(sScript);
+			}
+
+			oCalculateProps.asc_putType(nType);
+			oActionsProperty.asc_putCalculate(oCalculateProps);
+		}
+
+		return oActionsProperty;
+	}
 
     function CreateAscPagePropFromObj(pageInfo) {
         let oProps = new Asc.asc_CPdfPageProperty();
