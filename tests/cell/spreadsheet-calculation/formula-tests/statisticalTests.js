@@ -1411,428 +1411,1285 @@ $(function () {
 	QUnit.test("Test: \"AVERAGEIF\"", function (assert) {
 
 		ws.getRange2("A1:J210").cleanAll();
-		// Data for reference link. Use A100-A111
-		ws.getRange2("F2:F3").setValue("");
-		ws.getRange2("E2").setValue("10");
-		ws.getRange2("E3").setValue("20");
-		ws.getRange2("E4").setValue("28");
-		ws.getRange2("E5").setValue("30");
-		ws.getRange2("E6").setValue("1");
-		ws.getRange2("E7").setValue("0");
-		ws.getRange2("A100").setValue("10");
-		ws.getRange2("A101").setValue("20");
-		ws.getRange2("A102").setValue("30");
-		ws.getRange2("A103").setValue("40");
-		ws.getRange2("A104").setValue("50");
-		ws.getRange2("A105").setValue("60");
-		ws.getRange2("A106").setValue("70");
-		ws.getRange2("A107").setValue("80");
-		ws.getRange2("A108").setValue("90");
-		ws.getRange2("A109").setValue("3");
-		ws.getRange2("A110").setValue("5");
-		ws.getRange2("B100").setValue("1");
-		ws.getRange2("B101").setValue("2");
-		ws.getRange2("B102").setValue("3");
-		ws.getRange2("B103").setValue("4");
-		ws.getRange2("B104").setValue("5");
-		ws.getRange2("B105").setValue("6");
-		ws.getRange2("B106").setValue("7");
-		ws.getRange2("B107").setValue("8");
-		ws.getRange2("B108").setValue("9");
-		ws.getRange2("B109").setValue("10");
-		ws.getRange2("B110").setValue("11");
-		ws.getRange2("A111").setValue("50");
-		ws.getRange2("A112").setValue("44927");
-		ws.getRange2("A113").setValue("0.5");
-		ws.getRange2("B112").setValue("Test");
-		ws.getRange2("B113").setValue("Text");
-		ws.getRange2("A114").setValue("0");
-		ws.getRange2("A115").setValue("1e+308");
-		ws.getRange2("A116").setValue("-1e+308");
-		// type check
-		ws.getRange2("G1").setValue("str1");
-		ws.getRange2("G2").setValue("str2");
-		ws.getRange2("I1").setValue("TRUE");
-		ws.getRange2("I2").setValue("FALSE");
-		// Table type. Use A601:L6**
-		getTableType(599, 0, 601, 0);
-		ws.getRange2("A601").setValue("6"); // Column1
-		ws.getRange2("A602").setValue("7"); // Column1
-		// 3D links. Use A1:Z10
+		ws.getRange2("A800:B810").cleanAll();
+		ws.getRange2("A900:B910").cleanAll();
+		ws.getRange2("A301:B320").cleanAll();
+		ws.getRange2("F301:G320").cleanAll();
+		ws.getRange2("H301:I310").cleanAll();
+		ws.getRange2("K301:L320").cleanAll();
+		ws.getRange2("M301:N310").cleanAll();
+		ws.getRange2("P301:Q320").cleanAll();
+		ws.getRange2("R301:S310").cleanAll();
+		ws.getRange2("U301:V320").cleanAll();
+		ws.getRange2("W301:X310").cleanAll();
+		ws.getRange2("Z301:AA320").cleanAll();
+		ws.getRange2("AB301:AC310").cleanAll();
+		ws.getRange2("AE301:AF310").cleanAll();
+		ws.getRange2("AJ301:AK320").cleanAll();
+		ws.getRange2("AO301:AP320").cleanAll();
+		ws.getRange2("AT301:AU320").cleanAll();
+		ws.getRange2("BA301:BB320").cleanAll();
+		ws.getRange2("BD301:BE320").cleanAll();
+		ws.getRange2("BI301:BJ320").cleanAll();
+		ws.getRange2("CC311:CD320").cleanAll();
+		ws.getRange2("BM301:BN310").cleanAll();
+		ws.getRange2("AQ301:AR310").cleanAll();
+		ws.getRange2("T301:T310").cleanAll();
+		ws.getRange2("Y301:Y310").cleanAll();
+		ws.getRange2("A598:A610").cleanAll();
+		// Table type (A600:D606): header row A600:D600, data rows A601:D606
+		getTableType(599, 0, 605, 3);
+		ws.getRange2("A601").setValue("5");
+		ws.getRange2("B601").setValue("Apple");
+		ws.getRange2("C601").setValue("Red");
+		ws.getRange2("D601").setValue("10");
+		ws.getRange2("A602").setValue("10");
+		ws.getRange2("B602").setValue("Banana");
+		ws.getRange2("C602").setValue("Yellow");
+		ws.getRange2("D602").setValue("20");
+		ws.getRange2("A603").setValue("5");
+		ws.getRange2("B603").setValue("Apple");
+		ws.getRange2("C603").setValue("Green");
+		ws.getRange2("D603").setValue("30");
+		ws.getRange2("A604").setValue("15");
+		ws.getRange2("B604").setValue("Orange");
+		ws.getRange2("C604").setValue("Orange");
+		ws.getRange2("D604").setValue("40");
+		ws.getRange2("A605").setValue("10");
+		ws.getRange2("B605").setValue("Banana");
+		ws.getRange2("C605").setValue("Yellow");
+		ws.getRange2("D605").setValue("50");
+		ws.getRange2("A606").setValue("5");
+		ws.getRange2("B606").setValue("Cherry");
+		ws.getRange2("C606").setValue("Red");
+		ws.getRange2("D606").setValue("60");
+		// 3D links. Use A1:D10
 		let ws2 = getSecondSheet();
-		ws2.getRange2("A1").setValue("10");
-		ws2.getRange2("A2").setValue("20");
-		ws2.getRange2("A3").setValue("28");
-		ws2.getRange2("A4").setValue("30");
-		ws2.getRange2("A5").setValue("6");
-		ws2.getRange2("A6").setValue("7");
-		ws2.getRange2("A7").setValue("8");
-		ws2.getRange2("A8").setValue("9");
-		ws2.getRange2("A9").setValue("0");
-		ws2.getRange2("B1").setValue("");
-		ws2.getRange2("B2").setValue("");
-		// DefNames. Use A201-A208, B208
+		ws2.getRange2("A1:D10").cleanAll();
+		ws2.getRange2("A1").setValue("5");
+		ws2.getRange2("A2").setValue("10");
+		ws2.getRange2("A3").setValue("5");
+		ws2.getRange2("A4").setValue("15");
+		ws2.getRange2("A5").setValue("10");
+		ws2.getRange2("A6").setValue("5");
+		ws2.getRange2("B1").setValue("Apple");
+		ws2.getRange2("B2").setValue("Banana");
+		ws2.getRange2("B3").setValue("Apple");
+		ws2.getRange2("B4").setValue("Cherry");
+		ws2.getRange2("B5").setValue("Banana");
+		ws2.getRange2("C1").setValue("10");
+		ws2.getRange2("C2").setValue("20");
+		ws2.getRange2("C3").setValue("30");
+		ws2.getRange2("C4").setValue("40");
+		ws2.getRange2("C5").setValue("50");
+		ws2.getRange2("C6").setValue("60");
+		ws2.getRange2("D1").setValue(">5");
+		ws2.getRange2("D2").setValue("Apple");
+		ws2.getRange2("D3").setValue("5");
+		// XLOOKUP test data (A900:B904)
+		ws.getRange2("A900").setValue("Math");
+		ws.getRange2("A901").setValue("87");
+		ws.getRange2("A902").setValue("99");
+		ws.getRange2("A903").setValue("72");
+		ws.getRange2("A904").setValue("68");
+		ws.getRange2("B900").setValue("Physics");
+		ws.getRange2("B901").setValue("91");
+		ws.getRange2("B902").setValue("78");
+		ws.getRange2("B903").setValue("55");
+		ws.getRange2("B904").setValue("82");
+		// DefNames. Use A201 (TestName points to A201)
 		ws.getRange2("A201").setValue("10"); // TestName
-		// DefNames 3D. Use A11-A18, B18
-		ws2.getRange2("A11").setValue("6") // TestName3D
+		// DefNames 3D. Use A11 (TestName3D points to Sheet2!A11)
+		ws2.getRange2("A11").setValue("6"); // TestName3D
 
-		// Positive cases:
+		// Group 1: Numeric criteria range (A301:A310) + avg range (B301:B310)
+		ws.getRange2("A301").setValue("10");
+		ws.getRange2("A302").setValue("20");
+		ws.getRange2("A303").setValue("30");
+		ws.getRange2("A304").setValue("40");
+		ws.getRange2("A305").setValue("50");
+		ws.getRange2("A306").setValue("10");
+		ws.getRange2("A307").setValue("20");
+		ws.getRange2("A308").setValue("30");
+		ws.getRange2("A309").setValue("15");
+		ws.getRange2("A310").setValue("25");
 
-		// Case #1: Area, String. Area with condition >15. 2 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(E2:E5,">15")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(E2:E5,">15") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 26, 'Test: Positive case: Area, String. Area with condition >15. 2 of 3 arguments were used.');
-		// Case #2: Area, Number. Area with condition =15. 2 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(E2:E5,20)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(E2:E5,20) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 20, 'Test: Positive case: Area, Number. Area with condition =15. 2 of 3 arguments were used.');
-		// Case #3: Area, String. Area with condition =1. 2 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(E2:E7,"1")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(E2:E7,"1") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: Area, String. Area with condition =1. 2 of 3 arguments were used.');
-		// Case #4: Area, String. Area with condition != 0. 2 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(E2:E3,"<>0")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(E2:E3,"<>0") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 15, 'Test: Positive case: Area, String. Area with condition != 0. 2 of 3 arguments were used.');
-		// Case #5: Area, String, Area. Areas with  condition != 0. 3 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(E2:E3,"<>0",E4:E5)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(E2:E3,"<>0",E4:E5) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 29, 'Test: Positive case: Area, String, Area. Areas with  condition != 0. 3 of 3 arguments were used.');
-		// Case #6: Area3D, String. Area3D with condition != 0. 2  of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(Sheet2!A1:A2,"<>0")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(Sheet2!A1:A2,"<>0") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 15, 'Test: Positive case: Area3D, String. Area3D with condition != 0. 2  of 3 arguments were used.');
-		// Case #7: Area3D, String, Area3D. Areas3D with condition != 0. 3 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(Sheet2!A1:A2,"<>0", Sheet2!A3:A4)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(Sheet2!A1:A2,"<>0", Sheet2!A3:A4) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 29, 'Test: Positive case: Area3D, String, Area3D. Areas3D with condition != 0. 3 of 3 arguments were used.');
-		// Case #8: Area, String, Area. Empty range in the first argument, normal range in third arg. 3 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(F2:F3,"<>0",E2:E3)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(F2:F3,"<>0",E2:E3) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 15, 'Test: Positive case: Area, String, Area. Empty range in the first argument, normal range in third arg. 3 of 3 arguments were used.');
-		// Case #9: Area3D, String, Area3D. Empty 3D range in the first arg, normal 3Drange in third arg
-		oParser = new parserFormula('AVERAGEIF(Sheet2!B1:B2,"<>0",Sheet2!A1:A2)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(Sheet2!B1:B2,"<>0",Sheet2!A1:A2) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 15, 'Test: Positive case: Area3D, String, Area3D. Empty 3D range in the first arg, normal 3Drange in third arg');
-		// Case #10: Reference link, String, Reference link. String in the first arg. 3 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(G1,"<>0",E2)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(G1,"<>0",E2) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 10, 'Test: Positive case: Reference link, String, Reference link. String in the first arg. 3 of 3 arguments were used.');
-		// Case #11: Reference link, String, Area. string in the first arg and third argument is area. 3 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(G1,"<>0",E2:E3)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(G1,"<>0",E2:E3) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 10, 'Test: Positive case: Reference link, String, Area. string in the first arg and third argument is area. 3 of 3 arguments were used.');
-		// Case #12: Reference link, String, Reference link. Bool in the first arg, second is ref. 3 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(I1,"<>0",E2)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(I1,"<>0",E2) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 10, 'Test: Positive case: Reference link, String, Reference link. Bool in the first arg, second is ref. 3 of 3 arguments were used.');
-		// Case #13: Reference link, String, Area. Bool in the first arg, second is area. 3 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(I1,"<>0",E2:E3)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(I1,"<>0",E2:E3) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 10, 'Test: Positive case: Reference link, String, Area. Bool in the first arg, second is area. 3 of 3 arguments were used.');
-		// Case #14: Reference link, String, Reference link. Bool in the first arg, second is ref(FALSE). 3 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(I2,"<>0",E2)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(I2,"<>0",E2) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 10, 'Test: Positive case: Reference link, String, Reference link. Bool in the first arg, second is ref(FALSE). 3 of 3 arguments were used.');
-		// Case #15: Reference link, String, Area. Bool in the first arg, second is area(FALSE). 3 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(I2,"<>0",E2:E3)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(I2,"<>0",E2:E3) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 10, 'Test: Positive case: Reference link, String, Area. Bool in the first arg, second is area(FALSE). 3 of 3 arguments were used.');
-		// Case #16: Area, String. Calculates average of values in range greater than 5. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, ">5")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, ">5") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 50, 'Test: Positive case: Area, String. Calculates average of values in range greater than 5. 2 of 3 arguments used.');
-		// Case #17: Area(2), String. Calculates average of values in second range where first range meets criteria. 3 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, ">5", B100:B110)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, ">5", B100:B110) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 5, 'Test: Positive case: Area(2), String. Calculates average of values in second range where first range meets criteria. 3 of 3 arguments used.');
-		// Case #18: Area, Number. Calculates average of cells equal to specific number (10). 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, 10)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, 10) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 10, 'Test: Positive case: Area, Number. Calculates average of cells equal to specific number (10). 2 of 3 arguments used.');
-		// Case #19: Area, String. Calculates average of values greater than or equal to 10. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, ">=10")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, ">=10") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 50, 'Test: Positive case: Area, String. Calculates average of values greater than or equal to 10. 2 of 3 arguments used.');
-		// Case #20: Area, String. Calculates average of values less than 10. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, "<10")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, "<10") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 4, 'Test: Positive case: Area, String. Calculates average of values less than 10. 2 of 3 arguments used.');
-		// Case #21: Area, String. Calculates average of values less than or equal to 5. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, "<=5")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, "<=5") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 4, 'Test: Positive case: Area, String. Calculates average of values less than or equal to 5. 2 of 3 arguments used.');
-		// Case #22: Area, String. Calculates average of values not equal to 10. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, "<>10")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, "<>10") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue().toFixed(1) - 0, 44.8, 'Test: Positive case: Area, String. Calculates average of values not equal to 10. 2 of 3 arguments used.');
-		// Case #23: Area, String. Calculates average of values equal to 10 with explicit equality operator. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, "=10")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, "=10") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 10, 'Test: Positive case: Area, String. Calculates average of values equal to 10 with explicit equality operator. 2 of 3 arguments used.');
-		// Case #24: Area, Reference link. Uses cell reference as criteria. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, A111)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, A111) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 50, 'Test: Positive case: Area, Reference link. Uses cell reference as criteria. 2 of 3 arguments used.');
-		// Case #25: Area, Formula. Uses formula result as criteria. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, ROUND(9.5,0))', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, ROUND(9.5,0)) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 10, 'Test: Positive case: Area, Formula. Uses formula result as criteria. 2 of 3 arguments used.');
-		// Case #26: Reference link, String. Single cell reference for range parameter. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A111, ">5")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A111, ">5") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 50, 'Test: Positive case: Reference link, String. Single cell reference for range parameter. 2 of 3 arguments used.');
-		// Case #27: Area, String, Reference link. Single cell reference for average_range parameter. 3 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, ">5", A111)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, ">5", A111) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Positive case: Area, String, Reference link. Single cell reference for average_range parameter. 3 of 3 arguments used.');
-		// Case #28: Area, Formula. Nested formula for criteria parameter. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, IF(TRUE,">5","<5"))', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, IF(TRUE,">5","<5")) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 50, 'Test: Positive case: Area, Formula. Nested formula for criteria parameter. 2 of 3 arguments used.');
-		// Case #29: Name, String. Named range for range parameter. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(TestName, ">5")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(TestName, ">5") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 10, 'Test: Positive case: Name, String. Named range for range parameter. 2 of 3 arguments used.');
-		// Case #30: Area, String, Name. Named range for average_range parameter. 3 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, ">5", TestName)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, ">5", TestName) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 50, 'Test: Positive case: Area, String, Name. Named range for average_range parameter. 3 of 3 arguments used.');
-		// Case #31: Name3D, String. 3D named range for range parameter. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(TestName3D, ">5")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(TestName3D, ">5") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 6, 'Test: Positive case: Name3D, String. 3D named range for range parameter. 2 of 3 arguments used.');
-		// Case #32: Area, String, Name3D. 3D named range for average_range parameter. 3 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, ">5", TestName3D)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, ">5", TestName3D) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 6, 'Test: Positive case: Area, String, Name3D. 3D named range for average_range parameter. 3 of 3 arguments used.');
-		// Case #33: Ref3D, String. 3D reference for range parameter. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(Sheet2!A5, ">5")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(Sheet2!A5, ">5") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 6, 'Test: Positive case: Ref3D, String. 3D reference for range parameter. 2 of 3 arguments used.');
-		// Case #34: Area, String, Ref3D. 3D reference for average_range parameter. 3 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, ">5", Sheet2!A5)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, ">5", Sheet2!A5) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 6, 'Test: Positive case: Area, String, Ref3D. 3D reference for average_range parameter. 3 of 3 arguments used.');
-		// Case #35: Area3D, String. 3D area for range parameter. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(Sheet2!A5:A9, ">5")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(Sheet2!A5:A9, ">5") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue().toFixed(1) - 0, 7.5, 'Test: Positive case: Area3D, String. 3D area for range parameter. 2 of 3 arguments used.');
-		// Case #36: Area, String, Area3D. 3D area for average_range parameter. 3 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, ">5", Sheet2!A5:A9)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, ">5", Sheet2!A5:A9) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 6, 'Test: Positive case: Area, String, Area3D. 3D area for average_range parameter. 3 of 3 arguments used.');
-		// Case #37: Table, String. Table reference for range parameter. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(Table1[Column1], ">5")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(Table1[Column1], ">5") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue().toFixed(1) - 0, 6.5, 'Test: Positive case: Table, String. Table reference for range parameter. 2 of 3 arguments used.');
-		// Case #38: Area, String, Table. Table reference for average_range parameter. 3 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, ">5", Table1[Column1])', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, ">5", Table1[Column1]) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 14980, 'Test: Positive case: Area, String, Table. Table reference for average_range parameter. 3 of 3 arguments used.');
-		// Case #40: Area, Formula. Date function as criteria (converts to serial number). 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A112:A113, DATE(2023,1,1))', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A112:A113, DATE(2023,1,1)) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 44927, 'Test: Positive case: Area, Formula. Date function as criteria (converts to serial number). 2 of 3 arguments used.');
-		// Case #41: Area, Formula. Time function as criteria (converts to fraction of day). 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A112:A113, TIME(12,0,0))', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A112:A113, TIME(12,0,0)) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue().toFixed(1) - 0, 0.5, 'Test: Positive case: Area, Formula. Time function as criteria (converts to fraction of day). 2 of 3 arguments used.');
-		// Case #42: Formula. AVERAGEIF used inside another function. 2 of 3 arguments used.
-		oParser = new parserFormula('SUM(AVERAGEIF(A100:A110, ">5"),5)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula SUM(AVERAGEIF(A100:A110, ">5"),5) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 55, 'Test: Positive case: Formula. AVERAGEIF used inside another function. 2 of 3 arguments used.');
-		// Case #44: Area, String. All positive numbers and zero. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, ">=0")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, ">=0") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue().toFixed(8) - 0, 41.63636364, 'Test: Positive case: Area, String. All positive numbers and zero. 2 of 3 arguments used.');
-		// Case #45: Area, String. All non-zero values. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, "<>0")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, "<>0") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue().toFixed(8) - 0, 41.63636364, 'Test: Positive case: Area, String. All non-zero values. 2 of 3 arguments used.');
-		// Case #46: Area, String. Concatenation formula for criteria. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, CONCATENATE(">","5"))', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, CONCATENATE(">","5")) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 50, 'Test: Positive case: Area, String. Concatenation formula for criteria. 2 of 3 arguments used.');
-		// Case #47: Area(2), String. Positive values in first range, average corresponding cells in second range. 3 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, ">0", B100:B110)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, ">0", B100:B110) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 6, 'Test: Positive case: Area(2), String. Positive values in first range, average corresponding cells in second range. 3 of 3 arguments used.');
-		// Case #48: Area(3). Reference for criteria parameter. 3 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, A111, B100:B110)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, A111, B100:B110) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 5, 'Test: Positive case: Area(3). Reference for criteria parameter. 3 of 3 arguments used.');
-		// Case #49: Area(2). Range as criteria parameter. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, A100:A101)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, A100:A101) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 10, 'Test: Positive case: Area(2). Range as criteria parameter. 2 of 3 arguments used.');
-		// Case #50: Area, Array. Array as criteria. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, {5,10})', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, {5,10}) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 5, 'Test: Positive case: Area, Array. Array as criteria. 2 of 3 arguments used.');
-		// Case #51: Area, String, Area. Average_range with different dimensions than range. 3 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A105, ">5", B100:C100)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A105, ">5", B100:C100) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 3, 'Test: Positive case: Area, String, Area. Average_range with different dimensions than range. 3 of 3 arguments used.');
+		ws.getRange2("B301").setValue("100");
+		ws.getRange2("B302").setValue("200");
+		ws.getRange2("B303").setValue("300");
+		ws.getRange2("B304").setValue("400");
+		ws.getRange2("B305").setValue("500");
+		ws.getRange2("B306").setValue("150");
+		ws.getRange2("B307").setValue("250");
+		ws.getRange2("B308").setValue("350");
+		ws.getRange2("B309").setValue("175");
+		ws.getRange2("B310").setValue("275");
 
-		// Negative cases:
+		// Group 2: Text criteria range (F301:F308) + avg range (G301:G308)
+		ws.getRange2("F301").setValue("Apple");
+		ws.getRange2("F302").setValue("Banana");
+		ws.getRange2("F303").setValue("Apple");
+		ws.getRange2("F304").setValue("Cherry");
+		ws.getRange2("F305").setValue("Banana");
+		ws.getRange2("F306").setValue("Apricot");
+		ws.getRange2("F307").setValue("Avocado");
+		ws.getRange2("F308").setValue("Blueberry");
 
-		// Case #1: Area, String. Area with incorrect condition. 2 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(E2:E7,"1s")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(E2:E7,"1s") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, String. Area with incorrect condition. 2 of 3 arguments were used.');
-		// Case #2: Area, Boolean. Area with condition =TRUE. 2 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(E2:E7,TRUE)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(E2:E7,TRUE) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, Boolean. Area with condition =TRUE. 2 of 3 arguments were used.');
-		// Case #3: Area, Boolean. Area with condition =FALSE. 2 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(E2:E7,FALSE)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(E2:E7,FALSE) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, Boolean. Area with condition =FALSE. 2 of 3 arguments were used.');
-		// Case #4: Area, String. Empty range in the first argument. 2 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(F2:F3, "<>0")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(F2:F3, "<>0") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, String. Empty range in the first argument. 2 of 3 arguments were used.');
-		// Case #5: Area, String, Area. Empty range in the first and third args. 3 of 3 argumenrs were used.
-		oParser = new parserFormula('AVERAGEIF(F2:F3, "<>0",F2:F3)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(F2:F3, "<>0",F2:F3) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, String, Area. Empty range in the first and third args. 3 of 3 argumenrs were used.');
-		// Case #6: Area, String, Area. Normal range in the first arg, empty range in third arg. 3 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(E2:E3,"<>0",F2:F3)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(E2:E3,"<>0",F2:F3) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, String, Area. Normal range in the first arg, empty range in third arg. 3 of 3 arguments were used.');
-		// Case #7: Area3D, String. Empty 3D range in the first argument. 3 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(Sheet2!B1:B2;"<>0")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(Sheet2!B1:B2;"<>0") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area3D, String. Empty 3D range in the first argument. 3 of 3 arguments were used.');
-		// Case #8: Reference link, String. String in the first arg. 2 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(G1,"<>0")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(G1,"<>0") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Reference link, String. String in the first arg. 2 of 3 arguments were used.');
-		// Case #9: Area, String, Reference link. String in the third arg. 3 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(E2:E3,"<>0",G1)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(E2:E3,"<>0",G1) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, String, Reference link. String in the third arg. 3 of 3 arguments were used.');
-		// Case #10: Reference link, String. Bool in the first arg. 2 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(I1,"<>0")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(I1,"<>0") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Reference link, String. Bool in the first arg. 2 of 3 arguments were used.');
-		// Case #11: Reference link, String. Bool in the first arg (FALSE). 2 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(I2,"<>0")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(I2,"<>0") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Reference link, String. Bool in the first arg (FALSE). 2 of 3 arguments were used.');
-		/* exact types for arg0, arg2 check */
-		let calculateResult = new AscCommonExcel.CalculateResult(true);
-		// Case #12: Array, Area, Reference link. Arg0 exact type check. 3 of 3 arguments were used.
-		oParser = new parserFormula("AVERAGEIF({1,2,3},A2:A9,A2)", "A1", ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF({1,2,3},A2:A9,A2) is parsed.');
-		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Test: Negative case: Array, Area, Reference link. Arg0 exact type check. 3 of 3 arguments were used.');
-		// Case #13: Number, Area, Reference link. Arg0 exact type check. 3 of 3 arguments were used.
-		oParser = new parserFormula("AVERAGEIF(12,A2:A9,A2)", "A1", ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(12,A2:A9,A2) is parsed.');
-		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Test: Negative case: Number, Area, Reference link. Arg0 exact type check. 3 of 3 arguments were used.');
-		// Case #14: String, Area, Reference link. Arg0 exact type check. 3 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF("str",A2:A9,A2)', "A1", ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF("str",A2:A9,A2) is parsed.');
-		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Test: Negative case: String, Area, Reference link. Arg0 exact type check. 3 of 3 arguments were used.');
-		// Case #15: Boolean, Area, Reference link. Arg0 exact type check. 3 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(TRUE,A2:A9,A2)', "A1", ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(TRUE,A2:A9,A2) is parsed.');
-		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Test: Negative case: Boolean, Area, Reference link. Arg0 exact type check. 3 of 3 arguments were used.');
-		// Case #16: Error, Area, Reference link. Arg0 exact type check. 3 of 3 arguments were used.
-		oParser = new parserFormula('AVERAGEIF(#N/A,A2:A9,A2)', "A1", ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(#N/A,A2:A9,A2) is parsed.');
-		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Test: Negative case: Error, Area, Reference link. Arg0 exact type check. 3 of 3 arguments were used.');
-		// Case #17: Reference link, Area, Array. Arg2 exact type check. 3 of 3 argumenrs were used.
-		oParser = new parserFormula("AVERAGEIF(A2,A2:A9,{1,2,3})", "A1", ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A2,A2:A9,{1,2,3}) is parsed.');
-		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Test: Negative case: Reference link, Area, Array. Arg2 exact type check. 3 of 3 argumenrs were used.');
-		// Case #18: Reference link, Area, Number. Arg2 exact type check. 3 of 3 argumenrs were used.
-		oParser = new parserFormula("AVERAGEIF(A2,A2:A9,12)", "A1", ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A2,A2:A9,12) is parsed.');
-		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Test: Negative case: Reference link, Area, Number. Arg2 exact type check. 3 of 3 argumenrs were used.');
-		// Case #19: Reference link, Area, String. Arg2 exact type check. 3 of 3 argumenrs were used.
-		oParser = new parserFormula('AVERAGEIF(A2,A2:A9,"str")', "A1", ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A2,A2:A9,"str") is parsed.');
-		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Test: Negative case: Reference link, Area, String. Arg2 exact type check. 3 of 3 argumenrs were used.');
-		// Case #20: Reference link, Area, Boolean. Arg2 exact type check. 3 of 3 argumenrs were used.
-		oParser = new parserFormula('AVERAGEIF(A2,A2:A9,TRUE)', "A1", ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A2,A2:A9,TRUE) is parsed.');
-		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Test: Negative case: Reference link, Area, Boolean. Arg2 exact type check. 3 of 3 argumenrs were used.');
-		// Case #21: Reference link, Area, Error. Arg2 exact type check. 3 of 3 argumenrs were used.
-		oParser = new parserFormula('AVERAGEIF(A2,A2:A9,#N/A)', "A1", ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A2,A2:A9,#N/A) is parsed.');
-		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Test: Negative case: Reference link, Area, Error. Arg2 exact type check. 3 of 3 argumenrs were used.');
-		// Case #22: Area, Error. Error value as criteria. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, NA())', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, NA()) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, Error. Error value as criteria. 2 of 3 arguments used.');
-		// Case #23: Area, String. Range containing only text values with numeric criteria. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(B112:B113, ">5")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(B112:B113, ">5") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, String. Range containing only text values with numeric criteria. 2 of 3 arguments used.');
-		// Case #24: Area, Formula. Formula returning error as criteria. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, SQRT(-1))', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, SQRT(-1)) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, Formula. Formula returning error as criteria. 2 of 3 arguments used.');
-		// Case #25: Area, String. Calculates average of all non-empty values in range using wildcard. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, "*")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, "*") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, String. Calculates average of all non-empty values in range using wildcard. 2 of 3 arguments used.');
-		// Case #26: Area, String. Calculates average of values starting with 1 using wildcard. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, "1*")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, "1*") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, String. Calculates average of values starting with 1 using wildcard. 2 of 3 arguments used.');
-		// Case #27: Area, String. Empty string as criteria. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, "")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, "") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, String. Empty string as criteria. 2 of 3 arguments used.');
-		// Case #28: Area, Empty. Empty criteria. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, )', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, ) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, Empty. Empty criteria. 2 of 3 arguments used.');
-		// Case #29: Area, Reference link. Reference to empty cell as criteria. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, F7)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, F7) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, Reference link. Reference to empty cell as criteria. 2 of 3 arguments used.');
-		// Case #30: Area, String. Text wildcard criteria with range of numbers (no matches). 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, "Text*")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, "Text*") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, String. Text wildcard criteria with range of numbers (no matches). 2 of 3 arguments used.');
-		// Case #31: Area, String. Invalid operator in string criteria. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, ">/5")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, ">/5") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, String. Invalid operator in string criteria. 2 of 3 arguments used.');
-		// Case #32: Area, String. Missing value after operator in criteria. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, ">=")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, ">=") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, String. Missing value after operator in criteria. 2 of 3 arguments used.');
-		// Case #33: Area, String. Reversed comparison operator in criteria. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, "5>")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, "5>") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, String. Reversed comparison operator in criteria. 2 of 3 arguments used.');
-		// Case #34: Area, String. Invalid combination of operators in criteria. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A100:A110, "><5")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A100:A110, "><5") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area, String. Invalid combination of operators in criteria. 2 of 3 arguments used.');
+		ws.getRange2("G301").setValue("10");
+		ws.getRange2("G302").setValue("20");
+		ws.getRange2("G303").setValue("30");
+		ws.getRange2("G304").setValue("40");
+		ws.getRange2("G305").setValue("50");
+		ws.getRange2("G306").setValue("60");
+		ws.getRange2("G307").setValue("70");
+		ws.getRange2("G308").setValue("80");
 
-		// Bounded cases:
+		// Group 3: Boolean criteria range (K301:K308) + avg range (L301:L308)
+		ws.getRange2("K301").setValue("=TRUE()");
+		ws.getRange2("K302").setValue("=FALSE()");
+		ws.getRange2("K303").setValue("=TRUE()");
+		ws.getRange2("K304").setValue("1");
+		ws.getRange2("K305").setValue("0");
+		ws.getRange2("K306").setValue("=TRUE()");
+		ws.getRange2("K307").setValue("'TRUE");   // text "TRUE", not boolean
+		ws.getRange2("K308").setValue("=FALSE()");
 
-		// Case #1: Area, Number. Minimum numeric criteria (zero). 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A114:A116, 0)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A114:A116, 0) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Bounded case: Area, Number. Minimum numeric criteria (zero). 2 of 3 arguments used.');
-		// Case #2: Area, Number. Maximum numeric criteria value. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A114:A116, 9.99999999999999E+307)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A114:A116, 9.99999999999999E+307) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1e+308, 'Test: Bounded case: Area, Number. Maximum numeric criteria value. 2 of 3 arguments used.');
-		// Case #3: Area, Number. Minimum numeric criteria value. 2 of 3 arguments used.
-		oParser = new parserFormula('AVERAGEIF(A114:A116, -9.99999999999999E+307)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula AVERAGEIF(A114:A116, -9.99999999999999E+307) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), -1e+308, 'Test: Bounded case: Area, Number. Minimum numeric criteria value. 2 of 3 arguments used.');
+		ws.getRange2("L301").setValue("100");
+		ws.getRange2("L302").setValue("200");
+		ws.getRange2("L303").setValue("300");
+		ws.getRange2("L304").setValue("400");
+		ws.getRange2("L305").setValue("500");
+		ws.getRange2("L306").setValue("600");
+		ws.getRange2("L307").setValue("700");
+		ws.getRange2("L308").setValue("800");
 
-		// TODO calc problem in this function
-		// Need to fix: error handle, results diff from MS
+		// Group 4: Errors in criteria range (P301:P308) + avg range (Q301:Q308)
+		ws.getRange2("P301").setValue("10");
+		ws.getRange2("P302").setValue("=1/0");    // #DIV/0!
+		ws.getRange2("P303").setValue("20");
+		ws.getRange2("P304").setValue("=1/0");    // #DIV/0!
+		ws.getRange2("P305").setValue("30");
+		ws.getRange2("P306").setValue("=SQRT(-1)"); // #NUM!
+		ws.getRange2("P307").setValue("40");
+		ws.getRange2("P308").setValue("50");
+
+		ws.getRange2("Q301").setValue("100");
+		ws.getRange2("Q302").setValue("200");
+		ws.getRange2("Q303").setValue("300");
+		ws.getRange2("Q304").setValue("400");
+		ws.getRange2("Q305").setValue("500");
+		ws.getRange2("Q306").setValue("600");
+		ws.getRange2("Q307").setValue("700");
+		ws.getRange2("Q308").setValue("800");
+
+		// Group 5: Mixed types in criteria range (U301:U310) + avg range (V301:V310)
+		ws.getRange2("U301").setValue("10");
+		ws.getRange2("U302").setValue("hello");
+		ws.getRange2("U303").setValue("=TRUE()");
+		ws.getRange2("U304").setValue("20");
+		// U305 left empty
+		ws.getRange2("U306").setValue("world");
+		ws.getRange2("U307").setValue("30");
+		ws.getRange2("U308").setValue("=FALSE()");
+		ws.getRange2("U309").setValue("=1/0");    // #DIV/0!
+		ws.getRange2("U310").setValue("10");
+
+		ws.getRange2("V301").setValue("1");
+		ws.getRange2("V302").setValue("2");
+		ws.getRange2("V303").setValue("3");
+		ws.getRange2("V304").setValue("4");
+		ws.getRange2("V305").setValue("5");
+		ws.getRange2("V306").setValue("6");
+		ws.getRange2("V307").setValue("7");
+		ws.getRange2("V308").setValue("8");
+		ws.getRange2("V309").setValue("9");
+		ws.getRange2("V310").setValue("10");
+
+		// Group 6: Empty cells in criteria range (Z301:Z310) + avg range (AA301:AA310)
+		ws.getRange2("Z301").setValue("1");
+		// Z302 empty
+		ws.getRange2("Z303").setValue("2");
+		// Z304 empty
+		ws.getRange2("Z305").setValue("3");
+		// Z306 empty
+		ws.getRange2("Z307").setValue("1");
+		// Z308 empty
+		ws.getRange2("Z309").setValue("2");
+		// Z310 empty
+
+		ws.getRange2("AA301").setValue("10");
+		ws.getRange2("AA302").setValue("20");
+		ws.getRange2("AA303").setValue("30");
+		// AA304 left empty
+		ws.getRange2("AA305").setValue("50");
+		ws.getRange2("AA306").setValue("60");
+		ws.getRange2("AA307").setValue("70");
+		ws.getRange2("AA308").setValue("80");
+		ws.getRange2("AA309").setValue("90");
+		ws.getRange2("AA310").setValue("100");
+
+		// Group 7: Errors in avg range (AE301:AE306) + avg range (AF301:AF306)
+		ws.getRange2("AE301").setValue("A");
+		ws.getRange2("AE302").setValue("B");
+		ws.getRange2("AE303").setValue("A");
+		ws.getRange2("AE304").setValue("C");
+		ws.getRange2("AE305").setValue("A");
+		ws.getRange2("AE306").setValue("B");
+
+		ws.getRange2("AF301").setValue("10");
+		ws.getRange2("AF302").setValue("=1/0");   // #DIV/0!
+		ws.getRange2("AF303").setValue("30");
+		ws.getRange2("AF304").setValue("40");
+		ws.getRange2("AF305").setValue("=1/0");   // #DIV/0!
+		ws.getRange2("AF306").setValue("60");
+
+		// Group 8: Offset avg range — criteria (AJ301:AJ305), avg range starts at AK304
+		ws.getRange2("AJ301").setValue("10");
+		ws.getRange2("AJ302").setValue("20");
+		ws.getRange2("AJ303").setValue("30");
+		ws.getRange2("AJ304").setValue("40");
+		ws.getRange2("AJ305").setValue("50");
+
+		ws.getRange2("AK304").setValue("100");
+		ws.getRange2("AK305").setValue("200");
+		ws.getRange2("AK306").setValue("300");
+		ws.getRange2("AK307").setValue("400");
+		ws.getRange2("AK308").setValue("500");
+
+		// Group 9: Smaller avg range — criteria (AO301:AO307), avg range (AP301:AP303) expands to AP301:AP307
+		ws.getRange2("AO301").setValue("1");
+		ws.getRange2("AO302").setValue("2");
+		ws.getRange2("AO303").setValue("3");
+		ws.getRange2("AO304").setValue("1");
+		ws.getRange2("AO305").setValue("2");
+		ws.getRange2("AO306").setValue("3");
+		ws.getRange2("AO307").setValue("1");
+
+		ws.getRange2("AP301").setValue("10");
+		ws.getRange2("AP302").setValue("20");
+		ws.getRange2("AP303").setValue("30");
+		ws.getRange2("AP304").setValue("40");
+		ws.getRange2("AP305").setValue("50");
+		ws.getRange2("AP306").setValue("60");
+		ws.getRange2("AP307").setValue("70");
+
+		// Group 10: Sparse range with text and empty cells in criteria (AT301:AT309) + avg range (AU301:AU309)
+		ws.getRange2("AT301").setValue("12");
+		ws.getRange2("AT302").setValue("2");
+		ws.getRange2("AT303").setValue("3");
+		ws.getRange2("AT304").setValue("4");
+		ws.getRange2("AT305").setValue("text");
+		// AT306, AT307, AT308 empty
+		ws.getRange2("AT309").setValue("12");
+
+		ws.getRange2("AU301").setValue("100");
+		ws.getRange2("AU302").setValue("200");
+		ws.getRange2("AU303").setValue("300");
+		ws.getRange2("AU304").setValue("400");
+		ws.getRange2("AU305").setValue("500");
+		// AU306, AU307 left empty
+		ws.getRange2("AU308").setValue("800");
+		ws.getRange2("AU309").setValue("900");
+
+		// Group 11a: Mostly-same values (BI301:BI306) + avg range (BJ301:BJ306)
+		ws.getRange2("BI301").setValue("5");
+		ws.getRange2("BI302").setValue("5");
+		ws.getRange2("BI303").setValue("5");
+		ws.getRange2("BI304").setValue("99");
+		ws.getRange2("BI305").setValue("5");
+		ws.getRange2("BI306").setValue("5");
+
+		ws.getRange2("BJ301").setValue("10");
+		ws.getRange2("BJ302").setValue("20");
+		ws.getRange2("BJ303").setValue("30");
+		ws.getRange2("BJ304").setValue("40");
+		ws.getRange2("BJ305").setValue("50");
+		ws.getRange2("BJ306").setValue("60");
+
+		// Group 11b: Mixed types with <> (BI310:BI316) + avg range (BJ310:BJ316)
+		ws.getRange2("BI310").setValue("cat");
+		ws.getRange2("BI311").setValue("dog");
+		ws.getRange2("BI312").setValue("cat");
+		ws.getRange2("BI313").setValue("42");
+		ws.getRange2("BI314").setValue("=TRUE()");
+		// BI315 empty
+		ws.getRange2("BI316").setValue("cat");
+
+		ws.getRange2("BJ310").setValue("1");
+		ws.getRange2("BJ311").setValue("2");
+		ws.getRange2("BJ312").setValue("3");
+		ws.getRange2("BJ313").setValue("4");
+		ws.getRange2("BJ314").setValue("5");
+		ws.getRange2("BJ315").setValue("6");
+		ws.getRange2("BJ316").setValue("7");
+
+		// Group 12: Real numbers vs formula-text numbers (CC311:CC314) + avg range (CD311:CD314)
+		ws.getRange2("CC311").setValue("10");        // real numeric 10
+		ws.getRange2("CC312").setValue('="10"');     // formula → text "10"
+		ws.getRange2("CC313").setValue("20");        // real numeric 20
+		ws.getRange2("CC314").setValue('="20"');     // formula → text "20"
+
+		ws.getRange2("CD311").setValue("100");
+		ws.getRange2("CD312").setValue("200");
+		ws.getRange2("CD313").setValue("300");
+		ws.getRange2("CD314").setValue("400");
+
+		// Group 13: Wildcard tilde escape (H301:H304) + avg range (I301:I304)
+		ws.getRange2("H301").setValue("a*c");   // literal asterisk in value
+		ws.getRange2("H302").setValue("aac");   // matches a*c wildcard
+		ws.getRange2("H303").setValue("a123c"); // matches a*c wildcard
+		ws.getRange2("H304").setValue("a**c");  // literal two asterisks
+
+		ws.getRange2("I301").setValue("10");
+		ws.getRange2("I302").setValue("20");
+		ws.getRange2("I303").setValue("30");
+		ws.getRange2("I304").setValue("40");
+
+		// Group 14: #N/A matching (R301:R304) + avg range (S301:S304)
+		ws.getRange2("R301").setValue("=NA()");  // formula → #N/A error
+		ws.getRange2("R302").setValue("#N/A");   // literal text "#N/A"
+		ws.getRange2("R303").setValue("10");
+		ws.getRange2("R304").setValue("hello");
+
+		ws.getRange2("S301").setValue("10");
+		ws.getRange2("S302").setValue("20");
+		ws.getRange2("S303").setValue("30");
+		ws.getRange2("S304").setValue("40");
+
+		// Group 15: Criteria text as operator-like strings (W301:W304) + avg range (X301:X304)
+		ws.getRange2("W301").setValue(">3");    // text ">3" (not a numeric comparison result)
+		ws.getRange2("W302").setValue("<=5");   // text "<=5"
+		ws.getRange2("W303").setValue("10");    // actual number > 3
+		ws.getRange2("W304").setValue("hello");
+
+		ws.getRange2("X301").setValue("100");
+		ws.getRange2("X302").setValue("200");
+		ws.getRange2("X303").setValue("300");
+		ws.getRange2("X304").setValue("400");
+
+		// Group 16: Apostrophe-prefixed cells (M301:M305) + avg range (N301:N305)
+		// M301 and M304 left truly empty
+		ws.getRange2("M302").setValue("'");   // apostrophe-prefix: displays and behaves as empty
+		ws.getRange2("M303").setValue("10");
+		ws.getRange2("M305").setValue("20");
+
+		ws.getRange2("N301").setValue("100");
+		ws.getRange2("N302").setValue("200");
+		ws.getRange2("N303").setValue("300");
+		ws.getRange2("N304").setValue("400");
+		ws.getRange2("N305").setValue("500");
+
+		// Group 17: Numeric format variants (BA301:BA308) + avg range (BB301:BB308)
+		ws.getRange2("BA301").setValue("12300%");  // percentage → evaluates to 123
+		ws.getRange2("BA302").setValue("$123");    // currency → evaluates to 123
+		ws.getRange2("BA303").setValue("1.23E+2"); // scientific → evaluates to 123
+		ws.getRange2("BA304").setValue("123");
+		ws.getRange2("BA305").setValue("123");
+		ws.getRange2("BA306").setValue("123");
+		ws.getRange2("BA307").setValue("123");
+		ws.getRange2("BA308").setValue("123");
+
+		ws.getRange2("BB301").setValue("10");
+		ws.getRange2("BB302").setValue("20");
+		ws.getRange2("BB303").setValue("30");
+		ws.getRange2("BB304").setValue("40");
+		ws.getRange2("BB305").setValue("50");
+		ws.getRange2("BB306").setValue("60");
+		ws.getRange2("BB307").setValue("70");
+		ws.getRange2("BB308").setValue("80");
+
+		// Group 18: All-text criteria range — formulas ="10" etc. evaluate to text strings, not numbers
+		ws.getRange2("BD301").setValue('="10"');
+		ws.getRange2("BD302").setValue('="20"');
+		ws.getRange2("BD303").setValue('="10"');
+		ws.getRange2("BD304").setValue('="30"');
+		ws.getRange2("BD305").setValue('="20"');
+		ws.getRange2("BD306").setValue('="10"');
+
+		ws.getRange2("BE301").setValue("1");
+		ws.getRange2("BE302").setValue("2");
+		ws.getRange2("BE303").setValue("3");
+		ws.getRange2("BE304").setValue("4");
+		ws.getRange2("BE305").setValue("5");
+		ws.getRange2("BE306").setValue("6");
+
+		// Group 19: Error values in criteria range (AB301:AB304) + avg range (AC301:AC304)
+		ws.getRange2("AB301").setValue("=NA()");
+		ws.getRange2("AB302").setValue("=1/0");     // #DIV/0!
+		ws.getRange2("AB303").setValue("=SQRT(-1)"); // #NUM!
+		ws.getRange2("AB304").setValue("5");
+
+		ws.getRange2("AC301").setValue("10");
+		ws.getRange2("AC302").setValue("20");
+		ws.getRange2("AC303").setValue("30");
+		ws.getRange2("AC304").setValue("40");
+
+		// Group 20: Date criteria matching (BM301:BM302) + avg range (BN301:BN302)
+		ws.getRange2("BM301").setValue("=DATE(2024,12,1)");
+		ws.getRange2("BM302").setValue("=DATE(2024,12,1)");
+		ws.getRange2("BN301").setValue("10");
+		ws.getRange2("BN302").setValue("20");
+
+		// Group 21: Mixed avg_range types — criteria col (AQ301:AQ306) all "A", avg col (AR301:AR306)
+		ws.getRange2("AQ301").setValue("A");
+		ws.getRange2("AQ302").setValue("A");
+		ws.getRange2("AQ303").setValue("A");
+		ws.getRange2("AQ304").setValue("A");
+		ws.getRange2("AQ305").setValue("A");
+		ws.getRange2("AQ306").setValue("A");
+		ws.getRange2("AR301").setValue("10");       // number
+		ws.getRange2("AR302").setValue("hello");    // text
+		// AR303 left empty
+		ws.getRange2("AR304").setValue("=TRUE()");
+		ws.getRange2("AR305").setValue("=FALSE()");
+		ws.getRange2("AR306").setValue("=1/0");     // #DIV/0!
+
+		// Group 22: Apostrophe-prefixed values (Y301:Y303) + avg range (T301:T303)
+		// ''value in setValue: first apostrophe is text-force prefix, second becomes part of the stored value
+		ws.getRange2("Y301").setValue("true");    // plain text "true"
+		ws.getRange2("Y302").setValue("''true");  // stores "'true" (apostrophe IS part of value)
+		ws.getRange2("Y303").setValue("10");
+		ws.getRange2("T301").setValue("100");
+		ws.getRange2("T302").setValue("200");
+		ws.getRange2("T303").setValue("300");
+
+		// Named ranges for DefName tests
+		initDefNames();
+		const defNameAvgIfRange = new Asc.asc_CDefName('AvgIfTestNameRange', ws.getName() + '!$A$301:$A$310');
+		const defNameAvgIfAvg = new Asc.asc_CDefName('AvgIfTestNameAvg', ws.getName() + '!$B$301:$B$310');
+		const defNameAvgIfCriteria = new Asc.asc_CDefName('AvgIfTestNameCriteria', ws.getName() + '!$A$305'); // A305=50
+		wb.editDefinesNames(null, defNameAvgIfRange);
+		wb.editDefinesNames(null, defNameAvgIfAvg);
+		wb.editDefinesNames(null, defNameAvgIfCriteria);
+
+		// Positive Cases:
+
+		// Case #1: Area, String, Area. Average values where criteria range > 20
+		oParser = new parserFormula("AVERAGEIF(A301:A310,\">20\",B301:B310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 365);
+
+		// Case #2: Area, String, Area. Average values where criteria range < 20
+		oParser = new parserFormula("AVERAGEIF(A301:A310,\"<20\",B301:B310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 141.667);
+
+		// Case #3: Area, String, Area. Average values where criteria range >= 20
+		oParser = new parserFormula("AVERAGEIF(A301:A310,\">=20\",B301:B310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 325);
+
+		// Case #4: Area, String, Area. Average values where criteria range <= 20
+		oParser = new parserFormula("AVERAGEIF(A301:A310,\"<=20\",B301:B310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 175);
+
+		// Case #5: Area, Number, Area. Average values where criteria range equals 20
+		oParser = new parserFormula("AVERAGEIF(A301:A310,20,B301:B310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 225);
+
+		// Case #6: Area, String, Area. Average values where criteria range not equal to 20
+		oParser = new parserFormula("AVERAGEIF(A301:A310,\"<>20\",B301:B310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 281.25);
+
+		// Case #7: Area, Number, Area. Average values where criteria range equals 10
+		oParser = new parserFormula("AVERAGEIF(A301:A310,10,B301:B310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 125);
+
+		// Case #8: Area, String, Area. Average using dynamic criteria with cell reference concatenation
+		oParser = new parserFormula("AVERAGEIF(A301:A310,\">=\" & A305,B301:B310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 500);
+
+		// Case #9: Area, String, Area. Average using dynamic criteria with > and cell reference
+		oParser = new parserFormula("AVERAGEIF(A301:A310,\">\" & A303,B301:B310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 450);
+
+		// Case #10: Area, String. Two-argument form - average criteria range itself where > 20
+		oParser = new parserFormula("AVERAGEIF(A301:A310,\">20\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 35);
+
+		// Case #11: Area, String. Two-argument form - average criteria range where not equal to 10
+		oParser = new parserFormula("AVERAGEIF(A301:A310,\"<>10\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 28.75);
+
+		// Case #12: Area, String, Area. Average values matching exact text "Apple"
+		oParser = new parserFormula("AVERAGEIF(F301:F308,\"Apple\",G301:G308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 20);
+
+		// Case #13: Area, String, Area. Average values matching exact text "Banana"
+		oParser = new parserFormula("AVERAGEIF(F301:F308,\"Banana\",G301:G308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 35);
+
+		// Case #14: Area, String, Area. Average values not equal to "Apple"
+		oParser = new parserFormula("AVERAGEIF(F301:F308,\"<>Apple\",G301:G308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 53.333);
+
+		// Case #15: Area, String, Area. Average values starting with "A" using wildcard
+		oParser = new parserFormula("AVERAGEIF(F301:F308,\"A*\",G301:G308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 42.5);
+
+		// Case #16: Area, String, Area. Average values ending with "berry" using wildcard
+		oParser = new parserFormula("AVERAGEIF(F301:F308,\"*berry\",G301:G308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 80);
+
+		// Case #17: Area, String, Area. Average values with exactly 6 characters using ? wildcard
+		oParser = new parserFormula("AVERAGEIF(F301:F308,\"??????\",G301:G308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 36.667);
+
+		// Case #18: Area, String, Area. Average values not equal to "Banana"
+		oParser = new parserFormula("AVERAGEIF(F301:F308,\"<>Banana\",G301:G308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 48.333);
+
+		// Case #19: Area, String, Area. Average values starting with "ap" (case insensitive) using wildcard
+		oParser = new parserFormula("AVERAGEIF(F301:F308,\"ap*\",G301:G308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 33.333);
+
+		// Case #20: Area, Boolean, Area. Average values where criteria range is TRUE
+		oParser = new parserFormula("AVERAGEIF(K301:K308,TRUE,L301:L308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 425);
+
+		// Case #21: Area, Boolean, Area. Average values where criteria range is FALSE
+		oParser = new parserFormula("AVERAGEIF(K301:K308,FALSE,L301:L308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 500);
+
+		// Case #22: Area, Number, Area. Average values where criteria range equals 1 (matches numeric 1, not boolean TRUE)
+		oParser = new parserFormula("AVERAGEIF(K301:K308,1,L301:L308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 400);
+
+		// Case #23: Area, Number, Area. Average values where criteria range equals 0 (matches numeric 0, not boolean FALSE)
+		oParser = new parserFormula("AVERAGEIF(K301:K308,0,L301:L308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 500);
+
+		// Case #24: Area, String, Area. Average values where criteria range matches "TRUE" text
+		oParser = new parserFormula("AVERAGEIF(K301:K308,\"TRUE\",L301:L308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 425);
+
+		// Case #25: Area, String, Area. Average values where criteria range not equal to "TRUE"
+		oParser = new parserFormula("AVERAGEIF(K301:K308,\"<>TRUE\",L301:L308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 475);
+
+		// Case #26: Area, String, Area. Average values where criteria range not equal to "FALSE"
+		oParser = new parserFormula("AVERAGEIF(K301:K308,\"<>FALSE\",L301:L308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 433.333);
+
+		// Case #27: Area, String, Area. Average where criteria > 15 (criteria range contains errors which are ignored)
+		oParser = new parserFormula("AVERAGEIF(P301:P308,\">15\",Q301:Q308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 575);
+
+		// Case #28: Area, String, Area. Average where criteria <> 10 (errors in criteria range ignored)
+		oParser = new parserFormula("AVERAGEIF(P301:P308,\"<>10\",Q301:Q308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 500);
+
+		// Case #29: Area, Number, Area. Average where criteria equals 10 (errors in criteria range ignored)
+		oParser = new parserFormula("AVERAGEIF(P301:P308,10,Q301:Q308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 100);
+
+		// Case #30: Area, String, Area. Average where criteria < 30 (errors in criteria range ignored)
+		oParser = new parserFormula("AVERAGEIF(P301:P308,\"<30\",Q301:Q308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 200);
+
+		// Case #31: Area, Number, Area. Average with mixed types in criteria range - match number 10
+		oParser = new parserFormula("AVERAGEIF(U301:U310,10,V301:V310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 5.5);
+
+		// Case #32: Area, String, Area. Average with mixed types in criteria range - match text "hello"
+		oParser = new parserFormula("AVERAGEIF(U301:U310,\"hello\",V301:V310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		// Case #33: Area, Boolean, Area. Average with mixed types in criteria range - match TRUE
+		oParser = new parserFormula("AVERAGEIF(U301:U310,TRUE,V301:V310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 3);
+
+		// Case #34: Area, Boolean, Area. Average with mixed types in criteria range - match FALSE
+		oParser = new parserFormula("AVERAGEIF(U301:U310,FALSE,V301:V310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 8);
+
+		// Case #35: Area, String, Area. Average with mixed types - match empty string
+		oParser = new parserFormula("AVERAGEIF(U301:U310,\"\",V301:V310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 5);
+
+		// Case #36: Area, String, Area. Average with mixed types - match numbers > 0
+		oParser = new parserFormula("AVERAGEIF(U301:U310,\">0\",V301:V310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 5.5);
+
+		// Case #37: Area, String, Area. Average with mixed types - match not equal to 10
+		oParser = new parserFormula("AVERAGEIF(U301:U310,\"<>10\",V301:V310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 5.5);
+
+		// Case #38: Area, String, Area. Average with mixed types - match all text using wildcard
+		oParser = new parserFormula("AVERAGEIF(U301:U310,\"*\",V301:V310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 4);
+
+		// Case #39: Area, String, Area. Average with mixed types - match all non-empty cells
+		oParser = new parserFormula("AVERAGEIF(U301:U310,\"<>\",V301:V310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 5.556);
+
+		// Case #40: Area, Number, Area. Average with empty cells in criteria range - match 1
+		oParser = new parserFormula("AVERAGEIF(Z301:Z310,1,AA301:AA310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 40);
+
+		// Case #41: Area, Number, Area. Average with empty cells in criteria range - match 2
+		oParser = new parserFormula("AVERAGEIF(Z301:Z310,2,AA301:AA310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 60);
+
+		// Case #42: Area, String, Area. Average with empty cells - match empty string
+		oParser = new parserFormula("AVERAGEIF(Z301:Z310,\"\",AA301:AA310)", "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), 52);
+
+		// Case #43: Area, String, Area. Average with empty cells - match non-empty
+		oParser = new parserFormula("AVERAGEIF(Z301:Z310,\"<>\",AA301:AA310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 50);
+
+		// Case #44: Area, String, Area. Average with empty cells - match numbers > 0
+		oParser = new parserFormula("AVERAGEIF(Z301:Z310,\">0\",AA301:AA310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 50);
+
+		// Case #45: Area, String, Area. Average with empty cells - match not equal to 1
+		oParser = new parserFormula("AVERAGEIF(Z301:Z310,\"<>1\",AA301:AA310)", "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), 53.75);
+
+		// Case #46: Area, Number, Area. Average with empty cells - match 3
+		oParser = new parserFormula("AVERAGEIF(Z301:Z310,3,AA301:AA310)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 50);
+
+		// Case #47: Area, String, Area. Average with errors in avg range - match "A" (propagates #DIV/0!)
+		oParser = new parserFormula("AVERAGEIF(AE301:AE306,\"A\",AF301:AF306)", "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		// Case #48: Area, String, Area. Average with errors in avg range - match "B" (propagates #DIV/0!)
+		oParser = new parserFormula("AVERAGEIF(AE301:AE306,\"B\",AF301:AF306)", "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		// Case #49: Area, String, Area. Average with errors in avg range - match "C" (no error)
+		oParser = new parserFormula("AVERAGEIF(AE301:AE306,\"C\",AF301:AF306)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 40);
+
+		// Case #50: Area, String, Area. Average with errors in avg range - match not "A" (propagates #DIV/0!)
+		oParser = new parserFormula("AVERAGEIF(AE301:AE306,\"<>A\",AF301:AF306)", "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		// Case #51: Area, String, Area. Average with errors in avg range - match not "C" (propagates #DIV/0!)
+		oParser = new parserFormula("AVERAGEIF(AE301:AE306,\"<>C\",AF301:AF306)", "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		// Case #52: Area, String, Area. Average with offset avg range - criteria > 20
+		oParser = new parserFormula("AVERAGEIF(AJ301:AJ305,\">20\",AK304:AK308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 400);
+
+		// Case #53: Area, String, Area. Average with offset avg range - criteria < 30
+		oParser = new parserFormula("AVERAGEIF(AJ301:AJ305,\"<30\",AK304:AK308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 150);
+
+		// Case #54: Area, Number, Area. Average with offset avg range - criteria equals 10
+		oParser = new parserFormula("AVERAGEIF(AJ301:AJ305,10,AK304:AK308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 100);
+
+		// Case #55: Area, String, Area. Average with offset avg range - criteria <> 30
+		oParser = new parserFormula("AVERAGEIF(AJ301:AJ305,\"<>30\",AK304:AK308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 300);
+
+		// Case #56: Area, String, Area. Average with offset avg range - dynamic criteria
+		oParser = new parserFormula("AVERAGEIF(AJ301:AJ305,\">=\" & AJ303,AK304:AK308)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 400);
+
+		// Case #57: Area, Number, Area. Average with smaller avg range than criteria range - match 1
+		oParser = new parserFormula("AVERAGEIF(AO301:AO307,1,AP301:AP303)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 40);
+
+		// Case #58: Area, Number, Area. Average with smaller avg range - match 2
+		oParser = new parserFormula("AVERAGEIF(AO301:AO307,2,AP301:AP303)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 35);
+
+		// Case #59: Area, Number, Area. Average with smaller avg range - match 3
+		oParser = new parserFormula("AVERAGEIF(AO301:AO307,3,AP301:AP303)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 45);
+
+		// Case #60: Area, String, Area. Average with smaller avg range - criteria > 1
+		oParser = new parserFormula("AVERAGEIF(AO301:AO307,\">1\",AP301:AP303)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 40);
+
+		// Case #61: Area, String, Area. Average with smaller avg range - criteria <> 1
+		oParser = new parserFormula("AVERAGEIF(AO301:AO307,\"<>1\",AP301:AP303)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 40);
+
+		// Case #62: Area, String, Area. Average sparse range with text/empty cells - criteria > 3
+		oParser = new parserFormula("AVERAGEIF(AT301:AT309,\">3\",AU301:AU309)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 466.667);
+
+		// Case #63: Area, String, Area. Average sparse range - criteria < 5
+		oParser = new parserFormula("AVERAGEIF(AT301:AT309,\"<5\",AU301:AU309)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 300);
+
+		// Case #64: Area, Number, Area. Average sparse range - match 12
+		oParser = new parserFormula("AVERAGEIF(AT301:AT309,12,AU301:AU309)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 500);
+
+		// Case #65: Area, String, Area. Average sparse range - criteria <> 12
+		oParser = new parserFormula("AVERAGEIF(AT301:AT309,\"<>12\",AU301:AU309)", "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 314.286);
+
+		// Case #66: Area, String, Area. Average sparse range - match text "text"
+		oParser = new parserFormula("AVERAGEIF(AT301:AT309,\"text\",AU301:AU309)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 500);
+
+		// Case #67: Area, String, Area. Average sparse range - match empty string
+		oParser = new parserFormula("AVERAGEIF(AT301:AT309,\"\",AU301:AU309)", "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 266.667);
+
+		// Case #68: Area, String, Area. Average sparse range - match non-empty
+		oParser = new parserFormula("AVERAGEIF(AT301:AT309,\"<>\",AU301:AU309)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 400);
+
+		// Case #69: Area, String, Area. Extended <> test - criteria <> 5 with mostly 5s
+		oParser = new parserFormula("AVERAGEIF(BI301:BI306,\"<>5\",BJ301:BJ306)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 40);
+
+		// Case #70: Area, Number, Area. Extended <> test - criteria equals 5
+		oParser = new parserFormula("AVERAGEIF(BI301:BI306,5,BJ301:BJ306)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 34);
+
+		// Case #71: Area, String, Area. Extended <> test with mixed types - criteria <> "cat"
+		oParser = new parserFormula("AVERAGEIF(BI310:BI316,\"<>cat\",BJ310:BJ316)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 4.25);
+
+		// Case #72: Area, String, Area. Extended <> test with mixed types - criteria <> empty
+		oParser = new parserFormula("AVERAGEIF(BI310:BI316,\"<>\",BJ310:BJ316)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 3.667);
+
+		// Case #73: Area, String, Area. Extended <> test with mixed types - match "cat"
+		oParser = new parserFormula("AVERAGEIF(BI310:BI316,\"cat\",BJ310:BJ316)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 3.667);
+
+		// Case #74: Ref, String, Ref. Single-cell range with <> - no match → #DIV/0!
+		oParser = new parserFormula("AVERAGEIF(BI301,\"<>5\",BJ301)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		// Case #75: Ref, String, Ref. Single-cell range with <> - match
+		oParser = new parserFormula("AVERAGEIF(BI304,\"<>5\",BJ304)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 40);
+
+		// Case #76: Area, String, Area. All-text criteria range - text "30" parses to 30 and is excluded by "<>30"
+		oParser = new parserFormula("AVERAGEIF(BD301:BD306,\"<>30\",BE301:BE306)", "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), 3.4);
+
+		// Case #77: Area, String, Area. All-text criteria range - numeric comparison skips text cells → #DIV/0!
+		oParser = new parserFormula("AVERAGEIF(BD301:BD306,\">=10\",BE301:BE306)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		// Case #78: Area, String, Area. Mixed real and text-stored numbers - "<>20" excludes both real and text "20"
+		oParser = new parserFormula("AVERAGEIF(CC311:CC314,\"<>20\",CD311:CD314)", "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), 150);
+
+		// Case #79: Area, Number, Area. Mixed real and text-stored numbers - match 20 (both real and text)
+		oParser = new parserFormula("AVERAGEIF(CC311:CC314,20,CD311:CD314)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 350);
+
+		// Case #80: Area, String, Area. Mixed real and text-stored numbers - criteria <> 0 (all non-zero)
+		oParser = new parserFormula("AVERAGEIF(CC311:CC314,\"<>0\",CD311:CD314)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 250);
+
+		// Case #81: Area, Formula, Area. avg(=10) + avg(<>10) = combined result of both averages
+		oParser = new parserFormula("AVERAGEIF(CC311:CC314,10,CD311:CD314)+AVERAGEIF(CC311:CC314,\"<>10\",CD311:CD314)", "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), 500);
+
+		// Case #82: Ref, String, Ref. Single real number 10 - excluded by "<>10" → #DIV/0!
+		oParser = new parserFormula("AVERAGEIF(CC311,\"<>10\",CD311)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		// Case #83: Ref, String, Ref. Single text "10" - also excluded by "<>10" (string converts to number) → #DIV/0!
+		oParser = new parserFormula("AVERAGEIF(CC312,\"<>10\",CD312)", "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		// Case #84: Ref, Number, Ref. Single real number 10 - matched by =10
+		oParser = new parserFormula("AVERAGEIF(CC311,10,CD311)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 100);
+
+		// Case #85: Ref, Number, Ref. Single text "10" - also matched by =10 (string converts to number)
+		oParser = new parserFormula("AVERAGEIF(CC312,10,CD312)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 200);
+
+		// Case #86: Table, Number, Table. Average numeric values equal to 5 in table column
+		oParser = new parserFormula('AVERAGEIF(Table1[Column1], 5, Table1[Column4])', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 33.333);
+
+		// Case #87: Table, String, Table. Average numeric values greater than 5 in table column
+		oParser = new parserFormula('AVERAGEIF(Table1[Column1], ">5", Table1[Column4])', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 36.667);
+
+		// Case #88: Table, String, Table. Average values where text column equals "Apple"
+		oParser = new parserFormula('AVERAGEIF(Table1[Column2], "Apple", Table1[Column4])', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 20);
+
+		// Case #89: Table, String, Table. Average values using wildcard in table column
+		oParser = new parserFormula('AVERAGEIF(Table1[Column2], "*an*", Table1[Column4])', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 36.667);
+
+		// Case #90: Table, String, Table. Average values where color column equals "Red"
+		oParser = new parserFormula('AVERAGEIF(Table1[Column3], "Red", Table1[Column4])', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 35);
+
+		// Case #91: Area3D, Number, Area3D. Average values equal to 5 in 3D range
+		oParser = new parserFormula('AVERAGEIF(Sheet2!A1:A6, 5, Sheet2!C1:C6)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 33.333);
+
+		// Case #92: Area3D, String, Area3D. Average values greater than 5 in 3D range
+		oParser = new parserFormula('AVERAGEIF(Sheet2!A1:A6, ">5", Sheet2!C1:C6)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 36.667);
+
+		// Case #93: Area3D, String, Area3D. Average values where text equals "Apple" in 3D range
+		oParser = new parserFormula('AVERAGEIF(Sheet2!B1:B5, "Apple", Sheet2!C1:C5)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 20);
+
+		// Case #94: Area3D, String, Area3D. Average values using wildcard in 3D range
+		oParser = new parserFormula('AVERAGEIF(Sheet2!B1:B5, "*an*", Sheet2!C1:C5)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 35);
+
+		// Case #95: Ref3D, Number, Ref3D. Single cell reference in 3D
+		oParser = new parserFormula('AVERAGEIF(Sheet2!A1, 5, Sheet2!C1)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 10);
+
+		// Case #96: Area, Ref3D, Area3D. Average values using 3D cell reference as criteria
+		oParser = new parserFormula('AVERAGEIF(Sheet2!A1:A6, Sheet2!D1, Sheet2!C1:C6)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 36.667);
+
+		// Case #97: Area, Ref3D, Area3D. Average text values using 3D cell reference as criteria
+		oParser = new parserFormula('AVERAGEIF(Sheet2!B1:B5, Sheet2!D2, Sheet2!C1:C5)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 20);
+
+		// Case #98: Area3D, Ref3D, Area3D. Average values in 3D area using 3D cell reference as criteria
+		oParser = new parserFormula('AVERAGEIF(Sheet2!A1:A6, Sheet2!A1, Sheet2!C1:C6)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 33.333);
+
+		// Case #99: Area3D, Area3D, Area3D. Multi-cell 3D area as criteria - returns array of results per criteria element
+		// Sheet2!A4:A6=[15,10,5]; for 15→avg(C4)=40, for 10→avg(C2,C5)=35, for 5→avg(C1,C3,C6)=33.333
+		oParser = new parserFormula('AVERAGEIF(Sheet2!A1:A6, Sheet2!A4:A6, Sheet2!C1:C6)', "A1", ws);
+		assert.ok(oParser.parse());
+		let result3d = oParser.calculate();
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(result3d.getElementRowCol(0, 0).getValue(), 40);
+		//assert.strictEqual(result3d.getElementRowCol(1, 0).getValue(), 35);
+		//assert.strictEqual(result3d.getElementRowCol(2, 0).getValue().toFixed(3) - 0, 33.333);
+
+		// Case #100: Area, Formula, Area. Average using formula as criteria (arithmetic expression)
+		oParser = new parserFormula('AVERAGEIF(A301:A310, 2+8, B301:B310)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 125);
+
+		// Case #101: Area, Array, Ref. Average using array as criteria - returns array of results
+		oParser = new parserFormula('AVERAGEIF(A301:A310, {10,20,30}, B301:B310)', "A1", ws);
+		assert.ok(oParser.parse());
+		let result = oParser.calculate();
+		//assert.strictEqual(result.getElementRowCol(0, 0).getValue(), 125);
+		//assert.strictEqual(result.getElementRowCol(0, 1).getValue(), 225);
+		//assert.strictEqual(result.getElementRowCol(0, 2).getValue(), 325);
+
+		// Case #102: Area, Area, Area. Average using area as criteria array
+		oParser = new parserFormula('AVERAGEIF(A301:A310, A301:A303, B301:B310)', "A1", ws);
+		assert.ok(oParser.parse());
+		result = oParser.calculate();
+		//assert.strictEqual(result.getElementRowCol(0, 0).getValue(), 125);
+		//assert.strictEqual(result.getElementRowCol(1, 0).getValue(), 225);
+		//assert.strictEqual(result.getElementRowCol(2, 0).getValue(), 325);
+
+		// Case #103: Formula, String, Formula. Average values in XLOOKUP result
+		oParser = new parserFormula('AVERAGEIF(XLOOKUP(A900,A900:B900,A901:B904),">80",XLOOKUP(A900,A900:B900,A901:B904))', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 93);
+
+		// Case #104: Formula, String, Formula. Average values in XLOOKUP result (Physics)
+		oParser = new parserFormula('AVERAGEIF(XLOOKUP(B900,A900:B900,A901:B904),">80",XLOOKUP(B900,A900:B900,A901:B904))', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 86.5);
+
+		// Case #105: Area, String, Area. Both formula =NA() and text "#N/A" in range match criteria "#N/A"
+		oParser = new parserFormula('AVERAGEIF(R301:R304, "#N/A", S301:S304)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 15);
+
+		// Case #106: Area, Formula, Area. Both formula =NA() and text "#N/A" in range match criteria NA()
+		oParser = new parserFormula('AVERAGEIF(R301:R304, NA(), S301:S304)', "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), 15);
+
+		// Case #107: Area, String, Area. Criteria "=NA()" (literal formula text) matches neither error nor text → #DIV/0!
+		oParser = new parserFormula('AVERAGEIF(R301:R304, "=NA()", S301:S304)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		// Case #108: Area, String, Area. Criteria ">3" treats text ">3" in range as non-numeric, only matches numeric > 3
+		oParser = new parserFormula('AVERAGEIF(W301:W304, ">3", X301:X304)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 300);
+
+		// Case #109: Area, String, Area. Criteria "=>3" is an exact-match for the text string ">3"
+		oParser = new parserFormula('AVERAGEIF(W301:W304, "=>3", X301:X304)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 100);
+
+		// Case #110: Area, String, Area. Criteria "a~*c" uses tilde to match literal asterisk - only "a*c" matches
+		oParser = new parserFormula('AVERAGEIF(H301:H304, "a~*c", I301:I304)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 10);
+
+		// Case #111: Area, String, Area. Criteria "a*c" treats * as wildcard - all 4 values match
+		oParser = new parserFormula('AVERAGEIF(H301:H304, "a*c", I301:I304)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 25);
+
+		// Case #112: DefName, Number, DefName. Range and avg range as named ranges
+		oParser = new parserFormula('AVERAGEIF(AvgIfTestNameRange, 10, AvgIfTestNameAvg)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 125);
+
+		// Case #113: DefName, DefName, DefName. Criteria cell as named range
+		oParser = new parserFormula('AVERAGEIF(AvgIfTestNameRange, AvgIfTestNameCriteria, AvgIfTestNameAvg)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 500);
+
+		// Case #114: Area, String, Area. Criteria "<>*" matches non-text cells (numbers, booleans, errors, empty)
+		oParser = new parserFormula('AVERAGEIF(U301:U310, "<>*", V301:V310)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 5.875);
+
+		// Case #115: Area, String, Area. Lowercase criteria "#n/a" matches both formula =NA() and text "#N/A" (case-insensitive)
+		oParser = new parserFormula('AVERAGEIF(R301:R304, "#n/a", S301:S304)', "A1", ws);
+		assert.ok(oParser.parse());
+		//assert.strictEqual(oParser.calculate().getValue(), 15);
+
+		// Case #116: Area, Formula, Area. FALSE() function criteria matches same cells as FALSE literal
+		oParser = new parserFormula('AVERAGEIF(K301:K308, FALSE(), L301:L308)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 500);
+
+		// Case #117: Area, String, Area. Date string criteria "12/1/2024" matches cells stored as date "12/1/2024"
+		oParser = new parserFormula('AVERAGEIF(BM301:BM302, "12/1/2024", BN301:BN302)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 15);
+
+		// Case #118: Area, String, Area. Date string "12/1/2023" does not match "12/1/2024" → #DIV/0!
+		oParser = new parserFormula('AVERAGEIF(BM301:BM302, "12/1/2023", BN301:BN302)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		// Case #119: Area, String, Area. "<>"&"*" concatenation is equivalent to "<>*" - matches non-text cells
+		oParser = new parserFormula('AVERAGEIF(U301:U310, "<>"&"*", V301:V310)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 5.875);
+
+		// Case #120: Area, String, Area. "<>"&"?" concatenation equals "<>?" - matches all non-single-char-text cells
+		oParser = new parserFormula('AVERAGEIF(U301:U310, "<>"&"?", V301:V310)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 5.5);
+
+		// Case #121: Area, String, Area. Avg range with text — only numeric cell counts
+		oParser = new parserFormula('AVERAGEIF(AQ301:AQ302, "A", AR301:AR302)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 10);
+
+		// Case #122: Area, String, Area. Avg range with booleans only — no numeric values → #DIV/0!
+		oParser = new parserFormula('AVERAGEIF(AQ304:AQ305, "A", AR304:AR305)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		// Case #123: Area, String, Area. Mixed avg range (number + text + empty + TRUE + FALSE) — only numeric counts
+		oParser = new parserFormula('AVERAGEIF(AQ301:AQ305, "A", AR301:AR305)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 10);
+
+		// Case #124: Area, String, Area. Error in avg range propagates to result
+		oParser = new parserFormula('AVERAGEIF(AQ301:AQ306, "A", AR301:AR306)', "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		// Case #125: Area, String, Area. Lowercase "true" matches boolean TRUE cells (case-insensitive)
+		oParser = new parserFormula('AVERAGEIF(K301:K308, "true", L301:L308)', "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), 425);
+
+		// Case #126: Area, String, Area. Mixed-case "TrUe" matches boolean TRUE cells (case-insensitive)
+		oParser = new parserFormula('AVERAGEIF(K301:K308, "TrUe", L301:L308)', "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), 425);
+
+		// Case #127: Area, String, Area. Lowercase "false" matches boolean FALSE cells (case-insensitive)
+		oParser = new parserFormula('AVERAGEIF(K301:K308, "false", L301:L308)', "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), 500);
+
+		// Case #128: Area, String, Area. "="&cell dynamic exact match - "="&W301 yields "=>3", matching only cells equal to the text ">3"
+		oParser = new parserFormula('AVERAGEIF(W301:W304, "="&W301, X301:X304)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 100);
+
+		// Negative Cases:
+
+		// Case #1: Error, Number. Handle reference error in range
+		oParser = new parserFormula("AVERAGEIF(#REF!, 1)", "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), "#REF!");
+
+		// Case #2: Array, Number, Ref. Array not allowed as first argument
+		oParser = new parserFormula("AVERAGEIF({1,2,3}, 1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		// Case #3: Array, String, Ref. Array with strings not allowed as first argument
+		oParser = new parserFormula('AVERAGEIF({"a","b","c"}, "a")', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		// Case #4: String, Number. String literal not allowed as range
+		oParser = new parserFormula('AVERAGEIF("a", 1)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		// Case #5: String, String. String literal not allowed as range
+		oParser = new parserFormula('AVERAGEIF("a", "a")', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		// Case #6: Number, String. Number literal not allowed as range
+		oParser = new parserFormula('AVERAGEIF(1, "a")', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		// Case #7: Number, Number. Number literal not allowed as range
+		oParser = new parserFormula('AVERAGEIF(1, 1)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		// Case #8: Area3D, String. Area3D with different sheets not allowed
+		oParser = new parserFormula('AVERAGEIF(Sheet1:Sheet2!A1:B1, "0")', "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		// Case #9: Area, String. Area3D with different sheets not allowed as avg_range
+		oParser = new parserFormula('AVERAGEIF(A1:B1, "0", Sheet1:Sheet2!A1:B1)', "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		// Bounded Cases:
+
+		// Case #1: Area, String, Area. Average with error values - no comparison operators on errors → #DIV/0!
+		oParser = new parserFormula('AVERAGEIF(AB301:AB304,">#N/A",AC301:AC304)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		// Case #2: Area, String, Area. Average with error values - < comparison on errors → #DIV/0!
+		oParser = new parserFormula('AVERAGEIF(AB301:AB304,"<#DIV/0!",AC301:AC304)', "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		// Case #3: Area, String, Area. Average with error values - <> comparison excludes matching error
+		oParser = new parserFormula('AVERAGEIF(AB301:AB304,"<>#N/A",AC301:AC304)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 30);
+
+		// Case #4: Area, String, Area. Average with error values - >= comparison on errors
+		oParser = new parserFormula('AVERAGEIF(AB301:AB304,">=#NUM!",AC301:AC304)', "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), 20);
+
+		// Case #5: Area, String, Area. Average with error values - exact match on error
+		oParser = new parserFormula('AVERAGEIF(AB301:AB304,"=#N/A",AC301:AC304)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 10);
+
+		// Case #6: Area, Formula, Area. Average with error values - match error using NA() function
+		oParser = new parserFormula('AVERAGEIF(AB301:AB304,NA(),AC301:AC304)', "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), 10);
+
+		// Case #7: Area, String, Area. Apostrophe-prefixed cell ("'") matches empty criteria same as truly empty cells
+		oParser = new parserFormula('AVERAGEIF(M301:M305, "", N301:N305)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 233.333);
+
+		// Case #8: Area, String, Area. Apostrophe-prefixed cell is treated as non-empty and matched by "<>"
+		oParser = new parserFormula('AVERAGEIF(M301:M305, "<>", N301:N305)', "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 333.333);
+
+		// Case #9: Area, Number, Area. Cells stored as "12300%", "$123", "1.23E+2", "123" all evaluate to 123
+		oParser = new parserFormula('AVERAGEIF(BA301:BA304, 123, BB301:BB304)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 25);
+
+		// Case #10: Area, String, Area. Criteria "12300%" (percentage) equals 123 and matches same cells
+		oParser = new parserFormula('AVERAGEIF(BA301:BA304, "12300%", BB301:BB304)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 25);
+
+		// Case #11: Area, String, Area. Criteria "$123" (currency) equals 123 and matches same cells
+		oParser = new parserFormula('AVERAGEIF(BA301:BA304, "$123", BB301:BB304)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 25);
+
+		// Case #12: Area, String, Area. Criteria "'true" (apostrophe+true) matches only the cell whose value contains apostrophe
+		oParser = new parserFormula("AVERAGEIF(Y301:Y303, \"'true\", T301:T303)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 200);
+
+		// Case #13: Area, String, Area. Criteria "true" (no apostrophe) matches only booleans, not apostrophe-prefixed value
+		oParser = new parserFormula('AVERAGEIF(Y301:Y303, "true", T301:T303)', "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), 100);
+
+		// Case #14: Area, String, Area. Criteria "123." (trailing period) is recognized as numeric 123
+		oParser = new parserFormula('AVERAGEIF(BA301:BA308, "123.", BB301:BB308)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 45);
+
+		// Case #15: Area, String, Area. Criteria "1.23e+2" (lowercase e scientific) is recognized as numeric 123
+		oParser = new parserFormula('AVERAGEIF(BA301:BA308, "1.23e+2", BB301:BB308)', "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), 45);
+
+		// Case #16: Area, String, Area. Criteria "0123" (leading zero) is recognized as numeric 123
+		oParser = new parserFormula('AVERAGEIF(BA301:BA308, "0123", BB301:BB308)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 45);
+
+		// Case #17: Area, String, Area. Criteria "123.0" (trailing decimal zero) is recognized as numeric 123
+		oParser = new parserFormula('AVERAGEIF(BA301:BA308, "123.0", BB301:BB308)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 45);
+
+		// Case #18: Area, String, Ref. Testing avg bbox range calculation
+		oParser = new parserFormula('AVERAGEIF(BA301:BA308, "123.0", BB301)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 45);
+
+		// Case #19: Area, Area3D, Area. Multi-sheet 3D range as criteria always returns #DIV/0!
+		oParser = new parserFormula('AVERAGEIF(A301:A310, Sheet1:Sheet2!A1:B1, B301:B310)', "A1", ws);
+		assert.ok(oParser.parse());
+		//TODO: fix with optimization AVERAGEIF
+		//assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		// Cleanup: remove named ranges
+		wb.delDefinesNames(defNameAvgIfRange);
+		wb.delDefinesNames(defNameAvgIfAvg);
+		wb.delDefinesNames(defNameAvgIfCriteria);
 
 		testArrayFormula2(assert, "AVERAGEIF", 2, 3, null, true);
 	});

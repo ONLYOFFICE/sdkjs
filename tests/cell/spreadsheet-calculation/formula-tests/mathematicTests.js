@@ -21066,7 +21066,7 @@ $(function () {
 		ws.getRange2("AC4").setValue("40");
 
 		// ''value in setValue: first apostrophe is text-force prefix, second becomes part of the stored value
-		ws.getRange2("Y1").setValue("true");    // plain text "true" (no apostrophe in stored value)
+		ws.getRange2("Y1").setValue("true");    // boolean
 		ws.getRange2("Y2").setValue("''true");  // stores "'true" (apostrophe IS part of value)
 		ws.getRange2("Y3").setValue("10");
 		ws.getRange2("T1").setValue("100");
@@ -21833,7 +21833,7 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 200);
 
-		// Case #13: Area, String, Area. Criteria "true" (no apostrophe) matches only plain text, not apostrophe-prefixed value
+		// Case #13: Area, String, Area. Criteria "true" (no apostrophe) matches only booleans, not apostrophe-prefixed value
 		oParser = new parserFormula('SUMIF(Y1:Y3, "true", T1:T3)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 100);
