@@ -806,18 +806,6 @@
 	asc_docs_api.prototype.IsThumbnailsSupported = function() {
 		return this.presentationViewManager.isThumbnailsSupported();
 	};
-	asc_docs_api.prototype.asc_setHandoutFooter = function(val) {
-		return this.presentationViewManager.setHandoutFooter(val);
-	};
-	asc_docs_api.prototype.asc_setHandoutHeader = function(val) {
-		return this.presentationViewManager.setHandoutHeader(val);
-	};
-	asc_docs_api.prototype.asc_setHandoutDate = function(val) {
-		return this.presentationViewManager.setHandoutDate(val);
-	};
-	asc_docs_api.prototype.asc_setHandoutNumber = function(val) {
-		return this.presentationViewManager.setHandoutNumber(val);
-	};
 	asc_docs_api.prototype.asc_setHandoutPageCount = function(val) {
 		return this.presentationViewManager.setHandoutPageCount(val);
 	};
