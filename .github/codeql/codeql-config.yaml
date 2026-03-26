@@ -1,4 +1,0 @@
-paths-ignore:
-  - 'build/**'
-  - 'tests/**'
-  - 'tools/**'
