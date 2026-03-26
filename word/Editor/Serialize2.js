@@ -5123,6 +5123,7 @@ function BinaryNumberingTableWriter(memory, doc, oNumIdMap, oUsedNumIdMap, saveP
 				case align_Center: this.memory.WriteByte(1);break;
 				case align_Right: this.memory.WriteByte(11);break;
 				case align_Justify:this.memory.WriteByte(2);break;
+				case align_Distributed: this.memory.WriteByte(4);break;
 				default: this.memory.WriteByte(10);break;
 			}
         }
@@ -11156,6 +11157,7 @@ function Binary_NumberingTableReader(doc, oReadResult, stream)
 				case 0:
 				case 9:
 				case 2: oNewLvl.Jc = align_Justify;break;
+				case 4: oNewLvl.Jc = align_Distributed;break;
 				default: oNewLvl.Jc = align_Left;break;
 			}
         }

@@ -2061,7 +2061,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 								X = Range.X + RangeWidth - Range.W - rtlShift;
 							else
 								X = Range.X;
-							
+
 							JustifyWord  = 0;
 							JustifySpace = 0;
 						}
@@ -2105,7 +2105,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 						else
 						{
 							// TODO: Переделать проверку последнего отрезка в последней строке (нужно выставлять флаг когда пришел PRS.End в отрезке)
-							
+
 							// Последний промежуток последней строки не надо растягивать по ширине.
 							if (PRSC.Spaces > 0 && (!(Line.Info & paralineinfo_End) || CurRange !== Line.Ranges.length - 1))
 							{
@@ -2113,7 +2113,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 									X = Range.X - rtlShift;
 								else
 									X = Range.X;
-								
+
 								JustifySpace = (RangeWidth - Range.W) / PRSC.Spaces;
 							}
 							else
@@ -2122,9 +2122,34 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 									X = Range.X + RangeWidth - Range.W - rtlShift;
 								else
 									X = Range.X;
-								
+
 								JustifySpace = 0;
 							}
+						}
+						break;
+					}
+					case AscCommon.align_Distributed:
+					{
+						// Thai Distributed / Distributed alignment:
+						// Distributes all characters evenly across the full line width,
+						// including the last line (unlike justify which left-aligns the last line).
+						if (1 === PRSC.Words || PRSC.Spaces <= 0)
+						{
+							// No spaces (e.g. Thai text without spaces between words, or CJK)
+							// Distribute inter-character spacing evenly
+							X = Range.X;
+							if (PRSC.Letters > 1)
+								JustifyWord = (RangeWidth - Range.W) / (PRSC.Letters - 1);
+						}
+						else
+						{
+							// Has spaces — distribute spacing across all spaces (including last line)
+							if (bRtlAlign)
+								X = Range.X - rtlShift;
+							else
+								X = Range.X;
+
+							JustifySpace = (RangeWidth - Range.W) / PRSC.Spaces;
 						}
 						break;
 					}

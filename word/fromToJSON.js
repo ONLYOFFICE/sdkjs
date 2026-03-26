@@ -16493,6 +16493,10 @@
 						oResult["algn"] = "r";
 						break;
 					}
+					case AscCommon.align_Distributed: {
+						oResult["algn"] = "dist";
+						break;
+					}
 				}
 			}
 
@@ -16630,7 +16634,7 @@
 						break;
 					}
 					case "dist": {
-						this.Jc = AscCommon.align_Justify;
+						this.Jc = AscCommon.align_Distributed;
 						break;
 					}
 					case "just": {
@@ -16650,7 +16654,7 @@
 						break;
 					}
 					case "thaiDist": {
-						this.Jc = AscCommon.align_Justify;
+						this.Jc = AscCommon.align_Distributed;
 						break;
 					}
 				}
