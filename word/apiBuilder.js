@@ -8719,6 +8719,31 @@
 	};
 
 	/**
+	 * Returns the comments for the current cursor position or selection.
+	 * If the cursor is placed within one or more comment ranges, those comments are returned.
+	 * If no comments are found at the current position, an empty array is returned.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiComment[]}
+	 */
+	ApiDocument.prototype.GetCurrentComments = function()
+	{
+		let arrIds = this.Document.GetAllComments(false, true);
+		if (!arrIds || arrIds.length === 0)
+			return [];
+
+		let oCommManager = this.Document.GetCommentsManager();
+		let aResult = [];
+		for (let i = 0; i < arrIds.length; i++)
+		{
+			let oComment = oCommManager.GetById(arrIds[i]);
+			if (oComment)
+				aResult.push(new ApiComment(oComment));
+		}
+		return aResult;
+	};
+
+	/**
 	 * Returns a comment from the current document by its ID.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
@@ -29626,6 +29651,7 @@
 	ApiDocument.prototype["AddEndnote"]                    = ApiDocument.prototype.AddEndnote;
 	ApiDocument.prototype["SetControlsHighlight"]          = ApiDocument.prototype.SetControlsHighlight;
 	ApiDocument.prototype["GetAllComments"]                = ApiDocument.prototype.GetAllComments;
+	ApiDocument.prototype["GetCurrentComments"]            = ApiDocument.prototype.GetCurrentComments;
 	ApiDocument.prototype["GetCommentById"]                = ApiDocument.prototype.GetCommentById;
 	ApiDocument.prototype["ShowComment"]                   = ApiDocument.prototype.ShowComment;
 	ApiDocument.prototype["GetStatistics"]                 = ApiDocument.prototype.GetStatistics;
