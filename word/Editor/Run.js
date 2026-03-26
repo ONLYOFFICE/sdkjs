@@ -5271,6 +5271,10 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
             {
                 PRSC.Letters++;
 
+                // Count non-combining base characters for Thai Distributed alignment
+                if (!(Item.IsCombiningMark && Item.IsCombiningMark()))
+                    PRSC.BaseLetters++;
+
                 if ( true !== PRSC.Word )
                 {
                     PRSC.Word = true;
@@ -5488,6 +5492,12 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                 {
                     WidthVisible = Item.GetWidth();
                     PRSA.LettersSkip--;
+                }
+                else if (PRSA.IsDistributed && Item.IsCombiningMark && Item.IsCombiningMark())
+                {
+                    // Thai Distributed: skip combining marks (vowels above/below, tone marks)
+                    // to keep them attached to their base character
+                    WidthVisible = Item.GetWidth();
                 }
                 else
                     WidthVisible = Item.GetWidth() + PRSA.JustifyWord;

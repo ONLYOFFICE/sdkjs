@@ -2130,27 +2130,14 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 					}
 					case AscCommon.align_Distributed:
 					{
-						// Thai Distributed / Distributed alignment:
-						// Distributes all characters evenly across the full line width,
-						// including the last line (unlike justify which left-aligns the last line).
-						if (1 === PRSC.Words || PRSC.Spaces <= 0)
-						{
-							// No spaces (e.g. Thai text without spaces between words, or CJK)
-							// Distribute inter-character spacing evenly
-							X = Range.X;
-							if (PRSC.Letters > 1)
-								JustifyWord = (RangeWidth - Range.W) / (PRSC.Letters - 1);
-						}
-						else
-						{
-							// Has spaces — distribute spacing across all spaces (including last line)
-							if (bRtlAlign)
-								X = Range.X - rtlShift;
-							else
-								X = Range.X;
-
-							JustifySpace = (RangeWidth - Range.W) / PRSC.Spaces;
-						}
+						// Thai Distributed alignment:
+						// Distribute equal letter-spacing across base characters only
+						// (excluding combining marks like Thai vowels above/below).
+						// Applies to every line including the last line.
+						X = Range.X;
+						var nBaseLetters = PRSC.BaseLetters > 0 ? PRSC.BaseLetters : PRSC.Letters;
+						if (nBaseLetters > 1)
+							JustifyWord = (RangeWidth - Range.W) / (nBaseLetters - 1);
 						break;
 					}
 					default:
@@ -2175,6 +2162,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
         PRSA.Y    = this.Pages[CurPage].Y + this.Lines[CurLine].Y;
         PRSA.XEnd = Range.XEnd;
         PRSA.JustifyWord   = JustifyWord;
+        PRSA.IsDistributed = (jc === AscCommon.align_Distributed);
         PRSA.JustifySpace  = JustifySpace;
         PRSA.SpacesCounter = PRSC.Spaces;
         PRSA.SpacesSkip    = PRSC.SpacesSkip;
@@ -2664,19 +2652,92 @@ Paragraph.prototype.ShapeText = function()
 	if (!this.RecalcInfo.ShapeText)
 		return;
 
-	// TODO: Код для теста скорости функции ShapeText
-	// let nRecalcId = this.LogicDocument ? this.LogicDocument.GetRecalcId() : -1;
-	// if (this.ShapeId === nRecalcId)
-	// 	return;
-	//
-	// this.ShapeId = nRecalcId;
-
-	// TODO: Сейчас мы шейпим текст целиком во всем параграфе. Для ускорения нужно отслеживать позиции, в которых
-	//       произошли изменения (далее влево и вправо найти позиции пробела/таба или другого разделителя слова)
-	//       и шейпить текст только в заданном промежутке
-
 	AscWord.ParagraphTextShaper.Shape(this);
 	this.RecalcInfo.ShapeText = false;
+
+	// Thai word segmentation for line breaking
+	this.SegmentThaiWords();
+};
+
+/**
+ * Scan all runs in this paragraph for Thai text sequences.
+ * Use Intl.Segmenter to find word boundaries and set SpaceAfter(true)
+ * on the last character of each Thai word, enabling proper line breaking.
+ */
+Paragraph.prototype.SegmentThaiWords = function()
+{
+	if (typeof Intl === 'undefined' || typeof Intl.Segmenter === 'undefined')
+		return;
+
+	for (var i = 0; i < this.Content.length; i++)
+	{
+		var run = this.Content[i];
+		if (!run.Content || run.Content.length === 0)
+			continue;
+
+		// Collect sequences of Thai characters with their positions
+		var thaiStart = -1;
+		var thaiChars = '';
+		var thaiPositions = [];
+
+		for (var j = 0; j <= run.Content.length; j++)
+		{
+			var isThai = false;
+			if (j < run.Content.length)
+			{
+				var item = run.Content[j];
+				if (item.Type === para_Text)
+				{
+					var code = item.Value;
+					// Thai Unicode block: U+0E00 - U+0E7F
+					if (code >= 0x0E00 && code <= 0x0E7F)
+						isThai = true;
+				}
+			}
+
+			if (isThai)
+			{
+				if (thaiStart === -1)
+					thaiStart = j;
+				thaiChars += String.fromCharCode(run.Content[j].Value);
+				thaiPositions.push(j);
+			}
+			else
+			{
+				// End of Thai sequence — segment it
+				if (thaiStart !== -1 && thaiChars.length > 0)
+				{
+					this.private_ApplyThaiSegmentation(run, thaiChars, thaiPositions);
+					thaiStart = -1;
+					thaiChars = '';
+					thaiPositions = [];
+				}
+			}
+		}
+	}
+};
+
+Paragraph.prototype.private_ApplyThaiSegmentation = function(run, thaiText, positions)
+{
+	var segmenter = new Intl.Segmenter('th-TH', { granularity: 'word' });
+	var segments = segmenter.segment(thaiText);
+
+	var charIndex = 0;
+	for (var seg of segments)
+	{
+		var segEnd = charIndex + seg.segment.length - 1;
+
+		// Set SpaceAfter on the last character of each word segment
+		// (but not the very last segment of the Thai sequence)
+		if (segEnd < positions.length - 1)
+		{
+			var pos = positions[segEnd];
+			if (pos < run.Content.length && run.Content[pos].SetSpaceAfter)
+				run.Content[pos].SetSpaceAfter(true);
+		}
+
+		charIndex += seg.segment.length;
+	}
 };
 Paragraph.prototype.HyphenateText = function()
 {
@@ -4427,6 +4488,7 @@ function CParagraphRecalculateStateCounter(wrapState)
     this.Words       = 0;
     this.Spaces      = 0;
     this.Letters     = 0;
+    this.BaseLetters = 0;
     this.SpacesSkip  = 0;
     this.LettersSkip = 0;
 
@@ -4443,6 +4505,7 @@ CParagraphRecalculateStateCounter.prototype.Reset = function(Paragraph, Range)
 	this.Words       = 0;
 	this.Spaces      = 0;
 	this.Letters     = 0;
+	this.BaseLetters = 0;
 	this.SpacesSkip  = 0;
 	this.LettersSkip = 0;
 	
