@@ -2664,8 +2664,34 @@ Paragraph.prototype.ShapeText = function()
 	AscWord.ParagraphTextShaper.Shape(this);
 	this.RecalcInfo.ShapeText = false;
 
-	// Thai word segmentation for line breaking
-	this.SegmentThaiWords();
+	// Thai word segmentation for line breaking (debounced)
+	this.ScheduleThaiSegmentation();
+};
+
+/**
+ * Debounced scheduler for Thai word segmentation.
+ * Waits 300ms after last call before running segmentation,
+ * then triggers paragraph recalculation.
+ */
+Paragraph.prototype.ScheduleThaiSegmentation = function()
+{
+	var para = this;
+
+	if (this.ThaiSegmentTimer)
+		clearTimeout(this.ThaiSegmentTimer);
+
+	this.ThaiSegmentTimer = setTimeout(function()
+	{
+		para.ThaiSegmentTimer = null;
+		para.SegmentThaiWords();
+
+		// Trigger re-layout after segmentation
+		if (para.LogicDocument)
+		{
+			para.RecalcInfo.ShapeText = false;
+			para.LogicDocument.Recalculate();
+		}
+	}, 300);
 };
 
 /**
@@ -2684,7 +2710,16 @@ Paragraph.prototype.SegmentThaiWords = function()
 		if (!run.Content || run.Content.length === 0)
 			continue;
 
-		// Collect sequences of Thai characters with their positions
+		// First pass: reset SpaceAfter on all Thai characters
+		// (clear previous segmentation before re-segmenting)
+		for (var j = 0; j < run.Content.length; j++)
+		{
+			var item = run.Content[j];
+			if (item.Type === para_Text && item.Value >= 0x0E00 && item.Value <= 0x0E7F && item.SetSpaceAfter)
+				item.SetSpaceAfter(false);
+		}
+
+		// Second pass: collect Thai sequences and segment them
 		var thaiStart = -1;
 		var thaiChars = '';
 		var thaiPositions = [];
