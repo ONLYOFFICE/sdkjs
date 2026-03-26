@@ -680,4 +680,110 @@ $(function () {
         assert.strictEqual(ws.GetRange("F10").GetValue(), "3"); assert.strictEqual(ws.GetRange('G10').GetValue(), "2"); assert.strictEqual(ws.GetRange("H10").GetValue(), "1");
         assert.strictEqual(ws.GetRange("F11").GetValue(), "4"); assert.strictEqual(ws.GetRange('G11').GetValue(), "1"); assert.strictEqual(ws.GetRange("H11").GetValue(), "2");
     });
+
+	QUnit.test("Clear", function (assert) {
+		ws.GetRange("A1").SetValue("test");
+		assert.strictEqual(ws.GetRange("A1").Clear(), true, "Clear returns true");
+		assert.strictEqual(ws.GetRange("A1").GetValue(), "", "Cell is empty after Clear");
+	});
+
+	QUnit.test("SetOffset", function (assert) {
+		const range = ws.GetRange("A1");
+		assert.strictEqual(range.SetOffset(2, 2), true, "SetOffset returns true");
+	});
+
+	QUnit.test("SetFontColor", function (assert) {
+		const range = ws.GetRange("A1");
+		const color = AscTest.JsApi.CreateColorFromRGB(255, 0, 0);
+		assert.strictEqual(range.SetFontColor(color), true, "SetFontColor returns true");
+	});
+
+	QUnit.test("SetHidden", function (assert) {
+		const sheet = AscTest.JsApi.GetActiveSheet();
+		const colRange = sheet.GetRangeByNumber(0, 0).GetEntireColumn();
+		assert.strictEqual(colRange.SetHidden(true), true, "SetHidden returns true");
+		colRange.SetHidden(false);
+	});
+
+	QUnit.test("SetRowHeight", function (assert) {
+		const range = ws.GetRange("A1");
+		assert.strictEqual(range.SetRowHeight(30), true, "SetRowHeight returns true");
+		assert.strictEqual(range.GetRowHeight(), 30, "GetRowHeight returns the value that was set");
+	});
+
+	QUnit.test("SetFontSize", function (assert) {
+		const range = ws.GetRange("A1");
+		assert.strictEqual(range.SetFontSize(14), true, "SetFontSize returns true");
+	});
+
+	QUnit.test("SetFontName", function (assert) {
+		const range = ws.GetRange("A1");
+		assert.strictEqual(range.SetFontName("Arial"), true, "SetFontName returns true");
+	});
+
+	QUnit.test("SetBold", function (assert) {
+		const range = ws.GetRange("A1");
+		assert.strictEqual(range.SetBold(true), true, "SetBold returns true");
+	});
+
+	QUnit.test("SetItalic", function (assert) {
+		const range = ws.GetRange("A1");
+		assert.strictEqual(range.SetItalic(true), true, "SetItalic returns true");
+	});
+
+	QUnit.test("SetUnderline", function (assert) {
+		const range = ws.GetRange("A1");
+		assert.strictEqual(range.SetUnderline("single"), true, "SetUnderline returns true");
+	});
+
+	QUnit.test("SetStrikeout", function (assert) {
+		const range = ws.GetRange("A1");
+		assert.strictEqual(range.SetStrikeout(true), true, "SetStrikeout returns true");
+	});
+
+	QUnit.test("SetWrap", function (assert) {
+		const range = ws.GetRange("A1");
+		assert.strictEqual(range.SetWrap(true), true, "SetWrap returns true");
+		assert.strictEqual(range.GetWrapText(), true, "GetWrapText returns true after SetWrap(true)");
+
+		assert.strictEqual(range.SetWrap(false), true, "SetWrap returns true");
+		assert.strictEqual(range.GetWrapText(), false, "GetWrapText returns false after SetWrap(false)");
+	});
+
+	QUnit.test("SetFillColor", function (assert) {
+		const range = ws.GetRange("A1");
+		const color = AscTest.JsApi.CreateColorFromRGB(0, 255, 0);
+		assert.strictEqual(range.SetFillColor(color), true, "SetFillColor returns true");
+		assert.strictEqual(range.SetFillColor("No Fill"), true, "SetFillColor returns true for No Fill");
+	});
+
+	QUnit.test("SetNumberFormat", function (assert) {
+		const range = ws.GetRange("A1");
+		assert.strictEqual(range.SetNumberFormat("0.00"), true, "SetNumberFormat returns true");
+		assert.strictEqual(range.GetNumberFormat(), "0.00", "GetNumberFormat returns the format that was set");
+	});
+
+	QUnit.test("SetBorders", function (assert) {
+		const range = ws.GetRange("A1");
+		const color = AscTest.JsApi.CreateColorFromRGB(0, 0, 0);
+		assert.strictEqual(range.SetBorders("Bottom", "Thin", color), true, "SetBorders returns true");
+	});
+
+	QUnit.test("Merge / UnMerge", function (assert) {
+		const range = ws.GetRange("B2:C3");
+		assert.strictEqual(range.Merge(false), true, "Merge returns true");
+		assert.strictEqual(range.UnMerge(), true, "UnMerge returns true");
+	});
+
+	QUnit.test("ForEach", function (assert) {
+		ws.GetRange("A1").SetValue("1");
+		ws.GetRange("A2").SetValue("2");
+		const cells = [];
+		assert.strictEqual(ws.GetRange("A1:A2").ForEach(function (cell) { cells.push(cell.GetValue()); }), true, "ForEach returns true when callback is a function");
+		assert.strictEqual(ws.GetRange("A1:A2").ForEach(null), false, "ForEach returns false when callback is not a function");
+	});
+
+	QUnit.test("Select", function (assert) {
+		assert.strictEqual(ws.GetRange("A1").Select(), true, "Select returns true for range on active sheet");
+	});
 });

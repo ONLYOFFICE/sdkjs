@@ -151,6 +151,14 @@ $(function()
 	
 	AscTest.JsApi.CreateColorFromRGB = AscBuilder.Cell.Api.CreateColorFromRGB.bind(AscTest.JsApi);
 	AscTest.JsApi.AddDefName = AscBuilder.Cell.Api.AddDefName.bind(AscTest.JsApi);
+	AscTest.JsApi.GetDefName = AscBuilder.Cell.Api.GetDefName.bind(AscTest.JsApi);
+	AscTest.JsApi.AddSheet = AscBuilder.Cell.Api.AddSheet.bind(AscTest.JsApi);
+	AscTest.JsApi.GetSheet = AscBuilder.Cell.Api.GetSheet.bind(AscTest.JsApi);
+	AscTest.JsApi.GetSheets = AscBuilder.Cell.Api.GetSheets.bind(AscTest.JsApi);
+	AscTest.JsApi.SetLocale = AscBuilder.Cell.Api.SetLocale.bind(AscTest.JsApi);
+	AscTest.JsApi.GetLocale = AscBuilder.Cell.Api.GetLocale.bind(AscTest.JsApi);
+	AscTest.JsApi.CreateNewHistoryPoint = AscBuilder.Cell.Api.CreateNewHistoryPoint.bind(AscTest.JsApi);
+	AscTest.JsApi.Save = AscBuilder.Cell.Api.Save.bind(AscTest.JsApi);
 	
 	AscTest.Workbook = AscTest.Editor.wbModel;
 	AscTest.WorkbookView = AscTest.Editor.wb;
