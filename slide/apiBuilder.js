@@ -7675,7 +7675,7 @@
 	 *
 	 * @param {number} columnIndex - The zero-based column index.
 	 * @param {EMU} width - The column width measured in English measure units.
-	 * @returns {boolean}
+	 * @returns {EMU | null} - Returns the actual column width set (in EMU), or null if the column index is invalid.
 	 *
 	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetColumnWidth.js
@@ -7683,7 +7683,7 @@
 	ApiTable.prototype.SetColumnWidth = function (columnIndex, width) {
 		const table = this.Table;
 		if (!table || columnIndex < 0 || columnIndex >= table.TableGrid.length) {
-			return false;
+			return null;
 		}
 
 		const colsMinWidth = table.GetMinWidth(true);
@@ -7713,7 +7713,28 @@
 			}
 		}
 
-		return true;
+		return private_MM2EMU(widthMM);
+	};
+
+	/**
+	 * Returns the width of the specified column (by index) of the current table.
+	 *
+	 * @memberof ApiTable
+	 * @typeofeditors ["CPE"]
+	 *
+	 * @param {number} columnIndex - The zero-based column index.
+	 * @returns {EMU | null}
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetColumnWidth.js
+	 */
+	ApiTable.prototype.GetColumnWidth = function (columnIndex) {
+		const table = this.Table;
+		const isValidIndex = table && columnIndex >= 0 && columnIndex < table.TableGrid.length;
+		if (isValidIndex) {
+			return private_MM2EMU(table.TableGrid[columnIndex]);
+		}
+		return null;
 	};
 
 	/**
@@ -7738,6 +7759,7 @@
     // ApiTableRow
     //
     //------------------------------------------------------------------------------------------------------------------
+
     /**
      * Returns the type of the ApiTableRow class.
      * @typeofeditors ["CPE"]
@@ -7748,6 +7770,7 @@
     {
         return "tableRow";
     };
+
     /**
      * Returns a number of cells in the current row.
      * @typeofeditors ["CPE"]
@@ -7758,6 +7781,7 @@
     {
         return this.Row.Content.length;
     };
+
     /**
      * Returns a cell by its position in the current row.
      * @typeofeditors ["CPE"]
@@ -7773,38 +7797,52 @@
         return new ApiTableCell(this.Row.Content[nPos]);
     };
 
-
-    /**
-     * Sets the height to the current table row.
-     * @typeofeditors ["CPE"]
-     * @param {EMU} [nValue] - The row height in English measure units.
-     * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetHeight.js
+	/**
+	 * Sets the height to the current table row.
+	 *
+	 * @memberof ApiTableRow
+	 * @typeofeditors ["CPE"]
+	 *
+	 * @param {EMU} [nValue] - The row height in English measure units.
+	 * @returns {EMU | null}
+	 * 
+	 * @since 5.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetHeight.js
 	 */
-    ApiTableRow.prototype.SetHeight = function(nValue)
-    {
-        var fMaxTopMargin = 0, fMaxBottomMargin = 0, fMaxTopBorder = 0, fMaxBottomBorder = 0;
+	ApiTableRow.prototype.SetHeight = function (nValue) {
+		const heightMM = Math.max(0, nValue / 36000);
+		const horizontalLineRule = Asc.linerule_AtLeast;
+		this.Row.Set_Height(heightMM, horizontalLineRule);
+		return private_MM2EMU(heightMM);
+	};
 
-        for (var i = 0;  i < this.Row.Content.length; ++i){
-            var oCell = this.Row.Content[i];
-            var oMargins = oCell.GetMargins();
-            if(oMargins.Bottom.W > fMaxBottomMargin){
-                fMaxBottomMargin = oMargins.Bottom.W;
-            }
-            if(oMargins.Top.W > fMaxTopMargin){
-                fMaxTopMargin = oMargins.Top.W;
-            }
-            var oBorders = oCell.Get_Borders();
-            if(oBorders.Top.Size > fMaxTopBorder){
-                fMaxTopBorder = oBorders.Top.Size;
-            }
-            if(oBorders.Bottom.Size > fMaxBottomBorder){
-                fMaxBottomBorder = oBorders.Bottom.Size;
-            }
-        }
-        this.Row.Set_Height(Math.max(1, nValue/36000 - fMaxTopMargin - fMaxBottomMargin - fMaxTopBorder/2 - fMaxBottomBorder/2), Asc.linerule_AtLeast);
-    };
+	/**
+	 * Returns the height of the current table row.
+	 *
+	 * @memberof ApiTableRow
+	 * @typeofeditors ["CPE"]
+	 *
+	 * @returns {EMU | null}
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetHeight.js
+	 */
+	ApiTableRow.prototype.GetHeight = function () {
+		const table = this.Row.Table;
+		if (!table || !table.Parent) {
+			return null;
+		}
 
+		table.Parent.recalculateTable();
+		table.Parent.recalculateSizes();
 
+		const rowInfo = table.RowsInfo[this.Row.Index];
+		if (!rowInfo || !rowInfo.H[0]) {
+			return null;
+		}
+
+		return private_MM2EMU(rowInfo.H[0]);
+	};
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -8478,12 +8516,14 @@
     ApiTable.prototype["SetShd"]                          = ApiTable.prototype.SetShd;
 	ApiTable.prototype["SetSize"]                         = ApiTable.prototype.SetSize;
 	ApiTable.prototype["SetColumnWidth"]                  = ApiTable.prototype.SetColumnWidth;
+	ApiTable.prototype["GetColumnWidth"]                  = ApiTable.prototype.GetColumnWidth;
 	ApiTable.prototype["ToJSON"]                          = ApiTable.prototype.ToJSON;
 
     ApiTableRow.prototype["GetClassType"]                 = ApiTableRow.prototype.GetClassType;
     ApiTableRow.prototype["GetCellsCount"]                = ApiTableRow.prototype.GetCellsCount;
     ApiTableRow.prototype["GetCell"]                      = ApiTableRow.prototype.GetCell;
     ApiTableRow.prototype["SetHeight"]                    = ApiTableRow.prototype.SetHeight;
+    ApiTableRow.prototype["GetHeight"]                    = ApiTableRow.prototype.GetHeight;
 
     ApiTableCell.prototype["GetClassType"]                = ApiTableCell.prototype.GetClassType;
     ApiTableCell.prototype["GetContent"]                  = ApiTableCell.prototype.GetContent;
