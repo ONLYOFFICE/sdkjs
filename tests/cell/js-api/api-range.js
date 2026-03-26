@@ -690,6 +690,7 @@ $(function () {
 	QUnit.test("SetOffset", function (assert) {
 		const range = ws.GetRange("A1");
 		assert.strictEqual(range.SetOffset(2, 2), true, "SetOffset returns true");
+		assert.strictEqual(range.GetAddress(false, false, "xlA1", false), "C3", "Range address is C3 after SetOffset(2, 2) from A1");
 	});
 
 	QUnit.test("SetFontColor", function (assert) {
@@ -701,8 +702,12 @@ $(function () {
 	QUnit.test("SetHidden", function (assert) {
 		const sheet = AscTest.JsApi.GetActiveSheet();
 		const colRange = sheet.GetRangeByNumber(0, 0).GetEntireColumn();
+
 		assert.strictEqual(colRange.SetHidden(true), true, "SetHidden returns true");
-		colRange.SetHidden(false);
+		assert.strictEqual(colRange.GetHidden(), true, "Column is hidden after SetHidden(true)");
+
+		assert.strictEqual(colRange.SetHidden(false), true, "SetHidden returns true");
+		assert.strictEqual(colRange.GetHidden(), false, "Column is visible after SetHidden(false)");
 	});
 
 	QUnit.test("SetRowHeight", function (assert) {
@@ -753,8 +758,13 @@ $(function () {
 	QUnit.test("SetFillColor", function (assert) {
 		const range = ws.GetRange("A1");
 		const color = AscTest.JsApi.CreateColorFromRGB(0, 255, 0);
+
 		assert.strictEqual(range.SetFillColor(color), true, "SetFillColor returns true");
+		const fillColor = range.GetFillColor();
+		assert.ok(fillColor && typeof fillColor === "object", "GetFillColor returns a color object after SetFillColor");
+
 		assert.strictEqual(range.SetFillColor("No Fill"), true, "SetFillColor returns true for No Fill");
+		assert.strictEqual(range.GetFillColor(), "No Fill", "GetFillColor returns 'No Fill' after clearing fill");
 	});
 
 	QUnit.test("SetNumberFormat", function (assert) {

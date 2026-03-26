@@ -179,6 +179,7 @@
 	QUnit.test("SetRowHeight", function (assert) {
 		const sheet = AscTest.JsApi.GetActiveSheet();
 		assert.strictEqual(sheet.SetRowHeight(0, 30), true, "SetRowHeight returns true");
+		assert.strictEqual(sheet.GetRange("A1").GetRowHeight(), 30, "GetRowHeight returns the value that was set");
 	});
 
 	QUnit.test("SetDisplayGridlines", function (assert) {
