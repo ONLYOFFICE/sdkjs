@@ -2623,11 +2623,12 @@
       }
     }
 
-    if (!bLockDraw) {
-      ws.draw();
-      ws.objectRender.controller.updateSelectionState();
-      ws.objectRender.controller.updateOverlay();
-    }
+	if (!bLockDraw) {
+		ws.objectRender.controller.recalculate2();
+		ws.draw();
+		ws.objectRender.controller.updateSelectionState();
+		ws.objectRender.controller.updateOverlay();
+	}
 
     if (!window["NATIVE_EDITOR_ENJINE"] || window["IS_NATIVE_EDITOR"]) {
       this._onSelectionNameChanged(ws.getSelectionName(/*bRangeText*/false));
