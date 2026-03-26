@@ -26015,21 +26015,21 @@ function isAllowPasteLink(pastedWb) {
 		var  firstLockRow;
 		var deleteIndexes = [];
 		var deleteIndexesMap = [];
-		var repeatArr = [];
+		var oRepeatMap = {};
 		var aSortElems = [];
 		for (i = selection.r1; i <= selection.r2; i++) {
 			var cell = t.model.getCell3(i, startSortCol);
 			var value = cell.getValueWithFormat();
 			aSortElems.push({index: i});
-			if (repeatArr.hasOwnProperty(value)) {
-				for (var n = 0; n < repeatArr[value].length; n++) {
+			if (oRepeatMap[value]) {
+				for (var n = 0; n < oRepeatMap[value].length; n++) {
 					var _notEqual = false;
 					for (var j = startSortCol + 1; j <= selection.c2; j++) {
 						if (!colMap[j]) {
 							continue;
 						}
 						var cell1 = t.model.getCell3(i, j);
-						var cell2 = t.model.getCell3(repeatArr[value][n], j);
+						var cell2 = t.model.getCell3(oRepeatMap[value][n], j);
 						var val1 = cell1.getValueWithFormat();
 						var val2 = cell2.getValueWithFormat();
 						if (val1 !== val2) {
@@ -26048,14 +26048,14 @@ function isAllowPasteLink(pastedWb) {
 					}
 				}
 				if (_notEqual) {
-					repeatArr[value].push(i);
+					oRepeatMap[value].push(i);
 				}
 
 			} else {
-				if(!repeatArr[value]) {
-					repeatArr[value] = [];
+				if(!oRepeatMap[value]) {
+					oRepeatMap[value] = [];
 				}
-				repeatArr[value].push(i);
+				oRepeatMap[value].push(i);
 			}
 		}
 
