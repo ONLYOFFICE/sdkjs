@@ -324,6 +324,20 @@ function (window, undefined) {
 		return n;
 	}
 
+
+	function lcl_GetCouppcd2(settl, matur, freq) {
+		let maturDate = new cDate(matur);
+		maturDate.setUTCFullYear(settl.getUTCFullYear());
+		if (maturDate < settl) {
+			maturDate.addYears(1);
+		}
+		while (maturDate > settl) {
+			maturDate.addMonths(-12 / freq);
+		}
+
+		return maturDate;
+	}
+
 	function lcl_GetCoupncd(settl, matur, freq) {
 		matur.setUTCFullYear(settl.getUTCFullYear());
 		if (matur > settl) {
@@ -335,7 +349,7 @@ function (window, undefined) {
 	}
 
 	function getcoupdaybs(settl, matur, frequency, basis) {
-		var n = lcl_GetCouppcd(settl, matur, frequency);
+		let n = lcl_GetCouppcd2(settl, matur, frequency);
 		return AscCommonExcel.diffDate(n, settl, basis);
 	}
 
@@ -1330,48 +1344,81 @@ function (window, undefined) {
 	cCOUPDAYBS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCOUPDAYBS.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any];
 	cCOUPDAYBS.prototype.Calculate = function (arg) {
-		var settlement = arg[0], maturity = arg[1], frequency = arg[2],
-			basis = arg[3] && !(arg[3] instanceof cEmpty) ? arg[3] : new cNumber(0);
+	
+		let settlement = arg[0], maturity = arg[1], frequency = arg[2],
+			basis = arg[3] && !(arg[3].type === cElementType.empty) ? arg[3] : new cNumber(0);
 
-		if (settlement instanceof cArea || settlement instanceof cArea3D) {
-			settlement = settlement.cross(arguments[1]);
-		} else if (settlement instanceof cArray) {
+		if (settlement.type === cElementType.array) {
 			settlement = settlement.getElementRowCol(0, 0);
+		} else if (settlement.type === cElementType.cell || settlement.type === cElementType.cell3D) {
+			settlement = settlement.getValue();
+		}
+		
+		if (((settlement.type === cElementType.cellsRange || settlement.type === cElementType.cellsRange3D) && !settlement.isOneElement()) || 
+		settlement.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (settlement.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
-		if (maturity instanceof cArea || maturity instanceof cArea3D) {
-			maturity = maturity.cross(arguments[1]);
-		} else if (maturity instanceof cArray) {
+
+		if (maturity.type === cElementType.array) {
 			maturity = maturity.getElementRowCol(0, 0);
+		} else if (maturity.type === cElementType.cell || maturity.type === cElementType.cell3D) {
+			maturity = maturity.getValue();
 		}
 
-		if (frequency instanceof cArea || frequency instanceof cArea3D) {
-			frequency = frequency.cross(arguments[1]);
-		} else if (frequency instanceof cArray) {
+		if (((maturity.type === cElementType.cellsRange || maturity.type === cElementType.cellsRange3D) && !maturity.isOneElement()) ||
+			maturity.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (maturity.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
+		}
+
+
+		if (frequency.type === cElementType.array) {
 			frequency = frequency.getElementRowCol(0, 0);
+		} else if (frequency.type === cElementType.cell || frequency.type === cElementType.cell3D) {
+			frequency = frequency.getValue();
+		} 
+
+		if (((frequency.type === cElementType.cellsRange || frequency.type === cElementType.cellsRange3D) && !frequency.isOneElement()) ||
+			frequency.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (frequency.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
-		if (basis instanceof cArea || basis instanceof cArea3D) {
-			basis = basis.cross(arguments[1]);
-		} else if (basis instanceof cArray) {
+
+		if (basis.type === cElementType.array) {
 			basis = basis.getElementRowCol(0, 0);
+		} else if (basis.type === cElementType.cell || basis.type === cElementType.cell3D) {
+			basis = basis.getValue();
 		}
+
+		if (((basis.type === cElementType.cellsRange || basis.type === cElementType.cellsRange3D) && !basis.isOneElement()) || 
+			basis.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (basis.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
+		}
+
 
 		settlement = settlement.tocNumber();
 		maturity = maturity.tocNumber();
 		frequency = frequency.tocNumber();
 		basis = basis.tocNumber();
 
-		if (settlement instanceof cError) {
+		if (settlement.type === cElementType.error) {
 			return settlement;
 		}
-		if (maturity instanceof cError) {
+		if (maturity.type === cElementType.error) {
 			return maturity;
 		}
-		if (frequency instanceof cError) {
+		if (frequency.type === cElementType.error) {
 			return frequency;
 		}
-		if (basis instanceof cError) {
+		if (basis.type === cElementType.error) {
 			return basis;
 		}
 
@@ -1380,14 +1427,14 @@ function (window, undefined) {
 		basis = Math.floor(basis.getValue());
 		frequency = Math.floor(frequency.getValue());
 
-
 		if (settlement < startRangeCurrentDateSystem || maturity < startRangeCurrentDateSystem ||
 			settlement >= maturity || basis < 0 || basis > 4 ||
 			(frequency != 1 && frequency != 2 && frequency != 4)) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var settl = cDate.prototype.getDateFromExcel(settlement), matur = cDate.prototype.getDateFromExcel(maturity);
+		let settl = AscCommonExcel.getCorrectDate(settlement), matur = AscCommonExcel.getCorrectDate(maturity);
+		
 
 		return new cNumber(getcoupdaybs(settl, matur, frequency, basis));
 
@@ -1410,31 +1457,62 @@ function (window, undefined) {
 	cCOUPDAYS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCOUPDAYS.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any];
 	cCOUPDAYS.prototype.Calculate = function (arg) {
-		var settlement = arg[0], maturity = arg[1], frequency = arg[2],
-			basis = arg[3] && !(arg[3] instanceof cEmpty) ? arg[3] : new cNumber(0);
+		let settlement = arg[0], maturity = arg[1], frequency = arg[2],
+			basis = arg[3] && !(arg[3].type === cElementType.empty) ? arg[3] : new cNumber(0);
 
-		if (settlement instanceof cArea || settlement instanceof cArea3D) {
-			settlement = settlement.cross(arguments[1]);
-		} else if (settlement instanceof cArray) {
+
+		if (settlement.type === cElementType.array) {
 			settlement = settlement.getElementRowCol(0, 0);
+		} else if (settlement.type === cElementType.cell || settlement.type === cElementType.cell3D) {
+			settlement = settlement.getValue();
+		}
+		
+		if (((settlement.type === cElementType.cellsRange || settlement.type === cElementType.cellsRange3D) && !settlement.isOneElement()) || 
+		settlement.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (settlement.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
-		if (maturity instanceof cArea || maturity instanceof cArea3D) {
-			maturity = maturity.cross(arguments[1]);
-		} else if (maturity instanceof cArray) {
+
+		if (maturity.type === cElementType.array) {
 			maturity = maturity.getElementRowCol(0, 0);
+		} else if (maturity.type === cElementType.cell || maturity.type === cElementType.cell3D) {
+			maturity = maturity.getValue();
 		}
 
-		if (frequency instanceof cArea || frequency instanceof cArea3D) {
-			frequency = frequency.cross(arguments[1]);
-		} else if (frequency instanceof cArray) {
+		if (((maturity.type === cElementType.cellsRange || maturity.type === cElementType.cellsRange3D) && !maturity.isOneElement()) ||
+			maturity.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (maturity.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
+		}
+
+		if (frequency.type === cElementType.array) {
 			frequency = frequency.getElementRowCol(0, 0);
+		} else if (frequency.type === cElementType.cell || frequency.type === cElementType.cell3D) {
+			frequency = frequency.getValue();
+		} 
+
+		if (((frequency.type === cElementType.cellsRange || frequency.type === cElementType.cellsRange3D) && !frequency.isOneElement()) ||
+			frequency.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (frequency.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
-		if (basis instanceof cArea || basis instanceof cArea3D) {
-			basis = basis.cross(arguments[1]);
-		} else if (basis instanceof cArray) {
+
+		if (basis.type === cElementType.array) {
 			basis = basis.getElementRowCol(0, 0);
+		} else if (basis.type === cElementType.cell || basis.type === cElementType.cell3D) {
+			basis = basis.getValue();
+		}
+
+		if (((basis.type === cElementType.cellsRange || basis.type === cElementType.cellsRange3D) && !basis.isOneElement()) || 
+			basis.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (basis.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
 		settlement = settlement.tocNumber();
@@ -1442,16 +1520,16 @@ function (window, undefined) {
 		frequency = frequency.tocNumber();
 		basis = basis.tocNumber();
 
-		if (settlement instanceof cError) {
+		if (settlement.type === cElementType.error) {
 			return settlement;
 		}
-		if (maturity instanceof cError) {
+		if (maturity.type === cElementType.error) {
 			return maturity;
 		}
-		if (frequency instanceof cError) {
+		if (frequency.type === cElementType.error) {
 			return frequency;
 		}
-		if (basis instanceof cError) {
+		if (basis.type === cElementType.error) {
 			return basis;
 		}
 
@@ -1466,7 +1544,7 @@ function (window, undefined) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var settl = cDate.prototype.getDateFromExcel(settlement), matur = cDate.prototype.getDateFromExcel(maturity);
+		let settl = AscCommonExcel.getCorrectDate(settlement), matur = AscCommonExcel.getCorrectDate(maturity);
 
 		return new cNumber(getcoupdays(settl, matur, frequency, basis));
 
@@ -1489,31 +1567,61 @@ function (window, undefined) {
 	cCOUPDAYSNC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCOUPDAYSNC.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any];
 	cCOUPDAYSNC.prototype.Calculate = function (arg) {
-		var settlement = arg[0], maturity = arg[1], frequency = arg[2],
-			basis = arg[3] && !(arg[3] instanceof cEmpty) ? arg[3] : new cNumber(0);
+		let settlement = arg[0], maturity = arg[1], frequency = arg[2],
+			basis = arg[3] && !(arg[3].type === cElementType.empty) ? arg[3] : new cNumber(0);
 
-		if (settlement instanceof cArea || settlement instanceof cArea3D) {
-			settlement = settlement.cross(arguments[1]);
-		} else if (settlement instanceof cArray) {
+		if (settlement.type === cElementType.array) {
 			settlement = settlement.getElementRowCol(0, 0);
+		} else if (settlement.type === cElementType.cell || settlement.type === cElementType.cell3D) {
+			settlement = settlement.getValue();
+		}
+		
+		if (((settlement.type === cElementType.cellsRange || settlement.type === cElementType.cellsRange3D) && !settlement.isOneElement()) || 
+			settlement.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (settlement.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
-		if (maturity instanceof cArea || maturity instanceof cArea3D) {
-			maturity = maturity.cross(arguments[1]);
-		} else if (maturity instanceof cArray) {
+
+		if (maturity.type === cElementType.array) {
 			maturity = maturity.getElementRowCol(0, 0);
+		} else if (maturity.type === cElementType.cell || maturity.type === cElementType.cell3D) {
+			maturity = maturity.getValue();
 		}
 
-		if (frequency instanceof cArea || frequency instanceof cArea3D) {
-			frequency = frequency.cross(arguments[1]);
-		} else if (frequency instanceof cArray) {
+		if (((maturity.type === cElementType.cellsRange || maturity.type === cElementType.cellsRange3D) && !maturity.isOneElement()) ||
+			maturity.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (maturity.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
+		}
+
+		if (frequency.type === cElementType.array) {
 			frequency = frequency.getElementRowCol(0, 0);
+		} else if (frequency.type === cElementType.cell || frequency.type === cElementType.cell3D) {
+			frequency = frequency.getValue();
+		} 
+
+		if (((frequency.type === cElementType.cellsRange || frequency.type === cElementType.cellsRange3D) && !frequency.isOneElement()) ||
+			frequency.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (frequency.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
-		if (basis instanceof cArea || basis instanceof cArea3D) {
-			basis = basis.cross(arguments[1]);
-		} else if (basis instanceof cArray) {
+
+		if (basis.type === cElementType.array) {
 			basis = basis.getElementRowCol(0, 0);
+		} else if (basis.type === cElementType.cell || basis.type === cElementType.cell3D) {
+			basis = basis.getValue();
+		}
+
+		if (((basis.type === cElementType.cellsRange || basis.type === cElementType.cellsRange3D) && !basis.isOneElement()) || 
+			basis.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (basis.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
 		settlement = settlement.tocNumber();
@@ -1521,16 +1629,16 @@ function (window, undefined) {
 		frequency = frequency.tocNumber();
 		basis = basis.tocNumber();
 
-		if (settlement instanceof cError) {
+		if (settlement.type === cElementType.error) {
 			return settlement;
 		}
-		if (maturity instanceof cError) {
+		if (maturity.type === cElementType.error) {
 			return maturity;
 		}
-		if (frequency instanceof cError) {
+		if (frequency.type === cElementType.error) {
 			return frequency;
 		}
-		if (basis instanceof cError) {
+		if (basis.type === cElementType.error) {
 			return basis;
 		}
 
@@ -1545,7 +1653,7 @@ function (window, undefined) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var settl = cDate.prototype.getDateFromExcel(settlement), matur = cDate.prototype.getDateFromExcel(maturity);
+		let settl = AscCommonExcel.getCorrectDate(settlement), matur = AscCommonExcel.getCorrectDate(maturity);
 
 		return new cNumber(getcoupdaysnc(new cDate(settl), new cDate(matur), frequency, basis));
 
@@ -1571,31 +1679,57 @@ function (window, undefined) {
 		let settlement = arg[0], maturity = arg[1], frequency = arg[2],
 			basis = arg[3] && !(arg[3].type === cElementType.empty) ? arg[3] : new cNumber(0);
 
-		if (settlement.type === cElementType.cellsRange || settlement.type === cElementType.cellsRange3D) {
-			settlement = settlement.cross(arguments[1]);
-		} else if (settlement.type === cElementType.array) {
+		if (settlement.type === cElementType.array) {
 			settlement = settlement.getElementRowCol(0, 0);
+		} else if (settlement.type === cElementType.cell || settlement.type === cElementType.cell3D) {
+			settlement = settlement.getValue();
+		}
+		
+		if (((settlement.type === cElementType.cellsRange || settlement.type === cElementType.cellsRange3D) && !settlement.isOneElement()) || 
+			settlement.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (settlement.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
-		if (maturity.type === cElementType.cellsRange || maturity.type === cElementType.cellsRange3D) {
-			maturity = maturity.cross(arguments[1]);
-		} else if (maturity.type === cElementType.array) {
+
+		if (maturity.type === cElementType.array) {
 			maturity = maturity.getElementRowCol(0, 0);
+		} else if (maturity.type === cElementType.cell || maturity.type === cElementType.cell3D) {
+			maturity = maturity.getValue();
 		}
 
-		if (frequency.type === cElementType.cellsRange || frequency.type === cElementType.cellsRange3D) {
-			frequency = frequency.cross(arguments[1]);
-		} else if (frequency.type === cElementType.array) {
+		if (((maturity.type === cElementType.cellsRange || maturity.type === cElementType.cellsRange3D) && !maturity.isOneElement()) ||
+			maturity.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (maturity.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
+		}
+
+		if (frequency.type === cElementType.array) {
 			frequency = frequency.getElementRowCol(0, 0);
+		} else if (frequency.type === cElementType.cell || frequency.type === cElementType.cell3D) {
+			frequency = frequency.getValue();
+		} 
+
+		if (((frequency.type === cElementType.cellsRange || frequency.type === cElementType.cellsRange3D) && !frequency.isOneElement()) ||
+			frequency.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (frequency.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
-		if (basis.type === cElementType.cellsRange || basis.type === cElementType.cellsRange3D) {
-			basis = basis.cross(arguments[1]);
-		} else if (basis.type === cElementType.array) {
+
+		if (basis.type === cElementType.array) {
 			basis = basis.getElementRowCol(0, 0);
+		} else if (basis.type === cElementType.cell || basis.type === cElementType.cell3D) {
+			basis = basis.getValue();
 		}
 
-		if (settlement.type === cElementType.empty || maturity.type === cElementType.empty || frequency.type === cElementType.empty) {
+		if (((basis.type === cElementType.cellsRange || basis.type === cElementType.cellsRange3D) && !basis.isOneElement()) || 
+			basis.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (basis.type === cElementType.empty) {
 			return new cError(cErrorType.not_available);
 		}
 
@@ -1645,31 +1779,61 @@ function (window, undefined) {
 	cCOUPNUM.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCOUPNUM.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any];
 	cCOUPNUM.prototype.Calculate = function (arg) {
-		var settlement = arg[0], maturity = arg[1], frequency = arg[2],
-			basis = arg[3] && !(arg[3] instanceof cEmpty) ? arg[3] : new cNumber(0);
+		let settlement = arg[0], maturity = arg[1], frequency = arg[2],
+			basis = arg[3] && !(arg[3].type === cElementType.empty) ? arg[3] : new cNumber(0);
 
-		if (settlement instanceof cArea || settlement instanceof cArea3D) {
-			settlement = settlement.cross(arguments[1]);
-		} else if (settlement instanceof cArray) {
+		if (settlement.type === cElementType.array) {
 			settlement = settlement.getElementRowCol(0, 0);
+		} else if (settlement.type === cElementType.cell || settlement.type === cElementType.cell3D) {
+			settlement = settlement.getValue();
+		}
+		
+		if (((settlement.type === cElementType.cellsRange || settlement.type === cElementType.cellsRange3D) && !settlement.isOneElement()) || 
+			settlement.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (settlement.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
-		if (maturity instanceof cArea || maturity instanceof cArea3D) {
-			maturity = maturity.cross(arguments[1]);
-		} else if (maturity instanceof cArray) {
+
+		if (maturity.type === cElementType.array) {
 			maturity = maturity.getElementRowCol(0, 0);
+		} else if (maturity.type === cElementType.cell || maturity.type === cElementType.cell3D) {
+			maturity = maturity.getValue();
 		}
 
-		if (frequency instanceof cArea || frequency instanceof cArea3D) {
-			frequency = frequency.cross(arguments[1]);
-		} else if (frequency instanceof cArray) {
+		if (((maturity.type === cElementType.cellsRange || maturity.type === cElementType.cellsRange3D) && !maturity.isOneElement()) ||
+			maturity.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (maturity.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
+		}
+
+		if (frequency.type === cElementType.array) {
 			frequency = frequency.getElementRowCol(0, 0);
+		} else if (frequency.type === cElementType.cell || frequency.type === cElementType.cell3D) {
+			frequency = frequency.getValue();
+		} 
+
+		if (((frequency.type === cElementType.cellsRange || frequency.type === cElementType.cellsRange3D) && !frequency.isOneElement()) ||
+			frequency.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (frequency.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
-		if (basis instanceof cArea || basis instanceof cArea3D) {
-			basis = basis.cross(arguments[1]);
-		} else if (basis instanceof cArray) {
+
+		if (basis.type === cElementType.array) {
 			basis = basis.getElementRowCol(0, 0);
+		} else if (basis.type === cElementType.cell || basis.type === cElementType.cell3D) {
+			basis = basis.getValue();
+		}
+
+		if (((basis.type === cElementType.cellsRange || basis.type === cElementType.cellsRange3D) && !basis.isOneElement()) || 
+			basis.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (basis.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
 		settlement = settlement.tocNumber();
@@ -1677,16 +1841,16 @@ function (window, undefined) {
 		frequency = frequency.tocNumber();
 		basis = basis.tocNumber();
 
-		if (settlement instanceof cError) {
+		if (settlement.type === cElementType.error) {
 			return settlement;
 		}
-		if (maturity instanceof cError) {
+		if (maturity.type === cElementType.error) {
 			return maturity;
 		}
-		if (frequency instanceof cError) {
+		if (frequency.type === cElementType.error) {
 			return frequency;
 		}
-		if (basis instanceof cError) {
+		if (basis.type === cElementType.error) {
 			return basis;
 		}
 
@@ -1701,9 +1865,8 @@ function (window, undefined) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var settl = cDate.prototype.getDateFromExcel(settlement), matur = cDate.prototype.getDateFromExcel(maturity);
-
-		var res = getcoupnum(settl, matur, frequency);
+		let settl = AscCommonExcel.getCorrectDate(settlement), matur = AscCommonExcel.getCorrectDate(maturity);
+		let res = getcoupnum(settl, matur, frequency);
 
 		return new cNumber(res);
 
@@ -1729,28 +1892,58 @@ function (window, undefined) {
 		let settlement = arg[0], maturity = arg[1], frequency = arg[2],
 			basis = arg[3] && !(arg[3].type === cElementType.empty) ? arg[3] : new cNumber(0);
 
-		if (settlement.type === cElementType.cellsRange || settlement.type === cElementType.cellsRange3D) {
-			settlement = settlement.cross(arguments[1]);
-		} else if (settlement.type === cElementType.array) {
+		if (settlement.type === cElementType.array) {
 			settlement = settlement.getElementRowCol(0, 0);
+		} else if (settlement.type === cElementType.cell || settlement.type === cElementType.cell3D) {
+			settlement = settlement.getValue();
+		}
+		
+		if (((settlement.type === cElementType.cellsRange || settlement.type === cElementType.cellsRange3D) && !settlement.isOneElement()) || 
+			settlement.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (settlement.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
-		if (maturity.type === cElementType.cellsRange || maturity.type === cElementType.cellsRange3D) {
-			maturity = maturity.cross(arguments[1]);
-		} else if (maturity.type === cElementType.array) {
+
+		if (maturity.type === cElementType.array) {
 			maturity = maturity.getElementRowCol(0, 0);
+		} else if (maturity.type === cElementType.cell || maturity.type === cElementType.cell3D) {
+			maturity = maturity.getValue();
 		}
 
-		if (frequency.type === cElementType.cellsRange || frequency.type === cElementType.cellsRange3D) {
-			frequency = frequency.cross(arguments[1]);
-		} else if (frequency.type === cElementType.array) {
+		if (((maturity.type === cElementType.cellsRange || maturity.type === cElementType.cellsRange3D) && !maturity.isOneElement()) ||
+			maturity.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (maturity.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
+		}
+
+		if (frequency.type === cElementType.array) {
 			frequency = frequency.getElementRowCol(0, 0);
+		} else if (frequency.type === cElementType.cell || frequency.type === cElementType.cell3D) {
+			frequency = frequency.getValue();
+		} 
+
+		if (((frequency.type === cElementType.cellsRange || frequency.type === cElementType.cellsRange3D) && !frequency.isOneElement()) ||
+			frequency.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (frequency.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
-		if (basis.type === cElementType.cellsRange || basis.type === cElementType.cellsRange3D) {
-			basis = basis.cross(arguments[1]);
-		} else if (basis.type === cElementType.array) {
+
+		if (basis.type === cElementType.array) {
 			basis = basis.getElementRowCol(0, 0);
+		} else if (basis.type === cElementType.cell || basis.type === cElementType.cell3D) {
+			basis = basis.getValue();
+		}
+
+		if (((basis.type === cElementType.cellsRange || basis.type === cElementType.cellsRange3D) && !basis.isOneElement()) || 
+			basis.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (basis.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
 		settlement = settlement.tocNumber();
@@ -1774,7 +1967,7 @@ function (window, undefined) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		let settl = cDate.prototype.getDateFromExcel(settlement), matur = cDate.prototype.getDateFromExcel(maturity);
+		let settl = AscCommonExcel.getCorrectDate(settlement), matur = AscCommonExcel.getCorrectDate(maturity);
 
 		let n = lcl_GetCouppcd(settl, matur, frequency);
 		let res = new cNumber(n.getExcelDate());
@@ -2536,7 +2729,7 @@ function (window, undefined) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var settl = cDate.prototype.getDateFromExcel(settlement), matur = cDate.prototype.getDateFromExcel(maturity);
+		let settl = AscCommonExcel.getCorrectDate(settlement), matur = AscCommonExcel.getCorrectDate(maturity);
 
 		return new cNumber(getduration(settl, matur, coupon, yld, frequency, basis));
 

@@ -107,7 +107,7 @@ function (window, undefined) {
 	}
 
 	function diffDate(d1, d2, mode) {
-		var date1 = d1.getUTCDate(), month1 = d1.getUTCMonth() + 1, year1 = d1.getUTCFullYear(),
+		let date1 = d1.getUTCDate(), month1 = d1.getUTCMonth() + 1, year1 = d1.getUTCFullYear(),
 			date2 = d2.getUTCDate(), month2 = d2.getUTCMonth() + 1, year2 = d2.getUTCFullYear();
 
 		switch (mode) {
@@ -290,6 +290,7 @@ function (window, undefined) {
 	}
 
 	function getCorrectDate(val) {
+		// function with shift for dates of the first two months of 1900 (until February)
 		if (!AscCommon.bDate1904) {
 			if (val < 60) {
 				val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
@@ -2444,6 +2445,7 @@ function (window, undefined) {
 	window['AscCommonExcel'].DayCountBasis = DayCountBasis;
 	window['AscCommonExcel'].yearFrac = yearFrac;
 	window['AscCommonExcel'].diffDate = diffDate;
+	window['AscCommonExcel'].GetDiffDate = GetDiffDate;
 	window['AscCommonExcel'].days360 = days360;
 	window['AscCommonExcel'].getCorrectDate = getCorrectDate;
 	window['AscCommonExcel'].daysInYear = daysInYear;

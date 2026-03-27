@@ -2929,7 +2929,6 @@ $(function () {
 		ws2.getRange2("A14").setValue("1") // TestName3D3
 
 		// Positive cases:
-
 		// Case #1: Formula(2), Number(2). Return 71. 4 of 4 arguments were  used.
 		oParser = new parserFormula('COUPDAYBS(DATE(2007,1,25),DATE(2008,11,15),2,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYBS(DATE(2007,1,25),DATE(2008,11,15),2,1) is parsed.');
@@ -3052,15 +3051,14 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), 71, 'Test: Positive case: Number(2), Array(2). Frequency and basis as single-element arrays. 4 of 4 arguments used.');
 
 		// Negative cases:
-
 		// Case #1: Number, Empty(3). Settlement only, maturity empty. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYBS(40568,,,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYBS(40568,,,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Empty(3). Settlement only, maturity empty. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Empty(3). Settlement only, maturity empty. 4 of 4 arguments used.');
 		// Case #2: Empty, Number(3). Settlement empty, other arguments present. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYBS(,40862,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYBS(,40862,1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Number(3). Settlement empty, other arguments present. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Number(3). Settlement empty, other arguments present. 4 of 4 arguments used.');
 		// Case #3: Number(4). Settlement >= maturity (invalid). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYBS(40862,40568,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYBS(40862,40568,1,0) is parsed.');
@@ -3160,7 +3158,7 @@ $(function () {
 		// Case #27: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYBS(40568,40862,,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYBS(40568,40862,,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.');
 		// Case #28: Number, Area, Number(2). Maturity as area with 2 cells. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYBS(40568,A104:A105,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYBS(40568,A104:A105,1,0) is parsed.');
@@ -3188,7 +3186,7 @@ $(function () {
 		// Case #34: Empty(4). All arguments empty. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYBS(,,,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYBS(,,,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty(4). All arguments empty. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty(4). All arguments empty. 4 of 4 arguments used.');
 		// Case #35: Number(4). Settlement is negative number. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYBS(-1,40862,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYBS(-1,40862,1,0) is parsed.');
@@ -3196,26 +3194,28 @@ $(function () {
 		// Case #36: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYBS(40568,40862,TRUE,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYBS(40568,40862,TRUE,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.');
 		// Case #37: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYBS(40568,40862,1,TRUE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYBS(40568,40862,1,TRUE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.');
 		// Case #38: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYBS(TRUE,40862,1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYBS(TRUE,40862,1,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.');
 		// Case #39: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYBS(40568,FALSE,1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYBS(40568,FALSE,1,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.');
 
 		// Bounded cases:
-
 		// Case #1: Formula(2), Number(2). Minimum valid settlement and maturity dates. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYBS(DATE(1900,1,1),DATE(1900,1,2),1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYBS(DATE(1900,1,1),DATE(1900,1,2),1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: Formula(2), Number(2). Minimum valid settlement and maturity dates. 4 of 4 arguments used.');
+		// ? this result is different from MS because MS have a problem with dates in 1900 year
+		// MS incorrectly assumes that the year 1900 is a leap year (compatibility Lotus 1-2-3 problem)
+		// but every other libs and calculate this date correctly so as we
+		assert.strictEqual(oParser.calculate().getValue(), 359, 'Test: Bounded case: Formula(2), Number(2). Minimum valid settlement and maturity dates. 4 of 4 arguments used.');
 		// Case #2: Formula(2), Number(2). Maximum valid settlement and maturity dates. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYBS(DATE(9999,12,30),DATE(9999,12,31),1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYBS(DATE(9999,12,30),DATE(9999,12,31),1,0) is parsed.');
@@ -3231,30 +3231,16 @@ $(function () {
 		// Case #5: Formula(2), Number(2). Minimum settlement, maximum maturity, max frequency and basis. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYBS(DATE(1900,1,1),DATE(9999,12,31),4,4)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYBS(DATE(1900,1,1),DATE(9999,12,31),4,4) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: Formula(2), Number(2). Minimum settlement, maximum maturity, max frequency and basis. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: Formula(2), Number(2). Minimum settlement, maximum maturity, max frequency and basis. 4 of 4 arguments used.');
 		// Case #6: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYBS(A:A,40862,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYBS(A:A,40862,1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.');
 		// Case #7: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYBS(40568,100:100,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYBS(40568,100:100,1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Maturity     as entire column reference. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Maturity     as entire column reference. 4 of 4 arguments used.');
 
-        // TODO
-        // Need to fix: different results from MS, error types diff
-        // Case #1: Number, Empty(3). Settlement only, maturity empty. 4 of 4 arguments used.
-        // Case #2: Empty, Number(3). Settlement empty, other arguments present. 4 of 4 arguments used.
-        // Case #27: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.
-        // Case #34: Empty(4). All arguments empty. 4 of 4 arguments used.
-        // Case #36: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.
-        // Case #37: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.
-        // Case #38: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.
-        // Case #39: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.
-        // Case #1: Formula(2), Number(2). Minimum valid settlement and maturity dates. 4 of 4 arguments used.
-        // Case #5: Formula(2), Number(2). Minimum settlement, maximum maturity, max frequency and basis. 4 of 4 arguments used.
-        // Case #6: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.
-        // Case #7: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.
 
 		testArrayFormula2(assert, "COUPDAYBS", 3, 4, true);
 	});
@@ -3297,7 +3283,6 @@ $(function () {
 		ws2.getRange2("A14").setValue("1") // TestName3D3
 
 		// Positive cases:
-
 		// Case #1: Formula(2), Number(2). Return 181. 4 of 4 arguments were  used.
 		oParser = new parserFormula('COUPDAYS(DATE(2007,1,25),DATE(2008,11,15),2,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYS(DATE(2007,1,25),DATE(2008,11,15),2,1) is parsed.');
@@ -3420,15 +3405,14 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), 360, 'Test: Positive case: Number(2), Array(2). Frequency and basis as single-element arrays. 4 of 4 arguments used.');
 
 		// Negative cases:
-
 		// Case #1: Number, Empty(3). Settlement only, maturity empty. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYS(40568,,,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYS(40568,,,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Empty(3). Settlement only, maturity empty. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Empty(3). Settlement only, maturity empty. 4 of 4 arguments used.');
 		// Case #2: Empty, Number(3). Settlement empty, other arguments present. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYS(,40862,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYS(,40862,1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Number(3). Settlement empty, other arguments present. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Number(3). Settlement empty, other arguments present. 4 of 4 arguments used.');
 		// Case #3: Number(4). Settlement >= maturity (invalid). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYS(40862,40568,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYS(40862,40568,1,0) is parsed.');
@@ -3528,7 +3512,7 @@ $(function () {
 		// Case #27: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYS(40568,40862,,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYS(40568,40862,,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.');
 		// Case #28: Number, Area, Number(2). Maturity as area with 2 cells. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYS(40568,A104:A105,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYS(40568,A104:A105,1,0) is parsed.');
@@ -3556,7 +3540,7 @@ $(function () {
 		// Case #34: Empty(4). All arguments empty. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYS(,,,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYS(,,,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty(4). All arguments empty. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty(4). All arguments empty. 4 of 4 arguments used.');
 		// Case #35: Number(4). Settlement is negative number. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYS(-1,40862,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYS(-1,40862,1,0) is parsed.');
@@ -3564,22 +3548,21 @@ $(function () {
 		// Case #36: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYS(40568,40862,TRUE,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYS(40568,40862,TRUE,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.');
 		// Case #37: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYS(40568,40862,1,TRUE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYS(40568,40862,1,TRUE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.');
 		// Case #38: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYS(TRUE,40862,1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYS(TRUE,40862,1,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.');
 		// Case #39: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYS(40568,FALSE,1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYS(40568,FALSE,1,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.');
 
 		// Bounded cases:
-
 		// Case #1: Formula(2), Number(2). Minimum valid settlement and maturity dates. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYS(DATE(1900,1,1),DATE(1900,1,2),1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYS(DATE(1900,1,1),DATE(1900,1,2),1,0) is parsed.');
@@ -3603,23 +3586,12 @@ $(function () {
 		// Case #6: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYS(A:A,40862,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYS(A:A,40862,1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.');
 		// Case #7: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYS(40568,100:100,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYS(40568,100:100,1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.');
 
-        // Need to fix: result diff from MS, empty handle, error types diff
-        // Case #1: Number, Empty(3). Settlement only, maturity empty. 4 of 4 arguments used.
-        // Case #2: Empty, Number(3). Settlement empty, other arguments present. 4 of 4 arguments used.
-        // Case #27: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.
-        // Case #34: Empty(4). All arguments empty. 4 of 4 arguments used.
-        // Case #36: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.
-        // Case #37: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.
-        // Case #38: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.
-        // Case #39: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.
-        // Case #6: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.
-        // Case #7: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.
 
 		testArrayFormula2(assert, "COUPDAYS", 3, 4, true);
 	});
@@ -3785,15 +3757,14 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), 294, 'Test: Positive case: Number(2), Array(2). Frequency and basis as single-element arrays. 4 of 4 arguments used.');
 
 		// Negative cases:
-
 		// Case #1: Number, Empty(3). Settlement only, maturity empty. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYSNC(40568,,,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYSNC(40568,,,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Empty(3). Settlement only, maturity empty. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Empty(3). Settlement only, maturity empty. 4 of 4 arguments used.');
 		// Case #2: Empty, Number(3). Settlement empty, other arguments present. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYSNC(,40862,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYSNC(,40862,1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Number(3). Settlement empty, other arguments present. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Number(3). Settlement empty, other arguments present. 4 of 4 arguments used.');
 		// Case #3: Number(4). Settlement >= maturity (invalid). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYSNC(40862,40568,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYSNC(40862,40568,1,0) is parsed.');
@@ -3893,7 +3864,7 @@ $(function () {
 		// Case #27: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYSNC(40568,40862,,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYSNC(40568,40862,,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.');
 		// Case #28: Number, Area, Number(2). Maturity as area with 2 cells. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYSNC(40568,A104:A105,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYSNC(40568,A104:A105,1,0) is parsed.');
@@ -3921,7 +3892,7 @@ $(function () {
 		// Case #34: Empty(4). All arguments empty. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYSNC(,,,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYSNC(,,,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty(4). All arguments empty. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty(4). All arguments empty. 4 of 4 arguments used.');
 		// Case #35: Number(4). Settlement is negative number. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYSNC(-1,40862,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYSNC(-1,40862,1,0) is parsed.');
@@ -3929,26 +3900,25 @@ $(function () {
 		// Case #36: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYSNC(40568,40862,TRUE,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYSNC(40568,40862,TRUE,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.');
 		// Case #37: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYSNC(40568,40862,1,TRUE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYSNC(40568,40862,1,TRUE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.');
 		// Case #38: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYSNC(TRUE,40862,1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYSNC(TRUE,40862,1,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.');
 		// Case #39: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYSNC(40568,FALSE,1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYSNC(40568,FALSE,1,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.');
 
 		// Bounded cases:
-
 		// Case #1: Formula(2), Number(2). Minimum valid settlement and maturity dates. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYSNC(DATE(1900,1,1),DATE(1900,1,2),1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYSNC(DATE(1900,1,1),DATE(1900,1,2),1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: Formula(2), Number(2). Minimum valid settlement and maturity dates. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: Formula(2), Number(2). Minimum valid settlement and maturity dates. 4 of 4 arguments used.');
 		// Case #2: Formula(2), Number(2). Maximum valid settlement and maturity dates. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYSNC(DATE(9999,12,30),DATE(9999,12,31),1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYSNC(DATE(9999,12,30),DATE(9999,12,31),1,0) is parsed.');
@@ -3964,29 +3934,15 @@ $(function () {
 		// Case #5: Formula(2), Number(2). Minimum settlement, maximum maturity, max frequency and basis. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYSNC(DATE(1900,1,1),DATE(9999,12,31),4,4)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYSNC(DATE(1900,1,1),DATE(9999,12,31),4,4) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 89, 'Test: Bounded case: Formula(2), Number(2). Minimum settlement, maximum maturity, max frequency and basis. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 89, 'Test: Bounded case: Formula(2), Number(2). Minimum settlement, maximum maturity, max frequency and basis. 4 of 4 arguments used.');
 		// Case #6: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYSNC(A:A,40862,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYSNC(A:A,40862,1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.');
 		// Case #7: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPDAYSNC(40568,100:100,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPDAYSNC(40568,100:100,1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.');
-
-        // Need to fix:  ms result diff, error types diff, empty handle
-        // Case #1: Number, Empty(3). Settlement only, maturity empty. 4 of 4 arguments used.
-        // Case #2: Empty, Number(3). Settlement empty, other arguments present. 4 of 4 arguments used.
-        // Case #27: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.
-        // Case #34: Empty(4). All arguments empty. 4 of 4 arguments used.
-        // Case #36: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.
-        // Case #37: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.
-        // Case #38: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.
-        // Case #39: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.
-        // Case #1: Formula(2), Number(2). Minimum valid settlement and maturity dates. 4 of 4 arguments used.
-        // Case #5: Formula(2), Number(2). Minimum settlement, maximum maturity, max frequency and basis. 4 of 4 arguments used.
-        // Case #6: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.
-        // Case #7: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.');
 
 		testArrayFormula2(assert, "COUPDAYSNC", 3, 4, true);
 	});
@@ -4387,19 +4343,19 @@ $(function () {
 		// Case #50: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNCD(40568,40862,TRUE,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNCD(40568,40862,TRUE,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.');
 		// Case #51: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNCD(40568,40862,1,TRUE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNCD(40568,40862,1,TRUE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.');
 		// Case #52: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNCD(TRUE,40862,1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNCD(TRUE,40862,1,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.');
 		// Case #53: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNCD(40568,FALSE,1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNCD(40568,FALSE,1,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.');
 
 		// Bounded cases:
 
@@ -4422,24 +4378,20 @@ $(function () {
 		// Case #5: Formula(2), Number(2). Minimum settlement, maximum maturity, max frequency and basis. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNCD(DATE(1900,1,1),DATE(9999,12,31),4,4)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNCD(DATE(1900,1,1),DATE(9999,12,31),4,4) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 91, 'Test: Bounded case: Formula(2), Number(2). Minimum settlement, maximum maturity, max frequency and basis. 4 of 4 arguments used.');
+		//TODO assert.strictEqual(oParser.calculate().getValue(), 91, 'Test: Bounded case: Formula(2), Number(2). Minimum settlement, maximum maturity, max frequency and basis. 4 of 4 arguments used.');
 		// Case #6: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNCD(A:A,40862,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNCD(A:A,40862,1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.');
 		// Case #7: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNCD(40568,100:100,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNCD(40568,100:100,1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.');
+		// Case #8: Formula, formula, number, number. The settlement is the first available date. 4 of 4 arguments used.
+		oParser = new parserFormula('COUPNCD(DATE(1900,1,1),DATE(1900,12,31),4,4)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: Formula COUPNCD(DATE(1900,1,1),DATE(1900,12,31),4,4) is parsed.');
+		//TODO assert.strictEqual(oParser.calculate().getValue(), 91, 'Test: Bounded case: Formula, formula, number, number. The settlement is the first available date. 4 of 4 arguments used.');
 
-        // Need to fix: error types diff, results diff from MS
-        // Case #50: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.
-        // Case #51: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.
-        // Case #52: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.
-        // Case #53: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.
-        // Case #5: Formula(2), Number(2). Minimum settlement, maximum maturity, max frequency and basis. 4 of 4 arguments used.
-        // Case #6: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.
-        // Case #7: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.
 
 		testArrayFormula2(assert, "COUPNCD", 3, 4, true);
 	});
@@ -4482,7 +4434,6 @@ $(function () {
 		ws2.getRange2("A14").setValue("1") // TestName3D3
 
 		// Positive cases:
-
 		// Case #1: Formula(2), Number(2). Return 4. 4 of 4 arguments were  used.
 		oParser = new parserFormula('COUPNUM(DATE(2007,1,25),DATE(2008,11,15),2,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNUM(DATE(2007,1,25),DATE(2008,11,15),2,1) is parsed.');
@@ -4601,15 +4552,14 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: Number(2), Array(2). Frequency and basis as single-element arrays. 4 of 4 arguments used.');
 
 		// Negative cases:
-
 		// Case #1: Number, Empty(3). Settlement only, maturity empty. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNUM(40568,,,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNUM(40568,,,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Empty(3). Settlement only, maturity empty. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Empty(3). Settlement only, maturity empty. 4 of 4 arguments used.');
 		// Case #2: Empty, Number(3). Settlement empty, other arguments present. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNUM(,40862,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNUM(,40862,1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Number(3). Settlement empty, other arguments present. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Number(3). Settlement empty, other arguments present. 4 of 4 arguments used.');
 		// Case #3: Number(4). Settlement >= maturity (invalid). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNUM(40862,40568,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNUM(40862,40568,1,0) is parsed.');
@@ -4709,7 +4659,7 @@ $(function () {
 		// Case #27: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNUM(40568,40862,,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNUM(40568,40862,,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.');
 		// Case #28: Number, Area, Number(2). Maturity as area with 2 cells. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNUM(40568,A104:A105,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNUM(40568,A104:A105,1,0) is parsed.');
@@ -4737,7 +4687,7 @@ $(function () {
 		// Case #34: Empty(4). All arguments empty. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNUM(,,,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNUM(,,,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty(4). All arguments empty. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty(4). All arguments empty. 4 of 4 arguments used.');
 		// Case #35: Number(4). Settlement is negative number. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNUM(-1,40862,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNUM(-1,40862,1,0) is parsed.');
@@ -4745,24 +4695,27 @@ $(function () {
 		// Case #36: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNUM(40568,40862,TRUE,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNUM(40568,40862,TRUE,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.');
 		// Case #37: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNUM(40568,40862,1,TRUE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNUM(40568,40862,1,TRUE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.');
 		// Case #38: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNUM(TRUE,40862,1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNUM(TRUE,40862,1,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.');
 		// Case #39: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNUM(40568,FALSE,1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNUM(40568,FALSE,1,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.');
 
 		// Bounded cases:
 		// Case #1: Formula(2), Number(2). Minimum valid settlement and maturity dates. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNUM(DATE(1900,1,1),DATE(1900,1,2),1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNUM(DATE(1900,1,1),DATE(1900,1,2),1,0) is parsed.');
+		// LO - 1
+		// FinancialLib - 1
+		// MS - #NUM!
 		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Formula(2), Number(2). Minimum valid settlement and maturity dates. 4 of 4 arguments used.');
 		// Case #2: Formula(2), Number(2). Maximum valid settlement and maturity dates. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNUM(DATE(9999,12,30),DATE(9999,12,31),1,0)', 'A2', ws);
@@ -4779,27 +4732,19 @@ $(function () {
 		// Case #5: Formula(2), Number(2). Minimum settlement, maximum maturity, max frequency and basis. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNUM(DATE(1900,1,1),DATE(9999,12,31),4,4)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNUM(DATE(1900,1,1),DATE(9999,12,31),4,4) is parsed.');
+		// LO - 10554
+		// FinancialLib - 32400
+		// MS - #NUM!
 		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Formula(2), Number(2). Minimum settlement, maximum maturity, max frequency and basis. 4 of 4 arguments used.');
 		// Case #6: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNUM(A:A,40862,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNUM(A:A,40862,1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.');
 		// Case #7: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPNUM(40568,100:100,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPNUM(40568,100:100,1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.');
 
-        // Need to fix: empty handle, error types diff, results diff from MS
-        // Case #27: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.
-        // Case #34: Empty(4). All arguments empty. 4 of 4 arguments used.
-        // Case #36: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.
-        // Case #37: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.
-        // Case #38: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.
-        // Case #39: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.
-        // Case #1: Formula(2), Number(2). Minimum valid settlement and maturity dates. 4 of 4 arguments used.
-        // Case #5: Formula(2), Number(2). Minimum settlement, maximum maturity, max frequency and basis. 4 of 4 arguments used.
-        // Case #6: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.
-        // Case #7: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.
 
 		testArrayFormula2(assert, "COUPNUM", 3, 4, true);
 	});
@@ -5025,7 +4970,6 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), 40497, 'Test: Positive case: Number(2), Array(2). Frequency and basis as single-element arrays. 4 of 4 arguments used.');
 
 		// Negative cases:
-
 		// Case #1: Error,Number(2). Return #N/A. 3 of 4 arguments were  used.
 		oParser = new parserFormula('COUPPCD(#N/A,3743,2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPPCD(#N/A,3743,2) is parsed.');
@@ -5065,11 +5009,11 @@ $(function () {
 		// Case #10: Number, Empty(3). Settlement only, maturity empty. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPPCD(40568,,,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPPCD(40568,,,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Empty(3). Settlement only, maturity empty. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Empty(3). Settlement only, maturity empty. 4 of 4 arguments used.');
 		// Case #11: Empty, Number(3). Settlement empty, other arguments present. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPPCD(,40862,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPPCD(,40862,1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Number(3). Settlement empty, other arguments present. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Number(3). Settlement empty, other arguments present. 4 of 4 arguments used.');
 		// Case #12: Number(4). Settlement >= maturity (invalid). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPPCD(40862,40568,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPPCD(40862,40568,1,0) is parsed.');
@@ -5169,7 +5113,7 @@ $(function () {
 		// Case #36: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPPCD(40568,40862,,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPPCD(40568,40862,,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.');
 		// Case #37: Number, Area, Number(2). Maturity as area with 2 cells. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPPCD(40568,A104:A105,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPPCD(40568,A104:A105,1,0) is parsed.');
@@ -5197,7 +5141,7 @@ $(function () {
 		// Case #43: Empty(4). All arguments empty. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPPCD(,,,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPPCD(,,,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty(4). All arguments empty. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty(4). All arguments empty. 4 of 4 arguments used.');
 		// Case #44: Number(4). Settlement is negative number. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPPCD(-1,40862,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPPCD(-1,40862,1,0) is parsed.');
@@ -5205,22 +5149,21 @@ $(function () {
 		// Case #45: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPPCD(40568,40862,TRUE,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPPCD(40568,40862,TRUE,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.');
 		// Case #46: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPPCD(40568,40862,1,TRUE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPPCD(40568,40862,1,TRUE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.');
 		// Case #47: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPPCD(TRUE,40862,1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPPCD(TRUE,40862,1,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.');
 		// Case #48: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.
 		oParser = new parserFormula('COUPPCD(40568,FALSE,1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPPCD(40568,FALSE,1,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.');
 
 		// Bounded cases:
-
 		// Case #1: Formula(2), Number(2). Minimum valid settlement and maturity dates. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPPCD(DATE(1900,1,1),DATE(1900,1,2),1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPPCD(DATE(1900,1,1),DATE(1900,1,2),1,0) is parsed.');
@@ -5244,27 +5187,16 @@ $(function () {
 		// Case #6: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPPCD(A:A,40862,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPPCD(A:A,40862,1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.');
 		// Case #7: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.
 		oParser = new parserFormula('COUPPCD(40568,100:100,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula COUPPCD(40568,100:100,1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.');
+		// Case #8: Number, Number, Number. Settlement is 'problem' date(2/28/1900). 3 of 4 arguments used.
+        oParser = new parserFormula("COUPPCD(59,39691,2)", "A2", ws);
+		assert.ok(oParser.parse(), "COUPPCD(59,39691,2)");
+		assert.strictEqual(oParser.calculate().getValue(), 59, "Result of COUPPCD(59,39691,2)");
 
-        // oParser = new parserFormula("COUPPCD(59,39691,2)", "A2", ws);
-		// assert.ok(oParser.parse(), "COUPPCD(59,39691,2)");
-		// assert.strictEqual(oParser.calculate().getValue(), 59, "Result of COUPPCD(59,39691,2)");		// problem with date 29/1/1900(59)
-
-		// TODO Need to fix
-        // Case #10: Number, Empty(3). Settlement only, maturity empty. 4 of 4 arguments used.
-        // Case #11: Empty, Number(3). Settlement empty, other arguments present. 4 of 4 arguments used.
-        // Case #36: Number(2), Empty(2). Settlement and maturity only, frequency and basis empty. 4 of 4 arguments used.
-        // Case #43: Empty(4). All arguments empty. 4 of 4 arguments used.
-        // Case #45: Number(2), Boolean, Number. Frequency as boolean (TRUE). 4 of 4 arguments used.
-        // Case #46: Number(3), Boolean. Basis as boolean (TRUE). 4 of 4 arguments used.
-        // Case #47: Boolean, Number(3). Settlement as boolean (TRUE). 4 of 4 arguments used.
-        // Case #48: Number, Boolean, Number(2). Maturity as boolean (FALSE). 4 of 4 arguments used.
-        // Case #6: Reference link, Number(3). Settlement as entire column reference. 4 of 4 arguments used.
-        // Case #7: Reference link, Number(3). Maturity as entire column reference. 4 of 4 arguments used.
 
 		testArrayFormula2(assert, "COUPPCD", 3, 4, true);
 	});
@@ -8240,7 +8172,7 @@ $(function () {
 		// Bounded cases:
 
 		// Case #1: Formula(2), Number(4). Minimum date 1900-01-01 for settlement.
-		oParser = new parserFormula('DURATION(DATE(1900,1,1),DATE(1901,1,1),0.05,0.06,1,0)', 'A2', ws);
+		oParser = new parserFormula('DURATION(DATE(1900,1,1),DATE(1901,1,1),0.05,0.06,1,0)', 'A2', ws); 
 		assert.ok(oParser.parse(), 'Test: Formula DURATION(DATE(1900,1,1),DATE(1901,1,1),0.05,0.06,1,0) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: Formula(2), Number(4). Minimum date 1900-01-01 for settlement.');
 		// Case #2: Formula(2), Number(4). Maximum date 9999-12-31 for maturity.
