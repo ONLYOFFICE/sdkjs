@@ -157,9 +157,9 @@
 			return this.m_oManager.m_pFont;
 		},
 
-		GetGraphemeByUnicode : function(codePoint, sFontName, nFontStyle)
+		GetGraphemeByUnicode : function(codePoint, fontName, fontStyle)
 		{
-			let oFont = this.SetFontInternal(sFontName, AscFonts.MEASURE_FONTSIZE, nFontStyle);
+			let oFont = this.SetFontInternal(fontName, AscFonts.MEASURE_FONTSIZE, fontStyle);
 			let nGID  = oFont ? oFont.GetGIDByUnicode(codePoint) : 0;
 			if (!nGID)
 			{
@@ -168,14 +168,14 @@
 					return AscFonts.NO_GRAPHEME;
 
 				nGID = oFont.GetGIDByUnicode(codePoint);
-				sFontName = oFont.GetFamilyName();
 			}
 
 			let oGlyph = oFont.GetChar(codePoint);
 			if (!oGlyph)
 				return AscFonts.NO_GRAPHEME;
-
-			AscFonts.InitGrapheme(AscCommon.FontNameMap.GetId(sFontName), nFontStyle);
+			
+			fontName = oFont.GetFamilyName();
+			AscFonts.InitGrapheme(AscCommon.FontNameMap.GetId(fontName), fontStyle);
 			AscFonts.AddGlyphToGrapheme(nGID, oGlyph.fAdvanceX * 64, 0, 0, 0);
 			return AscFonts.GetGrapheme(getSingleCodePointCalculator(codePoint));
 		},
@@ -204,6 +204,7 @@
 			if (!glyph)
 				return AscFonts.NO_GRAPHEME;
 			
+			fontName = font.GetFamilyName();
 			AscFonts.InitGrapheme(AscCommon.FontNameMap.GetId(fontName), fontStyle);
 			AscFonts.AddGlyphToGrapheme(gid, glyph.fAdvanceX * 64, 0, 0, 0);
 			return AscFonts.GetGrapheme(getSingleCodePointCalculator(codePoint));
