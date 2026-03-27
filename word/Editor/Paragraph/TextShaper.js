@@ -301,11 +301,10 @@
 		let grapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(codePoint, fontInfo.Name, fontInfo.Style);
 		
 		let width   = AscFonts.GetGraphemeWidth(grapheme);
-		let enWidth = getEastAsiaEnWidth(fontInfo.Name, fontInfo.Style);
 		
 		item.SetGrapheme(this.MaskSymbol ? grapheme : AscFonts.NO_GRAPHEME);
 		item.SetMetrics(fontInfo.Size, AscWord.fontslot_ASCII, this.TextPr);
-		item.SetWidth(width, this.TextPr, enWidth);
+		item.SetWidth(width, this.TextPr);
 	};
 	CParagraphTextShaper.prototype.IsEqualTextPr = function(oTextPr)
 	{
@@ -446,5 +445,6 @@
 	window['AscWord'].CODEPOINT_TYPE      = CODEPOINT_TYPE;
 	window['AscWord'].ParagraphTextShaper = new CParagraphTextShaper();
 	window['AscWord'].stringShaper        = new AscFonts.StringShaper();
+	window['AscWord'].getEastAsiaEnWidth  = getEastAsiaEnWidth;
 
 })(window);
