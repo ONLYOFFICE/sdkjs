@@ -636,8 +636,6 @@ function (window, undefined) {
 			}
 		} else if ((arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) && arg0.range) {
 			res = arg0.range.isFormula();
-		} else if (arg0.type === cElementType.error) {
-			return arg0;
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
