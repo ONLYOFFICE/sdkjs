@@ -676,29 +676,13 @@
 	};
 	CTextInputPrototype.emulateKeyDownApi = function(code)
 	{
-		let keyObject = this.getKeyboardEventObject(code);
-
-		this.Api.onKeyDown(keyObject);
-		this.Api.onKeyUp(keyObject);
+		AscCommon.emulateKeyDownApi(this.Api, code);
 	};
 
 	// keyboard
 	CTextInputPrototype.getKeyboardEventObject = function(code)
 	{
-		return {
-			altKey : false,
-			ctrlKey : false,
-			shiftKey : false,
-			target : null,
-			charCode : 0,
-			which : code,
-			keyCode : code,
-			code : "",
-			emulated: true,
-
-			preventDefault : function() {},
-			stopPropagation : function() {}
-		};
+		return AscCommon.getKeyboardEventObject(code);
 	};
 	CTextInputPrototype.emulateNativeKeyDown = function(e, target)
 	{
@@ -1542,5 +1526,31 @@
 		};
 	}
 	*/
+
+	AscCommon.getKeyboardEventObject = function(code)
+	{
+		return {
+			altKey : false,
+			ctrlKey : false,
+			shiftKey : false,
+			target : null,
+			charCode : 0,
+			which : code,
+			keyCode : code,
+			code : "",
+			emulated: true,
+
+			preventDefault : function() {},
+			stopPropagation : function() {}
+		};
+	};
+
+	AscCommon.emulateKeyDownApi = function(api, code)
+	{
+		let keyObject = AscCommon.getKeyboardEventObject(code);
+
+		api.onKeyDown(keyObject);
+		api.onKeyUp(keyObject);
+	};
 
 })(window);

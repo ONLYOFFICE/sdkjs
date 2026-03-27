@@ -4303,8 +4303,7 @@
 
 	baseEditorsApi.prototype.asc_Remove = function()
 	{
-		if (AscCommon.g_inputContext)
-			AscCommon.g_inputContext.emulateKeyDownApi(46);
+		AscCommon.emulateKeyDownApi(this, 46);
 	};
 
 	// System input
