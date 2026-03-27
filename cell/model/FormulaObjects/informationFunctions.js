@@ -624,22 +624,22 @@ function (window, undefined) {
 	cISFORMULA.prototype.argumentsMax = 1;
 	cISFORMULA.prototype.isXLFN = true;
 	cISFORMULA.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
+	cISFORMULA.prototype.exactTypes = {0: 1};
 	cISFORMULA.prototype.argumentsType = [argType.reference];
 	cISFORMULA.prototype.Calculate = function (arg) {
-		//есть различия в поведении этой формулы для ms и lo(для нескольких ячеек с данными)
-		var arg0 = arg[0];
-		var res = false;
-		if ((arg0 instanceof cArea || arg0 instanceof cArea3D) && arg0.range) {
+		let arg0 = arg[0];
+		let res = false;
+		if ((arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) && arg0.range) {
 			let range = arg0.getRange && arg0.getRange();
 			if (range) {
 				res = range.isFormula()
 			}
-		} else if ((arg0 instanceof cRef || arg0 instanceof cRef3D) && arg0.range) {
+		} else if ((arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) && arg0.range) {
 			res = arg0.range.isFormula();
-		}
-
-		if (arg0 instanceof cError) {
+		} else if (arg0.type === cElementType.error) {
 			return arg0;
+		} else {
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		return new cBool(res);

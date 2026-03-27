@@ -2421,7 +2421,7 @@ $(function () {
 		// Data for reference link. Use A100-A111
 		ws.getRange2("A100").setValue("SQRT");
 		ws.getRange2("A101").setValue("SUM");
-		ws.getRange2("A104").setValue("Text");
+		ws.getRange2("A104").setValue("=SIN(1)");
 		// For area
 		ws.getRange2("A102").setValue("=SUM(1)");
 		ws.getRange2("A103").setValue('=TEXT("1s")');
@@ -2474,7 +2474,7 @@ $(function () {
 		// Case #5: Reference link. Reference to empty cell returns FALSE. 1 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA(A103)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISFORMULA(A103) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 'TRUE', 'Test: Positive case: Reference link. Reference to empty cell returns FALSE. 1 of 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), 'FALSE', 'Test: Positive case: Reference link. Reference to empty cell returns FALSE. 1 of 1 argument used.');
 		// Case #6: Area. Single-cell range with formula returns TRUE. 1 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA(A102:A102)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISFORMULA(A102:A102) is parsed.');
@@ -2499,18 +2499,26 @@ $(function () {
 		oParser = new parserFormula('ISFORMULA(Table1[Column1])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISFORMULA(Table1[Column1]) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 'FALSE', 'Test: Positive case: Table. Table column referencing formula cell returns TRUE. 1 of 1 argument used.');
-		// Case #12: Formula. IF formula returning reference to formula cell returns TRUE. 1 of 1 argument used.
+		// Case #12: Formula. IF formula returning reference to formula cell returns FALSE. 1 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA(IF(TRUE,A103,A104))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISFORMULA(IF(TRUE,A103,A104)) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 'TRUE', 'Test: Positive case: Formula. IF formula returning reference to formula cell returns TRUE. 1 of 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), 'FALSE', 'Test: Positive case: Formula. IF formula returning reference to formula cell returns FALSE. 1 of 1 argument used.');
+		// Case #12.1: Formula. IF formula returning reference to formula cell returns TRUE. 1 of 1 argument used.
+		oParser = new parserFormula('ISFORMULA(IF(FALSE,A103,A104))', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: ISFORMULA(IF(FALSE,A103,A104)) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 'TRUE', 'Test: Positive case: Formula. IF formula returning reference to formula cell returns TRUE. 1 of 1 argument used.');
 		// Case #13: Formula. Formula returning reference to constant cell returns FALSE. 1 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA(INDIRECT("A103"))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISFORMULA(INDIRECT("A103")) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 'TRUE', 'Test: Positive case: Formula. Formula returning reference to constant cell returns FALSE. 1 of 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), 'FALSE', 'Test: Positive case: Formula. Formula returning reference to constant cell returns FALSE. 1 of 1 argument used.');
+		// Case #13.1: Formula. Formula returning reference to constant cell returns TRUE. 1 of 1 argument used.
+		oParser = new parserFormula('ISFORMULA(INDIRECT("A104"))', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: ISFORMULA(INDIRECT("A104")) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 'TRUE', 'Test: Positive case: Formula. Formula returning reference to constant cell returns FALSE. 1 of 1 argument used.');
 		// Case #14: Reference link. Reference link to formula cell (A100=A1) returns TRUE. 1 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA(A104)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISFORMULA(A104) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 'FALSE', 'Test: Positive case: Reference link. Reference link to formula cell (A100=A1) returns TRUE. 1 of 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), 'TRUE', 'Test: Positive case: Reference link. Reference link to formula cell (A100=A1) returns TRUE. 1 of 1 argument used.');
 		// Case #15: Name. Named range referencing constant cell returns FALSE. 1 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA(TestName1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISFORMULA(TestName1) is parsed.');
@@ -2534,7 +2542,7 @@ $(function () {
 		// Case #20: Formula. ADDRESS formula returning reference to formula cell (A1) returns TRUE. 1 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA(ADDRESS(1,1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISFORMULA(ADDRESS(1,1)) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 'FALSE', 'Test: Positive case: Formula. ADDRESS formula returning reference to formula cell (A1) returns TRUE. 1 of 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Positive case: Formula. ADDRESS formula returning reference to formula cell (A1) returns TRUE. 1 of 1 argument used.');
 		// Case #21: Table. Table column referencing constant cell returns FALSE. 1 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA(Table1[Column2])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISFORMULA(Table1[Column2]) is parsed.');
@@ -2543,20 +2551,20 @@ $(function () {
 		// Negative cases:
 		// Case #1: Number. Numeric reference returns #VALUE!. 1 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA(123)', 'A2', ws);
-		//? assert.ok(oParser.parse() === false, 'Test: ISFORMULA(123) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 'FALSE', 'Test: Negative case: Number. Numeric reference returns #VALUE!. 1 of 1 argument used.');
+		assert.ok(oParser.parse(), 'Test: ISFORMULA(123) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number. Numeric reference returns #VALUE!. 1 of 1 argument used.');
 		// Case #2: String. Text reference returns #VALUE!. 1 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA("text")', 'A2', ws);
-		//? assert.ok(oParser.parse() === false, 'Test: ISFORMULA("text") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '=ISFORMULA("text")', 'Test: Negative case: String. Text reference returns #VALUE!. 1 of 1 argument used.');
+		assert.ok(oParser.parse(), 'Test: ISFORMULA("text") is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: String. Text reference returns #VALUE!. 1 of 1 argument used.');
 		// Case #3: Boolean. Boolean reference returns #VALUE!. 1 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA(FALSE)', 'A2', ws);
-		//? assert.ok(oParser.parse() === false, 'Test: ISFORMULA(FALSE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '=ISFORMULA(FALSE)', 'Test: Negative case: Boolean. Boolean reference returns #VALUE!. 1 of 1 argument used.');
+		assert.ok(oParser.parse(), 'Test: ISFORMULA(FALSE) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean reference returns #VALUE!. 1 of 1 argument used.');
 		// Case #4: Error. Error reference returns #N/A. 1 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA(NA())', 'A2', ws);
-		//? assert.ok(oParser.parse() === false, 'Test: ISFORMULA(NA()) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '=ISFORMULA(NA())', 'Test: Negative case: Error. Error reference returns #N/A. 1 of 1 argument used.');
+		assert.ok(oParser.parse(), 'Test: ISFORMULA(NA()) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Error. Error reference returns #N/A. 1 of 1 argument used.');
 		// Case #5: Area. Multi-cell range returns #VALUE!. 1 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA(A1:A2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISFORMULA(A1:A2) is parsed.');
@@ -2587,28 +2595,28 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), 'FALSE', 'Test: Negative case: Table. Table column with text value returns FALSE. 1 of 1 argument used.');
 		// Case #12: Formula. Formula returning #NUM! returns #NUM!. 1 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA(SQRT(-1))', 'A2', ws);
-		//? assert.ok(oParser.parse() === false, 'Test: ISFORMULA(SQRT(-1)) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '=ISFORMULA(SQRT(-1))', 'Test: Negative case: Formula. Formula returning #NUM! returns #NUM!. 1 of 1 argument used.');
+		assert.ok(oParser.parse(), 'Test: ISFORMULA(SQRT(-1)) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Formula. Formula returning #NUM! returns #NUM!. 1 of 1 argument used.');
 		// Case #13: Array. Array literal returns #VALUE!. 1 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA({"A1"})', 'A2', ws);
-		//? assert.ok(oParser.parse() === false, 'Test: ISFORMULA({"A1"}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '=ISFORMULA({"A1"})', 'Test: Negative case: Array. Array literal returns #VALUE!. 1 of 1 argument used.');
+		assert.ok(oParser.parse(), 'Test: ISFORMULA({"A1"}) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array literal returns #VALUE!. 1 of 1 argument used.');
 		// Case #14: Formula. Formula returning text ("A1") returns #VALUE!. 1 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA(CONCATENATE("A","1"))', 'A2', ws);
-		//? assert.ok(oParser.parse() === false, 'Test: ISFORMULA(CONCATENATE("A","1")) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '=ISFORMULA(CONCATENATE("A";"1"))', 'Test: Negative case: Formula. Formula returning text ("A1") returns #VALUE!. 1 of 1 argument used.');
+		assert.ok(oParser.parse(), 'Test: ISFORMULA(CONCATENATE("A","1")) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Formula. Formula returning text ("A1") returns #VALUE!. 1 of 1 argument used.');
 		// Case #15: Empty. Missing reference returns #VALUE!. 0 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA("")', 'A2', ws);
-		//? assert.ok(oParser.parse() === false, 'Test: ISFORMULA("") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '=ISFORMULA()', 'Test: Negative case: Empty. Missing reference returns #VALUE!. 0 of 1 argument used.');
+		assert.ok(oParser.parse(), 'Test: ISFORMULA("") is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Empty. Missing reference returns #VALUE!. 0 of 1 argument used.');
 		// Case #16: Date. Date serial number returns #VALUE!. 1 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA(DATE(2025,1,1))', 'A2', ws);
-		//? assert.ok(oParser.parse() === false, 'Test: ISFORMULA(DATE(2025,1,1)) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '=ISFORMULA(DATE(2025;1;1))', 'Test: Negative case: Date. Date serial number returns #VALUE!. 1 of 1 argument used.');
+		assert.ok(oParser.parse(), 'Test: ISFORMULA(DATE(2025,1,1)) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Date. Date serial number returns #VALUE!. 1 of 1 argument used.');
 		// Case #17: Time. Time value returns #VALUE!. 1 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA(TIME(12,0,0))', 'A2', ws);
-		//? assert.ok(oParser.parse() === false, 'Test: ISFORMULA(TIME(12,0,0)) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '=ISFORMULA(TIME(12;0;0))', 'Test: Negative case: Time. Time value returns #VALUE!. 1 of 1 argument used.');
+		assert.ok(oParser.parse(), 'Test: ISFORMULA(TIME(12,0,0)) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Time. Time value returns #NULL! because its return a number. 1 of 1 argument used.');
 		// Case #18: Reference link. Reference to non-existent cell (A5) may return FALSE or error (context-dependent). 1 of 1 argument used.
 		oParser = new parserFormula('ISFORMULA(A105)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISFORMULA(A105) is parsed.');
@@ -2640,21 +2648,6 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: ISFORMULA(INDIRECT("XFD1048576")) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 'FALSE', 'Test: Bounded case: Formula. Formula returning reference to last cell returns FALSE (assuming no formula). 1 of 1 argument used.');
 
-		// TODO formula can't be enter without correct reference to a cell or name
-		// Need to fix: parse error
-		// Case #5: Reference link. Reference to empty cell returns FALSE. 1 of 1 argument used.
-		// Case #12: Formula. IF formula returning reference to formula cell returns TRUE. 1 of 1 argument used.
-		// Case #13: Formula. Formula returning reference to constant cell returns FALSE. 1 of 1 argument used.
-		// Case #1: Number. Numeric reference returns #VALUE!. 1 of 1 argument used. - formula should not be parsed
-		// Case #2: String. Text reference returns #VALUE!. 1 of 1 argument used.
-		// Case #3: Boolean. Boolean reference returns #VALUE!. 1 of 1 argument used.
-		// Case #4: Error. Error reference returns #N/A. 1 of 1 argument used.
-		// Case #12: Formula. Formula returning #NUM! returns #NUM!. 1 of 1 argument used.
-		// Case #13: Array. Array literal returns #VALUE!. 1 of 1 argument used.
-		// Case #14: Formula. Formula returning text ("A1") returns #VALUE!. 1 of 1 argument used.
-		// Case #15: Empty. Missing reference returns #VALUE!. 0 of 1 argument used.
-		// Case #16: Date. Date serial number returns #VALUE!. 1 of 1 argument used.
-		// Case #17: Time. Time value returns #VALUE!. 1 of 1 argument used.
 
 	});
 
