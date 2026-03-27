@@ -28168,7 +28168,7 @@ $(function () {
 
 		function normsinv(x) {
 			if (x <= 0.0 || x >= 1.0) {
-				return "#N/A";
+				return "#NUM!";
 			} else {
 				return toFixed(AscCommonExcel.gaussinv(x));
 			}
@@ -28396,7 +28396,7 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: NORMSINV(SINGLE(Sheet2!A4:A5)) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: SINGLE Area3D. 3D multi-cell range returns #NUM!.');
 
-		let res = AscCommonExcel.bIsSupportDynamicArrays ? '#N/A' : '#VALUE!';
+		let res = AscCommonExcel.bIsSupportDynamicArrays ? '#NUM!' : '#VALUE!';
 		oParser = new parserFormula('NORMSINV(Sheet2!A4:A5)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: NORMSINV(Sheet2!A4:A5) is parsed.');
 		assert.strictEqual(oParser.calculate(null, null, null, null, null, null, true).getValue(), res, 'Test: Negative case: Area3D. 3D multi-cell range returns #NUM!.');
@@ -28633,7 +28633,7 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: NORM.S.INV(SINGLE(Sheet2!A4:A5)) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: SINGLE Area3D. 3D multi-cell range returns #NUM!.');
 
-		res = AscCommonExcel.bIsSupportDynamicArrays ? '#N/A' : '#VALUE!';
+		res = AscCommonExcel.bIsSupportDynamicArrays ? '#NUM!' : '#VALUE!';
 		oParser = new parserFormula('NORM.S.INV(Sheet2!A4:A5)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: NORM.S.INV(Sheet2!A4:A5) is parsed.');
 		assert.strictEqual(oParser.calculate(null, null, null, null, null, null, true).getValue(), res, 'Test: Negative case: Area3D. 3D multi-cell range returns #NUM!.');

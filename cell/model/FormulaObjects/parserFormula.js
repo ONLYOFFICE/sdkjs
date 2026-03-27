@@ -9046,6 +9046,11 @@ function parserFormula( formula, parent, _ws ) {
 				this.outStack.push(operand);
 			}
 		}
+		if (parenthesesNotEnough) {
+			parseResult.setError(c_oAscError.ID.FrmlParenthesesCorrectCount);
+			return this.isParsed = false;
+		}
+
 		if (bConditionalFormula && t.getParent() && t.getParent() instanceof AscCommonExcel.CCellWithFormula && !t.ca && !ignoreErrors) {
 			t.ca = t.isRecursiveCondFormula(levelFuncMap[0].func.name);
 			t.outStack.forEach(function (oOperand) {
@@ -9074,10 +9079,6 @@ function parserFormula( formula, parent, _ws ) {
 				});
 			}
 			t.ca = bRecursiveCell;
-		}
-		if (parenthesesNotEnough) {
-			parseResult.setError(c_oAscError.ID.FrmlParenthesesCorrectCount);
-			return this.isParsed = false;
 		}
 
 		if (0 !== this.outStack.length) {
@@ -9129,675 +9130,52 @@ function parserFormula( formula, parent, _ws ) {
 	};
 
 
-	let enabledToSingle =
-	{
-		"AGGREGATE": {
-			"2": true
-		},
-		"AND": {
-			"0": true
-		},
-		"AREAS": {
-			"0": true
-		},
-		"AVEDEV": {
-			"0": true
-		},
-		"AVERAGE": {
-			"0": true
-		},
-		"AVERAGEA": {
-			"0": true
-		},
-		"AVERAGEIF": {
-			"0": true
-		},
-		"AVERAGEIFS": {
-			"0": true,
-			"1": true
-		},
-		"BESSELI": {
-			"0": true,
-			"1": true
-		},
-		"BESSELJ": {
-			"0": true,
-			"1": true
-		},
-		"BESSELK": {
-			"0": true,
-			"1": true
-		},
-		"BESSELY": {
-			"0": true,
-			"1": true
-		},
-		"BIN2DEC": {
-			"0": true
-		},
-		"BIN2HEX": {
-			"0": true
-		},
-		"BIN2OCT": {
-			"0": true
-		},
-		"CELL": {
-			"0": true,
-			"1": true
-		},
-		"CHISQ.TEST": {
-			"0": true,
-			"1": true
-		},
-		"CHOOSE": {
-			"1": true
-		},
-		"COLUMN": {
-			"0": true
-		},
-		"COLUMNS": {
-			"0": true
-		},
-		"COMPLEX": {
-			"0": true,
-			"1": true
-		},
-		"CONCAT": {
-			"0": true
-		},
-		"CONVERT": {
-			"0": true,
-			"1": true,
-			"2": true
-		},
-		"CORREL": {
-			"0": true,
-			"1": true
-		},
-		"COUNT": {
-			"0": true
-		},
-		"COUNTA": {
-			"0": true
-		},
-		"COUNTBLANK": {
-			"0": true
-		},
-		"COUNTIF": {
-			"0": true
-		},
-		"COUNTIFS": {
-			"0": true
-		},
-		"COVAR": {
-			"0": true,
-			"1": true
-		},
-		"DEC2BIN": {
-			"0": true
-		},
-		"DEC2HEX": {
-			"0": true
-		},
-		"DEC2OCT": {
-			"0": true
-		},
-		"DELTA": {
-			"0": true,
-			"1": true
-		},
-		"DEVSQ": {
-			"0": true
-		},
-		"DOLLARDE": {
-			"0": true,
-			"1": true
-		},
-		"DOLLARFR": {
-			"0": true,
-			"1": true
-		},
-		/*"DGET": {
-			"0": true,
-			"2": true
-		},*/
-		"EDATE": {
-			"0": true,
-			"1": true
-		},
-		"EFFECT": {
-			"0": true,
-			"1": true
-		},
-		"EOMONTH": {
-			"0": true,
-			"1": true
-		},
-		"ERF": {
-			"0": true,
-			"1": true
-		},
-		"ERF.PRECISE": {
-			"0": true
-		},
-		"ERFC": {
-			"0": true
-		},
-		"ERFC.PRECISE": {
-			"0": true
-		},
-		"F.TEST": {
-			"0": true,
-			"1": true
-		},
-		"FACTDOUBLE": {
-			"0": true
-		},
-		"FORMULATEXT": {
-			"0": true
-		},
-		"GCD": {
-			"0": true
-		},
-		"GEOMEAN": {
-			"0": true
-		},
-		"GESTEP": {
-			"0": true,
-			"1": true
-		},
-		"HARMEAN": {
-			"0": true
-		},
-		"HEX2BIN": {
-			"0": true
-		},
-		"HEX2DEC": {
-			"0": true
-		},
-		"HEX2OCT": {
-			"0": true
-		},
-		"HLOOKUP": {
-			"1": true
-		},
-		"IF": {
-			"1": true,
-			"2": true
-		},
-		"IFERROR": {
-			"1": true
-		},
-		"IFNA": {
-			"1": true
-		},
-		"IFS": {
-			"0": true,
-			"1": true
-		},
-		/*"IF": {
-			"1": true,
-			"2": true
-		},*/
-		"IMABS": {
-			"0": true
-		},
-		"IMAGINARY": {
-			"0": true
-		},
-		"IMARGUMENT": {
-			"0": true
-		},
-		"IMCONJUGATE": {
-			"0": true
-		},
-		"IMCOS": {
-			"0": true
-		},
-		"IMCOSH": {
-			"0": true
-		},
-		"IMCOT": {
-			"0": true
-		},
-		"IMCSC": {
-			"0": true
-		},
-		"IMCSCH": {
-			"0": true
-		},
-		"IMDIV": {
-			"0": true,
-			"1": true
-		},
-		"IMEXP": {
-			"0": true
-		},
-		"IMLN": {
-			"0": true
-		},
-		"IMLOG10": {
-			"0": true
-		},
-		"IMLOG2": {
-			"0": true
-		},
-		"IMPOWER": {
-			"0": true,
-			"1": true
-		},
-		"IMPRODUCT": {
-			"0": true
-		},
-		"IMREAL": {
-			"0": true
-		},
-		"IMSEC": {
-			"0": true
-		},
-		"IMSECH": {
-			"0": true
-		},
-		"IMSIN": {
-			"0": true
-		},
-		"IMSINH": {
-			"0": true
-		},
-		"IMSQRT": {
-			"0": true
-		},
-		"IMSUB": {
-			"0": true,
-			"1": true
-		},
-		"IMSUM": {
-			"0": true
-		},
-		"IMTAN": {
-			"0": true
-		},
-		"INDEX": {
-			"0": true,
-			"1": true
-		},
-		"INDIRECT": {
-			"0": true
-		},
-		"INTERCEPT": {
-			"0": true,
-			"1": true
-		},
-		"IRR": {
-			"0": true
-		},
-		"ISEVEN": {
-			"0": true
-		},
-		"ISFORMULA": {
-			"0": true
-		},
-		"ISODD": {
-			"0": true
-		},
-		"ISREF": {
-			"0": true
-		},
-		"KURT": {
-			"0": true
-		},
-		"LARGE": {
-			"0": true
-		},
-		"LCM": {
-			"0": true
-		},
-		"LOOKUP": {
-			"1": true,
-			"2": true
-		},
-		"MATCH": {
-			"1": true,
-			"2": true
-		},
-		"MAX": {
-			"0": true
-		},
-		"MAXA": {
-			"0": true
-		},
-		"MAXIFS": {
-			"0": true,
-			"1": true
-		},
-		"MDETERM": {
-			"0": true
-		},
-		"MEDIAN": {
-			"0": true
-		},
-		"MIN": {
-			"0": true
-		},
-		"MINA": {
-			"0": true
-		},
-		"MINIFS": {
-			"0": true,
-			"1": true
-		},
-		"MIRR": {
-			"0": true
-		},
-		"MODE": {
-			"0": true
-		},
-		"MODE.MULT": {
-			"0": true
-		},
-		"MODE.SNGL": {
-			"0": true
-		},
-		"MROUND": {
-			"0": true,
-			"1": true
-		},
-		"MULTINOMIAL": {
-			"0": true
-		},
-		"MUNIT": {
-			"0": true
-		},
-		"N": {
-			"0": true
-		},
-		"NETWORKDAYS": {
-			"0": true,
-			"1": true
-		},
-		"NETWORKDAYS.INTL": {
-			"0": true,
-			"1": true
-		},
-		"NOMINAL": {
-			"0": true,
-			"1": true
-		},
-		"NPV": {
-			"1": true
-		},
-		"OCT2BIN": {
-			"0": true
-		},
-		"OCT2DEC": {
-			"0": true
-		},
-		"OCT2HEX": {
-			"0": true
-		},
-		"OFFSET": {
-			"0": true
-		},
-		"OR": {
-			"0": true
-		},
-		"PEARSON": {
-			"0": true,
-			"1": true
-		},
-		"PERCENTILE": {
-			"0": true
-		},
-		"PERCENTRANK": {
-			"0": true
-		},
-		"PRODUCT": {
-			"0": true
-		},
-		"QUARTILE": {
-			"0": true
-		},
-		"QUOTIENT": {
-			"0": true,
-			"1": true
-		},
-		"RANDBETWEEN": {
-			"0": true,
-			"1": true
-		},
-		"RANK": {
-			"1": true
-		},
-		"RANK.AVG": {
-			"1": true
-		},
-		"RANK.EQ": {
-			"1": true
-		},
-		"ROW": {
-			"0": true
-		},
-		"ROWS": {
-			"0": true
-		},
-		"RSQ": {
-			"0": true,
-			"1": true
-		},
-		"SEQUENCE": {
-			"0": true,
-			"1": true
-		},
-		"SKEW": {
-			"0": true
-		},
-		"SKEW.P": {
-			"0": true
-		},
-		"SLOPE": {
-			"0": true,
-			"1": true
-		},
-		"SMALL": {
-			"0": true
-		},
-		"SQRTPI": {
-			"0": true
-		},
-		"STDEV": {
-			"0": true
-		},
-		"STDEV.P": {
-			"0": true
-		},
-		"STDEV.S": {
-			"0": true
-		},
-		"STDEVA": {
-			"0": true
-		},
-		"STDEVP": {
-			"0": true
-		},
-		"STDEVPA": {
-			"0": true
-		},
-		"STEYX": {
-			"0": true,
-			"1": true
-		},
-		"SUBTOTAL": {
-			"1": true
-		},
-		"SUM": {
-			"0": true
-		},
-		"SUMIF": {
-			"0": true
-		},
-		"SUMIFS": {
-			"0": true,
-			"1": true
-		},
-		"SUMPRODUCT": {
-			"0": true
-		},
-		"SUMSQ": {
-			"0": true
-		},
-		"SUMX2MY2": {
-			"0": true,
-			"1": true
-		},
-		"SUMX2PY2": {
-			"0": true,
-			"1": true
-		},
-		"SUMXMY2": {
-			"0": true,
-			"1": true
-		},
-		"SWITCH": {
-			"0": true,
-			"1": true
-		},
-		"SEARCH": {
-			"0": true
-		},
-		"T": {
-			"0": true
-		},
-		"T.TEST": {
-			"0": true,
-			"1": true
-		},
-		"TBILLEQ": {
-			"0": true,
-			"1": true,
-			"2": true
-		},
-		"TBILLPRICE": {
-			"0": true,
-			"1": true,
-			"2": true
-		},
-		"TBILLYIELD": {
-			"0": true,
-			"1": true,
-			"2": true
-		},
-		"TEXTJOIN": {
-			"0": true,
-			"3": true
-		},
-		"TRANSPOSE": {
-			"0": true
-		},
-		"TREND": {
-			"0": true,
-			"1": true
-		},
-		"TRIMMEAN": {
-			"0": true
-		},
-		"TTEST": {
-			"0": true,
-			"1": true
-		},
-		"UNIQUE": {
-			"0": true
-		},
-		"VAR": {
-			"0": true
-		},
-		"VAR.P": {
-			"0": true
-		},
-		"VAR.S": {
-			"0": true
-		},
-		"VARA": {
-			"0": true
-		},
-		"VARP": {
-			"0": true
-		},
-		"VARPA": {
-			"0": true
-		},
-		"VLOOKUP": {
-			"1": true
-		},
-		"WEEKNUM": {
-			"0": true,
-			"1": true
-		},
-		"WORKDAY": {
-			"0": true,
-			"1": true
-		},
-		"WORKDAY.INTL": {
-			"0": true,
-			"1": true
-		},
-		"XIRR": {
-			"0": true,
-			"1": true,
-			"2": true
-		},
-		"XLOOKUP": {
-			"1": true,
-			"2": true
-		},
-		"XMATCH": {
-			"1": true
-		},
-		"XNPV": {
-			"0": true,
-			"1": true,
-			"2": true
-		},
-		"XOR": {
-			"0": true
-		},
-		"YEARFRAC": {
-			"0": true,
-			"1": true,
-			"2": true
-		},
-		"YIELD": {
-			"0": true,
-			"1": true,
-			"2": true,
-			"3": true,
-			"4": true,
-			"5": true
-		},
-		"YIELDDISC": {
-			"0": true,
-			"1": true,
-			"2": true,
-			"3": true
-		},
-		"YIELDMAT": {
-			"0": true,
-			"1": true,
-			"2": true,
-			"3": true,
-			"4": true
-		},
-		"Z.TEST": {
-			"0": true
-		},
-		"ZTEST": {
-			"0": true
-		},
-		"SHEET": {
-			"0": true
-		},
-		"TAKE": {
-			"0": true
+	// Helper: checks a prototype.enabledToSingle entry against argPos.
+	// Supported keys:
+	//   "*": true        – all argument positions accept ranges
+	//   "allFrom": N     – positions N and above accept ranges
+	//   "even": true     – even positions (0, 2, 4, ...) accept ranges
+	//   "odd": true      – odd positions (1, 3, 5, ...) accept ranges (IFS pattern)
+	//   "evenFrom2": true – even positions starting at 2 (2, 4, 6, ...) accept ranges (SWITCH pattern)
+	//   "arg0orOdd": true – position 0 and all odd positions (1, 3, 5, ...) accept ranges (SUMIFS pattern)
+	//   N: true          – specific position N accepts ranges
+	function _checkEntry(entry, argPos) {
+		if (!entry) {
+			return false;
 		}
+		if (entry["*"]) {
+			return true;
+		}
+		if (entry[argPos]) {
+			return true;
+		}
+		var allFrom = entry["allFrom"];
+		if (allFrom !== undefined && argPos >= allFrom) {
+			return true;
+		}
+		if (entry["even"] && argPos % 2 === 0) {
+			return true;
+		}
+		if (entry["odd"] && argPos % 2 === 1) {
+			return true;
+		}
+		if (entry["evenFrom2"] && argPos >= 2 && argPos % 2 === 0) {
+			return true;
+		}
+		if (entry["arg0orOdd"] && (argPos === 0 || argPos % 2 === 1)) {
+			return true;
+		}
+		return false;
+	}
+
+	// INPUT path: returns true if the position is listed → explicit @ is meaningful, keep it (convert to SINGLE).
+	function isArgPosInEnabledToSingle(func, argPos) {
+		return _checkEntry(func && func.enabledToSingle, argPos);
+	}
+
+	// DISPLAY path: returns true if ranges are natively accepted here → do NOT auto-add @.
+	function isArgPosEnabledToSingle(func, argPos) {
+		return _checkEntry(func && func.enabledToSingle, argPos);
 	}
 
 	parserFormula.prototype.checkSkipAtOperator = function(_curFunc, _curArgPos, found_operand_type) {
@@ -9810,7 +9188,9 @@ function parserFormula( formula, parent, _ws ) {
 		}
 
 		if (found_operand_type === cElementType.cellsRange || found_operand_type === cElementType.cellsRange3D) {
-			return !enabledToSingle[_curFunc] || !enabledToSingle[_curFunc][_curArgPos];
+			// Use INPUT path check only (enabledToSingle, not displayOnlyNativeRange).
+			// skip @ (return true) when the function is NOT listed or position is NOT covered.
+			return !isArgPosInEnabledToSingle(_curFunc, _curArgPos);
 		}
 
 		/*if (_curFunc && _curFunc.func && _curFunc.func.arrayIndexes) {
@@ -9832,7 +9212,7 @@ function parserFormula( formula, parent, _ws ) {
 			for (let i = 0; i < atOperators.length; i++) {
 				let atOp = atOperators[i];
 				let funcInfo = parseResult.getActiveFunction(atOp.start + 1, atOp.end + 1, true);
-				atOp.isSkip = this.checkSkipAtOperator(funcInfo && funcInfo.func && funcInfo.func.name, funcInfo && funcInfo.argPos, atOp.type);
+				atOp.isSkip = this.checkSkipAtOperator(funcInfo && funcInfo.func, funcInfo && funcInfo.argPos, atOp.type);
 				if (!atOp.isSkip) {
 					isAllSkip = false;
 				}
@@ -9858,7 +9238,7 @@ function parserFormula( formula, parent, _ws ) {
 							}
 
 							if (!isAtOperator) {
-								let shouldSkip = this.checkSkipAtOperator(funcInfo.func && funcInfo.func.name, funcInfo.argPos, ref.type);
+								let shouldSkip = this.checkSkipAtOperator(funcInfo.func, funcInfo.argPos, ref.type);
 								if (!shouldSkip) {
 									isAllSkip = false;
 									break;
@@ -11232,7 +10612,7 @@ function parserFormula( formula, parent, _ws ) {
 						if (parentInfo) {
 							if (parentInfo.funcName === "SINGLE") {
 								needAddAt = false;
-							} else if (enabledToSingle[parentInfo.funcName] && enabledToSingle[parentInfo.funcName][parentInfo.argIndex]) {
+							} else if (isArgPosEnabledToSingle(parentInfo.func || parentInfo.funcName, parentInfo.argIndex)) {
 								needAddAt = false;
 							}
 						}
@@ -11296,12 +10676,15 @@ function parserFormula( formula, parent, _ws ) {
 						args.unshift(stack.pop());
 					}
 				}
-				for (var k = 0; k < args.length; k++) {
-					if (args[k].index === operandIndex) {
-						return {funcName: elem.name, argIndex: k};
-					}
-					if (args[k].containsIndices && args[k].containsIndices.indexOf(operandIndex) !== -1) {
-						return {funcName: elem.name, argIndex: k};
+				if (elem.type === cElementType.func) {
+					for (var k = 0; k < args.length; k++) {
+						if (args[k].index === operandIndex ||
+							(args[k].containsIndices && args[k].containsIndices.indexOf(operandIndex) !== -1)) {
+							if (elem.name === "SINGLE" || isArgPosEnabledToSingle(elem, k)) {
+								return {func: elem, funcName: elem.name, argIndex: k};
+							}
+							break;
+						}
 					}
 				}
 				var containsIndices = [];
@@ -11889,18 +11272,24 @@ function parserFormula( formula, parent, _ws ) {
 				if (!oIndexNumValue) {
 					oIndexNumValue = this.outStack[nIndexNumId];
 				}
+				if (!oIndexNumValue) {
+					continue;
+				}
 				if (oIndexNumValue.type === cElementType.func || oIndexNumValue.type === cElementType.operator) {
 					g_cCalcRecursion.setRecheckFormula(true);
 					g_cCalcRecursion.addRecheckingFormulaData('parserFormula', this);
 					g_cCalcRecursion.addRecheckingFormulaData('formulaName', oOutStackElem.name);
 					continue;
 				}
-				if (oIndexNumValue.type === cElementType.error) {
+				if (oIndexNumValue.type === cElementType.error || oIndexNumValue.type === cElementType.empty) {
 					continue;
 				}
 				if (!oTableArrayArg) {
 					const nTableArrayId = nIndexNumId - 1;
 					oTableArrayArg = this.outStack[nTableArrayId];
+				}
+				if (!oTableArrayArg) {
+					continue;
 				}
 				if (oTableArrayArg.type === cElementType.func) {
 					g_cCalcRecursion.setRecheckFormula(true);
@@ -11908,11 +11297,18 @@ function parserFormula( formula, parent, _ws ) {
 					g_cCalcRecursion.addRecheckingFormulaData('formulaName', oOutStackElem.name);
 					continue;
 				}
-				if (oTableArrayArg.type === cElementType.error) {
+				if (oTableArrayArg.type === cElementType.error || oTableArrayArg.type === cElementType.empty) {
+					continue;
+				}
+				if (!oTableArrayArg || !oTableArrayArg.clone) {
 					continue;
 				}
 				oTableArrayArg = oTableArrayArg.clone();
-				const nIndexNumValue = oIndexNumValue.tocNumber().toNumber() - 1;
+				const oNumber = oIndexNumValue.tocNumber();
+				if (oNumber.type === cElementType.error) {
+					continue;
+				}
+				const nIndexNumValue = oNumber.toNumber() - 1;
 				const nIndexTableArray = aRefElements.findIndex(function (oElem) {
 					return oElem.getRange().getBBox0().isEqualAll(oTableArrayArg.getRange().getBBox0());
 				});

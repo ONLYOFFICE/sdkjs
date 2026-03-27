@@ -493,6 +493,7 @@ function (window, undefined) {
 	cACCRINT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cACCRINT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cACCRINT.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any, argType.any, argType.any, argType.any];
+	cACCRINT.prototype.enabledToSingle = {"*": true};
 	cACCRINT.prototype.Calculate = function (arg) {
 		// the ACCRINT formula in ms does not always match the calculation using the formula manually
 		let issue = arg[0],
@@ -791,6 +792,7 @@ function (window, undefined) {
 	cACCRINTM.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cACCRINTM.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cACCRINTM.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any];
+	cACCRINTM.prototype.enabledToSingle = {"*": true};
 	cACCRINTM.prototype.Calculate = function (arg) {
 		var issue = arg[0], settlement = arg[1], rate = arg[2],
 			par = arg[3] && !(arg[3] instanceof cEmpty) ? arg[3] : new cNumber(1000),
@@ -899,6 +901,7 @@ function (window, undefined) {
 	cAMORDEGRC.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cAMORDEGRC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cAMORDEGRC.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any, argType.any, argType.any];
+	cAMORDEGRC.prototype.enabledToSingle = {"*": true};
 	cAMORDEGRC.prototype.Calculate = function (arg) {
 		var cost = arg[0], datePurch = arg[1], firstPer = arg[2], salvage = arg[3], period = arg[4], rate = arg[5],
 			basis = arg[6] && !(arg[6] instanceof cEmpty) ? arg[6] : new cNumber(0);
@@ -1093,6 +1096,7 @@ function (window, undefined) {
 	cAMORLINC.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cAMORLINC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cAMORLINC.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any, argType.any, argType.any];
+	cAMORLINC.prototype.enabledToSingle = {"*": true};
 	cAMORLINC.prototype.Calculate = function (arg) {
 		var cost = arg[0], datePurch = arg[1], firstPer = arg[2], salvage = arg[3], period = arg[4], rate = arg[5],
 			basis = arg[6] && !(arg[6] instanceof cEmpty) ? arg[6] : new cNumber(0);
@@ -1225,6 +1229,7 @@ function (window, undefined) {
 	cCOUPDAYBS.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cCOUPDAYBS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCOUPDAYBS.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any];
+	cCOUPDAYBS.prototype.enabledToSingle = {"*": true};
 	cCOUPDAYBS.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], frequency = arg[2],
 			basis = arg[3] && !(arg[3] instanceof cEmpty) ? arg[3] : new cNumber(0);
@@ -1305,6 +1310,7 @@ function (window, undefined) {
 	cCOUPDAYS.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cCOUPDAYS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCOUPDAYS.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any];
+	cCOUPDAYS.prototype.enabledToSingle = {"*": true};
 	cCOUPDAYS.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], frequency = arg[2],
 			basis = arg[3] && !(arg[3] instanceof cEmpty) ? arg[3] : new cNumber(0);
@@ -1384,6 +1390,7 @@ function (window, undefined) {
 	cCOUPDAYSNC.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cCOUPDAYSNC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCOUPDAYSNC.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any];
+	cCOUPDAYSNC.prototype.enabledToSingle = {"*": true};
 	cCOUPDAYSNC.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], frequency = arg[2],
 			basis = arg[3] && !(arg[3] instanceof cEmpty) ? arg[3] : new cNumber(0);
@@ -1463,6 +1470,7 @@ function (window, undefined) {
 	cCOUPNCD.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cCOUPNCD.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCOUPNCD.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any];
+	cCOUPNCD.prototype.enabledToSingle = {"*": true};
 	cCOUPNCD.prototype.Calculate = function (arg) {
 		let settlement = arg[0], maturity = arg[1], frequency = arg[2],
 			basis = arg[3] && !(arg[3].type === cElementType.empty) ? arg[3] : new cNumber(0);
@@ -1540,6 +1548,7 @@ function (window, undefined) {
 	cCOUPNUM.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cCOUPNUM.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCOUPNUM.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any];
+	cCOUPNUM.prototype.enabledToSingle = {"*": true};
 	cCOUPNUM.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], frequency = arg[2],
 			basis = arg[3] && !(arg[3] instanceof cEmpty) ? arg[3] : new cNumber(0);
@@ -1621,6 +1630,7 @@ function (window, undefined) {
 	cCOUPPCD.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cCOUPPCD.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCOUPPCD.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any];
+	cCOUPPCD.prototype.enabledToSingle = {"*": true};
 	cCOUPPCD.prototype.Calculate = function (arg) {
 		let settlement = arg[0], maturity = arg[1], frequency = arg[2],
 			basis = arg[3] && !(arg[3].type === cElementType.empty) ? arg[3] : new cNumber(0);
@@ -1695,6 +1705,7 @@ function (window, undefined) {
 	cCUMIPMT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cCUMIPMT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCUMIPMT.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any, argType.any];
+	cCUMIPMT.prototype.enabledToSingle = {"*": true};
 	cCUMIPMT.prototype.Calculate = function (arg) {
 		var rate = arg[0], nper = arg[1], pv = arg[2], startPeriod = arg[3], endPeriod = arg[4], type = arg[5];
 
@@ -1813,6 +1824,7 @@ function (window, undefined) {
 	cCUMPRINC.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cCUMPRINC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCUMPRINC.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any, argType.any];
+	cCUMPRINC.prototype.enabledToSingle = {"*": true};
 	cCUMPRINC.prototype.Calculate = function (arg) {
 		var rate = arg[0], nper = arg[1], pv = arg[2], startPeriod = arg[3],
 			endPeriod = arg[4] && !(arg[4] instanceof cEmpty) ? arg[4] : new cNumber(0),
@@ -2134,6 +2146,7 @@ function (window, undefined) {
 	cDISC.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cDISC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDISC.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any];
+	cDISC.prototype.enabledToSingle = {"*": true};
 	cDISC.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], pr = arg[2], redemption = arg[3],
 			basis = arg[4] && !(arg[4] instanceof cEmpty) ? arg[4] : new cNumber(0);
@@ -2225,6 +2238,7 @@ function (window, undefined) {
 	cDOLLARDE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cDOLLARDE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDOLLARDE.prototype.argumentsType = [argType.any, argType.any];
+	cDOLLARDE.prototype.enabledToSingle = {"0": true, "1": true};
 	cDOLLARDE.prototype.Calculate = function (arg) {
 		var fractionalDollar = arg[0], fraction = arg[1];
 
@@ -2289,6 +2303,7 @@ function (window, undefined) {
 	cDOLLARFR.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cDOLLARFR.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDOLLARFR.prototype.argumentsType = [argType.any, argType.any];
+	cDOLLARFR.prototype.enabledToSingle = {"0": true, "1": true};
 	cDOLLARFR.prototype.Calculate = function (arg) {
 		var decimalDollar = arg[0], fraction = arg[1];
 
@@ -2353,6 +2368,7 @@ function (window, undefined) {
 	cDURATION.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cDURATION.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDURATION.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any, argType.any];
+	cDURATION.prototype.enabledToSingle = {"*": true};
 	cDURATION.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], coupon = arg[2], yld = arg[3], frequency = arg[4],
 			basis = arg[5] && !(arg[5] instanceof cEmpty) ? arg[5] : new cNumber(0);
@@ -2454,6 +2470,7 @@ function (window, undefined) {
 	cEFFECT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cEFFECT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cEFFECT.prototype.argumentsType = [argType.any, argType.any];
+	cEFFECT.prototype.enabledToSingle = {"0": true, "1": true};
 	cEFFECT.prototype.Calculate = function (arg) {
 		var nominalRate = arg[0], npery = arg[1];
 
@@ -2738,6 +2755,7 @@ function (window, undefined) {
 	cFVSCHEDULE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cFVSCHEDULE.prototype.arrayIndexes = {1: 1};
 	cFVSCHEDULE.prototype.argumentsType = [argType.any, argType.any];
+	cFVSCHEDULE.prototype.enabledToSingle = {"0": true, "1": true};
 	cFVSCHEDULE.prototype.Calculate = function (arg) {
 		var principal = arg[0], schedule = arg[1], shedList = [];
 
@@ -2795,6 +2813,7 @@ function (window, undefined) {
 	cINTRATE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cINTRATE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cINTRATE.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any];
+	cINTRATE.prototype.enabledToSingle = {"*": true};
 	cINTRATE.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], investment = arg[2], redemption = arg[3],
 			basis = arg[4] && !(arg[4] instanceof cEmpty) ? arg[4] : new cNumber(0);
@@ -2988,6 +3007,7 @@ function (window, undefined) {
 	cIRR.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cIRR.prototype.arrayIndexes = {0: 1};
 	cIRR.prototype.argumentsType = [argType.reference, argType.number];
+	cIRR.prototype.enabledToSingle = {"0": true};
 	cIRR.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cNumber(0.1);
 
@@ -3187,6 +3207,7 @@ function (window, undefined) {
 	cMDURATION.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cMDURATION.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cMDURATION.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any, argType.any];
+	cMDURATION.prototype.enabledToSingle = {"*": true};
 	cMDURATION.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], coupon = arg[2], yld = arg[3], frequency = arg[4],
 			basis = arg[5] && !(arg[5] instanceof cEmpty) ? arg[5] : new cNumber(0);
@@ -3292,6 +3313,7 @@ function (window, undefined) {
 	cMIRR.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cMIRR.prototype.arrayIndexes = {0: 1};
 	cMIRR.prototype.argumentsType = [argType.reference, argType.number, argType.number];
+	cMIRR.prototype.enabledToSingle = {"0": true};
 	cMIRR.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], invest = arg[1], reinvest = arg[2];
 
@@ -3407,6 +3429,7 @@ function (window, undefined) {
 	cNOMINAL.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cNOMINAL.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cNOMINAL.prototype.argumentsType = [argType.any, argType.any];
+	cNOMINAL.prototype.enabledToSingle = {"0": true, "1": true};
 	cNOMINAL.prototype.Calculate = function (arg) {
 		var effectRate = arg[0], npery = arg[1];
 
@@ -3558,6 +3581,7 @@ function (window, undefined) {
 		}
 		return 1;
 	};
+	cNPV.prototype.enabledToSingle = {"allFrom": 1};
 	cNPV.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], iStart = 1, res = 0, rate;
 
@@ -3634,6 +3658,7 @@ function (window, undefined) {
 	cODDFPRICE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cODDFPRICE.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any, argType.any,
 		argType.any, argType.any, argType.any];
+	cODDFPRICE.prototype.enabledToSingle = {"*": true};
 	cODDFPRICE.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], issue = arg[2], first_coupon = arg[3], rate = arg[4], yld = arg[5],
 			redemption = arg[6], frequency = arg[7],
@@ -3772,6 +3797,7 @@ function (window, undefined) {
 	cODDFYIELD.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cODDFYIELD.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any, argType.any,
 		argType.any, argType.any, argType.any];
+	cODDFYIELD.prototype.enabledToSingle = {"*": true};
 	cODDFYIELD.prototype.Calculate = function (arg) {
 		let settlement = arg[0], maturity = arg[1], issue = arg[2], first_coupon = arg[3], rate = arg[4], pr = arg[5],
 			redemption = arg[6], frequency = arg[7],
@@ -3973,6 +3999,7 @@ function (window, undefined) {
 	cODDLPRICE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cODDLPRICE.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any, argType.any,
 		argType.any, argType.any];
+	cODDLPRICE.prototype.enabledToSingle = {"*": true};
 	cODDLPRICE.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], last_interest = arg[2], rate = arg[3], yld = arg[4],
 			redemption = arg[5], frequency = arg[6],
@@ -4107,6 +4134,7 @@ function (window, undefined) {
 	cODDLYIELD.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cODDLYIELD.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any, argType.any,
 		argType.any, argType.any];
+	cODDLYIELD.prototype.enabledToSingle = {"*": true};
 	cODDLYIELD.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], last_interest = arg[2], rate = arg[3], pr = arg[4],
 			redemption = arg[5], frequency = arg[6],
@@ -4483,6 +4511,7 @@ function (window, undefined) {
 	cPRICE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cPRICE.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any,
 		argType.any, argType.any];
+	cPRICE.prototype.enabledToSingle = {"*": true};
 	cPRICE.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], rate = arg[2], yld = arg[3], redemption = arg[4],
 			frequency = arg[5], basis = arg[6] && !(arg[6] instanceof cEmpty) ? arg[6] : new cNumber(0);
@@ -4595,6 +4624,7 @@ function (window, undefined) {
 	cPRICEDISC.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cPRICEDISC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cPRICEDISC.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any];
+	cPRICEDISC.prototype.enabledToSingle = {"*": true};
 	cPRICEDISC.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], discount = arg[2], redemption = arg[3],
 			basis = arg[4] && !(arg[4] instanceof cEmpty) ? arg[4] : new cNumber(0);
@@ -4687,6 +4717,7 @@ function (window, undefined) {
 	cPRICEMAT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cPRICEMAT.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any,
 		argType.any];
+	cPRICEMAT.prototype.enabledToSingle = {"*": true};
 	cPRICEMAT.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], issue = arg[2], rate = arg[3], yld = arg[4],
 			basis = arg[5] && !(arg[5] instanceof cEmpty) ? arg[5] : new cNumber(0);
@@ -4984,6 +5015,7 @@ function (window, undefined) {
 	cRECEIVED.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cRECEIVED.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cRECEIVED.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any];
+	cRECEIVED.prototype.enabledToSingle = {"*": true};
 	cRECEIVED.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], investment = arg[2], discount = arg[3],
 			basis = arg[4] && !(arg[4] instanceof cEmpty) ? arg[4] : new cNumber(0);
@@ -5256,6 +5288,7 @@ function (window, undefined) {
 	cTBILLEQ.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cTBILLEQ.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cTBILLEQ.prototype.argumentsType = [argType.any, argType.any, argType.any];
+	cTBILLEQ.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cTBILLEQ.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], discount = arg[2];
 
@@ -5336,6 +5369,7 @@ function (window, undefined) {
 	cTBILLPRICE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cTBILLPRICE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cTBILLPRICE.prototype.argumentsType = [argType.any, argType.any, argType.any];
+	cTBILLPRICE.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cTBILLPRICE.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], discount = arg[2];
 
@@ -5410,6 +5444,7 @@ function (window, undefined) {
 	cTBILLYIELD.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cTBILLYIELD.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cTBILLYIELD.prototype.argumentsType = [argType.any, argType.any, argType.any];
+	cTBILLYIELD.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cTBILLYIELD.prototype.Calculate = function (arg) {
 		let settlement = arg[0], maturity = arg[1], pr = arg[2];
 
@@ -5704,6 +5739,7 @@ function (window, undefined) {
 	cXIRR.prototype.arrayIndexes = {0: 1, 1: 1};
 	cXIRR.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cXIRR.prototype.argumentsType = [argType.any, argType.any, argType.any];
+	cXIRR.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cXIRR.prototype.Calculate = function (arg) {
 		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : new cNumber(0.1);
 
@@ -5967,6 +6003,7 @@ function (window, undefined) {
 	cXNPV.prototype.arrayIndexes = {1: 1, 2: 1};
 	cXNPV.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cXNPV.prototype.argumentsType = [argType.any, argType.any, argType.any];
+	cXNPV.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	/**
 	 * XNPV - Returns the net present value for a schedule of cash flows that is not necessarily periodic. 
 	 * @param {number} rate - Discount rate
@@ -6150,6 +6187,7 @@ function (window, undefined) {
 	cYIELD.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cYIELD.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any,
 		argType.any, argType.any];
+	cYIELD.prototype.enabledToSingle = {"0": true, "1": true, "2": true, "3": true, "4": true, "5": true, "6": true};
 	cYIELD.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], rate = arg[2], pr = arg[3], redemption = arg[4], frequency = arg[5],
 			basis = arg[6] && !(arg[6] instanceof cEmpty) ? arg[6] : new cNumber(0);
@@ -6263,6 +6301,7 @@ function (window, undefined) {
 	cYIELDDISC.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cYIELDDISC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cYIELDDISC.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any];
+	cYIELDDISC.prototype.enabledToSingle = {"0": true, "1": true, "2": true, "3": true, "4": true};
 	cYIELDDISC.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], pr = arg[2], redemption = arg[3],
 			basis = arg[4] && !(arg[4] instanceof cEmpty) ? arg[4] : new cNumber(0);
@@ -6358,6 +6397,7 @@ function (window, undefined) {
 	cYIELDMAT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cYIELDMAT.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any,
 		argType.any];
+	cYIELDMAT.prototype.enabledToSingle = {"0": true, "1": true, "2": true, "3": true, "4": true, "5": true};
 	cYIELDMAT.prototype.Calculate = function (arg) {
 		var settlement = arg[0], maturity = arg[1], issue = arg[2], rate = arg[3], pr = arg[4],
 			basis = arg[5] && !(arg[5] instanceof cEmpty) ? arg[5] : new cNumber(0);

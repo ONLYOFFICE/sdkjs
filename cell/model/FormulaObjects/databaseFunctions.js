@@ -431,6 +431,7 @@ function (window, undefined) {
 	cDAVERAGE.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDAVERAGE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDAVERAGE.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDAVERAGE.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDAVERAGE.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -485,6 +486,7 @@ function (window, undefined) {
 	cDCOUNT.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDCOUNT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDCOUNT.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDCOUNT.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDCOUNT.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -538,6 +540,7 @@ function (window, undefined) {
 	cDCOUNTA.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDCOUNTA.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDCOUNTA.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDCOUNTA.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDCOUNTA.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -583,6 +586,7 @@ function (window, undefined) {
 	cDGET.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDGET.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDGET.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDGET.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDGET.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -625,6 +629,7 @@ function (window, undefined) {
 	cDMAX.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDMAX.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDMAX.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDMAX.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDMAX.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -668,6 +673,7 @@ function (window, undefined) {
 	cDMIN.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDMIN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDMIN.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDMIN.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDMIN.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -712,6 +718,7 @@ function (window, undefined) {
 	cDPRODUCT.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDPRODUCT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDPRODUCT.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDPRODUCT.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDPRODUCT.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -763,6 +770,7 @@ function (window, undefined) {
 	cDSTDEV.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDSTDEV.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDSTDEV.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDSTDEV.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDSTDEV.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -822,6 +830,7 @@ function (window, undefined) {
 	cDSTDEVP.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDSTDEVP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDSTDEVP.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDSTDEVP.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDSTDEVP.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -882,6 +891,7 @@ function (window, undefined) {
 	cDSUM.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDSUM.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDSUM.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDSUM.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDSUM.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array], null, cErrorType.wrong_value_type);
@@ -929,6 +939,7 @@ function (window, undefined) {
 	cDVAR.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDVAR.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDVAR.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDVAR.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDVAR.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -995,6 +1006,7 @@ function (window, undefined) {
 	cDVARP.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDVARP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDVARP.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDVARP.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDVARP.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);

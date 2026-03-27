@@ -4497,6 +4497,7 @@ function (window, undefined) {
 	cBESSELI.prototype.argumentsMax = 2;
 	cBESSELI.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cBESSELI.prototype.argumentsType = [argType.any, argType.any];
+	cBESSELI.prototype.enabledToSingle = {"0": true, "1": true};
 	/**
 	 * @param {number} X: The value at which to evaluate the function.
 	 * @param {number} N: The order of the Bessel function. If n is not an integer, it is truncated.
@@ -4534,6 +4535,7 @@ function (window, undefined) {
 	cBESSELJ.prototype.argumentsMax = 2;
 	cBESSELJ.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cBESSELJ.prototype.argumentsType = [argType.any, argType.any];
+	cBESSELJ.prototype.enabledToSingle = {"0": true, "1": true};
 	/**
 	 * @param {number} X: The value at which to evaluate the function.
 	 * @param {number} N: The order of the Bessel function. If n is not an integer, it is truncated.
@@ -4574,6 +4576,7 @@ function (window, undefined) {
 	cBESSELK.prototype.argumentsMax = 2;
 	cBESSELK.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cBESSELK.prototype.argumentsType = [argType.any, argType.any];
+	cBESSELK.prototype.enabledToSingle = {"0": true, "1": true};
 	/**
 	 * @param {number} X: The value at which to evaluate the function.
 	 * @param {number} N: The order of the function. If n is not an integer, it is truncated.
@@ -4612,6 +4615,7 @@ function (window, undefined) {
 	cBESSELY.prototype.argumentsMax = 2;
 	cBESSELY.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cBESSELY.prototype.argumentsType = [argType.any, argType.any];
+	cBESSELY.prototype.enabledToSingle = {"0": true, "1": true};
 	/**
 	 * @param {number} X: The value at which to evaluate the function.
 	 * @param {number} N: The order of the function. If n is not an integer, it is truncated.
@@ -4650,6 +4654,7 @@ function (window, undefined) {
 	cBIN2DEC.prototype.argumentsMax = 1;
 	cBIN2DEC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cBIN2DEC.prototype.argumentsType = [argType.any];
+	cBIN2DEC.prototype.enabledToSingle = {"0": true};
 	cBIN2DEC.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 
@@ -4702,6 +4707,7 @@ function (window, undefined) {
 	cBIN2HEX.prototype.argumentsMax = 2;
 	cBIN2HEX.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cBIN2HEX.prototype.argumentsType = [argType.any, argType.any];
+	cBIN2HEX.prototype.enabledToSingle = {"0": true, "1": true};
 	cBIN2HEX.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cUndefined();
@@ -4770,6 +4776,7 @@ function (window, undefined) {
 	cBIN2OCT.prototype.argumentsMax = 2;
 	cBIN2OCT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cBIN2OCT.prototype.argumentsType = [argType.any, argType.any];
+	cBIN2OCT.prototype.enabledToSingle = {"0": true, "1": true};
 	cBIN2OCT.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cUndefined();
@@ -5064,6 +5071,7 @@ function (window, undefined) {
 	cCOMPLEX.prototype.argumentsMax = 3;
 	cCOMPLEX.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCOMPLEX.prototype.argumentsType = [argType.any, argType.any, argType.any];
+	cCOMPLEX.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cCOMPLEX.prototype.Calculate = function (arg) {
 
 		var real = arg[0], img = arg[1],
@@ -5129,6 +5137,7 @@ function (window, undefined) {
 	cCONVERT.prototype.argumentsMax = 3;
 	cCONVERT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCONVERT.prototype.argumentsType = [argType.any, argType.any, argType.any];
+	cCONVERT.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cCONVERT.prototype.Calculate = function (arg) {
 		let oArguments = this._prepareArguments(arg, arguments[1], true);
 		let argClone = oArguments.args;
@@ -5256,6 +5265,7 @@ function (window, undefined) {
 	cDEC2BIN.prototype.argumentsMax = 2;
 	cDEC2BIN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDEC2BIN.prototype.argumentsType = [argType.any, argType.any];
+	cDEC2BIN.prototype.enabledToSingle = {"0": true, "1": true};
 	cDEC2BIN.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cUndefined();
 
@@ -5319,6 +5329,7 @@ function (window, undefined) {
 	cDEC2HEX.prototype.argumentsMax = 2;
 	cDEC2HEX.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDEC2HEX.prototype.argumentsType = [argType.any, argType.any];
+	cDEC2HEX.prototype.enabledToSingle = {"0": true, "1": true};
 	cDEC2HEX.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cUndefined();
 
@@ -5381,6 +5392,7 @@ function (window, undefined) {
 	cDEC2OCT.prototype.argumentsMax = 2;
 	cDEC2OCT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDEC2OCT.prototype.argumentsType = [argType.any, argType.any];
+	cDEC2OCT.prototype.enabledToSingle = {"0": true, "1": true};
 	cDEC2OCT.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cUndefined();
 
@@ -5443,6 +5455,7 @@ function (window, undefined) {
 	cDELTA.prototype.argumentsMax = 2;
 	cDELTA.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDELTA.prototype.argumentsType = [argType.any, argType.any];
+	cDELTA.prototype.enabledToSingle = {"0": true, "1": true};
 	cDELTA.prototype.Calculate = function (arg) {
 
 		var number1 = arg[0], number2 = !arg[1] ? new cNumber(0) : arg[1];
@@ -5490,6 +5503,7 @@ function (window, undefined) {
 	cERF.prototype.argumentsMax = 2;
 	cERF.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cERF.prototype.argumentsType = [argType.any, argType.any];
+	cERF.prototype.enabledToSingle = {"0": true, "1": true};
 	/**
 	 * @param {number} lower_limit: The lower bound for integrating ERF.
 	 * @param {number} upper_limit(optional): The upper bound for integrating ERF. If omitted, ERF integrates between zero and lower_limit.
@@ -5587,6 +5601,7 @@ function (window, undefined) {
 	cERF_PRECISE.prototype.isXLFN = true;
 	cERF_PRECISE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cERF_PRECISE.prototype.argumentsType = [argType.any];
+	cERF_PRECISE.prototype.enabledToSingle = {"0": true};
 	/**
 	 * @param {number} X: The lower bound for integrating ERF.PRECISE.
 	 * @return {number} Returns the error function.
@@ -5630,6 +5645,7 @@ function (window, undefined) {
 	cERFC.prototype.argumentsMax = 1;
 	cERFC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cERFC.prototype.argumentsType = [argType.any];
+	cERFC.prototype.enabledToSingle = {"0": true};
 	/**
 	 * @param {number} X: The lower bound for integrating ERF.
 	 * @return {number} Returns the complementary ERF function integrated between x and infinity.
@@ -5672,6 +5688,7 @@ function (window, undefined) {
 	cERFC_PRECISE.prototype.name = 'ERFC.PRECISE';
 	cERFC_PRECISE.prototype.isXLFN = true;
 	cERFC_PRECISE.prototype.argumentsType = [argType.any];
+	cERFC_PRECISE.prototype.enabledToSingle = {"0": true};
 
 	/**
 	 * @constructor
@@ -5688,6 +5705,7 @@ function (window, undefined) {
 	cGESTEP.prototype.argumentsMax = 2;
 	cGESTEP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cGESTEP.prototype.argumentsType = [argType.any, argType.any];
+	cGESTEP.prototype.enabledToSingle = {"0": true, "1": true};
 	cGESTEP.prototype.Calculate = function (arg) {
 
 		let number1 = arg[0], step = !arg[1] ? new cNumber(0) : arg[1];
@@ -5734,6 +5752,7 @@ function (window, undefined) {
 	cHEX2BIN.prototype.argumentsMax = 2;
 	cHEX2BIN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cHEX2BIN.prototype.argumentsType = [argType.any, argType.any];
+	cHEX2BIN.prototype.enabledToSingle = {"0": true, "1": true};
 	cHEX2BIN.prototype.Calculate = function (arg) {
 
 		const MAX_POSITIVE_NUMBER = Math.pow(2,9); // 9 bit number, and 1 bit for sign = 10 bit
@@ -5824,6 +5843,7 @@ function (window, undefined) {
 	cHEX2DEC.prototype.argumentsMax = 1;
 	cHEX2DEC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cHEX2DEC.prototype.argumentsType = [argType.any];
+	cHEX2DEC.prototype.enabledToSingle = {"0": true};
 	cHEX2DEC.prototype.Calculate = function (arg) {
 
 		const MAX_40BIT_NUMBER = Math.pow(2,39); // 2^(40 - 1) -> 1 bit is for sign
@@ -5884,6 +5904,7 @@ function (window, undefined) {
 	cHEX2OCT.prototype.argumentsMax = 2;
 	cHEX2OCT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cHEX2OCT.prototype.argumentsType = [argType.any, argType.any];
+	cHEX2OCT.prototype.enabledToSingle = {"0": true, "1": true};
 	cHEX2OCT.prototype.Calculate = function (arg) {
 
 		const MAX_POSITIVE_NUMBER = 536870911;	// 1FFFFFFF
@@ -5973,6 +5994,7 @@ function (window, undefined) {
 	cIMABS.prototype.argumentsMax = 1;
 	cIMABS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMABS.prototype.argumentsType = [argType.any];
+	cIMABS.prototype.enabledToSingle = {"0": true};
 	cIMABS.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0];
@@ -6016,6 +6038,7 @@ function (window, undefined) {
 	cIMAGINARY.prototype.argumentsMax = 1;
 	cIMAGINARY.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMAGINARY.prototype.argumentsType = [argType.any];
+	cIMAGINARY.prototype.enabledToSingle = {"0": true};
 	cIMAGINARY.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0];
@@ -6059,6 +6082,7 @@ function (window, undefined) {
 	cIMARGUMENT.prototype.argumentsMax = 1;
 	cIMARGUMENT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMARGUMENT.prototype.argumentsType = [argType.any];
+	cIMARGUMENT.prototype.enabledToSingle = {"0": true};
 	cIMARGUMENT.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0];
@@ -6102,6 +6126,7 @@ function (window, undefined) {
 	cIMCONJUGATE.prototype.argumentsMax = 1;
 	cIMCONJUGATE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMCONJUGATE.prototype.argumentsType = [argType.any];
+	cIMCONJUGATE.prototype.enabledToSingle = {"0": true};
 	cIMCONJUGATE.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0];
@@ -6145,6 +6170,7 @@ function (window, undefined) {
 	cIMCOS.prototype.argumentsMax = 1;
 	cIMCOS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMCOS.prototype.argumentsType = [argType.any];
+	cIMCOS.prototype.enabledToSingle = {"0": true};
 	cIMCOS.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6176,6 +6202,7 @@ function (window, undefined) {
 	cIMCOSH.prototype.isXLFN = true;
 	cIMCOSH.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMCOSH.prototype.argumentsType = [argType.any];
+	cIMCOSH.prototype.enabledToSingle = {"0": true};
 	cIMCOSH.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6206,6 +6233,7 @@ function (window, undefined) {
 	cIMCOT.prototype.isXLFN = true;
 	cIMCOT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMCOT.prototype.argumentsType = [argType.any];
+	cIMCOT.prototype.enabledToSingle = {"0": true};
 	cIMCOT.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6236,6 +6264,7 @@ function (window, undefined) {
 	cIMCSC.prototype.isXLFN = true;
 	cIMCSC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMCSC.prototype.argumentsType = [argType.any];
+	cIMCSC.prototype.enabledToSingle = {"0": true};
 	cIMCSC.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6266,6 +6295,7 @@ function (window, undefined) {
 	cIMCSCH.prototype.isXLFN = true;
 	cIMCSCH.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMCSCH.prototype.argumentsType = [argType.any];
+	cIMCSCH.prototype.enabledToSingle = {"0": true};
 	cIMCSCH.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6295,6 +6325,7 @@ function (window, undefined) {
 	cIMDIV.prototype.argumentsMax = 2;
 	cIMDIV.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMDIV.prototype.argumentsType = [argType.any, argType.any];
+	cIMDIV.prototype.enabledToSingle = {"0": true, "1": true};
 	cIMDIV.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0], arg1 = arg[1];
@@ -6351,6 +6382,7 @@ function (window, undefined) {
 	cIMEXP.prototype.argumentsMax = 1;
 	cIMEXP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMEXP.prototype.argumentsType = [argType.any];
+	cIMEXP.prototype.enabledToSingle = {"0": true};
 	cIMEXP.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6380,6 +6412,7 @@ function (window, undefined) {
 	cIMLN.prototype.argumentsMax = 1;
 	cIMLN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMLN.prototype.argumentsType = [argType.any];
+	cIMLN.prototype.enabledToSingle = {"0": true};
 	cIMLN.prototype.Calculate = function (arg) {
 		let arg0 = arg[0];
 		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
@@ -6416,6 +6449,7 @@ function (window, undefined) {
 	cIMLOG10.prototype.argumentsMax = 1;
 	cIMLOG10.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMLOG10.prototype.argumentsType = [argType.any];
+	cIMLOG10.prototype.enabledToSingle = {"0": true};
 	cIMLOG10.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6454,6 +6488,7 @@ function (window, undefined) {
 	cIMLOG2.prototype.argumentsMax = 1;
 	cIMLOG2.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMLOG2.prototype.argumentsType = [argType.any];
+	cIMLOG2.prototype.enabledToSingle = {"0": true};
 	cIMLOG2.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6490,6 +6525,7 @@ function (window, undefined) {
 	cIMPOWER.prototype.argumentsMax = 2;
 	cIMPOWER.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMPOWER.prototype.argumentsType = [argType.any, argType.any];
+	cIMPOWER.prototype.enabledToSingle = {"0": true, "1": true};
 	cIMPOWER.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0], arg1 = arg[1];
@@ -6549,6 +6585,7 @@ function (window, undefined) {
 	cIMPRODUCT.prototype.argumentsMin = 1;
 	cIMPRODUCT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cIMPRODUCT.prototype.argumentsType = [[argType.any]];
+	cIMPRODUCT.prototype.enabledToSingle = {"*": true};
 	cIMPRODUCT.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], t = this;
 
@@ -6651,6 +6688,7 @@ function (window, undefined) {
 	cIMREAL.prototype.argumentsMax = 1;
 	cIMREAL.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMREAL.prototype.argumentsType = [argType.any];
+	cIMREAL.prototype.enabledToSingle = {"0": true};
 	cIMREAL.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6706,6 +6744,7 @@ function (window, undefined) {
 	cIMSEC.prototype.isXLFN = true;
 	cIMSEC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMSEC.prototype.argumentsType = [argType.any];
+	cIMSEC.prototype.enabledToSingle = {"0": true};
 	cIMSEC.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6736,6 +6775,7 @@ function (window, undefined) {
 	cIMSECH.prototype.isXLFN = true;
 	cIMSECH.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMSECH.prototype.argumentsType = [argType.any];
+	cIMSECH.prototype.enabledToSingle = {"0": true};
 	cIMSECH.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6766,6 +6806,7 @@ function (window, undefined) {
 	cIMSIN.prototype.argumentsMax = 1;
 	cIMSIN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMSIN.prototype.argumentsType = [argType.any];
+	cIMSIN.prototype.enabledToSingle = {"0": true};
 	cIMSIN.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6796,6 +6837,7 @@ function (window, undefined) {
 	cIMSINH.prototype.isXLFN = true;
 	cIMSINH.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMSINH.prototype.argumentsType = [argType.any];
+	cIMSINH.prototype.enabledToSingle = {"0": true};
 	cIMSINH.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6825,6 +6867,7 @@ function (window, undefined) {
 	cIMSQRT.prototype.argumentsMax = 1;
 	cIMSQRT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMSQRT.prototype.argumentsType = [argType.any];
+	cIMSQRT.prototype.enabledToSingle = {"0": true};
 	cIMSQRT.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6854,6 +6897,7 @@ function (window, undefined) {
 	cIMSUB.prototype.argumentsMax = 2;
 	cIMSUB.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMSUB.prototype.argumentsType = [argType.any, argType.any];
+	cIMSUB.prototype.enabledToSingle = {"0": true, "1": true};
 	cIMSUB.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0], arg1 = arg[1];
@@ -6909,6 +6953,7 @@ function (window, undefined) {
 	cIMSUM.prototype.argumentsMin = 1;
 	cIMSUM.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cIMSUM.prototype.argumentsType = [[argType.any]];
+	cIMSUM.prototype.enabledToSingle = {"*": true};
 	cIMSUM.prototype.Calculate = function (arg) {
 		
 		const t = this;
@@ -7023,6 +7068,7 @@ function (window, undefined) {
 	cIMTAN.prototype.isXLFN = true;
 	cIMTAN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMTAN.prototype.argumentsType = [argType.any];
+	cIMTAN.prototype.enabledToSingle = {"0": true};
 	cIMTAN.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -7052,6 +7098,7 @@ function (window, undefined) {
 	cOCT2BIN.prototype.argumentsMax = 2;
 	cOCT2BIN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cOCT2BIN.prototype.argumentsType = [argType.any, argType.any];
+	cOCT2BIN.prototype.enabledToSingle = {"0": true, "1": true};
 	cOCT2BIN.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cUndefined();
@@ -7127,6 +7174,7 @@ function (window, undefined) {
 	cOCT2DEC.prototype.argumentsMax = 1;
 	cOCT2DEC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cOCT2DEC.prototype.argumentsType = [argType.any];
+	cOCT2DEC.prototype.enabledToSingle = {"0": true};
 	cOCT2DEC.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0];
@@ -7178,6 +7226,7 @@ function (window, undefined) {
 	cOCT2HEX.prototype.argumentsMax = 2;
 	cOCT2HEX.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cOCT2HEX.prototype.argumentsType = [argType.any, argType.any];
+	cOCT2HEX.prototype.enabledToSingle = {"0": true, "1": true};
 	cOCT2HEX.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cUndefined();

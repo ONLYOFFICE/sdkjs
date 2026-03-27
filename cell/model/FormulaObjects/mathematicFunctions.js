@@ -395,6 +395,7 @@ function (window, undefined) {
 		}
 		return 1;
 	};
+	cAGGREGATE.prototype.enabledToSingle = {"allFrom": 2};
 	cAGGREGATE.prototype.Calculate = function (arg) {
 		let oArguments = this._prepareArguments([arg[0], arg[1]], arguments[1]);
 		let argClone = oArguments.args;
@@ -1765,6 +1766,7 @@ function (window, undefined) {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
 			})
+			return arg0;
 		}
 		if (!(arg0 instanceof cNumber)) {
 			return new cError(cErrorType.not_numeric);
@@ -1834,6 +1836,7 @@ function (window, undefined) {
 	cFACTDOUBLE.prototype.argumentsMax = 1;
 	cFACTDOUBLE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cFACTDOUBLE.prototype.argumentsType = [argType.any];
+	cFACTDOUBLE.prototype.enabledToSingle = {"0": true};
 	cFACTDOUBLE.prototype.Calculate = function (arg) {
 		function factDouble(n) {
 			n = Math.floor(n);
@@ -2095,6 +2098,7 @@ function (window, undefined) {
 	cGCD.prototype.argumentsMin = 1;
 	cGCD.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cGCD.prototype.argumentsType = [[argType.any]];
+	cGCD.prototype.enabledToSingle = {"*": true};
 	/**
 	 * GCD - Returns the greatest common divisor of two or more integers
 	 * The greatest common divisor is the largest integer that divides all numbers without a remainder
@@ -2223,11 +2227,10 @@ function (window, undefined) {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
 			})
+			return arg0;
 		} else {
 			return new cNumber(Math.floor(arg0.getValue()))
 		}
-
-		return new cNumber(Math.floor(arg0.getValue()));
 	};
 
 	/**
@@ -2286,6 +2289,7 @@ function (window, undefined) {
 	cLCM.prototype.argumentsMin = 1;
 	cLCM.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cLCM.prototype.argumentsType = [[argType.any]];
+	cLCM.prototype.enabledToSingle = {"*": true};
 	/**
 	 * The least common multiple is the smallest positive integer that is a multiple of all integer arguments number1, number2, and so on. 
 	 * Use LCM to add fractions with different denominators.
@@ -2474,6 +2478,7 @@ function (window, undefined) {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
 			})
+			return arg0;
 		} else {
 			if (arg0.getValue() <= 0) {
 				return new cError(cErrorType.not_numeric);
@@ -2626,6 +2631,7 @@ function (window, undefined) {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
 			})
+			return arg0;
 		} else {
 			if (arg0.getValue() <= 0) {
 				return new cError(cErrorType.not_numeric);
@@ -2651,6 +2657,7 @@ function (window, undefined) {
 	cMDETERM.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cMDETERM.prototype.arrayIndexes = {0: 1};
 	cMDETERM.prototype.argumentsType = [argType.array];
+	cMDETERM.prototype.enabledToSingle = {"0": true};
 	cMDETERM.prototype.Calculate = function (arg) {
 
 		function determ(A) {
@@ -2741,6 +2748,7 @@ function (window, undefined) {
 	cMINVERSE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cMINVERSE.prototype.arrayIndexes = {0: 1};
 	cMINVERSE.prototype.argumentsType = [argType.array];
+	cMINVERSE.prototype.enabledToSingle = {"0": true};
 	cMINVERSE.prototype.Calculate = function (arg) {
 		function Determinant(A) {
 			let N = A.length, B = [], denom = 1, exchanges = 0, i, j;
@@ -2906,6 +2914,7 @@ function (window, undefined) {
 	cMMULT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cMMULT.prototype.arrayIndexes = {0: 1, 1: 1};
 	cMMULT.prototype.argumentsType = [argType.array, argType.array];
+	cMMULT.prototype.enabledToSingle = {"0": true, "1": true};
 	cMMULT.prototype.Calculate = function (arg) {
 
 		function mult(A, B) {
@@ -3080,6 +3089,7 @@ function (window, undefined) {
 	cMROUND.prototype.argumentsMax = 2;
 	cMROUND.prototype.argumentsType = [argType.any, argType.any];
 	cMROUND.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
+	cMROUND.prototype.enabledToSingle = {"0": true, "1": true};
 	cMROUND.prototype.Calculate = function (arg) {
 
 		var multiple;
@@ -3183,6 +3193,7 @@ function (window, undefined) {
 	cMULTINOMIAL.prototype.argumentsMin = 1;
 	cMULTINOMIAL.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cMULTINOMIAL.prototype.argumentsType = [[argType.any]];
+	cMULTINOMIAL.prototype.enabledToSingle = {"*": true};
 	cMULTINOMIAL.prototype.Calculate = function (arg) {
 		var arg0 = new cNumber(0), fact = 1;
 
@@ -3567,6 +3578,7 @@ function (window, undefined) {
 	cPRODUCT.prototype.argumentsMin = 1;
 	cPRODUCT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cPRODUCT.prototype.argumentsType = [[argType.number]];
+	cPRODUCT.prototype.enabledToSingle = {"*": true};
 	cPRODUCT.prototype.Calculate = function (arg) {
 
 		let element, arg0 = new cNumber(1), isFoundValue;
@@ -3653,6 +3665,7 @@ function (window, undefined) {
 	cQUOTIENT.prototype.argumentsMax = 2;
 	cQUOTIENT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cQUOTIENT.prototype.argumentsType = [argType.any, argType.any];
+	cQUOTIENT.prototype.enabledToSingle = {"0": true, "1": true};
 	cQUOTIENT.prototype.Calculate = function (arg) {
 
 		function quotient(a, b) {
@@ -3960,6 +3973,7 @@ function (window, undefined) {
 	cRANDBETWEEN.prototype.ca = true;
 	cRANDBETWEEN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cRANDBETWEEN.prototype.argumentsType = [argType.any, argType.any];
+	cRANDBETWEEN.prototype.enabledToSingle = {"0": true, "1": true};
 	cRANDBETWEEN.prototype.Calculate = function (arg) {
 
 		function randBetween(a, b) {
@@ -4692,6 +4706,7 @@ function (window, undefined) {
 	cSERIESSUM.prototype.arrayIndexes = {3: 1};
 	cSERIESSUM.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cSERIESSUM.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any];
+	cSERIESSUM.prototype.enabledToSingle = {"*": true};
 	cSERIESSUM.prototype.Calculate = function (arg) {
 
 		function Seriessum_SingleVal(x, n, m, a) {
@@ -5037,6 +5052,7 @@ function (window, undefined) {
 	cSQRTPI.prototype.argumentsMax = 1;
 	cSQRTPI.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cSQRTPI.prototype.argumentsType = [argType.any];
+	cSQRTPI.prototype.enabledToSingle = {"0": true};
 	cSQRTPI.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
@@ -5081,6 +5097,7 @@ function (window, undefined) {
 		}
 		return 1;
 	};
+	cSUBTOTAL.prototype.enabledToSingle = {"allFrom": 1};
 	cSUBTOTAL.prototype.Calculate = function (arg) {
 		let f, exclude = false, arg0 = arg[0];
 
@@ -5237,6 +5254,7 @@ function (window, undefined) {
 	cSUM.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cSUM.prototype.inheritFormat = true;
 	cSUM.prototype.argumentsType = [[argType.number]];
+	cSUM.prototype.enabledToSingle = {"*": true};
 	cSUM.prototype.Calculate = function (arg) {
 		var element, _arg, arg0 = new cNumber(0);
 		for (var i = 0; i < arg.length; i++) {
@@ -5298,6 +5316,7 @@ function (window, undefined) {
 	cSUMIF.prototype.arrayIndexes = {0: 1, 2: 1};
 	cSUMIF.prototype.exactTypes = {0: 1};
 	cSUMIF.prototype.argumentsType = [argType.reference, argType.any, argType.reference];
+	cSUMIF.prototype.enabledToSingle = {"0": true, "2": true};
 	cSUMIF.prototype.Calculate = function (arg) {
 		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : arg[0], _sum = 0, matchingInfo;
 		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
@@ -5439,6 +5458,7 @@ function (window, undefined) {
 	};
 	cSUMIFS.prototype.exactTypes = {0: 1, 1: 1};	// in this function every odd argument is should be checked for type reference
 	cSUMIFS.prototype.argumentsType = [argType.reference, [argType.reference, argType.any]];
+	cSUMIFS.prototype.enabledToSingle = {"arg0orOdd": true};
 	cSUMIFS.prototype.Calculate = function (arg) {
 		let arg0 = arg[0];
 		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type && cElementType.cellsRange !== arg0.type) {
@@ -5630,6 +5650,7 @@ function (window, undefined) {
 	cSUMPRODUCT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cSUMPRODUCT.prototype.argumentsType = [[argType.array]];
 	cSUMPRODUCT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cSUMPRODUCT.prototype.enabledToSingle = {"*": true};
 	cSUMPRODUCT.prototype.Calculate = function (arg) {
 		let arg0 = new cNumber(0), resArr = [], col = 0, row = 0, res = 1, _res = [], i;
 
@@ -5715,6 +5736,7 @@ function (window, undefined) {
 	cSUMSQ.prototype.argumentsMin = 1;
 	cSUMSQ.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cSUMSQ.prototype.argumentsType = [[argType.number]];
+	cSUMSQ.prototype.enabledToSingle = {"*": true};
 	cSUMSQ.prototype.Calculate = function (arg) {
 		var arg0 = new cNumber(0), _arg;
 
@@ -5771,6 +5793,7 @@ function (window, undefined) {
 	cSUMX2MY2.prototype.argumentsMax = 2;
 	cSUMX2MY2.prototype.arrayIndexes = {0: 1, 1: 1};
 	cSUMX2MY2.prototype.argumentsType = [argType.array, argType.array];
+	cSUMX2MY2.prototype.enabledToSingle = {"0": true, "1": true};
 	cSUMX2MY2.prototype.Calculate = function (arg) {
 		var func = function (a, b) {
 			return a * a - b * b;
@@ -5793,6 +5816,7 @@ function (window, undefined) {
 	cSUMX2PY2.prototype.argumentsMax = 2;
 	cSUMX2PY2.prototype.arrayIndexes = {0: 1, 1: 1};
 	cSUMX2PY2.prototype.argumentsType = [argType.array, argType.array];
+	cSUMX2PY2.prototype.enabledToSingle = {"0": true, "1": true};
 	cSUMX2PY2.prototype.Calculate = function (arg) {
 
 		var func = function (a, b) {
@@ -5816,6 +5840,7 @@ function (window, undefined) {
 	cSUMXMY2.prototype.argumentsMax = 2;
 	cSUMXMY2.prototype.arrayIndexes = {0: 1, 1: 1};
 	cSUMXMY2.prototype.argumentsType = [argType.array, argType.array];
+	cSUMXMY2.prototype.enabledToSingle = {"0": true, "1": true};
 	cSUMXMY2.prototype.Calculate = function (arg) {
 
 		var func = function (a, b) {

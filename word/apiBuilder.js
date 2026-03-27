@@ -4066,14 +4066,26 @@
 
 	/**
 	 * The possible values for the base which the relative horizontal positioning of an object will be calculated from.
-	 * @typedef {("character" | "column" | "leftMargin" | "rightMargin" | "margin" | "page")} RelFromH
+	 * @typedef {("character" | "column" | "insideMargin" | "leftMargin" | "rightMargin" | "margin" | "outsideMargin" | "page")} RelFromH
 	 * @see office-js-api/Examples/Enumerations/RelFromH.js
 	 */
 
 	/**
 	 * The possible values for the base which the relative vertical positioning of an object will be calculated from.
-	 * @typedef {("bottomMargin" | "topMargin" | "margin" | "page" | "line" | "paragraph")} RelFromV
+	 * @typedef {("bottomMargin" | "insideMargin" | "topMargin" | "margin" | "outsideMargin" | "page" | "line" | "paragraph")} RelFromV
 	 * @see office-js-api/Examples/Enumerations/RelFromV.js
+	 */
+
+	/**
+	 * The possible values for the base which the relative horizontal size of an object will be calculated from.
+	 * @typedef {("insideMargin" | "leftMargin" | "rightMargin" | "margin" | "outsideMargin" | "page")} SizeRelFromH
+	 * @see office-js-api/Examples/Enumerations/SizeRelFromH.js
+	 */
+
+	/**
+	 * The possible values for the base which the relative vertical size of an object will be calculated from.
+	 * @typedef {("bottomMargin" | "insideMargin" | "topMargin" | "margin" | "outsideMargin" | "page")} SizeRelFromV
+	 * @see office-js-api/Examples/Enumerations/SizeRelFromV.js
 	 */
 
 	/**
@@ -5839,7 +5851,7 @@
 	 */
 	Api.installDeveloperPlugin = Api["installDeveloperPlugin"] = function()
 	{
-		return Asc.editor.installDeveloperPlugin.apply(Asc.editor, arguments);
+		return Asc.editor["installDeveloperPlugin"].apply(Asc.editor, arguments);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -18646,7 +18658,7 @@
 	 * Sets the relative height of the object (image, shape, chart) bounding box.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @param {RelFromV} [sRelativeFrom="page"] - The document element which will be taken as a countdown point for the object height.
+	 * @param {SizeRelFromV} [sRelativeFrom="page"] - The document element which will be taken as a countdown point for the object height.
 	 * @param {percentage} nPercent
 	 * @since 9.3.0
 	 * @returns {boolean}
@@ -18668,7 +18680,7 @@
 	 * Sets the relative width of the object (image, shape, chart) bounding box.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @param {RelFromV} [sRelativeFrom="page"] - The document element which will be taken as a countdown point for the object width.
+	 * @param {SizeRelFromH} [sRelativeFrom="page"] - The document element which will be taken as a countdown point for the object width.
 	 * @param {percentage} nPercent
 	 * @since 9.3.0
 	 * @returns {boolean}
@@ -18816,7 +18828,7 @@
 	 * @since 9.3.0
 	 * @param {RelFromH} sRelativeFrom - The document element which will be taken as a countdown point for the object horizontal alignment.
 	 * @param {EMU|number} nDistance - The distance from the right side of the document element to the floating object. Use EMU for absolute distance or a number for percent (1 = 1%) when bPercent=true.
-	 * @param {boolean} [bPercent=false] - The option defining whether the vertical alignment offset is specified in percent.
+	 * @param {boolean} [bPercent=false] - The option defining whether the horizontal alignment offset is specified in percent.
 	 * @returns {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetHorPosition.js
@@ -18835,7 +18847,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @deprecated since 9.3.0 version.
-	 * @param {RelFromH} sRelativeFrom - The document element which will be taken as a countdown point for the object vertical alignment.
+	 * @param {RelFromV} sRelativeFrom - The document element which will be taken as a countdown point for the object vertical alignment.
 	 * @param {EMU} nDistance - The distance from the bottom part of the document element to the floating object measured in English measure units.
 	 * @returns {boolean}
 	 *
@@ -31337,12 +31349,16 @@
 			return Asc.c_oAscRelativeFromH.Character;
 		else if ("column" === sRel)
 			return Asc.c_oAscRelativeFromH.Column;
+		else if ("insideMargin" === sRel)
+			return Asc.c_oAscRelativeFromH.InsideMargin;
 		else if ("leftMargin" === sRel)
 			return Asc.c_oAscRelativeFromH.LeftMargin;
 		else if ("rightMargin" === sRel)
 			return Asc.c_oAscRelativeFromH.RightMargin;
 		else if ("margin" === sRel)
 			return Asc.c_oAscRelativeFromH.Margin;
+		else if ("outsideMargin" === sRel)
+			return Asc.c_oAscRelativeFromH.OutsideMargin;
 		else if ("page" === sRel)
 			return Asc.c_oAscRelativeFromH.Page;
 
@@ -31353,10 +31369,14 @@
 	{
 		if ("bottomMargin" === sRel)
 			return Asc.c_oAscRelativeFromV.BottomMargin;
+		else if ("insideMargin" === sRel)
+			return Asc.c_oAscRelativeFromV.InsideMargin;
 		else if ("topMargin" === sRel)
 			return Asc.c_oAscRelativeFromV.TopMargin;
 		else if ("margin" === sRel)
 			return Asc.c_oAscRelativeFromV.Margin;
+		else if ("outsideMargin" === sRel)
+			return Asc.c_oAscRelativeFromV.OutsideMargin;
 		else if ("page" === sRel)
 			return Asc.c_oAscRelativeFromV.Page;
 		else if ("line" === sRel)

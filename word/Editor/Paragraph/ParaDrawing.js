@@ -1285,6 +1285,10 @@ ParaDrawing.prototype.Measure = function()
 		if (oParagraph)
 		{
 			let hrWidth = oParagraph.XLimit - oParagraph.X;
+			let paraInd = oParagraph.Get_CompiledPr2(true).ParaPr.Ind;
+			hrWidth -= paraInd.Left + paraInd.Right;
+			hrWidth = Math.max(0, hrWidth);
+			
 			this.Width = hrWidth;
 			this.WidthVisible = hrWidth;
 			this.GraphicObj.recalcTransform();
@@ -1463,9 +1467,8 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 			let oLine = Paragraph.Lines[LineNum];
 			if (oLine) {
 				let metrics = oLine.Metrics;
-				let lineH = metrics.Ascent + metrics.Descent + metrics.LineGap;
 				let hrH = this.GraphicObj.extY;
-				this.Internal_Position.CalcY = this.Internal_Position.LineTop + (lineH - hrH) / 2;
+				this.Internal_Position.CalcY = this.Internal_Position.LineTop + (metrics.Ascent - hrH) - this.DrawingDocument.GetMMPerDot(1); // 1 px difference with MSWord
 			}
 			let hrExtX = this.GraphicObj.extX;
 			let hrLineW = this.WidthVisible;
@@ -3498,6 +3501,16 @@ ParaDrawing.prototype.CheckRunContent = function(fCheck)
 	{
 		this.GraphicObj.checkRunContent(fCheck);
 	}
+};
+ParaDrawing.prototype.IsChart = function()
+{
+	let type = this.GraphicObj ? this.GraphicObj.getObjectType() : AscDFH.historyitem_type_Unknown;
+	return AscDFH.historyitem_type_ChartSpace === type || AscDFH.historyitem_type_Chart === type;
+};
+ParaDrawing.prototype.IsSmartArt = function()
+{
+	let type = this.GraphicObj ? this.GraphicObj.getObjectType() : AscDFH.historyitem_type_Unknown;
+	return AscDFH.historyitem_type_SmartArt === type || AscDFH.historyitem_type_SmartArtDrawing === type;
 };
 /**
  * Класс, описывающий текущее положение параграфа при рассчете позиции автофигуры.
