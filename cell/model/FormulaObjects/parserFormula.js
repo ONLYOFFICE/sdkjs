@@ -77,6 +77,7 @@ function (window, undefined) {
 
 	var importRangeLinksState = {importRangeLinks: null, startBuildImportRangeLinks: null};
 	const aExcludeRecursiveFormulas = ['ISFORMULA','SHEET','SHEETS', 'AREAS', 'COLUMN', 'COLUMNS', 'ROW', 'ROWS', 'CELL', 'OFFSET'];
+	const aLookupFormulas = ['VLOOKUP', 'HLOOKUP'];
 
 	const cReplaceFormulaType = {
 		val: 1,
@@ -581,6 +582,8 @@ var cNumFormatNull = -3;
 var g_nFormulaStringMaxLength = 255;
 var c_nMaxDate1900 = 2958465;
 var c_nMaxDate1904 = c_nMaxDate1900 - (c_Date1900Const - c_Date1904Const) + 1;
+const aLinkTypes =  [cElementType.cell, cElementType.cell3D, cElementType.cellsRange, cElementType.cellsRange3D,
+	cElementType.name, cElementType.name3D, cElementType.table];
 
 function getMaxDate () {
 	return AscCommon.bDate1904 ? c_nMaxDate1904 : c_nMaxDate1900; 	// Maximum date used in calculations in ms (equivalent 31/12/9999)
@@ -9065,7 +9068,7 @@ function parserFormula( formula, parent, _ws ) {
 					const oRange = oRefElement && oRefElement.getRange && oRefElement.getRange();
 					oRange && oRange._foreachNoEmpty(function (oCell) {
 						if (!bRecursiveCell) {
-							bRecursiveCell = oCell.checkRecursiveFormula(t.getParent(), [], bRecheckFormula);
+							bRecursiveCell = oCell.checkRecursiveFormula(t.getParent(), {}, bRecheckFormula);
 						}
 					});
 				});
@@ -11848,11 +11851,9 @@ function parserFormula( formula, parent, _ws ) {
 	 */
 	parserFormula.prototype.getRefElements = function () {
 		const aRefElements = [];
-		const aExcludeFormulas = aExcludeRecursiveFormulas;
-		const aLookupFormulas = ['VLOOKUP', 'HLOOKUP'];
 
-		for (let i = 0, length = this.getOutStackSize(); i < length; i++) {
-			const oOutStackElem = this.getOutStackElem(i);
+		for (let i = 0, length = this.outStack.length; i < length; i++) {
+			const oOutStackElem = this.outStack[i];
 			const nElemType = oOutStackElem.type;
 			const b3D = nElemType === cElementType.cell3D || nElemType === cElementType.cellsRange3D || nElemType === cElementType.name3D;
 			const bArea = nElemType === cElementType.cellsRange || nElemType === cElementType.name;
@@ -11860,18 +11861,16 @@ function parserFormula( formula, parent, _ws ) {
 			const bTable = nElemType === cElementType.table;
 			const nPrevIndex = i - 1;
 
-			if (nElemType === cElementType.func && aExcludeFormulas.includes(oOutStackElem.name)) {
-				const nArgsCount = this.getOutStackElem(nPrevIndex);
+			if (nElemType === cElementType.func && aExcludeRecursiveFormulas.includes(oOutStackElem.name)) {
+				const nArgsCount = this.outStack[nPrevIndex];
 				if (nArgsCount > 0) {
 					const nStartIndex = nPrevIndex - 1;
 					const nEndIndex = nPrevIndex - nArgsCount;
-					const aLinkTypes =  [cElementType.cell, cElementType.cell3D, cElementType.cellsRange,
-						cElementType.cellsRange3D, cElementType.name, cElementType.name3D, cElementType.table];
 					for (let j = nStartIndex; j >= nEndIndex; j--) {
 						if (j < 0) {
 							break;
 						}
-						const oElem = this.getOutStackElem(j);
+						const oElem = this.outStack[j];
 						if (aLinkTypes.includes(oElem.type)) {
 							aRefElements.pop();
 						}
@@ -11879,7 +11878,7 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			}
 			if (nElemType === cElementType.func && aLookupFormulas.includes(oOutStackElem.name)) {
-				const nArgsCount = this.getOutStackElem(nPrevIndex);
+				const nArgsCount = this.outStack[nPrevIndex];
 				const nIndexNumId = nArgsCount === 4 ? nPrevIndex - 2 : nPrevIndex - 1;
 				let oIndexNumValue = null;
 				let oTableArrayArg = null;
@@ -11888,7 +11887,7 @@ function parserFormula( formula, parent, _ws ) {
 					oTableArrayArg = g_cCalcRecursion.getCalculatedArgument('table_array');
 				}
 				if (!oIndexNumValue) {
-					oIndexNumValue = this.getOutStackElem(nIndexNumId);
+					oIndexNumValue = this.outStack[nIndexNumId];
 				}
 				if (oIndexNumValue.type === cElementType.func || oIndexNumValue.type === cElementType.operator) {
 					g_cCalcRecursion.setRecheckFormula(true);
@@ -11901,7 +11900,7 @@ function parserFormula( formula, parent, _ws ) {
 				}
 				if (!oTableArrayArg) {
 					const nTableArrayId = nIndexNumId - 1;
-					oTableArrayArg = this.getOutStackElem(nTableArrayId);
+					oTableArrayArg = this.outStack[nTableArrayId];
 				}
 				if (oTableArrayArg.type === cElementType.func) {
 					g_cCalcRecursion.setRecheckFormula(true);
@@ -11939,7 +11938,6 @@ function parserFormula( formula, parent, _ws ) {
 				aRefElements.push(oOutStackElem);
 			}
 		}
-
 		return aRefElements;
 	};
 	/**
