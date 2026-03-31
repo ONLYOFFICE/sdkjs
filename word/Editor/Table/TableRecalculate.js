@@ -3603,6 +3603,30 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
             this.Pages[CurPage].LastRow = LastRow - 1;
         else
             this.Pages[CurPage].LastRowSplit = true;
+
+        // Check "Keep with next" on paragraphs inside table cells.
+        // If the last paragraph in any cell of a row has KeepNext, that row must stay
+        // on the same page as the next row (matching MS Word behavior).
+        var adjustedLastRow = this.Pages[CurPage].LastRow;
+        var canMoveRowsOff = (0 !== CurPage)
+            || (null !== this.Get_DocumentPrev())
+            || (this.Parent && !this.Parent.IsFirstElementOnPage(this.GetRelativePage(CurPage), this.GetIndex()));
+
+        if (canMoveRowsOff)
+        {
+            while (adjustedLastRow >= FirstRow && this.private_IsRowKeepWithNext(adjustedLastRow))
+            {
+                adjustedLastRow--;
+            }
+            if (adjustedLastRow < FirstRow)
+                adjustedLastRow = FirstRow - 1;
+
+            if (adjustedLastRow !== this.Pages[CurPage].LastRow)
+            {
+                this.Pages[CurPage].LastRow = adjustedLastRow;
+                this.Pages[CurPage].LastRowSplit = false;
+            }
+        }
     }
 
     this.TurnOffRecalc = false;
@@ -3613,6 +3637,31 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         return recalcresult_NextPage;
     else
         return recalcresult_NextElement;
+};
+/**
+ * Checks if any cell in the given row has "Keep with next" set on its last paragraph.
+ * When true, this row should not be separated from the next row by a page break.
+ * @param {number} nRow - row index
+ * @returns {boolean}
+ */
+CTable.prototype.private_IsRowKeepWithNext = function(nRow)
+{
+	if (nRow < 0 || nRow >= this.Content.length - 1)
+		return false;
+
+	var oRow = this.Content[nRow];
+	var nCellsCount = oRow.Get_CellsCount();
+
+	for (var nCell = 0; nCell < nCellsCount; nCell++)
+	{
+		var oCell = oRow.Get_Cell(nCell);
+		var oLastPara = oCell.GetContent().GetLastParagraph();
+
+		if (oLastPara && oLastPara.Get_CompiledPr2(false).ParaPr.KeepNext)
+			return true;
+	}
+
+	return false;
 };
 CTable.prototype.private_RecalculatePrepareHeaderPageRows = function(headerPage)
 {
