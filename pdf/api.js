@@ -1536,7 +1536,7 @@
 					"zoom":		oDoc.Viewer.zoom,
 				};
 
-				oLink.SetActions(AscPDF.PDF_TRIGGERS_TYPES.MouseUp, [oAction]);
+				oLink.SetActions(AscPDF.PDF_TRIGGERS_TYPES.mouseUp, [oAction]);
 			});
 		}, AscDFH.historydescription_Pdf_ContextMenuRemove);
 
@@ -1721,6 +1721,63 @@
 	PDFEditorApi.prototype.asc_getFieldDateTimeFormatExample = function(nFormat) {
 		return AscPDF.FormatDateValue(new Date().getTime(), nFormat);
 	};
+	PDFEditorApi.prototype.SetFieldActions = function(oActions) {
+		let oDoc = this.getPDFDoc();
+		let oField = oDoc.activeForm;
+		let oController = oDoc.GetController();
+		if (!oField) {
+			return false;
+		}
+		
+		return oDoc.DoAction(function() {
+			let res = false;
+
+			oController.selectedObjects.forEach(function(shape) {
+				let oField = shape.GetEditField();
+				if (!oField) {
+					return false;
+				}
+				
+				// widget actions
+				if (oActions.mouseUp) {
+					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.mouseUp, oActions.mouseUp.getJsonActionInfo());
+				}
+				if (oActions.mouseDown) {
+					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.mouseDown, oActions.mouseDown.getJsonActionInfo());
+				}
+				if (oActions.mouseEnter) {
+					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.mouseEnter, oActions.mouseEnter.getJsonActionInfo());
+				}
+				if (oActions.mouseExit) {
+					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.mouseExit, oActions.mouseExit.getJsonActionInfo());
+				}
+				if (oActions.onFocus) {
+					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.onFocus, oActions.onFocus.getJsonActionInfo());
+				}
+				if (oActions.onBlur) {
+					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.onBlur, oActions.onBlur.getJsonActionInfo());
+				}
+
+				// logic actions
+				if (oActions.format) {
+					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.format, oActions.format.getJsonActionInfo());
+				}
+				if (oActions.keystroke) {
+					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.keystroke, oActions.keystroke.getJsonActionInfo());
+				}
+				if (oActions.validate) {
+					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.validate, oActions.validate.getJsonActionInfo());
+				}
+				if (oActions.calculate) {
+					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.calculate, oActions.calculate.getJsonActionInfo());
+				}
+				
+				res = true;
+			});
+
+			return res;
+		}, AscDFH.historydescription_Pdf_ChangeField, this);
+	};
 	PDFEditorApi.prototype.ClearFieldFormat = function() {
 		let oDoc = this.getPDFDoc();
 		let oField = oDoc.activeForm;
@@ -1775,13 +1832,13 @@
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": "AFNumber_Format(" + nDemical + "," + nSepStyle + "," + nNegStyle + "," + "0" + ',"' + sCurrency + '",' + bCurrencyPrepend + ");"
 				}];
-				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.format, aActionsFormat);
 
 				let aActionsKeystroke = [{
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": "AFNumber_Keystroke(" + nDemical + "," + nSepStyle + "," + nNegStyle + "," + "0" + ',"' + sCurrency + '",' + bCurrencyPrepend + ");"
 				}];
-				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.keystroke, aActionsKeystroke);
 
 				if (oField.IsCanCommit()) {
 					oField.Commit();
@@ -1818,13 +1875,13 @@
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": "AFPercent_Format(" + nDemical + "," + nSepStyle + ");"
 				}]
-				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.format, aActionsFormat);
 
 				let aActionsKeystroke = [{
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": "AFPercent_Keystroke(" + nDemical + "," + nSepStyle + ");"
 				}];
-				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.keystroke, aActionsKeystroke);
 				if (oField.IsCanCommit()) {
 					oField.Commit();
 				}
@@ -1863,13 +1920,13 @@
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": 'AFDate_FormatEx("' + sFormat + '");'
 				}]
-				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.format, aActionsFormat);
 
 				let aActionsKeystroke = [{
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": 'AFDate_KeystrokeEx("' + sFormat + '");'
 				}];
-				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.keystroke, aActionsKeystroke);
 
 				if (oField.IsCanCommit()) {
 					oField.Commit();
@@ -1907,13 +1964,13 @@
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": 'AFTime_FormatEx(' + nFormat + ');'
 				}]
-				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.format, aActionsFormat);
 
 				let aActionsKeystroke = [{
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": 'AFTime_KeystrokeEx(' + nFormat + ');'
 				}];
-				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.keystroke, aActionsKeystroke);
 				if (oField.IsCanCommit()) {
 					oField.Commit();
 				}
@@ -1950,13 +2007,13 @@
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": "AFSpecial_Format(" + nFormat + ");"
 				}]
-				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.format, aActionsFormat);
 
 				let aActionsKeystroke = [{
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": "AFSpecial_Keystroke(" + nFormat + ");"
 				}];
-				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.keystroke, aActionsKeystroke);
 				if (oField.IsCanCommit()) {
 					oField.Commit();
 				}
@@ -2062,7 +2119,7 @@
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": 'AFRange_Validate(' + bGreaterThan +  ',' + nGreaterThan + ',' + bLessThan + ',' + nLessThan +  ');'
 				}];
-				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Validate, aActionsValidate);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.validate, aActionsValidate);
 				res = true;
 			});
 
@@ -2088,19 +2145,19 @@
 
 				let sCalcFunc = 'AFSimple_Calculate(';
 				switch (nCalcType) {
-					case AscPDF.CalculateType.SUM:
+					case AscPDF.CalculateOperation.sum:
 						sCalcFunc += '"SUM",';
 						break;
-					case AscPDF.CalculateType.PRODUCT:
+					case AscPDF.CalculateOperation.product:
 						sCalcFunc += '"PRD",';
 						break;
-					case AscPDF.CalculateType.AVERAGE:
+					case AscPDF.CalculateOperation.average:
 						sCalcFunc += '"AVG",';
 						break;
-					case AscPDF.CalculateType.MIN:
+					case AscPDF.CalculateOperation.min:
 						sCalcFunc += '"MIN",';
 						break;
-					case AscPDF.CalculateType.MAX:
+					case AscPDF.CalculateOperation.max:
 						sCalcFunc += '"MAX",';
 						break;
 				}
@@ -2114,7 +2171,7 @@
 					"JS": sCalcFunc
 				}];
 
-				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Calculate, aActions);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.calculate, aActions);
 
 				let oCalcInfo	= oDoc.GetCalculateInfo();
 				let aCalcOrder	= oCalcInfo.GetCalculateOrder();

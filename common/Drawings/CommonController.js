@@ -819,7 +819,7 @@
 								}
 							}
 							else if (drawing.IsAnnot && drawing.IsAnnot() && drawing.IsLink()) {
-								let aActions = drawing.GetActions(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
+								let aActions = drawing.GetActions(AscPDF.PDF_TRIGGERS_TYPES.mouseUp);
 								
 								for (let i = 0; i < aActions.length; i++) {
 									if (aActions[i]["S"] == AscPDF.ACTIONS_TYPES.URI) {

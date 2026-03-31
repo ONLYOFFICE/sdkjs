@@ -32,17 +32,18 @@
 
 (function(){
     let PDF_TRIGGERS_TYPES = {
-        MouseUp:    0,
-        MouseDown:  1,
-        MouseEnter: 2,
-        MouseExit:  3,
-        OnFocus:    4,
-        OnBlur:     5,
-        Keystroke:  6,
-        Validate:   7,
-        Calculate:  8,
-        Format:     9
+        mouseUp:    0,
+        mouseDown:  1,
+        mouseEnter: 2,
+        mouseExit:  3,
+        onFocus:    4,
+        onBlur:     5,
+        keystroke:  6,
+        validate:   7,
+        calculate:  8,
+        format:     9
     }
+	
     let ACTIONS_TYPES = {
         Unknown:        0,
         GoTo:           1,
@@ -125,34 +126,34 @@
     }
     CPdfTrigger.GetName = function(nType) {
         switch (nType) {
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseUp: {
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseUp: {
                 return "Mouse Up";
             }
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseDown: {
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseDown: {
                 return "Mouse Down";
             }
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseEnter: {
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseEnter: {
                 return "Mouse Enter";
             }
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseExit: {
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseExit: {
                 return "Mouse Exit";
             }
-            case AscPDF.PDF_TRIGGERS_TYPES.OnFocus: {
+            case AscPDF.PDF_TRIGGERS_TYPES.onFocus: {
                 return "Focus";
             }
-            case AscPDF.PDF_TRIGGERS_TYPES.OnBlur: {
+            case AscPDF.PDF_TRIGGERS_TYPES.onBlur: {
                 return "Blur";
             }
-            case AscPDF.PDF_TRIGGERS_TYPES.Keystroke: {
+            case AscPDF.PDF_TRIGGERS_TYPES.keystroke: {
                 return "Keystroke";
             }
-            case AscPDF.PDF_TRIGGERS_TYPES.Validate: {
+            case AscPDF.PDF_TRIGGERS_TYPES.validate: {
                 return "Validate";
             }
-            case AscPDF.PDF_TRIGGERS_TYPES.Calculate: {
+            case AscPDF.PDF_TRIGGERS_TYPES.calculate: {
                 return "Calculate";
             }
-            case AscPDF.PDF_TRIGGERS_TYPES.Format: {
+            case AscPDF.PDF_TRIGGERS_TYPES.format: {
                 return "Format";
             }
         }
@@ -190,34 +191,34 @@
     CPdfTrigger.prototype.WriteToBinary = function(memory) {
         let nType = this.GetType();
         switch (nType) {
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseUp:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseUp:
                 memory.WriteString("A");
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseDown:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseDown:
                 memory.WriteString("D");
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseEnter:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseEnter:
                 memory.WriteString("E");
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseExit:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseExit:
                 memory.WriteString("X");
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.OnFocus:
+            case AscPDF.PDF_TRIGGERS_TYPES.onFocus:
                 memory.WriteString("Fo");
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.OnBlur:
+            case AscPDF.PDF_TRIGGERS_TYPES.onBlur:
                 memory.WriteString("Bl");
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.Keystroke:
+            case AscPDF.PDF_TRIGGERS_TYPES.keystroke:
                 memory.WriteString("K");
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.Validate:
+            case AscPDF.PDF_TRIGGERS_TYPES.validate:
                 memory.WriteString("V");
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.Calculate:
+            case AscPDF.PDF_TRIGGERS_TYPES.calculate:
                 memory.WriteString("C");
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.Format:
+            case AscPDF.PDF_TRIGGERS_TYPES.format:
                 memory.WriteString("F");
                 break;
         }
@@ -357,7 +358,7 @@
         oActionsQueue.SetCurAction(this);
         
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
+        if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.onFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
         }
@@ -492,7 +493,7 @@
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
+        if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.onFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
         }
@@ -541,7 +542,7 @@
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
+        if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.onFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
         }
@@ -584,7 +585,7 @@
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
+        if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.onFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
         }
@@ -593,7 +594,7 @@
     };
 
     CActionHideShow.prototype.GetNames = function() {
-        return this.names;
+        return this.names.slice();
     };
     CActionHideShow.prototype.GetHidden = function() {
         return this.hidden;
@@ -633,7 +634,7 @@
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
+        if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.onFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
         }
@@ -642,7 +643,7 @@
     };
 
     CActionReset.prototype.GetNames = function() {
-        return this.names;
+        return this.names.slice();
     };
     CActionReset.prototype.GetNeedAllExcept = function() {
         return this.bAllExcept;
@@ -683,7 +684,7 @@
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
+        if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.onFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
         }
@@ -847,6 +848,127 @@
         func.bind(oApiDoc).apply(null, new Array(aArgsNamesToDelete.length - 1).concat(oApiConsole, aArgsPdfApi));
     }
     
+	function extractArguments(str) {
+		const start = str.indexOf('(');
+		if (start === -1) {
+			return [];
+		}
+
+		let end = -1;
+		let depth = 0;
+		let quote = null;
+		let escaped = false;
+
+		for (let i = start; i < str.length; i++) {
+			const ch = str[i];
+
+			if (quote) {
+				if (escaped) {
+					escaped = false;
+				} else if (ch === '\\') {
+					escaped = true;
+				} else if (ch === quote) {
+					quote = null;
+				}
+				continue;
+			}
+
+			if (ch === '"' || ch === "'") {
+				quote = ch;
+				continue;
+			}
+
+			if (ch === '(') depth++;
+			if (ch === ')') depth--;
+
+			if (depth === 0) {
+				end = i;
+				break;
+			}
+		}
+
+		if (end === -1) {
+			return [];
+		}
+
+		const argsString = str.slice(start + 1, end);
+		const args = splitTopLevel(argsString);
+
+		return args.map(parseArgument);
+	}
+
+	function splitTopLevel(str) {
+		const result = [];
+		let current = '';
+		let quote = null;
+		let escaped = false;
+		let paren = 0;
+		let bracket = 0;
+		let brace = 0;
+
+		for (let i = 0; i < str.length; i++) {
+			const ch = str[i];
+
+			if (quote) {
+				current += ch;
+
+				if (escaped) {
+					escaped = false;
+				} else if (ch === '\\') {
+					escaped = true;
+				} else if (ch === quote) {
+					quote = null;
+				}
+				continue;
+			}
+
+			if (ch === '"' || ch === "'") {
+				quote = ch;
+				current += ch;
+				continue;
+			}
+
+			if (ch === '(') paren++;
+			else if (ch === ')') paren--;
+			else if (ch === '[') bracket++;
+			else if (ch === ']') bracket--;
+			else if (ch === '{') brace++;
+			else if (ch === '}') brace--;
+
+			if (ch === ',' && paren === 0 && bracket === 0 && brace === 0) {
+				result.push(current.trim());
+				current = '';
+				continue;
+			}
+
+			current += ch;
+		}
+
+		if (current.trim() !== '') {
+			result.push(current.trim());
+		}
+
+		return result;
+	}
+
+	function parseArgument(arg) {
+		if (arg === 'true') return true;
+		if (arg === 'false') return false;
+		if (arg === 'null') return null;
+
+		if (arg !== '' && !Number.isNaN(Number(arg))) {
+			return Number(arg);
+		}
+
+		if (
+			(arg.startsWith('"') && arg.endsWith('"')) ||
+			(arg.startsWith("'") && arg.endsWith("'"))
+		) {
+			return arg.slice(1, -1);
+		}
+
+		return arg;
+	}
 
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
@@ -859,6 +981,7 @@
     window["AscPDF"].CActionHideShow    = CActionHideShow;
     window["AscPDF"].CActionReset       = CActionReset;
     window["AscPDF"].CActionRunScript   = CActionRunScript;
+    window["AscPDF"].extractArguments   = extractArguments;
     
     window["AscPDF"].ACTIONS_TYPES          = ACTIONS_TYPES;
     window["AscPDF"].PDF_TRIGGERS_TYPES   = PDF_TRIGGERS_TYPES;
