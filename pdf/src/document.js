@@ -76,14 +76,21 @@ var CPresentation = CPresentation || function(){};
     CCalculateInfo.prototype = Object.create(AscFormat.CBaseNoIdObject.prototype);
 
     CCalculateInfo.prototype.AddFieldToOrder = function(id) {
-        if (this.ids.includes(id) == false)
-            this.ids.push(id);
+		let aNewOrder = this.ids.slice();
+		if (aNewOrder.includes(id) == false)
+            aNewOrder.push(id);
+
+		this.SetCalculateOrder(aNewOrder);
     };
     CCalculateInfo.prototype.RemoveFieldFromOrder = function(id) {
-        let nIdx = this.ids.indexOf(id);
+		let aNewOrder = this.ids.slice();
+
+        let nIdx = aNewOrder.indexOf(id);
         if (nIdx != -1) {
-            this.ids.splice(nIdx, 1);
+            aNewOrder.splice(nIdx, 1);
         }
+
+		this.SetCalculateOrder(aNewOrder);
     };
     CCalculateInfo.prototype.SetIsInProgress = function(bValue) {
         this.isInProgress = bValue;
@@ -4717,17 +4724,17 @@ var CPresentation = CPresentation || function(){};
      * Note: This method used by forms actions.
 	 * @memberof CPDFDoc
      * @param {CBaseField[]} aNames - array with forms names to reset. If param is undefined or array is empty then resets all forms.
-     * @param {boolean} bAllExcept - reset all fields except aNames
+     * @param {boolean} isAllExcept - reset all fields except aNames
 	 * @typeofeditors ["PDF"]
 	 */
-    CPDFDoc.prototype.ResetForms = function(aNames, bAllExcept) {
+    CPDFDoc.prototype.ResetForms = function(aNames, isAllExcept) {
         let oActionsQueue = this.GetActionsQueue();
         let oThis = this;
 
         let aReseted = [];
 
         if (aNames.length > 0) {
-            if (bAllExcept) {
+            if (isAllExcept) {
                 for (let nField = 0; nField < this.widgets.length; nField++) {
                     let oField = this.widgets[nField];
                     let sFieldName = oField.GetFullName();
@@ -4920,7 +4927,36 @@ var CPresentation = CPresentation || function(){};
 
         return null;
     };
+	
+	CPDFDoc.prototype.SetCalculateOrder = function(aNames) {
+		let _t = this;
 
+		let aNewOrder = [];
+		aNames.forEach(function(name) {
+			let oField = _t.GetField(name);
+			aNewOrder.push(oField.GetApIdx());
+		});
+
+		let oCalcInfo	= _t.GetCalculateInfo();
+		oCalcInfo.SetCalculateOrder(aNewOrder);
+
+		return true;
+	};
+	CPDFDoc.prototype.GetCalculateOrder = function() {
+		let _t			= this;
+		let oCalcInfo	= _t.GetCalculateInfo();
+		let aCalcOrder	= oCalcInfo.GetCalculateOrder();
+		
+		let aNames = [];
+		aCalcOrder.forEach(function(apIdx) {
+			let oField = _t.GetFieldByApIdx(apIdx);
+			if (oField) {
+				aNames.push(oField.GetFullName());
+			}
+		});
+
+		return aNames;
+	};
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Work with interface
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -9972,20 +10008,20 @@ var CPresentation = CPresentation || function(){};
         let oAction = oTrigger.Actions[0];
         switch (oAction.GetType()) {
             case AscPDF.ACTIONS_TYPES.Named: {
-                switch (oAction.GetNameStrType()) {
-                    case "FirstPage": {
+                switch (oAction.GetName()) {
+                    case AscPDF.ACTION_NAMED_TYPES.FirstPage: {
                         oProps.Value = "ppaction://hlinkshowjump?jump=firstslide";
                         break;
                     }
-                    case "LastPage": {
+                    case AscPDF.ACTION_NAMED_TYPES.LastPage: {
                         oProps.Value = "ppaction://hlinkshowjump?jump=lastslide";
                         break;
                     }
-                    case "NextPage": {
+                    case AscPDF.ACTION_NAMED_TYPES.NextPage: {
                         oProps.Value = "ppaction://hlinkshowjump?jump=nextslide";
                         break;
                     }
-                    case "PrevPage": {
+                    case AscPDF.ACTION_NAMED_TYPES.PrevPage: {
                         oProps.Value = "ppaction://hlinkshowjump?jump=previousslide";
                         break;
                     }
@@ -10002,7 +10038,7 @@ var CPresentation = CPresentation || function(){};
                 break;
             }
             case AscPDF.ACTIONS_TYPES.URI: {
-                oProps.Value = oAction.GetURI();
+                oProps.Value = oAction.GetUri();
                 break;
             }
         }

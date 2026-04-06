@@ -607,11 +607,11 @@
                             break;
                         }
                         
-                        oAction = new AscPDF.CActionGoTo(oPageInfo.GetId(), aActionsInfo[i]["kind"], aActionsInfo[i]["zoom"], oRect);
+                        oAction = new AscPDF.CActionGoTo(oPageInfo.GetId(), aActionsInfo[i]["kind"], aActionsInfo[i]["zoom"], [oRect.left, oRect.top, oRect.right, oRect.bottom]);
                         aActions.push(oAction);
                         break;
                     case AscPDF.ACTIONS_TYPES.Named:
-                        oAction = new AscPDF.CActionNamed(AscPDF.CActionNamed.GetInternalType(aActionsInfo[i]["N"]));
+                        oAction = new AscPDF.CActionNamed(aActionsInfo[i]["N"]);
                         aActions.push(oAction);
                         break;
                 }
@@ -653,6 +653,16 @@
                 break;
             case AscPDF.PDF_TRIGGERS_TYPES.calculate:
                 this._triggers.Calculate = oNewTrigger;
+
+				let oDoc        = this.GetDocument();
+				let canChange	= !oDoc.Viewer.IsOpenFormsInProgress && AscCommon.History.CanAddChanges() && !AscCommon.g_oIdCounter.IsLoad();
+        		
+				if (canChange) {
+					let oCalcInfo = oDoc.GetCalculateInfo();
+					oCalcInfo.RemoveFieldFromOrder(this.GetFullName());
+                	oCalcInfo.AddFieldToOrder(oDoc.GetField(this.GetFullName()).GetApIdx());
+				}
+
                 break;
             case AscPDF.PDF_TRIGGERS_TYPES.format:
                 this._triggers.Format = oNewTrigger;
@@ -683,48 +693,7 @@
         // Iterate through all actions associated with the trigger
         for (let i = 0; i < oTrigger.Actions.length; i++) {
             let oAction = oTrigger.Actions[i];
-            let actionInfo = {};
-            
-            // Determine the action type and populate the object with information
-            switch (oAction.GetType()) {
-                case AscPDF.ACTIONS_TYPES.JavaScript:
-                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.JavaScript;
-                    actionInfo["JS"] = oAction.GetScript();
-                    break;
-                case AscPDF.ACTIONS_TYPES.ResetForm:
-                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.ResetForm;
-                    actionInfo["Fields"] = oAction.GetNames();
-                    actionInfo["Flags"] = Number(oAction.GetNeedAllExcept());
-                    break;
-                case AscPDF.ACTIONS_TYPES.URI:
-                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.URI;
-                    actionInfo["URI"] = oAction.GetURI();
-                    break;
-                case AscPDF.ACTIONS_TYPES.HideShow:
-                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.HideShow;
-                    actionInfo["H"] = oAction.GetHidden();
-                    actionInfo["T"] = oAction.GetNames();
-                    break;
-                case AscPDF.ACTIONS_TYPES.GoTo:
-                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.GoTo;
-                    actionInfo["page"] = oAction.GetPageIdx();
-                    actionInfo["pageId"] = oAction.GetPageId();
-                    actionInfo["kind"] = oAction.GetKind();
-                    actionInfo["zoom"] = oAction.GetZoom();
-                    let oRect = oAction.GetRect();
-                    actionInfo["top"] = oRect.top;
-                    actionInfo["right"] = oRect.right;
-                    actionInfo["bottom"] = oRect.bottom;
-                    actionInfo["left"] = oRect.left;
-                    break;
-                case AscPDF.ACTIONS_TYPES.Named:
-                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.Named;
-                    actionInfo["N"] = oAction.GetNameStrType();
-                    break;
-                default:
-                    // If the type is not recognized, add handling or skip
-                    continue;
-            }
+            let actionInfo = AscPDF.getJsonActionInfo(oAction);
             
             aActionsInfo.push(actionInfo);
         }

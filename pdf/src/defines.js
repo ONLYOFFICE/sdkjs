@@ -432,6 +432,18 @@
     LINE_END_TYPE["rClosedArrow"]   = LINE_END_TYPE.rClosedArrow;
     LINE_END_TYPE["slash"]          = LINE_END_TYPE.slash;
 
+	const ACTION_NAMED_TYPES = {
+        NextPage:   "NextPage",
+        PrevPage:   "PrevPage",
+        FirstPage:  "FirstPage",
+        LastPage:   "LastPage"
+    }
+
+	ACTION_NAMED_TYPES["NextPage"]		= ACTION_NAMED_TYPES.NextPage;
+	ACTION_NAMED_TYPES["PrevPage"]		= ACTION_NAMED_TYPES.PrevPage;
+	ACTION_NAMED_TYPES["FirstPage"]		= ACTION_NAMED_TYPES.FirstPage;
+	ACTION_NAMED_TYPES["LastPage"]		= ACTION_NAMED_TYPES.LastPage;
+
     asc["FIELD_TYPES"]                  = asc.FIELD_TYPES                = FIELD_TYPES;
     asc["BORDER_EFFECT_STYLES"]         = asc.BORDER_EFFECT_STYLES       = BORDER_EFFECT_STYLES;
     asc["REF_TO_REASON"]                = asc.REF_TO_REASON              = REF_TO_REASON;
@@ -455,5 +467,6 @@
     asc["PRINT_CONTENT_TYPES"]          = asc.PRINT_CONTENT_TYPES        = PRINT_CONTENT_TYPES;
     asc["TEXT_ICONS_TYPES"]             = asc.TEXT_ICONS_TYPES           = TEXT_ICONS_TYPES;
     asc["LINE_END_TYPE"]                = asc.LINE_END_TYPE              = LINE_END_TYPE;
+    asc["ACTION_NAMED_TYPES"]           = asc.ACTION_NAMED_TYPES         = ACTION_NAMED_TYPES;
     asc.CommandType                     = CommandType;
 })();

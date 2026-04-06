@@ -2194,35 +2194,13 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			let aNewOrder = [];
-			
-			aNames.forEach(function(name) {
-				let oField = oDoc.GetField(name);
-				aNewOrder.push(oField.GetApIdx());
-			});
-
-			let oCalcInfo	= oDoc.GetCalculateInfo();
-			oCalcInfo.SetCalculateOrder(aNewOrder);
-
-			return true;
-
+			return oDoc.SetCalculateOrder(aNames);
 		}, AscDFH.historydescription_Pdf_ChangeField, this);
 	};
 	PDFEditorApi.prototype.GetCalculateOrder = function() {
 		let oDoc = this.getPDFDoc();
 		
-		let oCalcInfo	= oDoc.GetCalculateInfo();
-		let aCalcOrder	= oCalcInfo.GetCalculateOrder();
-		
-		let aNames = [];
-		aCalcOrder.forEach(function(apIdx) {
-			let oField = oDoc.GetFieldByApIdx(apIdx);
-			if (oField) {
-				aNames.push(oField.GetFullName());
-			}
-		});
-
-		return aNames;
+		return oDoc.GetCalculateOrder();
 	};
 	// fields common
 	PDFEditorApi.prototype.SetFieldName = function(sName) {

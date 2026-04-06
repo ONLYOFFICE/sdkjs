@@ -356,6 +356,25 @@
 	 * @property {Quad[]} [pageIndex] - the key is the index of a page
 	 */
 
+	/**
+	 * The available GoTo action types:
+	 * - "xyz"   — Zoom to a specific position and magnification
+	 * - "fit"   — Fit the entire page in the window
+	 * - "fitH"  — Fit the page horizontally
+	 * - "fitV"  — Fit the page vertically
+	 * - "fitR"  — Fit the specified rectangle
+	 * - "fitB"  — Fit the page bounding box
+	 * - "fitBH" — Fit the bounding box horizontally
+	 * - "fitBV" — Fit the bounding box vertically
+	 *
+	 * @typedef {("xyz" | "fit" | "fitH" | "fitV" | "fitR" | "fitB" | "fitBH" | "fitBV")} GoToType
+	 */
+
+	/**
+	 * The available named action names:
+	 * @typedef {("NextPage" | "PrevPage" | "FirstPage" | "LastPage")} NamedActionType
+	 */
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// Api
@@ -411,6 +430,22 @@
 		oField.SetRect(aRect);
 
 		return new ApiTextField(oField);
+	};
+
+	/**
+	 * Creates a button field.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect} rect - widget rect
+	 * @returns {ApiButtonField}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateButtonField.js
+	 */
+	Api.CreateButtonField = function(rect) {
+		let oDoc = private_GetLogicDocument();
+		let oField = oDoc.CreateButtonField();
+		oField.SetRect(rect);
+
+		return new ApiButtonField(oField);
 	};
 
 	/**
@@ -491,6 +526,142 @@
 		oField.SetRect(aRect);
 
 		return new ApiListboxField(oField);
+	};
+
+	/**
+	 * Creates a GoTo action.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {number} page
+	 * @param {GoToType} goToType
+	 * @param {number} zoom - 1 = 100% (used only for goToType = "xyz")
+	 * @param {Rect} rect
+	 * @returns {ApiGoToAction}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateGoToAction.js
+	 */
+	Api.CreateGoToAction = function(page, goToType, zoom, rect) {
+		let oDoc = private_GetLogicDocument();
+		let oPage = oDoc.GetPageInfo(page);
+		if (!oPage) {
+			AscBuilder.throwException("The page parameter must be a valid page index");
+		}
+
+		if (goToType == "xyz") {
+			zoom = AscBuilder.GetNumberParameter(zoom, 100);
+		}
+		else {
+			zoom = null;
+		}
+
+		let nGoToType = private_GetInnerGoToType(goToType);
+		if (!Object.values(AscPDF.GOTO_TYPES).includes(nGoToType)) {
+			AscBuilder.throwException("The goToType parameter must be one of available");
+		}
+
+		if (!private_IsValidRect(rect)) {
+			AscBuilder.throwException("The rect parameter must be a valid rect");
+		}
+
+		return new ApiGoToAction(new AscPDF.CActionGoTo(oPage.GetId(), nGoToType, zoom, rect));
+	};
+
+	/**
+	 * Creates an URI action.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {string} uri
+	 * @returns {ApiUriAction}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateUriAction.js
+	 */
+	Api.CreateUriAction = function(uri) {
+		uri = AscBuilder.GetStringParameter(uri, null);
+		if (!uri) {
+			AscBuilder.throwException("The uri parameter must be a non emptry string");
+		}
+
+		return new ApiUriAction(new AscPDF.CActionURI(uri));
+	};
+
+	/**
+	 * Creates a hide-show forms action.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {boolean} isHidde - to hide - true, to show - false
+	 * @param {string[]} names - field names
+	 * @returns {ApiHideShowFormsAction}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateHideShowFormsAction.js
+	 */
+	Api.CreateHideShowFormsAction = function(isHide, names) {
+		names = AscBuilder.GetArrayParameter(names, []);
+		if (names.length == 0)
+			AscBuilder.throwException("The names parameter must be a non empty array");
+
+		names.forEach(function(name) {
+			name = AscBuilder.GetStringParameter(name, null);
+			if (!name) {
+				AscBuilder.throwException("The field name must be a non emptry string");
+			}
+		});
+
+		return new ApiHideShowFormsAction(new AscPDF.CActionHideShow(Boolean(isHide), names));
+	};
+
+	/**
+	 * Creates a named action.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {NamedActionType} name
+	 * @returns {ApiNamedAction}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateNamedAction.js
+	 */
+	Api.CreateNamedAction = function(name) {
+		if (false == Object.values(AscPDF.ACTION_NAMED_TYPES).includes(name)) {
+			AscBuilder.throwException("The name parameter must be one of available");
+		}
+
+		return new ApiNamedAction(new AscPDF.CActionNamed(name));
+	};
+
+	/**
+	 * Creates a reset forms action.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {boolean} isAllExcept - will all fields be reset except the fields whose names are specified
+	 * @param {string[]} names - field names
+	 * @returns {ApiHideShowFormsAction}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateHideShowFormsAction.js
+	 */
+	Api.CreateResetFormsAction = function(isAllExcept, names) {
+		names = AscBuilder.GetArrayParameter(names, []);
+		if (names.length == 0)
+			AscBuilder.throwException("The names parameter must be a non empty array");
+
+		names.forEach(function(name) {
+			name = AscBuilder.GetStringParameter(name, null);
+			if (!name) {
+				AscBuilder.throwException("The field name must be a non emptry string");
+			}
+		});
+
+		return new ApiResetFormsAction(new AscPDF.CActionReset(names, Boolean(isAllExcept)));
+	};
+
+	
+	/**
+	 * Creates a js action.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {string} script
+	 * @returns {ApiJsAction}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateJsAction.js
+	 */
+	Api.CreateJsAction = function(script) {
+		script = AscBuilder.GetStringParameter(script, null);
+		if (!script) {
+			AscBuilder.throwException("The field script must be a non emptry string");
+		}
+
+		return new ApiJsAction(new AscPDF.CActionRunScript(script));
 	};
 
 	/**
@@ -1563,22 +1734,26 @@
 	};
 	
 	/**
-	 * Gets document selection quads by page
+	 * Gets document calculate fields order
 	 * @typeofeditors ["PDFE"]
-	 * @returns {DocQuads}
-	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetSelectionQuads.js
+	 * @returns {string[]} - order of fields names
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetCalculateOrder.js
 	 */
-	ApiDocument.prototype.GetSelectionQuads = function() {
-		let oDoc = private_GetLogicDocument();
-		let aDocQuads = oDoc.GetFile().getSelectionQuads();
-
-		let aResult = {};
-		aDocQuads.forEach(function(pageQuads) {
-			aResult[pageQuads["page"]] = pageQuads["quads"];
-		});
-
-		return aResult;
+	ApiDocument.prototype.GetCalculateOrder = function() {
+		return this.Document.GetCalculateOrder();
 	};
+
+	/**
+	 * Sets document calculate fields order
+	 * @typeofeditors ["PDFE"]
+	 * @param {string[]} names - order of fields names
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetCalculateOrder.js
+	 */
+	ApiDocument.prototype.SetCalculateOrder = function(names) {
+		return this.Document.SetCalculateOrder(names);
+	};
+
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -2043,6 +2218,8 @@
 	 */
 	function ApiBaseWidget(oField) {
 		this.Field = oField;
+
+		this.ApiActionCollection = new ApiActionCollection({}, oField);
 	}
 
 	/**
@@ -2327,6 +2504,91 @@
 	ApiBaseWidget.prototype.Delete = function() {
 		let oDoc = private_GetLogicDocument();
 		return oDoc.RemoveField(this.Field.GetId());
+	};
+
+	/**
+	 * Gets parent field.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiField}
+	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/GetParent.js
+	 */
+	ApiBaseWidget.prototype.GetParent = function() {
+		let oParent = this.Field.GetParent();
+		if (oParent && oParent.IsAllKidsWidgets()) {
+			return private_GetFieldApi(oParent);
+		}
+
+		return private_GetFieldApi(this.Field);
+	};
+
+	/**
+	 * Gets actions collection.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiActionCollection}
+	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/GetActions.js
+	 */
+	ApiBaseWidget.prototype.GetActions = function() {
+		let oField = this.Field;
+
+		function getTriggetApiAction(nTriggerType) {
+			let oTrigger = oField.GetTrigger(nTriggerType);
+			let oHeadAction = null;
+
+			if (oTrigger) {
+				oTrigger.Actions.forEach(function(action) {
+					let oApiAction;
+					switch (action.GetType()) {
+						case AscPDF.ACTIONS_TYPES.JavaScript:
+							oApiAction = new ApiJsAction(action);
+							break;
+						case AscPDF.ACTIONS_TYPES.ResetForms:
+							oApiAction = new ApiResetFormsAction(action);
+							break;
+						case AscPDF.ACTIONS_TYPES.URI:
+							oApiAction = new ApiUriAction(action);
+							break;
+						case AscPDF.ACTIONS_TYPES.HideShowForms:
+							oApiAction = new ApiHideShowFormsAction(action);
+							break;
+						case AscPDF.ACTIONS_TYPES.GoTo:
+							oApiAction = new ApiGoToAction(action);
+							break;
+						case AscPDF.ACTIONS_TYPES.Named:
+							oApiAction = new ApiNamedAction(action);
+							break;
+						default:
+							break;
+					}
+
+					if (oApiAction) {
+						if (!oHeadAction) {
+							oHeadAction = oApiAction;
+						}
+						else if (oHeadAction) {
+							oHeadAction.SetNext(oApiAction);
+						}
+					}
+				});
+			}
+
+			return oHeadAction;
+		}
+
+		let oCollection = {
+			MouseUp:    getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.mouseUp),
+			MouseDown:  getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.mouseDown),
+			MouseEnter: getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.mouseEnter),
+			MouseExit:  getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.mouseExit),
+			OnFocus:    getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.onFocus),
+			OnBlur:     getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.onBlur),
+			Keystroke:  getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.keystroke),
+			Validate:   getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.validate),
+			Calculate:  getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.calculate),
+			Format:     getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.format)
+		}
+
+		this.ApiActionCollection.private_UpdateCollection(oCollection);
+		return this.ApiActionCollection;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -3837,6 +4099,945 @@
 		this.Field.SetImageRasterId(sImageUrl, private_GetInnerButtonApType(sApType));
 		this.Field.SetNeedUpdateImage(true);
 
+		return true;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiActionCollection
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a base an action collection.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 */
+	function ApiActionCollection(collection, parent) {
+		this.Parent		= parent;
+
+		this.MouseUp	= collection.MouseUp;
+		this.MouseDown	= collection.MouseDown;
+		this.MouseEnter	= collection.MouseEnter;
+		this.MouseExit	= collection.MouseExit;
+		this.OnFocus	= collection.OnFocus;
+		this.OnBlur		= collection.OnBlur;
+
+		this.Format		= collection.Format;
+		this.Keystroke	= collection.Keystroke;
+		this.Validate	= collection.Validate;
+		this.Calculate	= collection.Calculate;
+	}
+
+	ApiActionCollection.prototype.private_OnChange = function(triggerName) {
+		if (!this.Parent) {
+			return;
+		}
+
+		let nTriggerType;
+		let oApiAction;
+
+		switch (triggerName) {
+			case "mouseUp": {
+				nTriggerType = AscPDF.PDF_TRIGGERS_TYPES.mouseUp;
+				oApiAction = this.MouseUp;
+				break;
+			}
+			case "mouseDown": {
+				nTriggerType = AscPDF.PDF_TRIGGERS_TYPES.mouseDown;
+				oApiAction = this.MouseDown;
+				break;
+			}
+			case "mouseEnter": {
+				nTriggerType = AscPDF.PDF_TRIGGERS_TYPES.mouseEnter;
+				oApiAction = this.MouseEnter;
+				break;
+			}
+			case "mouseExit": {
+				nTriggerType = AscPDF.PDF_TRIGGERS_TYPES.mouseExit;
+				oApiAction = this.MouseExit;
+				break;
+			}
+			case "onFocus": {
+				nTriggerType = AscPDF.PDF_TRIGGERS_TYPES.onFocus;
+				oApiAction = this.OnFocus;
+				break;
+			}
+			case "onBlur": {
+				nTriggerType = AscPDF.PDF_TRIGGERS_TYPES.onBlur;
+				oApiAction = this.OnBlur;
+				break;
+			}
+			case "format": {
+				nTriggerType = AscPDF.PDF_TRIGGERS_TYPES.format;
+				oApiAction = this.Format;
+				break;
+			}
+			case "keystroke": {
+				nTriggerType = AscPDF.PDF_TRIGGERS_TYPES.keystroke;
+				oApiAction = this.Keystroke;
+				break;
+			}
+			case "validate": {
+				nTriggerType = AscPDF.PDF_TRIGGERS_TYPES.validate;
+				oApiAction = this.Validate;
+				break;
+			}
+			case "calculate": {
+				nTriggerType = AscPDF.PDF_TRIGGERS_TYPES.calculate;
+				oApiAction = this.Calculate;
+				break;
+			}
+		}
+
+		let aActionsJsonInfo = null;
+		if (oApiAction) {
+			aActionsJsonInfo = [];
+			aActionsJsonInfo.push(AscPDF.getJsonActionInfo(oApiAction.Action));
+
+			let oApiNextAction = oApiAction.GetNext();
+			while (oApiNextAction) {
+				aActionsJsonInfo.push(AscPDF.getJsonActionInfo(oApiNextAction.Action));
+				oApiNextAction = oApiNextAction.GetNext();
+			}
+		}
+
+		this.Parent.SetActions(nTriggerType, aActionsJsonInfo);
+	};
+
+	ApiActionCollection.prototype.private_UpdateCollection = function(collection) {
+		this.MouseUp	= collection.MouseUp;
+		this.MouseDown	= collection.MouseDown;
+		this.MouseEnter	= collection.MouseEnter;
+		this.MouseExit	= collection.MouseExit;
+		this.OnFocus	= collection.OnFocus;
+		this.OnBlur		= collection.OnBlur;
+
+		this.Format		= collection.Format;
+		this.Keystroke	= collection.Keystroke;
+		this.Validate	= collection.Validate;
+		this.Calculate	= collection.Calculate;
+	};
+
+	/**
+	 * Gets class type of this object.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"actionCollection"}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetClassType.js
+	 */
+	ApiActionCollection.prototype.GetClassType = function() {
+		return "actionCollection";
+	};
+
+	/**
+	 * Gets MouseUp action.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiBaseAction}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetMouseUp.js
+	 */
+	ApiActionCollection.prototype.GetMouseUp = function() {
+		return this.MouseUp;
+	};
+
+	/**
+	 * Sets MouseUp actions.
+	 * @typeofeditors ["PDFE"]
+	 * @param {ApiBaseAction}
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetMouseUp.js
+	 */
+	ApiActionCollection.prototype.SetMouseUp = function(action) {
+		this.MouseUp = action;
+
+		action && action.private_SetParentCollection(this, "mouseUp");
+
+		this.private_OnChange("mouseUp");
+		return true;
+	};
+
+	/**
+	 * Gets MouseDown action.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiBaseAction}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetMouseDown.js
+	 */
+	ApiActionCollection.prototype.GetMouseDown = function() {
+		return this.MouseDown;
+	};
+
+	/**
+	 * Sets MouseDown actions.
+	 * @typeofeditors ["PDFE"]
+	 * @param {ApiBaseAction}
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetMouseDown.js
+	 */
+	ApiActionCollection.prototype.SetMouseDown = function(action) {
+		this.MouseDown = action;
+
+		action && action.private_SetParentCollection(this, "mouseDown");
+
+		this.private_OnChange("mouseDown");
+		return true;
+	};
+
+	/**
+	 * Gets MouseEnter action.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiBaseAction}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetMouseEnter.js
+	 */
+	ApiActionCollection.prototype.GetMouseEnter = function() {
+		return this.MouseEnter;
+	};
+
+	/**
+	 * Sets MouseEnter actions.
+	 * @typeofeditors ["PDFE"]
+	 * @param {ApiBaseAction}
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetMouseEnter.js
+	 */
+	ApiActionCollection.prototype.SetMouseEnter = function(action) {
+		this.MouseEnter = action;
+
+		action && action.private_SetParentCollection(this, "mouseEnter");
+
+		this.private_OnChange("mouseEnter");
+		return true;
+	};
+
+	/**
+	 * Gets MouseExit action.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiBaseAction}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetMouseExit.js
+	 */
+	ApiActionCollection.prototype.GetMouseExit = function() {
+		return this.MouseExit;
+	};
+
+	/**
+	 * Sets MouseExit actions.
+	 * @typeofeditors ["PDFE"]
+	 * @param {ApiBaseAction}
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetMouseExit.js
+	 */
+	ApiActionCollection.prototype.SetMouseExit = function(action) {
+		this.MouseExit = action;
+
+		action && action.private_SetParentCollection(this, "mouseExit");
+
+		this.private_OnChange("mouseExit");
+		return true;
+	};
+
+	/**
+	 * Gets OnFocus action.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiBaseAction}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetOnFocus.js
+	 */
+	ApiActionCollection.prototype.GetOnFocus = function() {
+		return this.OnFocus;
+	};
+
+	/**
+	 * Sets OnFocus actions.
+	 * @typeofeditors ["PDFE"]
+	 * @param {ApiBaseAction}
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetOnFocus.js
+	 */
+	ApiActionCollection.prototype.SetOnFocus = function(action) {
+		this.OnFocus = action;
+
+		action && action.private_SetParentCollection(this, "onFocus");
+
+		this.private_OnChange("onFocus");
+		return true;
+	};
+
+	/**
+	 * Gets OnBlur action.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiBaseAction}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetOnBlur.js
+	 */
+	ApiActionCollection.prototype.GetOnBlur = function() {
+		return this.OnBlur;
+	};
+
+	/**
+	 * Sets OnBlur actions.
+	 * @typeofeditors ["PDFE"]
+	 * @param {ApiBaseAction}
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetOnBlur.js
+	 */
+	ApiActionCollection.prototype.SetOnBlur = function(action) {
+		this.OnBlur = action;
+
+		action && action.private_SetParentCollection(this, "onBlur");
+
+		this.private_OnChange("onBlur");
+		return true;
+	};
+
+	/**
+	 * Gets Format action.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiJsAction}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetFormat.js
+	 */
+	ApiActionCollection.prototype.GetFormat = function() {
+		return this.Format;
+	};
+
+	/**
+	 * Sets Format actions.
+	 * @typeofeditors ["PDFE"]
+	 * @param {?ApiJsAction} action
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetFormat.js
+	 */
+	ApiActionCollection.prototype.SetFormat = function(action) {
+		if (action && !(action instanceof ApiJsAction) && action != null) {
+			AscBuilder.throwException("The action parameter must be an ApiJsAction or null/undefined");
+		}
+
+		this.Format = action;
+
+		action && action.private_SetParentCollection(this, "format");
+
+		this.private_OnChange("format");
+		return true;
+	};
+
+	/**
+	 * Gets Keystroke action.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiJsAction}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetKeystroke.js
+	 */
+	ApiActionCollection.prototype.GetKeystroke = function() {
+		return this.Keystroke;
+	};
+
+	/**
+	 * Sets Keystroke actions.
+	 * @typeofeditors ["PDFE"]
+	 * @param {ApiJsAction} action
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetKeystroke.js
+	 */
+	ApiActionCollection.prototype.SetKeystroke = function(action) {
+		this.Keystroke = action;
+
+		action && action.private_SetParentCollection(this, "keystroke");
+
+		this.private_OnChange("keystroke");
+		return true;
+	};
+
+	/**
+	 * Gets Validate action.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiJsAction}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetValidate.js
+	 */
+	ApiActionCollection.prototype.GetValidate = function() {
+		return this.Validate;
+	};
+
+	/**
+	 * Sets Validate actions.
+	 * @typeofeditors ["PDFE"]
+	 * @param {ApiJsAction} action
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetValidate.js
+	 */
+	ApiActionCollection.prototype.SetValidate = function(action) {
+		this.Validate = action;
+
+		action && action.private_SetParentCollection(this, "validate");
+
+		this.private_OnChange("validate");
+		return true;
+	};
+
+	/**
+	 * Gets Calculate action.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiJsAction}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetCalculate.js
+	 */
+	ApiActionCollection.prototype.GetCalculate = function() {
+		return this.Calculate;
+	};
+
+	/**
+	 * Sets Calculate actions.
+	 * @typeofeditors ["PDFE"]
+	 * @param {ApiJsAction} action
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetCalculate.js
+	 */
+	ApiActionCollection.prototype.SetCalculate = function(action) {
+		this.Calculate = action;
+
+		action && action.private_SetParentCollection(this, "calculate");
+
+		this.private_OnChange("calculate");
+		return true;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiBaseAction
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a base pdf action.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 */
+	function ApiBaseAction(action) {
+		this.Action = action;
+		this.Next = null;
+	}
+
+	ApiBaseAction.prototype.private_SetParentCollection = function(apiCollection, triggerName) {
+		this.ParentCollection = apiCollection;
+		this.TriggerName = triggerName;
+	};
+
+	ApiBaseAction.prototype.private_OnChange = function() {
+		if (!this.ParentCollection) {
+			return;
+		}
+
+		this.ParentCollection.private_OnChange(this.TriggerName);
+	};
+
+	/**
+	 * Returns next action.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiBaseAction}
+	 * @see office-js-api/Examples/{Editor}/ApiBaseAction/Methods/GetNext.js
+	 */
+	ApiBaseAction.prototype.GetNext = function() {
+		return this.Next;
+	};
+
+	/**
+	 * Sets next action.
+	 * @typeofeditors ["PDFE"]
+	 * @param {ApiBaseAction} action
+	 * @returns {ApiBaseAction} - returns next action
+	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetNext.js
+	 */
+	ApiBaseAction.prototype.SetNext = function(action) {
+		this.Next = action;
+
+		this.private_OnChange();
+		return action;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiGoToAction
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a GoTo action.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 */
+	function ApiGoToAction(action) {
+		ApiBaseAction.call(this, action);
+		this.ParentCollection = null;
+	}
+
+	ApiGoToAction.prototype = Object.create(ApiBaseAction.prototype);
+	ApiGoToAction.prototype.constructor = ApiGoToAction;
+
+	/**
+	 * Returns a type of the ApiGoToAction class.
+	 * @memberof ApiGoToAction
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"goToAction"}
+	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/GetClassType.js
+	 */
+	ApiGoToAction.prototype.GetClassType = function() {
+		return "goToAction";
+	};
+
+	/**
+	 * Gets desctination page index
+	 * @typeofeditors ["PDFE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/GetPage.js
+	 */
+	ApiGoToAction.prototype.GetPage = function() {
+		return this.Action.GetPageIdx();
+	};
+
+	/**
+	 * Sets desctination page index
+	 * @typeofeditors ["PDFE"]
+	 * @param {number} page
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/SetPage.js
+	 */
+	ApiGoToAction.prototype.SetPage = function(page) {
+		let oDoc = private_GetLogicDocument();
+		let oFile = oDoc.GetFile();
+		if (!oFile.pages[page]) {
+			AscBuilder.throwException("The page parameter must be a valid page index");
+		}
+
+		this.Action.SetPageIdx(page);
+
+		this.private_OnChange();
+		return true;
+	};
+
+	/**
+	 * Gets goto type
+	 * @typeofeditors ["PDFE"]
+	 * @returns {GoToType}
+	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/GetType.js
+	 */
+	ApiGoToAction.prototype.GetType = function() {
+		return private_GetStrGoToType(this.Action.GetKind());
+	};
+
+	/**
+	 * Sets goto type
+	 * @typeofeditors ["PDFE"]
+	 * @param {GoToType} type
+	 * @returns {number}
+	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/SetType.js
+	 */
+	ApiGoToAction.prototype.SetType = function(type) {
+		if (!Object.values(AscPDF.GOTO_TYPES).includes(type)) {
+			AscBuilder.throwException("The type parameter must be one of available");
+		}
+
+		let oDoc = private_GetLogicDocument();
+		let nPage = this.GetPage();
+
+		this.Action.SetKind(private_GetInnerGoToType(type));
+		this.Action.SetRect({
+			left: 0,
+			top: 0,
+			right: oDoc.GetPageWidth(nPage),
+			bottom: oDoc.GetPageHeight(nPage)
+		});
+
+		this.private_OnChange();
+		return true;
+	};
+
+	/**
+	 * Gets goto destination rect
+	 * @typeofeditors ["PDFE"]
+	 * @returns {?Rect}
+	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/GetRect.js
+	 */
+	ApiGoToAction.prototype.GetRect = function() {
+		let oDoc = private_GetLogicDocument();
+		let nPage = this.GetPage();
+
+		let aRect = this.Action.GetRect();
+		return [aRect[0] || 0, aRect[1] || 0, aRect[2] || oDoc.GetPageWidth(nPage), aRect[3] || oDoc.GetPageHeight(nPage)];
+	};
+
+	/**
+	 * Sets goto destination rect
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect} rect
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/SetRect.js
+	 */
+	ApiGoToAction.prototype.SetRect = function(rect) {
+		if (!private_IsValidRect(rect)) {
+			AscBuilder.throwException("The rect parameter must be a valid rect");
+		}
+
+		this.Action.SetRect(rect);
+
+		this.private_OnChange();
+		return true;
+	};
+
+	/**
+	 * Gets goto destination rect
+	 * @typeofeditors ["PDFE"]
+	 * @returns {?Rect}
+	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/GetRect.js
+	 */
+	ApiGoToAction.prototype.GetZoom = function() {
+		return this.Action.GetZoom(true);
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiUriAction
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a uri action.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 */
+	function ApiUriAction(action) {
+		ApiBaseAction.call(this, action);
+		this.ParentCollection = null;
+	}
+
+	ApiUriAction.prototype = Object.create(ApiBaseAction.prototype);
+	ApiUriAction.prototype.constructor = ApiUriAction;
+
+	/**
+	 * Returns a type of the ApiUriAction class.
+	 * @memberof ApiUriAction
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"uriAction"}
+	 * @see office-js-api/Examples/{Editor}/ApiUriAction/Methods/GetClassType.js
+	 */
+	ApiUriAction.prototype.GetClassType = function() {
+		return "uriAction";
+	};
+
+	/**
+	 * Gets uri string
+	 * @typeofeditors ["PDFE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiUriAction/Methods/GetRect.js
+	 */
+	ApiUriAction.prototype.GetUri = function() {
+		return this.Action.GetUri();
+	};
+
+	/**
+	 * Sets uri to action
+	 * @typeofeditors ["PDFE"]
+	 * @param {string} uri
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiUriAction/Methods/GetRect.js
+	 */
+	ApiUriAction.prototype.SetUri = function(uri) {
+		uri = AscBuilder.GetStringParameter(uri, null);
+		if (!uri) {
+			AscBuilder.throwException("The uri parameter must be a non emptry string");
+		}
+
+		this.Action.SetUri(uri);
+
+		this.private_OnChange();
+		return true;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiHideShowFormsAction
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a hide-show action.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 */
+	function ApiHideShowFormsAction(action) {
+		ApiBaseAction.call(this, action);
+		this.ParentCollection = null;
+	}
+
+	ApiHideShowFormsAction.prototype = Object.create(ApiBaseAction.prototype);
+	ApiHideShowFormsAction.prototype.constructor = ApiHideShowFormsAction;
+
+	/**
+	 * Returns a type of the ApiHideShowFormsAction class.
+	 * @memberof ApiHideShowFormsAction
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"hideShowAction"}
+	 * @see office-js-api/Examples/{Editor}/ApiHideShowFormsAction/Methods/GetClassType.js
+	 */
+	ApiHideShowFormsAction.prototype.GetClassType = function() {
+		return "hideShowAction";
+	};
+
+	/**
+	 * Checks if action hide fields
+	 * @typeofeditors ["PDFE"]
+	 * @returns {boolean} - if false then show fields
+	 * @see office-js-api/Examples/{Editor}/ApiHideShowFormsAction/Methods/IsHide.js
+	 */
+	ApiHideShowFormsAction.prototype.IsHide = function() {
+		return this.Action.IsHide();
+	};
+
+	/**
+	 * Sets action hide fields
+	 * @typeofeditors ["PDFE"]
+	 * @param {boolean} isHide
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiHideShowFormsAction/Methods/SetHide.js
+	 */
+	ApiHideShowFormsAction.prototype.SetHide = function(isHide) {
+		this.Action.SetHide(Boolean(isHide));
+
+		this.private_OnChange();
+		return true;
+	};
+
+	/**
+	 * Gets names of fields to hide
+	 * @typeofeditors ["PDFE"]
+	 * @returns {string[]}
+	 * @see office-js-api/Examples/{Editor}/ApiHideShowFormsAction/Methods/GetNames.js
+	 */
+	ApiHideShowFormsAction.prototype.GetNames = function() {
+		return this.Action.GetNames();
+	};
+
+	/**
+	 * Sets names of fields to hide
+	 * @typeofeditors ["PDFE"]
+	 * @param {string[]} names
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiHideShowFormsAction/Methods/GetNames.js
+	 */
+	ApiHideShowFormsAction.prototype.SetNames = function(names) {
+		names = AscBuilder.GetArrayParameter(names, []);
+		if (names.length == 0)
+			AscBuilder.throwException("The names parameter must be a non empty array");
+
+		names.forEach(function(name) {
+			name = AscBuilder.GetStringParameter(name, null);
+			if (!name) {
+				AscBuilder.throwException("The field name must be a non emptry string");
+			}
+		});
+
+		this.Action.SetNames(names);
+
+		this.private_OnChange();
+		return true;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiNamedAction
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a named action.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 */
+	function ApiNamedAction(action) {
+		ApiBaseAction.call(this, action);
+		this.ParentCollection = null;
+	}
+
+	ApiNamedAction.prototype = Object.create(ApiBaseAction.prototype);
+	ApiNamedAction.prototype.constructor = ApiNamedAction;
+
+	/**
+	 * Returns a type of the ApiNamedAction class.
+	 * @memberof ApiNamedAction
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"namedAction"}
+	 * @see office-js-api/Examples/{Editor}/ApiNamedAction/Methods/GetClassType.js
+	 */
+	ApiNamedAction.prototype.GetClassType = function() {
+		return "namedAction";
+	};
+
+	/**
+	 * Gets a name of action.
+	 * @memberof ApiNamedAction
+	 * @typeofeditors ["PDFE"]
+	 * @returns {NamedActionType}
+	 * @see office-js-api/Examples/{Editor}/ApiNamedAction/Methods/GetName.js
+	 */
+	ApiNamedAction.prototype.GetName = function() {
+		return this.Action.GetName();
+	};
+
+	/**
+	 * Sets a name of action.
+	 * @memberof ApiNamedAction
+	 * @typeofeditors ["PDFE"]
+	 * @param {NamedActionType} name
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiNamedAction/Methods/SetName.js
+	 */
+	ApiNamedAction.prototype.SetName = function(name) {
+		if (false == Object.values(AscPDF.ACTION_NAMED_TYPES).includes(name)) {
+			AscBuilder.throwException("The name parameter must be one of available");
+		}
+
+		this.Action.SetName(name);
+
+		this.private_OnChange();
+		return true;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiResetFormsAction
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a reset form action.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 */
+	function ApiResetFormsAction(action) {
+		ApiBaseAction.call(this, action);
+		this.ParentCollection = null;
+	}
+
+	ApiResetFormsAction.prototype = Object.create(ApiBaseAction.prototype);
+	ApiResetFormsAction.prototype.constructor = ApiResetFormsAction;
+
+	/**
+	 * Returns a type of the ApiResetFormsAction class.
+	 * @memberof ApiResetFormsAction
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"resetFormsAction"}
+	 * @see office-js-api/Examples/{Editor}/ApiResetFormsAction/Methods/GetClassType.js
+	 */
+	ApiResetFormsAction.prototype.GetClassType = function() {
+		return "resetFormsAction";
+	};
+
+	/**
+	 * Will all fields be reset except the fields whose names are specified
+	 * @typeofeditors ["PDFE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiResetFormsAction/Methods/IsAllExcept.js
+	 */
+	ApiResetFormsAction.prototype.IsAllExcept = function() {
+		return this.Action.IsAllExcept();
+	};
+
+	/**
+	 * Sets all fields be reset except the fields whose names are specified
+	 * @typeofeditors ["PDFE"]
+	 * @param {boolean} isAllExcept
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiResetFormsAction/Methods/SetAllExcept.js
+	 */
+	ApiResetFormsAction.prototype.SetAllExcept = function(isAllExcept) {
+		this.Action.SetAllExcept(Boolean(isAllExcept));
+
+		this.private_OnChange();
+		return true;
+	};
+
+	/**
+	 * Gets names of fields to reset
+	 * @typeofeditors ["PDFE"]
+	 * @returns {string[]}
+	 * @see office-js-api/Examples/{Editor}/ApiResetFormsAction/Methods/GetNames.js
+	 */
+	ApiResetFormsAction.prototype.GetNames = function() {
+		return this.Action.GetNames();
+	};
+
+	/**
+	 * Sets names of fields to reset
+	 * @typeofeditors ["PDFE"]
+	 * @param {string[]} names
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiResetFormsAction/Methods/GetNames.js
+	 */
+	ApiResetFormsAction.prototype.SetNames = function(names) {
+		names = AscBuilder.GetArrayParameter(names, []);
+		if (names.length == 0)
+			AscBuilder.throwException("The names parameter must be a non empty array");
+
+		names.forEach(function(name) {
+			name = AscBuilder.GetStringParameter(name, null);
+			if (!name) {
+				AscBuilder.throwException("The field name must be a non emptry string");
+			}
+		});
+
+		this.Action.SetNames(names);
+
+		this.private_OnChange();
+		return true;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiJsAction
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a js action.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 */
+	function ApiJsAction(action) {
+		ApiBaseAction.call(this, action);
+		this.ParentCollection = null;
+	}
+
+	ApiJsAction.prototype = Object.create(ApiBaseAction.prototype);
+	ApiJsAction.prototype.constructor = ApiJsAction;
+
+	/**
+	 * Returns a type of the ApiJsAction class.
+	 * @memberof ApiJsAction
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"jsAction"}
+	 * @see office-js-api/Examples/{Editor}/ApiJsAction/Methods/GetClassType.js
+	 */
+	ApiJsAction.prototype.GetClassType = function() {
+		return "jsAction";
+	};
+
+	/**
+	 * Gets action script
+	 * @typeofeditors ["PDFE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiJsAction/Methods/GetScript.js
+	 */
+	ApiJsAction.prototype.GetScript = function() {
+		return this.Action.GetScript();
+	};
+
+	/**
+	 * Sets action script.
+	 * @typeofeditors ["PDFE"]
+	 * @param {string} script
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiJsAction/Methods/SetScript.js
+	 */
+	ApiJsAction.prototype.SetScript = function(script) {
+		script = AscBuilder.GetStringParameter(script, null);
+		if (!script) {
+			AscBuilder.throwException("The script parameter must be a non emptry string");
+		}
+
+		this.Action.SetScript(script);
+
+		this.private_OnChange();
 		return true;
 	};
 
@@ -8302,16 +9503,56 @@
 		return new CTableMeasurement(nType, nW);
 	}
 
+	function private_GetInnerGoToType(type) {
+		return AscPDF.GOTO_TYPES[type];
+	}
+
+	function private_GetStrGoToType(type) {
+		switch (type) {
+			case AscPDF.GOTO_TYPES.xyz: {
+				return "xyz";
+			}
+			case AscPDF.GOTO_TYPES.fit: {
+				return "fit";
+			}
+			case AscPDF.GOTO_TYPES.fitH: {
+				return "fitH";
+			}
+			case AscPDF.GOTO_TYPES.fitV: {
+				return "fitV";
+			}
+			case AscPDF.GOTO_TYPES.fitR: {
+				return "fitR";
+			}
+			case AscPDF.GOTO_TYPES.fitB: {
+				return "fitB";
+			}
+			case AscPDF.GOTO_TYPES.fitBH: {
+				return "fitBH";
+			}
+			case AscPDF.GOTO_TYPES.fitBV: {
+				return "fitBV";
+			}
+			
+		}
+	}
 
 	// Api
 	Api["GetDocument"]				= Api.GetDocument;
 	Api["CreateTextField"]			= Api.CreateTextField;
 	Api["CreateDateField"]			= Api.CreateDateField;
+	Api["CreateButtonField"]		= Api.CreateButtonField;
 	Api["CreateImageField"]			= Api.CreateImageField;
 	Api["CreateCheckboxField"]		= Api.CreateCheckboxField;
 	Api["CreateRadiobuttonField"]	= Api.CreateRadiobuttonField;
 	Api["CreateComboboxField"]		= Api.CreateComboboxField;
 	Api["CreateListboxField"]		= Api.CreateListboxField;
+	Api["CreateGoToAction"]			= Api.CreateGoToAction;
+	Api["CreateUriAction"]			= Api.CreateUriAction;
+	Api["CreateHideShowFormsAction"]= Api.CreateHideShowFormsAction;
+	Api["CreateNamedAction"]		= Api.CreateNamedAction;
+	Api["CreateResetFormsAction"]	= Api.CreateResetFormsAction;
+	Api["CreateJsAction"]			= Api.CreateJsAction;
 	Api["CreateTextAnnot"]			= Api.CreateTextAnnot;
 	Api["CreateCircleAnnot"]		= Api.CreateCircleAnnot;
 	Api["CreateSquareAnnot"]		= Api.CreateSquareAnnot;
@@ -8348,6 +9589,8 @@
 	ApiDocument.prototype["ApplyRedact"]					= ApiDocument.prototype.ApplyRedact;
 	ApiDocument.prototype["SetSelection"]					= ApiDocument.prototype.SetSelection;
 	ApiDocument.prototype["GetSelectionQuads"]				= ApiDocument.prototype.GetSelectionQuads;
+	ApiDocument.prototype["GetCalculateOrder"]				= ApiDocument.prototype.GetCalculateOrder;
+	ApiDocument.prototype["SetCalculateOrder"]				= ApiDocument.prototype.SetCalculateOrder;
 
 	// ApiPage
 	ApiPage.prototype["GetClassType"]						= ApiPage.prototype.GetClassType;
@@ -8400,6 +9643,8 @@
 	ApiBaseWidget.prototype["SetAutoFit"]					= ApiBaseWidget.prototype.SetAutoFit;
 	ApiBaseWidget.prototype["IsAutoFit"]					= ApiBaseWidget.prototype.IsAutoFit;
 	ApiBaseWidget.prototype["Delete"]						= ApiBaseWidget.prototype.Delete;
+	ApiBaseWidget.prototype["GetParent"]					= ApiBaseWidget.prototype.GetParent;
+	ApiBaseWidget.prototype["GetActions"]					= ApiBaseWidget.prototype.GetActions;
 
 	// ApiTextField
 	ApiTextField.prototype["GetClassType"]					= ApiTextField.prototype.GetClassType;
@@ -8502,6 +9747,71 @@
 	ApiButtonWidget.prototype["SetLabel"]					= ApiButtonWidget.prototype.SetLabel;
 	ApiButtonWidget.prototype["GetLabel"]					= ApiButtonWidget.prototype.GetLabel;
 	ApiButtonWidget.prototype["SetImage"]					= ApiButtonWidget.prototype.SetImage;
+
+	// ApiActionCollection
+	ApiActionCollection.prototype["GetClassType"]			= ApiActionCollection.prototype.GetClassType;
+	ApiActionCollection.prototype["GetMouseUp"]				= ApiActionCollection.prototype.GetMouseUp;
+	ApiActionCollection.prototype["SetMouseUp"]				= ApiActionCollection.prototype.SetMouseUp;
+	ApiActionCollection.prototype["GetMouseDown"]			= ApiActionCollection.prototype.GetMouseDown;
+	ApiActionCollection.prototype["SetMouseDown"]			= ApiActionCollection.prototype.SetMouseDown;
+	ApiActionCollection.prototype["GetMouseEnter"]			= ApiActionCollection.prototype.GetMouseEnter;
+	ApiActionCollection.prototype["SetMouseEnter"]			= ApiActionCollection.prototype.SetMouseEnter;
+	ApiActionCollection.prototype["GetMouseExit"]			= ApiActionCollection.prototype.GetMouseExit;
+	ApiActionCollection.prototype["SetMouseExit"]			= ApiActionCollection.prototype.SetMouseExit;
+	ApiActionCollection.prototype["GetOnFocus"]				= ApiActionCollection.prototype.GetOnFocus;
+	ApiActionCollection.prototype["SetOnFocus"]				= ApiActionCollection.prototype.SetOnFocus;
+	ApiActionCollection.prototype["GetOnBlur"]				= ApiActionCollection.prototype.GetOnBlur;
+	ApiActionCollection.prototype["SetOnBlur"]				= ApiActionCollection.prototype.SetOnBlur;
+	ApiActionCollection.prototype["GetFormat"]				= ApiActionCollection.prototype.GetFormat;
+	ApiActionCollection.prototype["SetFormat"]				= ApiActionCollection.prototype.SetFormat;
+	ApiActionCollection.prototype["GetKeystroke"]			= ApiActionCollection.prototype.GetKeystroke;
+	ApiActionCollection.prototype["SetKeystroke"]			= ApiActionCollection.prototype.SetKeystroke;
+	ApiActionCollection.prototype["GetValidate"]			= ApiActionCollection.prototype.GetValidate;
+	ApiActionCollection.prototype["SetValidate"]			= ApiActionCollection.prototype.SetValidate;
+	ApiActionCollection.prototype["GetCalculate"]			= ApiActionCollection.prototype.GetCalculate;
+	ApiActionCollection.prototype["SetCalculate"]			= ApiActionCollection.prototype.SetCalculate;
+	
+	// ApiBaseAction
+	ApiBaseAction.prototype["GetNext"]						= ApiBaseAction.prototype.GetNext;
+	ApiBaseAction.prototype["SetNext"]						= ApiBaseAction.prototype.SetNext;
+
+	// ApiGoToAction
+	ApiGoToAction.prototype["GetClassType"]					= ApiGoToAction.prototype.GetClassType;
+	ApiGoToAction.prototype["GetPage"]						= ApiGoToAction.prototype.GetPage;
+	ApiGoToAction.prototype["SetPage"]						= ApiGoToAction.prototype.SetPage;
+	ApiGoToAction.prototype["GetType"]						= ApiGoToAction.prototype.GetType;
+	ApiGoToAction.prototype["SetType"]						= ApiGoToAction.prototype.SetType;
+	ApiGoToAction.prototype["GetRect"]						= ApiGoToAction.prototype.GetRect;
+	ApiGoToAction.prototype["SetRect"]						= ApiGoToAction.prototype.SetRect;
+
+	// ApiUriAction
+	ApiUriAction.prototype["GetClassType"]					= ApiUriAction.prototype.GetClassType;
+	ApiUriAction.prototype["GetUri"]						= ApiUriAction.prototype.GetUri;
+	ApiUriAction.prototype["SetUri"]						= ApiUriAction.prototype.SetUri;
+
+	// ApiHideShowFormsAction
+	ApiHideShowFormsAction.prototype["GetClassType"]				= ApiHideShowFormsAction.prototype.GetClassType;
+	ApiHideShowFormsAction.prototype["IsHide"]					= ApiHideShowFormsAction.prototype.IsHide;
+	ApiHideShowFormsAction.prototype["SetHide"]					= ApiHideShowFormsAction.prototype.SetHide;
+	ApiHideShowFormsAction.prototype["GetNames"]					= ApiHideShowFormsAction.prototype.GetNames;
+	ApiHideShowFormsAction.prototype["SetNames"]					= ApiHideShowFormsAction.prototype.SetNames;
+
+	// ApiNamedAction
+	ApiNamedAction.prototype["GetClassType"]				= ApiNamedAction.prototype.GetClassType;
+	ApiNamedAction.prototype["GetName"]						= ApiNamedAction.prototype.GetName;
+	ApiNamedAction.prototype["SetName"]						= ApiNamedAction.prototype.SetName;
+
+	// ApiResetFormsAction
+	ApiResetFormsAction.prototype["GetClassType"]			= ApiResetFormsAction.prototype.GetClassType;
+	ApiResetFormsAction.prototype["IsAllExcept"]				= ApiResetFormsAction.prototype.IsAllExcept;
+	ApiResetFormsAction.prototype["SetAllExcept"]			= ApiResetFormsAction.prototype.SetAllExcept;
+	ApiResetFormsAction.prototype["GetNames"]				= ApiResetFormsAction.prototype.GetNames;
+	ApiResetFormsAction.prototype["SetNames"]				= ApiResetFormsAction.prototype.SetNames;
+
+	// ApiJsAction
+	ApiJsAction.prototype["GetClassType"]					= ApiJsAction.prototype.GetClassType;
+	ApiJsAction.prototype["GetScript"]						= ApiJsAction.prototype.GetScript;
+	ApiJsAction.prototype["SetScript"]						= ApiJsAction.prototype.SetScript;
 
 	// ApiBaseAnnotation
 	ApiBaseAnnotation.prototype["SetRect"]					= ApiBaseAnnotation.prototype.SetRect;
