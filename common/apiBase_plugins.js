@@ -373,7 +373,7 @@
           fCallback();
         }
         window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn(true);
-      }
+      },
     );
   };
 
@@ -439,6 +439,172 @@
   };
 
   /**
+   * Sets HTML content in the document header, replacing any existing header content.
+   * @memberof Api
+   * @typeofeditors ["CDE"]
+   * @alias SetHeaderHtml
+   * @param {string} htmlText - HTML string to set as the header content.
+   * @param {number} [pageNumber=0] - The page number to target (0-based).
+   */
+  Api.prototype["pluginMethod_SetHeaderHtml"] = function (
+    htmlText,
+    pageNumber,
+  ) {
+    if (this.editorId !== AscCommon.c_oEditorId.Word) return null;
+    if (!this.canEdit()) return null;
+
+    var logicDocument = this.WordControl.m_oLogicDocument;
+    if (!logicDocument) return null;
+
+    pageNumber = typeof pageNumber === "number" ? pageNumber : 0;
+
+    var _t = this;
+    window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
+
+    var wrappedHtml = '<div style="color:rgb(0,0,0);">' + htmlText + "</div>";
+
+    AscCommon.GetContentFromHtml(_t, wrappedHtml, function (selectedContent) {
+      if (!selectedContent || selectedContent.Elements.length === 0) {
+        window.g_asc_plugins &&
+          window.g_asc_plugins.onPluginMethodReturn(false);
+        return;
+      }
+
+      var sectPr = logicDocument.SectionsInfo.Get_SectPr2(0).SectPr;
+      var header = sectPr.Get_Header_Default();
+      if (!header) {
+        header = new CHeaderFooter(
+          logicDocument.GetHdrFtr(),
+          logicDocument,
+          logicDocument.Get_DrawingDocument(),
+          AscCommon.hdrftr_Header,
+        );
+        sectPr.Set_Header_Default(header);
+      }
+
+      var content = header.Get_DocumentContent();
+
+      logicDocument.StartAction(AscDFH.historydescription_Document_PasteHotKey);
+      content.ClearContent(false);
+      for (
+        var nPos = 0, nCount = selectedContent.Elements.length;
+        nPos < nCount;
+        nPos++
+      ) {
+        content.AddToContent(nPos, selectedContent.Elements[nPos].Element);
+      }
+      content.RemoveSelection();
+      content.MoveCursorToEndPos();
+      logicDocument.Recalculate();
+      logicDocument.UpdateInterface();
+      logicDocument.UpdateSelection();
+      logicDocument.FinalizeAction();
+
+      _t.WordControl.m_oDrawingDocument.ClearCachePages();
+      _t.WordControl.m_oDrawingDocument.FirePaint();
+
+      window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn(true);
+    });
+  };
+
+  /**
+   * Sets HTML content in the document footer, replacing any existing footer content.
+   * @memberof Api
+   * @typeofeditors ["CDE"]
+   * @alias SetFooterHtml
+   * @param {string} htmlText - HTML string to set as the footer content.
+   * @param {number} [pageNumber=0] - The page number to target (0-based).
+   */
+  Api.prototype["pluginMethod_SetFooterHtml"] = function (
+    htmlText,
+    alignment,
+    pageNumber,
+  ) {
+    if (this.editorId !== AscCommon.c_oEditorId.Word) return null;
+    if (!this.canEdit()) return null;
+
+    var logicDocument = this.WordControl.m_oLogicDocument;
+    if (!logicDocument) return null;
+
+    alignment = alignment || "center";
+    pageNumber = typeof pageNumber === "number" ? pageNumber : 0;
+
+    function replaceTokensWithFields(docContent) {
+      for (var i = 0; i < docContent.Content.length; i++) {
+        var para = docContent.Content[i];
+        if (!para || !para.Content) continue;
+
+        for (var j = para.Content.length - 1; j >= 0; j--) {
+          var run = para.Content[j];
+          if (!run || run.Type !== para_Run) continue;
+
+          for (var k = run.Content.length - 1; k >= 0; k--) {
+            var item = run.Content[k];
+            if (item.Type === para_Text) {
+              if (item.Value === 0x0023) {
+                run.Remove_FromContent(k, 1, true);
+                run.Add_ToContent(k, new AscWord.CRunPageNum(), true);
+              } else if (item.Value === 0x002a) {
+                run.Remove_FromContent(k, 1, true);
+                run.Add_ToContent(k, new AscWord.CRunPagesCount(), true);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    var _t = this;
+    window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
+
+    var wrappedHtml = '<div style="color:rgb(0,0,0);">' + htmlText + "</div>";
+
+    AscCommon.GetContentFromHtml(_t, wrappedHtml, function (selectedContent) {
+      if (!selectedContent || selectedContent.Elements.length === 0) {
+        window.g_asc_plugins &&
+          window.g_asc_plugins.onPluginMethodReturn(false);
+        return;
+      }
+
+      var sectPr = logicDocument.SectionsInfo.Get_SectPr2(0).SectPr;
+      var footer = sectPr.Get_Footer_Default();
+      if (!footer) {
+        footer = new CHeaderFooter(
+          logicDocument.GetHdrFtr(),
+          logicDocument,
+          logicDocument.Get_DrawingDocument(),
+          AscCommon.hdrftr_Header,
+        );
+        sectPr.Set_Footer_Default(footer);
+      }
+
+      var content = footer.Get_DocumentContent();
+
+      logicDocument.StartAction(AscDFH.historydescription_Document_PasteHotKey);
+      content.ClearContent(false);
+      for (
+        var nPos = 0, nCount = selectedContent.Elements.length;
+        nPos < nCount;
+        nPos++
+      ) {
+        content.AddToContent(nPos, selectedContent.Elements[nPos].Element);
+      }
+      content.RemoveSelection();
+      content.MoveCursorToEndPos();
+      replaceTokensWithFields(content);
+      logicDocument.Recalculate();
+      logicDocument.UpdateInterface();
+      logicDocument.UpdateSelection();
+      logicDocument.FinalizeAction();
+
+      _t.WordControl.m_oDrawingDocument.ClearCachePages();
+      _t.WordControl.m_oDrawingDocument.FirePaint();
+
+      window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn(true);
+    });
+  };
+
+  /**
    * Returns all VBA macros from the document.
    * @memberof Api
    * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -465,7 +631,7 @@
       type == "Block"
         ? Asc.c_oAscAsyncActionType.BlockInteraction
         : Asc.c_oAscAsyncActionType.Information,
-      description
+      description,
     );
   };
 
@@ -482,13 +648,13 @@
   Api.prototype["pluginMethod_EndAction"] = function (
     type,
     description,
-    status
+    status,
   ) {
     this.sync_EndAction(
       type == "Block"
         ? Asc.c_oAscAsyncActionType.BlockInteraction
         : Asc.c_oAscAsyncActionType.Information,
-      description
+      description,
     );
 
     if (window["AscDesktopEditor"] && status != null && status != "") {
@@ -497,7 +663,7 @@
         this.sendEvent(
           "asc_onError",
           "Encryption error: " + status + ". The file was not compiled.",
-          c_oAscError.Level.Critical
+          c_oAscError.Level.Critical,
         );
         window["AscDesktopEditor"]["CryptoMode"] = 0;
       } else {
@@ -506,7 +672,7 @@
           "Encryption error: " +
             status +
             ". End-to-end encryption mode is disabled.",
-          c_oAscError.Level.NoCritical
+          c_oAscError.Level.NoCritical,
         );
         window["AscDesktopEditor"]["CryptoMode"] = 0;
 
@@ -562,7 +728,7 @@
           _editor.sendEvent(
             "asc_onError",
             "There is no connection with the blockchain",
-            c_oAscError.Level.Critical
+            c_oAscError.Level.Critical,
           );
           return;
         }
@@ -579,7 +745,7 @@
           _ret.data,
           _ret.header,
           obj["password"],
-          obj["docinfo"] ? obj["docinfo"] : ""
+          obj["docinfo"] ? obj["docinfo"] : "",
         );
         break;
       }
@@ -732,7 +898,7 @@
             !this.isPdfEditor()
           )
             this.WordControl.m_oLogicDocument.SetForceHideContentControlTrack(
-              obj[prop]
+              obj[prop],
             );
 
           break;
@@ -800,7 +966,7 @@
                 })
               ) {
                 oLogicDocument.StartAction(
-                  AscDFH.historydescription_Document_FillFormsByTags
+                  AscDFH.historydescription_Document_FillFormsByTags,
                 );
 
                 for (let sTag in oTags) {
@@ -821,8 +987,8 @@
                       if (oValue["picture"] && oPicture)
                         oPicture.setBlipFill(
                           AscFormat.CreateBlipFillRasterImageId(
-                            oValue["picture"]
-                          )
+                            oValue["picture"],
+                          ),
                         );
                     } else if (oForm.IsCheckBox()) {
                       if (oValue["checkBox"])
@@ -891,7 +1057,7 @@
     guid,
     w,
     h,
-    isKeyboardTake
+    isKeyboardTake,
   ) {
     var _frame = document.getElementById("iframe_" + guid);
     if (!_frame) return;
@@ -1101,14 +1267,14 @@
     bHtmlHeadings,
     bBase64img,
     bDemoteHeadings,
-    bRenderHTMLTags
+    bRenderHTMLTags,
   ) {
     return this.ConvertDocument(
       sConvertType,
       bHtmlHeadings,
       bBase64img,
       bDemoteHeadings,
-      bRenderHTMLTags
+      bRenderHTMLTags,
     );
   };
   /**
@@ -1181,7 +1347,7 @@
   Api.prototype["pluginMethod_ReplaceTextSmart"] = function (
     arrString,
     sParaTab,
-    sParaNewLine
+    sParaNewLine,
   ) {
     window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
     this.incrementCounterLongAction();
@@ -1235,7 +1401,7 @@
     opts.callback = function () {
       _t.sync_EndAction(
         Asc.c_oAscAsyncActionType.BlockInteraction,
-        Asc.c_oAscAsyncAction.DownloadAs
+        Asc.c_oAscAsyncAction.DownloadAs,
       );
       _t.fCurCallback = function (res) {
         let data = res.status == "ok" ? res.data : "error";
@@ -1284,7 +1450,7 @@
    * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/PutImageDataToSelection.js
    */
   Api.prototype["pluginMethod_PutImageDataToSelection"] = function (
-    oImageData
+    oImageData,
   ) {
     if (!this.canEdit() || this.isPdfEditor()) {
       return;
@@ -1303,7 +1469,7 @@
         AscCommon.g_oDocumentUrls.getImageLocal(oImage.src),
         nWidth,
         nHeight,
-        oImageData["replaceMode"]
+        oImageData["replaceMode"],
       );
       window.g_asc_plugins.onPluginMethodReturn();
     });
@@ -1350,7 +1516,7 @@
       // UPD: done. Ничего не изменять в менеджере плагинов, если guid пуст
 
       let result = window["AscDesktopEditor"]["PluginInstall"](
-        JSON.stringify(config)
+        JSON.stringify(config),
       );
 
       if (result && window.g_asc_plugins.isRunned(config["guid"])) {
@@ -1388,7 +1554,7 @@
     let services = [];
     try {
       services = JSON.parse(
-        window.localStorage.getItem("asc_plugins_background")
+        window.localStorage.getItem("asc_plugins_background"),
       );
       if (!services) services = [];
     } catch (e) {
@@ -1402,7 +1568,7 @@
   Api.prototype.setUsedBackgroundPlugins = function (services) {
     window.localStorage.setItem(
       "asc_plugins_background",
-      JSON.stringify(services)
+      JSON.stringify(services),
     );
   };
 
@@ -1440,7 +1606,7 @@
     let isInstalledPresent = window.g_asc_plugins.loadExtensionPlugins(
       arrayPlugins,
       undefined,
-      true
+      true,
     );
 
     let isRemovedPresent = false;
@@ -1513,7 +1679,7 @@
 
     if (isLocal) {
       var _pluginsTmp = JSON.parse(
-        window["AscDesktopEditor"]["GetInstallPlugins"]()
+        window["AscDesktopEditor"]["GetInstallPlugins"](),
       );
 
       var len = _pluginsTmp[0]["pluginsData"].length;
@@ -1534,7 +1700,7 @@
     if (-1 !== posQ) baseUrl = baseUrl.substr(0, posQ);
 
     let pluginsArray = window.g_asc_plugins.plugins.concat(
-      window.g_asc_plugins.systemPlugins
+      window.g_asc_plugins.systemPlugins,
     );
     let returnArray = [];
 
@@ -1612,7 +1778,7 @@
       setLocalStorageItem("asc_plugins_removed", currentRemovedPlugins);
 
       let currentInstalledPlugins = getLocalStorageItem(
-        "asc_plugins_installed"
+        "asc_plugins_installed",
       );
       if (
         currentInstalledPlugins &&
@@ -1672,7 +1838,7 @@
         var configJson = JSON.parse(xhrObj.responseText);
         configJson["baseUrl"] = configUrl.substr(
           0,
-          configUrl.lastIndexOf("/") + 1
+          configUrl.lastIndexOf("/") + 1,
         );
 
         installPlugin(configJson, "Installed");
@@ -1786,7 +1952,7 @@
     if (window["Common"])
       langName =
         window["Common"]["util"]["LanguageInfo"]["getLocalLanguageName"](
-          langCode
+          langCode,
         )[0];
 
     return langName;
@@ -1878,7 +2044,7 @@
     buttons["baseUrl"] =
       this.pluginsManager.pluginsMap[buttons["guid"]].baseUrl;
     this.WordControl.m_oLogicDocument.DrawingDocument.contentControls.addPluginButtons(
-      buttons
+      buttons,
     );
   };
 
@@ -2042,7 +2208,7 @@
     frameId,
     size,
     minSize,
-    maxSize
+    maxSize,
   ) {
     window.g_asc_plugins.setPluginMethodReturnAsync();
     this.sendEvent(
@@ -2053,7 +2219,7 @@
       maxSize,
       function () {
         window.g_asc_plugins.onPluginMethodReturn("resize_result");
-      }
+      },
     );
   };
 
@@ -2111,7 +2277,7 @@
    * @since 8.2.2
    */
   Api.prototype["pluginMethod_OnWindowDockChangedCallback"] = function (
-    windowID
+    windowID,
   ) {
     let key = window.g_asc_plugins.getCurrentPluginGuid() + "_" + windowID;
     if (window.g_asc_plugins.dockCallbacks[key]) {
