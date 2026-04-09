@@ -529,6 +529,7 @@
 			AscCommonExcel.g_oSUMIFSCache.clean();
 			AscCommonExcel.g_oFormulaRangesCache.clean();
 			AscCommonExcel.g_oCountIfCache.clean();
+			AscCommonExcel.g_oCountIFSCache.clean();
 			AscCommonExcel.g_oSumIfCache.clean();
 		};
 

@@ -5229,76 +5229,7 @@ function (window, undefined) {
 	cCOUNTIFS.prototype.argumentsType = [[argType.reference, argType.any]];
 	cCOUNTIFS.prototype.enabledToSingle = {"even": true};
 	cCOUNTIFS.prototype.Calculate = function (arg) {
-		let i, j, arg0, arg1, matchingInfo, arg0Matrix, arg1Matrix, _count = 0, argBaseDimension, argNextDimension;
-		let resArrayLength = 0;
-		for (let k = 0; k < arg.length; k += 2) {
-			arg0 = arg[k];
-			arg1 = arg[k + 1];
-			if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
-				cElementType.cellsRange !== arg0.type &&
-				!(cElementType.cellsRange3D === arg0.type && arg0.isSingleSheet())) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-
-			if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
-				arg1 = arg1.cross(arguments[1]);
-			} else if (cElementType.array === arg1.type) {
-				arg1 = arg1.getElementRowCol(0, 0);
-			}
-
-			if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
-				arg1 = arg1.getValue();
-			}
-
-			if (arg1.type === cElementType.empty) {
-				arg1 = arg1.tocNumber();
-			}
-
-			argNextDimension = arg0.getDimensions();
-			matchingInfo = AscCommonExcel.matchingValue(arg1);
-
-			if (arg1.value === "") {
-				arg1Matrix = arg0.getMatrix();
-			} else {
-				arg1Matrix = arg0.getMatrixNoEmpty ? arg0.getMatrixNoEmpty() : arg0.getMatrix();
-			}
-			if (cElementType.cellsRange3D === arg0.type) {
-				arg1Matrix = arg1Matrix[0];
-			}
-			if (!arg0Matrix) {
-				arg0Matrix = matrixClone(arg1Matrix);
-				argBaseDimension = argNextDimension;
-				resArrayLength = arg0Matrix.length;
-			}
-			if (argNextDimension.row !== argBaseDimension.row || argNextDimension.col !== argBaseDimension.col) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-			resArrayLength = resArrayLength > arg1Matrix.length ? arg1Matrix.length : resArrayLength;
-			for (i = 0; i < arg1Matrix.length; ++i) {
-				if (!arg1Matrix[i]) {
-					if (arg0Matrix[i]) {
-						arg0Matrix[i] = null;
-					}
-					continue;
-				}
-				for (j = 0; j < arg1Matrix[i].length; ++j) {
-					if (arg0Matrix[i] && arg0Matrix[i][j] && arg1Matrix[i] && arg1Matrix[i][j] && !matching(arg1Matrix[i][j], matchingInfo, true, true)) {
-						arg0Matrix[i][j] = null;
-					}
-				}
-			}
-		}
-		for (i = 0; i < resArrayLength; ++i) {
-			if (!arg0Matrix[i]) {
-				continue;
-			}
-			for (j = 0; j < arg0Matrix[i].length; ++j) {
-				if (arg0Matrix[i] && arg0Matrix[i][j]) {
-					++_count;
-				}
-			}
-		}
-		return new cNumber(_count);
+		return g_oCountIFSCache.calculate(arg, arguments[1]);
 	};
 	cCOUNTIFS.prototype.checkArguments = function (countArguments) {
 		return 0 === countArguments % 2 && cBaseFunction.prototype.checkArguments.apply(this, arguments);
@@ -12864,6 +12795,529 @@ function parseStringToCElement (val, cultureInfo) {
 		this.typedCache.clean();
 	};
 
+	// -------------------------------------------------------CountIFSCache------------------------------------------
+
+	/**
+	 * Count the number of set bits in a 32-bit integer (Hamming weight).
+	 * Uses the standard parallel-prefix popcount algorithm.
+	 *
+	 * @param {number} n - 32-bit integer (treated as unsigned)
+	 * @returns {number} bit count in [0, 32]
+	 */
+	function popcount32(n) {
+		n = n - ((n >>> 1) & 0x55555555);
+		n = (n & 0x33333333) + ((n >>> 2) & 0x33333333);
+		n = (n + (n >>> 4)) & 0x0F0F0F0F;
+		return Math.imul(n, 0x01010101) >>> 24;
+	}
+
+	/**
+	 * Cache for the COUNTIFS function.
+	 *
+	 * Stores calculation results keyed by all criteria-range/criteria pairs so that
+	 * repeated calls with the same arguments return immediately without re-scanning
+	 * the sheet.  Shares a CountIfTypedCache instance with CountIfCache for column
+	 * data storage, meaning a single lazy-loaded typed-column pool is reused across
+	 * both COUNTIF and COUNTIFS.
+	 *
+	 * Algorithm: mask-based multi-criteria intersection using Uint32 bit-packing.
+	 *   1. Allocate a flat Uint32Array of ⌈numRows/32⌉ × numCols words, all bits 1.
+	 *   2. For each criteria pair call _applyOneCriteria(), which uses the typed
+	 *      column cache to mark non-matching positions as 0 without allocating
+	 *      intermediate matrices.
+	 *   3. Early-exit as soon as the remaining count reaches 0.
+	 *   4. Count surviving 1-bits in the mask as the final result.
+	 *
+	 * @constructor
+	 */
+	function CountIFSCache() {
+		this.cacheId = {};
+		this.cacheRanges = {};
+		this.typedCache = new CountIfTypedCache();
+	}
+	CountIFSCache.prototype.constructor = CountIFSCache;
+
+	/**
+	 * Entry point called from cCOUNTIFS.prototype.Calculate.
+	 * Validates arguments, then delegates to _get for caching.
+	 *
+	 * @param {Array} arg - array of parsed formula arguments
+	 * @param {Object} _arg1 - second implicit argument (formula context)
+	 * @returns {cNumber|cError}
+	 */
+	CountIFSCache.prototype.calculate = function (arg, _arg1) {
+		// Fast path: validate types, normalise criteria, and build the cache key in a
+		// single pass — without allocating any intermediate arrays.  The cache is
+		// checked immediately after, so cache hits return without any allocation at all.
+		let sKey = '';
+		let cacheElem = null;
+
+		for (let k = 0; k < arg.length; k += 2) {
+			let rangeArg = arg[k];
+			let criteriaArg = arg[k + 1];
+
+			if (cElementType.error === rangeArg.type) {
+				return rangeArg;
+			}
+			if (cElementType.cell !== rangeArg.type && cElementType.cell3D !== rangeArg.type &&
+				cElementType.cellsRange !== rangeArg.type &&
+				!(cElementType.cellsRange3D === rangeArg.type && rangeArg.isSingleSheet())) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			// Normalise criteria: range/array/cell reference → scalar
+			if (cElementType.cellsRange === criteriaArg.type || cElementType.cellsRange3D === criteriaArg.type) {
+				criteriaArg = criteriaArg.cross(_arg1);
+			} else if (cElementType.array === criteriaArg.type) {
+				criteriaArg = criteriaArg.getElementRowCol(0, 0);
+			}
+			if (criteriaArg.type === cElementType.cell || criteriaArg.type === cElementType.cell3D) {
+				criteriaArg = criteriaArg.getValue();
+			}
+			if (criteriaArg.type === cElementType.empty) {
+				criteriaArg = criteriaArg.tocNumber();
+			}
+
+			const ws = rangeArg.getWS();
+			const wsId = ws.getId();
+			const bboxName = rangeArg.getBBox0().getName();
+
+			if (k > 0) { sKey += g_cCharDelimiter; }
+			sKey += wsId + g_cCharDelimiter + bboxName + g_cCharDelimiter + criteriaArg.getValue();
+
+			if (k === 0) {
+				const sPrimaryKey = wsId + g_cCharDelimiter + bboxName;
+				cacheElem = this.cacheId[sPrimaryKey];
+				if (!cacheElem) {
+					cacheElem = {results: {}, bboxKeys: new Set()};
+					this.cacheId[sPrimaryKey] = cacheElem;
+				}
+			}
+		}
+
+		// Cache hit: return immediately — no getDimensions, no array allocation.
+		if (cacheElem.results[sKey]) {
+			return cacheElem.results[sKey];
+		}
+
+		// Cache miss: delegate to the slow path which builds arrays, validates
+		// dimensions, registers bboxes in RangeDataManager, and runs _calculate.
+		return this._calculateMiss(arg, _arg1, sKey, cacheElem);
+	};
+
+	/**
+	 * Slow path for cache misses.  Rebuilds normalised args into proper arrays,
+	 * validates that all criteria ranges share the same dimensions, registers
+	 * each bbox in the per-worksheet RangeDataManager for future invalidation,
+	 * then runs _calculate and stores the result.
+	 *
+	 * @param {Array} arg - raw formula arguments (range, criteria, range, criteria, …)
+	 * @param {Object} _arg1 - formula context (for criteria cross-reference)
+	 * @param {string} sKey - pre-computed composite cache key
+	 * @param {Object} cacheElem - cache entry ({results: {}, bboxKeys: Set})
+	 * @returns {cNumber|cError}
+	 */
+	CountIFSCache.prototype._calculateMiss = function (arg, _arg1, sKey, cacheElem) {
+		const ranges = [];
+		const criteriaVals = [];
+		const bboxes = [];
+		const wsIds = [];
+
+		for (let k = 0; k < arg.length; k += 2) {
+			let criteriaArg = arg[k + 1];
+
+			// Re-normalise criteria (safe: idempotent within the same evaluation).
+			if (cElementType.cellsRange === criteriaArg.type || cElementType.cellsRange3D === criteriaArg.type) {
+				criteriaArg = criteriaArg.cross(_arg1);
+			} else if (cElementType.array === criteriaArg.type) {
+				criteriaArg = criteriaArg.getElementRowCol(0, 0);
+			}
+			if (criteriaArg.type === cElementType.cell || criteriaArg.type === cElementType.cell3D) {
+				criteriaArg = criteriaArg.getValue();
+			}
+			if (criteriaArg.type === cElementType.empty) {
+				criteriaArg = criteriaArg.tocNumber();
+			}
+
+			const rangeArg = arg[k];
+			ranges.push(rangeArg);
+			criteriaVals.push(criteriaArg);
+			bboxes.push(rangeArg.getBBox0());
+			wsIds.push(rangeArg.getWS().getId());
+		}
+
+		// Validate that all criteria ranges share the same dimensions.
+		const baseDim = ranges[0].getDimensions();
+		for (let k = 1; k < ranges.length; k += 1) {
+			const dim = ranges[k].getDimensions();
+			if (dim.row !== baseDim.row || dim.col !== baseDim.col) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		// Register every bbox in the RangeDataManager so that a cell change in any
+		// participating range invalidates this cache entry.
+		// bboxKeys guards against redundant add() calls on repeated cache misses for
+		// the same (bbox, cacheElem) pair — each add() triggers an expensive isSame
+		// traversal in the interval tree even when the record already exists.
+		for (let k = 0; k < ranges.length; k += 1) {
+			const wsId = wsIds[k];
+			const bboxKey = wsId + g_cCharDelimiter + bboxes[k].getName();
+			if (cacheElem.bboxKeys.has(bboxKey)) { continue; }
+			let cacheRange = this.cacheRanges[wsId];
+			if (!cacheRange) {
+				cacheRange = new AscCommonExcel.RangeDataManager(null);
+				this.cacheRanges[wsId] = cacheRange;
+			}
+			cacheRange.add(bboxes[k], cacheElem);
+			cacheElem.bboxKeys.add(bboxKey);
+		}
+
+		cacheElem.results[sKey] = this._calculate(ranges, criteriaVals, bboxes, wsIds, baseDim);
+		return cacheElem.results[sKey];
+	};
+
+	/**
+	 * Parse a single criteria value into a descriptor used by _applyOneCriteria.
+	 *
+	 * Returns an object:
+	 *   { op, type, searchValue, matchingFn, isEmptyStr }
+	 *
+	 * @param {Object} criteriaVal - cElement
+	 * @returns {Object}
+	 */
+	CountIFSCache.prototype._parseCriteria = function (criteriaVal) {
+		const matchingInfo = AscCommonExcel.matchingValue(criteriaVal, parseStringToCElement);
+		const op = matchingInfo.op;
+		const type = matchingInfo.val.type;
+
+		let searchValue = matchingInfo.val;
+		if (type === cElementType.string) {
+			searchValue = searchValue.toString().toLowerCase();
+		} else if (type === cElementType.error) {
+			searchValue = searchValue.errorType;
+		} else {
+			searchValue = searchValue.value;
+		}
+
+		const isEmptyStr = (searchValue === '' && type === cElementType.string);
+
+		// Precompile wildcard regex once — only for '=' / null operator.
+		// Comparison operators (<, >, <=, >=) treat * and ? as literal characters
+		// (Excel behaviour), so they must not use regex.
+		let matchingFn;
+		const isWildcard = type === cElementType.string &&
+			typeof searchValue === 'string' &&
+			(searchValue.indexOf('*') !== -1 || searchValue.indexOf('?') !== -1);
+
+		if (!isEmptyStr && isWildcard && (op === '=' || op === null)) {
+			const re = _buildWildcardRegex(searchValue);
+			matchingFn = function (v) { return re.test(v); };
+		} else if (isEmptyStr) {
+			// handled specially in _applyOneCriteria
+			matchingFn = null;
+		} else {
+			matchingFn = getMatchingFunction(type, op || '=', isWildcard);
+		}
+
+		return {op: op, type: type, searchValue: searchValue, matchingFn: matchingFn, isEmptyStr: isEmptyStr};
+	};
+
+	/**
+	 * Iterates every position in the mask column-by-column and clears those for
+	 * which shouldClear(column, absRow) returns true.  Shared by the two
+	 * hasDataAtRow-based branches in _applyOneCriteria.
+	 *
+	 * @param {Uint32Array} mask - bit-packed row-major mask (words layout)
+	 * @param {Object} ws
+	 * @param {string} wsId
+	 * @param {Object} bbox
+	 * @param {number} numRows
+	 * @param {number} numCols
+	 * @param {function(Object, number): boolean} shouldClear
+	 * @returns {number} positions cleared
+	 */
+	CountIFSCache.prototype._iterateByRow = function (mask, ws, wsId, bbox, numRows, numCols, shouldClear) {
+		let eliminated = 0;
+		const typedCache = this.typedCache;
+		const words = (numRows + 31) >> 5;
+		for (let relCol = 0; relCol < numCols; relCol += 1) {
+			const absCol = bbox.c1 + relCol;
+			typedCache.updateColumnData(ws, absCol, bbox.r1, bbox.r2);
+			const column = typedCache.data[wsId][absCol];
+			const wordBase = relCol * words;
+			for (let w = 0; w < words; w += 1) {
+				let bits = mask[wordBase + w];
+				if (bits === 0) { continue; }
+				let clearMask = 0;
+				const rowBase = w << 5;
+				let tmp = bits;
+				while (tmp !== 0) {
+					const lsb = tmp & -tmp;
+					const bitPos = 31 - Math.clz32(lsb);
+					const relRow = rowBase | bitPos;
+					if (shouldClear(column, bbox.r1 + relRow)) {
+						clearMask |= lsb;
+					}
+					tmp = (tmp & (tmp - 1)) | 0;
+				}
+				if (clearMask !== 0) {
+					mask[wordBase + w] ^= clearMask;
+					eliminated += popcount32(clearMask);
+				}
+			}
+		}
+		return eliminated;
+	};
+
+	/**
+	 * Apply one criteria pair to the bit-packed mask.
+	 *
+	 * @param {Uint32Array} mask - bit-packed row-major mask (words layout)
+	 * @param {Object} info - descriptor from _parseCriteria
+	 * @param {Object} ws - worksheet
+	 * @param {string} wsId - worksheet id
+	 * @param {Object} bbox - bounding box of the criteria range
+	 * @param {number} numRows - height of the criteria range
+	 * @param {number} numCols - width of the criteria range
+	 * @param {Uint32Array} matchingRelRows - scratch buffer, length ⌈numRows/32⌉
+	 * @param {number} remaining - surviving positions before this criteria
+	 * @returns {number} number of positions set to 0 (newly eliminated)
+	 */
+	CountIFSCache.prototype._applyOneCriteria = function (mask, info, ws, wsId, bbox, numRows, numCols, matchingRelRows, remaining) {
+		const typedCache = this.typedCache;
+
+		if (info.isEmptyStr && (info.op === '=' || info.op === null)) {
+			// Positions with any non-empty value are eliminated.
+			return this._iterateByRow(mask, ws, wsId, bbox, numRows, numCols, function (column, absRow) {
+				return typedCache.hasDataAtRow(column, absRow, true);
+			});
+		}
+
+		if (info.op === '<>') {
+			if (info.isEmptyStr) {
+				// <>"" → keep only non-empty cells.
+				return this._iterateByRow(mask, ws, wsId, bbox, numRows, numCols, function (column, absRow) {
+					return !typedCache.hasDataAtRow(column, absRow, false);
+				});
+			}
+			// <>X: all rows satisfy by default; only rows where value === X are cleared.
+			// Empty cells are intentionally kept since empty <> X.
+			return this._applyEqualsOneCriteria(mask, info, ws, wsId, bbox, numRows, numCols, true, matchingRelRows, remaining);
+		}
+		return this._applyEqualsOneCriteria(mask, info, ws, wsId, bbox, numRows, numCols, false, matchingRelRows, remaining);
+	};
+
+	/**
+	 * Apply an equality/comparison-style criteria to the mask.
+	 *
+	 * Normal mode (isComplement = false):
+	 *   matchingRelRows starts at 0; bits set for rows where info.matchingFn returns true.
+	 *   Sweep clears mask positions where matchingRelRows = 0 (no match).
+	 *
+	 * Complement mode (isComplement = true, used for '<>X', X = ''):
+	 *   matchingRelRows starts at all-1s — every row tentatively satisfies '<>X'.
+	 *   Bits cleared for rows where value === X (using an equality comparator).
+	 *   Empty cells are never touched, so they remain 1 and are correctly counted.
+	 *
+	 * @param {Uint32Array} mask - bit-packed row-major mask (words layout)
+	 * @param {Object} info
+	 * @param {Object} ws
+	 * @param {string} wsId
+	 * @param {Object} bbox
+	 * @param {number} numRows
+	 * @param {number} numCols
+	 * @param {boolean} isComplement
+	 * @param {Uint32Array} matchingRelRows - scratch buffer, length ⌈numRows/32⌉
+	 * @param {number} remaining - surviving positions before this criteria; used for
+	 *   early column exit: once eliminated >= remaining, no further columns can match.
+	 * @returns {number} positions cleared
+	 */
+	CountIFSCache.prototype._applyEqualsOneCriteria = function (mask, info, ws, wsId, bbox, numRows, numCols, isComplement, matchingRelRows, remaining) {
+		let eliminated = 0;
+		const typedCache = this.typedCache;
+		const type = info.type;
+		const searchValue = info.searchValue;
+		const op = info.op;
+		const words = (numRows + 31) >> 5;
+
+		// Complement mode uses an equality comparator to find rows to exclude;
+		// normal mode uses info.matchingFn (may be =, <, >, <=, >=).
+		const matchFn = isComplement ? getMatchingFunction(type, '=', false) : info.matchingFn;
+
+		// Numeric criteria also probe string-typed column data for numerically equal strings.
+		// In complement mode we always need equality; in normal mode only for = / null ops.
+		const checkStrNums = type === cElementType.number && (isComplement || op === '=' || op === null);
+		const numMatchFn = checkStrNums ? getMatchingFunction(cElementType.number, '=', false) : null;
+
+		// Padding mask for the last word when numRows is not a multiple of 32.
+		const remBits = numRows & 31;
+		const lastWordMask = remBits !== 0 ? (1 << remBits) - 1 : 0xFFFFFFFF;
+
+		for (let relCol = 0; relCol < numCols; relCol += 1) {
+			const absCol = bbox.c1 + relCol;
+			typedCache.updateColumnData(ws, absCol, bbox.r1, bbox.r2);
+			const column = typedCache.data[wsId][absCol];
+
+			const typedData = column.data[type];
+			const typedIndexes = column.indexes[type];
+
+			if (isComplement) {
+				// All rows start as satisfying '<>X'; rows where v===X are removed below.
+				matchingRelRows.fill(0xFFFFFFFF);
+				matchingRelRows[words - 1] = lastWordMask;
+			} else {
+				matchingRelRows.fill(0);
+			}
+
+			if (typedData) {
+				const first = typedCache.findLowerIndexInTyped(bbox.r1, typedIndexes);
+				const last = typedCache.findHigherIndexInTyped(bbox.r2, typedIndexes);
+
+				if (isComplement) {
+					for (let j = first; j < last; j += 1) {
+						if (matchFn(typedData[j], searchValue)) {
+							const relRow = typedIndexes[j] - bbox.r1;
+							matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
+						}
+					}
+				} else {
+					for (let j = first; j < last; j += 1) {
+						if (matchFn(typedData[j], searchValue)) {
+							const relRow = typedIndexes[j] - bbox.r1;
+							matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+						}
+					}
+				}
+
+				if (checkStrNums) {
+					const strData = column.data[cElementType.string];
+					const strIndexes = column.indexes[cElementType.string];
+					if (strData) {
+						const strFirst = typedCache.findLowerIndexInTyped(bbox.r1, strIndexes);
+						const strLast = typedCache.findHigherIndexInTyped(bbox.r2, strIndexes);
+						if (isComplement) {
+							for (let j = strFirst; j < strLast; j += 1) {
+								const parsed = typedCache.parseAnyNumber(strData[j]);
+								if (parsed !== null && numMatchFn(parsed, searchValue)) {
+									const relRow = strIndexes[j] - bbox.r1;
+									matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
+								}
+							}
+						} else {
+							for (let j = strFirst; j < strLast; j += 1) {
+								const parsed = typedCache.parseAnyNumber(strData[j]);
+								if (parsed !== null && numMatchFn(parsed, searchValue)) {
+									const relRow = strIndexes[j] - bbox.r1;
+									matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+								}
+							}
+						}
+					}
+				}
+			}
+
+			// Sweep: AND the column's mask words with matchingRelRows.
+			// Bits that were 1 in mask but 0 in matchingRelRows are newly eliminated.
+			const wordBase = relCol * words;
+			for (let w = 0; w < words; w += 1) {
+				const oldWord = mask[wordBase + w];
+				if (oldWord === 0) { continue; }
+				const clearBits = oldWord & ~matchingRelRows[w];
+				if (clearBits !== 0) {
+					mask[wordBase + w] = oldWord ^ clearBits;
+					eliminated += popcount32(clearBits);
+				}
+			}
+
+			// Early exit: once eliminated >= remaining, every surviving position has
+			// been cleared.  Processing further columns cannot increase eliminated further.
+			if (eliminated >= remaining) { break; }
+		}
+		return eliminated;
+	};
+
+	/**
+	 * Core calculation.  Builds a flat mask and applies each criteria pair.
+	 *
+	 * @param {Array} ranges - range arguments
+	 * @param {Array} criteriaVals - normalised criteria cElement values
+	 * @param {Array} bboxes - pre-computed bounding boxes
+	 * @param {Array} wsIds - pre-computed worksheet ids
+	 * @param {Object} baseDim - {row, col}
+	 * @returns {cNumber}
+	 */
+	CountIFSCache.prototype._calculate = function (ranges, criteriaVals, bboxes, wsIds, baseDim) {
+		const numRows = baseDim.row;
+		const numCols = baseDim.col;
+		const total = numRows * numCols;
+		const words = (numRows + 31) >> 5;
+
+		// Bit-packed mask: bit (relRow & 31) of mask[relCol * words + (relRow >> 5)]
+		// being 1 means the position still satisfies all criteria seen so far.
+		const mask = new Uint32Array(words * numCols);
+		mask.fill(0xFFFFFFFF);
+
+		// Clear padding bits in the last word of each column so that surplus bits
+		// beyond numRows are never counted as surviving positions.
+		const remBits = numRows & 31;
+		if (remBits !== 0) {
+			const lastMask = (1 << remBits) - 1;
+			for (let relCol = 0; relCol < numCols; relCol += 1) {
+				mask[relCol * words + words - 1] = lastMask;
+			}
+		}
+
+		let remaining = total;
+
+		// Pre-allocated scratch buffer reused across all K criteria to avoid K separate
+		// Uint32Array allocations inside _applyEqualsOneCriteria.
+		const matchingRelRows = new Uint32Array(words);
+
+		for (let k = 0; k < ranges.length; k += 1) {
+			const rangeArg = ranges[k];
+			const ws = rangeArg.getWS();
+			const wsId = wsIds[k];
+			const bbox = bboxes[k];
+			const info = this._parseCriteria(criteriaVals[k]);
+
+			remaining -= this._applyOneCriteria(mask, info, ws, wsId, bbox, numRows, numCols, matchingRelRows, remaining);
+
+			if (remaining <= 0) {
+				return new cNumber(0);
+			}
+		}
+
+		return new cNumber(remaining);
+	};
+
+	/**
+	 * Invalidation callback.  Called whenever a cell value changes.
+	 * Clears all cached results for ranges that contain the changed cell,
+	 * and updates the shared typed column cache.
+	 *
+	 * @param {Object} cell     - changed cell
+	 * @param {*}      dataOld  - previous cell data
+	 * @param {*}      dataNew  - new cell data
+	 */
+	CountIFSCache.prototype.remove = function (cell, dataOld, dataNew) {
+		const wsId = cell.ws.getId();
+		const cacheRange = this.cacheRanges[wsId];
+		if (cacheRange) {
+			const oGetRes = cacheRange.get(new Asc.Range(cell.nCol, cell.nRow, cell.nCol, cell.nRow));
+			for (let i = 0; i < oGetRes.all.length; i += 1) {
+				oGetRes.all[i].data.results = {};
+			}
+		}
+		this.typedCache.changeData(cell, dataOld, dataNew);
+	};
+
+	CountIFSCache.prototype.clean = function () {
+		this.cacheId = {};
+		this.cacheRanges = {};
+		this.typedCache.clean();
+	};
+
 	// -------------------------------------------------------SumIfSumRangeCache------------------------------------------
 
 	function SumIfSumRangeCache() {
@@ -13483,6 +13937,7 @@ function parseStringToCElement (val, cultureInfo) {
 
 	let g_oFormulaRangesCache = new FormulaRangesCache();
 	let g_oCountIfCache = new CountIfCache();
+	let g_oCountIFSCache = new CountIFSCache();
 	let g_oSumIfCache = new SumIfCache();
 	let g_oAverageIfCache = new AverageIfCache();
 
@@ -13519,6 +13974,7 @@ function parseStringToCElement (val, cultureInfo) {
 
 	window['AscCommonExcel'].g_oFormulaRangesCache = g_oFormulaRangesCache;
 	window['AscCommonExcel'].g_oCountIfCache = g_oCountIfCache;
+	window['AscCommonExcel'].g_oCountIFSCache = g_oCountIFSCache;
 	window['AscCommonExcel'].g_oSumIfCache = g_oSumIfCache;
 	window['AscCommonExcel'].g_oAverageIfCache = g_oAverageIfCache;
 	window['AscCommonExcel'].CountIfTypedCache = CountIfTypedCache;
