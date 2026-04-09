@@ -5295,7 +5295,7 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
                 PRSC.SpacesCount = 0;
 
 				if (Item.IsSpaceAfter())
-					PRSC.Word = false;
+				PRSC.Word = false;
 
                 break;
             }

@@ -2130,9 +2130,11 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 					}
 					case AscCommon.align_Distributed:
 					{
-						// Thai Distributed alignment:
-						// Equal letter-spacing across all base characters (like CSS letter-spacing).
-						// Last line of paragraph is left-aligned.
+						// Thai Distributed alignment (same as Word editor):
+						// 1. Lines break at Thai word boundaries (controlled by SegmentThaiWords/SpaceAfter)
+						// 2. Each non-last line: distribute remaining width as uniform letter-spacing
+						//    remaining = maxWidth - totalTextWidth, added between every base character pair
+						// 3. Last line: left-align
 						X = Range.X;
 
 						if (PRSC.ParaEnd)
@@ -2703,14 +2705,11 @@ Paragraph.prototype.ScheduleThaiSegmentation = function()
 
 /**
  * Scan all runs in this paragraph for Thai text sequences.
- * Use Intl.Segmenter (browser) or dictionary maximum matching (doctrenderer fallback)
- * to find word boundaries and set SpaceAfter(true) on the last character of each
- * Thai word, enabling proper line breaking.
+ * Uses dictionary-based maximum matching (ThaiDictionary.js) for both browser and
+ * server-side (doctrenderer) — consistent segmentation across all environments.
  */
 Paragraph.prototype.SegmentThaiWords = function()
 {
-	var useIntl = typeof Intl !== 'undefined' && typeof Intl['Segmenter'] !== 'undefined';
-
 	for (var i = 0; i < this.Content.length; i++)
 	{
 		var run = this.Content[i];
@@ -2718,7 +2717,6 @@ Paragraph.prototype.SegmentThaiWords = function()
 			continue;
 
 		// First pass: reset SpaceAfter on all Thai characters
-		// (clear previous segmentation before re-segmenting)
 		for (var j = 0; j < run.Content.length; j++)
 		{
 			var item = run.Content[j];
@@ -2740,7 +2738,6 @@ Paragraph.prototype.SegmentThaiWords = function()
 				if (item.Type === para_Text)
 				{
 					var code = item.Value;
-					// Thai Unicode block: U+0E00 - U+0E7F
 					if (code >= 0x0E00 && code <= 0x0E7F)
 						isThai = true;
 				}
@@ -2753,53 +2750,20 @@ Paragraph.prototype.SegmentThaiWords = function()
 				thaiChars += String.fromCharCode(run.Content[j].Value);
 				thaiPositions.push(j);
 			}
-			else
+			else if (thaiStart !== -1 && thaiChars.length > 0)
 			{
-				// End of Thai sequence — segment it
-				if (thaiStart !== -1 && thaiChars.length > 0)
-				{
-					if (useIntl)
-						this.private_ApplyThaiSegmentation(run, thaiChars, thaiPositions);
-					else
-						this.private_ApplyThaiDictSegmentation(run, thaiChars, thaiPositions);
-					thaiStart = -1;
-					thaiChars = '';
-					thaiPositions = [];
-				}
+				this.private_ApplyThaiDictSegmentation(run, thaiChars, thaiPositions);
+				thaiStart = -1;
+				thaiChars = '';
+				thaiPositions = [];
 			}
 		}
 	}
 };
 
-Paragraph.prototype.private_ApplyThaiSegmentation = function(run, thaiText, positions)
-{
-	var segmenter = new Intl['Segmenter']('th-TH', { 'granularity': 'word' });
-	var segments = Array.from(segmenter['segment'](thaiText));
-
-	var charIndex = 0;
-	for (var i = 0; i < segments.length; i++)
-	{
-		var seg = segments[i];
-		var segText = seg['segment'];
-		var segEnd = charIndex + segText.length - 1;
-
-		// Set SpaceAfter on the last character of each word segment
-		// (but not the very last segment of the Thai sequence)
-		if (segEnd < positions.length - 1)
-		{
-			var pos = positions[segEnd];
-			if (pos < run.Content.length && run.Content[pos].SetSpaceAfter)
-				run.Content[pos].SetSpaceAfter(true);
-		}
-
-		charIndex += segText.length;
-	}
-};
-
 /**
- * Dictionary-based maximum matching segmentation.
- * Used as fallback when Intl.Segmenter is unavailable (e.g. doctrenderer/V8).
- * Uses getThaiDictionary() from ThaiDictionary.js.
+ * Dictionary maximum matching segmentation.
+ * Uses getThaiDictionary() from ThaiDictionary.js (built from config/dictionary/words_th.txt).
  */
 Paragraph.prototype.private_ApplyThaiDictSegmentation = function(run, text, positions)
 {
@@ -4584,7 +4548,6 @@ function CParagraphRecalculateStateCounter(wrapState)
     this.BaseLetters = 0;
     this.SpacesSkip  = 0;
     this.LettersSkip = 0;
-
     this.ComplexFields = new AscWord.ParagraphComplexFieldStack();
 }
 CParagraphRecalculateStateCounter.prototype.Reset = function(Paragraph, Range)
@@ -4601,7 +4564,7 @@ CParagraphRecalculateStateCounter.prototype.Reset = function(Paragraph, Range)
 	this.BaseLetters = 0;
 	this.SpacesSkip  = 0;
 	this.LettersSkip = 0;
-	
+
 	this.ParaEnd   = false;
 	this.LineBreak = false;
 };
