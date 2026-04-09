@@ -2796,7 +2796,7 @@ Paragraph.prototype.private_ApplyThaiSegmentation = function(run, thaiText, posi
  */
 Paragraph.prototype.private_ApplyThaiDictSegmentation = function(run, text, positions)
 {
-	var dict = getThaiDictionary();
+	var dict = window['AscWord']['getThaiDictionary']();
 	var MAX_WORD_LEN = 20;
 	var i = 0;
 	while (i < text.length)
