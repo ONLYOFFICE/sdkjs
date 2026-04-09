@@ -2696,13 +2696,13 @@ Paragraph.prototype.ScheduleThaiSegmentation = function()
 
 /**
  * Scan all runs in this paragraph for Thai text sequences.
- * Use Intl.Segmenter to find word boundaries and set SpaceAfter(true)
- * on the last character of each Thai word, enabling proper line breaking.
+ * Use Intl.Segmenter (browser) or dictionary maximum matching (doctrenderer fallback)
+ * to find word boundaries and set SpaceAfter(true) on the last character of each
+ * Thai word, enabling proper line breaking.
  */
 Paragraph.prototype.SegmentThaiWords = function()
 {
-	if (typeof Intl === 'undefined' || typeof Intl['Segmenter'] === 'undefined')
-		return;
+	var useIntl = typeof Intl !== 'undefined' && typeof Intl['Segmenter'] !== 'undefined';
 
 	for (var i = 0; i < this.Content.length; i++)
 	{
@@ -2751,7 +2751,10 @@ Paragraph.prototype.SegmentThaiWords = function()
 				// End of Thai sequence — segment it
 				if (thaiStart !== -1 && thaiChars.length > 0)
 				{
-					this.private_ApplyThaiSegmentation(run, thaiChars, thaiPositions);
+					if (useIntl)
+						this.private_ApplyThaiSegmentation(run, thaiChars, thaiPositions);
+					else
+						this.private_ApplyThaiDictSegmentation(run, thaiChars, thaiPositions);
 					thaiStart = -1;
 					thaiChars = '';
 					thaiPositions = [];
@@ -2783,6 +2786,43 @@ Paragraph.prototype.private_ApplyThaiSegmentation = function(run, thaiText, posi
 		}
 
 		charIndex += segText.length;
+	}
+};
+
+/**
+ * Dictionary-based maximum matching segmentation.
+ * Used as fallback when Intl.Segmenter is unavailable (e.g. doctrenderer/V8).
+ * Uses getThaiDictionary() from ThaiDictionary.js.
+ */
+Paragraph.prototype.private_ApplyThaiDictSegmentation = function(run, text, positions)
+{
+	var dict = getThaiDictionary();
+	var MAX_WORD_LEN = 20;
+	var i = 0;
+	while (i < text.length)
+	{
+		var matched = false;
+		var maxLen = Math.min(MAX_WORD_LEN, text.length - i);
+		for (var len = maxLen; len > 1; len--)
+		{
+			if (dict.has(text.substring(i, i + len)))
+			{
+				// Mark word boundary: set SpaceAfter on last char of matched word
+				// (but not at the very end of the Thai sequence)
+				var endIdx = i + len - 1;
+				if (endIdx < positions.length - 1)
+				{
+					var pos = positions[endIdx];
+					if (pos < run.Content.length && run.Content[pos].SetSpaceAfter)
+						run.Content[pos].SetSpaceAfter(true);
+				}
+				i += len;
+				matched = true;
+				break;
+			}
+		}
+		if (!matched)
+			i++; // no match: advance one character
 	}
 };
 Paragraph.prototype.HyphenateText = function()

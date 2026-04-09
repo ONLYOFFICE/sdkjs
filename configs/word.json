@@ -253,6 +253,7 @@
 			"word/Editor/MathChanges.js",
 			"word/Editor/Paragraph.js",
 			"word/Editor/ParagraphChanges.js",
+			"word/Editor/ThaiDictionary.js",
 			"word/Editor/Paragraph_Recalculate.js",
 			"word/Editor/Paragraph/draw/content-draw-state.js",
 			"word/Editor/Paragraph/draw/highlight-draw-state.js",
