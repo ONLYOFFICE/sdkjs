@@ -2670,11 +2670,18 @@ Paragraph.prototype.ShapeText = function()
 
 /**
  * Debounced scheduler for Thai word segmentation.
- * Waits 300ms after last call before running segmentation,
- * then triggers paragraph recalculation.
+ * In browser: waits 300ms after last call before running (performance during editing).
+ * In server-side (doctrenderer, no setTimeout): runs synchronously immediately.
  */
 Paragraph.prototype.ScheduleThaiSegmentation = function()
 {
+	if (typeof setTimeout !== 'function')
+	{
+		// Server-side (doctrenderer): no event loop — run synchronously
+		this.SegmentThaiWords();
+		return;
+	}
+
 	var para = this;
 
 	if (this.ThaiSegmentTimer)
