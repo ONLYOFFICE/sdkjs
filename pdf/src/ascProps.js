@@ -532,12 +532,6 @@ function (window, undefined) {
 	asc_CTextFieldProperty.prototype.asc_putPassword = function (v) {
 		this.password = v;
 	};
-	asc_CTextFieldProperty.prototype.asc_getFormat = function () {
-		return this.format;
-	};
-	asc_CTextFieldProperty.prototype.asc_putFormat = function (v) {
-		this.format = v;
-	};
 	asc_CTextFieldProperty.prototype.compare = function (pr) {
 		if (this.defaultValue !== pr.defaultValue) {
 			this.defaultValue = null;
