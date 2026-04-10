@@ -10348,79 +10348,87 @@ var CPresentation = CPresentation || function(){};
 			return oFormatProps;
 		}
 
-		// format
-		if (oTriggers[AscPDF.PDF_TRIGGERS_TYPES.format]) {
-			let oFormatAction	= oTriggers[AscPDF.PDF_TRIGGERS_TYPES.format][0];
-			let sFormatScript	= oFormatAction["JS"];
-			let nFormatType		= field.GetFormatType();
-			let aFormatArgs		= field.GetFormatArgs();
+		if (field.GetType() == AscPDF.FIELD_TYPES.text || field.GetType() == AscPDF.FIELD_TYPES.combobox) {
+			// format
+			if (oTriggers[AscPDF.PDF_TRIGGERS_TYPES.format]) {
+				let oFormatAction	= oTriggers[AscPDF.PDF_TRIGGERS_TYPES.format][0];
+				let sFormatScript	= oFormatAction["JS"];
+				let nFormatType		= field.GetFormatType();
+				let aFormatArgs		= field.GetFormatArgs();
 
-			let oFormatProps = getFormatKeystrokeProps(nFormatType, aFormatArgs, sFormatScript);
+				let oFormatProps = getFormatKeystrokeProps(nFormatType, aFormatArgs, sFormatScript);
+				
+				oActionsProperty.asc_putFormat(oFormatProps);
+			}
 			
-			oActionsProperty.asc_putFormat(oFormatProps);
+			// keystroke
+			if (oTriggers[AscPDF.PDF_TRIGGERS_TYPES.keystroke]) {
+				let oKeystrokeAction= oTriggers[AscPDF.PDF_TRIGGERS_TYPES.keystroke][0];
+				let sKeystrokeScript= oKeystrokeAction["JS"];
+				let nKeystrokeType	= field.GetKeystrokeType();
+				let aKeystrokeArgs	= field.GetKeystrokeArgs();
+				
+				let oKeystrokeProps = getFormatKeystrokeProps(nKeystrokeType, aKeystrokeArgs, sKeystrokeScript);
+				
+				oActionsProperty.asc_putKeystroke(oKeystrokeProps);
+			}
+
+			// validate
+			if (oTriggers[AscPDF.PDF_TRIGGERS_TYPES.validate]) {
+				let oAction = oTriggers[AscPDF.PDF_TRIGGERS_TYPES.validate][0];
+				let oValidateProps = new Asc.asc_CFieldValidateProperty();
+				
+				let sScript = oAction["JS"];
+				if (sScript.startsWith('AFRange_Validate')) {
+					let aArgs = AscPDF.extractArguments(sScript);
+					oValidateProps.asc_putGreaterThen(aArgs[1]);
+					oValidateProps.asc_putLessThen(aArgs[3]);
+				}
+				else {
+					oValidateProps.asc_putScript(sScript);
+				}
+
+				oActionsProperty.asc_putValidate(oValidateProps);
+			}
+
+			// calculate
+			if (oTriggers[AscPDF.PDF_TRIGGERS_TYPES.calculate]) {
+				let oAction = oTriggers[AscPDF.PDF_TRIGGERS_TYPES.calculate][0];
+				let oCalculateProps = new Asc.asc_CFieldCalculateProperty();
+				
+				let nType;
+				function extractBvCalcText(script) {
+					const match = script.match(/BVCALC\s*([\s\S]*?)\s*EVCALC/);
+					return match ? match[1].trim() : null;
+				}
+				
+				let sScript = oAction["JS"];
+				let bvCalcText = extractBvCalcText(sScript);
+
+				if (bvCalcText) {
+					nType = AscPDF.CalculateType.simpleJs;
+					oCalculateProps.asc_putScript(sScript);
+				}
+				else if (sScript.startsWith('AFSimple_Calculate')) {
+					nType = AscPDF.CalculateType.simpleJs;
+					let aArgs = AscPDF.extractArguments(sScript);
+					let aNames = eval(aArgs[1]);
+					oCalculateProps.asc_putNames(aNames);
+				}
+				else {
+					nType = AscPDF.CalculateType.js;
+					oCalculateProps.asc_putScript(sScript);
+				}
+
+				oCalculateProps.asc_putType(nType);
+				oActionsProperty.asc_putCalculate(oCalculateProps);
+			}
 		}
-		
-		// keystroke
-		if (oTriggers[AscPDF.PDF_TRIGGERS_TYPES.keystroke]) {
-			let oKeystrokeAction= oTriggers[AscPDF.PDF_TRIGGERS_TYPES.keystroke][0];
-			let sKeystrokeScript= oKeystrokeAction["JS"];
-			let nKeystrokeType	= field.GetKeystrokeType();
-			let aKeystrokeArgs	= field.GetKeystrokeArgs();
-			
-			let oKeystrokeProps = getFormatKeystrokeProps(nKeystrokeType, aKeystrokeArgs, sKeystrokeScript);
-			
-			oActionsProperty.asc_putKeystroke(oKeystrokeProps);
-		}
-
-        // validate
-		if (oTriggers[AscPDF.PDF_TRIGGERS_TYPES.validate]) {
-			let oAction = oTriggers[AscPDF.PDF_TRIGGERS_TYPES.validate][0];
-			let oValidateProps = new Asc.asc_CFieldValidateProperty();
-			
-			let sScript = oAction["JS"];
-			if (sScript.startsWith('AFRange_Validate')) {
-				let aArgs = AscPDF.extractArguments(sScript);
-				oValidateProps.asc_putGreaterThen(aArgs[1]);
-				oValidateProps.asc_putLessThen(aArgs[3]);
-			}
-			else {
-				oValidateProps.asc_putScript(sScript);
-			}
-
-			oActionsProperty.asc_putValidate(oValidateProps);
-		}
-
-		// calculate
-		if (oTriggers[AscPDF.PDF_TRIGGERS_TYPES.calculate]) {
-			let oAction = oTriggers[AscPDF.PDF_TRIGGERS_TYPES.calculate][0];
-			let oCalculateProps = new Asc.asc_CFieldCalculateProperty();
-			
-			let nType;
-			function extractBvCalcText(script) {
-				const match = script.match(/BVCALC\s*([\s\S]*?)\s*EVCALC/);
-				return match ? match[1].trim() : null;
-			}
-			
-			let sScript = oAction["JS"];
-			let bvCalcText = extractBvCalcText(sScript);
-
-			if (bvCalcText) {
-				nType = AscPDF.CalculateType.simpleJs;
-				oCalculateProps.asc_putScript(sScript);
-			}
-			else if (sScript.startsWith('AFSimple_Calculate')) {
-				nType = AscPDF.CalculateType.simpleJs;
-				let aArgs = AscPDF.extractArguments(sScript);
-				let aNames = eval(aArgs[1]);
-				oCalculateProps.asc_putNames(aNames);
-			}
-			else {
-				nType = AscPDF.CalculateType.js;
-				oCalculateProps.asc_putScript(sScript);
-			}
-
-			oCalculateProps.asc_putType(nType);
-			oActionsProperty.asc_putCalculate(oCalculateProps);
+		else {
+			oActionsProperty.asc_putFormat(null);
+			oActionsProperty.asc_putKeystroke(null);
+			oActionsProperty.asc_putValidate(null);
+			oActionsProperty.asc_putCalculate(null);
 		}
 
 		return oActionsProperty;

@@ -1042,7 +1042,7 @@ function (window, undefined) {
 		}
 	};
 	//////////////////////////////////////////////////////////////////
-	///// Number format
+	///// Field Actions
 	//////////////////////////////////////////////////////////////////
 	function asc_CFieldActionsProperty() {
 		this.mouseUp	= undefined;
@@ -1052,10 +1052,11 @@ function (window, undefined) {
 		this.onFocus	= undefined;
 		this.onBlur		= undefined;
 
-		this.format		= null;
-		this.keystroke	= null;
-		this.validate	= null;
-		this.calculate	= null;
+		// text/combobox
+		this.format		= undefined;
+		this.keystroke	= undefined;
+		this.validate	= undefined;
+		this.calculate	= undefined;
 	};
 
 	asc_CFieldActionsProperty.prototype.asc_getMouseUp = function () {
