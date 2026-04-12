@@ -44,6 +44,11 @@ var c_oAscDefaultPlaceholderName = {
 	SignatureOform : "DefaultPlaceholder_SIGNATURE_OFORM",
 };
 
+function private_NormalizePlaceholderText(sText)
+{
+	return ("string" === typeof sText) ? sText : "";
+}
+
 /**
  * Класс для хранения и работы с дополнительными DocContents
  * @param {CDocument} oLogicDocument
@@ -249,6 +254,7 @@ CGlossaryDocument.prototype.private_CreateDefaultPlaceholder = function(sName, s
 	let logicDocument = this.LogicDocument;
 	let styles = logicDocument ? logicDocument.GetStyles() : null;
 	let defaultStyle = styles ? styles.GetDefaultPlaceholderText() : null;
+	sText = private_NormalizePlaceholderText(sText);
 	
 	var oDocPart = this.CreateDocPart(sName);
 
@@ -278,7 +284,7 @@ CGlossaryDocument.prototype.private_CreateDefaultOformPlaceholder = function(sNa
 	var oParagraph = oDocPart.GetFirstParagraph();
 	var oRun       = new ParaRun();
 	oParagraph.AddToContent(0, oRun);
-	sText = sText.replaceAll(' ', '\u00A0');
+	sText = private_NormalizePlaceholderText(sText).replaceAll(' ', '\u00A0');
 	oRun.AddText(sText);
 	
 	oDocPart.SetDocPartBehavior(c_oAscDocPartBehavior.Content);
