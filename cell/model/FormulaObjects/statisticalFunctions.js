@@ -13173,7 +13173,6 @@ function parseStringToCElement (val, cultureInfo) {
 			if (typedData) {
 				const first = typedCache.findLowerIndexInTyped(bbox.r1, typedIndexes);
 				const last = typedCache.findHigherIndexInTyped(bbox.r2, typedIndexes);
-
 				if (isComplement) {
 					for (let j = first; j < last; j += 1) {
 						if (matchFn(typedData[j], searchValue)) {
@@ -13189,28 +13188,31 @@ function parseStringToCElement (val, cultureInfo) {
 						}
 					}
 				}
+			}
 
-				if (checkStrNums) {
-					const strData = column.data[cElementType.string];
-					const strIndexes = column.indexes[cElementType.string];
-					if (strData) {
-						const strFirst = typedCache.findLowerIndexInTyped(bbox.r1, strIndexes);
-						const strLast = typedCache.findHigherIndexInTyped(bbox.r2, strIndexes);
-						if (isComplement) {
-							for (let j = strFirst; j < strLast; j += 1) {
-								const parsed = typedCache.parseAnyNumber(strData[j]);
-								if (parsed !== null && numMatchFn(parsed, searchValue)) {
-									const relRow = strIndexes[j] - bbox.r1;
-									matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
-								}
+			// checkStrNums is intentionally outside the typedData block: a column may
+			// contain string-encoded numbers with no actual number-typed cells at all,
+			// in which case typedData is undefined but strData must still be scanned.
+			if (checkStrNums) {
+				const strData = column.data[cElementType.string];
+				const strIndexes = column.indexes[cElementType.string];
+				if (strData) {
+					const strFirst = typedCache.findLowerIndexInTyped(bbox.r1, strIndexes);
+					const strLast = typedCache.findHigherIndexInTyped(bbox.r2, strIndexes);
+					if (isComplement) {
+						for (let j = strFirst; j < strLast; j += 1) {
+							const parsed = typedCache.parseAnyNumber(strData[j]);
+							if (parsed !== null && numMatchFn(parsed, searchValue)) {
+								const relRow = strIndexes[j] - bbox.r1;
+								matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
 							}
-						} else {
-							for (let j = strFirst; j < strLast; j += 1) {
-								const parsed = typedCache.parseAnyNumber(strData[j]);
-								if (parsed !== null && numMatchFn(parsed, searchValue)) {
-									const relRow = strIndexes[j] - bbox.r1;
-									matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
-								}
+						}
+					} else {
+						for (let j = strFirst; j < strLast; j += 1) {
+							const parsed = typedCache.parseAnyNumber(strData[j]);
+							if (parsed !== null && numMatchFn(parsed, searchValue)) {
+								const relRow = strIndexes[j] - bbox.r1;
+								matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
 							}
 						}
 					}
@@ -13233,8 +13235,10 @@ function parseStringToCElement (val, cultureInfo) {
 			// Early exit: once eliminated >= remaining, every surviving position has
 			// been cleared.  Processing further columns cannot increase eliminated further.
 			if (eliminated >= remaining) { break; }
+			
 		}
 		return eliminated;
+		
 	};
 
 	/**
