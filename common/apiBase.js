@@ -547,7 +547,9 @@
 	}
 	baseEditorsApi.prototype.asc_openDocumentForStandalone                  = function(documentInfo)
 	{
+		setTimeout(() => {
 			this.CoAuthoringApi.onDocumentOpen(documentInfo);
+		}, 2000);
 	}
 
 	baseEditorsApi.prototype.asc_setDocInfo                  = function(oDocInfo)

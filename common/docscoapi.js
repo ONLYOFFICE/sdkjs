@@ -163,6 +163,9 @@
       this._CoAuthoringApi.onSaveChanges = function(e, userId, bFirstLoad) {
         s.callback_OnSaveChanges(e, userId, bFirstLoad);
       };
+      this._CoAuthoringApi.onChangesIndex = function(changesIndex) {
+        s.callback_OnChangesIndex(changesIndex);
+      };
     }
   };
 
@@ -238,6 +241,35 @@
     }
 
     if (data.c === "imgurls" && this._standaloneApp) {
+      const imageArr = [];
+      const pathArr = [];
+      for (let i = 0; i < data?.data?.length; i++) {
+        const t = data?.data[i];
+        const array = new Uint8Array(16);
+        crypto.getRandomValues(array);
+        const hex = Array.from(array)
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+        imageArr.push({
+          url: t,
+          path: `media/${hex}`,
+        });
+        pathArr.push({
+          url: t,
+          path: `media/${hex}`,
+          hex,
+        });
+      }
+
+      window.parent.postMessage(
+        {
+          location: "@onlyofficeeditor",
+          from: "saveMedia",
+          pathArr,
+          key: crypto.randomUUID(),
+        },
+        "*",
+      );
       const imagePayload = {
         type: "documentOpen",
         data: {
@@ -245,10 +277,7 @@
           status: "ok",
           data: {
             error: 0,
-            urls: (data?.data ?? [])?.map((t) => ({
-              url: t,
-              path: `media/${Date.now()}`,
-            })),
+            urls: imageArr,
           },
         },
       };
