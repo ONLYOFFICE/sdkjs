@@ -12326,6 +12326,10 @@ function parseStringToCElement (val, cultureInfo) {
 		let valueToAdd = value.value;
 		if (value.type === cElementType.error) {
 			valueToAdd = value.errorType;
+		} else if (value.type === cElementType.string && !column.hasNumericStrings &&
+			this.parseAnyNumber(valueToAdd) !== null) {
+			// Mark columns that contain at least one numeric-looking string.
+			column.hasNumericStrings = true;
 		}
 		data[value.type].push(valueToAdd);
 		indexes[value.type].push(index);
@@ -12413,6 +12417,11 @@ function parseStringToCElement (val, cultureInfo) {
 		for (let i = bbox.c1; i <= bbox.c2; i += 1) {
 			this.updateColumnData(ws, i, bbox.r1, bbox.r2);
 			const column = this.data[wsId][i];
+			// Numeric string fallback is only needed for columns that actually
+			// contain a string parsable as a number.
+			if (convertToNumber && !column.hasNumericStrings) {
+				continue;
+			}
 			const typedData = column.data[type];
 			if (typedData) {
 				const typedIndexes = column.indexes[type];
@@ -12515,6 +12524,11 @@ function parseStringToCElement (val, cultureInfo) {
 				} else {
 					column.data[newType] = [newValue];
 					column.indexes[newType] = [changedIndex];
+				}
+				// Mirror pushValue on inline edits; the flag is sticky-true by design.
+				if (newType === cElementType.string && !column.hasNumericStrings &&
+					this.parseAnyNumber(newValue) !== null) {
+					column.hasNumericStrings = true;
 				}
 			}
 		}
@@ -12650,13 +12664,58 @@ function parseStringToCElement (val, cultureInfo) {
 	}
 
 	/**
+	 * Shared base for caches that combine a per-range result map with a per-column
+	 * typed index.  Factors the identical `remove` / `clean` logic out of
+	 * `CountIfCache` and `CountIFSCache` so that future invalidation changes stay
+	 * in one place.
+	 *
+	 * @constructor
+	 * @param {Object} typedCache - per-column typed index (CountIfTypedCache or subclass)
+	 */
+	function BaseTypedCache(typedCache) {
+		this.cacheId = {};
+		this.cacheRanges = {};
+		this.typedCache = typedCache;
+	}
+
+	/**
+	 * Invalidation callback invoked when a cell value changes.
+	 * Clears result entries for every bbox that contains the changed cell, then
+	 * patches the shared typed column index.
+	 *
+	 * @param {Object} cell    - changed cell
+	 * @param {*}      dataOld - previous cell data
+	 * @param {*}      dataNew - new cell data
+	 */
+	BaseTypedCache.prototype.remove = function (cell, dataOld, dataNew) {
+		const wsId = cell.ws.getId();
+		const cacheRange = this.cacheRanges[wsId];
+		if (cacheRange) {
+			const oGetRes = cacheRange.get(new Asc.Range(cell.nCol, cell.nRow, cell.nCol, cell.nRow));
+			for (let i = 0; i < oGetRes.all.length; i += 1) {
+				oGetRes.all[i].data.results = {};
+			}
+		}
+		this.typedCache.changeData(cell, dataOld, dataNew);
+	};
+
+	/**
+	 * Drop every cached result and rebuild the typed index from scratch on next
+	 * access.  Called on bulk resets (sheet reload, data-validation mass update).
+	 */
+	BaseTypedCache.prototype.clean = function () {
+		this.cacheId = {};
+		this.cacheRanges = {};
+		this.typedCache.clean();
+	};
+
+	/**
 	 * @constructor
 	 */
 	function CountIfCache() {
-		this.cacheId = {};
-		this.cacheRanges = {};
-		this.typedCache = new CountIfTypedCache();
+		BaseTypedCache.call(this, new CountIfTypedCache());
 	}
+	CountIfCache.prototype = Object.create(BaseTypedCache.prototype);
 	CountIfCache.prototype.constructor = CountIfCache;
 
 	CountIfCache.prototype.calculate = function (arg, _arg1) {
@@ -12777,23 +12836,6 @@ function parseStringToCElement (val, cultureInfo) {
 		}
 		return new cNumber(_count);
 	};
-	CountIfCache.prototype.remove = function (cell, dataOld, dataNew) {
-		const wsId = cell.ws.getId();
-		const cacheRange = this.cacheRanges[wsId];
-		if (cacheRange) {
-			const oGetRes = cacheRange.get(new Asc.Range(cell.nCol, cell.nRow, cell.nCol, cell.nRow));
-			for (let i = 0; i < oGetRes.all.length; i += 1) {
-				const elem = oGetRes.all[i];
-				elem.data.results = {};
-			}
-		}
-		this.typedCache.changeData(cell, dataOld, dataNew);
-	};
-	CountIfCache.prototype.clean = function () {
-		this.cacheId = {};
-		this.cacheRanges = {};
-		this.typedCache.clean();
-	};
 
 	// -------------------------------------------------------CountIFSCache------------------------------------------
 
@@ -12831,10 +12873,9 @@ function parseStringToCElement (val, cultureInfo) {
 	 * @constructor
 	 */
 	function CountIFSCache() {
-		this.cacheId = {};
-		this.cacheRanges = {};
-		this.typedCache = new CountIfTypedCache();
+		BaseTypedCache.call(this, new CountIfTypedCache());
 	}
+	CountIFSCache.prototype = Object.create(BaseTypedCache.prototype);
 	CountIFSCache.prototype.constructor = CountIFSCache;
 
 	/**
@@ -12847,8 +12888,15 @@ function parseStringToCElement (val, cultureInfo) {
 	 */
 	CountIFSCache.prototype.calculate = function (arg, _arg1) {
 		// Fast path: validate types, normalise criteria, and build the cache key in a
-		// single pass — without allocating any intermediate arrays.  The cache is
-		// checked immediately after, so cache hits return without any allocation at all.
+		// single pass.  The normalised criteria values and per-range metadata are kept
+		// so that _calculateMiss can reuse them without re-normalising (avoids a second
+		// allocation of cell/empty/range-crossed cElements per COUNTIFS invocation).
+		const pairs = arg.length >> 1;
+		const ranges = new Array(pairs);
+		const criteriaVals = new Array(pairs);
+		const bboxes = new Array(pairs);
+		const wsIds = new Array(pairs);
+
 		let sKey = '';
 		let cacheElem = null;
 
@@ -12880,7 +12928,8 @@ function parseStringToCElement (val, cultureInfo) {
 
 			const ws = rangeArg.getWS();
 			const wsId = ws.getId();
-			const bboxName = rangeArg.getBBox0().getName();
+			const bbox = rangeArg.getBBox0();
+			const bboxName = bbox.getName();
 
 			if (k > 0) { sKey += g_cCharDelimiter; }
 			sKey += wsId + g_cCharDelimiter + bboxName + g_cCharDelimiter + criteriaArg.getValue();
@@ -12893,6 +12942,12 @@ function parseStringToCElement (val, cultureInfo) {
 					this.cacheId[sPrimaryKey] = cacheElem;
 				}
 			}
+
+			const idx = k >> 1;
+			ranges[idx] = rangeArg;
+			criteriaVals[idx] = criteriaArg;
+			bboxes[idx] = bbox;
+			wsIds[idx] = wsId;
 		}
 
 		// Cache hit: return immediately — no getDimensions, no array allocation.
@@ -12900,52 +12955,24 @@ function parseStringToCElement (val, cultureInfo) {
 			return cacheElem.results[sKey];
 		}
 
-		// Cache miss: delegate to the slow path which builds arrays, validates
-		// dimensions, registers bboxes in RangeDataManager, and runs _calculate.
-		return this._calculateMiss(arg, _arg1, sKey, cacheElem);
+		// Cache miss: delegate to the slow path with the already-normalised data.
+		return this._calculateMiss(ranges, criteriaVals, bboxes, wsIds, sKey, cacheElem);
 	};
 
 	/**
-	 * Slow path for cache misses.  Rebuilds normalised args into proper arrays,
-	 * validates that all criteria ranges share the same dimensions, registers
-	 * each bbox in the per-worksheet RangeDataManager for future invalidation,
-	 * then runs _calculate and stores the result.
+	 * Slow path for cache misses.  Validates that all criteria ranges share the same
+	 * dimensions, registers each bbox in the per-worksheet RangeDataManager for
+	 * future invalidation, then runs _calculate and stores the result.
 	 *
-	 * @param {Array} arg - raw formula arguments (range, criteria, range, criteria, …)
-	 * @param {Object} _arg1 - formula context (for criteria cross-reference)
+	 * @param {Array} ranges - range arguments (pre-normalised in calculate)
+	 * @param {Array} criteriaVals - normalised criteria cElement values
+	 * @param {Array} bboxes - pre-computed bounding boxes
+	 * @param {Array} wsIds - pre-computed worksheet ids
 	 * @param {string} sKey - pre-computed composite cache key
 	 * @param {Object} cacheElem - cache entry ({results: {}, bboxKeys: Set})
 	 * @returns {cNumber|cError}
 	 */
-	CountIFSCache.prototype._calculateMiss = function (arg, _arg1, sKey, cacheElem) {
-		const ranges = [];
-		const criteriaVals = [];
-		const bboxes = [];
-		const wsIds = [];
-
-		for (let k = 0; k < arg.length; k += 2) {
-			let criteriaArg = arg[k + 1];
-
-			// Re-normalise criteria (safe: idempotent within the same evaluation).
-			if (cElementType.cellsRange === criteriaArg.type || cElementType.cellsRange3D === criteriaArg.type) {
-				criteriaArg = criteriaArg.cross(_arg1);
-			} else if (cElementType.array === criteriaArg.type) {
-				criteriaArg = criteriaArg.getElementRowCol(0, 0);
-			}
-			if (criteriaArg.type === cElementType.cell || criteriaArg.type === cElementType.cell3D) {
-				criteriaArg = criteriaArg.getValue();
-			}
-			if (criteriaArg.type === cElementType.empty) {
-				criteriaArg = criteriaArg.tocNumber();
-			}
-
-			const rangeArg = arg[k];
-			ranges.push(rangeArg);
-			criteriaVals.push(criteriaArg);
-			bboxes.push(rangeArg.getBBox0());
-			wsIds.push(rangeArg.getWS().getId());
-		}
-
+	CountIFSCache.prototype._calculateMiss = function (ranges, criteriaVals, bboxes, wsIds, sKey, cacheElem) {
 		// Validate that all criteria ranges share the same dimensions.
 		const baseDim = ranges[0].getDimensions();
 		for (let k = 1; k < ranges.length; k += 1) {
@@ -13170,7 +13197,7 @@ function parseStringToCElement (val, cultureInfo) {
 				matchingRelRows.fill(0);
 			}
 
-			if (typedData) {
+			if (typedData && matchFn) {
 				const first = typedCache.findLowerIndexInTyped(bbox.r1, typedIndexes);
 				const last = typedCache.findHigherIndexInTyped(bbox.r2, typedIndexes);
 				if (isComplement) {
@@ -13190,10 +13217,9 @@ function parseStringToCElement (val, cultureInfo) {
 				}
 			}
 
-			// checkStrNums is intentionally outside the typedData block: a column may
-			// contain string-encoded numbers with no actual number-typed cells at all,
-			// in which case typedData is undefined but strData must still be scanned.
-			if (checkStrNums) {
+			// checkStrNums is intentionally outside typedData: a column may have
+			// string-encoded numbers and no number-typed cells at all.
+			if (checkStrNums && column.hasNumericStrings) {
 				const strData = column.data[cElementType.string];
 				const strIndexes = column.indexes[cElementType.string];
 				if (strData) {
@@ -13235,10 +13261,8 @@ function parseStringToCElement (val, cultureInfo) {
 			// Early exit: once eliminated >= remaining, every surviving position has
 			// been cleared.  Processing further columns cannot increase eliminated further.
 			if (eliminated >= remaining) { break; }
-			
 		}
 		return eliminated;
-		
 	};
 
 	/**
@@ -13293,33 +13317,6 @@ function parseStringToCElement (val, cultureInfo) {
 		}
 
 		return new cNumber(remaining);
-	};
-
-	/**
-	 * Invalidation callback.  Called whenever a cell value changes.
-	 * Clears all cached results for ranges that contain the changed cell,
-	 * and updates the shared typed column cache.
-	 *
-	 * @param {Object} cell     - changed cell
-	 * @param {*}      dataOld  - previous cell data
-	 * @param {*}      dataNew  - new cell data
-	 */
-	CountIFSCache.prototype.remove = function (cell, dataOld, dataNew) {
-		const wsId = cell.ws.getId();
-		const cacheRange = this.cacheRanges[wsId];
-		if (cacheRange) {
-			const oGetRes = cacheRange.get(new Asc.Range(cell.nCol, cell.nRow, cell.nCol, cell.nRow));
-			for (let i = 0; i < oGetRes.all.length; i += 1) {
-				oGetRes.all[i].data.results = {};
-			}
-		}
-		this.typedCache.changeData(cell, dataOld, dataNew);
-	};
-
-	CountIFSCache.prototype.clean = function () {
-		this.cacheId = {};
-		this.cacheRanges = {};
-		this.typedCache.clean();
 	};
 
 	// -------------------------------------------------------SumIfSumRangeCache------------------------------------------
@@ -13670,6 +13667,11 @@ function parseStringToCElement (val, cultureInfo) {
 
 			const searchColumn = this.data[searchRangeWsId][i];
 			const sumColumn = sumCache.data[sumRangeWsId][sumColumnIndex];
+
+			// Skip the string pass for columns with no numeric-looking strings.
+			if (convertToNumber && !searchColumn.hasNumericStrings) {
+				continue;
+			}
 
 			const searchTypedData = searchColumn.data[type];
 			const searchTypedIndexes = searchColumn.indexes[type];
