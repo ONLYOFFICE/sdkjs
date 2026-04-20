@@ -14726,6 +14726,104 @@
 	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedCells.js
 	 */
+	/**
+	 * Returns the current table cell (where the cursor is placed).
+	 * @memberof ApiTable
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiTableCell | null}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetCurCell.js
+	 */
+	ApiTable.prototype.GetCurCell = function(){
+		let cell = this.Table.GetCurCell();
+		if (cell)
+			return new ApiTableCell(cell);
+
+		return null;
+	};
+	/**
+	 * Sets the width of the specified column (by index) of the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CDE"]
+	 * @param {number} columnIndex - The zero-based column index.
+	 * @param {EMU} width - The column width measured in English measure units.
+	 * @returns {EMU | null} - Returns the actual column width set (in EMU), or null if the column index is invalid.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetColumnWidth.js
+	 */
+	ApiTable.prototype.SetColumnWidth = function(columnIndex, width){
+		const table = this.Table;
+		if (!table || columnIndex < 0 || columnIndex >= table.TableGrid.length)
+			return null;
+
+		const oTablePr = table.Get_CompiledPr(false).TablePr;
+		if (tbllayout_AutoFit === oTablePr.TableLayout)
+			table.SetTableLayout(tbllayout_Fixed);
+
+		const colsMinWidth = table.GetMinWidth(true);
+		const minWidth = colsMinWidth[columnIndex] || 1;
+		const widthMM = Math.max(private_EMU2MM(width), minWidth);
+
+		const newGrid = table.TableGrid.slice();
+		newGrid[columnIndex] = widthMM;
+		table.SetTableGrid(newGrid);
+
+		const rowsCount = table.GetRowsCount();
+		for (let rowIndex = 0; rowIndex < rowsCount; rowIndex++) {
+			const row = table.GetRow(rowIndex);
+			let gridColumnIndex = row.GetBefore().Grid;
+			const cellsCount = row.GetCellsCount();
+			for (let cellIndex = 0; cellIndex < cellsCount; cellIndex++) {
+				const cell = row.GetCell(cellIndex);
+				const gridSpan = cell.GetGridSpan();
+				if (gridColumnIndex <= columnIndex && columnIndex < gridColumnIndex + gridSpan) {
+					const spanWidth = table.GetSpanWidth(gridColumnIndex, gridSpan);
+					cell.SetW(new CTableMeasurement(tblwidth_Mm, spanWidth));
+				}
+				gridColumnIndex += gridSpan;
+			}
+		}
+
+		return private_MM2EMU(widthMM);
+	};
+	/**
+	 * Returns the width of the specified column (by index) of the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CDE"]
+	 * @param {number} columnIndex - The zero-based column index.
+	 * @returns {EMU | null}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetColumnWidth.js
+	 */
+	ApiTable.prototype.GetColumnWidth = function(columnIndex){
+		const table = this.Table;
+		const isValidIndex = table && columnIndex >= 0 && columnIndex < table.TableGrid.length;
+		if (isValidIndex)
+			return private_MM2EMU(table.TableGrid[columnIndex]);
+
+		return null;
+	};
+	/**
+	 * Sets the total height of the current table. The height is distributed proportionally among the rows
+	 * (the same way as resizing the table by its outer handle).
+	 * @memberof ApiTable
+	 * @typeofeditors ["CDE"]
+	 * @param {EMU} nValue - The table height in English measure units.
+	 * @returns {EMU | null} - Returns the requested height (in EMU), or null if the table is not recalculated yet.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetHeight.js
+	 */
+	ApiTable.prototype.SetHeight = function(nValue){
+		const table = this.Table;
+		if (!table || !table.Pages || table.Pages.length <= 0)
+			return null;
+
+		const heightMM = Math.max(0, nValue / 36000);
+		const bounds = table.GetPageBounds(table.Pages.length - 1);
+		table.Resize(bounds.Right - bounds.Left, heightMM);
+
+		return private_MM2EMU(heightMM);
+	};
 	ApiTable.prototype.GetSelectedCells = function(){
 		let cells = [];
 
@@ -14958,6 +15056,33 @@
 	ApiTableRow.prototype.GetCellsCount = function()
 	{
 		return this.Row.GetCellsCount();
+	};
+	/**
+	 * Returns the height of the current table row.
+	 * @memberof ApiTableRow
+	 * @typeofeditors ["CDE"]
+	 * @returns {EMU | null}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetHeight.js
+	 */
+	ApiTableRow.prototype.GetHeight = function()
+	{
+		const table = this.Row.Table;
+		if (!table || !table.RowsInfo)
+			return null;
+
+		const rowInfo = table.RowsInfo[this.Row.Index];
+		if (!rowInfo || !rowInfo.H)
+			return null;
+
+		let height = 0;
+		for (let page in rowInfo.H)
+			height += rowInfo.H[page];
+
+		if (height <= 0)
+			return null;
+
+		return private_MM2EMU(height);
 	};
 	/**
 	 * Returns a cell by its position.
@@ -31208,6 +31333,10 @@
 	ApiTable.prototype["RemoveColumn"]               = ApiTable.prototype.RemoveColumn;
 	ApiTable.prototype["Copy"]                       = ApiTable.prototype.Copy;
 	ApiTable.prototype["GetCell"]                    = ApiTable.prototype.GetCell;
+	ApiTable.prototype["GetCurCell"]                 = ApiTable.prototype.GetCurCell;
+	ApiTable.prototype["SetColumnWidth"]             = ApiTable.prototype.SetColumnWidth;
+	ApiTable.prototype["GetColumnWidth"]             = ApiTable.prototype.GetColumnWidth;
+	ApiTable.prototype["SetHeight"]                  = ApiTable.prototype.SetHeight;
 	ApiTable.prototype["Split"]                      = ApiTable.prototype.Split;
 	ApiTable.prototype["AddRows"]                    = ApiTable.prototype.AddRows;
 	ApiTable.prototype["AddColumns"]                 = ApiTable.prototype.AddColumns;
@@ -31237,6 +31366,8 @@
 	ApiTableRow.prototype["GetClassType"]            = ApiTableRow.prototype.GetClassType;
 	ApiTableRow.prototype["GetInternalId"]           = ApiTableRow.prototype.GetInternalId;
 	ApiTableRow.prototype["GetCellsCount"]           = ApiTableRow.prototype.GetCellsCount;
+	ApiTableRow.prototype["SetHeight"]               = ApiTableRow.prototype.SetHeight;
+	ApiTableRow.prototype["GetHeight"]               = ApiTableRow.prototype.GetHeight;
 	ApiTableRow.prototype["GetCell"]                 = ApiTableRow.prototype.GetCell;
 	ApiTableRow.prototype["GetIndex"]           	 = ApiTableRow.prototype.GetIndex;
 	ApiTableRow.prototype["GetParentTable"]          = ApiTableRow.prototype.GetParentTable;

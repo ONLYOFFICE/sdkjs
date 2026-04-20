@@ -393,6 +393,15 @@
 			action: ACTION.NOT_WRITE_PREV
 		},
 		{
+			prevType: "DeselectDrawing",
+			editor: [AscCommon.c_oEditorId.Word, AscCommon.c_oEditorId.Presentation],
+			curType: "SelectDrawing",
+			check: function(type, additional) {
+				return true;
+			},
+			action: ACTION.NOT_WRITE_PREV
+		},
+		{
 			prevType: "SetDrawingPos",
 			editor: [AscCommon.c_oEditorId.Word],
 			curType: "SelectDrawing",
@@ -608,6 +617,31 @@
 		}
 
 		return { varName: varName, declaration: "\tlet " + varName + getSelectedTables };
+	}
+
+	function private_getSelectedCellsVar(reg, getterName)
+	{
+		let getter = getterName || "GetSelectedCells";
+		let cellsVar = varRegistry.inc('cells');
+		let cellVar = varRegistry.inc('cell');
+		let declaration = "\tlet " + cellsVar + " = " + reg.varName + "." + getter + "();\n"
+			+ "\tif (!" + cellsVar + ".length) {\n"
+			+ "\t\tlet " + cellVar + " = " + reg.varName + ".GetCurCell();\n"
+			+ "\t\tif (" + cellVar + ") " + cellsVar + ".push(" + cellVar + ");\n"
+			+ "\t}\n";
+		return { varName: cellsVar, declaration: declaration };
+	}
+
+	function private_getSelectedRowsVar(reg)
+	{
+		let rowsVar = varRegistry.inc('rows');
+		let cellVar = varRegistry.inc('cell');
+		let declaration = "\tlet " + rowsVar + " = " + reg.varName + ".GetSelectedRows();\n"
+			+ "\tif (!" + rowsVar + ".length) {\n"
+			+ "\t\tlet " + cellVar + " = " + reg.varName + ".GetCurCell();\n"
+			+ "\t\tif (" + cellVar + ") " + rowsVar + ".push(" + reg.varName + ".GetRow(" + cellVar + ".GetRowIndex()));\n"
+			+ "\t}\n";
+		return { varName: rowsVar, declaration: declaration };
 	}
 
 	function private_GetAlignH(nAlign)
@@ -1549,7 +1583,8 @@
 			let top = d.Top;
 			let left = d.Left;
 			let right = d.Right;
-			return reg.declaration + "\t" + reg.varName + ".GetSelectedCells().forEach(function(cell){\n" +
+			let cellsReg = private_getSelectedCellsVar(reg);
+			return reg.declaration + cellsReg.declaration + "\t" + cellsReg.varName + ".forEach(function(cell){\n" +
 				(bottom ? "\t\tcell.SetCellMarginBottom(" + AscCommon.MMToTwips(bottom, -1) + ");\n" : "") +
 				(left ? "\t\tcell.SetCellMarginLeft(" + AscCommon.MMToTwips(left, -1) + ");\n" : "") +
 				(right ? "\t\tcell.SetCellMarginRight(" + AscCommon.MMToTwips(right, -1) + ");\n" : "") +
@@ -1590,7 +1625,8 @@
 			let top = borders.Top;
 			let left = borders.Left;
 			let right = borders.Right;
-			return reg.declaration + "\t" + reg.varName + ".GetSelectedCells().forEach(function(cell){\n" +
+			let cellsReg = private_getSelectedCellsVar(reg);
+			return reg.declaration + cellsReg.declaration + "\t" + cellsReg.varName + ".forEach(function(cell){\n" +
 				"\t\tcell.SetCellBorderBottom(\"" + (bottom.Value ? 'single' : 'none') + "\", " + bottom.Size * 72 * 8 / 25.4 + ", " + bottom.Space + ", " + bottom.Color.r + ", " + bottom.Color.g + ", " + bottom.Color.b + ");\n" +
 				"\t\tcell.SetCellBorderLeft(\"" + (left.Value ? 'single' : 'none') + "\", " + left.Size * 72 * 8 / 25.4 + ", " + left.Space + ", " + left.Color.r + ", " + left.Color.g + ", " + left.Color.b + ");\n" +
 				"\t\tcell.SetCellBorderRight(\"" + (right.Value ? 'single' : 'none') + "\", " + right.Size * 72 * 8 / 25.4 + ", " + right.Space + ", " + right.Color.r + ", " + right.Color.g + ", " + right.Color.b + ");\n" +
@@ -1617,27 +1653,32 @@
 		setCellBackground		: function(oAdditional){
 			let reg = private_getTableVar(oAdditional.tableId);
 			let color = oAdditional.data.Color;
-			return reg.declaration + "\t" + reg.varName + ".GetSelectedCells().forEach(function(cell){\n" +
+			let cellsReg = private_getSelectedCellsVar(reg);
+			return reg.declaration + cellsReg.declaration + "\t" + cellsReg.varName + ".forEach(function(cell){\n" +
 				"\t\tcell.SetBackgroundColor(" + color.r + ", " + color.g + ", " + color.b + ");\n" +
 				"\t});\n";
 		},
 		setCellWidth			: function(oAdditional){
 			let reg = private_getTableVar(oAdditional.tableId);
 			let cellPrVar = varRegistry.inc('cellPr');
+			let cellsReg = private_getSelectedCellsVar(reg, "GetSelectedColumnsCells");
 			return reg.declaration
 				+ "\tlet " + cellPrVar + " = Api.CreateTableCellPr();\n"
 				+ "\t" + cellPrVar + ".SetWidth(\"twips\", " + AscCommon.MMToTwips(oAdditional.data, -1) + ");\n"
-				+ "\t" + reg.varName + ".GetSelectedColumnsCells().forEach(function(cell){\n"
+				+ cellsReg.declaration
+				+ "\t" + cellsReg.varName + ".forEach(function(cell){\n"
 				+ "\t\tcell.SetCellPr(" + cellPrVar + ");\n"
 				+ "\t});\n";
 		},
 		setCellWrap				: function(oAdditional){
 			let reg = private_getTableVar(oAdditional.tableId);
 			let cellPrVar = varRegistry.inc('cellPr');
+			let cellsReg = private_getSelectedCellsVar(reg);
 			return reg.declaration
 				+ "\tlet " + cellPrVar + " = Api.CreateTableCellPr();\n"
 				+ "\t" + cellPrVar + ".SetNoWrap(" + oAdditional.data + ");\n"
-				+ "\t" + reg.varName + ".GetSelectedCells().forEach(function(cell){\n"
+				+ cellsReg.declaration
+				+ "\t" + cellsReg.varName + ".forEach(function(cell){\n"
 				+ "\t\tcell.SetCellPr(" + cellPrVar + ");\n"
 				+ "\t});\n";
 		},
@@ -1662,12 +1703,11 @@
 		},
 		setRowHeightTable		: function(oAdditional){
 			let reg = private_getTableVar(oAdditional.tableId);
-			let rowPrVar = varRegistry.inc('rowPr');
-			return reg.declaration
-				+ "\tlet " + rowPrVar + " = Api.CreateTableRowPr();\n"
-				+ "\t" + rowPrVar + ".SetHeight(\"atLeast\", " + AscCommon.MMToTwips(oAdditional.data, -1) + ");\n"
-				+ "\t" + reg.varName + ".GetSelectedRows().forEach(function(row){\n"
-				+ "\t\trow.SetRowPr(" + rowPrVar + ");\n"
+			let twips = AscCommon.MMToTwips(oAdditional.data, -1);
+			let rowsReg = private_getSelectedRowsVar(reg);
+			return reg.declaration + rowsReg.declaration
+				+ "\t" + rowsReg.varName + ".forEach(function(row){\n"
+				+ "\t\tif (row) row.SetHeight(\"atLeast\", " + twips + ");\n"
 				+ "\t});\n";
 		},
 		selectTable				: function(data){
@@ -1755,12 +1795,13 @@
 		setTableResize		: function(oAdditional)
 		{
 			let reg = private_getTableVar(oAdditional.tableId);
-			let width = AscCommon.MMToTwips(oAdditional.width, -1);
-			let height = AscCommon.MMToTwips(oAdditional.height, -1);
-
-			return reg.declaration
-				+ "\t" + reg.varName + ".SetWidth(\"twips\", " + width + ");\n"
-				//+ reg.varName + ".SetHeight(\"twips\", " + height + ");\n"   // no api for height
+			let grid = oAdditional.tableGrid;
+			if (!grid || !grid.length)
+				return "";
+			let text = reg.declaration;
+			for (let i = 0; i < grid.length; i++)
+				text += "\t" + reg.varName + ".SetColumnWidth(" + i + ", " + Math.round(grid[i] * 36000) + ");\n";
+			return text;
 		},
 	};
 
@@ -2598,7 +2639,7 @@
 			let varName = prop.tableId
 				? varRegistry.register(prop.tableId, "table")
 				: varRegistry.inc('table');
-			let width = prop.tableGrid.map(function(num) { return AscCommon.MMToTwips(num, -1) });
+			let width = prop.tableGrid.map(function(num) { return Math.round(num * 36000) });
 			let styleStr = prop.style ? prop.style : "";
 			let styleVar = varRegistry.inc('tableStyle');
 
@@ -2607,16 +2648,13 @@
 				+ "\t\tlet table = Api.CreateTable(" + prop.col + ", " + prop.row + ");\n"
 				+ "\t\tlet " + styleVar + " = presentation.GetStyle(\"" + styleStr + "\");\n"
 				+ "\t\tif (" + styleVar + ") table.SetStyle(" + styleVar + ");\n"
-				+ "\t\tlet row = table.GetRow(0);\n"
 				+ "\t\t[" + width.toString() + "].forEach(function(width, index){\n"
-				+ "\t\t\tlet cellColumnFirst = row.GetCell(index);\n"
-				+ "\t\t\tlet cellPr = Api.CreateTableCellPr();\n"
-				+ "\t\t\tcellPr.SetWidth(\"twips\", width);\n"
-				+ "\t\t\tcellColumnFirst.SetCellPr(cellPr);\n"
+				+ "\t\t\ttable.SetColumnWidth(index, width);\n"
 				+ "\t\t});\n"
 				+ "\t\tpresentation.GetCurrentSlide().AddObject(table);\n"
 				//+ "\t\ttable.GetRange(0, 0).Select();\n"
 				+ "\t\ttable.SetPosition(" + prop.x + " * 36000.0, " + prop.y + " * 36000.0);\n"
+				+ "\t\ttable.Select(true);\n"
 				+ "\t\treturn table;\n"
 				+ "\t}());\n";
 		},
@@ -2716,6 +2754,7 @@
 		},
 		selectDrawing				: function(shapes)
 		{
+			debugger
 			let str = "";
 			let shapesSort = [];
 			function isDrawingOnSlide(oDrawing) {
@@ -2763,7 +2802,7 @@
 			let isTable = oAdditional.isTable;
 
 			if (isTable === true) {
-				return "\tpresentation.GetCurrentTable().Unselect();\n";
+				return "\tpresentation.GetActiveTable().Unselect();\n";
 			}
 
 			if (varName === undefined) {
@@ -2877,10 +2916,17 @@
 		{
 			return "\tApi.GetSelection().GetShapes().forEach(draw => draw.SetWrappingStyle(\"" + getWrappingStyleName(props) + "\"))\n"
 		},
-		setDrawingPos			: function(pos)
+		setDrawingPos			: function(data)
 		{
+			// if (data.id.indexOf("Table") === 0)
+			// 	return "\tpresentation.GetActiveTable().SetPosition(" + data.x + " * 36000.0, " + data.y + " * 36000.0);\n";
+
 			return "\tApi.GetSelection().GetShapes().forEach(draw => {\n" +
-				"\t\tdraw.SetPosition(" + pos.x + " * 36000.0, " + pos.y + " * 36000.0);\n" +
+				"\t\tdraw.SetPosition(" + data.x + " * 36000.0, " + data.y + " * 36000.0);\n" +
+				"\t});\n"
+			
+			return "\tApi.GetSelection().GetShapes().forEach(draw => {\n" +
+				"\t\tdraw.SetPosition(" + data.x + " * 36000.0, " + data.y + " * 36000.0);\n" +
 				"\t});\n"
 		},
 		setShapeX				: function(pos)
@@ -3054,12 +3100,13 @@
 		setTableResize		: function(oAdditional)
 		{
 			let reg = private_getTableVar(oAdditional.tableId);
-			let width = AscCommon.MMToTwips(oAdditional.width, -1);
-			let height = AscCommon.MMToTwips(oAdditional.height, -1);
-
-			return reg.declaration
-				+ "\t" + reg.varName + ".SetWidth(\"twips\", " + width + ");\n"
-				//+ reg.varName + ".SetHeight(\"twips\", " + height + ");\n"   // no api for height
+			let grid = oAdditional.tableGrid;
+			if (!grid || !grid.length)
+				return "";
+			let text = reg.declaration;
+			for (let i = 0; i < grid.length; i++)
+				text += "\t" + reg.varName + ".SetColumnWidth(" + i + ", " + Math.round(grid[i] * 36000) + ");\n";
+			return text;
 		},
 		setTableBorders		: function(oAdditional){
 			let reg = private_getTableVar(oAdditional.tableId);
@@ -3092,8 +3139,9 @@
 			let left = borders.Left;
 			let right = borders.Right;
 
-			return reg.declaration
-				+ "\t" + reg.varName + ".GetSelectedCells().forEach(function(cell){\n"
+			let cellsReg = private_getSelectedCellsVar(reg);
+			return reg.declaration + cellsReg.declaration
+				+ "\t" + cellsReg.varName + ".forEach(function(cell){\n"
 				+ (bottom ? "\t\tcell.SetCellBorderBottom(\"" + (bottom.Value ? 'single' : 'none') + "\", " + bottom.Size + ", Api.CreateSolidFill(Api.RGB(" + bottom.Color.r + ", " + bottom.Color.g + ", " + bottom.Color.b + "))); \n" : "")
 				+ (left ? "\t\tcell.SetCellBorderLeft(\"" + (left.Value ? 'single' : 'none') + "\", " + left.Size + ", Api.CreateSolidFill(Api.RGB(" + left.Color.r + ", " + left.Color.g + ", " + left.Color.b + "))); \n" : "")
 				+ (right ? "\t\tcell.SetCellBorderRight(\"" + (right.Value ? 'single' : 'none') + "\", " + right.Size + ", Api.CreateSolidFill(Api.RGB(" + right.Color.r + ", " + right.Color.g + ", " + right.Color.b + "))); \n" : "")
@@ -3122,7 +3170,8 @@
 			let top = d.Top;
 			let left = d.Left;
 			let right = d.Right;
-			return reg.declaration + "\t" + reg.varName + ".GetSelectedCells().forEach(function(cell){\n" +
+			let cellsReg = private_getSelectedCellsVar(reg);
+			return reg.declaration + cellsReg.declaration + "\t" + cellsReg.varName + ".forEach(function(cell){\n" +
 				(bottom ? "\t\tcell.SetCellMarginBottom(" + AscCommon.MMToTwips(bottom, -1) + ");\n" : "") +
 				(left ? "\t\tcell.SetCellMarginLeft(" + AscCommon.MMToTwips(left, -1) + ");\n" : "") +
 				(right ? "\t\tcell.SetCellMarginRight(" + AscCommon.MMToTwips(right, -1) + ");\n" : "") +
@@ -3137,28 +3186,32 @@
 		setCellBackground	: function(oAdditional){
 			let reg = private_getTableVar(oAdditional.tableId);
 			let color = oAdditional.data.Color;
-			return reg.declaration + "\t" + reg.varName + ".GetSelectedCells().forEach(function(cell){\n" +
+			let cellsReg = private_getSelectedCellsVar(reg);
+			return reg.declaration + cellsReg.declaration + "\t" + cellsReg.varName + ".forEach(function(cell){\n" +
 				"\t\tcell.SetBackgroundColor(Api.RGB(" + color.r + ", " + color.g + ", " + color.b + "));\n" +
 				"\t});\n";
 		},
 		setCellWidth		: function(oAdditional){
 			let reg = private_getTableVar(oAdditional.tableId);
-			let cellPrVar = varRegistry.inc('cellPr');
-			return reg.declaration
-				+ "\tlet " + cellPrVar + " = Api.CreateTableCellPr();\n"
-				+ "\t" + cellPrVar + ".SetWidth(\"twips\", " + AscCommon.MMToTwips(oAdditional.data, -1) + ");\n"
-				+ "\t" + reg.varName + ".GetSelectedColumnsCells().forEach(function(cell){\n"
-				+ "\t\tcell.SetCellPr(" + cellPrVar + ");\n"
+			let cellsReg = private_getSelectedCellsVar(reg, "GetSelectedColumnsCells");
+			let seenVar = varRegistry.inc('seenCols');
+			let widthEMU = Math.round(oAdditional.data * 36000);
+			return reg.declaration + cellsReg.declaration
+				+ "\tlet " + seenVar + " = {};\n"
+				+ "\t" + cellsReg.varName + ".forEach(function(cell){\n"
+				+ "\t\tlet idx = cell.GetIndex();\n"
+				+ "\t\tif (" + seenVar + "[idx]) return;\n"
+				+ "\t\t" + seenVar + "[idx] = true;\n"
+				+ "\t\t" + reg.varName + ".SetColumnWidth(idx, " + widthEMU + ");\n"
 				+ "\t});\n";
 		},
 		setRowHeightTable	: function(oAdditional){
 			let reg = private_getTableVar(oAdditional.tableId);
-			let rowPrVar = varRegistry.inc('rowPr');
-			return reg.declaration
-				+ "\tlet " + rowPrVar + " = Api.CreateTableRowPr();\n"
-				+ "\t" + rowPrVar + ".SetHeight(\"atLeast\", " + AscCommon.MMToTwips(oAdditional.data, -1) + ");\n"
-				+ "\t" + reg.varName + ".GetSelectedRows().forEach(function(row){\n"
-				+ "\t\trow.SetRowPr(" + rowPrVar + ");\n"
+			let heightEMU = Math.round(oAdditional.data * 36000);
+			let rowsReg = private_getSelectedRowsVar(reg);
+			return reg.declaration + rowsReg.declaration
+				+ "\t" + rowsReg.varName + ".forEach(function(row){\n"
+				+ "\t\tif (row) row.SetHeight(" + heightEMU + ");\n"
 				+ "\t});\n";
 		},
 		moveCursorLeft			: function(arrData){

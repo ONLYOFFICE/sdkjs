@@ -6931,6 +6931,9 @@
 		if (!oController)
 			return false;
 		oController.deselectObject(oDrawing);
+
+		let presentation = Asc.editor.getLogicDocument();
+		presentation.RemoveSelection();
 		oController.updateSelectionState();
 		oController.updateOverlay();
 		return true;
@@ -7799,9 +7802,19 @@
     ApiTable.prototype.GetClassType = function(){
         return "table";
     };
-
-
-    /**
+	/**
+	 * Returns an internal ID of the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CDE"]
+	 * @returns {string}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetInternalId.js
+	 */
+	ApiTable.prototype.GetInternalId = function()
+	{
+		return this.Table.GetId();
+	};
+	/**
      * Returns a row by its index.
      * @memberof ApiTable
      * @typeofeditors ["CPE"]
@@ -8046,6 +8059,103 @@
 		this.Table.Document_SetThisElementCurrent();
 		return true;
 	};
+
+	/**
+	 * Returns the selected cells of the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiTableCell[]} - An array of the currently selected cells (empty if there is no cell selection).
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedCells.js
+	 */
+	ApiTable.prototype.GetSelectedCells = function(){
+		let cells = [];
+		let positions = this.Table.GetSelectionArray();
+		for (let nPos = 0; nPos < positions.length; nPos++)
+		{
+			let pos = positions[nPos];
+			cells.push(this.GetCell(pos.Row, pos.Cell));
+		}
+		return cells
+	};
+
+	/**
+	 * Returns all cells from the columns that contain the currently selected cells.
+	 * This method identifies which columns contain selected cells and then returns all cells
+	 * in those columns, not just the selected cells themselves.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiTableCell[]} - An array of all cells from the columns that contain selected cells.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedColumnsCells.js
+	 */
+	ApiTable.prototype.GetSelectedColumnsCells = function () {
+		let colsNum = [];
+		let cols = [];
+
+		let cells = this.Table.GetSelectionArray();
+		for (let index = 0; index < cells.length; index++) {
+			let element = cells[index];
+			if (!colsNum.includes(element.Cell))
+				colsNum.push(element.Cell);
+		}
+
+		for (let i = 0; i < colsNum.length; i++)
+		{
+			let num = colsNum[i];
+			let cells = this.Table.GetColumn(num,0);
+			cells.forEach(function(cell) {
+				cols.push( new ApiTableCell(cell) )
+			})
+
+		}
+		return cols
+	};
+
+	/**
+	 * Returns the rows that contain the currently selected cells of the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiTableRow[]} - An array of the rows that contain selected cells (empty if there is no cell selection).
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedRows.js
+	 */
+	ApiTable.prototype.GetSelectedRows = function()
+	{
+		let rowsNum = [];
+		let rows = [];
+
+		let cells = this.Table.GetSelectionArray();
+		for (let index = 0; index < cells.length; index++) {
+			let element = cells[index];
+			if (!rowsNum.includes(element.Row))
+				rowsNum.push(element.Row)
+		}
+
+		for (let i = 0; i < rowsNum.length; i++)
+		{
+			let num = rowsNum[i];
+			rows.push(this.GetRow(num));
+		}
+		return rows
+	};
+
+	/**
+	 * Returns the current table cell (where the cursor is placed).
+	 * @memberof ApiTable
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiTableCell | null} - returns null if there is no current cell.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetCurCell.js
+	 */
+	ApiTable.prototype.GetCurCell = function()
+	{
+		let cell = this.Table.GetCurCell();
+		if (cell)
+			return new ApiTableCell(cell);
+
+		return null;
+	}
     /**
      * Specifies the shading which shall be applied to the extents of the current table.
      * @memberof ApiTable
@@ -8056,7 +8166,7 @@
 	 * @param {byte} b - Blue color component value.
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetShd.js
 	 */
-    ApiTable.prototype.SetShd = function(sType, r, g, b)
+	ApiTable.prototype.SetShd = function(sType, r, g, b)
     {
         var oPr    = this.Table.Pr.Copy();
         var color  = new Asc.asc_CColor({r : r, g: g, b: b, Auto : false});
@@ -8185,6 +8295,31 @@
 			return private_MM2EMU(table.TableGrid[columnIndex]);
 		}
 		return null;
+	};
+
+	/**
+	 * Sets the total height of the current table. The height is distributed proportionally among the rows
+	 * (the same way as resizing the table by its outer handle).
+	 * @memberof ApiTable
+	 * @typeofeditors ["CPE"]
+	 * @param {EMU} nValue - The table height in English measure units.
+	 * @returns {EMU | null} - Returns the requested height (in EMU), or null if the table is not recalculated yet.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetHeight.js
+	 */
+	ApiTable.prototype.SetHeight = function (nValue) {
+		const table = this.Table;
+		if (!table || !table.Pages || table.Pages.length <= 0)
+			return null;
+
+		const heightMM = Math.max(0, nValue / 36000);
+		const bounds = table.GetPageBounds(table.Pages.length - 1);
+		table.Resize(bounds.Right - bounds.Left, heightMM);
+
+		if (table.Parent && table.Parent.Refresh_RecalcData2)
+			table.Parent.Refresh_RecalcData2();
+
+		return private_MM2EMU(heightMM);
 	};
 
 	/**
@@ -8463,7 +8598,7 @@
 	 */
 	ApiTable.prototype.GetSelectedColumnsCells = AscBuilder.ApiTable.prototype.GetSelectedColumnsCells;
 
-    //------------------------------------------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------------------------------------------
     //
     // ApiTableRow
     //
@@ -8476,7 +8611,7 @@
      * @returns {"tableRow"}
      * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetClassType.js
 	 */
-    ApiTableRow.prototype.GetClassType = function()
+	ApiTableRow.prototype.GetClassType = function()
     {
         return "tableRow";
     };
@@ -8525,6 +8660,11 @@
 		const heightMM = Math.max(0, nValue / 36000);
 		const horizontalLineRule = Asc.linerule_AtLeast;
 		this.Row.Set_Height(heightMM, horizontalLineRule);
+
+		const oTable = this.Row.GetTable();
+		if (oTable && oTable.Parent && oTable.Parent.Refresh_RecalcData2)
+			oTable.Parent.Refresh_RecalcData2();
+
 		return private_MM2EMU(heightMM);
 	};
 
@@ -9127,81 +9267,122 @@
             oPr.TableCellMar.Top = private_GetTableMeasure("twips", nValue);
         this.Cell.Set_Pr(oPr);
     };
-    /**
-     * Sets the border which shall be displayed at the bottom of the current table cell.
-     * @memberof ApiTableCell
-     * @typeofeditors ["CPE"]
+	/**
+	 * Sets the border which shall be displayed at the bottom of the current table cell.
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CPE"]
+	 * 
+	 * @deprecated since 9.5.0 version.
+	 * @param {mm} fSize - The width of the current border.
+     * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderBottom.js
+	 */
+	/**
+	 * Sets the border which shall be displayed at the bottom of the current table cell.
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CPE"]
+	 * 
+	 * @since 9.5.0
+	 * @param {BorderType} sType - The cell bottom border style.
      * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
-     * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderBottom.js
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderBottom.js
 	 */
-    ApiTableCell.prototype.SetCellBorderBottom = function(fSize, oApiFill)
+    ApiTableCell.prototype.SetCellBorderBottom = function(sType, fSize, oApiFill)
     {
-        var oBorder = new CDocumentBorder();
-        oBorder.Value = border_Single;
-        oBorder.Size  = fSize;
-        oBorder.Space = 0;
-        oBorder.Unifill = oApiFill.UniFill;
-        var oPr = this.Cell.Pr.Copy();
+        var oBorder = private_GetTableBorder(sType, fSize, oApiFill);
+		var oPr = this.Cell.Pr.Copy();
         oPr.TableCellBorders.Bottom = oBorder;
         this.Cell.Set_Pr(oPr);
     };
-
-    /**
-     * Sets the border which shall be displayed at the left of the current table cell.
-     * @memberof ApiTableCell
-     * @typeofeditors ["CPE"]
+	/**
+	 * Sets the border which shall be displayed at the left of the current table cell.
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CPE"]
+	 * 
+	 * @deprecated since 9.5.0 version.
+	 * @param {mm} fSize - The width of the current border.
+     * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderLeft.js
+	 */
+	/**
+	 * Sets the border which shall be displayed at the left of the current table cell.
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CPE"]
+	 * 
+	 * @since 9.5.0
+	 * @param {BorderType} sType - The cell bottom border style.
      * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
-     * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderLeft.js
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderLeft.js
 	 */
-    ApiTableCell.prototype.SetCellBorderLeft = function(fSize, oApiFill)
+    ApiTableCell.prototype.SetCellBorderLeft = function(sType, fSize, oApiFill)
     {
-        var oBorder = new CDocumentBorder();
-        oBorder.Value = border_Single;
-        oBorder.Size  = fSize;
-        oBorder.Space = 0;
-        oBorder.Unifill = oApiFill.UniFill;
+		var oBorder = private_GetTableBorder(sType, fSize, oApiFill);
         var oPr = this.Cell.Pr.Copy();
         oPr.TableCellBorders.Left = oBorder;
         this.Cell.Set_Pr(oPr);
     };
-
-    /**
-     * Sets the border which shall be displayed at the right of the current table cell.
-     * @memberof ApiTableCell
-     * @typeofeditors ["CPE"]
+	/**
+	 * Sets the border which shall be displayed at the right of the current table cell.
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CPE"]
+	 * 
+	 * @deprecated since 9.5.0 version.
+	 * @param {mm} fSize - The width of the current border.
+     * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderRight.js
+	 */
+	/**
+	 * Sets the border which shall be displayed at the right of the current table cell.
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CPE"]
+	 * 
+	 * @since 9.5.0
+	 * @param {BorderType} sType - The cell bottom border style.
      * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
-     * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderRight.js
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderRight.js
 	 */
-    ApiTableCell.prototype.SetCellBorderRight = function(fSize, oApiFill)
+    ApiTableCell.prototype.SetCellBorderRight = function(sType, fSize, oApiFill)
     {
-        var oBorder = new CDocumentBorder();
-        oBorder.Value = border_Single;
-        oBorder.Size  = fSize;
-        oBorder.Space = 0;
-        oBorder.Unifill = oApiFill.UniFill;
+        var oBorder = private_GetTableBorder(sType, fSize, oApiFill);
         var oPr = this.Cell.Pr.Copy();
         oPr.TableCellBorders.Right = oBorder;
         this.Cell.Set_Pr(oPr);
     };
-
-    /**
-     * Sets the border which shall be displayed at the top of the current table cell.
-     * @memberof ApiTableCell
-     * @typeofeditors ["CPE"]
+	/**
+	 * Sets the border which shall be displayed at the top of the current table cell.
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CPE"]
+	 * 
+	 * @deprecated since 9.5.0 version.
+	 * @param {mm} fSize - The width of the current border.
+     * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderTop.js
+	 */
+	/**
+	 * Sets the border which shall be displayed at the top of the current table cell.
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CPE"]
+	 * 
+	 * @since 9.5.0
+	 * @param {BorderType} sType - The cell bottom border style.
      * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
-     * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderTop.js
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderTop.js
 	 */
-    ApiTableCell.prototype.SetCellBorderTop = function(fSize, oApiFill)
+    ApiTableCell.prototype.SetCellBorderTop = function(sType, fSize, oApiFill)
     {
-        var oBorder = new CDocumentBorder();
-        oBorder.Value = border_Single;
-        oBorder.Size  = fSize;
-        oBorder.Space = 0;
-        oBorder.Unifill = oApiFill.UniFill;
+        var oBorder = private_GetTableBorder(sType, fSize, oApiFill);
         var oPr = this.Cell.Pr.Copy();
         oPr.TableCellBorders.Top = oBorder;
         this.Cell.Set_Pr(oPr);
@@ -9921,8 +10102,10 @@
     ApiTable.prototype["AddRows"]						= ApiTable.prototype.AddRows;
     ApiTable.prototype["AddColumn"]						= ApiTable.prototype.AddColumn;
     ApiTable.prototype["AddColumns"]					= ApiTable.prototype.AddColumns;
+	ApiTable.prototype["GetCurCell"]					= ApiTable.prototype.GetCurCell;
 	ApiTable.prototype["SetColumnWidth"]				= ApiTable.prototype.SetColumnWidth;
 	ApiTable.prototype["GetColumnWidth"]				= ApiTable.prototype.GetColumnWidth;
+	ApiTable.prototype["SetHeight"]						= ApiTable.prototype.SetHeight;
 	ApiTable.prototype["AddElement"]					= ApiTable.prototype.AddElement;
     ApiTable.prototype["RemoveRow"]						= ApiTable.prototype.RemoveRow;
     ApiTable.prototype["RemoveColumn"]					= ApiTable.prototype.RemoveColumn;
@@ -10189,6 +10372,30 @@
 
 		return defaultValue;
 	}
+	function private_GetTableBorder(sType, nSize, oApiColor)
+	{
+		var oBorder = new CDocumentBorder();
+
+		if ("none" === sType)
+		{
+			oBorder.Value = border_None;
+			oBorder.Size  = 0;
+			oBorder.Space = 0;
+			oBorder.Color.Set(0, 0, 0, true);
+		}
+		else
+		{
+			if ("single" === sType)
+				oBorder.Value = border_Single;
+
+			oBorder.Size  = nSize;
+			oBorder.Space = 0;
+			oBorder.Unifill = oApiColor.UniFill;
+		}
+
+		return oBorder;
+	}
+
     function private_GetTableMeasure(sType, nValue)
     {
         var nType = tblwidth_Auto;
