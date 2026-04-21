@@ -10903,15 +10903,15 @@
 	 * Sets the vertical alignment of the text in the current cell range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {'center' | 'bottom' | 'top' | 'distributed' | 'justify'} sAligment - The vertical alignment that will be applied to the cell contents.
-	 * @returns {boolean} - return false if sAligment doesn't exist.
+	 * @param {'center' | 'bottom' | 'top' | 'distributed' | 'justify'} sAlignment - The vertical alignment that will be applied to the cell contents.
+	 * @returns {boolean} - return false if sAlignment doesn't exist.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetAlignVertical.js
 	 */
-	ApiRange.prototype.SetAlignVertical = function (sAligment) {
+	ApiRange.prototype.SetAlignVertical = function (sAlignment) {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
 			return null;
 		}
-		switch (sAligment) {
+		switch (sAlignment) {
 			case "center": {
 				this.range.setAlignVertical(Asc.c_oAscVAlign.Center);
 				break;
@@ -10939,8 +10939,8 @@
 		return true;
 	};
 	Object.defineProperty(ApiRange.prototype, "AlignVertical", {
-		set: function (sAligment) {
-			return this.SetAlignVertical(sAligment);
+		set: function (sAlignment) {
+			return this.SetAlignVertical(sAlignment);
 		}
 	});
 
@@ -10949,7 +10949,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {'left' | 'right' | 'center' | 'justify'} sAlignment - The horizontal alignment that will be applied to the cell contents.
-	 * @returns {boolean} - return false if sAligment doesn't exist.
+	 * @returns {boolean} - return false if sAlignment doesn't exist.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetAlignHorizontal.js
 	 */
 	ApiRange.prototype.SetAlignHorizontal = function (sAlignment) {
