@@ -2580,6 +2580,14 @@
 			t.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
 		});
 	};
+
+	baseEditorsApi.prototype.fileToDataURL = function (file, cb) {
+		const reader = new FileReader();
+		reader.onload = () => cb(reader.result, null);
+		reader.onerror = () => cb(null,e);
+		reader.readAsDataURL(file);
+  };
+
 	baseEditorsApi.prototype._uploadCallback                     = function(error, files, obj)
 	{
 		var t = this;
@@ -2596,19 +2604,56 @@
 			}
 			obj && obj.fStartUploadImageCallback && obj.fStartUploadImageCallback();
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
-			AscCommon.UploadImageFiles(files, this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, this.documentWopiSrc, this.documentUserSessionId, function(error, urls)
-			{
-				if (c_oAscError.ID.No !== error)
-				{
-					t.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
-					obj && obj.fErrorCallback && obj.fErrorCallback(error);
+					AscCommon.UploadImageFiles(
+				files,
+				this.documentId,
+				this.documentUserId,
+				this.CoAuthoringApi.get_jwt(),
+				this.documentShardKey,
+				this.documentWopiSrc,
+				this.documentUserSessionId,
+				function (error, urls) {
+				const filesArray = Array.from(files);
+				for (const element of filesArray) {
+					const item = element;
+					t.fileToDataURL(item, (value) => {
+					const array = new Uint8Array(16);
+					crypto.getRandomValues(array);
+					const hex = Array.from(array)
+						.map((b) => b.toString(16).padStart(2, "0"))
+						.join("");
+
+					t._addImageUrl([value], obj);
+
+					window.parent.postMessage(
+						{
+						location: "@onlyofficeeditor",
+						from: "saveMedia",
+						pathArr: [
+							{
+							url: value,
+							path: `media/${hex}`,
+							hex,
+							},
+						],
+						key: crypto.randomUUID(),
+						},
+						"*",
+					);
+					});
 				}
-				else
-				{
-					t._addImageUrl(urls, obj);
-				}
-				t.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
-			});
+        //   if (c_oAscError.ID.No !== error) {
+        //     t.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
+        //     obj && obj.fErrorCallback && obj.fErrorCallback(error);
+        //   } else {
+        //     t._addImageUrl(urls, obj);
+        //   }
+          t.sync_EndAction(
+            c_oAscAsyncActionType.BlockInteraction,
+            c_oAscAsyncAction.UploadImage,
+          );
+        },
+      );
 		}
 	};
 
@@ -3096,7 +3141,7 @@
 		var t = this;
 		AscCommon.InitDragAndDrop(this.HtmlElement, function(error, files)
 		{
-			t._uploadCallback(error, files);
+			t._uploadCallback(0, files);
 		});
 
 		AscFonts.g_fontApplication.Init();
