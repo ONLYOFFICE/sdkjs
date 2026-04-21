@@ -29964,10 +29964,11 @@
     });
 
     /**
-     * Returns the parent ApiWorksheet object for the AutoFilter.
+     * Returns the parent object for the AutoFilter — either the ApiWorksheet the filter is applied to,
+     * or the ApiListObject if the filter belongs to a table.
      * @memberof ApiAutoFilter
      * @typeofeditors ["CSE"]
-     * @returns {ApiWorksheet}
+     * @returns {ApiWorksheet | ApiListObject} The parent worksheet or table object.
      * @see office-js-api/Examples/{Editor}/ApiAutoFilter/Methods/GetParent.js
      */
     ApiAutoFilter.prototype.GetParent = function () {
