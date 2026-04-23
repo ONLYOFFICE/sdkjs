@@ -602,6 +602,8 @@
         var aImages = [], sImagePath, i, sImageFromChanges, oThemeUrls = {};
         var aNewImages = this.m_aNewImages;
         var oMap = {};
+        /** data: URLs from paste/drop — host app persists to S3 (see ixc-desktop-app Editor saveMedia handler). */
+        var aDataUrlForHost = [];
         for(i = 0; i < aNewImages.length; ++i)
         {
             sImageFromChanges = aNewImages[i];
@@ -614,7 +616,14 @@
             {
                 oThemeUrls[sImageFromChanges] = oApi.ThemeLoader.ThemesUrlAbs + sImageFromChanges;
             }
-            else if (0 === sImageFromChanges.indexOf('http:') || 0 === sImageFromChanges.indexOf('data:') || 0 === sImageFromChanges.indexOf('https:') ||
+            else if (0 === sImageFromChanges.indexOf('data:'))
+            {
+                if (oApi.CoAuthoringApi && oApi.CoAuthoringApi.get_standaloneApp && oApi.CoAuthoringApi.get_standaloneApp())
+                {
+                    aDataUrlForHost.push(sImageFromChanges);
+                }
+            }
+            else if (0 === sImageFromChanges.indexOf('http:') || 0 === sImageFromChanges.indexOf('https:') ||
                 0 === sImageFromChanges.indexOf('file:') || 0 === sImageFromChanges.indexOf('ftp:'))
             {
             }
@@ -628,6 +637,31 @@
             }
         }
         AscCommon.g_oDocumentUrls.addUrls(oThemeUrls);
+        if (aDataUrlForHost.length > 0 && window.parent)
+        {
+            var pathArr = [];
+            for (var j = 0; j < aDataUrlForHost.length; j++)
+            {
+                var array = new Uint8Array(16);
+                if (window.crypto && window.crypto.getRandomValues)
+                    window.crypto.getRandomValues(array);
+                else
+                    for (var ri = 0; ri < 16; ri++)
+                        array[ri] = Math.floor(Math.random() * 256);
+                var hex = Array.from(array, function(b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+                pathArr.push({
+                    url: aDataUrlForHost[j],
+                    hex: hex,
+                    path: 'media/' + hex
+                });
+            }
+            window.parent.postMessage({
+                location: '@onlyofficeeditor',
+                from: 'saveMedia',
+                pathArr: pathArr,
+                key: (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : ('host-' + Date.now() + '-' + Math.random())
+            }, '*');
+        }
         return aImages;
     };
 
