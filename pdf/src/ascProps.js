@@ -1695,6 +1695,9 @@ function (window, undefined) {
 	};
 	asc_CFieldCustomFormatProperty.prototype.getJsonActionInfo = function () {
 		const script = this.script;
+		if (!script) {
+			return [];
+		}
 
 		return [{
 			S: 14,
