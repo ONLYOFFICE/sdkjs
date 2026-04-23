@@ -1763,7 +1763,7 @@
 					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.format, oActions.format.getJsonActionInfo());
 				}
 				if (oActions.keystroke) {
-					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.keystroke, oActions.keystroke.getJsonActionInfo());
+					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.keystroke, oActions.keystroke.getJsonActionInfo(true));
 				}
 				if (oActions.validate) {
 					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.validate, oActions.validate.getJsonActionInfo());

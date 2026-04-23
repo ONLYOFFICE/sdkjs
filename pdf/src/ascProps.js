@@ -1465,7 +1465,7 @@ function (window, undefined) {
 
 		return true;
 	};
-	asc_CFieldNumberFormatProperty.prototype.getJsonActionInfo = function () {
+	asc_CFieldNumberFormatProperty.prototype.getJsonActionInfo = function (isKeystroke) {
 		const decimals = this.decimals;
 		const sepStyle = this.sepStyle;
 		const negStyle = this.negStyle;
@@ -1475,7 +1475,7 @@ function (window, undefined) {
 
 		return [{
 			S: 14,
-			JS: 'AFNumber_Format(' +
+			JS: (isKeystroke ? 'AFNumber_Keystroke(' : 'AFNumber_Format(') +
 				decimals + ', ' +
 				sepStyle + ', ' +
 				negStyle + ', ' +
@@ -1524,13 +1524,13 @@ function (window, undefined) {
 
 		return true;
 	};
-	asc_CFieldPercentageFormatProperty.prototype.getJsonActionInfo = function () {
+	asc_CFieldPercentageFormatProperty.prototype.getJsonActionInfo = function (isKeystroke) {
 		const decimals = this.decimals;
 		const sepStyle = this.sepStyle;
 
 		return [{
 			S: 14,
-			JS: 'AFPercent_Format(' +
+			JS: (isKeystroke ? 'AFPercent_Keystroke(' : 'AFPercent_Format(') +
 				decimals + ', ' +
 				sepStyle +
 			');'
@@ -1565,12 +1565,13 @@ function (window, undefined) {
 
 		return true;
 	};
-	asc_CFieldDateFormatProperty.prototype.getJsonActionInfo = function () {
+	asc_CFieldDateFormatProperty.prototype.getJsonActionInfo = function (isKeystroke) {
 		const format = this.format;
 
 		return [{
 			S: 14,
-			JS: 'AFDate_Format(' + JSON.stringify(format) + ');'
+			JS: (isKeystroke ? 'AFDate_Keystroke(' : 'AFDate_Format(') + 
+				JSON.stringify(format) + ');'
 		}];
 	};
 	//////////////////////////////////////////////////////////////////
@@ -1601,12 +1602,13 @@ function (window, undefined) {
 
 		return true;
 	};
-	asc_CFieldTimeFormatProperty.prototype.getJsonActionInfo = function () {
+	asc_CFieldTimeFormatProperty.prototype.getJsonActionInfo = function (isKeystroke) {
 		const format = this.format;
 
 		return [{
 			S: 14,
-			JS: 'AFTime_Format(' + format + ');'
+			JS: (isKeystroke ? 'AFTime_Keystroke(' : 'AFTime_Format(') +
+				format + ');'
 		}];
 	};
 
@@ -1648,7 +1650,7 @@ function (window, undefined) {
 
 		return true;
 	};
-	asc_CFieldSpecialFormatProperty.prototype.getJsonActionInfo = function () {
+	asc_CFieldSpecialFormatProperty.prototype.getJsonActionInfo = function (isKeystroke) {
 		const format = this.format;
 		const mask = this.mask;
 
@@ -1661,7 +1663,8 @@ function (window, undefined) {
 
 		return [{
 			S: 14,
-			JS: 'AFSpecial_Format(' + format + ');'
+			JS: (isKeystroke ? 'AFSpecial_Keystroke(' : 'AFSpecial_Format(') +
+				format + ');'
 		}];
 	};
 
