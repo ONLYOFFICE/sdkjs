@@ -637,31 +637,32 @@
             }
         }
         AscCommon.g_oDocumentUrls.addUrls(oThemeUrls);
-        if (aDataUrlForHost.length > 0 && window.parent)
-        {
-            var pathArr = [];
-            for (var j = 0; j < aDataUrlForHost.length; j++)
-            {
-                var array = new Uint8Array(16);
-                if (window.crypto && window.crypto.getRandomValues)
-                    window.crypto.getRandomValues(array);
-                else
-                    for (var ri = 0; ri < 16; ri++)
-                        array[ri] = Math.floor(Math.random() * 256);
-                var hex = Array.from(array, function(b) { return ('0' + b.toString(16)).slice(-2); }).join('');
-                pathArr.push({
-                    url: aDataUrlForHost[j],
-                    hex: hex,
-                    path: 'media/' + hex
-                });
-            }
-            window.parent.postMessage({
-                location: '@onlyofficeeditor',
-                from: 'saveMedia',
-                pathArr: pathArr,
-                key: (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : ('host-' + Date.now() + '-' + Math.random())
-            }, '*');
-        }
+
+        // if (aDataUrlForHost.length > 0 && window.parent)
+        // {
+        //     var pathArr = [];
+        //     for (var j = 0; j < aDataUrlForHost.length; j++)
+        //     {
+        //         var array = new Uint8Array(16);
+        //         if (window.crypto && window.crypto.getRandomValues)
+        //             window.crypto.getRandomValues(array);
+        //         else
+        //             for (var ri = 0; ri < 16; ri++)
+        //                 array[ri] = Math.floor(Math.random() * 256);
+        //         var hex = Array.from(array, function(b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+        //         pathArr.push({
+        //             url: aDataUrlForHost[j],
+        //             hex: hex,
+        //             path: 'media/' + hex
+        //         });
+        //     }
+        //     window.parent.postMessage({
+        //         location: '@onlyofficeeditor',
+        //         from: 'saveMedia',
+        //         pathArr: pathArr,
+        //         key: (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : ('host-' + Date.now() + '-' + Math.random())
+        //     }, '*');
+        // }
         return aImages;
     };
 
