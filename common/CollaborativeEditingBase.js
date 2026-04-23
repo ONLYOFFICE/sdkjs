@@ -362,7 +362,7 @@
 			this.m_nUndoBeforeApply = 0;
 		}
 		console.info("Inside CCollaborativeEditingBase.prototype.Apply_Changes")
-        console.log("🚀 ~ m_aChanges:", this.m_aChanges)
+        // console.log("🚀 ~ m_aChanges:", this.m_aChanges)
         if (this.m_aChanges.length > 0)
         {
             this.GetEditorApi().sendEvent("asc_onBeforeApplyChanges");
