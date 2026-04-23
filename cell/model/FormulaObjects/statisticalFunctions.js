@@ -12887,10 +12887,102 @@ function parseStringToCElement (val, cultureInfo) {
 	 * @returns {cNumber|cError}
 	 */
 	CountIFSCache.prototype.calculate = function (arg, _arg1) {
-		// Fast path: validate types, normalise criteria, and build the cache key in a
-		// single pass.  The normalised criteria values and per-range metadata are kept
-		// so that _calculateMiss can reuse them without re-normalising (avoids a second
-		// allocation of cell/empty/range-crossed cElements per COUNTIFS invocation).
+		// Pass 1: validate range args and collect criteria that are ranges/arrays.
+		// Each entry stores the arg index and the criteria's own dimensions.
+		// Scalar criteria (number, string, single cell) are tracked separately:
+		// they are treated as 1×1 and clamp the intersection accordingly.
+		const arrayCriteria = [];  // [{pos, dims}, ...]
+		let hasScalarCriteria = false;
+		let forceZeroIntersection = false;
+
+		for (let k = 0; k < arg.length; k += 2) {
+			const rangeArg = arg[k];
+			if (cElementType.error === rangeArg.type) {
+				return rangeArg;
+			}
+			if (cElementType.cell !== rangeArg.type && cElementType.cell3D !== rangeArg.type &&
+				cElementType.cellsRange !== rangeArg.type &&
+				!(cElementType.cellsRange3D === rangeArg.type && rangeArg.isSingleSheet())) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			const criteriaArg = arg[k + 1];
+			if (criteriaArg.type === cElementType.cellsRange ||
+				criteriaArg.type === cElementType.cellsRange3D ||
+				criteriaArg.type === cElementType.array) {
+				if (criteriaArg.type === cElementType.cellsRange3D && !criteriaArg.isSingleSheet()) {
+					forceZeroIntersection = true;
+				}
+				arrayCriteria.push({pos: k + 1, dims: criteriaArg.getDimensions()});
+			} else {
+				hasScalarCriteria = true;
+			}
+		}
+
+		// If any criteria is an array/range, build a result cArray sized MAX rows × MAX cols
+		// Only the intersection (MIN rows × MIN cols) needs actual COUNTIFS computation; positions outside it are filled with zero.
+		// Scalar criteria count as 1×1 and clamp the intersection to a single cell.
+		// A multi-sheet 3D criteria forces the intersection to 0×0 (all zeros).
+		if (arrayCriteria.length > 0) {
+			let maxRow = 0, maxCol = 0;
+			for (let i = 0; i < arrayCriteria.length; i += 1) {
+				const dims = arrayCriteria[i].dims;
+				if (dims.row > maxRow) {
+					maxRow = dims.row;
+				}
+				if (dims.col > maxCol) {
+					maxCol = dims.col;
+				}
+			}
+
+			let minRow = 0, minCol = 0;
+			if (!forceZeroIntersection) {
+				if (hasScalarCriteria) {
+					minRow = 1;
+					minCol = 1;
+				} else {
+					minRow = AscCommon.gc_nMaxRow0 + 1;
+					minCol = AscCommon.gc_nMaxCol0 + 1;
+					for (let i = 0; i < arrayCriteria.length; i += 1) {
+						const dims = arrayCriteria[i].dims;
+						if (dims.row < minRow) {
+							minRow = dims.row;
+						}
+						if (dims.col < minCol) {
+							minCol = dims.col;
+						}
+					}
+				}
+			}
+
+			const result = new cArray();
+			for (let row = 0; row < maxRow; row += 1) {
+				result.addRow();
+				for (let col = 0; col < maxCol; col += 1) {
+					let elem;
+					if (row < minRow && col < minCol) {
+						const newArg = arg.slice();
+						for (let i = 0; i < arrayCriteria.length; i += 1) {
+							const pos = arrayCriteria[i].pos;
+							const crit = arg[pos];
+							let critElem = crit.type === cElementType.array
+								? crit.getElementRowCol(row, col)
+								: crit.getValueByRowCol(row, col, true);
+							if (critElem.type === cElementType.empty) {
+								critElem = new cNumber(0);
+							}
+							newArg[pos] = critElem;
+						}
+						elem = this.calculate(newArg, _arg1);
+					} else {
+						elem = new cNumber(0);
+					}
+					result.addElementInRow(elem, row);
+				}
+			}
+			return result;
+		}
+
 		const pairs = arg.length >> 1;
 		const ranges = new Array(pairs);
 		const criteriaVals = new Array(pairs);
@@ -12901,29 +12993,14 @@ function parseStringToCElement (val, cultureInfo) {
 		let cacheElem = null;
 
 		for (let k = 0; k < arg.length; k += 2) {
-			let rangeArg = arg[k];
+			const rangeArg = arg[k];
 			let criteriaArg = arg[k + 1];
 
-			if (cElementType.error === rangeArg.type) {
-				return rangeArg;
-			}
-			if (cElementType.cell !== rangeArg.type && cElementType.cell3D !== rangeArg.type &&
-				cElementType.cellsRange !== rangeArg.type &&
-				!(cElementType.cellsRange3D === rangeArg.type && rangeArg.isSingleSheet())) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-
-			// Normalise criteria: range/array/cell reference → scalar
-			if (cElementType.cellsRange === criteriaArg.type || cElementType.cellsRange3D === criteriaArg.type) {
-				criteriaArg = criteriaArg.cross(_arg1);
-			} else if (cElementType.array === criteriaArg.type) {
-				criteriaArg = criteriaArg.getElementRowCol(0, 0);
-			}
 			if (criteriaArg.type === cElementType.cell || criteriaArg.type === cElementType.cell3D) {
 				criteriaArg = criteriaArg.getValue();
-			}
-			if (criteriaArg.type === cElementType.empty) {
-				criteriaArg = criteriaArg.tocNumber();
+				if (criteriaArg.type === cElementType.empty) {
+					criteriaArg = new cNumber(0);
+				}
 			}
 
 			const ws = rangeArg.getWS();
@@ -13047,7 +13124,7 @@ function parseStringToCElement (val, cultureInfo) {
 			matchingFn = getMatchingFunction(type, op || '=', isWildcard);
 		}
 
-		return {op: op, type: type, searchValue: searchValue, matchingFn: matchingFn, isEmptyStr: isEmptyStr};
+		return {op: op, type: type, searchValue: searchValue, matchingFn: matchingFn, isEmptyStr: isEmptyStr, isWildcard: isWildcard};
 	};
 
 	/**
@@ -13165,12 +13242,13 @@ function parseStringToCElement (val, cultureInfo) {
 		const typedCache = this.typedCache;
 		const type = info.type;
 		const searchValue = info.searchValue;
+		const isWildcard = info.isWildcard;
 		const op = info.op;
 		const words = (numRows + 31) >> 5;
 
 		// Complement mode uses an equality comparator to find rows to exclude;
 		// normal mode uses info.matchingFn (may be =, <, >, <=, >=).
-		const matchFn = isComplement ? getMatchingFunction(type, '=', false) : info.matchingFn;
+		const matchFn = isComplement ? getMatchingFunction(type, '=', isWildcard) : info.matchingFn;
 
 		// Numeric criteria also probe string-typed column data for numerically equal strings.
 		// In complement mode we always need equality; in normal mode only for = / null ops.
