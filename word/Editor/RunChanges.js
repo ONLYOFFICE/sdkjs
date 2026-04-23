@@ -457,7 +457,7 @@ CChangesRunRemoveItem.prototype.Load = function()
 	var nChangesCount   = 0;
 	for (var Index = 0, Count = this.PosArray.length; Index < Count; Index++)
 	{
-		var nChangesPos = oRun.m_oContentChanges.Check(AscCommon.contentchanges_Remove, this.PosArray[Index]);
+		var nChangesPos = oRun.m_oContentChanges?.Check(AscCommon.contentchanges_Remove, this.PosArray[Index]);
 
 		// действие совпало, не делаем его
 		if (false === nChangesPos)
@@ -489,10 +489,10 @@ CChangesRunRemoveItem.prototype.Load = function()
 
 	if (nChangesCount)
 	{
-		oRun.CollaborativeMarks.Update_OnRemove(nLastChangesPos, nChangesCount);
-		oRun.Content.splice(nLastChangesPos, nChangesCount);
-		oRun.private_UpdatePositionsOnRemove(nLastChangesPos, nChangesCount);
-		oRun.private_UpdateCompositeInputPositionsOnRemove(nLastChangesPos, nChangesCount);
+		oRun.CollaborativeMarks?.Update_OnRemove(nLastChangesPos, nChangesCount);
+		oRun.Content?.splice(nLastChangesPos, nChangesCount);
+		oRun?.private_UpdatePositionsOnRemove(nLastChangesPos, nChangesCount);
+		oRun?.private_UpdateCompositeInputPositionsOnRemove(nLastChangesPos, nChangesCount);
 		AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(oRun, nLastChangesPos, nChangesCount);
 	}
 

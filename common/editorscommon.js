@@ -2550,11 +2550,13 @@
             };
 
 			var xhr = new XMLHttpRequest();
-			xhr.open('POST', url, true);
-			xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-			xhr.setRequestHeader('Authorization', 'Bearer ' + jwt);
-			xhr.onreadystatechange = fOnReadyChnageState;
-			xhr.send(file);
+			// var xhr = new XMLHttpRequest();
+			// xhr.open('POST', url, true);
+			// xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+			// xhr.setRequestHeader('Authorization', 'Bearer ' + jwt);
+			// xhr.onreadystatechange = fOnReadyChnageState;
+			// xhr.send(file);
+			callback(0)
 		}
 		else
 		{

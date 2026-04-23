@@ -160,6 +160,12 @@
       this._CoAuthoringApi.onDocumentOpenStandalone = function(data) {
         s.callback_OnDocumentOpen(data);
       };
+      this._CoAuthoringApi.onSaveChanges = function(e, userId, bFirstLoad) {
+        s.callback_OnSaveChanges(e, userId, bFirstLoad);
+      };
+      this._CoAuthoringApi.onChangesIndex = function(changesIndex) {
+        s.callback_OnChangesIndex(changesIndex);
+      };
     }
   };
 
@@ -223,12 +229,47 @@
     return 0;
   };
 
+  CDocsCoApi.prototype.set_changesJson = function(changes) {
+    setTimeout(() => {
+      this._CoAuthoringApi.updateAuthChangesWithJsonSet(changes)
+    }, 1500);
+  };
+
   CDocsCoApi.prototype.openDocument = function(data) {
     if (this._CoAuthoringApi && this._onlineWork) {
       this._CoAuthoringApi.openDocument(data);
     }
 
     if (data.c === "imgurls" && this._standaloneApp) {
+      const imageArr = [];
+      const pathArr = [];
+      for (let i = 0; i < data?.data?.length; i++) {
+        const t = data?.data[i];
+        const array = new Uint8Array(16);
+        crypto.getRandomValues(array);
+        const hex = Array.from(array)
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+        imageArr.push({
+          url: t,
+          path: `media/${hex}`,
+        });
+        pathArr.push({
+          url: t,
+          path: `media/${hex}`,
+          hex,
+        });
+      }
+
+      window.parent.postMessage(
+        {
+          location: "@onlyofficeeditor",
+          from: "saveMedia",
+          pathArr,
+          key: crypto.randomUUID(),
+        },
+        "*",
+      );
       const imagePayload = {
         type: "documentOpen",
         data: {
@@ -236,10 +277,7 @@
           status: "ok",
           data: {
             error: 0,
-            urls: (data?.data ?? [])?.map((t) => ({
-              url: t,
-              path: `media/${Date.now()}`,
-            })),
+            urls: imageArr,
           },
         },
       };
@@ -718,6 +756,11 @@
     this._saveChangesChunks = [];
     this._authChanges = [];
     this._authOtherChanges = [];
+  }
+
+  DocsCoApi.prototype.updateAuthChangesWithJsonSet = function (data) {
+    this._authChanges = [data];
+      this._updateAuthChanges();
   }
 
   DocsCoApi.prototype.isRightURL = function() {
@@ -1381,7 +1424,7 @@
       if (allServerChanges) {
         for (var i = 0; i < allServerChanges.length; ++i) {
           var change = allServerChanges[i];
-          var changesOneUser = this.binaryChanges ? new Uint8Array(change['change']) : JSON.parse(change['change']);
+          var changesOneUser = this.binaryChanges ? new Uint8Array(change['change']) : change['change'];
           if (changesOneUser) {
             if (change['user'] !== this._userId) {
               this.lastOtherSaveTime = change['time'];
