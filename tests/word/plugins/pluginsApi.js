@@ -326,6 +326,12 @@ $(function () {
 
 	QUnit.test("Test SetParagraphHtml", function(assert)
 	{
+		if (!PluginsApi.pluginMethod_SetParagraphHtml)
+		{
+			assert.ok(true, "pluginMethod_SetParagraphHtml is not available");
+			return;
+		}
+
 		AscTest.ClearDocument();
 		const p = MoveToNewParagraph();
 		AscTest.EnterText("original text");

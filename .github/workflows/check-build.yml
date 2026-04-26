@@ -36,16 +36,27 @@ jobs:
       - name: check out repository
         uses: actions/checkout@v4
 
+      - name: check out repository sdkjs-ext
+        uses: actions/checkout@v4
+        with:
+          repository: ONLYOFFICE/sdkjs-ext
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-ext
+      - name: switch sdkjs-ext to current branch
+        run: |
+          cd sdkjs-ext
+          git fetch --depth=1 origin "${{ github.head_ref || github.ref_name }}" 2>/dev/null && git checkout FETCH_HEAD || true
+
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
             node-version: 20
-      
+
       - name: Run unit tests
         run: |
           npm install grunt-cli node-qunit-puppeteer
           npm install --prefix build
-          node node_modules/grunt-cli/bin/grunt --gruntfile build/Gruntfile.js develop
+          node node_modules/grunt-cli/bin/grunt --gruntfile build/Gruntfile.js develop --addon=../sdkjs-ext
           node node_modules/node-qunit-puppeteer/cli.js tests/common/api/api.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/cell/shortcuts/shortcuts.html 30000 "--no-sandbox"
           node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/formula-tests/FormulaTests.html 30000 "--no-sandbox"
@@ -128,23 +139,16 @@ jobs:
         with:
           path: sdkjs
 
-      - name: check out repository sdkjs-forms current branch
-        id: sdkjs-forms
-        uses: actions/checkout@v4
-        continue-on-error: true
-        with:
-          repository: ONLYOFFICE/sdkjs-forms
-          token: ${{ secrets.READ_PAT }}
-          path: sdkjs-forms
-          ref: ${{ github.ref }}
-      - name: check out repository sdkjs-forms master branch
-        if: steps.sdkjs-forms.outcome != 'success'
+      - name: check out repository sdkjs-forms
         uses: actions/checkout@v4
         with:
           repository: ONLYOFFICE/sdkjs-forms
           token: ${{ secrets.READ_PAT }}
           path: sdkjs-forms
-          ref: master
+      - name: switch sdkjs-forms to current branch
+        run: |
+          cd sdkjs-forms
+          git fetch --depth=1 origin "${{ github.head_ref || github.ref_name }}" 2>/dev/null && git checkout FETCH_HEAD || true
 
       - name: Use Node.js 20
         uses: actions/setup-node@v4
