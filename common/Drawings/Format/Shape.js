@@ -5155,6 +5155,11 @@
 					if (this.isObjectInSmartArt()) {
 						this.copyTextInfoFromShapeToPoint();
 						this.setTruthFontSizeInSmartArt();
+						// Trigger live re-layout when text is edited inside a SmartArt shape
+						var smartArtObj = this.group && this.group.group;
+						if (smartArtObj && smartArtObj.isSmartArtObject && smartArtObj.isSmartArtObject() && smartArtObj.scheduleRelayout) {
+							smartArtObj.scheduleRelayout();
+						}
 					}
 				}
 			}
