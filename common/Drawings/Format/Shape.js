@@ -5155,10 +5155,16 @@
 					if (this.isObjectInSmartArt()) {
 						this.copyTextInfoFromShapeToPoint();
 						this.setTruthFontSizeInSmartArt();
-						// Trigger live re-layout when text is edited inside a SmartArt shape
+						// Trigger live re-layout when text is edited inside a SmartArt shape.
+						// Only do this during active user editing (when the document controller
+						// has a cursor state), NOT during file load or recalculation.
 						var smartArtObj = this.group && this.group.group;
-						if (smartArtObj && smartArtObj.isSmartArtObject && smartArtObj.isSmartArtObject() && smartArtObj.scheduleRelayout) {
-							smartArtObj.scheduleRelayout();
+						if (smartArtObj && smartArtObj.isSmartArtObject && smartArtObj.isSmartArtObject() &&
+							smartArtObj['scheduleRelayout'] && !smartArtObj._isPerformingRelayout) {
+							var oApi = Asc.editor || editor;
+							if (oApi && oApi.isDocumentLoadComplete) {
+								smartArtObj['scheduleRelayout']();
+							}
 						}
 					}
 				}

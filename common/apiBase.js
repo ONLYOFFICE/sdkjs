@@ -1588,7 +1588,7 @@
 		if (!smartArt) {
 			return null;
 		}
-		return smartArt.getTextPaneData();
+		return smartArt['getTextPaneData']();
 	};
 
 	/**
@@ -1605,7 +1605,7 @@
 		if (!smartArt) {
 			return;
 		}
-		smartArt.setNodeText(sPointId, sText);
+		smartArt['setNodeText'](sPointId, sText);
 	};
 
 	/**
@@ -1626,7 +1626,7 @@
 			return null;
 		}
 		options = options || {};
-		return smartArt.addNode(
+		return smartArt['addNode'](
 			options.parentPointId !== undefined ? options.parentPointId : null,
 			options.position !== undefined ? options.position : -1,
 			options.text
@@ -1647,7 +1647,7 @@
 		if (!smartArt) {
 			return false;
 		}
-		return smartArt.removeNode(sPointId);
+		return smartArt['removeNode'](sPointId);
 	};
 
 	/**
@@ -1664,7 +1664,7 @@
 		if (!smartArt) {
 			return false;
 		}
-		return smartArt.promoteNode(sPointId);
+		return smartArt['promoteNode'](sPointId);
 	};
 
 	/**
@@ -1681,7 +1681,7 @@
 		if (!smartArt) {
 			return false;
 		}
-		return smartArt.demoteNode(sPointId);
+		return smartArt['demoteNode'](sPointId);
 	};
 
 	/**
@@ -1698,7 +1698,7 @@
 		if (!smartArt) {
 			return false;
 		}
-		return smartArt.moveNodeUp(sPointId);
+		return smartArt['moveNodeUp'](sPointId);
 	};
 
 	/**
@@ -1715,7 +1715,7 @@
 		if (!smartArt) {
 			return false;
 		}
-		return smartArt.moveNodeDown(sPointId);
+		return smartArt['moveNodeDown'](sPointId);
 	};
 
 	/**

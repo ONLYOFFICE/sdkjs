@@ -9879,6 +9879,11 @@ Because of this, the display is sometimes not correct.
       if (!this.isCanGenerateSmartArt()) {
         return;
       }
+      if (this._isPerformingRelayout) {
+        return;
+      }
+      this._isPerformingRelayout = true;
+      try {
       // Reset the smartArtTree so it rebuilds from the updated data model
       this.smartArtTree = null;
       this.initSmartArtAlgorithm();
@@ -9903,7 +9908,10 @@ Because of this, the display is sometimes not correct.
       // Notify that data changed (for text pane sync)
       var oApi = Asc.editor || editor;
       if (oApi && oApi.sendEvent) {
-        oApi.sendEvent('asc_onSmartArtDataChanged', this.getTextPaneData());
+        oApi.sendEvent('asc_onSmartArtDataChanged', this['getTextPaneData']());
+      }
+      } finally {
+        this._isPerformingRelayout = false;
       }
     };
 
@@ -9962,6 +9970,19 @@ Because of this, the display is sometimes not correct.
     window['AscFormat'].ShapeSmartArtInfo      = ShapeSmartArtInfo;
     window['AscFormat'].LayoutBaseClass        = LayoutBaseClass;
     window['AscFormat'].IteratorLayoutBase     = IteratorLayoutBase;
+
+    // SmartArt Text Pane API — bracket notation exports for Closure Compiler
+    var smartArtProt = SmartArt.prototype;
+    smartArtProt['getTextPaneData']    = smartArtProt.getTextPaneData;
+    smartArtProt['setNodeText']        = smartArtProt.setNodeText;
+    smartArtProt['addNode']            = smartArtProt.addNode;
+    smartArtProt['removeNode']         = smartArtProt.removeNode;
+    smartArtProt['promoteNode']        = smartArtProt.promoteNode;
+    smartArtProt['demoteNode']         = smartArtProt.demoteNode;
+    smartArtProt['moveNodeUp']         = smartArtProt.moveNodeUp;
+    smartArtProt['moveNodeDown']       = smartArtProt.moveNodeDown;
+    smartArtProt['scheduleRelayout']   = smartArtProt.scheduleRelayout;
+    smartArtProt['performRelayout']    = smartArtProt.performRelayout;
 
     window['AscFormat'].Point_type_asst = Point_type_asst;
     window['AscFormat'].Point_type_doc = Point_type_doc;
