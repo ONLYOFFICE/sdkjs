@@ -9184,6 +9184,737 @@ Because of this, the display is sometimes not correct.
       // });
     };
 
+    // =========================================================================
+    // SmartArt Text Pane API
+    // =========================================================================
+
+    /**
+     * Returns an ordered array of text entries for the SmartArt text pane.
+     * Each entry represents a content node (type=node) in the data tree,
+     * traversed depth-first to match the MS Office text pane order.
+     * @returns {Array.<{id: string, text: string, level: number, pointType: number}>}
+     */
+    SmartArt.prototype.getTextPaneData = function () {
+      var dataModel = this.getDataModelFromData();
+      if (!dataModel) {
+        return [];
+      }
+      var ptLst = dataModel.getPtLst();
+      var cxnLst = dataModel.getCxnLst();
+      if (!ptLst || !cxnLst) {
+        return [];
+      }
+
+      // Build a map of points by modelId
+      var ptMap = ptLst.getPtMap();
+
+      // Find the document root point
+      var docPoint = dataModel.getMainPoint();
+      if (!docPoint) {
+        return [];
+      }
+
+      // Build parent->children map from parOf connections, sorted by srcOrd
+      var childrenMap = {};
+      var cxnList = cxnLst.list;
+      for (var i = 0; i < cxnList.length; i += 1) {
+        var cxn = cxnList[i];
+        if (cxn.type === Cxn_type_parOf) {
+          if (!childrenMap[cxn.srcId]) {
+            childrenMap[cxn.srcId] = [];
+          }
+          childrenMap[cxn.srcId].push({
+            destId: cxn.destId,
+            srcOrd: cxn.srcOrd
+          });
+        }
+      }
+      // Sort children by srcOrd
+      for (var parentId in childrenMap) {
+        if (childrenMap.hasOwnProperty(parentId)) {
+          childrenMap[parentId].sort(function (a, b) {
+            return a.srcOrd - b.srcOrd;
+          });
+        }
+      }
+
+      // Depth-first traversal from the doc root's children
+      var result = [];
+      var stack = [];
+
+      // Push doc root's children in reverse order so first child is processed first
+      var rootChildren = childrenMap[docPoint.getModelId()];
+      if (rootChildren) {
+        for (var j = rootChildren.length - 1; j >= 0; j -= 1) {
+          var childInfo = rootChildren[j];
+          var childPoint = ptMap[childInfo.destId];
+          if (childPoint && childPoint.getType() === Point_type_node) {
+            stack.push({point: childPoint, level: 0});
+          }
+        }
+      }
+
+      while (stack.length) {
+        var item = stack.pop();
+        var point = item.point;
+        var level = item.level;
+
+        // Extract plain text from the point's text body
+        var text = '';
+        if (point.t && point.t.content) {
+          var content = point.t.content;
+          for (var p = 0; p < content.Content.length; p += 1) {
+            var paragraph = content.Content[p];
+            if (p > 0) {
+              text += '\n';
+            }
+            if (paragraph.GetText) {
+              var paraText = '';
+              paragraph.GetText({Text: paraText, ParaEndToNewLine: false});
+              // GetText modifies the passed object, use direct extraction
+              var textParts = [];
+              for (var r = 0; r < paragraph.Content.length; r += 1) {
+                var run = paragraph.Content[r];
+                if (run.GetText) {
+                  var runObj = {Text: ''};
+                  run.GetText(runObj);
+                  textParts.push(runObj.Text);
+                }
+              }
+              text += textParts.join('');
+            }
+          }
+        }
+
+        result.push({
+          id: point.getModelId(),
+          text: text,
+          level: level,
+          pointType: point.getType()
+        });
+
+        // Push children in reverse order for depth-first
+        var nodeChildren = childrenMap[point.getModelId()];
+        if (nodeChildren) {
+          for (var k = nodeChildren.length - 1; k >= 0; k -= 1) {
+            var nodeChildInfo = nodeChildren[k];
+            var nodeChildPoint = ptMap[nodeChildInfo.destId];
+            if (nodeChildPoint && nodeChildPoint.getType() === Point_type_node) {
+              stack.push({point: nodeChildPoint, level: level + 1});
+            }
+          }
+        }
+      }
+
+      return result;
+    };
+
+    /**
+     * Updates the text of a specific data point by modelId.
+     * Triggers re-layout if the SmartArt supports generation.
+     * @param {string} sPointId - The modelId of the point to update
+     * @param {string} sText - The new plain text for the node
+     */
+    SmartArt.prototype.setNodeText = function (sPointId, sText) {
+      var dataModel = this.getDataModelFromData();
+      if (!dataModel) {
+        return;
+      }
+      var ptLst = dataModel.getPtLst();
+      if (!ptLst) {
+        return;
+      }
+      var ptMap = ptLst.getPtMap();
+      var point = ptMap[sPointId];
+      if (!point || point.getType() !== Point_type_node) {
+        return;
+      }
+
+      // Create or update the text body
+      AscFormat.ExecuteNoHistory(function () {
+        var txBody = point.getT();
+        if (!txBody) {
+          txBody = new AscFormat.CTextBody();
+          txBody.setBodyPr(new AscFormat.CBodyPr());
+        }
+
+        // Create a new content with the text
+        var drawingDocument = (Asc.editor || editor) && (Asc.editor || editor).getDrawingDocument();
+        var oDocContent = new AscFormat.CDrawingDocContent(txBody, drawingDocument, 0, 0, 0, 0, false, false, true);
+        var oParagraph = oDocContent.Content[0];
+        if (oParagraph) {
+          var oRun = new AscCommonWord.ParaRun(oParagraph, false);
+          oRun.AddText(sText);
+          oParagraph.AddToContent(0, oRun);
+        }
+        txBody.setContent(oDocContent);
+        point.setT(txBody);
+      }, this, []);
+
+      this.scheduleRelayout();
+    };
+
+    /**
+     * Adds a new node to the SmartArt data model.
+     * @param {string} sParentPointId - The modelId of the parent point (null for root level)
+     * @param {number} nPosition - The position among siblings (0-based). -1 means append at end.
+     * @param {string} [sText] - Optional initial text for the new node
+     * @returns {string|null} The modelId of the newly created point, or null on failure
+     */
+    SmartArt.prototype.addNode = function (sParentPointId, nPosition, sText) {
+      var dataModel = this.getDataModelFromData();
+      if (!dataModel) {
+        return null;
+      }
+      var ptLst = dataModel.getPtLst();
+      var cxnLst = dataModel.getCxnLst();
+      if (!ptLst || !cxnLst) {
+        return null;
+      }
+
+      var ptMap = ptLst.getPtMap();
+
+      // Determine the actual parent: if sParentPointId is null, use the doc root
+      var parentPoint;
+      if (sParentPointId === null || sParentPointId === undefined) {
+        parentPoint = dataModel.getMainPoint();
+      } else {
+        parentPoint = ptMap[sParentPointId];
+      }
+      if (!parentPoint) {
+        return null;
+      }
+
+      var parentModelId = parentPoint.getModelId();
+
+      // Generate unique IDs using a simple incrementing scheme based on existing max
+      var maxId = 0;
+      for (var i = 0; i < ptLst.list.length; i += 1) {
+        var existingId = parseInt(ptLst.list[i].getModelId(), 10);
+        if (!isNaN(existingId) && existingId > maxId) {
+          maxId = existingId;
+        }
+      }
+      for (var ci = 0; ci < cxnLst.list.length; ci += 1) {
+        var existingCxnId = parseInt(cxnLst.list[ci].getModelId(), 10);
+        if (!isNaN(existingCxnId) && existingCxnId > maxId) {
+          maxId = existingCxnId;
+        }
+      }
+
+      var newNodeId = String(maxId + 1);
+      var newSibTransId = String(maxId + 2);
+      var newParTransId = String(maxId + 3);
+      var newCxnId = String(maxId + 4);
+
+      // Determine srcOrd for the new connection
+      var existingChildren = [];
+      for (var ec = 0; ec < cxnLst.list.length; ec += 1) {
+        var ecxn = cxnLst.list[ec];
+        if (ecxn.type === Cxn_type_parOf && ecxn.srcId === parentModelId) {
+          existingChildren.push(ecxn);
+        }
+      }
+      existingChildren.sort(function (a, b) {
+        return a.srcOrd - b.srcOrd;
+      });
+
+      var newSrcOrd;
+      if (nPosition < 0 || nPosition >= existingChildren.length) {
+        newSrcOrd = existingChildren.length;
+      } else {
+        newSrcOrd = nPosition;
+        // Shift existing srcOrds
+        for (var sh = 0; sh < existingChildren.length; sh += 1) {
+          if (existingChildren[sh].srcOrd >= newSrcOrd) {
+            existingChildren[sh].setSrcOrd(existingChildren[sh].srcOrd + 1);
+          }
+        }
+      }
+
+      // Create the new content point
+      var newPoint = new Point();
+      newPoint.setModelId(newNodeId);
+      newPoint.setType(Point_type_node);
+      var newPrSet = new AscFormat.PrSet();
+      newPrSet.setPhldr(true);
+      newPrSet.setPhldrT('[' + AscCommon.translateManager.getValue('Text') + ']');
+      newPoint.setPrSet(newPrSet);
+
+      // Set initial text if provided
+      if (sText) {
+        var newTxBody = AscFormat.ExecuteNoHistory(function () {
+          var txBody = new AscFormat.CTextBody();
+          txBody.setBodyPr(new AscFormat.CBodyPr());
+          var drawingDocument = (Asc.editor || editor) && (Asc.editor || editor).getDrawingDocument();
+          var oDocContent = new AscFormat.CDrawingDocContent(txBody, drawingDocument, 0, 0, 0, 0, false, false, true);
+          var oParagraph = oDocContent.Content[0];
+          if (oParagraph) {
+            var oRun = new AscCommonWord.ParaRun(oParagraph, false);
+            oRun.AddText(sText);
+            oParagraph.AddToContent(0, oRun);
+          }
+          txBody.setContent(oDocContent);
+          return txBody;
+        }, this, []);
+        newPoint.setT(newTxBody);
+        newPrSet.setPhldr(false);
+      }
+
+      // Create sibling transition point
+      var sibTransPoint = new Point();
+      sibTransPoint.setModelId(newSibTransId);
+      sibTransPoint.setType(Point_type_sibTrans);
+      sibTransPoint.setCxnId(newCxnId);
+      var sibPrSet = new AscFormat.PrSet();
+      sibTransPoint.setPrSet(sibPrSet);
+
+      // Create parent transition point
+      var parTransPoint = new Point();
+      parTransPoint.setModelId(newParTransId);
+      parTransPoint.setType(Point_type_parTrans);
+      parTransPoint.setCxnId(newCxnId);
+      var parPrSet = new AscFormat.PrSet();
+      parTransPoint.setPrSet(parPrSet);
+
+      // Add points to ptLst
+      ptLst.addToLst(ptLst.list.length, newPoint);
+      ptLst.addToLst(ptLst.list.length, sibTransPoint);
+      ptLst.addToLst(ptLst.list.length, parTransPoint);
+
+      // Create the parOf connection
+      var newCxn = new Cxn();
+      newCxn.setModelId(newCxnId);
+      newCxn.setType(Cxn_type_parOf);
+      newCxn.setSrcId(parentModelId);
+      newCxn.setDestId(newNodeId);
+      newCxn.setSrcOrd(newSrcOrd);
+      newCxn.setDestOrd(0);
+      newCxn.setSibTransId(newSibTransId);
+      newCxn.setParTransId(newParTransId);
+      cxnLst.addToLst(cxnLst.list.length, newCxn);
+
+      this.scheduleRelayout();
+      return newNodeId;
+    };
+
+    /**
+     * Removes a node from the SmartArt data model.
+     * Children of the removed node are promoted (reparented to the removed node's parent).
+     * @param {string} sPointId - The modelId of the point to remove
+     * @returns {boolean} True if the node was removed successfully
+     */
+    SmartArt.prototype.removeNode = function (sPointId) {
+      var dataModel = this.getDataModelFromData();
+      if (!dataModel) {
+        return false;
+      }
+      var ptLst = dataModel.getPtLst();
+      var cxnLst = dataModel.getCxnLst();
+      if (!ptLst || !cxnLst) {
+        return false;
+      }
+
+      var ptMap = ptLst.getPtMap();
+      var point = ptMap[sPointId];
+      if (!point || point.getType() !== Point_type_node) {
+        return false;
+      }
+
+      // Don't allow removing the doc root
+      if (point.getType() === Point_type_doc) {
+        return false;
+      }
+
+      // Find the parOf connection that makes this node a child of its parent
+      var parentCxn = null;
+      var parentModelId = null;
+      for (var i = 0; i < cxnLst.list.length; i += 1) {
+        var cxn = cxnLst.list[i];
+        if (cxn.type === Cxn_type_parOf && cxn.destId === sPointId) {
+          parentCxn = cxn;
+          parentModelId = cxn.srcId;
+          break;
+        }
+      }
+      if (!parentCxn) {
+        return false;
+      }
+
+      var removedSrcOrd = parentCxn.srcOrd;
+
+      // Find children of the node being removed
+      var childCxns = [];
+      for (var c = 0; c < cxnLst.list.length; c += 1) {
+        var ccxn = cxnLst.list[c];
+        if (ccxn.type === Cxn_type_parOf && ccxn.srcId === sPointId) {
+          childCxns.push(ccxn);
+        }
+      }
+      childCxns.sort(function (a, b) {
+        return a.srcOrd - b.srcOrd;
+      });
+
+      // Reparent children to the removed node's parent
+      for (var rc = 0; rc < childCxns.length; rc += 1) {
+        childCxns[rc].setSrcId(parentModelId);
+        childCxns[rc].setSrcOrd(removedSrcOrd + rc);
+      }
+
+      // Shift siblings that were after the removed node
+      for (var s = 0; s < cxnLst.list.length; s += 1) {
+        var scxn = cxnLst.list[s];
+        if (scxn.type === Cxn_type_parOf && scxn.srcId === parentModelId && scxn.srcOrd > removedSrcOrd && scxn !== parentCxn) {
+          scxn.setSrcOrd(scxn.srcOrd - 1 + childCxns.length);
+        }
+      }
+
+      // Remove the parOf connection for the deleted node
+      for (var ri = cxnLst.list.length - 1; ri >= 0; ri -= 1) {
+        if (cxnLst.list[ri] === parentCxn) {
+          cxnLst.removeFromLst(ri);
+          break;
+        }
+      }
+
+      // Remove the sibling and parent transition points
+      var sibTransId = parentCxn.sibTransId;
+      var parTransId = parentCxn.parTransId;
+      for (var pi = ptLst.list.length - 1; pi >= 0; pi -= 1) {
+        var ptId = ptLst.list[pi].getModelId();
+        if (ptId === sPointId || ptId === sibTransId || ptId === parTransId) {
+          ptLst.removeFromLst(pi);
+        }
+      }
+
+      // Remove any presOf connections referencing the deleted point
+      for (var pri = cxnLst.list.length - 1; pri >= 0; pri -= 1) {
+        var prcxn = cxnLst.list[pri];
+        if ((prcxn.type === Cxn_type_presOf || prcxn.type === Cxn_type_presParOf) &&
+            (prcxn.srcId === sPointId || prcxn.destId === sPointId ||
+             prcxn.srcId === sibTransId || prcxn.destId === sibTransId ||
+             prcxn.srcId === parTransId || prcxn.destId === parTransId)) {
+          cxnLst.removeFromLst(pri);
+        }
+      }
+
+      this.scheduleRelayout();
+      return true;
+    };
+
+    /**
+     * Promotes a node (decreases its level/depth by one).
+     * The node becomes a sibling of its former parent, inserted right after it.
+     * @param {string} sPointId - The modelId of the point to promote
+     * @returns {boolean} True if the node was promoted successfully
+     */
+    SmartArt.prototype.promoteNode = function (sPointId) {
+      var dataModel = this.getDataModelFromData();
+      if (!dataModel) {
+        return false;
+      }
+      var cxnLst = dataModel.getCxnLst();
+      if (!cxnLst) {
+        return false;
+      }
+
+      // Find the connection making this node a child of its parent
+      var nodeCxn = null;
+      var parentId = null;
+      for (var i = 0; i < cxnLst.list.length; i += 1) {
+        var cxn = cxnLst.list[i];
+        if (cxn.type === Cxn_type_parOf && cxn.destId === sPointId) {
+          nodeCxn = cxn;
+          parentId = cxn.srcId;
+          break;
+        }
+      }
+      if (!nodeCxn) {
+        return false;
+      }
+
+      // Find the grandparent connection (parent's parent)
+      var parentCxn = null;
+      var grandparentId = null;
+      for (var g = 0; g < cxnLst.list.length; g += 1) {
+        var gcxn = cxnLst.list[g];
+        if (gcxn.type === Cxn_type_parOf && gcxn.destId === parentId) {
+          parentCxn = gcxn;
+          grandparentId = gcxn.srcId;
+          break;
+        }
+      }
+      if (!parentCxn) {
+        // Parent is at the root level, can't promote further
+        return false;
+      }
+
+      // Change the node's parent to the grandparent
+      var parentSrcOrd = parentCxn.srcOrd;
+
+      // Shift siblings of the parent that come after it to make room
+      for (var s = 0; s < cxnLst.list.length; s += 1) {
+        var scxn = cxnLst.list[s];
+        if (scxn.type === Cxn_type_parOf && scxn.srcId === grandparentId && scxn.srcOrd > parentSrcOrd) {
+          scxn.setSrcOrd(scxn.srcOrd + 1);
+        }
+      }
+
+      // Update the node's connection to point to grandparent
+      nodeCxn.setSrcId(grandparentId);
+      nodeCxn.setSrcOrd(parentSrcOrd + 1);
+
+      // Reindex remaining children of the old parent
+      var oldParentChildren = [];
+      for (var oc = 0; oc < cxnLst.list.length; oc += 1) {
+        var occxn = cxnLst.list[oc];
+        if (occxn.type === Cxn_type_parOf && occxn.srcId === parentId) {
+          oldParentChildren.push(occxn);
+        }
+      }
+      oldParentChildren.sort(function (a, b) {
+        return a.srcOrd - b.srcOrd;
+      });
+      for (var ri = 0; ri < oldParentChildren.length; ri += 1) {
+        oldParentChildren[ri].setSrcOrd(ri);
+      }
+
+      this.scheduleRelayout();
+      return true;
+    };
+
+    /**
+     * Demotes a node (increases its level/depth by one).
+     * The node becomes a child of its previous sibling.
+     * @param {string} sPointId - The modelId of the point to demote
+     * @returns {boolean} True if the node was demoted successfully
+     */
+    SmartArt.prototype.demoteNode = function (sPointId) {
+      var dataModel = this.getDataModelFromData();
+      if (!dataModel) {
+        return false;
+      }
+      var cxnLst = dataModel.getCxnLst();
+      if (!cxnLst) {
+        return false;
+      }
+
+      // Find the connection making this node a child of its parent
+      var nodeCxn = null;
+      var parentId = null;
+      for (var i = 0; i < cxnLst.list.length; i += 1) {
+        var cxn = cxnLst.list[i];
+        if (cxn.type === Cxn_type_parOf && cxn.destId === sPointId) {
+          nodeCxn = cxn;
+          parentId = cxn.srcId;
+          break;
+        }
+      }
+      if (!nodeCxn) {
+        return false;
+      }
+
+      var currentSrcOrd = nodeCxn.srcOrd;
+
+      // Find the previous sibling (the sibling with the highest srcOrd < currentSrcOrd)
+      var prevSiblingCxn = null;
+      for (var ps = 0; ps < cxnLst.list.length; ps += 1) {
+        var pscxn = cxnLst.list[ps];
+        if (pscxn.type === Cxn_type_parOf && pscxn.srcId === parentId && pscxn.srcOrd < currentSrcOrd) {
+          if (!prevSiblingCxn || pscxn.srcOrd > prevSiblingCxn.srcOrd) {
+            prevSiblingCxn = pscxn;
+          }
+        }
+      }
+      if (!prevSiblingCxn) {
+        // No previous sibling to become a child of
+        return false;
+      }
+
+      var newParentId = prevSiblingCxn.destId;
+
+      // Count existing children of the new parent
+      var newParentChildCount = 0;
+      for (var nc = 0; nc < cxnLst.list.length; nc += 1) {
+        var nccxn = cxnLst.list[nc];
+        if (nccxn.type === Cxn_type_parOf && nccxn.srcId === newParentId) {
+          newParentChildCount += 1;
+        }
+      }
+
+      // Move the node to be a child of the previous sibling
+      nodeCxn.setSrcId(newParentId);
+      nodeCxn.setSrcOrd(newParentChildCount);
+
+      // Reindex siblings of the old parent
+      var oldParentChildren = [];
+      for (var oc = 0; oc < cxnLst.list.length; oc += 1) {
+        var occxn = cxnLst.list[oc];
+        if (occxn.type === Cxn_type_parOf && occxn.srcId === parentId) {
+          oldParentChildren.push(occxn);
+        }
+      }
+      oldParentChildren.sort(function (a, b) {
+        return a.srcOrd - b.srcOrd;
+      });
+      for (var ri = 0; ri < oldParentChildren.length; ri += 1) {
+        oldParentChildren[ri].setSrcOrd(ri);
+      }
+
+      this.scheduleRelayout();
+      return true;
+    };
+
+    /**
+     * Moves a node up among its siblings (decreases its srcOrd by 1).
+     * @param {string} sPointId - The modelId of the point to move up
+     * @returns {boolean} True if the node was moved successfully
+     */
+    SmartArt.prototype.moveNodeUp = function (sPointId) {
+      var dataModel = this.getDataModelFromData();
+      if (!dataModel) {
+        return false;
+      }
+      var cxnLst = dataModel.getCxnLst();
+      if (!cxnLst) {
+        return false;
+      }
+
+      // Find the connection for this node
+      var nodeCxn = null;
+      var parentId = null;
+      for (var i = 0; i < cxnLst.list.length; i += 1) {
+        var cxn = cxnLst.list[i];
+        if (cxn.type === Cxn_type_parOf && cxn.destId === sPointId) {
+          nodeCxn = cxn;
+          parentId = cxn.srcId;
+          break;
+        }
+      }
+      if (!nodeCxn || nodeCxn.srcOrd === 0) {
+        return false;
+      }
+
+      // Find the sibling at srcOrd - 1
+      var targetOrd = nodeCxn.srcOrd - 1;
+      for (var s = 0; s < cxnLst.list.length; s += 1) {
+        var scxn = cxnLst.list[s];
+        if (scxn.type === Cxn_type_parOf && scxn.srcId === parentId && scxn.srcOrd === targetOrd) {
+          scxn.setSrcOrd(nodeCxn.srcOrd);
+          nodeCxn.setSrcOrd(targetOrd);
+          this.scheduleRelayout();
+          return true;
+        }
+      }
+
+      return false;
+    };
+
+    /**
+     * Moves a node down among its siblings (increases its srcOrd by 1).
+     * @param {string} sPointId - The modelId of the point to move down
+     * @returns {boolean} True if the node was moved successfully
+     */
+    SmartArt.prototype.moveNodeDown = function (sPointId) {
+      var dataModel = this.getDataModelFromData();
+      if (!dataModel) {
+        return false;
+      }
+      var cxnLst = dataModel.getCxnLst();
+      if (!cxnLst) {
+        return false;
+      }
+
+      // Find the connection for this node
+      var nodeCxn = null;
+      var parentId = null;
+      for (var i = 0; i < cxnLst.list.length; i += 1) {
+        var cxn = cxnLst.list[i];
+        if (cxn.type === Cxn_type_parOf && cxn.destId === sPointId) {
+          nodeCxn = cxn;
+          parentId = cxn.srcId;
+          break;
+        }
+      }
+      if (!nodeCxn) {
+        return false;
+      }
+
+      // Find the sibling at srcOrd + 1
+      var targetOrd = nodeCxn.srcOrd + 1;
+      for (var s = 0; s < cxnLst.list.length; s += 1) {
+        var scxn = cxnLst.list[s];
+        if (scxn.type === Cxn_type_parOf && scxn.srcId === parentId && scxn.srcOrd === targetOrd) {
+          scxn.setSrcOrd(nodeCxn.srcOrd);
+          nodeCxn.setSrcOrd(targetOrd);
+          this.scheduleRelayout();
+          return true;
+        }
+      }
+
+      return false;
+    };
+
+    /**
+     * Schedules a debounced re-layout of the SmartArt.
+     * This is called after data model changes (text edits, node add/remove, etc.)
+     * to regenerate the visual drawing part.
+     */
+    SmartArt.prototype.scheduleRelayout = function () {
+      var oThis = this;
+      if (this._relayoutTimer) {
+        clearTimeout(this._relayoutTimer);
+      }
+      this._relayoutTimer = setTimeout(function () {
+        oThis._relayoutTimer = null;
+        oThis.performRelayout();
+      }, 200);
+    };
+
+    /**
+     * Performs the actual re-layout: regenerates the drawing part from the data model.
+     * Wraps the operation in a history point for undo/redo support.
+     */
+    SmartArt.prototype.performRelayout = function () {
+      if (!this.isCanGenerateSmartArt()) {
+        return;
+      }
+      if (this._isPerformingRelayout) {
+        return;
+      }
+      this._isPerformingRelayout = true;
+      try {
+      // Reset the smartArtTree so it rebuilds from the updated data model
+      this.smartArtTree = null;
+      this.initSmartArtAlgorithm();
+      this.smartArtTree.startFromBegin();
+
+      var drawing = this.getDrawing();
+      if (!drawing) {
+        return;
+      }
+      var shapeLength = drawing.spTree.length;
+      for (var i = 0; i < shapeLength; i++) {
+        drawing.removeFromSpTreeByPos(0);
+      }
+      var shapes = this.smartArtTree.getShapes();
+      for (var j = shapes.length - 1; j >= 0; j -= 1) {
+        drawing.addToSpTree(0, shapes[j]);
+      }
+      this.recalcFitFontSize();
+      this.recalcSmartArtConnections();
+      this.addToRecalculate();
+
+      // Notify that data changed (for text pane sync)
+      var oApi = Asc.editor || editor;
+      if (oApi && oApi.sendEvent) {
+        oApi.sendEvent('asc_onSmartArtDataChanged', this['getTextPaneData']());
+      }
+      } finally {
+        this._isPerformingRelayout = false;
+      }
+    };
+
 
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].kForInsFitFontSize     = kForInsFitFontSize;
@@ -9239,6 +9970,19 @@ Because of this, the display is sometimes not correct.
     window['AscFormat'].ShapeSmartArtInfo      = ShapeSmartArtInfo;
     window['AscFormat'].LayoutBaseClass        = LayoutBaseClass;
     window['AscFormat'].IteratorLayoutBase     = IteratorLayoutBase;
+
+    // SmartArt Text Pane API — bracket notation exports for Closure Compiler
+    var smartArtProt = SmartArt.prototype;
+    smartArtProt['getTextPaneData']    = smartArtProt.getTextPaneData;
+    smartArtProt['setNodeText']        = smartArtProt.setNodeText;
+    smartArtProt['addNode']            = smartArtProt.addNode;
+    smartArtProt['removeNode']         = smartArtProt.removeNode;
+    smartArtProt['promoteNode']        = smartArtProt.promoteNode;
+    smartArtProt['demoteNode']         = smartArtProt.demoteNode;
+    smartArtProt['moveNodeUp']         = smartArtProt.moveNodeUp;
+    smartArtProt['moveNodeDown']       = smartArtProt.moveNodeDown;
+    smartArtProt['scheduleRelayout']   = smartArtProt.scheduleRelayout;
+    smartArtProt['performRelayout']    = smartArtProt.performRelayout;
 
     window['AscFormat'].Point_type_asst = Point_type_asst;
     window['AscFormat'].Point_type_doc = Point_type_doc;

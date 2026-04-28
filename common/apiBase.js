@@ -1570,6 +1570,190 @@
 			return oSmartArt;
 		});
 	};
+
+	// =========================================================================
+	// SmartArt Text Pane API
+	// =========================================================================
+
+	/**
+	 * Returns the text pane data for the currently selected SmartArt.
+	 * @returns {Array.<{id: string, text: string, level: number, pointType: number}>|null}
+	 */
+	baseEditorsApi.prototype.asc_getSmartArtTextPaneData = function () {
+		var oController = this.getGraphicController();
+		if (!oController) {
+			return null;
+		}
+		var smartArt = this._getSelectedSmartArt(oController);
+		if (!smartArt) {
+			return null;
+		}
+		return smartArt['getTextPaneData']();
+	};
+
+	/**
+	 * Updates the text of a SmartArt node.
+	 * @param {string} sPointId - The modelId of the point to update
+	 * @param {string} sText - The new plain text
+	 */
+	baseEditorsApi.prototype.asc_setSmartArtNodeText = function (sPointId, sText) {
+		var oController = this.getGraphicController();
+		if (!oController) {
+			return;
+		}
+		var smartArt = this._getSelectedSmartArt(oController);
+		if (!smartArt) {
+			return;
+		}
+		smartArt['setNodeText'](sPointId, sText);
+	};
+
+	/**
+	 * Adds a new node to the selected SmartArt.
+	 * @param {Object} options
+	 * @param {string|null} options.parentPointId - Parent node id (null for root level)
+	 * @param {number} options.position - Position among siblings (-1 for end)
+	 * @param {string} [options.text] - Optional initial text
+	 * @returns {string|null} The modelId of the new node
+	 */
+	baseEditorsApi.prototype.asc_addSmartArtNode = function (options) {
+		var oController = this.getGraphicController();
+		if (!oController) {
+			return null;
+		}
+		var smartArt = this._getSelectedSmartArt(oController);
+		if (!smartArt) {
+			return null;
+		}
+		options = options || {};
+		return smartArt['addNode'](
+			options.parentPointId !== undefined ? options.parentPointId : null,
+			options.position !== undefined ? options.position : -1,
+			options.text
+		);
+	};
+
+	/**
+	 * Removes a node from the selected SmartArt.
+	 * @param {string} sPointId - The modelId of the point to remove
+	 * @returns {boolean}
+	 */
+	baseEditorsApi.prototype.asc_removeSmartArtNode = function (sPointId) {
+		var oController = this.getGraphicController();
+		if (!oController) {
+			return false;
+		}
+		var smartArt = this._getSelectedSmartArt(oController);
+		if (!smartArt) {
+			return false;
+		}
+		return smartArt['removeNode'](sPointId);
+	};
+
+	/**
+	 * Promotes a SmartArt node (decrease depth / move up in hierarchy).
+	 * @param {string} sPointId
+	 * @returns {boolean}
+	 */
+	baseEditorsApi.prototype.asc_promoteSmartArtNode = function (sPointId) {
+		var oController = this.getGraphicController();
+		if (!oController) {
+			return false;
+		}
+		var smartArt = this._getSelectedSmartArt(oController);
+		if (!smartArt) {
+			return false;
+		}
+		return smartArt['promoteNode'](sPointId);
+	};
+
+	/**
+	 * Demotes a SmartArt node (increase depth / move down in hierarchy).
+	 * @param {string} sPointId
+	 * @returns {boolean}
+	 */
+	baseEditorsApi.prototype.asc_demoteSmartArtNode = function (sPointId) {
+		var oController = this.getGraphicController();
+		if (!oController) {
+			return false;
+		}
+		var smartArt = this._getSelectedSmartArt(oController);
+		if (!smartArt) {
+			return false;
+		}
+		return smartArt['demoteNode'](sPointId);
+	};
+
+	/**
+	 * Moves a SmartArt node up among its siblings.
+	 * @param {string} sPointId
+	 * @returns {boolean}
+	 */
+	baseEditorsApi.prototype.asc_moveSmartArtNodeUp = function (sPointId) {
+		var oController = this.getGraphicController();
+		if (!oController) {
+			return false;
+		}
+		var smartArt = this._getSelectedSmartArt(oController);
+		if (!smartArt) {
+			return false;
+		}
+		return smartArt['moveNodeUp'](sPointId);
+	};
+
+	/**
+	 * Moves a SmartArt node down among its siblings.
+	 * @param {string} sPointId
+	 * @returns {boolean}
+	 */
+	baseEditorsApi.prototype.asc_moveSmartArtNodeDown = function (sPointId) {
+		var oController = this.getGraphicController();
+		if (!oController) {
+			return false;
+		}
+		var smartArt = this._getSelectedSmartArt(oController);
+		if (!smartArt) {
+			return false;
+		}
+		return smartArt['moveNodeDown'](sPointId);
+	};
+
+	/**
+	 * Helper: finds the SmartArt object from the current drawing selection.
+	 * @param {Object} oController - The drawing objects controller
+	 * @returns {AscFormat.SmartArt|null}
+	 * @private
+	 */
+	baseEditorsApi.prototype._getSelectedSmartArt = function (oController) {
+		// Check if we're inside a SmartArt group selection
+		var groupSel = oController.selection && oController.selection.groupSelection;
+		if (groupSel && groupSel.isSmartArtObject && groupSel.isSmartArtObject()) {
+			return groupSel;
+		}
+		// Check if the group's parent is a SmartArt
+		if (groupSel && groupSel.group && groupSel.group.isSmartArtObject && groupSel.group.isSmartArtObject()) {
+			return groupSel.group;
+		}
+		// Check selected objects for SmartArt
+		var selectedObjects = oController.selectedObjects;
+		if (selectedObjects) {
+			for (var i = 0; i < selectedObjects.length; i += 1) {
+				var obj = selectedObjects[i];
+				if (obj.isSmartArtObject && obj.isSmartArtObject()) {
+					return obj;
+				}
+				// Shape inside SmartArt
+				if (obj.isObjectInSmartArt && obj.isObjectInSmartArt()) {
+					var grp = obj.group;
+					if (grp && grp.group && grp.group.isSmartArtObject && grp.group.isSmartArtObject()) {
+						return grp.group;
+					}
+				}
+			}
+		}
+		return null;
+	};
+
 	baseEditorsApi.prototype.forceSave = function()
 	{
 		if (!this.getViewMode()) {
@@ -6213,6 +6397,14 @@
 	prot['asc_generateChartPreviews'] = prot.asc_generateChartPreviews;
 	prot['asc_createSmartArt'] = prot.asc_createSmartArt;
 	prot['asc_generateSmartArtPreviews'] = prot.asc_generateSmartArtPreviews;
+	prot['asc_getSmartArtTextPaneData'] = prot.asc_getSmartArtTextPaneData;
+	prot['asc_setSmartArtNodeText'] = prot.asc_setSmartArtNodeText;
+	prot['asc_addSmartArtNode'] = prot.asc_addSmartArtNode;
+	prot['asc_removeSmartArtNode'] = prot.asc_removeSmartArtNode;
+	prot['asc_promoteSmartArtNode'] = prot.asc_promoteSmartArtNode;
+	prot['asc_demoteSmartArtNode'] = prot.asc_demoteSmartArtNode;
+	prot['asc_moveSmartArtNodeUp'] = prot.asc_moveSmartArtNodeUp;
+	prot['asc_moveSmartArtNodeDown'] = prot.asc_moveSmartArtNodeDown;
 	prot['asc_addTableOleObject'] = prot.asc_addTableOleObject;
 	prot['asc_editTableOleObject'] = prot.asc_editTableOleObject;
 	prot['asc_canEditTableOleObject'] = prot.asc_canEditTableOleObject;
