@@ -12312,7 +12312,11 @@ function parseStringToCElement (val, cultureInfo) {
 				unshiftIndexesArray.push(r);
 			}
 		});
+		const strPrepend = unshiftDataArrays[cElementType.string] ? unshiftDataArrays[cElementType.string].length : 0;
 		this.unshiftValues(column, unshiftDataArrays, unshiftIndexesArrays);
+		if (strPrepend > 0) {
+			column._rankPrepend = (column._rankPrepend || 0) + strPrepend;
+		}
 	};
 	CountIfTypedCache.prototype.pushValue = function (column, value, index) {
 		const data = column.data;
@@ -12340,7 +12344,10 @@ function parseStringToCElement (val, cultureInfo) {
 			const value = AscCommonExcel.checkTypeCell(cell, true, true);
 			if (r > column.end) {
 				if (value.type !== cElementType.empty) {
-					t.pushValue(column, value, r)
+					t.pushValue(column, value, r);
+					if (value.type === cElementType.string) {
+						column._rankAppend = (column._rankAppend || 0) + 1;
+					}
 				}
 				column.end = r;
 			}
@@ -12409,35 +12416,477 @@ function parseStringToCElement (val, cultureInfo) {
 		}
 		return convertedToNumber;
 	};
-	CountIfTypedCache.prototype.calculate = function(range, type, matchingFunction, searchValue, convertToNumber) {
+	/**
+	 * Apply deferred string data/indexes array changes in one O(N+K) pass.
+	 * Replaces repeated individual splice on large arrays (O(N) each) with
+	 * a single filter+merge (O(N+K)).
+	 *
+	 * Pending changes are stored in column._pendingStrChanges (Map: row → value|null).
+	 *   row → string value : the row should have this string value in the array
+	 *   row → null         : the row should be removed from the array
+	 */
+	CountIfTypedCache.prototype._applyPendingStringChanges = function(column) {
+		const pending = column._pendingStrChanges;
+		if (!pending || pending.size === 0) {
+			return;
+		}
+
+		const stringData = column.data[cElementType.string] || [];
+		const stringIdx = column.indexes[cElementType.string] || [];
+		const oldDataLen = stringData.length;
+
+		// Fast path: for small batches of in-place value updates, use binary search
+		// instead of walking the entire array. O(K × log N) vs O(N+K).
+		if (pending.size <= 4 && stringIdx.length > 0) {
+			let allInPlace = true;
+			pending.forEach(function(val, row) {
+				if (!allInPlace) {
+					return;
+				}
+				if (val === null) {
+					allInPlace = false;
+					return;
+				}
+				let lo = 0, hi = stringIdx.length;
+				while (lo < hi) {
+					const mid = (lo + hi) >>> 1;
+					if (stringIdx[mid] < row) {
+						lo = mid + 1;
+					} else {
+						hi = mid;
+					}
+				}
+				if (lo < stringIdx.length && stringIdx[lo] === row) {
+					stringData[lo] = val;
+					column._lastChangedDataPos = lo;
+				} else {
+					allInPlace = false;
+				}
+			});
+			if (allInPlace) {
+				column._pendingApplyInPlace = true;
+				column._pendingStrChanges = null;
+				return;
+			}
+		}
+
+		// Phase 1: Walk current arrays — apply updates/removals in place.
+		const handledRows = new Set();
+		let writePos = 0;
+		for (let i = 0; i < stringData.length; i++) {
+			const row = stringIdx[i];
+			if (pending.has(row)) {
+				handledRows.add(row);
+				const newVal = pending.get(row);
+				if (newVal !== null) {
+					column._lastChangedDataPos = writePos;
+					stringData[writePos] = newVal;
+					stringIdx[writePos] = row;
+					writePos++;
+				}
+				// else: remove (skip this entry)
+			} else {
+				if (writePos !== i) {
+					stringData[writePos] = stringData[i];
+					stringIdx[writePos] = stringIdx[i];
+				}
+				writePos++;
+			}
+		}
+		stringData.length = writePos;
+		stringIdx.length = writePos;
+
+		// Phase 2: Collect new inserts — rows in pending but not in current array.
+		const newInserts = [];
+		pending.forEach(function(val, row) {
+			if (!handledRows.has(row) && val !== null) {
+				newInserts.push(row);
+			}
+		});
+
+		// Phase 3: Merge new inserts into the arrays (maintain sorted row order).
+		if (newInserts.length > 0) {
+			newInserts.sort(function(a, b) { return a - b; });
+			if (stringData.length === 0) {
+				const nd = new Array(newInserts.length);
+				const ni = new Array(newInserts.length);
+				for (let k = 0; k < newInserts.length; k++) {
+					nd[k] = pending.get(newInserts[k]);
+					ni[k] = newInserts[k];
+				}
+				column.data[cElementType.string] = nd;
+				column.indexes[cElementType.string] = ni;
+			} else {
+				const oldLen = stringData.length;
+				const totalLen = oldLen + newInserts.length;
+				const mergedData = new Array(totalLen);
+				const mergedIdx = new Array(totalLen);
+				let oi = oldLen - 1, nii = newInserts.length - 1, wi = totalLen - 1;
+				while (oi >= 0 && nii >= 0) {
+					if (stringIdx[oi] > newInserts[nii]) {
+						mergedData[wi] = stringData[oi];
+						mergedIdx[wi] = stringIdx[oi];
+						oi--;
+					} else {
+						mergedData[wi] = pending.get(newInserts[nii]);
+						mergedIdx[wi] = newInserts[nii];
+						nii--;
+					}
+					wi--;
+				}
+				while (oi >= 0) {
+					mergedData[wi] = stringData[oi];
+					mergedIdx[wi] = stringIdx[oi];
+					oi--;
+					wi--;
+				}
+				while (nii >= 0) {
+					mergedData[wi] = pending.get(newInserts[nii]);
+					mergedIdx[wi] = newInserts[nii];
+					nii--;
+					wi--;
+				}
+				column.data[cElementType.string] = mergedData;
+				column.indexes[cElementType.string] = mergedIdx;
+			}
+		}
+
+		column._pendingApplyInPlace = (writePos === oldDataLen && newInserts.length === 0);
+		column._pendingStrChanges = null;
+	};
+	/**
+	 * Update column._sortedStrings and column._stringCounts for the strings that
+	 * changed unique status (column._sortedChanged), including any new prepend/append
+	 * entries. Returns rank-delta info needed by the caller to do an incremental
+	 * rank-buffer update instead of a full rebuild.
+	 * @returns {{delOldRank: number, addNewRank: number, delCount: number, addCount: number}}
+	 */
+	CountIfTypedCache.prototype._applySortedChanges = function(column, stringData) {
+		const self = this;
+		const sorted = column._sortedStrings;
+		const sCounts = column._stringCounts;
+		let sortedChanged = column._sortedChanged;
+
+		const prepend = column._rankPrepend || 0;
+		const append = column._rankAppend || 0;
+		if ((prepend + append > 0) && sCounts) {
+			if (!sortedChanged) {
+				sortedChanged = new Set();
+			}
+			for (let pi = 0; pi < prepend; pi++) {
+				const ps = stringData[pi];
+				const oldC = sCounts[ps] || 0;
+				sCounts[ps] = oldC + 1;
+				if (oldC === 0) {
+					sortedChanged.add(ps);
+				}
+			}
+			const appendStart = stringData.length - append;
+			for (let ai = appendStart; ai < stringData.length; ai++) {
+				const str = stringData[ai];
+				const prevCount = sCounts[str] || 0;
+				sCounts[str] = prevCount + 1;
+				if (prevCount === 0) {
+					sortedChanged.add(str);
+				}
+			}
+		}
+
+		let delCount = 0;
+		let addCount = 0;
+		let delOldRank = -1;
+		let addNewRank = -1;
+		if (sortedChanged && sortedChanged.size > 0) {
+			let toDel = null, toAdd = null;
+			let hasDel = false, hasAdd = false, multiChange = false;
+			sortedChanged.forEach(function(str) {
+				if (multiChange) {
+					return;
+				}
+				if (!sCounts[str]) {
+					if (hasDel) {
+						multiChange = true;
+						return;
+					}
+					toDel = str; hasDel = true;
+				} else {
+					if (hasAdd) {
+						multiChange = true;
+						return;
+					}
+					toAdd = str; hasAdd = true;
+				}
+			});
+
+			if (!multiChange && hasDel && hasAdd) {
+				// Fast path: single del + single add — use copyWithin instead of 2 splices.
+				const dlo = self._binarySearchSorted(sorted, toDel);
+				if (dlo < sorted.length && sorted[dlo] === toDel) {
+					delOldRank = dlo;
+					delCount = 1;
+					const alo = self._binarySearchSorted(sorted, toAdd);
+					const eap = alo > dlo ? alo - 1 : alo;
+					if (dlo < eap) {
+						if (sorted.copyWithin) {
+							sorted.copyWithin(dlo, dlo + 1, eap + 1);
+						} else {
+							for (let ci = dlo; ci < eap; ci++) {
+								sorted[ci] = sorted[ci + 1];
+							}
+						}
+					} else if (dlo > eap) {
+						if (sorted.copyWithin) {
+							sorted.copyWithin(eap + 1, eap, dlo);
+						} else {
+							for (let ci = dlo; ci > eap; ci--) {
+								sorted[ci] = sorted[ci - 1];
+							}
+						}
+					}
+					sorted[eap] = toAdd;
+					addNewRank = eap;
+					addCount = 1;
+				}
+			} else {
+				sortedChanged.forEach(function(str) {
+					const lo = self._binarySearchSorted(sorted, str);
+					if (!sCounts[str]) {
+						if (lo < sorted.length && sorted[lo] === str) {
+							delOldRank = lo;
+							sorted.splice(lo, 1);
+							delCount++;
+						}
+					} else if (lo >= sorted.length || sorted[lo] !== str) {
+						sorted.splice(lo, 0, str);
+						addNewRank = lo;
+						addCount++;
+					}
+				});
+			}
+		}
+		column._sortedChanged = null;
+		return {delOldRank: delOldRank, addNewRank: addNewRank, delCount: delCount, addCount: addCount};
+	};
+	/**
+	 * Build (once) a sorted-rank index for a column's string data.
+	 * Stores on the column object:
+	 *   _sortedStrings   — unique string values sorted by stringCompare
+	 *   _stringRankArray — Int32Array: rank[i] = sorted position of stringData[i]
+	 *   _rankLen         — stringData.length at build time
+	 * Three rebuild tiers: full sort, incremental sorted update, cheap rank refresh.
+	 */
+	/**
+	 * Precondition: column._pendingStrChanges must already be flushed by the caller
+	 * (i.e. _applyPendingStringChanges must have been called before this method).
+	 * Use _setupRankCompare instead of calling this directly — it handles the flush.
+	 */
+	CountIfTypedCache.prototype._ensureStringRank = function(column) {
+		const self = this;
+		const stringData = column.data[cElementType.string];
+		if (!stringData || !stringData.length) {
+			return;
+		}
+		const needsFull = column._rankDirty || !column._sortedStrings;
+		const needsSortedRebuild = column._sortedDirty;
+		const needsRefresh = column._rankStale || column._rankLen !== stringData.length;
+		if (!needsFull && !needsSortedRebuild && !needsRefresh) {
+			return;
+		}
+
+		let delOldRank = -1, addNewRank = -1, delCount = 0, addCount = 0;
+		if (needsFull) {
+			const seen = new Set();
+			const unique = [];
+			const counts = Object.create(null);
+			for (let i = 0; i < stringData.length; i++) {
+				const s = stringData[i];
+				counts[s] = (counts[s] || 0) + 1;
+				if (!seen.has(s)) {
+					seen.add(s);
+					unique.push(s);
+				}
+			}
+			unique.sort(function(a, b) { return AscCommon.stringCompare(a, b); });
+			column._sortedStrings = unique;
+			column._stringCounts = counts;
+			column._sortedChanged = null;
+		} else if (needsSortedRebuild) {
+			const changes = this._applySortedChanges(column, stringData);
+			delOldRank = changes.delOldRank;
+			addNewRank = changes.addNewRank;
+			delCount = changes.delCount;
+			addCount = changes.addCount;
+		} else if (needsRefresh) {
+			const prepend = column._rankPrepend || 0;
+			const append = column._rankAppend || 0;
+			const sorted = column._sortedStrings;
+			const sCounts = column._stringCounts;
+			if (prepend + append > 0 && sCounts) {
+				const insertIntoSorted = function(str) {
+					sCounts[str] = (sCounts[str] || 0) + 1;
+					if (sCounts[str] === 1) {
+						const lo = self._binarySearchSorted(sorted, str);
+						sorted.splice(lo, 0, str);
+					}
+				};
+				for (let pi = 0; pi < prepend; pi++) {
+					insertIntoSorted(stringData[pi]);
+				}
+				const appendStart = stringData.length - append;
+				for (let ai = appendStart; ai < stringData.length; ai++) {
+					insertIntoSorted(stringData[ai]);
+				}
+			}
+		}
+
+		let sorted = column._sortedStrings;
+		const needed = stringData.length;
+		let buf = column._rankBuf;
+
+		const dc = delCount;
+		const ac = addCount;
+		const canIncremental = needsSortedRebuild
+			&& column._pendingApplyInPlace === true
+			&& buf && column._rankLen === needed
+			&& dc <= 1 && ac <= 1 && (dc + ac) > 0;
+
+		if (canIncremental) {
+			const dp = delOldRank;
+			const ap = addNewRank;
+			for (let j = 0; j < needed; j++) {
+				let r = buf[j];
+				if (dc === 1 && dp >= 0 && r > dp) {
+					r--;
+				}
+				if (ac === 1 && ap >= 0 && r >= ap) {
+					r++;
+				}
+				buf[j] = r;
+			}
+			const changedPos = column._lastChangedDataPos;
+			if (changedPos !== undefined && changedPos >= 0 && changedPos < needed) {
+				buf[changedPos] = this._binarySearchSorted(sorted, stringData[changedPos]);
+			}
+			column._lastChangedDataPos = undefined;
+			column._rankMap = null;
+		} else {
+			const stringToRank = Object.create(null);
+			for (let k = 0; k < sorted.length; k++) {
+				stringToRank[sorted[k]] = k;
+			}
+			column._rankMap = stringToRank;
+			if (!buf || buf.length < needed) {
+				buf = new Int32Array(Math.max(needed, Math.ceil(needed * 1.25)));
+				column._rankBuf = buf;
+			}
+			for (let j = 0; j < needed; j++) {
+				buf[j] = stringToRank[stringData[j]];
+			}
+		}
+
+		column._stringRankArray = buf;
+		column._rankLen = needed;
+		column._rankPrepend = 0;
+		column._rankAppend = 0;
+		column._rankDirty = false;
+		column._rankStale = false;
+		column._sortedDirty = false;
+		column._pendingApplyInPlace = undefined;
+	};
+	/**
+	 * Binary-search `str` in a sorted unique-strings array using stringCompare.
+	 * Returns the leftmost insertion position (first index where sorted[i] >= str).
+	 * @param {string[]} sorted
+	 * @param {string}   str
+	 * @returns {number}
+	 */
+	CountIfTypedCache.prototype._binarySearchSorted = function(sorted, str) {
+		let lo = 0, hi = sorted.length;
+		while (lo < hi) {
+			const mid = (lo + hi) >>> 1;
+			if (AscCommon.stringCompare(sorted[mid], str) < 0) {
+				lo = mid + 1;
+			} else {
+				hi = mid;
+			}
+		}
+		return lo;
+	};
+	/**
+	 * Binary-search `searchValue` in the pre-sorted unique-strings array and return
+	 * the rank threshold needed for inequality-operator matching.
+	 * @param {string[]} sorted     — unique column strings sorted by stringCompare
+	 * @param {string}   searchValue
+	 * @param {string}   opt_op     — one of '<', '>', '<=', '>='
+	 * @returns {{threshold: number, useGte: boolean}}
+	 *   Rows match when: useGte ? rank >= threshold : rank < threshold
+	 */
+	CountIfTypedCache.prototype._buildRankThreshold = function(sorted, searchValue, opt_op) {
+		const lo = this._binarySearchSorted(sorted, searchValue);
+		const posInclusive = lo + (lo < sorted.length && sorted[lo] === searchValue ? 1 : 0);
+		if (opt_op === '<') {
+			return {threshold: lo, useGte: false};
+		}
+		if (opt_op === '>') {
+			return {threshold: posInclusive, useGte: true};
+		}
+		if (opt_op === '<=') {
+			return {threshold: posInclusive, useGte: false};
+		}
+		/* '>=' */
+		return {threshold: lo, useGte: true};
+	};
+	CountIfTypedCache.prototype.calculate = function(range, type, matchingFunction, searchValue, convertToNumber, opt_op) {
 		let count = 0;
 		const ws = range.getWS();
 		const bbox = range.getBBox0();
 		const wsId = ws.getId();
+		// Rank-based comparison is eligible when searching strings with inequality operators.
+		// Empty string is excluded: callers return 0 early for that case (consistent with COUNTIFS).
+		const useRankCompare = !convertToNumber && type === cElementType.string && opt_op &&
+			searchValue !== "" &&
+			(opt_op === '<' || opt_op === '>' || opt_op === '<=' || opt_op === '>=');
 		for (let i = bbox.c1; i <= bbox.c2; i += 1) {
 			this.updateColumnData(ws, i, bbox.r1, bbox.r2);
 			const column = this.data[wsId][i];
+			// Apply deferred string changes before reading data/indexes references.
+			// _applyPendingStringChanges may replace column.data[string]/indexes[string].
+			this._applyPendingStringChanges(column);
 			// Numeric string fallback is only needed for columns that actually
 			// contain a string parsable as a number.
 			if (convertToNumber && !column.hasNumericStrings) {
 				continue;
 			}
 			const typedData = column.data[type];
-			if (typedData) {
-				const typedIndexes = column.indexes[type];
-				const firstIndex = this.findLowerIndexInTyped(bbox.r1, typedIndexes);
-				const lastIndex = this.findHigherIndexInTyped(bbox.r2, typedIndexes);
-				if (convertToNumber) {
+			if (!typedData) {
+				continue;
+			}
+			const typedIndexes = column.indexes[type];
+			const firstIndex = this.findLowerIndexInTyped(bbox.r1, typedIndexes);
+			const lastIndex = this.findHigherIndexInTyped(bbox.r2, typedIndexes);
+			if (useRankCompare && typedData.length) {
+				const rc = this._setupRankCompare(column, searchValue, opt_op);
+				if (rc) {
 					for (let j = firstIndex; j < lastIndex; j += 1) {
-						let value = this.parseAnyNumber(typedData[j]);
-						if (value !== null) {
-							count += matchingFunction(value, searchValue);
+						if (rc.useGte ? rc.rankData[j] >= rc.threshold : rc.rankData[j] < rc.threshold) {
+							count += 1;
 						}
 					}
 				} else {
 					for (let j = firstIndex; j < lastIndex; j += 1) {
-						count += matchingFunction( typedData[j], searchValue);
+						count += matchingFunction(typedData[j], searchValue);
 					}
+				}
+			} else if (convertToNumber) {
+				for (let j = firstIndex; j < lastIndex; j += 1) {
+					let value = this.parseAnyNumber(typedData[j]);
+					if (value !== null) {
+						count += matchingFunction(value, searchValue);
+					}
+				}
+			} else {
+				for (let j = firstIndex; j < lastIndex; j += 1) {
+					count += matchingFunction(typedData[j], searchValue);
 				}
 			}
 		}
@@ -12451,6 +12900,7 @@ function parseStringToCElement (val, cultureInfo) {
 		for (let i = bbox.c1; i <= bbox.c2; i += 1) {
 			this.updateColumnData(ws, i, bbox.r1, bbox.r2);
 			const column = this.data[wsId][i];
+			this._applyPendingStringChanges(column);
 			for (let type in column.indexes) {
 				const typedIndexes = column.indexes[type];
 				const firstIndex = this.findLowerIndexInTyped(bbox.r1, typedIndexes);
@@ -12469,6 +12919,7 @@ function parseStringToCElement (val, cultureInfo) {
 	 * @returns {boolean}
 	 */
 	CountIfTypedCache.prototype.hasDataAtRow = function(column, row, checkEmptyString) {
+		this._applyPendingStringChanges(column);
 		const indexes = column.indexes;
 		const numIdx = indexes[cElementType.number];
 		if (numIdx) {
@@ -12497,38 +12948,111 @@ function parseStringToCElement (val, cultureInfo) {
 		}
 		return false;
 	};
+	/**
+	 * Ensure rank data is up to date for `column`, then build the threshold for `op`.
+	 * Returns null when rank data is unavailable (column has no strings yet).
+	 * @returns {{rankData: Int32Array, threshold: number, useGte: boolean}|null}
+	 */
+	CountIfTypedCache.prototype._setupRankCompare = function(column, searchValue, op) {
+		// Flush pending string changes before rank computation.
+		// Callers must also flush before reading column.data[string] (for typedData freshness),
+		// so their flush comes first and this one is the no-op; never the other way around.
+		this._applyPendingStringChanges(column);
+		this._ensureStringRank(column);
+		if (!column._sortedStrings || !column._sortedStrings.length) {
+			return null;
+		}
+		const rt = this._buildRankThreshold(column._sortedStrings, searchValue, op);
+		return {rankData: column._stringRankArray, threshold: rt.threshold, useGte: rt.useGte};
+	};
 	CountIfTypedCache.prototype.changeColumnsData = function(wsId, cell, oldValue, oldType, newValue, newType) {
 		const columnIndex = cell.nCol;
 		const changedIndex = cell.nRow;
 		const data = this.data[wsId];
 		const column = data[columnIndex];
 		if (column && changedIndex >= column.start && changedIndex <= column.end) {
+			// --- Remove old value ---
 			if (oldValue !== null) {
-				const indexesArray = column.indexes[oldType];
-				const dataArray = column.data[oldType];
-				if (dataArray && indexesArray) {
-					const removeIndex = this.findLowerIndexInTyped(changedIndex, indexesArray);
-					if (removeIndex < indexesArray.length && indexesArray[removeIndex] === changedIndex) {
-						dataArray.splice(removeIndex, 1);
-						indexesArray.splice(removeIndex, 1);
+				if (oldType === cElementType.string) {
+					// Defer string array splice — O(1) Map.set vs O(N) splice on large arrays.
+					if (!column._pendingStrChanges) {
+						column._pendingStrChanges = new Map();
+					}
+					column._pendingStrChanges.set(changedIndex, null);
+				} else {
+					const indexesArray = column.indexes[oldType];
+					const dataArray = column.data[oldType];
+					if (dataArray && indexesArray) {
+						const removeIndex = this.findLowerIndexInTyped(changedIndex, indexesArray);
+						if (removeIndex < indexesArray.length && indexesArray[removeIndex] === changedIndex) {
+							dataArray.splice(removeIndex, 1);
+							indexesArray.splice(removeIndex, 1);
+						}
 					}
 				}
 			}
+			// --- Insert new value ---
 			if (newValue !== null && newType !== cElementType.empty) {
-				const indexesArray = column.indexes[newType];
-				const dataArray = column.data[newType];
-				if (dataArray && indexesArray) {
-					const insertIndex = this.findHigherIndexInTyped(changedIndex - 1, indexesArray);
-					dataArray.splice(insertIndex, 0, newValue);
-					indexesArray.splice(insertIndex, 0, changedIndex);
+				if (newType === cElementType.string) {
+					// Defer string array splice.
+					if (!column._pendingStrChanges) {
+						column._pendingStrChanges = new Map();
+					}
+					column._pendingStrChanges.set(changedIndex, newValue);
+					// Mirror pushValue on inline edits; the flag is sticky-true by design.
+					if (!column.hasNumericStrings && this.parseAnyNumber(newValue) !== null) {
+						column.hasNumericStrings = true;
+					}
 				} else {
-					column.data[newType] = [newValue];
-					column.indexes[newType] = [changedIndex];
+					const newIndexes = column.indexes[newType];
+					const newData = column.data[newType];
+					if (newData && newIndexes) {
+						const insertIndex = this.findHigherIndexInTyped(changedIndex - 1, newIndexes);
+						newData.splice(insertIndex, 0, newValue);
+						newIndexes.splice(insertIndex, 0, changedIndex);
+					} else {
+						column.data[newType] = [newValue];
+						column.indexes[newType] = [changedIndex];
+					}
 				}
-				// Mirror pushValue on inline edits; the flag is sticky-true by design.
-				if (newType === cElementType.string && !column.hasNumericStrings &&
-					this.parseAnyNumber(newValue) !== null) {
-					column.hasNumericStrings = true;
+			}
+			if (oldType === cElementType.string || newType === cElementType.string) {
+				// Update string frequency counts (O(1) per change).
+				const sCounts = column._stringCounts;
+				if (sCounts) {
+					if (oldType === cElementType.string && oldValue !== null) {
+						const c = sCounts[oldValue] || 0;
+						if (c > 1) {
+							sCounts[oldValue] = c - 1;
+						} else {
+							delete sCounts[oldValue];
+						}
+					}
+					if (newType === cElementType.string && newValue !== null) {
+						sCounts[newValue] = (sCounts[newValue] || 0) + 1;
+					}
+					// Track strings that changed the unique set for targeted SORTED_REBUILD.
+					if (column._sortedStrings) {
+						if (oldType === cElementType.string && oldValue !== null && !sCounts[oldValue]) {
+							if (!column._sortedChanged) {
+								column._sortedChanged = new Set();
+							}
+							column._sortedChanged.add(oldValue);
+						}
+						if (newType === cElementType.string && newValue !== null && sCounts[newValue] === 1) {
+							if (!column._sortedChanged) {
+								column._sortedChanged = new Set();
+							}
+							column._sortedChanged.add(newValue);
+						}
+					}
+				}
+				// Defer _sortedStrings rebuild to _ensureStringRank.
+				if (column._sortedStrings) {
+					column._sortedDirty = true;
+					column._rankStale = true;
+				} else {
+					column._rankDirty = true;
 				}
 			}
 		}
@@ -12807,6 +13331,9 @@ function parseStringToCElement (val, cultureInfo) {
 			} else if (matchingInfo.op === "<>") {
 				const elemsCount = this.typedCache.getElemsCount(range);
 				return new cNumber(elemsCount);
+			} else {
+				// >=, <=, >, < with empty string — no match (consistent with COUNTIFS behaviour).
+				return new cNumber(0);
 			}
 		}
 		const isWildcard = type === cElementType.string && (searchValue.indexOf('*') !== -1 || searchValue.indexOf('?') !== -1);
@@ -12832,7 +13359,8 @@ function parseStringToCElement (val, cultureInfo) {
 			const matchingFunction = (type === cElementType.string && isWildcard && (matchingInfo.op === '=' || matchingInfo.op === null))
 				? (function() { var re = _buildWildcardRegex(searchValue); return function(a) { return re.test(a); }; }())
 				: getMatchingFunction(type, matchingInfo.op, isWildcard);
-			_count = this.typedCache.calculate(range, type, matchingFunction, searchValue);
+			// Pass opt_op for rank-based string inequality optimisation.
+			_count = this.typedCache.calculate(range, type, matchingFunction, searchValue, false, matchingInfo.op);
 		}
 		return new cNumber(_count);
 	};
@@ -13259,10 +13787,18 @@ function parseStringToCElement (val, cultureInfo) {
 		const remBits = numRows & 31;
 		const lastWordMask = remBits !== 0 ? (1 << remBits) - 1 : 0xFFFFFFFF;
 
+		// Rank-based comparison: eligible for string type with inequality operators in normal mode.
+		// isEmptyStr is excluded: matchFn is null in that case and the expected result is 0 matches.
+		const useRankCompare = type === cElementType.string && !isComplement && !info.isEmptyStr &&
+			(op === '<' || op === '>' || op === '<=' || op === '>=');
+
 		for (let relCol = 0; relCol < numCols; relCol += 1) {
 			const absCol = bbox.c1 + relCol;
 			typedCache.updateColumnData(ws, absCol, bbox.r1, bbox.r2);
 			const column = typedCache.data[wsId][absCol];
+
+			// Apply deferred string changes before reading data/indexes references.
+			typedCache._applyPendingStringChanges(column);
 
 			const typedData = column.data[type];
 			const typedIndexes = column.indexes[type];
@@ -13275,7 +13811,27 @@ function parseStringToCElement (val, cultureInfo) {
 				matchingRelRows.fill(0);
 			}
 
-			if (typedData && matchFn) {
+			if (useRankCompare && typedData && typedData.length) {
+				// Rank-based fast path: integer comparisons instead of string comparisons.
+				const rc = typedCache._setupRankCompare(column, searchValue, op);
+				const first = typedCache.findLowerIndexInTyped(bbox.r1, typedIndexes);
+				const last = typedCache.findHigherIndexInTyped(bbox.r2, typedIndexes);
+				if (rc) {
+					for (let j = first; j < last; j += 1) {
+						if (rc.useGte ? rc.rankData[j] >= rc.threshold : rc.rankData[j] < rc.threshold) {
+							const relRow = typedIndexes[j] - bbox.r1;
+							matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+						}
+					}
+				} else if (matchFn) {
+					for (let j = first; j < last; j += 1) {
+						if (matchFn(typedData[j], searchValue)) {
+							const relRow = typedIndexes[j] - bbox.r1;
+							matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+						}
+					}
+				}
+			} else if (typedData && matchFn) {
 				const first = typedCache.findLowerIndexInTyped(bbox.r1, typedIndexes);
 				const last = typedCache.findHigherIndexInTyped(bbox.r2, typedIndexes);
 				if (isComplement) {
@@ -13567,6 +14123,7 @@ function parseStringToCElement (val, cultureInfo) {
 
 			const searchColumn = this.data[searchRangeWsId][searchColumnIndex];
 			const sumColumn = sumCache.data[sumRangeWsId][i];
+			this._applyPendingStringChanges(searchColumn);
 			const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
 
 			// 4 advancing pointers, one per type — amortized O(1) per sum entry to check if search row has ANY data
@@ -13653,6 +14210,7 @@ function parseStringToCElement (val, cultureInfo) {
 
 			const searchColumn = this.data[searchRangeWsId][searchColumnIndex];
 			const sumColumn = sumCache.data[sumRangeWsId][i];
+			this._applyPendingStringChanges(searchColumn);
 			const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
 
 			const errorIndexes = sumColumn.indexes[cElementType.error];
@@ -13724,7 +14282,7 @@ function parseStringToCElement (val, cultureInfo) {
 		return null;
 	};
 
-	SumIfTypedCache.prototype.calculate = function(searchRange, sumRange, sumCache, type, matchingFunction, searchValue, convertToNumber, skipErrors) {
+	SumIfTypedCache.prototype.calculate = function(searchRange, sumRange, sumCache, type, matchingFunction, searchValue, convertToNumber, skipErrors, opt_op) {
 		let sum = 0;
 		let count = 0;
 
@@ -13737,6 +14295,12 @@ function parseStringToCElement (val, cultureInfo) {
 
 		const columnsOffset = sumRangeBbox.c1 - searchRangeBbox.c1;
 
+		// Rank-based comparison is eligible when searching strings with inequality operators.
+		// Empty string is excluded: callers return 0 early for that case (consistent with COUNTIFS).
+		const useRankCompare = !convertToNumber && type === cElementType.string && opt_op &&
+			searchValue !== "" &&
+			(opt_op === '<' || opt_op === '>' || opt_op === '<=' || opt_op === '>=');
+
 		for (let i = searchRangeBbox.c1; i <= searchRangeBbox.c2; i += 1) {
 			const sumColumnIndex = columnsOffset + i;
 
@@ -13745,6 +14309,9 @@ function parseStringToCElement (val, cultureInfo) {
 
 			const searchColumn = this.data[searchRangeWsId][i];
 			const sumColumn = sumCache.data[sumRangeWsId][sumColumnIndex];
+
+			// Apply deferred string changes before reading data/indexes references.
+			this._applyPendingStringChanges(searchColumn);
 
 			// Skip the string pass for columns with no numeric-looking strings.
 			if (convertToNumber && !searchColumn.hasNumericStrings) {
@@ -13761,13 +14328,24 @@ function parseStringToCElement (val, cultureInfo) {
 			const errorData = skipErrors ? null : sumColumn.data[cElementType.error];
 
 			if (searchTypedData) {
+				// Build rank threshold once per column for string inequality fast path.
+				const rc = useRankCompare && searchTypedData.length
+					? this._setupRankCompare(searchColumn, searchValue, opt_op)
+					: null;
+				const rankData = rc ? rc.rankData : null;
+				const rankThreshold = rc ? rc.threshold : 0;
+				const rankUseGte = rc ? rc.useGte : false;
+
 				const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
 
 				const firstIndex = this.findLowerIndexInTyped(searchRangeBbox.r1, searchTypedIndexes);
 				const lastIndex = this.findHigherIndexInTyped(searchRangeBbox.r2, searchTypedIndexes);
 
-				let currentSumIndex = sumIndexes && sumCache.findLowerIndexInTyped(searchTypedIndexes[firstIndex] + rowSumOffset, sumIndexes);
-				let currentErrorIndex = errorIndexes && sumCache.findLowerIndexInTyped(searchTypedIndexes[firstIndex] + rowSumOffset, errorIndexes);
+				// Guard against empty range: if firstIndex >= lastIndex there are no matching rows,
+				// the loops below are skipped, and the starting pointer value is irrelevant.
+				const startRow = firstIndex < lastIndex ? searchTypedIndexes[firstIndex] + rowSumOffset : 0;
+				let currentSumIndex = sumIndexes && sumCache.findLowerIndexInTyped(startRow, sumIndexes);
+				let currentErrorIndex = errorIndexes && sumCache.findLowerIndexInTyped(startRow, errorIndexes);
 
 				const sumLen = sumIndexes ? sumIndexes.length : 0;
 				const errLen = errorIndexes ? errorIndexes.length : 0;
@@ -13782,6 +14360,23 @@ function parseStringToCElement (val, cultureInfo) {
 						currentSumIndex = gallopAdvance(sumIndexes, currentSumIndex, sumLen, targetRow);
 						currentErrorIndex = gallopAdvance(errorIndexes, currentErrorIndex, errLen, targetRow);
 						// Check after gallop: pointer may land on targetRow whether or not it needed to advance
+						if (errorIndexes && currentErrorIndex < errLen && errorIndexes[currentErrorIndex] === targetRow) {
+							return {sum: null, count: null, error: new cError(errorData[currentErrorIndex])};
+						}
+						if (sumIndexes && currentSumIndex < sumLen && sumIndexes[currentSumIndex] === targetRow) {
+							sum += sumData[currentSumIndex];
+							count += 1;
+							currentSumIndex += 1;
+						}
+					}
+				} else if (rankData) {
+					// Fast path: integer rank comparison instead of string comparison.
+					for (let j = firstIndex; j < lastIndex; j += 1) {
+						if (rankUseGte ? rankData[j] < rankThreshold : rankData[j] >= rankThreshold) continue;
+						if ((!sumIndexes || currentSumIndex >= sumLen) && (!errorIndexes || currentErrorIndex >= errLen)) break;
+						const targetRow = searchTypedIndexes[j] + rowSumOffset;
+						currentSumIndex = gallopAdvance(sumIndexes, currentSumIndex, sumLen, targetRow);
+						currentErrorIndex = gallopAdvance(errorIndexes, currentErrorIndex, errLen, targetRow);
 						if (errorIndexes && currentErrorIndex < errLen && errorIndexes[currentErrorIndex] === targetRow) {
 							return {sum: null, count: null, error: new cError(errorData[currentErrorIndex])};
 						}
@@ -13905,6 +14500,9 @@ function parseStringToCElement (val, cultureInfo) {
 				}
 				_sum = calculatingResult.sum;
 				_count = calculatingResult.count;
+			} else {
+				// >=, <=, >, < with empty string — no match (consistent with COUNTIFS behaviour).
+				return this._finalizeResult(0, 0);
 			}
 		} else {
 			const isWildcard = type === cElementType.string && (searchValue.indexOf('*') !== -1 || searchValue.indexOf('?') !== -1);
@@ -13948,7 +14546,8 @@ function parseStringToCElement (val, cultureInfo) {
 				const matchingFunction = (type === cElementType.string && isWildcard && (matchingInfo.op === '=' || matchingInfo.op === null))
 					? (function() { var re = _buildWildcardRegex(searchValue); return function(a) { return re.test(a); }; }())
 					: getMatchingFunction(type, matchingInfo.op, isWildcard);
-				const calculatingResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, matchingFunction, searchValue);
+				// Pass opt_op for rank-based string inequality optimisation.
+				const calculatingResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, matchingFunction, searchValue, false, false, matchingInfo.op);
 				if (calculatingResult.error !== null) {
 					return calculatingResult.error;
 				}
