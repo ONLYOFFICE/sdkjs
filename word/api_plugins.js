@@ -1249,6 +1249,23 @@
 		return logicDocument.ReplaceCurrentSentence(private_GetTextDirection(type), _replaceString);
 	};
 	/**
+	 * Selects all document content.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias SelectAll
+	 */
+	Api.prototype["pluginMethod_SelectAll"] = function()
+	{
+		this.asc_EditSelectAll();
+	};
+	Api.prototype["pluginMethod_Copy"] = function () {
+	return this.Copy();
+	};
+
+	Api.prototype["pluginMethod_Deselect"] = function () {
+	return this.asc_RemoveSelection();
+	};
+	/**
 	 * Undoes the user's last action.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
@@ -1319,6 +1336,60 @@
 		let docPos = topDocument && topDocument.GetContentPosition ? topDocument.GetContentPosition(false) : null;
 		return bookmarks.GetBookmarkByDocPos(docPos);
 	};
+	/**
+	 * Returns the same payload prepared by copy operation, but does not write to clipboard.
+	 * Mirrors Copy_New flow: focus check, same formats, LastCopyBinary update, and copy event.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias GetCopyPayload
+	 * @returns {{ok: boolean, Text: string|null, Html: string|null, Internal: string|null, Image: any, Raw: object}}
+	 */
+	Api.prototype["pluginMethod_GetCopyPayload"] = function()
+	{
+		var oClipboard = AscCommon.g_clipboardBase;
+		if (!oClipboard || !oClipboard.Api)
+			return {ok: false, Text: null, Html: null, Internal: null, Image: null, Raw: {}};
+
+		if (!oClipboard.Api.asc_IsFocus(true) && !oClipboard._isUseMobileNewCopy())
+			return {ok: false, Text: null, Html: null, Internal: null, Image: null, Raw: {}};
+
+		oClipboard.LastCopyBinary = null;
+
+		var copy_data = {
+			data : {},
+			pushData: function(format, value)
+			{
+				oClipboard.lastCopyPush(format, value);
+				this.data[format] = value;
+			}
+		};
+
+		try
+		{
+			oClipboard.bCut = false;
+			this.asc_CheckCopy(copy_data, AscCommon.c_oAscClipboardDataFormat.Text |
+				AscCommon.c_oAscClipboardDataFormat.Html |
+				AscCommon.c_oAscClipboardDataFormat.Internal |
+				AscCommon.c_oAscClipboardDataFormat.Image);
+			oClipboard.bCut = false;
+
+			oClipboard.SendCopyEvent();
+		}
+		catch (e)
+		{
+			oClipboard.bCut = false;
+			return {ok: false, Text: null, Html: null, Internal: null, Image: null, Raw: {}};
+		}
+
+		return {
+			ok: true,
+			Text: copy_data.data[AscCommon.c_oAscClipboardDataFormat.Text] || null,
+			Html: copy_data.data[AscCommon.c_oAscClipboardDataFormat.Html] || null,
+			Internal: copy_data.data[AscCommon.c_oAscClipboardDataFormat.Internal] || null,
+			Image: copy_data.data[AscCommon.c_oAscClipboardDataFormat.Image] || null,
+			Raw: copy_data.data
+		};
+	};
 
 	function private_ReadContentControlCommonPr(commonPr)
 	{
@@ -1384,5 +1455,3 @@
 	window["AscCommon"].readContentControlCommonPr = readContentControlCommonPr;
 	
 })(window);
-
-
