@@ -1756,6 +1756,10 @@ function (window, undefined) {
 		let script = this.script;
 
 		if (!script) {
+			if (this.lessThen == undefined && this.greaterThen == undefined) {
+				return [];
+			}
+
 			const hasGreater = this.greaterThen !== undefined && this.greaterThen !== null;
 			const hasLess = this.lessThen !== undefined && this.lessThen !== null;
 
