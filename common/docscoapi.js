@@ -229,9 +229,12 @@
     return 0;
   };
 
-  CDocsCoApi.prototype.set_changesJson = function(changes) {
+  CDocsCoApi.prototype.set_changesJson = function(changes, done) {
     setTimeout(() => {
       this._CoAuthoringApi.updateAuthChangesWithJsonSet(changes)
+      if (typeof done === "function") {
+        done();
+      }
     }, 1500);
   };
 
@@ -375,13 +378,22 @@
   };
 
   CDocsCoApi.prototype.saveChanges = function(arrayChanges, deleteIndex, excelAdditionalInfo, canUnlockDocument, canReleaseLocks) {
-    const frameId = "iframe_asc.{57096ca0-51df-438e-90d6-2cfe9d2fa7d4}";
-    let frame = document.getElementById(frameId);
-    if (frame)
-      frame.contentWindow.postMessage(
-        JSON.stringify({ type: "FILE_DELTA_CHANGES", payload: arrayChanges }),
-        "*"
-      );
+    // Standalone mode has no online DocsCo save pipeline, so emit editor deltas here.
+    if (this._standaloneApp) {
+      const frameId = "iframe_asc.{57096ca0-51df-438e-90d6-2cfe9d2fa7d4}";
+      const frame = document.getElementById(frameId);
+      if (frame && frame.contentWindow) {
+        const safeChanges = Array.isArray(arrayChanges) ? arrayChanges : [];
+        frame.contentWindow.postMessage(
+          JSON.stringify({
+            type: "FILE_DELTA_CHANGES",
+            payload: safeChanges,
+          }),
+          "*"
+        );
+      }
+    }
+
     if (this._CoAuthoringApi && this._onlineWork) {
       this._CoAuthoringApi.canUnlockDocument = canUnlockDocument;
       this._CoAuthoringApi.canReleaseLocks = canReleaseLocks;

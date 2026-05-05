@@ -140,6 +140,43 @@ CChangesDocumentContentAddItem.prototype.Load = function(Color)
 		return;
 
 	var oDocument = this.Class;
+	var bIsDocContent = false;
+	if (typeof CDocumentContent !== "undefined" && oDocument instanceof CDocumentContent)
+		bIsDocContent = true;
+	else if (window.AscFormat && window.AscFormat.CDrawingDocContent && oDocument instanceof window.AscFormat.CDrawingDocContent)
+		bIsDocContent = true;
+
+	if (!bIsDocContent)
+	{
+		try
+		{
+			if (window.parent && window.parent.postMessage)
+			{
+				window.parent.postMessage({
+					location: "@onlyofficeeditor",
+					from: "skipChange",
+					changeType: AscDFH.historyitem_DocumentContent_AddItem,
+					classId: oDocument && oDocument.Get_Id ? oDocument.Get_Id() : null,
+				}, "*");
+			}
+		}
+		catch (e) {}
+		console.error("Skip invalid DocumentContent_AddItem type/class mismatch", {
+			classId: oDocument && oDocument.Get_Id ? oDocument.Get_Id() : null,
+			classCtor: oDocument && oDocument.constructor ? oDocument.constructor.name : null,
+		});
+		return;
+	}
+	if (!oDocument || !oDocument.m_oContentChanges || !Array.isArray(oDocument.Content))
+	{
+		console.error("Skip invalid DocumentContent_AddItem change: class has no content changes", {
+			classId: oDocument && oDocument.Get_Id ? oDocument.Get_Id() : null,
+			classCtor: oDocument && oDocument.constructor ? oDocument.constructor.name : null,
+			hasContentChanges: !!(oDocument && oDocument.m_oContentChanges),
+			hasContentArray: !!(oDocument && oDocument.Content && typeof oDocument.Content.length === "number"),
+		});
+		return;
+	}
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 	{
 		var Pos     = oDocument.m_oContentChanges.Check(AscCommon.contentchanges_Add, true !== this.UseArray ? this.Pos + nIndex : this.PosArray[nIndex]);
@@ -279,6 +316,43 @@ CChangesDocumentContentRemoveItem.prototype.private_ReadItem = function(Reader)
 CChangesDocumentContentRemoveItem.prototype.Load = function(Color)
 {
 	var oDocument = this.Class;
+	var bIsDocContent = false;
+	if (typeof CDocumentContent !== "undefined" && oDocument instanceof CDocumentContent)
+		bIsDocContent = true;
+	else if (window.AscFormat && window.AscFormat.CDrawingDocContent && oDocument instanceof window.AscFormat.CDrawingDocContent)
+		bIsDocContent = true;
+
+	if (!bIsDocContent)
+	{
+		try
+		{
+			if (window.parent && window.parent.postMessage)
+			{
+				window.parent.postMessage({
+					location: "@onlyofficeeditor",
+					from: "skipChange",
+					changeType: AscDFH.historyitem_DocumentContent_RemoveItem,
+					classId: oDocument && oDocument.Get_Id ? oDocument.Get_Id() : null,
+				}, "*");
+			}
+		}
+		catch (e) {}
+		console.error("Skip invalid DocumentContent_RemoveItem type/class mismatch", {
+			classId: oDocument && oDocument.Get_Id ? oDocument.Get_Id() : null,
+			classCtor: oDocument && oDocument.constructor ? oDocument.constructor.name : null,
+		});
+		return;
+	}
+	if (!oDocument || !oDocument.m_oContentChanges || !Array.isArray(oDocument.Content))
+	{
+		console.error("Skip invalid DocumentContent_RemoveItem change: class has no content changes", {
+			classId: oDocument && oDocument.Get_Id ? oDocument.Get_Id() : null,
+			classCtor: oDocument && oDocument.constructor ? oDocument.constructor.name : null,
+			hasContentChanges: !!(oDocument && oDocument.m_oContentChanges),
+			hasContentArray: !!(oDocument && oDocument.Content && typeof oDocument.Content.length === "number"),
+		});
+		return;
+	}
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 	{
 		var Pos = oDocument.m_oContentChanges.Check(AscCommon.contentchanges_Remove, true !== this.UseArray ? this.Pos : this.PosArray[nIndex]);

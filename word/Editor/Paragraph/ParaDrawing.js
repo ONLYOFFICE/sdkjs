@@ -337,7 +337,7 @@ ParaDrawing.prototype.GetParentDocumentContent = function()
 ParaDrawing.prototype.Get_Run = function()
 {
 	var oParagraph = this.Get_ParentParagraph();
-	if (oParagraph)
+	if (oParagraph && oParagraph.Get_DrawingObjectRun)
 		return oParagraph.Get_DrawingObjectRun(this.Id);
 
 	return null;
@@ -548,6 +548,9 @@ ParaDrawing.prototype.IsUseInDocument = function()
 {
 	if (this.Parent)
 	{
+		if (!this.Parent.Get_DrawingObjectRun)
+			return false;
+
 		var Run = this.Parent.Get_DrawingObjectRun(this.Id);
 		if (Run)
 		{
@@ -2064,6 +2067,11 @@ ParaDrawing.prototype.Remove_FromDocument = function(bRecalculate)
 		return oResult;
 	}
 
+	if (!this.Parent.Get_DrawingObjectRun)
+	{
+		return oResult;
+	}
+
 	var oRun = this.Parent.Get_DrawingObjectRun(this.Id);
 	if (oRun)
 	{
@@ -2113,14 +2121,38 @@ ParaDrawing.prototype.Remove_FromDocument = function(bRecalculate)
 };
 ParaDrawing.prototype.Get_ParentParagraph = function()
 {
-	if (this.Parent instanceof Paragraph)
-		return this.Parent;
+	let oParent = this.Parent;
+	let nGuard = 0;
+	// can be changed later depending upon the the maximum call stack that we need to keep
+	while (oParent && nGuard < 128)
+	{
+		if (oParent instanceof Paragraph)
+			return oParent;
 
-	if (this.Parent instanceof ParaRun)
-		return this.Parent.Paragraph;
+		if (oParent instanceof ParaRun)
+			return oParent.Paragraph || null;
 
-	if (this.Parent && this.Parent.GetParagraph)
-		return this.Parent.GetParagraph();
+		if (oParent.Parent && oParent.Parent !== oParent)
+		{
+			oParent = oParent.Parent;
+			++nGuard;
+			continue;
+		}
+
+		if (oParent.GetParagraph && oParent.GetParagraph !== this.Get_ParentParagraph)
+		{
+			try
+			{
+				return oParent.GetParagraph();
+			}
+			catch (e)
+			{
+				return null;
+			}
+		}
+
+		break;
+	}
 
 	return null;
 };
