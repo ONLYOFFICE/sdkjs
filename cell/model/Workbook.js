@@ -1688,12 +1688,13 @@
 			AscCommonExcel.g_oVLOOKUPCache.clean();
 			AscCommonExcel.g_oHLOOKUPCache.clean();
 			AscCommonExcel.g_oMatchCache.clean();
-			AscCommonExcel.g_oSUMIFSCache.clean();
 			AscCommonExcel.g_oFormulaRangesCache.clean();
 			AscCommonExcel.g_oCountIfCache.clean();
 			AscCommonExcel.g_oCountIFSCache.clean();
 			AscCommonExcel.g_oSumIfCache.clean();
 			AscCommonExcel.g_oAverageIfCache.clean();
+			AscCommonExcel.g_oSumIFSCache.clean();
+			AscCommonExcel.g_oAverageIFSCache.clean();
 		},
 		notifyAllFormulasInChangedWs: function() {
 			let sheetIds = {};
@@ -17499,12 +17500,13 @@
 			AscCommonExcel.g_oVLOOKUPCache.remove(this, DataOld, res);
 			AscCommonExcel.g_oHLOOKUPCache.remove(this, DataOld, res);
 			AscCommonExcel.g_oMatchCache.remove(this);
-			AscCommonExcel.g_oSUMIFSCache.remove(this);
 			AscCommonExcel.g_oFormulaRangesCache.remove(this);
 			AscCommonExcel.g_oCountIfCache.remove(this, DataOld, res);
 			AscCommonExcel.g_oCountIFSCache.remove(this, DataOld, res);
 			AscCommonExcel.g_oSumIfCache.remove(this, DataOld, res);
 			AscCommonExcel.g_oAverageIfCache.remove(this, DataOld, res);
+			AscCommonExcel.g_oSumIFSCache.remove(this, DataOld, res);
+			AscCommonExcel.g_oAverageIFSCache.remove(this, DataOld, res);
 		}
 	};
 	Cell.prototype.cleanText = function() {

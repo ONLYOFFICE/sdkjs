@@ -4154,70 +4154,7 @@ function (window, undefined) {
 	cAVERAGEIFS.prototype.argumentsType = [argType.reference, [argType.reference, argType.any]];
 	cAVERAGEIFS.prototype.enabledToSingle = {"arg0orOdd": true};
 	cAVERAGEIFS.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
-		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
-			cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		var arg0Matrix = arg0.getMatrix();
-		var i, j, arg1, arg2, matchingInfo;
-		for (var k = 1; k < arg.length; k += 2) {
-			arg1 = arg[k];
-			arg2 = arg[k + 1];
-
-			if (cElementType.cell !== arg1.type && cElementType.cell3D !== arg1.type && cElementType.cellsRange !==
-				arg1.type && cElementType.cellsRange3D !== arg1.type) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-
-			if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
-				arg2 = arg2.cross(arguments[1]);
-			} else if (cElementType.array === arg2.type) {
-				arg2 = arg2.getElementRowCol(0, 0);
-			}
-
-			arg2 = arg2.tocString();
-			if (cElementType.string !== arg2.type) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-			matchingInfo = AscCommonExcel.matchingValue(arg2);
-
-			var arg1Matrix = arg1.getMatrix();
-			if (arg0Matrix.length !== arg1Matrix.length) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-
-			for (i = 0; i < arg1Matrix.length; ++i) {
-				if (arg0Matrix[i].length !== arg1Matrix[i].length) {
-					return new cError(cErrorType.wrong_value_type);
-				}
-				for (j = 0; j < arg1Matrix[i].length; ++j) {
-					var arg1Val = arg1Matrix[i][j] && arg1Matrix[i][j][0] ? arg1Matrix[i][j][0] : arg1Matrix[i][j];
-					if (arg0Matrix[i][j] && !AscCommonExcel.matching(arg1Val, matchingInfo)) {
-						arg0Matrix[i][j] = null;
-					}
-				}
-			}
-		}
-
-		var _sum = 0, _count = 0;
-		var valMatrix0;
-		for (i = 0; i < arg0Matrix.length; ++i) {
-			for (j = 0; j < arg0Matrix[i].length; ++j) {
-				valMatrix0 = arg0Matrix[i][j] && arg0Matrix[i][j][0] ? arg0Matrix[i][j][0] : arg0Matrix[i][j];
-				if (valMatrix0 && cElementType.number === valMatrix0.type) {
-					_sum += valMatrix0.getValue();
-					++_count;
-				}
-			}
-		}
-
-		if (0 === _count) {
-			return new cError(cErrorType.division_by_zero);
-		} else {
-			return new cNumber(_sum / _count);
-		}
+		return AscCommonExcel.g_oAverageIFSCache.calculate(arg, arguments[1]);
 	};
 	cAVERAGEIFS.prototype.checkArguments = function (countArguments) {
 		return 1 === countArguments % 2 && cBaseFunction.prototype.checkArguments.apply(this, arguments);
@@ -13900,23 +13837,22 @@ function parseStringToCElement (val, cultureInfo) {
 	};
 
 	/**
-	 * Core calculation.  Builds a flat mask and applies each criteria pair.
+	 * Builds a flat Uint32 bitmask encoding which (relRow, relCol) positions satisfy
+	 * all criteria pairs and returns the count of surviving positions.
 	 *
-	 * @param {Array} ranges - range arguments
-	 * @param {Array} criteriaVals - normalised criteria cElement values
-	 * @param {Array} bboxes - pre-computed bounding boxes
-	 * @param {Array} wsIds - pre-computed worksheet ids
-	 * @param {Object} baseDim - {row, col}
-	 * @returns {cNumber}
+	 * Bit layout: bit (relRow & 31) of mask[relCol * words + (relRow >> 5)] is 1 when
+	 * the position still satisfies every criteria seen so far.
+	 *
+	 * @param {Array}  ranges      - criteria range arguments (one per pair)
+	 * @param {Array}  criteriaVals - normalised criteria cElement values
+	 * @param {Array}  bboxes      - pre-computed bounding boxes
+	 * @param {Array}  wsIds       - pre-computed worksheet ids
+	 * @param {number} numRows     - height of the criteria ranges
+	 * @param {number} numCols     - width of the criteria ranges
+	 * @returns {{mask: Uint32Array, remaining: number}}
 	 */
-	CountIFSCache.prototype._calculate = function (ranges, criteriaVals, bboxes, wsIds, baseDim) {
-		const numRows = baseDim.row;
-		const numCols = baseDim.col;
-		const total = numRows * numCols;
+	CountIFSCache.prototype._buildMask = function (ranges, criteriaVals, bboxes, wsIds, numRows, numCols) {
 		const words = (numRows + 31) >> 5;
-
-		// Bit-packed mask: bit (relRow & 31) of mask[relCol * words + (relRow >> 5)]
-		// being 1 means the position still satisfies all criteria seen so far.
 		const mask = new Uint32Array(words * numCols);
 		mask.fill(0xFFFFFFFF);
 
@@ -13930,27 +13866,36 @@ function parseStringToCElement (val, cultureInfo) {
 			}
 		}
 
-		let remaining = total;
+		let remaining = numRows * numCols;
 
 		// Pre-allocated scratch buffer reused across all K criteria to avoid K separate
 		// Uint32Array allocations inside _applyEqualsOneCriteria.
 		const matchingRelRows = new Uint32Array(words);
 
-		for (let k = 0; k < ranges.length; k += 1) {
-			const rangeArg = ranges[k];
-			const ws = rangeArg.getWS();
-			const wsId = wsIds[k];
-			const bbox = bboxes[k];
+		for (let k = 0; k < ranges.length && remaining > 0; k += 1) {
 			const info = this._parseCriteria(criteriaVals[k]);
-
-			remaining -= this._applyOneCriteria(mask, info, ws, wsId, bbox, numRows, numCols, matchingRelRows, remaining);
-
-			if (remaining <= 0) {
-				return new cNumber(0);
-			}
+			remaining -= this._applyOneCriteria(
+				mask, info, ranges[k].getWS(), wsIds[k], bboxes[k],
+				numRows, numCols, matchingRelRows, remaining);
 		}
 
-		return new cNumber(remaining);
+		return {mask: mask, remaining: remaining};
+	};
+
+	/**
+	 * Core calculation.  Delegates mask construction to _buildMask, then counts
+	 * surviving positions.
+	 *
+	 * @param {Array}  ranges      - criteria range arguments
+	 * @param {Array}  criteriaVals - normalised criteria cElement values
+	 * @param {Array}  bboxes      - pre-computed bounding boxes
+	 * @param {Array}  wsIds       - pre-computed worksheet ids
+	 * @param {Object} baseDim     - {row, col}
+	 * @returns {cNumber}
+	 */
+	CountIFSCache.prototype._calculate = function (ranges, criteriaVals, bboxes, wsIds, baseDim) {
+		const res = this._buildMask(ranges, criteriaVals, bboxes, wsIds, baseDim.row, baseDim.col);
+		return new cNumber(res.remaining);
 	};
 
 	// -------------------------------------------------------SumIfSumRangeCache------------------------------------------
@@ -14618,11 +14563,409 @@ function parseStringToCElement (val, cultureInfo) {
 	};
 
 
+	// -------------------------------------------------------SumIFSCache---------------------------------------------------
+
+	/**
+	 * Cache for SUMIFS.  Inherits the bitmask infrastructure from CountIFSCache and
+	 * collects sum values from a separate sum range for surviving (relRow, relCol)
+	 * positions.
+	 *
+	 * Argument layout expected by calculate():
+	 *   arg[0]          = sum_range   (reference)
+	 *   arg[1], arg[2]  = criteria_range_1, criteria_1
+	 *   arg[3], arg[4]  = criteria_range_2, criteria_2  ...
+	 *
+	 * @constructor
+	 */
+	function SumIFSCache() {
+		CountIFSCache.call(this);
+		this.sumRangeCache = new SumIfSumRangeCache();
+	}
+
+	SumIFSCache.prototype = Object.create(CountIFSCache.prototype);
+	SumIFSCache.prototype.constructor = SumIFSCache;
+
+	/**
+	 * Entry point called from cSUMIFS.prototype.Calculate.
+	 * Validates arguments, handles array/range criteria expansion,
+	 * and delegates to _calculateMiss on a cache miss.
+	 *
+	 * @param {Array}  arg  - formula arguments (sum_range at [0], criteria pairs at [1..])
+	 * @param {Object} _arg1 - implicit formula context (passed through for array expansion)
+	 * @returns {cNumber|cError|cArray}
+	 */
+	SumIFSCache.prototype.calculate = function (arg, _arg1) {
+		// Validate sum_range (arg[0]).
+		const sumRangeArg = arg[0];
+		if (cElementType.error === sumRangeArg.type) {
+			return sumRangeArg;
+		}
+		if (cElementType.cell !== sumRangeArg.type && cElementType.cell3D !== sumRangeArg.type &&
+			cElementType.cellsRange !== sumRangeArg.type &&
+			!(cElementType.cellsRange3D === sumRangeArg.type && sumRangeArg.isSingleSheet())) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+		const arrayCriteria = [];
+		let hasScalarCriteria = false;
+		let forceZeroIntersection = false;
+
+		for (let k = 1; k < arg.length; k += 2) {
+			const rangeArg = arg[k];
+			if (cElementType.error === rangeArg.type) {
+				return rangeArg;
+			}
+			if (cElementType.cell !== rangeArg.type && cElementType.cell3D !== rangeArg.type &&
+				cElementType.cellsRange !== rangeArg.type &&
+				!(cElementType.cellsRange3D === rangeArg.type && rangeArg.isSingleSheet())) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			let criteriaArg = arg[k + 1];
+			if (criteriaArg.type === cElementType.cellsRange ||
+				criteriaArg.type === cElementType.cellsRange3D ||
+				criteriaArg.type === cElementType.array) {
+				if (criteriaArg.type === cElementType.cellsRange3D && !criteriaArg.isSingleSheet()) {
+					forceZeroIntersection = true;
+				}
+				arrayCriteria.push({pos: k + 1, dims: criteriaArg.getDimensions()});
+			} else {
+				hasScalarCriteria = true;
+			}
+		}
+
+		// If any criteria is an array/range, build a result cArray by iterating each element.
+		// The intersection (MIN rows × MIN cols) gets actual SUMIFS values; other positions are zero.
+		if (arrayCriteria.length > 0) {
+			let maxRow = 0, maxCol = 0;
+			for (let i = 0; i < arrayCriteria.length; i += 1) {
+				const dims = arrayCriteria[i].dims;
+				if (dims.row > maxRow) {
+					maxRow = dims.row;
+				}
+				if (dims.col > maxCol) {
+					maxCol = dims.col;
+				}
+			}
+
+			let minRow = 0, minCol = 0;
+			if (!forceZeroIntersection) {
+				if (hasScalarCriteria) {
+					minRow = 1;
+					minCol = 1;
+				} else {
+					minRow = AscCommon.gc_nMaxRow0 + 1;
+					minCol = AscCommon.gc_nMaxCol0 + 1;
+					for (let j = 0; j < arrayCriteria.length; j += 1) {
+						const adims = arrayCriteria[j].dims;
+						if (adims.row < minRow) {
+							minRow = adims.row;
+						}
+						if (adims.col < minCol) {
+							minCol = adims.col;
+						}
+					}
+				}
+			}
+
+			const result = new cArray();
+			for (let row = 0; row < maxRow; row += 1) {
+				result.addRow();
+				for (let col = 0; col < maxCol; col += 1) {
+					let elem;
+					if (row < minRow && col < minCol) {
+						const newArg = arg.slice();
+						for (let ai = 0; ai < arrayCriteria.length; ai += 1) {
+							const pos = arrayCriteria[ai].pos;
+							const crit = arg[pos];
+							let critElem = crit.type === cElementType.array
+								? crit.getElementRowCol(row, col)
+								: crit.getValueByRowCol(row, col, true);
+							if (critElem.type === cElementType.empty) {
+								critElem = new cNumber(0);
+							}
+							newArg[pos] = critElem;
+						}
+						elem = this.calculate(newArg, _arg1);
+					} else {
+						elem = new cNumber(0);
+					}
+					result.addElementInRow(elem, row);
+				}
+			}
+			return result;
+		}
+
+		// Scalar path: build cache key = sum_range bbox + all criteria pairs.
+		const sumBbox = sumRangeArg.getBBox0();
+		const sumWsId = sumRangeArg.getWS().getId();
+		const sPrimaryKey = sumWsId + g_cCharDelimiter + sumBbox.getName();
+
+		const pairs = (arg.length - 1) >> 1;
+		const ranges = new Array(pairs);
+		const criteriaVals = new Array(pairs);
+		const bboxes = new Array(pairs);
+		const wsIds = new Array(pairs);
+
+		let sKey = sPrimaryKey;
+
+		for (let k = 1; k < arg.length; k += 2) {
+			const cRangeArg = arg[k];
+			let cCriteriaArg = arg[k + 1];
+
+			if (cCriteriaArg.type === cElementType.cell || cCriteriaArg.type === cElementType.cell3D) {
+				cCriteriaArg = cCriteriaArg.getValue();
+				if (cCriteriaArg.type === cElementType.empty) {
+					cCriteriaArg = new cNumber(0);
+				}
+			}
+
+			const cWs = cRangeArg.getWS();
+			const cWsId = cWs.getId();
+			const cBbox = cRangeArg.getBBox0();
+
+			sKey += g_cCharDelimiter + cWsId + g_cCharDelimiter + cBbox.getName() +
+				g_cCharDelimiter + cCriteriaArg.getValue();
+
+			const idx = (k - 1) >> 1;
+			ranges[idx] = cRangeArg;
+			criteriaVals[idx] = cCriteriaArg;
+			bboxes[idx] = cBbox;
+			wsIds[idx] = cWsId;
+		}
+
+		let cacheElem = this.cacheId[sPrimaryKey];
+		if (!cacheElem) {
+			cacheElem = {results: {}, bboxKeys: new Set()};
+			this.cacheId[sPrimaryKey] = cacheElem;
+		}
+
+		// Cache hit: return immediately.
+		if (cacheElem.results[sKey]) {
+			return cacheElem.results[sKey];
+		}
+
+		// Cache miss: delegate to the slow path.
+		return this._calculateMiss(sumRangeArg, ranges, criteriaVals, bboxes, wsIds, sKey, cacheElem);
+	};
+
+	/**
+	 * Slow path for cache misses.  Validates range dimensions, registers all
+	 * bboxes (criteria AND sum range) for future invalidation, computes the result.
+	 *
+	 * @param {Object} sumRange     - sum range argument
+	 * @param {Array}  ranges       - criteria range arguments (pre-normalised)
+	 * @param {Array}  criteriaVals - normalised criteria cElement values
+	 * @param {Array}  bboxes       - pre-computed bounding boxes for criteria ranges
+	 * @param {Array}  wsIds        - pre-computed worksheet ids for criteria ranges
+	 * @param {string} sKey         - pre-computed composite cache key
+	 * @param {Object} cacheElem    - cache entry ({results: {}, bboxKeys: Set})
+	 * @returns {cNumber|cError}
+	 */
+	SumIFSCache.prototype._calculateMiss = function (sumRange, ranges, criteriaVals, bboxes, wsIds, sKey, cacheElem) {
+		// Validate that all criteria ranges share the same dimensions.
+		const baseDim = ranges[0].getDimensions();
+		for (let k = 1; k < ranges.length; k += 1) {
+			const dim = ranges[k].getDimensions();
+			if (dim.row !== baseDim.row || dim.col !== baseDim.col) {
+				const errDim = new cError(cErrorType.wrong_value_type);
+				cacheElem.results[sKey] = errDim;
+				return errDim;
+			}
+		}
+
+		// Also validate that the sum range has the same dimensions as the criteria ranges.
+		const sumDim = sumRange.getDimensions();
+		if (sumDim.row !== baseDim.row || sumDim.col !== baseDim.col) {
+			const errSum = new cError(cErrorType.wrong_value_type);
+			cacheElem.results[sKey] = errSum;
+			return errSum;
+		}
+
+		// Register every bbox (criteria ranges + sum range) in cacheRanges so that
+		// a cell change in any participating range invalidates cacheElem.results.
+		for (let k = 0; k < ranges.length; k += 1) {
+			const wsId = wsIds[k];
+			const bboxKey = wsId + g_cCharDelimiter + bboxes[k].getName();
+			if (!cacheElem.bboxKeys.has(bboxKey)) {
+				let cacheRange = this.cacheRanges[wsId];
+				if (!cacheRange) {
+					cacheRange = new AscCommonExcel.RangeDataManager(null);
+					this.cacheRanges[wsId] = cacheRange;
+				}
+				cacheRange.add(bboxes[k], cacheElem);
+				cacheElem.bboxKeys.add(bboxKey);
+			}
+		}
+
+		// Register sum_range bbox separately with a distinct prefix so it never
+		// collides with a criteria range that happens to occupy the same cells.
+		const sumBbox = sumRange.getBBox0();
+		const sumWsId = sumRange.getWS().getId();
+		const sumBboxKey = 's' + g_cCharDelimiter + sumWsId + g_cCharDelimiter + sumBbox.getName();
+		if (!cacheElem.bboxKeys.has(sumBboxKey)) {
+			let sumCacheRange = this.cacheRanges[sumWsId];
+			if (!sumCacheRange) {
+				sumCacheRange = new AscCommonExcel.RangeDataManager(null);
+				this.cacheRanges[sumWsId] = sumCacheRange;
+			}
+			sumCacheRange.add(sumBbox, cacheElem);
+			cacheElem.bboxKeys.add(sumBboxKey);
+		}
+
+		cacheElem.results[sKey] = this._calculate(ranges, criteriaVals, bboxes, wsIds, baseDim, sumRange);
+		return cacheElem.results[sKey];
+	};
+
+	/**
+	 * Builds the criteria bitmask via _buildMask, then iterates surviving bits
+	 * column-by-column and accumulates values from the sum range.
+	 *
+	 * Sum range stores only numeric cells (cElementType.number); non-numeric cells
+	 * are treated as 0, matching the legacy SUMIFS behaviour.
+	 *
+	 * Bit iteration order: LSB-first within each 32-bit word → ascending relRow.
+	 * The sum-pointer advances monotonically, giving O(sumLen + matchBits) per column.
+	 *
+	 * @param {Array}  ranges      - criteria range arguments
+	 * @param {Array}  criteriaVals - normalised criteria cElement values
+	 * @param {Array}  bboxes      - pre-computed bounding boxes
+	 * @param {Array}  wsIds       - pre-computed worksheet ids
+	 * @param {Object} baseDim     - {row, col} — dimensions shared by all ranges
+	 * @param {Object} sumRange    - sum range argument
+	 * @returns {cNumber}
+	 */
+	SumIFSCache.prototype._calculate = function (ranges, criteriaVals, bboxes, wsIds, baseDim, sumRange) {
+		const numRows = baseDim.row;
+		const numCols = baseDim.col;
+		const res = this._buildMask(ranges, criteriaVals, bboxes, wsIds, numRows, numCols);
+		if (res.remaining === 0) {
+			return this._finalizeResult(0, 0);
+		}
+
+		const mask = res.mask;
+		const words = (numRows + 31) >> 5;
+		const sumBbox = sumRange.getBBox0();
+		const sumWs = sumRange.getWS();
+		const sumWsId = sumWs.getId();
+		let sum = 0, count = 0;
+
+		for (let relCol = 0; relCol < numCols; relCol += 1) {
+			const wordBase = relCol * words;
+
+			// Quick check: any surviving bits in this column?
+			let hasAny = false;
+			for (let wi = 0; wi < words; wi += 1) {
+				if (mask[wordBase + wi] !== 0) {
+					hasAny = true;
+					break;
+				}
+			}
+			if (!hasAny) {
+				continue;
+			}
+
+			// Load numeric data for the corresponding sum column.
+			// Non-numeric cells (errors, strings, booleans) are absent from the typed
+			// index and treated as 0 — consistent with legacy SUMIFS behaviour.
+			const sumColIdx = sumBbox.c1 + relCol;
+			this.sumRangeCache.updateColumnData(sumWs, sumColIdx, sumBbox.r1, sumBbox.r2);
+			const sumColumn = this.sumRangeCache.data[sumWsId][sumColIdx];
+			const sumData = sumColumn.data[cElementType.number];
+			const sumIndexes = sumColumn.indexes[cElementType.number];
+			if (!sumData || !sumIndexes) {
+				continue;
+			}
+
+			let sumPtr = this.sumRangeCache.findLowerIndexInTyped(sumBbox.r1, sumIndexes);
+			const sumLen = sumIndexes.length;
+
+			// Iterate surviving bits in ascending relRow order (LSB-first within each word).
+			// sumPtr advances monotonically across the inner loop — no rewind needed.
+			for (let w = 0; w < words && sumPtr < sumLen; w += 1) {
+				let word = mask[wordBase + w];
+				while (word !== 0) {
+					// Isolate lowest set bit and compute the trailing-zero count (= relRow within word).
+					const lsb = word & -word;
+					const relRow = (w << 5) + (31 - Math.clz32(lsb));
+					word = (word & (word - 1)) | 0;  // clear lowest set bit, keep 32-bit int
+
+					const targetSumRow = sumBbox.r1 + relRow;
+					while (sumPtr < sumLen && sumIndexes[sumPtr] < targetSumRow) {
+						sumPtr += 1;
+					}
+					if (sumPtr >= sumLen) {
+						break;
+					}
+					if (sumIndexes[sumPtr] === targetSumRow) {
+						sum += sumData[sumPtr];
+						count += 1;
+						sumPtr += 1;
+					}
+				}
+			}
+		}
+
+		return this._finalizeResult(sum, count);
+	};
+
+	/**
+	 * @param {number} sum
+	 * @param {number} count
+	 * @returns {cNumber}
+	 */
+	SumIFSCache.prototype._finalizeResult = function (sum, count) {
+		return new cNumber(sum);
+	};
+
+	SumIFSCache.prototype.remove = function (cell, dataOld, dataNew) {
+		// Parent (CountIFSCache → BaseTypedCache) clears result entries for the
+		// cell's position and updates the criteria-range typed column data.
+		CountIFSCache.prototype.remove.call(this, cell, dataOld, dataNew);
+		// Also update typed sum column data so the next calculate() gets fresh values.
+		this.sumRangeCache.changeData(cell, dataOld, dataNew);
+	};
+
+	SumIFSCache.prototype.clean = function () {
+		CountIFSCache.prototype.clean.call(this);
+		this.sumRangeCache.clean();
+	};
+
+	// -------------------------------------------------------AverageIFSCache----------------------------------------------
+
+	/**
+	 * Cache for AVERAGEIFS.  Extends SumIFSCache and overrides _finalizeResult
+	 * to return sum/count instead of sum alone.
+	 *
+	 * @constructor
+	 */
+	function AverageIFSCache() {
+		SumIFSCache.call(this);
+	}
+
+	AverageIFSCache.prototype = Object.create(SumIFSCache.prototype);
+	AverageIFSCache.prototype.constructor = AverageIFSCache;
+
+	/**
+	 * @param {number} sum
+	 * @param {number} count
+	 * @returns {cNumber|cError}
+	 */
+	AverageIFSCache.prototype._finalizeResult = function (sum, count) {
+		if (count === 0) {
+			return new cError(cErrorType.division_by_zero);
+		}
+		return new cNumber(sum / count);
+	};
+
+	// -------------------------------------------------------globals------------------------------------------------------
+
 	let g_oFormulaRangesCache = new FormulaRangesCache();
 	let g_oCountIfCache = new CountIfCache();
 	let g_oCountIFSCache = new CountIFSCache();
 	let g_oSumIfCache = new SumIfCache();
 	let g_oAverageIfCache = new AverageIfCache();
+	let g_oSumIFSCache = new SumIFSCache();
+	let g_oAverageIFSCache = new AverageIFSCache();
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
@@ -14660,6 +15003,8 @@ function parseStringToCElement (val, cultureInfo) {
 	window['AscCommonExcel'].g_oCountIFSCache = g_oCountIFSCache;
 	window['AscCommonExcel'].g_oSumIfCache = g_oSumIfCache;
 	window['AscCommonExcel'].g_oAverageIfCache = g_oAverageIfCache;
+	window['AscCommonExcel'].g_oSumIFSCache = g_oSumIFSCache;
+	window['AscCommonExcel'].g_oAverageIFSCache = g_oAverageIFSCache;
 	window['AscCommonExcel'].CountIfTypedCache = CountIfTypedCache;
 	window['AscCommonExcel'].parseStringToCElement = parseStringToCElement;
 	window['AscCommonExcel'].buildWildcardRegex = _buildWildcardRegex;
