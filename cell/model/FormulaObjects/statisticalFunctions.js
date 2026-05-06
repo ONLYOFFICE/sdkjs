@@ -12557,8 +12557,10 @@ function parseStringToCElement (val, cultureInfo) {
 
 			if (!multiChange && hasDel && hasAdd) {
 				// Fast path: single del + single add — use copyWithin instead of 2 splices.
-				const dlo = self._binarySearchSorted(sorted, toDel);
-				if (dlo < sorted.length && sorted[dlo] === toDel) {
+				// Identity match via _findExactInSorted so comparator-equal-but-distinct
+				// Unicode strings (e.g. NFC vs NFD forms) are not confused.
+				const dlo = self._findExactInSorted(sorted, toDel);
+				if (dlo >= 0) {
 					delOldRank = dlo;
 					delCount = 1;
 					const alo = self._binarySearchSorted(sorted, toAdd);
@@ -12586,14 +12588,15 @@ function parseStringToCElement (val, cultureInfo) {
 				}
 			} else {
 				sortedChanged.forEach(function(str) {
-					const lo = self._binarySearchSorted(sorted, str);
 					if (!sCounts[str]) {
-						if (lo < sorted.length && sorted[lo] === str) {
-							delOldRank = lo;
-							sorted.splice(lo, 1);
+						const dlo = self._findExactInSorted(sorted, str);
+						if (dlo >= 0) {
+							delOldRank = dlo;
+							sorted.splice(dlo, 1);
 							delCount++;
 						}
-					} else if (lo >= sorted.length || sorted[lo] !== str) {
+					} else if (self._findExactInSorted(sorted, str) < 0) {
+						const lo = self._binarySearchSorted(sorted, str);
 						sorted.splice(lo, 0, str);
 						addNewRank = lo;
 						addCount++;
@@ -12750,8 +12753,46 @@ function parseStringToCElement (val, cultureInfo) {
 		return lo;
 	};
 	/**
+	 * Upper-bound search: leftmost index where stringCompare(sorted[i], str) > 0.
+	 * Together with _binarySearchSorted (lower bound), brackets the
+	 * comparator-equal run for `str` (entries where stringCompare === 0).
+	 */
+	CountIfTypedCache.prototype._upperBoundSorted = function(sorted, str) {
+		let lo = 0, hi = sorted.length;
+		while (lo < hi) {
+			const mid = (lo + hi) >>> 1;
+			if (AscCommon.stringCompare(sorted[mid], str) <= 0) {
+				lo = mid + 1;
+			} else {
+				hi = mid;
+			}
+		}
+		return lo;
+	};
+	/**
+	 * Find the exact identity-match index of `str` within `sorted`, scanning
+	 * the comparator-equal run starting from the lower bound. Returns -1 if
+	 * no identity match exists. Required because Unicode-normalisation can
+	 * make distinct identities (e.g. "é" and "é") compare equal
+	 * via localeCompare while remaining `===`-distinct.
+	 */
+	CountIfTypedCache.prototype._findExactInSorted = function(sorted, str) {
+		const lo = this._binarySearchSorted(sorted, str);
+		for (let i = lo; i < sorted.length; i++) {
+			if (sorted[i] === str) {
+				return i;
+			}
+			if (AscCommon.stringCompare(sorted[i], str) !== 0) {
+				break;
+			}
+		}
+		return -1;
+	};
+	/**
 	 * Binary-search `searchValue` in the pre-sorted unique-strings array and return
 	 * the rank threshold needed for inequality-operator matching.
+	 * Uses lower/upper bounds via stringCompare so comparator-equal-but-not-identical
+	 * Unicode strings are bracketed correctly.
 	 * @param {string[]} sorted     — unique column strings sorted by stringCompare
 	 * @param {string}   searchValue
 	 * @param {string}   opt_op     — one of '<', '>', '<=', '>='
@@ -12759,19 +12800,17 @@ function parseStringToCElement (val, cultureInfo) {
 	 *   Rows match when: useGte ? rank >= threshold : rank < threshold
 	 */
 	CountIfTypedCache.prototype._buildRankThreshold = function(sorted, searchValue, opt_op) {
-		const lo = this._binarySearchSorted(sorted, searchValue);
-		const posInclusive = lo + (lo < sorted.length && sorted[lo] === searchValue ? 1 : 0);
 		if (opt_op === '<') {
-			return {threshold: lo, useGte: false};
-		}
-		if (opt_op === '>') {
-			return {threshold: posInclusive, useGte: true};
+			return {threshold: this._binarySearchSorted(sorted, searchValue), useGte: false};
 		}
 		if (opt_op === '<=') {
-			return {threshold: posInclusive, useGte: false};
+			return {threshold: this._upperBoundSorted(sorted, searchValue), useGte: false};
+		}
+		if (opt_op === '>') {
+			return {threshold: this._upperBoundSorted(sorted, searchValue), useGte: true};
 		}
 		/* '>=' */
-		return {threshold: lo, useGte: true};
+		return {threshold: this._binarySearchSorted(sorted, searchValue), useGte: true};
 	};
 	CountIfTypedCache.prototype.calculate = function(range, type, matchingFunction, searchValue, convertToNumber, opt_op) {
 		let count = 0;
