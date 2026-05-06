@@ -12252,7 +12252,31 @@ function parseStringToCElement (val, cultureInfo) {
 		const strPrepend = unshiftDataArrays[cElementType.string] ? unshiftDataArrays[cElementType.string].length : 0;
 		this.unshiftValues(column, unshiftDataArrays, unshiftIndexesArrays);
 		if (strPrepend > 0) {
-			column._rankPrepend = (column._rankPrepend || 0) + strPrepend;
+			// Materialize prepended strings into _stringCounts immediately. A later
+			// changeColumnsData on the same rows expects counts to already reflect
+			// column.data; deferring this update lets in-place decrements underflow
+			// (count never incremented) and the next rebuild double-count via the
+			// SORTED_REBUILD path.
+			if (column._stringCounts) {
+				const stringData = column.data[cElementType.string];
+				const sCounts = column._stringCounts;
+				const hasSorted = !!column._sortedStrings;
+				for (let i = 0; i < strPrepend; i++) {
+					const s = stringData[i];
+					const oldC = sCounts[s] || 0;
+					sCounts[s] = oldC + 1;
+					if (oldC === 0 && hasSorted) {
+						if (!column._sortedChanged) {
+							column._sortedChanged = new Set();
+						}
+						column._sortedChanged.add(s);
+					}
+				}
+				if (hasSorted) {
+					column._sortedDirty = true;
+				}
+				column._rankStale = true;
+			}
 		}
 	};
 	CountIfTypedCache.prototype.pushValue = function (column, value, index) {
@@ -12274,6 +12298,22 @@ function parseStringToCElement (val, cultureInfo) {
 		}
 		data[value.type].push(valueToAdd);
 		indexes[value.type].push(index);
+		// Mirror of updateDataBefore: materialize the appended string into
+		// _stringCounts immediately so a same-tick changeColumnsData on this row
+		// observes consistent counts.
+		if (value.type === cElementType.string && column._stringCounts) {
+			const sCounts = column._stringCounts;
+			const oldC = sCounts[valueToAdd] || 0;
+			sCounts[valueToAdd] = oldC + 1;
+			if (oldC === 0 && column._sortedStrings) {
+				if (!column._sortedChanged) {
+					column._sortedChanged = new Set();
+				}
+				column._sortedChanged.add(valueToAdd);
+				column._sortedDirty = true;
+			}
+			column._rankStale = true;
+		}
 	};
 	CountIfTypedCache.prototype.updateDataAfter = function (range, column, endIndex) {
 		const t = this;
@@ -12282,9 +12322,6 @@ function parseStringToCElement (val, cultureInfo) {
 			if (r > column.end) {
 				if (value.type !== cElementType.empty) {
 					t.pushValue(column, value, r);
-					if (value.type === cElementType.string) {
-						column._rankAppend = (column._rankAppend || 0) + 1;
-					}
 				}
 				column.end = r;
 			}
@@ -12374,6 +12411,7 @@ function parseStringToCElement (val, cultureInfo) {
 
 		// Fast path: for small batches of in-place value updates, use binary search
 		// instead of walking the entire array. O(K × log N) vs O(N+K).
+		const changedPositions = [];
 		if (pending.size <= 4 && stringIdx.length > 0) {
 			let allInPlace = true;
 			pending.forEach(function(val, row) {
@@ -12395,16 +12433,19 @@ function parseStringToCElement (val, cultureInfo) {
 				}
 				if (lo < stringIdx.length && stringIdx[lo] === row) {
 					stringData[lo] = val;
-					column._lastChangedDataPos = lo;
+					changedPositions.push(lo);
 				} else {
 					allInPlace = false;
 				}
 			});
 			if (allInPlace) {
 				column._pendingApplyInPlace = true;
+				column._changedDataPositions = changedPositions;
 				column._pendingStrChanges = null;
 				return;
 			}
+			// Fast path failed — discard partial position list; slow path will rebuild.
+			changedPositions.length = 0;
 		}
 
 		// Phase 1: Walk current arrays — apply updates/removals in place.
@@ -12416,7 +12457,7 @@ function parseStringToCElement (val, cultureInfo) {
 				handledRows.add(row);
 				const newVal = pending.get(row);
 				if (newVal !== null) {
-					column._lastChangedDataPos = writePos;
+					changedPositions.push(writePos);
 					stringData[writePos] = newVal;
 					stringIdx[writePos] = row;
 					writePos++;
@@ -12488,7 +12529,11 @@ function parseStringToCElement (val, cultureInfo) {
 			}
 		}
 
-		column._pendingApplyInPlace = (writePos === oldDataLen && newInserts.length === 0);
+		const inPlaceOnly = (writePos === oldDataLen && newInserts.length === 0);
+		column._pendingApplyInPlace = inPlaceOnly;
+		// Only the in-place-only outcome makes positions meaningful for incremental
+		// FALLBACK; otherwise structural changes invalidated rank positions anyway.
+		column._changedDataPositions = inPlaceOnly ? changedPositions : null;
 		column._pendingStrChanges = null;
 	};
 	/**
@@ -12502,32 +12547,9 @@ function parseStringToCElement (val, cultureInfo) {
 		const self = this;
 		const sorted = column._sortedStrings;
 		const sCounts = column._stringCounts;
-		let sortedChanged = column._sortedChanged;
-
-		const prepend = column._rankPrepend || 0;
-		const append = column._rankAppend || 0;
-		if ((prepend + append > 0) && sCounts) {
-			if (!sortedChanged) {
-				sortedChanged = new Set();
-			}
-			for (let pi = 0; pi < prepend; pi++) {
-				const ps = stringData[pi];
-				const oldC = sCounts[ps] || 0;
-				sCounts[ps] = oldC + 1;
-				if (oldC === 0) {
-					sortedChanged.add(ps);
-				}
-			}
-			const appendStart = stringData.length - append;
-			for (let ai = appendStart; ai < stringData.length; ai++) {
-				const str = stringData[ai];
-				const prevCount = sCounts[str] || 0;
-				sCounts[str] = prevCount + 1;
-				if (prevCount === 0) {
-					sortedChanged.add(str);
-				}
-			}
-		}
+		const sortedChanged = column._sortedChanged;
+		// Prepend/append counts are materialized eagerly in updateDataBefore/pushValue,
+		// so this method only processes sortedChanged from changeColumnsData.
 
 		let delCount = 0;
 		let addCount = 0;
@@ -12621,7 +12643,6 @@ function parseStringToCElement (val, cultureInfo) {
 	 * Use _setupRankCompare instead of calling this directly — it handles the flush.
 	 */
 	CountIfTypedCache.prototype._ensureStringRank = function(column) {
-		const self = this;
 		const stringData = column.data[cElementType.string];
 		if (!stringData || !stringData.length) {
 			return;
@@ -12656,28 +12677,10 @@ function parseStringToCElement (val, cultureInfo) {
 			addNewRank = changes.addNewRank;
 			delCount = changes.delCount;
 			addCount = changes.addCount;
-		} else if (needsRefresh) {
-			const prepend = column._rankPrepend || 0;
-			const append = column._rankAppend || 0;
-			const sorted = column._sortedStrings;
-			const sCounts = column._stringCounts;
-			if (prepend + append > 0 && sCounts) {
-				const insertIntoSorted = function(str) {
-					sCounts[str] = (sCounts[str] || 0) + 1;
-					if (sCounts[str] === 1) {
-						const lo = self._binarySearchSorted(sorted, str);
-						sorted.splice(lo, 0, str);
-					}
-				};
-				for (let pi = 0; pi < prepend; pi++) {
-					insertIntoSorted(stringData[pi]);
-				}
-				const appendStart = stringData.length - append;
-				for (let ai = appendStart; ai < stringData.length; ai++) {
-					insertIntoSorted(stringData[ai]);
-				}
-			}
 		}
+		// needsRefresh without _sortedDirty: counts/sorted were already materialized
+		// eagerly in updateDataBefore/pushValue. Fall through to FALLBACK to rebuild
+		// the rank array against the new length.
 
 		let sorted = column._sortedStrings;
 		const needed = stringData.length;
@@ -12703,11 +12706,21 @@ function parseStringToCElement (val, cultureInfo) {
 				}
 				buf[j] = r;
 			}
-			const changedPos = column._lastChangedDataPos;
-			if (changedPos !== undefined && changedPos >= 0 && changedPos < needed) {
-				buf[changedPos] = this._binarySearchSorted(sorted, stringData[changedPos]);
+			// Look up the new rank for every row whose value changed. The rank-delta
+			// pass above only shifts existing ranks; changed positions still need
+			// their own lookup (identity-correct via _findExactInSorted to keep
+			// NFC/NFD twins distinct).
+			const positions = column._changedDataPositions;
+			if (positions && positions.length > 0) {
+				for (let pi = 0; pi < positions.length; pi++) {
+					const cp = positions[pi];
+					if (cp >= 0 && cp < needed) {
+						const exact = this._findExactInSorted(sorted, stringData[cp]);
+						buf[cp] = exact >= 0 ? exact : this._binarySearchSorted(sorted, stringData[cp]);
+					}
+				}
 			}
-			column._lastChangedDataPos = undefined;
+			column._changedDataPositions = null;
 			column._rankMap = null;
 		} else {
 			const stringToRank = Object.create(null);
@@ -12722,12 +12735,11 @@ function parseStringToCElement (val, cultureInfo) {
 			for (let j = 0; j < needed; j++) {
 				buf[j] = stringToRank[stringData[j]];
 			}
+			column._changedDataPositions = null;
 		}
 
 		column._stringRankArray = buf;
 		column._rankLen = needed;
-		column._rankPrepend = 0;
-		column._rankAppend = 0;
 		column._rankDirty = false;
 		column._rankStale = false;
 		column._sortedDirty = false;
