@@ -1832,8 +1832,8 @@ function (window, undefined) {
 			const names = this.names;
 
 			script = 'AFSimple_Calculate(' +
-				JSON.stringify(type) + ', ' +
-				JSON.stringify(names) +
+				'"' + type + '"' + ', ' +
+				'new Array(' + names.map(JSON.stringify).join(', ') + ')' +
 			');';
 		}
 

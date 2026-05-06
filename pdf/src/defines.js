@@ -201,28 +201,18 @@
     NegativeStyle["PARENS_RED"] = NegativeStyle.PARENS_RED;
 
     const CalculateOperation = {
-        sum:        0,
-        product:    1,
-        average:    2,
-        min:        3,
-        max:        4
+        SUM:	"SUM",
+        PRD:	"PRD",
+        AVG:	"AVG",
+        MIN:	"MIN",
+        MAX:	"MAX"
     }
 
-    CalculateOperation["sum"]        = CalculateOperation.sum;
-    CalculateOperation["product"]    = CalculateOperation.product;
-    CalculateOperation["average"]    = CalculateOperation.average;
-    CalculateOperation["min"]        = CalculateOperation.min;
-    CalculateOperation["max"]        = CalculateOperation.max;
-
-    const CalculateType = {
-        common:     0,
-        simpleJs:   1,
-        js:         2
-    }
-
-    CalculateType["common"]		= CalculateType.common;
-    CalculateType["simpleJs"]	= CalculateType.simpleJs;
-    CalculateType["js"]			= CalculateType.js;
+    CalculateOperation["SUM"]	= CalculateOperation.SUM;
+    CalculateOperation["PRD"]	= CalculateOperation.PRD;
+    CalculateOperation["AVG"]	= CalculateOperation.AVG;
+    CalculateOperation["MIN"]	= CalculateOperation.MIN;
+    CalculateOperation["MAX"]	= CalculateOperation.MAX;
 
     Object.freeze(FIELD_TYPES);
 
@@ -453,7 +443,6 @@
     asc["TimeFormatType"]               = asc.TimeFormatType             = TimeFormatType;
     asc["NegativeStyle"]                = asc.NegativeStyle              = NegativeStyle;
     asc["CalculateOperation"]           = asc.CalculateOperation         = CalculateOperation;
-    asc["CalculateType"]           		= asc.CalculateType              = CalculateType;
     asc["CHECKBOX_STYLES"]              = asc.CHECKBOX_STYLES            = CHECKBOX_STYLES;
     asc["BORDER_TYPES"]                 = asc.BORDER_TYPES               = BORDER_TYPES;
     asc["ANNOT_COMPLEX_BORDER_TYPES"]   = asc.ANNOT_COMPLEX_BORDER_TYPES = ANNOT_COMPLEX_BORDER_TYPES;

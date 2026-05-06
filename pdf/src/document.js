@@ -10396,31 +10396,22 @@ var CPresentation = CPresentation || function(){};
 				let oAction = oTriggers[AscPDF.PDF_TRIGGERS_TYPES.calculate][0];
 				let oCalculateProps = new Asc.asc_CFieldCalculateProperty();
 				
-				let nType;
 				function extractBvCalcText(script) {
 					const match = script.match(/BVCALC\s*([\s\S]*?)\s*EVCALC/);
 					return match ? match[1].trim() : null;
 				}
 				
 				let sScript = oAction["JS"];
-				let bvCalcText = extractBvCalcText(sScript);
 
-				if (bvCalcText) {
-					nType = AscPDF.CalculateType.simpleJs;
-					oCalculateProps.asc_putScript(sScript);
-				}
-				else if (sScript.startsWith('AFSimple_Calculate')) {
-					nType = AscPDF.CalculateType.simpleJs;
+				if (sScript.startsWith('AFSimple_Calculate')) {
 					let aArgs = AscPDF.extractArguments(sScript);
-					let aNames = eval(aArgs[1]);
-					oCalculateProps.asc_putNames(aNames);
+					oCalculateProps.asc_putNames(AscPDF.extractArguments(aArgs[1]));
+					oCalculateProps.asc_putType(AscPDF.CalculateOperation[aArgs[0]]);
 				}
 				else {
-					nType = AscPDF.CalculateType.js;
 					oCalculateProps.asc_putScript(sScript);
 				}
 
-				oCalculateProps.asc_putType(nType);
 				oActionsProperty.asc_putCalculate(oCalculateProps);
 			}
 		}

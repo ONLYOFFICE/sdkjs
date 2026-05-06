@@ -2145,19 +2145,19 @@
 
 				let sCalcFunc = 'AFSimple_Calculate(';
 				switch (nCalcType) {
-					case AscPDF.CalculateOperation.sum:
+					case AscPDF.CalculateOperation.SUM:
 						sCalcFunc += '"SUM",';
 						break;
-					case AscPDF.CalculateOperation.product:
+					case AscPDF.CalculateOperation.PRD:
 						sCalcFunc += '"PRD",';
 						break;
-					case AscPDF.CalculateOperation.average:
+					case AscPDF.CalculateOperation.AVG:
 						sCalcFunc += '"AVG",';
 						break;
-					case AscPDF.CalculateOperation.min:
+					case AscPDF.CalculateOperation.MIN:
 						sCalcFunc += '"MIN",';
 						break;
-					case AscPDF.CalculateOperation.max:
+					case AscPDF.CalculateOperation.MAX:
 						sCalcFunc += '"MAX",';
 						break;
 				}
