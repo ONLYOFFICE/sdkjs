@@ -537,16 +537,19 @@
 	{
 		this.CoAuthoringApi.set_onlineWork(false);
 		this.CoAuthoringApi.set_standaloneApp(true);
+		// Force text/base64 change packets in standalone mode to avoid
+		// binary serialization mismatches across save/reopen.
+		this.binaryChanges = false;
+		this.CoAuthoringApi.setBinaryChanges(false);
 		this.licenseResult   = licenseInfo;
 		this.isOnLoadLicense = true;
 		this._onEndPermissions();
 	}
-	baseEditorsApi.prototype.asc_set_changesJson = function(changes)
+	baseEditorsApi.prototype.asc_set_changesJson = function(changes,done)
 	{
-		this.CoAuthoringApi.set_changesJson(changes)
+		this.CoAuthoringApi.set_changesJson(changes,done)
 	}
-	baseEditorsApi.prototype.asc_openDocumentForStandalone                  = function(documentInfo)
-	{
+	baseEditorsApi.prototype.asc_openDocumentForStandalone = function(documentInfo) {
 		setTimeout(() => {
 			this.CoAuthoringApi.onDocumentOpen(documentInfo);
 		}, 2000);
@@ -1813,8 +1816,13 @@
 					t.maxChangesSize = res['settings']['maxChangesSize'];
 				}
 				if (res['settings']['binaryChanges']) {
-					t.binaryChanges = res['settings']['binaryChanges'];
-					t.CoAuthoringApi.setBinaryChanges(t.binaryChanges);
+					if (t.CoAuthoringApi.get_standaloneApp && t.CoAuthoringApi.get_standaloneApp()) {
+						t.binaryChanges = false;
+						t.CoAuthoringApi.setBinaryChanges(false);
+					} else {
+						t.binaryChanges = res['settings']['binaryChanges'];
+						t.CoAuthoringApi.setBinaryChanges(t.binaryChanges);
+					}
 				}
 				if (res['settings']['limits_image_size']) {
 					AscCommon.c_oAscImageUploadProp.MaxFileSize = res['settings']['limits_image_size']

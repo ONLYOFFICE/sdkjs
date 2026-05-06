@@ -85,10 +85,56 @@
             if (true === CollaborativeEditing.private_AddOverallChange(oChange))
             {
 				// // CollaborativeEditing LOG
-				// if (!(oChange instanceof AscCommon.CChangesTableIdDescription))
-				// 	return true;
-				
-				oChange.Load(this.m_oColor);
+		
+				try {
+					oChange.Load(this.m_oColor);
+				} catch (e) {
+					try
+					{
+						if (window.parent && window.parent.postMessage)
+						{
+							window.parent.postMessage({
+								location: "@onlyofficeeditor",
+								from: "skipChange",
+								changeType: nChangesType,
+								classId: ClassId,
+							}, "*");
+						}
+					}
+					catch (err) {}
+					var raw = this.m_pData;
+					var preview = "";
+					var packetLength = 0;
+					var hasLenPrefix = false;
+					var declaredLen = null;
+					if (typeof raw === "string") {
+						packetLength = raw.length;
+						preview = raw.substring(0, 120);
+						var sep = raw.indexOf(";");
+						if (sep > 0) {
+							var maybeLen = raw.substring(0, sep);
+							hasLenPrefix = /^\d+$/.test(maybeLen);
+							if (hasLenPrefix) {
+								declaredLen = parseInt(maybeLen, 10);
+							}
+						}
+					}
+					console.error("Collaborative change apply failed", {
+						classId: ClassId,
+						changeType: nChangesType,
+						isBinary: !!((Asc.editor || editor).binaryChanges),
+						classCtor: Class && Class.constructor ? Class.constructor.name : null,
+						hasContentChanges: !!(Class && Class.m_oContentChanges),
+						hasContentArray: !!(Class && Class.Content),
+						contentLength: Class && Class.Content && typeof Class.Content.length === "number" ? Class.Content.length : null,
+						error: e && e.message ? e.message : e,
+						packetLength: packetLength,
+						hasLenPrefix: hasLenPrefix,
+						declaredLen: declaredLen,
+						packetPreview: preview,
+					});
+					return true;
+				}
 				oChange.CheckNeedRecalculate();
             }
 
@@ -105,8 +151,30 @@
 
             if (!Class.Load_Changes)
                 return false;
-
-            return Class.Load_Changes(Reader, null, this.m_oColor);
+            try {
+                return Class.Load_Changes(Reader, null, this.m_oColor);
+            } catch (e) {
+                try
+                {
+                    if (window.parent && window.parent.postMessage)
+                    {
+                        window.parent.postMessage({
+                            location: "@onlyofficeeditor",
+                            from: "skipChange",
+                            changeType: nChangesType,
+                            classId: ClassId,
+                        }, "*");
+                    }
+                }
+                catch (err) {}
+                console.error("Collaborative old-schema apply failed", {
+                    classId: ClassId,
+                    changeType: nChangesType,
+                    isBinary: !!((Asc.editor || editor).binaryChanges),
+                    error: e && e.message ? e.message : e,
+                });
+                return false;
+            }
         }
     };
     CCollaborativeChanges.prototype.private_LoadData = function(szSrc)
