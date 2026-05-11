@@ -678,12 +678,14 @@ CHistory.prototype =
         for (var TableId in this.RecalculateData.Tables)
         {
             var Table = AscCommon.g_oTableId.Get_ById(TableId);
-            if (null !== Table && Table.IsUseInDocument())
+            if (null !== Table
+                && typeof Table.IsUseInDocument === "function"
+                && Table.IsUseInDocument()
+                && typeof Table.Check_ChangedTableGrid === "function"
+                && true === Table.Check_ChangedTableGrid()
+                && typeof Table.Refresh_RecalcData2 === "function")
             {
-                if (true === Table.Check_ChangedTableGrid())
-                {
-                    Table.Refresh_RecalcData2(0, 0);
-                }
+                Table.Refresh_RecalcData2(0, 0);
             }
         }
 
