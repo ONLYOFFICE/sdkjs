@@ -195,6 +195,11 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Cell_SetHidden = 29;
 	window['AscCH'].historyitem_Cell_SetLocked = 30;
 	window['AscCH'].historyitem_Cell_ReadingOrder = 31;
+	// Direct cell xf change for a pure style-only cell. Replay applies the
+	// xfIndex change directly to ws.cellStylesByCol (no Cell, no SheetMemory
+	// init row). Distinct from historyitem_Cell_SetStyle so undo does not
+	// route through ws._getCell, which would force a SheetMemory init row.
+	window['AscCH'].historyitem_Cell_SetStyleOnly = 32;
 
 	window['AscCH'].historyitem_Comment_Add = 1;
 	window['AscCH'].historyitem_Comment_Remove = 2;

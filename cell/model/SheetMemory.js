@@ -43,7 +43,6 @@
 	 * @param {number} maxIndex - Maximum index allowed
 	 */
 	function SheetMemory(structSize, maxIndex) {
-		//todo separate structure for data and style
 		this.dataBuffer = null; // ArrayBuffer to store the data
 		this.dataUint8 = null; // Uint8Array view on the buffer
 		this.dataFloat = null; // Float64Array view on the buffer
@@ -335,34 +334,23 @@
 	};
 
 	/**
-	 * Clears a range of indices except for locked flag from the cell style
-	 * Uses a callback function to transform full style into minimal style with only locked property
+	 * Clears a range of indices, dropping data bytes and flags identically to
+	 * `clear`. Direct cell xf is owned by `ws.cellStylesByCol`, not by
+	 * SheetMemory, so this method must not preserve any xf bits. The
+	 * locked-only style transform for protected moves runs in
+	 * `Worksheet._moveCells.mirrorMoveCellXfs` against `cellStylesByCol`
+	 * BEFORE this call, so by the time we get here the per-cell
+	 * locked-only xfIndex is already in the range storage.
+	 *
+	 * The signature, including the unused `getLockedOnlyXfIndex` callback,
+	 * is preserved so the existing `_moveCells` call sites stay untouched.
+	 *
 	 * @param {number} start - Start index
 	 * @param {number} end - End index (exclusive)
-	 * @param {function} getLockedOnlyXfIndex - Callback function that receives xfIndex and returns new xfIndex with only locked property
+	 * @param {function} getLockedOnlyXfIndex - Unused; kept for signature compatibility
 	 */
 	SheetMemory.prototype.clearExceptLocked = function(start, end, getLockedOnlyXfIndex) {
-		start = Math.max(start, this.indexA);
-		end = Math.min(end, this.indexB + 1);
-		if (start < end) {
-			let g_nCellFlag_init = 1;
-			for (let i = start; i < end; i++) {
-				let mix = this.getInt32(i, 0);
-				let xfIndex = mix & 0xFFFFFF;
-				
-				let startOffset = (i - this.indexA) * this.structSize;
-				let endOffset = startOffset + this.structSize;
-				this.dataUint8.fill(0, startOffset, endOffset);
-				
-				// Transform full style to minimal style with only locked property
-				if (xfIndex > 0 && getLockedOnlyXfIndex) {
-					let newXfIndex = getLockedOnlyXfIndex(xfIndex);
-					if (newXfIndex != null) {
-						this.setInt32(i, 0, newXfIndex | (g_nCellFlag_init << 24));
-					}
-				}
-			}
-		}
+		this.clear(start, end);
 	};
 
 	/**
