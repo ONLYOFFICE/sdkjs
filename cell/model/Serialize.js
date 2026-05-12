@@ -6817,10 +6817,13 @@
 		this.WriteSheetDataXLSB = function(ws)
         {
             var oThis = this;
+            var bbox;
             var range;
             if(oThis.isCopyPaste ){
-                range = ws.getRange3(oThis.isCopyPaste.r1, oThis.isCopyPaste.c1, oThis.isCopyPaste.r2, oThis.isCopyPaste.c2);
+                bbox = {c1: oThis.isCopyPaste.c1, r1: oThis.isCopyPaste.r1, c2: oThis.isCopyPaste.c2, r2: oThis.isCopyPaste.r2};
+                range = ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2);
             } else {
+                bbox = {c1: 0, r1: 0, c2: gc_nMaxCol0, r2: gc_nMaxRow0};
                 range = ws.getRange3(0, 0, gc_nMaxRow0, gc_nMaxCol0);
             }
 
@@ -6833,17 +6836,84 @@
 			this.memory.XlsbStartRecord(AscCommonExcel.XLSB.rt_BEGIN_SHEET_DATA, 0);
 			this.memory.XlsbEndRecord();
 
+            // Stream style-only cells in parallel with the data-cell walk.
+            // iterContentByCell merges per-column SheetMemory and
+            // cellStylesByCol cursors into row-major (row, col) order; we
+            // run a styleOnly variant alongside _foreachRowNoEmpty (which
+            // stays data-only) and drain style-only events before each
+            // data cell so XLSB still sees rows in ascending order with
+            // one row header per row.
+            var styleCursor = AscCommonExcel.CellStyleStorage.createContentByCellCursor(ws, bbox, {styleOnly: true});
+            var bExcludeHiddenRows = !!(ws.bExcludeHiddenRows && oThis.isCopyPaste);
+            // Independent hidden-row walker so style-only emissions stay
+            // aligned with _foreachRowNoEmpty's excludedCount even when
+            // style-only rows fall between data rows that the data walker
+            // would have skipped.
+            var hiddenWalk = bExcludeHiddenRows ? {next: bbox.r1, count: 0} : null;
+            function _excludedCountAt(row) {
+                if (!hiddenWalk) {
+                    return 0;
+                }
+                while (hiddenWalk.next < row) {
+                    if (ws.getRowHidden(hiddenWalk.next)) {
+                        hiddenWalk.count++;
+                    }
+                    hiddenWalk.next++;
+                }
+                return hiddenWalk.count;
+            }
+            var styleCell = new AscCommonExcel.Cell(ws);
+            styleCell._isTransient = true;
+            function _drainStyleBefore(beforeRow, beforeCol) {
+                while (true) {
+                    var p = styleCursor.peek();
+                    if (!p) {
+                        return;
+                    }
+                    if (p.row > beforeRow) {
+                        return;
+                    }
+                    if (p.row === beforeRow && p.col >= beforeCol) {
+                        return;
+                    }
+                    var ev = styleCursor.consume();
+                    if (!ev || ev.xfIndex <= 0) {
+                        continue;
+                    }
+                    var r = ev.row;
+                    if (bExcludeHiddenRows && ws.getRowHidden(r)) {
+                        continue;
+                    }
+                    var rowExcl = _excludedCountAt(r);
+                    if (cur.rowIndex !== r) {
+                        tempRow.setIndex(r);
+                        oThis.WriteRowAndFixEmpty(oThis.memory, cur, allRow, tempRow, rowExcl, oThis.stylesForWrite);
+                    }
+                    var xfsObj = AscCommonExcel.CellStyleStorage.getWriterCellXfs(ws, r, ev.col, null);
+                    var nStyleXfsId = oThis.stylesForWrite.add(xfsObj);
+                    styleCell.clearData();
+                    styleCell.setRowCol(r, ev.col);
+                    styleCell.toXLSB(oThis.memory, nStyleXfsId, null, oThis.InitSaveManager.oSharedStrings);
+                }
+            }
+
             range._foreachRowNoEmpty(function(row, excludedCount) {
+                _drainStyleBefore(row.index, 0);
                 oThis.WriteRowAndFixEmpty(oThis.memory, cur, allRow, row, excludedCount, oThis.stylesForWrite);
             }, function(cell, nRow0, nCol0, nRowStart0, nColStart0, excludedCount) {
+                _drainStyleBefore(nRow0, nCol0);
                 if (cur.rowIndex != nRow0) {
                     tempRow.setIndex(nRow0);
                     oThis.WriteRowAndFixEmpty(oThis.memory, cur, allRow, tempRow, excludedCount, oThis.stylesForWrite);
                 }
                 //prepare cell for writing
+                // Direct cell style is read solely through cellStylesByCol;
+                // there is no fallback to cell.xfs or to the SheetMemory
+                // shadow. The `cell` argument is kept for call-site
+                // stability but is no longer consulted for the xf lookup.
                 var nXfsId;
-                var cellXfs = cell.xfs;
-                nXfsId = oThis.stylesForWrite.add(cell.xfs);
+                var cellXfs = AscCommonExcel.CellStyleStorage.getWriterCellXfs(ws, nRow0, nCol0, cell);
+                nXfsId = oThis.stylesForWrite.add(cellXfs);
 
                 // save even an empty style like Excel (needed to remove row/column style)
                 let needWrite = cellXfs || !cell.isNullText()
@@ -6862,6 +6932,11 @@
 					cell.toXLSB(oThis.memory, nXfsId, formulaToWrite, oThis.InitSaveManager.oSharedStrings);
 				}
             }, (ws.bExcludeHiddenRows && oThis.isCopyPaste));
+
+            // Tail-drain style-only events past the data walker's reach (rows
+            // beyond cellsByColRowsCount / rowsData.maxIndex are never visited
+            // by _foreachRowNoEmpty).
+            _drainStyleBefore(Infinity, Infinity);
 
             this.WriteRowAndFixEmpty(oThis.memory, cur, allRow);
 
@@ -11052,6 +11127,23 @@
                     return oThis.ReadSheetData(t, l, tmp);
                 });
 
+				// Eager post-open hydration sweep. The per-cell mirror in
+				// initCellAfterRead covers every column whose deserialized
+				// cells went through setStyle/setCellXf, but a column whose
+				// direct xf only lives in the legacy SheetMemory shadow
+				// (e.g. opened from an older file via a path that skips
+				// initCellAfterRead) would not be migrated otherwise. One
+				// pass per worksheet here finishes the migration.
+				//
+				// Must run BEFORE the formula-array build pass below: that
+				// pass calls `rangeFormulaArray._foreach` which materializes
+				// Cell objects via loadContent + saveContent. saveContent
+				// zeroes the SheetMemory low 24 bits without mirroring into
+				// cellStylesByCol, so any legacy-shadow-only row visited
+				// by the formula-array loop would lose its xf bits before
+				// the sweep got a chance to migrate them.
+				AscCommonExcel.CellStyleStorage.hydrateAllColumnsFromSheetMemory(tmp.ws);
+
 				if (!bNoBuildDep) {
 					//TODO perhaps this should be done in worksheet after complete reading
 					//***array-formula***
@@ -14982,7 +15074,22 @@
         if(!(this.copyPasteObj && this.copyPasteObj.isCopyPaste && typeof editor != "undefined" && editor)) {
             this.setFormulaOpen(tmp);
         }
-        tmp.cell.saveContent();
+        // Pure style-only cells (no value, no formula) must not stamp a
+        // SheetMemory init row -- they belong in cellStylesByCol only,
+        // matching the in-session `ws.setCellXf(...)` shape. Data, text,
+        // and formula cells still persist exactly as `saveContent` would.
+        tmp.cell.saveContentSkipStyleOnly();
+        // Eagerly mirror the deserialized direct cell xf into
+        // ws.cellStylesByCol while tmp.cell.xfs / nRow / nCol are still
+        // valid. Most binary paths route the style assignment through
+        // cell.setStyle, which mirrors via setStyleInternal -- but the
+        // binary `Style` element can be read before `Ref` / `RefRowCol`,
+        // leaving nRow/nCol negative when setStyleInternal runs.
+        // Re-running mirrorCellStyle here covers that ordering. The
+        // companion hydration sweep in `ReadSheetData` backstops any
+        // column whose direct xf landed in the SheetMemory shadow
+        // without going through this mirror at all.
+        AscCommonExcel.CellStyleStorage.mirrorCellStyle(tmp.cell);
         if (tmp.cell.nCol >= tmp.ws.nColsCount) {
             tmp.ws.nColsCount = tmp.cell.nCol + 1;
         }

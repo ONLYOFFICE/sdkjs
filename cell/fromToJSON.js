@@ -2624,11 +2624,59 @@
 	{
 		var oThis = this;
 		var aRows = [];
-		var oRange = oWorksheet.getRange3(0, 0, AscCommon.gc_nMaxRow0, AscCommon.gc_nMaxCol0);
+		var bbox = {c1: 0, r1: 0, c2: AscCommon.gc_nMaxCol0, r2: AscCommon.gc_nMaxRow0};
+		var oRange = oWorksheet.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2);
 		var oTempRow, oTempCell;
+
+		// Keep _foreachNoEmpty data-only and interleave style-only cells from
+		// cellStylesByCol via a row-major per-cell cursor. Style runs ending
+		// at hi > lo are pre-split per row so each event is one (row, col);
+		// see CellStyleStorage.createContentByCellCursor.
+		var styleCursor = AscCommonExcel.CellStyleStorage.createContentByCellCursor(
+			oWorksheet, bbox, {styleOnly: true});
+
+		function ensureRow(nRow0) {
+			if (oTempRow && oTempRow["r"] === nRow0 + 1) {
+				return;
+			}
+			oTempRow = {
+				"r":    nRow0 + 1,
+				"cell": []
+			};
+			aRows.push(oTempRow);
+		}
+
+		function drainStyleBefore(beforeRow, beforeCol) {
+			while (true) {
+				var p = styleCursor.peek();
+				if (!p) {
+					return;
+				}
+				if (p.row > beforeRow) {
+					return;
+				}
+				if (p.row === beforeRow && p.col >= beforeCol) {
+					return;
+				}
+				var ev = styleCursor.consume();
+				if (!ev || ev.xfIndex <= 0) {
+					continue;
+				}
+				ensureRow(ev.row);
+				var sRef = AscCommon.g_oCellAddressUtils.colnumToColstr(ev.col + 1) + (ev.row + 1);
+				var oCellXfsForWrite = AscCommonExcel.CellStyleStorage.getWriterCellXfs(
+					oWorksheet, ev.row, ev.col, null);
+				oTempRow["cell"].push({
+					"r": sRef,
+					"s": oThis.stylesForWrite.add(oCellXfsForWrite),
+					"t": ToXml_ST_CellValueType(AscCommon.CellValueType.Number)
+				});
+			}
+		}
 
 		function SerRow(oRow)
 		{
+			drainStyleBefore(oRow.index, 0);
 			oTempRow = {
 				"collapsed":    oRow.getCollapsed(),
 				"customHeight": oRow.getCustomHeight(),
@@ -2644,12 +2692,18 @@
 
 		function SerCell(oCell)
 		{
+			drainStyleBefore(oCell.nRow, oCell.nCol);
+			ensureRow(oCell.nRow);
 			var sRef = AscCommon.g_oCellAddressUtils.colnumToColstr(oCell.nCol + 1) + (oCell.nRow + 1);
 			var oFormulaForWrite = oCell.isFormula() ? oThis.InitSaveManager.PrepareFormulaToWrite(oCell) : null;
+			// Direct cell style resolves only through cellStylesByCol;
+			// there is no cell.xfs fallback.
+			var oCellXfsForWrite = AscCommonExcel.CellStyleStorage.getWriterCellXfs(
+				oCell.ws, oCell.nRow, oCell.nCol, oCell);
 			oTempCell = {
 				"f": SerFormula(oFormulaForWrite),
 				"r": sRef,
-				"s": oThis.stylesForWrite.add(oCell.getStyle()),
+				"s": oThis.stylesForWrite.add(oCellXfsForWrite),
 				"t": ToXml_ST_CellValueType(oCell.type)
 			}
 			if (oCell.multiText)
@@ -2680,7 +2734,7 @@
 		{
 			if (!oFormulaForWrite)
 				return undefined;
-				
+
 			return {
 				"t":   ToXml_ST_CellFormulaType(oFormulaForWrite.type),
 				"ref": oFormulaForWrite.ref != null ? oFormulaForWrite.ref.getName() : undefined,
@@ -2699,6 +2753,7 @@
 		}
 
 		oRange._foreachNoEmpty(SerCell, SerRow);
+		drainStyleBefore(Infinity, Infinity);
 		return aRows;
 	};
 	WriterToJSON.prototype.SerDataValidations = function(oDataValidations)
@@ -7903,9 +7958,23 @@
 					oTempCell.setStyle(this.aCellXfs[oParsedCell["s"]]);
 
 				oTempCell.type = FromXml_ST_CellValueType(oParsedCell["t"]);
-				oTempCell.saveContent(true);
+				// Pure style-only cells (no value, no formula) must not stamp
+				// a SheetMemory init row -- they belong in cellStylesByCol
+				// only, matching the in-session `ws.setCellXf(...)` shape.
+				// Data, text, and formula cells still persist exactly as
+				// `saveContent` would.
+				oTempCell.saveContentSkipStyleOnly(true);
 			}
 		}
+
+		// Eager post-open hydration sweep for the JSON open path. The
+		// per-cell setStyleInternal mirror covers cells whose JSON entry
+		// carried a direct `s`, but any column whose direct xf only lives
+		// in the legacy SheetMemory shadow (persisted by an older build)
+		// is migrated here. This sweep is the sole production reader of
+		// those legacy low-24-bit xf values; there is no read-side
+		// fallback to back it up.
+		AscCommonExcel.CellStyleStorage.hydrateAllColumnsFromSheetMemory(oWorksheet);
 
 		// for(var j = 0; j < tmp.formulaArray.length; j++) {
 		// 	var curFormula = tmp.formulaArray[j];
