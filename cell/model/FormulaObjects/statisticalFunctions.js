@@ -13391,100 +13391,10 @@ function parseStringToCElement (val, cultureInfo) {
 	 * @returns {cNumber|cError}
 	 */
 	CountIFSCache.prototype.calculate = function (arg, _arg1) {
-		// Pass 1: validate range args and collect criteria that are ranges/arrays.
-		// Each entry stores the arg index and the criteria's own dimensions.
-		// Scalar criteria (number, string, single cell) are tracked separately:
-		// they are treated as 1×1 and clamp the intersection accordingly.
-		const arrayCriteria = [];  // [{pos, dims}, ...]
-		let hasScalarCriteria = false;
-		let forceZeroIntersection = false;
-
-		for (let k = 0; k < arg.length; k += 2) {
-			const rangeArg = arg[k];
-			if (cElementType.error === rangeArg.type) {
-				return rangeArg;
-			}
-			if (cElementType.cell !== rangeArg.type && cElementType.cell3D !== rangeArg.type &&
-				cElementType.cellsRange !== rangeArg.type &&
-				!(cElementType.cellsRange3D === rangeArg.type && rangeArg.isSingleSheet())) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-
-			const criteriaArg = arg[k + 1];
-			if (criteriaArg.type === cElementType.cellsRange ||
-				criteriaArg.type === cElementType.cellsRange3D ||
-				criteriaArg.type === cElementType.array) {
-				if (criteriaArg.type === cElementType.cellsRange3D && !criteriaArg.isSingleSheet()) {
-					forceZeroIntersection = true;
-				}
-				arrayCriteria.push({pos: k + 1, dims: criteriaArg.getDimensions()});
-			} else {
-				hasScalarCriteria = true;
-			}
-		}
-
-		// If any criteria is an array/range, build a result cArray sized MAX rows × MAX cols
-		// Only the intersection (MIN rows × MIN cols) needs actual COUNTIFS computation; positions outside it are filled with zero.
-		// Scalar criteria count as 1×1 and clamp the intersection to a single cell.
-		// A multi-sheet 3D criteria forces the intersection to 0×0 (all zeros).
-		if (arrayCriteria.length > 0) {
-			let maxRow = 0, maxCol = 0;
-			for (let i = 0; i < arrayCriteria.length; i += 1) {
-				const dims = arrayCriteria[i].dims;
-				if (dims.row > maxRow) {
-					maxRow = dims.row;
-				}
-				if (dims.col > maxCol) {
-					maxCol = dims.col;
-				}
-			}
-
-			let minRow = 0, minCol = 0;
-			if (!forceZeroIntersection) {
-				if (hasScalarCriteria) {
-					minRow = 1;
-					minCol = 1;
-				} else {
-					minRow = AscCommon.gc_nMaxRow0 + 1;
-					minCol = AscCommon.gc_nMaxCol0 + 1;
-					for (let i = 0; i < arrayCriteria.length; i += 1) {
-						const dims = arrayCriteria[i].dims;
-						if (dims.row < minRow) {
-							minRow = dims.row;
-						}
-						if (dims.col < minCol) {
-							minCol = dims.col;
-						}
-					}
-				}
-			}
-
-			const result = new cArray();
-			for (let row = 0; row < maxRow; row += 1) {
-				result.addRow();
-				for (let col = 0; col < maxCol; col += 1) {
-					let elem;
-					if (row < minRow && col < minCol) {
-						const newArg = arg.slice();
-						for (let i = 0; i < arrayCriteria.length; i += 1) {
-							const pos = arrayCriteria[i].pos;
-							const crit = arg[pos];
-							let critElem = crit.type === cElementType.array
-								? crit.getElementRowCol(row, col)
-								: crit.getValueByRowCol(row, col, true);
-							if (critElem.type === cElementType.empty) {
-								critElem = new cNumber(0);
-							}
-							newArg[pos] = critElem;
-						}
-						elem = this.calculate(newArg, _arg1);
-					} else {
-						elem = new cNumber(0);
-					}
-					result.addElementInRow(elem, row);
-				}
-			}
-			return result;
+		// Validate range args and broadcast any array/range criteria into a cArray result.
+		const expanded = this._tryBroadcastArrays(arg, _arg1, 0);
+		if (expanded !== null) {
+			return expanded;
 		}
 
 		const pairs = arg.length >> 1;
@@ -13512,7 +13422,9 @@ function parseStringToCElement (val, cultureInfo) {
 			const bbox = rangeArg.getBBox0();
 			const bboxName = bbox.getName();
 
-			if (k > 0) { sKey += g_cCharDelimiter; }
+			if (k > 0) {
+				sKey += g_cCharDelimiter;
+			}
 			sKey += wsId + g_cCharDelimiter + bboxName + g_cCharDelimiter + criteriaArg.getValue();
 
 			if (k === 0) {
@@ -13538,6 +13450,98 @@ function parseStringToCElement (val, cultureInfo) {
 
 		// Cache miss: delegate to the slow path with the already-normalised data.
 		return this._calculateMiss(ranges, criteriaVals, bboxes, wsIds, sKey, cacheElem);
+	};
+
+	/**
+	 * Validates range arguments and, if any criteria is an array/range/cellsRange3D,
+	 * expands the formula call into a cArray result by broadcasting each criterion
+	 * across the output shape and recursing into this.calculate per output cell.
+	 *
+	 * Shared by COUNTIFS (startIdx = 0) and SUMIFS/AVERAGEIFS (startIdx = 1).
+	 *
+	 * Broadcasting rules per criterion (R × C):
+	 *   - if R === 1: row index folds to 0 (replicate along rows);
+	 *   - if C === 1: col index folds to 0 (replicate along cols);
+	 *   - otherwise the criterion must cover that index, else the output cell is 0.
+	 * Scalar criteria (number, string, single cell) are 1×1 by definition and pass
+	 * through newArg unchanged — no special path needed.
+	 * Example: {1;2;3} (3×1) and {1,2} (1×2) ⇒ 3×2 result with full cross-product.
+	 *
+	 * Returns the cArray result when broadcasting occurred, a cError when a range
+	 * argument is invalid, or null when no array criteria were found (the caller
+	 * should proceed with the scalar path).
+	 *
+	 * @param {Array} arg - full argument list
+	 * @param {*} _arg1 - second formula arg, passed verbatim to the recursive call
+	 * @param {number} startIdx - index of the first range arg (0 for COUNTIFS, 1 for SUMIFS)
+	 * @returns {cArray|cError|null}
+	 */
+	CountIFSCache.prototype._tryBroadcastArrays = function (arg, _arg1, startIdx) {
+		const arrayCriteria = [];  // [{pos, dims}, ...]
+
+		for (let k = startIdx; k < arg.length; k += 2) {
+			const rangeArg = arg[k];
+			if (cElementType.error === rangeArg.type) {
+				return rangeArg;
+			}
+			if (cElementType.cell !== rangeArg.type && cElementType.cell3D !== rangeArg.type &&
+				cElementType.cellsRange !== rangeArg.type &&
+				!(cElementType.cellsRange3D === rangeArg.type && rangeArg.isSingleSheet())) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			const criteriaArg = arg[k + 1];
+			if (criteriaArg.type === cElementType.cellsRange ||
+				criteriaArg.type === cElementType.cellsRange3D ||
+				criteriaArg.type === cElementType.array) {
+				arrayCriteria.push({pos: k + 1, dims: criteriaArg.getDimensions()});
+			}
+		}
+
+		if (arrayCriteria.length === 0) {
+			return null;
+		}
+
+		let maxRow = 0, maxCol = 0;
+		for (let i = 0; i < arrayCriteria.length; i += 1) {
+			const dims = arrayCriteria[i].dims;
+			if (dims.row > maxRow) {
+				maxRow = dims.row;
+			}
+			if (dims.col > maxCol) {
+				maxCol = dims.col;
+			}
+		}
+
+		const result = new cArray();
+		for (let row = 0; row < maxRow; row += 1) {
+			result.addRow();
+			for (let col = 0; col < maxCol; col += 1) {
+				const newArg = arg.slice();
+				let outOfRange = false;
+				for (let i = 0; i < arrayCriteria.length; i += 1) {
+					const pos = arrayCriteria[i].pos;
+					const dims = arrayCriteria[i].dims;
+					const effRow = (dims.row === 1) ? 0 : row;
+					const effCol = (dims.col === 1) ? 0 : col;
+					if (effRow >= dims.row || effCol >= dims.col) {
+						outOfRange = true;
+						break;
+					}
+					const crit = arg[pos];
+					let critElem = crit.type === cElementType.array
+						? crit.getElementRowCol(effRow, effCol)
+						: crit.getValueByRowCol(effRow, effCol, true);
+					if (critElem.type === cElementType.empty) {
+						critElem = new cNumber(0);
+					}
+					newArg[pos] = critElem;
+				}
+				const elem = outOfRange ? new cNumber(0) : this.calculate(newArg, _arg1);
+				result.addElementInRow(elem, row);
+			}
+		}
+		return result;
 	};
 
 	/**
@@ -14644,94 +14648,11 @@ function parseStringToCElement (val, cultureInfo) {
 			!(cElementType.cellsRange3D === sumRangeArg.type && sumRangeArg.isSingleSheet())) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-		const arrayCriteria = [];
-		let hasScalarCriteria = false;
-		let forceZeroIntersection = false;
 
-		for (let k = 1; k < arg.length; k += 2) {
-			const rangeArg = arg[k];
-			if (cElementType.error === rangeArg.type) {
-				return rangeArg;
-			}
-			if (cElementType.cell !== rangeArg.type && cElementType.cell3D !== rangeArg.type &&
-				cElementType.cellsRange !== rangeArg.type &&
-				!(cElementType.cellsRange3D === rangeArg.type && rangeArg.isSingleSheet())) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-
-			let criteriaArg = arg[k + 1];
-			if (criteriaArg.type === cElementType.cellsRange ||
-				criteriaArg.type === cElementType.cellsRange3D ||
-				criteriaArg.type === cElementType.array) {
-				if (criteriaArg.type === cElementType.cellsRange3D && !criteriaArg.isSingleSheet()) {
-					forceZeroIntersection = true;
-				}
-				arrayCriteria.push({pos: k + 1, dims: criteriaArg.getDimensions()});
-			} else {
-				hasScalarCriteria = true;
-			}
-		}
-
-		// If any criteria is an array/range, build a result cArray by iterating each element.
-		// The intersection (MIN rows × MIN cols) gets actual SUMIFS values; other positions are zero.
-		if (arrayCriteria.length > 0) {
-			let maxRow = 0, maxCol = 0;
-			for (let i = 0; i < arrayCriteria.length; i += 1) {
-				const dims = arrayCriteria[i].dims;
-				if (dims.row > maxRow) {
-					maxRow = dims.row;
-				}
-				if (dims.col > maxCol) {
-					maxCol = dims.col;
-				}
-			}
-
-			let minRow = 0, minCol = 0;
-			if (!forceZeroIntersection) {
-				if (hasScalarCriteria) {
-					minRow = 1;
-					minCol = 1;
-				} else {
-					minRow = AscCommon.gc_nMaxRow0 + 1;
-					minCol = AscCommon.gc_nMaxCol0 + 1;
-					for (let j = 0; j < arrayCriteria.length; j += 1) {
-						const adims = arrayCriteria[j].dims;
-						if (adims.row < minRow) {
-							minRow = adims.row;
-						}
-						if (adims.col < minCol) {
-							minCol = adims.col;
-						}
-					}
-				}
-			}
-
-			const result = new cArray();
-			for (let row = 0; row < maxRow; row += 1) {
-				result.addRow();
-				for (let col = 0; col < maxCol; col += 1) {
-					let elem;
-					if (row < minRow && col < minCol) {
-						const newArg = arg.slice();
-						for (let ai = 0; ai < arrayCriteria.length; ai += 1) {
-							const pos = arrayCriteria[ai].pos;
-							const crit = arg[pos];
-							let critElem = crit.type === cElementType.array
-								? crit.getElementRowCol(row, col)
-								: crit.getValueByRowCol(row, col, true);
-							if (critElem.type === cElementType.empty) {
-								critElem = new cNumber(0);
-							}
-							newArg[pos] = critElem;
-						}
-						elem = this.calculate(newArg, _arg1);
-					} else {
-						elem = new cNumber(0);
-					}
-					result.addElementInRow(elem, row);
-				}
-			}
-			return result;
+		// Validate criteria range args and broadcast any array/range criteria into a cArray result.
+		const expanded = this._tryBroadcastArrays(arg, _arg1, 1);
+		if (expanded !== null) {
+			return expanded;
 		}
 
 		// Scalar path: build cache key = sum_range bbox + all criteria pairs.
