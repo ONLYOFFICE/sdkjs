@@ -444,6 +444,45 @@
 		}
 	}
 
+	// Post-insert / post-shift border override for style-only cells.
+	// Data cells are visited by `_foreachNoEmpty` + `clearDataKeepXf`;
+	// style-only cells need the same override applied directly through
+	// `cellStylesByCol`. No SheetMemory write. History is suppressed
+	// because the enclosing structural item replays on undo.
+	function applyInsertedBorderToStyleOnly(ws, bbox, borders, bRow) {
+		if (typeof CSS.forEachStyleOnlyCell !== 'function') {
+			return;
+		}
+		var AscCommonExcel = window['AscCommonExcel'];
+		var styleCache = AscCommonExcel.g_StyleCache;
+		var entries = null;
+		CSS.forEachStyleOnlyCell(ws, bbox, function (row, col, xfIndex) {
+			if (!entries) { entries = []; }
+			entries.push(row, col, xfIndex);
+		});
+		if (!entries) {
+			return;
+		}
+		for (var i = 0; i < entries.length; i += 3) {
+			var row = entries[i];
+			var col = entries[i + 1];
+			var xfIndex = entries[i + 2];
+			var oldXfs = styleCache.getXf(xfIndex);
+			if (!oldXfs) {
+				continue;
+			}
+			var key = bRow ? col : row;
+			var newBorder = (borders && borders[key]) ? borders[key] : null;
+			var newXfs = oldXfs.clone();
+			newXfs.border = (newBorder != null) ? styleCache.addBorder(newBorder) : null;
+			var registered = styleCache.addXf(newXfs);
+			if (registered === oldXfs) {
+				continue;
+			}
+			ws.setCellXf(row, col, registered);
+		}
+	}
+
 	CSS.shiftCellXfs = shiftCellXfs;
 	CSS.iterCellXfs = iterCellXfs;
 	CSS.deleteRowsAllCols = deleteRowsAllCols;
@@ -455,4 +494,5 @@
 	CSS.sortCellXfs = sortCellXfs;
 	CSS.cleanStyleOnlyDirectStyles = cleanStyleOnlyDirectStyles;
 	CSS.promoteStyleOnlyDirectStyles = promoteStyleOnlyDirectStyles;
+	CSS.applyInsertedBorderToStyleOnly = applyInsertedBorderToStyleOnly;
 })(window);

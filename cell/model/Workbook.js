@@ -192,17 +192,27 @@
 				xf = xf.merge(opt_cell.xfs, true);
 			}
 		} else if (opt_ws) {
-			opt_ws._getRowNoEmpty(nRow, function(row){
-				if(row && null != row.xfs){
-					xf = null === xf ? row.xfs : xf.merge(row.xfs, true);
-				} else {
-					var col = opt_ws._getColNoEmptyWithAll(nCol);
-					if(null != col && null != col.xfs){
-						xf = null === xf ? col.xfs : xf.merge(col.xfs, true);
+			// opt_cell == null can still mean a style-only cell with a
+			// direct xf in cellStylesByCol; consult it before row/col fallback.
+			var directXfs = null;
+			var CSS = window['AscCommonExcel'].CellStyleStorage;
+			if (CSS && typeof CSS.getDirectCellXfs === 'function') {
+				directXfs = CSS.getDirectCellXfs(opt_ws, nRow, nCol);
+			}
+			if (directXfs) {
+				xf = (null === xf) ? directXfs : xf.merge(directXfs, true);
+			} else {
+				opt_ws._getRowNoEmpty(nRow, function(row){
+					if(row && null != row.xfs){
+						xf = null === xf ? row.xfs : xf.merge(row.xfs, true);
+					} else {
+						var col = opt_ws._getColNoEmptyWithAll(nCol);
+						if(null != col && null != col.xfs){
+							xf = null === xf ? col.xfs : xf.merge(col.xfs, true);
+						}
 					}
-				}
-			});
-
+				});
+			}
 		}
 		xf = getCompiledStyleFromArray(xf, styleComponents.conditional);
 		return xf;
@@ -8378,6 +8388,8 @@
 			},function(cell) {
 				cell.clearDataKeepXf(borders[cell.nCol]);
 			});
+			AscCommonExcel.CellStyleStorage.applyInsertedBorderToStyleOnly(this,
+				new Asc.Range(0, index, gc_nMaxCol0, index + count - 1), borders, true);
 		}
 		//notifyChanged after move cells to get new locations(for intersect ranges)
 		this.workbook.dependencyFormulas.notifyChanged(renameRes.changed);
@@ -9363,32 +9375,43 @@
 		}
 		this.nRowsCount = index >= this.nRowsCount ? index + 1 : this.nRowsCount;
 	};
-	Worksheet.prototype._initCell=function(cell, nRow, nCol){
+	// Style-only direct xf wins over row/col inheritance. Returns the
+	// cached direct xf as-is (callers use `_isTransient` to avoid
+	// re-mirroring); row/col inheritance is cloned because callers
+	// mutate the result via setStyleInternal.
+	Worksheet.prototype._directOrInheritedXfs = function (nRow, nCol) {
+		var direct = AscCommonExcel.CellStyleStorage.getDirectCellXfs(this, nRow, nCol);
+		if (direct) {
+			return direct;
+		}
 		var t = this;
-		cell.setChanged(true);
-		this._getRowNoEmpty(nRow, function(row) {
-			var oCol = t._getColNoEmptyWithAll(nCol);
-			var xfs = null;
-			if (row && null != row.xfs)
+		var xfs = null;
+		this._getRowNoEmpty(nRow, function (row) {
+			if (row && null != row.xfs) {
 				xfs = row.xfs.clone();
-			else if (null != oCol && null != oCol.xfs)
-				xfs = oCol.xfs.clone();
-			// Inheritance-only write: stamp the row/column style into the cell
-			// in-memory, but don't let it pollute cellStylesByCol; that
-			// storage must hold direct cell styles only. try/finally guards
-			// the flag restore against any throw inside setStyleInternal.
-			var prevTransient = cell._isTransient;
-			cell._isTransient = true;
-			try {
-				cell.setStyleInternal(xfs);
-			} finally {
-				cell._isTransient = prevTransient;
+			} else {
+				var oCol = t._getColNoEmptyWithAll(nCol);
+				if (null != oCol && null != oCol.xfs) {
+					xfs = oCol.xfs.clone();
+				}
 			}
-			t.cellsByColRowsCount = Math.max(t.cellsByColRowsCount, nRow + 1);
-			t.nRowsCount = Math.max(t.nRowsCount, t.cellsByColRowsCount);
-			if (nCol >= t.nColsCount)
-				t.setColsCount(nCol + 1);
 		});
+		return xfs;
+	};
+	Worksheet.prototype._initCell=function(cell, nRow, nCol){
+		cell.setChanged(true);
+		var xfs = this._directOrInheritedXfs(nRow, nCol);
+		var prevTransient = cell._isTransient;
+		cell._isTransient = true;
+		try {
+			cell.setStyleInternal(xfs);
+		} finally {
+			cell._isTransient = prevTransient;
+		}
+		this.cellsByColRowsCount = Math.max(this.cellsByColRowsCount, nRow + 1);
+		this.nRowsCount = Math.max(this.nRowsCount, this.cellsByColRowsCount);
+		if (nCol >= this.nColsCount)
+			this.setColsCount(nCol + 1);
 		//init ColData otherwise all 'foreach' will not return this cell until saveContent(loadCells)
 		var sheetMemory = this.getColData(nCol);
 		sheetMemory.checkIndex(nRow);
@@ -10151,6 +10174,7 @@
 				this.getRange3(oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2)._foreachNoEmpty(function(cell) {
 					cell.clearDataKeepXf(borders[cell.nRow]);
 				});
+				AscCommonExcel.CellStyleStorage.applyInsertedBorderToStyleOnly(this, oBBox, borders, false);
 			}
 		}
 		//notifyChanged after move cells to get new locations(for intersect ranges)
@@ -10231,6 +10255,7 @@
 			this.getRange3(oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2)._foreachNoEmpty(function(cell) {
 				cell.clearDataKeepXf(borders[cell.nCol]);
 			});
+			AscCommonExcel.CellStyleStorage.applyInsertedBorderToStyleOnly(this, oBBox, borders, true);
 		}
 		//notifyChanged after move cells to get new locations(for intersect ranges)
 		this.workbook.dependencyFormulas.notifyChanged(renameRes.changed);
@@ -19965,6 +19990,57 @@
 			}
 		}
 	};
+	// Style-only complement of _setBorderEdge. Data-cell pass uses
+	// _foreachNoEmpty; style-only neighbors need the same edge cleanup
+	// through cellStylesByCol. Emits SetStyleOnly history; no SheetMemory write.
+	Range.prototype._setBorderEdgeStyleOnly=function(edgeBbox, bbox, oNewBorder){
+		var ws = this.worksheet;
+		var CSS = AscCommonExcel.CellStyleStorage;
+		if (!CSS || typeof CSS.forEachStyleOnlyCell !== 'function') {
+			return;
+		}
+		var entries = null;
+		CSS.forEachStyleOnlyCell(ws, edgeBbox, function (row, col, xfIndex) {
+			if (!entries) { entries = []; }
+			entries.push(row, col, xfIndex);
+		});
+		if (!entries) {
+			return;
+		}
+		var styleCache = AscCommonExcel.g_StyleCache;
+		var historyOn = AscCommon.History.Is_On();
+		var sheetId = historyOn ? ws.getId() : null;
+		var tempCell = new Cell(ws);
+		tempCell._isTransient = true;
+		var wb = ws.workbook;
+		wb.loadCells.push(tempCell);
+		try {
+			for (var i = 0; i < entries.length; i += 3) {
+				var row = entries[i];
+				var col = entries[i + 1];
+				var xfIndex = entries[i + 2];
+				var oldXfs = styleCache.getXf(xfIndex);
+				tempCell.clear();
+				tempCell.setRowCol(row, col);
+				tempCell.xfs = oldXfs;
+				AscCommon.History.TurnOff();
+				this._setBorderEdge(bbox, tempCell, row, col, oNewBorder);
+				AscCommon.History.TurnOn();
+				if (tempCell.xfs !== oldXfs) {
+					var newXfs = tempCell.xfs;
+					if (historyOn) {
+						AscCommon.History.Add(AscCommonExcel.g_oUndoRedoCell,
+							AscCH.historyitem_Cell_SetStyleOnly, sheetId,
+							new Asc.Range(col, row, col, row),
+							new UndoRedoData_CellSimpleData(row, col, oldXfs, newXfs));
+					}
+					ws.setCellXf(row, col, newXfs);
+				}
+			}
+		} finally {
+			wb.loadCells.pop();
+		}
+	};
 	Range.prototype.setBorder=function(border){
 		//border = null clears border
 		//"ih" - internal horizontal, "iv" - internal vertical
@@ -20015,6 +20091,7 @@
 									  function(cell){
 										  _this._setBorderEdge(oBBox, cell, cell.nRow, cell.nCol, border);
 									  });
+			range._setBorderEdgeStyleOnly(range.bbox, oBBox, border);
 		}
 	};
 	Range.prototype.setShrinkToFit=function(val){
@@ -20275,18 +20352,11 @@
 			}
 			else
 			{
-				var xfs = null;
-				t.worksheet._getRowNoEmpty(t.bbox.r1, function(row){
-					var oCol = t.worksheet._getColNoEmptyWithAll(t.bbox.c1);
-					if(row && null != row.xfs)
-						xfs = row.xfs.clone();
-					else if(null != oCol && null != oCol.xfs)
-						xfs = oCol.xfs.clone();
-				});
+				// Style-only cells have no Cell object; direct xf still wins.
 				var oTempCell = new Cell(t.worksheet);
 				oTempCell._isTransient = true;
 				oTempCell.setRowCol(t.bbox.r1, t.bbox.c1);
-				oTempCell.setStyleInternal(xfs);
+				oTempCell.setStyleInternal(t.worksheet._directOrInheritedXfs(t.bbox.r1, t.bbox.c1));
 				valueForEdit2 = oTempCell.getValueForEdit2();
 			}
 		});
@@ -20303,9 +20373,13 @@
 		return valueWithoutFormat;
 	};
 	Range.prototype.getQuotePrefix=function(){
+		// Style-only cells have no Cell object; direct xf still wins.
 		let res = false;
-		this.worksheet._getCellNoEmpty(this.bbox.r1, this.bbox.c1, function(cell) {
-			if(null != cell && cell.getQuotePrefix())
+		let t = this;
+		let nRow = this.bbox.r1, nCol = this.bbox.c1;
+		this.worksheet._getCellNoEmpty(nRow, nCol, function(cell) {
+			let xfs = cell ? cell.getCompiledStyle() : t.worksheet.getCompiledStyle(nRow, nCol);
+			if (xfs && xfs.getQuotePrefix())
 				res = true;
 		});
 		return res;
@@ -20360,19 +20434,11 @@
 				value2 = cell.getValue2(dDigitsCount, fIsFitMeasurer);
 			else
 			{
-				var xfs = null;
-				t.worksheet._getRowNoEmpty(t.bbox.r1, function(row){
-					var oCol = t.worksheet._getColNoEmptyWithAll(t.bbox.c1);
-
-					if(row && null != row.xfs)
-						xfs = row.xfs.clone();
-					else if(null != oCol && null != oCol.xfs)
-						xfs = oCol.xfs.clone();
-				});
+				// Style-only cells have no Cell object; direct xf still wins.
 				var oTempCell = new Cell(t.worksheet);
 				oTempCell._isTransient = true;
 				oTempCell.setRowCol(t.bbox.r1, t.bbox.c1);
-				oTempCell.setStyleInternal(xfs);
+				oTempCell.setStyleInternal(t.worksheet._directOrInheritedXfs(t.bbox.r1, t.bbox.c1));
 				value2 = oTempCell.getValue2(dDigitsCount, fIsFitMeasurer);
 			}
 		});
@@ -20538,12 +20604,15 @@
 	};
 
 	Range.prototype.getAngle = function () {
+		// Style-only cells have no Cell object; direct xf still wins.
+		var t = this;
 		var nRow = this.bbox.r1;
 		var nCol = this.bbox.c1;
 		var angle;
 		this.worksheet._getCellNoEmpty(nRow, nCol, function (cell) {
-			var align = cell.getAlign();
-			angle = align.getAngle();
+			var xfs = cell ? cell.getCompiledStyle() : t.worksheet.getCompiledStyle(nRow, nCol);
+			var align = (xfs && xfs.align) ? xfs.align : g_oDefaultFormat.AlignAbs;
+			angle = align ? align.getAngle() : 0;
 		});
 		return angle;
 	}
@@ -20853,6 +20922,19 @@
 			}
 			else if( oBBox.r1 == elem.bbox.r1 && (elem.bbox.r1 != elem.bbox.r2 || (elem.bbox.c1 != elem.bbox.c2 && oBBox.r1 == oBBox.r2)))
 				aHyperlinksToRestore.push(elem.data);
+		}
+		// The bFirst walk above is data-only, so a style-only top-left cell
+		// is invisible to it. Probe cellStylesByCol to recover its xf as
+		// the merge target style before cleanAll wipes the entry.
+		if (null == oFirstCellValue && null == oLeftTopCellStyle) {
+			var _mergeCSS = AscCommonExcel.CellStyleStorage;
+			if (_mergeCSS && typeof _mergeCSS.forEachStyleOnlyCell === 'function') {
+				var _mergeTopLeftBbox = new Asc.Range(oBBox.c1, oBBox.r1, oBBox.c1, oBBox.r1);
+				_mergeCSS.forEachStyleOnlyCell(this.worksheet, _mergeTopLeftBbox, function (row, col, xfIndex) {
+					oLeftTopCellStyle = g_StyleCache.getXf(xfIndex);
+					return false;
+				});
+			}
 		}
 		this.cleanAll();
 		//restore hyperlink
