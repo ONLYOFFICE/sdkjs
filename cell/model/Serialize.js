@@ -6839,14 +6839,15 @@
             // Stream style-only cells in parallel with the data-cell walk.
             // iterContentByCell merges per-column SheetMemory and
             // cellStylesByCol cursors into row-major (row, col) order; we
-            // run a styleOnly variant alongside _foreachRowNoEmpty (which
-            // stays data-only) and drain style-only events before each
+            // run a styleOnly variant alongside the data walker
+            // (_foreachDataOnly) and drain style-only events before each
             // data cell so XLSB still sees rows in ascending order with
-            // one row header per row.
+            // one row header per row. Disjoint partition: style-only
+            // cells reach this code only through styleCursor.
             var styleCursor = AscCommonExcel.CellStyleStorage.createContentByCellCursor(ws, bbox, {styleOnly: true});
             var bExcludeHiddenRows = !!(ws.bExcludeHiddenRows && oThis.isCopyPaste);
             // Independent hidden-row walker so style-only emissions stay
-            // aligned with _foreachRowNoEmpty's excludedCount even when
+            // aligned with the data walker's excludedCount even when
             // style-only rows fall between data rows that the data walker
             // would have skipped.
             var hiddenWalk = bExcludeHiddenRows ? {next: bbox.r1, count: 0} : null;
@@ -6897,10 +6898,7 @@
                 }
             }
 
-            range._foreachRowNoEmpty(function(row, excludedCount) {
-                _drainStyleBefore(row.index, 0);
-                oThis.WriteRowAndFixEmpty(oThis.memory, cur, allRow, row, excludedCount, oThis.stylesForWrite);
-            }, function(cell, nRow0, nCol0, nRowStart0, nColStart0, excludedCount) {
+            range._foreachDataOnly(function(cell, nRow0, nCol0, nRowStart0, nColStart0, excludedCount) {
                 _drainStyleBefore(nRow0, nCol0);
                 if (cur.rowIndex != nRow0) {
                     tempRow.setIndex(nRow0);
@@ -6931,11 +6929,14 @@
                     }
 					cell.toXLSB(oThis.memory, nXfsId, formulaToWrite, oThis.InitSaveManager.oSharedStrings);
 				}
+            }, function(row, excludedCount) {
+                _drainStyleBefore(row.index, 0);
+                oThis.WriteRowAndFixEmpty(oThis.memory, cur, allRow, row, excludedCount, oThis.stylesForWrite);
             }, (ws.bExcludeHiddenRows && oThis.isCopyPaste));
 
             // Tail-drain style-only events past the data walker's reach (rows
             // beyond cellsByColRowsCount / rowsData.maxIndex are never visited
-            // by _foreachRowNoEmpty).
+            // by the data iterator).
             _drainStyleBefore(Infinity, Infinity);
 
             this.WriteRowAndFixEmpty(oThis.memory, cur, allRow);

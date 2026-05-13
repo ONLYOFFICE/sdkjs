@@ -2628,10 +2628,11 @@
 		var oRange = oWorksheet.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2);
 		var oTempRow, oTempCell;
 
-		// Keep _foreachNoEmpty data-only and interleave style-only cells from
-		// cellStylesByCol via a row-major per-cell cursor. Style runs ending
-		// at hi > lo are pre-split per row so each event is one (row, col);
-		// see CellStyleStorage.createContentByCellCursor.
+		// Disjoint partition: the data walk uses _foreachDataOnly so
+		// direct-style-only cells reach the writer only through this
+		// styleOnly cursor. Style runs ending at hi > lo are pre-split per
+		// row so each event is one (row, col); see
+		// CellStyleStorage.createContentByCellCursor.
 		var styleCursor = AscCommonExcel.CellStyleStorage.createContentByCellCursor(
 			oWorksheet, bbox, {styleOnly: true});
 
@@ -2752,7 +2753,7 @@
 			}
 		}
 
-		oRange._foreachNoEmpty(SerCell, SerRow);
+		oRange._foreachDataOnly(SerCell, SerRow);
 		drainStyleBefore(Infinity, Infinity);
 		return aRows;
 	};

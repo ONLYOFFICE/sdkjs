@@ -186,6 +186,7 @@
 			"cell/model/CellStyleStorage/Serialization.js",
 			"cell/model/CellStyleStorage/LegacyMigration.js",
 			"cell/model/Workbook.js",
+			"cell/model/CellIterators.js",
 			"cell/model/Serialize.js",
 			"cell/model/ConditionalFormatting.js",
 			"cell/model/DataValidation.js",

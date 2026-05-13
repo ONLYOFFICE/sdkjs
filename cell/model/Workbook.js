@@ -9291,7 +9291,16 @@
 	Worksheet.prototype.getRange4=function(r, c){
 		return new Range(this, r, c, r, c);
 	};
+	// Yields data and direct-style-only cells. Direct-style-only emissions
+	// are transient and must not be written back via saveContent.
 	Worksheet.prototype.getRowIterator=function(r1, c1, c2, callback){
+		var it = new AscCommonExcel.OccupiedRowIterator();
+		it.init(this, r1, c1, c2);
+		callback(it);
+		it.release();
+	};
+	// Yields only SheetMemory data cells; direct-style-only entries are skipped.
+	Worksheet.prototype.getDataRowIterator=function(r1, c1, c2, callback){
 		var it = new RowIterator();
 		it.init(this, r1, c1, c2);
 		callback(it);
@@ -12204,14 +12213,14 @@
 		if (findEmptyStr) {
 			if (maxRowsCount === 0 || maxColsCount === 0) {
 				findRange = this.getRange3(0, 0, maxRowsCount, maxColsCount);
-				func = findRange._foreachNoEmpty;
+				func = findRange._foreachDataOnly;
 			} else if (options.findInSelection) {
 				if (lastRange.r1 <= maxRowsCount - 1 && lastRange.c1 <= maxColsCount - 1) {
 					findRange = this.getRange3(lastRange.r1, lastRange.c1, Math.min(lastRange.r2, maxRowsCount - 1), Math.min(lastRange.c2, maxColsCount - 1));
 					func = findRange._foreach2;
 				} else {
 					findRange = this.getRange3(lastRange.r1, lastRange.c1, lastRange.r2, lastRange.c2);
-					func = findRange._foreachNoEmpty;
+					func = findRange._foreachDataOnly;
 				}
 			} else {
 				findRange = this.getRange3(0, 0, maxRowsCount - 1, maxColsCount - 1);
@@ -19063,7 +19072,68 @@
 			wb.loadCells.pop();
 		}
 	};
+	// Row-major occupied (data + direct-style-only) iteration. Direct-style-only
+	// cells are emitted as a shared transient Cell (read-only, no saveContent).
 	Range.prototype._foreachNoEmpty = function(actionCell, actionRow, excludeHiddenRows) {
+		var oRes, i, oBBox = this.bbox;
+		var ws = this.worksheet;
+		var dataMaxR = Math.max(ws.cellsByColRowsCount - 1, ws.rowsData.getMaxIndex());
+		var styleMaxR = AscCommonExcel.maxStyleOnlyRow(ws, oBBox.c1, oBBox.c2);
+		var minR = Math.max(dataMaxR, styleMaxR);
+		minR = Math.min(minR, oBBox.r2);
+		if (actionCell || actionRow) {
+			var itRow = null;
+			if (actionCell) {
+				itRow = new AscCommonExcel.OccupiedRowIterator();
+				itRow.init(ws, oBBox.r1, oBBox.c1, oBBox.c2);
+			}
+			var bExcludeHiddenRows = (ws.bExcludeHiddenRows || excludeHiddenRows);
+			var excludedCount = 0;
+			var tempCell;
+			var tempRow = new AscCommonExcel.Row(ws);
+			var allRow = ws.getAllRow();
+			var allRowHidden = allRow && allRow.getHidden();
+			for (i = oBBox.r1; i <= minR; i++) {
+				if (actionRow) {
+					if (tempRow.loadContent(i)) {
+						if (bExcludeHiddenRows && tempRow.getHidden()) {
+							excludedCount++;
+							continue;
+						}
+						oRes = actionRow(tempRow, excludedCount);
+						tempRow.saveContent(true);
+						if (null != oRes) {
+							if (itRow) {
+								itRow.release();
+							}
+							return oRes;
+						}
+					} else if (bExcludeHiddenRows && allRowHidden) {
+						excludedCount++;
+						continue;
+					}
+				} else if (bExcludeHiddenRows && ws.getRowHidden(i)) {
+					excludedCount++;
+					continue;
+				}
+				if (itRow) {
+					itRow.setRow(i);
+					while (tempCell = itRow.next()) {
+						oRes = actionCell(tempCell, i, tempCell.nCol, oBBox.r1, oBBox.c1, excludedCount);
+						if (null != oRes) {
+							itRow.release();
+							return oRes;
+						}
+					}
+				}
+			}
+			if (itRow) {
+				itRow.release();
+			}
+		}
+	};
+	// Row-major data-only iteration; direct-style-only cells are skipped.
+	Range.prototype._foreachDataOnly = function(actionCell, actionRow, excludeHiddenRows) {
 		var oRes, i, oBBox = this.bbox, minR = Math.max(this.worksheet.cellsByColRowsCount - 1, this.worksheet.rowsData.getMaxIndex());
 		minR = Math.min(minR, oBBox.r2);
 		if (actionCell || actionRow) {
@@ -19118,7 +19188,103 @@
 			}
 		}
 	};
+	// Column-major occupied (data + direct-style-only) iteration; transient
+	// Cell emissions are read-only.
 	Range.prototype._foreachNoEmptyByCol = function(actionCell, excludeHiddenRows) {
+		if (!actionCell) {
+			return;
+		}
+		var oRes, i, j, colData;
+		var ws = this.worksheet;
+		var wb = ws.workbook;
+		var oBBox = this.bbox;
+		var dataRowMax = ws.cellsByColRowsCount - 1;
+		var dataColMax = ws.getColDataLength() - 1;
+		var stylesByCol = ws.cellStylesByCol || [];
+		var styleColMax = stylesByCol.length - 1;
+		var minC = oBBox.c2;
+		var bigC = dataColMax > styleColMax ? dataColMax : styleColMax;
+		if (minC > bigC) {
+			minC = bigC;
+		}
+		if (oBBox.c1 > minC) {
+			return;
+		}
+		var bExcludeHiddenRows = (ws.bExcludeHiddenRows || excludeHiddenRows);
+		var excludedCount = 0;
+		var tempCell = new Cell(ws);
+		tempCell._isTransient = true;
+		var transientStyleCell = new Cell(ws);
+		transientStyleCell._isTransient = true;
+		wb.loadCells.push(tempCell);
+		for (j = oBBox.c1; j <= minC; ++j) {
+			colData = ws.getColDataNoEmpty(j);
+			var styleStore = stylesByCol[j] || null;
+			if (!colData && (!styleStore || styleStore.isEmpty())) {
+				continue;
+			}
+			var dataMaxR = colData ? colData.getMaxIndex() : -1;
+			var styleMaxR = (styleStore && !styleStore.isEmpty()) ? styleStore.lastRow() : -1;
+			var maxR = dataMaxR > styleMaxR ? dataMaxR : styleMaxR;
+			var loopMaxR = Math.min(oBBox.r2, maxR);
+			for (i = oBBox.r1; i <= loopMaxR; i++) {
+				if (bExcludeHiddenRows && ws.getRowHidden(i)) {
+					excludedCount++;
+					continue;
+				}
+				var targetCell = null;
+				for (var k = 0; k < wb.loadCells.length - 1; ++k) {
+					var elem = wb.loadCells[k];
+					if (elem.nRow === i && elem.nCol === j && ws === elem.ws) {
+						targetCell = elem;
+						break;
+					}
+				}
+				if (null !== targetCell) {
+					oRes = actionCell(targetCell, i, j, oBBox.r1, oBBox.c1, excludedCount);
+					if (null != oRes) {
+						wb.loadCells.pop();
+						return oRes;
+					}
+					continue;
+				}
+				var loaded = false;
+				if (colData) {
+					loaded = tempCell.loadContent(i, j, colData);
+				}
+				if (loaded) {
+					oRes = actionCell(tempCell, i, j, oBBox.r1, oBBox.c1, excludedCount);
+					tempCell.saveContent(true);
+					if (null != oRes) {
+						wb.loadCells.pop();
+						return oRes;
+					}
+					continue;
+				}
+				if (styleStore) {
+					var styleXf = styleStore.get(i);
+					if (styleXf != null && styleXf !== 0) {
+						transientStyleCell.clear();
+						transientStyleCell.nRow = i;
+						transientStyleCell.nCol = j;
+						transientStyleCell._isTransient = true;
+						var xfs = ws._directOrInheritedXfs(i, j);
+						if (xfs) {
+							transientStyleCell.xfs = xfs;
+						}
+						oRes = actionCell(transientStyleCell, i, j, oBBox.r1, oBBox.c1, excludedCount);
+						if (null != oRes) {
+							wb.loadCells.pop();
+							return oRes;
+						}
+					}
+				}
+			}
+		}
+		wb.loadCells.pop();
+	};
+	// Column-major data-only iteration; direct-style-only cells are skipped.
+	Range.prototype._foreachDataOnlyByCol = function(actionCell, excludeHiddenRows) {
 		var oRes, i, j, colData;
 		var wb = this.worksheet.workbook;
 		var oBBox = this.bbox, minR = Math.min(this.worksheet.cellsByColRowsCount - 1, oBBox.r2);
@@ -21936,7 +22102,7 @@
 			if (nRowFirst0 == nStartRowCol) {
 				while (0 == aSortElems.length && nStartRowCol <= nLastRow0) {
 					if (false == bWholeRow) {
-						oRangeRow._foreachNoEmptyByCol(fAddSortElems);
+						oRangeRow._foreachDataOnlyByCol(fAddSortElems);
 					} else {
 						oRangeRow._foreachRowNoEmpty(null, fAddSortElems);
 					}
@@ -21947,7 +22113,7 @@
 				}
 			} else {
 				if (false == bWholeRow) {
-					oRangeRow._foreachNoEmptyByCol(fAddSortElems);
+					oRangeRow._foreachDataOnlyByCol(fAddSortElems);
 				} else {
 					oRangeRow._foreachRowNoEmpty(null, fAddSortElems);
 				}
@@ -21956,7 +22122,7 @@
 			if (nColFirst0 == nStartRowCol) {
 				while (0 == aSortElems.length && nStartRowCol <= nLastCol0) {
 					if (false == bWholeCol) {
-						oRangeCol._foreachNoEmpty(fAddSortElems);
+						oRangeCol._foreachDataOnly(fAddSortElems);
 					} else {
 						oRangeCol._foreachColNoEmpty(null, fAddSortElems);
 					}
@@ -21967,7 +22133,7 @@
 				}
 			} else {
 				if (false == bWholeCol) {
-					oRangeCol._foreachNoEmpty(fAddSortElems);
+					oRangeCol._foreachDataOnly(fAddSortElems);
 				} else {
 					oRangeCol._foreachColNoEmpty(null, fAddSortElems);
 				}
@@ -22147,7 +22313,7 @@
 		}
 
 		var tempRange = this.worksheet.getRange3(oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2);
-		var func = opt_by_row ? tempRange._foreachNoEmptyByCol : tempRange._foreachNoEmpty;
+		var func = opt_by_row ? tempRange._foreachDataOnlyByCol : tempRange._foreachDataOnly;
 		func.apply(tempRange, [(function (cell) {
 			var ws = t.worksheet;
 			var formula = cell.getFormulaParsed();
@@ -22786,7 +22952,7 @@
 			let nPreviousVal = null;
 			let nPrevInputTimePeriod = null;
 			let nRepeat = 0;
-			fromRange._foreachNoEmpty(function(oCell, nRow0, nCol0, nRowStart0, nColStart0){
+			fromRange._foreachDataOnly(function(oCell, nRow0, nCol0, nRowStart0, nColStart0){
 				if(null != oCell)
 				{
 					function calcTimePeriodValues() {
@@ -23465,6 +23631,7 @@
 			}
 		}
 	};
+	// OccupiedRowIterator and maxStyleOnlyRow live in cell/model/CellIterators.js.
 //-------------------------------------------------------------------------------------------------
 	/**
 	 * @constructor
@@ -25005,7 +25172,7 @@
 				}
 			});
 		} else {
-			oFilledRange._foreachNoEmpty(function (oCell, nCurRow, nCurCol) {
+			oFilledRange._foreachDataOnly(function (oCell, nCurRow, nCurCol) {
 				if (oCell && oCell.getValueWithoutFormat()) {
 					if (nType === oSeriesType.autoFill) {
 						nRow = nCurRow;
@@ -25091,7 +25258,7 @@
 		let nType = this.getType();
 		let aFilledCells = [];
 
-		oFromRange._foreachNoEmpty(function (oCell, nRow, nCol) {
+		oFromRange._foreachDataOnly(function (oCell, nRow, nCol) {
 			if (oCell && oCell.getValueWithoutFormat() && nType !== oSeriesType.autoFill) {
 				let nTypeCell = oCell.getType();
 				let oFilledRange = oSerial.getFilledRange(bVertical ? nCol : nRow);
@@ -27368,6 +27535,7 @@
 	window['AscCommonExcel'].g_sNewSheetNamePattern = g_sNewSheetNamePattern;
 	window['AscCommonExcel'].CSerial = CSerial;
 	window['AscCommonExcel'].SweepLineRowIterator = SweepLineRowIterator;
+	window['AscCommonExcel'].RowIterator = RowIterator;
 	window['AscCommonExcel'].BroadcastHelper = BroadcastHelper;
 	window['AscCommonExcel'].foreachRefElements = foreachRefElements;
 

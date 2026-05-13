@@ -671,7 +671,7 @@
 					aValue = [];
 					aData = [];
 					let duplicatedMap = [];
-					list._foreachNoEmpty(function (cell) {
+					list._foreachDataOnly(function (cell) {
 						if (!cell.isNullTextString()) {
 							let val = cell.getValue();
 							if (!duplicatedMap[val]) {
