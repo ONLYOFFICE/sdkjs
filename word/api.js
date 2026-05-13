@@ -1963,8 +1963,17 @@ background-repeat: no-repeat;\
       var Paragraph = g_oTableId.Get_ById(ParaId);
       var Type = Obj["type"];
       if (null != Paragraph) {
-        if ("spell" === Type) {
-          // Paragraph.SpellChecker.SpellCheckResponse(Obj["RecalcId"], Obj["usrCorrect"]);
+        if (
+          "spell" === Type &&
+          Paragraph.SpellChecker &&
+          Paragraph.SpellChecker.SpellCheckResponse &&
+          typeof Paragraph.SpellChecker.SpellCheckResponse === "function" &&
+          typeof Paragraph.ReDraw === "function"
+        ) {
+          Paragraph.SpellChecker.SpellCheckResponse(
+            Obj["RecalcId"],
+            Obj["usrCorrect"]
+          );
           Paragraph.ReDraw();
         } else if ("suggest" === Type) {
           Paragraph.SpellChecker.SuggestResponse(
