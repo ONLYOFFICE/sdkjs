@@ -2184,6 +2184,11 @@
 				//todo realize removeDependencies
 				this._f.buildDependencies();
 			}
+		} else {
+			if (opt_parent && !this._f.parent) {
+				this._f.buildDependencies();
+				this._f.parent = opt_parent;
+			}
 		}
 	};
 	CFormulaCF.prototype.recalcFormula = function (ws, toInterface) {
