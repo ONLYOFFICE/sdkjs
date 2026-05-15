@@ -236,10 +236,107 @@ function CopyProcessor(api, onlyBinaryCopy)
     this.aFootnoteReference = [];
 	this.oRoot = new CopyElement("root");
     this.listNextNumMap = [];
+    this.listStack = [];
+    this.listContextTarget = null;
     this.instructionHyperlinkStart = null;
 }
 CopyProcessor.prototype =
 {
+	/** 
+	 * start of code for copy indent fix 14th may 2026
+	*/
+    _resetListState : function(oDomTarget)
+    {
+        this.listStack = [];
+        this.listContextTarget = oDomTarget || null;
+    },
+    _getListCounterKey : function(numId, level)
+    {
+        return numId + ":" + level;
+    },
+    _getListLevel : function(oNumPr)
+    {
+        if (!oNumPr) {
+            return 0;
+        }
+
+        if (typeof oNumPr.Lvl === "number") {
+            return oNumPr.Lvl;
+        }
+
+        if (typeof oNumPr.m_nLvl === "number") {
+            return oNumPr.m_nLvl;
+        }
+
+        if (typeof oNumPr.m_nLevel === "number") {
+            return oNumPr.m_nLevel;
+        }
+
+        return 0;
+    },
+    _getDefaultBulletListStyle : function(level)
+    {
+        switch (level % 3) {
+            case 1:
+                return "circle";
+            case 2:
+                return "square";
+            default:
+                return "disc";
+        }
+    },
+    _appendListItem : function(oDomTarget, level, bBullet, sListStyle, oNumPr, Para)
+    {
+        var listTagName = bBullet ? "ul" : "ol";
+        var listCounterKey = this._getListCounterKey(oNumPr ? oNumPr.NumId : listTagName, level);
+
+        while (this.listStack.length > level + 1) {
+            this.listStack.pop();
+        }
+
+        var oTargetList = this.listStack[level];
+        if (!oTargetList || oTargetList.sName !== listTagName) {
+            if (this.listStack.length > level) {
+                this.listStack = this.listStack.slice(0, level);
+            }
+
+            oTargetList = new CopyElement(listTagName);
+            if (!bBullet) {
+                var nNextIndex = this.listNextNumMap[listCounterKey] || 1;
+                if (nNextIndex > 1) {
+                    oTargetList.oAttributes["start"] = nNextIndex;
+                }
+            }
+
+            if (level === 0) {
+                oDomTarget.addChild(oTargetList);
+            } else {
+                var oParentEntry = this.listStack[level - 1];
+                if (oParentEntry && oParentEntry.lastLi) {
+                    oParentEntry.lastLi.addChild(oTargetList);
+                } else {
+                    oDomTarget.addChild(oTargetList);
+                }
+            }
+
+            this.listStack[level] = oTargetList;
+        }
+
+        this.listStack.length = level + 1;
+
+        var Li = new CopyElement("li");
+        Li.oAttributes["style"] = "list-style-type: " + sListStyle;
+        Li.addChild(Para);
+        oTargetList.addChild(Li);
+        oTargetList.lastLi = Li;
+
+        if (!bBullet) {
+            this.listNextNumMap[listCounterKey] = (this.listNextNumMap[listCounterKey] || 1) + 1;
+        }
+    },
+	/** 
+	 * end of code for copy indent fix 14th may 2026
+	*/
     getInnerHtml : function()
     {
         return this.oRoot.getInnerHtml();
@@ -267,20 +364,22 @@ CopyProcessor.prototype =
             sB = "0" + sB;
         return "#" + sR + sG + sB;
     },
-    Commit_pPr : function(Item, Para, nextElem)
+    Commit_pPr : function(Item, Para, nextElem, options)
     {
         //pPr
         var apPr = [];
+        options = options || {};
+        var isListItemParagraph = !!options.isListItemParagraph;
         var Def_pPr = this.oDocument.Styles ? this.oDocument.Styles.Default.ParaPr : null;
         var Item_pPr = Item.CompiledPr && Item.CompiledPr.Pr && Item.CompiledPr.Pr.ParaPr ? Item.CompiledPr.Pr.ParaPr : Item.Pr;
         if(Item_pPr && Def_pPr)
         {
             //Ind
-            if(Def_pPr.Ind.Left !== Item_pPr.Ind.Left)
+            if(!isListItemParagraph && Def_pPr.Ind.Left !== Item_pPr.Ind.Left)
                 apPr.push("margin-left:" + (Item_pPr.Ind.Left * g_dKoef_mm_to_pt) + "pt");
             if(Def_pPr.Ind.Right !== Item_pPr.Ind.Right)
                 apPr.push("margin-right:" + ( Item_pPr.Ind.Right * g_dKoef_mm_to_pt) + "pt");
-            if(Def_pPr.Ind.FirstLine !== Item_pPr.Ind.FirstLine)
+            if(!isListItemParagraph && Def_pPr.Ind.FirstLine !== Item_pPr.Ind.FirstLine)
                 apPr.push("text-indent:" + (Item_pPr.Ind.FirstLine * g_dKoef_mm_to_pt) + "pt");
             //Jc
             if(Def_pPr.Jc !== Item_pPr.Jc){
@@ -328,10 +427,12 @@ CopyProcessor.prototype =
             }
 			//TODO при вставке в EXCEL(внутрь ячейки) появляются лишние пустые строки из-за того, что в HTML пишутся отступы - BUG #14663
 			//При вставке в word лучше чтобы эти значения выставлялись всегда
-            //if(Def_pPr.Spacing.Before != Item_pPr.Spacing.Before)
-            apPr.push("margin-top:" + (Item_pPr.Spacing.Before * g_dKoef_mm_to_pt) + "pt");
-            //if(Def_pPr.Spacing.After != Item_pPr.Spacing.After)
-            apPr.push("margin-bottom:" + (Item_pPr.Spacing.After * g_dKoef_mm_to_pt) + "pt");
+            if (!isListItemParagraph) {
+                //if(Def_pPr.Spacing.Before != Item_pPr.Spacing.Before)
+                apPr.push("margin-top:" + (Item_pPr.Spacing.Before * g_dKoef_mm_to_pt) + "pt");
+                //if(Def_pPr.Spacing.After != Item_pPr.Spacing.After)
+                apPr.push("margin-bottom:" + (Item_pPr.Spacing.After * g_dKoef_mm_to_pt) + "pt");
+            }
             //Shd
             if (null != Item_pPr.Shd && c_oAscShdNil !== Item_pPr.Shd.Value && (null != Item_pPr.Shd.Color || null != Item_pPr.Shd.Unifill)){
 				var _shdColor = Item_pPr.Shd.GetSimpleColor && Item_pPr.Shd.GetSimpleColor(this.oDocument.Get_Theme(), this.oDocument.Get_ColorMap());
@@ -710,6 +811,10 @@ CopyProcessor.prototype =
     },
     CopyParagraph : function(oDomTarget, Item, selectedAll, nextElem)
     {
+        if (this.listContextTarget !== oDomTarget) {
+            this._resetListState(oDomTarget);
+        }
+
         var oDocument = this.oDocument;
 		var Para = null;
 		//Для heading пишем в h1
@@ -741,9 +846,11 @@ CopyProcessor.prototype =
             bIsNullNumPr = (0 == oNumPr.m_nType);
         }
 		var bBullet = false;
+        var nListLevel = 0;
         var sListStyle = "";
-        if(!bIsNullNumPr)
+	        if(!bIsNullNumPr)
         {
+            nListLevel = this._getListLevel(oNumPr);
             if(PasteElementsId.g_bIsDocumentCopyPaste)
 			{
 				var oNum = this.oDocument.GetNumbering().GetNum(oNumPr.NumId);
@@ -766,15 +873,15 @@ CopyProcessor.prototype =
 							case Asc.c_oAscNumberingFormat.LowerLetter:
 								sListStyle = "lower-alpha";
 								break;
-							case Asc.c_oAscNumberingFormat.UpperLetter:
-								sListStyle = "upper-alpha";
-								break;
-							default:
-								sListStyle = "disc";
-								bBullet    = true;
-								break;
+								case Asc.c_oAscNumberingFormat.UpperLetter:
+									sListStyle = "upper-alpha";
+									break;
+								default:
+									sListStyle = this._getDefaultBulletListStyle(nListLevel);
+									bBullet    = true;
+									break;
+							}
 						}
-					}
 				}
 			}
             else
@@ -818,20 +925,21 @@ CopyProcessor.prototype =
                     {
                         sListStyle = "upper-alpha";
                         break;
-                    }
-                    default:
-                        sListStyle = "disc";
-                        bBullet = true;
-                        break;
-                }
-            }
+	                    }
+	                    default:
+	                        sListStyle = this._getDefaultBulletListStyle(nListLevel);
+	                        bBullet = true;
+	                        break;
+	                }
+	            }
         }
         //pPr
-        this.Commit_pPr(Item, Para, nextElem);
+        this.Commit_pPr(Item, Para, nextElem, {isListItemParagraph: !bIsNullNumPr});
 
         if(false === selectedAll)
         {
 			//если последний элемент в выделении неполностью выделенный параграф, то он копируется как обычный текст без настроек параграфа и списков
+            this._resetListState(oDomTarget);
 			this.CopyRunContent(Item, oDomTarget, false);
         }
         else
@@ -840,42 +948,12 @@ CopyProcessor.prototype =
 			//добавляем &nbsp; потому что параграфы без содержимого не копируются
             if(Para.isEmptyChild())
                 Para.addChild(new CopyElement("&nbsp;", true));
-            if(bIsNullNumPr)
+            if(bIsNullNumPr) {
+                this._resetListState(oDomTarget);
                 oDomTarget.addChild( Para );
-			else{
-				var Li = new CopyElement( "li" );
-				Li.oAttributes["style"] = "list-style-type: " + sListStyle;
-				Li.addChild( Para );
-				//пробуем добавить в предыдущий список
-				var oTargetList = null;
-				if(oDomTarget.aChildren.length > 0){
-					var oPrevElem = oDomTarget.aChildren[oDomTarget.aChildren.length - 1];
-					if((bBullet && "ul" === oPrevElem.sName) || (!bBullet && "ol" === oPrevElem.sName))
-						oTargetList = oPrevElem;
-				}
-
-				if (!bBullet) {
-					if (!this.listNextNumMap[oNumPr.NumId]) {
-						this.listNextNumMap[oNumPr.NumId] = 1;
-					} else {
-						this.listNextNumMap[oNumPr.NumId]++;
-					}
-				}
-				if (null == oTargetList) {
-					if (bBullet) {
-						oTargetList = new CopyElement("ul");
-					} else {
-						oTargetList = new CopyElement("ol");
-					}
-					oTargetList.oAttributes["style"] = "padding-left:40px";
-					//если список идёт с промежуточными элементами, добавляем аттрибут start
-					if (!bBullet && this.listNextNumMap[oNumPr.NumId] > 1) {
-						oTargetList.oAttributes["start"] = this.listNextNumMap[oNumPr.NumId];
-					}
-					oDomTarget.addChild(oTargetList);
-				}
-				oTargetList.addChild(Li);
-			}
+            } else {
+                this._appendListItem(oDomTarget, nListLevel, bBullet, sListStyle, oNumPr, Para);
+            }
         }
     },
     _BorderToStyle : function(border, name)
