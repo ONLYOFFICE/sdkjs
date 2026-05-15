@@ -612,11 +612,14 @@ CopyProcessor.prototype =
 
 
 				oTarget.addChild(oBr);
-				//todo закончить этот параграф и начать новый
-				//добавил неразрвной пробел для того, чтобы информация попадала в буфер обмена
-				oSpan = new CopyElement("span");
-				oSpan.addChild(new CopyElement("&nbsp;", true));
-				oTarget.addChild(oSpan);
+				if (!nextParaItem) {
+					//todo закончить этот параграф и начать новый
+					//добавил неразрвной пробел для того, чтобы информация попадала в буфер обмена
+					// Keep the paragraph copyable when a manual break is the last visible content.
+					oSpan = new CopyElement("span");
+					oSpan.addChild(new CopyElement("&nbsp;", true));
+					oTarget.addChild(oSpan);
+				}
 				break;
             case para_Drawing:
                 let oGraphicObj = ParaItem.GraphicObj;
@@ -686,9 +689,54 @@ CopyProcessor.prototype =
 				break;
         }
     },
-    CopyRun: function (Item, oTarget) {
+    _hasVisibleContentInItem : function(ParaItem)
+    {
+        if (!ParaItem) {
+            return false;
+        }
+
+        switch (ParaItem.Type)
+        {
+            case para_Text:
+                return !!AscCommon.encodeSurrogateChar(ParaItem.Value);
+            case para_Space:
+            case para_Tab:
+            case para_Drawing:
+            case para_PageNum:
+            case para_FootnoteReference:
+            case para_Math:
+                return true;
+            case para_NewLine:
+            case para_FieldChar:
+            case para_Bookmark:
+                return false;
+            case para_Run:
+            case para_Hyperlink:
+            case para_InlineLevelSdt:
+            case para_Field:
+                return this._hasVisibleContentAfter(ParaItem.Content, 0);
+        }
+
+        return false;
+    },
+    _hasVisibleContentAfter : function(aContent, nStartIndex)
+    {
+        if (!aContent) {
+            return false;
+        }
+
+        for (let i = nStartIndex; i < aContent.length; i++) {
+            if (this._hasVisibleContentInItem(aContent[i])) {
+                return true;
+            }
+        }
+
+        return false;
+    },
+    CopyRun: function (Item, oTarget, bHasFollowingContentInContainer) {
 		for (var i = 0; i < Item.Content.length; i++) {
-			this.ParseItem(Item.Content[i], oTarget, Item.Content[i + 1], Item.Content.length);
+			let hasFollowingContent = this._hasVisibleContentAfter(Item.Content, i + 1) || (bHasFollowingContentInContainer && i === Item.Content.length - 1);
+			this.ParseItem(Item.Content[i], oTarget, hasFollowingContent ? Item.Content[i + 1] || {} : null, Item.Content.length);
 		}
     },
     CopyRunContent: function (Container, oTarget, bOmitHyperlink) {
@@ -712,12 +760,13 @@ CopyProcessor.prototype =
     	for (var i = 0; i < Container.Content.length; i++) {
 			var item = Container.Content[i];
 			if (para_Run === item.Type) {
+				let bHasFollowingContentInContainer = this._hasVisibleContentAfter(Container.Content, i + 1);
 				//отдельная обработка для сносок, добавляем внутри данные
 				if (item.Content && item.Content.length === 1 && item.Content[0] && item.Content[0].Type === para_FootnoteReference) {
-					this.CopyRun(item, oTarget);
+					this.CopyRun(item, oTarget, bHasFollowingContentInContainer);
 				} else {
 					var oSpan = new CopyElement("span");
-					this.CopyRun(item, oSpan);
+					this.CopyRun(item, oSpan, bHasFollowingContentInContainer);
 
 					if (this.instructionHyperlinkStart && !realTarget) {
 						oHyperlink = new CopyElement("a");
