@@ -8317,15 +8317,30 @@
 		var r2 = bRow ? bbox.r1 : bbox.r2;
 		var c2 = !bRow ? bbox.c1 : bbox.c2;
 		if(0 !== offsetRow || 0 !== offsetCol){
+			// _getCellNoEmpty returns null for pure style-only neighbors
+			// (no SheetMemory init flag); their direct xf still lives in
+			// cellStylesByCol, so fall back to getDirectCellXfs to keep
+			// border-intersect parity with data-cell neighbors.
+			var resolveNeighborXfs = function(row, col) {
+				var resolved = null;
+				t._getCellNoEmpty(row, col, function(neighbor) {
+					if (neighbor) {
+						resolved = neighbor.xfs || null;
+					}
+				});
+				if (!resolved) {
+					resolved = AscCommonExcel.CellStyleStorage.getDirectCellXfs(t, row, col);
+				}
+				return resolved;
+			};
 			this.getRange3(bbox.r1, bbox.c1, r2, c2)._foreachNoEmpty(function(cell) {
 				if (cell.xfs && cell.xfs.border) {
-					t._getCellNoEmpty(cell.nRow + offsetRow, cell.nCol + offsetCol, function(neighbor) {
-						if (neighbor && neighbor.xfs && neighbor.xfs.border) {
-							var newBorder = neighbor.xfs.border.clone();
-							newBorder.intersect(cell.xfs.border, true);
-							borders[bRow ? cell.nCol : cell.nRow] = newBorder;
-						}
-					});
+					var neighborXfs = resolveNeighborXfs(cell.nRow + offsetRow, cell.nCol + offsetCol);
+					if (neighborXfs && neighborXfs.border) {
+						var newBorder = neighborXfs.border.clone();
+						newBorder.intersect(cell.xfs.border, true);
+						borders[bRow ? cell.nCol : cell.nRow] = newBorder;
+					}
 				}
 			});
 		}
@@ -8584,6 +8599,15 @@
 				this.getRange3(0, index, gc_nMaxRow0, index + count - 1)._foreachNoEmpty(function(cell) {
 					cell.clearDataKeepXf(borders[cell.nRow]);
 				});
+			}
+			// The data path above visits inserted data cells through
+			// `_foreachNoEmpty` + `clearDataKeepXf` and never enters when
+			// the left neighbor is style-only. Cloned-from-style-only
+			// cells in cellStylesByCol still need the intersected borders
+			// applied directly so they match the data-left-neighbor result.
+			if (borders && prevStyleStore) {
+				AscCommonExcel.CellStyleStorage.applyInsertedBorderToStyleOnly(this,
+					new Asc.Range(index, 0, index + count - 1, gc_nMaxRow0), borders, false);
 			}
 		}
 
@@ -10170,10 +10194,17 @@
 		if (nLeft > 0 && !this.workbook.bUndoChanges)
 		{
 			var prevSheetMemory = this.getColDataNoEmpty(nLeft - 1);
-			if (prevSheetMemory) {
+			// A style-only left neighbor (direct xf in cellStylesByCol, no
+			// SheetMemory) must also drive the inheritance/apply path so
+			// the inserted band ends up with the same intersected border
+			// as the data-left-neighbor case.
+			var prevStyleStore = this.cellStylesByCol[nLeft - 1];
+			if (prevSheetMemory || prevStyleStore) {
 				//todo hidden, keep only style
 				for (var i = nLeft; i <= nRight; ++i) {
-					this.getColData(i).copyRange(prevSheetMemory, oBBox.r1, oBBox.r1, shiftRightBandHeight);
+					if (prevSheetMemory) {
+						this.getColData(i).copyRange(prevSheetMemory, oBBox.r1, oBBox.r1, shiftRightBandHeight);
+					}
 					// Mirror the inheritance copy from the column to the
 					// left so inserted columns inherit direct cell styles.
 					this.moveCellXfBand(nLeft - 1, i, oBBox.r1, shiftRightBandHeight, false);
