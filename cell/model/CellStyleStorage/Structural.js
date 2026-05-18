@@ -483,6 +483,37 @@
 		}
 	}
 
+	// Pair `Worksheet._removeRows / _removeCols / shiftCells*` with undo:
+	// before a structural shift wipes out style-only entries that have no
+	// SheetMemory counterpart, record `historyitem_Cell_SetStyleOnly`
+	// items for each entry in `bbox` so undo replays them. Data cells in
+	// the same bbox are picked up by the data-side history items emitted
+	// by the structural item; this helper only covers the disjoint
+	// style-only partition (I6).
+	function recordStyleOnlyClearHistory(ws, bbox, opt_excludeHiddenRows) {
+		var AscCommon = window['AscCommon'];
+		if (!AscCommon.History.Is_On() || !ws || !ws.cellStylesByCol || !bbox) {
+			return;
+		}
+		if (typeof CSS.forEachStyleOnlyCell !== 'function') {
+			return;
+		}
+		var AscCommonExcel = window['AscCommonExcel'];
+		var AscCH = window['AscCH'];
+		var styleCache = AscCommonExcel.g_StyleCache;
+		var UndoRedoData_CellSimpleData = AscCommonExcel.UndoRedoData_CellSimpleData;
+		var sheetId = ws.getId();
+		CSS.forEachStyleOnlyCell(ws, bbox, function (row, col, xfIndex) {
+			if (xfIndex <= 0) {
+				return;
+			}
+			var oldXfs = styleCache.getXf(xfIndex);
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_SetStyleOnly,
+				sheetId, new Asc.Range(col, row, col, row),
+				new UndoRedoData_CellSimpleData(row, col, oldXfs, null));
+		}, {excludeHiddenRows: !!opt_excludeHiddenRows});
+	}
+
 	CSS.shiftCellXfs = shiftCellXfs;
 	CSS.iterCellXfs = iterCellXfs;
 	CSS.deleteRowsAllCols = deleteRowsAllCols;
@@ -495,4 +526,5 @@
 	CSS.cleanStyleOnlyDirectStyles = cleanStyleOnlyDirectStyles;
 	CSS.promoteStyleOnlyDirectStyles = promoteStyleOnlyDirectStyles;
 	CSS.applyInsertedBorderToStyleOnly = applyInsertedBorderToStyleOnly;
+	CSS.recordStyleOnlyClearHistory = recordStyleOnlyClearHistory;
 })(window);

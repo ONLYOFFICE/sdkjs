@@ -8266,8 +8266,16 @@
 			}
 
 		}, function(cell){
-			t._removeCell(null, null, cell);
+			// Direct style-only cells are deleted below by
+			// deleteCellXfRowsAllCols. Calling _removeCell on their
+			// transient iterator cell creates a wrong RemoveCell history
+			// item and can materialize SheetMemory unnecessarily.
+			if (!cell._isTransient) {
+				t._removeCell(null, null, cell);
+			}
 		});
+
+		AscCommonExcel.CellStyleStorage.recordStyleOnlyClearHistory(this, oActualRange);
 
 		//ms doesn't remove collapsed from the deleted row, it inherits this property from the next one
 		if(collapsedInfo !== null && lastRowIndex === stop) {
@@ -8459,6 +8467,7 @@
 
 		var collapsedInfo = null, lastRowIndex;
 		var oDefColPr = new AscCommonExcel.UndoRedoData_ColProp();
+		AscCommonExcel.CellStyleStorage.recordStyleOnlyClearHistory(this, oActualRange);
 		this.getRange3(0, start, gc_nMaxRow0,stop)._foreachColNoEmpty(function(col){
 			var nIndex = col.getIndex();
 			var oOldProps = col.getWidthProp();
@@ -8477,7 +8486,12 @@
 				}
 			}
 		}, function(cell){
-			t._removeCell(null, null, cell);
+			// Direct style-only cells are deleted below by deleteCellXfCols.
+			// Keep _removeCell for data-backed cells only so undo history
+			// does not materialize style-only cells as SheetMemory rows.
+			if (!cell._isTransient) {
+				t._removeCell(null, null, cell);
+			}
 		});
 
 		if(collapsedInfo !== null && lastRowIndex === stop) {
@@ -10048,7 +10062,24 @@
 			this.updateUserProtectedRangesOffset(oBBox, offset);
 		}
 
-		this.getRange3(oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2)._foreachNoEmpty(function(cell){
+		AscCommonExcel.CellStyleStorage.recordStyleOnlyClearHistory(this, oBBox);
+
+		// Clear direct styles for the deletion zone before shifting in from
+		// the right. When the deletion zone is the rightmost styled band the
+		// moveCellXfBand loop below won't execute, so style-only entries in
+		// the deleted columns would otherwise persist.
+		for (var ci = oBBox.c1; ci <= oBBox.c2; ci++) {
+			var delStore = this.cellStylesByCol[ci];
+			if (delStore) {
+				delStore.clearRange(oBBox.r1, oBBox.r2);
+			}
+		}
+
+		// Data-only: style-only cells have no data to remove. Their
+		// cellStylesByCol entries are already cleared above; calling
+		// _removeCell on a transient style-only cell allocates a SheetMemory
+		// init row (I5 violation) and records a wrong undo item.
+		this.getRange3(oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2)._foreachDataOnly(function(cell){
 			t._removeCell(null, null, cell);
 		});
 
@@ -10105,7 +10136,13 @@
 			this.updateUserProtectedRangesOffset(oBBox, offset);
 		}
 
-		this.getRange3(oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2)._foreachNoEmpty(function(cell){
+		AscCommonExcel.CellStyleStorage.recordStyleOnlyClearHistory(this, oBBox);
+
+		// Data-only: style-only cells have no data to remove. Their
+		// cellStylesByCol entries are handled by styleStoreUp.deleteRows
+		// below; calling _removeCell on a transient style-only cell allocates
+		// a SheetMemory init row (I5 violation) and records a wrong undo item.
+		this.getRange3(oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2)._foreachDataOnly(function(cell){
 			t._removeCell(null, null, cell);
 		});
 		this._updateFormulasParents(oActualRange.r1, oActualRange.c1, oActualRange.r2, oActualRange.c2, oBBox, offset, renameRes.shiftedShared);
@@ -19103,8 +19140,19 @@
 			wb.loadCells.pop();
 		}
 	};
-	// Row-major occupied (data + direct-style-only) iteration. Direct-style-only
-	// cells are emitted as a shared transient Cell (read-only, no saveContent).
+	// Iterator contract:
+	//   `_foreachNoEmpty` / `_foreachRowNoEmpty` / `_foreachNoEmptyByCol`
+	//       = occupied iteration (data cells + direct-style-only cells)
+	//       Style-only cells reach actionCell as a shared `_isTransient`
+	//       Cell with `cell.xfs` preloaded from `cellStylesByCol`. Callers
+	//       MUST NOT run `saveContent`, `clearData`, `setStyle`, or any
+	//       emptiness-branching write on transients (I5) -- only reads.
+	//   `_foreachDataOnly` / `_foreachDataOnlyByCol`
+	//       = data-only iteration (SheetMemory init rows only). Use when
+	//       the caller cannot tolerate transient style-only cells (e.g.
+	//       formula/calc walks, sort moves, `_removeCell`).
+	// Both variants honor `excludeHiddenRows` and surface `excludedCount`
+	// to the callback.
 	Range.prototype._foreachNoEmpty = function(actionCell, actionRow, excludeHiddenRows) {
 		var oRes, i, oBBox = this.bbox;
 		var ws = this.worksheet;
@@ -19163,7 +19211,9 @@
 			}
 		}
 	};
-	// Row-major data-only iteration; direct-style-only cells are skipped.
+	// Row-major data-only iteration: SheetMemory init rows only, no
+	// transient style-only emissions. See the contract block above
+	// `_foreachNoEmpty` for when to choose which variant.
 	Range.prototype._foreachDataOnly = function(actionCell, actionRow, excludeHiddenRows) {
 		var oRes, i, oBBox = this.bbox, minR = Math.max(this.worksheet.cellsByColRowsCount - 1, this.worksheet.rowsData.getMaxIndex());
 		minR = Math.min(minR, oBBox.r2);
@@ -19379,6 +19429,10 @@
 			return this._foreachNoEmpty(actionCell);
 		}
 	};
+	// Row-major occupied iteration with an actionRow hook (data + direct
+	// style-only); thin reorder of `_foreachNoEmpty` arguments. See the
+	// occupied/data-only contract above `_foreachNoEmpty` /
+	// `_foreachDataOnly` for what each callback sees.
 	Range.prototype._foreachRowNoEmpty = function(actionRow, actionCell, excludeHiddenRows) {
 		return this._foreachNoEmpty(actionCell, actionRow, excludeHiddenRows);
 	};
@@ -21750,15 +21804,18 @@
 			// if(col.isEmpty())
 			// col.Remove();
 		},function(cell, nRow0, nCol0, nRowStart, nColStart){
-			cell.setStyle(null);
+			// Transient style-only cells must not emit historyitem_Cell_SetStyle
+			// (wrong undo path). Skip them; cleanStyleOnlyDirectStyles below
+			// emits historyitem_Cell_SetStyleOnly (I5-preserving undo path).
+			if (!cell._isTransient) {
+				cell.setStyle(null);
+			}
 			// if(cell.isEmpty())
 			// cell.Remove();
 		});
-		// The data-only path above reaches only SheetMemory init rows, so
-		// a cell that lives purely in `cellStylesByCol` (no data) is
-		// invisible to `_foreachNoEmpty`. Sweep those style-only entries
-		// here and clear them through a style-only history item without
-		// materializing a Cell or creating a SheetMemory init row.
+		// Style-only entries in cellStylesByCol have no SheetMemory init row
+		// and must clear through historyitem_Cell_SetStyleOnly (I5-preserving
+		// undo). cleanStyleOnlyDirectStyles handles them here.
 		AscCommonExcel.CellStyleStorage.cleanStyleOnlyDirectStyles(this.worksheet, this.bbox, !!this.worksheet.bExcludeHiddenRows);
 		AscCommon.History.EndTransaction();
 	};
@@ -21770,6 +21827,10 @@
 
 		this._setPropertyNoEmpty(null, null,
 			function (cell, nRow0, nCol0, nRowStart, nColStart) {
+				// Transient style-only cells have no text; setValue("") on
+				// them crashes internal helpers and creates a wrong history
+				// item. Style-only cells are data-only from cleanText's view.
+				if (cell._isTransient) { return; }
 				if(false == t.worksheet.workbook.bUndoChanges && false == t.worksheet.workbook.bRedoChanges) {
 					t.worksheet.dynamicArrayManager.changeCell(cell);
 				}
@@ -21784,6 +21845,8 @@
 		History.StartTransaction();
 		this._setPropertyNoEmpty(null, null,
 			function (cell, nRow0, nCol0, nRowStart, nColStart) {
+				// Transient style-only cells have no text; skip them.
+				if (cell._isTransient) { return; }
 				if (!(cell.nRow === nRowStart && cell.nCol === nColStart)) {
 					cell.setValue("");
 				}
@@ -21809,10 +21872,17 @@
 			// if(col.isEmpty())
 			// col.Remove();
 		},function(cell, nRow0, nCol0, nRowStart, nColStart){
-			oThis.worksheet._removeCell(nRow0, nCol0, cell, ignoreNoEmpty);
+			// Transient style-only cells have no data; calling _removeCell on
+			// them allocates a SheetMemory init row (I5 violation) and records
+			// a wrong undo item. Skip them; cleanStyleOnlyDirectStyles below
+			// clears their direct xf via historyitem_Cell_SetStyleOnly.
+			if (!cell._isTransient) {
+				oThis.worksheet._removeCell(nRow0, nCol0, cell, ignoreNoEmpty);
+			}
 		});
-		// Clear direct styles for pure style-only cells; see
-		// Range.cleanFormat for the rationale.
+		// Style-only entries in cellStylesByCol have no SheetMemory init row
+		// and must clear through historyitem_Cell_SetStyleOnly (I5-preserving
+		// undo). cleanStyleOnlyDirectStyles handles them here.
 		AscCommonExcel.CellStyleStorage.cleanStyleOnlyDirectStyles(this.worksheet, this.bbox, !!this.worksheet.bExcludeHiddenRows);
 
 		this.worksheet.workbook.dependencyFormulas.calcTree();
