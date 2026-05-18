@@ -192,13 +192,8 @@
 				xf = xf.merge(opt_cell.xfs, true);
 			}
 		} else if (opt_ws) {
-			// opt_cell == null can still mean a style-only cell with a
-			// direct xf in cellStylesByCol; consult it before row/col fallback.
-			var directXfs = null;
-			var CSS = window['AscCommonExcel'].CellStyleStorage;
-			if (CSS && typeof CSS.getDirectCellXfs === 'function') {
-				directXfs = CSS.getDirectCellXfs(opt_ws, nRow, nCol);
-			}
+			// Style-only direct xf must beat row/col inheritance.
+			var directXfs = AscCommonExcel.CellStyleStorage.getDirectCellXfs(opt_ws, nRow, nCol);
 			if (directXfs) {
 				xf = (null === xf) ? directXfs : xf.merge(directXfs, true);
 			} else {
@@ -8266,10 +8261,7 @@
 			}
 
 		}, function(cell){
-			// Direct style-only cells are deleted below by
-			// deleteCellXfRowsAllCols. Calling _removeCell on their
-			// transient iterator cell creates a wrong RemoveCell history
-			// item and can materialize SheetMemory unnecessarily.
+			// Style-only transients are deleted by deleteCellXfRowsAllCols.
 			if (!cell._isTransient) {
 				t._removeCell(null, null, cell);
 			}
@@ -8293,10 +8285,7 @@
 		this._forEachColData(function(sheetMemory) {
 			sheetMemory.deleteRange(start, (-nDif));
 		});
-		// Mirror the row delete on the per-column style storage so a cell
-		// styled at row R doesn't keep its style at row R after the rows
-		// above it are deleted (writers resolve direct xf through
-		// cellStylesByCol).
+		// Mirror the row delete on cellStylesByCol.
 		this.deleteCellXfRowsAllCols(start, (-nDif));
 		//notifyChanged after move cells to get new locations(for intersect ranges)
 		this.workbook.dependencyFormulas.notifyChanged(renameRes && renameRes.changed);
@@ -8325,25 +8314,10 @@
 		var r2 = bRow ? bbox.r1 : bbox.r2;
 		var c2 = !bRow ? bbox.c1 : bbox.c2;
 		if(0 !== offsetRow || 0 !== offsetCol){
-			// _getCellNoEmpty returns null for pure style-only neighbors
-			// (no SheetMemory init flag); their direct xf still lives in
-			// cellStylesByCol, so fall back to getDirectCellXfs to keep
-			// border-intersect parity with data-cell neighbors.
-			var resolveNeighborXfs = function(row, col) {
-				var resolved = null;
-				t._getCellNoEmpty(row, col, function(neighbor) {
-					if (neighbor) {
-						resolved = neighbor.xfs || null;
-					}
-				});
-				if (!resolved) {
-					resolved = AscCommonExcel.CellStyleStorage.getDirectCellXfs(t, row, col);
-				}
-				return resolved;
-			};
 			this.getRange3(bbox.r1, bbox.c1, r2, c2)._foreachNoEmpty(function(cell) {
 				if (cell.xfs && cell.xfs.border) {
-					var neighborXfs = resolveNeighborXfs(cell.nRow + offsetRow, cell.nCol + offsetCol);
+					var neighborXfs = AscCommonExcel.CellStyleStorage.getDirectCellXfs(
+						t, cell.nRow + offsetRow, cell.nCol + offsetCol);
 					if (neighborXfs && neighborXfs.border) {
 						var newBorder = neighborXfs.border.clone();
 						newBorder.intersect(cell.xfs.border, true);
@@ -8389,8 +8363,7 @@
 			t.cellsByColRowsCount = Math.max(t.cellsByColRowsCount, sheetMemory.getMaxIndex() + 1);
 		});
 		this.nRowsCount = Math.max(this.nRowsCount, this.cellsByColRowsCount);
-		// Open the same row band on the style storage so direct cell styles
-		// in rows below `index` shift down in lockstep with SheetMemory.
+		// Open the row band on cellStylesByCol.
 		this.insertCellXfRowsAllCols(index, count);
 		//copy property from row/cell above
 		if (index > 0 && !this.workbook.bUndoChanges)
@@ -8402,8 +8375,7 @@
 				t.cellsByColRowsCount = Math.max(t.cellsByColRowsCount, sheetMemory.getMaxIndex() + 1);
 			});
 			this.nRowsCount = Math.max(this.nRowsCount, this.cellsByColRowsCount);
-			// Mirror the inheritance copy on style storage so the inserted
-			// rows pick up the direct style of the row above them.
+			// Mirror the inheritance copy on cellStylesByCol.
 			this.copyCellXfRowInAllCols(index - 1, index, count);
 			//show rows and remain only cell xf property
 			this.getRange3(index, 0, index + count - 1, gc_nMaxCol0)._foreachRowNoEmpty(function(row) {
@@ -8486,9 +8458,7 @@
 				}
 			}
 		}, function(cell){
-			// Direct style-only cells are deleted below by deleteCellXfCols.
-			// Keep _removeCell for data-backed cells only so undo history
-			// does not materialize style-only cells as SheetMemory rows.
+			// Style-only transients are deleted by deleteCellXfCols.
 			if (!cell._isTransient) {
 				t._removeCell(null, null, cell);
 			}
@@ -8504,8 +8474,7 @@
 
 		this._updateFormulasParents(0, start, gc_nMaxRow0, gc_nMaxCol0, oActualRange, offset, renameRes.shiftedShared);
 		this.cellsByCol.splice(start, stop - start + 1);
-		// Drop the same column slice from the style storage so cellStylesByCol
-		// stays index-aligned with cellsByCol after the splice.
+		// Keep cellStylesByCol index-aligned with cellsByCol.
 		this.deleteCellXfCols(start, stop - start + 1);
 		this.aCols.splice(start, stop - start + 1);
 		for(i = start, length = this.aCols.length; i < length; ++i)
@@ -8563,8 +8532,7 @@
 			this.cellsByCol[i + count] = this.cellsByCol[i];
 			this.cellsByCol[i] = undefined;
 		}
-		// Mirror the column shift on style storage so per-column style
-		// indexes follow cellsByCol after the insert.
+		// Mirror the column shift on cellStylesByCol.
 		this.insertCellXfCols(index, count, gc_nMaxCol0);
 		this.setColsCount(Math.max(this.nColsCount, this.getColDataLength()));
 		this.aCols.splice(gc_nMaxCol0 - count + 1, count);
@@ -8594,9 +8562,7 @@
 				}
 				AscCommon.History.LocalChange = false;
 			}
-			// Style-only columns can have a populated cellStylesByCol entry
-			// without any cellsByCol record, so the style clone must run even
-			// when prevCellsByCol is null.
+			// Mirror left-neighbor inheritance on cellStylesByCol.
 			var prevStyleStore = index > 0 ? this.cellStylesByCol[index - 1] : null;
 			if (prevStyleStore) {
 				for (var ci = index; ci < index + count; ++ci) {
@@ -8614,11 +8580,6 @@
 					cell.clearDataKeepXf(borders[cell.nRow]);
 				});
 			}
-			// The data path above visits inserted data cells through
-			// `_foreachNoEmpty` + `clearDataKeepXf` and never enters when
-			// the left neighbor is style-only. Cloned-from-style-only
-			// cells in cellStylesByCol still need the intersected borders
-			// applied directly so they match the data-left-neighbor result.
 			if (borders && prevStyleStore) {
 				AscCommonExcel.CellStyleStorage.applyInsertedBorderToStyleOnly(this,
 					new Asc.Range(index, 0, index + count - 1, gc_nMaxRow0), borders, false);
@@ -9329,15 +9290,15 @@
 	Worksheet.prototype.getRange4=function(r, c){
 		return new Range(this, r, c, r, c);
 	};
-	// Yields data and direct-style-only cells. Direct-style-only emissions
-	// are transient and must not be written back via saveContent.
+	// Occupied: data + direct-style-only. Style-only emissions are
+	// transient; never saveContent / mutate them.
 	Worksheet.prototype.getRowIterator=function(r1, c1, c2, callback){
 		var it = new AscCommonExcel.OccupiedRowIterator();
 		it.init(this, r1, c1, c2);
 		callback(it);
 		it.release();
 	};
-	// Yields only SheetMemory data cells; direct-style-only entries are skipped.
+	// Data-only: skips direct-style-only entries.
 	Worksheet.prototype.getDataRowIterator=function(r1, c1, c2, callback){
 		var it = new RowIterator();
 		it.init(this, r1, c1, c2);
@@ -9422,10 +9383,8 @@
 		}
 		this.nRowsCount = index >= this.nRowsCount ? index + 1 : this.nRowsCount;
 	};
-	// Style-only direct xf wins over row/col inheritance. Returns the
-	// cached direct xf as-is (callers use `_isTransient` to avoid
-	// re-mirroring); row/col inheritance is cloned because callers
-	// mutate the result via setStyleInternal.
+	// Direct cell xf wins over row/col inheritance. Inheritance is cloned
+	// so callers may mutate via setStyleInternal.
 	Worksheet.prototype._directOrInheritedXfs = function (nRow, nCol) {
 		var direct = AscCommonExcel.CellStyleStorage.getDirectCellXfs(this, nRow, nCol);
 		if (direct) {
@@ -9778,63 +9737,9 @@
 		var isClearFromArea = !copyRange || (copyRange && oThis.workbook.bUndoChanges);
 		let isLockedSheet = this.getSheetProtection();
 		var getLockedOnlyXfIndex = isLockedSheet ? this._getLockedOnlyXfIndex : null;
-		// Mirror the SheetMemory copy/clear of `_moveCells` on cellStylesByCol.
-		// On unprotected sheets the source band is fully cleared; on
-		// protected sheets each row keeps the locked-only xf returned by
-		// `_getLockedOnlyXfIndex(originalXf)` (or 0 when the cell was
-		// unlocked). This mirror is the sole owner of the locked-only
-		// transform; `SheetMemory.clearExceptLocked` zeroes the data row
-		// like `clear`, so without this mirror the writer would
-		// re-serialize the original full direct style at the source
-		// coordinate after a protected move.
-		var mirrorMoveCellXfs = function (from, to, r1From, r1To, count, clearStart, clearEnd) {
-			if (count <= 0) {
-				return;
-			}
-			// The eager file-open sweep has already migrated every column
-			// with direct styles into `cellStylesByCol`, so the typical
-			// "styled column" case finds `srcStore` directly. The fallback
-			// below materializes an empty store for columns that have
-			// SheetMemory data but no direct styles -- a benign noop kept
-			// for defensive symmetry with the destination path; the
-			// subsequent `copyFrom` copies an empty band.
-			var srcStore = oThis.cellStylesByCol[from];
-			if (!srcStore && oThis.getColDataNoEmpty && oThis.getColDataNoEmpty(from)) {
-				srcStore = oThis.getCellStyleStore(from, true);
-			}
-			var dstStore = wsTo.cellStylesByCol[to];
-			if (srcStore) {
-				if (!dstStore) {
-					dstStore = wsTo.getCellStyleStore(to, true);
-				}
-				dstStore.copyFrom(srcStore, r1From, r1To, count);
-			} else if (dstStore) {
-				dstStore.clearRange(r1To, r1To + count - 1);
-			}
-			if (!isClearFromArea || !srcStore || clearEnd <= clearStart) {
-				return;
-			}
-			if (isLockedSheet && getLockedOnlyXfIndex) {
-				// mapRange iterates only existing runs in [clearStart, clearEnd-1];
-				// rows that were already null stay null (== cleared), matching
-				// `clearExceptLocked` which leaves untouched-zero rows zero.
-				srcStore.mapRange(clearStart, clearEnd - 1, function (v) {
-					if (v == null || v === 0) {
-						return null;
-					}
-					var locked = getLockedOnlyXfIndex(v);
-					return (locked != null && locked > 0) ? locked : null;
-				});
-			} else {
-				srcStore.clearRange(clearStart, clearEnd - 1);
-			}
-		};
 		var moveCells = function(copyRange, from, to, r1From, r1To, count){
 			var fromData = oThis.getColDataNoEmpty(from);
 			var toData;
-			// Compute the source clear band purely from move parameters, so a
-			// style-only source column (no SheetMemory) still has its style
-			// store transformed/cleared by mirrorMoveCellXfs below.
 			var clearStart = -1;
 			var clearEnd = -1;
 			if (isClearFromArea) {
@@ -9849,35 +9754,17 @@
 					clearEnd = r1From + count;
 				}
 			}
-			// Mirror BEFORE SheetMemory mutation: subsequent SheetMemory
-			// copy/clear converges with the mirror's band semantics on the
-			// destination store, and the locked-only transform on the
-			// source side runs against the pre-mutation cellStylesByCol
-			// state.
-			mirrorMoveCellXfs(from, to, r1From, r1To, count, clearStart, clearEnd);
+			// Mirror BEFORE the SheetMemory clear so the locked-only
+			// transform reads the pre-mutation store.
+			AscCommonExcel.CellStyleStorage.moveCellsBetweenWorksheets(
+				oThis, wsTo, from, to, r1From, r1To, count,
+				isClearFromArea ? clearStart : 0, isClearFromArea ? clearEnd : 0,
+				getLockedOnlyXfIndex);
 			if(fromData){
 				toData = wsTo.getColData(to);
 				toData.copyRange(fromData, r1From, r1To, count);
-				if (isClearFromArea) {
-					if(from !== to || moveToOtherSheet) {
-						if (isLockedSheet) {
-							fromData.clearExceptLocked(r1From, r1From + count, getLockedOnlyXfIndex);
-						} else {
-							fromData.clear(r1From, r1From + count);
-						}
-					} else if (r1From < r1To) {
-						if (isLockedSheet) {
-							fromData.clearExceptLocked(r1From, clearEnd, getLockedOnlyXfIndex);
-						} else {
-							fromData.clear(r1From, clearEnd);
-						}
-					} else {
-						if (isLockedSheet) {
-							fromData.clearExceptLocked(clearStart, r1From + count, getLockedOnlyXfIndex);
-						} else {
-							fromData.clear(clearStart, r1From + count);
-						}
-					}
+				if (isClearFromArea && clearEnd > clearStart) {
+					fromData.clear(clearStart, clearEnd);
 				}
 			} else {
 				toData = wsTo.getColDataNoEmpty(to);
@@ -10064,10 +9951,8 @@
 
 		AscCommonExcel.CellStyleStorage.recordStyleOnlyClearHistory(this, oBBox);
 
-		// Clear direct styles for the deletion zone before shifting in from
-		// the right. When the deletion zone is the rightmost styled band the
-		// moveCellXfBand loop below won't execute, so style-only entries in
-		// the deleted columns would otherwise persist.
+		// Pre-clear so a deletion at the rightmost styled band, where the
+		// shift loop below covers no cols, does not leak stale entries.
 		for (var ci = oBBox.c1; ci <= oBBox.c2; ci++) {
 			var delStore = this.cellStylesByCol[ci];
 			if (delStore) {
@@ -10075,10 +9960,6 @@
 			}
 		}
 
-		// Data-only: style-only cells have no data to remove. Their
-		// cellStylesByCol entries are already cleared above; calling
-		// _removeCell on a transient style-only cell allocates a SheetMemory
-		// init row (I5 violation) and records a wrong undo item.
 		this.getRange3(oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2)._foreachDataOnly(function(cell){
 			t._removeCell(null, null, cell);
 		});
@@ -10086,17 +9967,11 @@
 		this._updateFormulasParents(oActualRange.r1, oActualRange.c1, oActualRange.r2, oActualRange.c2, oBBox, offset, renameRes.shiftedShared);
 		var cellsByColLength = this.getColDataLength();
 		var shiftLeftBandHeight = oBBox.r2 - oBBox.r1 + 1;
-		// Iterate up to the longer of cellsByCol / cellStylesByCol so that
-		// style-only columns (created via Worksheet.setCellXf without any
-		// SheetMemory record) shift in lockstep with data-backed columns.
+		// Style-only columns may extend past cellsByCol; scan the union.
 		var shiftLeftScanEnd = Math.max(cellsByColLength, this.cellStylesByCol.length);
 		for (var i = nRight + 1; i < shiftLeftScanEnd; ++i) {
 			var sheetMemoryFrom = this.getColDataNoEmpty(i);
-			// cellStylesByCol is the sole source of truth for direct cell
-			// styles; the eager file-open sweep has migrated every legacy
-			// column. Mirror still runs BEFORE the SheetMemory mutation so
-			// the destination store sees the pre-shift source band rather
-			// than the already-cleared range.
+			// Mirror BEFORE SheetMemory mutation.
 			this.moveCellXfBand(i, i + dif, oBBox.r1, shiftLeftBandHeight, true);
 			if (sheetMemoryFrom) {
 				this.getColData(i + dif).copyRange(sheetMemoryFrom, oBBox.r1, oBBox.r1, shiftLeftBandHeight);
@@ -10138,10 +10013,7 @@
 
 		AscCommonExcel.CellStyleStorage.recordStyleOnlyClearHistory(this, oBBox);
 
-		// Data-only: style-only cells have no data to remove. Their
-		// cellStylesByCol entries are handled by styleStoreUp.deleteRows
-		// below; calling _removeCell on a transient style-only cell allocates
-		// a SheetMemory init row (I5 violation) and records a wrong undo item.
+		// Data-only: style-only cells shift below via styleStoreUp.deleteRows.
 		this.getRange3(oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2)._foreachDataOnly(function(cell){
 			t._removeCell(null, null, cell);
 		});
@@ -10151,8 +10023,6 @@
 			if (sheetMemory) {
 				sheetMemory.deleteRange(nTop, -dif);
 			}
-			// Mirror the per-column row delete on style storage so styled
-			// cells below nBottom shift up in lockstep with SheetMemory.
 			var styleStoreUp = this.cellStylesByCol[i];
 			if (styleStoreUp) {
 				styleStoreUp.deleteRows(nTop, -dif);
@@ -10197,17 +10067,11 @@
 		}
 		var cellsByColLength = this.getColDataLength();
 		var shiftRightBandHeight = oBBox.r2 - oBBox.r1 + 1;
-		// Iterate down from the longer of cellsByCol / cellStylesByCol so that
-		// style-only columns also shift right with their data-backed peers.
+		// Style-only columns may extend past cellsByCol; scan the union.
 		var shiftRightScanStart = Math.max(cellsByColLength, this.cellStylesByCol.length) - 1;
 		for (var i = shiftRightScanStart; i >= nLeft; --i) {
 			var sheetMemoryFrom = this.getColDataNoEmpty(i);
-			// cellStylesByCol is authoritative; the eager file-open sweep
-			// has already migrated every legacy column. Mirror still runs
-			// BEFORE the SheetMemory mutation so the destination store
-			// sees the pre-shift source band. Drop the band entirely when
-			// the destination column is past the max-col boundary,
-			// otherwise propagate it.
+			// Mirror BEFORE SheetMemory mutation.
 			if (i + dif <= gc_nMaxCol0) {
 				this.moveCellXfBand(i, i + dif, oBBox.r1, shiftRightBandHeight, true);
 			} else {
@@ -10231,10 +10095,7 @@
 		if (nLeft > 0 && !this.workbook.bUndoChanges)
 		{
 			var prevSheetMemory = this.getColDataNoEmpty(nLeft - 1);
-			// A style-only left neighbor (direct xf in cellStylesByCol, no
-			// SheetMemory) must also drive the inheritance/apply path so
-			// the inserted band ends up with the same intersected border
-			// as the data-left-neighbor case.
+			// A style-only left neighbor also drives inheritance/apply.
 			var prevStyleStore = this.cellStylesByCol[nLeft - 1];
 			if (prevSheetMemory || prevStyleStore) {
 				//todo hidden, keep only style
@@ -10242,8 +10103,7 @@
 					if (prevSheetMemory) {
 						this.getColData(i).copyRange(prevSheetMemory, oBBox.r1, oBBox.r1, shiftRightBandHeight);
 					}
-					// Mirror the inheritance copy from the column to the
-					// left so inserted columns inherit direct cell styles.
+					// Mirror inheritance from the left neighbor on cellStylesByCol.
 					this.moveCellXfBand(nLeft - 1, i, oBBox.r1, shiftRightBandHeight, false);
 				}
 				this.setColsCount(Math.max(this.nColsCount, this.getColDataLength()));
@@ -10304,8 +10164,6 @@
 				sheetMemory.insertRange(nTop, dif);
 				t.cellsByColRowsCount = Math.max(t.cellsByColRowsCount, sheetMemory.getMaxIndex() + 1);
 			}
-			// Mirror the per-column row insert on style storage so styled
-			// rows below nTop shift down with their cells.
 			var styleStoreDown = this.cellStylesByCol[i];
 			if (styleStoreDown) {
 				styleStoreDown.insertRows(nTop, dif);
@@ -10320,8 +10178,6 @@
 					sheetMemory.copyRangeByChunk((nTop - 1), 1, nTop, dif);
 					t.cellsByColRowsCount = Math.max(t.cellsByColRowsCount, sheetMemory.getMaxIndex() + 1);
 				}
-				// Mirror the inheritance copy on style storage so the
-				// inserted rows pick up the direct style of the row above.
 				var styleStoreInherit = this.cellStylesByCol[i];
 				if (styleStoreInherit) {
 					styleStoreInherit.setAreaByRow(nTop - 1, nTop, dif);
@@ -14098,18 +13954,10 @@
 	};
 
 	Worksheet.prototype.getLockedCell = function (c, r) {
-		// A pure style-only cell carries its locked state only in
-		// cellStylesByCol. The `getCell3 -> getXfs(false)` path falls
-		// through `_getCellNoEmpty` (which skips coordinates without a
-		// SheetMemory data init flag) and returns the default locked=true,
-		// so resolve the direct xf first; an explicit unlocked style-only
-		// cell must report unlocked without materializing a Cell.
-		var CSS = AscCommonExcel.CellStyleStorage;
-		if (CSS && CSS.isStyleOnlyCell(this, r, c)) {
-			var directXfs = CSS.getDirectCellXfs(this, r, c);
-			if (directXfs) {
-				return directXfs.asc_getLocked();
-			}
+		// Style-only cell short-circuit: getCell3 is data-only.
+		var directXfs = AscCommonExcel.CellStyleStorage.getDirectCellXfs(this, r, c);
+		if (directXfs && AscCommonExcel.CellStyleStorage.isStyleOnlyCell(this, r, c)) {
+			return directXfs.asc_getLocked();
 		}
 		var cellTo =  this.getCell3(r, c);
 		if (cellTo) {
@@ -14123,6 +13971,7 @@
 			range = new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0);
 		}
 		var res = null;
+		// _foreachNoEmpty is occupied: visits data and direct-style-only cells.
 		this.getRange3(range.r1, range.c1, range.r2, range.c2)._foreachNoEmpty(function(cell) {
 			if (cell) {
 				var cellxfs = cell.xfs;
@@ -14132,25 +13981,6 @@
 				}
 			}
 		});
-		// Extend the search to pure style-only cells without materializing
-		// a Cell. forEachStyleOnlyCell skips data+style cells (those are
-		// emitted by the data-only pass above with their direct xfs
-		// already resolved via resolveLoadXfIndex), so the two passes stay
-		// disjoint. The synthetic {nCol, nRow} matches what callers
-		// (WorksheetView.changeProtection) read off the result.
-		if (!res) {
-			var CSS = AscCommonExcel.CellStyleStorage;
-			if (CSS && CSS.forEachStyleOnlyCell) {
-				var cache = AscCommonExcel.g_StyleCache;
-				CSS.forEachStyleOnlyCell(this, range, function (row, col, xfIndex) {
-					var xfs = cache ? cache.getXf(xfIndex) : null;
-					if (xfs && !xfs.asc_getLocked()) {
-						res = {nCol: col, nRow: row};
-						return false;
-					}
-				});
-			}
-		}
 		return res;
 	};
 
@@ -14305,7 +14135,6 @@
 		let counter = 0;
 		let bbox = oRange.getBBox0 && oRange.getBBox0();
 		let sizeRange = bbox ? bbox.getHeight() * bbox.getWidth() : null;
-		let earlyExit = false;
 		oRange._foreachNoEmpty(function(cell){
 			if (!cell) {
 				return;
@@ -14314,7 +14143,6 @@
 			var isLocked = _getLocked(cell.xfs);
 			if (isLocked === true) {
 				res = true;
-				earlyExit = true;
 				return true;
 			} else if (isLocked === false) {
 				counter++;
@@ -14327,35 +14155,6 @@
 				}
 			}
 		});
-
-		// Extend the cell-level pass to style-only cells so the algorithm's
-		// "every cell in range is unlocked" terminator counts them, and a
-		// locked style-only cell forces res=true. forEachStyleOnlyCell
-		// already excludes data+style cells (those came through
-		// _foreachNoEmpty above), so the two passes do not double-count.
-		if (!earlyExit) {
-			let CSS = AscCommonExcel.CellStyleStorage;
-			if (CSS && CSS.forEachStyleOnlyCell) {
-				let cache = AscCommonExcel.g_StyleCache;
-				CSS.forEachStyleOnlyCell(this, range, function (row, col, xfIndex) {
-					var xfs = cache ? cache.getXf(xfIndex) : null;
-					var isLocked = _getLocked(xfs);
-					if (isLocked === true) {
-						res = true;
-						return false;
-					} else if (isLocked === false) {
-						counter++;
-						if (res === true && sizeRange) {
-							if (counter === sizeRange) {
-								res = false;
-							}
-						} else {
-							res = false;
-						}
-					}
-				});
-			}
-		}
 
 		return res;
 	};
@@ -14383,19 +14182,6 @@
 				_excludeCell(cell.nRow, cell.nCol);
 			}
 		});
-		// Also subtract unlocked style-only cells so a protected sheet
-		// does not treat their coordinate as locked when computing the
-		// editable subset of a selection.
-		var CSS = AscCommonExcel.CellStyleStorage;
-		if (CSS && CSS.forEachStyleOnlyCell) {
-			var cache = AscCommonExcel.g_StyleCache;
-			CSS.forEachStyleOnlyCell(this, range, function (row, col, xfIndex) {
-				var xfs = cache ? cache.getXf(xfIndex) : null;
-				if (xfs && xfs.asc_getLocked() === false) {
-					_excludeCell(row, col);
-				}
-			});
-		}
 		return res;
 	};
 
@@ -15391,11 +15177,8 @@
 		this.isCalc = false;
 
 		this._hasChanged = false;
-		// When true, setStyleInternal and clearDataKeepXf skip mirroring
-		// this cell's xfs into Worksheet.cellStylesByCol. Set explicitly
-		// at known temporary-cell creation sites (RowIterator,
-		// Cell.duplicate, Cell.clone, Row._tempCell); the default false
-		// matches a real, persistent cell.
+		// When true, xfs mutations skip the cellStylesByCol mirror.
+		// Set at temporary-cell creation sites; cleared on real attach.
 		this._isTransient = false;
 	}
 	Cell.prototype.clear = function(keepIndex) {
@@ -15419,23 +15202,13 @@
 		this.isCalc = false;
 
 		this._hasChanged = true;
-		// Direct `this.xfs = null` bypasses setStyleInternal, so mirror the
-		// cleared state into cellStylesByCol explicitly. Otherwise
-		// _removeCell / cleanAll / shift-delete leave a stale style entry
-		// that the writer would re-serialize. mirrorCellStyle is a no-op
-		// for transient cells and for cells without a real (row, col);
-		// the Cell.clear() reset path zeroes nRow/nCol before this method
-		// runs.
+		// Direct xfs write bypasses setStyleInternal; mirror manually.
 		AscCommonExcel.CellStyleStorage.mirrorCellStyle(this);
 	};
 	Cell.prototype.clearDataKeepXf = function(border) {
 		var xfs = this.xfs;
 		this.clearData();
 		this.xfs = xfs;
-		// `this.xfs = xfs` is a direct assignment that bypasses
-		// setStyleInternal, so mirror into cellStylesByCol explicitly.
-		// setBorder below also routes through setStyleInternal, which
-		// mirrors again (idempotent).
 		AscCommonExcel.CellStyleStorage.mirrorCellStyle(this);
 		AscCommon.History.TurnOff();
 		this.setBorder(border);
@@ -15450,10 +15223,7 @@
 			var numberSave = 0;
 			var formulaSave = this.formulaParsed ? wb.workbookFormulas.add(this.formulaParsed).getIndexNumber() : 0;
 			var flagValue = 0;
-			// Direct cell xf does not travel in the low 24 bits of
-			// SheetMemory word 0. The source of truth is ws.cellStylesByCol,
-			// populated by setStyleInternal (in-session edits) and by
-			// initCellAfterRead (deserializer paths). Low bits stay 0 here.
+			// xf bits stay 0; direct xf lives in ws.cellStylesByCol.
 			if (null != this.number) {
 				flagValue = 1;
 				const flags = this._toFlags(flagValue);
@@ -15474,63 +15244,6 @@
 			}
 		}
 	};
-	// Opt-in variant of saveContent that drops the SheetMemory write for
-	// *pure style-only* cells (no number, no text, no multiText, no
-	// formula). All other cell shapes (number, text, multiText, and
-	// formula-only) fall through to the same SheetMemory writes as
-	// `saveContent`, byte-for-byte. Direct cell style is expected to be
-	// mirrored into `ws.cellStylesByCol` by `setStyleInternal`, or by the
-	// caller's `mirrorCellStyle` when style bytes were read before row/col
-	// coordinates were final. This helper never writes low-24 xf bits.
-	//
-	// Used by the JSON / binary open paths so roundtripped pure
-	// style-only cells match in-session shape (no SheetMemory init row).
-	Cell.prototype.saveContentSkipStyleOnly = function(opt_inCaseOfChange) {
-		if (!this.hasRowCol()) {
-			return;
-		}
-		if (opt_inCaseOfChange && !this._hasChanged) {
-			return;
-		}
-		// Pure style-only: no payload, no formula. Style lives in
-		// cellStylesByCol via setStyleInternal; nothing to persist into
-		// SheetMemory. Match `saveContent`'s `_hasChanged` reset so
-		// repeated calls stay idempotent and consistent with the existing
-		// gate.
-		if (null == this.number && null == this.text && null == this.multiText
-			&& null == this.formulaParsed) {
-			this._hasChanged = false;
-			return;
-		}
-		this._hasChanged = false;
-		var wb = this.ws.workbook;
-		var sheetMemory = this.ws.getColData(this.nCol);
-		sheetMemory.checkIndex(this.nRow);
-		var numberSave = 0;
-		var formulaSave = this.formulaParsed ? wb.workbookFormulas.add(this.formulaParsed).getIndexNumber() : 0;
-		var flagValue = 0;
-		if (null != this.number) {
-			flagValue = 1;
-			const flags = this._toFlags(flagValue);
-			sheetMemory.setInt32(this.nRow, 0, (flags << 24));
-			sheetMemory.setInt32(this.nRow, 4, formulaSave);
-			sheetMemory.setFloat64(this.nRow, 8, this.number);
-		} else if (null != this.text || null != this.multiText) {
-			flagValue = 2;
-			const flags = this._toFlags(flagValue);
-			sheetMemory.setInt32(this.nRow, 0, (flags << 24));
-			sheetMemory.setInt32(this.nRow, 4, formulaSave);
-			numberSave = this.getTextIndex();
-			sheetMemory.setInt32(this.nRow, 8, numberSave);
-		} else {
-			// Formula-only cell (no cached value): fall through to the
-			// same empty-branch shape as saveContent so the init flag
-			// and formula word still land in SheetMemory.
-			const flags = this._toFlags(flagValue);
-			sheetMemory.setInt32(this.nRow, 0, (flags << 24));
-			sheetMemory.setInt32(this.nRow, 4, formulaSave);
-		}
-	};
 	Cell.prototype.loadContent = function(row, col, opt_sheetMemory) {
 		var res = false;
 		this.clear();
@@ -15549,9 +15262,6 @@
 			if (0 !== (g_nCellFlag_init & flags)) {
 				var wb = this.ws.workbook;
 				var flagValue = this._fromFlags(flags);
-				// cellStylesByCol is the sole source of truth for direct
-				// cell xf. There is no `mix & 0xffffff` fallback; the
-				// eager file-open hydration sweep covers legacy shadows.
 				const xfIndex = AscCommonExcel.CellStyleStorage.resolveLoadXfIndex(
 					this.ws, this.nRow, this.nCol);
 				if (xfIndex > 0) {
@@ -15643,11 +15353,7 @@
 	Cell.prototype.duplicate=function(){
 		var t = this;
 		var oNewCell = new Cell(this.ws);
-		// duplicate() copies ws/nRow/nCol verbatim, so unless the clone is
-		// flagged transient, any later setStyleInternal on the clone would
-		// mirror into cellStylesByCol at the original coordinate and clobber
-		// the source. All current callers (autofill/promote helpers) treat
-		// the duplicate as a working copy, never as the persistent cell.
+		// Working copy; callers must clear _isTransient before final attach.
 		oNewCell._isTransient = true;
 		oNewCell.nRow = this.nRow;
 		oNewCell.nCol = this.nCol;
@@ -15678,13 +15384,7 @@
 			oNewWs = this.ws;
 		let oThis = this;
 		var oNewCell = new Cell(oNewWs);
-		// clone() can target the source ws (validation, what-if, clipboard)
-		// or a foreign ws (sheet copy + rename). In both cases the clone is
-		// a working copy: callers either re-attach it explicitly or feed it
-		// to copy/paste/autofill before final placement. Mark it transient
-		// so style mutations on the clone don't pollute cellStylesByCol at
-		// the source coordinate. Real placement code paths re-set the
-		// transient flag (or go through Worksheet APIs) when needed.
+		// Working copy; callers must clear _isTransient before final attach.
 		oNewCell._isTransient = true;
 		oNewCell.nRow = this.nRow;
 		oNewCell.nCol = this.nCol;
@@ -19140,276 +18840,6 @@
 			wb.loadCells.pop();
 		}
 	};
-	// Iterator contract:
-	//   `_foreachNoEmpty` / `_foreachRowNoEmpty` / `_foreachNoEmptyByCol`
-	//       = occupied iteration (data cells + direct-style-only cells)
-	//       Style-only cells reach actionCell as a shared `_isTransient`
-	//       Cell with `cell.xfs` preloaded from `cellStylesByCol`. Callers
-	//       MUST NOT run `saveContent`, `clearData`, `setStyle`, or any
-	//       emptiness-branching write on transients (I5) -- only reads.
-	//   `_foreachDataOnly` / `_foreachDataOnlyByCol`
-	//       = data-only iteration (SheetMemory init rows only). Use when
-	//       the caller cannot tolerate transient style-only cells (e.g.
-	//       formula/calc walks, sort moves, `_removeCell`).
-	// Both variants honor `excludeHiddenRows` and surface `excludedCount`
-	// to the callback.
-	Range.prototype._foreachNoEmpty = function(actionCell, actionRow, excludeHiddenRows) {
-		var oRes, i, oBBox = this.bbox;
-		var ws = this.worksheet;
-		var dataMaxR = Math.max(ws.cellsByColRowsCount - 1, ws.rowsData.getMaxIndex());
-		var styleMaxR = AscCommonExcel.maxStyleOnlyRow(ws, oBBox.c1, oBBox.c2);
-		var minR = Math.max(dataMaxR, styleMaxR);
-		minR = Math.min(minR, oBBox.r2);
-		if (actionCell || actionRow) {
-			var itRow = null;
-			if (actionCell) {
-				itRow = new AscCommonExcel.OccupiedRowIterator();
-				itRow.init(ws, oBBox.r1, oBBox.c1, oBBox.c2);
-			}
-			var bExcludeHiddenRows = (ws.bExcludeHiddenRows || excludeHiddenRows);
-			var excludedCount = 0;
-			var tempCell;
-			var tempRow = new AscCommonExcel.Row(ws);
-			var allRow = ws.getAllRow();
-			var allRowHidden = allRow && allRow.getHidden();
-			for (i = oBBox.r1; i <= minR; i++) {
-				if (actionRow) {
-					if (tempRow.loadContent(i)) {
-						if (bExcludeHiddenRows && tempRow.getHidden()) {
-							excludedCount++;
-							continue;
-						}
-						oRes = actionRow(tempRow, excludedCount);
-						tempRow.saveContent(true);
-						if (null != oRes) {
-							if (itRow) {
-								itRow.release();
-							}
-							return oRes;
-						}
-					} else if (bExcludeHiddenRows && allRowHidden) {
-						excludedCount++;
-						continue;
-					}
-				} else if (bExcludeHiddenRows && ws.getRowHidden(i)) {
-					excludedCount++;
-					continue;
-				}
-				if (itRow) {
-					itRow.setRow(i);
-					while (tempCell = itRow.next()) {
-						oRes = actionCell(tempCell, i, tempCell.nCol, oBBox.r1, oBBox.c1, excludedCount);
-						if (null != oRes) {
-							itRow.release();
-							return oRes;
-						}
-					}
-				}
-			}
-			if (itRow) {
-				itRow.release();
-			}
-		}
-	};
-	// Row-major data-only iteration: SheetMemory init rows only, no
-	// transient style-only emissions. See the contract block above
-	// `_foreachNoEmpty` for when to choose which variant.
-	Range.prototype._foreachDataOnly = function(actionCell, actionRow, excludeHiddenRows) {
-		var oRes, i, oBBox = this.bbox, minR = Math.max(this.worksheet.cellsByColRowsCount - 1, this.worksheet.rowsData.getMaxIndex());
-		minR = Math.min(minR, oBBox.r2);
-		if (actionCell || actionRow) {
-			var itRow = new RowIterator();
-			if (actionCell) {
-				itRow.init(this.worksheet, this.bbox.r1, this.bbox.c1, this.bbox.c2);
-			}
-			var bExcludeHiddenRows = (this.worksheet.bExcludeHiddenRows || excludeHiddenRows);
-			var excludedCount = 0;
-			var tempCell;
-			var tempRow = new AscCommonExcel.Row(this.worksheet);
-			var allRow = this.worksheet.getAllRow();
-			var allRowHidden = allRow && allRow.getHidden();
-			for (i = oBBox.r1; i <= minR; i++) {
-				if (actionRow) {
-					if (tempRow.loadContent(i)) {
-						if (bExcludeHiddenRows && tempRow.getHidden()) {
-							excludedCount++;
-							continue;
-						}
-						oRes = actionRow(tempRow, excludedCount);
-						tempRow.saveContent(true);
-						if (null != oRes) {
-							if (actionCell) {
-								itRow.release();
-							}
-							return oRes;
-						}
-					} else if (bExcludeHiddenRows && allRowHidden) {
-						excludedCount++;
-						continue;
-					}
-				} else if (bExcludeHiddenRows && this.worksheet.getRowHidden(i)) {
-					excludedCount++;
-					continue;
-				}
-				if (actionCell) {
-					itRow.setRow(i);
-					while (tempCell = itRow.next()) {
-						oRes = actionCell(tempCell, i, tempCell.nCol, oBBox.r1, oBBox.c1, excludedCount);
-						if (null != oRes) {
-							if (actionCell) {
-								itRow.release();
-							}
-							return oRes;
-						}
-					}
-				}
-			}
-			if (actionCell) {
-				itRow.release();
-			}
-		}
-	};
-	// Column-major occupied (data + direct-style-only) iteration; transient
-	// Cell emissions are read-only.
-	Range.prototype._foreachNoEmptyByCol = function(actionCell, excludeHiddenRows) {
-		if (!actionCell) {
-			return;
-		}
-		var oRes, i, j, colData;
-		var ws = this.worksheet;
-		var wb = ws.workbook;
-		var oBBox = this.bbox;
-		var dataRowMax = ws.cellsByColRowsCount - 1;
-		var dataColMax = ws.getColDataLength() - 1;
-		var stylesByCol = ws.cellStylesByCol || [];
-		var styleColMax = stylesByCol.length - 1;
-		var minC = oBBox.c2;
-		var bigC = dataColMax > styleColMax ? dataColMax : styleColMax;
-		if (minC > bigC) {
-			minC = bigC;
-		}
-		if (oBBox.c1 > minC) {
-			return;
-		}
-		var bExcludeHiddenRows = (ws.bExcludeHiddenRows || excludeHiddenRows);
-		var excludedCount = 0;
-		var tempCell = new Cell(ws);
-		tempCell._isTransient = true;
-		var transientStyleCell = new Cell(ws);
-		transientStyleCell._isTransient = true;
-		wb.loadCells.push(tempCell);
-		for (j = oBBox.c1; j <= minC; ++j) {
-			colData = ws.getColDataNoEmpty(j);
-			var styleStore = stylesByCol[j] || null;
-			if (!colData && (!styleStore || styleStore.isEmpty())) {
-				continue;
-			}
-			var dataMaxR = colData ? colData.getMaxIndex() : -1;
-			var styleMaxR = (styleStore && !styleStore.isEmpty()) ? styleStore.lastRow() : -1;
-			var maxR = dataMaxR > styleMaxR ? dataMaxR : styleMaxR;
-			var loopMaxR = Math.min(oBBox.r2, maxR);
-			for (i = oBBox.r1; i <= loopMaxR; i++) {
-				if (bExcludeHiddenRows && ws.getRowHidden(i)) {
-					excludedCount++;
-					continue;
-				}
-				var targetCell = null;
-				for (var k = 0; k < wb.loadCells.length - 1; ++k) {
-					var elem = wb.loadCells[k];
-					if (elem.nRow === i && elem.nCol === j && ws === elem.ws) {
-						targetCell = elem;
-						break;
-					}
-				}
-				if (null !== targetCell) {
-					oRes = actionCell(targetCell, i, j, oBBox.r1, oBBox.c1, excludedCount);
-					if (null != oRes) {
-						wb.loadCells.pop();
-						return oRes;
-					}
-					continue;
-				}
-				var loaded = false;
-				if (colData) {
-					loaded = tempCell.loadContent(i, j, colData);
-				}
-				if (loaded) {
-					oRes = actionCell(tempCell, i, j, oBBox.r1, oBBox.c1, excludedCount);
-					tempCell.saveContent(true);
-					if (null != oRes) {
-						wb.loadCells.pop();
-						return oRes;
-					}
-					continue;
-				}
-				if (styleStore) {
-					var styleXf = styleStore.get(i);
-					if (styleXf != null && styleXf !== 0) {
-						transientStyleCell.clear();
-						transientStyleCell.nRow = i;
-						transientStyleCell.nCol = j;
-						transientStyleCell._isTransient = true;
-						var xfs = ws._directOrInheritedXfs(i, j);
-						if (xfs) {
-							transientStyleCell.xfs = xfs;
-						}
-						oRes = actionCell(transientStyleCell, i, j, oBBox.r1, oBBox.c1, excludedCount);
-						if (null != oRes) {
-							wb.loadCells.pop();
-							return oRes;
-						}
-					}
-				}
-			}
-		}
-		wb.loadCells.pop();
-	};
-	// Column-major data-only iteration; direct-style-only cells are skipped.
-	Range.prototype._foreachDataOnlyByCol = function(actionCell, excludeHiddenRows) {
-		var oRes, i, j, colData;
-		var wb = this.worksheet.workbook;
-		var oBBox = this.bbox, minR = Math.min(this.worksheet.cellsByColRowsCount - 1, oBBox.r2);
-		var minC = Math.min(this.worksheet.getColDataLength() - 1, oBBox.c2);
-		if (actionCell && oBBox.c1 <= minC && oBBox.r1 <= minR) {
-			var bExcludeHiddenRows = (this.worksheet.bExcludeHiddenRows || excludeHiddenRows);
-			var excludedCount = 0;
-			var tempCell = new Cell(this.worksheet);
-			tempCell._isTransient = true;
-			wb.loadCells.push(tempCell);
-			for (j = oBBox.c1; j <= minC; ++j) {
-				colData = this.worksheet.getColDataNoEmpty(j);
-				if (colData) {
-					for (i = oBBox.r1; i <= Math.min(minR, colData.getMaxIndex()); i++) {
-						if (bExcludeHiddenRows && this.worksheet.getRowHidden(i)) {
-							excludedCount++;
-							continue;
-						}
-						var targetCell = null;
-						for (var k = 0; k < wb.loadCells.length - 1; ++k) {
-							var elem = wb.loadCells[k];
-							if (elem.nRow == i && elem.nCol == j && this.worksheet === elem.ws) {
-								targetCell = elem;
-								break;
-							}
-						}
-						if (null === targetCell) {
-							if (tempCell.loadContent(i, j, colData)) {
-								oRes = actionCell(tempCell, i, j, oBBox.r1, oBBox.c1, excludedCount);
-								tempCell.saveContent(true);
-							}
-						} else {
-							oRes = actionCell(targetCell, i, j, oBBox.r1, oBBox.c1, excludedCount);
-						}
-						if (null != oRes) {
-							wb.loadCells.pop();
-							return oRes;
-						}
-					}
-				}
-			}
-			wb.loadCells.pop();
-		}
-	};
 	Range.prototype._foreachRow = function(actionRow, actionCell){
 		var oBBox = this.bbox;
 		if (null != actionRow) {
@@ -19429,10 +18859,7 @@
 			return this._foreachNoEmpty(actionCell);
 		}
 	};
-	// Row-major occupied iteration with an actionRow hook (data + direct
-	// style-only); thin reorder of `_foreachNoEmpty` arguments. See the
-	// occupied/data-only contract above `_foreachNoEmpty` /
-	// `_foreachDataOnly` for what each callback sees.
+	// Argument-reordered wrapper over _foreachNoEmpty.
 	Range.prototype._foreachRowNoEmpty = function(actionRow, actionCell, excludeHiddenRows) {
 		return this._foreachNoEmpty(actionCell, actionRow, excludeHiddenRows);
 	};
@@ -20241,57 +19668,6 @@
 			}
 		}
 	};
-	// Style-only complement of _setBorderEdge. Data-cell pass uses
-	// _foreachNoEmpty; style-only neighbors need the same edge cleanup
-	// through cellStylesByCol. Emits SetStyleOnly history; no SheetMemory write.
-	Range.prototype._setBorderEdgeStyleOnly=function(edgeBbox, bbox, oNewBorder){
-		var ws = this.worksheet;
-		var CSS = AscCommonExcel.CellStyleStorage;
-		if (!CSS || typeof CSS.forEachStyleOnlyCell !== 'function') {
-			return;
-		}
-		var entries = null;
-		CSS.forEachStyleOnlyCell(ws, edgeBbox, function (row, col, xfIndex) {
-			if (!entries) { entries = []; }
-			entries.push(row, col, xfIndex);
-		});
-		if (!entries) {
-			return;
-		}
-		var styleCache = AscCommonExcel.g_StyleCache;
-		var historyOn = AscCommon.History.Is_On();
-		var sheetId = historyOn ? ws.getId() : null;
-		var tempCell = new Cell(ws);
-		tempCell._isTransient = true;
-		var wb = ws.workbook;
-		wb.loadCells.push(tempCell);
-		try {
-			for (var i = 0; i < entries.length; i += 3) {
-				var row = entries[i];
-				var col = entries[i + 1];
-				var xfIndex = entries[i + 2];
-				var oldXfs = styleCache.getXf(xfIndex);
-				tempCell.clear();
-				tempCell.setRowCol(row, col);
-				tempCell.xfs = oldXfs;
-				AscCommon.History.TurnOff();
-				this._setBorderEdge(bbox, tempCell, row, col, oNewBorder);
-				AscCommon.History.TurnOn();
-				if (tempCell.xfs !== oldXfs) {
-					var newXfs = tempCell.xfs;
-					if (historyOn) {
-						AscCommon.History.Add(AscCommonExcel.g_oUndoRedoCell,
-							AscCH.historyitem_Cell_SetStyleOnly, sheetId,
-							new Asc.Range(col, row, col, row),
-							new UndoRedoData_CellSimpleData(row, col, oldXfs, newXfs));
-					}
-					ws.setCellXf(row, col, newXfs);
-				}
-			}
-		} finally {
-			wb.loadCells.pop();
-		}
-	};
 	Range.prototype.setBorder=function(border){
 		//border = null clears border
 		//"ih" - internal horizontal, "iv" - internal vertical
@@ -20342,7 +19718,7 @@
 									  function(cell){
 										  _this._setBorderEdge(oBBox, cell, cell.nRow, cell.nCol, border);
 									  });
-			range._setBorderEdgeStyleOnly(range.bbox, oBBox, border);
+			AscCommonExcel.CellStyleStorage.applyBorderEdgeToStyleOnly(range, range.bbox, oBBox, border);
 		}
 	};
 	Range.prototype.setShrinkToFit=function(val){
@@ -20603,7 +19979,6 @@
 			}
 			else
 			{
-				// Style-only cells have no Cell object; direct xf still wins.
 				var oTempCell = new Cell(t.worksheet);
 				oTempCell._isTransient = true;
 				oTempCell.setRowCol(t.bbox.r1, t.bbox.c1);
@@ -20624,7 +19999,6 @@
 		return valueWithoutFormat;
 	};
 	Range.prototype.getQuotePrefix=function(){
-		// Style-only cells have no Cell object; direct xf still wins.
 		let res = false;
 		let t = this;
 		let nRow = this.bbox.r1, nCol = this.bbox.c1;
@@ -20685,7 +20059,6 @@
 				value2 = cell.getValue2(dDigitsCount, fIsFitMeasurer);
 			else
 			{
-				// Style-only cells have no Cell object; direct xf still wins.
 				var oTempCell = new Cell(t.worksheet);
 				oTempCell._isTransient = true;
 				oTempCell.setRowCol(t.bbox.r1, t.bbox.c1);
@@ -20855,7 +20228,6 @@
 	};
 
 	Range.prototype.getAngle = function () {
-		// Style-only cells have no Cell object; direct xf still wins.
 		var t = this;
 		var nRow = this.bbox.r1;
 		var nCol = this.bbox.c1;
@@ -21173,19 +20545,6 @@
 			}
 			else if( oBBox.r1 == elem.bbox.r1 && (elem.bbox.r1 != elem.bbox.r2 || (elem.bbox.c1 != elem.bbox.c2 && oBBox.r1 == oBBox.r2)))
 				aHyperlinksToRestore.push(elem.data);
-		}
-		// The bFirst walk above is data-only, so a style-only top-left cell
-		// is invisible to it. Probe cellStylesByCol to recover its xf as
-		// the merge target style before cleanAll wipes the entry.
-		if (null == oFirstCellValue && null == oLeftTopCellStyle) {
-			var _mergeCSS = AscCommonExcel.CellStyleStorage;
-			if (_mergeCSS && typeof _mergeCSS.forEachStyleOnlyCell === 'function') {
-				var _mergeTopLeftBbox = new Asc.Range(oBBox.c1, oBBox.r1, oBBox.c1, oBBox.r1);
-				_mergeCSS.forEachStyleOnlyCell(this.worksheet, _mergeTopLeftBbox, function (row, col, xfIndex) {
-					oLeftTopCellStyle = g_StyleCache.getXf(xfIndex);
-					return false;
-				});
-			}
 		}
 		this.cleanAll();
 		//restore hyperlink
@@ -21786,9 +21145,6 @@
 			return this.worksheet.getRange3(r1, c1, r2, c2);
 		return null;
 	};
-	// `cleanStyleOnlyDirectStyles` and `promoteStyleOnlyDirectStyles` are
-	// now exported by AscCommonExcel.CellStyleStorage (Structural). Range
-	// call sites pass `(ws, bbox, ws.bExcludeHiddenRows)` directly.
 	Range.prototype.cleanFormat=function(ignoreNoEmpty){
 		AscCommon.History.Create_NewPoint();
 		AscCommon.History.StartTransaction();
@@ -21804,18 +21160,11 @@
 			// if(col.isEmpty())
 			// col.Remove();
 		},function(cell, nRow0, nCol0, nRowStart, nColStart){
-			// Transient style-only cells must not emit historyitem_Cell_SetStyle
-			// (wrong undo path). Skip them; cleanStyleOnlyDirectStyles below
-			// emits historyitem_Cell_SetStyleOnly (I5-preserving undo path).
+			// Style-only transients are cleared below via SetStyleOnly history.
 			if (!cell._isTransient) {
 				cell.setStyle(null);
 			}
-			// if(cell.isEmpty())
-			// cell.Remove();
 		});
-		// Style-only entries in cellStylesByCol have no SheetMemory init row
-		// and must clear through historyitem_Cell_SetStyleOnly (I5-preserving
-		// undo). cleanStyleOnlyDirectStyles handles them here.
 		AscCommonExcel.CellStyleStorage.cleanStyleOnlyDirectStyles(this.worksheet, this.bbox, !!this.worksheet.bExcludeHiddenRows);
 		AscCommon.History.EndTransaction();
 	};
@@ -21827,9 +21176,7 @@
 
 		this._setPropertyNoEmpty(null, null,
 			function (cell, nRow0, nCol0, nRowStart, nColStart) {
-				// Transient style-only cells have no text; setValue("") on
-				// them crashes internal helpers and creates a wrong history
-				// item. Style-only cells are data-only from cleanText's view.
+				// Style-only cells have no text; skip them.
 				if (cell._isTransient) { return; }
 				if(false == t.worksheet.workbook.bUndoChanges && false == t.worksheet.workbook.bRedoChanges) {
 					t.worksheet.dynamicArrayManager.changeCell(cell);
@@ -21872,17 +21219,11 @@
 			// if(col.isEmpty())
 			// col.Remove();
 		},function(cell, nRow0, nCol0, nRowStart, nColStart){
-			// Transient style-only cells have no data; calling _removeCell on
-			// them allocates a SheetMemory init row (I5 violation) and records
-			// a wrong undo item. Skip them; cleanStyleOnlyDirectStyles below
-			// clears their direct xf via historyitem_Cell_SetStyleOnly.
+			// Style-only transients are cleared below via SetStyleOnly history.
 			if (!cell._isTransient) {
 				oThis.worksheet._removeCell(nRow0, nCol0, cell, ignoreNoEmpty);
 			}
 		});
-		// Style-only entries in cellStylesByCol have no SheetMemory init row
-		// and must clear through historyitem_Cell_SetStyleOnly (I5-preserving
-		// undo). cleanStyleOnlyDirectStyles handles them here.
 		AscCommonExcel.CellStyleStorage.cleanStyleOnlyDirectStyles(this.worksheet, this.bbox, !!this.worksheet.bExcludeHiddenRows);
 
 		this.worksheet.workbook.dependencyFormulas.calcTree();
@@ -22444,10 +21785,8 @@
 		})]);
 
 
-		// Mirror the SheetMemory permutation onto cellStylesByCol BEFORE the
-		// SheetMemory mutation runs. cellStylesByCol is the authoritative
-		// store for direct cell xf; the ordering still matters because
-		// the sort cycle snapshots the pre-mutation store state.
+		// Must run BEFORE the SheetMemory permutation: sortCellXfs
+		// snapshots the pre-mutation store.
 		this.worksheet.sortCellXfs(oBBox, oSortedIndexes, opt_by_row);
 
 		var tempSheetMemory, nIndexFrom, nIndexTo, j;
@@ -22905,9 +22244,6 @@
 
 		return null;
 	}
-	// `promoteStyleOnlyDirectStyles` is exported by
-	// AscCommonExcel.CellStyleStorage (Structural); the autofill /
-	// format-painter call site reaches it through the namespace.
 	function _promoteFromTo(from, wsFrom, to, wsTo, bIsPromote, oCanPromote, bCtrl, bVertical, nIndex) {
 		var wb = wsFrom.workbook;
 		const oDefaultCultureInfo = AscCommon.g_oDefaultCultureInfo;
@@ -23325,11 +22661,8 @@
 			//add merged areas
 			var nDx = from.c2 - from.c1 + 1;
 			var nDy = from.r2 - from.r1 + 1;
-			// Tile direct styles from pure style-only source cells AFTER
-			// the data pass so destinations matching data+style sources
-			// already carry their copied style. Tile layout (start at
-			// to.r1/to.c1, step by nDy/nDx) mirrors the
-			// merged-areas/hyperlinks loops below.
+			// Must run AFTER the data pass so data+style destinations
+			// already carry their copied style before tiling.
 			AscCommonExcel.CellStyleStorage.promoteStyleOnlyDirectStyles(wsFrom, from, wsTo, to, nDx, nDy);
 			var oMergedFrom = oCanPromote.oMergedFrom;
 			if(null != oMergedFrom && oMergedFrom.all.length > 0)
@@ -23732,7 +23065,6 @@
 			}
 		}
 	};
-	// OccupiedRowIterator and maxStyleOnlyRow live in cell/model/CellIterators.js.
 //-------------------------------------------------------------------------------------------------
 	/**
 	 * @constructor

@@ -32,10 +32,10 @@
 
 "use strict";
 
-// Content-aware iteration: visits the union of SheetMemory data cells
-// and cellStylesByCol style runs over `bbox` without materializing
-// persistent Cell objects. See docs/cell-style-storage-iterator-design.md
-// for the full contract.
+// Per-cell cursors over (SheetMemory data + cellStylesByCol) used by
+// the JSON/XLSB writers to interleave style-only emissions with the
+// data walk, and read-only style-only iteration for protection /
+// border / cleanup / promote helpers.
 (function (window, undefined) {
 	var CSS = window['AscCommonExcel'].CellStyleStorage;
 	var _internals = CSS._internals;
@@ -224,84 +224,8 @@
 		return ws.cellsByCol ? !!ws.cellsByCol[col] : false;
 	}
 
-	function iterContent(ws, bbox, callback, options) {
-		if (!ws || !bbox || typeof callback !== 'function') {
-			return;
-		}
-		var opts = options || {};
-		var columnMajor = (opts.columnMajor !== false);
-		var c1 = bbox.c1 | 0;
-		var c2 = bbox.c2 | 0;
-		var r1 = bbox.r1 | 0;
-		var r2 = bbox.r2 | 0;
-		if (c1 < 0) {
-			c1 = 0;
-		}
-		if (r1 < 0) {
-			r1 = 0;
-		}
-		if (c2 < c1 || r2 < r1) {
-			return;
-		}
-
-		if (columnMajor) {
-			for (var c = c1; c <= c2; c++) {
-				if (!_columnHasAnyContent(ws, c)) {
-					continue;
-				}
-				var cursor = _makeContentColumnCursor(ws, c, c1, r1, c2, r2, opts);
-				while (cursor.peek()) {
-					var ev = cursor.consume();
-					if (callback(ev) === false) {
-						return;
-					}
-				}
-			}
-			return;
-		}
-
-		// Row-major: streaming k-way merge over active per-column cursors.
-		// Sort key is (event.row, col); for styleRun events event.row is the
-		// run's current lo (clipped to bbox). See iterator-design section 3
-		// for the stability rule.
-		var cursors = [];
-		for (var rc = c1; rc <= c2; rc++) {
-			if (!_columnHasAnyContent(ws, rc)) {
-				continue;
-			}
-			var cur = _makeContentColumnCursor(ws, rc, c1, r1, c2, r2, opts);
-			if (cur.peek()) {
-				cursors.push(cur);
-			}
-		}
-		while (cursors.length) {
-			var bestIdx = -1;
-			var bestRow = Infinity;
-			for (var i = 0; i < cursors.length; i++) {
-				var p = cursors[i].peek();
-				if (p && p.row < bestRow) {
-					bestRow = p.row;
-					bestIdx = i;
-				}
-			}
-			if (bestIdx === -1) {
-				return;
-			}
-			var emitted = cursors[bestIdx].consume();
-			if (!cursors[bestIdx].peek()) {
-				cursors.splice(bestIdx, 1);
-			}
-			if (callback(emitted) === false) {
-				return;
-			}
-		}
-	}
-
-	// Per-cell wrapper over _makeContentColumnCursor. iterContent emits
-	// styleRun events as multi-row spans; XLSB/JSON writers need per-row
-	// events because XLSB requires each row to appear in ascending order
-	// exactly once. The wrapped styleRun stays pending in the inner
-	// cursor until every row in [lo..hi] has been emitted.
+	// Per-cell wrapper over _makeContentColumnCursor: styleRun events are
+	// split per row so writers see one (row, col) at a time.
 	function _makeByCellCursor(ws, col, c1, r1, c2, r2, opts) {
 		var inner = _makeContentColumnCursor(ws, col, c1, r1, c2, r2, opts);
 		var curRow = Infinity;
@@ -429,24 +353,6 @@
 		};
 	}
 
-	// Push-based row-major per-cell iteration. styleRun events are split
-	// per row (lo == hi for every emit). Callback returning false aborts.
-	function iterContentByCell(ws, bbox, callback, options) {
-		if (!ws || !bbox || typeof callback !== 'function') {
-			return;
-		}
-		var cursor = createContentByCellCursor(ws, bbox, options);
-		while (true) {
-			var ev = cursor.consume();
-			if (!ev) {
-				return;
-			}
-			if (callback(ev) === false) {
-				return;
-			}
-		}
-	}
-
 	// Visit every (row, col) inside `bbox` that has a cellStylesByCol entry
 	// but no SheetMemory data init flag -- the cells that `_foreachNoEmpty`
 	// would miss. Callback receives `(row, col, xfIndex)`; returning false
@@ -509,8 +415,66 @@
 		}
 	}
 
-	CSS.iterContent = iterContent;
-	CSS.iterContentByCell = iterContentByCell;
+	// Shared drain wrapper around createContentByCellCursor for sheet-data
+	// writers. Each writer supplies `onStyleOnly(row, col, xfIndex, excludedCount)`
+	// and gets back a small object with `drainBefore(beforeRow, beforeCol)`
+	// and `drainTail()`. The helper owns:
+	//   - the styleOnly cursor;
+	//   - strict (row, col) ordering before emission;
+	//   - hidden-row skipping when opts.excludeHiddenRows is true;
+	//   - the forward-only excludedCountAt(row) walker.
+	// It does NOT emit any XML/XLSB/JSON or know about Cell / stylesForWrite.
+	function createStyleOnlyDrain(ws, bbox, opts, onStyleOnly) {
+		var cursor = createContentByCellCursor(ws, bbox, {styleOnly: true});
+		var excludeHiddenRows = !!(opts && opts.excludeHiddenRows);
+		var r1 = (bbox && bbox.r1 != null) ? (bbox.r1 | 0) : 0;
+		var hiddenWalk = excludeHiddenRows ? {next: r1, count: 0} : null;
+
+		function excludedCountAt(row) {
+			if (!hiddenWalk) {
+				return 0;
+			}
+			while (hiddenWalk.next < row) {
+				if (ws.getRowHidden(hiddenWalk.next)) {
+					hiddenWalk.count++;
+				}
+				hiddenWalk.next++;
+			}
+			return hiddenWalk.count;
+		}
+
+		function drainBefore(beforeRow, beforeCol) {
+			while (true) {
+				var p = cursor.peek();
+				if (!p) {
+					return;
+				}
+				if (p.row > beforeRow) {
+					return;
+				}
+				if (p.row === beforeRow && p.col >= beforeCol) {
+					return;
+				}
+				var ev = cursor.consume();
+				if (!ev || ev.xfIndex <= 0) {
+					continue;
+				}
+				var r = ev.row;
+				if (excludeHiddenRows && ws.getRowHidden(r)) {
+					continue;
+				}
+				onStyleOnly(r, ev.col, ev.xfIndex, excludedCountAt(r));
+			}
+		}
+
+		function drainTail() {
+			drainBefore(Infinity, Infinity);
+		}
+
+		return {drainBefore: drainBefore, drainTail: drainTail};
+	}
+
 	CSS.createContentByCellCursor = createContentByCellCursor;
 	CSS.forEachStyleOnlyCell = forEachStyleOnlyCell;
+	CSS.createStyleOnlyDrain = createStyleOnlyDrain;
 })(window);

@@ -334,26 +334,6 @@
 	};
 
 	/**
-	 * Clears a range of indices, dropping data bytes and flags identically to
-	 * `clear`. Direct cell xf is owned by `ws.cellStylesByCol`, not by
-	 * SheetMemory, so this method must not preserve any xf bits. The
-	 * locked-only style transform for protected moves runs in
-	 * `Worksheet._moveCells.mirrorMoveCellXfs` against `cellStylesByCol`
-	 * BEFORE this call, so by the time we get here the per-cell
-	 * locked-only xfIndex is already in the range storage.
-	 *
-	 * The signature, including the unused `getLockedOnlyXfIndex` callback,
-	 * is preserved so the existing `_moveCells` call sites stay untouched.
-	 *
-	 * @param {number} start - Start index
-	 * @param {number} end - End index (exclusive)
-	 * @param {function} getLockedOnlyXfIndex - Unused; kept for signature compatibility
-	 */
-	SheetMemory.prototype.clearExceptLocked = function(start, end, getLockedOnlyXfIndex) {
-		this.clear(start, end);
-	};
-
-	/**
 	 * Gets an unsigned 8-bit integer
 	 * @param {number} index - Index
 	 * @param {number} offset - Offset within the structure

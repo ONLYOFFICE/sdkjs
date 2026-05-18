@@ -43,119 +43,7 @@
 	var DEFAULT_MAX_ROW = _internals.DEFAULT_MAX_ROW;
 	var _getCRangeAttrArrayCtor = _internals.getCRangeAttrArrayCtor;
 	var _resolveSourceStore = _internals.resolveSourceStore;
-	var _maxLegacyColLength = _internals.maxLegacyColLength;
 	var getCellStyleStore = _internals.getCellStyleStore;
-
-	// Shift cell styles inside / through `bbox` in one of four directions.
-	// `offset` is currently informational; `mode` drives the behavior.
-	// Modes:
-	//   'up'    -- delete the bbox rows in cols [c1..c2]; rows below shift up.
-	//   'down'  -- insert empty rows of bbox height in cols [c1..c2] at r1.
-	//   'left'  -- within rows [r1..r2], pull style from columns to the right of c2 into [c1..]; clear the gap at the far right.
-	//   'right' -- within rows [r1..r2], shift style in cols starting at c1 by +width; clear the inserted block at [c1..c1+width-1].
-	function shiftCellXfs(ws, bbox, offset, mode) {
-		var c1 = bbox.c1;
-		var c2 = bbox.c2;
-		var r1 = bbox.r1;
-		var r2 = bbox.r2;
-		if (c2 < c1 || r2 < r1) {
-			return;
-		}
-		var w = c2 - c1 + 1;
-		var h = r2 - r1 + 1;
-
-		if (mode === 'up') {
-			for (var c = c1; c <= c2; c++) {
-				var sUp = ws.cellStylesByCol[c];
-				if (sUp) {
-					sUp.deleteRows(r1, h);
-				}
-			}
-			return;
-		}
-		if (mode === 'down') {
-			for (var cd = c1; cd <= c2; cd++) {
-				var sDown = ws.cellStylesByCol[cd];
-				if (sDown) {
-					sDown.insertRows(r1, h);
-				}
-			}
-			return;
-		}
-		if (mode === 'left') {
-			// Bound must reach data-only columns to match `_shiftCellsLeft`.
-			var L = Math.max(ws.cellStylesByCol.length, _maxLegacyColLength(ws));
-			for (var cl = c1; cl < L; cl++) {
-				var srcL = _resolveSourceStore(ws, cl + w);
-				var dstL = ws.cellStylesByCol[cl];
-				if (!srcL) {
-					if (dstL) {
-						dstL.clearRange(r1, r2);
-					}
-					continue;
-				}
-				if (!dstL) {
-					dstL = getCellStyleStore(ws, cl, true);
-				}
-				dstL.copyFrom(srcL, r1, r1, h);
-			}
-			return;
-		}
-		if (mode === 'right') {
-			// Rightmost source Lr-1 lands at Lr-1+w; destinations past the
-			// current array length are materialized lazily. Same data-only
-			// widening as the 'left' branch.
-			var Lr = Math.max(ws.cellStylesByCol.length, _maxLegacyColLength(ws));
-			for (var cr = Lr - 1 + w; cr >= c1 + w; cr--) {
-				var srcR = _resolveSourceStore(ws, cr - w);
-				var dstR = ws.cellStylesByCol[cr];
-				if (!srcR) {
-					if (dstR) {
-						dstR.clearRange(r1, r2);
-					}
-					continue;
-				}
-				if (!dstR) {
-					dstR = getCellStyleStore(ws, cr, true);
-				}
-				dstR.copyFrom(srcR, r1, r1, h);
-			}
-			for (var cg = c1; cg < c1 + w; cg++) {
-				var dstGap = ws.cellStylesByCol[cg];
-				if (dstGap) {
-					dstGap.clearRange(r1, r2);
-				}
-			}
-			return;
-		}
-	}
-
-	// Iterate every style run intersecting bbox in column-major order.
-	// callback(loRow, hiRow, col, xfIndex). Return false from the callback to stop.
-	function iterCellXfs(ws, bbox, callback) {
-		var c1 = bbox.c1;
-		var c2 = bbox.c2;
-		if (c2 < c1) {
-			return;
-		}
-		for (var c = c1; c <= c2; c++) {
-			var store = ws.cellStylesByCol[c];
-			if (!store) {
-				continue;
-			}
-			var stopped = false;
-			var colCaptured = c;
-			store.iter(bbox.r1, bbox.r2, function (lo, hi, v) {
-				if (callback(lo, hi, colCaptured, v) === false) {
-					stopped = true;
-					return false;
-				}
-			});
-			if (stopped) {
-				return;
-			}
-		}
-	}
 
 	// Drop `count` rows starting at `start` from every column store.
 	// Pairs with `_removeRows` / `_shiftCellsUp`.
@@ -256,20 +144,50 @@
 		}
 	}
 
-	// Mirror the permutation that `Range._sortByArray` applies to
-	// SheetMemory. Must run BEFORE the SheetMemory mutation so the
-	// snapshot logic resolves cycles against pre-sort state.
-	//
-	// Vertical (`opt_by_row` falsy): per column, reorder rows in
-	// [oBBox.r1..oBBox.r2] using `oSortedIndexes` (from-row -> to-row).
-	// Reads come from the pre-mutation store, so partial permutations
-	// resolve regardless of iteration order.
-	//
-	// Horizontal (`opt_by_row` truthy): swap the row band between
-	// columns named by `oSortedIndexes` (from-col -> to-col). Each
-	// destination's pre-mutation band is snapshotted before the
-	// destination is overwritten, so later iterations that read the
-	// same column as a source see the snapshot, not the mutated state.
+	// Mirror _moveCells on cellStylesByCol. SheetMemory no longer owns
+	// the xf, so this is the only path that preserves locked-only xfs on
+	// the source band of a protected-sheet move. `clearStart`/`clearEnd`
+	// are inclusive-exclusive; pass equal values to skip the source clear.
+	// Lazily materializes a source store from SheetMemory presence so
+	// data-only source columns clear properly.
+	function moveCellsBetweenWorksheets(wsFrom, wsTo, fromCol, toCol, r1From, r1To,
+										count, clearStart, clearEnd, getLockedOnlyXfIndex) {
+		if (count <= 0) {
+			return;
+		}
+		var srcStore = wsFrom.cellStylesByCol[fromCol];
+		if (!srcStore && typeof wsFrom.getColDataNoEmpty === 'function'
+			&& wsFrom.getColDataNoEmpty(fromCol)) {
+			srcStore = getCellStyleStore(wsFrom, fromCol, true);
+		}
+		var dstStore = wsTo.cellStylesByCol[toCol];
+		if (srcStore) {
+			if (!dstStore) {
+				dstStore = getCellStyleStore(wsTo, toCol, true);
+			}
+			dstStore.copyFrom(srcStore, r1From, r1To, count);
+		} else if (dstStore) {
+			dstStore.clearRange(r1To, r1To + count - 1);
+		}
+		if (!srcStore || clearEnd <= clearStart) {
+			return;
+		}
+		if (getLockedOnlyXfIndex) {
+			srcStore.mapRange(clearStart, clearEnd - 1, function (v) {
+				if (v == null || v === 0) {
+					return null;
+				}
+				var locked = getLockedOnlyXfIndex(v);
+				return (locked != null && locked > 0) ? locked : null;
+			});
+		} else {
+			srcStore.clearRange(clearStart, clearEnd - 1);
+		}
+	}
+
+	// Mirror Range._sortByArray's permutation on cellStylesByCol. Must
+	// run BEFORE the SheetMemory mutation. Horizontal sort uses a
+	// destination-band snapshot so cycles resolve regardless of order.
 	function sortCellXfs(ws, oBBox, oSortedIndexes, opt_by_row) {
 		if (!ws || !oBBox || !oSortedIndexes) {
 			return;
@@ -310,10 +228,8 @@
 			var storeFrom = _resolveSourceStore(ws, from);
 			var storeTo = _resolveSourceStore(ws, to);
 
-			// Snapshot the destination band BEFORE any mutation. Even when
-			// `to` has no store yet, record an empty snapshot so a later
-			// iteration that reads `to` as a source sees the pre-mutation
-			// "no styles in band" state rather than the mutated column.
+			// Snapshot the destination band BEFORE mutation so a later
+			// iteration reading `to` as a source sees the pre-shift state.
 			var snapTo = new Ctor(storeTo ? storeTo.maxRow : DEFAULT_MAX_ROW);
 			if (storeTo) {
 				snapTo.copyFrom(storeTo, oBBox.r1, oBBox.r1, height);
@@ -379,10 +295,9 @@
 		}
 	}
 
-	// Tile direct styles from pure style-only source cells over a
-	// destination range. Runs AFTER `_promoteFromTo`'s data pass; the
-	// two passes target disjoint (row, col) sets because
-	// `forEachStyleOnlyCell` skips data init rows.
+	// Tile style-only sources over destination tiles. Runs after the data
+	// pass; forEachStyleOnlyCell skips data init rows so the two passes
+	// stay disjoint.
 	function promoteStyleOnlyDirectStyles(wsFrom, from, wsTo, to, nDx, nDy) {
 		if (!wsFrom || !wsTo || nDx <= 0 || nDy <= 0) {
 			return;
@@ -393,8 +308,8 @@
 		var AscCommon = window['AscCommon'];
 		var AscCommonExcel = window['AscCommonExcel'];
 		var AscCH = window['AscCH'];
-		// Gather source offsets first so we don't re-walk `cellStylesByCol`
-		// per tile and so we can early-return without history side effects.
+		// Gather sources first so per-tile cost is O(|sources|) and we can
+		// early-return before touching history.
 		var sources = null;
 		CSS.forEachStyleOnlyCell(wsFrom, from, function (row, col, xfIndex) {
 			if (xfIndex > 0) {
@@ -444,11 +359,8 @@
 		}
 	}
 
-	// Post-insert / post-shift border override for style-only cells.
-	// Data cells are visited by `_foreachNoEmpty` + `clearDataKeepXf`;
-	// style-only cells need the same override applied directly through
-	// `cellStylesByCol`. No SheetMemory write. History is suppressed
-	// because the enclosing structural item replays on undo.
+	// Style-only complement of clearDataKeepXf for post-insert borders.
+	// History is suppressed; the enclosing structural item replays on undo.
 	function applyInsertedBorderToStyleOnly(ws, bbox, borders, bRow) {
 		if (typeof CSS.forEachStyleOnlyCell !== 'function') {
 			return;
@@ -483,13 +395,9 @@
 		}
 	}
 
-	// Pair `Worksheet._removeRows / _removeCols / shiftCells*` with undo:
-	// before a structural shift wipes out style-only entries that have no
-	// SheetMemory counterpart, record `historyitem_Cell_SetStyleOnly`
-	// items for each entry in `bbox` so undo replays them. Data cells in
-	// the same bbox are picked up by the data-side history items emitted
-	// by the structural item; this helper only covers the disjoint
-	// style-only partition (I6).
+	// Emit SetStyleOnly history for every style-only entry in `bbox`
+	// before a structural shift drops it. Data cells in the same bbox
+	// are covered by the enclosing structural item's history.
 	function recordStyleOnlyClearHistory(ws, bbox, opt_excludeHiddenRows) {
 		var AscCommon = window['AscCommon'];
 		if (!AscCommon.History.Is_On() || !ws || !ws.cellStylesByCol || !bbox) {
@@ -514,17 +422,75 @@
 		}, {excludeHiddenRows: !!opt_excludeHiddenRows});
 	}
 
-	CSS.shiftCellXfs = shiftCellXfs;
-	CSS.iterCellXfs = iterCellXfs;
+	// Style-only complement of Range._setBorderEdge. Iterates style-only
+	// cells in `edgeBbox`, lets the caller-provided Range apply the edge
+	// override through its own `_setBorderEdge`, and emits SetStyleOnly
+	// history for any cell whose xfs changed. The Range is borrowed only
+	// for its `_setBorderEdge` prototype method.
+	function applyBorderEdgeToStyleOnly(range, edgeBbox, bbox, oNewBorder) {
+		if (typeof CSS.forEachStyleOnlyCell !== 'function') {
+			return;
+		}
+		var ws = range.worksheet;
+		var entries = null;
+		CSS.forEachStyleOnlyCell(ws, edgeBbox, function (row, col, xfIndex) {
+			if (!entries) { entries = []; }
+			entries.push(row, col, xfIndex);
+		});
+		if (!entries) {
+			return;
+		}
+		var AscCommon = window['AscCommon'];
+		var AscCommonExcel = window['AscCommonExcel'];
+		var AscCH = window['AscCH'];
+		var styleCache = AscCommonExcel.g_StyleCache;
+		var Cell = AscCommonExcel.Cell;
+		var UndoRedoData_CellSimpleData = AscCommonExcel.UndoRedoData_CellSimpleData;
+		var historyOn = AscCommon.History.Is_On();
+		var sheetId = historyOn ? ws.getId() : null;
+		var tempCell = new Cell(ws);
+		tempCell._isTransient = true;
+		var wb = ws.workbook;
+		wb.loadCells.push(tempCell);
+		try {
+			for (var i = 0; i < entries.length; i += 3) {
+				var row = entries[i];
+				var col = entries[i + 1];
+				var xfIndex = entries[i + 2];
+				var oldXfs = styleCache.getXf(xfIndex);
+				tempCell.clear();
+				tempCell.setRowCol(row, col);
+				tempCell.xfs = oldXfs;
+				AscCommon.History.TurnOff();
+				range._setBorderEdge(bbox, tempCell, row, col, oNewBorder);
+				AscCommon.History.TurnOn();
+				if (tempCell.xfs !== oldXfs) {
+					var newXfs = tempCell.xfs;
+					if (historyOn) {
+						AscCommon.History.Add(AscCommonExcel.g_oUndoRedoCell,
+							AscCH.historyitem_Cell_SetStyleOnly, sheetId,
+							new Asc.Range(col, row, col, row),
+							new UndoRedoData_CellSimpleData(row, col, oldXfs, newXfs));
+					}
+					ws.setCellXf(row, col, newXfs);
+				}
+			}
+		} finally {
+			wb.loadCells.pop();
+		}
+	}
+
 	CSS.deleteRowsAllCols = deleteRowsAllCols;
 	CSS.insertRowsAllCols = insertRowsAllCols;
 	CSS.copyRowInAllCols = copyRowInAllCols;
 	CSS.deleteCols = deleteCols;
 	CSS.insertCols = insertCols;
 	CSS.moveColRowBand = moveColRowBand;
+	CSS.moveCellsBetweenWorksheets = moveCellsBetweenWorksheets;
 	CSS.sortCellXfs = sortCellXfs;
 	CSS.cleanStyleOnlyDirectStyles = cleanStyleOnlyDirectStyles;
 	CSS.promoteStyleOnlyDirectStyles = promoteStyleOnlyDirectStyles;
 	CSS.applyInsertedBorderToStyleOnly = applyInsertedBorderToStyleOnly;
+	CSS.applyBorderEdgeToStyleOnly = applyBorderEdgeToStyleOnly;
 	CSS.recordStyleOnlyClearHistory = recordStyleOnlyClearHistory;
 })(window);

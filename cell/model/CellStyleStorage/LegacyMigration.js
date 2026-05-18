@@ -32,13 +32,9 @@
 
 "use strict";
 
-// Legacy SheetMemory xf-shadow migration.
-//
-// Pre-split files put direct cell xf into the low 24 bits of
-// SheetMemory word 0. This module replays those bits into
-// cellStylesByCol exactly once per worksheet, at file open, before any
-// consumer (calc, save, range op) reads direct cell styles. After the
-// sweep, the legacy shadow is dead code.
+// Legacy SheetMemory xf-shadow migration. Old files carried direct xf
+// in the low 24 bits of SheetMemory word 0; this sweep moves them into
+// cellStylesByCol once per worksheet at open, before any other reader.
 (function (window, undefined) {
 	var CSS = window['AscCommonExcel'].CellStyleStorage;
 	var _internals = CSS._internals;
@@ -65,15 +61,9 @@
 		return false;
 	}
 
-	// Merge legacy xf values into `store`, filling ONLY rows that have no
-	// store entry yet. Rows already present in the store are untouched.
-	//
-	// CRangeAttrArray treats `null` identically for "never set" and
-	// "explicitly cleared" -- the merge is safe only because this runs
-	// before any clear can happen (see migration-only contract on
-	// hydrateAllColumnsFromSheetMemory). Same-column mixed legacy case:
-	// the per-cell open-time mirror may have migrated some rows already;
-	// this fills the rest.
+	// Fill legacy xf values into `store` for rows the store has not
+	// already covered. Safe only at file-open because a CRangeAttrArray
+	// null entry cannot distinguish "never set" from "user-cleared".
 	function _mergeLegacyXfBitsIntoStore(sheetMemory, store) {
 		if (!sheetMemory || !sheetMemory.dataBuffer || !sheetMemory.dataInt32) {
 			return;
@@ -92,20 +82,9 @@
 		}
 	}
 
-	// Eager post-open sweep. Walks every populated column and merges
-	// legacy xf bits into the column's store; allocates a store only when
-	// there is real work to do. Bounded to `ws.cellsByCol.length`, so a
-	// sparse worksheet stays sparse.
-	//
-	// Migration-only contract: MUST run at file-open completion, BEFORE
-	// any user edit or tombstone. After edits begin, `store.get(r) ===
-	// null` can mean either "never styled" or "explicitly cleared"; a
-	// repeat sweep could resurrect a legacy value and undo a user clear.
-	// Idempotent if re-run immediately (every row gets a store entry on
-	// the first pass), but do not use as a late-session repair tool.
-	//
-	// Wired into binary and JSON open paths once per worksheet at the
-	// completion of ReadSheetData / SheetDataFromJSON.
+	// File-open-only sweep. Must run BEFORE any user edit or tombstone,
+	// otherwise it can resurrect a cleared row. Called once per worksheet
+	// from ReadSheetData / SheetDataFromJSON.
 	function hydrateAllColumnsFromSheetMemory(ws) {
 		if (!ws || !ws.cellsByCol || !ws.cellStylesByCol) {
 			return;

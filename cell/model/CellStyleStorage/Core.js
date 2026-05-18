@@ -32,15 +32,10 @@
 
 "use strict";
 
-// Core read/write for cellStylesByCol direct cell styles.
-//
-// Sibling files in this folder share one runtime namespace
-// `window.AscCommonExcel.CellStyleStorage`; this file installs it and
-// exposes the private surface via `CSS._internals`. Helpers here and in
-// sibling files touch only `ws.cellStylesByCol[col]` (a CRangeAttrArray)
-// -- never Cell, SheetMemory, or History -- so the load/save, range ops,
-// and serializer paths all share one source of truth without re-entering
-// Cell materialization.
+// Core read/write for cellStylesByCol direct cell styles. Sibling files
+// share the AscCommonExcel.CellStyleStorage namespace; private internals
+// for them live on CSS._internals. Helpers here never touch Cell,
+// SheetMemory, or History.
 (function (window, undefined) {
 	var DEFAULT_MAX_ROW = (window['AscCommon'] && window['AscCommon'].gc_nMaxRow0 != null)
 		? window['AscCommon'].gc_nMaxRow0
@@ -59,10 +54,8 @@
 		return ((mix >>> _CELL_FLAG_INIT_SHIFT) & 1) !== 0;
 	}
 
-	// Normalize a number-or-CellXfs into a positive xfIndex, returning 0
-	// for "no direct cell style" (matches Cell.loadContent, which only
-	// restores style when the saved index is > 0). An unregistered CellXfs
-	// is added to g_StyleCache so a fresh builder-side xf is not dropped.
+	// Number / CellXfs -> positive xfIndex (0 == no direct style). An
+	// unregistered CellXfs is added to g_StyleCache.
 	function _toXfIndex(xfIndexOrXfs) {
 		if (xfIndexOrXfs == null) {
 			return 0;
@@ -87,9 +80,7 @@
 		return 0;
 	}
 
-	// Lazy creation only. Legacy SheetMemory xf bits are migrated by the
-	// eager file-open sweep (LegacyMigration); a store materialized here
-	// starts empty.
+	// Lazy creation. Stores start empty (LegacyMigration hydrates first).
 	function getCellStyleStore(ws, col, opt_create) {
 		if (col < 0) {
 			return null;
@@ -103,25 +94,7 @@
 		return store || null;
 	}
 
-	// Upper bound (exclusive) for column scans that must reach past
-	// `cellStylesByCol.length` into data-only columns. Used by
-	// `shiftCellXfs` left/right modes.
-	function _maxLegacyColLength(ws) {
-		if (!ws) {
-			return 0;
-		}
-		if (typeof ws.getColDataLength === 'function') {
-			return ws.getColDataLength();
-		}
-		if (ws.cellsByCol && typeof ws.cellsByCol.length === 'number') {
-			return ws.cellsByCol.length;
-		}
-		return 0;
-	}
-
-	// Returns the existing store for `col` or null. No SheetMemory
-	// hydration: LegacyMigration has already run for every column at file
-	// open. Callers treat null as a no-op source.
+	// Existing store for `col`, or null (no on-demand hydration).
 	function _resolveSourceStore(ws, col) {
 		if (col < 0) {
 			return null;
@@ -156,75 +129,8 @@
 		store.setRange(row, row, idx);
 	}
 
-	function setCellXfRange(ws, r1, c1, r2, c2, xfIndexOrXfs) {
-		if (c2 < c1 || r2 < r1) {
-			return;
-		}
-		var idx = _toXfIndex(xfIndexOrXfs);
-		if (idx === 0) {
-			for (var c = c1; c <= c2; c++) {
-				var existing = _resolveSourceStore(ws, c);
-				if (existing) {
-					existing.clearRange(r1, r2);
-				}
-			}
-			return;
-		}
-		for (var c2col = c1; c2col <= c2; c2col++) {
-			var store = getCellStyleStore(ws, c2col, true);
-			store.setRange(r1, r2, idx);
-		}
-	}
-
-	function clearCellXfRange(ws, r1, c1, r2, c2) {
-		if (c2 < c1 || r2 < r1) {
-			return;
-		}
-		for (var c = c1; c <= c2; c++) {
-			var existing = _resolveSourceStore(ws, c);
-			if (existing) {
-				existing.clearRange(r1, r2);
-			}
-		}
-	}
-
-	// Copy a 2D range of direct cell styles between worksheets (or within one).
-	// fromBBox and toBBox are expected to have matching dimensions; if they
-	// differ, the smaller dimension is used so the call is bounded.
-	function copyCellXfRange(wsTo, wsFrom, fromBBox, toBBox) {
-		var fw = fromBBox.c2 - fromBBox.c1 + 1;
-		var fh = fromBBox.r2 - fromBBox.r1 + 1;
-		var tw = toBBox.c2 - toBBox.c1 + 1;
-		var th = toBBox.r2 - toBBox.r1 + 1;
-		var w = fw < tw ? fw : tw;
-		var h = fh < th ? fh : th;
-		if (w <= 0 || h <= 0) {
-			return;
-		}
-		for (var dc = 0; dc < w; dc++) {
-			var srcCol = fromBBox.c1 + dc;
-			var dstCol = toBBox.c1 + dc;
-			// A null source store means no direct style to copy; clear the
-			// destination band so it stays consistent with the source.
-			var src = _resolveSourceStore(wsFrom, srcCol);
-			var dst = wsTo.cellStylesByCol[dstCol];
-			if (!src) {
-				if (dst) {
-					dst.clearRange(toBBox.r1, toBBox.r1 + h - 1);
-				}
-				continue;
-			}
-			if (!dst) {
-				dst = getCellStyleStore(wsTo, dstCol, true);
-			}
-			dst.copyFrom(src, fromBBox.r1, toBBox.r1, h);
-		}
-	}
-
-	// Mirror `cell.xfs` into `ws.cellStylesByCol` so the store stays the
-	// source of truth for direct cell xf. Called from Cell.setStyleInternal
-	// and Cell.clearDataKeepXf. Skips transient cells, cells without a real
-	// (row, col), and cells without a Worksheet host.
+	// Mirror cell.xfs into ws.cellStylesByCol. Called from
+	// setStyleInternal / clearDataKeepXf. Skips transient cells.
 	function mirrorCellStyle(cell) {
 		if (!cell || cell._isTransient) {
 			return;
@@ -239,8 +145,8 @@
 		setCellXf(ws, cell.nRow, cell.nCol, cell.xfs);
 	}
 
-	// Wrappers dispatch through `CSS.<name>` at call time so methods
-	// defined in sibling files resolve regardless of file load order.
+	// Wrappers resolve through CSS.<name> at call time so sibling files
+	// may install methods in any load order.
 	function installOnWorksheet(WorksheetCtor) {
 		WorksheetCtor.prototype.getCellStyleStore = function (col, opt_create) {
 			return CSS.getCellStyleStore(this, col, opt_create);
@@ -279,9 +185,6 @@
 	CSS.getCellStyleStore = getCellStyleStore;
 	CSS.getCellXf = getCellXf;
 	CSS.setCellXf = setCellXf;
-	CSS.setCellXfRange = setCellXfRange;
-	CSS.clearCellXfRange = clearCellXfRange;
-	CSS.copyCellXfRange = copyCellXfRange;
 	CSS.mirrorCellStyle = mirrorCellStyle;
 	CSS.installOnWorksheet = installOnWorksheet;
 
@@ -291,6 +194,5 @@
 	CSS._internals.getCRangeAttrArrayCtor = _getCRangeAttrArrayCtor;
 	CSS._internals.isDataInitRow = _isDataInitRow;
 	CSS._internals.resolveSourceStore = _resolveSourceStore;
-	CSS._internals.maxLegacyColLength = _maxLegacyColLength;
 	CSS._internals.getCellStyleStore = getCellStyleStore;
 })(window);

@@ -3308,9 +3308,8 @@ function (window, undefined) {
 			oLockInfo["rangeOrObjectId"] = new Asc.Range(nCol, nRow, nCol, nRow);
 			this.wb.aCollaborativeChangeElements.push(oLockInfo);
 		}
-		// Direct xf change on a pure style-only cell: apply straight to
-		// ws.cellStylesByCol without ws._getCell / _initCell / saveContent,
-		// so undo/redo never creates a SheetMemory init row.
+		// Style-only undo: apply to cellStylesByCol directly so no
+		// SheetMemory init row is created.
 		if (AscCH.historyitem_Cell_SetStyleOnly === Type) {
 			var styleVal = bUndo ? Data.oOldVal : Data.oNewVal;
 			if (typeof ws.setCellXf === 'function') {

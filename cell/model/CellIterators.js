@@ -32,14 +32,20 @@
 
 "use strict";
 
-// Cell-shaped iterators composing SheetMemory data scans with
-// cellStylesByCol cursors. Loaded after Workbook.js to reference the
-// exported Cell and RowIterator via AscCommonExcel.
+// Range / cell iterators that merge SheetMemory data and cellStylesByCol
+// direct-style entries. Loaded after Workbook.js so AscCommonExcel.Cell /
+// Range / Row / RowIterator exist.
+//
+//   OccupiedRowIterator                   - data + direct-style-only cells in row order.
+//   maxStyleOnlyRow                       - bound for occupied iteration.
+//   Range._foreachNoEmpty (occupied)      - row-major occupied iteration.
+//   Range._foreachDataOnly                - row-major data-only iteration.
+//   Range._foreachNoEmptyByCol (occupied) - column-major occupied iteration.
+//   Range._foreachDataOnlyByCol           - column-major data-only iteration.
 (function (window, undefined) {
 	var ns = window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 
-	// Largest row index with any direct cell style entry in [c1..c2],
-	// or -1 when none.
+	// Largest row index with any direct style entry in [c1..c2], or -1.
 	function maxStyleOnlyRow(ws, c1, c2) {
 		var stylesByCol = ws.cellStylesByCol;
 		if (!stylesByCol || stylesByCol.length === 0) {
@@ -63,11 +69,10 @@
 		return maxR;
 	}
 
-	// Pull-based row iterator yielding data and direct-style-only cells.
-	// Direct-style-only emissions return a shared transient Cell (read-only,
-	// no saveContent). Within a row, columns emit in ascending order; a cell
-	// with both data and a direct cellStylesByCol entry emits once via the
-	// data path because Cell.loadContent resolves the direct xf.
+	// Yields data and style-only cells in column order. Style-only
+	// emissions use a shared read-only transient Cell. Data+style at the
+	// same coord emits once through the data path (Cell.loadContent
+	// resolves the direct xf).
 	function OccupiedRowIterator() {
 	}
 	OccupiedRowIterator.prototype.init = function (ws, r1, c1, c2) {
@@ -89,6 +94,25 @@
 		this.transientCell = new ns.Cell(ws);
 		this.transientCell._isTransient = true;
 		this.row = r1 - 1;
+		// Snapshot the columns that carry any style entry in [c1..c2] once,
+		// so per-row setRow does not re-walk the full cellStylesByCol array.
+		this._activeStoreCols = null;
+		this._activeStores = null;
+		var maxStoreC = stylesByCol.length - 1;
+		if (maxStoreC > c2) {
+			maxStoreC = c2;
+		}
+		for (var sc = c1; sc <= maxStoreC; sc++) {
+			var s = stylesByCol[sc];
+			if (s && !s.isEmpty()) {
+				if (this._activeStoreCols === null) {
+					this._activeStoreCols = [];
+					this._activeStores = [];
+				}
+				this._activeStoreCols.push(sc);
+				this._activeStores.push(s);
+			}
+		}
 		this._styleCols = null;
 		this._styleColsIdx = 0;
 		this._pendingData = null;
@@ -113,28 +137,20 @@
 		this._styleColsIdx = 0;
 	};
 	OccupiedRowIterator.prototype._computeStyleOnlyCols = function (row) {
-		var stylesByCol = this.ws.cellStylesByCol;
-		if (!stylesByCol || stylesByCol.length === 0) {
+		var stores = this._activeStores;
+		if (!stores) {
 			return null;
 		}
-		var maxC = stylesByCol.length - 1;
-		if (maxC > this.c2) {
-			maxC = this.c2;
-		}
 		var cols = null;
-		for (var c = this.c1; c <= maxC; c++) {
-			var store = stylesByCol[c];
-			if (!store) {
-				continue;
-			}
-			var xf = store.get(row);
+		for (var i = 0; i < stores.length; i++) {
+			var xf = stores[i].get(row);
 			if (xf == null || xf === 0) {
 				continue;
 			}
 			if (cols === null) {
 				cols = [];
 			}
-			cols.push(c);
+			cols.push(this._activeStoreCols[i]);
 		}
 		return cols;
 	};
@@ -183,7 +199,7 @@
 				return dataCell;
 			}
 			if (this._pendingDataCol === styleCol) {
-				// data + direct xf at same col: emit once via data path.
+				// data + style at same col: emit once via data path.
 				this._styleColsIdx++;
 				this._pendingData = null;
 				return dataCell;
@@ -195,4 +211,269 @@
 
 	ns.OccupiedRowIterator = OccupiedRowIterator;
 	ns.maxStyleOnlyRow = maxStyleOnlyRow;
+
+	var Range = ns.Range;
+	var Cell = ns.Cell;
+	var Row = ns.Row;
+	var RowIterator = ns.RowIterator;
+
+	// Occupied iteration: data cells AND direct-style-only cells.
+	// Style-only cells arrive as a shared _isTransient Cell with cell.xfs
+	// preloaded; callers must treat them as read-only (no saveContent,
+	// clearData, setStyle, _removeCell). Use _foreachDataOnly when only
+	// SheetMemory init rows should be visited.
+	Range.prototype._foreachNoEmpty = function(actionCell, actionRow, excludeHiddenRows) {
+		var oRes, i, oBBox = this.bbox;
+		var ws = this.worksheet;
+		var dataMaxR = Math.max(ws.cellsByColRowsCount - 1, ws.rowsData.getMaxIndex());
+		var styleMaxR = maxStyleOnlyRow(ws, oBBox.c1, oBBox.c2);
+		var minR = Math.max(dataMaxR, styleMaxR);
+		minR = Math.min(minR, oBBox.r2);
+		if (actionCell || actionRow) {
+			var itRow = null;
+			if (actionCell) {
+				itRow = new OccupiedRowIterator();
+				itRow.init(ws, oBBox.r1, oBBox.c1, oBBox.c2);
+			}
+			var bExcludeHiddenRows = (ws.bExcludeHiddenRows || excludeHiddenRows);
+			var excludedCount = 0;
+			var tempCell;
+			var tempRow = new Row(ws);
+			var allRow = ws.getAllRow();
+			var allRowHidden = allRow && allRow.getHidden();
+			for (i = oBBox.r1; i <= minR; i++) {
+				if (actionRow) {
+					if (tempRow.loadContent(i)) {
+						if (bExcludeHiddenRows && tempRow.getHidden()) {
+							excludedCount++;
+							continue;
+						}
+						oRes = actionRow(tempRow, excludedCount);
+						tempRow.saveContent(true);
+						if (null != oRes) {
+							if (itRow) {
+								itRow.release();
+							}
+							return oRes;
+						}
+					} else if (bExcludeHiddenRows && allRowHidden) {
+						excludedCount++;
+						continue;
+					}
+				} else if (bExcludeHiddenRows && ws.getRowHidden(i)) {
+					excludedCount++;
+					continue;
+				}
+				if (itRow) {
+					itRow.setRow(i);
+					while (tempCell = itRow.next()) {
+						oRes = actionCell(tempCell, i, tempCell.nCol, oBBox.r1, oBBox.c1, excludedCount);
+						if (null != oRes) {
+							itRow.release();
+							return oRes;
+						}
+					}
+				}
+			}
+			if (itRow) {
+				itRow.release();
+			}
+		}
+	};
+	// Data-only row-major iteration; no transient style-only emissions.
+	Range.prototype._foreachDataOnly = function(actionCell, actionRow, excludeHiddenRows) {
+		var oRes, i, oBBox = this.bbox, minR = Math.max(this.worksheet.cellsByColRowsCount - 1, this.worksheet.rowsData.getMaxIndex());
+		minR = Math.min(minR, oBBox.r2);
+		if (actionCell || actionRow) {
+			var itRow = new RowIterator();
+			if (actionCell) {
+				itRow.init(this.worksheet, this.bbox.r1, this.bbox.c1, this.bbox.c2);
+			}
+			var bExcludeHiddenRows = (this.worksheet.bExcludeHiddenRows || excludeHiddenRows);
+			var excludedCount = 0;
+			var tempCell;
+			var tempRow = new Row(this.worksheet);
+			var allRow = this.worksheet.getAllRow();
+			var allRowHidden = allRow && allRow.getHidden();
+			for (i = oBBox.r1; i <= minR; i++) {
+				if (actionRow) {
+					if (tempRow.loadContent(i)) {
+						if (bExcludeHiddenRows && tempRow.getHidden()) {
+							excludedCount++;
+							continue;
+						}
+						oRes = actionRow(tempRow, excludedCount);
+						tempRow.saveContent(true);
+						if (null != oRes) {
+							if (actionCell) {
+								itRow.release();
+							}
+							return oRes;
+						}
+					} else if (bExcludeHiddenRows && allRowHidden) {
+						excludedCount++;
+						continue;
+					}
+				} else if (bExcludeHiddenRows && this.worksheet.getRowHidden(i)) {
+					excludedCount++;
+					continue;
+				}
+				if (actionCell) {
+					itRow.setRow(i);
+					while (tempCell = itRow.next()) {
+						oRes = actionCell(tempCell, i, tempCell.nCol, oBBox.r1, oBBox.c1, excludedCount);
+						if (null != oRes) {
+							if (actionCell) {
+								itRow.release();
+							}
+							return oRes;
+						}
+					}
+				}
+			}
+			if (actionCell) {
+				itRow.release();
+			}
+		}
+	};
+	// Column-major occupied (data + direct-style-only) iteration; transient
+	// Cell emissions are read-only.
+	Range.prototype._foreachNoEmptyByCol = function(actionCell, excludeHiddenRows) {
+		if (!actionCell) {
+			return;
+		}
+		var oRes, i, j, colData;
+		var ws = this.worksheet;
+		var wb = ws.workbook;
+		var oBBox = this.bbox;
+		var dataColMax = ws.getColDataLength() - 1;
+		var stylesByCol = ws.cellStylesByCol || [];
+		var styleColMax = stylesByCol.length - 1;
+		var minC = oBBox.c2;
+		var bigC = dataColMax > styleColMax ? dataColMax : styleColMax;
+		if (minC > bigC) {
+			minC = bigC;
+		}
+		if (oBBox.c1 > minC) {
+			return;
+		}
+		var bExcludeHiddenRows = (ws.bExcludeHiddenRows || excludeHiddenRows);
+		var excludedCount = 0;
+		var tempCell = new Cell(ws);
+		tempCell._isTransient = true;
+		var transientStyleCell = new Cell(ws);
+		transientStyleCell._isTransient = true;
+		wb.loadCells.push(tempCell);
+		for (j = oBBox.c1; j <= minC; ++j) {
+			colData = ws.getColDataNoEmpty(j);
+			var styleStore = stylesByCol[j] || null;
+			if (!colData && (!styleStore || styleStore.isEmpty())) {
+				continue;
+			}
+			var dataMaxR = colData ? colData.getMaxIndex() : -1;
+			var styleMaxR = (styleStore && !styleStore.isEmpty()) ? styleStore.lastRow() : -1;
+			var maxR = dataMaxR > styleMaxR ? dataMaxR : styleMaxR;
+			var loopMaxR = Math.min(oBBox.r2, maxR);
+			for (i = oBBox.r1; i <= loopMaxR; i++) {
+				if (bExcludeHiddenRows && ws.getRowHidden(i)) {
+					excludedCount++;
+					continue;
+				}
+				var targetCell = null;
+				for (var k = 0; k < wb.loadCells.length - 1; ++k) {
+					var elem = wb.loadCells[k];
+					if (elem.nRow === i && elem.nCol === j && ws === elem.ws) {
+						targetCell = elem;
+						break;
+					}
+				}
+				if (null !== targetCell) {
+					oRes = actionCell(targetCell, i, j, oBBox.r1, oBBox.c1, excludedCount);
+					if (null != oRes) {
+						wb.loadCells.pop();
+						return oRes;
+					}
+					continue;
+				}
+				var loaded = false;
+				if (colData) {
+					loaded = tempCell.loadContent(i, j, colData);
+				}
+				if (loaded) {
+					oRes = actionCell(tempCell, i, j, oBBox.r1, oBBox.c1, excludedCount);
+					tempCell.saveContent(true);
+					if (null != oRes) {
+						wb.loadCells.pop();
+						return oRes;
+					}
+					continue;
+				}
+				if (styleStore) {
+					var styleXf = styleStore.get(i);
+					if (styleXf != null && styleXf !== 0) {
+						transientStyleCell.clear();
+						transientStyleCell.nRow = i;
+						transientStyleCell.nCol = j;
+						transientStyleCell._isTransient = true;
+						var xfs = ws._directOrInheritedXfs(i, j);
+						if (xfs) {
+							transientStyleCell.xfs = xfs;
+						}
+						oRes = actionCell(transientStyleCell, i, j, oBBox.r1, oBBox.c1, excludedCount);
+						if (null != oRes) {
+							wb.loadCells.pop();
+							return oRes;
+						}
+					}
+				}
+			}
+		}
+		wb.loadCells.pop();
+	};
+	// Column-major data-only iteration; direct-style-only cells are skipped.
+	Range.prototype._foreachDataOnlyByCol = function(actionCell, excludeHiddenRows) {
+		var oRes, i, j, colData;
+		var wb = this.worksheet.workbook;
+		var oBBox = this.bbox, minR = Math.min(this.worksheet.cellsByColRowsCount - 1, oBBox.r2);
+		var minC = Math.min(this.worksheet.getColDataLength() - 1, oBBox.c2);
+		if (actionCell && oBBox.c1 <= minC && oBBox.r1 <= minR) {
+			var bExcludeHiddenRows = (this.worksheet.bExcludeHiddenRows || excludeHiddenRows);
+			var excludedCount = 0;
+			var tempCell = new Cell(this.worksheet);
+			tempCell._isTransient = true;
+			wb.loadCells.push(tempCell);
+			for (j = oBBox.c1; j <= minC; ++j) {
+				colData = this.worksheet.getColDataNoEmpty(j);
+				if (colData) {
+					for (i = oBBox.r1; i <= Math.min(minR, colData.getMaxIndex()); i++) {
+						if (bExcludeHiddenRows && this.worksheet.getRowHidden(i)) {
+							excludedCount++;
+							continue;
+						}
+						var targetCell = null;
+						for (var k = 0; k < wb.loadCells.length - 1; ++k) {
+							var elem = wb.loadCells[k];
+							if (elem.nRow == i && elem.nCol == j && this.worksheet === elem.ws) {
+								targetCell = elem;
+								break;
+							}
+						}
+						if (null === targetCell) {
+							if (tempCell.loadContent(i, j, colData)) {
+								oRes = actionCell(tempCell, i, j, oBBox.r1, oBBox.c1, excludedCount);
+								tempCell.saveContent(true);
+							}
+						} else {
+							oRes = actionCell(targetCell, i, j, oBBox.r1, oBBox.c1, excludedCount);
+						}
+						if (null != oRes) {
+							wb.loadCells.pop();
+							return oRes;
+						}
+					}
+				}
+			}
+			wb.loadCells.pop();
+		}
+	};
 })(window);
