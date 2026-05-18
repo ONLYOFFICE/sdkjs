@@ -2459,14 +2459,14 @@ var editor;
 								AscCommonExcel.PrepareComments(ws, xmlParserContext, comments, pThreadedComments, personList);
 
 								var timelines = wsPart.getPartsByRelationshipType(openXml.Types.timelines.relationType);
-								if (timelines && timelines.length) {
+								for (i = 0; i < timelines.length; ++i) {
 									let contentTimeline = timelines[i].getDocumentContent();
 									let oNewTimelines = new AscCommonExcel.CT_CTimelines();
 									reader = new StaxParser(contentTimeline, oNewTimelines, xmlParserContext);
 									oNewTimelines.fromXml(reader);
 
 									if (oNewTimelines.timelines && oNewTimelines.timelines.length) {
-										ws.timelines = oNewTimelines.timelines;
+										ws.timelines = (ws.timelines || []).concat(oNewTimelines.timelines);
 									}
 								}
 							}
