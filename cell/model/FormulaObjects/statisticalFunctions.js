@@ -12640,7 +12640,7 @@ function parseStringToCElement (val, cultureInfo) {
 	/**
 	 * Precondition: column._pendingStrChanges must already be flushed by the caller
 	 * (i.e. _applyPendingStringChanges must have been called before this method).
-	 * Use _setupRankCompare instead of calling this directly — it handles the flush.
+	 * Use _setupRankRange instead of calling this directly — it handles the flush.
 	 */
 	CountIfTypedCache.prototype._ensureStringRank = function(column) {
 		const stringData = column.data[cElementType.string];
@@ -12800,40 +12800,22 @@ function parseStringToCElement (val, cultureInfo) {
 		}
 		return -1;
 	};
-	/**
-	 * Binary-search `searchValue` in the pre-sorted unique-strings array and return
-	 * the rank threshold needed for inequality-operator matching.
-	 * Uses lower/upper bounds via stringCompare so comparator-equal-but-not-identical
-	 * Unicode strings are bracketed correctly.
-	 * @param {string[]} sorted     — unique column strings sorted by stringCompare
-	 * @param {string}   searchValue
-	 * @param {string}   opt_op     — one of '<', '>', '<=', '>='
-	 * @returns {{threshold: number, useGte: boolean}}
-	 *   Rows match when: useGte ? rank >= threshold : rank < threshold
-	 */
-	CountIfTypedCache.prototype._buildRankThreshold = function(sorted, searchValue, opt_op) {
-		if (opt_op === '<') {
-			return {threshold: this._binarySearchSorted(sorted, searchValue), useGte: false};
-		}
-		if (opt_op === '<=') {
-			return {threshold: this._upperBoundSorted(sorted, searchValue), useGte: false};
-		}
-		if (opt_op === '>') {
-			return {threshold: this._upperBoundSorted(sorted, searchValue), useGte: true};
-		}
-		/* '>=' */
-		return {threshold: this._binarySearchSorted(sorted, searchValue), useGte: true};
-	};
 	CountIfTypedCache.prototype.calculate = function(range, type, matchingFunction, searchValue, convertToNumber, opt_op) {
 		let count = 0;
 		const ws = range.getWS();
 		const bbox = range.getBBox0();
 		const wsId = ws.getId();
-		// Rank-based comparison is eligible when searching strings with inequality operators.
+		// Rank-based comparison is eligible for string criteria with any of the
+		// supported ops ('<', '>', '<=', '>=', '=', or null).  Replaces per-cell
+		// stringCompare/localeCompare with a `lower <= rank < upper` integer check.
 		// Empty string is excluded: callers return 0 early for that case (consistent with COUNTIFS).
-		const useRankCompare = !convertToNumber && type === cElementType.string && opt_op &&
+		// Wildcard-bearing searchValue is also excluded — wildcards are not a collation
+		// operation; the caller is responsible for not passing opt_op when matchingFunction
+		// is a regex.
+		const useRankCompare = !convertToNumber && type === cElementType.string &&
 			searchValue !== "" &&
-			(opt_op === '<' || opt_op === '>' || opt_op === '<=' || opt_op === '>=');
+			(opt_op === '<' || opt_op === '>' || opt_op === '<=' || opt_op === '>=' ||
+				opt_op === '=' || opt_op === null);
 		for (let i = bbox.c1; i <= bbox.c2; i += 1) {
 			this.updateColumnData(ws, i, bbox.r1, bbox.r2);
 			const column = this.data[wsId][i];
@@ -12853,16 +12835,18 @@ function parseStringToCElement (val, cultureInfo) {
 			const firstIndex = this.findLowerIndexInTyped(bbox.r1, typedIndexes);
 			const lastIndex = this.findHigherIndexInTyped(bbox.r2, typedIndexes);
 			if (useRankCompare && typedData.length) {
-				const rc = this._setupRankCompare(column, searchValue, opt_op);
-				if (rc) {
+				// Single rank loop covers '<', '>', '<=', '>=', '=' / null.  When searchValue
+				// is absent (rb null or lower === upper), no string cells match.
+				const rb = this._setupRankRange(column, searchValue, opt_op);
+				if (rb && rb.lower < rb.upper) {
+					const lower = rb.lower;
+					const upper = rb.upper;
+					const rankData = rb.rankData;
 					for (let j = firstIndex; j < lastIndex; j += 1) {
-						if (rc.useGte ? rc.rankData[j] >= rc.threshold : rc.rankData[j] < rc.threshold) {
+						const r = rankData[j];
+						if (r >= lower && r < upper) {
 							count += 1;
 						}
-					}
-				} else {
-					for (let j = firstIndex; j < lastIndex; j += 1) {
-						count += matchingFunction(typedData[j], searchValue);
 					}
 				}
 			} else if (convertToNumber) {
@@ -12937,21 +12921,63 @@ function parseStringToCElement (val, cultureInfo) {
 		return false;
 	};
 	/**
-	 * Ensure rank data is up to date for `column`, then build the threshold for `op`.
-	 * Returns null when rank data is unavailable (column has no strings yet).
-	 * @returns {{rankData: Int32Array, threshold: number, useGte: boolean}|null}
+	 * Build the half-open rank-match range [lower, upper) for `searchValue` under
+	 * comparison operator `op` on the column's sorted string index. Shared by all
+	 * rank fast paths (COUNTIF / COUNTIFS / SUMIF / SUMIFS / AVERAGEIF / AVERAGEIFS):
+	 * a cell matches iff its rank r satisfies lower <= r < upper.
+	 *
+	 * Supported ops:
+	 *   '<'  → [0, binarySearchSorted(searchValue))
+	 *   '<=' → [0, upperBoundSorted(searchValue))
+	 *   '>'  → [upperBoundSorted(searchValue), sorted.length)
+	 *   '>=' → [binarySearchSorted(searchValue), sorted.length)
+	 *   '='  → [binarySearchSorted(searchValue), upperBoundSorted(searchValue))
+	 *           — the collation-equality run for searchValue.
+	 *   null → same as '='  (default-equals when criterion has no operator prefix).
+	 *
+	 * For '<>' callers pass op = '=' here and treat matches as complement
+	 * (rank ∉ [lower, upper)). When searchValue is absent from the column the
+	 * returned bounds satisfy lower === upper, so the standard rank-in-range
+	 * check yields no matches — callers do not need to special-case this.
+	 *
+	 * Flushes pending string changes and ensures the rank index is built.
+	 * Returns null when the column has no sorted strings yet.
+	 *
+	 * @param {Object} column
+	 * @param {string} searchValue
+	 * @param {string|null} op
+	 * @returns {{rankData: Int32Array, lower: number, upper: number}|null}
 	 */
-	CountIfTypedCache.prototype._setupRankCompare = function(column, searchValue, op) {
-		// Flush pending string changes before rank computation.
-		// Callers must also flush before reading column.data[string] (for typedData freshness),
-		// so their flush comes first and this one is the no-op; never the other way around.
+	CountIfTypedCache.prototype._setupRankRange = function(column, searchValue, op) {
+		// Flush pending string changes before rank computation. Callers must also
+		// flush before reading column.data[string]/indexes[string]; their flush
+		// comes first and the one here is the no-op (never the other way around).
 		this._applyPendingStringChanges(column);
 		this._ensureStringRank(column);
-		if (!column._sortedStrings || !column._sortedStrings.length) {
+		const sorted = column._sortedStrings;
+		if (!sorted || !sorted.length) {
 			return null;
 		}
-		const rt = this._buildRankThreshold(column._sortedStrings, searchValue, op);
-		return {rankData: column._stringRankArray, threshold: rt.threshold, useGte: rt.useGte};
+		const len = sorted.length;
+		let lower, upper;
+		if (op === '<') {
+			lower = 0;
+			upper = this._binarySearchSorted(sorted, searchValue);
+		} else if (op === '<=') {
+			lower = 0;
+			upper = this._upperBoundSorted(sorted, searchValue);
+		} else if (op === '>') {
+			lower = this._upperBoundSorted(sorted, searchValue);
+			upper = len;
+		} else if (op === '>=') {
+			lower = this._binarySearchSorted(sorted, searchValue);
+			upper = len;
+		} else {
+			// '=' or null: collation-equality run.
+			lower = this._binarySearchSorted(sorted, searchValue);
+			upper = this._upperBoundSorted(sorted, searchValue);
+		}
+		return {rankData: column._stringRankArray, lower: lower, upper: upper};
 	};
 	CountIfTypedCache.prototype.changeColumnsData = function(wsId, cell, oldValue, oldType, newValue, newType) {
 		const columnIndex = cell.nCol;
@@ -13327,7 +13353,10 @@ function parseStringToCElement (val, cultureInfo) {
 		const isWildcard = type === cElementType.string && (searchValue.indexOf('*') !== -1 || searchValue.indexOf('?') !== -1);
 		if ((matchingInfo.op === '=' || matchingInfo.op === null) && !isWildcard) {
 			const matchingFunction = getMatchingFunction(type, matchingInfo.op, isWildcard);
-			_count = this.typedCache.calculate(range, type, matchingFunction, searchValue);
+			// Pass '=' as opt_op only for the string path so the rank-equality fast path
+			// can be taken; the numeric-string fallback below must keep matchFn-linear.
+			const rankOp = type === cElementType.string ? '=' : undefined;
+			_count = this.typedCache.calculate(range, type, matchingFunction, searchValue, false, rankOp);
 			if (type === cElementType.number) {
 				_count += this.typedCache.calculate(range, cElementType.string, matchingFunction, searchValue, true);
 			}
@@ -13338,17 +13367,23 @@ function parseStringToCElement (val, cultureInfo) {
 			const matchingFunction = (type === cElementType.string && isWildcard)
 				? (function() { var re = _buildWildcardRegex(searchValue); return function(a) { return re.test(a); }; }())
 				: getMatchingFunction(type, '=', isWildcard);
-			_count = this.typedCache.calculate(range, type, matchingFunction, searchValue);
+			// '<>X' = cellsCount - equalCount.  Rank-equality applies only to the non-wildcard
+			// string-equality call; wildcard matchFn is a regex and must stay linear.
+			const rankOp = (type === cElementType.string && !isWildcard) ? '=' : undefined;
+			_count = this.typedCache.calculate(range, type, matchingFunction, searchValue, false, rankOp);
 			_count = cellsCount - _count;
 		} else {
 			// For wildcard = (e.g. "Asd1**"), pre-compile the pattern once per formula call.
 			// IMPORTANT: only pre-compile for '=' / null — inequality operators (<,>,<=,>=) treat
 			// * and ? as literal characters (Excel behavior), so they must use stringCompare, not regex.
-			const matchingFunction = (type === cElementType.string && isWildcard && (matchingInfo.op === '=' || matchingInfo.op === null))
+			const isWildcardEq = type === cElementType.string && isWildcard && (matchingInfo.op === '=' || matchingInfo.op === null);
+			const matchingFunction = isWildcardEq
 				? (function() { var re = _buildWildcardRegex(searchValue); return function(a) { return re.test(a); }; }())
 				: getMatchingFunction(type, matchingInfo.op, isWildcard);
-			// Pass opt_op for rank-based string inequality optimisation.
-			_count = this.typedCache.calculate(range, type, matchingFunction, searchValue, false, matchingInfo.op);
+			// Pass opt_op for the rank fast path. Wildcard equality must stay linear:
+			// matchingFunction is a regex and the rank '=' path would bypass it.
+			const rankOp = isWildcardEq ? undefined : matchingInfo.op;
+			_count = this.typedCache.calculate(range, type, matchingFunction, searchValue, false, rankOp);
 		}
 		return new cNumber(_count);
 	};
@@ -13779,10 +13814,16 @@ function parseStringToCElement (val, cultureInfo) {
 		const remBits = numRows & 31;
 		const lastWordMask = remBits !== 0 ? (1 << remBits) - 1 : 0xFFFFFFFF;
 
-		// Rank-based comparison: eligible for string type with inequality operators in normal mode.
-		// isEmptyStr is excluded: matchFn is null in that case and the expected result is 0 matches.
-		const useRankCompare = type === cElementType.string && !isComplement && !info.isEmptyStr &&
-			(op === '<' || op === '>' || op === '<=' || op === '>=');
+		// Rank-based comparison replaces per-cell stringCompare with a `lower <= rank < upper`
+		// integer check.  Eligible for string criteria with any of '<', '>', '<=', '>=',
+		// '=' / null (normal mode) and '<>' (isComplement, treated as '=' with inverted result).
+		// Wildcards are excluded: they go through the precompiled regex matchFn and are not
+		// a collation operation.
+		// isEmptyStr is excluded: matchFn is null and the expected result is 0 matches;
+		// the empty-cells path runs upstream in _applyOneCriteria.
+		const useRankCompare = type === cElementType.string && !info.isEmptyStr && !isWildcard &&
+			(isComplement || op === '<' || op === '>' || op === '<=' || op === '>=' ||
+				op === '=' || op === null);
 
 		for (let relCol = 0; relCol < numCols; relCol += 1) {
 			const absCol = bbox.c1 + relCol;
@@ -13804,22 +13845,34 @@ function parseStringToCElement (val, cultureInfo) {
 			}
 
 			if (useRankCompare && typedData && typedData.length) {
-				// Rank-based fast path: integer comparisons instead of string comparisons.
-				const rc = typedCache._setupRankCompare(column, searchValue, op);
-				const first = typedCache.findLowerIndexInTyped(bbox.r1, typedIndexes);
-				const last = typedCache.findHigherIndexInTyped(bbox.r2, typedIndexes);
-				if (rc) {
-					for (let j = first; j < last; j += 1) {
-						if (rc.useGte ? rc.rankData[j] >= rc.threshold : rc.rankData[j] < rc.threshold) {
-							const relRow = typedIndexes[j] - bbox.r1;
-							matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+				// Single rank loop covers '<', '>', '<=', '>=', '=' / null, and '<>'.
+				// In complement mode ('<>') the loop clears bits; in normal mode it sets
+				// them.  When searchValue is absent (rb null or lower === upper) the loop
+				// is skipped — matchingRelRows is left at its initial fill (all-1s for
+				// complement, all-0s for normal), which is the correct outcome for both.
+				// In complement mode the rank range is the collation-equality run ('=').
+				const rb = typedCache._setupRankRange(column, searchValue, isComplement ? '=' : op);
+				if (rb && rb.lower < rb.upper) {
+					const lower = rb.lower;
+					const upper = rb.upper;
+					const rankData = rb.rankData;
+					const first = typedCache.findLowerIndexInTyped(bbox.r1, typedIndexes);
+					const last = typedCache.findHigherIndexInTyped(bbox.r2, typedIndexes);
+					if (isComplement) {
+						for (let j = first; j < last; j += 1) {
+							const r = rankData[j];
+							if (r >= lower && r < upper) {
+								const relRow = typedIndexes[j] - bbox.r1;
+								matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
+							}
 						}
-					}
-				} else if (matchFn) {
-					for (let j = first; j < last; j += 1) {
-						if (matchFn(typedData[j], searchValue)) {
-							const relRow = typedIndexes[j] - bbox.r1;
-							matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+					} else {
+						for (let j = first; j < last; j += 1) {
+							const r = rankData[j];
+							if (r >= lower && r < upper) {
+								const relRow = typedIndexes[j] - bbox.r1;
+								matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+							}
 						}
 					}
 				}
@@ -14295,11 +14348,16 @@ function parseStringToCElement (val, cultureInfo) {
 
 		const columnsOffset = sumRangeBbox.c1 - searchRangeBbox.c1;
 
-		// Rank-based comparison is eligible when searching strings with inequality operators.
+		// Rank-based comparison is eligible for string criteria with any of the supported
+		// ops ('<', '>', '<=', '>=', '=' or null).  Replaces per-cell stringCompare with a
+		// `lower <= rank < upper` integer check on the column's rank index.
 		// Empty string is excluded: callers return 0 early for that case (consistent with COUNTIFS).
-		const useRankCompare = !convertToNumber && type === cElementType.string && opt_op &&
+		// Wildcard-bearing searchValue is excluded — callers must not pass opt_op when
+		// matchingFunction is a regex.
+		const useRankCompare = !convertToNumber && type === cElementType.string &&
 			searchValue !== "" &&
-			(opt_op === '<' || opt_op === '>' || opt_op === '<=' || opt_op === '>=');
+			(opt_op === '<' || opt_op === '>' || opt_op === '<=' || opt_op === '>=' ||
+				opt_op === '=' || opt_op === null);
 
 		for (let i = searchRangeBbox.c1; i <= searchRangeBbox.c2; i += 1) {
 			const sumColumnIndex = columnsOffset + i;
@@ -14328,13 +14386,16 @@ function parseStringToCElement (val, cultureInfo) {
 			const errorData = skipErrors ? null : sumColumn.data[cElementType.error];
 
 			if (searchTypedData) {
-				// Build rank threshold once per column for string inequality fast path.
-				const rc = useRankCompare && searchTypedData.length
-					? this._setupRankCompare(searchColumn, searchValue, opt_op)
+				// Build rank range once per column when eligible.  Single bracket covers
+				// all supported ops ('<', '>', '<=', '>=', '=' / null).  When the bracket
+				// is empty (searchValue absent or out of range) the rank loop iterates
+				// without matching any cell — correct outcome by construction.
+				const rb = useRankCompare && searchTypedData.length
+					? this._setupRankRange(searchColumn, searchValue, opt_op)
 					: null;
-				const rankData = rc ? rc.rankData : null;
-				const rankThreshold = rc ? rc.threshold : 0;
-				const rankUseGte = rc ? rc.useGte : false;
+				const rankData = rb ? rb.rankData : null;
+				const rankLower = rb ? rb.lower : 0;
+				const rankUpper = rb ? rb.upper : 0;
 
 				const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
 
@@ -14372,7 +14433,8 @@ function parseStringToCElement (val, cultureInfo) {
 				} else if (rankData) {
 					// Fast path: integer rank comparison instead of string comparison.
 					for (let j = firstIndex; j < lastIndex; j += 1) {
-						if (rankUseGte ? rankData[j] < rankThreshold : rankData[j] >= rankThreshold) continue;
+						const r = rankData[j];
+						if (r < rankLower || r >= rankUpper) continue;
 						if ((!sumIndexes || currentSumIndex >= sumLen) && (!errorIndexes || currentErrorIndex >= errLen)) break;
 						const targetRow = searchTypedIndexes[j] + rowSumOffset;
 						currentSumIndex = gallopAdvance(sumIndexes, currentSumIndex, sumLen, targetRow);
@@ -14508,7 +14570,10 @@ function parseStringToCElement (val, cultureInfo) {
 			const isWildcard = type === cElementType.string && (searchValue.indexOf('*') !== -1 || searchValue.indexOf('?') !== -1);
 			if ((matchingInfo.op === '=' || matchingInfo.op === null) && !isWildcard) {
 				const matchingFunction = getMatchingFunction(type, matchingInfo.op, isWildcard);
-				let calculatingResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, matchingFunction, searchValue);
+				// Pass '=' as opt_op only for the string path so the rank-equality fast
+				// path can be taken; the numeric-string fallback below stays matchFn-linear.
+				const rankOp = type === cElementType.string ? '=' : undefined;
+				let calculatingResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, matchingFunction, searchValue, false, false, rankOp);
 				if (calculatingResult.error !== null) {
 					return calculatingResult.error;
 				}
@@ -14535,7 +14600,10 @@ function parseStringToCElement (val, cultureInfo) {
 				}
 
 				const total = this.typedCache.sumColumnTotalInRange(range, sumRange, this.sumRangeCache);
-				const matchResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, equalFn, searchValue, false, true);
+				// Rank-equality applies only to the non-wildcard string-equality call;
+				// wildcard equalFn is a regex and must stay linear.
+				const rankOp = (type === cElementType.string && !isWildcard) ? '=' : undefined;
+				const matchResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, equalFn, searchValue, false, true, rankOp);
 				_sum = total.sum - matchResult.sum;
 				_count = total.count - matchResult.count;
 			} else {
@@ -14543,11 +14611,14 @@ function parseStringToCElement (val, cultureInfo) {
 				// This avoids re-parsing the mask and calling toLowerCase on every of N cell comparisons.
 				// IMPORTANT: only pre-compile for '=' / null — inequality operators (<,>,<=,>=) treat
 				// * and ? as literal characters (Excel behavior), so they must use stringCompare, not regex.
-				const matchingFunction = (type === cElementType.string && isWildcard && (matchingInfo.op === '=' || matchingInfo.op === null))
+				const isWildcardEq = type === cElementType.string && isWildcard && (matchingInfo.op === '=' || matchingInfo.op === null);
+				const matchingFunction = isWildcardEq
 					? (function() { var re = _buildWildcardRegex(searchValue); return function(a) { return re.test(a); }; }())
 					: getMatchingFunction(type, matchingInfo.op, isWildcard);
-				// Pass opt_op for rank-based string inequality optimisation.
-				const calculatingResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, matchingFunction, searchValue, false, false, matchingInfo.op);
+				// Pass opt_op for the rank fast path. Wildcard equality must stay linear:
+				// matchingFunction is a regex and the rank '=' path would bypass it.
+				const rankOp = isWildcardEq ? undefined : matchingInfo.op;
+				const calculatingResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, matchingFunction, searchValue, false, false, rankOp);
 				if (calculatingResult.error !== null) {
 					return calculatingResult.error;
 				}
