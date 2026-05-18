@@ -380,9 +380,27 @@
             return;
         }
 
+		let nExtMM = 5;
+        let oBounds = this.bounds ? {l: this.bounds.l - nExtMM, t: this.bounds.t - nExtMM, r: this.bounds.r + nExtMM, b: this.bounds.b + nExtMM} : null;
+
         function setRedrawPageOnRepaint() {
             if (oViewer.pagesInfo.pages[nPage]) {
-                oViewer.pagesInfo.pages[nPage].needRedrawDrawings = true;
+                let oPageInfo = oViewer.pagesInfo.pages[nPage];
+                oPageInfo.needRedrawDrawings = true;
+
+                if (oBounds && oPageInfo.dirtyDrawingsBounds !== null) {
+                    if (!oPageInfo.dirtyDrawingsBounds) {
+                        oPageInfo.dirtyDrawingsBounds = {l: oBounds.l, t: oBounds.t, r: oBounds.r, b: oBounds.b};
+                    } else {
+                        oPageInfo.dirtyDrawingsBounds.l = Math.min(oPageInfo.dirtyDrawingsBounds.l, oBounds.l);
+                        oPageInfo.dirtyDrawingsBounds.t = Math.min(oPageInfo.dirtyDrawingsBounds.t, oBounds.t);
+                        oPageInfo.dirtyDrawingsBounds.r = Math.max(oPageInfo.dirtyDrawingsBounds.r, oBounds.r);
+                        oPageInfo.dirtyDrawingsBounds.b = Math.max(oPageInfo.dirtyDrawingsBounds.b, oBounds.b);
+                    }
+                } else {
+                    oPageInfo.dirtyDrawingsBounds = null;
+                }
+
                 oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
             }
         }

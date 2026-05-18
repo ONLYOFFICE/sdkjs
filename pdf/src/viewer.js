@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
@@ -99,6 +99,28 @@
 		Width : 1,
 		Page : 2
 	};
+
+	function isBoundsIntersect(a, b) {
+		return a.l < b.r && a.r > b.l &&
+			a.t < b.b && a.b > b.t;
+	}
+
+	function collectDrawingsForPartialRedraw(drawings, dirtyBounds) {
+		let result = [];
+		let count = 0;
+
+		for (let i = 0; i < drawings.length; i++) {
+			let bounds = drawings[i].bounds;
+			if (!bounds || isBoundsIntersect(bounds, dirtyBounds)) {
+				result[count++] = drawings[i];
+			}
+		}
+
+		return {
+			drawings: result,
+			bounds: dirtyBounds
+		};
+	}
 
 	// page class.
 	// isPainted - means it was ever drawn and finished drawing (fonts loaded)
@@ -2850,14 +2872,34 @@
 						oImageToDraw = page.Image;
 					}
 					else {
+						let oDirtyBounds     = pageInfo.dirtyDrawingsBounds;
+						let bHasPrevTmpImage = !!page.TmpImage;
 						let tmpPageImage = page.TmpImage ? page.TmpImage : document.createElement('canvas');
 						let tmpPageCtx = tmpPageImage.getContext('2d');
-						
+
 						if (!page.TmpImage) {
 							page.TmpImage = tmpPageImage;
 						}
 
-						if (pageInfo.needRedrawDrawings || pageInfo.needRedrawMarkups || (needNewPage && !isStretchPaint)) {
+						let bCanPartialRedraw = bHasPrevTmpImage &&
+							page.Image &&
+							tmpPageImage.width === page.Image.width &&
+							tmpPageImage.height === page.Image.height &&
+							!isStretchPaint &&
+							!needNewPage &&
+							pageInfo.needRedrawDrawings &&
+							!pageInfo.needRedrawMarkups &&
+							aMarkups.length === 0 &&
+							oDirtyBounds !== null &&
+							oDirtyBounds !== undefined;
+
+						if (bCanPartialRedraw) {
+							this._drawDrawingsOnCtx(i, tmpPageCtx, false, oDirtyBounds, page.Image);
+
+							pageInfo.needRedrawDrawings = false;
+							pageInfo.dirtyDrawingsBounds = undefined;
+						}
+						else if (pageInfo.needRedrawDrawings || pageInfo.needRedrawMarkups || (needNewPage && !isStretchPaint)) {
 							if (page.Image) {
 								tmpPageImage.width = page.Image.width;
 								tmpPageImage.height = page.Image.height;
@@ -2866,16 +2908,17 @@
 								tmpPageImage.width = w;
 								tmpPageImage.height = h;
 							}
-		
+
 							tmpPageCtx.drawImage(page.Image, 0, 0);
-		
+
 							this._drawDrawingsOnCtx(i, tmpPageCtx);
 							this._drawMarkupAnnotsOnCtx(i, tmpPageCtx);
 
 							pageInfo.needRedrawDrawings = false;
 							pageInfo.needRedrawMarkups = false;
+							pageInfo.dirtyDrawingsBounds = undefined;
 						}
-						
+
 						oImageToDraw = tmpPageImage;
 					}
 				}
@@ -4206,26 +4249,85 @@
             });
         }
     };
-	CHtmlPage.prototype._drawDrawingsOnCtx = function(nPage, ctx, isThumbnails) {
+	CHtmlPage.prototype._drawDrawingsOnCtx = function(nPage, ctx, isThumbnails, oDirtyBoundsMM, pageImage) {
 		let aDrawings = this.pagesInfo.pages[nPage].drawings;
 		if (aDrawings.length == 0) {
 			return;
 		}
 
-		let oDoc		= this.getPDFDoc();
-		let widthPx		= ctx.canvas.width;
-		let heightPx    = ctx.canvas.height;
+		let oDoc         = this.getPDFDoc();
+		let widthPx      = ctx.canvas.width;
+		let heightPx     = ctx.canvas.height;
+		let pageWidthMM  = oDoc.GetPageWidthMM(nPage);
+		let pageHeightMM = oDoc.GetPageHeightMM(nPage);
+
+		let drawingsToRender = aDrawings;
+		let bPartialRedraw   = !!oDirtyBoundsMM;
+		let bClipDrawings    = false;
+		let clipX = 0, clipY = 0, clipW = 0, clipH = 0;
+		let clipL = 0, clipT = 0, clipWmm = 0, clipHmm = 0;
+
+		if (bPartialRedraw) {
+			let dirty = {l: oDirtyBoundsMM.l, t: oDirtyBoundsMM.t, r: oDirtyBoundsMM.r, b: oDirtyBoundsMM.b};
+
+			aDrawings.forEach(function(d) {
+				if (d.IsNeedRecalc()) {
+					d.Recalculate();
+					d.recalcBounds();
+					if (d.bounds) {
+						dirty.l = Math.min(dirty.l, d.bounds.l);
+						dirty.t = Math.min(dirty.t, d.bounds.t);
+						dirty.r = Math.max(dirty.r, d.bounds.r);
+						dirty.b = Math.max(dirty.b, d.bounds.b);
+					}
+				}
+			});
+
+			let partialRedrawInfo = collectDrawingsForPartialRedraw(aDrawings, dirty);
+			dirty = partialRedrawInfo.bounds;
+			drawingsToRender = partialRedrawInfo.drawings;
+
+			let scaleX = (25.4 * widthPx / pageWidthMM) / 25.4;
+			let scaleY = (25.4 * heightPx / pageHeightMM) / 25.4;
+			let dirtyX = Math.max(0, Math.floor(dirty.l * scaleX));
+			let dirtyY = Math.max(0, Math.floor(dirty.t * scaleY));
+			let dirtyR = Math.min(widthPx, Math.ceil(dirty.r * scaleX));
+			let dirtyB = Math.min(heightPx, Math.ceil(dirty.b * scaleY));
+			let dirtyW = dirtyR - dirtyX;
+			let dirtyH = dirtyB - dirtyY;
+			clipX = dirtyX;
+			clipY = dirtyY;
+			clipW = dirtyW;
+			clipH = dirtyH;
+			clipL = dirtyX / scaleX;
+			clipT = dirtyY / scaleY;
+			clipWmm = dirtyW / scaleX;
+			clipHmm = dirtyH / scaleY;
+
+			if (pageImage) {
+				ctx.drawImage(pageImage, dirtyX, dirtyY, dirtyW, dirtyH, dirtyX, dirtyY, dirtyW, dirtyH);
+			}
+		}
 
 		let oGraphicsWord = new AscCommon.CGraphics();
 		oGraphicsWord.isThumbnails = isThumbnails;
-		oGraphicsWord.init(ctx, widthPx, heightPx, oDoc.GetPageWidthMM(nPage) , oDoc.GetPageHeightMM(nPage));
+		oGraphicsWord.init(ctx, widthPx, heightPx, pageWidthMM, pageHeightMM);
 		oGraphicsWord.m_oFontManager = AscCommon.g_fontManager;
 		oGraphicsWord.setEndGlobalAlphaColor(255, 255, 255);
 		oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
 
-		aDrawings.forEach(function(drawing) {
+		if (bPartialRedraw) {
+			oGraphicsWord.AddClipRect(clipL, clipT, clipWmm, clipHmm);
+			bClipDrawings = true;
+		}
+
+		drawingsToRender.forEach(function(drawing) {
 			drawing.Draw(oGraphicsWord);
 		});
+
+		if (bClipDrawings) {
+			oGraphicsWord.RemoveLastClip();
+		}
 	};
 	CHtmlPage.prototype.createComponents = function()
 	{
@@ -5514,6 +5616,7 @@
 	if (!window["AscPDF"])
 	    window["AscPDF"] = {};
 
+	window["AscPDF"].collectDrawingsForPartialRedraw = collectDrawingsForPartialRedraw;
 	window["AscPDF"].CPageInfo = CPageInfo;
 	window["AscPDF"].PropLocker = PropLocker;
 
