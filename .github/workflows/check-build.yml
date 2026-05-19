@@ -36,82 +36,34 @@ jobs:
       - name: check out repository
         uses: actions/checkout@v4
 
+      - name: Check out sdkjs-tests (matching branch)
+        id: sdkjs-tests-branch
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: ONLYOFFICE/sdkjs-tests
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-tests
+          ref: ${{ github.base_ref || github.ref_name }}
+          
+      - name: Check out sdkjs-tests (master fallback)
+        if: steps.sdkjs-tests-branch.outcome != 'success'
+        uses: actions/checkout@v4
+        with:
+          repository: ONLYOFFICE/sdkjs-tests
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-tests
+          ref: master
+
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
             node-version: 20
-      
+
       - name: Run unit tests
         run: |
-          npm install grunt-cli node-qunit-puppeteer
-          npm install --prefix build
-          node node_modules/grunt-cli/bin/grunt --gruntfile build/Gruntfile.js develop
-          node node_modules/node-qunit-puppeteer/cli.js tests/common/api/api.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/shortcuts/shortcuts.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/formula-tests/FormulaTests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/formula-tests/databaseTests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/formula-tests/dateTimeTests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/formula-tests/financialTests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/formula-tests/informationTests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/formula-tests/engineeringTests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/formula-tests/logicalTests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/formula-tests/lookupAndReferenceTests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/formula-tests/mathematicTests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/formula-tests/statisticalTests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/formula-tests/textAndDataTests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/PivotTests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/copy-paste-tests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/SheetStructureTests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/autoFilterTests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/UserProtectedRangesTest.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/FormulaTrace.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/NumFormatParse.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/DataValidationTests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/conditionalFormattingTests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/ExternalReference.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/SheetMemoryTest.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/whatIfAnalysisTests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/DynamicArraysTests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/cell/js-api/js-api.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/unit-tests/paragraphContentPos.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/unit-tests/deleted-text-recovery.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/content-control/block-level/cursorAndSelection.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/content-control/inline-level/checkbox.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/content-control/inline-level/cursorAndSelection.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/content-control/inline-level/date-time.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/custom-xml/custom-xml.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/floating-position/drawing.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/paragraph.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/table/correctBadTable.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/table/flowTablePosition.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/table/pageBreak.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/table/table-flow.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/table/table-grid.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/table/table-header.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/textShaper/textShaper.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/text-hyphenator/text-hyphenator.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/forms/forms.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/forms/complexForm.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/numbering/numberingApplicator.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/numbering/numberingCalculation.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/numbering/numberingAutocorrect.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/api/api.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/api/cross-ref.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/api/textInput.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/styles/displayStyle.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/styles/paraPr.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/styles/styleApplicator.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/text-autocorrection/as-you-type.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/plugins/pluginsApi.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/revisions/paragraph.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/merge-documents/mergeDocuments.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/math-autocorrection/math-autocorrection.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/math-ml/math-ml.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/change-case/change-case.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/js-api/js-api.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/shortcuts/shortcuts.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/word/copypaste/copy-paste-tests.html 30000 "--no-sandbox"
-          node node_modules/node-qunit-puppeteer/cli.js tests/slide/shortcuts/shortcuts.html 30000 "--no-sandbox"
+          python build/build.py --develop
+          node tests/run.js
 
       - name: Send message to telegram if failure
         if: failure()
