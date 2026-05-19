@@ -21,9 +21,28 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-
+          
+      - name: Check out sdkjs-tests (matching branch)
+        id: sdkjs-tests-branch
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: ONLYOFFICE/sdkjs-tests
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-tests
+          ref: ${{ github.base_ref || github.ref_name }}
+          
+      - name: Check out sdkjs-tests (master fallback)
+        if: steps.sdkjs-tests-branch.outcome != 'success'
+        uses: actions/checkout@v4
+        with:
+          repository: ONLYOFFICE/sdkjs-tests
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-tests
+          ref: master
+      
       - name: execute check styles
-        run: python tests/code-style/check.py
+        run: python ../sdkjs-tests/code-style/check.py
 
   unit-tests:
     runs-on: ubuntu-latest
@@ -63,7 +82,7 @@ jobs:
       - name: Run unit tests
         run: |
           python build/build.py --develop
-          node tests/run.js
+          node ../sdkjs-tests/run.js
 
       - name: Send message to telegram if failure
         if: failure()
