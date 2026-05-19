@@ -80,6 +80,25 @@ jobs:
           path: sdkjs-tests
           ref: master
 
+      - name: Check out sdkjs-ext (matching branch)
+        id: sdkjs-ext-branch
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: ONLYOFFICE/sdkjs-ext
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-ext
+          ref: ${{ github.base_ref || github.ref_name }}
+
+      - name: Check out sdkjs-ext (master fallback)
+        if: steps.sdkjs-ext-branch.outcome != 'success'
+        uses: actions/checkout@v4
+        with:
+          repository: ONLYOFFICE/sdkjs-ext
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-ext
+          ref: master
+
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
@@ -88,7 +107,7 @@ jobs:
       - name: Run unit tests
         run: |
           cd sdkjs
-          python build/build.py --develop
+          python build/build.py --develop --addon ../sdkjs-ext
           cd ../sdkjs-tests
           npm install node-qunit-puppeteer
           node run.js
