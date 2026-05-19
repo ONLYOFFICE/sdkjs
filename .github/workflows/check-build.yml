@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: sdkjs
 
@@ -44,7 +44,9 @@ jobs:
           ref: master
       
       - name: execute check styles
-        run: python sdkjs-tests/code-style/check.py
+        run: |
+          cd sdkjs
+          python ../sdkjs-tests/code-style/check.py
 
   unit-tests:
     runs-on: ubuntu-latest
@@ -87,11 +89,13 @@ jobs:
         run: |
           cd sdkjs
           python build/build.py --develop
-          node ../sdkjs-tests/run.js
+          cd ../sdkjs-tests
+          npm install node-qunit-puppeteer
+          node run.js
 
       - name: Send message to telegram if failure
         if: failure()
-        uses: ./.github/actions/send-message
+        uses: ./sdkjs/.github/actions/send-message
         with:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           chat: ${{ secrets.TELEGRAM_TO }}
