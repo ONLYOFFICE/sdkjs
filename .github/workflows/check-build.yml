@@ -99,6 +99,25 @@ jobs:
           path: sdkjs-ext
           ref: master
 
+      - name: Check out sdkjs-forms (matching branch)
+        id: sdkjs-forms-branch
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: ONLYOFFICE/sdkjs-forms
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-forms
+          ref: ${{ github.base_ref || github.ref_name }}
+
+      - name: Check out sdkjs-forms (master fallback)
+        if: steps.sdkjs-forms-branch.outcome != 'success'
+        uses: actions/checkout@v4
+        with:
+          repository: ONLYOFFICE/sdkjs-forms
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-forms
+          ref: master
+
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
@@ -107,7 +126,7 @@ jobs:
       - name: Run unit tests
         run: |
           cd sdkjs
-          python build/build.py --develop --addon ../sdkjs-ext
+          python build/build.py --develop --addon ../sdkjs-ext --addon ../sdkjs-forms
           cd ../sdkjs-tests
           npm install node-qunit-puppeteer
           node run.js
