@@ -8606,7 +8606,7 @@ CDocument.prototype.IsTableBorder = function(X, Y, PageIndex)
 	{
 		if (-1 != this.DrawingObjects.IsInDrawingObject(X, Y, PageIndex, this))
 		{
-			return null;
+			return this.DrawingObjects.IsTableBorderInDrawing(X, Y, PageIndex);
 		}
 		else if (true === this.Footnotes.CheckHitInFootnote(X, Y, PageIndex))
 		{

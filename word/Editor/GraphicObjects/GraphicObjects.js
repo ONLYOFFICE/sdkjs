@@ -3713,6 +3713,19 @@ CGraphicObjects.prototype =
         return this.maximalGraphicObjectZIndex;
     },
 
+    IsTableBorderInDrawing: function(X, Y, nPageIndex){
+        this.handleEventMode = HANDLE_EVENT_MODE_CURSOR;
+        const ret = this.curState.onMouseDown(global_mouseEvent, X, Y, nPageIndex);
+        this.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
+        if(ret && ret.objectId)
+        {
+            const oObject = AscCommon.g_oTableId.Get_ById(ret.objectId);
+            if(oObject)
+                return oObject.IsTableBorder(X, Y, nPageIndex);
+        }
+        return null;
+    },
+
     IsInDrawingObject: function(X, Y, nPageIndex, oContent){
         var _X, _Y, oTransform, oInvertTransform;
         if(oContent){

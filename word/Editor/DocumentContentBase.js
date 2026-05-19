@@ -2789,7 +2789,11 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 {
 	if (!prevState)
 		return null;
-	
+
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsMovingTableBorder())
+		return null;
+
 	if (action && (action.type !== AscCommon.SpeakerActionType.keyDown || action.event.KeyCode < 33 || action.event.KeyCode > 40))
 		return null;
 	

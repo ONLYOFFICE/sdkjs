@@ -280,7 +280,11 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
                             return null;
                         }
                     }
-                    if(bWord && selected_objects[i].parent && selected_objects[i].parent.Is_Inline())
+                    if(bWord && drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE && null !== selected_objects[i].IsTableBorder(tx, ty, pageIndex))
+                    {
+                        ret = drawingObjectsController.handleTextHit(selected_objects[i], e, tx, ty, group, pageIndex, bWord);
+                    }
+                    else if(bWord && selected_objects[i].parent && selected_objects[i].parent.Is_Inline())
                         ret = handleInlineHitNoText(selected_objects[i], drawingObjectsController, e, tx, ty, pageIndex, true);
                     else
                         ret = drawingObjectsController.handleMoveHit(selected_objects[i], e, tx, ty, group, true, selected_objects[i].selectStartPage, true);
