@@ -8149,6 +8149,11 @@ CDocument.prototype.IsMovingTableBorder = function()
 {
 	return this.Controller.IsMovingTableBorder();
 };
+CDocument.prototype.CancelTableBorderMove = function()
+{
+	this.Controller.CancelTableBorderMove();
+	this.DrawingDocument.OnUpdateOverlay();
+};
 /**
  * Проверяем попали ли мы в селект.
  * @param X
@@ -9035,7 +9040,23 @@ CDocument.prototype.OnKeyDown = function(e)
 			{
 				this.Api.sync_StartAddShapeCallback(false);
 				this.Api.sync_EndAddShape();
-				this.DrawingObjects.endTrackNewShape();
+				if (this.Is_TrackingDrawingObjects())
+					this.DrawingObjects.resetTrackState();
+				else
+					this.DrawingObjects.endTrackNewShape();
+				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
+			}
+			else if (this.IsMovingTableBorder())
+			{
+				this.CancelTableBorderMove();
+				this.DrawingDocument.UnlockCursorType();
+				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
+			}
+			else if (this.Is_TrackingDrawingObjects())
+			{
+				this.DrawingObjects.resetTrackState();
+				this.DrawingDocument.OnUpdateOverlay();
+				this.DrawingDocument.UnlockCursorType();
 				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
 			}
 			else if (this.Api.isInkDrawerOn())
@@ -21765,6 +21786,19 @@ CDocument.prototype.controller_IsMovingTableBorder = function()
 		return true;
 
 	return false;
+};
+CDocument.prototype.controller_CancelTableBorderMove = function()
+{
+	if (null == this.Selection.Data || true !== this.Selection.Data.TableBorder)
+		return;
+
+	let table = this.Content[this.Selection.Data.Pos];
+	if (table && type_Table === table.GetType())
+		table.CancelBorderMove();
+
+	this.Selection.Start = false;
+	this.Selection.Use   = this.Selection.Data.Selection;
+	this.Selection.Data  = null;
 };
 CDocument.prototype.controller_CheckPosInSelection = function(X, Y, PageAbs, NearPos)
 {

@@ -1586,6 +1586,13 @@ CGraphicObjects.prototype =
         return false;
     },
 
+    cancelSelectionTableBorder: function()
+    {
+        var content = this.getTargetDocContent();
+        if(content)
+            content.CancelTableBorderMove();
+    },
+
 
     getTableByXY: function(x, y, pageIndex, documentContent)
     {

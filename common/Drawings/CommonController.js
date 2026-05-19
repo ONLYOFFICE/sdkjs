@@ -6522,7 +6522,8 @@
 
 				checkEndAddShape: function () {
 					if (this.checkTrackDrawings()) {
-						this.endTrackNewShape();
+						this.resetTrackState();
+						this.updateOverlay();
 						if (Asc["editor"] && Asc["editor"].wb) {
 							Asc["editor"].asc_endAddShape();
 							var ws = Asc["editor"].wb.getWorksheet();

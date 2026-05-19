@@ -241,6 +241,25 @@ DrawingObjectsController.prototype.onMouseUp = function(e, x, y)
 };
 DrawingObjectsController.prototype.OnMouseUp = DrawingObjectsController.prototype.onMouseUp;
 
+DrawingObjectsController.prototype.cancelTableBorderMove = function()
+{
+    const selected = this.selectedObjects || [];
+    for (let i = 0; i < selected.length; ++i)
+    {
+        const drawing = selected[i];
+        if (drawing.getObjectType() === AscDFH.historyitem_type_GraphicFrame)
+        {
+            const table = drawing.graphicObject;
+            if (table && table.IsBorderMove())
+            {
+                table.CancelBorderMove();
+                return true;
+            }
+        }
+    }
+    return false;
+};
+
 
 DrawingObjectsController.prototype.convertPixToMM = function(pix)
 {

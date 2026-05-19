@@ -5600,10 +5600,19 @@ CPresentation.prototype.OnKeyDown = function (e) {
 			if (oController && !this.IsFocusOnNotes()) {
 				if(!bCancelEyedropper && !bCancelInkDrawer) {
 					var oDrawingObjects = oController;
+					if (oDrawingObjects.cancelTableBorderMove()) {
+						this.DrawingDocument.UnlockCursorType();
+						this.DrawingDocument.m_oWordControl.OnUpdateOverlay();
+						this.OnMouseMove(global_mouseEvent, 0, 0, this.CurPage);
+						this.UpdateInterface();
+						return;
+					}
 					if (oDrawingObjects.isTrackingDrawings()) {
+						oDrawingObjects.resetTrackState();
+						this.DrawingDocument.m_oWordControl.OnUpdateOverlay();
 						this.Api.sync_EndAddShape();
-						oDrawingObjects.endTrackNewShape();
-						this.UpdateCursorType(0, 0, new AscCommon.CMouseEventHandler());
+						this.DrawingDocument.UnlockCursorType();
+						this.OnMouseMove(global_mouseEvent, 0, 0, this.CurPage);
 						this.UpdateInterface();
 						return;
 					}

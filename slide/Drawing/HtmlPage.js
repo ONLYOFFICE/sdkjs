@@ -4060,7 +4060,7 @@
 		if (oWordControl.IsFocus === false && e.emulated !== true)
 			return;
 
-		if (oWordControl.m_oApi.isLongAction() || oWordControl.m_bIsMouseLock === true) {
+		if (oWordControl.m_oApi.isLongAction() || (oWordControl.m_bIsMouseLock === true && 27 !== e.keyCode)) {
 			AscCommon.check_KeyboardEvent2(e);
 			e.preventDefault();
 			return;
@@ -4089,7 +4089,7 @@
 			oWordControl.m_oDrawingDocument.TransitionSlide.End(true);
 
 		var oWordControl = oThis;
-		if (false === oWordControl.m_oApi.bInit_word_control || oWordControl.IsFocus === false && e.emulated !== true || oWordControl.m_oApi.isLongAction() || oWordControl.m_bIsMouseLock === true)
+		if (false === oWordControl.m_oApi.bInit_word_control || oWordControl.IsFocus === false && e.emulated !== true || oWordControl.m_oApi.isLongAction() || (oWordControl.m_bIsMouseLock === true && 27 !== e.keyCode))
 			return;
 
 		AscCommon.check_KeyboardEvent(e);
