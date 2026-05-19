@@ -2150,6 +2150,12 @@ var CPresentation = CPresentation || function(){};
 
 									if (Asc.editor.embeddedFontsMap[sFont]) {
 										run.Pr.RFonts.SetAll(Asc.editor.embeddedFontsMap[sFont]);
+										
+										for (let i = 0; i < run.Content.length; i++) {
+											let oItem = run.Content[i];
+											run.Remove_FromContent(i, 1);
+											run.Add_ToContent(i, oItem.IsSpace() ? new AscWord.CRunSpace(oItem.Value) : new AscWord.CRunText(oItem.Value));
+										}
 									}
 								});
 							}
