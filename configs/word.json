@@ -170,6 +170,7 @@
 			"cell/model/CellStyleStorage/LegacyMigration.js",
 			"cell/model/Workbook.js",
 			"cell/model/CellIterators.js",
+			"cell/model/CellStyleStorage/Compatibility.js",
 			"cell/model/Serialize.js",
 			"cell/model/CellInfo.js",
 			"cell/model/HeaderFooter.js",

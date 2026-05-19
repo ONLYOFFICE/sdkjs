@@ -9764,7 +9764,8 @@
 				toData = wsTo.getColData(to);
 				toData.copyRange(fromData, r1From, r1To, count);
 				if (isClearFromArea && clearEnd > clearStart) {
-					fromData.clear(clearStart, clearEnd);
+					AscCommonExcel.CellStyleStorage.clearMovedSourceData(
+						fromData, clearStart, clearEnd, getLockedOnlyXfIndex);
 				}
 			} else {
 				toData = wsTo.getColDataNoEmpty(to);
