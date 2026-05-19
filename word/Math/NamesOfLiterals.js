@@ -5541,6 +5541,15 @@
 
 		return this
 	};
+	MathTextAndStyles.prototype.DelLastSubSup = function ()
+	{
+		let oLastContent = this.GetLastContent();
+
+		if (oLastContent && (oLastContent.text[oLastContent.text.length - 1] === "^" || oLastContent.text[oLastContent.text.length - 1] === "_"))
+			oLastContent.text = oLastContent.text.slice(0, -1);
+
+		return this
+	};
 
 	// for store data without symbols and transfer data between autocorrection/correction sessions
 	function MathMetaData()
@@ -6559,12 +6568,18 @@
 		let oAbsolutePLastId	= this.GetAbsolutePreLast();
 		let oFuncNamePos		= CheckFunctionOnCursor(this.oCMathContent);
 
+		if (oFuncNamePos && oRuleLast && oRuleLast.IsLess(oFuncNamePos))
+			oRuleLast = oFuncNamePos;
+
 		if (this.oAbsoluteLastId === oAbsolutePLastId && this.oAbsoluteLastId === MathLiterals.space.id) // подряд два пробела, не начинам коррекцию
 			return false;
 
 		// если нажали пробел после названия функции (cos, sin, lim, log, ...), то
 		// нужно добавить символ \funcapply после и инициировать конвертацию
-		if (!oRuleLast && oFuncNamePos && this.oAbsoluteLastId === MathLiterals.space.id)
+		// or _ ^
+		if ((!oRuleLast || oRuleLast.GetType() === MathLiterals.func.id) 
+				&& oFuncNamePos
+				&& (this.oAbsoluteLastId === MathLiterals.space.id || this.oAbsoluteLastId === MathLiterals.subSup.id))
 		{
 			// последний элемент для получения стиля
 			let oLastMath		= this.GetAbsolutLastObject();
@@ -6573,7 +6588,8 @@
 			let oParamsCutContent	= {
 				oDelMark			: oFuncNamePos,
 				oEndDelMark			: GetEndCurPos(oFuncNamePos),
-				isDelLastSpace		: true
+				isDelLastSpace		: true,
+				isDelLastSubSup		: this.oAbsoluteLastId === MathLiterals.subSup.id
 			};
 
 			let oMathContent		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
@@ -6589,9 +6605,17 @@
 			//добавляем символ funcapply
 			let oFuncApply		= new MathText(String.fromCodePoint(8289), oLastMath.additionalMathData);
 			oMathContent.AddText(oFuncApply);
+	
+			if (this.oAbsoluteLastId === MathLiterals.subSup.id)
+			{
+				oMathContent.AddText(oLastMath);
+				this.oCMathContent.AddDataFromFlatMathTextAndStyles(oMathContent.Flat());
+			}
+			else
+			{
+				GetConvertContent(0, oMathContent, this.oCMathContent);
+			}
 
-			//конвертируем в профф. формат
-			GetConvertContent(0, oMathContent, this.oCMathContent);
 			this.SetCursorByConvertedData(this.oCMathContent);
 			return true
 		}
@@ -7158,6 +7182,7 @@
 				if (!isParaPosUsed && nParaPos >= oCurrentElement.Content.length)
 					continue;
 
+				let strWord = "";
 				for (let j = nTempParaPos !== null ? nTempParaPos : nParaPos; j >= 0; j--)
 				{
 					if (null !== nTempParaPos)
@@ -7167,6 +7192,19 @@
 
 					let oEndPos = new PositionIsCMathContent(i, j, undefined, oCurrentElement);
 					let oPos = this.IsStepInBracket(oEndPos, true);
+					let strCurrentContent = oCurrentElement.GetText();
+
+					strWord = strCurrentContent + strWord;
+					if (window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathFuncs.includes(strWord))
+					{
+						for (let i = 0; i < strWord.length - 1; i++)
+							oEndPos.DecreasePosition();
+
+						return {
+							start: oEndPos,
+							end: oTempStartPos
+						}
+					}
 
 					if (oPos)
 					{
@@ -7326,6 +7364,7 @@
 			|| MathLiterals.rect.id 	=== intLastTokenType
 			|| MathLiterals.func.id 	=== intLastTokenType
 			|| MathLiterals.hbrack.id	=== intLastTokenType
+			|| MathLiterals.func.id		=== intLastTokenType
 	};
 	/**
 	 * Processing PCFunction type of math content.
@@ -7598,6 +7637,7 @@
 		let nTypeOfTrigger		= oParamsCutContent.nTypeOfTrigger;
 		let isDelLastSpace		= oParamsCutContent.isDelLastSpace;
 		let isDelStartSpace		= oParamsCutContent.isDelStartSpace;
+		let isDelLastSubSup		= oParamsCutContent.isDelLastSubSup;
 
 		if (isCopy === true)
 			oContent = oContent.Copy();
@@ -7721,6 +7761,8 @@
 			oMathTextAndStyles.DelFirstSpace();
 		if (isDelLastSpace)
 			oMathTextAndStyles.DelLastSpace();
+		if (isDelLastSubSup)
+			oMathTextAndStyles.DelLastSubSup();
 
 		return oMathTextAndStyles;
 	}
@@ -7773,7 +7815,7 @@
 					oTempPos = new PositionIsCMathContent(
 						nTempRootIndex + 1,
 						nTempRunCounter + 1,
-						undefined,
+						MathLiterals.func.id,
 						oContentIterator._paraRun
 					);
 				}
@@ -7900,6 +7942,34 @@
 			}
 
 			return false;
+		};
+		/**
+		 * Check if this position is less than oPos
+		 * @param {PositionIsCMathContent} oPos
+		 * @returns {boolean}
+		 */
+		this.IsLess = function (oPos)
+		{
+			let MathPos = this.GetMathPos();
+			let ParaPos = this.GetPosition();
+			let OtherMathPos = oPos.GetMathPos();
+			let OtherParaPos = oPos.GetPosition();
+
+			return MathPos < OtherMathPos || (MathPos === OtherMathPos && ParaPos < OtherParaPos);
+		};
+		/**
+		 * Check if this position is greater than oPos
+		 * @param {PositionIsCMathContent} oPos
+		 * @returns {boolean}
+		 */
+		this.IsGreater = function (oPos)
+		{
+			let MathPos = this.GetMathPos();
+			let ParaPos = this.GetPosition();
+			let OtherMathPos = oPos.GetMathPos();
+			let OtherParaPos = oPos.GetPosition();
+
+			return MathPos > OtherMathPos || (MathPos === OtherMathPos && ParaPos > OtherParaPos);
 		};
 		/**
 		 * Get text of token. Needs  for debug
