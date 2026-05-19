@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: check out repository
         uses: actions/checkout@v3
+        with:
+          path: sdkjs
 
       - name: setup python
         uses: actions/setup-python@v4
@@ -42,7 +44,7 @@ jobs:
           ref: master
       
       - name: execute check styles
-        run: python ../sdkjs-tests/code-style/check.py
+        run: python sdkjs-tests/code-style/check.py
 
   unit-tests:
     runs-on: ubuntu-latest
@@ -54,6 +56,8 @@ jobs:
 
       - name: check out repository
         uses: actions/checkout@v4
+        with:
+          path: sdkjs
 
       - name: Check out sdkjs-tests (matching branch)
         id: sdkjs-tests-branch
@@ -81,6 +85,7 @@ jobs:
 
       - name: Run unit tests
         run: |
+          cd sdkjs
           python build/build.py --develop
           node ../sdkjs-tests/run.js
 
@@ -107,7 +112,7 @@ jobs:
           repository: ONLYOFFICE/sdkjs-forms
           token: ${{ secrets.READ_PAT }}
           path: sdkjs-forms
-          ref: ${{ github.ref }}
+          ref: ${{ github.base_ref || github.ref_name }}
       - name: check out repository sdkjs-forms master branch
         if: steps.sdkjs-forms.outcome != 'success'
         uses: actions/checkout@v4
@@ -125,9 +130,7 @@ jobs:
       - name: Run build sdkjs
         run: |
           cd sdkjs
-          npm install grunt-cli
-          npm install --prefix build
-          node node_modules/grunt-cli/bin/grunt --gruntfile build/Gruntfile.js
+          python build/build.py --addon ../sdkjs-forms
 
       - name: Send message to telegram if failure
         if: failure()
