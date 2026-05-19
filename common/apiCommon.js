@@ -146,6 +146,42 @@ function (window, undefined) {
 		return FixDurableId(CreateUInt32());
 	}
 
+	function CDrawingIdAllocator() {
+		this.userIndex = 0;
+		this.counter = 0;
+		this.m_nTurnOffDepth = 0;
+	}
+	CDrawingIdAllocator.prototype.setUserIndex = function(index) {
+		this.userIndex = (index | 0) & 0xFF;
+	};
+	CDrawingIdAllocator.prototype.observeId = function(id) {
+		if (typeof id !== "number" || id <= 0) return;
+		if (((id >> 23) & 0xFF) !== this.userIndex) return;
+		let c = id & 0x7FFFFF;
+		if (c > this.counter) this.counter = c;
+	};
+	CDrawingIdAllocator.prototype.TurnOff = function() {
+		this.m_nTurnOffDepth++;
+	};
+	CDrawingIdAllocator.prototype.TurnOn = function() {
+		if (this.m_nTurnOffDepth > 0) this.m_nTurnOffDepth--;
+	};
+	CDrawingIdAllocator.prototype.IsOn = function() {
+		return this.m_nTurnOffDepth === 0;
+	};
+	CDrawingIdAllocator.prototype.allocate = function() {
+		if (this.m_nTurnOffDepth > 0) return 0;
+		this.counter = (this.counter + 1) & 0x7FFFFF;
+		if (this.counter === 0) this.counter = 1;
+		return (this.userIndex << 23) | this.counter;
+	};
+
+	let g_oDrawingIdAllocator = new CDrawingIdAllocator();
+
+	function CreateDrawingId() {
+		return g_oDrawingIdAllocator.allocate();
+	}
+
 	function ExtendPrototype(dst, src) {
 		for (let k in src.prototype) {
 			dst.prototype[k] = src.prototype[k];
@@ -8270,6 +8306,9 @@ function (window, undefined) {
 	window["AscCommon"].CreateUUID = CreateUUID;
 	window["AscCommon"].CreateUInt32 = CreateUInt32;
 	window["AscCommon"].CreateDurableId = CreateDurableId;
+	window["AscCommon"].CreateDrawingId = CreateDrawingId;
+	window["AscCommon"].CDrawingIdAllocator = CDrawingIdAllocator;
+	window["AscCommon"].g_oDrawingIdAllocator = g_oDrawingIdAllocator;
 	window["AscCommon"].FixDurableId = FixDurableId;
 	window["AscCommon"].ExtendPrototype = ExtendPrototype;
 

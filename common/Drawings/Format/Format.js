@@ -1553,11 +1553,14 @@
 				b_table_id = true;
 			}
 
+			AscCommon.g_oDrawingIdAllocator.TurnOff();
+
 			var ret = f.apply(oThis, args);
 			AscCommon.History.TurnOn && AscCommon.History.TurnOn();
 			if (b_table_id) {
 				g_oTableId.m_bTurnOff = false;
 			}
+			AscCommon.g_oDrawingIdAllocator.TurnOn();
 			return ret;
 		}
 
@@ -8050,7 +8053,10 @@
 
 			this.form = null;
 
-			this.setId(AscCommon.CreateDurableId());
+			let id = AscCommon.CreateDrawingId();
+			if (id !== 0) {
+				this.setId(id);
+			}
 		}
 
 		InitClass(CNvPr, CBaseFormatObject, AscDFH.historyitem_type_CNvPr);
@@ -8071,6 +8077,7 @@
 		CNvPr.prototype.setId = function (id) {
 			AscCommon.History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CNvPr_SetId, this.id, id));
 			this.id = id;
+			AscCommon.g_oDrawingIdAllocator.observeId(id);
 		};
 		CNvPr.prototype.setName = function (name) {
 			AscCommon.History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_CNvPr_SetName, this.name, name));

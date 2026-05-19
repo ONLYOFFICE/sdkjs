@@ -15704,6 +15704,7 @@ CDocument.prototype.StartNoHistoryMode = function()
 
 	this.History.TurnOff();
 	this.TableId.TurnOff();
+	AscCommon.g_oDrawingIdAllocator.TurnOff();
 	this.SetLocalTrackRevisions(false);
 
 	return oState;
@@ -15716,6 +15717,7 @@ CDocument.prototype.EndNoHistoryMode = function(oState)
 {
 	this.History.TurnOn();
 	this.TableId.TurnOn();
+	AscCommon.g_oDrawingIdAllocator.TurnOn();
 	this.SetLocalTrackRevisions(oState.LocalTrackRevisions);
 };
 /**
