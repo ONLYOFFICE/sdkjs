@@ -737,12 +737,12 @@ var CPresentation = CPresentation || function(){};
 
         for (let i = 0; i < this.widgets.length; i++) {
             let oField = this.widgets[i];
-            if ((oField.GetPartialName() == null || oField.GetParentValue(bInberitValue) == null) && oField.GetParent()) {
+            if ((oField.GetPartialName() == null || oField.GetLogicValue(bInberitValue) == null) && oField.GetParent()) {
                 let oParent = oField.GetParent();
-                if (oParent.GetType() == AscPDF.FIELD_TYPES.radiobutton && oParent.IsAllKidsWidgets())
+                if (oParent.GetType() == AscPDF.FIELD_TYPES.radiobutton && oParent.IsLogicalRoot())
                     aRadios.push(oParent);
 
-                value = oParent.GetParentValue(false);
+                value = oParent.GetLogicValue(false);
                 if (value != null && value.toString) {
                     value = value.toString();
                 }
@@ -751,7 +751,7 @@ var CPresentation = CPresentation || function(){};
                     oField.SetCurIdxs(oParent._currentValueIndexes);
                 }
                 else {
-                    if (oField.GetType() !== AscPDF.FIELD_TYPES.radiobutton && oParent.IsAllKidsWidgets())
+                    if (oField.GetType() !== AscPDF.FIELD_TYPES.radiobutton && oParent.IsLogicalRoot())
                         oField.SetValue(value, true);
                 }
             }
@@ -3622,7 +3622,7 @@ var CPresentation = CPresentation || function(){};
             oParentsMap[nIdx] = oParent;
 
             if (aParentsInfo[i]["value"] != null)
-                oParent.SetParentValue(aParentsInfo[i]["value"]);
+                oParent.SetLogicValue(aParentsInfo[i]["value"]);
             if (aParentsInfo[i]["Parent"] != null)
                 this.private_AddFieldToChildsMap(oParent, aParentsInfo[i]["Parent"]);
             if (aParentsInfo[i]["defaultValue"] != null)
@@ -3630,7 +3630,7 @@ var CPresentation = CPresentation || function(){};
             if (aParentsInfo[i]["i"] != null)
                 oParent.SetApIdx(aParentsInfo[i]["i"]);
             if (aParentsInfo[i]["curIdxs"])
-                oParent.SetParentCurIdxs(aParentsInfo[i]["curIdxs"]);
+                oParent.SetLogicCurIdxs(aParentsInfo[i]["curIdxs"]);
             if (aParentsInfo[i]["opt"])
                 oParent.SetOptions(aParentsInfo[i]["opt"]);
             if (aParentsInfo[i]["MEOptions"] != null)
@@ -4716,7 +4716,7 @@ var CPresentation = CPresentation || function(){};
         }
         function AddJsAction(form, trigger, script)
         {
-            form.SetAction(trigger, script);
+            form.SetActions(trigger, [{"S": AscPDF.ACTIONS_TYPES.JavaScript, "JS": script}]);
         }
 	
         let textForm1 = CreateTextForm("TextForm1", [0, 0, 50, 50]);
@@ -9820,7 +9820,7 @@ var CPresentation = CPresentation || function(){};
         if (Array.isArray(formJson["curIdxs"]) && formJson["curIdxs"].length != 0) {
             oForm.SetCurIdxs(formJson["curIdxs"]);
             if (formJson["value"] != null)
-                oForm.SetParentValue(formJson["value"]);
+                oForm.SetLogicValue(formJson["value"]);
         }
         else if (formJson["value"] != null && oForm.GetType() != AscPDF.FIELD_TYPES.button) {
             oForm.SetValue(formJson["value"], true);

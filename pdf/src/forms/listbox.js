@@ -191,7 +191,7 @@
 	 */
     CListBoxField.prototype.SyncValue = function() {
         this.private_SetOptionsToContent(this.GetOptions().slice());
-        this.SetCurIdxs(this.GetParentCurIdxs());
+        this.SetCurIdxs(this.GetLogicCurIdxs());
         this.SetNeedRecalc(true);
     };
     CListBoxField.prototype.DrainLogicFrom = function(oFieldToInherit, bClearFrom) {
@@ -200,13 +200,13 @@
         this.SetMultipleSelection(oFieldToInherit.IsMultipleSelection());
         this.SetCommitOnSelChange(oFieldToInherit.IsCommitOnSelChange());
         this.SetOptions(oFieldToInherit.GetOptions());
-        this.SetParentCurIdxs(oFieldToInherit.GetParentCurIdxs());
+        this.SetLogicCurIdxs(oFieldToInherit.GetLogicCurIdxs());
 
         if (bClearFrom !== false) {
             oFieldToInherit.SetMultipleSelection(false);
             oFieldToInherit.SetCommitOnSelChange(false);
             oFieldToInherit.SetOptions([]);
-            oFieldToInherit.SetParentCurIdxs([]);
+            oFieldToInherit.SetLogicCurIdxs([]);
         }
     };
     /**
@@ -219,7 +219,7 @@
         let aFields = oDoc.GetAllWidgets(this.GetFullName());
         
         let aCurIdxs = this.GetCurIdxs();
-        let aApiIdxs = this.GetParentCurIdxs();
+        let aApiIdxs = this.GetLogicCurIdxs();
 
         this.ScrollVerticalEnd(true);
         let isChanged = false;
@@ -251,8 +251,8 @@
         
         this._bAutoShiftContentView = true;
         
-        this.SetParentValue(this.GetValue());
-        this.SetParentCurIdxs(aCurIdxs);
+        this.SetLogicValue(this.GetValue());
+        this.SetLogicCurIdxs(aCurIdxs);
     };
     CListBoxField.prototype.UpdateTopIndex = function() {
         let oParaBounds     = this.content.GetElement(0).GetPageBounds(0);
@@ -608,14 +608,14 @@
             }
 
             if (editor.getDocumentRenderer().IsOpenFormsInProgress) {
-                this.SetParentValue(value);
-                this.SetParentCurIdxs(aIndexes);
+                this.SetLogicValue(value);
+                this.SetLogicCurIdxs(aIndexes);
             }
                 
         }
         else {
-            this.SetParentValue(value);
-            this.SetParentCurIdxs(aIndexes);
+            this.SetLogicValue(value);
+            this.SetLogicCurIdxs(aIndexes);
         }
     };
     CListBoxField.prototype.private_SetValue = CListBoxField.prototype.SetValue;
@@ -1136,7 +1136,7 @@
     };
     CListBoxField.prototype.SetCurIdxs = function(aIdxs) {
         if (this.IsWidget()) {
-            AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetParentCurIdxs(), aIdxs));
+            AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetLogicCurIdxs(), aIdxs));
 
             AscCommon.History.StartNoHistoryMode();
             // first remove selection from current ones
@@ -1154,10 +1154,10 @@
             
             AscCommon.History.EndNoHistoryMode();
             if (Asc.editor.getDocumentRenderer().IsOpenFormsInProgress)
-                this.SetParentCurIdxs(aIdxs);
+                this.SetLogicCurIdxs(aIdxs);
         }
         else {
-            this.SetParentCurIdxs(aIdxs);
+            this.SetLogicCurIdxs(aIdxs);
         }
 
         this.SetNeedCommit(false);
@@ -1218,7 +1218,7 @@
         this.WriteToBinaryBase(memory);
         this.WriteToBinaryBase2(memory);
 
-        let value = this.GetParentValue(memory.isCopyPaste);
+        let value = this.GetLogicValue(memory.isCopyPaste);
         if (value != null && Array.isArray(value) == false) {
             memory.fieldDataFlags |= (1 << 9);
             memory.WriteString(value);
@@ -1247,7 +1247,7 @@
         // I array (selected list values)
         let curIdxs;
         if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
-            curIdxs = this.GetParentCurIdxs(memory.isCopyPaste);
+            curIdxs = this.GetLogicCurIdxs(memory.isCopyPaste);
         }
         if (curIdxs) {
             memory.fieldDataFlags |= (1 << 14);
