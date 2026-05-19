@@ -67,8 +67,8 @@
 		
 		this.isOnlyReaderMode = false;
 		
-		window["AscViewer"]["baseUrl"] = (typeof document !== 'undefined' && document.currentScript) ? "" : "./../../../../sdkjs/pdf/src/engine/";
-		window["AscViewer"]["baseEngineUrl"] = "./../../../../sdkjs/pdf/src/engine/";
+		window["AscViewer"]["baseUrl"] = (typeof document !== 'undefined' && document.currentScript) ? "" : (AscCommon.RELATIVE_SDKJS_PATH + "pdf/src/engine/");
+		window["AscViewer"]["baseEngineUrl"] = AscCommon.RELATIVE_SDKJS_PATH + "pdf/src/engine/";
 		
 		// TODO: Perhaps we should move initialization to
 		this.initDocumentRenderer();
@@ -4203,7 +4203,7 @@
 				}
 
 				let xhr = new XMLHttpRequest();
-				xhr.open("GET", "../../../../sdkjs/pdf/src/annotations/stamps/" + lang + ".json", false);
+				xhr.open("GET", AscCommon.RELATIVE_SDKJS_PATH + "pdf/src/annotations/stamps/" + lang + ".json", false);
 				xhr.send(null);
 	
 				if (xhr.status === 200 || location.href.indexOf("file:") === 0) {

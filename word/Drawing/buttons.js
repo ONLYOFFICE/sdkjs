@@ -523,7 +523,7 @@
 	function OverlayRasterIcon()
 	{
 		AscCommon.BaseImageCtrl.call(this);
-		this.baseUrl = "../../../../sdkjs/common/Images/icons";
+		this.baseUrl = AscCommon.RELATIVE_SDKJS_PATH + "common/Images/icons";
 	}
 	OverlayRasterIcon.prototype = Object.create(AscCommon.BaseImageCtrl.prototype);
 	OverlayRasterIcon.prototype.constructor = OverlayRasterIcon;
@@ -580,7 +580,7 @@
 	function PI()
 	{
 		AscCommon.BaseImageCtrl.call(this);
-		this.baseUrl = "../../../../sdkjs/common/Images/placeholders";
+		this.baseUrl = AscCommon.RELATIVE_SDKJS_PATH + "common/Images/placeholders";
 	}
 	PI.prototype = Object.create(AscCommon.BaseImageCtrl.prototype);
 	PI.prototype.constructor = PI;
@@ -1215,7 +1215,7 @@
 		function CCI(baseUrl)
 		{
 			AscCommon.BaseImageCtrl.call(this);
-			this.baseUrl = baseUrl ? baseUrl : "../../../../sdkjs/common/Images/content_controls";
+			this.baseUrl = baseUrl ? baseUrl : (AscCommon.RELATIVE_SDKJS_PATH + "common/Images/content_controls");
 		}
 		CCI.prototype = Object.create(AscCommon.BaseImageCtrl.prototype);
 		CCI.prototype.constructor = CCI;

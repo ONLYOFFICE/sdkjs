@@ -4924,6 +4924,8 @@ window.AscCommon.g_cIsBeta = "false";
 		Shape: 1
 	};
 
+	window.AscCommon.RELATIVE_SDKJS_PATH = typeof window.AscCommon.RELATIVE_SDKJS_PATH === "string" ? window.AscCommon.RELATIVE_SDKJS_PATH : "../../../../sdkjs/";
+
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
 	window['Asc']['FONT_THUMBNAIL_HEIGHT'] = FONT_THUMBNAIL_HEIGHT;

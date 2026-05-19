@@ -92,7 +92,7 @@
 			return;
 		}
 
-		var url = "../../../../sdkjs/common/libfont/engine/";
+		var url = AscCommon.RELATIVE_SDKJS_PATH + "common/libfont/engine/";
 		var useWasm = false;
 		var webAsmObj = window["WebAssembly"];
 		if (typeof webAsmObj === "object")

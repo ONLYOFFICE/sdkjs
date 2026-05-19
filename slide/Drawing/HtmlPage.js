@@ -384,7 +384,7 @@
 			_ctrl.Anchor = (g_anchor_left | g_anchor_right | g_anchor_bottom);
 			this.m_oDemonstrationDivParent.AddControl(_ctrl);
 
-			var _images_url = "../../../../sdkjs/common/Images/reporter/";
+			var _images_url = AscCommon.RELATIVE_SDKJS_PATH + "common/Images/reporter/";
 			var _head = document.getElementsByTagName('head')[0];
 
 			var styleContent = ".block_elem_no_select { -khtml-user-select: none; user-select: none; -moz-user-select: none; -webkit-user-select: none; }";
