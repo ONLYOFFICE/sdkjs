@@ -6507,7 +6507,7 @@
 		const oStartChangedCells = oSolver && oSolver.getStartChangingCells();
 
 		if (!bSave && oStartChangedCells) {
-			oChangedCells && oChangedCells._foreachNoEmpty(function (oCell) {
+			oChangedCells && oChangedCells._foreachDataOnly(function (oCell) {
 				const sOriginalValue = oStartChangedCells[oCell.getName()];
 				oCell.setValue(sOriginalValue);
 			});

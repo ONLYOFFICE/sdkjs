@@ -963,7 +963,7 @@ function (window, undefined) {
 		};
 
 		let formulaParsed;
-		ws.getCell3(row, col)._foreachNoEmpty(function (cell) {
+		ws.getCell3(row, col)._foreachDataOnly(function (cell) {
 			formulaParsed = cell.formulaParsed;
 		});
 

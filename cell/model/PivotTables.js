@@ -3066,7 +3066,7 @@ CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFiel
 	var headings = location.headings;
 	if (!headings) {
 		headings = [];
-		ws.getRange3(bbox.r1, bbox.c1, bbox.r1, bbox.c2)._foreachNoEmpty(function(cell) {
+		ws.getRange3(bbox.r1, bbox.c1, bbox.r1, bbox.c2)._foreachDataOnly(function(cell) {
 			if (!cell.isNullTextString()) {
 				headings.push(cell.getValue());
 			}
@@ -3105,7 +3105,7 @@ CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFiel
 		let stringCaseMap = new Map();
 		var lastRow, lastRowWithText;
 		lastRow = lastRowWithText = firstRow - 1;
-		ws.getRange3(lastRow + 1, bbox.c1 + i, bbox.r2, bbox.c1 + i)._foreachNoEmptyByCol(function(cell) {
+		ws.getRange3(lastRow + 1, bbox.c1 + i, bbox.r2, bbox.c1 + i)._foreachDataOnlyByCol(function(cell) {
 			if (undefined === cacheFieldNum) {
 				cacheFieldNum = cell.xfs && cell.xfs.num || null;
 			}
@@ -5781,7 +5781,7 @@ CT_pivotTableDefinition.prototype.prepareDataRange = function(ws, range) {
 };
 CT_pivotTableDefinition.prototype._prepareDataRange = function(ws, row, c1, c2) {
 	var res = {minCol: c2, maxCol: c1, countCol: 0};
-	ws.getRange3(row, c1, row, c2)._foreachNoEmptyByCol(function(cell) {
+	ws.getRange3(row, c1, row, c2)._foreachDataOnlyByCol(function(cell) {
 		if (!cell.isNullTextString()) {
 			res.minCol = Math.min(res.minCol, cell.nCol);
 			res.maxCol = Math.max(res.maxCol, cell.nCol);

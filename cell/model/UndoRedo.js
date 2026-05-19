@@ -3308,6 +3308,15 @@ function (window, undefined) {
 			oLockInfo["rangeOrObjectId"] = new Asc.Range(nCol, nRow, nCol, nRow);
 			this.wb.aCollaborativeChangeElements.push(oLockInfo);
 		}
+		// Style-only undo: apply to cellStylesByCol directly so no
+		// SheetMemory init row is created.
+		if (AscCH.historyitem_Cell_SetStyleOnly === Type) {
+			var styleVal = bUndo ? Data.oOldVal : Data.oNewVal;
+			if (typeof ws.setCellXf === 'function') {
+				ws.setCellXf(nRow, nCol, styleVal);
+			}
+			return;
+		}
 		ws._getCell(nRow, nCol, function (cell) {
 			var Val = bUndo ? Data.oOldVal : Data.oNewVal;
 			if (AscCH.historyitem_Cell_Fontname == Type) {

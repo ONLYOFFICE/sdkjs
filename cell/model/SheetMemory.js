@@ -43,7 +43,6 @@
 	 * @param {number} maxIndex - Maximum index allowed
 	 */
 	function SheetMemory(structSize, maxIndex) {
-		//todo separate structure for data and style
 		this.dataBuffer = null; // ArrayBuffer to store the data
 		this.dataUint8 = null; // Uint8Array view on the buffer
 		this.dataFloat = null; // Float64Array view on the buffer
@@ -331,37 +330,6 @@
 		end = Math.min(end, this.indexB + 1);
 		if (start < end) {
 			this.dataUint8.fill(0, (start - this.indexA) * this.structSize, (end - this.indexA) * this.structSize);
-		}
-	};
-
-	/**
-	 * Clears a range of indices except for locked flag from the cell style
-	 * Uses a callback function to transform full style into minimal style with only locked property
-	 * @param {number} start - Start index
-	 * @param {number} end - End index (exclusive)
-	 * @param {function} getLockedOnlyXfIndex - Callback function that receives xfIndex and returns new xfIndex with only locked property
-	 */
-	SheetMemory.prototype.clearExceptLocked = function(start, end, getLockedOnlyXfIndex) {
-		start = Math.max(start, this.indexA);
-		end = Math.min(end, this.indexB + 1);
-		if (start < end) {
-			let g_nCellFlag_init = 1;
-			for (let i = start; i < end; i++) {
-				let mix = this.getInt32(i, 0);
-				let xfIndex = mix & 0xFFFFFF;
-				
-				let startOffset = (i - this.indexA) * this.structSize;
-				let endOffset = startOffset + this.structSize;
-				this.dataUint8.fill(0, startOffset, endOffset);
-				
-				// Transform full style to minimal style with only locked property
-				if (xfIndex > 0 && getLockedOnlyXfIndex) {
-					let newXfIndex = getLockedOnlyXfIndex(xfIndex);
-					if (newXfIndex != null) {
-						this.setInt32(i, 0, newXfIndex | (g_nCellFlag_init << 24));
-					}
-				}
-			}
 		}
 	};
 

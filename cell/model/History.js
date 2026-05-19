@@ -195,6 +195,9 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Cell_SetHidden = 29;
 	window['AscCH'].historyitem_Cell_SetLocked = 30;
 	window['AscCH'].historyitem_Cell_ReadingOrder = 31;
+	// Direct xf change on a style-only cell; undo applies to
+	// ws.cellStylesByCol without creating a SheetMemory init row.
+	window['AscCH'].historyitem_Cell_SetStyleOnly = 32;
 
 	window['AscCH'].historyitem_Comment_Add = 1;
 	window['AscCH'].historyitem_Comment_Remove = 2;
