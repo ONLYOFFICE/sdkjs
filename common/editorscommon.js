@@ -1729,7 +1729,7 @@
 	//todo get from server config
 	var c_oAscImageUploadProp = {//Not all browsers allow getting file info before upload (e.g. ie9); if params change here, change matching params in web.common
 		MaxFileSize:      25000000, //25 mb
-		SupportedFormats: ["jpg", "jpeg", "jpe", "png", "gif", "bmp", "svg", "tiff", "tif"]
+		SupportedFormats: ["jpg", "jpeg", "jpe", "jfif", "jif", "png", "gif", "bmp", "svg", "tiff", "tif", "webp", "heic", "heif", "avif"]
 	};
 
 	var c_oAscDocumentUploadProp = {
