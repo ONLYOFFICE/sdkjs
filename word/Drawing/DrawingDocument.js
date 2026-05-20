@@ -4995,8 +4995,12 @@ function CDrawingDocument()
 		if (!this.TableOutlineDr.bIsTracked)
 			return;
 		
-		this.EndTrackTable(null, true);
+		this.TableOutlineDr.TableOutline = null;
 		this.TableOutlineDr.bIsTracked = false;
+		this.TableOutlineDr.InlinePos = null;
+		this.TableOutlineDr.IsResizeTableTrack = false;
+		this.TableOutlineDr.Counter = 0;
+		
 		this.m_oWordControl.OnUpdateOverlay();
 	};
 
