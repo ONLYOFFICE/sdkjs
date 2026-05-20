@@ -480,6 +480,266 @@
 		}
 	}
 
+	// Rewrite cellStylesByCol runs in bbox through transformFn; one
+	// historyitem_Cell_SetStyleOnlyRange per changed run, so the cost is
+	// O(runs), not O(cells). transformFn(oldXfs, col) returns a new
+	// (registered or unregistered) CellXfs, or null/oldXfs to skip.
+	// `prop`+`hash` enable the per-xf operation cache; pass null to skip
+	// (callers whose output is not keyed by a single value, e.g. setStyle).
+	function applyXfTransformToStyleOnlyRunsInBBox(ws, bbox, prop, hash, transformFn) {
+		if (!ws || !ws.cellStylesByCol || !bbox || typeof transformFn !== 'function') {
+			return;
+		}
+		var c1 = bbox.c1 | 0;
+		var r1 = bbox.r1 | 0;
+		var c2 = bbox.c2 | 0;
+		var r2 = bbox.r2 | 0;
+		if (c1 < 0) { c1 = 0; }
+		if (r1 < 0) { r1 = 0; }
+		if (c2 < c1 || r2 < r1) {
+			return;
+		}
+		var stores = ws.cellStylesByCol;
+		var maxCol = stores.length - 1;
+		if (c2 < maxCol) { maxCol = c2; }
+		var AscCommonExcel = window['AscCommonExcel'];
+		var AscCommon = window['AscCommon'];
+		var AscCH = window['AscCH'];
+		var styleCache = AscCommonExcel.g_StyleCache;
+		var historyOn = AscCommon.History.Is_On();
+		var sheetId = historyOn ? ws.getId() : null;
+		var useCache = (prop != null && hash !== undefined);
+		// memo[oldXfIdx] = entry or null (null = no-op for this xf).
+		var memo = {};
+
+		for (var c = c1; c <= maxCol; c++) {
+			var store = stores[c];
+			if (!store || store.isEmpty()) {
+				continue;
+			}
+			// Snapshot first; store.setRange below splits and merges runs.
+			var segs = [];
+			store.iter(r1, r2, function (lo, hi, v) {
+				segs.push({lo: lo, hi: hi, v: v});
+			});
+			for (var i = 0; i < segs.length; i++) {
+				var seg = segs[i];
+				var oldXfIdx = seg.v;
+				if (oldXfIdx == null || oldXfIdx <= 0) {
+					continue;
+				}
+				var entry = memo[oldXfIdx];
+				if (entry === undefined) {
+					var oldXfs = styleCache.getXf(oldXfIdx);
+					if (!oldXfs) {
+						memo[oldXfIdx] = null;
+						continue;
+					}
+					var newXfs = useCache && typeof oldXfs.getOperationCache === 'function'
+						? oldXfs.getOperationCache(prop, hash) : null;
+					if (!newXfs) {
+						var produced = transformFn(oldXfs, c);
+						if (!produced || produced === oldXfs) {
+							memo[oldXfIdx] = null;
+							continue;
+						}
+						newXfs = styleCache.addXf(produced);
+						if (useCache && typeof oldXfs.setOperationCache === 'function') {
+							oldXfs.setOperationCache(prop, hash, newXfs);
+						}
+					}
+					if (!newXfs || newXfs === oldXfs) {
+						memo[oldXfIdx] = null;
+						continue;
+					}
+					entry = {newXfs: newXfs, newIdx: newXfs.getIndexNumber() | 0};
+					memo[oldXfIdx] = entry;
+				}
+				if (!entry || entry.newIdx === 0 || entry.newIdx === oldXfIdx) {
+					continue;
+				}
+				store.setRange(seg.lo, seg.hi, entry.newIdx);
+				if (historyOn) {
+					var oldXfsForHist = styleCache.getXf(oldXfIdx);
+					AscCommon.History.Add(
+						AscCommonExcel.g_oUndoRedoCell,
+						AscCH.historyitem_Cell_SetStyleOnlyRange,
+						sheetId,
+						new Asc.Range(c, seg.lo, c, seg.hi),
+						new AscCommonExcel.UndoRedoData_CellRangeStyleSimpleData(
+							c, seg.lo, c, seg.hi, oldXfsForHist, entry.newXfs));
+				}
+			}
+		}
+	}
+
+	function applyFontPropToStyleOnlyRunsInBBox(ws, bbox, prop, val, getFunc, setFunc) {
+		var AscCommonExcel = window['AscCommonExcel'];
+		var styleCache = AscCommonExcel.g_StyleCache;
+		var defaultFont = AscCommonExcel.g_oDefaultFormat && AscCommonExcel.g_oDefaultFormat.Font;
+		var hash = (val && typeof val.getHash === 'function') ? val.getHash() : val;
+		applyXfTransformToStyleOnlyRunsInBBox(ws, bbox, prop, hash, function (oldXfs) {
+			var curFont = oldXfs.font || defaultFont;
+			if (curFont && typeof getFunc === 'function'
+				&& getFunc.call(curFont) === val) {
+				return null;
+			}
+			var clone = oldXfs.clone();
+			if (!clone.font) { clone.font = defaultFont; }
+			clone.font = clone.font.clone();
+			setFunc.call(clone.font, val);
+			clone.font = styleCache.addFont(clone.font);
+			return clone;
+		});
+	}
+
+	function applyAlignPropToStyleOnlyRunsInBBox(ws, bbox, prop, val, setFunc) {
+		var AscCommonExcel = window['AscCommonExcel'];
+		var styleCache = AscCommonExcel.g_StyleCache;
+		var defaultAlign = AscCommonExcel.g_oDefaultFormat
+			&& (AscCommonExcel.g_oDefaultFormat.AlignAbs || AscCommonExcel.g_oDefaultFormat.Align);
+		var hash = (val && typeof val.getHash === 'function') ? val.getHash() : val;
+		applyXfTransformToStyleOnlyRunsInBBox(ws, bbox, prop, hash, function (oldXfs) {
+			var clone = oldXfs.clone();
+			if (!clone.align) { clone.align = defaultAlign; }
+			clone.align = clone.align.clone();
+			setFunc.call(clone.align, val);
+			clone.align = styleCache.addAlign(clone.align);
+			return clone;
+		});
+	}
+
+	function applyXfsPropToStyleOnlyRunsInBBox(ws, bbox, prop, val, setFunc, addFunc) {
+		var AscCommonExcel = window['AscCommonExcel'];
+		var styleCache = AscCommonExcel.g_StyleCache;
+		var hash = (val && typeof val.getHash === 'function') ? val.getHash() : val;
+		applyXfTransformToStyleOnlyRunsInBBox(ws, bbox, prop, hash, function (oldXfs) {
+			var clone = oldXfs.clone();
+			if (val != null) {
+				if (addFunc) {
+					setFunc.call(clone, addFunc.call(styleCache, val));
+				} else {
+					setFunc.call(clone, val);
+				}
+			} else {
+				setFunc.call(clone, null);
+			}
+			return clone;
+		});
+	}
+
+	function applyXfsReplaceToStyleOnlyRunsInBBox(ws, bbox, newXfs) {
+		if (!newXfs) { return; }
+		var AscCommonExcel = window['AscCommonExcel'];
+		var styleCache = AscCommonExcel.g_StyleCache;
+		var registered = styleCache.addXf(newXfs);
+		applyXfTransformToStyleOnlyRunsInBBox(ws, bbox, null, null, function () {
+			return registered;
+		});
+	}
+
+	// setBorder's per-cell merge depends on edge position, so a uniform
+	// transform across the bbox would be wrong on Row / Col / All ranges.
+	// Split into a 3x3 grid of edge / interior bands; each band is uniform.
+	function applyBorderInnerToStyleOnly(range, bbox, oNewBorder) {
+		if (!range || !bbox) { return; }
+		var ws = range.worksheet;
+		if (!ws || !ws.cellStylesByCol) { return; }
+		var AscCommonExcel = window['AscCommonExcel'];
+		var styleCache = AscCommonExcel.g_StyleCache;
+		var defaultBorder = AscCommonExcel.g_oDefaultFormat && AscCommonExcel.g_oDefaultFormat.Border;
+		var c1 = bbox.c1 | 0, c2 = bbox.c2 | 0, r1 = bbox.r1 | 0, r2 = bbox.r2 | 0;
+		var cBands = _buildEdgeBands(c1, c2);
+		var rBands = _buildEdgeBands(r1, r2);
+		for (var ci = 0; ci < cBands.length; ci++) {
+			var cb = cBands[ci];
+			for (var ri = 0; ri < rBands.length; ri++) {
+				var rb = rBands[ri];
+				_applyBorderSubBbox(range, ws, styleCache, defaultBorder,
+					cb.lo, rb.lo, cb.hi, rb.hi,
+					cb.bLow, rb.bLow, cb.bHigh, rb.bHigh, oNewBorder);
+			}
+		}
+	}
+
+	// `bLow` = low-coord edge flag (left for column axis, top for row axis);
+	// `bHigh` = high-coord edge. Degenerate `lo === hi` collapses into one
+	// band carrying both edges.
+	function _buildEdgeBands(lo, hi) {
+		if (lo === hi) {
+			return [{lo: lo, hi: hi, bLow: true, bHigh: true}];
+		}
+		var bands = [{lo: lo, hi: lo, bLow: true, bHigh: false}];
+		if (lo + 1 <= hi - 1) {
+			bands.push({lo: lo + 1, hi: hi - 1, bLow: false, bHigh: false});
+		}
+		bands.push({lo: hi, hi: hi, bLow: false, bHigh: true});
+		return bands;
+	}
+
+	// Undo/redo side of historyitem_Cell_SetStyleOnlyRange: write the
+	// uniform band directly on cellStylesByCol, no SheetMemory init row.
+	// On the collab recipient `val` arrives off the wire still unregistered
+	// (getIndexNumber() == null), so canonicalise via styleCache.addXf
+	// before reading the index -- otherwise idx=0 falls through to
+	// store.clearRange and wipes the band.
+	function applyStyleOnlyRangeHistory(ws, data, bUndo) {
+		if (!ws || !data) {
+			return;
+		}
+		var stores = ws.cellStylesByCol;
+		if (!stores) {
+			return;
+		}
+		var val = bUndo ? data.oOldVal : data.oNewVal;
+		var idx = 0;
+		if (val) {
+			if (typeof val.getIndexNumber === 'function') {
+				idx = val.getIndexNumber() | 0;
+			}
+			if (idx <= 0) {
+				var cache = window['AscCommonExcel'].g_StyleCache;
+				var registered = cache && cache.addXf(val);
+				if (registered && typeof registered.getIndexNumber === 'function') {
+					idx = registered.getIndexNumber() | 0;
+				}
+			}
+		}
+		for (var c = data.c1; c <= data.c2; c++) {
+			var store = stores[c];
+			if (idx > 0) {
+				if (!store && typeof ws.getCellStyleStore === 'function') {
+					store = ws.getCellStyleStore(c, true);
+				}
+				if (store) {
+					store.setRange(data.r1, data.r2, idx);
+				}
+			} else if (store) {
+				store.clearRange(data.r1, data.r2);
+			}
+		}
+	}
+
+	function _applyBorderSubBbox(range, ws, styleCache, defaultBorder,
+								 subC1, subR1, subC2, subR2,
+								 bLeft, bTop, bRight, bBottom, oNewBorder) {
+		var subBbox = new Asc.Range(subC1, subR1, subC2, subR2);
+		applyXfTransformToStyleOnlyRunsInBBox(ws, subBbox, null, null, function (oldXfs) {
+			if (oNewBorder == null) {
+				if (!oldXfs.border) { return null; }
+				var cloneClear = oldXfs.clone();
+				cloneClear.border = null;
+				return cloneClear;
+			}
+			var oCurBorder = (oldXfs.border) ? oldXfs.border.clone()
+				: (defaultBorder ? defaultBorder.clone() : null);
+			var newBorder = range._setBorderMerge(bLeft, bTop, bRight, bBottom, oNewBorder, oCurBorder);
+			var clone = oldXfs.clone();
+			clone.border = newBorder ? styleCache.addBorder(newBorder) : null;
+			return clone;
+		});
+	}
+
 	CSS.deleteRowsAllCols = deleteRowsAllCols;
 	CSS.insertRowsAllCols = insertRowsAllCols;
 	CSS.copyRowInAllCols = copyRowInAllCols;
@@ -493,4 +753,11 @@
 	CSS.applyInsertedBorderToStyleOnly = applyInsertedBorderToStyleOnly;
 	CSS.applyBorderEdgeToStyleOnly = applyBorderEdgeToStyleOnly;
 	CSS.recordStyleOnlyClearHistory = recordStyleOnlyClearHistory;
+	CSS.applyXfTransformToStyleOnlyRunsInBBox = applyXfTransformToStyleOnlyRunsInBBox;
+	CSS.applyFontPropToStyleOnlyRunsInBBox = applyFontPropToStyleOnlyRunsInBBox;
+	CSS.applyAlignPropToStyleOnlyRunsInBBox = applyAlignPropToStyleOnlyRunsInBBox;
+	CSS.applyXfsPropToStyleOnlyRunsInBBox = applyXfsPropToStyleOnlyRunsInBBox;
+	CSS.applyXfsReplaceToStyleOnlyRunsInBBox = applyXfsReplaceToStyleOnlyRunsInBBox;
+	CSS.applyBorderInnerToStyleOnly = applyBorderInnerToStyleOnly;
+	CSS.applyStyleOnlyRangeHistory = applyStyleOnlyRangeHistory;
 })(window);
