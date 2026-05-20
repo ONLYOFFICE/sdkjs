@@ -528,6 +528,8 @@
 				  return null;
 			  }, "showFormulas": function () {
 				  self._onShowFormulas.apply(self, arguments);
+			  }, "fillDown": function () {
+				  self.Api.asc_FillCells(Asc.c_oAscFillType.fillDown);
 			  },
 
 
