@@ -5595,6 +5595,11 @@ CPresentation.prototype.OnKeyDown = function (e) {
 			bRetValue = keydownresult_PreventAll;
 		} else if (e.KeyCode === 27) // Esc
 		{
+			if (this.DrawingDocument.IsTrackRuler()) {
+				this.DrawingDocument.CancelTrackRuler();
+				bRetValue = keydownresult_PreventAll;
+				return bRetValue;
+			}
 			const bCancelEyedropper = this.CancelEyedropper();
 			const bCancelInkDrawer = this.CancelInkDrawer();
 			if (oController && !this.IsFocusOnNotes()) {

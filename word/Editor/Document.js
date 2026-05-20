@@ -9062,6 +9062,10 @@ CDocument.prototype.OnKeyDown = function(e)
 				this.DrawingDocument.UnlockCursorType();
 				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
 			}
+			else if (this.DrawingDocument.IsTrackRuler())
+			{
+				this.DrawingDocument.CancelTrackRuler();
+			}
 			else if (this.Is_TrackingDrawingObjects())
 			{
 				this.DrawingObjects.resetTrackState();

@@ -2640,7 +2640,7 @@ function CEditorPage(api)
 			return;
 		}
 
-		if (oWordControl.m_bIsRuler && oWordControl.m_oHorRuler.m_bIsMouseDown)
+		if (oWordControl.m_bIsRuler && oWordControl.m_oHorRuler.m_bIsMouseDown && 27 !== e.keyCode)
 		{
 			AscCommon.check_KeyboardEvent2(e);
 			e.preventDefault();
