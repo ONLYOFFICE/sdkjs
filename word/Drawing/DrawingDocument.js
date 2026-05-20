@@ -4986,6 +4986,19 @@ function CDrawingDocument()
 			}
 		}
 	};
+	this.IsTrackTable = function()
+	{
+		return !!(this.TableOutlineDr && this.TableOutlineDr.bIsTracked);
+	};
+	this.CancelTrackTable = function()
+	{
+		if (!this.TableOutlineDr.bIsTracked)
+			return;
+		
+		this.EndTrackTable(null, true);
+		this.TableOutlineDr.bIsTracked = false;
+		this.m_oWordControl.OnUpdateOverlay();
+	};
 
 	this.DrawFrameTrack = function (overlay)
 	{

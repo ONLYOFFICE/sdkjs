@@ -9026,6 +9026,16 @@ CDocument.prototype.OnKeyDown = function(e)
 
 				this.DrawingDocument.CancelTrackText();
 			}
+			else if (this.DrawingDocument.IsTrackTable())
+			{
+				let table = this.GetCurrentTable();
+				this.DrawingDocument.CancelTrackTable();
+				if (table)
+				{
+					table.SelectAll();
+					table.Document_SetThisElementCurrent(true);
+				}
+			}
 			else if (true === this.Api.isMarkerFormat)
 			{
 				this.Api.sync_MarkerFormatCallback(false);
