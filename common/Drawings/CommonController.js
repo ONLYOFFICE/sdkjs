@@ -1960,7 +1960,7 @@
 						if (content && invert_transform_text) {
 							tx = invert_transform_text.TransformPointX(x, y);
 							ty = invert_transform_text.TransformPointY(x, y);
-							if (!this.isSlideShow() && (this.document || (this.drawingObjects.cSld && !(this.noNeedUpdateCursorType === true)))) {
+							if (!this.isSlideShow() && !(this.noNeedUpdateCursorType === true) && (this.document || this.drawingObjects.cSld)) {
 								if (this.document && this.document.IsDocumentEditor() && object instanceof AscFormat.CShape && object.isForm()) {
 									var oForm = object.getInnerForm();
 									if (oForm)
