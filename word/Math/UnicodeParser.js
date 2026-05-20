@@ -1405,6 +1405,9 @@
 
 				oThirdSoOperand = this.GetOperandLiteral();
 
+				if (!oThirdSoOperand)
+					oThirdSoOperand = {};
+
 				return {
 					type: Struc.sub_sub,
 					value: oBase,
@@ -1537,6 +1540,9 @@
 					style: {supStyle: oSupStyle, subStyle: oSubStyle},
 				};
 			}
+
+			if (!oSecondElement)
+				oSecondElement = {type: Struc.char, value: ""};
 
 			return {
 				type: Struc.sub_sub,
@@ -2008,7 +2014,7 @@
 			{
 				return this.GetSpecialHBracket(oEntity);
 			}
-			return oEntity;
+			return this.GetContentOfLiteral(oEntity);
 		}
 		else if (this.IsFunctionLiteral()) {
 			return this.GetFunctionLiteral();

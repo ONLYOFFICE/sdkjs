@@ -6738,6 +6738,7 @@ StyleManager.prototype =
 		this._hasChanged = false;
 
 		this._tempCell = new AscCommonExcel.Cell(worksheet);
+		this._tempCell._isTransient = true;
 	}
 	Row.prototype.clear = function () {
 		this.index = null;

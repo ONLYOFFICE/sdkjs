@@ -157,7 +157,7 @@ CChangesPDFFormParentValue.prototype.Type = AscDFH.historyitem_Pdf_Form_Parent_V
 CChangesPDFFormParentValue.prototype.private_SetValue = function(Value)
 {
 	let oField = this.Class;
-	oField.SetParentValue(Value);
+	oField.SetLogicValue(Value);
 };
 
 CChangesPDFFormValue.prototype.WriteToBinary = function(Writer)
@@ -268,6 +268,7 @@ CChangesPDFFormKidsContent.prototype.Undo = function()
 			oParentField._kids.splice(this.Pos, 1);
 			oItem._parent = null;
 			oItem.AddToRedraw();
+			oItem.SetNeedUpdateEditShape(true);
 		}
 	}
 	else {
@@ -277,6 +278,7 @@ CChangesPDFFormKidsContent.prototype.Undo = function()
 			oParentField._kids.splice(this.Pos, 0, oItem);
 			oItem._parent = oParentField;
 			oItem.AddToRedraw();
+			oItem.SetNeedUpdateEditShape(true);
 		}
 	}
 	
@@ -296,6 +298,7 @@ CChangesPDFFormKidsContent.prototype.Redo = function()
 			oParentField._kids.splice(this.Pos, 0, oItem);
 			oItem._parent = oParentField;
 			oItem.AddToRedraw();
+			oItem.SetNeedUpdateEditShape(true);
 		}
 	}
 	else {
@@ -305,6 +308,7 @@ CChangesPDFFormKidsContent.prototype.Redo = function()
 			oParentField._kids.splice(this.Pos, 1);
 			oItem._parent = null;
 			oItem.AddToRedraw();
+			oItem.SetNeedUpdateEditShape(true);
 		}
 	}
 	
@@ -333,6 +337,7 @@ CChangesPDFFormKidsContent.prototype.private_InsertInArrayLoad = function()
 		oItem._parent = oParentField;
 
         oItem.AddToRedraw();
+		oItem.SetNeedUpdateEditShape(true);
     }
 
     oDocument.SetMouseDownObject(null);
@@ -361,6 +366,7 @@ CChangesPDFFormKidsContent.prototype.private_RemoveInArrayLoad = function()
 		oItem._parent = null;
 
 		oItem.AddToRedraw();
+		oItem.SetNeedUpdateEditShape(true);
     }
 
     oDocument.SetMouseDownObject(null);
@@ -1240,7 +1246,7 @@ CChangesPDFListFormParentCurIdxs.prototype.Type = AscDFH.historyitem_Pdf_List_Fo
 CChangesPDFListFormParentCurIdxs.prototype.private_SetValue = function(Value)
 {
 	var oField = this.Class;
-	oField.SetParentCurIdxs(Value);
+	oField.SetLogicCurIdxs(Value);
 };
 
 CChangesPDFListFormParentCurIdxs.prototype.WriteToBinary = function(Writer)

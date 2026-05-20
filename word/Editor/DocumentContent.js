@@ -706,6 +706,25 @@ CDocumentContent.prototype.IsMovingTableBorder = function()
 
 	return false;
 };
+CDocumentContent.prototype.CancelTableBorderMove = function()
+{
+	if (docpostype_DrawingObjects === this.CurPos.Type)
+	{
+		this.DrawingObjects.cancelSelectionTableBorder();
+		return;
+	}
+
+	if (null == this.Selection.Data || true !== this.Selection.Data.TableBorder)
+		return;
+
+	let table = this.Content[this.Selection.Data.Pos];
+	if (table && type_Table === table.GetType())
+		table.CancelBorderMove();
+
+	this.Selection.Start = false;
+	this.Selection.Use   = this.Selection.Data.Selection;
+	this.Selection.Data  = null;
+};
 CDocumentContent.prototype.CheckTableCoincidence = function(Table)
 {
 	if (!this.Parent)

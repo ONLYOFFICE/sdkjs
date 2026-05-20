@@ -384,7 +384,7 @@
 			_ctrl.Anchor = (g_anchor_left | g_anchor_right | g_anchor_bottom);
 			this.m_oDemonstrationDivParent.AddControl(_ctrl);
 
-			var _images_url = "../../../../sdkjs/common/Images/reporter/";
+			var _images_url = AscCommon.RELATIVE_SDKJS_PATH + "common/Images/reporter/";
 			var _head = document.getElementsByTagName('head')[0];
 
 			var styleContent = ".block_elem_no_select { -khtml-user-select: none; user-select: none; -moz-user-select: none; -webkit-user-select: none; }";
@@ -4060,7 +4060,7 @@
 		if (oWordControl.IsFocus === false && e.emulated !== true)
 			return;
 
-		if (oWordControl.m_oApi.isLongAction() || oWordControl.m_bIsMouseLock === true) {
+		if (oWordControl.m_oApi.isLongAction() || (oWordControl.m_bIsMouseLock === true && 27 !== e.keyCode)) {
 			AscCommon.check_KeyboardEvent2(e);
 			e.preventDefault();
 			return;
@@ -4089,7 +4089,7 @@
 			oWordControl.m_oDrawingDocument.TransitionSlide.End(true);
 
 		var oWordControl = oThis;
-		if (false === oWordControl.m_oApi.bInit_word_control || oWordControl.IsFocus === false && e.emulated !== true || oWordControl.m_oApi.isLongAction() || oWordControl.m_bIsMouseLock === true)
+		if (false === oWordControl.m_oApi.bInit_word_control || oWordControl.IsFocus === false && e.emulated !== true || oWordControl.m_oApi.isLongAction() || (oWordControl.m_bIsMouseLock === true && 27 !== e.keyCode))
 			return;
 
 		AscCommon.check_KeyboardEvent(e);

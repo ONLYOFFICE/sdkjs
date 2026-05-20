@@ -869,6 +869,17 @@ function CDrawingDocument()
 	{
 		this.m_sLockedCursorType = "";
 	};
+	this.IsTrackRuler = function()
+	{
+		return this.m_oWordControl.m_oHorRuler.IsTracking() || this.m_oWordControl.m_oVerRuler.IsTracking();
+	};
+	this.CancelTrackRuler = function()
+	{
+		if (this.m_oWordControl.m_oHorRuler.IsTracking())
+			this.m_oWordControl.m_oHorRuler.CancelTracking();
+		if (this.m_oWordControl.m_oVerRuler.IsTracking())
+			this.m_oWordControl.m_oVerRuler.CancelTracking();
+	};
 
 	this.TargetStart          = function()
 	{

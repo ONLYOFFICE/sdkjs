@@ -1462,7 +1462,7 @@
 			oPageInfo.fields.forEach(function(widget) {
 				let oParent = widget.GetParent();
 				
-				if (oParent && oParent.IsAllKidsWidgets()) {
+				if (oParent && oParent.IsLogicalRoot()) {
 					if (!aFields.includes(oParent)) {
 						aFields.push(oParent);
 					}
@@ -1489,11 +1489,11 @@
 			return null;
 
 		if (!oField.IsWidget()) {
-			return oField.IsAllKidsWidgets() ? GetFieldApi(oField) : null;
+			return oField.IsLogicalRoot() ? GetFieldApi(oField) : null;
 		}
 
 		let oParent = oField.GetParent();
-		if (oParent && oParent.IsAllKidsWidgets()) {
+		if (oParent && oParent.IsLogicalRoot()) {
 			return GetFieldApi(oParent);
 		}
 
@@ -2130,7 +2130,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiBaseField/Methods/GetValue.js
 	 */
 	ApiBaseField.prototype.GetValue = function() {
-		return this.Field.GetParentValue();
+		return this.Field.GetLogicValue();
 	};
 
 	/**
@@ -3059,7 +3059,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiBaseListField/Methods/GetValueIndexes.js
 	 */
 	ApiBaseListField.prototype.GetValueIndexes = function() {
-		return this.Field.GetParentCurIdxs();
+		return this.Field.GetLogicCurIdxs();
 	};
 
 	//------------------------------------------------------------------------------------------------------------------

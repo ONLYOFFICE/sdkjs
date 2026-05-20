@@ -2624,11 +2624,39 @@
 	{
 		var oThis = this;
 		var aRows = [];
-		var oRange = oWorksheet.getRange3(0, 0, AscCommon.gc_nMaxRow0, AscCommon.gc_nMaxCol0);
+		var bbox = {c1: 0, r1: 0, c2: AscCommon.gc_nMaxCol0, r2: AscCommon.gc_nMaxRow0};
+		var oRange = oWorksheet.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2);
 		var oTempRow, oTempCell;
+
+		// Style-only events streamed alongside _foreachDataOnly via a shared
+		// drain (O(events)). Occupied _foreachNoEmpty would be O(maxRow)
+		// for a sparse far style entry.
+		function ensureRow(nRow0) {
+			if (oTempRow && oTempRow["r"] === nRow0 + 1) {
+				return;
+			}
+			oTempRow = {
+				"r":    nRow0 + 1,
+				"cell": []
+			};
+			aRows.push(oTempRow);
+		}
+
+		var styleDrain = AscCommonExcel.CellStyleStorage.createStyleOnlyDrain(
+			oWorksheet, bbox, null, function (r, col, xfIndex) {
+				ensureRow(r);
+				var sRef = AscCommon.g_oCellAddressUtils.colnumToColstr(col + 1) + (r + 1);
+				var oCellXfsForWrite = AscCommonExcel.g_StyleCache.getXf(xfIndex);
+				oTempRow["cell"].push({
+					"r": sRef,
+					"s": oThis.stylesForWrite.add(oCellXfsForWrite),
+					"t": ToXml_ST_CellValueType(AscCommon.CellValueType.Number)
+				});
+			});
 
 		function SerRow(oRow)
 		{
+			styleDrain.drainBefore(oRow.index, 0);
 			oTempRow = {
 				"collapsed":    oRow.getCollapsed(),
 				"customHeight": oRow.getCustomHeight(),
@@ -2644,12 +2672,16 @@
 
 		function SerCell(oCell)
 		{
+			styleDrain.drainBefore(oCell.nRow, oCell.nCol);
+			ensureRow(oCell.nRow);
 			var sRef = AscCommon.g_oCellAddressUtils.colnumToColstr(oCell.nCol + 1) + (oCell.nRow + 1);
 			var oFormulaForWrite = oCell.isFormula() ? oThis.InitSaveManager.PrepareFormulaToWrite(oCell) : null;
+			var oCellXfsForWrite = AscCommonExcel.CellStyleStorage.getWriterCellXfs(
+				oCell.ws, oCell.nRow, oCell.nCol, oCell);
 			oTempCell = {
 				"f": SerFormula(oFormulaForWrite),
 				"r": sRef,
-				"s": oThis.stylesForWrite.add(oCell.getStyle()),
+				"s": oThis.stylesForWrite.add(oCellXfsForWrite),
 				"t": ToXml_ST_CellValueType(oCell.type)
 			}
 			if (oCell.multiText)
@@ -2680,7 +2712,7 @@
 		{
 			if (!oFormulaForWrite)
 				return undefined;
-				
+
 			return {
 				"t":   ToXml_ST_CellFormulaType(oFormulaForWrite.type),
 				"ref": oFormulaForWrite.ref != null ? oFormulaForWrite.ref.getName() : undefined,
@@ -2698,7 +2730,8 @@
 			}
 		}
 
-		oRange._foreachNoEmpty(SerCell, SerRow);
+		oRange._foreachDataOnly(SerCell, SerRow);
+		styleDrain.drainTail();
 		return aRows;
 	};
 	WriterToJSON.prototype.SerDataValidations = function(oDataValidations)
@@ -7903,9 +7936,14 @@
 					oTempCell.setStyle(this.aCellXfs[oParsedCell["s"]]);
 
 				oTempCell.type = FromXml_ST_CellValueType(oParsedCell["t"]);
-				oTempCell.saveContent(true);
+				// Skip SheetMemory init row for pure style-only cells.
+				AscCommonExcel.CellStyleStorage.saveContentSkipStyleOnly(oTempCell, true);
 			}
 		}
+
+		// Migrate any legacy SheetMemory xf bits from older-build files;
+		// there is no read-side fallback after the sweep.
+		AscCommonExcel.CellStyleStorage.hydrateAllColumnsFromSheetMemory(oWorksheet);
 
 		// for(var j = 0; j < tmp.formulaArray.length; j++) {
 		// 	var curFormula = tmp.formulaArray[j];

@@ -1065,7 +1065,7 @@
 			}
 
 			var xhr = new XMLHttpRequest();
-			let urlCmap = "../../../../sdkjs/pdf/src/engine/cmap.bin";
+			let urlCmap = AscCommon.RELATIVE_SDKJS_PATH + "pdf/src/engine/cmap.bin";
 			if (this.Api.isSeparateModule === true)
 				urlCmap = window["AscViewer"]["baseEngineUrl"] + "cmap.bin";
 

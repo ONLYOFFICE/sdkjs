@@ -12362,7 +12362,7 @@ function parseStringToCElement (val, cultureInfo) {
 		column.start = startIndex;
 		const unshiftDataArrays = {};
 		const unshiftIndexesArrays = {};
-		range._foreachNoEmpty(function (cell, r, c) {
+		range._foreachDataOnly(function (cell, r, c) {
 			const value = AscCommonExcel.checkTypeCell(cell, true, true);
 			if (value.type !== cElementType.empty) {
 				if (!unshiftDataArrays[value.type]) {
@@ -12401,7 +12401,7 @@ function parseStringToCElement (val, cultureInfo) {
 	};
 	CountIfTypedCache.prototype.updateDataAfter = function (range, column, endIndex) {
 		const t = this;
-		range._foreachNoEmpty(function (cell, r, c) {
+		range._foreachDataOnly(function (cell, r, c) {
 			const value = AscCommonExcel.checkTypeCell(cell, true, true);
 			if (r > column.end) {
 				if (value.type !== cElementType.empty) {
@@ -12877,7 +12877,7 @@ function parseStringToCElement (val, cultureInfo) {
 		column.start = startIndex;
 		const unshiftDataArrays = {};
 		const unshiftIndexesArrays = {};
-		range._foreachNoEmpty(function (cell, r, c) {
+		range._foreachDataOnly(function (cell, r, c) {
 			const value = checkTypeCell(cell, true, true);
 			if (value.type === cElementType.number || value.type === cElementType.error) {
 				if (!unshiftDataArrays[value.type]) {
@@ -12898,7 +12898,7 @@ function parseStringToCElement (val, cultureInfo) {
 
 	SumIfSumRangeCache.prototype.updateDataAfter = function (range, column, endIndex) {
 		const t = this;
-		range._foreachNoEmpty(function (cell, r, c) {
+		range._foreachDataOnly(function (cell, r, c) {
 			const value = checkTypeCell(cell, true, true);
 			if (r > column.end) {
 				if (value.type === cElementType.number || value.type === cElementType.error) {

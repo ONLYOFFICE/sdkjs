@@ -5374,6 +5374,14 @@
 			}
 		};
 
+		CShape.prototype.IsTableBorder = function (x, y, pageIndex) {
+			const content = this.getDocContent();
+			if (!content || !this.invertTransformText)
+				return null;
+			const tx = this.invertTransformText.TransformPointX(x, y);
+			const ty = this.invertTransformText.TransformPointY(x, y);
+			return content.IsTableBorder(tx, ty, pageIndex - content.GetRelativeStartPage());
+		};
 		CShape.prototype.selectionSetStart = function (e, x, y, slideIndex) {
 			if (this.isProtectedText && this.isProtectedText()) {
 				return;

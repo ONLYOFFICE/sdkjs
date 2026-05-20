@@ -2416,8 +2416,8 @@
 				this.SpellCheckApi = {};
 				this.SpellCheckApi.log = false;
 				this.SpellCheckApi.worker = new CSpellchecker({
-					enginePath: "../../../../sdkjs/common/spell/spell",
-					dictionariesPath: "./../../../../dictionaries"
+					enginePath: AscCommon.RELATIVE_SDKJS_PATH + "common/spell/spell",
+					dictionariesPath: AscCommon.RELATIVE_SDKJS_PATH + "../dictionaries"
 				});
 				this.SpellCheckApi.worker.restartCallback = function() {
 					t.asc_restartCheckSpelling();

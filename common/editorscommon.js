@@ -405,7 +405,7 @@
 		this.hotspot = _hotspot;
 		this.default = _default;
 	}
-	CHTMLCursorItemBase.prototype.baseUrl = "../../../../sdkjs/common/Images/cursors/";
+	CHTMLCursorItemBase.prototype.baseUrl = AscCommon.RELATIVE_SDKJS_PATH + "common/Images/cursors/";
 	CHTMLCursorItemBase.prototype.getValue = function() { return this.default; };
 
 	/**
@@ -533,7 +533,7 @@
 			try
 			{
 				var xhr = new XMLHttpRequest();
-				xhr.open("GET", "../../../../sdkjs/common/Images/cursors/svg.json", true);
+				xhr.open("GET", AscCommon.RELATIVE_SDKJS_PATH + "common/Images/cursors/svg.json", true);
 				var t = this;
 				xhr.onload = function()
 				{
@@ -11669,17 +11669,17 @@
 			if (scriptDirectory) {
 				loadScript(scriptDirectory + 'sdk-all.js', onSuccess, onError);
 			} else {
-				loadScript('./../../../../sdkjs/' + sdkName + '/sdk-all.js', onSuccess, onError);
+				loadScript(AscCommon.RELATIVE_SDKJS_PATH + sdkName + '/sdk-all.js', onSuccess, onError);
 			}
 		}
 	}
 
 	function loadChartStyles(onSuccess, onError) {
-		loadScript('../../../../sdkjs/common/Charts/ChartStyles.js', onSuccess, onError);
+		loadScript(AscCommon.RELATIVE_SDKJS_PATH + 'common/Charts/ChartStyles.js', onSuccess, onError);
 	}
 
 	function loadPathBoolean(onSuccess, onError) {
-		loadScript('../../../../sdkjs/common/Drawings/Format/path-boolean-min.js', onSuccess, onError);
+		loadScript(AscCommon.RELATIVE_SDKJS_PATH + 'common/Drawings/Format/path-boolean-min.js', onSuccess, onError);
 	}
 
 	function getAltGr(e)

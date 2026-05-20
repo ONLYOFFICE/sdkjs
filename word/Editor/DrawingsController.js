@@ -467,6 +467,10 @@ CDrawingsController.prototype.IsMovingTableBorder = function()
 {
 	return this.DrawingObjects.selectionIsTableBorder();
 };
+CDrawingsController.prototype.CancelTableBorderMove = function()
+{
+	this.DrawingObjects.cancelSelectionTableBorder();
+};
 CDrawingsController.prototype.canEditTableOleObject = function()
 {
 	return this.DrawingObjects.canEditTableOleObject();

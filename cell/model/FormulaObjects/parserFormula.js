@@ -1204,7 +1204,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			if (checkExclude && !excludeHiddenRows) {
 				excludeHiddenRows = this.ws.isApplyFilterBySheet();
 			}
-			r._foreachNoEmpty(function (cell) {
+			r._foreachDataOnly(function (cell) {
 				if(!(excludeNestedStAg && cell.formulaParsed && cell.formulaParsed.isFoundNestedStAg())){
 					var checkTypeVal = checkTypeCell(cell);
 					if(!(excludeErrorsVal && CellValueType.Error === checkTypeVal.type)){
@@ -1330,7 +1330,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArea.prototype.countCells = function () {
 		var r = this.getRange(), bbox = r.bbox, count = (Math.abs(bbox.c1 - bbox.c2) + 1) *
 			(Math.abs(bbox.r1 - bbox.r2) + 1);
-		r._foreachNoEmpty(function (cell) {
+		r._foreachDataOnly(function (cell) {
 			if (!cell || !cell.isEmptyTextString()) {
 				count--;
 			}
@@ -1404,7 +1404,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArea.prototype.getMatrixNoEmpty = function () {
 		var arr = [], r = this.getRange(), res;
-		r._foreachNoEmpty(function (cell, i, j, r1, c1) {
+		r._foreachDataOnly(function (cell, i, j, r1, c1) {
 			if (!arr[i - r1]) {
 				arr[i - r1] = [];
 			}
@@ -1416,7 +1416,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArea.prototype.getValuesNoEmpty = function (checkExclude, excludeHiddenRows, excludeErrorsVal, excludeNestedStAg) {
 		var arr = [], r = this.getRange();
 
-		r._foreachNoEmpty(function (cell) {
+		r._foreachDataOnly(function (cell) {
 			if(!(excludeNestedStAg && cell.formulaParsed && cell.formulaParsed.isFoundNestedStAg())){
 				var checkTypeVal = checkTypeCell(cell);
 				if(!(excludeErrorsVal && CellValueType.Error === checkTypeVal.type)){
@@ -1584,7 +1584,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				_exclude = _wsA[i].isApplyFilterBySheet();
 			}
 
-			_r[i]._foreachNoEmpty(function (cell) {
+			_r[i]._foreachDataOnly(function (cell) {
 				if (!(excludeNestedStAg && cell.formulaParsed && cell.formulaParsed.isFoundNestedStAg())) {
 					var checkTypeVal = checkTypeCell(cell);
 					if (!(excludeErrorsVal && CellValueType.Error === checkTypeVal.type)) {
@@ -1747,7 +1747,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var _r = this.range(_wsA), bbox = _r[0].bbox, count = (Math.abs(bbox.c1 - bbox.c2) + 1) * (Math.abs(bbox.r1 - bbox.r2) + 1);
 		count = _r.length * count;
 		for (i = 0; i < _r.length; i++) {
-			_r[i]._foreachNoEmpty(function (cell) {
+			_r[i]._foreachDataOnly(function (cell) {
 				if (!cell || !cell.isEmptyTextString()) {
 					count--;
 				}
@@ -1835,7 +1835,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		for (var k = 0; k < r.length; k++) {
 			arr[k] = [];
-			r[k]._foreachNoEmpty(function (cell, i, j, r1, c1) {
+			r[k]._foreachDataOnly(function (cell, i, j, r1, c1) {
 				if (!arr[k][i - r1]) {
 					arr[k][i - r1] = [];
 				}
@@ -5573,7 +5573,9 @@ _func[cElementType.string][cElementType.string] = function ( arg0, arg1, what ) 
 	let res = null;
 
 	let isEqualStrings = function (str1, str2) {
-		return opt_return_bool ? str1 === str2 : str1.toLowerCase() === str2.toLowerCase();
+		return opt_return_bool
+			? AscCommon.stringCompare(str1, str2) === 0
+			: AscCommon.stringCompare(str1.toLowerCase(), str2.toLowerCase()) === 0;
 	};
 
 	let _arg0, _arg1;
@@ -7364,7 +7366,7 @@ function parserFormula( formula, parent, _ws ) {
 			}
 			if (aArg[i] && (aArg[i].type === cElementType.cell || aArg[i].type === cElementType.cell3D)) {
 				let oRange = aArg[i].getRange();
-				oRange._foreachNoEmpty(function (oCell) {
+				oRange._foreachDataOnly(function (oCell) {
 					if (!bRecursiveCell) {
 						const sCellKey = oCell.ws.getId() + '_' + oCell.nRow + '_' + oCell.nCol;
 						if (g_cCalcRecursion.isCellChecked(sCellKey)) {
@@ -7414,7 +7416,7 @@ function parserFormula( formula, parent, _ws ) {
 		if (oOperand && aTypesWithRange.includes(oOperand.type)) {
 			if (oOperand.type === cElementType.cell || oOperand.type === cElementType.cell3D) {
 				let oRange = oOperand.getRange();
-				oRange._foreachNoEmpty(function (oCell) {
+				oRange._foreachDataOnly(function (oCell) {
 					bRecursiveCell = oCell.checkRecursiveFormula(oThis.getParent());
 				});
 				return bRecursiveCell;
@@ -8425,7 +8427,7 @@ function parserFormula( formula, parent, _ws ) {
 				oRange = found_operand && found_operand.getRange && found_operand.getRange();
 			}
 
-			oRange && oRange._foreachNoEmpty(function (oCell) {
+			oRange && oRange._foreachDataOnly(function (oCell) {
 				if (!bRecursiveCell) {
 					bRecursiveCell = oCell.checkRecursiveFormula(parserFormula.getParent());
 				}
@@ -9191,7 +9193,7 @@ function parserFormula( formula, parent, _ws ) {
 						oRefElement = oRefElement.getValue();
 					}
 					const oRange = oRefElement && oRefElement.getRange && oRefElement.getRange();
-					oRange && oRange._foreachNoEmpty(function (oCell) {
+					oRange && oRange._foreachDataOnly(function (oCell) {
 						if (!bRecursiveCell) {
 							bRecursiveCell = oCell.checkRecursiveFormula(t.getParent(), {}, bRecheckFormula);
 						}
@@ -10921,7 +10923,7 @@ function parserFormula( formula, parent, _ws ) {
 				let _range = ref.getRange() && ref.getRange().getBBox0();
 				if (this.outStack[i + 2] && this.outStack[i + 2].type === cElementType.func && this.getCm() != null && this.outStack[i + 2].name === "ANCHORARRAY") {
 					let ahchorRef;
-					ref.getWS().getCell3(ref.range.bbox.r1, ref.range.bbox.c1)._foreachNoEmpty(function (c) {
+					ref.getWS().getCell3(ref.range.bbox.r1, ref.range.bbox.c1)._foreachDataOnly(function (c) {
 						if (c && c.formulaParsed && c.formulaParsed.getCm() != null) {
 							ahchorRef = c.formulaParsed.getArrayFormulaRef();
 						}
@@ -11943,7 +11945,7 @@ function parserFormula( formula, parent, _ws ) {
 				}
 				if (aCellTypes.includes(aOutStack[i].type)) {
 					let oRange = aOutStack[i].getRange();
-					oRange._foreachNoEmpty(function (oElem) {
+					oRange._foreachDataOnly(function (oElem) {
 						if (oElem.isFormula()) {
 							bHasInRecursiveCells = !!oThis.getRecursiveCells(oElem).length;
 							bHasListeners = !!oElem.getListeners();

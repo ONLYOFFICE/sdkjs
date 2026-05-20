@@ -2513,6 +2513,9 @@
 	CGraphicObjectBase.prototype.onMouseMove = function (e, x, y) {
 		return this.hit(x, y);
 	};
+	CGraphicObjectBase.prototype.IsTableBorder = function (x, y, pageIndex) {
+		return null;
+	};
 	CGraphicObjectBase.prototype.drawLocks = function (transform, graphics) {
 		if (AscCommon.IsShapeToImageConverter) {
 			return;
