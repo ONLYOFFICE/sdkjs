@@ -157,7 +157,7 @@ CChangesPDFFormParentValue.prototype.Type = AscDFH.historyitem_Pdf_Form_Parent_V
 CChangesPDFFormParentValue.prototype.private_SetValue = function(Value)
 {
 	let oField = this.Class;
-	oField.SetParentValue(Value);
+	oField.SetLogicValue(Value);
 };
 
 CChangesPDFFormValue.prototype.WriteToBinary = function(Writer)
@@ -1246,7 +1246,7 @@ CChangesPDFListFormParentCurIdxs.prototype.Type = AscDFH.historyitem_Pdf_List_Fo
 CChangesPDFListFormParentCurIdxs.prototype.private_SetValue = function(Value)
 {
 	var oField = this.Class;
-	oField.SetParentCurIdxs(Value);
+	oField.SetLogicCurIdxs(Value);
 };
 
 CChangesPDFListFormParentCurIdxs.prototype.WriteToBinary = function(Writer)

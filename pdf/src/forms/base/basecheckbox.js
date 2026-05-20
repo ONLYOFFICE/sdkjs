@@ -77,7 +77,7 @@
     CBaseCheckBoxField.prototype.SetDefaultValue = function(value) {
         let oParent = this.GetParent(true);
         if (oParent || this.IsWidget()) {
-            const shouldUpdate = value && !this.GetParentValue() || this.GetParentValue() !== value;
+            const shouldUpdate = value && !this.GetLogicValue() || this.GetLogicValue() !== value;
 
             if (shouldUpdate) {
                 this.SetValue(value);
@@ -460,18 +460,18 @@
         if (this.IsChecked()) {
             if (aOpt && aKids) {
                 if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this.IsRadiosInUnison() || this.GetType() == AscPDF.FIELD_TYPES.checkbox) {
-                    this.SetParentValue(aOpt.indexOf(this.GetExportValue()));
+                    this.SetLogicValue(aOpt.indexOf(this.GetExportValue()));
                 }
                 else {
-                    this.SetParentValue(String(aKids.indexOf(this)));
+                    this.SetLogicValue(String(aKids.indexOf(this)));
                 }
             }
             else {
-                this.SetParentValue(this.GetExportValue());
+                this.SetLogicValue(this.GetExportValue());
             }
         }
         else {
-            this.SetParentValue("Off");
+            this.SetLogicValue("Off");
         }
 
         this.Commit2();
@@ -732,7 +732,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseCheckBoxField.prototype.SyncValue = function() {
-        if (this.GetExportValue() == this.GetParentValue()) {
+        if (this.GetExportValue() == this.GetLogicValue()) {
             this.SetChecked(true);
             this.AddToRedraw();
         }

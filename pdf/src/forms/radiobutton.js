@@ -61,8 +61,8 @@
 	 */
     CRadioButtonField.prototype.UpdateAll = function() {
         let aOptions    = this.GetOptions();
-        let aFields     = this.GetDocument().GetAllWidgets(this.GetFullName());
-        let value       = this.GetParentValue();
+        let aFields     = this.GetAllWidgets();
+        let value       = this.GetLogicValue();
 
         let bFromOpt = false;
         let sExportValue;
