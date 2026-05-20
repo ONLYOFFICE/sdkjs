@@ -8304,7 +8304,7 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 	{
 		let fontName = run.Pr.GetFontFamily();
 		let prefix = AscFonts.getEmbeddedFontPrefix();
-		if (!fontName || !fontName.startsWith(prefix))
+		if (!fontName || !fontName.startsWith(prefix) || run.GetFormPDF())
 			return;
 
 		if (!!run.Pr.Bold !== !!newTextPr.Bold || !!run.Pr.Italic !== !!newTextPr.Italic || (newTextPr.GetFontFamily() && fontName != newTextPr.GetFontFamily()))
@@ -8319,6 +8319,10 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 				}
 			}
 			
+			if (!Asc.editor.embeddedFontsMap || !Asc.editor.embeddedFontsMap[fontName]) {
+				return;
+			}
+
 			let subFontName = Asc.editor.embeddedFontsMap[fontName];
 			newTextPr.RFonts.SetAll(subFontName);
 			newTextPr.SetSpacing(0);
