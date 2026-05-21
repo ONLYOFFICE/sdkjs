@@ -3358,7 +3358,7 @@ function CParagraphRecalculateStateWrap()
 	this.Fast            = false; // Быстрый ли пересчет
 	
 	this.alignState   = new CParagraphRecalculateStateAlign(this);
-	this.counterState = new CParagraphRecalculateStateCounter(this);
+	this.counterState = new AscWord.Paragraph.CounterRecalcState(this);
 
     //
     this.Page            = 0;
@@ -4392,45 +4392,6 @@ CParagraphRecalculateStateWrap.prototype.checkHyphenationZone = function(x)
 	return x - shift < this.XLimit - this.getHyphenationZone();
 };
 AscWord.ParagraphRecalculationWrapState = CParagraphRecalculateStateWrap;
-
-function CParagraphRecalculateStateCounter(wrapState)
-{
-	this.wrapState   = wrapState;
-    this.Paragraph   = undefined;
-    this.Range       = undefined;
-    this.Word        = false;
-    this.SpaceLen    = 0;
-    this.SpacesCount = 0;
-
-    this.Words       = 0;
-    this.Spaces      = 0;
-    this.Letters     = 0;
-    this.SpacesSkip  = 0;
-    this.LettersSkip = 0;
-
-    this.ComplexFields = new AscWord.ParagraphComplexFieldStack();
-}
-CParagraphRecalculateStateCounter.prototype.Reset = function(Paragraph, Range)
-{
-	this.Paragraph   = Paragraph;
-	this.Range       = Range;
-	this.Word        = false;
-	this.SpaceLen    = 0;
-	this.SpacesCount = 0;
-
-	this.Words       = 0;
-	this.Spaces      = 0;
-	this.Letters     = 0;
-	this.SpacesSkip  = 0;
-	this.LettersSkip = 0;
-	
-	this.ParaEnd   = false;
-	this.LineBreak = false;
-};
-CParagraphRecalculateStateCounter.prototype.isFastRecalculation = function()
-{
-	return this.wrapState.isFastRecalculation();
-};
 
 function CParagraphRecalculateStateAlign(wrapState)
 {

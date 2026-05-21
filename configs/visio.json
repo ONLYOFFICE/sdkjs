@@ -284,6 +284,7 @@
 			"word/Editor/FlowObjects.js",
 			"word/Editor/Paragraph.js",
 			"word/Editor/ParagraphChanges.js",
+			"word/Editor/Paragraph/recalc/counter-recalc-state.js",
 			"word/Editor/Paragraph_Recalculate.js",
 			"word/Editor/Paragraph/draw/content-draw-state.js",
 			"word/Editor/Paragraph/draw/highlight-draw-state.js",

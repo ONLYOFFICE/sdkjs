@@ -249,6 +249,10 @@ ParaDrawing.prototype.SetWidthVisible = function(WidthVisible)
 {
 	this.WidthVisible = WidthVisible;
 };
+ParaDrawing.prototype.getBidiType = function()
+{
+	return AscBidi.TYPE.ON;
+};
 ParaDrawing.prototype.GetSelectedContent = function(SelectedContent)
 {
 	if (this.GraphicObj && this.GraphicObj.GetSelectedContent)
