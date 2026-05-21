@@ -124,19 +124,43 @@ jobs:
             node-version: 20
 
       - name: Run unit tests
+        shell: bash
         run: |
+          set -o pipefail
           cd sdkjs
           python build/build.py --develop --addon ../sdkjs-ext --addon ../sdkjs-forms
           cd ../sdkjs-tests
           npm install node-qunit-puppeteer
-          node run.js
+          node run.js 2>&1 | tee "$GITHUB_WORKSPACE/test-output.txt"
 
       - name: Send message to telegram if failure
         if: failure()
-        uses: ./sdkjs/.github/actions/send-message
-        with:
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          chat: ${{ secrets.TELEGRAM_TO }}
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT: ${{ secrets.TELEGRAM_TO }}
+        shell: bash
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          AUTHOR="${{ github.actor }}"
+          NOW=$(date -u "+%Y-%m-%d %H:%M UTC")
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          FAILED_MODULES=$(sed 's/\x1b\[[0-9;]*m//g' "$GITHUB_WORKSPACE/test-output.txt" | \
+            awk '/^FAILED$/{f=1; next} f && /\.html$/{print}' | \
+            sed "s|$GITHUB_WORKSPACE/sdkjs-tests/||")
+
+          [ -z "$FAILED_MODULES" ] && FAILED_MODULES="(see logs for details)"
+
+          MESSAGE=$'❌ Unit tests failed\n\nBranch: '"$BRANCH"$'\nAuthor: ['"$AUTHOR"'](https://github.com/'"$AUTHOR"$')\nTime: '"$NOW"$'\n\nFailed modules:\n```\n'"$FAILED_MODULES"$'\n```\n\nLogs: '"$RUN_URL"
+
+          PAYLOAD=$(jq -n \
+            --arg chat_id "$TELEGRAM_CHAT" \
+            --arg text "$MESSAGE" \
+            '{"chat_id":$chat_id,"text":$text,"parse_mode":"Markdown","disable_notification":true,"disable_web_page_preview":true}')
+
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+            -H 'Content-Type: application/json' \
+            -d "$PAYLOAD"
 
   build-test:
     runs-on: ubuntu-latest

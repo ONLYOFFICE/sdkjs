@@ -680,7 +680,8 @@ var c_oAscPopUpSelectorType = {
 		RemoveGraphicalObject:      172,
 		ExitAddingShapesMode:       173,
 		SpeechWorker:               174,
-		EnDash:                     175
+		EnDash:                     175,
+		FillDown:                   176
 	};
 
   var c_oAscCalcMode = {
@@ -1202,6 +1203,7 @@ var c_oAscPopUpSelectorType = {
 	prot["ExitAddingShapesMode"] = prot.ExitAddingShapesMode;
 	prot["SpeechWorker"] = prot.SpeechWorker;
 	prot["EnDash"] = prot.EnDash;
+	prot["FillDown"] = prot.FillDown;
 
   window['Asc']['c_oAscCalcMode'] = window['Asc'].c_oAscCalcMode = c_oAscCalcMode;
   prot = c_oAscCalcMode;

@@ -198,6 +198,9 @@ function (window, undefined) {
 	// Direct xf change on a style-only cell; undo applies to
 	// ws.cellStylesByCol without creating a SheetMemory init row.
 	window['AscCH'].historyitem_Cell_SetStyleOnly = 32;
+	// Range-form companion of SetStyleOnly: one record per CRangeAttrArray
+	// run (bbox + uniform oldXfs/newXfs); splits to per-cell on OT conflict.
+	window['AscCH'].historyitem_Cell_SetStyleOnlyRange = 33;
 
 	window['AscCH'].historyitem_Comment_Add = 1;
 	window['AscCH'].historyitem_Comment_Remove = 2;

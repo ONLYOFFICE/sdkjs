@@ -151,9 +151,6 @@
 		// Array of locks that existed when the document was opened
 		this.arrPreOpenLocksObjects = [];
 
-		// Spell Checking
-		this.SpellCheckUrl = '';    // Spell check service URL
-
 		// License retrieval result
 		this.licenseResult       = null;
 		// Whether license was received
@@ -222,7 +219,7 @@
 		this.SaveAfterMacros = false;
 
 		// Spell Checking
-		this.SpellCheckApi = new AscCommon.CSpellCheckApi();
+		this.SpellCheckApi = {};
 		this.isSpellCheckEnable = true;
 
 		// macros & plugins events
@@ -1955,9 +1952,8 @@
 		{
 			t.sendEvent("asc_onParticipantsChanged", users);
 		};
-		this.CoAuthoringApi.onSpellCheckInit          = function(e)
+		this.CoAuthoringApi.onSpellCheckInit          = function()
 		{
-			t.SpellCheckUrl = e;
 			t._coSpellCheckInit();
 		};
 		this.CoAuthoringApi.onSetIndexUser            = function(e)
@@ -2412,7 +2408,7 @@
 				this.sendEvent('asc_onSpellCheckInit', langs_array);
 			}
 		} else {
-			if (!this.SpellCheckUrl && !window['NATIVE_EDITOR_ENJINE']) {
+			if (!window['NATIVE_EDITOR_ENJINE']) {
 				this.SpellCheckApi = {};
 				this.SpellCheckApi.log = false;
 				this.SpellCheckApi.worker = new CSpellchecker({
@@ -2448,22 +2444,8 @@
 				};
 
 				this.sendEvent('asc_onSpellCheckInit', this.SpellCheckApi.worker.getLanguages());
-				return;
-			}
-			
-			// Deprecated old scheme with server
-			if (this.SpellCheckUrl && this.isSpellCheckEnable) {
-				this.SpellCheckApi.set_url(this.SpellCheckUrl);
 			}
 		}
-
-		this.SpellCheckApi.onInit = function (e) {
-			t.sendEvent('asc_onSpellCheckInit', e);
-		};
-		this.SpellCheckApi.onSpellCheck = function (e) {
-			t.SpellCheck_CallBack(e);
-		};
-		this.SpellCheckApi.init(this.documentId);
 	};
     baseEditorsApi.prototype.asc_spellCheckAddToDictionary       = function(SpellCheckProperty)
     {

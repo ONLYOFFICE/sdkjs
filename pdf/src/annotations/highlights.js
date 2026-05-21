@@ -119,9 +119,22 @@
 
         oViewer.paint(setRedrawPageOnRepaint);
     };
-    CAnnotationTextMarkup.prototype.IsInQuads = function(x, y) {
-        return IsInQuads(this.GetQuads(), x, y);
-    };
+	CAnnotationTextMarkup.prototype.IsInQuads = function(x, y) {
+		let aQuads = this.GetQuads();
+		if (aQuads.length > 0) {
+			return IsInQuads(this.GetQuads(), x, y);
+		}
+		
+		let aRect = this.GetRect();
+		let nWidth = aRect[2] - aRect[0];
+		let nHeight = aRect[3] - aRect[1];
+		
+		if (x >= aRect[0] && x <= aRect[0] + nWidth && y >= aRect[1] && y <= aRect[1] + nHeight) {
+			return true;
+		}
+		
+		return false;
+	};
     CAnnotationTextMarkup.prototype.DrawSelected = function(overlay) {
         overlay.m_oContext.lineWidth    = 3;
         overlay.m_oContext.globalAlpha  = 1;
@@ -157,7 +170,23 @@
             });
         }
 
-        if (aAllRegions.length > 1) {
+        if (aAllRegions.length === 0) {
+            let aRect = this.GetRect();
+            if (aRect && aRect.length === 4) {
+                resultRegion = {
+                    inverted : false,
+                    regions : [
+                        [
+                            [aRect[0], aRect[1]],
+                            [aRect[2], aRect[1]],
+                            [aRect[2], aRect[3]],
+                            [aRect[0], aRect[3]]
+                        ]
+                    ]
+                };
+            }
+        }
+        else if (aAllRegions.length > 1) {
             resultRegion = fUniter(aAllRegions[0], aAllRegions[1]);
             for (let i = 2; i < aAllRegions.length; i++) {
                 resultRegion = fUniter(resultRegion, aAllRegions[i]);

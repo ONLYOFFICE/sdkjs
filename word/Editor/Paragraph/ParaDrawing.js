@@ -249,6 +249,10 @@ ParaDrawing.prototype.SetWidthVisible = function(WidthVisible)
 {
 	this.WidthVisible = WidthVisible;
 };
+ParaDrawing.prototype.getBidiType = function()
+{
+	return AscBidi.TYPE.ON;
+};
 ParaDrawing.prototype.GetSelectedContent = function(SelectedContent)
 {
 	if (this.GraphicObj && this.GraphicObj.GetSelectedContent)
@@ -621,6 +625,10 @@ ParaDrawing.prototype.Set_AllowOverlap = function(AllowOverlap)
 {
 	History.Add(new CChangesParaDrawingAllowOverlap(this, this.AllowOverlap, AllowOverlap));
 	this.AllowOverlap = AllowOverlap;
+};
+ParaDrawing.prototype.Get_AllowOverlap = function()
+{
+  return this.AllowOverlap
 };
 ParaDrawing.prototype.Set_PositionH = function(RelativeFrom, Align, Value, Percent)
 {
@@ -1099,9 +1107,11 @@ ParaDrawing.prototype.Set_Props = function(Props)
 
 	if(undefined != Props.description){
 		this.docPr.setDescr(Props.description);
+    Asc.editor.addMacroStepData('SetDrawingDescription', Props.description);
 	}
 	if(undefined != Props.title){
 		this.docPr.setTitle(Props.title);
+    Asc.editor.addMacroStepData('SetDrawingTitle', Props.title);
 	}
 };
 ParaDrawing.prototype.CheckFitToColumn = function()
@@ -1783,9 +1793,8 @@ ParaDrawing.prototype.Set_XY = function(X, Y, Paragraph, PageNum, bResetAlign)
 			Layout = Paragraph.Get_Layout(ContentPos, this);
 
 		this.private_SetXYByLayout(X, Y, PageNum, Layout, (bResetAlign || true !== this.PositionH.Align ? true : false), (bResetAlign || true !== this.PositionV.Align ? true : false));
-
 		if (this.IsShape() || this.IsPicture())
-			Asc.editor.addMacroStepData("SetDrawingPos", {x: this.X, y: this.Y, name: this.GraphicObj.getObjectName()});
+			Asc.editor.addMacroStepData("SetDrawingPos", {x: this.X, y: this.Y, id: this.GraphicObj.getObjectName()});
 	}
 };
 ParaDrawing.prototype.private_SetXYByLayout = function(X, Y, PageNum, Layout, bChangeX, bChangeY)

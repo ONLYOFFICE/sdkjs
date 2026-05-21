@@ -4456,7 +4456,36 @@
 					// Recalculate positions
 					if (item.Data && item.Data.applyCollaborative) {
 						//not making a copy of oData, but shifting in it, because changes will be erased after serialization anyway
-						if (item.Data.applyCollaborative(item.SheetId, this.oApi.collaborativeEditing)) {
+						var transformResult = item.Data.applyCollaborative(item.SheetId, this.oApi.collaborativeEditing);
+						// `{split: [...]}` lets a range-style record collapse to
+						// per-cell records when a remote insert/delete crossed
+						// its band. Split items stay in original coordinates so
+						// this same loop can re-process each one through the
+						// ordinary per-cell collaborative path exactly once.
+						if (transformResult && transformResult.split) {
+							var splitItems = transformResult.split;
+							var newItems = [];
+							for (var s = 0; s < splitItems.length; s++) {
+								var sp = splitItems[s];
+								var newItem = {
+									Class: item.Class,
+									Type: sp.Type,
+									SheetId: item.SheetId,
+									Range: sp.Range,
+									Data: sp.Data,
+									LocalChange: item.LocalChange,
+									Binary: {Pos: 0, Len: 0}
+								};
+								AscCommon.History.Refresh_SpreadsheetChanges(newItem);
+								newItems.push(newItem);
+							}
+							Array.prototype.splice.apply(items, [j, 1].concat(newItems));
+							length2 = items.length;
+							// Re-process the new j slot (first split item).
+							j--;
+							continue;
+						}
+						if (transformResult === true) {
 							AscCommon.History.Refresh_SpreadsheetChanges(item);
 						}
 					}
@@ -19141,28 +19170,101 @@
 		t.worksheet.dynamicArrayManager.recalculateVolatileArrays();
 		AscCommon.History.EndTransaction();
 	};
+	// Shim for setters where row / col / cell all delegate to the same method.
+	Range.prototype._setRangeXfByMethod = function (styleOnlyApply, methodName, val) {
+		this._setRangeXfProperty(styleOnlyApply,
+			function (row)  { row[methodName](val); },
+			function (col)  { col[methodName](val); },
+			function (cell) { cell[methodName](val); });
+	};
+	// Row / Col / All ranges route style-only entries through `styleOnlyApply`
+	// (a run-rewrite helper from CellStyleStorage) and visit only data cells
+	// in the per-cell loop: mirrorCellStyle no-ops on transient cells, so a
+	// cell-setter call there would clone and silently drop the mutation.
+	Range.prototype._setRangeXfProperty = function (styleOnlyApply, rowAction, colAction, cellAction) {
+		var fSetProperty = this._setProperty;
+		var nRangeType = this._getRangeType();
+		var isRowColAll = (c_oRangeType.Row === nRangeType
+			|| c_oRangeType.Col === nRangeType
+			|| c_oRangeType.All === nRangeType);
+		if (c_oRangeType.All === nRangeType) {
+			if (colAction) {
+				colAction(this.worksheet.getAllCol());
+			}
+			fSetProperty = this._setPropertyNoEmpty;
+		}
+		if (isRowColAll && styleOnlyApply) {
+			styleOnlyApply(this.worksheet, this.bbox);
+		}
+		var fActionRow = rowAction ? function (row) {
+			if (c_oRangeType.All === nRangeType && null == row.xfs) {
+				return;
+			}
+			rowAction(row);
+		} : null;
+		var fActionCol = colAction ? function (col) { colAction(col); } : null;
+		var fActionCell = cellAction ? function (cell) {
+			if (isRowColAll && cell._isTransient) {
+				return;
+			}
+			cellAction(cell);
+		} : null;
+		if (isRowColAll) {
+			if (c_oRangeType.Row === nRangeType) {
+				this._foreachRow(fActionRow, null);
+				this._foreachDataOnly(fActionCell);
+			} else if (c_oRangeType.Col === nRangeType) {
+				this._foreachCol(fActionCol, null);
+				this._foreachDataOnly(fActionCell);
+			} else {
+				this._foreachDataOnly(fActionCell, fActionRow);
+				this._foreachColNoEmpty(fActionCol, null);
+			}
+		} else {
+			fSetProperty.call(this, fActionRow, fActionCol, fActionCell);
+		}
+	};
 	Range.prototype.setCellStyle=function(val){
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
+		var ws = this.worksheet;
 		var oStyle;
-		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			oStyle = this.worksheet.getAllCol().setCellStyle(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-							if(c_oRangeType.All == nRangeType && null == row.xfs)
-								return;
-							oStyle = row.setCellStyle(val);
-						},
-						function(col){
-							oStyle = col.setCellStyle(val);
-						},
-						function(cell){
-							oStyle = cell.setCellStyle(val);
-						});
+		var styleCache = AscCommonExcel.g_StyleCache;
+		var newXfId = ws.workbook.CellStyles._prepareCellStyle(val);
+		var resolvedStyle = (newXfId != null)
+			? ws.workbook.CellStyles.getStyleByXfId(newXfId) : null;
+		this._setRangeXfProperty(
+			function (ws2, bbox) {
+				AscCommonExcel.CellStyleStorage.applyXfTransformToStyleOnlyRunsInBBox(
+					ws2, bbox, 'XfId', newXfId, function (oldXfs) {
+						if (oldXfs.XfId === newXfId && !resolvedStyle) {
+							return null;
+						}
+						var clone = oldXfs.clone();
+						clone.XfId = newXfId;
+						if (resolvedStyle) {
+							if (resolvedStyle.ApplyFont && resolvedStyle.getFont()) {
+								clone.font = styleCache.addFont(resolvedStyle.getFont());
+							}
+							if (resolvedStyle.ApplyFill && resolvedStyle.getFill()) {
+								clone.fill = styleCache.addFill(resolvedStyle.getFill());
+							}
+							if (resolvedStyle.ApplyBorder && resolvedStyle.getBorder()) {
+								clone.border = styleCache.addBorder(resolvedStyle.getBorder());
+							}
+							if (resolvedStyle.ApplyNumberFormat) {
+								var numFmt = resolvedStyle.getNumFormatStr();
+								if (numFmt != null) {
+									clone.num = styleCache.addNum(new AscCommonExcel.Num({f: numFmt}));
+								}
+							}
+						}
+						return clone;
+					});
+			},
+			function (row) { oStyle = row.setCellStyle(val); },
+			function (col) { oStyle = col.setCellStyle(val); },
+			function (cell) { oStyle = cell.setCellStyle(val); });
 		if (oStyle && oStyle.ApplyNumberFormat)
 			this.setNumFormatPivot(oStyle.getNumFormatStr());
 	};
@@ -19172,24 +19274,9 @@
 		}
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			this.worksheet.getAllCol().setStyle(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-				if(c_oRangeType.All == nRangeType && null == row.xfs)
-					return;
-				row.setStyle(val);
-			},
-			function(col){
-				col.setStyle(val);
-			},
-			function(cell){
-				cell.setStyle(val);
-			});
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyXfsReplaceToStyleOnlyRunsInBBox(ws, bbox, val);
+		}, 'setStyle', val);
 	};
 	Range.prototype.clearTableStyle = function() {
 		this.worksheet.sheetMergedStyles.clearTablePivotStyle(this.bbox);
@@ -19212,23 +19299,12 @@
 	Range.prototype.setNum = function(val) {
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if (c_oRangeType.All == nRangeType) {
-			this.worksheet.getAllCol().setNum(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row) {
-							  if (c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  row.setNum(val);
-						  },
-						  function(col) {
-							  col.setNum(val);
-						  },
-						  function(cell) {
-							  cell.setNum(val);
-						  });
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyXfsPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'num', val,
+				AscCommonExcel.CellXfs.prototype.setNum,
+				AscCommonExcel.g_StyleCache.addNum);
+		}, 'setNum', val);
 	};
 	Range.prototype.getShiftedNumFormat=function(nShift, dDigitsCount){
 		AscCommon.History.Create_NewPoint();
@@ -19241,288 +19317,130 @@
 	Range.prototype.setFont=function(val){
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			this.worksheet.getAllCol().setFont(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-							  if(c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  row.setFont(val);
-						  },
-						  function(col){
-							  col.setFont(val);
-						  },
-						  function(cell){
-							  cell.setFont(val);
-						  });
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyXfsPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'font', val,
+				AscCommonExcel.CellXfs.prototype.setFont,
+				AscCommonExcel.g_StyleCache.addFont);
+		}, 'setFont', val);
 	};
 	Range.prototype.setFontname=function(val){
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			this.worksheet.getAllCol().setFontname(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-							  if(c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  row.setFontname(val);
-						  },
-						  function(col){
-							  col.setFontname(val);
-						  },
-						  function(cell){
-							  cell.setFontname(val);
-						  });
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyFontPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'name', val,
+				AscCommonExcel.Font.prototype.getName,
+				function (v) { this.setName(v); this.setScheme(null); });
+		}, 'setFontname', val);
 	};
 	Range.prototype.setFontsize=function(val){
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			this.worksheet.getAllCol().setFontsize(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-							  if(c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  row.setFontsize(val);
-						  },
-						  function(col){
-							  col.setFontsize(val);
-						  },
-						  function(cell){
-							  cell.setFontsize(val);
-						  });
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyFontPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'size', val,
+				AscCommonExcel.Font.prototype.getSize,
+				AscCommonExcel.Font.prototype.setSize);
+		}, 'setFontsize', val);
 	};
 	Range.prototype.setFontcolor=function(val){
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			this.worksheet.getAllCol().setFontcolor(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-							  if(c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  row.setFontcolor(val);
-						  },
-						  function(col){
-							  col.setFontcolor(val);
-						  },
-						  function(cell){
-							  cell.setFontcolor(val);
-						  });
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyFontPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'color', val,
+				AscCommonExcel.Font.prototype.getColor,
+				AscCommonExcel.Font.prototype.setColor);
+		}, 'setFontcolor', val);
 	};
 	Range.prototype.setBold=function(val){
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			this.worksheet.getAllCol().setBold(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-							  if(c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  row.setBold(val);
-						  },
-						  function(col){
-							  col.setBold(val);
-						  },
-						  function(cell){
-							  cell.setBold(val);
-						  });
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyFontPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'bold', val,
+				AscCommonExcel.Font.prototype.getBold,
+				AscCommonExcel.Font.prototype.setBold);
+		}, 'setBold', val);
 	};
 	Range.prototype.setItalic=function(val){
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			this.worksheet.getAllCol().setItalic(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-							  if(c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  row.setItalic(val);
-						  },
-						  function(col){
-							  col.setItalic(val);
-						  },
-						  function(cell){
-							  cell.setItalic(val);
-						  });
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyFontPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'italic', val,
+				AscCommonExcel.Font.prototype.getItalic,
+				AscCommonExcel.Font.prototype.setItalic);
+		}, 'setItalic', val);
 	};
 	Range.prototype.setUnderline=function(val){
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			this.worksheet.getAllCol().setUnderline(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-							  if(c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  row.setUnderline(val);
-						  },
-						  function(col){
-							  col.setUnderline(val);
-						  },
-						  function(cell){
-							  cell.setUnderline(val);
-						  });
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyFontPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'underline', val,
+				AscCommonExcel.Font.prototype.getUnderline,
+				AscCommonExcel.Font.prototype.setUnderline);
+		}, 'setUnderline', val);
 	};
 	Range.prototype.setStrikeout=function(val){
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			this.worksheet.getAllCol().setStrikeout(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-							  if(c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  row.setStrikeout(val);
-						  },
-						  function(col){
-							  col.setStrikeout(val);
-						  },
-						  function(cell){
-							  cell.setStrikeout(val);
-						  });
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyFontPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'strikeout', val,
+				AscCommonExcel.Font.prototype.getStrikeout,
+				AscCommonExcel.Font.prototype.setStrikeout);
+		}, 'setStrikeout', val);
 	};
 	Range.prototype.setFontAlign=function(val){
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			this.worksheet.getAllCol().setFontAlign(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-							  if(c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  row.setFontAlign(val);
-						  },
-						  function(col){
-							  col.setFontAlign(val);
-						  },
-						  function(cell){
-							  cell.setFontAlign(val);
-						  });
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyFontPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'fontAlign', val,
+				AscCommonExcel.Font.prototype.getVerticalAlign,
+				AscCommonExcel.Font.prototype.setVerticalAlign);
+		}, 'setFontAlign', val);
 	};
 	Range.prototype.setAlignVertical=function(val){
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			this.worksheet.getAllCol().setAlignVertical(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-							  if(c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  row.setAlignVertical(val);
-						  },
-						  function(col){
-							  col.setAlignVertical(val);
-						  },
-						  function(cell){
-							  cell.setAlignVertical(val);
-						  });
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'alignVertical', val,
+				AscCommonExcel.Align.prototype.setAlignVertical);
+		}, 'setAlignVertical', val);
 	};
 	Range.prototype.setAlignHorizontal=function(val){
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			this.worksheet.getAllCol().setAlignHorizontal(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-							  if(c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  row.setAlignHorizontal(val);
-						  },
-						  function(col){
-							  col.setAlignHorizontal(val);
-						  },
-						  function(cell){
-							  cell.setAlignHorizontal(val);
-						  });
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'alignHorizontal', val,
+				AscCommonExcel.Align.prototype.setAlignHorizontal);
+		}, 'setAlignHorizontal', val);
 	};
 	Range.prototype.setReadingOrder=function(val){
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			this.worksheet.getAllCol().setReadingOrder(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-							  if(c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  row.setReadingOrder(val);
-						  },
-						  function(col){
-							  col.setReadingOrder(val);
-						  },
-						  function(cell){
-							  cell.setReadingOrder(val);
-						  });
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'readingOrder', val,
+				AscCommonExcel.Align.prototype.setReadingOrder);
+		}, 'setReadingOrder', val);
 	};
 	Range.prototype.setFill=function(val){
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			this.worksheet.getAllCol().setFill(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-							  if(c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  row.setFill(val);
-						  },
-						  function(col){
-							  col.setFill(val);
-						  },
-						  function(cell){
-							  cell.setFill(val);
-						  });
+		this._setRangeXfByMethod(function (ws, bbox) {
+			if (val) { val.checkEmptyContent(); }
+			AscCommonExcel.CellStyleStorage.applyXfsPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'fill', val,
+				AscCommonExcel.CellXfs.prototype.setFill,
+				AscCommonExcel.g_StyleCache.addFill);
+		}, 'setFill', val);
 	};
 	Range.prototype.setFillColor=function(val){
 		var fill = new AscCommonExcel.Fill();
@@ -19535,24 +19453,18 @@
 		if (null == border)
 			border = new Border();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			this.worksheet.getAllCol().setBorder(border.clone());
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-							  if(c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  row.setBorder(border.clone());
-						  },
-						  function(col){
-							  col.setBorder(border.clone());
-						  },
-						  function(cell){
-							  cell.setBorder(border.clone());
-						  });
+		// setBorderSrc has no edge-aware merge, so a uniform border-replace
+		// is correct here; setBorder (with merge) uses applyBorderInnerToStyleOnly.
+		this._setRangeXfProperty(
+			function (ws, bbox) {
+				AscCommonExcel.CellStyleStorage.applyXfsPropToStyleOnlyRunsInBBox(
+					ws, bbox, 'border', border,
+					AscCommonExcel.CellXfs.prototype.setBorder,
+					AscCommonExcel.g_StyleCache.addBorder);
+			},
+			function (row) { row.setBorder(border.clone()); },
+			function (col) { col.setBorder(border.clone()); },
+			function (cell) { cell.setBorder(border.clone()); });
 		AscCommon.History.EndTransaction();
 	};
 	Range.prototype._setBorderMerge=function(bLeft, bTop, bRight, bBottom, oNewBorder, oCurBorder){
@@ -19675,26 +19587,15 @@
 		AscCommon.History.Create_NewPoint();
 		var _this = this;
 		var oBBox = this.bbox;
-		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
 		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			var oAllCol = this.worksheet.getAllCol();
-			_this._setRowColBorder(oBBox, oAllCol, false, border);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-							  if(c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  _this._setRowColBorder(oBBox, row, true, border);
-						  },
-						  function(col){
-							  _this._setRowColBorder(oBBox, col, false, border);
-						  },
-						  function(cell){
-							  _this._setCellBorder(oBBox, cell, border);
-						  });
+		this.createCellOnRowColCross();
+		this._setRangeXfProperty(
+			function (ws, bbox) {
+				AscCommonExcel.CellStyleStorage.applyBorderInnerToStyleOnly(_this, bbox, border);
+			},
+			function (row) { _this._setRowColBorder(oBBox, row, true, border); },
+			function (col) { _this._setRowColBorder(oBBox, col, false, border); },
+			function (cell) { _this._setCellBorder(oBBox, cell, border); });
 		//remove boundary borders
 		var aEdgeBorders = [];
 		if(oBBox.c1 > 0 && (null == border || (border.l && !border.l.isEmpty())))
@@ -19725,68 +19626,29 @@
 	Range.prototype.setShrinkToFit=function(val){
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			this.worksheet.getAllCol().setShrinkToFit(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-							  if(c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  row.setShrinkToFit(val);
-						  },
-						  function(col){
-							  col.setShrinkToFit(val);
-						  },
-						  function(cell){
-							  cell.setShrinkToFit(val);
-						  });
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'shrinkToFit', val,
+				AscCommonExcel.Align.prototype.setShrinkToFit);
+		}, 'setShrinkToFit', val);
 	};
 	Range.prototype.setWrap=function(val){
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			this.worksheet.getAllCol().setWrap(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-							  if(c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  row.setWrap(val);
-						  },
-						  function(col){
-							  col.setWrap(val);
-						  },
-						  function(cell){
-							  cell.setWrap(val);
-						  });
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'wrap', val,
+				AscCommonExcel.Align.prototype.setWrap);
+		}, 'setWrap', val);
 	};
 	Range.prototype.setAngle=function(val){
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if(c_oRangeType.All == nRangeType)
-		{
-			this.worksheet.getAllCol().setAngle(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function(row){
-							  if(c_oRangeType.All == nRangeType && null == row.xfs)
-								  return;
-							  row.setAngle(val);
-						  },
-						  function(col){
-							  col.setAngle(val);
-						  },
-						  function(cell){
-							  cell.setAngle(val);
-						  });
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'angle', val,
+				AscCommonExcel.Align.prototype.setAngle);
+		}, 'setAngle', val);
 	};
 	Range.prototype.setIndent = function (val) {
 		if (val < 0) {
@@ -19794,82 +19656,38 @@
 		}
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if (c_oRangeType.All == nRangeType) {
-			this.worksheet.getAllCol().setAngle(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function (row) {
-			if (c_oRangeType.All == nRangeType && null == row.xfs) {
-				return;
-			}
-			row.setIndent(val);
-		}, function (col) {
-			col.setIndent(val);
-		}, function (cell) {
-			cell.setIndent(val);
-		});
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'indent', val,
+				AscCommonExcel.Align.prototype.setIndent);
+		}, 'setIndent', val);
 	};
 	Range.prototype.setApplyProtection = function (val) {
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if (c_oRangeType.All == nRangeType) {
-			this.worksheet.getAllCol().setApplyProtection(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function (row) {
-			if (c_oRangeType.All == nRangeType && null == row.xfs) {
-				return;
-			}
-			row.setApplyProtection(val);
-		}, function (col) {
-			col.setApplyProtection(val);
-		}, function (cell) {
-			cell.setApplyProtection(val);
-		});
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyXfsPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'applyProtection', val,
+				AscCommonExcel.CellXfs.prototype.setApplyProtection);
+		}, 'setApplyProtection', val);
 	};
 	Range.prototype.setLocked = function (val) {
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if (c_oRangeType.All == nRangeType) {
-			this.worksheet.getAllCol().setLocked(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function (row) {
-			if (c_oRangeType.All == nRangeType && null == row.xfs) {
-				return;
-			}
-			row.setLocked(val);
-		}, function (col) {
-			col.setLocked(val);
-		}, function (cell) {
-			cell.setLocked(val);
-		});
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyXfsPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'locked', val,
+				AscCommonExcel.CellXfs.prototype.setLocked);
+		}, 'setLocked', val);
 	};
 	Range.prototype.setHiddenFormulas = function (val) {
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
-		var fSetProperty = this._setProperty;
-		var nRangeType = this._getRangeType();
-		if (c_oRangeType.All == nRangeType) {
-			this.worksheet.getAllCol().setHiddenFormulas(val);
-			fSetProperty = this._setPropertyNoEmpty;
-		}
-		fSetProperty.call(this, function (row) {
-			if (c_oRangeType.All == nRangeType && null == row.xfs) {
-				return;
-			}
-			row.setHiddenFormulas(val);
-		}, function (col) {
-			col.setHiddenFormulas(val);
-		}, function (cell) {
-			cell.setHiddenFormulas(val);
-		});
+		this._setRangeXfByMethod(function (ws, bbox) {
+			AscCommonExcel.CellStyleStorage.applyXfsPropToStyleOnlyRunsInBBox(
+				ws, bbox, 'hidden', val,
+				AscCommonExcel.CellXfs.prototype.setHidden);
+		}, 'setHiddenFormulas', val);
 	};
 	Range.prototype.setType=function(type){
 		AscCommon.History.Create_NewPoint();

@@ -1057,6 +1057,13 @@
 					this.view.setFontAttributes("changeFontSize", nShortcutAction === Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 					break;
 				}
+				case Asc.c_oAscSpreadsheetShortcutType.FillDown: {
+					if (!bCanEdit || bSelectionDialogMode || this.getCellEditMode()) {
+						break;
+					}
+					this.handlers.trigger("fillDown");
+					break;
+				}
 				default: {
 					const oCustom = this.view.Api.getCustomShortcutAction(nShortcutAction);
 					if (oCustom) {

@@ -595,6 +595,7 @@ function (window, undefined) {
 		this.SortData = 20;
 		this.CommentData = 21;
 		this.CommentCoords = 22;
+		this.CellRangeStyleSimpleData = 23;
 		this.ChartSeriesData = 24;
 		this.SheetAdd = 25;
 		this.SheetRemove = 26;
@@ -697,6 +698,8 @@ function (window, undefined) {
 					return new UndoRedoData_CellData();
 				case this.CellSimpleData:
 					return new UndoRedoData_CellSimpleData();
+				case this.CellRangeStyleSimpleData:
+					return new UndoRedoData_CellRangeStyleSimpleData();
 				case this.FromTo:
 					return new UndoRedoData_FromTo();
 				case this.FromToRowCol:
@@ -927,6 +930,94 @@ function (window, undefined) {
 		this.nRow = collaborativeEditing.getLockMeRow2(nSheetId, this.nRow);
 		this.nCol = collaborativeEditing.getLockMeColumn2(nSheetId, this.nCol);
 		return this.nRow !== nRowOld || this.nCol !== nColOld;
+	};
+
+	// Range companion of UndoRedoData_CellSimpleData: one record covers a
+	// uniform (c1..c2) x (r1..r2) band. oOldVal is local-only (matches
+	// CellSimpleData's wire shape).
+	function UndoRedoData_CellRangeStyleSimpleData(c1, r1, c2, r2, oOldVal, oNewVal) {
+		this.c1 = c1;
+		this.r1 = r1;
+		this.c2 = c2;
+		this.r2 = r2;
+		this.oOldVal = oOldVal;
+		this.oNewVal = oNewVal;
+	}
+	UndoRedoData_CellRangeStyleSimpleData.prototype.Properties = {
+		c1: 0, r1: 1, c2: 2, r2: 3, NewVal: 4
+	};
+	UndoRedoData_CellRangeStyleSimpleData.prototype.getType = function () {
+		return UndoRedoDataTypes.CellRangeStyleSimpleData;
+	};
+	UndoRedoData_CellRangeStyleSimpleData.prototype.getProperties = function () {
+		return this.Properties;
+	};
+	UndoRedoData_CellRangeStyleSimpleData.prototype.getProperty = function (nType) {
+		switch (nType) {
+			case this.Properties.c1: return this.c1;
+			case this.Properties.r1: return this.r1;
+			case this.Properties.c2: return this.c2;
+			case this.Properties.r2: return this.r2;
+			case this.Properties.NewVal: return this.oNewVal;
+		}
+		return null;
+	};
+	UndoRedoData_CellRangeStyleSimpleData.prototype.setProperty = function (nType, value) {
+		switch (nType) {
+			case this.Properties.c1: this.c1 = value; break;
+			case this.Properties.r1: this.r1 = value; break;
+			case this.Properties.c2: this.c2 = value; break;
+			case this.Properties.r2: this.r2 = value; break;
+			case this.Properties.NewVal: this.oNewVal = value; break;
+		}
+	};
+	UndoRedoData_CellRangeStyleSimpleData.prototype.CreateReverseChangeSpreadsheet = function () {
+		return new UndoRedoData_CellRangeStyleSimpleData(
+			this.c1, this.r1, this.c2, this.r2, this.oNewVal, this.oOldVal);
+	};
+	UndoRedoData_CellRangeStyleSimpleData.prototype.applyCollaborative = function (nSheetId, collaborativeEditing) {
+		var newC1 = collaborativeEditing.getLockMeColumn2(nSheetId, this.c1);
+		var newR1 = collaborativeEditing.getLockMeRow2(nSheetId, this.r1);
+		var newC2 = collaborativeEditing.getLockMeColumn2(nSheetId, this.c2);
+		var newR2 = collaborativeEditing.getLockMeRow2(nSheetId, this.r2);
+		var oldRowSpan = this.r2 - this.r1 + 1;
+		var oldColSpan = this.c2 - this.c1 + 1;
+		var newRowSpan = (newR1 != null && newR2 != null) ? (newR2 - newR1 + 1) : -1;
+		var newColSpan = (newC1 != null && newC2 != null) ? (newC2 - newC1 + 1) : -1;
+		// Uniform shift: no remote op fell inside the band; remap corners
+		// and keep the compact range record.
+		if (newRowSpan === oldRowSpan && newColSpan === oldColSpan) {
+			var changed = (newR1 !== this.r1) || (newC1 !== this.c1)
+				|| (newR2 !== this.r2) || (newC2 !== this.c2);
+			this.r1 = newR1;
+			this.c1 = newC1;
+			this.r2 = newR2;
+			this.c2 = newC2;
+			return changed;
+		}
+		// Span changed: a remote insert/delete crossed our band. Split into
+		// per-cell SetStyleOnly records in ORIGINAL coordinates so the
+		// SerializeHistory loop remaps each through CellSimpleData exactly
+		// once; deleted cells (null remap) are dropped silently.
+		var splitItems = [];
+		for (var c = this.c1; c <= this.c2; c++) {
+			var nc = collaborativeEditing.getLockMeColumn2(nSheetId, c);
+			if (nc == null) {
+				continue;
+			}
+			for (var r = this.r1; r <= this.r2; r++) {
+				var nr = collaborativeEditing.getLockMeRow2(nSheetId, r);
+				if (nr == null) {
+					continue;
+				}
+				splitItems.push({
+					Type: window['AscCH'].historyitem_Cell_SetStyleOnly,
+					Range: new Asc.Range(c, r, c, r),
+					Data: new UndoRedoData_CellSimpleData(r, c, this.oOldVal, this.oNewVal)
+				});
+			}
+		}
+		return {split: splitItems};
 	};
 
 	function UndoRedoData_CellData(value, style) {
@@ -3296,17 +3387,30 @@ function (window, undefined) {
 		if (null == ws) {
 			return;
 		}
+		var isRangeStyleType = (AscCH.historyitem_Cell_SetStyleOnlyRange === Type);
 		var nRow = Data.nRow;
 		var nCol = Data.nCol;
 		if (this.wb.bCollaborativeChanges) {
 			var collaborativeEditing = this.wb.oApi.collaborativeEditing;
-			nRow = collaborativeEditing.getLockOtherRow2(nSheetId, nRow);
-			nCol = collaborativeEditing.getLockOtherColumn2(nSheetId, nCol);
 			var oLockInfo = new AscCommonExcel.asc_CLockInfo();
 			oLockInfo["sheetId"] = nSheetId;
 			oLockInfo["type"] = c_oAscLockTypeElem.Range;
-			oLockInfo["rangeOrObjectId"] = new Asc.Range(nCol, nRow, nCol, nRow);
+			if (isRangeStyleType) {
+				var lockC1 = collaborativeEditing.getLockOtherColumn2(nSheetId, Data.c1);
+				var lockR1 = collaborativeEditing.getLockOtherRow2(nSheetId, Data.r1);
+				var lockC2 = collaborativeEditing.getLockOtherColumn2(nSheetId, Data.c2);
+				var lockR2 = collaborativeEditing.getLockOtherRow2(nSheetId, Data.r2);
+				oLockInfo["rangeOrObjectId"] = new Asc.Range(lockC1, lockR1, lockC2, lockR2);
+			} else {
+				nRow = collaborativeEditing.getLockOtherRow2(nSheetId, nRow);
+				nCol = collaborativeEditing.getLockOtherColumn2(nSheetId, nCol);
+				oLockInfo["rangeOrObjectId"] = new Asc.Range(nCol, nRow, nCol, nRow);
+			}
 			this.wb.aCollaborativeChangeElements.push(oLockInfo);
+		}
+		if (isRangeStyleType) {
+			AscCommonExcel.CellStyleStorage.applyStyleOnlyRangeHistory(ws, Data, bUndo);
+			return;
 		}
 		// Style-only undo: apply to cellStylesByCol directly so no
 		// SheetMemory init row is created.
@@ -6487,6 +6591,7 @@ function (window, undefined) {
 	window['AscCommonExcel'].UndoRedoClassTypes = UndoRedoClassTypes;
 	window['AscCommonExcel'].UndoRedoDataTypes = UndoRedoDataTypes;
 	window['AscCommonExcel'].UndoRedoData_CellSimpleData = UndoRedoData_CellSimpleData;
+	window['AscCommonExcel'].UndoRedoData_CellRangeStyleSimpleData = UndoRedoData_CellRangeStyleSimpleData;
 	window['AscCommonExcel'].UndoRedoData_CellData = UndoRedoData_CellData;
 	window['AscCommonExcel'].UndoRedoData_CellValueData = UndoRedoData_CellValueData;
 	window['AscCommonExcel'].UndoRedoData_FromToRowCol = UndoRedoData_FromToRowCol;

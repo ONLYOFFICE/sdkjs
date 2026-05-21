@@ -6946,8 +6946,6 @@ var editor;
 	var t = this;
     asc["editor"] = this;
 
-    this.SpellCheckUrl = '';
-
     if (undefined == isUser) {
         this.User = new AscCommon.asc_CUser();
         this.User.setId("TM");

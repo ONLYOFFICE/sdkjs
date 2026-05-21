@@ -7783,13 +7783,23 @@ var CPresentation = CPresentation || function(){};
 				const oFillRGB = annot.GetRGBColor(annot.GetFillColor());
 
 				const aQuadsParts = annot.GetQuads();
-				aQuadsParts.forEach(function(quads) {
-					aQuadsFlat = aQuadsFlat.concat(quads);
-					
+				if (aQuadsParts.length > 0) {
+					aQuadsParts.forEach(function(quads) {
+						aQuadsFlat = aQuadsFlat.concat(quads);
+
+						oMemory.WriteLong(oFillRGB.r);
+						oMemory.WriteLong(oFillRGB.g);
+						oMemory.WriteLong(oFillRGB.b);
+					});
+				}
+				else {
+					let aRect = annot.GetRect();
+					aQuadsFlat = aQuadsFlat.concat([aRect[0], aRect[1], aRect[2], aRect[1], aRect[0], aRect[3], aRect[2], aRect[3]]);
+
 					oMemory.WriteLong(oFillRGB.r);
 					oMemory.WriteLong(oFillRGB.g);
 					oMemory.WriteLong(oFillRGB.b);
-				});
+				}
 
 				pagesIdxMap.set(pageIdx, nOrigPageIdx);
 			});
