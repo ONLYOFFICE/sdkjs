@@ -9,7 +9,6 @@
 			"common/commonDefines.js",
 			"common/docscoapicommon.js",
 			"common/docscoapi.js",
-			"common/spellcheckapi.js",
 			"common/apiCommon.js",
 			"common/SerializeCommonWordExcel.js",
 			"vendor/string.js",

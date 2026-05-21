@@ -13326,8 +13326,6 @@ background-repeat: no-repeat;\
 	window["asc_docs_api"]                                      = asc_docs_api;
 	window["asc_docs_api"].prototype["asc_nativeOpenFile"]      = function(base64File, version)
 	{
-		this.SpellCheckUrl = '';
-
 		this.User = new AscCommon.asc_CUser();
 		this.User.setId("TM");
 		this.User.setUserName("native");

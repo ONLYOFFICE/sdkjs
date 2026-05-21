@@ -165,8 +165,6 @@
 		}
 	};
 	PDFEditorApi.prototype["asc_nativeOpenFile"] = function(data, version) {
-		this.SpellCheckUrl = '';
-
 		this.User = new AscCommon.asc_CUser();
 		this.User.setId("TM");
 		this.User.setUserName("native");
