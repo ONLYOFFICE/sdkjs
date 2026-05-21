@@ -39,7 +39,7 @@
 {
 	/**
 	 * 
-	 * @param {AscWord.CParagraphRecalculateStateWrap} wrapState 
+	 * @param {AscWord.Paragraph.WrapRecalcState} wrapState 
 	 */
 	function CounterRecalcState(wrapState)
 	{
