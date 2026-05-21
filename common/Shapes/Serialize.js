@@ -7096,7 +7096,7 @@ function BinaryPPTYLoader()
                             const objectCNvProps = _object.getCNvProps();
                             if (objectId !== null && objectCNvProps !== null) {
                                 if (this.map_shapes_by_id[objectCNvProps.id]) {
-                                    objectCNvProps.setId(AscCommon.CreateDrawingId());
+                                    objectCNvProps.setId(AscCommon.CreateDurableId());
                                 }
                             }
                             shapes[shapes.length] = _object;

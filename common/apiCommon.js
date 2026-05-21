@@ -146,41 +146,60 @@ function (window, undefined) {
 		return FixDurableId(CreateUInt32());
 	}
 
-	function CDrawingIdAllocator() {
-		this.userIndex = 0;
-		this.counter = 0;
-		this.m_nTurnOffDepth = 0;
+	function CDrawingIdAllocator(owner) {
+		this.owner = owner || null;
+		this.usedByNs = {};
+		this.lastByNs = {};
+		this.bInitialized = false;
 	}
-	CDrawingIdAllocator.prototype.setUserIndex = function(index) {
-		this.userIndex = (index | 0) & 0xFF;
+	CDrawingIdAllocator.prototype._getCurrentUserIndex = function() {
+		let coEdit = AscCommon.CollaborativeEditing;
+		if (!coEdit || !coEdit.isCollaboration || !coEdit.isCollaboration()) return 0;
+		let api = (typeof Asc !== "undefined") && Asc.editor;
+		let coApi = api && api.CoAuthoringApi;
+		if (!coApi || !coApi.get_indexUser) return 0;
+		let idx = coApi.get_indexUser();
+		return ((idx | 0) % 1000);
 	};
-	CDrawingIdAllocator.prototype.observeId = function(id) {
-		if (typeof id !== "number" || id <= 0) return;
-		if (((id >> 23) & 0xFF) !== this.userIndex) return;
-		let c = id & 0x7FFFFF;
-		if (c > this.counter) this.counter = c;
+	CDrawingIdAllocator.prototype.checkInitialized = function() {
+		if (this.bInitialized) return;
+		this.bInitialized = true;
+		if (this.owner && this.owner.getDrawings) {
+			let arr = this.owner.getDrawings();
+			if (Array.isArray(arr)) this._observeTree(arr);
+		}
 	};
-	CDrawingIdAllocator.prototype.TurnOff = function() {
-		this.m_nTurnOffDepth++;
-	};
-	CDrawingIdAllocator.prototype.TurnOn = function() {
-		if (this.m_nTurnOffDepth > 0) this.m_nTurnOffDepth--;
-	};
-	CDrawingIdAllocator.prototype.IsOn = function() {
-		return this.m_nTurnOffDepth === 0;
+	CDrawingIdAllocator.prototype._observeTree = function(spTree) {
+		for (let i = 0; i < spTree.length; i++) {
+			let item = spTree[i];
+			let oCNvPr = item && item.getCNvProps && item.getCNvProps();
+			if (oCNvPr) this.observe(oCNvPr.id);
+			if (item && Array.isArray(item.spTree)) this._observeTree(item.spTree);
+		}
 	};
 	CDrawingIdAllocator.prototype.allocate = function() {
-		if (this.m_nTurnOffDepth > 0) return 0;
-		this.counter = (this.counter + 1) & 0x7FFFFF;
-		if (this.counter === 0) this.counter = 1;
-		return (this.userIndex << 23) | this.counter;
+		this.checkInitialized();
+		let ns = this._getCurrentUserIndex();
+		let map = this.usedByNs[ns] || (this.usedByNs[ns] = {});
+		let cnt = this.lastByNs[ns] || 0;
+		let maxCounter = (ns === 0) ? 999 : 0x7FFFFF;
+		let attempts = 0;
+		do {
+			cnt++;
+			if (cnt > maxCounter) return 0;
+			if (++attempts > maxCounter) return 0;
+		} while (map[cnt]);
+		map[cnt] = true;
+		this.lastByNs[ns] = cnt;
+		return cnt * 1000 + ns;
 	};
-
-	let g_oDrawingIdAllocator = new CDrawingIdAllocator();
-
-	function CreateDrawingId() {
-		return g_oDrawingIdAllocator.allocate();
-	}
+	CDrawingIdAllocator.prototype.observe = function(id) {
+		if (typeof id !== "number" || id <= 0) return;
+		let ns, cnt;
+		if (id < 1000) { ns = 0; cnt = id; }
+		else           { ns = id % 1000; cnt = Math.floor(id / 1000); }
+		(this.usedByNs[ns] || (this.usedByNs[ns] = {}))[cnt] = true;
+	};
 
 	function ExtendPrototype(dst, src) {
 		for (let k in src.prototype) {
@@ -8306,9 +8325,7 @@ function (window, undefined) {
 	window["AscCommon"].CreateUUID = CreateUUID;
 	window["AscCommon"].CreateUInt32 = CreateUInt32;
 	window["AscCommon"].CreateDurableId = CreateDurableId;
-	window["AscCommon"].CreateDrawingId = CreateDrawingId;
 	window["AscCommon"].CDrawingIdAllocator = CDrawingIdAllocator;
-	window["AscCommon"].g_oDrawingIdAllocator = g_oDrawingIdAllocator;
 	window["AscCommon"].FixDurableId = FixDurableId;
 	window["AscCommon"].ExtendPrototype = ExtendPrototype;
 

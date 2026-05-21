@@ -1904,6 +1904,7 @@
 	window['AscDFH'].historyitem_type_Control      = 2303 << 16;
 	window['AscDFH'].historyitem_type_ControlPr    = 2304 << 16;
 	window['AscDFH'].historyitem_type_FormControlPr= 2305 << 16;
+	window['AscDFH'].historyitem_type_CSld         = 2306 << 16;
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3244,6 +3245,7 @@
 	window['AscDFH'].historyitem_SlideSetClrMapOverride = window['AscDFH'].historyitem_type_Slide | 14;
 	window['AscDFH'].historyitem_SlideSetNotes          = window['AscDFH'].historyitem_type_Slide | 15;
 	window['AscDFH'].historyitem_SlideSetTiming         = window['AscDFH'].historyitem_type_Slide | 16;
+	window['AscDFH'].historyitem_SlideSetCSld           = window['AscDFH'].historyitem_type_Slide | 17;
 
 	window['AscDFH'].historyitem_SlideLayoutSetMaster         = window['AscDFH'].historyitem_type_SlideLayout | 1;
 	window['AscDFH'].historyitem_SlideLayoutSetMatchingName   = window['AscDFH'].historyitem_type_SlideLayout | 2;
@@ -3261,6 +3263,7 @@
 	window['AscDFH'].historyitem_SlideLayoutSetTransition     = window['AscDFH'].historyitem_type_SlideLayout | 14;
 	window['AscDFH'].historyitem_SlideLayoutRemoveFromSpTree  = window['AscDFH'].historyitem_type_SlideLayout | 15;
 	window['AscDFH'].historyitem_SlideLayoutSetPreserve       = window['AscDFH'].historyitem_type_SlideLayout | 16;
+	window['AscDFH'].historyitem_SlideLayoutSetCSld           = window['AscDFH'].historyitem_type_SlideLayout | 17;
 
 	window['AscDFH'].historyitem_SlideMasterAddToSpTree       = window['AscDFH'].historyitem_type_SlideMaster | 1;
 	window['AscDFH'].historyitem_SlideMasterSetTheme          = window['AscDFH'].historyitem_type_SlideMaster | 2;
@@ -3277,6 +3280,7 @@
 	window['AscDFH'].historyitem_SlideMasterRemoveLayout      = window['AscDFH'].historyitem_type_SlideMaster | 13;
 	window['AscDFH'].historyitem_SlideMasterRemoveFromSpTree  = window['AscDFH'].historyitem_type_SlideMaster | 14;
 	window['AscDFH'].historyitem_SlideMasterSetPreserve       = window['AscDFH'].historyitem_type_SlideMaster | 15;
+	window['AscDFH'].historyitem_SlideMasterSetCSld           = window['AscDFH'].historyitem_type_SlideMaster | 16;
 
 	window['AscDFH'].historyitem_SlideCommentsAddComment    = window['AscDFH'].historyitem_type_SlideComments | 1;
 	window['AscDFH'].historyitem_SlideCommentsRemoveComment = window['AscDFH'].historyitem_type_SlideComments | 2;
@@ -3342,6 +3346,7 @@
     window['AscDFH'].historyitem_NotesMasterAddToNotesLst  = window['AscDFH'].historyitem_type_NotesMaster | 7;
     window['AscDFH'].historyitem_NotesMasterSetName        = window['AscDFH'].historyitem_type_NotesMaster | 8;
     window['AscDFH'].historyitem_NotesMasterSetClrMap      = window['AscDFH'].historyitem_type_NotesMaster | 9;
+    window['AscDFH'].historyitem_NotesMasterSetCSld        = window['AscDFH'].historyitem_type_NotesMaster | 10;
 
 
     window['AscDFH'].historyitem_NotesSetClrMap           = window['AscDFH'].historyitem_type_Notes | 1;
@@ -3353,6 +3358,7 @@
     window['AscDFH'].historyitem_NotesSetName             = window['AscDFH'].historyitem_type_Notes | 7;
     window['AscDFH'].historyitem_NotesSetSlide            = window['AscDFH'].historyitem_type_Notes | 8;
     window['AscDFH'].historyitem_NotesSetNotesMaster      = window['AscDFH'].historyitem_type_Notes | 9;
+    window['AscDFH'].historyitem_NotesSetCSld             = window['AscDFH'].historyitem_type_Notes | 10;
 
     window['AscDFH'].historyitem_PresentationSectionSetName       = window['AscDFH'].historyitem_type_PresentationSection | 1;
     window['AscDFH'].historyitem_PresentationSectionSetGuid       = window['AscDFH'].historyitem_type_PresentationSection | 2;
@@ -4093,6 +4099,11 @@
 	AscDFH.historyitem_FormControlPr_PasswordEdit      = AscDFH.historyitem_type_FormControlPr | 31;
 	AscDFH.historyitem_FormControlPr_AddItemToLst      = AscDFH.historyitem_type_FormControlPr | 32;
 	AscDFH.historyitem_FormControlPr_RemoveItemFromLst = AscDFH.historyitem_type_FormControlPr | 33;
+
+	AscDFH.historyitem_CSld_SetBg              = AscDFH.historyitem_type_CSld | 1;
+	AscDFH.historyitem_CSld_SetName            = AscDFH.historyitem_type_CSld | 2;
+	AscDFH.historyitem_CSld_AddToSpTree        = AscDFH.historyitem_type_CSld | 3;
+	AscDFH.historyitem_CSld_RemoveFromSpTree   = AscDFH.historyitem_type_CSld | 4;
 
 	AscDFH.historyitem_ControlPr_AltText       = AscDFH.historyitem_type_ControlPr | 1;
 	AscDFH.historyitem_ControlPr_AutoFill      = AscDFH.historyitem_type_ControlPr | 2;

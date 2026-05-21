@@ -1866,6 +1866,19 @@
 		}
 		return null;
 	};
+	CGraphicObjectBase.prototype.assignDrawingId = function (allocator) {
+		if (!allocator) return;
+		let oCNvPr = this.getCNvProps && this.getCNvProps();
+		if (oCNvPr) {
+			let nNewId = allocator.allocate();
+			if (nNewId !== 0) oCNvPr.setId(nNewId);
+		}
+		if (Array.isArray(this.spTree)) {
+			for (let i = 0; i < this.spTree.length; ++i) {
+				this.spTree[i].assignDrawingId(allocator);
+			}
+		}
+	};
 	CGraphicObjectBase.prototype.getFormatIdString = function () {
 		let nId = this.getFormatId();
 		if (nId !== null) {

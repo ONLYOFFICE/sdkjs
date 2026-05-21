@@ -209,6 +209,10 @@ function addToDrawings(worksheet, graphic, position, lockByDefault, anchor)
 
     _invalidatePageBreakPreviewForWorksheet(worksheet);
 
+    if (worksheet && worksheet.drawingIdAllocator) {
+        graphic.assignDrawingId(worksheet.drawingIdAllocator);
+    }
+
     return ret;
 }
 

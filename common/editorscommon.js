@@ -10967,7 +10967,6 @@
 				AscCommon.g_oTableId.TurnOff();
 				isTableId = true;
 			}
-			AscCommon.g_oDrawingIdAllocator.TurnOff();
 		}
 
 		let result = f.apply(oThis, args);
@@ -10981,7 +10980,6 @@
 			AscCommon.History.TurnOn && AscCommon.History.TurnOn();
 			if (isTableId)
 				AscCommon.g_oTableId.TurnOn();
-			AscCommon.g_oDrawingIdAllocator.TurnOn();
 		}
 
 		return result;

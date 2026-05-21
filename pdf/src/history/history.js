@@ -68,14 +68,12 @@
     History.prototype.StartNoHistoryMode = function() {
         this.TurnOff();
         AscCommon.g_oTableId.TurnOff();
-        AscCommon.g_oDrawingIdAllocator.TurnOff();
     };
     History.prototype.EndNoHistoryMode = function() {
         this.TurnOn();
         if (this.IsOn()) {
             AscCommon.g_oTableId.TurnOn();
         }
-        AscCommon.g_oDrawingIdAllocator.TurnOn();
     };
 	History.prototype.Add = function(_Class, Data) {
 		AscCommon.CHistory.prototype.Add.call(this, _Class, Data);

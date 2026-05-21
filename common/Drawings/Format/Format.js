@@ -956,6 +956,36 @@
 		drawingsChangesMap[AscDFH.historyitem_CNvPr_SetId] = function (oClass, value) {
 			oClass.id = value;
 		};
+		drawingsChangesMap[AscDFH.historyitem_CSld_SetBg] = function (oClass, value, FromLoad) {
+			oClass.Bg = value;
+			if (FromLoad && typeof AscCommon.CollaborativeEditing !== "undefined") {
+				let Fill = oClass.Bg && oClass.Bg.bgPr && oClass.Bg.bgPr.Fill;
+				let sRasterImageId = Fill && Fill.checkRasterImageId && Fill.checkRasterImageId();
+				if (sRasterImageId) {
+					AscCommon.CollaborativeEditing.Add_NewImage(sRasterImageId);
+				}
+			}
+		};
+		drawingsChangesMap[AscDFH.historyitem_CSld_SetName] = function (oClass, value) {
+			oClass.name = value;
+		};
+		AscDFH.drawingContentChanges[AscDFH.historyitem_CSld_AddToSpTree]      = function(oClass){
+			if (oClass.parent && oClass.parent.handleAfterCSldSpTreeChange) {
+				oClass.parent.handleAfterCSldSpTreeChange();
+			}
+			return oClass.spTree;
+		};
+		AscDFH.drawingContentChanges[AscDFH.historyitem_CSld_RemoveFromSpTree] = function(oClass){
+			if (oClass.parent && oClass.parent.handleAfterCSldSpTreeChange) {
+				oClass.parent.handleAfterCSldSpTreeChange();
+			}
+			return oClass.spTree;
+		};
+		AscDFH.changesFactory[AscDFH.historyitem_CSld_SetBg]              = AscDFH.CChangesDrawingsObjectNoId;
+		AscDFH.changesFactory[AscDFH.historyitem_CSld_SetName]            = AscDFH.CChangesDrawingsString;
+		AscDFH.changesFactory[AscDFH.historyitem_CSld_AddToSpTree]        = AscDFH.CChangesDrawingsContentPresentation;
+		AscDFH.changesFactory[AscDFH.historyitem_CSld_RemoveFromSpTree]   = AscDFH.CChangesDrawingsContentPresentation;
+		AscDFH.drawingsConstructorsMap[AscDFH.historyitem_CSld_SetBg]     = AscFormat.CBg;
 		drawingsChangesMap[AscDFH.historyitem_CNvPr_SetName] = function (oClass, value) {
 			oClass.name = value;
 		};
@@ -1553,14 +1583,11 @@
 				b_table_id = true;
 			}
 
-			AscCommon.g_oDrawingIdAllocator.TurnOff();
-
 			var ret = f.apply(oThis, args);
 			AscCommon.History.TurnOn && AscCommon.History.TurnOn();
 			if (b_table_id) {
 				g_oTableId.m_bTurnOff = false;
 			}
-			AscCommon.g_oDrawingIdAllocator.TurnOn();
 			return ret;
 		}
 
@@ -8053,10 +8080,7 @@
 
 			this.form = null;
 
-			let id = AscCommon.CreateDrawingId();
-			if (id !== 0) {
-				this.setId(id);
-			}
+			this.setId(AscCommon.CreateDurableId());
 		}
 
 		InitClass(CNvPr, CBaseFormatObject, AscDFH.historyitem_type_CNvPr);
@@ -8077,7 +8101,6 @@
 		CNvPr.prototype.setId = function (id) {
 			AscCommon.History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_CNvPr_SetId, this.id, id));
 			this.id = id;
-			AscCommon.g_oDrawingIdAllocator.observeId(id);
 		};
 		CNvPr.prototype.setName = function (name) {
 			AscCommon.History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_CNvPr_SetName, this.name, name));
@@ -10999,14 +11022,76 @@
 		};
 
 		function CSld(parent) {
-			CBaseNoIdObject.call(this);
+			CBaseFormatObject.call(this);
 			this.name = "";
 			this.Bg = null;
 			this.spTree = [];//new GroupShape();
-			this.parent = parent;
+			this.parent = parent || null;
+			this.drawingIdAllocator = new AscCommon.CDrawingIdAllocator(this);
+			this.m_oContentChanges = new AscCommon.CContentChanges();
+			this.collaborativeMarks = null;
 		}
 
-		InitClass(CSld, CBaseNoIdObject, 0);
+		InitClass(CSld, CBaseFormatObject, AscDFH.historyitem_type_CSld);
+		CSld.prototype.setBg = function (bg) {
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_CSld_SetBg, this.Bg, bg));
+			this.Bg = bg;
+		};
+		CSld.prototype.setName = function (name) {
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_CSld_SetName, this.name, name));
+			this.name = name;
+		};
+		CSld.prototype.addToSpTree = function (pos, item) {
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_CSld_AddToSpTree, pos, [item], true, true));
+			this.spTree.splice(pos, 0, item);
+			this.checkAndAssignDrawingId(item);
+			if (this.collaborativeMarks) {
+				this.collaborativeMarks.Update_OnAdd(pos);
+			}
+		};
+		CSld.prototype.removeFromSpTree = function (pos, count) {
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_CSld_RemoveFromSpTree, pos, this.spTree.slice(pos, pos + count), false));
+			let aRemoved = this.spTree.splice(pos, count);
+			if (this.collaborativeMarks) {
+				this.collaborativeMarks.Update_OnRemove(pos, count);
+			}
+			return aRemoved;
+		};
+		CSld.prototype.Clear_CollaborativeMarks = function () {
+			if (this.collaborativeMarks) {
+				this.collaborativeMarks.Clear();
+			}
+		};
+		CSld.prototype.Refresh_RecalcData = function (data) {
+			if (this.parent && this.parent.handleCSldRecalc) {
+				this.parent.handleCSldRecalc(data);
+			}
+		};
+		CSld.prototype.Refresh_RecalcData2 = function (pageIndex, object) {
+			if (this.parent && this.parent.Refresh_RecalcData2) {
+				this.parent.Refresh_RecalcData2(pageIndex, object);
+			}
+		};
+		CSld.prototype.initCollaborativeMarks = function () {
+			if (!this.collaborativeMarks && typeof CRunCollaborativeMarks !== "undefined") {
+				this.collaborativeMarks = new CRunCollaborativeMarks();
+			}
+		};
+		CSld.prototype.Clear_ContentChanges = function () {
+			this.m_oContentChanges.Clear();
+		};
+		CSld.prototype.Add_ContentChanges = function (changes) {
+			this.m_oContentChanges.Add(changes);
+		};
+		CSld.prototype.Refresh_ContentChanges = function () {
+			this.m_oContentChanges.Refresh();
+		};
+		CSld.prototype.getDrawings = function () {
+			return this.spTree;
+		};
+		CSld.prototype.checkAndAssignDrawingId = function (item) {
+			item.assignDrawingId(this.drawingIdAllocator);
+		};
 		CSld.prototype.removeAllInks = function () {
 			const oController = this.parent && this.parent.graphicObjects;
 			if (!oController) {

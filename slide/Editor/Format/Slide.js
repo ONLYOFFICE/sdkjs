@@ -100,11 +100,8 @@ AscDFH.changesFactory[AscDFH.historyitem_SlideSetLayout            ] = AscDFH.CC
 AscDFH.changesFactory[AscDFH.historyitem_SlideSetNum               ] = AscDFH.CChangesDrawingsLong      ;
 AscDFH.changesFactory[AscDFH.historyitem_SlideSetTransition        ] = AscDFH.CChangesDrawingsObjectNoId;
 AscDFH.changesFactory[AscDFH.historyitem_SlideSetSize              ] = AscDFH.CChangesDrawingsObjectNoId;
-AscDFH.changesFactory[AscDFH.historyitem_SlideSetBg                ] = AscDFH.CChangesDrawingsObjectNoId;
-AscDFH.changesFactory[AscDFH.historyitem_SlideAddToSpTree          ] = AscDFH.CChangesDrawingsContentPresentation   ;
-AscDFH.changesFactory[AscDFH.historyitem_SlideRemoveFromSpTree     ] = AscDFH.CChangesDrawingsContentPresentation   ;
-AscDFH.changesFactory[AscDFH.historyitem_SlideSetCSldName          ] = AscDFH.CChangesDrawingsString    ;
 AscDFH.changesFactory[AscDFH.historyitem_SlideSetClrMapOverride    ] = AscDFH.CChangesDrawingsObject    ;
+AscDFH.changesFactory[AscDFH.historyitem_SlideSetCSld              ] = AscDFH.CChangesDrawingsObject    ;
 AscDFH.changesFactory[AscDFH.historyitem_PropLockerSetId           ] = AscDFH.CChangesDrawingsString    ;
 AscDFH.changesFactory[AscDFH.historyitem_SlideCommentsAddComment   ] = AscDFH.CChangesDrawingsContentComments   ;
 AscDFH.changesFactory[AscDFH.historyitem_SlideCommentsRemoveComment] = AscDFH.CChangesDrawingsContentComments   ;
@@ -121,32 +118,16 @@ AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetTiming            ] = funct
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetNum               ] = function(oClass, value){oClass.num = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetTransition        ] = function(oClass, value){oClass.transition = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetSize              ] = function(oClass, value){oClass.Width = value.a; oClass.Height = value.b;};
-AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetBg                ] = function(oClass, value, FromLoad){
-    oClass.cSld.Bg = value;
-    if(FromLoad){
-        var Fill;
-        if(oClass.cSld.Bg && oClass.cSld.Bg.bgPr && oClass.cSld.Bg.bgPr.Fill)
-        {
-            Fill = oClass.cSld.Bg.bgPr.Fill;
-        }
-        if(typeof AscCommon.CollaborativeEditing !== "undefined")
-        {
-            if(Fill && Fill.fill && Fill.fill.type === Asc.c_oAscFill.FILL_TYPE_BLIP && typeof Fill.fill.RasterImageId === "string" && Fill.fill.RasterImageId.length > 0)
-            {
-                AscCommon.CollaborativeEditing.Add_NewImage(Fill.fill.RasterImageId);
-            }
-        }
-    }
-};
-AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetCSldName          ] = function(oClass, value){oClass.cSld.name = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetClrMapOverride    ] = function(oClass, value){oClass.clrMap = value;};
+AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetCSld              ] = function(oClass, value){
+    oClass.cSld = value;
+    if (value) value.parent = oClass;
+};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_PropLockerSetId           ] = function(oClass, value){oClass.objectId = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetNotes             ] = function(oClass, value){oClass.notes = value;};
 
 
 
-AscDFH.drawingContentChanges[AscDFH.historyitem_SlideAddToSpTree          ] =
-AscDFH.drawingContentChanges[AscDFH.historyitem_SlideRemoveFromSpTree     ] = function(oClass){return oClass.cSld.spTree;};
 AscDFH.drawingContentChanges[AscDFH.historyitem_SlideCommentsAddComment   ] =
 AscDFH.drawingContentChanges[AscDFH.historyitem_SlideCommentsRemoveComment] = function(oClass){return oClass.comments;};
 
@@ -161,8 +142,9 @@ function Slide(presentation, slideLayout, slideNum)
 
     this.presentation = editor && editor.WordControl && editor.WordControl.m_oLogicDocument;
     this.graphicObjects = new AscFormat.DrawingObjectsController(this);
-    this.cSld = new AscFormat.CSld(this);
-    this.collaborativeMarks = new CRunCollaborativeMarks();
+    this.cSld = null;
+    this.setCSld(new AscFormat.CSld(this));
+    this.cSld.initCollaborativeMarks();
     this.clrMap = null; // override ClrMap
 
     this.show = true;
@@ -263,7 +245,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
     };
     Slide.prototype.Clear_CollaborativeMarks = function()
     {
-        this.collaborativeMarks.Clear();
+        this.cSld.Clear_CollaborativeMarks();
     };
     Slide.prototype.createDuplicate = function(IdMap, bCacheImage)
     {
@@ -638,11 +620,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         {
             switch(data.Type)
             {
-                case AscDFH.historyitem_SlideSetBg:
-                {
-                    this.recalcInfo.recalculateBackground = true;
-                    break;
-                }
                 case AscDFH.historyitem_SlideSetLayout:
                 {
                     this.checkSlideTheme();
@@ -656,6 +633,13 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
             }
             this.addToRecalculate();
         }
+    };
+    Slide.prototype.handleCSldRecalc = function(data)
+    {
+        if (data && data.Type === AscDFH.historyitem_CSld_SetBg) {
+            this.recalcInfo.recalculateBackground = true;
+        }
+        this.addToRecalculate();
     };
     Slide.prototype.setNotes = function(pr){
         History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SlideSetNotes, this.notes, pr));
@@ -824,8 +808,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
     };
     Slide.prototype.changeBackground = function(bg)
     {
-       History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SlideSetBg, this.cSld.Bg , bg));
-        this.cSld.Bg = bg;
+        this.cSld.setBg(bg);
     };
     Slide.prototype.setLocks = function(deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock)
     {
@@ -841,18 +824,13 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
     {
         this.checkDrawingUniNvPr(item);
         var _pos = (AscFormat.isRealNumber(pos) && pos > -1 && pos <= this.cSld.spTree.length) ? pos : this.cSld.spTree.length;
-       History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_SlideAddToSpTree, _pos, [item], true, true));
-        this.cSld.spTree.splice(_pos, 0, item);
+        this.cSld.addToSpTree(_pos, item);
         item.setParent2(this);
-        if(this.collaborativeMarks) {
-            this.collaborativeMarks.Update_OnAdd(_pos);
-        }
     };
 
     Slide.prototype.shapeRemove = function (pos, count) {
         if(pos > -1 && pos < this.cSld.spTree.length){
-        History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideRemoveFromSpTree, pos, this.cSld.spTree.slice(pos, pos + count), false));
-        this.cSld.spTree.splice(pos, count);
+            this.cSld.removeFromSpTree(pos, count);
         }
     };
 
@@ -982,9 +960,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
                 this.checkNeedCopyTimingBeforeEdit();
                 this.timing.onRemoveObject(oSp.Get_Id());
             }
-            if(this.collaborativeMarks) {
-                this.collaborativeMarks.Update_OnRemove(pos, 1);
-            }
 
             return oSp;
         }
@@ -1039,14 +1014,18 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 
     Slide.prototype.setCSldName = function(name)
     {
-       History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_SlideSetCSldName, this.cSld.name, name));
-        this.cSld.name = name;
+        this.cSld.setName(name);
     };
 
     Slide.prototype.setClMapOverride = function(clrMap)
     {
        History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SlideSetClrMapOverride, this.clrMap, clrMap));
         this.clrMap = clrMap;
+    };
+    Slide.prototype.setCSld = function(cSld)
+    {
+        History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SlideSetCSld, this.cSld, cSld));
+        this.cSld = cSld;
     };
 
     Slide.prototype.getAllFonts = function(fonts)
@@ -1449,7 +1428,9 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         }
         let _bounds, i;
         this.drawBgMasterAndLayout(graphics, bClipBySlide, bCheckBounds);
-        this.collaborativeMarks.Init_Drawing();
+        if (this.cSld.collaborativeMarks) {
+            this.cSld.collaborativeMarks.Init_Drawing();
+        }
         let oCollColor;
         let fDist = 3;
         let oIdentityMtx = new AscCommon.CMatrix();
@@ -1458,8 +1439,8 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
             if(AscCommon.IsHiddenObj(oSp)) {
                 continue;
             }
-            if(this.collaborativeMarks) {
-                oCollColor = this.collaborativeMarks.Check(i);
+            if(this.cSld.collaborativeMarks) {
+                oCollColor = this.cSld.collaborativeMarks.Check(i);
                 if(oCollColor) {
                     var oBounds = oSp.bounds;
                     graphics.transform3(oIdentityMtx);

@@ -6910,6 +6910,7 @@
 		this.aCols = [];// 0 based
 		this.hiddenManager = new HiddenManager(this);
 		this.Drawings = [];
+		this.drawingIdAllocator = new AscCommon.CDrawingIdAllocator(this);
 		this.TableParts = [];
 		this.AutoFilter = null;
 		this.oAllCol = null;
@@ -7140,6 +7141,14 @@
 		for(var i = 0; i < this.Drawings.length; ++i){
 			this.Drawings[i].graphicObject.Reassign_ImageUrls(oImages);
 		}
+	};
+	Worksheet.prototype.getDrawings = function () {
+		let arr = [];
+		for (let i = 0; i < this.Drawings.length; i++) {
+			let g = this.Drawings[i] && this.Drawings[i].graphicObject;
+			if (g) arr.push(g);
+		}
+		return arr;
 	};
 	Worksheet.prototype.copyFrom=function(wsFrom, sName, tableNames){
 		var i, elem, range, _newSlicer;
