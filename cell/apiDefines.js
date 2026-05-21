@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -38,8 +41,8 @@
 * @param {undefined} undefined
 */
 function (window, undefined) {
-// Используем [] вместо new Array() для ускорения (http://jsperf.com/creation-array)
-// Используем {} вместо new Object() для ускорения (http://jsperf.com/creation-object)
+// Using [] instead of new Array() for performance (http://jsperf.com/creation-array)
+// Using {} instead of new Object() for performance (http://jsperf.com/creation-object)
 
   // Import
   var CColor = AscCommon.CColor;
@@ -186,25 +189,25 @@ var c_oAscChangeTableStyleInfo = {
 	advancedSettings: 8
 };
 
-// Состояние редактора ячейки
+// Cell editor state
 var c_oAscCellEditorState = {
-  editEnd: 0,				// Окончание редактирования
-  editStart: 1,				// Начало редактирования
-  editEmptyCell: 2,			// Редактирование пустой ячейки (доступны функции и свойства текста)
-  editText: 3,				// Редактирование текста, числа, даты и др. формата, кроме формулы
-  editFormula: 4,			// Редактирование формулы
-  editInFormulaBar: 5,		// Редактирование в строке формул
-  editInCell: 6				// Редактирование в ячейке
+  editEnd: 0,				// End of editing
+  editStart: 1,				// Start of editing
+  editEmptyCell: 2,			// Editing empty cell (functions and text properties available)
+  editText: 3,				// Editing text, number, date and other formats, except formula
+  editFormula: 4,			// Editing formula
+  editInFormulaBar: 5,		// Editing in formula bar
+  editInCell: 6				// Editing in cell
 };
 
-// Состояние select-а
+// Selection state
 var c_oAscCellEditorSelectState = {
   no    : 0,
   char  : 1,
   word  : 2
 };
 
-// Пересчитывать ли ширину столбца
+// Whether to recalculate column width
 var c_oAscCanChangeColWidth = {
   none: 0,	// not recalc
   numbers: 1,	// only numbers
@@ -214,8 +217,8 @@ var c_oAscCanChangeColWidth = {
 // Merge cell type
 var c_oAscMergeType = {
   none: 0,
-  cols: 1, // Замержены ли колонки (если да, то автоподбор ширины не должен работать)
-  rows: 2  // Замержены ли строки (если да, то автоподбор высоты не должен работать)
+  cols: 1, // Whether columns are merged (if yes, auto-fit width should not work)
+  rows: 2  // Whether rows are merged (if yes, auto-fit height should not work)
 };
 
 
@@ -348,7 +351,7 @@ var c_oAscPopUpSelectorType = {
 	RedoTableAutoExpansion: 1
   };
 
-  //изменяем Print_Area
+  // Change Print_Area
   var c_oAscChangePrintAreaType = {
       set: 0,
       clear: 1,
@@ -677,7 +680,8 @@ var c_oAscPopUpSelectorType = {
 		RemoveGraphicalObject:      172,
 		ExitAddingShapesMode:       173,
 		SpeechWorker:               174,
-		EnDash:                     175
+		EnDash:                     175,
+		FillDown:                   176
 	};
 
   var c_oAscCalcMode = {
@@ -1199,6 +1203,7 @@ var c_oAscPopUpSelectorType = {
 	prot["ExitAddingShapesMode"] = prot.ExitAddingShapesMode;
 	prot["SpeechWorker"] = prot.SpeechWorker;
 	prot["EnDash"] = prot.EnDash;
+	prot["FillDown"] = prot.FillDown;
 
   window['Asc']['c_oAscCalcMode'] = window['Asc'].c_oAscCalcMode = c_oAscCalcMode;
   prot = c_oAscCalcMode;

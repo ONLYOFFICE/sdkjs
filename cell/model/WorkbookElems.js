@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -386,7 +389,7 @@ function CorrectAscColor(asc_color)
 	{
 		case Asc.c_oAscColor.COLOR_TYPE_SCHEME:
 		{
-			// тут выставляется ТОЛЬКО из меню. поэтому:
+			// this is set ONLY from menu. therefore:
 			var _index = asc_color.asc_getValue() >> 0;
 			var _id = (_index / 6) >> 0;
 			var _pos = _index - _id * 6;
@@ -485,7 +488,7 @@ g_oColorManager = new ColorManager();
 	function Fragment(val) {
 		this.text = null;
 		this.format = null;
-		//для отрисовки ввожу дополнительный массив
+		//for rendering, introduce additional array
 		this.charCodes = null;//[]
 
 		if (null != val) {
@@ -510,7 +513,7 @@ g_oColorManager = new ColorManager();
 	Fragment.prototype.checkVisitedHyperlink = function (row, col, hyperlinkManager) {
 		var color = this.format.getColor();
 		if (color instanceof AscCommonExcel.ThemeColor && g_nColorHyperlink === color.theme && null === color.tint) {
-			//для посещенных гиперссылок
+			//for visited hyperlinks
 			var hyperlink = hyperlinkManager.getByCell(row, col);
 			if (hyperlink && hyperlink.data.getVisited()) {
 				this.format.setColor(g_oColorManager.getThemeColor(g_nColorHyperlinkVisited, null));
@@ -550,7 +553,7 @@ g_oColorManager = new ColorManager();
 		return this.charCodes;
 	};
 	Fragment.prototype.setCharCodes = function (val, isInit) {
-		//если выставляем charCodes, контент меняется, нужно занулять текстовое поле
+		//if setting charCodes, content changes, need to nullify text field
 		if (!isInit) {
 			this.text = null;
 		}
@@ -563,7 +566,7 @@ g_oColorManager = new ColorManager();
 		return this.text;
 	};
 	Fragment.prototype.setFragmentText = function (val, isInit) {
-		//если выставляем текстовое поле, контент меняется, нужно занулять charCodes
+		//if setting text field, content changes, need to nullify charCodes
 		if (!isInit) {
 			this.charCodes = null;
 		}
@@ -1889,7 +1892,7 @@ var g_oFontProperties = {
 	}
 
 	function FromXml_ST_IconSetType(val) {
-		//в пивотах есть функция FromXml_ST_IconSetType, но там корвенртирцем в другие константы. пока оставляю так, нужно сделать общие
+		//in pivots there is FromXml_ST_IconSetType function, but it converts to different constants. keeping it like this for now, need to make common ones
 		var res = undefined;
 		switch (val) {
 			case "3Arrows":
@@ -1960,7 +1963,7 @@ var g_oFontProperties = {
 	}
 
 	function ToXml_ST_IconSetType(val) {
-		//в пивотах есть функция ToXml_ST_IconSetType, но там корвенртирцем в другие константы. пока оставляю так, нужно сделать общие
+		//in pivots there is ToXml_ST_IconSetType function, but it converts to different constants. keeping it like this for now, need to make common ones
 		var res = undefined;
 		switch (val) {
 			case Asc.EIconSetType.Arrows3:
@@ -4882,7 +4885,7 @@ var g_oFontProperties = {
         return this.getFont2().getItalic();
     };
     CellXfs.prototype.asc_getFontUnderline = function () {
-        // ToDo убрать, когда будет реализовано двойное подчеркивание
+        // ToDo remove when double underline is implemented
         return (Asc.EUnderline.underlineNone !== this.getFont2().getUnderline());
     };
     CellXfs.prototype.asc_getFontStrikeout = function () {
@@ -4969,7 +4972,7 @@ var g_oFontProperties = {
 	};
 
 	CellXfs.prototype.asc_setFillColor = function (val) {
-		//TODO не применяю цвета темы?
+		//TODO not applying theme colors?
 		var fill = null;
 		if (val) {
 			fill = new AscCommonExcel.Fill();
@@ -5284,7 +5287,7 @@ var g_oFontProperties = {
 		this.angle = null !== val ? AscCommonExcel.angleInterfaceToFormat(val) : val;
 	};
 	Align.prototype.getWrap = function () {
-		// Для justify wrap всегда true
+		// For justify wrap is always true
 		return (AscCommon.align_Justify === this.hor || Asc.c_oAscVAlign.Just === this.ver || Asc.c_oAscVAlign.Dist === this.ver) ? true : this.wrap;
 	};
 	Align.prototype.setWrap = function (val) {
@@ -5369,7 +5372,7 @@ var g_oFontProperties = {
 function CCellStyles() {
 	this.CustomStyles = [];
 	this.DefaultStyles = [];
-	// ToDo нужно все компоновать в общий список стилей (для того, чтобы не было проблем с добавлением стилей и отсутствия имени стиля)
+	// ToDo need to compose everything into a common list of styles (to avoid problems with adding styles and missing style names)
 	this.AllStyles = {};
 }
 CCellStyles.prototype.generateFontMap = function (oFontMap) {
@@ -5385,7 +5388,7 @@ CCellStyles.prototype._generateFontMap = function (oFontMap, aStyles) {
 	}
 };
 /**
- * Возвращает колличество стилей без учета скрытых
+ * Returns the number of styles excluding hidden ones
  */
 CCellStyles.prototype.getDefaultStylesCount = function () {
 	var nCount = this.DefaultStyles.length;
@@ -5396,7 +5399,7 @@ CCellStyles.prototype.getDefaultStylesCount = function () {
 	return nCount;
 };
 /**
- * Возвращает колличество стилей без учета скрытых и стандартных
+ * Returns the number of styles excluding hidden and default ones
  */
 CCellStyles.prototype.getCustomStylesCount = function () {
 	var nCount = this.CustomStyles.length;
@@ -5461,14 +5464,14 @@ CCellStyles.prototype._prepareCellStyle = function (name) {
 	var style = null;
 	var i, length;
 	var maxXfId = -1;
-	// Проверим, есть ли в default
+	// Check if it exists in default
 	for (i = 0, length = this.DefaultStyles.length; i < length; ++i) {
 		if (name === this.DefaultStyles[i].Name) {
 			defaultStyle = this.DefaultStyles[i];
 			break;
 		}
 	}
-	// Если есть в default, ищем в custom по builtinId. Если нет, то по имени
+	// If exists in default, search in custom by builtinId. If not, then by name
 	if (defaultStyle) {
 		for (i = 0, length = this.CustomStyles.length; i < length; ++i) {
 			if (defaultStyle.BuiltinId === this.CustomStyles[i].BuiltinId) {
@@ -5487,7 +5490,7 @@ CCellStyles.prototype._prepareCellStyle = function (name) {
 		}
 	}
 
-	// Если нашли, то возвращаем XfId
+	// If found, return XfId
 	if (style)
 		return style.XfId;
 
@@ -6071,7 +6074,7 @@ StyleManager.prototype =
 		this.Ref = null;
 		this.Hyperlink = null;
 		this.Tooltip = null;
-		// Составные части Location
+		// Location component parts
 		this.Location = null;
 		this.LocationSheet = null;
 		this.LocationRange = null;
@@ -6196,7 +6199,7 @@ StyleManager.prototype =
 		//for local file
 		/*var res = null;
 		if (null !== this.Hyperlink) {
-			//либо гиперссылка, либо ссылка на локальный файл(отдельное поле не стал заводить, все будет в Hyperlink)
+			//either hyperlink or link to local file (didn't create a separate field, everything will be in Hyperlink)
 			if (XRegExp.exec(this.Hyperlink, new XRegExp("([a-zA-Z]:)?(\\\\[a-zA-Z0-9_.-]+)+\\\\?"))) {
 				res = Asc.c_oAscHyperlinkType.FileLink;
 			} else {
@@ -6222,10 +6225,10 @@ StyleManager.prototype =
 	Hyperlink.prototype.setProperty = function (nType, value) {
 		switch (nType) {
 			case this.Properties.Ref:
-				//todo обработать нули
+				//todo handle nulls
 				var oRefParsed = parserHelp.parse3DRef(value);
 				if (null !== oRefParsed) {
-					// Получаем sheet по имени
+					// Get sheet by name
 					var ws = window["Asc"]["editor"].wbModel.getWorksheetByName (oRefParsed.sheet);
 					if (ws)
 						this.Ref = ws.getRange2(oRefParsed.range);
@@ -6468,7 +6471,7 @@ StyleManager.prototype =
 			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoCol, AscCH.historyitem_RowCol_SetCellStyle, this.ws.getId(),
 				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, false, oldStyleName, val));
 
-			// Выставляем стиль
+			// Set the style
 			oStyle = this.ws.workbook.CellStyles.getStyleByXfId(oRes.newVal);
 			if (oStyle.ApplyFont) {
 				this.setFont(oStyle.getFont());
@@ -6735,6 +6738,7 @@ StyleManager.prototype =
 		this._hasChanged = false;
 
 		this._tempCell = new AscCommonExcel.Cell(worksheet);
+		this._tempCell._isTransient = true;
 	}
 	Row.prototype.clear = function () {
 		this.index = null;
@@ -6877,7 +6881,7 @@ StyleManager.prototype =
 			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoRow, AscCH.historyitem_RowCol_SetCellStyle, this.ws.getId(),
 				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, true, oldStyleName, val));
 
-			// Выставляем стиль
+			// Set the style
 			oStyle = this.ws.workbook.CellStyles.getStyleByXfId(oRes.newVal);
 			if (oStyle.ApplyFont) {
 				this.setFont(oStyle.getFont());
@@ -7077,7 +7081,7 @@ StyleManager.prototype =
 			var bCollaborativeChanges = !(this.ws.autoFilters && this.ws.autoFilters.useViewLocalChange) && this.ws.workbook.bCollaborativeChanges;
 			bViewLocalChange = !bCollaborativeChanges && inViewAndFilter;
 		}
-		//если находимся в режиме вью, а приходят изменения для дефолта - не меняем hiddenManager
+		//if we are in view mode and changes are coming for default - don't change hiddenManager
 		if (this.index >= 0 && (!this.getHidden() !== !val) && !(inViewAndFilter && !bViewLocalChange)) {
 			this.ws.hiddenManager.addHidden(true, this.index);
 		}
@@ -7618,7 +7622,7 @@ function RangeDataManagerElem(bbox, data)
 		var aToChange = [];
 		var bAdd = offset.row > 0 || offset.col > 0;
 		var bHor = 0 != offset.col ? true : false;
-		//сдвигаем inner
+		//shift inner
 		if (elems.inner.length > 0) {
 			var bboxAsc = new Asc.Range(bbox.c1, bbox.r1, bbox.c2, bbox.r2);
 			for (var i = 0, length = elems.inner.length; i < length; i++) {
@@ -7649,7 +7653,7 @@ function RangeDataManagerElem(bbox, data)
 				aToChange.push({elem: elem, to: to});
 			}
 		}
-		//меняем outer
+		//change outer
 		if (bShift) {
 			if (elems.outer.length > 0) {
 				for (var i = 0, length = elems.outer.length; i < length; i++) {
@@ -7687,7 +7691,7 @@ function RangeDataManagerElem(bbox, data)
 				}
 			}
 		}
-		//сначала сортируем чтобы не было конфликтов при сдвиге
+		//first sort to avoid conflicts during shift
 		aToChange.sort(function (a, b) {
 			return shiftSort(a, b, offset);
 		});
@@ -7698,16 +7702,16 @@ function RangeDataManagerElem(bbox, data)
 				this.fChange.call(this, item.elem.data, item.elem.bbox, item.to, oChangeParam);
 			}
 		}
-		//убираем fChange, чтобы потом послать его только на одну операцию, а не 2
+		//remove fChange, so that later it is sent for only one operation, not 2
 		var fOldChange = this.fChange;
 		this.fChange = null;
-		//сначала удаляем все чтобы не было конфликтов
+		//first delete everything to avoid conflicts
 		for (var i = 0, length = aToChange.length; i < length; ++i) {
 			var item = aToChange[i];
 			var elem = item.elem;
 			this.removeElement(elem, oChangeParam);
 		}
-		//добавляем измененные ячейки
+		//add changed cells
 		for (var i = 0, length = aToChange.length; i < length; ++i) {
 			var item = aToChange[i];
 			if (null != item.to) {
@@ -7790,7 +7794,7 @@ function RangeDataManagerElem(bbox, data)
 	sparklineGroup.prototype.Read_FromBinary2 = function (r) {
 		this.Id = r.GetString2();
 
-		// ToDDo не самая лучшая схема добавления на лист...
+		// ToDo not the best scheme for adding to a sheet...
 		var api_sheet = Asc['editor'];
 		this.worksheet = api_sheet.wbModel.getWorksheetById(r.GetString2());
 		/*if (this.worksheet) {
@@ -8424,7 +8428,7 @@ function RangeDataManagerElem(bbox, data)
 		this.sqRef.setAbs(true, true, true, true);
 	};
 	sparkline.prototype.setF = function (f) {
-		//TODO AscCommonExcel.executeInR1C1Mode. пока выставляю сверху. перепроверить и добавить здесь.
+		//TODO AscCommonExcel.executeInR1C1Mode. setting it above for now. recheck and add here.
 		this.f = f;
 		this._f = AscCommonExcel.g_oRangeCache.getRange3D(this.f);
 	};
@@ -8770,6 +8774,18 @@ function RangeDataManagerElem(bbox, data)
 		this.buildDependencies();
 	};
 
+	TablePart.prototype.addTableFirstColumn = function (autoFilters) {
+		this.removeDependencies();
+		let newTableColumns = [new TableColumn()].concat(this.TableColumns);
+		newTableColumns[0].setTableColumnName(autoFilters._generateColumnName2(newTableColumns));
+
+		this.TableColumns = newTableColumns;
+		if (this.QueryTable) {
+			this.cleanQueryTables();
+		}
+		this.buildDependencies();
+	};
+
 	TablePart.prototype.isAutoFilter = function () {
 		return false;
 	};
@@ -8941,7 +8957,7 @@ function RangeDataManagerElem(bbox, data)
 			return;
 		}
 
-		//в случае одной колонки выставляем только формулу
+		//in case of single column, set only the formula
 		if (this.TableColumns.length > 1) {
 			this.TableColumns[0].generateTotalsRowLabel();
 		}
@@ -9022,8 +9038,8 @@ function RangeDataManagerElem(bbox, data)
 		this.SortState.SortConditions[0] = new AscCommonExcel.SortCondition();
 	};
 
-	//при открытии в случае если не валидный Ref приходит в объекте AutoFilter
-	//получаем этот Ref из табличного
+	//when opening, if invalid Ref comes in AutoFilter object
+	//get this Ref from table
 	TablePart.prototype.generateAutoFilterRef = function () {
 		let res = null;
 		if (this.Ref) {
@@ -9059,13 +9075,13 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 	TablePart.prototype.cleanQueryTables = function () {
-		//удаляю инфомарцию об queryTables после удаления/добавления колонки таблицы
-		//связано это с тем, что необходимо следить за всеми полями из queryTables + синхронизировать их с tableColumns,
-		//+ есть нюанс - id колонок таблиц сейчас записывается в x2t по порядку в массиве. queryTables связаны с id таблиц
-		//необходимо перейти на генерацию id в js и следить за id
-		//+ записывать в историю, обрабатывать undo/redo
-		//поля, которые попадают в список удаленных, необходимо при undo вовращать с прежними индексами и айдишниками
-		//TODO в следующих версиях необходимо реализовать данный функционал в полном объеме
+		//removing queryTables information after deleting/adding table column
+		//this is because we need to track all fields from queryTables + synchronize them with tableColumns,
+		//+ there's a nuance - table column ids are currently written in x2t in array order. queryTables are linked to table ids
+		//need to switch to id generation in js and track ids
+		//+ write to history, handle undo/redo
+		//fields that fall into the deleted list need to be restored with previous indices and ids on undo
+		//TODO in future versions this functionality needs to be fully implemented
 		this.QueryTable = null;
 		this.tableType = null;
 		for (let i = 0; i < this.TableColumns.length; i++) {
@@ -9330,8 +9346,8 @@ function RangeDataManagerElem(bbox, data)
 		return this.FilterColumns && this.FilterColumns[index];
 	};
 	AutoFilter.prototype.setStringRef = function (ref) {
-		//TODO пересмотреть проверку
-		//возможно здесь 3d ref - проверяем
+		//TODO reconsider the check
+		//possibly 3d ref here - checking
 		if(-1 !== ref.indexOf("!"))
 		{
 			var is3DRef = AscCommon.parserHelp.parse3DRef(ref);
@@ -9479,7 +9495,7 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 
-	//функция используется только для изменения данных сортировки, называется так как и в классе TablePart. возможно стоит переименовать.
+	//function is used only for changing sort data, named same as in TablePart class. possibly should be renamed.
 	AutoFilter.prototype.deleteTableColumns = function (activeRange) {
 		if (this.SortState) {
 			var bIsDeleteSortState = this.SortState.changeColumns(activeRange, true);
@@ -9489,7 +9505,7 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 
-	//функция используется только для изменения данных сортировки, называется так как и в классе TablePart. возможно стоит переименовать.
+	//function is used only for changing sort data, named same as in TablePart class. possibly should be renamed.
 	AutoFilter.prototype.addTableColumns = function (activeRange) {
 		if (this.SortState) {
 			this.SortState.changeColumns(activeRange);
@@ -9608,7 +9624,7 @@ function RangeDataManagerElem(bbox, data)
 						minChangeRow = i;
 					}
 
-					//скрываем строки
+					//hide rows
 					if (hiddenObj.h === null) {
 						hiddenObj.h = isSetHidden;
 						hiddenObj.start = i;
@@ -9847,7 +9863,7 @@ function RangeDataManagerElem(bbox, data)
 
 	SortState.prototype.changeColumns = function (activeRange, isDelete) {
 		var bIsSortStateDelete = true;
-		//если изменяем диапазон так, что удаляется колонка с сортировкой, удаляем ее
+		//if we change the range so that the column with sorting is deleted, delete it
 		if (this.SortConditions) {
 			for (var i = 0; i < this.SortConditions.length; ++i) {
 				var bIsSortConditionsDelete = this.SortConditions[i].changeColumns(activeRange, isDelete);
@@ -9931,18 +9947,18 @@ function RangeDataManagerElem(bbox, data)
 					var sortCondition = this.SortConditions[i];
 					var ref = sortCondition.Ref;
 					if (offset.row < 0 || offset.col < 0) {
-						//смотрим, не попал ли в выделение целиком
+						//check if it fell entirely into selection
 						if(range.containsRange(ref)) {
 							deleteIndexes[i] = true;
 						}
 					}
 					if(!deleteIndexes[i]) {
 						var bboxShift = AscCommonExcel.shiftGetBBox(range, 0 !== offset.col);
-						//проверяем, не сдвинулся ли целиком
+						//check if it shifted entirely
 						if(bboxShift.containsRange(ref)) {
 							sortCondition.setOffset(offset);
 						} else {
-							//осталось проверить на изменение диапазона
+							//remains to check for range change
 							sortCondition.shift(range, offset, this.ColumnSort);
 						}
 					}
@@ -9969,7 +9985,7 @@ function RangeDataManagerElem(bbox, data)
 		this.dxf = null;
 		this.CalculatedColumnFormula = null;
 
-		//формируется на сохранения
+		//generated on save
 		this.queryTableFieldId = null;
 		this.uniqueName = null;
 
@@ -9983,7 +9999,7 @@ function RangeDataManagerElem(bbox, data)
 		this.id = null;
 		
 		this._lowerCaseName = null;
-		//формируется на сохранения
+		//generated on save
 		//this.tableColumnId = null;
 	}
 
@@ -10046,13 +10062,13 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 	TableColumn.prototype.generateTotalsRowLabel = function () {
-		//TODO добавить в перевод
+		//TODO add to translation
 		if (this.TotalsRowLabel === null) {
 			this.TotalsRowLabel = "Summary";
 		}
 	};
 	TableColumn.prototype.generateTotalsRowFunction = function (ws, tablePart) {
-		//TODO добавить в перевод
+		//TODO add to translation
 		if (null === this.TotalsRowFunction && null === this.TotalsRowLabel) {
 			var columnRange = this.getRange(tablePart);
 
@@ -10152,8 +10168,8 @@ function RangeDataManagerElem(bbox, data)
 		this.TotalsRowFunction = Asc.ETotalsRowFunction.totalrowfunctionCustom;
 	};
 	TableColumn.prototype.setTotalsRowFunction = function (val) {
-		//функция работает только на undo/redo
-		//для того, чтобы работала из меню, необходимо генерировать и добавлять формулу в ячейку
+		//function works only on undo/redo
+		//for it to work from menu, need to generate and add formula to cell
 		this.cleanTotalsData();
 		this.TotalsRowFunction = val;
 	};
@@ -10376,11 +10392,11 @@ function RangeDataManagerElem(bbox, data)
 	FilterColumn.prototype.createFilter = function (obj) {
 
 
-		//распознаем формат
+		//recognize format
 		/*var res = AscCommon.g_oFormatParser.parse(val);
 		if(null != res)
 		{
-			//Сравниваем с текущим форматом, если типы совпадают - меняем только значение ячейки
+			//Compare with current format, if types match - change only the cell value
 			var nFormatType = oNumFormat.getType();
 			if(!((c_oAscNumFormatType.Percent == nFormatType && res.bPercent) ||
 				(c_oAscNumFormatType.Currency == nFormatType && res.bCurrency) ||
@@ -10394,7 +10410,7 @@ function RangeDataManagerElem(bbox, data)
 		else
 		{
 			this.setTypeInternal(CellValueType.String);
-			//проверяем QuotePrefix
+			//check QuotePrefix
 			if(val.length > 0 && "'" == val[0])
 			{
 				this.setQuotePrefix(true);
@@ -10429,7 +10445,7 @@ function RangeDataManagerElem(bbox, data)
 				break;
 			}
 			case c_oAscAutoFilterTypes.Filters: {
-				//если приходит только скрытое Blank, тогда добавляем CustomFilter, так же делает MS
+				//if only hidden Blank comes, then add CustomFilter, same as MS does
 				var addCustomFilter = false;
 				for (var i = 0; i < obj.values.length; i++) {
 					if ("" === obj.values[i].text && false === obj.values[i].visible) {
@@ -10476,7 +10492,7 @@ function RangeDataManagerElem(bbox, data)
 
 	FilterColumn.prototype.init = function (range) {
 
-		//добавляем данные, которые не передаются из меню при примененни а/ф(в данном случае только DynamicFilter)
+		//add data that is not passed from menu when applying autofilter (in this case only DynamicFilter)
 		if (null !== this.DynamicFilter) {
 			this.DynamicFilter.init(range);
 		} else if (null !== this.Top10) {
@@ -11278,7 +11294,7 @@ function RangeDataManagerElem(bbox, data)
 			} else if (isNumberFilter) {
 				filterVal = this.Val;
 				if (isLabelFilter) {
-					//'1'0' - число для данного случая
+					//'1'0' - number for this case
 					filterVal = this.Val.replace(/'/g, "");
 					if (isNaN(filterVal)) {
 						filterVal = this.Val;
@@ -11286,7 +11302,7 @@ function RangeDataManagerElem(bbox, data)
 				}
 
 				if (isLabelFilter && isNaN(filterVal)) {
-					//в случае label filter - сравнивам строки
+					//in case of label filter - compare strings
 					filterVal = filterVal.toLowerCase();
 					isDigitValue = false;
 					val = val.toLowerCase();
@@ -11522,7 +11538,7 @@ function RangeDataManagerElem(bbox, data)
 			ns = "";
 		}
 
-		writer.WriteXmlNodeStart(ns + name/*"сustomFilter"*/);
+		writer.WriteXmlNodeStart(ns + name/*"customFilter"*/);
 		writer.WriteXmlAttributeString("operator", AscCommonExcel.ToXml_ST_FilterOperator(this.Operator));
 		writer.WriteXmlAttributeStringEncode("val", this.Val);
 		writer.WriteXmlAttributesEnd();
@@ -12328,7 +12344,7 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 	Top10.prototype.isHideValue = function(val) {
-		// ToDo работает не совсем правильно.
+		// ToDo doesn't work quite correctly.
 		var res = false;
 
 		if(null !== this.FilterVal)
@@ -12875,8 +12891,8 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 	QueryTable.prototype.syncIndexes = function(tableColumns) {
-		//при удалении приходится меняться tableColumnId, поскольку id  у колонок таблиц у нас формируются на сохранение
-		//а соотсетствие именно по id tableColumn
+		//when deleting, tableColumnId has to change, since table column ids are generated on save
+		//and correspondence is exactly by tableColumn id
 
 		if (this.queryTableRefresh) {
 			this.queryTableRefresh.syncIndexes(tableColumns);
@@ -12941,8 +12957,8 @@ function RangeDataManagerElem(bbox, data)
 		this.queryTableDeletedFields.push(newDeletedField);
 	};
 	QueryTableRefresh.prototype.syncIndexes = function(tableColumns) {
-		//при удалении приходится меняться tableColumnId, поскольку id  у колонок таблиц у нас формируются на сохранение
-		//а соотсетствие именно по id tableColumn
+		//when deleting, tableColumnId has to change, since table column ids are generated on save
+		//and correspondence is exactly by tableColumn id
 
 		if (this.queryTableFields) {
 			for (var i = 0; i < tableColumns.length; i++) {
@@ -12955,8 +12971,8 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 	QueryTableRefresh.prototype.syncIndexes2 = function(tableColumns) {
-		//при удалении приходится меняться tableColumnId, поскольку id  у колонок таблиц у нас формируются на сохранение
-		//а соотсетствие именно по id tableColumn
+		//when deleting, tableColumnId has to change, since table column ids are generated on save
+		//and correspondence is exactly by tableColumn id
 
 		if (this.queryTableFields) {
 			var i;
@@ -13204,7 +13220,7 @@ function RangeDataManagerElem(bbox, data)
 		this.top = null;
 		this.bottom = null;
 
-		//TODO в историю нужно будет записывать эти параметры
+		//TODO these parameters will need to be written to history
 		this.header = null;
 		this.footer = null;
 
@@ -13347,7 +13363,7 @@ function RangeDataManagerElem(bbox, data)
 		this.verticalDpi = 600;
 		this.paperUnits = 0;
 
-		//для превью передаём из интерфейса
+		//for preview, passed from interface
 		this.headerFooter = null;
 		this.printArea = null;
 		this.selection = null;
@@ -13451,7 +13467,7 @@ function RangeDataManagerElem(bbox, data)
 	asc_CPageSetup.prototype.asc_getScale = function () { return this.scale; };
 
 	asc_CPageSetup.prototype.asc_setFitToWidth = function (newVal) {
-		//TODO заглушка! потому что из меню проставляется булево значение, а должно быть число
+		//TODO workaround! because boolean value is set from menu, but it should be a number
 		if(newVal === true) {
 			newVal = 1;
 		} else if(newVal === false) {
@@ -13468,7 +13484,7 @@ function RangeDataManagerElem(bbox, data)
 		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageSetup.prototype.asc_setFitToHeight = function (newVal) {
-		//TODO заглушка! потому что из меню проставляется булево значение, а должно быть число
+		//TODO workaround! because boolean value is set from menu, but it should be a number
 		if(newVal === true) {
 			newVal = 1;
 		} else if(newVal === false) {
@@ -13540,9 +13556,9 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	/** @constructor */
-	//этот объект используется как в модели, так и в меню для передачи измененных опций page layout
-	//если определена ws - это означает, что этот объект лежит в модели и при изменении его свойств идёт запись в историю
-	//в противном случае запись в историю не происходит
+	//this object is used both in model and in menu for passing changed page layout options
+	//if ws is defined - it means this object is in the model and when its properties change, it writes to history
+	//otherwise, no history recording occurs
 	function asc_CPageOptions(ws) {
 		this.pageMargins = new asc_CPageMargins(ws);
 		this.pageSetup = new asc_CPageSetup(ws);
@@ -13554,7 +13570,7 @@ function RangeDataManagerElem(bbox, data)
 
 		this.ws = ws;
 
-		//только для передачи из интефейса
+		//only for passing from interface
 		this.printTitlesWidth = null;
 		this.printTitlesHeight = null;
 
@@ -13687,7 +13703,7 @@ function RangeDataManagerElem(bbox, data)
 		this.printTitlesWidth = checkOnNull(props["printTitlesWidth"], this.printTitlesWidth);
 	};
 	asc_CPageOptions.prototype.initPrintTitles = function () {
-		//функция добавлена только для того, чтобы в интерфейс передать текущие заголовки печати, которые хранятся как именованный диапазон
+		//function added only to pass current print titles to interface, which are stored as named range
 
 		this.printTitlesWidth = null;
 		this.printTitlesHeight = null;
@@ -13742,7 +13758,7 @@ function RangeDataManagerElem(bbox, data)
 	asc_CPageOptions.prototype.asc_getGridLinesSet = function () { return this.gridLinesSet; };
 	asc_CPageOptions.prototype.asc_getHorizontalCentered = function () { return this.horizontalCentered; };
 	asc_CPageOptions.prototype.asc_getVerticalCentered = function () { return this.verticalCentered; };
-	//методы только для меню, без добавляем в историю
+	//methods only for menu, without adding to history
 	asc_CPageOptions.prototype.asc_setPageMargins = function (val) { this.pageMargins = val; };
 	asc_CPageOptions.prototype.asc_setPageSetup = function (val) { this.pageSetup = val; };
 
@@ -14243,7 +14259,7 @@ function RangeDataManagerElem(bbox, data)
 
 		this.levels = null;
 
-		this.sortList = null;//массив, порядковый номер - его индекс в levels
+		this.sortList = null;//array, ordinal number - its index in levels
 
 		this.lockChangeHeaders = null;
 		this.lockChangeOrientation = null;
@@ -14342,7 +14358,7 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 	CSortProperties.prototype.asc_addBySortList = function (sRange) {
-		//при количестве строк/столбцов более 500, добавляем по одной строке/одному столбцу
+		//when row/column count is more than 500, add one row/column at a time
 		var selection = this._newSelection;
 		var range = AscCommonExcel.g_oRangeCache.getAscRange(sRange);
 		var index = this.columnSort ? range.c1 - selection.c1 : range.r1 - selection.r1;
@@ -14365,7 +14381,7 @@ function RangeDataManagerElem(bbox, data)
 		//columnSort; dataHasHeaders
 		var row = this.columnSort ? parentRef.r1 : index + parentRef.r1;
 		var col = !this.columnSort ? parentRef.c1 : index + parentRef.c1;
-		//TODO проверить в 1 строке как должно работать
+		//TODO check how it should work in 1 row
 		if (this.hasHeaders) {
 			if (this.columnSort) {
 				row--;
@@ -14649,19 +14665,19 @@ function RangeDataManagerElem(bbox, data)
 		this.ctx = null;
 		this.pages = null;
 
-		//отслеживаем активную страницу и активный лист
+		//track active page and active sheet
 		this.activePage = null;
 		this.activeSheet = null;
 		this.sheetsProps = null;
 
 		this.start = null;
 
-		//зум для масштабирования страницы и зум печати
+		//zoom for page scaling and print zoom
 		this.pageZoom = null;
 		this.printZoom = null;
 
 		this.wb = wb;
-		//после закрытия окна предварительной печати возвращаем зум и актиный лист
+		//after closing print preview window, restore zoom and active sheet
 		this.realZoom = null;
 		this.realActiveSheet = null;
 
@@ -14669,13 +14685,13 @@ function RangeDataManagerElem(bbox, data)
 
 		this.advancedOptions = null;
 
-		//избегаем повторных вызовов, пересмотреть
+		//avoid repeated calls, reconsider
 		this.isDrawPrintPreview = null;
-		//избегаем повторного отображения ошибки(максимальное количество страниц)
+		//avoid showing error again (maximum page count)
 		this.maxPagesCount = null;
 
-		//опции измененного листа пока не мержу с теми, что в модели. перезатираю полностью. если будет необходимость - _pageOptionsMap использовать и при сохранении проверять что изменилось
-		//при закрытии окна с сохранением вычисляем только измененные настройки, для этого храним те настройки, которые были до открытия
+		//not merging changed sheet options with those in model yet. overwriting completely. if needed - use _pageOptionsMap and check what changed on save
+		//when closing window with save, calculate only changed settings, for this we store settings that were before opening
 		//this._pageOptionsMap = null;
 
 		return this;
@@ -15068,8 +15084,8 @@ function RangeDataManagerElem(bbox, data)
 	{
 		this.Id = null;
 		this.Type = 0;
-		//дополнительная информация, которая приходит при copy/paste
-		//необходимо её добавлять в ooxml
+		//additional information that comes with copy/paste
+		//need to add it to ooxml
 		//fileId
 		//portalName
 		this.referenceData = null;
@@ -15121,18 +15137,18 @@ function RangeDataManagerElem(bbox, data)
 		return this.Id.match(p);
 	};
 
-	//TODO внешние источники данных, как в файле из бага https://bugzilla.onlyoffice.com/show_bug.cgi?id=38646
+	//TODO external data sources, as in file from bug https://bugzilla.onlyoffice.com/show_bug.cgi?id=38646
 
 	ExternalReferenceBase.prototype.getAscLink = function () {
 
-		// вот так, если это из файла прилетело, в т.ч. из буфера
+		// like this, if it came from a file, including from buffer
 		// onRequestReferenceData({data:{referenceData:config.document.referenceData}})
 		//
 		//
-		// вот так, если это будет ссылка на редактор файла в тестовом как в onedrive
+		// like this, if it will be a link to file editor in test like in onedrive
 		// onRequestReferenceData({data:{link:"http://192.168.1.1/editor?fileName=new.docx"}})
 		//
-		// вот так, если б это было просто путь к файлу как в MS:
+		// like this, if it was just a path to file like in MS:
 		// 	onRequestReferenceData({data:{path: "new.docx"}})
 
 
@@ -15580,7 +15596,7 @@ function RangeDataManagerElem(bbox, data)
 
 		let existedWsArray = [];
 		for (var i = 0; i < arr.length; i++) {
-			//если есть this.worksheets, если нет - проверить и обработать
+			//if this.worksheets exists, if not - check and handle
 			var sheetName = arr[i].sName;
 			if (this.worksheets[null]) {
 				this.changeSheetName(null, sheetName);
@@ -15590,7 +15606,7 @@ function RangeDataManagerElem(bbox, data)
 			}
 			if (this.worksheets && this.worksheets[sheetName]) {
 				let wsTo = this.worksheets[sheetName];
-				//меняем лист
+				//change the sheet
 				AscFormat.ExecuteNoHistory(function(){
 					AscCommonExcel.executeInR1C1Mode(false, function () {
 
@@ -15611,7 +15627,7 @@ function RangeDataManagerElem(bbox, data)
 				});
 				//this.worksheets[sheetName] = arr[i];
 
-				//обновляем данные в SheetDataSet
+				//update data in SheetDataSet
 				var index = this.getSheetByName(sheetName);
 				if (index != null) {
 					var externalSheetDataSet = this.SheetDataSet[index];
@@ -15718,15 +15734,15 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	ExternalReference.prototype.addSheet = function (sheet, ranges) {
-		//добавляем нужные данные из вставляемого листа в SheetDataSet
+		//add required data from the inserted sheet to SheetDataSet
 		var sheetName = sheet && sheet.sName;
 		if (sheetName && null === this.getSheetByName(sheetName)) {
-			//делаем init и формируем на основании данных из SheetDataSet
-			//добавляем в this.worksheets
+			//init and form based on data from SheetDataSet
+			//add to this.worksheets
 			this.addSheetName(sheetName, true);
 
-			//TODO при копипасте есть нюанас - те данные, которые не были скопированы из исходного документа, подхватить не сможем
-			//либо вставку менять - и делать не так как мс(в случае ссылки вставляеть всегда диапазон, равный скопированному). сейчас - если выделили больше, то подхватиться этот диапазон.
+			//TODO there is a nuance with copy-paste - data that was not copied from the source document cannot be retrieved
+			//either change the paste behavior - and do it differently from MS (in case of a link, always paste the range equal to the copied one). Currently - if you select more, that range will be picked up.
 
 			this.updateSheetData(sheetName, sheet, ranges);
 		}
@@ -15741,7 +15757,7 @@ function RangeDataManagerElem(bbox, data)
 		}
 		externalSheetDataSet.initFromSheet(sheet, ranges);
 
-		//из SheetDataSet данные добавляем во временный лист, который хранится в worksheets
+		//add data from SheetDataSet to a temporary sheet stored in worksheets
 		this.initWorksheetFromSheetDataSet(sheetName);
 	};
 
@@ -15797,7 +15813,7 @@ function RangeDataManagerElem(bbox, data)
 			var sheetDataSet = this.SheetDataSet[sheetDataSetIndex];
 			var ws = this.initWorksheet(sheetName);
 
-			//клонируем все данные из SheetDataSet в данный темповый Worksheet
+			//clone all data from SheetDataSet to this temporary Worksheet
 			if (!sheetDataSet || !sheetDataSet.Row) {
 				return;
 			}
@@ -15886,7 +15902,7 @@ function RangeDataManagerElem(bbox, data)
 
 	ExternalReference.prototype.getSheetByName = function (val) {
 		for (var i = 0; i < this.SheetNames.length; i++) {
-			//если есть this.worksheets, если нет - проверить и обработать
+			//if this.worksheets exists, if not - check and handle
 			if (this.SheetNames[i] === val) {
 				return i;
 			}
@@ -15905,7 +15921,7 @@ function RangeDataManagerElem(bbox, data)
 	ExternalReference.prototype.getSheetBySheetId = function (sheetId) {
 		if (this.worksheets) {
 			for (var i in this.worksheets) {
-				//если есть this.worksheets, если нет - проверить и обработать
+				//if this.worksheets exists, if not - check and handle
 				if (this.worksheets[i].Id === sheetId) {
 					return i;
 				}
@@ -15918,7 +15934,7 @@ function RangeDataManagerElem(bbox, data)
 	ExternalReference.prototype.getWb = function () {
 		if (this.worksheets) {
 			for (let i in this.worksheets) {
-				//если есть this.worksheets, если нет - проверить и обработать
+				//if this.worksheets exists, if not - check and handle
 				if (this.worksheets[i]) {
 					return this.worksheets[i].workbook;
 				}
@@ -16207,7 +16223,7 @@ function RangeDataManagerElem(bbox, data)
 			var wb = api_sheet.wbModel;
 			var wbView = api_sheet.wb;
 			const aRanges = [];
-			//TODO пока обновлю ячейки по одной, в дальнейшем нужно объединить ячейки в диапазоны
+			//TODO for now updating cells one by one, in the future need to merge cells into ranges
 			for (var i = 0; i < this.Row.length; i++) {
 				var row = this.Row[i];
 				if (!row) {
@@ -16370,7 +16386,7 @@ function RangeDataManagerElem(bbox, data)
 
 
 	function ExternalCell() {
-		this.Ref = null;//храним в строке, в будущем перевести в row/col
+		this.Ref = null;//stored as string, in the future convert to row/col
 		this.CellType = null;
 		this.CellValue = null;
 	}

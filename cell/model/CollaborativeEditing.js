@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -46,7 +49,7 @@
 		var c_oAscLockTypeElem = AscCommonExcel.c_oAscLockTypeElem;
 
 		/**
-		 * Отвечает за совместное редактирование
+		 * Responsible for collaborative editing
 		 * -----------------------------------------------------------------------------
 		 *
 		 * @constructor
@@ -58,24 +61,24 @@
 			}
 			AscCommon.CCollaborativeEditingBase.call(this);
 
-			this.m_nUseType					= 1;  // 1 - 1 клиент и мы сохраняем историю, -1 - несколько клиентов, 0 - переход из -1 в 1
+			this.m_nUseType					= 1;  // 1 - single client and we save history, -1 - multiple clients, 0 - transition from -1 to 1
 
 			this.handlers					= new AscCommonExcel.asc_CHandlersList(handlers);
-			this.m_bIsViewerMode			= !!isViewerMode; // Режим Viewer-а
-			this.m_bGlobalLock				= 0; // Глобальный lock
-			this.m_bGlobalLockEditCell		= false; // Глобальный lock (для редактирования ячейки) - отключаем смену select-а, но разрешаем сразу вводить
-			this.m_arrCheckLocks			= [];    // Массив для проверки залоченности объектов, которые мы собираемся изменять
+			this.m_bIsViewerMode			= !!isViewerMode; // Viewer mode
+			this.m_bGlobalLock				= 0; // Global lock
+			this.m_bGlobalLockEditCell		= false; // Global lock (for cell editing) - disable selection change, but allow immediate input
+			this.m_arrCheckLocks			= [];    // Array for checking lock status of objects we intend to modify
 
-			this.m_arrNeedUnlock			= []; // Массив со списком залоченных объектов(которые были залочены другими пользователями)
-			this.m_arrNeedUnlock2			= []; // Массив со списком залоченных объектов(которые были залочены на данном клиенте)
+			this.m_arrNeedUnlock			= []; // Array with list of locked objects (locked by other users)
+			this.m_arrNeedUnlock2			= []; // Array with list of locked objects (locked on this client)
 
-			this.m_arrChanges				= []; // Массив с изменениями других пользователей
+			this.m_arrChanges				= []; // Array with changes from other users
 
 			this.m_oRecalcIndexColumns		= {};
 			this.m_oRecalcIndexRows			= {};
 
-			this.m_oInsertColumns			= {}; // Массив листов с массивами списков добавленных колонок
-			this.m_oInsertRows				= {}; // Массив листов с массивами списков добавленных строк
+			this.m_oInsertColumns			= {}; // Map of sheets with arrays of added columns lists
+			this.m_oInsertRows				= {}; // Map of sheets with arrays of added rows lists
 
 			this.m_bFast = false;
 
@@ -91,24 +94,24 @@
 		CCollaborativeEditing.prototype.init = function () {
 		};
 
-		// Очищаем индексы пересчета (при открытии это необходимо)
+		// Clear recalculation indexes (necessary when opening)
 		CCollaborativeEditing.prototype.clearRecalcIndex = function () {
 			this.m_oRecalcIndexColumns = {};
 			this.m_oRecalcIndexRows = {};
 		};
 
-		// Начало совместного редактирования
+		// Start collaborative editing
 		CCollaborativeEditing.prototype.startCollaborationEditing = function () {
 			this.m_nUseType = -1;
 		};
 
-		// Временное окончание совместного редактирования
+		// Temporary end of collaborative editing
 		CCollaborativeEditing.prototype.endCollaborationEditing = function () {
 			if (this.m_nUseType <= 0)
 				this.m_nUseType = 0;
 		};
 
-		// Выставление режима view
+		// Setting view mode
 		CCollaborativeEditing.prototype.setViewerMode = function (isViewerMode) {
 			this.m_bIsViewerMode = isViewerMode;
 		};
@@ -140,7 +143,7 @@
 		};
 
 		//-----------------------------------------------------------------------------------
-		// Функции для проверки залоченности объектов
+		// Functions for checking object lock status
 		//-----------------------------------------------------------------------------------
 		CCollaborativeEditing.prototype.getGlobalLock = function () {
 			return this.m_bGlobalLock;
@@ -149,12 +152,12 @@
 			return this.m_bGlobalLockEditCell;
 		};
 		CCollaborativeEditing.prototype.onStartEditCell = function () {
-			// Вызывать эту функцию только в случае редактирования ячейки и если мы не одни редактируем!!!
+			// Call this function only when editing a cell and if we are not the only one editing!!!
 			if (this.getCollaborativeEditing())
 				this.m_bGlobalLockEditCell = true;
 		};
 		CCollaborativeEditing.prototype.onStopEditCell = function () {
-			// Вызывать эту функцию только в случае окончания редактирования ячейки!!!
+			// Call this function only when finishing cell editing!!!
 			this.m_bGlobalLockEditCell = false;
 		};
 		CCollaborativeEditing.prototype.lock = function (arrLocks, callback) {
@@ -165,7 +168,7 @@
 			for (var i = 0; i < arrLocks.length; ++i) {
 				type = this._addCheckLock(arrLocks[i], callback);
 				if (c_oAscLockTypes.kLockTypeNone !== type) {
-					// Снимаем глобальный лок (для редактирования ячейки)
+					// Release global lock (for cell editing)
 					this.m_bGlobalLockEditCell = false;
 					return c_oAscLockTypes.kLockTypeMine === type;
 				}
@@ -175,7 +178,7 @@
 		};
 		CCollaborativeEditing.prototype._checkCollaborative = function (callback) {
 			if (false === this.getCollaborativeEditing()) {
-				// Пользователь редактирует один: не ждем ответа, а сразу продолжаем редактирование
+				// User is editing alone: don't wait for response, continue editing immediately
 				AscCommonExcel.applyFunction(callback, true);
 				callback = undefined;
 			}
@@ -183,11 +186,11 @@
 		};
 		CCollaborativeEditing.prototype._addCheckLock = function (lockInfo, callback) {
 			if (false !== this.getLockIntersection(lockInfo, c_oAscLockTypes.kLockTypeMine, false)) {
-				// Редактируем сами
+				// Self editing
 				AscCommonExcel.applyFunction(callback, true);
 				return c_oAscLockTypes.kLockTypeMine;
 			} else if (false !== this.getLockIntersection(lockInfo, c_oAscLockTypes.kLockTypeOther, false)) {
-				// Уже ячейку кто-то редактирует
+				// Someone is already editing the cell
 				AscCommonExcel.applyFunction(callback, false);
 				return c_oAscLockTypes.kLockTypeOther;
 			}
@@ -204,36 +207,36 @@
 		CCollaborativeEditing.prototype.onEndCheckLock = function (callback) {
 			var t = this;
 			if (this.m_arrCheckLocks.length > 0) {
-				// Отправляем запрос на сервер со списком элементов
+				// Send request to server with list of elements
 				this.handlers.trigger("askLock", this.m_arrCheckLocks, function (result) {
 					t.onCallbackAskLock(result, callback);
 				});
 
 				if (undefined !== callback) {
-					// Ставим глобальный лок (только если мы не одни и ждем ответа!)
+					// Set global lock (only if we are not alone and waiting for response!)
 					this.Set_GlobalLock(true);
 				}
 			} else {
 				asc_applyFunction(callback, true);
 
-				// Снимаем глобальный лок (для редактирования ячейки)
+				// Release global lock (for cell editing)
 				this.m_bGlobalLockEditCell = false;
 			}
 		};
 
 		CCollaborativeEditing.prototype.onCallbackAskLock = function (result, callback) {
-			// Снимаем глобальный лок
+			// Release global lock
 			this.Set_GlobalLock(false);
-			// Снимаем глобальный лок (для редактирования ячейки)
+			// Release global lock (for cell editing)
 			this.m_bGlobalLockEditCell = false;
 
 			if (result["lock"]) {
-				// Пробегаемся по массиву и проставляем, что залочено нами
+				// Iterate through the array and mark as locked by us
 				var count = this.m_arrCheckLocks.length;
 				for (var i = 0; i < count; ++i) {
 					var oItem = this.m_arrCheckLocks[i];
 
-					if (true !== oItem && false !== oItem) // сравниваем по значению и типу обязательно
+					if (true !== oItem && false !== oItem) // compare by value and type strictly
 					{
 						var oNewLock = new CLock(oItem);
 						oNewLock.setType(c_oAscLockTypes.kLockTypeMine);
@@ -273,12 +276,12 @@
 			this.m_arrChanges.push(oChanges);
 		};
 
-		// Возвращает - нужно ли отправлять end action
+		// Returns - whether to send end action
 		CCollaborativeEditing.prototype.applyChanges = function (oColor) {
 			var t = this;
 			var length = this.m_arrChanges.length;
 			var oApi = Asc.editor;
-			// Принимаем изменения
+			// Apply changes
 			if (0 < length) {
 				//splice to prevent double apply other changes in case of load fonts
 				oApi.sendEvent("asc_onBeforeApplyChanges");
@@ -295,7 +298,7 @@
 		};
 
 		CCollaborativeEditing.prototype.sendChanges = function (IsUserSave, isAfterAskSave, changesToSend) {
-			// Когда не совместное редактирование чистить ничего не нужно, но отправлять нужно.
+			// When not collaborative editing, nothing needs to be cleared, but sending is required.
 			var bIsCollaborative = this.getCollaborativeEditing();
 
 			var bCheckRedraw = false, bRedrawGraphicObjects = false, bUnlockDefName = false;
@@ -306,7 +309,7 @@
 					this.handlers.trigger("cleanSelection");
 				}
 
-				// Очищаем свои изменения
+				// Clear our changes
 				while (0 < this.m_arrNeedUnlock2.length) {
 					oLock = this.m_arrNeedUnlock2.shift();
 					oLock.setType(c_oAscLockTypes.kLockTypeNone, false);
@@ -329,7 +332,7 @@
 					this.handlers.trigger("releaseLocks", oLock.Element["guid"]);
 				}
 
-				// Очищаем примененные чужие изменения
+				// Clear applied changes from other users
 				var nIndex = 0;
 				var nCount = this.m_arrNeedUnlock.length;
 				for (; nIndex < nCount; ++nIndex) {
@@ -361,26 +364,26 @@
 				}
 			}
 
-			// Отправляем на сервер изменения
+			// Send changes to server
 			this.handlers.trigger("sendChanges", this.getRecalcIndexSave(this.m_oRecalcIndexColumns), this.getRecalcIndexSave(this.m_oRecalcIndexRows), isAfterAskSave, changesToSend);
 
 			if (bIsCollaborative) {
-				// Пересчитываем lock-и от чужих пользователей
+				// Recalculate locks from other users
 				this._recalcLockArrayOthers();
 
-				// Очищаем свои изменения (удаляем массив добавленных строк/столбцов)
+				// Clear our changes (remove array of added rows/columns)
 				delete this.m_oInsertColumns;
 				delete this.m_oInsertRows;
 				this.m_oInsertColumns = {};
 				this.m_oInsertRows = {};
-				// Очищаем свои пересчетные индексы
+				// Clear our recalculation indexes
 				this.clearRecalcIndex();
 
-				// Чистим Undo/Redo
+				// Clear Undo/Redo
 				AscCommon.History.Clear_Redo();
 				AscCommon.History.Clear();
 
-				// Перерисовываем
+				// Redraw
 				if (bCheckRedraw) {
 					this.handlers.trigger("drawSelection");
 					this.handlers.trigger("drawFrozenPaneLines");
@@ -409,7 +412,7 @@
 				if (0 === this.m_nUseType)
 					this.m_nUseType = 1;
 			} else {
-				// Обновляем точку последнего сохранения в истории
+				// Update the last save point in history
 				AscCommon.History.Reset_SavedIndex(IsUserSave);
 			}
 
@@ -464,10 +467,10 @@
 		};
 
 		/**
-		 * Проверка lock для элемента
-		 * @param {asc_CLockInfo} element  элемент для проверки lock
-		 * @param {c_oAscLockTypes} type сами(kLockTypeMine) или кто-то другой
-		 * @param {Boolean} bCheckOnlyLockAll проверять только lock для свойств всего листа (либо только проверять удален ли лист, а не просто залочен)
+		 * Check lock for element
+		 * @param {asc_CLockInfo} element  element to check lock
+		 * @param {c_oAscLockTypes} type ourselves(kLockTypeMine) or someone else
+		 * @param {Boolean} bCheckOnlyLockAll check only lock for entire sheet properties (or only check if sheet is deleted, not just locked)
 		 */
 		CCollaborativeEditing.prototype.getLockIntersection = function (element, type, bCheckOnlyLockAll) {
 			var arrayElements = (c_oAscLockTypes.kLockTypeMine === type) ? this.m_arrNeedUnlock2 : this.m_arrNeedUnlock;
@@ -475,10 +478,10 @@
 			for (var i = 0; i < arrayElements.length; ++i) {
 				oUnlockElement = arrayElements[i].Element;
 				if (c_oAscLockTypeElem.Sheet === element["type"] && element["type"] === oUnlockElement["type"]) {
-					// Проверка только на удаление листа (если проверка для себя, то выходим не сразу, т.к. нужно проверить lock от других элементов)
+					// Check only for sheet deletion (if checking for ourselves, don't exit immediately since we need to check locks from other elements)
 					if ((c_oAscLockTypes.kLockTypeMine !== type && false === bCheckOnlyLockAll) ||
 						element["sheetId"] === oUnlockElement["sheetId"]) {
-						// Если кто-то залочил sheet, то больше никто не может лочить sheet-ы (иначе можно удалить все листы)
+						// If someone locked a sheet, no one else can lock sheets (otherwise all sheets could be deleted)
 						return arrayElements[i];
 					}
 				}
@@ -488,7 +491,7 @@
 				if (null !== element["subType"] && null !== oUnlockElement["subType"])
 					return arrayElements[i];
 
-				// Не учитываем lock от ChangeProperties (только если это не lock листа)
+				// Don't consider lock from ChangeProperties (only if it's not a sheet lock)
 				if (true === bCheckOnlyLockAll ||
 					(c_oAscLockTypeElemSubType.ChangeProperties === oUnlockElement["subType"]
 						&& c_oAscLockTypeElem.Sheet !== element["type"]))
@@ -499,7 +502,7 @@
 						if (element["rangeOrObjectId"] === oUnlockElement["rangeOrObjectId"])
 							return arrayElements[i];
 					} else if (element["type"] === c_oAscLockTypeElem.Range) {
-						// Не учитываем lock от Insert
+						// Don't consider lock from Insert
 						if (c_oAscLockTypes.kLockTypeMine === type || c_oAscLockTypeElemSubType.InsertRows === oUnlockElement["subType"] || c_oAscLockTypeElemSubType.InsertColumns === oUnlockElement["subType"])
 							continue;
 						rangeTmp1 = oUnlockElement["rangeOrObjectId"];
@@ -510,7 +513,7 @@
 					}
 				} else if (oUnlockElement["type"] === c_oAscLockTypeElem.Sheet ||
 					(element["type"] === c_oAscLockTypeElem.Sheet && c_oAscLockTypes.kLockTypeMine !== type)) {
-					// Если кто-то уже залочил лист или мы пытаемся сами залочить и проверяем на чужие lock
+					// If someone already locked the sheet or we're trying to lock it ourselves and checking for other locks
 					return arrayElements[i];
 				}
 			}
@@ -536,24 +539,24 @@
 				if (element["sheetId"] !== sheetId || element["type"] !== typeElem)
 					continue;
 
-				// Отображать залоченность удаленных текущим пользователем строк/столбцов не нужно (уже нечего отображать)
+				// Don't display lock status for rows/columns deleted by current user (nothing to display anymore)
 				if (c_oAscLockTypes.kLockTypeMine === type && c_oAscLockTypeElem.Range === typeElem &&
 					(c_oAscLockTypeElemSubType.DeleteColumns === element["subType"] ||
 						c_oAscLockTypeElemSubType.DeleteRows === element["subType"]))
 					continue;
-				// Отображать залоченность добавленных другим пользователем строк/столбцов не нужно (еще нечего отображать)
+				// Don't display lock status for rows/columns added by another user (nothing to display yet)
 				if (c_oAscLockTypeElem.Range === typeElem &&
 					(c_oAscLockTypeElemSubType.InsertColumns === element["subType"] ||
 						c_oAscLockTypeElemSubType.InsertRows === element["subType"]))
 					continue;
-				// Отображать lock-диапазон для lockAll(всего листа) не нужно
+				// Don't display lock range for lockAll (entire sheet)
 				if (c_oAscLockTypeElemSubType.ChangeProperties === element["subType"])
 					continue;
 
 				oRangeOrObjectId = element["rangeOrObjectId"];
-				// Для диапазона нужно сделать пересчет с учетом удаленных или добавленных строк/столбцов
+				// For range, need to recalculate considering deleted or added rows/columns
 				if (c_oAscLockTypeElem.Range === typeElem) {
-					// Пересчитывать для удаленных строк/столбцов у другого пользователя не нужно
+					// Don't recalculate for rows/columns deleted by another user
 					if (c_oAscLockTypes.kLockTypeMine !== type && c_oAscLockTypeElem.Range === typeElem &&
 						(c_oAscLockTypeElemSubType.DeleteColumns === element["subType"] ||
 							c_oAscLockTypeElemSubType.DeleteRows === element["subType"])) {
@@ -592,8 +595,8 @@
 			return this.getLockElem(c_oAscLockTypeElem.Object, c_oAscLockTypes.kLockTypeOther, sheetId);
 		};
 		/**
-		 * Проверка lock для всего листа
-		 * @param {Number} sheetId  элемент для проверки lock
+		 * Check lock for entire sheet
+		 * @param {Number} sheetId  element to check lock
 		 * @return {Asc.c_oAscMouseMoveLockedObjectType} oLockedObjectType
 		 */
 		CCollaborativeEditing.prototype.isLockAllOther = function (sheetId) {
@@ -624,7 +627,7 @@
 
 			for (i = 0; i < count; ++i) {
 				element = arrayElements[i].Element;
-				// Для удаления пересчитывать индексы не нужно
+				// No need to recalculate indexes for deletion
 				if (c_oAscLockTypeElem.Range !== element["type"] ||
 					c_oAscLockTypeElemSubType.InsertColumns === element["subType"] ||
 					c_oAscLockTypeElemSubType.InsertRows === element["subType"] ||
@@ -636,18 +639,18 @@
 				oRangeOrObjectId = element["rangeOrObjectId"];
 
 				if (oRecalcIndexColumns && oRecalcIndexColumns.hasOwnProperty(sheetId)) {
-					// Пересчет колонок
+					// Column recalculation
 					oRangeOrObjectId["c1"] = oRecalcIndexColumns[sheetId].getLockMe(oRangeOrObjectId["c1"]);
 					oRangeOrObjectId["c2"] = oRecalcIndexColumns[sheetId].getLockMe(oRangeOrObjectId["c2"]);
 				}
 				if (oRecalcIndexRows && oRecalcIndexRows.hasOwnProperty(sheetId)) {
-					// Пересчет строк
+					// Row recalculation
 					oRangeOrObjectId["r1"] = oRecalcIndexRows[sheetId].getLockMe(oRangeOrObjectId["r1"]);
 					oRangeOrObjectId["r2"] = oRecalcIndexRows[sheetId].getLockMe(oRangeOrObjectId["r2"]);
 				}
 			}
 		};
-		// Пересчет только для чужих Lock при сохранении на клиенте, который добавлял/удалял строки или столбцы
+		// Recalculation only for other users' Locks when saving on client that added/deleted rows or columns
 		CCollaborativeEditing.prototype._recalcLockArrayOthers = function () {
 			var typeLock = c_oAscLockTypes.kLockTypeOther;
 			var arrayElements = (c_oAscLockTypes.kLockTypeMine === typeLock) ? this.m_arrNeedUnlock2 : this.m_arrNeedUnlock;
@@ -667,12 +670,12 @@
 				oRangeOrObjectId = element["rangeOrObjectId"];
 
 				if (this.m_oRecalcIndexColumns.hasOwnProperty(sheetId)) {
-					// Пересчет колонок
+					// Column recalculation
 					oRangeOrObjectId["c1"] = this.m_oRecalcIndexColumns[sheetId].getLockOther(oRangeOrObjectId["c1"]);
 					oRangeOrObjectId["c2"] = this.m_oRecalcIndexColumns[sheetId].getLockOther(oRangeOrObjectId["c2"]);
 				}
 				if (this.m_oRecalcIndexRows.hasOwnProperty(sheetId)) {
-					// Пересчет строк
+					// Row recalculation
 					oRangeOrObjectId["r1"] = this.m_oRecalcIndexRows[sheetId].getLockOther(oRangeOrObjectId["r1"]);
 					oRangeOrObjectId["r2"] = this.m_oRecalcIndexRows[sheetId].getLockOther(oRangeOrObjectId["r2"]);
 				}
@@ -704,7 +707,7 @@
 							c_oAscRecalcIndexTypes.RecalcIndexRemove : c_oAscRecalcIndexTypes.RecalcIndexAdd;
 						oRecalcIndexTmp[sheetId].add(nRecalcType, oRecalcIndexElement["_position"],
 							oRecalcIndexElement["_count"], /*bIsSaveIndex*/true);
-						// Дублируем для возврата результата (нам нужно пересчитать только по последнему индексу
+						// Duplicate for returning result (we need to recalculate only by the last index
 						oRecalcIndexResult[sheetId].add(nRecalcType, oRecalcIndexElement["_position"],
 							oRecalcIndexElement["_count"], /*bIsSaveIndex*/true);
 					}
@@ -714,13 +717,13 @@
 			return oRecalcIndexResult;
 		};
 
-		// Undo для добавления/удаления столбцов
+		// Undo for adding/deleting columns
 		CCollaborativeEditing.prototype.undoCols = function (sheetId, count) {
 			if (!this.m_oRecalcIndexColumns.hasOwnProperty(sheetId))
 				return;
 			this.m_oRecalcIndexColumns[sheetId].remove(count);
 		};
-		// Undo для добавления/удаления строк
+		// Undo for adding/deleting rows
 		CCollaborativeEditing.prototype.undoRows = function (sheetId, count) {
 			if (!this.m_oRecalcIndexRows.hasOwnProperty(sheetId))
 				return;
@@ -760,7 +763,7 @@
 				this.m_oInsertColumns[sheetId] = [];
 			}
 			var arrInsertColumns = this.m_oInsertColumns[sheetId];
-			// Перед добавлением нужно передвинуть имеющиеся
+			// Before adding, need to shift existing ones
 			var countCols = range.c2 - range.c1 + 1;
 			var isAddNewRange = true;
 			for (var i = 0; i < arrInsertColumns.length; ++i) {
@@ -780,7 +783,7 @@
 				this.m_oInsertRows[sheetId] = [];
 			}
 			var arrInsertRows = this.m_oInsertRows[sheetId];
-			// Перед добавлением нужно передвинуть имеющиеся
+			// Before adding, need to shift existing ones
 			var countRows = range.r2 - range.r1 + 1;
 			var isAddNewRange = true;
 			for (var i = 0; i < arrInsertRows.length; ++i) {
@@ -799,27 +802,27 @@
 			if (!this.m_oInsertColumns.hasOwnProperty(sheetId))
 				return;
 			var arrInsertColumns = this.m_oInsertColumns[sheetId];
-			// Нужно убрать те колонки, которые входят в диапазон
+			// Need to remove columns that fall within the range
 			var countCols = range.c2 - range.c1 + 1;
 			for (var i = 0; i < arrInsertColumns.length; ++i) {
 				if (arrInsertColumns[i].c1 > range.c2) {
-					// Справа от удаляемого диапазона
+					// To the right of the range being deleted
 					arrInsertColumns[i].c1 -= countCols;
 					arrInsertColumns[i].c2 -= countCols;
 				} else if (arrInsertColumns[i].c1 >= range.c1 && arrInsertColumns[i].c2 <= range.c2) {
-					// Полностью включение в удаляемый диапазон
+					// Completely included in the range being deleted
 					arrInsertColumns.splice(i, 1);
 					i -= 1;
 				} else if (arrInsertColumns[i].c1 >= range.c1 && arrInsertColumns[i].c1 <= range.c2 && arrInsertColumns[i].c2 > range.c2) {
-					// Частичное включение начала диапазона
+					// Partial inclusion of range start
 					arrInsertColumns[i].c1 = range.c2 + 1;
 					arrInsertColumns[i].c1 -= countCols;
 					arrInsertColumns[i].c2 -= countCols;
 				} else if (arrInsertColumns[i].c1 < range.c1 && arrInsertColumns[i].c2 >= range.c1 && arrInsertColumns[i].c2 <= range.c2) {
-					// Частичное включение окончания диапазона
+					// Partial inclusion of range end
 					arrInsertColumns[i].c2 = range.c1 - 1;
 				} else if (arrInsertColumns[i].c1 < range.c1 && arrInsertColumns[i].c2 > range.c2) {
-					// Удаляемый диапазон внутри нашего диапазона
+					// Range being deleted is inside our range
 					arrInsertColumns[i].c2 -= countCols;
 				}
 			}
@@ -828,27 +831,27 @@
 			if (!this.m_oInsertRows.hasOwnProperty(sheetId))
 				return;
 			var arrInsertRows = this.m_oInsertRows[sheetId];
-			// Нужно убрать те строки, которые входят в диапазон
+			// Need to remove rows that fall within the range
 			var countRows = range.r2 - range.r1 + 1;
 			for (var i = 0; i < arrInsertRows.length; ++i) {
 				if (arrInsertRows[i].r1 > range.r2) {
-					// Снизу от удаляемого диапазона
+					// Below the range being deleted
 					arrInsertRows[i].r1 -= countRows;
 					arrInsertRows[i].r2 -= countRows;
 				} else if (arrInsertRows[i].r1 >= range.r1 && arrInsertRows[i].r2 <= range.r2) {
-					// Полностью включение в удаляемый диапазон
+					// Completely included in the range being deleted
 					arrInsertRows.splice(i, 1);
 					i -= 1;
 				} else if (arrInsertRows[i].r1 >= range.r1 && arrInsertRows[i].r1 <= range.r2 && arrInsertRows[i].r2 > range.r2) {
-					// Частичное включение начала диапазона
+					// Partial inclusion of range start
 					arrInsertRows[i].r1 = range.r2 + 1;
 					arrInsertRows[i].r1 -= countRows;
 					arrInsertRows[i].r2 -= countRows;
 				} else if (arrInsertRows[i].r1 < range.r1 && arrInsertRows[i].r2 >= range.r1 && arrInsertRows[i].r2 <= range.r2) {
-					// Частичное включение окончания диапазона
+					// Partial inclusion of range end
 					arrInsertRows[i].r2 = range.r1 - 1;
 				} else if (arrInsertRows[i].r1 < range.r1 && arrInsertRows[i].r2 > range.r2) {
-					// Удаляемый диапазон внутри нашего диапазона
+					// Range being deleted is inside our range
 					arrInsertRows[i].r2 -= countRows;
 				}
 			}
@@ -895,25 +898,25 @@
 				return row;
 			return this.m_oRecalcIndexRows[sheetId].getLockMe(row);
 		};
-		// Только когда от других пользователей изменения колонок (для пересчета)
+		// Only when column changes from other users (for recalculation)
 		CCollaborativeEditing.prototype.getLockMeColumn2 = function (sheetId, col) {
 			if (!this.m_oRecalcIndexColumns.hasOwnProperty(sheetId))
 				return col;
 			return this.m_oRecalcIndexColumns[sheetId].getLockMe2(col);
 		};
-		// Только когда от других пользователей изменения строк (для пересчета)
+		// Only when row changes from other users (for recalculation)
 		CCollaborativeEditing.prototype.getLockMeRow2 = function (sheetId, row) {
 			if (!this.m_oRecalcIndexRows.hasOwnProperty(sheetId))
 				return row;
 			return this.m_oRecalcIndexRows[sheetId].getLockMe2(row);
 		};
-		// Только для принятия изменений от других пользователей! (для пересчета только в сохранении)
+		// Only for accepting changes from other users! (for recalculation only when saving)
 		CCollaborativeEditing.prototype.getLockOtherColumn2 = function (sheetId, col) {
 			if (!this.m_oRecalcIndexColumns.hasOwnProperty(sheetId))
 				return col;
 			return this.m_oRecalcIndexColumns[sheetId].getLockSaveOther(col);
 		};
-		// Только для принятия изменений от других пользователей! (для пересчета только в сохранении)
+		// Only for accepting changes from other users! (for recalculation only when saving)
 		CCollaborativeEditing.prototype.getLockOtherRow2 = function (sheetId, row) {
 			if (!this.m_oRecalcIndexRows.hasOwnProperty(sheetId))
 				return row;
@@ -1022,7 +1025,7 @@
 
 			this.oRedoObjectParam = new AscCommonExcel.RedoObjectParam();
 			AscCommon.History.UndoRedoPrepare(this.oRedoObjectParam, false, true);
-			//todo встроить в GetReverseOwnChanges
+			//todo integrate into GetReverseOwnChanges
 			if (this.CoHistory.OwnRanges.length > 0) {
 				let range     = this.CoHistory.OwnRanges[this.CoHistory.OwnRanges.length - 1];
 				let change = this.CoHistory.Changes[range.Position];
@@ -1035,7 +1038,7 @@
 		CCollaborativeEditing.prototype.PostUndo = function (state, changes) {
 			let Point = {Items: []}
 			if (changes.length > 0) {
-				//изменение не последнее потому что могут добавиться при корректировке
+				//change is not the last because more may be added during adjustment
 				let elem = changes.find(function(elem){
 					if(elem && elem.oData && elem.oData.Point) {
 						return true;
@@ -1054,7 +1057,7 @@
 
 		AscCommon.CCollaborativeHistory.prototype.CommuteRelated = function(oClass, oChange, nStartPosition)
 		{
-			//todo снаследоваться потому что планируется обьедениение sdk
+			//todo inherit because SDK merge is planned
 			var arrChangesForProceed = this.Changes;
 			for (var nIndex = nStartPosition, nOverallCount = arrChangesForProceed.length; nIndex < nOverallCount; ++nIndex) {
 				var oOtherAction = arrChangesForProceed[nIndex];
@@ -1074,7 +1077,7 @@
 		};
 
 		/**
-		 * Отвечает за лок в совместном редактировании
+		 * Responsible for lock in collaborative editing
 		 * -----------------------------------------------------------------------------
 		 *
 		 * @constructor
@@ -1120,35 +1123,35 @@
 				return new CRecalcIndexElement(recalcType, position, bIsSaveIndex);
 			}
 
-			this._recalcType	= recalcType;		// Тип изменений (удаление или добавление)
-			this._position		= position;			// Позиция, в которой произошли изменения
-			this._count			= 1;				// Считаем все изменения за простейшие
-			this.m_bIsSaveIndex	= !!bIsSaveIndex;	// Это индексы из изменений других пользователей (которые мы еще не применили)
+			this._recalcType	= recalcType;		// Type of changes (deletion or addition)
+			this._position		= position;			// Position where changes occurred
+			this._count			= 1;				// Consider all changes as elementary
+			this.m_bIsSaveIndex	= !!bIsSaveIndex;	// These are indexes from changes of other users (which we haven't applied yet)
 
 			return this;
 		}
 
-		// Пересчет для других
+		// Recalculation for others
 		CRecalcIndexElement.prototype.getLockOther = function (position, type) {
 			var inc = (c_oAscRecalcIndexTypes.RecalcIndexAdd === this._recalcType) ? +1 : -1;
 			if (position === this._position && c_oAscRecalcIndexTypes.RecalcIndexRemove === this._recalcType &&
 				true === this.m_bIsSaveIndex) {
-				// Мы еще не применили чужие изменения (поэтому для insert не нужно отрисовывать)
-				// RecalcIndexRemove (потому что перевертываем для правильной отработки, от другого пользователя
-				// пришло RecalcIndexAdd
+				// We haven't applied other users' changes yet (so no need to draw for insert)
+				// RecalcIndexRemove (because we reverse for correct processing, RecalcIndexAdd
+				// came from another user
 				return null;
 			} else if (position === this._position &&
 				c_oAscRecalcIndexTypes.RecalcIndexRemove === this._recalcType &&
 				c_oAscLockTypes.kLockTypeMine === type && false === this.m_bIsSaveIndex) {
-				// Для пользователя, который удалил столбец, рисовать залоченные ранее в данном столбце ячейки
-				// не нужно
+				// For the user who deleted the column, no need to draw cells
+				// that were previously locked in this column
 				return null;
 			} else if (position < this._position)
 				return position;
 			else
 				return (position + inc);
 		};
-		// Пересчет для других (только для сохранения)
+		// Recalculation for others (only for saving)
 		CRecalcIndexElement.prototype.getLockSaveOther = function (position, type) {
 			if (this.m_bIsSaveIndex)
 				return position;
@@ -1156,22 +1159,22 @@
 			var inc = (c_oAscRecalcIndexTypes.RecalcIndexAdd === this._recalcType) ? +1 : -1;
 			if (position === this._position && c_oAscRecalcIndexTypes.RecalcIndexRemove === this._recalcType &&
 				true === this.m_bIsSaveIndex) {
-				// Мы еще не применили чужие изменения (поэтому для insert не нужно отрисовывать)
-				// RecalcIndexRemove (потому что перевертываем для правильной отработки, от другого пользователя
-				// пришло RecalcIndexAdd
+				// We haven't applied other users' changes yet (so no need to draw for insert)
+				// RecalcIndexRemove (because we reverse for correct processing, RecalcIndexAdd
+				// came from another user
 				return null;
 			} else if (position === this._position &&
 				c_oAscRecalcIndexTypes.RecalcIndexRemove === this._recalcType &&
 				c_oAscLockTypes.kLockTypeMine === type && false === this.m_bIsSaveIndex) {
-				// Для пользователя, который удалил столбец, рисовать залоченные ранее в данном столбце ячейки
-				// не нужно
+				// For the user who deleted the column, no need to draw cells
+				// that were previously locked in this column
 				return null;
 			} else if (position < this._position)
 				return position;
 			else
 				return (position + inc);
 		};
-		// Пересчет для себя
+		// Recalculation for me
 		CRecalcIndexElement.prototype.getLockMe = function (position) {
 			var inc = (c_oAscRecalcIndexTypes.RecalcIndexAdd === this._recalcType) ? -1 : +1;
 			if (position < this._position)
@@ -1179,7 +1182,7 @@
 			else
 				return (position + inc);
 		};
-		// Только когда от других пользователей изменения (для пересчета)
+		// Only when changes from other users (for recalculation)
 		CRecalcIndexElement.prototype.getLockMe2 = function (position) {
 			var inc = (c_oAscRecalcIndexTypes.RecalcIndexAdd === this._recalcType) ? -1 : +1;
 			if (true !== this.m_bIsSaveIndex || position < this._position)
@@ -1193,7 +1196,7 @@
 				return new CRecalcIndex();
 			}
 
-			this._arrElements = [];		// Массив CRecalcIndexElement
+			this._arrElements = [];		// Array of CRecalcIndexElement
 
 			return this;
 		}
@@ -1202,7 +1205,7 @@
 			for (var i = 0; i < count; ++i)
 				this._arrElements.push(new CRecalcIndexElement(recalcType, position, bIsSaveIndex));
 		};
-		// Удаляет из пересчета, для undo
+		// Removes from recalculation, for undo
 		CRecalcIndex.prototype.remove = function (count) {
 			for (var i = 0; i < count; ++i)
 				this._arrElements.pop();
@@ -1211,7 +1214,7 @@
 			this._arrElements.length = 0;
 		};
 
-		// Пересчет для других
+		// Recalculation for others
 		CRecalcIndex.prototype.getLockOther = function (position, type) {
 			var newPosition = position;
 			/*var count = this._arrElements.length;
@@ -1224,8 +1227,8 @@
 			var count = this._arrElements.length;
 			if (0 >= count)
 				return newPosition;
-			// Для пересчета, когда добавил сам - обратный порядок
-			// Для пересчета, когда добавил кто-то другой - прямой
+			// For recalculation when added by self - reverse order
+			// For recalculation when added by someone else - direct order
 			var bIsDirect = !this._arrElements[0].m_bIsSaveIndex;
 			var i;
 			if (bIsDirect) {
@@ -1244,7 +1247,7 @@
 
 			return newPosition;
 		};
-		// Пересчет для других (только для сохранения)
+		// Recalculation for others (only for saving)
 		CRecalcIndex.prototype.getLockSaveOther = function (position, type) {
 			var newPosition = position;
 			var count = this._arrElements.length;
@@ -1256,14 +1259,14 @@
 
 			return newPosition;
 		};
-		// Пересчет для себя
+		// Recalculation for me
 		CRecalcIndex.prototype.getLockMe = function (position) {
 			var newPosition = position;
 			var count = this._arrElements.length;
 			if (0 >= count)
 				return newPosition;
-			// Для пересчета, когда добавил сам - обратный порядок
-			// Для пересчета, когда добавил кто-то другой - прямой
+			// For recalculation when added by self - reverse order
+			// For recalculation when added by someone else - direct order
 			var bIsDirect = this._arrElements[0].m_bIsSaveIndex;
 			var i;
 			if (bIsDirect) {
@@ -1282,14 +1285,14 @@
 
 			return newPosition;
 		};
-		// Только когда от других пользователей изменения (для пересчета)
+		// Only when changes from other users (for recalculation)
 		CRecalcIndex.prototype.getLockMe2 = function (position) {
 			var newPosition = position;
 			var count = this._arrElements.length;
 			if (0 >= count)
 				return newPosition;
-			// Для пересчета, когда добавил сам - обратный порядок
-			// Для пересчета, когда добавил кто-то другой - прямой
+			// For recalculation when added by self - reverse order
+			// For recalculation when added by someone else - direct order
 			var bIsDirect = this._arrElements[0].m_bIsSaveIndex;
 			var i;
 			if (bIsDirect) {

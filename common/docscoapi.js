@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -44,7 +47,7 @@
   var c_oAscServerCommandErrors = AscCommon.c_oAscServerCommandErrors;
   var c_oAscForceSaveTypes = AscCommon.c_oAscForceSaveTypes;
 
-  // Класс надстройка, для online и offline работы
+  // Wrapper class for online/offline operation
   function CDocsCoApi() {
     this._CoAuthoringApi = new DocsCoApi();
     this._onlineWork = false;
@@ -116,7 +119,7 @@
       this._CoAuthoringApi.onChangesIndex = function(changesIndex) {
         t.callback_OnChangesIndex(changesIndex);
       };
-      // Callback есть пользователей больше 1
+      // Callback when more than 1 user
       this._CoAuthoringApi.onStartCoAuthoring = function(e, isWaitAuth) {
         t.callback_OnStartCoAuthoring(e, isWaitAuth);
       };
@@ -151,7 +154,7 @@
       this._CoAuthoringApi.init(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey, wopiSrc, userSessionId, headingsColor, openCmd);
       this._onlineWork = true;
     } else {
-      // Фиктивные вызовы
+      // Dummy calls
       this.onFirstConnect();
       this.onLicense(null);
     }
@@ -178,7 +181,7 @@
     if (this._CoAuthoringApi && this._onlineWork) {
       this._CoAuthoringApi.auth(isViewer, opt_openCmd, opt_isIdle);
     } else {
-      // Фиктивные вызовы
+      // Dummy calls
       this.callback_OnSpellCheckInit('');
       this.callback_OnSetIndexUser('123');
       this.onFirstLoadChangesEnd();
@@ -243,7 +246,7 @@
           var lengthArray = (arrayBlockId) ? arrayBlockId.length : 0;
           if (0 < lengthArray) {
             callback({"lock": arrayBlockId[0]});
-            // Фиктивные вызовы
+            // Dummy calls
             for (var i = 0; i < lengthArray; ++i) {
               t.callback_OnLocksAcquired({"state": 2, "block": arrayBlockId[i]});
             }
@@ -259,7 +262,7 @@
     } else {
       window.setTimeout(function() {
         if (callback) {
-          // Фиктивные вызовы
+          // Dummy calls
           callback({"saveLock": false});
         }
       }, 100);
@@ -272,7 +275,7 @@
     } else {
       var t = this;
       window.setTimeout(function() {
-        // Фиктивные вызовы
+        // Dummy calls
         t.callback_OnUnSaveLock();
       }, 100);
     }
@@ -458,8 +461,8 @@
   };
 
   /**
-   * Event об отсоединении от сервера
-   * @param {jQuery} e  event об отсоединении с причиной
+   * Event on server disconnect
+   * @param {jQuery} e  disconnect event with reason
    * @param {code: AscCommon.c_oCloseCode.drop} code
    */
   CDocsCoApi.prototype.callback_OnDisconnect = function(e, code) {
@@ -567,7 +570,7 @@
 
   function DocsCoApi() {
     this._state = ConnectionState.None;
-    // Online-пользователи в документе
+    // Online users in the document
     this._participants = {};
     this._participantsTimestamp;
     this._countEditUsers = 0;
@@ -591,9 +594,9 @@
 	this._lastForceSaveButtonTime = -2;//-2 to allow first save without changes
 	this._lastForceSaveTimeoutTime = null;
     this._indexUser = -1;
-    // Если пользователей больше 1, то совместно редактируем
+    // If more than 1 user, co-editing is active
     this.isCoAuthoring = false;
-    // Мы сами отключились от совместного редактирования
+    // Co-editing closed by us
     this.isCloseCoAuthoring = false;
 
     //websocket payload size is limited by https://github.com/faye/faye-websocket-node#initialization-options (64 MiB)
@@ -601,22 +604,22 @@
     //"1.5MB" is choosen to avoid disconnect(after 25s) while downloading/uploading oversized changes with 0.5Mbps connection
     this.websocketMaxPayloadSize = 1572864;
     this._serverChangesSize = 0;
-    // Текущий индекс для колличества изменений
+    // Current changes index
     this.currentIndex = 0;
     this.currentIndexEnd = 0;
-    // Индекс, с которого мы начинаем сохранять изменения
+    // Index from which saving starts
     this.deleteIndex = 0;
-    // Массив изменений
+    // Array of changes
     this.arrayChanges = null;
-    // Время последнего сохранения (для разрыва соединения)
+    // Time of last save - for disconnect handling
     this.lastOtherSaveTime = -1;
 	this.lastOwnSaveTime = -1;
-    // Локальный индекс изменений
+    // Local changes index
     this.changesIndex = 0;
     //server changes index
     //todo: replace changesIndex with syncChangesIndex. changesIndex has different value in single editing mode
     this.syncChangesIndex = 0;
-    // Дополнительная информация для Excel
+    // Additional information for Excel
     this.excelAdditionalInfo = null;
     // Unlock document
     this.canUnlockDocument = false;
@@ -628,7 +631,7 @@
     this.maxAttemptCount = 50;
     this.reconnectInterval = 2000;
     this.errorTimeOut = 10000;
-    this.errorTimeOutSave = 60000;	// ToDo стоит переделать это, т.к. могут дублироваться изменения...
+    this.errorTimeOutSave = 60000;	// ToDo refactor - changes may be duplicated...
 
     this._docid = null;
     this._documentCallbackUrl = null;
@@ -653,7 +656,7 @@
     this.IsAnonymousUser = undefined;
     this.coEditingMode = undefined;
     this.headingsColor = undefined;
-    this._isReSaveAfterAuth = false;	// Флаг для сохранения после повторной авторизации (для разрыва соединения во время сохранения)
+    this._isReSaveAfterAuth = false;	// Flag for save after re-authorization - for disconnect during save
     this._lockBuffer = [];
     this._saveChangesChunks = [];
     this._authChanges = [];
@@ -722,7 +725,7 @@
 
   DocsCoApi.prototype.askLock = function(arrayBlockId, callback) {
     if (ConnectionState.SaveChanges === this._state || ConnectionState.AskSaveChanges === this._state) {
-      // Мы в режиме сохранения. Lock-и запросим после окончания.
+      // In save mode. Request locks after completion.
       this._lockBuffer.push(new LockBufferElement(arrayBlockId, callback));
       return;
     }
@@ -748,7 +751,7 @@
 
     if (!isLock) {
       if (this._lockCallbacksErrorTimerId.hasOwnProperty(idLockInArray)) {
-        // Два раза для одного id нельзя запрашивать lock, не дождавшись ответа
+        // Cannot request same lock id twice without waiting for response
         return;
       }
       //Ask
@@ -768,7 +771,7 @@
       }
       this._send({"type": 'getLock', 'block': arrayBlockId});
     } else {
-      // Вернем ошибку, т.к. залочены элементы
+      // Return error - elements locked
       window.setTimeout(function() {
         if (callback) {
           callback({error: idLockInArray + '-lock'});
@@ -779,20 +782,20 @@
 
   DocsCoApi.prototype.askSaveChanges = function(callback) {
     if (this._saveCallback[this._saveCallback.length - 1]) {
-      // Мы еще не отработали старый callback и ждем ответа
+      // Previous callback still pending
       return;
     }
 
-    // Очищаем предыдущий таймер
+    // Clear the previous timer
     if (null !== this.saveLockCallbackErrorTimeOutId) {
       clearTimeout(this.saveLockCallbackErrorTimeOutId);
     }
 
-    // Проверим состояние, если мы не подсоединились, то сразу отправим ошибку
+    // Check state - if not connected, send error immediately
     if (ConnectionState.Authorized !== this._state) {
       this.saveLockCallbackErrorTimeOutId = window.setTimeout(function() {
         if (callback) {
-          // Фиктивные вызовы
+          // Dummy calls
           callback({error: "No connection"});
         }
       }, 100);
@@ -812,7 +815,7 @@
           //Not signaled already
           oTmpCallback({error: "Timed out"});
           t._state = ConnectionState.Authorized;
-          // Делаем отложенные lock-и
+          // Process deferred locks
           t._sendBufferedLocks();
         }
       }, this.errorTimeOut);
@@ -822,7 +825,7 @@
   };
 
   DocsCoApi.prototype.unSaveLock = function() {
-    // ToDo при разрыве соединения нужно перестать делать unSaveLock!
+    // ToDo stop calling unSaveLock on disconnect!
     var t = this;
     this.unSaveLockCallbackErrorTimeOutId = window.setTimeout(function() {
       t.unSaveLockCallbackErrorTimeOutId = null;
@@ -876,10 +879,12 @@
       t._reSaveChanges(1);
     }, this.errorTimeOutSave);
 
-    // Выставляем состояние сохранения
+    // Set save state
     this._state = ConnectionState.SaveChanges;
-    if (!reSave) {
-      this._serverChangesSize += curBytes;
+    // Credit all bytes of this save operation upfront on the first batch (not per-batch),
+    // so localSize + serverSize stays accurate while batches 2..N are sent asynchronously.
+    if (!reSave && startIndex === 0) {
+      this._serverChangesSize += arrayChanges.reduce((s, c) => s + c.length, 0);
     }
     let _changes = this.binaryChanges ? arrayChanges.slice(startIndex, endIndex) : JSON.stringify(arrayChanges.slice(startIndex, endIndex));
     this._send({'type': 'saveChanges', 'changes': _changes,
@@ -899,7 +904,7 @@
   };
 
   DocsCoApi.prototype.getUsers = function() {
-    // Специально для возможности получения после прохождения авторизации (Стоит переделать)
+    // Allows get after authorization completes (should be refactored)
     if (this.onAuthParticipantsChanged) {
       this.onAuthParticipantsChanged(this._participants, this._userId);
     }
@@ -911,7 +916,7 @@
   };
 
   DocsCoApi.prototype.disconnect = function(opt_code, opt_reason) {
-    // Отключаемся сами
+    // Disconnect initiated by us
     this.isCloseCoAuthoring = true;
     if (opt_code) {
       this.onDisconnect(opt_reason, opt_code);
@@ -1246,7 +1251,7 @@
 			var indexCallback = this._saveCallback.length - 1;
 			var oTmpCallback = this._saveCallback[indexCallback];
 			if (oTmpCallback) {
-				// Очищаем предыдущий таймер
+				// Clear the previous timer
 				if (null !== this.saveLockCallbackErrorTimeOutId) {
 					clearTimeout(this.saveLockCallbackErrorTimeOutId);
 					this.saveLockCallbackErrorTimeOutId = null;
@@ -1258,27 +1263,27 @@
 		}
 		if (null == data["saveLock"] || data['error'] || data["saveLock"]) {
 			this._state = ConnectionState.Authorized;
-			// Делаем отложенные lock-и
+			// Process deferred locks
 			this._sendBufferedLocks();
 		}
 	};
 
   DocsCoApi.prototype._onUnSaveLock = function(data) {
-    // Очищаем предыдущий таймер сохранения
+    // Clear the previous save timer
     if (null !== this.saveCallbackErrorTimeOutId) {
       clearTimeout(this.saveCallbackErrorTimeOutId);
       this.saveCallbackErrorTimeOutId = null;
     }
-    // Очищаем предыдущий таймер снятия блокировки
+    // Clear the previous unlock timer
     if (null !== this.unSaveLockCallbackErrorTimeOutId) {
       clearTimeout(this.unSaveLockCallbackErrorTimeOutId);
       this.unSaveLockCallbackErrorTimeOutId = null;
     }
 
-    // Возвращаем состояние
+    // Restore state
     this._state = ConnectionState.Authorized;
 
-    // Делаем отложенные lock-и
+    // Process deferred locks
     this._sendBufferedLocks();
 
     if (-1 !== data['index']) {
@@ -1333,7 +1338,7 @@
   };
 
   DocsCoApi.prototype._onSavePartChanges = function(data) {
-    // Очищаем предыдущий таймер
+    // Clear the previous timer
     if (null !== this.saveCallbackErrorTimeOutId) {
       clearTimeout(this.saveCallbackErrorTimeOutId);
       this.saveCallbackErrorTimeOutId = null;
@@ -1426,7 +1431,7 @@
         this.onAuthParticipantsChanged(this._participants, this._userId);
       }
 
-      // Посылаем эвент о совместном редактировании
+      // Send event about co-editing
       if (1 < this._countEditUsers) {
         this._onStartCoAuthoring(/*isStartEvent*/true);
       } else {
@@ -1463,7 +1468,7 @@
         this.sendClientLog("error", "changesError: " + errorMsg);
       }
       if (usersStateChanged.length > 0) {
-        // Посылаем эвент о совместном редактировании
+        // Send event about co-editing
         if (1 < this._countEditUsers) {
           this._onStartCoAuthoring(/*isStartEvent*/false, isWaitAuth);
         } else {
@@ -1514,13 +1519,13 @@
 
       this._onServerVersion(data);
 
-      // Мы должны только соединиться для получения файла. Совместное редактирование уже было отключено.
+      // Only connect to get file. Co-editing already disabled.
       if (this.isCloseCoAuthoring) {
         return;
       }
 
       this._onLicenseChanged(data);
-      // Мы уже авторизовывались, нужно обновить пользователей (т.к. пользователи могли входить и выходить пока у нас не было соединения)
+      // Already authorized - update users, as users could have joined and left while connection was down
       this._onAuthParticipantsChanged(data['participants']);
 
       //if (this.ownedLockBlocks && this.ownedLockBlocks.length > 0) {
@@ -1549,7 +1554,7 @@
       return;
     }
     if (data['result'] === 1) {
-      // Выставляем флаг, что мы уже авторизовывались
+      // Set flag: already authorized
       this._isAuth = true;
 
       //TODO: add checks
@@ -1582,7 +1587,7 @@
         this._onHasForgotten();
       }
 
-      // Применения изменений пользователя
+      // Apply user changes
       if (window['AscApplyChanges'] && window['AscChanges']) {
         var userOfflineChanges = window['AscChanges'], changeOneUser;
         for (var i = 0; i < userOfflineChanges.length; ++i) {
@@ -1592,7 +1597,7 @@
         }
       }
       this._updateAuthChanges();
-      // Посылать нужно всегда, т.к. на это рассчитываем при открытии
+      // Always send this - opening relies on it
       if (this.onFirstLoadChangesEnd) {
         this.onFirstLoadChangesEnd(data['openedAt']);
       }
@@ -1667,7 +1672,7 @@
     return this._docid;
   };
   DocsCoApi.prototype.setDocId = function(docid) {
-    //todo возможно надо менять sockjs_url
+    //todo may need to change sockjs_url
     this._docid = docid;
     this.socketio_url = AscCommon.getBaseUrlPathname() + '../../../../doc/' + docid + '/c';
   };
@@ -1719,7 +1724,7 @@
       'supportAuthChangesAck': true
     };
   };
-  // Авторизация (ее нужно делать после выставления состояния редактора view-mode)
+  // Authorization (should be done after setting editor state to view-mode)
   DocsCoApi.prototype.auth = function(isViewer, opt_openCmd, opt_isIdle) {
     this._send(this.getAuthCommand(opt_openCmd, opt_isIdle));
   };
@@ -1893,9 +1898,9 @@
 			case 'disconnectReason':
 				this._onDisconnectReason(dataObject);
 				break;
-			case 'waitAuth'      : /*Ждем, когда придет auth, документ залочен*/
+			case 'waitAuth'      : /*Waiting for auth to arrive, document is locked*/
 				break;
-			case 'error'      : /*Старая версия sdk*/
+			case 'error'      : /*Old SDK version*/
 				this._onDrop(dataObject);
 				break;
 			case 'documentOpen'    :
@@ -1932,9 +1937,9 @@
 	};
 	DocsCoApi.prototype._onServerClose = function (explicit) {
 		if (ConnectionState.SaveChanges === this._state) {
-			// Мы сохраняли изменения и разорвалось соединение
+			// Connection lost during save
 			this._isReSaveAfterAuth = true;
-			// Очищаем предыдущий таймер
+			// Clear the previous timer
 			if (null !== this.saveCallbackErrorTimeOutId) {
 				clearTimeout(this.saveCallbackErrorTimeOutId);
 				this.saveCallbackErrorTimeOutId = null;

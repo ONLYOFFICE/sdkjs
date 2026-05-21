@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -3858,27 +3861,27 @@
 		oLogicDocument.LoadDocumentState(oSelectionState);
 	};
 
-    function CompareBinary(oApi, sBinary2, oOptions, bForceApplyChanges)
+    function CompareBinary(sBinary2, oOptions, bForceApplyChanges)
     {
-        const oDoc1 = oApi.WordControl.m_oLogicDocument;
+        const oDoc1 = Asc.editor.WordControl.m_oLogicDocument;
         if(!window['NATIVE_EDITOR_ENJINE'])
         {
             const oCollaborativeEditing = oDoc1.CollaborativeEditing;
             if(oCollaborativeEditing && !oCollaborativeEditing.Is_SingleUser())
             {
-                oApi.sendEvent("asc_onError", Asc.c_oAscError.ID.CannotCompareInCoEditing, c_oAscError.Level.NoCritical);
+                Asc.editor.sendEvent("asc_onError", Asc.c_oAscError.ID.CannotCompareInCoEditing, c_oAscError.Level.NoCritical);
                 return;
             }
         }
-        oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+        Asc.editor.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
 				const oldTrackRevisions = oDoc1.GetLocalTrackRevisions();
 	    oDoc1.SetTrackRevisions(false);
 	    let bHaveRevisons2 = false;
 	    const oDoc2 = AscFormat.ExecuteNoHistory(function(){
             const openParams = {disableRevisions: true, noSendComments: true, noGenerateSmartArts: true};
-            const oTempDocument = new CDocument(oApi.WordControl.m_oDrawingDocument, false);
+            const oTempDocument = new CDocument(Asc.editor.WordControl.m_oDrawingDocument, false);
             const oBinaryFileReader = new AscCommonWord.BinaryFileReader(oTempDocument, openParams);
-            AscCommon.pptx_content_loader.Start_UseFullUrl(oApi.insertDocumentUrlsData);
+            AscCommon.pptx_content_loader.Start_UseFullUrl(Asc.editor.insertDocumentUrlsData);
             if (!oBinaryFileReader.Read(sBinary2))
             {
                 return null;
@@ -3909,10 +3912,10 @@
                 if(oDoc1.TrackRevisionsManager.Have_Changes() || bHaveRevisons2)
                 {
 
-                    oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
-                    oApi.sendEvent("asc_onAcceptChangesBeforeCompare", function (bAccept) {
+                    Asc.editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+                    Asc.editor.sendEvent("asc_onAcceptChangesBeforeCompare", function (bAccept) {
                         if(bAccept){
-                            oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+                            Asc.editor.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
                             fCallback();
                         }
                     })
@@ -3930,15 +3933,21 @@
     }
 
 
-    function CompareDocuments(oApi, oTmpDocument)
+    // TODO: Remove backward compatibility with old signature CompareDocuments(oApi, oTmpDocument) after a few versions
+    function CompareDocuments(oTmpDocument)
     {
-        oApi.insertDocumentUrlsData = {
+        if (oTmpDocument && typeof oTmpDocument["GetBinary"] !== "function")
+        {
+            oTmpDocument = arguments[1];
+        }
+
+        Asc.editor.insertDocumentUrlsData = {
             imageMap: oTmpDocument["GetImageMap"](), documents: [], convertCallback: function (_api, url) {
             }, endCallback: function (_api) {
             }
         };
-        CompareBinary(oApi, oTmpDocument["GetBinary"](), null, true);
-        oApi.insertDocumentUrlsData = null;
+        CompareBinary(oTmpDocument["GetBinary"](), null, true);
+        Asc.editor.insertDocumentUrlsData = null;
     }
 
     function CMoveMarkComparisonManager() {

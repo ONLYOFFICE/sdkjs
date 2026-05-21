@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 
@@ -1150,8 +1153,8 @@ function (window, undefined) {
 
 			unitConverterArr = {};
 			var generateWeightAndMass = function () {
-				//Вес и масса
-				unitConverterArr["g"] = {};//грамм
+				//Weight and mass
+				unitConverterArr["g"] = {};//Gram
 
 				unitConverterArr["g"]["sg"] = 0.0000685220500053478;
 				unitConverterArr["g"]["lbm"] = 0.0022046226218487763;
@@ -1170,7 +1173,7 @@ function (window, undefined) {
 				unitConverterArr["g"]["brton"] = 0.0000009842065;
 
 
-				unitConverterArr["sg"] = {};//Слэг
+				unitConverterArr["sg"] = {};//Slug
 
 				unitConverterArr["sg"]["lbm"] = 32.1739194101648;
 				unitConverterArr["sg"]["u"] = 8.78861184032002E+027;
@@ -1188,7 +1191,7 @@ function (window, undefined) {
 				unitConverterArr["sg"]["brton"] = 0.0143633545686854;
 
 
-				unitConverterArr["lbm"] = {};//Фунт массы (эвердьюпойс)
+				unitConverterArr["lbm"] = {};//Pound mass (avoirdupois)
 
 				unitConverterArr["lbm"]["u"] = 2.73159503145377E+026;
 				unitConverterArr["lbm"]["ozm"] = 16.0000023429409;
@@ -1205,7 +1208,7 @@ function (window, undefined) {
 				unitConverterArr["lbm"]["brton"] = 0.000446428499604793;
 
 
-				unitConverterArr["u"] = {};//атомная единица массы
+				unitConverterArr["u"] = {};//Atomic mass unit
 
 				unitConverterArr["u"]["ozm"] = 5.85738448002141E-026;
 				unitConverterArr["u"]["grain"] = 2.56260526786422E-023;
@@ -1221,7 +1224,7 @@ function (window, undefined) {
 				unitConverterArr["u"]["brton"] = 1.63431436382135E-030;
 
 
-				unitConverterArr["ozm"] = {};//Унция
+				unitConverterArr["ozm"] = {};//Ounce
 
 				unitConverterArr["ozm"]["grain"] = 437.499924514917;
 				unitConverterArr["ozm"]["cwt"] = 0.000624999825459436;
@@ -1236,7 +1239,7 @@ function (window, undefined) {
 				unitConverterArr["ozm"]["brton"] = 0.0000279017771395361;
 
 
-				unitConverterArr["grain"] = {};//Гран
+				unitConverterArr["grain"] = {};//Grain
 
 				unitConverterArr["grain"]["cwt"] = 0.00000142857127610345;
 				unitConverterArr["grain"]["shweight"] = 0.00000142857152114129;
@@ -1250,7 +1253,7 @@ function (window, undefined) {
 				unitConverterArr["grain"]["brton"] = 0.0000000637755016083088;
 
 
-				unitConverterArr["cwt"] = {};//Американский (короткий) центнер
+				unitConverterArr["cwt"] = {};//U.S. (short) hundredweight
 
 				unitConverterArr["cwt"]["shweight"] = 1.00000017152651;
 				unitConverterArr["cwt"]["uk_cwt"] = 0.892857142857143;
@@ -1263,7 +1266,7 @@ function (window, undefined) {
 				unitConverterArr["cwt"]["brton"] = 0.0446428558904405;
 
 
-				unitConverterArr["shweight"] = {};//Американский (короткий) центнер
+				unitConverterArr["shweight"] = {};//U.S. (short) hundredweight
 
 				unitConverterArr["shweight"]["uk_cwt"] = 0.892856989708499;
 				unitConverterArr["shweight"]["lcwt"] = 0.892856989708499;
@@ -1275,7 +1278,7 @@ function (window, undefined) {
 				unitConverterArr["shweight"]["brton"] = 0.0446428482330085;
 
 
-				unitConverterArr["uk_cwt"] = {};//Английский (длинный) центнер
+				unitConverterArr["uk_cwt"] = {};//Imperial (long) hundredweight
 
 				unitConverterArr["uk_cwt"]["lcwt"] = 1;
 				unitConverterArr["uk_cwt"]["hweight"] = 0.999999971945867;
@@ -1286,7 +1289,7 @@ function (window, undefined) {
 				unitConverterArr["uk_cwt"]["brton"] = 0.0499999985972934;
 
 
-				unitConverterArr["lcwt"] = {};//Английский (длинный) центнер
+				unitConverterArr["lcwt"] = {};//Imperial (long) hundredweight
 
 				unitConverterArr["lcwt"]["hweight"] = 0.999999971945867;
 				unitConverterArr["lcwt"]["stone"] = 7.99999774347312;
@@ -1296,7 +1299,7 @@ function (window, undefined) {
 				unitConverterArr["lcwt"]["brton"] = 0.0499999985972934;
 
 
-				unitConverterArr["lcwt"] = {};//Английский (длинный) центнер
+				unitConverterArr["lcwt"] = {};//Imperial (long) hundredweight
 
 				unitConverterArr["lcwt"]["hweight"] = 0.999999971945867;
 				unitConverterArr["lcwt"]["stone"] = 7.99999774347312;
@@ -1306,7 +1309,7 @@ function (window, undefined) {
 				unitConverterArr["lcwt"]["brton"] = 0.0499999985972934;
 
 
-				unitConverterArr["hweight"] = {};//Английский (длинный) центнер
+				unitConverterArr["hweight"] = {};//Imperial (long) hundredweight
 
 				unitConverterArr["hweight"]["stone"] = 7.99999796790613;
 				unitConverterArr["hweight"]["ton"] = 0.0559999857753429;
@@ -1315,7 +1318,7 @@ function (window, undefined) {
 				unitConverterArr["hweight"]["brton"] = 0.05;
 
 
-				unitConverterArr["stone"] = {};//Стоун
+				unitConverterArr["stone"] = {};//Stone
 
 				unitConverterArr["stone"]["ton"] = 0.007;
 				unitConverterArr["stone"]["uk_ton"] = 0.00625000176291212;
@@ -1323,20 +1326,20 @@ function (window, undefined) {
 				unitConverterArr["stone"]["brton"] = 0.00625000158757374;
 
 
-				unitConverterArr["ton"] = {};//Тонна
+				unitConverterArr["ton"] = {};//Ton
 
 				unitConverterArr["ton"]["uk_ton"] = 0.892857394701732;
 				unitConverterArr["ton"]["LTON"] = 0.892857394701732;
 				unitConverterArr["ton"]["brton"] = 0.892857369653392;
 
 
-				unitConverterArr["uk_ton"] = {};//Стандартная тонна
+				unitConverterArr["uk_ton"] = {};//Imperial ton
 
 				unitConverterArr["uk_ton"]["LTON"] = 1;
 				unitConverterArr["uk_ton"]["brton"] = 0.999999971945867;
 
 
-				unitConverterArr["LTON"] = {};//Стандартная тонна
+				unitConverterArr["LTON"] = {};//Imperial ton
 
 				unitConverterArr["LTON"]["brton"] = 0.999999971945867;
 			};
@@ -1487,7 +1490,7 @@ function (window, undefined) {
 
 			var generateTime = function () {
 
-				unitConverterArr["yr"] = {};//Год
+				unitConverterArr["yr"] = {};//Year
 
 				unitConverterArr["yr"]["day"] = 365.25;
 				unitConverterArr["yr"]["d"] = 365.25;
@@ -1498,7 +1501,7 @@ function (window, undefined) {
 				unitConverterArr["yr"]["s"] = 31557600;
 
 
-				unitConverterArr["day"] = {};//День
+				unitConverterArr["day"] = {};//Day
 
 				unitConverterArr["day"]["d"] = 1;
 				unitConverterArr["day"]["hr"] = 24;
@@ -1508,7 +1511,7 @@ function (window, undefined) {
 				unitConverterArr["day"]["s"] = 86400;
 
 
-				unitConverterArr["d"] = {};//День
+				unitConverterArr["d"] = {};//Day
 
 				unitConverterArr["d"]["hr"] = 24;
 				unitConverterArr["d"]["mn"] = 1440;
@@ -1517,7 +1520,7 @@ function (window, undefined) {
 				unitConverterArr["d"]["s"] = 86400;
 
 
-				unitConverterArr["hr"] = {};//Час
+				unitConverterArr["hr"] = {};//Hour
 
 				unitConverterArr["hr"]["mn"] = 60;
 				unitConverterArr["hr"]["min"] = 60;
@@ -1525,20 +1528,20 @@ function (window, undefined) {
 				unitConverterArr["hr"]["s"] = 3600;
 
 
-				unitConverterArr["mn"] = {};//Минуты
+				unitConverterArr["mn"] = {};//Minutes
 
 				unitConverterArr["mn"]["min"] = 1;
 				unitConverterArr["mn"]["sec"] = 60;
 				unitConverterArr["mn"]["s"] = 60;
 
 
-				unitConverterArr["min"] = {};//Минуты
+				unitConverterArr["min"] = {};//Minutes
 
 				unitConverterArr["min"]["sec"] = 60;
 				unitConverterArr["min"]["s"] = 60;
 
 
-				unitConverterArr["sec"] = {};//Секунды
+				unitConverterArr["sec"] = {};//Seconds
 
 				unitConverterArr["sec"]["s"] = 1;
 			};
@@ -1546,7 +1549,7 @@ function (window, undefined) {
 			var generatePressure = function () {
 
 				//p parameter do not support by LO(p === Pa in MS DOC)
-				unitConverterArr["Pa"] = {};//Паскаль
+				unitConverterArr["Pa"] = {};//Pascal
 
 				//unitConverterArr["Pa"]["p"] = ;
 				unitConverterArr["Pa"]["atm"] = 0.00000986923299998193;
@@ -1555,7 +1558,7 @@ function (window, undefined) {
 				unitConverterArr["Pa"]["psi"] = 0.0001450377;
 				unitConverterArr["Pa"]["Torr"] = 0.007500638;
 
-				unitConverterArr["atm"] = {};//Атмосфера
+				unitConverterArr["atm"] = {};//Atmosphere
 
 				unitConverterArr["atm"]["at"] = 1;
 				unitConverterArr["atm"]["mmHg"] = 760;
@@ -1563,20 +1566,20 @@ function (window, undefined) {
 				unitConverterArr["atm"]["Torr"] = 760.00211972032;
 
 
-				unitConverterArr["at"] = {};//Атмосфера
+				unitConverterArr["at"] = {};//Atmosphere
 
 				unitConverterArr["at"]["mmHg"] = 760;
 				unitConverterArr["at"]["psi"] = 14.6959444569062;
 				unitConverterArr["at"]["Torr"] = 760.00211972032;
 
 
-				unitConverterArr["mmHg"] = {};//Миллиметр ртутного столба
+				unitConverterArr["mmHg"] = {};//Millimeter of mercury
 
 				unitConverterArr["mmHg"]["psi"] = 0.019336769022245;
 				unitConverterArr["mmHg"]["Torr"] = 1.00000278910568;
 
 
-				unitConverterArr["psi"] = {};//Фунт на квадратный дюйм
+				unitConverterArr["psi"] = {};//Pound per square inch
 
 				unitConverterArr["psi"]["Torr"] = 51.7150920071126;
 			};
@@ -1772,9 +1775,9 @@ function (window, undefined) {
 
 				unitConverterArr["T"]["ga"] = 10000;
 
-				//***TODO пересмотреть коэфиициэнты у температуры!!!!!***
+				//***TODO review the temperature coefficients!!!!!***
 				//Temperature
-				//type 0 - умножение, 1 - сложение
+				//type 0 - multiplication, 1 - addition
 				unitConverterArr["C"] = {};//Degree Celsius
 
 				unitConverterArr["C"]["cel"] = 1;
@@ -4497,6 +4500,7 @@ function (window, undefined) {
 	cBESSELI.prototype.argumentsMax = 2;
 	cBESSELI.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cBESSELI.prototype.argumentsType = [argType.any, argType.any];
+	cBESSELI.prototype.enabledToSingle = {"0": true, "1": true};
 	/**
 	 * @param {number} X: The value at which to evaluate the function.
 	 * @param {number} N: The order of the Bessel function. If n is not an integer, it is truncated.
@@ -4534,6 +4538,7 @@ function (window, undefined) {
 	cBESSELJ.prototype.argumentsMax = 2;
 	cBESSELJ.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cBESSELJ.prototype.argumentsType = [argType.any, argType.any];
+	cBESSELJ.prototype.enabledToSingle = {"0": true, "1": true};
 	/**
 	 * @param {number} X: The value at which to evaluate the function.
 	 * @param {number} N: The order of the Bessel function. If n is not an integer, it is truncated.
@@ -4574,6 +4579,7 @@ function (window, undefined) {
 	cBESSELK.prototype.argumentsMax = 2;
 	cBESSELK.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cBESSELK.prototype.argumentsType = [argType.any, argType.any];
+	cBESSELK.prototype.enabledToSingle = {"0": true, "1": true};
 	/**
 	 * @param {number} X: The value at which to evaluate the function.
 	 * @param {number} N: The order of the function. If n is not an integer, it is truncated.
@@ -4612,6 +4618,7 @@ function (window, undefined) {
 	cBESSELY.prototype.argumentsMax = 2;
 	cBESSELY.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cBESSELY.prototype.argumentsType = [argType.any, argType.any];
+	cBESSELY.prototype.enabledToSingle = {"0": true, "1": true};
 	/**
 	 * @param {number} X: The value at which to evaluate the function.
 	 * @param {number} N: The order of the function. If n is not an integer, it is truncated.
@@ -4650,6 +4657,7 @@ function (window, undefined) {
 	cBIN2DEC.prototype.argumentsMax = 1;
 	cBIN2DEC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cBIN2DEC.prototype.argumentsType = [argType.any];
+	cBIN2DEC.prototype.enabledToSingle = {"0": true};
 	cBIN2DEC.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 
@@ -4702,6 +4710,7 @@ function (window, undefined) {
 	cBIN2HEX.prototype.argumentsMax = 2;
 	cBIN2HEX.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cBIN2HEX.prototype.argumentsType = [argType.any, argType.any];
+	cBIN2HEX.prototype.enabledToSingle = {"0": true, "1": true};
 	cBIN2HEX.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cUndefined();
@@ -4770,6 +4779,7 @@ function (window, undefined) {
 	cBIN2OCT.prototype.argumentsMax = 2;
 	cBIN2OCT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cBIN2OCT.prototype.argumentsType = [argType.any, argType.any];
+	cBIN2OCT.prototype.enabledToSingle = {"0": true, "1": true};
 	cBIN2OCT.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cUndefined();
@@ -5064,6 +5074,7 @@ function (window, undefined) {
 	cCOMPLEX.prototype.argumentsMax = 3;
 	cCOMPLEX.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCOMPLEX.prototype.argumentsType = [argType.any, argType.any, argType.any];
+	cCOMPLEX.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cCOMPLEX.prototype.Calculate = function (arg) {
 
 		var real = arg[0], img = arg[1],
@@ -5129,6 +5140,7 @@ function (window, undefined) {
 	cCONVERT.prototype.argumentsMax = 3;
 	cCONVERT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCONVERT.prototype.argumentsType = [argType.any, argType.any, argType.any];
+	cCONVERT.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cCONVERT.prototype.Calculate = function (arg) {
 		let oArguments = this._prepareArguments(arg, arguments[1], true);
 		let argClone = oArguments.args;
@@ -5256,6 +5268,7 @@ function (window, undefined) {
 	cDEC2BIN.prototype.argumentsMax = 2;
 	cDEC2BIN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDEC2BIN.prototype.argumentsType = [argType.any, argType.any];
+	cDEC2BIN.prototype.enabledToSingle = {"0": true, "1": true};
 	cDEC2BIN.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cUndefined();
 
@@ -5319,6 +5332,7 @@ function (window, undefined) {
 	cDEC2HEX.prototype.argumentsMax = 2;
 	cDEC2HEX.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDEC2HEX.prototype.argumentsType = [argType.any, argType.any];
+	cDEC2HEX.prototype.enabledToSingle = {"0": true, "1": true};
 	cDEC2HEX.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cUndefined();
 
@@ -5381,6 +5395,7 @@ function (window, undefined) {
 	cDEC2OCT.prototype.argumentsMax = 2;
 	cDEC2OCT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDEC2OCT.prototype.argumentsType = [argType.any, argType.any];
+	cDEC2OCT.prototype.enabledToSingle = {"0": true, "1": true};
 	cDEC2OCT.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cUndefined();
 
@@ -5443,6 +5458,7 @@ function (window, undefined) {
 	cDELTA.prototype.argumentsMax = 2;
 	cDELTA.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDELTA.prototype.argumentsType = [argType.any, argType.any];
+	cDELTA.prototype.enabledToSingle = {"0": true, "1": true};
 	cDELTA.prototype.Calculate = function (arg) {
 
 		var number1 = arg[0], number2 = !arg[1] ? new cNumber(0) : arg[1];
@@ -5490,6 +5506,7 @@ function (window, undefined) {
 	cERF.prototype.argumentsMax = 2;
 	cERF.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cERF.prototype.argumentsType = [argType.any, argType.any];
+	cERF.prototype.enabledToSingle = {"0": true, "1": true};
 	/**
 	 * @param {number} lower_limit: The lower bound for integrating ERF.
 	 * @param {number} upper_limit(optional): The upper bound for integrating ERF. If omitted, ERF integrates between zero and lower_limit.
@@ -5587,6 +5604,7 @@ function (window, undefined) {
 	cERF_PRECISE.prototype.isXLFN = true;
 	cERF_PRECISE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cERF_PRECISE.prototype.argumentsType = [argType.any];
+	cERF_PRECISE.prototype.enabledToSingle = {"0": true};
 	/**
 	 * @param {number} X: The lower bound for integrating ERF.PRECISE.
 	 * @return {number} Returns the error function.
@@ -5630,6 +5648,7 @@ function (window, undefined) {
 	cERFC.prototype.argumentsMax = 1;
 	cERFC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cERFC.prototype.argumentsType = [argType.any];
+	cERFC.prototype.enabledToSingle = {"0": true};
 	/**
 	 * @param {number} X: The lower bound for integrating ERF.
 	 * @return {number} Returns the complementary ERF function integrated between x and infinity.
@@ -5672,6 +5691,7 @@ function (window, undefined) {
 	cERFC_PRECISE.prototype.name = 'ERFC.PRECISE';
 	cERFC_PRECISE.prototype.isXLFN = true;
 	cERFC_PRECISE.prototype.argumentsType = [argType.any];
+	cERFC_PRECISE.prototype.enabledToSingle = {"0": true};
 
 	/**
 	 * @constructor
@@ -5688,6 +5708,7 @@ function (window, undefined) {
 	cGESTEP.prototype.argumentsMax = 2;
 	cGESTEP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cGESTEP.prototype.argumentsType = [argType.any, argType.any];
+	cGESTEP.prototype.enabledToSingle = {"0": true, "1": true};
 	cGESTEP.prototype.Calculate = function (arg) {
 
 		let number1 = arg[0], step = !arg[1] ? new cNumber(0) : arg[1];
@@ -5695,12 +5716,28 @@ function (window, undefined) {
 			number1 = number1.cross(arguments[1]);
 		} else if (number1.type === cElementType.array) {
 			number1 = number1.getElement(0);
+		} else if (number1.type === cElementType.cell || number1.type === cElementType.cell3D) {
+			number1 = number1.getValue();
 		}
 
 		if (step.type === cElementType.cellsRange || step.type === cElementType.cellsRange3D) {
 			step = step.cross(arguments[1]);
 		} else if (step.type === cElementType.array) {
 			step = step.getElement(0);
+		} else if (step.type === cElementType.cell || step.type === cElementType.cell3D) {
+			step = step.getValue();
+		}
+
+		if (number1.type === cElementType.error) {
+			return number1;
+		} else if (number1.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		if (step.type === cElementType.error) {
+			return step;
+		} else if (step.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		number1 = number1.tocNumber();
@@ -5734,6 +5771,7 @@ function (window, undefined) {
 	cHEX2BIN.prototype.argumentsMax = 2;
 	cHEX2BIN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cHEX2BIN.prototype.argumentsType = [argType.any, argType.any];
+	cHEX2BIN.prototype.enabledToSingle = {"0": true, "1": true};
 	cHEX2BIN.prototype.Calculate = function (arg) {
 
 		const MAX_POSITIVE_NUMBER = Math.pow(2,9); // 9 bit number, and 1 bit for sign = 10 bit
@@ -5824,6 +5862,7 @@ function (window, undefined) {
 	cHEX2DEC.prototype.argumentsMax = 1;
 	cHEX2DEC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cHEX2DEC.prototype.argumentsType = [argType.any];
+	cHEX2DEC.prototype.enabledToSingle = {"0": true};
 	cHEX2DEC.prototype.Calculate = function (arg) {
 
 		const MAX_40BIT_NUMBER = Math.pow(2,39); // 2^(40 - 1) -> 1 bit is for sign
@@ -5884,6 +5923,7 @@ function (window, undefined) {
 	cHEX2OCT.prototype.argumentsMax = 2;
 	cHEX2OCT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cHEX2OCT.prototype.argumentsType = [argType.any, argType.any];
+	cHEX2OCT.prototype.enabledToSingle = {"0": true, "1": true};
 	cHEX2OCT.prototype.Calculate = function (arg) {
 
 		const MAX_POSITIVE_NUMBER = 536870911;	// 1FFFFFFF
@@ -5973,6 +6013,7 @@ function (window, undefined) {
 	cIMABS.prototype.argumentsMax = 1;
 	cIMABS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMABS.prototype.argumentsType = [argType.any];
+	cIMABS.prototype.enabledToSingle = {"0": true};
 	cIMABS.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0];
@@ -6016,6 +6057,7 @@ function (window, undefined) {
 	cIMAGINARY.prototype.argumentsMax = 1;
 	cIMAGINARY.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMAGINARY.prototype.argumentsType = [argType.any];
+	cIMAGINARY.prototype.enabledToSingle = {"0": true};
 	cIMAGINARY.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0];
@@ -6059,6 +6101,7 @@ function (window, undefined) {
 	cIMARGUMENT.prototype.argumentsMax = 1;
 	cIMARGUMENT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMARGUMENT.prototype.argumentsType = [argType.any];
+	cIMARGUMENT.prototype.enabledToSingle = {"0": true};
 	cIMARGUMENT.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0];
@@ -6102,6 +6145,7 @@ function (window, undefined) {
 	cIMCONJUGATE.prototype.argumentsMax = 1;
 	cIMCONJUGATE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMCONJUGATE.prototype.argumentsType = [argType.any];
+	cIMCONJUGATE.prototype.enabledToSingle = {"0": true};
 	cIMCONJUGATE.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0];
@@ -6145,6 +6189,7 @@ function (window, undefined) {
 	cIMCOS.prototype.argumentsMax = 1;
 	cIMCOS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMCOS.prototype.argumentsType = [argType.any];
+	cIMCOS.prototype.enabledToSingle = {"0": true};
 	cIMCOS.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6176,6 +6221,7 @@ function (window, undefined) {
 	cIMCOSH.prototype.isXLFN = true;
 	cIMCOSH.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMCOSH.prototype.argumentsType = [argType.any];
+	cIMCOSH.prototype.enabledToSingle = {"0": true};
 	cIMCOSH.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6206,6 +6252,7 @@ function (window, undefined) {
 	cIMCOT.prototype.isXLFN = true;
 	cIMCOT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMCOT.prototype.argumentsType = [argType.any];
+	cIMCOT.prototype.enabledToSingle = {"0": true};
 	cIMCOT.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6236,6 +6283,7 @@ function (window, undefined) {
 	cIMCSC.prototype.isXLFN = true;
 	cIMCSC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMCSC.prototype.argumentsType = [argType.any];
+	cIMCSC.prototype.enabledToSingle = {"0": true};
 	cIMCSC.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6266,6 +6314,7 @@ function (window, undefined) {
 	cIMCSCH.prototype.isXLFN = true;
 	cIMCSCH.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMCSCH.prototype.argumentsType = [argType.any];
+	cIMCSCH.prototype.enabledToSingle = {"0": true};
 	cIMCSCH.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6295,6 +6344,7 @@ function (window, undefined) {
 	cIMDIV.prototype.argumentsMax = 2;
 	cIMDIV.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMDIV.prototype.argumentsType = [argType.any, argType.any];
+	cIMDIV.prototype.enabledToSingle = {"0": true, "1": true};
 	cIMDIV.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0], arg1 = arg[1];
@@ -6351,6 +6401,7 @@ function (window, undefined) {
 	cIMEXP.prototype.argumentsMax = 1;
 	cIMEXP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMEXP.prototype.argumentsType = [argType.any];
+	cIMEXP.prototype.enabledToSingle = {"0": true};
 	cIMEXP.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6380,6 +6431,7 @@ function (window, undefined) {
 	cIMLN.prototype.argumentsMax = 1;
 	cIMLN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMLN.prototype.argumentsType = [argType.any];
+	cIMLN.prototype.enabledToSingle = {"0": true};
 	cIMLN.prototype.Calculate = function (arg) {
 		let arg0 = arg[0];
 		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
@@ -6416,6 +6468,7 @@ function (window, undefined) {
 	cIMLOG10.prototype.argumentsMax = 1;
 	cIMLOG10.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMLOG10.prototype.argumentsType = [argType.any];
+	cIMLOG10.prototype.enabledToSingle = {"0": true};
 	cIMLOG10.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6454,6 +6507,7 @@ function (window, undefined) {
 	cIMLOG2.prototype.argumentsMax = 1;
 	cIMLOG2.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMLOG2.prototype.argumentsType = [argType.any];
+	cIMLOG2.prototype.enabledToSingle = {"0": true};
 	cIMLOG2.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6490,6 +6544,7 @@ function (window, undefined) {
 	cIMPOWER.prototype.argumentsMax = 2;
 	cIMPOWER.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMPOWER.prototype.argumentsType = [argType.any, argType.any];
+	cIMPOWER.prototype.enabledToSingle = {"0": true, "1": true};
 	cIMPOWER.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0], arg1 = arg[1];
@@ -6549,6 +6604,7 @@ function (window, undefined) {
 	cIMPRODUCT.prototype.argumentsMin = 1;
 	cIMPRODUCT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cIMPRODUCT.prototype.argumentsType = [[argType.any]];
+	cIMPRODUCT.prototype.enabledToSingle = {"*": true};
 	cIMPRODUCT.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], t = this;
 
@@ -6651,6 +6707,7 @@ function (window, undefined) {
 	cIMREAL.prototype.argumentsMax = 1;
 	cIMREAL.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMREAL.prototype.argumentsType = [argType.any];
+	cIMREAL.prototype.enabledToSingle = {"0": true};
 	cIMREAL.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6706,6 +6763,7 @@ function (window, undefined) {
 	cIMSEC.prototype.isXLFN = true;
 	cIMSEC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMSEC.prototype.argumentsType = [argType.any];
+	cIMSEC.prototype.enabledToSingle = {"0": true};
 	cIMSEC.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6736,6 +6794,7 @@ function (window, undefined) {
 	cIMSECH.prototype.isXLFN = true;
 	cIMSECH.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMSECH.prototype.argumentsType = [argType.any];
+	cIMSECH.prototype.enabledToSingle = {"0": true};
 	cIMSECH.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6766,6 +6825,7 @@ function (window, undefined) {
 	cIMSIN.prototype.argumentsMax = 1;
 	cIMSIN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMSIN.prototype.argumentsType = [argType.any];
+	cIMSIN.prototype.enabledToSingle = {"0": true};
 	cIMSIN.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6796,6 +6856,7 @@ function (window, undefined) {
 	cIMSINH.prototype.isXLFN = true;
 	cIMSINH.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMSINH.prototype.argumentsType = [argType.any];
+	cIMSINH.prototype.enabledToSingle = {"0": true};
 	cIMSINH.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6825,6 +6886,7 @@ function (window, undefined) {
 	cIMSQRT.prototype.argumentsMax = 1;
 	cIMSQRT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMSQRT.prototype.argumentsType = [argType.any];
+	cIMSQRT.prototype.enabledToSingle = {"0": true};
 	cIMSQRT.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -6854,6 +6916,7 @@ function (window, undefined) {
 	cIMSUB.prototype.argumentsMax = 2;
 	cIMSUB.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMSUB.prototype.argumentsType = [argType.any, argType.any];
+	cIMSUB.prototype.enabledToSingle = {"0": true, "1": true};
 	cIMSUB.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0], arg1 = arg[1];
@@ -6909,6 +6972,7 @@ function (window, undefined) {
 	cIMSUM.prototype.argumentsMin = 1;
 	cIMSUM.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cIMSUM.prototype.argumentsType = [[argType.any]];
+	cIMSUM.prototype.enabledToSingle = {"*": true};
 	cIMSUM.prototype.Calculate = function (arg) {
 		
 		const t = this;
@@ -7023,6 +7087,7 @@ function (window, undefined) {
 	cIMTAN.prototype.isXLFN = true;
 	cIMTAN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cIMTAN.prototype.argumentsType = [argType.any];
+	cIMTAN.prototype.enabledToSingle = {"0": true};
 	cIMTAN.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -7052,6 +7117,7 @@ function (window, undefined) {
 	cOCT2BIN.prototype.argumentsMax = 2;
 	cOCT2BIN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cOCT2BIN.prototype.argumentsType = [argType.any, argType.any];
+	cOCT2BIN.prototype.enabledToSingle = {"0": true, "1": true};
 	cOCT2BIN.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cUndefined();
@@ -7127,6 +7193,7 @@ function (window, undefined) {
 	cOCT2DEC.prototype.argumentsMax = 1;
 	cOCT2DEC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cOCT2DEC.prototype.argumentsType = [argType.any];
+	cOCT2DEC.prototype.enabledToSingle = {"0": true};
 	cOCT2DEC.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0];
@@ -7178,6 +7245,7 @@ function (window, undefined) {
 	cOCT2HEX.prototype.argumentsMax = 2;
 	cOCT2HEX.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cOCT2HEX.prototype.argumentsType = [argType.any, argType.any];
+	cOCT2HEX.prototype.enabledToSingle = {"0": true, "1": true};
 	cOCT2HEX.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cUndefined();

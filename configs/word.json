@@ -15,6 +15,7 @@
 			"vendor/string.js",
 			"vendor/array.js",
 			"common/editorscommon.js",
+			"common/colorUtils.js",
 			"common/externalChartCollector.js",
 			"common/frameManager.js",
 			"common/BulletPreviewDrawer.js",
@@ -60,6 +61,7 @@
 
 			"common/nameMap.js",
 			"common/downloaderfiles.js",
+			"common/NumFormatData.js",
 			"common/NumFormat.js",
 			"common/SerializeChart.js",
 
@@ -157,10 +159,18 @@
 			"common/intervalTree.js",
 
 			"cell/model/FormulaObjects/parserFormula.js",
-		  "cell/view/HandlerList.js",
+			"cell/view/HandlerList.js",
 			"cell/model/SheetMemory.js",
+			"cell/model/CellStyleStorage/RangeAttrArray.js",
 			"cell/model/WorkbookElems.js",
+			"cell/model/CellStyleStorage/Core.js",
+			"cell/model/CellStyleStorage/Structural.js",
+			"cell/model/CellStyleStorage/ContentIterator.js",
+			"cell/model/CellStyleStorage/Serialization.js",
+			"cell/model/CellStyleStorage/LegacyMigration.js",
 			"cell/model/Workbook.js",
+			"cell/model/CellIterators.js",
+			"cell/model/CellStyleStorage/Compatibility.js",
 			"cell/model/Serialize.js",
 			"cell/model/CellInfo.js",
 			"cell/model/HeaderFooter.js",
@@ -397,6 +407,7 @@
 			"pdf/src/drawings/graphicFrame.js",
 			"pdf/src/drawings/groupShape.js",
 			"pdf/src/drawings/smartArt.js",
+			"pdf/src/drawings/metafile.js",
 			"pdf/src/annotations/base.js",
 			"pdf/src/annotations/text.js",
 			"pdf/src/annotations/ink.js",
@@ -457,10 +468,6 @@
 			"common/Native/native_graphics.js",
 
 			"word/Editor/document-visitor.js",
-			
-			"word/Editor/annotations/custom-text-annotator/custom-text-annotator.js",
-			"word/Editor/annotations/custom-text-annotator/range-marks.js",
-			"word/Editor/annotations/custom-text-annotator/text-annotator-manager.js",
 			
 			"word/apiBuilder.js",
 			"word/fromToJSON.js",

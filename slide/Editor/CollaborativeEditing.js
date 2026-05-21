@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -63,15 +66,15 @@ CCollaborativeEditing.prototype.GetPresentation = function()
 };
 CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalInfo, IsUpdateInterface, isAfterAskSave)
 {
-    // Пересчитываем позиции
+    // Recalculate positions
     this.Refresh_DCChanges();
     this.RefreshPosExtChanges();
-    // Генерируем свои изменения
+    // Generate our changes
     let StartPoint = ( null === AscCommon.History.SavedIndex ? 0 : AscCommon.History.SavedIndex + 1 );
     let LastPoint  = -1;
     if ( this.m_nUseType <= 0 )
     {
-        // (ненужные точки предварительно удаляем)
+        // (remove unnecessary points beforehand)
         AscCommon.History.Clear_Redo();
         LastPoint = AscCommon.History.Points.length - 1;
     }
@@ -79,7 +82,7 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
     {
         LastPoint = AscCommon.History.Index;
     }
-    // Просчитаем сколько изменений на сервер пересылать не надо
+    // Calculate how many changes do not need to be sent to the server
 	let SumIndex = 0;
 	let StartPoint2 = Math.min( StartPoint, LastPoint + 1 );
     for ( let PointIndex = 0; PointIndex < StartPoint2; PointIndex++ )
@@ -106,7 +109,7 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
     }
 
 
-    // Пока пользователь сидит один, мы не чистим его локи до тех пор пока не зайдет второй
+    // While the user is alone, we don't clear their locks until another user joins
 	let bCollaborative = this.getCollaborativeEditing();
 
 	let num_arr = [];
@@ -211,13 +214,13 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
 
     if ( -1 === this.m_nUseType )
     {
-        // Чистим Undo/Redo только во время совместного редактирования
+        // Clear Undo/Redo only during collaborative editing
         AscCommon.History.Clear();
         AscCommon.History.SavedIndex = null;
     }
     else if ( 0 === this.m_nUseType )
     {
-        // Чистим Undo/Redo только во время совместного редактирования
+        // Clear Undo/Redo only during collaborative editing
         AscCommon.History.Clear();
         AscCommon.History.SavedIndex = null;
 
@@ -225,7 +228,7 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
     }
     else
     {
-        // Обновляем точку последнего сохранения в истории
+        // Update the last save point in history
         AscCommon.History.Reset_SavedIndex(IsUserSave);
     }
 
@@ -318,13 +321,13 @@ CCollaborativeEditing.prototype.Release_Locks = function()
 
 CCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
 {
-    // Данная функция вызывается, когда загрузились внешние объекты (картинки и шрифты)
+    // This function is called when external objects (images and fonts) are loaded
 
-    // Снимаем лок
+    // Release the lock
     AscCommon.CollaborativeEditing.Set_GlobalLock(false);
     AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
 
-    // Запускаем полный пересчет документа
+    // Start full document recalculation
     let LogicDocument = this.GetPresentation();
 
 		const arrChanges = this.CoHistory.GetAllChanges();
@@ -345,7 +348,7 @@ CCollaborativeEditing.prototype.OnEnd_CheckLock = function(DontLockInFastMode)
     {
 		let oItem = this.m_aCheckLocks[Index];
 
-        if ( true === oItem ) // сравниваем по значению и типу обязательно
+        if ( true === oItem ) // must compare by value and type
             return true;
         else if ( false !== oItem )
             aIds.push( oItem );
@@ -357,17 +360,17 @@ CCollaborativeEditing.prototype.OnEnd_CheckLock = function(DontLockInFastMode)
 
     if ( aIds.length > 0 )
     {
-        // Отправляем запрос на сервер со списком Id
+        // Send request to server with list of Ids
 		Asc.editor.CoAuthoringApi.askLock( aIds, this.OnCallback_AskLock );
 
-        // Ставим глобальный лок, только во время совместного редактирования
+        // Set global lock only during collaborative editing
         if ( -1 === this.m_nUseType )
 		{
 			this.Set_GlobalLock(true);
 		}
         else
         {
-            // Пробегаемся по массиву и проставляем, что залочено нами
+            // Iterate through array and mark as locked by us
             Count = this.m_aCheckLocks.length;
             for ( let Index = 0; Index < Count; Index++ )
             {
@@ -395,7 +398,7 @@ CCollaborativeEditing.prototype.OnEnd_CheckLock = function(DontLockInFastMode)
                 for(let i = 0; i < items.length; ++i)
                 {
 					let item = items[i];
-                    if ( true !== item && false !== item ) // сравниваем по значению и типу обязательно
+                    if ( true !== item && false !== item ) // must compare by value and type
                     {
 						let Class = AscCommon.g_oTableId.Get_ById( item );
                         if ( null != Class )
@@ -421,12 +424,12 @@ CCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
         if (!Asc.editor.checkLongActionCallback(AscCommon.CollaborativeEditing.OnCallback_AskLock, result))
             return;
 
-        // Снимаем глобальный лок
+        // Release global lock
         AscCommon.CollaborativeEditing.Set_GlobalLock(false);
 
         if (result["lock"])
         {
-            // Пробегаемся по массиву и проставляем, что залочено нами
+            // Iterate through array and mark as locked by us
 
 			let Count = AscCommon.CollaborativeEditing.m_aCheckLocks.length;
             for ( let Index = 0; Index < Count; Index++ )
@@ -450,7 +453,7 @@ CCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
                         break;
                     }
                 }
-                if ( true !== oItem && false !== oItem ) // сравниваем по значению и типу обязательно
+                if ( true !== oItem && false !== oItem ) // must compare by value and type
                 {
 					let Class = AscCommon.g_oTableId.Get_ById( item );
                     if ( null != Class )
@@ -463,15 +466,15 @@ CCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
         }
         else if (result["error"])
         {
-            // Если у нас началось редактирование диаграммы, а вернулось, что ее редактировать нельзя,
-            // посылаем сообщение о закрытии редактора диаграмм.
+            // If chart editing started but we were told it cannot be edited,
+            // send message to close the chart editor.
             if (Asc.editor.frameManager.isLoadingChartEditor)
                 Asc.editor.sync_closeChartEditor();
 
             if (Asc.editor.frameManager.isLoadingOleEditor)
               Asc.editor.sync_closeOleEditor();
 
-            // Делаем откат на 1 шаг назад и удаляем из Undo/Redo эту последнюю точку
+            // Rollback one step and remove this last point from Undo/Redo
 			presentation.Document_Undo();
             AscCommon.History.Clear_Redo();
         }

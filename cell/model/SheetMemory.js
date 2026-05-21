@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -40,7 +43,6 @@
 	 * @param {number} maxIndex - Maximum index allowed
 	 */
 	function SheetMemory(structSize, maxIndex) {
-		//todo separate structure for data and style
 		this.dataBuffer = null; // ArrayBuffer to store the data
 		this.dataUint8 = null; // Uint8Array view on the buffer
 		this.dataFloat = null; // Float64Array view on the buffer
@@ -328,37 +330,6 @@
 		end = Math.min(end, this.indexB + 1);
 		if (start < end) {
 			this.dataUint8.fill(0, (start - this.indexA) * this.structSize, (end - this.indexA) * this.structSize);
-		}
-	};
-
-	/**
-	 * Clears a range of indices except for locked flag from the cell style
-	 * Uses a callback function to transform full style into minimal style with only locked property
-	 * @param {number} start - Start index
-	 * @param {number} end - End index (exclusive)
-	 * @param {function} getLockedOnlyXfIndex - Callback function that receives xfIndex and returns new xfIndex with only locked property
-	 */
-	SheetMemory.prototype.clearExceptLocked = function(start, end, getLockedOnlyXfIndex) {
-		start = Math.max(start, this.indexA);
-		end = Math.min(end, this.indexB + 1);
-		if (start < end) {
-			let g_nCellFlag_init = 1;
-			for (let i = start; i < end; i++) {
-				let mix = this.getInt32(i, 0);
-				let xfIndex = mix & 0xFFFFFF;
-				
-				let startOffset = (i - this.indexA) * this.structSize;
-				let endOffset = startOffset + this.structSize;
-				this.dataUint8.fill(0, startOffset, endOffset);
-				
-				// Transform full style to minimal style with only locked property
-				if (xfIndex > 0 && getLockedOnlyXfIndex) {
-					let newXfIndex = getLockedOnlyXfIndex(xfIndex);
-					if (newXfIndex != null) {
-						this.setInt32(i, 0, newXfIndex | (g_nCellFlag_init << 24));
-					}
-				}
-			}
 		}
 	};
 

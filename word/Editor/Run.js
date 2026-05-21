@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -4129,7 +4132,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                 {
                 	// TODO: Проверку Balanced перенести в Measure (и избавиться от WidthEn)
                 	if (PRS.IsBalanceSingleByteDoubleByteWidth(this, Pos))
-                		Item.BalanceSingleByteDoubleByteWidth();
+                		Item.BalanceSingleByteDoubleByteWidth(textPr);
 					else if (PRS.IsCondensedSpaces())
 						PRS.AddCondensedSpaceToRange(Item);
 					else
@@ -4421,6 +4424,10 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                         {
                             // Добавляем длину пробелов до автофигуры
                             X += SpaceLen + DrawingWidth;
+							
+							// MSWord treats the horizontal line as a text element element
+							if (Item.getHorizontalRule())
+								TextOnLine = true;
 
                             FirstItemOnLine = false;
                             EmptyLine = false;
@@ -5132,7 +5139,54 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 			}
 			case para_Drawing:
 			{
-				if (true === Item.Is_Inline() || true === Para.Parent.Is_DrawingShape())
+				if (Item.getHorizontalRule())
+				{
+					let metrics = textPr.GetTextMetrics(AscWord.fontslot_ASCII, this.Paragraph.GetTheme());
+					
+					let textDescent = metrics.Descent;
+					let textAscent2 = metrics.Ascent;
+					let textAscent  = metrics.Ascent + metrics.LineGap;
+					
+					let horRuleH = Item.getHeight() + 1; // take into account 1mm offset from top
+					if (horRuleH > textAscent && textAscent > AscWord.EPSILON)
+						textAscent *= horRuleH / textAscent;
+					
+					if (Asc.linerule_Exact === LineRule)
+					{
+						if (PRS.LineAscent < textAscent)
+							PRS.LineAscent = textAscent;
+						
+						if (PRS.LineDescent < textDescent)
+							PRS.LineDescent = textDescent;
+					}
+					else
+					{
+						let yOffset = this.getYOffset();
+						
+						if (yOffset >= 0)
+						{
+							PRS.LineAscent = Math.max(PRS.LineAscent, textAscent + yOffset);
+							textDescent    = Math.max(0, textDescent - yOffset);
+						}
+						else
+						{
+							PRS.LineDescent = Math.max(PRS.LineDescent, textDescent - yOffset);
+							textAscent2     = Math.max(0, textAscent2 + yOffset);
+						}
+						
+						textAscent = textAscent2 + metrics.LineGap;
+					}
+					
+					if (PRS.LineTextAscent < textAscent)
+						PRS.LineTextAscent = textAscent;
+					
+					if (PRS.LineTextAscent2 < textAscent2)
+						PRS.LineTextAscent2 = textAscent2;
+					
+					if (PRS.LineTextDescent < textDescent)
+						PRS.LineTextDescent = textDescent;
+				}
+				else if (true === Item.Is_Inline() || true === Para.Parent.Is_DrawingShape())
 				{
 					// Обновим метрики строки
 					if (Asc.linerule_Exact === LineRule)
@@ -6304,6 +6358,9 @@ ParaRun.prototype.RecalculateMinMaxContentWidth = function(MinMax)
                     bWord    = false;
                     nWordLen = 0;
                 }
+				
+				if (Item.getHorizontalRule())
+					break;
 
                 if ((true === Item.Is_Inline() || true === this.Paragraph.Parent.Is_DrawingShape() || Item.IsForm()) && Item.Width > nMinWidth)
                 {
@@ -6827,21 +6884,13 @@ ParaRun.prototype.Set_ParaContentPos = function(ContentPos, Depth)
 };
 /**
  * Функция для перевода позиции внутри параграфа в специальную позицию используемую в ApiRange
- * @param {AscWord.CParagraphContentPos} oContentPos - если null -> возвращает количество символов в элементе.
- * @param {number} nDepth
+ * @param {AscWord.CParagraphContentPos} contentPos - если null -> возвращает количество символов в элементе.
+ * @param {number} depth
  * @return {number}
  */
-ParaRun.prototype.ConvertParaContentPosToRangePos = function(oContentPos, nDepth)
+ParaRun.prototype.GetFlatPos = function(contentPos, depth)
 {
-	var nRangePos = 0;
-
-	var nCurPos = oContentPos ? Math.max(0, Math.min(this.Content.length, oContentPos.Get(nDepth))) : this.Content.length;
-	for (var nPos = 0; nPos < nCurPos; ++nPos)
-	{
-		nRangePos++;
-    }
-
-	return nRangePos;
+	return contentPos ? Math.max(0, Math.min(this.Content.length, contentPos.Get(depth))) : this.Content.length;
 };
 ParaRun.prototype.Get_PosByElement = function(Class, ContentPos, Depth, UseRange, Range, Line)
 {
@@ -8255,7 +8304,7 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 	{
 		let fontName = run.Pr.GetFontFamily();
 		let prefix = AscFonts.getEmbeddedFontPrefix();
-		if (!fontName || !fontName.startsWith(prefix))
+		if (!fontName || !fontName.startsWith(prefix) || run.GetFormPDF())
 			return;
 
 		if (!!run.Pr.Bold !== !!newTextPr.Bold || !!run.Pr.Italic !== !!newTextPr.Italic || (newTextPr.GetFontFamily() && fontName != newTextPr.GetFontFamily()))
@@ -8270,6 +8319,10 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 				}
 			}
 			
+			if (!Asc.editor.embeddedFontsMap || !Asc.editor.embeddedFontsMap[fontName]) {
+				return;
+			}
+
 			let subFontName = Asc.editor.embeddedFontsMap[fontName];
 			newTextPr.RFonts.SetAll(subFontName);
 			newTextPr.SetSpacing(0);

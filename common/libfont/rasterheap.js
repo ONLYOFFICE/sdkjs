@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -173,8 +176,8 @@
 			}
 		}
 
-		// линию не нашли. Начинаем искать из свободной памяти
-		// ищем 3/2 от нужного размера. и параллельно 1
+		// Line not found. Start searching from free memory
+		// Looking for 3/2 of the required size, and simultaneously for 1
 		var _need_height1 = (3 * _need_height) >> 1;
 		if (this.FindOnlyEqualHeight)
 			_need_height1 = _need_height;
@@ -186,7 +189,7 @@
 			var _line = this.LinesFree[i];
 			if (_line.Height >= _need_height1)
 			{
-				// нашли
+				// found
 				var _new_line = new CRasterHeapLine();
 				_new_line.CreatePlaces(_need_height1, _need_height1, this.Width);
 				_new_line.Y = _line.Y;
@@ -211,7 +214,7 @@
 			}
 		}
 
-		// 3/2 не нашли. если нашли для 1, то выделяем там
+		// 3/2 not found. If found for 1, then allocate there
 		if (-1 != _index_found_koef1)
 		{
 			var _line = this.LinesFree[_index_found_koef1];
@@ -235,7 +238,7 @@
 			return _ret;
 		}
 
-		// не нашли.
+		// not found.
 		return null;
 	};
 	CRasterHeapChuck.prototype.Free = function(obj)
@@ -243,7 +246,7 @@
 		var _refs = obj.Line.Free(obj.Index);
 		if (_refs == 0)
 		{
-			// нужно удалить линию и перебить всем оставшимся индексы
+			// need to delete the line and reassign indices to all remaining
 
 			var _line = obj.Line;
 			this.LinesBusy.splice(_line.Index, 1);
@@ -253,7 +256,7 @@
 			for (var i = _line.Index; i < _busy_len; i++)
 				_lines_busy[i].Index = i;
 
-			// теперь нужно поправить linesfree
+			// now need to fix linesfree
 			var y1 = _line.Y;
 			var y2 = _line.Y + _line.Height;
 			var _lines_free = this.LinesFree;
@@ -280,7 +283,7 @@
 				}
 			}
 
-			// нашли прилегаюую свободную память. теперь нужно их склеить, или создать новую
+			// found adjacent free memory. Now need to merge them, or create a new one
 			if (-1 != _ind_prev && -1 != _ind_next)
 			{
 				_lines_free[_ind_prev].Height += (_line.Height + _lines_free[_ind_next].Height);
@@ -319,7 +322,7 @@
 			this.Chunks[i].Clear();
 		}
 
-		// теперь наверное удалим и память лишнюю
+		// now let's probably delete the extra memory too
 		if (_len > 1)
 			this.Chunks.splice(1, _len - 1);
 	};

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -35,7 +38,7 @@
 (function (window)
 {
 	/**
-	 * Класс работающий с общей историей в совместном редактировании
+	 * Class for working with a common history in collaborative editing
 	 * @param {AscCommon.CCollaborativeEditingBase} coEditing
 	 * @constructor
 	 */
@@ -43,18 +46,18 @@
 	{
 		this.CoEditing = coEditing;
 
-		this.Changes   = []; // Список всех изменений
-		this.ChangesSplitByPoints = [] // Список изменений разделенных по точкам
-		this.OwnRanges = []; // Диапазоны собственных изменений
+		this.Changes   = []; // List of all changes
+		this.ChangesSplitByPoints = [] // List of changes split by points
+		this.OwnRanges = []; // Ranges of own changes
 
-		this.SyncIndex      = -1; // Позиция в массиве изменений, которые согласованы с сервером
-		this.curChangeIndex = -1; // Текущая позиция в массиве изменений разделенных по точкам
-		//this.StepTextPoint = undefined; //Позиция предыдущего состояния
+		this.SyncIndex      = -1; // Position in the array of changes that are synced with server
+		this.curChangeIndex = -1; // Current position in the array of changes split by points
+		//this.StepTextPoint = undefined; // Position of previous state
 		
 		this.textRecovery = null;
 	}
 	/**
-	 * Разделяем изменения ревизии для отображения истории ревизии
+	 * Split changes by points
 	 */
 	CCollaborativeHistory.prototype.SplitChangesByPoints = function ()
 	{
@@ -91,8 +94,8 @@
 		this.textRecovery = null;
 	};
 	/**
-	 * Перемещаемся по истории ревизии на заданную точку
-	 * @param {number} pointIndex - Позиция на которую необходимо переместится
+	 * Navigate to a specific point in revision history
+	 * @param {number} pointIndex - Position to navigate to
 	 * @constructor
 	 */
 	CCollaborativeHistory.prototype.NavigationRevisionHistoryByStep = function(pointIndex)
@@ -126,17 +129,17 @@
 	};
 	CCollaborativeHistory.prototype.AddOwnChanges = function(ownChanges, deleteIndex)
 	{
-		// TODO: При удалении изменений не удаляются OwnRanges, которые могли ссылаться на эти изменения
-		//       Надо проверить насколько это корректно
+		// TODO: When deleting changes, OwnRanges that could reference these changes are not deleted
+		//       Need to check if this is correct
 
 		if (null !== deleteIndex)
 			this.Changes.length = this.SyncIndex + deleteIndex;
 		else
 			this.SyncIndex = this.Changes.length;
 
-		// TODO: Пока мы делаем это как одну точку, которую надо откатить. Надо пробежаться по массиву и разбить его
-		//       по отдельным действиям. В принципе, данная схема срабатывает в быстром совместном редактировании,
-		//       так что как правило две точки не успевают попасть в одно сохранение.
+		// TODO: For now we do this as a single point to undo. Need to iterate through the array and split it
+		//       by individual actions. In fact, this scheme works in fast collaborative editing,
+		//       so two points shouldn't fall into one save.
 		if (ownChanges.length > 0)
 		{
 			this.OwnRanges.push(new COwnRange(this.Changes.length, ownChanges.length));
@@ -206,9 +209,9 @@
 		return changes;
 	};
 	/**
-	 * Откатываем заданное количество действий
+	 * Undo a specified number of actions
 	 * @param {number} count
-	 * @returns {[]} возвращаем массив откаченных действий
+	 * @returns {[]} returns array of reverted changes
 	 */
 	CCollaborativeHistory.prototype.UndoGlobalChanges = function(count)
 	{
@@ -247,8 +250,8 @@
 		return changeArray;
 	};
 	/**
-	 * Отменяем все действия, попавшие в последнюю точку истории
-	 * @returns {[]} возвращаем массив отмененных действий
+	 * Undo all actions that fell into the last history point
+	 * @returns {[]} returns array of reverted changes
 	 */
 	CCollaborativeHistory.prototype.UndoGlobalPoint = function()
 	{
@@ -271,9 +274,8 @@
 		return count ? this.UndoGlobalChanges(count) : [];
 	};
 	/**
-	 * Получаем количество позиций истории в текущей ревизии
+	 * Get the number of history positions in the current revision
 	 * @return {number}
-	 * @constructor
 	 */
 	CCollaborativeHistory.prototype.GetGlobalPointCount = function()
 	{
@@ -281,7 +283,7 @@
 		return this.ChangesSplitByPoints.length;
 	};
 	/**
-	 * Получаем текущую позицию в истории ревизии
+	 * Get the current position in revision history
 	 * @return {number}
 	 */
 	CCollaborativeHistory.prototype.GetGlobalPointIndex = function()
@@ -290,9 +292,9 @@
 		return this.curChangeIndex;
 	};
 	/**
-	 * Перемещаемся на нужную точку истории ревизии
-	 * @param nPos - позиция в истории
-	 * @return {boolean} - был ли произведен переход на данную позицию
+	 * Navigate to the required point in revision history
+	 * @param nPos - position in history
+	 * @return {boolean} - whether navigation to this position was performed
 	 */
 	CCollaborativeHistory.prototype.MoveToPoint = function(nPos)
 	{
@@ -310,8 +312,8 @@
 		this.textRecovery = new AscCommon.DeletedTextRecovery(logicDocument);
 	};
 	/**
-	 * Отображаем удаленный текст для данный точки в истории ревизии
-	 * @return {boolean} - был ли отображен удаленный текст
+	 * Display deleted text for the given point in revision history
+	 * @return {boolean} - whether the deleted text was displayed
 	 */
 	CCollaborativeHistory.prototype.RecoverDeletedText = function()
 	{
@@ -319,7 +321,7 @@
 		return this.textRecovery.RecoverDeletedText();
 	};
 	/**
-	 * Отменить отображение удаленного текста в данной точке истории ревизии
+	 * Cancel display of deleted text at this point in revision history
 	 * @return {boolean}
 	 */
 	CCollaborativeHistory.prototype.UndoDeletedTextRecovery = function()
@@ -338,16 +340,16 @@
 		return this.CoEditing.Get_CollaborativeMarks();
 	}
 	/**
-	 * Отменяем собственные последние действия, прокатывая их через чужие
-	 * @returns {[]} возвращаем массив новых действий
+	 * Undo own last actions by rolling them through others' changes
+	 * @returns {[]} returns array of new changes
 	 */
 	CCollaborativeHistory.prototype.UndoOwnPoint = function()
 	{
-		// Формируем новую пачку действий, которые будут откатывать нужные нам действия
+		// Form a new batch of actions that will roll back the actions we need
 		let reverseChanges = this.GetReverseOwnChanges();
 		if (reverseChanges.length <= 0)
 		{
-			//чтобы не было бесконечного saving(пересмотреть чтобы работало без saveChanges)
+			// To prevent infinite saving (reconsider to work without saveChanges)
 			this.saveChanges([]);
 			return [];
 		}
@@ -358,8 +360,8 @@
 			reverseChanges[index].CheckNeedRecalculate();
 		}
 
-		// Создаем точку в истории. Делаем действия через обычные функции (с отключенным пересчетом), которые пишут в
-		// историю. Сохраняем список изменений в новой точке, удаляем данную точку.
+		// Create a point in history. Execute actions through regular functions (with disabled recalculation) that write to
+		// history. Save the list of changes in a new point, delete this point.
 
 		let historyPoint = this.CreateLocalHistoryPointByReverseChanges(reverseChanges);
 		let changesToSend = [], changesToRecalc = [];
@@ -412,7 +414,7 @@
 		return changes;
 	};
 	/**
-	 * Проверяем, что последнее изменение в документе - это ввод заданного символа
+	 * Check that the last change in the document is the input of the specified character
 	 * @param {AscWord.CRun} run
 	 * @param {number} inRunPos
 	 * @param {?number} codePoint
@@ -439,11 +441,12 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	CCollaborativeHistory.prototype.GetReverseOwnChanges = function()
 	{
-		// На первом шаге мы заданнуюю пачку изменений коммутируем с последними измениями. Смотрим на то какой набор
-		// изменений у нас получается.
-		// Объектная модель у нас простая: класс, в котором возможно есть массив элементов(тоже классов), у которого воможно
-		// есть набор свойств. Поэтому у нас ровно 2 типа изменений: изменения внутри массива элементов, либо изменения
-		// свойств. Изменения этих двух типов коммутируют между собой, изменения разных классов тоже коммутируют.
+		// On the first step we commute the given batch of changes with the latest changes. We look at what set
+		// of changes we get.
+		// Our object model is simple: a class that possibly has a content as an array of elements (also classes),
+		// and also this class may have a set of properties. Therefore we have exactly 2 types of changes:
+		// content changes or property changes.
+		// Changes of these two types commute with each other, changes of different classes also commute.
 
 		if (this.OwnRanges.length <= 0)
 			return [];
@@ -482,7 +485,7 @@
 			else if (oChange.IsSpreadsheetChange())
 			{
 				let _oChange = oChange.Copy();
-				//удобнее сначала создавать обратное изменение
+				// Create the reverse change first
 				let oReverseChange = _oChange.CreateReverseChange();
 				if (oReverseChange) {
 					if (this.CommuteRelated(oClass, oReverseChange, nPosition + nCount))
@@ -492,9 +495,9 @@
 					}
 					else
 					{
-						//todo для автофигур не надо скрывать всю точку
-						//в таблицах не принимается вся точка
-						//например при вставка столбца копируется заливка соседнего столбца
+						// TODO: for autoshapes we don't need to hide the entire point
+						//       in tables the entire point is not accepted
+						//       for example when inserting a column, the fill of the adjacent column is copied
 						arrReverseChanges = [];
 						for (let i = nCount - 1; i > nIndex; --i)
 						{
@@ -505,7 +508,7 @@
 				}
 				else if(null !== oReverseChange)
 				{
-					//ничего не делаем если есть изменения которые не готовы
+					//do nothing if there are changes that are not ready
 					arrReverseChanges = [];
 					for (let i = nCount - 1; i > nIndex; --i)
 					{
@@ -517,7 +520,7 @@
 			}
 			else
 			{
-				let _oChange = oChange; // TODO: Тут надо бы сделать копирование
+				let _oChange = oChange; // TODO: Should make a copy here
 
 				if (this.CommutePropertyChange(oClass, _oChange, nPosition + nCount))
 				{
@@ -631,18 +634,17 @@
 	};
 	CCollaborativeHistory.prototype.CommutePropertyChange = function(oClass, oChange, nStartPosition)
 	{
-		// В GoogleDocs если 2 пользователя исправляют одно и тоже свойство у одного и того же класса, тогда Undo работает
-		// у обоих. Например, первый выставляет параграф по центру (изначально по левому), второй после этого по правому
-		// краю. Тогда на Undo первого пользователя возвращает параграф по левому краю, а у второго по центру, неважно в
-		// какой последовательности они вызывают Undo.
-		// Далем как у них: т.е. изменения свойств мы всегда откатываем, даже если данное свойсво менялось в последующих
-		// изменениях.
+		// In GoogleDocs if 2 users modify the same property of the same class, then Undo works
+		// for both. For example, the first user sets paragraph align to center (initially left), the second one after
+		// that sets its to right alignment. Then on Undo the first user returns paragraph to left alignment, and the
+		// second to center, regardless of the sequence in which they call Undo.
+		// We do the same: always roll back property changes, even if this property was changed in subsequent changes.
 
-		// Здесь вариант: свойство не откатываем, если оно менялось в одном из последующих действий. (для работы этого
-		// варианта нужно реализовать функцию IsRelated у всех изменений).
+		// Alternative here: don't roll back the property if it was changed in one of the subsequent actions. (for this
+		// option to work, you need to implement the IsRelated function for all changes).
 
-		// // Значит это изменение свойства. Пробегаемся по всем следующим изменениям и смотрим, менялось ли такое
-		// // свойство у данного класса, если да, тогда данное изменение невозможно скоммутировать.
+		// // This means it's a property change. We iterate through all subsequent changes and check if this
+		// // property was changed for this class, if so, then this change cannot be commuted.
 		// for (var nIndex = nStartPosition, nOverallCount = this.Changes.length; nIndex < nOverallCount; ++nIndex)
 		// {
 		// 	var oTempChange = this.Changes[nIndex];
@@ -667,8 +669,8 @@
 
 		let pointIndex = localHistory.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_Undo);
 		
-		// До вызова данного метода мы все изменения reverseChanges прогнали через Load, где
-		// изменения позиций из-за этих изменений уже были отмечены
+		// Before calling this method, we ran all reverseChanges through Load, where
+		// position changes due to these changes were already marked
 		this.CoEditing.StopTrackingPositions();
 		for (let index = 0, count = reverseChanges.length; index < count; ++index)
 		{
@@ -688,9 +690,9 @@
 	{
 		let oLogicDocument = this.CoEditing.GetLogicDocument();
 
-		// Может так случиться, что в каких-то классах DocumentContent удалились все элементы, либо
-		// в классе Paragraph удалился знак конца параграфа. Нам необходимо проверить все классы на корректность, и если
-		// нужно, добавить дополнительные изменения.
+		// It may happen that in some DocumentContent classes all elements were deleted, or
+		// in the Paragraph class the end-of-paragraph mark was deleted. We need to check all classes and if
+		// necessary, make additional changes to normalize them
 
 		var mapDrawings         = {};
 		var mapDocumentContents = {};
@@ -989,7 +991,7 @@
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	/**
-	 * Отрезок собственных изменений в общем массиве
+	 * Own changes segment in the common array
 	 * @param position
 	 * @param length
 	 * @constructor

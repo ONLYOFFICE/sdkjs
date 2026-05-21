@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -70,7 +73,7 @@ function CBuilderImages(blip_fill, full_url, image_shape, sp_pr, ln, text_pr, pa
     this.Run        = run;
     this.Paragraph  = paragraph;
     this.Bullet = bullet;
-    this.AdditionalUrls = [];//для wmf, ole
+    this.AdditionalUrls = [];//for wmf, ole
 }
 CBuilderImages.prototype =
 {
@@ -325,7 +328,7 @@ function BinaryPPTYLoader()
 
     this.LoadDocument = function()
     {
-        // чтение формата ppty
+        // reading ppty format
         var _main_tables = {};
         var s = this.stream;
         var err = 0;
@@ -516,7 +519,7 @@ function BinaryPPTYLoader()
                 var _nm_count = s.GetULong();
                 for (var i = 0; i < _nm_count; i++){
                     this.presentation.notesMasters[i] = this.ReadNoteMaster();
-                    this.presentation.notesMasters[i].setTheme(this.aThemes[0]);//TODO: убрать после того как будут сделаны рельсы
+                    this.presentation.notesMasters[i].setTheme(this.aThemes[0]);//TODO: remove after rels are implemented
                 }
             }
 
@@ -531,7 +534,7 @@ function BinaryPPTYLoader()
             }
         }
 
-        // теперь нужно прочитать используемые в презентации шрифты и картинки
+        // now we need to read fonts and images used in the presentation
         if (null == this.ImageMapChecker)
         {
             if (undefined != _main_tables["42"])
@@ -598,7 +601,7 @@ function BinaryPPTYLoader()
             }
         }
 
-        // все загружено, осталось расставить связи и загрузить картинки тем и шаблонов
+        // everything is loaded, now we need to establish relationships and load images from themes and layouts
         if (undefined != _main_tables["41"])
         {
             s.Seek2(_main_tables["41"]);
@@ -2752,14 +2755,6 @@ function BinaryPPTYLoader()
                 nRecLen = s.GetLong();
                 nRecEnd = nRecStart + nRecLen + 4;
                 oEffect = new AscFormat.CFillEffect();
-                s.Skip2(1); // start attributes
-
-                while (true)
-                {
-                    var _at = s.GetUChar();
-                    if (_at == g_nodeAttributeEnd)
-                        break;
-                }
 
                 while (s.cur < nRecEnd)
                 {
@@ -2787,14 +2782,7 @@ function BinaryPPTYLoader()
                 nRecLen = s.GetLong();
                 nRecEnd = nRecStart + nRecLen + 4;
                 oEffect = new AscFormat.CClrRepl();
-                s.Skip2(1);
 
-                while (true)
-                {
-                    var _at = s.GetUChar();
-                    if (_at == g_nodeAttributeEnd)
-                        break;
-                }
                 while (s.cur < nRecEnd)
                 {
                     var _at = s.GetUChar();
@@ -2865,14 +2853,7 @@ function BinaryPPTYLoader()
                 nRecLen = s.GetLong();
                 nRecEnd = nRecStart + nRecLen + 4;
                 oEffect = new AscFormat.CAlphaInv();
-                s.Skip2(1);
 
-                while (true)
-                {
-                    var _at = s.GetUChar();
-                    if (_at == g_nodeAttributeEnd)
-                        break;
-                }
                 while (s.cur < nRecEnd)
                 {
                     var _at = s.GetUChar();
@@ -2899,14 +2880,7 @@ function BinaryPPTYLoader()
                 nRecLen = s.GetLong();
                 nRecEnd = nRecStart + nRecLen + 4;
                 oEffect = new AscFormat.CAlphaMod();
-                s.Skip2(1);
 
-                while (true)
-                {
-                    var _at = s.GetUChar();
-                    if (_at == g_nodeAttributeEnd)
-                        break;
-                }
                 while (s.cur < nRecEnd)
                 {
                     var _at = s.GetUChar();
@@ -3347,7 +3321,7 @@ function BinaryPPTYLoader()
                             }
                             default:
                             {
-                                // пока никаких настроек градиента нет
+                                // no gradient settings for now
                                 var _len = s.GetULong();
                                 s.Skip2(_len);
                             }
@@ -3444,7 +3418,7 @@ function BinaryPPTYLoader()
                             }
                             default:
                             {
-                                // пока никаких настроек градиента нет
+                                // no gradient settings for now
                                 var _len = s.GetULong();
                                 s.Skip2(_len);
                             }
@@ -3454,7 +3428,7 @@ function BinaryPPTYLoader()
                     }
                     if (null != uni_fill.fill.lin && null != uni_fill.fill.path)
                     {
-                        // ms office не открывает такие файлы.
+                        // ms office does not open such files.
                         uni_fill.fill.setPath(null);
                     }
 
@@ -3516,7 +3490,7 @@ function BinaryPPTYLoader()
                             }
                             default:
                             {
-                                // пока никаких настроек градиента нет
+                                // no gradient settings for now
                                 s.SkipRecord();
                             }
                         }
@@ -6707,6 +6681,11 @@ function BinaryPPTYLoader()
                     shape.setUseBgFill(s.GetBool());
                     break;
                 }
+                case 1:
+                {
+                    shape.setTextLink(s.GetString2());
+                    break;
+                }
                 default:
                     break;
             }
@@ -8423,7 +8402,7 @@ function BinaryPPTYLoader()
 				s.Skip2(1);
 				this.ReadCell(row.Content[i]);
 
-				// удаляем
+				// remove
 				row.Remove_Cell(i);
 				i--;
 				_count--;
@@ -9389,7 +9368,7 @@ function BinaryPPTYLoader()
     this.CorrectBodyPr = function(bodyPr)
     {
 
-        //TODO: сделать через методы
+        //TODO: implement using methods
         var s = this.stream;
         var _end_rec = s.cur + s.GetULong() + 4;
 
@@ -10214,7 +10193,7 @@ function BinaryPPTYLoader()
 
         if(b_bullet)
             para_pr.Bullet = bullet;
-        // пока записи не поддерживаем
+        // records are not supported for now
         s.Seek2(_end_rec);
         return para_pr;
     };
@@ -11187,6 +11166,11 @@ function BinaryPPTYLoader()
                         shape.setUseBgFill(s.GetBool());
                         break;
                     }
+                    case 1:
+                    {
+                        shape.setTextLink(s.GetString2());
+                        break;
+                    }
                     default:
                         break;
                 }
@@ -11718,7 +11702,11 @@ function BinaryPPTYLoader()
                 {
                     case 0:
                     {
-                        s.SkipRecord();
+						const nvSpPr = this.Reader.ReadNvUniProp(shape);
+						shape.setNvSpPr(nvSpPr);
+						if (AscFormat.isRealNumber(nvSpPr.locks)) {
+							shape.setLocks(nvSpPr.locks);
+						}
                         break;
                     }
                     case 1:
@@ -11954,7 +11942,7 @@ function BinaryPPTYLoader()
 
         this.Clear = function(bClearStreamOnly)
         {
-            //вызывается пока только перед вставкой
+            //called only before paste for now
             this.Reader.stream = null;
             this.stream = null;
             this.BaseReader = null;

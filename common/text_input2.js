@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -36,7 +39,7 @@
 {
 	window["AscInputMethod"] = window["AscInputMethod"] || {};
 	///
-	// такие методы нужны в апи
+	// these methods are required in the API
 	// baseEditorsApi.prototype.Begin_CompositeInput = function()
 	// baseEditorsApi.prototype.Replace_CompositeText = function(arrCharCodes)
 	// baseEditorsApi.prototype.Set_CursorPosInCompositeText = function(nPos)
@@ -76,8 +79,8 @@
 		this.Api = api;
 
 		this.TargetId = null; // id caret
-		this.HtmlDiv  = null; // для незаметной реализации одной textarea недостаточно. parent для HtmlArea
-		this.HtmlArea = null; // HtmlArea - элемент для ввода
+		this.HtmlDiv  = null; // a single textarea is not enough for seamless implementation. parent for HtmlArea
+		this.HtmlArea = null; // HtmlArea - input element
 		this.ElementType = InputTextElementType.TextArea;
 
 		// ---------------------------------------------------------------
@@ -87,25 +90,28 @@
 		// Notes offset for slides
 		this.TargetOffsetY = 0;
 
-		this.HtmlAreaOffset = 50; // height in pix
+		this.isUseLeftOffset = (AscCommon.AscBrowser.isAppleDevices || AscCommon.AscBrowser.isAndroid) ? true : false; // new browsers remove autoscroll textarea
+		this.HtmlAreaOffset = (AscCommon.AscBrowser.isAppleDevices || AscCommon.AscBrowser.isAndroid) ? 50 : 0; // height in pix
 		this.HtmlAreaWidth = 200;
+
+		this.lastFontSize = 0; // in pixels
 		// ---------------------------------------------------------------
 
-		// информация о текущем состоянии текста -------------------------
+		// current text state information -------------------------
 
-		// текущее значение в textarea
+		// current value in textarea
 		this.Text = "";
 
-		// текст до того, как пришли сообщения onCompositeStart/onCompositeUpdate
-		// т.е. текст, который пришел на onInput/onTextInput, и когда мы не внутри onComposite[Begin-End]
+		// text before onCompositeStart/onCompositeUpdate messages arrived
+		// i.e. text that came to onInput/onTextInput, when we are not inside onComposite[Begin-End]
 		this.TextBeforeComposition = "";
 
-		// в каком состоянии апи (композитный ли ввод сейчас)
+		// API state (whether composite input is active now)
 		this.IsComposition = false;
 
 		// ---------------------------------------------------------------
 
-		// не обрабатывать keyPress после keyDown
+		// do not process keyPress after keyDown
 		this.IsDisableKeyPress = false;
 
 		this.nativeFocusElement = null;
@@ -120,13 +126,13 @@
 		this.isInputHelpersPresent = false;
 		this.isInputHelpers = {};
 
-		// параметры для показа/скрытия виртуальной клавиатуры.
+		// parameters for showing/hiding virtual keyboard.
 		this.isHardCheckKeyboard = AscCommon.AscBrowser.isSailfish;
 
 		this.virtualKeyboardClickTimeout = -1;
 		this.virtualKeyboardReadOnly_ShowKeyboard = AscCommon.AscBrowser.isAndroid && AscCommon.AscBrowser.isMozilla;
 
-		// для сброса текста при фокусе
+		// for clearing text on focus
 		this.checkClearTextOnFocusTimerId = -1;
 
 		this.isDisableKeyboard = false;
@@ -136,6 +142,15 @@
 			x : 0,
 			y : 0
 		};
+
+		this.oldBrowserZoom = 1;
+		this.oldParentForResize = "";
+
+		this.TextAreaHeightMin = 50;
+		this.TextAreaHeight = this.TextAreaHeightMin;
+
+		this.isMoveAccurateSync = false;
+		this.resizeOnMove = false;
 	}
 
 	var CTextInputPrototype = CTextInput2.prototype;
@@ -147,7 +162,7 @@
 			console.log(value);
 	};
 
-	// для совместимости. убрал системный ввод
+	// for compatibility. removed system input
 	CTextInputPrototype.systemInputEnable = function()
 	{
 	};
@@ -177,7 +192,7 @@
 			return false;
 		}
 
-		// проверим - может это навигация в окне хэлпера
+		// check if this is navigation in the helper window
 		if (this.isInputHelpersPresent)
 		{
 			switch (e.keyCode)
@@ -284,8 +299,8 @@
 			}
 		}
 
-		// ios копирование и вырезка через клавиатуру внешнюю - требует селекта в фокусном textarea
-		// но если селектить - его видно. да и куча проблем. попробуем сэмулировать
+		// iOS copy and cut via external keyboard requires selection in focused textarea
+		// but if we select - it becomes visible, plus many other issues. let's try to emulate
 		if (this.Api.isMobileVersion && AscCommon.AscBrowser.isAppleDevices)
 		{
 			if (e.metaKey)
@@ -353,7 +368,7 @@
 			return false;
 		}
 
-		// вся обработка - в onInput
+		// all processing is in onInput
 	};
 	CTextInputPrototype.onKeyUp = function(e)
 	{
@@ -408,13 +423,13 @@
 
 		if (("compositionstart" === type) && this.IsComposition)
 		{
-			// не пришел end - пришлем сами
+			// end was not received - we'll send it ourselves
 			this.compositeEnd();
 		}
 
 		if (("compositionstart" === type || "compositionupdate" === type) && !this.IsComposition)
 		{
-			// начался композитный ввод
+			// composite input has started
 			this.TextBeforeComposition = this.Text;
 
 			this.log("compositionStart: " + this.TextBeforeComposition);
@@ -446,7 +461,7 @@
 		}
 		else
 		{
-			// текст может не только добавиться, но и замениться (например на маке зажать i - и выбрать вариант)
+			// text can not only be added but also replaced (for example on Mac hold i and select a variant)
 			let codesOld = [];
 			for (let iter = this.Text.getUnicodeIterator(); iter.check(); iter.next())
 				codesOld.push(iter.value());
@@ -469,12 +484,12 @@
 
 			newTextLength = newLen;
 
-			// удаляем то, чего уже нет
+			// remove what no longer exists
 			let codesRemove = undefined;
 			if (oldLen > equalsLen)
 				codesRemove = codesOld.slice(equalsLen);
 
-			// удаляем старые из массива
+			// remove old items from array
 			if (0 !== equalsLen)
 				codesNew.splice(0, equalsLen);
 
@@ -483,18 +498,18 @@
 
 			if (10 === lastSymbol)
 			{
-				// заглушка на интерфейс (если там enter был нажат - и сначала blur(), и только затем применение).
+				// interface workaround (if enter was pressed there - first blur(), then application).
 				this.clear();
 				return;
 			}
 
-			// добавляем новые
+			// add new items
 			isAsyncInput = this.checkTextInput(codesNew, codesRemove);
 		}
 
 		if (("compositionend" === type) && this.IsComposition)
 		{
-			// закончился композитный ввод
+			// composite input has ended
 			this.compositeEnd();
 
 			this.log("compositionEnd: " + newValue);
@@ -502,7 +517,7 @@
 
 		if (!isAsyncInput)
 		{
-			// если асинхронно - то на коллбеке придет onInput - и текст добавится позже
+			// if async - onInput will come on callback and text will be added later
 			this.Text = newValue;
 		}
 
@@ -514,19 +529,19 @@
 			let isClear = false;
 			switch (lastSymbol)
 			{
-				case 32: // пробел
-				case 46: // точка
-				case 44: // запятая
-				//case 12290: // азиатская точка
-				//case 65292: // азиатская запятая
+				case 32: // space
+				case 46: // period
+				case 44: // comma
+				//case 12290: // Asian period
+				//case 65292: // Asian comma
 				{
 					isClear = true;
 					break;
 				}
 				default:
 				{
-					// надеемся, что при вводе все-таки будут точки/пробелы/запятые
-					// если нет - то не даем копить до бесконечности.
+					// hoping that input will eventually contain periods/spaces/commas
+					// if not - don't let it accumulate indefinitely.
 					let currentTextLenMax = this.Api.isMobileVersion ? 20 : 100;
 					if (newTextLength > currentTextLenMax)
 						isClear = true;
@@ -643,7 +658,7 @@
 		{
 			if (!this.isSpaceOnKeyDown)
 			{
-				// иначе пробел добавился на onKeyDown
+				// otherwise space was added on onKeyDown
 				let keyObject = this.getKeyboardEventObject(code);
 				this.Api.onKeyDown(keyObject);
 				this.Api.onKeyUp(keyObject);
@@ -652,9 +667,9 @@
 		}
 		else
 		{
-			// TODO: отдельный метод в апи
-			// пока имитируем через keyCode - для keyDown/Up - сделаем такой код,
-			// который ни на что не влияет. код для буквы 'a' - 65
+			// TODO: separate method in API
+			// for now we emulate via keyCode - for keyDown/Up - we'll use a code
+			// that doesn't affect anything. code for letter 'a' is 65
 			let keyObject = this.getKeyboardEventObject(code);
 			let keyObjectUpDown = this.getKeyboardEventObject(65);
 
@@ -676,29 +691,13 @@
 	};
 	CTextInputPrototype.emulateKeyDownApi = function(code)
 	{
-		let keyObject = this.getKeyboardEventObject(code);
-
-		this.Api.onKeyDown(keyObject);
-		this.Api.onKeyUp(keyObject);
+		AscCommon.emulateKeyDownApi(this.Api, code);
 	};
 
 	// keyboard
 	CTextInputPrototype.getKeyboardEventObject = function(code)
 	{
-		return {
-			altKey : false,
-			ctrlKey : false,
-			shiftKey : false,
-			target : null,
-			charCode : 0,
-			which : code,
-			keyCode : code,
-			code : "",
-			emulated: true,
-
-			preventDefault : function() {},
-			stopPropagation : function() {}
-		};
+		return AscCommon.getKeyboardEventObject(code);
 	};
 	CTextInputPrototype.emulateNativeKeyDown = function(e, target)
 	{
@@ -829,7 +828,7 @@
 
 		if (!this.IsLockTargetMode)
 		{
-			// никакого смысла прыгать курсором туда-сюда
+			// no point in jumping the cursor back and forth
 			if (_offset == 0 && this.compositionValue.length == 1)
 				_offset = 1;
 		}
@@ -879,9 +878,9 @@
 		else
 			this.ReadOnlyCounter--;
 
-		// при синхронной загрузке шрифтов (десктоп)
-		// может вызываться и в обратном порядке (setReadOnly(false), setReadOnly(true))
-		// поэтому сравнение с нулем неверно. отрицательные значение могут быть.
+		// during synchronous font loading (desktop)
+		// can be called in reverse order (setReadOnly(false), setReadOnly(true))
+		// so comparison with zero is incorrect. negative values are possible.
 
 		this.setReadOnlyWrapper((0 >= this.ReadOnlyCounter) ? false : true);
 	};
@@ -932,14 +931,14 @@
 		this.HtmlDiv.style.background = "transparent";
 		this.HtmlDiv.style.border     = "none";
 
-		// в хроме скроллируется редактор, когда курсор текстового поля выходит за пределы окна
+		// in Chrome the editor scrolls when the text field cursor goes beyond the window boundaries
 		if (AscCommon.AscBrowser.isChrome && !TEXT_INPUT_DEBUG)
 			this.HtmlDiv.style.position = "fixed";
 		else
 			this.HtmlDiv.style.position   = "absolute";
 		this.HtmlDiv.style.zIndex     = 10;
 		this.HtmlDiv.style.width      = TEXT_INPUT_DEBUG ? "200px" : "20px";
-		this.HtmlDiv.style.height     = "50px";
+		this.HtmlDiv.style.height     = this.TextAreaHeight + "px";
 		this.HtmlDiv.style.overflow   = "hidden";
 
 		this.HtmlDiv.style.boxSizing 		= "content-box";
@@ -963,20 +962,33 @@
 		var _style = "";
 		if (!TEXT_INPUT_DEBUG)
 		{
-			_style = ("left:-" + (this.HtmlAreaWidth >> 1) + "px;top:" + (-this.HtmlAreaOffset) + "px;");
+			let _left = this.isUseLeftOffset ? (this.HtmlAreaWidth >> 1) : 0;
+			_style = ("left:-" +_left + "px;top:" + (-this.HtmlAreaOffset) + "px;");
 			_style += "color:transparent;caret-color:transparent;background:transparent;";
 
 			if (this.Api.isUseOldMobileVersion())
 				_style += (AscCommon.AscBrowser.isAppleDevices && !AscCommon.AscBrowser.isTelegramWebView && (AscCommon.AscBrowser.maxTouchPoints > 0)) ? "font-size:0px;" : "font-size:8px;";
 			else
-				_style += "font-size:8px;";
+			{
+				this.lastFontSize = 8;
+				_style += ("font-size:" + this.lastFontSize + "px;");
+			}
 		}
 		else
 		{
 			_style = "left:0px;top:0px;color:black;caret-color:black;font-size:16px;background:transparent;";
 		}
-		_style += ("border:none;position:absolute;text-shadow:0 0 0 #000;outline:none;width:" + this.HtmlAreaWidth + "px;height:50px;");
-		_style += "overflow:hidden;padding:0px;margin:0px;font-family:arial;resize:none;font-weight:normal;box-sizing:content-box;-moz-box-sizing:content-box;-webkit-box-sizing:content-box;";
+
+		_style += "margin:0px;";
+		let textAreaWidth = this.HtmlAreaWidth;
+		if (window.CSS && CSS.supports && CSS.supports("transform", "scaleX(0.2)")) {
+			textAreaWidth *= 5;
+			_style += "transform:scaleX(0.2);";
+			_style += "margin-right:-" + (textAreaWidth * 0.8) + "px;";
+		}
+
+		_style += ("border:none;position:absolute;text-shadow:0 0 0 #000;outline:none;width:" + textAreaWidth + "px;height:100%;");
+		_style += "overflow:hidden;padding:0px;font-family:arial;resize:none;font-weight:normal;box-sizing:content-box;-moz-box-sizing:content-box;-webkit-box-sizing:content-box;";
 		_style += "touch-action: none;-webkit-touch-callout: none;";
 
 		this.HtmlArea.setAttribute("style", _style);
@@ -1041,6 +1053,20 @@
 			}, false);
 		}
 
+		if (this.Api.isMobileVersion && AscCommon.AscBrowser.isAppleDevices)
+		{
+			var blockMouseEmulation = function(e)
+			{
+				if (document.activeElement === oThis.HtmlArea)
+				{
+					//e.stopImmediatePropagation();
+					e.preventDefault();
+				}
+			};
+			document.addEventListener("mousedown", blockMouseEmulation, true);
+			document.addEventListener("mouseup", blockMouseEmulation, true);
+		}
+
 		this.Api.Input_UpdatePos();
 
 		this.checkViewMode();
@@ -1053,10 +1079,10 @@
 		else
 			oHtmlParent = document.getElementById(parent_id);
 
-		// нужен еще один родитель. чтобы скроллился он, а не oHtmlParent
+		// need another parent. so that it scrolls, not oHtmlParent
 		var oHtmlDivScrollable = document.createElement("div");
 		oHtmlDivScrollable.id = "area_id_main";
-		let styleZIndex = TEXT_INPUT_DEBUG ? "z-index:50;" : "z-index:0;";
+		let styleZIndex = TEXT_INPUT_DEBUG ? "z-index:50;" : "z-index:-1;";
 		oHtmlDivScrollable.setAttribute("style", "background:transparent;border:none;position:absolute;padding:0px;margin:0px;pointer-events:none;" + styleZIndex);
 		var parentStyle = getComputedStyle(oHtmlParent);
 		oHtmlDivScrollable.style.left = parentStyle.left;
@@ -1075,11 +1101,19 @@
 		if (!_elem || !_elemSrc)
 			return;
 
+		this.oldBrowserZoom = AscCommon.AscBrowser.zoom;
+		this.oldParentForResize = editorContainerId;
+
 		if (AscCommon.AscBrowser.isChrome)
 		{
 			var rectObject = AscCommon.UI.getBoundingClientRect(_elemSrc);
 			this.FixedPosCheckElementX = rectObject.left;
 			this.FixedPosCheckElementY = rectObject.top;
+
+			if (rectObject.width < 1 && rectObject.height < 1)
+				this.resizeOnMove = true;
+			else
+				this.resizeOnMove = false;
 		}
 
 		var _width = _elemSrc.style.width;
@@ -1150,13 +1184,17 @@
 				focusHtmlElement(this.getFocusElement());
 		}
 	};
+	CTextInputPrototype.moveAccurateForce = function()
+	{
+		this.isMoveAccurateSync = true;
+	};
 	CTextInputPrototype.moveAccurate = function(x, y)
 	{
 		if (!this.moveAccurateFunc)
 		{
 			this.moveAccurateFunc = function() {
 				let ctx = AscCommon.g_inputContext;
-				ctx.move(ctx.moveAccurateInfo.x, ctx.moveAccurateInfo.y);
+				ctx.move(ctx.moveAccurateInfo.x / AscCommon.AscBrowser.retinaPixelRatio, ctx.moveAccurateInfo.y / AscCommon.AscBrowser.retinaPixelRatio);
 				ctx.moveAccurateInfo.id = -1;
 			};
 		}
@@ -1166,19 +1204,60 @@
 
 		this.moveAccurateInfo.x = x;
 		this.moveAccurateInfo.y = y;
-		this.moveAccurateInfo.id = setTimeout(this.moveAccurateFunc, 20);
+
+		if (true === this.isMoveAccurateSync)
+		{
+			this.isMoveAccurateSync = false;
+			this.moveAccurateFunc();
+		}
+		else
+			this.moveAccurateInfo.id = setTimeout(this.moveAccurateFunc, 20);
 	};
 	CTextInputPrototype.move = function(x, y)
 	{
 		if (this.Api.isUseOldMobileVersion())
 			return;
 
+		if (this.oldParentForResize)
+		{
+			if (this.resizeOnMove || Math.abs(AscCommon.AscBrowser.zoom - this.oldBrowserZoom) > 0.1)
+				this.onResize(this.oldParentForResize);
+		}
+
 		var oTarget = document.getElementById(this.TargetId);
 		if (!oTarget)
 			return;
 
+		let targetSize = parseInt(oTarget.style.height);
 		var xPos = x ? x : parseInt(oTarget.style.left);
-		var yPos = (y ? y : parseInt(oTarget.style.top)) + parseInt(oTarget.style.height);
+		var yPos = (y ? y : parseInt(oTarget.style.top));
+
+		if (this.isUseLeftOffset)
+			yPos += targetSize;
+
+		let addOffset = 0;
+		if (!this.isUseLeftOffset)
+		{
+			addOffset = 5;
+			if (targetSize > 100)
+				targetSize = 100;
+
+			let areaH = targetSize + 2 * addOffset;
+			if (areaH < this.TextAreaHeightMin)
+				areaH = this.TextAreaHeightMin;
+
+			if (areaH != this.TextAreaHeight)
+			{
+				this.TextAreaHeight = areaH;
+				this.HtmlDiv.style.height = this.TextAreaHeight + "px";
+			}
+
+			if (Math.abs(this.lastFontSize - targetSize) > 2)
+			{
+				this.lastFontSize = targetSize;
+				this.HtmlArea.style.fontSize = ((2 * addOffset) + this.lastFontSize) + "px";
+			}
+		}
 
 		if (AscCommon.AscBrowser.isSafari && AscCommon.AscBrowser.isMobile)
 			xPos = -100;
@@ -1191,7 +1270,7 @@
 		}
 
 		this.HtmlDiv.style.left = xPos + this.FixedPosCheckElementX + "px";
-		this.HtmlDiv.style.top  = yPos + this.FixedPosCheckElementY + this.TargetOffsetY + this.HtmlAreaOffset + "px";
+		this.HtmlDiv.style.top  = yPos - addOffset + this.FixedPosCheckElementY + this.TargetOffsetY + this.HtmlAreaOffset + "px";
 
 		this.HtmlArea.scrollTop = this.HtmlArea.scrollHeight;
 		//this.log("" + this.HtmlArea.scrollTop + ", " + this.HtmlArea.scrollHeight);
@@ -1432,15 +1511,15 @@
 			}
 			if ("IFRAME" == _name)
 			{
-				// перехват клавиатуры
+				// keyboard interception
 				t.Api.asc_enableKeyEvents(false, true);
 				t.nativeFocusElement = null;
 				return;
 			}
 
-			// перехватывает ли элемент ввод
+			// whether the element intercepts input
 			var _oo_editor_input    = _getAttirbute(t.nativeFocusElement, "oo_editor_input", 3);
-			// нужно ли прокидывать нажатие клавиш элементу (ТОЛЬКО keyDown)
+			// whether to forward key presses to the element (keyDown ONLY)
 			var _oo_editor_keyboard = _getAttirbute(t.nativeFocusElement, "oo_editor_keyboard", 3);
 
 			if (!_oo_editor_input && !_oo_editor_keyboard)
@@ -1451,7 +1530,7 @@
 
 			if (_oo_editor_input == "true")
 			{
-				// перехват клавиатуры
+				// keyboard interception
 				t.Api.asc_enableKeyEvents(false, true);
 				t.nativeFocusElement = null;
 				return;
@@ -1459,13 +1538,13 @@
 
 			if (_isElementEditable && (_oo_editor_input != "false"))
 			{
-				// перехват клавиатуры
+				// keyboard interception
 				t.Api.asc_enableKeyEvents(false, true);
 				t.nativeFocusElement = null;
 				return;
 			}
 
-			// итак, ввод у нас. теперь определяем, нужна ли клавиатура элементу
+			// so, input is ours. now determine if the element needs the keyboard
 			if (_oo_editor_keyboard != "true")
 				t.nativeFocusElement = null;
 
@@ -1542,5 +1621,31 @@
 		};
 	}
 	*/
+
+	AscCommon.getKeyboardEventObject = function(code)
+	{
+		return {
+			altKey : false,
+			ctrlKey : false,
+			shiftKey : false,
+			target : null,
+			charCode : 0,
+			which : code,
+			keyCode : code,
+			code : "",
+			emulated: true,
+
+			preventDefault : function() {},
+			stopPropagation : function() {}
+		};
+	};
+
+	AscCommon.emulateKeyDownApi = function(api, code)
+	{
+		let keyObject = AscCommon.getKeyboardEventObject(code);
+
+		api.onKeyDown(keyObject);
+		api.onKeyUp(keyObject);
+	};
 
 })(window);

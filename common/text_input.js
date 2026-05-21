@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -36,7 +39,7 @@
 {
 	window["AscInputMethod"] = window["AscInputMethod"] || {};
 	///
-	// такие методы нужны в апи
+	// these methods are required in the API
 	// baseEditorsApi.prototype.Begin_CompositeInput = function()
 	// baseEditorsApi.prototype.Replace_CompositeText = function(arrCharCodes)
 	// baseEditorsApi.prototype.Set_CursorPosInCompositeText = function(nPos)
@@ -87,7 +90,7 @@
 		this.Api = api;
 
 		this.TargetId = null;			// id caret
-		this.HtmlDiv  = null;			// для незаметной реализации одной textarea недостаточно
+		this.HtmlDiv  = null;			// a single textarea is not enough for seamless implementation
 
 		this.TextArea_Not_ContentEditableDiv = true;
 		this.HtmlArea = null;
@@ -147,7 +150,7 @@
         this.isInputHelpersPresent = false;
         this.isInputHelpers = {};
 
-        this.isKeyPressOnUp = AscCommon.AscBrowser.isAppleDevices; // keyPress может приходить ДО oncompositionstart, а это проблема.
+        this.isKeyPressOnUp = AscCommon.AscBrowser.isAppleDevices; // keyPress can arrive BEFORE oncompositionstart, and that's a problem.
 		this.keyPressOnUpCodes = [];
 		this.isKeyPressOnUpStackedMode = this.isKeyPressOnUp;
 
@@ -170,7 +173,7 @@
 			this.HtmlDiv.style.background = "transparent";
 			this.HtmlDiv.style.border     = "none";
 
-			// в хроме скроллируется редактор, когда курсор текстового поля выходит за пределы окна
+			// in Chrome the editor scrolls when the text field cursor goes beyond the window boundaries
 			if (AscCommon.AscBrowser.isChrome)
 				this.HtmlDiv.style.position = "fixed";
 			else
@@ -309,7 +312,7 @@
 			else
 				oHtmlParent = document.getElementById(parent_id);
 
-			// нужен еще один родитель. чтобы скроллился он, а не oHtmlParent
+			// need another parent. so that it scrolls, not oHtmlParent
 			var oHtmlDivScrollable = document.createElement("div");
 			oHtmlDivScrollable.id = "area_id_main";
 			oHtmlDivScrollable.setAttribute("style", "background:transparent;border:none;position:absolute;padding:0px;margin:0px;z-index:0;pointer-events:none;");
@@ -423,7 +426,7 @@
 			}
 			else
 			{
-				// this.HtmlAreaOffset - не сдвигаем, курсор должен быть виден
+				// this.HtmlAreaOffset - don't shift, cursor should be visible
 				this.debugCalculatePlace(xPos + this.FixedPosCheckElementX, yPos + this.FixedPosCheckElementY + this.TargetOffsetY);
 			}
 
@@ -490,9 +493,9 @@
 			else
 				this.ReadOnlyCounter--;
 
-			// при синхронной загрузке шрифтов (десктоп)
-			// может вызываться и в обратном порядке (setReadOnly(false), setReadOnly(true))
-			// поэтому сравнение с нулем неверно. отрицательные значение могут быть.
+			// during synchronous font loading (desktop)
+			// can be called in reverse order (setReadOnly(false), setReadOnly(true))
+			// so comparison with zero is incorrect. negative values are possible.
 
 			this.setReadOnlyWrapper((0 >= this.ReadOnlyCounter) ? false : true);
 		},
@@ -593,7 +596,7 @@
 			{
 				var _editorSdk = document.getElementById("editor_sdk");
 
-				// теперь нужно расчитать ширину/высоту текстбокса
+				// now we need to calculate the textbox width/height
 				var _p = document.createElement('p');
 				_p.style.zIndex = "-1";
 				_p.style.position = "absolute";
@@ -637,7 +640,7 @@
 			this.HtmlDiv.style.width  = _width + "px";
 			this.HtmlDiv.style.height = _height + "px";
 
-			// вот такая заглушка под firefox если этого не делать, то будет плохо перерисовываться border)
+			// this is a workaround for Firefox (if not done, the border will redraw poorly)
 			var oldZindex                  = parseInt(this.HtmlDiv.style.zIndex);
 			var newZindex                  = (oldZindex == 90) ? "89" : "90";
 			this.HtmlDiv.style.zIndex = newZindex;
@@ -719,7 +722,7 @@
 
 				if (!isAsync)
 				{
-					// ie/edge могут не присылать onCompositeEnd. И тогда ориентир - дополнительный селект
+					// ie/edge may not send onCompositeEnd. In that case the indicator is additional selection
 					if (ieStart > this.CompositionStart)
 					{
 						textReplace = textReplace.substr(0, ieStart - this.CompositionStart);
@@ -798,12 +801,12 @@
 					var _lastCode = this.Text.charCodeAt(this.Text.length - 1);
 					if (_lastCode == 12290 || _lastCode == 46)
 					{
-						// китайская точка
+						// Chinese period
 						AscCommon.stopEvent(e);
 
 						if (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge)
 						{
-							// ie тепряет фокус
+							// ie loses focus
 							setTimeout(function(){
 								window['AscCommon'].g_inputContext.clear();
 								focusHtmlElement(window['AscCommon'].g_inputContext.HtmlArea);
@@ -1015,7 +1018,7 @@
                         // send, but not prevent
 
                         //window.g_asc_plugins.onPluginEvent2("onKeyDown", { "keyCode" : e.keyCode }, this.isInputHelpers);
-						//теперь пробел - на keyPress - и добавится там
+						//now space - on keyPress - will be added there
                         //this.keyPressInput += " ";
                         if (window.g_asc_plugins)
                             window.g_asc_plugins.onPluginEvent("onInputHelperInput", { "text" : this.keyPressInput });
@@ -1026,14 +1029,14 @@
 			}
 			else if (32 == e.keyCode)
 			{
-                //теперь пробел - на keyPress - и добавится там
+                //now space - on keyPress - will be added there
 				//this.keyPressInput += " ";
             }
 
 			if (this.isSystem && this.isShow)
 			{
-				// нужно проверить на enter
-				// вся остальная обработка - в текстбоксе
+				// need to check for enter
+				// all other processing is in the textbox
 
 				if (e.keyCode == 13)
 				{
@@ -1061,7 +1064,7 @@
 					return false;
 				}
 
-				// вся обработка - в текстбоксе
+				// all processing is in the textbox
 				return;
 			}
 
@@ -1074,7 +1077,7 @@
 				}
 			}
 
-			// некоторые рукописные вводы не присылают keyUp
+			// some handwriting inputs don't send keyUp
 			var _code = e.keyCode;
 			if (_code != 8 && _code != 46)
 				this.KeyDownFlag = true;
@@ -1137,7 +1140,7 @@
 				{
 					if (!AscCommon.global_keyboardEvent.CtrlKey && !AscCommon.global_keyboardEvent.ShiftKey) // copy/cut/paste
 					{
-						// заканчиваем "непрерывный" ввод => очищаем текстбокс
+						// finishing "continuous" input => clearing the textbox
 						this.clear();
 						return false;
 					}
@@ -1320,7 +1323,7 @@
 
 			if (!this.IsLockTargetMode)
 			{
-				// никакого смысла прыгать курсором туда-сюда
+				// no point in jumping the cursor back and forth
 				if (_offset == 0 && this.compositionValue.length == 1)
 					_offset = 1;
 			}
@@ -1398,7 +1401,7 @@
 					}
 
 					if (isEqual)
-						return; // не посылаем одинаковые замены!
+						return; // don't send identical replacements!
 				}
 			}
 
@@ -1662,15 +1665,15 @@
 			}
 			if ("IFRAME" == _name)
 			{
-				// перехват клавиатуры
+				// keyboard interception
 				t.Api.asc_enableKeyEvents(false, true);
 				t.nativeFocusElement = null;
 				return;
 			}
 
-			// перехватывает ли элемент ввод
+			// whether the element intercepts input
 			var _oo_editor_input    = _getAttirbute(t.nativeFocusElement, "oo_editor_input", 3);
-			// нужно ли прокидывать нажатие клавиш элементу (ТОЛЬКО keyDown)
+			// whether to forward key presses to the element (keyDown ONLY)
 			var _oo_editor_keyboard = _getAttirbute(t.nativeFocusElement, "oo_editor_keyboard", 3);
 
 			if (!_oo_editor_input && !_oo_editor_keyboard)
@@ -1681,7 +1684,7 @@
 
 			if (_oo_editor_input == "true")
 			{
-				// перехват клавиатуры
+				// keyboard interception
 				t.Api.asc_enableKeyEvents(false, true);
 				t.nativeFocusElement = null;
 				return;
@@ -1689,13 +1692,13 @@
 
 			if (_isElementEditable && (_oo_editor_input != "false"))
 			{
-				// перехват клавиатуры
+				// keyboard interception
 				t.Api.asc_enableKeyEvents(false, true);
 				t.nativeFocusElement = null;
 				return;
 			}
 
-			// итак, ввод у нас. теперь определяем, нужна ли клавиатура элементу
+			// so, input is ours. now determine if the element needs the keyboard
 			if (_oo_editor_keyboard != "true")
 				t.nativeFocusElement = null;
 

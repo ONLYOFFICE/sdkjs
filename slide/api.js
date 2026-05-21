@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -320,7 +323,7 @@
 
 		this.CoAuthoringApi.isPowerPoint = true;
 
-		// объекты, нужные для отправки в тулбар (шрифты, стили)
+		// objects needed for sending to toolbar (fonts, styles)
 		this._gui_editor_themes   = null;
 		this._gui_document_themes = null;
 
@@ -503,7 +506,7 @@
 						{
 							Lock.Set_Type(locktype_Other, true);
 						}
-						// Выставляем ID пользователя, залочившего данный элемент
+						// Set the ID of the user who locked this element
 						Lock.Set_UserId(e["user"]);
 
 						if (Class instanceof AscCommonSlide.PropLocker)
@@ -543,8 +546,8 @@
 							editor.sendEvent("asc_onLockCore", true);
 						}
 
-						// TODO: Здесь для ускорения надо сделать проверку, является ли текущим элемент с
-						//       заданным Id. Если нет, тогда и не надо обновлять состояние.
+						// TODO: For optimization, we need to check if the element with
+						//       the given Id is the current one. If not, then we don't need to update the state.
 						editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
 					}
 					else
@@ -635,7 +638,7 @@
 						}
 						else if (CurType === locktype_Mine)
 						{
-							// Такого быть не должно
+							// This should not happen
 							NewType = locktype_Mine;
 						}
 						else if (CurType === locktype_Other2 || CurType === locktype_Other3)
@@ -706,12 +709,12 @@
 		};
 		this.CoAuthoringApi.onSaveChanges            = function(e, userId, bFirstLoad)
 		{
-			// bSendEvent = false - это означает, что мы загружаем имеющиеся изменения при открытии
+			// bSendEvent = false - this means we are loading existing changes when opening
 			var Changes = new AscCommon.CCollaborativeChanges();
 			Changes.Set_Data(e);
 			AscCommon.CollaborativeEditing.Add_Changes(Changes);
 
-			// т.е. если bSendEvent не задан, то посылаем  сообщение + когда загрузился документ
+			// i.e. if bSendEvent is not set, we send the message + when the document is loaded
 			if (!bFirstLoad && t.bInit_word_control)
 			{
 				t.sync_CollaborativeChanges();
@@ -806,7 +809,7 @@
 
     //----------------------------------------------------------------------------------------------------------------------
     // SpellCheck_CallBack
-    //          Функция ответа от сервера.
+    //          Callback function from the server.
     //----------------------------------------------------------------------------------------------------------------------
     asc_docs_api.prototype.SpellCheck_CallBack = function(Obj)
     {
@@ -888,7 +891,7 @@
 			this.sendEvent("asc_onCollaborativeChanges");
 	};
 
-	// Эвент о пришедщих изменениях
+	// Event about incoming changes
 	asc_docs_api.prototype.syncCollaborativeChanges = function()
 	{
 		this.sendEvent("asc_onCollaborativeChanges");
@@ -914,7 +917,7 @@
 	{
 		var CollEditing = AscCommon.CollaborativeEditing;
 
-		// Можно модифицировать это условие на более быстрое (менять самим состояние в аргументах, а не запрашивать каждый раз)
+		// This condition can be optimized for speed (change the state ourselves in the arguments instead of requesting it each time)
 		var isCanSave = this.isDocumentModified() || (true !== CollEditing.Is_SingleUser() && 0 !== CollEditing.getOwnLocksLength());
 
 		if (true === CollEditing.Is_Fast() && true !== CollEditing.Is_SingleUser())
@@ -937,8 +940,8 @@
 	{
 		if (true === History.Have_Changes())
 		{
-			// дублирование евента. когда будет undo-redo - тогда
-			// эти евенты начнут отличаться
+			// event duplication. when undo-redo is implemented - then
+			// these events will start to differ
 			this.SetDocumentModified(true);
 		}
 		else
@@ -969,7 +972,7 @@
 	{
 		if (!this.canSave || this.isOpenedFrameEditor)
 		{
-			// Пока идет сохранение, мы не закрываем документ
+			// While saving is in progress, we don't close the document
 			return true;
 		}
 		return this.isDocumentModify;
@@ -1192,10 +1195,10 @@
 	{
 	    if (this.standartThemesStatus == 0)
         {
-            // 0 - начальное состояние
-            // 1 - просто чтобы не позволить грузить два раза
-            // 2 - загрузка скрипта/конец открытия документа
-            // 3 - конец открытия документа/загрузка скрипта
+            // 0 - initial state
+            // 1 - just to prevent loading twice
+            // 2 - script loading/end of document opening
+            // 3 - end of document opening/script loading
 
             this.standartThemesStatus = 1;
             var t = this;
@@ -1581,27 +1584,27 @@ background-repeat: no-repeat;\
 	};
 
 	// Callbacks
-	/* все имена callback'оф начинаются с On. Пока сделаны:
+	/* all callback names start with On. Currently implemented:
 	 OnBold,
 	 OnItalic,
 	 OnUnderline,
-	 OnTextPrBaseline(возвращается расположение строки - supstring, superstring, baseline),
-	 OnPrAlign(выравнивание по ширине, правому краю, левому краю, по центру),
-	 OnListType( возвращается AscCommon.asc_CListType )
+	 OnTextPrBaseline(returns line position - supstring, superstring, baseline),
+	 OnPrAlign(alignment: justify, right, left, center),
+	 OnListType( returns AscCommon.asc_CListType )
 
-	 фейк-функции ожидающие TODO:
+	 fake functions awaiting TODO:
 	 Print,Undo,Redo,Copy,Cut,Paste,Share,Save,Download & callbacks
 	 OnFontName, OnFontSize, OnLineSpacing
 
-	 OnFocusObject( возвращается массив asc_CSelectedObject )
-	 OnInitEditorStyles( возвращается CStylesPainter )
-	 OnSearchFound( возвращается CSearchResult );
-	 OnParaSpacingLine( возвращается AscCommon.asc_CParagraphSpacing )
-	 OnLineSpacing( не используется? )
-	 OnTextColor( возвращается AscCommon.CColor )
-	 OnTextHighLight( возвращается AscCommon.CColor )
-	 OnInitEditorFonts( возвращается массив объектов СFont )
-	 OnFontFamily( возвращается asc_CTextFontFamily )
+	 OnFocusObject( returns array of asc_CSelectedObject )
+	 OnInitEditorStyles( returns CStylesPainter )
+	 OnSearchFound( returns CSearchResult );
+	 OnParaSpacingLine( returns AscCommon.asc_CParagraphSpacing )
+	 OnLineSpacing( not used? )
+	 OnTextColor( returns AscCommon.CColor )
+	 OnTextHighLight( returns AscCommon.CColor )
+	 OnInitEditorFonts( returns array of CFont objects )
+	 OnFontFamily( returns asc_CTextFontFamily )
 	 */
 	var _callbacks = {};
 
@@ -1645,7 +1648,7 @@ background-repeat: no-repeat;\
 	};
 
 	// -------
-	// тут методы, замены евентов
+	// here are methods for event replacements
 	asc_docs_api.prototype.get_PropertyEditorThemes = function()
 	{
 		var ret = [this._gui_editor_themes, this._gui_document_themes];
@@ -1922,7 +1925,7 @@ background-repeat: no-repeat;\
 
 		var fixPos = props.fixPosition;
 		var notesFocus = presentation.IsFocusOnNotes();
-		if(props.shapeId)//при переходе между шейпами, скрываем значок спец.вставки
+		if(props.shapeId)//when switching between shapes, hide the special paste icon
 		{
 			var targetDocContent = presentation ? presentation.Get_TargetDocContent() : null;
 			if(targetDocContent && targetDocContent.Id === props.shapeId)
@@ -2061,7 +2064,7 @@ background-repeat: no-repeat;\
 		if (!_logicDoc)
 			return;
 
-		//TODO пересмотреть проверку лока и добавление новой точки(AscDFH.historydescription_Document_PasteHotKey)
+		//TODO review lock check and adding new history point(AscDFH.historydescription_Document_PasteHotKey)
 		if (false === _logicDoc.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, false))
 		{
 			if (isPasteOptions) {
@@ -2216,7 +2219,7 @@ background-repeat: no-repeat;\
 			AscCommon.CollaborativeEditing.Clear_CollaborativeMarks();
 		}
 
-		// Принимаем чужие изменения
+		// Apply other users' changes
 		AscCommon.CollaborativeEditing.Apply_Changes();
 
 		this.CoAuthoringApi.onUnSaveLock = function()
@@ -2228,7 +2231,7 @@ background-repeat: no-repeat;\
 			if (t.forceSaveForm) {
 				t.forceSaveForm();
 			}
-			// Выставляем, что документ не модифицирован
+			// Set document as not modified
 			t.CheckChangedDocument();
 			t.canSave    = true;
 			t.IsUserSave = false;
@@ -2236,7 +2239,7 @@ background-repeat: no-repeat;\
 				t.sync_EndAction(c_oAscAsyncActionType.Information, c_oAscAsyncAction.Save);
 			}
 
-			// Обновляем состояние возможности сохранения документа
+			// Update document save availability state
 			t._onUpdateDocumentCanSave();
 
 			if (undefined !== window["AscDesktopEditor"])
@@ -2254,7 +2257,7 @@ background-repeat: no-repeat;\
 			CursorInfo = History.Get_DocumentPositionBinary();
 		}
 
-		// Пересылаем свои изменения
+		// Send our changes
 		if (this.forceSaveUndoRequest)
 		{
 			AscCommon.CollaborativeEditing.Set_GlobalLock(false);
@@ -2341,8 +2344,8 @@ background-repeat: no-repeat;\
 
 	};
 	/*
-	 idOption идентификатор дополнительного параметра, c_oAscAdvancedOptionsID.TXT.
-	 option - какие свойства применить, пока массив. для TXT объект asc_CTextOptions(codepage)
+	 idOption - identifier of additional parameter, c_oAscAdvancedOptionsID.TXT.
+	 option - which properties to apply, currently an array. for TXT use asc_CTextOptions(codepage) object
 	 exp:	asc_setAdvancedOptions(c_oAscAdvancedOptionsID.TXT, new Asc.asc_CTextOptions(1200) );
 	 */
 	asc_docs_api.prototype.asc_setAdvancedOptions       = function(idOption, option)
@@ -2372,7 +2375,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.startGetDocInfo              = function()
 	{
 		/*
-		 Возвращаем объект следующего вида:
+		 Returns an object of the following type:
 		 {
 		 PageCount: 12,
 		 WordsCount: 2321,
@@ -2461,7 +2464,7 @@ background-repeat: no-repeat;\
 		this.sendEvent("asc_onZoom", zoom);
 	};
 	asc_docs_api.prototype.ClearPropObjCallback = function(prop)
-	{//колбэк предшествующий приходу свойств объекта, prop а всякий случай
+	{//callback preceding the arrival of object properties, prop just in case
 
 		this.sendEvent("asc_onClearPropObj", prop);
 	};
@@ -2506,12 +2509,12 @@ background-repeat: no-repeat;\
 	/*----------------------------------------------------------------*/
 	/*functions for working with search*/
 	/*
-	 структура поиска, предварительно, выглядит так
+	 search structure, preliminarily, looks like this
 	 {
-	 text: "...<b>слово поиска</b>...",
-	 pageNumber: 0, //содержит номер страницы, где находится искомая последовательность
-	 X: 0,//координаты по OX начала последовательности на данной страницы
-	 Y: 0//координаты по OY начала последовательности на данной страницы
+	 text: "...<b>search word</b>...",
+	 pageNumber: 0, //contains the page number where the search sequence is located
+	 X: 0,//X coordinate of the sequence start on this page
+	 Y: 0//Y coordinate of the sequence start on this page
 	 }
 	 */
 	asc_docs_api.prototype.startSearchText = function(what)
@@ -2534,7 +2537,7 @@ background-repeat: no-repeat;\
 
 
 	asc_docs_api.prototype.gotoSearchResultText = function(navigator)
-	{//переход к результату.
+	{//navigate to result.
 
 		this.WordControl.m_oDrawingDocument.CurrentSearchNavi = navigator;
 		this.WordControl.ToSearchResult();
@@ -2670,7 +2673,7 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_PutTextPrFontSize, size);
 			this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({FontSize : Math.min(size, 300)}), false);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
-			// для мобильной версии это важно
+			// this is important for mobile version
 			if (this.isMobileVersion)
 				this.UpdateInterfaceState();
 		}
@@ -2869,22 +2872,22 @@ background-repeat: no-repeat;\
 	/*setters*/
 	// Right = 0; Left = 1; Center = 2; Justify = 3; or using enum that written above
 
-	/* структура для параграфа
+	/* paragraph structure
 	 Ind :
 	 {
-	 Left      : 0,                    // Левый отступ
-	 Right     : 0,                    // Правый отступ
-	 FirstLine : 0                     // Первая строка
+	 Left      : 0,                    // Left indent
+	 Right     : 0,                    // Right indent
+	 FirstLine : 0                     // First line
 	 }
 	 Spacing :
 	 {
-	 Line     : 1.15,                  // Расстояние между строками внутри абзаца
-	 LineRule : linerule_Auto,         // Тип расстрояния между строками
-	 Before   : 0,                     // Дополнительное расстояние до абзаца
-	 After    : 10 * g_dKoef_pt_to_mm  // Дополнительное расстояние после абзаца
+	 Line     : 1.15,                  // Line spacing within paragraph
+	 LineRule : linerule_Auto,         // Line spacing type
+	 Before   : 0,                     // Additional spacing before paragraph
+	 After    : 10 * g_dKoef_pt_to_mm  // Additional spacing after paragraph
 	 },
-	 KeepLines : false,                    // переносить параграф на новую страницу,
-	 // если на текущей он целиком не убирается
+	 KeepLines : false,                    // move paragraph to new page,
+	 // if it doesn't fit entirely on current page
 	 PageBreakBefore : false
 	 */
 
@@ -2950,18 +2953,18 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
 	};
-	/* 	Маркированный список Type = 0
-	 нет         - SubType = -1
-	 черная точка - SubType = 1
-	 круг         - SubType = 2
-	 квадрат      - SubType = 3
-	 картинка     - SubType = -1
-	 4 ромба      - SubType = 4
-	 ч/б стрелка  - SubType = 5
-	 галка        - SubType = 6
+	/* 	Bulleted list Type = 0
+	 none         - SubType = -1
+	 black dot    - SubType = 1
+	 circle       - SubType = 2
+	 square       - SubType = 3
+	 picture      - SubType = -1
+	 4 diamonds   - SubType = 4
+	 b/w arrow    - SubType = 5
+	 checkmark    - SubType = 6
 
-	 Нумерованный список Type = 1
-	 нет - SubType = -1
+	 Numbered list Type = 1
+	 none - SubType = -1
 	 1.  - SubType = 1
 	 1)  - SubType = 2
 	 I.  - SubType = 3
@@ -2970,11 +2973,11 @@ background-repeat: no-repeat;\
 	 a.  - SubType = 6
 	 i.  - SubType = 7
 
-	 Многоуровневый список Type = 2
-	 нет            - SubType = -1
+	 Multilevel list Type = 2
+	 none           - SubType = -1
 	 1)a)i)        - SubType = 1
 	 1.1.1         - SubType = 2
-	 маркированный - SubType = 3
+	 bulleted      - SubType = 3
 	 */
 	asc_docs_api.prototype.put_ImageBulletFromFile = function () {
 		this.asc_addImage({isImageBullet: true});
@@ -3190,7 +3193,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.ShapeApply = function(prop)
 	{
-		// нужно определить, картинка это или нет
+		// need to determine if this is an image or not
 		var image_url = "";
 		var sToken = undefined;
 		prop.Width    = prop.w;
@@ -3647,7 +3650,7 @@ background-repeat: no-repeat;\
 		this.WordControl.m_oLogicDocument.SetParagraphIndent({FirstLine : value});
 	};
 	asc_docs_api.prototype.getFocusObject        = function()
-	{//возвратит тип элемента - параграф c_oAscTypeSelectElement.Paragraph, изображение c_oAscTypeSelectElement.Image, таблица c_oAscTypeSelectElement.Table, колонтитул c_oAscTypeSelectElement.Header.
+	{//returns element type - paragraph c_oAscTypeSelectElement.Paragraph, image c_oAscTypeSelectElement.Image, table c_oAscTypeSelectElement.Table, header/footer c_oAscTypeSelectElement.Header.
 
 	};
 
@@ -4027,7 +4030,7 @@ background-repeat: no-repeat;\
 
 	};
 	asc_docs_api.prototype.set_Borders             = function(typeBorders, size, Color)
-	{//если size == 0 то границы нет.
+	{//if size == 0 then there is no border.
 
 	};
 	asc_docs_api.prototype.set_TableBackground     = function(Color)
@@ -4069,10 +4072,10 @@ background-repeat: no-repeat;\
 
 	/*
 	 {
-	 TableWidth   : null - галочка убрана, либо заданное значение в мм
-	 TableSpacing : null - галочка убрана, либо заданное значение в мм
+	 TableWidth   : null - checkbox unchecked, or specified value in mm
+	 TableSpacing : null - checkbox unchecked, or specified value in mm
 
-	 TableDefaultMargins :  // маргины для всей таблицы(значение по умолчанию)
+	 TableDefaultMargins :  // margins for entire table (default value)
 	 {
 	 Left   : 1.9,
 	 Right  : 1.9,
@@ -4082,17 +4085,17 @@ background-repeat: no-repeat;\
 
 	 CellMargins :
 	 {
-	 Left   : 1.9, (null - неопределенное значение)
-	 Right  : 1.9, (null - неопределенное значение)
-	 Top    : 0,   (null - неопределенное значение)
-	 Bottom : 0,   (null - неопределенное значение)
-	 Flag   : 0 - У всех выделенных ячеек значение берется из TableDefaultMargins
-	 1 - У выделенных ячеек есть ячейки с дефолтовыми значениями, и есть со своими собственными
-	 2 - У всех ячеек свои собственные значения
+	 Left   : 1.9, (null - undefined value)
+	 Right  : 1.9, (null - undefined value)
+	 Top    : 0,   (null - undefined value)
+	 Bottom : 0,   (null - undefined value)
+	 Flag   : 0 - All selected cells use values from TableDefaultMargins
+	 1 - Selected cells have both default values and custom values
+	 2 - All cells have their own custom values
 	 }
 
-	 TableAlignment : 0, 1, 2 (слева, по центру, справа)
-	 TableIndent : значение в мм,
+	 TableAlignment : 0, 1, 2 (left, center, right)
+	 TableIndent : value in mm,
 	 TableWrappingStyle : 0, 1 (inline, flow)
 	 TablePaddings:
 	 {
@@ -4102,7 +4105,7 @@ background-repeat: no-repeat;\
 	 Bottom : 0
 	 }
 
-	 TableBorders : // границы таблицы
+	 TableBorders : // table borders
 	 {
 	 Bottom :
 	 {
@@ -4153,7 +4156,7 @@ background-repeat: no-repeat;\
 	 }
 	 }
 
-	 CellBorders : // границы выделенных ячеек
+	 CellBorders : // selected cells borders
 	 {
 	 ForSelectedCells : true,
 
@@ -4189,8 +4192,8 @@ background-repeat: no-repeat;\
 	 Space :
 	 },
 
-	 InsideH : // данного элемента может не быть, если у выделенных ячеек
-	 // нет горизонтальных внутренних границ
+	 InsideH : // this element may not exist if selected cells
+	 // have no horizontal inner borders
 	 {
 	 Color : { r : 0, g : 0, b : 0 },
 	 Value : border_Single,
@@ -4198,8 +4201,8 @@ background-repeat: no-repeat;\
 	 Space :
 	 },
 
-	 InsideV : // данного элемента может не быть, если у выделенных ячеек
-	 // нет вертикальных внутренних границ
+	 InsideV : // this element may not exist if selected cells
+	 // have no vertical inner borders
 	 {
 	 Color : { r : 0, g : 0, b : 0 },
 	 Value : border_Single,
@@ -4210,12 +4213,12 @@ background-repeat: no-repeat;\
 
 	 TableBackground :
 	 {
-	 Value : тип заливки(прозрачная или нет),
+	 Value : fill type (transparent or not),
 	 Color : { r : 0, g : 0, b : 0 }
 	 }
-	 CellsBackground : null если заливка не определена для выделенных ячеек
+	 CellsBackground : null if fill is not defined for selected cells
 	 {
-	 Value : тип заливки(прозрачная или нет),
+	 Value : fill type (transparent or not),
 	 Color : { r : 0, g : 0, b : 0 }
 	 }
 
@@ -4648,7 +4651,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_addOleObjectAction = function(sLocalUrl, Data, sApplicationId, fWidth, fHeight, nWidthPix, nHeightPix, bSelect, arrImagesForAddToHistory)
 	{
 		var _image = this.ImageLoader.LoadImage(AscCommon.getFullImageSrc2(sLocalUrl), 1);
-		if (null != _image)//картинка уже должна быть загружена
+		if (null != _image)//image should already be loaded
 		{
             this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_PasteHotKey);
 			this.WordControl.m_oLogicDocument.AddOleObject(fWidth, fHeight, nWidthPix, nHeightPix, sLocalUrl, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
@@ -4866,9 +4869,9 @@ background-repeat: no-repeat;\
 			}
 		}
 	};
-	/* В качестве параметра  передается объект класса Asc.asc_CImgProperty, он же приходит на OnImgProp
-	 Asc.asc_CImgProperty заменяет пережнюю структуру:
-	 если параметр не имеет значения то передвать следует null, напримере inline-картинок: в качестве left,top,bottom,right,X,Y,ImageUrl необходимо передавать null.
+	/* An object of class Asc.asc_CImgProperty is passed as parameter, it also arrives at OnImgProp
+	 Asc.asc_CImgProperty replaces the previous structure:
+	 if a parameter has no value, null should be passed, for example with inline images: left,top,bottom,right,X,Y,ImageUrl should be null.
 	 {
 	 Width: 0,
 	 Height: 0,
@@ -5024,7 +5027,7 @@ background-repeat: no-repeat;\
 
 	};
 	asc_docs_api.prototype.set_PositionOnPage      = function(X, Y)
-	{//расположение от начала страницы
+	{//position from page start
 
 	};
 	asc_docs_api.prototype.get_OriginalSizeImage   = function()
@@ -5287,7 +5290,7 @@ background-repeat: no-repeat;\
 
 
 	//-----------------------------------------------------------------
-	// Функции для работы с комментариями
+	// Functions for working with comments
 	//-----------------------------------------------------------------
 	function asc_CCommentDataSlide(obj)
 	{
@@ -5609,7 +5612,7 @@ background-repeat: no-repeat;\
 		 X -= ((this.WordControl.m_oMainContent.Bounds.L * g_dKoef_mm_to_pix) >> 0);
 		 }
 		 */
-		// TODO: Переделать на нормальный массив
+		// TODO: Refactor to a proper array
 		this.sendEvent("asc_onShowComment", [Id], X, Y);
 	};
 
@@ -5620,7 +5623,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.sync_UpdateCommentPosition = function(Id, X, Y)
 	{
-		// TODO: Переделать на нормальный массив
+		// TODO: Refactor to a proper array
 		this.sendEvent("asc_onUpdateCommentPosition", [Id], X, Y);
 	};
 
@@ -5654,18 +5657,18 @@ background-repeat: no-repeat;\
 	};
 
 
-	// работа с шрифтами
+	// working with fonts
 	asc_docs_api.prototype.asyncFontsDocumentStartLoaded = function(blockType)
 	{
-		// здесь прокинуть евент о заморозке меню
-		// и нужно вывести информацию в статус бар
+		// here we need to fire event about menu freeze
+		// and display information in status bar
 		if (this.isPasteFonts_Images)
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.LoadFont);
 		else
 		{
 			this.sync_StartAction(undefined === blockType ? c_oAscAsyncActionType.BlockInteraction : blockType, c_oAscAsyncAction.LoadDocumentFonts);
 
-			// заполним прогресс
+			// fill progress
 			this.updateOpenDocumentProgress();
 			var _loader_object = this.WordControl.m_oLogicDocument;
 			if (_loader_object !== undefined && _loader_object != null)
@@ -5687,7 +5690,7 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asyncFontsDocumentEndLoaded   = function(blockType)
 	{
-		// все, шрифты загружены. Теперь нужно подгрузить картинки
+		// fonts are loaded. Now we need to load images
 		if (this.isPasteFonts_Images)
 			this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.LoadFont);
 		else
@@ -5733,7 +5736,7 @@ background-repeat: no-repeat;\
 		}
 
 		this.GenerateStyles();
-		// открытие после загрузки документа
+		// opening after document load
 
 		var _loader_object = this.WordControl.m_oLogicDocument;
 		if (null == _loader_object)
@@ -5788,7 +5791,7 @@ background-repeat: no-repeat;\
 
 		this.EndActionLoadImages = 0;
 
-		// размораживаем меню... и начинаем считать документ
+		// unfreeze menu... and start calculating document
 		if (this.isPasteFonts_Images)
 		{
 			this.isPasteFonts_Images = false;
@@ -5964,7 +5967,7 @@ background-repeat: no-repeat;\
 		if (this.isViewMode)
 			this.asc_setViewMode(true);
 
-		// Меняем тип состояния (на никакое)
+		// Change state type (to none)
 		this.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.None;
 		this.goTo();
 		this.onNeedUpdateExternalReferenceOnOpen();
@@ -6114,7 +6117,7 @@ background-repeat: no-repeat;\
 	};
 
 	//----------------------------------------------------------------------------------------------------------------------
-	// Работаем с формулами
+	// Working with formulas
 	//----------------------------------------------------------------------------------------------------------------------
 	asc_docs_api.prototype.asc_SetMathProps = function(MathProps)
 	{
@@ -6160,7 +6163,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asyncImageEndLoaded = function(_image, placeholder)
 	{
-		// отжать заморозку меню
+		// release menu freeze
 		if (this.asyncImageEndLoaded2)
 			this.asyncImageEndLoaded2(_image, placeholder);
 		else
@@ -6224,8 +6227,8 @@ background-repeat: no-repeat;\
         AscFonts.FontPickerByCharacter.extendFonts(_fonts);
 		if (0 == _count && false === this.FontLoader.CheckFontsNeedLoading(_fonts))
 		{
-			// никаких евентов. ничего грузить не нужно. сделано для сафари под макОс.
-			// там при LongActions теряется фокус и вставляются пробелы
+			// no events. nothing needs to be loaded. done for Safari on macOS.
+			// there, during LongActions focus is lost and spaces are inserted
 			this.pasteCallback();
 			this.pasteCallback            = null;
 			return;
@@ -6680,7 +6683,7 @@ background-repeat: no-repeat;\
 
 
 	//-----------------------------------------------------------------
-	// Функции для работы с гиперссылками
+	// Functions for working with hyperlinks
 	//-----------------------------------------------------------------
 	asc_docs_api.prototype.can_AddHyperlink = function () {
 		const oPresentation = this.private_GetLogicDocument();
@@ -6714,7 +6717,7 @@ background-repeat: no-repeat;\
 		return cNvProps && AscCommon.isRealObject(cNvProps.hlinkClick) ? false : null;
 	};
 
-	// HyperProps - объект CHyperlinkProperty
+	// HyperProps - CHyperlinkProperty object
 	asc_docs_api.prototype.add_Hyperlink = function(HyperProps)
 	{
 		if(null !== HyperProps.Text && undefined !== HyperProps.Text)
@@ -6731,7 +6734,7 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	// HyperProps - объект CHyperlinkProperty
+	// HyperProps - CHyperlinkProperty object
 	asc_docs_api.prototype.change_Hyperlink = function(HyperProps)
 	{
 		this.WordControl.m_oLogicDocument.ModifyHyperlink(HyperProps);
@@ -6761,7 +6764,7 @@ background-repeat: no-repeat;\
 	};
 
     //-----------------------------------------------------------------
-    // Функции для работы с орфографией
+    // Functions for working with spell checking
     //-----------------------------------------------------------------
     asc_docs_api.prototype.sync_SpellCheckCallback = function(Word, Checked, Variants, ParaId, Element)
     {
@@ -6810,7 +6813,7 @@ background-repeat: no-repeat;\
 		var LogicDocument = this.WordControl.m_oLogicDocument;
 		if (LogicDocument)
 		{
-			// TODO: сделать нормальный сброс слова
+			// TODO: implement proper word reset
 			var oldWordStatus = LogicDocument.Spelling.IsIgnored(word);
 			if (true !== oldWordStatus)
 			{
@@ -7355,15 +7358,20 @@ background-repeat: no-repeat;\
 	{
 		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
 
-		// применение темы
+		// apply theme
 		var _array = this.WordControl.m_oLogicDocument.GetSelectedSlides();
 		this.WordControl.m_oLogicDocument.changeTheme(theme_load_info, (_array.length <= 1 && !this.bSelectedSlidesTheme) ? null : _array);
 		this.WordControl.ThemeGenerateThumbnails(theme_load_info.Master);
-		// меняем шаблоны в меню
+		// change templates in menu
 		this.WordControl.CheckLayouts();
 		this.WordControl.m_oLogicDocument.FinalizeAction(true);
 
 		this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.LoadTheme);
+
+		if (this._pluginApplyThemeCallback) {
+			this._pluginApplyThemeCallback();
+			this._pluginApplyThemeCallback = null;
+		}
 	};
 
 	asc_docs_api.prototype.ChangeLayout = function(layout_index)
@@ -7508,8 +7516,8 @@ background-repeat: no-repeat;\
 		if (window.g_asc_plugins) {
 
 			window.g_asc_plugins.onPluginEvent('onSlideShowSlideChanged', {
-				slideIndex: slideIndex,
-				previousSlideIndex: previousSlideIndex
+				"slideIndex": slideIndex,
+				"previousSlideIndex": previousSlideIndex
 			});
 
 			const slidesCount = this.getCountPages();
@@ -8098,6 +8106,10 @@ background-repeat: no-repeat;\
 			}
 			oPresentation.UpdateInterface();
 			oPresentation.FinalizeAction();
+			if (oTransition.get_TransitionType() !== undefined || oTransition.get_TransitionOption() !== undefined)
+			{
+				this.SlideTransitionPlay();
+			}
 		}
 	};
 	asc_docs_api.prototype.SlideTransitionApplyToAll = function()
@@ -8175,7 +8187,7 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	// Вставка диаграмм
+	// Chart insertion
 	asc_docs_api.prototype.asc_getChartObject = function(type, placeholder)
 	{
 		const oLogicDocument = this.private_GetLogicDocument();
@@ -8231,7 +8243,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_editChartDrawingObject = function(chartBinary)
 	{
 		this.asc_onCloseFrameEditor();
-		// Находим выделенную диаграмму и накатываем бинарник
+		// Find selected chart and apply binary
 		const oLogicDocument = this.WordControl.m_oLogicDocument;
 		if (oLogicDocument)
 		{
@@ -8311,7 +8323,7 @@ background-repeat: no-repeat;\
 	};
 
 	//-----------------------------------------------------------------
-	// События контекстного меню
+	// Context menu events
 	//-----------------------------------------------------------------
 
 	function CContextMenuData(oData)
@@ -8406,7 +8418,7 @@ background-repeat: no-repeat;\
 		this.ThemeLoader     = new AscCommonSlide.CThemeLoader();
 		this.ThemeLoader.Api = this;
 
-		//выставляем тип copypaste
+		//set copypaste type
 		PasteElementsId.g_bIsDocumentCopyPaste = false;
 
 		this.CreateComponents();
@@ -8852,8 +8864,8 @@ background-repeat: no-repeat;\
 	{
 		var oLogicDocument = this.WordControl.m_oLogicDocument;
 
-		// TODO: Вообще здесь нужно запрашивать шрифты, которые использовались в старой формуле,
-		//      но пока это только 1 шрифт "Cambria Math".
+		// TODO: In general, we need to request fonts that were used in the old formula here,
+		//      but for now it's only 1 font "Cambria Math".
 		var loader   = AscCommon.g_font_loader;
 		var fontinfo = AscFonts.g_fontApplication.GetFontInfo("Cambria Math");
 		var isasync  = loader.LoadFont(fontinfo, function()
@@ -8927,7 +8939,7 @@ background-repeat: no-repeat;\
 
 	window["asc_docs_api"].prototype["asc_nativeApplyChanges2"] = function(data, isFull)
 	{
-		// Чтобы заново созданные параграфы не отображались залоченными
+		// So that newly created paragraphs don't appear locked
 		g_oIdCounter.Set_Load(true);
 
 		var stream = new AscCommon.FT_Stream2(data, data.length);
@@ -8935,7 +8947,7 @@ background-repeat: no-repeat;\
 		var Loader = {Reader : stream, Reader2 : null};
 		var _color = new AscCommonWord.CDocumentColor(191, 255, 199);
 
-		// Применяем изменения, пока они есть
+		// Apply changes while they exist
 		var _count = Loader.Reader.GetLong();
 
 		var _pos = 4;
@@ -8988,7 +9000,7 @@ background-repeat: no-repeat;\
 		{
 			AscCommon.CollaborativeEditing.m_aChanges = [];
 			
-			// Делаем проверки корректности новых изменений
+			// Perform validation checks on new changes
 			AscCommon.CollaborativeEditing.Check_MergeData();
 
 			AscCommon.CollaborativeEditing.OnEnd_ReadForeignChanges();
@@ -9219,13 +9231,13 @@ background-repeat: no-repeat;\
 	};
 
 	asc_docs_api.prototype.getDefaultFontFamily = function () {
-		//TODO переделать и отдавать дефолтовый шрифт
+		//TODO refactor to return default font
 		var defaultFont = "Arial";
 		return defaultFont;
 	};
 
 	asc_docs_api.prototype.getDefaultFontSize = function () {
-		//TODO переделать и отдавать дефолтовый шрифт
+		//TODO refactor to return default font size
 		var defaultSize = 11;
 		return defaultSize;
 	};

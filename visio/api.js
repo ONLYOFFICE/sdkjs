@@ -1,33 +1,36 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -276,7 +279,7 @@
 		}
 		this.canvas = document.getElementById("id_viewer");
 	};
-	// работа с шрифтами
+	// Font operations
 	VisioEditorApi.prototype.asyncFontsDocumentStartLoaded = function(blockType)
 	{
 		this.sync_StartAction(undefined === blockType ? Asc.c_oAscAsyncActionType.BlockInteraction : blockType, Asc.c_oAscAsyncAction.LoadDocumentFonts);
@@ -309,7 +312,7 @@
 			// this.sendColorThemes(this.WordControl.m_oLogicDocument.themes[0]);
 		}
 
-		// открытие после загрузки документа
+		// Opening after document loading
 
 		var _loader_object = this.WordControl.m_oLogicDocument;
 		if (null == _loader_object)
@@ -332,7 +335,7 @@
 	{
 		this.ImageLoader.bIsLoadDocumentFirst = false;
 
-		// на методе _openDocumentEndCallback может поменяться this.EndActionLoadImages
+		// this.EndActionLoadImages may change in _openDocumentEndCallback method
 		if (this.EndActionLoadImages == 1)
 		{
 			this.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.LoadDocumentImages);
@@ -365,10 +368,37 @@
 		if (this.isViewMode)
 			this.asc_setViewMode(true);
 
-		// Меняем тип состояния (на никакое)
+		// Change state type (to none)
 		this.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.None;
 
 		this.WordControl.GoToPage(this.Document.getCurrentPage());
+	};
+	VisioEditorApi.prototype.asc_setViewMode = function(isViewMode)
+	{
+		this.isViewMode = !!isViewMode;
+		if (!this.isLoadFullApi)
+		{
+			return;
+		}
+
+		if (this.isViewMode)
+		{
+			AscCommon.CollaborativeEditing.Set_GlobalLock(true);
+			if (null != this.WordControl.m_oLogicDocument)
+			{
+				this.WordControl.m_oLogicDocument.viewMode = true;
+			}
+			this.turnOffSpecialModes();
+		}
+		else
+		{
+			if (null != this.WordControl.m_oLogicDocument)
+			{
+				this.WordControl.m_oLogicDocument.viewMode = false;
+			}
+		}
+
+		this.checkInputMode();
 	};
 	VisioEditorApi.prototype._coAuthoringInitEnd = function()
 	{
@@ -709,7 +739,7 @@
 		return false;
 		if (!this.canSave)
 		{
-			// Пока идет сохранение, мы не закрываем документ
+			// While saving is in progress, we don't close the document
 			return true;
 		}
 		return this.isDocumentModify;

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -61,8 +64,8 @@ function (window, undefined) {
 			formatInfo = numFormat ? numFormat.getTypeInfo() : null;
 			sFormat = numFormat ? numFormat.sFormat : null;
 		});
-		//такие форматы как дата не поддерживаются
-		//TODO функция нуждается в доработке
+		//formats like date are not supported
+		//TODO function needs improvement
 		if (formatInfo) {
 			let postfix = "";
 			if (numFormat && (numFormat.oNegativeFormat && numFormat.oNegativeFormat.Color !== -1)) {
@@ -171,6 +174,7 @@ function (window, undefined) {
 	//cCell.prototype.exactTypes = {1: 1};
 	cCell.prototype.argumentsType = [argType.text, argType.reference];
 	cCell.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cCell.prototype.enabledToSingle = {"1": true};
 	/**
 	 * The CELL function returns information about the formatting, location, or contents of a cell.
 	 * 
@@ -179,10 +183,10 @@ function (window, undefined) {
 	 * @return {text} Returns information about the formatting, location, or contents of a cell.
 	 */
 	cCell.prototype.Calculate = function (arg, opt_bbox, opt_defName, ws) {
-		//специально ввожу ограничения - минимум 2 аргумента
-		//в случае одного аргумента необходимо следить всегда за последней измененной ячейкой
-		//так же при сборке необходимо записывать данные об последней измененной ячейке
-		//нужно дли это ?
+		//intentionally enforcing a restriction - minimum 2 arguments
+		//with one argument, the last changed cell must always be tracked
+		//also, during assembly, data about the last changed cell must be recorded
+		//is this needed?
 		let arg0 = arg[0];
 		let arg1 = arg[1];
 		arg0 = arg0.tocString();
@@ -238,7 +242,7 @@ function (window, undefined) {
 				}
 				case "sheet":
 				case _cCellFunctionLocal["sheet"]: {
-					//нет в офф. документации
+					//not in official documentation
 					//ms excel returns 1?
 					res = new cNumber(1);
 					break;
@@ -261,7 +265,7 @@ function (window, undefined) {
 				}
 				case "filename":
 				case _cCellFunctionLocal["filename"]: {
-					//TODO без пути
+					//TODO without path
 					let fileName;
 					if (spreadsheetLayout && spreadsheetLayout["formulaProps"] && spreadsheetLayout["formulaProps"]["docTitle"]) {
 						fileName = spreadsheetLayout["formulaProps"]["docTitle"];
@@ -587,6 +591,7 @@ function (window, undefined) {
 	cISEVEN.prototype.argumentsMax = 1;
 	cISEVEN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cISEVEN.prototype.argumentsType = [argType.any];
+	cISEVEN.prototype.enabledToSingle = {"0": true};
 	cISEVEN.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (arg0 instanceof cArray) {
@@ -625,8 +630,9 @@ function (window, undefined) {
 	cISFORMULA.prototype.isXLFN = true;
 	cISFORMULA.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
 	cISFORMULA.prototype.argumentsType = [argType.reference];
+	cISFORMULA.prototype.enabledToSingle = {"0": true};
 	cISFORMULA.prototype.Calculate = function (arg) {
-		//есть различия в поведении этой формулы для ms и lo(для нескольких ячеек с данными)
+		//there are differences in behavior of this formula between MS and LO (for multiple cells with data)
 		var arg0 = arg[0];
 		var res = false;
 		if ((arg0 instanceof cArea || arg0 instanceof cArea3D) && arg0.range) {
@@ -783,6 +789,7 @@ function (window, undefined) {
 	cISODD.prototype.argumentsMax = 1;
 	cISODD.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cISODD.prototype.argumentsType = [argType.any];
+	cISODD.prototype.enabledToSingle = {"0": true};
 	cISODD.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (arg0 instanceof cArray) {
@@ -820,6 +827,7 @@ function (window, undefined) {
 	cISREF.prototype.argumentsMax = 1;
 	cISREF.prototype.arrayIndexes = {0: 1};
 	cISREF.prototype.argumentsType = [argType.any];
+	cISREF.prototype.enabledToSingle = {"0": true};
 	cISREF.prototype.Calculate = function (arg) {
 		if ((arg[0] instanceof cRef || arg[0] instanceof cArea || arg[0] instanceof cArea3D ||
 			arg[0] instanceof cRef3D) && arg[0].isValid && arg[0].isValid()) {
@@ -876,19 +884,24 @@ function (window, undefined) {
 	cN.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cN.prototype.arrayIndexes = {0: 1};
 	cN.prototype.argumentsType = [argType.any];
+	cN.prototype.enabledToSingle = {"0": true};
 	cN.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (arg0 instanceof cArray) {
+			var res = new cArray();
 			arg0.foreach(function (elem, r, c) {
+				if (!res.array[r]) {
+					res.addRow();
+				}
 				if (elem instanceof cNumber || elem instanceof cError) {
-					this.array[r][c] = elem;
+					res.addElement(elem);
 				} else if (elem instanceof cBool) {
-					this.array[r][c] = elem.tocNumber();
+					res.addElement(elem.tocNumber());
 				} else {
-					this.array[r][c] = new cNumber(0);
+					res.addElement(new cNumber(0));
 				}
 			});
-			return arg0;
+			return res;
 		} else if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
 			arg0 = arg0.cross(arguments[1]);
 		} else if (arg0 instanceof cRef || arg0 instanceof cRef3D) {
@@ -939,6 +952,7 @@ function (window, undefined) {
 	cSHEET.prototype.isXLFN = true;
 	cSHEET.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cSHEET.prototype.argumentsType = [argType.text];
+	cSHEET.prototype.enabledToSingle = {"0": true};
 	cSHEET.prototype.Calculate = function (arg, opt_bbox, opt_defName, ws) {
 
 		var res = null;
@@ -988,6 +1002,7 @@ function (window, undefined) {
 	cSHEETS.prototype.isXLFN = true;
 	cSHEETS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cSHEETS.prototype.argumentsType = [argType.reference];
+	cSHEETS.prototype.enabledToSingle = {"0": true};
 	cSHEETS.prototype.Calculate = function (arg, opt_bbox, opt_defName, ws) {
 
 		var res;
@@ -1036,9 +1051,9 @@ function (window, undefined) {
 	cTYPE.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
-			//todo пересмотреть!
-			//заглушка для формулы массива
-			//ms воспринимает данный аргумент как массив
+			//todo review!
+			//stub for array formula
+			//MS treats this argument as an array
 			if (this.bArrayFormula) {
 				arg0 = arg[0].getValue()
 			} else {

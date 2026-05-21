@@ -15,6 +15,7 @@
 			"vendor/string.js",
 			"vendor/array.js",
 			"common/editorscommon.js",
+			"common/colorUtils.js",
           "common/frameManager.js",
           "common/BulletPreviewDrawer.js",
 			"common/HistoryCommon.js",
@@ -55,6 +56,7 @@
 			
 			"common/nameMap.js",
 			"common/downloaderfiles.js",
+			"common/NumFormatData.js",
 			"common/NumFormat.js",
 			"common/SerializeChart.js",
 
@@ -176,8 +178,16 @@
 			"cell/model/CellComment.js",
 			"cell/model/whatIfAnalysis.js",
 			"cell/model/SheetMemory.js",
+			"cell/model/CellStyleStorage/RangeAttrArray.js",
 			"cell/model/WorkbookElems.js",
+			"cell/model/CellStyleStorage/Core.js",
+			"cell/model/CellStyleStorage/Structural.js",
+			"cell/model/CellStyleStorage/ContentIterator.js",
+			"cell/model/CellStyleStorage/Serialization.js",
+			"cell/model/CellStyleStorage/LegacyMigration.js",
 			"cell/model/Workbook.js",
+			"cell/model/CellIterators.js",
+			"cell/model/CellStyleStorage/Compatibility.js",
 			"cell/model/Serialize.js",
 			"cell/model/ConditionalFormatting.js",
 			"cell/model/DataValidation.js",
@@ -402,10 +412,6 @@
 			"word/Editor/api/document-section-props.js",
 			
 			"word/Editor/document-visitor.js",
-			
-			"word/Editor/annotations/custom-text-annotator/custom-text-annotator.js",
-			"word/Editor/annotations/custom-text-annotator/range-marks.js",
-			"word/Editor/annotations/custom-text-annotator/text-annotator-manager.js",
 			
 			"word/apiBuilder.js",
 			"slide/apiBuilder.js",

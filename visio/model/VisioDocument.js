@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -156,7 +159,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		// this.EmbeddedData = null;
 
 		//------------------------------------------------------------------------------------------------------------------
-		//  Сохраняем ссылки на глобальные объекты
+		//  Save references to global objects
 		//------------------------------------------------------------------------------------------------------------------
 		this.History              = History;
 		this.idCounter            = AscCommon.g_oIdCounter;
@@ -165,7 +168,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.api                  = Api;
 		this.DrawingDocument = DrawingDocument
 		//------------------------------------------------------------------------------------------------------------------
-		//  Выставляем ссылки на главный класс
+		//  Set references to the main class
 		//------------------------------------------------------------------------------------------------------------------
 		if (false !== isMainLogicDocument)
 		{
@@ -398,7 +401,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 	 * @return {number}
 	 */
 	CVisioDocument.prototype.GetSlideType = function(nIdx) {
-		//чтобы не работал select thumbnail c ctrl или shift
+		//to prevent select thumbnail from working with ctrl or shift
 		return nIdx;
 	};
 
@@ -1040,7 +1043,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		let nStartHistoryIndex = this.History.Index;
 
 
-		// // Сбрасываем текущий элемент в поиске
+		// // Reset the current element in search
 		// if (this.SearchEngine.Count > 0)
 		// 	this.SearchEngine.ResetCurrent();
 
@@ -1061,9 +1064,9 @@ AscDFH.historyitem_type_VisioWindow = 328;
 			{
 				//
 			}
-			else if (e.KeyCode === 35) // клавиша End
+			else if (e.KeyCode === 35) // End key
 			{
-				if (true === e.CtrlKey) // Ctrl + End - переход в конец документа
+				if (true === e.CtrlKey) // Ctrl + End - go to the end of the document
 				{
 					WordControl.m_oScrollVerApi.scrollTo(WordControl.m_dScrollX_max, WordControl.m_dScrollY_max);
 				}
@@ -1072,9 +1075,9 @@ AscDFH.historyitem_type_VisioWindow = 328;
 					WordControl.m_oScrollVerApi.scrollTo(0, WordControl.m_dScrollY_max);
 				}
 			}
-			else if (e.KeyCode === 36) // клавиша Home
+			else if (e.KeyCode === 36) // Home key
 			{
-				if (true === e.CtrlKey) // Ctrl + Home - переход в начало документа
+				if (true === e.CtrlKey) // Ctrl + Home - go to the beginning of the document
 				{
 					WordControl.m_oScrollVerApi.scrollTo(WordControl.m_dScrollX_max, 0);
 				}
@@ -1208,8 +1211,8 @@ AscDFH.historyitem_type_VisioWindow = 328;
 	AscFormat.InitClass(CPages, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioPages);
 
 	// Docs:
-	// Элемент Shapes (PageContents_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/shapes-element-pagecontents_type-complextypevisio-xml
-	// PageContents_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/pagecontents_type-complextypevisio-xml
+	// Element Shapes (PageContents_Type complexType): https://learn.microsoft.com/en-us/office/client-developer/visio/shapes-element-pagecontents_type-complextypevisio-xml
+	// PageContents_Type complexType: https://learn.microsoft.com/en-us/office/client-developer/visio/pagecontents_type-complextypevisio-xml
 	/**
 	 * @extends AscFormat.CBaseFormatNoIdObject
 	 * @constructor
@@ -1405,9 +1408,9 @@ AscDFH.historyitem_type_VisioWindow = 328;
 	AscFormat.InitClass(RefBy_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioRefBy);
 
 	// Docs:
-	// Элемент PageSheet (Master_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/pagesheet-element-master_type-complextypevisio-xml
-	// Элемент Rel (Master_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/rel-element-master_type-complextypevisio-xml
-	// Master_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/master_type-complextypevisio-xml
+	// Element PageSheet (Master_Type complexType): https://learn.microsoft.com/en-us/office/client-developer/visio/pagesheet-element-master_type-complextypevisio-xml
+	// Element Rel (Master_Type complexType): https://learn.microsoft.com/en-us/office/client-developer/visio/rel-element-master_type-complextypevisio-xml
+	// Master_Type complexType: https://learn.microsoft.com/en-us/office/client-developer/visio/master_type-complextypevisio-xml
 	/**
 	 * @extends AscFormat.CBaseFormatNoIdObject
 	 * @constructor
@@ -1446,8 +1449,8 @@ AscDFH.historyitem_type_VisioWindow = 328;
 	AscFormat.InitClass(Master_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioMaster);
 
 	// Docs:
-	// Элемент Icon (MasterShortcut_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/icon-element-mastershortcut_type-complextypevisio-xml
-	// MasterShortcut_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/mastershortcut_type-complextypevisio-xml
+	// Element Icon (MasterShortcut_Type complexType): https://learn.microsoft.com/en-us/office/client-developer/visio/icon-element-mastershortcut_type-complextypevisio-xml
+	// MasterShortcut_Type complexType: https://learn.microsoft.com/en-us/office/client-developer/visio/mastershortcut_type-complextypevisio-xml
 	/**
 	 * @extends AscFormat.CBaseFormatNoIdObject
 	 * @constructor
@@ -1512,12 +1515,12 @@ AscDFH.historyitem_type_VisioWindow = 328;
 	AscFormat.InitClass(DataConnection_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioDataConnection);
 
 	// Docs:
-	// Элемент DynamicGridEnabled (DocumentSettings_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/dynamicgridenabled-element-documentsettings_type-complextypevisio-xml
-	// Элемент GlueSettings (DocumentSettings_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/gluesettings-element-documentsettings_type-complextypevisio-xml
-	// Элемент SnapAngles (DocumentSettings_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/snapangles-element-documentsettings_type-complextypevisio-xml
-	// Элемент SnapExtensions (DocumentSettings_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/snapextensions-element-documentsettings_type-complextypevisio-xml
-	// Элемент SnapSettings (DocumentSettings_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/snapsettings-element-documentsettings_type-complextypevisio-xml
-	// DocumentSettings_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/documentsettings_type-complextypevisio-xml
+	// Element DynamicGridEnabled (DocumentSettings_Type complexType): https://learn.microsoft.com/en-us/office/client-developer/visio/dynamicgridenabled-element-documentsettings_type-complextypevisio-xml
+	// Element GlueSettings (DocumentSettings_Type complexType): https://learn.microsoft.com/en-us/office/client-developer/visio/gluesettings-element-documentsettings_type-complextypevisio-xml
+	// Element SnapAngles (DocumentSettings_Type complexType): https://learn.microsoft.com/en-us/office/client-developer/visio/snapangles-element-documentsettings_type-complextypevisio-xml
+	// Element SnapExtensions (DocumentSettings_Type complexType): https://learn.microsoft.com/en-us/office/client-developer/visio/snapextensions-element-documentsettings_type-complextypevisio-xml
+	// Element SnapSettings (DocumentSettings_Type complexType): https://learn.microsoft.com/en-us/office/client-developer/visio/snapsettings-element-documentsettings_type-complextypevisio-xml
+	// DocumentSettings_Type complexType: https://learn.microsoft.com/en-us/office/client-developer/visio/documentsettings_type-complextypevisio-xml
 	/**
 	 * @extends AscFormat.CBaseFormatNoIdObject
 	 * @constructor
@@ -1646,12 +1649,12 @@ AscDFH.historyitem_type_VisioWindow = 328;
 	AscFormat.InitClass(EventItem_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioEventItem);
 
 	// Docs old:
-// Элемент DynamicGridEnabled (Window_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/dynamicgridenabled-element-window_type-complextypevisio-xml
-// Элемент GlueSettings (Window_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/gluesettings-element-window_type-complextypevisio-xml
-// Элемент SnapAngles (Window_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/snapangles-element-window_type-complextypevisio-xml
-// Элемент SnapExtensions (Window_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/snapextensions-element-window_type-complextypevisio-xml
-// Элемент SnapSettings (Window_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/snapsettings-element-window_type-complextypevisio-xml
-// Window_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/window_type-complextypevisio-xml
+// Element DynamicGridEnabled (Window_Type complexType): https://learn.microsoft.com/en-us/office/client-developer/visio/dynamicgridenabled-element-window_type-complextypevisio-xml
+// Element GlueSettings (Window_Type complexType): https://learn.microsoft.com/en-us/office/client-developer/visio/gluesettings-element-window_type-complextypevisio-xml
+// Element SnapAngles (Window_Type complexType): https://learn.microsoft.com/en-us/office/client-developer/visio/snapangles-element-window_type-complextypevisio-xml
+// Element SnapExtensions (Window_Type complexType): https://learn.microsoft.com/en-us/office/client-developer/visio/snapextensions-element-window_type-complextypevisio-xml
+// Element SnapSettings (Window_Type complexType): https://learn.microsoft.com/en-us/office/client-developer/visio/snapsettings-element-window_type-complextypevisio-xml
+// Window_Type complexType: https://learn.microsoft.com/en-us/office/client-developer/visio/window_type-complextypevisio-xml
 	/**
 	 * @extends AscFormat.CBaseFormatNoIdObject
 	 * @constructor
@@ -2778,8 +2781,8 @@ AscDFH.historyitem_type_VisioWindow = 328;
 	AscFormat.InitClass(ValidationProperties_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
-// Элемент Rel (DataRecordSet_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/rel-element-datarecordset_type-complextypevisio-xml
-// DataRecordSet_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/datarecordset_type-complextypevisio-xml
+// Element Rel (DataRecordSet_Type complexType): https://learn.microsoft.com/en-us/office/client-developer/visio/rel-element-datarecordset_type-complextypevisio-xml
+// DataRecordSet_Type complexType: https://learn.microsoft.com/en-us/office/client-developer/visio/datarecordset_type-complextypevisio-xml
 	/**
 	 * @extends AscFormat.CBaseFormatNoIdObject
 	 * @constructor

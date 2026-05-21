@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -384,7 +387,7 @@
 	{
 		this.Api = _api;
 
-		// создаем делегата. инициализация его - ПОСЛЕ создания iScroll
+		// create delegate. its initialization - AFTER creating iScroll
 		this.delegate = new CMobileDelegateEditorPresentation(this);
 		var _element = this.delegate.GetScrollerParent();
 		this.CreateScrollerDiv(_element);
@@ -465,7 +468,7 @@
 			this.Mode = AscCommon.MobileTouchMode.Zoom;
 		}
 
-		// если не используем этот моус даун - то уменьшаем количество кликов
+		// if we don't use this mouse down - reduce the click count
 		switch (this.Mode)
 		{
 			case AscCommon.MobileTouchMode.None:
@@ -476,7 +479,7 @@
 			case AscCommon.MobileTouchMode.Cursor:
 			case AscCommon.MobileTouchMode.TableMove:
 			{
-				// так как был уже check, нужно уменьшить количество кликов
+				// since check was already done, need to reduce click count
 				if (global_mouseEvent.ClickCount > 0)
 					global_mouseEvent.ClickCount--;
 				break;
@@ -524,7 +527,7 @@
 			}
 			case AscCommon.MobileTouchMode.Scroll:
 			{
-				// ничего не меняем, просто перемещаем точку
+				// don't change anything, just move the point
 				this.DownPoint           = this.delegate.ConvertCoordsFromCursor(global_mouseEvent.X, global_mouseEvent.Y);
 				this.DownPointOriginal.X = global_mouseEvent.X;
 				this.DownPointOriginal.Y = global_mouseEvent.Y;
@@ -711,7 +714,7 @@
 			}
 			case AscCommon.MobileTouchMode.Select:
 			{
-				// во время движения может смениться порядок ректов
+				// during movement the order of rects may change
 				global_mouseEvent.ClickCount = 1;
 				var pos                      = this.delegate.ConvertCoordsFromCursor(global_mouseEvent.X, global_mouseEvent.Y);
 				this.delegate.Logic_OnMouseMove(global_mouseEvent, pos.X, pos.Y, pos.Page);
@@ -830,7 +833,7 @@
 		{
 			case AscCommon.MobileTouchMode.Cursor:
 			{
-				// ничего не делаем. курсор уже установлен
+				// do nothing. cursor is already set
 				this.Mode = AscCommon.MobileTouchMode.None;
 				break;
 			}
@@ -853,7 +856,7 @@
 				}
 				else
 				{
-					// нужно запускать анимацию скролла, если она есть
+					// need to start scroll animation if there is one
 					// TODO:
 					isCheckContextMenuMode = false;
 					this.iScroll._end(e);
@@ -864,7 +867,7 @@
 			}
 			case AscCommon.MobileTouchMode.Zoom:
 			{
-				// здесь нужно запускать отрисовку, если есть анимация зума
+				// here need to start drawing if there is zoom animation
 				this.delegate.HtmlPage.NoneRepaintPages = false;
 				this.delegate.DrawingDocument.FirePaint();
 
@@ -886,7 +889,7 @@
 			}
 			case AscCommon.MobileTouchMode.Select:
 			{
-				// ничего не нужно делать
+				// nothing needs to be done
 				this.DragSelect = 0;
 				this.Mode       = AscCommon.MobileTouchMode.None;
 				var pos         = this.delegate.ConvertCoordsFromCursor(global_mouseEvent.X, global_mouseEvent.Y);
@@ -1068,7 +1071,7 @@
 
 	CMobileTouchManager.prototype.CheckSelectTrack = function()
 	{
-		// сдвиг относительно табнейлов => нужно переопределить
+		// offset relative to thumbnails => need to redefine
 		if (!this.SelectEnabled)
 			return false;
 
@@ -1076,7 +1079,7 @@
 		if (_matrix && global_MatrixTransformer.IsIdentity(_matrix))
 			_matrix = null;
 
-		// проверим на попадание в селект - это может произойти на любом mode
+		// check for hitting select - this can happen on any mode
 		if (null != this.RectSelect1 && null != this.RectSelect2)
 		{
 			var pos1 = null;
@@ -1214,7 +1217,7 @@
 
 		this.iScrollElement = "scroller_id_thumbnails";
 
-		// создаем делегата. инициализация его - ПОСЛЕ создания iScroll
+		// create delegate. its initialization - AFTER creating iScroll
 		this.delegate = new CMobileDelegateThumbnails(this);
 		var _element = this.delegate.GetScrollerParent();
 		this.CreateScrollerDiv(_element);

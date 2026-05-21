@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -366,12 +369,6 @@ CHistory.prototype =
 
         // Удаляем ненужные точки
         this.Points.length = this.Index + 1;
-		
-		if(!window['AscCommon'].g_specialPasteHelper.pasteStart)
-		{
-			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
-		}
-
 		return true;
     },
 
@@ -1033,6 +1030,41 @@ CHistory.prototype =
             }
         } catch (e) {
         }
+    },
+
+    RefreshBinaryDataItem : function(item)
+    {
+        let Binary_Pos = this.BinaryWriter.GetCurPosition();
+        let _t         = this;
+        if ((Asc.editor || editor).binaryChanges) {
+            this.BinaryWriter.WriteWithLen(this, function () {
+                _t.BinaryWriter.WriteString2(item.Class.Get_Id());
+                _t.BinaryWriter.WriteLong(item.Data.Type);
+                item.Data.WriteToBinary(_t.BinaryWriter);
+            });
+        } else {
+            this.BinaryWriter.WriteString2(item.Class.Get_Id());
+            this.BinaryWriter.WriteLong(item.Data.Type);
+            item.Data.WriteToBinary(this.BinaryWriter);
+        }
+        let Binary_Len = this.BinaryWriter.GetCurPosition() - Binary_Pos;
+        item.Binary.Pos = Binary_Pos;
+        item.Binary.Len = Binary_Len;
+    },
+
+    RewriteImageUrlsInLastPoint : function(mapUrl)
+    {
+        if (this.Index < 0 || !this.Points[this.Index])
+            return;
+        let items = this.Points[this.Index].Items;
+        for (let i = 0; i < items.length; ++i) {
+            let item   = items[i];
+            let change = item.Data;
+            if (!change || !change.ReplaceImageUrl || !change.ReplaceImageUrl(mapUrl))
+                continue;
+            this.RefreshBinaryDataItem(item);
+            change.Redo();
+        }
     }
 };
 	CHistory.prototype.GetLocalChangesSize = function()
@@ -1528,12 +1560,25 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 			}
 			else
 			{
-				var oChange = oPoint.Items[nItemsCount - 1].Data;
-				if (!oChange || !oChange.IsContentChange())
-					return false;
-				
-				let nChangeItemsCount = oChange.GetItemsCount();
-				return (nChangeItemsCount > 0 && AscDFH.historyitem_ParaRun_AddItem === oChange.GetType() && oChange.GetItem(nChangeItemsCount - 1) === oLastElement);
+				for (let changeIndex = nItemsCount - 1; changeIndex >= 0; changeIndex--) {
+					const change = oPoint.Items[changeIndex].Data;
+					if (!change || !change.IsContentChange()) {
+						continue;
+					}
+
+					const changeType = change.GetType();
+					if (changeType !== AscDFH.historyitem_ParaRun_AddItem) {
+						return false;
+					}
+
+					const changeItemsCount = change.GetItemsCount();
+					if (changeItemsCount <= 0) {
+						return false;
+					}
+
+					const isSameLastElement = change.GetItem(changeItemsCount - 1) === oLastElement;
+					return isSameLastElement;
+				}
 			}
 		}
 

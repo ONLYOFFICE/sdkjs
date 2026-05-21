@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -179,12 +182,12 @@
         let tr = this.GetTransform();
         
         ctx.setTransform(
-            tr.sx,  // масштаб по оси X
-            tr.shy, // наклон по оси Y
-            tr.shx, // наклон по оси X
-            tr.sy,  // масштаб по оси Y
-            tr.tx,  // сдвиг по оси X
-            tr.ty   // сдвиг по оси Y
+            tr.sx,  // scale on X axis
+            tr.shy, // skew on Y axis
+            tr.shx, // skew on X axis
+            tr.sy,  // scale on Y axis
+            tr.tx,  // translation on X axis
+            tr.ty   // translation on Y axis
         );
     }
     CPDFGraphics.prototype.BeginPath = function() {
@@ -294,12 +297,12 @@
         ctx.save();
 
         ctx.setTransform(
-            tr.sx,  // масштаб по оси X
-            tr.shy, // наклон по оси Y
-            tr.shx, // наклон по оси X
-            tr.sy,  // масштаб по оси Y
-            tr.tx,  // сдвиг по оси X
-            tr.ty   // сдвиг по оси Y
+            tr.sx,  // scale on X axis
+            tr.shy, // skew on Y axis
+            tr.shx, // skew on X axis
+            tr.sy,  // scale on Y axis
+            tr.tx,  // translation on X axis
+            tr.ty   // translation on Y axis
         );
 
         ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
@@ -407,13 +410,13 @@
     
         ctx.lineWidth = 1;
     
-        let eps = 5; // Коэффициент расширения
+        let eps = 5; // Expansion coefficient
     
         let tr = this.GetTransform();
     
         ctx.beginPath();
         for (let i = 0; i < aRegions.length; i++) {
-            let aPoints = aRegions[i]; // Массив точек [[x1, y1], [x2, y2], ..., [xn, yn]]
+            let aPoints = aRegions[i]; // Array of points [[x1, y1], [x2, y2], ..., [xn, yn]]
             let expandedPoints = [];
     
             let numPoints = aPoints.length;
@@ -421,13 +424,13 @@
                 let current = aPoints[j];
                 let next = aPoints[(j + 1) % numPoints];
     
-                // Векторы текущего и следующего ребра
+                // Vectors of current and next edge
                 let dx1 = next[0] - current[0];
                 let dy1 = next[1] - current[1];
                 let dx2 = aPoints[(j + 2) % numPoints][0] - next[0];
                 let dy2 = aPoints[(j + 2) % numPoints][1] - next[1];
     
-                // Нормали к ребрам
+                // Normals to edges
                 let len1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
                 let len2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
                 let nx1 = dy1 / len1;
@@ -435,11 +438,11 @@
                 let nx2 = dy2 / len2;
                 let ny2 = -dx2 / len2;
     
-                // Усредненная нормаль
+                // Averaged normal
                 let avgNx = (nx1 + nx2) / 2;
                 let avgNy = (ny1 + ny2) / 2;
     
-                // Нормализуем усредненную нормаль
+                // Normalize the averaged normal
                 let avgLen = Math.sqrt(avgNx * avgNx + avgNy * avgNy);
                 if (avgLen === 0) {
                     avgNx = 0;
@@ -449,20 +452,20 @@
                     avgNy /= avgLen;
                 }
     
-                // Смещение точки
+                // Point offset
                 let x_expanded = next[0] + avgNx * eps;
                 let y_expanded = next[1] + avgNy * eps;
     
-                // Преобразуем координаты
+                // Transform coordinates
                 let tx = tr.TransformPointX(x_expanded, y_expanded);
                 let ty = tr.TransformPointY(x_expanded, y_expanded);
     
                 expandedPoints.push([tx, ty]);
             }
     
-            // Рисуем пунктир вручную
-            let w_dot = 2;  // Длина штриха
-            let w_dist = 2; // Расстояние между штрихами
+            // Draw dashed line manually
+            let w_dot = 2;  // Dash length
+            let w_dist = 2; // Gap between dashes
     
             for (let j = 0; j < expandedPoints.length; j++) {
                 let start = expandedPoints[j];

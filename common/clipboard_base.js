@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -35,17 +38,17 @@
 (function(window, undefined)
 {
 	///
-	// api редактора должен иметь методы
-	// 1) asc_IsFocus(true /* bIsNaturalFocus */) - это принимаем ли мы сейчас клавиатуру.
-	// bIsNaturalFocus - это параметр, говорящий о том, что нам нужен фокус наш, исключая поля для ввода (иероглифы например)
-	// 2) asc_CheckCopy(_clipboard /* CClipboardData */, _formats) - для наполнения буфера обмена.
-	// В нем вызывать _clipboard.pushData(_format, _data); _formats - какие форматы нужны
+	// Editor api must have the following methods:
+	// 1) asc_IsFocus(true /* bIsNaturalFocus */) - whether we are currently accepting keyboard input.
+	// bIsNaturalFocus - this parameter indicates that we need our own focus, excluding input fields (e.g. hieroglyphs)
+	// 2) asc_CheckCopy(_clipboard /* CClipboardData */, _formats) - for filling the clipboard.
+	// Call _clipboard.pushData(_format, _data); inside it; _formats - which formats are needed
 	// 3) asc_PasteData(_format, ...)
-	// 4) incrementCounterLongAction / decrementCounterLongAction - для залочивания вставки
+	// 4) incrementCounterLongAction / decrementCounterLongAction - for locking paste
 	// 5) asc_SelectionCut();
 	///
 
-	// Для инициализации вызвать g_clipboardBase.Init(api); в любой момент времени
+	// To initialize, call g_clipboardBase.Init(api); at any time
 
 	// Import
 	var AscBrowser = AscCommon.AscBrowser;
@@ -95,7 +98,7 @@
 		this.CopyPasteFocusTimer = -1;
 
 		this.inputContext = null;
-		this.LastCopyBinary = null; // для вставки по кнопке, когда браузер не позволяет
+		this.LastCopyBinary = null; // for button paste when browser doesn't allow
 
 		// images counter
 		this.PasteImagesCount = 0;
@@ -105,7 +108,7 @@
 		this.DivOnCopyHtmlPresent = false;
 		this.DivOnCopyText = "";
 
-		this.bSaveFormat = false; //для вставки, допустим, из плагина необходимо чтобы при добавлении текста в шейп сохранялось форматирование
+		this.bSaveFormat = false; //for paste, e.g. from a plugin, when adding text to a shape the formatting needs to be preserved
 		this.bCut = false;
 		this.forceCutSelection = null;
 
@@ -116,6 +119,8 @@
 		this.needClearBuffer = false;
 
 		this.canUseNewCopy = null;
+
+		this.bPutImage = true;
 	}
 
 	CClipboardBase.prototype =
@@ -176,8 +181,8 @@
 				this.checkCopy(AscCommon.c_oAscClipboardDataFormat.Text | AscCommon.c_oAscClipboardDataFormat.Html | AscCommon.c_oAscClipboardDataFormat.Internal);
 
 				setTimeout(function(){
-					//вызываю CommonDiv_End, поскольку на _private_onbeforecopy всегда делается CommonDiv_Start
-					//TODO перепроверить!
+					//calling CommonDiv_End because CommonDiv_Start is always done on _private_onbeforecopy
+					//TODO recheck!
 					g_clipboardBase.CommonDiv_End();
 				}, 0);
 
@@ -217,8 +222,8 @@
 			if (!this.IsNeedDivOnCopy)
 			{
 				setTimeout(function(){
-					//вызываю CommonDiv_End, поскольку на _private_onbeforecopy всегда делается CommonDiv_Start
-					//TODO перепроверить!
+					//calling CommonDiv_End because CommonDiv_Start is always done on _private_onbeforecopy
+					//TODO recheck!
 					g_clipboardBase.CommonDiv_End();
 				}, 0);
 
@@ -412,7 +417,7 @@
 		{
 			this._console_log("onbeforepaste");
 			
-			//TODO условие добавил, чтобы не терялся фокус со строки формул при copy/paste. проверить!
+			//TODO added condition to prevent focus loss from formula bar during copy/paste. check!
 			if (!this.Api.asc_IsFocus(true))
 				return;
 			
@@ -450,7 +455,7 @@
 		{
 			this._console_log("onbeforecopy");
 			
-			//TODO условие добавил, чтобы не терялся фокус со строки формул при copy/paste. проверить!
+			//TODO added condition to prevent focus loss from formula bar during copy/paste. check!
 			if (!this.Api.asc_IsFocus(true))
 				return;
 			
@@ -682,14 +687,14 @@
 
 		StartFocus : function()
 		{
-			// не плодим таймеры
+			// avoid creating duplicate timers
 			this.EndFocus(false);
 
 			this.CopyPasteFocus = true;
 
-			// этот метод используется на beforeCopy/Cut/Paste
-			// нужно не отдать фокус текстовому полю (до настоящих Copy/Cut/Paste)
-			// время ставим с запасом, так как обрубим на конец Copy/Cut/Paste
+			// this method is used on beforeCopy/Cut/Paste
+			// need to not give focus to text field (before actual Copy/Cut/Paste)
+			// setting time with margin, as we'll cut off at the end of Copy/Cut/Paste
 			this.CopyPasteFocusTimer = setTimeout(function(){
 				g_clipboardBase.EndFocus();
 			}, 1000);
@@ -734,8 +739,8 @@
 				ElemToSelect.style.overflow               = 'hidden';
 				ElemToSelect.style.zIndex                 = -1000;
 				ElemToSelect.style.MozUserSelect          = "text";
-				ElemToSelect.style.fontFamily             = "onlyofficeDefaultFont";//дефолтовый шрифт
-				ElemToSelect.style.fontSize               = "11pt";//дефолтовый размер. значения 0 и тп не подходят - изменяются такие параметры, как line-height
+				ElemToSelect.style.fontFamily             = "onlyofficeDefaultFont";//default font
+				ElemToSelect.style.fontSize               = "11pt";//default size. values like 0 etc don't work - parameters like line-height are changed
 				ElemToSelect.style.color                  = "black";
 				ElemToSelect.style["-khtml-user-select"]  = "text";
 				ElemToSelect.style["-o-user-select"]      = "text";
@@ -1074,7 +1079,8 @@
 				{
 					this.bCut = isCut;
 
-					this.Api.asc_CheckCopy(copy_data, c_oAscClipboardDataFormat.Text | c_oAscClipboardDataFormat.Html | c_oAscClipboardDataFormat.Internal | c_oAscClipboardDataFormat.Image);
+					let nImageFormat = this.bPutImage ? c_oAscClipboardDataFormat.Image : 0;
+					this.Api.asc_CheckCopy(copy_data, c_oAscClipboardDataFormat.Text | c_oAscClipboardDataFormat.Html | c_oAscClipboardDataFormat.Internal | nImageFormat);
 
 					let clipboardData = {};
 					if (copy_data.data[c_oAscClipboardDataFormat.Text]) {
@@ -1127,9 +1133,8 @@
 
 							callback(true);
 						})
-						.catch(function(error) {
-							console.error('Failed to query clipboard permissions:', error);
-							callback(false);
+						.catch(function() {
+							callback(typeof navigator.clipboard.read === 'function');
 						});
 
 					return true;
@@ -1159,7 +1164,7 @@
 							callback && callback(true);
 						})
 						.catch(function() {
-							callback && callback(false);
+							callback && callback(typeof navigator.clipboard.write === 'function');
 						});
 
 					return true;
@@ -1409,7 +1414,7 @@
 			}
 			if (!_ret)
 			{
-				//　копирования не было
+				// copying didn't happen
 				this.LastCopyBinary = null;
 				this.checkCopy(AscCommon.c_oAscClipboardDataFormat.Text | AscCommon.c_oAscClipboardDataFormat.Html | AscCommon.c_oAscClipboardDataFormat.Internal);
 			}
@@ -1455,7 +1460,7 @@
 			}
 			if (!_ret)
 			{
-				//　копирования не было
+				// copying didn't happen
 				this.LastCopyBinary = null;
 				this.bCut = true;
 				this.checkCopy(AscCommon.c_oAscClipboardDataFormat.Text | AscCommon.c_oAscClipboardDataFormat.Html | AscCommon.c_oAscClipboardDataFormat.Internal);
@@ -1662,32 +1667,32 @@
 		this.Api = null;
 
 		//special paste
-		this.specialPasteData = {};//данные последней вставки перед специальной вставкой
+		this.specialPasteData = {};//data from the last paste before special paste
 
-		//параметры специальной вставки из меню.используется класс для EXCEL СSpecialPasteProps. чтобы не протаскивать через все вызываемые функции, добавил это свойство
+		//special paste parameters from menu. CSpecialPasteProps class is used for EXCEL. to avoid passing through all called functions, added this property
 		this.specialPasteProps = null;
 
-		this.showSpecialPasteButton = false;//нужно показывать или нет кнопку специальной вставки
-		this.buttonInfo = new Asc.SpecialPasteShowOptions();//параметры кнопки специальной вставки - позиция. нужно при прокрутке документа, изменения масштаба и тп
+		this.showSpecialPasteButton = false;//whether to show special paste button or not
+		this.buttonInfo = new Asc.SpecialPasteShowOptions();//special paste button parameters - position. needed for document scrolling, zoom changes, etc.
 
-		this.specialPasteStart = false;//если true, то в данный момент выполняется специальная вставка
-		this.pasteStart = false;//идет процесс вставки, выставится в false только после полного ее окончания(загрузка картинок и шрифтов)
+		this.specialPasteStart = false;//if true, special paste is currently in progress
+		this.pasteStart = false;//paste process is running, will be set to false only after complete finishing (image and font loading)
 
-		this.bIsEndTransaction = false;//временный флаг для excel. TODO пересмотреть!
+		this.bIsEndTransaction = false;//temporary flag for excel. TODO review!
 
 		this.showButtonIdParagraph = null;
-		this.endRecalcDocument = false;//для документов, закончен ли пересчет документа. нужно, чтобы грамотно рассчитать позицию иконки с/в
+		this.endRecalcDocument = false;//for documents, whether document recalculation is finished. needed to correctly calculate paste button icon position
 		this.doNotShowButton = false;
 		this.visiblePasteButton = true;
 
-		//активный диапазон до первой вставки
+		//active range before first paste
 		this.selectionRange = null;
 
-		//добавил флаг для возможности применения друг за другом нескольких математических операций(paste special)
-		//если данный флаг выставлен в true и делается новая математическая операция
+		//added flag for the ability to apply multiple math operations in sequence (paste special)
+		//if this flag is set to true and a new math operation is performed
 		this.isAppliedOperation = false;
 
-		//избегаем повторных ошибок при вставке от формул
+		//avoid repeated errors during formula paste
 		this._formulaError = null;
 	}
 
@@ -1711,7 +1716,7 @@
 		{
 			this.specialPasteStart = true;
 
-			//для того, чтобы были доступны скомпилированые стили во время вставки
+			//so that compiled styles are available during paste
 			if (g_clipboardBase.CommonIframe && g_clipboardBase.CommonIframe.style.display != "block")
 			{
 				g_clipboardBase.CommonIframe.style.display = "block";
@@ -1747,12 +1752,12 @@
 
 		Paste_Process_End : function(checkEnd)
 		{
-			// при открытии хтмл не инициализируется. так как нет никакого ввода.
+			// when opening html it's not initialized, since there's no input.
 			if (!this.Api)
 				return;
 
 			AscFonts.IsCheckSymbols             = false;
-			//todo возможно стоит добавить проверку
+			//todo maybe should add a check
 			/*if(!this.pasteStart)
 			{
 				return;
@@ -1760,11 +1765,11 @@
 			this.pasteStart = false;
 			this.specialPasteProps = null;
 			this.bSaveFormat = false;
-			//процесс специальной вставки заканчивается вместе с общей вставкой
+			//special paste process ends together with the general paste
 			if(this.specialPasteStart)
 			{
 				this.Special_Paste_End();
-				//TODO только для презентаций! проверить на остальных редакторах!
+				//TODO only for presentations! check on other editors!
 				if (this.isPasteOptions) {
 					this.SpecialPasteButton_Show();
 				} else if(!this.buttonInfo.isClean()){
@@ -1772,7 +1777,7 @@
 					this.Api.asc_ShowSpecialPasteButton(this.buttonInfo);
 				}
 			}
-			else//если не было специальной вставки, необходимо показать кнопку специальной вставки
+			else//if there was no special paste, need to show the special paste button
 			{
 				this.SpecialPasteButton_Show();
 			}
@@ -1783,7 +1788,7 @@
 				this.doNotShowButton = false;
 			}
 
-			//TODO для excel заглушка. пересмотреть!
+			//TODO stub for excel. review!
 			if(this.bIsEndTransaction)
 			{
 				this.bIsEndTransaction = false;
@@ -1801,7 +1806,7 @@
 			if (!this.Api || this.doNotShowButton || !this.visiblePasteButton)
 				return;
 
-			//при быстром совместном редактировании отключаем возможность специальной вставки
+			//disable special paste capability during fast collaborative editing
 			if(this.CheckFastCoEditing())
 			{
 				return;

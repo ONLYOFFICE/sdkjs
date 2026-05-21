@@ -15,6 +15,7 @@
 			"vendor/string.js",
 			"vendor/array.js",
 			"common/editorscommon.js",
+			"common/colorUtils.js",
             "common/BulletPreviewDrawer.js",
 			"common/frameManager.js",
 			"common/HistoryCommon.js",
@@ -50,6 +51,7 @@
 			
 			"common/nameMap.js",
 			"common/downloaderfiles.js",
+			"common/NumFormatData.js",
 			"common/NumFormat.js",
 			"common/SerializeChart.js",
 
@@ -140,10 +142,19 @@
 			"common/wordcopypaste.js",
 			"common/intervalTree.js",
 
-		  "cell/view/HandlerList.js",
+			"cell/view/HandlerList.js",
 			"cell/model/SheetMemory.js",
+			"cell/model/FormulaObjects/parserFormula.js",
 			"cell/model/WorkbookElems.js",
+			"cell/model/CellStyleStorage/RangeAttrArray.js",
+			"cell/model/CellStyleStorage/Core.js",
+			"cell/model/CellStyleStorage/Structural.js",
+			"cell/model/CellStyleStorage/ContentIterator.js",
+			"cell/model/CellStyleStorage/Serialization.js",
+			"cell/model/CellStyleStorage/LegacyMigration.js",
 			"cell/model/Workbook.js",
+			"cell/model/CellIterators.js",
+			"cell/model/CellStyleStorage/Compatibility.js",
 			"cell/model/Serialize.js",
 			"cell/model/CellInfo.js",
 			"cell/view/DrawingObjectsController.js",
@@ -375,11 +386,7 @@
 			"visio/model/SerializeReader.js",
 			"visio/model/SerializeWriter.js",
 			
-			"word/Editor/document-visitor.js",
-			
-			"word/Editor/annotations/custom-text-annotator/custom-text-annotator.js",
-			"word/Editor/annotations/custom-text-annotator/range-marks.js",
-			"word/Editor/annotations/custom-text-annotator/text-annotator-manager.js"
+			"word/Editor/document-visitor.js"
 		],
 		"desktop": {
 			"min": [

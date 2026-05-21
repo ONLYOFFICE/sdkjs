@@ -1,34 +1,39 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
+
+"use strict";
 
 (function(){
     /**
@@ -48,7 +53,7 @@
         this._doNotSpellCheck   = false;
         this._multiline         = false;
         this._password          = false;
-        this._richText          = false; // to do связанные свойства, методы
+        this._richText          = false; // to do related properties, methods
         this._richValue         = [];
         this._textFont          = AscPDF.DEFAULT_FIELD_FONT;
         this._fileSelect        = false;
@@ -291,9 +296,9 @@
             this.GetAllWidgets().forEach(updateWidget);
 
             if (bMultiline == false) {
-                let sText = this.GetParentValue();
+                let sText = this.GetLogicValue();
                 if (sText && sText.search("\r") !== -1) {
-                    this.SetParentValue(sText.split("\r").join(""));
+                    this.SetLogicValue(sText.split("\r").join(""));
                 }
             }
         }
@@ -357,12 +362,12 @@
 				this.SetWasChanged(true);
 			
 			if (isOnOpen == true && !this.GetParent(true))
-				this.SetParentValue(sValue);
+				this.SetLogicValue(sValue);
 			
 			this.UpdateDisplayValue(sValue);
 		}
 		else {
-			this.SetParentValue(sValue);
+			this.SetLogicValue(sValue);
 		}
 	};
     CTextField.prototype.private_SetValue = function(sValue) {
@@ -370,7 +375,7 @@
 			this.UpdateDisplayValue(sValue);
 		}
 		else {
-			this.SetParentValue(sValue);
+			this.SetLogicValue(sValue);
 		}
     };
 
@@ -460,8 +465,8 @@
     CTextField.prototype.SetCalcOrderIndex = function(nIdx) {
         let oCalcInfo   = this.GetDocument().GetCalculateInfo();
         let oWidget     = null;
-        if (this.IsWidget() || this.IsAllKidsWidgets()) {
-            oWidget = this.GetKid(0) || this;
+        if (this.IsLogicalRoot()) {
+            oWidget = this.GetKid(0);
         }
         let oCalcTrigget = oWidget.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Calculate);
         if (oCalcTrigget == null || nIdx < 0)
@@ -503,7 +508,7 @@
         this.DrawBackground(oGraphicsPDF);
                 
         let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) && this.IsNeedDrawHighlight() ? this.contentFormat : this.content;
-        this.curContent = oContentToDraw; // запоминаем текущий контент
+        this.curContent = oContentToDraw; // remember current content
 
         if (this.IsMultiline() == true) {
             oContentToDraw.ResetShiftView();
@@ -912,25 +917,25 @@
             for (var i = 0; i < args.length; i++) {
                 var arg = args[i].trim();
         
-                // Проверяем на булево значение
+                // Check for boolean value
                 if (arg === "true") {
                     parsedArgs.push(true);
                 } else if (arg === "false") {
                     parsedArgs.push(false);
                 }
-                // Проверяем на null
+                // Check for null
                 else if (arg === "null") {
                     parsedArgs.push(null);
                 }
-                // Проверяем на число
+                // Check for number
                 else if (!isNaN(arg) && arg !== "") {
                     parsedArgs.push(Number(arg));
                 }
-                // Проверяем на строку в кавычках
+                // Check for string in quotes
                 else if ((arg.startsWith('"') && arg.endsWith('"')) || (arg.startsWith("'") && arg.endsWith("'"))) {
                     parsedArgs.push(arg.slice(1, -1));
                 }
-                // Иначе оставляем как есть
+                // Otherwise keep as is
                 else {
                     parsedArgs.push(arg);
                 }
@@ -1355,7 +1360,7 @@
         }
 
         let oOnFocus = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
-        // вызываем выставление курсора после onFocus. Если уже в фокусе, тогда сразу.
+        // call cursor positioning after onFocus. If already in focus, then immediately.
         if (false == isInFocus && oOnFocus && oOnFocus.Actions.length > 0)
             oActionsQueue.callbackAfterFocus = callbackAfterFocus.bind(this, x, y, e);
         else
@@ -1611,7 +1616,7 @@
                     docElem:        oScrollDocElm,
                     baseYPos:       parseInt(oScrollDocElm.style.top),
                     oldZoom:        oViewer.zoom,
-                    scrollCoeff:    nScrollCoeff, // проскроленная часть
+                    scrollCoeff:    nScrollCoeff, // scrolled portion
                     rot:            nRotAngle 
                 });
             }
@@ -1744,7 +1749,7 @@
 			return false;
 		
 		this.SetNeedRecalc(true);
-		this.SetNeedCommit(true); // флаг что значение будет применено к остальным формам с таким именем
+		this.SetNeedCommit(true); // flag that value will be applied to other forms with the same name
 		this._bAutoShiftContentView = true && this.IsDoNotScroll() == false;
 		
 		if (this.IsDoNotScroll()) {
@@ -1766,8 +1771,8 @@
 
         let isRTL = this.IsRTL();
 
-        // если выравнивание по центру или справа, то оно должно переключаться на left если ширина контента выходит за пределы формы
-        // вызывается на момент коммита формы
+        // if alignment is center or right, it should switch to left if content width exceeds form bounds
+        // called at the moment of form commit
         if (this.IsTextOutOfForm(this.content).hor) {
             if (this.content.GetAlign() != (isRTL ? AscPDF.ALIGN_TYPE.right : AscPDF.ALIGN_TYPE.left)) {
                 this.content.SetAlign((isRTL ? AscPDF.ALIGN_TYPE.right : AscPDF.ALIGN_TYPE.left));
@@ -1873,7 +1878,7 @@
         let sNewValue = this.GetValue();
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i].IsChanged() == false)
-                aFields[i].SetWasChanged(true); // фиксируем, что форма была изменена
+                aFields[i].SetWasChanged(true); // mark that form was changed
 
             if (aFields[i].HasShiftView()) {
                 aFields[i].content.MoveCursorToStartPos();
@@ -1896,11 +1901,11 @@
             aFields[i].SetFormatValue(sFormatValue);
         }
 
-        if (this.GetParentValue() != sNewValue) {
-            this.SetParentValue(sNewValue);
+        if (this.GetLogicValue() != sNewValue) {
+            this.SetLogicValue(sNewValue);
         }
-        // когда выравнивание посередине или справа, то после того
-        // как ширина контента будет больше чем размер формы, выравнивание становится слева, пока текста вновь не станет меньше чем размер формы
+        // when alignment is center or right, after content width becomes larger than form size,
+        // alignment becomes left, until text becomes smaller than form size again
         aFields.forEach(function(field) {
             field.SetNeedCheckAlign(true);
         });
@@ -1953,9 +1958,9 @@
         let nSelStart   = oSelRange.nSelStart;
         let nSelEnd     = oSelRange.nSelEnd;
         
-        // если нет селекта, тогда обрабатывает ctrl
+        // if no selection, then handle ctrl
         if (isCtrlKey && nSelStart == nSelEnd && nRemoveType !== undefined) {
-            // удаляем текст до пробела
+            // delete text up to space
             if (nRemoveType == -1) { // backspace
                 let nSpacePos = sValue.lastIndexOf(' ', nSelEnd - 2);
                 nSelStart = nSpacePos != - 1 ? nSpacePos + 1 : 0;
@@ -2080,7 +2085,7 @@
 		
         this.content.Remove(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord);
 
-        // скрипт keystroke мог поменять change значение, поэтому
+        // keystroke script could have changed the change value, therefore
         let oKeystrokeTrigger = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Keystroke);
         if (oKeystrokeTrigger) {
             this.InsertChars(AscWord.CTextFormFormat.prototype.GetBuffer(oKeystrokeEvent["change"].toString()));
@@ -2110,14 +2115,14 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CTextField.prototype.SyncValue = function() {
-        this.SetValue(this.GetParentValue());
+        this.SetValue(this.GetLogicValue());
         this.SetFormatValue(this.GetFormatValue());
         
         this.SetNeedRecalc(true);
     };
     CTextField.prototype.CheckFormViewWindow = function()
     {
-        // размеры всего контента
+        // whole content dimensions
         let oPageBounds = this.content.GetContentBounds(0);
         let oFormBounds = this.getFormRelRect();
 		
@@ -2173,7 +2178,7 @@
         }
 
         if (this.IsMultiline && this.IsMultiline()) {
-            // если высота контента больше чем высота формы
+            // if content height is greater than form height
             if (oParagraph.IsSelectionUse()) {
                 if (oParagraph.GetSelectDirection() == 1) {
                     if (nCursorT + nCursorH - nCursorH/4 > formY + formH)
@@ -2292,14 +2297,14 @@
 	CTextField.prototype.WriteToBinary = function(memory) {
 		memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
-        // длина комманд
+        // command length
         let nStartPos = memory.GetCurPosition();
         memory.Skip(4);
 
         this.WriteToBinaryBase(memory);
         this.WriteToBinaryBase2(memory);
 
-        let sValue = this.GetParentValue(memory.isCopyPaste);
+        let sValue = this.GetLogicValue(memory.isCopyPaste);
         if (sValue != null) {
             memory.fieldDataFlags |= (1 << 9);
             memory.WriteString(sValue);
@@ -2342,13 +2347,13 @@
 
         let nEndPos = memory.GetCurPosition();
 
-        // запись флагов
+        // write flags
         memory.Seek(memory.posForWidgetFlags);
         memory.WriteLong(memory.widgetFlags);
         memory.Seek(memory.posForFieldDataFlags);
         memory.WriteLong(memory.fieldDataFlags);
 
-        // запись длины комманд
+        // write command length
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
@@ -2358,6 +2363,10 @@
 	//------------------------------------------------------------------------------------------------------------------
 	CTextField.prototype.getParagraph = function() {
 		return this.content.GetElement(0);
+	};
+	CTextField.prototype.hitInTextRectWord = function (x, y) {
+		let rect = this.getFormRect();
+		return AscFormat.HitToRect(x, y, new AscCommon.CMatrix(), rect.X, rect.Y, rect.W, rect.H);
 	};
 	
     function codePointToRunElement(codePoint)

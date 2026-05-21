@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -190,7 +193,7 @@ function (window, undefined) {
 		return new CParaPos(this.StartRange, this.StartLine, 0, 0);
 	};
 //-----------------------------------------------------------------------------------
-// Функции пересчета
+// Recalculation functions
 //-----------------------------------------------------------------------------------
 
 	ParaComment.prototype.Recalculate_Reset = function (StartRange, StartLine) {
@@ -257,7 +260,7 @@ function (window, undefined) {
 	ParaComment.prototype.Shift_Range = function (Dx, Dy, _CurLine, _CurRange, _CurPage) {
 	};
 //-----------------------------------------------------------------------------------
-// Функции отрисовки
+// Drawing functions
 //-----------------------------------------------------------------------------------
 	ParaComment.prototype.Draw_HighLights = function (PDSH) {
 	};
@@ -268,7 +271,7 @@ function (window, undefined) {
 	ParaComment.prototype.Draw_Lines = function (PDSL) {
 	};
 //-----------------------------------------------------------------------------------
-// Функции для работы с курсором
+// Functions for working with cursor
 //-----------------------------------------------------------------------------------
 	ParaComment.prototype.IsCursorPlaceable = function () {
 		return false;
@@ -360,7 +363,7 @@ function (window, undefined) {
 	ParaComment.prototype.Get_EndPos = function (BehindEnd, ContentPos, Depth) {
 	};
 //-----------------------------------------------------------------------------------
-// Функции для работы с селектом
+// Functions for working with selection
 //-----------------------------------------------------------------------------------
 	ParaComment.prototype.Set_SelectionContentPos = function (StartContentPos, EndContentPos, Depth, StartFlag, EndFlag) {
 	};
@@ -413,7 +416,7 @@ function (window, undefined) {
 		return new CTextPr();
 	};
 //----------------------------------------------------------------------------------------------------------------------
-// Разное
+// Miscellaneous
 //----------------------------------------------------------------------------------------------------------------------
 	ParaComment.prototype.SetReviewType = function (ReviewType, RemovePrChange) {
 	};
@@ -756,13 +759,13 @@ function (window, undefined) {
 		// String            : m_sUserId
 		// String            : m_sUserName
 		// String            : m_sGuid
-		// Bool              : Null ли TimeZoneBias
+		// Bool              : Is TimeZoneBias Null
 		// Long              : TimeZoneBias
-		// Bool              : Null ли QuoteText
-		// String            : (Если предыдущий параметр false) QuoteText
+		// Bool              : Is QuoteText Null
+		// String            : (If the previous parameter is false) QuoteText
 		// Bool              : Solved
-		// Long              : Количество отетов
-		// Array of Variable : Ответы
+		// Long              : Number of replies
+		// Array of Variable : Replies
 
 		var Count = this.m_aReplies.length;
 		Writer.WriteString2(this.m_sText);
@@ -794,13 +797,13 @@ function (window, undefined) {
 		// String            : m_sOOTime
 		// String            : m_sUserId
 		// String            : m_sGuid
-		// Bool              : Null ли TimeZoneBias
+		// Bool              : Is TimeZoneBias Null
 		// Long              : TimeZoneBias
-		// Bool              : Null ли QuoteText
-		// String            : (Если предыдущий параметр false) QuoteText
+		// Bool              : Is QuoteText Null
+		// String            : (If the previous parameter is false) QuoteText
 		// Bool              : Solved
-		// Long              : Количество отетов
-		// Array of Variable : Ответы
+		// Long              : Number of replies
+		// Array of Variable : Replies
 
 		this.m_sText = Reader.GetString2();
 		this.m_sTime = Reader.GetString2();
@@ -863,8 +866,8 @@ function (window, undefined) {
 	};
 
 
-	var comment_type_Common = 1; // Комментарий к обычному тексу
-	var comment_type_HdrFtr = 2; // Комментарий к колонтитулу
+	var comment_type_Common = 1; // Comment to regular text
+	var comment_type_HdrFtr = 2; // Comment to header/footer
 
 	function CComment(Parent, Data) {
 		this.Id = AscCommon.g_oIdCounter.Get_NewId();
@@ -887,13 +890,13 @@ function (window, undefined) {
 			X: 0, Y: 0, H: 0, PageNum: 0, ParaId: null
 		};
 
-		this.Lock = new AscCommon.CLock(); // Зажат ли комментарий другим пользователем
+		this.Lock = new AscCommon.CLock(); // Is the comment locked by another user
 		if (false === AscCommon.g_oIdCounter.m_bLoad) {
 			this.Lock.Set_Type(AscCommon.c_oAscLockTypes.kLockTypeMine, false);
 			AscCommon.CollaborativeEditing.Add_Unlock2(this);
 		}
 
-		// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
+		// Add this class to the Id table (must be at the end of the constructor)
 		g_oTableId.Add(this, this.Id);
 	}
 
@@ -1021,7 +1024,7 @@ function (window, undefined) {
 		this.m_oStartInfo.H = H;
 		this.m_oStartInfo.ParaId = ParaId;
 
-		// Если у нас комментарий в колонтитуле, то номер страницы обновляется при нажатии на комментарий
+		// If the comment is in a header/footer, the page number is updated when clicking on the comment
 		if (comment_type_Common === this.m_oTypeInfo.Type) this.m_oStartInfo.PageNum = PageNum;
 	};
 
@@ -1111,7 +1114,7 @@ function (window, undefined) {
 	CComment.prototype.recalculate = function () {
 	};
 	//-----------------------------------------------------------------------------------
-	// Функции для работы с совместным редактированием
+	// Functions for working with collaborative editing
 	//-----------------------------------------------------------------------------------
 	CComment.prototype.Get_Id = function () {
 		return this.Id;
@@ -1124,8 +1127,8 @@ function (window, undefined) {
 		// Variable : Data
 		// Long     : m_oTypeInfo.Type
 		//          : m_oTypeInfo.Data
-		//    Если comment_type_HdrFtr
-		//    String : Id колонтитула
+		//    If comment_type_HdrFtr
+		//    String : Header/footer Id
 
 		Writer.WriteString2(this.Id);
 		AscFormat.writeObject(Writer, this.Parent);
@@ -1140,8 +1143,8 @@ function (window, undefined) {
 		// Variable : Data
 		// Long     : m_oTypeInfo.Type
 		//          : m_oTypeInfo.Data
-		//    Если comment_type_HdrFtr
-		//    String : Id колонтитула
+		//    If comment_type_HdrFtr
+		//    String : Header/footer Id
 
 		this.Id = Reader.GetString2();
 		this.Parent = AscFormat.readObject(Reader);
@@ -1152,9 +1155,9 @@ function (window, undefined) {
 	};
 
 	CComment.prototype.Check_MergeData = function () {
-		// Проверяем, не удалили ли мы параграф, к которому был сделан данный комментарий
-		// Делаем это в самом конце, а не сразу, чтобы заполнились данные о начальном и
-		// конечном параграфах.
+		// Check if we have deleted the paragraph to which this comment was made
+		// We do this at the very end, not immediately, so that the data about the starting and
+		// ending paragraphs is filled in.
 
 		var bUse = true;
 

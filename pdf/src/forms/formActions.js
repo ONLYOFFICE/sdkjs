@@ -1,34 +1,39 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
+
+"use strict";
 
 (function(){
     let PDF_TRIGGERS_TYPES = {
@@ -292,7 +297,7 @@
             case AscPDF.GOTO_TYPES.xyz: // inherit zoom
                 break;
             case AscPDF.GOTO_TYPES.fit:
-            case AscPDF.GOTO_TYPES.fitB: { // fit to max of heigth/width
+            case AscPDF.GOTO_TYPES.fitB: { // fit to page
                 let nVerZoom = ((oViewer.canvas.height / (nNoZoomH * AscCommon.AscBrowser.retinaPixelRatio)) * 100 >> 0) / 100;
                 let nHorZoom = ((oViewer.canvas.width / (nNoZoomW * AscCommon.AscBrowser.retinaPixelRatio)) * 100 >> 0) / 100;
 
@@ -318,14 +323,14 @@
 
                 let nMinZoom = Math.min(nHorZoom, nVerZoom);
                 
-                // далее вычисляем ширину с новым потенциальным зумом,
-                // если при данных размерах будет добавлен скролл, то вычитаем его ширину и пересчитываем zoom
+                // next we calculate width with new potential zoom,
+                // if scroll will be added at these dimensions, then we subtract its width and recalculate zoom
                 let nNewPageW = (oViewer.file.pages[nPageIdx].W * 96 * nMinZoom / oViewer.file.pages[nPageIdx].Dpi) >> 0;
                 if (nNewPageW > oViewer.width) {
                     nVerZoom = (((oViewer.canvas.height - oViewer.scrollWidth) / (nRectH)) * 100 >> 0) / 100;
                 }
                 
-                this.zoom = Math.min(nHorZoom, nVerZoom);
+                this.zoom = Math.max(nHorZoom, nVerZoom);
             }
         }
 
@@ -351,12 +356,14 @@
     CActionGoTo.prototype.Do = function() {
         let oViewer         = Asc.editor.getDocumentRenderer();
         let oField          = this.GetCallerFiled();
-        let oDoc            = oField.GetDocument();
+        let oDoc            = oField ? oField.GetDocument() : Asc.editor.getPDFDoc();
         let oActionsQueue   = oDoc.GetActionsQueue();
 
-        oActionsQueue.SetCurAction(this);
+		if (oField) {
+	        oActionsQueue.SetCurAction(this);
+		}
         
-        // если onFocus но форма не активна, то скипаем дейсвтие
+        // if onFocus but form is not active, then skip action
         if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
@@ -372,7 +379,7 @@
         if (nZoom && oViewer.zoom != nZoom)
             oViewer.setZoom(nZoom, true);
 
-        // выставляем смещения
+        // set offsets
         let yOffset = this.rect.top != null ? this.rect.top : 0;
         let xOffset = this.rect.left != null ? this.rect.left : 0;
 
@@ -380,13 +387,15 @@
             let oTr = oDoc.pagesTransform[nPageIdx].invert;
             let oPos = oTr.TransformPoint(xOffset, yOffset);
 
-            oViewer.disabledPaintOnScroll = true; // вырубаем отрисовку на скроле
+            oViewer.disabledPaintOnScroll = true; // disable drawing on scroll
             oViewer.scrollToXY(oViewer.scrollY + oPos.y, oViewer.scrollX + oPos.x);
             oViewer.disabledPaintOnScroll = false;
-            oViewer.needRedraw = true; // в конце Actions выполним отрисовку
+            oViewer.needRedraw = true; // at the end of Actions we'll perform repaint
         }
 
-        oActionsQueue.Continue();
+		if (oField) {
+	        oActionsQueue.Continue();
+		}
     };
     
     CActionGoTo.prototype.WriteToBinary = function(memory) {
@@ -491,7 +500,7 @@
 
         oActionsQueue.SetCurAction(this);
 
-        // если onFocus но форма не активна, то скипаем дейсвтие
+        // if onFocus but form is not active, then skip action
         if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
@@ -540,7 +549,7 @@
 
         oActionsQueue.SetCurAction(this);
 
-        // если onFocus но форма не активна, то скипаем дейсвтие
+        // if onFocus but form is not active, then skip action
         if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
@@ -583,7 +592,7 @@
 
         oActionsQueue.SetCurAction(this);
 
-        // если onFocus но форма не активна, то скипаем дейсвтие
+        // if onFocus but form is not active, then skip action
         if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
@@ -632,7 +641,7 @@
 
         oActionsQueue.SetCurAction(this);
 
-        // если onFocus но форма не активна, то скипаем дейсвтие
+        // if onFocus but form is not active, then skip action
         if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
@@ -667,7 +676,7 @@
     function CActionRunScript(script) {
         CActionBase.call(this, ACTIONS_TYPES.JavaScript);
         this.script = script;
-        this.bContinueAfterEval = true; // выключаем на асинхронных операциях
+        this.bContinueAfterEval = true; // disable on asynchronous operations
     };
     CActionRunScript.prototype = Object.create(CActionBase.prototype);
 	CActionRunScript.prototype.constructor = CActionRunScript;
@@ -682,7 +691,7 @@
 
         oActionsQueue.SetCurAction(this);
 
-        // если onFocus но форма не активна, то скипаем дейсвтие
+        // if onFocus but form is not active, then skip action
         if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
@@ -792,6 +801,7 @@
             "AFSpecial_KeystrokeEx",
             "AFSimple_Calculate",
             "AFRange_Validate",
+            "AFMakeNumber"
         ];
     
         if (!oParentDoc.globalEventStack) {
@@ -822,14 +832,28 @@
             oApiFunc["AFSpecial_Keystroke"],
             oApiFunc["AFSpecial_KeystrokeEx"],
             oApiFunc["AFSimple_Calculate"],
-            oApiFunc["AFRange_Validate"]
+            oApiFunc["AFRange_Validate"],
+            oApiFunc["AFMakeNumber"]
         ];
     
         let funcArgs = aArgsNamesToDelete.concat(aArgsNamesPdfApi);
-        funcArgs.push(str);
-    
+        
+		// make document methods global
+		let oApiDoc = oParentDoc.GetDocumentApi();
+		const aOwnMethods = Object.getOwnPropertyNames(AscPDF.ApiDocument.prototype).filter(function(key) {
+			return key !== "constructor" && typeof oApiDoc[key] === 'function';
+		});
+		aArgsNamesPdfApi = aArgsNamesPdfApi.concat(aOwnMethods);
+
+		aOwnMethods.forEach(function(key) {
+			funcArgs.push(key);
+			aArgsPdfApi.push(oApiDoc[key].bind(oApiDoc));
+		});
+
+		funcArgs.push(str);
+
         let func = Function.apply(null, funcArgs);
-        func.bind(oParentDoc.GetDocumentApi()).apply(null, new Array(aArgsNamesToDelete.length - 1).concat(oApiConsole, aArgsPdfApi));
+        func.bind(oApiDoc).apply(null, new Array(aArgsNamesToDelete.length - 1).concat(oApiConsole, aArgsPdfApi));
     }
     
 

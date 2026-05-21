@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -175,7 +178,7 @@
 	{
 		return null;
 	};
-	CMobileDelegateSimple.prototype.ConvertCoordsToCursor = function(x, y, page, isCanvas /* делать ли сдвиги на сам редактор */)
+	CMobileDelegateSimple.prototype.ConvertCoordsToCursor = function(x, y, page, isCanvas /* whether to apply shifts to the editor itself */)
 	{
 		return null;
 	};
@@ -897,8 +900,8 @@
 			this.Api.setHandlerOnClick(undefined);
 	};
 
-	// создание вспомогательного элемента, для прокрутки. по идее потом можно изменить
-	// просто на сдвиги. но пока так
+	// creating helper element for scrolling. ideally can be changed later
+	// to just offsets. but for now this way
 	CMobileTouchManagerBase.prototype.CreateScrollerDiv = function(_wrapper)
 	{
 		var _scroller = document.createElement('div');
@@ -912,14 +915,14 @@
 		_wrapper.appendChild(_scroller);
 	};
 
-	// здесь загрузка нужных картинок. пока только для таблицы (движение)
-	// грузим в конструкторе, используем тогда, когда загружено (asc_complete)
+	// loading required images here. for now only for table (movement)
+	// load in constructor, use when loaded (asc_complete)
 	CMobileTouchManagerBase.prototype.LoadMobileImages = function()
 	{
-		// если нужно подгрузить/сгенерировать картинки - это делать тут
+		// if you need to load/generate images - do it here
 	};
 
-	// onTouchStart => попали ли в якорьки селекта, чтобы не начинать скроллы/зумы
+	// onTouchStart => check if we hit selection anchors, to avoid starting scrolls/zooms
 	CMobileTouchManagerBase.prototype.CheckSelectTrack = function()
 	{
 		if (!this.SelectEnabled)
@@ -929,7 +932,7 @@
 		if (_matrix && global_MatrixTransformer.IsIdentity(_matrix))
 			_matrix = null;
 
-		// проверим на попадание в селект - это может произойти на любом mode
+		// check for selection hit - this can happen in any mode
 		if (null != this.RectSelect1 && null != this.RectSelect2)
 		{
 			var pos1 = null;
@@ -967,7 +970,7 @@
 		return (this.Mode == AscCommon.MobileTouchMode.Select);
 	};
 
-	// onTouchStart => попали ли в якорьки таблицы, чтобы не начинать скроллы/зумы
+	// onTouchStart => check if we hit table anchors, to avoid starting scrolls/zooms
 	CMobileTouchManagerBase.prototype.CheckTableTrack = function()
 	{
 		if (!this.TableTrackEnabled)
@@ -1218,7 +1221,7 @@
 		return bIsTable;
 	};
 
-	// onTouchStart => попали ли в якорьки трека объекта (шейп, картинка), чтобы не начинать скроллы/зумы
+	// onTouchStart => check if we hit object track anchors (shape, image), to avoid starting scrolls/zooms
 	CMobileTouchManagerBase.prototype.CheckObjectTrack = function()
 	{
 		var pos = this.delegate.ConvertCoordsFromCursor(global_mouseEvent.X, global_mouseEvent.Y);
@@ -1253,7 +1256,7 @@
 		return bResult;
 	};
 
-	// в мобильной версии - меньше, чем "по ширине" - не делаем
+	// in mobile version - we don't allow zoom less than "fit to width"
 	CMobileTouchManagerBase.prototype.CheckZoomCriticalValues = function(zoomMin)
 	{
 		if (zoomMin !== undefined)
@@ -1295,7 +1298,7 @@
 		this.IsZoomCheckFit = false;
 	};
 
-	// изменился размер документа/экрана => нужно перескитать вспомогательный элемент для скролла
+	// document/screen size changed => need to recalculate helper element for scrolling
 	CMobileTouchManagerBase.prototype.UpdateScrolls = function()
 	{
 		if (this.iScroll != null)
@@ -1332,7 +1335,7 @@
 		this.isMobileContextMenuShowResize = false;
 	};
 
-	// есть ли тач или анимационный скролл/зум
+	// is there a touch or animated scroll/zoom
 	CMobileTouchManagerBase.prototype.IsWorkedPosition = function()
 	{
 		if (this.IsTouching)
@@ -1344,7 +1347,7 @@
 		return false;
 	};
 
-	// удаление вспомогательного элемента
+	// remove helper element
 	CMobileTouchManagerBase.prototype.Destroy = function()
 	{
 		var _scroller = document.getElementById(this.iScrollElement);
@@ -1377,8 +1380,8 @@
 
 	CMobileTouchManagerBase.prototype.CheckContextMenuTouchEndOld = function(isCheck, isSelectTouch, isGlassTouch, isTableRuler)
 	{
-		// isCheck: если пришли сюда после скролла или зума (или их анимации) - то не нужно проверять состояние редактора.
-		// Нужно проверять последнее сохраненной состояние
+		// isCheck: if we came here after scroll or zoom (or their animation) - no need to check editor state.
+		// Need to check the last saved state
 
 		if (isCheck)
 		{
@@ -1402,8 +1405,8 @@
 
 	CMobileTouchManagerBase.prototype.CheckContextMenuTouchEnd = function(isCheck, isSelectTouch, isGlassTouch, isTableRuler)
 	{
-		// isCheck: если пришли сюда после скролла или зума (или их анимации) - то не нужно проверять состояние редактора.
-		// Нужно проверять последнее сохраненной состояние
+		// isCheck: if we came here after scroll or zoom (or their animation) - no need to check editor state.
+		// Need to check the last saved state
 
 		var isShowContextMenu = false;
 		var isSelectCell = false;
@@ -1520,7 +1523,7 @@
 				}
 			}
 
-			// после таблиц не показываем меню
+			// don't show menu after tables
 			if (isTableRuler)
 				isEqual = false;
 
@@ -1568,13 +1571,13 @@
 		}
 		else
 		{
-			// меню для текстового селекта показываем всегда
+			// always show menu for text selection
 			isSelectCell = (this.ContextMenuLastInfo && (this.ContextMenuLastInfo.selectCell != null)) ? true : false;
 			isShowContextMenu = (!isSelectCell && (this.ContextMenuLastMode == AscCommon.MobileTouchContextMenuType.Select));
 
 			if (this.ContextMenuLastShow || isTableRuler)
 			{
-				// эмулируем пропажу меню (клик туда же)
+				// emulate menu disappearance (click same place)
 				switch (this.ContextMenuLastMode)
 				{
 					case AscCommon.MobileTouchContextMenuType.Target:
@@ -1629,7 +1632,7 @@
 		this.Api.sendEvent("asc_onHidePopMenu");
 	};
 
-	// закончился скролл
+	// scroll ended
 	CMobileTouchManagerBase.prototype.OnScrollAnimationEnd = function()
 	{
 		if (this.Api.isViewMode)
@@ -1638,7 +1641,7 @@
 		this.CheckContextMenuTouchEnd(false);
 	};
 
-	// обновление ректов для селекта текстового
+	// update rects for text selection
 	CMobileTouchManagerBase.prototype.CheckSelectRects = function()
 	{
 		this.RectSelect1 = null;
@@ -1861,7 +1864,7 @@
 		this.isGlassDrawed = true;
 	};
 
-	// отрисовка текстового селекта
+	// draw text selection
 	CMobileTouchManagerBase.prototype.CheckSelect = function(overlay)
 	{
 		if (!this.desktopTouchState)
@@ -1973,8 +1976,8 @@
 		ctx.globalAlpha = _oldGlobalAlpha;
 	};
 
-	// отрисовка табличного селекта
-	// заточка на определенного делегата
+	// draw table selection
+	// tailored for specific delegate
 	CMobileTouchManagerBase.prototype.CheckTableRules = function(overlay)
 	{
 		if (!this.desktopTouchState)
@@ -2394,7 +2397,7 @@
 		}
 	};
 
-	/* document renderer mode (заточка на делегата) */
+	/* document renderer mode (tailored for specific delegate) */
 	CMobileTouchManagerBase.prototype.onTouchStart_renderer = function(e)
 	{
 		AscCommon.check_MouseDownEvent(e.touches ? e.touches[0] : e, true);
@@ -2423,7 +2426,7 @@
 			}
 			case AscCommon.MobileTouchMode.Scroll:
 			{
-				// ничего не меняем, просто перемещаем точку
+				// don't change anything, just move the point
 				this.DownPoint           = this.delegate.ConvertCoordsFromCursor(global_mouseEvent.X, global_mouseEvent.Y);
 				this.DownPointOriginal.X = global_mouseEvent.X;
 				this.DownPointOriginal.Y = global_mouseEvent.Y;
@@ -2522,13 +2525,13 @@
 			}
 			case AscCommon.MobileTouchMode.Zoom:
 			{
-				// здесь нужно запускать отрисовку, если есть анимация зума
+				// need to start drawing here if there is zoom animation
 				this.delegate.HtmlPage.NoneRepaintPages = false;
 
 				if (this.delegate.IsNativeViewer && this.delegate.IsNativeViewer())
 				{
 					this.delegate.DrawingDocument.m_oDocumentRenderer.paint();
-					// очищаем координаты зума для мобильного веба
+					// clear zoom coordinates for mobile web
 					this.delegate.DrawingDocument.m_oDocumentRenderer.skipClearZoomCoord = false;
 					this.delegate.DrawingDocument.m_oDocumentRenderer.clearZoomCoord();
 				}
@@ -2548,7 +2551,7 @@
 		return false;
 	};
 
-	/* перемещение курсора (именно курсора!) до ближайщей позиции. заточка на делегата */
+	/* move cursor (specifically cursor!) to nearest position. tailored for specific delegate */
 	CMobileTouchManagerBase.prototype.MoveCursorToPoint = function(isHalfHeight)
 	{
 		var pos = this.delegate.ConvertCoordsFromCursor(global_mouseEvent.X, global_mouseEvent.Y);
@@ -2611,7 +2614,7 @@
 	};
 	CMobileTouchManagerBase.prototype.checkPointerMultiTouchRemove = function(e)
 	{
-		// на андроиде не приходит onCompositeEnd - поэтому заглушка
+		// on Android onCompositeEnd is not called - so this is a workaround
 		if (AscCommon.AscBrowser.isAndroid && AscCommon.g_inputContext)
 			AscCommon.g_inputContext.apiCompositeEnd();
 
@@ -2620,7 +2623,7 @@
 
 		//delete this.pointerTouchesCoords[e["pointerId"]];
 
-		// на всякий случай - удаляем все.
+		// just in case - remove everything.
 		this.pointerTouchesCoords = {};
 	};
 	CMobileTouchManagerBase.prototype.checkPointerEvent = function(e)
@@ -2651,7 +2654,7 @@
 			var _x2 = (e.touches[1].pageX !== undefined) ? e.touches[1].pageX : e.touches[1].clientX;
 			var _y2 = (e.touches[1].pageY !== undefined) ? e.touches[1].pageY : e.touches[1].clientY;
 
-			// запоминаем координаты между тачами только на старте
+			// remember coordinates between touches only on start
 			if (bFixZoomCoord && this.delegate.IsNativeViewer && this.delegate.IsNativeViewer()) {
 				this.delegate.DrawingDocument.m_oDocumentRenderer.fixZoomCoord( ( ( _x1 + _x2 ) / 2 ), ( ( _y1 + _y2 ) / 2 ) );
 				this.delegate.DrawingDocument.m_oDocumentRenderer.skipClearZoomCoord = true;
@@ -2675,7 +2678,7 @@
 				if (_counter > 1)
 					break;
 			}
-			// запоминаем координаты между тачами только на старте
+			// remember coordinates between touches only on start
 			if (bFixZoomCoord && this.delegate.IsNativeViewer && this.delegate.IsNativeViewer()) {
 				this.delegate.DrawingDocument.m_oDocumentRenderer.fixZoomCoord( ( ( _touch1.X + _touch2.X ) / 2 ), ( ( _touch1.Y + _touch2.Y ) / 2 ) );
 				this.delegate.DrawingDocument.m_oDocumentRenderer.skipClearZoomCoord = true;

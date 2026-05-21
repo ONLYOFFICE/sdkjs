@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -68,7 +71,7 @@
 			if (null != oThemeColorTint) {
 				for (var i = 0, length = oThemeColorTint.length; i < length; ++i) {
 					var cur = oThemeColorTint[i];
-					//0.005 установлено экспериментально
+					//0.005 was set experimentally
 					if (Math.abs(cur - tintExcel) < 0.005) {
 						bTheme = true;
 						tintPresentation = i;
@@ -384,8 +387,8 @@
 	NativeContext.prototype.getImageData = function (sx,sy,sw,sh) {};
 	NativeContext.prototype.putImageData = function (image_data,dx,dy,dirtyX,dirtyY,dirtyWidth,dirtyHeight) {};
 	
-	// В текущей реализации используется несколько разных DrawingContext, но ссылающихся на одни и те же
-	// FontManager, чтобы разрулить правильное выставление шрифта используем здесь локальные переменные
+	// In the current implementation, several different DrawingContexts are used, but they reference the same
+	// FontManager, so to handle proper font setup we use local variables here
 	let setupFontSize  = -1;
 	let setupFontName  = "";
 	let setupFontStyle = -1;
@@ -446,7 +449,7 @@
 
 		/** @type AscCommonExcel.Font */
 		this.font = undefined !== settings.font ? settings.font : null;
-		// Font должен быть передан (он общий для всех DrawingContext, т.к. может возникнуть ситуация как в баге http://bugzilla.onlyoffice.com/show_bug.cgi?id=19784)
+		// Font must be provided (it's shared across all DrawingContexts, as issues like bug http://bugzilla.onlyoffice.com/show_bug.cgi?id=19784 can occur)
 		if (null === this.font) {
 			throw "Can not set font in DrawingContext";
 		}
@@ -477,7 +480,7 @@
 
 	/**
 	 * Returns width of drawing context in current units
-	 * @param {Number} [units]  Единицы измерения (0=px, 1=pt, 2=in, 3=mm) в которых будет возвращена ширина
+	 * @param {Number} [units]  Units of measurement (0=px, 1=pt, 2=in, 3=mm) in which the width will be returned
 	 * @return {Number}
 	 */
 	DrawingContext.prototype.getWidth = function (units) {
@@ -487,7 +490,7 @@
 
 	/**
 	 * Returns height of drawing context in current units
-	 * @param {Number} [units]  Единицы измерения (0=px, 1=pt, 2=in, 3=mm) в которых будет возвращена высота
+	 * @param {Number} [units]  Units of measurement (0=px, 1=pt, 2=in, 3=mm) in which the height will be returned
 	 * @return {Number}
 	 */
 	DrawingContext.prototype.getHeight = function (units) {
@@ -896,7 +899,7 @@
 
 	DrawingContext.prototype.nativeTextDecorationTransform = function(isStart)
 	{
-		// текст рисуется с трансформом, а strikeout/underline - без (матрица применяется ДО отрисовщика)
+		// text is drawn with transform, but strikeout/underline - without (matrix is applied BEFORE the renderer)
 		if (isStart)
 			window["native"]["PD_transform"](this._im.sx, this._im.shy, this._im.shx, this._im.sy, this._im.tx, this._im.ty);
 		else
@@ -977,15 +980,15 @@
 				flag |= 0x08;
 			}
 			
-			// выставляем шрифт и отрисовщику...
+			// set font for the renderer...
 			var drawFontSize = fontSize * this.scaleFactor * 96.0 / 25.4;
 			window["native"]["PD_LoadFont"](fontInfo.Path, fontInfo.FaceIndex, drawFontSize, flag);
 			
-			// на отрисовке ячейки трансформ выставляется/сбрасывается. так что тут - только если есть angle
+			// transform is set/reset during cell rendering. so here - only if angle is present
 			if (isRotated)
 				window["native"]["PD_transform"](this._mt.sx, this._mt.shy, this._mt.shx, this._mt.sy, this._mt.tx, this._mt.ty);
 			
-			// ...и измерятелю
+			// ...and for the measurer
 			AscFonts.g_fontApplication.LoadFont(fontName, AscCommon.g_font_loader, this.fmgrGraphics[3], fontSize, fontStyle, this.ppiX, this.ppiY);
 		} else {
 			let r;
@@ -1040,7 +1043,7 @@
 			code = aCodes ? aCodes[i] : text.charCodeAt(i);
 			// Replace Non-breaking space(0xA0) with White-space(0x20)
 			tmp = fm.MeasureChar(0xA0 === code ? 0x20 : code);
-			w += asc_round(tmp.fAdvanceX); // ToDo скачет при wrap в ячейке и zoom
+			w += asc_round(tmp.fAdvanceX); // ToDo jumps during wrap in cell and zoom
 		}
 		w2 = w - tmp.fAdvanceX + tmp.oBBox.fMaxX - tmp.oBBox.fMinX + 1;
 		return this._calcTextMetrics(w * r, w2 * r, fm, r);
@@ -1079,7 +1082,7 @@
 			code = 0xA0 === code ? 0x20 : code;
 			if (window["IS_NATIVE_EDITOR"]) {
 				window["native"]["PD_FillText"](_x, _y, code);
-				// убрать это!!! все сдвиги ДОЛЖНЫ быть вщять из измерятеля/шейпера
+				// remove this!!! all offsets SHOULD be taken from the measurer/shaper
 				_x += asc_round((this.measureChar(undefined, 3, code).width) * this.scaleFactor * 96.0 / 25.4);
 			} else {
 				_x = asc_round(manager.LoadString4C(code, _x, _y));
@@ -1099,7 +1102,7 @@
 		return this.fillText(text, x, y, maxWidth, charWidths, angle);
 	};
 	
-	DrawingContext.prototype.tg = function(gid, x, y, codePoints) {
+	DrawingContext.prototype.tg = function(gid, x, y, codePoints, advX, advY) {
 		
 		var _x = this._mift.transformPointX(x, y);
 		var _y = this._mift.transformPointY(x, y);
@@ -1171,7 +1174,7 @@
 		return this;
 	};
 
-	// Отрисовка на 1px меньше
+	// Draw 1px shorter
 	DrawingContext.prototype.lineHorPrevPx = function (x1, y, x2) {
 		var isEven = (0 !== this.ctx.lineWidth % 2 ? 0.5 : 0) - 1;
 		var r1 = this._calcRect(x1, y);
@@ -1387,10 +1390,10 @@
 	};
 
 	/**
-	 * @param {Number} w         Ширина текста
-	 * @param {Number} wBB       Ширина Bound Box текста
-	 * @param {AscFonts.CFontManager} fm  Объект AscFonts.CFontManager для получения метрик шрифта
-	 * @param {Number} r         Коэффициент перевода pt -> в текущие единицы измерения (this.units)
+	 * @param {Number} w         Text width
+	 * @param {Number} wBB       Text Bound Box width
+	 * @param {AscFonts.CFontManager} fm  AscFonts.CFontManager object for getting font metrics
+	 * @param {Number} r         Conversion coefficient pt -> current units of measurement (this.units)
 	 * @return {TextMetrics}
 	 */
 	DrawingContext.prototype._calcTextMetrics = function (w, wBB, fm, r) {

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -900,11 +903,13 @@ function (window, undefined) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DataLabel_SetSpPr, this.spPr, pr));
 		this.spPr = pr;
 		this.setParentToChild(pr);
+		this.onChartUpdateDataLabels();
 	};
 	CDataLabel.prototype.setTxPr = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DataLabel_SetTxPr, this.txPr, pr));
 		this.txPr = pr;
 		this.setParentToChild(pr);
+		this.onChartUpdateDataLabels();
 	};
 	CDataLabel.prototype.setVisibility = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DataLabel_SetVisibility, this.visibility, pr));
@@ -922,6 +927,18 @@ function (window, undefined) {
 	CDataLabel.prototype.setPos = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_DataLabel_SetPos, this.pos, pr));
 		this.pos = pr;
+	};
+	CDataLabel.prototype.Refresh_RecalcData = function () {
+		this.Refresh_RecalcData2();
+	};
+	CDataLabel.prototype.Refresh_RecalcData2 = function () {
+		this.onChartUpdateDataLabels();
+	};
+	CDataLabel.prototype.handleUpdateFill = function () {
+		this.Refresh_RecalcData2();
+	};
+	CDataLabel.prototype.handleUpdateLn = function () {
+		this.Refresh_RecalcData2();
 	};
 
 
@@ -1043,11 +1060,13 @@ function (window, undefined) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DataLabels_SetSpPr, this.spPr, pr));
 		this.spPr = pr;
 		this.setParentToChild(pr);
+		this.onChartUpdateDataLabels();
 	};
 	CDataLabels.prototype.setTxPr = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DataLabels_SetTxPr, this.txPr, pr));
 		this.txPr = pr;
 		this.setParentToChild(pr);
+		this.onChartUpdateDataLabels();
 	};
 	CDataLabels.prototype.setVisibility = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DataLabels_SetVisibility, this.visibility, pr));
@@ -1079,6 +1098,22 @@ function (window, undefined) {
 			History.CanAddChanges() && History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_DataLabels_RemoveDataLabel, pos, [dataLabel], false));
 		}
 	};
+	CDataLabels.prototype.findDataLabelByIdx = function (idx) {
+		for (let i = 0; i < this.dataLabel.length; ++i) {
+			if (this.dataLabel[i] && this.dataLabel[i].idx === idx) {
+				return this.dataLabel[i];
+			}
+		}
+		return null;
+	};
+	CDataLabels.prototype.removeAllDataLabels = function () {
+		for (let i = this.dataLabel.length - 1; i > -1; --i) {
+			this.removeDataLabelByPos(i);
+		}
+	};
+	CDataLabels.prototype.findDLblByIdx = CDataLabels.prototype.findDataLabelByIdx;
+	CDataLabels.prototype.addDLbl = CDataLabels.prototype.addDataLabel;
+	CDataLabels.prototype.removeAllDLbls = CDataLabels.prototype.removeAllDataLabels;
 	CDataLabels.prototype.addDataLabelHidden = function (pr, idx) {
 		let pos;
 		if (AscFormat.isRealNumber(idx))
@@ -1098,6 +1133,18 @@ function (window, undefined) {
 	CDataLabels.prototype.setPos = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_DataLabels_SetPos, this.pos, pr));
 		this.pos = pr;
+	};
+	CDataLabels.prototype.Refresh_RecalcData = function () {
+		this.Refresh_RecalcData2();
+	};
+	CDataLabels.prototype.Refresh_RecalcData2 = function () {
+		this.onChartUpdateDataLabels();
+	};
+	CDataLabels.prototype.handleUpdateFill = function () {
+		this.Refresh_RecalcData2();
+	};
+	CDataLabels.prototype.handleUpdateLn = function () {
+		this.Refresh_RecalcData2();
 	};
 
 
@@ -3320,6 +3367,7 @@ function (window, undefined) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Series_SetDataLabels, this.dataLabels, pr));
 		this.dataLabels = pr;
 		this.setParentToChild(pr);
+		this.onChartUpdateDataLabels();
 	};
 	CSeries.prototype.setDataId = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_Series_SetDataId, this.dataId, pr));

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -517,7 +520,7 @@
 	};
 
 	CSheetProtection.prototype.asc_setSheet = function (password, callback) {
-		//просталяю временный пароль, аспинхронная проверка пароля в asc_setProtectedSheet
+		//setting temporary password, asynchronous password verification in asc_setProtectedSheet
 		this.setSheet(!this.sheet);
 		if (this.sheet && password) {
 			var hashParams = AscCommon.generateHashParams();
@@ -577,7 +580,7 @@
 		this.selectUnlockedCells = val;
 	};
 	CSheetProtection.prototype.asc_setPassword = function (val) {
-		//генерируем хэш
+		//generate hash
 		this.algorithmName = "test";
 		this.hashValue = "test";
 		this.saltValue = "test";
@@ -820,7 +823,7 @@
 		return this.workbookSaltValue;
 	};
 	CWorkbookProtection.prototype.asc_setLockStructure = function (password, callback) {
-		//просталяю временный пароль, аспинхронная проверка пароля в asc_setProtectedWorkbook
+		//setting temporary password, asynchronous password verification in asc_setProtectedWorkbook
 		this.setLockStructure(!this.lockStructure);
 
 		if (this.lockStructure && password) {
@@ -868,7 +871,7 @@
 		this.workbookSpinCount = val;
 	};
 	CWorkbookProtection.prototype.asc_setPassword = function (val) {
-		//генерируем хэш
+		//generate hash
 		this.workbookAlgorithmName = "test";
 		this.workbookHashValue = "test";
 		this.workbookSaltValue = "test";
@@ -896,7 +899,7 @@
 		this.saltValue = null;
 		this.spinCount = null;
 
-		//пока прогоняю только на запись/чтение xml
+		//currently only running for xml write/read
 		this.securityDescriptors = null;
 
 		this._ws = ws;
@@ -997,7 +1000,7 @@
 		var isChange = false;
 
 		var _setDiff = function (_range) {
-			//TODO объединть в одну функцию с dataValidation(.shift)
+			//TODO merge into one function with dataValidation(.shift)
 			var _newRanges, _offset, tempRange, intersection, otherPart, diff;
 
 			if (range && range.getType() === Asc.c_oAscSelectionType.RangeCells) {
@@ -1009,12 +1012,12 @@
 						diff = range.r2 - range.r1 + 1;
 
 						_newRanges = [];
-						//добавляем сдвинутую часть диапазона
+						//add shifted part of range
 						_newRanges.push(intersection);
 						_offset = new AscCommon.CellBase(offset.row > 0 ? diff : -diff, 0);
 						otherPart = _newRanges[0].difference(_range);
 						_newRanges[0].setOffset(_offset);
-						//исключаем сдвинутую часть из диапазона
+						//exclude shifted part from range
 						_newRanges = _newRanges.concat(otherPart);
 
 					}
@@ -1025,12 +1028,12 @@
 					if (intersection) {
 						diff = range.c2 - range.c1 + 1;
 						_newRanges = [];
-						//добавляем сдвинутую часть диапазона
+						//add shifted part of range
 						_newRanges.push(intersection);
 						_offset = new AscCommon.CellBase(0, offset.col > 0 ? diff : -diff, 0);
 						otherPart = _newRanges[0].difference(_range);
 						_newRanges[0].setOffset(_offset);
-						//исключаем сдвинутую часть из диапазона
+						//exclude shifted part from range
 						_newRanges = _newRanges.concat(otherPart);
 					}
 				}
@@ -1148,7 +1151,7 @@
 	};
 
 	CProtectedRange.prototype.contains = function (c, r) {
-		//TODO  в каком виде будет хранится sqref?
+		//TODO  what format will sqref be stored in?
 		for (var i = 0; i < this.sqref.length; i++) {
 			if (this.sqref[i].contains(c, r)) {
 				return true;
@@ -1158,7 +1161,7 @@
 	};
 
 	CProtectedRange.prototype.containsRange = function (range) {
-		//TODO  в каком виде будет хранится sqref?
+		//TODO  what format will sqref be stored in?
 		for (var i = 0; i < this.sqref.length; i++) {
 			if (this.sqref[i].containsRange(range)) {
 				return true;
@@ -1167,7 +1170,7 @@
 		return false;
 	};
 	CProtectedRange.prototype.intersection = function (range) {
-		//TODO  в каком виде будет хранится sqref?
+		//TODO  what format will sqref be stored in?
 		for (var i = 0; i < this.sqref.length; i++) {
 			if (this.sqref[i].intersection(range)) {
 				return true;
@@ -1176,7 +1179,7 @@
 		return false;
 	};
 	CProtectedRange.prototype.containsIntoRange = function (range) {
-		//TODO  в каком виде будет хранится sqref?
+		//TODO  what format will sqref be stored in?
 		for (var i = 0; i < this.sqref.length; i++) {
 			if (!range.containsRange(this.sqref[i])) {
 				return false;
@@ -1270,7 +1273,7 @@
 			this.spinCount = hashParams.spinCount;
 			this.algorithmName = AscCommon.c_oSerAlgorithmNameTypes.SHA_512;
 		}
-		//генерируем хэш
+		//generate hash
 		this.temporaryPassword = val;
 	};
 	CProtectedRange.prototype.asc_isPassword = function () {

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -456,7 +459,7 @@ window.AscCommon.g_cIsBeta = "false";
 	var c_nVersionNoBase64 = 10;
 	var c_dMaxParaRunContentLength = 256;
 	var c_nMaxHyperlinkLength = 2083;
-	var c_sNativeViewerFormats = '.pdf.xps.oxps.djvu';
+	var c_sNativeViewerFormats = '.pdf.xps.oxps.djvu.ofd';
 	var c_sShardKeyName = 'shardkey';
 	var c_sWopiSrcName = 'WOPISrc';
 	var c_sUserSessionIdName = 'usid';
@@ -494,7 +497,7 @@ window.AscCommon.g_cIsBeta = "false";
 		MD   : 0x005c,
 		DOCY : 0x1001,
 		CANVAS_WORD : 0x2001,
-		JSON : 0x0808,	// Для mail-merge
+		JSON : 0x0808,	// For mail-merge
 
 		// Excel
 		XLSX : 0x0101,
@@ -563,23 +566,23 @@ window.AscCommon.g_cIsBeta = "false";
 	};
 
 	var c_oAscAsyncAction = {
-		Open               : 0,  // открытие документа
-		Save               : 1,  // сохранение
-		LoadDocumentFonts  : 2,  // загружаем фонты документа (сразу после открытия)
-		LoadDocumentImages : 3,  // загружаем картинки документа (сразу после загрузки шрифтов)
-		LoadFont           : 4,  // подгрузка нужного шрифта
-		LoadImage          : 5,  // подгрузка картинки
-		DownloadAs         : 6,  // cкачать
-		Print              : 7,  // конвертация в PDF и сохранение у пользователя
-		UploadImage        : 8,  // загрузка картинки
+		Open               : 0,  // opening document
+		Save               : 1,  // saving
+		LoadDocumentFonts  : 2,  // loading document fonts (immediately after opening)
+		LoadDocumentImages : 3,  // loading document images (immediately after loading fonts)
+		LoadFont           : 4,  // loading required font
+		LoadImage          : 5,  // loading image
+		DownloadAs         : 6,  // download
+		Print              : 7,  // converting to PDF and saving to user
+		UploadImage        : 8,  // uploading image
 
-		ApplyChanges : 9,  // применение изменений от другого пользователя.
+		ApplyChanges : 9,  // applying changes from another user.
 
-		SlowOperation     : 11, // медленная операция
-		LoadTheme         : 12, // загрузка темы
-		MailMergeLoadFile : 13, // загрузка файла для mail merge
-		DownloadMerge     : 14, // cкачать файл с mail merge
-		SendMailMerge     : 15,  // рассылка mail merge по почте
+		SlowOperation     : 11, // slow operation
+		LoadTheme         : 12, // loading theme
+		MailMergeLoadFile : 13, // loading file for mail merge
+		DownloadMerge     : 14, // download file with mail merge
+		SendMailMerge     : 15,  // sending mail merge by email
 		ForceSaveButton   : 16,
 		ForceSaveTimeout  : 17,
 		Waiting	: 18,
@@ -619,7 +622,7 @@ window.AscCommon.g_cIsBeta = "false";
 		Nosafe		: 0x04
 	};
 
-	// Режимы отрисовки
+	// Rendering modes
 	var c_oAscFontRenderingModeType = {
 		noHinting             : 1,
 		hinting               : 2,
@@ -709,18 +712,19 @@ window.AscCommon.g_cIsBeta = "false";
 		Hyperlink         : 4,
 		SpellCheck        : 5,
 		Shape             : 6,
-		Slide             : 7,
-		Chart             : 8,
-		Math              : 9,
-		MailMerge         : 10,
-		ContentControl    : 11,
-		Animation         : 12,
-		UnProtectedRegion : 13,
+		HorizontalLine    : 7,
+		Slide             : 8,
+		Chart             : 9,
+		Math              : 10,
+		MailMerge         : 11,
+		ContentControl    : 12,
+		Animation         : 13,
+		UnProtectedRegion : 14,
 		// viewer
-		Text              : 14,
-		Annot             : 15,
-		Field			  : 16,
-		PdfPage           : 17
+		Text              : 15,
+		Annot             : 16,
+		Field             : 17,
+		PdfPage           : 18
 	};
 
 	var c_oAscLineDrawingRule = {
@@ -794,9 +798,9 @@ window.AscCommon.g_cIsBeta = "false";
 	var hdrftr_Header         = 0x01;
 	var hdrftr_Footer         = 0x02;
 
-	var vaKSize  =  0.65;  // Коэффициент изменения размера текста для верхнего и нижнего индексов
-	var vaKSuper =  0.35;  // Позиция верхнего индекса (относительно размера текста)
-	var vaKSub   = -0.141; // Позиция нижнего индекса (относительно размера текста)
+	var vaKSize  =  0.65;  // Text size scaling coefficient for superscript and subscript
+	var vaKSuper =  0.35;  // Superscript position (relative to text size)
+	var vaKSub   = -0.141; // Subscript position (relative to text size)
 
 	var c_oAscDropCap = {
 		None   : 0x00,
@@ -832,7 +836,7 @@ window.AscCommon.g_cIsBeta = "false";
 		leftOverlay  : 5,
 		rightOverlay : 6,
 		layout       : 7,
-		topRight     : 8 // ToDo добавить в меню
+		topRight     : 8 // ToDo add to menu
 	};
 
 	var c_oAscChartDataLabelsPos = {
@@ -1668,7 +1672,7 @@ window.AscCommon.g_cIsBeta = "false";
 		Flow   : 1
 	};
 
-	// Толщина бордера
+	// Border thickness
 	var c_oAscBorderWidth     = {
 		None   : 0,	// 0px
 		Thin   : 1,	// 1px
@@ -1676,7 +1680,7 @@ window.AscCommon.g_cIsBeta = "false";
 		Thick  : 3		// 3px
 	};
 	/**
-	 * Располагаются в порядке значимости для отрисовки
+	 * Ordered by rendering priority
 	 * @enum {number}
 	 */
 	var c_oAscBorderStyles    = {
@@ -1710,11 +1714,11 @@ window.AscCommon.g_cIsBeta = "false";
 	 * @enum {number}
 	 */
 	var c_oAscLockTypes       = {
-		kLockTypeNone   : 1, // никто не залочил данный объект
-		kLockTypeMine   : 2, // данный объект залочен текущим пользователем
-		kLockTypeOther  : 3, // данный объект залочен другим(не текущим) пользователем
-		kLockTypeOther2 : 4, // данный объект залочен другим(не текущим) пользователем (обновления уже пришли)
-		kLockTypeOther3 : 5  // данный объект был залочен (обновления пришли) и снова стал залочен
+		kLockTypeNone   : 1, // no one has locked this object
+		kLockTypeMine   : 2, // this object is locked by the current user
+		kLockTypeOther  : 3, // this object is locked by another (not current) user
+		kLockTypeOther2 : 4, // this object is locked by another (not current) user (updates already received)
+		kLockTypeOther3 : 5  // this object was locked (updates received) and it was locked again after
 	};
 
 	var c_oAscFormatPainterState = {
@@ -1903,12 +1907,12 @@ window.AscCommon.g_cIsBeta = "false";
 
 	// Print default options (in mm)
 	var c_oAscPrintDefaultSettings = {
-		// Размеры страницы при печати
+		// Page size for printing
 		PageWidth       : 210,
 		PageHeight      : 297,
 		PageOrientation : c_oAscPageOrientation.PagePortrait,
 
-		// Поля для страницы при печати
+		// Page margins for printing
 		PageLeftField   : 17.8,
 		PageRightField  : 17.8,
 		PageTopField    : 19.1,
@@ -1924,11 +1928,11 @@ window.AscCommon.g_cIsBeta = "false";
 		PageHeadings  : false
 	};
 
-	// Тип печати
+	// Print type
 	var c_oAscPrintType = {
-		ActiveSheets: 0,	// Активные листы
-		EntireWorkbook: 1,	// Всю книгу
-		Selection: 2		// Выделенный фрагмент
+		ActiveSheets: 0,
+		EntireWorkbook: 1,
+		Selection: 2
 	};
 
 	var c_oZoomType = {
@@ -2030,7 +2034,7 @@ window.AscCommon.g_cIsBeta = "false";
 
 	/** @enum {number} */
 	var c_oAscMathInterfaceScript = {
-		None      : 0x000,  // Удаление скрипта
+		None      : 0x000,  // Remove script
 		Sup       : 0x001,
 		Sub       : 0x002,
 		SubSup    : 0x003,
@@ -2047,7 +2051,7 @@ window.AscCommon.g_cIsBeta = "false";
 
 	/** @enum {number} */
 	var c_oAscMathInterfaceLimitPos = {
-		None   : -1,  // Удаление предела
+		None   : -1,  // Remove limit
 		Top    : 0,
 		Bottom : 1
 	};
@@ -2081,7 +2085,7 @@ window.AscCommon.g_cIsBeta = "false";
 
 	/** @enum {number} */
 	var c_oAscMathInterfaceGroupCharPos = {
-		None   : -1,  // Удаление GroupChar
+		None   : -1,  // Remove GroupChar
 		Top    : 0,
 		Bottom : 1
 	};
@@ -2199,33 +2203,33 @@ window.AscCommon.g_cIsBeta = "false";
 	var c_oAscMaxFormulaReferenceLength = 2048;
 	var c_oAscMaxTableColumnTextLength  = 256;
 
-	var changestype_None                      = 0; // Ничего не происходит с выделенным элементом (проверка идет через дополнительный параметр)
-	var changestype_Paragraph_Content         = 1; // Добавление/удаление элементов в параграф
-	var changestype_Paragraph_Properties      = 2; // Изменение свойств параграфа
-	var changestype_Paragraph_AddText         = 3; // Добавление текста
-	var changestype_Paragraph_TextProperties  = 4; // Изменение настроек текста
-	var changestype_Document_Content          = 10; // Добавление/удаление элементов в Document или в DocumentContent
-	var changestype_Document_Content_Add      = 11; // Добавление элемента в класс Document или в класс DocumentContent
-	var changestype_Document_SectPr           = 12; // Изменения свойств данной секции (размер страницы, поля и ориентация)
-	var changestype_Document_Styles           = 13; // Изменяем стили документа (добавление/удаление/модифицирование)
-	var changestype_Table_Properties          = 20; // Любые изменения в таблице
-	var changestype_Table_RemoveCells         = 21; // Удаление ячеек (строк или столбцов)
-	var changestype_Image_Properties          = 23; // Изменения настроек картинки
-	var changestype_ContentControl_Remove     = 24; // Удаление контейнера целиком
-	var changestype_ContentControl_Properties = 25; // Изменение свойств контейнера
-	var changestype_ContentControl_Add        = 26; // Добавление контейнера
-	var changestype_HdrFtr                    = 30; // Изменения в колонтитуле (любые изменения)
-	var changestype_Remove                    = 40; // Удаление, через кнопку backspace (Удаление назад)
-	var changestype_Delete                    = 41; // Удаление, через кнопку delete (Удаление вперед)
-	var changestype_Drawing_Props             = 51; // Изменение свойств фигуры
-	var changestype_ColorScheme               = 60; // Изменение свойств фигуры
-	var changestype_Text_Props                = 61; // Изменение свойств фигуры
-	var changestype_RemoveSlide               = 62; // Изменение свойств фигуры
-	var changestype_PresentationProps         = 63; // Изменение темы, цветовой схемы, размера слайда;
-	var changestype_Theme                     = 64; // Изменение темы;
-	var changestype_SlideSize                 = 65; // Изменение цветовой схемы;
-	var changestype_SlideBg                   = 66; // Изменение цветовой схемы;
-	var changestype_SlideTransition           = 67; // Изменение цветовой схемы;
+	var changestype_None                      = 0; // Nothing happens with the selected element (check is done using additional parameter)
+	var changestype_Paragraph_Content         = 1; // Adding/removing contents of paragraph
+	var changestype_Paragraph_Properties      = 2; // Changing paragraph properties
+	var changestype_Paragraph_AddText         = 3; // Adding text
+	var changestype_Paragraph_TextProperties  = 4; // Changing text settings
+	var changestype_Document_Content          = 10; // Adding/removing elements in Document or DocumentContent
+	var changestype_Document_Content_Add      = 11; // Adding element to Document class or DocumentContent class
+	var changestype_Document_SectPr           = 12; // Changes to section properties (page size, margins, and orientation)
+	var changestype_Document_Styles           = 13; // Modifying document styles (adding/removing/modifying)
+	var changestype_Table_Properties          = 20; // Any changes to table
+	var changestype_Table_RemoveCells         = 21; // Removing cells (rows or columns)
+	var changestype_Image_Properties          = 23; // Changes to image settings
+	var changestype_ContentControl_Remove     = 24; // Removing the entire container
+	var changestype_ContentControl_Properties = 25; // Changing container properties
+	var changestype_ContentControl_Add        = 26; // Adding container
+	var changestype_HdrFtr                    = 30; // Changes to header/footer (any changes)
+	var changestype_Remove                    = 40; // Deletion using backspace key (backward deletion)
+	var changestype_Delete                    = 41; // Deletion using delete key (forward deletion)
+	var changestype_Drawing_Props             = 51; // Changing shape properties
+	var changestype_ColorScheme               = 60; // Changing color scheme
+	var changestype_Text_Props                = 61; // Changing text properties
+	var changestype_RemoveSlide               = 62; // Removing slide
+	var changestype_PresentationProps         = 63; // Changing theme, color scheme, slide size;
+	var changestype_Theme                     = 64; // Changing theme;
+	var changestype_SlideSize                 = 65; // Changing slide size;
+	var changestype_SlideBg                   = 66; // Changing slide background;
+	var changestype_SlideTransition           = 67; // Changing slide transition;
 	var changestype_MoveComment               = 68;
 	var changestype_AddSp                     = 69;
 	var changestype_AddComment                = 70;
@@ -2235,19 +2239,19 @@ window.AscCommon.g_cIsBeta = "false";
 	var changestype_PresDefaultLang           = 74;
 	var changestype_SlideHide                 = 75;
 	var changestype_CorePr                    = 76;
-	var changestype_Document_Settings         = 77; // Изменение общих настроек документа Document.Settings
+	var changestype_Document_Settings         = 77; // Changing general document settings Document.Settings
 	var changestype_Timing                    = 78;
 	var changestype_ViewPr                    = 79;
 	var changestype_DocumentProtection        = 80;
 	var changestype_CustomPr                  = 81;
 
-	var changestype_2_InlineObjectMove       = 1; // Передвигаем объект в заданную позцию (проверяем место, в которое пытаемся передвинуть)
-	var changestype_2_HdrFtr                 = 2; // Изменения с колонтитулом
-	var changestype_2_Comment                = 3; // Работает с комментариями
-	var changestype_2_Element_and_Type       = 4; // Проверяем возможно ли сделать изменение заданного типа с заданным элементом(а не с текущим)
-	var changestype_2_ElementsArray_and_Type = 5; // Аналогично предыдущему, только идет массив элементов
-	var changestype_2_AdditionalTypes        = 6; // Дополнительные проверки типа 1
-	var changestype_2_Element_and_Type_Array = 7; // Проверяем возможно ли сделать изменения заданного типа с заданными элементами (для каждого элемента свое изменение)
+	var changestype_2_InlineObjectMove       = 1; // Moving object to specified position (checking the place we're trying to move to)
+	var changestype_2_HdrFtr                 = 2; // Changes to header/footer
+	var changestype_2_Comment                = 3; // Working with comments
+	var changestype_2_Element_and_Type       = 4; // Checking if it's possible to make a change of specified type with specified element (not with current one)
+	var changestype_2_ElementsArray_and_Type = 5; // Same as previous, but with an array of elements
+	var changestype_2_AdditionalTypes        = 6; // Additional checks of type 1
+	var changestype_2_Element_and_Type_Array = 7; // Checking if it's possible to make changes of specified type with specified elements (each element has its own change)
 
 	var contentchanges_Add    = 1;
 	var contentchanges_Remove = 2;
@@ -2411,8 +2415,8 @@ window.AscCommon.g_cIsBeta = "false";
 	g_aPunctuation[0x2425] = PUNCTUATION_FLAG_BASE;                                     // ␥
 	g_aPunctuation[0x2426] = PUNCTUATION_FLAG_BASE;                                     // ␦
 
-	// Не смотря на то что следующий набор символов идет в блоке CJK Symbols and Punctuation
-	// Word не считает их как EastAsian script (w:lang->w:eastAsian)
+	// Despite the following set of characters being in CJK Symbols and Punctuation block
+	// Word does not consider them as EastAsian script (w:lang->w:eastAsian)
 
 	g_aPunctuation[0x3001] = PUNCTUATION_FLAG_BASE | PUNCTUATION_FLAG_CANT_BE_AT_BEGIN; // 、
 	g_aPunctuation[0x3002] = PUNCTUATION_FLAG_BASE | PUNCTUATION_FLAG_CANT_BE_AT_BEGIN; // 。
@@ -2564,140 +2568,140 @@ window.AscCommon.g_cIsBeta = "false";
 
 
 	var c_oAscSmartArtTypes = {
-		AccentedPicture: 0, // Акцентируемый рисунок
-		Balance: 1, // Баланс
-		TitledPictureBlocks: 2, // Блоки рисунков с названиями
-		PictureAccentBlocks: 3, // Блоки со смещенными рисунками
-		BlockCycle: 4, // Блочный цикл
-		StackedVenn: 5, // Венна в столбик
-		VerticalEquation: 6, // Вертикальное уравнение
-		VerticalBlockList: 7, // Вертикальный блочный список
-		VerticalBendingProcess: 8, // Вертикальный ломаный процесс
-		VerticalBulletList: 9, // Вертикальный маркированный список
-		VerticalCurvedList: 10, // Вертикальный нелинейный список
-		VerticalProcess: 11, // Вертикальный процесс
-		VerticalBoxList: 12, // Вертикальный список
-		VerticalPictureList: 13, // Вертикальный список рисунков
-		VerticalCircleList: 14, // Вертикальный список с кругами
-		VerticalPictureAccentList: 15, // Вертикальный список со смещенными рисунками
-		VerticalArrowList: 16, // Вертикальный список со стрелкой
-		VerticalChevronList: 17, // Вертикальный уголковый список
-		VerticalAccentList: 18, // Вертикальный уголковый список2
-		NestedTarget: 19, // Вложенная целевая
-		Funnel: 20, // Воронка
-		UpwardArrow: 21, // Восходящая стрелка
-		IncreasingArrowsProcess: 22, // Восходящая стрелка процесса
-		StepUpProcess: 23, // Восходящий процесс
-		CircularPictureCallout: 24, // Выноска с круглыми рисунками
-		HorizontalHierarchy: 25, // Горизонтальная иерархия
-		HorizontalLabeledHierarchy: 26, // Горизонтальная иерархия с подписями
-		HorizontalMultiLevelHierarchy: 27, // Горизонтальная многоуровневая иерархия
-		HorizontalOrganizationChart: 28, // Горизонтальная организационная диаграмма
-		HorizontalBulletList: 29, // Горизонтальный маркированный список
-		HorizontalPictureList: 30, // Горизонтальный список рисунков
-		ClosedChevronProcess: 31, // Закрытый уголковый процесс
-		HierarchyList: 32, // Иерархический список
-		Hierarchy: 33, // Иерархия
-		CirclePictureHierarchy: 34, // Иерархия с круглыми рисунками
-		LabeledHierarchy: 35, // Иерархия с подписями
-		InvertedPyramid: 36, // Инвертированная пирамида
-		HexagonCluster: 37, // Кластер шестиугольников
-		CircleRelationship: 38, // Круг связей
-		CircleAccentTimeline: 39, // Круглая временная шкала
-		CircularBendingProcess: 40, // Круглый ломаный процесс
-		ArrowRibbon: 41, // Лента со стрелками
-		LinearVenn: 42, // Линейная Венна
-		PictureLineup: 43, // Линия рисунков
-		TitlePictureLineup: 44, // Линия рисунков с названиями
-		BendingPictureCaptionList: 45, // Ломаный список рисунков с подписями
-		BendingPictureAccentList: 46, // Ломаный список со смещенными рисунками
-		TitledMatrix: 47, // Матрица с заголовками
-		IncreasingCircleProcess: 48, // Нарастающий процесс с кругами
-		BendingPictureBlocks: 49, // Нелинейные рисунки с блоками
-		BendingPictureCaption: 50, // Нелинейные рисунки с подписями
-		BendingPictureSemiTransparentText: 51, // Нелинейные рисунки с полупрозрачным текстом
-		NonDirectionalCycle: 52, // Ненаправленный цикл
-		ContinuousBlockProcess: 53, // Непрерывный блочный процесс
-		ContinuousPictureList: 54, // Непрерывный список с рисунками
-		ContinuousCycle: 55, // Непрерывный цикл
-		DescendingBlockList: 56, // Нисходящий блочный список
-		StepDownProcess: 57, // Нисходящий процесс
-		ReverseList: 58, // Обратный список
-		OrganizationChart: 59, // Организационная диаграмма
-		NameAndTitleOrganizationChart: 60, // Организационная диаграмма с именами и должностями
-		AlternatingFlow: 61, // Переменный поток
-		PyramidList: 62, // Пирамидальный список
-		PlusAndMinus: 63, // Плюс и минус
-		RepeatingBendingProcess: 64, // Повторяющийся ломаный процесс
-		CaptionedPictures: 65, // Подписанные рисунки
-		DetailedProcess: 66, // Подробный процесс
-		PictureStrips: 67, // Полосы рисунков
-		HalfCircleOrganizationChart: 68, // Полукруглая организационная диаграмма
-		PhasedProcess: 69, // Поэтапный процесс
-		BasicVenn: 70, // Простая Венна
-		BasicTimeline: 71, // Простая временная шкала
-		BasicPie: 72, // Простая круговая
-		BasicMatrix: 73, // Простая матрица
-		BasicPyramid: 74, // Простая пирамида
-		BasicRadial: 75, // Простая радиальная
-		BasicTarget: 76, // Простая целевая
-		BasicBlockList: 77, // Простой блочный список
-		BasicBendingProcess: 78, // Простой ломаный процесс
-		BasicProcess: 79, // Простой процесс
-		BasicChevronProcess: 80, // Простой уголковый процесс
-		BasicCycle: 81, // Простой цикл
-		OpposingIdeas: 82, // Противоположные идеи
-		OpposingArrows: 83, // Противостоящие стрелки
-		RandomToResultProcess: 84, // Процесс от случайности к результату
-		SubStepProcess: 85, // Процесс с вложенными шагами
-		PieProcess: 86, // Процесс с круговой диаграммой
-		AccentProcess: 87, // Процесс со смещением
-		AscendingPictureAccentProcess: 88, // Процесс со смещенными по возрастанию рисунками
-		PictureAccentProcess: 89, // Процесс со смещенными рисунками
-		RadialVenn: 90, // Радиальная Венна
-		RadialCycle: 91, // Радиальная циклическая
-		RadialCluster: 92, // Радиальный кластер
-		RadialList: 93, // Радиальный список
-		MultiDirectionalCycle: 94, // Разнонаправленный цикл
-		DivergingRadial: 95, // Расходящаяся радиальная
-		DivergingArrows: 96, // Расходящиеся стрелки
-		FramedTextPicture: 97, // Рисунок с текстом в рамке
-		GroupedList: 98, // Сгруппированный список
-		SegmentedPyramid: 99, // Сегментированная пирамида
-		SegmentedProcess: 100, // Сегментированный процесс
-		SegmentedCycle: 101, // Сегментированный цикл
-		PictureGrid: 102, // Сетка рисунков
-		GridMatrix: 103, // Сетчатая матрица
-		SpiralPicture: 104, // Спираль рисунков
-		StackedList: 105, // Список в столбик
-		PictureCaptionList: 106, // Список названий рисунков
-		ProcessList: 107, // Список процессов
-		BubblePictureList: 108, // Список рисунков с выносками
-		SquareAccentList: 109, // Список с квадратиками
-		LinedList: 110, // Список с линиями
-		PictureAccentList: 111, // Список со смещенными рисунками
-		TitledPictureAccentList: 112, // Список со смещенными рисунками и заголовком
-		SnapshotPictureList: 113, // Список со снимками
-		ContinuousArrowProcess: 114, // Стрелка непрерывного процесса
-		CircleArrowProcess: 115, // Стрелка процесса с кругами
-		ProcessArrows: 116, // Стрелки процесса
-		StaggeredProcess: 117, // Ступенчатый процесс
-		ConvergingRadial: 118, // Сходящаяся радиальная
-		ConvergingArrows: 119, // Сходящиеся стрелки
-		TableHierarchy: 120, // Табличная иерархия
-		TableList: 121, // Табличный список
-		TextCycle: 122, // Текстовый цикл
-		TrapezoidList: 123, // Трапецевидный список
-		DescendingProcess: 124, // Убывающий процесс
-		ChevronList: 125, // Уголковый список
-		Equation: 126, // Уравнение
-		CounterbalanceArrows: 127, // Уравновешивающие стрелки
-		TargetList: 128, // Целевой список
-		CycleMatrix: 129, // Циклическая матрица
-		AlternatingPictureBlocks: 130, // Чередующиеся блоки рисунков
-		AlternatingPictureCircles: 131, // Чередующиеся круги рисунков
-		AlternatingHexagonList: 132, // Чередующиеся шестиугольники
-		Gear: 133, // Шестеренки
+		AccentedPicture: 0,
+		Balance: 1,
+		TitledPictureBlocks: 2,
+		PictureAccentBlocks: 3,
+		BlockCycle: 4,
+		StackedVenn: 5,
+		VerticalEquation: 6,
+		VerticalBlockList: 7,
+		VerticalBendingProcess: 8,
+		VerticalBulletList: 9,
+		VerticalCurvedList: 10,
+		VerticalProcess: 11,
+		VerticalBoxList: 12,
+		VerticalPictureList: 13,
+		VerticalCircleList: 14,
+		VerticalPictureAccentList: 15,
+		VerticalArrowList: 16,
+		VerticalChevronList: 17,
+		VerticalAccentList: 18,
+		NestedTarget: 19,
+		Funnel: 20,
+		UpwardArrow: 21,
+		IncreasingArrowsProcess: 22,
+		StepUpProcess: 23,
+		CircularPictureCallout: 24,
+		HorizontalHierarchy: 25,
+		HorizontalLabeledHierarchy: 26,
+		HorizontalMultiLevelHierarchy: 27,
+		HorizontalOrganizationChart: 28,
+		HorizontalBulletList: 29,
+		HorizontalPictureList: 30,
+		ClosedChevronProcess: 31,
+		HierarchyList: 32,
+		Hierarchy: 33,
+		CirclePictureHierarchy: 34,
+		LabeledHierarchy: 35,
+		InvertedPyramid: 36,
+		HexagonCluster: 37,
+		CircleRelationship: 38,
+		CircleAccentTimeline: 39,
+		CircularBendingProcess: 40,
+		ArrowRibbon: 41,
+		LinearVenn: 42,
+		PictureLineup: 43,
+		TitlePictureLineup: 44,
+		BendingPictureCaptionList: 45,
+		BendingPictureAccentList: 46,
+		TitledMatrix: 47,
+		IncreasingCircleProcess: 48,
+		BendingPictureBlocks: 49,
+		BendingPictureCaption: 50,
+		BendingPictureSemiTransparentText: 51,
+		NonDirectionalCycle: 52,
+		ContinuousBlockProcess: 53,
+		ContinuousPictureList: 54,
+		ContinuousCycle: 55,
+		DescendingBlockList: 56,
+		StepDownProcess: 57,
+		ReverseList: 58,
+		OrganizationChart: 59,
+		NameAndTitleOrganizationChart: 60,
+		AlternatingFlow: 61,
+		PyramidList: 62,
+		PlusAndMinus: 63,
+		RepeatingBendingProcess: 64,
+		CaptionedPictures: 65,
+		DetailedProcess: 66,
+		PictureStrips: 67,
+		HalfCircleOrganizationChart: 68,
+		PhasedProcess: 69,
+		BasicVenn: 70,
+		BasicTimeline: 71,
+		BasicPie: 72,
+		BasicMatrix: 73,
+		BasicPyramid: 74,
+		BasicRadial: 75,
+		BasicTarget: 76,
+		BasicBlockList: 77,
+		BasicBendingProcess: 78,
+		BasicProcess: 79,
+		BasicChevronProcess: 80,
+		BasicCycle: 81,
+		OpposingIdeas: 82,
+		OpposingArrows: 83,
+		RandomToResultProcess: 84,
+		SubStepProcess: 85,
+		PieProcess: 86,
+		AccentProcess: 87,
+		AscendingPictureAccentProcess: 88,
+		PictureAccentProcess: 89,
+		RadialVenn: 90,
+		RadialCycle: 91,
+		RadialCluster: 92,
+		RadialList: 93,
+		MultiDirectionalCycle: 94,
+		DivergingRadial: 95,
+		DivergingArrows: 96,
+		FramedTextPicture: 97,
+		GroupedList: 98,
+		SegmentedPyramid: 99,
+		SegmentedProcess: 100,
+		SegmentedCycle: 101,
+		PictureGrid: 102,
+		GridMatrix: 103,
+		SpiralPicture: 104,
+		StackedList: 105,
+		PictureCaptionList: 106,
+		ProcessList: 107,
+		BubblePictureList: 108,
+		SquareAccentList: 109,
+		LinedList: 110,
+		PictureAccentList: 111,
+		TitledPictureAccentList: 112,
+		SnapshotPictureList: 113,
+		ContinuousArrowProcess: 114,
+		CircleArrowProcess: 115,
+		ProcessArrows: 116,
+		StaggeredProcess: 117,
+		ConvergingRadial: 118,
+		ConvergingArrows: 119,
+		TableHierarchy: 120,
+		TableList: 121,
+		TextCycle: 122,
+		TrapezoidList: 123,
+		DescendingProcess: 124,
+		ChevronList: 125,
+		Equation: 126,
+		CounterbalanceArrows: 127,
+		TargetList: 128,
+		CycleMatrix: 129,
+		AlternatingPictureBlocks: 130,
+		AlternatingPictureCircles: 131,
+		AlternatingHexagonList: 132,
+		Gear: 133,
 
 		// Office.com
 		ArchitectureLayout: 134,
@@ -3155,8 +3159,8 @@ window.AscCommon.g_cIsBeta = "false";
 		RowsRem    : 0x09,
 		TableRowPr : 0x0A,
 
-		MoveMark       : 0xFE, // специальный внутренний тип, для обозначения меток переноса
-		MoveMarkRemove : 0xFF  // внутреннний тип, для удаления отметок переноса внутри параграфов и таблиц
+		MoveMark       : 0xFE, // special internal type, for marking move marks
+		MoveMarkRemove : 0xFF  // internal type, for removing move marks inside paragraphs and tables
 	};
 
 
@@ -3179,7 +3183,7 @@ window.AscCommon.g_cIsBeta = "false";
 
 
 	/**
-	 * Типы горизонтального прилегания для автофигур.
+	 * Horizontal alignment types for autoshapes.
 	 * @type {{Center: number, Inside: number, Left: number, Outside: number, Right: number}}
 	 * @enum {number}
 	 */
@@ -3192,7 +3196,7 @@ window.AscCommon.g_cIsBeta = "false";
 	};
 
 	/**
-	 * Типы вертикального прилегания для автофигур.
+	 * Vertical alignment types for autoshapes.
 	 * @type {{Bottom: number, Center: number, Inside: number, Outside: number, Top: number}}
 	 * @enum {number}
 	 */
@@ -4775,7 +4779,7 @@ window.AscCommon.g_cIsBeta = "false";
 		autoNoTable: 1,
 		manual: 2
 	};
-	//поля worksheet header/footer
+	//worksheet header/footer fields
 	var c_oAscHeaderFooterField = {
 		pageNumber: 0,
 		pageCount: 1,
@@ -4914,6 +4918,13 @@ window.AscCommon.g_cIsBeta = "false";
 		RangeLink: 2,
 		FileLink: 3
 	};
+
+	var c_oAscMsoHyperlinkType = {
+		Range: 0,
+		Shape: 1
+	};
+
+	window.AscCommon.RELATIVE_SDKJS_PATH = typeof window.AscCommon.RELATIVE_SDKJS_PATH === "string" ? window.AscCommon.RELATIVE_SDKJS_PATH : "../../../../sdkjs/";
 
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
@@ -6640,6 +6651,11 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['WebLink'] = prot.WebLink;
 	prot['RangeLink'] = prot.RangeLink;
 	prot['FileLink'] = prot.FileLink;
+
+	window['Asc']['c_oAscMsoHyperlinkType'] = window['Asc'].c_oAscMsoHyperlinkType = c_oAscMsoHyperlinkType;
+	prot = c_oAscMsoHyperlinkType;
+	prot['Range'] = prot.Range;
+	prot['Shape'] = prot.Shape;
 
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].c_oAscPaneState = c_oAscPaneState;

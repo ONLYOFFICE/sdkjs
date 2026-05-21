@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 "use strict";
 (function (window, undefined){
@@ -522,7 +525,7 @@
                     var ColumnStartPos = Column.Pos;
                     var ColumnEndPos   = Column.EndPos;
 
-                    // Плавающие объекты не должны попадать в клип колонок
+                    // Floating objects should not be included in column clipping
                     var FlowElements = [];
 
                     if (ColumnsCount > 1)
@@ -648,7 +651,7 @@
     {
         if (undefined === PageNum || null === PageNum)
             PageNum = this.CurPage;
-        // Теперь проверим пустые параграфы с окончанием секций
+        // Now let's check empty paragraphs with section endings
         var SectCount = this.Pages[PageNum].EndSectionParas.length;
         if(this.Pages[PageNum].Sections.length === 0){
             return CDocumentContent.prototype.Internal_GetContentPosByXY.call(this, X, Y, PageNum);
@@ -662,7 +665,7 @@
                 return Item.Index;
         }
 
-        // Сначала мы определим секцию и колонку, в которую попали
+        // First we will determine the section and column that we hit
         var Page = this.Pages[PageNum];
 
         var SectionIndex = 0;
@@ -681,7 +684,7 @@
                 break;
         }
 
-        // TODO: Разобраться с ситуацией, когда пустые колонки стоят не только в конце
+        // TODO: Handle the situation when empty columns are not only at the end
         while (ColumnIndex > 0 && true === PageSection.Columns[ColumnIndex].Empty)
             ColumnIndex--;
 
@@ -716,7 +719,7 @@
     {
         var DC = new CDrawingDocContent(Parent, DrawingDocument ? DrawingDocument : this.DrawingDocument, 0, 0, 0, 0, this.Split, this.TurnOffInnerWrap, this.bPresentation);
 
-        // Копируем содержимое
+        // Copy the content
         DC.Internal_Content_RemoveAll();
 
         var Count = this.Content.length;
@@ -727,11 +730,11 @@
 
         return DC;
     };
-    CDrawingDocContent.prototype.Copy3           = function(Parent)//для заголовков диаграмм
+    CDrawingDocContent.prototype.Copy3           = function(Parent)//for chart titles
     {
         var DC = new CDrawingDocContent(Parent, this.DrawingDocument, 0, 0, 0, 0, this.Split, this.TurnOffInnerWrap, true);
 
-        // Копируем содержимое
+        // Copy the content
         DC.Internal_Content_RemoveAll();
 
         var Count = this.Content.length;
@@ -914,7 +917,7 @@
 			});
 			return nContentLength;
 		};
-    // TODO: сделать по-нормальному!!!
+    // TODO: do this properly!!!
     function CDocument_prototype_private_GetElementPageIndexByXY(ElementPos, X, Y, PageIndex)
     {
         var Element = this.Content[ElementPos];
@@ -957,7 +960,7 @@
     		EndColumn   = Math.min(ElementPagesCount - ElementStartColumn + (PageIndex - ElementStartPage) * ColumnsCount, ColumnsCount - 1);
     	}
 
-    	// TODO: Разобраться с ситуацией, когда пустые колонки стоят не только в конце
+    	// TODO: Handle the situation when empty columns are not only at the end
     	while (true === PageSection.Columns[EndColumn].Empty && EndColumn > StartColumn)
     		EndColumn--;
 

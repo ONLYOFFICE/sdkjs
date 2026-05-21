@@ -1,33 +1,36 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -39,13 +42,13 @@
 
     AscCrypto.Storage = {};
 
-    // тип команды. "private" - значит доступно только для того юзера, который делает запрос
+    // command type. "private" - means accessible only to the user making the request
     AscCrypto.Storage.CommandType = {
         private : "private",
         public : "public"
     };
 
-    // ключи команды.
+    // command keys.
     AscCrypto.Storage.CommandKey = {
         keySign : "keySign",
         keyCrypt : "keyCrypt"
@@ -58,24 +61,24 @@
     }
     */
 
-    // перечень команд.
+    // list of commands.
     AscCrypto.Storage.CommandName = {
-        // добавляем к текущему юзеру запись
+        // add a record for the current user
         // { type : add, value : [{value},{value}] }
         add : "add",
-        // удаляем запись по id. пока не используем
+        // remove a record by id. not used yet
         // { type : remove, value : [id1, id2, ...] }
         remove : "remove",
-        // заменяем у текущего юзера запись по id (если записи нет - то ничего не делаем)
+        // replace a record by id for the current user (if the record does not exist - do nothing)
         // { type : remove, value : [{rec, rec}] }
         replace : "replace",
-        // для текущего юзера. отдаем все записи с указанным ключом
+        // for the current user. return all records with the specified key
         // { type : get, value : [key1, key2] }
-        // для себя - отдаем и private. для остальных- нет
+        // for self - return private as well. for others - no
         get : "get",
-        // вернуть объект юзера (данные его) по одному из значений ключа.
-        // если ничего не указано - то вернуть для текущего юзера
-        // (в принципе можно присылать еще и ключ, по которому смотреть, записей будет мало => ключ можно упустить)
+        // return the user object (their data) by one of the key values.
+        // if nothing is specified - return for the current user
+        // (in principle, you can also send the key to look up, there will be few records => the key can be omitted)
         getUserInfo : "getUserInfo"
     };
 
@@ -214,7 +217,7 @@
             }
             case AscCrypto.Storage.CommandName.getUserInfo:
             {
-                // в локальной версии юзеров нет
+                // no users in the local version
                 break;
             }
             default:
@@ -236,7 +239,7 @@
             if (localValue.hasOwnProperty(prop) && mapReturnKeys[localValue[prop]["key"]] === true)
             {
                 returnObj[prop] = localValue[prop];
-                // тут приватные не удаляем (это нужно на юзерах делать)
+                // don't remove private ones here (this should be done on users)
             }
         }
 

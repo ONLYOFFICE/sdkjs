@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 /**
@@ -144,6 +147,9 @@
 	};
 	drawingsChangesMap[AscDFH.historyitem_ShapeSetTextLink] = function (oClass, value) {
 		oClass.textLink = value;
+		if (oClass.recalcInfo) {
+			oClass.recalcInfo._textLinkCache = null;
+		}
 	};
 	drawingsChangesMap[AscDFH.historyitem_ShapeSetModelId] = function (oClass, value) {
 		oClass.modelId = value;
@@ -880,6 +886,9 @@
 	CGraphicObjectBase.prototype.setTextLink = function (sLink) {
 		AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ShapeSetTextLink, this.textLink, sLink));
 		this.textLink = sLink;
+		if (this.recalcInfo) {
+			this.recalcInfo._textLinkCache = null;
+		}
 	};
 	CGraphicObjectBase.prototype.hasMacro = function () {
 		var sMacro = this.getMacroOwnOrGroup();
@@ -1060,22 +1069,30 @@
 		return !this.isObjectInSmartArt() && this.getNoAdjustHandles() === false;
 	};
 	CGraphicObjectBase.prototype.Reassign_ImageUrls = function (mapUrl) {
-		if (this.blipFill) {
-			if (mapUrl[this.blipFill.RasterImageId]) {
-				if (this.setBlipFill) {
-					const blip_fill = this.blipFill.createDuplicate();
-					blip_fill.setRasterImageId(mapUrl[this.blipFill.RasterImageId]);
-					this.setBlipFill(blip_fill);
-				}
+		if (this.blipFill && mapUrl[this.blipFill.RasterImageId]) {
+			if (this.setBlipFill) {
+				const oNew = this.blipFill.createDuplicate();
+				oNew.ReplaceImageUrl(mapUrl);
+				this.setBlipFill(oNew);
 			}
 		}
 		if (this.spPr) {
-			const oNewFill = this.spPr.Fill && this.spPr.Fill.reassignImageUrl(mapUrl);
-			if (oNewFill)
-				this.spPr.setFill(oNewFill);
-			const oNewLn = this.spPr.ln && this.spPr.ln.reassignImageUrl(mapUrl);
-			if (oNewLn)
-				this.spPr.setLn(oNewLn);
+			if (this.spPr.Fill) {
+				const sId = this.spPr.Fill.checkRasterImageId();
+				if (sId && mapUrl[sId]) {
+					const oNew = this.spPr.Fill.createDuplicate();
+					oNew.ReplaceImageUrl(mapUrl);
+					this.spPr.setFill(oNew);
+				}
+			}
+			if (this.spPr.ln) {
+				const sId = this.spPr.ln.checkRasterImageId();
+				if (sId && mapUrl[sId]) {
+					const oNew = this.spPr.ln.createDuplicate();
+					oNew.ReplaceImageUrl(mapUrl);
+					this.spPr.setLn(oNew);
+				}
+			}
 		}
 		if (Array.isArray(this.spTree)) {
 			for (let i = 0; i < this.spTree.length; ++i) {
@@ -1870,42 +1887,65 @@
 		}
 		return false;
 	};
+	CGraphicObjectBase.prototype.getEffectiveCNvProps = function () {
+		if (this.parent && this.parent.docPr) {
+			return this.parent.docPr;
+		}
+		return this.getCNvProps();
+	};
+	CGraphicObjectBase.prototype.collectAllCNvProps = function () {
+		const allProps = [];
+
+		const oCNvPr = this.getCNvProps();
+		if (oCNvPr) {
+			allProps.push(oCNvPr);
+		}
+
+		if (this.parent && this.parent.docPr && this.parent.docPr !== oCNvPr) {
+			allProps.push(this.parent.docPr);
+		}
+
+		return allProps;
+	};
 	CGraphicObjectBase.prototype.setTitle = function (sTitle) {
 		if (undefined === sTitle || null === sTitle) {
 			return;
 		}
-		var oNvPr = this.getCNvProps();
-		if (oNvPr) {
-			oNvPr.setTitle(sTitle ? sTitle : null);
+		this.checkDrawingUniNvPr();
+		const allCNvProps = this.collectAllCNvProps();
+		for (let i = 0; i < allCNvProps.length; i++) {
+			allCNvProps[i].setTitle(sTitle ? sTitle : null);
 		}
 	};
 	CGraphicObjectBase.prototype.setDescription = function (sDescription) {
 		if (undefined === sDescription || null === sDescription) {
 			return;
 		}
-		var oNvPr = this.getCNvProps();
-		if (oNvPr) {
-			oNvPr.setDescr(sDescription ? sDescription : null);
+		this.checkDrawingUniNvPr();
+		const allCNvProps = this.collectAllCNvProps();
+		for (let i = 0; i < allCNvProps.length; i++) {
+			allCNvProps[i].setDescr(sDescription ? sDescription : null);
 		}
 	};
 	CGraphicObjectBase.prototype.setName = function (sName) {
 		if (undefined === sName || null === sName) {
 			return;
 		}
-		var oNvPr = this.getCNvProps();
-		if (oNvPr) {
-			oNvPr.setName(sName ? sName : null);
+		this.checkDrawingUniNvPr();
+		const allCNvProps = this.collectAllCNvProps();
+		for (let i = 0; i < allCNvProps.length; i++) {
+			allCNvProps[i].setName(sName ? sName : null);
 		}
 	};
 	CGraphicObjectBase.prototype.getTitle = function () {
-		var oNvPr = this.getCNvProps();
+		const oNvPr = this.getEffectiveCNvProps();
 		if (oNvPr) {
 			return oNvPr.title ? oNvPr.title : undefined;
 		}
 		return undefined;
 	};
 	CGraphicObjectBase.prototype.getDescription = function () {
-		var oNvPr = this.getCNvProps();
+		const oNvPr = this.getEffectiveCNvProps();
 		if (oNvPr) {
 			return oNvPr.descr ? oNvPr.descr : undefined;
 		}
@@ -2472,6 +2512,9 @@
 
 	CGraphicObjectBase.prototype.onMouseMove = function (e, x, y) {
 		return this.hit(x, y);
+	};
+	CGraphicObjectBase.prototype.IsTableBorder = function (x, y, pageIndex) {
+		return null;
 	};
 	CGraphicObjectBase.prototype.drawLocks = function (transform, graphics) {
 		if (AscCommon.IsShapeToImageConverter) {
@@ -3361,24 +3404,9 @@
 	};
 	CGraphicObjectBase.prototype.getBoundsByDrawing = function (bMorph) {
 		const oCopy = this.bounds.copy();
-		if(this.shdwSp) {
+		if (this.shdwSp) {
 			this.shdwSp.recalculateBounds();
 			oCopy.checkByOther(this.shdwSp.bounds);
-		}
-		if(!bMorph) {
-			oCopy.l -= 3;
-			oCopy.r += 3;
-			oCopy.t -= 3;
-			oCopy.b += 3;
-			oCopy.checkWH();
-			return oCopy;//TODO: do not count shape rect
-		}
-		if(this.pen) {
-			const dCorrection = this.pen.getWidthMM() / 2;
-			oCopy.l -= dCorrection;
-			oCopy.r += dCorrection;
-			oCopy.t -= dCorrection;
-			oCopy.b += dCorrection;
 		}
 		oCopy.checkWH();
 		return oCopy;
@@ -3655,7 +3683,7 @@
 		return AscCommon.translateManager.getValue("Graphic Object");
 	};
 	CGraphicObjectBase.prototype.getOwnName = function() {
-		const oCNvPr = this.getCNvProps();
+		const oCNvPr = this.getEffectiveCNvProps();
 		if (oCNvPr && typeof oCNvPr.name === "string" && oCNvPr.name.length > 0) {
 			return oCNvPr.name;
 		}

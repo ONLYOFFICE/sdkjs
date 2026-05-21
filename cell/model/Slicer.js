@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -313,7 +316,7 @@
 		return AscCommonExcel.UndoRedoDataTypes.Slicer;
 	};
 	CT_slicer.prototype.clone = function (ws) {
-		//если ws-> undefined, то клонирование для интерфейса, только CT_slicer без внутренних структур
+		//if ws-> undefined, then cloning for interface, only CT_slicer without internal structures
 		var res = new CT_slicer(ws);
 
 		res.name = this.name;
@@ -412,7 +415,7 @@
 		}
 
 		if (!this.cacheDefinition) {
-			//необходимо проверить, возможно данный кэш уже существует
+			//need to check, perhaps this cache already exists
 			var cache;
 			var caches = this.ws.getSlicerCachesBySourceName(name);
 			if (caches) {
@@ -675,7 +678,7 @@
 		History.Create_NewPoint();
 		History.StartTransaction();
 
-		//TODO передать информацию во view о смене caption
+		//TODO pass information to view about caption change
 		if (this.caption === oldVal) {
 			this.setCaption(newVal);
 		}
@@ -799,7 +802,7 @@
 	};
 
 	CT_slicer.prototype.getSortOrder = function () {
-		//TODO может быть не только таблица
+		//TODO may not only be a table
 		var table = this.cacheDefinition.getTableSlicerCache() || this.cacheDefinition.getTabular();
 		if (table) {
 			return table.sortOrder;
@@ -1026,7 +1029,7 @@
 
 		this.wb = wb;
 
-		//пока добавил объект для хранения типа, чтобы не проходится по внутреннему дереву
+		//for now I added an object to store the type, so as not to traverse the internal tree
 		this._type = null;
 
 		return this;
@@ -1039,7 +1042,7 @@
 		switch (type) {
 			case insertSlicerType.table: {
 				this.sourceName = name;
-				//TODO для генерации имени нужна отдельная функция
+				//TODO a separate function is needed for name generation
 				this.name = this.generateSlicerCacheName(name);
 				this.tableSlicerCache = new CT_tableSlicerCache();
 				this.tableSlicerCache.tableId = obj_name;
@@ -1053,7 +1056,7 @@
 				var cacheField = -1 !== fieldIndex && cacheFields[fieldIndex];
 				if (cacheField) {
 					this.sourceName = cacheField.asc_getName();
-					//TODO для генерации имени нужна отдельная функция
+					//TODO a separate function is needed for name generation
 					this.name = this.generateSlicerCacheName(name);
 					this.data = new CT_slicerCacheData();
 					this.data.tabular = new CT_tabularSlicerCache();
@@ -1130,7 +1133,7 @@
 			if (this.slicerCacheHideItemsWithNoData.length === 0) {
 				res.slicerCacheHideItemsWithNoData = this.slicerCacheHideItemsWithNoData;
 			} else {
-				//TODO проверить структуру
+				//TODO check the structure
 				for (i = 0; i < this.slicerCacheHideItemsWithNoData.length; i++) {
 					if (!res.slicerCacheHideItemsWithNoData) {
 						res.slicerCacheHideItemsWithNoData = [];
@@ -1167,7 +1170,7 @@
 
 		//replace not valid symbols
 		name = name.replace(/[-+*\/^&%<=>: ;//),]/g, "_");
-		//TODO дополнительная проверка - пересмотреть
+		//TODO additional check - needs review
 		if (!AscCommon.rx_defName.test(name)) {
 			name = name.replace(/[^a-zA-ZА-Яа-яЁё0-9]/gi, "_")
 		}
@@ -1303,13 +1306,13 @@
 	};
 
 	CT_slicerCacheDefinition.prototype.getIndexSheetCache = function () {
-		//TODO позже можно использовать данную функцию в функции getFilterValues. сейчас часть кода дублируется.
+		//TODO later this function can be used in getFilterValues. currently part of the code is duplicated.
 		var res = null;
 		var type = this.getType();
 		var wb = this.wb;
 		switch (type) {
 			case insertSlicerType.table: {
-				//пока беру первый элемент, поскольку не очень понятно в каких случаях их вообще может быть несколько
+				//for now taking the first element, since it's not clear in which cases there can be several
 				var tableCache = this.tableSlicerCache;
 				var tableObj = wb.getTableByName(tableCache.tableId, true);
 				res = tableObj ? tableObj.index : null;
@@ -1330,7 +1333,7 @@
 		var wb = this.wb;
 		switch (type) {
 			case insertSlicerType.table: {
-				//пока беру первый элемент, поскольку не очень понятно в каких случаях их вообще может быть несколько
+				//for now taking the first element, since it's not clear in which cases there can be several
 				var tableCache = this.tableSlicerCache;
 				var tableObj = wb.getTableByName(tableCache.tableId, true);
 				var table = tableObj ? tableObj.table : null;
@@ -1382,7 +1385,7 @@
 		var wb = this.wb;
 		switch (type) {
 			case insertSlicerType.table: {
-				//пока беру первый элемент, поскольку не очень понятно в каких случаях их вообще может быть несколько
+				//for now taking the first element, since it's not clear in which cases there can be several
 				var tableCache = this.tableSlicerCache;
 				var table = wb.getTableByName(tableCache.tableId);
 				if (table) {
@@ -1557,7 +1560,7 @@
 		var wb = this.wb;
 		switch (type) {
 			case insertSlicerType.table: {
-				//пока беру первый элемент, поскольку не очень понятно в каких случаях их вообще может быть несколько
+				//for now taking the first element, since it's not clear in which cases there can be several
 				var tableCache = this.tableSlicerCache;
 				var table = wb.getTableByName(tableCache.tableId);
 				if (table) {
@@ -1919,7 +1922,7 @@
 
 
 	function CT_olapSlicerCacheItem() {
-		this.p = [];//OlapSlicerCacheItemParent - состоит из одного поля, поэтому данную структуру не добавляю
+		this.p = [];//OlapSlicerCacheItemParent - consists of one field, so I don't add this structure
 		this.n = null;
 		this.c = null;
 		this.nd = false;
@@ -2426,7 +2429,7 @@
 	};
 
 	function CT_olapSlicerCacheSelection() {
-		this.p = [];//OlapSlicerCacheItemParent - состоит из одного поля, поэтому данную структуру не добавляю
+		this.p = [];//OlapSlicerCacheItemParent - consists of one field, so I don't add this structure
 		this.n = null;
 	}
 

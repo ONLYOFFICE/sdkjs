@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -100,7 +103,7 @@ function GetObjectsForImageDownload(aBuilderImages, bSameDoc)
         }
     }
     if(bSameDoc !== true){
-        //в конце добавляем ссылки на wmf, ole
+        //add links to wmf, ole at the end
         for(var i = 0; i < aBuilderImages.length; ++i)
         {
             var oBuilderImage = aBuilderImages[i];
@@ -150,7 +153,7 @@ function ResetNewUrls(data, aUrls, aBuilderImagesByUrl, oImageMap)
     }
 }
 
-//TODO на счёт коэффициэнта не нахожу подходящего преобразования. пересмотреть.
+//TODO can't find a suitable conversion. review.
 var koef_mm_to_indent = 3.88;
 
 var PasteElementsId = {
@@ -166,7 +169,7 @@ function CopyElement(sName, bText){
 }
 CopyElement.prototype.addChild = function(child){
 	if(child.bText && this.aChildren.length > 0 && this.aChildren[this.aChildren.length - 1].bText)
-		this.aChildren[this.aChildren.length - 1].sName += child.sName;//обьединяем текст, потому что есть места где мы определяем количество child и будет неправильное значение, потому на getOuterHtml тест обьединится в один
+		this.aChildren[this.aChildren.length - 1].sName += child.sName;//merge text, because there are places where we determine child count and it will be wrong value, so on getOuterHtml the text will merge into one
 	else
 		this.aChildren.push(child);
 };
@@ -335,8 +338,8 @@ CopyProcessor.prototype =
                 if(Asc.linerule_Exact === Item_pPr.Spacing.LineRule)
                     apPr.push("mso-line-height-rule:exactly");
             }
-			//TODO при вставке в EXCEL(внутрь ячейки) появляются лишние пустые строки из-за того, что в HTML пишутся отступы - BUG #14663
-			//При вставке в word лучше чтобы эти значения выставлялись всегда
+			//TODO when pasting into EXCEL (inside a cell) extra empty lines appear because indents are written in HTML - BUG #14663
+			//When pasting into word it's better to always set these values
             //if(Def_pPr.Spacing.Before != Item_pPr.Spacing.Before)
             apPr.push("margin-top:" + (Item_pPr.Spacing.Before * g_dKoef_mm_to_pt) + "pt");
             //if(Def_pPr.Spacing.After != Item_pPr.Spacing.After)
@@ -344,8 +347,8 @@ CopyProcessor.prototype =
             //Shd
             if (null != Item_pPr.Shd && c_oAscShdNil !== Item_pPr.Shd.Value && (null != Item_pPr.Shd.Color || null != Item_pPr.Shd.Unifill)){
 				var _shdColor = Item_pPr.Shd.GetSimpleColor && Item_pPr.Shd.GetSimpleColor(this.oDocument.Get_Theme(), this.oDocument.Get_ColorMap());
-				//TODO проверить сохранение в epub
-				//todo проверить и убрать else, всегда использовать GetSimpleColor
+				//TODO check saving to epub
+				//todo check and remove else, always use GetSimpleColor
 				if (_shdColor) {
 					_shdColor = this.RGBToCSS(_shdColor);
 				} else {
@@ -371,7 +374,7 @@ CopyProcessor.prototype =
             {
                 apPr.push("border:none");
 
-                //сравниваю бордеры со следующим параграфом
+                //compare borders with the next paragraph
                 var isNeedPrefix = true;
                 if (Item && type_Paragraph === Item.GetType() && Item.IsTableCellContent && !Item.IsTableCellContent()) {
 					isNeedPrefix = false;
@@ -423,7 +426,7 @@ CopyProcessor.prototype =
         }
         if (null != Value.FontSize) {
             if (!this.api.DocumentReaderMode)
-                aProp.push("font-size:" + Value.FontSize + "pt");//font-size в pt все остальные метрики в mm
+                aProp.push("font-size:" + Value.FontSize + "pt");//font-size in pt, all other metrics in mm
             else
                 aProp.push("font-size:" + this.api.DocumentReaderMode.CorrectFontSize(Value.FontSize));
         }
@@ -443,7 +446,7 @@ CopyProcessor.prototype =
             aProp.push("background-color:" + this.RGBToCSS(Value.HighLight, null));
         if (null != Value.Color || null != Value.Unifill) {
 			var color;
-			//TODO правка того, что в полученной html цвет текста всегда чёрный. стоит пересмотреть.
+			//TODO fix for the fact that in received html text color is always black. should review.
 			if(null != Value.Unifill)
 				color = this.RGBToCSS(null, Value.Unifill);
 			else
@@ -469,15 +472,15 @@ CopyProcessor.prototype =
     	switch ( ParaItem.Type )
         {
             case para_Text:
-				//экранируем спецсимволы
+				//escape special characters
                 let sValue = AscCommon.encodeSurrogateChar(ParaItem.Value);
                 if(sValue)
 					oTarget.addChild(new CopyElement(CopyPasteCorrectString(sValue), true));
                 break;
             case para_Space:
-				//TODO пересмотреть обработку пробелов - возможно стоит всегда копировать неразрывный пробел!!!!!
-				//в случае нескольких пробелов друг за другом добавляю неразрывный пробел, иначе добавиться только один
-				//lengthContent - если в элемент добавляется только один пробел, этот элемент не записывается в буфер, поэтому добавляем неразрывный пробел
+				//TODO review space handling - maybe should always copy non-breaking space!!!!!
+				//in case of several consecutive spaces, add non-breaking space, otherwise only one will be added
+				//lengthContent - if only one space is added to element, this element is not written to buffer, so add non-breaking space
 				if((nextParaItem && nextParaItem.Type === para_Space) || lengthContent === 1)
 					oTarget.addChild(new CopyElement("&nbsp;", true));
 				else
@@ -522,8 +525,8 @@ CopyProcessor.prototype =
 
 
 				oTarget.addChild(oBr);
-				//todo закончить этот параграф и начать новый
-				//добавил неразрвной пробел для того, чтобы информация попадала в буфер обмена
+				//todo finish this paragraph and start a new one
+				//added non-breaking space so that information goes to clipboard
 				oSpan = new CopyElement("span");
 				oSpan.addChild(new CopyElement("&nbsp;", true));
 				oTarget.addChild(oSpan);
@@ -622,7 +625,7 @@ CopyProcessor.prototype =
     	for (var i = 0; i < Container.Content.length; i++) {
 			var item = Container.Content[i];
 			if (para_Run === item.Type) {
-				//отдельная обработка для сносок, добавляем внутри данные
+				//separate handling for footnotes, add data inside
 				if (item.Content && item.Content.length === 1 && item.Content[0] && item.Content[0].Type === para_FootnoteReference) {
 					this.CopyRun(item, oTarget);
 				} else {
@@ -662,7 +665,7 @@ CopyProcessor.prototype =
 					var sToolTip = item.GetToolTip();
 					oHyperlink.oAttributes["href"] = CopyPasteCorrectString(sValue);
 					oHyperlink.oAttributes["title"] = CopyPasteCorrectString(sToolTip);
-					//вложенные ссылки в html запрещены.
+					//nested links are forbidden in html.
 					this.CopyRunContent(item, oHyperlink, true);
 					oTarget.addChild(oHyperlink);
 				} else {
@@ -687,12 +690,12 @@ CopyProcessor.prototype =
 
 				this.CopyRunContent(item, oTarget);
 			} else if (para_Bookmark === item.Type) {
-				//для внутренних ссылок
-				//если конец ссылки находится в тепкущем параграфе, то закрываем тэг ссылки здесь
-				//если он находится в следующем параграфе, то закрываем после того, как прошлись по всему содержимому данного параграфа
-				//ms в данном случае берёт только первый элемент
-				//чтобы заранее не проходиться по всему контенту параграфа в поисках закрытия bookmark - закрываю его после всего цикла
-				//на следующий параграф не переносим
+				//for internal links
+				//if the link end is in the current paragraph, close the link tag here
+				//if it's in the next paragraph, close after going through all the content of this paragraph
+				//ms in this case takes only the first element
+				//to avoid going through all paragraph content in advance to find bookmark closure - close it after the entire loop
+				//don't transfer to next paragraph
 				if (item.Start) {
 					var bookmarkLevel = bookmarkStack.length + 1;
 					bookmarksStartMap[item.BookmarkId] = bookmarkLevel;
@@ -726,12 +729,12 @@ CopyProcessor.prototype =
     {
         var oDocument = this.oDocument;
 		var Para = null;
-		//Для heading пишем в h1
+		//For heading write to h1
         var styleId = Item.Style_Get();
         if(styleId)
         {
             var styleName = oDocument.Styles.Get_Name( styleId ).toLowerCase();
-			//шаблон "heading n" (n=1:6)
+			//pattern "heading n" (n=1:6)
             if(0 === styleName.indexOf("heading"))
             {
                 var nLevel = parseInt(styleName.substring("heading".length));
@@ -848,13 +851,13 @@ CopyProcessor.prototype =
 
         if(false === selectedAll)
         {
-			//если последний элемент в выделении неполностью выделенный параграф, то он копируется как обычный текст без настроек параграфа и списков
+			//if the last element in selection is not fully selected paragraph, it's copied as regular text without paragraph and list settings
 			this.CopyRunContent(Item, oDomTarget, false);
         }
         else
         {
 			this.CopyRunContent(Item, Para, false);
-			//добавляем &nbsp; потому что параграфы без содержимого не копируются
+			//add &nbsp; because paragraphs without content are not copied
             if(Para.isEmptyChild())
                 Para.addChild(new CopyElement("&nbsp;", true));
             if(bIsNullNumPr) {
@@ -952,7 +955,7 @@ CopyProcessor.prototype =
             res += name + ":none;";
         else
         {
-            //TODO получение цвета рассмотреть аналогично получению фону у ячейки с ипользованием функции GetSimpleColor
+            //TODO consider getting color similar to getting cell background using GetSimpleColor function
         	var size = 0.5;
             var color = border.Color;
             var unifill = border.Unifill;
@@ -1055,7 +1058,7 @@ CopyProcessor.prototype =
 		if(null != cell.CompiledPr && null != cell.CompiledPr.Pr)
         {
             cellPr = cell.CompiledPr.Pr;
-			//Для первых и послених ячеек выставляются margin а не colspan
+			//For first and last cells margin is set instead of colspan
             if(null != cellPr.GridSpan && cellPr.GridSpan > 1)
 				tc.oAttributes["colspan"] = cellPr.GridSpan;
         }
@@ -1063,7 +1066,7 @@ CopyProcessor.prototype =
         {
 			if (c_oAscShdNil !== cellPr.Shd.Value && (null != cellPr.Shd.Color || null != cellPr.Shd.Unifill)) {
 				var _shdColor = cellPr.Shd.GetSimpleColor(this.oDocument.Get_Theme(), this.oDocument.Get_ColorMap());
-				//todo проверить и убрать else, всегда использовать GetSimpleColor
+				//todo check and remove else, always use GetSimpleColor
 				if (_shdColor) {
 					_shdColor = this.RGBToCSS(_shdColor);
 				} else {
@@ -1134,9 +1137,9 @@ CopyProcessor.prototype =
             {
                 nGridBefore = elems.before;
                 var nWBefore = gridSum[elems.gridStart - 1] - gridSum[elems.gridStart - nGridBefore - 1];
-				//Записываем margin
+				//Write margin
                 trStyle += "mso-row-margin-left:"+(nWBefore * g_dKoef_mm_to_pt)+"pt;";
-				//добавляем td для тех кто не понимает mso-row-margin-left
+				//add td for those who don't understand mso-row-margin-left
                 var oNewTd = new CopyElement("td");
                 oNewTd.oAttributes["style"] = "mso-cell-special:placeholder;border:none;padding:0cm 0cm 0cm 0cm";
                 oNewTd.oAttributes["width"] = Math.round(nWBefore * g_dKoef_mm_to_pix);
@@ -1163,7 +1166,7 @@ CopyProcessor.prototype =
 				var StartGridCol = cell.Metrics.StartGridCol;
 				var GridSpan = cell.Get_GridSpan();
 				var width = gridSum[StartGridCol + GridSpan - 1] - gridSum[StartGridCol - 1];
-				//вычисляем rowspan
+				//calculate rowspan
 				var nRowSpan = table.Internal_GetVertMergeCount(nCurRow, StartGridCol, GridSpan);
 				if(nCurRow + nRowSpan - 1 > nMaxRow)
 				{
@@ -1181,9 +1184,9 @@ CopyProcessor.prototype =
             {
                 var nGridAfter = elems.after;
                 var nWAfter = gridSum[elems.gridEnd + nGridAfter] - gridSum[elems.gridEnd];
-				//Записываем margin
+				//Write margin
                 trStyle += "mso-row-margin-right:"+(nWAfter * g_dKoef_mm_to_pt)+"pt;";
-				//добавляем td для тех кто не понимает mso-row-margin-left
+				//add td for those who don't understand mso-row-margin-left
                 var oNewTd = new CopyElement("td");
                 oNewTd.oAttributes["style"] = "mso-cell-special:placeholder;border:none;padding:0cm 0cm 0cm 0cm";
 				oNewTd.oAttributes["width"] = Math.round(nWAfter * g_dKoef_mm_to_pix);
@@ -1263,7 +1266,7 @@ CopyProcessor.prototype =
             if(null != Pr.TableBorders)
                 tblStyle += this._BordersToStyle(Pr.TableBorders, true, false);
         }
-		//ищем cellSpacing
+		//look for cellSpacing
         var bAddSpacing = false;
         if(table.Content.length > 0)
         {
@@ -1338,7 +1341,7 @@ CopyProcessor.prototype =
 				else if ( type_Paragraph === Item.GetType() )
 				{
 					var SelectedAll = Index === elementsContent.length - 1 ? elementsContent[Index].SelectedAll : true;
-					//todo может только для верхнего уровня надо Index == End
+					//todo maybe only for top level need Index == End
 					if (!dNotGetBinary) {
 						this.oBinaryFileWriter.CopyParagraph(Item, SelectedAll);
 					}
@@ -1387,13 +1390,13 @@ CopyProcessor.prototype =
 				|| (elementsContent[0].Fields && elementsContent[0].Fields.length)
 				|| elementsContent[0].Pages.length) {
 				this.oPDFWriter.WriteString2(this.api.documentId);
-				//флаг о том, что множественный контент в буфере
+				//flag indicating that multiple content is in buffer
 				this.oPDFWriter.WriteBool(true);
 			}
 
-			//записываем все варианты контента
-			//в html записываем первый вариант - конечное форматирование
-			//в банарник пишем: 1)конечное форматирование 2)исходное форматирование 3)картинка
+			//write all content variants
+			//in html write first variant - final formatting
+			//in binary write: 1)final formatting 2)source formatting 3)image
 			this.oPDFWriter.WriteULong(elementsContent.length);
 			for (var i = 0; i < elementsContent.length; i++) {
 				if (i === 0) {
@@ -1414,13 +1417,13 @@ CopyProcessor.prototype =
 				this.oPresentationWriter.WriteString2(themeName);
 				this.oPresentationWriter.WriteDouble(presentation.GetWidthMM());
 				this.oPresentationWriter.WriteDouble(presentation.GetHeightMM());
-				//флаг о том, что множественный контент в буфере
+				//flag indicating that multiple content is in buffer
 				this.oPresentationWriter.WriteBool(true);
 			}
 
-			//записываем все варианты контента
-			//в html записываем первый вариант - конечное форматирование
-			//в банарник пишем: 1)конечное форматирование 2)исходное форматирование 3)картинка
+			//write all content variants
+			//in html write first variant - final formatting
+			//in binary write: 1)final formatting 2)source formatting 3)image
 			this.oPresentationWriter.WriteULong(elementsContent.length);
 			for(var i = 0; i < elementsContent.length; i++)
 			{
@@ -1436,7 +1439,7 @@ CopyProcessor.prototype =
 		}
 		/*else if(elementsContent)
 		{
-			//эту ветку оставляю для записи едиственного варианта контента, который используется функцией getSelectedBinary
+			//leaving this branch for writing single content variant used by getSelectedBinary function
 			if(elementsContent.DocContent || (elementsContent.Drawings && elementsContent.Drawings.length) || (elementsContent.SlideObjects && elementsContent.SlideObjects.length))
 			{
 				this.oPresentationWriter.WriteString2(this.api.documentId);
@@ -1447,7 +1450,7 @@ CopyProcessor.prototype =
 		}*/
 		else
 		{
-			//для записи внутреннего контента таблицы
+			//for writing internal table content
 			this.copyPresentationContent(oDocument, oDomTarget);
 		}
 	},
@@ -1459,7 +1462,7 @@ CopyProcessor.prototype =
 		}
 		else {
 			//inner recursive call CopyDocument2 function
-			if (elementsContent && elementsContent.Content && elementsContent.Content.length) {//пишем таблицу в html
+			if (elementsContent && elementsContent.Content && elementsContent.Content.length) {//write table to html
 
 				for (var Index = 0; Index < elementsContent.Content.length; Index++) {
 					var Item = elementsContent.Content[Index];
@@ -1485,11 +1488,11 @@ CopyProcessor.prototype =
 			if (docContent.Elements) {
 				let elements = docContent.Elements;
 
-				//пишем метку и длины
+				//write marker and lengths
 				oThis.oPDFWriter.WriteString2("DocContent");
 				oThis.oPDFWriter.WriteDouble(elements.length);
 
-				//пишем контент
+				//write content
 				for (let Index = 0; Index < elements.length; Index++) {
 					let Item;
 					if (elements[Index].Element) {
@@ -1512,7 +1515,7 @@ CopyProcessor.prototype =
 		};
 
 		let copyDrawings = function(elements){
-			//пишем метку и длины
+			//write marker and lengths
 			oThis.oPDFWriter.WriteString2("Drawings");
 			oThis.oPDFWriter.WriteULong(elements.length);
 
@@ -1528,7 +1531,7 @@ CopyProcessor.prototype =
 					oThis.oPDFWriter.WriteDouble(elements[i].ExtX);
 					oThis.oPDFWriter.WriteDouble(elements[i].ExtY);
 
-					//TODO записывать base64 у картинок для разных контентов в единственном экземпляре
+					//TODO write base64 for images across different contents in single instance
 					if(elements[i].Drawing.isImage()) {
 						oThis.oPDFWriter.WriteString2("");
 					} else {
@@ -1558,7 +1561,7 @@ CopyProcessor.prototype =
 
 			let elements = elementsContent.Annots;
 
-			//пишем метку и длину
+			//write marker and length
 			oThis.oPDFWriter.WriteString2("Annots");
 			oThis.oPDFWriter.WriteULong(elements.length);
 
@@ -1578,7 +1581,7 @@ CopyProcessor.prototype =
 
 			let elements = elementsContent.Fields;
 
-			//пишем метку и длину
+			//write marker and length
 			oThis.oPDFWriter.WriteString2("Fields");
 			oThis.oPDFWriter.WriteULong(elements.length);
 
@@ -1619,7 +1622,7 @@ CopyProcessor.prototype =
 			}
 		};
 
-		// пишем количество
+		// write count
 		let contentCount = 0;
 		for(let i in elementsContent){
 			if(elementsContent[i] && typeof elementsContent[i] === "object" && elementsContent[i].length){
@@ -1682,7 +1685,7 @@ CopyProcessor.prototype =
 		History.TurnOff();
 		this.oPDFWriter.WriteGrFrame(graphicFrame);
 
-		//для случая, когда копируем 1 таблицу из презентаций, в бинарник заносим ещё одну такую же табличку, но со скомпиоированными стилями(для вставки в word / excel)
+		//for the case when copying 1 table from presentations, add another same table to binary but with compiled styles (for pasting in word / excel)
 		if (isOnlyTable) {
 			this.convertToCompileStylesTable(Item);
 			this.oPDFWriter.WriteGrFrame(graphicFrame);
@@ -1702,7 +1705,7 @@ CopyProcessor.prototype =
 		else
 		{
 			//inner recursive call CopyDocument2 function
-			if (elementsContent && elementsContent.Content && elementsContent.Content.length) {//пишем таблицу в html
+			if (elementsContent && elementsContent.Content && elementsContent.Content.length) {//write table to html
 
 				for (var Index = 0; Index < elementsContent.Content.length; Index++) {
 					var Item = elementsContent.Content[Index];
@@ -1727,11 +1730,11 @@ CopyProcessor.prototype =
 			if (docContent.Elements) {
 				var elements = docContent.Elements;
 
-				//пишем метку и длины
+				//write marker and lengths
 				oThis.oPresentationWriter.WriteString2("DocContent");
 				oThis.oPresentationWriter.WriteDouble(elements.length);
 
-				//пишем контент
+				//write content
 				for (var Index = 0; Index < elements.length; Index++) {
 					var Item;
 					if (elements[Index].Element) {
@@ -1758,7 +1761,7 @@ CopyProcessor.prototype =
 
 			//var selected_objects = graphicObjects.State.id === STATES_ID_GROUP ? graphicObjects.State.group.selectedObjects : graphicObjects.selectedObjects;
 
-			//пишем метку и длины
+			//write marker and lengths
 			oThis.oPresentationWriter.WriteString2("Drawings");
 			oThis.oPresentationWriter.WriteULong(elements.length);
 
@@ -1773,7 +1776,7 @@ CopyProcessor.prototype =
 					oThis.oPresentationWriter.WriteDouble(elements[i].Y);
 					oThis.oPresentationWriter.WriteDouble(elements[i].ExtX);
 					oThis.oPresentationWriter.WriteDouble(elements[i].ExtY);
-					//TODO записывать base64 у картинок для разных контентов в единственном экземпляре
+					//TODO write base64 for images across different contents in single instance
 					if(elements[i].Drawing.isImage()) {
 						oThis.oPresentationWriter.WriteString2("");
 					} else {
@@ -1805,7 +1808,7 @@ CopyProcessor.prototype =
 			var layout_count = 0;
 			editor.WordControl.m_oLogicDocument.CalculateComments();
 
-			//пишем слайд
+			//write slide
 			var slide;
 			for (var i = 0; i < selected_slides.length; ++i) {
 				slide = selected_slides[i];
@@ -1899,7 +1902,7 @@ CopyProcessor.prototype =
 		};
 
 
-		//получаем пишем количество
+		//get and write count
 		var contentCount = 0;
 		for(var i in elementsContent){
 			if(elementsContent[i] && typeof elementsContent[i] === "object" && elementsContent[i].length){
@@ -1914,7 +1917,7 @@ CopyProcessor.prototype =
 		oThis.oPresentationWriter.WriteULong(contentCount);
 
 		//DocContent
-		if (elementsContent.DocContent) {//пишем контент
+		if (elementsContent.DocContent) {//write content
 			copyDocContent();
 		}
 		//Drawings
@@ -1945,7 +1948,7 @@ CopyProcessor.prototype =
 		}
 		//Notes
 		if (elementsContent.Notes && elementsContent.Notes.length) {
-			//TODO если нет Notes, то Notes должен быть равен null. вместо этого приходится проверять 1 элемент массива
+			//TODO if there's no Notes, then Notes should be null. instead have to check 1st array element
 			if(!(elementsContent.Notes.length === 1 && null === elementsContent.Notes[0])){
 				copyNotes();
 			}
@@ -2008,7 +2011,7 @@ CopyProcessor.prototype =
 				}
 			}
 
-			//подменяем Document для копирования(если не подменить, то commentId будет не соответствовать)
+			//substitute Document for copying (if not substituted, commentId will not match)
 			this.oBinaryFileWriter.Document = elementsContent[0].Element.LogicDocument;
 
 			if (!this.oBinaryFileWriter.Document)
@@ -2045,11 +2048,11 @@ CopyProcessor.prototype =
 				return "";
 			}
 
-			//TODO заглушка для презентационных параграфов(выделен текст внутри диаграммы) - пока не пишем в бинарник
+			//TODO stub for presentation paragraphs (text selected inside chart) - not writing to binary yet
 			if (selectedContent.Elements[0].Element && selectedContent.Elements[0].Element.bFromDocument === false) {
 				this.oBinaryFileWriter.Document = this.oDocument;
 			} else {
-				//подменяем Document для копирования(если не подменить, то commentId будет не соответствовать)
+				//substitute Document for copying (if not substituted, commentId will not match)
 				this.oBinaryFileWriter.Document = elementsContent[0].Element.LogicDocument;
 			}
 
@@ -2082,7 +2085,7 @@ CopyProcessor.prototype =
 					oElem.oAttributes["style"] = "font-weight:normal";
 				} else {
 					oElem.oAttributes["style"] = sStyle + ";font-weight:normal";
-				}//просто добавляем потому что в sStyle не могло быть font-weight, мы всегда пишем <b>
+				}//just add because sStyle couldn't have font-weight, we always write <b>
 				this.oRoot.wrapChild(new CopyElement("b"));
 			}
 			if (this.oRoot.aChildren && this.oRoot.aChildren.length > 0) {
@@ -2105,7 +2108,7 @@ CopyProcessor.prototype =
 					oElem.oAttributes["style"] = "font-weight:normal";
 				} else {
 					oElem.oAttributes["style"] = sStyle + ";font-weight:normal";
-				}//просто добавляем потому что в sStyle не могло быть font-weight, мы всегда пишем <b>
+				}//just add because sStyle couldn't have font-weight, we always write <b>
 				this.oRoot.wrapChild(new CopyElement("b"));
 			}
 			if (this.oRoot.aChildren && this.oRoot.aChildren.length > 0) {
@@ -2122,7 +2125,7 @@ CopyProcessor.prototype =
 					oElem.oAttributes["style"] = "font-weight:normal";
 				} else {
 					oElem.oAttributes["style"] = sStyle + ";font-weight:normal";
-				}//просто добавляем потому что в sStyle не могло быть font-weight, мы всегда пишем <b>
+				}//just add because sStyle couldn't have font-weight, we always write <b>
 				this.oRoot.wrapChild(new CopyElement("b"));
 			}
 			if (this.oRoot.aChildren && this.oRoot.aChildren.length > 0) {
@@ -2151,9 +2154,9 @@ CopyProcessor.prototype =
 
 	CopySlide: function (oDomTarget, slide) {
 		this.AddObjectImageToElement(oDomTarget, slide);
-		//пока записываю для копирования/вставки ссылку на стиль
-		//TODO в дальнейшем необходимо пересмотреть и писать стили вместе со слайдом
-		// - аналогично тому как это реализовано при записи таблицы
+		//for now writing style reference for copy/paste
+		//TODO in the future need to review and write styles together with slide
+		// - similar to how it's implemented when writing table
 		var presentation = editor.WordControl.m_oLogicDocument;
 		for(var key in presentation.TableStylesIdMap)
 		{
@@ -2163,7 +2166,7 @@ CopyProcessor.prototype =
 			}
 		}
 
-		//записываем slide
+		//write slide
 		this.oPresentationWriter.WriteSlide(slide);
 
 	},
@@ -2227,7 +2230,7 @@ CopyProcessor.prototype =
 			var nCurStartGrid = cellFirst.Metrics.StartGridCol;
 			var nCurEndGrid = cellLast.Metrics.StartGridCol + cellLast.Get_GridSpan() - 1;
 			if (null != nPrevStartGrid && null != nPrevEndGrid) {
-				//учитываем вертикальный merge, раздвигаем границы
+				//account for vertical merge, expand boundaries
 				if (nCurStartGrid > nPrevStartGrid) {
 					for (var j = elem.indexStart - 1; j >= 0; --j) {
 						var cellCur = row.Get_Cell(j);
@@ -2265,7 +2268,7 @@ CopyProcessor.prototype =
 				nMaxGrid = nCurEndGrid;
 		}
 		if (null != nMinGrid && null != nMaxGrid) {
-			//выставляем after, before
+			//set after, before
 			for (var i = 0, length = aSelectedRows.length; i < length; ++i) {
 				var elem = aSelectedRows[i];
 				elem.before = elem.gridStart - nMinGrid;
@@ -2335,7 +2338,7 @@ CopyProcessor.prototype =
 		History.TurnOff();
 		this.oPresentationWriter.WriteGrFrame(graphicFrame);
 
-		//для случая, когда копируем 1 таблицу из презентаций, в бинарник заносим ещё одну такую же табличку, но со скомпиоированными стилями(для вставки в word / excel)
+		//for the case when copying 1 table from presentations, add another same table to binary but with compiled styles (for pasting in word / excel)
 		if (isOnlyTable) {
 			this.convertToCompileStylesTable(Item);
 			this.oPresentationWriter.WriteGrFrame(graphicFrame);
@@ -2580,7 +2583,7 @@ CopyProcessor.prototype =
 function CopyPasteCorrectString(str)
 {
     /*
-    // эта реализация на порядок быстрее. Перед выпуском не меняю ничего
+    // this implementation is an order of magnitude faster. Not changing anything before release
     var _ret = "";
     var _len = str.length;
 
@@ -2797,7 +2800,7 @@ function sendImgUrls(api, images, callback, bNotShowError, token) {
         api.sendEvent("asc_onError", nError, c_oAscError.Level.NoCritical);
     }
     if (!data) {
-      //todo сделать функцию очистки, чтобы можно было оборвать paste и показать error
+      //todo create cleanup function so paste can be aborted and error shown
       data = [];
       for ( var i = 0; i < images.length; ++i) {
         data.push({'url': 'error', 'path': 'error'});
@@ -2822,7 +2825,7 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
     this.map_font_index = api.FontLoader && api.FontLoader.map_font_index;
     this.bUploadImage = bUploadImage;
     this.bUploadFonts = bUploadFonts;
-    this.bNested = bNested;//для параграфов в таблицах
+    this.bNested = bNested;//for paragraphs in tables
     this.oFonts = {};
     this.oImages = {};
 	this.aContent = [];
@@ -2837,7 +2840,7 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
 
 	this.maxTableCell = null;
 
-	//для вставки текста в ячейку, при копировании из word в chrome появляются лишние пробелы вне <p>
+	//for pasting text into cell, when copying from word in chrome extra spaces appear outside <p>
     this.bIgnoreNoBlockText = false;
 
     this.oCurRun = null;
@@ -2849,15 +2852,15 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
     this.oCur_rPr = new CTextPr();
     this._lastCommitedRunId = null;
 
-	//Br копятся потомы что есть случаи когда не надо вывобить br, хотя он и присутствует.
+	//Br accumulates because there are cases when br should not be output, even though it's present.
     this.nBrCount = 0;
-	//bInBlock указывает блочный ли элемент(рассматриваются только элементы дочерние от child)
-	//Если после окончания вставки true != this.bInBlock значит последний элемент не параграф и не надо добавлять новый параграф
+	//bInBlock indicates whether element is block (only child elements are considered)
+	//If after paste completion true != this.bInBlock then last element is not paragraph and no need to add new paragraph
     this.bInBlock = null;
 
-	//ширина элемента в который вставляем страница или ячейка
+	//width of element we're pasting into - page or cell
     this.dMaxWidth = getPageWidth();
-	//коэфициент сжатия(например при вставке таблица сжалась, значит при вставке содержимого ячейки к картинкам и таблице будет применен этот коэффициент)
+	//compression coefficient (e.g. if table was compressed during paste, this coefficient will be applied to images and tables when pasting cell content)
     this.dScaleKoef = 1;
     this.bUseScaleKoef = false;
 	this.bIsPlainText = false;
@@ -2876,10 +2879,10 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
 
 	this.msoListMap = [];
 
-	//пока ввожу эти параметры для специальной вставки. возможно, нужно будет пересмотреть и убрать их
+	//for now introducing these parameters for special paste. may need to review and remove them later
 	this.pasteTypeContent = undefined;
 	this.pasteList = undefined;
-	this.pasteIntoElem = undefined;//ссылка на элемент контента, который был выделен до вставки
+	this.pasteIntoElem = undefined;//reference to content element that was selected before paste
 
 	this.apiEditor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window["editor"];
 
@@ -2937,7 +2940,7 @@ PasteProcessor.prototype =
 					oDocument = oDocument.Endnotes.CurEndnote
 			}
 
-			// Отдельно обрабатываем случай, когда курсор находится внутри таблицы
+			// Handle separately the case when cursor is inside table
 			var Item = oDocument.Content[oDocument.CurPos.ContentPos];
 			if (type_Table === Item.GetType() && null != Item.CurCell)
 			{
@@ -3036,7 +3039,7 @@ PasteProcessor.prototype =
     {
         var oDocument = this.oDocument;
 
-		//TODO ориентируюсь при специальной вставке на SelectionState. возможно стоит пересмотреть.
+		//TODO relying on SelectionState for special paste. may need to reconsider.
 		this._initSelectedElem();
 
         var nInsertLength = this.aContent.length;
@@ -3082,8 +3085,8 @@ PasteProcessor.prototype =
 		var paragraph = oDoc.GetCurrentParagraph();
 		var oTable = oDoc.IsInTable() ? oDoc.GetParent().GetTable() : null;
 
-		//pasteTypeContent - если все содержимое одного типа
-		//TODO пересмотреть pasteTypeContent
+		//pasteTypeContent - if all content is of one type
+		//TODO review pasteTypeContent
 		this.pasteTypeContent = null;
 		var oSelectedContent = new AscCommonWord.CSelectedContent();
 
@@ -3267,7 +3270,7 @@ PasteProcessor.prototype =
 			}
 			
 			var NearPos = paragraph.GetCurrentAnchorPosition();
-			//делаем небольшой сдвиг по y, потому что сама точка TargetPos для двухстрочного параграфа определяется как верхняя
+			//make small y offset because TargetPos point for two-line paragraph is defined as the top
 			//var NearPos = oDoc.Get_NearestPos(this.oLogicDocument.TargetPos.PageNum, this.oLogicDocument.TargetPos.X, this.oLogicDocument.TargetPos.Y + 0.05);//0.05 == 2pix
 
 			if(bIsSpecialPaste){
@@ -3319,8 +3322,8 @@ PasteProcessor.prototype =
 				oSelectedContent.Add(oSelectedElement);
 			}
 
-			//проверка на возможность втавки в формулу
-			//TODO проверку на excel пеерсмотреть!!!!
+			//check if paste into formula is possible
+			//TODO review excel check!!!!
 			oSelectedContent.EndCollect(this.oLogicDocument);
 			oSelectedContent.SetCopyComments(false);
 
@@ -3342,11 +3345,11 @@ PasteProcessor.prototype =
 			pasteHelperElement = oSelectedContent.GetPasteHelperElement();
 		}
 
-		//если вставляем таблицу в ячейку таблицы
+		//if pasting table into table cell
 		if (this.pasteIntoElem && 1 === this.aContent.length && type_Table === this.aContent[0].GetType() &&
 			this.pasteIntoElem.Parent && this.pasteIntoElem.Parent.IsInTable() && (!bIsSpecialPaste || (bIsSpecialPaste &&
 			Asc.c_oSpecialPasteProps.overwriteCells === specialPasteHelper.specialPasteProps))) {
-			//TODO пересмотреть положение кнопки специальной вставки при вставке в таблицу
+			//TODO review special paste button position when pasting into table
 			var table;
 			var tableCell = paragraph && paragraph.Parent && paragraph.Parent.Parent;
 			if (tableCell && tableCell.GetTable) {
@@ -3409,7 +3412,7 @@ PasteProcessor.prototype =
 
 		if(type_Paragraph === type)
 		{
-			//проверяем, возможно это графический объект
+			//check if this is possibly a graphic object
 			for(var i = 0; i < elem.Content.length; i++)
 			{
 				if(elem.Content[i] && elem.Content[i].Content)
@@ -3463,20 +3466,20 @@ PasteProcessor.prototype =
 
 	_specialPasteSetShowOptions: function()
 	{
-		//специальная вставка:
-		//выдаем стандартные параметры всавки(paste, merge, value) во всех ситуация, за исключением:
-		//если вставляем единственную таблицу в таблицу - особые параметры вставки(как извне, так и внутри)
-		//если вставляем список - должны совпадать типы с уже существующими(как извне, так и внутри)
-		//изображения / шейпы
+		//special paste:
+		//return standard paste parameters (paste, merge, value) in all situations, except:
+		//if pasting single table into table - special paste parameters (both from outside and inside)
+		//if pasting list - types must match existing ones (both from outside and inside)
+		//images / shapes
 
-		//отдельно диаграммы - для них есть отдельный пункт. посмотреть, нужно ли это добавлять
+		//charts separately - they have separate option. check if this needs to be added
 
-		//для формул параметры как и при обычной вставке. но нужно уметь их преобразовывать в текст при вставке только текста
-		//особые параметры при вставке таблиц из EXCEL
+		//for formulas parameters same as normal paste. but need to be able to convert them to text when pasting text only
+		//special parameters when pasting tables from EXCEL
 
 		let specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
 
-		//если вставляются только изображения, пока не показываем параметры специальной
+		//if only images are being pasted, don't show special paste parameters for now
 		if(para_Drawing === this.pasteTypeContent && !(this.aContent.length === 1 && this.specificPasteProps) && !specialPasteHelper.specialPasteStart)
 		{
 			specialPasteHelper.SpecialPasteButton_Hide();
@@ -3499,19 +3502,19 @@ PasteProcessor.prototype =
 
 			var props = null;
 			//table into table
-			//this.pasteTypeContent и this.pasteList нужны для вставки таблиц/списков и тд
-			//TODO пока вставка будет работать только с текстом(форматированный/не форматированный)
+			//this.pasteTypeContent and this.pasteList are needed for pasting tables/lists etc
+			//TODO for now paste will only work with text (formatted/unformatted)
 			/*if(insertToElem && 1 === aContent.length && type_Table === this.aContent[0].GetType() && type_Table === insertToElem.GetType())
 			{
 				props = [sProps.paste, sProps.insertAsNestedTable, sProps.uniteIntoTable, sProps.insertAsNewRows, sProps.pasteOnlyValues];
 			}
 			else if(this.pasteList && insertToElem && type_Paragraph === insertToElem.GetType() && insertToElem.Pr && insertToElem.Pr.NumPr && insertToElem.Pr.NumPr.Is_Equal(this.pasteList))
 			{
-				//вставка нумерованного списка в нумерованный список
+				//pasting numbered list into numbered list
 				props = [sProps.paste, sProps.uniteList, sProps.doNotUniteList];
 			}*/
 
-			//если вставляем одну таблицу в ячейку другой таблицы
+			//if pasting one table into another table's cell
 			if (this.pasteIntoElem && 1 === aContent.length && type_Table === this.aContent[0].GetType() &&
 				this.pasteIntoElem.Parent && this.pasteIntoElem.Parent.IsInTable())
 			{
@@ -3546,8 +3549,8 @@ PasteProcessor.prototype =
 
 		if(specialPasteShowOptions)
 		{
-			//SpecialPasteButtonById_Show вызываю здесь, если пересчет документа завершился раньше, чем мы попали сюда и сгенерировали параметры вставки
-			//в противном случае вызываю SpecialPasteButtonById_Show в drawingDocument->OnEndRecalculate
+			//calling SpecialPasteButtonById_Show here if document recalculation finished before we got here and generated paste parameters
+			//otherwise calling SpecialPasteButtonById_Show in drawingDocument->OnEndRecalculate
 			if (specialPasteHelper.endRecalcDocument) {
 				specialPasteHelper.SpecialPasteButtonById_Show();
 			}
@@ -3556,14 +3559,14 @@ PasteProcessor.prototype =
 
 	_specialPasteItemConvert: function(item)
 	{
-		//TODO рассмотреть вариант вставки текста ("text/plain")
-		//для вставки простого текста, можно было бы использовать ("text/plain")
-		//но в данном случае вставка текста будет работать не совсем корретно внутри приложения, поскольку
-		//когда мы пишем в буфер текст, функция GetSelectedText отдаёт вместо табуляции пробелы
-		//так же некорректно будут вставляться таблицы, поскольку табуляции между ячейками мы потеряем
-		//внутренние таблицы мы вообще теряем
-		//для реализации необходимо менять функцию GetSelectedText
-		//посмотреть, какие браузер могут заменить табуляцию на пробел при занесении текста в буфер обмена
+		//TODO consider text paste option ("text/plain")
+		//for plain text paste, could use ("text/plain")
+		//but in this case text paste won't work quite correctly inside application, because
+		//when we write text to clipboard, GetSelectedText function returns spaces instead of tabs
+		//also tables will be pasted incorrectly because we lose tabs between cells
+		//we lose nested tables entirely
+		//to implement this, GetSelectedText function needs to be changed
+		//check which browsers may replace tabs with spaces when adding text to clipboard
 
 		var res = item;
 		var type = item.GetType();
@@ -3585,7 +3588,7 @@ PasteProcessor.prototype =
 
 	_specialPasteTableConvert: function(table)
 	{
-		//TODO временная функция
+		//TODO temporary function
 		var res = table;
 
 		var props = window['AscCommon'].g_specialPasteHelper.specialPasteProps;
@@ -3623,7 +3626,7 @@ PasteProcessor.prototype =
 		var res = paragraph;
 		var props = window['AscCommon'].g_specialPasteHelper.specialPasteProps;
 
-		//стиль текущего параграфа/рана, в который вставляем
+		//style of current paragraph/run we're pasting into
 		var pasteIntoParagraphPr = this.oDocument.GetDirectParaPr();
 		var pasteIntoParaRunPr = this.oDocument.GetDirectTextPr();
 
@@ -3639,7 +3642,7 @@ PasteProcessor.prototype =
 				var numbering =  paragraph.GetNumPr();
 				if(numbering)
 				{
-					//проставляем параграфам NumInfo
+					//set NumInfo for paragraphs
 					var parentContent = paragraph.Parent instanceof CDocument ? this.aContent : paragraph.Parent.Content;
 					for(var i = 0; i < parentContent.length; i++)
 					{
@@ -3685,7 +3688,7 @@ PasteProcessor.prototype =
 			}
 			case Asc.c_oSpecialPasteProps.mergeFormatting:
 			{
-				//ms почему-то при merge игнорирует заливку текста
+				//ms for some reason ignores text fill during merge
 				if(pasteIntoParagraphPr)
 				{
 					paragraph.Pr.Merge(pasteIntoParagraphPr);
@@ -3737,7 +3740,7 @@ PasteProcessor.prototype =
 			}
 			case Asc.c_oSpecialPasteProps.keepTextOnly:
 			{
-				//в данному случае мы должны применить к вставленному фрагменту стиль paraRun, в который вставляем
+				//in this case we need to apply paraRun style to pasted fragment we're pasting into
 				if(pasteIntoParaRunPr)
 				{
 					for(var i = 0; i < paragraphContent.length; i++)
@@ -3748,7 +3751,7 @@ PasteProcessor.prototype =
 						{
 							case para_Run:
 							{
-								//проверить, есть ли внутри изображение
+								//check if there's an image inside
 								if(pasteIntoParaRunPr && elem.Set_Pr)
 								{
 									elem.Set_Pr( pasteIntoParaRunPr.Copy() );
@@ -3762,8 +3765,8 @@ PasteProcessor.prototype =
 							case para_InlineLevelSdt:
 							case para_Hyperlink:
 							{
-								//изменить hyperlink на pararun
-								//проверить, есть ли внутри изображение
+								//change hyperlink to pararun
+								//check if there's an image inside
 
 								paragraphContent.splice(i, 1);
 								for(var n = 0; n < elem.Content.length; n++)
@@ -3776,7 +3779,7 @@ PasteProcessor.prototype =
 							}
 							case para_Math:
 							{
-								//преобразуем в текст
+								//convert to text
 								var mathToParaRun = this._convertParaMathToText(elem);
 								if(mathToParaRun)
 								{
@@ -3788,7 +3791,7 @@ PasteProcessor.prototype =
 							}
 							case para_Comment:
 							{
-								//TODO в дальнейшем лучше удалять коммент а не заменять его
+								//TODO in future better to delete comment rather than replace it
 								paragraphContent.splice(i, 1, new ParaRun());
 								i--;
 
@@ -3802,7 +3805,7 @@ PasteProcessor.prototype =
 			}
 			case Asc.c_oSpecialPasteProps.mergeFormatting:
 			{
-				//ms почему-то при merge игнорирует заливку текста
+				//ms for some reason ignores text fill during merge
 				if(pasteIntoParaRunPr)
 				{
 					for(var i = 0; i < paragraphContent.length; i++)
@@ -3873,7 +3876,7 @@ PasteProcessor.prototype =
 
 					if(cDocumentContent.Content[n] instanceof AscWord.Paragraph)
 					{
-						//TODO пересмотреть обработку. получаем текст из контента, затем делаем контент из текста!
+						//TODO review processing. getting text from content, then making content from text!
 						this._specialPasteParagraphConvert(cDocumentContent.Content[n]);
 
 						var value = cDocumentContent.Content[n].GetText();
@@ -4017,7 +4020,7 @@ PasteProcessor.prototype =
     insertInPlace2: function(oDoc, aNewContent)
     {
         var nNewContentLength = aNewContent.length;
-		//Часть кода из Document.Add_NewParagraph
+		//Part of code from Document.Add_NewParagraph
 
         for(var i = 0; i < aNewContent.length; ++i)
         {
@@ -4030,7 +4033,7 @@ PasteProcessor.prototype =
         {
             if(/*true != this.bInBlock &&*/ 1 === nNewContentLength && type_Paragraph === aNewContent[0].GetType() && Item.CurPos.ContentPos !== 1)
             {
-				//Вставка строки в параграф
+				//Insert line into paragraph
                 var oInsertPar = aNewContent[0];
                 var nContentLength = oInsertPar.Content.length;
                 if(nContentLength > 2)
@@ -4042,7 +4045,7 @@ PasteProcessor.prototype =
 					else
 						TextPr = new ParaTextPr();
                     var nContentPos = Item.CurPos.ContentPos;
-                    for(var i = 0; i < nContentLength - 2; ++i)// -2 на спецсимволы конца параграфа
+                    for(var i = 0; i < nContentLength - 2; ++i)// -2 for paragraph end special characters
                     {
                         var oCurInsItem = oInsertPar.Content[i];
                         if(para_Numbering !== oCurInsItem.Type)
@@ -4060,7 +4063,7 @@ PasteProcessor.prototype =
             {
                 var LastPos = this.oRecalcDocument.CurPos.ContentPos;
                 var LastPosCurDoc = oDoc.CurPos.ContentPos;
-				//Нужно разрывать параграф
+				//Need to split paragraph
                 var oSourceFirstPar = Item;
                 var oSourceLastPar = new AscWord.Paragraph(oDoc);
                 if(true !== oSourceFirstPar.IsCursorAtEnd() || oSourceFirstPar.IsEmpty())
@@ -4075,32 +4078,32 @@ PasteProcessor.prototype =
 
                 if(type_Paragraph === oInsFirstPar.GetType())
                 {
-					//копируем свойства первого вставляемого параграфа в первый исходный параграф
-					//CopyPr_Open - заносим в историю, т.к. этот параграф уже в документе
+					//copy properties of first pasted paragraph to first source paragraph
+					//CopyPr_Open - add to history since this paragraph is already in document
                     oInsFirstPar.CopyPr_Open( oSourceFirstPar );
-					//Копируем содержимое вставляемого параграфа
+					//Copy content of pasted paragraph
                     oSourceFirstPar.Concat(oInsFirstPar);
                     if(AscCommon.isRealObject(oInsFirstPar.bullet))
                     {
                         oSourceFirstPar.setPresentationBullet(oInsFirstPar.bullet.createDuplicate());
                     }
-					//Сдвигаем стартовый индекс чтобы больше не учитывать этот параграф
+					//Shift start index to no longer account for this paragraph
                     nStartIndex++;
                 }
                 else if(type_Table === oInsFirstPar.GetType())
                 {
-					//если вставляем таблицу в пустой параграф, то не разрываем его
+					//if pasting table into empty paragraph, don't split it
                     if(oSourceFirstPar.IsEmpty())
                     {
                         oSourceFirstPar = null;
                     }
                 }
-				//Если не скопирован символ конца параграфа, то добавляем содержимое последнего параграфа в начело второй половины разбитого параграфа
+				//If paragraph end character not copied, add last paragraph content to beginning of second half of split paragraph
                 if(null != oInsLastPar && type_Paragraph == oInsLastPar.GetType() && true != this.bInBlock)
                 {
                     var nNewContentPos = oInsLastPar.Content.length - 2;
-					//копируем свойства последнего исходного параграфа в последний  вставляемый параграф
-					//CopyPr - не заносим в историю, т.к. в историю добавится вставка этого параграфа в документ
+					//copy properties of last source paragraph to last pasted paragraph
+					//CopyPr - don't add to history since inserting this paragraph into document will be added to history
                     var ind = oInsLastPar.Pr.Ind;
                     if(null != oInsLastPar)
                         oSourceLastPar.CopyPr( oInsLastPar );
@@ -4113,7 +4116,7 @@ PasteProcessor.prototype =
                     oSourceLastPar = oInsLastPar;
                     nEndIndex--;
                 }
-				//вставляем
+				//insert
                 for(var i = nStartIndex; i <= nEndIndex; ++i )
                 {
                     var oElemToAdd = aNewContent[i];
@@ -4122,13 +4125,13 @@ PasteProcessor.prototype =
                 }
                 if(null != oSourceLastPar)
                 {
-					//вставляем последний параграф
+					//insert last paragraph
                     LastPosCurDoc++;
                     oDoc.Internal_Content_Add(LastPosCurDoc, oSourceLastPar);
                 }
                 if(null == oSourceFirstPar)
                 {
-					//Удаляем первый параграф, потому что будут ошибки если в документе не будет ни одного параграфа
+					//Delete first paragraph because there will be errors if document has no paragraphs
                     oDoc.Internal_Content_Remove(LastPosCurDoc, 1);
                     LastPosCurDoc--;
                 }
@@ -4240,7 +4243,7 @@ PasteProcessor.prototype =
 			for (var i = 0; i < bytes.byteLength; i++) {
 				res += String.fromCharCode(bytes[i]);
 			}
-			//TODO проверить данный метод на разных браузерах и системах
+			//TODO test this method on different browsers and systems
 			return window.btoa(res);
 		}
 
@@ -4286,13 +4289,13 @@ PasteProcessor.prototype =
 				return;
 			}
 
-			//при вставке списка в список, ms вставляет именно html и фильтрует текст(убирает всё, что относится к списку)
-			//идея такая, если видим, что вставляем в список, то здесь не делаем pasteText, смотрим на функции prepeare есть ли внутри html списки
-			//причём в любом виде - стандартные списки/mso-list
-			//если есть, то парсим стандратно html, далее переводим в текст её без элементов списка и вставляем
-			//+ если из нас в нас вставляем, тоже отсекам всё что связано со списками
+			//when pasting list into list, ms pastes exactly html and filters text (removes everything related to list)
+			//idea is, if we see we're pasting into list, don't do pasteText here, check in prepeare function if there are html lists inside
+			//in any form - standard lists/mso-list
+			//if yes, parse html normally, then convert to text without list elements and paste
+			//+ if pasting from us to us, also filter out everything related to lists
 
-			//TODO pasteTextIntoList - ввожу временно, искючение для вставки текста в список. позже сделать общую отдельную обработку для подобных исключений
+			//TODO pasteTextIntoList - introducing temporarily, exception for pasting text into list. later make common separate handling for such exceptions
 
 			if (PasteElementsId.g_bIsDocumentCopyPaste && (node || ("" !== fromBinary && base64FromWord))) {
 				this._initSelectedElem();
@@ -4320,10 +4323,10 @@ PasteProcessor.prototype =
 			if (PasteElementsId.g_bIsDocumentCopyPaste)//document
 			{
 				var oThis = this;
-				//удаляем в начале, иначе может получиться что будем вставлять в элементы, которое потом удалим.
-				//todo с удалением в начале есть проблема, что удаляем элементы даже при пустом буфере
+				//delete at beginning, otherwise we might paste into elements that we'll delete later.
+				//todo with deleting at beginning there's a problem that we delete elements even with empty clipboard
 
-				// Для вставки текста по выделению ячеек таблицы, мы должны сохранить выделенные ячейки
+				// For pasting text by table cell selection, we must preserve selected cells
 				var oDocState = null;
 				if (this.oDocument instanceof CDocument && this.oDocument.IsTableCellSelection())
 					oDocState = this.oDocument.SaveDocumentState(false);
@@ -4353,7 +4356,7 @@ PasteProcessor.prototype =
 			}
 
 			//insert from binary
-			if (base64FromExcel)//вставка из редактора таблиц
+			if (base64FromExcel)//paste from spreadsheet editor
 			{
 				if (PasteElementsId.g_bIsPDFCopyPaste) {
 					bInsertFromBinary = null !== this._pasteBinaryFromExcelToPDF(base64FromExcel, !!(fromBinary));
@@ -4362,7 +4365,7 @@ PasteProcessor.prototype =
 				} else {
 					bInsertFromBinary = null !== this._pasteBinaryFromExcelToPresentation(base64FromExcel);
 				}
-			} else if (base64FromWord)//вставка из редактора документов
+			} else if (base64FromWord)//paste from document editor
 			{
 				if (PasteElementsId.g_bIsPDFCopyPaste) {
 					bInsertFromBinary = null !== this._pasteBinaryFromWordToPDF(base64FromWord, !!(fromBinary));
@@ -4371,7 +4374,7 @@ PasteProcessor.prototype =
 				} else {
 					bInsertFromBinary = null !== this._pasteBinaryFromWordToPresentation(base64FromWord, !!(fromBinary));
 				}
-			} else if (base64FromPresentation)//вставка из редактора презентаций
+			} else if (base64FromPresentation)//paste from presentation editor
 			{
 				if (PasteElementsId.g_bIsPDFCopyPaste) {
 					bInsertFromBinary = null !== this._pasteBinaryFromPresentationToPDF(base64FromPresentation, bDuplicate);
@@ -4380,7 +4383,7 @@ PasteProcessor.prototype =
 				} else {
 					bInsertFromBinary = null !== this._pasteBinaryFromPresentationToPresentation(base64FromPresentation);
 				}
-			} else if (base64FromPDF)//вставка из pdf редактора
+			} else if (base64FromPDF)//paste from pdf editor
 			{
 				PasteElementsId.g_bIsPdfBinary = true;
 				if (PasteElementsId.g_bIsPDFCopyPaste) {
@@ -4488,7 +4491,7 @@ PasteProcessor.prototype =
 		var aContentExcel = excelContent.workbook;
 		var aPastedImages = excelContent.arrImages;
 
-		//если есть шейпы, то вставляем их из excel
+		//if there are shapes, paste them from excel
 		var aContent;
 		var _sheet = aContentExcel && aContentExcel.aWorksheets && aContentExcel.aWorksheets[0];
 		var drawings = excelContent.pDrawings ? excelContent.pDrawings : _sheet && _sheet.Drawings;
@@ -4603,7 +4606,7 @@ PasteProcessor.prototype =
 			}
 
 			var fonts = [];
-			//грузим картинки и фонты
+			//load images and fonts
 			for (var i in font_map) {
 				fonts.push(new CFont(i));
 			}
@@ -4638,7 +4641,7 @@ PasteProcessor.prototype =
 
 				if (type_Table === element.GetType())//table
 				{
-					//TODO переделать количество строк и ширину
+					//TODO redo row count and width
 					var W = 100;
 					var Rows = 3;
 					var graphic_frame = new AscFormat.CGraphicFrame();
@@ -4663,7 +4666,7 @@ PasteProcessor.prototype =
 			}
 			presentationSelectedContent.Drawings = pDrawings;
 
-			//вставка
+			//paste
 			var paste_callback_presentation = function () {
 				if (false == oThis.bNested) {
 
@@ -4699,7 +4702,7 @@ PasteProcessor.prototype =
 		let aContentExcel = excelContent.workbook;
 		let aPastedImages = excelContent.arrImages;
 
-		//если есть шейпы, то вставляем их из excel
+		//if there are shapes, paste them from excel
 		let aContent;
 		let _sheet = aContentExcel && aContentExcel.aWorksheets && aContentExcel.aWorksheets[0];
 		let drawings = excelContent.pDrawings ? excelContent.pDrawings : _sheet && _sheet.Drawings;
@@ -4754,7 +4757,7 @@ PasteProcessor.prototype =
 			}
 
 			let fonts = [];
-			//грузим картинки и фонты
+			//load images and fonts
 			for (let i in font_map) {
 				fonts.push(new CFont(i));
 			}
@@ -4818,7 +4821,7 @@ PasteProcessor.prototype =
 			
 			oPDFSelContent.Drawings = pDrawings;
 
-			//вставка
+			//paste
 			let paste_callback_pdf = function () {
 				if (false == oThis.bNested) {
 					for (let i = 0; i < oPDFSelContent.Drawings.length; i++) {
@@ -4851,18 +4854,18 @@ PasteProcessor.prototype =
 	//from WORD to WORD
 	_pasteBinaryFromWordToWord: function (base64FromWord, bIsOnlyFromBinary) {
 		var oThis = this;
-		//при чтении документа создаётся новый DocPart, который добавляется в DocParts, но не добавляется в g_oTableId
-		//чтобы он добавлялся в g_oTableId и соответсвенно в историю, делаю ему Copy()
+		//when reading document new DocPart is created, which is added to DocParts but not to g_oTableId
+		//so it gets added to g_oTableId and correspondingly to history, doing Copy() on it
 
-		//но далее вызывается функция InsertInDocument-> ... -> CheckDocPartNames, где берутся все СС во вставляемом фрагменте
-		//смотрится есть ли плесйхолдер и если он есть, то переименовывается плейсходер и DocPart->Name
-		//поскольку в DocParts уже есть несколько DocPart с одинаковым именем(один при чтении, второй и при Copy)
-		//то при попытке переименования берётся первый DocPart(который добавлен в DocParts, но не в g_oTableId)-> и переименовывается
-		//соответсвенно далее при накатывании изменений в g_oTableId отсутвует DocPart с нужным именем
-		//чтобы от этой проблемы уйти - удаляю тот первый, который был создан при чтении - delete glossaryDoc.DocParts[aDelIndexes[i]];
+		//but then InsertInDocument-> ... -> CheckDocPartNames function is called, which gets all CC in pasted fragment
+		//checks if there's placeholder and if yes, placeholder and DocPart->Name are renamed
+		//since DocParts already has several DocPart with same name (one from reading, second from Copy)
+		//when trying to rename, first DocPart is taken (added to DocParts but not to g_oTableId)-> and renamed
+		//correspondingly when applying changes later, g_oTableId doesn't have DocPart with needed name
+		//to avoid this problem - delete first one that was created during reading - delete glossaryDoc.DocParts[aDelIndexes[i]];
 
-		//но появляется другая проблема - при повтроном копировании делается CDocPart-> Copy и снова создаётся DocPart с таким именем
-		//и добавляется в DocParts. далее при вставке снова всё повторяется...
+		//but another problem appears - when copying again CDocPart-> Copy is done and DocPart with same name is created again
+		//and added to DocParts. then during paste everything repeats...
 		var aContent = this.ReadFromBinary(base64FromWord);
 		if (null === aContent) {
 			return null;
@@ -4883,13 +4886,13 @@ PasteProcessor.prototype =
 			return;
 		}
 
-		//вставляем в заголовок диаграммы, предварительно конвертируем все параграфы в презентационный формат
+		//insert into chart title, first convert all paragraphs to presentation format
 		if (aContent && aContent.content && this.oDocument.bPresentation && oThis.oDocument && oThis.oDocument.Parent &&
 			oThis.oDocument.Parent.parent && oThis.oDocument.Parent.parent.parent &&
 			oThis.oDocument.Parent.parent.parent.getObjectType &&
 			oThis.oDocument.Parent.parent.parent.getObjectType() === AscDFH.historyitem_type_Chart) {
 
-			//не грузим изображения при вставке в заголовок диаграммы
+			//don't load images when pasting into chart title
 			aContent.images = [];
 			aContent.aPastedImages = [];
 
@@ -4918,7 +4921,7 @@ PasteProcessor.prototype =
 		};
 
 		this.aContent = aContent.content;
-		//проверяем список фонтов
+		//check font list
 		aContent.fonts = oThis._checkFontsOnLoad(aContent.fonts);
 
 		var oObjectsForDownload = GetObjectsForImageDownload(aContent.aPastedImages);
@@ -4962,7 +4965,7 @@ PasteProcessor.prototype =
 		var tempCDocument = function () {
 			return new CDocument(oThis.oDocument.DrawingDocument, false);
 		};
-		//создаём темповый CDocument
+		//create temporary CDocument
 		this.oDocument = AscFormat.ExecuteNoHistory(tempCDocument, this, []);
 
 		AscCommon.g_oIdCounter.m_bRead = true;
@@ -4973,7 +4976,7 @@ PasteProcessor.prototype =
 			return null;
 		}
 
-		//возврщаем обратно переменные и историю, документ которой заменяется при создании CDocument
+		//restore variables and history, whose document is replaced when creating CDocument
 		this.oDocument = trueDocument;
 		History.Document = trueDocument;
 
@@ -4994,7 +4997,7 @@ PasteProcessor.prototype =
 				{
 					element = oThis._convertTableToPPTX(element, true);
 
-					//TODO переделать количество строк и ширину
+					//TODO redo row count and width
 					var W = oThis.oDocument.GetWidthMM() / 1.45;
 					var Rows = element.GetRowsCount();
 					var H = Rows * 7.478268771701388;
@@ -5029,7 +5032,7 @@ PasteProcessor.prototype =
 
 		var onlyImages = false;
 		if (drawings && drawings.length) {
-			//если массив содержит только изображения
+			//if array contains only images
 			if (elements && 1 === elements.length && elements[0].Element && type_Paragraph === elements[0].Element.Get_Type()) {
 				if (true === this._isParagraphContainsOnlyDrawing(elements[0].Element)) {
 					elements = [];
@@ -5046,10 +5049,10 @@ PasteProcessor.prototype =
 		presentationSelectedContent.DocContent.Elements = elements;
 		presentationSelectedContent.Drawings = pDrawings;
 
-		//вставка
+		//paste
 		var paste_callback = function () {
 			if (false === oThis.bNested) {
-				//для таблиц необходимо рассчитать их размер, чтобы разместить в центре
+				//for tables need to calculate their size to place in center
 				var slide = presentation.Slides[0];
 				for (var i = 0; i < presentationSelectedContent.Drawings.length; i++) {
 					if (presentationSelectedContent.Drawings[i].Drawing instanceof AscFormat.CGraphicFrame) {
@@ -5095,7 +5098,7 @@ PasteProcessor.prototype =
 		var images = [];
 		//shape.getAllFonts(font_map);
 
-		//перебираем шрифты
+		//iterate through fonts
 		var fonts = [];
 		for (var i in font_map)
 			fonts.push(new CFont(i));
@@ -5105,7 +5108,7 @@ PasteProcessor.prototype =
 			AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
 				var oImageMap = {};
 				ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
-				//ковертим изображения в презентационный формат
+				//convert images to presentation format
 				for (var i = 0; i < presentationSelectedContent.Drawings.length; i++) {
 					if (!(presentationSelectedContent.Drawings[i].Drawing instanceof AscFormat.CGraphicFrame)) {
 						AscFormat.ExecuteNoHistory(function () {
@@ -5123,7 +5126,7 @@ PasteProcessor.prototype =
 				oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
 			}, true);
 		} else {
-			//ковертим изображения в презентационный формат
+			//convert images to presentation format
 			for (var i = 0; i < presentationSelectedContent.Drawings.length; i++) {
 				if (!(presentationSelectedContent.Drawings[i].Drawing instanceof AscFormat.CGraphicFrame)) {
 					presentationSelectedContent.Drawings[i].Drawing = presentationSelectedContent.Drawings[i].Drawing.convertToPPTX(oThis.oDocument.DrawingDocument, undefined, true);
@@ -5188,7 +5191,7 @@ PasteProcessor.prototype =
 			if (!bSlideObjects && content.Drawings.length === selectedContent2[1].content.Drawings.length) {
 				AscFormat.checkDrawingsTransformBeforePaste(content, selectedContent2[1].content, null);
 			}
-			//****если записана одна табличка, то вставляем html и поддерживаем все цвета и стили****
+			//****if one table is recorded, paste html and support all colors and styles****
 			if (!arrImages.length && arr_shapes.length === 1 && arr_shapes[0] && arr_shapes[0].Drawing &&
 				arr_shapes[0].Drawing.graphicObject) {
 
@@ -5199,12 +5202,12 @@ PasteProcessor.prototype =
 					var table = AscFormat.ConvertGraphicFrameToWordTable(drawing, this.oLogicDocument);
 					table.Document_Get_AllFontNames(font_map);
 
-					//перебираем шрифты
+					//iterate through fonts
 					for (var i in font_map) {
 						fonts.push(new CFont(i));
 					}
 
-					//TODO стиль не прокидывается. в будущем нужно реализовать
+					//TODO style is not passed through. need to implement in future
 					table.TableStyle = null;
 					aContent.push(table);
 
@@ -5216,7 +5219,7 @@ PasteProcessor.prototype =
 			}
 
 
-			//если несколько графических объектов, то собираем base64 у таблиц(graphicFrame)
+			//if multiple graphic objects, collect base64 from tables(graphicFrame)
 			if (arr_shapes.length > 1) {
 				for (var i = 0; i < arr_shapes.length; i++) {
 					if (arr_shapes[i].Drawing && arr_shapes[i].Drawing.isTable()) {
@@ -5248,7 +5251,7 @@ PasteProcessor.prototype =
 									}
 								}
 							} else {
-								//для вставки graphicFrame в виде картинки(если было при копировании выделено несколько графических объектов)
+								//for pasting graphicFrame as image (if multiple graphic objects were selected during copy)
 								if (imageElem.ImageShape && imageElem.ImageShape.base64) {
 									imageElem.ImageShape.base64 = name;
 								} else {
@@ -5280,7 +5283,7 @@ PasteProcessor.prototype =
 		let tempCDocument = function () {
 			return new CDocument(oThis.oDocument.DrawingDocument, false);
 		};
-		//создаём темповый CDocument
+		//create temporary CDocument
 		this.oDocument = AscFormat.ExecuteNoHistory(tempCDocument, this, []);
 
 		AscCommon.g_oIdCounter.m_bRead = true;
@@ -5291,7 +5294,7 @@ PasteProcessor.prototype =
 			return null;
 		}
 
-		//возврщаем обратно переменные и историю, документ которой заменяется при создании CDocument
+		//restore variables and history, whose document is replaced when creating CDocument
 		this.oDocument = trueDocument;
 		History.Document = trueDocument;
 
@@ -5348,7 +5351,7 @@ PasteProcessor.prototype =
 
 		var onlyImages = false;
 		if (drawings && drawings.length) {
-			//если массив содержит только изображения
+			//if array contains only images
 			if (elements && 1 === elements.length && elements[0].Element && type_Paragraph === elements[0].Element.Get_Type()) {
 				if (true === this._isParagraphContainsOnlyDrawing(elements[0].Element)) {
 					elements = [];
@@ -5365,10 +5368,10 @@ PasteProcessor.prototype =
 		oPDFSelContent.DocContent.Elements = elements;
 		oPDFSelContent.Drawings = pDrawings;
 
-		//вставка
+		//paste
 		let paste_callback = function () {
 			if (false === oThis.bNested) {
-				//для таблиц необходимо рассчитать их размер, чтобы разместить в центре
+				//for tables need to calculate their size to place in center
 				for (let i = 0; i < oPDFSelContent.Drawings.length; i++) {
 					if (oPDFSelContent.Drawings[i].Drawing instanceof AscFormat.CGraphicFrame) {
 						let drawing = oPDFSelContent.Drawings[i].Drawing;
@@ -5400,7 +5403,7 @@ PasteProcessor.prototype =
 		var images = [];
 		//shape.getAllFonts(font_map);
 
-		//перебираем шрифты
+		//iterate through fonts
 		var fonts = [];
 		for (var i in font_map)
 			fonts.push(new CFont(i));
@@ -5492,7 +5495,7 @@ PasteProcessor.prototype =
 						break;
 					}
 					case Asc.c_oSpecialPasteProps.keepTextOnly: {
-						//в идеале у этом случае нужно использовать данные plain text из буфера обмена
+						//ideally in this case should use plain text data from clipboard
 						//pasteObj = selectedContent2[2];
 						break;
 					}
@@ -5595,7 +5598,7 @@ PasteProcessor.prototype =
 
 			var arr_shapes = content.Drawings;
 			var arrImages = pasteObj.images;
-			//****если записана одна табличка, то вставляем html и поддерживаем все цвета и стили****
+			//****if one table is recorded, paste html and support all colors and styles****
 			if (!arrImages.length && arr_shapes.length === 1 && arr_shapes[0] && arr_shapes[0].Drawing &&
 				arr_shapes[0].Drawing.graphicObject) {
 
@@ -5606,12 +5609,12 @@ PasteProcessor.prototype =
 					var table = AscFormat.ConvertGraphicFrameToWordTable(drawing, this.oLogicDocument);
 					table.Document_Get_AllFontNames(font_map);
 
-					//перебираем шрифты
+					//iterate through fonts
 					for (var i in font_map) {
 						fonts.push(new CFont(i));
 					}
 
-					//TODO стиль не прокидывается. в будущем нужно реализовать
+					//TODO style is not passed through. need to implement in future
 					table.TableStyle = null;
 					aContent.push(table);
 
@@ -5623,7 +5626,7 @@ PasteProcessor.prototype =
 			}
 
 
-			//если несколько графических объектов, то собираем base64 у таблиц(graphicFrame)
+			//if multiple graphic objects, collect base64 from tables(graphicFrame)
 			if (arr_shapes.length > 1) {
 				for (var i = 0; i < arr_shapes.length; i++) {
 					if (arr_shapes[i].Drawing && arr_shapes[i].Drawing.isTable()) {
@@ -5655,7 +5658,7 @@ PasteProcessor.prototype =
 									}
 								}
 							} else {
-								//для вставки graphicFrame в виде картинки(если было при копировании выделено несколько графических объектов)
+								//for pasting graphicFrame as image (if multiple graphic objects were selected during copy)
 								if (imageElem.ImageShape && imageElem.ImageShape.base64) {
 									imageElem.ImageShape.base64 = name;
 								} else {
@@ -5740,7 +5743,7 @@ PasteProcessor.prototype =
 						break;
 					}
 					case Asc.c_oSpecialPasteProps.keepTextOnly: {
-						//в идеале у этом случае нужно использовать данные plain text из буфера обмена
+						//ideally in this case should use plain text data from clipboard
 						//pasteObj = selectedContent2[2];
 						break;
 					}
@@ -5946,7 +5949,7 @@ PasteProcessor.prototype =
 			oPDFSelContent.DocContent = new AscCommonWord.CSelectedContent();
 			oPDFSelContent.DocContent.Elements = docContent;
 
-			//перебираем шрифты
+			//iterate through fonts
 			for (let i in oThis.oFonts) {
 				oFontMap[i] = 1;
 			}
@@ -5959,7 +5962,7 @@ PasteProcessor.prototype =
 			if (PasteElementsId.g_bIsDocumentCopyPaste) {
 				History.TurnOff();
 			}
-			// шейпы из презентаций, поэтому чтение то же самое
+			// shapes from presentations, so reading is the same
 			let objects = oThis.ReadPresentationShapes(stream);
 			if (PasteElementsId.g_bIsDocumentCopyPaste) {
 				History.TurnOn();
@@ -6012,7 +6015,7 @@ PasteProcessor.prototype =
 			if (PasteElementsId.g_bIsDocumentCopyPaste) {
 				History.TurnOff();
 			}
-			// шейпы из презентаций, поэтому чтение то же самое
+			// shapes from presentations, so reading is the same
 			let objects = oThis.ReadPresentationShapes(stream);
 			if (PasteElementsId.g_bIsDocumentCopyPaste) {
 				History.TurnOn();
@@ -6210,7 +6213,7 @@ PasteProcessor.prototype =
 						break;
 					}
 					case Asc.c_oSpecialPasteProps.keepTextOnly: {
-						//в идеале у этом случае нужно использовать данные plain text из буфера обмена
+						//ideally in this case should use plain text data from clipboard
 						//pasteObj = selectedContent2[2];
 						break;
 					}
@@ -6266,7 +6269,7 @@ PasteProcessor.prototype =
 					presentation.FinalizeAction();
 					presentation.UpdateInterface();
 
-					//пока не показываю значок специальной вставки после copy/paste слайдов
+					//not showing special paste icon after copy/paste slides for now
 					var bSlideObjects = aContents[nIndex] && aContents[nIndex].SlideObjects && aContents[nIndex].SlideObjects.length > 0;
 					if (specialOptionsArr.length >= 1 /*&& !bSlideObjects*/ && oPaste.insert) {
 						if (presentationSelectedContent && presentationSelectedContent.DocContent) {
@@ -6340,7 +6343,7 @@ PasteProcessor.prototype =
 				presentationSelectedContent.DocContent = new AscCommonWord.CSelectedContent();
 				presentationSelectedContent.DocContent.Elements = docContent;
 
-				//перебираем шрифты
+				//iterate through fonts
 				for (var i in oThis.oFonts) {
 					oFontMap[i] = 1;
 				}
@@ -6379,8 +6382,8 @@ PasteProcessor.prototype =
 				loader.presentation = editor.WordControl.m_oLogicDocument;
 				loader.DrawingDocument = editor.WordControl.m_oLogicDocument.DrawingDocument;
 
-				//для вставки таблицы со стилем
-				//TODO в дальнейшем необходимо пересмотреть и писать стили вместе со слайдом
+				//for pasting table with style
+				//TODO in future need to review and write styles together with slide
 				var _globalTableStyles = editor.WordControl.m_oLogicDocument.globalTableStyles;
 				if (_globalTableStyles) {
 					for (var key in _globalTableStyles.Style) {
@@ -6530,7 +6533,7 @@ PasteProcessor.prototype =
 
 				var count = stream.GetULong();
 
-				//TODO возможно стоит пропустить при чтении в документах
+				//TODO possibly should skip when reading in documents
 				var array = [];
 				for (var i = 0; i < count; ++i) {
 					let oTheme = loader.ReadTheme();
@@ -6552,7 +6555,7 @@ PasteProcessor.prototype =
 
 				var count = stream.GetULong();
 
-				//TODO возможно стоит пропустить при чтении в документах
+				//TODO possibly should skip when reading in documents
 				var array = [];
 				for (var i = 0; i < count; ++i) {
 					let oTheme = loader.ReadTheme();
@@ -6824,8 +6827,8 @@ PasteProcessor.prototype =
 				let oController = oPresentation.GetCurrentController();
 				let oTargetContent = oController && oController.getTargetDocContent();
 				if (oTargetContent && aCopyObjects.length === 1 && aImages.length === 0 && aTables.length === 0) {
-					//не проверяем на лок т. к. это делается в asc_docs_api.prototype.asc_PasteData.
-					// При двух последовательных проверках в совместном редактировании вторая проверка всегда будет возвращать лок
+					//don't check for lock since this is done in asc_docs_api.prototype.asc_PasteData.
+					// With two consecutive checks in collaborative editing second check will always return lock
 					let aNewContent = aCopyObjects[0].Drawing.txBody.content.Content;
 					oThis.InsertInPlacePresentation(aNewContent);
 				} else {
@@ -7097,14 +7100,14 @@ PasteProcessor.prototype =
 				}
 			};
 
-			//если в итоге во вставляемом контенте нет следов списков, тогда вставляем просто текст, в противном случае - чистим списки
+			//if ultimately pasted content has no list traces, paste plain text, otherwise - clean lists
 			if (oThis.pasteTextIntoList) {
 				oThis._pasteText(oThis.pasteTextIntoList);
 				return;
 			}
 
 			oThis.aContent = [];
-			//если находимся внутри текстовой области диаграммы, то не вставляем ссылки
+			//if inside chart text area, don't paste links
 			if (oThis.oDocument && oThis.oDocument.Parent && oThis.oDocument.Parent.parent && oThis.oDocument.Parent.parent.parent && oThis.oDocument.Parent.parent.parent.getObjectType && oThis.oDocument.Parent.parent.parent.getObjectType() == AscDFH.historyitem_type_Chart) {
 				var hyperlinks = node.getElementsByTagName("a");
 				if (hyperlinks && hyperlinks.length) {
@@ -7122,7 +7125,7 @@ PasteProcessor.prototype =
 					}
 				}
 
-				//Todo пока сделал так, чтобы не вставлялись графические объекты в название диаграммы, потом нужно будет сделать так же запутанно, как в MS
+				//Todo for now made it so graphic objects don't paste into chart title, later need to make it as convoluted as in MS
 				var htmlImages = node.getElementsByTagName("img");
 				if (htmlImages && htmlImages.length) {
 					for (var i = 0; i < htmlImages.length; i++) {
@@ -7133,7 +7136,7 @@ PasteProcessor.prototype =
 			if (false !== bTurnOffTrackRevisions) {
 				oThis.api.WordControl.m_oLogicDocument.SetLocalTrackRevisions(bTurnOffTrackRevisions);
 			}
-			//на время заполнения контента для вставки отключаем историю
+			//disable history while filling paste content
 			oThis._Execute(node, {}, true, true, false);
 			//by section
 			//oThis._applyMsoSections(oThis.aContent, oThis.oMsoSections);
@@ -7522,7 +7525,7 @@ PasteProcessor.prototype =
 	},
 
 	_convertExcelBinary: function (aContentExcel, pDrawings) {
-		//пока только распознаём только графические объекты
+		//for now only recognizing graphic objects
 		var aContent = null, tempParagraph = null;
 		var imageUrl, isGraphicFrame, extX, extY;
 		var fonts = null;
@@ -7534,13 +7537,13 @@ PasteProcessor.prototype =
 			aContent = [];
 
 			var font_map = {};
-			//из excel в word они вставляются в один параграф
+			//from excel to word they are pasted into one paragraph
 			for (var i = 0; i < drawings.length; i++) {
 				drawing = drawings[i] && drawings[i].Drawing ? drawings[i].Drawing : drawings[i];
 
-				//TODO нужна отдельная обработка для таблиц из презентаций
+				//TODO need separate handling for tables from presentations
 				isGraphicFrame = typeof CTable !== "undefined" && drawing.graphicObject instanceof CTable;
-				if (isGraphicFrame && drawings.length > 1 && drawings[i].base64)//если кроме таблички(при вставке из презентаций) содержатся ещё данные, вставляем в виде base64
+				if (isGraphicFrame && drawings.length > 1 && drawings[i].base64)//if besides table (when pasting from presentations) there's more data, paste as base64
 				{
 					if (!tempParagraph)
 						tempParagraph = new AscWord.Paragraph(this.oDocument);
@@ -7817,7 +7820,7 @@ PasteProcessor.prototype =
 					if (null != align.hor) {
 						oCurPar.SetParagraphAlign(align.hor);
 					} else if (AscCommon.CellValueType.Number === type) {
-						//для пустого текста, даже если тип соответсвующий, не проставляю выравнивание
+						//for empty text, even if type matches, don't set alignment
 						if (!range.isEmptyTextString()) {
 							oCurPar.SetParagraphAlign(AscCommon.align_Right);
 						}
@@ -8010,7 +8013,7 @@ PasteProcessor.prototype =
 	},
 
 	_convertTableToPPTX: function (table, isFromWord) {
-		//TODO пересмотреть обработку для вложенных таблиц(можно сделать так, как при копировании из документов в таблицы)
+		//TODO review handling for nested tables (can do like when copying from documents to tables)
 		var oTable = AscFormat.ExecuteNoHistory(function () {
 			var allRows = [];
 			this.maxTableCell = 0;
@@ -8050,7 +8053,7 @@ PasteProcessor.prototype =
 	},
 
 	_replaceInnerTables: function (table, allRows, isRoot) {
-		//заменяем внутренние таблички
+		//replace nested tables
 		for (var i = 0; i < table.Content.length; i++) {
 			allRows[allRows.length] = table.Content[i];
 
@@ -8063,7 +8066,7 @@ PasteProcessor.prototype =
 
 				var k = 0;
 				for (var n = 0; n < cDocumentContent.Content.length; n++) {
-					//если нашли внутреннюю табличку
+					//if found nested table
 					if (cDocumentContent.Content[n] instanceof CTable) {
 						this._replaceInnerTables(cDocumentContent.Content[n], allRows);
 						cDocumentContent.Content.splice(n, 1);
@@ -8073,7 +8076,7 @@ PasteProcessor.prototype =
 			}
 		}
 
-		//дополняем пустыми ячейками, строки, где ячеек меньше
+		//fill with empty cells rows where there are fewer cells
 		if (isRoot === true) {
 			for (var row = 0; row < allRows.length; row++) {
 				var cells = allRows[row].Content;
@@ -8118,7 +8121,7 @@ PasteProcessor.prototype =
 	},
 
 	_getImagesFromExcelShapes: function (aDrawings, aSpTree, aPastedImages, aUrls) {
-		//пока только распознаём только графические объекты
+		//for now only recognizing graphic objects
 		var sImageUrl, nDrawingsCount, oGraphicObj, bDrawings;
 		if (Array.isArray(aDrawings)) {
 			nDrawingsCount = aDrawings.length;
@@ -8212,7 +8215,7 @@ PasteProcessor.prototype =
 		}
 
 		var arrImages;
-		//если есть срез в контенте - вставляем только картинку
+		//if there's slicer in content - paste only image
 		var _sheet = tempWorkbook.aWorksheets[0];
 		var pDrawings;
 		let arrSlicers = null;
@@ -8277,7 +8280,7 @@ PasteProcessor.prototype =
 
 			shape.setTxBody(new AscFormat.CTextBody(shape));
 
-			//читаем контент, здесь только параграфы
+			//read content, here only paragraphs
 			cDocumentContent = new AscFormat.CDrawingDocContent(shape.txBody, editor.WordControl.m_oDrawingDocument, 0, 0, 0, 0, false, false);
 		} else {
 			cDocumentContent = worksheet;
@@ -8327,7 +8330,7 @@ PasteProcessor.prototype =
 			loader.TempMainObject = presentation && presentation.Slides ? presentation.Slides[presentation.CurPage] : presentation;
 			var style_index = null;
 
-			//читаем флаг о наличии табличного стиля
+			//read flag about table style presence
 			if (!loader.stream.GetBool()) {
 				if (loader.stream.GetBool()) {
 					loader.stream.Skip2(1);
@@ -8340,9 +8343,9 @@ PasteProcessor.prototype =
 
 			var drawing = loader.ReadGraphicObject();
 
-			//для случая, когда копируем 1 таблицу из презентаций, в бинарник заносим ещё одну такую же табличку, но со скомпилированными стилями(для вставки в word/excel)
+			//for case when copying 1 table from presentations, we add another same table to binary but with compiled styles (for pasting to word/excel)
 			if (count === 1 && typeof AscFormat.CGraphicFrame !== "undefined" && drawing instanceof AscFormat.CGraphicFrame) {
-				//в презентациях пропускаю чтение ещё раз графического объекта
+				//in presentations skip reading graphic object again
 				if (presentation.Slides) {
 					loader.stream.Skip2(1);
 					loader.stream.SkipRecord();
@@ -8372,13 +8375,13 @@ PasteProcessor.prototype =
 
 			if (style_index != null && arr_shapes[i].Drawing.graphicObject && arr_shapes[i].Drawing.graphicObject.Set_TableStyle) {
 				if (!PasteElementsId.g_bIsDocumentCopyPaste) {
-					//TODO продумать добавления нового стиля(ReadTableStyle->получуть id нового стиля, сравнить новый стиль со всеми присутвующими.если нет - добавить и сделать Set_TableStyle(id))
+					//TODO consider adding new style (ReadTableStyle->get new style id, compare new style with all existing. if not - add and do Set_TableStyle(id))
 					if (foundTableStylesIdMap[style_index]) {
 						arr_shapes[i].Drawing.graphicObject.Set_TableStyle(foundTableStylesIdMap[style_index], true);
 					} else if (cStyle && presentation.globalTableStyles && presentation.globalTableStyles.Style) {
 						var isFoundStyle = false;
 						for (var j in presentation.globalTableStyles.Style) {
-							//TODO isEqual - сравнивает ещё и имя стиля. для случая, когда одинаковый контент, но имя стиля разное, не подойдет это сравнение
+							//TODO isEqual - also compares style name. for case when content is same but style name is different, this comparison won't work
 							if (presentation.globalTableStyles.Style[j].isEqual(cStyle)) {
 								arr_shapes[i].Drawing.graphicObject.Set_TableStyle(j, true);
 								foundTableStylesIdMap[style_index] = j;
@@ -8387,9 +8390,9 @@ PasteProcessor.prototype =
 							}
 						}
 
-						//в данном случае добавляем новый стиль
+						//in this case add new style
 						if (!isFoundStyle) {
-							//TODO при добавлении нового стиля - падение. пересмотреть!
+							//TODO crash when adding new style. review!
 							/*var newIndexStyle = presentation.globalTableStyles.Add(cStyle);
 							presentation.TableStylesIdMap[newIndexStyle] = true;
 							arr_shapes[i].Drawing.graphicObject.Set_TableStyle(newIndexStyle, true);
@@ -8399,7 +8402,7 @@ PasteProcessor.prototype =
 						arr_shapes[i].Drawing.graphicObject.Set_TableStyle(style_index, true);
 					}
 				} else if (cStyle) {
-					//пока не применяем стили, посольку они отличаются
+					//not applying styles for now since they differ
 					//this._applyStylesToTable(arr_shapes[i].Drawing.graphicObject, cStyle);
 				}
 			}
@@ -8446,7 +8449,7 @@ PasteProcessor.prototype =
 	_Prepeare: function (node, fCallback) {
 		var oThis = this;
 		if (true === this.bUploadImage || true === this.bUploadFonts || this.pasteTextIntoList) {
-			//Пробегаемся по документу собираем список шрифтов и картинок.
+			//Go through document and collect list of fonts and images.
 			var aPrepeareFonts;
 			if (this.pasteTextIntoList) {
 				this._Prepeare_recursive(node, true);
@@ -8456,7 +8459,7 @@ PasteProcessor.prototype =
 				aPrepeareFonts = this._Prepeare_recursive(node, true, true);
 			}
 
-			//TODO пересмотреть все "local" и сделать одинаковые проверки во всех редакторах
+			//TODO review all "local" and make same checks in all editors
 			var aImagesToDownload = [];
 			var _mapLocal = {};
 			var originalSrcArr = [];
@@ -8505,7 +8508,7 @@ PasteProcessor.prototype =
 		}
 	},
 	_Prepeare_recursive: function (node, bIgnoreStyle, isCheckFonts) {
-		//пробегаемся по всему дереву, собираем все шрифты и картинки
+		//go through entire tree, collect all fonts and images
 		var nodeName = node.nodeName.toLowerCase();
 		var nodeType = node.nodeType;
 		if (!bIgnoreStyle) {
@@ -8558,12 +8561,12 @@ PasteProcessor.prototype =
 				this.pasteTextIntoList = null;
 			}
 
-			//принудительно добавляю для математики шрифт Cambria Math
+			//forcibly add Cambria Math font for math
 			if ((child && (child.nodeName.toLowerCase() === "#comment" && this.isSupportPasteMathContent(child.nodeValue, true)
 				&& this.apiEditor["asc_isSupportFeature"]("ooxml")) || child.nodeName.toLowerCase() === "math" ||
 				(child.className && child.className.indexOf && -1 !== child.className.indexOf("oo-latex")) ||
 				(style && -1 !== style.indexOf("oo-latex"))) && !this.pasteInExcel) {
-				//TODO пока только в документы разрешаю вставку математики математику
+				//TODO for now only allowing math paste into documents
 				var mathFont = "Cambria Math";
 				this.oFonts[mathFont] = {
 					Name: g_fontApplication.GetFontNameDictionary(mathFont, true),
@@ -8574,7 +8577,7 @@ PasteProcessor.prototype =
 			var child_nodeType = child.nodeType;
 			if (!(Node.ELEMENT_NODE === child_nodeType || Node.TEXT_NODE === child_nodeType))
 				continue;
-			//попускам элеметы состоящие только из \t,\n,\r
+			//skip elements consisting only of \t,\n,\r
 			if (Node.TEXT_NODE === child.nodeType) {
 				var value = child.nodeValue;
 				if (!value)
@@ -8589,9 +8592,9 @@ PasteProcessor.prototype =
 		if (isCheckFonts) {
 			var aPrepeareFonts = [];
 			for (var font_family in this.oFonts) {
-				//todo подбирать шрифт, хотябы по регистру
+				//todo select font, at least by case
 				var oFontItem = this.oFonts[font_family];
-				//Ищем среди наших шрифтов
+				//Search among our fonts
 				this.oFonts[font_family].Index = -1;
 				aPrepeareFonts.push(new CFont(oFontItem.Name));
 			}
@@ -8604,8 +8607,8 @@ PasteProcessor.prototype =
 		if (msoTextNode && msoTextNode[0]) {
 			var msoComment = this._getMsoCommentText(msoTextNode[0]);
 			var msoCommentId = msoTextNode[0].parentElement.id;
-			//в качестве id использую индекс из id у родительского элемента
-			//id вида _com_1
+			//using index from parent element's id as id
+			//id format _com_1
 			if (msoCommentId) {
 				var id = msoCommentId.split("_com_");
 				if (id && undefined !== id[1]) {
@@ -8642,9 +8645,9 @@ PasteProcessor.prototype =
 			for (var i = 0; i < elems.length; i++) {
 				var child = elems[i];
 
-				//нужно исключить <![if !supportAnnotations]>
-				//пока собираем только текст(не форматированный), в дальнейшем, когда будет полная поддержка отображения
-				//коментариев, можно преобразовывать уже в структуру и вставлять в комм. форматированный текст
+				//need to exclude <![if !supportAnnotations]>
+				//for now collecting only text (unformatted), later when there's full display support
+				//for comments, can convert to structure and paste formatted text into comment
 				if (child.nodeName === "#comment") {
 					if (child.nodeValue === "[if !supportAnnotations]") {
 						bMsoAnnotation = true;
@@ -8658,7 +8661,7 @@ PasteProcessor.prototype =
 
 				if (Node.TEXT_NODE === child.nodeType) {
 					var value = child.nodeValue;
-					//пропускаем неразрывный пробел перед комментарием
+					//skip non-breaking space before comment
 					if (value === " " && child.parentElement && child.parentElement.getAttribute("style") === "mso-special-character:comment") {
 						continue;
 					}
@@ -8818,7 +8821,7 @@ PasteProcessor.prototype =
 					if (aParems.length >= 3) {
 						if (aParems.length >= 4) {
 							var oA = AscCommon.valueToMmType(aParems[3]);
-							if (0 == oA.val)//полностью прозрачный
+							if (0 == oA.val)//fully transparent
 							{
 								return null;
 							}
@@ -8858,7 +8861,7 @@ PasteProcessor.prototype =
 		return bIsEmpty;
 	},
 	_set_pPr: function (node, Para, pNoHtmlPr) {
-		//Пробегаемся вверх по дереву в поисках блочного элемента
+		//Go up the tree looking for block element
 		var t = this;
 		var sNodeName = node.nodeName.toLowerCase();
 		if (node !== this.oRootNode) {
@@ -8881,7 +8884,7 @@ PasteProcessor.prototype =
 				text_align = t._getStyle(node, computedStyle, "text-align");
 			}
 			if (text_align) {
-				//Может приходить -webkit-right
+				//Can receive -webkit-right
 				let Jc = null;
 				if (-1 !== text_align.indexOf('center')) {
 					Jc = align_Center;
@@ -8900,7 +8903,7 @@ PasteProcessor.prototype =
 		if ("td" === sNodeName || "th" === sNodeName) {
 			_applyTextAlign();
 
-			//для случая <td>br<span></span></td> без текста в ячейке
+			//for case <td>br<span></span></td> without text in cell
 			var oNewSpacing = new AscWord.ParaSpacing();
 			oNewSpacing.Set_FromObject({After: 0, Before: 0, Line: Asc.linerule_Auto});
 			Para.Set_Spacing(oNewSpacing);
@@ -8909,7 +8912,7 @@ PasteProcessor.prototype =
 		var oDocument = this.oDocument;
 
 		//Heading
-		//Ранее применялся весь заголовок - Para.Style_Add(oDocument.Styles.Get_Default_Heading(pNoHtmlPr.hLevel));
+		//Previously entire heading was applied - Para.Style_Add(oDocument.Styles.Get_Default_Heading(pNoHtmlPr.hLevel));
 		if (null != pNoHtmlPr.hLevel && oDocument.Styles) {
 			//Para.SetOutlineLvl(pNoHtmlPr.hLevel);
 			Para.Style_Add(oDocument.Styles.Get_Default_Heading(pNoHtmlPr.hLevel));
@@ -8975,12 +8978,12 @@ PasteProcessor.prototype =
 				var obj = AscCommon.valueToMmType(font_size);
 				if (obj && "%" !== obj.type && "none" !== obj.type) {
 					font_size = obj.val;
-					//Если браузер не поддерживает нецелые пикселы отсекаем половинные шрифты, они появляются при вставке 8, 11, 14, 20, 26pt
+					//If browser doesn't support non-integer pixels, cut off half-size fonts, they appear when pasting 8, 11, 14, 20, 26pt
 					if ("px" === obj.type && false === this.bIsDoublePx) {
 						font_size = Math.round(font_size * g_dKoef_mm_to_pt);
 					} else {
 						font_size = Math.round(2 * font_size * g_dKoef_mm_to_pt) / 2;
-					}//половинные значения допустимы.
+					}//half values are acceptable.
 
 					//TODO use constant
 					if (font_size > 300) {
@@ -8997,7 +9000,7 @@ PasteProcessor.prototype =
 			var Ind = new CParaInd();
 			var margin_left = this._getStyle(node, computedStyle, "margin-left");
 
-			//TODO перепроверить правку с pageColumn
+			//TODO re-verify fix with pageColumn
 			var curContent = this.oLogicDocument.Content[this.oLogicDocument.CurPos.ContentPos];
 			var curIndexColumn = curContent && curContent.Get_CurrentColumn ? curContent.Get_CurrentColumn(this.oLogicDocument.CurPage) : null;
 			var curPage = this.oLogicDocument.Pages[this.oLogicDocument.CurPage];
@@ -9020,9 +9023,9 @@ PasteProcessor.prototype =
 			// pPr.Ind.Left = pPr.Ind.Left * this.dScaleKoef;
 			// if(null != pPr.Ind.Right && true == this.bUseScaleKoef)
 			// pPr.Ind.Right = pPr.Ind.Right * this.dScaleKoef;
-			//Проверка чтобы правый margin не заходил за левый или не приближался ближе чем на линейке
+			//Check that right margin doesn't go past left or get closer than on ruler
 			if (null != Ind.Left && null != Ind.Right) {
-				//30 ограничение как и на линейке
+				//30 limit same as on ruler
 				var dif = Page_Width - X_Left_Margin - X_Right_Margin - Ind.Left - Ind.Right;
 				if (dif < 30) {
 					Ind.Right = Page_Width - X_Left_Margin - X_Right_Margin - Ind.Left - 30;
@@ -9054,7 +9057,7 @@ PasteProcessor.prototype =
 				Spacing.After = margin_bottom;
 			}
 			//line height
-			//computedStyle возвращает значение в px. мне нужны %(ms записывает именно % в html)
+			//computedStyle returns value in px. I need % (ms writes exactly % in html)
 			var line_height = node.style && node.style.lineHeight ? node.style.lineHeight : this._getStyle(node, computedStyle, "line-height");
 			if (line_height) {
 				var oLineHeight = AscCommon.valueToMmType(line_height);
@@ -9070,7 +9073,7 @@ PasteProcessor.prototype =
 				Para.Set_Spacing(Spacing);
 			}
 			//Shd
-			//background-color не наследуется остальные свойства, надо смотреть родительские элементы
+			//background-color is not inherited, other properties need to look at parent elements
 			var background_color = null;
 			var oTempNode = node;
 			while (true) {
@@ -9164,7 +9167,7 @@ PasteProcessor.prototype =
 		if (PasteElementsId.g_bIsDocumentCopyPaste) {
 			if (true === pNoHtmlPr.bNum) {
 				var setListTextPr = function (oNum) {
-					//текстовые настройки списка берем по настройкам первого текстового элемента
+					//list text settings taken from first text element settings
 					var oFirstTextChild = node;
 					while (true) {
 						var bContinue = false;
@@ -9175,7 +9178,7 @@ PasteProcessor.prototype =
 							if (!(Node.ELEMENT_NODE === nodeType || Node.TEXT_NODE === nodeType)) {
 								continue;
 							}
-							//попускам элеметы состоящие только из \t,\n,\r
+							//skip elements consisting only of \t,\n,\r
 							if (Node.TEXT_NODE === child.nodeType) {
 								var value = child.nodeValue;
 								if (!value) {
@@ -9204,13 +9207,13 @@ PasteProcessor.prototype =
 								oTextPr.RFonts = oLvl.GetTextPr().RFonts.Copy();
 							}
 
-							//TODO убираю пока при всатвке извне underline/bold/italic у стиля маркера
+							//TODO for now removing underline/bold/italic from marker style when pasting from outside
 							oTextPr.Bold = oTextPr.Underline = oTextPr.Italic = undefined;
 							if (oFirstTextChild.nodeName.toLowerCase() === "a" && oTextPr.Color) {
 								oTextPr.Color.Set(0, 0, 0);
 							}
 
-							//получаем настройки из node
+							//get settings from node
 							oNum.ApplyTextPr(0, oTextPr);
 						}
 					}
@@ -9259,7 +9262,7 @@ PasteProcessor.prototype =
 
 					if (null == NumId && this.pasteInPresentationShape !== true)//create new NumId
 					{
-						// Создаем нумерацию
+						// Create numbering
 						var oNum = this.oLogicDocument.GetNumbering().CreateNum();
 						NumId = oNum.GetId();
 
@@ -9311,7 +9314,7 @@ PasteProcessor.prototype =
 								break;
 						}
 
-						//проставляем начальную позицию
+						//set initial position
 						if (null !== startPos) {
 							oNum.SetLvlStart(level, startPos);
 						}
@@ -9356,9 +9359,9 @@ PasteProcessor.prototype =
 								break;
 						}
 					}
-					//Часть кода скопирована из Document.Set_ParagraphNumbering
+					//Part of code copied from Document.Set_ParagraphNumbering
 
-					//Смотрим передыдущий параграф, если тип списка совпадает, то берем тип списка из предыдущего параграфа
+					//Look at previous paragraph, if list type matches, take list type from previous paragraph
 					let curLvl = pNoHtmlPr.nLvl != null ? pNoHtmlPr.nLvl : 0;
 					if (this.aContent.length > 1) {
 						let prevElem = null;
@@ -9453,7 +9456,7 @@ PasteProcessor.prototype =
 					};
 					
 					if (null == NumId && this.pasteInPresentationShape !== true) {
-						// Создаем нумерацию
+						// Create numbering
 						let oNum = this.oLogicDocument.GetNumbering().CreateNum();
 						NumId = oNum.GetId();
 						if (Asc.c_oAscNumberingFormat.Bullet === num) {
@@ -9531,7 +9534,7 @@ PasteProcessor.prototype =
 		if (!this.bIsPlainText) {
 			var rPr = this._read_rPr(node, bUseOnlyInherit);
 
-			//заглушка для вставки в excel внутрь шейпа
+			//stub for pasting into excel inside shape
 			var tempRpr;
 			var bSaveExcelFormat = window['AscCommon'].g_clipboardBase.bSaveFormat;
 			if (this.pasteInExcel === true && !bSaveExcelFormat && this.oDocument && this.oDocument.Parent &&
@@ -9545,7 +9548,7 @@ PasteProcessor.prototype =
 				rPr = tempRpr;
 			}
 
-			//Если текстовые настройки поменялись добавляем элемент
+			//If text settings changed add element
 			if (!this.oCur_rPr.Is_Equal(rPr)) {
 				this._Set_Run_Pr(rPr);
 				this.oCur_rPr = rPr;
@@ -9611,11 +9614,11 @@ PasteProcessor.prototype =
 				var obj = AscCommon.valueToMmType(font_size);
 				if (obj && "%" !== obj.type && "none" !== obj.type) {
 					font_size = obj.val;
-					//Если браузер не поддерживает нецелые пикселы отсекаем половинные шрифты, они появляются при вставке 8, 11, 14, 20, 26pt
+					//If browser doesn't support non-integer pixels, cut off half-size fonts, they appear when pasting 8, 11, 14, 20, 26pt
 					if ("px" === obj.type && false === this.bIsDoublePx)
 						font_size = Math.round(font_size * g_dKoef_mm_to_pt);
 					else
-						font_size = Math.round(2 * font_size * g_dKoef_mm_to_pt) / 2;//половинные значения допустимы.
+						font_size = Math.round(2 * font_size * g_dKoef_mm_to_pt) / 2;//half values are acceptable.
 
 					//TODO use constant
 					if (font_size > 300)
@@ -9652,7 +9655,7 @@ PasteProcessor.prototype =
 			if (spacing && null != (spacing = AscCommon.valueToMm(spacing)))
 				rPr.Spacing = spacing;
 
-			//Провяем те свойства, которые не наследуется, надо смотреть родительские элементы
+			//Check properties that are not inherited, need to look at parent elements
 			var background_color = null;
 			var underline = null;
 			var Strikeout = null;
@@ -9741,13 +9744,13 @@ PasteProcessor.prototype =
 		}
 	},
 	_PrepareContent: function (indent) {
-		//Не допускам чтобы контент заканчивался на таблицу, иначе тяжело вставить параграф после
+		//Don't allow content to end with table, otherwise hard to insert paragraph after
 		if (this.aContent.length > 0) {
 			var last = this.aContent[this.aContent.length - 1];
 			if (type_Table === last.GetType()) {
 				this._Add_NewParagraph();
 			} else if (indent && type_Paragraph === last.GetType()) {
-				//при копировании внутри мс indent ячейки записывается в FirstLine (excel->word->xlsx->w:ind->w:firstLine)
+				//when copying inside ms cell indent is written to FirstLine (excel->word->xlsx->w:ind->w:firstLine)
 				if (last.Pr && last.Pr.Ind) {
 					last.Pr.Ind.FirstLine = indent * koef_mm_to_indent;
 				}
@@ -9807,7 +9810,7 @@ PasteProcessor.prototype =
 			"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		];
 
-		//TODO пересмотреть функцию перевода из римских чисел
+		//TODO review Roman numeral conversion function
 		var romanToIndex = function (text) {
 			var arab_number = [1, 4, 5, 9, 10, 40, 50, 90, 100, 400, 500, 900, 1000, 4000, 5000, 9000, 10000];
 			var rom_number = ["I", "IV", "V", "IX", "X", "XL", "L", "XC", "C", "CD", "D", "CM", "M", "M&#8577;", "&#8577;", "&#8577;&#8578;", "&#8578;"];
@@ -9849,7 +9852,7 @@ PasteProcessor.prototype =
 			return fullListIndex;
 		};
 
-		//TODO пока делаю так, пересмотреть регулярные выражения
+		//TODO doing it this way for now, review regular expressions
 		var resType = Asc.c_oAscNumberingFormat.Bullet;
 		var number = parseInt(str);
 		var startPos = null, fullListIndex;
@@ -9859,9 +9862,9 @@ PasteProcessor.prototype =
 		} else if (1 === str.length && -1 !== str.indexOf("o")) {
 			resType = Asc.c_oAscNumberingFormat.Bullet;
 		} else {
-			//1)смотрим на первый символ в строке
-			//2)ищем все символы, соответсвующие данному типу
-			//3)находим порядковый номер этих символов
+			//1)look at first character in string
+			//2)find all characters matching this type
+			//3)find ordinal number of these characters
 			var firstSymbol = str[0];
 			if (-1 !== symbolsArr[0].indexOf(firstSymbol)) {
 				if (getStartPosition) {
@@ -9897,7 +9900,7 @@ PasteProcessor.prototype =
 		return {type: resType, startPos: startPos};
 	},
 	_tryGenerateNumberingFromMsoStyle: function (aNumbering, node) {
-		//TODO mso-level-style-link - пока не парсил ссылку на стиль
+		//TODO mso-level-style-link - haven't parsed style link yet
 		/*@list l0:level1
 		{mso-level-style-link:"Р—Р°РіРѕР»РѕРІРѕРє 1";
 			mso-level-text:%1;
@@ -9905,7 +9908,7 @@ PasteProcessor.prototype =
 			mso-level-number-position:left;
 			margin-left:.3in;
 			text-indent:-.3in;}*/
-		//лежит в таком виде:
+		//stored in this format:
 		/*{mso-style-name:"Р—Р°РіРѕР»РѕРІРѕРє 1";
 			mso-style-unhide:no;
 			margin-top:0in;
@@ -9914,12 +9917,12 @@ PasteProcessor.prototype =
 			margin-left:.3in;
 			text-indent:-.3in;.....*/
 
-		// Создаем нумерацию
+		// Create numbering
 		var res = null;
 		if (aNumbering && aNumbering[1]) {
 
 			var correctText = function (_str) {
-				//лежит строка вида - ""\(\0022\\\0027%1sdfdf\0022J\\J\)""
+				//string format - ""\(\0022\\\0027%1sdfdf\0022J\\J\)""
 
 				if (!_str) {
 					return "";
@@ -10164,7 +10167,7 @@ PasteProcessor.prototype =
 	},
 	_read_rPr_mso_numbering: function (numberingProps, msoLinkStyles, node) {
 
-		//пример того, что должно лежать в numberingProps:
+		//example of what should be in numberingProps:
 		/*	mso-list-template-ids:-1656974294;}
 			@list l0:level1
 			{mso-level-style-link:"Heading 11";
@@ -10183,8 +10186,8 @@ PasteProcessor.prototype =
 			text-decoration:line-through underline;
 			vertical-align:super;*/
 
-		//пример того, что должно лежать в msoLinkStyles:
-		//ссылка mso-level-style-link:"Heading 11"
+		//example of what should be in msoLinkStyles:
+		//link mso-level-style-link:"Heading 11"
 		/*{mso-style-name:"Heading 11";
 			mso-style-update:auto;
 			mso-style-unhide:no;
@@ -10232,11 +10235,11 @@ PasteProcessor.prototype =
 				var obj = AscCommon.valueToMmType(font_size);
 				if (obj && "%" !== obj.type && "none" !== obj.type) {
 					font_size = obj.val;
-					//Если браузер не поддерживает нецелые пикселы отсекаем половинные шрифты, они появляются при вставке 8, 11, 14, 20, 26pt
+					//If browser doesn't support non-integer pixels, cut off half-size fonts, they appear when pasting 8, 11, 14, 20, 26pt
 					if ("px" === obj.type && false === this.bIsDoublePx)
 						font_size = Math.round(font_size * g_dKoef_mm_to_pt);
 					else
-						font_size = Math.round(2 * font_size * g_dKoef_mm_to_pt) / 2;//половинные значения допустимы.
+						font_size = Math.round(2 * font_size * g_dKoef_mm_to_pt) / 2;//half values are acceptable.
 
 					//TODO use constant
 					if (font_size > 300)
@@ -10273,7 +10276,7 @@ PasteProcessor.prototype =
 		if (spacing && null != (spacing = AscCommon.valueToMm(spacing)))
 			rPr.Spacing = spacing;
 
-		//Провяем те свойства, которые не наследуется, надо смотреть родительские элементы
+		//Check properties that are not inherited, need to look at parent elements
 		var background_color = null;
 		var underline = null;
 		var Strikeout = null;
@@ -10337,7 +10340,7 @@ PasteProcessor.prototype =
 		return res;
 	},
 	_findElemFromMsoHeadStyle: function (prefixName, name) {
-		//первый элемент массива - общая инфомарция о списках, остальные - инфомарция об уровнях по порядку
+		//first array element - general list info, rest - level info in order
 		/*@list l0
 		{mso-list-id:1405642429;
 			mso-list-type:hybrid;
@@ -10520,8 +10523,8 @@ PasteProcessor.prototype =
 				this._CommitElemToParagraph(elem);
 			} else {
 				if (this.oCurRun.Content.length === Asc.c_dMaxParaRunContentLength) {
-					//создаём новый paraRun и выставляем ему настройки предыдущего
-					//сделано для того, чтобы избежать большого количества данных в paraRun
+					//create new paraRun and set previous settings to it
+					//done to avoid large amount of data in paraRun
 					if (this.oCurRun && this.oCurRun.Pr && this.oCurRun.Pr.Copy) {
 						this._Set_Run_Pr(this.oCurRun.Pr.Copy());
 					}
@@ -10542,19 +10545,19 @@ PasteProcessor.prototype =
 		this.oCurRun = new ParaRun(this.oCurPar);
 		this.oCurRunContentPos = 0;
 		this.aContent.push(this.oCurPar);
-		//сбрасываем настройки теста
+		//reset test settings
 		this.oCur_rPr = new CTextPr();
 	},
 	_Execute_AddParagraph: function (node, pPr) {
 		this._Add_NewParagraph();
-		//Устанавливаем стили параграфа
+		//Set paragraph styles
 		this._set_pPr(node, this.oCurPar, pPr);
 	},
 	_Decide_AddParagraph: function (node, pPr, bParagraphAdded, bCommitBr) {
-		//Игнорируем пустые параграфы(как браузеры, как MS), добавляем параграф только когда придет текст
+		//Ignore empty paragraphs (like browsers, like MS), add paragraph only when text comes
 		if (true == bParagraphAdded) {
 			if (false != bCommitBr)
-				this._Commit_Br(2, node, pPr);//word игнорируем 2 последних br
+				this._Commit_Br(2, node, pPr);//word ignore last 2 br
 			this._Execute_AddParagraph(node, pPr);
 		} else if (false != bCommitBr)
 			this._Commit_Br(0, node, pPr);
@@ -10580,7 +10583,7 @@ PasteProcessor.prototype =
 		var bPresentation = !PasteElementsId.g_bIsDocumentCopyPaste;
 		let tBodyNode;
 
-		//Ищем если есть tbody
+		//Look for tbody if present
 		var i, length, j, length2;
 		for (i = 0, length = node.childNodes.length; i < length; ++i) {
 			var nodeName = node.childNodes[i].nodeName.toLowerCase();
@@ -10612,7 +10615,7 @@ PasteProcessor.prototype =
 			tBodyNode = tableNode;
 		}
 
-		//валидация талиц. В таблице не может быть строк состоящих из вертикально замерженых ячеек.
+		//table validation. Table cannot have rows consisting of vertically merged cells.
 		var nRowCount = 0;
 		var nMinColCount = 0;
 		var nMaxColCount = 0;
@@ -10645,7 +10648,7 @@ PasteProcessor.prototype =
 				nCurSum = 0;
 				nCurColWidth = 0;
 				var minRowSpanIndex = null;
-				var nMinRowSpanCount = null;//минимальный rowspan ячеек строки
+				var nMinRowSpanCount = null;//minimum rowspan of row cells
 				for (j = 0, length2 = tr.childNodes.length; j < length2; ++j) {
 					tc = tr.childNodes[j];
 					tcName = tc.nodeName.toLowerCase();
@@ -10701,7 +10704,7 @@ PasteProcessor.prototype =
 				}
 				nAllSum += nCurSum;
 				fParseSpans();
-				//Удаляем лишние rowspan
+				//Remove extra rowspan
 				if (nMinRowSpanCount > 1) {
 					for (j = 0, length2 = tr.childNodes.length; j < length2; ++j) {
 						tc = tr.childNodes[j];
@@ -10715,7 +10718,7 @@ PasteProcessor.prototype =
 				}
 				if (dMaxSum < nCurSum)
 					dMaxSum = nCurSum;
-				//удаляем пустые tr
+				//remove empty tr
 				if (0 === nCurColWidth) {
 					node.removeChild(tr);
 					length--;
@@ -10744,7 +10747,7 @@ PasteProcessor.prototype =
 				dScaleKoef = dScaleKoef * this.dMaxWidth / dMaxSum;
 				bUseScaleKoef = true;
 			}
-			//строим Grid
+			//build Grid
 			var aGrid = [];
 			var nPrevIndex = null;
 			var nPrevVal = 0;
@@ -10785,14 +10788,14 @@ PasteProcessor.prototype =
 				table.Set_TableStyle(0);
 				arrTables.push(graphicFrame);
 
-				//TODO пересмотреть!!!
+				//TODO review!!!
 				//graphicFrame.setXfrm(dd.GetMMPerDot(node["offsetLeft"]), dd.GetMMPerDot(node["offsetTop"]), dd.GetMMPerDot(node["offsetWidth"]), dd.GetMMPerDot(node["offsetHeight"]), null, null, null);
 			} else {
 				table = new CTable(oDocument.DrawingDocument, oDocument, true, 0, 0, aGrid);
 			}
 
 
-			//считаем aSumGrid
+			//calculate aSumGrid
 			var aSumGrid = [];
 			aSumGrid[-1] = 0;
 			var nSum = 0;
@@ -10800,7 +10803,7 @@ PasteProcessor.prototype =
 				nSum += aGrid[i];
 				aSumGrid[i] = nSum;
 			}
-			//набиваем content
+			//populate content
 			this._ExecuteTable(tBodyNode, node, table, aSumGrid, nMaxColCount !== nMinColCount ? aColsCountByRow : null, pPr, bUseScaleKoef, dScaleKoef, arrShapes, arrImages, arrTables);
 			table.MoveCursorToStartPos();
 
@@ -11164,11 +11167,13 @@ PasteProcessor.prototype =
 			}
 
 			if (_type === "complexform" && AscCommon.IsSupportOFormFeature()) {
-				this._applyComplexFormPr(node, levelSdt);
+				let complexFormPr = this._createComplexFormPr(node);
+				levelSdt.SetComplexFormPr(complexFormPr);
 			}
 
 			if (_type === "text" && AscCommon.IsSupportOFormFeature()) {
-				this._applyTextFormPr(node, levelSdt);
+				let textFormPr = this._createTextFormPr(node);
+				levelSdt.ApplyTextFormPr(textFormPr);
 			}
 
 			if (_type === "datetime" && AscCommon.IsSupportOFormFeature()) {
@@ -11330,18 +11335,18 @@ PasteProcessor.prototype =
 		return oPr;
 	},
 
-	_applyComplexFormPr: function (node, levelSdt) {
+	_createComplexFormPr: function (node) {
 		let complexFormType = node.attributes["complexformtype"];
 		if (complexFormType && complexFormType.value) {
 			let nType = parseInt(complexFormType.value);
 			if (!isNaN(nType)) {
-				let complexFormPr = new AscWord.CSdtComplexFormPr(nType);
-				levelSdt.SetComplexFormPr(complexFormPr);
+				return new AscWord.CSdtComplexFormPr(nType);
 			}
 		}
+		return new AscWord.CSdtComplexFormPr();
 	},
 
-	_applyTextFormPr: function (node, levelSdt) {
+	_createTextFormPr: function (node) {
 		let textFormNode = null;
 		for (let i = 0; i < node.childNodes.length; i++) {
 			let childNode = node.childNodes[i];
@@ -11350,12 +11355,11 @@ PasteProcessor.prototype =
 				break;
 			}
 		}
-
-		if (!textFormNode) {
-			return;
-		}
-
+		
 		let textFormPr = new AscWord.CSdtTextFormPr();
+		if (!textFormNode) {
+			return textFormPr;
+		}
 
 		let maxCharacters = textFormNode.attributes["maxcharacters"];
 		if (maxCharacters && maxCharacters.value) {
@@ -11439,7 +11443,7 @@ PasteProcessor.prototype =
 			}
 		}
 
-		levelSdt.ApplyTextFormPr(textFormPr);
+		return textFormPr;
 	},
 
 	_createDatePickerPr: function (node) {
@@ -11586,8 +11590,8 @@ PasteProcessor.prototype =
 		if (null != res)
 			return res.Copy();
 		else {
-			//сделано через dom чтобы не писать большую функцию разбора строки
-			//todo сделать без dom, анализируя текст.
+			//done through dom to avoid writing large string parsing function
+			//todo do without dom, analyzing text.
 			res = new CDocumentBorder();
 			var oTestDiv = document.createElement("div");
 			oTestDiv.setAttribute("style", "border-left:" + border);
@@ -11610,7 +11614,7 @@ PasteProcessor.prototype =
 		table.SetTableLayout(tbllayout_AutoFit);
 		//Pr
 		var Pr = table.Pr;
-		//align смотрим у parent tableBodyNode
+		//look at align from parent tableBodyNode
 		var sTableAlign = null;
 		if (null != tableBodyNode.align)
 			sTableAlign = tableBodyNode.align;
@@ -11709,7 +11713,7 @@ PasteProcessor.prototype =
 		var computedStyle = this._getComputedStyle(tableNode);
 		if (align_Left === table.Get_TableAlign()) {
 			var margin_left = this._getStyle(tableNode, computedStyle, "margin-left");
-			//todo возможно надо еще учесть ширину таблицы
+			//todo possibly need to also account for table width
 			if (margin_left && null != (margin_left = AscCommon.valueToMm(margin_left)) && margin_left < Page_Width - X_Left_Margin)
 				table.Set_TableInd(margin_left);
 		}
@@ -11744,7 +11748,7 @@ PasteProcessor.prototype =
 		var bFirstRow = true;
 		for (var i = 0, length = node.childNodes.length; i < length; ++i) {
 			var tr = node.childNodes[i];
-			//TODO временная правка в условии для того, чтобы избежать ошибки при копировании из excel мерженной ячейки
+			//TODO temporary fix in condition to avoid error when copying merged cell from excel
 			if ("tr" === tr.nodeName.toLowerCase() && tr.childNodes && tr.childNodes.length) {
 				var row = table.private_AddRow(table.Content.length, 0);
 				if (bFirstRow && pPr.repeatHeaderRow) {
@@ -11850,7 +11854,7 @@ PasteProcessor.prototype =
 		}
 
 		for (var i = 0, length = node.childNodes.length; i < length; ++i) {
-			//важно чтобы этот код был после определения td, потому что вертикально замерженые ячейки отсутствуют в dom
+			//important that this code is after td definition because vertically merged cells are absent in dom
 			fParseSpans();
 
 			var tc = node.childNodes[i];
@@ -11991,11 +11995,11 @@ PasteProcessor.prototype =
 				let content = first_shape.txBody.content;
 
 				if (content.Content.length > 1) {
-					//Удаляем параграф, который создается в шейпе по умолчанию
+					//Delete paragraph that is created in shape by default
 					content.Internal_Content_Remove(0, 1);
 				}
 
-				//добавляем новый параграфы
+				//add new paragraphs
 				for (i = 0, length = content.Content.length; i < length; ++i) {
 					if (i === length - 1) {
 						cell.Content.Internal_Content_Add(i + 1, content.Content[i], true);
@@ -12003,7 +12007,7 @@ PasteProcessor.prototype =
 						cell.Content.Internal_Content_Add(i + 1, content.Content[i], false);
 					}
 				}
-				//Удаляем параграф, который создается в таблице по умолчанию
+				//Delete paragraph that is created in table by default
 				cell.Content.Internal_Content_Remove(0, 1);
 				arrShapes2.splice(0, 1);
 			}
@@ -12030,11 +12034,11 @@ PasteProcessor.prototype =
 				var content = first_shape.txBody.content;
 
 				if (content.Content.length > 1) {
-					//Удаляем параграф, который создается в шейпе по умолчанию
+					//Delete paragraph that is created in shape by default
 					content.Internal_Content_Remove(0, 1);
 				}
 				
-				//добавляем новый параграфы
+				//add new paragraphs
 				for (i = 0, length = content.Content.length; i < length; ++i) {
 					if (i === length - 1) {
 						cell.Content.Internal_Content_Add(i + 1, content.Content[i], true);
@@ -12042,7 +12046,7 @@ PasteProcessor.prototype =
 						cell.Content.Internal_Content_Add(i + 1, content.Content[i], false);
 					}
 				}
-				//Удаляем параграф, который создается в таблице по умолчанию
+				//Delete paragraph that is created in table by default
 				cell.Content.Internal_Content_Remove(0, 1);
 				arrShapes2.splice(0, 1);
 			}
@@ -12080,13 +12084,13 @@ PasteProcessor.prototype =
 			if (0 === oPasteProcessor.aContent.length) {
 				var oDocContent = cell.Content;
 				var oNewPar = new AscWord.Paragraph(oDocContent);
-				//выставляем единичные настройки - важно для копирования из таблиц и других мест где встречаются пустые ячейки
+				//set single settings - important for copying from tables and other places where empty cells occur
 				var oNewSpacing = new AscWord.ParaSpacing();
 				oNewSpacing.Set_FromObject({After: 0, Before: 0, Line: Asc.linerule_Auto});
 				oNewPar.Set_Spacing(oNewSpacing);
 				oPasteProcessor.aContent.push(oNewPar);
 			}
-			//добавляем новый параграфы
+			//add new paragraphs
 			for (i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
 				if (i === length - 1) {
 					cell.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], true);
@@ -12094,7 +12098,7 @@ PasteProcessor.prototype =
 					cell.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], false);
 				}
 			}
-			//Удаляем параграф, который создается в таблице по умолчанию
+			//Delete paragraph that is created in table by default
 			cell.Content.Internal_Content_Remove(0, 1);
 		}
 	},
@@ -12105,7 +12109,7 @@ PasteProcessor.prototype =
 		var checkStyle = function (elem) {
 			var res = false;
 
-			//TODO пересмотреть! возможно стоит сделать проверку на computedStyle.
+			//TODO review! possibly should add computedStyle check.
 			var _nodeName = elem.nodeName.toLowerCase();
 			if ("h1" === _nodeName || "h2" === _nodeName || "h3" === _nodeName || "h4" === _nodeName || "h5" === _nodeName || "h6" === _nodeName) {
 				return true;
@@ -12134,8 +12138,8 @@ PasteProcessor.prototype =
 			return res;
 		};
 
-		//проверяем верхний элемент
-		//в случае с плагинами - контент оборачивается в дивку, которая может иметь свои стили
+		//check top element
+		//in case of plugins - content is wrapped in div which may have its own styles
 		if ("body" !== node.nodeName.toLowerCase() && !dNotCheckFirstElem) {
 			if (Node.ELEMENT_NODE === node.nodeType) {
 				if (checkStyle(node)) {
@@ -12161,15 +12165,15 @@ PasteProcessor.prototype =
 	},
 
 	_Execute: function (node, pPr, bRoot, bAddParagraph, bInBlock, arrShapes, arrImages, arrTables) {
-		//bAddParagraph флаг влияющий на функцию _Decide_AddParagraph, добавлять параграф или нет.
-		//bAddParagraph выставляется в true, когда встретился блочный элемент и по окончанию блочного элемента
+		//bAddParagraph flag affecting _Decide_AddParagraph function, whether to add paragraph or not.
+		//bAddParagraph is set to true when block element is encountered and at end of block element
 
 		var oThis = this;
-		var bRootHasBlock = false;//Если root есть блочный элемент, то надо все child считать параграфами
-		//Для Root node не смотрим стили и не добавляем текст
+		var bRootHasBlock = false;//If root has block element, then all children should be considered paragraphs
+		//For Root node don't look at styles and don't add text
 		//var presentation = editor.WordControl.m_oLogicDocument;
 
-		//для правки бага на релизе обработку добавляю только для вставки из ms excel, потом сделать данный класс как основной для получения данных из стилей ms
+		//for release bug fix adding handling only for paste from ms excel, later make this class main for getting data from ms styles
 		if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel) {
 			if (!this.oMsoStylesParser) {
 				this.oMsoStylesParser = new MsoStylesParser(node);
@@ -12188,7 +12192,7 @@ PasteProcessor.prototype =
 				var tempWhiteSpacing = oThis._getStyle(node.parentNode, computedStyle, "white-space");
 				whiteSpacing = "pre" === tempWhiteSpacing || "pre-wrap" === tempWhiteSpacing;
 
-				//TODO заглушка! разобрать все ситуации(в тч и те, когда браузер добавляет при вставке лишние), когда пробельные символы нужно/не нужно сохранять
+				//TODO stub! handle all situations (including when browser adds extra during paste), when whitespace should/shouldn't be preserved
 				if (!whiteSpacing && node.parentNode.nodeName && "span" === node.parentNode.nodeName.toLowerCase()) {
 					if (value === " ") {
 						whiteSpacing = true;
@@ -12199,7 +12203,7 @@ PasteProcessor.prototype =
 				}
 			}
 
-			//в конструкциях вида text/n<b>text<b/> || <b>text<b/>/ntext заменяю символ переноса на пробел
+			//in constructs like text/n<b>text<b/> || <b>text<b/>/ntext replace newline character with space
 			if ((node.nextSibling && node.nextSibling.nodeType !== Node.TEXT_NODE) ||
 				(node.previousSibling && node.previousSibling.nodeType !== Node.TEXT_NODE)) {
 				value = value.replace(/(\r|\t|\n)/g, ' ');
@@ -12241,7 +12245,7 @@ PasteProcessor.prototype =
 				return resText;
 			};
 
-			//потому что(например иногда chrome при вставке разбивает строки с помощью \n)
+			//because (e.g. sometimes chrome splits lines with \n during paste)
 			if (!whiteSpacing) {
 				value = value.replace(/^(\r|\t|\n)+|(\r|\t|\n)+$/g, '');
 				value = value.replace(/(\r|\t|\n)/g, ' ');
@@ -12293,14 +12297,14 @@ PasteProcessor.prototype =
 					}
 					bAddParagraph = oThis._Decide_AddParagraph(oTargetNode, pPr, bAddParagraph);
 
-					//Добавляет элемени стиля если он поменялся
+					//Add style element if it changed
 					oThis._commit_rPr(oTargetNode, bUseOnlyInherit);
 				}
 
-				//для проблемы с лишними прообелами в начале новой строки при копировании из MS EXCEL ячеек с текстом, разделенным alt+enter
-				//мс в данном случае(баг 55851) оборачивает данные в тэг font. чтобы сохранить пробелы, добавляю проверку.
-				//можно было бы проверить на наличие переноса строки вначале, но 55851 - перед вторым Bold добавляет символ переноса
-				//тег font является устаревшим, но мс его активно испольует
+				//for problem with extra spaces at beginning of new line when copying from MS EXCEL cells with text separated by alt+enter
+				//ms in this case (bug 55851) wraps data in font tag. to preserve spaces, adding check.
+				//could check for newline at beginning, but 55851 - adds newline character before second Bold
+				//font tag is deprecated, but ms actively uses it
 				var ignoreFirstSpaces = false;
 				if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel && !(node.parentNode && node.parentNode.nodeName.toLowerCase() === "font")) {
 					ignoreFirstSpaces = true;
@@ -12312,7 +12316,7 @@ PasteProcessor.prototype =
 					value = "";
 				}
 
-				//bIsPreviousSpace - игнорируем несколько пробелов подряд
+				//bIsPreviousSpace - ignore multiple consecutive spaces
 				var bIsPreviousSpace = false, clonePr;
 				
 				for (var oIterator = value.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
@@ -12463,7 +12467,7 @@ PasteProcessor.prototype =
 						}
 					}
 				} else {
-					//в данном случае если нет тега li, то списоком не считаем
+					//in this case if there's no li tag, don't consider it a list
 					if ("li" === sNodeName) {
 						pPr.bNum = true;
 					}
@@ -12492,7 +12496,7 @@ PasteProcessor.prototype =
 		};
 
 		var parseStyle = function () {
-			//собираем не html свойства параграфа(те что нельзя получить из getComputedStyle)
+			//collect non-html paragraph properties (those that can't be obtained from getComputedStyle)
 			var style = node.getAttribute("style");
 			if (style) {
 				oThis._parseCss(style, pPr);
@@ -12559,14 +12563,14 @@ PasteProcessor.prototype =
 					if (nWidth && nHeight && sSrc) {
 						sSrc = oThis.oImages[sSrc];
 						if (sSrc) {
-							//вписываем в oThis.dMaxWidth
+							//write to oThis.dMaxWidth
 							var bUseScaleKoef = oThis.bUseScaleKoef;
 							var dScaleKoef = oThis.dScaleKoef;
 							if (nWidth * dScaleKoef > oThis.dMaxWidth) {
 								dScaleKoef = dScaleKoef * oThis.dMaxWidth / nWidth;
 								bUseScaleKoef = true;
 							}
-							//закомментировал, потому что при вставке получаем изображения измененного размера
+							//commented out because during paste we get resized images
 							/*if(bUseScaleKoef)
 							 {
 							 var dTemp = nWidth;
@@ -12576,7 +12580,7 @@ PasteProcessor.prototype =
 							var oTargetDocument = oThis.oDocument;
 							var oDrawingDocument = oThis.oDocument.DrawingDocument;
 							if (oTargetDocument && oDrawingDocument) {
-								//если добавляем изображение в гиперссылку, то кладём его в отдельный ран и делаем не подчёркнутым
+								//if adding image to hyperlink, put it in separate run and make it not underlined
 								if (oThis.oCurHyperlink) {
 									if (!(oThis._lastCommitedRunId && oThis.oCurRun && oThis._lastCommitedRunId && oThis.oCurRun.Id === oThis._lastCommitedRunId)) {
 										oThis._CommitElemToParagraph(oThis.oCurRun);
@@ -12666,7 +12670,7 @@ PasteProcessor.prototype =
 
 		var parseLineBreak = function () {
 			if (bPresentation) {
-				//Добавляем linebreak, если он не разделяет блочные элементы и до этого был блочный элемент
+				//Add linebreak if it doesn't separate block elements and there was block element before
 				if ("br" === sNodeName || "always" === node.style.pageBreakBefore) {
                     let oParagraph = oShapeContent.GetLastParagraph();
                     let oRun;
@@ -12678,12 +12682,12 @@ PasteProcessor.prototype =
                     }
 				}
 			} else {
-				//Добавляем linebreak, если он не разделяет блочные элементы и до этого был блочный элемент
+				//Add linebreak if it doesn't separate block elements and there was block element before
 				var bPageBreakBefore = "always" === node.style.pageBreakBefore ||
 					"left" === node.style.pageBreakBefore || "right" === node.style.pageBreakBefore;
 				if ("br" == sNodeName || bPageBreakBefore) {
 
-					//TODO пока комментирую добавление колонок
+					//TODO commenting out column addition for now
 					/*if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Word && pPr.msoWordSection && "section-break" === pPr["mso-break-type"]) {
 						//section break
 						oThis._Add_NewParagraph();
@@ -12862,7 +12866,7 @@ PasteProcessor.prototype =
 					return;
 				}
 
-				//попускам элеметы состоящие только из \t,\n,\r
+				//skip elements consisting only of \t,\n,\r
 				if (Node.TEXT_NODE === child.nodeType) {
 					value = child.nodeValue;
 					if (!value) {
@@ -12910,7 +12914,7 @@ PasteProcessor.prototype =
 					}
 				}
 
-				//TODO временная правка. пересмотреть обработку тега math
+				//TODO temporary fix. review math tag handling
 				if (!child.style && Node.TEXT_NODE !== child.nodeType) {
 					child.style = {};
 				}
@@ -12927,9 +12931,9 @@ PasteProcessor.prototype =
 			} else {
 				sChildNodeName = child.nodeName.toLowerCase();
 
-				//исключаю чтение тега "o:p", потому что ms в пустые ячейки таблицы добавляется внутрь данного тега неразрывные пробелы
-				//не нашёл такой ситуации, когда пропадают пробелы между словами
-				//todo протестровать "o:p"!
+				//excluding reading "o:p" tag because ms adds non-breaking spaces inside this tag in empty table cells
+				//haven't found situation where spaces between words disappear
+				//todo test "o:p"!
 				if (!(Node.ELEMENT_NODE === nodeType || Node.TEXT_NODE === nodeType) || sChildNodeName === "style" ||
 					sChildNodeName === "#comment" || sChildNodeName === "script" /*|| sChildNodeName === "o:p"*/) {
 					if (sChildNodeName === "#comment") {
@@ -12977,12 +12981,12 @@ PasteProcessor.prototype =
 					return;
 				}
 
-				//добавляю пока флаг startMsoAnnotation для игнорирования комментариев при вставке из ms
-				//TODO в дальнейшем необходимо поддержать вставку комментариев из ms
-				//так же рассмотреть где ещё используется тег [if !supportAnnotations]
+				//adding startMsoAnnotation flag for now to ignore comments when pasting from ms
+				//TODO in future need to support pasting comments from ms
+				//also consider where else [if !supportAnnotations] tag is used
 				if (oThis.startMsoAnnotation) {
 					if (child.id) {
-						//ориентируюсь по id для закрытия комментариев
+						//using id for closing comments
 						var idAnchor = child.id.split("_anchor_");
 						if (idAnchor && idAnchor[1] && oThis.msoComments[idAnchor[1]] && oThis.msoComments[idAnchor[1]].start) {
 							if (null != oThis.oCurRun) {
@@ -13004,14 +13008,14 @@ PasteProcessor.prototype =
 					if (commentId && undefined !== commentId[1]) {
 						var startComment = oThis.msoComments[commentId[1]];
 						if (startComment && !startComment.start) {
-							//добавляем комментарий AscCommon.CComment и получаем его id
+							//add AscCommon.CComment comment and get its id
 							var newCCommentId = oThis._addComment({
 								Date: pPr["mso-comment-date"],
 								Text: startComment.text
 							});
-							//удаляем из map
+							//remove from map
 							oThis.msoComments[commentId[1]].start = newCCommentId;
-							//добавляем paraComment
+							//add paraComment
 							if (!oThis.needAddCommentStart) {
 								oThis.needAddCommentStart = [];
 							}
@@ -13020,18 +13024,18 @@ PasteProcessor.prototype =
 					}
 				}
 
-				//пропускаем одиночный неразрывный пробел перед комментарием
+				//skip single non-breaking space before comment
 				if ("comment" === pPr["mso-special-character"]) {
 					return;
 				}
 
-				//попускам элеметы состоящие только из \t,\n,\r
+				//skip elements consisting only of \t,\n,\r
 				if (Node.TEXT_NODE === child.nodeType) {
 					value = child.nodeValue;
 					if (!value) {
 						return;
 					}
-					//TODO заглушка! разобрать все ситуации(в тч и те, когда браузер добавляет при вставке лишние), когда пробельные символы нужно/не нужно сохранять
+					//TODO stub! handle all situations (including when browser adds extra during paste), when whitespace should/shouldn't be preserved
 					if (child.parentNode && child.parentNode.nodeName && "span" === child.parentNode.nodeName.toLowerCase()) {
 						value = value.replace(/(\r|\t|\n)/g, ' ');
 					} else {
@@ -13058,7 +13062,7 @@ PasteProcessor.prototype =
 					if (null != href) {
 						
 						/*var sDecoded;
-						//decodeURI может выдавать malformed exception, потому что наш сайт в utf8, а некоторые сайты могут кодировать url в своей кодировке(например windows-1251)
+						//decodeURI can throw malformed exception because our site is utf8, and some sites may encode url in their encoding (e.g. windows-1251)
 						try {
 							sDecoded = decodeURI(href);
 						} catch (e) {
@@ -13066,17 +13070,17 @@ PasteProcessor.prototype =
 						}
 						href = sDecoded;*/
 						if (href && href.length > 0) {
-							// проверяем, является ли ссылка ссылкой на контент сноски
-							// если да, то создаём сноску и добавляем в контент
-							// если нет, значит создаём гиперссылку
+							// check if link is a link to footnote content
+							// if yes, create footnote and add to content
+							// if no, create hyperlink
 							var sStr = href.split("#");
 							var sText, oAddedRun;
 							if (sStr[1] && -1 !== sStr[1].indexOf("_ftnref")) {
 							}
-							// обычная сноска
+							// regular footnote
 							else if (sStr[1] && -1 !== sStr[1].indexOf("_ftn")) {
 								sText = child.innerText;
-								// проверяем, является ли название сноски кастомной или нет
+								// check if footnote name is custom or not
 								if (sText[0] === "[" && sText[sText.length - 1] === "]") {
 									sText = undefined;
 								}
@@ -13101,10 +13105,10 @@ PasteProcessor.prototype =
 							}
 							else if (sStr[1] && -1 !== sStr[1].indexOf("_ednref")) {
 							}
-							// концевая сноска
+							// endnote
 							else if (sStr[1] && -1 !== sStr[1].indexOf("_edn")) {
 								sText = child.innerText;
-								// проверяем, является ли название сноски кастомной или нет
+								// check if footnote name is custom or not
 								if (sText[0] === "[" && sText[sText.length - 1] === "]") {
 									sText = undefined;
 								}
@@ -13146,7 +13150,7 @@ PasteProcessor.prototype =
 					}
 				}
 
-				//TODO временная правка. пересмотреть обработку тега math
+				//TODO temporary fix. review math tag handling
 				if (!child.style && Node.TEXT_NODE !== child.nodeType) {
 					child.style = {};
 				}
@@ -13175,7 +13179,7 @@ PasteProcessor.prototype =
 							oHyperlink.Apply_TextPr(TextPr, undefined, true);
 						}
 
-						//проставляем rStyle
+						//set rStyle
 						if (oHyperlink.Content && oHyperlink.Content.length && oHyperlink.Paragraph.bFromDocument) {
 							if (oThis.oLogicDocument && oThis.oLogicDocument.Styles &&
 								oThis.oLogicDocument.Styles.Default && oThis.oLogicDocument.Styles.Default.Hyperlink &&
@@ -13196,20 +13200,20 @@ PasteProcessor.prototype =
 			}
 		};
 		var startExecuteNotes = function () {
-			// Проверяем является ли тег контентом сноски
+			// Check if tag is footnote content
 			if (node.nodeName.toLowerCase() === "div" && (-1 !== node.id.indexOf("ftn") || -1 !== node.id.indexOf("edn"))) {
 				oThis.aContentForNotes = oThis.aContent;
 				oThis.aContent = [];
 			}
 		};
 		var endExecuteNotes = function () {
-			// Проверяем является ли тег контентом сноски
+			// Check if tag is footnote content
 			if (node.nodeName.toLowerCase() === "div" && (-1 !== node.id.indexOf("ftn") || -1 !== node.id.indexOf("edn"))) {
 				var tmp = oThis.aContent;
-				// Меняем контент обратно, для работы вне контента сносок
+				// Change content back for working outside footnote content
 				oThis.aContent = oThis.aContentForNotes;
 	
-				// Заполняем контент сносок
+				// Fill footnote content
 				if (oThis.AddedFootEndNotes[node.id]) {
 					for (var i = 0; i < tmp.length; i++) {
 						if (i === 0) {
@@ -13219,7 +13223,7 @@ PasteProcessor.prototype =
 							oThis.AddedFootEndNotes[node.id].Content.push(tmp[i]);
 						}
 					}
-					// Удаляем сноску из PasteProcessor, после того, как добавили в неё контент
+					// Remove footnote from PasteProcessor after adding content to it
 					delete oThis.AddedFootEndNotes[node.id];
 				}
 			}
@@ -13274,7 +13278,7 @@ PasteProcessor.prototype =
 			node.nodeName.toLowerCase() === "a" && (-1 !== node.name.indexOf("ftn") || -1 !== node.name.indexOf("edn"))) {
 				oThis.bIsForFootEndnote = true;
 			}
-		// Меняем контент, если начинается контент сноски
+		// Change content if footnote content starts
 		startExecuteNotes();
 
 		var bPresentation = !PasteElementsId.g_bIsDocumentCopyPaste;
@@ -13288,7 +13292,7 @@ PasteProcessor.prototype =
 
 
 		if (true === bRoot) {
-			//Если блочных элементов нет, то отменяем флаг
+			//If no block elements, cancel the flag
 			var bExist = false;
 			for (var i = 0, length = node.childNodes.length; i < length; i++) {
 				var child = node.childNodes[i];
@@ -13305,7 +13309,7 @@ PasteProcessor.prototype =
 		} else {
 			//TEXT NODE
 			if (Node.TEXT_NODE === node.nodeType) {
-				//TODO пересмотреть условия
+				//TODO review conditions
 				if (false === this.bIgnoreNoBlockText || true === bInBlock || (node.parentElement && "a" === node.parentElement.nodeName.toLowerCase())) {
 					if (bPresentation) {
 						if (bInBlock && bAddParagraph && (oThis.needNewSepShape || Asc.editor.htmlPasteSepParagraphs)) {
@@ -13387,7 +13391,7 @@ PasteProcessor.prototype =
 		}
 
 
-		//рекурсивно вызываем для childNodes
+		//recursively call for childNodes
 		var savedNLvl = null;
 		if (("ul" === sNodeName || "ol" === sNodeName) && pPr.nLvl != null) {
 			savedNLvl = pPr.nLvl;
@@ -13396,14 +13400,14 @@ PasteProcessor.prototype =
 		for (var i = 0, length = node.childNodes.length; i < length; i++) {
 			var child = node.childNodes[i];
 			var nodeType = child.nodeType;
-			//При копировании из word может встретиться комментарий со списком
-			//Комментарии пропускаем, списки делаем своими
+			//When copying from word may encounter comment with list
+			//Skip comments, make lists our own
 			if (Node.COMMENT_NODE === nodeType) {
 				var value = child.nodeValue;
 				var bSkip = false;
 				if (value) {
 					if (-1 !== value.indexOf("supportLists")) {
-						//todo распознать тип списка
+						//todo recognize list type
 						pPr.bNum = true;
 						bSkip = true;
 					}
@@ -13411,17 +13415,17 @@ PasteProcessor.prototype =
 						bSkip = true;
 					}
 					if (this.isSupportPasteMathContent(value) && !this.pasteInExcel && this.apiEditor["asc_isSupportFeature"]("ooxml")) {
-						//TODO пока только в документы разрешаю вставку математики математику
+						//TODO for now only allowing math paste into documents
 						bSkip = true;
 					}
 
-					// TODO пересмотреть информацию в <![if !supportFootnotes]>
+					// TODO review information in <![if !supportFootnotes]>
 					/*if (-1 !== value.indexOf("supportFootnotes")) {
 						bSkip = true;
 					}*/
 				}
 				if (true === bSkip) {
-					//пропускаем все до закрывающегося комментария
+					//skip everything until closing comment
 					var j = i + 1;
 					for (; j < length; j++) {
 						var tempNode = node.childNodes[j];
@@ -13440,7 +13444,7 @@ PasteProcessor.prototype =
 
 			parseChildNodes();
 
-			//TODO пока не используется, поскольку есть проблемы при вставке колонок
+			//TODO not used for now since there are problems when pasting columns
 			//by section
 			/*if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Word) {
 				if (child.className && -1 !== child.className.indexOf("WordSection")) {
@@ -13458,10 +13462,10 @@ PasteProcessor.prototype =
 		}
 
 		if (bRoot && bPresentation) {
-			this._Commit_Br(2, node, pPr);//word игнорируем 2 последних br
+			this._Commit_Br(2, node, pPr);//word ignore last 2 br
 		}
 		checkStylesForNotes();
-		// Если тег с контентом для сноски, то записываем контент в сноску и заменяем его на обычный
+		// If tag with footnote content, write content to footnote and replace with regular
 		endExecuteNotes();
 
 		if (node && node.nodeName && node.name &&
@@ -13509,7 +13513,7 @@ PasteProcessor.prototype =
 	},
 
 	_parseMathContent: function (node, oPar) {
-		//получаем строку, которая содержит необходимые данные для получения уравнения
+		//get string containing necessary data to obtain equation
 		let bAddNewParagraph = true;
 		let str = node.nodeValue;
 		str = str.replace('[if gte msEquation 12]>', '');
@@ -13567,24 +13571,47 @@ PasteProcessor.prototype =
 		var nHeight = parseInt(node.getAttribute("height"));
 		if (!nWidth || !nHeight) {
 			var computedStyle = oThis._getComputedStyle(node);
-			nWidth = parseInt(oThis._getStyle(node, computedStyle, "width"));
-			nHeight = parseInt(oThis._getStyle(node, computedStyle, "height"));
+			if (!nWidth) {
+				var sWidth = oThis._getStyle(node, computedStyle, "width");
+				var oWidth = AscCommon.valueToMmType(sWidth);
+				if (oWidth && "%" !== oWidth.type) {
+					nWidth = Math.round(oWidth.val / AscCommon.g_dKoef_pix_to_mm);
+				}
+			}
+			if (!nHeight) {
+				var sHeight = oThis._getStyle(node, computedStyle, "height");
+				var oHeight = AscCommon.valueToMmType(sHeight);
+				if (oHeight && "%" !== oHeight.type) {
+					nHeight = Math.round(oHeight.val / AscCommon.g_dKoef_pix_to_mm);
+				}
+			}
 		}
 
-		//TODO пересмотреть! node.getAttribute("width") в FF возврашает "auto" -> изображения в FF не всталяются
+		//TODO review! node.getAttribute("width") in FF returns "auto" -> images in FF are not pasted
 		if ((!nWidth || !nHeight)) {
 			if (AscBrowser.isMozilla || AscBrowser.isIE) {
-				nWidth = parseInt(node.width);
-				nHeight = parseInt(node.height);
-			} else if (AscBrowser.isChrome) {
-				if (nWidth && !nHeight) {
-					nHeight = nWidth;
-				} else if (!nWidth && nHeight) {
-					nWidth = nHeight;
-				} else {
+				if (!nWidth) {
 					nWidth = parseInt(node.width);
+				}
+				if (!nHeight) {
 					nHeight = parseInt(node.height);
 				}
+			} else if (AscBrowser.isChrome) {
+				if (!nWidth) {
+					nWidth = parseInt(node.width);
+				}
+				if (!nHeight) {
+					nHeight = parseInt(node.height);
+				}
+			}
+		}
+
+		if ((!nWidth || !nHeight) && node.naturalWidth && node.naturalHeight) {
+			if (!nWidth) {
+				nWidth = node.naturalWidth;
+			}
+			if (!nHeight) {
+				nHeight = node.naturalHeight;
 			}
 		}
 
@@ -13629,11 +13656,11 @@ PasteProcessor.prototype =
 
 			for (var j = 0; j < row.Content.length; j++) {
 				tableCell = row.Content[j];
-				//пока не заливаю функцию Internal_Compile_Pr(находится в table.js + правки)
+				//not uploading Internal_Compile_Pr function for now (located in table.js + fixes)
 				var test = this.Internal_Compile_Pr(cTable, cStyle, tableCell);
 				tableCell.Set_Pr(test.CellPr);
 
-				//проверка цвета
+				//color check
 				/*cStyle.TableFirstRow.TableCellPr.Shd.Unifill.check(cTable.Get_Theme(), cTable.Get_ColorMap());
 				var RGBA = cStyle.TableFirstRow.TableCellPr.Shd.Unifill.getRGBAColor();
 				var theme = cTable.Get_Theme();*/
@@ -13691,7 +13718,7 @@ PasteProcessor.prototype =
 		};
 
 		var oCommentsNewId = {};
-		//меняем CDocumentContent на Document для возможности вставки комментариев в колонтитул и таблицу
+		//change CDocumentContent to Document to enable pasting comments into header/footer and table
 		var isIntoShape = this.oDocument && this.oDocument.Parent && this.oDocument.Parent instanceof AscFormat.CShape ? true : false;
 		var isIntoDocumentContent = this.oDocument instanceof CDocumentContent ? true : false;
 		var document = this.oDocument && isIntoDocumentContent && !isIntoShape ? this.oDocument.LogicDocument : this.oDocument;
@@ -13699,7 +13726,7 @@ PasteProcessor.prototype =
 		var oNewComment = new AscCommon.CComment(document.Comments, fInitCommentData(oOldComment));
 		document.Comments.Add(oNewComment);
 
-		//посылаем событие о добавлении комментариев
+		//send event about adding comments
 		this.api.sync_AddComment && this.api.sync_AddComment(oNewComment.Id, oNewComment.Data);
 
 		return oNewComment.Id;
@@ -14015,8 +14042,8 @@ function SpecialPasteShowOptions()
 	this.fixPosition = null;
 	this.position = null;
 
-	//для электронных таблиц
-	//показывать или нет дополнительный пункт специальной вставки
+	//for spreadsheets
+	//whether to show additional special paste option or not
 	this.showPasteSpecial = null;
 	this.containTables = null;
 
@@ -14103,7 +14130,7 @@ function MsoStylesParser(node) {
 	this._isInit = null;
 }
 MsoStylesParser.prototype.init = function () {
-	//TODO копия функции _findMsoHeadStyle, пока не трогаю новый функционал, потом порефакторить и избавиться от старых функций
+	//TODO copy of _findMsoHeadStyle function, not touching new functionality for now, later refactor and remove old functions
 	var msoStyleParser;
 	var styleTags = this.node && this.node.parentElement && this.node.parentElement.getElementsByTagName("style");
 	if (styleTags && styleTags.length) {
@@ -14277,8 +14304,8 @@ MsoStyleParser.prototype.addByAttrName = function (sym) {
 	this.attrName += sym;
 };
 MsoStyleParser.prototype.addByClassName = function (sym) {
-	//TODO - классов может быть несколько с одинаковыми аттрибутами
-	//TODO имя класса разделить по пробелам - @page WordSection1(префикс + имя)
+	//TODO - there can be multiple classes with same attributes
+	//TODO split class name by spaces - @page WordSection1(prefix + name)
 	/*p.MsoListParagraph, li.MsoListParagraph, div.MsoListParagraph
 	{mso-style-priority:34;
 		mso-style-unhide:no;
@@ -14462,11 +14489,11 @@ ParseHtmlStyle.prototype.applyStyles = function (textPr) {
 		var obj = AscCommon.valueToMmType(font_size);
 		if (obj && "%" !== obj.type && "none" !== obj.type) {
 			font_size = obj.val;
-			//Если браузер не поддерживает нецелые пикселы отсекаем половинные шрифты, они появляются при вставке 8, 11, 14, 20, 26pt
+			//If browser doesn't support non-integer pixels, cut off half-size fonts, they appear when pasting 8, 11, 14, 20, 26pt
 			if ("px" === obj.type && false === this.bIsDoublePx)
 				font_size = Math.round(font_size * g_dKoef_mm_to_pt);
 			else
-				font_size = Math.round(2 * font_size * g_dKoef_mm_to_pt) / 2;//половинные значения допустимы.
+				font_size = Math.round(2 * font_size * g_dKoef_mm_to_pt) / 2;//half values are acceptable.
 
 			//TODO use constant
 			if (font_size > 300)

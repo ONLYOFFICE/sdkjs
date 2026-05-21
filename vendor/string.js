@@ -128,9 +128,9 @@
 			{
 				return '';
 			}
-			// Обеспечение того, что count является 31-битным целым числом, позволяет нам значительно
-			// соптимизировать главную часть функции. Впрочем, большинство современных (на август
-			// 2014 года) браузеров не обрабатывают строки, длиннее 1 << 28 символов, так что:
+			// Ensuring that count is a 31-bit integer allows us to significantly
+			// optimize the main part of the function. However, most modern browsers (as of August
+			// 2014) don't handle strings longer than 1 << 28 characters, so:
 			if (str.length * count >= 1 << 28)
 			{
 				throw new RangeError('repeat count must not overflow maximum string size');

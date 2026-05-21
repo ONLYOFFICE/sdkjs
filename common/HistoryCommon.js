@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -1419,20 +1422,20 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
-	// Типы произошедших изменений
+	// Types of occurred changes
 	//
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	window['AscDFH'].historyitem_recalctype_Inline    = 0; // Изменения произошли в обычном тексте (с верхним классом CDocument)
-	window['AscDFH'].historyitem_recalctype_Flow      = 1; // Изменения произошли в "плавающем" объекте
-	window['AscDFH'].historyitem_recalctype_HdrFtr    = 2; // Изменения произошли в колонтитуле
-	window['AscDFH'].historyitem_recalctype_Drawing   = 3; // Изменения произошли в drawing'е
-	window['AscDFH'].historyitem_recalctype_NotesEnd  = 4; // Изменение произошли в сносках, которые идут в конце документа
-	window['AscDFH'].historyitem_recalctype_FromStart = 0xFFFF; // Изменения требуют полного пересчета документа с самого начала
+	window['AscDFH'].historyitem_recalctype_Inline    = 0; // Changes in regular text (with top class CDocument)
+	window['AscDFH'].historyitem_recalctype_Flow      = 1; // Changes in a "floating" object
+	window['AscDFH'].historyitem_recalctype_HdrFtr    = 2; // Changes in header/footer
+	window['AscDFH'].historyitem_recalctype_Drawing   = 3; // Changes in drawing
+	window['AscDFH'].historyitem_recalctype_NotesEnd  = 4; // Changes in footnotes at the end of document
+	window['AscDFH'].historyitem_recalctype_FromStart = 0xFFFF; // Changes require full document recalculation from the beginning
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
-	// Типы классов, в которых происходили изменения (типы нужны для совместного редактирования)
+	// Class types where changes occurred (types needed for collaboration)
 	//
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1510,7 +1513,7 @@
 	window['AscDFH'].historyitem_type_CustomXmlManager   = 72 << 16;
 	window['AscDFH'].historyitem_type_CustomXml          = 73 << 16;
 
-	window['AscDFH'].historyitem_type_CommonShape            = 1000 << 16; // Этот класс добавлен для элементов, у которых нет конкретного класса
+	window['AscDFH'].historyitem_type_CommonShape            = 1000 << 16; // This class is added for elements that don't have a specific class
 
 	window['AscDFH'].historyitem_type_ColorMod               = 1001 << 16;
 	window['AscDFH'].historyitem_type_ColorModifiers         = 1002 << 16;
@@ -1906,18 +1909,18 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
-	// Типы изменений, разбитые по классам
+	// Types of changes, grouped by classes
 	//
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	window['AscDFH'].historyitem_Unknown_Unknown = window['AscDFH'].historyitem_type_Unknown | 0;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе CTableId
+	// Types of changes in CTableId class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_TableId_Add         = window['AscDFH'].historyitem_type_TableId | 1;
 	window['AscDFH'].historyitem_TableId_Description = window['AscDFH'].historyitem_type_TableId | 0xFFFF;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе CDocument
+	// Types of changes in CDocument class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_Document_AddItem                         = window['AscDFH'].historyitem_type_Document | 1;
 	window['AscDFH'].historyitem_Document_RemoveItem                      = window['AscDFH'].historyitem_type_Document | 2;
@@ -1938,7 +1941,7 @@
 
 	window['AscDFH'].historyitem_Document_DisconnectEveryone              = window['AscDFH'].historyitem_type_Document | 10000;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе Paragraph
+	// Types of changes in Paragraph class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_Paragraph_AddItem                   = window['AscDFH'].historyitem_type_Paragraph | 1;
 	window['AscDFH'].historyitem_Paragraph_RemoveItem                = window['AscDFH'].historyitem_type_Paragraph | 2;
@@ -1987,7 +1990,7 @@
 	window['AscDFH'].historyitem_Paragraph_Spacing_BeforeLines      = window['AscDFH'].historyitem_type_Paragraph | 45;
 	window['AscDFH'].historyitem_Paragraph_Spacing_AfterLines       = window['AscDFH'].historyitem_type_Paragraph | 46;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе ParaTextPr
+	// Types of changes in ParaTextPr class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_TextPr_Bold                  = window['AscDFH'].historyitem_type_TextPr | 1;
 	window['AscDFH'].historyitem_TextPr_Italic                = window['AscDFH'].historyitem_type_TextPr | 2;
@@ -2027,7 +2030,7 @@
 	window['AscDFH'].historyitem_TextPr_ItalicCS              = window['AscDFH'].historyitem_type_TextPr | 36;
 	window['AscDFH'].historyitem_TextPr_Ligatures             = window['AscDFH'].historyitem_type_TextPr | 37;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе ParaDrawing
+	// Types of changes in ParaDrawing class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_Drawing_DrawingType       = window['AscDFH'].historyitem_type_Drawing | 1;
 	window['AscDFH'].historyitem_Drawing_WrappingType      = window['AscDFH'].historyitem_type_Drawing | 2;
@@ -2050,7 +2053,7 @@
 	window['AscDFH'].historyitem_Drawing_SetSizeRelV       = window['AscDFH'].historyitem_type_Drawing | 19;
 	window['AscDFH'].historyitem_Drawing_Form              = window['AscDFH'].historyitem_type_Drawing | 20;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе CTable
+	// Types of changes in CTable class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_Table_TableW                = window['AscDFH'].historyitem_type_Table | 1;
 	window['AscDFH'].historyitem_Table_TableCellMar          = window['AscDFH'].historyitem_type_Table | 2;
@@ -2082,7 +2085,7 @@
 	window['AscDFH'].historyitem_Table_TableGridChange       = window['AscDFH'].historyitem_type_Table | 28;
 	window['AscDFH'].historyitem_Table_PrChange              = window['AscDFH'].historyitem_type_Table | 29;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе CTableRow
+	// Types of changes in CTable classRow
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_TableRow_Before      = window['AscDFH'].historyitem_type_TableRow | 1;
 	window['AscDFH'].historyitem_TableRow_After       = window['AscDFH'].historyitem_type_TableRow | 2;
@@ -2095,7 +2098,7 @@
 	window['AscDFH'].historyitem_TableRow_PrChange    = window['AscDFH'].historyitem_type_TableRow | 9;
 	window['AscDFH'].historyitem_TableRow_ReviewType  = window['AscDFH'].historyitem_type_TableRow | 10;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе CTableCell
+	// Types of changes in CTable classCell
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_TableCell_GridSpan      = window['AscDFH'].historyitem_type_TableCell | 1;
 	window['AscDFH'].historyitem_TableCell_Margins       = window['AscDFH'].historyitem_type_TableCell | 2;
@@ -2113,23 +2116,23 @@
 	window['AscDFH'].historyitem_TableCell_HMerge        = window['AscDFH'].historyitem_type_TableCell | 14;
 	window['AscDFH'].historyitem_TableCell_PrChange      = window['AscDFH'].historyitem_type_TableCell | 15;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе CDocumentContent
+	// Types of changes in CDocument classContent
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_DocumentContent_AddItem    = window['AscDFH'].historyitem_type_DocumentContent | 1;
 	window['AscDFH'].historyitem_DocumentContent_RemoveItem = window['AscDFH'].historyitem_type_DocumentContent | 2;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе CNum
+	// Types of changes in CNum class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_Num_LvlOverrideChange = window['AscDFH'].historyitem_type_Num | 1;
 	window['AscDFH'].historyitem_Num_AbstractNum       = window['AscDFH'].historyitem_type_Num | 2;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе CPresentationField
+	// Types of changes in CPresentationField class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_PresentationField_Guid      = window['AscDFH'].historyitem_type_PresentationField | 1;
 	window['AscDFH'].historyitem_PresentationField_FieldType = window['AscDFH'].historyitem_type_PresentationField | 2;
 	window['AscDFH'].historyitem_PresentationField_PPr       = window['AscDFH'].historyitem_type_PresentationField | 3;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе СComment
+	// Types of changes in CComment class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_Comment_Change     = window['AscDFH'].historyitem_type_Comment | 1;
 	window['AscDFH'].historyitem_Comment_TypeInfo   = window['AscDFH'].historyitem_type_Comment | 2;
@@ -2137,12 +2140,12 @@
 	window['AscDFH'].historyitem_Comment_RangeStart = window['AscDFH'].historyitem_type_Comment | 4;
 	window['AscDFH'].historyitem_Comment_RangeEnd   = window['AscDFH'].historyitem_type_Comment | 5;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе AscCommon.CComments
+	// Types of changes in AscCommon.CComments class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_Comments_Add    = window['AscDFH'].historyitem_type_Comments | 1;
 	window['AscDFH'].historyitem_Comments_Remove = window['AscDFH'].historyitem_type_Comments | 2;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе ParaHyperlink
+	// Types of changes in ParaHyperlink class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_Hyperlink_Value      = window['AscDFH'].historyitem_type_Hyperlink | 1;
 	window['AscDFH'].historyitem_Hyperlink_ToolTip    = window['AscDFH'].historyitem_type_Hyperlink | 2;
@@ -2150,7 +2153,7 @@
 	window['AscDFH'].historyitem_Hyperlink_RemoveItem = window['AscDFH'].historyitem_type_Hyperlink | 4;
 	window['AscDFH'].historyitem_Hyperlink_Anchor     = window['AscDFH'].historyitem_type_Hyperlink | 5;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе CStyle
+	// Types of changes in CStyle class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_Style_TextPr          = window['AscDFH'].historyitem_type_Style | 1;
 	window['AscDFH'].historyitem_Style_ParaPr          = window['AscDFH'].historyitem_type_Style | 2;
@@ -2183,14 +2186,14 @@
 	window['AscDFH'].historyitem_Style_Custom          = window['AscDFH'].historyitem_type_Style | 111;
 	window['AscDFH'].historyitem_Style_StyleId         = window['AscDFH'].historyitem_type_Style | 112;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе CStyles
+	// Types of changes in CStyle classs
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_Styles_Add                 = window['AscDFH'].historyitem_type_Styles | 1;
 	window['AscDFH'].historyitem_Styles_Remove              = window['AscDFH'].historyitem_type_Styles | 2;
 	window['AscDFH'].historyitem_Styles_ChangeDefaultTextPr = window['AscDFH'].historyitem_type_Styles | 3;
 	window['AscDFH'].historyitem_Styles_ChangeDefaultParaPr = window['AscDFH'].historyitem_type_Styles | 4;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе ParaMath
+	// Types of changes in ParaMath class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_MathContent_AddItem      = window['AscDFH'].historyitem_type_Math | 101;
 	window['AscDFH'].historyitem_MathContent_RemoveItem   = window['AscDFH'].historyitem_type_Math | 102;
@@ -2250,7 +2253,7 @@
 	window['AscDFH'].historyitem_MathMatrix_Plh           = window['AscDFH'].historyitem_type_Math | 1308;
 	window['AscDFH'].historyitem_MathDegree_SubSupType    = window['AscDFH'].historyitem_type_Math | 1401;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе ParaRun
+	// Types of changes in ParaRun class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_ParaRun_AddItem               = window['AscDFH'].historyitem_type_ParaRun | 1;
 	window['AscDFH'].historyitem_ParaRun_RemoveItem            = window['AscDFH'].historyitem_type_ParaRun | 2;
@@ -2309,18 +2312,18 @@
 	window['AscDFH'].historyitem_ParaRun_MathMetaData          = window['AscDFH'].historyitem_type_ParaRun | 55;
 	
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе AscCommon.ParaComment
+	// Types of changes in AscCommon.ParaComment class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_ParaComment_CommentId = window['AscDFH'].historyitem_type_ParaComment | 1;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе ParaField
+	// Types of changes in ParaField class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_Field_AddItem              = window['AscDFH'].historyitem_type_Field | 1;
 	window['AscDFH'].historyitem_Field_RemoveItem           = window['AscDFH'].historyitem_type_Field | 2;
 	window['AscDFH'].historyitem_Field_FormFieldName        = window['AscDFH'].historyitem_type_Field | 3;
 	window['AscDFH'].historyitem_Field_FormFieldDefaultText = window['AscDFH'].historyitem_type_Field | 4;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе Footnotes
+	// Types of changes in Footnotes class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_Footnotes_AddFootnote              = window['AscDFH'].historyitem_type_Footnotes | 1;
 	window['AscDFH'].historyitem_Footnotes_SetSeparator             = window['AscDFH'].historyitem_type_Footnotes | 2;
@@ -2328,11 +2331,11 @@
 	window['AscDFH'].historyitem_Footnotes_SetContinuationNotice    = window['AscDFH'].historyitem_type_Footnotes | 4;
 	window['AscDFH'].historyitem_Footnotes_RemoveFootnote           = window['AscDFH'].historyitem_type_Footnotes | 5;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе CGlossaryDocument
+	// Types of changes in CGlossaryDocument class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_GlossaryDocument_AddDocPart = window['AscDFH'].historyitem_type_GlossaryDocument | 1;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе CDocPart
+	// Types of changes in CDocPart class
 	//------------------------------------------------------------------------------------------------------------------
 	window["AscDFH"].historyitem_DocPart_Name        = window["AscDFH"].historyitem_type_DocPart | 1;
 	window["AscDFH"].historyitem_DocPart_Style       = window["AscDFH"].historyitem_type_DocPart | 2;
@@ -2342,7 +2345,7 @@
 	window["AscDFH"].historyitem_DocPart_Category    = window["AscDFH"].historyitem_type_DocPart | 6;
 	window["AscDFH"].historyitem_DocPart_Behavior    = window["AscDFH"].historyitem_type_DocPart | 7;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе CSdtPr
+	// Types of changes in CSdtPr class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_SdtPr_Alias                = window['AscDFH'].historyitem_type_SdtPr | 1;
 	window['AscDFH'].historyitem_SdtPr_Id                   = window['AscDFH'].historyitem_type_SdtPr | 2;
@@ -2375,12 +2378,12 @@
 	window['AscDFH'].historyitem_SdtPr_RepeatingSection     = window['AscDFH'].historyitem_type_SdtPr | 29;
 	window['AscDFH'].historyitem_SdtPr_RepeatingSectionItem = window['AscDFH'].historyitem_type_SdtPr | 30;
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе CSdtPr
+	// Types of changes in CSdtPr class
 	//------------------------------------------------------------------------------------------------------------------
 	window["AscDFH"].historyitem_Endnotes_AddEndnote    = window["AscDFH"].historyitem_type_Endnotes | 1;
 	window["AscDFH"].historyitem_Endnotes_RemoveEndnote = window["AscDFH"].historyitem_type_Endnotes | 2;
 	//------------------------------------------------------------------------------------------------------------------
-	// Графические классы общего назначение (без привязки к конкретному классу)
+	// Common graphics classes
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_AutoShapes_SetDrawingBaseCoors      = window['AscDFH'].historyitem_type_CommonShape | 101;
 	window['AscDFH'].historyitem_AutoShapes_SetWorksheet             = window['AscDFH'].historyitem_type_CommonShape | 102;
@@ -2416,7 +2419,7 @@
 
 	window['AscDFH'].historyitem_Common_AddWatermark = window['AscDFH'].historyitem_type_CommonShape | 401;
 	//------------------------------------------------------------------------------------------------------------------
-	// Графические классы
+	// Graphics classes
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_Presentation_AddSlide                    = window['AscDFH'].historyitem_type_Presentation | 1;
 	window['AscDFH'].historyitem_Presentation_RemoveSlide                 = window['AscDFH'].historyitem_type_Presentation | 2;
@@ -3370,17 +3373,17 @@
 	window['AscDFH'].historyitem_AbsSizeAnchorParent  = window['AscDFH'].historyitem_type_AbsSizeAnchor | 6;
 
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений класса CDocumentMacros
+	// Types of changes in CDocumentMacros class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_DocumentMacros_Data = window['AscDFH'].historyitem_type_DocumentMacros | 1;
 
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений класса CCore
+	// Types of changes in CCore class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_CoreProperties = window['AscDFH'].historyitem_type_Core | 1;
 
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений класса CSlicerView
+	// Types of changes in CSlicerView class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_SlicerViewName = window['AscDFH'].historyitem_type_SlicerView | 1;
 
@@ -4113,7 +4116,7 @@
 
 
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в PDF Forms 
+	// Types of changes in PDF Forms
 	//------------------------------------------------------------------------------------------------------------------
 
 	// common
@@ -4185,13 +4188,14 @@
 	AscDFH.historyitem_Pdf_Checkbox_Style				= AscDFH.historyitem_type_Pdf_Checkbox_Field | 2;
 	AscDFH.historyitem_Pdf_Checkbox_Export_Value		= AscDFH.historyitem_type_Pdf_Checkbox_Field | 3;
 	AscDFH.historyitem_Pdf_Checkbox_Options				= AscDFH.historyitem_type_Pdf_Checkbox_Field | 4;
+	AscDFH.historyitem_Pdf_Checkbox_Checked				= AscDFH.historyitem_type_Pdf_Checkbox_Field | 5;
 
 	// radio
 	AscDFH.historyitem_Pdf_Radiobutton_Is_Unison		= AscDFH.historyitem_type_Pdf_Radiobutton_Field | 1;
 
 
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в PDF Annots 
+	// Types of changes in PDF Annots
 	//------------------------------------------------------------------------------------------------------------------
 
 	// Common
@@ -4265,7 +4269,7 @@
 	AscDFH.historyitem_Pdf_Link_Annot_Highlight_Type = AscDFH.historyitem_type_Pdf_Annot_Link | 1;
 
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в PDF drawing prototype
+	// Types of changes in PDF drawing prototype
 	//------------------------------------------------------------------------------------------------------------------
 
 	AscDFH.historyitem_type_Pdf_Drawing_Page		= AscDFH.historyitem_type_Pdf_Drawing | 1;
@@ -4273,7 +4277,7 @@
 	AscDFH.historyitem_type_Pdf_Drawing_From_Scan	= AscDFH.historyitem_type_Pdf_Drawing | 3;
 
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в классе CPDFDoc
+	// Types of changes in CPDFDoc class
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_PDF_Document_AnnotsContent		= window['AscDFH'].historyitem_type_PDF_Document | 1;
 	window['AscDFH'].historyitem_PDF_Document_DrawingsContent	= window['AscDFH'].historyitem_type_PDF_Document | 2;
@@ -4301,7 +4305,7 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
-	// Типы действий, который может совершить пользователь
+	// Types of user actions
 	//
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4814,7 +4818,9 @@
 	window['AscDFH'].historydescription_Spreadsheet_SetCellFormula					= 0x01fb;
 	window['AscDFH'].historydescription_Document_AddCheckBoxLabel                   = 0x01fc;
 	window['AscDFH'].historydescription_Document_StretchFormToCell                  = 0x01fd;
-	window['AscDFH'].historydescription_Document_InsertHorizontalRule              = 0x01fe;
+	window['AscDFH'].historydescription_Document_InsertHorizontalRule               = 0x01fe;
+	window['AscDFH'].historydescription_Document_SetParagraphHtml                   = 0x01ff;
+	window['AscDFH'].historydescription_Document_SetHorizontalRuleProps             = 0x0200;
 
 	// pdf
 	window['AscDFH'].historydescription_Pdf_AddAnnot			= 0x29a;
@@ -4849,7 +4855,7 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
-	// Фабрика изменений (заполняется там же, где и определяются классы изменений)
+	// Change factory (filled in the same place where change classes are defined)
 	//
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4858,8 +4864,8 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
-	// Карта зависимости изменений. Изменения зависят только от изменений для того же класса, но вот типы могут быть
-	// разными. В основном изменения зависят только от изменений такого же типа.
+	// Change dependency map. Changes depend only on changes for the same class, but types can be
+	// different. Mostly changes depend only on changes of the same type.
 	//
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4867,14 +4873,14 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
-	// Базовые классы для изменений
+	// Base classes for changes
 	//
-	// Разница между классами Property и Value в том, что Property могут быть undefined, а Value всегда значение
-	// заданного типа.
+	// The difference between Property and Value classes is that Property can be undefined, while Value is always a value
+	// of a specified type.
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/**
-	 * Базовый класс для всех изменений совместного редактирования.
+	 * Base class for all collaborative editing changes.
 	 * @constructor
 	 */
 	function CChangesBase(Class)
@@ -4909,7 +4915,7 @@
 	};
 	CChangesBase.prototype.Load = function()
 	{
-		// В большинстве случаев загрузка чужого изменения работает как простое Redo
+		// In most cases loading another user's change works like a simple Redo
 		this.Redo();
 	};
 	CChangesBase.prototype.GetClass = function()
@@ -4979,7 +4985,7 @@
 	};
 	window['AscDFH'].CChangesBase = CChangesBase;
 	/**
-	 * Базовый класс для изменений, которые меняют содержимое родительского класса.*
+	 * Base class for changes that modify the content of the parent class.*
 	 * @constructor
 	 * @extends {AscDFH.CChangesBase}
 	 */
@@ -5041,13 +5047,13 @@
 	};
 	CChangesBaseContentChange.prototype.WriteToBinary = function(Writer)
 	{
-		// Long : Количество элементов
+		// Long : Number of elements
 		// Array of
 		// {
-		//    Long     : позиции элементов
+		//    Long     : element positions
 		//    Variable : Item
 		// }
-		// Long : Поле Color
+		// Long : Color field
 
 		var bArray = this.UseArray;
 		var nCount = this.Items.length;
@@ -5093,13 +5099,13 @@
 	};
 	CChangesBaseContentChange.prototype.ReadFromBinary = function(Reader)
 	{
-		// Long : Количество элементов
+		// Long : Number of elements
 		// Array of
 		// {
-		//    Long     : позиции элементов
+		//    Long     : element positions
 		//    Variable : Item
 		// }
-		// Long : поле Color
+		// Long : Color field
 
 		this.UseArray = true;
 		this.Items    = [];
@@ -5241,7 +5247,7 @@
 	};
 	CChangesBaseContentChange.prototype.Merge = function(oChange)
 	{
-		// TODO: Сюда надо бы перенести работу с ContentChanges
+		// TODO: Should move ContentChanges handling here
 		return true;
 	};
 	CChangesBaseContentChange.prototype.GetMinPos = function()
@@ -5267,7 +5273,7 @@
 	};
 	window['AscDFH'].CChangesBaseContentChange = CChangesBaseContentChange;
 	/**
-	 * Базовый класс для изменения свойств.
+	 * Base class for property changes.
 	 * @constructor
 	 * @extends {AscDFH.CChangesBase}
 	 */
@@ -5292,7 +5298,7 @@
 	};
 	CChangesBaseProperty.prototype.private_SetValue = function(Value)
 	{
-		// Эту функцию нужно переопределить в дочернем классе
+		// This function needs to be overridden in the child class
 	};
 	CChangesBaseProperty.prototype.CreateReverseChange = function()
 	{
@@ -5311,7 +5317,7 @@
 
 	window['AscDFH'].CChangesBaseProperty = CChangesBaseProperty;
 	/**
-	 * Базовый класс для изменения булевых свойств.
+	 * Base class for boolean property changes.
 	 * @constructor
 	 * @extends {AscDFH.CChangesBaseProperty}
 	 */
@@ -5325,7 +5331,7 @@
 	CChangesBaseBoolProperty.prototype.WriteToBinary = function(Writer)
 	{
 		// Long  : Flag
-		// 1-bit : Подсвечивать ли данные изменения
+		// 1-bit : Highlight changes or not
 		// 2-bit : IsUndefined New
 		// 3-bit : New value
 		// 4-bit : IsUndefined Old
@@ -5351,7 +5357,7 @@
 	CChangesBaseBoolProperty.prototype.ReadFromBinary = function(Reader)
 	{
 		// Long  : Flag
-		// 1-bit : Подсвечивать ли данные изменения
+		// 1-bit : Highlight changes or not
 		// 2-bit : IsUndefined New
 		// 3-bit : New value
 		// 4-bit : IsUndefined Old
@@ -5380,7 +5386,7 @@
 	};
 	window['AscDFH'].CChangesBaseBoolProperty = CChangesBaseBoolProperty;
 	/**
-	 * Базовый класс для изменения числовых (double) свойств.
+	 * Base class for numeric (double) property changes.
 	 * @constructor
 	 * @extends {AscDFH.CChangesBaseProperty}
 	 */
@@ -5394,7 +5400,7 @@
 	CChangesBaseDoubleProperty.prototype.WriteToBinary = function(Writer)
 	{
 		// Long  : Flag
-		// 1-bit : Подсвечивать ли данные изменения
+		// 1-bit : Highlight changes or not
 		// 2-bit : IsUndefined New
 		// 3-bit : IsUndefined Old
 		// double : New
@@ -5422,7 +5428,7 @@
 	CChangesBaseDoubleProperty.prototype.ReadFromBinary = function(Reader)
 	{
 		// Long  : Flag
-		// 1-bit : Подсвечивать ли данные изменения
+		// 1-bit : Highlight changes or not
 		// 2-bit : IsUndefined New
 		// 3-bit : IsUndefined Old
 		// double : New
@@ -5448,7 +5454,7 @@
 	};
 	window['AscDFH'].CChangesBaseDoubleProperty = CChangesBaseDoubleProperty;
 	/**
-	 * Базовый класс для изменения объектных свойств, т.е. если свойство задано объектом.
+	 * Base class for object property changes, i.e. when property is defined by an object.
 	 * @constructor
 	 * @extends {AscDFH.CChangesBaseProperty}
 	 */
@@ -5459,10 +5465,14 @@
 
 	CChangesBaseObjectProperty.prototype = Object.create(CChangesBaseProperty.prototype);
 	CChangesBaseObjectProperty.prototype.constructor = CChangesBaseObjectProperty;
+	CChangesBaseObjectProperty.prototype.ReplaceImageUrl = function (mapUrl)
+	{
+		return this.New && this.New.ReplaceImageUrl ? this.New.ReplaceImageUrl(mapUrl) : false;
+	};
 	CChangesBaseObjectProperty.prototype.WriteToBinary = function(Writer)
 	{
 		// Long  : Flag
-		// 1-bit : Подсвечивать ли данные изменения
+		// 1-bit : Highlight changes or not
 		// 2-bit : IsUndefined New
 		// 3-bit : IsUndefined Old
 		// Variable : New
@@ -5492,7 +5502,7 @@
 	CChangesBaseObjectProperty.prototype.ReadFromBinary = function(Reader)
 	{
 		// Long  : Flag
-		// 1-bit : Подсвечивать ли данные изменения
+		// 1-bit : Highlight changes or not
 		// 2-bit : IsUndefined New
 		// 3-bit : IsUndefined Old
 		// Variable : New
@@ -5543,7 +5553,7 @@
 	};
 	CChangesBaseObjectProperty.prototype.private_CreateObject = function()
 	{
-		// Эту функцию нужно переопределить в дочернем классе
+		// This function needs to be overridden in the child class
 		return null;
 	};
 	CChangesBaseObjectProperty.prototype.private_IsCreateEmptyObject = function()
@@ -5552,7 +5562,7 @@
 	};
 	window['AscDFH'].CChangesBaseObjectProperty = CChangesBaseObjectProperty;
 	/**
-	 * Базовый класс для изменения числовых (long) свойств.
+	 * Base class for numeric (long) property changes.
 	 * @constructor
 	 * @extends {AscDFH.CChangesBaseProperty}
 	 */
@@ -5566,7 +5576,7 @@
 	CChangesBaseLongProperty.prototype.WriteToBinary = function(Writer)
 	{
 		// Long  : Flag
-		// 1-bit : Подсвечивать ли данные изменения
+		// 1-bit : Highlight changes or not
 		// 2-bit : IsUndefined New
 		// 3-bit : IsUndefined Old
 		// long : New
@@ -5594,7 +5604,7 @@
 	CChangesBaseLongProperty.prototype.ReadFromBinary = function(Reader)
 	{
 		// Long  : Flag
-		// 1-bit : Подсвечивать ли данные изменения
+		// 1-bit : Highlight changes or not
 		// 2-bit : IsUndefined New
 		// 3-bit : IsUndefined Old
 		// long : New
@@ -5620,7 +5630,7 @@
 	};
 	window['AscDFH'].CChangesBaseLongProperty = CChangesBaseLongProperty;
 	/**
-	 * Базовый класс для изменения строковых свойств.
+	 * Base class for string property changes.
 	 * @constructor
 	 * @extends {AscDFH.CChangesBaseProperty}
 	 */
@@ -5634,7 +5644,7 @@
 	CChangesBaseStringProperty.prototype.WriteToBinary = function(Writer)
 	{
 		// Long  : Flag
-		// 1-bit : Подсвечивать ли данные изменения
+		// 1-bit : Highlight changes or not
 		// 2-bit : IsUndefined New
 		// 3-bit : IsUndefined Old
 		// string : New
@@ -5662,7 +5672,7 @@
 	CChangesBaseStringProperty.prototype.ReadFromBinary = function(Reader)
 	{
 		// Long  : Flag
-		// 1-bit : Подсвечивать ли данные изменения
+		// 1-bit : Highlight changes or not
 		// 2-bit : IsUndefined New
 		// 3-bit : IsUndefined Old
 		// string : New
@@ -5688,7 +5698,7 @@
 	};
 	window['AscDFH'].CChangesBaseStringProperty = CChangesBaseStringProperty;
 	/**
-	 * Базовый класс для изменения числовых (byte) свойств.
+	 * Base class for numeric (byte) property changes.
 	 * @constructor
 	 * @extends {AscDFH.CChangesBaseProperty}
 	 */
@@ -5702,7 +5712,7 @@
 	CChangesBaseByteProperty.prototype.WriteToBinary = function(Writer)
 	{
 		// Long  : Flag
-		// 1-bit : Подсвечивать ли данные изменения
+		// 1-bit : Highlight changes or not
 		// 2-bit : IsUndefined New
 		// 3-bit : IsUndefined Old
 		// byte  : New
@@ -5730,7 +5740,7 @@
 	CChangesBaseByteProperty.prototype.ReadFromBinary = function(Reader)
 	{
 		// Long  : Flag
-		// 1-bit : Подсвечивать ли данные изменения
+		// 1-bit : Highlight changes or not
 		// 2-bit : IsUndefined New
 		// 3-bit : IsUndefined Old
 		// byte  : New
@@ -5756,7 +5766,7 @@
 	};
 	window['AscDFH'].CChangesBaseByteProperty = CChangesBaseByteProperty;
 	/**
-	 * Базовый класс для изменения числовых(long) значений.
+	 * Base class for numeric (long) value changes.
 	 * @constructor
 	 * @extends {AscDFH.CChangesBaseProperty}
 	 */
@@ -5785,7 +5795,7 @@
 	};
 	window['AscDFH'].CChangesBaseLongValue = CChangesBaseLongValue;
 	/**
-	 * Базовый класс для изменения булевых значений.
+	 * Base class for boolean value changes.
 	 * @constructor
 	 * @extends {AscDFH.CChangesBaseProperty}
 	 */
@@ -5814,7 +5824,7 @@
 	};
 	window['AscDFH'].CChangesBaseBoolValue = CChangesBaseBoolValue;
 	/**
-	 * Базовый класс для изменения объектных значений.
+	 * Base class for object value changes.
 	 * @constructor
 	 * @extends {AscDFH.CChangesBaseObjectProperty}
 	 */
@@ -5831,7 +5841,7 @@
 	};
 	window['AscDFH'].CChangesBaseObjectValue = CChangesBaseObjectValue;
 	/**
-	 * Базовый класс для изменения строковых значений.
+	 * Base class for string value changes.
 	 * @constructor
 	 * @extends {AscDFH.CChangesBaseProperty}
 	 */
@@ -5860,7 +5870,7 @@
 	};
 	window['AscDFH'].CChangesBaseStringValue = CChangesBaseStringValue;
 	/**
-	 * Базовый класс для изменения числовых(byte) значений.
+	 * Base class for numeric (byte) value changes.
 	 * @constructor
 	 * @extends {AscDFH.CChangesBaseProperty}
 	 */
@@ -5889,7 +5899,7 @@
 	};
 	window['AscDFH'].CChangesBaseByteValue = CChangesBaseByteValue;
 	/**
-	 * Базовый класс для изменения числовых(double) значений.
+	 * Base class for numeric (double) value changes.
 	 * @constructor
 	 * @extends {AscDFH.CChangesBaseProperty}
 	 */

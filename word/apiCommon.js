@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -2769,37 +2772,67 @@
 				t.documentShardKey, t.documentWopiSrc, t.documentUserSessionId, function(error, files)
 			{
 				if (Asc.c_oAscError.ID.No !== error)
-				{
 					t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
-				}
 				else
-				{
-					t.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-					AscCommon.UploadImageFiles(files, t.documentId, t.documentUserId, t.CoAuthoringApi.get_jwt(),
-						t.documentShardKey, t.documentWopiSrc, t.documentUserSessionId, function(error, urls)
-					{
-						if (Asc.c_oAscError.ID.No !== error)
-						{
-							t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
-							t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-						}
-						else
-						{
-							t.ImageLoader.LoadImagesWithCallback(urls, function()
-							{
-								if (urls.length > 0)
-								{
-									_this.ImageUrl = urls[0];
-									_this.ProcessedCanvas = null;
-									t.sendEvent("asc_onSignatureImageLoaded");
-								}
-								t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-							});
-						}
-					});
-				}
+					_this._uploadFiles(files);
 			});
 		}
+	};
+
+	CSignatureFormProps.prototype.putFile = function(file)
+	{
+		const t = this.Api;
+		if (!t || !file)
+			return;
+
+		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]() && file["path"])
+		{
+			const _this = this;
+			const url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](file["path"]);
+			const urls = [AscCommon.g_oDocumentUrls.getImageUrl(url)];
+			t.ImageLoader.LoadImagesWithCallback(urls, function()
+			{
+				if (urls.length > 0)
+				{
+					_this.ImageUrl = urls[0];
+					_this.ProcessedCanvas = null;
+					t.sendEvent("asc_onSignatureImageLoaded");
+				}
+			});
+			return;
+		}
+
+		this._uploadFiles([file]);
+	};
+
+	CSignatureFormProps.prototype._uploadFiles = function(files)
+	{
+		const t = this.Api;
+		const _this = this;
+
+		t.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+		AscCommon.UploadImageFiles(files, t.documentId, t.documentUserId, t.CoAuthoringApi.get_jwt(),
+			t.documentShardKey, t.documentWopiSrc, t.documentUserSessionId, function(error, urls)
+		{
+			if (Asc.c_oAscError.ID.No !== error)
+			{
+				t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
+				t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+			}
+			else
+			{
+				t.ImageLoader.LoadImagesWithCallback(urls, function()
+				{
+					if (urls.length > 0)
+					{
+						_this.ImageUrl = urls[0];
+						_this.ProcessedCanvas = null;
+						t.sendEvent("asc_onSignatureImageLoaded");
+					}
+					t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+				});
+			}
+		});
 	};
 
 	CSignatureFormProps.prototype.put_ImageUrl = function(sUrl, token)
@@ -3402,6 +3435,175 @@
 		graphics.restore();
 	};
 
+	CSignatureFormProps.prototype.getSignatureImage = function()
+	{
+		switch (this.Mode)
+		{
+			case 0:
+			{
+				if (this.ProcessedCanvas)
+					return this.ProcessedCanvas.toDataURL("image/png");
+
+				if (this.ImageUrl && this.Api)
+				{
+					let _img = this.Api.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(this.ImageUrl)];
+					if (_img && _img.Image)
+					{
+						let nW = _img.Image.naturalWidth || _img.Image.width;
+						let nH = _img.Image.naturalHeight || _img.Image.height;
+						if (nW && nH)
+						{
+							let oCanvas = document.createElement('canvas');
+							oCanvas.width = nW;
+							oCanvas.height = nH;
+							oCanvas.getContext('2d').drawImage(_img.Image, 0, 0);
+							return oCanvas.toDataURL("image/png");
+						}
+					}
+				}
+				return null;
+			}
+			case 1:
+				return this._getDrawImageData();
+			case 2:
+				return this._getTypeImageData();
+		}
+		return null;
+	};
+
+	CSignatureFormProps.prototype.get_Mode = function()
+	{
+		return this.Mode;
+	};
+
+	CSignatureFormProps.prototype.get_FormId = function()
+	{
+		return this.FormObj.get_ObjId();
+	};
+
+	CSignatureFormProps.prototype.getText = function()
+	{
+		return this.TypeText;
+	};
+
+	CSignatureFormProps.prototype.get_TypeFont = function()
+	{
+		return this.TypeFont;
+	};
+
+	CSignatureFormProps.prototype.get_TypeFontSize = function()
+	{
+		return this.TypeFontSize;
+	};
+
+	CSignatureFormProps.prototype.get_TypeBold = function()
+	{
+		return this.TypeBold;
+	};
+
+	CSignatureFormProps.prototype.get_TypeItalic = function()
+	{
+		return this.TypeItalic;
+	};
+
+	CSignatureFormProps.prototype.serialize = function()
+	{
+		let result = {
+			'mode': this.Mode,
+			'signatureImage': this.getSignatureImage()
+		};
+
+		switch (this.Mode)
+		{
+			case 0:
+			{
+				result['removeBackground'] = this.RemoveBackground;
+				break;
+			}
+			case 1:
+			{
+				result['paths'] = this.DrawPaths;
+				result['lineSize'] = this.LineSize;
+				result['lineColor'] = this.LineColor;
+				break;
+			}
+			case 2:
+			{
+				result['text'] = this.TypeText;
+				result['font'] = this.TypeFont;
+				result['fontSize'] = this.TypeFontSize;
+				result['bold'] = this.TypeBold;
+				result['italic'] = this.TypeItalic;
+				break;
+			}
+		}
+
+		return result;
+	};
+
+	CSignatureFormProps.prototype.deserialize = function(data)
+	{
+		if (!data)
+			return;
+
+		this.Mode = data['mode'] || 0;
+
+		switch (this.Mode)
+		{
+			case 0:
+			{
+				this.RemoveBackground = !!data['removeBackground'];
+				this.ImageUrl = null;
+
+				if (data['signatureImage'] && this.Api)
+				{
+					let _this = this;
+					let t = this.Api;
+					AscCommon.sendImgUrls(t, [data['signatureImage']], function(imgData)
+					{
+						if (imgData && imgData[0] && imgData[0].url !== "error")
+						{
+							let url = AscCommon.g_oDocumentUrls.imagePath2Local(imgData[0].path);
+							t.ImageLoader.LoadImagesWithCallback([AscCommon.getFullImageSrc2(url)], function()
+							{
+								_this.ImageUrl = url;
+								_this.ProcessedCanvas = null;
+								t.sendEvent("asc_onSignatureImageLoaded");
+							});
+						}
+					});
+				}
+				break;
+			}
+			case 1:
+			{
+				if (data['paths'])
+					this.DrawPaths = data['paths'];
+				if (data['lineSize'] !== undefined)
+					this.LineSize = data['lineSize'];
+				if (data['lineColor'] !== undefined)
+					this.LineColor = data['lineColor'];
+				this.UndoStack = [];
+				this.RedoStack = [];
+				break;
+			}
+			case 2:
+			{
+				if (data['text'] !== undefined)
+					this.TypeText = data['text'];
+				if (data['font'] !== undefined)
+					this.TypeFont = data['font'];
+				if (data['fontSize'] !== undefined)
+					this.TypeFontSize = data['fontSize'];
+				if (data['bold'] !== undefined)
+					this.TypeBold = data['bold'];
+				if (data['italic'] !== undefined)
+					this.TypeItalic = data['italic'];
+				break;
+			}
+		}
+	};
+
 	CSignatureFormProps.prototype.getResult = function()
 	{
 		let imageData = null;
@@ -3410,9 +3612,9 @@
 		switch (mode)
 		{
 			case 0:
-				if (this.RemoveBackground && this.ProcessedCanvas)
+				if (this.ProcessedCanvas && (this.RemoveBackground || !this.ImageUrl))
 					imageData = this.ProcessedCanvas.toDataURL("image/png");
-				else
+				else if (this.ImageUrl)
 					imageData = AscCommon.getFullImageSrc2(this.ImageUrl);
 				break;
 			case 1:
@@ -3520,6 +3722,7 @@
 	prot['put_PreviewTypeId']   = prot.put_PreviewTypeId;
 	prot['updateView']          = prot.updateView;
 	prot['showFileDialog']      = prot.showFileDialog;
+	prot['putFile']             = prot.putFile;
 	prot['put_ImageUrl']        = prot.put_ImageUrl;
 	prot['put_RemoveBackground'] = prot.put_RemoveBackground;
 	prot['clearImg']            = prot.clearImg;
@@ -3536,6 +3739,16 @@
 	prot['put_TypeItalic']      = prot.put_TypeItalic;
 	prot['setText']             = prot.setText;
 	prot['clearType']           = prot.clearType;
+	prot['getSignatureImage']   = prot.getSignatureImage;
+	prot['get_Mode']            = prot.get_Mode;
+	prot['get_FormId']          = prot.get_FormId;
+	prot['getText']             = prot.getText;
+	prot['get_TypeFont']        = prot.get_TypeFont;
+	prot['get_TypeFontSize']    = prot.get_TypeFontSize;
+	prot['get_TypeBold']        = prot.get_TypeBold;
+	prot['get_TypeItalic']      = prot.get_TypeItalic;
+	prot['serialize']           = prot.serialize;
+	prot['deserialize']         = prot.deserialize;
 	prot['getResult']           = prot.getResult;
 
 	window['Asc']['CAscTextToTableProperties']				 = window['Asc'].CAscTextToTableProperties = CAscTextToTableProperties;

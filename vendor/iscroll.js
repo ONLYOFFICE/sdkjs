@@ -256,7 +256,7 @@ var utils = (function () {
 	};
 
 	me.click = function (e) {
-		// отключаем клики
+		// disable clicks
 		return;
 
 		var target = e.target,
@@ -329,12 +329,12 @@ function IScroll (el, options) {
 		this.options[i] = options[i];
 	}
 
-	// на последних ios - может не приходить pointedown/up при быстрых кликах.
-	// они посылают вместо них просто сообщение onclick
+	// on latest iOS - pointerdown/up may not arrive on fast clicks.
+	// they send onclick message instead
 	if (AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.iosVersion >= 13)
 		this.options.click = true;
 
-	// на андроиде тоже нужно обрабатывать клик, иначе не показать диалог с картинками
+	// on Android we also need to handle click, otherwise image dialog won't show
 	if (AscCommon.AscBrowser.isAndroid)
 		this.options.click = true;
 
@@ -1678,7 +1678,7 @@ IScroll.prototype = {
 				this.isDown = true;
 				this.isDownBeforeClick = true;
 				this.manager.removeHandlersOnClick();
-				// enableLongTapAction вызываем ДО обработки, чтобы была возможность отменить внутри
+				// call enableLongTapAction BEFORE processing, so it can be cancelled inside
 				this.enableLongTapAction(e);
 				this.eventsElement ? this.manager.mainOnTouchStart(e) : this._start(e);
 				break;

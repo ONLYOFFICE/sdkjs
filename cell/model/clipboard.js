@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -181,7 +184,7 @@
 						break;
 					}
 					case c_oSpecialPasteProps.pasteOnlyFormula: {
-						//только формулы(или значения)
+						//only formulas (or values)
 						this._clean();
 						this.formula = true;
 						this.val = true;
@@ -189,7 +192,7 @@
 						break;
 					}
 					case c_oSpecialPasteProps.formulaNumberFormat: {
-						//только формулы(или значения) и числовой формат
+						//only formulas (or values) and number format
 						this._clean();
 						this.formula = true;
 						this.numFormat = true;
@@ -198,11 +201,11 @@
 						break;
 					}
 					case c_oSpecialPasteProps.formulaAllFormatting: {
-						//формулы и формат
+						//formulas and formatting
 						break;
 					}
 					case c_oSpecialPasteProps.formulaWithoutBorders: {
-						//всё кроме бордеров
+						//everything except borders
 						this.borders = null;
 						break;
 					}
@@ -214,7 +217,7 @@
 						break;
 					}
 					case c_oSpecialPasteProps.pasteOnlyValues: {
-						//только значения(вместо формул также вставляются значения)
+						//only values (values are pasted instead of formulas as well)
 						this._clean();
 						this.val = true;
 						break;
@@ -226,7 +229,7 @@
 						break;
 					}
 					case c_oSpecialPasteProps.valueAllFormating: {
-						//все кроме формул
+						//everything except formulas
 						this.formula = null;
 						this.formatTable = null;
 						break;
@@ -235,6 +238,8 @@
 						this.formula = null;
 						this.val = null;
 						this.formatTable = null;
+						this.comment = null;
+						this.hyperlink = null;
 						break;
 					}
 					case c_oSpecialPasteProps.transpose: {
@@ -255,10 +260,10 @@
 						break;
 					}
 					case c_oSpecialPasteProps.destinationFormatting: {
-						//только значения(вместо формул также вставляются значения)
+						//only values (values are pasted instead of formulas as well)
 						this._clean();
 						this.val = true;
-						//картинки из word сохраняем в данной ситуации
+						//save images from Word in this situation
 						if (window['AscCommon'].g_specialPasteHelper.specialPasteData.pasteFromWord) {
 							this.images = true;
 						}
@@ -355,8 +360,16 @@
 				}
 
 
-				//TODO игнорировать нужно и формулы и скрытые строчки в случае, если селект их задевает + стандартные условия в bIsExcludeHiddenRows
+				//TODO we need to ignore both formulas and hidden rows if the selection includes them + standard conditions in bIsExcludeHiddenRows
+				let aMultiRanges;
 				if (ws.model.autoFilters.bIsExcludeHiddenRows(selectionRange, activeCell, true)) {
+					var noHiddenRows = ws.model._getNoHiddenRowsArr(selectionRange.r1, selectionRange.r2);
+					if (noHiddenRows.length > 1) {
+						aMultiRanges = [];
+						for (var i = 0; i < noHiddenRows.length; i++) {
+							aMultiRanges.push(new Asc.Range(selectionRange.c1, noHiddenRows[i].start, selectionRange.c2, noHiddenRows[i].stop));
+						}
+					}
 					ws.model.excludeHiddenRows(true);
 					ws.model.ignoreWriteFormulas(true);
 				}
@@ -380,7 +393,7 @@
 				}
 				//HTML
 				if (AscCommon.c_oAscClipboardDataFormat.Html & _formats) {
-					_data = this.copyProcessor.getHtml(activeRange, ws);
+					_data = this.copyProcessor.getHtml(activeRange, ws, aMultiRanges);
 
 					if (null !== _data && "" !== _data.html) {
 						_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, _data.html)
@@ -388,6 +401,12 @@
 				}
 				//INTERNAL
 				if (AscCommon.c_oAscClipboardDataFormat.Internal & _formats) {
+					let origSelectionRanges = ws.model.selectionRange.ranges;
+					if (aMultiRanges) {
+						ws.model.selectionRange.ranges = aMultiRanges;
+						ws.model.excludeHiddenRows(false);
+						ws.model.ignoreWriteFormulas(false);
+					}
 					if (window["NATIVE_EDITOR_ENJINE"]) {
 						_data = this.copyProcessor.getBinaryForMobile();
 					} else {
@@ -396,6 +415,10 @@
 						} else {
 							_data = this.copyProcessor.getBinaryForCopy(ws.model, ws.objectRender);
 						}
+					}
+
+					if (aMultiRanges) {
+						ws.model.selectionRange.ranges = origSelectionRanges;
 					}
 
 					if (null !== _data) {
@@ -410,7 +433,7 @@
 
 			if (ws && ws.workbook && !ws.workbook.getCellEditMode()) {
 				if (AscCommon.g_clipboardBase.bCut) {
-					//в данном случае не вырезаем, а записываем
+					//in this case we don't cut, we just save
 					if (!ws.isNeedSelectionCut() && false === ws.isMultiSelect()) {
 						ws.workbook.cutIdSheet = ws.model.Id;
 						ws.setCutRange([ws.model.selectionRange.getLast()]);
@@ -450,10 +473,10 @@
 			switch (_format) {
 				case AscCommon.c_oAscClipboardDataFormat.HtmlElement: {
 					if (wb.getCellEditMode()) {
-						//fragments = пока только для плагина вставка символов
+						//fragments = currently only for the symbol insertion plugin
 						var fragments;
 						if (window['AscCommon'].g_clipboardBase.bSaveFormat) {
-							//проверяем иероглифы внутри
+							//check for hieroglyphs inside
 							fragments = this.pasteProcessor._getFragmentsFromHtml(data1);
 						}
 						if (fragments) {
@@ -463,11 +486,11 @@
 								cellEditor.paste(pasteFragments);
 								window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
 
-								//TODO пересмотреть! по возможности вызывать из меню!
-								//при использовании рекдактора ячейки в качестве редактора HF
-								//в функции onLongActionEnd(ф-я меню) не вызывается asc_enableKeyEvents(true)
-								//из-за этого enableKeyEvents остаётся выставленным в false
-								//поэтому приходится вызывать здесь, после того, как пройдет загрузка шрифтов
+								//TODO review this! call from menu if possible!
+								//when using the cell editor as the HF editor
+								//the onLongActionEnd function (menu function) does not call asc_enableKeyEvents(true)
+								//because of this enableKeyEvents remains set to false
+								//so we have to call it here, after the fonts have been loaded
 
 								if (cellEditor.getMenuEditorMode()) {
 									window["Asc"]["editor"].asc_enableKeyEvents(true);
@@ -500,7 +523,7 @@
 					if (wb.getCellEditMode()) {
 						this._pasteTextInCellEditor(data1);
 					} else {
-						//не показываем иконку с/в если вставляется только текст
+						//don't show copy/paste icon if only text is being pasted
 						//window['AscCommon'].g_specialPasteHelper.Special_Paste_Hide_Button();
 						t.pasteProcessor.pasteTextOnSheet(ws, data1);
 					}
@@ -538,8 +561,6 @@
 		};
 
 		Clipboard.prototype.drawSelectedArea = function (ws, opt_get_bytes) {
-			let activeRange = ws.model.selectionRange.getLast();
-
 			// Canvas limitations for different browsers:
 			// Chrome/Edge: 32767px x 32767px
 			// Firefox: 32767px x 32767px
@@ -567,54 +588,71 @@
 				maxCanvasArea = 8192 * 8192;
 			}
 
-			let estimatedHeight = ws._getRowTop(activeRange.r2 + 1) - ws._getRowTop(activeRange.r1);
-			let estimatedWidth = ws._getColLeft(activeRange.c2 + 1) - ws._getColLeft(activeRange.c1);
-
-			// Check height limitations
-			if (estimatedHeight > maxCanvasHeight) {
-				let currentHeight = 0;
-				let maxRow = activeRange.r1;
-
-				for (let row = activeRange.r1; row <= activeRange.r2; row++) {
-					let rowHeight = ws._getRowHeight(row);
-					if (currentHeight + rowHeight > maxCanvasHeight) {
-						break;
-					}
-					currentHeight += rowHeight;
-					maxRow = row;
-				}
-
-				activeRange = new Asc.Range(activeRange.c1, activeRange.r1, activeRange.c2, maxRow);
-				estimatedHeight = ws._getRowTop(activeRange.r2 + 1) - ws._getRowTop(activeRange.r1);
-			}
-
-			// Check width limitations
-			if (estimatedWidth > maxCanvasWidth) {
-				let currentWidth = 0;
-				let maxCol = activeRange.c1;
-
-				for (let col = activeRange.c1; col <= activeRange.c2; col++) {
-					let colWidth = ws._getColLeft(col + 1) - ws._getColLeft(col);
-					if (currentWidth + colWidth > maxCanvasWidth) {
-						break;
-					}
-					currentWidth += colWidth;
-					maxCol = col;
-				}
-
-				activeRange = new Asc.Range(activeRange.c1, activeRange.r1, maxCol, activeRange.r2);
-				estimatedWidth = ws._getColLeft(activeRange.c2 + 1) - ws._getColLeft(activeRange.c1);
-			}
-
-			//TODO cut by max size
-			if (estimatedHeight * estimatedWidth >= maxCanvasArea) {
-				return;
-			}
-
 			let base64;
-			let ctx = ws.workbook.printForCopyPaste(ws, activeRange, true);
-			if (ctx && ctx.canvas) {
-				base64 = ctx.canvas.toDataURL("image/png");
+
+			if (ws.objectRender && ws.objectRender.selectedGraphicObjectsExists()) {
+				let controller = ws.objectRender.controller;
+				if (controller.getTargetDocContent()) {
+					return;
+				}
+				let imgProperty = controller.getSelectionImage();
+				if (!imgProperty) {
+					return;
+				}
+				base64 = imgProperty.asc_getImageUrl();
+				if (!base64) {
+					return;
+				}
+			} else {
+				let activeRange = ws.model.selectionRange.getLast();
+				let estimatedHeight = ws._getRowTop(activeRange.r2 + 1) - ws._getRowTop(activeRange.r1);
+				let estimatedWidth = ws._getColLeft(activeRange.c2 + 1) - ws._getColLeft(activeRange.c1);
+
+				// Check height limitations
+				if (estimatedHeight > maxCanvasHeight) {
+					let currentHeight = 0;
+					let maxRow = activeRange.r1;
+
+					for (let row = activeRange.r1; row <= activeRange.r2; row++) {
+						let rowHeight = ws._getRowHeight(row);
+						if (currentHeight + rowHeight > maxCanvasHeight) {
+							break;
+						}
+						currentHeight += rowHeight;
+						maxRow = row;
+					}
+
+					activeRange = new Asc.Range(activeRange.c1, activeRange.r1, activeRange.c2, maxRow);
+					estimatedHeight = ws._getRowTop(activeRange.r2 + 1) - ws._getRowTop(activeRange.r1);
+				}
+
+				// Check width limitations
+				if (estimatedWidth > maxCanvasWidth) {
+					let currentWidth = 0;
+					let maxCol = activeRange.c1;
+
+					for (let col = activeRange.c1; col <= activeRange.c2; col++) {
+						let colWidth = ws._getColLeft(col + 1) - ws._getColLeft(col);
+						if (currentWidth + colWidth > maxCanvasWidth) {
+							break;
+						}
+						currentWidth += colWidth;
+						maxCol = col;
+					}
+
+					activeRange = new Asc.Range(activeRange.c1, activeRange.r1, maxCol, activeRange.r2);
+					estimatedWidth = ws._getColLeft(activeRange.c2 + 1) - ws._getColLeft(activeRange.c1);
+				}
+
+				//TODO cut by max size
+				if (estimatedHeight * estimatedWidth >= maxCanvasArea) {
+					return;
+				}
+
+				let ctx = ws.workbook.printForCopyPaste(ws, activeRange, true);
+				if (ctx && ctx.canvas) {
+					base64 = ctx.canvas.toDataURL("image/png");
+				}
 			}
 
 			if (opt_get_bytes && base64) {
@@ -717,7 +755,7 @@
 
 			constructor: CopyProcessorExcel,
 
-			getHtml: function (range, worksheet) {
+			getHtml: function (range, worksheet, aMultiRanges) {
 				var t = this;
 				var sBase64 = null;
 
@@ -727,7 +765,18 @@
 				History.TurnOff();
 				//use binary strings
 				if (copyPasteUseBinary) {
+					let origSelectionRanges = worksheet.model.selectionRange.ranges;
+					if (aMultiRanges) {
+						worksheet.model.selectionRange.ranges = aMultiRanges;
+						worksheet.model.excludeHiddenRows(false);
+						worksheet.model.ignoreWriteFormulas(false);
+					}
 					sBase64 = this.getBinaryForCopy(worksheet.model, worksheet.objectRender);
+					if (aMultiRanges) {
+						worksheet.model.selectionRange.ranges = origSelectionRanges;
+						worksheet.model.excludeHiddenRows(true);
+						worksheet.model.ignoreWriteFormulas(true);
+					}
 				}
 				History.TurnOn();
 
@@ -744,7 +793,7 @@
 				let sBase64 = null;
 
 				if (isIntoShape) {
-					//в данному случае пишем бинарник с меткой pptData - с префиксом xlsData отдельно параграфы записать не получится
+					//in this case we write binary with pptData tag - with xlsData prefix we can't write paragraphs separately
 					sBase64 = this._getBinaryShapeContent(isIntoShape);
 				} else {
 
@@ -791,7 +840,7 @@
 							wb.Core = new window['AscCommon'].CCore();
 						}
 
-						//подменяем identifier/creator для того, чтобы протащить id
+						//substitute identifier/creator in order to pass the id
 						let oldCreator = wb.Core.creator;
 						let oldIdentifier = wb.Core.identifier;
 						let oldLanguage = wb.Core.language;
@@ -802,8 +851,8 @@
 						wb.Core.creator = wb.oApi && wb.oApi.CoAuthoringApi ? wb.oApi.CoAuthoringApi.getUserConnectionId() : null;
 						wb.Core.identifier = wb.oApi && wb.oApi.DocInfo ? wb.oApi.DocInfo.Id : null;
 
-						//для внешних данных необходимо протащить docInfo->ReferenceData
-						//пока беру данные поля, поскольку для копипаста они не используются. по названию не особо совпадают - пересмотреть
+						//for external data we need to pass docInfo->ReferenceData
+						//for now I'm taking these fields since they are not used for copy/paste. names don't really match - review later
 						let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
 						if (isLocalDesktop && window["AscDesktopEditor"]["LocalFileGetSaved"]()) {
 							wb.Core.contentStatus = window["AscDesktopEditor"]["LocalFileGetSourcePath"]();
@@ -815,8 +864,8 @@
 
 						wb.Core.title = wb.oApi && wb.oApi.DocInfo && wb.oApi.DocInfo.Title ? wb.oApi.DocInfo.Title : null;
 
-						//записываю изображение выделенного фрагмента. пока только для изоюражений
-						//выбрал для этого поле subject
+						//writing the image of the selected fragment. for now only for images
+						//I chose the subject field for this
 						let oldSubject = wb.Core.subject;
 						let objectRender = Asc.editor.wb.getWorksheet().objectRender;
 						let _imgProperty = objectRender && objectRender.controller && objectRender.controller.getSelectionImage();
@@ -827,9 +876,9 @@
 							wb.Core.subject = _width + ";" + _height + ";" + _base64;
 						}
 
-						//так же необходимо протащить локаль, для этого использую поля language
-						//и записываю туда номер локали, предварительно конвертируя его в строку
-						//пока буду использовать его только при вставке в документы, а в документах устанавливать -> AscCommon.setCurrentCultureInfo(val)
+						//we also need to pass the locale, for this I use the language field
+						//and write the locale number there, first converting it to a string
+						//for now I will only use it when pasting into documents, and in documents set -> AscCommon.setCurrentCultureInfo(val)
 						let locale = wb.oApi ? wb.oApi.asc_getLocale() : null;
 						wb.Core.language = (undefined !== locale && null !== locale) ? locale.toString() : null;
 
@@ -876,8 +925,8 @@
 			_getRangeMaxRowCol: function (worksheet, selectionRange, range3) {
 				var res = null;
 
-				//при выделенных столбцах ищем последнюю непустую ячейку
-				//ограничиваемся последней пустой строкой/столбцом
+				//when columns are selected, we look for the last non-empty cell
+				//we limit ourselves to the last empty row/column
 				var type = selectionRange.getType();
 				var oType = Asc.c_oAscSelectionType;
 				if (type === oType.RangeCol || type === oType.RangeRow || type === oType.RangeMax) {
@@ -885,7 +934,7 @@
 						range3 = worksheet.getRange3(selectionRange.r1, selectionRange.c1, selectionRange.r2, selectionRange.c2);
 					}
 
-					//нужно вычислить последнюю ячейку в столбце, где есть данные
+					//we need to find the last cell in the column that has data
 					var maxRow = 0;
 					var maxCol = 0;
 					range3._foreachNoEmpty(function (cell) {
@@ -918,7 +967,7 @@
 
 				var oPresentationWriter = new AscCommon.CBinaryFileWriter();
 
-				//начало записи
+				//start writing
 				oPresentationWriter.WriteString2("");
 				oPresentationWriter.WriteString2("");
 				oPresentationWriter.WriteDouble(1);
@@ -927,14 +976,14 @@
 				oPresentationWriter.WriteBool(true);
 				oPresentationWriter.WriteULong(1);
 
-				if (selectedContent)//пишем контент
+				if (selectedContent)//write content
 				{
 					var docContent = selectedContent;
 
 					if (docContent.Elements) {
 						var elements = docContent.Elements;
 
-						//пишем метку и длины
+						//write tag and lengths
 						oPresentationWriter.WriteString2("SelectedContent");
 						oPresentationWriter.WriteULong(1);
 						oPresentationWriter.WriteULong(1);
@@ -942,7 +991,7 @@
 						oPresentationWriter.WriteString2("DocContent");
 						oPresentationWriter.WriteDouble(elements.length);
 
-						//пишем контент
+						//write content
 						for (var Index = 0; Index < elements.length; Index++) {
 							var Item;
 							if (elements[Index].Element) {
@@ -1055,11 +1104,11 @@
 				return res;
 			},
 
-			//TODO пересмотреть функцию
+			//TODO review this function
 			_generateHtml: function (range, worksheet, isIntoShape, sBase64) {
 				var isSelectedImages = this._getSelectedDrawingIndex(worksheet);
 				var htmlObj, container;
-				if (isIntoShape)//если курсор находится внутри шейпа
+				if (isIntoShape)//if cursor is inside a shape
 				{
 					var selectedContent = new AscCommonWord.CSelectedContent();
 					AscFormat.ExecuteNoHistory(function () {
@@ -1075,7 +1124,7 @@
 						}
 					}
 					return oCopyProcessor.getInnerHtml();
-				} else if (isSelectedImages && isSelectedImages !== -1) {//графические объекты
+				} else if (isSelectedImages && isSelectedImages !== -1) {//graphic objects
 					htmlObj = this._generateHtmlImg(isSelectedImages, worksheet);
 					if (!htmlObj) {
 						return false;
@@ -1287,7 +1336,7 @@
 							style += _border ? "border-top:" + makeBorder(b.t) + ";" : "";
 
 							b = cell.getFillColor();
-							// если b==0 мы не зайдем в if, хотя b==0 это ни что иное, как черный цвет заливки.
+							// if b==0 we won't enter the if, although b==0 is nothing other than black fill color.
 							if (b != null) {
 								style += "background-color:" + number2color(b.getRgb()) + ";";
 							}
@@ -1367,9 +1416,9 @@
 				var str = "";
 
 				var addByStr = function (_str) {
-					//исследования по максимальной длине строки:
-					//Edge/chrome 96.0.4664 -> 536870888 символов(1073741776 байта)
-					//FF 95.0.2 -> 1073741822 символов(2147483644 байта)
+					//research on maximum string length:
+					//Edge/chrome 96.0.4664 -> 536870888 characters (1073741776 bytes)
+					//FF 95.0.2 -> 1073741822 characters (2147483644 bytes)
 					if (str.length + _str.length > c_MaxStringLength) {
 						return false;
 					}
@@ -1498,7 +1547,7 @@
 							style += _border ? "border-top:" + makeBorder(b.t) + ";" : "";
 
 							b = cell.getFillColor();
-							// если b==0 мы не зайдем в if, хотя b==0 это ни что иное, как черный цвет заливки.
+							// if b==0 we won't enter the if, although b==0 is nothing other than black fill color.
 							if (b != null) {
 								style += "background-color:" + number2color(b.getRgb()) + ";";
 							}
@@ -1893,7 +1942,7 @@
 						window['AscCommon'].g_specialPasteHelper.Special_Paste_Hide_Button();
 					}
 
-					//закрываем общую транзакцию _loadDataBeforePaste после загрузки шрифтов
+					//close the common transaction _loadDataBeforePaste after loading fonts
 					worksheet.setSelectionInfo('paste', {
 						data: pasteData,
 						fromBinary: true,
@@ -2007,6 +2056,7 @@
 					//TODO if paste multiselect into multiselect - we must show error
 					let pastedWorksheet = tempWorkbook.aWorksheets && tempWorkbook.aWorksheets[0];
 					let _ranges = pastedWorksheet && pastedWorksheet.selectionRange && pastedWorksheet.selectionRange.ranges;
+					t.bIsMultiselectPaste = !!(_ranges && _ranges.length > 1);
 					if (_ranges && _ranges.length > 1) {
 						//paste - should only be with an equal number of rows/columns
 						//there should be only rows/columns between the ranges, then -> delete the extra rows/columns
@@ -2070,9 +2120,9 @@
 				var res = false;
 
 				//***MOVE***
-				//проверяем, может это вырезанный фрагмент пытаемся вставить в пределах одного документа
-				//чтобы не передавать изменения на сервер, даже в случае одного пользователя в разных вкладках
-				//вырезать и вставить будут работать независимо, поэтому при вставке сравнивем ещё и id юзера
+				//check if this is a cut fragment we're trying to paste within the same document
+				//to avoid sending changes to the server, even in case of one user in different tabs
+				//cut and paste will work independently, so when pasting we also compare the user id
 				var pasteInOriginalDoc = this._checkPastedInOriginalDoc(pastedWb);
 				if (pasteInOriginalDoc && null !== window["Asc"]["editor"].wb.cutIdSheet) {
 					var wsFrom = window["Asc"]["editor"].wb.getWorksheetById(window["Asc"]["editor"].wb.cutIdSheet);
@@ -2262,7 +2312,7 @@
 								newContent.push(docContent[i]);
 							} else if (type_Table === docContent[i].GetType())//table
 							{
-								//TODO вырезать из таблицы параграфы
+								//TODO extract paragraphs from table
 							}
 						}
 						docContent = newContent;
@@ -2346,7 +2396,7 @@
 					presentationSelectedContent.DocContent = new AscCommonWord.CSelectedContent();
 					presentationSelectedContent.DocContent.Elements = docContent;
 
-					//перебираем шрифты
+					//iterate through fonts
 					for (var i in oThis.oFonts) {
 						fonts.push(new AscFonts.CFont(i));
 					}
@@ -2538,7 +2588,7 @@
 								newContent.push(docContent[i]);
 							} else if (type_Table === docContent[i].GetType())//table
 							{
-								//TODO вырезать из таблицы параграфы
+								//TODO extract paragraphs from table
 							}
 						}
 						docContent = newContent;
@@ -2620,7 +2670,7 @@
 					oPdfSelContent.DocContent = new AscCommonWord.CSelectedContent();
 					oPdfSelContent.DocContent.Elements = docContent;
 
-					//перебираем шрифты
+					//iterate through fonts
 					for (var i in oThis.oFonts) {
 						fonts.push(new AscFonts.CFont(i));
 					}
@@ -2690,7 +2740,7 @@
 				History.Create_NewPoint();
 				History.StartTransaction();
 
-				//ещё раз вызваем getTargetDocContent с флагом true после создания точки в истории(getTargetDocContent добавляет данные в историю)
+				//call getTargetDocContent again with true flag after creating point in history (getTargetDocContent adds data to history)
 				var isIntoShape = worksheet.objectRender.controller.getTargetDocContent(true);
 				isIntoShape.Remove(1, true, true);
 
@@ -2700,7 +2750,7 @@
 				insertContent.Elements =
 					this._convertBeforeInsertIntoShapeContent(worksheet, content, isConvertToPPTX, target_doc_content);
 
-				//TODO конвертирую в текст без форматирую. пеесмотреть!
+				//TODO converting to text without formatting. review later!
 				var specialPasteProps = window['AscCommon'].g_specialPasteHelper.specialPasteProps;
 				if (specialPasteProps && !specialPasteProps.format) {
 					for (var i = 0; i < insertContent.Elements.length; i++) {
@@ -2718,7 +2768,7 @@
 			},
 
 			_setShapeSpecialPasteProperties: function (worksheet, isIntoShape) {
-				//TODO пока выключаю специальную ставку внутри math, позже доработать и включить
+				//TODO for now I'm disabling special paste inside math, will refine and enable later
 				var oInfo = new CSelectedElementsInfo();
 				//var selectedElementsInfo = isIntoShape.GetSelectedElementsInfo(oInfo);
 				var mathObj = oInfo.GetMath();
@@ -2775,7 +2825,7 @@
 						elements.push(selectedElement);
 					} else if (type_Table === element.GetType())//table
 					{
-						//excel (извне и из word) вставляет в шейпы аналогично, а вот из excel в excel вставляет в одну строку(?). мы сделаем для всех случаев одинаково. 
+						//excel (from outside and from word) pastes into shapes similarly, but from excel to excel pastes into one line(?). we'll make it the same for all cases.
 						var paragraphs = [];
 						element.GetAllParagraphs({All: true}, paragraphs);
 						for (var j = 0; j < paragraphs.length; j++) {
@@ -2811,7 +2861,7 @@
 				var curCol, drawingObject, curRow, startCol, startRow, xfrm, aImagesSync = [], activeRow, activeCol,
 					offX, offY, rot;
 
-				//отдельная обработка для вставки одной таблички из презентаций
+				//separate handling for pasting a single table from presentations
 				drawingObject = data.Drawings[0];
 				if (data.Drawings.length === 1 && typeof AscFormat.CGraphicFrame !== "undefined" &&
 					drawingObject.graphicObject instanceof AscFormat.CGraphicFrame) {
@@ -2841,7 +2891,7 @@
 						return;
 					}
 
-					//определяем стартовую позицию, если изображений несколько вставляется
+					//determine the starting position if multiple images are being pasted
 					var graphicObject, i;
 					for (i = 0; i < data.Drawings.length; i++) {
 						drawingObject = data.Drawings[i];
@@ -3008,10 +3058,10 @@
 					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
 				};
 
-				//вставляем срезы следующим образом: проверяем что вставлем в оригинальный документ
-				//далее смотрим, есть ли такой внутренний объект этого кэша - для таблиц проверяем
-				//соответствие имени таблицы и имени колонки
-				//если все объекты внутренние имеются, проверяем локи, если нет - ошибка
+				//we paste slicers as follows: check that we're pasting into the original document
+				//then we check if such internal object of this cache exists - for tables we check
+				//the match of table name and column name
+				//if all internal objects are present, we check locks, if not - error
 				var pastedInOriginalDoc = this._checkPastedInOriginalDoc(pastedWb)
 				var pastedSlicers = [];
 				for (var i = 0; i < data.Drawings.length; i++) {
@@ -3051,7 +3101,7 @@
 				History.StartTransaction();
 				var api = window["Asc"]["editor"];
 				var addImagesFromWord = data.props.addImagesFromWord;
-				//определяем стартовую позицию, если изображений несколько вставляется
+				//determine the starting position if multiple images are being pasted
 				let aDrawings = [];
 				for (var i = 0; i < addImagesFromWord.length; i++) {
 					if (para_Math === addImagesFromWord[i].image.Type) {
@@ -3191,11 +3241,11 @@
 
 			_insertTableFromPresentation: function (ws, graphicFrame) {
 				History.TurnOff();
-				//из-за данной строки падение при вставке таблицы pe->se
+				//this line causes crash when pasting table pe->se
 				//graphicFrame.graphicObject = graphicFrame.graphicObject.copy();
 				var drawingObject = graphicFrame;
 
-				//вставляем табличку из презентаций
+				//paste table from presentations
 				var oPasteFromBinaryWord = new pasteFromBinaryWord(this, ws, true);
 				var oTempDrawingDocument = ws.getDrawingDocument();
 
@@ -3224,7 +3274,7 @@
 				var binaryResult, t = this;
 				t.alreadyLoadImagesOnServer = false;
 
-				//если находимся внутри шейпа
+				//if we are inside a shape
 				var isIntoShape = worksheet.objectRender.controller.getTargetDocContent();
 				if (isIntoShape) {
 					var callback = function (isSuccess) {
@@ -3284,8 +3334,8 @@
 					}, false, false, null, true);
 					oPasteProcessor._Prepeare_recursive(node, true, true);
 
-					//при специальной вставке в firefox _getComputedStyle возвращает null
-					//TODO пересмотреть функцию _getComputedStyle
+					//on special paste in firefox _getComputedStyle returns null
+					//TODO review the _getComputedStyle function
 					let specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
 					let specialPasteProps = specialPasteHelper.specialPasteProps;
 					let props = specialPasteProps ? specialPasteProps.property : null;
@@ -3543,7 +3593,7 @@
 
 				for (var i = 0; i < count; ++i) {
 					var style_index = null;
-					//читаем флаг о наличии табличного стиля
+					//read flag for presence of table style
 					if (!loader.stream.GetBool()) {
 						if (loader.stream.GetBool()) {
 							loader.stream.Skip2(1);
@@ -3557,7 +3607,7 @@
 					var drawing = loader.ReadGraphicObject();
 					var isGraphicFrame = typeof AscFormat.CGraphicFrame !== "undefined" && drawing instanceof AscFormat.CGraphicFrame;
 
-					//для случая, когда копируем 1 таблицу из презентаций, в бинарник заносим ещё одну такую же табличку, но со скомпиоированными стилями(для вставки в word / excel)
+					//for the case when we copy 1 table from presentations, we add another identical table to the binary but with compiled styles (for pasting into word / excel)
 					if (count === 1 && isGraphicFrame) {
 						drawing = loader.ReadGraphicObject();
 					}
@@ -3594,7 +3644,7 @@
 				History.TurnOff();
 				AscCommon.g_oIdCounter.m_bRead = true;
 
-				//передавать CDrawingDocument текущего worksheet
+				//pass CDrawingDocument of the current worksheet
 				var oTempDrawingDocument = worksheet.getDrawingDocument();
 
 				var newCDocument = new CDocument(oTempDrawingDocument, false);
@@ -3608,7 +3658,7 @@
 				if ("undefined" !== typeof editor) {
 					oOldEditor = editor;
 				}
-				//создается глобальная переменная
+				//a global variable is created
 				editor = {isDocumentEditor: true, WordControl: {m_oLogicDocument: newCDocument}};
 
 				pptx_content_loader.Clear();
@@ -3657,7 +3707,7 @@
 				var cMax = (activeCellsPasteFragment.c2 - activeCellsPasteFragment.c1) + lastRange.c1;
 				var res = true;
 
-				//если область вставки выходит за пределы доступной области
+				//if the paste area exceeds the available area
 				if (cMax > AscCommon.gc_nMaxCol0 || rMax > AscCommon.gc_nMaxRow0) {
 					if (isWriteError) {
 						worksheet.handlers.trigger("onErrorEvent", Asc.c_oAscError.ID.PasteMaxRangeError, Asc.c_oAscError.Level.NoCritical);
@@ -3665,7 +3715,7 @@
 
 					res = false;
 				} else if (worksheet.handlers && !worksheet.handlers.trigger("getLockDefNameManagerStatus") && insertWorksheet && insertWorksheet.TableParts && insertWorksheet.TableParts.length) {
-					//если пытаемся вставить вторым пользователем форматированную таблицу, когда первый уже добавил другую форматированную таблицу
+					//if a second user tries to paste a formatted table when the first has already added another formatted table
 					worksheet.handlers.trigger("onErrorEvent", c_oAscError.ID.LockCreateDefName,
 						c_oAscError.Level.NoCritical);
 
@@ -3689,7 +3739,7 @@
 				oPasteProcessor.pasteInPresentationShape = true;
 
 				var newFonts;
-				//если находимся внутри диаграммы убираем ссылки
+				//if we are inside a chart, remove links
 				if (targetDocContent && targetDocContent.Parent && targetDocContent.Parent.parent && targetDocContent.Parent.parent.chart) {
 					var changeTag = $(node).find("a");
 					this._changeHtmlTag(changeTag);
@@ -3710,12 +3760,12 @@
 					return false;
 				}
 
-				var targetContent = worksheet.objectRender.controller.getTargetDocContent(true);//нужно для заголовков диаграмм
+				var targetContent = worksheet.objectRender.controller.getTargetDocContent(true);//needed for chart titles
 				targetContent.Remove(1, true, true);
 
 				worksheet._loadFonts(newFonts, function () {
 
-					//TODO конвертирую в текст без форматирую. пеесмотреть!
+					//TODO converting to text without formatting. review later!
 					var specialPasteProps = window['AscCommon'].g_specialPasteHelper.specialPasteProps;
 					if (specialPasteProps && !specialPasteProps.format) {
 						for (var i = 0; i < oPasteProcessor.aContent.length; i++) {
@@ -3855,7 +3905,7 @@
 				return oCurPar;
 			},
 
-			//TODO сделать при получаении структуры. игнорировать размер шрифта и тп
+			//TODO do this when getting the structure. ignore font size etc
 			_changeHtmlTag: function (arr) {
 				var oldElem, value, style, bold, underline, italic;
 				for (var i = 0; i < arr.length; i++) {
@@ -3902,10 +3952,10 @@
 				textImport = props === c_oSpecialPasteProps.useTextImport;
 
 
-				//TODO сделать вставку текста всегда через эту функцию
+				//TODO always paste text through this function
 				this.activeRange = worksheet.model.selectionRange.getLast().clone(true);
 
-				//если находимся внутри шейпа
+				//if we are inside a shape
 				var isIntoShape = worksheet.objectRender.controller.getTargetDocContent();
 				if (isIntoShape) {
 					var callback = function (isSuccess) {
@@ -4182,8 +4232,8 @@
 			},
 
 			_getFragmentsFromHtml: function (html) {
-				//даная функция рассчитана только на вставку символа из плагина
-				//TODO для вставки полноценной html нужно писать обработку
+				//this function is designed only for inserting a symbol from a plugin
+				//TODO for pasting full html, need to write handling
 
 				var res = null;
 				if (html && html.children) {
@@ -4364,15 +4414,15 @@
 			this.ws = ws;
 			this.isUsuallyPutImages = null;
 			this.maxLengthRowCount = 0;
-			//для этого сделал функцию _getParagraphMeasure у DocumentContentBoundsElement
-			//this.rowDiff = 0;//для обработки данных в ране, разделенных shift+enter
+			//for this I created the _getParagraphMeasure function in DocumentContentBoundsElement
+			//this.rowDiff = 0;//for processing data in run separated by shift+enter
 
 			this.paragraphText = "";
 			this.bFromPresentation = bFromPresentation;
 			this.prevTextPr = null;
 
-			//работает когда есть внутренние табы
-			//TODO  в дальнейшем учитывать внутреннии табы в DocumentContentBounds
+			//works when there are internal tabs
+			//TODO  in the future consider internal tabs in DocumentContentBounds
 			this.maxCellCount = 0;
 
 			this.footnotesCount = 0;
@@ -4388,7 +4438,7 @@
 				var documentContent = pasteData.content;
 				var t = this;
 
-				//у родителя(CDocument) проставляю контент. нужно для вставки извне нумерованного списка. ф-ия CalculateNumberingValues требует наличие этих параграфов в родителе.
+				//setting content on the parent (CDocument). needed for pasting numbered list from outside. the CalculateNumberingValues function requires these paragraphs to be in the parent.
 				var cDocument = documentContent && documentContent[0] &&
 				documentContent[0].Parent instanceof CDocument ? documentContent[0].Parent : null;
 				if (cDocument && cDocument.Content && 1 === cDocument.Content.length) {
@@ -4412,8 +4462,8 @@
 				var coverDocument = documentContentBounds.getBounds(0, 0, documentContent);
 				AscFormat.ExecuteNoHistory(this._parseChildren, this, [coverDocument]);
 
-				//не вставляем графику в редактор диаграмм
-				//если кроме графики есть ещё данные, то убираем только графику
+				//don't paste graphics into chart editor
+				//if there is other data besides graphics, we only remove the graphics
 				if (window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor) {
 					if (this.aResult.props && this.aResult.props.addImagesFromWord && this.aResult.props.addImagesFromWord.length === 1 && this.aResult.content) {
 						if (1 === this.aResult.content.length && 1 === this.aResult.content[0].length && this.aResult.content[0][0].content && this.aResult.content[0][0].content.length === 0) {
@@ -4445,10 +4495,10 @@
 				this.aResult.props._aPastedImages = pasteData.aPastedImages && pasteData.aPastedImages.length ? pasteData.aPastedImages : this.aResult.props._aPastedImages;
 
 
-				//TODO alreadyLoadImagesOnServer - пересмотреть
-				//alreadyLoadImagesOnServer - флаг используется для загрузки изображений из html
-				//грузим картинки для вствки из документов(если это необходимо)
-				//в данный момент в worksheetView не грузятся изображения
+				//TODO alreadyLoadImagesOnServer - review later
+				//alreadyLoadImagesOnServer - flag is used for loading images from html
+				//load images for pasting from documents (if necessary)
+				//currently images are not loaded in worksheetView
 				var specialPasteProps = window['AscCommon'].g_specialPasteHelper.specialPasteProps;
 				var aImagesToDownload = this.aResult.props._images;
 				if (!this.clipboard.alreadyLoadImagesOnServer && aImagesToDownload && (!specialPasteProps || (specialPasteProps && specialPasteProps.images)))//load to server
@@ -4582,7 +4632,7 @@
 					oNewItem.bc = backgroundColor;
 				}
 
-				//настройки параграфа
+				//paragraph settings
 				paragraph.elem.CompiledPr.NeedRecalc = true;
 				var paraPr = paragraph.elem.Get_CompiledPr();
 
@@ -4594,7 +4644,7 @@
 					}
 				}
 
-				//горизонтальное выравнивание
+				//horizontal alignment
 				var horisontalAlign = this._getAlignHorisontal(paraPr);
 				if (horisontalAlign == null) {
 					oNewItem.wrap = true;
@@ -4602,10 +4652,10 @@
 
 				oNewItem.alignHorizontal = horisontalAlign;
 
-				//вертикальное выравнивание
+				//vertical alignment
 				//oNewItem.alignVertical = Asc.c_oAscVAlign.Center;
 
-				//так же wrap выставляем у параграфа, чьим родителем является ячейка таблицы
+				//we also set wrap for a paragraph whose parent is a table cell
 				var cellParent = this._getParentByTag(paragraph, c_oAscBoundsElementType.Cell);
 				if (cellParent) {
 					oNewItem.wrap = !(cellParent.elem && cellParent.elem.Pr && true === cellParent.elem.Pr.NoWrap);
@@ -4646,10 +4696,10 @@
 				}
 
 
-				//проходимся по контенту paragraph
+				//iterate through paragraph content
 				var paraRunObj;
-				//получае общий шрифт для ячейки для случая когда вставляем нумерованный список
-				//общего может не быть в том случае, если шрифты внутри ячейки разные
+				//get the common font for the cell for the case when we paste a numbered list
+				//there may be no common font if the fonts inside the cell are different
 				var allParaFont, textPr;
 				for (var n = 0; n < content.length; n++) {
 					this.aResult.getCell(row + this.maxLengthRowCount, innerCol + col);
@@ -4681,7 +4731,7 @@
 						}
 						case para_Hyperlink://*hyperLink*
 						{
-							//если несколько ссылок в одном параграфе, то отменяем ссылки
+							//if there are multiple links in one paragraph, we cancel the links
 							if (!oNewItem.doNotApplyHyperlink) {
 								if (!oNewItem.hyperLink) {
 									oNewItem.hyperLink = content[n].Value;
@@ -4690,6 +4740,7 @@
 								} else {
 									oNewItem.hyperLink = null;
 									oNewItem.toolTip = null;
+									oNewItem.location = null;
 									oNewItem.doNotApplyHyperlink = true;
 								}
 							}
@@ -4809,7 +4860,7 @@
 					cloneNewItem.rowSpan = null;
 					cloneNewItem.colSpan = null;
 
-					//переходим в следующую ячейку
+					//move to the next cell
 					cell = aResult.getCell(row + t.maxLengthRowCount, innerCol + col);
 					aResult.setCellContent(row + t.maxLengthRowCount, innerCol + col, cloneNewItem);
 
@@ -4817,7 +4868,7 @@
 					oNewItem = new pasteCell();
 				};
 
-				//проходимся по контенту paraRun
+				//iterate through paraRun content
 				var cell;
 				var lastTab;
 				for (var pR = 0; pR < paraRunContent.length; pR++) {
@@ -4934,7 +4985,7 @@
 			_checkDrawingList: function (drawing) {
 				var t = this;
 				var checkParagraph = function (paragraph) {
-					//TODO не могу получить в данном случае GetNumPr
+					//TODO cannot get GetNumPr in this case
 					/*var LvlPr = null;
 					 var Lvl = null;
 					 var oNumPr = paragraph.GetNumPr ? paragraph.GetNumPr() : null;
@@ -5073,7 +5124,7 @@
 				var compiledPrCell, color;
 				var backgroundColor = null;
 
-				//TODO внутреннии таблицы без стиля - цвет фона белый
+				//TODO inner tables without style - background color is white
 				var tableCell = this._getParentByTag(elem, c_oAscBoundsElementType.Cell);
 
 				if (tableCell) {
@@ -5136,7 +5187,7 @@
 						var NumPr = Pr.ParaPr.NumPr;
 						if (undefined === NumPr || undefined === NumPr.NumId || 0 === NumPr.NumId ||
 							"0" === NumPr.NumId) {
-							// Ничего не делаем
+							// Do nothing
 						} else {
 							var Numbering = paragraph.Parent.GetNumbering();
 							var NumLvl = Numbering.GetNum(NumPr.NumId).GetLvl(NumPr.Lvl);
@@ -5144,8 +5195,8 @@
 							//var NumJc     = NumLvl.GetJc();
 							var NumTextPr = paragraph.Get_CompiledPr2(false).TextPr.Copy();
 
-							// Word не рисует подчеркивание у символа списка, если оно пришло из настроек для
-							// символа параграфа.
+							// Word doesn't draw underline for the list symbol if it came from the settings for
+							// the paragraph symbol.
 
 							var TextPr_temp = paragraph.TextPr.Value.Copy();
 							TextPr_temp.Underline = undefined;
@@ -5253,10 +5304,10 @@
 			constructor: DocumentContentBounds,
 
 			getBounds: function (nLeft, nTop, aDocumentContent) {
-				//в первный проход заполняем размеры
-				//и могут заноситься относительные сдвиги при небходимости
+				//on the first pass we fill in the sizes
+				//and relative offsets may be added if necessary
 				var oRes = this._getMeasure(aDocumentContent, null);
-				//заполняем абсолютные сдвиги
+				//fill in absolute offsets
 				this._getOffset(nLeft, nTop, oRes);
 				return oRes;
 			},
@@ -5321,12 +5372,12 @@
 			},
 			_getTableMeasure: function (table, oParent) {
 				var oRes = new DocumentContentBoundsElement(table, c_oAscBoundsElementType.Table, oParent);
-				//надо рассчитать сколько ячеек приходится на tableGrid, по умолчанию по одной
-				//todo надо оптимизировать размер 
+				//need to calculate how many cells correspond to tableGrid, by default one each
+				//todo need to optimize size
 				var aGridWidth = [], i, length;
 				for (i = 0, length = table.TableGrid.length; i < length; i++)
 					aGridWidth.push(1);
-				//заполняем aGridWidth
+				//fill aGridWidth
 				for (i = 0, length = table.Content.length; i < length; i++) {
 					var row = table.Content[i];
 					var oNewElem = this._setRowGridWidth(row, oRes, aGridWidth);
@@ -5341,12 +5392,12 @@
 					if (nCurValue)
 						nTempSum += nCurValue;
 				}
-				//заполняем размеры
+				//fill sizes
 				for (i = 0, length = oRes.children.length; i < length; i++) {
 					var rowWrapped = oRes.children[i];
 					this._getRowMeasure(rowWrapped, aSumGridWidth, oRes.children, i);
 					oRes.height += rowWrapped.height;
-					//в left временно занесен относительный сдвиг
+					//relative offset is temporarily stored in left
 					if (rowWrapped.width + rowWrapped.left > oRes.width)
 						oRes.width = rowWrapped.width + rowWrapped.left;
 				}
@@ -5400,7 +5451,7 @@
 				var nSumGrid = 0;
 				var BeforeInfo = rowWrapped.elem.Get_Before();
 				if (BeforeInfo && BeforeInfo.GridBefore) {
-					//временно заносим относительный сдвиг
+					//temporarily store relative offset
 					rowWrapped.left = aSumGridWidth[nSumGrid + BeforeInfo.GridBefore] - aSumGridWidth[nSumGrid];
 					nSumGrid += BeforeInfo.GridBefore;
 				}
@@ -5409,7 +5460,7 @@
 					var cellWrapped = rowWrapped.children[i];
 					var nCellGrid = cellWrapped.elem.Get_GridSpan();
 					cellWrapped.width = aSumGridWidth[nSumGrid + nCellGrid] - aSumGridWidth[nSumGrid];
-					//выравниваем высоту ячеек по-максимому
+					//align cell height to maximum
 					cellWrapped.height = rowWrapped.height;
 					rowWrapped.width += cellWrapped.width;
 					nSumGrid += nCellGrid;

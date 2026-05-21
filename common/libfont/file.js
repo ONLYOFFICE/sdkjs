@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -132,9 +135,9 @@
 
 	var EGlyphState =
 	{
-		glyphstateNormal : 0,	// символ отрисовался в нужном шрифте
-		glyphstateDefault : 1, // символ отрисовался в дефолтовом шрифте
-		glyphstateMiss : 2  	// символ не отрисовался
+		glyphstateNormal : 0,	// character rendered in the requested font
+		glyphstateDefault : 1, // character rendered in the default font
+		glyphstateMiss : 2  	// character was not rendered
 	};
 
 	function get_raster_bounds_safe(rasterBitmap)
@@ -384,10 +387,10 @@
 
 	function CGlyphBitmap()
 	{
-		this.nX = 0;            // Сдвиг по X начальной точки для рисования символа
-		this.nY = 0;            // Сдвиг по Y начальной точки для рисования символа
-		this.nWidth = 0;        // Ширина символа
-		this.nHeight = 0;       // Высота символа
+		this.nX = 0;            // X offset of the starting point for drawing the character
+		this.nY = 0;            // Y offset of the starting point for drawing the character
+		this.nWidth = 0;        // Character width
+		this.nHeight = 0;       // Character height
 
 		this.oGlyphData = new CGlyphData();
 	}
@@ -472,7 +475,7 @@
 			}
 			else if (null != this.oGlyphData.m_oCanvas)
 			{
-				// своя память
+				// own memory
 				context2D.drawImage(this.oGlyphData.m_oCanvas, 0, 0, nW, nH, x, y, nW, nH);
 			}
 			else
@@ -493,7 +496,7 @@
 			}
 			else if (null != this.oGlyphData.m_oCanvas)
 			{
-				// своя память
+				// own memory
 				context2D.drawImage(this.oGlyphData.m_oCanvas, cx, 0, w, h, x, y, w, h);
 			}
 			else
@@ -548,7 +551,7 @@
 			}
 			else if (null != this.oGlyphData.m_oCanvas)
 			{
-				// своя память
+				// own memory
 				context2D.drawImage(this.oGlyphData.m_oCanvas, _dstX, _dstY, _dstW, _dstH, _x, _y, _dstW, _dstH);
 			}
 			else
@@ -595,9 +598,9 @@
 
 	function CFontCacheSizes()
 	{
-		this.ushUnicode; // Значение символа в юникоде
-		this.eState;     // Есть ли символ в шрифте/стандартном шрифте
-		this.nCMapIndex; // Номер таблицы 'cmap', в которой был найден данный символ
+		this.ushUnicode; // Character value in unicode
+		this.eState;     // Whether the character is in the font/default font
+		this.nCMapIndex; // Index of the 'cmap' table where this character was found
 
 		this.ushGID;
 
@@ -617,7 +620,7 @@
 
 	function CGlyphVectorPainter()
 	{
-		// сдвиг
+		// offset
 		this.X = 0;
 		this.Y = 0;
 
@@ -688,12 +691,12 @@
 			var dX3 = this.X + this.KoefX * (to_x / 64.0);
 			var dY3 = this.Y - this.KoefY * (to_y / 64.0);
 
-			// Строим кривую Безье второго порядка, с помощью кривой Безье третего порядка. Если p0, pC, p3 -
-			// начальная, контрольная и конечная точки, соответственно, для кривой Безье второго порядка. Тогда
-			// для этой же кривой, рассматриваемой как кривая Безье третьего порядка, точки p0, p1, p2, p3 будут
-			// начальной, две контрольные, конечная точки. Где p1 и p2 рассчитываются по следующим формулам:
-			//     p1 = (1/3) * (p0 + 2pС)
-			//     p2 = (1/3) * (2pС + p3)
+			// Build a quadratic Bezier curve using a cubic Bezier curve. If p0, pC, p3 are
+			// the start, control and end points, respectively, for the quadratic Bezier curve. Then
+			// for the same curve, considered as a cubic Bezier curve, points p0, p1, p2, p3 will be
+			// the start, two control, and end points. Where p1 and p2 are calculated using the following formulas:
+			//     p1 = (1/3) * (p0 + 2pC)
+			//     p2 = (1/3) * (2pC + p3)
 
 			var dX1 = (1.0 / 3.0) * (dX0 + 2 * dXc);
 			var dY1 = (1.0 / 3.0) * (dY0 + 2 * dYc);
@@ -754,9 +757,9 @@
 		this.m_bAntiAliasing = true;
 		this.m_bUseKerning = false;
 
-		this.m_fSize = 1.0;       // Размер шрифта
-		this.m_unHorDpi = 0;      // Горизонтальное разрешение
-		this.m_unVerDpi = 0;      // Вертикальное разрешение
+		this.m_fSize = 1.0;       // Font size
+		this.m_unHorDpi = 0;      // Horizontal resolution
+		this.m_unVerDpi = 0;      // Vertical resolution
 
 		this.m_bNeedDoItalic = false;
 		this.m_bNeedDoBold = false;
@@ -896,7 +899,7 @@
 
 				this.m_dUnitsKoef = this.m_unHorDpi / 72.0 * this.m_fSize;
 
-				// Выставляем размер шрифта (dSize) и DPI
+				// Set font size (dSize) and DPI
 				this.m_nError = AscFonts.FT_Set_Char_Size(this.m_pFace, 0, (dNewSize * 64) >> 0, dpiX, dpiY);
 				this.ClearCache();
 			}
@@ -1021,8 +1024,8 @@
 			{
 				let codePoint = buffer[nPos];
 
-				// TODO: Обработать ситуацию, когда сегмент начинается с AscFonts.HB_SCRIPT.HB_SCRIPT_INHERITED
-				//       в такой ситуации нужно ориентироваться на следующий юникод, у которого будет нормальный скрипт
+				// TODO: Handle the situation when a segment starts with AscFonts.HB_SCRIPT.HB_SCRIPT_INHERITED
+				//       in this case we need to look at the next unicode that has a normal script
 				if (AscFonts.HB_SCRIPT.HB_SCRIPT_INHERITED !== AscFonts.hb_get_script_by_unicode(codePoint))
 				{
 					let gid = this.GetGIDByUnicode(codePoint);
@@ -1086,7 +1089,7 @@
 
 				if (!this.m_bStringGID && this.Picker)
 				{
-					// пробуем подобрать нужный шрифт
+					// try to find the appropriate font
 					var oSizesCheck = this.Picker.LoadSymbol(this, glyph_index_or_unicode, isRaster, isRasterDistances, workerVector, workerVectorX, workerVectorY);
 					if (oSizesCheck)
 						return oSizesCheck;
@@ -1185,7 +1188,7 @@
 
 				switch (glyph_index_or_unicode)
 				{
-					// список допустимых символов нулевой ширины
+					// list of allowed zero-width characters
 					case 0xFEFF:
 					{
 						return oSizes;
@@ -1250,13 +1253,13 @@
 					{
 						var _pos_x = pDstBuffer + ((_width_im - extraPixels) << 2) - 1;
 
-						// последние - просто копируем
+						// last ones - just copy
 						_input[_pos_x] = _input[_pos_x - 4];
 						_pos_x -= 4;
 
 						for (nX = _width_im - extraPixels - 2; nX > 0; --nX, _pos_x -= 4)
 						{
-							// сдвигаем все вправо
+							// shift everything to the right
 							_input[_pos_x] = Math.min(255, _input[_pos_x - 4] + _input[_pos_x]);
 						}
 					}
@@ -1275,7 +1278,7 @@
 			var unPrevGID = 0;
 			var fPenX = 0, fPenY = 0;
 
-			// Сначала мы все рассчитываем исходя только из матрицы шрифта FontMatrix
+			// First we calculate everything based only on the font FontMatrix
 			if (this.m_bIsTransform)
 				this.UpdateMatrix();
 
@@ -1340,7 +1343,7 @@
 				var fX = pString.m_fX + fPenX;
 				var fY = pString.m_fY + fPenY;
 
-				// Начальную точку рассчитываем сразу исходя из глобальной матрицы
+				// Calculate the starting point based on the global matrix
 				var fXX = (pString.m_arrCTM[4] + fX * pString.m_arrCTM[0] + fY * pString.m_arrCTM[2] - pString.m_fX);
 				var fYY = (pString.m_arrCTM[5] + fX * pString.m_arrCTM[1] + fY * pString.m_arrCTM[3] - pString.m_fY);
 
@@ -1431,7 +1434,7 @@
 				var fX = pString.m_fX + fPenX;
 				var fY = pString.m_fY + fPenY;
 
-				// Начальную точку рассчитываем сразу исходя из глобальной матрицы
+				// Calculate the starting point based on the global matrix
 				var fXX = (pString.m_arrCTM[4] + fX * pString.m_arrCTM[0] + fY * pString.m_arrCTM[2] - pString.m_fX);
 				var fYY = (pString.m_arrCTM[5] + fX * pString.m_arrCTM[1] + fY * pString.m_arrCTM[3] - pString.m_fY);
 
@@ -1453,7 +1456,7 @@
 
 		this.GetString2C = function(pString)
 		{
-			// Сначала мы все рассчитываем исходя только из матрицы шрифта FontMatrix
+			// First we calculate everything based only on the font FontMatrix
 			if (this.m_bIsTransform)
 				this.UpdateMatrix();
 
@@ -1486,12 +1489,12 @@
 				return;
 			}
 
-			// кернинга нету пока.
+			// no kerning for now.
 			var fX = pString.m_fX;
 			var fY = pString.m_fY;
 			var _m = pString.m_arrCTM;
 
-			// Начальную точку рассчитываем сразу исходя из глобальной матрицы
+			// Calculate the starting point based on the global matrix
 			pCurGlyph.fX = (_m[4] + fX * _m[0] + fY * _m[2] - pString.m_fX);
 			pCurGlyph.fY = (_m[5] + fX * _m[1] + fY * _m[3] - pString.m_fY);
 
@@ -1517,7 +1520,7 @@
 			var Result = undefined;
 			var ushUnicode = lUnicode;
 
-			// Сначала мы все рассчитываем исходя только из матрицы шрифта FontMatrix
+			// First we calculate everything based only on the font FontMatrix
 			if (this.m_bIsTransform)
 				this.UpdateMatrix();
 
@@ -1541,11 +1544,11 @@
 			var Result;
 			var ushUnicode = lUnicode;
 
-			// Сначала мы все рассчитываем исходя только из матрицы шрифта FontMatrix
+			// First we calculate everything based only on the font FontMatrix
 			if (this.m_bIsTransform)
 				this.UpdateMatrix();
 
-			// no really cashe
+			// no real cache
 			this.CacheGlyph(ushUnicode, false, false, worker, x, y);
 		};
 
@@ -1573,7 +1576,7 @@
 			if (this.HintsSupport && this.HintsSubpixelSupport)
 			{
 				// -----------------------------------------------------------------
-				// заглушки
+				// workarounds
 				if (code === 95 && this.m_pFaceInfo.family_name === "Wingdings 3")
 					return AscFonts.LOAD_MODE_DEFAULT;
 				// -----------------------------------------------------------------
@@ -1625,7 +1628,7 @@
 		{
 			var sStyle = this.GetStyleName();
 
-			// Смотрим какой стиль у исходного шрифта
+			// Check what style the original font has
 			var bSrcBold = (-1 != sStyle.indexOf("Bold"));
 			var bSrcItalic = (-1 != sStyle.indexOf("Italic"));
 
@@ -1741,7 +1744,7 @@
 				if (fontManager.Mode === AscFonts.TextMeasureMode.Cell)
 				{
 					/*
-					// что-то типо этого в экселе... пока выключаем
+					// something like this in Excel... disabling for now
 					var _addidive = (0.15 * font.m_lLineHeight) >> 0;
 					font.m_lAscender += ((_addidive + 1) >> 1);
 					font.m_lDescender -= (_addidive >> 1);
@@ -1770,8 +1773,8 @@
 				}
 				else
 				{
-					// Здесь все подобрано после многочисленных тестов, если будет что-то меняться, то все шрифты
-					// надо проверять заново
+					// Everything here is selected after numerous tests, if something changes, all fonts
+					// need to be re-tested
 
 					let faceInfo = this.m_pFaceInfo;
 					let nAscent  = faceInfo.os2_usWinAscent;

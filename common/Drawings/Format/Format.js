@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -1286,7 +1289,7 @@
  map_color_scheme["tx2"]     = 16;
  */
 
-//Типы изменений в классе CTheme
+//Types of changes in the CTheme class
 
 		function CreateFontRef(idx, color) {
 			var ret = new FontRef();
@@ -1932,88 +1935,16 @@
 			return duplicate;
 		};
 		CColorModifiers.prototype.RGB2HSL = function (R, G, B, HLS) {
-			var iMin = (R < G ? R : G);
-			iMin = iMin < B ? iMin : B;//Math.min(R, G, B);
-			var iMax = (R > G ? R : G);
-			iMax = iMax > B ? iMax : B;//Math.max(R, G, B);
-			var iDelta = iMax - iMin;
-			var dMax = (iMax + iMin) / 255.0;
-			var dDelta = iDelta / 255.0;
-			var H = 0;
-			var S = 0;
-			var L = dMax / 2.0;
-
-			if (iDelta != 0) {
-				if (L < 0.5) S = dDelta / dMax;
-				else S = dDelta / (2.0 - dMax);
-
-				dDelta = dDelta * 1530.0;
-				var dR = (iMax - R) / dDelta;
-				var dG = (iMax - G) / dDelta;
-				var dB = (iMax - B) / dDelta;
-
-				if (R == iMax) H = dB - dG;
-				else if (G == iMax) H = cd13 + dR - dB;
-				else if (B == iMax) H = cd23 + dG - dR;
-
-				if (H < 0.0) H += 1.0;
-				if (H > 1.0) H -= 1.0;
-			}
-
-			H = H * max_hls;
-			if (H < 0)
-				H = 0;
-			if (H > 255)
-				H = 255;
-
-			S = S * max_hls;
-			if (S < 0)
-				S = 0;
-			if (S > 255)
-				S = 255;
-
-			L = L * max_hls;
-			if (L < 0)
-				L = 0;
-			if (L > 255)
-				L = 255;
-
-			HLS.H = H;
-			HLS.S = S;
-			HLS.L = L;
+			var hsl = AscCommon.CU.rgbToHsl({R: R, G: G, B: B});
+			HLS.H = hsl.H;
+			HLS.S = hsl.S;
+			HLS.L = hsl.L;
 		};
 		CColorModifiers.prototype.HSL2RGB = function (HSL, RGB, bRoundValues) {
-			if (HSL.S == 0) {
-				const clampL = bRoundValues ? AscFormat.ClampColor(HSL.L) : HSL.L;
-				RGB.R = clampL;
-				RGB.G = clampL;
-				RGB.B = clampL;
-			} else {
-				var H = HSL.H / max_hls;
-				var S = HSL.S / max_hls;
-				var L = HSL.L / max_hls;
-				var v2 = 0;
-				if (L < 0.5)
-					v2 = L * (1.0 + S);
-				else
-					v2 = L + S - S * L;
-
-				var v1 = 2.0 * L - v2;
-
-				var R = (255 * this.Hue_2_RGB(v1, v2, H + cd13));
-				var G = (255 * this.Hue_2_RGB(v1, v2, H));
-				var B = (255 * this.Hue_2_RGB(v1, v2, H - cd13));
-
-				if (bRoundValues) {
-					RGB.R = AscFormat.ClampColor(R);
-					RGB.G = AscFormat.ClampColor(G);
-					RGB.B = AscFormat.ClampColor(B);
-				} else {
-					RGB.R = R;
-					RGB.G = G;
-					RGB.B = B;
-				}
-			}
+			var rgb = AscCommon.CU.hslToRgb(HSL, bRoundValues);
+			RGB.R = rgb.R;
+			RGB.G = rgb.G;
+			RGB.B = rgb.B;
 		};
 		CColorModifiers.prototype.Hue_2_RGB = function (v1, v2, vH) {
 			if (vH < 0.0)
@@ -2029,16 +1960,10 @@
 			return v1;
 		};
 		CColorModifiers.prototype.standardToLinear = function(nColorValue) {
-			if (nColorValue <= 0.04045) {
-				return nColorValue / 12.92;
-			}
-			return Math.pow((nColorValue + 0.055) / 1.055, 2.4);
+			return AscCommon.CU.srgbToLinear(nColorValue);
 		}
 		CColorModifiers.prototype.linearToStandard = function(nColorValue) {
-			if (nColorValue <= 0.0031308) {
-				return  12.92 * nColorValue;
-			}
-			return 1.055 * Math.pow(nColorValue, 1 / 2.4) - 0.055;
+			return AscCommon.CU.linearToSrgb(nColorValue);
 		}
 		CColorModifiers.prototype.RgbtoCrgbColor = function (c) {
 			if (this.isUsePow) {
@@ -2875,13 +2800,9 @@
 		MODS_MAP["shade"] = true;
 		MODS_MAP["tint"] = true;
 
-		function toHex(c) {
-			var res = Number(c).toString(16).toUpperCase();
-			return res.length === 1 ? "0" + res : res;
-		}
-
 		function fRGBAToHexString(oRGBA) {
-			return "" + toHex(oRGBA.R) + toHex(oRGBA.G) + toHex(oRGBA.B);
+			var byteToHex = AscCommon.ByteToHex;
+			return "" + byteToHex(oRGBA.R) + byteToHex(oRGBA.G) + byteToHex(oRGBA.B);
 		}
 
 		/**
@@ -3147,7 +3068,7 @@
 			this.Mods.addMod(mod.createDuplicate());
 		};
 		CUniColor.prototype.check = function (theme, colorMap) {
-			if (this.color && this.color.check(theme, colorMap.color_map)/*возвращает был ли изменен RGBA*/) {
+			if (this.color && this.color.check(theme, colorMap.color_map)/*returns whether RGBA was changed*/) {
 				this.RGBA.R = this.color.RGBA.R;
 				this.RGBA.G = this.color.RGBA.G;
 				this.RGBA.B = this.color.RGBA.B;
@@ -3618,6 +3539,13 @@
 		CBlipFill.prototype.setRasterImageId = function (rasterImageId) {
 			this.RasterImageId = checkRasterImageId(rasterImageId);
 		};
+		CBlipFill.prototype.ReplaceImageUrl = function (mapUrl) {
+			if (typeof this.RasterImageId !== "string") return false;
+			const sId = this.RasterImageId;
+			if (!mapUrl[sId]) return false;
+			this.RasterImageId = checkRasterImageId(mapUrl[sId]);
+			return true;
+		};
 		CBlipFill.prototype.createDuplicate = function () {
 			var duplicate = new CBlipFill();
 			duplicate.RasterImageId = this.RasterImageId;
@@ -3837,14 +3765,6 @@
 				}
 			}
 		};
-		CBlipFill.prototype.createDuplicateNoRaster = function(transparent) {
-			let sId = this.RasterImageId;
-			this.RasterImageId = null;
-			let copy = this.createDuplicate();
-			this.RasterImageId = sId;
-			return copy;
-		};
-
 		CBlipFill.prototype.getTile = function () { return this.tile; };
 		CBlipFill.prototype.setTile = function (tile) { this.tile = tile; };
 		CBlipFill.prototype.getStretch = function () { return this.stretch; };
@@ -5884,7 +5804,7 @@
 
 		function CGradFill() {
 			CBaseFill.call(this);
-			// пока просто front color
+			// for now just front color
 			this.colors = [];
 
 			this.lin = null;
@@ -6719,6 +6639,9 @@
 				return true;
 			}
 		};
+		CUniFill.prototype.isPatternFill = function () {
+			return !!(this.fill && this.fill.type === c_oAscFill.FILL_TYPE_PATT);
+		};
 		CUniFill.prototype.checkTransparent = function() {
 			let oFill = this.fill;
 			if(oFill) {
@@ -6771,18 +6694,9 @@
 				return this.fill.RasterImageId;
 			return null;
 		};
-		CUniFill.prototype.reassignImageUrl = function(mapUrl) {
-			const sId = this.checkRasterImageId();
-			if (sId && mapUrl[sId] && mapUrl[sId] !== sId) {
-				const oNewBlipFill = this.fill.createDuplicate();
-				oNewBlipFill.setRasterImageId(mapUrl[sId]);
-				const oNewUniFill = this.createDuplicate();
-				oNewUniFill.setFill(oNewBlipFill);
-				return oNewUniFill;
-			}
-			return null;
+		CUniFill.prototype.ReplaceImageUrl = function (mapUrl) {
+			return this.fill && this.fill.ReplaceImageUrl ? this.fill.ReplaceImageUrl(mapUrl) : false;
 		};
-
 		function CBuBlip() {
 			CBaseNoIdObject.call(this);
 			this.blip = null;
@@ -6791,6 +6705,9 @@
 		InitClass(CBuBlip, CBaseNoIdObject, 0);
 		CBuBlip.prototype.setBlip = function (oPr) {
 			this.blip = oPr;
+		};
+		CBuBlip.prototype.ReplaceImageUrl = function (mapUrl) {
+			return this.blip && this.blip.ReplaceImageUrl ? this.blip.ReplaceImageUrl(mapUrl) : false;
 		};
 		CBuBlip.prototype.fillObject = function (oCopy, oIdMap) {
 			if (this.blip) {
@@ -7203,9 +7120,9 @@
 		}
 
 // LN --------------------------
-// размеры стрелок;
+// arrow sizes;
 		var lg = 500, mid = 300, sm = 200;
-//типы стрелок
+//arrow types
 		var ar_arrow = 0, ar_diamond = 1, ar_none = 2, ar_oval = 3, ar_stealth = 4, ar_triangle = 5;
 
 		var LineEndType = {
@@ -7831,16 +7748,8 @@
 		CLn.prototype.checkRasterImageId = function() {
 			return this.Fill && this.Fill.checkRasterImageId();
 		};
-		CLn.prototype.reassignImageUrl = function(mapUrl) {
-			if (this.Fill) {
-				const oNewFill = this.Fill.reassignImageUrl(mapUrl);
-				if (oNewFill) {
-					const oNewLn = this.createDuplicate();
-					oNewLn.setFill(oNewFill);
-					return oNewLn;
-				}
-			}
-			return null;
+		CLn.prototype.ReplaceImageUrl = function (mapUrl) {
+			return this.Fill && this.Fill.ReplaceImageUrl ? this.Fill.ReplaceImageUrl(mapUrl) : false;
 		};
 		CLn.prototype.GetCapCode = function (sVal) {
 			switch (sVal) {
@@ -9483,8 +9392,7 @@
 			this.handleUpdateGeometry();
 		};
 		CSpPr.prototype.setFill = function (pr) {
-			if(!pr || !pr.isBlipFill() || !Asc.editor.evalCommand)
-				AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SpPr_SetFill, this.Fill, pr));
+			AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SpPr_SetFill, this.Fill, pr));
 			this.Fill = pr;
 			if (this.parent && this.parent.handleUpdateFill) {
 				this.parent.handleUpdateFill();
@@ -10278,23 +10186,20 @@
 			}
 		};
 		FmtScheme.prototype.Reassign_ImageUrls = function(oImageMap) {
-			const aFillLists = [this.fillStyleLst, this.bgFillStyleLst];
+			this.ReplaceImageUrl(oImageMap);
+		};
+		FmtScheme.prototype.ReplaceImageUrl = function(mapUrl) {
+			let bChanged = false;
+			const aFillLists = [this.fillStyleLst, this.bgFillStyleLst, this.lnStyleLst];
 			for(let i = 0; i < aFillLists.length; ++i) {
 				for(let nIdx = 0; nIdx < aFillLists[i].length; ++nIdx) {
-					const oUnifill = aFillLists[i][nIdx];
-					const sId = oUnifill && oUnifill.checkRasterImageId();
-					if(sId && oImageMap[sId]) {
-						oUnifill.fill.RasterImageId = oImageMap[sId];
+					const oItem = aFillLists[i][nIdx];
+					if (oItem && oItem.ReplaceImageUrl && oItem.ReplaceImageUrl(mapUrl)) {
+						bChanged = true;
 					}
 				}
 			}
-			for(let nIdx = 0; nIdx < this.lnStyleLst.length; ++nIdx) {
-				const oLn = this.lnStyleLst[nIdx];
-				const sId = oLn && oLn.checkRasterImageId();
-				if(sId && oImageMap[sId]) {
-					oLn.Fill.fill.RasterImageId = oImageMap[sId];
-				}
-			}
+			return bChanged;
 		};
 		
 		function CEffectStyle() {
@@ -10769,13 +10674,14 @@
 							oPresentation.bNeedUpdateThemes = true;
 							let oThemedObjects = oPresentation.GetSlideObjectsWithTheme(this);
 							for(let nIdx = 0; nIdx < oThemedObjects.masters.length; ++nIdx) {
-								oThemedObjects.masters[nIdx].checkSlideTheme();
+								oThemedObjects.masters[nIdx].checkSlideColorScheme();
 							}
 							for(let nIdx = 0; nIdx < oThemedObjects.layouts.length; ++nIdx) {
-								oThemedObjects.layouts[nIdx].checkSlideTheme();
+								oThemedObjects.layouts[nIdx].checkSlideColorScheme();
 							}
 							for(let nIdx = 0; nIdx < oThemedObjects.slides.length; ++nIdx) {
-								oThemedObjects.slides[nIdx].checkSlideTheme();
+								oThemedObjects.slides[nIdx].checkSlideColorScheme();
+								oThemedObjects.slides[nIdx].addToRecalculate();
 							}
 							AscCommon.History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: this});
 						}
@@ -11019,6 +10925,9 @@
 			if (fill_image_id !== null)
 				images.push(fill_image_id);
 		};
+		CBgPr.prototype.ReplaceImageUrl = function (mapUrl) {
+			return this.Fill && this.Fill.ReplaceImageUrl ? this.Fill.ReplaceImageUrl(mapUrl) : false;
+		};
 
 
 
@@ -11038,6 +10947,9 @@
 		};
 		CBg.prototype.setBgRef = function (pr) {
 			this.bgRef = pr;
+		};
+		CBg.prototype.ReplaceImageUrl = function (mapUrl) {
+			return this.bgPr && this.bgPr.ReplaceImageUrl ? this.bgPr.ReplaceImageUrl(mapUrl) : false;
 		};
 		CBg.prototype.merge = function (bg) {
 			if (this.bgPr == null) {
@@ -12370,7 +12282,7 @@
 
 		function CompareBullets(bullet1, bullet2) {
 
-			//TODO: пока будем сравнивать только bulletType, т. к. эта функция используется для мержа свойств при отдаче в интерфейс, а для интерфейса bulletTyp'a достаточно. Если понадобится нужно сделать полное сравнение.
+			//TODO: for now we will only compare bulletType, since this function is used for merging properties when returning to the interface, and bulletType is enough for the interface. If needed, a full comparison should be implemented.
 			//
 			if (bullet1.bulletType && bullet2.bulletType
 				&& bullet1.bulletType.type === bullet2.bulletType.type) {
@@ -12516,6 +12428,9 @@
 		};
 		CBullet.prototype.isBullet = function () {
 			return this.bulletType != null && this.bulletType.type != null;
+		};
+		CBullet.prototype.ReplaceImageUrl = function (mapUrl) {
+			return this.Bullet && this.Bullet.ReplaceImageUrl ? this.Bullet.ReplaceImageUrl(mapUrl) : false;
 		};
 		CBullet.prototype.isNone = function() {
 			if (!this.bulletType)
@@ -16779,7 +16694,7 @@
 			return ret;
 		}
 
-// эта функция ДОЛЖНА минимизироваться
+// this function MUST be minified
 		function CreateAscStroke(ln, _canChangeArrows) {
 			if (null == ln || null == ln.Fill || ln.Fill.fill == null)
 				return new Asc.asc_CStroke();
@@ -16956,7 +16871,7 @@
 			return ret;
 		}
 
-// эта функция ДОЛЖНА минимизироваться
+// this function MUST be minified
 		function CreateAscShapeProp(shape) {
 			if (null == shape)
 				return new asc_CShapeProperty();
@@ -17102,7 +17017,7 @@
 						ret.color = new CSchemeColor();
 					}
 
-					// тут выставляется ТОЛЬКО из меню. поэтому:
+					// this is set ONLY from the menu. therefore:
 					var _index = parseInt(asc_color.value);
 					if (isNaN(_index))
 						break;
@@ -17396,11 +17311,17 @@
 			oChartSpace.setBDeleted(false);
 			oChartSpace.extX = nW;
 			oChartSpace.extY = nH;
-			if (AscFormat.isRealNumber(nStyleIndex)) {
-				oChartSpace.setStyle(nStyleIndex);
-			}
+			AscFormat.applyChartStyle(oChartSpace, nStyleIndex);
 			AscFormat.CheckSpPrXfrm(oChartSpace);
 			return oChartSpace;
+		}
+
+		function applyChartStyle(oChartSpace, nStyleIndex) {
+			if (AscFormat.isRealNumber(nStyleIndex) && nStyleIndex >= 1 && nStyleIndex <= 48) {
+				oChartSpace.setStyle(nStyleIndex);
+			} else {
+				oChartSpace.setStyle(2);
+			}
 		}
 
 		function builder_CreateGroup(aDrawings, oController) {
@@ -17592,9 +17513,18 @@
 			return null;
 		}
 
+		function builder_ApplyChartStyleToElement(oChartSpace, oElement) {
+			if (!oElement || !oChartSpace || !oChartSpace.chartStyle || !oChartSpace.chartColors) return;
+			if (typeof oElement.applyChartStyle !== "function") return;
+			var oCache = AscFormat.g_oChartStyleCache;
+			var oAdditional = oCache && oCache.getAdditionalData(oChartSpace.getChartType(), oChartSpace.chartStyle.id);
+			oElement.applyChartStyle(oChartSpace.chartStyle, oChartSpace.chartColors, oAdditional, true);
+		}
+
 		function builder_SetChartTitle(oChartSpace, sTitle, nFontSize, bIsBold) {
 			if (oChartSpace) {
 				oChartSpace.chart.setTitle(builder_CreateChartTitle(sTitle, nFontSize, bIsBold, oChartSpace.getDrawingDocument()));
+				builder_ApplyChartStyleToElement(oChartSpace, oChartSpace.chart.title);
 			}
 		}
 
@@ -17614,6 +17544,7 @@
 				var horAxis = oChartSpace.chart.plotArea.getHorizontalAxis();
 				if (horAxis) {
 					horAxis.setTitle(builder_CreateTitle(sTitle, nFontSize, bIsBold, oChartSpace));
+					builder_ApplyChartStyleToElement(oChartSpace, horAxis.title);
 				}
 			}
 		}
@@ -17633,6 +17564,7 @@
 							var _text_body = verAxis.title.txPr;
 							_text_body.setBodyPr(_body_pr);
 							verAxis.title.setOverlay(false);
+							builder_ApplyChartStyleToElement(oChartSpace, verAxis.title);
 						}
 					} else {
 						verAxis.setTitle(null);
@@ -17701,13 +17633,18 @@
 						}
 					}
 					if (null !== nLegendPos) {
+						var bNewLegend = false;
 						if (!oChartSpace.chart.legend) {
 							oChartSpace.chart.setLegend(new AscFormat.CLegend());
+							bNewLegend = true;
 						}
 						if (oChartSpace.chart.legend.legendPos !== nLegendPos)
 							oChartSpace.chart.legend.setLegendPos(nLegendPos);
 						if (oChartSpace.chart.legend.overlay !== false) {
 							oChartSpace.chart.legend.setOverlay(false);
+						}
+						if (bNewLegend) {
+							builder_ApplyChartStyleToElement(oChartSpace, oChartSpace.chart.legend);
 						}
 					}
 				}
@@ -17747,75 +17684,245 @@
 			builder_SetObjectFontSize(oChartSpace.chart.plotArea.getVerticalAxis(), nFontSize, oChartSpace.getDrawingDocument());
 		}
 
+		function builder_MergeObjectDefaultTextPr(object, textPr, drawingDocument) {
+			if (!object || !textPr) {
+				return false;
+			}
 
-		function builder_SetShowPointDataLabel(oChartSpace, nSeriesIndex, nPointIndex, bShowSerName, bShowCatName, bShowVal, bShowPerecent) {
-			if (oChartSpace && oChartSpace.chart && oChartSpace.chart.plotArea && oChartSpace.chart.plotArea.charts[0]) {
-				var oChart = oChartSpace.chart.plotArea.charts[0];
-				var bPieChart = oChart.getObjectType() === AscDFH.historyitem_type_PieChart || oChart.getObjectType() === AscDFH.historyitem_type_DoughnutChart;
-				var ser = oChart.series[nSeriesIndex];
-				if (ser) {
-					{
-						if (!ser.dLbls) {
-							if (oChart.dLbls) {
-								ser.setDLbls(oChart.dLbls.createDuplicate());
-							} else {
-								ser.setDLbls(new AscFormat.CDLbls());
-								ser.dLbls.setSeparator(",");
-								ser.dLbls.setShowSerName(false);
-								ser.dLbls.setShowCatName(false);
-								ser.dLbls.setShowVal(false);
-								ser.dLbls.setShowLegendKey(false);
-								if (bPieChart) {
-									ser.dLbls.setShowPercent(false);
-								}
-								ser.dLbls.setShowBubbleSize(false);
-							}
+			if (!object.txPr) {
+				object.setTxPr(new AscFormat.CTextBody());
+			}
+			if (!object.txPr.bodyPr) {
+				object.txPr.setBodyPr(new AscFormat.CBodyPr());
+			}
+			if (!object.txPr.content) {
+				object.txPr.setContent(new AscFormat.CDrawingDocContent(object.txPr, drawingDocument, 0, 0, 100, 500, false, false, true));
+			}
+
+			const propCopy = object.txPr.content.Content[0].Pr.Copy();
+			if (!propCopy.DefaultRunPr) {
+				propCopy.DefaultRunPr = new AscCommonWord.CTextPr();
+			}
+
+			propCopy.DefaultRunPr.Merge(textPr);
+			object.txPr.content.Content[0].Set_Pr(propCopy);
+			return true;
+		}
+
+		function builder_SetDataLabelsTextPr(chartSpace, textPr) {
+			const chart = (
+				chartSpace &&
+				chartSpace.chart &&
+				chartSpace.chart.plotArea &&
+				chartSpace.chart.plotArea.charts[0]
+			);
+
+			if (!chart) {
+				return false;
+			}
+
+			if (!chart.dLbls) {
+				chart.setDLbls(new AscFormat.CDLbls());
+			}
+
+			const drawingDocument = chartSpace.getDrawingDocument();
+			for (let i = 0; i < chart.series.length; ++i) {
+				const ser = chart.series[i];
+				if (!ser.dLbls) {
+					ser.setDLbls(new AscFormat.CDLbls());
+				}
+				builder_MergeObjectDefaultTextPr(ser.dLbls, textPr, drawingDocument);
+
+				const labelArray = ser.dLbls.dLbl;
+				for (let j = 0; j < labelArray.length; ++j) {
+					const dLbl = labelArray[j];
+					if (dLbl) {
+						if (ser.dLbls.txPr && !dLbl.txPr) {
+							dLbl.setTxPr(ser.dLbls.txPr.createDuplicate());
 						}
-						var dLbl = ser.dLbls && ser.dLbls.findDLblByIdx(nPointIndex);
-						if (!dLbl) {
-							dLbl = new AscFormat.CDLbl();
-							dLbl.setIdx(nPointIndex);
-							if (ser.dLbls.txPr) {
-								dLbl.merge(ser.dLbls);
-							}
-							ser.dLbls.addDLbl(dLbl);
-						}
-						dLbl.setSeparator(",");
-						dLbl.setShowSerName(true == bShowSerName);
-						dLbl.setShowCatName(true == bShowCatName);
-						dLbl.setShowVal(true == bShowVal);
-						dLbl.setShowLegendKey(false);
-						if (bPieChart) {
-							dLbl.setShowPercent(true === bShowPerecent);
-						}
-						dLbl.setShowBubbleSize(false);
+						builder_MergeObjectDefaultTextPr(dLbl, textPr, drawingDocument);
 					}
 				}
 			}
+
+			chartSpace.handleUpdateDataLabels();
+			return true;
 		}
 
-		function builder_SetShowDataLabels(oChartSpace, bShowSerName, bShowCatName, bShowVal, bShowPerecent) {
-			if (oChartSpace && oChartSpace.chart && oChartSpace.chart.plotArea && oChartSpace.chart.plotArea.charts[0]) {
-				var oChart = oChartSpace.chart.plotArea.charts[0];
-				var bPieChart = oChart.getObjectType() === AscDFH.historyitem_type_PieChart || oChart.getObjectType() === AscDFH.historyitem_type_DoughnutChart;
-				if (false == bShowSerName && false == bShowCatName && false == bShowVal && (bPieChart && bShowPerecent === false)) {
-					if (oChart.dLbls) {
-						oChart.setDLbls(null);
+		function builder_SetPointDataLabelTextPr(chartSpace, seriesIndex, pointIndex, textPr) {
+			const chart = (
+				chartSpace &&
+				chartSpace.chart &&
+				chartSpace.chart.plotArea &&
+				chartSpace.chart.plotArea.charts[0]
+			);
+			if (!chart) {
+				return false;
+			}
+
+			const ser = chart.series[seriesIndex];
+			if (!ser) {
+				return false;
+			}
+
+			if (!ser.dLbls) {
+				const newDLbls = chart.dLbls ? chart.dLbls.createDuplicate() : new AscFormat.CDLbls();
+				ser.setDLbls(newDLbls);
+			}
+
+			let dLbl = ser.dLbls.findDLblByIdx(pointIndex);
+			if (!dLbl) {
+				dLbl = new AscFormat.CDLbl();
+				dLbl.setIdx(pointIndex);
+				if (ser.dLbls.txPr) {
+					dLbl.merge(ser.dLbls);
+				}
+				ser.dLbls.addDLbl(dLbl);
+			}
+
+			const result = builder_MergeObjectDefaultTextPr(dLbl, textPr, chartSpace.getDrawingDocument());
+			if (result) {
+				chartSpace.handleUpdateDataLabels();
+			}
+			return result;
+		}
+
+		function builder_SetShowPointDataLabel(oChartSpace, nSeriesIndex, nPointIndex, bShowSerName, bShowCatName, bShowVal, bShowPercent) {
+			const chart = (
+				oChartSpace &&
+				oChartSpace.chart &&
+				oChartSpace.chart.plotArea &&
+				oChartSpace.chart.plotArea.charts[0]
+			);
+			if (!chart) {
+				return;
+			}
+
+			const objectType = chart.getObjectType();
+			const isCircleChart = (
+				objectType === AscDFH.historyitem_type_PieChart ||
+				objectType === AscDFH.historyitem_type_DoughnutChart
+			);
+
+			const ser = chart.series[nSeriesIndex];
+			if (!ser) {
+				return;
+			}
+
+			let bNewSerDLbls = false;
+			if (!ser.dLbls) {
+				if (chart.dLbls) {
+					ser.setDLbls(chart.dLbls.createDuplicate());
+				} else {
+					ser.setDLbls(new AscFormat.CDLbls());
+					ser.dLbls.setSeparator(",");
+					ser.dLbls.setShowSerName(false);
+					ser.dLbls.setShowCatName(false);
+					ser.dLbls.setShowVal(false);
+					ser.dLbls.setShowLegendKey(false);
+					if (isCircleChart) {
+						ser.dLbls.setShowPercent(false);
+					}
+					ser.dLbls.setShowBubbleSize(false);
+					bNewSerDLbls = true;
+				}
+			}
+			if (bNewSerDLbls) {
+				builder_ApplyChartStyleToElement(oChartSpace, ser.dLbls);
+			}
+
+			let dLbl = ser.dLbls && ser.dLbls.findDLblByIdx(nPointIndex);
+			let bNewDLbl = false;
+			if (!dLbl) {
+				dLbl = new AscFormat.CDLbl();
+				dLbl.setIdx(nPointIndex);
+				if (ser.dLbls.txPr) {
+					dLbl.merge(ser.dLbls);
+				}
+				ser.dLbls.addDLbl(dLbl);
+				bNewDLbl = true;
+			}
+			if (bNewDLbl) {
+				builder_ApplyChartStyleToElement(oChartSpace, dLbl);
+			}
+
+			dLbl.setSeparator(",");
+			dLbl.setShowSerName(true === bShowSerName);
+			dLbl.setShowCatName(true === bShowCatName);
+			dLbl.setShowVal(true === bShowVal);
+			dLbl.setShowLegendKey(false);
+			if (isCircleChart) {
+				dLbl.setShowPercent(true === bShowPercent);
+			}
+			dLbl.setShowBubbleSize(false);
+		}
+
+		function builder_SetShowDataLabels(chartSpace, bShowSerName, bShowCatName, bShowVal, bShowPercent) {
+			const chart = (
+				chartSpace &&
+				chartSpace.chart &&
+				chartSpace.chart.plotArea &&
+				chartSpace.chart.plotArea.charts[0]
+			);
+			if (!chart) {
+				return;
+			}
+
+			const objectType = chart.getObjectType();
+			const isCircleChart = (
+				objectType === AscDFH.historyitem_type_PieChart ||
+				objectType === AscDFH.historyitem_type_DoughnutChart
+			);
+
+			const clearDataLabels = (
+				bShowSerName === false &&
+				bShowCatName === false &&
+				bShowVal === false &&
+				(!isCircleChart || bShowPercent === false)
+			);
+			if (clearDataLabels) {
+				if (chart.dLbls) {
+					chart.setDLbls(null);
+				}
+				for (let i = 0; i < chart.series.length; ++i) {
+					if (chart.series[i].dLbls) {
+						chart.series[i].setDLbls(null);
 					}
 				}
-				if (!oChart.dLbls) {
-					oChart.setDLbls(new AscFormat.CDLbls());
-				}
-				oChart.dLbls.setSeparator(",");
-				oChart.dLbls.setShowSerName(true == bShowSerName);
-				oChart.dLbls.setShowCatName(true == bShowCatName);
-				oChart.dLbls.setShowVal(true == bShowVal);
-				oChart.dLbls.setShowLegendKey(false);
-				if (bPieChart) {
-					oChart.dLbls.setShowPercent(true === bShowPerecent);
-				}
+				return;
+			}
 
-				oChart.dLbls.setShowBubbleSize(false);
+			let bNewChartDLbls = false;
+			if (!chart.dLbls) {
+				chart.setDLbls(new AscFormat.CDLbls());
+				bNewChartDLbls = true;
+			}
+
+			chart.dLbls.setSeparator(',');
+			chart.dLbls.setShowSerName(true === bShowSerName);
+			chart.dLbls.setShowCatName(true === bShowCatName);
+			chart.dLbls.setShowVal(true === bShowVal);
+			chart.dLbls.setShowLegendKey(false);
+			if (isCircleChart) {
+				chart.dLbls.setShowPercent(true === bShowPercent);
+			}
+			chart.dLbls.setShowBubbleSize(false);
+			if (bNewChartDLbls) {
+				builder_ApplyChartStyleToElement(chartSpace, chart.dLbls);
+			}
+
+			for (let i = 0; i < chart.series.length; ++i) {
+				const ser = chart.series[i];
+				if (ser.dLbls) {
+					ser.dLbls.setShowSerName(true === bShowSerName);
+					ser.dLbls.setShowCatName(true === bShowCatName);
+					ser.dLbls.setShowVal(true === bShowVal);
+					ser.dLbls.setShowLegendKey(false);
+					if (isCircleChart) {
+						ser.dLbls.setShowPercent(true === bShowPercent);
+					}
+					ser.dLbls.setShowBubbleSize(false);
+				}
 			}
 		}
 
@@ -20596,6 +20703,7 @@
 
 		window['AscFormat'].builder_CreateShape = builder_CreateShape;
 		window['AscFormat'].builder_CreateChart = builder_CreateChart;
+		window['AscFormat'].applyChartStyle = applyChartStyle;
 		window['AscFormat'].builder_CreateGroup = builder_CreateGroup;
 		window['AscFormat'].builder_CreateSchemeColor = builder_CreateSchemeColor;
 		window['AscFormat'].builder_CreatePresetColor = builder_CreatePresetColor;
@@ -20629,6 +20737,8 @@
 		window['AscFormat'].builder_SetHorAxisFontSize = builder_SetHorAxisFontSize;
 		window['AscFormat'].builder_SetVerAxisFontSize = builder_SetVerAxisFontSize;
 		window['AscFormat'].builder_SetShowPointDataLabel = builder_SetShowPointDataLabel;
+		window['AscFormat'].builder_SetDataLabelsTextPr = builder_SetDataLabelsTextPr;
+		window['AscFormat'].builder_SetPointDataLabelTextPr = builder_SetPointDataLabelTextPr;
 
 
 		window['AscFormat'].Ax_Counter = Ax_Counter;
@@ -20646,7 +20756,7 @@
 		window['AscFormat'].LineEndSize = LineEndSize;
 		window['AscFormat'].LineJoinType = LineJoinType;
 
-//типы плейсхолдеров
+//placeholder types
 		window['AscFormat']["phType_body"] = window['AscFormat'].phType_body = 0;
 		window['AscFormat']["phType_chart"] = window['AscFormat'].phType_chart = 1;
 		window['AscFormat']["phType_clipArt"] = window['AscFormat'].phType_clipArt = 2;
@@ -20846,6 +20956,7 @@
 		window['AscFormat'].CLR_IDX_MAP = CLR_IDX_MAP;
 		window['AscFormat'].MAP_AUTONUM_TYPES = MAP_AUTONUM_TYPES;
 		window['AscFormat'].CLR_NAME_MAP = CLR_NAME_MAP;
+		window['AscFormat'].map_prst_color = map_prst_color;
 		window['AscFormat'].LINE_PRESETS_MAP = LINE_PRESETS_MAP;
 		window['AscFormat'].OBJECT_MORPH_MARKER = OBJECT_MORPH_MARKER;
 

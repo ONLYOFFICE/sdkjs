@@ -1,33 +1,36 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -39,25 +42,25 @@
 	/**
 	 * 1st version:
 	 *
-	 * 0) Вводим текст - произносим его. Copy/Paste не произносим.
+	 * 0) Enter text - speak it. Do not speak Copy/Paste.
 	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.Text, "a");
-	 * 1) Ходим курсором по тексту - произносим следующую а курсором букву. Если пробел - присылаем пустой текст.
+	 * 1) Move cursor through text - speak the next letter after the cursor. If space - send empty text.
 	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.Text, "a");
-	 * 2) Ходим по тексту по словам - произносим следующее за курсором слово. Если конец - посылаем пустой текст.
+	 * 2) Move through text by words - speak the next word after the cursor. If end - send empty text.
 	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.Text, "hello");
-	 * 3) Селект/УменьшениеСелета по клавиатуре/конец селекта мышью - произносится изменение в селекте (новый текст/тот что ушел из селекта).
-	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.TextSelected, { text: "текст", isBefore: false });
-	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.TextUnselected, { text: "текст", isBefore: false });
-	 * 4) Селект автофигуры/диаграммы/картинки/...
-	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.DrawingSelected, { altText: "текст" });
-	 * 5) Селект слайда
+	 * 3) Selection/Reduce selection by keyboard/end selection with mouse - speak selection change (new text/text that left the selection).
+	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.TextSelected, { text: "text", isBefore: false });
+	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.TextUnselected, { text: "text", isBefore: false });
+	 * 4) Select autoshape/chart/image/...
+	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.DrawingSelected, { altText: "text" });
+	 * 5) Select slide
 	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.SlideSelected, { num: 1 });
-	 * 6) Ходим по ячейкам в Cell
+	 * 6) Navigate through cells in Cell
 	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.CellSelected, { text: "cell value", cell: "A1" });
-	 * 7) Селект/УменьшениеСелета по клавиатуре/конец селекта мышью - смотрим,
-	 * если +/- одна ячейка, то используем CellRangeSelectedChangeOne/CellRangeUnselectedChangeOne
-	 * если нет - то CellRangeSelected/CellRangeUnselected
-	 * 8) Ходим по листам - даем информацию о нем
+	 * 7) Selection/Reduce selection by keyboard/end selection with mouse - check,
+	 * if +/- one cell, use CellRangeSelectedChangeOne/CellRangeUnselectedChangeOne
+	 * if not - use CellRangeSelected/CellRangeUnselected
+	 * 8) Navigate through sheets - provide information about it
 	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.SheetSelected, { ... });
 	 *
 	 */
@@ -590,7 +593,7 @@
 		{
 			_t.isAction = false;
 			_t.updateState();
-			// TODO: Если нужно, то добавить описание действия
+			// TODO: If needed, add action description
 		};
 		
 		this.onBeforeKeyDown = function()
@@ -613,7 +616,7 @@
 		{
 			_t.isApplyChanges = false;
 			_t.updateState();
-			// TODO: Если дополнительно сообщить о совместке, то добавить тут
+			// TODO: If additional collaboration notification is needed, add it here
 		};
 		
 		this.onBeforeUndoRedo = function()
@@ -626,7 +629,7 @@
 			_t.isUndoRedo = false;
 			_t.handleSpeechDescription({type: SpeakerActionType.undoRedo});
 			_t.updateState();
-			// TODO: Если дополнительно сообщить об Undo/Redo, то добавить тут
+			// TODO: If additional Undo/Redo notification is needed, add it here
 		};
 
 		this.onActiveSheetChanged = function(index)

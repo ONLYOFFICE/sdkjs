@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 (function (window)
@@ -56,7 +59,7 @@
 		this.m_oCurrentPara = null;
 
 		this.m_oPrimaryTextColor = new AscCommonWord.CDocumentColor(0, 0, 0);
-		// для словесного текста используем цвет контрастнее
+		// use a more contrasting color for word text
 		this.m_oSecondaryTextColor = new AscCommonWord.CDocumentColor(121, 121, 121);
 		this.m_oSecondaryLineTextColor = new AscCommonWord.CDocumentColor(203, 203, 203);
 		this.m_oBackgroundColor = new AscCommonWord.CDocumentColor(255, 255, 255);
@@ -70,7 +73,7 @@
 	{
 		oTextPr.VertAlign  = undefined;
 		oTextPr.RStyle     = undefined;
-		oTextPr.Position   = undefined; // Смещение по Y
+		oTextPr.Position   = undefined; // Y offset
 
 		oTextPr.BoldCS     = undefined;
 		oTextPr.ItalicCS   = undefined;
@@ -315,7 +318,7 @@
 		let nBackTextWidth = 0;
 		if (nNumberingTextWidth !== 0)
 		{
-			nBackTextWidth = nNumberingTextWidth + 4; // 4 - чтобы линия никогда не была 'совсем рядом'
+			nBackTextWidth = nNumberingTextWidth + 4; // 4 - so that the line is never 'too close'
 			if (isRtl)
 				cleanX -= 4;
 			
@@ -331,7 +334,7 @@
 		this.cleanParagraphField(oGraphics, cleanX * AscCommon.g_dKoef_pix_to_mm, (nY - nLineHeight) * AscCommon.g_dKoef_pix_to_mm, (nBackTextWidth + 2) * AscCommon.g_dKoef_pix_to_mm, (nLineHeight + (nLineHeight >> 1)) * AscCommon.g_dKoef_pix_to_mm);
 		this.drawParagraph(oGraphics, oParagraph, nXOffset, nYOffset);
 
-		// рисуем текст вместо черты текста
+		// draw text instead of text line
 		this.drawStyleText(oGraphics, oParagraphTextOptions, isRtl ? nXOffset : nXOffset + nBackTextWidth, nY, nLineHeight, oTextPr);
 	};
 
@@ -533,7 +536,7 @@
 		else
 		{
 			const nMaxFontSize = nHeight_px * this.m_nSingleBulletFontSizeCoefficient;
-			// для буллетов решено не уменьшать их превью, как и в word
+			// for bullets, we decided not to reduce their preview, same as in Word
 			//const oFitInformation = this.getInformationWithFitFontSize(oLvl, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm, nMaxFontSize, nMaxFontSize);
 			//const oFitTextPr = oFitInformation.textPr;
 			const oTextPr = oLvl.GetTextPr();
@@ -600,7 +603,7 @@
 			AscCommon.g_oTextMeasurer.SetFontSlot(nFontSlot, 1);
 			const oInfo = AscCommon.g_oTextMeasurer.Measure2Code(nValue);
 
-			// в ворде крайние пробелы в превью буллетов прижимаются к глифу, а не к ширине символа
+			// in Word, edge spaces in bullet preview align to the glyph, not to the character width
 			if (!bFirstGlyphSymbol)
 			{
 				if (oInfo.WidthG)
@@ -642,7 +645,7 @@
 
 	CBulletPreviewDrawer.prototype.getXYForCenterPosition = function (oLvl, nWidth, nHeight)
 	{
-		// Здесь будем считать позицию отрисовки
+		// Here we calculate the drawing position
 		const sText = oLvl.GetDrawingContent([oLvl], 0, undefined, this.m_oLang, oLvl.IsLegalStyle());
 		if (typeof sText !== 'string') return;
 		const oTextPr = oLvl.GetTextPr().Copy();
@@ -673,9 +676,9 @@
 
 		const nOffsetBase = 4;
 		const nLineWidth = 2;
-		// считаем расстояние между линиями
+		// calculate distance between lines
 		const nLineDistance = Math.floor(((nHeight_px - (nOffsetBase << 2)) - nLineWidth * nCountOfLines) / nCountOfLines);
-		// убираем погрешность в offset
+		// remove error in offset
 		const nOffset = (nHeight_px - (nLineWidth * nCountOfLines + nLineDistance * nCountOfLines)) >> 1;
 
 		const nTextBaseOffsetX = nOffset + Math.floor(2.25 * AscCommon.g_dKoef_mm_to_pix);
@@ -903,7 +906,7 @@
 			const nOffsetBase = 5;
 			const nLineWidth = 2;
 
-			// посчитаем нужные переменные для одного canvas
+			// calculate required variables for one canvas
 			let sDivId = this.m_arrId[0];
 			let oCanvas = this.getCanvas(sDivId);
 			const nHeight_px = oCanvas.clientHeight;
@@ -1046,9 +1049,9 @@
 
 		const nOffsetBase = 10;
 		const nLineWidth = 4;
-		// считаем расстояние между линиями
+		// calculate the distance between lines
 		const nLineDistance = Math.floor(((nHeight_px - (nOffsetBase << 1)) - nLineWidth * 10) / 9);
-		// убираем погрешность в offset
+		// remove rounding error in offset
 		const nOffset = (nHeight_px - (nLineWidth * 10 + nLineDistance * 9)) >> 1;
 		const nCurrentLvl = this.m_nCurrentLvl;
 
@@ -1214,7 +1217,7 @@
 		const nLeftOffset2 = nOffsetBase;
 		const nRightOffset2 = nWidth_px - nOffsetBase;
 
-		// Здесь получаем коэффициент, чтобы при открытии всегда видеть отступ текста
+		// Here we get the coefficient so that the text indent is always visible when opening
 		const nScaleCoefficient = this.getScaleCoefficientForSingleLevel(nWidth_px - nOffsetBase * 5);
 		let nNumberPosition = nOffsetBase + ((oCurrentLvl.GetNumberPosition() * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient) << 0);
 		let nIndentSize = nOffsetBase + ((oCurrentLvl.GetIndentSize() * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient) << 0);
@@ -1233,7 +1236,7 @@
 		oGraphics.p_color(this.m_oPrimaryTextColor.r, this.m_oPrimaryTextColor.g, this.m_oPrimaryTextColor.b, 255);
 		let nTextYx = nNumberPosition;
 		let nOffsetTextX;
-		// если при прилегании к правому краю левый край текста упирается в оффсет, то линии текста должны двигаться вправо(это относится ко всем типам прилегания)
+		// if when aligned to the right edge the left text edge hits the offset, then text lines should move right (applies to all alignment types)
 		if ((nTextYx - nMaxTextWidth) < nLeftOffset2)
 		{
 			nTextYx = nLeftOffset2 + nMaxTextWidth;
@@ -1244,7 +1247,7 @@
 
 			const nCurrentAlign = oCurrentLvl.Jc;
 			oCurrentLvl.Jc = AscCommon.align_Left;
-			// считаем позицию отдельно, чтобы нумерация по горизонтали начиналась с одного и того же места
+			// calculate X position separately to ensure a consistent starting point
 			if (nCurrentAlign === AscCommon.align_Right)
 			{
 				nTextYx -= nMaxTextWidth;

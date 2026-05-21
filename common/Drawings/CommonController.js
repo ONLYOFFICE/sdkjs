@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -1957,7 +1960,7 @@
 						if (content && invert_transform_text) {
 							tx = invert_transform_text.TransformPointX(x, y);
 							ty = invert_transform_text.TransformPointY(x, y);
-							if (!this.isSlideShow() && (this.document || (this.drawingObjects.cSld && !(this.noNeedUpdateCursorType === true)))) {
+							if (!this.isSlideShow() && !(this.noNeedUpdateCursorType === true) && (this.document || this.drawingObjects.cSld)) {
 								if (this.document && this.document.IsDocumentEditor() && object instanceof AscFormat.CShape && object.isForm()) {
 									var oForm = object.getInnerForm();
 									if (oForm)
@@ -3425,7 +3428,7 @@
 					//TODO:this.checkSelectedObjectsAndCallback(this.setCellStyleCallBack, [name]);
 				},
 
-				// Увеличение размера шрифта
+				// Increase font size
 				increaseFontSize: function () {
 
 					if (this.checkSelectedObjectsProtectionText()) {
@@ -3435,7 +3438,7 @@
 
 				},
 
-				// Уменьшение размера шрифта
+				// Decrease font size
 				decreaseFontSize: function () {
 					if (this.checkSelectedObjectsProtectionText()) {
 						return;
@@ -5155,7 +5158,7 @@
 				},
 
 				getSeriesDefault: function (type) {
-					// Обновлены тестовые данные для новой диаграммы
+					// Updated test data for new chart
 					var series = [], seria, Cat;
 					var createItem = function (value) {
 						return {numFormatStr: "General", isDateTimeFormat: false, val: value, isHidden: false};
@@ -6513,7 +6516,7 @@
 
 					} else if (oEvent.KeyCode === 88 && bCanEdit && true === bIsCtrl) // Ctrl + X - cut
 					{
-						//не возвращаем true чтобы не было preventDefault
+						//don't return true to avoid preventDefault
 					} else if ((oEvent.KeyCode === 93 && !oEvent.MacCmdKey) || 57351 === oEvent.KeyCode/*in Opera there is such a code*/) // context menu
 					{
 						nRetValue = keydownresult_PreventDefault;
@@ -6542,7 +6545,8 @@
 
 				checkEndAddShape: function () {
 					if (this.checkTrackDrawings()) {
-						this.endTrackNewShape();
+						this.resetTrackState();
+						this.updateOverlay();
 						if (Asc["editor"] && Asc["editor"].wb) {
 							Asc["editor"].asc_endAddShape();
 							var ws = Asc["editor"].wb.getWorksheet();
@@ -7671,6 +7675,14 @@
 				getDrawingPropsFromArray: function (drawings) {
 					const editorId = Asc.editor.getEditorId();
 
+					var horizontal_rule_props = null;
+					if (drawings.length === 1 && drawings[0].isHorizontalRule && drawings[0].isHorizontalRule()) {
+						let oDrawing = drawings[0];
+						let oCurHr = oDrawing.getHorizontalRule();
+						horizontal_rule_props = oCurHr.createDuplicate();
+						horizontal_rule_props._shape = oDrawing;
+					}
+
 					var image_props, shape_props, chart_props, table_props = undefined, new_image_props,
 						new_shape_props, new_chart_props, new_table_props, shape_chart_props, locked;
 					var anim_props = null;
@@ -8300,7 +8312,7 @@
 											chart_props.h = null;
 
 
-										if (chart_props.title !== group_drawing_props.title)
+										if (chart_props.title !== group_drawing_props.chartProps.title)
 											chart_props.title = undefined;
 										if (chart_props.description !== group_drawing_props.chartProps.description)
 											chart_props.description = undefined;
@@ -8397,7 +8409,8 @@
 						hyperlinkProps: hyperlink_properties,
 						shapeChartProps: shape_chart_props,
 						slicerProps: slicer_props,
-						animProps: anim_props
+						animProps: anim_props,
+						horizontalRuleProps: horizontal_rule_props
 					};
 				},
 
@@ -8730,7 +8743,7 @@
 						ascSelectedObjects.push(new AscCommon.asc_CSelectedObject(Asc.c_oAscTypeSelectElement.Image, new Asc.asc_CImgProperty(ret[i])));
 					}
 
-					// Текстовые свойства объекта
+					// Text properties of the object
 					var ParaPr = this.getParagraphParaPr();
 					var TextPr = this.getParagraphTextPr();
 					if (ParaPr && TextPr) {
@@ -9196,7 +9209,7 @@
 						this.setParagraphNumbering(Props.Bullet)
 					}
 
-					// TODO: как только разъединят настройки параграфа и текста переделать тут
+					// TODO: refactor here once paragraph and text settings are separated
 					var TextPr = new CTextPr();
 
 					if (true === Props.Subscript)
@@ -10434,7 +10447,7 @@
 			if (this.m_bIsBreak)
 				return;
 
-			// TODO: нужен другой метод отрисовки!!!
+			// TODO: a different rendering method is needed!!!
 			var _x = this.m_oFullTransform.TransformPointX(x, y);
 			var _y = this.m_oFullTransform.TransformPointY(x, y);
 			this.Bounds.CheckRect(_x, _y, 1, 1);
@@ -10443,7 +10456,7 @@
 		CSlideBoundsChecker.prototype.FillText     = function(x, y, text) { this._checkText(x, y); };
 		CSlideBoundsChecker.prototype.FillTextCode = function(x, y, lUnicode) { this._checkText(x, y); };
 		CSlideBoundsChecker.prototype.t            = function (text, x, y) { this._checkText(x, y); };
-		CSlideBoundsChecker.prototype.tg           = function (gid, x, y) { this._checkText(x, y); };
+		CSlideBoundsChecker.prototype.tg           = function (gid, x, y, advX, advY) { this._checkText(x, y); };
 		CSlideBoundsChecker.prototype.FillText2    = function (x, y, text, cropX, cropW)  { this._checkText(x, y); };
 		CSlideBoundsChecker.prototype.t2           = function(text, x, y, cropX, cropW)  { this._checkText(x, y); };
 
@@ -10489,7 +10502,7 @@
 			this.Bounds.CheckPoint(_x4, _y4);
 		};
 
-		// мега крутые функции для таблиц
+		// super cool functions for tables
 		CSlideBoundsChecker.prototype.drawHorLineExt = function(align, y, x, r, penW, leftMW, rightMW) {
 			this.drawHorLine(align, y, x + leftMW, r + rightMW);
 		};
@@ -10697,7 +10710,7 @@
 				var loader = AscCommon.g_font_loader;
 				var fontinfo = g_fontApplication.GetFontInfo("Cambria Math");
 				if (undefined === fontinfo) {
-					// нет Cambria Math - нет и формул
+					// no Cambria Math - no formulas
 					return;
 				}
 

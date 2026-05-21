@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -40,7 +43,7 @@
 	// Import
 	var AscBrowser               = AscCommon.AscBrowser;
 
-	// константы для мыши
+	// mouse constants
 	var g_mouse_event_type_down  = 0;
 	var g_mouse_event_type_move  = 1;
 	var g_mouse_event_type_up    = 2;
@@ -109,26 +112,26 @@
 
 	function CMouseEventHandler()
 	{
-		this.X = 0;                            // позиция курсора X
-		this.Y = 0;                            // позиция курсора Y
+		this.X = 0;                            // cursor position X
+		this.Y = 0;                            // cursor position Y
 
-		this.Button = g_mouse_button_left;          // кнопка мыши
+		this.Button = g_mouse_button_left;          // mouse button
 		this.ButtonOverride = -1;
-		this.Type   = g_mouse_event_type_move;      // тип евента
+		this.Type   = g_mouse_event_type_move;      // event type
 
-		this.AltKey   = false;                        // нажата ли кнопка alt
-		this.CtrlKey  = false;                        // нажата ли кнопка ctrl
-		this.ShiftKey = false;                        // нажата ли кнопка shift
+		this.AltKey   = false;                        // is alt key pressed
+		this.CtrlKey  = false;                        // is ctrl key pressed
+		this.ShiftKey = false;                        // is shift key pressed
 
-		this.Sender = null;                         // от какого html элемента пришел евент
+		this.Sender = null;                         // which html element the event came from
 
-		this.LastClickTime = -1;                       // время последнего mousedown
-		this.ClickCount    = 0;                        // количество кликов
+		this.LastClickTime = -1;                       // time of the last mousedown
+		this.ClickCount    = 0;                        // number of clicks
 
 		this.WheelDelta = 0;
 
-		// координаты мышки при предыдущем mousedown (для mousemove)
-		this.IsPressed = false;                        // была ли зажата кнопка
+		// mouse coordinates at previous mousedown (for mousemove)
+		this.IsPressed = false;                        // was the button pressed
 		this.LastX     = 0;
 		this.LastY     = 0;
 
@@ -211,13 +214,13 @@
 
 	function CKeyboardEvent()
 	{
-		this.AltKey   = false;                        // нажата ли кнопка alt
-		this.CtrlKey  = false;                        // нажата ли кнопка ctrl
-		this.ShiftKey = false;                        // нажата ли кнопка shift
+		this.AltKey   = false;                        // is alt key pressed
+		this.CtrlKey  = false;                        // is ctrl key pressed
+		this.ShiftKey = false;                        // is shift key pressed
 		this.MacCmdKey = false;
 		this.AltGr    = false;
 
-		this.Sender = null;                         // от какого html элемента пришел евент
+		this.Sender = null;                         // which html element the event came from
 
 		this.CharCode = 0;
 		this.KeyCode  = 0;
@@ -297,7 +300,7 @@
 
 	function check_MouseMoveEvent(e)
 	{
-		// если мышь залочена, то евент придет от окна.
+		// if the mouse is locked, the event will come from the window.
 		if (e.IsLocked && !e.IsLockedEvent)
 			return;
 
@@ -609,10 +612,10 @@
 			{
 				if (global_mouseEvent.Sender.id != oThis.Control.HtmlElement.id)
 				{
-					// это не залоченная кнопка
+					// this is not the locked button
 					return;
 				}
-				// залоченная кнопка
+				// locked button
 				oThis.Control.HtmlElement.style.backgroundPosition = oThis.state_down;
 				return;
 			}
@@ -626,10 +629,10 @@
 			{
 				if (global_mouseEvent.Sender.id != oThis.Control.HtmlElement.id)
 				{
-					// это не залоченная кнопка
+					// this is not the locked button
 					return;
 				}
-				// залоченная кнопка
+				// locked button
 				oThis.Control.HtmlElement.style.backgroundPosition = oThis.state_over;
 				return;
 			}
@@ -647,10 +650,10 @@
 			{
 				if (global_mouseEvent.Sender.id != oThis.Control.HtmlElement.id)
 				{
-					// это не залоченная кнопка
+					// this is not the locked button
 					return;
 				}
-				// залоченная кнопка
+				// locked button
 				oThis.Control.HtmlElement.style.backgroundPosition = oThis.state_down;
 				return;
 			}
@@ -685,7 +688,7 @@
 			global_mouseEvent.buttonObject = null;
 		}
 
-		// теперь touch
+		// now touch
 		this.Control.HtmlElement.ontouchstart = function(e)
 		{
 			oThis.Control.HtmlElement.onmousedown(e.touches[0]);

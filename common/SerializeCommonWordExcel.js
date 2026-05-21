@@ -1,39 +1,42 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
 (function(window, undefined){
 
-//зависимости
+//dependencies
 //stream
 //memory
 //c_oAscChartType
@@ -192,7 +195,7 @@ BinaryCommonWriter.prototype.WriteItemWithLength = function(fWrite)
 };
 BinaryCommonWriter.prototype.WriteItemWithLengthStart = function()
 {
-    //Запоминаем позицию чтобы в конце записать туда длину
+    //Remember position to write length at end
     var nStart = this.memory.GetCurPosition();
     this.memory.Skip(4);
     return nStart;
@@ -469,7 +472,7 @@ Binary_CommonReader.prototype.ReadTable = function(fReadContent)
     if(c_oSerConstants.ReadOk != res)
         return res;
     var stLen = this.stream.GetULongLE();
-    //Смотрим есть ли данные под всю таблицу в дальнейшем спокойно пользуемся get функциями
+    //Check whether whole table has enough data, then safely use get functions
     res = this.stream.EnterFrame(stLen);
     if(c_oSerConstants.ReadOk != res)
         return res;
@@ -1048,7 +1051,7 @@ var g_oCellAddressUtils = new CellAddressUtils();
 		this.col = Math.max(0, Math.min(this.col - 1, gc_nMaxCol0));
 	};
 	CellBase.prototype.toRefA1 = function (row, col) {
-		//TODO функция неверно работает, если кол-во столбцов превышает 26
+		//TODO function works incorrectly if column count exceeds 26
 		var res = '';
 		do {
 			res += String.fromCharCode(col % 26 + 65);
@@ -1073,20 +1076,20 @@ function CellAddress(){
 	this.bIsRow = false;
 	this.colLetter = null;
 	if(1 == argc){
-		//Сразу пришло ID вида "A1"
+		//ID in "A1" format passed directly
 		this.id = arguments[0].toUpperCase();
 		this._invalidCoord = true;
 		this._checkId();
 	}
 	else if(2 == argc){
-		//адрес вида (1,1) = "A1". Внутренний формат начинается с 1
+		//address in format (1,1) = "A1". Internal format starts at 1
 		this.row = arguments[0];
 		this.col = arguments[1];
 		this._checkCoord();
 		this._invalidId = true;
 	}
 	else if(3 == argc){
-		//тоже самое что и 2 аргумента, только 0-based
+		//same as 2 arguments, but 0-based
 		this.row = arguments[0] + 1;
 		this.col = arguments[1] + 1;
 		this._checkCoord();
@@ -1118,10 +1121,10 @@ CellAddress.prototype._recalculate=function(bCoord, bId){
 	if(bCoord && this._invalidCoord){
 		this._invalidCoord = false;
 		var sId = this.id;
-		this.row = this.col = 0;//выставляем невалидные значения, чтобы не присваивать их при каждом else
+		this.row = this.col = 0;//set invalid values to avoid assignment in every else branch
 		var indexes = {}, i = -1, indexesCount = 0;
 		while ((i = sId.indexOf("$", i + 1)) != -1) {
-		    indexes[i - indexesCount++] = 1;//отнимаем количество, чтобы индексы указывали на следующий после них символ после удаления $
+		    indexes[i - indexesCount++] = 1;//subtract count so indexes point to next character after $ removal
 		}
 		if (indexesCount <= 2) {
 		    if (indexesCount > 0)

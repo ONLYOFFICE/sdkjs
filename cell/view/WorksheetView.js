@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -117,11 +120,11 @@
      */
     var kCurDefault = "default";
     var kCurCorner = "pointer";
-    // Курсор для автозаполнения
+    // Cursor for autofill
     var kCurFillHandle = "crosshair";
-    // Курсор для гиперссылки
+    // Cursor for hyperlink
     var kCurHyperlink = "pointer";
-    // Курсор для перемещения области выделения
+    // Cursor for moving selection area
     var kCurMove = "move";
     var kCurSEResize = /*window.rightToleft ? "sw-resize" :*/ "se-resize";
     var kCurNEResize = "ne-resize";
@@ -168,8 +171,8 @@ function isAllowPasteLink(pastedWb) {
 		return sameDoc || (_core.contentStatus && !_core.category && window["AscDesktopEditor"]["LocalFileGetSaved"]());
 	}
 	if (_core.contentStatus && _core.category) {
-		//работаем внутри одного портала
-		//если разные документу, то вставляем ссылку на другой документ, если один и тот же, то вставляем обычную ссылку
+		//working within the same portal
+		//if different documents, insert link to another document, if the same, insert regular link
 		return api.DocInfo && api.DocInfo.ReferenceData && _core.category === api.DocInfo.ReferenceData["instanceId"];
 	}
 
@@ -263,7 +266,7 @@ function isAllowPasteLink(pastedWb) {
 
 	function CacheRow() {
 		this.top = 0;
-		this.height = 0;			// Высота с точностью до 1 px
+		this.height = 0;			// Height with 1 px precision
 		this.descender = 0;
 
 		this._heightForPrint = null;
@@ -274,7 +277,7 @@ function isAllowPasteLink(pastedWb) {
 	};
 
     function CacheElement() {
-        this.columnsWithText = {};							// Колонки, в которых есть текст
+        this.columnsWithText = {};							// Columns that contain text
         this.columns = {};
         this.erased = {};
         return this;
@@ -420,7 +423,7 @@ function isAllowPasteLink(pastedWb) {
      * @param {AscCommonExcel.asc_CHandlersList} handlers  Event handlers
      * @param {Object} buffers    DrawingContext + Overlay
      * @param {AscCommonExcel.StringRender} stringRender    StringRender
-     * @param {Number} maxDigitWidth    Максимальный размер цифры
+     * @param {Number} maxDigitWidth    Maximum digit width
      * @param {CCollaborativeEditing} collaborativeEditing
      * @param {Object} settings  Settings
      *
@@ -443,19 +446,19 @@ function isAllowPasteLink(pastedWb) {
 
 		this.stringRender = stringRender;
 
-		// Флаг, сигнализирует о том, что мы сделали resize, но это не активный лист (поэтому как только будем показывать, нужно перерисовать и пересчитать кеш)
+		// Flag indicating that we did resize, but this is not the active sheet (so when showing, need to redraw and recalculate cache)
 		this.updateResize = false;
-		// Флаг, сигнализирует о том, что мы сменили zoom, но это не активный лист (поэтому как только будем показывать, нужно перерисовать и пересчитать кеш)
+		// Flag indicating that we changed zoom, but this is not the active sheet (so when showing, need to redraw and recalculate cache)
 		this.updateZoom = false;
 		this.isZooming = false;
-		// ToDo Флаг-заглушка, для того, чтобы на mobile не было изменения высоты строк при zoom (по правильному высота просто не должна меняться)
+		// ToDo Stub flag to prevent row height changes on mobile during zoom (ideally height should not change)
 		this.notUpdateRowHeight = false;
 
 		this.cache = new Cache();
 
 		//---member declaration---
-		// Максимальная ширина числа из 0,1,2...,9, померенная в нормальном шрифте(дефалтовый для книги) в px(целое)
-		// Ecma-376 Office Open XML Part 1, пункт 18.3.1.13
+		// Maximum width of digit from 0,1,2...,9, measured in normal font (default for workbook) in px (integer)
+		// Ecma-376 Office Open XML Part 1, section 18.3.1.13
 		this.maxDigitWidth = maxDigitWidth;
 
 		this.defaultColWidthChars = 0;
@@ -467,7 +470,7 @@ function isAllowPasteLink(pastedWb) {
 		this.headersTop = 0;
 		this.headersWidth = 0;
 		this.headersHeight = 0;
-		this.headersHeightByFont = 0;	// Размер по шрифту (размер без скрытия заголовков)
+		this.headersHeightByFont = 0;	// Size by font (size without hiding headers)
 		this.groupWidth = 0;
 		this.groupHeight = 0;
 		this.cellsLeft = 0;
@@ -477,29 +480,29 @@ function isAllowPasteLink(pastedWb) {
 
 		this.highlightedCol = -1;
 		this.highlightedRow = -1;
-		this.topLeftFrozenCell = null;	// Верхняя ячейка для закрепления диапазона
+		this.topLeftFrozenCell = null;	// Top cell for freezing range
 		this.visibleRange = new asc_Range(0, 0, 0, 0);
 		this.isChanged = false;
 		this.isChartAreaEditMode = false;
 		this.lockDraw = false;
-		this.isSelectOnShape = false;	// Выделен shape
+		this.isSelectOnShape = false;	// Shape is selected
 
 		this.startCellMoveResizeRange = null;
 		this.startCellMoveResizeRange2 = null;
 		this.moveRangeDrawingObjectTo = null;
 
-		// Координаты ячейки начала перемещения диапазона
+		// Coordinates of the cell at the start of range movement
 		this.startCellMoveRange = null;
-		// Дипазон перемещения
+		// Movement range
 		this.activeMoveRange = null;
 		// Range for drag and drop
 		this.dragAndDropRange = null;
 		// Range fillHandle
 		this.activeFillHandle = null;
 		this.resizeTableIndex = null;
-		// Горизонтальное (0) или вертикальное (1) направление автозаполнения
+		// Horizontal (0) or vertical (1) autofill direction
 		this.fillHandleDirection = -1;
-		// Зона автозаполнения
+		// Autofill zone
 		this.fillHandleArea = -1;
 		this.nRowsCount = 0;
 		this.nColsCount = 0;
@@ -526,19 +529,19 @@ function isAllowPasteLink(pastedWb) {
 
 		this.copyCutRange = null;
 
-		this.usePrintScale = false;//флаг нужен для того, чтобы возвращался scale только в случае печати, а при отрисовке, допустим сектки, он был равен 1
+		this.usePrintScale = false;//flag needed so that scale is returned only for printing, while for drawing (e.g. grid) it equals 1
 
 		this.arrRowGroups = null;
 		this.arrColGroups = null;
 		this.clickedGroupButton = null;
-		this.ignoreGroupSize = null;//для печати не нужно учитывать отступы групп
+		this.ignoreGroupSize = null;//for printing, group indents should not be considered
 
-		//ифомарция о залоченности нового добавленного правила
-		//TODO пока сюда добавляю, пересмотреть!
+		//information about the lock status of a newly added rule
+		//TODO adding here for now, review later!
 		this._lockAddNewRule = null;
 		this._lockAddProtectedRange = null;
 
-		//добавляю константы для расчётов без зума
+		//adding constants for calculations without zoom
 		this.maxDigitWidthForPrint = null;
 		this.defaultColWidthPxForPrint = null;
 
@@ -591,10 +594,10 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 	WorksheetView.prototype._initWorksheetDefaultWidth = function () {
-		// Теперь рассчитываем число px
+		// Now calculate the number of px
 		this.defaultColWidthChars = this.model.charCountToModelColWidth(this.model.getBaseColWidth());
 		this.defaultColWidthPx = this.model.modelColWidthToColWidth(this.defaultColWidthChars);
-		// Делаем кратным 8 (http://support.microsoft.com/kb/214123)
+		// Make it multiple of 8 (http://support.microsoft.com/kb/214123)
 		this.defaultColWidthPx = asc_ceil(this.defaultColWidthPx / 8) * 8;
 		this.defaultColWidthChars = this.model.colWidthToCharCount(this.defaultColWidthPx);
 		AscCommonExcel.oDefaultMetrics.ColWidthChars = this.model.charCountToModelColWidth(this.defaultColWidthChars);
@@ -603,7 +606,7 @@ function isAllowPasteLink(pastedWb) {
 			this.defaultColWidthPx = this.model.modelColWidthToColWidth(defaultColWidth);
 		}
 
-		// ToDo разобраться со значениями
+		// ToDo clarify the values
 		this._setDefaultFont(undefined);
 		var tm = this._roundTextMetrics(this.stringRender.measureString("A"));
 		this.headersHeightByFont = tm.height;
@@ -622,8 +625,8 @@ function isAllowPasteLink(pastedWb) {
 		// ToDo refactoring
 		this.model.setDefaultHeight(AscCommonExcel.oDefaultMetrics.RowHeight);
 
-		// Инициализируем число колонок и строк (при открытии). Причем нужно поставить на 1 больше,
-		// чтобы могли показать последнюю строку/столбец (http://bugzilla.onlyoffice.com/show_bug.cgi?id=23513)
+		// Initialize the number of columns and rows (on open). Need to add 1 more
+		// to be able to show the last row/column (http://bugzilla.onlyoffice.com/show_bug.cgi?id=23513)
 		this._initRowsCount();
 		this._initColsCount();
 
@@ -1232,7 +1235,7 @@ function isAllowPasteLink(pastedWb) {
 			tmp -= 1;
 		}*/
 		let isMobileVersion = this.workbook && this.workbook.Api && this.workbook.Api.isMobileVersion;
-		let row = Math.max(0, i); // Диапазон скрола должен быть меньше количества строк, чтобы не было прибавления строк при перетаскивании бегунка
+		let row = Math.max(0, i); // Scroll range should be less than the number of rows to prevent adding rows when dragging the scrollbar
 		let defaultScrollPxStep = Asc.round(this.getVScrollStep());
 		let beforeVisibleRangeHeight = this._getRowTop(row) - this.cellsTop;
 		if (isMobileVersion || AscCommonExcel.c_oAscScrollType.ScrollInitRowsColsCount & this.scrollType) {
@@ -1282,7 +1285,7 @@ function isAllowPasteLink(pastedWb) {
 			tmp -= 1;
 		}*/
 		let isMobileVersion = this.workbook && this.workbook.Api && this.workbook.Api.isMobileVersion;
-		let col = Math.max(0, i); // Диапазон скрола должен быть меньше количества строк, чтобы не было прибавления строк при перетаскивании бегунка
+		let col = Math.max(0, i); // Scroll range should be less than the number of columns to prevent adding columns when dragging the scrollbar
 		let defaultScrollPxStep = Asc.round(this.getHScrollStep());
 		let beforeVisibleRangeWidth = this._getColLeft(col) - this.cellsLeft + wOffset;
 		if (isMobileVersion || AscCommonExcel.c_oAscScrollType.ScrollInitRowsColsCount & this.scrollType) {
@@ -1315,7 +1318,7 @@ function isAllowPasteLink(pastedWb) {
 		if (gc_nMaxCol === this.nColsCount || this.model.isDefaultWidthHidden()) {
 			tmp -= 1;
 		}
-        return Math.max(0, i - tmp); // Диапазон скрола должен быть меньше количества столбцов, чтобы не было прибавления столбцов при перетаскивании бегунка
+        return Math.max(0, i - tmp); // Scroll range should be less than the number of columns to prevent adding columns when dragging the scrollbar
     };
 
     WorksheetView.prototype.getVerticalScrollRange = function (bCheckEqual) {
@@ -1340,7 +1343,7 @@ function isAllowPasteLink(pastedWb) {
 		if (gc_nMaxRow === this.getCurrentRowsCount() || this.model.isDefaultHeightHidden()) {
 			tmp -= 1;
 		}
-		return Math.max(0, i - tmp); // Диапазон скрола должен быть меньше количества строк, чтобы не было прибавления строк при перетаскивании бегунка
+		return Math.max(0, i - tmp); // Scroll range should be less than the number of rows to prevent adding rows when dragging the scrollbar
     };
 
 	WorksheetView.prototype.getHorizontalScrollMax = function () {
@@ -1399,7 +1402,7 @@ function isAllowPasteLink(pastedWb) {
     };
 
 	WorksheetView.prototype._getRowHeightReal = function (i) {
-		// Реальная высота из файла (может быть не кратна 1 px, в Excel можно выставить через меню строки)
+		// Real height from the file (may not be a multiple of 1 px, can be set in Excel via the row menu)
 		var h = -1;
 		this.model._getRowNoEmptyWithAll(i, function (row) {
 			if (row) {
@@ -1431,7 +1434,7 @@ function isAllowPasteLink(pastedWb) {
         if (col < 0 || col >= this.nColsCount) {
             return null;
         }
-        // С учетом видимой области
+        // Taking into account the visible area
         var offsetX = 0;
 		let frozenOffset = null;
         if (this.topLeftFrozenCell) {
@@ -1461,7 +1464,7 @@ function isAllowPasteLink(pastedWb) {
         if (row < 0 || row >= this.nRowsCount) {
             return null;
         }
-        // С учетом видимой области
+        // Taking into account the visible area
         var offsetY = 0;
 		let frozenOffset = null;
         if (this.topLeftFrozenCell) {
@@ -1504,7 +1507,7 @@ function isAllowPasteLink(pastedWb) {
 		return null;
 	};
 	WorksheetView.prototype._getHeightForPrint = function (i) {
-		//_heightForPrint и defaultRowHeightForPrintPt всегда в пунктах, здесь перевожу в px
+		//_heightForPrint and defaultRowHeightForPrintPt are always in points, here converting to px
 		var height;
 		if (i < this.rows.length) {
 			height = this.rows[i]._heightForPrint !== null ? this.rows[i]._heightForPrint : this.defaultRowHeightForPrintPt;
@@ -1720,7 +1723,7 @@ function isAllowPasteLink(pastedWb) {
     };
 
 
-	// mouseX - это разница стартовых координат от мыши при нажатии и границы
+	// mouseX - difference between mouse start coordinates on click and the border
 	WorksheetView.prototype.changeColumnWidth = function (col, x2, mouseX) {
 		if (this.model.isUserProtectedRangesIntersection(new Asc.Range(col, 0, col, gc_nMaxRow0))) {
 			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
@@ -1734,7 +1737,7 @@ function isAllowPasteLink(pastedWb) {
 		}
     	var viewMode = this.handlers.trigger('getViewMode');
 		var t = this;
-		// Учитываем координаты точки, где мы начали изменение размера
+		// Take into account the coordinates of the point where we started resizing
 		x2 += mouseX;
 
 		var offsetFrozenX = 0;
@@ -1864,7 +1867,7 @@ function isAllowPasteLink(pastedWb) {
 		}
 	};
 
-	// mouseY - это разница стартовых координат от мыши при нажатии и границы
+	// mouseY - difference between mouse start coordinates on click and the border
 	WorksheetView.prototype.changeRowHeight = function (row, y2, mouseY) {
 		if (this.model.isUserProtectedRangesIntersection(new Asc.Range(0, row, gc_nMaxCol0, row))) {
 			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
@@ -1875,7 +1878,7 @@ function isAllowPasteLink(pastedWb) {
 		}
 		var viewMode = this.handlers.trigger('getViewMode');
 		var t = this;
-		// Учитываем координаты точки, где мы начали изменение размера
+		// Take into account the coordinates of the point where we started resizing
 		y2 += mouseY;
 
 		var offsetFrozenY = 0;
@@ -2310,14 +2313,14 @@ function isAllowPasteLink(pastedWb) {
 				arCopy = ar.clone(true);
 
 				if (false === hasNumberInLastColumn && false === hasNumberInLastRow) {
-					// Значений нет ни в последней строке ни в последнем столбце (значит нужно сделать формулы в каждой последней ячейке)
+					// No values in the last row or last column (so we need to create formulas in each last cell)
 					changedRange =
 					  [new asc_Range(hasNumber.arrCols[0], arCopy.r2, hasNumber.arrCols[hasNumber.arrCols.length -
 					  1], arCopy.r2),
 						  new asc_Range(arCopy.c2, hasNumber.arrRows[0], arCopy.c2, hasNumber.arrRows[hasNumber.arrRows.length -
 						  1])];
 					functionAction = function () {
-						// Пройдемся по последней строке
+						// Iterate through the last row
 						for (i = 0; i < hasNumber.arrCols.length; ++i) {
 							c = hasNumber.arrCols[i];
 							cell = t._getVisibleCell(c, arCopy.r2);
@@ -2326,10 +2329,10 @@ function isAllowPasteLink(pastedWb) {
 							}
 							text = (new asc_Range(c, arCopy.r1, c, arCopy.r2 - 1)).getName();
 							val = t.generateAutoCompleteFormula(functionName, text);
-							// ToDo - при вводе формулы в заголовок автофильтра надо писать "0"
+							// ToDo - when entering a formula in an autofilter header, should write "0"
 							cell.setValue(val);
 						}
-						// Пройдемся по последнему столбцу
+						// Iterate through the last column
 						for (i = 0; i < hasNumber.arrRows.length; ++i) {
 							r = hasNumber.arrRows[i];
 							cell = t._getVisibleCell(arCopy.c2, r);
@@ -2340,7 +2343,7 @@ function isAllowPasteLink(pastedWb) {
 							val = t.generateAutoCompleteFormula(functionName, text);
 							cell.setValue(val);
 						}
-						// Значение в правой нижней ячейке
+						// Value in the bottom right cell
 						cell = t._getVisibleCell(arCopy.c2, arCopy.r2);
 						if (!cell.hasMerged()) {
 							text = (new asc_Range(arCopy.c1, arCopy.r2, arCopy.c2 - 1, arCopy.r2)).getName();
@@ -2349,12 +2352,12 @@ function isAllowPasteLink(pastedWb) {
 						}
 					};
 				} else if (true === hasNumberInLastRow && false === hasNumberInLastColumn) {
-					// Есть значения только в последней строке (значит нужно заполнить только последнюю колонку)
+					// Values exist only in the last row (so we only need to fill the last column)
 					changedRange =
 					  new asc_Range(arCopy.c2, hasNumber.arrRows[0], arCopy.c2, hasNumber.arrRows[hasNumber.arrRows.length -
 					  1]);
 					functionAction = function () {
-						// Пройдемся по последнему столбцу
+						// Iterate through the last column
 						for (i = 0; i < hasNumber.arrRows.length; ++i) {
 							r = hasNumber.arrRows[i];
 							cell = t._getVisibleCell(arCopy.c2, r);
@@ -2367,12 +2370,12 @@ function isAllowPasteLink(pastedWb) {
 						}
 					};
 				} else if (false === hasNumberInLastRow && true === hasNumberInLastColumn) {
-					// Есть значения только в последнем столбце (значит нужно заполнить только последнюю строчку)
+					// Values exist only in the last column (so we only need to fill the last row)
 					changedRange =
 					  new asc_Range(hasNumber.arrCols[0], arCopy.r2, hasNumber.arrCols[hasNumber.arrCols.length -
 					  1], arCopy.r2);
 					functionAction = function () {
-						// Пройдемся по последней строке
+						// Iterate through the last row
 						for (i = 0; i < hasNumber.arrCols.length; ++i) {
 							c = hasNumber.arrCols[i];
 							cell = t._getVisibleCell(c, arCopy.r2);
@@ -2385,13 +2388,13 @@ function isAllowPasteLink(pastedWb) {
 						}
 					};
 				} else {
-					// Есть значения и в последнем столбце, и в последней строке, выделенный диапазон по столбцам больше одной ячейки и только в одной строке есть значения
+					// Values exist in both the last column and last row, selected range spans more than one cell column-wise and only one row has values
 					if (1 === hasNumber.arrRows.length && (ar.c2 - ar.c1) > 0) {
 						changedRange = new asc_Range(arCopy.c2, arCopy.r2, arCopy.c2, arCopy.r2);
 						functionAction = function () {
-							// Одна строка или только в последней строке есть значения...
+							// One row or only the last row has values...
 							cell = t._getVisibleCell(arCopy.c2, arCopy.r2);
-							// ToDo вводить в первое свободное место, а не сразу за диапазоном
+							// ToDo insert into the first free place, not immediately after the range
 							text = (new asc_Range(arCopy.c1, arCopy.r2, arCopy.c2 - 1, arCopy.r2)).getName();
 							val = t.generateAutoCompleteFormula(functionName, text);
 							cell.setValue(val);
@@ -2401,11 +2404,11 @@ function isAllowPasteLink(pastedWb) {
 						  new asc_Range(hasNumber.arrCols[0], arCopy.r2, hasNumber.arrCols[hasNumber.arrCols.length -
 						  1], arCopy.r2);
 						functionAction = function () {
-							// Иначе вводим в строку вниз
+							// Otherwise insert into the row below
 							for (i = 0; i < hasNumber.arrCols.length; ++i) {
 								c = hasNumber.arrCols[i];
 								cell = t._getVisibleCell(c, arCopy.r2);
-								// ToDo вводить в первое свободное место, а не сразу за диапазоном
+								// ToDo insert into the first free place, not immediately after the range
 								text = (new asc_Range(c, arCopy.r1, c, arCopy.r2 - 1)).getName();
 								val = t.generateAutoCompleteFormula(functionName, text);
 								cell.setValue(val);
@@ -2414,7 +2417,7 @@ function isAllowPasteLink(pastedWb) {
 					}
 				}
 
-				// Можно ли применять автоформулу
+				// Can autoformula be applied
 				this._isLockedCells(changedRange, /*subType*/null, onAutoCompleteFormula);
 
 				result.notEditCell = true;
@@ -2433,21 +2436,21 @@ function isAllowPasteLink(pastedWb) {
 			}
 		}
 
-        // Ищем первую ячейку с числом
+        // Looking for the first cell with a number
         for (; r >= vr.r1; --r) {
             cell = this._getCellTextCache(activeCell.col, r);
             if (cell) {
-                // Нашли не пустую ячейку, проверим формат
+                // Found a non-empty cell, check the format
                 cellType = cell.cellType;
                 isNumberFormat = (null === cellType || CellValueType.Number === cellType);
                 let cellRange = this.model.getCell3(r, activeCell.col);
                 let isDateFormat = cellRange.getNumFormat().isDateTimeFormat();
                 if (isNumberFormat && !isDateFormat) {
-                    // Это число, мы нашли то, что искали
+                    // This is a number, we found what we were looking for
                     topCell = {
                         c: activeCell.col, r: r, isFormula: cell.isFormula
                     };
-                    // смотрим вторую ячейку
+                    // check the second cell
                     if (topCell.isFormula && r - 1 >= vr.r1) {
                         cell = this._getCellTextCache(activeCell.col, r - 1);
                         if (cell && cell.isFormula) {
@@ -2458,18 +2461,18 @@ function isAllowPasteLink(pastedWb) {
                 }
             }
         }
-        // Проверим, первой все равно должна быть колонка
+        // Check, the column should still be first
         if (null === topCell || topCell.r !== activeCell.row - 1 || topCell.isFormula && !topCell.isFormulaSeq) {
             for (; c >= vr.c1; --c) {
                 cell = this._getCellTextCache(c, activeCell.row);
                 if (cell) {
-                    // Нашли не пустую ячейку, проверим формат
+                    // Found a non-empty cell, check the format
                     cellType = cell.cellType;
                     isNumberFormat = (null === cellType || CellValueType.Number === cellType);
                     let cellRange = this.model.getCell3(activeCell.row, c);
                     let isDateFormat = cellRange.getNumFormat().isDateTimeFormat();
                     if (isNumberFormat && !isDateFormat) {
-                        // Это число, мы нашли то, что искали
+                        // This is a number, we found what we were looking for
                         leftCell = {
                             r: activeCell.row, c: c
                         };
@@ -2477,7 +2480,7 @@ function isAllowPasteLink(pastedWb) {
                     }
                 }
                 if (null !== topCell) {
-                    // Если это не первая ячейка слева от текущей и мы нашли верхнюю, то дальше не стоит искать
+                    // If this is not the first cell to the left of the current one and we found the top one, there is no need to search further
                     break;
                 }
             }
@@ -2642,7 +2645,7 @@ function isAllowPasteLink(pastedWb) {
 	};
 
     WorksheetView.prototype._prepareComments = function () {
-        // ToDo возможно не нужно это делать именно тут..
+        // ToDo maybe this should not be done here..
         if (0 < this.model.aComments.length) {
             this.model.workbook.handlers.trigger("asc_onAddComments", this.model.aComments);
         }
@@ -2887,14 +2890,14 @@ function isAllowPasteLink(pastedWb) {
 		}
 
 		var w;
-		// Получаем свойства колонки
+		// Get column properties
 		var isDefaultWidth;
 		var column = this.model._getColNoEmptyWithAll(i);
 		if (!column) {
 			isDefaultWidth = true;
-			w = this.defaultColWidthPx; // Используем дефолтное значение
+			w = this.defaultColWidthPx; // Use default value
 		} else if (column.getHidden()) {
-			w = 0;            // Если столбец скрытый, ширину выставляем 0
+			w = 0;            // If column is hidden, set width to 0
 		} else {
 			if (null === column.widthPx) {
 				isDefaultWidth = true;
@@ -2918,7 +2921,7 @@ function isAllowPasteLink(pastedWb) {
 		var w;
 		var column = this.model._getColNoEmptyWithAll(i);
 		if (!column) {
-			w = this.defaultColWidthPx; // Используем дефолтное значение
+			w = this.defaultColWidthPx; // Use default value
 		} else {
 			w = null === column.widthPx ? this.defaultColWidthPx : column.widthPx;
 		}
@@ -2930,11 +2933,11 @@ function isAllowPasteLink(pastedWb) {
 		var r, hR;
 		this.model._getRowNoEmptyWithAll(i, function (row) {
 			if (!row) {
-				hR = -1; // Будет использоваться дефолтная высота строки
+				hR = -1; // Default row height will be used
 			} else if (row.getHidden()) {
-				hR = 0;  // Скрытая строка, высоту выставляем 0
+				hR = 0;  // Hidden row, set height to 0
 			} else {
-				// Берем высоту из модели, если она custom(баг 15618), либо дефолтную
+				// Take height from the model if it's custom (bug 15618), otherwise use default
 				if (row.h > 0 && (row.getCustomHeight() || row.getCalcHeight())) {
 					hR = row.h;
 				} else {
@@ -2959,35 +2962,35 @@ function isAllowPasteLink(pastedWb) {
 		r.descender = this.defaultRowDescender;
 	};
 
-    /** Вычисляет ширину колонки заголовков */
+    /** Calculates the header column width */
     WorksheetView.prototype._calcHeaderColumnWidth = function () {
     	var old = this.cellsLeft;
         if (false === this.model.getSheetView().asc_getShowRowColHeaders()) {
             this.headersWidth = 0;
         } else {
-            // Ширина колонки заголовков считается  - max число знаков в строке - перевести в символы - перевести в пикселы
+            // Header column width is calculated as - max number of digits in a row - convert to characters - convert to pixels
             var numDigit = Math.max(AscCommonExcel.calcDecades(this.visibleRange.r2 + 1), 3);
             var nCharCount = this.model.charCountToModelColWidth(numDigit);
             this.headersWidth = Asc.round(this.model.modelColWidthToColWidth(nCharCount) * this.getZoom() * this.getRetinaPixelRatio());
         }
-        //todo приравниваю headersLeft и groupWidth. Необходимо пересмотреть!
+        //todo equating headersLeft and groupWidth. Need to review!
         this.headersLeft = this.ignoreGroupSize ? 0 : this.groupWidth;
         this.cellsLeft = this.headersLeft + this.headersWidth;
         return old !== this.cellsLeft;
     };
 
-    /** Вычисляет высоту строки заголовков */
+    /** Calculates the header row height */
     WorksheetView.prototype._calcHeaderRowHeight = function () {
 		this.headersHeight = (false === this.model.getSheetView().asc_getShowRowColHeaders()) ? 0 :
 			Asc.round(this.headersHeightByFont * this.getZoom());
 
-		//todo приравниваю headersTop и groupHeight. Необходимо пересмотреть!
+		//todo equating headersTop and groupHeight. Need to review!
 		this.headersTop = this.ignoreGroupSize ? 0 : this.groupHeight;
         this.cellsTop = this.headersTop + this.headersHeight;
     };
 
     /**
-     * Вычисляет ширину и позицию колонок
+     * Calculates width and position of columns
      * @param {AscCommonExcel.recalcType} type
      */
     WorksheetView.prototype._calcWidthColumns = function (type) {
@@ -3007,7 +3010,7 @@ function isAllowPasteLink(pastedWb) {
     };
 
     /**
-     * Вычисляет высоту и позицию строк
+     * Calculates height and position of rows
      * @param {AscCommonExcel.recalcType} type
      */
     WorksheetView.prototype._calcHeightRows = function (type) {
@@ -3029,7 +3032,7 @@ function isAllowPasteLink(pastedWb) {
         this.nRowsCount = Math.min(Math.max(this.nRowsCount, i), gc_nMaxRow);
     };
 
-    /** Вычисляет диапазон индексов видимых колонок */
+    /** Calculates the range of visible column indices */
     WorksheetView.prototype._calcVisibleColumns = function () {
         var w = this.drawingCtx.getWidth();
         var sumW = this.topLeftFrozenCell ? this._getColLeft(this.topLeftFrozenCell.getCol0()) : this.cellsLeft;
@@ -3041,7 +3044,7 @@ function isAllowPasteLink(pastedWb) {
         this.visibleRange.c2 = i - (f ? 1 : 0);
     };
 
-    /** Вычисляет диапазон индексов видимых строк */
+    /** Calculates the range of visible row indices */
     WorksheetView.prototype._calcVisibleRows = function () {
         var h = this.drawingCtx.getHeight();
         var sumH = this.topLeftFrozenCell ? this._getRowTop(this.topLeftFrozenCell.getRow0()) : this.cellsTop;
@@ -3056,7 +3059,7 @@ function isAllowPasteLink(pastedWb) {
 		}
     };
 
-    /** Обновляет позицию колонок */
+    /** Updates column positions */
     WorksheetView.prototype._updateColumnPositions = function () {
 		if (Number.MAX_VALUE === this.updateColumnsStart) {
 			return;
@@ -3075,13 +3078,13 @@ function isAllowPasteLink(pastedWb) {
 		this.updateColumnsStart = Number.MAX_VALUE;
 
 		this._updateVisibleColsCount(true); // ToDo check need calculate
-		this._updateDrawingArea(); // ToDo может отказаться от своих area в DO?
+		this._updateDrawingArea(); // ToDo maybe drop own area in DO?
         if (this.objectRender) {
 			this.objectRender.updateDrawingsTransform({target: c_oTargetType.ColumnResize, col: updateColumnsStart});
 		}
     };
 
-    /** Обновляет позицию строк */
+    /** Updates row positions */
     WorksheetView.prototype._updateRowPositions = function () {
     	// ToDo add updateStart. See _updateColumnPositions
 
@@ -3092,7 +3095,7 @@ function isAllowPasteLink(pastedWb) {
         }
     };
 
-    /** Устанаваливает видимый диапазон ячеек максимально возможным */
+    /** Sets the visible cell range to the maximum possible */
     WorksheetView.prototype._normalizeViewRange = function () {
         var t = this;
         var vr = t.visibleRange;
@@ -3142,7 +3145,7 @@ function isAllowPasteLink(pastedWb) {
     // ----- Drawing for print -----
     WorksheetView.prototype._calcPagesPrint = function(range, pageOptions, indexWorksheet, arrPages, printScale, adjustPrint, bPrintArea, opt_prepareTextMetrics) {
         if (0 > range.r2 || 0 > range.c2) {
-			// Ничего нет
+			// Nothing to print
             return;
         }
 
@@ -3193,7 +3196,7 @@ function isAllowPasteLink(pastedWb) {
 		if(printScale) {
 			scale = printScale / 100;
 		} else {
-			//scale пока всегда берём из модели
+			//scale is always taken from the model for now
 			let pageSetupModel = this.model.PagePrintOptions ? this.model.PagePrintOptions.pageSetup : null;
 			scale = pageSetupModel ? pageSetupModel.asc_getScale() / 100 : 1;
 		}
@@ -3272,18 +3275,18 @@ function isAllowPasteLink(pastedWb) {
 
 		let _retinaPixelRatio = this.getRetinaPixelRatio();
 		if (pageHeadings) {
-			// Рисуем заголовки, нужно чуть сдвинуться
+			// Drawing headers, need to shift a bit
 			leftFieldInPx += startPrintPreview ? (this.cellsLeft * scale) / _retinaPixelRatio : this.cellsLeft / _retinaPixelRatio;
 			topFieldInPx += startPrintPreview ? (this.cellsTop * scale) / _retinaPixelRatio : this.cellsTop / _retinaPixelRatio;
 		}
 
-		//TODO при сравнении резальтатов рассчета страниц в зависимости от scale - LO выдаёт похожие результаты, MS - другие. Необходимо пересмотреть!
+		//TODO when comparing page calculation results depending on scale - LO gives similar results, MS - different. Need to review!
 		let pageWidthWithFieldsHeadings = ((pageWidth - pageRightField) / vector_koef - leftFieldInPx);
 		let pageHeightWithFieldsHeadings = ((pageHeight - pageBottomField) / vector_koef - topFieldInPx);
 
 		//PRINT TITLES
 		let tCol1, tCol2, tRow1, tRow2;
-		//первостепенно ориентируемся что в этих настройках
+		//primarily focus on these settings
 		let printTitlesHeight = pageOptions.printTitlesHeight;
 		let printTitlesWidth = pageOptions.printTitlesWidth;
 		let _titleRange;
@@ -3415,12 +3418,12 @@ function isAllowPasteLink(pastedWb) {
 			newPagePrint.leftFieldInPx = leftFieldInPx;
 			newPagePrint.topFieldInPx = topFieldInPx;
 
-			//каждая новая страница должна начинаться с заголовков печати
+			//each new page should start with print headers
 			if(range.r1 === rowIndex) {
 				curTitleHeight = 0;
 				addedTitleHeight = 0;
 			} else if(undefined !== startTitleArrRow[rowIndex - 1]) {
-				//TODO в дальнейшем для функционала печати страниц по вертикали необходимо сделать аналогично для столбцов
+				//TODO in the future for vertical page printing functionality, need to do the same for columns
 				curTitleHeight = startTitleArrRow[rowIndex - 1];
 				addedTitleHeight = startTitleArrRow[rowIndex - 1];
 			}
@@ -3446,7 +3449,7 @@ function isAllowPasteLink(pastedWb) {
 				rowBreak = !bFitToHeight && rowIndex !== currentRowIndex && t.model.rowBreaks && t.model.rowBreaks.isBreak(rowIndex, bPrintArea && range.c1, bPrintArea && range.c2);
 				if ((currentHeight + currentRowHeight + curTitleHeight > pageHeightWithFieldsHeadings
 					&& rowIndex !== currentRowIndex) || rowBreak) {
-					// Закончили рисовать страницу
+					// Finished drawing the page
 					curTitleHeight = addedTitleHeight;
 					break;
 				}
@@ -3486,7 +3489,7 @@ function isAllowPasteLink(pastedWb) {
 						}
 
 						if (currentWidth > pageWidthWithFieldsHeadings && colIndex === currentColIndex) {
-							// Смещаем в селедующий раз ячейку
+							// Shift the cell next time
 							bIsAddOffset = true;
 							++colIndex;
 							break;
@@ -3543,16 +3546,16 @@ function isAllowPasteLink(pastedWb) {
 			}
 			realPageHeight = currentHeight;
 
-			// Нужно будет пересчитывать колонки
+			// Will need to recalculate columns
 			isCalcColumnsWidth = true;
 
-			// Рисуем сетку
+			// Draw grid
 			if (pageGridLines) {
 				newPagePrint.pageGridLines = true;
 			}
 
 			if (pageHeadings) {
-				// Нужно отрисовать заголовки
+				// Need to draw headers
 				newPagePrint.pageHeadings = true;
 			}
 
@@ -3567,7 +3570,7 @@ function isAllowPasteLink(pastedWb) {
 				newPagePrint.titleColRange = new asc_Range(tCol1, pageRange.r1, Math.min(tCol2, currentColIndex - 1), rowIndex - 1);
 				//newPagePrint.titleWidth = addedTitleWidth;
 			}
-			//чтобы передать временный scale(допустим при печати выделенного) добавляем его в pagePrint
+			//to pass temporary scale (e.g. when printing selection) we add it to pagePrint
 			if(printScale) {
 				newPagePrint.scale = printScale / 100;
 			} else if(scale) {
@@ -3578,19 +3581,19 @@ function isAllowPasteLink(pastedWb) {
 			nCountPages++;
 
 			if (bIsAddOffset) {
-				// Мы еще не дорисовали колонку
+				// We haven't finished drawing the column yet
 				colIndex -= 1;
 			} else {
 				nCountOffset = 0;
 			}
 
 			if (colIndex <= range.c2) {
-				// Мы еще не все колонки отрисовали
+				// We haven't drawn all columns yet
 				currentColIndex = colIndex;
 				currentHeight = 0;
 				currentHeightReal = 0;
 			} else {
-				// Мы дорисовали все колонки, нужна новая строка и стартовая колонка
+				// We finished drawing all columns, need a new row and starting column
 				currentColIndex = range.c1;
 				currentRowIndex = rowIndex;
 				currentHeight = 0;
@@ -3598,13 +3601,13 @@ function isAllowPasteLink(pastedWb) {
 			}
 
 			if (rowIndex > range.r2) {
-				// Мы вышли, т.к. дошли до конца отрисовки по строкам
+				// We exited because we reached the end of row drawing
 				if (colIndex <= range.c2) {
 					currentColIndex = colIndex;
 					currentHeight = 0;
 					currentHeightReal = 0;
 				} else {
-					// Мы дошли до конца отрисовки
+					// We reached the end of drawing
 					currentColIndex = colIndex;
 					currentRowIndex = rowIndex;
 					break;
@@ -3791,7 +3794,7 @@ function isAllowPasteLink(pastedWb) {
 
     WorksheetView.prototype.calcPagesPrint = function (pageOptions, printOnlySelection, indexWorksheet, arrPages, arrRanges, adjustPrint, doNotRecalc) {
 		var range, maxCell, t = this;
-		//в опциях может прийти другая область печати. сделано на случай, когда при совместке меняется область в модели
+		//a different print area may come in options. done for the case when the area changes in the model during collaboration
 		var _printArea;
 		if (pageOptions && pageOptions.pageSetup && (pageOptions.pageSetup.printArea || pageOptions.pageSetup.printArea === false) ) {
 			_printArea = pageOptions.pageSetup.printArea;
@@ -3820,7 +3823,7 @@ function isAllowPasteLink(pastedWb) {
 			return res && res.length ? res : null;
 		};
 
-		//TODO для печати не нужно учитывать размер группы
+		//TODO for printing, group size should not be taken into account
 		if(this.groupWidth || this.groupHeight) {
 			this.ignoreGroupSize = true;
 			this._calcHeaderColumnWidth();
@@ -3833,7 +3836,7 @@ function isAllowPasteLink(pastedWb) {
 		var fitToHeight = pageSetup.asc_getFitToHeight();
 		var _scale = pageSetup.asc_getScale();
 
-		//проверяем, не пришли ли настройки масштабирование, отличные от тех, которые лежат в модели
+		//check if scaling settings came that are different from those in the model
 		var checkCustomScaleProps = function() {
 			var _res;
 
@@ -3863,7 +3866,7 @@ function isAllowPasteLink(pastedWb) {
 				selection = _arrRanges;
 			}
 			var tempPrintScale;
-			//подменяем scale на временный для печати выделенной области
+			//substitute scale with temporary one for printing selected area
 			if(fitToWidth || fitToHeight) {
 				tempPrintScale = this.calcPrintScale(fitToWidth, fitToHeight, selection ? selection : true);
 			}
@@ -3886,9 +3889,9 @@ function isAllowPasteLink(pastedWb) {
 			}
 		} else if(printArea && printAreaRanges) {
 
-			//когда printArea мультиселект - при отрисовке областей печати в специальном режиме
-			// необходимо возвращать массив из фрагментов
-			//для этого добавил arrRanges
+			//when printArea is multiselect - when drawing print areas in special mode
+			// need to return an array of fragments
+			//added arrRanges for this
 			tempPrintScale = checkCustomScaleProps();
 			for(var j = 0; j < printAreaRanges.length; j++) {
 				range = printAreaRanges[j];
@@ -3919,7 +3922,7 @@ function isAllowPasteLink(pastedWb) {
 			if (!_maxRowCol) {
 				range = new asc_Range(0, 0, this.model.getColsCount() - 1, this.model.getRowsCount() - 1);
 
-				//подменяем scale на временный для печати выделенной области
+				//substitute scale with temporary one for printing selected area
 				if(_printArea && ignorePrintArea && (fitToWidth || fitToHeight)) {
 					tempPrintScale = this.calcPrintScale(fitToWidth, fitToHeight, null, ignorePrintArea);
 				} else {
@@ -3930,7 +3933,7 @@ function isAllowPasteLink(pastedWb) {
 			} else {
 				range = new asc_Range(0, 0, _maxRowCol.col, _maxRowCol.row);
 
-				//подменяем scale на временный для печати выделенной области
+				//substitute scale with temporary one for printing selected area
 				if(_printArea && ignorePrintArea && (fitToWidth || fitToHeight)) {
 					tempPrintScale = this.calcPrintScale(fitToWidth, fitToHeight, null, ignorePrintArea);
 				} else {
@@ -4000,7 +4003,7 @@ function isAllowPasteLink(pastedWb) {
 
 		this.stringRender.fontNeedUpdate = true;
 		if (null === printPagesData) {
-			// Напечатаем пустую страницу
+			// Print an empty page
 			drawingCtx.BeginPage && drawingCtx.BeginPage(c_oAscPrintDefaultSettings.PageWidth, c_oAscPrintDefaultSettings.PageHeight);
 
 			//draw header/footer
@@ -4050,7 +4053,7 @@ function isAllowPasteLink(pastedWb) {
 				}
 			}
 
-			//TODO для печати не нужно учитывать размер группы
+			//TODO for printing, group size should not be taken into account
 			if(this.groupWidth || this.groupHeight) {
 				this.ignoreGroupSize = true;
 				this._calcHeaderColumnWidth();
@@ -4064,9 +4067,9 @@ function isAllowPasteLink(pastedWb) {
 			//draw header/footer
 			this.drawHeaderFooter(drawingCtx, printPagesData, indexPrintPage, countPrintPages);
 
-			//отступы с учётом заголовков
+			//offsets with headers taken into account
 			let clipLeft, clipTop, clipWidth, clipHeight;
-			//отступы без учёта загаловков
+			//offsets without headers taken into account
 			let clipLeftShape, clipTopShape, clipWidthShape, clipHeightShape;
 
 			let doDraw = function(range, titleWidth, titleHeight) {
@@ -4112,12 +4115,12 @@ function isAllowPasteLink(pastedWb) {
 				let offsetX = t._getColLeft(range.c1) - printPagesData.leftFieldInPx + offsetCols - titleWidth;
 				let offsetY = t._getRowTop(range.r1) - printPagesData.topFieldInPx - titleHeight;
 
-				//TODO необходимо ли подменять visibleRange - в методе _prepareCellTextMetricsCache он может измениться
+				//TODO is it necessary to replace visibleRange - it may change in the _prepareCellTextMetricsCache method
 				let tmpVisibleRange = t.visibleRange;
-				// Сменим visibleRange для прохождения проверок отрисовки
+				// Change visibleRange to pass drawing checks
 				t.visibleRange = range.clone();
 
-				// Нужно отрисовать заголовки
+				// Need to draw headers
 				if (printPagesData.pageHeadings) {
 					t._drawColumnHeaders(drawingCtx, range.c1, range.c2, /*style*/ undefined, offsetX,
 						printPagesData.topFieldInPx - t.cellsTop);
@@ -4125,7 +4128,7 @@ function isAllowPasteLink(pastedWb) {
 						printPagesData.leftFieldInPx - t.cellsLeft, offsetY);
 				}
 
-				// Рисуем сетку
+				// Draw grid
 				if (printPagesData.pageGridLines) {
 					let vector_koef = AscCommonExcel.vector_koef / t.getZoom();
 					if (AscCommon.AscBrowser.isCustomScaling()) {
@@ -4135,7 +4138,7 @@ function isAllowPasteLink(pastedWb) {
 					printPagesData.pageHeight / vector_koef, printPagesData.scale, !titleHeight, !titleWidth);
 				}
 
-				//TODO временно подменяю scale. пересмотреть! подменять либо всегда, либо флаг добавить.
+				//TODO temporarily replacing scale. Review! Either always replace or add a flag.
 				let _modelScale, _modelPagesOptions;
 				if(t.model.PagePrintOptions && t.model.PagePrintOptions.pageSetup) {
 					_modelScale = t.model.PagePrintOptions.pageSetup.scale;
@@ -4145,7 +4148,7 @@ function isAllowPasteLink(pastedWb) {
 					t.model.PagePrintOptions = new Asc.asc_CPageOptions(t.model);
 					t.model.PagePrintOptions.pageSetup.scale = printPagesData.scale;
 				}
-				// Отрисовываем ячейки и бордеры
+				// Draw cells and borders
 				t._drawCellsAndBorders(drawingCtx, range, offsetX, offsetY);
 				if (_modelPagesOptions) {
 					t.model.PagePrintOptions = _modelPagesOptions;
@@ -4160,7 +4163,7 @@ function isAllowPasteLink(pastedWb) {
 						transformMatrix.sy, transformMatrix.tx, transformMatrix.ty);
 				}
 
-				//Отрисовываем панель группировки по строкам
+				//Draw row grouping panel
 				//t._drawGroupData(drawingCtx, null, offsetX, offsetY);
 
 				let drawingPrintOptions = {
@@ -4270,7 +4273,7 @@ function isAllowPasteLink(pastedWb) {
 			let changedCellLeft = cellsLeft - cellsLeft*printScale;
 			let changedCellTop = cellsTop - cellsTop*printScale;
 			let pageWidth, pageHeight;
-			//увеличиваем область клипирования на половину максимального размера бордера - максимально выступающую часть за пределы листа
+			//increase clipping area by half the maximum border size - the maximum protruding part beyond the sheet
 			let borderDiff = 2;//Math.ceil(1.5)
 			if(printPagesData.titleRowRange || printPagesData.titleColRange) {
 				if(printPagesData.titleRowRange && printPagesData.titleColRange){
@@ -4332,9 +4335,9 @@ function isAllowPasteLink(pastedWb) {
 
 				doDraw(printPagesData.pageRange, printPagesData.titleWidth/printScale, printPagesData.titleHeight/printScale);
 			} else {
-				//pageClipRectWidth - ширина страницы без учёта измененного(*scale) хеадера - как при 100%
-				//поэтому при расчтетах из него вычетаем размер заголовка как при 100%
-				//смещение слева/сверху рассчитывается с учётом измененной ширины заголовков - поэтому домножаем её на printScale
+				//pageClipRectWidth - page width without considering the changed (*scale) header - as at 100%
+				//therefore in calculations we subtract the header size as at 100%
+				//left/top offset is calculated considering the changed header width - so we multiply it by printScale
 
 				clipLeft = printPagesData.pageClipRectLeft - borderDiff;
 				clipTop =  printPagesData.pageClipRectTop - borderDiff;
@@ -4412,7 +4415,7 @@ function isAllowPasteLink(pastedWb) {
 		});
 	};
 
-	//пересчитывать необходимо когда после открытия зашли в настройки печати
+	//recalculation is needed when entering print settings after opening
 	WorksheetView.prototype.recalcPrintScale = function () {
 		var pageOptions = this.model.PagePrintOptions;
 		var pageSetup = pageOptions.asc_getPageSetup();
@@ -4433,7 +4436,7 @@ function isAllowPasteLink(pastedWb) {
 			this.lockDraw = realLockDraw;
 		}
 
-		//TODO нужно ли в данном случае лочить?
+		//TODO do we need to lock in this case?
 		//this._isLockedLayoutOptions(callback);
 	};
 
@@ -4443,11 +4446,11 @@ function isAllowPasteLink(pastedWb) {
 		//define print scale
 		this._setPrintScale(this.calcPrintScale(width, height));
 
-		//TODO нужно ли в данном случае лочить?
+		//TODO do we need to lock in this case?
 		//this._isLockedLayoutOptions(callback);
 	};
 
-	//вызывается из меню при изменении только scale to fit -> width
+	//called from menu when changing only scale to fit -> width
 	WorksheetView.prototype.fitToWidth = function (val) {
 		//width/height - count of pages
 		//automatic -> width/height = undefined
@@ -4466,11 +4469,11 @@ function isAllowPasteLink(pastedWb) {
 			History.EndTransaction();
 		}
 
-		//TODO нужно ли в данном случае лочить?
+		//TODO do we need to lock in this case?
 		//this._isLockedLayoutOptions(callback);
 	};
 
-	//вызывается из меню при изменении только scale to fit -> height
+	//called from menu when changing only scale to fit -> height
 	WorksheetView.prototype.fitToHeight = function (val) {
 		//width/height - count of pages
 		//automatic -> width/height = undefined
@@ -4489,7 +4492,7 @@ function isAllowPasteLink(pastedWb) {
 			History.EndTransaction();
 		}
 
-		//TODO нужно ли в данном случае лочить?
+		//TODO do we need to lock in this case?
 		//this._isLockedLayoutOptions(callback);
 	};
 
@@ -4564,7 +4567,7 @@ function isAllowPasteLink(pastedWb) {
 			History.EndTransaction();
 		}
 
-		//TODO нужно ли в данном случае лочить?
+		//TODO do we need to lock in this case?
 		//this._isLockedLayoutOptions(callback);
 	};
 
@@ -4575,7 +4578,7 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 	WorksheetView.prototype.calcPrintScale = function(width, height, _selection, ignorePrintArea) {
-		//TODO для печати не нужно учитывать размер группы
+		//TODO for printing, group size should not be taken into account
 		if(this.groupWidth || this.groupHeight) {
 			this.ignoreGroupSize = true;
 			this._calcHeaderColumnWidth();
@@ -4658,14 +4661,14 @@ function isAllowPasteLink(pastedWb) {
 		let _cellsLeft = this.cellsLeft;
 		let _cellsTop = this.cellsTop;
 
-		//TODO ms считает именно так - каждый раз прибаляются размеры заголовков к полям. необходимо перепроверить!
+		//TODO ms calculates exactly like this - header sizes are added to fields each time. need to verify!
 		//if (pageHeadings) {
-		// Рисуем заголовки, нужно чуть сдвинуться
+		// Drawing headers, need to shift a bit
 		leftFieldInPx += _cellsLeft;
 		topFieldInPx += _cellsTop;
 		//}
 
-		//TODO при сравнении резальтатов рассчета страниц в зависимости от scale - LO выдаёт похожие результаты, MS - другие. Необходимо пересмотреть!
+		//TODO when comparing page calculation results depending on scale - LO gives similar results, MS - different. Need to review!
 		var pageWidthWithFieldsHeadings = ((pageWidth - pageRightField) / vector_koef - leftFieldInPx) /*/ scale*/;
 		var pageHeightWithFieldsHeadings = ((pageHeight - pageBottomField) / vector_koef - topFieldInPx) /*/ scale*/;
 
@@ -4715,7 +4718,7 @@ function isAllowPasteLink(pastedWb) {
 		if(_selection) {
 			calcScaleByRanges(asc_typeof(_selection) === "object" ? _selection : this._getSelection().ranges);
 		} else {
-			//TODO ignorePrintArea - необходимо протащить флаг!
+			//TODO ignorePrintArea - need to pass the flag!
 			var printArea = !ignorePrintArea && this.model.workbook.getDefinesNames("Print_Area", this.model.getId());
 			var getPrintAreaRanges = function() {
 				var res = false;
@@ -4811,9 +4814,9 @@ function isAllowPasteLink(pastedWb) {
 			return this;
 		}
 		if (this.workbook.printPreviewState && this.workbook.printPreviewState.isStart()) {
-			//только перерисовываю, каждый раз пересчёт - может потребовать много ресурсов
-			//если изменилось количество строк/столбцов со значениями - пересчитываю
-			//пересчёт выполянется когда пришли данные от других пользователей
+			//only redraw, recalculating each time - may require many resources
+			//if the number of rows/columns with values changed - recalculate
+			//recalculation is performed when data from other users arrives
 			return;
 		}
 		if (this.workbook.Api.isEyedropperStarted()) {
@@ -4977,7 +4980,7 @@ function isAllowPasteLink(pastedWb) {
           .fill();
     };
 
-    /** Рисует заголовки видимых колонок */
+    /** Draws visible column headers */
     WorksheetView.prototype._drawColumnHeaders = function (drawingCtx, start, end, style, offsetXForDraw, offsetYForDraw) {
           if (!drawingCtx && false === this.model.getSheetView().asc_getShowRowColHeaders()) {
               return;
@@ -5035,7 +5038,7 @@ function isAllowPasteLink(pastedWb) {
             this._RemoveClipRect(ctx);
       };
 
-    /** Рисует заголовки видимых строк */
+    /** Draws visible row headers */
     WorksheetView.prototype._drawRowHeaders = function (drawingCtx, start, end, style, offsetXForDraw, offsetYForDraw) {
         if (!drawingCtx && false === this.model.getSheetView().asc_getShowRowColHeaders()) {
             return;
@@ -5086,18 +5089,18 @@ function isAllowPasteLink(pastedWb) {
     };
 
     /**
-     * Рисует заголовок, принимает координаты и размеры в px
+     * Draws a header, accepts coordinates and sizes in px
      * @param {DrawingContext} drawingCtx
-     * @param {Number} x  Координата левого угла в px
-     * @param {Number} y  Координата левого угла в px
-     * @param {Number} w  Ширина в px
-     * @param {Number} h  Высота в px
-     * @param {Number} style  Стиль заголовка (kHeaderDefault, kHeaderActive, kHeaderHighlighted)
-     * @param {Boolean} isColHeader  Тип заголовка: true - колонка, false - строка
-     * @param {Number} index  Индекс столбца/строки или -1
+     * @param {Number} x  Left corner coordinate in px
+     * @param {Number} y  Left corner coordinate in px
+     * @param {Number} w  Width in px
+     * @param {Number} h  Height in px
+     * @param {Number} style  Header style (kHeaderDefault, kHeaderActive, kHeaderHighlighted)
+     * @param {Boolean} isColHeader  Header type: true - column, false - row
+     * @param {Number} index  Column/row index or -1
      */
     WorksheetView.prototype._drawHeader = function (drawingCtx, x, y, w, h, style, isColHeader, index) {
-        // Для отрисовки невидимого столбца/строки
+        // For drawing invisible column/row
         var isZeroHeader = false;
         if (-1 !== index) {
             if (isColHeader) {
@@ -5105,17 +5108,17 @@ function isAllowPasteLink(pastedWb) {
                     if (style !== kHeaderDefault) {
                         return;
                     }
-                    // Это невидимый столбец
+                    // This is an invisible column
                     isZeroHeader = true;
-                    // Отрисуем только границу
+                    // Draw only the border
                     w = 1;
-                    // Возможно мы уже рисовали границу невидимого столбца (для последовательности невидимых)
+                    // We may have already drawn the border of an invisible column (for a sequence of invisible ones)
                     if (0 < index && 0 === this._getColumnWidth(index - 1)) {
-                        // Мы уже нарисовали border для невидимой границы
+                        // We already drew the border for the invisible boundary
                         return;
                     }
                 } else if (0 < index && 0 === this._getColumnWidth(index - 1)) {
-                    // Мы уже нарисовали border для невидимой границы (поэтому нужно чуть меньше рисовать для соседнего столбца)
+                    // We already drew the border for the invisible boundary (so need to draw a bit less for the neighboring column)
                     w -= 1;
                     x += 1;
                 }
@@ -5124,25 +5127,25 @@ function isAllowPasteLink(pastedWb) {
                     if (style !== kHeaderDefault) {
                         return;
                     }
-                    // Это невидимая строка
+                    // This is an invisible row
                     isZeroHeader = true;
-                    // Отрисуем только границу
+                    // Draw only the border
                     h = 1;
-                    // Возможно мы уже рисовали границу невидимой строки (для последовательности невидимых)
+                    // We may have already drawn the border of an invisible row (for a sequence of invisible ones)
                     if (0 < index && 0 === this._getRowHeight(index - 1)) {
-                        // Мы уже нарисовали border для невидимой границы
+                        // We already drew the border for the invisible boundary
                         return;
                     }
                 } else if (0 < index && 0 === this._getRowHeight(index - 1)) {
-                    // Мы уже нарисовали border для невидимой границы (поэтому нужно чуть меньше рисовать для соседней строки)
+                    // We already drew the border for the invisible boundary (so need to draw a bit less for the neighboring row)
                     h -= 1;
                     y += 1;
                 }
             }
         }
 	
-		//TODO во время печати едиственный флаг usePrintScale выставляется в true, использую здесь именно его
-		//в дальнейшем необходимо его изменить/переименовать
+		//TODO during printing the only flag usePrintScale is set to true, using it here
+		//in the future need to change/rename it
 		var isPrint = this.usePrintScale;
 		var isFiltering = false;
 		if (!isPrint && !isColHeader) {
@@ -5160,7 +5163,7 @@ function isAllowPasteLink(pastedWb) {
         var y2 = y + h;
         var x2WithoutBorder = x2 - gridlineSize;
 
-        // background только для видимых
+        // background only for visible ones
         if (!isZeroHeader) {
             // draw background
             ctx.setFillStyle(backgroundColor);
@@ -5264,7 +5267,7 @@ function isAllowPasteLink(pastedWb) {
 		ctx.stroke();
 
 
-        // Для невидимых кроме border-а ничего не рисуем
+        // For invisible ones we draw nothing except border
         if (isZeroHeader || -1 === index) {
 			ctx.isDarkMode = ctxOldDarkMode;
             return;
@@ -5296,7 +5299,7 @@ function isAllowPasteLink(pastedWb) {
     };
 
 	WorksheetView.prototype.drawHeaderFooter = function (drawingCtx, printPagesData, indexPrintPage, countPrintPages) {
-		//odd - нечетные страницы, even - четные. в случае если флаг differentOddEven не выставлен, используем odd
+		//odd - odd pages, even - even pages. if differentOddEven flag is not set, use odd
 
 		if(!printPagesData) {
 			return;
@@ -5308,7 +5311,7 @@ function isAllowPasteLink(pastedWb) {
 		}
 
 		//new CHeaderFooter();
-		//при печати берём колонтитул либо из настроек печати(если есть), либо из модели 
+		//when printing, take header/footer either from print settings (if available) or from model
 		var printPreview = this.workbook.printPreviewState;
 		var pageOptionsMap = printPreview && printPreview.advancedOptions && printPreview.advancedOptions.pageOptionsMap;
 		var opt_headerFooter = pageOptionsMap && pageOptionsMap[this.model.index] && pageOptionsMap[this.model.index].pageSetup && pageOptionsMap[this.model.index].pageSetup.getPreviewHeaderFooter();
@@ -5364,7 +5367,7 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 
-	/** Рисует текст ячейки */
+	/** Draws cell text */
 	WorksheetView.prototype._drawHeaderFooter = function (drawingCtx, printPagesData, headerFooterData, indexPrintPage, countPrintPages, bFooter, opt_headerFooter) {
 		const t = this;
 		const _printScale = printPagesData ? printPagesData.scale : this.getPrintScale();
@@ -5379,8 +5382,8 @@ function isAllowPasteLink(pastedWb) {
 		const width = printPagesData.pageWidth;
 		const height = printPagesData.pageHeight;
 
-		//это стандартный маргин для случая, если alignWithMargins = true
-		//TODO необходимо перепроверить размер маргина
+		//this is the standard margin for case when alignWithMargins = true
+		//TODO need to verify margin size
 		const defaultMargin = 17.8;
 		const alignWithMargins = hF.getAlignWithMargins();
 		const left =  alignWithMargins ? margins.left : defaultMargin;
@@ -5590,7 +5593,7 @@ function isAllowPasteLink(pastedWb) {
         }
         if (0 !== cFrozen) {
             offsetX = this._getOffsetX(0, true);
-            // Почистим для pane
+            // Clean for pane
             colStart = Math.max(0, colStart);
             colEnd = Math.min(cFrozen, colEnd);
 			l = this._getColLeft(colStart) - offsetX;
@@ -5638,7 +5641,7 @@ function isAllowPasteLink(pastedWb) {
         }
         if (0 !== rFrozen) {
             offsetY = this._getOffsetY(0, true);
-            // Почистим для pane
+            // Clean for pane
             rowStart = Math.max(0, rowStart);
             rowEnd = Math.min(rFrozen, rowEnd);
 			t = this._getRowTop(rowStart) - offsetY;
@@ -5657,22 +5660,22 @@ function isAllowPasteLink(pastedWb) {
           this.headersHeight);
     };
 
-	/** Рисует сетку таблицы */
+	/** Draws table grid */
 	WorksheetView.prototype._drawGrid = function (drawingCtx, range, leftFieldInPx, topFieldInPx, width, height, printScale, needDrawFirstHLine, needDrawFirstVLine) {
-		//отрисовку для режима предварительного просмотра страниц
-		//добавлено сюда потому что отрисовка проиходит одновеременно с отрисовкой сетки
-		//и отрисовка происходит в два этапа - сначала текст - до линий сетки, потом линии печати - после линий сетки
-		//поэтому рассчет делаю 1 раз
+		//rendering for page preview mode
+		//added here because rendering happens simultaneously with grid rendering
+		//and rendering happens in two stages - first text - before grid lines, then print lines - after grid lines
+		//therefore calculation is done once
 		if (this.isPageBreakPreview() && !this.pagesModeData) {
 			this.pagesModeData = this._getPagesModeData(range);
 		}
 
-		// Возможно сетку не нужно рисовать (при печати свои проверки)
+		// Maybe grid doesn't need to be drawn (printing has its own checks)
 		if (!drawingCtx && false === this.model.getSheetView().asc_getShowGridLines()) {
 			return;
 		}
 
-		//needDrawFirstVLine, needDrawFirstHLine - добавляю два аргумета, в дальнейшем их убрать и при отрисовке на печать всегда рисовать первый бордер(за исключением когда заголовки применены)
+		//needDrawFirstVLine, needDrawFirstHLine - adding two arguments, remove them later and always draw first border when printing (except when headers are applied)
 
 		if (range === undefined) {
 			range = this.visibleRange;
@@ -5713,7 +5716,7 @@ function isAllowPasteLink(pastedWb) {
 			this._fillRect(ctx, x1, y1, x2 - x1, y2 - y1);
 		}
 
-		//рисуем текст для преварительного просмотра
+		//draw text for print preview
 		//this._drawPageBreakPreviewText(drawingCtx, range, leftFieldInPx, topFieldInPx, width, height);
 
 		ctx.setStrokeStyle(this.settings.cells.defaultState.border)
@@ -6114,13 +6117,13 @@ function isAllowPasteLink(pastedWb) {
 		}
 	};
 
-    /** Рисует спарклайны */
+    /** Draws sparklines */
     WorksheetView.prototype._drawSparklines = function(drawingCtx, range, offsetX, offsetY) {
 		this.objectRender.drawSparkLineGroups(drawingCtx || this.drawingCtx, this.model.aSparklineGroups, range,
 			offsetX * asc_getcvt(0, 3, this._getPPIX()), offsetY * asc_getcvt(0, 3, this._getPPIX()));
     };
 
-    /** Рисует фон ячеек в строке */
+    /** Draws cell background in row */
     WorksheetView.prototype._drawRowBG = function (drawingCtx, row, colStart, colEnd, offsetX, offsetY, mergedCells, mc, cfIterator) {
 		var height = this._getRowHeight(row);
 		if (0 === height && mergedCells) {
@@ -6138,7 +6141,7 @@ function isAllowPasteLink(pastedWb) {
 				continue;
 			}
 
-			// ToDo подумать, может стоит не брать ячейку из модели (а брать из кеш-а)
+			// ToDo consider maybe not taking cell from model (but from cache)
 			var c = this._getVisibleCell(col, row);
 			//***searchEngine
 			var findFillColor = this.handlers.trigger('selectSearchingResults') && undefined !== this.workbook.inFindResults(this, row, col)/*this.model.inFindResults(row, col)*/ ? this.settings.findFillColor : null;
@@ -6171,8 +6174,8 @@ function isAllowPasteLink(pastedWb) {
 			}
 
 			if (findFillColor || hasFill || mc) {
-				// ToDo не отрисовываем заливку границ от ячеек c заливкой, которые находятся правее и ниже
-				//  отрисовываемого диапазона. Но по факту проблем быть не должно.
+				// ToDo we don't draw border fill from cells with fill that are to the right and below
+				//  the rendered range. But in practice there shouldn't be problems.
 				var fillGrid = findFillColor || hasFill;
 				findFillColor = findFillColor || (!hasFill && mc && this.settings.cells.defaultState.background);
 
@@ -6477,7 +6480,7 @@ function isAllowPasteLink(pastedWb) {
 		return oRuleElement.ShowValue;
 	};
 
-	/** Рисует текст ячейки */
+	/** Draws cell text */
 	WorksheetView.prototype._drawCellText = function (drawingCtx, cfIterator, col, row, colStart, colEnd, offsetX, offsetY) {
 		var ct = this._getCellTextCache(col, row);
 		if (!ct) {
@@ -6574,13 +6577,13 @@ function isAllowPasteLink(pastedWb) {
 			this.stringRender.fontNeedUpdate = true;
 
 			if (90 === ct.angle || -90 === ct.angle) {
-				// клип по ячейке
+				// clip by cell
 				if (!isMerged) {
 					this._AddClipRect(ctx, xb1, yb1, wb, hb, true);
 					clipUse = true;
 				}
 			} else {
-				// клип по строке
+				// clip by row
 				if (!isMerged) {
 					this._AddClipRect(ctx, 0, y1, this.drawingCtx.getWidth(), h);
 					clipUse = true;
@@ -6623,8 +6626,8 @@ function isAllowPasteLink(pastedWb) {
 				}
 			}
 
-			//если ранее выставлена матрица трансформации, например, в случае когда задан масштаб печати
-			//необходимо перемножить на новую матрицу, а в конце вернуть начальную
+			//if transformation matrix was previously set, for example when print scale is specified
+			//need to multiply by new matrix, and at the end restore the initial one
 			var transformMatrix;
 			if (_printScale !== 1 && drawingCtx && drawingCtx.Transform) {
 				transformMatrix = drawingCtx.Transform.CreateDublicate();
@@ -6688,7 +6691,7 @@ function isAllowPasteLink(pastedWb) {
 			this._AddClipRect(ctx, x1, y1, w, h);
 			if (this._getCellCF(cfIterator, c, row, col, Asc.ECfType.iconSet) /*&& AscCommon.align_Left === ct.cellHA*/) {
 				var iconSize = AscCommon.AscBrowser.convertToRetinaValue(getCFIconSize(font.getSize()) * this.getZoom(), true);
-				//TODO оставляю отступ 0, пересмотреть!
+				//TODO leaving indent 0, revisit!
 				var indentIcon = 0;
 				if (AscCommon.align_Left === ct.cellHA) {
 					textX += iconSize;
@@ -6728,7 +6731,7 @@ function isAllowPasteLink(pastedWb) {
 		}
 
 
-		//внутреннии ссылки не добавляю, мс аналогично работает
+		//not adding internal links, MS works the same way
 		if (drawingCtx && drawingCtx.DocumentRenderer && drawingCtx.DocumentRenderer.AddHyperlink /*&& drawingCtx.DocumentRenderer.AddLink*/) {
 			var oHyperlink = this.model.getHyperlinkByCell(row, col);
 			if (oHyperlink && oHyperlink.Hyperlink) {
@@ -6759,7 +6762,7 @@ function isAllowPasteLink(pastedWb) {
 		const widthLine = 3;
 
 		let allPagesRange;
-		//рисуем страницы
+		//draw pages
 		if(printPages && printPages.length) {
 			for (let i = 0; i < printRanges.length; i++) {
 				let oPrintRange = printRanges[i];
@@ -7284,7 +7287,7 @@ function isAllowPasteLink(pastedWb) {
 			var needWidth = width / kf;
 			var needHeight = height / kf;
 
-			//TODO максмальный размер выбрал произвольно. изменить! + оптимизировать алгоритм по равенству
+			//TODO max size was chosen arbitrarily. change! + optimize equality algorithm
 			var font = new AscCommonExcel.Font();
 			font.fn = "Arial";
 			var str;
@@ -7345,7 +7348,7 @@ function isAllowPasteLink(pastedWb) {
 				var centerX = this._getColLeft(pageRange.c1) + (widthPage) / 2 - offsetX;
 				var centerY = this._getRowTop(pageRange.r1) + (heightPage) / 2 - offsetY;
 
-				//TODO подобрать такой размер шрифта, чтобы у текста была нужная нам ширина(1/3 от ширины страницы)
+				//TODO select font size so that text has the width we need (1/3 of page width)
 				var font = new AscCommonExcel.Font();
 				font.fn = "Arial";
 				font.fs = getOptimalFontSize(widthPage, heightPage);
@@ -7406,7 +7409,7 @@ function isAllowPasteLink(pastedWb) {
 		return {printPages: res, printRanges: printRanges && printRanges.length ? printRanges : null};
 	};
 
-    /** Удаляет вертикальные границы ячейки, если текст выходит за границы и соседние ячейки пусты */
+    /** Removes vertical cell borders if text overflows and adjacent cells are empty */
     WorksheetView.prototype._eraseCellRightBorder = function ( drawingCtx, colBeg, colEnd, row, offsetX, offsetY ) {
         if ( colBeg >= colEnd ) {
             return;
@@ -7432,13 +7435,13 @@ function isAllowPasteLink(pastedWb) {
         }
     };
 
-	/** Рисует рамки для ячеек */
+	/** Draws borders for cells */
 	WorksheetView.prototype._drawCellsBorders = function (drawingCtx, range, offsetX, offsetY, mergedCells) {
-		//TODO: использовать стили линий при рисовании границ
+		//TODO: use line styles when drawing borders
 		var t = this;
 		var ctx = drawingCtx || this.drawingCtx;
 
-		var objectMergedCells = {}; // Двумерный map вида строка-колонка {1: {1: range, 4: range}}
+		var objectMergedCells = {}; // Two-dimensional map of row-column form {1: {1: range, 4: range}}
 		var h, w, i, mergeCellInfo, startCol, endRow, endCol, col, row;
 		for (i in mergedCells) {
 			mergeCellInfo = mergedCells[i];
@@ -7460,7 +7463,7 @@ function isAllowPasteLink(pastedWb) {
 			if (val < 1) {
 				return val;
 			}
-			//учитываю здесь только зум масштабирования
+			//taking into account only scaling zoom here
 			return t.workbook.printPreviewState && t.workbook.printPreviewState.isStart() ? Math.max(Asc.round(val * zoom), 1) : val;
 		};
 
@@ -7513,7 +7516,7 @@ function isAllowPasteLink(pastedWb) {
 
 			var bw = zoomPrintPreviewCorrect(border.w);
 
-			// ToDo переделать рассчет
+			// ToDo refactor calculation
 			var tbw = zoomPrintPreviewCorrect(t._calcMaxBorderWidth(borderLeftObject && borderLeftObject.getTopBorder(),
 				borderRightObject && borderRightObject.getTopBorder())); // top border width
 			var bbw = zoomPrintPreviewCorrect(t._calcMaxBorderWidth(borderLeftObject && borderLeftObject.getBottomBorder(),
@@ -7534,7 +7537,7 @@ function isAllowPasteLink(pastedWb) {
 			if (border && border.w > 0) {
 				var bw = zoomPrintPreviewCorrect(border.w);
 
-				// ToDo переделать рассчет
+				// ToDo refactor calculation
 				var lbw = zoomPrintPreviewCorrect(t._calcMaxBorderWidth(borderTopObject && borderTopObject.getLeftBorder(),
 					borderBottomObject && borderBottomObject.getLeftBorder()));
 				var rbw = zoomPrintPreviewCorrect(t._calcMaxBorderWidth(borderTopObject && borderTopObject.getRightBorder(),
@@ -7568,11 +7571,11 @@ function isAllowPasteLink(pastedWb) {
 		bCur = bPrev = bNext = bTopCur = bTopNext = bBotCur = bBotNext = null;
 		row = range.r1 - 1;
 		var prevCol = range.c1 - 1;
-		// Определим первую колонку (т.к. могут быть скрытые колонки)
+		// Determine first column (since there may be hidden columns)
 		while (0 <= prevCol && 0 === this._getColumnWidth(prevCol))
 			--prevCol;
 
-		// Сначала пройдемся по верхней строке (над отрисовываемым диапазоном)
+		// First go through the top row (above the rendered range)
 		while (0 <= row) {
 			if (this._getRowHeight(row) > 0) {
 				objMCPrevRow = objectMergedCells[row];
@@ -7597,7 +7600,7 @@ function isAllowPasteLink(pastedWb) {
 			if (0 === h) {
 				continue;
 			}
-			// Нужно отсеять пустые снизу
+			// Need to filter out empty cells below
 			for (; nextRow <= range.r2 && nextRow < t.nRowsCount; ++nextRow) {
 				if (0 < this._getRowHeight(nextRow)) {
 					break;
@@ -7605,7 +7608,7 @@ function isAllowPasteLink(pastedWb) {
 			}
 
 			var isFirstRowTmp = isFirstRow, isLastRow = nextRow > range.r2 || nextRow >= t.nRowsCount;
-			isFirstRow = false; // Это уже не первая строка (определяем не по совпадению с range.r1, а по видимости)
+			isFirstRow = false; // This is no longer the first row (determined not by matching range.r1, but by visibility)
 
 			objMCRow = isFirstRowTmp ? objectMergedCells[row] : objMCNextRow;
 			objMCNextRow = objectMergedCells[nextRow];
@@ -7621,7 +7624,7 @@ function isAllowPasteLink(pastedWb) {
 				if (0 === w) {
 					continue;
 				}
-				// Нужно отсеять пустые справа
+				// Need to filter out empty cells to the right
 				for (; nextCol <= range.c2 && nextCol < t.nColsCount; ++nextCol) {
 					if (0 < this._getColumnWidth(nextCol)) {
 						break;
@@ -7629,7 +7632,7 @@ function isAllowPasteLink(pastedWb) {
 				}
 
 				var isFirstColTmp = isFirstCol, isLastCol = nextCol > range.c2 || nextCol >= t.nColsCount;
-				isFirstCol = false; // Это уже не первая колонка (определяем не по совпадению с range.c1, а по видимости)
+				isFirstCol = false; // This is no longer the first column (determined not by matching range.c1, but by visibility)
 
 				mc = objMCRow ? objMCRow[col] : null;
 
@@ -7704,24 +7707,24 @@ function isAllowPasteLink(pastedWb) {
 				// draw left border
 				if (isFirstColTmp && !t._isLeftBorderErased(col, rowCache)) {
 					drawVerticalBorder(bPrev, bCur, x1 - gridlineSize, y1, y2);
-					// Если мы в печати и печатаем первый столбец, то нужно напечатать бордеры
+					// If we are in print and printing the first column, we need to print borders
 //						if (lb.w >= 1 && drawingCtx && 0 === col) {
-					// Иначе они будут не такой ширины
-					// ToDo посмотреть что с этим ? в печати будет обрезка
+					// Otherwise they will have wrong width
+					// ToDo check this - in print there will be clipping
 //							drawVerticalBorder(lb, tb, tbPrev, bb, bbPrev, x1, y1, y2);
 //						}
 				}
 				// draw right border
-				//если пустая является частью мерженной ячейки, то её бордер может потеряться,  nextCol === mc.c2 + 1 - условие для этого
+				//if empty cell is part of merged cell, its border may be lost, nextCol === mc.c2 + 1 - condition for this
 				if ((!mc || col === mc.c2 || nextCol === mc.c2 + 1) && !t._isRightBorderErased(col, rowCache)) {
 					drawVerticalBorder(bCur, bNext, x2, y1, y2);
 				}
 				// draw top border
 				if (isFirstRowTmp) {
 					drawHorizontalBorder(bTopCur, bCur, x1, y1 - gridlineSize, x2);
-					// Если мы в печати и печатаем первую строку, то нужно напечатать бордеры
+					// If we are in print and printing the first row, we need to print borders
 //						if (tb.w > 0 && drawingCtx && 0 === row) {
-					// ToDo посмотреть что с этим ? в печати будет обрезка
+					// ToDo check this - in print there will be clipping
 //							drawHorizontalBorder.call(this, tb, lb, lbPrev, rb, rbPrev, x1, y1, x2);
 //						}
 				}
@@ -7733,7 +7736,7 @@ function isAllowPasteLink(pastedWb) {
 				if (0 === w) {
 					continue;
 				}
-				// Нужно отсеять пустые справа
+				// Need to filter out empty cells to the right
 				for (; nextCol <= range.c2 && nextCol < t.nColsCount; ++nextCol) {
 					if (0 < this._getColumnWidth(nextCol)) {
 						break;
@@ -7741,7 +7744,7 @@ function isAllowPasteLink(pastedWb) {
 				}
 
 				var isFirstColTmp = isFirstCol, isLastCol = nextCol > range.c2 || nextCol >= t.nColsCount;
-				isFirstCol = false; // Это уже не первая колонка (определяем не по совпадению с range.c1, а по видимости)
+				isFirstCol = false; // This is no longer the first column (determined not by matching range.c1, but by visibility)
 
 				mc = objMCRow ? objMCRow[col] : null;
 
@@ -7799,7 +7802,7 @@ function isAllowPasteLink(pastedWb) {
 		}
 	};
 
-    /** Рисует закрепленные области областей */
+    /** Draws frozen panes areas */
     WorksheetView.prototype._drawFrozenPane = function ( noCells ) {
         if ( this.topLeftFrozenCell ) {
             var row = this.topLeftFrozenCell.getRow0();
@@ -7871,9 +7874,9 @@ function isAllowPasteLink(pastedWb) {
 		return this._getColLeft(nCol != null ? nCol : this.visibleRange.c1) - this.cellsLeft + scrollCorrect;
 	};
 
-	/** Рисует закрепление областей */
+	/** Draws frozen panes */
 	WorksheetView.prototype._drawFrozenPaneLines = function (drawingCtx) {
-		// Возможно стоит отрисовывать на overlay, а не на основной канве
+		// Maybe should draw on overlay instead of main canvas
 		var ctx = drawingCtx || this.drawingCtx;
 		var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Object, null, this.model.getId(),
 			AscCommonExcel.c_oAscLockNameFrozenPane);
@@ -8040,7 +8043,7 @@ function isAllowPasteLink(pastedWb) {
         this._isLockedFrozenPane( onChangeFrozenCallback );
     };
 
-	/** Для api закрепленных областей */
+	/** For frozen panes api */
 	WorksheetView.prototype.freezePane = function (type, c, r) {
 		var t = this;
 		var activeCell = this.model.selectionRange.activeCell.clone();
@@ -8111,12 +8114,12 @@ function isAllowPasteLink(pastedWb) {
           this.model.getId(), null, oData);
 
         var isUpdate = false;
-        if (0 === col && 0 === row) { // Очистка
+        if (0 === col && 0 === row) { // Clear
             if (null !== this.topLeftFrozenCell) {
                 isUpdate = true;
             }
             this.topLeftFrozenCell = this.model.getSheetView().pane = null;
-        } else { // Создание
+        } else { // Creation
             if (null === this.topLeftFrozenCell) {
                 isUpdate = true;
             }
@@ -8136,7 +8139,7 @@ function isAllowPasteLink(pastedWb) {
             this.draw();
         }
 
-        // Эвент на обновление
+        // Update event
         if (isUpdate && !this.model.workbook.bUndoChanges && !this.model.workbook.bRedoChanges) {
             this.handlers.trigger("updateSheetViewSettings");
         }
@@ -8273,7 +8276,7 @@ function isAllowPasteLink(pastedWb) {
 
 
         let isPagePreview = AscCommonExcel.selectionLineType.ResizeRange & selectionLineType;
-		//меняю толщину линии для селекта(только в случае сплошной линии) и масштаба 200%
+		//changing line thickness for selection (only for solid line) and 200% scale
 		let isRetina = (!isDashLine || isAllowRetina) && this.getRetinaPixelRatio() >= 2;
 		let widthLine = (isDashLine || isThinSolid) ? 1 : 2;
 
@@ -8287,7 +8290,7 @@ function isAllowPasteLink(pastedWb) {
 			thinLineDiff = isDashLine ? 0 : 1;
 		}
 
-        //TODO проверить на следующих версиях. сдвиг, который получился опытным путём. проблема только в safari.
+        //TODO check in future versions. offset obtained experimentally. problem only in safari.
         let notStroke = AscCommonExcel.selectionLineType.NotStroke & selectionLineType;
         if (!notStroke) {
             let _diff = 0;
@@ -8332,7 +8335,7 @@ function isAllowPasteLink(pastedWb) {
 			}
 		}
 
-        if (canFill && !notStroke) {/*Отрисовка светлой полосы при выборе ячеек для формулы*/
+        if (canFill && !notStroke) {/*Drawing light stripe when selecting cells for formula*/
             ctx.setLineWidth(1);
             ctx.setStrokeStyle(colorN);
             ctx.beginPath();
@@ -8353,11 +8356,11 @@ function isAllowPasteLink(pastedWb) {
 
 
 
-        // Отрисовка квадратов для move/resize
+        // Drawing squares for move/resize
         let isResize = AscCommonExcel.selectionLineType.Resize & selectionLineType;
         let isPromote = AscCommonExcel.selectionLineType.Promote & selectionLineType;
         if (isResize || isPromote) {
-            //isResize - пока не увеличиваю квадрат при выборе диапазона в формуле, поскольку нужно менять логику очистки селекта в режиме формул
+            //isResize - not increasing square when selecting range in formula for now, since need to change selection clearing logic in formula mode
 			let retinaKf = isRetina && (!isResize || isAllowRetinaResize) ? 2 : 1;
 			let size = 5 * retinaKf;
 			let sizeBorder = size + 2 * retinaKf;
@@ -8398,7 +8401,7 @@ function isAllowPasteLink(pastedWb) {
         }
         return true;
     };
-    /**Отрисовывает диапазон с заданными параметрами*/
+    /**Draws range with specified parameters*/
     WorksheetView.prototype._drawElements = function (drawFunction) {
         var cFrozen = 0, rFrozen = 0, args = Array.prototype.slice.call(arguments, 1),
 			offsetX = this._getOffsetX(),
@@ -8455,7 +8458,7 @@ function isAllowPasteLink(pastedWb) {
             }
         }
 
-        // Можно вместо call попользовать apply, но тогда нужно каждый раз соединять массив аргументов и 3 объекта
+        // Could use apply instead of call, but then need to join argument array and 3 objects each time
         let clipX = this._getColLeft(this.visibleRange.c1) - offsetX + this.getHorizontalScrollCorrect();
         let clipY = this._getRowTop(this.visibleRange.r1) - offsetY + this.getScrollCorrect();
         let clipW = this._getColLeft(this.visibleRange.c2 + 1) - this._getColLeft(this.visibleRange.c1);
@@ -8469,7 +8472,7 @@ function isAllowPasteLink(pastedWb) {
     };
 
     /**
-     * Рисует выделение вокруг ячеек
+     * Draws selection around cells
      */
     WorksheetView.prototype._drawSelection = function () {
 		var api = window["Asc"]["editor"];
@@ -8903,10 +8906,10 @@ function isAllowPasteLink(pastedWb) {
             if (arnIntersection) {
                 _x1 = t._getColLeft(arnIntersection.c1) - offsetX - 3 - isMacLinuxMozilla * 1;
                 _x2 = t._getColLeft(arnIntersection.c2 + 1) - offsetX +
-                  1 + /* Это ширина "квадрата" для автофильтра от границы ячейки */2;
+                  1 + /* This is the width of "square" for autofilter from cell border */2;
                 _y1 = t._getRowTop(arnIntersection.r1) - offsetY - 2 - isRetinaWidth * 1 - isMacLinuxMozilla * 1;
                 _y2 = t._getRowTop(arnIntersection.r2 + 1) - offsetY +
-                  1 + /* Это высота "квадрата" для автофильтра от границы ячейки */2;
+                  1 + /* This is the height of "square" for autofilter from cell border */2;
 
                 x1 = Math.min(x1, _x1);
                 x2 = Math.max(x2, _x2);
@@ -8927,17 +8930,17 @@ function isAllowPasteLink(pastedWb) {
         });
         this._deactivateOverlayCtx();
 
-        // Если есть активное автозаполнения, то нужно его тоже очистить
+        // If there's active autofill, need to clear it too
         if (this.activeFillHandle !== null) {
             var activeFillClone = this.activeFillHandle.clone(true);
 
-            // Координаты для автозаполнения
+            // Coordinates for autofill
             _x1 = this._getColLeft(activeFillClone.c1) - offsetX - 2 - 1;
             _x2 = this._getColLeft(activeFillClone.c2 + 1) - offsetX + 1 + 2;
             _y1 = this._getRowTop(activeFillClone.r1) - offsetY - 2 - 1;
             _y2 = this._getRowTop(activeFillClone.r2 + 1) - offsetY + 1 + 2;
 
-            // Выбираем наибольший range для очистки
+            // Select largest range for clearing
             x1 = Math.min(x1, _x1);
             x2 = Math.max(x2, _x2);
             y1 = Math.min(y1, _y1);
@@ -8964,13 +8967,13 @@ function isAllowPasteLink(pastedWb) {
 
                     var aFormulaIntersection = arFormulaTmp.intersection(range);
                     if (aFormulaIntersection) {
-                        // Координаты для автозаполнения
+                        // Coordinates for autofill
                         _x1 = this._getColLeft(aFormulaIntersection.c1) - offsetX - 2;
                         _x2 = this._getColLeft(aFormulaIntersection.c2 + 1) - offsetX + 1 + 2;
                         _y1 = this._getRowTop(aFormulaIntersection.r1) - offsetY - 2;
                         _y2 = this._getRowTop(aFormulaIntersection.r2 + 1) - offsetY + 1 + 2;
 
-                        // Выбираем наибольший range для очистки
+                        // Select largest range for clearing
                         x1 = Math.min(x1, _x1);
                         x2 = Math.max(x2, _x2);
                         y1 = Math.min(y1, _y1);
@@ -8980,7 +8983,7 @@ function isAllowPasteLink(pastedWb) {
             }
         }
 
-		//TODO пересмотреть! возможно стоит очищать частями в зависимости от print_area
+		//TODO reconsider! maybe should clear in parts depending on print_area
 		//print lines view
 		let isTraceDependents = this.traceDependentsManager.isHaveData();
 		let searchSpecificRange = this.handlers.trigger('selectSearchingResults') && this.workbook.SearchEngine && this.workbook.SearchEngine.isSpecificRange();
@@ -8991,15 +8994,15 @@ function isAllowPasteLink(pastedWb) {
 			}
 		}
 
-		let retinaСoef = isRetinaWidth ? 2 : 1;
+		let retinaCoef = isRetinaWidth ? 2 : 1;
         if (this.oOtherRanges) {
             this.oOtherRanges.ranges.forEach(function (item) {
                 arnIntersection = item.intersectionSimple(range);
                 if (arnIntersection) {
-                    _x1 = t._getColLeft(arnIntersection.c1) - offsetX - 3 * retinaСoef;
-                    _x2 = arnIntersection.c2 > t.nColsCount ? width : t._getColLeft(arnIntersection.c2 + 1) - offsetX + 3  *retinaСoef;
-                    _y1 = t._getRowTop(arnIntersection.r1) - offsetY - 3 * retinaСoef;
-                    _y2 = arnIntersection.r2 > t.nRowsCount ? height : t._getRowTop(arnIntersection.r2 + 1) - offsetY + 3 * retinaСoef;
+                    _x1 = t._getColLeft(arnIntersection.c1) - offsetX - 3 * retinaCoef;
+                    _x2 = arnIntersection.c2 > t.nColsCount ? width : t._getColLeft(arnIntersection.c2 + 1) - offsetX + 3  *retinaCoef;
+                    _y1 = t._getRowTop(arnIntersection.r1) - offsetY - 3 * retinaCoef;
+                    _y2 = arnIntersection.r2 > t.nRowsCount ? height : t._getRowTop(arnIntersection.r2 + 1) - offsetY + 3 * retinaCoef;
 
                     x1 = Math.min(x1, _x1);
                     x2 = Math.max(x2, _x2);
@@ -9013,14 +9016,14 @@ function isAllowPasteLink(pastedWb) {
 
 			var oleRange = this.getOleSize().getLast();
 			arnIntersection = oleRange.intersectionSimple(range);
-			// Координаты для видимой области оле-объекта
+			// Coordinates for visible area of OLE object
 			if (arnIntersection) {
 				_x1 = t._getColLeft(oleRange.c1) - offsetX - 3;
 				_x2 = oleRange.c2 > t.nColsCount ? width : t._getColLeft(oleRange.c2 + 1) - offsetX + 1 + 2;
 				_y1 = t._getRowTop(oleRange.r1) - offsetY - 3;
 				_y2 = oleRange.r2 > t.nRowsCount ? height : t._getRowTop(oleRange.r2 + 1) - offsetY + 1 + 2;
 
-				// Выбираем наибольший range для очистки
+				// Select largest range for clearing
 				x1 = Math.min(x1, _x1);
 				x2 = Math.max(x2, _x2);
 				y1 = Math.min(y1, _y1);
@@ -9042,13 +9045,13 @@ function isAllowPasteLink(pastedWb) {
 
 			arnIntersection = activeMoveRange.intersectionSimple(range);
 			if (arnIntersection) {
-				// Координаты для перемещения диапазона
+				// Coordinates for range movement
 				_x1 = this._getColLeft(arnIntersection.c1) - offsetX - 2 - 1*isRetinaWidth;
 				_x2 = this._getColLeft(arnIntersection.c2 + 1) - offsetX + 1 + 2;
 				_y1 = this._getRowTop(arnIntersection.r1) - offsetY - 2 - 1*isRetinaWidth;
 				_y2 = this._getRowTop(arnIntersection.r2 + 1) - offsetY + 1 + 2;
 
-				// Выбираем наибольший range для очистки
+				// Select largest range for clearing
 				x1 = Math.min(x1, _x1);
 				x2 = Math.max(x2, _x2);
 				y1 = Math.min(y1, _y1);
@@ -9072,9 +9075,9 @@ function isAllowPasteLink(pastedWb) {
                 var arnIntersection = item.intersectionSimple(range);
                 if (arnIntersection) {
                     _x1 = t._getColLeft(arnIntersection.c1) - offsetX - 2;
-                    _x2 = t._getColLeft(arnIntersection.c2 + 1) - offsetX + 1 + /* Это ширина "квадрата" для автофильтра от границы ячейки */2;
+                    _x2 = t._getColLeft(arnIntersection.c2 + 1) - offsetX + 1 + /* This is the width of "square" for autofilter from cell border */2;
                     _y1 = t._getRowTop(arnIntersection.r1) - offsetY - 2;
-                    _y2 = t._getRowTop(arnIntersection.r2 + 1) - offsetY + 1 + /* Это высота "квадрата" для автофильтра от границы ячейки */2;
+                    _y2 = t._getRowTop(arnIntersection.r2 + 1) - offsetY + 1 + /* This is the height of "square" for autofilter from cell border */2;
 
                     x1 = Math.min(x1, _x1);
                     x2 = Math.max(x2, _x2);
@@ -9090,9 +9093,9 @@ function isAllowPasteLink(pastedWb) {
 				var arnIntersection = item && item.range.intersectionSimple(range);
 				if (arnIntersection) {
 					_x1 = t._getColLeft(arnIntersection.c1) - offsetX - 2;
-					_x2 = t._getColLeft(arnIntersection.c2 + 1) - offsetX + 1 + /* Это ширина "квадрата" для автофильтра от границы ячейки */2;
+					_x2 = t._getColLeft(arnIntersection.c2 + 1) - offsetX + 1 + /* This is the width of "square" for autofilter from cell border */2;
 					_y1 = t._getRowTop(arnIntersection.r1) - offsetY - 2;
-					_y2 = t._getRowTop(arnIntersection.r2 + 1) - offsetY + 1 + /* Это высота "квадрата" для автофильтра от границы ячейки */2;
+					_y2 = t._getRowTop(arnIntersection.r2 + 1) - offsetY + 1 + /* This is the height of "square" for autofilter from cell border */2;
 
 					x1 = Math.min(x1, _x1);
 					x2 = Math.max(x2, _x2);
@@ -9102,7 +9105,7 @@ function isAllowPasteLink(pastedWb) {
 			});
 		}
 		
-        //todo для ретины все сдвиги необходимо сделать общими
+        //todo for retina all offsets need to be made common
 		//clean foreign cursors
 		if ((this.collaborativeEditing.getCollaborativeEditing() || api.isLiveViewer()) && this.collaborativeEditing.getFast()) {
 			var foreignCursors = this.collaborativeEditing.m_aForeignCursorsData;
@@ -9113,9 +9116,9 @@ function isAllowPasteLink(pastedWb) {
 						arnIntersection = _range.intersectionSimple(range);
 						if (arnIntersection) {
 							_x1 = t._getColLeft(arnIntersection.c1) - offsetX - 3;
-							_x2 = t._getColLeft(arnIntersection.c2 + 1) - offsetX + 1 + /* Это ширина "квадрата" для автофильтра от границы ячейки */2;
+							_x2 = t._getColLeft(arnIntersection.c2 + 1) - offsetX + 1 + /* This is the width of "square" for autofilter from cell border */2;
 							_y1 = t._getRowTop(arnIntersection.r1) - offsetY - 2 - isRetinaWidth * 1;
-							_y2 = t._getRowTop(arnIntersection.r2 + 1) - offsetY + 1 + /* Это высота "квадрата" для автофильтра от границы ячейки */2;
+							_y2 = t._getRowTop(arnIntersection.r2 + 1) - offsetY + 1 + /* This is the height of "square" for autofilter from cell border */2;
 
 							x1 = Math.min(x1, _x1);
 							x2 = Math.max(x2, _x2);
@@ -9168,7 +9171,7 @@ function isAllowPasteLink(pastedWb) {
 
 		var locationRange;
 
-		//временный код. locationRange - должен быть привязан только к текущему листу
+		//temporary code. locationRange - should be bound only to current sheet
 		var dataRange = AscCommonExcel.g_oRangeCache.getRange3D(sDataRange);
 		if (!dataRange) {
 			dataRange = AscCommonExcel.g_oRangeCache.getAscRange(sDataRange);
@@ -9205,10 +9208,10 @@ function isAllowPasteLink(pastedWb) {
 			}
 		};
 
-		//здесь добавляю проверку данных - поскольку требуется проверка одновременно двух значений
+		//adding data validation here - since checking two values simultaneously is required
 		var error = AscCommonExcel.sparklineGroup.prototype.isValidDataRef(dataRange, locationRange);
 		if (!error) {
-			//чтобы добавить все данные в историю создаём ещё один sparklineGroup и заполняем его всеми необходимыми опциями
+			//to add all data to history create another sparklineGroup and fill it with all necessary options
 			var ws = this.model;
 			var newSparkLine = new AscCommonExcel.sparklineGroup();
 			newSparkLine.default();
@@ -9222,9 +9225,9 @@ function isAllowPasteLink(pastedWb) {
 		}
 	};
 
-	// mouseX - это разница стартовых координат от мыши при нажатии и границы
+	// mouseX - this is the difference between mouse starting coordinates when clicking and border
     WorksheetView.prototype.drawColumnGuides = function ( col, x, y, mouseX ) {
-        // Учитываем координаты точки, где мы начали изменение размера
+        // Account for coordinates of point where we started resizing
         x += mouseX;
 
         var ctx = this.overlayCtx;
@@ -9258,9 +9261,9 @@ function isAllowPasteLink(pastedWb) {
         } );
     };
 
-    // mouseY - это разница стартовых координат от мыши при нажатии и границы
+    // mouseY - this is the difference between mouse starting coordinates when clicking and border
     WorksheetView.prototype.drawRowGuides = function ( row, x, y, mouseY ) {
-        // Учитываем координаты точки, где мы начали изменение размера
+        // Account for coordinates of point where we started resizing
         y += mouseY;
 
         var ctx = this.overlayCtx;
@@ -9323,14 +9326,14 @@ function isAllowPasteLink(pastedWb) {
 
     // ----- Cell text cache -----
 
-    /** Очищает кэш метрик текста ячеек */
+    /** Clears cell text metrics cache */
     WorksheetView.prototype._cleanCellsTextMetricsCache = function () {
         this.cache.sectors = [];
     };
 
     /**
-     * Обновляет общий кэш и кэширует метрики текста ячеек для указанного диапазона
-     * @param {Asc.Range} [range]  Диапазон кэширования текта
+     * Updates shared cache and caches cell text metrics for specified range
+     * @param {Asc.Range} [range]  Text caching range
      */
     WorksheetView.prototype._prepareCellTextMetricsCache = function (range) {
         var firstUpdateRow = null;
@@ -9347,8 +9350,8 @@ function isAllowPasteLink(pastedWb) {
         firstUpdateRow = asc.getMinValueOrNull(firstUpdateRow, this._prepareCellTextMetricsCache2(range.r1, range.r2));
 
         if (null !== firstUpdateRow || this.isChanged) {
-            // Убрал это из _calcCellsTextMetrics, т.к. вызов был для каждого сектора(добавляло тормоза: баг 20388)
-            // Код нужен для бага http://bugzilla.onlyoffice.com/show_bug.cgi?id=13875
+            // Removed this from _calcCellsTextMetrics, since call was for each sector (caused slowdowns: bug 20388)
+            // Code needed for bug http://bugzilla.onlyoffice.com/show_bug.cgi?id=13875
             this._updateRowPositions();
             this._calcVisibleRows();
 
@@ -9359,9 +9362,9 @@ function isAllowPasteLink(pastedWb) {
     };
 
     /**
-     * Обновляет общий кэш и кэширует метрики текста ячеек для указанного диапазона (сама реализация, напрямую не вызывать, только из _prepareCellTextMetricsCache)
-     * @param {Number} [r1]  r1-r2 диапазон кэширования текта
-	 * @param {Number} [r2]  r1-r2 диапазон кэширования текта
+     * Updates shared cache and caches cell text metrics for specified range (implementation, don't call directly, only from _prepareCellTextMetricsCache)
+     * @param {Number} [r1]  r1-r2 text caching range
+	 * @param {Number} [r2]  r1-r2 text caching range
      */
     WorksheetView.prototype._prepareCellTextMetricsCache2 = function (r1, r2) {
         var firstUpdateRow = null;
@@ -9379,7 +9382,7 @@ function isAllowPasteLink(pastedWb) {
     };
 
     /**
-     * Кэширует метрики текста для диапазона ячеек
+     * Caches text metrics for cell range
      */
     WorksheetView.prototype._calcCellsTextMetrics = function (r1, r2) {
         var t = this;
@@ -9418,7 +9421,7 @@ function isAllowPasteLink(pastedWb) {
         if (c) {
             return c;
         } else if (!dontLookupMergedCells) {
-            // ToDo проверить это условие, возможно оно избыточно
+            // ToDo check this condition, it may be redundant
             var range = this.model.getMergedByCell(row, col);
             return null !== range ? this._getCellTextCache(range.c1, range.r1, true) : undefined;
         }
@@ -9428,14 +9431,14 @@ function isAllowPasteLink(pastedWb) {
     WorksheetView.prototype._changeColWidth = function (col, width) {
 		var oldColWidth = this.getColumnWidthInSymbols(col);
         var pad = this.settings.cells.padding * 2 + 1;
-		//поскольку width - приходит с учётом зума, то и pad нужно домоножить на зум + далее результат делим на зум, соответсвенно если pad не будет домножен на зум, то в результате будет неточность
+		//since width comes accounting for zoom, pad also needs to be multiplied by zoom + then result is divided by zoom, accordingly if pad is not multiplied by zoom, result will be inaccurate
 		var zoomScale = this.getZoom(true) * this.getRetinaPixelRatio();
         var cc = Math.min(this.model.colWidthToCharCount((width + pad * zoomScale) / (zoomScale)), Asc.c_oAscMaxColumnWidth);
 
         if (cc > oldColWidth) {
             History.Create_NewPoint();
             History.StartTransaction();
-            // Выставляем, что это bestFit
+            // Set that this is bestFit
             this.model.setColBestFit(true, this.model.charCountToModelColWidth(cc), col, col);
             History.EndTransaction();
 
@@ -9452,10 +9455,10 @@ function isAllowPasteLink(pastedWb) {
 				let widthStr;
 				let widthWithoutZoom = null;
 				if (isWidth && self.workbook.printPreviewState && self.workbook.printPreviewState.isStart()) {
-					//заглушка для печати
-					//попробовать перейти на все расчёты как при 100%(потом * zoom)
-					// но в данном случае есть проблемы с измерением текста
-					//получаем ширину колонки как при 100% и длину строки как при 100%, чтобы не было разницы
+					//stub for printing
+					//try to switch to all calculations as at 100% (then * zoom)
+					// but in this case there are issues with text measurement
+					//get column width as at 100% and row length as at 100%, so there's no difference
 					let _scale = self.getZoom(true)*self.getRetinaPixelRatio();
 					let _innerDiff = self.settings.cells.padding * 2 + gridlineSize;
 					widthWithoutZoom = Math.ceil((width + _innerDiff - _innerDiff*_scale)/_scale);
@@ -9496,12 +9499,12 @@ function isAllowPasteLink(pastedWb) {
 
         let str, tm, strCopy;
 
-        // Range для замерженной ячейки
+        // Range for merged cell
         let fl = this._getCellFlags(c);
         let mc = fl.merged;
         if (null !== mc) {
             if (col !== mc.c1 || row !== mc.r1) {
-                // Проверим внесена ли первая ячейка в cache (иначе если была скрыта первая строка или первый столбец, то мы не внесем)
+                // Check if first cell was added to cache (otherwise if first row or first column was hidden, we won't add it)
                 if (undefined === this._getCellTextCache(mc.c1, mc.r1, true)) {
                     return this._addCellTextToCache(mc.c1, mc.r1);
                 }
@@ -9528,14 +9531,14 @@ function isAllowPasteLink(pastedWb) {
 
         if (c.isEmptyTextString()) {
             if (!angle && c.isNotDefaultFont() && !(mergeType & c_oAscMergeType.rows)) {
-                // Пустая ячейка с измененной гарнитурой или размером, учитвается в высоте
+                // Empty cell with changed font or size, counted in height
                 str = getValue2Func.call(c);
                 if (0 < str.length) {
                     strCopy = str[0];
                     //this.isZooming - in default case(with text) every time recalculate text size -> update row height
                     //this.isZooming -> fix for start editor with system zoom
                     if (!(tm = AscCommonExcel.g_oCacheMeasureEmpty.get(strCopy.format)) || this.isZooming) {
-                        // Без текста не будет толка
+                        // Without text there's no point
                         strCopy = strCopy.clone();
                         strCopy.setFragmentText('A');
                         tm = this._roundTextMetrics(this.stringRender.measureString([strCopy], fl));
@@ -9554,7 +9557,7 @@ function isAllowPasteLink(pastedWb) {
         let dDigitsCount = 0;
         let colWidth = 0;
         let cellType = c.getType();
-        fl.isNumberFormat = (null === cellType || CellValueType.String !== cellType); // Автоподбор делается по любому типу (кроме строки)
+        fl.isNumberFormat = (null === cellType || CellValueType.String !== cellType); // Autofit is done for any type (except string)
         let numFormatStr = c.getNumFormatStr();
         let pad = this.settings.cells.padding * 2 + 1;
         let sstr, sfl, stm;
@@ -9565,7 +9568,7 @@ function isAllowPasteLink(pastedWb) {
         if (!isCustomWidth && fl.isNumberFormat && !fl.shrinkToFit && !(mergeType & c_oAscMergeType.cols) &&
           c_oAscCanChangeColWidth.none !== this.canChangeColWidth) {
             colWidth = this._getColumnWidthInner(col);
-            // Измеряем целую часть числа
+            // Measure integer part of number
             sstr = getValue2Func.call(c, gc_nMaxDigCountView, function () {
                 return true;
             });
@@ -9576,18 +9579,18 @@ function isAllowPasteLink(pastedWb) {
             sfl.wrapText = false;
             stm = this._roundTextMetrics(this.stringRender.measureString(sstr, sfl, colWidth));
             let stmPrj = Math.abs(angleCos * stm.width) + Math.abs(angleSin * stm.height);
-            // Если целая часть числа не убирается в ячейку, то расширяем столбец
+            // If integer part of number doesn't fit in cell, expand column
             if (stmPrj > colWidth) {
                 this._changeColWidth(col, stmPrj);
             }
-            // Обновленная ячейка
+            // Updated cell
             dDigitsCount = this.getColumnWidthInSymbols(col);
             colWidth = this._getColumnWidthInner(col);
         } else if (null === mc) {
-            // Обычная ячейка
+            // Regular cell
             dDigitsCount = this.getColumnWidthInSymbols(col);
             colWidth = this._getColumnWidthInner(col);
-            // подбираем ширину
+            // select width
             if (!isCustomWidth && !fl.shrinkToFit && !(mergeType & c_oAscMergeType.cols) && !fl.wrapText &&
               c_oAscCanChangeColWidth.all === this.canChangeColWidth) {
                 sstr = getValue2Func.call(c, gc_nMaxDigCountView, function () {
@@ -9597,13 +9600,13 @@ function isAllowPasteLink(pastedWb) {
                 let stmPrj = Math.abs(angleCos * stm.width) + Math.abs(angleSin * stm.height);
                 if (stmPrj > colWidth) {
                     this._changeColWidth(col, stmPrj);
-                    // Обновленная ячейка
+                    // Updated cell
                     dDigitsCount = this.getColumnWidthInSymbols(col);
                     colWidth = this._getColumnWidthInner(col);
                 }
             }
         } else {
-            // Замерженная ячейка, нужна сумма столбцов
+            // Merged cell, need sum of columns
             for (let i = mc.c1; i <= mc.c2 && i < this.cols.length; ++i) {
                 colWidth += this._getColumnWidth(i);
                 dDigitsCount += this.getColumnWidthInSymbols(i);
@@ -9613,7 +9616,7 @@ function isAllowPasteLink(pastedWb) {
 
         let rowHeight = this._getRowHeight(row);
 
-        // ToDo dDigitsCount нужно рассчитывать исходя не из дефалтового шрифта и размера, а исходя из текущего шрифта и размера ячейки
+        // ToDo dDigitsCount should be calculated not from default font and size, but from current font and cell size
         if (angle === 0 && !fl.shrinkToFit) {
             str = getValue2Func.call(c, dDigitsCount, makeFnIsGoodNumFormat(fl, colWidth, true));
         } else {
@@ -9644,8 +9647,8 @@ function isAllowPasteLink(pastedWb) {
             maxW -= indent * 3 * this.defaultSpaceWidth;
         }
 
-		//чтобы грамотно расчитать высоту строки, необходимо знать размер текста в ячейке. если скрыт столбец, то maxW всегда будет 0 и расчёт measureString будет неверным
-		//добавляю следующую заглушку для этого - _getColumnWidthIgnoreHidden
+		//to properly calculate row height, need to know text size in cell. if column is hidden, maxW will always be 0 and measureString calculation will be wrong
+		//adding following stub for this - _getColumnWidthIgnoreHidden
 		tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW === 0 ? Math.max(this._getColumnWidthIgnoreHidden(col) - this.settings.cells.padding * 2 - gridlineSize, 0) : maxW));
 
 		if (indent) {
@@ -9672,7 +9675,7 @@ function isAllowPasteLink(pastedWb) {
 
         let textBound = {};
         if (angle) {
-            //  повернутый текст учитывает мерж ячеек по строкам
+            //  rotated text accounts for cell merge by rows
             if (mergeType & c_oAscMergeType.rows) {
                 rowHeight = 0;
 
@@ -9701,7 +9704,7 @@ function isAllowPasteLink(pastedWb) {
                 textBound = this.stringRender.getTransformBound(angle, colWidth, rowHeight, textW, ha, va, maxW);
             }
 
-//  NOTE: если проекция строчки на Y больше высоты ячейки подставлять # и рисовать все по центру
+//  NOTE: if line projection on Y is greater than cell height, substitute # and draw everything centered
 
             if (fl.isNumberFormat) {
                 let textMetricWidth  = textW;
@@ -9783,7 +9786,7 @@ function isAllowPasteLink(pastedWb) {
 		var th;
 		var cellType = cell.getType();
 		var wrap = align.getWrap() || align.hor === AscCommon.align_Distributed;
-		// Автоподбор делается по любому типу (кроме строки)
+		// Autofit is done for any type (except string)
 		var isNumberFormat = !cell.isEmptyTextString() && (null === cellType || CellValueType.String !== cellType);
 		if (angle || isNumberFormat || wrap) {
 			this._addCellTextToCache(cell.nCol, cell.nRow);
@@ -9861,7 +9864,7 @@ function isAllowPasteLink(pastedWb) {
 
 		var isCustomHeight = this.model.getRowCustomHeight(row);
 		// update row's height
-		// Замерженная ячейка (с 2-мя или более строками) не влияет на высоту строк!
+		// Merged cell (with 2 or more rows) does not affect row heights!
 		if (!isCustomHeight && !(window["NATIVE_EDITOR_ENJINE"] && this.notUpdateRowHeight) && !isMergedRows) {
 			var newHeight = mergedWrapHeight ? mergedWrapHeight : tm.height;
 			var oldHeight = this.updateRowHeightValuePx || AscCommonExcel.convertPtToPx(this._getRowHeightReal(row));
@@ -9873,7 +9876,7 @@ function isAllowPasteLink(pastedWb) {
 				if (this.updateRowHeightValuePx) {
 					this.updateRowHeightValuePx = newHeight;
 				}
-				//TODO правлю на хотфикс ошибку. это следствие, а не причина. нужно пересмотреть! баг 50489
+				//TODO fixing hotfix error. this is the consequence, not the cause. needs review! bug 50489
 				var _rowHeight = this.workbook.printPreviewState.isStart() ? newHeight * this.getZoom() : Asc.round(newHeight * this.getZoom());
 				if (rowInfo) {
 					rowInfo.setHeight(_rowHeight);
@@ -10106,7 +10109,7 @@ function isAllowPasteLink(pastedWb) {
     };
 
     WorksheetView.prototype._calcMaxBorderWidth = function (b1, b2) {
-        // ToDo пересмотреть
+        // ToDo review
         return Math.max(b1 && b1.w, b2 && b2.w);
     };
 
@@ -10114,8 +10117,8 @@ function isAllowPasteLink(pastedWb) {
     // ----- Cells utilities -----
 
     /**
-     * Возвращает заголовок колонки по индексу
-     * @param {Number} col  Индекс колонки
+     * Returns column title by index
+     * @param {Number} col  Column index
      * @return {String}
      */
     WorksheetView.prototype._getColumnTitle = function (col) {
@@ -10123,8 +10126,8 @@ function isAllowPasteLink(pastedWb) {
     };
 
     /**
-     * Возвращает заголовок строки по индексу
-     * @param {Number} row  Индекс строки
+     * Returns row title by index
+     * @param {Number} row  Row index
      * @return {String}
      */
     WorksheetView.prototype._getRowTitle = function (row) {
@@ -10132,9 +10135,9 @@ function isAllowPasteLink(pastedWb) {
     };
 
     /**
-     * Возвращает ячейку таблицы (из Worksheet)
-     * @param {Number} col  Индекс колонки
-     * @param {Number} row  Индекс строки
+     * Returns table cell (from Worksheet)
+     * @param {Number} col  Column index
+     * @param {Number} row  Row index
      * @return {Range}
      */
     WorksheetView.prototype._getCell = function (col, row) {
@@ -10260,8 +10263,8 @@ function isAllowPasteLink(pastedWb) {
 	};
 
     /**
-     * Возвращает true, если диапазон больше видимой области, и операции над ним могут привести к задержкам
-     * @param {Asc.Range} range  Диапазон для проверки
+     * Returns true if range is larger than visible area, and operations on it may cause delays
+     * @param {Asc.Range} range  Range to check
      * @returns {Boolean}
      */
     WorksheetView.prototype._isLargeRange = function (range) {
@@ -10282,7 +10285,7 @@ function isAllowPasteLink(pastedWb) {
               fromx, dy = toy - fromy, tox = tox > that._getColLeft(0) ? tox : that._getColLeft(0), toy = toy >
             that._getRowTop(0) ? toy : that._getRowTop(0), angle = Math.atan2(dy, dx), _a = Math.PI / 18;
 
-            // ToDo посмотреть на четкость moveTo, lineTo
+            // ToDo check clarity of moveTo, lineTo
             context.save()
               .setLineWidth(1)
               .beginPath()
@@ -10418,7 +10421,7 @@ function isAllowPasteLink(pastedWb) {
                   y1 < this._getRowTop(0) ? this._getRowTop(0) : y1, x2, y2);
                 // draw_arrow(ctx, x1, y1, x2, y2);
 
-                // ToDo посмотреть на четкость rect
+                // ToDo check clarity of rect
                 if (nodeCellMetrics.apl > this._getColLeft(0) && nodeCellMetrics.apt > this._getRowTop(0)) {
                     ctx.save()
                       .beginPath()
@@ -10539,7 +10542,7 @@ function isAllowPasteLink(pastedWb) {
                 i += dx;
                 j += dy;
             }
-            // Проверки для перехода в самый конец (ToDo пока убрал, чтобы не добавлять тормозов)
+            // Checks for transition to the very end (ToDo removed for now to avoid adding slowdowns)
 			/*if (i === t.nColsCount && state) {
 				i = gc_nMaxCol;
 			}
@@ -10780,7 +10783,7 @@ function isAllowPasteLink(pastedWb) {
         this._fixSelectionOfHiddenCells(0, delta >= 0 ? +1 : -1, fixStartRow);
         this._fixVisibleRange(fixStartRow);
         var reinitScrollY = start !== fixStartRow.r1;
-        // Для скролла вверх обычный сдвиг + дорисовка
+        // For scrolling up - regular shift + redraw
         if (reinitScrollY && 0 > delta) {
             delta += fixStartRow.r1 - start;
         }
@@ -10814,7 +10817,7 @@ function isAllowPasteLink(pastedWb) {
         var dy = (this._getRowTop(start) + deltaCorrect - (topOldStart + currentScrollCorrect));
 		isSmoothScroll && this.setScrollCorrect(deltaCorrect);
 
-        // ToDo стоит тут переделать весь scroll
+        // ToDo should refactor the whole scroll here
         vr.r1 = start;
 		let _beforeRowsCount = this.nRowsCount;
         this._updateVisibleRowsCount(undefined, function () {
@@ -10831,16 +10834,16 @@ function isAllowPasteLink(pastedWb) {
 				}
 			}
 		});
-        // Это необходимо для того, чтобы строки, у которых высота по тексту, рассчитались
+        // This is necessary so that rows with text-based height are calculated
         if (!oldVR.intersectionSimple(vr)) {
-            // Полностью обновилась область
+            // Area fully updated
             this._prepareCellTextMetricsCache(vr);
         } else {
             if (isReverse) {
-                // Идем вверх
+                // Going up
                 this._prepareCellTextMetricsCache(new asc_Range(vr.c1, start, vr.c2, oldStart - 1));
             } else {
-                // Идем вниз
+                // Going down
                 this._prepareCellTextMetricsCache(new asc_Range(vr.c1, oldEnd + 1, vr.c2, vr.r2));
             }
         }
@@ -10917,21 +10920,21 @@ function isAllowPasteLink(pastedWb) {
             oldW = ctxW;
         }
 
-        // Перемещаем область
+        // Move area
         lastRowHeight = Math.max(lastRowHeight, 0)
         var moveHeight = oldH - lastRowHeight;
         if (moveHeight > 0) {
             ctx.drawImage(ctx.getCanvas(), x, y, oldW, moveHeight, x + dx, y - dy, oldW, moveHeight);
 
-            // Заглушка для safari (http://bugzilla.onlyoffice.com/show_bug.cgi?id=25546). Режим 'copy' сначала затирает, а
-            // потом рисует (а т.к. мы рисуем сами на себе, то уже картинка будет пустой)
+            // Stub for safari (http://bugzilla.onlyoffice.com/show_bug.cgi?id=25546). 'copy' mode first erases, then
+            // draws (and since we draw on ourselves, the image will be empty)
             if (AscBrowser.isSafari) {
                 this.drawingGraphicCtx.moveImageDataSafari(x, y, oldW, moveHeight, x + dx, y - dy);
             } else {
                 this.drawingGraphicCtx.moveImageData(x, y, oldW, moveHeight, x + dx, y - dy);
             }
         }
-        // Очищаем область
+        // Clear area
         var clearTop = this.cellsTop + diffHeight + (scrollDown && moveHeight > 0 ? moveHeight : 0);
         var clearHeight = (moveHeight > 0) ? Math.abs(dy) + lastRowHeight : ctxH - (this.cellsTop + diffHeight);
         let clearOffset = 0;
@@ -10953,7 +10956,7 @@ function isAllowPasteLink(pastedWb) {
 
 		this._updateDrawingArea();
 
-        // Дорисовываем необходимое
+        // Draw the necessary parts
         if (dy < 0 || vr.r2 !== oldEnd || oldVRE_isPartial || dx !== 0 || (clearHeight !== 0 && isSmoothScroll)) {
             var r1, r2;
             if (moveHeight > 0) {
@@ -11048,7 +11051,7 @@ function isAllowPasteLink(pastedWb) {
 			this.drawingGraphicCtx.RemoveClipRect && this.drawingGraphicCtx.RemoveClipRect();
 		}
 
-        // Отрисовывать нужно всегда, вдруг бордеры
+        // Always need to draw, in case of borders
         this._drawFrozenPaneLines();
         this._fixSelectionOfMergedCells(null, true);
         this._drawSelection();
@@ -11233,7 +11236,7 @@ function isAllowPasteLink(pastedWb) {
         this._fixSelectionOfHiddenCells(delta >= 0 ? +1 : -1, 0, fixStartCol);
         this._fixVisibleRange(fixStartCol);
         var reinitScrollX = start !== fixStartCol.c1;
-        // Для скролла влево обычный сдвиг + дорисовка
+        // For scrolling left - regular shift + redraw
         if (reinitScrollX && 0 > delta) {
             delta += fixStartCol.c1 - start;
         }
@@ -11274,7 +11277,7 @@ function isAllowPasteLink(pastedWb) {
 
 		this.workbook.getSmoothScrolling() && this.setHorizontalScrollCorrect(deltaCorrect);
 
-        // ToDo стоит тут переделать весь scroll
+        // ToDo should refactor the whole scroll here
         vr.c1 = start;
 		let _beforeColsCount = this.nColsCount;
 		this._updateVisibleColsCount(undefined, function () {
@@ -11291,16 +11294,16 @@ function isAllowPasteLink(pastedWb) {
 				}
 			}
 		});
-        // Это необходимо для того, чтобы строки, у которых высота по тексту, рассчитались
+        // This is necessary so that rows with text-based height are calculated
         if (!oldVR.intersectionSimple(vr)) {
-            // Полностью обновилась область
+            // Area fully updated
             this._prepareCellTextMetricsCache(vr);
         } else {
             if (0 > delta) {
-                // Идем влево
+                // Going left
                 this._prepareCellTextMetricsCache(new asc_Range(start, vr.r1, oldStart - 1, vr.r2));
             } else {
-                // Идем вправо
+                // Going right
                 this._prepareCellTextMetricsCache(new asc_Range(oldEnd + 1, vr.r1, vr.c2, vr.r2));
             }
         }
@@ -11314,17 +11317,17 @@ function isAllowPasteLink(pastedWb) {
 
 
 
-        // Перемещаем область
+        // Move area
         var moveWidth = oldW - lastColWidth;
         if (moveWidth > 0) {
             this._drawImage(ctx, ctx.getCanvas(), x + this.getRightToLeftOffset(), y, moveWidth, ctxH, x - dx + this.getRightToLeftOffset(), y, moveWidth, ctxH);
 
-            // Заглушка для safari (http://bugzilla.onlyoffice.com/show_bug.cgi?id=25546). Режим 'copy' сначала затирает, а
-            // потом рисует (а т.к. мы рисуем сами на себе, то уже картинка будет пустой)
+            // Stub for safari (http://bugzilla.onlyoffice.com/show_bug.cgi?id=25546). 'copy' mode first erases, then
+            // draws (and since we draw on ourselves, the image will be empty)
 
 			this._moveImageData(x, y, moveWidth, ctxH, x - dx, y, moveWidth, ctxH);
         }
-        // Очищаем область
+        // Clear area
         var clearLeft = this.cellsLeft + diffWidth + (scrollRight && moveWidth > 0 ? moveWidth : 0);
         var clearWidth = (moveWidth > 0) ? Math.abs(dx) + lastColWidth : ctxW - (this.cellsLeft + diffWidth);
 		let clearOffset = 0;
@@ -11352,7 +11355,7 @@ function isAllowPasteLink(pastedWb) {
 			this.drawingGraphicCtx.AddClipRect && this._AddClipRect(this.drawingGraphicCtx, clearLeft - clearOffset + this.getRightToLeftOffset(), y, clearWidth + clearOffset + this.getRightToLeftOffset(), ctxH);
 		}
 
-        // Дорисовываем необходимое
+        // Draw the necessary parts
         if (dx < 0 || vr.c2 !== oldEnd || oldVCE_isPartial || (clearWidth !== 0 && this.workbook.getSmoothScrolling())) {
             var c1, c2;
             if (moveWidth > 0) {
@@ -11407,7 +11410,7 @@ function isAllowPasteLink(pastedWb) {
 			this.drawingGraphicCtx.RemoveClipRect && this.drawingGraphicCtx.RemoveClipRect();
 		}
 
-        // Отрисовывать нужно всегда, вдруг бордеры
+        // Always need to draw, in case of borders
         this._drawFrozenPaneLines();
         this._fixSelectionOfMergedCells(null, true);
         this._drawSelection();
@@ -11462,7 +11465,7 @@ function isAllowPasteLink(pastedWb) {
 
     // ----- Selection -----
 
-    // x,y - абсолютные координаты относительно листа (без учета заголовков)
+    // x,y - absolute coordinates relative to the sheet (without headers)
     WorksheetView.prototype.findCellByXY = function (x, y, canReturnNull, skipCol, skipRow) {
         var i, sum, size, result = new AscFormat.CCellObjectInfo();
         if (canReturnNull) {
@@ -11534,7 +11537,7 @@ function isAllowPasteLink(pastedWb) {
      *
 	 * @param x
 	 * @param canReturnNull
-	 * @param half - считать с половиной следующей ячейки
+	 * @param half - consider with half of next cell
 	 * @returns {*}
 	 * @private
 	 */
@@ -11609,7 +11612,7 @@ function isAllowPasteLink(pastedWb) {
      *
 	 * @param y
 	 * @param canReturnNull
-	 * @param half - считать с половиной следующей ячейки
+	 * @param half - consider with half of next cell
 	 * @returns {*}
 	 * @private
 	 */
@@ -11906,7 +11909,7 @@ function isAllowPasteLink(pastedWb) {
 			var width = x2 - x1;
 			var _x2, _y2;
 
-			//TODO коэффициэнты перепроверить
+			//TODO recheck coefficients
 			var maxChangeSelectionHeight = 27;
 			var maxChangeSelectionWidth = 24;
 			var percentOfWidth = 0.25;
@@ -12027,7 +12030,7 @@ function isAllowPasteLink(pastedWb) {
 				isLocked =
 					this.collaborativeEditing.getLockIntersection(lockInfo, c_oAscLockTypes.kLockTypeOther, false);
 				if (false !== isLocked) {
-					// Кто-то сделал lock
+					// Someone made a lock
 					var frozenCell = this.topLeftFrozenCell ? this.topLeftFrozenCell :
 						new AscCommon.CellAddress(0, 0, 0);
 					userId = isLocked.UserId;
@@ -12051,13 +12054,13 @@ function isAllowPasteLink(pastedWb) {
 			}
 
 			if (drawingInfo && drawingInfo.id) {
-				// Возможно картинка с lock
+				// Possibly image with lock
 				lockInfo =
 					this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Object, null, sheetId, drawingInfo.id);
 				isLocked =
 					this.collaborativeEditing.getLockIntersection(lockInfo, c_oAscLockTypes.kLockTypeOther, false);
 				if (false !== isLocked) {
-					// Кто-то сделал lock
+					// Someone made a lock
 					userId = isLocked.UserId;
 					lockRangePosLeft = drawingInfo.object.getVisibleLeftOffset(true);
 					lockRangePosTop = drawingInfo.object.getVisibleTopOffset(true);
@@ -12125,7 +12128,7 @@ function isAllowPasteLink(pastedWb) {
 			offsetY = (y < this.cellsTop + heightDiff) ? 0 : offsetY - heightDiff;
 		}
 
-		//TODO проверить!
+		//TODO check!
 		//group row
 		if (readyMode && x <= this.cellsLeft && this.groupWidth && x < this.groupWidth) {
 			if(y > this.groupHeight + this.headersHeight) {
@@ -12144,7 +12147,7 @@ function isAllowPasteLink(pastedWb) {
 			};
 		}
 
-		//TODO проверить!
+		//TODO check!
 		//group col
 		if (readyMode && y <= this.cellsTop && this.groupHeight && y < this.groupHeight) {
 			c = null;
@@ -12203,7 +12206,7 @@ function isAllowPasteLink(pastedWb) {
 				_cursor = t.startCellMoveRange && t.startCellMoveRange.colRowMoveProps ? "grabbing" : "grab";
 			}
 
-			// ToDo В Excel зависимость epsilon от размера ячейки (у нас фиксированный 3)
+			// ToDo In Excel epsilon depends on cell size (we have fixed 3)
 			return {
 				cursor: _cursor,
 				target: f ? c_oTargetType.RowResize : _target,
@@ -12221,7 +12224,7 @@ function isAllowPasteLink(pastedWb) {
 			isNotFirst = c.col !== (-1 !== cFrozen ? 0 : this.visibleRange.c1);
 			f = (canEdit || viewMode) && (isNotFirst && x < c.left + epsChangeSize || x >= c.right - epsChangeSize) &&
 				readyMode && !this.model.getSheetProtection(Asc.c_oAscSheetProtectType.formatColumns);
-			// ToDo В Excel зависимость epsilon от размера ячейки (у нас фиксированный 3)
+			// ToDo In Excel epsilon depends on cell size (we have fixed 3)
 
 			let isSelectedFullCol = false;
 			let selection = this._getSelection();
@@ -12326,7 +12329,7 @@ function isAllowPasteLink(pastedWb) {
 				return oResDefault;
 			}
 
-			// Проверка на совместное редактирование
+			// Check for collaborative editing
 			var lockRange = undefined;
 			var lockAllPosLeft = undefined;
 			var lockAllPosTop = undefined;
@@ -12335,7 +12338,7 @@ function isAllowPasteLink(pastedWb) {
 			if (canEdit && this.collaborativeEditing.getCollaborativeEditing() && readyMode) {
 				var c1Recalc = null, r1Recalc = null;
 				var selectRangeRecalc = new asc_Range(c.col, r.row, c.col, r.row);
-				// Пересчет для входящих ячеек в добавленные строки/столбцы
+				// Recalculation for incoming cells in added rows/columns
 				var isIntersection = this._recalcRangeByInsertRowsAndColumns(sheetId, selectRangeRecalc);
 				if (false === isIntersection) {
 					lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Range, /*subType*/null, sheetId,
@@ -12344,7 +12347,7 @@ function isAllowPasteLink(pastedWb) {
 					isLocked = this.collaborativeEditing.getLockIntersection(lockInfo, c_oAscLockTypes.kLockTypeOther,
                         /*bCheckOnlyLockAll*/false);
 					if (false !== isLocked) {
-						// Кто-то сделал lock
+						// Someone made a lock
 						userId = isLocked.UserId;
 						lockRange = isLocked.Element["rangeOrObjectId"];
 
@@ -12356,7 +12359,7 @@ function isAllowPasteLink(pastedWb) {
 						if (null !== c1Recalc && null !== r1Recalc) {
 							lockRangePosLeft = this._getColLeft(c1Recalc);
 							lockRangePosTop = this._getRowTop(r1Recalc);
-							// Пересчитываем X и Y относительно видимой области
+							// Recalculate X and Y relative to visible area
 							lockRangePosLeft -= offsetX;
 							lockRangePosTop -= offsetY;
 							lockRangePosLeft = this.cellsLeft > lockRangePosLeft ? this.cellsLeft : lockRangePosLeft;
@@ -12367,29 +12370,29 @@ function isAllowPasteLink(pastedWb) {
 					lockInfo =
 						this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Range, /*subType*/null, sheetId, null);
 				}
-				// Проверим не удален ли весь лист (именно удален, т.к. если просто залочен, то не рисуем рамку вокруг)
+				// Check if the entire sheet is deleted (specifically deleted, because if just locked, we don't draw a frame around)
 				lockInfo["type"] = c_oAscLockTypeElem.Sheet;
 				isLocked = this.collaborativeEditing.getLockIntersection(lockInfo, c_oAscLockTypes.kLockTypeOther,
                     /*bCheckOnlyLockAll*/true);
 				if (false !== isLocked) {
-					// Кто-то сделал lock
+					// Someone made a lock
 					userIdAllSheet = isLocked.UserId;
 				}
 
-				// Проверим не залочены ли все свойства листа (только если не удален весь лист)
+				// Check if all sheet properties are locked (only if the entire sheet is not deleted)
 				if (undefined === userIdAllSheet) {
 					lockInfo["type"] = c_oAscLockTypeElem.Range;
 					lockInfo["subType"] = c_oAscLockTypeElemSubType.InsertRows;
 					isLocked = this.collaborativeEditing.getLockIntersection(lockInfo, c_oAscLockTypes.kLockTypeOther,
                         /*bCheckOnlyLockAll*/true);
 					if (false !== isLocked) {
-						// Кто-то сделал lock
+						// Someone made a lock
 						userIdAllProps = isLocked.UserId;
 					}
 				}
 			}
 
-			//проверяем, не попали ли мы в чужой селект
+			//check if we hit someone else's selection
 			if (((canEdit && this.collaborativeEditing.getCollaborativeEditing()) || this.workbook.Api.isLiveViewer()) && readyMode && this.collaborativeEditing.getFast()) {
 				var isForeignSelect = this.collaborativeEditing.getForeignSelectIntersection(c.col, r.row);
 				if (isForeignSelect) {
@@ -12399,7 +12402,7 @@ function isAllowPasteLink(pastedWb) {
 					shortIdForeignSelect = isForeignSelect.shortId;
 					foreignSelectPosLeft = this._getColLeft(foreignCol) + this._getColumnWidth(foreignCol);
 					foreignSelectPosTop = this._getRowTop(foreignRow);
-					// Пересчитываем X и Y относительно видимой области
+					// Recalculate X and Y relative to the visible area
 					foreignSelectPosLeft -= offsetX;
 					foreignSelectPosTop -= offsetY;
 					foreignSelectPosLeft = this.cellsLeft > foreignSelectPosLeft ? this.cellsLeft : foreignSelectPosLeft;
@@ -12466,7 +12469,7 @@ function isAllowPasteLink(pastedWb) {
 				}
 			}
 
-			// Проверим есть ли комменты
+			// Check if there are comments
 			var comment = readyMode && this.cellCommentator.getComment(c.col, r.row, true);
 			var coords = null;
 			var indexes = null;
@@ -12476,7 +12479,7 @@ function isAllowPasteLink(pastedWb) {
 				coords = this.cellCommentator.getCommentTooltipPosition(comment);
 			}
 
-			// Проверим, может мы в гиперлинке
+			// Check if we are in a hyperlink
 			oHyperlink = readyMode && this.model.getHyperlinkByCell(r.row, c.col);
 			cellCursor = {
 				cursor: AscCommon.Cursors.CellCur,
@@ -12552,8 +12555,8 @@ function isAllowPasteLink(pastedWb) {
 						cell.processFormula(function(formulaParsed) {
 							let formulaHyperlink = formulaParsed.getFormulaHyperlink();
 							if (formulaHyperlink) {
-								//запсускаю пересчет в связи с тем, что после открытия значение не рассчитано,
-								// но показывать результат при наведении на ссылку нужно
+								//starting recalculation because after opening the value is not calculated,
+								// but we need to show the result when hovering over the link
 								if(null === formulaParsed.value || formulaParsed.getShared()) {
 									formulaParsed.calculate();
 								}
@@ -12606,7 +12609,7 @@ function isAllowPasteLink(pastedWb) {
         	return;
 		}
 
-        // ToDo - переделать этот момент!!!!
+        // ToDo - refactor this part!!!!
         var res = this.model.expandRangeByMerged(ar.clone(true));
 
         if (ar.c1 !== res.c1 && ar.c1 !== res.c2) {
@@ -12658,7 +12661,7 @@ function isAllowPasteLink(pastedWb) {
             }
         } else {
             if (0 !== dc && this.nColsCount > ar.c2 && 0 === this._getColumnWidth(ar.c2)) {
-                // Проверка для одновременно замерженных и скрытых ячеек (A1:C1 merge, B:C hidden)
+                // Check for simultaneously merged and hidden cells (A1:C1 merge, B:C hidden)
                 for (mc = null, i = arn.r1; i <= arn.r2; ++i) {
                     mc = this.model.getMergedByCell(i, ar.c2);
                     if (mc) {
@@ -12680,7 +12683,7 @@ function isAllowPasteLink(pastedWb) {
             }
         } else {
             if (0 !== dr && this.nRowsCount > ar.r2 && 0 === this._getRowHeight(ar.r2)) {
-                //Проверка для одновременно замерженных и скрытых ячеек (A1:A3 merge, 2:3 hidden)
+                //Check for simultaneously merged and hidden cells (A1:A3 merge, 2:3 hidden)
                 for (mc = null, i = arn.c1; i <= arn.c2; ++i) {
                     mc = this.model.getMergedByCell(ar.r2, i);
                     if (mc) {
@@ -12774,11 +12777,11 @@ function isAllowPasteLink(pastedWb) {
         this._fixSelectionOfMergedCells(undefined, undefined, customSelection);
     };
 
-    // Движение активной ячейки в выделенной области
+    // Movement of active cell in selected area
     WorksheetView.prototype._moveActivePointInSelection = function (dc, dr) {
         var t = this, cell = this.model.selectionRange.activeCell;
 
-        // Если мы на скрытой строке или ячейке, то двигаться в выделении нельзя (так делает и Excel)
+        // If we are on a hidden row or cell, we cannot move in the selection (Excel does the same)
         if (0 === this._getColumnWidth(cell.col) || 0 === this._getRowHeight(cell.row)) {
             return;
         }
@@ -12868,7 +12871,7 @@ function isAllowPasteLink(pastedWb) {
 	      var originalSelection = customSelection || this._getSelection();
 	      var ar = originalSelection.getLast();
         if (this.getFormulaEditMode()) {
-            // Для формул нужно сделать ограничение по range (у нас хранится полный диапазон)
+            // For formulas we need to limit by range (we store the full range)
             if (ar.c2 >= this.nColsCount || ar.r2 >= this.nRowsCount) {
                 ar = ar.clone(true);
                 ar.c2 = (ar.c2 >= this.nColsCount) ? this.nColsCount - 1 : ar.c2;
@@ -12911,7 +12914,7 @@ function isAllowPasteLink(pastedWb) {
         let vr = this.visibleRange;
         let ar = range || this._getSelection().getLast();
         if (this.getFormulaEditMode()) {
-            // Для формул нужно сделать ограничение по range (у нас хранится полный диапазон)
+            // For formulas we need to limit by range (we store the full range)
             if (ar.c2 >= this.nColsCount || ar.r2 >= this.nRowsCount) {
                 ar = ar.clone(true);
                 ar.c2 = (ar.c2 >= this.nColsCount) ? this.nColsCount - 1 : ar.c2;
@@ -12992,7 +12995,7 @@ function isAllowPasteLink(pastedWb) {
 		var selection = this.model.selectionRange || this.model.copySelection;
 		var ar = range || selection.getLast();
 		if (this.getFormulaEditMode()) {
-			// Для формул нужно сделать ограничение по range (у нас хранится полный диапазон)
+			// For formulas, we need to limit by range (we store the full range)
 			if (ar.c2 >= this.nColsCount || ar.r2 >= this.nRowsCount) {
 				ar = ar.clone(true);
 				ar.c2 = (ar.c2 >= this.nColsCount) ? this.nColsCount - 1 : ar.c2;
@@ -13130,7 +13133,7 @@ function isAllowPasteLink(pastedWb) {
 			incY : 0, type === c_oAscSelectionType.RangeCol || type === c_oAscSelectionType.RangeCells ? incX : 0);
     };
 
-    // Потеряем ли мы что-то при merge ячеек
+    // Will we lose something when merging cells
     WorksheetView.prototype.getSelectionMergeInfo = function (options) {
         // ToDo now check only last selection range
 		var t = this;
@@ -13169,22 +13172,22 @@ function isAllowPasteLink(pastedWb) {
         return !!res;
     };
 
-	//нужно ли спрашивать пользователя о расширении диапазона
+	//do we need to ask user about range expansion
 	WorksheetView.prototype.getSelectionSortInfo = function () {
-		//в случае попытки сортировать мультиселект, необходимо выдавать ошибку
+		//in case of attempt to sort multiselect, need to show error
 		var arn = this.model.selectionRange.getLast().clone(true);
 
-		//null - не выдавать сообщение и не расширять, false - не выдавать сообщение и расширЯть, true - выдавать сообщение
+		//null - don't show message and don't expand, false - don't show message and expand, true - show message
 		var bResult = Asc.c_oAscSelectionSortExpand.expandAndNotShowMessage;
 
-		//если внутри форматированной таблиц, никогда не выдаем сообщение
+		//if inside formatted table, never show message
 		if(this.model.autoFilters._isTablePartsContainsRange(arn) || this.model.inPivotTable(arn))
 		{
 			bResult = Asc.c_oAscSelectionSortExpand.notExpandAndNotShowMessage;
 		}
-		else if(!arn.isOneCell())//в случае одной выделенной ячейки - всегда не выдаём сообщение и автоматически расширяем
+		else if(!arn.isOneCell())//in case of one selected cell - always don't show message and auto-expand
 		{
-			//если одна замерженная ячейка
+			//if one merged cell
 			var cell = this.model.getRange3(arn.r1, arn.c1, arn.r2, arn.c2);
 			var isMerged = cell.hasMerged();
 
@@ -13194,14 +13197,14 @@ function isAllowPasteLink(pastedWb) {
 
 			var colCount = arn.c2 - arn.c1 + 1;
 			var rowCount = arn.r2 - arn.r1 + 1;
-			//если выделено более одного столбца и более одной строки - не выдаем сообщение и не расширяем
+			//if more than one column and more than one row selected - don't show message and don't expand
 			if(colCount > 1 && rowCount > 1)
 			{
 				bResult = Asc.c_oAscSelectionSortExpand.notExpandAndNotShowMessage;
 			}
 			else
 			{
-				//далее проверяем есть ли смежные ячейки у startCol/startRow
+				//next we check if there are adjacent cells at startCol/startRow
 				var activeCell = this.model.selectionRange.activeCell;
 				var activeCellRange = new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row);
 
@@ -13223,7 +13226,7 @@ function isAllowPasteLink(pastedWb) {
 					}
 				}
 
-				//если диапазон не расширяется за счет близлежащих ячеек - не выдаем сообщение и не расширяем
+				//if range doesn't expand due to adjacent cells - don't show message and don't expand
 				if(arn.isEqual(expandRange) || activeCellRange.isEqual(expandRange))
 				{
 					bResult = Asc.c_oAscSelectionSortExpand.notExpandAndNotShowMessage;
@@ -13243,7 +13246,7 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 	WorksheetView.prototype.getSelectionMathInfo = function (callback) {
-		//TODO при выделении большого количетсва данных функция работает долго
+		//TODO when selecting large amount of data the function works slowly
 		var oSelectionMathInfo = new asc_CSelectionMathInfo();
 		if (window["NATIVE_EDITOR_ENJINE"] || this.getSelectionDialogMode()) {
 			return oSelectionMathInfo;
@@ -13382,12 +13385,12 @@ function isAllowPasteLink(pastedWb) {
 			}
 			let sum = _props.sum;
 			if (1 < _oSelectionMathInfo.count && 0 < _oSelectionMathInfo.countNumbers) {
-				// Мы должны отдавать в формате активной ячейки
+				// We should return in format of active cell
 				var activeCell = t.model.selectionRange.activeCell;
 				var numFormat = t.model.getRange3(activeCell.row, activeCell.col,
 					activeCell.row, activeCell.col).getNumFormat();
 				if (Asc.c_oAscNumFormatType.Time === numFormat.getType()) {
-					// Для времени нужно отдавать в формате [h]:mm:ss (http://bugzilla.onlyoffice.com/show_bug.cgi?id=26271)
+					// For time we need to return in format [h]:mm:ss (http://bugzilla.onlyoffice.com/show_bug.cgi?id=26271)
 					numFormat = AscCommon.oNumFormatCache.get('[h]:mm:ss');
 				}
 
@@ -13582,7 +13585,7 @@ function isAllowPasteLink(pastedWb) {
 		return this.getSelectionRangeValues(absName, addSheet, addBook).join(AscCommon.FormulaSeparators.functionArgumentSeparator);
 	};
 	WorksheetView.prototype.getSelectionRangeValues = function (absName, addSheet, addBook) {
-		// ToDo проблема с выбором целого столбца/строки
+		// ToDo problem with selecting entire column/row
 		var name, res = [];
 		absName = absName || this.workbook.dialogAbsName;
 		addSheet = addSheet || this.workbook.getDialogSheetName();
@@ -13626,7 +13629,7 @@ function isAllowPasteLink(pastedWb) {
 			}
 			for (let i = 0; i < ranges.length; ++i) {
 				var range = ranges[i];
-				//делаю условие только для формул, просмотреть все остальные диапазоны
+				//making condition only for formulas, review all other ranges
 				if (this.getFormulaEditMode()) {
 					var isMerged = this.model.getMergedByCell(range.r1, range.c1);
 					if (isMerged && isMerged.isEqual(range)) {
@@ -13634,7 +13637,7 @@ function isAllowPasteLink(pastedWb) {
 					}
 				}
 
-				// ToDo проблема с выбором целого столбца/строки
+				// ToDo problem with selecting entire column/row
 				name = range.getName(absName ? AscCommonExcel.referenceType.A : AscCommonExcel.referenceType.R);
 				let exPath = "";
 				if (addBook) {
@@ -13739,14 +13742,14 @@ function isAllowPasteLink(pastedWb) {
 
         cell_info.lockText = ("" !== cell_info.text && (isNumberFormat || c.isFormula()));
 
-        // Получаем гиперссылку (//ToDo)
+        // Get hyperlink (//ToDo)
         var ar = selectionRange.getLast().clone();
 		let isOneColSelected = Math.abs(ar.c2 - ar.c1) + 1;
         var range = this.model.getRange3(ar.r1, ar.c1, ar.r2, ar.c2);
         var hyperlink = range.getHyperlink();
         var oHyperlink;
         if (null !== hyperlink) {
-            // Гиперлинк
+            // Hyperlink
             oHyperlink = new asc_CHyperlink(hyperlink);
             oHyperlink.asc_setText(cell_info.text);
             cell_info.hyperlink = oHyperlink;
@@ -13754,8 +13757,8 @@ function isAllowPasteLink(pastedWb) {
             cell_info.hyperlink = null;
         }
 
-        //можно было бы просто возвратить от фукнции getComment undefined, но в билдере уже используется данная функция
-		//и резуьтат документирован. оставляю так.
+        //could just return undefined from getComment function, but this function is already used in builder
+		//and the result is documented. leaving it as is.
         cell_info.comment = this.cellCommentator.getComment(c1, r1, false, true);
         if (cell_info.comment && !AscCommon.UserInfoParser.canViewComment(cell_info.comment.sUserName)) {
 			cell_info.comment = undefined;
@@ -13765,7 +13768,7 @@ function isAllowPasteLink(pastedWb) {
 
         var sheetId = this.model.getId();
 		var lockInfo;
-        // Пересчет для входящих ячеек в добавленные строки/столбцы
+        // Recalculation for incoming cells in added rows/columns
         var isIntersection = this._recalcRangeByInsertRowsAndColumns(sheetId, ar);
         if (false === isIntersection) {
 			lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Range, /*subType*/null, sheetId,
@@ -13773,7 +13776,7 @@ function isAllowPasteLink(pastedWb) {
 
             if (false !== this.collaborativeEditing.getLockIntersection(lockInfo, c_oAscLockTypes.kLockTypeOther,
                 /*bCheckOnlyLockAll*/false)) {
-                // Уже ячейку кто-то редактирует
+                // Someone is already editing the cell
                 cell_info.isLocked = true;
             }
         }
@@ -13792,7 +13795,7 @@ function isAllowPasteLink(pastedWb) {
 
 				if (false !== this.collaborativeEditing.getLockIntersection(lockInfo, c_oAscLockTypes.kLockTypeOther,
 						/*bCheckOnlyLockAll*/false)) {
-					// Уже таблицу кто-то редактирует
+					// Someone is already editing the table
 					cell_info.isLockedTable = true;
 				}
 			}
@@ -13952,14 +13955,14 @@ function isAllowPasteLink(pastedWb) {
 
         objectInfo.xfs = xfs;
 
-        // ToDo Нужно выставить правильный Fill
+        // ToDo Need to set correct Fill
 
         // ToDo locks
 
         return objectInfo;
     };
 
-    // Получаем координаты активной ячейки
+    // Get active cell coordinates
     WorksheetView.prototype.getActiveCellCoord = function (useUpRightMerge) {
         var selection = this.model.getSelection();
 		var row = selection.activeCell.row;
@@ -13997,10 +14000,10 @@ function isAllowPasteLink(pastedWb) {
 
         var xL = this._getColLeft(col);
         var yL = this._getRowTop(row);
-        // Пересчитываем X и Y относительно видимой области
+        // Recalculate X and Y relative to visible area
         xL -= (this._getOffsetX(vrCol));
         yL -= (this._getOffsetY(vrRow));
-        // Пересчитываем X и Y относительно закрепленной области
+        // Recalculate X and Y relative to frozen area
         xL += offsetX;
         yL += offsetY;
 
@@ -14059,7 +14062,7 @@ function isAllowPasteLink(pastedWb) {
     };
     WorksheetView.prototype.setSelectionShape = function ( isSelectOnShape ) {
         this.isSelectOnShape = isSelectOnShape;
-        // отправляем евент для получения свойств картинки, шейпа или группы
+        // send event to get properties of image, shape or group
         this.model.workbook.handlers.trigger( "asc_onHideComment" );
         this._updateSelectionNameAndInfo();
 
@@ -14150,7 +14153,7 @@ function isAllowPasteLink(pastedWb) {
         }
 
 		if (this.getSelectionDialogMode()) {
-            // Смена диапазона
+            // Range change
             let externalFormulaEditMode = this.workbook.externalSelectionController.getExternalFormulaEditMode();
             this.handlers.trigger("selectionRangeChanged", this.getSelectionRangeValue(externalFormulaEditMode, externalFormulaEditMode, externalFormulaEditMode));
 		} else {
@@ -14230,7 +14233,7 @@ function isAllowPasteLink(pastedWb) {
 		return !isRelative ? this._calcActiveRangeOffsetIsCoord(x, y, oleSize) : this._calcRangeOffset(oleSize.getLast(), diffRange);
 	};
 
-    // Смена селекта по нажатию правой кнопки мыши
+    // Selection change on right mouse button click
     WorksheetView.prototype.changeSelectionStartPointRightClick = function (x, y, target) {
         var isSelectOnShape = this._endSelectionShape();
         this.model.workbook.handlers.trigger("asc_onHideComment");
@@ -14259,7 +14262,7 @@ function isAllowPasteLink(pastedWb) {
 
 		range = new asc_Range(c1, r1, c2, r2);
         if (!this.model.selectionRange.containsRange(range)) {
-            // Не попали в выделение (меняем первую точку)
+            // Didn't hit the selection (change first point)
             this.cleanSelection();
             this.model.selectionRange.clean();
 			this.setSelection(range, true);
@@ -14273,9 +14276,9 @@ function isAllowPasteLink(pastedWb) {
 
     /**
      *
-     * @param x - координата или прибавка к column
-     * @param y - координата или прибавка к row
-     * @param isCoord - выделение с помощью мышки или с клавиатуры. При выделении с помощью мышки, не нужно отправлять эвенты о смене выделения и информации
+     * @param x - coordinate or addition to column
+     * @param y - coordinate or addition to row
+     * @param isCoord - selection with mouse or keyboard. When selecting with mouse, no need to send events about selection change and info
      * @param keepType
      * @returns {*}
      */
@@ -14324,7 +14327,7 @@ function isAllowPasteLink(pastedWb) {
         return isCoord ? this._calcActiveRangeOffsetIsCoord(x, y) : this._calcRangeOffset(undefined, diffRange, true);
     };
 
-    // Окончание выделения
+    // End of selection
     WorksheetView.prototype.changeSelectionDone = function () {
         if (this.workbook.Api.getFormatPainterState()) {
             this.applyFormatPainter();
@@ -14333,7 +14336,7 @@ function isAllowPasteLink(pastedWb) {
         }
     };
 
-    // Обработка движения в выделенной области
+    // Handle movement in selected area
     WorksheetView.prototype.changeSelectionActivePoint = function (dc, dr) {
         var ret, res;
         if (0 === dc && 0 === dr) {
@@ -14355,16 +14358,16 @@ function isAllowPasteLink(pastedWb) {
             return null;
         }
 
-        // Очищаем выделение
+        // Clear selection
         this.cleanSelection();
         this.endEditChart();
-        // Перерисовываем
+        // Redraw
         this.updateSelectionWithSparklines();
 
-        // Смотрим, ушли ли мы за границу видимой области
+        // Check if we went beyond visible area boundary
         ret = this._calcActiveCellOffset();
 
-        // Эвент обновления
+        // Update event
         this.handlers.trigger("selectionNameChanged", this.getSelectionName(/*bRangeText*/false));
         this.handlers.trigger("selectionChanged");
 
@@ -14403,14 +14406,14 @@ function isAllowPasteLink(pastedWb) {
 			let t = this;
 			let from = oRange.getLast(), to = this.model.selectionRange.getLast().clone();
 			let onApplyFormatPainterCallback = function (isSuccess) {
-				// Очищаем выделение
+				// Clear selection
 				t.cleanSelection();
 
 				if (isSuccess) {
 					AscCommonExcel.promoteFromTo(from, t.workbook.getFormatPainterSheet(), to, t.model);
 				}
 
-				// Сбрасываем параметры
+				// Reset parameters
 				if (c_oAscFormatPainterState.kMultiple !== t.workbook.Api.getFormatPainterState()) {
 					t.handlers.trigger('onStopFormatPainter', true);
 				}
@@ -14419,13 +14422,13 @@ function isAllowPasteLink(pastedWb) {
 					t._updateRange(to);
 				}
 
-				// Перерисовываем
+				// Redraw
 				t.draw();
 			};
 
 			let result = AscCommonExcel.preparePromoteFromTo(from, to);
 			if (!result) {
-				// ToDo вывести ошибку
+				// ToDo show error
 				onApplyFormatPainterCallback(false);
 				return;
 			}
@@ -14435,7 +14438,7 @@ function isAllowPasteLink(pastedWb) {
 				return;
 			}
 
-			//проверку отдельно добавляю, возможно стоит добавить внутрь preparePromoteFromTo
+			//adding check separately, maybe should add inside preparePromoteFromTo
 			if (this.model.getSheetProtection() && this.model.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
 				this.checkProtectRangeOnEdit([to], function (success) {
 					if (success) {
@@ -14604,9 +14607,9 @@ function isAllowPasteLink(pastedWb) {
 		t.draw();
 	};
 
-    /* Функция для работы автозаполнения (selection). (x, y) - координаты точки мыши на области */
+    /* Function for autofill (selection). (x, y) - mouse point coordinates on area */
     WorksheetView.prototype.changeSelectionFillHandle = function (x, y, tableIndex) {
-        // Возвращаемый результат
+        // Return result
         var ret = null;
 
 		var t = this, table;
@@ -14629,7 +14632,7 @@ function isAllowPasteLink(pastedWb) {
 			return t.model.TableParts && t.model.TableParts[index] ? t.model.TableParts[index] : null;
 		};
 
-		// Если мы только первый раз попали сюда, то копируем выделенную область
+		// If we are here for the first time, copy the selected area
 		if (null === this.activeFillHandle) {
 			if (undefined !== tableIndex) {
 				table = _getTableByIndex(tableIndex);
@@ -14638,52 +14641,52 @@ function isAllowPasteLink(pastedWb) {
 			} else {
 				this.activeFillHandle = this.model.getSelection().getLast().clone();
 			}
-			// Для первого раза нормализуем (т.е. первая точка - это левый верхний угол)
+			// For the first time normalize (i.e. first point is upper left corner)
 			this.activeFillHandle.normalize();
 			return ret;
 		}
 
-        // Очищаем выделение, будем рисовать заново
+        // Clear selection, will redraw
         this.cleanSelection();
 
-        // Копируем выделенную область
+        // Copy selected area
 		table = undefined !== this.resizeTableIndex ? _getTableByIndex(this.resizeTableIndex) : null;
         var ar = table ? table.Ref.clone() : this.model.getSelection().getLast().clone(true);
 
-        // Получаем координаты левого верхнего угла выделения
+        // Get coordinates of upper left corner of selection
         var xL = this._getColLeft(ar.c1, true);
         var yL = this._getRowTop(ar.r1);
-        // Получаем координаты правого нижнего угла выделения
+        // Get coordinates of lower right corner of selection
         var xR = this._getColLeft(ar.c2 + 1, true);
         var yR = this._getRowTop(ar.r2 + 1);
 
-        // range для пересчета видимой области
+        // range for visible area recalculation
         var activeFillHandleCopy;
 
-        // Колонка по X и строка по Y
+        // Column by X and row by Y
         var colByX = this._findColUnderCursor(x, /*canReturnNull*/false, true).col;
         var rowByY = this._findRowUnderCursor(y, /*canReturnNull*/false, true).row;
-        // Колонка по X и строка по Y (без половинчатого счета). Для сдвига видимой области
+        // Column by X and row by Y (without half count). For visible area shift
         var colByXNoDX = this._findColUnderCursor(x, /*canReturnNull*/false, false).col;
         var rowByYNoDY = this._findRowUnderCursor(y, /*canReturnNull*/false, false).row;
-        // Сдвиг в столбцах и строках от крайней точки
+        // Shift in columns and rows from edge point
         var dCol;
         var dRow;
 
-        // Пересчитываем X и Y относительно видимой области
+        // Recalculate X and Y relative to visible area
         x += (this._getColLeft(this.visibleRange.c1, true) - this.cellsLeft);
         y += (this._getRowTop(this.visibleRange.r1) - this.cellsTop);
 
-        // Вычисляем расстояние от (x, y) до (xL, yL)
+        // Calculate distance from (x, y) to (xL, yL)
         var dXL = x - xL;
         var dYL = y - yL;
-        // Вычисляем расстояние от (x, y) до (xR, yR)
+        // Calculate distance from (x, y) to (xR, yR)
         var dXR = x - xR;
         var dYR = y - yR;
         var dXRMod;
         var dYRMod;
 
-        // Определяем область попадания и точку
+        // Determine hit area and point
         /*
          (1)					(2)					(3)
 
@@ -14696,136 +14699,136 @@ function isAllowPasteLink(pastedWb) {
          (7)					(8)					(9)
          */
 
-        // Область точки (x, y)
+        // Area of point (x, y)
         var _tmpArea = 0;
         if (dXR <= 0) {
-            // Области (1), (2), (4), (5), (7), (8)
+            // Areas (1), (2), (4), (5), (7), (8)
             if (dXL <= 0) {
-                // Области (1), (4), (7)
+                // Areas (1), (4), (7)
                 if (dYR <= 0) {
-                    // Области (1), (4)
+                    // Areas (1), (4)
                     if (dYL <= 0) {
-                        // Область (1)
+                        // Area (1)
                         _tmpArea = 1;
                     } else {
-                        // Область (4)
+                        // Area (4)
                         _tmpArea = 4;
                     }
                 } else {
-                    // Область (7)
+                    // Area (7)
                     _tmpArea = 7;
                 }
             } else {
-                // Области (2), (5), (8)
+                // Areas (2), (5), (8)
                 if (dYR <= 0) {
-                    // Области (2), (5)
+                    // Areas (2), (5)
                     if (dYL <= 0) {
-                        // Область (2)
+                        // Area (2)
                         _tmpArea = 2;
                     } else {
-                        // Область (5)
+                        // Area (5)
                         _tmpArea = 5;
                     }
                 } else {
-                    // Область (3)
+                    // Area (3)
                     _tmpArea = 8;
                 }
             }
         } else {
-            // Области (3), (6), (9)
+            // Areas (3), (6), (9)
             if (dYR <= 0) {
-                // Области (3), (6)
+                // Areas (3), (6)
                 if (dYL <= 0) {
-                    // Область (3)
+                    // Area (3)
                     _tmpArea = 3;
                 } else {
-                    // Область (6)
+                    // Area (6)
                     _tmpArea = 6;
                 }
             } else {
-                // Область (9)
+                // Area (9)
                 _tmpArea = 9;
             }
         }
 
-        // Проверяем, в каком направлении движение
+        // Check which direction we're moving
         switch (_tmpArea) {
             case 2:
             case 8:
-                // Двигаемся по вертикали.
+                // Moving vertically.
                 this.fillHandleDirection = 1;
                 break;
             case 4:
             case 6:
-                // Двигаемся по горизонтали.
+                // Moving horizontally.
                 this.fillHandleDirection = 0;
                 break;
             case 1:
-                // Сравниваем расстояния от точки до левого верхнего угла выделения
+                // Compare distances from point to top-left corner of selection
                 dXRMod = Math.abs(x - xL);
                 dYRMod = Math.abs(y - yL);
-                // Сдвиги по столбцам и строкам
+                // Column and row offsets
                 dCol = Math.abs(colByX - ar.c1);
                 dRow = Math.abs(rowByY - ar.r1);
-                // Определим направление позднее
+                // Will determine direction later
                 this.fillHandleDirection = -1;
                 break;
             case 3:
-                // Сравниваем расстояния от точки до правого верхнего угла выделения
+                // Compare distances from point to top-right corner of selection
                 dXRMod = Math.abs(x - xR);
                 dYRMod = Math.abs(y - yL);
-                // Сдвиги по столбцам и строкам
+                // Column and row offsets
                 dCol = Math.abs(colByX - ar.c2);
                 dRow = Math.abs(rowByY - ar.r1);
-                // Определим направление позднее
+                // Will determine direction later
                 this.fillHandleDirection = -1;
                 break;
             case 7:
-                // Сравниваем расстояния от точки до левого нижнего угла выделения
+                // Compare distances from point to bottom-left corner of selection
                 dXRMod = Math.abs(x - xL);
                 dYRMod = Math.abs(y - yR);
-                // Сдвиги по столбцам и строкам
+                // Column and row offsets
                 dCol = Math.abs(colByX - ar.c1);
                 dRow = Math.abs(rowByY - ar.r2);
-                // Определим направление позднее
+                // Will determine direction later
                 this.fillHandleDirection = -1;
                 break;
             case 5:
             case 9:
-                // Сравниваем расстояния от точки до правого нижнего угла выделения
+                // Compare distances from point to bottom-right corner of selection
                 dXRMod = Math.abs(dXR);
                 dYRMod = Math.abs(dYR);
-                // Сдвиги по столбцам и строкам
+                // Column and row offsets
                 dCol = Math.abs(colByX - ar.c2);
                 dRow = Math.abs(rowByY - ar.r2);
-                // Определим направление позднее
+                // Will determine direction later
                 this.fillHandleDirection = -1;
                 break;
         }
 
         //console.log(_tmpArea);
 
-        // Возможно еще не определили направление
+        // Direction may not be determined yet
         if (-1 === this.fillHandleDirection) {
-            // Проверим сдвиги по столбцам и строкам, если не поможет, то рассчитываем по расстоянию
+            // Check shifts by columns and rows, if that doesn't help, calculate by distance
             if (0 === dCol && 0 !== dRow) {
-                // Двигаемся по вертикали.
+                // Moving vertically.
                 this.fillHandleDirection = 1;
             } else if (0 !== dCol && 0 === dRow) {
-                // Двигаемся по горизонтали.
+                // Moving horizontally.
                 this.fillHandleDirection = 0;
             } else if (dXRMod >= dYRMod) {
-                // Двигаемся по горизонтали.
+                // Moving horizontally.
                 this.fillHandleDirection = 0;
             } else {
-                // Двигаемся по вертикали.
+                // Moving vertically.
                 this.fillHandleDirection = 1;
             }
         }
 
-        // Проверяем, в каком направлении движение
+        // Check movement direction
         if (0 === this.fillHandleDirection) {
-            // Определяем область попадания и точку
+            // Determine hit area and point
             /*
              |						|
              |						|
@@ -14836,44 +14839,44 @@ function isAllowPasteLink(pastedWb) {
 			if (table) {
 				this.fillHandleArea = 3;
 			} else if (dXR <= 0) {
-                // Область (1) или (2)
+                // Area (1) or (2)
                 if (dXL <= 0) {
-                    // Область (1)
+                    // Area (1)
                     this.fillHandleArea = 1;
                 } else {
-                    // Область (2)
+                    // Area (2)
                     this.fillHandleArea = 2;
                 }
             } else {
-                // Область (3)
+                // Area (3)
                 this.fillHandleArea = 3;
             }
 
-            // Находим колонку для точки
+            // Find column for point
             this.activeFillHandle.c2 = colByX;
 
             switch (this.fillHandleArea) {
                 case 1:
-                    // Первая точка (xR, yR), вторая точка (x, yL)
+                    // First point (xR, yR), second point (x, yL)
                     this.activeFillHandle.c1 = ar.c2;
                     this.activeFillHandle.r1 = ar.r2;
 
                     this.activeFillHandle.r2 = ar.r1;
 
-                    // Случай, если мы еще не вышли из внутренней области
+                    // Case when we haven't left the inner area yet
                     if (this.activeFillHandle.c2 == ar.c1) {
                         this.fillHandleArea = 2;
                     }
                     break;
                 case 2:
-                    // Первая точка (xR, yR), вторая точка (x, yL)
+                    // First point (xR, yR), second point (x, yL)
                     this.activeFillHandle.c1 = ar.c2;
                     this.activeFillHandle.r1 = ar.r2;
 
                     this.activeFillHandle.r2 = ar.r1;
 
                     if (this.activeFillHandle.c2 > this.activeFillHandle.c1) {
-                        // Ситуация половинки последнего столбца
+                        // Half of last column situation
                         this.activeFillHandle.c1 = ar.c1;
                         this.activeFillHandle.r1 = ar.r1;
 
@@ -14882,7 +14885,7 @@ function isAllowPasteLink(pastedWb) {
                     }
                     break;
                 case 3:
-                    // Первая точка (xL, yL), вторая точка (x, yR)
+                    // First point (xL, yL), second point (x, yR)
                     this.activeFillHandle.c1 = ar.c1;
                     this.activeFillHandle.r1 = ar.r1;
 
@@ -14894,11 +14897,11 @@ function isAllowPasteLink(pastedWb) {
 				_checkTableRange();
 			}
 
-            // Копируем в range для пересчета видимой области
+            // Copy to range for visible area recalculation
             activeFillHandleCopy = this.activeFillHandle.clone();
             activeFillHandleCopy.c2 = colByXNoDX;
         } else {
-            // Определяем область попадания и точку
+            // Determine hit area and point
             /*
              (1)
              ____________________________
@@ -14913,44 +14916,44 @@ function isAllowPasteLink(pastedWb) {
 			if (table) {
 				this.fillHandleArea = 3;
 			} else if (dYR <= 0) {
-                // Область (1) или (2)
+                // Area (1) or (2)
                 if (dYL <= 0) {
-                    // Область (1)
+                    // Area (1)
                     this.fillHandleArea = 1;
                 } else {
-                    // Область (2)
+                    // Area (2)
                     this.fillHandleArea = 2;
                 }
             } else {
-                // Область (3)
+                // Area (3)
                 this.fillHandleArea = 3;
             }
 
-            // Находим строку для точки
+            // Find row for point
             this.activeFillHandle.r2 = rowByY;
 
             switch (this.fillHandleArea) {
                 case 1:
-                    // Первая точка (xR, yR), вторая точка (xL, y)
+                    // First point (xR, yR), second point (xL, y)
                     this.activeFillHandle.c1 = ar.c2;
                     this.activeFillHandle.r1 = ar.r2;
 
                     this.activeFillHandle.c2 = ar.c1;
 
-                    // Случай, если мы еще не вышли из внутренней области
+                    // Case when we haven't left the inner area yet
                     if (this.activeFillHandle.r2 == ar.r1) {
                         this.fillHandleArea = 2;
                     }
                     break;
                 case 2:
-                    // Первая точка (xR, yR), вторая точка (xL, y)
+                    // First point (xR, yR), second point (xL, y)
                     this.activeFillHandle.c1 = ar.c2;
                     this.activeFillHandle.r1 = ar.r2;
 
                     this.activeFillHandle.c2 = ar.c1;
 
                     if (this.activeFillHandle.r2 > this.activeFillHandle.r1) {
-                        // Ситуация половинки последней строки
+                        // Half of last row situation
                         this.activeFillHandle.c1 = ar.c1;
                         this.activeFillHandle.r1 = ar.r1;
 
@@ -14959,7 +14962,7 @@ function isAllowPasteLink(pastedWb) {
                     }
                     break;
                 case 3:
-                    // Первая точка (xL, yL), вторая точка (xR, y)
+                    // First point (xL, yL), second point (xR, y)
                     this.activeFillHandle.c1 = ar.c1;
                     this.activeFillHandle.r1 = ar.r1;
 
@@ -14971,16 +14974,16 @@ function isAllowPasteLink(pastedWb) {
 				_checkTableRange();
 			}
 
-            // Копируем в range для пересчета видимой области
+            // Copy to range for visible area recalculation
             activeFillHandleCopy = this.activeFillHandle.clone();
             activeFillHandleCopy.r2 = rowByYNoDY;
         }
 
         //console.log ("row1: " + this.activeFillHandle.r1 + " col1: " + this.activeFillHandle.c1 + " row2: " + this.activeFillHandle.r2 + " col2: " + this.activeFillHandle.c2);
-        // Перерисовываем
+        // Redraw
         this._drawSelection();
 
-        // Смотрим, ушли ли мы за границу видимой области
+        // Check if we went beyond visible area boundary
         ret = this._calcRangeOffset(activeFillHandleCopy);
         this.model.workbook.handlers.trigger("asc_onHideComment");
 
@@ -15019,7 +15022,7 @@ function isAllowPasteLink(pastedWb) {
 			return;
 		}
 
-		// Текущее выделение (к нему применится автозаполнение)
+		// Current selection (autofill will be applied to it)
 		let arn = t.model.selectionRange.getLast();
 		let range = t.model.getRange3(arn.r1, arn.c1, arn.r2, arn.c2);
 
@@ -15041,51 +15044,51 @@ function isAllowPasteLink(pastedWb) {
 			ctrlPress = !(range.getType() === AscCommon.CellValueType.Number && !dateType);
 		}
 
-		// Были ли изменения
+		// Were there changes
 		let bIsHaveChanges = false;
-		// Вычисляем индекс сдвига
+		// Calculate shift index
 		let nIndex = 0;
 		/*nIndex*/
 		if (0 === this.fillHandleDirection) {
-			// Горизонтальное движение
+			// Horizontal movement
 			nIndex = this.activeFillHandle.c2 - arn.c1;
 			if (2 === this.fillHandleArea) {
-				// Для внутренности нужно вычесть 1 из значения
+				// For interior need to subtract 1 from value
 				bIsHaveChanges = arn.c2 !== (this.activeFillHandle.c2 - 1);
 			} else {
 				bIsHaveChanges = arn.c2 !== this.activeFillHandle.c2;
 			}
 		} else {
-			// Вертикальное движение
+			// Vertical movement
 			nIndex = this.activeFillHandle.r2 - arn.r1;
 			if (2 === this.fillHandleArea) {
-				// Для внутренности нужно вычесть 1 из значения
+				// For interior need to subtract 1 from value
 				bIsHaveChanges = arn.r2 !== (this.activeFillHandle.r2 - 1);
 			} else {
 				bIsHaveChanges = arn.r2 !== this.activeFillHandle.r2;
 			}
 		}
 
-		// Меняли ли что-то
+		// Did we change anything
 		if (bIsHaveChanges && (this.activeFillHandle.r1 !== this.activeFillHandle.r2 || this.activeFillHandle.c1 !== this.activeFillHandle.c2)) {
-			// Диапазон ячеек, который мы будем менять
+			// Cell range that we will change
 			let changedRange = arn.clone();
 
-			// Очищаем выделение
+			// Clear selection
 			this.cleanSelection();
 			if (2 === this.fillHandleArea) {
-				// Мы внутри, будет удаление cбрасываем первую ячейку
-				// Проверяем, удалили ли мы все (если да, то область не меняется)
+				// We are inside, there will be deletion, reset first cell
+				// Check if we deleted everything (if yes, area doesn't change)
 				if (arn.c1 !== this.activeFillHandle.c2 || arn.r1 !== this.activeFillHandle.r2) {
-					// Уменьшаем диапазон (мы удалили не все)
+					// Reduce range (we didn't delete everything)
 					if (0 === this.fillHandleDirection) {
-						// Горизонтальное движение (для внутренности необходимо вычесть 1)
+						// Horizontal movement (for interior need to subtract 1)
 						arn.c2 = this.activeFillHandle.c2 - 1;
 
 						changedRange.c1 = changedRange.c2;
 						changedRange.c2 = this.activeFillHandle.c2;
 					} else {
-						// Вертикальное движение (для внутренности необходимо вычесть 1)
+						// Vertical movement (for interior need to subtract 1)
 						arn.r2 = this.activeFillHandle.r2 - 1;
 
 						changedRange.r1 = changedRange.r2;
@@ -15093,9 +15096,9 @@ function isAllowPasteLink(pastedWb) {
 					}
 				}
 			} else {
-				// Мы вне выделения. Увеличиваем диапазон
+				// We are outside selection. Increase range
 				if (0 === this.fillHandleDirection) {
-					// Горизонтальное движение
+					// Horizontal movement
 					if (1 === this.fillHandleArea) {
 						arn.c1 = this.activeFillHandle.c2;
 
@@ -15108,7 +15111,7 @@ function isAllowPasteLink(pastedWb) {
 						changedRange.c2 = this.activeFillHandle.c2;
 					}
 				} else {
-					// Вертикальное движение
+					// Vertical movement
 					if (1 === this.fillHandleArea) {
 						arn.r1 = this.activeFillHandle.r2;
 
@@ -15127,7 +15130,7 @@ function isAllowPasteLink(pastedWb) {
 
 			let applyFillHandleCallback = function (res) {
 				if (res) {
-					// Автозаполняем ячейки
+					// Autofill cells
 					let oCanPromote = range.canPromote(/*bCtrl*/ctrlPress, /*bVertical*/(1 === t.fillHandleDirection), nIndex);
 					if (null != oCanPromote) {
 						History.Create_NewPoint();
@@ -15135,12 +15138,12 @@ function isAllowPasteLink(pastedWb) {
 
 						AscCommonExcel.executeInR1C1Mode(false, function () {
 							range.promote(/*bCtrl*/ctrlPress, /*bVertical*/(1 === t.fillHandleDirection), nIndex, oCanPromote);
-							// Вызываем функцию пересчета для заголовков форматированной таблицы
+							// Call the recalculation function for formatted table headers
 							t.model.checkChangeTablesContent(arn);
 							let api = t.getApi();
 							api.onWorksheetChange(oCanPromote.to);
 
-							// Сбрасываем параметры автозаполнения
+							// Reset autofill parameters
 							t.activeFillHandle = null;
 							t.fillHandleDirection = -1;
 
@@ -15152,7 +15155,7 @@ function isAllowPasteLink(pastedWb) {
 						if (t.traceDependentsManager) {
 							t.traceDependentsManager.clearAll();
 						}
-						// Обновляем выделенные ячейки
+						// Update selected cells
 						t._updateRange(arn);
 
 						t.model.workbook.handlers.trigger("cleanCutData", null, true);
@@ -15164,7 +15167,7 @@ function isAllowPasteLink(pastedWb) {
 						t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotFillRange, c_oAscError.Level.NoCritical);
 						t.model.selectionRange.assign2(range.bbox);
 
-						// Сбрасываем параметры автозаполнения
+						// Reset autofill parameters
 						t.activeFillHandle = null;
 						t.fillHandleDirection = -1;
 
@@ -15172,10 +15175,10 @@ function isAllowPasteLink(pastedWb) {
 						callback && callback(false);
 					}
 				} else {
-					// Сбрасываем параметры автозаполнения
+					// Reset autofill parameters
 					t.activeFillHandle = null;
 					t.fillHandleDirection = -1;
-					// Перерисовываем
+					// Redraw
 					!opt_doNotDraw && t._drawSelection();
 					callback && callback(false);
 				}
@@ -15186,17 +15189,17 @@ function isAllowPasteLink(pastedWb) {
 				return;
 			}
 
-			//если все разлоченные ячейки - разрешаем. если перекрываем один защищенный диапазон(с паролем) - запрашиваем пароль, если более одного - ошибка
-			//если хоть одна залоченная ячейка, которая не принадлежит защищенному диапазону - ошибка
+			//if all cells are unlocked - allow. if overlapping one protected range (with password) - request password, if more than one - error
+			//if at least one locked cell that doesn't belong to a protected range - error
 			if (this.model.getSheetProtection()) {
 				this.checkProtectRangeOnEdit([changedRange], function (success) {
 					if (success) {
 						t._isLockedCells(changedRange, /*subType*/null, applyFillHandleCallback);
 					} else {
-						// Сбрасываем параметры автозаполнения
+						// Reset autofill parameters
 						t.activeFillHandle = null;
 						t.fillHandleDirection = -1;
-						// Перерисовываем
+						// Redraw
 						!opt_doNotDraw && t._drawSelection();
 						callback && callback(false);
 					}
@@ -15204,10 +15207,10 @@ function isAllowPasteLink(pastedWb) {
 				return;
 			}
 			if (this.model.inPivotTable(changedRange)) {
-				// Сбрасываем параметры автозаполнения
+				// Reset autofill parameters
 				this.activeFillHandle = null;
 				this.fillHandleDirection = -1;
-				// Перерисовываем
+				// Redraw
 				!opt_doNotDraw && this._drawSelection();
 				callback && callback(false);
 
@@ -15217,10 +15220,10 @@ function isAllowPasteLink(pastedWb) {
 
 
 			if (this.intersectionFormulaArray(changedRange, null, null, true)) {
-				// Сбрасываем параметры автозаполнения
+				// Reset autofill parameters
 				this.activeFillHandle = null;
 				this.fillHandleDirection = -1;
-				// Перерисовываем
+				// Redraw
 				!opt_doNotDraw && this._drawSelection();
 				callback && callback(false);
 
@@ -15228,15 +15231,15 @@ function isAllowPasteLink(pastedWb) {
 				return;
 			}
 
-			// Можно ли применять автозаполнение ?
+			// Can autofill be applied?
 			this._isLockedCells(changedRange, /*subType*/null, applyFillHandleCallback);
 		} else {
-			// Ничего не менялось, сбрасываем выделение
+			// Nothing changed, reset selection
 			this.cleanSelection();
-			// Сбрасываем параметры автозаполнения
+			// Reset autofill parameters
 			this.activeFillHandle = null;
 			this.fillHandleDirection = -1;
-			// Перерисовываем
+			// Redraw
 			!opt_doNotDraw && this._drawSelection();
 			callback && callback(false);
 		}
@@ -15244,9 +15247,9 @@ function isAllowPasteLink(pastedWb) {
 
 	WorksheetView.prototype.applyFillHandleDoubleClick = function () {
 
-		//1. если есть внизу расширяемых значений данные - диапазон расширяем строго по данным столбцам вниз до тех пор
-		//пока хотя бы одная ячейка не станет пустой в строке ниже
-		//2. если внизу только пустые строки - дёргае expandRange и идём до ближайшей непустой
+		//1. if there is data below the expandable values - expand the range strictly downward by these columns until
+		//at least one cell becomes empty in the row below
+		//2. if only empty rows below - call expandRange and go to the nearest non-empty
 		var range;
 
 		var activeRange = this.model.selectionRange && this.model.selectionRange.getLast();
@@ -15257,31 +15260,31 @@ function isAllowPasteLink(pastedWb) {
 			if (activeRange.r2 + 1 >= this.model.cellsByColRowsCount - 1) {
 				return;
 			}
-			//проверям следующую строку после активной
-			//если есть хотя бы одна пустая ячейка, то автозаполнение не применяем
+			//check the row after the active one
+			//if there is at least one empty cell, don't apply autofill
 			var nextRowRange = new Asc.Range(activeRange.c1,  activeRange.r2 + 1,  activeRange.c2,  activeRange.r2 + 1);
 			if (this.model.autoFilters._isContainEmptyCell(nextRowRange)) {
 
-				//если все пустые, то идём до ближайшей не пустой, в привном случае не применяем а/з
+				//if all empty, go to the nearest non-empty, otherwise don't apply autofill
 				if (this.model.autoFilters._isEmptyRange(nextRowRange)) {
 					var expandRange = this.model.autoFilters.expandRange(activeRange);
 					if (expandRange.r2 > activeRange.r2) {
-						//диапазон, на который расширились
+						//the range we expanded to
 						var newExpandRange = new Asc.Range(activeRange.c1,  activeRange.r2 + 1,  activeRange.c2,  expandRange.r2);
 						var firstNotEmptyCell = this.model.autoFilters._getFirstNotEmptyCell(newExpandRange);
 						if (firstNotEmptyCell) {
 							if (firstNotEmptyCell.nRow > activeRange.r2) {
-								//берём диапазон до ближайшей пустой
+								//take the range up to the nearest empty
 								range = new Asc.Range(activeRange.c1,  activeRange.r1,  activeRange.c2,  firstNotEmptyCell.nRow - 1);
 							}
 						} else {
-							//берём весь расширенный диапазон
+							//take the entire expanded range
 							range = new Asc.Range(activeRange.c1,  activeRange.r1,  activeRange.c2,  expandRange.r2);
 						}
 					}
 				}
 			} else {
-				//если все непустые, то идём до ближайшей строки, где есть хотя бы одна пустая
+				//if all non-empty, go to the nearest row where there is at least one empty cell
 				var firstEmptyCell = this.model.autoFilters._getFirstEmptyCellByRow(activeRange.r2, activeRange.c1, activeRange.c2);
 				if (firstEmptyCell && firstEmptyCell.nRow > activeRange.r1) {
 					range = new Asc.Range(activeRange.c1,  activeRange.r1,  activeRange.c2,  firstEmptyCell.nRow - 1);
@@ -15298,21 +15301,21 @@ function isAllowPasteLink(pastedWb) {
 		}
 	};
 
-    /* Функция для работы перемещения диапазона (selection). (x, y) - координаты точки мыши на области
-     *  ToDo нужно переделать, чтобы moveRange появлялся только после сдвига от текущей ячейки
+    /* Function for range (selection) movement handling. (x, y) - mouse point coordinates on the area
+     *  ToDo need to refactor so that moveRange appears only after shift from current cell
      */
     WorksheetView.prototype.changeSelectionMoveRangeHandle = function (x, y, colRowMoveProps) {
-        // Возвращаемый результат
+        // Return result
         var ret = null;
 
-        //если выделена ячейка заголовка ф/т, меняем выделение с ячейки на столбец ф/т
-        //если выделена вся видимая часть форматированной таблицы, но не выделены последние скрытые строчки
+        //if a formatted table header cell is selected, change selection from cell to formatted table column
+        //if the entire visible part of the formatted table is selected, but the last hidden rows are not selected
         var selectionRange = (this.dragAndDropRange || this.model.selectionRange.getLast()).clone();
         if (null === this.startCellMoveRange) {
             this.af_changeSelectionTablePart(selectionRange);
         }
 
-        // Колонка по X и строка по Y
+        // Column by X and row by Y
         var colByX = this._findColUnderCursor(x, /*canReturnNull*/false, false).col;
         var rowByY = this._findRowUnderCursor(y, /*canReturnNull*/false, false).row;
         var type = selectionRange.getType();
@@ -15326,9 +15329,9 @@ function isAllowPasteLink(pastedWb) {
             rowByY = 0;
         }
 
-        // Если мы только первый раз попали сюда, то копируем выделенную область
+        // If we got here for the first time, copy the selected area
         if (null === this.startCellMoveRange) {
-            // Учитываем погрешность (мы должны быть внутри диапазона при старте)
+            // Account for tolerance (we must be inside the range at start)
             if (colByX < selectionRange.c1) {
                 colByX = selectionRange.c1;
             } else if (colByX > selectionRange.c2) {
@@ -15340,7 +15343,7 @@ function isAllowPasteLink(pastedWb) {
                 rowByY = selectionRange.r2;
             }
             this.startCellMoveRange = new asc_Range(colByX, rowByY, colByX, rowByY);
-            this.startCellMoveRange.isChanged = false;	// Флаг, сдвигались ли мы от первоначального диапазона
+            this.startCellMoveRange.isChanged = false;	// Flag indicating whether we have shifted from the original range
 			//added new options for move all colls/rows
 			if (colRowMoveProps) {
 				this.startCellMoveRange.colRowMoveProps = colRowMoveProps;
@@ -15349,25 +15352,25 @@ function isAllowPasteLink(pastedWb) {
             return ret;
         }
 
-        // Разница, на сколько мы сдвинулись
+        // Difference in how much we've shifted
         var colDelta = colByX - this.startCellMoveRange.c1;
         var rowDelta = rowByY - this.startCellMoveRange.r1;
 
-        // Проверяем, нужно ли отрисовывать перемещение (сдвигались или нет)
+        // Check if we need to draw movement (shifted or not)
         if (false === this.startCellMoveRange.isChanged && 0 === colDelta && 0 === rowDelta) {
             return ret;
         }
-        // Выставляем флаг
+        // Set the flag
         this.startCellMoveRange.isChanged = true;
 
-        // Очищаем выделение, будем рисовать заново
+        // Clear selection, will redraw from scratch
         this.cleanSelection();
 
         this.activeMoveRange = selectionRange;
-        // Для первого раза нормализуем (т.е. первая точка - это левый верхний угол)
+        // For the first time normalize (i.e. first point is the top-left corner)
         this.activeMoveRange.normalize();
 
-        // Выставляем
+        // Set
         this.activeMoveRange.c1 += colDelta;
         if (0 > this.activeMoveRange.c1) {
             colDelta -= this.activeMoveRange.c1;
@@ -15382,7 +15385,7 @@ function isAllowPasteLink(pastedWb) {
         }
         this.activeMoveRange.r2 += rowDelta;
 
-        // Перерисовываем
+        // Redraw
         this._drawSelection();
         var d = new AscCommon.CellBase(0, 0);
         /*var d = {
@@ -15430,7 +15433,7 @@ function isAllowPasteLink(pastedWb) {
     };
 
     WorksheetView.prototype.changeChartSelectionMoveResizeRangeHandle = function(x, y, targetInfo) {
-        // Колонка по X и строка по Y
+        // Column by X and row by Y
         var colByX = this._findColUnderCursor(x, /*canReturnNull*/false, false).col;
         var rowByY = this._findRowUnderCursor(y, /*canReturnNull*/false, false).row;
         var i;
@@ -15651,7 +15654,7 @@ function isAllowPasteLink(pastedWb) {
 		WorksheetView.prototype._startMoveResizeRangeHandle = function (x, y, targetInfo, range) {
 			var ar = range.clone();
 
-			// Колонка по X и строка по Y
+			// Column by X and row by Y
 			var colByX = this._findColUnderCursor(x, /*canReturnNull*/false, false).col;
 			var rowByY = this._findRowUnderCursor(y, /*canReturnNull*/false, false).row;
 
@@ -15883,7 +15886,7 @@ function isAllowPasteLink(pastedWb) {
 	};
 	
 		WorksheetView.prototype.changeSelectionMoveResizeRangeHandle = function (x, y, targetInfo, editor) {
-			// Возвращаемый результат
+			// Return result
 			if (!targetInfo) {
 				return null;
 			}
@@ -15898,7 +15901,7 @@ function isAllowPasteLink(pastedWb) {
 			if (null === this.startCellMoveResizeRange) {
 				return this._startMoveResizeRangeHandle(x, y, targetInfo, initialRange);
 			}
-            // очищаем выделение
+            // clear selection
             this.overlayCtx.clear();
 
 			if (!this.getFormulaEditMode()) {
@@ -15914,17 +15917,17 @@ function isAllowPasteLink(pastedWb) {
     };
 
     WorksheetView.prototype._cleanSelectionMoveRange = function () {
-        // Перерисовываем и сбрасываем параметры
+        // Redraw and reset parameters
         this.cleanSelection();
         this.activeMoveRange = null;
         this.startCellMoveRange = null;
         this._drawSelection();
     };
 
-    /* Функция для применения перемещения диапазона */
+    /* Function for applying range movement */
     WorksheetView.prototype.applyMoveRangeHandle = function (ctrlKey) {
         if (null === this.activeMoveRange) {
-            // Сбрасываем параметры
+            // Reset parameters
             this.startCellMoveRange = null;
             return;
         }
@@ -15976,10 +15979,10 @@ function isAllowPasteLink(pastedWb) {
 			}
 
 			//***array-formula***
-			//теперь не передаю 3 параметром в функцию checkMoveFormulaArray ctrlKey, поскольку undo/redo для
-			//клонирования части формулы работает некорректно
-			//при undo созданную формулу обходимо не переносить, а удалять
-			//TODO пересомтреть!
+			//no longer passing ctrlKey as 3rd parameter to checkMoveFormulaArray because undo/redo for
+			//cloning part of the formula doesn't work correctly
+			//when undoing, the created formula needs to be deleted, not moved
+			//TODO review!
 			if (!t.checkMoveFormulaArray(arnFrom, arnTo)) {
 				t._cleanSelectionMoveRange();
 				t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
@@ -16072,10 +16075,10 @@ function isAllowPasteLink(pastedWb) {
 		}
 
 		//***array-formula***
-		//теперь не передаю 3 параметром в функцию checkMoveFormulaArray ctrlKey, поскольку undo/redo для
-		//клонирования части формулы работает некорректно
-		//при undo созданную формулу обходимо не переносить, а удалять
-		//TODO пересомтреть!
+		//no longer passing ctrlKey as 3rd parameter to checkMoveFormulaArray because undo/redo for
+		//cloning part of the formula doesn't work correctly
+		//when undoing, the created formula needs to be deleted, not moved
+		//TODO review!
 		if (!this.checkMoveFormulaArray(arnFrom, arnTo, null, opt_wsTo)) {
 			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
 			return;
@@ -16167,7 +16170,7 @@ function isAllowPasteLink(pastedWb) {
 
 				var hasMerged = t.model.getRange3(arnFrom.r1, arnFrom.c1, arnFrom.r2, arnFrom.c2).hasMerged();
 
-				// Очищаем выделение
+				// Clear selection
 				wsTo.cleanSelection();
 				// clear traces
 				if (t.traceDependentsManager) {
@@ -16195,7 +16198,7 @@ function isAllowPasteLink(pastedWb) {
 				var oRangeTo = new AscCommonExcel.Range(t.model, arnTo.r1, arnTo.c1, arnTo.r2, arnTo.c2);
 				Asc.editor.wbModel.handleChartsOnMoveRange(oRangeFrom, oRangeTo);
 
-				// Вызываем функцию пересчета для заголовков форматированной таблицы
+				// Call the recalculation function for formatted table headers
 				t.model.checkChangeTablesContent(arnFrom);
 				wsTo.model.checkChangeTablesContent(arnTo);
 				t.model.autoFilters.reDrawFilter(arnFrom);
@@ -16211,18 +16214,18 @@ function isAllowPasteLink(pastedWb) {
 				t._updateRange(arnFrom);
 
 				wsTo.model.selectionRange.assign2(arnTo);
-				// Сбрасываем параметры
+				// Reset parameters
 				wsTo.activeMoveRange = null;
 				wsTo.startCellMoveRange = null;
 
-				// Тут будет отрисовка select-а
+				// Selection will be drawn here
 				wsTo.draw();
-				// Вызовем на всякий случай, т.к. мы можем уже обновиться из-за формул ToDo возможно стоит убрать это в дальнейшем (но нужна переработка формул) - http://bugzilla.onlyoffice.com/show_bug.cgi?id=24505
+				// Call just in case, since we may have already updated due to formulas ToDo possibly remove this in the future (but formula refactoring is needed) - http://bugzilla.onlyoffice.com/show_bug.cgi?id=24505
 				wsTo._updateSelectionNameAndInfo();
 
 				if (hasMerged && false !== t.model.autoFilters._intersectionRangeWithTableParts(arnTo)) {
-					//не делаем действий в asc_onConfirmAction, потому что во время диалога может выполниться autosave и новые измения добавятся в точку, которую уже отправили
-					//тем более результат диалога ни на что не влияет
+					//don't perform actions in asc_onConfirmAction because autosave may execute during the dialog and new changes will be added to a point that was already sent
+					//besides, the dialog result doesn't affect anything
 					wsTo.model.workbook.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmPutMergeRange, function () {
 					});
 				}
@@ -16234,7 +16237,7 @@ function isAllowPasteLink(pastedWb) {
 			if (t.model.autoFilters._searchFiltersInRange(arnFrom, true)) {
 				t._isLockedAll(onApplyMoveAutoFiltersCallback);
 				if (copyRange) {
-					//TODO перепроверить лок
+					//TODO recheck lock
 					t._isLockedDefNames(null, null);
 				}
 			} else {
@@ -16275,7 +16278,7 @@ function isAllowPasteLink(pastedWb) {
     
 
     WorksheetView.prototype.emptySelection = function ( options, bIsCut, isMineComments ) {
-        // Удаляем выделенные графичекие объекты
+        // Delete selected graphic objects
         if ( this.objectRender.selectedGraphicObjectsExists() ) {
 			var isIntoShape = this.objectRender.controller.getTargetDocContent();
             var isMobileVersion = this.workbook && this.workbook.Api && this.workbook.Api.isMobileVersion;
@@ -16322,7 +16325,7 @@ function isAllowPasteLink(pastedWb) {
 	};
 
     WorksheetView.prototype.setSelectionInfo = function (prop, val, onlyActive, isMineComments) {
-        // Проверка глобального лока
+        // Global lock check
         if (this.collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
             if (prop === "paste" && AscCommonExcel.g_clipboardExcel.pasteProcessor.pasteCallBack) {
                 AscCommonExcel.g_clipboardExcel.pasteProcessor.pasteCallBack(false);
@@ -16482,7 +16485,7 @@ function isAllowPasteLink(pastedWb) {
 						break;
                     case "bc":
                         range.setFillColor(val || null);
-                        break; // ToDo можно делать просто отрисовку
+                        break; // ToDo could just do rendering
                     case "wrap":
                         range.setWrap(val);
                         break;
@@ -16649,7 +16652,7 @@ function isAllowPasteLink(pastedWb) {
                             callTrigger = true;
                             t.handlers.trigger("slowOperation", true);
                         }
-                        /* отключаем отрисовку на случай необходимости пересчета ячеек, заносим ячейку, при необходимости в список перерисовываемых */
+                        /* disable rendering in case cells need to be recalculated, add cell to the redraw list if necessary */
 
                         t.model.workbook.dependencyFormulas.lockRecal();
 						
@@ -16672,9 +16675,9 @@ function isAllowPasteLink(pastedWb) {
 								t.model.removeSparklines(range.bbox);
 								t.model.clearDataValidation([range.bbox], true);
 								t.model.clearConditionalFormattingRulesByRanges([range.bbox]);
-								// Удаляем комментарии
-								//TODO isMineComments - используется только здесь
-								// временный флаг, как только в сдк появится класс для групп, добавить этот флаг туда
+								// Delete comments
+								//TODO isMineComments - used only here
+								// temporary flag, once the sdk has a class for groups, add this flag there
 								isMineComments = isMineComments ? (t.model.workbook.oApi.DocInfo && t.model.workbook.oApi.DocInfo.get_UserId()) : null;
 								t.cellCommentator.deleteCommentsRange(range.bbox, isMineComments);
 								break;
@@ -16703,7 +16706,7 @@ function isAllowPasteLink(pastedWb) {
 
 						t.model.excludeHiddenRows(false);
 
-						// Если нужно удалить автофильтры - удаляем
+						// If we need to delete autofilters - delete them
 						if (window['AscCommonExcel'].filteringMode) {
 							if (val === c_oAscCleanOptions.All || val === c_oAscCleanOptions.Text) {
 								t.model.autoFilters.isEmptyAutoFilters(range.bbox);
@@ -16712,7 +16715,7 @@ function isAllowPasteLink(pastedWb) {
 							}
 						}
 
-                        // Вызываем функцию пересчета для заголовков форматированной таблицы
+                        // Call the recalculation function for formatted table headers
                         if (val === c_oAscCleanOptions.All || val === c_oAscCleanOptions.Text) {
                             t.model.checkChangeTablesContent(range.bbox);
                         }
@@ -16720,7 +16723,7 @@ function isAllowPasteLink(pastedWb) {
 						// recalculate all volatile arrays on page
 						t.model.dynamicArrayManager.recalculateVolatileArrays();
 
-                        /* возвращаем отрисовку. и перерисовываем ячейки с предварительным пересчетом */
+                        /* restore rendering. and redraw cells with preliminary recalculation */
                         t.model.workbook.dependencyFormulas.unlockRecal();
                         break;
 
@@ -16780,12 +16783,12 @@ function isAllowPasteLink(pastedWb) {
                                 }
                             }
 							if (null !== val.asc_getText()) {
-								// Вставим текст в активную ячейку (а не так, как MSExcel в первую ячейку диапазона)
+								// Insert text into the active cell (not like MSExcel into the first cell of the range)
 								mc = t.model.getMergedByCell(activeCell.row, activeCell.col);
 								c = mc ? mc.c1 : activeCell.col;
 								r = mc ? mc.r1 : activeCell.row;
 								t.model.getRange3(r, c, r, c).setValue(val.asc_getText());
-								// Вызываем функцию пересчета для заголовков форматированной таблицы
+								// Call the recalculation function for formatted table headers
 								t.model.checkChangeTablesContent(range.bbox);
 							}
 
@@ -16825,7 +16828,7 @@ function isAllowPasteLink(pastedWb) {
 				t.model.workbook.handlers.trigger("cleanCopyData", true);
 			}
 
-			//в случае, если вставляем из глобального буфера, транзакцию закрываем внутри функции loadDataBeforePaste на callbacks от загрузки шрифтов и картинок
+			//in case of pasting from the global buffer, close the transaction inside loadDataBeforePaste function on callbacks from font and image loading
 			if (prop !== "paste") {
 				History.EndTransaction();
 				if(expansionTableRange) {
@@ -16866,8 +16869,8 @@ function isAllowPasteLink(pastedWb) {
 			} else {
 
 				if (val.fromBinary) {
-					//при вставке извне не работает эта обработка в мс
-					//не клонирую, поскольку нигде меняться не будет
+					//this handling doesn't work in MS when pasting from outside
+					//not cloning, since it won't be changed anywhere
 					val.originalSelectBeforePaste = this.model.selectionRange ? this.model.selectionRange.clone() : null;
 					if (!this.changeSelectOnMultiSelect()) {
 						val.originalSelectBeforePaste = undefined;
@@ -16958,13 +16961,13 @@ function isAllowPasteLink(pastedWb) {
 				}
 				var pasteContent = val.data;
 				var fonts = pasteContent.props && pasteContent.props.fontsNew ? pasteContent.props.fontsNew : val.fontsNew;
-				//изначально планировалось заранее выполнить все асинхронные операции перед вызовом onSelectionCallback
-				//но в случае с мультиселектом вставленные ф/т(при вставке ф/т нужно лочить лист и и/д) могут пересекаться друг с другом
-				//и в этом случае предварительная проверка на предмет лока затруднена
+				//originally planned to execute all async operations before calling onSelectionCallback
+				//but with multiselect, pasted formatted tables (when pasting formatted tables need to lock sheet and defined names) may intersect each other
+				//and in this case preliminary lock checking is difficult
 				t._loadFonts(fonts, onSelectionCallback);
 			};
 
-			//проверка защиты. пока ставлю здесь. возможно где-то выше придётся поставить(но там нужно знать диапазоны вставки).
+			//protection check. placing here for now. may need to place it somewhere above (but paste ranges need to be known there).
 			this.checkProtectRangeOnEdit(checkPasteRange, function (isSuccess) {
 				if (!isSuccess) {
 					return;
@@ -17000,7 +17003,7 @@ function isAllowPasteLink(pastedWb) {
                 this._isLockedCells(checkRange, /*subType*/null, onSelectionCallback);
             }
 		}
-		// убрал paste здесь так как не работает здесь для метода pasteHTML
+		// removed paste here because it doesn't work here for the pasteHTML method
 		if (/*prop == "paste" ||*/ prop == "empty" || prop == "hyperlink" || prop == "sort")
 			this.workbook.Api.onWorksheetChange(checkRange);
 	};
@@ -17085,14 +17088,14 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 	WorksheetView.prototype.changeSelectOnMultiSelect = function () {
-		//разбиваем селект в зависимости от наличия скрытых строк внутри фильтра
+		//split selection depending on the presence of hidden rows inside the filter
 		var t = this;
 		var breakRange;
 		if (this.model.AutoFilter && this.model.AutoFilter.isApplyAutoFilter()) {
-			//отсеиваем все скрытые строки
+			//filter out all hidden rows
 			breakRange = new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0);
 		} else {
-			//проверяем, попала ли активная ячейка в ф/т с примененным а/ф и в зависимости от этого составляем список скрытых внутри строк
+			//check if the active cell is in a formatted table with applied autofilter and compile a list of hidden rows inside accordingly
 			const tableInfo = this.model.autoFilters.getTableByActiveCell();
 			const table = tableInfo && tableInfo.table;
 			if (table && table.isApplyAutoFilter()) {
@@ -17101,7 +17104,7 @@ function isAllowPasteLink(pastedWb) {
 		}
 
 		var breakRangeByHiddenRows = function (_range, intersection) {
-			//чтобы не усложнять логику прохожусь по всем строкам селекта
+			//to avoid complicating the logic, iterate through all rows of the selection
 			var tempRanges = [];
 			var tempRange;
 			for (var j = _range.r1; j <= _range.r2; j++) {
@@ -17134,7 +17137,7 @@ function isAllowPasteLink(pastedWb) {
 				if (sr.ranges[i]) {
 					var intersection = sr.ranges[i].intersection(breakRange);
 					if (intersection) {
-						//нужно пройтись по всем строкам пересечения и отсеять скрытые
+						//need to iterate through all rows of the intersection and filter out hidden ones
 						var breakRanges = breakRangeByHiddenRows(sr.ranges[i], intersection);
 						if (breakRanges.length > 1) {
 							isChange = true;
@@ -17184,7 +17187,7 @@ function isAllowPasteLink(pastedWb) {
 		this.collaborativeEditing.lock([lockInfo], callback);
 	};
 
-	// Залочена ли панель для закрепления
+	// Is the freeze pane panel locked
 	WorksheetView.prototype._isLockedFrozenPane = function (callback) {
 		var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Object, null, this.model.getId(),
 			AscCommonExcel.c_oAscLockNameFrozenPane);
@@ -17225,7 +17228,7 @@ function isAllowPasteLink(pastedWb) {
 		this.collaborativeEditing.lock(lockInfos, callback);
 	};
 
-	// Залочен ли весь лист
+	// Is the entire sheet locked
 	WorksheetView.prototype._isLockedAll = function (callback) {
 		var ar = this.model.getSelection().getLast();
 
@@ -17234,7 +17237,7 @@ function isAllowPasteLink(pastedWb) {
 			new AscCommonExcel.asc_CCollaborativeRange(ar.c1, ar.r1, ar.c2, ar.r2));
 		this.collaborativeEditing.lock([lockInfo], callback);
 	};
-    // Пересчет для входящих ячеек в добавленные строки/столбцы
+    // Recalculate for cells falling into added rows/columns
     WorksheetView.prototype._recalcRangeByInsertRowsAndColumns = function (sheetId, ar) {
         var isIntersection = false, isIntersectionC1 = true, isIntersectionC2 = true, isIntersectionR1 = true, isIntersectionR2 = true;
         do {
@@ -17279,7 +17282,7 @@ function isAllowPasteLink(pastedWb) {
 
         return isIntersection;
     };
-    // Функция проверки lock (возвращаемый результат нельзя использовать в качестве ответа, он нужен только для редактирования ячейки)
+    // Lock check function (return result cannot be used as answer, it's only for cell editing)
     WorksheetView.prototype._isLockedCells = function (range, subType, callback) {
         var sheetId = this.model.getId();
         var isIntersection = false;
@@ -17298,7 +17301,7 @@ function isAllowPasteLink(pastedWb) {
 
             if (c_oAscLockTypeElemSubType.InsertColumns !== subType &&
               c_oAscLockTypeElemSubType.InsertRows !== subType) {
-                // Пересчет для входящих ячеек в добавленные строки/столбцы
+                // Recalculate for cells falling into added rows/columns
                 isIntersection = this._recalcRangeByInsertRowsAndColumns(sheetId, ar);
             }
 
@@ -17361,13 +17364,13 @@ function isAllowPasteLink(pastedWb) {
 
     WorksheetView.prototype._onChangeSheetViewSettings = function (type) {
 		if (AscCH.historyitem_Worksheet_SetDisplayHeadings === type) {
-			this._calcHeaderRowHeight(); //ToDo оставить только _calcHeaderRowHeight, а в нем выставить необходимость обновления
+			this._calcHeaderRowHeight(); //ToDo keep only _calcHeaderRowHeight and set the need for update inside it
 			this._updateRowPositions();
 			this._updateVisibleRowsCount(/*skipScrolReinit*/true);
 		}
 	};
     WorksheetView.prototype.changeSheetViewSettings = function (type, val) {
-		// Проверка глобального лока
+		// Check global lock
 		if (this.collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
 			return;
 		}
@@ -17423,7 +17426,7 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 	WorksheetView.prototype.changeWorksheet = function (prop, val, callback, lockDraw) {
-		// Проверка глобального лока
+		// Check global lock
 		let isViewModeUpdate = val && val.viewModeUpdate;
 		if (this.collaborativeEditing.getGlobalLock() || (!window["Asc"]["editor"].canEdit() && !this.workbook.Api.VersionHistory && !isViewModeUpdate)) {
 			return;
@@ -17541,41 +17544,16 @@ function isAllowPasteLink(pastedWb) {
 
 		var checkDeleteCellsFilteringMode = function () {
 			if (!window['AscCommonExcel'].filteringMode) {
-				if (val === c_oAscDeleteOptions.DeleteCellsAndShiftLeft || val === c_oAscDeleteOptions.DeleteColumns) {
-					//запрещаем в этом режиме удалять столбцы
+				var checkRangeForFilter;
+				if (val === c_oAscDeleteOptions.DeleteColumns) {
+					checkRangeForFilter = new asc_Range(arn.c1, 0, arn.c2, gc_nMaxRow0);
+				} else if (val === c_oAscDeleteOptions.DeleteRows) {
+					checkRangeForFilter = new asc_Range(0, checkRange.r1, gc_nMaxCol0, checkRange.r2);
+				} else {
+					checkRangeForFilter = arn;
+				}
+				if (t.model.autoFilters.isRangeIntersectionTableOrFilter(checkRangeForFilter)) {
 					return false;
-				} else if (val === c_oAscDeleteOptions.DeleteCellsAndShiftTop ||
-					val === c_oAscDeleteOptions.DeleteRows) {
-
-					var tempRange = arn;
-					if (val === c_oAscDeleteOptions.DeleteRows) {
-						tempRange = new asc_Range(0, checkRange.r1, gc_nMaxCol0, checkRange.r2);
-					}
-
-					//запрещаем удалять последнюю строку фильтра и его заголовок + запрещаем удалять ф/т
-					var autoFilter = t.model.AutoFilter;
-					if (autoFilter && autoFilter.Ref) {
-						var ref = autoFilter.Ref;
-						//нельзя удалять целиком а/ф
-						if (tempRange.containsRange(ref)) {
-							return false;
-						} else if (tempRange.containsRange(new asc_Range(ref.c1, ref.r1, ref.c2, ref.r1))) {
-							//нельзя удалять первую строку а/ф
-							return false;
-						} /*else if (ref.r2 === ref.r1 + 1) {
-							//нельзя удалять последнюю строку тела а/ф
-							if (tempRange.containsRange(new asc_Range(ref.c1, ref.r1 + 1, ref.c2, ref.r1 + 1))) {
-								return false;
-							}
-						}*/
-					}
-					//нельзя целиком удалять ф/т
-					var tableParts = t.model.TableParts;
-					for (var i = 0; i < tableParts.length; i++) {
-						if (tempRange.containsRange(tableParts[i].Ref)) {
-							return false;
-						}
-					}
 				}
 			}
 
@@ -17586,8 +17564,8 @@ function isAllowPasteLink(pastedWb) {
 		var _checkFreezePaneOffset = function (_type, _range, callback, bInsert) {
 			var isArrayRange = Array.isArray(_range);
 			var nLength = isArrayRange ? range.length : 1;
-			//если имеем дело с мультидиапазонами, то сюда они уже приходят уникальными и отсортированными в обратном порядке
-			//поэтому складываю сдвиги
+			//if dealing with multi-ranges, they already come here unique and sorted in reverse order
+			//so we accumulate the shifts
 			for (var i = 0; i < nLength; i++) {
 				var curRange = isArrayRange ? _range[i] : _range;
 				var _changeFreezePane = t._getFreezePaneOffset(_type, curRange, bInsert);
@@ -17618,7 +17596,7 @@ function isAllowPasteLink(pastedWb) {
 
 			var _selectionRange = t.model.selectionRange;
 			if (_selectionRange && _selectionRange.ranges) {
-				//необходимо объединить пересекающиеся диапазоны и сортировать от конца к началу
+				//need to merge intersecting ranges and sort from end to beginning
 				if (!multiRanges) {
 					multiRanges = new AscCommonExcel.MultiplyRange(_selectionRange.ranges).unionByRowCol(_byCol);
 				}
@@ -17719,7 +17697,7 @@ function isAllowPasteLink(pastedWb) {
 						t.model.setColHidden(true, start, end);
 					}, arn.c1, arn.c2, true);
 
-					//TODO _updateRowGroups нужно перенести в onChangeWorksheetCallback с соответсвующим флагом обновления
+					//TODO _updateRowGroups should be moved to onChangeWorksheetCallback with the corresponding update flag
 					t._updateGroups(true);
 					oRecalcType = AscCommonExcel.recalcType.full;
 					reinitRanges = true;
@@ -17732,7 +17710,7 @@ function isAllowPasteLink(pastedWb) {
 					return;
 				}
 				functionModelAction = function () {
-					// Приводим к px (чтобы было ровно)
+					// Convert to px (to be exact)
 					val = val / AscCommonExcel.sizePxinPt;
 					val = (val | val) * AscCommonExcel.sizePxinPt;
 
@@ -17755,7 +17733,7 @@ function isAllowPasteLink(pastedWb) {
 					return;
 				}
 				functionModelAction = function () {
-					//TODO пока убираю проверку на FilteringMode. перепроверить, нужна ли она?!
+					//TODO temporarily removing FilteringMode check. verify if it's needed?!
 					//AscCommonExcel.checkFilteringMode(function () {
 
 					minUpdateIndex = checkRange.r1;
@@ -17764,7 +17742,7 @@ function isAllowPasteLink(pastedWb) {
 						t.model.autoFilters.reDrawFilter(updateRange ? updateRange : arn);
 					}, arn.r1, arn.r2);
 
-					//TODO _updateRowGroups нужно перенести в onChangeWorksheetCallback с соответсвующим флагом обновления
+					//TODO _updateRowGroups should be moved to onChangeWorksheetCallback with the corresponding update flag
 					t._updateGroups();
 					oRecalcType = AscCommonExcel.recalcType.full;
 					reinitRanges = true;
@@ -17786,7 +17764,7 @@ function isAllowPasteLink(pastedWb) {
 						t.model.autoFilters.reDrawFilter(updateRange ? updateRange : arn);
 					}, arn.r1, arn.r2);
 
-					//TODO _updateRowGroups нужно перенести в onChangeWorksheetCallback с соответсвующим флагом обновления
+					//TODO _updateRowGroups should be moved to onChangeWorksheetCallback with the corresponding update flag
 					t._updateGroups();
 					oRecalcType = AscCommonExcel.recalcType.full;
 					reinitRanges = true;
@@ -17796,12 +17774,6 @@ function isAllowPasteLink(pastedWb) {
 				this._isLockedAll(onChangeWorksheetCallback);
 				break;
 			case "insCell":
-				if (!window['AscCommonExcel'].filteringMode) {
-					if (val === c_oAscInsertOptions.InsertCellsAndShiftRight || val === c_oAscInsertOptions.InsertColumns) {
-						return;
-					}
-				}
-
 				t.model.workbook.handlers.trigger("cleanCutData", true, true);
 				t.model.workbook.handlers.trigger("cleanCopyData", true);
 
@@ -17888,6 +17860,11 @@ function isAllowPasteLink(pastedWb) {
 							return;
 						}
 						lockRange = new asc_Range(arn.c1, 0, arn.c2, gc_nMaxRow0);
+						if (!window['AscCommonExcel'].filteringMode) {
+							if (t.model.autoFilters.isRangeIntersectionTableOrFilter(lockRange)) {
+								return;
+							}
+						}
 						count = arn.c2 - arn.c1 + 1;
 						if (this.model.checkShiftPivotTable(lockRange, new AscCommon.CellBase(0, count))) {
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
@@ -17934,6 +17911,11 @@ function isAllowPasteLink(pastedWb) {
 							return;
 						}
 						lockRange = new asc_Range(0, arn.r1, gc_nMaxCol0, arn.r2);
+						if (!window['AscCommonExcel'].filteringMode) {
+							if (t.model.autoFilters.isRangeIntersectionTableOrFilter(lockRange)) {
+								return;
+							}
+						}
 						count = arn.r2 - arn.r1 + 1;
 						if (this.model.checkShiftPivotTable(lockRange, new AscCommon.CellBase(count, 0))) {
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
@@ -18087,7 +18069,7 @@ function isAllowPasteLink(pastedWb) {
 						this._isLockedCells(lockRange, null, onChangeWorksheetCallback);
 						break;
 					case c_oAscDeleteOptions.DeleteColumns:
-						//сначала првоеряем
+						//first check
 						doMultiRanges(function (start, end, updateRange) {
 							if (isError) {
 								return;
@@ -18168,7 +18150,7 @@ function isAllowPasteLink(pastedWb) {
 						});
 						break;
 					case c_oAscDeleteOptions.DeleteRows:
-						//сначала првоеряем
+						//first check
 						doMultiRanges(function (start, end, updateRange) {
 							if (isError) {
 								return;
@@ -18267,7 +18249,7 @@ function isAllowPasteLink(pastedWb) {
 					History.Create_NewPoint();
 					History.StartTransaction();
 					t.model.setGroupRow(val, arn.r1, arn.r2);
-					//TODO _updateRowGroups нужно перенести в onChangeWorksheetCallback с соответсвующим флагом обновления
+					//TODO _updateRowGroups should be moved to onChangeWorksheetCallback with the corresponding update flag
 					t._updateGroups();
 					History.EndTransaction();
 					/*oRecalcType = AscCommonExcel.recalcType.full;
@@ -18285,7 +18267,7 @@ function isAllowPasteLink(pastedWb) {
 					History.Create_NewPoint();
 					History.StartTransaction();
 					t.model.setGroupCol(val, arn.c1, arn.c2);
-					//TODO _updateRowGroups нужно перенести в onChangeWorksheetCallback с соответсвующим флагом обновления
+					//TODO _updateRowGroups should be moved to onChangeWorksheetCallback with the corresponding update flag
 					t._updateGroups(true);
 					History.EndTransaction();
 					/*oRecalcType = AscCommonExcel.recalcType.full;
@@ -18331,7 +18313,7 @@ function isAllowPasteLink(pastedWb) {
 
         this.canChangeColWidth = c_oAscCanChangeColWidth.all;
         for (row = r1; row <= r2; ++row) {
-            // пересчет метрик текста
+            // recalculate text metrics
             this._addCellTextToCache(col, row);
             ct = this._getCellTextCache(col, row);
             if (ct === undefined) {
@@ -18341,7 +18323,7 @@ function isAllowPasteLink(pastedWb) {
             isMerged = fl.isMerged();
             if (isMerged) {
                 mc = fl.merged;
-                // Для замерженных ячеек (с 2-мя или более колонками) оптимизировать не нужно
+                // For merged cells (with 2 or more columns) optimization is not needed
                 if (mc.c1 !== mc.c2) {
                     continue;
                 }
@@ -18355,10 +18337,10 @@ function isAllowPasteLink(pastedWb) {
                 if (isMerged) {
                     continue;
                 }
-                // Запоминаем старую ширину (в случае, если у нас по высоте не уберется)
+                // Remember old width (in case the text won't fit by height)
                 oldWidth = ct.metrics.width;
                 lastHeight = null;
-                // вычисление новой ширины столбца, чтобы высота текста была меньше maxRowHeightPx
+                // calculate new column width so that text height is less than maxRowHeightPx
                 c = this._getCell(col, row);
                 str = c.getValue2();
                 maxW = ct.metrics.width + this.maxDigitWidth * this.getZoom(true) * this.getRetinaPixelRatio();
@@ -18368,7 +18350,7 @@ function isAllowPasteLink(pastedWb) {
                         break;
                     }
                     if (lastHeight === tm.height) {
-                        // Ситуация, когда у нас текст не уберется по высоте (http://bugzilla.onlyoffice.com/show_bug.cgi?id=19974)
+                        // Situation when the text won't fit by height (http://bugzilla.onlyoffice.com/show_bug.cgi?id=19974)
                         tm.width = oldWidth;
                         break;
                     }
@@ -18404,7 +18386,7 @@ function isAllowPasteLink(pastedWb) {
 
         History.Create_NewPoint();
         History.StartTransaction();
-        // Выставляем, что это bestFit
+        // Set that this is bestFit
 		cw = this.model.charCountToModelColWidth(cc);
 		// ToDo 2 times may be called setColBestFit. From addCellTextToCache->_changeColWidth and this
         this.model.setColBestFit(true, cw, col, col);
@@ -18563,7 +18545,7 @@ function isAllowPasteLink(pastedWb) {
 	// ----- Search -----
 	WorksheetView.prototype._isCellEqual = function (c, r, options) {
 		var cell, cellText;
-		// Не пользуемся RegExp, чтобы не возиться со спец.символами
+		// Don't use RegExp to avoid dealing with special characters
 		var mc = this.model.getMergedByCell(r, c);
 		cell = mc ? this._getVisibleCell(mc.c1, mc.r1) : this._getVisibleCell(c, r);
 		cellText = (options.lookIn === Asc.c_oAscFindLookIn.Formulas) ? cell.getValueForEdit() : cell.getValue();
@@ -18641,9 +18623,9 @@ function isAllowPasteLink(pastedWb) {
 			}
 		}
 
-		// Продолжаем циклический поиск
+		// Continue cyclic search
 		if (options.scanForward) {
-			// Идем вперед с первой ячейки
+			// Go forward from the first cell
 			if (options.scanByRows) {
 				c = minC - 1;
 				r = minR;
@@ -18654,7 +18636,7 @@ function isAllowPasteLink(pastedWb) {
 				maxC = ar.col;
 			}
 		} else {
-			// Идем назад с последней
+			// Go backward from the last
 			c = maxC;
 			r = maxR;
 			if (options.scanByRows) {
@@ -18678,14 +18660,14 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 	WorksheetView.prototype.replaceCellText = function (options, lockDraw, callback, bSearchEngine) {
-		// Очищаем результаты
+		// Clear results
 		options.countFind = 0;
 		options.countReplace = 0;
 
 		var cell, tmp;
 		var aReplaceCells = [];
 		if (options.isReplaceAll) {
-			//TODO нужно ли запускать ещё раз поиск?!
+			//TODO do we need to run search again?!
 			if (!bSearchEngine) {
 				this.model._findAllCells(options);
 
@@ -18715,7 +18697,7 @@ function isAllowPasteLink(pastedWb) {
 			}
 		} else {
 			cell = bSearchEngine ? this.workbook.SearchEngine.GetCurrentElem() : this.model.selectionRange.activeCell;
-			// Попробуем сначала найти
+			// Try to find first
 			if (cell) {
 				var isEqual = this._isCellEqual(cell.col, cell.row, options);
 				if (isEqual) {
@@ -18745,7 +18727,7 @@ function isAllowPasteLink(pastedWb) {
 		options.indexInArray = 0;
 		options.countFind = aReplaceCells.length;
 
-		//находим общее количество повторений, в тч внутри текста
+		//find total number of occurrences, including inside text
 		if (options.isReplaceAll && !options.isSpellCheck) {
 			options.countFind = 0;
 
@@ -18789,7 +18771,7 @@ function isAllowPasteLink(pastedWb) {
 		var needLockCell = !oneUser;
 		var isSC = options.isSpellCheck;
 		if (options.indexInArray >= aReplaceCells.length) {
-			//49467 - проблема в том, что пересчёт запускается после отрисовки на endTransaction
+			//49467 - the problem is that recalculation is triggered after rendering on endTransaction
 			this.model.workbook.dependencyFormulas.unlockRecal();
 			this.draw(lockDraw);
 			return callback(options);
@@ -18825,7 +18807,7 @@ function isAllowPasteLink(pastedWb) {
 				var isNeedToSave = oldCellValue === cellValue ? false : true;
 				// get first fragment and change its text
 				v = c.getValueForEdit2().slice(0, 1);
-				// Создаем новый массив, т.к. getValueForEdit2 возвращает ссылку
+				// Create new array since getValueForEdit2 returns a reference
 				newValue = [];
 				newValue[0] = new AscCommonExcel.Fragment({text: cellValue, format: v[0].format.clone()});
 
@@ -18867,8 +18849,8 @@ function isAllowPasteLink(pastedWb) {
 		if (!ranges || 0 === ranges.length) {
 			ranges = AscCommonExcel.getRangeByRef(reference, this.model, true, true);
 		}
-		//добавил проверка на имя среза
-		//проверить, возможно стоит добавить проверку на ошибку в ref именованного диапазона
+		//added check for slicer name
+		//check, maybe should add error check in named range ref
 		if (this.workbook.model.getSlicerCacheByCacheName(reference)) {
 			return [];
 		}
@@ -18876,7 +18858,7 @@ function isAllowPasteLink(pastedWb) {
 
 		if (0 === ranges.length && this.workbook.canEdit()) {
 
-			//проверяем на совпадение с именем диапазона в другом формате
+			//check for match with range name in different format
 			var changeModeRanges;
 			AscCommonExcel.executeInR1C1Mode(!AscCommonExcel.g_R1C1Mode, function () {
 				changeModeRanges = AscCommonExcel.getRangeByRef(reference, t.model, true, true);
@@ -18887,7 +18869,7 @@ function isAllowPasteLink(pastedWb) {
 				return ranges;
 			}
 
-			/*TODO: сделать поиск по названиям автофигур, должен искать до того как вызвать поиск по именованным диапазонам*/
+			/*TODO: implement search by autoshape names, should search before calling search by named ranges*/
 			if (this.collaborativeEditing.getGlobalLock() || !this.handlers.trigger("getLockDefNameManagerStatus")) {
 				this.handlers.trigger("onErrorEvent", c_oAscError.ID.LockCreateDefName, c_oAscError.Level.NoCritical);
 				this._updateSelectionNameAndInfo();
@@ -18914,7 +18896,7 @@ function isAllowPasteLink(pastedWb) {
 		return ranges;
 	};
 
-    /* Ищет дополнение для ячейки */
+    /* Finds completion for a cell */
     WorksheetView.prototype.getCellAutoCompleteValues = function (cell, maxCount) {
 		var merged = this._getVisibleCell(cell.col, cell.row).hasMerged();
 		if (merged) {
@@ -18930,7 +18912,7 @@ function isAllowPasteLink(pastedWb) {
         return arrValues;
     };
 
-    /* Ищет дополнение для ячейки (снизу или сверху) */
+    /* Finds completion for a cell (from below or above) */
     WorksheetView.prototype.findCellAutoComplete = function (cellActive, step, maxCount) {
         var col = cellActive.col, row = cellActive.row;
         row += step;
@@ -18952,7 +18934,7 @@ function isAllowPasteLink(pastedWb) {
 					break;
 				}
             }
-            // Идем влево по колонкам
+            // Go left through columns
             for (col = range.c1 - 1; col >= 0; --col) {
 				this.model._getCellNoEmpty(row, col, function(cell) {
 					isBreak = (null === cell || cell.isNullText());
@@ -18964,7 +18946,7 @@ function isAllowPasteLink(pastedWb) {
                 isEnd = false;
             }
             range.c1 = col + 1;
-            // Идем вправо по колонкам
+            // Go right through columns
             for (col = range.c2 + 1; col < colsCount; ++col) {
 				this.model._getCellNoEmpty(row, col, function(cell) {
 					isBreak = (null === cell || cell.isNullText());
@@ -18989,7 +18971,7 @@ function isAllowPasteLink(pastedWb) {
         return range.r1 <= range.r2 ? range : null;
     };
 
-    /* Формирует уникальный массив */
+    /* Builds a unique array */
     WorksheetView.prototype.getColValues = function (range, col, arrValues, objValues) {
         if (null === range) {
             return;
@@ -19051,7 +19033,7 @@ function isAllowPasteLink(pastedWb) {
             row = activeCell.row;
         }
 
-        // Проверим замерженность
+        // Check merge
         var mergedRange = this.model.getMergedByCell(row, col);
         return mergedRange ? mergedRange : new asc_Range(col, row, col, row);
     };
@@ -19075,11 +19057,11 @@ function isAllowPasteLink(pastedWb) {
 		//***array-formula***
 		const changeRangesIfArrayFormula = function() {
 			if(ctrlKey) {
-				//TODO есть баг с тем, что не лочатся все ячейки при данном действии
+				//TODO there's a bug where not all cells get locked during this action
 				c = dynamicSelectionRange ? t._getRange(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c2, dynamicSelectionRange.r2) : t.getSelectedRange();
 				var isAllColumnSelect = c && c.bbox && (c.bbox.getType() === c_oAscSelectionType.RangeMax || c.bbox.getType() === c_oAscSelectionType.RangeCol);
 				if(c.bbox.isOneCell()) {
-					//проверяем, есть ли формула массива в этой ячейке
+					//check if there is an array formula in this cell
 					t.model._getCell(c.bbox.r1, c.bbox.c1, function(cell){
 						var formulaRef = cell && cell.formulaParsed && cell.formulaParsed.ref ? cell.formulaParsed.ref : null;
 						if(formulaRef) {
@@ -19169,7 +19151,7 @@ function isAllowPasteLink(pastedWb) {
 		if (isFormula) {
 			let needReparse = isFormulaFromVal;
 			let calculateResult = new AscCommonExcel.CalculateResult(true);
-			//перед созданием точки в истории, проверяю, валидная ли формула
+			//before creating a history point, check if the formula is valid
 			cellWithFormula = isFormulaFromVal ? cellWithFormula : new AscCommonExcel.CCellWithFormula(this.model, bbox.r1, bbox.c1);
 			newFP = isFormulaFromVal ? newFP : new AscCommonExcel.parserFormula(valText.substring(1), cellWithFormula, this.model);
 			parseResult = isFormulaFromVal ? parseResult : new AscCommonExcel.ParseResult([],[]);
@@ -19193,6 +19175,30 @@ function isAllowPasteLink(pastedWb) {
 					this.model.workbook.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
 					endTransaction();
 					return;
+				}
+			}
+
+			//reparse if hash (#) spilled-range operators included — rewrite `A1#` → `_xlfn.ANCHORARRAY(A1)`
+			if (parseResult.hashOperators && parseResult.hashOperators.length > 0) {
+				let sBefore = newFP.Formula;
+				let rewritten = newFP._assembleWithHashOperators(parseResult.hashOperators);
+				if (rewritten !== sBefore) {
+					newFP.Formula = rewritten;
+					newFP.isParsed = false;
+					newFP.outStack = [];
+					let _parseResult = new AscCommonExcel.ParseResult();
+					if (!newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, _parseResult)) {
+						if (parseResult.error !== c_oAscError.ID.FrmlWrongFunctionName && _parseResult.error !== c_oAscError.ID.FrmlParenthesesCorrectCount) {
+							this.model.workbook.handlers.trigger("asc_onError", _parseResult.error, c_oAscError.Level.NoCritical);
+							endTransaction();
+							return;
+						}
+					}
+					val[0].setFragmentText("=" + newFP.Formula);
+					// merge atOperators detected by the re-parse so the @ pass below still runs
+					if (_parseResult.atOperators && _parseResult.atOperators.length > 0) {
+						parseResult.atOperators = _parseResult.atOperators;
+					}
 				}
 			}
 
@@ -19299,7 +19305,7 @@ function isAllowPasteLink(pastedWb) {
 				endTransaction();
 				return;
 			}
-			// ToDo - при вводе формулы в заголовок автофильтра надо писать "0"
+			// ToDo - when entering a formula in the autofilter header, should write "0"
 			//***array-formula***
 			let ret = true;
 			changeRangesIfArrayFormula();
@@ -19377,9 +19383,11 @@ function isAllowPasteLink(pastedWb) {
 					}
 				}
 			} else {
+				this.model.dynamicArrayManager._externalReferenesNeedAdd = parseResult && parseResult.externalReferenesNeedAdd;
 				c.setValue(AscCommonExcel.getFragmentsText(val), function (r) {
 					ret = r;
 				}, null, applyByArray ? bbox : ((!applyByArray && ctrlKey) ? null : undefined), null, AscCommonExcel.bIsSupportDynamicArrays && (dynamicSelectionRange || beforeSpillRange) ? {range: dynamicSelectionRange, beforeSpillRange: beforeSpillRange} : null);
+				this.model.dynamicArrayManager._externalReferenesNeedAdd = null;
 			}
 
 			this.workbook.FinalizeAction();
@@ -19418,7 +19426,7 @@ function isAllowPasteLink(pastedWb) {
 			// recalculate all volatile arrays on page
 			//t.model.dynamicArrayManager.recalculateVolatileArrays();
 
-			// Вызываем функцию пересчета для заголовков форматированной таблицы
+			// Call the recalculation function for formatted table headers
 			this.model.checkChangeTablesContent(bbox);
 		}
 
@@ -19457,7 +19465,7 @@ function isAllowPasteLink(pastedWb) {
 		if (isFormula) {
 			this.workbook.Api.onWorksheetChange(bbox);
 		}
-		// если вернуть false, то редактор не закроется
+		// if return false, editor won't close
 		return true;
 	};
 
@@ -19531,7 +19539,7 @@ function isAllowPasteLink(pastedWb) {
 			this.setHorizontalScrollCorrect(0, true);
 		}
 
-		// Возможно стоит заменить на ячейку из кеша
+		// Maybe should replace with cell from cache
 		c = this._getVisibleCell(col, row);
 		fl = this._getCellFlags(c);
 		isMerged = fl.isMerged();
@@ -19568,7 +19576,7 @@ function isAllowPasteLink(pastedWb) {
 		bg = c.getFillColor();
 
 		var font = c.getFont();
-		// Скрываем окно редактирования комментария
+		// Hide comment edit window
 		this.model.workbook.handlers.trigger("asc_onHideComment");
 
 		var _fragmentsTmp = c.getValueForEdit2();
@@ -19663,11 +19671,11 @@ function isAllowPasteLink(pastedWb) {
 						return false;
 					}
 
-					//если в качестве условия введена формула, необходимо чтобы данные временно были в ячейке
-					//поскольку формула может ссылаться на данную ячейку
+					//if a formula is entered as a condition, data needs to be temporarily in the cell
+					//since the formula may reference this cell
 					var oldValueData;
-					//дополнительно ещё проверим на наличие данной ячейки в стеке формулы
-					//если её там нет - временно подменять значение не нужно
+					//additionally check if this cell is in the formula stack
+					//if it's not there - no need to temporarily substitute the value
 					var isNeedChange = Asc.EDataValidationType.Custom ===
 						dataValidation.type /*&& dataValidation.checkFormulaStackOnCell(row, col)*/;
 					var temporarySetValue = function (_val) {
@@ -19703,7 +19711,7 @@ function isAllowPasteLink(pastedWb) {
 				let ref = null;
 				let isDynamicRef = null;
 				if (flags.ctrlKey && flags.shiftKey) {
-					//необходимо проверить на выделение массива частично
+					//need to check for partial array selection
 					var activeRange = t.getSelectedRange();
 					var doNotApply = false;
 					var formulaRef;
@@ -19965,7 +19973,7 @@ function isAllowPasteLink(pastedWb) {
     };
 
 	WorksheetView.prototype.addAutoFilter = function (styleName, addFormatTableOptionsObj, range) {
-		// Проверка глобального лока
+		// Check global lock
 		if (this.collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
 			return;
 		}
@@ -20073,9 +20081,9 @@ function isAllowPasteLink(pastedWb) {
 							t.setSelection(filterRange);
 						}
 
-						//приходится принудительно запускать пересчёт перед функцией _onUpdateFormatTable
-						//для грамотного отображения формул(#46170)
-						//TODO пересчёт происходит два раза! в unlockRecal и EndTransaction.
+						//have to force recalculation before _onUpdateFormatTable function
+						//for proper formula display (#46170)
+						//TODO recalculation happens twice! in unlockRecal and EndTransaction.
 						t.model.workbook.dependencyFormulas.unlockRecal();
 
 						if (styleName) {
@@ -20161,14 +20169,14 @@ function isAllowPasteLink(pastedWb) {
 			} else {
 				_doAdd();
 			}
-		} else//для того, чтобы в случае ошибки кнопка отжималась!
+		} else//so that button gets released in case of error!
 		{
 			t.handlers.trigger("selectionChanged");
 		}
 	};
 
 	WorksheetView.prototype.changeAutoFilter = function (tableName, optionType, val, opt_callback) {
-		// Проверка глобального лока
+		// Check global lock
 		if (this.collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
 			if (opt_callback) {
 				opt_callback(false);
@@ -20286,7 +20294,7 @@ function isAllowPasteLink(pastedWb) {
 						History.Create_NewPoint();
 						History.StartTransaction();
 
-						//TODO внутри вызывается _isTablePartsContainsRange
+						//TODO _isTablePartsContainsRange is called inside
 						t.model.autoFilters.changeTableStyleInfo(val, ar, tableName);
 						History.EndTransaction();
 
@@ -20350,8 +20358,8 @@ function isAllowPasteLink(pastedWb) {
 			var minChangeRow = applyFilterProps.minChangeRow;
 			var rangeOldFilter = applyFilterProps.rangeOldFilter;
 
-			//если срез находится на одном листе, а таблица на другом
-			//в данном случае пересчёт для ф/т нужен, а перерисовка не нужна
+			//if slicer is on one sheet and table on another
+			//in this case recalculation for formatted table is needed but redraw is not
 			var differentSheetApply = t.model.index !== t.workbook.model.nActive;
 
 			if (null !== rangeOldFilter && !t.model.workbook.bUndoChanges && !t.model.workbook.bRedoChanges) {
@@ -20373,8 +20381,8 @@ function isAllowPasteLink(pastedWb) {
 			onChangeAutoFilterCallback();
 			History.LocalChange = false;
 		} else {
-			//лочу даже в режиме вью. для того чтобы избежать кофликтов - допустим, когда один пользователь сортирует
-			//второй - фильтрует
+			//lock even in view mode. to avoid conflicts - for example, when one user sorts
+			//and another - filters
 			this._isLockedAll(onChangeAutoFilterCallback);
 		}
 	};
@@ -20478,7 +20486,7 @@ function isAllowPasteLink(pastedWb) {
 			return;
 		}
 
-		//нельзя применять если столбец, где находится активная ячейка, не определен
+		//cannot apply if the column where the active cell is located is undefined
 		if (!this.model.getColDataNoEmpty(activeCell.col)) {
 			t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterDataRangeError, c_oAscError.Level.NoCritical);
 			return;
@@ -20543,12 +20551,12 @@ function isAllowPasteLink(pastedWb) {
 							var xfs = cell.getCompiledStyleCustom(false, true, true);
 							if (false === filter.filter.CellColor) {
 								var fontColor = xfs && xfs.font ? xfs.font.getColor() : null;
-								//TODO добавлять дефолтовый цвет шрифта в случае, если цвет шрифта не указан
+								//TODO add default font color if font color is not specified
 								if (null !== fontColor) {
 									filter.filter.dxf.fill.fromColor(fontColor);
 								}
 							} else {
-								//TODO просмотерть ситуации без заливки
+								//TODO review situations without fill
 								var cellColor = null !== xfs && xfs.fill && xfs.fill.bg() ? xfs.fill.bg() : null;
 								filter.filter.dxf.fill.fromColor(null !== cellColor ? new AscCommonExcel.RgbColor(cellColor.getRgb()) : null);
 							}
@@ -20623,7 +20631,7 @@ function isAllowPasteLink(pastedWb) {
 			activeRangeOrCellId = AscCommonExcel.g_oRangeCache.getAscRange(cellId);
 			activeCellOrCellId = new AscCommon.CellBase(activeRangeOrCellId.r1, activeRangeOrCellId.c1);
 		}
-		//TODO проверка защиты
+		//TODO protection check
 		var pivotTable = this.model.inPivotTable(activeRangeOrCellId);
 		if (pivotTable) {
 				if (pivotTable.location && pivotTable.location.ref && this.model.isUserProtectedRangesIntersection(pivotTable.location.ref)) {
@@ -20646,7 +20654,7 @@ function isAllowPasteLink(pastedWb) {
 		var isFilter = sortProps && sortProps.curFilter && sortProps.curFilter.isAutoFilter();
 		var filterRef;
 		if(bIsExpandRange && isFilter) {
-			//в случае расширения диапазона если мы находимся внутри а/ф игнорируются наcтройки
+			//in case of range expansion if we are inside autofilter, settings are ignored
 			filterRef = sortProps.curFilter.Ref;
 			sortProps = null;
 		}
@@ -20708,7 +20716,7 @@ function isAllowPasteLink(pastedWb) {
 
 				//sort
 				t.setSelectionInfo("sort", {type: type, color: rgbColor});
-				//TODO возможно стоит возвратить selection обратно
+				//TODO maybe should return selection back
 
             } else if (false !== sortProps) {
                 t._isLockedCells(sortProps.sortRange.bbox, /*subType*/null, onSortAutoFilterCallBack);
@@ -20736,6 +20744,8 @@ function isAllowPasteLink(pastedWb) {
 				}
 
 				if(!t.intersectionFormulaArray(doSortRange, true)) {
+					t.model.workbook.handlers.trigger("cleanCutData", true, true);
+					t.model.workbook.handlers.trigger("cleanCopyData", true);
 					t._isLockedAll(onChangeAutoFilterCallback);
 				} else {
 					t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
@@ -20745,12 +20755,12 @@ function isAllowPasteLink(pastedWb) {
     };
 
     WorksheetView.prototype.getAddFormatTableOptions = function (range, isPivot) {
-		//TODO обработать в интерфейсе null
+		//TODO handle null in interface
     	if (this.model.getSheetProtection()) {
 			return null;
 		}
     	var selectionRange = this.model.selectionRange.getLast();
-        //TODO возможно стоит перенести getAddFormatTableOptions во view
+        //TODO maybe should move getAddFormatTableOptions to view
         return this.model.autoFilters.getAddFormatTableOptions(selectionRange, range, isPivot);
     };
 
@@ -20766,7 +20776,7 @@ function isAllowPasteLink(pastedWb) {
 			}
 		}
 
-		//в особом режиме не лочим лист при фильтрации
+		//in special mode don't lock sheet during filtering
 		var nActive = t.model.getActiveNamedSheetViewId();
 		var onChangeAutoFilterCallback = function (isSuccess) {
 			if (false === isSuccess && null === nActive) {
@@ -20805,7 +20815,7 @@ function isAllowPasteLink(pastedWb) {
 			}
 		}
 
-		//в особом режиме не лочим лист при фильтрации
+		//in special mode don't lock sheet during filtering
 		var nActive = t.model.getActiveNamedSheetViewId();
 		var onChangeAutoFilterCallback = function (isSuccess) {
 			if (false === isSuccess && nActive === null) {
@@ -20832,12 +20842,12 @@ function isAllowPasteLink(pastedWb) {
 	};
 
     /**
-     * Обновление при изменениях форматированной таблицы
-     * @param range - обновляемый диапазон (он же диапазон для выделения
+     * Update on formatted table changes
+     * @param range - range to update (also the selection range)
      * @private
      */
     WorksheetView.prototype._onUpdateFormatTable = function (range, lockDraw) {
-		// ToDo сделать правильное обновление при скрытии/раскрытии строк/столбцов
+		// ToDo implement proper update when hiding/showing rows/columns
 		this._initCellsArea(AscCommonExcel.recalcType.full);
 		this.cache.reset();
 		this._cleanCellsTextMetricsCache();
@@ -20879,7 +20889,7 @@ function isAllowPasteLink(pastedWb) {
             }
         }
         History.TurnOn();
-        this._updateRange(oAllRange.bbox); // ToDo Стоит обновить nRowsCount и nColsCount
+        this._updateRange(oAllRange.bbox); // ToDo Should update nRowsCount and nColsCount
 		this.draw();
     };
     WorksheetView.prototype.getData = function () {
@@ -21105,7 +21115,7 @@ function isAllowPasteLink(pastedWb) {
 
 		var isMobileRetina = false;
 		var isPivotCollapsed = false;
-	    //TODO пересмотреть масштабирование!!!
+	    //TODO review scaling!!!
 		var isApplyAutoFilter = props.isSetFilter;
 		var isApplySortState = props.isSortState;
 		var row = props.row;
@@ -21130,7 +21140,7 @@ function isAllowPasteLink(pastedWb) {
 			heightWithBorders = rowHeight;
 		}
 
-		//стартовая позиция кнопки
+		//button start position
 		var x1;
 		if (isDataValidation) {
 			var _maxColDiff = col === AscCommon.gc_nMaxCol0 ? widthWithBorders - widthBorder : 0;
@@ -21139,11 +21149,11 @@ function isAllowPasteLink(pastedWb) {
 			x1 = t._getColLeft(col + 1) - widthWithBorders - 0.5 - offsetX;
 		}
 
-		//-1 смещение относительно нижней границы ячейки на 1px
+		//-1 offset relative to the bottom border of the cell by 1px
 		var y1 = t._getRowTop(row + 1) - heightWithBorders - 0.5 - offsetY - 1;
 
 		var _drawButtonFrame = function (startX, startY, width, height) {
-			//TODO нужен цвет для заливки
+			//TODO need fill color
 			ctx.setFillStyle(isPivotCollapsed ? new CColor(227, 228, 228) : t.settings.cells.defaultState.background);
 			ctx.setLineWidth(1);
 			ctx.setStrokeStyle(t.settings.cells.defaultState.border);
@@ -21164,8 +21174,8 @@ function isAllowPasteLink(pastedWb) {
 		};
 
 		var _drawSortArrow = function (startX, startY, isDescending, heightArrow) {
-			//isDescending = true - стрелочка смотрит вниз
-			//рисуем сверху вниз
+			//isDescending = true - arrow points down
+			//draw from top to bottom
 			ctx.beginPath();
 			t._lineVer(ctx, startX, startY, startY + heightArrow * scaleIndex);
 
@@ -21249,12 +21259,12 @@ function isAllowPasteLink(pastedWb) {
 			ctx.stroke();
 		};
 
-		//TODO пересмотреть отрисовку кнопок + отрисовку при масштабировании
+		//TODO review button rendering + rendering when scaling
 		var _drawButton = function (upLeftXButton, upLeftYButton) {
-			//квадрат кнопки рисуем
+			//draw button square
 			_drawButtonFrame(upLeftXButton, upLeftYButton, width, height);
 
-			//координаты центра
+			//center coordinates
 			var centerX = upLeftXButton + (width / 2);
 			var centerY = upLeftYButton + (height / 2);
 
@@ -21283,7 +21293,7 @@ function isAllowPasteLink(pastedWb) {
 			}
 		};
 
-		//TODO!!! некорректно рисуется кнопка при уменьшении масштаба и уменьшении размера строки
+		//TODO!!! button renders incorrectly when decreasing scale and reducing row size
 		var _notChangeScaleWidth = isDataValidation && col !== AscCommon.gc_nMaxCol0;
 		var diffX = 0;
 		var diffY = 0;
@@ -21301,7 +21311,7 @@ function isAllowPasteLink(pastedWb) {
 			}
 		} else if ((colWidth - 2) < width && !_notChangeScaleWidth) {
 			scaleIndex = colWidth / width;
-			//смещения по x и y
+			//x and y offsets
 			diffY = width - colWidth;
 			diffX = width - colWidth + 2;
 			width = colWidth;
@@ -21410,7 +21420,7 @@ function isAllowPasteLink(pastedWb) {
 		var textY = this._calcTextVertPos(y1, h, bl, ct.metrics, ct.cellVA);
 		//var textW = this._calcTextWidth(x1ct, x2ct, ct.metrics, ct.cellHA);
 
-		//TODO пока решили не учитывать позицию текста. кнопка всегда прижата к левому краю. учитывается только левый индент
+		//TODO for now decided not to consider text position. button always aligned to left edge. only left indent is considered
 
 		var fontSize = c.getFont().getSize();
 		var cfIterator = this.model.getConditionalFormattingRangeIterator();
@@ -21455,7 +21465,7 @@ function isAllowPasteLink(pastedWb) {
 		var baseLnSize = 4;
 
 		var lnW = Math.round(baseLw * zoom * retinaKoef);
-		//смотрим насколько изменилась толщина линиии  - настолько и изменился масштаб
+		//see how much line thickness changed - scale changed by the same amount
 		var kF = lnW / baseLw;
 		var lnSize = baseLnSize * kF;
 
@@ -21485,7 +21495,7 @@ function isAllowPasteLink(pastedWb) {
 
 			if (filter.HeaderRowCount === 0) {
 				result = null;
-			} else if (autoFilter && autoFilter.FilterColumns)//проверяем скрытые ячейки
+			} else if (autoFilter && autoFilter.FilterColumns)//check hidden cells
 			{
 				var colId = col - autoFilter.Ref.c1;
 				for (var i = 0; i < autoFilter.FilterColumns.length; i++) {
@@ -21497,7 +21507,7 @@ function isAllowPasteLink(pastedWb) {
 						break;
 					}
 				}
-			} else if (!filter.isAutoFilter() && autoFilter === null)//если форматированная таблица и отсутсвует а/ф
+			} else if (!filter.isAutoFilter() && autoFilter === null)//if formatted table and autofilter is absent
 			{
 				result = null;
 			}
@@ -21621,7 +21631,7 @@ function isAllowPasteLink(pastedWb) {
 				c_oAscError.Level.NoCritical);
 			result = false;
 		} else if (!styleName && filterByCellContextMenu && false === worksheet.autoFilters._getAdjacentCellsAF(activeRange, this).isIntersect(activeRange)) {
-			//TODO _getAdjacentCellsAF стоит заменить на expandRange ?
+			//TODO _getAdjacentCellsAF should be replaced with expandRange ?
 			//add filter to empty range
 			worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterDataRangeError, c_oAscError.Level.NoCritical);
 			result = false;
@@ -21705,7 +21715,7 @@ function isAllowPasteLink(pastedWb) {
 	};
 
     WorksheetView.prototype._checkFilterButtonInRange = function (c, r) {
-		//TODO добавить проверку на isHidden у кнопки
+		//TODO add isHidden check for button
 		if (this.model.TableParts) {
 			var tablePart;
 			for (var i = 0; i < this.model.TableParts.length; i++) {
@@ -21793,7 +21803,7 @@ function isAllowPasteLink(pastedWb) {
 
         var checkMoveRangeIntoApplyAutoFilter = function (arnTo) {
             if (ws.AutoFilter && ws.AutoFilter.Ref && arnTo.intersection(ws.AutoFilter.Ref) && !arnFrom.isEqual(ws.AutoFilter.Ref)) {
-                //если затрагиваем скрытые строки а/ф - выдаём ошибку
+                //if affecting hidden autofilter rows - throw error
                 if (ws.autoFilters._searchHiddenRowsByFilter(ws.AutoFilter, arnTo)) {
                     return false;
                 }
@@ -21801,7 +21811,7 @@ function isAllowPasteLink(pastedWb) {
             return true;
         };
 
-        //1) если выделена часть форматированной таблицы и ещё часть(либо полностью)
+        //1) if part of formatted table is selected and another part (or fully)
         var counterIntersection = 0;
         var counterContains = 0;
         for (var i = 0; i < tableParts.length; i++) {
@@ -21822,7 +21832,7 @@ function isAllowPasteLink(pastedWb) {
         }
 
 
-        //2)если затрагиваем перемещаемым диапазоном часть а/ф со скрытыми строчками
+        //2) if moving range affects part of autofilter with hidden rows
         if (!opt_wsTo && !checkMoveRangeIntoApplyAutoFilter(arnTo)) {
             ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterMoveToHiddenRangeError,
               c_oAscError.Level.NoCritical);
@@ -21928,7 +21938,7 @@ function isAllowPasteLink(pastedWb) {
 		}
 
 		t._endSelectionShape();
-		//todo обработать выделение при клике с зажатым ctrl
+		//todo handle selection when clicking with ctrl held
 		t.setSelection(new Asc.Range(startCol, startRow, endCol, endRow));
 	};
 
@@ -22018,10 +22028,10 @@ function isAllowPasteLink(pastedWb) {
 				!t.model.autoFilters.isPartFilterUnderRange(range)) {
 				result = true;
 
-				//проверяем ещё на наличие части объединенной ячейки
-				//для объединенной ячейки - ms выдаёт другую ошибку
-				//TODO мы сейчас выдаём одинаковую ошибку для случаев с форматированной таблицей внизу и объединенной областью. пересмотреть!
-				//пока комментирую проверку на объединенные ячейки
+				//also check for presence of merged cell part
+				//for merged cell - ms shows different error
+				//TODO we currently show same error for cases with formatted table below and merged area. review!
+				//commenting out merged cells check for now
 
 				var downRange = Asc.Range(range.c1, range.r2 + 1, range.c2, gc_nMaxRow0);
 				var mergedRange = ws.getMergedByRange(downRange);
@@ -22044,7 +22054,7 @@ function isAllowPasteLink(pastedWb) {
 
 		switch (optionType) {
 			case c_oAscChangeTableStyleInfo.rowHeader: {
-				//добавляем строку заголовков. нужно чтобы либо сверху была пустая строка, либо был возможен сдвиг диапазона вниз
+				//adding header row. need either empty row above or ability to shift range down
 				if (!table.isHeaderRow()) {
 					range = Asc.Range(table.Ref.c1, table.Ref.r1 - 1, table.Ref.c2, table.Ref.r1 - 1);
 					if (!this.model.autoFilters._isEmptyRange(range, 0)) {
@@ -22052,7 +22062,7 @@ function isAllowPasteLink(pastedWb) {
 							sendError();
 							res = false;
 						} else {
-							//в данном случае возвращаем не диапазон лока, а диапазон обновления данных
+							//in this case return data update range, not lock range
 							lockRange = Asc.Range(table.Ref.c1, table.Ref.r1 - 1, table.Ref.c2, gc_nMaxRow0);
 							res = table.Ref;
 						}
@@ -22066,14 +22076,14 @@ function isAllowPasteLink(pastedWb) {
 				if (table.isTotalsRow()) {
 
 					if (checkShift(table.Ref)) {
-						//сдвиг диапазона вверх
-						//в данном случае возвращаем не диапазон лока, а диапазон обновления данных
+						//shift range up
+						//in this case return data update range, not lock range
 						lockRange = Asc.Range(table.Ref.c1, table.Ref.r2 - 1, table.Ref.c2, gc_nMaxRow0);
 						res = table.Ref;
 					}
-				} else { // добавляем строку
+				} else { // add row
 					if (checkShift(table.Ref)) {
-						//сдвиг диапазона вниз
+						//shift range down
 						lockRange = Asc.Range(table.Ref.c1, table.Ref.r2 + 1, table.Ref.c2, gc_nMaxRow0);
 						res = Asc.Range(table.Ref.c1, table.Ref.r1, table.Ref.c2, table.Ref.r2 + 1);
 					} else if (!this.model.autoFilters._isEmptyRange(range, 0)) {
@@ -22238,7 +22248,7 @@ function isAllowPasteLink(pastedWb) {
 		insertCellsAndShiftDownRight(newActiveRange, displayName, type)
 	};
 
-    WorksheetView.prototype.af_deleteCellsInTable = function (tableName, optionType) {
+    WorksheetView.prototype.af_deleteCellsInTable = function (tableName, optionType, activeRange, skipError) {
         var t = this;
         var ws = this.model;
 
@@ -22249,9 +22259,9 @@ function isAllowPasteLink(pastedWb) {
         }
 
         var deleteCellsAndShiftLeftTop = function (arn, type) {
-            var isCheckChangeAutoFilter = t.af_checkInsDelCells(arn, type, "delCell", true);
+            var isCheckChangeAutoFilter = t.af_checkInsDelCells(arn, type, "delCell", true, skipError);
             if (isCheckChangeAutoFilter === false) {
-                return;
+                return false;
             }
 
             var callback = function (isSuccess) {
@@ -22323,7 +22333,7 @@ function isAllowPasteLink(pastedWb) {
             t._isLockedCells(ref, null, callback);
         };
 
-        var newActiveRange = this.model.selectionRange.getLast().clone();
+        var newActiveRange = activeRange ? activeRange.clone() : this.model.selectionRange.getLast().clone();
         var val = null;
         switch (optionType) {
             case c_oAscDeleteOptions.DeleteColumns:
@@ -22350,26 +22360,19 @@ function isAllowPasteLink(pastedWb) {
         }
 
         if (val !== null) {
-            deleteCellsAndShiftLeftTop(newActiveRange, val);
+            return deleteCellsAndShiftLeftTop(newActiveRange, val) !== false;
         }
+        return true;
     };
 
     WorksheetView.prototype.af_changeDisplayNameTable = function (tableName, newName) {
         this.model.autoFilters.changeDisplayNameTable(tableName, newName);
     };
 
-	WorksheetView.prototype.af_checkInsDelCells = function (activeRange, val, prop, isFromFormatTable) {
+	WorksheetView.prototype.af_checkInsDelCells = function (activeRange, val, prop, isFromFormatTable, skipError) {
 		var ws = this.model;
 		var res = true;
 		var filterError;
-
-		if (!window['AscCommonExcel'].filteringMode) {
-			if (val === c_oAscInsertOptions.InsertCellsAndShiftRight || val === c_oAscInsertOptions.InsertColumns) {
-				return false;
-			} else if (val === c_oAscDeleteOptions.DeleteCellsAndShiftLeft || val === c_oAscDeleteOptions.DeleteColumns) {
-				return false;
-			}
-		}
 
 		var intersectionTableParts = ws.autoFilters.getTablesIntersectionRange(activeRange);
 		var isPartTablePartsUnderRange = ws.autoFilters._isPartTablePartsUnderRange(activeRange);
@@ -22391,14 +22394,24 @@ function isAllowPasteLink(pastedWb) {
 			}
 		}
 
-		//TODO перепроверить ->
-		//когда выделено несколько колонок и нажимаем InsertCellsAndShiftRight(аналогично со строками)
-		//ms в данном случае выдаёт ошибку, но пока не вижу никаких ограничений для данного действия
+		if (!window['AscCommonExcel'].filteringMode &&
+			(val === c_oAscInsertOptions.InsertCellsAndShiftRight ||
+			 val === c_oAscInsertOptions.InsertCellsAndShiftDown ||
+			 val === c_oAscDeleteOptions.DeleteCellsAndShiftLeft ||
+			 val === c_oAscDeleteOptions.DeleteCellsAndShiftTop)) {
+			if (ws.autoFilters.isRangeIntersectionTableOrFilter(activeRange)) {
+				return false;
+			}
+		}
+
+		//TODO recheck ->
+		//when multiple columns are selected and we press InsertCellsAndShiftRight (same with rows)
+		//ms shows error in this case, but I don't see any restrictions for this action yet
 		var checkInsCells = function () {
 			switch (val) {
 				case c_oAscInsertOptions.InsertCellsAndShiftDown: {
 					if (isFromFormatTable) {
-						//если внизу находится часть форматированной таблицы или это часть форматированной таблицы
+						//if part of formatted table is below or this is part of formatted table
 						if (isPartTablePartsUnderRange) {
 							res = false;
 						} else if (isOneTableIntersection !== null &&
@@ -22426,7 +22439,7 @@ function isAllowPasteLink(pastedWb) {
 					break;
 				}
 				case c_oAscInsertOptions.InsertCellsAndShiftRight: {
-					//если справа находится часть форматированной таблицы или это часть форматированной таблицы
+					//if part of formatted table is to the right or this is part of formatted table
 					if (isFromFormatTable) {
 						if (isPartTablePartsRightRange) {
 							res = false;
@@ -22524,7 +22537,7 @@ function isAllowPasteLink(pastedWb) {
 
 		prop === "insCell" ? checkInsCells() : checkDelCells();
 
-		if (res === false) {
+		if (res === false && !skipError) {
 			if (filterError) {
 				ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ChangeFilteredRangeError,
 					c_oAscError.Level.NoCritical);
@@ -22549,22 +22562,22 @@ function isAllowPasteLink(pastedWb) {
         var refTable = tablePart.Ref;
         var refTableContainsActiveRange = selectionRange.isSingleRange() && refTable.containsRange(lastRange);
 
-        //если курсор стоит в нижней строке, то разрешаем добавление нижней строки
+        //if cursor is in bottom row, allow adding bottom row
         formatTableInfo.isInsertRowBelow = (refTableContainsActiveRange && ((tablePart.TotalsRowCount === null && activeCell.row === refTable.r2) ||
         (tablePart.TotalsRowCount !== null && activeCell.row === refTable.r2 - 1)));
 
-        //если курсор стоит в правом столбце, то разрешаем добавление одного столбца правее
+        //if cursor is in rightmost column, allow adding one column to the right
         formatTableInfo.isInsertColumnRight = (refTableContainsActiveRange && activeCell.col === refTable.c2);
 
-        //если внутри находится вся активная область или если выходит активная область за границу справа
+        //if entire active area is inside or if active area extends beyond right boundary
         formatTableInfo.isInsertColumnLeft = refTableContainsActiveRange;
 
-        //если внутри находится вся активная область(кроме строки заголовков) или если выходит активная область за границу снизу
+        //if entire active area is inside (except header row) or if active area extends beyond bottom boundary
         formatTableInfo.isInsertRowAbove = (refTableContainsActiveRange && ((lastRange.r1 > refTable.r1 && tablePart.HeaderRowCount === null) ||
         (lastRange.r1 >= refTable.r1 && tablePart.HeaderRowCount !== null)));
 
-		//если есть заголовок, и в данных всего одна строка
-		//todo пределать все проверки HeaderRowCount на вызов функции isHeaderRow
+		//if header exists and data has only one row
+		//todo refactor all HeaderRowCount checks to use isHeaderRow function
 		var dataRange = tablePart.getRangeWithoutHeaderFooter();
 		if(refTable.r1 === lastRange.r1 && refTable.r2 === lastRange.r2) {
 			formatTableInfo.isDeleteRow = true;
@@ -22617,7 +22630,7 @@ function isAllowPasteLink(pastedWb) {
             t._isLockedCells(lockRange, null, callback);
         };
 
-        //лочим данный именованный диапазон
+        //lock this named range
         var defNameId = t.model.workbook.dependencyFormulas.getDefNameByName(tableName, t.model.getId());
         defNameId = defNameId ? defNameId.getNodeId() : null;
 
@@ -22651,9 +22664,9 @@ function isAllowPasteLink(pastedWb) {
 			t.model.autoFilters.changeTableRange(tableName, range);
 			var newRange = tablePart.Ref;
 
-			//расширяем условное форматирование
-			//если тело колоки заполнено УФ, тогда расширяем его диапазон на ячейки ниже
-			//ms ещё изменяет УФ при уменьшении ф/т, что мне кажется может мешать работе, пока не реализую
+			//expand conditional formatting
+			//if column body is filled with CF, expand its range to cells below
+			//ms also changes CF when reducing formatted table, which I think may interfere with work, not implementing for now
 			if (tablePart && newRange.containsRange(oldRange)) {
 				var aRules = t.model.getConditionalFormattingRules();
 				if (aRules) {
@@ -22702,13 +22715,13 @@ function isAllowPasteLink(pastedWb) {
 			if (!doNotUpdate) {
 				t._onUpdateFormatTable(range);
 			}
-			//TODO добавить перерисовку таблицы и перерисовку шаблонов
+			//TODO add table redraw and template redraw
 			if (callbackAfterChange) {
 				callbackAfterChange(true);
 			}
 		};
 
-		//TODO возможно не стоит лочить весь диапазон. проверить: когда один ползователь меняет диапазон, другой снимает а/ф с ф/т. в этом случае в deleteAutoFilter передавать не range а имя ф/т
+		//TODO maybe shouldn't lock entire range. check: when one user changes range, another removes autofilter from formatted table. in this case pass formatted table name to deleteAutoFilter instead of range
 		var table = t.model.autoFilters._getFilterByDisplayName(tableName);
 		var tableRange = null !== table ? table.Ref : null;
 
@@ -22752,7 +22765,7 @@ function isAllowPasteLink(pastedWb) {
 			t._isLockedAll(callbackLockAll);
 		};
 
-		//лочим данный именованный диапазон при смене размера ф/т
+		//lock this named range when changing formatted table size
 		var defNameId = t.model.workbook.dependencyFormulas.getDefNameByName(tableName, t.model.getId());
 		defNameId = defNameId ? defNameId.getNodeId() : null;
 
@@ -22767,16 +22780,16 @@ function isAllowPasteLink(pastedWb) {
             var tablePart = intersectionTables[0];
             if (range.r1 === range.r2) {
                 res = c_oAscError.ID.FTChangeTableRangeError;
-            } else if (range.r1 !== tablePart.Ref.r1)//первая строка таблицы не равна первой строке выделенного диапазона
+            } else if (range.r1 !== tablePart.Ref.r1)//first row of table is not equal to first row of selected range
             {
                 res = c_oAscError.ID.FTChangeTableRangeError;
-            } else if (intersectionTables.length !== 1)//выделено несколько таблиц
+            } else if (intersectionTables.length !== 1)//multiple tables selected
             {
                 res = c_oAscError.ID.FTRangeIncludedOtherTables;
             } else if (this.model.AutoFilter && this.model.AutoFilter.Ref && this.model.AutoFilter.Ref.isIntersect(range)) {
                 res = c_oAscError.ID.FTChangeTableRangeError;
             } else if((merged = this.model.getMergedByRange(range)) && merged.all && merged.all.length !== 0) {
-				//TODO необходимо изменить название ошибки!!!
+				//TODO need to change error name!!!
             	res = c_oAscError.ID.FTChangeTableRangeError;
 			} else if(this.intersectionFormulaArray(range, true, true)) {
 				res = c_oAscError.ID.MultiCellsInTablesFormulaArray;
@@ -22792,13 +22805,13 @@ function isAllowPasteLink(pastedWb) {
 		//***array-formula***
 		var res = true;
 
-		//TODO вместо getRange3 нужна функция, которая может заканчивать цикл по ячейкам
+		//TODO instead of getRange3 need a function that can end cell iteration loop
 		if(!ctrlKey) {
-			//проверяем from, затрагиваем ли мы часть формулы массива
+			//check from, do we affect part of array formula
 			res = !this.intersectionFormulaArray(from, null, null, true);
 		}
 
-		//проверяем to, затрагиваем ли мы часть формулы массива
+		//check to, do we affect part of array formula
 		var ws = opt_wsTo ? opt_wsTo : this;
 		if(res && to) {
 			res = !ws.intersectionFormulaArray(to, null, null, true);
@@ -22808,8 +22821,8 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 	WorksheetView.prototype.intersectionFormulaArray = function(range, notCheckContains, checkOneCellArray, ignoreFirstDynamicCell) {
-		//checkOneCellArray - ф/т можно добавить поверх формулы массива, которая содержит 1 ячейку, если более - то ошибка
-		//notCheckContains - ф/т нельзя добавить, если мы пересекаемся или содержим ф/т
+		//checkOneCellArray - formatted table can be added over array formula containing 1 cell, if more - error
+		//notCheckContains - formatted table cannot be added if we intersect or contain formatted table
 
 		var res = false;
 		this.model.getRange3(range.r1, range.c1, range.r2, range.c2)._foreachNoEmpty(function(cell) {
@@ -22883,7 +22896,7 @@ function isAllowPasteLink(pastedWb) {
 		return {X: xL, Y: yL};
 	};
 
-	/** Для api layout */
+	/** For api layout */
 	WorksheetView.prototype.changeDocSize = function (width, height) {
 		var t = this;
 		var pageOptions = t.model.PagePrintOptions;
@@ -23104,7 +23117,7 @@ function isAllowPasteLink(pastedWb) {
 		var newFitToWidth = pageSetupObj.asc_getFitToWidth();
 		var newFitToHeight = pageSetupObj.asc_getFitToHeight();
 
-		//если поменялись scaling - fit sheet on.. -> необходимо пересчитать scaling
+		//if scaling changed - fit sheet on.. -> need to recalculate scaling
 		if (oldFitToWidth != newFitToWidth || oldFitToHeight != newFitToHeight) {
 			this.fitToWidthHeight(newFitToWidth, newFitToHeight);
 		}
@@ -23116,7 +23129,7 @@ function isAllowPasteLink(pastedWb) {
 		pageOptions.asc_setOptions(obj);
 		this._changePrintTitles(obj.printTitlesWidth, obj.printTitlesHeight);
 
-		//может прийти только из превью
+		//can only come from preview
 		if (pageSetupObj.headerFooter) {
 			var tempEditor = new AscCommonExcel.CHeaderFooterEditor();
 			tempEditor.setPropsFromInterface(pageSetupObj.headerFooter);
@@ -23142,7 +23155,7 @@ function isAllowPasteLink(pastedWb) {
 		var t = this;
 		var wb = window["Asc"]["editor"].wb;
 
-		//TODO нужно ли лочить именованные диапазоны при изменении особого именованного диапазона - Print_Area
+		//TODO do we need to lock named ranges when changing special named range - Print_Area
 		var callback = function (isSuccess) {
 			if (false === isSuccess) {
 				return;
@@ -23173,7 +23186,7 @@ function isAllowPasteLink(pastedWb) {
 			var oldDefName, oldScope, newRef, newDefName, oldRef;
 			switch (type) {
 				case Asc.c_oAscChangePrintAreaType.set: {
-					//если нет такого именнованного диапазона - создаём. если есть - меняем ref
+					//if no such named range exists - create. if exists - change ref
 
 					oldDefName = printArea ? printArea.getAscCDefName() : null;
 					oldScope = oldDefName ? oldDefName.asc_getScope() : t.model.index;
@@ -23191,7 +23204,7 @@ function isAllowPasteLink(pastedWb) {
 					break;
 				}
 				case Asc.c_oAscChangePrintAreaType.add: {
-					//расширяем именованный диапазон
+					//expand named range
 					oldDefName = printArea ? printArea.getAscCDefName() : null;
 					if(oldDefName) {
 						oldScope = oldDefName ? oldDefName.asc_getScope() : t.model.index;
@@ -23259,7 +23272,7 @@ function isAllowPasteLink(pastedWb) {
             	for(var i = 0; i < areaRefsArr.length; i++) {
 					var range = areaRefsArr[i];
 
-					//todo проверирить если есть валидные области, нужно ли в данном случае сразу возвращать false
+					//todo check if valid areas exist, do we need to return false immediately in this case
 					if(range && range.bbox) {
 						range = range.bbox;
 					} else {
@@ -23442,7 +23455,7 @@ function isAllowPasteLink(pastedWb) {
 			History.EndTransaction();
 		};
 
-		//лочу по аналогии со всеми опциями из print settings
+		//lock similar to all options from print settings
 		this._isLockedLayoutOptions(onChangePrintTitles);
 	};
 
@@ -23510,13 +23523,13 @@ function isAllowPasteLink(pastedWb) {
 		var _convertRangeStr = function(_val, _byCols) {
 			var _res;
 
-			//из интерфейса приходит в виду g_R1C1Mode
+			//comes from interface as g_R1C1Mode
 			AscCommonExcel.executeInR1C1Mode(AscCommonExcel.g_R1C1Mode, function () {
 				_res = AscCommonExcel.g_oRangeCache.getAscRange(_val);
 			});
 			_res = _byCols ? new Asc.Range(_res.c1, 0, _res.c2, gc_nMaxRow0) : new Asc.Range(0, _res.r1, gc_nMaxCol0, _res.r2);
 
-			//в модель ->в виде A1B1
+			//to model -> as A1B1
 			AscCommonExcel.executeInR1C1Mode(false, function () {
 				_res = parserHelp.get3DRef(t.model.getName(), _res.getAbsName());
 			});
@@ -23572,8 +23585,8 @@ function isAllowPasteLink(pastedWb) {
 		this.model.getRange3(range.r1, range.c1, maxRow, range.c2)._foreach2(function(cell, r, c) {
 			if(cell !== null) {
 				var text = cell.getValueForEdit();
-				//извлекаем тест до первого переноса строки
-				//TODO ms  в данном случае показывает на первом preview всю ячейку в одну строку, а на втором preview обрубает до первого переноса строки
+				//extract text up to first line break
+				//TODO ms in this case shows entire cell as one line on first preview, and truncates to first line break on second preview
 				text = text.split(/\r?\n/)[0];
 				if(text !== "") {
 					res += text;
@@ -23603,7 +23616,7 @@ function isAllowPasteLink(pastedWb) {
 				var oldGroupHeight = this.groupHeight;
 				this.groupHeight = this.getGroupCommonWidth(this.getGroupCommonLevel(bCol), bCol);
 
-				//TODO пересмотреть! добавлено, потому что при undo не вызывается
+				//TODO review! added because it's not called on undo
 
 				if(oldGroupHeight !== this.groupHeight) {
 					this._calcHeaderRowHeight();
@@ -23628,8 +23641,8 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 	WorksheetView.prototype.getGroupDataArray = function (bCol, start, end, bUpdateOnlyRowLevelMap, bUpdateOnlyRange) {
-		//проходимся по диапазону, и проверяем верхние/нижние строчки на наличия в них аттрибута outLineLevel
-		//возможно стоит добавить кэш для отрисовки
+		//iterate through range and check upper/lower rows for outLineLevel attribute
+		//maybe should add cache for rendering
 
 		if(start === undefined) {
 			start = 0;
@@ -23700,8 +23713,8 @@ function isAllowPasteLink(pastedWb) {
 					res[outLineLevel].push({start: val.index, end: val.index});
 				}
 
-				//расширяем предыдущие(младшие) уровни
-				//для того что - младший уровень не может быть меньше старшего
+				//expand previous (lower) levels
+				//because lower level cannot be smaller than higher
 				for(var n = 1; n < outLineLevel; n++) {
 
 					var bAdd = false;
@@ -23721,7 +23734,7 @@ function isAllowPasteLink(pastedWb) {
 						}
 					}
 
-					//если не расширен данный(предыдущий) уровень или не добавлен новый элемент, тогда в него добавляем строки текущего
+					//if this (previous) level is not expanded or new element is not added, then add current rows to it
 					if(!bContinue && !bAdd) {
 						res[n].push({start: res[outLineLevel][res[outLineLevel].length - 1].start, end: res[outLineLevel][res[outLineLevel].length - 1].end});
 					}
@@ -23772,17 +23785,17 @@ function isAllowPasteLink(pastedWb) {
 			}
 		}
 
-		//TODO возможно стоит вначале пройтись по старому groupArr и проставить всем столбцам/строкам false - могут быть проблемы при удалении всех групп и тд
+		//TODO maybe should first iterate through old groupArr and set all columns/rows to false - there may be issues when deleting all groups etc
 		//val.setCollapsed(false);
 
 
-		//вычисляем опцию collapsed уже после основных вычислений
-		//связано с тем, что она проставляется в строке/столбце, следующей за последней в группе
-		//если последний столбец/строка скрыты, то в следующей ячейке необходимо проставить collapsed = true
-		//не записываю в историю, а высчитываю каждый раз здесь в связи с тем
-		// что при удалении столбца/строки с данным свойством, оно переходит следующему столбцу/строке, те столбцу/строке
-		//следующему за последней скрытой в группе
-		//TODO рассмотреть: запись свойства collapsed только на сохранение
+		//calculate collapsed option after main calculations
+		//this is because it's set in the row/column following the last one in the group
+		//if last column/row is hidden, then collapsed = true needs to be set in the next cell
+		//not saving to history, calculating each time here because
+		//when deleting column/row with this property, it transfers to the next column/row, i.e. column/row
+		//following the last hidden one in the group
+		//TODO consider: save collapsed property only on save
 
 		var groupArr, index, i, j;
 		if(res) {
@@ -23848,7 +23861,7 @@ function isAllowPasteLink(pastedWb) {
 		var lineWidth = AscCommon.AscBrowser.convertToRetinaValue(2, true);
 		var lineWidthDiff = lineWidth % 2 === 0 ? lineWidth : lineWidth - 0.5;
 		var thickLineDiff = AscCommon.AscBrowser.isCustomScalingAbove2() ? 0.5 : 0;
-		var tempButtonMap = [];//чтобы не рисовать точки там где кпопки
+		var tempButtonMap = [];//to not draw dots where buttons are
 		var bFirstLine = true;
 		var _buttonSize = this._getGroupButtonSize();
 		var buttonSize = AscCommon.AscBrowser.convertToRetinaValue(_buttonSize, true);
@@ -23864,7 +23877,7 @@ function isAllowPasteLink(pastedWb) {
 			y2 = this.groupHeight;
 
 
-			//фон для группировки
+			//background for grouping
 			ctx.setFillStyle(this.settings.header.style[kHeaderDefault].background);
 			this._fillRect(ctx, x1 + (this.getRightToLeft() ? 1 : 0), y1, x2 - x1 + (this.getRightToLeft() ? 1 : 0), y2 - y1);
 			ctx.setStrokeStyle(this.settings.header.editorBorder).setLineWidth(1).beginPath();
@@ -23913,7 +23926,7 @@ function isAllowPasteLink(pastedWb) {
 
 							//button
 							if(endX === arrayLines[i][j].end + 1) {
-								//TODO ms обрезает кнопки сверху/снизу
+								//TODO ms clips buttons at top/bottom
 								if(widthNextRow && endX >= startX) {
 									if(!tempButtonMap[i]) {
 										tempButtonMap[i] = [];
@@ -23961,7 +23974,7 @@ function isAllowPasteLink(pastedWb) {
 
 							//button
 							if(startX === arrayLines[i][j].start - 1) {
-								//TODO ms обрезает кнопки сверху/снизу
+								//TODO ms clips buttons at top/bottom
 								if(widthNextRow && endX >= startX) {
 									if(!tempButtonMap[i]) {
 										tempButtonMap[i] = [];
@@ -23996,7 +24009,7 @@ function isAllowPasteLink(pastedWb) {
 				}
 			}
 
-			//TODO не рисовать точки на местах линий и кнопок
+			//TODO don't draw dots at line and button positions
 			for(l = minCol; l < maxCol; l++) {
 				pointLevel = this._getGroupLevel(l, bCol);
 
@@ -24085,7 +24098,7 @@ function isAllowPasteLink(pastedWb) {
 
 							//button
 							if(endY === arrayLines[i][j].end + 1) {
-								//TODO ms обрезает кнопки сверху/снизу
+								//TODO ms clips buttons at top/bottom
 								if(heightNextRow && endY >= startY) {
 									if(!tempButtonMap[i]) {
 										tempButtonMap[i] = [];
@@ -24132,7 +24145,7 @@ function isAllowPasteLink(pastedWb) {
 
 							//button
 							if(startY === arrayLines[i][j].start - 1) {
-								//TODO ms обрезает кнопки сверху/снизу
+								//TODO ms clips buttons at top/bottom
 								if(heightNextRow && endY >= startY) {
 									if(!tempButtonMap[i]) {
 										tempButtonMap[i] = [];
@@ -24164,7 +24177,7 @@ function isAllowPasteLink(pastedWb) {
 				}
 			}
 
-			//TODO не рисовать точки на местах линий и кнопок
+			//TODO don't draw dots at line and button positions
 			for(l = minRow; l < maxRow; l++) {
 				pointLevel = this._getGroupLevel(l, bCol);
 
@@ -24228,7 +24241,7 @@ function isAllowPasteLink(pastedWb) {
 		}
 
 		//buttons
-		//проходимся 2 раза, поскольку разная толщина у рамки и у -/+
+		//iterate 2 times because frame and -/+ have different thickness
 
 		var i, val, level, diff, pos, x, y, w, h, active;
 		var borderSize = AscCommon.AscBrowser.convertToRetinaValue(1, true);
@@ -24308,7 +24321,7 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 	WorksheetView.prototype._getGroupDataButtonPos = function(val, level, bCol) {
-		//возвращает позицию без учета сдвига offsetY
+		//returns position without offsetY
 
 		var zoom = this.getZoom();
 		if(zoom > 1) {
@@ -24398,14 +24411,14 @@ function isAllowPasteLink(pastedWb) {
 
 		ctx.setFillStyle(st.background);
 		this._fillRect(ctx, x1, y1, x2 - x1, y2 - y1);
-		//угол до кнопок
+		//angle to buttons
 		ctx.setFillStyle(st.background);
 		this._fillRect(ctx, 0, 0, this.headersLeft, this.headersTop);
 
 		ctx.setStrokeStyle(this.settings.header.editorBorder).setLineWidth(1).beginPath();
 		this._lineHorPrevPx(ctx, x1, y2, x2);
 		this._lineVerPrevPx(ctx, x2, y1, y2);
-		//угол до кнопок
+		//angle to buttons
 		this._lineHorPrevPx(ctx, 0, this.headersTop, this.headersLeft);
 		this._lineVerPrevPx(ctx, this.headersLeft, 0, this.headersTop);
 		ctx.stroke();
@@ -24495,7 +24508,7 @@ function isAllowPasteLink(pastedWb) {
 		var padding =  AscCommon.AscBrowser.convertToRetinaValue(1, true);
 		var buttonSize =  AscCommon.AscBrowser.convertToRetinaValue(_buttonSize, true) - padding;
 
-		//TODO учитывать будущий отступ для группировке колонок!
+		//TODO consider future indent for column grouping!
 		var x, y;
 		if(bCol) {
 			x = this.headersLeft + this.headersWidth/2 - buttonSize/2;
@@ -24517,7 +24530,7 @@ function isAllowPasteLink(pastedWb) {
 			}
 		};
 
-		//TODO пересмотреть общее свойство outlineLevelRow/outlineLevelCol
+		//TODO review common property outlineLevelRow/outlineLevelCol
 		/*var _allProps = bCol ? this.model.getAllCol() :  this.model.getAllRow();
 		var allOutLineLevel = _allProps ? _allProps.getOutlineLevel() : 0;*/
 
@@ -24541,14 +24554,14 @@ function isAllowPasteLink(pastedWb) {
 		if(level > 0) {
 			var padding = 2;
 			/*var headersSize;
-			//так как headersHeight и headersWidth рассчитывается после вызова данной функции, рассчитываем ихъ здесь самостоятельно
+			//since headersHeight and headersWidth are calculated after this function is called, calculate them here ourselves
 			if(!bCol) {
 				headersSize = (false === this.model.getSheetView().asc_getShowRowColHeaders()) ? 0 : Asc.round(this.headersHeightByFont * this.getZoom());
 			} else {
 				if (false === this.model.getSheetView().asc_getShowRowColHeaders()) {
 					headersSize = 0;
 				} else {
-					// Ширина колонки заголовков считается  - max число знаков в строке - перевести в символы - перевести в пикселы
+					// Header column width is calculated - max number of characters in row - convert to characters - convert to pixels
 					var numDigit = Math.max(AscCommonExcel.calcDecades(this.visibleRange.r2 + 1), 3);
 					var nCharCount = this.model.charCountToModelColWidth(numDigit);
 					headersSize = Asc.round(this.model.modelColWidthToColWidth(nCharCount) * this.getZoom());
@@ -24581,7 +24594,7 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 	WorksheetView.prototype.groupRowClick = function (x, y, target, type) {
-		//разрешаем открывать/скрывать группы во вьювере
+		//allow opening/hiding groups in viewer
 		var viewMode = this.handlers.trigger('getViewMode') || window["Asc"]["editor"].isRestrictionComments();
 
 		if(this.collaborativeEditing.getGlobalLock() && !viewMode) {
@@ -24653,7 +24666,7 @@ function isAllowPasteLink(pastedWb) {
 		}
 
 		if((target.row < 0 && !bCol) || (target.col < 0 && bCol)) {
-			//проверяем, возможно мы попали в одну из кнопок управления уровнями
+			//check if we hit one of the level control buttons
 			return this._groupRowMenuClick(x, y, target, type, bCol);
 		}
 
@@ -24690,7 +24703,7 @@ function isAllowPasteLink(pastedWb) {
 											t._tryChangeGroup(arrayLines[i][j], collapsed, i, bCol);
 											t.clickedGroupButton = null;
 										} else if(AscCommon.getPtrEvtName("down") === type) {
-											//перерисовываем кнопку в нажатом состоянии
+											//redraw button in pressed state
 											t._drawGroupDataButtons(null, [{r: arrayLines[i][j].start - 1, level: i, active: true, clean: true}], undefined, undefined, bCol);
 											t.clickedGroupButton = {level: i, r: arrayLines[i][j].start - 1, bCol: bCol};
 											mouseDownClick = true;
@@ -24715,7 +24728,7 @@ function isAllowPasteLink(pastedWb) {
 											t._tryChangeGroup(arrayLines[i][j], collapsed, i, bCol);
 											t.clickedGroupButton = null;
 										} else if(AscCommon.getPtrEvtName("down") === type) {
-											//перерисовываем кнопку в нажатом состоянии
+											//redraw button in pressed state
 											t._drawGroupDataButtons(null, [{r: arrayLines[i][j].end + 1, level: i, active: true, clean: true}], undefined, undefined, bCol);
 											t.clickedGroupButton = {level: i, r: arrayLines[i][j].end + 1, bCol: bCol};
 											mouseDownClick = true;
@@ -24740,7 +24753,7 @@ function isAllowPasteLink(pastedWb) {
 			}
 		};
 		if(bCol) {
-			//TODO не учитывается oAllCol
+			//TODO oAllCol is not taken into account
 			if(_summaryRight) {
 				this.model.getRange3(0, target.col - 1,0, target.col)._foreachColNoEmpty(func);
 			} else {
@@ -24754,7 +24767,7 @@ function isAllowPasteLink(pastedWb) {
 			}
 		}
 
-		//проверяем предыдущую строку - если там есть outLineLevel, а в следующей outLineLevel c другим индексом, тогда в следующей может быть кнопка управления группой
+		//check previous row - if it has outLineLevel and next row has outLineLevel with different index, then next row may have group control button
 		if(outLineLevel !== prevOutlineLevel) {
 			doClick();
 		}
@@ -24764,7 +24777,7 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 	WorksheetView.prototype._groupRowMenuClick = function (x, y, target, type, bCol) {
-		//разрешаем открывать/скрывать группы во вьювере
+		//allow opening/hiding groups in viewer
 		var viewMode = this.handlers.trigger('getViewMode') || window["Asc"]["editor"].isRestrictionComments();
 
 		if(this.collaborativeEditing.getGlobalLock() && !viewMode) {
@@ -24785,7 +24798,7 @@ function isAllowPasteLink(pastedWb) {
 
 		x = this.checkRtl(x);
 
-		//TODO для группировки колонок - y должен быть больше поля колонок
+		//TODO for column grouping - y should be greater than column field
 		var bButtonClick = !bCol && x <= this.cellsLeft && this.groupWidth && x < this.groupWidth && y < this.cellsTop;
 		if(!bButtonClick) {
 			bButtonClick = bCol && y <= this.cellsTop && this.groupHeight && y < this.groupHeight && x < this.cellsLeft;
@@ -24824,7 +24837,7 @@ function isAllowPasteLink(pastedWb) {
 	WorksheetView.prototype._tryChangeGroup = function (pos, collapsed, level, bCol) {
 		var viewMode = this.handlers.trigger('getViewMode') || window["Asc"]["editor"].isRestrictionComments();
 
-		// Проверка глобального лока
+		// Check global lock
 		if (this.collaborativeEditing.getGlobalLock() && !viewMode) {
 			return;
 		}
@@ -24833,9 +24846,9 @@ function isAllowPasteLink(pastedWb) {
 			return;
 		}
 
-		//при закрытии группы всем внутренним строкам проставляется hidden
-		//при открытии группы проходимся по всем строкам и открываем только те, которые не закрыты внутренними группами
-		//а для тех что закрыты внутренними группами - ещё раз скрыаем их
+		//when closing group, all inner rows are set to hidden
+		//when opening group, iterate through all rows and open only those not closed by inner groups
+		//and for those closed by inner groups - hide them again
 		var start = pos.start;
 		var end = pos.end;
 
@@ -24878,7 +24891,7 @@ function isAllowPasteLink(pastedWb) {
 
 			var changeModelFunc = bCol ? t.model.setColHidden :  t.model.setRowHidden;
 			var collapsedFunction = bCol ? t.model.setCollapsedCol :  t.model.setCollapsedRow;
-			if(!collapsed) {//скрываем
+			if(!collapsed) {//hide
 				changeModelFunc.call(t.model, true, start, end);
 				if((!_summaryBelow && !bCol) || (!_summaryRight && bCol)) {
 					collapsedFunction.call(t.model, !collapsed, start - 1);
@@ -24888,8 +24901,8 @@ function isAllowPasteLink(pastedWb) {
 				//hideFunc(true, start, end);
 				//t.model.autoFilters.reDrawFilter(arn);
 			} else {
-				//открываем все строки, кроме внутренних групп
-				//внутренние группы скрываем, если среди них есть раскрытые
+				//open all rows except inner groups
+				//hide inner groups if there are expanded ones among them
 				changeModelFunc.call(t.model, false, start, end);
 				if((!_summaryBelow && !bCol) || (!_summaryRight && bCol)) {
 					collapsedFunction.call(t.model, !collapsed, start - 1);
@@ -24958,7 +24971,7 @@ function isAllowPasteLink(pastedWb) {
 			return;
 		}
 
-		// Проверка глобального лока
+		// Check global lock
 		if (this.collaborativeEditing.getGlobalLock() && !viewMode) {
 			return;
 		}
@@ -24981,7 +24994,7 @@ function isAllowPasteLink(pastedWb) {
 			} else {
 				t._updateAfterChangeGroup(null, undefined, true);
 			}
-			//тут требуется обновить только rowLevelMap
+			//here only rowLevelMap needs to be updated
 			//t._updateGroups(bCol, undefined, undefined, true);
 		};
 
@@ -25061,10 +25074,10 @@ function isAllowPasteLink(pastedWb) {
 		var ar = this.model.selectionRange.getLast().clone();
 		var t = this;
 
-		//ms делает следущим образом:
-		//закрываем группы, кнопки которых попали в выделение. если же ни одна из кнопок не попала - смотрим пересечение с группой с максимальным уровнем
-		//TODO если кнопка группа с наименьшим уровнем попала в выделение и внутри этой группы на предыдущей строке есть кнопка группы с меньшим уровнем,
-		//TODO то скрываем именно внутреннюю группу - это необходимо сделать! касается только группы с самым наименьшим уровенем, далее внутренни группы не нужно проверять
+		//ms does the following:
+		//close groups whose buttons are in selection. if no buttons are in selection - check intersection with group with maximum level
+		//TODO if button of group with smallest level is in selection and inside this group on previous row there's a button of group with smaller level,
+		//TODO then hide exactly the inner group - this needs to be done! applies only to group with smallest level, further inner groups don't need to be checked
 
 
 		var getNeedGroups = function(groupArr, /*levelMap,*/ bCol) {
@@ -25078,7 +25091,7 @@ function isAllowPasteLink(pastedWb) {
 						for(var j = 0; j < groupArr[i].length; j++) {
 							//TODO COLUMNS! - bCol
 							var collapsed = t._getGroupCollapsed(groupArr[i][j].end + 1, bCol);
-							//полностью выделена группа, если выделена кнопка
+							//group is fully selected if button is selected
 							if(groupArr[i][j].end + 1 >= ar.r1 && groupArr[i][j].end + 1 <= ar.r2 && undefined === maxGroupIndexMap[groupArr[i][j].end]) {
 								if(!deleteIndexes[groupArr[i][j].end] && undefined !== maxGroupIndexMap[groupArr[i][j].end + 1] && !collapsed /*!levelMap[groupArr[i][j].end + 1].collapsed*/) {
 									delete container[maxGroupIndexMap[groupArr[i][j].end + 1]];
@@ -25090,7 +25103,7 @@ function isAllowPasteLink(pastedWb) {
 									container.push(groupArr[i][j]);
 								}
 							} else {
-								//частичное выделение - выбираем максимальный уровень, первую по счёту группу
+								//partial selection - choose maximum level, first group
 								var outLineGroupRange;
 								if(bCol) {
 									outLineGroupRange = Asc.Range(groupArr[i][j].start, 0, groupArr[i][j].end, gc_nMaxRow);
@@ -25136,7 +25149,7 @@ function isAllowPasteLink(pastedWb) {
 			t._updateAfterChangeGroup(null, null);
 		};
 
-		//TODO необходимо не закрывать полностью выделенные 1 уровни
+		//TODO should not close fully selected level 1 groups
 		var callback = function(isSuccess) {
 			if (false === isSuccess) {
 				return;
@@ -25145,7 +25158,7 @@ function isAllowPasteLink(pastedWb) {
 			History.Create_NewPoint();
 			History.StartTransaction();
 
-			//строки
+			//rows
 			var i;
 			if(allGroupSelectedRow.length) {
 				for(i = 0; i < allGroupSelectedRow.length; i++) {
@@ -25153,7 +25166,7 @@ function isAllowPasteLink(pastedWb) {
 						continue;
 					}
 
-					//если блок попал полностью под выделение
+					//if block is fully within selection
 					t.model.setRowHidden(!bExpand, allGroupSelectedRow[i].start, allGroupSelectedRow[i].end);
 				}
 			}
@@ -25162,14 +25175,14 @@ function isAllowPasteLink(pastedWb) {
 				t.model.setRowHidden(!bExpand, selectPartRowGroup.start, selectPartRowGroup.end);
 			}
 
-			//столбцы
+			//columns
 			if(allGroupSelectedCol.length) {
 				for(i = 0; i < allGroupSelectedCol.length; i++) {
 					if(!allGroupSelectedCol[i]) {
 						continue;
 					}
 
-					//если блок попал полностью под выделение
+					//if block is fully within selection
 					t.model.setColHidden(!bExpand, allGroupSelectedCol[i].start, allGroupSelectedCol[i].end);
 				}
 			}
@@ -25185,10 +25198,10 @@ function isAllowPasteLink(pastedWb) {
 		}
 	};
 
-	//самый простой вариант реализации данной функции
-	//ориентируемся по первой строке выделенного диапазона
-	//попали внутрь группы или затронули кнопку - выполняем действие
-	//приоритет у группы с максимальным уровнем
+	//simplest implementation of this function
+	//orient by first row of selected range
+	//hit inside group or touched button - perform action
+	//priority goes to group with maximum level
 	WorksheetView.prototype.changeGroupDetailsSimple = function (bExpand) {
 		//multiselect
 		if (this.model.selectionRange.ranges.length > 1) {
@@ -25205,7 +25218,7 @@ function isAllowPasteLink(pastedWb) {
 				for(var i = 0; i < groupArr.length; i++) {
 					if(groupArr[i]) {
 						for(var j = 0; j < groupArr[i].length; j++) {
-							//полностью выделена группа, если выделена кнопка
+							//group is fully selected if button is selected
 							if(!bCol && groupArr[i][j].start <= ar.r1 && groupArr[i][j].end + 1 >= ar.r1) {
 								res = groupArr[i][j];
 							} else if(groupArr[i][j].start <= ar.c1 && groupArr[i][j].end + 1 >= ar.c1) {
@@ -25234,7 +25247,7 @@ function isAllowPasteLink(pastedWb) {
 			t._updateAfterChangeGroup(null, null);
 		};
 
-		//TODO необходимо не закрывать полностью выделенные 1 уровни
+		//TODO should not close fully selected level 1 groups
 		var callback = function(isSuccess) {
 			if (false === isSuccess) {
 				return;
@@ -25243,17 +25256,17 @@ function isAllowPasteLink(pastedWb) {
 			History.Create_NewPoint();
 			History.StartTransaction();
 
-			//строки
+			//rows
 			var i;
 			if(allGroupSelectedRow) {
-				//если блок попал полностью под выделение
+				//if block is fully within selection
 				t.model.setRowHidden(!bExpand, allGroupSelectedRow.start, allGroupSelectedRow.end);
 			}
 
 
-			//столбцы
+			//columns
 			if(allGroupSelectedCol) {
-				//если блок попал полностью под выделение
+				//if block is fully within selection
 				t.model.setColHidden(!bExpand, allGroupSelectedCol.start, allGroupSelectedCol.end);
 			}
 
@@ -25269,7 +25282,7 @@ function isAllowPasteLink(pastedWb) {
 		var t = this;
 
 		var oRecalcType = AscCommonExcel.recalcType.recalc;
-		var lockDraw = false;	// Параметр, при котором не будет отрисовки (т.к. мы просто обновляем информацию на неактивном листе)
+		var lockDraw = false;	// Parameter that prevents rendering (since we're just updating info on inactive sheet)
 		var arrChangedRanges = [];
 
 		t._initCellsArea(oRecalcType);
@@ -25322,7 +25335,7 @@ function isAllowPasteLink(pastedWb) {
 		//TODO check filtering mode
 		var ar = t.model.selectionRange;
 
-		//если активной является 1 ячейка, то сбрасываем все группы
+		//if active cell is 1 cell, then reset all groups
 		var isOneCell = 1 === ar.ranges.length && ar.ranges[0].isOneCell();
 
 		var groupArrCol= t.arrColGroups ? t.arrColGroups.groupArr : null;
@@ -25439,7 +25452,7 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 	WorksheetView.prototype._isGroupSheet = function() {
-		//проверка на то, есть ли вообще группировка на листе
+		//check if there is any grouping on the sheet
 		var res = false;
 
 		if((this.arrRowGroups && this.arrRowGroups.groupArr) || (this.arrColGroups && this.arrColGroups.groupArr)) {
@@ -25550,11 +25563,11 @@ function isAllowPasteLink(pastedWb) {
 		var sortSettings = null;
 		var t = this;
 
-		//todo добавить локи
+		//todo add locks
 
-		//перед этой функцией необходимо вызвать getSelectionSortInfo - необходимо ли расширять
-		//bExpand - ответ от этой функции, который протаскивается через интерфейс
-		//если мультиселект - дизейбл кнопки sort
+		//before this function need to call getSelectionSortInfo - whether to expand
+		//bExpand - response from that function, passed through interface
+		//if multiselect - disable sort button
 		var selection = t.model.selectionRange.getLast();
 
 		//TODO is it need here?
@@ -25580,7 +25593,7 @@ function isAllowPasteLink(pastedWb) {
 		var modelSort, dataHasHeaders, columnSort;
 		var tables = t.model.autoFilters.getTablesIntersectionRange(selection);
 		var lockChangeHeaders, lockChangeOrientation, caseSensitive;
-		//проверяем, возможно находится рядом а/ф
+		//check if autofilter is nearby
 		var tryExpandRange = t.model.autoFilters.expandRange(selection, true);
 		if(tables && tables.length) {
 			if(tables && tables && tables.length === 1 && tables[0].Ref.containsRange(selection)) {
@@ -25610,8 +25623,8 @@ function isAllowPasteLink(pastedWb) {
 				selection = t.model.autoFilters.checkExpandRangeForSort(selection);
 			}
 
-			//в модели лежит флаг columnSort - если он true значит сортируем по строке(те перемещаем колонки)
-			//в настройках флаг columnSort - означает, что сортируем по колонке
+			//model has columnSort flag - if true then we sort by row (i.e. move columns)
+			//in settings columnSort flag - means we sort by column
 			modelSort = this.model.sortState;
 			columnSort = modelSort ? !modelSort.ColumnSort : true;
 			caseSensitive = modelSort ? modelSort.CaseSensitive : false;
@@ -25633,12 +25646,12 @@ function isAllowPasteLink(pastedWb) {
 			}
 
 
-			//для columnSort - добавлять с1++
+			//for columnSort - increment r1
 			if (dataHasHeaders) {
 				selection.r1++;
 			}
 
-			//если пустой дипазон, выдаём ошибку
+			//if empty range, return error
 			if(t.model.autoFilters._isEmptyRange(selection, 0)) {
 				t.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterDataRangeError, c_oAscError.Level.NoCritical);
 				return false;
@@ -25654,10 +25667,10 @@ function isAllowPasteLink(pastedWb) {
 		t._drawSelection();
 
 		sortSettings = new Asc.CSortProperties(this);
-		//необходимо ещё сохранять значение старого селекта, чтобы при нажатии пользователя на отмену - откатить
+		//need to save old selection value to rollback when user clicks cancel
 		sortSettings.selection = oldSelection;
 
-		//заголовки
+		//headers
 		sortSettings.hasHeaders = dataHasHeaders;
 		sortSettings.columnSort = columnSort;
 
@@ -25674,8 +25687,8 @@ function isAllowPasteLink(pastedWb) {
 			level.index = index;
 			level.name = name;
 
-			//TODO добавить функцию в CSortPropertiesLevel для получения всех цветов(при открытии соответсвующего меню)
-			//TODO перенести в отдельную константу Descending/Ascending
+			//TODO add function to CSortPropertiesLevel to get all colors (when opening corresponding menu)
+			//TODO move to separate constant Descending/Ascending
 			level.descending = sortCondition.ConditionDescending ? Asc.c_oAscSortOptions.Descending : Asc.c_oAscSortOptions.Ascending;
 			level.sortBy = sortCondition.ConditionSortBy;
 
@@ -25725,9 +25738,9 @@ function isAllowPasteLink(pastedWb) {
 		};
 
 
-		//столбцы/строки с настройками
+		//columns/rows with settings
 		if(modelSort) {
-			//заполняем только в случае пересечения
+			//fill only in case of intersection
 			if(selection.intersection(modelSort.Ref)) {
 				for(var i = 0; i < modelSort.SortConditions.length; i++) {
 					if(modelSort.SortConditions[i].Ref.intersection(selection)) {
@@ -25778,7 +25791,7 @@ function isAllowPasteLink(pastedWb) {
 			t._drawSelection();
 		};
 
-		//TODO selection не сохраняется при применении сортировки, поскольку создаётся новый CSortProperties в интерфейсе
+		//TODO selection is not saved when applying sort, because a new CSortProperties is created in the interface
 		if(bCancel && props && props.selection) {
 			revertSelection();
 			return;
@@ -25794,7 +25807,7 @@ function isAllowPasteLink(pastedWb) {
 			return;
 		}
 
-		//TODO отдельная обработка для таблиц
+		//TODO separate handling for tables
 		var callback = function(obj) {
 			t.model.setCustomSort(props, obj, doNotSortRange, t.cellCommentator);
 
@@ -25902,8 +25915,8 @@ function isAllowPasteLink(pastedWb) {
 		var settings = null;
 		var t = this;
 
-		//bExpand - ответ от этой функции, который протаскивается через интерфейс
-		//если мультиселект - дизейбл кнопки
+		//bExpand - response from this function, which is passed through the interface
+		//if multiselect - disable button
 		var selection = t.model.selectionRange.getLast();
 		var activeCell = t.model.selectionRange.activeCell.clone();
 		var oldSelection = selection.clone();
@@ -25912,7 +25925,7 @@ function isAllowPasteLink(pastedWb) {
 		var dataHasHeaders;
 		var tables = t.model.autoFilters.getTablesIntersectionRange(selection);
 		var lockChangeHeaders, lockChangeOrientation, caseSensitive;
-		//проверяем, возможно находится рядом а/ф
+		//check if autofilter is nearby
 		var tryExpandRange = t.model.autoFilters.expandRange(selection, true);
 		if(tables && tables.length) {
 			if(tables && tables && tables.length === 1 && tables[0].Ref.containsRange(selection)) {
@@ -25936,12 +25949,12 @@ function isAllowPasteLink(pastedWb) {
 
 			dataHasHeaders = window['AscCommonExcel'].ignoreFirstRowSort(t.model, selection);
 
-			//для columnSort - добавлять с1++
+			//for columnSort - increment r1
 			if (dataHasHeaders) {
 				selection.r1++;
 			}
 
-			//если пустой дипазон, выдаём ошибку
+			//if empty range, return error
 			if(t.model.autoFilters._isEmptyRange(selection, 0) || selection.r1 === selection.r2) {
 				t.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterDataRangeError, c_oAscError.Level.NoCritical);
 				return false;
@@ -25956,13 +25969,13 @@ function isAllowPasteLink(pastedWb) {
 		}
 		t._drawSelection();
 
-		//в плане взаимодействия с интерефесом очень много общего с кастомной сортировкой
-		//из-за того, что из сортировки здесь требуется несколько полей + чтобы не было путанницы
-		// передаваемый объект создаю другой
+		//in terms of interface interaction, there's a lot in common with custom sorting
+		//because sorting here requires several fields + to avoid confusion
+		//creating a different object to pass
 		settings = new Asc.CRemoveDuplicatesProps(this);
-		//необходимо ещё сохранять значение старого селекта, чтобы при нажатии пользователя на отмену - откатить
+		//need to save old selection value to rollback when user clicks cancel
 		settings.selection = oldSelection;
-		//заголовки
+		//headers
 		settings.hasHeaders = dataHasHeaders;
 		settings._newSelection = selection;
 		settings.generateColumnList();
@@ -26015,21 +26028,21 @@ function isAllowPasteLink(pastedWb) {
 		var  firstLockRow;
 		var deleteIndexes = [];
 		var deleteIndexesMap = [];
-		var repeatArr = [];
+		var oRepeatMap = {};
 		var aSortElems = [];
 		for (i = selection.r1; i <= selection.r2; i++) {
 			var cell = t.model.getCell3(i, startSortCol);
 			var value = cell.getValueWithFormat();
 			aSortElems.push({index: i});
-			if (repeatArr.hasOwnProperty(value)) {
-				for (var n = 0; n < repeatArr[value].length; n++) {
+			if (oRepeatMap.hasOwnProperty(value)) {
+				for (var n = 0; n < oRepeatMap[value].length; n++) {
 					var _notEqual = false;
 					for (var j = startSortCol + 1; j <= selection.c2; j++) {
 						if (!colMap[j]) {
 							continue;
 						}
 						var cell1 = t.model.getCell3(i, j);
-						var cell2 = t.model.getCell3(repeatArr[value][n], j);
+						var cell2 = t.model.getCell3(oRepeatMap[value][n], j);
 						var val1 = cell1.getValueWithFormat();
 						var val2 = cell2.getValueWithFormat();
 						if (val1 !== val2) {
@@ -26048,14 +26061,14 @@ function isAllowPasteLink(pastedWb) {
 					}
 				}
 				if (_notEqual) {
-					repeatArr[value].push(i);
+					oRepeatMap[value].push(i);
 				}
 
 			} else {
-				if(!repeatArr[value]) {
-					repeatArr[value] = [];
+				if(!oRepeatMap[value]) {
+					oRepeatMap[value] = [];
 				}
-				repeatArr[value].push(i);
+				oRepeatMap[value].push(i);
 			}
 		}
 
@@ -26108,7 +26121,7 @@ function isAllowPasteLink(pastedWb) {
 			}
 
 			if (deleteIndexes.length) {
-				//удаляем
+				//delete
 				for (var j = 0; j < deleteIndexes.length; j++) {
 					var deleteRange = t.model.getRange3(deleteIndexes[j], selection.c1, deleteIndexes[j], selection.c2);
 					deleteRange.cleanAll();
@@ -26117,7 +26130,7 @@ function isAllowPasteLink(pastedWb) {
 					t.cellCommentator.deleteCommentsRange(deleteRange.bbox);
 				}
 
-				//сортируем
+				//sort
 				if (aSortData.length) {
 					var sortRange = t.model.getRange3(selection.r1, selection.c1, selection.r2, selection.c2);
 					var oUndoRedoBBox = new AscCommonExcel.UndoRedoData_BBox({r1: selection.r1, c1: selection.c1, r2: selection.r2, c2: selection.c2});
@@ -26216,27 +26229,27 @@ function isAllowPasteLink(pastedWb) {
 
 		return new AscFormat.CGraphicBounds(l - this.getRightToLeftOffset(), t, r, b);
     };
-	//интерфейс
-	/*отдаём массив данных для интерефейса - beforeInsertSlicer
-	добавляем срезы от интерфейса - insertSlicers
+	//interface
+	/*return data array for interface - beforeInsertSlicer
+	add slicers from interface - insertSlicers
 
-	//данные для отображения
-	генерируем данные для отображения в шейпа по имени - getFilterValuesBySlicerName
+	//display data
+	generate display data for shape by name - getFilterValuesBySlicerName
 
 
-	//обновление view
-	после применения автофильтра изменяем отображения на основне данных модели по имени ф/т - updateSlicerViewAfterTableChange
+	//update view
+	after applying autofilter, change display based on model data by table name - updateSlicerViewAfterTableChange
 
-	//обновляем модель среза
-	принимаем данные от шейпа для того чтобы изменить ф/т - setFilterValuesFromSlicer
+	//update slicer model
+	receive data from shape to change table - setFilterValuesFromSlicer
 
-	изменяется имя колонки ф/т - changeSlicerAfterSetTableColName
-	изменяется имя ф/т - setSlicerTableName
-	удаляем срез - deleteSlicer
+	table column name changes - changeSlicerAfterSetTableColName
+	table name changes - setSlicerTableName
+	delete slicer - deleteSlicer
 	*/
 
 	WorksheetView.prototype.beforeInsertSlicer = function () {
-		//чтобы лишний раз не проверять - может быть взять информацию из cellinfo?
+		//to avoid checking again - maybe get information from cellinfo?
 		const tableInfo = this.model.autoFilters.getTableByActiveCell();
 		if (tableInfo) {
 			const table = tableInfo.table;
@@ -26270,7 +26283,7 @@ function isAllowPasteLink(pastedWb) {
 				return;
 			}
 
-			//добавляем в структуру
+			//add to structure
 			for (var i = 0; i < arr.length; i++) {
 				var slicer = t.model.insertSlicer(arr[i], name, type, pivotTable);
 				arr[i] = slicer.name;
@@ -26282,7 +26295,7 @@ function isAllowPasteLink(pastedWb) {
 		History.Create_NewPoint();
 		History.StartTransaction();
 
-		//чтобы лишний раз не проверять - может быть взять информацию из cellinfo?
+		//to avoid checking again - maybe get information from cellinfo?
 		const tableInfo = this.model.autoFilters.getTableByActiveCell();
 		var lockRanges = [], colRange, needAddFilter, pivotLockInfos = [];
 		if (tableInfo) {
@@ -26314,7 +26327,7 @@ function isAllowPasteLink(pastedWb) {
 					History.EndTransaction();
 					return;
 				}
-				//TODO перепроверить лок
+				//TODO recheck lock
 				t._isLockedDefNames(callback);
 			});
 		} else {
@@ -26323,7 +26336,7 @@ function isAllowPasteLink(pastedWb) {
 					History.EndTransaction();
 					return;
 				}
-				//TODO перепроверить лок
+				//TODO recheck lock
 				if (pivotLockInfos.length > 0) {
 					t.collaborativeEditing.lock(pivotLockInfos, function(success){
 						if (!success) {
@@ -26453,10 +26466,10 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 	WorksheetView.prototype.getFilterValuesBySlicerName = function (name) {
-		//получаем данные для отображения в шейпе
-		//в связанном шейпе хранится имя cSlicer
-		//чтобы получить скрытые/открытые значения используем slicerCache
-		//внутри получаем имя форматированной(сводной) таблицы и имя колонки
+		//get data for display in shape
+		//linked shape stores cSlicer name
+		//to get hidden/visible values we use slicerCache
+		//inside we get the formatted (pivot) table name and column name
 		var slicerCache = this.model.getSlicerCachesBySourceName(name);
 		return slicerCache ? slicerCache.getFilterValues() : null;
 	};
@@ -26475,7 +26488,7 @@ function isAllowPasteLink(pastedWb) {
 		for (var i = 0; i < slicers.length; i++) {
 			switch (type) {
 				case window['AscCommonExcel'].insertSlicerType.table: {
-					//TODO сформировать объект autoFiltersObject
+					//TODO create autoFiltersObject
 					this.applyAutoFilter();
 					break;
 				}
@@ -26540,11 +26553,11 @@ function isAllowPasteLink(pastedWb) {
 			for (var i = 0; i < arr.length; i++) {
 				var slicer = arr[i].clone(t.model);
 				slicer.name = slicer.generateName(slicer.name);
-				//клонируем, перегенерируем имя, имя кэша и проверяем sourceName у кэша
+				//clone, regenerate name, cache name and check sourceName in cache
 				if (modelCaches[i]) {
 					slicer.cacheDefinition = modelCaches[i];
 				} else {
-					//тут необходимо ещё проверить, соответсвует ли внутренняя структура
+					//here we also need to check if internal structure matches
 					var _type = slicer.cacheDefinition.getType();
 					if (_type === window['AscCommonExcel'].insertSlicerType.table) {
 						var table = slicer.cacheDefinition.getTableSlicerCache();
@@ -26600,7 +26613,7 @@ function isAllowPasteLink(pastedWb) {
 		this._isLockedCells(lockRanges, null, function(success) {
 			if (success) {
 				if (isLockDefNames) {
-					//TODO перепроверить лок
+					//TODO recheck lock
 					t._isLockedDefNames(function(isLockedDefNames) {
 						if (isLockedDefNames) {
 							if (pivotLockInfos.length > 0) {
@@ -26626,7 +26639,7 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 	WorksheetView.prototype._updateSlicers = function (range) {
-		//пока только для таблиц
+		//for now only for tables
 		var tables = this.model.autoFilters.getTablesIntersectionRange(range);
 		if (tables) {
 			for (var i = 0; i < tables.length; i++) {
@@ -26679,7 +26692,7 @@ function isAllowPasteLink(pastedWb) {
 			History.EndTransaction();
 		};
 
-		//TODO необходимо ли лочить каждый объект data validate?
+		//TODO do we need to lock each data validate object?
 		var lockRanges = this.model.dataValidations ? this.model.dataValidations.expandRanges(_selection) : _selection;
 		this._isLockedCells(lockRanges, /*subType*/null, callback);
 	};
@@ -26696,10 +26709,10 @@ function isAllowPasteLink(pastedWb) {
 			return _ranges;
 		};
 
-		//здесь не будем проверять лок
-		//если какая-то ячейка окажется залочена, то дальнейшего применения не произойдёт
+		//here we won't check lock
+		//if some cell is locked, further application won't happen
 		if (val) {
-			//поскольку объект может быть измененным, использую тот, который лежит в модели
+			//since object may be modified, use the one stored in model
 			var modelDataValidation = this.model.dataValidations.getById(props.Id);
 			if (modelDataValidation && modelDataValidation.data) {
 				modelDataValidation = modelDataValidation.data;
@@ -26761,7 +26774,7 @@ function isAllowPasteLink(pastedWb) {
 				}
 			}
 
-			//TODO возможно здесь необходимо пересчитать формулы
+			//TODO formulas may need to be recalculated here
 			t.draw();
 			History.EndTransaction();
 		};
@@ -26778,7 +26791,7 @@ function isAllowPasteLink(pastedWb) {
 
 				if (_rule.priority === null) {
 					_rule.priority = 1;
-					//двигаем приоритет у всех остальных и добавляем их в список измененных
+					//shift priority for all others and add them to modified list
 					if (t.model.isConditionalFormattingRules()) {
 						t.model.forEachConditionalFormattingRules(function (val) {
 							var _id = val.id;
@@ -26839,12 +26852,12 @@ function isAllowPasteLink(pastedWb) {
 
 			var updateRanges = [];
 			for (var i = 0; i < arr.length; i++) {
-				//TODO для мультиселекта - передать массив!
+				//TODO for multiselect - pass array!
 				updateRanges = updateRanges.concat(arr[i].ranges);
 				t.model.tryClearCFRule(arr[i], _ranges);
 			}
 
-			//TODO возможно здесь необходимо пересчитать формулы
+			//TODO formulas may need to be recalculated here
 			if (updateRanges) {
 				for (i = 0; i < updateRanges.length; i++) {
 					t._updateRange(updateRanges[i]);
@@ -26982,7 +26995,7 @@ function isAllowPasteLink(pastedWb) {
 			unitedArr = unitedArr.concat(deleteIdArr);
 		}
 
-		//TODO протащить всё для локов, аналогично CF
+		//TODO add all lock handling, similar to CF
 		this._isLockedProtectedRange(callback, unitedArr);
 	};
 
@@ -26993,17 +27006,17 @@ function isAllowPasteLink(pastedWb) {
 			var canSelectLockedCells = !sheetProtection.getSelectLockedCells();
 			var canSelectUnLockedCells = !sheetProtection.getSelectUnlockedCells();
 			if (!canSelectLockedCells && canSelectUnLockedCells) {
-				//если стоим на заблокированной ячейке, то меняем селект на незаблокированный
+				//if on locked cell, change selection to unlocked
 				var isUnlocked = this.model.getUnlockedCellInRange(this.model.selectionRange.getLast());
 				if (!isUnlocked) {
 					isUnlocked = this.model.getUnlockedCellInRange();
 				}
 
-				//меняем селект
+				//change selection
 				if (isUnlocked) {
 					this.setSelection(new Asc.Range(isUnlocked.nCol, isUnlocked.nRow, isUnlocked.nCol, isUnlocked.nRow));
 				} else {
-					//нужно сделать так, чтобы селект вообще не отображался
+					//need to make selection not display at all
 				}
 			}
 		}
@@ -27033,7 +27046,7 @@ function isAllowPasteLink(pastedWb) {
 			return;
 		}
 
-		//если выделить ничего нельзя, то и редактировать возможности нет
+		//if nothing can be selected, then editing is not possible
 		if (wsModel.getSheetProtection(Asc.c_oAscSheetProtectType.selectLockedCells) && wsModel.getSheetProtection(Asc.c_oAscSheetProtectType.selectUnlockedCells)) {
 			return;
 		}
@@ -27084,15 +27097,15 @@ function isAllowPasteLink(pastedWb) {
 			}
 		}
 
-		//в сдучае, допустим, мультиселекта, когда попадаем в несколько диапазонов с паролем, выдаём ошибку
-		//в дальнейшем можно использовать Promise.all
+		//in case of, say, multiselect, when we hit multiple ranges with password, return error
+		//in future can use Promise.all
 		if (aCheckPasswordRanges.length > 1) {
 			textAreaBlurFunc && textAreaBlurFunc();
 			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
 			callback(false);
 		} else if (aCheckPasswordRanges.length === 1) {
 			textAreaBlurFunc && textAreaBlurFunc();
-			//внутри asc_onConfirmAction дёргаем checkProtectedRangesPassword
+			//inside asc_onConfirmAction we call checkProtectedRangesPassword
 			this.model.workbook.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmChangeProtectRange, function (can, isCancel) {
 				if (!can && !isCancel) {
 					t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
@@ -27169,7 +27182,7 @@ function isAllowPasteLink(pastedWb) {
 		maxCol = Math.max(maxCol, maxCell.col);
 		maxRow = Math.max(maxRow, maxCell.row);
 
-		// Получаем максимальную колонку/строку для изображений/чатов
+		// Get maximum column/row for images/charts
 		maxCell = this.objectRender && this.objectRender.getMaxColRow();
 		if (maxCell) {
 			maxCol = Math.max(maxCol, maxCell.col);
@@ -28252,7 +28265,7 @@ function isAllowPasteLink(pastedWb) {
 					} else {
 						oImageMap = pasteContent.props.oImageMap;
 						if (window["NATIVE_EDITOR_ENJINE"]) {
-							//TODO для мобильных приложений  - не рабочий код!
+							//TODO for mobile applications - non-working code!
 							AscCommon.ResetNewUrls(pasteContent.props.data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
 							selectData = t._pasteData(isLargeRange, fromBinaryExcel, pasteContent, bIsUpdate, _pasteToRange, null, val);
 							AscCommonExcel.g_clipboardExcel.pasteProcessor._insertImagesFromBinaryWord(ws, pasteContent, oImageMap);
@@ -28287,6 +28300,10 @@ function isAllowPasteLink(pastedWb) {
 
 		let isPasteOptions = window['AscCommon'].g_specialPasteHelper.isPasteOptions;
 
+		if (!specialPasteHelper.specialPasteStart && AscCommonExcel.g_clipboardExcel.pasteProcessor.bIsMultiselectPaste) {
+			specialPasteProps.formula = null;
+		}
+
 		if (val.props && val.props.onlyImages === true) {
 			if (!specialPasteHelper.specialPasteStart) {
 				ws.handlers.trigger("showSpecialPasteOptions", [Asc.c_oSpecialPasteProps.picture]);
@@ -28309,31 +28326,31 @@ function isAllowPasteLink(pastedWb) {
 			ws.handlers.trigger("slowOperation", true);
 		}
 
-		//если вставка производится внутрь ф/т, расширяем её вниз
+		//if paste is inside table, expand it downward
 		var activeTable = ws.model.autoFilters.getTableContainActiveCell(ws.model.selectionRange.activeCell);
 		var newRange;
 		if (pasteToRange && activeTable && specialPasteProps.formatTable) {
 			var delta = pasteToRange.r2 - activeTable.Ref.r2;
 			if (delta > 0) {
-				//TODO пересмотреть!
-				//пока сделал при вставке в ф/т расширяем только в случае, если внизу есть пустые строки, сдвиг не делаем
-				//потому что в случае совместного редактирования необходимо лочить весь лист(из-за сдвига)
-				//и так же необходимо заранее расширить область обновления, чтобы данные внизу ф/т перерисовались
-				//и ещё excel ругается, когда область вставки затрагивает несколько таблиц - причём не во всех случаях - просмотреть!
-				//так же рассмотреть ситуацию, когда вставляется ниже последней строки ф/т заполненные текстом даные(если хоть 1 ячека содержит текст) - баг 26402
+				//TODO review!
+				//for now when pasting into table, expand only if there are empty rows below, don't shift
+				//because in collaborative editing we need to lock whole sheet (due to shift)
+				//and also need to expand update area in advance so data below table redraws
+				//and also excel complains when paste area affects multiple tables - not in all cases - review!
+				//also consider case when pasting below last table row with text-filled data (if at least 1 cell has text) - bug 26402
 				if (false && !ws.model.autoFilters._isPartTablePartsUnderRange(activeTable.Ref)) {
-					//сдвигаем и расширяем
+					//shift and expand
 					ws.model.getRange3(activeTable.Ref.r2 + 1, activeTable.Ref.c1, activeTable.Ref.r2 + delta,
 						activeTable.Ref.c2).addCellsShiftBottom();
 					newRange =
 						new Asc.Range(activeTable.Ref.c1, activeTable.Ref.r1, activeTable.Ref.c2, activeTable.Ref.r2 +
 							delta);
 				} else {
-					//в противном случае используем ячейки внизу таблицы без сдвига, перед этим проверяем на предмет наличия пустых строк под таблицей
+					//otherwise use cells below table without shifting, first check for empty rows under table
 					var tempRange = new Asc.Range(activeTable.Ref.c1, activeTable.Ref.r2 +
 						1, activeTable.Ref.c2, activeTable.Ref.r2 + delta);
 					if (ws.model.autoFilters._isEmptyRange(tempRange, 0)) {
-						//расширяем таблицу вниз
+						//expand table downward
 						newRange =
 							new Asc.Range(activeTable.Ref.c1, activeTable.Ref.r1, activeTable.Ref.c2, activeTable.Ref.r2 +
 								delta);
@@ -28375,8 +28392,8 @@ function isAllowPasteLink(pastedWb) {
 			}
 		}
 
-		//для бага 26402 - добавляю возможность продолжения ф/т если вставляем фрагмент по ширине такой же как и ф/т
-		//и имеет хоть одну ячейку с данными
+		//for bug 26402 - adding ability to continue table if pasting fragment with same width as table
+		//and has at least one cell with data
 		if (specialPasteProps.formatTable && window['AscCommonExcel'].g_IncludeNewRowColInTable) {
 			var tableIndexAboveRange = ws.model.autoFilters.searchRangeInTableParts(
 				new Asc.Range(pasteToRange.c1, pasteToRange.r1 - 1, pasteToRange.c1, pasteToRange.r1 - 1));
@@ -28384,14 +28401,14 @@ function isAllowPasteLink(pastedWb) {
 
 			if (tableAboveRange && tableAboveRange.Ref && !tableAboveRange.isTotalsRow() &&
 				tableAboveRange.Ref.c1 === pasteToRange.c1 && tableAboveRange.Ref.c2 === pasteToRange.c2) {
-				//далее проверяем наличие ф/т в области вставки
+				//then check for table in paste area
 				if (-1 === ws.model.autoFilters.searchRangeInTableParts(pasteToRange)) {
-					//проверям на наличие хотя бы одной значимой ячейки в диапазоне, который вставляем
+					//check for at least one significant cell in range being pasted
 					if (activeCellsPasteFragment && fromBinary &&
 						!val.autoFilters._isEmptyRange(activeCellsPasteFragment, 0)) {
 						newRange =
 							new Asc.Range(tableAboveRange.Ref.c1, tableAboveRange.Ref.r1, pasteToRange.c2, pasteToRange.r2);
-						//продлеваем ф/т
+						//extend table
 						ws.model.autoFilters.changeTableRange(tableAboveRange.DisplayName, newRange);
 					}
 				}
@@ -28399,7 +28416,7 @@ function isAllowPasteLink(pastedWb) {
 		}
 
 
-		//добавляем форматированные таблицы
+		//add formatted tables
 		var i;
 		var arnToRange = pasteToRange ? pasteToRange : ws.model.selectionRange.getLast();
 		var tablesMap = null, intersectionRangeWithTableParts;
@@ -28415,12 +28432,12 @@ function isAllowPasteLink(pastedWb) {
 				range = ws.model.getRange3(diffRow, diffCol, diffRow + (tablePartRange.r2 - tablePartRange.r1),
 					diffCol + (tablePartRange.c2 - tablePartRange.c1));
 
-				//если в активную область при записи попала лишь часть таблицы
+				//if only part of table got into active area during write
 				if (activeCellsPasteFragment && !activeCellsPasteFragment.containsRange(tablePartRange)) {
 					continue;
 				}
 
-				//если область вставки содержит форматированную таблицу, которая пересекается с вставляемой форматированной таблицей
+				//if paste area contains formatted table that intersects with pasted formatted table
 				intersectionRangeWithTableParts = ws.model.autoFilters._intersectionRangeWithTableParts(range.bbox);
 				if (intersectionRangeWithTableParts) {
 					continue;
@@ -28430,7 +28447,7 @@ function isAllowPasteLink(pastedWb) {
 					range.cleanFormat();
 				}
 
-				//TODO использовать bWithoutFilter из tablePart
+				//TODO use bWithoutFilter from tablePart
 				var bWithoutFilter = false;
 				if (!curTable.AutoFilter) {
 					bWithoutFilter = true;
@@ -28504,10 +28521,10 @@ function isAllowPasteLink(pastedWb) {
 								var formulaOffset = new AscCommon.CellBase(pasteToRange.r1 - refInsertBinary.r1, pasteToRange.c1 - refInsertBinary.c1);
 								dataValidation._init(ws.model, true);
 								//TODO
-								//MS сдвигает немного иначе - при отрицательных значениях сдвига вычитает из максимальной строки/столбца
-								//мы делаем аналогично формулам
-								//для того, чтобы сделать как в ms необходимо переделать сдвиг диапазонов для формул
-								//и нужно ли это? кто ожидает в случае такого копирования подобный результат?
+								//MS shifts differently - for negative shift values it subtracts from max row/column
+								//we do it similar to formulas
+								//to do it like MS, need to rework range shifting for formulas
+								//and is it needed? who expects such result when copying like this?
 								dataValidation.setOffset(formulaOffset);
 								//dataValidation._buildDependencies();
 							}
@@ -28537,7 +28554,7 @@ function isAllowPasteLink(pastedWb) {
 		}
 
 
-		//делаем unmerge ф/т
+		//unmerge table
 		intersectionRangeWithTableParts = ws.model.autoFilters._intersectionRangeWithTableParts(arnToRange);
 		if (intersectionRangeWithTableParts && intersectionRangeWithTableParts.length) {
 			var tablePart;
@@ -28631,7 +28648,7 @@ function isAllowPasteLink(pastedWb) {
 		}
 
 		ws.model.workbook.dependencyFormulas.unlockRecal();
-		//добавил для случая, когда вставка формулы проиходит в заголовок таблицы
+		//added for case when formula paste happens into table header
 		if (arrFormula && arrFormula.length) {
 			ws.model.checkChangeTablesContent(ws.model.selectionRange.getLast());
 		}
@@ -28660,7 +28677,7 @@ function isAllowPasteLink(pastedWb) {
 						allowedSpecialPasteProps.push(sProps.transpose);
 					}
 				} else {
-					//matchDestinationFormatting - пока не добавляю, так как работает как и values
+					//matchDestinationFormatting - not adding for now, works same as values
 					if (bText) {
 						allowedSpecialPasteProps = [sProps.keepTextOnly, sProps.useTextImport];
 					} else {
@@ -28711,7 +28728,7 @@ function isAllowPasteLink(pastedWb) {
 		var rangeUnMerge = ws.model.getRange3(arn.r1, arn.c1, rMax - 1, cMax - 1);
 		var isOneMerge = false;
 
-		//если вставляем в мерженную ячейку, диапазон которой больше или равен
+		//if pasting into merged cell whose range is greater than or equal to
 		var fPasteCell = pasteContent.content[0] && pasteContent.content[0][0];
 		var colSpanCompare = fPasteCell && cMax - arn.c1 === fPasteCell.colSpan;
 		var rowSpanCompare = fPasteCell && rMax - arn.r1 === fPasteCell.rowSpan;
@@ -28722,14 +28739,14 @@ function isAllowPasteLink(pastedWb) {
 			}
 			isOneMerge = true;
 		} else {
-			//проверка на наличие части объединённой ячейки в области куда осуществляем вставку
+			//check for part of merged cell in paste destination area
 			for (var rFirst = arn.r1; rFirst < rMax; ++rFirst) {
 				for (var cFirst = arn.c1; cFirst < cMax; ++cFirst) {
 					var range = ws.model.getRange3(rFirst, cFirst, rFirst, cFirst);
 					var merged = range.hasMerged();
 					if (merged) {
 						if (merged.r1 < arn.r1 || merged.r2 > rMax - 1 || merged.c1 < arn.c1 || merged.c2 > cMax - 1) {
-							//ошибка в случае если вставка происходит в часть объедененной ячейки
+							//error if paste occurs into part of merged cell
 							if (isCheckSelection) {
 								return arn;
 							} else {
@@ -28756,7 +28773,7 @@ function isAllowPasteLink(pastedWb) {
 			return newArr;
 		}
 
-		//если не возникает конфликт, делаем unmerge
+		//if no conflict, do unmerge
 		if (specialPasteProps.format) {
 			rangeUnMerge.unmerge();
 			//ws.cellCommentator.deleteCommentsRange(rangeUnMerge.bbox);
@@ -28837,7 +28854,7 @@ function isAllowPasteLink(pastedWb) {
 			}
 
 			//hyperlink
-			if (currentObj.hyperLink || currentObj.location) {
+			if ((currentObj.hyperLink || currentObj.location) && !currentObj.doNotApplyHyperlink) {
 				pastedRangeProps.hyperLink = currentObj;
 			}
 
@@ -28963,8 +28980,8 @@ function isAllowPasteLink(pastedWb) {
 		var res;
 		if (isCheckSelection) {
 			for (i = 0; i < selectRanges.length; i++) {
-				//если всталвляем ссылки, то в случае если изначально была выделена только 1 ячейка - подбираем диапазон вставки, в случае нескольких -
-				//оставляем первоначальный диапазон
+				//if pasting links, when only 1 cell was initially selected - pick paste range, for multiple -
+				//keep original range
 				var _selection;
 				if (specialPasteProp === Asc.c_oSpecialPasteProps.link) {
 					if (!selectRanges[i].isOneCell()) {
@@ -29071,11 +29088,11 @@ function isAllowPasteLink(pastedWb) {
 
 		if (!isMergedFirstCell) {
 			if (arn.c1 === arn.c2 && arn.r2 > arn.r1 && countPasteCol > 1 && countPasteRow === 1) {
-				//если всталяем одну строку в одну колонку
+				//if pasting one row into one column
 				arn.c2 = arn.c1 + countPasteCol - 1;
 				trueActiveRange.c2 = arn.c2;
 			} else if (arn.r1 === arn.r2 && arn.c2 > arn.c1 && countPasteRow > 1 && countPasteCol === 1) {
-				//если всталяем одну колонку в одну строку
+				//if pasting one column into one row
 				arn.r2 = arn.r1 + countPasteRow - 1;
 				trueActiveRange.r2 = arn.r2;
 			}
@@ -29084,21 +29101,21 @@ function isAllowPasteLink(pastedWb) {
 		var rowDiff = arn.r1 - activeCellsPasteFragment.r1;
 		var colDiff = arn.c1 - activeCellsPasteFragment.c1;
 		var newPasteRange = new Asc.Range(arn.c1 - colDiff, arn.r1 - rowDiff, arn.c2 - colDiff, arn.r2 - rowDiff);
-		//если вставляем в мерженную ячейку, диапазон которой больше или меньше, но не равен выделенной области
+		//if pasting into merged cell whose range is greater or less but not equal to selected area
 		if (isMergedFirstCell && isMergedFirstCell.isEqual(arn) && cMax - arn.c1 === (firstValuesCol + 1) && rMax - arn.r1 === (firstValuesRow + 1) &&
 			!newPasteRange.isEqual(activeCellsPasteFragment)) {
 			isOneMerge = true;
 			rMax = arn.r2 + 1;
 			cMax = arn.c2 + 1;
 		} else if (arn.c2 >= cMax - 1 && arn.r2 >= rMax - 1) {
-			//если область кратная куску вставки
+			//if area is multiple of paste chunk
 			var widthArea = arn.c2 - arn.c1 + 1;
 			var heightArea = getOpenRowsCount(arn);
 			var widthPasteFr = cMax - arn.c1;
 			var heightPasteFr = rMax - arn.r1;
-			//если кратны, то обрабатываем
+			//if multiple, process
 			if (widthArea % widthPasteFr === 0 && heightArea % heightPasteFr === 0) {
-				//Для случая, когда выделен весь диапазон, запрещаю множественную вставку
+				//For case when entire range is selected, prohibit multiple paste
 				if (arn.getType() !== window["Asc"].c_oAscSelectionType.RangeMax && arn.getType() !== window["Asc"].c_oAscSelectionType.RangeCol && arn.getType() !==
 					window["Asc"].c_oAscSelectionType.RangeRow) {
 					isMultiple = true;
@@ -29109,7 +29126,7 @@ function isAllowPasteLink(pastedWb) {
 						w: widthArea, h: heightArea, pasteW: widthPasteFr, pasteH: heightPasteFr, pasteInRange: pasteInRange
 					});
 				}
-			} else if (firstCell.hasMerged() !== null)//в противном случае ошибка
+			} else if (firstCell.hasMerged() !== null)//otherwise error
 			{
 				if (isCheckSelection) {
 					return arn;
@@ -29119,14 +29136,14 @@ function isAllowPasteLink(pastedWb) {
 				}
 			}
 		} else {
-			//проверка на наличие части объединённой ячейки в области куда осуществляем вставку
+			//check for part of merged cell in paste destination area
 			for (var rFirst = arn.r1; rFirst < rMax; ++rFirst) {
 				for (var cFirst = arn.c1; cFirst < cMax; ++cFirst) {
 					var range = ws.model.getRange3(rFirst, cFirst, rFirst, cFirst);
 					var merged = range.hasMerged();
 					if (merged) {
 						if (merged.r1 < arn.r1 || merged.r2 > rMax - 1 || merged.c1 < arn.c1 || merged.c2 > cMax - 1) {
-							//ошибка в случае если вставка происходит в часть объедененной ячейки
+							//error if paste occurs into part of merged cell
 							if (isCheckSelection) {
 								return arn;
 							} else {
@@ -29159,7 +29176,7 @@ function isAllowPasteLink(pastedWb) {
 		var bboxUnMerge = getLockRange();
 		var rangeUnMerge = ws.model.getRange3(bboxUnMerge.r1, bboxUnMerge.c1, bboxUnMerge.r2, bboxUnMerge.c2);
 
-		//если не возникает конфликт, делаем unmerge
+		//if no conflict, do unmerge
 		if (specialPasteProps.format) {
 			rangeUnMerge.unmerge();
 			ws.cellCommentator.deleteCommentsRange(rangeUnMerge.bbox);
@@ -29170,7 +29187,7 @@ function isAllowPasteLink(pastedWb) {
 		}
 
 		var maxARow = 1, maxACol = 1, plRow = 0, plCol = 0;
-		if (isMultiple)//случай автозаполнения сложных форм
+		if (isMultiple)//case of complex forms autofill
 		{
 			if (specialPasteProps.format) {
 				ws.model.getRange3(trueActiveRange.r1, trueActiveRange.c1, trueActiveRange.r2, trueActiveRange.c2)
@@ -29185,8 +29202,8 @@ function isAllowPasteLink(pastedWb) {
 			trueActiveRange.c2 = arn.c2;
 		}
 
-		//необходимо проверить, пересекаемся ли мы с фоматированной таблицей
-		//если да, то подхватывать dxf при вставке не нужно
+		//need to check if we intersect with formatted table
+		//if yes, don't apply dxf during paste
 		var intersectionAllRangeWithTables = ws.model.autoFilters._intersectionRangeWithTableParts(trueActiveRange);
 
 
@@ -29317,14 +29334,14 @@ function isAllowPasteLink(pastedWb) {
 				if (linkInfo.type === -1) {
 					pasteLinkIndex = linkInfo.index;
 					pasteSheetLinkName = linkInfo.sheet;
-					//необходимо положить нужные данные в SheetDataSet
+					//need to put required data into SheetDataSet
 					var modelExternalReference = ws.model.workbook.externalReferences[pasteLinkIndex - 1];
 					if (modelExternalReference) {
 						modelExternalReference.updateSheetData(pasteSheetLinkName, pastedWb.aWorksheets[0], [activeCellsPasteFragment]);
 						ws.model.workbook.changeExternalReference(pasteLinkIndex, modelExternalReference);
 					}
 				} else if (linkInfo.type === -2) {
-					//добавляем
+					//add
 					var referenceData;
 					var name = pastedWb.Core.title;
 					if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
@@ -29343,9 +29360,9 @@ function isAllowPasteLink(pastedWb) {
 					newExternalReference.Id = name;
 					//newExternalReference.addSheetName(pastedSheetName, true);
 
-					//необходимо взять данные с листа. если лист ещё не создан, то взять этот лист и положить в ExternalReferences
-					//+ положить нужные данные в SheetDataSet
-					//вставляемый фрагмент - ориентируюсь на activeCellsPasteFragment
+					//need to get data from sheet. if sheet not created yet, take this sheet and put in ExternalReferences
+					//+ put required data into SheetDataSet
+					//pasted fragment - orient by activeCellsPasteFragment
 					newExternalReference.addSheet(pastedWb.aWorksheets[0], [activeCellsPasteFragment]);
 
 					ws.model.workbook.addExternalReferences([newExternalReference]);
@@ -29380,7 +29397,7 @@ function isAllowPasteLink(pastedWb) {
 				return;
 			}
 
-			//range может далее изменится в связи с наличием мерженных ячеек, firstRange - не меняется(ему делаем setValue, как первой ячейке в диапазоне мерженных)
+			//range may change further due to merged cells, firstRange - doesn't change (we setValue to it as first cell in merged range)
 			var firstRange = range.clone();
 
 			//****paste comments****
@@ -29423,13 +29440,13 @@ function isAllowPasteLink(pastedWb) {
 				//borders
 				var fullBorders;
 				if (specialPasteProps.transpose) {
-					//TODO сделано для правильного отображения бордеров при транспонирования. возможно стоит использовать эту функцию во всех ситуациях. проверить!
+					//TODO done for correct border display during transpose. maybe use this function in all cases. check!
 					fullBorders = newVal.getBorder(newVal.bbox.r1, newVal.bbox.c1).clone();
 				} else {
 					fullBorders = newVal.getBorderFull();
 				}
 				if (pastedRangeProps.offsetLast && pastedRangeProps.offsetLast.col > 0 && curMerge && fullBorders) {
-					//для мерженных ячеек, правая границу
+					//for merged cells, right border
 					var endMergeCell = val.getCell3(fromRow, curMerge.c2);
 					var fullBordersEndMergeCell = endMergeCell.getBorderFull();
 					if (fullBordersEndMergeCell && fullBordersEndMergeCell.r) {
@@ -29480,9 +29497,9 @@ function isAllowPasteLink(pastedWb) {
 				fromCell = cell;
 				var _formulaArrayRef = cell.formulaParsed && cell.formulaParsed.getArrayFormulaRef();
 				if (_formulaArrayRef) {
-					//для ситуаций, когда нужно при вставке преобразовать формулу массива в набор формул
-					//это случается, когда при специальной вставке выбираешь арифметическую операцию, а во
-					//фрагменте вставке находится формула массива
+					//for cases when array formula needs to be converted to set of formulas during paste
+					//this happens when selecting arithmetic operation in special paste, and
+					//paste fragment contains array formula
 					pastedFormulaArray.push({ref: _formulaArrayRef, newVal: newVal});
 				}
 			});
@@ -29506,13 +29523,13 @@ function isAllowPasteLink(pastedWb) {
 			t._setPastedDataByCurrentRange(range, pastedRangeProps, formulaProps, specialPasteProps);
 		};
 
-		//случай, когда при копировании был выделен целый стобец/строка
+		//case when entire column/row was selected during copy
 		var fromSelectionRange = val.selectionRange.getLast();
 		var fromSelectionRangeType = fromSelectionRange.getType();
-		//MS для случая копирования полностью выделенных столбцов/строк по-разному осуществляет вставку
-		//в этот же документ вставляется вся строка/столбец, затирая все данные в строке/столбце
-		//в другой документ вставляется лишь фрагмент с данными
-		//сделал как 2 вариант в ms - стоит пересмотреть
+		//MS handles paste differently for fully selected columns/rows
+		//in same document entire row/column is pasted, overwriting all data in row/column
+		//in different document only fragment with data is pasted
+		//implemented as option 2 in ms - should be reviewed
 		if (Asc.c_oAscSelectionType.RangeCol === fromSelectionRangeType || Asc.c_oAscSelectionType.RangeRow === fromSelectionRangeType || Asc.c_oAscSelectionType.RangeMax === fromSelectionRangeType) {
 			maxARow = 1;
 			maxACol = 1;
@@ -29581,7 +29598,7 @@ function isAllowPasteLink(pastedWb) {
 							putInsertedCellIntoRange(nRow, nCol, pasteRow, pasteCol, autoR * plRow, autoC * plCol,
 								range, newVal, curMerge, transposeRange);
 
-							//если замержили range
+							//if range was merged
 							c = range.bbox.c2 - autoC * plCol - arn.c1;
 							if (c === cMax) {
 								r = range.bbox.r2 - autoC * plCol - arn.r1;
@@ -29606,7 +29623,7 @@ function isAllowPasteLink(pastedWb) {
 
 		var firstRange, arrFormula, tablesMap, newVal, isOneMerge, val, activeCellsPasteFragment, transposeRange;
 		if (formulaProps) {
-			//TODO firstRange возможно стоит убрать(добавлено было для правки бага 27745)
+			//TODO firstRange may need to be removed (was added to fix bug 27745)
 			firstRange = formulaProps.firstRange;
 			arrFormula = formulaProps.arrFormula;
 			tablesMap = formulaProps.tablesMap;
@@ -29813,7 +29830,7 @@ function isAllowPasteLink(pastedWb) {
 					let cmIndex = arrayFormulaRef ? formulaProps.cell.formulaParsed.cm : null;
 					var cellAddress = new AscCommon.CellAddress(sId);
 					if (specialPasteProps.transpose && transposeRange) {
-						//для transpose необходимо брать offset перевернутого range
+						//for transpose need to take offset of flipped range
 						if (arrayFormulaRef) {
 							offset = new AscCommon.CellBase(transposeRange.bbox.r1 - cellAddress.row + 1, transposeRange.bbox.c1 - cellAddress.col + 1);
 							arrayOffset = new AscCommon.CellBase(transposeRange.bbox.r1 - cellAddress.row + 1, transposeRange.bbox.c1 - cellAddress.col + 1);
@@ -29856,7 +29873,7 @@ function isAllowPasteLink(pastedWb) {
 							}
 						}
 						if (specialPasteProps.transpose) {
-							//для transpose необходимо перевернуть все дипазоны в формулах
+							//for transpose need to flip all ranges in formulas
 							_p_.transpose(activeCellsPasteFragment);
 						}
 
@@ -29978,7 +29995,7 @@ function isAllowPasteLink(pastedWb) {
 
 		//cellStyle
 		if (rangeStyle.cellStyle && specialPasteProps.cellStyle) {
-			//сделал для того, чтобы не перетерались старые бордеры бордерами стиля в случае, если специальная вставка без бордеров
+			//done so old borders aren't overwritten by style borders in case of special paste without borders
 			var oldBorders = null;
 			if (!specialPasteProps.borders) {
 				oldBorders = range.getBorderFull();
@@ -29995,7 +30012,7 @@ function isAllowPasteLink(pastedWb) {
 			}
 		}
 
-		//если не вставляем форматированную таблицу, но формат необходимо вставить
+		//if not pasting formatted table, but format needs to be pasted
 		if (specialPasteProps.format && !specialPasteProps.formatTable && rangeStyle.tableDxf) {
 			range.getLeftTopCell(function (firstCell) {
 				if (firstCell) {
@@ -30013,7 +30030,7 @@ function isAllowPasteLink(pastedWb) {
 		//font
 		if (rangeStyle.font && specialPasteProps.font) {
 			var font = rangeStyle.font;
-			//если вставляем форматированную таблицу с параметров values + all formating
+			//if pasting formatted table with values + all formatting option
 			if (specialPasteProps.format && !specialPasteProps.formatTable && rangeStyle.tableDxf && rangeStyle.tableDxf.font) {
 				font = rangeStyle.tableDxf.font.merge(rangeStyle.font);
 			}
@@ -30026,11 +30043,11 @@ function isAllowPasteLink(pastedWb) {
 		var pasteOnlyText = propPaste === Asc.c_oSpecialPasteProps.valueNumberFormat || propPaste === Asc.c_oSpecialPasteProps.pasteOnlyValues;
 
 		//***value***
-		//если формула - добавляем в массив и обрабатываем уже в _pasteData
+		//if formula - add to array and process in _pasteData
 		if (rangeStyle.formula && specialPasteProps.formula) {
 			arrFormula.push(rangeStyle.formula);
 		} else if (specialPasteProps.formula && searchRangeIntoFormulaArrays(arrFormula, range)) {
-			//если ячейка является частью формулы массива-> в этом случае не нужно делать setValueData
+			//if cell is part of array formula -> in this case don't need to do setValueData
 		} else if (rangeStyle.cellValueData2 && specialPasteProps.font && specialPasteProps.val) {
 			ws.model._getCell(rangeStyle.cellValueData2.row, rangeStyle.cellValueData2.col, function (cell) {
 				cell.setValueData(rangeStyle.cellValueData2.valueData);
@@ -30048,7 +30065,7 @@ function isAllowPasteLink(pastedWb) {
 				range.setValueData(rangeStyle.cellValueData);
 			}
 		} else if (null != rangeStyle.val && specialPasteProps.val) {
-			//TODO возможно стоит всегда вызывать setValueData и тип выставлять в зависимости от val
+			//TODO maybe always call setValueData and set type based on val
 			if (rangeStyle.val[0] === "'") {
 				range.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, new AscCommonExcel.CCellValue({
 					text: rangeStyle.val, type: CellValueType.String
@@ -30169,7 +30186,7 @@ function isAllowPasteLink(pastedWb) {
 		if (pasteLink != null) {
 			sFromula = "[" + pasteLink + "]" + sheetName + "!" + formulaRange.getName();
 		} else {
-			//вставляем в этот же документ
+			//pasting into same document
 			if (sheetName) {
 				sFromula = sheetName + "!" + formulaRange.getName();
 			} else {
@@ -30183,10 +30200,10 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 	CCellPasteHelper.prototype.getPastedLinkInfo = function (pastedWb, pastedWs) {
-		//0 - вставляем в эту же книгу и в этот же лист
-		//1 - вставляем в эту же книгу и на другой лист
-		//-1 - вставляем в другую книгу и сслыка на неё уже есть
-		//-2 - вставляем в другую книгу и ссылки на неё ешё нет
+		//0 - pasting into same workbook and same sheet
+		//1 - pasting into same workbook but different sheet
+		//-1 - pasting into different workbook and reference already exists
+		//-2 - pasting into different workbook and reference doesn't exist yet
 
 		var ws = this.ws;
 
@@ -30195,11 +30212,11 @@ function isAllowPasteLink(pastedWb) {
 		let sheet = null;
 		let relativePath;
 		if (pastedWb) {
-			//вставляем в этот же документ. но исходный лист уже мог измениться/удалиться и тп
-			//TODO просмотреть все эти случаи, ms desktop и online ведут себя по-разному
-			//сейчас сравниваю по имени
+			//pasting into same document. but source sheet may have changed/deleted etc
+			//TODO review all these cases, ms desktop and online behave differently
+			//currently comparing by name
 
-			//TODO обработать: при вставке из одного и того же документа(открытого разными юзерами) с листа, который ещё не был добавлен другим юзером в режиме строго совместного редактирования
+			//TODO handle: when pasting from same document (opened by different users) from sheet that wasn't yet added by another user in strict collaborative editing mode
 			let sameDoc = AscCommonExcel.g_clipboardExcel && AscCommonExcel.g_clipboardExcel.pasteProcessor && AscCommonExcel.g_clipboardExcel.pasteProcessor._checkPastedInOriginalDoc(pastedWb, true);
 			let sameSheet = sameDoc && pastedWs.sName === ws.model.sName;
 			let externalSheetSameWb;
@@ -30238,7 +30255,7 @@ function isAllowPasteLink(pastedWb) {
 					externalReferenceIndex = referenceData && ws.model.workbook.getExternalReferenceByReferenceData(referenceData, true);
 
 					if (null == externalReferenceIndex) {
-						//потом пробуем по имени найти
+						//then try to find by name
 						let tempER = pastedWb && pastedWb.Core && ws.model.workbook.getExternalLinkIndexByName(pastedWb.Core.title);
 						if (tempER && !referenceData) {
 							// if there is no data, but an existing link with the same name is found, we refer to the existing data without updating
@@ -30279,7 +30296,7 @@ function isAllowPasteLink(pastedWb) {
 		var allowedPasteTables = !specialPasteProps || specialPasteProps.formatTable;
 		var pasteContent = val.data;
 
-		//отдельный лок для этого не делаю, а лочу всё перед вставкой новой ссылки
+		//not making separate lock for this, locking everything before inserting new reference
 		if (specialPasteProps && specialPasteProps.property === Asc.c_oSpecialPasteProps.link) {
 			const workbook = pasteContent.workbook;
 			var linkInfo = this.getPastedLinkInfo(workbook, workbook && workbook.aWorksheets[0]);
@@ -30308,12 +30325,12 @@ function isAllowPasteLink(pastedWb) {
 				range = ws.model.getRange3(diffRow, diffCol, diffRow + (tablePartRange.r2 - tablePartRange.r1),
 					diffCol + (tablePartRange.c2 - tablePartRange.c1));
 
-				//если в активную область при записи попала лишь часть таблицы
+				//if only part of table got into active area during write
 				if (activeCellsPasteFragment && !activeCellsPasteFragment.containsRange(tablePartRange)) {
 					continue;
 				}
 
-				//если область вставки содержит форматированную таблицу, которая пересекается с вставляемой форматированной таблицей
+				//if paste area contains formatted table that intersects with pasted formatted table
 				if (ws.model.autoFilters._intersectionRangeWithTableParts(range.bbox)) {
 					continue;
 				}
@@ -30347,7 +30364,7 @@ function isAllowPasteLink(pastedWb) {
 
 			window['AscCommon'].g_specialPasteHelper.isPasteOptions = isPasteOptions;
 
-			//для того, чтобы была возможность делать несколько математических операций подряд
+			//so it's possible to do multiple math operations in a row
 			var doUndo = isPasteOptions ? false : true;
 			if (window['Asc'].c_oSpecialPasteOperation.none !== props.operation && null !== props.operation) {
 				if (window['AscCommon'].g_specialPasteHelper.isAppliedOperation) {
@@ -30359,7 +30376,7 @@ function isAllowPasteLink(pastedWb) {
 				window['AscCommon'].g_specialPasteHelper.isAppliedOperation = false;
 			}
 
-			//тут нужно откатить селект
+			//here need to rollback selection
 			if (doUndo) {
 				api.asc_Undo();
 			}
@@ -30374,13 +30391,14 @@ function isAllowPasteLink(pastedWb) {
 				if (!isSuccess) {
 					return;
 				}
-				//транзакция закроется в end_paste
+				//transaction will close in end_paste
 				History.Create_NewPoint();
 				History.StartTransaction();
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Workbook_SpecialPaste, null, null, null, true);
 
-				//далее специальная вставка
+				//then special paste
 				specialPasteHelper.specialPasteProps = props;
-				//TODO пока для закрытия транзации выставляю флаг. пересмотреть!
+				//TODO for now setting flag to close transaction. review!
 				window['AscCommon'].g_specialPasteHelper.bIsEndTransaction = true;
 				AscCommonExcel.g_clipboardExcel.pasteData(ws, _format != null ? _format : specialPasteData._format, pastingData1, pastingData2, specialPasteData.text_data, true);
 
@@ -30503,7 +30521,7 @@ function isAllowPasteLink(pastedWb) {
 		};
 
 		var ws = this.ws;
-		//TODO пересмотреть когда иконка вылезает за пределы области видимости
+		//TODO review when icon goes beyond visible area
 		var cellCoord = ws.getCellCoord(range.c2, range.r2);
 		if (window['AscCommon'].g_specialPasteHelper.buttonInfo.shapeId) {
 			disableCoords();

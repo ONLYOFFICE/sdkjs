@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -182,7 +185,7 @@
     CChangesDrawingsDouble2.prototype.WriteToBinary = function(Writer)
     {
         // Long  : Flag
-        // 1-bit : Подсвечивать ли данные изменения
+        // 1-bit : Whether to highlight these changes
         // 2-bit : IsUndefined New
         // 3-bit : IsUndefined Old
         // double : New
@@ -215,7 +218,7 @@
         Reader.Seek2(Reader.GetCurPos() - 4);
         this.Type = Reader.GetLong();
         // Long  : Flag
-        // 1-bit : Подсвечивать ли данные изменения
+        // 1-bit : Whether to highlight these changes
         // 2-bit : IsUndefined New
         // 3-bit : IsUndefined Old
         // double : New
@@ -316,146 +319,6 @@
         }
         return null;
     };
-
-
-    /**
-     * @constructor
-     * @extends {AscDFH.CChangesBase}
-     */
-    function CChangesImageIdStart(Class)
-    {
-        AscDFH.CChangesBase.call(this, Class);
-    }
-    CChangesImageIdStart.prototype = Object.create(AscDFH.CChangesBase.prototype);
-    CChangesImageIdStart.prototype.constructor = CChangesImageIdStart;
-    CChangesImageIdStart.prototype.Type = AscDFH.historyitem_type_ImageBlipStart;
-    CChangesImageIdStart.prototype.Undo = function()
-    {
-        let value = this.Class.blipFill;
-        if(!value) return;
-        let chunks = this.Class._chunkedRaster;
-        if(!Array.isArray(chunks) || chunks.length === 0) return;
-        chunks.reverse();
-        const fullVal = chunks.join("");
-        value.RasterImageId = fullVal;
-        delete this.Class._chunkedRaster;
-    };
-    CChangesImageIdStart.prototype.Redo = function()
-    {
-    };
-    CChangesImageIdStart.prototype.WriteToBinary = function(writer)
-    {
-    };
-    CChangesImageIdStart.prototype.ReadFromBinary = function(reader)
-    {
-    };
-    CChangesImageIdStart.prototype.CreateReverseChange = function()
-    {
-        return new CChangesImageIdEnd(this.Class);
-    };
-    AscDFH.changesFactory[AscDFH.historyitem_type_ImageBlipStart] = CChangesImageIdStart;
-    window['AscDFH'].CChangesImageIdStart = CChangesImageIdStart;
-    /**
-     * @constructor
-     * @extends {AscDFH.CChangesBase}
-     */
-    function CChangesImageIdEnd(Class)
-    {
-        AscDFH.CChangesBase.call(this, Class);
-    }
-    CChangesImageIdEnd.prototype = Object.create(AscDFH.CChangesBase.prototype);
-    CChangesImageIdEnd.prototype.constructor = CChangesImageIdEnd;
-    CChangesImageIdEnd.prototype.Type = AscDFH.historyitem_type_ImageBlipEnd;
-    CChangesImageIdEnd.prototype.Undo = function()
-    {
-    };
-    CChangesImageIdEnd.prototype.Redo = function()
-    {
-        let value = this.Class.blipFill;
-        if(!value) return;
-        let chunks = this.Class._chunkedRaster;
-        if(!Array.isArray(chunks) || chunks.length === 0) return;
-
-
-        const fullVal = chunks.join("");
-        value.RasterImageId = fullVal;
-        delete this.Class._chunkedRaster;
-
-        let _correct_id = AscCommon.getImageFromChanges(value.RasterImageId);
-        if (null != _correct_id)
-            value.RasterImageId = _correct_id;
-        if (value && (typeof value.RasterImageId === "string") && value.RasterImageId.length > 0) {
-            AscCommon.CollaborativeEditing.Add_NewImage(value.RasterImageId);
-        }
-    };
-    CChangesImageIdEnd.prototype.WriteToBinary = function(writer)
-    {
-    };
-    CChangesImageIdEnd.prototype.ReadFromBinary = function(reader)
-    {
-    };
-    CChangesImageIdEnd.prototype.CreateReverseChange = function()
-    {
-        return new CChangesImageIdStart(this.Class);
-    };
-    AscDFH.changesFactory[AscDFH.historyitem_type_ImageBlipEnd] = CChangesImageIdEnd;
-    window['AscDFH'].CChangesImageIdEnd = CChangesImageIdEnd;
-
-
-    function CChangesDrawingsImageRasterImageIdPart(Class, NewChunk, OldChunk) {
-		this.NewChunk = NewChunk;
-		this.OldChunk = OldChunk;
-		AscDFH.CChangesBaseStringProperty.call(this, Class, undefined, undefined);
-	}
-
-	CChangesDrawingsImageRasterImageIdPart.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
-	CChangesDrawingsImageRasterImageIdPart.prototype.constructor = CChangesDrawingsImageRasterImageIdPart;
-
-	CChangesDrawingsImageRasterImageIdPart.prototype.Type = AscDFH.historyitem_type_ImageBlipFillPart;
-	window['AscDFH'].CChangesDrawingsImageRasterImageIdPart = CChangesDrawingsImageRasterImageIdPart;
-	AscDFH.changesFactory[AscDFH.historyitem_type_ImageBlipFillPart]			= CChangesDrawingsImageRasterImageIdPart;
-
-	CChangesDrawingsImageRasterImageIdPart.prototype.CreateReverseChange = function () {
-		return new this.constructor(this.Class, this.OldChunk, this.NewChunk);
-	};
-
-	CChangesDrawingsImageRasterImageIdPart.prototype.ReadFromBinary = function (reader) {
-		this.NewChunk = reader.GetString2();
-		this.OldChunk = reader.GetString2();
-		AscDFH.CChangesBaseStringProperty.prototype.ReadFromBinary.call(this, reader);
-	};
-
-	CChangesDrawingsImageRasterImageIdPart.prototype.WriteToBinary = function (writer) {
-		writer.WriteString2(this.NewChunk);
-		writer.WriteString2(this.OldChunk);
-		AscDFH.CChangesBaseStringProperty.prototype.WriteToBinary.call(this, writer);
-	};
-
-	CChangesDrawingsImageRasterImageIdPart.prototype.Redo = function () {
-		this._applyChunk(this.NewChunk);
-	};
-
-	CChangesDrawingsImageRasterImageIdPart.prototype.Undo = function () {
-		this._applyChunk(this.OldChunk);
-	};
-
-	CChangesDrawingsImageRasterImageIdPart.prototype._applyChunk = function (chunk) {
-		if (!this.Class._chunkedRaster) {
-			this.Class._chunkedRaster = [];
-		}
-		this.Class._chunkedRaster.push(chunk);
-	};
-
-	CChangesDrawingsImageRasterImageIdPart.prototype.Load = function () {
-		this.Redo();
-		this.RefreshRecalcData();
-	};
-
-	CChangesDrawingsImageRasterImageIdPart.prototype.CheckCorrect = function () {
-		return true;
-	};
-
-
     function CChangesDrawingsObject(Class, Type, OldPr, NewPr) {
         this.Type = Type;
         var _OldPr = OldPr && OldPr.Get_Id ? OldPr.Get_Id() : undefined;

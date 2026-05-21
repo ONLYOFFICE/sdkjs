@@ -1,34 +1,39 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
+
+"use strict";
 
 (function(){
 
@@ -320,7 +325,7 @@
         }
     };
 
-    // ГЛАВНЫЙ КЛАСС
+    // MAIN CLASS
     function CDocument(id)
     {
         this.id = id;
@@ -376,7 +381,7 @@
         this.selectedPages = [];
         this.hoverPage = -1;
 
-        this.keepSelectedPages = false; // сохраняет селект при updateCurrentPage, например после ворота страниц
+        this.keepSelectedPages = false; // preserves selection on updateCurrentPage, e.g. after page rotation
         this.handlers = {};
 
         this.createComponents();
@@ -542,7 +547,7 @@
             this.scrollY = this.scrollMaxY;
     };
 
-    // очередь задач - нужно ли перерисоваться и/или перерисовать страницу
+    // task queue - whether to repaint and/or redraw the page
     CDocument.prototype.checkTasks = function(isViewerTask)
     {
 		let pdfDoc = this.viewer.getPDFDoc();
@@ -564,8 +569,8 @@
 		
         if (!isViewerTask && -1 != this.startBlock)
         {
-            // смотрим, какие страницы нужно перерисовать. 
-            // делаем это по одной, так как задачи вьюера важнее
+            // check which pages need to be redrawn.
+            // do this one at a time, since viewer tasks have higher priority
             var needPage = null;
             var drPage, block;
             for (var blockNum = this.startBlock; (blockNum <= this.endBlock) && !needPage; blockNum++)
@@ -605,13 +610,13 @@
                 {
                     needPage.page.image = oImage;
                 } else {
-                    // Создание нового canvas с изменёнными размерами
+                    // Create a new canvas with modified dimensions
                     const rotatedCanvas = document.createElement('canvas');
                     rotatedCanvas.width = needPage.pageRect.w;
                     rotatedCanvas.height = needPage.pageRect.h;
                     const rotatedContext = rotatedCanvas.getContext('2d');
 
-                    // Поворот canvas
+                    // Rotate canvas
                     rotatedContext.save();
                     rotatedContext.translate(rotatedCanvas.width / 2 >> 0, rotatedCanvas.height / 2 >> 0);
                     rotatedContext.rotate(angle * Math.PI / 180);
@@ -630,7 +635,7 @@
             }
         }
 
-        // проверяем, нужна ли перерисовка
+        // check if repaint is needed
         if (this.isRepaint)
         {
             this._paint();
@@ -654,7 +659,7 @@
             if (!drPage)
                 return;
 
-            // или подскролливаем, или просто перерисовываем            
+            // either scroll or just repaint            
             if (drPage.pageRect.y < this.scrollY)
                 this.m_oScrollVerApi.scrollToY(drPage.pageRect.y - this.betweenH);
             else
@@ -730,7 +735,7 @@
         if (0 === element.offsetWidth || !this.canvas)
             return;
 
-        // размер панели
+        // panel size
         this.panelWidth = element.offsetWidth;
         this.panelHeight = element.offsetHeight;
 
@@ -764,25 +769,25 @@
         if (this.pages.length == 0)
             return;
 
-        // делим страницы на колонки одинаковой ширины (по максимальной странице)
+        // divide pages into columns of equal width (based on the widest page)
 
         var pageWidthMax = this.getMaxPageWidth();
         var sizeMax = Math.max(pageWidthMax, this.getMaxPageHeight());
 
-        // максимальные/минимальные зумы
+        // maximum/minimum zoom values
         this.zoomMin = this.minSizePage / sizeMax;
         this.zoomMax = (this.panelWidth - (2 * this.marginW)) / pageWidthMax;
         
         if (this.defaultPageW != 0)
         {
-            // зум "по умолчанию"
+            // "default" zoom
             this.zoom = AscCommon.AscBrowser.convertToRetinaValue(this.defaultPageW, true) / pageWidthMax;
 
             if (0 != this.panelWidth)
                 this.defaultPageW = 0;
         }
 
-        // корректировка зумов
+        // zoom adjustment
         if (this.zoomMax < this.zoomMin)
             this.zoomMax = this.zoomMin;
         if (this.zoom < this.zoomMin)
@@ -796,8 +801,8 @@
             this.sendEvent("onZoomChanged", interfaceZoom);
         }
 
-        // смотрим, сколько столбцов влезает
-        // уравнение:
+        // check how many columns fit
+        // equation:
         // (pageWidthMax * this.zoom) * x + this.betweenW * (x - 1) = this.panelWidth - 2 * this.marginW;
         var blockW = (pageWidthMax * this.zoom) >> 0;
         this.countPagesInBlock = (this.panelWidth - 2 * this.marginW + this.betweenW) / (blockW + this.betweenW);
@@ -810,7 +815,7 @@
 
         this.documentWidth = this.countPagesInBlock * blockW + 2 * this.marginW + this.betweenW * (this.countPagesInBlock - 1);
 
-        // теперь набиваем блоки
+        // now fill the blocks
         this.blocks = [];
         var blocksCount = 0;
         var countInCurrentBlock = this.countPagesInBlock;
@@ -825,7 +830,7 @@
             ++countInCurrentBlock;
         }
 
-        // теперь считаем позиции страниц в блоке (координаты сквозные)
+        // now calculate page positions in the block (through coordinates)
         var blockTop = this.betweenH;
         var startOffsetX = this.marginW + ((this.panelWidth - this.documentWidth) >> 1);
         for (let i = 0, len = this.blocks.length; i < len; i++)
@@ -896,13 +901,13 @@
             block = this.blocks[i];
             if (block.bottom > this.scrollY)
             {
-                // первый видимый блок!
+                // first visible block!
                 this.startBlock = i;
                 break;
             }
             else
             {
-                // выкидываем страницу из кэша
+                // remove page from cache
                 for (var pageNum = 0, pagesCount = block.pages.length; pageNum < pagesCount; pageNum++)
                 {
                     this.pages[block.pages[pageNum].num].image = null;
@@ -917,26 +922,26 @@
                 block = this.blocks[i];
                 if (block.top > (this.scrollY + this.panelHeight))
                 {
-                    // уже невидимый блок!
+                    // already invisible block!
                     this.endBlock = i - 1;
                     break;
                 }
             }
         }
 
-        // проверяем - могли дойти до конца
+        // check - we might have reached the end
         if (this.startBlock >= 0 && this.endBlock == -1)
             this.endBlock = blocksCount - 1;
 
         for (var i = this.endBlock + 1; i < blocksCount; i++)
         {
             block = this.blocks[i];
-            // выкидываем страницу из кэша
+            // remove page from cache
             for (var pageNum = 0, pagesCount = block.pages.length; pageNum < pagesCount; pageNum++)
             {
                 this.pages[block.pages[pageNum].num].image = null;
             }
-        }        
+        }
     };
 
     CDocument.prototype.getMaxPageWidth = function()
@@ -989,7 +994,7 @@
 
     CDocument.prototype.getPageByCoords = function(x, y)
     {
-        // тут ТОЛЬКО для попадания. поэтому смотрим только видимые блоки
+        // here ONLY for hit testing. therefore we only look at visible blocks
         if (-1 === this.startBlock || -1 === this.endBlock)
             return null;
 
@@ -1050,21 +1055,21 @@
 
         let dp = this.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
         if (!dp) {
-            // Клик вне страницы
+            // Click outside the page
             return false;
         }
     
-        if (e.button === 0) { // Левая кнопка мыши
-            // Вместо выбора страницы - просто запомним, что было нажато.
+        if (e.button === 0) { // Left mouse button
+            // Instead of selecting the page - just remember what was pressed.
             this._mouseDownPage  = dp.num;
             this._shiftPressed   = e.shiftKey;
             this._ctrlPressed    = e.ctrlKey || e.metaKey;
     
-            // Готовимся к потенциальному drag&drop
+            // Prepare for potential drag&drop
             this.pendingDrag = true;
             this.dragStartX = AscCommon.global_mouseEvent.X;
             this.dragStartY = AscCommon.global_mouseEvent.Y;
-            this.dragPageIndex = dp.num;  // какую страницу потащим
+            this.dragPageIndex = dp.num;  // which page to drag
         }
     
         AscCommon.stopEvent(e);
@@ -1078,15 +1083,15 @@
         let mx = AscCommon.global_mouseEvent.X;
         let my = AscCommon.global_mouseEvent.Y;
     
-        // Если зажата ЛКМ и мы еще не начали drag, проверяем порог смещения
+        // If left mouse button is held and we haven't started drag yet, check offset threshold
         if (this.pendingDrag && !this.isDragging && !Asc.editor.isRestrictionView()) {
             this.isDragging = true;
             this.canvas.style.cursor = AscCommon.Cursors.Grabbing;
 
             let dp = this.getDrawingPage(this.dragPageIndex);
             if (dp) {
-                // Если страница под курсором не в выделении, делаем её выделенной
-                // (или добавляем в выделение — зависит от задачи; здесь пример «заменить всё»)
+                // If the page under cursor is not selected, make it selected
+                // (or add to selection - depends on the task; here's an example of "replace all")
                 if (!this.selectedPages.includes(dp.num)) {
                     this.resetSelection();
                     this.selectedPages.push(dp.num);
@@ -1098,12 +1103,12 @@
         }
     
         if (this.isDragging) {
-            // Уже «тащим» — перемещаем «призрак» и проверяем, над какой страницей курсор
+            // Already "dragging" - move the "ghost" and check which page the cursor is over
             this.moveDragGhost(mx, my);
     
             let dp = this.getPageByCoords(mx, my);
             if (dp) {
-                // Определяем позицию для вставки (до или после dp.num)
+                // Determine insert position (before or after dp.num)
                 let bottom = dp.pageRect.y + dp.pageRect.h;
                 let yLocal = (my - this.coordsOffset.y + this.scrollY);
                 if (yLocal > bottom) {
@@ -1119,7 +1124,7 @@
             AscCommon.stopEvent(e);
             return false;
         } else {
-            // Если мы не «тащим», просто обновляем hover для курсора
+            // If we're not "dragging", just update hover for cursor
             if (!AscCommon.global_mouseEvent.IsLocked) {
                 let dp = this.getPageByCoords(mx, my);
                 let hov = dp ? dp.num : -1;
@@ -1138,22 +1143,22 @@
     CDocument.prototype.onMouseUp = function(e) {
         AscCommon.check_MouseUpEvent(e);
     
-        // Если действительно «тащили» страницу, завершаем drag&drop
+        // If we were actually "dragging" the page, complete drag&drop
         if (this.isDragging) {
             this.isDragging = false;
             this.canvas.style.cursor = "default";
             if (this.dragCanvas) {
                 this.dragCanvas.style.display = "none";
             }
-            // Перенос страниц в новое место, если dropInsertPosition валиден
+            // Move pages to new location if dropInsertPosition is valid
             if (this.dropInsertPosition >= 0) {
                 let selected = this.selectedPages.slice();
-                // Может оказаться, что в selected ничего нет,
-                // тогда берем страницу, которую начинали тащить
+                // It may turn out that selected is empty,
+                // then we take the page we started dragging
                 if (!selected.length) {
                     selected = [this.dragPageIndex];
                 }
-                // Сортируем и убираем дубли, если нужно
+                // Sort and remove duplicates if needed
                 selected = Array.from(new Set(selected)).sort(function(a, b) { return a - b });
     
                 this.reorderPagesMultiple(selected, this.dropInsertPosition);
@@ -1162,11 +1167,11 @@
             this.dragPageIndex = -1;
             this.repaint();
         }
-        // Иначе это был простой клик (или минимальное движение, не дотянувшее до drag)
+        // Otherwise it was a simple click (or minimal movement that didn't reach drag threshold)
         else if (this.pendingDrag) {
             let dp = this.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
             if (dp) {
-                // Выполняем логику выделения по shift/ctrl/одиночному клику
+                // Execute selection logic for shift/ctrl/single click
                 if (this._shiftPressed) {
                     let allPages = this.selectedPages.concat(dp.num);
                     let minp = Math.min.apply(null, allPages);
@@ -1187,7 +1192,7 @@
                         this.repaint();
                     }
                 } else {
-                    // Обычный клик без модификаторов
+                    // Regular click without modifiers
                     if (!this.selectedPages.includes(dp.num) || this.selectedPages.length > 1) {
                         this.resetSelection();
                         this.selectedPages.push(dp.num);
@@ -1211,7 +1216,7 @@
             }
         }
     
-        // Сбрасываем временные флаги
+        // Reset temporary flags
         this.pendingDrag = false;
         this._mouseDownPage = null;
         this._shiftPressed = false;
@@ -1421,7 +1426,7 @@
         if (0 != delta)
             this.m_oScrollVerApi.scrollBy(0, delta, false);
 
-        // здесь - имитируем моус мув ---------------------------
+        // here - simulate mouse move ---------------------------
         var _e   = {};
         _e.pageX = AscCommon.global_mouseEvent.X / AscCommon.AscBrowser.zoom;
         _e.pageY = AscCommon.global_mouseEvent.Y / AscCommon.AscBrowser.zoom;

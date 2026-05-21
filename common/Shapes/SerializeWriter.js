@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -577,7 +580,7 @@ function CBinaryFileWriter()
 
             if ((_start_pos + 5) == this.pos)
             {
-                // удаляем запись из бинарника
+                // remove record from binary
                 this.pos -= 5;
 
                 return false;
@@ -1017,7 +1020,7 @@ function CBinaryFileWriter()
         for (var i = 0; i < _count_arr; i++)
             this.WriteNoteMaster(_dst_notesMasters[i]);
 
-        // во время записи - нужно заодно генерить FontMap и ImagesMap
+        // during writing - we also need to generate FontMap and ImagesMap
         this.StartMainRecord(c_oMainTables.FontMap);
         this.StartRecord(c_oMainTables.FontMap);
         this.WriteUChar(g_nodeAttributeStart);
@@ -1046,7 +1049,7 @@ function CBinaryFileWriter()
         this.WriteUChar(g_nodeAttributeEnd);
         this.EndRecord();
 
-        // теперь запишем информацию о главных таблицах
+        // now write information about main tables
         this.WriteMainPart(startPos);
     };
 
@@ -1054,7 +1057,7 @@ function CBinaryFileWriter()
     {
         this.WriteDocument2(presentation);
 
-        // и скинем все в base64
+        // and convert everything to base64
         var ret = "PPTY;v1;" + this.pos + ";";
         return ret + this.GetBase64Memory();
     };
@@ -2515,7 +2518,7 @@ function CBinaryFileWriter()
         {
             return;
         }
-        // делаем прозрачность
+        // apply transparency
         if(!color.Mods)
         {
             color.setMods(new AscFormat.CColorModifiers());
@@ -2559,7 +2562,7 @@ function CBinaryFileWriter()
 
         for (var i = 0; i < len__; ++i)
         {
-            oThis.WriteRecord1(1, oEffect.effectList[i], oThis.WriteEffect); // id неважен
+            oThis.WriteRecord1(1, oEffect.effectList[i], oThis.WriteEffect); // id doesn't matter
         }
         oThis.EndRecord();
 
@@ -3026,7 +3029,7 @@ function CBinaryFileWriter()
                     oThis._WriteInt1(0, fill.colors[i].pos);
                     oThis.WriteUChar(g_nodeAttributeEnd);
 
-                    // делаем прозрачность
+                    // apply transparency
                     oThis.CorrectUniColorAlpha(fill.colors[i].color, trans);
 
                     oThis.WriteRecord1(0, fill.colors[i].color, oThis.WriteUniColor);
@@ -3697,6 +3700,7 @@ function CBinaryFileWriter()
             oThis.StartRecord(1);
             oThis.WriteUChar(g_nodeAttributeStart);
             oThis._WriteBool2(0, shape.useBgFill);
+            oThis._WriteString2(1, shape.textLink);
             oThis.WriteUChar(g_nodeAttributeEnd);
         }
 
@@ -3763,7 +3767,7 @@ function CBinaryFileWriter()
         var isOle = AscDFH.historyitem_type_OleObject == image.getObjectType();
         if(isOle){
             oThis.StartRecord(6);
-            //важно писать в начале
+            //important to write at the beginning
             oThis.WriteRecord1(4, image, oThis.WriteOleInfo);
         } else {
             var _type;
@@ -5314,7 +5318,7 @@ function CBinaryFileWriter()
             }
             oThis.WriteUChar(g_nodeAttributeEnd);
 
-            // TODO: потом переделать по-нормальному
+            // TODO: refactor properly later
             //if (!_border.Unifill && _border.Color instanceof CDocumentColor)
             //{
             //    var _unifill = new AscFormat.CUniFill();
@@ -5397,7 +5401,7 @@ function CBinaryFileWriter()
             }
             oThis.WriteUChar(g_nodeAttributeEnd);
 
-            // TODO: потом переделать по-нормальному
+            // TODO: refactor properly later
             //if (!_border.Unifill && _border.Color instanceof CDocumentColor)
             //{
             //    var _unifill = new AscFormat.CUniFill();
@@ -5686,6 +5690,7 @@ function CBinaryFileWriter()
                 _writer.StartRecord(1);
                 _writer.WriteUChar(g_nodeAttributeStart);
                 _writer._WriteBool2(0, shape.useBgFill);
+                _writer._WriteString2(1, shape.textLink);
                 _writer.WriteUChar(g_nodeAttributeEnd);
             }
 
@@ -5764,7 +5769,7 @@ function CBinaryFileWriter()
             var _type, _fileMask;
             if(isOle){
                 _writer.StartRecord(6);
-                //важно писать в начале
+                //important to write at the beginning
                 _writer.WriteRecord1(4, image, _writer.WriteOleInfo);
             } else {
                 var _type;
@@ -5844,7 +5849,12 @@ function CBinaryFileWriter()
             //    group.spPr.WriteXfrm.chExtY = group.spPr.WriteXfrm.extY;
             //}
 
-            //_writer.WriteRecord1(0, group.nvGrpSpPr, oThis.WriteUniNvPr);
+			if (AscCommon.isRealObject(group.nvGrpSpPr)) {
+				group.nvGrpSpPr.locks = group.locks;
+				group.nvGrpSpPr.objectType = group.getObjectType();
+				_writer.WriteRecord1(0, group.nvGrpSpPr, _writer.WriteUniNvPr);
+			}
+
             _writer.WriteRecord1(1, group.spPr, _writer.WriteGrpSpPr);
 
             delete group.spPr.WriteXfrm;

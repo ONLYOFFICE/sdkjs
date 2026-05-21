@@ -1,34 +1,39 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
+
+"use strict";
 
 (function(window, undefined) {
     function TextStreamReader(data, size)
@@ -412,13 +417,61 @@ void main() {\n\
     };
 
     // TEXT
-    CFile.prototype.getPageTextStream = function(pageIndex) {
-        let textCommands = this.pages[pageIndex].text;
-        if (!textCommands || 0 === textCommands.length)
-            return null;
+	CFile.prototype.getPageTextStream = function(pageIndex) {
+		let page = this.pages[pageIndex];
+		let textLen = page.text ? page.text.length : 0;
+		let drawingsLen = page.drawingsText ? page.drawingsText.length : 0;
 
-        return new TextStreamReader(textCommands, textCommands.length);
-    };
+		if (Asc.editor.canEdit()) {
+			if (this.pages[pageIndex].isRecognized) {
+				return null;
+			}
+			else {
+				return new TextStreamReader(page.text, textLen);
+			}
+		}
+
+		let oDoc = this.viewer.getPDFDoc();
+		let oPageInfo = oDoc.GetPageInfo(pageIndex);
+		let aDrawings = oPageInfo.drawings;
+		if (aDrawings.length == 0) {
+			if (this.pages[pageIndex].isRecognized) {
+				return null;
+			}
+			else {
+				return new TextStreamReader(page.text, textLen);
+			}
+		}
+
+		this.pages[pageIndex].drawingsText = this.getDrawingsGlyphs(pageIndex);
+		drawingsLen = page.drawingsText.length;
+		if (this.pages[pageIndex].isRecognized || textLen == 0) {
+			return new TextStreamReader(page.drawingsText, drawingsLen);
+		}
+
+		let totalLen = textLen + drawingsLen;
+		let merged = new Uint8Array(totalLen);
+		merged.set(page.text, 0);
+		merged.set(page.drawingsText, textLen);
+
+		return new TextStreamReader(merged, merged.length);
+	};
+	CFile.prototype.getDrawingsGlyphs = function(pageIndex) {
+		let oDoc = this.viewer.getPDFDoc();
+		let oPageInfo = oDoc.GetPageInfo(pageIndex);
+		let aDrawings = oPageInfo.drawings;
+		if (aDrawings.length == 0) {
+			return [];
+		}
+
+		let metafile = new AscPDF.CPdfTextMetafile();
+		aDrawings.forEach(function(drawing) {
+			drawing.draw(metafile);
+		});
+		
+		metafile.endLine();
+		return metafile.getData();
+	};
     CFile.prototype.removeSelection = function() {
         this.Selection = {
 			Page1 : 0,
@@ -529,15 +582,108 @@ void main() {\n\
     CFile.prototype.getSelection = function() {
         return this.Selection;
     };
+    CFile.prototype.getGlyphCoord = function(page, line, glyph) {
+        let stream = this.getPageTextStream(page);
+        if (!stream) return null;
+
+        // line < 0 means "before first line" → treat as start of line 0
+        if (line < 0) {
+            line  = 0;
+            glyph = -2;
+        }
+
+        let _lineX = 0, _lineY = 0, _lineEx = 1, _lineEy = 0;
+        let _lineWidth = 0;
+        let _linePrevCharX = 0;
+        let _arrayGlyphOffsets = [];
+        let nChars = 0;
+        let iLine = -1;
+
+        while (stream.pos < stream.size) {
+            iLine++;
+            _lineEx = 1;
+            _lineEy = 0;
+            _linePrevCharX = 0;
+            _arrayGlyphOffsets.splice(0, _arrayGlyphOffsets.length);
+
+            _lineX = stream.GetDouble();
+            _lineY = stream.GetDouble();
+            if (stream.GetChar()) {
+                _lineEx = stream.GetDouble();
+                _lineEy = stream.GetDouble();
+            }
+            stream.GetDouble(); // _lineAscent (skip, not needed)
+            stream.GetDouble(); // _lineDescent (skip, not needed)
+            _lineWidth = stream.GetDouble();
+
+            nChars = stream.GetLong();
+            for (let i = 0; i < nChars; ++i) {
+                if (i) _linePrevCharX += stream.GetDouble();
+                _arrayGlyphOffsets[i] = _linePrevCharX;
+                stream.Skip(8);
+            }
+
+            if (iLine === line) {
+                break;
+            }
+        }
+
+        if (iLine < 0) return null;
+        // iLine < line means the stream ended before reaching the requested line
+        // (e.g. Line2 = _numLine + 1 from selectWholePage) → use last available line as-is
+
+        let off;
+        if (glyph === -2) {
+            off = 0;
+        } else if (glyph === -1) {
+            off = _lineWidth;
+        } else {
+            let left  = _arrayGlyphOffsets[glyph] || 0;
+            let right = (glyph + 1 < nChars) ? _arrayGlyphOffsets[glyph + 1] : _lineWidth;
+            off = (left + right) / 2;
+        }
+
+        return {
+            x: _lineX + off * _lineEx,
+            y: _lineY + off * _lineEy
+        };
+    };
+    CFile.prototype.getSelectionCoords = function() {
+        if (!this.isSelectionUse()) {
+            return null;
+        }
+
+        let sel = this.sortSelection();
+        let startCoord = this.getGlyphCoord(sel.Page1, sel.Line1, sel.Glyph1);
+        let endCoord   = this.getGlyphCoord(sel.Page2, sel.Line2, sel.Glyph2);
+
+        if (!startCoord || !endCoord) return null;
+
+        return {
+            start: { page: sel.Page1, x: startCoord.x, y: startCoord.y },
+            end:   { page: sel.Page2, x: endCoord.x,   y: endCoord.y }
+        };
+    };
+    CFile.prototype.getPageLastLine = function(pageIndex) {
+        let stream = this.getPageTextStream(pageIndex);
+        if (!stream) return -1;
+        let _numLine = -1;
+        while (stream.pos < stream.size) {
+            _numLine++;
+            stream.Skip(8);
+            if (stream.GetChar())
+                stream.Skip(8);
+            stream.Skip(12);
+            stream.Skip(12 * stream.GetLong() - 4);
+        }
+        return _numLine;
+    };
     CFile.prototype.onMouseDown = function(pageIndex, x, y) {
         let isRedactTool = Asc.editor.IsRedactTool();
         let isLinkTool   = Asc.editor.IsLinkTool();
 
-        if (this.pages[pageIndex].isRecognized && !isRedactTool && !isLinkTool)
-            return;
-        
         let ret = this.getNearestPos(pageIndex, x, y);
-        let sel = this.Selection;
+		let sel = this.Selection;
 
         let isTextSel = ret.Glyph >= 0 && ret.Line >= 0;
 
@@ -677,7 +823,7 @@ void main() {\n\
         let stream = this.getPageTextStream(pageIndex);
         if (!stream) return { Line : -1, Glyph : -1 };
 
-        if (this.type === 2)
+        if (this.type === 2 || this.type === 3)
         {
             let k = 72 / 96;
             x *= k;
@@ -741,9 +887,9 @@ void main() {\n\
             {
                 let _distX = x - _lineX;
                 if (y >= (_lineY - _lineAscent) && y <= (_lineY + _lineDescent) && _distX >= 0 && _distX <= _lineWidth)
-                { // попали внутрь линии
+                { // hit inside the line
                     for (_glyph = 1; _glyph < nChars; ++_glyph)
-                    { // если символы перекрывают друг друга то текущий выделяется по пересечении начала следующего
+                    { // if characters overlap, the current one is selected at the intersection with the start of the next one
                         if (_arrayGlyphOffsets[_glyph] > _distX)
                             break;
                     }
@@ -799,20 +945,20 @@ void main() {\n\
                         --_glyph;
                     }
                 }
-                // Ничего не надо делать, уже найдена более "ближняя" линия
+                // Nothing to do, a "closer" line has already been found
             }
             else
             {
-                // определяем точки descent линии
+                // determine the descent line points
                 let _dx = _lineX - _lineEy * _lineDescent;
                 let _dy = _lineY + _lineEx * _lineDescent;
 
-                // теперь проекции (со знаком) на линию descent
+                // now projections (with sign) onto the descent line
                 let h = (x - _dx) * _lineEy - (y - _dy) * _lineEx;
                 let w = (x - _dx) * _lineEx + (y - _dy) * _lineEy;
 
                 if (w >= 0 && w <= _lineWidth && h >= 0 && h <= (_lineDescent + _lineAscent))
-                { // попали внутрь линии
+                { // hit inside the line
                     for (_glyph = 1; _glyph < nChars; ++_glyph)
                     {
                         if (_arrayGlyphOffsets[_glyph] > w)
@@ -1051,7 +1197,7 @@ void main() {\n\
                 if (stream.GetChar())
                     stream.Skip(8);
                 stream.Skip(12);
-                // Не объединять - GetLong прочитает нужное только после skip 12
+                // Do not unite - GetLong will read the required value only after skip 12
                 stream.Skip(12 * stream.GetLong() - 4);
             }
 
@@ -1113,7 +1259,7 @@ void main() {\n\
         for (let iPage = Page1; iPage <= Page2; ++iPage)
         {
             let stream = this.getPageTextStream(iPage);
-            if (!stream || this.pages[iPage].isRecognized)
+            if (!stream)
                 continue;
 
             let oInfo = { page: iPage, quads: [] };
@@ -1198,8 +1344,8 @@ void main() {\n\
                 if (off2 <= off1)
                     continue;
 
-                // в принципе код один и тот же. Но почти всегда линии горизонтальные.
-                // а для горизонтальной линии все можно пооптимизировать
+                // essentially the code is the same. But lines are almost always horizontal.
+                // and for a horizontal line everything can be optimized
                 if (_lineEx == 1 && _lineEy == 0)
                 {
                     let _x = (dKoefX * (_lineX + off1));
@@ -1211,7 +1357,7 @@ void main() {\n\
                 }
                 else
                 {
-                    // определяем точки descent линии
+                    // determine the descent line points
                     let ortX = -_lineEy;
                     let ortY = _lineEx;
 
@@ -1288,9 +1434,6 @@ void main() {\n\
             return;
         }
 
-        if (this.pages[pageIndex].isRecognized)
-            return;
-        
         let stream = this.getPageTextStream(pageIndex);
         if (!stream)
             return;
@@ -1392,8 +1535,8 @@ void main() {\n\
             if (off2 <= off1)
                 continue;
 
-            // в принципе код один и тот же. Но почти всегда линии горизонтальные.
-            // а для горизонтальной линии все можно пооптимизировать
+            // basically the code is the same. But almost always lines are horizontal.
+            // and for horizontal line everything can be optimized
             if (_lineEx == 1 && _lineEy == 0)
             {
                 let _x = (x + dKoefX * (_lineX + off1));
@@ -1408,7 +1551,7 @@ void main() {\n\
             }
             else
             {
-                // определяем точки descent линии
+                // determine the descent line points
                 let ortX = -_lineEy;
                 let ortY = _lineEx;
 
@@ -1539,6 +1682,115 @@ void main() {\n\
         }
         return ret;
     };
+    CFile.prototype.copyPageText = function(pageIndex)
+    {
+        let stream = this.getPageTextStream(pageIndex);
+        if (!stream)
+            return "";
+
+        let ret = "";
+
+        while (stream.pos < stream.size)
+        {
+            stream.Skip(8);
+            if (stream.GetChar())
+                stream.Skip(8);
+            stream.Skip(12);
+
+            let nChars = stream.GetLong();
+            for (let i = 0; i < nChars; ++i)
+            {
+                if (i)
+                    stream.Skip(4);
+                let nChar = stream.GetLong();
+                stream.Skip(4);
+
+                ret += nChar === 0xFFFF ? ' ' : String.fromCodePoint(nChar);
+            }
+            ret += "\n";
+        }
+        return ret;
+    };
+    CFile.prototype.copyPageTextWithQuads = function(pageIndex)
+    {
+        let stream = this.getPageTextStream(pageIndex);
+        if (!stream || this.pages[pageIndex].isRecognized)
+            return [];
+
+        let result = [];
+        let dKoefX = this.pages[pageIndex].Dpi / 25.4;
+        let dKoefY = this.pages[pageIndex].Dpi / 25.4;
+
+        while (stream.pos < stream.size)
+        {
+            let _lineX = stream.GetDouble();
+            let _lineY = stream.GetDouble();
+            let _lineEx = 1;
+            let _lineEy = 0;
+            if (stream.GetChar())
+            {
+                _lineEx = stream.GetDouble();
+                _lineEy = stream.GetDouble();
+            }
+            let _lineAscent  = stream.GetDouble();
+            let _lineDescent = stream.GetDouble();
+            let _lineWidth   = stream.GetDouble();
+
+            let nChars = stream.GetLong();
+            let lineText = "";
+
+            for (let i = 0; i < nChars; ++i)
+            {
+                if (i)
+                    stream.GetDouble();
+                let nChar = stream.GetLong();
+                stream.Skip(4);
+
+                lineText += nChar === 0xFFFF ? ' ' : String.fromCodePoint(nChar);
+            }
+
+            if (!lineText)
+                continue;
+
+            let quad;
+            if (_lineEx == 1 && _lineEy == 0)
+            {
+                let _x = dKoefX * _lineX;
+                let _r = dKoefX * (_lineX + _lineWidth);
+                let _y = dKoefY * (_lineY - _lineAscent);
+                let _b = dKoefY * (_lineY + _lineDescent);
+                quad = [_x, _y, _r, _y, _x, _b, _r, _b];
+            }
+            else
+            {
+                let ortX = -_lineEy;
+                let ortY = _lineEx;
+
+                let _dx = _lineX + ortX * _lineDescent;
+                let _dy = _lineY + ortY * _lineDescent;
+
+                let _x1 = _dx;
+                let _y1 = _dy;
+                let _x2 = _x1 - ortX * (_lineAscent + _lineDescent);
+                let _y2 = _y1 - ortY * (_lineAscent + _lineDescent);
+                let _x3 = _x2 + _lineWidth * _lineEx;
+                let _y3 = _y2 + _lineWidth * _lineEy;
+                let _x4 = _x3 + ortX * (_lineAscent + _lineDescent);
+                let _y4 = _y3 + ortY * (_lineAscent + _lineDescent);
+
+                quad = [
+                    dKoefX * _x2, dKoefY * _y2,
+                    dKoefX * _x3, dKoefY * _y3,
+                    dKoefX * _x1, dKoefY * _y1,
+                    dKoefX * _x4, dKoefY * _y4
+                ];
+            }
+
+            result.push({ text: lineText, quads: quad });
+        }
+
+        return result;
+    };
     CFile.prototype.copy = function(_text_format)
     {
         let sel = this.Selection;
@@ -1553,8 +1805,6 @@ void main() {\n\
         let ret = "<div>";
         for (let i = page1; i <= page2; ++i)
         {
-            if (this.pages[i].isRecognized)
-                continue;
             ret += this.copySelection(i, _text_format);
         }
         ret += "</div>";
@@ -1606,7 +1856,7 @@ void main() {\n\
         this.viewer.EndSearch(false);
     };
 
-    // класс элемента совпадения при поиске на странице
+    // class for a match element when searching on a page
     function PdfPageMatch() {
         Array.apply(null, arguments);
         
@@ -1625,10 +1875,10 @@ void main() {\n\
         let aMatches = oSearchEngine.Elements[nId];
         let oPart, oLine;
         let aResult = ["", "", ""];
-        // найденный текст может быть разбит на части (строки)
+        // found text may be split into parts (lines)
         for (let nPart = 0; nPart < aMatches.length; nPart++) {
             oPart = aMatches[nPart];
-            // знаем в какой строке было найдено совпадение
+            // we know which line the match was found in
             oLine = oSearchEngine.PagesLines[oPart.PageNum][oPart.LineNum];
 
             if (nPart == 0 && aMatches.length == 1) {
@@ -1798,7 +2048,7 @@ void main() {\n\
                 }
 
                 if (posInText == PosStartText)
-                { // Начало совпадения
+                { // Start of match
                     oMatch.Line = _numLine;
                     oMatch.Char = i;
                     oMatch.StreamPos = _linePos;
@@ -1807,7 +2057,7 @@ void main() {\n\
                 _predChar = nChar;
 
                 if (++posInText == searchText.length)
-                { // Полное совпадение
+                { // Complete match
                     if (oSearchEngine.Word)
                     {
                         _skip = true;
@@ -1829,7 +2079,7 @@ void main() {\n\
                             break;
                     }
                     let rects = new PdfPageMatch();
-                    // Добавление всех областей совпадения от oMatch до текущего
+                    // Adding all match regions from oMatch to current
                     let _endChar = i + 1;
                     if (_endChar == nChars)
                         _endChar = -1;
@@ -1843,7 +2093,7 @@ void main() {\n\
             _numLine++;
             _predChar = 0;
             if (_skip)
-            { // Возвращаемся к началу совпадения
+            { // Return to the start of the match
                 _numLine = oMatch.Line;
                 _startChar = oMatch.Char + 1;
                 stream.pos = oMatch.StreamPos;
@@ -1973,7 +2223,7 @@ void main() {\n\
                 page.W              = page["W"];
                 page.H              = page["H"];
                 page.Dpi            = page["Dpi"];
-                page.originIndex    = page["originIndex"]; // исходный индекс в файле
+                page.originIndex    = page["originIndex"]; // original index in the file
                 page.originRotate   = page["Rotate"];
                 page.Rotate         = page["Rotate"];
             }
@@ -2014,7 +2264,7 @@ void main() {\n\
                 page.W              = page["W"];
                 page.H              = page["H"];
                 page.Dpi            = page["Dpi"];
-                page.originIndex    = page["originIndex"]; // исходный индекс в файле
+                page.originIndex    = page["originIndex"]; // original index in the file
                 page.originRotate   = page["Rotate"];
                 page.Rotate         = page["Rotate"];
             }

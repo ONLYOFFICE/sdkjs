@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -35,7 +38,7 @@
 (function ()
 {
 	/**
-	 * Класс, восстанавливающий удаленные части документа
+	 * Class that recovers deleted parts of the document
 	 * @param {AscWord.Document} logicDocument
 	 * @constructor
 	 */
@@ -44,7 +47,7 @@
 		this.document = logicDocument;
 		
 		/**
-		 * Список всех изменений связанных с удалением текста
+		 * List of all changes related to text deletion
 		 * @type {*[]}
 		 */
 		this.m_RewiewDelPoints		= [];
@@ -55,7 +58,7 @@
 		this.userTime				= undefined;
 	}
 	/**
-	 * Восстанавливаем удаленный текст в текущей точке истории версий
+	 * Recover deleted text at the current version history point
 	 * @return {boolean}
 	 */
 	DeletedTextRecovery.prototype.RecoverDeletedText = function()
@@ -64,7 +67,7 @@
 		return this.ShowDelText();
 	};
 	/**
-	 * Отменяем восстановление удаленного текста, если оно было
+	 * Undo the deleted text recovery if it was performed
 	 */
 	DeletedTextRecovery.prototype.UndoRecoveredText = function ()
 	{
@@ -77,7 +80,7 @@
 		localHistory.ClearRedo();
 	};
 	/**
-	 * Запрашивем,есть ли восстановленный удаленный текст
+	 * Check if there is recovered deleted text
 	 * @return {boolean}
 	 */
 	DeletedTextRecovery.prototype.HaveRecoveredText = function()
@@ -90,7 +93,7 @@
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/**
-	 * Инициализация и создание промежуточных данных для отображения удаленного текста в текущей ревизии
+	 * Collect changes for displaying deleted text in the current revision
 	 */
 	DeletedTextRecovery.prototype.HandleChanges = function()
 	{
@@ -108,7 +111,7 @@
 		this.m_RewiewDelPoints = arrChanges;
 	};
 	/**
-	 * Получаем подготовленные данные, разбитые по точкам
+	 * Get changes separated by points
 	 * @return {*[]}
 	 */
 	DeletedTextRecovery.prototype.GetChanges = function()
@@ -143,12 +146,12 @@
 	{
 		let oAddText		= new AddTextPositions();
 
-		// отбираем удаленный текст связанный с текущей ревизией
+		// select deleted text related to the current revision
 		for (let i = 0; i < arrInputChanges.length; i++)
 		{
 			let oCurChange		= arrInputChanges[i];
 
-			// пропускаем все изменения связанные со сплитом
+			// skip all changes related to split
 			if (oCurChange instanceof CChangesRunOnStartSplit)
 			{
 				while (oCurChange && !(oCurChange instanceof CChangesRunOnEndSplit))
@@ -177,7 +180,7 @@
 	}
 	DeletedTextRecovery.prototype.CommuteChanges = function (arrInputChanges, arrSaveData, oRemoveText)
 	{
-		// коммутируем изменения
+		// commute changes
 		let arrRevInput = arrInputChanges;
 
 		let arrDelChangesForCommute = oRemoveText.GetArrayChanges();
@@ -204,7 +207,7 @@
 		oRemoveText.ResetData();
 	}
 	/**
-	 * Отменяем заданные изменения
+	 * Undo specified changes
 	 * @param arrInputChanges
 	 * @return {*[]}
 	 */
@@ -257,7 +260,7 @@
 		this.userName = versionHistory.userName;
 		this.userTime = new Date(versionHistory.dateOfRevision).getTime();
 
-		// отменяем изменения до нужного места (необходимо для перемещения по истории)
+		// undo changes to the required point (necessary for navigating through history)
 		let arrCurrentPoint	= this.RedoUndoChanges(arrInput);
 		let delChanges = arrCurrentPoint[0];
 		let arrResult  = arrCurrentPoint[1];
@@ -359,7 +362,7 @@
 		if (!oReviewInfoParent === undefined)
 			return;
 
-		// TODO: Проверку по каким классам нужно проходить лучше переделать
+		// TODO: Refactor the check which classes should be iterated
 		if (!oReviewInfoParent || !oReviewInfoParent.GetReviewInfo)
 		{
 			if (oReviewInfoParent instanceof ParaMath)

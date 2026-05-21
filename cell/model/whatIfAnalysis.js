@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -1624,7 +1627,7 @@ function (window, undefined) {
 		const aArgsFormula = [];
 
 		AscCommonExcel.foreachRefElements(function (oRange) {
-			oRange._foreachNoEmpty(function (oCell) {
+			oRange._foreachDataOnly(function (oCell) {
 				if (oCell.isFormula() || oCell.getNumberValue() !== null || bIsEmpty) {
 					const oTempCell = oCell.clone();
 					if (oCell.isFormula()) {
@@ -2075,7 +2078,7 @@ function (window, undefined) {
 				bVertical = oConstraintBbox.c1 === oConstraintBbox.c2;
 				oConstraintWs = constraintData.worksheet;
 			}
-			oRefCellsRange._foreachNoEmpty(function (oRefCell) {
+			oRefCellsRange._foreachDataOnly(function (oRefCell) {
 				/** @type {Cell} */
 				const oCell = oRefCell.clone();
 				let oNewConstraint, nConstraintVal;
@@ -2212,7 +2215,7 @@ function (window, undefined) {
 		const oVarIndexByCellName = this.getVarIndexByCellName();
 
 		this.oUnrestrictedVars = {};
-		oVariables._foreachNoEmpty(function (oVariableCell) {
+		oVariables._foreachDataOnly(function (oVariableCell) {
 			const sCellKey = oVariableCell.ws.getName() + '_' + oVariableCell.getName();
 			const bConstraintsHasVarCell = aSimplexConstraints.some(function (oConstraint) {
 				const oRefCell = oConstraint.getCell();
@@ -2359,7 +2362,7 @@ function (window, undefined) {
 		// Links variable with variable's index
 		let nIter = 0;
 		const oVarIndexByCellName = this.getVarIndexByCellName();
-		oVariables._foreachNoEmpty(function (oCell) {
+		oVariables._foreachDataOnly(function (oCell) {
 			oVarIndexByCellName[oCell.getName()] = aVariablesIndexes[nIter];
 			nIter++;
 		});
@@ -2818,7 +2821,7 @@ function (window, undefined) {
 		const aMatrix = this.getMatrix();
 		const sRegNumDecimalSeparator = this.getModel().getRegNumDecimalSeparator();
 
-		oVariablesCells._foreachNoEmpty(function (oCell) {
+		oVariablesCells._foreachDataOnly(function (oCell) {
 			const sCellName = oCell.getName();
 			const nVarIndex = oVarIndexByCellName[sCellName];
 			const nRowId = aRowByVarIndex[nVarIndex];
@@ -2880,7 +2883,7 @@ function (window, undefined) {
 		const oChangingCells = this.getChangingCell();
 
 		// Fills empty cells to 0 value for changing cells
-		oChangingCells._foreachNoEmpty(function (oCell) {
+		oChangingCells._foreachDataOnly(function (oCell) {
 			oThis.setStartChangingCells(oCell.getName(), oCell.getValueWithoutFormat()); // Saves original data
 			if (oCell.getNumberValue() === null) {
 				oCell.setValue("0");
@@ -3025,7 +3028,7 @@ function (window, undefined) {
 			/** @type {Cell} */
 			let oPrevConstraintCell = null;
 
-			oConstraintCell._foreachNoEmpty(function (oElem, nIndex, nCol, nStartRow) {
+			oConstraintCell._foreachDataOnly(function (oElem, nIndex, nCol, nStartRow) {
 				if (oElem.getNumberValue() !== null) {
 					const constraintData = aConstraints[i].getConstraint();
 					const nOperator = aConstraints[i].getOperator();
@@ -3114,7 +3117,7 @@ function (window, undefined) {
 			return false;
 		}
 		// Checks whether variable cells have only the number of type values
-		oVariablesCells._foreachNoEmpty(function (oCell) {
+		oVariablesCells._foreachDataOnly(function (oCell) {
 			if (oCell.getValueText() !== null) {
 				bVariablesIsCorrect = false;
 				return true;
@@ -3131,7 +3134,7 @@ function (window, undefined) {
 			const constraintData = oConstraint.getConstraint();
 			if (typeof constraintData === 'object') {
 				let bConstraintIsCorrect = true;
-				constraintData._foreachNoEmpty(function (oCell) {
+				constraintData._foreachDataOnly(function (oCell) {
 					if (oCell.getNumberValue() === null) {
 						bConstraintIsCorrect = false;
 						return true;
@@ -3142,7 +3145,7 @@ function (window, undefined) {
 					return false;
 				}
 			}
-			oRefCells._foreachNoEmpty(function (oCell) {
+			oRefCells._foreachDataOnly(function (oCell) {
 				checkLinks(oCell, oVariablesCells);
 				if (bIsConnected) {
 					return true;
@@ -3225,7 +3228,7 @@ function (window, undefined) {
 		const oOptions = this.getOptions();
 		const nDerivatives = oOptions.asc_getDerivatives();
 
-		oChangingCells._foreachNoEmpty(function (oChangingCell) {
+		oChangingCells._foreachDataOnly(function (oChangingCell) {
 
 		});
 	};

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -35,7 +38,7 @@
 (function (window) {
 	
 	/**
-	 * Класс локальной истории изменений
+	 * Local history of changes class
 	 * @param logicDocument
 	 * @constructor
 	 */
@@ -47,7 +50,7 @@
 	History.prototype.constructor = History;
 	
 	History.prototype.ClearAdditional = function() {
-		// Ничего не делаем
+		// Do nothing
 	};
 	History.prototype.GetLastPointSourceObjectsPdf = function() {
 		if (this.Index !== -1) {
@@ -90,11 +93,11 @@
 	};
 	History.prototype.CheckUnionLastPoints = function()
     {
-        // Не объединяем точки во время Undo/Redo
+        // Don't unite points during Undo/Redo
         if (this.Index < this.Points.length - 1)
         	return false;
 
-        // Не объединяем точки истории, если на предыдущей точке произошло сохранение
+        // Don't unite history points if save occurred at the previous point
         if (this.Points.length < 2
             || (true !== this.Is_UserSaveMode() && null !== this.SavedIndex && this.SavedIndex >= this.Points.length - 2)
             || (true === this.Is_UserSaveMode() && null !== this.UserSavedIndex && this.UserSavedIndex >= this.Points.length - 2))
@@ -103,12 +106,12 @@
         var Point1 = this.Points[this.Points.length - 2];
         var Point2 = this.Points[this.Points.length - 1];
 
-        // запрет на объединение
+        // union is prohibited
         if (Point1.forbidUnion || Point2.forbidUnion) {
             return false;
         }
 
-        // Не объединяем слова больше 63 элементов
+        // Don't unite words with more than 63 elements
         if (Point1.Items.length > 63 && AscDFH.historydescription_Document_AddLetterUnion === Point1.Description)
             return false;
 
@@ -124,7 +127,7 @@
         if ((AscDFH.historydescription_Document_CompositeInput === Point1.Description || AscDFH.historydescription_Document_CompositeInputReplace === Point1.Description)
             && AscDFH.historydescription_Document_CompositeInputReplace === Point2.Description)
         {
-            // Ничего не делаем. Эта ветка означает, что эти две точки можно объединить
+            // Do nothing. This case means these two points can be united
             NewDescription = Point1.Description;
         }
 		else if (AscDFH.historydescription_Document_CompositeInput === Point1.Description
@@ -132,7 +135,7 @@
 			|| AscDFH.historydescription_Document_CompositeInput === Point2.Description
 			|| AscDFH.historydescription_Document_CompositeInputReplace === Point2.Description)
 		{
-			// Композитный ввод не разрешаем объединять ни с чем, кроме композитного ввода
+			// Composite input is not allowed to unite with anything except composite input
 			return false;
 		}
 		else if ((AscDFH.historydescription_Document_AddLetter === Point1.Description || AscDFH.historydescription_Document_AddLetterUnion === Point1.Description)
@@ -230,7 +233,7 @@
 			contentChanges.RemoveByHistoryItem(Item);
 	};
 		/**
-	 * Проверяем лок для последних нескольких точек
+	 * Check lock for the last several points
 	 * @param pointCount
 	 */
 	History.prototype.checkLock = function(pointCount)

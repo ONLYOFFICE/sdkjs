@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -117,7 +120,6 @@ function CChartsDrawer()
 	this.trendline = new CTrendline(this);
 	this.upDownBars = new CUpDownBars(this);
 
-
 	this.changeAxisMap = null;
 
 	this.calcShapesHelper = new calcShapesHelper(this);
@@ -171,7 +173,7 @@ CChartsDrawer.prototype =
 		//AXIS
 		if (!chartSpace.bEmptySeries) {
 
-			//оси значений и категорий
+			//value and category axes
 			this.axesChart = [];
 			for (var i = 0; i < chartSpace.chart.plotArea.axId.length; i++) {
 				var axId = chartSpace.chart.plotArea.axId[i];
@@ -187,7 +189,6 @@ CChartsDrawer.prototype =
 			}
 
 		}
-
 		//CHARTS
 		if (!chartSpace.bEmptySeries) {
 			for(var i in this.charts) {
@@ -247,9 +248,8 @@ CChartsDrawer.prototype =
 	},
 
 	init: function(chartSpace) {
-		//создаём область
+		//create area
 		this.areaChart = new areaChart();
-		//создаём область
 		this.plotAreaChart = new plotAreaChart();
 		//Floor This element specifies the floor of a 3D chart.
 		this.floor3DChart = new floor3DChart();
@@ -340,11 +340,11 @@ CChartsDrawer.prototype =
 
 		this.cShapeDrawer = cShapeDrawer;
 
-		//отрисовываем без пересчёта
+		//draw without recalculation
 		this.areaChart.draw(this);
 
 		var drawCharts = function(bBeforeAxes) {
-			//рисуем 3d диаграммы только до отрисовки сетки
+			//draw 3D charts only before grid rendering
 			if(!bBeforeAxes && t.nDimensionCount === 3) {
 				return;
 			}
@@ -359,7 +359,7 @@ CChartsDrawer.prototype =
 					}
 				}
 			} else {
-				//для начала нужно отсортировать
+				//first we need to sort
 				var sortCharts = t._sortChartsForDrawing(chartSpace);
 				for(var i = 0; i < sortCharts.length; i++) {
 					var id = sortCharts[i];
@@ -370,7 +370,7 @@ CChartsDrawer.prototype =
 	
 					var type = chartModel.getObjectType();
 					var isLinesChart = type === AscDFH.historyitem_type_LineChart || type === AscDFH.historyitem_type_ScatterChart;
-					//рисуем линейные диаграммы после отрисовки сетки
+					//draw line charts after grid rendering
 					if(t.nDimensionCount !== 3 && ((isLinesChart && bBeforeAxes) || (!isLinesChart && !bBeforeAxes))) {
 						continue;
 					}
@@ -410,7 +410,7 @@ CChartsDrawer.prototype =
 			}
 
 			// DRAW 3D CHARTS
-			// рисуем оси поверх 3d-диаграмм и линейных/точечных
+			// draw axes on top of 3D charts and line/scatter charts
 			drawCharts(true);
 
 			for(i = 0; i < this.axesChart.length; i++) {
@@ -430,9 +430,9 @@ CChartsDrawer.prototype =
 	},
 
 	_testChartsPaths: function() {
-		//чтобы сгенерировать все paths нужно выставить buildAllPaths в true
-		//добавляем данные из консоли(console.log(JSON.stringify(test_compare_paths_arr));) в буфер обмена
-		//далее открыаем файл, запускаем макрос - получаем готовый файл с текстом наших paths в колонке с индексом col
+		//to generate all paths, set buildAllPaths to true
+		//add data from console (console.log(JSON.stringify(test_compare_paths_arr));) to clipboard
+		//then open the file, run the macro - get a ready file with our paths text in the column with index col
 
 		var buildAllPaths = false;
 		var col = 41;
@@ -470,7 +470,7 @@ CChartsDrawer.prototype =
 			window.test_compare_paths_count++;
 		}
 
-		//с помощью данного макроса добавляю paths в файл
+		//using this macro to add paths to the file
 		/*Private Sub CommandButton1_Click()
 
 		Dim DataObj As MSForms.DataObject
@@ -722,7 +722,7 @@ CChartsDrawer.prototype =
 	
 			var chartId = this._getChartModelIdBySerIdx(chartSpace.chart.plotArea, serIdx);
 			if(null !== chartId && this.charts[chartId] && this.charts[chartId].chart && this.charts[chartId].chart.series) {
-				//TODO нужно переделать все массивы с патами по idx
+				//TODO need to refactor all path arrays by idx
 				var serIndex = this._getIndexByIdxSeria(this.charts[chartId].chart.series, serIdx);
 				res = this.charts[chartId]._calculateDLbl(chartSpace, serIndex, valIdx, bLayout, serIdx);
 			}
@@ -854,7 +854,7 @@ CChartsDrawer.prototype =
 					convertResult = this._convertAndTurnPoint((x + widthAxisTitle / 2) * pxToMM, y * pxToMM, this.processor3D.calculateZPositionCatAxis());
 					x = convertResult.x / pxToMM - widthAxisTitle / 2;
 				} else {
-					//TODO избавиться от привзяки к типу диаграммы
+					//TODO eliminate dependency on chart type
 					if(!this.processor3D.view3D.getRAngAx() && (this.calcProp.type === c_oChartTypes.Bar || this.calcProp.type === c_oChartTypes.Line))
 					{
 						var posX = axis.posX;
@@ -961,7 +961,6 @@ CChartsDrawer.prototype =
 	//****calculate margins****
 	_calculateMarginsChart: function (chartSpace, dNotPutResult) {
 		this.calcProp.chartGutter = {};
-
 		if (this._isSwitchCurrent3DChart(chartSpace)) {
 			standartMarginForCharts = 16;
 		}
@@ -971,15 +970,20 @@ CChartsDrawer.prototype =
 
 		var pxToMM = this.calcProp.pxToMM;
 		var plotArea = chartSpace.chart.plotArea;
+		var charts = plotArea.charts;
 		const isChartEx = chartSpace ? chartSpace.isChartEx() : false;
+		let dataTableExtY = 0;
 
-		//если точки рассчитаны - ставим маргин в зависимости от них
+		//if points are calculated - set margin based on them
 		var marginOnPoints = this._calculateMarginOnPoints(chartSpace/*, isHBar*/);
 		var calculateLeft = marginOnPoints.calculateLeft, calculateRight = marginOnPoints.calculateRight, calculateTop = marginOnPoints.calculateTop, calculateBottom = marginOnPoints.calculateBottom;
 
-		//высчитываем выходящие за пределы подписи осей
+		//calculate axis labels extending beyond bounds
 		var labelsMargin = this._calculateMarginLabels(chartSpace);
-		var left = labelsMargin.left, right = labelsMargin.right, top = labelsMargin.top, bottom = labelsMargin.bottom;
+		let left = labelsMargin.left;
+		let right = labelsMargin.right;
+		let top = 0;
+		let bottom = 0;
 
 
 		var leftTextLabels = 0;
@@ -987,8 +991,8 @@ CChartsDrawer.prototype =
 		var topTextLabels = 0;
 		var bottomTextLabels = 0;
 
-		//добавляем размеры подписей осей + размеры названия
-		//TODO генерировать extX для всех осей
+		//add axis label sizes + title sizes
+		//TODO generate extX for all axes
 		var axId = chartSpace.chart.plotArea.axId;
 		const axisSettings = [{ isExist: false, opKey: 1}, {isExist: false, opKey: 0}, {isExist: false, opKey : 3}, {isExist: false, opKey: 2}]; //L,R,T,D
 
@@ -1090,10 +1094,9 @@ CChartsDrawer.prototype =
 			}
 		}
 
-		//исключение - когда среди диаграмм есть груговая
+		//exception - when there is a pie chart among the charts
 		let isCircleShape = null;
 		var radarChart = null;
-		var charts = plotArea.charts;
 
 		// check whether chart is of type pie, doughnut or sunburst
 		if (isChartEx) {
@@ -1122,7 +1125,7 @@ CChartsDrawer.prototype =
 
 		var is3dChart = this._isSwitchCurrent3DChart(chartSpace);
 		if(!is3dChart && isCircleShape !== null) {
-			//вычисляем истинную(первоначальную) ширину и высоту диаграммы
+			//calculate the true (original) width and height of the chart
 			left = this._getStandartMargin(left, leftKey, leftTextLabels, 0) + leftKey + leftTextLabels;
 			bottom = this._getStandartMargin(bottom, bottomKey, bottomTextLabels, 0) + bottomKey + bottomTextLabels;
 			top = this._getStandartMargin(top, topKey, topTextLabels, topMainTitle) + topKey + topTextLabels + topMainTitle;
@@ -1132,7 +1135,7 @@ CChartsDrawer.prototype =
 			var height = chartSpace.extY - top - bottom;
 			var pieSize = width > height ? height : width;
 
-			//размещаем по центру относительно width/height
+			//center relative to width/height
 			left += (width - pieSize)/2;
 			right += (width - pieSize)/2;
 			top += (height - pieSize)/2;
@@ -1165,6 +1168,7 @@ CChartsDrawer.prototype =
 			// barChart, hBarChart, lineChart, scatterChart, areaChart,
 			const info = this._calculateMarginsChartOrdinaryDiagrams(
 				topMainTitle,
+				dataTableExtY,
 				{left: axisSettings[0].isExist, right: axisSettings[1].isExist, top: axisSettings[2].isExist, bottom: axisSettings[3].isExist},
 				{left: leftTextLabels, right: rightTextLabels, top: topTextLabels, bottom: bottomTextLabels},
 				{left: leftKey, right: rightKey, top: topKey, bottom: bottomKey},
@@ -1180,12 +1184,12 @@ CChartsDrawer.prototype =
 		var pxTop = calculateTop ? calculateTop * pxToMM : top * pxToMM;
 		var pxBottom = calculateBottom ? calculateBottom * pxToMM : bottom * pxToMM;
 
-		//TODO позже пересмотреть правку
+		//TODO review this fix later
 		if(topMainTitle && topMainTitle * pxToMM > pxTop) {
 			pxTop = (this._getStandartMargin(top, topKey, topTextLabels, topMainTitle) / 2 + topMainTitle) * pxToMM;
 		}
 
-		//TODO пересмотреть!!!
+		//TODO review!!!
 		if(isCircleShape && plotArea.charts.length === 1) {
 			if (plotArea.layout) {
 				var oLayout = plotArea.layout;
@@ -1203,6 +1207,10 @@ CChartsDrawer.prototype =
 			}
 		}
 
+		if (plotArea.dTable && !this._isSwitchCurrent3DChart(chartSpace) &&
+				!(chartSpace.isLayoutSizes && chartSpace.isLayoutSizes()) && pxLeft < standartMarginForCharts * 1.5) {
+			pxLeft = standartMarginForCharts * 1.5;
+		}
 		if (dNotPutResult) {
 			return {left: pxLeft, right: pxRight, top: pxTop, bottom: pxBottom};
 		} else {
@@ -1218,7 +1226,40 @@ CChartsDrawer.prototype =
 	// margin is combination of outward things + inward things
 	// outward things are: title and legend labels
 	// inward things are: axis titles, axes themselves and standard margin.
-	_calculateMarginsChartOrdinaryDiagrams: function (chartTitle, axes, axesTitles, legendTexts) {
+	_calculateMarginsChartOrdinaryDiagrams: function (chartTitle, dataTableExtY, axes, axesTitles, legendTexts) {
+		if (true) {
+			return this._calculateMarginsChartOrdinaryDiagramsOld(chartTitle, axes, axesTitles, legendTexts);
+		}
+
+		const normalizedMargin = standartMarginForCharts / this.calcProp.pxToMM;
+		const marginWithOffsetApplied1 = normalizedMargin / 2;
+		const marginWithOffsetApplied2 = normalizedMargin / 2;
+		const marginWithOffsetApplied3 = normalizedMargin / 3;
+		const marginWithOffsetApplied4 = normalizedMargin + (normalizedMargin * 2 / 3);
+
+		const titleBasedMargin = chartTitle ? chartTitle + marginWithOffsetApplied1 : 0;
+
+		const labelBasedMarginTop = legendTexts && legendTexts.top ? legendTexts.top + marginWithOffsetApplied2 : 0;
+		const labelBasedMarginLeft = legendTexts && legendTexts.left ? legendTexts.left + marginWithOffsetApplied2 : 0;
+		const labelBasedMarginRight = legendTexts && legendTexts.right ? legendTexts.right + marginWithOffsetApplied2 : 0;
+		const labelBasedMarginBottom = legendTexts && legendTexts.bottom ? legendTexts.bottom + marginWithOffsetApplied2 : 0;
+
+		const decider = function (dataTableExtY, dataTableMargin, axisTitle, axisTitleMargin, axis, axisMargin, defaultMarginEffect) {
+			const dataTableEffect = dataTableExtY ? dataTableExtY + dataTableMargin : 0;
+			const axisTitleEffect = axisTitle ? axisTitle + axisTitleMargin : 0;
+			const axisEffect = axis ? axisMargin : 0;
+			return dataTableEffect || axisTitleEffect || axisEffect || defaultMarginEffect;
+		}
+
+		const left = labelBasedMarginLeft + decider(0, marginWithOffsetApplied4, axesTitles.left, normalizedMargin, axes.left, marginWithOffsetApplied1, normalizedMargin);
+		const bottom = labelBasedMarginBottom + decider(dataTableExtY, marginWithOffsetApplied2, axesTitles.bottom, normalizedMargin, axes.bottom || axes.left || axes.right, marginWithOffsetApplied2, normalizedMargin);
+		const right = labelBasedMarginRight + decider(0, 0, axesTitles.right, normalizedMargin, axes.right, marginWithOffsetApplied2, normalizedMargin);
+		const top = titleBasedMargin + labelBasedMarginTop + decider(0, 0, axesTitles.top, normalizedMargin, axes.top || axes.left || axes.right, (titleBasedMargin || axes.top) ? marginWithOffsetApplied1 : marginWithOffsetApplied3, (labelBasedMarginTop && labelBasedMarginRight) ? marginWithOffsetApplied1 : normalizedMargin);
+
+		return {left: left, right: right, top: top, bottom: bottom};
+	},
+
+	_calculateMarginsChartOrdinaryDiagramsOld: function (chartTitle, axes, axesTitles, legendTexts) {
 		const normalizedMargin = standartMarginForCharts / this.calcProp.pxToMM;
 		const marginWithOffsetApplied1 = normalizedMargin * 1 / 2;
 		const marginWithOffsetApplied2 = normalizedMargin * 2 / 3;
@@ -1278,7 +1319,7 @@ CChartsDrawer.prototype =
 		}
 	},
 
-	//включаю новую функцию. если будут проблемы с отступами - использовать функцию _calculateMarginOnPoints2
+	//enabling new function. if there are issues with margins - use _calculateMarginOnPoints2 function
 	_calculateMarginOnPoints: function (chartSpace) {
 		var calculateLeft = 0, calculateRight = 0, calculateTop = 0, calculateBottom = 0, diffPoints, curBetween;
 		var pxToMM = this.calcProp.pxToMM;
@@ -1453,10 +1494,10 @@ CChartsDrawer.prototype =
 			}
 
 			if (verticalAxis && verticalAxis.labels && !verticalAxis.bDelete) {
-				//подпись оси OY находится левее крайней левой точки
+				//OY axis label is to the left of the leftmost point
 				if (leftDownPointX >= verticalAxis.labels.x) {
 					left = leftDownPointX - verticalAxis.labels.x;
-				} else if ((verticalAxis.labels.x + verticalAxis.labels.extX) >= rightUpPointX)//правее крайней правой точки
+				} else if ((verticalAxis.labels.x + verticalAxis.labels.extX) >= rightUpPointX)//to the right of the rightmost point
 				{
 					right = verticalAxis.labels.x + verticalAxis.labels.extX - rightUpPointX;
 				}
@@ -1479,10 +1520,10 @@ CChartsDrawer.prototype =
 			}
 
 			if (horizontalAxis && horizontalAxis.labels && !horizontalAxis.bDelete) {
-				//подпись оси OX находится ниже крайней нижней точки
+				//OX axis label is below the lowest point
 				if ((horizontalAxis.labels.y + horizontalAxis.labels.extY) >= leftDownPointY) {
 					bottom = (horizontalAxis.labels.y + horizontalAxis.labels.extY) - leftDownPointY;
-				} else if (horizontalAxis.labels.y <= rightUpPointY)//выше верхней
+				} else if (horizontalAxis.labels.y <= rightUpPointY)//above the top
 				{
 					top = rightUpPointY - horizontalAxis.labels.y;
 				}
@@ -1565,7 +1606,7 @@ CChartsDrawer.prototype =
 			this.preCalculateData(chartSpace, true);
 		}
 
-		//считаем маргины
+		//calculate margins
 		this._calculateMarginsChart(chartSpace);
 
 		// check if diagmar size affected by layout
@@ -1602,7 +1643,7 @@ CChartsDrawer.prototype =
 		let chartType = this._getChartType(chart);
 		let t = this;
 
-		//TODO стоит сделать общую обработку для всех диаграмм
+		//TODO should make common processing for all charts
 		let calculateStacked = function(sum) {
 			if(c_oChartTypes.HBar === chartType || c_oChartTypes.Bar === chartType) {
 				let originalData = $.extend(true, [], data);
@@ -1647,8 +1688,8 @@ CChartsDrawer.prototype =
 		};
 
 		let calculateSum = function() {
-			//вычисляем сумму
-			//для разных диаграмм она вычисляется по-разному
+			//calculate sum
+			//for different charts it is calculated differently
 			let res = [];
 			if(c_oChartTypes.HBar === chartType || c_oChartTypes.Bar === chartType) {
 				for (let j = 0; j < (data.length); j++) {
@@ -1685,19 +1726,19 @@ CChartsDrawer.prototype =
 	},
 
 	_calculateExtremumAllCharts: function (chartSpace, isFirstChart) {
-		//возвращает массив, где первый элемент - для основной оси, второй - для вспомогательной
-		//максимальные/минимальные значения среди всех графиков
+		//returns an array where the first element is for the primary axis, the second is for the secondary axis
+		//maximum/minimum values among all charts
 		var t = this, isStackedType, isCombinationChartTypes;
 		var plotArea = chartSpace.chart.plotArea;
 		var charts = plotArea.charts;
 		if(!charts || isFirstChart) {
 			charts = [plotArea.chart];
 		}
-		var isScatterType = false; //входит в условие расчета шага
+		var isScatterType = false; //included in step calculation condition
 
 		var getMinMaxCurCharts = function(axisCharts, axis) {
 
-			//предварительно проходимся по всем диаграммам и ищем 100% stacked тип
+			//first pass through all charts looking for 100% stacked type
 			isStackedType = false;
 			for (var i = 0; i < axisCharts.length; i++) {
 				grouping = t.getChartGrouping(axisCharts[i]);
@@ -1706,7 +1747,7 @@ CChartsDrawer.prototype =
 				}
 				if ("stackedPer" === grouping && !isStackedType) {
 					isStackedType = true;
-					//break; // пока что заменяем на !isStackedType (т.к. другие типы могут быть нужны для расчета шага)
+					//break; // for now replacing with !isStackedType (since other types may be needed for step calculation)
 				}
 			}
 
@@ -1716,7 +1757,7 @@ CChartsDrawer.prototype =
 				grouping = t.getChartGrouping(chart);
 				minMaxData = t._calculateData2(chart, grouping, axis);
 
-				//условие добавлено для случая когда комбинированная диаграмма содержит stacked и stackedPer
+				//condition added for the case when a combination chart contains stacked and stackedPer
 				if (grouping === "stacked" && isStackedType) {
 					isCombinationChartTypes = true;
 				}
@@ -1872,11 +1913,11 @@ CChartsDrawer.prototype =
 				axObj.max = Math.max(axObj.max, boundaries[axObj.Id].max) ;
 			}
 			
-			//если будут проблемы, протестить со старой функцией -> this._getAxisValues(false, minMaxAxis.min, minMaxAxis.max, chartSpace)
+			//if there are issues, test with the old function -> this._getAxisValues(false, minMaxAxis.min, minMaxAxis.max, chartSpace)
 			axObj.scale = this._roundValues(this._getAxisValues2(axObj, chartSpace, isStackedType && !isCombinationChartTypes, isScatterType));
 
 			if(isStackedType && !axObj.scaling.logBase && !isCombinationChartTypes) {
-				//для случая 100% stacked - если макс/мин равно определенному делению, большие/меньшие - убираем, логарифмическая шкала - исключение
+				//for 100% stacked case - if max/min equals a certain division, remove greater/lesser values, logarithmic scale is an exception
 				if(axObj.scale[0] !== 0 && axObj.min === axObj.scale[1]) {
 					axObj.scale.splice(0, 1);
 				}
@@ -1947,8 +1988,8 @@ CChartsDrawer.prototype =
 	},
 	
 	_calculateChangeAxisMap: function (chartSpace) {
-		//ms рисует по-разному диаграммы со скрытымми/не скрытыми осями
-		//если ось скрыта - ищем замену среди основных открытых
+		//MS draws charts differently with hidden/visible axes
+		//if an axis is hidden - look for a replacement among the main visible ones
 		this.changeAxisMap = {};
 		var axId = chartSpace.chart.plotArea.axId;
 
@@ -2107,7 +2148,7 @@ CChartsDrawer.prototype =
 					for (var col = 0; col < numCache.ptCount; col++) {
 						var curPoint = numCache.pts[col];
 
-						//условие дбавлено для того, чтобы диаграммы, данные которых имеют мин/макс и пустые ячейки, рисовались грамотно
+						//condition added so that charts with data having min/max and empty cells are rendered correctly
 						if(!curPoint && (t.calcProp.subType === 'stackedPer' || t.calcProp.subType === 'stacked')) {
 							curPoint = {val: 0};
 						} else if (!curPoint || curPoint.isHidden === true) {
@@ -2163,7 +2204,7 @@ CChartsDrawer.prototype =
 					// find max value across each seria
 					for (let i = 0; i < series.length; i++) {
 						const seria = series[i];
-						if (seria) {
+						if (seria && !seria.isHidden) {
 							numCache = t.getNumCache(seria.val);
 							const ptCount = numCache && AscFormat.isRealNumber(numCache.ptCount) ? numCache.ptCount : 0;
 							// trendline can affect max value
@@ -2216,7 +2257,7 @@ CChartsDrawer.prototype =
 			arrValues = arrReverse(arrValues);
 		}
 
-		//пересчёт данных для накопительных диаграмм
+		//recalculation of data for stacked charts
 		if (AscDFH.historyitem_type_ValAx === axis.getObjectType() && ("stackedPer" === grouping || "stacked" === grouping)) {
 			if (newArr) {
 				arrValues = newArr;
@@ -2277,7 +2318,7 @@ CChartsDrawer.prototype =
 
 	_getAxisValues2: function (axis, chartSpace, isStackedType, isScatter) {
 		let isOx = axis.axPos === window['AscFormat'].AX_POS_B || axis.axPos === window['AscFormat'].AX_POS_T;
-		//для оси категорий берем интервал 1
+		//for category axis we take interval 1
 		let arrayValues;
 		const axisType = axis.getObjectType();
 		if(AscDFH.historyitem_type_CatAx === axisType || AscDFH.historyitem_type_DateAx === axisType) {
@@ -2308,7 +2349,7 @@ CChartsDrawer.prototype =
 		let calcAxisMinMax = function (isDefaultMinMax) {
 			let trueMinMax = t._getTrueMinMax((manualMin !== null && manualMin < yMin) ? manualMin : yMin, (manualMax !== null && manualMax > yMax) ? manualMax : yMax, isDefaultMinMax, isScatter, manualMax);
 			let _axisMin, _axisMax, _step, firstDegree;
-			//TODO временная проверка для некорректных минимальных и максимальных значений
+			//TODO temporary check for incorrect minimum and maximum values
 			if (manualMax && manualMin && manualMax < manualMin) {
 				if (manualMax < 0) {
 					manualMax = 0;
@@ -2329,15 +2370,15 @@ CChartsDrawer.prototype =
 				}
 			}
 
-			//приводим к первому порядку
+			//reduce to first order
 			firstDegree = t._getFirstDegree((Math.abs(_axisMax - _axisMin)) / 10);
 
-			//находим шаг
+			//find step
 			if (axis && axis.majorUnit != null) {
 				_step = axis.majorUnit;
 				bIsManualStep = true;
 			} else {
-				//было следующее условие - isOx || c_oChartTypes.HBar === this.calcProp.type
+				//the following condition was used - isOx || c_oChartTypes.HBar === this.calcProp.type
 				if (isOx /*&& !isScatter && axisMin !== 0 && axisMax !== 0*/) {
 					_step = t._getStep(firstDegree.val + (firstDegree.val / 10) * 1.1111);
 					// _step = t._getStep(firstDegree.val);
@@ -2350,7 +2391,7 @@ CChartsDrawer.prototype =
 			return {step: _step, axisMin: _axisMin, axisMax: _axisMax};
 		};
 
-		//максимальное и минимальное значение(по документации excel)
+		//maximum and minimum value (according to Excel documentation)
 		let isRadarChart = this.isRadarChart(axis);
 		let axisMin, axisMax, step;
 		let minMaxCalc = calcAxisMinMax(isStackedType);
@@ -2381,7 +2422,7 @@ CChartsDrawer.prototype =
 			}
 		}
 
-		//проверка на переход в другой диапазон из-за ограничения по высоте
+		//check for transition to another range due to height limitation
 		if (!bIsManualStep && !chartSpace.isSparkline) {
 			let props = {
 				arrayValues: arrayValues,
@@ -2394,7 +2435,7 @@ CChartsDrawer.prototype =
 			arrayValues = this._correctDataValuesFromHeight(props, chartSpace);
 		}
 
-		//TODO для 3d диаграмм. пересмотреть!
+		//TODO for 3D charts. review!
 		if (this._isSwitchCurrent3DChart(chartSpace)) {
 			if (yMax > 0 && yMin < 0) {
 				if (manualMax == null && yMax <= arrayValues[arrayValues.length - 2]) {
@@ -2527,7 +2568,7 @@ CChartsDrawer.prototype =
 		}
 
 		var arrayValues;
-		//минимальное значение оси
+		//minimum axis value
 		//TODO use axisMin
 		let minUnit = 0;
 
@@ -2554,7 +2595,7 @@ CChartsDrawer.prototype =
 			}
 		}
 
-		//массив подписей
+		//array of labels
 		arrayValues = this._getArrayAxisValues(minUnit, axisMin, axisMax, step, manualMin, manualMax);
 
 		return arrayValues;
@@ -2738,7 +2779,7 @@ CChartsDrawer.prototype =
 
 		/*if(this.calcProp.subType == 'stackedPer')
 		 {
-		 //TODO пересмотреть все ситуации, когда заданы фиксированные максимальные и минимальные значение выше 100%
+		 //TODO review all situations when fixed maximum and minimum values above 100% are set
 		 if(step > axisMax)
 		 arrayValues = [axisMin, axisMax];
 		 }*/
@@ -2769,9 +2810,9 @@ CChartsDrawer.prototype =
 
 		var axisMax, axisMin, diffMaxMin;
 		var cDiff = 1/6;
-		//добавил правку в первую ветку: если минмальное значение оказывается равно 0, то максимальное высчитываем
-		//с учётом минимального, равного 0.
-		// TODO пересмотреть все остальные ситуации!
+		//added fix to the first branch: if minimum value equals 0, then maximum is calculated
+		//taking into account minimum equal to 0.
+		// TODO review all other situations!
 		if (yMin >= 0 && yMax >= 0) {
 			diffMaxMin = (yMax - yMin) / yMax;
 			if (isMaxSet === null && cDiff > diffMaxMin) {
@@ -3032,7 +3073,7 @@ CChartsDrawer.prototype =
 			this._calculateMarginsChart(chartSpace);
 		}
 
-		if (!this.calcProp.chartGutter.left && !this.calcProp.chartGutter.right && !this.calcProp.chartGutter._bottom && !this.calcProp.chartGutter.top) {
+		if (!this.calcProp.chartGutter._left && !this.calcProp.chartGutter._right && !this.calcProp.chartGutter._bottom && !this.calcProp.chartGutter._top) {
 			this._calculateMarginsChart(chartSpace);
 		}
 
@@ -3342,7 +3383,7 @@ CChartsDrawer.prototype =
 			return this._getYPositionLogBase(val, yPoints, isOx, logBase);
 		}
 
-		//позиция в заисимости от положения точек на оси OY
+		//position depending on the position of points on the OY axis
 		var result, resPos, resVal, diffVal;
 
 		if (!yPoints[1] && val === yPoints[0].val) {
@@ -3474,7 +3515,7 @@ CChartsDrawer.prototype =
 		// var logVal = Math.log(val) / Math.log(logBase);
 		// var result;
 
-		// //TODO переписать функцию!
+		// //TODO rewrite the function!
 		// var parseVal, maxVal, minVal, startPos = 0, diffPos;
 
 		// if (yPoints.length < 2) {
@@ -3761,7 +3802,7 @@ CChartsDrawer.prototype =
 	
 	
 	//***spline functions***
-	//TODO пока включаю calculate_Bezier. проверить корретность calculate_Bezier2!
+	//TODO for now enabling calculate_Bezier. check correctness of calculate_Bezier2!
 	calculate_Bezier2: function (x, y, x1, y1, x2, y2, x3, y3) {
 		var pts = [], bz = [];
 
@@ -3940,8 +3981,8 @@ CChartsDrawer.prototype =
 		return chart ? this.calculateCountSeries(chart) : null;
 	},
 	
-	//вспомогательные функции работающие с тремя координатами
-	//получаем к-ты уравнения прямой по 2 точкам
+	//helper functions working with three coordinates
+	//get line equation coefficients from 2 points
 	getLineEquation: function (point1, point2) {
 		var x0 = point1.x, y0 = point1.y, z0 = point1.z;
 		var x1 = point2.x, y1 = point2.y, z1 = point2.z;
@@ -4027,7 +4068,7 @@ CChartsDrawer.prototype =
 		return {x: x, y: y, z: z};
 	},
 
-	//поиск точки пересечения плоскости и прямой
+	//finding intersection point of plane and line
 	isIntersectionPlainAndLine: function (plainEquation, lineEquation) {
 		var A = plainEquation.a;
 		var B = plainEquation.b;
@@ -4078,7 +4119,7 @@ CChartsDrawer.prototype =
 		var isBetweenX = (convertResult.x >= projPoint1.x && convertResult.x <= projPoint2.x) || (convertResult.x <= projPoint1.x && convertResult.x >= projPoint2.x);
 		var isBetweenY = (convertResult.y >= projPoint1.y && convertResult.y <= projPoint2.y) || (convertResult.y <= projPoint1.y && convertResult.y >= projPoint2.y);
 		
-		//принадлежит ли даная точка отрезку
+		//does this point belong to the segment
 		if(isBetweenX && isBetweenY)
 		{
 			var vectorMultiplication = ((convertResult.x - projPoint1.x) * (projPoint2.y - projPoint1.y)) - ((convertResult.y - projPoint1.y) * (projPoint2.x - projPoint1.x));
@@ -4109,7 +4150,7 @@ CChartsDrawer.prototype =
 		var plain1 = this.getPlainEquation(point1, point2, point3);
 		var plain2 = this.getPlainEquation(point3, point4, point1);
 		
-		//todo пересмотреть округление
+		//todo review rounding
 		if(Math.round(plain1.a) === Math.round(plain2.a) && Math.round(plain1.b) === Math.round(plain2.b) && Math.round(plain1.c) === Math.round(plain2.c) && Math.round(plain1.d) === Math.round(plain2.d))
 		{
 			bRes = true;
@@ -4157,20 +4198,20 @@ CChartsDrawer.prototype =
 		return res;
 	},
 	
-	//получаем площадь произвольного выпуклого четырехугольника
+	//get area of arbitrary convex quadrilateral
 	getAreaQuadrilateral: function(point0, point1, point2, point3)
 	{
-		//длины сторон
+		//side lengths
 		var a = Math.sqrt(Math.pow(point3.x - point0.x, 2) + Math.pow(point3.y - point0.y, 2));
 		var b = Math.sqrt(Math.pow(point1.x - point0.x, 2) + Math.pow(point1.y - point0.y, 2));
 		var c = Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
 		var d = Math.sqrt(Math.pow(point3.x - point2.x, 2) + Math.pow(point3.y - point2.y, 2));
-		
-		//длины диагоналей
+
+		//diagonal lengths
 		var e = Math.sqrt(Math.pow(point3.x - point1.x, 2) + Math.pow(point3.y - point1.y, 2));
 		var f = Math.sqrt(Math.pow(point0.x - point2.x, 2) + Math.pow(point0.y - point2.y, 2));
-		
-		//полупериметр
+
+		//semi-perimeter
 		var p = (a + b + c + d) / 2;
 		
 		
@@ -4179,21 +4220,21 @@ CChartsDrawer.prototype =
 		return res;
 	},
 	
-	//получаем площадь произвольного трехугольника
+	//get area of arbitrary triangle
 	getAreaTriangle: function(point0, point1, point2)
 	{
-		//длины сторон
+		//side lengths
 		var a = Math.sqrt(Math.pow(point1.x - point0.x, 2) + Math.pow(point1.y - point0.y, 2));
 		var b = Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
 		var c = Math.sqrt(Math.pow(point2.x - point0.x, 2) + Math.pow(point2.y - point0.y, 2));
-		
-		//полупериметр
+
+		//semi-perimeter
 		var p = (a + b + c ) / 2;
 
 		return Math.sqrt(p * (p - a) * (p - b) * (p - c));
 	},
 	
-	//из массива точек получаем минимальные/максимальные x,y,z
+	//from array of points get minimum/maximum x,y,z
 	getMinMaxPoints: function(points)
 	{
 		var minX, maxX, minY, maxY, minZ, maxZ;
@@ -4246,7 +4287,7 @@ CChartsDrawer.prototype =
 		return {minX: minX, maxX: maxX, minY : minY, maxY: maxY, minZ: minZ, maxZ: maxZ};
 	},
 	
-	//TODO временная функция для теста результата значений
+	//TODO temporary function for testing result values
 	getPlainEquation3: function(point1, point2, point3)
 	{
 		var a1 = point1.x, b1 = point1.y, c1 = point1.z, a2 = point2.x, b2 = point2.y, c2 = point2.z, a3 = point3.x, b3 = point3.y, c3 = point3.z;
@@ -4354,7 +4395,7 @@ CChartsDrawer.prototype =
 		return {a: a, b: b, c: c, d: d};
 	},
 	
-	//TODO если будет проблема при отрисовке граней(перекрытие друг другом), вернуть протестированную функцию  - getPlainEquation3
+	//TODO if there is a problem when drawing faces (overlapping each other), revert to tested function - getPlainEquation3
 	getPlainEquation: function(point1, point2, point3)
 	{
 		var x1 = point1.x, y1 = point1.y, z1 = point1.z;
@@ -4385,7 +4426,7 @@ CChartsDrawer.prototype =
 		return {a: a1, b: b1, c: c1, d: d1};
 	},
 	
-	//уравнение плоскости
+	//plane equation
 	getPlainEquation2: function(point1, point2, point3)
 	{
 		var x1 = point1.x, y1 = point1.y, z1 = point1.z;
@@ -4648,7 +4689,7 @@ CChartsDrawer.prototype =
 		var frontPaths = [];
 		var darkPaths = [];
 
-		// условие для конусов
+		// condition for cones
 		var isVisibleReverse = cone ? isNotAllPointsVisible : true;
 
 		var addPathToArr = function (isFront, face, index) {
@@ -4777,7 +4818,7 @@ CChartsDrawer.prototype =
 			path.lnTo(constP * pathW, (p1 - l) * pathH);
 		} else {
 			path.moveTo(p1 * pathW, constP * pathH);
-			path.lnTo(p1 + l * pathW, constP * pathH);
+			path.lnTo((p1 + l) * pathW, constP * pathH);
 		}
 
 		return pathId;
@@ -5172,7 +5213,7 @@ CChartsDrawer.prototype =
 					posY = points[i].pos * this.calcProp.pxToMM;
 				}
 
-				//промежуточные линии
+				//minor lines
 				for (let n = 0; n < minorLinesCount; n++) {
 					posMinorY = posY + n * minorStep;
 
@@ -5278,7 +5319,7 @@ CChartsDrawer.prototype =
 				posX = points[i].pos * this.calcProp.pxToMM;
 			}
 
-			//промежуточные линии
+			//minor lines
 			for (var n = 0; n <= minorLinesCount; n++) {
 				posMinorX = posX + n * minorStep;
 
@@ -5545,7 +5586,7 @@ CChartsDrawer.prototype =
 
 	calculatePyramid: function (hBar, subType, startX, startY, height, gapDepth, individualBarValue, perspectiveDepth, 
 		val, nullPositionOX, maxH, minH) {
-		//todo оптимизировать под вертикальные bar
+		//todo optimize for vertical bar
 		var x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, x5, y5, z5, x6, y6, z6, x7, y7, z7, x8, y8, z8;
 		var point1, point2, point3, point4, point5, point6, point7, point8;
 		var value = height;
@@ -5610,7 +5651,7 @@ CChartsDrawer.prototype =
 				x8 = startX + individualBarValue / 2, y8 = nullPositionOX - value - 1, z8 = 0 + gapDepth + perspectiveDepth / 2;
 			}
 
-			//расчет верхней и нижней пересекающих плоскостей
+			//calculation of upper and lower intersecting planes
 			pointPlainDown1 = this._convertAndTurnPoint(downPlainPointX1, downPlainPointY1, downPlainPointZ1);
 			pointPlainDown2 = this._convertAndTurnPoint(downPlainPointX2, downPlainPointY2, downPlainPointZ2);
 			pointPlainDown3 = this._convertAndTurnPoint(downPlainPointX3, downPlainPointY3, downPlainPointZ3);
@@ -5631,7 +5672,7 @@ CChartsDrawer.prototype =
 			point7 = this._convertAndTurnPoint(x7, y7, z7);
 			point8 = this._convertAndTurnPoint(x8, y8, z8);
 
-			//расчет уравнений прямых для ребер пирамиды
+			//calculation of line equations for pyramid edges
 			if (hBar) {
 				lineEquation1 = this.getLineEquation(point1, point4);
 				lineEquation2 = this.getLineEquation(point2, point3);
@@ -5644,12 +5685,12 @@ CChartsDrawer.prototype =
 				lineEquation4 = this.getLineEquation(point2, point6);
 			}
 
-			//расчет уравнений плоскостей
+			//calculation of plane equations
 			plainEquationDown =
 				this.getPlainEquation(pointPlainDown1, pointPlainDown2, pointPlainDown3, pointPlainDown4);
 			plainEquationUp = this.getPlainEquation(pointPlainUp1, pointPlainUp2, pointPlainUp3, pointPlainUp4);
 
-			//находим точки пересечения плоскостей с пирамидой для расчета усечения
+			//find intersection points of planes with pyramid for truncation calculation
 
 			if (hBar) {
 				point1 = this.isIntersectionPlainAndLine(plainEquationDown, lineEquation1);
@@ -5814,7 +5855,7 @@ CChartsDrawer.prototype =
 			}
 		}
 
-		// рассчитываем большую и малую полуось оснований усеченного конуса через нахождение точек пересечения линий пирамиды и параллелепипеда
+		// calculate major and minor semi-axes of truncated cone bases by finding intersection points of pyramid lines and parallelepiped
 		if (hbar) {
 			pyramidX1 = startY + individualBarValue / 2, pyramidY1 = nullPositionOX - value;
 			pyramidX2 = startY, pyramidY2 = nullPositionOX;
@@ -5858,10 +5899,10 @@ CChartsDrawer.prototype =
 			wDown = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
 			lDown = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
 		} else {
-			// координаты точек ребра пирамиды в плоскости x, y
+			// coordinates of pyramid edge points in the x, y plane
 			pyramidX1 = startX + individualBarValue / 2, pyramidY1 = nullPositionOX - value;
 			pyramidX2 = startX, pyramidY2 = nullPositionOX;
-			// координаты точек стороны пересекающего прямоугольника
+			// coordinates of intersecting rectangle side points
 			rectX1 = startX, rectY1 = startY - height;
 			rectX2 = startX + individualBarValue, rectY2 = startY - height;
 
@@ -5954,7 +5995,7 @@ CChartsDrawer.prototype =
 			
 		} else if (subType === "stackedPer") {
 			h = this.getStackedMaxHeight(ptCount, chart, null, j).heightPer;
-			//получаем пропорционально наибольшее значение высоты и его индекс
+			//get proportionally largest height value and its index
 			indexMax = h.indexMax;
 			indexMin = h.indexMin;
 			minH = h.minH;
@@ -5962,11 +6003,11 @@ CChartsDrawer.prototype =
 			maxPer = h.maxPer;
 			minPer = h.minPer;
 			
-			//значения для проверки условия усечения
+			//values for checking truncation condition
 			valueMax = maxPer;
 			valueMin = minPer;
-			//по индексу определяем когда получаем наибольшую высоту для расчета усечения
-			//делится на this.summBarVal, чтобы получить пропорциональную величину для высоты
+			//by index we determine when we get the largest height for truncation calculation
+			//divided by this.summBarVal to get proportional value for height
 			if (indexMax === j) {
 				endBlockPositionMax = this.getYPosition(maxH / summBarVal[j], valAx, null, true) * chartProp.pxToMM;
 			} else {
@@ -6046,7 +6087,7 @@ CChartsDrawer.prototype =
 			var countMax = 0;
 			var countMin = 0;
 	
-			//нахождение пропорционально наибольшей и наименьшей высоты для накопительных процентных пирамид
+			//finding proportionally largest and smallest height for stacked percentage pyramids
 			for (var i = 0; i < ptCount; i++) {
 				var sumBar = calculateSummStacked(i);
 				for (var k = 0; k < chart.series.length; k++) {
@@ -6069,11 +6110,11 @@ CChartsDrawer.prototype =
 					}
 				}
 
-				//пропорциональная высота
+				//proportional height
 				maxH1[i] = tempMax / sumBar;
 				minH1[i] = tempMin / sumBar;
-	
-				//обычная высота по значениям
+
+				//regular height by values
 				maxH2[i] = tempMax;
 				minH2[i] = tempMin;
 
@@ -6162,7 +6203,7 @@ CChartsDrawer.prototype =
 
 		if (subType) {
 			cone = true;
-			// за оси эллипса берем 1/2 длин ребер оснований усеченной пирамиды
+			// for ellipse axes we take 1/2 of the edge lengths of truncated pyramid bases
 			points = this.isConeIntersection(hbar, subType, startX, startY, height, gapDepth, individualBarWidth, perspectiveDepth,
 				val, nullPositionOX, maxH, minH);
 
@@ -6179,7 +6220,7 @@ CChartsDrawer.prototype =
 			}
 
 		} else {
-			//большая и малая полуось эллипса
+			//major and minor semi-axis of the ellipse
 			sizes1 = individualBarWidth / 2;
 			sizes2 = perspectiveDepth / 2;
 		}
@@ -6189,16 +6230,16 @@ CChartsDrawer.prototype =
 		var segmentPoint1, segmentPoint2;
 
 		var A, B, A1, B1;
-		// в ms 180 градусов составляют 17 сегментов
-		// todo пока что рассчитываем дополнительные точки, нужно будет оптимизировать
+		// in MS 180 degrees consist of 17 segments
+		// todo for now calculating additional points, will need to optimize
 		var dt = Math.PI / 34; //Math.PI / 17;
 
-		//рассчитываем стартовый угол
+		//calculate starting angle
 		var angel = Math.abs(this.processor3D.angleOy);
 		var k = Math.PI / 2;
 		k += angel;
 
-		// получаем точки основания цилиндра через парамметрические уравнения эллиптического цилиндра
+		// get cylinder base points through parametric equations of elliptical cylinder
 		for (var t = k; t <= Math.PI * 2 + k; t += dt) {
 			A = sizes1 * Math.cos(t);
 			B = sizes2 * Math.sin(t);
@@ -6231,7 +6272,7 @@ CChartsDrawer.prototype =
 		var sortCylinderPoints2 = [];
 		var invisible = false;
 
-		// сортируем точки по видимости для построения плоскости цилиндра
+		// sort points by visibility for building cylinder surface
 		for (var i = 1; i < segmentPoints.length; i++) {
 			if (this._isVisibleVerge3D(segmentPoints[i], segmentPoints[i - 1], segmentPoints2[i - 1], val, true)) {
 				if (!invisible) {
@@ -6254,8 +6295,8 @@ CChartsDrawer.prototype =
 		}
 		var isNotAllPointsVisible = invisible;
 
-		// проверяем если все точки поверхности цилиндра(конуса) либо видимы либо невидимы
-		// если уловие выполняется, то для отрисовки цилиндра(конуса) достаточно отрисовать эллипс (т.е вид сверху или снизу)
+		// check if all cylinder (cone) surface points are either visible or invisible
+		// if condition is met, then for drawing cylinder (cone) it is sufficient to draw an ellipse (i.e. top or bottom view)
 		if (sortCylinderPoints1.length === 0 || sortCylinderPoints2.length === 0 || val === 0) {
 			sortCylinderPoints1 = segmentPoints;
 			sortCylinderPoints2 = segmentPoints2;
@@ -6631,7 +6672,7 @@ drawBarChart.prototype = {
 					isValLessZero++;
 				}
 
-				//стартовая позиция колонки Y(+ высота с учётом поправок на накопительные диаграммы)
+				//starting Y position of column (+ height with adjustments for stacked charts)
 				val = parseFloat(seria[j].val);
 				const trendline = this.chart.series[i].getLastTrendline();
 				idx = seria[j].idx != null ? seria[j].idx + Math.floor(trendline && trendline.backward ? trendline.backward : 0) : j;
@@ -6647,7 +6688,7 @@ drawBarChart.prototype = {
 					}
 				}
 
-				//shapeType = 5; //раскоментировать для теста пирамид
+				//shapeType = 5; //uncomment for pyramid testing
 				tempValues[i][idx] = val;
 
 				startYColumnPosition = this._getStartYColumnPosition(seriesHeight, i, idx, val, yPoints, prevVal, shapeType, axisMax, axisMin);
@@ -6659,7 +6700,7 @@ drawBarChart.prototype = {
 
 				seriesHeight[i][idx] = height;
 
-				//стартовая позиция колонки X
+				//starting X position of column
 				if (!this.catAx.isReversed()) {
 					if (xPoints[1] && xPoints[1].pos && xPoints[idx]) {
 						startXPosition = xPoints[idx].pos - Math.abs((xPoints[1].pos - xPoints[0].pos) / 2);
@@ -6708,7 +6749,7 @@ drawBarChart.prototype = {
 
 				//for 3d charts
 				if (this.cChartDrawer.nDimensionCount === 3) {
-					//расскомментируем, чтобы включить старую схему отрисовки(+ переименовать функции _DrawBars3D -> _DrawBars3D2)
+					//uncomment to enable old drawing scheme (+ rename functions _DrawBars3D -> _DrawBars3D2)
 					//this.sortZIndexPaths.push({seria: i, point: idx, paths: paths.paths, x: paths.x, y: paths.y, zIndex: paths.zIndex});
 
 					var testHeight;
@@ -6788,8 +6829,8 @@ drawBarChart.prototype = {
 						zIndex = arr[i].z;
 					}
 				}
-				//проверяем что оси не под прямым углов и отступ в глубину OZ = 0
-				//в зависимости от угла увеличиваем zIndex фронтальной грани не первой к точке наблюдения колонки
+				//check that axes are not at right angle and depth offset on OZ = 0
+				//depending on angle, increase zIndex of front face for column not closest to observation point
 				if (!checkRotation && _gapDepth === 0) {
 					if (verge === verges.front && seria > 0 && angelX > 0) {
 						zIndex += angelX * 2;
@@ -6808,7 +6849,7 @@ drawBarChart.prototype = {
 
 			if (this.subType !== "standard") {
 				this.sortParallelepipeds = [];
-				//когда оси под прямым углом можно отсортировать без поиска пересечений в sortParallelepipeds
+				//when axes are at right angle, can sort without searching for intersections in sortParallelepipeds
 				if (this.cChartDrawer.processor3D.view3D.getRAngAx()) {
 					var angle;
 					if (this.subType !== "normal") {
@@ -6879,7 +6920,7 @@ drawBarChart.prototype = {
 			prevVal = this._getStackedValue(this.chart.series, i - 1, j, val);
 
 			if (this.subType === "stacked") {
-				//если максимальное значение задано вручную, и присутвуют точки, которые больше этого значения
+				//if maximum value is set manually and there are points greater than this value
 				if (curVal > axisMax) {
 					curVal = axisMax;
 				}
@@ -6894,7 +6935,7 @@ drawBarChart.prototype = {
 
 				var test = this.summBarVal[j];
 
-				//если максимальное значение задано вручную, и присутвуют точки, которые больше этого значения
+				//if maximum value is set manually and there are points greater than this value
 				if (curVal / test > axisMax) {
 					curVal = axisMax * test;
 				}
@@ -7002,7 +7043,7 @@ drawBarChart.prototype = {
 		var countMax = 0;
 		var countMin = 0;
 
-		//нахождение пропорционально наибольшей и наименьшей высоты для накопительных процентных пирамид
+		//finding proportionally largest and smallest height for stacked percentage pyramids
 		for (var i = 0; i < this.ptCount; i++) {
 			this._calculateSummStacked(i);
 			for (var k = 0; k < this.chart.series.length; k++) {
@@ -7015,11 +7056,11 @@ drawBarChart.prototype = {
 					tempMin += curVal;
 				}
 			}
-			//пропорциональная высота
+			//proportional height
 			maxH1[i] = tempMax / this.summBarVal[i];
 			minH1[i] = tempMin / this.summBarVal[i];
 
-			//обычная высота по значениям
+			//regular height by values
 			maxH2[i] = tempMax;
 			minH2[i] = tempMin;
 			tempMax = 0;
@@ -7028,7 +7069,7 @@ drawBarChart.prototype = {
 
 		var indexMax = 0;
 		var indexMin = 0;
-		//сортировка высоты по пропорциональным положительным и отрицательным значениям
+		//sorting height by proportional positive and negative values
 		for (var k = 0; k < maxH1.length; k++) {
 			if (tempMax < maxH1[k]) {
 				tempMax = maxH1[k];
@@ -7097,7 +7138,7 @@ drawBarChart.prototype = {
 		}
 
 		var path = this.paths.series[serIdx][val];
-		//ToDo пересмотреть для 3d диаграмм
+		//ToDo review for 3D charts
 		var isZeroH = false;
 		if (this.cChartDrawer.nDimensionCount === 3) {
 			if (AscFormat.isRealNumber(path[0])) {
@@ -7109,7 +7150,7 @@ drawBarChart.prototype = {
 			} else if (AscFormat.isRealNumber(path[3])) {
 				path = path[3];
 			} else if (AscFormat.isRealNumber(path[1])) {
-				//TODO добавлено для случая нулевой точки. возможно в данном случае сдвиги нужно считать иначе
+				//TODO added for zero point case. possibly in this case offsets need to be calculated differently
 				path = path[1];
 				isZeroH = true;
 			} else if (AscFormat.isRealNumber(path[4])) {
@@ -7321,9 +7362,9 @@ drawBarChart.prototype = {
 	},
 
 	_drawBar3D: function (path, pen, brush, k, val) {
-		//затемнение боковых сторон
-		//в excel всегда темные боковые стороны, лицевая и задняя стороны светлые
-		//TODO пересмотреть получения pen
+		//darkening of side faces
+		//in Excel side faces are always dark, front and back faces are light
+		//TODO review pen retrieval
 		if (null === pen || (null !== pen && null === pen.Fill) ||
 			(null !== pen && null !== pen.Fill && null === pen.Fill.fill)) {
 			pen = AscFormat.CreatePenFromParams(brush, undefined, undefined, undefined, undefined, 0.1);
@@ -7337,10 +7378,10 @@ drawBarChart.prototype = {
 				var cColorMod = new AscFormat.CColorMod;
 
 				if (k === 1 || k === 4) {
-					//для градиентной заливки верхнюю и нижнюю грань закрашиываем первым и последним цветом соотвенственно
+					//for gradient fill, top and bottom faces are filled with first and last color respectively
 					if (duplicateBrush.fill && AscDFH.historyitem_type_GradFill === duplicateBrush.fill.getObjectType()) {
 						var colors = duplicateBrush.fill.colors;
-						//ToDo проверить stacked charts!
+						//ToDo check stacked charts!
 						var color;
 						var valAxOrientation = this.valAx.getOrientation();
 						if ((val > 0 && valAxOrientation === ORIENTATION_MIN_MAX) ||
@@ -7445,7 +7486,7 @@ drawBarChart.prototype = {
 			[point1, point2, point6, point5], [point4, point8, point7, point3], [point5, point6, point7, point8],
 			[point2, point3, point7, point6]];
 		
-		//paths2 для расчета подписей, в дальнейшем нужно оптимизировать этот процесс
+		//paths2 for calculating labels, this process needs to be optimized later
 		points = [point1, point2, point3, point4, point5, point6, point7, point8];
 		paths2 = this.cChartDrawer.calculateRect3D(points, val, isNotDrawDownVerge);
 	
@@ -7566,9 +7607,9 @@ drawBarChart.prototype = {
 		var t = this;
 		var dRadius1, dRadius2, uRadius1, uRadius2;
 		var calcCylinderProps = function (bCone) {
-			//большая и малая полуось оснований усеченного конуса
+			//major and minor semi-axes of truncated cone bases
 			if (bCone) {
-				// за оси эллипса берем 1/2 длин ребер оснований усеченной пирамиды
+				// for ellipse axes we take 1/2 of the edge lengths of truncated pyramid bases
 				points = t.cChartDrawer.isConeIntersection(false, t.subType, startX, startY, height, gapDepth, individualBarWidth, perspectiveDepth, val, nullPositionOX, maxH, minH);
 
 				if (t.val === 0) {
@@ -7589,7 +7630,7 @@ drawBarChart.prototype = {
 				}
 
 			} else {
-				//большая и малая полуось эллипса
+				//major and minor semi-axis of the ellipse
 				dRadius1 = individualBarWidth / 2;
 				dRadius2 = perspectiveDepth / 2;
 			}
@@ -7638,7 +7679,7 @@ drawBarChart.prototype = {
 			[point1, point2, point6, point5], [point4, point8, point7, point3], [point5, point6, point7, point8],
 			[point2, point3, point7, point6]];
 
-		//paths2 для расчета подписей, в дальнейшем нужно оптимизировать этот процесс
+		//paths2 for calculating labels, this process needs to be optimized later
 		points = [point1, point2, point3, point4, point5, point6, point7, point8];
 		paths2 = this.cChartDrawer.calculateRect3D(points, val, isNotDrawDownVerge);
 
@@ -7728,10 +7769,10 @@ drawBarChart.prototype = {
 	},
 
 	getDepths: function (serNum) {
-		//параметр r и глубина по OZ
+		//parameter r and depth along OZ
 		var perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
 
-		//сдвиг по OZ в глубину
+		//offset along OZ into depth
 		var gapDepth = this.chart.gapDepth != null ? this.chart.gapDepth : globalGapDepth;
 		if (this.subType === "standard") {
 			perspectiveDepth = (perspectiveDepth / (gapDepth / 100 + 1)) / this.seriesCount;
@@ -7739,7 +7780,7 @@ drawBarChart.prototype = {
 			perspectiveDepth = perspectiveDepth / (gapDepth / 100 + 1);
 		}
 
-		//если есть ось z берем pos из zPoints
+		//if z axis exists, get pos from zPoints
 		if (this.serAx && this.serAx.zPoints[serNum]) {
 			return { gapDepth: this.serAx.zPoints[serNum].pos - (perspectiveDepth / 2), perspectiveDepth: perspectiveDepth };
 		}
@@ -9141,8 +9182,8 @@ drawLineChart.prototype = {
 			dataSeries = numCache.pts;
 
 			for (var n = 0; n < numCache.ptCount; n++) {
-				//рассчитываем значения
-				//используем для поиска n - idx с 0 индексом может не существовать, а точку в нулевой позиции необходимо отрисовать
+				//calculate values
+				//using n for search - idx with 0 index may not exist, but point at zero position needs to be drawn
 				val = this._getYVal(n, i);
 
 				x = this.catAx ? this.cChartDrawer.getYPosition(n + 1, this.catAx) : xPoints[n].pos;
@@ -9191,7 +9232,7 @@ drawLineChart.prototype = {
 		let chart3d = this.cChartDrawer.nDimensionCount === 3;
 		let perspectiveDepth, serDiff, gapDepth, depthSer, diffGapDepth;
 		if (chart3d) {
-			//сдвиг по OZ в глубину
+			//offset along OZ into depth
 			perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
 			serDiff = perspectiveDepth / this.seriesCount;
 			gapDepth = this.chart.gapDepth != null ? this.chart.gapDepth : globalGapDepth;
@@ -9302,6 +9343,10 @@ drawLineChart.prototype = {
 			return;
 		}
 
+		if (!point.compiledDlb) {
+			return;
+		}
+
 		var oPath = this.cChartSpace.GetPath(path);
 		var oCommand0 = oPath.getCommandByIndex(commandIndex);
 		var x = oCommand0.X;
@@ -9359,7 +9404,7 @@ drawLineChart.prototype = {
 	},
 
 	_drawLines: function (/*isSkip*/) {
-		//TODO для того, чтобы верхняя линия рисовалась. пересмотреть!
+		//TODO for top line to be drawn. review!
 		var diffPen = 3;
 		var leftRect = this.chartProp.chartGutter._left / this.chartProp.pxToMM;
 		var topRect = (this.chartProp.chartGutter._top - diffPen) / this.chartProp.pxToMM;
@@ -9396,7 +9441,7 @@ drawLineChart.prototype = {
 			var sumVal = 0;
 			for (k = 0; k < this.chart.series.length; k++) {
 				idxPoint = this.cChartDrawer.getPointByIndex(this.chart.series[k], n);
-				//TODO сейчас рисуем непрерывную линию, если нужно разорваться - не нужно 0 подставлять
+				//TODO currently drawing continuous line, if need to break - don't use 0
 				tempVal = idxPoint ? parseFloat(idxPoint.val) : 0;
 				if (tempVal) {
 					if (k <= i) {
@@ -9441,7 +9486,7 @@ drawLineChart.prototype = {
 		return pathId;
 	},
 
-	//TODO пока включаю функцию _calculateSplineLine. с _calculateSplineLine2 отрисовается неверно. проверить!
+	//TODO for now enabling _calculateSplineLine function. with _calculateSplineLine2 draws incorrectly. check!
 	_calculateSplineLine2: function (x, y, x1, y1, x2, y2, x3, y3, xPoints, yPoints) {
 		var pathId = this.cChartSpace.AllocPath();
 		var path = this.cChartSpace.GetPath(pathId);
@@ -9496,7 +9541,7 @@ drawLineChart.prototype = {
 		};
 
 
-		//рисуем по сериям
+		//draw by series
 		var onSeries = function (onlyLessNull) {
 			var drawNeedVerge = function () {
 				for (var j = 0; j < t.paths.series.length; j++) {
@@ -9540,10 +9585,10 @@ drawLineChart.prototype = {
 	},
 
 	_drawLine3D: function (path, pen, brush, k) {
-		//затемнение боковых сторон
-		//в excel всегда темные боковые стороны, лицевая и задняя стороны светлые
+		//darkening of side faces
+		//in Excel side faces are always dark, front and back faces are light
 
-		//todo возможно стоит проверить fill.type на FILL_TYPE_NOFILL и рисовать отдельно границы, если они заданы!
+		//todo possibly should check fill.type for FILL_TYPE_NOFILL and draw borders separately if they are set!
 		//brush = pen.Fill;
 
 		if (k !== 2) {
@@ -9690,7 +9735,7 @@ drawAreaChart.prototype = {
 			dataSeries = numCache.pts;
 
 			for (var n = 0; n < numCache.ptCount; n++) {
-				//рассчитываем значения
+				//calculate values
 				val = this._getYVal(n, i);
 
 				if((null === val && this.cChartDrawer.nDimensionCount !== 3) || (isLog && val === 0)) {
@@ -9725,7 +9770,7 @@ drawAreaChart.prototype = {
 			}
 
 			if (this.cChartDrawer.nDimensionCount === 3) {
-				//для normal рассчитываем видимые/невидимые грани для каждой серии
+				//for normal calculate visible/invisible faces for each series
 				if (this.subType === "normal") {
 					this._calculateDarkSideOfTheFace(i);
 				} else if (this.darkFaces === null) {
@@ -9743,7 +9788,7 @@ drawAreaChart.prototype = {
 
 			var upDownFaces = this.upFaces.concat(this.downFaces);
 
-			//более быстрая сортировка
+			//faster sorting
 			var angle = this.cChartDrawer.processor3D.angleOx;
 			if (angle < 0) {
 				upDownFaces.sort(function sortArr(a, b) {
@@ -9766,7 +9811,7 @@ drawAreaChart.prototype = {
 			var anotherFaces = this.sortZIndexPathsFront.concat(this.sortZIndexPathsBack).concat(this.sortZIndexPathsLeft).concat(this.sortZIndexPathsRight);
 			this.sortZIndexPaths = upDownFaces.concat(anotherFaces);
 
-			//медленная, но более качественный сортировка
+			//slower but higher quality sorting
 			//var anotherFaces = this.sortZIndexPathsFront.concat(this.sortZIndexPathsBack).concat(this.sortZIndexPathsLeft).concat(this.sortZIndexPathsRight);
 			//this.sortZIndexPaths = this.upFaces.concat(anotherFaces);
 			//this.sortZIndexPaths = this.downFaces.concat(this.sortZIndexPaths)
@@ -9854,7 +9899,7 @@ drawAreaChart.prototype = {
 			return null;
 		};
 
-		//точки данной серии
+		//points of this series
 		if(this.subType === "stacked" || this.subType === "stackedPer") {
 			let pointsLength = points.length;
 			for (let i = 0; i < pointsLength; i++) {
@@ -9868,7 +9913,7 @@ drawAreaChart.prototype = {
 				}
 			}
 
-			//точки предыдущей серии
+			//points of previous series
 			if (isPrevPoints && pointsLength) {
 				for (let i = pointsLength - 1; i >= 0; i--) {
 					point = searchPreviousPoint(i);
@@ -9892,7 +9937,7 @@ drawAreaChart.prototype = {
 				point = points[i];
 				if(!point) {
 					if(startSegmentPoint) {
-						//возвращаемся к оси, далее к начальной точки сегмента
+						//return to axis, then to segment start point
 						path.lnTo(points[i - 1].x * pathW, nullPositionOX / pxToMm * pathH);
 						path.lnTo(startSegmentPoint.x * pathW, nullPositionOX / pxToMm * pathH);
 						path.lnTo(startSegmentPoint.x * pathW, startSegmentPoint.y * pathH);
@@ -9908,7 +9953,7 @@ drawAreaChart.prototype = {
 
 				if(i === points.length - 1 && point) {
 					if(startSegmentPoint) {
-						//возвращаемся к оси, далее к начальной точки сегмента
+						//return to axis, then to segment start point
 						path.lnTo(point.x * pathW, nullPositionOX / pxToMm * pathH);
 						path.lnTo(startSegmentPoint.x * pathW, nullPositionOX / pxToMm * pathH);
 						path.lnTo(startSegmentPoint.x * pathW, startSegmentPoint.y * pathH);
@@ -9921,11 +9966,11 @@ drawAreaChart.prototype = {
 	},
 
 	_calculateLine3D: function (points, seriaNum) {
-		//pointsIn3D[0] - верхняя кривая ближней стороны, pointsIn3D[1] - нижняя кривая ближней стороны, pointsIn3D[2] - верхняя кривая дальней стороны, pointsIn3D[3] - нижняя кривая дальней стороны
+		//pointsIn3D[0] - upper curve of near side, pointsIn3D[1] - lower curve of near side, pointsIn3D[2] - upper curve of far side, pointsIn3D[3] - lower curve of far side
 		var pointsIn3D = [], t = this, pxToMm = this.chartProp.pxToMM;
 		var nullPosition = this.catAx.posY * this.chartProp.pxToMM;
 
-		//сдвиг по OZ в глубину
+		//offset along OZ into depth
 		var gapDepth = this.gapDepth[seriaNum];
 
 		var getProjectPoints = function (currentZ, startN) {
@@ -9939,7 +9984,7 @@ drawAreaChart.prototype = {
 
 		var zNear = 0;
 		var zFar = this.perspectiveDepth;
-		//рассчитываем ближние и дальние точки конкретной серии
+		//calculate near and far points for specific series
 		getProjectPoints(zNear, 0);
 		getProjectPoints(zFar, 2);
 
@@ -9956,7 +10001,7 @@ drawAreaChart.prototype = {
 			var x1 = points[i + 1].x * pxToMm;
 			var y1 = points[i + 1].y * pxToMm;
 
-			//рассчитываем 8 точек для каждого ректа
+			//calculate 8 points for each rect
 			var prevX = prevPoints ? prevPoints[i].x * pxToMm : x;
 			var prevY = prevPoints ? prevPoints[i].y * pxToMm : nullPositionOX;
 			var prevX1 = prevPoints ? prevPoints[i + 1].x * pxToMm : x1;
@@ -9990,7 +10035,7 @@ drawAreaChart.prototype = {
 			}
 
 
-			//начальные точки, без проекции и без поворота
+			//initial points, without projection and without rotation
 			var p1 = {x: x, y: y, z: this.gapDepth};
 			var p2 = {x: x, y: y, z: this.gapDepth + this.perspectiveDepth};
 			var p3 = {x: x1, y: y1, z: this.gapDepth + this.perspectiveDepth};
@@ -10001,7 +10046,7 @@ drawAreaChart.prototype = {
 			var p8 = {x: prevX1, y: prevY1, z: this.gapDepth};
 			var arrNotRotatePoints = [p1, p2, p3, p4, p5, p6, p7, p8];
 
-			//повернутые, но без проекции
+			//rotated, but without projection
 			var point11 = t.cChartDrawer._convertAndTurnPoint(p1.x, p1.y, p1.z, null, null, true);
 			var point22 = t.cChartDrawer._convertAndTurnPoint(p2.x, p2.y, p2.z, null, null, true);
 			var point33 = t.cChartDrawer._convertAndTurnPoint(p3.x, p3.y, p3.z, null, null, true);
@@ -10012,7 +10057,7 @@ drawAreaChart.prototype = {
 			var point88 = t.cChartDrawer._convertAndTurnPoint(p8.x, p8.y, p8.z, null, null, true);
 			var arrPoints = [point11, point22, point33, point44, point55, point66, point77, point88];
 
-			//спроецированные и повернутые точки
+			//projected and rotated points
 			var point1 = t.cChartDrawer._convertAndTurnPoint(p1.x, p1.y, p1.z);
 			var point2 = t.cChartDrawer._convertAndTurnPoint(p2.x, p2.y, p2.z);
 			var point3 = t.cChartDrawer._convertAndTurnPoint(p3.x, p3.y, p3.z);
@@ -10348,14 +10393,14 @@ drawAreaChart.prototype = {
 			};
 		};
 
-		//рассчитываем все грани, кроме верхних и нижних
+		//calculate all faces except top and bottom
 		this._calculateSimpleRect(arrPoints, arrPointsProject, point, seria);
 
-		//находим пересечение грани с предыдущими гранями. если есть, то делим грани
+		//find face intersection with previous faces. if exists, split faces
 		var breakFaces = this.intersections[point] && this.intersections[point][seria] ? this.intersections[point][seria] : null;
 
 		if (breakFaces && breakFaces.up && breakFaces.up.length) {
-			//сортируем грани одной точки
+			//sort faces of one point
 			breakFaces.up = breakFaces.up.sort(function sortArr(a, b) {
 				return a.x - b.x;
 			});
@@ -10391,7 +10436,7 @@ drawAreaChart.prototype = {
 		}
 
 		if (breakFaces && breakFaces.down && breakFaces.down.length) {
-			//сортируем грани одной точки
+			//sort faces of one point
 			breakFaces.down = breakFaces.down.sort(function sortArr(a, b) {
 				return a.x - b.x;
 			});
@@ -10431,7 +10476,7 @@ drawAreaChart.prototype = {
 				this.downFaces.push(face);
 			}
 		} else {
-			//TODO проверить и убрать
+			//TODO check and remove
 			face = generateFace(point1, point2, point3, point4, point11, point22, point33, point44, p1, p2, p3, p4, 1);
 			this.downFaces.push(face);
 		}
@@ -10460,7 +10505,7 @@ drawAreaChart.prototype = {
 
 				prevPoints = this._getPrevSeriesPoints(allPoints, seria);
 
-				//рассчитываем 8 точек для каждого ректа
+				//calculate 8 points for each rect
 				var prevX = prevPoints ? prevPoints[i].x * pxToMm : x;
 				var prevY = prevPoints ? prevPoints[i].y * pxToMm : nullPositionOX;
 				var prevX1 = prevPoints ? prevPoints[i + 1].x * pxToMm : x1;
@@ -10523,13 +10568,13 @@ drawAreaChart.prototype = {
 			arr.push(elem);
 		};
 
-		//текущая верхняя и нижняя прямая и их пересечение
+		//current upper and lower line and their intersection
 		var curLine1 = this.cChartDrawer.getLineEquation(curPoint1, curPoint2);
 		var curLine2 = this.cChartDrawer.getLineEquation(curPoint3, curPoint4);
 		var curTempIntersection = this.cChartDrawer.isIntersectionLineAndLine(curLine1, curLine2);
 
 		var curDown = [{start: curPoint3, end: curPoint4, eq: curLine2}];
-		//если пересечения текущих прямых вписывается в границы диаграммы
+		//if intersection of current lines fits within chart boundaries
 		var curIntersection = null;
 		if (curTempIntersection && curTempIntersection.x > curPoint3.x && curTempIntersection.x < curPoint4.x) {
 			curIntersection = curTempIntersection;
@@ -10539,7 +10584,7 @@ drawAreaChart.prototype = {
 		}
 
 		var curUp = [{start: curPoint1, end: curPoint2, eq: curLine1}];
-		//если пересечения текущих прямых вписывается в границы диаграммы
+		//if intersection of current lines fits within chart boundaries
 		curIntersection = null;
 		if (curTempIntersection && curTempIntersection.x > curPoint1.x && curTempIntersection.x < curPoint2.x) {
 			curIntersection = curTempIntersection;
@@ -10549,29 +10594,29 @@ drawAreaChart.prototype = {
 		}
 
 
-		//первая/последняя точка текущей грани, пересечение текущей грани
+		//first/last point of current face, intersection of current face
 		if (!this.prevPoints[pointIndex].length ||
 			(this.prevPoints[pointIndex].length && !this.prevPoints[pointIndex][seriaIndex])) {
-			//заносим первую точку грани - ПЕРЕПРОВеРИТЬ
+			//add first face point - RECHECK
 			addToArr(pointIndex, seriaIndex, true, curPoint3);
 			addToArr(pointIndex, seriaIndex, null, curPoint1);
 
-			//заносим текущее пересечение
+			//add current intersection
 			if (curIntersection) {
 				addToArr(pointIndex, seriaIndex, true, curIntersection);
 				addToArr(pointIndex, seriaIndex, null, curIntersection);
 
-				//сразу заносим последнюю точку грани
+				//immediately add last face point
 				addToArr(pointIndex, seriaIndex, true, curPoint2);
 				addToArr(pointIndex, seriaIndex, null, curPoint4);
 			} else {
-				//сразу заносим последнюю точку грани
+				//immediately add last face point
 				addToArr(pointIndex, seriaIndex, true, curPoint4);
 				addToArr(pointIndex, seriaIndex, null, curPoint2);
 			}
 		}
 
-		//пересечения с прямыми предыдущих серий
+		//intersections with lines of previous series
 		var line1, line2, intersection;
 		if (this.prevDown && this.prevDown[pointIndex]) {
 			for (var i = 0; i < this.prevDown[pointIndex].length; i++) {
@@ -10584,12 +10629,12 @@ drawAreaChart.prototype = {
 						intersection = this.cChartDrawer.isIntersectionLineAndLine(line1.eq, line2.eq);
 
 						if (intersection) {
-							//предыдущая - i
+							//previous - i
 							if (intersection.x > line1.start.x && intersection.x < line1.end.x) {
 								addToArr(pointIndex, i, true, intersection);
 							}
 
-							//текущая серия
+							//current series
 							if (intersection.x > line2.start.x && intersection.x < line2.end.x) {
 								addToArr(pointIndex, seriaIndex, true, intersection);
 							}
@@ -10600,7 +10645,7 @@ drawAreaChart.prototype = {
 			}
 		}
 
-		//пересечения с прямыми предыдущих серий
+		//intersections with lines of previous series
 		if (this.prevUp && this.prevUp[pointIndex]) {
 			for (var i = 0; i < this.prevUp[pointIndex].length; i++) {
 				var prevUp = this.prevUp[pointIndex][i];
@@ -10612,12 +10657,12 @@ drawAreaChart.prototype = {
 						intersection = this.cChartDrawer.isIntersectionLineAndLine(line1.eq, line2.eq);
 
 						if (intersection) {
-							//предыдущая - i
+							//previous - i
 							if (intersection.x > line1.start.x && intersection.x < line1.end.x) {
 								addToArr(pointIndex, i, null, intersection);
 							}
 
-							//текущая серия
+							//current series
 							if (intersection.x > line2.start.x && intersection.x < line2.end.x) {
 								addToArr(pointIndex, seriaIndex, null, intersection);
 							}
@@ -10824,6 +10869,10 @@ drawAreaChart.prototype = {
 
 		var constMargin = 5 / pxToMm;
 
+		if (!point.compiledDlb) {
+			return;
+		}
+
 		var width = point.compiledDlb.extX;
 		var height = point.compiledDlb.extY;
 
@@ -10873,7 +10922,7 @@ drawAreaChart.prototype = {
 	},
 
 	_drawLines: function (/*isSkip*/) {
-		//ширина линии
+		//line width
 		var brush;
 		var pen;
 		var seria, dataSeries, numCache;
@@ -10917,7 +10966,7 @@ drawAreaChart.prototype = {
 	},
 
 	_getYVal: function (n, i) {
-		//TODO сделать общую функцию для line/area!
+		//TODO create common function for line/area!
 		var tempVal;
 		var val = 0;
 		var idxPoint;
@@ -10964,7 +11013,7 @@ drawAreaChart.prototype = {
 	},
 
 	_drawLines3D: function (/*isSkip*/) {
-		//ширина линии
+		//line width
 		var brush;
 		var pen;
 		var seria, dataSeries, numCache;
@@ -11000,8 +11049,8 @@ drawAreaChart.prototype = {
 	},
 
 	_drawBar3D: function (path, pen, brush, k) {
-		//затемнение боковых сторон
-		//в excel всегда темные боковые стороны, лицевая и задняя стороны светлые
+		//darkening of side faces
+		//in Excel side faces are always dark, front and back faces are light
 		//pen = this.cChartSpace.chart.plotArea.valAx.compiledMajorGridLines;
 		//pen.setFill(brush);
 		pen = AscFormat.CreatePenFromParams(brush, undefined, undefined, undefined, undefined, 0.2);
@@ -11244,7 +11293,7 @@ drawHBarChart.prototype = {
 	},
 
 	_recalculateBars: function (/*isSkip*/) {
-		//соответствует подписям оси категорий(OX)
+		//corresponds to category axis labels (OX)
 		var xPoints = this.valAx.xPoints;
 		var yPoints = this.catAx.yPoints;
 
@@ -11272,7 +11321,7 @@ drawHBarChart.prototype = {
 		var perspectiveDepth, gapDepth, DiffGapDepth;
 		if (this.cChartDrawer.nDimensionCount === 3) {
 			perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
-			//сдвиг по OZ в глубину
+			//offset along OZ into depth
 			gapDepth = this.chart.gapDepth != null ? this.chart.gapDepth : globalGapDepth;
 			perspectiveDepth = perspectiveDepth / (gapDepth / 100 + 1);
 			DiffGapDepth = perspectiveDepth * (gapDepth / 2) / 100;
@@ -11295,7 +11344,7 @@ drawHBarChart.prototype = {
 			var shapeType = null !== this.chart.series[i].shape ? this.chart.series[i].shape : this.chart.shape;
 			//shapeType = 0;
 			for (var j = 0; j < seria.length; j++) {
-				//стартовая позиция колонки Y(+ высота с учётом поправок на накопительные диаграммы)
+				//starting Y position of column (+ height with adjustments for stacked charts)
 				val = parseFloat(seria[j].val);
 
 				if (val > 0) {
@@ -11321,7 +11370,7 @@ drawHBarChart.prototype = {
 				seriesHeight[i][idx] = startXColumnPosition.width;
 
 
-				//стартовая позиция колонки Y
+				//starting Y position of column
 				if (!this.catAx.isReversed()) {
 					if (yPoints[1] && yPoints[1].pos && yPoints[idx]) {
 						startYPosition = yPoints[idx].pos + Math.abs((yPoints[1].pos - yPoints[0].pos) / 2);
@@ -11493,8 +11542,8 @@ drawHBarChart.prototype = {
 		var axisMin = xPoints[0].val < xPoints[xPoints.length - 1].val ? xPoints[0].val : xPoints[xPoints.length - 1].val;
 		var axisMax = xPoints[0].val < xPoints[xPoints.length - 1].val ? xPoints[xPoints.length - 1].val : xPoints[0].val;
 
-		//в ms отрисовка сделана следующим образом: если диаграмма типа normal, то стартовую точку отрисовки столбцов берем позицию X оси категорий(posX)
-		//если диаграмма типа stacked то рисуем от позиции X ноля оси категорий - getPositionZero(позиция ноля и оси могут отличиться в зависимости от настроек)
+		//in MS drawing is done as follows: if chart is normal type, we take category axis X position (posX) as column drawing start point
+		//if chart is stacked type, we draw from category axis zero X position - getPositionZero (zero position and axis may differ depending on settings)
 		var nullPositionOX = this.subType === "stacked" ? this.cChartDrawer.getPositionZero(this.valAx) : catAx.posX * this.chartProp.pxToMM;
 
 		var testMaxHeight = this.cChartDrawer.getYPosition(axisMax, this.valAx) * this.chartProp.pxToMM - nullPositionOX;
@@ -11505,7 +11554,7 @@ drawHBarChart.prototype = {
 			prevVal = this._getStackedValue(this.chart.series, i - 1, j, val);
 
 			if (this.subType === "stacked") {
-				//если максимальное значение задано вручную, и присутвуют точки, которые больше этого значения
+				//if maximum value is set manually and there are points greater than this value
 				if (curVal > axisMax) {
 					curVal = axisMax;
 				}
@@ -11520,7 +11569,7 @@ drawHBarChart.prototype = {
 
 				var test = this.summBarVal[j];
 
-				//если максимальное значение задано вручную, и присутвуют точки, которые больше этого значения
+				//if maximum value is set manually and there are points greater than this value
 				if (curVal / test > axisMax) {
 					curVal = axisMax * test;
 				}
@@ -11646,6 +11695,10 @@ drawHBarChart.prototype = {
 
 		var pxToMm = this.chartProp.pxToMM;
 
+		if (!point.compiledDlb) {
+			return;
+		}
+
 		var width = point.compiledDlb.extX;
 		var height = point.compiledDlb.extY;
 
@@ -11717,7 +11770,7 @@ drawHBarChart.prototype = {
 		newStartX = newStartX * this.chartProp.pxToMM;
 		newStartY = newStartY - individualBarHeight;
 
-		//рассчитываем 8 точек для каждого столбца
+		//calculate 8 points for each column
 		x1 = newStartX, y1 = newStartY, z1 = DiffGapDepth;
 		x2 = newStartX, y2 = newStartY, z2 = perspectiveDepth + DiffGapDepth;
 		x3 = newStartX + width, y3 = newStartY, z3 = perspectiveDepth + DiffGapDepth;
@@ -11727,7 +11780,7 @@ drawHBarChart.prototype = {
 		x7 = newStartX + width, y7 = newStartY + individualBarHeight, z7 = perspectiveDepth + DiffGapDepth;
 		x8 = newStartX + width, y8 = newStartY + individualBarHeight, z8 = DiffGapDepth;
 
-		//поворот относительно осей
+		//rotation relative to axes
 		point1 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
 		point2 = this.cChartDrawer._convertAndTurnPoint(x2, y2, z2);
 		point3 = this.cChartDrawer._convertAndTurnPoint(x3, y3, z3);
@@ -11788,7 +11841,7 @@ drawHBarChart.prototype = {
 				});
 			}
 		} else {
-			//рассчитываем 8 точек для каждого столбца одинакового размера для рассчета положения столбцов
+			//calculate 8 points for each column of equal size for calculating column positions
 			if (this.subType === "normal") {
 				var startXColumnPosition = this._getStartYColumnPosition(seriesHeight, idx, i, axisMax, xPoints);
 				width = startXColumnPosition.width / this.chartProp.pxToMM;
@@ -11804,7 +11857,7 @@ drawHBarChart.prototype = {
 				point8 = this.cChartDrawer._convertAndTurnPoint(x8, y8, z8);
 			}
 
-			//не проецируем на плоскость
+			//do not project onto plane
 			var point11 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1, null, null, true);
 			var point22 = this.cChartDrawer._convertAndTurnPoint(x2, y2, z2, null, null, true);
 			var point33 = this.cChartDrawer._convertAndTurnPoint(x3, y3, z3, null, null, true);
@@ -12061,7 +12114,7 @@ drawHBarChart.prototype = {
 	},
 
 	_drawBar3D: function (path, pen, brush, k) {
-		//затемнение боковых сторон
+		//darkening of side faces
 		var fill = this._getFill(pen, brush, k);
 		var newBrush = fill.brush;
 		var newPen = fill.pen;
@@ -12069,7 +12122,7 @@ drawHBarChart.prototype = {
 	},
 
 	_getFill: function (pen, brush, face) {
-		//k: 0 - передняя, 1 - верхняя, 2 - левая, 3 - правая, 4 - нижняя, 5 - задняя
+		//k: 0 - front, 1 - top, 2 - left, 3 - right, 4 - bottom, 5 - back
 		var shade = "shade";
 		var shadeValue1 = 35000;
 		var shadeValue2 = 45000;
@@ -12083,7 +12136,7 @@ drawHBarChart.prototype = {
 		 pen = AscFormat.CreatePenFromParams(brush, undefined, undefined, undefined, undefined, 0.1);
 		 }*/
 
-		//TODO будет время - сделать градиентную заливку в зависимости от угла!!!!
+		//TODO when there's time - make gradient fill depending on angle!!!!
 		var color;
 		if (brush && brush.fill && AscDFH.historyitem_type_GradFill === brush.fill.getObjectType()) {
 			switch (face) {
@@ -12346,7 +12399,7 @@ drawPieChart.prototype = {
 
 		var firstSliceAng = this.chart && this.chart.firstSliceAng ? this.chart.firstSliceAng : 0;
 		this.tempAngle = Math.PI / 2 - (firstSliceAng / 180) * Math.PI;
-		//рисуем против часовой стрелки, поэтому цикл с конца
+		//draw counter-clockwise, so loop from end
 		let startAngle = this.tempAngle
 		let angle;
 		let midAngle;
@@ -12380,7 +12433,7 @@ drawPieChart.prototype = {
 			const xExplosion = Math.max(0, Math.min(maxExplosionValue, fExplosionLenght)) * Math.cos(midAngle);
 			const yExplosion = Math.max(0, Math.min(maxExplosionValue, fExplosionLenght)) * Math.sin(midAngle);
 
-			//правка связана с реализацией arcTo, где swAng зануляется и приравнивается к значению
+			//fix related to arcTo implementation, where swAng is zeroed and set to value
 			if(angle < 10e-16) {
 				angle = 0;
 			}
@@ -12388,7 +12441,7 @@ drawPieChart.prototype = {
 			if (!this.paths.series) {
 				this.paths.series = [];
 			}
-			if (sumData === 0)//TODO стоит пересмотреть
+			if (sumData === 0)//TODO should review
 			{
 				this.paths.series[i] = this._calculateEmptySegment(radius, xCenter, yCenter);
 			} else {
@@ -12547,7 +12600,7 @@ drawPieChart.prototype = {
 	},
 
 	_changeAngle: function (radius, stAng, swAng, xCenter, yCenter, depth, radius1, radius2) {
-		//корректируем центр
+		//adjust center
 		yCenter = yCenter - depth / 2;
 
 		var x0 = xCenter + radius * Math.cos(stAng);
@@ -12629,7 +12682,7 @@ drawPieChart.prototype = {
 	_calculateDLbl: function (chartSpace, ser, val, bLayout) {
 		var pxToMm = this.chartProp.pxToMM;
 
-		//TODO сделать через idx как у drawDoughnutChart!!!
+		//TODO implement via idx like in drawDoughnutChart!!!
 		if (!this.paths.series[val]) {
 			var numCache = this._getFirstRealNumCache();
 			if(numCache) {
@@ -12651,7 +12704,7 @@ drawPieChart.prototype = {
 			if (this.paths.series[val][ser] && this.paths.series[val][ser].upPath) {
 				path = this.paths.series[val][ser].upPath;
 			} else if (this.paths.series[val][ser] && this.paths.series[val][ser].insidePath) {
-				// функция для случая когда все значения серии равны нулю, рассчитывает позицию исходя из insidePath
+				// function for case when all series values equal zero, calculates position based on insidePath
 				return this._calculateDLblOnlyZeroValue(val, this.paths.series[val][ser].insidePath);
 			}
 		} else {
@@ -12698,7 +12751,7 @@ drawPieChart.prototype = {
 
 		var tempCenterX, tempCenterY;
 
-		//TODO высчитать позиции, как в екселе +  ограничения
+		//TODO calculate positions as in Excel + constraints
 		var oPos;
 		switch (point.compiledDlb.dLblPos) {
 			case c_oAscChartDataLabelsPos.bestFit: {
@@ -12787,7 +12840,7 @@ drawPieChart.prototype = {
 	_calculateDLblOnlyZeroValue: function (val, path) {
 		var numCache = this._getFirstRealNumCache();
 		var oCommand1, calcPath, oCommand0;
-		// циклом находим крайнюю точку
+		// find extreme point with loop
 		for (var i = 0; i < this.paths.series.length; i++) {
 			calcPath = null;
 			if (this.paths.series[i] && numCache[i] && null != numCache[i].val && this.paths.series[i][numCache[i].val]) {
@@ -13023,7 +13076,7 @@ drawPieChart.prototype = {
 
 		var angles = [];
 		for (var i = numCache.ptCount; i >= 0; i--) {
-			//рассчитываем угол
+			//calculate angle
 			var swapAngle;
 			if (i === numCache.ptCount) {
 				swapAngle = firstAngle;
@@ -13116,7 +13169,7 @@ drawPieChart.prototype = {
 
 		swAng = this._changeAngle(radius, stAng, swAng, xCenter, yCenter, depth, radius1, radius2);
 		stAng = this.angleFor3D;
-		//корректируем центр
+		//adjust center
 		yCenter = yCenter - depth / 2;
 
 
@@ -13547,7 +13600,7 @@ drawPieChart.prototype = {
 						if (side === sides.down) {
 							drawPath(path[j].downPath, pen, null);
 						} else if (side === sides.inside) {
-							//выставляю закругленные соединения
+							//setting rounded joins
 							let _duplicatedPen = pen;
 							if (_duplicatedPen && _duplicatedPen.Join) {
 								_duplicatedPen = _duplicatedPen.createDuplicate();
@@ -13992,7 +14045,7 @@ drawPieChart.prototype = {
 		this.tempAngle = Math.PI / 2 + startAngle;
 		this.angleFor3D = Math.PI / 2 - startAngle3D;
 
-		//рисуем против часовой стрелки, поэтому цикл с конца
+		//draw counter-clockwise, so loop from end
 		var depth = this.properties3d.depth;
 		for (var n = 0; n < depth; n++) {
 			if (!this.paths.series) {
@@ -14005,7 +14058,7 @@ drawPieChart.prototype = {
 					this.paths.series[n] = [];
 				}
 
-				if (sumData === 0)//TODO стоит пересмотреть
+				if (sumData === 0)//TODO should review
 				{
 					this.paths.series[n][i] = this._calculateEmptySegment(radius, xCenter, yCenter);
 				} else {
@@ -14048,7 +14101,7 @@ drawPieChart.prototype = {
 				swAng = t._changeAngle(radius, stAng, swAng, xCenter, yCenter, t.properties3d);
 				stAng = t.angleFor3D;
 
-				//корректируем центр
+				//adjust center
 				yCenter = yCenter + t.properties3d.depth / 2 - depth;
 
 				radiusSpec = (radius1 * radius2) / Math.sqrt(Math.pow(radius2, 2) * Math.pow((Math.cos(stAng)), 2) + Math.pow(radius1, 2) * Math.pow(Math.sin(stAng), 2));
@@ -14218,7 +14271,7 @@ drawDoughnutChart.prototype = {
 
 			sumData = this.cChartDrawer._getSumArray(numCache.pts, true);
 
-			//рисуем против часовой стрелки, поэтому цикл с конца
+			//draw counter-clockwise, so loop from end
 			let startAngle = this.tempAngle - firstSliceAng;
 			let midAngle;
 			let nExplosion;
@@ -14251,7 +14304,7 @@ drawDoughnutChart.prototype = {
 					yExplosion = Math.max(0, Math.min(maxExplosionValue, fExplosionLenght)) * Math.sin(midAngle);
 				}
 
-				//правка связана с реализацией arcTo, где swAng зануляется и приравнивается к значению
+				//fix related to arcTo implementation, where swAng is zeroed and set to value
 				if(angle < 10e-16) {
 					angle = 0;
 				}
@@ -14804,6 +14857,10 @@ drawRadarChart.prototype = {
 		var pxToMm = this.chartProp.pxToMM;
 		var constMargin = 5 / pxToMm;
 
+		if (!point.compiledDlb) {
+			return;
+		}
+
 		var width = point.compiledDlb.extX;
 		var height = point.compiledDlb.extY;
 
@@ -14958,7 +15015,7 @@ drawScatterChart.prototype = {
 			compiledMarkerSize = seria && seria.compiledSeriesMarker ? seria.compiledSeriesMarker.size : null;
 			compiledMarkerSymbol = seria && seria.compiledSeriesMarker ? seria.compiledSeriesMarker.symbol : null;
 
-			//idx не всегда начинается с нуля
+			//idx does not always start from zero
 			for (let n = 0; n < yNumCache.ptCount; n++) {
 				idx = yNumCache.pts && undefined !== yNumCache.pts[n] ? yNumCache.pts[n].idx : null;
 
@@ -15011,14 +15068,14 @@ drawScatterChart.prototype = {
 					}
 				}
 
-				//idx - индекс точки по оси OY
+				//idx - point index on OY axis
 				/*idx = yNumCache.pts && undefined !== yNumCache.pts[n] ? yNumCache.pts[n].idx : null;
 				if(null === idx) {
 					continue;
 				}
 
-				//вычисляем yVal
-				//пытаемся вычислить xVal  в зависимости от idx точки по OY
+				//calculate yVal
+				//try to calculate xVal depending on point idx on OY
 				yVal = this._getYVal(n, i);
 
 				xPoint = this.cChartDrawer.getIdxPoint(seria, idx, true);
@@ -15086,14 +15143,14 @@ drawScatterChart.prototype = {
 			}
 
 			for (var n = 0; n < yNumCache.ptCount; n++) {
-				//idx - индекс точки по оси OY
+				//idx - point index on OY axis
 				idx = yNumCache.pts && undefined !== yNumCache.pts[n] ? yNumCache.pts[n].idx : null;
 				if(null === idx) {
 					continue;
 				}
 
-				//вычисляем yVal
-				//пытаемся вычислить xVal  в зависимости от idx точки по OY
+				//calculate yVal
+				//try to calculate xVal depending on point idx on OY
 				yVal = this._getYVal(n, i);
 				xPoint = this.cChartDrawer.getIdxPoint(seria, idx, true);
 				if (xPoint) {
@@ -15146,7 +15203,7 @@ drawScatterChart.prototype = {
 		var xPoints = this.catAx.xPoints;
 		var yPoints = this.valAx.yPoints;
 
-		//пока smooth для логарифмической шкалы не выставлю - рисуется не верно
+		//until I set smooth for logarithmic scale - draws incorrectly
 		var allAxisLog = this.catAx.scaling && this.catAx.scaling.logBase && this.valAx.scaling && this.valAx.scaling.logBase;
 		var x, y, x1, y1, x2, y2, x3, y3, isSplineLine;
 
@@ -15207,7 +15264,7 @@ drawScatterChart.prototype = {
 	},
 
 	_drawScatter: function () {
-		//TODO 2 раза проходимся по сериям!
+		//TODO iterating through series twice!
 		//add clip rect
 		var diffPen = 2;
 		var leftRect = this.chartProp.chartGutter._left / this.chartProp.pxToMM;
@@ -15313,7 +15370,7 @@ drawScatterChart.prototype = {
 		return {x: centerX, y: centerY};
 	},
 
-	//TODO пока включаю функцию _calculateSplineLine. с _calculateSplineLine2 отрисовается неверно. проверить!
+	//TODO for now enabling _calculateSplineLine function. with _calculateSplineLine2 draws incorrectly. check!
 	_calculateSplineLine2: function (points, k, xPoints, yPoints) {
 
 		var pathId = this.cChartSpace.AllocPath();
@@ -15892,10 +15949,10 @@ drawSurfaceChart.prototype = {
 
 			dataSeries = numCache.pts;
 			for (var n = 0; n < this.ptCount; n++) {
-				//рассчитываем значения
+				//calculate values
 				idx = dataSeries[n] && dataSeries[n].idx != null ? dataSeries[n].idx : n;
 
-				//TODO временно заменил idx на n. позже нужно использовать idx  -> val = this._getYVal(idx, i);
+				//TODO temporarily replaced idx with n. later need to use idx  -> val = this._getYVal(idx, i);
 				val = this._getYVal(n, i);
 				if (null === val) {
 					val = 0;
@@ -15909,10 +15966,10 @@ drawSurfaceChart.prototype = {
 					z = (perspectiveDepth / (this.chart.series.length - 1)) * (i);
 				}
 
-				//рассчитываем значения
+				//calculate values
 				idx2 = dataSeries[n + 1] && dataSeries[n + 1].idx != null ? dataSeries[n + 1].idx : null;
 
-				//TODO временно заменил idx на n. позже нужно использовать idx
+				//TODO temporarily replaced idx with n. later need to use idx
 				//var val2 = Math.round(this._getYVal(n + 1, i) * roundInt) / roundInt;
 				val2 = this._getYVal(n + 1, i);
 				if (null === val2) {
@@ -15971,8 +16028,8 @@ drawSurfaceChart.prototype = {
 				var p33d = points3d[i][j + 1];
 				var p43d = points3d[i + 1][j + 1];
 
-				//рассчитываем отдельный сегмент - смотрим, может ли он располагаться в одной плоскости + делим его плоскостями сетки
-				//p, p2, p21, p1 - точки данного сегмента
+				//calculate individual segment - check if it can lie in one plane + divide it by grid planes
+				//p, p2, p21, p1 - points of this segment
 				//  p1-----p21
 				//  |       |
 				//  |       |
@@ -15985,7 +16042,7 @@ drawSurfaceChart.prototype = {
 	_calculateFace: function (p, p1, p2, p21, p3d, p13d, p23d, p213d) {
 		var t = this;
 
-		//все стороны сегмента
+		//all sides of segment
 		var lines = [];
 		lines[0] = {p1: p3d, p2: p23d, p111: p, p222: p2};
 		lines[1] = {p1: p13d, p2: p213d, p111: p1, p222: p21};
@@ -15994,10 +16051,10 @@ drawSurfaceChart.prototype = {
 
 
 		var pointsValue = [p1, p2, p21, p];
-		if (this.cChartDrawer.isPointsLieIntoOnePlane(p3d, p13d, p213d, p23d))//не делим диагональю данный сегмент
+		if (this.cChartDrawer.isPointsLieIntoOnePlane(p3d, p13d, p213d, p23d))//don't divide this segment by diagonal
 		{
 			this._getIntersectionPlanesAndLines(lines, pointsValue, true);
-		} else//делим диагональю данный сегмент
+		} else//divide this segment by diagonal
 		{
 			var max = p.val;
 			var maxIndex = 0;
@@ -16009,10 +16066,10 @@ drawSurfaceChart.prototype = {
 				}
 			}
 
-			//разбиваем диагональю данный сегмент на два сегмента
+			//split this segment into two segments by diagonal
 			var lines1, pointsValue1, lines2, pointsValue2;
 			if (p1.val + p2.val < p21.val + p.val) {
-				//добавляем диагональ
+				//add diagonal
 				lines.push({p1: p213d, p2: p3d, p111: p21, p222: p});
 				//this.paths.test.push(this._calculatePath(p21.x, p21.y, p.x, p.y));
 
@@ -16021,7 +16078,7 @@ drawSurfaceChart.prototype = {
 				lines2 = [lines[2], lines[1], lines[4]];
 				pointsValue2 = [p, p1, p21];
 			} else {
-				//добавляем диагональ
+				//add diagonal
 				lines.push({p1: p13d, p2: p23d, p111: p1, p222: p2});
 				//this.paths.test.push(this._calculatePath(p2.x, p2.y, p1.x, p1.y));
 
@@ -16031,10 +16088,10 @@ drawSurfaceChart.prototype = {
 				pointsValue2 = [p2, p1, p21];
 			}
 
-			//для поверхностных диаграмм без заливки
+			//for surface charts without fill
 			var bIsWireframeChart = false;
 
-			//находим пересечение двух сегментов с плоскостями сетки
+			//find intersection of two segments with grid planes
 			var pointsFace1 = this._getIntersectionPlanesAndLines(lines1, pointsValue1, !bIsWireframeChart);
 			var pointsFace2 = this._getIntersectionPlanesAndLines(lines2, pointsValue2, !bIsWireframeChart);
 
@@ -16067,13 +16124,13 @@ drawSurfaceChart.prototype = {
 				}
 			}
 
-			//TODO временно убираю. если будут проблемы в отрисовке - раскомментировать!
+			//TODO temporarily removing. if there are drawing issues - uncomment!
 			/*var lengthFaces = Math.max(pointsFace1.length, pointsFace2.length);
 			 for(var l = 0; l < lengthFaces; l++)
 			 {
 			 if(pointsFace1[l] && pointsFace2[l])
 			 {
-			 //находим две точки, принадлежащие диагональной прямой. у обоих сегментов они должны быть
+			 //find two points belonging to diagonal line. both segments should have them
 			 var lineEquation = t.cChartDrawer.getLineEquation2d(lines[4].p111, lines[4].p222);
 
 			 var points1 = [];
@@ -16193,16 +16250,16 @@ drawSurfaceChart.prototype = {
 
 		var prevPoints = null;
 		for (var k = 0; k < yPoints.length; k++) {
-			//если сегмент весь находится между двумя соседними плоскостями сетки, то есть ни с одной из них не имеет пересечений
+			//if segment is entirely between two adjacent grid planes, i.e. has no intersections with any of them
 			if (calculateFaceBetween2GridLines(minVal, maxVal, k, pointsValue, res)) {
 				break;
 			}
-			//если значение сетки больше максимального значения сегмента
+			//if grid value is greater than segment maximum value
 			if (yPoints[k - 1] && yPoints[k].val > maxVal && yPoints[k - 1].val >= maxVal) {
 				break;
 			}
 
-			//точки, которые находятся между данными плоскостями сетки(или лежат на них), обязательно должны войти в сегмент
+			//points that are between these grid planes (or lie on them) must be included in segment
 			var pointNeedAddIntoFace = null;
 			if (yPoints[k - 1]) {
 				for (var i = 0; i < pointsValue.length; i++) {
@@ -16230,7 +16287,7 @@ drawSurfaceChart.prototype = {
 				}
 			}
 
-			//находим точки пересечения с текущей плоскостью сетки
+			//find intersection points with current grid plane
 			var gridPlane = getGridPlain(k);
 			var points = this._getIntersectionPlaneAndLines(gridPlane, lines, pointsValue);
 
@@ -16268,7 +16325,7 @@ drawSurfaceChart.prototype = {
 				res[k] = arrPoints;
 			}
 
-			//добавляем точки, которые обязательно должны присутвовать в сегменте
+			//add points that must be present in segment
 			if (arrPoints && null !== pointNeedAddIntoFace) {
 				for (var i = 0; i < pointNeedAddIntoFace.length; i++) {
 					arrPoints.push(pointNeedAddIntoFace[i]);
@@ -16316,13 +16373,13 @@ drawSurfaceChart.prototype = {
 
 		var p1, p2;
 		if (!segmentIntersectionPoints.length) {
-			if (clearIntersectionPoints.length === 2)//две точки, не равняющиеся ни одной точке сегмента
+			if (clearIntersectionPoints.length === 2)//two points not equal to any segment point
 			{
 				p1 = clearIntersectionPoints[0];
 				p2 = clearIntersectionPoints[1];
 
 				res = [p1, p2];
-			} else if (clearIntersectionPoints.length === 1)//одна точка, не равняющиеся ни одной точке сегмента
+			} else if (clearIntersectionPoints.length === 1)//one point not equal to any segment point
 			{
 				p1 = clearIntersectionPoints[0];
 
@@ -16452,7 +16509,7 @@ drawSurfaceChart.prototype = {
 				var brush = style && style.spPr ? style.spPr.Fill : null;
 				var pen = style && style.spPr ? style.spPr.ln : null;
 
-				//линии пока делаю по цвету как и заливку
+				//for now making lines same color as fill
 				if (!pen || (pen && 0 === pen.w)) {
 					pen = AscFormat.CreatePenFromParams(brush, undefined, undefined, undefined, undefined, 0.13);
 				}
@@ -16525,7 +16582,7 @@ axisChart.prototype = {
 			paths = this.cChartDrawer._getRadarGridLines(this.axis);
 		} else {
 			if (this.axis.axPos === window['AscFormat'].AX_POS_L || this.axis.axPos === window['AscFormat'].AX_POS_R) {
-				//ось слева или справа, линии горизонтальные
+				//axis on left or right, lines are horizontal
 				paths = this.cChartDrawer.getHorizontalGridLines(this.axis, this.axisType === AscDFH.historyitem_type_CatAx);
 			} else {
 				paths = this.cChartDrawer.getVerticalGridLines(this.axis, this.axisType === AscDFH.historyitem_type_CatAx);
@@ -16743,9 +16800,9 @@ axisChart.prototype = {
 			minorStep = stepY / minorLinesCount;
 			posX = this.axis.posX;
 
-			//сдвиг, если положение оси - между делениями
+			//offset if axis position is between divisions
 			if (this.axis.crossAx.crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN) {
-				//TODO избавиться от использовения параметров лругой оси!!!
+				//TODO eliminate use of other axis parameters!!!
 				firstDiff = yPoints[1] ? Math.abs(yPoints[1].pos - yPoints[0].pos) : Math.abs(yPoints[0].pos - this.cChartSpace.chart.plotArea.valAx.posY) * 2;
 			}
 
@@ -16763,7 +16820,7 @@ axisChart.prototype = {
 				if(yPoints[k].val < 0) {
 					continue;
 				}
-				//основные линии
+				//major lines
 				posY = yPoints[k].pos + firstDiff / 2;
 
 				if (!this.paths.tickMarks) {
@@ -16771,14 +16828,14 @@ axisChart.prototype = {
 				}
 				this._calculateLine(posX, posY, posX + widthLine / this.chartProp.pxToMM, posY, path);
 
-				if (((i + 1) * tickMarkSkip) === yPoints.length)//если последняя основная линия, то рисуем её
+				if (((i + 1) * tickMarkSkip) === yPoints.length)//if last major line, draw it
 				{
 					var posYtemp = yPoints[yPoints.length - 1].pos - firstDiff / 2;
 					this._calculateLine(posX - crossMajorStep / this.chartProp.pxToMM, posYtemp, posX + widthLine / this.chartProp.pxToMM, posYtemp, path);
 				}
 
 
-				//промежуточные линии
+				//minor lines
 				if (widthMinorLine !== 0) {
 					for (n = 1; n < minorLinesCount; n++) {
 						var posMinorY = posY - n * minorStep * tickMarkSkip;
@@ -16819,7 +16876,7 @@ axisChart.prototype = {
 				firstDiff = -firstDiff;
 			}
 
-			//сам рассчёт основных и промежуточных линий
+			//actual calculation of major and minor lines
 			for (i = 0; i < xPoints.length; i++) {
 				k = i * tickMarkSkip;
 				if (k >= xPoints.length) {
@@ -16836,13 +16893,13 @@ axisChart.prototype = {
 				}
 				this._calculateLine(posX, posY - crossMajorStep / this.chartProp.pxToMM, posX, posY + widthLine / this.chartProp.pxToMM, path);
 
-				if (((i + 1) * tickMarkSkip) === xPoints.length)//если последняя основная линия, то рисуем её
+				if (((i + 1) * tickMarkSkip) === xPoints.length)//if last major line, draw it
 				{
 					var posXtemp = xPoints[xPoints.length - 1].pos + firstDiff / 2;
 					this._calculateLine(posXtemp, posY - crossMajorStep / this.chartProp.pxToMM, posXtemp, posY + widthLine / this.chartProp.pxToMM, path);
 				}
 
-				//промежуточные линии
+				//minor lines
 				if (widthMinorLine !== 0) {
 					for (n = 1; n < minorLinesCount; n++) {
 						posMinorX = posX + n * minorStep * tickMarkSkip;
@@ -16946,7 +17003,7 @@ axisChart.prototype = {
 				}
 				this._calculateLine(posX, posY - crossMajorStep / this.chartProp.pxToMM, posX, posY + widthLine / this.chartProp.pxToMM, path);
 
-				//промежуточные линии
+				//minor lines
 				if (widthMinorLine !== 0 && !((orientation === ORIENTATION_MIN_MAX && i === points.length - 1) || (orientation !== ORIENTATION_MIN_MAX && i === 0))) {
 					for (let n = 0; n < minorLinesCount; n++) {
 						posMinorX = posX + n * minorStep;
@@ -16967,7 +17024,7 @@ axisChart.prototype = {
 
 			let posMinorY;
 			for (let i = 0; i < points.length; i++) {
-				//основные линии
+				//major lines
 				posY = points[i].pos;
 
 				if (!this.paths.tickMarks) {
@@ -16975,7 +17032,7 @@ axisChart.prototype = {
 				}
 				this._calculateLine(posX - crossMajorStep / this.chartProp.pxToMM, posY, posX + widthLine / this.chartProp.pxToMM, posY, path);
 
-				//промежуточные линии
+				//minor lines
 				if (widthMinorLine !== 0 && !((orientation === ORIENTATION_MIN_MAX && i === points.length - 1) || (orientation !== ORIENTATION_MIN_MAX && i === 0))) {
 					for (let n = 0; n < minorLinesCount; n++) {
 						posMinorY = posY - n * minorStep;
@@ -17015,7 +17072,7 @@ axisChart.prototype = {
 			let startY = this.axis.posY * this.chartProp.pxToMM;
 
 			for (let i = 0; i <= seriesCount; i++) {
-				//основные линии
+				//major lines
 				if (!this.paths.tickMarks) {
 					this.paths.tickMarks = [];
 				}
@@ -17233,7 +17290,7 @@ floor3DChart.prototype =
 		
 	_draw: function()
 	{
-		//TODO цвет заливки неправильно выставляется при чтении. поэтому использую пока цвет сетки
+		//TODO fill color is set incorrectly when reading. so using grid color for now
 		var brush = this.cChartSpace.chart.floor ? this.cChartSpace.chart.floor.brush : null;
 		var pen = this.cChartSpace.chart.floor ? this.cChartSpace.chart.floor.pen : null;
 		var path = this.paths.chartFloor;
@@ -17325,7 +17382,7 @@ sideWall3DChart.prototype =
 		
 	_draw: function()
 	{
-		//TODO цвет заливки неправильно выставляется при чтении. поэтому использую пока цвет сетки
+		//TODO fill color is set incorrectly when reading. so using grid color for now
 		var brush = this.cChartSpace.chart.sideWall ? this.cChartSpace.chart.sideWall.brush : null;
 		var pen = this.cChartSpace.chart.sideWall ? this.cChartSpace.chart.sideWall.pen : null;
 		var path = this.paths;
@@ -17416,7 +17473,7 @@ backWall3DChart.prototype =
 		
 	_draw: function()
 	{
-		//TODO цвет заливки неправильно выставляется при чтении. поэтому использую пока цвет сетки
+		//TODO fill color is set incorrectly when reading. so using grid color for now
 		var brush = this.cChartSpace.chart.backWall ? this.cChartSpace.chart.backWall.brush : null;
 		var pen = this.cChartSpace.chart.backWall ? this.cChartSpace.chart.backWall.pen : null;
 		var path = this.paths;
@@ -17542,7 +17599,7 @@ plotAreaChart.prototype =
 		var pathH = this.chartProp.pathH;
 		var pathW = this.chartProp.pathW;
 
-		//смещаем на px все точки, посольку рисуем прямоугольную область
+		//offset all points by px since we draw a rectangular area
 		var px = 1/this.chartProp.pxToMM;
 		var plotAreaPoints = this.cChartDrawer.getPlotAreaPoints();
 		var left = plotAreaPoints.left - px;
@@ -18064,7 +18121,7 @@ CErrBarsDraw.prototype = {
 
 		this.dRadius1 = null;
 		this.dRadius2 = null;
-		//нужны только для конусов uRadius1/uRadius2
+		//needed only for cones uRadius1/uRadius2
 		this.uRadius1 = null;
 		this.uRadius2 = null;
 	}
@@ -18112,16 +18169,16 @@ CErrBarsDraw.prototype = {
 		var segmentPoint1, segmentPoint2;
 
 		var A, B, A1, B1;
-		// в ms 180 градусов составляют 17 сегментов
-		// todo пока что рассчитываем дополнительные точки, нужно будет оптимизировать
+		// in MS 180 degrees consist of 17 segments
+		// todo for now we calculate additional points, will need to optimize
 		var dt = Math.PI / 34; //Math.PI / 17;
 
-		//рассчитываем стартовый угол
+		// calculate start angle
 		var angel = Math.abs(this.chartsDrawer.processor3D.angleOy);
 		var k = Math.PI / 2;
 		k += angel;
 
-		// получаем точки основания цилиндра через парамметрические уравнения эллиптического цилиндра
+		// get cylinder base points through parametric equations of elliptical cylinder
 		for (var t = k; t <= Math.PI * 2 + k; t += dt) {
 			A = this.dRadius1 * Math.cos(t);
 			B = this.dRadius2 * Math.sin(t);
@@ -18154,7 +18211,7 @@ CErrBarsDraw.prototype = {
 		var sortCylinderPoints2 = [];
 		var invisible = false;
 
-		// сортируем точки по видимости для построения плоскости цилиндра
+		// sort points by visibility for building cylinder surface
 		for (var i = 1; i < segmentPoints.length; i++) {
 			if (this.chartsDrawer._isVisibleVerge3D(segmentPoints[i], segmentPoints[i - 1], segmentPoints2[i - 1], this.val, true)) {
 				if (!invisible) {
@@ -18178,8 +18235,8 @@ CErrBarsDraw.prototype = {
 		}
 		var isNotAllPointsVisible = invisible;
 
-		// проверяем если все точки поверхности цилиндра(конуса) либо видимы либо невидимы
-		// если уловие выполняется, то для отрисовки цилиндра(конуса) достаточно отрисовать эллипс (т.е вид сверху или снизу)
+		// check if all cylinder (cone) surface points are either visible or invisible
+		// if condition is met, then for drawing cylinder (cone) it is sufficient to draw an ellipse (i.e. top or bottom view)
 		if (sortCylinderPoints1.length === 0 || sortCylinderPoints2.length === 0) {
 			sortCylinderPoints1 = segmentPoints;
 			sortCylinderPoints2 = segmentPoints2;
@@ -18242,7 +18299,7 @@ CErrBarsDraw.prototype = {
 		var frontPaths = [];
 		var darkPaths = [];
 
-		// условие для конусов
+		// condition for cones
 		var isVisibleReverse = cone ? isNotAllPointsVisible : true;
 
 		var addPathToArr = function (isFront, face, index) {
@@ -21034,4 +21091,5 @@ CErrBarsDraw.prototype = {
 	window["AscFormat"].c_oChartTypes = c_oChartTypes;
 	window["AscCommon"]._roundValue = _roundValue;
 	window["AscFormat"].CachedClusteredColumn = CCachedClusteredColumn;
+	window["AscFormat"].CGeometry2 = CGeometry2;
 })(window);

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -404,7 +407,7 @@ function getCurrentTime() {
     return currDate.getTime();
 }
 
-function roundPlus(x, n) { //x - число, n - количество знаков
+function roundPlus(x, n) { //x - number, n - number of decimal places
     if ( isNaN(x) || isNaN(n) ) return false;
     var m = Math.pow(10,n);
     return Math.round(x * m) / m;
@@ -496,7 +499,7 @@ asc_CChartBinary.prototype = {
     {
         const binary = this["binary"];
         const stream = AscFormat.CreateBinaryReader(binary, 0, binary.length);
-        //надо сбросить то, что остался после открытия документа
+        //need to reset what remained after opening the document
         AscCommon.pptx_content_loader.Clear();
         const oNewChartSpace = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChartSpace() : new AscFormat.CChartSpace();
         const oBinaryChartReader = new AscCommon.BinaryChartReader(stream);
@@ -513,7 +516,7 @@ asc_CChartBinary.prototype = {
 		const binary = this["binary"];
 		const isChartEx = this["IsChartEx"];
 		const stream = AscFormat.CreateBinaryReader(binary, 0, binary.length);
-		//надо сбросить то, что остался после открытия документа
+		//need to reset what remained after opening the document
 		AscCommon.pptx_content_loader.Clear();
 		const oNewChart = new AscFormat.CChart();
 		const oBinaryChartReader = new AscCommon.BinaryChartReader(stream);
@@ -535,7 +538,7 @@ asc_CChartBinary.prototype = {
 		}
 
 		const stream = AscFormat.CreateBinaryReader(binary, 0, binary.length);
-		//надо сбросить то, что остался после открытия документа
+		//need to reset what remained after opening the document
 		AscCommon.pptx_content_loader.Clear();
 		const oChartData = new AscFormat.CChartData();
 		const oBinaryChartReader = new AscCommon.BinaryChartReader(stream);
@@ -1472,7 +1475,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         return metrics;
     };
 
-    // Считаем From/To исходя из graphicObject
+    // Calculate From/To based on graphicObject
 
 
     DrawingBase.prototype._getGraphicObjectCoords = function()
@@ -1681,33 +1684,33 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         }
     };
 
-    // Реальное смещение по высоте
+    // Actual height offset
     DrawingBase.prototype.getRealTopOffset = function() {
         var _t = this;
         var val = _t.worksheet._getRowTop(_t.from.row) + this.mmToPx(_t.from.rowOff);
         return window["Asc"].round(val);
     };
 
-    // Реальное смещение по ширине
+    // Actual width offset
     DrawingBase.prototype.getRealLeftOffset = function() {
         var _t = this;
         var val = _t.worksheet._getColLeft(_t.from.col) + this.mmToPx(_t.from.colOff);
         return window["Asc"].round(val);
     };
 
-    // Ширина по координатам
+    // Width by coordinates
     DrawingBase.prototype.getWidthFromTo = function() {
         return (this.worksheet._getColLeft(this.to.col) + this.mmToPx(this.to.colOff) -
             this.worksheet._getColLeft(this.from.col) - this.mmToPx(this.from.colOff));
     };
 
-    // Высота по координатам
+    // Height by coordinates
     DrawingBase.prototype.getHeightFromTo = function() {
         return this.worksheet._getRowTop(this.to.row) + this.mmToPx(this.to.rowOff) -
             this.worksheet._getRowTop(this.from.row) - this.mmToPx(this.from.rowOff);
     };
 
-    // Видимое смещение объекта от первой видимой строки
+    // Visible offset of object from first visible row
     DrawingBase.prototype.getVisibleTopOffset = function(withHeader) {
         var _t = this;
         var headerRowOff = _t.worksheet._getRowTop(0);
@@ -1717,7 +1720,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         return withHeader ? headerRowOff + off : off;
     };
 
-    // Видимое смещение объекта от первой видимой колонки
+    // Visible offset of object from first visible column
     DrawingBase.prototype.getVisibleLeftOffset = function(withHeader) {
         var _t = this;
         var headerColOff = _t.worksheet._getColLeft(0);
@@ -2537,7 +2540,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 
 
     _this.calculateObjectMetrics = function (object, width, height, opt_checkRtl) {
-        // Обработка картинок большого разрешения
+        // Processing high resolution images
         var bCorrect = false;
         var metricCoeff = 1;
 
@@ -2545,7 +2548,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         var realTopOffset = coordsFrom.y;
         var realLeftOffset = coordsFrom.x;
 
-        var areaWidth = worksheet._getColLeft(worksheet.getLastVisibleCol()) - worksheet._getColLeft(worksheet.getFirstVisibleCol(true)); 	// по ширине
+        var areaWidth = worksheet._getColLeft(worksheet.getLastVisibleCol()) - worksheet._getColLeft(worksheet.getFirstVisibleCol(true)); 	// by width
         if (areaWidth < width) {
             metricCoeff = width / areaWidth;
 
@@ -2554,7 +2557,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             bCorrect = true;
         }
 
-        var areaHeight = worksheet._getRowTop(worksheet.getLastVisibleRow()) - worksheet._getRowTop(worksheet.getFirstVisibleRow(true)); 	// по высоте
+        var areaHeight = worksheet._getRowTop(worksheet.getLastVisibleRow()) - worksheet._getRowTop(worksheet.getFirstVisibleRow(true)); 	// by height
         if (areaHeight < height) {
             metricCoeff = height / areaHeight;
 
@@ -3847,15 +3850,15 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 
     _this.checkGraphicObjectPosition = function(x, y, w, h) {
 
-        /*	Принцип:
-         true - если перемещение в области или требуется увеличить лист вправо/вниз
-         false - наезд на хидеры
+        /*	Principle:
+         true - if movement is within area or requires extending sheet right/down
+         false - overlapping headers
          */
 
         var response = { result: true, x: 0, y: 0 };
 
 
-        // выход за границу слева или сверху
+        // going beyond boundary on left or top
         if ( y < 0 ) {
             response.result = false;
             response.y = Math.abs(y);
@@ -3901,7 +3904,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
     };
 
     _this.convertMetric = function(val, from, to) {
-        /* Параметры конвертирования (from/to)
+        /* Conversion parameters (from/to)
          0 - px, 1 - pt, 2 - in, 3 - mm
          */
         return val * ascCvtRatio(from, to);

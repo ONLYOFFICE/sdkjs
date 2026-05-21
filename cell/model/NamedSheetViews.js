@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -40,33 +43,33 @@
 	var History = AscCommon.History;
 
 
-	// 1. интерфейс
-	// asc_addNamedSheetView - создание нового вью и дублирование текущего.
-	// лочим созднанный лист, проверяем лок менеджера. при принятии лока другими пользователями - лочится менеджер.
-	// для добавления в историю используем historyitem_Worksheet_SheetViewAdd, в историю кладём весь объект.
+	// 1. interface
+	// asc_addNamedSheetView - creating new view and duplicating current one.
+	// lock created sheet, check manager lock. when lock is accepted by other users - manager gets locked.
+	// for adding to history use historyitem_Worksheet_SheetViewAdd, put the whole object into history.
 
-	// asc_getNamedSheetViews - отдаём массив отображений активного листа
-	// asc_getActiveNamedSheetView - отдаём имя активного листа
+	// asc_getNamedSheetViews - return array of views for active sheet
+	// asc_getActiveNamedSheetView - return name of active sheet
 
-	// asc_deleteNamedSheetViews - удаление массива отображений. лочим удаляемое отображение.
-	// в данном случае(как и в именованных диапазонах) у других пользователей нельзя добавить новое отображение. Удалить другие можно.
-	// для истории при удалении использую UndoRedoData_NamedSheetViewRedo, потому что весь объект необходим только при undo, пересылать его не нужно.
+	// asc_deleteNamedSheetViews - delete array of views. lock the view being deleted.
+	// in this case (same as named ranges) other users cannot add new view. Deleting others is allowed.
+	// for history when deleting use UndoRedoData_NamedSheetViewRedo, because whole object is needed only for undo, no need to send it.
 
-	// asc_setActiveNamedSheetView - выставление активного отображения. ничего не лочим. внутри функции описана процедура взаимодействия со скрытыми строками при переходе между вью.
+	// asc_setActiveNamedSheetView - set active view. nothing is locked. inside function describes procedure for interaction with hidden rows when switching between views.
 
-	// 1.1 Ограничения строгого совместного редактирования:
-	// 	- Локи работают следующим образом: при переходе между вью локов нет. при примении а/ф в режиме вью ничего не лочится.
-	// - при взаимных изменениях с одним а/ф, применяем тот а/ф, который был последним сохраненным.
-	// - при скрытии строк в режиме дефолт - лочится лист, но в режиме вью можно использовать а/ф для скрытия строчек, скрывать строки через контекстное меню после скрытия строк в дефолте - нельзя.
-	// - при добавлении нового вью - лочим менеджер
-	// - при удалении вью - лочим менеджер. но при удалении не проверяем залочен ли менеджер. проверяем только залоченность конкретного вью.
-	// - при переименовании - лочим менеджер
+	// 1.1 Strict collaborative editing restrictions:
+	// 	- Locks work as follows: when switching between views there are no locks. when applying autofilter in view mode nothing is locked.
+	// - when mutual changes with same autofilter, apply the autofilter that was last saved.
+	// - when hiding rows in default mode - sheet is locked, but in view mode you can use autofilter to hide rows, hiding rows through context menu after hiding rows in default - not allowed.
+	// - when adding new view - lock manager
+	// - when deleting view - lock manager. but when deleting we don't check if manager is locked. only check if specific view is locked.
+	// - when renaming - lock manager
 
-	// 2. служебные функции в приватном апи
-	// _isLockedNamedSheetView - проверка лока массива отображений
-	// _onUpdateNamedSheetViewLock - вызывается из onLocksAcquired, добавляем информацию о локах
-	// _onUpdateAllSheetViewLock - снимаем локи со всех листов и отображний. !!! вызывается через "updateAllSheetViewLock"(пересмотреть). возможно, необходимо добавить вызов в onLocksReleased !!!
-	// 	isNamedSheetViewManagerLocked - проверка лока листа. !!! храним в прототипе апи - sheetViewManagerLocks. пересмореть!!!
+	// 2. service functions in private api
+	// _isLockedNamedSheetView - check lock of views array
+	// _onUpdateNamedSheetViewLock - called from onLocksAcquired, add lock information
+	// _onUpdateAllSheetViewLock - release locks from all sheets and views. !!! called via "updateAllSheetViewLock"(review). possibly need to add call in onLocksReleased !!!
+	// 	isNamedSheetViewManagerLocked - check sheet lock. !!! stored in api prototype - sheetViewManagerLocks. review!!!
 	// 	updateAllFilters
 
 
@@ -342,7 +345,7 @@
 			}
 			name = baseName + counter;
 		} else if (isContains) {
-			//так делаяем при создании дубликата
+			//this is done when creating duplicate
 			baseName = name + " ";
 			counter = 2;
 			while (mapNames[baseName + "(" + counter + ")"]) {
@@ -720,7 +723,7 @@
 		this.dxf = null;
 		//this.extLst
 
-		//нужно ли?
+		//is this needed?
 		this.colId = null;
 		this.id = AscCommon.CreateGUID();
 
@@ -948,7 +951,7 @@
 		this.sortCondition = null;
 		this.richSortCondition = null;
 
-		//нужно ли?
+		//is this needed?
 		this.colId = null;
 		this.id = AscCommon.CreateGUID();
 

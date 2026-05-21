@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -155,7 +158,7 @@
 		this.m_oScrollThumb_ = null;
 		this.m_oScrollNotes_ = null;
 		this.m_oScrollAnim_ = null;
-		this.m_nVerticalSlideChangeOnScrollInterval = 300; // как часто можно менять слайды при вертикальном скролле
+		this.m_nVerticalSlideChangeOnScrollInterval = 300; // how often slides can be changed on vertical scroll
 		this.m_nVerticalSlideChangeOnScrollLast = -1;
 		this.m_nVerticalSlideChangeOnScrollEnabled = false;
 
@@ -248,7 +251,7 @@
 		// thumbnails
 		this.Thumbnails = new CThumbnailsManager(this);
 
-		// сплиттеры (для табнейлов и для заметок)
+		// splitters (for thumbnails and notes)
 		this.splitters;
 
 		this.SplitterDiv = null;
@@ -259,7 +262,7 @@
 		this.SlideScrollMIN = 0;
 		this.SlideScrollMAX = 0;
 
-		// поддерживает ли браузер нецелые пикселы
+		// whether browser supports non-integer pixels
 		this.bIsDoublePx = AscCommon.isSupportDoublePx();
 
 		this.m_nCurrentTimeClearCache = 0;
@@ -381,7 +384,7 @@
 			_ctrl.Anchor = (g_anchor_left | g_anchor_right | g_anchor_bottom);
 			this.m_oDemonstrationDivParent.AddControl(_ctrl);
 
-			var _images_url = "../../../../sdkjs/common/Images/reporter/";
+			var _images_url = AscCommon.RELATIVE_SDKJS_PATH + "common/Images/reporter/";
 			var _head = document.getElementsByTagName('head')[0];
 
 			var styleContent = ".block_elem_no_select { -khtml-user-select: none; user-select: none; -moz-user-select: none; -webkit-user-select: none; }";
@@ -1103,7 +1106,7 @@
 		this.m_oMainView = CreateControlContainer("id_main_view");
 		this.m_oMainContent.AddControl(this.m_oMainView);
 
-		// проблема с фокусом fixed-позиционированного элемента внутри (bug 63194)
+		// problem with focus of fixed-positioned element inside (bug 63194)
 		this.m_oMainView.HtmlElement.onscroll = function () {
 			this.scrollTop = 0;
 		};
@@ -1921,7 +1924,7 @@
 			AscCommon.addMouseEvent(this.m_oBody.HtmlElement, "up", this.onBodyMouseUp);
 		}
 
-		// в мобильной версии - при транзишне - не обновляется позиция/размер
+		// in mobile version - during transition - position/size is not updated
 		if (this.m_oApi.isMobileVersion) {
 			var _t = this;
 			document.addEventListener && document.addEventListener("transitionend", function () { _t.OnResize(false); }, false);
@@ -2420,7 +2423,7 @@
 
 		this.m_nZoomType = type;
 
-		// нужно проверить режим и сбросить кеш грамотно (ie version)
+		// need to check mode and reset cache properly (ie version)
 		AscCommon.g_fontManager.ClearRasterMemory();
 
 		var oWordControl = oThis;
@@ -2761,7 +2764,7 @@
 		this.SlideScrollMIN = size.SlideScrollMIN;
 		this.SlideScrollMAX = size.SlideScrollMAX;
 
-		// теперь проверим необходимость перезуммирования
+		// now check if re-zooming is needed
 		if (1 == this.m_nZoomType) {
 			if (true === this.zoom_FitToWidth())
 				return;
@@ -2863,7 +2866,7 @@
 		var _x = -this.m_dScrollX + _centerX - _centerSlideX - _hor_width_left;
 		var _y = -(this.m_dScrollY - this.SlideScrollMIN) + _centerY - _centerSlideY - _ver_height_top;
 
-		// теперь расчитаем какие нужны позиции, чтобы слайд находился по центру
+		// now calculate positions needed to center the slide
 		var _x_c = _centerX - _centerSlideX;
 		var _y_c = _centerY - _centerSlideY;
 		this.m_dScrollX_Central = _centerX - _centerSlideX - _hor_width_left - _x_c;
@@ -2918,7 +2921,7 @@
 			return true;
 		}
 
-		// защита от внутренних скроллах. мы превентим ТОЛЬКО самый верхний из onMouseWheel
+		// protection from internal scrolls. we prevent ONLY the topmost onMouseWheel
 		this.m_nVerticalSlideChangeOnScrollEnabled = false;
 
 		var newTime = new Date().getTime();
@@ -2961,7 +2964,7 @@
 				return;
 			}
 
-			var lNumSlide = ((scrollPositionY / this.m_dDocumentPageHeight) + 0.01) >> 0; // 0.01 - ошибка округления!!
+			var lNumSlide = ((scrollPositionY / this.m_dDocumentPageHeight) + 0.01) >> 0; // 0.01 - rounding error!!
 			var _can_change_slide = true;
 			if (-1 != this.ZoomFreePageNum && this.ZoomFreePageNum == this.m_oDrawingDocument.SlideCurrent)
 				_can_change_slide = false;
@@ -3560,7 +3563,7 @@
 		if (oWordControl.m_oDrawingDocument.TransitionSlide.IsPlaying())
 			oWordControl.m_oDrawingDocument.TransitionSlide.End(true);
 
-		// после fullscreen возможно изменение X, Y после вызова Resize.
+		// after fullscreen, X and Y may change after calling Resize.
 		oWordControl.checkBodyOffset();
 
 		if (!oThis.m_bIsIE) {
@@ -4057,7 +4060,7 @@
 		if (oWordControl.IsFocus === false && e.emulated !== true)
 			return;
 
-		if (oWordControl.m_oApi.isLongAction() || oWordControl.m_bIsMouseLock === true) {
+		if (oWordControl.m_oApi.isLongAction() || (oWordControl.m_bIsMouseLock === true && 27 !== e.keyCode)) {
 			AscCommon.check_KeyboardEvent2(e);
 			e.preventDefault();
 			return;
@@ -4070,7 +4073,7 @@
 
 		if (oWordControl.Thumbnails.FocusObjType == FOCUS_OBJECT_THUMBNAILS) {
 			if (0 == oWordControl.splitters[0].position) {
-				// табнейлы не видны. Чего же тогда обрабатывать им клавиатуру
+				// thumbnails are not visible. Why handle keyboard for them then
 				e.preventDefault();
 				return false;
 			}
@@ -4086,7 +4089,7 @@
 			oWordControl.m_oDrawingDocument.TransitionSlide.End(true);
 
 		var oWordControl = oThis;
-		if (false === oWordControl.m_oApi.bInit_word_control || oWordControl.IsFocus === false && e.emulated !== true || oWordControl.m_oApi.isLongAction() || oWordControl.m_bIsMouseLock === true)
+		if (false === oWordControl.m_oApi.bInit_word_control || oWordControl.IsFocus === false && e.emulated !== true || oWordControl.m_oApi.isLongAction() || (oWordControl.m_bIsMouseLock === true && 27 !== e.keyCode))
 			return;
 
 		AscCommon.check_KeyboardEvent(e);
@@ -4099,7 +4102,7 @@
 		oWordControl.bIsUseKeyPress = ((_ret_mouseDown & keydownresult_PreventKeyPress) != 0) ? false : true;
 
 		if ((_ret_mouseDown & keydownresult_PreventDefault) != 0) {
-			// убираем превент с альтом. Уж больно итальянцы недовольны.
+			// remove prevent with alt. Workaround for Italian keyboard layout.
 			e.preventDefault();
 		}
 
@@ -4138,7 +4141,7 @@
 		oWordControl.EndUpdateOverlay();
 
 		if ((_ret_mouseDown & keydownresult_PreventDefault) != 0) {
-			// убираем превент с альтом. Уж больно итальянцы недовольны.
+			// remove prevent with alt. Workaround for Italian keyboard layout.
 			e.preventDefault();
 			return false;
 		}
@@ -4465,13 +4468,15 @@
 
 		var isDesktopVersion = window["AscDesktopEditor"] !== undefined;
 
-		if (this.splitters[0].position > 0.1 && !isDesktopVersion) {
+		if (this.Width > 0 && !isDesktopVersion) {
 			const maxSplitterThMax = Math.min(g_dKoef_pix_to_mm * this.Width / 3, 80);
 			this.splitters[0].setLimits(maxSplitterThMax >> 2, maxSplitterThMax >> 0);
+		}
 
-			const considerLimits = true;
-			this.splitters[0].setPosition(this.splitters[0].initialPosition, considerLimits);
-
+		if (this.splitters[0].position > 0.1 && !isDesktopVersion) {
+			if (this.Width > 0) {
+				this.splitters[0].setPosition(this.splitters[0].initialPosition, true, true);
+			}
 			this.onSplitterResize(true);
 		}
 
@@ -4510,7 +4515,7 @@
 			return;
 		}
 
-		// теперь проверим необходимость перезуммирования
+		// now check if re-zooming is needed
 		if (1 == this.m_nZoomType && 0 != this.m_dDocumentPageWidth && 0 != this.m_dDocumentPageHeight) {
 			if (true === this.zoom_FitToWidth()) {
 				this.m_oBoundsController.ClearNoAttack();
@@ -4571,7 +4576,7 @@
 			return;
 		}
 
-		// теперь проверим необходимость перезуммирования
+		// now check if re-zooming is needed
 		if (1 == this.m_nZoomType) {
 			if (true === this.zoom_FitToWidth()) {
 				this.m_oBoundsController.ClearNoAttack();
@@ -4746,7 +4751,7 @@
 		var drDoc = this.m_oDrawingDocument;
 
 		if (!this.m_oScrollVerApi) {
-			// сборка файлов
+			// file assembly
 			return;
 		}
 		if (this.m_oApi.isEyedropperStarted() && drDoc.SlideCurrent !== lPageNum) {
@@ -4795,7 +4800,7 @@
 			}
 		}
 
-		// теперь пошлем все шаблоны первой темы
+		// now send all layouts of the first theme
 		this.CheckLayouts();
 
 		this.SlideDrawer.CheckSlide(drDoc.SlideCurrent);
@@ -4864,7 +4869,7 @@
 	CEditorPage.prototype.CheckFontCache = function () {
 		var _c = oThis;
 		_c.m_nCurrentTimeClearCache++;
-		if (_c.m_nCurrentTimeClearCache > 750) // 30 секунд. корректировать при смене интервала главного таймера!!!
+		if (_c.m_nCurrentTimeClearCache > 750) // 30 seconds. adjust when changing the main timer interval!!!
 		{
 			_c.m_nCurrentTimeClearCache = 0;
 			_c.m_oDrawingDocument.CheckFontCache();

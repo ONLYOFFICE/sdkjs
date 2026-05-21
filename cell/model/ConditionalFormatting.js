@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -43,7 +46,7 @@
 	var asc_error = Asc.c_oAscError.ID;
 
 	/**
-	 * Отвечает за условное форматирование
+	 * Responsible for conditional formatting
 	 * -----------------------------------------------------------------------------
 	 *
 	 * @constructor
@@ -563,7 +566,7 @@
 		var isChange = false;
 
 		var _setDiff = function (_range) {
-			//TODO объединть в одну функцию с dataValidation(.shift)
+			//TODO merge into a single function with dataValidation(.shift)
 			var _newRanges, _offset, tempRange, intersection, otherPart, diff;
 
 			if (range && range.getType() === Asc.c_oAscSelectionType.RangeCells) {
@@ -575,12 +578,12 @@
 						diff = range.r2 - range.r1 + 1;
 
 						_newRanges = [];
-						//добавляем сдвинутую часть диапазона
+						//add shifted part of the range
 						_newRanges.push(intersection);
 						_offset = new AscCommon.CellBase(offset.row > 0 ? diff : -diff, 0);
 						otherPart = _newRanges[0].difference(_range);
 						_newRanges[0].setOffset(_offset);
-						//исключаем сдвинутую часть из диапазона
+						//exclude shifted part from the range
 						_newRanges = _newRanges.concat(otherPart);
 
 					}
@@ -591,12 +594,12 @@
 					if (intersection) {
 						diff = range.c2 - range.c1 + 1;
 						_newRanges = [];
-						//добавляем сдвинутую часть диапазона
+						//add shifted part of the range
 						_newRanges.push(intersection);
 						_offset = new AscCommon.CellBase(0, offset.col > 0 ? diff : -diff, 0);
 						otherPart = _newRanges[0].difference(_range);
 						_newRanges[0].setOffset(_offset);
-						//исключаем сдвинутую часть из диапазона
+						//exclude shifted part from the range
 						_newRanges = _newRanges.concat(otherPart);
 					}
 				}
@@ -1281,7 +1284,7 @@
 	CConditionalFormattingRule.prototype.asc_setContainsText = function (val) {
 		if (val[0] === "=") {
 			val = val.slice(1);
-			//генерируем массив
+			//generate array
 			this.aRuleElements = [];
 			this.aRuleElements[0] = new CFormulaCF();
 			this.aRuleElements[0].Text = this.getFormulaByType(val, true);
@@ -1435,7 +1438,7 @@
 		this.text = val;
 	};
 	CConditionalFormattingRule.prototype.asc_setValue1 = function (val) {
-		//чищу всегда, поскольку от интерфейса всегда заново выставляются оба значения
+		//always clear, since both values are always set again from the interface
 		this.aRuleElements = [];
 		val = correctFromInterface(val);
 
@@ -1733,7 +1736,7 @@
 		return res;
 	};
 	CDataBar.prototype.merge = function (obj) {
-		//сравниваю по дефолтовым величинам
+		//compare by default values
 		if (this.MaxLength === 90) {
 			this.MaxLength = obj.MaxLength;
 		}
@@ -2022,8 +2025,8 @@
 		}
 	};
 	CDataBar.prototype.asc_setInterfaceDefault = function () {
-		//ms всегда создаёт правило с такими настройками, хотя в документации други дефолтовые значения
-		//дёргаем этот метод при создании нового правила из интерфейса
+		//MS always creates a rule with these settings, although the documentation has different default values
+		//call this method when creating a new rule from the interface
 		this.MinLength = 0;
 		this.MaxLength = 100;
 	};
@@ -2050,7 +2053,7 @@
 		return this.ShowValue;
 	};
 	CDataBar.prototype.asc_getAxisPosition = function () {
-		//TODO после открытия менять значения для условного формтирования без ext
+		//TODO after opening, change values for conditional formatting without ext
 		if (this.AxisPosition === AscCommonExcel.EDataBarAxisPosition.automatic && !this.AxisColor) {
 			this.AxisPosition = AscCommonExcel.EDataBarAxisPosition.none;
 		}
@@ -2063,9 +2066,9 @@
 		return this.Direction;
 	};
 	CDataBar.prototype.asc_getNegativeBarColorSameAsPositive = function () {
-		//TODO после открытия менять значения для условного формтирования без ext
-		//в старом формате эта опция не используется
-		//буду ориентироваться что если не задан NegativeColor, то эта опция выставляется в true
+		//TODO after opening, change values for conditional formatting without ext
+		//this option is not used in the old format
+		//will assume that if NegativeColor is not set, then this option is set to true
 		if (!this.NegativeColor) {
 			this.NegativeBarColorSameAsPositive = true;
 		}
@@ -2181,11 +2184,18 @@
 				//todo realize removeDependencies
 				this._f.buildDependencies();
 			}
+		} else {
+			if (opt_parent && !this._f.parent) {
+				this._f.buildDependencies();
+				this._f.parent = opt_parent;
+			}
 		}
 	};
 	CFormulaCF.prototype.recalcFormula = function (ws, toInterface) {
 		var f = new AscCommonExcel.parserFormula(this.Text, null, ws);
-		if (f.parse(!toInterface)) {
+		//to interface we parse model formula without localization, from interface - with localization
+		let isParsed = toInterface ? f.parse() : f.parse(true, true);
+		if (isParsed) {
 			this.Text = toInterface ? f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true) : f.assemble();
 		}
 	};
@@ -2209,7 +2219,7 @@
 	};
 	CFormulaCF.prototype.isExtended = function () {
 		//if ((m_arrFormula[i].IsInit()) && m_arrFormula[i]->isExtended())
-		//TODO в x2t условие, которое  в нашем случае не получится использовать, мы не храним этот флаг
+		//TODO in x2t this is a condition that we cannot use in our case, we do not store this flag
 		//m_arrFormula[i]->isExtended() -> return (m_sNodeName == L"xm:f");
 		return true;
 	};
@@ -2223,7 +2233,7 @@
 				var ws = oWB.getActiveWs();
 				if (ws) {
 					var _f = new AscCommonExcel.parserFormula(this.Text, null, ws);
-					_f.parse(true, true);
+					_f.parse();
 					res = _f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
 				}
 			}
@@ -2264,7 +2274,7 @@
 		return res;
 	};
 	CIconSet.prototype.merge = function (obj) {
-		//сравниваю по дефолтовым величинам
+		//compare by default values
 		if (this.IconSet === EIconSetType.Traffic3Lights1) {
 			this.IconSet = obj.IconSet;
 		}
@@ -2494,7 +2504,7 @@
 		return res;
 	};
 	CConditionalFormatValueObject.prototype.merge = function (obj) {
-		//сравниваю по дефолтовым величинам
+		//compare by default values
 		if (this.Gte === true) {
 			this.Gte = obj.Gte;
 		}
@@ -2549,7 +2559,9 @@
 		return this.Type;
 	};
 	CConditionalFormatValueObject.prototype.asc_getVal = function () {
-		return !isNumeric(this.Val) ? "=" + this.Val : this.Val;
+		if (!isNumeric(this.Val))
+			return "=" + this.Val;
+		return AscCommon.g_oFormatParser.toLocaleNumber(this.Val);
 	};
 	CConditionalFormatValueObject.prototype.asc_setGte = function (val) {
 		this.Gte = val;
@@ -2558,8 +2570,7 @@
 		this.Type = val;
 	};
 	CConditionalFormatValueObject.prototype.asc_setVal = function (val) {
-		val = correctFromInterface(val);
-		this.Val = (val !== undefined && val !== null) ? val + "" : val;
+		this.Val = correctFromInterface(val);
 	};
 	CConditionalFormatValueObject.prototype.isEqual = function (elem) {
 		if (this.Gte === elem.Gte && this.Type === elem.Type && this.Val === elem.Val && this.Type === elem.Type) {
@@ -2582,7 +2593,7 @@
 		return res;
 	};
 	CConditionalFormatIconSet.prototype.merge = function (obj) {
-		//сравниваю по дефолтовым величинам
+		//compare by default values
 		if (this.IconSet === null) {
 			this.IconSet = obj.IconSet;
 		}
@@ -2689,8 +2700,8 @@
 			}
 			var stack = _f.outStack;
 			if (stack && stack.length) {
-				//если идут фрифметические операции, использования диапазонов внутри формул - ошибки на это нет
-				//поэтому я проверяю на одиночный диапазон
+				//if there are arithmetic operations, use of ranges inside formulas - there is no error for this
+				//therefore I check for a single range
 				if (stack.length === 1 && (stack[0].type === AscCommonExcel.cElementType.cellsRange ||
 					stack[0].type === AscCommonExcel.cElementType.cellsRange3D)) {
 					return asc_error.NotSingleReferenceCannotUsed;
@@ -2699,12 +2710,12 @@
 				if (type === Asc.ECfType.colorScale || type === Asc.ECfType.dataBar || type === Asc.ECfType.iconSet) {
 					for (var i = 0; i < stack.length; i++) {
 						if (stack[i]) {
-							//допускаются только абсолютные ссылки
+							//only absolute references are allowed
 							if (stack[i].type === AscCommonExcel.cElementType.cellsRange ||
 								stack[i].type === AscCommonExcel.cElementType.cellsRange3D ||
 								stack[i].type === AscCommonExcel.cElementType.cell ||
 								stack[i].type === AscCommonExcel.cElementType.cell3D) {
-								//ссылки должны быть только абсолютные
+								//references must be absolute only
 								var _range = stack[i].getRange();
 								if (_range.bbox) {
 									_range = _range.bbox;
@@ -2765,7 +2776,7 @@
 							return _parseResultArg.error;
 						}
 
-						//если внутри диапазон - проверяем его
+						//if there is a range inside - check it
 						_error = fParser && checkFormulaStack(fParser);
 						if (_error !== null) {
 							return _error;
@@ -2783,7 +2794,7 @@
 							return _parseResultArg.error;
 						}
 
-						//если внутри диапазон - проверяем его
+						//if there is a range inside - check it
 						_error = fParser && checkFormulaStack(fParser);
 						if (_error !== null) {
 							return _error;
@@ -2804,7 +2815,7 @@
 							return _parseResultArg.error;
 						}
 
-						//если внутри диапазон - проверяем его
+						//if there is a range inside - check it
 						_error = fParser && checkFormulaStack(fParser);
 						if (_error !== null) {
 							return _error;
@@ -2812,7 +2823,7 @@
 					}
 					break;
 				case AscCommonExcel.ECfvoType.Percentile:
-					//в случае с индивидуальное проверкой Percentile - выдаём только 2 ошибки
+					//in case of individual Percentile check - return only 2 errors
 					if (_isNumeric) {
 						if (_val < 0 && _val > 100) {
 							//is not valid precentile
@@ -2828,14 +2839,14 @@
 		};
 
 		var compareRefs = function (_prevVal, _prevType, _prevNum, _val, _type, _isNum) {
-			//далее сравниваем ближайшие значения с одним типом, предыдущее должно быть меньше следующего
-			//в databar ошибка для подобного сравнения не возникает
-			//для iconSet сравниваем числа для типов Number/Percent/Percentile - должны идти по убыванию, сраниваем только соседние
+			//next we compare adjacent values with the same type, previous must be less than next
+			//in databar no error occurs for such comparison
+			//for iconSet we compare numbers for types Number/Percent/Percentile - should be in descending order, compare only adjacent
 
 			if (_prevNum && _isNum) {
 				if (_isNum && _prevNum) {
-					_val = parseFloat(_val);
-					_prevVal = parseFloat(_prevVal);
+					_val = AscCommon.g_oFormatParser.parseLocaleNumber(_val);
+					_prevVal = AscCommon.g_oFormatParser.parseLocaleNumber(_prevVal);
 				}
 				if (type === Asc.ECfType.colorScale) {
 					if (_prevType === _type && type !== AscCommonExcel.ECfvoType.Formula && _prevVal > _val) {
@@ -2858,7 +2869,7 @@
 		var _isNumeric;
 		for (i = 0; i < props.length; i++) {
 			if (undefined !== props[i][1] && type !== Asc.ECfType.top10) {
-				_isNumeric = isNumeric(props[i][0]);
+				_isNumeric = AscCommon.g_oFormatParser.tryParseLocaleNumber(props[i][0]) !== null;
 				nError = _checkValue(props[i][0], props[i][1], _isNumeric);
 				if (nError !== null) {
 					return [nError, i];
@@ -2882,7 +2893,7 @@
 					prevNum = _isNumeric;
 				}
 			} else {
-				//в этом случае должны быть следующие типы
+				//in this case the following types should be used
 				if (type === Asc.ECfType.expression) {
 					nError = _checkValue(props[i][0], AscCommonExcel.ECfvoType.Formula);
 					if (nError !== null) {
@@ -2915,8 +2926,12 @@
 	}
 
 	function correctFromInterface(val) {
-		let _isNumeric = isNumeric(val);
-		if (!_isNumeric) {
+		if (typeof val === "number")
+			return val + "";
+		let _num = AscCommon.g_oFormatParser.tryParseLocaleNumber(val);
+		if (_num !== null) {
+			val = String(_num);
+		} else {
 			let isDate;
 			let isFormula;
 
@@ -2927,10 +2942,10 @@
 				isDate = AscCommon.g_oFormatParser.parseDate(val, AscCommon.g_oDefaultCultureInfo);
 			}
 
-			//храним число
+			//store number
 			if (isDate) {
 				val = isDate.value;
-				return val;
+				return typeof val === "number" ? val + "" : val;
 			}
 
 			if (!isFormula) {

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -91,11 +94,15 @@ function CTransitionAnimation(htmlpage)
     this.DemonstrationObject = null;
 
     this.TimerId = null;
+
+    this.GLTransition = null;
+    this.IsWebGLAvailable = null;
+
     var oThis = this;
 
     this.CalculateRect = function()
     {
-        // эта функция определяет, где находится рект для перехода
+        // this function determines where the rect for transition is located
 
 
         var _rect   = editor.WordControl.m_oDrawingDocument.SlideCurrectRect;
@@ -114,7 +121,7 @@ function CTransitionAnimation(htmlpage)
         var _w_mm = this.HtmlPage.m_oLogicDocument.GetWidthMM();
         var _h_mm = this.HtmlPage.m_oLogicDocument.GetHeightMM();
 
-        // проверим аспект
+        // check the aspect ratio
         var aspectDisplay = _width / _height;
         var aspectPres = _w_mm / _h_mm;
 
@@ -171,7 +178,7 @@ function CTransitionAnimation(htmlpage)
         var oSlide = this.GetSlide(slide_num);
         var oPlayer = oSlide.getAnimationPlayer();
 
-        // не кэшируем вотермарк никогда
+        // never cache the watermark
         let oldWatermark = this.HtmlPage.m_oApi.watermarkDraw;
         this.HtmlPage.m_oApi.watermarkDraw = null;
         oPlayer.drawFrame(CacheImage.Image, {x: 0, y: 0, w: _w, h: _h});
@@ -259,6 +266,26 @@ function CTransitionAnimation(htmlpage)
         }
     };
 
+
+
+    this.CheckWebGLSupport = function()
+    {
+        if (oThis.IsWebGLAvailable !== null)
+            return oThis.IsWebGLAvailable;
+        try
+        {
+            let testCanvas = document.createElement('canvas');
+            let gl = testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl');
+            oThis.IsWebGLAvailable = (gl !== null);
+            testCanvas = null;
+        }
+        catch (e)
+        {
+            oThis.IsWebGLAvailable = false;
+        }
+        return oThis.IsWebGLAvailable;
+    };
+
     this.Start = function(isButtonPreview, endCallback)
     {
         this.endCallback = endCallback
@@ -287,59 +314,63 @@ function CTransitionAnimation(htmlpage)
         this.StartTime = new Date().getTime();
         this.EndTime = this.StartTime + this.Duration;
 
-		const nType = this.Type;
+		let nType = this.Type;
+
+        // WebGL transitions: route to GL or fallback to Fade
+        if (AscCommonSlide._WebGLTransitionTypes[nType])
+        {
+            if (this.CheckWebGLSupport() && typeof AscCommonSlide.CTransitionGL !== "undefined")
+            {
+                this._startGL(nType);
+                return;
+            }
+            else
+            {
+                nType = c_oAscSlideTransitionTypes.Fade;
+                this.Param = c_oAscSlideTransitionParams.Fade_Smoothly;
+            }
+        }
+
         switch (nType)
         {
             case c_oAscSlideTransitionTypes.Fade:
-            {
                 this._startFade();
                 break;
-            }
             case c_oAscSlideTransitionTypes.Push:
-            {
                 this._startPush();
                 break;
-            }
             case c_oAscSlideTransitionTypes.Wipe:
-            {
                 this._startWipe();
                 break;
-            }
             case c_oAscSlideTransitionTypes.Split:
-            {
                 this._startSplit();
                 break;
-            }
             case c_oAscSlideTransitionTypes.UnCover:
-            {
                 this._startUnCover();
                 break;
-            }
             case c_oAscSlideTransitionTypes.Cover:
-            {
                 this._startCover();
                 break;
-            }
             case c_oAscSlideTransitionTypes.Clock:
-            {
                 this._startClock();
                 break;
-            }
             case c_oAscSlideTransitionTypes.Zoom:
-            {
                 this._startZoom();
                 break;
-            }
             case c_oAscSlideTransitionTypes.Morph:
-            {
                 this._startMorph();
                 break;
-            }
+            case c_oAscSlideTransitionTypes.Cut:
+                this._startCut();
+                break;
+            case c_oAscSlideTransitionTypes.Comb:
+                this._startComb();
+                break;
+			// Other transitions (like Glitter and Conveyor)
+			// are now handled by WebGL (routed before this switch)
             default:
-            {
                 this.End(true);
                 break;
-            }
         }
     };
 
@@ -354,6 +385,10 @@ function CTransitionAnimation(htmlpage)
         {
             this.Morph.end();
             this.Morph = null;
+        }
+        if (this.GLTransition)
+        {
+            this.GLTransition.Cleanup();
         }
 
         if (this.endCallback)
@@ -415,7 +450,7 @@ function CTransitionAnimation(htmlpage)
             var _ctx1 = null;
             if (null == oThis.DemonstrationObject)
             {
-                // отрисовываем на основной канве картинку первого слайда
+                // draw the first slide image on the main canvas
                 _ctx1 = oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
                 _ctx1.fillStyle = GlobalSkin.BackgroundColor;
                 _ctx1.fillRect(0, 0, oThis.HtmlPage.m_oEditor.HtmlElement.width, oThis.HtmlPage.m_oEditor.HtmlElement.height);
@@ -486,7 +521,7 @@ function CTransitionAnimation(htmlpage)
                         var _ctx1 = null;
                         if (null == oThis.DemonstrationObject)
                         {
-                            // отрисовываем на основной канве картинку первого слайда
+                            // draw the first slide image on the main canvas
                             _ctx1 = oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
                         }
                         else
@@ -535,7 +570,7 @@ function CTransitionAnimation(htmlpage)
                         var _ctx1 = null;
                         if (null == oThis.DemonstrationObject)
                         {
-                            // отрисовываем на основной канве картинку первого слайда
+                            // draw the first slide image on the main canvas
                             _ctx1 = oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
                         }
                         else
@@ -614,7 +649,7 @@ function CTransitionAnimation(htmlpage)
 
             if (null == oThis.DemonstrationObject)
             {
-                // отрисовываем на основной канве картинку первого слайда
+                // draw the first slide image on the main canvas
                 var _ctx1 = oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
                 _ctx1.fillStyle = GlobalSkin.BackgroundColor;
                 _ctx1.fillRect(0, 0, oThis.HtmlPage.m_oEditor.HtmlElement.width, oThis.HtmlPage.m_oEditor.HtmlElement.height);
@@ -750,7 +785,7 @@ function CTransitionAnimation(htmlpage)
             var _ctx1 = null;
             if (null == oThis.DemonstrationObject)
             {
-                // отрисовываем на основной канве картинку первого слайда
+                // draw the first slide image on the main canvas
                 _ctx1 = oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
                 _ctx1.fillStyle = GlobalSkin.BackgroundColor;
                 _ctx1.fillRect(0, 0, oThis.HtmlPage.m_oEditor.HtmlElement.width, oThis.HtmlPage.m_oEditor.HtmlElement.height);
@@ -1085,7 +1120,7 @@ function CTransitionAnimation(htmlpage)
                 _ctx2.translate(_cPosX, _cPosY);
                 _ctx2.rotate(Math.PI/2 - _ang);
 
-                // потом расчитать точнее!!!
+                // TODO: calculate more precisely later!!!
                 _ctx2.fillStyle = "#000000";
                 _ctx2.fillRect(-_hDstN2 - _gradW, -_wDstN / 2, _gradW, _wDstN);
                 _ctx2.beginPath();
@@ -1141,7 +1176,7 @@ function CTransitionAnimation(htmlpage)
                 _ctx2.translate(_cPosX, _cPosY);
                 _ctx2.rotate(_ang - Math.PI / 2);
 
-                // потом расчитать точнее!!!
+                // TODO: calculate more precisely later!!!
                 _ctx2.fillStyle = "#000000";
                 _ctx2.fillRect(_wDstN2, -_hDstN / 2, _gradW, _hDstN);
                 _ctx2.beginPath();
@@ -1197,7 +1232,7 @@ function CTransitionAnimation(htmlpage)
                 _ctx2.translate(_cPosX, _cPosY);
                 _ctx2.rotate(_ang - Math.PI / 2);
 
-                // потом расчитать точнее!!!
+                // TODO: calculate more precisely later!!!
                 _ctx2.fillStyle = "#000000";
                 _ctx2.fillRect(-_wDstN2 - _gradW, -_hDstN / 2, _gradW, _hDstN);
                 _ctx2.beginPath();
@@ -1253,7 +1288,7 @@ function CTransitionAnimation(htmlpage)
                 _ctx2.translate(_cPosX, _cPosY);
                 _ctx2.rotate(Math.PI/2 - _ang);
 
-                // потом расчитать точнее!!!
+                // TODO: calculate more precisely later!!!
                 _ctx2.fillStyle = "#000000";
                 _ctx2.fillRect(_hDstN2, -_wDstN / 2, _gradW, _wDstN);
                 _ctx2.beginPath();
@@ -1322,7 +1357,7 @@ function CTransitionAnimation(htmlpage)
 
         if (oThis.TimerId === null)
         {
-            // отрисовываем на основной канве картинку первого слайда
+            // draw the first slide image on the main canvas
             var _ctx1 = null;
             if (null == oThis.DemonstrationObject)
             {
@@ -1657,7 +1692,7 @@ function CTransitionAnimation(htmlpage)
             var _ctx1 = null;
             if (null == oThis.DemonstrationObject)
             {
-                // отрисовываем на основной канве картинку первого слайда
+                // draw the first slide image on the main canvas
                 _ctx1 = oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
                 _ctx1.fillStyle = GlobalSkin.BackgroundColor;
                 _ctx1.fillRect(0, 0, oThis.HtmlPage.m_oEditor.HtmlElement.width, oThis.HtmlPage.m_oEditor.HtmlElement.height);
@@ -1808,7 +1843,7 @@ function CTransitionAnimation(htmlpage)
             var _ctx1 = null;
             if (null == oThis.DemonstrationObject)
             {
-                // отрисовываем на основной канве картинку первого слайда
+                // draw the first slide image on the main canvas
                 _ctx1 = oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
                 _ctx1.fillStyle = GlobalSkin.BackgroundColor;
                 _ctx1.fillRect(0, 0, oThis.HtmlPage.m_oEditor.HtmlElement.width, oThis.HtmlPage.m_oEditor.HtmlElement.height);
@@ -1959,7 +1994,7 @@ function CTransitionAnimation(htmlpage)
             var _ctx1 = null;
             if (null == oThis.DemonstrationObject)
             {
-                // отрисовываем на основной канве картинку первого слайда
+                // draw the first slide image on the main canvas
                 _ctx1 = oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
                 _ctx1.fillStyle = GlobalSkin.BackgroundColor;
                 _ctx1.fillRect(0, 0, oThis.HtmlPage.m_oEditor.HtmlElement.width, oThis.HtmlPage.m_oEditor.HtmlElement.height);
@@ -2431,7 +2466,7 @@ function CTransitionAnimation(htmlpage)
                 var _ctx1 = null;
                 if (null == oThis.DemonstrationObject)
                 {
-                    // отрисовываем на основной канве картинку первого слайда
+                    // draw the first slide image on the main canvas
                     _ctx1 = oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
                     _ctx1.fillStyle = GlobalSkin.BackgroundColor;
                     _ctx1.fillRect(0, 0, oThis.HtmlPage.m_oEditor.HtmlElement.width, oThis.HtmlPage.m_oEditor.HtmlElement.height);
@@ -2490,7 +2525,7 @@ function CTransitionAnimation(htmlpage)
                 var _ctx1 = null;
                 if (null == oThis.DemonstrationObject)
                 {
-                    // отрисовываем на основной канве картинку первого слайда
+                    // draw the first slide image on the main canvas
                     _ctx1 = oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
                     _ctx1.fillStyle = GlobalSkin.BackgroundColor;
                     _ctx1.fillRect(0, 0, oThis.HtmlPage.m_oEditor.HtmlElement.width, oThis.HtmlPage.m_oEditor.HtmlElement.height);
@@ -2551,7 +2586,7 @@ function CTransitionAnimation(htmlpage)
                     var _ctx1 = null;
                     if (null == oThis.DemonstrationObject)
                     {
-                        // отрисовываем на основной канве картинку первого слайда
+                        // draw the first slide image on the main canvas
                         _ctx1 = oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
                         _ctx1.fillStyle = GlobalSkin.BackgroundColor;
                         _ctx1.fillRect(0, 0, oThis.HtmlPage.m_oEditor.HtmlElement.width, oThis.HtmlPage.m_oEditor.HtmlElement.height);
@@ -2590,8 +2625,8 @@ function CTransitionAnimation(htmlpage)
                     _ctx2.clearRect(oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
                 }
 
-                // начинаем с угла в -45 градусов. затем крутим против часовой стрелки на 360 + 45 градусов
-                // размер - от 5% до 100%
+                // start from angle of -45 degrees, then rotate counter-clockwise by 360 + 45 degrees
+                // size - from 5% to 100%
                 var _angle = -45 + 405 * _part;
                 var _scale = (0.05 + 0.95 * _part);
                 _angle *= (Math.PI / 180);
@@ -2698,20 +2733,305 @@ function CTransitionAnimation(htmlpage)
         oThis.TimerId = __nextFrame(oThis._startMorph);
     };
 
-    this._easeFunction = function(t)
+    // ============================================================
+    // WebGL bridge
+    // ============================================================
+    this._startGL = function(nType)
     {
-        let dT = (1 - t);
-        return 1 - dT*dT*dT;
+        if (!oThis.GLTransition)
+            oThis.GLTransition = new AscCommonSlide.CTransitionGL(oThis);
+
+        let _w = oThis.Rect.w;
+        let _h = oThis.Rect.h;
+
+        if (!oThis.GLTransition.isInitialized ||
+            oThis.GLTransition.glCanvas.width !== _w ||
+            oThis.GLTransition.glCanvas.height !== _h)
+        {
+            if (!oThis.GLTransition.Init(_w, _h))
+            {
+                oThis.IsWebGLAvailable = false;
+                oThis.Type = c_oAscSlideTransitionTypes.Fade;
+                oThis.Param = c_oAscSlideTransitionParams.Fade_Smoothly;
+                oThis._startFade();
+                return;
+            }
+        }
+
+        // Fallback: if slide image is null, create a solid-color canvas from CacheImage.Color
+        let _img1 = oThis.CacheImage1.Image;
+        let _img2 = oThis.CacheImage2.Image;
+        if (!_img1)
+        {
+            let _c = oThis.CacheImage1.Color;
+            let _tmpCanvas = document.createElement('canvas');
+            _tmpCanvas.width = _w;
+            _tmpCanvas.height = _h;
+            let _tmpCtx = _tmpCanvas.getContext('2d');
+            _tmpCtx.fillStyle = "rgb(" + _c.r + "," + _c.g + "," + _c.b + ")";
+            _tmpCtx.fillRect(0, 0, _w, _h);
+            _img1 = _tmpCanvas;
+        }
+        if (!_img2)
+        {
+            let _c = oThis.CacheImage2.Color;
+            let _tmpCanvas = document.createElement('canvas');
+            _tmpCanvas.width = _w;
+            _tmpCanvas.height = _h;
+            let _tmpCtx = _tmpCanvas.getContext('2d');
+            _tmpCtx.fillStyle = "rgb(" + _c.r + "," + _c.g + "," + _c.b + ")";
+            _tmpCtx.fillRect(0, 0, _w, _h);
+            _img2 = _tmpCanvas;
+        }
+
+        oThis.GLTransition.UploadSlideTextures(_img1, _img2);
+        oThis.GLTransition.PrepareTransition(nType, oThis.Param);
+
+        // First-frame: draw CacheImage1 on base canvas
+        if (oThis.TimerId === null)
+        {
+            let _ctx1 = null;
+            if (null == oThis.DemonstrationObject)
+            {
+                _ctx1 = oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
+                _ctx1.fillStyle = GlobalSkin.BackgroundColor;
+                _ctx1.fillRect(0, 0, oThis.HtmlPage.m_oEditor.HtmlElement.width, oThis.HtmlPage.m_oEditor.HtmlElement.height);
+            }
+            else
+            {
+                _ctx1 = oThis.DemonstrationObject.Canvas.getContext('2d');
+                _ctx1.fillStyle = oThis.DemonstrationObject.Canvas.style.backgroundColor;
+                _ctx1.fillRect(0, 0, oThis.DemonstrationObject.Canvas.width, oThis.DemonstrationObject.Canvas.height);
+            }
+            if (null != oThis.CacheImage1.Image)
+                _ctx1.drawImage(oThis.CacheImage1.Image, oThis.Rect.x, oThis.Rect.y, _w, _h);
+            else
+            {
+                let _c = oThis.CacheImage1.Color;
+                _ctx1.fillStyle = "rgb(" + _c.r + "," + _c.g + "," + _c.b + ")";
+                _ctx1.fillRect(oThis.Rect.x, oThis.Rect.y, _w, _h);
+            }
+        }
+
+        let _savedType = nType;
+        let _savedParam = oThis.Param;
+
+        oThis._glFrame = function()
+        {
+            oThis.CurrentTime = new Date().getTime();
+            if (oThis.CurrentTime >= oThis.EndTime)
+            {
+                oThis.End(false);
+                return;
+            }
+
+            oThis.SetBaseTransform();
+            let _part = oThis._getLinearPart();
+
+            oThis.GLTransition.Render(_savedType, _savedParam, _part);
+
+            let _ctx2 = null;
+            if (oThis.DemonstrationObject == null)
+            {
+                oThis.HtmlPage.m_oOverlayApi.Clear();
+                oThis.HtmlPage.m_oOverlayApi.CheckRect(oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
+                _ctx2 = oThis.HtmlPage.m_oOverlayApi.m_oContext;
+            }
+            else
+            {
+                _ctx2 = oThis.DemonstrationObject.Overlay.getContext('2d');
+                _ctx2.clearRect(oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
+            }
+            _ctx2.drawImage(oThis.GLTransition.glCanvas, 0, 0, oThis.Rect.w, oThis.Rect.h,
+                oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
+
+            oThis.TimerId = __nextFrame(oThis._glFrame);
+            oThis.OnAfterAnimationDraw();
+        };
+        oThis._glFrame();
     };
 
-    this._getPart = function()
+    // ============================================================
+    // Helper: standard first-frame boilerplate for 2D transitions
+    // ============================================================
+    this._initFirstFrame2D = function()
     {
-        let _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
-        _part = oThis._easeFunction(_part);
-        if (oThis.IsBackward)
-            _part = 1 - _part;
-        return _part;
+        let _ctx1 = null;
+        if (null == oThis.DemonstrationObject)
+        {
+            _ctx1 = oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
+            _ctx1.fillStyle = GlobalSkin.BackgroundColor;
+            _ctx1.fillRect(0, 0, oThis.HtmlPage.m_oEditor.HtmlElement.width, oThis.HtmlPage.m_oEditor.HtmlElement.height);
+        }
+        else
+        {
+            _ctx1 = oThis.DemonstrationObject.Canvas.getContext('2d');
+            _ctx1.fillStyle = oThis.DemonstrationObject.Canvas.style.backgroundColor;
+            _ctx1.fillRect(0, 0, oThis.DemonstrationObject.Canvas.width, oThis.DemonstrationObject.Canvas.height);
+        }
+        if (null != oThis.CacheImage1.Image)
+            _ctx1.drawImage(oThis.CacheImage1.Image, oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
+        else
+        {
+            let _c = oThis.CacheImage1.Color;
+            _ctx1.fillStyle = "rgb(" + _c.r + "," + _c.g + "," + _c.b + ")";
+            _ctx1.fillRect(oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
+            _ctx1.beginPath();
+        }
     };
+
+    this._getOverlayCtx = function()
+    {
+        let _ctx2 = null;
+        if (oThis.DemonstrationObject == null)
+        {
+            oThis.HtmlPage.m_oOverlayApi.Clear();
+            oThis.HtmlPage.m_oOverlayApi.CheckRect(oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
+            _ctx2 = oThis.HtmlPage.m_oOverlayApi.m_oContext;
+        }
+        else
+        {
+            _ctx2 = oThis.DemonstrationObject.Overlay.getContext('2d');
+            _ctx2.clearRect(oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
+        }
+        return _ctx2;
+    };
+
+    // ============================================================
+    // 2D transitions: Cut
+    // ============================================================
+    this._startCut = function()
+    {
+        oThis.CurrentTime = new Date().getTime();
+        if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
+        oThis.SetBaseTransform();
+
+        if (oThis.TimerId === null)
+        {
+            oThis.Params = { IsFirstAfterHalf: true };
+            oThis._initFirstFrame2D();
+        }
+
+        let _ctx2 = oThis._getOverlayCtx();
+        let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+        let _part = oThis._getPart();
+
+        if (oThis.Param === c_oAscSlideTransitionParams.Cut_ThroughBlack)
+        {
+            // Two-phase: old→black→new
+            if (_part < 0.5)
+            {
+                _ctx2.globalAlpha = _part * 2;
+                _ctx2.fillStyle = "#000000";
+                _ctx2.fillRect(_xDst, _yDst, _wDst, _hDst);
+                _ctx2.globalAlpha = 1;
+            }
+            else
+            {
+                if (oThis.Params.IsFirstAfterHalf)
+                {
+                    oThis.Params.IsFirstAfterHalf = false;
+                    let _ctx1 = (oThis.DemonstrationObject == null)
+                        ? oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d')
+                        : oThis.DemonstrationObject.Canvas.getContext('2d');
+                    _ctx1.fillStyle = "#000000";
+                    _ctx1.fillRect(_xDst, _yDst, _wDst, _hDst);
+                }
+                _ctx2.globalAlpha = (_part - 0.5) * 2;
+                if (null != oThis.CacheImage2.Image)
+                    _ctx2.drawImage(oThis.CacheImage2.Image, _xDst, _yDst, _wDst, _hDst);
+                _ctx2.globalAlpha = 1;
+            }
+        }
+        else
+        {
+            // Instant cut — draw new slide immediately
+            if (null != oThis.CacheImage2.Image)
+                _ctx2.drawImage(oThis.CacheImage2.Image, _xDst, _yDst, _wDst, _hDst);
+            oThis.End(false);
+            return;
+        }
+
+        oThis.TimerId = __nextFrame(oThis._startCut);
+        oThis.OnAfterAnimationDraw();
+    };
+
+    // ============================================================
+    // 2D transitions: Comb
+    // ============================================================
+    this._startComb = function()
+    {
+        oThis.CurrentTime = new Date().getTime();
+        if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
+        oThis.SetBaseTransform();
+
+        if (oThis.TimerId === null)
+        {
+            let count = (oThis.Param === c_oAscSlideTransitionParams.Comb_Vertical) ? 10 : 7;
+            oThis.Params = { count: count };
+            oThis._initFirstFrame2D();
+        }
+
+        let _ctx2 = oThis._getOverlayCtx();
+        let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+        let _part = oThis._getPart();
+        let n = oThis.Params.count;
+
+        if (oThis.Param === c_oAscSlideTransitionParams.Comb_Vertical)
+        {
+            let stripW = _wDst / n;
+            for (let i = 0; i < n; i++)
+            {
+                let shift = (_hDst * _part) >> 0;
+                let fromTop = (i % 2 === 0);
+                _ctx2.save();
+                _ctx2.beginPath();
+                _ctx2.rect(_xDst + i * stripW, _yDst, stripW + 1, _hDst);
+                _ctx2.clip();
+                let oldY = fromTop ? _yDst + shift : _yDst - shift;
+                let newY = fromTop ? _yDst + shift - _hDst : _yDst - shift + _hDst;
+                if (null != oThis.CacheImage1.Image)
+                    _ctx2.drawImage(oThis.CacheImage1.Image, _xDst, oldY, _wDst, _hDst);
+                if (null != oThis.CacheImage2.Image)
+                    _ctx2.drawImage(oThis.CacheImage2.Image, _xDst, newY, _wDst, _hDst);
+                _ctx2.restore();
+            }
+        }
+        else
+        {
+            let stripH = _hDst / n;
+            for (let i = 0; i < n; i++)
+            {
+                let shift = (_wDst * _part) >> 0;
+                let fromLeft = (i % 2 === 0);
+                _ctx2.save();
+                _ctx2.beginPath();
+                _ctx2.rect(_xDst, _yDst + i * stripH, _wDst, stripH + 1);
+                _ctx2.clip();
+                let oldX = fromLeft ? _xDst + shift : _xDst - shift;
+                let newX = fromLeft ? _xDst + shift - _wDst : _xDst - shift + _wDst;
+                if (null != oThis.CacheImage1.Image)
+                    _ctx2.drawImage(oThis.CacheImage1.Image, oldX, _yDst, _wDst, _hDst);
+                if (null != oThis.CacheImage2.Image)
+                    _ctx2.drawImage(oThis.CacheImage2.Image, newX, _yDst, _wDst, _hDst);
+                _ctx2.restore();
+            }
+        }
+
+        oThis.TimerId = __nextFrame(oThis._startComb);
+        oThis.OnAfterAnimationDraw();
+    };
+
+	this._getLinearPart = function () {
+		const part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
+		return oThis.IsBackward ? 1 - part : part;
+	};
+
+	this._getPart = function () {
+		const part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
+		const easedPart = easeOutCubic(part);
+		return oThis.IsBackward ? 1 - easedPart : easedPart;
+	};
 }
 
 function CGIFTimer(demoManager)
@@ -2900,7 +3220,7 @@ function CDemonstrationManager(htmlpage)
         const oSlide = this.GetSlide(slide_num);
         const oPlayer = oSlide.getAnimationPlayer();
 
-        // не кэшируем вотермарк никогда
+        // never cache the watermark
         let oldWatermark = this.HtmlPage.m_oApi.watermarkDraw;
         this.HtmlPage.m_oApi.watermarkDraw = null;
 				const oOldAnnotations = this.SlideAnnotations;
@@ -2923,7 +3243,7 @@ function CDemonstrationManager(htmlpage)
         this.Transition.IsBackward = false;
         if (is_first)
         {
-            _slide1 = -1;
+            _slide1 = this.GetPrevVisibleSlide();
             _slide2 = this.SlideNum;
         }
         else if (!is_backward)
@@ -3377,8 +3697,8 @@ function CDemonstrationManager(htmlpage)
 
     this.StartTransition = function(_transition, is_first, is_backward)
     {
-        // сначала проверим, создан ли уже оверлей (в идеале спрашивать еще у транзишна, нужен ли ему оверлей)
-        // пока так.
+        // first check if overlay is already created (ideally should also ask transition if it needs overlay)
+        // for now this way.
         if (null == oThis.Overlay)
         {
             oThis.Overlay = document.createElement('canvas');
@@ -3513,7 +3833,7 @@ function CDemonstrationManager(htmlpage)
 
 
 
-        // теперь запустим функцию
+        // now let's run the function
         var _slides = oThis.HtmlPage.m_oLogicDocument.Slides;
         var nSlideNum = oThis.SlideNum;
         var oSlide = _slides[nSlideNum];
@@ -3527,6 +3847,11 @@ function CDemonstrationManager(htmlpage)
         }
 
         oThis.WaitAnimationEnd = false;
+        oThis.ScheduleAdvanceAfter(nSlideNum);
+    };
+    this.ScheduleAdvanceAfter = function(nSlideNum)
+    {
+        let oSlide = oThis.GetSlide(nSlideNum);
         if (oSlide && oSlide.isAdvanceAfterTransition() && oThis.CheckSlideDuration === -1)
         {
             oThis.CheckSlideDuration = setTimeout(function()
@@ -4052,6 +4377,7 @@ function CDemonstrationManager(htmlpage)
         if(this.IsPausedAnimation(this.SlideNum) || -1 !== this.CheckSlideDuration)
         {
             this.StartAnimation(this.SlideNum);
+            this.ScheduleAdvanceAfter(this.SlideNum);
         }
         else
         {
@@ -4295,7 +4621,7 @@ function CDemonstrationManager(htmlpage)
                 oThis.HtmlPage.m_oApi.disableReporterEvents = true;
             }
 
-            // после fullscreen возможно изменение X, Y после вызова Resize.
+            // after fullscreen, X and Y may change after calling Resize.
             oThis.HtmlPage.checkBodyOffset();
 
             if(oThis.CheckMouseDown(documentMI.x, documentMI.y, documentMI.page))
@@ -4411,7 +4737,7 @@ function CDemonstrationManager(htmlpage)
 		    oThis.PointerRemove();
 
         let handleSwipe = false;
-        if (e.pointerType === "touch")
+        if (e.pointerType === "touch" && !Asc.editor.isDrawSlideshowAnnotations())
         {
             let iN = AscFormat.isRealNumber;
             if (iN(oThis.startPageX) && iN(oThis.startPageY) && iN(e.pageX) && iN(e.pageY) )
@@ -4421,9 +4747,7 @@ function CDemonstrationManager(htmlpage)
                     oThis.OnPrevSlide();
                     handleSwipe = true;
                 }
-                else if (oThis.startPageX - e.pageX > 20 ||
-                        (Math.abs(e.pageX - oThis.startPageX) < 1 &&
-                            Math.abs(e.pageY- oThis.startPageY) < 1))
+                else if (oThis.startPageX - e.pageX > 20)
                 {
                     oThis.OnNextSlide();
                     handleSwipe = true;
@@ -4462,7 +4786,7 @@ function CDemonstrationManager(htmlpage)
 
         // next slide
         oThis.CorrectSlideNum();
-			if (isMouseDown) {
+			if (isMouseDown && !oThis.HtmlPage.m_oApi.isMobileVersion) {
 				var _is_transition = oThis.Transition.IsPlaying();
 				if (_is_transition)
 				{
@@ -4641,3 +4965,10 @@ function CDemonstrationManager(htmlpage)
 		}
     };
 }
+
+function easeOutCubic(t) {
+	return 1 - Math.pow(1 - t, 3);
+}
+
+window['AscCommonSlide'] = window['AscCommonSlide'] || {};
+window['AscCommonSlide'].easeOutCubic = easeOutCubic;

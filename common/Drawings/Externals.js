@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -37,7 +40,7 @@
     // Import
     var FontStyle = AscFonts.FontStyle;
 
-    // глобальные мапы для быстрого поиска
+    // global maps for fast lookup
     var g_map_font_index = {};
     var g_fonts_streams = [];
 
@@ -283,7 +286,7 @@
 
     CFontInfo.prototype =
     {
-        // начинаем грузить нужные стили
+        // start loading required styles
         CheckFontLoadStyles : function(global_loader)
         {
             if (isLoadFontsSync)
@@ -341,7 +344,7 @@
             return isNeed;
         },
 
-        // надо ли грузить хоть один шрифт из семейства
+        // check if at least one font from the family needs to be loaded
         CheckFontLoadStylesNoLoad : function(global_loader)
         {
             if (isLoadFontsSync)
@@ -358,7 +361,7 @@
             return false;
         },
 
-        // используется только в тестовом примере
+        // used only in test example
         LoadFontsFromServer : function(global_loader)
         {
             var fonts = global_loader.fontFiles;
@@ -389,10 +392,10 @@
 
             if (!pFontFile && -1 === fontfile.stream_index && true === AscFonts.IsLoadFontOnCheckSymbols && true != AscFonts.IsLoadFontOnCheckSymbolsWait)
             {
-                // в форматах pdf/xps - не прогоняем символы через чеккер при открытии,
-                // так как там должны быть символы в встроенном шрифте. Но вдруг?
-                // тогда при отрисовке СРАЗУ грузим шрифт - и при загрузке перерисовываемся
-                // сюда попали только если символ попал в чеккер
+                // in pdf/xps formats - we don't run symbols through the checker when opening,
+                // since symbols should be in the embedded font. But what if not?
+                // then we load the font IMMEDIATELY during rendering - and redraw on load
+                // we got here only if the symbol went through the checker
                 AscFonts.IsLoadFontOnCheckSymbols = false;
                 AscFonts.IsLoadFontOnCheckSymbolsWait = true;
                 AscFonts.FontPickerByCharacter.loadFonts(window.editor, function ()
@@ -427,7 +430,7 @@
             return { id: fontfile.Id, faceIndex : info.faceIndex, file : fontfile };
         },
 
-        // по запрашиваемому стилю - отдаем какой будем использовать
+        // based on the requested style - return which one we will use
         GetBaseStyle : function(style)
         {
             switch (style)
@@ -483,7 +486,7 @@
             return FontStyle.FontStyleRegular;
         },
 
-        // по запрашиваемому стилю - возвращаем какой будем грузить и какие настройки нужно сделать самому
+        // based on the requested style - return which one we will load and what settings need to be applied manually
         GetNeedInfo : function(style)
         {
             let result = {
@@ -545,7 +548,7 @@
 
     CFontInfoEmbed.prototype =
     {
-        // начинаем грузить нужные стили
+        // start loading required styles
         CheckFontLoadStyles : function(global_loader)
         {
             let fontFile = global_loader.fontFiles[this.indexR];
@@ -553,7 +556,7 @@
             return false;
         },
 
-        // надо ли грузить хоть один шрифт из семейства
+        // check if at least one font from the family needs to be loaded
         CheckFontLoadStylesNoLoad : function(global_loader)
         {
             return false;
@@ -596,7 +599,7 @@
         }
     };
 
-    // thumbnail - это позиция (y) в общем табнейле всех шрифтов
+    // thumbnail - this is the position (y) in the common thumbnail of all fonts
     function CFont(name, id, thumbnail, style)
     {
         this.name       = name;
@@ -612,7 +615,7 @@
         return _name ? _name : this.name;
     };
     CFont.prototype["asc_getFontThumbnail"] = CFont.prototype.asc_getFontThumbnail = function() { return this.thumbnail; };
-    // для совместимости
+    // for compatibility
     CFont.prototype["asc_getFontType"] = CFont.prototype.asc_getFontType = function() { return 1; };
 
     var ImageLoadStatus =
@@ -670,7 +673,7 @@
         g_font_infos.length = curIndex;
 
 		/////////////////////////////////////////////////////////////////////
-		// наш шрифт для спецсимволов
+		// our font for special symbols
 		let ascW3 = new CFontFileLoader(ascFontFath);
         ascW3.Status = 0;
 		let streams_count = g_fonts_streams.length;
@@ -686,7 +689,7 @@
         if (AscFonts.FontPickerByCharacter)
             AscFonts.FontPickerByCharacter.init(window["__fonts_infos"]);
 
-		// удаляем временные переменные
+		// delete temporary variables
 		delete window["__fonts_files"];
 		delete window["__fonts_infos"];
 
@@ -776,8 +779,8 @@
 
 })(window, window.document);
 
-// сначала хотел писать "вытеснение" из этого мапа.
-// но тогда нужно хранить base64 строки. Это не круто. По памяти - даже
-// выигрыш будет. Не особо то шрифты жмутся lzw или deflate
-// поэтому лучше из памяти будем удалять base64 строки
+// initially wanted to implement "eviction" from this map.
+// but then we would need to store base64 strings. That's not cool. Memory-wise - even
+// there will be a gain. Fonts don't compress well with lzw or deflate
+// so it's better to delete base64 strings from memory
 // ----------------------------------------------------------------------------

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -384,6 +387,18 @@ function getFlatPenColor() {
 	CControl.prototype.isNeedResetState = function() {
 		return this.controller.isNeedResetState();
 	};
+	CControl.prototype.getAllFonts = function (fonts) {
+		AscFormat.CShape.prototype.getAllFonts.call(this, fonts);
+		if (this.formControlPr && this.formControlPr.objectType === CFormControlPr_objectType_checkBox) {
+			fonts[CHECKBOX_GLYPH_FONT_NAME] = 1;
+		}
+	};
+	CControl.prototype.documentGetAllFontNames = function (fonts) {
+		AscFormat.CShape.prototype.documentGetAllFontNames.call(this, fonts);
+		if (this.formControlPr && this.formControlPr.objectType === CFormControlPr_objectType_checkBox) {
+			fonts[CHECKBOX_GLYPH_FONT_NAME] = 1;
+		}
+	};
 	CControl.prototype.initController = function () {
 		switch (this.formControlPr.objectType) {
 			case CFormControlPr_objectType_checkBox: {
@@ -704,6 +719,75 @@ function getFlatPenColor() {
 	const CHECKBOX_BODYPR_INSETS_B = 32004 / 36000;
 	const CHECKBOX_OFFSET_X = CHECKBOX_SIDE_SIZE + (CHECKBOX_X_OFFSET * 2 - CHECKBOX_BODYPR_INSETS_L);
 
+	const CHECKBOX_GLYPH_FONT_NAME = "Segoe UI Symbol";
+	const CHECKBOX_GLYPH_CODE_CHECKED = 0x2611;
+	const CHECKBOX_GLYPH_CODE_UNCHECKED = 0x2610;
+	const CHECKBOX_GLYPH_CODE_MIXED = 0x25A3;
+	const CHECKBOX_GLYPH_PROBE_FONT_SIZE = 10;
+
+	let CHECKBOX_GLYPH_METRICS = null;
+	function getCheckBoxGlyphMetrics() {
+		if (CHECKBOX_GLYPH_METRICS) {
+			return CHECKBOX_GLYPH_METRICS;
+		}
+		const oTextPr = new AscCommonWord.CTextPr();
+		oTextPr.Set_FromObject({
+			FontFamily: {Name: CHECKBOX_GLYPH_FONT_NAME, Index: -1},
+			FontSize: CHECKBOX_GLYPH_PROBE_FONT_SIZE,
+			Bold: false,
+			Italic: false
+		});
+		oTextPr.RFonts.SetAll(CHECKBOX_GLYPH_FONT_NAME);
+
+		AscCommon.g_oTextMeasurer.SetTextPr(oTextPr);
+		const nProbeSlot = AscWord.GetFontSlotByTextPr(CHECKBOX_GLYPH_CODE_CHECKED, oTextPr);
+		AscCommon.g_oTextMeasurer.SetFontSlot(nProbeSlot, 1);
+		let oInfo = AscCommon.g_oTextMeasurer.Measure2Code(CHECKBOX_GLYPH_CODE_CHECKED);
+
+		if (!oInfo || !oInfo.WidthG || !oInfo.Height) {
+			return {useManual: true};
+		}
+
+		const nFontSize = CHECKBOX_GLYPH_PROBE_FONT_SIZE * (CHECKBOX_SIDE_SIZE / oInfo.Height);
+		oTextPr.FontSize = nFontSize;
+		oTextPr.FontSizeCS = nFontSize;
+		AscCommon.g_oTextMeasurer.SetTextPr(oTextPr);
+		AscCommon.g_oTextMeasurer.SetFontSlot(nProbeSlot, 1);
+		oInfo = AscCommon.g_oTextMeasurer.Measure2Code(CHECKBOX_GLYPH_CODE_CHECKED);
+
+		CHECKBOX_GLYPH_METRICS = {
+			useManual: false,
+			font: {
+				FontFamily: {Name: CHECKBOX_GLYPH_FONT_NAME, Index: -1},
+				FontSize: nFontSize,
+				Bold: false,
+				Italic: false
+			},
+			xCenter: (CHECKBOX_SIDE_SIZE - oInfo.WidthG) / 2 - (oInfo.rasterOffsetX || 0),
+			yBaseline: (CHECKBOX_SIDE_SIZE + oInfo.Height) / 2 + (oInfo.rasterOffsetY || 0)
+		};
+		return CHECKBOX_GLYPH_METRICS;
+	}
+
+	function drawCheckBoxGlyph(graphics, isChecked, isMixed) {
+		const oMetrics = getCheckBoxGlyphMetrics();
+		if (oMetrics.useManual) {
+			return false;
+		}
+		let nCode;
+		if (isChecked) {
+			nCode = CHECKBOX_GLYPH_CODE_CHECKED;
+		} else if (isMixed) {
+			nCode = CHECKBOX_GLYPH_CODE_MIXED;
+		} else {
+			nCode = CHECKBOX_GLYPH_CODE_UNCHECKED;
+		}
+		graphics.SetFont(oMetrics.font);
+		graphics.b_color1.apply(graphics, getFlatCheckBoxPenColor());
+		graphics.FillTextCode(oMetrics.xCenter, oMetrics.yBaseline, nCode);
+		return true;
+	}
+
 	function CCheckBox(oController) {
 		CButtonBase.call(this, oController);
 	}
@@ -729,24 +813,36 @@ function getFlatPenColor() {
 	CCheckBox.prototype.draw = function (graphics) {
 		graphics.SaveGrState();
 		graphics.transform3(this.transform);
-		const endRoundControl = startRoundControl(graphics, 0, 0, this.extX, this.extY, 2, getFlatCheckBoxPenColor());
-		CButtonBase.prototype.draw.call(this, graphics);
-		graphics.p_color.apply(graphics, this.getFlatPenColor());
-		graphics.p_width(400);
-		graphics._s();
-		if (this.isChecked()) {
-			graphics._m(2.5, 0.75);
-			graphics._l(1, 2.25);
-			graphics._l(0.5, 1.75);
+		if (!drawCheckBoxGlyph(graphics, this.isChecked(), this.isMixed())) {
+			const arrPenColor = getFlatCheckBoxPenColor();
+			graphics.p_width(0);
+			graphics.p_color.apply(graphics, arrPenColor);
+			graphics.b_color1.apply(graphics, this.getFlatFillColor());
+			graphics._s();
+			graphics._m(0, 0);
+			graphics._l(this.extX, 0);
+			graphics._l(this.extX, this.extY);
+			graphics._l(0, this.extY);
+			graphics._z();
+			graphics.df();
 			graphics.ds();
+			graphics._e();
 
-		} else if (this.isMixed()) {
-			graphics._m(CHECKBOX_SIDE_SIZE * 0.2, CHECKBOX_SIDE_SIZE * 0.5);
-			graphics._l(CHECKBOX_SIDE_SIZE * 0.8, CHECKBOX_SIDE_SIZE * 0.5);
-			graphics.ds();
+			graphics.p_color.apply(graphics, arrPenColor);
+			graphics.p_width(400);
+			graphics._s();
+			if (this.isChecked()) {
+				graphics._m(2.5, 0.75);
+				graphics._l(1, 2.25);
+				graphics._l(0.5, 1.75);
+				graphics.ds();
+			} else if (this.isMixed()) {
+				graphics._m(CHECKBOX_SIDE_SIZE * 0.2, CHECKBOX_SIDE_SIZE * 0.5);
+				graphics._l(CHECKBOX_SIDE_SIZE * 0.8, CHECKBOX_SIDE_SIZE * 0.5);
+				graphics.ds();
+			}
+			graphics._e();
 		}
-		graphics._e();
-		endRoundControl();
 		graphics.RestoreGrState();
 	};
 
@@ -754,6 +850,11 @@ function getFlatPenColor() {
 		CControlControllerBase.call(this, oControl);
 		this.checkBox = new CCheckBox(this);
 		this.initCheckBoxHandlers();
+		if (AscFonts.IsCheckSymbols) {
+			AscFonts.FontPickerByCharacter.getFontBySymbol(CHECKBOX_GLYPH_CODE_CHECKED);
+			AscFonts.FontPickerByCharacter.getFontBySymbol(CHECKBOX_GLYPH_CODE_UNCHECKED);
+			AscFonts.FontPickerByCharacter.getFontBySymbol(CHECKBOX_GLYPH_CODE_MIXED);
+		}
 	}
 	AscFormat.InitClassWithoutType(CCheckBoxController, CControlControllerBase);
 	CCheckBoxController.prototype.initCheckBoxHandlers = function () {

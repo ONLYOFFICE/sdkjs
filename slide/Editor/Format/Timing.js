@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -755,6 +758,9 @@
         }
         this.startSimpleDuration(0, oPlayer);
         this.scheduleEnd(oPlayer);
+        if (window["AscUserTest"]) {
+            Asc.editor.sendEvent("asc_onAnimNodeActivated", this, oPlayer);
+        }
     };
     CTimeNodeBase.prototype.startSimpleDuration = function (nIdx, oPlayer) {
         this.simpleDurationIdx = nIdx;
@@ -861,7 +867,7 @@
                     var aChildren = this.getChildrenTimeNodes();
                     var oThis = this;
 
-                    if(oPlayer instanceof CDemoAnimPlayer) {
+                    if(oPlayer.isDemoPlayer()) {
                         oTrigger.addTrigger(function () {
                             for (var nChild = 0; nChild < aChildren.length; ++nChild) {
                                 if (!aChildren[nChild].isAtEnd() && (!aChildren[nChild].repeatCount || !aChildren[nChild].repeatCount.isIndefinite())) {
@@ -916,6 +922,9 @@
             this.calculateParams(oPlayer);
         }
         this.setState(TIME_NODE_STATE_FROZEN);
+        if (window["AscUserTest"]) {
+            Asc.editor.sendEvent("asc_onAnimNodeFrozen", this, oPlayer);
+        }
         oPlayer.cancelCallerEvent(this);
         var oParentNode = this.getParentTimeNode();
         if (oParentNode) {
@@ -933,6 +942,9 @@
             this.calculateParams(oPlayer);
         }
         this.setState(TIME_NODE_STATE_FINISHED);
+        if (window["AscUserTest"]) {
+            Asc.editor.sendEvent("asc_onAnimNodeFinished", this, oPlayer);
+        }
         oPlayer.cancelCallerEvent(this);
         var oParentNode = this.getParentTimeNode();
         if (oParentNode) {
@@ -1641,6 +1653,47 @@
         }
         return false;
     };
+
+    CTimeNodeBase.prototype.asc_getNodeId = function () {
+        return this.GetId();
+    };
+    CTimeNodeBase.prototype["asc_getNodeId"] = CTimeNodeBase.prototype.asc_getNodeId;
+    CTimeNodeBase.prototype.asc_getNodeType = function () {
+        var oAttr = this.getAttributesObject();
+        return oAttr ? oAttr.nodeType : null;
+    };
+    CTimeNodeBase.prototype["asc_getNodeType"] = CTimeNodeBase.prototype.asc_getNodeType;
+    CTimeNodeBase.prototype.asc_getPresetClass = function () {
+        var oAttr = this.getAttributesObject();
+        return oAttr ? oAttr.presetClass : null;
+    };
+    CTimeNodeBase.prototype["asc_getPresetClass"] = CTimeNodeBase.prototype.asc_getPresetClass;
+    CTimeNodeBase.prototype.asc_getPresetID = function () {
+        var oAttr = this.getAttributesObject();
+        return oAttr ? oAttr.presetID : null;
+    };
+    CTimeNodeBase.prototype["asc_getPresetID"] = CTimeNodeBase.prototype.asc_getPresetID;
+    CTimeNodeBase.prototype.asc_getPresetSubtype = function () {
+        var oAttr = this.getAttributesObject();
+        return oAttr ? oAttr.presetSubtype : null;
+    };
+    CTimeNodeBase.prototype["asc_getPresetSubtype"] = CTimeNodeBase.prototype.asc_getPresetSubtype;
+    CTimeNodeBase.prototype.asc_getTargetObjectId = function () {
+        return this.getTargetObjectId();
+    };
+    CTimeNodeBase.prototype["asc_getTargetObjectId"] = CTimeNodeBase.prototype.asc_getTargetObjectId;
+    CTimeNodeBase.prototype.asc_getEffectDuration = function () {
+        return this.simpleDuration ? this.simpleDuration.getVal() : null;
+    };
+    CTimeNodeBase.prototype["asc_getEffectDuration"] = CTimeNodeBase.prototype.asc_getEffectDuration;
+    CTimeNodeBase.prototype.asc_getEffectRepeatCount = function () {
+        return this.repeatCount ? this.repeatCount.getVal() : null;
+    };
+    CTimeNodeBase.prototype["asc_getEffectRepeatCount"] = CTimeNodeBase.prototype.asc_getEffectRepeatCount;
+    CTimeNodeBase.prototype.asc_getNodeState = function () {
+        return this.state;
+    };
+    CTimeNodeBase.prototype["asc_getNodeState"] = CTimeNodeBase.prototype.asc_getNodeState;
 
     var MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER || 9007199254740991;
 
@@ -2469,7 +2522,7 @@
             nPositions = 1;
         }
 
-        // Получаем последовательности и выбранные интервалы
+        // Get sequences and selected intervals
         const aSeqs = this.getEffectsSequences();
         const aRanges = this.getSelectionRanges(aSeqs);
 
@@ -2485,7 +2538,7 @@
         const aStart = aRange[0];
         const aEnd = aRange[1];
 
-        // Вычисляем максимальное разрешенное количество перемещений
+        // Calculate the maximum allowed number of movements
         let nAllowedMovements;
         if (bEarlier) {
             let nOuterPossibleMovements = aStart[0];
@@ -2511,7 +2564,7 @@
             return null;
         }
 
-        // Вычисляем целевую последовательность и позицию в ней
+        // Calculate the target sequence and position in it
         let newStart = [].concat(aStart);
         let newEnd = [].concat(aEnd);
         if (bEarlier) {
@@ -2540,7 +2593,7 @@
         let aSeqToInsert = bEarlier ? aSeqs[newStart[0]] : aSeqs[newEnd[0]];
         let nPosToInsert = bEarlier ? newStart[1] : newEnd[1];
 
-        // Забираем из последовательностей все выбранные эффекты и складываем их в aEffectsToInsert
+        // Take all selected effects from sequences and put them into aEffectsToInsert
         let aEffectsToInsert = [];
         for (let nSeq = aStart[0]; nSeq <= aEnd[0]; nSeq++) {
             let aSeq = aSeqs[nSeq];
@@ -12318,6 +12371,9 @@
             this.animationDrawer.clearTextureCache();
             this.animationDrawer.collectHiddenObjects();
         }
+        if (window["AscUserTest"]) {
+            Asc.editor.sendEvent("asc_onAnimPlayerStart", this, bIsPaused);
+        }
         if (this.isMainSequenceFinished()) {
             this.onMainSeqFinished();
         }
@@ -12336,12 +12392,18 @@
         }
     };
     CAnimationPlayer.prototype.stop = function () {
+        if (window["AscUserTest"]) {
+            Asc.editor.sendEvent("asc_onAnimPlayerStop", this);
+        }
         this.timer.stop();
         this.animationScheduler.stop();
         this.animationDrawer.stop();
         this.resetNodesState();
     };
     CAnimationPlayer.prototype.onMainSeqFinished = function () {
+        if (window["AscUserTest"]) {
+            Asc.editor.sendEvent("asc_onAnimMainSeqFinished", this);
+        }
         if (this.drawer) {
             var nSlideNum = -1;
             if (this.slide) {
@@ -12361,6 +12423,9 @@
         return true;
     };
     CAnimationPlayer.prototype.pause = function () {
+        if (window["AscUserTest"]) {
+            Asc.editor.sendEvent("asc_onAnimPlayerPause", this);
+        }
         this.timer.pause();
         this.animationDrawer.clearTextureCache();
     };
@@ -12405,9 +12470,18 @@
         if (!this.isStarted()) {
             return false;
         }
-        return this.eventsProcessor.addEvent(oExternalEvent);
+        var bAdded = this.eventsProcessor.addEvent(oExternalEvent);
+        if (bAdded) {
+            if (window["AscUserTest"]) {
+                Asc.editor.sendEvent("asc_onAnimExternalEvent", this, oExternalEvent.type, oExternalEvent.target);
+            }
+        }
+        return bAdded;
     };
     CAnimationPlayer.prototype.onClick = function () {
+        if (window["AscUserTest"]) {
+            Asc.editor.sendEvent("asc_onAnimMouseClick", this, null);
+        }
         var bClick = this.addExternalEvent(new CExternalEvent(this.eventsProcessor, COND_EVNT_ON_CLICK, null));
         if (bClick) {
             return true;
@@ -12417,6 +12491,9 @@
     CAnimationPlayer.prototype.onSpClick = function (oSp) {
         if (!oSp) {
             return false;
+        }
+        if (window["AscUserTest"]) {
+            Asc.editor.sendEvent("asc_onAnimMouseClick", this, oSp.Get_Id());
         }
         var bClick = this.addExternalEvent(new CExternalEvent(this.eventsProcessor, COND_EVNT_ON_CLICK, oSp.Get_Id()));
         if (bClick) {
@@ -12441,11 +12518,17 @@
         if (!oSp) {
             return false;
         }
+        if (window["AscUserTest"]) {
+            Asc.editor.sendEvent("asc_onAnimMouseDblClick", this, oSp.Get_Id());
+        }
         return this.addExternalEvent(new CExternalEvent(this.eventsProcessor, COND_EVNT_ON_DBLCLICK, oSp.Get_Id()));
     };
     CAnimationPlayer.prototype.onSpMouseOver = function (oSp) {
         if (!oSp) {
             return false;
+        }
+        if (window["AscUserTest"]) {
+            Asc.editor.sendEvent("asc_onAnimMouseOver", this, oSp.Get_Id());
         }
         return this.addExternalEvent(new CExternalEvent(this.eventsProcessor, COND_EVNT_ON_MOUSEOVER, oSp.Get_Id()));
     };
@@ -12453,9 +12536,15 @@
         if (!oSp) {
             return false;
         }
+        if (window["AscUserTest"]) {
+            Asc.editor.sendEvent("asc_onAnimMouseOut", this, oSp.Get_Id());
+        }
         return this.addExternalEvent(new CExternalEvent(this.eventsProcessor, COND_EVNT_ON_MOUSEOUT, oSp.Get_Id()));
     };
     CAnimationPlayer.prototype.onNextSlide = function () {
+        if (window["AscUserTest"]) {
+            Asc.editor.sendEvent("asc_onAnimNextSlide", this);
+        }
         var bNext = this.addExternalEvent(new CExternalEvent(this.eventsProcessor, COND_EVNT_ON_NEXT, null));
         if (bNext) {
             return true;
@@ -12513,12 +12602,31 @@
         return  this.animationDrawer.isDrawingAnimated(sDrawingId);
     };
 
+    CAnimationPlayer.prototype.isDemoPlayer = function () {
+        return false;
+    };
+    CAnimationPlayer.prototype.asc_isDemoPlayer = function () {
+        return this.isDemoPlayer();
+    };
+    CAnimationPlayer.prototype["asc_isDemoPlayer"] = CAnimationPlayer.prototype.asc_isDemoPlayer;
+    CAnimationPlayer.prototype.asc_getElapsedTicks = function () {
+        return this.getElapsedTicks();
+    };
+    CAnimationPlayer.prototype["asc_getElapsedTicks"] = CAnimationPlayer.prototype.asc_getElapsedTicks;
+    CAnimationPlayer.prototype.asc_getSlideNum = function () {
+        return this.slide ? this.slide.num : -1;
+    };
+    CAnimationPlayer.prototype["asc_getSlideNum"] = CAnimationPlayer.prototype.asc_getSlideNum;
+
 
     function CDemoAnimPlayer(oSlide) {
         CAnimationPlayer.call(this, oSlide, null);
     }
 
     InitClass(CDemoAnimPlayer, CAnimationPlayer, 0);
+    CDemoAnimPlayer.prototype.isDemoPlayer = function () {
+        return true;
+    };
     CDemoAnimPlayer.prototype.updateTimingList = function () {
         this.timings.length = 0;
         var oTiming = this.slide.timing;

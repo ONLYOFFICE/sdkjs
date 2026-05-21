@@ -1,33 +1,36 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -700,7 +703,7 @@
 						function()
 						{
 							var _api = window.g_asc_plugins.api;
-							_api.WordControl.m_oLogicDocument.Reassign_ImageUrls(window.g_asc_plugins.images_rename);
+							AscCommon.History.RewriteImageUrlsInLastPoint(window.g_asc_plugins.images_rename);
 							delete window.g_asc_plugins.images_rename;
 							_api.asc_Recalculate(true);
 							_api.WordControl.m_oLogicDocument.UnlockPanelStyles(true);
@@ -1159,6 +1162,9 @@
 				break;
 			case Asc.c_oAscTypeSelectElement.UnProtectedRegion:
 				oUnkTypeObj = new Asc.RangePermProp(obj);
+				break;
+			case c_oAscTypeSelectElement.HorizontalLine:
+				oUnkTypeObj = obj;
 				break;
 		}
 
@@ -3094,10 +3100,6 @@ background-repeat: no-repeat;\
 		if (this.WordControl.m_oLogicDocument)
 			this.WordControl.m_oLogicDocument.Statistics_Stop();
 	};
-	asc_docs_api.prototype.sync_DocInfoCallback         = function(obj)
-	{
-		this.sendEvent("asc_onDocInfo", new CDocInfoProp(obj));
-	};
 	asc_docs_api.prototype.sync_GetDocInfoStartCallback = function()
 	{
 		this.sendEvent("asc_onGetDocInfoStart");
@@ -3146,66 +3148,6 @@ background-repeat: no-repeat;\
 		//this.WordControl.m_oLogicDocument.TurnOn_InterfaceEvents();
 	};
 
-	function CDocInfoProp(obj)
-	{
-		if (obj)
-		{
-			this.PageCount      = obj.PageCount;
-			this.WordsCount     = obj.WordsCount;
-			this.ParagraphCount = obj.ParagraphCount;
-			this.SymbolsCount   = obj.SymbolsCount;
-			this.SymbolsWSCount = obj.SymbolsWSCount;
-		}
-		else
-		{
-			this.PageCount      = -1;
-			this.WordsCount     = -1;
-			this.ParagraphCount = -1;
-			this.SymbolsCount   = -1;
-			this.SymbolsWSCount = -1;
-		}
-	}
-
-	CDocInfoProp.prototype.get_PageCount      = function()
-	{
-		return this.PageCount;
-	};
-	CDocInfoProp.prototype.put_PageCount      = function(v)
-	{
-		this.PageCount = v;
-	};
-	CDocInfoProp.prototype.get_WordsCount     = function()
-	{
-		return this.WordsCount;
-	};
-	CDocInfoProp.prototype.put_WordsCount     = function(v)
-	{
-		this.WordsCount = v;
-	};
-	CDocInfoProp.prototype.get_ParagraphCount = function()
-	{
-		return this.ParagraphCount;
-	};
-	CDocInfoProp.prototype.put_ParagraphCount = function(v)
-	{
-		this.ParagraphCount = v;
-	};
-	CDocInfoProp.prototype.get_SymbolsCount   = function()
-	{
-		return this.SymbolsCount;
-	};
-	CDocInfoProp.prototype.put_SymbolsCount   = function(v)
-	{
-		this.SymbolsCount = v;
-	};
-	CDocInfoProp.prototype.get_SymbolsWSCount = function()
-	{
-		return this.SymbolsWSCount;
-	};
-	CDocInfoProp.prototype.put_SymbolsWSCount = function(v)
-	{
-		this.SymbolsWSCount = v;
-	};
 
 	/*callbacks*/
 	/*asc_docs_api.prototype.sync_CursorLockCallBack = function(isLock){
@@ -4302,7 +4244,7 @@ background-repeat: no-repeat;\
 			return;
 
 		logicDocument.StartAction(AscDFH.historydescription_Document_SetParagraphAlign, undefined, undefined, value);
-		logicDocument.SetParagraphAlign(value);
+		logicDocument.SetParagraphAlign(value, {checkHR : true});
 		logicDocument.UpdateInterface();
 		logicDocument.Recalculate();
 		logicDocument.FinalizeAction();
@@ -4987,19 +4929,39 @@ background-repeat: no-repeat;\
 			oLogicDocument.FinalizeAction();
         }
     };
+	
+	asc_docs_api.prototype.asc_addHorizontalRule = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
 
-    asc_docs_api.prototype.asc_addHorizontalRule = function() {
-        let oLogicDocument = this.WordControl.m_oLogicDocument;
-        if (!oLogicDocument)
-            return;
+		if (logicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+			return false;
 
-        if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Document_Content_Add))
-        {
-            oLogicDocument.StartAction(AscDFH.historydescription_Document_InsertHorizontalRule);
-            oLogicDocument.AddHorizontalRule();
-            oLogicDocument.FinalizeAction();
-        }
-    };
+		logicDocument.StartAction(AscDFH.historydescription_Document_InsertHorizontalRule);
+		let result = logicDocument.AddHorizontalRule();
+		logicDocument.FinalizeAction();
+		return result;
+	};
+	asc_docs_api.prototype.sync_HorizontalRulePropCallback = function(hr)
+	{
+		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new asc_CSelectedObject(c_oAscTypeSelectElement.HorizontalLine, hr);
+	};
+	asc_docs_api.prototype.asc_SetHorizontalRuleProperties = function(hrUpdate)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || !hrUpdate)
+			return false;
+
+		if (logicDocument.IsSelectionLocked(AscCommon.changestype_Drawing_Props))
+			return false;
+
+		logicDocument.StartAction(AscDFH.historydescription_Document_SetHorizontalRuleProps);
+		let result = logicDocument.SetHorizontalRuleProperties(hrUpdate);
+		logicDocument.FinalizeAction();
+		return result;
+	};
 
     asc_docs_api.prototype.asc_getAllSignatures = function(){
     	if (!this.WordControl.m_oLogicDocument)
@@ -10411,9 +10373,8 @@ background-repeat: no-repeat;\
 					oLogicDocument.UpdateSelection();
 
 					oResult = oContentControl.GetContentControlPr();
+					oLogicDocument.AddMacroData(AscDFH.historydescription_Document_AddBlockLevelContentControl, oResult.GetPlaceholderText());
 				}
-
-				oLogicDocument.AddMacroData(AscDFH.historydescription_Document_AddBlockLevelContentControl, oResult.PlaceholderText);
 				oLogicDocument.FinalizeAction();
 			}
 		}
@@ -10434,9 +10395,8 @@ background-repeat: no-repeat;\
 					oLogicDocument.UpdateSelection();
 
 					oResult = oContentControl.GetContentControlPr();
+					oLogicDocument.AddMacroData(AscDFH.historydescription_Document_AddInlineLevelContentControl, oResult.GetPlaceholderText());
 				}
-
-				oLogicDocument.AddMacroData(AscDFH.historydescription_Document_AddInlineLevelContentControl, oResult.PlaceholderText);
 				oLogicDocument.FinalizeAction();
 			}
 		}
@@ -13318,7 +13278,7 @@ background-repeat: no-repeat;\
 		const oThis = this;
 		this._ConvertDocuments([document], !!document.url, function (stream, imageMap) {
 			oThis.insertDocumentUrlsData.imageMap = imageMap;
-			AscCommonWord.CompareBinary(oThis, stream, oOptions);
+			AscCommonWord.CompareBinary(stream, oOptions);
 		});
 	};
 
@@ -13326,7 +13286,7 @@ background-repeat: no-repeat;\
 		const oThis = this;
 		this._ConvertDocuments([document], !!document.url, function (stream, imageMap) {
 			oThis.insertDocumentUrlsData.imageMap = imageMap;
-			AscCommonWord.mergeBinary(oThis, stream, oOptions);
+			AscCommonWord.mergeBinary(stream, oOptions);
 		});
 	};
 	
@@ -13344,7 +13304,7 @@ background-repeat: no-repeat;\
 		file["GetBinary"] = function() { return AscCommon.getBinaryArray(file_content, file_content_len); };
 		file["GetImageMap"] = function() { return image_map; };
 
-		AscCommonWord["CompareDocuments"](api, file);
+		AscCommonWord["CompareDocuments"](file);
 	};
 
 	window["onDocumentMerge"] = function(folder, file_content, file_content_len, image_map, options) {
@@ -13360,7 +13320,7 @@ background-repeat: no-repeat;\
 		file["GetBinary"] = function() { return AscCommon.getBinaryArray(file_content, file_content_len); };
 		file["GetImageMap"] = function() { return image_map; };
 
-		AscCommonWord["mergeDocuments"](api, file);
+		AscCommonWord["mergeDocuments"](file);
 	};
 
 	window["asc_docs_api"]                                      = asc_docs_api;
@@ -14798,9 +14758,10 @@ background-repeat: no-repeat;\
 		if (this.WordControl && this.WordControl.m_oLogicDocument && this.WordControl.m_oLogicDocument.DrawingDocument)
 			this.WordControl.m_oLogicDocument.DrawingDocument.contentControls.removePluginButtons(guid);
 		
-		let logicDocument = this.private_GetLogicDocument();
-		if (logicDocument && logicDocument.IsDocumentEditor())
-			this.getTextAnnotatorEventManager().removePluginListener(guid);
+		this._onPluginClose(guid);
+	};
+	asc_docs_api.prototype._onPluginClose = function(guid)
+	{
 	};
 	asc_docs_api.prototype.onAttachPluginEvent = function(guid, name)
 	{
@@ -14811,9 +14772,10 @@ background-repeat: no-repeat;\
 			&& this.WordControl.m_oDrawingDocument)
 			this.WordControl.m_oDrawingDocument.contentControls.onAttachPluginEvent(guid);
 		
-		let logicDocument = this.private_GetLogicDocument();
-		if ("onParagraphText" === name && logicDocument && logicDocument.IsDocumentEditor())
-			this.getTextAnnotatorEventManager().addPluginListener(guid);
+		this._onAttachPluginEvent(guid, name);
+	};
+	asc_docs_api.prototype._onAttachPluginEvent = function(guid, name)
+	{
 	};
 	asc_docs_api.prototype.initBroadcastChannelListeners = function() {
 		let oThis = this;
@@ -14884,50 +14846,6 @@ background-repeat: no-repeat;\
 		this.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
 		logicDocument.RecalculateCurPos();
 		logicDocument.UpdateSelection();
-	};
-	
-	asc_docs_api.prototype._onStartGroupActions = function()
-	{
-		let logicDocument = this.private_GetLogicDocument();
-		if (!logicDocument)
-			return;
-		
-		logicDocument.GetSpellCheckManager().TurnOff();
-	};
-	asc_docs_api.prototype._onEndGroupActions = function(isFullEnd)
-	{
-		let logicDocument = this.private_GetLogicDocument();
-		if (!logicDocument)
-			return;
-
-		let groupChanges = AscCommon.History.getGroupChanges();
-		AscCommon.History.resetGroupChanges();
-		if (groupChanges.length)
-			logicDocument.RecalculateByChanges(groupChanges);
-
-		if (isFullEnd)
-		{
-			logicDocument.UpdateInterface();
-			logicDocument.UpdateSelection();
-			logicDocument.GetSpellCheckManager().TurnOn();
-		}
-	};
-	asc_docs_api.prototype._saveGroupActionsState = function()
-	{
-		let logicDocument = this.private_GetLogicDocument();
-		if (!logicDocument)
-			return;
-
-		this.groupActionsPr.selectionState = logicDocument.SaveDocumentState();
-	};
-	asc_docs_api.prototype._restoreGroupActionsState = function()
-	{
-		let logicDocument = this.private_GetLogicDocument();
-		if (!logicDocument || !this.groupActionsPr.selectionState)
-			return;
-
-		logicDocument.LoadDocumentState(this.groupActionsPr.selectionState);
-		this.groupActionsPr.selectionState = null;
 	};
 	
 	asc_docs_api.prototype.getJsApi = function()
@@ -15782,6 +15700,8 @@ background-repeat: no-repeat;\
 	// signatures
 	asc_docs_api.prototype["asc_addSignatureLine"] 						= asc_docs_api.prototype.asc_addSignatureLine;
 	asc_docs_api.prototype["asc_addHorizontalRule"] 					= asc_docs_api.prototype.asc_addHorizontalRule;
+	asc_docs_api.prototype["asc_SetHorizontalRuleProperties"]			= asc_docs_api.prototype.asc_SetHorizontalRuleProperties;
+	asc_docs_api.prototype["sync_HorizontalRulePropCallback"]			= asc_docs_api.prototype.sync_HorizontalRulePropCallback;
 	asc_docs_api.prototype["asc_CallSignatureDblClickEvent"]			= asc_docs_api.prototype.asc_CallSignatureDblClickEvent;
 	asc_docs_api.prototype["asc_getRequestSignatures"] 					= asc_docs_api.prototype.asc_getRequestSignatures;
 	asc_docs_api.prototype["asc_AddSignatureLine2"]             		= asc_docs_api.prototype.asc_AddSignatureLine2;
@@ -15865,16 +15785,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['getJsApi'] = asc_docs_api.prototype.getJsApi;
 	asc_docs_api.prototype['scrollToTarget'] = asc_docs_api.prototype.scrollToTarget;
 	
-	CDocInfoProp.prototype['get_PageCount']             = CDocInfoProp.prototype.get_PageCount;
-	CDocInfoProp.prototype['put_PageCount']             = CDocInfoProp.prototype.put_PageCount;
-	CDocInfoProp.prototype['get_WordsCount']            = CDocInfoProp.prototype.get_WordsCount;
-	CDocInfoProp.prototype['put_WordsCount']            = CDocInfoProp.prototype.put_WordsCount;
-	CDocInfoProp.prototype['get_ParagraphCount']        = CDocInfoProp.prototype.get_ParagraphCount;
-	CDocInfoProp.prototype['put_ParagraphCount']        = CDocInfoProp.prototype.put_ParagraphCount;
-	CDocInfoProp.prototype['get_SymbolsCount']          = CDocInfoProp.prototype.get_SymbolsCount;
-	CDocInfoProp.prototype['put_SymbolsCount']          = CDocInfoProp.prototype.put_SymbolsCount;
-	CDocInfoProp.prototype['get_SymbolsWSCount']        = CDocInfoProp.prototype.get_SymbolsWSCount;
-	CDocInfoProp.prototype['put_SymbolsWSCount']        = CDocInfoProp.prototype.put_SymbolsWSCount;
 	CContextMenuData.prototype['get_Type']    = CContextMenuData.prototype.get_Type;
 	CContextMenuData.prototype['get_X']       = CContextMenuData.prototype.get_X;
 	CContextMenuData.prototype['get_Y']       = CContextMenuData.prototype.get_Y;

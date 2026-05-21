@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -241,8 +244,8 @@ function (window, undefined) {
 			res = true;
 		} else {
 			var conditionObj = AscCommonExcel.matchingValue(condition);
-			//если строка, без операторов, добавляем * для поиска совпадений начинающихся с данной строки
-			//так делает MS. lo ищет строгие совпадения
+			//if a string has no operators, add * to search for matches starting with that string
+			//this is how MS does it. LO searches for exact matches
 			if (null === conditionObj.op && cElementType.string === conditionObj.val.type) {
 				conditionObj.val.value += "*";
 			}
@@ -262,7 +265,7 @@ function (window, undefined) {
 				if (bIsCondition) {
 					if (0 === i) {
 						arr[j] = header;
-						if (map.hasOwnProperty(header)) {//если находим такой же заголовок, пропускаем
+						if (map.hasOwnProperty(header)) {//if a duplicate header is found, skip it
 							continue;
 						} else {
 							map[header] = [];
@@ -272,7 +275,7 @@ function (window, undefined) {
 					}
 				} else {
 					if (0 === i) {
-						if (map.hasOwnProperty(header)) {//если находим такой же заголовок, пропускаем
+						if (map.hasOwnProperty(header)) {//if a duplicate header is found, skip it
 							continue;
 						} else {
 							map[header] = [];
@@ -292,15 +295,15 @@ function (window, undefined) {
 
 	function getNeedValuesFromDataBase(dataBase, field, conditionData, bIsGetObjArray, doNotCheckEmptyField) {
 
-		//заполняем map название столбца-> его содержимое(из базы данных)
+		//fill the map: column name -> its content (from the database)
 		var databaseObj = convertDatabase(dataBase);
 		var headersArr = databaseObj.arr, headersDataMap = databaseObj.map;
 
-		//заполняем map название столбца-> его содержимое(из условий)
+		//fill the map: column name -> its content (from conditions)
 		databaseObj = convertDatabase(conditionData, true);
 		var headersConditionArr = databaseObj.arr, headersConditionMap = databaseObj.map;
 
-		//преобразуем аргумент поле
+		//convert the field argument
 		if (cElementType.cell === field.type || cElementType.cell3D === field.type) {
 			field = field.getValue();
 		}
@@ -314,7 +317,7 @@ function (window, undefined) {
 		if (cElementType.error === isNumberField.type) {
 			field = field.getValue();
 		} else {
-			//если поле задано числом, то выбираем заголовок столбца с данным именем
+			//if the field is specified as a number, select the column header with that name
 			var number = isNumberField.getValue();
 			if (headersArr[number - 1]) {
 				field = headersArr[number - 1];
@@ -336,7 +339,7 @@ function (window, undefined) {
 				var condition = conditionData[i][j];
 				var header = headersConditionArr[j];
 
-				//проходимся по всем строкам данного столбца из базы и смотрим что нам подходит по условию
+				//iterate through all rows of this column from the database and check which ones match the condition
 				var databaseData = headersDataMap[header];
 
 				if (!databaseData) {
@@ -431,6 +434,7 @@ function (window, undefined) {
 	cDAVERAGE.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDAVERAGE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDAVERAGE.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDAVERAGE.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDAVERAGE.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -485,6 +489,7 @@ function (window, undefined) {
 	cDCOUNT.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDCOUNT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDCOUNT.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDCOUNT.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDCOUNT.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -506,7 +511,7 @@ function (window, undefined) {
 		var isEmptyField = cElementType.empty === argClone[1].type;
 		var count = 0;
 		for (var i = 0; i < resArr.length; i++) {
-			//если Поле пустое, то ms игнорирует числовой формат полученных данных
+			//if the Field is empty, MS ignores the numeric format of the retrieved data
 			if (isEmptyField) {
 				count++;
 			} else {
@@ -538,6 +543,7 @@ function (window, undefined) {
 	cDCOUNTA.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDCOUNTA.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDCOUNTA.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDCOUNTA.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDCOUNTA.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -583,6 +589,7 @@ function (window, undefined) {
 	cDGET.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDGET.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDGET.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDGET.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDGET.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -625,6 +632,7 @@ function (window, undefined) {
 	cDMAX.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDMAX.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDMAX.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDMAX.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDMAX.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -668,6 +676,7 @@ function (window, undefined) {
 	cDMIN.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDMIN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDMIN.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDMIN.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDMIN.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -712,6 +721,7 @@ function (window, undefined) {
 	cDPRODUCT.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDPRODUCT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDPRODUCT.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDPRODUCT.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDPRODUCT.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -763,6 +773,7 @@ function (window, undefined) {
 	cDSTDEV.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDSTDEV.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDSTDEV.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDSTDEV.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDSTDEV.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -822,6 +833,7 @@ function (window, undefined) {
 	cDSTDEVP.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDSTDEVP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDSTDEVP.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDSTDEVP.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDSTDEVP.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -882,6 +894,7 @@ function (window, undefined) {
 	cDSUM.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDSUM.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDSUM.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDSUM.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDSUM.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array], null, cErrorType.wrong_value_type);
@@ -929,6 +942,7 @@ function (window, undefined) {
 	cDVAR.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDVAR.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDVAR.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDVAR.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDVAR.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);
@@ -995,6 +1009,7 @@ function (window, undefined) {
 	cDVARP.prototype.arrayIndexes = {0: 1, 2: 1};
 	cDVARP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cDVARP.prototype.argumentsType = [argType.reference, argType.number, argType.text];
+	cDVARP.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cDVARP.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, null, cElementType.array]);

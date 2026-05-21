@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -805,7 +808,7 @@
 		/** @constructor */
 		function AutoFilters(currentSheet) {
 			this.worksheet = currentSheet;
-			//флаг для того, чтобы применять скрытые строки к текущему вью
+			//flag to apply hidden rows to the current view
 			this.useViewLocalChange = null;
 
 			this.applyCollaborativeChangedColumnsArr = [];
@@ -813,8 +816,8 @@
 
 			this.m_oColor = new AscCommon.CColor(120, 120, 120);
 
-			//при добавлении строки итогов не нужно чтобы на ней распространялось, допустим, УФ
-			//добавляю флаг, чтобы не протаскивать через несколько функций
+			//when adding a totals row, conditional formatting should not apply to it
+			//adding a flag to avoid passing through several functions
 			this.isAddTotalRow = null;
 
 			this.redoColumnName = null;
@@ -850,7 +853,7 @@
 
 				//*****callBack on add filter
 				var addFilterCallBack = function () {
-					//TODO воможно стоит добавлять точку в историю в верхних функциях
+					//TODO possibly should add history point in the upper functions
 					History.Create_NewPoint();
 					History.StartTransaction();
 
@@ -1072,8 +1075,8 @@
 				var activeNamedSheetViewName = activeNamedSheetView ? activeNamedSheetView.name : null;
 				var isEqualView = activeNamedSheetViewId !== null && activeNamedSheetViewName === redoNamedSheetViewName;
 				if (bCollaborativeChanges && isEqualView) {
-					//если находимся в одном вью - изменения в одном фильтре от чужого пользователя не принимаем
-					//сохраняем те, которые пришли последними
+					//if in the same view - don't accept changes in one filter from another user
+					//keep those that came last
 					if (this._checkCollaborativeActiveOnFilterApply(autoFiltersObject)) {
 						return;
 					}
@@ -1109,7 +1112,7 @@
 				var newFilterColumn, filterRange;
 
 				//TODO activeNamedSheetView ?
-				//byCurCell - если пользователь нажимает на конкретной ячейке - скрыть данное значение - для а/ф с мерженным заголвком
+				//byCurCell - if user clicks on a specific cell - hide this value - for autofilter with merged header
 				if (byCurCell && filterObj.ColId >= 0 && filterObj.startColId >= 0 && filterObj.ColId !== filterObj.startColId) {
 
 					newFilterColumn = new window['AscCommonExcel'].FilterColumn();
@@ -1146,7 +1149,7 @@
 
 					if (nsvFilter) {
 						oldFilter = nsvFilter.clone();
-						//TODO перепроверить. соответствует ли индекс?
+						//TODO recheck. does the index match?
 						newFilterColumn = nsvFilter.getColumnFilterByColId(filterObj.ColId, true);
 
 						if (!newFilterColumn) {
@@ -1201,7 +1204,7 @@
 					}
 				}
 
-				//автоматическое расширение диапазона а/ф
+				//automatic expansion of autofilter range
 				if (autoFiltersObject.automaticRowCount && filterObj.filter && filterObj.filter.Ref &&
 					filterObj.filter.isAutoFilter() /*&& !nsvFilter*/) {
 					var currentDiff = filterObj.filter.Ref.r2 - filterObj.filter.Ref.r1;
@@ -1221,12 +1224,12 @@
 						History.LocalChange = true;
 					}
 
-					//при принятии изменений от других пользователей не скрываем строки
+					//when accepting changes from other users, don't hide rows
 					if (!(bCollaborativeChanges && activeNamedSheetView !== null) || isEqualView) {
-						//TODO пересмотреть временную подмену флага
-						//заменяю потому что в случае одинаковых вью изменения о скрытии строчек нужно
-						//записывать во временный флаг(новый флаг о скрытии строчек)
-						//по общей схеме при принятии измений - записывается с использованием основного флага
+						//TODO review temporary flag substitution
+						//replacing because in case of identical views, row hiding changes need to
+						//be written to a temporary flag (new row hiding flag)
+						//by general scheme when accepting changes - written using the main flag
 						if (isEqualView && bCollaborativeChanges) {
 							this.worksheet.workbook.bCollaborativeChanges = false;
 						}
@@ -1275,8 +1278,8 @@
 				let res = autoFiltersObject;
 
 				if (autoFiltersObject.filter && Asc.c_oAscAutoFilterTypes.CustomFilters === autoFiltersObject.filter.type && autoFiltersObject.filter.filter) {
-					//посколько ms применяет в данном случае не кастомный фильтр
-					//кастомный применяется в случае, если открытые значения отсутсвуют
+					//since MS doesn't apply a custom filter in this case
+					//custom filter is applied when there are no open values
 					let allHideVal = true;
 					let individualMap = [];
 					let values = [];
@@ -1490,9 +1493,9 @@
 					}
 				}
 
-				//если выделена часть форматир. таблицы, то отправляем -2
-				//если форматировання таблица содержит данный диапазон, то id
-				//если диапазон не затрагивает форматированную таблицу, то -1
+				//if part of formatted table is selected, return -2
+				//if formatted table contains this range, return id
+				//if range doesn't affect formatted table, return -1
 				return containRangeId;
 			},
 
@@ -1563,10 +1566,10 @@
 					}
 				}
 
-				//данная функция возвращает false в двух случаях - при смене стиля ф/т или при поптыке добавить ф/т к части а/ф
+				//this function returns false in two cases - when changing table style or when trying to add table to part of autofilter
 
-				//TODO переделать взаимодействие с меню. если находимся внутри ф/т - вызывать сразу из меню смену стиля ф/т. 
-				//для проверки возможности добавить ф/т - попробовать использовать parserHelper.checkDataRange
+				//TODO rework menu interaction. if inside formatted table - call style change directly from menu.
+				//to check ability to add table - try using parserHelper.checkDataRange
 				var bIsInFilter = this._searchRangeInFilters(activeCells);
 				var addRange;
 
@@ -1580,7 +1583,7 @@
 					if (bIsInFilter && !bIsInFilter.isAutoFilter() && bIsInFilter.Ref.containsRange(activeCells)) {
 						res.asc_setRange(bIsInFilter.DisplayName);
 					} else {
-						if (activeCells.r1 === activeCells.r2 && activeCells.c1 === activeCells.c2 && !userRange)//если ячейка выделенная одна
+						if (activeCells.r1 === activeCells.r2 && activeCells.c1 === activeCells.c2 && !userRange)//if only one cell is selected
 						{
 							addRange = this.expandRange(activeCells);
 						} else {
@@ -1591,13 +1594,13 @@
 					}
 				} else {
 					if (null === bIsInFilter || isPivot) {
-						if (activeCells.r1 === activeCells.r2 && activeCells.c1 === activeCells.c2 && !userRange)//если ячейка выделенная одна
+						if (activeCells.r1 === activeCells.r2 && activeCells.c1 === activeCells.c2 && !userRange)//if only one cell is selected
 						{
 							addRange = this.expandRange(activeCells);
 						} else {
 							addRange = activeCells;
 						}
-					} else//range внутри а/ф или ф/т
+					} else//range inside autofilter or formatted table
 					{
 						if (bIsInFilter.isAutoFilter()) {
 							addRange = bIsInFilter.Ref;
@@ -1659,6 +1662,8 @@
 							var redrawTablesArr;
 							if (data.type === true) {
 								redrawTablesArr = this.insertLastTableColumn(data.displayName, data.activeCells);
+							} else if (data.type === undefined) {
+								redrawTablesArr = this.insertFirstTableColumn(data.displayName, data.activeCells);
 							} else if (data.type === false) {
 								redrawTablesArr = this.insertLastTableRow(data.displayName, data.activeCells);
 							}
@@ -1729,13 +1734,13 @@
 								cloneData.oldFilter.DisplayName === worksheet.TableParts[l].DisplayName) {
 								worksheet.changeTablePart(l, cloneData.oldFilter.clone(null), false);
 
-								//чистим стиль от старой таблицы
+								//clear style from old table
 								var clearRange = new AscCommonExcel.Range(worksheet, cloneData.newFilterRef.r1, cloneData.newFilterRef.c1, cloneData.newFilterRef.r2, cloneData.newFilterRef.c2);
 								clearRange.clearTableStyle();
 
 								t._setColorStyleTable(cloneData.oldFilter.Ref, cloneData.oldFilter, null, true);
 
-								//если на месте того, где находилась Ф/т находится другая, то применяем к ней стили
+								//if another table is in place of the old one, apply styles to it
 								t._setStyleTables(cloneData.newFilterRef);
 
 								//event
@@ -1767,7 +1772,7 @@
 									}
 									_doAdd = true;
 
-									//перерисовываем фильтры, находящиеся на одном уровне с данным фильтром
+									//redraw filters at the same level as this filter
 									t._resetTablePartStyle(worksheet.TableParts[l].Ref);
 									t.updateSlicer(worksheet.TableParts[l].DisplayName);
 									break;
@@ -1775,7 +1780,7 @@
 							}
 						}
 
-						if (!_doAdd)//добавляем фильтр
+						if (!_doAdd)//add filter
 						{
 							if (cloneData.TableStyleInfo) {
 								worksheet.addTablePart(cloneData);
@@ -1790,8 +1795,8 @@
 				};
 
 				var undo_do = function () {
-					//сортировка
-					//ипользуется целиком объект фт(cloneData)
+					//sorting
+					//uses the entire table object (cloneData)
 					if (worksheet.AutoFilter && cloneData.oldFilter.isAutoFilter()) {
 						worksheet.AutoFilter = cloneData.oldFilter.clone(null);
 					} else if (worksheet.TableParts) {
@@ -1820,20 +1825,20 @@
 						undo_do();
 						break;
 					case AscCH.historyitem_AutoFilter_Empty:
-						//было удаление, на undo добавляем
-						//ипользуется целиком объект фильтра/фт(cloneData)
+						//was deletion, on undo we add
+						//uses the entire filter/table object (cloneData)
 						undo_empty();
 						break;
 					/*case AscCH.historyitem_AutoFilter_Apply:
 						break;*/
 					case AscCH.historyitem_AutoFilter_Move:
-						//ипользуется moveFrom, moveTo + FilterColumns(data)
+						//uses moveFrom, moveTo + FilterColumns(data)
 						this._moveAutoFilters(null, null, data);
 						break;
 					/*case AscCH.historyitem_AutoFilter_CleanAutoFilter:
 						break;*/
 					case AscCH.historyitem_AutoFilter_Change:
-						//ипользуется целиком объект фильтра/фт(cloneData)
+						//uses the entire filter/table object (cloneData)
 						undo_change();
 						break;
 					case AscCH.historyitem_AutoFilter_ChangeTableInfo:
@@ -1849,19 +1854,19 @@
 						undo_do();
 						break;*/
 					case AscCH.historyitem_AutoFilter_ChangeColumnName:
-						//ипользуется объект c полями val, formula, nCol, nRow(undoData)
+						//uses object with fields val, formula, nCol, nRow(undoData)
 						this.renameTableColumn(null, null, undoData);
 						break;
 					case AscCH.historyitem_AutoFilter_ChangeTotalRow:
-						//ипользуется объект c полями val, formula, nCol, nRow(undoData)
+						//uses object with fields val, formula, nCol, nRow(undoData)
 						this.renameTableColumn(null, null, undoData);
 						break;
 					default:
 						if (cloneData.FilterColumns || cloneData.AutoFilter || cloneData.TableColumns || (cloneData.Ref && (cloneData instanceof AscCommonExcel.AutoFilter || cloneData instanceof AscCommonExcel.TablePart))) {
-							//заходим для случаев type === AscCH.historyitem_AutoFilter_Apply
-							//заходим для случаев type === historyitem_AutoFilter_CleanAutoFilter
+							//enter for cases type === AscCH.historyitem_AutoFilter_Apply
+							//enter for cases type === historyitem_AutoFilter_CleanAutoFilter
 							//AscCH.historyitem_AutoFilter_ClearFilterColumn
-							//ипользуется целиком объект фильтра/фт(cloneData)
+							//uses the entire filter/table object (cloneData)
 							undo_apply();
 						} else if (cloneData.columnsFilter) {
 							//undo view filter
@@ -1892,7 +1897,7 @@
 				var tableParts = worksheet.TableParts;
 				if (tableParts) {
 					if (range === null && row !== undefined) {
-						//TODO передавать wsview
+						//TODO pass wsview
 						range = new Asc.Range(0, row, worksheet.nColsCount - 1, row);
 					}
 
@@ -1901,14 +1906,14 @@
 						if (currentFilter && currentFilter.Ref) {
 							var tableRange = currentFilter.Ref;
 
-							//проверяем, попадает хотя бы одна ячейка из диапазона в область фильтра
+							//check if at least one cell from the range falls into the filter area
 							if (range.isIntersect(tableRange)) {
 								this._setColorStyleTable(tableRange, currentFilter);
 
-								//добавил сюда обновление срезав первую очередь по причине того, что мы
-								//не можем обновить срез после table->apply->undo(ракрытие/скрытие строк при undo делается
-								//позже чем происходит добавления в модель фильтра)
-								//TODO стоит пересмотреть - возможно стоит обновлять только для случая изменения строк
+								//added slicer update here primarily because we
+								//cannot update slicer after table->apply->undo (row hiding/showing on undo is done
+								//later than adding to filter model)
+								//TODO should reconsider - perhaps only update for row changes case
 								this.updateSlicer(currentFilter.DisplayName);
 							}
 						}
@@ -1924,11 +1929,11 @@
 				var DeleteColumns = !!(insertType && (insertType === c_oAscDeleteOptions.DeleteColumns || insertType === c_oAscInsertOptions.InsertColumns));
 				var DeleteRows = !!(insertType && (insertType === c_oAscDeleteOptions.DeleteRows || insertType === c_oAscInsertOptions.InsertRows));
 
-				if (DeleteColumns)//в случае, если удаляем столбцы, тогда расширяем активную область область по всем строкам
+				if (DeleteColumns)//if deleting columns, expand active area to all rows
 				{
 					activeCells.r1 = 0;
 					activeCells.r2 = AscCommon.gc_nMaxRow - 1;
-				} else if (DeleteRows)//в случае, если удаляем строки, тогда расширяем активную область область по всем столбцам
+				} else if (DeleteRows)//if deleting rows, expand active area to all columns
 				{
 					activeCells.c1 = 0;
 					activeCells.c2 = AscCommon.gc_nMaxCol - 1;
@@ -1943,7 +1948,7 @@
 
 					var bbox = oRange.getBBox0();
 
-					//смотрим находится ли фильтр(первая его строчка) внутри выделенного фрагмента
+					//check if filter (its first row) is inside the selected fragment
 					if ((activeCells.containsFirstLineRange(bbox) && !isTablePart) || (isTablePart && activeCells.containsRange(bbox))) {
 
 						t.updateNamedSheetViewAfterDeleteFilter(oldFilter);
@@ -1956,7 +1961,7 @@
 							worksheet.AutoFilter = null;
 						}
 
-						//открываем скрытые строки
+						//show hidden rows
 						if (oldFilter.isApplyAutoFilter()) {
 							var sheetViewId = worksheet.getActiveNamedSheetViewId();
 							worksheet.setActiveNamedSheetView(null);
@@ -1964,7 +1969,7 @@
 							worksheet.setActiveNamedSheetView(sheetViewId);
 						}
 
-						//заносим в историю
+						//add to history
 						if (isTablePart) {
 							if (!worksheet.workbook.bUndoChanges && !worksheet.workbook.bRedoChanges) {
 								worksheet.workbook.deleteSlicersByTable(oldFilter.DisplayName);
@@ -2193,7 +2198,7 @@
 								}
 							};
 
-							//так же необходимл сдвинуть фильтры во всех вью
+							//also need to shift filters in all views
 							var viewActive = worksheet.getActiveNamedSheetViewId();
 							if (Asc.CT_NamedSheetView.prototype.getNsvFiltersByTableId) {
 								worksheet.forEachView(function (curView, isActive) {
@@ -2281,6 +2286,43 @@
 				return redrawTablesArr;
 			},
 
+			insertFirstTableColumn: function (displayNameFormatTable, activeRange) {
+				var worksheet = this.worksheet;
+				var t = this;
+				var bUndoChanges = worksheet.workbook.bUndoChanges;
+				var bRedoChanges = worksheet.workbook.bRedoChanges;
+
+				var redrawTablesArr = [];
+
+				var changeFilter = function (filter) {
+					var oldFilter = filter.clone(null);
+					filter.addTableFirstColumn(t);
+					filter.changeRef(-1, null, true);
+
+					//History
+					if (!bUndoChanges && !bRedoChanges && oldFilter) {
+						var changeElement = {
+							oldFilter: oldFilter, newFilterRef: filter.Ref.clone()
+						};
+						let historyObj = t._getHistoryObj(changeElement, AscCH.historyitem_AutoFilter_Change,
+							{displayName: displayNameFormatTable, activeCells: activeRange}, false,
+							oldFilter.Ref, null, activeRange);
+						History.Add(AscCommonExcel.g_oUndoRedoAutoFilters, AscCH.historyitem_AutoFilter_Change, worksheet.getId(), worksheet.selectionRange.getLast().clone(),
+							historyObj);
+					}
+
+					redrawTablesArr.push({oldfilterRef: oldFilter.Ref, newFilter: filter});
+				};
+
+				var tablePart = t._getFilterByDisplayName(displayNameFormatTable);
+
+				if (tablePart) {
+					changeFilter(tablePart);
+				}
+
+				return redrawTablesArr;
+			},
+
 			insertRows: function (type, activeRange, insertType, displayNameFormatTable) {
 				var worksheet = this.worksheet;
 				var t = this;
@@ -2300,7 +2342,7 @@
 					this.applyCollaborativeChangedRowsArr.push({range: activeRange, offset: diff});
 				}
 
-				if (DeleteRows)//в случае, если удаляем строки, тогда расширяем активную область область по всем столбцам
+				if (DeleteRows)//if deleting rows, expand active area to all columns
 				{
 					activeRange.c1 = 0;
 					activeRange.c2 = AscCommon.gc_nMaxCol - 1;
@@ -2309,8 +2351,9 @@
 				var changeFilter = function (filter, bTablePart) {
 					var ref = filter.Ref;
 					var oldFilter = null;
+					let bTableHeaders = !bTablePart || filter.isHeaderRow();
 					if (activeRange.c1 <= ref.c1 && activeRange.c2 >= ref.c2) {
-						if (activeRange.r1 <= ref.r1)//until
+						if ((activeRange.r1 <= ref.r1 && bTableHeaders) || (activeRange.r1 < ref.r1 && !bTableHeaders))//until
 						{
 							oldFilter = filter.clone(null);
 
@@ -2334,9 +2377,9 @@
 						}
 					}
 
-					//для случая, когда вставляем последнюю строку в ф/т, не добавляю эти сдвиги в историю
-					//это делается при undo в функции _shiftCellsBottom
-					//2 раза дублировать сдвиги не нужно
+					//for case when inserting last row in table, don't add these shifts to history
+					//this is done on undo in _shiftCellsBottom function
+					//no need to duplicate shifts twice
 					if (!bUndoChanges && !bRedoChanges /*&& !notAddToHistory*/ && oldFilter && !(displayNameFormatTable && insertType === c_oAscInsertOptions.InsertCellsAndShiftDown)) {
 						var changeElement = {
 							oldFilter: oldFilter, newFilterRef: filter.Ref.clone()
@@ -2407,7 +2450,7 @@
 			},
 
 			sortColFilter: function (type, cellId, activeRange, sortProps, displayName, color) {
-				//TODO возвращаю старую версию функции(для истории использую весь объект а/ф). есть проблемы в undo при сортировке. позже пересмотреть новую версию.
+				//TODO returning old version of function (using entire autofilter object for history). there are problems in undo during sorting. review new version later.
 
 				var curFilter, filterRef, startCol, maxFilterRow;
 				var t = this;
@@ -2429,7 +2472,7 @@
 
 					var oldFilter = curFilter.clone(null);
 
-					//изменяем содержимое фильтра
+					//change filter content
 					if (!curFilter.SortState) {
 						var sortStateRange = new Asc.Range(curFilter.Ref.c1, curFilter.Ref.r1, curFilter.Ref.c2, maxFilterRow);
 						if (bIsAutoFilter || (!bIsAutoFilter && null === curFilter.HeaderRowCount)) {
@@ -2470,7 +2513,7 @@
 
 					var oldFilter = curFilter.clone(null);
 
-					//изменяем содержимое фильтра
+					//change filter content
 					if (!curFilter.SortState) {
 						var sortStateRange = new Asc.Range(curFilter.Ref.c1, curFilter.Ref.r1, curFilter.Ref.c2, maxFilterRow);
 						if (bIsAutoFilter || (!bIsAutoFilter && null === curFilter.HeaderRowCount)) {
@@ -2553,19 +2596,19 @@
 					}
 				} else {
 					var filter = t.searchRangeInTableParts(activeRange);
-					if (filter === -2)//если захвачена часть ф/т
+					if (filter === -2)//if part of table is selected
 					{
 						return false;
 					}
 
-					if (filter === -1)//если нет ф/т в выделенном диапазоне
+					if (filter === -1)//if no table in selected range
 					{
 						if (worksheet.AutoFilter && worksheet.AutoFilter.Ref) {
 							curFilter = worksheet.AutoFilter;
 							filterRef = curFilter.Ref;
 						}
 
-						//в данному случае может быть захвачен а/ф, если он присутвует(надо проверить), либо нажата кнопка а/ф
+						//in this case autofilter may be selected if present (need to check), or autofilter button was clicked
 						if (curFilter && (filterRef.isEqual(activeRange) || cellId !== '' ||
 							(activeRange.isOneCell() && filterRef.containsRange(activeRange)))) {
 							if (cellId !== '' && !isCellIdString) {
@@ -2577,12 +2620,12 @@
 							if (startCol === undefined) {
 								startCol = activeRange.c1;
 							}
-						} else//внутри а/ф либо без а/ф либо часть а/ф(делаем ws.setSelectionInfo("sort", resType);)
+						} else//inside autofilter or without autofilter or part of autofilter (do ws.setSelectionInfo("sort", resType);)
 						{
 							return null;
 						}
 					} else {
-						//получаем данную ф/т
+						//get this table
 						curFilter = worksheet.TableParts[filter];
 						filterRef = curFilter.Ref;
 
@@ -2595,9 +2638,9 @@
 
 				var ascSortRange = curFilter.getRangeWithoutHeaderFooter();
 				maxFilterRow = ascSortRange.r2;
-				if (curFilter.isAutoFilter() && curFilter.isApplyAutoFilter() === false)//нужно подхватить нижние ячейки в случае, если это не применен а/ф
+				if (curFilter.isAutoFilter() && curFilter.isApplyAutoFilter() === false)//need to pick up cells below if autofilter is not applied
 				{
-					//TODO стоит заменить на expandRange ?
+					//TODO should replace with expandRange ?
 					var automaticRange = this.expandRange(curFilter.Ref, true);
 					var automaticRowCount = automaticRange.r2;
 
@@ -2617,7 +2660,7 @@
 				};
 			},
 
-			//2 parameter - clean from found filter FilterColumns и SortState
+			//2 parameter - clean from found filter FilterColumns and SortState
 			isApplyAutoFilterInCell: function (activeCell, clean, viewId) {
 				var worksheet = this.worksheet;
 				var autoFilter;
@@ -2627,7 +2670,7 @@
 						tablePart = worksheet.TableParts[i];
 						autoFilter = this.getAutoFilter(tablePart, viewId);
 
-						//если применен фильтр или сортировка
+						//if filter or sort is applied
 						if ((autoFilter && autoFilter.isApplyAutoFilter()) || tablePart.isApplySortConditions()) {
 							if (tablePart.Ref.containsRange(activeCell)) {
 								if (clean) {
@@ -2652,7 +2695,7 @@
 				return false;
 			},
 
-			//на вход - таблица или а/ф. отдаёт либо autoFilter, либо nsvFilter
+			//input - table or autofilter. returns either autoFilter or nsvFilter
 			getAutoFilter: function (obj, viewId) {
 				if (!obj) {
 					return null;
@@ -2669,9 +2712,9 @@
 				return filter;
 			},
 
-			//если активный диапазон захватывает части нескольких табли, либо часть одной таблицы и одну целую
+			//if active range captures parts of several tables, or part of one table and one whole
 			isRangeIntersectionSeveralTableParts: function (activeRange) {
-				//TODO сделать общую функцию с isActiveCellsCrossHalfFTable
+				//TODO make common function with isActiveCellsCrossHalfFTable
 				var worksheet = this.worksheet;
 				var tableParts = worksheet.TableParts;
 
@@ -2703,7 +2746,7 @@
 					}
 				}
 
-				//пересекается, но не содержит фильтрованный диапазону. если содержит + строки первые совпадают - то фильтр превращается в таблицу
+				//intersects but doesn't contain filtered range. if contains + first rows match - filter becomes table
 				var filterRef = worksheet.AutoFilter && worksheet.AutoFilter.Ref;
 				var contains = filterRef && range.containsRange(filterRef) && range.r1 === filterRef.r1;
 				return filterRef && range.intersection(filterRef) && !contains;
@@ -2724,7 +2767,7 @@
 					}
 				}
 
-				//пересекается, но не равен фильтрованному диапазону. если равен - то фильтр превращается в таблицу
+				//intersects but not equal to filtered range. if equal - filter becomes table
 				if (worksheet.AutoFilter && worksheet.AutoFilter.Ref &&
 					startRange.intersection(worksheet.AutoFilter.Ref)) {
 					res = -1;
@@ -2785,7 +2828,7 @@
 			},
 
 			_moveAutoFilters: function (arnTo, arnFrom, data, copyRange, offLock, activeRange, wsTo) {
-				//проверяем покрывает ли диапазон хотя бы один автофильтр
+				//check if range covers at least one autofilter
 				var worksheet = this.worksheet;
 				var isUpdate = null;
 
@@ -2879,7 +2922,7 @@
 					fromFilter = moveFilter.clone(null);
 
 					t.isEmptyAutoFilters(fromFilter.Ref, null, null, true);
-					if (moveFilter.isAutoFilter()) {//а/ф не переносятся с листа на лист, переносятся только данные
+					if (moveFilter.isAutoFilter()) {//autofilters are not moved from sheet to sheet, only data is moved
 						return;
 					}
 
@@ -2889,7 +2932,7 @@
 					diffCol = tablePartRange.c1 - refInsertBinary.c1 + arnTo.c1;
 					range = wsTo.getRange3(diffRow, diffCol, diffRow + (tablePartRange.r2 - tablePartRange.r1), diffCol + (tablePartRange.c2 - tablePartRange.c1));
 
-					//TODO использовать bWithoutFilter из tablePart
+					//TODO use bWithoutFilter from tablePart
 					var bWithoutFilter = false;
 					if (!fromFilter.AutoFilter) {
 						bWithoutFilter = true;
@@ -2914,13 +2957,13 @@
 				} else {
 					var findFilters = this._searchFiltersInRange(arnFrom);
 					if (findFilters) {
-						//у найденных фильтров меняем Ref + скрытые строчки открываем
+						//for found filters change Ref + show hidden rows
 						for (var i = 0; i < findFilters.length; i++) {
 							if (moveOneSheet) {
 								moveFilterOneSheet(findFilters[i]);
 							} else {
-								//перемещение с листа на лист
-								//сначала удаляем, затем создаём новый
+								//moving from sheet to sheet
+								//first delete, then create new
 								moveTableSheetToSheet(findFilters[i]);
 							}
 						}
@@ -2943,8 +2986,8 @@
 			},
 
 			afterMoveAutoFilters: function (arnFrom, arnTo, opt_wsTo) {
-				//если переносим часть ф/т, применяем стиль к ячейкам arnTo
-				//todo пересмотреть перенос ячеек из ф/т. скорее всего нужно будет внести правки со стилями внутри moveRange
+				//if moving part of table, apply style to arnTo cells
+				//todo review moving cells from table. likely need to make changes with styles inside moveRange
 				var worksheet = this.worksheet;
 
 				var wsTo = opt_wsTo && opt_wsTo.model ? opt_wsTo.model : worksheet;
@@ -2957,7 +3000,7 @@
 
 					if (refTable && !arnFrom.containsRange(refTable) && refTable.containsRange(arnFrom)) {
 						var intersection = refTable.intersection(arnFrom);
-						//проходимся по всем ячейкам
+						//iterate through all cells
 						var diffRow = arnTo.r1 - arnFrom.r1;
 						var diffCol = arnTo.c1 - arnFrom.c1;
 						var tempRange = worksheet.getRange3(intersection.r1, intersection.c1, intersection.r2, intersection.c2);
@@ -2990,14 +3033,14 @@
 				var tableRange;
 				var selectAllTable;
 				if (DeleteColumns || DeleteRows) {
-					//меняем активную область
+					//change active area
 					var newActiveRange;
 					if (DeleteRows) {
 						newActiveRange = new Asc.Range(0, activeCells.r1, AscCommon.gc_nMaxCol - 1, activeCells.r2);
 					} else {
 						newActiveRange = new Asc.Range(activeCells.c1, 0, activeCells.c2, AscCommon.gc_nMaxRow - 1);
 					}
-					//если активной областью захвачена полнотью форматированная таблица(или её часть) + часть форматированной таблицы - выдаём ошибку
+					//if active area captures entire formatted table (or part) + part of formatted table - show error
 					if (tableParts) {
 						var selectTablePart = false;
 						selectAllTable = false;
@@ -3006,14 +3049,14 @@
 							var tablePart = tableParts[i];
 							var dataRange = tablePart.getRangeWithoutHeaderFooter();
 							tableRange = tablePart.Ref;
-							//если хотя бы одна ячейка активной области попадает внутрь форматированной таблицы
+							//if at least one cell of active area falls inside formatted table
 							if (newActiveRange.isIntersect(tableRange)) {
-								if (selectAllTable && selectTablePart)//часть + целая
+								if (selectAllTable && selectTablePart)//part + whole
 								{
 									worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterChangeFormatTableError, c_oAscError.Level.NoCritical);
 									return false;
 								} else if ((tablePart.isHeaderRow() || tablePart.isTotalsRow()) && dataRange.r1 === dataRange.r2 && activeCells.r1 === activeCells.r2 && dataRange.r1 === activeCells.r1) {
-									//если выделена одинственная строчка внутри таблицы (таблица состояит из заголовка+ 1 строчка)
+									//if single row inside table is selected (table consists of header + 1 row)
 									worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterChangeFormatTableError, c_oAscError.Level.NoCritical);
 									return false;
 								}
@@ -3027,7 +3070,7 @@
 								} else if (selectAllTable) {
 									worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterChangeFormatTableError, c_oAscError.Level.NoCritical);
 									return false;
-								} else if (selectTablePart)//уже часть захвачена + ещё одна часть
+								} else if (selectTablePart)//part already captured + another part
 								{
 									worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterChangeFormatTableError, c_oAscError.Level.NoCritical);
 									return false;
@@ -3036,13 +3079,13 @@
 										worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterChangeFormatTableError, c_oAscError.Level.NoCritical);
 										return false;
 									} else if (activeCells.r1 < tableRange.r1 && activeCells.r2 >= tableRange.r1 &&
-										activeCells.r2 < tableRange.r2)//TODO заглушка!!!
+										activeCells.r2 < tableRange.r2)//TODO stub!!!
 									{
 										worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterChangeFormatTableError, c_oAscError.Level.NoCritical);
 										return false;
 									}
 								}
-								/*else if(DeleteColumns && activeCells.c1 < tableRange.c1 && activeCells.c2 >= tableRange.c1 && activeCells.c2 < tableRange.c2)//TODO заглушка!!!
+								/*else if(DeleteColumns && activeCells.c1 < tableRange.c1 && activeCells.c2 >= tableRange.c1 && activeCells.c2 < tableRange.c2)//TODO stub!!!
 								 {
 								 worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterChangeFormatTableError, c_oAscError.Level.NoCritical);
 								 return false;
@@ -3055,15 +3098,15 @@
 					return result;
 				}
 
-				//проверка на то, что захвачен кусок форматированной таблицы
-				if (tableParts)//при удалении в MS Excel ошибка может возникать только в случае форматированных таблиц
+				//check that piece of formatted table is captured
+				if (tableParts)//when deleting in MS Excel error can occur only for formatted tables
 				{
 					for (var i = 0; i < tableParts.length; i++) {
 						tableRange = tableParts[i].Ref;
 						selectAllTable = false;
-						//если хотя бы одна ячейка активной области попадает внутрь форматированной таблицы
+						//if at least one cell of active area falls inside formatted table
 						if (activeCells.isIntersect(tableRange)) {
-							//если селектом засхвачена не вся таблица, то выдаём ошибку и возвращаем false
+							//if selection doesn't capture entire table, show error and return false
 							if (activeCells.c1 <= tableRange.c1 && activeCells.r1 <= tableRange.r1 && activeCells.c2 >= tableRange.c2 && activeCells.r2 >= tableRange.r2) {
 								result = true;
 							} else {
@@ -3083,29 +3126,29 @@
 								}
 							}
 						} else {
-							//проверка на то, что хотим сдвинуть часть отфильтрованного диапазона
+							//check that we want to shift part of filtered range
 							if (DeleteCellsAndShiftLeft) {
-								//если данный фильтр находится справа
+								//if this filter is to the right
 								if (tableRange.c1 > activeCells.c1 && (((tableRange.r1 <= activeCells.r1 && tableRange.r2 >= activeCells.r1) || (tableRange.r1 <= activeCells.r2 && tableRange.r2 >= activeCells.r2)) && !(tableRange.r1 == activeCells.r1 && tableRange.r2 == activeCells.r2))) {
 
 									worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterChangeFormatTableError, c_oAscError.Level.NoCritical);
 									return false;
 								}
 							} else if (DeleteCellsAndShiftTop) {
-								//если данный фильтр находится внизу
+								//if this filter is below
 								if (tableRange.r1 > activeCells.r1 && (((tableRange.c1 <= activeCells.c1 && tableRange.c2 >= activeCells.c1) || (tableRange.c1 <= activeCells.c2 && tableRange.c2 >= activeCells.c2)) && !(tableRange.c1 == activeCells.c1 && tableRange.c2 == activeCells.c2))) {
 									worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterChangeFormatTableError, c_oAscError.Level.NoCritical);
 									return false;
 								}
 
 							} else if (InsertCellsAndShiftRight) {
-								//если данный фильтр находится справа
+								//if this filter is to the right
 								if (tableRange.c1 > activeCells.c1 && (((tableRange.r1 <= activeCells.r1 && tableRange.r2 >= activeCells.r1) || (tableRange.r1 <= activeCells.r2 && tableRange.r2 >= activeCells.r2)) && !(tableRange.r1 == activeCells.r1 && tableRange.r2 == activeCells.r2))) {
 									worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterChangeFormatTableError, c_oAscError.Level.NoCritical);
 									return false;
 								}
 							} else {
-								//если данный фильтр находится внизу
+								//if this filter is below
 								if (tableRange.r1 > activeCells.r1 && (((tableRange.c1 <= activeCells.c1 && tableRange.c2 >= activeCells.c1) || (tableRange.c1 <= activeCells.c2 && tableRange.c2 >= activeCells.c2)) && !(tableRange.c1 >= activeCells.c1 && tableRange.c2 <= activeCells.c2))) {
 									worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterChangeFormatTableError, c_oAscError.Level.NoCritical);
 									return false;
@@ -3113,7 +3156,7 @@
 							}
 						}
 
-						//если сдвигаем данный фильтр
+						//if shifting this filter
 						if (DeleteCellsAndShiftLeft && tableRange.c1 > activeCells.c1 && tableRange.r1 >= activeCells.r1 && tableRange.r2 <= activeCells.r2) {
 							result = true;
 						} else if (DeleteCellsAndShiftTop && tableRange.r1 > activeCells.r1 && tableRange.c1 >= activeCells.c1 && tableRange.c2 <= activeCells.c2) {
@@ -3126,10 +3169,10 @@
 					}
 				}
 
-				//при вставке ошибка в MS Excel может возникать как в случае автофильтров, так и в случае форматированных таблиц
+				//when inserting, error in MS Excel can occur for both autofilters and formatted tables
 				if ((DeleteCellsAndShiftLeft || DeleteCellsAndShiftTop || InsertCellsAndShiftDown || InsertCellsAndShiftRight) && autoFilter) {
 					tableRange = autoFilter.Ref;
-					//если хотя бы одна ячейка активной области попадает внутрь форматированной таблицы
+					//if at least one cell of active area falls inside formatted table
 					if (activeCells.isIntersect(tableRange)) {
 						if (activeCells.c1 <= tableRange.c1 && activeCells.r1 <= tableRange.r1 && activeCells.c2 >= tableRange.c2 && activeCells.r2 >= tableRange.r2) {
 							result = true;
@@ -3141,17 +3184,17 @@
 					}
 
 
-					//если данный фильтр находится внизу, то ошибка
+					//if this filter is below, then error
 					if ((InsertCellsAndShiftDown || DeleteCellsAndShiftTop) && tableRange.r1 > activeCells.r1 && (((tableRange.c1 <= activeCells.c1 && tableRange.c2 >= activeCells.c1) || (tableRange.c1 <= activeCells.c2 && tableRange.c2 >= activeCells.c2)) && !(tableRange.c1 >= activeCells.c1 && tableRange.c2 <= activeCells.c2))) {
 						worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterChangeFormatTableError, c_oAscError.Level.NoCritical);
 						return false;
-					} else if (InsertCellsAndShiftRight && activeCells.c1 <= tableRange.c1 && ((activeCells.r1 >= tableRange.r1 && activeCells.r1 <= tableRange.r2) || (activeCells.r2 >= tableRange.r1 && activeCells.r2 <= tableRange.r2)) && !(activeCells.r1 <= tableRange.r1 && activeCells.r2 >= tableRange.r2))//если часть а/ф находится справа
+					} else if (InsertCellsAndShiftRight && activeCells.c1 <= tableRange.c1 && ((activeCells.r1 >= tableRange.r1 && activeCells.r1 <= tableRange.r2) || (activeCells.r2 >= tableRange.r1 && activeCells.r2 <= tableRange.r2)) && !(activeCells.r1 <= tableRange.r1 && activeCells.r2 >= tableRange.r2))//if part of autofilter is to the right
 					{
 						worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterChangeFormatTableError, c_oAscError.Level.NoCritical);
 						return false;
 					}
 
-					//если выделенная область находится до а/ф
+					//if selected area is before autofilter
 					if (activeCells.c2 < tableRange.c1 && activeCells.r1 <= tableRange.r1 && activeCells.r2 >= tableRange.r2 && (DeleteCellsAndShiftLeft || InsertCellsAndShiftRight)) {
 						result = true;
 					} else if (activeCells.r2 < tableRange.r1 && activeCells.c1 <= tableRange.c1 && activeCells.c2 >= tableRange.c2 && (InsertCellsAndShiftDown || DeleteCellsAndShiftTop)) {
@@ -3218,7 +3261,7 @@
 						break;
 					}
 					case c_oAscChangeTableStyleInfo.rowTotal: {
-						if (val === false)//снимаем галку - удаляем строку итогов
+						if (val === false)//uncheck - delete totals row
 						{
 							if (!this._isPartTablePartsUnderRange(tablePart.Ref) && !worksheet.checkShiftPivotTable(tablePart.Ref, new AscCommon.CellBase(1, 0))) {
 								AscFormat.ExecuteNoHistory(function () {
@@ -3238,10 +3281,10 @@
 								tablePart.changeRef(null, -1, null, true);
 							}
 						} else {
-							//если снизу пустая строка, то просто увеличиваем диапазон и меняем флаг
+							//if empty row below, just increase range and change flag
 							var rangeUnderTable = new Asc.Range(tablePart.Ref.c1, tablePart.Ref.r2 + 1, tablePart.Ref.c2, tablePart.Ref.r2 + 1);
 
-							//внизу часть форматированной таблицы - следовательно сдвигать нельзя, проверяем пустую строчку по ф/т
+							//part of formatted table below - therefore cannot shift, check for empty row by table
 							if (this._isPartTablePartsUnderRange(tablePart.Ref) || worksheet.checkShiftPivotTable(tablePart.Ref, new AscCommon.CellBase(1, 0))) {
 								if (this._isEmptyRange(rangeUnderTable, 0)) {
 									isSetValue = true;
@@ -3276,7 +3319,7 @@
 						break;
 					}
 					case c_oAscChangeTableStyleInfo.rowHeader: {
-						if (val === false)//снимаем галку
+						if (val === false)//uncheck
 						{
 							clearRange = new AscCommonExcel.Range(worksheet, tablePart.Ref.r1, tablePart.Ref.c1, tablePart.Ref.r1, tablePart.Ref.c2);
 							this._clearRange(clearRange, true);
@@ -3289,7 +3332,7 @@
 								tablePart.AutoFilter = null;
 							}
 						} else {
-							//если сверху пустая строка, то просто увеличиваем диапазон и меняем флаг
+							//if empty row above, just increase range and change flag
 							var rangeUpTable = new Asc.Range(tablePart.Ref.c1, tablePart.Ref.r1 - 1, tablePart.Ref.c2, tablePart.Ref.r1 - 1);
 							if (rangeUpTable.r1 >= 0 && this._isEmptyRange(rangeUpTable, 0) && this.searchRangeInTableParts(rangeUpTable) === -1) {
 								isSetValue = true;
@@ -3322,7 +3365,7 @@
 						var description = val.asc_getDescription();
 						undoData = new AdvancedTableInfoSettings();
 
-						//если ничего не меняется в advancedSettings, не заносим точку в историю
+						//if nothing changes in advancedSettings, don't add history point
 						bAddHistoryPoint = false;
 						if (undefined !== title) {
 							undoData.asc_setTitle(tablePart.altText);
@@ -3386,6 +3429,12 @@
 				var worksheet = this.worksheet;
 
 				if (!tablePart) {
+					return false;
+				}
+
+				// Prevent conflicts with existing tables or named ranges (case-insensitive)
+				if (newName && newName.toLowerCase() !== tableName.toLowerCase() &&
+					worksheet.workbook.dependencyFormulas.getDefNameByName(newName, null)) {
 					return false;
 				}
 
@@ -3461,7 +3510,7 @@
 						var ref = table.Ref;
 
 						if (ref.c2 + 1 === range.c1 && range.r1 >= ref.r1 && range.r1 <= ref.r2) {
-							//вводим значение в ячейку справа от форматированной таблицы
+							//entering value in cell to the right of formatted table
 							if (this._isEmptyCellsRightRange(ref, range, true)) {
 								res = {
 									name: table.DisplayName,
@@ -3470,7 +3519,7 @@
 							}
 							break;
 						} else if (!table.isTotalsRow() && ref.r2 + 1 === range.r1 && range.c1 >= ref.c1 && range.c1 <= ref.c2) {
-							//вводим значение в ячейку снизу от форматированной таблицы
+							//entering value in cell below formatted table
 							if (this._isEmptyCellsUnderRange(ref, range, true)) {
 								res = {
 									name: table.DisplayName,
@@ -3517,7 +3566,7 @@
 				}
 			},
 
-			//TODO избавиться от split, передавать cellId и tableName
+			//TODO need remove split, pass cellId and tableName
 			_getPressedFilter: function (activeRange, cellId) {
 				var worksheet = this.worksheet;
 
@@ -3571,10 +3620,9 @@
 				var worksheet = this.worksheet;
 				if (displayName === null) {
 					res = worksheet.AutoFilter;
-				} else if (worksheet.TableParts &&
-					worksheet.TableParts.length) {
+				} else if (worksheet.TableParts && worksheet.TableParts.length && displayName) {
 					for (var i = 0; i < worksheet.TableParts.length; i++) {
-						if (worksheet.TableParts[i].DisplayName === displayName) {
+						if (worksheet.TableParts[i].DisplayName.toLowerCase() === displayName.toLowerCase()) {
 							res = worksheet.TableParts[i];
 							break;
 						}
@@ -3631,7 +3679,7 @@
 				oHistoryObject.undo = oldObj;
 
 				if (redoObject) {
-					oHistoryObject.activeCells = redoObject.activeCells && redoObject.activeCells.clone();	// ToDo Слишком много клонирования, это долгая операция
+					oHistoryObject.activeCells = redoObject.activeCells && redoObject.activeCells.clone();	// ToDo Too much cloning, this is a slow operation
 					oHistoryObject.styleName = redoObject.styleName;
 					oHistoryObject.type = redoObject.type;
 					oHistoryObject.cellId = redoObject.cellId;
@@ -3684,7 +3732,7 @@
 
 				var isStartLockRecal = false;
 				if (worksheet.TableParts) {
-					//TODO проверить, возможно всегда стоит оборачивать в r1c1mode = false
+					//TODO check, possibly always wrap in r1c1mode = false
 
 					for (var i = 0; i < worksheet.TableParts.length; i++) {
 						var filter = worksheet.TableParts[i];
@@ -3693,11 +3741,11 @@
 						var tableRange = new Asc.Range(ref.c1, ref.r1, ref.c2, ref.r1);
 
 
-						//в этом случае нашли ячейки(ячейку), которая входит в состав заголовка фильтра
+						//in this case found cells (cell) that is part of filter header
 						var intersection = range.intersection(tableRange);
 						if (null !== intersection && 0 !== filter.HeaderRowCount) {
 							var toHistory = [];
-							//проходимся по всем заголовкам
+							//iterate through all headers
 							for (var j = tableRange.c1; j <= tableRange.c2; j++) {
 								if (j < range.c1 || j > range.c2) {
 									continue;
@@ -3716,10 +3764,10 @@
 									cell.setValue(val);
 								}
 
-								//если не пустая изменяем TableColumns
+								//if not empty change TableColumns
 								var oldVal = filter.TableColumns[j - tableRange.c1].getTableColumnName();
 								var newVal = null;
-								//проверка на повторение уже существующих заголовков
+								//check for duplicate existing headers
 								if (val !== "" && checkRepeateColumnName(val, filter.TableColumns, j - tableRange.c1)) {
 									filter.TableColumns[j - tableRange.c1].setTableColumnName("");
 									generateName = this._generateNextColumnName(filter.TableColumns, val);
@@ -3732,15 +3780,15 @@
 								} else if (val !== "" && intersection.c1 <= j && intersection.c2 >= j) {
 									filter.TableColumns[j - tableRange.c1].setTableColumnName(val);
 									if (!bUndo) {
-										//если пытаемся вбить формулу в заголовок - оставляем только результат
-										//ms в данном случае генерирует новое имя, начинающееся с 0
-										//считаю, что результат формулы добавлять более логично
+										//if trying to enter formula in header - keep only result
+										//MS in this case generates new name starting with 0
+										//consider that adding formula result is more logical
 										var valueData = new AscCommonExcel.UndoRedoData_CellValueData(null, new AscCommonExcel.CCellValue({text: cell.getValueWithFormat()}));
 										cell.setValueData(valueData);
 										cell.setType(CellValueType.String);
 									}
 									newVal = val;
-								} else if (val === "")//если пустая изменяем генерируем имя и добавляем его в TableColumns
+								} else if (val === "")//if empty generate name and add it to TableColumns
 								{
 									filter.TableColumns[j - tableRange.c1].setTableColumnName("");
 									generateName = this._generateColumnName(filter.TableColumns);
@@ -3861,7 +3909,7 @@
 
 			_getAdjacentCellsAF2: function (ar) {
 				var ws = this.worksheet;
-				var cloneActiveRange = ar.clone(true); // ToDo слишком много клонирования
+				var cloneActiveRange = ar.clone(true); // ToDo too much cloning
 
 				var isEnd = false, cell, result;
 
@@ -3995,7 +4043,7 @@
 				}
 
 
-				//проверяем есть ли пустые строчки и столбцы в диапазоне
+				//check if there are empty rows and columns in range
 				if (ar.r1 === cloneActiveRange.r1) {
 					for (var n = cloneActiveRange.c1; n <= cloneActiveRange.c2; n++) {
 						cell = ws.model.getRange3(cloneActiveRange.r1, n, cloneActiveRange.r1, n);
@@ -4041,7 +4089,7 @@
 					}
 				}
 
-				//проверяем не вошёл ли другой фильтр в область нового фильтра
+				//check if another filter entered the area of new filter
 				if (ws.AutoFilter || ws.TableParts) {
 					//var oldFilters = this.allAutoFilter;
 					var oldFilters = [];
@@ -4115,15 +4163,15 @@
 				}
 			},
 
-			//TODO пока включаю протестированную функцию. позже доработать функцию _getAdjacentCellsAF2, она работает быстрее!
+			//TODO for now enabling tested function. later improve _getAdjacentCellsAF2 function, it works faster!
 			_getAdjacentCellsAF: function (ar, ignoreAutoFilter, doNotIncludeMergedCells, ignoreSpaceSymbols) {
 				var ws = this.worksheet;
-				var cloneActiveRange = ar.clone(true); // ToDo слишком много клонирования
+				var cloneActiveRange = ar.clone(true); // ToDo too much cloning
 
 				var isEnd = true, cell, merged, valueMerg, rowNum = cloneActiveRange.r1, isEmptyCell;
 
-				//есть ли вообще на странице мерженные ячейки
-				//TODO стоит пересмотреть проверку мерженных ячеек
+				//are there any merged cells on the page at all
+				//TODO should reconsider merged cells check
 				var allRange = ws.getRange3(0, 0, ws.nRowsCount, ws.nColsCount);
 				var isMergedCells = allRange.hasMerged();
 
@@ -4152,7 +4200,7 @@
 							continue;
 						}
 
-						//если находимся уже внутри выделенного фрагмента, то смысла его просматривать нет
+						//if already inside selected fragment, no point viewing it
 						if (k >= cloneActiveRange.c1 && k <= cloneActiveRange.c2 && n >= cloneActiveRange.r1 &&
 							n <= cloneActiveRange.r2) {
 							continue;
@@ -4173,7 +4221,7 @@
 							continue;
 						}
 
-						//если мерженная ячейка
+						//if merged cell
 						if (!(n === ar.r1 && k === ar.c1) && isMergedCells != null && isEmptyCell) {
 							valueMerg = null;
 							if (merged) {
@@ -4211,7 +4259,7 @@
 							if (k < cloneActiveRange.c1) {
 								cloneActiveRange.c1 = k;
 								isEnd = false;
-								//TODO пересмотреть правку
+								//TODO review this fix
 								k = k - 2;
 							} else if (k > cloneActiveRange.c2) {
 								cloneActiveRange.c2 = k;
@@ -4228,7 +4276,7 @@
 					}
 				}
 
-				//проверяем есть ли пустые строчки и столбцы в диапазоне
+				//check if there are empty rows and columns in range
 				var mergeCells, n;
 				if (ar.r1 === cloneActiveRange.r1) {
 					for (n = cloneActiveRange.c1; n <= cloneActiveRange.c2; n++) {
@@ -4273,11 +4321,11 @@
 						}
 						if (n === cloneActiveRange.r2 && cloneActiveRange.c2 > cloneActiveRange.c1) {
 							mergeCells = ws.getRange3(n, cloneActiveRange.c2, n, cloneActiveRange.c2).hasMerged();
-							if (!mergeCells)//если не мерженная ячейка
+							if (!mergeCells)//if not merged cell
 							{
 								cloneActiveRange.c2--;
 							} else if (ws.getRange3(mergeCells.r1, mergeCells.c1,
-								mergeCells.r2, mergeCells.c2).getValue() === "")//если мерженная ячейка пустая
+								mergeCells.r2, mergeCells.c2).getValue() === "")//if merged cell is empty
 							{
 								cloneActiveRange.c2--;
 							}
@@ -4285,7 +4333,7 @@
 					}
 				}
 
-				//проверяем не вошёл ли другой фильтр в область нового фильтра
+				//check if another filter entered the area of new filter
 				if (ws.AutoFilter || ws.TableParts) {
 					//var oldFilters = this.allAutoFilter;
 					var oldFilters = [];
@@ -4332,7 +4380,7 @@
 								newRange.c2 = oldRange.c1 - 1;
 							}
 						} else if (intersection) {
-							if (intersection.r1 >= cloneActiveRange.r1 && intersection.r1 <= cloneActiveRange.r2)//место пересечения ниже
+							if (intersection.r1 >= cloneActiveRange.r1 && intersection.r1 <= cloneActiveRange.r2)//intersection point is below
 							{
 								cloneActiveRange.r2 = intersection.r1 - 1;
 								if (cloneActiveRange.r2 < cloneActiveRange.r1) {
@@ -4481,7 +4529,7 @@
 			expandRange: function (activeRange, ignoreFilter, doNotCheckEmpty, checkLastEmpty) {
 				var ws = this.worksheet;
 
-				//если вдруг встретили мерженную ячейку в диапазоне, расширяем
+				//if we encounter merged cell in range, expand
 				var mergeOffset = null;
 				var rangeAfterTableCrop;
 				var checkEmptyCell = function (row, col) {
@@ -4506,7 +4554,7 @@
 						return true;
 					}
 
-					//TODO в данной области могут быть несколько мерженных диапазонов
+					//TODO there may be several merged ranges in this area
 					mergeOffset = range3.hasMerged();
 					if (mergeOffset) {
 						var union = mergeOffset.union(range3.bbox);
@@ -4552,7 +4600,7 @@
 						if (countI > 10000000) {
 							break;
 						}
-						//идем влево
+						//go left
 						if (range.c1 >= 1 && !checkEmptyCell(range.r2, range.c1 - 1)) {
 							if (!changeMergeRange()) {
 								range.c1--;
@@ -4560,7 +4608,7 @@
 							continue;
 						}
 
-						//вниз
+						//down
 						if (!checkEmptyCell(range.r2 + 1, range.c1)) {
 							if (!changeMergeRange()) {
 								range.r2++;
@@ -4568,7 +4616,7 @@
 							continue;
 						}
 
-						//вправо
+						//right
 						if (!checkEmptyCell(range.r1, range.c2 + 1)) {
 							if (!changeMergeRange()) {
 								range.c2++;
@@ -4576,7 +4624,7 @@
 							continue;
 						}
 
-						//вверх
+						//up
 						if (range.r1 >= 1 && !checkEmptyCell(range.r1 - 1, range.c2)) {
 							if (!changeMergeRange()) {
 								range.r1--;
@@ -4584,8 +4632,8 @@
 							continue;
 						}
 
-						//проверяем диагональные элементы
-						//левый нижний
+						//check diagonal elements
+						//bottom left
 						if (range.c1 >= 1 && !checkEmptyCell(range.r2 + 1, range.c1 - 1)) {
 							if (!changeMergeRange()) {
 								range.c1--;
@@ -4593,7 +4641,7 @@
 							}
 							continue;
 						}
-						//левый верхний
+						//top left
 						if (range.c1 >= 1 && range.r1 >= 1 && !checkEmptyCell(range.r1 - 1, range.c1 - 1)) {
 							if (!changeMergeRange()) {
 								range.c1--;
@@ -4601,7 +4649,7 @@
 							}
 							continue;
 						}
-						//правый нижний
+						//bottom right
 						if (!checkEmptyCell(range.r2 + 1, range.c2 + 1)) {
 							if (!changeMergeRange()) {
 								range.c2++;
@@ -4609,7 +4657,7 @@
 							}
 							continue;
 						}
-						//правый верхний
+						//top right
 						if (range.r1 >= 1 && !checkEmptyCell(range.r1 - 1, range.c2 + 1)) {
 							if (!changeMergeRange()) {
 								range.c2++;
@@ -4618,28 +4666,28 @@
 							continue;
 						}
 
-						//проверяем сверху range
+						//check above range
 						if (range.r1 >= 1 && !checkEmptyRange(range.r1 - 1, range.c1, range.r1 - 1, range.c2)) {
 							if (!changeMergeRange()) {
 								range.r1--;
 							}
 							continue;
 						}
-						//проверяем снизу range
+						//check below range
 						if (!checkEmptyRange(range.r2 + 1, range.c1, range.r2 + 1, range.c2)) {
 							if (!changeMergeRange()) {
 								range.r2++;
 							}
 							continue;
 						}
-						//проверяем слева range
+						//check left of range
 						if (range.c1 >= 1 && !checkEmptyRange(range.r1, range.c1 - 1, range.r2, range.c1 - 1)) {
 							if (!changeMergeRange()) {
 								range.c1--;
 							}
 							continue;
 						}
-						//проверяем справа range
+						//check right of range
 						if (!checkEmptyRange(range.r1, range.c2 + 1, range.r2, range.c2 + 1)) {
 							if (!changeMergeRange()) {
 								range.c2++;
@@ -4651,14 +4699,14 @@
 					}
 				};
 
-				//проходимся первый раз
+				//first pass
 				doExpand();
-				//далее необходимо найти пересечения со всеми ф/т и а/ф
+				//next need to find intersections with all tables and autofilters
 				var doCropRange = function (ref) {
 					var intersection = ref.intersection(range);
 					if (intersection) {
 						var tempRange;
-						//область слева
+						//area to the left
 						if (range.c1 < intersection.c1) {
 							tempRange = new Asc.Range(range.c1, range.r1, intersection.c1 - 1, range.r2);
 							if (tempRange.containsRange(activeRange)) {
@@ -4666,7 +4714,7 @@
 								return true;
 							}
 						}
-						//область справа
+						//area to the right
 						if (range.c2 > intersection.c2) {
 							tempRange = new Asc.Range(intersection.c2 + 1, range.r1, range.c2, range.r2);
 							if (tempRange.containsRange(activeRange)) {
@@ -4674,7 +4722,7 @@
 								return true;
 							}
 						}
-						//область сверху
+						//area above
 						if (range.r1 < intersection.r1) {
 							tempRange = new Asc.Range(range.c1, range.r1, range.c2, intersection.r1 - 1);
 							if (tempRange.containsRange(activeRange)) {
@@ -4682,7 +4730,7 @@
 								return true;
 							}
 						}
-						//область снизу
+						//area below
 						if (range.r2 > intersection.r2) {
 							tempRange = new Asc.Range(range.c1, intersection.r2 + 1, range.c2, range.r2);
 							if (tempRange.containsRange(activeRange)) {
@@ -4709,8 +4757,8 @@
 						bIsChangedRange = true;
 					}
 				}
-				//если диапазон поменялся после проверки на а/ф и ф/т
-				//необходимо ещё раз запустить цикл с начальной точки, но уже в рамках полученного диапазона
+				//if range changed after checking autofilter and table
+				//need to run the loop again from starting point, but within the obtained range
 				if (bIsChangedRange) {
 					rangeAfterTableCrop = range.clone();
 					range = activeRange.clone();
@@ -4725,7 +4773,7 @@
 					}
 				}
 
-				//проверяем на наличие пустых колонок/строк
+				//check for empty columns/rows
 				return doNotCheckEmpty ? range : this.checkEmptyAreas(range, rangeAfterTableCrop);
 			},
 
@@ -4746,7 +4794,7 @@
 						return true;
 					}
 
-					//TODO в данной области могут быть несколько мерженных диапазонов
+					//TODO there may be several merged ranges in this area
 					var mergeOffset = range3.hasMerged();
 					if (mergeOffset) {
 						var union = mergeOffset.union(range3.bbox);
@@ -4769,22 +4817,22 @@
 						break;
 					}
 					//TODO merge cells
-					//проверяем сверху range
+					//check above range
 					if (range.r1 < range.r2 && checkEmptyRange(range.r1, range.c1, range.r1, range.c2)) {
 						range.r1++;
 						continue;
 					}
-					//проверяем снизу range
+					//check below range
 					if (range.r1 < range.r2 && checkEmptyRange(range.r2, range.c1, range.r2, range.c2)) {
 						range.r2--;
 						continue;
 					}
-					//проверяем слева range
+					//check left of range
 					if (range.c1 < range.c2 && checkEmptyRange(range.r1, range.c1, range.r2, range.c1)) {
 						range.c1++;
 						continue;
 					}
-					//проверяем справа range
+					//check right of range
 					if (range.c1 < range.c2 && checkEmptyRange(range.r1, range.c2, range.r2, range.c2)) {
 						range.c2--;
 						continue;
@@ -4796,8 +4844,8 @@
 			},
 
 			checkExpandRangeForSort: function (range) {
-				//пока добавляю только исколючение для именованного диапазона
-				//TODO так же необходимо рассмотреть все возможные ситуации при расширении именованного диапазона в случае сортировки
+				//for now adding only exception for named range
+				//TODO also need to consider all possible situations when expanding named range for sorting
 				var ws = this.worksheet;
 				var filterDefName = ws.workbook.getDefinesNames("_xlnm._filterdatabase", ws.getId());
 				if (filterDefName) {
@@ -4811,7 +4859,7 @@
 							filterDefNameRef = filterDefNameRef.bbox;
 							if (range.intersection(filterDefNameRef)) {
 								if (range.containsRange(filterDefNameRef)) {
-									//обрезаем диапазон по первой строке именованного диапазона
+									//crop range by first row of named range
 									range = new Asc.Range(range.c1, filterDefNameRef.r1, range.c2, range.r2);
 								} else {
 									range = range.union(filterDefNameRef);
@@ -4879,13 +4927,13 @@
 					if (!worksheet.AutoFilter) {
 						newFilter = new AscCommonExcel.AutoFilter();
 
-						//добавляем особый именованный диапазон, так же как это делает MS
-						//без него при открытии файла в MS и последующей сортировке, будет падение
+						//add special named range, same as MS does
+						//without it, opening file in MS and subsequent sorting will crash
 
-						//TODO только на сохранение добавляю данный именованный диапазон
-						//код ниже нуждается в доработке. addDefName - не добавляет в историю, editDefinesNames - не добавляет с подобными префиксами имена
+						//TODO only adding this named range on save
+						//code below needs improvement. addDefName - doesn't add to history, editDefinesNames - doesn't add names with such prefixes
 
-						//1 вариант
+						//variant 1
 						/*var defNameFilter = "_xlnm._FilterDatabase";
 						var oldDefName = this.worksheet.workbook.getDefinesNames(defNameFilter, this.worksheet.Id);
 						var defNameRef = AscCommon.parserHelp.get3DRef(this.worksheet.getName(), ref.getAbsName());
@@ -4895,7 +4943,7 @@
 							this.worksheet.workbook.dependencyFormulas.addDefName(defNameFilter, defNameRef, this.worksheet.Id, false);
 						}*/
 
-						//2 вариант
+						//variant 2
 						/*var defNameFilter = "_xlnm._FilterDatabase";
 						var oldDefName = this.worksheet.workbook.getDefinesNames(defNameFilter, this.worksheet.Id);
 						var defNameRef = AscCommon.parserHelp.get3DRef(this.worksheet.getName(), ref.getAbsName());
@@ -4908,13 +4956,13 @@
 						worksheet.AutoFilter = newFilter;
 					}
 
-					//проходимся по 1 строчке в поиске мерженных областей
+					//iterate through 1st row looking for merged areas
 					var row = ref.r1;
 					var cell, filterColumn;
 					for (var col = ref.c1; col <= ref.c2; col++) {
 						cell = worksheet.getCell3(row, col);
 						var isMerged = cell.hasMerged();
-						var isMergedAllRow = isMerged && isMerged.c2 + 1 == AscCommon.gc_nMaxCol && isMerged.c1 === 0;//если замержена вся ячейка
+						var isMergedAllRow = isMerged && isMerged.c2 + 1 == AscCommon.gc_nMaxCol && isMerged.c1 === 0;//if entire row is merged
 
 						if ((isMerged && isMerged.c2 !== col && !isMergedAllRow && ref.c2 !== col) || (isMergedAllRow && col !== ref.c1)) {
 							filterColumn = worksheet.AutoFilter.addFilterColumn();
@@ -4967,7 +5015,7 @@
 
 					newFilter.TableColumns = tableColumns;
 					worksheet.addTablePart(newFilter, true);
-					//TODO возможно дублируется при всавке(ф-ия _pasteFromBinary) - пересмотреть
+					//TODO possibly duplicated on paste (function _pasteFromBinary) - review
 					if (tablePart) {
 						var renameParams = {};
 						renameParams.offset = offset;
@@ -4986,8 +5034,8 @@
 				let _hideValues = [], textIndexMapHideValues = {};
 
 				//FOR SLICER
-				//для срезов необходимо отображать все значения, в тч скрытые другими фильтрами в данной таблице
-				//флаг fullValues - для срезов
+				//for slicers need to display all values, including those hidden by other filters in this table
+				//fullValues flag - for slicers
 				let hideItemsWithNoData = sortObj ? sortObj.hideItemsWithNoData : null;
 				let fullValues = sortObj ? sortObj.fullValues && !hideItemsWithNoData : null;
 				let isAscending = sortObj ? sortObj.sortOrder : true;
@@ -5049,13 +5097,13 @@
 					currentFilterColumn = null;
 				}
 
-				//если скрыты только пустые значение, игнорируем пользовательский фильтр при отображении в меню
+				//if only empty values are hidden, ignore custom filter when displaying in menu
 				let ignoreCustomFilter = currentFilterColumn ? currentFilterColumn.isOnlyNotEqualEmpty() : null;
 				let isCustomFilter = currentFilterColumn && !ignoreCustomFilter && currentFilterColumn.isApplyCustomFilter();
 
-				if (!isTablePart /*&& filter.isApplyAutoFilter() === false*/)//нужно подхватить нижние ячейки
+				if (!isTablePart /*&& filter.isApplyAutoFilter() === false*/)//need to pick up cells below
 				{
-					//TODO стоит заменить на expandRange ?
+					//TODO should replace with expandRange ?
 					let automaticRange = this.expandRange(filter.Ref, true, true);
 					automaticRowCount = automaticRange.r2;
 
@@ -5154,7 +5202,7 @@
 							textIndexMap[textLowerCase] = count;
 							count++;
 						} else if (fullValues) {
-							//hiddenByOtherColumns - ввожу дополнительный тип для отображения значений в срезах
+							//hiddenByOtherColumns - introducing additional type for displaying values in slicers
 							if (textIndexMapHideValues.hasOwnProperty(textLowerCase)) {
 								continue;
 							}
@@ -5234,7 +5282,7 @@
 			},
 
 			_getTrueColId: function (filter, colId, checkShowButton) {
-				//TODO - добавил условие, чтобы не было ошибки(bug 30007). возможно, второму пользователю нужно запретить все действия с измененной таблицей.
+				//TODO - added condition to avoid error (bug 30007). possibly second user needs to be prohibited from all actions with changed table.
 				if (filter === null) {
 					return null;
 				}
@@ -5244,7 +5292,7 @@
 					return res;
 				}
 
-				//если находимся в мерженной ячейке, то возвращаем сдвинутый colId
+				//if in merged cell, return shifted colId
 				var worksheet = this.worksheet;
 				var ref = filter.Ref;
 
@@ -5423,7 +5471,7 @@
 			},
 
 			_isAddNameColumn: function (range) {
-				//если в трёх первых строчках любых столбцов содержится текстовые данные
+				//if first three rows of any columns contain text data
 				var result = false;
 				var worksheet = this.worksheet;
 				if (range.r1 !== range.r2) {
@@ -5453,7 +5501,7 @@
 				let values = valuesAndMap.values;
 				let length = values.length;
 				if (0 === length) {
-					// Выделили всю строку без значений
+					// Selected entire row without values
 					length = ref.c2 - ref.c1 + 1;
 					emptyCells = true;
 				}
@@ -5575,7 +5623,7 @@
 				return res;
 			},
 
-			//TODO убрать начеркивание
+			//TODO remove strikethrough
 			_setColorStyleTable: function (range, options, isOpenFilter, isSetVal, isSetTotalRowType) {
 				var worksheet = this.worksheet;
 				var bRedoChanges = worksheet.workbook.bRedoChanges;
@@ -5584,7 +5632,7 @@
 
 				var style = options.TableStyleInfo ? options.TableStyleInfo.clone() : null;
 				var styleForCurTable;
-				//todo из файла
+				//todo from file
 				var headerRowCount = 1;
 				var totalsRowCount = 0;
 				if (null != options.HeaderRowCount) {
@@ -5595,7 +5643,7 @@
 				}
 
 				if (style && worksheet.workbook.TableStyles && worksheet.workbook.TableStyles.AllStyles) {
-					//заполняем названия столбцов
+					//fill column names
 					if (true !== isOpenFilter && isSetVal && !bRedoChanges) {
 						if ((headerRowCount > 0 || totalsRowCount > 0) && options.TableColumns) {
 							for (var ncol = bbox.c1; ncol <= bbox.c2; ncol++) {
@@ -5635,7 +5683,7 @@
 						return;
 					}
 
-					//заполняем стили
+					//fill styles
 					styleForCurTable.initStyle(worksheet.sheetMergedStyles, bbox, style, headerRowCount, totalsRowCount);
 					//expand init rows
 					if (bbox.r2 > worksheet.nRowsCount) {
@@ -5689,8 +5737,8 @@
 
 			//TODO CHANGE!!!
 			_reDrawCurrentFilter: function (fColumns, tableParts) {
-				//TODO сделать открытие и закрытие строк
-				//перерисовываем таблицу со стилем 
+				//TODO implement row show/hide
+				//redraw table with style
 				if (tableParts) {
 					var ref = tableParts.Ref;
 					this._cleanStyleTable(ref);
@@ -5706,26 +5754,26 @@
 
 				var ref, moveRangeTo, i;
 				if (!copyRange) {
-					//находим а/ф и ф/т там откуда переносим
+					//find autofilter and table from source location
 					var findFilters = this._searchFiltersInRange(arnFrom);
 					if (findFilters) {
 						var ws = opt_wsTo ? opt_wsTo.model : worksheet;
 						for (i = 0; i < findFilters.length; i++) {
 							ref = findFilters[i].Ref;
-							//range а/ф или ф/т со сдвигом(потенциальное место вставки)
+							//autofilter or table range with offset (potential insertion point)
 							moveRangeTo = new Asc.Range(ref.c1 + diffCol, ref.r1 + diffRow, ref.c2 + diffCol, ref.r2 + diffRow);
 
-							//если затрагиваем форматированной таблицей часть а/ф
-							//в данном случае, если вставлять в MS ф/т в а/ф с одного листа ну другой
-							//excel не убирает а/ф и в результате делает файл битым
-							//мы сделаем аналогично тому, как происходит в пределах одного листа
+							//if affecting part of autofilter with formatted table
+							//in this case, if inserting table into autofilter from one sheet to another
+							//Excel doesn't remove autofilter and results in corrupted file
+							//we will do the same as within one sheet
 							if (ws.AutoFilter && ws.AutoFilter.Ref && moveRangeTo.intersection(ws.AutoFilter.Ref) && ws.AutoFilter !== findFilters[i]) {
 								ws.autoFilters.deleteAutoFilter(ws.AutoFilter.Ref);
 							}
 
-							//если область вставки содержит форматированную таблицу, которая пересекается с вставляемой форматированной таблицей
+							//if insertion area contains formatted table that intersects with inserted table
 							var findFiltersFromTo = ws.autoFilters._intersectionRangeWithTableParts(moveRangeTo, opt_wsTo ? null : arnFrom);
-							if (findFiltersFromTo && findFiltersFromTo.length)//удаляем данный фильтр
+							if (findFiltersFromTo && findFiltersFromTo.length)//delete this filter
 							{
 								this.isEmptyAutoFilters(ref);
 								continue;
@@ -5735,14 +5783,14 @@
 						}
 					}
 
-					//TODO пока будем всегда чистить фильтры, которые будут в месте вставки. Позже сделать аналогично MS либо пересмотреть все возможные ситуации.
+					//TODO for now will always clear filters at insertion point. Later do same as MS or review all possible situations.
 					var afTo = opt_wsTo && opt_wsTo.model ? opt_wsTo.model.autoFilters : this;
 					var findFiltersTo = afTo._searchFiltersInRange(arnTo);
 					if (arnTo && findFiltersTo) {
 						for (i = 0; i < findFiltersTo.length; i++) {
 							ref = findFiltersTo[i].Ref;
 
-							//если переносим просто данные, причём шапки совпадают, то фильтр не очищаем
+							//if just moving data and headers match, don't clear filter
 							if (!(arnTo.r1 === ref.r1 && arnTo.c1 === ref.c1) && !arnFrom.containsRange(ref)) {
 								afTo.isEmptyAutoFilters(ref, null, findFilters);
 							}
@@ -5823,7 +5871,7 @@
 				return result;
 			},
 
-			_intersectionRangeWithTableParts: function (range, exceptionRange)//находим таблицы, находящиеся в данном range
+			_intersectionRangeWithTableParts: function (range, exceptionRange)//find tables in this range
 			{
 				var result = [];
 				var rangeFilter;
@@ -5833,7 +5881,7 @@
 					for (var k = 0; k < worksheet.TableParts.length; k++) {
 						if (worksheet.TableParts[k]) {
 							rangeFilter = worksheet.TableParts[k].Ref;
-							//TODO пересмотреть условие range.r1 === rangeFilter.r1 && range.c1 === rangeFilter.c1
+							//TODO review condition range.r1 === rangeFilter.r1 && range.c1 === rangeFilter.c1
 							if (range.intersection(rangeFilter) && !(range.containsRange(rangeFilter) && !(range.r1 === rangeFilter.r1 && range.c1 === rangeFilter.c1))) {
 								if (!exceptionRange || !(exceptionRange && exceptionRange.containsRange(rangeFilter))) {
 									result[result.length] = worksheet.TableParts[k];
@@ -5880,7 +5928,7 @@
 							bWithoutFilter = findFilters[i].AutoFilter === null;
 
 							if (!ref.intersection(newRange) && !this._intersectionRangeWithTableParts(newRange, arnFrom)) {
-								//TODO позже не копировать стиль при перемещении всей таблицы
+								//TODO later don't copy style when moving entire table
 								if (!bUndoRedoChanges) {
 									var cleanRange = new AscCommonExcel.Range(worksheet, newRange.r1, newRange.c1, newRange.r2, newRange.c2);
 									cleanRange.cleanFormat();
@@ -5895,7 +5943,7 @@
 				}
 			},
 
-			//с учётом последних скрытых строк
+			//considering last hidden rows
 			_activeRangeContainsTablePart: function (activeRange, tablePartRef) {
 				var worksheet = this.worksheet;
 				var res = false;
@@ -6007,7 +6055,7 @@
 				var isEmptyCell = cell.isNullText();
 				var isEnd = true, merged, valueMerg;
 
-				//если мерженная ячейка
+				//if merged cell
 				if (isEmptyCell) {
 					merged = cell.hasMerged();
 					valueMerg = null;
@@ -6063,7 +6111,7 @@
 			},
 
 			_isEmptyCellsUnderRange: function (range, exception, checkFilter) {
-				//если есть ячейки с непустыми значениями под активной областью, то возвращаем false
+				//if there are cells with non-empty values under active area, return false
 				var cell, isEmptyCell, result = true;
 				var worksheet = this.worksheet;
 
@@ -6092,7 +6140,7 @@
 			},
 
 			_isEmptyCellsRightRange: function (range, exception, checkFilter) {
-				//если есть ячейки с непустыми значениями под активной областью, то возвращаем false
+				//if there are cells with non-empty values to the right of active area, return false
 				var cell, isEmptyCell, result = true;
 				var worksheet = this.worksheet;
 
@@ -6372,13 +6420,13 @@
 			},
 
 			_generateColumnName2: function (tableColumns) {
-				// ToDo почему 2 функции generateColumnName?
+				// ToDo why 2 generateColumnName functions?
 				let columnName = this._getColumnName();
-				//let indexColumn = name[1]; name - не определено!
+				//let indexColumn = name[1]; name - not defined!
 				let indexColumn = undefined;
 				let nextIndex;
 
-				//ищем среди tableColumns, возможно такое имя уже имеется
+				//search among tableColumns, perhaps such name already exists
 				let tableColumnsNameMap = null;
 				let checkNextName = function () {
 					let nextName = columnName + nextIndex;
@@ -6396,7 +6444,7 @@
 					return true;
 				};
 
-				//если сменилась первая цифра
+				//if first digit changed
 				let checkChangeIndex = function () {
 					if ((nextIndex + 1).toString().substr(0, 1) !== (indexColumn).toString().substr(0, 1)) {
 						return true;
@@ -6405,7 +6453,7 @@
 					}
 				};
 
-				if (indexColumn && !isNaN(indexColumn))//если нашли числовой индекс
+				if (indexColumn && !isNaN(indexColumn))//if found numeric index
 				{
 					indexColumn = parseFloat(indexColumn);
 					nextIndex = indexColumn + 1;
@@ -6427,7 +6475,7 @@
 						firstInput = false;
 					}
 
-				} else//если не нашли, то индекс начинаем с 1
+				} else//if not found, start index from 1
 				{
 					nextIndex = 1;
 					while (checkNextName() === false) {
@@ -6481,9 +6529,9 @@
 					filterRange = this.expandRange(tempRange);
 				} else {
 					if (!bTable) {
-						//меняем range в зависимости от последних ячеек со значениями
-						//ms ещё смотрит на аналогичные значения для начала диапазона
-						//TODO если будут такие переменные со значениями начала диапазона - сделать аналогично MS
+						//change range depending on last cells with values
+						//MS also looks at similar values for range start
+						//TODO if such variables with range start values exist - do same as MS
 						let definedRange = new Asc.Range(0, 0, this.worksheet.nColsCount - 1, this.worksheet.nRowsCount - 1);
 						filterRange = tempRange.intersection(definedRange);
 						if (!filterRange) {
@@ -6586,7 +6634,7 @@
 			},
 
 			_checkCollaborativeActiveOnFilterApply: function (autoFiltersObject) {
-				//здесь проверяем массив aCollaborativeActions
+				//here we check aCollaborativeActions array
 				var res = false;
 
 				var _setOffset = function (_val, arr, byCol) {
@@ -6611,9 +6659,9 @@
 						for (var j = 0; j < wb.aCollaborativeActions[i].length; j++) {
 							var action = wb.aCollaborativeActions[i][j];
 							if (action.oClass && AscCommonExcel.g_oUndoRedoAutoFilters.nType === action.oClass.nType && action.nActionType === AscCH.historyitem_AutoFilter_Apply) {
-								//сравниваю только по названию таблицы/фильтра
-								//если сравнивать ещё и наванию колонки, тогда не понятно как разруливать сдвиги
-								//в дальнейшем если перейти на айдишники колонок, то этот вопрос можно решить
+								//comparing only by table/filter name
+								//if also comparing column name, then unclear how to handle shifts
+								//in future if switching to column IDs, this issue can be resolved
 								var autoFiltersObjectAction = action && action.oData ? action.oData.autoFiltersObject : null;
 								if (autoFiltersObjectAction && autoFiltersObject && autoFiltersObject.displayName === autoFiltersObjectAction.displayName) {
 									var cellIdOther = autoFiltersObject.cellId.split('af')[0];
@@ -6671,8 +6719,8 @@
 										applyFilterIdRange = AscCommonExcel.g_oRangeCache.getAscRange(applyFilterId).clone();
 									});
 									if (applyFilterIdRange && applyFilterIdRange.c1 >= range.c1 && applyFilterIdRange.c1 <= range.c2) {
-										//удаляем изменение чтобы потом при его применении у другого пользователя не было
-										//конфликтов с несуществующим столбцом
+										//delete change so that later when applying it another user won't have
+										//conflicts with non-existent column
 										wb.aCollaborativeActions[i].splice(j, 1);
 										j--;
 									}
@@ -6709,7 +6757,7 @@
 				var openAndClosedValues = ws.autoFilters.getOpenAndClosedValues(filter, colId, null, null, tooltipPreview);
 				var values = openAndClosedValues.values;
 				var automaticRowCount = openAndClosedValues.automaticRowCount;
-				//для случае когда скрыто только пустое значение не отображаем customfilter
+				//for case when only empty value is hidden, don't show customfilter
 				var ignoreCustomFilter = openAndClosedValues.ignoreCustomFilter;
 				let isTimeFormat = openAndClosedValues.isTimeFormat;
 

@@ -1,35 +1,40 @@
 
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
+
+"use strict";
 
 (function(){
 
@@ -70,8 +75,8 @@
         this._defaultStyle  = undefined;
 
         this.recalcInfo.recalculateGeometry = true;
-        this.isInTextBox                    = false; // флаг, что внутри текстбокса
-        this.defaultPerpLength              = 12; // длина выступающего перпендикуляра callout по умолчанию
+        this.isInTextBox                    = false; // flag indicating we're inside textbox
+        this.defaultPerpLength              = 12; // default length of the protruding callout perpendicular
 
         this.lastClickCoords = {}; // for onPreMove
     };
@@ -135,7 +140,7 @@
         
         let aTextBoxRect = aTxBoxRect || this.GetTextBoxRect();
 
-        // x1, y1 линии
+        // x1, y1 of the line
         let oArrowEndPt = {
             x: aCallout[0 * 2],
             y: (aCallout[0 * 2 + 1])
@@ -324,7 +329,7 @@
         return this._lineEnd;
     };
     /**
-	 * Проверяет и выставляет настройки ширины линии, цвета и тд для внутренних фигур.
+	 * Checks and sets line width, color, etc. settings for inner shapes.
 	 * @constructor
     */
     CAnnotationFreeText.prototype.CheckInnerShapesProps = function() {
@@ -467,7 +472,7 @@
 	};
     CAnnotationFreeText.prototype.GetTextBoxRect = function() {
         let aOrigRect   = this.GetRect();
-        let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0]; // отступ координат фигуры с текстом от ректа аннотации
+        let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0]; // offset of text shape coordinates from the annotation rect
 
         let xMin = (aOrigRect[0] + aRD[0]);
         let yMin = (aOrigRect[1] + aRD[1]);
@@ -495,6 +500,10 @@
         if (this.IsNeedRecalc() == false)
             return;
 
+		this.bSkipAddToRedraw = true;
+		if (this.IsNeedUpdateLn()) {
+			this.private_UpdateLn();
+		}
         if (this.IsNeedUpdateOpacity()) {
             this.private_UpdateOpacity();
         }
@@ -503,8 +512,10 @@
             this.RecalcSizes();
         }
 
-        if (this.recalcInfo.recalculateGeometry)
+        if (this.recalcInfo.recalculateGeometry) {
             this.RefillGeometry();
+		}
+		this.bSkipAddToRedraw = false;
 
         this.recalculateTransform();
         this.updateTransformMatrix();
@@ -535,29 +546,29 @@
     }
     CAnnotationFreeText.prototype.RefillGeometry = function() {
         let aOrigRect   = this.GetRect();
-        let aCallout    = this.GetCallout(); // координаты выходящей стрелки
-        let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0]; // отступ координат фигуры с текстом от ректа аннотации
+        let aCallout    = this.GetCallout(); // coordinates of the outgoing arrow
+        let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0]; // offset of text shape coordinates from the annotation rect
 
         let aFreeTextPoints = [];
-        let aFreeTextRect   = []; // прямоугольник
-        let aFreeTextLine90 = []; // перпендикуляр к прямоуольнику (x3, y3 - x2, y2) точки из callout
+        let aFreeTextRect   = []; // rectangle
+        let aFreeTextLine90 = []; // perpendicular to the rectangle (x3, y3 - x2, y2) points from callout
 
-        // левый верхний
+        // top left
         aFreeTextRect.push({
             x: (aOrigRect[0] + aRD[0]) * g_dKoef_pt_to_mm,
             y: (aOrigRect[1] + aRD[1]) * g_dKoef_pt_to_mm
         });
-        // правый верхний
+        // top right
         aFreeTextRect.push({
             x: (aOrigRect[2] - aRD[2]) * g_dKoef_pt_to_mm,
             y: (aOrigRect[1] + aRD[1]) * g_dKoef_pt_to_mm
         });
-        // правый нижний
+        // bottom right
         aFreeTextRect.push({
             x: (aOrigRect[2] - aRD[2]) * g_dKoef_pt_to_mm,
             y: (aOrigRect[3] - aRD[3]) * g_dKoef_pt_to_mm
         });
-        // левый нижний
+        // bottom left
         aFreeTextRect.push({
             x: (aOrigRect[0] + aRD[0]) * g_dKoef_pt_to_mm,
             y: (aOrigRect[3] - aRD[3]) * g_dKoef_pt_to_mm
@@ -566,7 +577,7 @@
 		let aCalloutLine = [];
 		if (this.GetIntent() == AscPDF.FREE_TEXT_INTENT_TYPE.freeTextCallout) {
 			if (aCallout && aCallout.length == 6) {
-				// точка выхода callout
+				// callout exit point
 				aFreeTextLine90.push({
 					x: (aCallout[2 * 2]) * g_dKoef_pt_to_mm,
 					y: (aCallout[2 * 2 + 1]) * g_dKoef_pt_to_mm
@@ -578,12 +589,12 @@
 			}
 			
 			if (aCallout.length != 0) {
-				// x2, y2 линии
+				// x2, y2 of the line
 				aCalloutLine.push({
 					x: aCallout[1 * 2] * g_dKoef_pt_to_mm,
 					y: (aCallout[1 * 2 + 1]) * g_dKoef_pt_to_mm
 				});
-				// x1, y1 линии
+				// x1, y1 of the line
 				aCalloutLine.push({
 					x: aCallout[0 * 2] * g_dKoef_pt_to_mm,
 					y: (aCallout[0 * 2 + 1]) * g_dKoef_pt_to_mm
@@ -889,7 +900,7 @@
             }
             else if (this.selectedObjects.length <= this.spTree.length - 1) {
                 let _t = this;
-                // селектим все фигуры в группе (кроме перпендикулярной линии) если до сих пор не заселекчены
+                // select all shapes in the group (except perpendicular line) if not selected yet
                 this.select(oController, this.GetPage());
                 oController.selection.groupSelection = this;
                 this.selectedObjects.length = 0;
@@ -1107,7 +1118,7 @@
     
             let aNewTextBoxRect = [xMin, yMin, xMax, yMax];
     
-            // расширяем рект на ширину линии (или на радиус cloud бордера)
+            // expand the rect by line width (or cloud border radius)
             let nLineWidth = this.GetBorderWidth();
             if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.cloud) {
                 aNewTextBoxRect[0] -= this.GetBorderEffectIntensity() * 12;
@@ -1121,10 +1132,10 @@
                 aNewTextBoxRect[3] += nLineWidth;
             }
     
-            // находит точку выхода callout для нового ректа textbox
+            // finds the callout exit point for the new textbox rect
             let nCalloutExitPos = this.GetCalloutExitPos(aNewTextBoxRect);
     
-            // пересчитываем callout
+            // recalculate callout
             let aNewCallout = this.GetCallout() ? this.GetCallout().slice() : null;
             switch (nCalloutExitPos) {
                 case AscPDF.CALLOUT_EXIT_POS.left: {
@@ -1181,13 +1192,13 @@
                 return [minX, minY, maxX, maxY];
             }
     
-            // находим рект стрелки, учитывая окончание линии
+            // find arrow rect, considering line ending
             let aArrowRect = aNewCallout.length != 0 ? this.GetArrowRect([aNewCallout[2], aNewCallout[3], aNewCallout[0], aNewCallout[1]]) : null;
     
-            // находим результирующий rect аннотации
+            // find the resulting annotation rect
             let aNewRect = AscPDF.unionRectangles([aArrowRect, aNewTextBoxRect, findBoundingRectangle(aNewCallout)]);
             
-            // пересчитываем RD.
+            // recalculate RD.
             let aNewRD = [
                 xMin - aNewRect[0],
                 yMin - aNewRect[1],
@@ -1218,7 +1229,7 @@
 
         this.selectStartPage = nPage;
         
-        // координаты клика на странице в MM
+        // click coordinates on the page in MM
         var pageObject = oViewer.getPageByCoords2(x, y);
         if (!pageObject)
             return false;
@@ -1277,7 +1288,7 @@
         this.lastClickCoords.X = undefined;
         this.lastClickCoords.Y = undefined;
 
-        // селектим все фигуры в группе (кроме перпендикулярной линии) если до сих пор не заселекчены
+        // select all shapes in the group (except perpendicular line) if not selected yet
         if (oController.selectedObjects.length == 1) {
             oController.selection.groupSelection = this;
         }
@@ -1299,7 +1310,7 @@
         x = this.lastClickCoords.X;
         y = this.lastClickCoords.Y;
 
-        // координаты клика на странице в MM
+        // click coordinates on the page in MM
         var pageObject = oViewer.getPageByCoords2(x, y);
         if (!pageObject)
             return false;
@@ -1315,11 +1326,11 @@
         let isResize    = oCursorInfo.cursorType.indexOf("resize") != -1 ? true : false;
         let sShapeId    = oCursorInfo.objectId;
 
-        // если фигуры в селекте группы, тогда смотрим в какую попали
+        // if shapes are selected in a group, check which one was hit
         this.selectedObjects.length = 0;
 
         let _t = this;
-        // если в handles то телектим внутри группы нужную фигуру
+        // if in handles, select the needed shape inside the group
         if (isResize) {
             this.spTree.forEach(function(sp) {
                 if (sp.GetId() == sShapeId) {
@@ -1328,16 +1339,16 @@
                 }
             });
         }
-        // иначе move 
+        // otherwise move
         else {
-            // если попали в стрелку, тогда селектим группу, т.к. будем перемещать всю аннотацию целиком
+            // if hit the arrow, select the group since we'll be moving the entire annotation
             if (this.spTree.length == 1 || (this.spTree[1] && sShapeId == this.spTree[1].GetId() && this.spTree[1].getPresetGeom() == "line")) {
                 this.selectedObjects.length = 0;
                 oDrawingObjects.selection.groupSelection = null;
                 oDrawingObjects.selectedObjects.length = 0;
                 oDrawingObjects.selectedObjects.push(this);
             }
-            // если попали в textbox, тогда селектим textbox фигуру внутри группы, т.к. будем перемещать только её
+            // if hit the textbox, select the textbox shape inside the group since we'll only be moving it
             else if (this.spTree[0] && sShapeId == this.spTree[0].GetId()) {
                 this.selectedObjects.length                 = 0;
                 oDrawingObjects.selection.groupSelection    = this;
@@ -1519,9 +1530,9 @@
             oParentAnnot.addToSpTree(0, oRectShape);
         
         let oLineShape;
-        // координаты стрелки
+        // arrow coordinates
         if (arrOfArrPoints[1]) {
-            // флипаем стрелку если соблюдаются условия (зачем? Чтобы handles были с нужной стороны - так уж устроены CShape)
+            // flip the arrow if conditions are met (why? So handles are on the correct side - that's how CShape works)
             let aArrowPts   = arrOfArrPoints[1].slice();
             let bFlipH      = false;
             let bFlipV      = false;

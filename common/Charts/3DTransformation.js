@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -42,7 +45,7 @@ function (window, undefined) {
 	let ORIENTATION_MIN_MAX = AscFormat.ORIENTATION_MIN_MAX;
 
 	let globalBasePercent = 100;
-	let global3DPersperctive = 30; // ToDo а нужна ли она в ChartsDrawer ?
+	let global3DPersperctive = 30; // ToDo is this needed in ChartsDrawer?
 
 	let c_oChartFloorPosition = {
 		None: 0, Left: 1, Right: 2, Bottom: 3, Top: 4
@@ -101,27 +104,27 @@ function (window, undefined) {
 	Processor3D.prototype.calaculate3DProperties = function (baseDepth, gapDepth, bIsCheck) {
 		this.calculateCommonOptions();
 
-		//TODO baseDepth -  не универсальный параметр, позже переделать
+		//TODO baseDepth - not a universal parameter, refactor later
 		this._calculateAutoHPercent();
 
-		//рассчёт коэффициэнта отношения ширины / высоты
+		//calculating width/height ratio coefficient
 		this._calcAspectRatio();
 
-		//TODO рассчёт коэффицианты для диаграмм типа standard. позже необходимо отказаться
+		//TODO calculation of coefficient for standard type charts. need to remove later
 		//this._calcSpecialStandardScaleX();
 
-		//глубина
+		//depth
 		this.depthPerspective = this.view3D.getRAngAx() ? this._calculateDepth() : this._calculateDepthPerspective();
 
-		//угол перспективы
+		//perspective angle
 		this._calculatePerspective(this.view3D);
 
-		//после рассчета глубины меняются пропорции ширины и высоты
+		//after depth calculation, width and height proportions change
 		if (this.view3D.getRAngAx()) {
 			this._calculateScaleFromDepth();
 		}
 
-		//сдвиг камеры для того, чтобы попали все линии
+		//camera shift so that all lines fit
 		if (!bIsCheck) {
 			this._calculateCameraDiff();
 
@@ -131,7 +134,7 @@ function (window, undefined) {
 		}
 
 		if (AscFormat.c_oChartTypes.Pie === this.chartsDrawer.calcProp.type && !this.view3D.getRAngAx()) {
-			//TODO пересмотреть функцию
+			//TODO review function
 			this.tempChangeAspectRatioForPie();
 		}
 	};
@@ -205,8 +208,8 @@ Processor3D.prototype.calculateCommonOptions = function () {
 		let widthLine = this.widthCanvas - (this.left + this.right);
 		let heightLine = this.heightCanvas - (this.top + this.bottom);
 		let widthCanvas = this.widthCanvas;
-		//todo оптимальную ширину нужно пересмотреть
-		//оптимальная ширина -  ширина при которой не происходит масштабирования по ширине
+		//todo need to review optimal width
+		//optimal width - width at which no width scaling occurs
 		let optimalWidth = heightLine * 10;
 
 		let subType = this.chartsDrawer.calcProp.subType;
@@ -242,10 +245,10 @@ Processor3D.prototype.calculateCommonOptions = function () {
 			let aspectRatioY = this.aspectRatioY;
 			let aspectRatioZ = this.aspectRatioZ;
 
-			//если будут проблемы с поворотом standard диграмм, раскомментровать!
-			//TODO протестировать, и если не будет проблем, то убрать if-else
+			//if there are issues with standard chart rotation, uncomment!
+			//TODO test, and if no issues, remove if-else
 			if (Math.abs(this.angleOy) > Math.PI) {
-				//рассчитываем параметры диаграммы при оптимальной ширине
+				//calculate chart parameters at optimal width
 				this.widthCanvas = optimalWidth + (this.left + this.right);
 
 				this.calaculate3DProperties(null, null, true);
@@ -275,7 +278,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 
 				this._recalculateCameraDiff();
 			} else {
-				//рассчитываем параметры диаграммы при оптимальной ширине
+				//calculate chart parameters at optimal width
 				this.widthCanvas = optimalWidth + (this.left + this.right);
 				this.calaculate3DProperties(null, null, true);
 
@@ -319,7 +322,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 
 		let areaStackedKf = this.chartsDrawer.calcProp.type === AscFormat.c_oChartTypes.Area && this.chartsDrawer.calcProp.subType !== "normal" ? (ptCount / ((ptCount - 1))) : 1;
 
-		//без маштабирования
+		//without scaling
 		if (this.angleOy === 0) {
 			this.aspectRatioX = ((this.widthCanvas - (this.left + this.right)) / mustWidth) / areaStackedKf;
 			this.scaleX = 1;
@@ -667,7 +670,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 			depth = depth / kF;
 		}
 
-		//ToDo временная правка для круговой диграммы с углом поворота 0 градусов
+		//ToDo temporary fix for pie chart with 0 degree rotation angle
 		if (0 === radius2) {
 			radius2 = 1;
 		}
@@ -777,7 +780,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 
 		let pxToMM = 1 / AscCommon.g_dKoef_pix_to_mm;
 		let t = this;
-		//коррективы для подписей
+		//adjustments for labels
 		let xPoints = chartSpace.chart.plotArea && chartSpace.chart.plotArea.catAx ? chartSpace.chart.plotArea.catAx.xPoints : null;
 		if (!xPoints) {
 			xPoints = chartSpace.chart.plotArea && chartSpace.chart.plotArea.valAx ? chartSpace.chart.plotArea.valAx.xPoints : null;
@@ -850,7 +853,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 			for (let i = 0; i < yPoints.length; i++) {
 				let point = t.convertAndTurnPoint(coordXAxisOy * pxToMM, yPoints[i].pos * (pxToMM), zPosition);
 
-				//TODO значения высчитать
+				//TODO calculate values
 				let widthText = 5;
 				if (valCatAx && valCatAx.labels) {
 					widthText = valCatAx.labels.extX * pxToMM;
@@ -882,7 +885,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 			for (let i = 0; i < yPoints.length; i++) {
 				let point = t.convertAndTurnPoint(coordXAxisOy * pxToMM, yPoints[i].pos * (pxToMM), zPosition);
 
-				//TODO значения высчитать
+				//TODO calculate values
 				let widthText = 0;
 				if (valCatAx && valCatAx.labels) {
 					widthText = valCatAx.labels.extX * pxToMM;
@@ -924,8 +927,8 @@ Processor3D.prototype.calculateCommonOptions = function () {
 			perspective = 1;
 		}
 
-		let alpha = perspective / 4;//в xml проиходит двойной угол(в параметрах ms стоит 40, приходит в xml 80)
-		//TODO this.top - this.bottom пересмотреть
+		let alpha = perspective / 4;//in xml comes doubled angle (MS parameters show 40, xml receives 80)
+		//TODO review this.top - this.bottom
 		let catt = ((heightLine / 2 + (Math.abs(this.top - this.bottom)))) / Math.tan((alpha / 360) * (Math.PI * 2));
 		let rPerspective;
 		if (catt === 0) {
@@ -981,7 +984,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 				chartWidth = widthOneBar + heightHPercent;
 			} else if (this.angleOx !== 0)//AngleOYNoAut + AngleOYNoAutPerHeight + (ANGLEOX+ANGLEOY) + AngleOYOXNoAut + ANGLEOXANGLEOYHPerDPer(ANGLEOX+ANGLEOY HPercent)
 			{
-				//если выставить ширину 255 будет так же, как и в документе с расчётами
+				//if width is set to 255, it will be same as in document with calculations
 				b = (seriesCount - (seriesCount - 1) * overlap + gapWidth);
 				a = (depthPercent / (ptCount * b)) / hPercent;
 				let width = heightOriginalChart * areaStackedKf;
@@ -990,8 +993,8 @@ Processor3D.prototype.calculateCommonOptions = function () {
 				chartWidth = heightHPercent - depth;
 			} else if (this.angleOy !== 0)//angleOxNoAuto
 			{
-				//если выставить ширину = 321.25 будет так же, как и в документе с расчётам
-				//TODO глубина с некоторыми графиками имеет различия, пересчитать!
+				//if width is set to 321.25, it will be same as in document with calculations
+				//TODO depth differs with some charts, recalculate!
 				let widthChart = (widthOriginalChart / t.aspectRatioX) / t.specialStandardScaleX;
 
 				b = (seriesCount - (seriesCount - 1) * overlap + gapWidth);
@@ -1066,7 +1069,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 			depth = this.hPercent * depth;
 		}
 
-		//TODO глубина в некоторых случаях отличается(тип Standard)
+		//TODO depth differs in some cases (Standard type)
 		if (this.chartsDrawer.calcProp.subType === "standard" || this.chartsDrawer.calcProp.type === AscFormat.c_oChartTypes.Line || isNormalArea) {
 			let b = 1 / seriesCount;
 
@@ -1120,7 +1123,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 	};
 
 	Processor3D.prototype._calculateCameraDiff = function (/*isSkip*/) {
-		//глубина по OZ
+		//depth along OZ
 		let perspectiveDepth = this.depthPerspective;
 
 		let widthCanvas = this.widthCanvas;
@@ -1167,7 +1170,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 
 		//***Calculate cameraDiffZ***
 		if (!this.view3D.getRAngAx()) {
-			//быстрая функция поиска сдвигов камеры
+			//fast function for finding camera shifts
 			//console.time("sdf");
 			this._calculateCameraDiffZX(points, faces);
 			//console.timeEnd("sdf");
@@ -1320,19 +1323,19 @@ Processor3D.prototype.calculateCommonOptions = function () {
 
 
 
-			//TODO пока включаю для поворотов  по OX + по OY checkOutSideArea(медленная функция), затем нужно переделать, используя закомментированный код сверху
+			//TODO for now enabling checkOutSideArea for OX + OY rotations (slow function), then need to refactor using commented code above
 			this.cameraDiffZ = -minZ;
 			//this.cameraDiffX = -minMaxOx.diffX;
 			this.checkOutSideArea(newPoints);
 		}*/
 
-		//TODO пока включаю для ВСЕГО checkOutSideArea(медленная функция), затем нужно переделать, используя закомментированный код сверху
+		//TODO for now enabling checkOutSideArea for ALL (slow function), then need to refactor using commented code above
 		this.cameraDiffZ = -minZ;
 		this.checkOutSideArea2(newPoints);
 
 	};
 
-//TODO если будут проблемы при маштабировании, вернуть функцию checkOutSideArea2 вместо checkOutSideArea
+//TODO if there are scaling issues, revert to checkOutSideArea2 function instead of checkOutSideArea
 	Processor3D.prototype.checkOutSideArea2 = function (newPoints) {
 		let i = 0;
 		let maxI = 1000;
@@ -1998,7 +2001,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 			//fov * x222 + fov * diffX = wR * z222 + wR * diffZ + wR * fov
 
 
-			//итого
+			//total
 			//fov * x111 + fov * diffX = wL * z111 + wL * diffZ + wL * fov
 			//fov * x222 + fov * diffX = wR * z222 + wR * diffZ + wR * fov
 
@@ -2110,11 +2113,11 @@ Processor3D.prototype.calculateCommonOptions = function () {
 	};
 
 	Processor3D.prototype._calculateCameraDiffX = function (minMaxOx) {
-		//test ровно по центру, но циклом
+		//test exactly centered, but using loop
 		let maxLeftPoint = minMaxOx.left;
 		let maxRightPoint = minMaxOx.right;
 
-		//так ближе к тому, как смещает excel
+		//this is closer to how excel shifts
 		let widthCanvas = this.widthCanvas;
 		let originalWidthChart = widthCanvas - this.left - this.right;
 
@@ -2133,7 +2136,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 		let diffTop = maxTopPoint - top;
 		let diffBottom = (heightChart + top) - maxBottomPoint;
 
-		//this.cameraDiffY = this.top - minMaxOy.top; - для rAngAx
+		//this.cameraDiffY = this.top - minMaxOy.top; - for rAngAx
 		this.cameraDiffY = (diffBottom - diffTop) / 2;
 	};
 
@@ -2306,10 +2309,10 @@ Processor3D.prototype.calculateCommonOptions = function () {
 		},
 
 		project: function (matrix) {
-			//умножаем
+			//multiply
 			let projectPoint = matrix.multiplyPoint(this);
 
-			//делим на 4 коэффициэнт
+			//divide by 4th coefficient
 			let newX = projectPoint.x / projectPoint.t;
 			let newY = projectPoint.y / projectPoint.t;
 
@@ -2454,14 +2457,14 @@ Processor3D.prototype.calculateCommonOptions = function () {
 				let diffX = centerChartX;
 				let diffY = centerChartY;
 				let diffZ = -1 / this.cChartDrawer.processor3D.rPerspective;
-				//TODO протестировать на bar и затем сделать для всех перспективных диаграмм данный сдвиг
+				//TODO test on bar chart and then apply this shift for all perspective charts
 				if (!this.cChartDrawer.processor3D.view3D.getRAngAx() && this.chartProp.type === AscFormat.c_oChartTypes.Bar) {
 					diffX -= this.cChartDrawer.processor3D.cameraDiffX;
 					diffY -= this.cChartDrawer.processor3D.cameraDiffY;
 					diffZ -= this.cChartDrawer.processor3D.cameraDiffZ;
 				}
 
-				//TODO пересмотреть правку!
+				//TODO review this fix!
 				if (diffZ > 0 && this.chartProp.type === AscFormat.c_oChartTypes.Bar && this.cChartDrawer.processor3D.view3D.getRAngAx() &&
 					(this.chartProp.subType === "stackedPer" || this.chartProp.subType === "stacked")) {
 					diffZ -= 500;
@@ -2489,13 +2492,13 @@ Processor3D.prototype.calculateCommonOptions = function () {
 			}
 
 			if (startIndexes.length === 0) {
-				//TODO сделано для графиков типа stacked, когда пересечения найдены всех параллалеп.
+				//TODO implemented for stacked charts when intersections found for all parallelepipeds
 				return this._getSortZIndexArray(parallelepipeds);
 			}
 
 			let g = revIntersections;
-			let color = {}; // цвет вершины (0, 1, или 2)
-			let time_in = {}, time_out = {}; // "времена" захода и выхода из вершины
+			let color = {}; // vertex color (0, 1, or 2)
+			let time_in = {}, time_out = {}; // "times" of entering and exiting vertex
 			let dfs_timer = 0;
 
 			let dfs = function (v) {
@@ -2558,7 +2561,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 		},
 
 		_getIntersectionsParallelepipeds: function (parallelepipeds) {
-			//TODO нужно по максимуму оптимизировать, при большом количестве значений работает медленно
+			//TODO need to optimize as much as possible, works slowly with large number of values
 			let usuallyIntersect = {};
 			let usuallyIntersectRev = {};
 
@@ -2566,7 +2569,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 			let reverseIntersections = [];
 			let countIntersection = [];
 			for (let i = 0; i < parallelepipeds.length; i++) {
-				//из каждой точки данного параллалепипеда строим прямые до точки наблюдателя
+				//from each point of this parallelepiped we draw lines to the observer point
 				let fromParallalepiped = parallelepipeds[i];
 				countIntersection[i] = 0;
 
@@ -2579,10 +2582,10 @@ Processor3D.prototype.calculateCommonOptions = function () {
 					}
 
 					for (let l = 0; l < fromParallalepiped.arrPoints.length; l++) {
-						//перебираем точки параллалепипеда FROM
+						//iterate through points of parallelepiped FROM
 						let point = fromParallalepiped.arrPoints[l];
 
-						//перебираем грани параллалепипеда TO и проверяем на пересечения с прямыми из параллалепипеда FROM
+						//iterate through faces of parallelepiped TO and check for intersections with lines from parallelepiped FROM
 						let toParallalepiped = parallelepipeds[m];
 						for (let n = 0; n < toParallalepiped.faces.length; n++) {
 							let toVerge = toParallalepiped.faces[n];
@@ -2620,7 +2623,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 			};
 		},
 
-		//смотрим есть ли пересечения точек, выходящих из вершин данной грани, с другими гранями
+		//check if there are intersections of points coming from vertices of this face with other faces
 		_isIntersectionFacesPointLines: function (plainVerge, i, sortZIndexPaths) {
 			let res = false;
 			let t = this;
@@ -2629,7 +2632,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 				let pointFromVerge = plainVerge.points[j];
 				let lineEqucation = t.cChartDrawer.getLineEquation(pointFromVerge, this.centralViewPoint);
 
-				//пересечение грани и прямой
+				//intersection of face and line
 				if (t._isIntersectionFacesAndLine(lineEqucation, pointFromVerge, i, j, sortZIndexPaths)) {
 					res = true;
 					break;
@@ -2639,7 +2642,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 			return res;
 		},
 
-		//пересечение прямой с другими гранями
+		//intersection of line with other faces
 		_isIntersectionFacesAndLine: function (lineEqucation, pointFromVerge, i, j, sortZIndexPaths) {
 			let res = false;
 
@@ -2657,7 +2660,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 			return res;
 		},
 
-		//пересечение прямой гранью
+		//intersection of line with face
 		_isIntersectionFaceAndLine: function (plain, lineEquation, pointFromVerge) {
 			let res = false;
 			let t = this;
@@ -2712,7 +2715,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 		},
 
 		_isBetweenPoint: function (point, start, end) {
-			//TODO округление пересмотреть
+			//TODO review rounding
 			let res = false;
 			point = Math.round(point * 100) / 100;
 			start = Math.round(start * 100) / 100;
@@ -2726,7 +2729,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 		},
 
 		_isEqualPoints: function (point1, point2) {
-			//TODO округление пересмотреть
+			//TODO review rounding
 			let res = false;
 
 			if (parseInt(point1.x) === parseInt(point2.x) && parseInt(point1.y) === parseInt(point2.y) && parseInt(point1.y) === parseInt(point2.y)) {

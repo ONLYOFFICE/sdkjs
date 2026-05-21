@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -35,14 +38,14 @@
 (function(window)
 {
 	/**
-	 * Механизм поиска. Хранит параграфы (или PageMatch объект) с найденной строкой
+	 * Search mechanism. Stores paragraphs (or PageMatch object) with the found string
 	 * @constructor
 	 */
 	function CPdfSearch(oPdfDoc) {
 		AscCommonWord.CDocumentSearch.call(this, oPdfDoc);
 
-		this.Show			= false;	// флаг что надо хайлайтить PdfPageMatch результаты на странице
-		this.PagesMatches	= [];		// результаты поиска по страницам
+		this.Show			= false;	// flag indicating to highlight PdfPageMatch results on the page
+		this.PagesMatches	= [];		// search results by pages
 		this.PagesLines		= [];
 	}
 
@@ -61,7 +64,7 @@
 	CPdfSearch.prototype.Clear = function() {
 		this.Reset();
 
-		// Очищаем предыдущие элементы поиска
+		// Clear previous search elements
 		for (var Id in this.Elements) {
 			if (true != this.Elements[Id].pdfPageMatch) {
 				this.Elements[Id].ClearSearchResults();
@@ -89,7 +92,7 @@
         for (let i = 0; i < oPagesInfo.pages.length; i++) {
             let oPageInfo = oPagesInfo.pages[i];
 
-            // сначала ищем на самой странице, если не было конвертации в шейпы
+            // first search on the page itself, if there was no conversion to shapes
             let nStartIdx = this.Id;
             let oPdfPageResult;
             if (true != oFile.pages[i].isRecognized) {
@@ -100,15 +103,17 @@
                 }
             }
             
-            // затем ищем в drawings
-            for (let j = 0; j < oPageInfo.drawings.length; ++j) {
-                oPageInfo.drawings[j].Search && oPageInfo.drawings[j].Search(this, search_Common);
-            }
+            // search in drawings in edit mode
+			if (Asc.editor.canEdit()) {
+				for (let j = 0; j < oPageInfo.drawings.length; ++j) {
+					oPageInfo.drawings[j].Search && oPageInfo.drawings[j].Search(this, search_Common);
+				}
+			}
 
-			// to do (нужен поиск в формах, аннотациях?)
+			// to do (is search needed in forms, annotations?)
 
             this.PagesMatches[i] = [];
-            // в Elements все результаты поиска, в PagesMatches - результаты по страницам
+            // Elements contains all search results, PagesMatches contains results by pages
             for (let j = nStartIdx; j < this.Id; j++) {
                 this.PagesMatches[i].push(this.Elements[j]);
             }
@@ -121,6 +126,7 @@
 
 	CPdfSearch.prototype.Select = function(nId) {
 		let oViewer		= Asc.editor.getDocumentRenderer();
+		let oFile		= oViewer.file;
 		let oElm		= this.Elements[nId];
 
 		if (!oElm) {
@@ -144,6 +150,18 @@
 			oViewer.navigateToPage(oElm.GetAbsolutePage());
 		}
 		else if (oElm.pdfPageMatch == true) {
+			oFile.removeSelection();
+
+			oFile.Selection.Page1 = oElm[0].PageNum;
+			oFile.Selection.Line1 = oElm[0].LineNum;
+			oFile.Selection.Glyph1 = oElm[0].Char1;
+			
+			oFile.Selection.Page2 = oElm[oElm.length - 1].PageNum;
+			oFile.Selection.Line2 = oElm[oElm.length - 1].LineNum;
+			oFile.Selection.Glyph2 = oElm[oElm.length - 1].Char2;
+
+			oFile.Selection.IsSelection = true;
+
 			oViewer.CurrentSearchNavi = oElm;
 			oViewer.ToSearchResult();
 		}

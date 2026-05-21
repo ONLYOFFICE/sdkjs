@@ -1,40 +1,43 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
 
-// не скрываем переменные, скин используется напрямую в sdk-all.js
-// а экспорт в AscCommon - только для sdk-all-min.js
-// если хочется скрыть - то везде GlobalSkin => AscCommon.GlobalSkin
+// we don't hide variables, skin is used directly in sdk-all.js
+// and export to AscCommon - only for sdk-all-min.js
+// if you want to hide - then everywhere GlobalSkin => AscCommon.GlobalSkin
 
 var EditorSkins = {
 	"theme-light" : {
@@ -157,7 +160,7 @@ var EditorSkins = {
 		DemTextColor                    : "#666666",
 
 		/* spreadsheets */
-		//TODO названия не менял. использую такие же как и были ранее. пересмотреть!
+		//TODO didn't change names. using same as before. review!
 		Background               : "#F7F7F7",
 		BackgroundActive         : "#c1c1c1",
 		BackgroundHighlighted    : "#dfdfdf",
@@ -339,7 +342,7 @@ var EditorSkins = {
 };
 
 /*
-функция для генерации "else" updateGlobalSkin
+function for generating "else" updateGlobalSkin
 function setter_from_interface(obj)
 {
 	var code = "";
@@ -475,9 +478,9 @@ function updateGlobalSkinColors(theme)
 		SheetViewSelectAllIcon          : "canvas-sheet-view-select-all-icon"
 	};
 
-	// корректируем цвета для старого хрома:
-	// в старых хромах (desktop windows XP)
-	// если начинается цвет с цифры (#0-9) - то помечается символом \3 (конец текста)
+	// fix colors for old Chrome:
+	// in old Chrome (desktop windows XP)
+	// if color starts with a digit (#0-9) - it's marked with \3 symbol (end of text)
 	for (var item in theme)
 	{
 		var testValue = theme[item];
@@ -717,7 +720,7 @@ window['AscCommon']['RgbaTextToRGBA'] = window['AscCommon'].RgbaTextToRGBA = fun
 
 if (AscCommon.TEMP_STYLE_THUMBNAIL_WIDTH !== undefined && AscCommon.TEMP_STYLE_THUMBNAIL_HEIGHT !== undefined)
 {
-	// TODO: переделать.
+	// TODO: refactor.
 	GlobalSkin.STYLE_THUMBNAIL_WIDTH = AscCommon.TEMP_STYLE_THUMBNAIL_WIDTH;
 	GlobalSkin.STYLE_THUMBNAIL_HEIGHT = AscCommon.TEMP_STYLE_THUMBNAIL_HEIGHT;
 }

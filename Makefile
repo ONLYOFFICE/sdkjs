@@ -15,7 +15,7 @@ BUILD_NUMBER ?= 0
 
 PUBLISHER_NAME ?= Ascensio System SIA
 
-APP_COPYRIGHT ?= Copyright (C) $(PUBLISHER_NAME) 2012-$(shell date +%Y). All rights reserved
+APP_COPYRIGHT ?= Copyright (C) $(PUBLISHER_NAME) 2009-$(shell date +%Y). All rights reserved
 
 PUBLISHER_URL ?= https://www.onlyoffice.com/
 

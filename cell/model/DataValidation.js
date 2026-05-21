@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -195,7 +198,7 @@
 			if (wasQuoted && oValidation.type === Asc.EDataValidationType.List) {
 				toListPreview(data);
 			} else if (this && this._formula) {
-				//если формула содержит ссылки на диапазоны, то в зависимости от активной области нужно их сдвинуть
+				//if the formula contains references to ranges, they need to be shifted depending on the active area
 				var offset = oValidation.calculateOffset(ws);
 				if (offset) {
 					this._formula.changeOffset(offset);
@@ -629,7 +632,7 @@
 		var f = this.formula1;
 		var offset;
 		if (f && f._formula) {
-			//если формула содержит ссылки на диапазоны, то в зависимости от активной области нужно их сдвинуть
+			//if the formula contains references to ranges, they need to be shifted depending on the active area
 			offset = this.calculateOffset(ws);
 			if (offset) {
 				f = f.clone();
@@ -642,7 +645,7 @@
 				aValue = list.getValue().split(AscCommon.FormulaSeparators.functionArgumentSeparatorDef);
 				if (aValue && aValue.length) {
 					for (var i = 0; i < aValue.length; i++) {
-						//обрезаем только вначале строки
+						//trim only at the beginning of the string
 						if (aValue[i] && aValue[i].length) {
 							var pos = 0;
 							while ((pos < aValue[i].length) && (aValue[i][pos] == ' ')) {
@@ -668,7 +671,7 @@
 					aValue = [];
 					aData = [];
 					let duplicatedMap = [];
-					list._foreachNoEmpty(function (cell) {
+					list._foreachDataOnly(function (cell) {
 						if (!cell.isNullTextString()) {
 							let val = cell.getValue();
 							if (!duplicatedMap[val]) {
@@ -749,14 +752,14 @@
 		};
 
 		var _checkFormulaOnError = function (fValue, _f) {
-			//ошибка по именованному диапазону
+			//error for named range
 			if (fValue.type === cElementType.error && fValue.errorType === AscCommonExcel.cErrorType.wrong_name && !checkDefNames(_f)) {
 				return asc_error.NamedRangeNotFound;
 			}
 
-			//если ссылка на диапазон - в любом случае отдаём ошибку
+			//if reference to a range - return an error in any case
 			if (fValue.type === cElementType.cellsRange || fValue.type === cElementType.cellsRange3D) {
-				//в случае списка допустимы строки/столбцы
+				//in case of a list, rows/columns are allowed
 				if (type === Asc.EDataValidationType.List) {
 					var _bbox = fValue.getBBox0();
 					if (_bbox.c1 !== _bbox.c2 && _bbox.r1 !== _bbox.r2) {
@@ -768,7 +771,7 @@
 			}
 
 			if (fValue.type === cElementType.array) {
-				//в ms другой текст ошибки, мы выдаём общий
+				//in MS there's a different error text, we return the generic one
 				return asc_error.DataValidateInvalid;
 			}
 
@@ -776,7 +779,7 @@
 				return type === Asc.EDataValidationType.List ? asc_error.DataValidateInvalidList : asc_error.DataValidateNotNumeric;
 			}
 
-			//если ощибка в подсчете формулы - выдаём предупреждение
+			//if there's an error in formula calculation - return a warning
 			if (fValue.type === cElementType.error) {
 				return asc_error.FormulaEvaluateError;
 			}
@@ -796,7 +799,7 @@
 		} else {
 			isNumeric = isNum(_val);
 			if (!isNumeric) {
-				//проверим, может быть это дата или время
+				//check if it's a date or time
 				if (type !== Asc.EDataValidationType.List) {
 					date = AscCommon.g_oFormatParser.parseDate(_val, AscCommon.g_oDefaultCultureInfo);
 				}
@@ -817,7 +820,7 @@
 						}
 					}
 
-					//TODO не нашёл константу на максимальную дату
+					//TODO couldn't find a constant for the maximum date
 					var maxDate = 2958465;
 					if (isNumeric && (_val < 0 || _val > maxDate)) {
 						return asc_error.DataValidateInvalid;
@@ -984,12 +987,12 @@
 						diff = updateRange.r2 - updateRange.r1 + 1;
 
 						_newRanges = [];
-						//добавляем сдвинутую часть диапазона
+						//add the shifted part of the range
 						_newRanges.push(intersection);
 						offset = new AscCommon.CellBase(bInsert ? diff : -diff, 0);
 						otherPart = _newRanges[0].difference(_range);
 						_newRanges[0].setOffset(offset);
-						//исключаем сдвинутую часть из диапазона
+						//exclude the shifted part from the range
 						_newRanges = _newRanges.concat(otherPart);
 
 					}
@@ -1001,12 +1004,12 @@
 					if (intersection) {
 						diff = updateRange.c2 - updateRange.c1 + 1;
 						_newRanges = [];
-						//добавляем сдвинутую часть диапазона
+						//add the shifted part of the range
 						_newRanges.push(intersection);
 						offset = new AscCommon.CellBase(0, bInsert ? diff : -diff, 0);
 						otherPart = _newRanges[0].difference(_range);
 						_newRanges[0].setOffset(offset);
-						//исключаем сдвинутую часть из диапазона
+						//exclude the shifted part from the range
 						_newRanges = _newRanges.concat(otherPart);
 					}
 					break;
@@ -1030,7 +1033,7 @@
 
 		var newRanges = [];
 		var bDel, isChanged;
-		//TODO правлю ошибку. 50521 - попытаться понять, как получился такой файл.
+		//TODO fixing a bug. 50521 - try to understand how this file was created.
 		if (!this.ranges) {
 			return -1;
 		}
@@ -1055,10 +1058,10 @@
 			}
 		}
 		if (!newRanges.length && bDel) {
-			//удаляем
+			//delete
 			return -1;
 		} else if (newRanges.length && isChanged) {
-			//меняем диапазон
+			//change the range
 			return newRanges;
 		}
 	};
@@ -1188,7 +1191,7 @@
 					}
 				}
 
-				//храним число
+				//store the number
 				if (isDate) {
 					_formula.text = isDate.value;
 					return;
@@ -1247,7 +1250,7 @@
 		}
 
 		var res = null;
-		//находим левый верхний угол
+		//find the top left corner
 		var _row = null, _col = null;
 		for (var i = 0; i < this.ranges.length; i++) {
 			if (_row === null && _col === null) {
@@ -1358,9 +1361,9 @@
 	};
 
 	CDataValidations.prototype.getIntersections = function (ranges) {
-		//выделяем несколько групп
-		//первая - если вся активная область находится в пределах одного dataValidation
-		//вторая - если пересекаемся с dataValidation
+		//distinguish several groups
+		//first - if the entire active area is within one dataValidation
+		//second - if we intersect with dataValidation
 
 		var checkAdd = function (arr, obj) {
 			for (var n = 0; n < arr.length; n++) {
@@ -1551,18 +1554,18 @@
 		var needCheck = doExtend === undefined;
 
 		if (needCheck) {
-			//если выделено несколько диапазонов с data validation
+			//if multiple ranges with data validation are selected
 			if (dataValidationIntersection.length > 1 || dataValidationContain.length > 1) {
 				return c_oAscError.ID.MoreOneTypeDataValidate;
 			}
-			//если в выделение попали диапазоны как с data validation так и без
+			//if the selection includes ranges both with and without data validation
 			if (dataValidationIntersection.length) {
 				return c_oAscError.ID.ContainsCellsWithoutDataValidate;
 			}
 		}
 
-		//для передачи в интерфейс использую объект и модели - CDataValidation
-		//если doExtend = null -> значит erase === true
+		//for passing to the interface I use the model object - CDataValidation
+		//if doExtend = null -> means erase === true
 		var res;
 		if (doExtend === null) {
 			res = this.getNewValidation();
@@ -1571,7 +1574,7 @@
 		} else if (dataValidationContain.length === 1) {
 			res = dataValidationContain[0].clone(true);
 		} else {
-			//возвращаем новый объект с опциями
+			//return a new object with options
 			res = this.getNewValidation();
 		}
 
@@ -1612,7 +1615,7 @@
 					}
 					equalRangeDataValidation.push(this.elems[i]);
 				}
-				//пока не усложняем логику и не объединяем объекты с одинаковыми настройками
+				//for now we don't complicate the logic and don't merge objects with the same settings
 				/*if (props.isEqual(this.dataValidations.elems[i])) {
 					equalDataValidation = this.dataValidations.elems[i];
 					break;
@@ -1621,9 +1624,9 @@
 		}
 
 		if (!instersection.length && !contain.length) {
-			//самый простой вариант - просто добавляем новый обхект и привязываем его к активной области
+			//the simplest case - just add a new object and bind it to the active area
 			if (equalDataValidation) {
-				//в данном случае расширяем диапазон
+				//in this case we extend the range
 				//set
 			} else {
 				this.add(ws, prepeareAdd(props), true);
@@ -1671,7 +1674,7 @@
 			for (k = 0; k < contain.length; k++) {
 				_split(contain[k]);
 			}
-			//разбиваем диапазон объектов, с которыми пересекаемся + добавляем новый
+			//split the range of objects we intersect with + add a new one
 			this.add(ws, prepeareAdd(props), true);
 		}
 	};
@@ -1698,11 +1701,11 @@
 	};
 
 	CDataValidations.prototype._containRanges = function (_ranges1, _ranges2) {
-		//проверка на то, что диапазон второго range входит в дипапазон первого
+		//check that the second range's area is within the first range's area
 		var res = false;
 		if (_ranges1 && _ranges2 && _ranges1.length && _ranges2.length) {
 			for (var j = 0; j < _ranges1.length; j++) {
-				//проверяем, вошёл ли целиком массив диапазонов второго в один из первых
+				//check if the entire array of second ranges fits into one of the first ranges
 				if (_ranges1[j].containsRanges(_ranges2)) {
 					res = true;
 					break;

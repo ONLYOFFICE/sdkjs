@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -72,7 +75,7 @@
             return false;
 
         //------------------------------------------------------------------------------------------------------------------
-        // Новая схема
+        // New scheme
         var nReaderPos   = Reader.GetCurPos();
         var nChangesType = Reader.GetLong();
 
@@ -97,11 +100,11 @@
         else
         {
             CollaborativeEditing.private_AddOverallChange(this.m_pData);
-            // Сюда мы попадаем, когда у данного изменения нет класса и он все еще работает по старой схеме через объект
+            // We get here when this change has no class and it still works through the old scheme via object
 
             Reader.Seek2(nReaderPos);
             //\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-            // Старая схема
+            // Old scheme
 
             if (!Class.Load_Changes)
                 return false;
@@ -169,35 +172,35 @@
 
 
 	/**
-	 * Базовый класс для совместного редактирования в разных редакторах
+	 * Base class for collaborative editing in different editors
 	 * @constructor
 	 */
     function CCollaborativeEditingBase()
     {
-        this.m_nUseType     = 1;  // 1 - 1 клиент и мы сохраняем историю, -1 - несколько клиентов, 0 - переход из -1 в 1
+        this.m_nUseType     = 1;  // 1 - 1 client and we save history, -1 - multiple clients, 0 - transition from -1 to 1
 
-        this.m_aUsers       = []; // Список текущих пользователей, редактирующих данный документ
-        this.m_aChanges     = []; // Массив с изменениями других пользователей
+        this.m_aUsers       = []; // List of current users editing this document
+        this.m_aChanges     = []; // Array with changes from other users
 		this.m_nUndoBeforeApply = 0; // The number of changes we need to undo before the other changes can be accepted
 
-        this.m_aNeedUnlock  = []; // Массив со списком залоченных объектов(которые были залочены другими пользователями)
-        this.m_aNeedUnlock2 = []; // Массив со списком залоченных объектов(которые были залочены на данном клиенте)
-        this.m_aNeedLock    = []; // Массив со списком залоченных объектов(которые были залочены, но еще не были добавлены на данном клиенте)
+        this.m_aNeedUnlock  = []; // Array with list of locked objects (locked by other users)
+        this.m_aNeedUnlock2 = []; // Array with list of locked objects (locked on this client)
+        this.m_aNeedLock    = []; // Array with list of locked objects (locked but not yet added on this client)
 
-        this.m_aEndActions  = []; // Массив действий, которые надо выполнить после принятия чужих изменений
+        this.m_aEndActions  = []; // Array of actions to perform after accepting other users' changes
 
 
-        this.m_bGlobalLock          = 0; // Запрещаем производить любые "редактирующие" действия (т.е. то, что в историю запишется)
-        this.m_bGlobalLockSelection = 0; // Запрещаем изменять селект и курсор
+        this.m_bGlobalLock          = 0; // Forbid any "editing" actions (i.e., what will be written to history)
+        this.m_bGlobalLockSelection = 0; // Forbid changing selection and cursor
 
-        this.m_aCheckLocks         = []; // Массив для проверки залоченности объектов, которые мы собираемся изменять
-        this.m_aCheckLocksInstance = []; // Массив для проверки залоченности объектов в случае сложного действия
+        this.m_aCheckLocks         = []; // Array for checking lock status of objects we are about to modify
+        this.m_aCheckLocksInstance = []; // Array for checking lock status of objects in case of complex action
 
-        this.m_aNewImages   = []; // Массив со списком картинок, которые нужно будет загрузить на сервере
-        this.m_aDC          = {}; // Массив(ассоциативный) классов DocumentContent
-        this.m_aChangedClasses = {}; // Массив(ассоциативный) классов, в которых есть изменения выделенные цветом
+        this.m_aNewImages   = []; // Array with list of images that need to be uploaded to server
+        this.m_aDC          = {}; // Associative array of DocumentContent classes
+        this.m_aChangedClasses = {}; // Associative array of classes with highlighted changes
 
-        this.m_aCursorsToUpdate        = {}; // Курсоры, которые нужно обновить после принятия изменений
+        this.m_aCursorsToUpdate        = {}; // Cursors that need to be updated after accepting changes
         this.m_aCursorsToUpdateShortId = {};
 
         // // CollaborativeEditing LOG
@@ -209,7 +212,7 @@
         this.m_bFast  = false;
 
         this.m_oLogicDocument     = null;
-		this.m_nTrackingPositions = 1; // По-умолчанию мы отслеживаем позиции
+		this.m_nTrackingPositions = 1; // By default we track positions
         this.m_aDocumentPositions = new CDocumentPositionsManager();
         this.m_aForeignCursorsPos = new CDocumentPositionsManager();
         this.m_aForeignCursors    = {};
@@ -226,8 +229,8 @@
 
 		this.CoHistory = new AscCommon.CCollaborativeHistory(this);
 
-        this.m_aAllChanges        = []; // Список всех изменений
-        this.m_aOwnChangesIndexes = []; // Список номеров своих изменений в общем списке, которые мы можем откатить
+        this.m_aAllChanges        = []; // List of all changes
+        this.m_aOwnChangesIndexes = []; // List of indexes of our changes in the overall list that we can undo
 
         this.m_oOwnChanges        = [];
 
@@ -378,7 +381,7 @@
 
             this.Apply_OtherChanges();
 
-            // После того как мы приняли чужие изменения, мы должны залочить новые объекты, которые были залочены
+            // After we accepted foreign changes, we need to lock new objects that were locked
             this.Lock_NeedLock();
             this.private_RestoreDocumentState(DocState);
             this.OnStart_Load_Objects(fEndCallBack);
@@ -395,7 +398,7 @@
     };
     CCollaborativeEditingBase.prototype.Apply_OtherChanges = function()
     {
-        // Чтобы заново созданные параграфы не отображались залоченными
+        // So that newly created paragraphs are not displayed as locked
         AscCommon.g_oIdCounter.Set_Load( true );
 
         if (this.m_aChanges.length > 0)
@@ -403,7 +406,7 @@
 
         this.private_SaveRecalcChangeIndex(true);
 
-        // Применяем изменения, пока они есть
+        // Apply changes while they exist
         var _count = this.m_aChanges.length;
         for (var i = 0; i < _count; i++)
         {
@@ -422,7 +425,7 @@
         this.private_SaveRecalcChangeIndex(false);
         this.private_ClearChanges();
 
-        // Делаем проверки корректности новых изменений
+        // Validate correctness of new changes
         this.Check_MergeData();
 
         this.OnEnd_ReadForeignChanges();
@@ -462,15 +465,15 @@
 		return this.m_aExternalChanges[this.m_nExternalIndex0][this.m_nExternalIndex1];
 	};
 	/**
-	 * Накатываем изменения заданные через LoadExternalChanges, причем не все сразу, а последовательно по 1-ой точке
-	 * @returns {number} возвращаем количество примененных изменений
+	 * Apply changes specified through LoadExternalChanges, not all at once, but sequentially by 1 point
+	 * @returns {number} returns the number of applied changes
 	 */
 	CCollaborativeEditingBase.prototype.ApplyExternalChanges = function(pointCount)
 	{
 		if (!this.ValidateExternalChanges())
 			return 0;
 
-		// Чтобы заново созданные параграфы не отображались залоченными
+		// So that newly created paragraphs are not displayed as locked
 		AscCommon.g_oIdCounter.Set_Load( true );
 
 		if (this.m_aChanges.length > 0)
@@ -528,7 +531,7 @@
 		this.private_SaveRecalcChangeIndex(false);
 		this.private_ClearChanges();
 
-		// Делаем проверки корректности новых изменений
+		// Validate correctness of new changes
 		this.Check_MergeData();
 
 		this.OnEnd_ReadForeignChanges();
@@ -640,7 +643,7 @@
 
         this.Set_GlobalLock(true);
         this.Set_GlobalLockSelection(true);
-        // Вызываем функцию для загрузки необходимых элементов (новые картинки и шрифты)
+        // Call function to load necessary elements (new images and fonts)
         var aImages = this.CollectImagesFromChanges();
         if(aImages.length > 0)
         {
@@ -661,13 +664,13 @@
 		}
 	};
     //-----------------------------------------------------------------------------------
-    // Функции для проверки корректности новых изменений
+    // Functions for validating correctness of new changes
     //-----------------------------------------------------------------------------------
     CCollaborativeEditingBase.prototype.Check_MergeData = function()
     {
     };
     //-----------------------------------------------------------------------------------
-    // Функции для проверки залоченности объектов
+    // Functions for checking if objects are locked
     //-----------------------------------------------------------------------------------
     CCollaborativeEditingBase.prototype.Get_GlobalLock = function()
     {
@@ -733,7 +736,7 @@
         return isLocked;
     };
     //-----------------------------------------------------------------------------------
-    // Функции для работы с залоченными объектами, которые еще не были добавлены
+    // Functions for working with locked objects that have not yet been added
     //-----------------------------------------------------------------------------------
     CCollaborativeEditingBase.prototype.Reset_NeedLock = function()
     {
@@ -764,7 +767,7 @@
         this.Reset_NeedLock();
     };
     //-----------------------------------------------------------------------------------
-    // Функции для работы с новыми объектами, созданными на других клиентах
+    // Functions for working with new objects created on other clients
     //-----------------------------------------------------------------------------------
     CCollaborativeEditingBase.prototype.Clear_EndActions = function()
     {
@@ -786,7 +789,7 @@
         this.Clear_EndActions();
     };
     //-----------------------------------------------------------------------------------
-    // Функции для работы с новыми объектами, созданными на других клиентах
+    // Functions for working with new objects created on other clients
     //-----------------------------------------------------------------------------------
     CCollaborativeEditingBase.prototype.Clear_NewImages = function()
     {
@@ -797,7 +800,7 @@
         this.m_aNewImages.push( Url );
     };
     //-----------------------------------------------------------------------------------
-    // Функции для работы с массивом m_aDC
+    // Functions for working with the m_aDC array
     //-----------------------------------------------------------------------------------
     CCollaborativeEditingBase.prototype.Add_NewDC = function(Class)
     {
@@ -811,7 +814,7 @@
             this.m_aDC[Id].Clear_ContentChanges();
         }
 
-        // Очищаем массив
+        // Clear the array
         this.m_aDC = {};
     };
     CCollaborativeEditingBase.prototype.Refresh_DCChanges = function()
@@ -826,7 +829,7 @@
 
 
     //-----------------------------------------------------------------------------------
-    // Функции для работы с массивами PosExtChangesX, PosExtChangesY
+    // Functions for working with arrays PosExtChangesX, PosExtChangesY
     //-----------------------------------------------------------------------------------
         CCollaborativeEditingBase.prototype.AddPosExtChanges = function(Item, ChangeObject){
 
@@ -838,7 +841,7 @@
         {
         };
     //-----------------------------------------------------------------------------------
-    // Функции для работы с отметками изменений
+    // Functions for working with change marks
     //-----------------------------------------------------------------------------------
     CCollaborativeEditingBase.prototype.Add_ChangedClass = function(Class)
     {
@@ -852,7 +855,7 @@
             this.m_aChangedClasses[Id].Clear_CollaborativeMarks();
         }
 
-        // Очищаем массив
+        // Clear the array
         this.m_aChangedClasses = {};
 
 
@@ -871,7 +874,7 @@
 		return this.m_aChangedClasses;
 	}
     //----------------------------------------------------------------------------------------------------------------------
-    // Функции для работы с обновлением курсоров после принятия изменений
+    // Functions for updating cursors after accepting changes
     //----------------------------------------------------------------------------------------------------------------------
 	CCollaborativeEditingBase.prototype.UpdateForeignCursorByAdditionalInfo = function(info)
 	{
@@ -907,8 +910,8 @@
         this.m_aCursorsToUpdateShortId = {};
     };
     //----------------------------------------------------------------------------------------------------------------------
-    // Функции для работы с сохраненными позициями в Word-документах. Они объявлены в базовом классе, потому что вызываются
-    // из общих классов Paragraph, Run, Table. Вообщем, для совместимости.
+    // Functions for working with saved positions in Word documents. They are declared in the base class because they are called
+    // from common classes Paragraph, Run, Table. Generally, for compatibility.
     //----------------------------------------------------------------------------------------------------------------------
 	CCollaborativeEditingBase.prototype.StopTrackingPositions = function()
 	{
@@ -949,7 +952,7 @@
         }
     };
     CCollaborativeEditingBase.prototype.RemoveMyCursorFromOthers = function() {
-        // Удаляем свой курсор у других пользователей
+        // Remove our cursor from other users
         var oApi = this.GetEditorApi();
         if(!oApi) {
             return;
@@ -1258,7 +1261,7 @@
 	};
 	CCollaborativeEditingBase.prototype.private_AddOverallChange  = function(oChange, isSave)
 	{
-		// Здесь мы должны смержить пришедшее изменение с одним из наших изменений
+		// Here we need to merge the incoming change with one of our changes
 		for (var nIndex = 0, nCount = this.m_oOwnChanges.length; nIndex < nCount; ++nIndex)
 		{
 			if (oChange && oChange.Merge && false === oChange.Merge(this.m_oOwnChanges[nIndex]))
@@ -1272,12 +1275,12 @@
 	};
 	CCollaborativeEditingBase.prototype._PreUndo = function()
 	{
-		// Метод для перегрузки, чтобы в каждом редакторе выполнялись свои действия
+		// Method for overloading, so each editor performs its own actions
 		return null;
 	};
 	CCollaborativeEditingBase.prototype._PostUndo = function(state, changes)
 	{
-		// Метод для перегрузки, чтобы в каждом редакторе выполнялись свои действия
+		// Method for overloading, so each editor performs its own actions
 	};
 	CCollaborativeEditingBase.prototype.PreUndo = function()
 	{
@@ -1360,20 +1363,20 @@
 			this.m_nRecalcIndexEnd = this.CoHistory.GetChangeCount() - 1;
 	};
     //----------------------------------------------------------------------------------------------------------------------
-    // Класс для работы с сохраненными позициями документа.
+    // Class for working with saved document positions.
     //----------------------------------------------------------------------------------------------------------------------
-    //   Принцип следующий. Заданная позиция - это Run + Позиция внутри данного Run.
-    //   Если заданный ран был разбит (операция Split), тогда отслеживаем куда перешла
-    //   заданная позиция, в новый ран или осталась в старом? Если в новый, тогда сохраняем
-    //   новый ран как отдельную позицию в массив m_aDocumentPositions, и добавляем мап
-    //   старой позиции в новую m_aDocumentPositionsMap. В конце действия, когда нам нужно
-    //   определить где же находистся наша позиция, мы сначала проверяем Map, если в нем есть
-    //   конечная позиция, проверяем является ли заданная позиция валидной в документе.
-    //   Если да, тогда выставляем ее, если нет, тогда берем Run исходной позиции, и
-    //   пытаемся сформировать полную позицию по данному Run. Если и это не получается,
-    //   тогда восстанавливаем позицию по измененной полной исходной позиции.
-	//   Right - позиции, которые мы сдвигаем вправо, если добавляем элемент в той же позиции
-	//   используется для правой границы селекта
+    //   The principle is as follows. The specified position is Run + Position inside this Run.
+    //   If the specified run was split (Split operation), then we track where the
+    //   specified position moved to - to a new run or stayed in the old one? If to a new one, then we save
+    //   the new run as a separate position in the m_aDocumentPositions array, and add a map
+    //   from the old position to the new one in m_aDocumentPositionsMap. At the end of the action, when we need to
+    //   determine where our position is, we first check the Map, if it contains
+    //   the final position, we check if the specified position is valid in the document.
+    //   If yes, then we set it, if no, then we take the Run of the original position, and
+    //   try to form the full position based on this Run. If that also fails,
+    //   then we restore the position based on the modified full original position.
+	//   Right - positions that we shift right if we add an element at the same position
+	//   used for the right boundary of selection
     //----------------------------------------------------------------------------------------------------------------------
     function CDocumentPositionsManager()
     {
@@ -1429,7 +1432,7 @@
                     }
                     else if (_Pos.Position >= Pos)
                     {
-                        // Элемент, в котором находится наша позиция, удаляется. Ставим специальную отметку об этом.
+                        // The element containing our position is being deleted. Set a special mark for this.
                         _Pos.Position = Pos;
                         _Pos.Deleted  = true;
                     }
@@ -1472,7 +1475,7 @@
     };
     CDocumentPositionsManager.prototype.Update_DocumentPosition = function(DocPos)
     {
-        // Смотрим куда мапится заданная позиция
+        // Check where the specified position maps to
         var NewDocPos = DocPos;
         for (var PosIndex = 0, PosCount = this.m_aDocumentPositionsMap.length; PosIndex < PosCount; ++PosIndex)
         {
@@ -1480,7 +1483,7 @@
                 NewDocPos = this.m_aDocumentPositionsMap[PosIndex].EndPos;
         }
 
-        // Нашли результирующую позицию. Проверим является ли она валидной для документа.
+        // Found the resulting position. Check if it's valid for the document.
         if (NewDocPos !== DocPos && NewDocPos.length === 1 && NewDocPos[0].Class instanceof AscCommonWord.ParaRun)
         {
             var Run = NewDocPos[0].Class;
@@ -1492,7 +1495,7 @@
                 DocPos.push({Class : Run, Position : NewDocPos[0].Position});
             }
         }
-        // Возможно ран с позицией переместился в другой класс
+        // Possibly the run with the position moved to another class
         else if (DocPos.length > 0 && DocPos[DocPos.length - 1].Class instanceof AscCommonWord.ParaRun)
         {
             var Run = DocPos[DocPos.length - 1].Class;

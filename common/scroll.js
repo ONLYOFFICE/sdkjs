@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -92,7 +95,7 @@ function GetClientHeight( elem ) {
 }
 
 function CArrowDrawer( settings ) {
-    // размер квадратика в пикселах
+    // square size in pixels
     this.Size = 16;
     this.SizeW = 16;
     this.SizeH = 16;
@@ -103,14 +106,14 @@ function CArrowDrawer( settings ) {
     this.ColorGradStart  = {R: _HEXTORGB_(settings.arrowColor).R, G: _HEXTORGB_(settings.arrowColor).G, B: _HEXTORGB_(settings.arrowColor).B};
 	this.InstalledColorGradStart = null;
 
-    // вот такие мега настройки для кастомизации)
+    // these are the customization settings
     this.IsDrawBorderInNoneMode = false;
     this.IsDrawBorders = true;
 
     //arrow pixel size
     this.pxCount = settings.slimScroll ? 4 : 6;
 
-    // имя - направление стрелки
+    // name - arrow direction
     this.ImageLeft = null;
     this.ImageTop = null;
     this.ImageRight = null;
@@ -158,7 +161,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 	if ( this.SizeH < this.pxCount )
 		return;
 
-	// теперь делаем нечетную длину
+	// now make the length odd
 	if ( 0 == (len & 1) )
 		len += 1;
 
@@ -172,7 +175,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 	g = this.ColorGradStart.G;
 	b = this.ColorGradStart.B;
 
-	// запоминаем цвет, чтобы перерисоваться при смене темы
+	// remember the color to redraw when theme changes
 	if (!this.InstalledColorGradStart)
 		this.InstalledColorGradStart = { R : 0, G : 0, B : 0 };
 	this.InstalledColorGradStart.R = r;
@@ -802,7 +805,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 			that.handleEvents( "onscrollHEnd", evt );
 		}
 	};
-	ScrollObject.prototype.scrollByY = function ( delta, isAttack) {
+	ScrollObject.prototype.scrollByY = function ( delta, isAttack, evt) {
 		if ( !this.settings.isVerticalScroll ) {
 			return;
 		}
@@ -843,7 +846,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 		if ( vend ) {
 			this.moveble = true;
 		}
-		this._scrollV( this, {}, destY, isTop, isBottom, isAttack);
+		this._scrollV( this, evt || {}, destY, isTop, isBottom, isAttack);
 		if ( vend ) {
 			this.moveble = false;
 		}
@@ -932,9 +935,9 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 		this.scrollToX( destX );
 		this.scrollToY( destY );
 	};
-	ScrollObject.prototype.scrollBy = function ( deltaX, deltaY ) {
-		this.scrollByX( deltaX );
-		this.scrollByY( deltaY );
+	ScrollObject.prototype.scrollBy = function ( deltaX, deltaY, isAttack, evt ) {
+		this.scrollByX( deltaX, undefined, evt );
+		this.scrollByY( deltaY, undefined, evt );
 	};
 
 	ScrollObject.prototype.roundRect = function ( x, y, width, height, radius ) {
@@ -1640,9 +1643,9 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 		var that = this, scrollTimeout, isFirst = true,
 			doScroll = function () {
 				if ( that.settings.isVerticalScroll )
-					that.scrollByY( that.settings.vscrollStep );
+					that.scrollByY( that.settings.vscrollStep, undefined, {userScroll : true} );
 				else if ( that.settings.isHorizontalScroll )
-					that.scrollByX( that.settings.hscrollStep);
+					that.scrollByX( that.settings.hscrollStep, undefined, {userScroll : true});
 
 				if(that.mouseDown)
 				scrollTimeout = setTimeout( doScroll, isFirst ? that.settings.initialDelay : that.settings.arrowRepeatFreq );
@@ -1658,9 +1661,9 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 		var that = this, scrollTimeout, isFirst = true,
 			doScroll = function () {
 				if ( that.settings.isVerticalScroll )
-					that.scrollByY( -that.settings.vscrollStep );
+					that.scrollByY( -that.settings.vscrollStep, undefined, {userScroll : true} );
 				else if ( that.settings.isHorizontalScroll )
-					that.scrollByX( -that.settings.hscrollStep);
+					that.scrollByX( -that.settings.hscrollStep, undefined, {userScroll : true} );
 
                 if(that.mouseDown)
 				scrollTimeout = setTimeout( doScroll, isFirst ? that.settings.initialDelay : that.settings.arrowRepeatFreq );
@@ -1701,6 +1704,8 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 			evt.preventDefault();
 		else
 			evt.returnValue = false;
+		
+		evt.userScroll = true;
 
 		var mousePos = this.that.getMousePosition( evt );
 		this.that.EndMousePosition.x = mousePos.x;
@@ -1918,7 +1923,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.disablePointerEvents();
 
-		// если сделать превент дефолт - перестанет приходить mousemove от window
+		// if preventDefault is called - mousemove events from window will stop
 		/*
 		 if (evt.preventDefault)
 		 evt.preventDefault();
@@ -1932,6 +1937,8 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 		this.that.mouseDown = true;
 
 		AscCommon.capturePointer(e, this.that.canvas);
+		
+		e.userScroll = true;
 
 		//arrow pressed
 		if (this.that.settings.showArrows && arrowHover) {
@@ -1971,22 +1978,22 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 							_tmp.that.lock = true;
 							if ( direction > 0 ) {
 								if ( _tmp.that.scroller.y + _tmp.that.scroller.h / 2 + step < mousePos.y ) {
-									_tmp.that.scrollByY( step * _tmp.that.scrollCoeff );
+									_tmp.that.scrollByY( step * _tmp.that.scrollCoeff, undefined, e );
 								}
 								else {
 									var _step = Math.abs( _tmp.that.scroller.y + _tmp.that.scroller.h / 2 - mousePos.y );
-									_tmp.that.scrollByY( _step * _tmp.that.scrollCoeff );
+									_tmp.that.scrollByY( _step * _tmp.that.scrollCoeff, undefined, e );
 									cancelClick();
 									return;
 								}
 							}
 							else if ( direction < 0 ) {
 								if ( _tmp.that.scroller.y + _tmp.that.scroller.h / 2 - step > mousePos.y ) {
-									_tmp.that.scrollByY( -step * _tmp.that.scrollCoeff );
+									_tmp.that.scrollByY( -step * _tmp.that.scrollCoeff, undefined, e );
 								}
 								else {
 									var _step = Math.abs( _tmp.that.scroller.y + _tmp.that.scroller.h / 2 - mousePos.y );
-									_tmp.that.scrollByY( -_step * _tmp.that.scrollCoeff );
+									_tmp.that.scrollByY( -_step * _tmp.that.scrollCoeff, undefined, e );
 									cancelClick();
 									return;
 								}
@@ -2065,6 +2072,8 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 		 evt.preventDefault();
 		 else
 		 evt.returnValue = false;*/
+		
+		e.userScroll = true;
 
 		var delta = 1;
 		if ( this.that.settings.isHorizontalScroll ) return;
@@ -2080,7 +2089,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 		else if ( this.that.scroller.y + this.that.scroller.h > this.that.canvasH ) {
 			this.that.scroller.y = this.that.canvasH - this.that.arrowPosition - this.that.scroller.h;
 		}
-		this.that.scrollByY( delta )
+		this.that.scrollByY( delta, undefined, e )
 	};
 	ScrollObject.prototype.evt_click = function ( e ) {
 		var evt = e || window.event;

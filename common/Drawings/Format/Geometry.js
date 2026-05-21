@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -157,7 +160,7 @@ function CalculateGuideValue(name, formula, x, y, z, gdLst)
 {
     var xt, yt, zt;
 
-    xt=gdLst[x];  //TODO : возможно, что gdLst[x] еще не расчитан
+    xt=gdLst[x];  //TODO : possibly gdLst[x] is not yet calculated
     if(xt===undefined)
         xt=parseInt(x,10);
 
@@ -1747,6 +1750,51 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
         this.align = null;
     }
     AscFormat.InitClass(CHorizontalRule, AscFormat.CBaseNoIdObject, 0);
+
+    CHorizontalRule.prototype.asc_getPct = function() {
+        return null === this.pct || 0 === this.pct ? null : this.pct / 10;
+    };
+    CHorizontalRule.prototype.asc_putPct = function(v) {
+        this.pct = null === v || undefined === v ? null : v * 10;
+        if (this.pct !== 0) this._newWidth = undefined;
+    };
+    CHorizontalRule.prototype.asc_getAlign = function() { return this.align; };
+    CHorizontalRule.prototype.asc_putAlign = function(v) { this.align = v; };
+    CHorizontalRule.prototype.asc_getNoShade = function() { return this.noshade; };
+    CHorizontalRule.prototype.asc_putNoShade = function(v) {
+        this.noshade = v;
+        if (v === false) {
+            this._newColor = AscCommon.CreateAscColorCustom(0xA0, 0xA0, 0xA0);
+        }
+    };
+
+    CHorizontalRule.prototype.asc_getHeight = function() {
+        let shape = this._shape;
+        if (shape && shape.spPr && shape.spPr.xfrm && AscFormat.isRealNumber(shape.spPr.xfrm.extY))
+            return shape.spPr.xfrm.extY;
+        return null;
+    };
+    CHorizontalRule.prototype.asc_putHeight = function(v) { this._newHeight = v; };
+    CHorizontalRule.prototype.asc_getWidth = function() {
+        let shape = this._shape;
+        if (shape && shape.spPr && shape.spPr.xfrm && AscFormat.isRealNumber(shape.spPr.xfrm.extX))
+            return shape.spPr.xfrm.extX;
+        return null;
+    };
+    CHorizontalRule.prototype.asc_putWidth = function(v) {
+        this._newWidth = v;
+        if (this.pct !== 0 && AscFormat.isRealNumber(v)) this.pct = 0;
+    };
+    CHorizontalRule.prototype.asc_getColor = function() {
+        let shape = this._shape;
+        let unifill = shape && shape.spPr && shape.spPr.Fill;
+        let unicolor = unifill && unifill.fill && unifill.fill.color;
+        return unicolor ? AscCommon.CreateAscColor(unicolor) : null;
+    };
+    CHorizontalRule.prototype.asc_putColor = function(v) {
+        this._newColor = v;
+        if (v) this.noshade = true;
+    };
     CHorizontalRule.prototype.Write_ToBinary = function(w) {
         var nStartPos = w.GetCurPosition();
         var nFlags = 0;
@@ -1974,6 +2022,18 @@ function GetArrayPolygonsByPaths(dEpsilon, aPathLst)
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].Geometry = Geometry;
     window['AscFormat'].CHorizontalRule = CHorizontalRule;
+    CHorizontalRule.prototype["asc_getPct"] = CHorizontalRule.prototype.asc_getPct;
+    CHorizontalRule.prototype["asc_putPct"] = CHorizontalRule.prototype.asc_putPct;
+    CHorizontalRule.prototype["asc_getAlign"] = CHorizontalRule.prototype.asc_getAlign;
+    CHorizontalRule.prototype["asc_putAlign"] = CHorizontalRule.prototype.asc_putAlign;
+    CHorizontalRule.prototype["asc_getNoShade"] = CHorizontalRule.prototype.asc_getNoShade;
+    CHorizontalRule.prototype["asc_putNoShade"] = CHorizontalRule.prototype.asc_putNoShade;
+    CHorizontalRule.prototype["asc_getHeight"] = CHorizontalRule.prototype.asc_getHeight;
+    CHorizontalRule.prototype["asc_putHeight"] = CHorizontalRule.prototype.asc_putHeight;
+    CHorizontalRule.prototype["asc_getWidth"] = CHorizontalRule.prototype.asc_getWidth;
+    CHorizontalRule.prototype["asc_putWidth"] = CHorizontalRule.prototype.asc_putWidth;
+    CHorizontalRule.prototype["asc_getColor"] = CHorizontalRule.prototype.asc_getColor;
+    CHorizontalRule.prototype["asc_putColor"] = CHorizontalRule.prototype.asc_putColor;
     window['AscFormat'].GraphEdge = GraphEdge;
     window['AscFormat'].PathAccumulator = PathAccumulator;
     window['AscFormat'].CGeomPt = CPos;

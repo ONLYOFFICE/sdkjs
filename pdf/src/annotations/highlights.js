@@ -1,34 +1,39 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
+
+"use strict";
 
 (function(){
 
@@ -501,24 +506,24 @@
     
     function drawZigZagLine(oGraphicsPDF, X1, Y1, X2, Y2, nLineW) {
         let length = Math.sqrt(Math.pow(X2 - X1, 2) + Math.pow(Y2 - Y1, 2));
-        // Параметры волны
-        let wavelength = 2;          // длина одного "зубчика"
-        let amplitude = nLineW * 1;  // высота волны
+        // Wave parameters
+        let wavelength = 2;          // length of one elevation
+        let amplitude = nLineW * 1;  // wave height
         let dx = (X2 - X1) / length;
         let dy = (Y2 - Y1) / length;
         let nx = -dy;
         let ny = dx;
     
-        // Сколько сегментов поместится на всей длине?
-        // Один период (полный зубчик - вверх-вниз) занимает 2 сегмента по wavelength/2 каждый,
-        // но для простоты возьмём wavelength как полный период.
+        // How many segments will fit on the entire length?
+        // One period (1 wave up-down) takes 2 segments of wavelength/2 each,
+        // but for simplicity we'll take wavelength as a full period.
         let segments = Math.floor(length / wavelength);
     
         oGraphicsPDF.BeginPath();
         oGraphicsPDF.MoveTo(X1, Y1);
     
         for (let i = 1; i <= segments; i++) {
-            // Чередуем направление сдвига: вверх-амплитуда, вниз-амплитуда
+            // Alternate offset direction: up-amplitude, down-amplitude
             let isUp = (i % 2 === 1); 
             let dist = i * wavelength;
     
@@ -530,14 +535,14 @@
             );
         }
     
-        // Если длина не делится ровно на сегменты, дойдём до конца
+        // If length doesn't divide evenly into segments, go to the end
         let remainder = length - segments * wavelength;
         if (remainder > 0) {
             let lastDist = length;
-            // Последний сегмент: продолжаем паттерн
+            // Last segment: continue pattern
             let isUp = (segments % 2 === 0); 
             let offset = isUp ? amplitude : -amplitude;
-            // Пропорционально оставшейся длине уменьшим offset, чтобы плавно закончить
+            // Proportionally reduce offset for remaining length to finish smoothly
             let ratio = remainder / wavelength;
             oGraphicsPDF.LineTo(
                 X1 + dx * lastDist + nx * (offset * ratio),
@@ -900,14 +905,14 @@
     };
 
     function findMaxSideWithRotation(x1, y1, x2, y2, x3, y3, x4, y4) {
-        // Найдите центр поворота
+        // Find rotation center
         const x_center = (x1 + x3) / 2;
         const y_center = (y1 + y3) / 2;
       
-        // Найдите угол поворота
+        // Find rotation angle
         const angle = Math.atan2(y3 - y1, x3 - x1);
       
-        // Выполните поворот вершин прямоугольника на обратный угол
+        // Rotate rectangle vertices by reverse angle
         const cosAngle = Math.cos(-angle);
         const sinAngle = Math.sin(-angle);
       
@@ -923,13 +928,13 @@
         const x4_rotated = cosAngle * (x4 - x_center) - sinAngle * (y4 - y_center) + x_center;
         const y4_rotated = sinAngle * (x4 - x_center) + cosAngle * (y4 - y_center) + y_center;
       
-        // Найдите длины сторон
+        // Find side lengths
         const sideAB = Math.sqrt(Math.pow(x2_rotated - x1_rotated, 2) + Math.pow(y2_rotated - y1_rotated, 2));
         const sideBC = Math.sqrt(Math.pow(x3_rotated - x2_rotated, 2) + Math.pow(y3_rotated - y2_rotated, 2));
         const sideCD = Math.sqrt(Math.pow(x4_rotated - x3_rotated, 2) + Math.pow(y4_rotated - y3_rotated, 2));
         const sideDA = Math.sqrt(Math.pow(x1_rotated - x4_rotated, 2) + Math.pow(y1_rotated - y4_rotated, 2));
       
-        // Найдите максимальную сторону
+        // Find maximum side
         const maxSide = Math.max(sideAB, sideBC, sideCD, sideDA);
       
         return maxSide;
@@ -960,7 +965,7 @@
         if (true == oViewer.isLandscapePage(pageIndex))
             indLeft = indLeft + (w - h) / 2;
 
-        // рисуем всегда в пиксельной сетке. при наклонных линиях - +- 1 пиксел - ничего страшного
+        // always draw in pixel grid. for slanted lines - +- 1 pixel - no big deal
         let pointOffset = (oCtx.lineWidth & 1) ? 0.5 : 0;
         
         for (let i = 0, countPolygons = polygon.regions.length; i < countPolygons; i++)

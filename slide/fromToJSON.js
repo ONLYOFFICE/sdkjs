@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -192,7 +195,7 @@
 			"theme":      oNoteMaster.Theme ? (this.themesMap[oNoteMaster.Theme.Id] ? oNoteMaster.Theme.Id : this.SerTheme(oNoteMaster.Theme)) : null
 		}
 
-		// мапим, чтобы не записывать несколько раз
+		// Map to avoid writing multiple times
 		this.notesMasterMap[oNoteMaster.Id] = oNotesMasterObj;
 
 		return oNotesMasterObj;
@@ -200,9 +203,9 @@
 	WriterToJSON.prototype.SerNotes = function(oNote)
 	{
 		return {
-			"lock":             undefined, /// ??? вроде не нужно
+			"lock":             undefined, /// ??? probably not needed
 			"clrMapOvr":        this.SerColorMapOvr(oNote.clrMap),
-			"graphicObjects":   undefined, /// ??? вроде не нужно
+			"graphicObjects":   undefined, /// ??? probably not needed
 			"cSld":             this.SerCSld(oNote.cSld),
 			"showMasterPhAnim": oNote.showMasterPhAnim,
 			"showMasterSp":     oNote.showMasterSp,
@@ -394,7 +397,7 @@
 		var oMaster = oSlide.Layout.Master.Id;
 		var oLayout = oSlide.Layout.Id;
 
-		// нет смысла тащить master за слайдом без layout
+		// No point in carrying master with slide without layout
 		if (bWriteLayout || (bWriteMaster && bWriteAllMasLayouts))
 		{
 			if (bWriteMaster)
@@ -698,6 +701,129 @@
 			case c_oAscSlideTransitionTypes.Zoom:
 				sTransType = "zoom";
 				break;
+			case c_oAscSlideTransitionTypes.Morph:
+				sTransType = "morph";
+				break;
+			case c_oAscSlideTransitionTypes.Random:
+				sTransType = "random";
+				break;
+			case c_oAscSlideTransitionTypes.Cut:
+				sTransType = "cut";
+				break;
+			case c_oAscSlideTransitionTypes.Blinds:
+				sTransType = "blinds";
+				break;
+			case c_oAscSlideTransitionTypes.Checker:
+				sTransType = "checker";
+				break;
+			case c_oAscSlideTransitionTypes.Comb:
+				sTransType = "comb";
+				break;
+			case c_oAscSlideTransitionTypes.Circle:
+				sTransType = "circle";
+				break;
+			case c_oAscSlideTransitionTypes.Diamond:
+				sTransType = "diamond";
+				break;
+			case c_oAscSlideTransitionTypes.Dissolve:
+				sTransType = "dissolve";
+				break;
+			case c_oAscSlideTransitionTypes.Plus:
+				sTransType = "plus";
+				break;
+			case c_oAscSlideTransitionTypes.RandomBar:
+				sTransType = "randomBar";
+				break;
+			case c_oAscSlideTransitionTypes.BoxZoom:
+				sTransType = "boxZoom";
+				break;
+			case c_oAscSlideTransitionTypes.Vortex:
+				sTransType = "vortex";
+				break;
+			case c_oAscSlideTransitionTypes.Switch:
+				sTransType = "switch";
+				break;
+			case c_oAscSlideTransitionTypes.Flip:
+				sTransType = "flip";
+				break;
+			case c_oAscSlideTransitionTypes.Ripple:
+				sTransType = "ripple";
+				break;
+			case c_oAscSlideTransitionTypes.Honeycomb:
+				sTransType = "honeycomb";
+				break;
+			case c_oAscSlideTransitionTypes.Prism:
+				sTransType = "prism";
+				break;
+			case c_oAscSlideTransitionTypes.Doors:
+				sTransType = "doors";
+				break;
+			case c_oAscSlideTransitionTypes.Window:
+				sTransType = "window";
+				break;
+			case c_oAscSlideTransitionTypes.Ferris:
+				sTransType = "ferris";
+				break;
+			case c_oAscSlideTransitionTypes.Gallery:
+				sTransType = "gallery";
+				break;
+			case c_oAscSlideTransitionTypes.Conveyor:
+				sTransType = "conveyor";
+				break;
+			case c_oAscSlideTransitionTypes.Pan:
+				sTransType = "pan";
+				break;
+			case c_oAscSlideTransitionTypes.Glitter:
+				sTransType = "glitter";
+				break;
+			case c_oAscSlideTransitionTypes.Flythrough:
+				sTransType = "flythrough";
+				break;
+			case c_oAscSlideTransitionTypes.Flash:
+				sTransType = "flash";
+				break;
+			case c_oAscSlideTransitionTypes.Shred:
+				sTransType = "shred";
+				break;
+			case c_oAscSlideTransitionTypes.Reveal:
+				sTransType = "reveal";
+				break;
+			case c_oAscSlideTransitionTypes.FallOver:
+				sTransType = "fallOver";
+				break;
+			case c_oAscSlideTransitionTypes.Drape:
+				sTransType = "drape";
+				break;
+			case c_oAscSlideTransitionTypes.Curtains:
+				sTransType = "curtains";
+				break;
+			case c_oAscSlideTransitionTypes.Wind:
+				sTransType = "wind";
+				break;
+			case c_oAscSlideTransitionTypes.Prestige:
+				sTransType = "prestige";
+				break;
+			case c_oAscSlideTransitionTypes.Fracture:
+				sTransType = "fracture";
+				break;
+			case c_oAscSlideTransitionTypes.Crush:
+				sTransType = "crush";
+				break;
+			case c_oAscSlideTransitionTypes.PeelOff:
+				sTransType = "peelOff";
+				break;
+			case c_oAscSlideTransitionTypes.PageCurlDouble:
+				sTransType = "pageCurlDouble";
+				break;
+			case c_oAscSlideTransitionTypes.PageCurlSingle:
+				sTransType = "pageCurlSingle";
+				break;
+			case c_oAscSlideTransitionTypes.Airplane:
+				sTransType = "airplane";
+				break;
+			case c_oAscSlideTransitionTypes.Origami:
+				sTransType = "origami";
+				break;
 		}
 
 		var transOption = "none";
@@ -782,6 +908,25 @@
 						transOption = "andRotate";
 						break;
 				}
+				break;
+			case "morph":
+				switch (oTransition.TransitionOption)
+				{
+					case c_oAscSlideTransitionParams.Morph_Objects:
+						transOption = "byObject";
+						break;
+					case c_oAscSlideTransitionParams.Morph_Words:
+						transOption = "byWord";
+						break;
+					case c_oAscSlideTransitionParams.Morph_Letters:
+						transOption = "byChar";
+						break;
+				}
+				break;
+			default:
+				// All new transition types store TransitionOption as a number
+				if (AscFormat.isRealNumber(oTransition.TransitionOption))
+					transOption = oTransition.TransitionOption;
 				break;
 		}
 
@@ -1838,7 +1983,7 @@
 	ReaderFromJSON.prototype.TableStylesFromJSON = function(oParsedStyles)
 	{
 		this.RestoredStylesMap = {};
-		// восстанавливаем все стили и мапим по старым id (т.к. создаются с новыми)
+		// Restore all styles and map by old id (since they are created with new ones)
 		for (var key in oParsedStyles)
 			this.RestoredStylesMap[key] = this.TableStyleFromJSON(oParsedStyles[key]);
 	};
@@ -1878,7 +2023,7 @@
 		var oStyles = private_GetStyles();
 		if (oTableStyle)
 		{
-			// если такого стиля нет - добавляем новый
+			// If such style doesn't exist - add new one
 			var nExistingStyleId = oStyles.GetStyleIdByName(oTableStyle.Name);
 			if (nExistingStyleId === null)
 			{
@@ -1887,7 +2032,7 @@
 			else
 			{
 				var oExistingStyle = oStyles.Get(nExistingStyleId);
-				// если стили идентичны, стиль не добавляем
+				// If styles are identical, don't add the style
 				if (!oTableStyle.IsEqual(oExistingStyle))
 					oStyles.Add(oTableStyle);
 				else
@@ -2125,7 +2270,7 @@
 		oLayout.setType(nLayoutType);
 		oLayout.ImageBase64 = oParsedLayout["imgBase64"];
 
-		// мапим, чтобы повторно не восстанавливать
+		// Map to avoid restoring multiple times
 		this.layoutsMap[oParsedLayout["id"]] = oLayout;
 
 		if (this.mastersMap[oParsedLayout["master"]])
@@ -2173,7 +2318,7 @@
 				oLayout = this.layoutsMap[oParsedSlide["layout"]];
 		}
 
-		// установим MasterSlide для Layout, если не задан
+		// Set MasterSlide for Layout if not specified
 		if (!oLayout.Master)
 		{
 			oMaster = oPresentation.getDefaultMasterSlide();
@@ -2359,7 +2504,7 @@
 		oParsedNotesMaster["hf"] && oNotesMaster.setHF(this.HFFromJSON(oParsedNotesMaster["hf"]));
 		oParsedNotesMaster["notesStyle"] && oNotesMaster.setNotesStyle(this.LstStyleFromJSON(oParsedNotesMaster["notesStyle"]));
 
-		// oTheme здесь будет либо объект темы, либо Id по которому тема уже создана и замаплена
+		// oTheme here will be either theme object or Id by which theme is already created and mapped
 		var oTheme = typeof oParsedNotesMaster["theme"] === "object" ? this.ThemeFromJSON(oParsedNotesMaster["theme"]) : oParsedNotesMaster["theme"];
 		typeof oParsedNotesMaster["theme"] === "object" ? oNotesMaster.setTheme(oTheme) : oNotesMaster.setTheme(this.themesMap[oTheme]);
 
@@ -3264,6 +3409,129 @@
 			case "zoom":
 				nTransType = c_oAscSlideTransitionTypes.Zoom;
 				break;
+			case "morph":
+				nTransType = c_oAscSlideTransitionTypes.Morph;
+				break;
+			case "random":
+				nTransType = c_oAscSlideTransitionTypes.Random;
+				break;
+			case "cut":
+				nTransType = c_oAscSlideTransitionTypes.Cut;
+				break;
+			case "blinds":
+				nTransType = c_oAscSlideTransitionTypes.Blinds;
+				break;
+			case "checker":
+				nTransType = c_oAscSlideTransitionTypes.Checker;
+				break;
+			case "comb":
+				nTransType = c_oAscSlideTransitionTypes.Comb;
+				break;
+			case "circle":
+				nTransType = c_oAscSlideTransitionTypes.Circle;
+				break;
+			case "diamond":
+				nTransType = c_oAscSlideTransitionTypes.Diamond;
+				break;
+			case "dissolve":
+				nTransType = c_oAscSlideTransitionTypes.Dissolve;
+				break;
+			case "plus":
+				nTransType = c_oAscSlideTransitionTypes.Plus;
+				break;
+			case "randomBar":
+				nTransType = c_oAscSlideTransitionTypes.RandomBar;
+				break;
+			case "boxZoom":
+				nTransType = c_oAscSlideTransitionTypes.BoxZoom;
+				break;
+			case "vortex":
+				nTransType = c_oAscSlideTransitionTypes.Vortex;
+				break;
+			case "switch":
+				nTransType = c_oAscSlideTransitionTypes.Switch;
+				break;
+			case "flip":
+				nTransType = c_oAscSlideTransitionTypes.Flip;
+				break;
+			case "ripple":
+				nTransType = c_oAscSlideTransitionTypes.Ripple;
+				break;
+			case "honeycomb":
+				nTransType = c_oAscSlideTransitionTypes.Honeycomb;
+				break;
+			case "prism":
+				nTransType = c_oAscSlideTransitionTypes.Prism;
+				break;
+			case "doors":
+				nTransType = c_oAscSlideTransitionTypes.Doors;
+				break;
+			case "window":
+				nTransType = c_oAscSlideTransitionTypes.Window;
+				break;
+			case "ferris":
+				nTransType = c_oAscSlideTransitionTypes.Ferris;
+				break;
+			case "gallery":
+				nTransType = c_oAscSlideTransitionTypes.Gallery;
+				break;
+			case "conveyor":
+				nTransType = c_oAscSlideTransitionTypes.Conveyor;
+				break;
+			case "pan":
+				nTransType = c_oAscSlideTransitionTypes.Pan;
+				break;
+			case "glitter":
+				nTransType = c_oAscSlideTransitionTypes.Glitter;
+				break;
+			case "flythrough":
+				nTransType = c_oAscSlideTransitionTypes.Flythrough;
+				break;
+			case "flash":
+				nTransType = c_oAscSlideTransitionTypes.Flash;
+				break;
+			case "shred":
+				nTransType = c_oAscSlideTransitionTypes.Shred;
+				break;
+			case "reveal":
+				nTransType = c_oAscSlideTransitionTypes.Reveal;
+				break;
+			case "fallOver":
+				nTransType = c_oAscSlideTransitionTypes.FallOver;
+				break;
+			case "drape":
+				nTransType = c_oAscSlideTransitionTypes.Drape;
+				break;
+			case "curtains":
+				nTransType = c_oAscSlideTransitionTypes.Curtains;
+				break;
+			case "wind":
+				nTransType = c_oAscSlideTransitionTypes.Wind;
+				break;
+			case "prestige":
+				nTransType = c_oAscSlideTransitionTypes.Prestige;
+				break;
+			case "fracture":
+				nTransType = c_oAscSlideTransitionTypes.Fracture;
+				break;
+			case "crush":
+				nTransType = c_oAscSlideTransitionTypes.Crush;
+				break;
+			case "peelOff":
+				nTransType = c_oAscSlideTransitionTypes.PeelOff;
+				break;
+			case "pageCurlDouble":
+				nTransType = c_oAscSlideTransitionTypes.PageCurlDouble;
+				break;
+			case "pageCurlSingle":
+				nTransType = c_oAscSlideTransitionTypes.PageCurlSingle;
+				break;
+			case "airplane":
+				nTransType = c_oAscSlideTransitionTypes.Airplane;
+				break;
+			case "origami":
+				nTransType = c_oAscSlideTransitionTypes.Origami;
+				break;
 		}
 
 		var transOption = undefined;
@@ -3348,6 +3616,25 @@
 						transOption = c_oAscSlideTransitionParams.Zoom_AndRotate;
 						break;
 				}
+				break;
+			case c_oAscSlideTransitionTypes.Morph:
+				switch (oParsedTransition["option"])
+				{
+					case "byObject":
+						transOption = c_oAscSlideTransitionParams.Morph_Objects;
+						break;
+					case "byWord":
+						transOption = c_oAscSlideTransitionParams.Morph_Words;
+						break;
+					case "byChar":
+						transOption = c_oAscSlideTransitionParams.Morph_Letters;
+						break;
+				}
+				break;
+			default:
+				// All new transition types store TransitionOption as a number
+				if (typeof oParsedTransition["option"] === "number")
+					transOption = oParsedTransition["option"];
 				break;
 		}
 

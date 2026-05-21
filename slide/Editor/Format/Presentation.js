@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -158,7 +161,7 @@ PresentationSelectedContent.prototype.copy = function () {
 	}
 	AscFormat.fResetConnectorsIds(aDrawingsCopy, oIdMap);
 	if (this.DocContent) {
-		//TODO: перенести копирование в CSelectedContent;
+		//TODO: move copying to CSelectedContent;
 		ret.DocContent = new AscCommonWord.CSelectedContent();
 		aElements = this.DocContent.Elements;
 		for (i = 0; i < aElements.length; ++i) {
@@ -531,7 +534,7 @@ CSlideSize.prototype.fillObject = function (oCopy, oIdMap) {
 const CONFORMANCE_STRICT = 0;
 const CONFORMANCE_TRANSITIONAL = 1;
 
-function CPresentation(DrawingDocument) {
+function CPresentation(DrawingDocument, isMainLogicDocument) {
 	AscFormat.CBaseFormatObject.call(this);
 	this.History = History;
 	this.IdCounter = AscCommon.g_oIdCounter;
@@ -540,7 +543,7 @@ function CPresentation(DrawingDocument) {
 	this.Api = Asc.editor;
 	this.TurnOffInterfaceEvents = false;
 	//------------------------------------------------------------------------
-	if (DrawingDocument) {
+	if (DrawingDocument && false !== isMainLogicDocument) {
 		if (this.History)
 			this.History.Set_LogicDocument(this);
 
@@ -560,7 +563,7 @@ function CPresentation(DrawingDocument) {
 	this.CustomProperties = new AscCommon.CCustomProperties();
 	this.customXmlManager = new AscWord.CustomXmlManager(this);
 
-	this.StartPage = 0; // Для совместимости с CDocumentContent
+	this.StartPage = 0; // For compatibility with CDocumentContent
 	this.CurPage = 0;
 
 	this.TurnOffRecalc = false;
@@ -574,7 +577,7 @@ function CPresentation(DrawingDocument) {
 	this.noShowContextMenu = false;
 
 	this.viewMode = false;
-	// Класс для работы с поиском
+	// Class for working with search
 	this.SearchInfo =
 		{
 			Id: null,
@@ -583,7 +586,7 @@ function CPresentation(DrawingDocument) {
 			String: null
 		};
 
-	// Позция каретки
+	// Caret position
 	this.TargetPos =
 		{
 			X: 0,
@@ -594,7 +597,7 @@ function CPresentation(DrawingDocument) {
 
 	this.Lock = new AscCommon.CLock();
 
-	this.m_oContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
+	this.m_oContentChanges = new AscCommon.CContentChanges(); // list of changes (adding/removing elements)
 
 
 	this.Slides = [];
@@ -646,7 +649,7 @@ function CPresentation(DrawingDocument) {
 
 	this.CheckLanguageOnTextAdd = false;
 
-	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
+	// Add this class to the Id table (must be at the end of the constructor)
 	g_oTableId.Add(this, this.Id);
 	//
 	this.hdrFtrLock = new PropLocker(this.Id);
@@ -657,7 +660,7 @@ function CPresentation(DrawingDocument) {
 	this.commentsLock = new PropLocker(this.Id);
 	this.viewPrLock = new PropLocker(this.Id);
 
-	this.RecalcId = 0; // Номер пересчета
+	this.RecalcId = 0; // Recalculation number
 	this.CommentAuthors = {};
 	this.createDefaultTableStyles();
 	this.bGoToPage = false;
@@ -939,11 +942,11 @@ CPresentation.prototype.checkEmptyGuides = function () {
 
 
 //----------------------------------------------------------------------------------------------------------------------
-// Функции для работы с составным вводом
+// Functions for working with composite input
 //----------------------------------------------------------------------------------------------------------------------
 /**
- * Сообщаем о начале составного ввода текста.
- * @returns {boolean} Начался или нет составной ввод.
+ * Notify about the start of composite text input.
+ * @returns {boolean} Whether or not composite input has started.
  */
 
 CPresentation.prototype.IsThisElementCurrent = function () {
@@ -2285,7 +2288,7 @@ CPresentation.prototype.checkCurrentTextObjectExtends = function () {
 };
 
 CPresentation.prototype.addCompositeText = function (nCharCode) {
-	// TODO: При таком вводе не меняется язык в зависимости от раскладки, не учитывается режим рецензирования.
+	// TODO: With this input, the language does not change depending on the keyboard layout, review mode is not taken into account.
 
 	if (null === this.CompositeInput)
 		return;
@@ -2470,7 +2473,7 @@ CPresentation.prototype.GetAllTableStyles = function () {
 	}
 	return aStyles;
 };
-// Проводим начальные действия, исходя из Документа
+// Perform initial actions based on the presentation
 CPresentation.prototype.Init = function () {
 
 };
@@ -2595,7 +2598,7 @@ CPresentation.prototype.Continue_FastCollaborativeEditing = function () {
 
 	var bHaveChanges = History.Have_Changes(true);
 	if (true !== bHaveChanges && (true === AscCommon.CollaborativeEditing.Have_OtherChanges() || 0 !== AscCommon.CollaborativeEditing.getOwnLocksLength())) {
-		// Принимаем чужие изменение. Своих нет, но функцию отсылки надо вызвать, чтобы снялить локи.
+		// Accept other users' changes. We have no changes, but we need to call the send function to release locks.
 		AscCommon.CollaborativeEditing.Apply_Changes();
 		AscCommon.CollaborativeEditing.Send_Changes();
 	} else if (true === bHaveChanges || true === AscCommon.CollaborativeEditing.Have_OtherChanges()) {
@@ -3149,7 +3152,7 @@ CPresentation.prototype.GenerateThumbnails = function (_drawerThemes, _drawerLay
 
 
 /**
- * Получаем идентификатор текущего пересчета
+ * Get the identifier of the current recalculation
  * @returns {number}
  */
 CPresentation.prototype.GetRecalcId = function () {
@@ -3253,7 +3256,7 @@ CPresentation.prototype.Set_TargetPos = function (X, Y, PageNum) {
 	this.TargetPos.PageNum = PageNum;
 };
 
-// Вызываем перерисовку нужных страниц
+// Call redraw of the required pages
 CPresentation.prototype.ReDraw = function (StartPage, EndPage) {
 	this.DrawingDocument.OnRecalculateSlide(StartPage);
 };
@@ -3354,7 +3357,7 @@ CPresentation.prototype.Remove_ForeignCursor = function (UserId) {
 };
 
 /**
- * Список позиций, которые мы собираемся отслеживать
+ * List of positions that we are going to track
  * @param arrPositions
  */
 CPresentation.prototype.TrackDocumentPositions = function (arrPositions) {
@@ -3365,7 +3368,7 @@ CPresentation.prototype.TrackDocumentPositions = function (arrPositions) {
 	}
 };
 /**
- * Обновляем отслеживаемые позиции
+ * Update tracked positions
  * @param arrPositions
  */
 CPresentation.prototype.RefreshDocumentPositions = function (arrPositions) {
@@ -3401,7 +3404,7 @@ CPresentation.prototype.GetTargetPosition = function () {
 	return oPosition;
 };
 
-// Отрисовка содержимого Документа
+// Drawing the presentation slide
 CPresentation.prototype.Draw = function (nPageIndex, pGraphics) {
 	if (!pGraphics.isBoundsChecker()) {
 		AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
@@ -3695,8 +3698,8 @@ CPresentation.prototype.ReplaceSearchElement = function (NewStr, bAll, Id, bInte
 	} else {
 		this.SearchEngine.Replace(NewStr, Id, false);
 
-		// TODO: В будушем надо будет переделать, чтобы искалось заново только в том параграфе, в котором произошла замена
-		//       Тут появляется проблема с вложенным поиском, если то что мы заменяем содержится в том, на что мы заменяем.
+		// TODO: In the future, this needs to be reworked so that the search is only performed again in the paragraph where the replacement occurred.
+		//       There is a problem with nested search here, if what we replace is contained in what we replace it with.
 		if (true === this.IsTrackRevisions())
 			this.SearchEngine.Reset();
 	}
@@ -4589,9 +4592,9 @@ CPresentation.prototype.MoveCursorToCell = function (bNext) {
 };
 
 /**
- * Проверяем будет ли добавление текста на ивенте KeyDown
+ * Check if text will be added on KeyDown event
  * @param e
- * @returns {Number[]} Массив юникодных значений
+ * @returns {Number[]} Array of unicode values
  */
 CPresentation.prototype.GetAddedTextOnKeyDown = function (e) {
 	if (e.KeyCode === 32) // Space
@@ -4613,9 +4616,9 @@ CPresentation.prototype.GetAddedTextOnKeyDown = function (e) {
 		}
 	} else if (e.KeyCode === 69 && e.CtrlKey) // Ctrl + E + ...
 	{
-		if (e.AltKey) // Ctrl + Alt + E - добавляем знак евро €
+		if (e.AltKey) // Ctrl + Alt + E - add euro sign
 			return [0x20AC];
-	} else if ((e.KeyCode === 189 || e.KeyCode === 173)) // Клавиша Num-
+	} else if ((e.KeyCode === 189 || e.KeyCode === 173)) // Num- key
 	{
 		if (e.CtrlKey && e.ShiftKey)
 			return [0x2013];
@@ -4970,7 +4973,7 @@ CPresentation.prototype.CollectStyleId = function (oMap, aSpTree) {
 	}
 };
 
-// Обновляем данные в интерфейсе о свойствах параграфа
+// Update paragraph properties data in the interface
 CPresentation.prototype.Interface_Update_ParaPr = function () {
 	var oController = this.GetCurrentController();
 	if (oController) {
@@ -4987,7 +4990,7 @@ CPresentation.prototype.Interface_Update_ParaPr = function () {
 	}
 };
 
-// Обновляем данные в интерфейсе о свойствах текста
+// Update text properties data in the interface
 CPresentation.prototype.Interface_Update_TextPr = function () {
 	var oController = this.GetCurrentController();
 	if (oController) {
@@ -5096,7 +5099,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 	if (this.StopAnimationPreview()) {
 		return keydownresult_PreventAll;
 	}
-	// Сбрасываем текущий элемент в поиске
+	// Reset the current element in search
 	if (this.SearchEngine.Count > 0)
 		this.SearchEngine.ResetCurrent();
 
@@ -5460,7 +5463,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 				this.Api.sync_HyperlinkClickCallback(Hyperlink.GetValue());
 				Hyperlink.SetVisited(true);
 
-				// TODO: Пока сделаем так, потом надо будет переделать
+				// TODO: For now we'll do it this way, later it will need to be reworked
 				this.DrawingDocument.ClearCachePages();
 				this.DrawingDocument.FirePaint();
 			} else {
@@ -5591,15 +5594,29 @@ CPresentation.prototype.OnKeyDown = function (e) {
 			bRetValue = keydownresult_PreventAll;
 		} else if (e.KeyCode === 27) // Esc
 		{
+			if (this.DrawingDocument.IsTrackRuler()) {
+				this.DrawingDocument.CancelTrackRuler();
+				bRetValue = keydownresult_PreventAll;
+				return bRetValue;
+			}
 			const bCancelEyedropper = this.CancelEyedropper();
 			const bCancelInkDrawer = this.CancelInkDrawer();
 			if (oController && !this.IsFocusOnNotes()) {
 				if(!bCancelEyedropper && !bCancelInkDrawer) {
 					var oDrawingObjects = oController;
+					if (oDrawingObjects.cancelTableBorderMove()) {
+						this.DrawingDocument.UnlockCursorType();
+						this.DrawingDocument.m_oWordControl.OnUpdateOverlay();
+						this.OnMouseMove(global_mouseEvent, 0, 0, this.CurPage);
+						this.UpdateInterface();
+						return;
+					}
 					if (oDrawingObjects.isTrackingDrawings()) {
+						oDrawingObjects.resetTrackState();
+						this.DrawingDocument.m_oWordControl.OnUpdateOverlay();
 						this.Api.sync_EndAddShape();
-						oDrawingObjects.endTrackNewShape();
-						this.UpdateCursorType(0, 0, new AscCommon.CMouseEventHandler());
+						this.DrawingDocument.UnlockCursorType();
+						this.OnMouseMove(global_mouseEvent, 0, 0, this.CurPage);
 						this.UpdateInterface();
 						return;
 					}
@@ -5727,13 +5744,13 @@ CPresentation.prototype.OnKeyDown = function (e) {
 				}
 			}
 			bRetValue = keydownresult_PreventAll;
-		} else if (e.KeyCode === 35) // клавиша End
+		} else if (e.KeyCode === 35) // End key
 		{
 			if (oController.getTargetDocContent()) {
-				if (e.CtrlKey) // Ctrl + End - переход в конец документа
+				if (e.CtrlKey) // Ctrl + End - go to the end of the document
 				{
 					this.MoveCursorToEndPos(e.ShiftKey);
-				} else // Переходим в конец строки
+				} else // Go to the end of the line
 				{
 					this.MoveCursorToEndOfLine(e.ShiftKey);
 				}
@@ -5750,13 +5767,13 @@ CPresentation.prototype.OnKeyDown = function (e) {
 			}
 
 			bRetValue = keydownresult_PreventAll;
-		} else if (e.KeyCode === 36) // клавиша Home
+		} else if (e.KeyCode === 36) // Home key
 		{
 			if (oController.getTargetDocContent()) {
-				if (e.CtrlKey) // Ctrl + Home - переход в начало документа
+				if (e.CtrlKey) // Ctrl + Home - go to the beginning of the document
 				{
 					this.MoveCursorToStartPos(e.ShiftKey);
-				} else // Переходим в начало строки
+				} else // Go to the beginning of the line
 				{
 					this.MoveCursorToStartOfLine(e.ShiftKey);
 				}
@@ -5808,7 +5825,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 			bRetValue = keydownresult_PreventAll;
 		} else if (e.KeyCode === 39) // Right Arrow
 		{
-			// Чтобы при зажатой клавише курсор не пропадал
+			// So that the cursor does not disappear when the key is held down
 			// if ( true != e.ShiftKey )
 			//     this.DrawingDocument.TargetStart();
 
@@ -5838,7 +5855,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 			bRetValue = keydownresult_PreventAll;
 		} else if (e.KeyCode === 40) // Bottom Arrow
 		{
-			// Чтобы при зажатой клавише курсор не пропадал
+			// So that the cursor does not disappear when the key is held down
 			//if ( true != e.ShiftKey )
 			//    this.DrawingDocument.TargetStart();
 
@@ -5863,14 +5880,14 @@ CPresentation.prototype.OnKeyDown = function (e) {
 			if (this.CanEdit()) {
 				if (oController && oController.getTargetDocContent()) {
 					if (e.ShiftKey)
-					{// Ctrl + Shift + M - уменьшаем левый отступ
+					{// Ctrl + Shift + M - decrease left indent
 						if (this.Can_IncreaseParagraphLevel(false))
 						{
 							this.Api.DecreaseIndent();
 						}
 					}
 					else
-					{ // Ctrl + M - увеличиваем левый отступ
+					{ // Ctrl + M - increase left indent
 						if (this.Can_IncreaseParagraphLevel(true))
 						{
 							this.Api.IncreaseIndent();
@@ -5893,16 +5910,16 @@ CPresentation.prototype.OnKeyDown = function (e) {
 			bRetValue = keydownresult_PreventAll;
 		} else if (e.KeyCode === 144) // Num Lock
 		{
-			// Ничего не делаем
+			// Do nothing
 			bRetValue = keydownresult_PreventAll;
 		} else if (e.KeyCode === 145) // Scroll Lock
 		{
-			// Ничего не делаем
+			// Do nothing
 			bRetValue = keydownresult_PreventAll;
 		} else if (e.KeyCode === 187) // +
 		{
 			if (e.IsCtrl() && e.IsShift()) {
-				// Ничего не делаем
+				// Do nothing
 				bRetValue = keydownresult_PreventAll;
 			}
 		}
@@ -6161,7 +6178,7 @@ CPresentation.prototype.OnMouseDown = function (e, X, Y, PageIndex) {
 	}
 
 
-	// Сбрасываем текущий элемент в поиске
+	// Reset the current element in search
 	if (this.SearchEngine.Count > 0)
 		this.SearchEngine.ResetCurrent();
 
@@ -6418,21 +6435,21 @@ CPresentation.prototype.IsShowShapeAdjustments = function () {
 	return (!!this.CanEdit());
 };
 /**
- * Рисовать ли трек у таблицы и давать ли возможность таскать границы
+ * Whether to draw the track for the table and allow dragging borders
  * @returns {boolean}
  */
 CPresentation.prototype.IsShowTableAdjustments = function () {
 	return (!!this.CanEdit());
 };
 /**
- * Рисовать ли трек у таблицы и давать ли возможность таскать границы
+ * Whether to draw the track for the table and allow dragging borders
  * @returns {boolean}
  */
 CPresentation.prototype.IsShowEquationTrack = function () {
 	return (!!this.CanEdit());
 };
 /**
- * Можем ли перетаскивать текст
+ * Whether we can drag and drop text
  * @returns {boolean}
  */
 CPresentation.prototype.CanDragAndDrop = function () {
@@ -6453,7 +6470,7 @@ CPresentation.prototype.IsFocusOnThumbnails = function () {
 };
 
 CPresentation.prototype.Notes_OnMouseDown = function (e, X, Y) {
-	// Сбрасываем текущий элемент в поиске
+	// Reset the current element in search
 	this.CancelEyedropper();
 	this.CancelInkDrawer();
 	if (this.SearchEngine.Count > 0)
@@ -6611,7 +6628,7 @@ CPresentation.prototype.Document_Format_Paste = function () {
 	oController.pasteFormattingWithPoint(oData);
 };
 
-// Возвращаем выделенный текст, если в выделении не более 1 параграфа, и там нет картинок, нумерации страниц и т.д.
+// Return the selected text if there is no more than 1 paragraph in the selection, and there are no images, page numbering, etc.
 CPresentation.prototype.GetSelectedText = function (bClearText, oPr) {
 	if (undefined === oPr)
 		oPr = {};
@@ -6640,7 +6657,7 @@ CPresentation.prototype.GetSelectedParagraphs = function () {
 	return aParagraphs;
 };
 //-----------------------------------------------------------------------------------
-// Функции для работы с таблицами
+// Functions for working with tables
 //-----------------------------------------------------------------------------------
 
 CPresentation.prototype.ApplyTableFunction = function (Function, bBefore, bAll, Cols, Rows) {
@@ -6786,7 +6803,7 @@ CPresentation.prototype.ChangeTextCase = function (nCaseType) {
 };
 
 //-----------------------------------------------------------------------------------
-// Дополнительные функции
+// Additional functions
 //-----------------------------------------------------------------------------------
 CPresentation.prototype.Document_CreateFontMap = function () {
 	var nSlide;
@@ -7202,7 +7219,7 @@ CPresentation.prototype.CheckNeedUpdateTableStyles = function (oTableLook) {
 	return false;
 };
 
-// Обновляем линейки
+// Update rulers
 CPresentation.prototype.Document_UpdateRulersState = function () {
 	if (this.TurnOffInterfaceEvents) {
 		return;
@@ -7219,7 +7236,7 @@ CPresentation.prototype.Document_UpdateRulersState = function () {
 	this.DrawingDocument.Set_RulerState_Paragraph(null);
 };
 
-// Обновляем линейки
+// Update rulers
 CPresentation.prototype.Document_UpdateSelectionState = function () {
 	if (this.TurnOffInterfaceEvents) {
 		return;
@@ -7236,10 +7253,10 @@ CPresentation.prototype.Document_UpdateUndoRedoState = function () {
 	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
 		return;
 
-	// TODO: Возможно стоит перенсти эту проверку в класс CHistory и присылать
-	//       данные события при изменении значения History.Index
+	// TODO: Perhaps this check should be moved to the CHistory class and send
+	//       events when the History.Index value changes
 
-	// Проверяем состояние Undo/Redo
+	// Check the Undo/Redo state
 
 	var bCanUndo = this.History.Can_Undo();
 	if (true !== bCanUndo && this.Api && this.CollaborativeEditing && true === this.CollaborativeEditing.Is_Fast() && true !== this.CollaborativeEditing.Is_SingleUser())
@@ -7382,7 +7399,7 @@ CPresentation.prototype.Notes_Draw = function (SlideIndex, graphics) {
 };
 
 //-----------------------------------------------------------------------------------
-// Undo/Redo функции
+// Undo/Redo functions
 //-----------------------------------------------------------------------------------
 CPresentation.prototype.Create_NewHistoryPoint = function (Description) {
 	this.History.Create_NewPoint(Description);
@@ -8934,7 +8951,7 @@ CPresentation.prototype.Refresh_RecalcData2 = function (Data) {
 };
 
 //-----------------------------------------------------------------------------------
-// Функции для работы с гиперссылками
+// Functions for working with hyperlinks
 //-----------------------------------------------------------------------------------
 CPresentation.prototype.AddHyperlink = function (HyperProps) {
 	var oController = this.GetCurrentController();
@@ -9089,7 +9106,7 @@ CPresentation.prototype.bringBackward = function () {
 	}
 };
 
-// Проверяем, находимся ли мы в гиперссылке сейчас
+// Check if we are currently in a hyperlink
 CPresentation.prototype.IsCursorInHyperlink = function (bCheckEnd) {
 	var oController = this.GetCurrentController();
 	return oController && oController.hyperlinkCheck(bCheckEnd);
@@ -9169,6 +9186,10 @@ CPresentation.prototype.addNextSlideAction = function (layoutIndex) {
 				sp.setParent(new_slide);
 				if (sp.txBody) {
 					sp.txBody.setBodyPr(new AscFormat.CBodyPr());
+					sp.txBody.setLstStyle(new AscFormat.TextListStyle());
+				}
+				if (sp.spPr) {
+					sp.spPr.setXfrm(null);
 				}
 				!bIsSpecialPh && sp.clearContent && sp.clearContent();
 				new_slide.addToSpTreeToPos(new_slide.cSld.spTree.length, sp);
@@ -9860,6 +9881,7 @@ CPresentation.prototype.insertSlide = function (pos, slide) {
 	}
 	slide.setSlideSize(this.GetWidthMM(), this.GetHeightMM());
 };
+
 CPresentation.prototype.insertSlideObjectToPos = function (pos, slide) {
 	if(this.IsMasterMode()) {
 		if(slide.isMaster()) {
@@ -10066,7 +10088,7 @@ CPresentation.prototype.moveSlidesPrevPos = function () {
 	}
 };
 //-----------------------------------------------------------------------------------
-// Функции для работы с совместным редактирования
+// Functions for working with collaborative editing
 //-----------------------------------------------------------------------------------
 
 CPresentation.prototype.IsSelectionLocked = function (nCheckType, oAdditionalData, isDontLockInFastMode, isIgnoreCanEditFlag) {
@@ -10407,7 +10429,7 @@ CPresentation.prototype.Load_Comments = function (authors) {
 };
 
 //-----------------------------------------------------------------------------------
-// Функции для работы с комментариями
+// Functions for working with comments
 //-----------------------------------------------------------------------------------
 
 CPresentation.prototype.addComment = function (comment) {
@@ -10610,15 +10632,15 @@ CPresentation.prototype.HideComments = function () {
 	//this.GetCurrentSlide().graphicObjects.hideComment();
 };
 //-----------------------------------------------------------------------------------
-// Функции для работы с textbox
+// Functions for working with textbox
 //-----------------------------------------------------------------------------------
 CPresentation.prototype.TextBox_Put = function (sText, rFonts) {
 	if (true === this.CollaborativeEditing.Is_Fast() || this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
 		History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
 		if (!rFonts) {
 
-			// Отключаем пересчет, включим перед последним добавлением. Поскольку,
-			// у нас все добавляется в 1 параграф, так можно делать.
+			// Disable recalculation, we will enable it before the last addition. Since
+			// everything is added to one paragraph, we can do it this way.
 			this.TurnOffRecalc = true;
 
 			for (var oIterator = sText.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
@@ -11048,7 +11070,7 @@ CPresentation.prototype.FitImagesToSlide = function () {
 
 
 /**
- * Добавляем текст в текущую позицию с заданными текстовыми настройками
+ * Add text at the current position with the specified text settings
  * @param sText {string}
  * @param {?AscCommon.CAddTextSettings} oSettings
  */
@@ -11197,7 +11219,7 @@ CPresentation.prototype.internalCalculateData = function (aSlideComments, aWrite
 			_new_data2.WriteParentAuthorId = _author.Id;
 			_new_data2.WriteParentCommentId = _commId;
 			_new_data2.x = _new_data.x;
-			_new_data2.y = _new_data.y + 136 * (j + 1); // так уж делает микрософт
+			_new_data2.y = _new_data.y + 136 * (j + 1); // that's how Microsoft does it
 			_new_data2.Calculate();
 			aWriteComments.push(_new_data2);
 		}
@@ -11264,31 +11286,31 @@ CPresentation.prototype.IsDoNotExpandShiftReturn = function () {
 CPresentation.prototype.IsActionStarted = function () {
 };
 /**
- * Сообщаем документу, что потребуется пересчет
+ * Notify the presentation that recalculation is required
  */
 CPresentation.prototype.Recalculate2 = function () {
 	this.Recalculate();
 };
 /**
- * Сообщаем документу, что потребуется обновить состояние селекта
+ * Notify the presentation that the selection state needs to be updated
  */
 CPresentation.prototype.UpdateSelection = function () {
 	this.Document_UpdateSelectionState();
 };
 /**
- * Сообщаем документу, что потребуется обновить состояние интерфейса
+ * Notify the presentation that the interface state needs to be updated
  */
 CPresentation.prototype.UpdateInterface = function () {
 	this.Document_UpdateInterfaceState();
 };
 /**
- * Сообщаем документу, что потребуется обновить линейки
+ * Notify the presentation that the rulers need to be updated
  */
 CPresentation.prototype.UpdateRulers = function () {
 	this.Document_UpdateRulersState();
 };
 /**
- * Сообщаем документу, что потребуется обновить состояние кнопки Unddo/Redo
+ * Notify the presentation that the Undo/Redo button state needs to be updated
  */
 CPresentation.prototype.UpdateUndoRedo = function () {
 	this.Document_UpdateUndoRedoState();
@@ -11303,119 +11325,119 @@ CPresentation.prototype.GetAutoCorrectSettings = function () {
 	return this.AutoCorrectSettings;
 };
 /**
- * Устанавливаем настройку автосоздания маркированных списков
+ * Set the setting for auto-creating bulleted lists
  * @param isAuto {boolean}
  */
 CPresentation.prototype.SetAutomaticBulletedLists = function (isAuto) {
 	this.AutoCorrectSettings.SetAutomaticBulletedLists(isAuto);
 };
 /**
- * Запрашиваем настройку автосоздания маркированных списков
+ * Get the setting for auto-creating bulleted lists
  * @returns {boolean}
  */
 CPresentation.prototype.IsAutomaticBulletedLists = function () {
 	return this.AutoCorrectSettings.IsAutomaticBulletedLists();
 };
 /**
- * Устанавливаем настройку автосоздания нумерованных списков
+ * Set the setting for auto-creating numbered lists
  * @param isAuto {boolean}
  */
 CPresentation.prototype.SetAutomaticNumberedLists = function (isAuto) {
 	this.AutoCorrectSettings.SetAutomaticNumberedLists(isAuto);
 };
 /**
- * Запрашиваем настройку автосоздания нумерованных списков
+ * Get the setting for auto-creating numbered lists
  * @returns {boolean}
  */
 CPresentation.prototype.IsAutomaticNumberedLists = function () {
 	return this.AutoCorrectSettings.IsAutomaticNumberedLists();
 };
 /**
- * Устанавливаем параметр автозамены: заменять ли прямые кавычки "умными"
+ * Set the autocorrect parameter: whether to replace straight quotes with "smart" quotes
  * @param isSmartQuotes {boolean}
  */
 CPresentation.prototype.SetAutoCorrectSmartQuotes = function (isSmartQuotes) {
 	this.AutoCorrectSettings.SetSmartQuotes(isSmartQuotes);
 };
 /**
- * Запрашиваем настройку автозамены: заменять ли прямые кавычки "умными"
+ * Get the autocorrect setting: whether to replace straight quotes with "smart" quotes
  * @returns {boolean}
  */
 CPresentation.prototype.IsAutoCorrectSmartQuotes = function () {
 	return this.AutoCorrectSettings.IsSmartQuotes();
 };
 /**
- * Устанавливаем параметр автозамены двух дефисов на тире
+ * Set the autocorrect parameter for replacing two hyphens with a dash
  * @param isReplace {boolean}
  */
 CPresentation.prototype.SetAutoCorrectHyphensWithDash = function (isReplace) {
 	this.AutoCorrectSettings.SetHyphensWithDash(isReplace);
 };
 /**
- * Запрашиваем настройку автозамены двух дефисов на тире
+ * Get the autocorrect setting for replacing two hyphens with a dash
  * @returns {boolean}
  */
 CPresentation.prototype.IsAutoCorrectHyphensWithDash = function () {
 	return this.AutoCorrectSettings.IsHyphensWithDash();
 };
 /**
- * Запрашиваем настройку автозамены для французской пунктуации
+ * Get the autocorrect setting for French punctuation
  * @returns {boolean}
  */
 CPresentation.prototype.IsAutoCorrectFrenchPunctuation = function () {
 	return this.AutoCorrectSettings.IsFrenchPunctuation();
 };
 /**
- * Запрашиваем настройку автозамены двойного пробела на точку
+ * Get the autocorrect setting for replacing double space with a period
  * @returns {boolean}
  */
 CPresentation.prototype.IsAutoCorrectDoubleSpaceWithPeriod = function () {
 	return this.AutoCorrectSettings.IsDoubleSpaceWithPeriod();
 };
 /**
- * Выставляем настройку атозамены двойного пробела на точку
+ * Set the autocorrect setting for replacing double space with a period
  * @param {boolean} isCorrect
  */
 CPresentation.prototype.SetAutoCorrectDoubleSpaceWithPeriod = function (isCorrect) {
 	this.AutoCorrectSettings.SetDoubleSpaceWithPeriod(isCorrect);
 };
 /**
- * Выставляем настройку атозамены для первого символа предложения
+ * Set the autocorrect setting for the first character of a sentence
  * @param {boolean} isCorrect
  */
 CPresentation.prototype.SetAutoCorrectFirstLetterOfSentences = function (isCorrect) {
 	this.AutoCorrectSettings.SetFirstLetterOfSentences(isCorrect);
 };
 /**
- * Запрашиваем настройку атозамены для первого символа предложения
+ * Get the autocorrect setting for the first character of a sentence
  * @return {boolean}
  */
 CPresentation.prototype.IsAutoCorrectFirstLetterOfSentences = function () {
 	return this.AutoCorrectSettings.IsFirstLetterOfSentences();
 };
 /**
- * Выставляем настройку атозамены для первого символа в ячейке таблицы
+ * Set the autocorrect setting for the first character in a table cell
  * @param {boolean} isCorrect
  */
 CPresentation.prototype.SetAutoCorrectFirstLetterOfCells = function (isCorrect) {
 	this.AutoCorrectSettings.SetFirstLetterOfCells(isCorrect);
 }
 /**
- * Запрашиваем настройку атозамены для первого символа ячейки таблицы
+ * Get the autocorrect setting for the first character of a table cell
  * @return {boolean}
  */
 CPresentation.prototype.IsAutoCorrectFirstLetterOfCells = function () {
 	return this.AutoCorrectSettings.IsFirstLetterOfCells();
 };
 /**
- * Выставляем настройку атозамены для гиперссылок
+ * Set the autocorrect setting for hyperlinks
  * @param {boolean} isCorrect
  */
 CPresentation.prototype.SetAutoCorrectHyperlinks = function (isCorrect) {
 	this.AutoCorrectSettings.SetHyperlinks(isCorrect);
 };
 /**
- * Запрашиваем настройку атозамены для гиперссылок
+ * Get the autocorrect setting for hyperlinks
  * @return {boolean}
  */
 CPresentation.prototype.IsAutoCorrectHyperlinks = function () {

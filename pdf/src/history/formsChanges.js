@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -100,7 +103,8 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Caption]		= CChangesPDFP
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Checkbox_No_Toggle_To_Off]	= CChangesPDFCheckboxNoToggleToOff;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Checkbox_Style]			= CChangesPDFCheckboxStyle;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Checkbox_Export_Value]		= CChangesPDFCheckboxExpValue;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Checkbox_Options]			= CChangesPDFCheckOptions;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Checkbox_Options]			= CChangesPDFCheckboxOptions;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Checkbox_Checked]			= CChangesPDFCheckboxChecked;
 
 // radio
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Radiobutton_Is_Unison]	= CChangesPDFRadiobuttonIsUnison;
@@ -153,13 +157,13 @@ CChangesPDFFormParentValue.prototype.Type = AscDFH.historyitem_Pdf_Form_Parent_V
 CChangesPDFFormParentValue.prototype.private_SetValue = function(Value)
 {
 	let oField = this.Class;
-	oField.SetParentValue(Value);
+	oField.SetLogicValue(Value);
 };
 
 CChangesPDFFormValue.prototype.WriteToBinary = function(Writer)
 {
 	// Long  : Flag
-	// 1-bit : Подсвечивать ли данные изменения
+	// 1-bit : Whether to highlight these changes
 	// 2-bit : IsUndefined New
 	// 3-bit : IsUndefined Old
 	// string : New
@@ -192,7 +196,7 @@ CChangesPDFFormValue.prototype.WriteToBinary = function(Writer)
 CChangesPDFFormValue.prototype.ReadFromBinary = function(Reader)
 {
 	// Long  : Flag
-	// 1-bit : Подсвечивать ли данные изменения
+	// 1-bit : Whether to highlight these changes
 	// 2-bit : IsUndefined New
 	// 3-bit : IsUndefined Old
 	// string : New
@@ -264,6 +268,7 @@ CChangesPDFFormKidsContent.prototype.Undo = function()
 			oParentField._kids.splice(this.Pos, 1);
 			oItem._parent = null;
 			oItem.AddToRedraw();
+			oItem.SetNeedUpdateEditShape(true);
 		}
 	}
 	else {
@@ -273,6 +278,7 @@ CChangesPDFFormKidsContent.prototype.Undo = function()
 			oParentField._kids.splice(this.Pos, 0, oItem);
 			oItem._parent = oParentField;
 			oItem.AddToRedraw();
+			oItem.SetNeedUpdateEditShape(true);
 		}
 	}
 	
@@ -292,6 +298,7 @@ CChangesPDFFormKidsContent.prototype.Redo = function()
 			oParentField._kids.splice(this.Pos, 0, oItem);
 			oItem._parent = oParentField;
 			oItem.AddToRedraw();
+			oItem.SetNeedUpdateEditShape(true);
 		}
 	}
 	else {
@@ -301,6 +308,7 @@ CChangesPDFFormKidsContent.prototype.Redo = function()
 			oParentField._kids.splice(this.Pos, 1);
 			oItem._parent = null;
 			oItem.AddToRedraw();
+			oItem.SetNeedUpdateEditShape(true);
 		}
 	}
 	
@@ -329,6 +337,7 @@ CChangesPDFFormKidsContent.prototype.private_InsertInArrayLoad = function()
 		oItem._parent = oParentField;
 
         oItem.AddToRedraw();
+		oItem.SetNeedUpdateEditShape(true);
     }
 
     oDocument.SetMouseDownObject(null);
@@ -357,6 +366,7 @@ CChangesPDFFormKidsContent.prototype.private_RemoveInArrayLoad = function()
 		oItem._parent = null;
 
 		oItem.AddToRedraw();
+		oItem.SetNeedUpdateEditShape(true);
     }
 
     oDocument.SetMouseDownObject(null);
@@ -658,7 +668,7 @@ CChangesPDFFormActions.prototype.ReadFromBinary = function(Reader)
 	this.FromLoad = true;
 
 	// Long  : Flag
-	// 1-bit : Подсвечивать ли данные изменения
+	// 1-bit : Whether to highlight these changes
 	// 2-bit : IsUndefined New
 	// 3-bit : IsUndefined Old
 	// long : New
@@ -726,7 +736,7 @@ CChangesPDFFormMeta.prototype.private_SetValue = function(Value)
 CChangesPDFFormMeta.prototype.WriteToBinary = function(Writer)
 {
 	// Long  : Flag
-	// 1-bit : Подсвечивать ли данные изменения
+	// 1-bit : Whether to highlight these changes
 	// 2-bit : IsUndefined New
 	// 3-bit : IsUndefined Old
 	// string : New
@@ -756,7 +766,7 @@ CChangesPDFFormMeta.prototype.WriteToBinary = function(Writer)
 CChangesPDFFormMeta.prototype.ReadFromBinary = function(Reader)
 {
 	// Long  : Flag
-	// 1-bit : Подсвечивать ли данные изменения
+	// 1-bit : Whether to highlight these changes
 	// 2-bit : IsUndefined New
 	// 3-bit : IsUndefined Old
 	// string : New
@@ -1168,7 +1178,7 @@ CChangesPDFListFormCurIdxs.prototype.private_SetValue = function(Value)
 CChangesPDFListFormCurIdxs.prototype.WriteToBinary = function(Writer)
 {
 	// Long  : Flag
-	// 1-bit : Подсвечивать ли данные изменения
+	// 1-bit : Whether to highlight these changes
 	// 2-bit : IsUndefined New
 	// 3-bit : IsUndefined Old
 	// string : New
@@ -1198,7 +1208,7 @@ CChangesPDFListFormCurIdxs.prototype.WriteToBinary = function(Writer)
 CChangesPDFListFormCurIdxs.prototype.ReadFromBinary = function(Reader)
 {
 	// Long  : Flag
-	// 1-bit : Подсвечивать ли данные изменения
+	// 1-bit : Whether to highlight these changes
 	// 2-bit : IsUndefined New
 	// 3-bit : IsUndefined Old
 	// string : New
@@ -1236,13 +1246,13 @@ CChangesPDFListFormParentCurIdxs.prototype.Type = AscDFH.historyitem_Pdf_List_Fo
 CChangesPDFListFormParentCurIdxs.prototype.private_SetValue = function(Value)
 {
 	var oField = this.Class;
-	oField.SetParentCurIdxs(Value);
+	oField.SetLogicCurIdxs(Value);
 };
 
 CChangesPDFListFormParentCurIdxs.prototype.WriteToBinary = function(Writer)
 {
 	// Long  : Flag
-	// 1-bit : Подсвечивать ли данные изменения
+	// 1-bit : Whether to highlight these changes
 	// 2-bit : IsUndefined New
 	// 3-bit : IsUndefined Old
 	// string : New
@@ -1272,7 +1282,7 @@ CChangesPDFListFormParentCurIdxs.prototype.WriteToBinary = function(Writer)
 CChangesPDFListFormParentCurIdxs.prototype.ReadFromBinary = function(Reader)
 {
 	// Long  : Flag
-	// 1-bit : Подсвечивать ли данные изменения
+	// 1-bit : Whether to highlight these changes
 	// 2-bit : IsUndefined New
 	// 3-bit : IsUndefined Old
 	// string : New
@@ -1670,7 +1680,7 @@ CChangesPDFPushbuttonImage.prototype.ReadFromBinary = function(Reader)
 	this.FromLoad = true;
 
 	// Long  : Flag
-	// 1-bit : Подсвечивать ли данные изменения
+	// 1-bit : Whether to highlight these changes
 	// 2-bit : IsUndefined New
 	// 3-bit : IsUndefined Old
 	// long : New
@@ -1856,7 +1866,7 @@ CChangesPDFPushbuttonCaption.prototype.ReadFromBinary = function(Reader)
 	this.FromLoad = true;
 
 	// Long  : Flag
-	// 1-bit : Подсвечивать ли данные изменения
+	// 1-bit : Whether to highlight these changes
 	// 2-bit : IsUndefined New
 	// 3-bit : IsUndefined Old
 	// long : New
@@ -1959,15 +1969,33 @@ CChangesPDFRadiobuttonIsUnison.prototype.private_SetValue = function(Value)
  * @constructor
  * @extends {AscDFH.CChangesPDFArrayOfStringProperty}
  */
-function CChangesPDFCheckOptions(Class, Old, New, Color)
+function CChangesPDFCheckboxOptions(Class, Old, New, Color)
 {
 	AscDFH.CChangesPDFArrayOfStringProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFCheckOptions.prototype = Object.create(AscDFH.CChangesPDFArrayOfStringProperty.prototype);
-CChangesPDFCheckOptions.prototype.constructor = CChangesPDFCheckOptions;
-CChangesPDFCheckOptions.prototype.Type = AscDFH.historyitem_Pdf_Checkbox_Options;
-CChangesPDFCheckOptions.prototype.private_SetValue = function(Value)
+CChangesPDFCheckboxOptions.prototype = Object.create(AscDFH.CChangesPDFArrayOfStringProperty.prototype);
+CChangesPDFCheckboxOptions.prototype.constructor = CChangesPDFCheckboxOptions;
+CChangesPDFCheckboxOptions.prototype.Type = AscDFH.historyitem_Pdf_Checkbox_Options;
+CChangesPDFCheckboxOptions.prototype.private_SetValue = function(Value)
 {
 	let oForm = this.Class;
 	oForm._options = Value;
 };
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFCheckboxChecked(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFCheckboxChecked.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFCheckboxChecked.prototype.constructor = CChangesPDFCheckboxChecked;
+CChangesPDFCheckboxChecked.prototype.Type = AscDFH.historyitem_Pdf_Checkbox_Checked;
+CChangesPDFCheckboxChecked.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm._checked = Value;
+};
+

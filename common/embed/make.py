@@ -7,10 +7,6 @@ import os
 
 params = sys.argv[1:]
 
-#compilation_level = "WHITESPACE_ONLY"
-compilation_level = "SIMPLE_OPTIMIZATIONS"
-base.cmd("python", ["./min.py"])
-
 min_content = base.readFile("./embed.min.js")
 
 if (1 != len(params)):

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -453,7 +456,7 @@ function (window, undefined) {
 	};
 
 	/**
-	 * Класс asc_CAscEditorPermissions для прав редакторов
+	 * Class asc_CAscEditorPermissions for editor permissions
 	 * -----------------------------------------------------------------------------
 	 *
 	 * @constructor
@@ -722,17 +725,66 @@ function (window, undefined) {
 	asc_ValAxisSettings.prototype.putAxisType = function (v) {
 		this.axisType = v;
 	};
+
+	asc_ValAxisSettings.prototype._parseStringValue = function (str) {
+		const num = AscCommon.g_oFormatParser.tryParseLocaleNumber(str);
+		if (num !== null) {
+			return num;
+		}
+
+		let formatType, formatCode;
+		if (this.numFmt) {
+			const typeInfo = this.numFmt.getFormatCellsInfo();
+			formatType = typeInfo.asc_getType();
+			formatCode = this.numFmt.getFormatCode();
+		}
+
+		const res = AscCommon.g_oFormatParser.parse(str, null, formatType, formatCode);
+		return res && AscFormat.isRealNumber(res.value)
+			? res.value
+			: null;
+	};
+
 	asc_ValAxisSettings.prototype.putMinValRule = function (v) {
 		this.minValRule = v;
 	};
-	asc_ValAxisSettings.prototype.putMinVal = function (v) {
-		this.minVal = v;
+	asc_ValAxisSettings.prototype.putMinVal = function (input) {
+		if (typeof input === 'number') {
+			this.minVal = input;
+			return true;
+		}
+
+		if (typeof input !== 'string' || input.length === 0) {
+			return false;
+		}
+
+		const numericValue = this._parseStringValue(input);
+		if (numericValue === null) {
+			return false;
+		}
+
+		this.minVal = numericValue;
+		return true;
 	};
 	asc_ValAxisSettings.prototype.putMaxValRule = function (v) {
 		this.maxValRule = v;
 	};
-	asc_ValAxisSettings.prototype.putMaxVal = function (v) {
-		this.maxVal = v;
+	asc_ValAxisSettings.prototype.putMaxVal = function (input) {
+		if (typeof input === 'number') {
+			this.maxVal = input;
+			return true;
+		}
+
+		if (typeof input !== 'string' || input.length === 0) {
+			return false;
+		}
+
+		const numericValue = this._parseStringValue(input);
+		if (numericValue === null) {
+			return false;
+		}
+		this.maxVal = numericValue;
+		return true;
 	};
 	asc_ValAxisSettings.prototype.putInvertValOrder = function (v) {
 		this.invertValOrder = v;
@@ -773,17 +825,32 @@ function (window, undefined) {
 	asc_ValAxisSettings.prototype.getDispUnitsRule = function () {
 		return this.dispUnitsRule;
 	};
+
+	asc_ValAxisSettings.prototype._formatNumericValue = function (value) {
+		if (value == null) {
+			return '';
+		}
+
+		if (!this.numFmt) {
+			return AscCommon.g_oFormatParser.toLocaleNumber(String(value));
+		}
+
+		const formatCode = this.numFmt.getFormatCode();
+		const numFormat = AscCommon.oNumFormatCache.get(formatCode);
+		return numFormat.formatToChart(value);
+	};
+
 	asc_ValAxisSettings.prototype.getMinValRule = function () {
 		return this.minValRule;
 	};
 	asc_ValAxisSettings.prototype.getMinVal = function () {
-		return this.minVal;
+		return this._formatNumericValue(this.minVal);
 	};
 	asc_ValAxisSettings.prototype.getMaxValRule = function () {
 		return this.maxValRule;
 	};
 	asc_ValAxisSettings.prototype.getMaxVal = function () {
-		return this.maxVal;
+		return this._formatNumericValue(this.maxVal);
 	};
 	asc_ValAxisSettings.prototype.getInvertValOrder = function () {
 		return this.invertValOrder;
@@ -1536,6 +1603,12 @@ function (window, undefined) {
 	asc_ChartSettings.prototype.getTrendlineType = function () {
 		return this.trendlineType;
 	};
+	asc_ChartSettings.prototype.getForecastForward = function () {
+		return this.forecastForward;
+	};
+	asc_ChartSettings.prototype.getForecastBackward = function () {
+		return this.forecastBackward;
+	};
 	asc_ChartSettings.prototype.getType = function () {
 		if (this.chartSpace) {
 			return this.chartSpace.getChartType();
@@ -2050,7 +2123,7 @@ function (window, undefined) {
 
 
 	/**
-	 * Класс CColor для работы с цветами
+	 * Class CColor for working with colors
 	 * -----------------------------------------------------------------------------
 	 *
 	 * @constructor
@@ -2305,52 +2378,12 @@ function (window, undefined) {
 		return deltaE;
 	};
 	asc_CColor.prototype.RGB2LAB = function (R, G, B) {
-		let r, g, b, X, Y, Z, fx, fy, fz, xr, yr, zr;
-		let Ls, as, bs;
-		let eps = 216.0 / 24389.0;
-		let k = 24389.0 / 27.0;
-
-		let Xr = 0.95047;  // reference white D65
-		let Yr = 1.0;
-		let Zr = 1.08883;
-
-		// RGB to XYZ
-		r = R / 255; //R 0..1
-		g = G / 255; //G 0..1
-		b = B / 255; //B 0..1
-
-		// assuming sRGB (D65)
-		if (r <= 0.04045) r = r / 12.92; else r = Math.pow((r + 0.055) / 1.055, 2.4);
-
-		if (g <= 0.04045) g = g / 12.92; else g = Math.pow((g + 0.055) / 1.055, 2.4);
-
-		if (b <= 0.04045) b = b / 12.92; else b = Math.pow((b + 0.055) / 1.055, 2.4);
-
-
-		X = 0.4124564 * r + 0.3575761 * g + 0.1804375 * b;
-		Y = 0.2126729 * r + 0.7151522 * g + 0.0721750 * b;
-		Z = 0.0193339 * r + 0.1191920 * g + 0.9503041 * b;
-
-		// XYZ to Lab
-		xr = X / Xr;
-		yr = Y / Yr;
-		zr = Z / Zr;
-
-		if (xr > eps) fx = Math.pow(xr, 1 / 3.); else fx = ((k * xr + 16.) / 116.);
-
-		if (yr > eps) fy = Math.pow(yr, 1 / 3.); else fy = ((k * yr + 16.) / 116.);
-
-		if (zr > eps) fz = Math.pow(zr, 1 / 3.); else fz = ((k * zr + 16.) / 116);
-
-		Ls = (116 * fy) - 16;
-		as = 500 * (fx - fy);
-		bs = 200 * (fy - fz);
-
-		let lab = [];
-		lab[0] = (2.55 * Ls + .5) >> 0;
-		lab[1] = (as + .5) >> 0;
-		lab[2] = (bs + .5) >> 0;
-		return lab;
+		var lab = AscCommon.CU.rgbToLab({R: R, G: G, B: B});
+		return [
+			(2.55 * lab.L + .5) >> 0,
+			(lab.a + .5) >> 0,
+			(lab.b + .5) >> 0
+		];
 	};
 	asc_CColor.prototype.asc_getName = function () {
 		const nColorVal = this.getVal();
@@ -2447,7 +2480,7 @@ function (window, undefined) {
 				this.Color = obj.Color;
 			}
 			else {
-				this.Color = (undefined != obj.Color && null != obj.Color) ? CreateAscColorCustom(obj.Color.r, obj.Color.g, obj.Color.b) : null;
+				this.Color = (undefined != obj.Color && null != obj.Color) ? CreateAscColorCustom(obj.Color.r, obj.Color.g, obj.Color.b, !!obj.Color.Auto) : null;
 			}
 			this.Size = (undefined != obj.Size) ? obj.Size : null;
 			this.Value = (undefined != obj.Value) ? obj.Value : null;
@@ -2717,7 +2750,7 @@ function (window, undefined) {
 		if (obj) {
 			this.Value = (undefined != obj.Value) ? obj.Value : null;
 
-			// TODO: В UI пока поддерживается ровно два типа заливки Nil, Clear
+			// TODO: UI currently supports exactly two fill types: Nil, Clear
 			if (null !== this.Value && this.Value !== Asc.c_oAscShd.Nil) this.Value = Asc.c_oAscShd.Clear;
 
 			if (obj.GetSimpleColor) {
@@ -2740,8 +2773,6 @@ function (window, undefined) {
 			}
 		}
 		else {
-
-			// TODO: Пока мы не работает отдельно с Color и Fill, поэтому пишем и тот и другой
 			this.Value = Asc.c_oAscShdNil;
 			this.Color = CreateAscColorCustom(255, 255, 255);
 			this.Fill = CreateAscColorCustom(255, 255, 255);
@@ -2918,16 +2949,16 @@ function (window, undefined) {
 	function asc_CParagraphSpacing(obj) {
 
 		if (obj) {
-			this.Line = (undefined != obj.Line) ? obj.Line : null; // Расстояние между строками внутри абзаца
-			this.LineRule = (undefined != obj.LineRule) ? obj.LineRule : null; // Тип расстрояния между строками
-			this.Before = (undefined != obj.Before) ? obj.Before : null; // Дополнительное расстояние до абзаца
-			this.After = (undefined != obj.After) ? obj.After : null; // Дополнительное расстояние после абзаца
+			this.Line = (undefined != obj.Line) ? obj.Line : null;
+			this.LineRule = (undefined != obj.LineRule) ? obj.LineRule : null;
+			this.Before = (undefined != obj.Before) ? obj.Before : null;
+			this.After = (undefined != obj.After) ? obj.After : null;
 		}
 		else {
-			this.Line = undefined; // Расстояние между строками внутри абзаца
-			this.LineRule = undefined; // Тип расстрояния между строками
-			this.Before = undefined; // Дополнительное расстояние до абзаца
-			this.After = undefined; // Дополнительное расстояние после абзаца
+			this.Line = undefined;
+			this.LineRule = undefined;
+			this.Before = undefined;
+			this.After = undefined;
 		}
 	}
 
@@ -2959,14 +2990,14 @@ function (window, undefined) {
 	/** @constructor */
 	function asc_CParagraphInd(obj) {
 		if (obj) {
-			this.Left = (undefined != obj.Left) ? obj.Left : null; // Левый отступ
-			this.Right = (undefined != obj.Right) ? obj.Right : null; // Правый отступ
-			this.FirstLine = (undefined != obj.FirstLine) ? obj.FirstLine : null; // Первая строка
+			this.Left = (undefined != obj.Left) ? obj.Left : null;
+			this.Right = (undefined != obj.Right) ? obj.Right : null;
+			this.FirstLine = (undefined != obj.FirstLine) ? obj.FirstLine : null;
 		}
 		else {
-			this.Left = undefined; // Левый отступ
-			this.Right = undefined; // Правый отступ
-			this.FirstLine = undefined; // Первая строка
+			this.Left = undefined;
+			this.Right = undefined;
+			this.FirstLine = undefined;
 		}
 	}
 
@@ -3038,23 +3069,6 @@ function (window, undefined) {
 			this.CanEditInlineCC = undefined !== obj.CanEditInlineCC ? obj.CanEditInlineCC : true;
 		}
 		else {
-			//ContextualSpacing : false,            // Удалять ли интервал между параграфами одинакового стиля
-			//
-			//    Ind :
-			//    {
-			//        Left      : 0,                    // Левый отступ
-			//        Right     : 0,                    // Правый отступ
-			//        FirstLine : 0                     // Первая строка
-			//    },
-			//
-			//    Jc : align_Left,                      // Прилегание параграфа
-			//
-			//    KeepLines : false,                    // переносить параграф на новую страницу,
-			//                                          // если на текущей он целиком не убирается
-			//    KeepNext  : false,                    // переносить параграф вместе со следующим параграфом
-			//
-			//    PageBreakBefore : false,              // начинать параграф с новой страницы
-
 			this.Bidi = undefined;
 			this.ContextualSpacing = undefined;
 			this.Ind = new asc_CParagraphInd();
@@ -3773,6 +3787,9 @@ function (window, undefined) {
 		}
 		if (this.type && this.annotProps) {
 			this.annotProps.compare(pr.annotProps);
+		}
+		else {
+			this.annotProps = null;
 		}
 	};
 
@@ -4945,7 +4962,7 @@ function (window, undefined) {
 	asc_CFieldRegularFormatProperty.prototype.asc_putRegExp = function (v) {
 		this.regExp = v;
 	};
-	asc_CFieldSpecialFormatProperty.prototype.compare = function (pr) {
+	asc_CFieldRegularFormatProperty.prototype.compare = function (pr) {
 		if (this.regExp !== pr.regExp) {
 			this.regExp = null;
 		}
@@ -4990,7 +5007,7 @@ function (window, undefined) {
 	asc_CFieldValidateProperty.prototype.asc_putLessThen = function (v) {
 		this.lessThen = v;
 	};
-	asc_CFieldSpecialFormatProperty.prototype.compare = function (pr) {
+	asc_CFieldValidateProperty.prototype.compare = function (pr) {
 		if (this.greaterThen !== pr.greaterThen) {
 			this.greaterThen = null;
 		}
@@ -5351,10 +5368,16 @@ function (window, undefined) {
 		this.WrappingStyle = v;
 	};
 
-	// Возвращается объект класса Asc.asc_CPaddings
+	/**
+	 * @returns {asc_CPaddings}
+	 */
 	asc_CImgProperty.prototype.asc_getPaddings = function () {
 		return this.Paddings;
-	}; // Аргумент объект класса Asc.asc_CPaddings
+	};
+	/**
+	 *
+	 * @param v {asc_CPaddings}
+	 */
 	asc_CImgProperty.prototype.asc_putPaddings = function (v) {
 		this.Paddings = v;
 	};
@@ -5363,10 +5386,16 @@ function (window, undefined) {
 	};
 	asc_CImgProperty.prototype.asc_putAllowOverlap = function (v) {
 		this.AllowOverlap = v;
-	}; // Возвращается объект класса CPosition
+	};
+	/**
+	 * @returns {Asc.CPosition}
+	 */
 	asc_CImgProperty.prototype.asc_getPosition = function () {
 		return this.Position;
-	}; // Аргумент объект класса CPosition
+	};
+	/**
+	 * @param v {Asc.CPosition}
+	 */
 	asc_CImgProperty.prototype.asc_putPosition = function (v) {
 		this.Position = v;
 	};
@@ -5966,11 +5995,11 @@ function (window, undefined) {
 		return this.prstDash;
 	};
 
-	// цвет. может быть трех типов:
-	// c_oAscColor.COLOR_TYPE_SRGB		: value - не учитывается
-	// c_oAscColor.COLOR_TYPE_PRST		: value - имя стандартного цвета (map_prst_color)
-	// c_oAscColor.COLOR_TYPE_SCHEME	: value - тип цвета в схеме
-	// c_oAscColor.COLOR_TYPE_SYS		: конвертируется в srgb
+	// color. can be one of three types:
+	// c_oAscColor.COLOR_TYPE_SRGB		: value - not used
+	// c_oAscColor.COLOR_TYPE_PRST		: value - standard color name (map_prst_color)
+	// c_oAscColor.COLOR_TYPE_SCHEME	: value - color type in scheme
+	// c_oAscColor.COLOR_TYPE_SYS		: converted to srgb
 	function CAscColorScheme() {
 		this.colors = [];
 		this.name = "";
@@ -6040,7 +6069,7 @@ function (window, undefined) {
 
 
 	//-----------------------------------------------------------------
-	// События движения мыши
+	// Mouse movement events
 	//-----------------------------------------------------------------
 	function CMouseMoveData(obj) {
 		if (obj) {
@@ -6128,7 +6157,7 @@ function (window, undefined) {
 
 
 	/**
-	 * Класс для работы с интерфейсом для гиперссылок
+	 * Class for working with hyperlinks in UI
 	 * @param obj
 	 * @constructor
 	 */
@@ -6947,7 +6976,7 @@ function (window, undefined) {
 
 				let bRemoveDocument = false;
 				if (oApi.WordControl && !oApi.WordControl.m_oLogicDocument) {
-					// TODO: Зачем это здесь вообще?
+					// TODO: Why is this here at all?
 					bRemoveDocument = true;
 					oApi.WordControl.m_oLogicDocument = new AscWord.CDocument(null, false);
 					oApi.WordControl.m_oDrawingDocument.m_oLogicDocument = oApi.WordControl.m_oLogicDocument;
@@ -7274,12 +7303,12 @@ function (window, undefined) {
 
 	// ----------------------------- plugins ------------------------------- //
 	let PluginType = {
-		System: 0,      // Системный, неотключаемый плагин.
-		Background: 1,  // Фоновый плагин. Тоже самое, что и системный, но отключаемый.
-		Window: 2,      // Окно
-		Panel: 3,       // Панель
-		Invisible : 4,  // Невидимый
-		PanelRight: 5   // Панель справа
+		System: 0,      // System, can't be disabled.
+		Background: 1,  // Background plugin. Same as system, but can be disabled.
+		Window: 2,      // Window
+		Panel: 3,       // Panel
+		Invisible : 4,  // Invisible
+		PanelRight: 5   // Right panel
 	};
 
 	PluginType["System"] = PluginType.System;
@@ -7314,7 +7343,7 @@ function (window, undefined) {
 		this.url = "";
 		this.help = "";
 		this.baseUrl = "";
-		this.index = 0;     // сверху не выставляем. оттуда в каком порядке пришли - в таком порядке и работают
+		this.index = 0;     // not set from above. they work in the order they arrived
 
 		this.descriptionLocale = undefined;
 		this.icons = ["1x", "2x"];
@@ -7324,8 +7353,8 @@ function (window, undefined) {
 
 		this.type = PluginType.Background;
 
-		this.isCustomWindow = false;	// используется только если this.type === PluginType.Window
-		this.isModal = true;     // используется только если this.type === PluginType.Window
+		this.isCustomWindow = false;	// used only if this.type === PluginType.Window
+		this.isModal = true;     // used only if this.type === PluginType.Window
 
 		this.isCanDocked = false;
 
@@ -7594,7 +7623,7 @@ function (window, undefined) {
 		this.loader = (_object["loader"] != null) ? _object["loader"] : this.loader;
 
 		if (true) {
-			// удалим этот if, как передем на просто прокидку объекта в интерфейсе
+			// remove this if when we switch to simply passing the object in the interface
 			if (_object["groupName"] || _object["groupRank"]) this.group = {};
 
 			if (_object["groupName"]) this.group.name = _object["groupName"];
@@ -7946,12 +7975,16 @@ function (window, undefined) {
 	{
 		this.WrappingStyle = v;
 	};
-	// Возвращается объект класса Asc.asc_CPaddings
+	/**
+	 * @returns {Asc.asc_CPaddings}
+	 */
 	CAscChartProp.prototype.get_Paddings      = function()
 	{
 		return this.Paddings;
 	};
-	// Аргумент объект класса Asc.asc_CPaddings
+	/**
+	 * @param v {Asc.asc_CPaddings}
+	 */
 	CAscChartProp.prototype.put_Paddings      = function(v)
 	{
 		this.Paddings = v;
@@ -7964,12 +7997,16 @@ function (window, undefined) {
 	{
 		this.AllowOverlap = v;
 	};
-	// Возвращается объект класса CPosition
+	/**
+	 * @returns {Asc.CPosition}
+	 */
 	CAscChartProp.prototype.get_Position      = function()
 	{
 		return this.Position;
 	};
-	// Аргумент объект класса CPosition
+	/**
+	 * @param v {Asc.CPosition}
+	 */
 	CAscChartProp.prototype.put_Position      = function(v)
 	{
 		this.Position = v;
@@ -8437,6 +8474,8 @@ function (window, undefined) {
 	prot["getDataLabelsPos"] = prot.getDataLabelsPos;
 	prot["getErrorBarsValueType"] = prot.getErrorBarsValueType;
 	prot["getTrendlineType"] = prot.getTrendlineType;
+	prot["getForecastForward"] = prot.getForecastForward;
+	prot["getForecastBackward"] = prot.getForecastBackward;
 	prot["getHorGridLines"] = prot.getHorGridLines;
 	prot["putHorGridLines"] = prot.putHorGridLines;
 	prot["getVertGridLines"] = prot.getVertGridLines;

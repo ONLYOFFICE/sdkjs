@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -1579,6 +1582,95 @@
 	TokenText.prototype = Object.create(LexerLiterals.prototype)
 	TokenText.prototype.constructor = TokenText;
 
+	function TokenOpScript()
+	{
+		this.id = 36;
+		this.Unicode = {
+			"'" : 1,
+			"′" : 1,
+			"″" : 1,
+			"⁗" : 1,
+			"!" : 1,
+			"‼" : 1,
+			"₀" : 1,
+			"₁" : 1,
+			"₂" : 1,
+			"₃" : 1,
+			"₄" : 1,
+			"₅" : 1,
+			"₆" : 1,
+			"₇" : 1,
+			"₈" : 1,
+			"₉" : 1,
+			"₊" : 1,
+			"₋" : 1,
+			"₌" : 1,
+			"₍" : 1,
+			"₎" : 1,
+			"ₐ" : 1,
+			"ₑ" : 1,
+			"ₕ" : 1,
+			"ᵢ" : 1,
+			"ⱼ" : 1,
+			"ₖ" : 1,
+			"ₗ" : 1,
+			"ₘ" : 1,
+			"ₙ" : 1,
+			"ₒ" : 1,
+			"ₚ" : 1,
+			"ᵣ" : 1,
+			"ₛ" : 1,
+			"ₜ" : 1,
+			"ᵤ" : 1,
+			"ᵥ" : 1,
+			"ₓ" : 1,
+			"⁰" : 1,
+			"¹" : 1,
+			"²" : 1,
+			"³" : 1,
+			"⁴" : 1,
+			"⁵" : 1,
+			"⁶" : 1,
+			"⁷" : 1,
+			"⁸" : 1,
+			"⁹" : 1,
+			"ᵃ" : 1,
+			"ᵇ" : 1,
+			"ᶜ" : 1,
+			"ᵈ" : 1,
+			"ᵉ" : 1,
+			"ᶠ" : 1,
+			"ᵍ" : 1,
+			"ʰ" : 1,
+			"ⁱ" : 1,
+			"ʲ" : 1,
+			"ᵏ" : 1,
+			"ˡ" : 1,
+			"ᵐ" : 1,
+			"ⁿ" : 1,
+			"ᵒ" : 1,
+			"ᵖ" : 1,
+			"ʳ" : 1,
+			"ˢ" : 1,
+			"ᵗ" : 1,
+			"ᵘ" : 1,
+			"ᵛ" : 1,
+			"ʷ" : 1,
+			"ˣ" : 1,
+			"ʸ" : 1,
+			"ᶻ" : 1,
+			"⁺" : 1,
+			"⁻" : 1,
+			"⁼" : 1,
+			"⁽" : 1,
+			"⁾" : 1
+		};
+		this.LaTeX = {};
+		this.LaTeXSpecial = {};
+	}
+	TokenOpScript.prototype = Object.create(LexerLiterals.prototype)
+	TokenOpScript.prototype.constructor = TokenOpScript;
+
 	//---------------------------------------Initialize data for Tokenizer----------------------------------------------
 
 	// List of tokens types for parsers processing
@@ -1598,6 +1690,7 @@
 		rBrackets: 		new TokenCloseBrackets(),
 		lBrackets: 		new TokenOpenBrackets(),
 		operand:		new TokenOperand(),
+		opScript:		new TokenOpScript(),
 		operator:		new TokenOperators(),
 		space: 			new TokenSpace(),
 		accent: 		new TokenAccent(),
@@ -2463,7 +2556,7 @@
 				case MathStructures.sub_sub:
 					if (oTokens.value && oTokens.value.type === MathStructures.func)
 					{
-						let oStyle		= oTokens.value.style.style
+						let oStyle		= oTokens.value.style ? oTokens.value.style.style : new CTextPr();
 						let oFunc		= oContext.Add_Function({ctrPrp: oStyle}, null, null);
 						let oFuncName	= oFunc.getFName();
 
@@ -2602,6 +2695,9 @@
 					{
 						let isSubSup = ((Array.isArray(oTokens.up) && oTokens.up.length > 0) || (!Array.isArray(oTokens.up) && oTokens.up !== undefined)) &&
 							((Array.isArray(oTokens.down) && oTokens.down.length > 0) || (!Array.isArray(oTokens.down) && oTokens.down !== undefined))
+
+						if (!oTokens.style)
+							return;
 
 						let oCurrentStyle = oTokens.style.subStyle ? oTokens.style.subStyle : oTokens.style.supStyle;
 						let Pr = {};
@@ -5445,6 +5541,15 @@
 
 		return this
 	};
+	MathTextAndStyles.prototype.DelLastSubSup = function ()
+	{
+		let oLastContent = this.GetLastContent();
+
+		if (oLastContent && (oLastContent.text[oLastContent.text.length - 1] === "^" || oLastContent.text[oLastContent.text.length - 1] === "_"))
+			oLastContent.text = oLastContent.text.slice(0, -1);
+
+		return this
+	};
 
 	// for store data without symbols and transfer data between autocorrection/correction sessions
 	function MathMetaData()
@@ -5846,6 +5951,7 @@
 		MathLiterals.special,
 		MathLiterals.subSup,
 		MathLiterals.of,
+		MathLiterals.opScript
 	];
 	const TokenSearch_NotBrackets = [
 		MathLiterals.operator,
@@ -6184,7 +6290,8 @@
 			|| MathLiterals.of.id			=== nId
 			|| MathLiterals.specialBrac.id	=== nId
 			|| MathLiterals.hbrack.id		=== nId
-			|| MathLiterals.invisible.id	=== nId;
+			|| MathLiterals.invisible.id	=== nId
+			|| MathLiterals.opScript.id		=== nId;
 	};
 	/**
 	 * Check is given id is brackets id
@@ -6461,12 +6568,18 @@
 		let oAbsolutePLastId	= this.GetAbsolutePreLast();
 		let oFuncNamePos		= CheckFunctionOnCursor(this.oCMathContent);
 
+		if (oFuncNamePos && oRuleLast && oRuleLast.IsLess(oFuncNamePos))
+			oRuleLast = oFuncNamePos;
+
 		if (this.oAbsoluteLastId === oAbsolutePLastId && this.oAbsoluteLastId === MathLiterals.space.id) // подряд два пробела, не начинам коррекцию
 			return false;
 
 		// если нажали пробел после названия функции (cos, sin, lim, log, ...), то
 		// нужно добавить символ \funcapply после и инициировать конвертацию
-		if (!oRuleLast && oFuncNamePos && this.oAbsoluteLastId === MathLiterals.space.id)
+		// or _ ^
+		if ((!oRuleLast || oRuleLast.GetType() === MathLiterals.func.id) 
+				&& oFuncNamePos
+				&& (this.oAbsoluteLastId === MathLiterals.space.id || this.oAbsoluteLastId === MathLiterals.subSup.id))
 		{
 			// последний элемент для получения стиля
 			let oLastMath		= this.GetAbsolutLastObject();
@@ -6475,12 +6588,16 @@
 			let oParamsCutContent	= {
 				oDelMark			: oFuncNamePos,
 				oEndDelMark			: GetEndCurPos(oFuncNamePos),
-				isDelLastSpace		: true
+				isDelLastSpace		: true,
+				isDelLastSubSup		: this.oAbsoluteLastId === MathLiterals.subSup.id
 			};
 
 			let oMathContent		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 
 			let oFuncName			= oMathContent.GetFirstContent();
+			if (!oFuncName)
+				return false;
+			
 			let oAddDataFuncName	= oFuncName.GetAdditionalData();
 			let mPrp				= oAddDataFuncName.mathPrp;
 			mPrp.SetStyle(false, false);
@@ -6488,9 +6605,17 @@
 			//добавляем символ funcapply
 			let oFuncApply		= new MathText(String.fromCodePoint(8289), oLastMath.additionalMathData);
 			oMathContent.AddText(oFuncApply);
+	
+			if (this.oAbsoluteLastId === MathLiterals.subSup.id)
+			{
+				oMathContent.AddText(oLastMath);
+				this.oCMathContent.AddDataFromFlatMathTextAndStyles(oMathContent.Flat());
+			}
+			else
+			{
+				GetConvertContent(0, oMathContent, this.oCMathContent);
+			}
 
-			//конвертируем в профф. формат
-			GetConvertContent(0, oMathContent, this.oCMathContent);
 			this.SetCursorByConvertedData(this.oCMathContent);
 			return true
 		}
@@ -6514,6 +6639,9 @@
 			let oMathContent		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 
 			let oFuncName			= oMathContent.GetFirstContent();
+			if (!oFuncName)
+				return false;
+			
 			let oAddDataFuncName	= oFuncName.GetAdditionalData();
 			let mPrp				= oAddDataFuncName.mathPrp;
 			mPrp.SetStyle(false, false);
@@ -6528,7 +6656,7 @@
 
 			//конвертируем в профф. формат
 			this.SetCursorByConvertedData(this.oCMathContent);
-			return true
+			return true;
 		}
 
 		// конвертация контента ВНУТРИ скобки, при закрытии скобки
@@ -6543,6 +6671,12 @@
 		if (MathLiterals.divide.id === this.oAbsoluteLastId && true === this.ProceedBeforeDivide(oRuleLast))
 		{
 			return true;
+		}
+
+		if (oRuleLast && oRuleLast.type === MathLiterals.opScript.id && this.IsTrigger(this.oAbsoluteLastId))
+		{
+			this.BIFunctionProcessing(oRuleLast);
+			return true
 		}
 
 		//при написании оператора нужно конвертировать всю формулу до оператора (или до первой открывающей скобки)
@@ -7048,6 +7182,7 @@
 				if (!isParaPosUsed && nParaPos >= oCurrentElement.Content.length)
 					continue;
 
+				let strWord = "";
 				for (let j = nTempParaPos !== null ? nTempParaPos : nParaPos; j >= 0; j--)
 				{
 					if (null !== nTempParaPos)
@@ -7057,6 +7192,19 @@
 
 					let oEndPos = new PositionIsCMathContent(i, j, undefined, oCurrentElement);
 					let oPos = this.IsStepInBracket(oEndPos, true);
+					let strCurrentContent = oCurrentElement.GetText();
+
+					strWord = strCurrentContent + strWord;
+					if (window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathFuncs.includes(strWord))
+					{
+						for (let i = 0; i < strWord.length - 1; i++)
+							oEndPos.DecreasePosition();
+
+						return {
+							start: oEndPos,
+							end: oTempStartPos
+						}
+					}
 
 					if (oPos)
 					{
@@ -7216,6 +7364,7 @@
 			|| MathLiterals.rect.id 	=== intLastTokenType
 			|| MathLiterals.func.id 	=== intLastTokenType
 			|| MathLiterals.hbrack.id	=== intLastTokenType
+			|| MathLiterals.func.id		=== intLastTokenType
 	};
 	/**
 	 * Processing PCFunction type of math content.
@@ -7488,6 +7637,7 @@
 		let nTypeOfTrigger		= oParamsCutContent.nTypeOfTrigger;
 		let isDelLastSpace		= oParamsCutContent.isDelLastSpace;
 		let isDelStartSpace		= oParamsCutContent.isDelStartSpace;
+		let isDelLastSubSup		= oParamsCutContent.isDelLastSubSup;
 
 		if (isCopy === true)
 			oContent = oContent.Copy();
@@ -7611,6 +7761,8 @@
 			oMathTextAndStyles.DelFirstSpace();
 		if (isDelLastSpace)
 			oMathTextAndStyles.DelLastSpace();
+		if (isDelLastSubSup)
+			oMathTextAndStyles.DelLastSubSup();
 
 		return oMathTextAndStyles;
 	}
@@ -7663,7 +7815,7 @@
 					oTempPos = new PositionIsCMathContent(
 						nTempRootIndex + 1,
 						nTempRunCounter + 1,
-						undefined,
+						MathLiterals.func.id,
 						oContentIterator._paraRun
 					);
 				}
@@ -7790,6 +7942,34 @@
 			}
 
 			return false;
+		};
+		/**
+		 * Check if this position is less than oPos
+		 * @param {PositionIsCMathContent} oPos
+		 * @returns {boolean}
+		 */
+		this.IsLess = function (oPos)
+		{
+			let MathPos = this.GetMathPos();
+			let ParaPos = this.GetPosition();
+			let OtherMathPos = oPos.GetMathPos();
+			let OtherParaPos = oPos.GetPosition();
+
+			return MathPos < OtherMathPos || (MathPos === OtherMathPos && ParaPos < OtherParaPos);
+		};
+		/**
+		 * Check if this position is greater than oPos
+		 * @param {PositionIsCMathContent} oPos
+		 * @returns {boolean}
+		 */
+		this.IsGreater = function (oPos)
+		{
+			let MathPos = this.GetMathPos();
+			let ParaPos = this.GetPosition();
+			let OtherMathPos = oPos.GetMathPos();
+			let OtherParaPos = oPos.GetPosition();
+
+			return MathPos > OtherMathPos || (MathPos === OtherMathPos && ParaPos > OtherParaPos);
 		};
 		/**
 		 * Get text of token. Needs  for debug

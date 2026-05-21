@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -109,7 +112,7 @@ function (window, undefined) {
 				break;
 			}
 			case asc.c_oAscHeaderFooterField.lineBreak: {
-				//TODO возможно стоит добавлять символ переноса строки к предыдущему параграфу
+				//TODO perhaps we should add the line break character to the previous paragraph
 				res = "\n";
 				break;
 			}
@@ -500,7 +503,7 @@ function (window, undefined) {
 		if ("" !== rName) {
 			// single dash is document default font
 			if ((rName.length === 1) && (rName[0] === '-')) {
-				//пересмотреть
+				//review this
 				this.font.fn = null;
 			} else {
 				this.font.fn = rName;
@@ -510,7 +513,7 @@ function (window, undefined) {
 	};
 
 	HeaderFooterParser.prototype.convertFontStyle = function (rStyle) {
-		//в ms жесткая завязка на font style. в lo - ддопускаются следующие строчки - "bold italic bold"  и тп
+		//in MS there's a strict binding to font style. in LO - the following strings are allowed - "bold italic bold" etc
 		this.font.b = this.font.i = false;
 
 		let fontStyleArr = rStyle.split(" ");
@@ -633,8 +636,8 @@ function (window, undefined) {
 						aParaText += "&\"" + newFont.fn;
 					}
 
-					//TODO пересмотреть. MS каждый раз прописывает новый font style:
-					// сли у предыдущего фрагмента был bold, у нового bold и italic - то у нового будет прописаны и bold и italic
+					//TODO review this. MS writes a new font style each time:
+					// if the previous fragment had bold, and the new one has bold and italic - then the new one will have both bold and italic written
 					let fontStyleStr = "";
 					if (prevFont.b !== newFont.b) {
 						fontStyleStr = ",";
@@ -831,7 +834,7 @@ function (window, undefined) {
 		};
 
 		if (!this.fragments) {
-			//возможно стоит очищать канву в данном случае
+			//perhaps we should clear the canvas in this case
 			drawBackground();
 			return;
 		}
@@ -841,14 +844,14 @@ function (window, undefined) {
 		let drawingCtx = this.canvasObj.drawingCtx;
 
 		//draw
-		//добавляю флаги для учета переноса строки
+		//adding flags to account for line breaks
 		let wb = window["Asc"]["editor"].wb;
 		let ws = window["Asc"]["editor"].wb.getWorksheet();
 		let cellFlags = new AscCommonExcel.CellFlags();
 		cellFlags.wrapText = true;
 		cellFlags.textAlign = this.getAlign();
 
-		//не зависит от зума страницы
+		//does not depend on page zoom
 		let realZoom = ws.stringRender.drawingCtx.getZoom();
 		ws.stringRender.drawingCtx.changeZoom(1);
 
@@ -1063,9 +1066,9 @@ function (window, undefined) {
 	}
 
 	CHeaderFooterEditor.prototype.init = function (idArr, opt_objForSave) {
-		//создаем 6 канвы(+ добавляем их в дом структуру внутрь элемента от меню) + 3 drawingCtx, необходимые для отрисовки 3 поля
-		//делается это только 1 раз при инициализации класса
-		//потом эти 6 канвы используются для отрисовки всех first/odd/even
+		//create 6 canvases (+ add them to the DOM structure inside the menu element) + 3 drawingCtx needed for rendering 3 fields
+		//this is done only once during class initialization
+		//then these 6 canvases are used for rendering all first/odd/even
 		let t = this;
 		let createAndPushCanvasObj = function (id) {
 			let obj = {};
@@ -1075,7 +1078,7 @@ function (window, undefined) {
 			obj.height = t.parentHeight;
 			obj.canvas = document.createElement('canvas');
 			obj.canvas.id = obj.id;
-			//TODO перепроверить код ниже. оставляю как было раньше
+			//TODO verify the code below. leaving it as it was before
 			/*obj.canvas.style.width = t.parentWidth + "px";
 			 obj.canvas.style.height = t.parentHeight + "px";
 			 AscCommon.calculateCanvasSize(obj.canvas);*/
@@ -1110,14 +1113,15 @@ function (window, undefined) {
 		this.differentOddEven = optHeaderFooterProps ? optHeaderFooterProps.differentOddEven : ws.model.headerFooter.differentOddEven;
 		this.scaleWithDoc = optHeaderFooterProps ? optHeaderFooterProps.scaleWithDoc : ws.model.headerFooter.scaleWithDoc;
 
-		//сохраняем редактор ячейки
+		//save the cell editor
 		this.wbCellEditor = this.wb.cellEditor;
 
-		//далее создаем классы, где будем хранить fragments всех типов колонтитулов + выполнять отрисовку
-		//хранить будем в следующем виде: [c_nPageHFType.firstHeader/.../][c_nPortionLeft/.../c_nPortionRight]
+		//then create classes where we will store fragments of all header/footer types + perform rendering
+		//we will store them in the following format: [c_nPageHFType.firstHeader/.../][c_nPortionLeft/.../c_nPortionRight]
 		this._createAndDrawSections(null, optHeaderFooterProps);
 		this._generatePresetsArr();
 
+		//lock
 		if (this.api.isDarkMode) {
 			this.updateDarkMode(true);
 		}
@@ -1155,7 +1159,7 @@ function (window, undefined) {
 		this.cellEditor = null;
 		this.pageType = type;
 
-		//ещё возможно нужно будет заново добавлять в parent созданную канву(reinit)
+		//may also need to add the created canvas to parent again (reinit)
 		this._createAndDrawSections(type);
 	};
 
@@ -1167,14 +1171,14 @@ function (window, undefined) {
 		let editLockCallback = function () {
 			id = id.replace("#", "");
 
-			//если находимся в том же элементе
+			//if we are in the same element
 			if (t.curParentFocusId === id) {
 				api.asc_enableKeyEvents(true);
 				return;
 			}
 
-			//TODO ещё нужно учитывать, что находимся в той же вкладке - odd/even/...
-			//если перед этим редактировали другое поле, сохраняем данные
+			//TODO also need to consider that we are in the same tab - odd/even/...
+			//if we were editing another field before, save the data
 			if (null !== t.curParentFocusId) {
 				let prevField = t._getSectionById(t.curParentFocusId);
 				let prevFragments = t.cellEditor.options.fragments;
@@ -1215,14 +1219,14 @@ function (window, undefined) {
 							}
 						}, AscCommon.AscBrowser.convertToRetinaValue(2, true), true);
 
-					//временно меняем cellEditor у wb
+					//temporarily replace cellEditor in wb
 					wb.cellEditor = t.cellEditor;
 
 					if (t.api.isDarkMode) {
 						t.cellEditor.updateDarkMode(true);
 					}
 
-					//удаляем z-index для интерфейса
+					//remove z-index for the interface
 					t.cellEditor.canvasOuter.style.zIndex = "";
 					t.cellEditor.canvas.style.zIndex = "";
 					t.cellEditor.canvasOverlay.style.zIndex = "";
@@ -1294,7 +1298,7 @@ function (window, undefined) {
 			autoComplete: [],
 			autoCompleteLC: [],
 			saveValueCallback: function (val, flags) {
-				//TODO добавил для того, чтобы при нажатии на стрелки не было падения
+				//TODO added this to prevent crash when pressing arrow keys
 			},
 			getSides: function () {
 				let bottomArr = [];
@@ -1346,7 +1350,7 @@ function (window, undefined) {
 	};
 
 	CHeaderFooterEditor.prototype.destroy = function (bSave, opt_objForSave) {
-		//возвращаем cellEditor у wb
+		//restore cellEditor in wb
 		let t = this;
 		let api = window["Asc"]["editor"];
 		let wb = api.wb;
@@ -1537,9 +1541,9 @@ function (window, undefined) {
 				continue;
 			}
 
-			//сначала формируем новый объект, затем доблавляем в модель и записываем в историю полученную строку
-			//возможно стоит пересмотреть(получать вначале строку) - создаём вначале парсер,
-			//добавляем туда полученные при редактировании фрагменты, затем получаем строку
+			//first we create a new object, then add it to the model and write the resulting string to history
+			//perhaps we should review this (get the string first) - we first create a parser,
+			//add the fragments obtained during editing, then get the string
 			let curHeaderFooter = this._getCurPageHF(i, opt_headerFooter, ws);
 			if (null === curHeaderFooter) {
 				curHeaderFooter = new Asc.CHeaderFooterData();
@@ -1578,7 +1582,7 @@ function (window, undefined) {
 				isChanged = true;
 			}
 
-			//нужно добавлять в историю
+			//need to add to history
 			if (isChanged) {
 				if (!isAddHistory && !opt_headerFooter) {
 					History.Create_NewPoint();
@@ -1963,12 +1967,12 @@ function (window, undefined) {
 		if (!this.sections[pageHeaderType]) {
 			this.sections[pageHeaderType] = [];
 
-			//создаём секции, если они уже не созданы
+			//create sections if they are not already created
 			this.sections[pageHeaderType][c_oPortionPosition.left] = new CHeaderFooterEditorSection(pageHeaderType, c_nPortionLeftHeader, this.canvas[c_nPortionLeftHeader]);
 			this.sections[pageHeaderType][c_oPortionPosition.center] = new CHeaderFooterEditorSection(pageHeaderType, c_nPortionCenterHeader, this.canvas[c_nPortionCenterHeader]);
 			this.sections[pageHeaderType][c_oPortionPosition.right] = new CHeaderFooterEditorSection(pageHeaderType, c_nPortionRightHeader, this.canvas[c_nPortionRightHeader]);
 
-			//в случае print preview храним временно опции в этом объекте
+			//in case of print preview, we temporarily store options in this object
 			if (opt_objForSave) {
 				if (opt_objForSave.sections[pageHeaderType][c_oPortionPosition.left]) {
 					this.sections[pageHeaderType][c_oPortionPosition.left].fragments = opt_objForSave.sections[pageHeaderType][c_oPortionPosition.left].fragments;
@@ -1980,7 +1984,7 @@ function (window, undefined) {
 					this.sections[pageHeaderType][c_oPortionPosition.right].fragments = opt_objForSave.sections[pageHeaderType][c_oPortionPosition.right].fragments;
 				}
 			} else {
-				//получаем из модели необходимый нам элемент
+				//get the element we need from the model
 				curPageHF = this._getCurPageHF(pageHeaderType, opt_headerFooter);
 				if (curPageHF && curPageHF.str) {
 					if (!curPageHF.parser) {
@@ -1998,12 +2002,12 @@ function (window, undefined) {
 		if (!this.sections[pageFooterType]) {
 			this.sections[pageFooterType] = [];
 
-			//создаём секции, если они уже не созданы
+			//create sections if they are not already created
 			this.sections[pageFooterType][c_oPortionPosition.left] = new CHeaderFooterEditorSection(pageFooterType, c_nPortionLeftFooter, this.canvas[c_nPortionLeftFooter]);
 			this.sections[pageFooterType][c_oPortionPosition.center] = new CHeaderFooterEditorSection(pageFooterType, c_nPortionCenterFooter, this.canvas[c_nPortionCenterFooter]);
 			this.sections[pageFooterType][c_oPortionPosition.right] = new CHeaderFooterEditorSection(pageFooterType, c_nPortionRightFooter, this.canvas[c_nPortionRightFooter]);
 
-			//в случае print preview храним временно опции в этом объекте
+			//in case of print preview, we temporarily store options in this object
 			if (opt_objForSave) {
 				if (opt_objForSave.sections[pageFooterType][c_oPortionPosition.left]) {
 					this.sections[pageFooterType][c_oPortionPosition.left].fragments = opt_objForSave.sections[pageFooterType][c_oPortionPosition.left].fragments;
@@ -2015,7 +2019,7 @@ function (window, undefined) {
 					this.sections[pageFooterType][c_oPortionPosition.right].fragments = opt_objForSave.sections[pageFooterType][c_oPortionPosition.right].fragments;
 				}
 			} else {
-				//получаем из модели необходимый нам элемент
+				//get the element we need from the model
 				curPageHF = this._getCurPageHF(pageFooterType, opt_headerFooter);
 				if (curPageHF && curPageHF.str) {
 					if (!curPageHF.parser) {
@@ -2057,7 +2061,7 @@ function (window, undefined) {
 		}
 		let hF = opt_headerFooter ? opt_headerFooter : ws.model.headerFooter;
 
-		//TODO можно у класса CHeaderFooter реализовать данную функцию
+		//TODO this function can be implemented in the CHeaderFooter class
 		if (hF) {
 			switch (type) {
 				case asc.c_oAscPageHFType.firstHeader: {
@@ -2116,7 +2120,7 @@ function (window, undefined) {
 			return null;
 		}
 
-		//TODO возможно стоит созадавать tokens внутри парсера с элементами Fragments
+		//TODO perhaps we should create tokens inside the parser with Fragment elements
 		let res = [];
 
 		let tM = AscCommon.translateManager;
@@ -2130,8 +2134,8 @@ function (window, undefined) {
 					text += symbol;
 				}
 
-				//если несколько таких символов подряд, ms оставляет 1 как текст
-				//пока игнорируем данную ситуацию
+				//if there are several such characters in a row, MS keeps 1 as text
+				//for now we ignore this situation
 				if (symbol === "&") {
 					if ("" !== text) {
 						res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
@@ -2200,12 +2204,12 @@ function (window, undefined) {
 						res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 					}
 				} else if (bToken) {
-					//начинаем просматривать аргумент
+					//start viewing the argument
 					if (symbol === "[") {
 						startToken = true;
 						tokenText = "";
 					} else {
-						//если за "&" следует спецсимвол
+						//if a special character follows "&"
 						switch (symbol) {
 							case 'l':
 							case 'c':
