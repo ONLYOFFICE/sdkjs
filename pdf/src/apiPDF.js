@@ -1208,7 +1208,7 @@
 						this.field.SetCharLimit(0);
 					}
 
-					field.SetComb(bValue);
+					this.field.SetComb(bValue);
 
 					return this["comb"];
 				}
