@@ -20155,6 +20155,86 @@
 		return null;
 	};
 	/**
+	 * Sets the title of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @param {string} title - The title to set for the current drawing.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetTitle.js
+	 */
+	ApiDrawing.prototype.SetTitle = function(title)
+	{
+		if (!title)
+			return false;
+
+		let oDrawing = this.getParaDrawing();
+		let oDocPr = oDrawing.docPr;
+		if (oDocPr)
+		{
+			oDocPr.setTitle(title);
+			return true;
+		}
+		return false;
+	};
+	/**
+	 * Gets the title of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {string | null} - The title of the current drawing, or null if not set.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetTitle.js
+	 */
+	ApiDrawing.prototype.GetTitle = function()
+	{
+		let oDrawing = this.getParaDrawing();
+		let oDocPr = oDrawing.docPr;
+		if (oDocPr && oDocPr.title)
+			return oDocPr.title;
+
+		return null;
+	};
+	/**
+	 * Sets the description of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @param {string} description - The description to set for the current drawing.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetDescription.js
+	 */
+	ApiDrawing.prototype.SetDescription = function(description)
+	{
+		if (!description)
+			return false;
+
+		let oDrawing = this.getParaDrawing();
+		let oDocPr = oDrawing.docPr;
+		if (oDocPr)
+		{
+			oDocPr.setDescr(description);
+			return true;
+		}
+		return false;
+	};
+	/**
+	 * Gets the description of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {string | null} - The description of the current drawing, or null if not set.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetDescription.js
+	 */
+	ApiDrawing.prototype.GetDescription = function()
+	{
+		let oDrawing = this.getParaDrawing();
+		let oDocPr = oDrawing.docPr;
+		if (oDocPr && oDocPr.descr)
+			return oDocPr.descr;
+
+		return null;
+	};
+	/**
 	 * Converts the ApiDrawing object into the JSON object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
@@ -20337,7 +20417,60 @@
 
 		return nRad * 180 / Math.PI
 	};
+	/**
+	 * Sets whether the aspect ratio of the drawing is locked.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @param {boolean} bAspect - Specifies whether the aspect ratio of this drawing is locked.
+	 * @returns {boolean} Returns `true` if the lock aspect was successfully set, otherwise returns `false`.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLockAspect.js
+	 */
+	ApiDrawing.prototype.SetLockAspect = function(bAspect)
+	{
+		if (bAspect !== false && bAspect !== true)
+			return false;
 
+		this.Drawing.setNoChangeAspect(bAspect);
+		return true;
+	};
+	/**
+	 * Returns whether the aspect ratio of the drawing is locked.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockAspect.js
+	 */
+	ApiDrawing.prototype.GetLockAspect = function()
+	{
+		return this.Drawing.getNoChangeAspect();
+	};
+	/**
+	 * Sets whether the drawing object is allowed to overlap other drawing objects.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @param {boolean} bOverlap - Specifies whether this drawing object can overlap other drawing objects.
+	 * @returns {void}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetAllowOverlap.js
+	 */
+	ApiDrawing.prototype.SetAllowOverlap = function(bOverlap) {
+		let drawing = this.getParaDrawing();
+		drawing.Set_AllowOverlap(bOverlap);
+	};
+	/**
+	 * Returns whether the drawing object is allowed to overlap other drawing objects.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetAllowOverlap.js
+	 */
+	ApiDrawing.prototype.GetAllowOverlap = function() {
+		let drawing = this.getParaDrawing();
+		return drawing.Get_AllowOverlap();
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiImage
