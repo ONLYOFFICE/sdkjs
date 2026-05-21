@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -44,6 +47,247 @@
 //   Range._foreachDataOnlyByCol           - column-major data-only iteration.
 (function (window, undefined) {
 	var ns = window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+
+	// Raw tuple iterator. Emits (row, col, type, value, xfIndex[, fHandle])
+	// without allocating a Cell or pushing workbook.loadCells. Visitor
+	// returning non-null stops iteration (matches _foreachDataOnly).
+	// Split into 5- and 6-arg specializations so the hot call site stays
+	// monomorphic — V8 deopts when a single site sees both arities.
+	function _fedv5(bbox, ws, excludeHidden, visitor) {
+		var cellsByCol = ws.cellsByCol;
+		var rowsData = ws.rowsData;
+		var rdInt32 = rowsData ? rowsData.dataInt32 : null;
+		var rdIdxA = rowsData ? rowsData.indexA : 0;
+		var rdStruct = rowsData ? rowsData.structSize : 0;
+		var c1 = bbox.c1;
+		var c2 = Math.min(bbox.c2, cellsByCol.length - 1);
+		var r1 = bbox.r1;
+		var r2 = bbox.r2;
+		var aCols = [], aDatas = [];
+		var effMin = Number.MAX_SAFE_INTEGER, effMax = -1;
+		for (var ci = c1; ci <= c2; ci++) {
+			var cd = cellsByCol[ci];
+			if (cd && r1 <= cd.getMaxIndex() && cd.getMinIndex() <= r2) {
+				aCols.push(ci); aDatas.push(cd);
+				var mn = cd.getMinIndex();
+				var mx = cd.getMaxIndex();
+				if (mn < effMin) effMin = mn;
+				if (mx > effMax) effMax = mx;
+			}
+		}
+		var aLen = aCols.length;
+		if (aLen === 0) return undefined;
+		// Clip the outer row loop to the active-column extent.
+		var startR = r1 > effMin ? r1 : effMin;
+		var stopR = r2 < effMax ? r2 : effMax;
+		for (var r = startR; r <= stopR; r++) {
+			if (excludeHidden && rdInt32) {
+				var rowFlags = rdInt32[((r - rdIdxA) * rdStruct) >> 2] & 0xFF;
+				if (rowFlags & 0x02) continue;
+			}
+			for (var i = 0; i < aLen; i++) {
+				var colData = aDatas[i];
+				if (!colData.isNonEmpty(r)) continue;
+				var col = aCols[i];
+				var byteOff = (r - colData.indexA) * colData.structSize;
+				var int32Off = byteOff >> 2;
+				var mix = colData.dataInt32[int32Off];
+				var flagsHi = (mix >>> 24) & 0xFF;
+				var type = (flagsHi >>> 1) & 0x3;
+				var xfIndex = mix & 0xFFFFFF;
+				var value;
+				if (flagsHi & 0x08) {
+					value = colData.dataFloat[(byteOff + 8) >> 3];
+				} else {
+					value = colData.dataInt32[(byteOff + 8) >> 2];
+				}
+				var stop = visitor(r, col, type, value, xfIndex);
+				if (stop != null) return stop;
+			}
+		}
+		return undefined;
+	}
+
+	function _fedv6(bbox, ws, excludeHidden, visitor) {
+		var cellsByCol = ws.cellsByCol;
+		var rowsData = ws.rowsData;
+		var rdInt32 = rowsData ? rowsData.dataInt32 : null;
+		var rdIdxA = rowsData ? rowsData.indexA : 0;
+		var rdStruct = rowsData ? rowsData.structSize : 0;
+		var workbookFormulas = ws.workbook.workbookFormulas;
+		var c1 = bbox.c1;
+		var c2 = Math.min(bbox.c2, cellsByCol.length - 1);
+		var r1 = bbox.r1;
+		var r2 = bbox.r2;
+		var aCols = [], aDatas = [];
+		var effMin = Number.MAX_SAFE_INTEGER, effMax = -1;
+		for (var ci = c1; ci <= c2; ci++) {
+			var cd = cellsByCol[ci];
+			if (cd && r1 <= cd.getMaxIndex() && cd.getMinIndex() <= r2) {
+				aCols.push(ci); aDatas.push(cd);
+				var mn = cd.getMinIndex();
+				var mx = cd.getMaxIndex();
+				if (mn < effMin) effMin = mn;
+				if (mx > effMax) effMax = mx;
+			}
+		}
+		var aLen = aCols.length;
+		if (aLen === 0) return undefined;
+		var startR = r1 > effMin ? r1 : effMin;
+		var stopR = r2 < effMax ? r2 : effMax;
+		for (var r = startR; r <= stopR; r++) {
+			if (excludeHidden && rdInt32) {
+				var rowFlags = rdInt32[((r - rdIdxA) * rdStruct) >> 2] & 0xFF;
+				if (rowFlags & 0x02) continue;
+			}
+			for (var i = 0; i < aLen; i++) {
+				var colData = aDatas[i];
+				if (!colData.isNonEmpty(r)) continue;
+				var col = aCols[i];
+				var byteOff = (r - colData.indexA) * colData.structSize;
+				var int32Off = byteOff >> 2;
+				var mix = colData.dataInt32[int32Off];
+				var flagsHi = (mix >>> 24) & 0xFF;
+				var type = (flagsHi >>> 1) & 0x3;
+				var xfIndex = mix & 0xFFFFFF;
+				var formulaIndex = colData.dataInt32[int32Off + 1];
+				var value;
+				if (flagsHi & 0x08) {
+					value = colData.dataFloat[(byteOff + 8) >> 3];
+				} else {
+					value = colData.dataInt32[(byteOff + 8) >> 2];
+				}
+				var fHandle = (formulaIndex && workbookFormulas) ? workbookFormulas.get(formulaIndex) : null;
+				var stop = visitor(r, col, type, value, xfIndex, fHandle);
+				if (stop != null) return stop;
+			}
+		}
+		return undefined;
+	}
+
+	function forEachDataValue(range, visitor, opts) {
+		opts = opts || {};
+		var ws = range.worksheet;
+		var excludeHidden = !!(ws.bExcludeHiddenRows || opts.excludeHiddenRows);
+		return opts.includeFormulaHandle
+			? _fedv6(range.bbox, ws, excludeHidden, visitor)
+			: _fedv5(range.bbox, ws, excludeHidden, visitor);
+	}
+
+	ns.forEachDataValue = forEachDataValue;
+	ns._forEachDataValue5 = _fedv5;
+	ns._forEachDataValue6 = _fedv6;
+
+	// Read-only row cursor: init snapshots active columns once, setRow swaps
+	// the current row, read/readInto/get* are O(1) per (row, col) probe.
+	// Does NOT push workbook.loadCells and does NOT allocate a Cell — not
+	// usable for mutation, history-aware writes, or formula rebinding.
+	function RowCursor() {
+		this.cellsByCol = null;
+		this.c1 = 0;
+		this.c2 = 0;
+		this.row = -1;
+		this._cdByCol = null;
+		this._effMinR = 0;
+		this._effMaxR = -1;
+	}
+	RowCursor.prototype.init = function (cellsByCol, c1, c2) {
+		this.cellsByCol = cellsByCol;
+		this.c1 = c1;
+		var cap = Math.min(c2, cellsByCol.length - 1);
+		this.c2 = cap;
+		var sparse = new Array(cap - c1 + 1);
+		var effMin = Number.MAX_SAFE_INTEGER, effMax = -1;
+		for (var c = c1; c <= cap; c++) {
+			var cd = cellsByCol[c];
+			if (cd) {
+				sparse[c - c1] = cd;
+				var mn = cd.getMinIndex();
+				var mx = cd.getMaxIndex();
+				if (mn < effMin) effMin = mn;
+				if (mx > effMax) effMax = mx;
+			}
+		}
+		this._cdByCol = sparse;
+		this._effMinR = effMin;
+		this._effMaxR = effMax;
+		return this;
+	};
+	RowCursor.prototype.setRow = function (r) { this.row = r; };
+	RowCursor.prototype.isOccupied = function (c) {
+		if (this.row < this._effMinR || this.row > this._effMaxR) return false;
+		var cd = this._cdByCol[c - this.c1];
+		return cd ? cd.isNonEmpty(this.row) : false;
+	};
+	RowCursor.prototype.read = function (c) {
+		if (this.row < this._effMinR || this.row > this._effMaxR) return null;
+		var cd = this._cdByCol[c - this.c1];
+		if (!cd || !cd.isNonEmpty(this.row)) return null;
+		var byteOff = (this.row - cd.indexA) * cd.structSize;
+		var int32Off = byteOff >> 2;
+		var mix = cd.dataInt32[int32Off];
+		var flagsHi = (mix >>> 24) & 0xFF;
+		return {
+			type: (flagsHi >>> 1) & 0x3,
+			xfIndex: mix & 0xFFFFFF,
+			value: (flagsHi & 0x08)
+				? cd.dataFloat[(byteOff + 8) >> 3]
+				: cd.dataInt32[(byteOff + 8) >> 2]
+		};
+	};
+	// Allocation-free variant. The out parameter shape must stay stable
+	// across calls; recommended pre-init: { type:0, xfIndex:0, value:0, isOccupied:false }.
+	RowCursor.prototype.readInto = function (c, out) {
+		if (this.row < this._effMinR || this.row > this._effMaxR) {
+			out.isOccupied = false;
+			return false;
+		}
+		var cd = this._cdByCol[c - this.c1];
+		if (!cd || !cd.isNonEmpty(this.row)) {
+			out.isOccupied = false;
+			return false;
+		}
+		var byteOff = (this.row - cd.indexA) * cd.structSize;
+		var int32Off = byteOff >> 2;
+		var mix = cd.dataInt32[int32Off];
+		var flagsHi = (mix >>> 24) & 0xFF;
+		out.type = (flagsHi >>> 1) & 0x3;
+		out.xfIndex = mix & 0xFFFFFF;
+		out.value = (flagsHi & 0x08)
+			? cd.dataFloat[(byteOff + 8) >> 3]
+			: cd.dataInt32[(byteOff + 8) >> 2];
+		out.isOccupied = true;
+		return true;
+	};
+	// Single-field accessors. Each returns the field if (row, c) is occupied,
+	// else `undefined`. No allocation.
+	RowCursor.prototype.getType = function (c) {
+		if (this.row < this._effMinR || this.row > this._effMaxR) return undefined;
+		var cd = this._cdByCol[c - this.c1];
+		if (!cd || !cd.isNonEmpty(this.row)) return undefined;
+		var byteOff = (this.row - cd.indexA) * cd.structSize;
+		var mix = cd.dataInt32[byteOff >> 2];
+		return ((mix >>> 24) >>> 1) & 0x3;
+	};
+	RowCursor.prototype.getXfIndex = function (c) {
+		if (this.row < this._effMinR || this.row > this._effMaxR) return undefined;
+		var cd = this._cdByCol[c - this.c1];
+		if (!cd || !cd.isNonEmpty(this.row)) return undefined;
+		var byteOff = (this.row - cd.indexA) * cd.structSize;
+		return cd.dataInt32[byteOff >> 2] & 0xFFFFFF;
+	};
+	RowCursor.prototype.getValue = function (c) {
+		if (this.row < this._effMinR || this.row > this._effMaxR) return undefined;
+		var cd = this._cdByCol[c - this.c1];
+		if (!cd || !cd.isNonEmpty(this.row)) return undefined;
+		var byteOff = (this.row - cd.indexA) * cd.structSize;
+		var mix = cd.dataInt32[byteOff >> 2];
+		return ((mix >>> 24) & 0x08)
+			? cd.dataFloat[(byteOff + 8) >> 3]
+			: cd.dataInt32[(byteOff + 8) >> 2];
+	};
+
+	ns.RowCursor = RowCursor;
 
 	// Largest row index with any direct style entry in [c1..c2], or -1.
 	function maxStyleOnlyRow(ws, c1, c2) {
@@ -75,7 +319,9 @@
 	// resolves the direct xf).
 	function OccupiedRowIterator() {
 	}
-	OccupiedRowIterator.prototype.init = function (ws, r1, c1, c2) {
+	// r2 is optional; forwarded to the inner RowIterator so the adaptive
+	// active-extent clip is correct when adaptive mode is active.
+	OccupiedRowIterator.prototype.init = function (ws, r1, c1, c2, r2) {
 		this.ws = ws;
 		this.c1 = c1;
 		var dataMaxC = (ws.cellsByCol && ws.cellsByCol.length > 0) ? ws.cellsByCol.length - 1 : -1;
@@ -89,7 +335,7 @@
 		this.dataIter = null;
 		if (c2 >= c1) {
 			this.dataIter = new ns.RowIterator();
-			this.dataIter.init(ws, r1, c1, c2);
+			this.dataIter.init(ws, r1, c1, c2, r2);
 		}
 		this.transientCell = new ns.Cell(ws);
 		this.transientCell._isTransient = true;
@@ -124,6 +370,45 @@
 			this.dataIter.release();
 			this.dataIter = null;
 		}
+	};
+	// Combined data + style row extent for the _foreachNoEmpty outer-loop clip.
+	// Returns -1 when the clip is not safe: dataIter.getEffMinR() < 0 means
+	// baseline mode (SweepLine doesn't publish an extent), so we cannot
+	// know which rows have data. The caller's gate `effMin/effMax >= 0`
+	// then keeps the legacy r1..minR walk.
+	OccupiedRowIterator.prototype.getEffMinR = function () {
+		if (!this.dataIter) return -1;
+		var dataMin = this.dataIter.getEffMinR();
+		if (dataMin < 0) return -1;
+		var dataKnown = this.dataIter.getEffMaxR() >= 0;
+		var styleMin = -1;
+		if (this._activeStores) {
+			for (var i = 0; i < this._activeStores.length; i++) {
+				var s = this._activeStores[i];
+				var f = s.firstRow();
+				if (f >= 0 && (styleMin === -1 || f < styleMin)) styleMin = f;
+			}
+		}
+		if (!dataKnown) return styleMin;
+		if (styleMin < 0) return dataMin;
+		return dataMin < styleMin ? dataMin : styleMin;
+	};
+	OccupiedRowIterator.prototype.getEffMaxR = function () {
+		if (!this.dataIter) return -1;
+		var dataMin = this.dataIter.getEffMinR();
+		if (dataMin < 0) return -1;
+		var dataMax = this.dataIter.getEffMaxR();
+		var styleMax = -1;
+		if (this._activeStores) {
+			for (var i = 0; i < this._activeStores.length; i++) {
+				var s = this._activeStores[i];
+				var l = s.lastRow();
+				if (l > styleMax) styleMax = l;
+			}
+		}
+		if (dataMax < 0) return styleMax;
+		if (styleMax < 0) return dataMax;
+		return dataMax > styleMax ? dataMax : styleMax;
 	};
 	OccupiedRowIterator.prototype.setRow = function (row) {
 		this.row = row;
@@ -217,6 +502,15 @@
 	var Row = ns.Row;
 	var RowIterator = ns.RowIterator;
 
+	// Range-level entry points for the raw tuple iterator and row cursor.
+	// Both are additive and don't alter _foreach* semantics.
+	Range.prototype.forEachDataValue = function(visitor, opts) {
+		return ns.forEachDataValue(this, visitor, opts);
+	};
+	Range.prototype.createRowCursor = function () {
+		return new RowCursor().init(this.worksheet.cellsByCol, this.bbox.c1, this.bbox.c2);
+	};
+
 	// Occupied iteration: data cells AND direct-style-only cells.
 	// Style-only cells arrive as a shared _isTransient Cell with cell.xfs
 	// preloaded; callers must treat them as read-only (no saveContent,
@@ -233,7 +527,20 @@
 			var itRow = null;
 			if (actionCell) {
 				itRow = new OccupiedRowIterator();
-				itRow.init(ws, oBBox.r1, oBBox.c1, oBBox.c2);
+				itRow.init(ws, oBBox.r1, oBBox.c1, oBBox.c2, oBBox.r2);
+			}
+			// Outer-loop clip. Only safe when actionRow is null: an actionRow
+			// callback may read excludedCount and may rely on per-row row
+			// metadata over the full bbox, so we keep the legacy walk there.
+			var startR = oBBox.r1;
+			var stopR = minR;
+			if (itRow && !actionRow && itRow.getEffMinR) {
+				var effMin = itRow.getEffMinR();
+				var effMax = itRow.getEffMaxR();
+				if (effMin >= 0 && effMax >= 0) {
+					if (effMin > startR) startR = effMin;
+					if (effMax < stopR) stopR = effMax;
+				}
 			}
 			var bExcludeHiddenRows = (ws.bExcludeHiddenRows || excludeHiddenRows);
 			var excludedCount = 0;
@@ -241,7 +548,7 @@
 			var tempRow = new Row(ws);
 			var allRow = ws.getAllRow();
 			var allRowHidden = allRow && allRow.getHidden();
-			for (i = oBBox.r1; i <= minR; i++) {
+			for (i = startR; i <= stopR; i++) {
 				if (actionRow) {
 					if (tempRow.loadContent(i)) {
 						if (bExcludeHiddenRows && tempRow.getHidden()) {
@@ -287,7 +594,20 @@
 		if (actionCell || actionRow) {
 			var itRow = new RowIterator();
 			if (actionCell) {
-				itRow.init(this.worksheet, this.bbox.r1, this.bbox.c1, this.bbox.c2);
+				itRow.init(this.worksheet, this.bbox.r1, this.bbox.c1, this.bbox.c2, this.bbox.r2);
+			}
+			// Outer-loop clip to the active-column extent. Skipped when
+			// actionRow is provided so the row callback still sees every row
+			// in [r1..minR] (excludedCount accuracy + per-row side effects).
+			var startR = oBBox.r1;
+			var stopR = minR;
+			if (actionCell && !actionRow && itRow.getEffMinR) {
+				var effMin = itRow.getEffMinR();
+				var effMax = itRow.getEffMaxR();
+				if (effMin >= 0 && effMax >= 0) {
+					if (effMin > startR) startR = effMin;
+					if (effMax < stopR) stopR = effMax;
+				}
 			}
 			var bExcludeHiddenRows = (this.worksheet.bExcludeHiddenRows || excludeHiddenRows);
 			var excludedCount = 0;
@@ -295,7 +615,7 @@
 			var tempRow = new Row(this.worksheet);
 			var allRow = this.worksheet.getAllRow();
 			var allRowHidden = allRow && allRow.getHidden();
-			for (i = oBBox.r1; i <= minR; i++) {
+			for (i = startR; i <= stopR; i++) {
 				if (actionRow) {
 					if (tempRow.loadContent(i)) {
 						if (bExcludeHiddenRows && tempRow.getHidden()) {
@@ -445,7 +765,14 @@
 			for (j = oBBox.c1; j <= minC; ++j) {
 				colData = this.worksheet.getColDataNoEmpty(j);
 				if (colData) {
-					for (i = oBBox.r1; i <= Math.min(minR, colData.getMaxIndex()); i++) {
+					// Clip the inner loop to the column's [getMinIndex..getMaxIndex].
+					// Callers do not rely on excludedCount accumulating over
+					// the empty prefix; the (cell, row, col) signature audit
+					// confirmed this is safe.
+					var startRow = oBBox.r1;
+					var colMin = colData.getMinIndex();
+					if (colMin > startRow) startRow = colMin;
+					for (i = startRow; i <= Math.min(minR, colData.getMaxIndex()); i++) {
 						if (bExcludeHiddenRows && this.worksheet.getRowHidden(i)) {
 							excludedCount++;
 							continue;

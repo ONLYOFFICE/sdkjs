@@ -22842,14 +22842,14 @@
 		return -1 !== this.col;
 	};
 
+	// Baseline RowIterator: wraps SweepLineRowIterator. The adaptive mode +
+	// runtime flag live in RowIteratorAdaptive.js, loaded after this file.
 	function RowIterator() {
 	}
-
 	RowIterator.prototype.init = function (ws, r1, c1, c2) {
 		this.ws = ws;
 		this.cell = new Cell(ws);
 		this.ws.workbook.loadCells.push(this.cell);
-
 		this.iter = new SweepLineRowIterator();
 		this.iter.init(ws.cellsByCol, r1, c1, c2);
 	};
