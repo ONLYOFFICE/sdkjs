@@ -9008,6 +9008,16 @@
 			return;
 		if(null == stop)
 			stop = start;
+		// Single-row no-op short-circuit (autofit calls per row).
+		if (start === stop) {
+			var noOp = false;
+			this._getRowNoEmpty(start, function (row) {
+				noOp = row && row.h === height && row.getCalcHeight()
+					&& !row.getHidden() && !row.getCollapsed()
+					&& (!isCustom || row.getCustomHeight());
+			});
+			if (noOp) return;
+		}
 		AscCommon.History.Create_NewPoint();
 		var oThis = this, i;
 		/*var oSelection = AscCommon.History.GetSelection();
@@ -9412,8 +9422,8 @@
 		}
 		this.nRowsCount = index >= this.nRowsCount ? index + 1 : this.nRowsCount;
 	};
-	// Direct cell xf wins over row/col inheritance. Inheritance is cloned
-	// so callers may mutate via setStyleInternal.
+	// Direct cell xf wins over row/col inheritance. Returns a shared
+	// canonical xfs; mutators clone via `_initXfFont` before writing.
 	Worksheet.prototype._directOrInheritedXfs = function (nRow, nCol) {
 		var direct = AscCommonExcel.CellStyleStorage.getDirectCellXfs(this, nRow, nCol);
 		if (direct) {
@@ -9423,11 +9433,11 @@
 		var xfs = null;
 		this._getRowNoEmpty(nRow, function (row) {
 			if (row && null != row.xfs) {
-				xfs = row.xfs.clone();
+				xfs = row.xfs;
 			} else {
 				var oCol = t._getColNoEmptyWithAll(nCol);
 				if (null != oCol && null != oCol.xfs) {
-					xfs = oCol.xfs.clone();
+					xfs = oCol.xfs;
 				}
 			}
 		});
@@ -10419,6 +10429,9 @@
 	Worksheet.prototype.getMergedByCell = function(row, col){
 		var oMergeInfo = this.mergeManager.getByCell(row, col);
 		return oMergeInfo ? oMergeInfo.bbox : null;
+	};
+	Worksheet.prototype.hasMergedCells = function () {
+		return this.mergeManager ? !this.mergeManager.isEmpty() : false;
 	};
 	Worksheet.prototype.getMergedByRange = function(bbox){
 		return this.mergeManager.get(bbox);
@@ -15210,6 +15223,10 @@
 		// When true, xfs mutations skip the cellStylesByCol mirror.
 		// Set at temporary-cell creation sites; cleared on real attach.
 		this._isTransient = false;
+		// Per-instance compiled-style cache (invalidated by clearData /
+		// setStyleInternal — the only paths that mutate this.xfs).
+		this._compiledStyleCached = false;
+		this._compiledStyleValue = null;
 	}
 	Cell.prototype.clear = function(keepIndex) {
 			this.nRow = -1;
@@ -15220,6 +15237,8 @@
 	};
 	Cell.prototype.clearData = function() {
 		this.xfs = null;
+		this._compiledStyleCached = false;
+		this._compiledStyleValue = null;
 		this.formulaParsed = null;
 
 		this.type = CellValueType.Number;
@@ -15369,6 +15388,16 @@
 		return this.xfs;
 	};
 	Cell.prototype.getCompiledStyle = function (opt_styleComponents, opt_AffectingText) {
+		// Cache the no-args case; opt_* paths are rare and skip the cache.
+		if (opt_styleComponents === undefined && opt_AffectingText === undefined) {
+			if (this._compiledStyleCached) {
+				return this._compiledStyleValue;
+			}
+			var res = this.ws.getCompiledStyle(this.nRow, this.nCol, this, undefined, undefined);
+			this._compiledStyleCached = true;
+			this._compiledStyleValue = res;
+			return res;
+		}
 		return this.ws.getCompiledStyle(this.nRow, this.nCol, this, opt_styleComponents, opt_AffectingText);
 	};
 	Cell.prototype.getCompiledStyleCustom = function(needTable, needCell, needConditional) {
@@ -16302,6 +16331,8 @@
 	};
 	Cell.prototype.setStyleInternal = function(xfs) {
 		this.xfs = g_StyleCache.addXf(xfs);
+		this._compiledStyleCached = false;
+		this._compiledStyleValue = null;
 		this._hasChanged = true;
 		AscCommonExcel.CellStyleStorage.mirrorCellStyle(this);
 	};

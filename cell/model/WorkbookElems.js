@@ -5889,11 +5889,15 @@ StyleManager.prototype =
 	};
 	var g_StyleCache = new StyleCache();
 
+	// Shared empty result for getStyle fast path; callers treat as read-only.
+	var EMPTY_STYLE_COMPONENTS = {table: [], conditional: []};
+
 	/** @constructor */
 	function SheetMergedStyles() {
 		this.stylesTablePivot = [];
 		this.stylesConditional = {};
 		this.stylesConditionalIterator = null;
+		this._stylesConditionalEmpty = true;
 	}
 
 	SheetMergedStyles.prototype.setTablePivotStyle = function(range, xf, stripe) {
@@ -5924,17 +5928,22 @@ StyleManager.prototype =
 		}
 	};
 	SheetMergedStyles.prototype.getStyle = function(hiddenManager, row, col, opt_ws, opt_AffectingText) {
-		var res = {table: [], conditional: []};
 		if (opt_ws) {
 			opt_ws._updateConditionalFormatting();
 		}
 		if (!this.stylesConditionalIterator) {
 			this.stylesConditionalIterator = new AscCommon.RangeTopBottomIterator();
 			//todo lose stylesConditional sorting
-			this.stylesConditionalIterator.init(Object.values(this.stylesConditional), function(elem) {
+			var values = Object.values(this.stylesConditional);
+			this.stylesConditionalIterator.init(values, function(elem) {
 				return elem.ranges;
 			});
+			this._stylesConditionalEmpty = (values.length === 0);
 		}
+		if (this._stylesConditionalEmpty && this.stylesTablePivot.length === 0) {
+			return EMPTY_STYLE_COMPONENTS;
+		}
+		var res = {table: [], conditional: []};
 		var rules = this.stylesConditionalIterator.get(row, col);
 		//todo sort inside RangeTopBottomIterator ?
 		rules.sort(function(v1, v2) {
@@ -7495,6 +7504,22 @@ function RangeDataManagerElem(bbox, data)
 		this.initData = null;
 		this.worksheet = null;
 	}
+	RangeDataManager.prototype.isEmpty = function () {
+		if (this.initData && this.initData.length > 0) {
+			return false;
+		}
+		var tree = this.tree && this.tree.tree;
+		if (tree && tree.root !== undefined) {
+			return false;
+		}
+		if (this.oDependenceManager) {
+			var depTree = this.oDependenceManager.tree && this.oDependenceManager.tree.tree;
+			if (depTree && depTree.root !== undefined) {
+				return false;
+			}
+		}
+		return true;
+	};
 	RangeDataManager.prototype._delayedInit = function () {
 		if (this.initData) {
 			var initData = this.initData;

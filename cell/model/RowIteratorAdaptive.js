@@ -65,7 +65,7 @@
 		ns.g_rowIteratorMode = normalizeMode(ns.g_rowIteratorProto);
 	}
 	if (ns.g_rowIteratorMode == null) {
-		ns.g_rowIteratorMode = MODE_BASELINE;
+		ns.g_rowIteratorMode = MODE_ADAPTIVE;
 	}
 	ns.g_rowIteratorProto = ns.g_rowIteratorMode;
 
