@@ -37,6 +37,9 @@
 
 (function(window)
 {
+	/**
+	 * @constructor
+	 */
 	function InfoRecalcState()
 	{
 		AscWord.ParagraphRecalculateStateBase.call(this);

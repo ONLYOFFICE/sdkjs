@@ -39,6 +39,7 @@
 {
 	/**
 	 * @param {AscWord.Paragraph.WrapRecalcState} wrapState
+	 * @constructor
 	 */
 	function AlignRecalcState(wrapState)
 	{

@@ -37,6 +37,9 @@
 
 (function(window)
 {
+	/**
+	 * @constructor
+	 */
 	function WrapRecalcState()
 	{
 		AscWord.ParagraphRecalculateStateBase.call(this);

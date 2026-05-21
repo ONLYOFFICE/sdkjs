@@ -1950,7 +1950,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
         var StartPos = Range.StartPos;
         var EndPos   = Range.EndPos;
 
-        PRSC.Reset( this, Range );
+        PRSC.beginRange( this, Range );
 
 		PRSC.Range.W      = 0;
 		PRSC.Range.WEnd   = 0;
@@ -1963,7 +1963,9 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
             var Item = this.Content[Pos];
             Item.Recalculate_Range_Width( PRSC, CurLine, CurRange );
         }
-		
+
+        PRSC.endRange();
+
 
         var JustifyWord  = 0;
         var JustifySpace = 0;
