@@ -4263,22 +4263,19 @@
 
 		let drawingsToRender = aDrawings;
 		let bPartialRedraw   = !!oDirtyBoundsMM;
-		let bClipDrawings    = false;
-		let clipX = 0, clipY = 0, clipW = 0, clipH = 0;
-		let clipL = 0, clipT = 0, clipWmm = 0, clipHmm = 0;
 
 		if (bPartialRedraw) {
 			let dirty = {l: oDirtyBoundsMM.l, t: oDirtyBoundsMM.t, r: oDirtyBoundsMM.r, b: oDirtyBoundsMM.b};
 
+			let extMM = AscPDF.PARTIAL_REDRAW_EXT;
 			aDrawings.forEach(function(d) {
 				if (d.IsNeedRecalc()) {
 					d.Recalculate();
-					d.recalcBounds();
 					if (d.bounds) {
-						dirty.l = Math.min(dirty.l, d.bounds.l);
-						dirty.t = Math.min(dirty.t, d.bounds.t);
-						dirty.r = Math.max(dirty.r, d.bounds.r);
-						dirty.b = Math.max(dirty.b, d.bounds.b);
+						dirty.l = Math.min(dirty.l, d.bounds.l - extMM);
+						dirty.t = Math.min(dirty.t, d.bounds.t - extMM);
+						dirty.r = Math.max(dirty.r, d.bounds.r + extMM);
+						dirty.b = Math.max(dirty.b, d.bounds.b + extMM);
 					}
 				}
 			});
@@ -4287,26 +4284,23 @@
 			dirty = partialRedrawInfo.bounds;
 			drawingsToRender = partialRedrawInfo.drawings;
 
-			let scaleX = (25.4 * widthPx / pageWidthMM) / 25.4;
-			let scaleY = (25.4 * heightPx / pageHeightMM) / 25.4;
-			let dirtyX = Math.max(0, Math.floor(dirty.l * scaleX));
-			let dirtyY = Math.max(0, Math.floor(dirty.t * scaleY));
-			let dirtyR = Math.min(widthPx, Math.ceil(dirty.r * scaleX));
-			let dirtyB = Math.min(heightPx, Math.ceil(dirty.b * scaleY));
+			let scaleX = widthPx / pageWidthMM;
+			let scaleY = heightPx / pageHeightMM;
+			let dirtyX = Math.max(0, (Math.floor(dirty.l * scaleX)) - 1);
+			let dirtyY = Math.max(0, (Math.floor(dirty.t * scaleY)) - 1);
+			let dirtyR = Math.min(widthPx, (Math.ceil(dirty.r * scaleX)) + 1);
+			let dirtyB = Math.min(heightPx, (Math.ceil(dirty.b * scaleY)) + 1);
 			let dirtyW = dirtyR - dirtyX;
 			let dirtyH = dirtyB - dirtyY;
-			clipX = dirtyX;
-			clipY = dirtyY;
-			clipW = dirtyW;
-			clipH = dirtyH;
-			clipL = dirtyX / scaleX;
-			clipT = dirtyY / scaleY;
-			clipWmm = dirtyW / scaleX;
-			clipHmm = dirtyH / scaleY;
 
 			if (pageImage) {
 				ctx.drawImage(pageImage, dirtyX, dirtyY, dirtyW, dirtyH, dirtyX, dirtyY, dirtyW, dirtyH);
 			}
+
+			ctx.save();
+			ctx.beginPath();
+			ctx.rect(dirtyX, dirtyY, dirtyW, dirtyH);
+			ctx.clip();
 		}
 
 		let oGraphicsWord = new AscCommon.CGraphics();
@@ -4316,17 +4310,13 @@
 		oGraphicsWord.setEndGlobalAlphaColor(255, 255, 255);
 		oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
 
-		if (bPartialRedraw) {
-			oGraphicsWord.AddClipRect(clipL, clipT, clipWmm, clipHmm);
-			bClipDrawings = true;
-		}
-
 		drawingsToRender.forEach(function(drawing) {
 			drawing.Draw(oGraphicsWord);
 		});
 
-		if (bClipDrawings) {
-			oGraphicsWord.RemoveLastClip();
+		if (bPartialRedraw) {
+			ctx.restore();
+			ctx.restore();
 		}
 	};
 	CHtmlPage.prototype.createComponents = function()
@@ -5616,6 +5606,7 @@
 	if (!window["AscPDF"])
 	    window["AscPDF"] = {};
 
+	window["AscPDF"].PARTIAL_REDRAW_EXT = 5;
 	window["AscPDF"].collectDrawingsForPartialRedraw = collectDrawingsForPartialRedraw;
 	window["AscPDF"].CPageInfo = CPageInfo;
 	window["AscPDF"].PropLocker = PropLocker;
