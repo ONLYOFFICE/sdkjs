@@ -109,10 +109,55 @@
     CAnnotationTextMarkup.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
         let nPage   = this.GetPage();
+        let aQuads  = this.GetQuads();
+        let oBounds = null;
+
+        if (aQuads && aQuads.length) {
+            for (let i = 0; i < aQuads.length; i++) {
+                let aQuad = aQuads[i];
+                for (let j = 0; j < aQuad.length; j += 2) {
+                    let x = aQuad[j] * g_dKoef_pt_to_mm;
+                    let y = aQuad[j + 1] * g_dKoef_pt_to_mm;
+                    if (!oBounds) {
+                        oBounds = {l: x, t: y, r: x, b: y};
+                    }
+                    else {
+                        oBounds.l = Math.min(oBounds.l, x);
+                        oBounds.t = Math.min(oBounds.t, y);
+                        oBounds.r = Math.max(oBounds.r, x);
+                        oBounds.b = Math.max(oBounds.b, y);
+                    }
+                }
+            }
+        }
+        else {
+            let aRect = this.GetRect && this.GetRect();
+            oBounds = {
+                l: Math.min(aRect[0], aRect[2]) * g_dKoef_pt_to_mm,
+                t: Math.min(aRect[1], aRect[3]) * g_dKoef_pt_to_mm,
+                r: Math.max(aRect[0], aRect[2]) * g_dKoef_pt_to_mm,
+                b: Math.max(aRect[1], aRect[3]) * g_dKoef_pt_to_mm
+            };
+        }
         
         function setRedrawPageOnRepaint() {
             if (oViewer.pagesInfo.pages[nPage]) {
-                oViewer.pagesInfo.pages[nPage].needRedrawMarkups = true;
+                let oPageInfo = oViewer.pagesInfo.pages[nPage];
+                oPageInfo.needRedrawMarkups = true;
+
+                if (oBounds && oPageInfo.dirtyDrawingsBounds !== null) {
+                    let extMM = AscPDF.PARTIAL_REDRAW_EXT;
+                    if (!oPageInfo.dirtyDrawingsBounds) {
+                        oPageInfo.dirtyDrawingsBounds = {l: oBounds.l - extMM, t: oBounds.t - extMM, r: oBounds.r + extMM, b: oBounds.b + extMM};
+                    }
+                    else {
+                        oPageInfo.dirtyDrawingsBounds.l = Math.min(oPageInfo.dirtyDrawingsBounds.l, oBounds.l - extMM);
+                        oPageInfo.dirtyDrawingsBounds.t = Math.min(oPageInfo.dirtyDrawingsBounds.t, oBounds.t - extMM);
+                        oPageInfo.dirtyDrawingsBounds.r = Math.max(oPageInfo.dirtyDrawingsBounds.r, oBounds.r + extMM);
+                        oPageInfo.dirtyDrawingsBounds.b = Math.max(oPageInfo.dirtyDrawingsBounds.b, oBounds.b + extMM);
+                    }
+                }
+
                 oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
             }
         }
