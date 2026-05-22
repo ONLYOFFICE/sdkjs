@@ -9916,6 +9916,7 @@ function isAllowPasteLink(pastedWb) {
 	    var t = this;
         var duplicate = {};
 		var range, cache, row, minRow = gc_nMaxRow0;
+		var hasMerges = this.model.hasMergedCells();
 		for (var i = 0; i < this.arrRecalcRangesWithHeight.length; ++i) {
 		    range = this.arrRecalcRangesWithHeight[i];
 			this.canChangeColWidth = this.arrRecalcRangesCanChangeColWidth[i];
@@ -9941,7 +9942,7 @@ function isAllowPasteLink(pastedWb) {
 					itRow.setRow(r);
 					var cell;
 					while (cell = itRow.next()) {
-						if (c_oAscMergeType.rows & getMergeType(t.model.getMergedByCell(cell.nRow, cell.nCol))) {
+						if (hasMerges && (c_oAscMergeType.rows & getMergeType(t.model.getMergedByCell(cell.nRow, cell.nCol)))) {
 							continue;
 						}
 						t.updateRowHeightValuePx = (cache && cache[cell.nCol] ? t._updateRowHeight(cache[cell.nCol], r)
@@ -13282,7 +13283,9 @@ function isAllowPasteLink(pastedWb) {
 			let cachedRowHeight = null;
 			let lastRow = -1;
 
-			range._setPropertyNoEmpty(null, null, function (cell, r) {
+			// Raw-tuple iteration (no Cell materialization). Visitor:
+			// (r, col, type, value, xfIndex); skips empty/style-only cells.
+			range.forEachDataValue(function (r, col, type, value, xfIndex) {
 					if (_oExistCells.size > max_size && r > lastCleanupRow + 1000) {
 						let minRowToKeep = r - 500;
 						_oExistCells.forEach(function(value, key){
@@ -13294,12 +13297,12 @@ function isAllowPasteLink(pastedWb) {
 						lastCleanupRow = r;
 					}
 
-					let idCell = cell.nCol * maxCol + cell.nRow;
+					let idCell = col * maxCol + r;
 
-					if (_oExistCells.has(idCell) || cell.isNullTextString()) {
+					if (_oExistCells.has(idCell)) {
 						if (hasStopFunc) {
-							_col = cell.nCol;
-							_row = cell.nRow;
+							_col = col;
+							_row = r;
 							if (stopFunc()) {
 								needBreak = true;
 								return true;
@@ -13315,8 +13318,8 @@ function isAllowPasteLink(pastedWb) {
 
 					if (cachedRowHeight <= 0) {
 						if (hasStopFunc) {
-							_col = cell.nCol;
-							_row = cell.nRow;
+							_col = col;
+							_row = r;
 							if (stopFunc()) {
 								needBreak = true;
 								return true;
@@ -13328,26 +13331,24 @@ function isAllowPasteLink(pastedWb) {
 					_oExistCells.set(idCell, 1);
 					++_oSelectionMathInfo.count;
 
-					let cellType = cell.getType();
-					if (CellValueType.Number === cellType) {
-						let cellValue = cell.getNumberValue();
+					if (CellValueType.Number === type) {
 						if (0 === _oSelectionMathInfo.countNumbers) {
-							_oSelectionMathInfo.min = _oSelectionMathInfo.max = cellValue;
+							_oSelectionMathInfo.min = _oSelectionMathInfo.max = value;
 						} else {
-							if (cellValue < _oSelectionMathInfo.min) {
-								_oSelectionMathInfo.min = cellValue;
+							if (value < _oSelectionMathInfo.min) {
+								_oSelectionMathInfo.min = value;
 							}
-							if (cellValue > _oSelectionMathInfo.max) {
-								_oSelectionMathInfo.max = cellValue;
+							if (value > _oSelectionMathInfo.max) {
+								_oSelectionMathInfo.max = value;
 							}
 						}
 						++_oSelectionMathInfo.countNumbers;
-						props.sum += cellValue;
+						props.sum += value;
 					}
 
 					if (hasStopFunc) {
-						_col = cell.nCol;
-						_row = cell.nRow;
+						_col = col;
+						_row = r;
 						if (stopFunc()) {
 							needBreak = true;
 							return true;
