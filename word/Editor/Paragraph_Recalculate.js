@@ -1930,13 +1930,8 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
     //        слова совпала с правой границей промежутка
     var PRSW = PRS;
     var PRSC = PRS.getCounterState();
-    var PRSA = PRS.getAlignState();
-    PRSA.Paragraph    = this;
-    PRSA.LastW        = 0;
-    PRSA.RecalcFast   = Fast;
-    PRSA.RecalcResult = recalcresult_NextElement;
-    PRSA.PageY        = this.Pages[CurPage].Bounds.Top;
-    PRSA.PageX        = this.Pages[CurPage].Bounds.Left;
+    var PRSA = PRS.getAlignState();	
+	PRSA.beginPage(this, CurPage, Fast);
 
     var Line        = this.Lines[CurLine];
     var RangesCount = Line.Ranges.length;
@@ -2145,55 +2140,27 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 			}
 		}
 		
-        Range.Spaces = PRSC.Spaces + PRSC.SpacesSkip;
-
-		PRSA.Range = Range;
-		PRSA.LeftSpace = X - Range.X;
-		PRSA.RTL = bRtlAlign;
+		Range.Spaces = PRSC.Spaces + PRSC.SpacesSkip;
+		if (0 === CurRange)
+			this.Lines[CurLine].X = X - PRSW.XStart;
 		
-        PRSA.X    = X;
-        PRSA.Y    = this.Pages[CurPage].Y + this.Lines[CurLine].Y;
-        PRSA.XEnd = Range.XEnd;
-        PRSA.JustifyWord   = JustifyWord;
-        PRSA.JustifySpace  = JustifySpace;
-        PRSA.SpacesCounter = PRSC.Spaces;
-        PRSA.SpacesSkip    = PRSC.SpacesSkip;
-        PRSA.LettersSkip   = PRSC.LettersSkip;
-        PRSA.RecalcResult  = recalcresult_NextElement;
+		PRSA.beginRange(Range, CurRange, CurLine, X, PRSC, JustifyWord, JustifySpace);
 
-        var _LineMetrics = this.Lines[CurLine].Metrics;
-        PRSA.Y0 = (this.Pages[CurPage].Y + this.Lines[CurLine].Y - _LineMetrics.Ascent);
-        PRSA.Y1 = (this.Pages[CurPage].Y + this.Lines[CurLine].Y + _LineMetrics.Descent);
-        if (_LineMetrics.LineGap < 0)
-            PRSA.Y1 += _LineMetrics.LineGap;
-
-        this.Lines[CurLine].Ranges[CurRange].XVisible = X;
-
-        if ( 0 === CurRange )
-            this.Lines[CurLine].X = X - PRSW.XStart;
-
-        if ( true === this.Numbering.checkRange(CurRange, CurLine) )
-            PRSA.X += this.Numbering.WidthVisible;
-
-        for ( var Pos = StartPos; Pos <= EndPos; Pos++ )
-        {
-            var Item = this.Content[Pos];
-            Item.Recalculate_Range_Spaces(PRSA, CurLine, CurRange, CurPage);
-
-            if (!(PRSA.RecalcResult & recalcresult_NextElement))
-            {
-                PRSW.RecalcResult = PRSA.RecalcResult;
-                return PRSA.RecalcResult;
-            }
-        }
+		// TODO: RTL ?
+		if (true === this.Numbering.checkRange(CurRange, CurLine))
+			PRSA.X += this.Numbering.WidthVisible;
 		
-		Range.XEndVisible = PRSA.X;
-		
-		if (bRtlAlign)
+		for (var Pos = StartPos; Pos <= EndPos; Pos++)
 		{
-			Range.XVisible -= Range.WBreak + Range.WEnd;
-			Range.XEndVisible -= Range.WBreak + Range.WEnd;
+			var Item = this.Content[Pos];
+			Item.Recalculate_Range_Spaces(PRSA, CurLine, CurRange, CurPage);
+			if (!(PRSA.RecalcResult & recalcresult_NextElement))
+			{
+				PRSW.RecalcResult = PRSA.RecalcResult;
+				return PRSA.RecalcResult;
+			}
 		}
+		PRSA.endRange();
     }
 
     return PRSA.RecalcResult;
