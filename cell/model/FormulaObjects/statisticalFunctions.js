@@ -3987,13 +3987,22 @@ function (window, undefined) {
 	cAVERAGE.prototype.inheritFormat = true;
 	cAVERAGE.prototype.argumentsType = [[argType.number]];
 	cAVERAGE.prototype.enabledToSingle = {"*": true};
+	/**
+	 * Returns the average (arithmetic mean) of the specified arguments.
+	 *
+	 * @param {(number | Array | Range | number[])} args - Up to 255 numeric values for which the average value will be returned.
+	 * The first argument is required, subsequent arguments are optional.
+	 * Arguments can be numbers, names, or arrays of numbers.
+	 * Text, logical values, and empty cells in references are ignored.
+	 * @returns {number} Average of the supplied numeric values.
+	 */
 	cAVERAGE.prototype.Calculate = function (arg) {
-		var count = 0, sum = new cNumber(0);
-		for (var i = 0; i < arg.length; i++) {
-			var _arg = arg[i];
+		let count = 0, sum = new cNumber(0);
+		for (let i = 0; i < arg.length; i++) {
+			let _arg = arg[i];
 			if (cElementType.cell === _arg.type || cElementType.cell3D === _arg.type) {
 				if (!this.checkExclude || !_arg.isHidden(this.excludeHiddenRows)) {
-					var _argV = _arg.getValue();
+					let _argV = _arg.getValue();
 					if (cElementType.string === _argV.type || cElementType.empty === _argV.type ||
 						cElementType.bool === _argV.type) {
 						continue;
@@ -4005,7 +4014,7 @@ function (window, undefined) {
 					}
 				}
 			} else if (cElementType.cellsRange === _arg.type || cElementType.cellsRange3D === _arg.type) {
-				var _argAreaValue = _arg.getValue(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal,
+				let _argAreaValue = _arg.getValue(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal,
 					this.excludeNestedStAg);
 				for (var j = 0; j < _argAreaValue.length; j++) {
 					var __arg = _argAreaValue[j];
@@ -4020,17 +4029,27 @@ function (window, undefined) {
 					}
 				}
 			} else if (cElementType.array === _arg.type) {
+				let isError;
 				_arg.foreach(function (elem) {
 					if (cElementType.string === elem.type || cElementType.empty === elem.type ||
 						cElementType.bool === elem.type) {
 						return false;
+					} else if (cElementType.error === elem.type) {
+						isError = elem;
+						return true;
 					}
-					var e = elem.tocNumber();
+
+					let e = elem.tocNumber();
 					if (cElementType.number === e.type) {
 						sum = _func[sum.type][e.type](sum, e, "+");
 						count++;
 					}
-				})
+				});
+
+				if (isError) {
+					return isError;
+				}
+
 			} else {
 				_arg = _arg.tocNumber();
 				if (cElementType.error === _arg.type) {
@@ -4040,6 +4059,11 @@ function (window, undefined) {
 				count++;
 			}
 		}
+
+		if (count === 0) {
+			return new cError(cErrorType.division_by_zero);
+		}
+
 		return new cNumber(sum.getValue() / count);
 	};
 
@@ -4058,12 +4082,19 @@ function (window, undefined) {
 	cAVERAGEA.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cAVERAGEA.prototype.argumentsType = [[argType.number]];
 	cAVERAGEA.prototype.enabledToSingle = {"*": true};
+	/**
+	 * Returns the average (arithmetic mean) of the specified arguments, evaluating text and FALSE in arguments as 0; TRUE evaluates as 1.
+	 *
+	 * @param {(number | Array | Range | string | number[])} args - Up to 255 numeric values for which the average value will be returned. The first argument is required,
+	 * subsequent arguments are optional. Arguments can be numbers, text, or logical values, such as TRUE and FALSE, names, or arrays of numbers.
+	 * @returns {number} Average of the supplied values.
+	 */
 	cAVERAGEA.prototype.Calculate = function (arg) {
-		var count = 0, sum = new cNumber(0);
-		for (var i = 0; i < arg.length; i++) {
-			var _arg = arg[i];
+		let count = 0, sum = new cNumber(0);
+		for (let i = 0; i < arg.length; i++) {
+			let _arg = arg[i];
 			if (cElementType.cell === _arg.type || cElementType.cell3D === _arg.type) {
-				var _argV = _arg.getValue();
+				let _argV = _arg.getValue();
 				if (cElementType.number === _argV.type || cElementType.bool === _argV.type) {
 					sum = _func[sum.type][_argV.type](sum, _argV, "+");
 					count++;
@@ -4073,9 +4104,9 @@ function (window, undefined) {
 					return _argV;
 				}
 			} else if (cElementType.cellsRange === _arg.type || cElementType.cellsRange3D === _arg.type) {
-				var _argAreaValue = _arg.getValue();
-				for (var j = 0; j < _argAreaValue.length; j++) {
-					var __arg = _argAreaValue[j];
+				let _argAreaValue = _arg.getValue();
+				for (let j = 0; j < _argAreaValue.length; j++) {
+					let __arg = _argAreaValue[j];
 					if (cElementType.number === __arg.type || cElementType.bool === __arg.type) {
 						sum = _func[sum.type][__arg.type](sum, __arg, "+");
 						count++;
@@ -4092,7 +4123,7 @@ function (window, undefined) {
 						return false;
 					}
 
-					var e = elem.tocNumber();
+					let e = elem.tocNumber();
 					if (cElementType.number === e.type) {
 						sum = _func[sum.type][e.type](sum, e, "+");
 						count++;
@@ -4107,6 +4138,11 @@ function (window, undefined) {
 				count++;
 			}
 		}
+
+		if (count === 0) {
+			return new cError(cErrorType.division_by_zero);
+		}
+
 		return new cNumber(sum.getValue() / count);
 	};
 
