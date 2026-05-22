@@ -107,19 +107,66 @@
 
 	function collectDrawingsForPartialRedraw(drawings, dirtyBounds) {
 		let result = [];
-		let count = 0;
 
 		for (let i = 0; i < drawings.length; i++) {
 			let bounds = drawings[i].bounds;
 			if (!bounds || isBoundsIntersect(bounds, dirtyBounds)) {
-				result[count++] = drawings[i];
+				result.push(drawings[i]);
 			}
 		}
 
-		return {
-			drawings: result,
-			bounds: dirtyBounds
-		};
+		return result;
+	}
+
+	function getTextMarkupBoundsMM(annot) {
+		let quads = annot.GetQuads();
+		let bounds = null;
+
+		if (quads && quads.length) {
+			for (let i = 0; i < quads.length; i++) {
+				let quad = quads[i];
+				for (let j = 0; j < quad.length; j += 2) {
+					let x = quad[j] * g_dKoef_pt_to_mm;
+					let y = quad[j + 1] * g_dKoef_pt_to_mm;
+					if (!bounds) {
+						bounds = {l: x, t: y, r: x, b: y};
+					}
+					else {
+						bounds.l = Math.min(bounds.l, x);
+						bounds.t = Math.min(bounds.t, y);
+						bounds.r = Math.max(bounds.r, x);
+						bounds.b = Math.max(bounds.b, y);
+					}
+				}
+			}
+		}
+
+		if (!bounds) {
+			let rect = annot.GetRect();
+			if (rect) {
+				bounds = {
+					l: Math.min(rect[0], rect[2]) * g_dKoef_pt_to_mm,
+					t: Math.min(rect[1], rect[3]) * g_dKoef_pt_to_mm,
+					r: Math.max(rect[0], rect[2]) * g_dKoef_pt_to_mm,
+					b: Math.max(rect[1], rect[3]) * g_dKoef_pt_to_mm
+				};
+			}
+		}
+
+		return bounds;
+	}
+
+	function collectTextMarkupsForPartialRedraw(annots, dirtyBounds) {
+		let result = [];
+
+		for (let i = 0; i < annots.length; i++) {
+			let bounds = getTextMarkupBoundsMM(annots[i]);
+			if (!bounds || isBoundsIntersect(bounds, dirtyBounds)) {
+				result.push(annots[i]);
+			}
+		}
+
+		return result;
 	}
 
 	// page class.
@@ -253,7 +300,7 @@
 
 		AscCommon.History.Add(new CChangesPDFDocumentDrawingsContent(this, nPos, [oDrawing], true));
 
-		this.RedrawDrawings();
+		oDrawing.AddToRedraw();
 	};
 	CPageInfo.prototype.RemoveDrawing = function(sId) {
         let oDrawing = this.drawings.find(function(drawing) {
@@ -263,11 +310,12 @@
         if (!oDrawing)
             return;
 
+		oDrawing.AddToRedraw();
+
         let nPos = this.drawings.indexOf(oDrawing);
         this.drawings.splice(nPos, 1);
         
         AscCommon.History.Add(new CChangesPDFDocumentDrawingsContent(this, nPos, [oDrawing], false));
-		this.RedrawDrawings();
 	};
 	CPageInfo.prototype.AddAnnot = function(oAnnot, nPos) {
 		if (nPos == undefined) {
@@ -278,10 +326,10 @@
         oAnnot.SetParentPage(this);
 
         AscCommon.History.Add(new CChangesPDFDocumentAnnotsContent(this, nPos, [oAnnot], true));
-		this.RedrawAnnots(oAnnot.IsTextMarkup());
-
+		
 		let oDoc = Asc.editor.getPDFDoc();
 		oDoc.CheckComment(oAnnot);
+		oAnnot.AddToRedraw();
 	};
 	CPageInfo.prototype.RemoveAnnot = function(sId) {
 		let oAnnot = this.annots.find(function(annot) {
@@ -291,11 +339,11 @@
         if (!oAnnot)
             return;
 
+		oAnnot.AddToRedraw();
         let nPos = this.annots.indexOf(oAnnot);
         this.annots.splice(nPos, 1);
         
         AscCommon.History.Add(new CChangesPDFDocumentAnnotsContent(this, nPos, [oAnnot], false));
-		this.RedrawAnnots(oAnnot.IsTextMarkup());
 	};
 	CPageInfo.prototype.GetAnnots = function() {
 		return this.annots;
@@ -2887,16 +2935,15 @@
 							tmpPageImage.height === page.Image.height &&
 							!isStretchPaint &&
 							!needNewPage &&
-							pageInfo.needRedrawDrawings &&
-							!pageInfo.needRedrawMarkups &&
-							aMarkups.length === 0 &&
-							oDirtyBounds !== null &&
-							oDirtyBounds !== undefined;
+							(pageInfo.needRedrawDrawings || pageInfo.needRedrawMarkups) &&
+							oDirtyBounds != null;
 
 						if (bCanPartialRedraw) {
 							this._drawDrawingsOnCtx(i, tmpPageCtx, false, oDirtyBounds, page.Image);
+							this._drawMarkupAnnotsOnCtx(i, tmpPageCtx, oDirtyBounds);
 
 							pageInfo.needRedrawDrawings = false;
+							pageInfo.needRedrawMarkups = false;
 							pageInfo.dirtyDrawingsBounds = undefined;
 						}
 						else if (pageInfo.needRedrawDrawings || pageInfo.needRedrawMarkups || (needNewPage && !isStretchPaint)) {
@@ -3919,7 +3966,7 @@
 				oContent.RecalculateCurPos();
 		}
 	};
-	CHtmlPage.prototype._drawMarkupAnnotsOnCtx = function(nPage, ctx)
+	CHtmlPage.prototype._drawMarkupAnnotsOnCtx = function(nPage, ctx, oDirtyBoundsMM)
 	{
         let aAnnots = this.pagesInfo.pages[nPage].annots.filter(function(annot) {
 			return annot.IsTextMarkup();
@@ -3927,6 +3974,13 @@
 
 		if (aAnnots.length == 0)
 			return;
+
+		if (oDirtyBoundsMM) {
+			aAnnots = collectTextMarkupsForPartialRedraw(aAnnots, oDirtyBoundsMM);
+			if (aAnnots.length == 0) {
+				return;
+			}
+		}
 		
 		let page = this.drawingPages[nPage];
 		if (!page)
@@ -3934,6 +3988,21 @@
 
 		let widthPx		= ctx.canvas.width;
 		let heightPx	= ctx.canvas.height;
+
+		if (oDirtyBoundsMM) {
+			let oDoc = this.getPDFDoc();
+			let scaleX = widthPx / oDoc.GetPageWidthMM(nPage);
+			let scaleY = heightPx / oDoc.GetPageHeightMM(nPage);
+			let dirtyX = Math.max(0, (Math.floor(oDirtyBoundsMM.l * scaleX)) - 1);
+			let dirtyY = Math.max(0, (Math.floor(oDirtyBoundsMM.t * scaleY)) - 1);
+			let dirtyR = Math.min(widthPx, (Math.ceil(oDirtyBoundsMM.r * scaleX)) + 1);
+			let dirtyB = Math.min(heightPx, (Math.ceil(oDirtyBoundsMM.b * scaleY)) + 1);
+
+			ctx.save();
+			ctx.beginPath();
+			ctx.rect(dirtyX, dirtyY, dirtyR - dirtyX, dirtyB - dirtyY);
+			ctx.clip();
+		}
 		
 		let oGraphicsPDF = new AscPDF.CPDFGraphics();
 		oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage) , this.file.getPageHeight(nPage));
@@ -3947,6 +4016,11 @@
 				annot.DrawFromStream(oGraphicsPDF);
 			}
 		});
+
+		if (oDirtyBoundsMM) {
+			ctx.restore();
+			ctx.restore();
+		}
 	};
 	CHtmlPage.prototype._paintDrawings = function() {
 		const ctx = this.canvas.getContext('2d');
@@ -4251,7 +4325,7 @@
     };
 	CHtmlPage.prototype._drawDrawingsOnCtx = function(nPage, ctx, isThumbnails, oDirtyBoundsMM, pageImage) {
 		let aDrawings = this.pagesInfo.pages[nPage].drawings;
-		if (aDrawings.length == 0) {
+		if (aDrawings.length == 0 && !oDirtyBoundsMM) {
 			return;
 		}
 
@@ -4265,31 +4339,27 @@
 		let bPartialRedraw   = !!oDirtyBoundsMM;
 
 		if (bPartialRedraw) {
-			let dirty = {l: oDirtyBoundsMM.l, t: oDirtyBoundsMM.t, r: oDirtyBoundsMM.r, b: oDirtyBoundsMM.b};
-
 			let extMM = AscPDF.PARTIAL_REDRAW_EXT;
 			aDrawings.forEach(function(d) {
 				if (d.IsNeedRecalc()) {
 					d.Recalculate();
 					if (d.bounds) {
-						dirty.l = Math.min(dirty.l, d.bounds.l - extMM);
-						dirty.t = Math.min(dirty.t, d.bounds.t - extMM);
-						dirty.r = Math.max(dirty.r, d.bounds.r + extMM);
-						dirty.b = Math.max(dirty.b, d.bounds.b + extMM);
+						oDirtyBoundsMM.l = Math.min(oDirtyBoundsMM.l, d.bounds.l - extMM);
+						oDirtyBoundsMM.t = Math.min(oDirtyBoundsMM.t, d.bounds.t - extMM);
+						oDirtyBoundsMM.r = Math.max(oDirtyBoundsMM.r, d.bounds.r + extMM);
+						oDirtyBoundsMM.b = Math.max(oDirtyBoundsMM.b, d.bounds.b + extMM);
 					}
 				}
 			});
 
-			let partialRedrawInfo = collectDrawingsForPartialRedraw(aDrawings, dirty);
-			dirty = partialRedrawInfo.bounds;
-			drawingsToRender = partialRedrawInfo.drawings;
+			drawingsToRender = collectDrawingsForPartialRedraw(aDrawings, oDirtyBoundsMM);
 
 			let scaleX = widthPx / pageWidthMM;
 			let scaleY = heightPx / pageHeightMM;
-			let dirtyX = Math.max(0, (Math.floor(dirty.l * scaleX)) - 1);
-			let dirtyY = Math.max(0, (Math.floor(dirty.t * scaleY)) - 1);
-			let dirtyR = Math.min(widthPx, (Math.ceil(dirty.r * scaleX)) + 1);
-			let dirtyB = Math.min(heightPx, (Math.ceil(dirty.b * scaleY)) + 1);
+			let dirtyX = Math.max(0, (Math.floor(oDirtyBoundsMM.l * scaleX)) - 1);
+			let dirtyY = Math.max(0, (Math.floor(oDirtyBoundsMM.t * scaleY)) - 1);
+			let dirtyR = Math.min(widthPx, (Math.ceil(oDirtyBoundsMM.r * scaleX)) + 1);
+			let dirtyB = Math.min(heightPx, (Math.ceil(oDirtyBoundsMM.b * scaleY)) + 1);
 			let dirtyW = dirtyR - dirtyX;
 			let dirtyH = dirtyB - dirtyY;
 
