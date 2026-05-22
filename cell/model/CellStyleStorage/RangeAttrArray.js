@@ -60,6 +60,10 @@
 		this.maxRow = (maxRow != null) ? maxRow : DEFAULT_MAX_ROW;
 		// Array of plain objects { r1, r2, v }. r1, r2 inclusive; v never null.
 		this._ranges = [];
+		// Reuse the previous range index for monotone get(row) calls.
+		// Mutators reset _cursorRow to -1 to invalidate.
+		this._cursorRow = -1;
+		this._cursorIdx = 0;
 	}
 
 	/**
@@ -95,9 +99,22 @@
 		if (row < 0 || row > this.maxRow) {
 			return null;
 		}
-		var i = this._lowerBound(row);
-		if (i < this._ranges.length) {
-			var r = this._ranges[i];
+		var ranges = this._ranges;
+		var len = ranges.length;
+		var i;
+		// Advance the cursor on monotone rows; binary search otherwise.
+		if (row >= this._cursorRow && this._cursorRow >= 0) {
+			i = this._cursorIdx;
+			while (i < len && ranges[i].r2 < row) {
+				i++;
+			}
+		} else {
+			i = this._lowerBound(row);
+		}
+		this._cursorIdx = i;
+		this._cursorRow = row;
+		if (i < len) {
+			var r = ranges[i];
 			if (r.r1 <= row && row <= r.r2) {
 				return r.v;
 			}
@@ -116,6 +133,7 @@
 		if (!clamped) {
 			return;
 		}
+		this._cursorRow = -1;
 		r1 = clamped[0];
 		r2 = clamped[1];
 		if (value === undefined) {
@@ -183,6 +201,7 @@
 		if (start < 0) {
 			start = 0;
 		}
+		this._cursorRow = -1;
 		for (var k = 0; k < this._ranges.length; k++) {
 			var r = this._ranges[k];
 			if (r.r2 < start) {
@@ -223,6 +242,7 @@
 		if (start > this.maxRow) {
 			return;
 		}
+		this._cursorRow = -1;
 		var end = start + count - 1;
 
 		var newRanges = [];

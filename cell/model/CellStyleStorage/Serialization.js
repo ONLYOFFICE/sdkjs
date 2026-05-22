@@ -72,7 +72,8 @@
 			return 0;
 		}
 		var store = ws.cellStylesByCol[col];
-		if (!store) {
+		// Empty style stores have no direct xf entries.
+		if (!store || store.isEmpty()) {
 			return 0;
 		}
 		var idx = store.get(row);
