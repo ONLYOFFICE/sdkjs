@@ -1695,6 +1695,8 @@
 			AscCommonExcel.g_oAverageIfCache.clean();
 			AscCommonExcel.g_oSumIFSCache.clean();
 			AscCommonExcel.g_oAverageIFSCache.clean();
+			AscCommonExcel.g_oMaxIFSCache.clean();
+			AscCommonExcel.g_oMinIFSCache.clean();
 		},
 		notifyAllFormulasInChangedWs: function() {
 			let sheetIds = {};
@@ -17507,6 +17509,8 @@
 			AscCommonExcel.g_oAverageIfCache.remove(this, DataOld, res);
 			AscCommonExcel.g_oSumIFSCache.remove(this, DataOld, res);
 			AscCommonExcel.g_oAverageIFSCache.remove(this, DataOld, res);
+			AscCommonExcel.g_oMaxIFSCache.remove(this, DataOld, res);
+			AscCommonExcel.g_oMinIFSCache.remove(this, DataOld, res);
 		}
 	};
 	Cell.prototype.cleanText = function() {
@@ -25569,7 +25573,7 @@
 			}
 		} else if (fromCmIndex != null && from && from.checkFirstCellArray(parent)) {
 			if (fromVmIndex != null && (toVmIndex == null || toVmIndex === 0)) {
-				// cm unchanged, but vm cleared: formula unblocked (e.g. redo of expand) → remove listener
+				// cm unchanged, but vm cleared: formula unblocked (e.g. redo of expand) -> remove listener
 				var listenerId = from.getListenerId();
 				this.ws.workbook.dependencyFormulas.endListeningVolatileArray(listenerId);
 			}
@@ -25769,7 +25773,7 @@
 			const newR2 = (formula.parent.nRow + arraySize.row) > AscCommon.gc_nMaxRow ? AscCommon.gc_nMaxRow - 1 : (formula.parent.nRow + arraySize.row - 1);
 			const newC2 = (formula.parent.nCol + arraySize.col) > AscCommon.gc_nMaxCol ? AscCommon.gc_nMaxCol - 1 : (formula.parent.nCol + arraySize.col - 1);
 
-			// cellsRange/cellsRange3D is produced by ANCHORARRAY (`A1#`) — treat as a spillable source.
+			// cellsRange/cellsRange3D is produced by ANCHORARRAY (`A1#`) - treat as a spillable source.
 			if (formulaResult.type !== cElementType.array &&
 				formulaResult.type !== cElementType.cellsRange &&
 				formulaResult.type !== cElementType.cellsRange3D) {
@@ -26674,7 +26678,7 @@
 					}
 					// arrV: [colOffset, errorType, rwOffset, subType]
 					if (rv.arrV[0] === colOffset && rv.arrV[2] === rwOffset) {
-						// found existing match — reuse its vmIndex (1-based)
+						// found existing match - reuse its vmIndex (1-based)
 						vmIndex = vi + 1;
 						needGenerateVm = false;
 						break;
@@ -26682,7 +26686,7 @@
 				}
 			}
 
-			// If not found — create new rich value and metadata as before
+			// If not found - create new rich value and metadata as before
 			if (needGenerateVm) {
 				const oldRichValueData = this.ws.workbook.richValueData ? this.ws.workbook.richValueData.clone() : null;
 				// Initialize richValueData if needed

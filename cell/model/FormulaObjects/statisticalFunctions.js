@@ -8148,92 +8148,7 @@ function (window, undefined) {
 	};
 	cMAXIFS.prototype.enabledToSingle = {"arg0orOdd": true};
 	cMAXIFS.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
-		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
-			cElementType.cellsRange !== arg0.type) {
-			if (cElementType.cellsRange3D === arg0.type) {
-				arg0 = arg0.tocArea();
-				if (!arg0) {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			} else {
-				return new cError(cErrorType.wrong_value_type);
-			}
-		}
-
-		var arg0Matrix = arg0.getMatrix();
-		var i, j, arg1, arg2, matchingInfo;
-		for (var k = 1; k < arg.length; k += 2) {
-			arg1 = arg[k];
-			arg2 = arg[k + 1];
-
-			if (cElementType.cell !== arg1.type && cElementType.cell3D !== arg1.type &&
-				cElementType.cellsRange !== arg1.type) {
-				if (cElementType.cellsRange3D === arg1.type) {
-					arg1 = arg1.tocArea();
-					if (!arg1) {
-						return new cError(cErrorType.wrong_value_type);
-					}
-				} else {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			}
-
-			if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
-				arg2 = arg2.cross(arguments[1]);
-			} else if (cElementType.array === arg2.type) {
-				arg2 = arg2.getElementRowCol(0, 0);
-			}
-
-			arg2 = arg2.tocString();
-
-			if (cElementType.string !== arg2.type) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-
-			matchingInfo = AscCommonExcel.matchingValue(arg2);
-
-			var arg1Matrix = arg1.getMatrix();
-			if (arg0Matrix.length !== arg1Matrix.length) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-
-			//compare
-			for (i = 0; i < arg1Matrix.length; ++i) {
-				if (arg0Matrix[i].length !== arg1Matrix[i].length) {
-					return new cError(cErrorType.wrong_value_type);
-				}
-				for (j = 0; j < arg1Matrix[i].length; ++j) {
-					if (arg0Matrix[i][j] && !AscCommonExcel.matching(arg1Matrix[i][j], matchingInfo)) {
-						//MS considers in this case that value 0 (from the range of conditions) corresponds to the condition = ""
-						if (!(null === matchingInfo.op && "" === matchingInfo.val.value && 0 ===
-							arg1Matrix[i][j].value)) {
-							arg0Matrix[i][j] = null;
-						}
-					}
-				}
-			}
-		}
-
-		var resArr = [];
-		var valMatrix0;
-		for (i = 0; i < arg0Matrix.length; ++i) {
-			for (j = 0; j < arg0Matrix[i].length; ++j) {
-				if ((valMatrix0 = arg0Matrix[i][j]) && cElementType.number === valMatrix0.type) {
-					resArr.push(valMatrix0.getValue());
-				}
-			}
-		}
-
-		if (0 === resArr.length) {
-			return new cNumber(0);
-		}
-
-		resArr.sort(function (a, b) {
-			return b - a;
-		});
-
-		return new cNumber(resArr[0]);
+		return g_oMaxIFSCache.calculate(arg, arguments[1]);
 	};
 	cMAXIFS.prototype.checkArguments = function (countArguments) {
 		return 1 === countArguments % 2 && cBaseFunction.prototype.checkArguments.apply(this, arguments);
@@ -8262,92 +8177,7 @@ function (window, undefined) {
 	};
 	cMINIFS.prototype.enabledToSingle = {"arg0orOdd": true};
 	cMINIFS.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
-		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
-			cElementType.cellsRange !== arg0.type) {
-			if (cElementType.cellsRange3D === arg0.type) {
-				arg0 = arg0.tocArea();
-				if (!arg0) {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			} else {
-				return new cError(cErrorType.wrong_value_type);
-			}
-		}
-
-		var arg0Matrix = arg0.getMatrix();
-		var i, j, arg1, arg2, matchingInfo;
-		for (var k = 1; k < arg.length; k += 2) {
-			arg1 = arg[k];
-			arg2 = arg[k + 1];
-
-			if (cElementType.cell !== arg1.type && cElementType.cell3D !== arg1.type &&
-				cElementType.cellsRange !== arg1.type) {
-				if (cElementType.cellsRange3D === arg1.type) {
-					arg1 = arg1.tocArea();
-					if (!arg1) {
-						return new cError(cErrorType.wrong_value_type);
-					}
-				} else {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			}
-
-			if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
-				arg2 = arg2.cross(arguments[1]);
-			} else if (cElementType.array === arg2.type) {
-				arg2 = arg2.getElementRowCol(0, 0);
-			}
-
-			arg2 = arg2.tocString();
-
-			if (cElementType.string !== arg2.type) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-
-			matchingInfo = AscCommonExcel.matchingValue(arg2);
-
-			var arg1Matrix = arg1.getMatrix();
-			if (arg0Matrix.length !== arg1Matrix.length) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-
-			//compare
-			for (i = 0; i < arg1Matrix.length; ++i) {
-				if (arg0Matrix[i].length !== arg1Matrix[i].length) {
-					return new cError(cErrorType.wrong_value_type);
-				}
-				for (j = 0; j < arg1Matrix[i].length; ++j) {
-					if (arg0Matrix[i][j] && !AscCommonExcel.matching(arg1Matrix[i][j], matchingInfo)) {
-						//MS considers in this case that value 0 (from the range of conditions) corresponds to the condition = ""
-						if (!(null === matchingInfo.op && "" === matchingInfo.val.value && 0 ===
-							arg1Matrix[i][j].value)) {
-							arg0Matrix[i][j] = null;
-						}
-					}
-				}
-			}
-		}
-
-		var resArr = [];
-		var valMatrix0;
-		for (i = 0; i < arg0Matrix.length; ++i) {
-			for (j = 0; j < arg0Matrix[i].length; ++j) {
-				if ((valMatrix0 = arg0Matrix[i][j]) && cElementType.number === valMatrix0.type) {
-					resArr.push(valMatrix0.getValue());
-				}
-			}
-		}
-
-		if (0 === resArr.length) {
-			return new cNumber(0);
-		}
-
-		resArr.sort(function (a, b) {
-			return a - b;
-		});
-
-		return new cNumber(resArr[0]);
+		return g_oMinIFSCache.calculate(arg, arguments[1]);
 	};
 	cMINIFS.prototype.checkArguments = function (countArguments) {
 		return 1 === countArguments % 2 && cBaseFunction.prototype.checkArguments.apply(this, arguments);
@@ -12395,9 +12225,9 @@ function parseStringToCElement (val, cultureInfo) {
 	 * Replaces repeated individual splice on large arrays (O(N) each) with
 	 * a single filter+merge (O(N+K)).
 	 *
-	 * Pending changes are stored in column._pendingStrChanges (Map: row → value|null).
-	 *   row → string value : the row should have this string value in the array
-	 *   row → null         : the row should be removed from the array
+	 * Pending changes are stored in column._pendingStrChanges (Map: row -> value|null).
+	 *   row -> string value : the row should have this string value in the array
+	 *   row -> null         : the row should be removed from the array
 	 */
 	CountIfTypedCache.prototype._applyPendingStringChanges = function(column) {
 		const pending = column._pendingStrChanges;
@@ -12410,7 +12240,7 @@ function parseStringToCElement (val, cultureInfo) {
 		const oldDataLen = stringData.length;
 
 		// Fast path: for small batches of in-place value updates, use binary search
-		// instead of walking the entire array. O(K × log N) vs O(N+K).
+		// instead of walking the entire array. O(K x log N) vs O(N+K).
 		const changedPositions = [];
 		if (pending.size <= 4 && stringIdx.length > 0) {
 			let allInPlace = true;
@@ -12444,11 +12274,11 @@ function parseStringToCElement (val, cultureInfo) {
 				column._pendingStrChanges = null;
 				return;
 			}
-			// Fast path failed — discard partial position list; slow path will rebuild.
+			// Fast path failed - discard partial position list; slow path will rebuild.
 			changedPositions.length = 0;
 		}
 
-		// Phase 1: Walk current arrays — apply updates/removals in place.
+		// Phase 1: Walk current arrays - apply updates/removals in place.
 		const handledRows = new Set();
 		let writePos = 0;
 		for (let i = 0; i < stringData.length; i++) {
@@ -12474,7 +12304,7 @@ function parseStringToCElement (val, cultureInfo) {
 		stringData.length = writePos;
 		stringIdx.length = writePos;
 
-		// Phase 2: Collect new inserts — rows in pending but not in current array.
+		// Phase 2: Collect new inserts - rows in pending but not in current array.
 		const newInserts = [];
 		pending.forEach(function(val, row) {
 			if (!handledRows.has(row) && val !== null) {
@@ -12578,7 +12408,7 @@ function parseStringToCElement (val, cultureInfo) {
 			});
 
 			if (!multiChange && hasDel && hasAdd) {
-				// Fast path: single del + single add — use copyWithin instead of 2 splices.
+				// Fast path: single del + single add - use copyWithin instead of 2 splices.
 				// Identity match via _findExactInSorted so comparator-equal-but-distinct
 				// Unicode strings (e.g. NFC vs NFD forms) are not confused.
 				const dlo = self._findExactInSorted(sorted, toDel);
@@ -12632,15 +12462,15 @@ function parseStringToCElement (val, cultureInfo) {
 	/**
 	 * Build (once) a sorted-rank index for a column's string data.
 	 * Stores on the column object:
-	 *   _sortedStrings   — unique string values sorted by stringCompare
-	 *   _stringRankArray — Int32Array: rank[i] = sorted position of stringData[i]
-	 *   _rankLen         — stringData.length at build time
+	 *   _sortedStrings   - unique string values sorted by stringCompare
+	 *   _stringRankArray - Int32Array: rank[i] = sorted position of stringData[i]
+	 *   _rankLen         - stringData.length at build time
 	 * Three rebuild tiers: full sort, incremental sorted update, cheap rank refresh.
 	 */
 	/**
 	 * Precondition: column._pendingStrChanges must already be flushed by the caller
 	 * (i.e. _applyPendingStringChanges must have been called before this method).
-	 * Use _setupRankRange instead of calling this directly — it handles the flush.
+	 * Use _setupRankRange instead of calling this directly - it handles the flush.
 	 */
 	CountIfTypedCache.prototype._ensureStringRank = function(column) {
 		const stringData = column.data[cElementType.string];
@@ -12785,7 +12615,7 @@ function parseStringToCElement (val, cultureInfo) {
 	 * Find the exact identity-match index of `str` within `sorted`, scanning
 	 * the comparator-equal run starting from the lower bound. Returns -1 if
 	 * no identity match exists. Required because Unicode-normalisation can
-	 * make distinct identities (e.g. "é" and "é") compare equal
+	 * make distinct Unicode identities (e.g. NFC and NFD forms of the same grapheme) compare equal
 	 * via localeCompare while remaining `===`-distinct.
 	 */
 	CountIfTypedCache.prototype._findExactInSorted = function(sorted, str) {
@@ -12809,7 +12639,7 @@ function parseStringToCElement (val, cultureInfo) {
 		// supported ops ('<', '>', '<=', '>=', '=', or null).  Replaces per-cell
 		// stringCompare/localeCompare with a `lower <= rank < upper` integer check.
 		// Empty string is excluded: callers return 0 early for that case (consistent with COUNTIFS).
-		// Wildcard-bearing searchValue is also excluded — wildcards are not a collation
+		// Wildcard-bearing searchValue is also excluded - wildcards are not a collation
 		// operation; the caller is responsible for not passing opt_op when matchingFunction
 		// is a regex.
 		const useRankCompare = !convertToNumber && type === cElementType.string &&
@@ -12884,7 +12714,7 @@ function parseStringToCElement (val, cultureInfo) {
 	};
 	/**
 	 * Checks whether a column has any non-empty data at a specific row.
-	 * Uses binary search per type — O(T × log K) where T ≤ 4.
+	 * Uses binary search per type - O(T x log K) where T <= 4.
 	 * @param {Object} column - column cache object with .indexes
 	 * @param {number} row - row index to check
 	 * @param {boolean} checkEmptyString - consider an empty string as a data
@@ -12927,18 +12757,18 @@ function parseStringToCElement (val, cultureInfo) {
 	 * a cell matches iff its rank r satisfies lower <= r < upper.
 	 *
 	 * Supported ops:
-	 *   '<'  → [0, binarySearchSorted(searchValue))
-	 *   '<=' → [0, upperBoundSorted(searchValue))
-	 *   '>'  → [upperBoundSorted(searchValue), sorted.length)
-	 *   '>=' → [binarySearchSorted(searchValue), sorted.length)
-	 *   '='  → [binarySearchSorted(searchValue), upperBoundSorted(searchValue))
-	 *           — the collation-equality run for searchValue.
-	 *   null → same as '='  (default-equals when criterion has no operator prefix).
+	 *   '<'  -> [0, binarySearchSorted(searchValue))
+	 *   '<=' -> [0, upperBoundSorted(searchValue))
+	 *   '>'  -> [upperBoundSorted(searchValue), sorted.length)
+	 *   '>=' -> [binarySearchSorted(searchValue), sorted.length)
+	 *   '='  -> [binarySearchSorted(searchValue), upperBoundSorted(searchValue))
+	 *           - the collation-equality run for searchValue.
+	 *   null -> same as '='  (default-equals when criterion has no operator prefix).
 	 *
 	 * For '<>' callers pass op = '=' here and treat matches as complement
-	 * (rank ∉ [lower, upper)). When searchValue is absent from the column the
+	 * (rank not in [lower, upper)). When searchValue is absent from the column the
 	 * returned bounds satisfy lower === upper, so the standard rank-in-range
-	 * check yields no matches — callers do not need to special-case this.
+	 * check yields no matches - callers do not need to special-case this.
 	 *
 	 * Flushes pending string changes and ensures the rank index is built.
 	 * Returns null when the column has no sorted strings yet.
@@ -12988,7 +12818,7 @@ function parseStringToCElement (val, cultureInfo) {
 			// --- Remove old value ---
 			if (oldValue !== null) {
 				if (oldType === cElementType.string) {
-					// Defer string array splice — O(1) Map.set vs O(N) splice on large arrays.
+					// Defer string array splice - O(1) Map.set vs O(N) splice on large arrays.
 					if (!column._pendingStrChanges) {
 						column._pendingStrChanges = new Map();
 					}
@@ -13197,7 +13027,7 @@ function parseStringToCElement (val, cultureInfo) {
 		// 'i' flag: string comparison is case-insensitive (searchValue is already lowercased,
 		// but cell values retain their original case).
 		// If mask ends with an unescaped '*', omit '$': "^prefix.*" already matches the full string
-		// from the anchor — dropping the end-anchor lets V8 use a faster prefix-check path.
+		// from the anchor - dropping the end-anchor lets V8 use a faster prefix-check path.
 		return new RegExp(endsWithWildstar ? s : s + '$', 'i');
 	}
 
@@ -13346,7 +13176,7 @@ function parseStringToCElement (val, cultureInfo) {
 				const elemsCount = this.typedCache.getElemsCount(range);
 				return new cNumber(elemsCount);
 			} else {
-				// >=, <=, >, < with empty string — no match (consistent with COUNTIFS behaviour).
+				// >=, <=, >, < with empty string - no match (consistent with COUNTIFS behaviour).
 				return new cNumber(0);
 			}
 		}
@@ -13374,7 +13204,7 @@ function parseStringToCElement (val, cultureInfo) {
 			_count = cellsCount - _count;
 		} else {
 			// For wildcard = (e.g. "Asd1**"), pre-compile the pattern once per formula call.
-			// IMPORTANT: only pre-compile for '=' / null — inequality operators (<,>,<=,>=) treat
+			// IMPORTANT: only pre-compile for '=' / null - inequality operators (<,>,<=,>=) treat
 			// * and ? as literal characters (Excel behavior), so they must use stringCompare, not regex.
 			const isWildcardEq = type === cElementType.string && isWildcard && (matchingInfo.op === '=' || matchingInfo.op === null);
 			const matchingFunction = isWildcardEq
@@ -13414,7 +13244,7 @@ function parseStringToCElement (val, cultureInfo) {
 	 * both COUNTIF and COUNTIFS.
 	 *
 	 * Algorithm: mask-based multi-criteria intersection using Uint32 bit-packing.
-	 *   1. Allocate a flat Uint32Array of ⌈numRows/32⌉ × numCols words, all bits 1.
+	 *   1. Allocate a flat Uint32Array of ceil(numRows/32) x numCols words, all bits 1.
 	 *   2. For each criteria pair call _applyOneCriteria(), which uses the typed
 	 *      column cache to mark non-matching positions as 0 without allocating
 	 *      intermediate matrices.
@@ -13490,7 +13320,7 @@ function parseStringToCElement (val, cultureInfo) {
 			wsIds[idx] = wsId;
 		}
 
-		// Cache hit: return immediately — no getDimensions, no array allocation.
+		// Cache hit: return immediately - no getDimensions, no array allocation.
 		if (cacheElem.results[sKey]) {
 			return cacheElem.results[sKey];
 		}
@@ -13506,13 +13336,13 @@ function parseStringToCElement (val, cultureInfo) {
 	 *
 	 * Shared by COUNTIFS (startIdx = 0) and SUMIFS/AVERAGEIFS (startIdx = 1).
 	 *
-	 * Broadcasting rules per criterion (R × C):
+	 * Broadcasting rules per criterion (R x C):
 	 *   - if R === 1: row index folds to 0 (replicate along rows);
 	 *   - if C === 1: col index folds to 0 (replicate along cols);
 	 *   - otherwise the criterion must cover that index, else the output cell is 0.
-	 * Scalar criteria (number, string, single cell) are 1×1 by definition and pass
-	 * through newArg unchanged — no special path needed.
-	 * Example: {1;2;3} (3×1) and {1,2} (1×2) ⇒ 3×2 result with full cross-product.
+	 * Scalar criteria (number, string, single cell) are 1x1 by definition and pass
+	 * through newArg unchanged - no special path needed.
+	 * Example: {1;2;3} (3x1) and {1,2} (1x2) => 3x2 result with full cross-product.
 	 *
 	 * Returns the cArray result when broadcasting occurred, a cError when a range
 	 * argument is invalid, or null when no array criteria were found (the caller
@@ -13617,7 +13447,7 @@ function parseStringToCElement (val, cultureInfo) {
 		// Register every bbox in the RangeDataManager so that a cell change in any
 		// participating range invalidates this cache entry.
 		// bboxKeys guards against redundant add() calls on repeated cache misses for
-		// the same (bbox, cacheElem) pair — each add() triggers an expensive isSame
+		// the same (bbox, cacheElem) pair - each add() triggers an expensive isSame
 		// traversal in the interval tree even when the record already exists.
 		for (let k = 0; k < ranges.length; k += 1) {
 			const wsId = wsIds[k];
@@ -13661,7 +13491,7 @@ function parseStringToCElement (val, cultureInfo) {
 
 		const isEmptyStr = (searchValue === '' && type === cElementType.string);
 
-		// Precompile wildcard regex once — only for '=' / null operator.
+		// Precompile wildcard regex once - only for '=' / null operator.
 		// Comparison operators (<, >, <=, >=) treat * and ? as literal characters
 		// (Excel behaviour), so they must not use regex.
 		let matchingFn;
@@ -13739,7 +13569,7 @@ function parseStringToCElement (val, cultureInfo) {
 	 * @param {Object} bbox - bounding box of the criteria range
 	 * @param {number} numRows - height of the criteria range
 	 * @param {number} numCols - width of the criteria range
-	 * @param {Uint32Array} matchingRelRows - scratch buffer, length ⌈numRows/32⌉
+	 * @param {Uint32Array} matchingRelRows - scratch buffer, length ceil(numRows/32)
 	 * @param {number} remaining - surviving positions before this criteria
 	 * @returns {number} number of positions set to 0 (newly eliminated)
 	 */
@@ -13755,7 +13585,7 @@ function parseStringToCElement (val, cultureInfo) {
 
 		if (info.op === '<>') {
 			if (info.isEmptyStr) {
-				// <>"" → keep only non-empty cells.
+				// <>"" -> keep only non-empty cells.
 				return this._iterateByRow(mask, ws, wsId, bbox, numRows, numCols, function (column, absRow) {
 					return !typedCache.hasDataAtRow(column, absRow, false);
 				});
@@ -13775,7 +13605,7 @@ function parseStringToCElement (val, cultureInfo) {
 	 *   Sweep clears mask positions where matchingRelRows = 0 (no match).
 	 *
 	 * Complement mode (isComplement = true, used for '<>X', X = ''):
-	 *   matchingRelRows starts at all-1s — every row tentatively satisfies '<>X'.
+	 *   matchingRelRows starts at all-1s - every row tentatively satisfies '<>X'.
 	 *   Bits cleared for rows where value === X (using an equality comparator).
 	 *   Empty cells are never touched, so they remain 1 and are correctly counted.
 	 *
@@ -13787,7 +13617,7 @@ function parseStringToCElement (val, cultureInfo) {
 	 * @param {number} numRows
 	 * @param {number} numCols
 	 * @param {boolean} isComplement
-	 * @param {Uint32Array} matchingRelRows - scratch buffer, length ⌈numRows/32⌉
+	 * @param {Uint32Array} matchingRelRows - scratch buffer, length ceil(numRows/32)
 	 * @param {number} remaining - surviving positions before this criteria; used for
 	 *   early column exit: once eliminated >= remaining, no further columns can match.
 	 * @returns {number} positions cleared
@@ -13848,7 +13678,7 @@ function parseStringToCElement (val, cultureInfo) {
 				// Single rank loop covers '<', '>', '<=', '>=', '=' / null, and '<>'.
 				// In complement mode ('<>') the loop clears bits; in normal mode it sets
 				// them.  When searchValue is absent (rb null or lower === upper) the loop
-				// is skipped — matchingRelRows is left at its initial fill (all-1s for
+				// is skipped - matchingRelRows is left at its initial fill (all-1s for
 				// complement, all-0s for normal), which is the correct outcome for both.
 				// In complement mode the rank range is the collation-equality run ('=').
 				const rb = typedCache._setupRankRange(column, searchValue, isComplement ? '=' : op);
@@ -14179,7 +14009,7 @@ function parseStringToCElement (val, cultureInfo) {
 			this._applyPendingStringChanges(searchColumn);
 			const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
 
-			// 4 advancing pointers, one per type — amortized O(1) per sum entry to check if search row has ANY data
+			// 4 advancing pointers, one per type - amortized O(1) per sum entry to check if search row has ANY data
 			const sNumIdx = searchColumn.indexes[cElementType.number];
 			const sStrIdx = searchColumn.indexes[cElementType.string];
 			const sBoolIdx = searchColumn.indexes[cElementType.bool];
@@ -14352,7 +14182,7 @@ function parseStringToCElement (val, cultureInfo) {
 		// ops ('<', '>', '<=', '>=', '=' or null).  Replaces per-cell stringCompare with a
 		// `lower <= rank < upper` integer check on the column's rank index.
 		// Empty string is excluded: callers return 0 early for that case (consistent with COUNTIFS).
-		// Wildcard-bearing searchValue is excluded — callers must not pass opt_op when
+		// Wildcard-bearing searchValue is excluded - callers must not pass opt_op when
 		// matchingFunction is a regex.
 		const useRankCompare = !convertToNumber && type === cElementType.string &&
 			searchValue !== "" &&
@@ -14389,7 +14219,7 @@ function parseStringToCElement (val, cultureInfo) {
 				// Build rank range once per column when eligible.  Single bracket covers
 				// all supported ops ('<', '>', '<=', '>=', '=' / null).  When the bracket
 				// is empty (searchValue absent or out of range) the rank loop iterates
-				// without matching any cell — correct outcome by construction.
+				// without matching any cell - correct outcome by construction.
 				const rb = useRankCompare && searchTypedData.length
 					? this._setupRankRange(searchColumn, searchValue, opt_op)
 					: null;
@@ -14563,7 +14393,7 @@ function parseStringToCElement (val, cultureInfo) {
 				_sum = calculatingResult.sum;
 				_count = calculatingResult.count;
 			} else {
-				// >=, <=, >, < with empty string — no match (consistent with COUNTIFS behaviour).
+				// >=, <=, >, < with empty string - no match (consistent with COUNTIFS behaviour).
 				return this._finalizeResult(0, 0);
 			}
 		} else {
@@ -14609,7 +14439,7 @@ function parseStringToCElement (val, cultureInfo) {
 			} else {
 				// For wildcard = (e.g. "Asd1**"), pre-compile the pattern once per formula call.
 				// This avoids re-parsing the mask and calling toLowerCase on every of N cell comparisons.
-				// IMPORTANT: only pre-compile for '=' / null — inequality operators (<,>,<=,>=) treat
+				// IMPORTANT: only pre-compile for '=' / null - inequality operators (<,>,<=,>=) treat
 				// * and ? as literal characters (Excel behavior), so they must use stringCompare, not regex.
 				const isWildcardEq = type === cElementType.string && isWildcard && (matchingInfo.op === '=' || matchingInfo.op === null);
 				const matchingFunction = isWildcardEq
@@ -14861,19 +14691,20 @@ function parseStringToCElement (val, cultureInfo) {
 
 	/**
 	 * Builds the criteria bitmask via _buildMask, then iterates surviving bits
-	 * column-by-column and accumulates values from the sum range.
+	 * column-by-column and feeds matching numeric values into _accumulate.
 	 *
-	 * Sum range stores only numeric cells (cElementType.number); non-numeric cells
-	 * are treated as 0, matching the legacy SUMIFS behaviour.
+	 * Value range stores only numeric cells (cElementType.number); non-numeric
+	 * cells are absent from the typed index and contribute nothing - matching
+	 * legacy SUMIFS (treated as 0) and legacy MAXIFS/MINIFS (skipped entirely).
 	 *
-	 * Bit iteration order: LSB-first within each 32-bit word → ascending relRow.
+	 * Bit iteration order: LSB-first within each 32-bit word -> ascending relRow.
 	 * The sum-pointer advances monotonically, giving O(sumLen + matchBits) per column.
 	 *
 	 * @param {Array}  ranges      - criteria range arguments
 	 * @param {Array}  criteriaVals - normalised criteria cElement values
 	 * @param {Array}  bboxes      - pre-computed bounding boxes
 	 * @param {Array}  wsIds       - pre-computed worksheet ids
-	 * @param {Object} baseDim     - {row, col} — dimensions shared by all ranges
+	 * @param {Object} baseDim     - {row, col} - dimensions shared by all ranges
 	 * @param {Object} sumRange    - sum range argument
 	 * @returns {cNumber}
 	 */
@@ -14882,7 +14713,7 @@ function parseStringToCElement (val, cultureInfo) {
 		const numCols = baseDim.col;
 		const res = this._buildMask(ranges, criteriaVals, bboxes, wsIds, numRows, numCols);
 		if (res.remaining === 0) {
-			return this._finalizeResult(0, 0);
+			return this._finalizeResult(this._initAccumulator(), 0);
 		}
 
 		const mask = res.mask;
@@ -14890,7 +14721,8 @@ function parseStringToCElement (val, cultureInfo) {
 		const sumBbox = sumRange.getBBox0();
 		const sumWs = sumRange.getWS();
 		const sumWsId = sumWs.getId();
-		let sum = 0, count = 0;
+		let acc = this._initAccumulator();
+		let count = 0;
 
 		for (let relCol = 0; relCol < numCols; relCol += 1) {
 			const wordBase = relCol * words;
@@ -14909,7 +14741,7 @@ function parseStringToCElement (val, cultureInfo) {
 
 			// Load numeric data for the corresponding sum column.
 			// Non-numeric cells (errors, strings, booleans) are absent from the typed
-			// index and treated as 0 — consistent with legacy SUMIFS behaviour.
+			// index and treated as 0 - consistent with legacy SUMIFS behaviour.
 			const sumColIdx = sumBbox.c1 + relCol;
 			this.sumRangeCache.updateColumnData(sumWs, sumColIdx, sumBbox.r1, sumBbox.r2);
 			const sumColumn = this.sumRangeCache.data[sumWsId][sumColIdx];
@@ -14923,7 +14755,7 @@ function parseStringToCElement (val, cultureInfo) {
 			const sumLen = sumIndexes.length;
 
 			// Iterate surviving bits in ascending relRow order (LSB-first within each word).
-			// sumPtr advances monotonically across the inner loop — no rewind needed.
+			// sumPtr advances monotonically across the inner loop - no rewind needed.
 			for (let w = 0; w < words && sumPtr < sumLen; w += 1) {
 				let word = mask[wordBase + w];
 				while (word !== 0) {
@@ -14940,7 +14772,7 @@ function parseStringToCElement (val, cultureInfo) {
 						break;
 					}
 					if (sumIndexes[sumPtr] === targetSumRow) {
-						sum += sumData[sumPtr];
+						acc = this._accumulate(acc, sumData[sumPtr]);
 						count += 1;
 						sumPtr += 1;
 					}
@@ -14948,20 +14780,40 @@ function parseStringToCElement (val, cultureInfo) {
 			}
 		}
 
-		return this._finalizeResult(sum, count);
+		return this._finalizeResult(acc, count);
 	};
 
 	/**
-	 * @param {number} sum
+	 * Initial accumulator value. Default: 0 (additive accumulation for SUMIFS/AVERAGEIFS).
+	 * Subclasses override (e.g. MaxIFSCache returns -Infinity).
+	 * @returns {number}
+	 */
+	SumIFSCache.prototype._initAccumulator = function () {
+		return 0;
+	};
+
+	/**
+	 * Combine the next matching numeric value into the running accumulator.
+	 * Default: additive. Subclasses override for max/min/other reductions.
+	 * @param {number} acc
+	 * @param {number} value
+	 * @returns {number}
+	 */
+	SumIFSCache.prototype._accumulate = function (acc, value) {
+		return acc + value;
+	};
+
+	/**
+	 * @param {number} acc
 	 * @param {number} count
 	 * @returns {cNumber}
 	 */
-	SumIFSCache.prototype._finalizeResult = function (sum, count) {
-		return new cNumber(sum);
+	SumIFSCache.prototype._finalizeResult = function (acc, count) {
+		return new cNumber(acc);
 	};
 
 	SumIFSCache.prototype.remove = function (cell, dataOld, dataNew) {
-		// Parent (CountIFSCache → BaseTypedCache) clears result entries for the
+		// Parent (CountIFSCache -> BaseTypedCache) clears result entries for the
 		// cell's position and updates the criteria-range typed column data.
 		CountIFSCache.prototype.remove.call(this, cell, dataOld, dataNew);
 		// Also update typed sum column data so the next calculate() gets fresh values.
@@ -15000,6 +14852,70 @@ function parseStringToCElement (val, cultureInfo) {
 		return new cNumber(sum / count);
 	};
 
+	// -------------------------------------------------------MaxIFSCache--------------------------------------------------
+
+	/**
+	 * Cache for MAXIFS.  Extends SumIFSCache; overrides accumulator hooks to
+	 * track the running maximum.  Returns cNumber(0) on empty match-set.
+	 *
+	 * @constructor
+	 */
+	function MaxIFSCache() {
+		SumIFSCache.call(this);
+	}
+
+	MaxIFSCache.prototype = Object.create(SumIFSCache.prototype);
+	MaxIFSCache.prototype.constructor = MaxIFSCache;
+
+	MaxIFSCache.prototype._initAccumulator = function () {
+		return -Infinity;
+	};
+
+	MaxIFSCache.prototype._accumulate = function (acc, value) {
+		return value > acc ? value : acc;
+	};
+
+	/**
+	 * @param {number} acc
+	 * @param {number} count
+	 * @returns {cNumber}
+	 */
+	MaxIFSCache.prototype._finalizeResult = function (acc, count) {
+		return count === 0 ? new cNumber(0) : new cNumber(acc);
+	};
+
+	// -------------------------------------------------------MinIFSCache--------------------------------------------------
+
+	/**
+	 * Cache for MINIFS.  Extends SumIFSCache; overrides accumulator hooks to
+	 * track the running minimum.  Returns cNumber(0) on empty match-set.
+	 *
+	 * @constructor
+	 */
+	function MinIFSCache() {
+		SumIFSCache.call(this);
+	}
+
+	MinIFSCache.prototype = Object.create(SumIFSCache.prototype);
+	MinIFSCache.prototype.constructor = MinIFSCache;
+
+	MinIFSCache.prototype._initAccumulator = function () {
+		return Infinity;
+	};
+
+	MinIFSCache.prototype._accumulate = function (acc, value) {
+		return value < acc ? value : acc;
+	};
+
+	/**
+	 * @param {number} acc
+	 * @param {number} count
+	 * @returns {cNumber}
+	 */
+	MinIFSCache.prototype._finalizeResult = function (acc, count) {
+		return count === 0 ? new cNumber(0) : new cNumber(acc);
+	};
+
 	// -------------------------------------------------------globals------------------------------------------------------
 
 	let g_oFormulaRangesCache = new FormulaRangesCache();
@@ -15009,6 +14925,8 @@ function parseStringToCElement (val, cultureInfo) {
 	let g_oAverageIfCache = new AverageIfCache();
 	let g_oSumIFSCache = new SumIFSCache();
 	let g_oAverageIFSCache = new AverageIFSCache();
+	let g_oMaxIFSCache = new MaxIFSCache();
+	let g_oMinIFSCache = new MinIFSCache();
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
@@ -15048,6 +14966,8 @@ function parseStringToCElement (val, cultureInfo) {
 	window['AscCommonExcel'].g_oAverageIfCache = g_oAverageIfCache;
 	window['AscCommonExcel'].g_oSumIFSCache = g_oSumIFSCache;
 	window['AscCommonExcel'].g_oAverageIFSCache = g_oAverageIFSCache;
+	window['AscCommonExcel'].g_oMaxIFSCache = g_oMaxIFSCache;
+	window['AscCommonExcel'].g_oMinIFSCache = g_oMinIFSCache;
 	window['AscCommonExcel'].CountIfTypedCache = CountIfTypedCache;
 	window['AscCommonExcel'].parseStringToCElement = parseStringToCElement;
 	window['AscCommonExcel'].buildWildcardRegex = _buildWildcardRegex;
