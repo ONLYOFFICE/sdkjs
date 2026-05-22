@@ -382,6 +382,24 @@
 		this.dataInt32[byteOffset >> 2] = val; // Division by 4 to get Int32 index
 	};
 
+	// Presence/flag primitives. Direct reads from dataInt32; safe on
+	// lazily-allocated columns (out-of-range returns the empty result).
+	SheetMemory.prototype.isNonEmpty = function(index) {
+		if (index < this.indexA || index > this.indexB) return false;
+		var byteOffset = (index - this.indexA) * this.structSize;
+		return 0 !== (this.dataInt32[byteOffset >> 2] & 0x01000000);
+	};
+	SheetMemory.prototype.isRowInit = function(index) {
+		if (index < this.indexA || index > this.indexB) return false;
+		var byteOffset = (index - this.indexA) * this.structSize;
+		return 0 !== (this.dataInt32[byteOffset >> 2] & 0x01);
+	};
+	SheetMemory.prototype.getRowFlags = function(index) {
+		if (index < this.indexA || index > this.indexB) return 0;
+		var byteOffset = (index - this.indexA) * this.structSize;
+		return this.dataInt32[byteOffset >> 2] & 0xFF;
+	};
+
 	/**
 	 * Gets a 64-bit floating point number
 	 * @param {number} index - Index

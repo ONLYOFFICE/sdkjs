@@ -164,6 +164,7 @@
 			"cell/model/CellStyleStorage/Serialization.js",
 			"cell/model/CellStyleStorage/LegacyMigration.js",
 			"cell/model/Workbook.js",
+			"cell/model/RowIteratorAdaptive.js",
 			"cell/model/CellIterators.js",
 			"cell/model/CellStyleStorage/Compatibility.js",
 			"cell/model/Serialize.js",
