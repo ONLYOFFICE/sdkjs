@@ -506,6 +506,7 @@
 	var Cell = ns.Cell;
 	var Row = ns.Row;
 	var RowIterator = ns.RowIterator;
+	var Worksheet = ns.Worksheet;
 
 	// Range-level entry points for the raw tuple iterator and row cursor.
 	// Both are additive and don't alter _foreach* semantics.
@@ -514,6 +515,52 @@
 	};
 	Range.prototype.createRowCursor = function () {
 		return new RowCursor().init(this.worksheet.cellsByCol, this.bbox.c1, this.bbox.c2);
+	};
+
+	// Storage extent inside opts.clipTo.
+	// includeValues uses SheetMemory; includeDirectStyles uses cellStylesByCol.
+	// Returns {r1,c1,r2,c2} or null. Not Excel UsedRange.
+	Worksheet.prototype._computeUsedExtent = function (opts) {
+		var includeValues = !!(opts && opts.includeValues);
+		var includeDirectStyles = !!(opts && opts.includeDirectStyles);
+		if (!includeValues && !includeDirectStyles) {
+			return null;
+		}
+		var clip = opts && opts.clipTo;
+		var clipR1 = clip ? clip.r1 : 0;
+		var clipR2 = clip ? clip.r2 : window["AscCommon"].gc_nMaxRow0;
+		var clipC1 = clip ? clip.c1 : 0;
+		var clipC2 = clip ? clip.c2 : window["AscCommon"].gc_nMaxCol0;
+		if (clipR1 > clipR2 || clipC1 > clipC2) {
+			return null;
+		}
+		var r1 = -1, c1 = -1, r2 = -1, c2 = -1;
+		function extend(c, lo, hi) {
+			if (lo < 0) return;
+			if (lo < clipR1) lo = clipR1;
+			if (hi > clipR2) hi = clipR2;
+			if (lo > hi) return;
+			if (c1 < 0 || c < c1) c1 = c;
+			if (c > c2) c2 = c;
+			if (r1 < 0 || lo < r1) r1 = lo;
+			if (hi > r2) r2 = hi;
+		}
+		var c, store, maxC;
+		if (includeValues && this.cellsByCol) {
+			maxC = Math.min(this.cellsByCol.length - 1, clipC2);
+			for (c = clipC1; c <= maxC; ++c) {
+				store = this.cellsByCol[c];
+				if (store) extend(c, store.getMinIndex(), store.getMaxIndex());
+			}
+		}
+		if (includeDirectStyles && this.cellStylesByCol) {
+			maxC = Math.min(this.cellStylesByCol.length - 1, clipC2);
+			for (c = clipC1; c <= maxC; ++c) {
+				store = this.cellStylesByCol[c];
+				if (store && !store.isEmpty()) extend(c, store.firstRow(), store.lastRow());
+			}
+		}
+		return r1 < 0 ? null : { r1: r1, c1: c1, r2: r2, c2: c2 };
 	};
 
 	// Occupied iteration: data cells AND direct-style-only cells.
