@@ -464,7 +464,15 @@
 
         AscCommon.History.Add(new CChangesPDFDocumentRecognizePage(this, oFile.pages[nIndex].isRecognized, isRecognized));
 		oFile.pages[nIndex].isRecognized = isRecognized;
+
 		delete oViewer.drawingPages[nIndex].Image;
+		let oThumbnails = oDoc.GetThumbnails();
+		if (oThumbnails) {
+			let oPage = oThumbnails.getDrawingPage(nIndex);
+			if (oPage) {
+				delete oPage.page.pageImage;
+			}
+		}
 	};
 	CPageInfo.prototype.IsRecognized = function() {
 		let oDoc		= this.GetDocument();
@@ -812,17 +820,8 @@
 					oThis.afterPaintCallbacks();
 				}
 			}
-			else if (oThis.checkPagesLinks())
-			{
-				isViewerTask = true;
-			}
 
-			if (oThis.thumbnails)
-			{
-				isViewerTask = oThis.thumbnails.checkTasks(isViewerTask);
-			}
-
-			if (!isViewerTask && !oThis.Api.WordControl.NoneRepaintPages)
+			if (!oThis.Api.WordControl.NoneRepaintPages)
 			{
 				oThis.checkPagesText();
 
@@ -836,6 +835,12 @@
 					}
 				}
 			}
+
+			setTimeout(function() {
+				if (oThis.thumbnails) {
+					oThis.thumbnails.checkTasks(isViewerTask);
+				}
+			}, 40);
 
 			if (!oThis.UseRequestAnimationFrame)
 			{
@@ -3136,24 +3141,6 @@
 			this.doc.SelectPrevForm();
 		};
 		
-		this.checkPagesLinks = function()
-		{
-			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
-				return false;
-
-			for (var i = this.startVisiblePage; i <= this.endVisiblePage; i++)
-			{
-				var page = this.pagesInfo.pages[i];
-				if (page.isPainted && null === page.links && this.file.pages[i].originIndex != undefined)
-				{
-					page.links = this.file.getLinks(this.file.pages[i].originIndex);
-					return true;
-				}
-			}
-
-			return false;
-		};
-
 		this.checkPagesText = function()
 		{
 			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
@@ -4196,36 +4183,55 @@
 
 		return oRotViewRect;
 	};
-	CHtmlPage.prototype.GetPageForThumbnails = function(nPage, nWidthPx, nHeightPx) {
+	CHtmlPage.prototype.GetPageForThumbnails = function(nPage, nWidthPx, nHeightPx, pageImage, oDirtyBoundsMM, prevImage) {
 		let oFile = this.file;
-		let image = !oFile.pages[nPage].isRecognized ? this.file.getPage(nPage, nWidthPx, nHeightPx, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF) : null;
+		let image = oDirtyBoundsMM && prevImage ? prevImage : null;
+		let ctx;
 
 		if (!image) {
-			let pageColor = this.Api.getPageBackgroundColor();
-
+			let pageColor = Asc.editor.getPageBackgroundColor();;
 			image = document.createElement('canvas');
 
-			let ctx = image.getContext('2d');
+			ctx = image.getContext('2d');
 
 			image.width = nWidthPx;
 			image.height = nHeightPx;
 
 			ctx.fillStyle = "rgba(" + pageColor.R + "," + pageColor.G + "," + pageColor.B + ",1)";
 			ctx.fillRect(0, 0, nWidthPx, nHeightPx);
+			ctx.drawImage(pageImage, 0, 0);
 		}
-
-		image.requestWidth = nWidthPx;
-		image.requestHeight = nHeightPx;
+		else {
+			ctx = image.getContext('2d');
+		}
 
 		if (oFile.type !== 0)
 			return image;
 
-		let ctx = image.getContext('2d');
+		this._drawDrawingsOnCtx(nPage, ctx, true, oDirtyBoundsMM, pageImage);
+		this._drawMarkupAnnotsOnCtx(nPage, ctx, oDirtyBoundsMM);
 
-		this._drawDrawingsOnCtx(nPage, ctx, true);
-		this._drawMarkupAnnotsOnCtx(nPage, ctx);
+		if (oDirtyBoundsMM) {
+			let scaleX = nWidthPx / this.getPDFDoc().GetPageWidthMM(nPage);
+			let scaleY = nHeightPx / this.getPDFDoc().GetPageHeightMM(nPage);
+			let dirtyX = Math.max(0, (Math.floor(oDirtyBoundsMM.l * scaleX)) - 1);
+			let dirtyY = Math.max(0, (Math.floor(oDirtyBoundsMM.t * scaleY)) - 1);
+			let dirtyR = Math.min(nWidthPx, (Math.ceil(oDirtyBoundsMM.r * scaleX)) + 1);
+			let dirtyB = Math.min(nHeightPx, (Math.ceil(oDirtyBoundsMM.b * scaleY)) + 1);
+			ctx.save();
+			ctx.beginPath();
+			ctx.rect(dirtyX, dirtyY, dirtyR - dirtyX, dirtyB - dirtyY);
+			ctx.clip();
+		}
+
 		this._drawAnnotsOnCtx(nPage, ctx, true);
 		this._drawFieldsOnCtx(nPage, ctx, true);
+
+		if (oDirtyBoundsMM) {
+			ctx.restore();
+			ctx.restore();
+			ctx.restore();
+		}
 
 		return ctx.canvas;
 	};

@@ -121,6 +121,7 @@
         this.height = h;
 
         this.image = null;
+        this.dirtyBounds = undefined;
     }
 
     CPage.prototype.draw = function(ctx, x, y, w, h)
@@ -556,7 +557,7 @@
         if (0 === element.offsetWidth || !this.canvas)
             return;
 
-		if (pdfDoc.fontLoader.isWorking() || AscCommon.CollaborativeEditing.waitingImagesForLoad)
+		if (pdfDoc.fontLoader.isWorking() || AscCommon.CollaborativeEditing.waitingImagesForLoad || !this.viewer.canInteract())
 			return true;
 		
         var isNeedTasks = false;
@@ -581,7 +582,7 @@
                 {
                     drPage = block.pages[pageNum];
                     if (drPage.page.image === null || drPage.page.needRedraw ||
-                        (drPage.page.image.requestWidth != drPage.pageRect.w || drPage.page.image.requestHeight != drPage.pageRect.h))
+                        (drPage.page.image.width != drPage.pageRect.w || drPage.page.image.height != drPage.pageRect.h))
                     {
                         needPage = drPage;
                         break;
@@ -594,22 +595,45 @@
 				if (!this.viewer._checkFontsOnPages(needPage.num, needPage.num))
 					return true;
 				
+				console.log('Thunbnails');
+				
                 isNeedTasks = true;
                 let isLandscape = this.viewer.isLandscapePage(needPage.num);
                 let angle       = this.viewer.getPageRotate(needPage.num);
+                let requestW    = isLandscape ? needPage.pageRect.h : needPage.pageRect.w;
+                let requestH    = isLandscape ? needPage.pageRect.w : needPage.pageRect.h;
                 
                 let oImage;
-                if (isLandscape) {
-                    oImage = this.viewer.GetPageForThumbnails(needPage.num, needPage.pageRect.h, needPage.pageRect.w);
-                }
-                else {
-                    oImage = this.viewer.GetPageForThumbnails(needPage.num, needPage.pageRect.w, needPage.pageRect.h);
-                }
+                let oDirtyBounds = 0 === angle ? needPage.page.dirtyBounds : null;
+				let isSameSize = needPage.page.pageImage && needPage.page.pageImage.width === requestW && needPage.page.pageImage.height === requestH;
+                let oPrevImage = oDirtyBounds && isSameSize ? needPage.page.image : null;
 
-                if (0 === angle)
-                {
+				let oFile = this.viewer.file;
+				if (!isSameSize) {
+					let pageImage = !oFile.pages[needPage.num].isRecognized ? oFile.getPage(needPage.num, requestW, requestH, undefined, Asc.editor.isDarkMode ? 0x3A3A3A : 0xFFFFFF) : null;
+					if (!pageImage) {
+						let pageColor = Asc.editor.getPageBackgroundColor();
+
+						pageImage = document.createElement('canvas');
+
+						let ctx = pageImage.getContext('2d');
+
+						pageImage.width = requestW;
+						pageImage.height = requestH;
+
+						ctx.fillStyle = "rgba(" + pageColor.R + "," + pageColor.G + "," + pageColor.B + ",1)";
+						ctx.fillRect(0, 0, requestW, requestH);
+					}
+
+					needPage.page.pageImage = pageImage;
+				}
+
+                oImage = this.viewer.GetPageForThumbnails(needPage.num, requestW, requestH, needPage.page.pageImage, oDirtyBounds, oPrevImage);
+
+                if (0 === angle) {
                     needPage.page.image = oImage;
-                } else {
+                }
+				else {
                     // Create a new canvas with modified dimensions
                     const rotatedCanvas = document.createElement('canvas');
                     rotatedCanvas.width = needPage.pageRect.w;
@@ -623,15 +647,15 @@
                     rotatedContext.drawImage(oImage, -oImage.width / 2 >> 0, -oImage.height / 2 >> 0);
                     rotatedContext.restore();
 
-                    rotatedCanvas.requestWidth = rotatedCanvas.width;
-                    rotatedCanvas.requestHeight = rotatedCanvas.height;
+                    rotatedCanvas.width = rotatedCanvas.width;
+                    rotatedCanvas.height = rotatedCanvas.height;
 
                     needPage.page.image = rotatedCanvas;
                 }
 
                 needPage.page.needRedraw = false;
+                needPage.page.dirtyBounds = undefined;
                 this.isRepaint = true;
-                
             }
         }
 
@@ -848,9 +872,23 @@
         this.calculateVisibleBlocks();
         this.repaint();
     };
-    CDocument.prototype._repaintPage = function(nPage) {
+    CDocument.prototype._repaintPage = function(nPage, dirtyBounds) {
         if (this.pages[nPage]) {
             this.pages[nPage].needRedraw = true;
+            if (dirtyBounds && this.pages[nPage].dirtyBounds !== null) {
+                if (!this.pages[nPage].dirtyBounds) {
+                    this.pages[nPage].dirtyBounds = {l: dirtyBounds.l, t: dirtyBounds.t, r: dirtyBounds.r, b: dirtyBounds.b};
+                }
+                else {
+                    this.pages[nPage].dirtyBounds.l = Math.min(this.pages[nPage].dirtyBounds.l, dirtyBounds.l);
+                    this.pages[nPage].dirtyBounds.t = Math.min(this.pages[nPage].dirtyBounds.t, dirtyBounds.t);
+                    this.pages[nPage].dirtyBounds.r = Math.max(this.pages[nPage].dirtyBounds.r, dirtyBounds.r);
+                    this.pages[nPage].dirtyBounds.b = Math.max(this.pages[nPage].dirtyBounds.b, dirtyBounds.b);
+                }
+            }
+            else {
+                this.pages[nPage].dirtyBounds = null;
+            }
         }
     };
     CDocument.prototype._deletePage = function(nPage) {

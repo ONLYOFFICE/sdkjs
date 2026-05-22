@@ -400,7 +400,7 @@
                     }
                 }
 
-                oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
+                oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage, oBounds);
             }
         }
 
