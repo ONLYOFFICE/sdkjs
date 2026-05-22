@@ -15480,6 +15480,14 @@
 		if (true !== options.isMatchCase) {
 			cellText = cellText.toLowerCase();
 		}
+		if (options.findRegExp && options.isWildcard) {
+			options.findRegExp.lastIndex = 0;
+			var m = options.findRegExp.exec(cellText);
+			if (!m) {
+				return false;
+			}
+			return true !== options.isWholeCell || (m.index === 0 && m[0].length === cellText.length);
+		}
 		var isWordEnter = cellText.indexOf(options.findWhat);
 		if (options.findWhat instanceof RegExp && options.isWholeWord) {
 			isWordEnter = cellText.search(options.findWhat);

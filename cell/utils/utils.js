@@ -3566,6 +3566,7 @@
 			this.isMatchCase = false;					// case sensitive
 			this.isWholeCell = false;
 			this.isWholeWord = false;
+			this.isWildcard = false;
 			this.isSpellCheck = false;		    // change triggered by spell check
 			this.scanOnOnlySheet = Asc.c_oAscSearchBy.Sheet;				// search only on sheet/in workbook c_oAscSearchBy
 			this.lookIn = Asc.c_oAscFindLookIn.Formulas;	// search in formulas/values/comments
@@ -3610,11 +3611,12 @@
 			result.isMatchCase = this.isMatchCase;
 			result.isWholeCell = this.isWholeCell;
 			result.isWholeWord = this.isWholeWord;
+			result.isWildcard = this.isWildcard;
 			result.isSpellCheck = this.isSpellCheck;
 			result.scanOnOnlySheet = this.scanOnOnlySheet;
 			result.lookIn = this.lookIn;
 
-
+			result.findRegExp = this.findRegExp;
 			result.replaceWith = this.replaceWith;
 			result.isReplaceAll = this.isReplaceAll;
 
@@ -3645,7 +3647,7 @@
 		asc_CFindOptions.prototype.isEqual2 = function (obj) {
 			return obj && this.findWhat === obj.findWhat && this.scanByRows === obj.scanByRows && this.isMatchCase === obj.isMatchCase && this.isWholeCell === obj.isWholeCell &&
 				this.lookIn === obj.lookIn && this.specificRange == obj.specificRange && this.isNotSearchEmptyCells == obj.isNotSearchEmptyCells &&
-				this.wsIndex === obj.wsIndex;
+				this.wsIndex === obj.wsIndex && this.isWildcard === obj.isWildcard;
 		};
 		asc_CFindOptions.prototype.clearFindAll = function () {
 			this.countFindAll = 0;

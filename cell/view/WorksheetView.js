@@ -18546,12 +18546,17 @@ function isAllowPasteLink(pastedWb) {
 	// ----- Search -----
 	WorksheetView.prototype._isCellEqual = function (c, r, options) {
 		var cell, cellText;
-		// Don't use RegExp to avoid dealing with special characters
 		var mc = this.model.getMergedByCell(r, c);
 		cell = mc ? this._getVisibleCell(mc.c1, mc.r1) : this._getVisibleCell(c, r);
 		cellText = (options.lookIn === Asc.c_oAscFindLookIn.Formulas) ? cell.getValueForEdit() : cell.getValue();
 		if (true !== options.isMatchCase) {
 			cellText = cellText.toLowerCase();
+		}
+		if (options.findRegExp && options.isWildcard) {
+			options.findRegExp.lastIndex = 0;
+			var m = options.findRegExp.exec(cellText);
+			var matched = m && (true !== options.isWholeCell || (m.index === 0 && m[0].length === cellText.length));
+			return matched ? (mc ? new asc_Range(mc.c1, mc.r1, mc.c1, mc.r1) : new asc_Range(c, r, c, r)) : null;
 		}
 		if ((cellText.indexOf(options.findWhat) >= 0) &&
 			(true !== options.isWholeCell || options.findWhat.length === cellText.length)) {

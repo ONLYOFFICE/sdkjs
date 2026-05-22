@@ -11891,7 +11891,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Find.js
 	 */
 	ApiRange.prototype.Find = function (oSearchData) {
-		let What, After, LookIn, LookAt, SearchOrder, SearchDirection, MatchCase;
+		let What, After, LookIn, LookAt, SearchOrder, SearchDirection, MatchCase, Wildcards;
 
 		if (arguments.length === 1) {
 			if (AscCommon.isRealObject(oSearchData)) {
@@ -11902,6 +11902,7 @@
 				SearchOrder = oSearchData['SearchOrder'];
 				SearchDirection = oSearchData['SearchDirection'];
 				MatchCase = oSearchData['MatchCase'];
+				Wildcards = oSearchData['Wildcards'];
 			} else {
 				return null;
 			}
@@ -11934,6 +11935,10 @@
 
 			options.asc_setLookIn((LookIn === 'xlValues' ? 2 : 1));
 			options.asc_setNotSearchEmptyCells(!(What === "" && !options.isWholeCell));
+			if (Wildcards) {
+				options.isWildcard = true;
+				options.findRegExp = AscCommonExcel.getFindRegExp(What, options);
+			}
 			let start = (After instanceof ApiRange && After.range.isOneCell() && this.range.containsRange(After.range))
 				? {row: After.range.bbox.r1, col: After.range.bbox.c1}
 				: {row: this.range.bbox.r1, col: this.range.bbox.c1};
