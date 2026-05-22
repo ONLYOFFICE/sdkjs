@@ -3167,14 +3167,21 @@
 
                 this.cellEditor.replaceText(this.lastFPos, this.lastFNameLength, type === c_oAscPopUpSelectorType.TableThisRow ? "@" : name);
                 this.cellEditor.skipTLUpdate = tmp;
-            } else if (false === this.cellEditor.insertFormula(name, isNotFunction)) {
-                // Could not insert formula, close editor with saving text
-                this.cellEditor.close(true);
+            } else {
+                if (isNotFunction && c_oAscPopUpSelectorType.FuncConstant === type) {
+                    let argHelpName = this._prepareArgHelpInsertion(name);
+                    if (argHelpName != null) {
+                        name = argHelpName;
+                    }
+                }
+                if (false === this.cellEditor.insertFormula(name, isNotFunction)) {
+                    this.cellEditor.close(true);
+                }
             }
 
             this.skipHelpSelector = false;
         } else {
-            if (c_oAscPopUpSelectorType.None === type) {
+            if (c_oAscPopUpSelectorType.FuncConstant === type) {
 				ws.executeWithFirstActiveCellInMerge(function () {
 					ws.setSelectionInfo("value", name, /*onlyActive*/true);
 				});
@@ -3234,6 +3241,52 @@
                 this._onEditCell(enterOptions, callback);
             }
         }
+    };
+
+    WorkbookView.prototype._prepareArgHelpInsertion = function (name) {
+        let cellEditor = this.cellEditor;
+        let parseResult = cellEditor && cellEditor._parseResult;
+        if (!parseResult || parseResult.argPos == null || !parseResult.argPosArr) {
+            return null;
+        }
+        let argInfo = parseResult.argPosArr[parseResult.argPos - 1];
+        if (!argInfo || argInfo.start == null) {
+            return null;
+        }
+
+        let editableFunc = cellEditor._getEditableFunction(parseResult);
+        let fnName = editableFunc && editableFunc.func;
+        let oCurFunc = fnName && AscCommonExcel.cFormulaFunction[fnName];
+        let argHelpList = oCurFunc && oCurFunc.prototype.getArgHelpList(parseResult.argPos - 1);
+        if (!argHelpList || !argHelpList.length) {
+            return null;
+        }
+
+        let isLastArgUnclosed = (parseResult.argPos === parseResult.argPosArr.length) &&
+                                (parseResult.error === c_oAscError.ID.FrmlParenthesesCorrectCount);
+        let argStart = argInfo.start;
+        let argEnd = argInfo.end != null ? argInfo.end + (isLastArgUnclosed ? 1 : 0) : cellEditor.cursorPos;
+
+        let s = cellEditor.options.fragments.reduce(function (pv, cv) {
+            return pv + AscCommonExcel.convertUnicodeToSimpleString(cv.getCharCodes());
+        }, "");
+       
+        if (cellEditor.cursorPos > argEnd && cellEditor.cursorPos <= s.length) {
+            argEnd = cellEditor.cursorPos;
+        }
+        if (argEnd > s.length) {
+            argEnd = s.length;
+        }
+        if (argEnd < argStart) {
+            argEnd = argStart;
+        }
+        let prefixMatch = s.substring(argStart, argEnd).match(/^\d*\s?/);
+        let prefix = prefixMatch ? prefixMatch[0] : '';
+
+        cellEditor.cursorPos = argEnd;
+        cellEditor.selectionBegin = argStart;
+        cellEditor.selectionEnd = argEnd;
+        return prefix + "" + name;
     };
 
     WorkbookView.prototype.startWizard = function (name, doCleanCellContent) {

@@ -4424,6 +4424,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return true;
 	};
 
+	cBaseFunction.prototype.getArgHelpList = function () {
+		return null;
+	};
+	
+
 	/** @constructor */
 	function cUnknownFunction(name) {
 		this.name = name;

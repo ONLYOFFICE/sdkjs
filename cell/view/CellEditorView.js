@@ -1358,6 +1358,18 @@ function (window, undefined) {
 			functionInfo = new AscCommonExcel.CFunctionInfo(AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[fCurrent] : fCurrent);
 			functionInfo.activeArgPos = this._parseResult.argPos;
 			functionInfo.activeArgsCount = this._parseResult.argPosArr && this._parseResult.argPosArr.length;
+
+			let oCurFunc = fCurrent && AscCommonExcel.cFormulaFunction[fCurrent];
+			if (oCurFunc) {
+				let argHelpList = oCurFunc.prototype.getArgHelpList(functionInfo.activeArgPos - 1);
+				if (argHelpList) {
+					let charBeforeCursor = (this.cursorPos > 0 && this.cursorPos <= s.length) ? s.charAt(this.cursorPos - 1) : '';
+					if (charBeforeCursor && /\s/.test(charBeforeCursor)) {
+						argHelpList = null;
+					}
+				}
+				functionInfo.argHelpList = argHelpList;
+			}
 		}
 		this.handlers.trigger("updatedEditableFunction", fCurrent, fPos !== undefined ? this.calculateOffset(fPos) : null, functionInfo);
 		if (api && api.isMobileVersion) {

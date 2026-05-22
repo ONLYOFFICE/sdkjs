@@ -338,7 +338,8 @@ var c_oAscPopUpSelectorType = {
   TableAll: 8,
   TableData: 9,
   TableHeaders: 10,
-  TableTotals: 11
+  TableTotals: 11,
+  FuncConstant: 12
 };
   /** @enum */
   var c_oSerFormat = {
@@ -880,6 +881,8 @@ var c_oAscPopUpSelectorType = {
   prot['TableData'] = prot.TableData;
   prot['TableHeaders'] = prot.TableHeaders;
   prot['TableTotals'] = prot.TableTotals;
+  prot['FuncConstant'] = prot.FuncConstant;
+
 
   window['Asc']['c_oAscAutoCorrectOptions'] = window['Asc'].c_oAscAutoCorrectOptions = c_oAscAutoCorrectOptions;
   prot = c_oAscAutoCorrectOptions;
