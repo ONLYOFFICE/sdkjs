@@ -1870,8 +1870,12 @@
 		if (!allocator) return;
 		let oCNvPr = this.getCNvProps && this.getCNvProps();
 		if (oCNvPr) {
-			let nNewId = allocator.allocate();
-			if (nNewId !== 0) oCNvPr.setId(nNewId);
+			if (AscCommon.g_oIdCounter.IsLoad()) {
+				allocator.observe(oCNvPr.id);
+			} else {
+				let nNewId = allocator.allocate();
+				if (nNewId !== 0) oCNvPr.setId(nNewId);
+			}
 		}
 		if (Array.isArray(this.spTree)) {
 			for (let i = 0; i < this.spTree.length; ++i) {

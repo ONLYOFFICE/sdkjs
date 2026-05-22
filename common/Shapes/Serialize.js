@@ -4685,7 +4685,7 @@ function BinaryPPTYLoader()
                 break;
 
             if (0 == _at)
-                csld.name = s.GetString2();
+                csld.setName(s.GetString2());
             else
                 break;
         }
@@ -4698,12 +4698,15 @@ function BinaryPPTYLoader()
                 case 0:
                 {
                     // themeElements
-                    csld.Bg = this.ReadBg();
+                    csld.setBg(this.ReadBg());
                     break;
                 }
                 case 1:
                 {
-                    csld.spTree = this.ReadGroupShapeMain();
+                    var arr = this.ReadGroupShapeMain();
+                    for (var i = 0; i < arr.length; i++) {
+                        csld.addToSpTree(csld.spTree.length, arr[i]);
+                    }
                     break;
                 }
                 default:
