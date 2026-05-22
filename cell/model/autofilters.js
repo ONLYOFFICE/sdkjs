@@ -5471,25 +5471,20 @@
 			},
 
 			_isAddNameColumn: function (range) {
-				//if first three rows of any columns contain text data
-				var result = false;
-				var worksheet = this.worksheet;
-				if (range.r1 !== range.r2) {
-					for (var col = range.c1; col <= range.c2; col++) {
-						var valFirst = worksheet.getCell3(range.r1, col);
-						if (valFirst !== '') {
-							for (var row = range.r1; row <= range.r1 + 2; row++) {
-								var cell = worksheet.getCell3(row, col);
-								var type = cell.getType();
-								if (type === CellValueType.String) {
-									result = true;
-									break;
-								}
-							}
-						}
-					}
+				if (range.r1 === range.r2) {
+					return false;
 				}
-				return result;
+				var r1 = range.r1;
+				var r2 = Math.min(r1 + 2, range.r2);
+				var scanRange = this.worksheet.getRange3(r1, range.c1, r2, range.c2);
+				var found = false;
+				scanRange.forEachDataValue(function (row, col, type) {
+					if (type === CellValueType.String) {
+						found = true;
+						return true;
+					}
+				});
+				return found;
 			},
 
 			_generateColumnNameWithoutTitle: function (ref) {

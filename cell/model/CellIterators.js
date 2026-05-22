@@ -93,6 +93,8 @@
 				var int32Off = byteOff >> 2;
 				var mix = colData.dataInt32[int32Off];
 				var flagsHi = (mix >>> 24) & 0xFF;
+				// Ignore init-only records without value bits.
+				if ((flagsHi & 0x18) === 0) continue;
 				var type = (flagsHi >>> 1) & 0x3;
 				var xfIndex = mix & 0xFFFFFF;
 				var value;
@@ -148,6 +150,8 @@
 				var int32Off = byteOff >> 2;
 				var mix = colData.dataInt32[int32Off];
 				var flagsHi = (mix >>> 24) & 0xFF;
+				// Ignore init-only records without value bits.
+				if ((flagsHi & 0x18) === 0) continue;
 				var type = (flagsHi >>> 1) & 0x3;
 				var xfIndex = mix & 0xFFFFFF;
 				var formulaIndex = colData.dataInt32[int32Off + 1];
@@ -165,6 +169,7 @@
 		return undefined;
 	}
 
+	// Raw SheetMemory tuple reader: no Cell/loadCells/_checkDirty side effects.
 	function forEachDataValue(range, visitor, opts) {
 		opts = opts || {};
 		var ws = range.worksheet;

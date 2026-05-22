@@ -7503,13 +7503,14 @@ function RangeDataManagerElem(bbox, data)
 
 		this.initData = null;
 		this.worksheet = null;
+		// Interval-tree row records can remain after their inner tree is empty.
+		this._count = 0;
 	}
 	RangeDataManager.prototype.isEmpty = function () {
 		if (this.initData && this.initData.length > 0) {
 			return false;
 		}
-		var tree = this.tree && this.tree.tree;
-		if (tree && tree.root !== undefined) {
+		if (this._count > 0) {
 			return false;
 		}
 		if (this.oDependenceManager) {
@@ -7541,6 +7542,7 @@ function RangeDataManagerElem(bbox, data)
 		this._delayedInit();
 		var oNewElem = new RangeDataManagerElem(new Asc.Range(bbox.c1, bbox.r1, bbox.c2, bbox.r2), data);
 		this.tree.insert(bbox, oNewElem);
+		this._count++;
 		if (null != this.fChange) {
 			this.fChange.call(this, oNewElem.data, null, oNewElem.bbox, oChangeParam);
 		}
@@ -7609,6 +7611,7 @@ function RangeDataManagerElem(bbox, data)
 		this._delayedInit();
 		if (null != elemToDelete) {
 			this.tree.remove(elemToDelete.bbox, elemToDelete);
+			if (this._count > 0) this._count--;
 			if (null != this.fChange) {
 				this.fChange.call(this, elemToDelete.data, elemToDelete.bbox, null, oChangeParam);
 			}
