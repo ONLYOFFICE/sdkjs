@@ -292,6 +292,64 @@ function (window, undefined) {
 		}
 	}
 
+	function actualDays(a, b) {
+		return Math.round((a - b) / c_msPerDay);
+	}
+
+	function daysInYearBasisFinancial(issue, settl, basis) {
+		switch (basis) {
+			case DayCountBasis.UsPsa30_360:         // 0=USA (NASD) 30/360
+			case DayCountBasis.Actual360:         // 2=exact/360
+			case DayCountBasis.Europ30_360:         // 4=Europe 30/360
+				return new cNumber(360);
+			case DayCountBasis.ActualActual: {         // 1=exact/exact
+				if (!lessOrEqualToAYearApart(issue, settl)) {
+					let actualYears = (settl.getFullYear() - issue.getFullYear()) + 1;
+					let actualDays = actualDays(new Date(settl.getFullYear() + 1, 0, 1), new Date(issue.getFullYear(), 0, 1));
+
+					return actualDays / actualYears;
+				}
+				return considerAsLeap(issue, settl) ? 366 : 365;
+			}
+			case DayCountBasis.Actual365:         //3=exact/365
+				return new cNumber(365);
+			default:
+				return new cError(cErrorType.not_numeric);
+		}
+	}
+
+	function lessOrEqualToAYearApart(issue, settl) {
+		if (settl.getFullYear() - issue.getFullYear() > 1) {
+			return false;
+		} 
+
+		if (settl.getFullYear() === issue.getFullYear()) {
+			return true;
+		} 
+
+		// exactly 1 year apart in calendar years
+		return settl.getMonth() < issue.getMonth() || (settl.getMonth() === issue.getMonth() && settl.getDate() <= issue.getDate());
+	}
+
+	function considerAsLeap(issue, settl) {
+		if (issue.getFullYear() === settl.getFullYear()) {
+			return issue.isLeapYear();
+		}
+		
+		// spans two calendar years - check if either year's Feb 29 falls in [issue, settl]
+		let y1 = issue.getFullYear(), y2 = settl.getFullYear();
+		for (let y = y1; y <= y2; y++) {
+			if (y.isLeapYear()) {
+				let feb29 = new Date(y, 1, 29);
+				if (feb29 >= issue && feb29 <= settl) {
+					return true;
+				} 
+			}
+		}
+		return false;
+	}
+
+
 	function getCorrectDate(val) {
 		// function with shift for dates of the first two months of 1900 (until February)
 		if (!AscCommon.bDate1904) {
@@ -2697,5 +2755,6 @@ function (window, undefined) {
 	window['AscCommonExcel'].days360 = days360;
 	window['AscCommonExcel'].getCorrectDate = getCorrectDate;
 	window['AscCommonExcel'].daysInYear = daysInYear;
+	window['AscCommonExcel'].daysInYearBasisFinancial = daysInYearBasisFinancial;
 	window['AscCommonExcel'].getLastDayInMonth = getLastDayInMonth;
 })(window);
