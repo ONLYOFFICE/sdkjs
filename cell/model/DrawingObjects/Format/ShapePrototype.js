@@ -143,7 +143,7 @@ function _invalidatePageBreakPreviewForWorksheet(worksheet)
     }
 }
 
-function addToDrawings(worksheet, graphic, position, lockByDefault, anchor)
+function addToDrawings(worksheet, graphic, position, lockByDefault, anchor, bSkipIdAssign)
 {
 
     var drawingObjects;
@@ -209,7 +209,7 @@ function addToDrawings(worksheet, graphic, position, lockByDefault, anchor)
 
     _invalidatePageBreakPreviewForWorksheet(worksheet);
 
-    if (worksheet && worksheet.drawingIdAllocator) {
+    if (!bSkipIdAssign && worksheet && worksheet.drawingIdAllocator) {
         graphic.assignDrawingId(worksheet.drawingIdAllocator);
     }
 
@@ -231,12 +231,12 @@ CChangeContentDrawingWorksheet.prototype.constructor = CChangeContentDrawingWork
             _invalidatePageBreakPreviewForWorksheet(this.Class.worksheet);
         }
         else {
-            AscFormat.addToDrawings(this.Class.worksheet, this.Class, this.Pos);
+            AscFormat.addToDrawings(this.Class.worksheet, this.Class, this.Pos, undefined, undefined, true);
         }
     };
     CChangeContentDrawingWorksheet.prototype.Redo = function() {
         if(this.IsAdd()) {
-            AscFormat.addToDrawings(this.Class.worksheet, this.Class, this.Pos);
+            AscFormat.addToDrawings(this.Class.worksheet, this.Class, this.Pos, undefined, undefined, true);
         }
         else {
             AscFormat.deleteDrawingBase(this.Class.worksheet.Drawings, this.Class.Get_Id());
@@ -253,7 +253,7 @@ CChangeContentDrawingWorksheet.prototype.constructor = CChangeContentDrawingWork
                 if(Pos === false){
                     return;
                 }
-                AscFormat.addToDrawings(this.Class.worksheet, this.Class, Pos);
+                AscFormat.addToDrawings(this.Class.worksheet, this.Class, Pos, undefined, undefined, true);
             }
             else {
                 var Pos  = this.Class.worksheet.contentChanges.Check(AscCommon.contentchanges_Remove, true === this.UseArray && AscFormat.isRealNumber(this.PosArray[0]) ? this.PosArray[0] : this.Pos);
