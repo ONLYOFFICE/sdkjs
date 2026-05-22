@@ -305,9 +305,9 @@ function (window, undefined) {
 			case DayCountBasis.ActualActual: {         // 1=exact/exact
 				if (!lessOrEqualToAYearApart(issue, settl)) {
 					let actualYears = (settl.getFullYear() - issue.getFullYear()) + 1;
-					let actualDays = actualDays(new Date(settl.getFullYear() + 1, 0, 1), new Date(issue.getFullYear(), 0, 1));
+					let totalDays = actualDays(new Date(settl.getFullYear() + 1, 0, 1), new Date(issue.getFullYear(), 0, 1));
 
-					return actualDays / actualYears;
+					return totalDays / actualYears;
 				}
 				return considerAsLeap(issue, settl) ? 366 : 365;
 			}
