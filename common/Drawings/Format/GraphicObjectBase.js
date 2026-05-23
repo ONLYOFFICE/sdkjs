@@ -1877,14 +1877,23 @@
 	};
 	CGraphicObjectBase.prototype.assignNameInContainer = function (container) {
 		let oCNvPr = this.getCNvProps && this.getCNvProps();
-		if (oCNvPr && (!oCNvPr.name || oCNvPr.name === "")) {
-			oCNvPr.setName(this.getTypeName() + " " + container.getNextNameIndex());
+		if (oCNvPr) {
+			let typeName = this.getTypeName();
+			if (!oCNvPr.name || this.isStandardName(oCNvPr.name, typeName)) {
+				oCNvPr.setName(typeName + " " + container.getNextNameIndex());
+			}
 		}
 		if (Array.isArray(this.spTree)) {
 			for (let i = 0; i < this.spTree.length; ++i) {
 				this.spTree[i].assignNameInContainer(container);
 			}
 		}
+	};
+	CGraphicObjectBase.prototype.isStandardName = function (name, typeName) {
+		let prefix = typeName + " ";
+		if (name.indexOf(prefix) !== 0) return false;
+		let rest = name.substring(prefix.length);
+		return /^\d+$/.test(rest);
 	};
 	CGraphicObjectBase.prototype.getFormatIdString = function () {
 		let nId = this.getFormatId();
