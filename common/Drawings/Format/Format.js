@@ -11067,6 +11067,27 @@
 				this.parent.handleCSldRecalc(data);
 			}
 		};
+		CSld.prototype.fillObject = function (oCopy, oPr) {
+			if (typeof this.name === "string" && this.name.length > 0) {
+				oCopy.setName(this.name);
+			}
+			if (this.Bg) {
+				oCopy.setBg(this.Bg.createFullCopy());
+			}
+			if (!oPr) {
+				oPr = new AscFormat.CCopyObjectProperties();
+			}
+			if (!oPr.idMap) oPr.idMap = {};
+			for (let i = 0; i < this.spTree.length; ++i) {
+				let oSp = this.spTree[i];
+				let oSpCopy = oSp.copy(oPr);
+				oPr.idMap[oSp.Id] = oSpCopy.Id;
+				oCopy.addToSpTree(oCopy.spTree.length, oSpCopy);
+				if (oCopy.parent) {
+					oSpCopy.setParent2(oCopy.parent);
+				}
+			}
+		};
 		CSld.prototype.Refresh_RecalcData2 = function (pageIndex, object) {
 			if (this.parent && this.parent.Refresh_RecalcData2) {
 				this.parent.Refresh_RecalcData2(pageIndex, object);

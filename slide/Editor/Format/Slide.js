@@ -254,20 +254,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         oPr.idMap = oIdMap;
         oPr.cacheImage = bCacheImage !== false;
         var copy = new Slide(this.presentation, this.Layout, 0), i;
-        if(typeof this.cSld.name === "string" && this.cSld.name.length > 0)
-        {
-            copy.setCSldName(this.cSld.name);
-        }
-        if(this.cSld.Bg)
-        {
-            copy.changeBackground(this.cSld.Bg.createFullCopy());
-        }
-
-	    this.cSld.forEachSp(function(oSp) {
-		    let oSpCopy = oSp.copy(oPr);
-		    oIdMap[oSp.Id] = oSpCopy.Id;
-		    copy.shapeAdd(copy.cSld.spTree.length, oSpCopy);
-	    });
+        this.cSld.fillObject(copy.cSld, oPr);
 
         if(this.clrMap)
         {
