@@ -1715,9 +1715,6 @@
 	window['AscDFH'].historyitem_type_ChartStyleEntry        = 1198 << 16;
 	window['AscDFH'].historyitem_type_MarkerLayout           = 1199 << 16;
 	window['AscDFH'].historyitem_type_TimelineSlicerView     = 1200 << 16;
-	window['AscDFH'].historyitem_type_ImageBlipFillPart      = 1201 << 16;
-	window['AscDFH'].historyitem_type_ImageBlipStart         = 1202 << 16;
-	window['AscDFH'].historyitem_type_ImageBlipEnd           = 1203 << 16;
 
 
 	window['AscDFH'].historyitem_type_Address                          = 1201 << 16;
@@ -1858,6 +1855,8 @@
 	window['AscDFH'].historyitem_type_ViewPrScale            = 2116 << 16;
 	window['AscDFH'].historyitem_type_ViewPrGuide            = 2117 << 16;
 
+	window['AscDFH'].historyitem_type_CSld                   = 2118 << 16;
+
 	window['AscDFH'].historyitem_type_OForm_UserMaster       = 2200 << 16;
 	window['AscDFH'].historyitem_type_OForm_User             = 2201 << 16;
 	window['AscDFH'].historyitem_type_OForm_FieldMaster      = 2202 << 16;
@@ -1904,7 +1903,6 @@
 	window['AscDFH'].historyitem_type_Control      = 2303 << 16;
 	window['AscDFH'].historyitem_type_ControlPr    = 2304 << 16;
 	window['AscDFH'].historyitem_type_FormControlPr= 2305 << 16;
-	window['AscDFH'].historyitem_type_CSld         = 2306 << 16;
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
