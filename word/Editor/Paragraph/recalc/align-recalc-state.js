@@ -72,6 +72,8 @@
 		this.RecalcFast2   = false; // Второй вариант быстрого пересчета
 
 		this.ComplexFields = new AscWord.ParagraphComplexFieldStack();
+		
+		this.bidiFlow = new AscWord.BidiFlow(this);
 	}
 	AlignRecalcState.prototype.beginPage = function(paragraph, pageNum, isFast)
 	{
@@ -120,9 +122,13 @@
 		this.RecalcResult  = recalcresult_NextElement;
 		
 		range.XVisible = x;
+		
+		this.bidiFlow.begin(this.RTL);
 	};
 	AlignRecalcState.prototype.endRange = function()
 	{
+		this.bidiFlow.end();
+		
 		this.Range.XEndVisible = this.X;
 		
 		if (this.RTL)
@@ -149,6 +155,13 @@
 			return;
 		}
 		
+		this.bidiFlow.add([element, run], element.getBidiType());
+	};
+	AlignRecalcState.prototype.handleBidiFlow = function(data, direction)
+	{
+		let element = data[0];
+		let run     = data[1];
+		let type = element.Type;
 		switch (type)
 		{
 			case para_Sym:
