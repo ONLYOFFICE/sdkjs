@@ -143,7 +143,7 @@ function _invalidatePageBreakPreviewForWorksheet(worksheet)
     }
 }
 
-function addToDrawings(worksheet, graphic, position, lockByDefault, anchor, bSkipIdAssign)
+function addToDrawings(worksheet, graphic, position, lockByDefault, anchor)
 {
 
     var drawingObjects;
@@ -209,10 +209,6 @@ function addToDrawings(worksheet, graphic, position, lockByDefault, anchor, bSki
 
     _invalidatePageBreakPreviewForWorksheet(worksheet);
 
-    if (!bSkipIdAssign && worksheet && worksheet.drawingIdAllocator) {
-        graphic.assignDrawingId(worksheet.drawingIdAllocator);
-    }
-
     return ret;
 }
 
@@ -231,12 +227,12 @@ CChangeContentDrawingWorksheet.prototype.constructor = CChangeContentDrawingWork
             _invalidatePageBreakPreviewForWorksheet(this.Class.worksheet);
         }
         else {
-            AscFormat.addToDrawings(this.Class.worksheet, this.Class, this.Pos, undefined, undefined, true);
+            AscFormat.addToDrawings(this.Class.worksheet, this.Class, this.Pos);
         }
     };
     CChangeContentDrawingWorksheet.prototype.Redo = function() {
         if(this.IsAdd()) {
-            AscFormat.addToDrawings(this.Class.worksheet, this.Class, this.Pos, undefined, undefined, true);
+            AscFormat.addToDrawings(this.Class.worksheet, this.Class, this.Pos);
         }
         else {
             AscFormat.deleteDrawingBase(this.Class.worksheet.Drawings, this.Class.Get_Id());
@@ -253,7 +249,7 @@ CChangeContentDrawingWorksheet.prototype.constructor = CChangeContentDrawingWork
                 if(Pos === false){
                     return;
                 }
-                AscFormat.addToDrawings(this.Class.worksheet, this.Class, Pos, undefined, undefined, true);
+                AscFormat.addToDrawings(this.Class.worksheet, this.Class, Pos);
             }
             else {
                 var Pos  = this.Class.worksheet.contentChanges.Check(AscCommon.contentchanges_Remove, true === this.UseArray && AscFormat.isRealNumber(this.PosArray[0]) ? this.PosArray[0] : this.Pos);
@@ -468,6 +464,9 @@ CChangeContentDrawingWorksheet.prototype.constructor = CChangeContentDrawingWork
     function editorAddToDrawingObjects(oGraphicObject, pos, type)
     {
         var position = addToDrawings(oGraphicObject.worksheet, oGraphicObject, pos, /*lockByDefault*/undefined, type);
+        if (oGraphicObject.worksheet && oGraphicObject.worksheet.checkAndAssignName) {
+            oGraphicObject.worksheet.checkAndAssignName(oGraphicObject);
+        }
         //var data = {Type: AscDFH.historyitem_AutoShapes_AddToDrawingObjects, Pos: position};
         History.Add(new CChangeContentDrawingWorksheetAdd(oGraphicObject, position));
         if(oGraphicObject.setDrawingBaseType)

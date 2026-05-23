@@ -1866,20 +1866,23 @@
 		}
 		return null;
 	};
-	CGraphicObjectBase.prototype.assignDrawingId = function (allocator) {
-		if (!allocator) return;
-		let oCNvPr = this.getCNvProps && this.getCNvProps();
-		if (oCNvPr) {
-			if (AscCommon.g_oIdCounter.IsLoad()) {
-				allocator.observe(oCNvPr.id);
-			} else {
-				let nNewId = allocator.allocate();
-				if (nNewId !== 0) oCNvPr.setId(nNewId);
+	CGraphicObjectBase.prototype.countDrawings = function () {
+		let count = 1;
+		if (Array.isArray(this.spTree)) {
+			for (let i = 0; i < this.spTree.length; ++i) {
+				count += this.spTree[i].countDrawings();
 			}
+		}
+		return count;
+	};
+	CGraphicObjectBase.prototype.assignNameInContainer = function (container) {
+		let oCNvPr = this.getCNvProps && this.getCNvProps();
+		if (oCNvPr && (!oCNvPr.name || oCNvPr.name === "")) {
+			oCNvPr.setName(this.getTypeName() + " " + container.getNextNameIndex());
 		}
 		if (Array.isArray(this.spTree)) {
 			for (let i = 0; i < this.spTree.length; ++i) {
-				this.spTree[i].assignDrawingId(allocator);
+				this.spTree[i].assignNameInContainer(container);
 			}
 		}
 	};

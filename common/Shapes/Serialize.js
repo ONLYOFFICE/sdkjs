@@ -4017,9 +4017,7 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
-                    var cSld = new AscFormat.CSld(master);
-                    this.ReadCSld(cSld);
-                    AscCommonSlide.fFillFromCSld(master, cSld);
+                    this.ReadCSld(master.cSld);
                     break;
                 }
                 case 1:
@@ -4179,9 +4177,7 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
-                    var cSld = new AscFormat.CSld(layout);
-                    this.ReadCSld(cSld);
-                    AscCommonSlide.fFillFromCSld(layout, cSld);
+                    this.ReadCSld(layout.cSld);
                     break;
                 }
                 case 1:
@@ -4260,9 +4256,7 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
-                    var cSld = new AscFormat.CSld(slide);
-                    this.ReadCSld(cSld);
-                    AscCommonSlide.fFillFromCSld(slide, cSld);
+                    this.ReadCSld(slide.cSld);
                     break;
                 }
                 case 1:
@@ -4568,16 +4562,7 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
-                    var cSld = new AscFormat.CSld(oNotesMaster);
-                    this.ReadCSld(cSld);
-                    for(var i = 0; i < cSld.spTree.length; ++i){
-                        oNotesMaster.addToSpTreeToPos(i, cSld.spTree[i]);
-                    }
-                    if(cSld.Bg)
-                    {
-                        oNotesMaster.changeBackground(cSld.Bg);
-                    }
-                    oNotesMaster.setCSldName(cSld.name);
+                    this.ReadCSld(oNotesMaster.cSld);
                     break;
                 }
                 case 1:
@@ -4641,16 +4626,7 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
-                    var cSld = new AscFormat.CSld(oNotes);
-                    this.ReadCSld(cSld);
-                    for(var i = 0; i < cSld.spTree.length; ++i){
-                        oNotes.addToSpTreeToPos(i, cSld.spTree[i]);
-                    }
-                    if(cSld.Bg)
-                    {
-                        oNotes.changeBackground(cSld.Bg);
-                    }
-                    oNotes.setCSldName(cSld.name);
+                    this.ReadCSld(oNotes.cSld);
                     break;
                 }
                 case 1:
@@ -4706,6 +4682,7 @@ function BinaryPPTYLoader()
                     var arr = this.ReadGroupShapeMain();
                     for (var i = 0; i < arr.length; i++) {
                         csld.addToSpTree(csld.spTree.length, arr[i]);
+                        if (csld.parent) arr[i].setParent2(csld.parent);
                     }
                     break;
                 }

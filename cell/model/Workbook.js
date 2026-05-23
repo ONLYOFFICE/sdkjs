@@ -6910,7 +6910,7 @@
 		this.aCols = [];// 0 based
 		this.hiddenManager = new HiddenManager(this);
 		this.Drawings = [];
-		this.drawingIdAllocator = new AscCommon.CDrawingIdAllocator(this);
+		this.drawingNameAllocator = null;
 		this.TableParts = [];
 		this.AutoFilter = null;
 		this.oAllCol = null;
@@ -7142,13 +7142,20 @@
 			this.Drawings[i].graphicObject.Reassign_ImageUrls(oImages);
 		}
 	};
-	Worksheet.prototype.getDrawings = function () {
-		let arr = [];
-		for (let i = 0; i < this.Drawings.length; i++) {
+	Worksheet.prototype.checkAndAssignName = function (graphic) {
+		graphic.assignNameInContainer(this);
+	};
+	Worksheet.prototype.getNextNameIndex = function () {
+		if (!this.drawingNameAllocator) this.drawingNameAllocator = new AscCommon.CDrawingNameAllocator();
+		return this.drawingNameAllocator.next(this.countDrawings());
+	};
+	Worksheet.prototype.countDrawings = function () {
+		let count = 0;
+		for (let i = 0; i < this.Drawings.length; ++i) {
 			let g = this.Drawings[i] && this.Drawings[i].graphicObject;
-			if (g) arr.push(g);
+			if (g) count += g.countDrawings();
 		}
-		return arr;
+		return count;
 	};
 	Worksheet.prototype.copyFrom=function(wsFrom, sName, tableNames){
 		var i, elem, range, _newSlicer;

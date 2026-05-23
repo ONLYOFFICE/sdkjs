@@ -11027,7 +11027,7 @@
 			this.Bg = null;
 			this.spTree = [];//new GroupShape();
 			this.parent = parent || null;
-			this.drawingIdAllocator = new AscCommon.CDrawingIdAllocator(this);
+			this.drawingNameAllocator = null;
 			this.m_oContentChanges = new AscCommon.CContentChanges();
 			this.collaborativeMarks = null;
 		}
@@ -11044,7 +11044,6 @@
 		CSld.prototype.addToSpTree = function (pos, item) {
 			AscCommon.History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_CSld_AddToSpTree, pos, [item], true, true));
 			this.spTree.splice(pos, 0, item);
-			this.checkAndAssignDrawingId(item);
 			if (this.collaborativeMarks) {
 				this.collaborativeMarks.Update_OnAdd(pos);
 			}
@@ -11107,11 +11106,19 @@
 		CSld.prototype.Refresh_ContentChanges = function () {
 			this.m_oContentChanges.Refresh();
 		};
-		CSld.prototype.getDrawings = function () {
-			return this.spTree;
+		CSld.prototype.checkAndAssignName = function (item) {
+			item.assignNameInContainer(this);
 		};
-		CSld.prototype.checkAndAssignDrawingId = function (item) {
-			item.assignDrawingId(this.drawingIdAllocator);
+		CSld.prototype.getNextNameIndex = function () {
+			if (!this.drawingNameAllocator) this.drawingNameAllocator = new AscCommon.CDrawingNameAllocator();
+			return this.drawingNameAllocator.next(this.countDrawings());
+		};
+		CSld.prototype.countDrawings = function () {
+			let count = 0;
+			for (let i = 0; i < this.spTree.length; ++i) {
+				count += this.spTree[i].countDrawings();
+			}
+			return count;
 		};
 		CSld.prototype.removeAllInks = function () {
 			const oController = this.parent && this.parent.graphicObjects;

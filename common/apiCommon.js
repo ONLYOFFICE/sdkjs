@@ -146,62 +146,12 @@ function (window, undefined) {
 		return FixDurableId(CreateUInt32());
 	}
 
-	function CDrawingIdAllocator(owner) {
-		this.owner = owner || null;
-		this.currentNs = -1;
+	function CDrawingNameAllocator() {
 		this.counter = 0;
-		this.usedSet = {};
 	}
-	CDrawingIdAllocator.M = 1000000;
-	CDrawingIdAllocator.prototype._getCurrentUserIndex = function() {
-		let coEdit = AscCommon.CollaborativeEditing;
-		if (!coEdit || !coEdit.isCollaboration || !coEdit.isCollaboration()) return 0;
-		let api = (typeof Asc !== "undefined") && Asc.editor;
-		let coApi = api && api.CoAuthoringApi;
-		if (!coApi || !coApi.get_indexUser) return 0;
-		let idx = coApi.get_indexUser();
-		return (idx | 0);
-	};
-	CDrawingIdAllocator.prototype.checkInitialized = function() {
-		let ns = this._getCurrentUserIndex();
-		if (this.currentNs === ns) return;
-		this.currentNs = ns;
-		this.counter = 0;
-		this.usedSet = {};
-		if (this.owner && this.owner.getDrawings) {
-			let arr = this.owner.getDrawings();
-			if (Array.isArray(arr)) this._observeTree(arr);
-		}
-	};
-	CDrawingIdAllocator.prototype._observeTree = function(spTree) {
-		for (let i = 0; i < spTree.length; i++) {
-			let item = spTree[i];
-			let oCNvPr = item && item.getCNvProps && item.getCNvProps();
-			if (oCNvPr) this.observe(oCNvPr.id);
-			if (item && Array.isArray(item.spTree)) this._observeTree(item.spTree);
-		}
-	};
-	CDrawingIdAllocator.prototype.allocate = function() {
-		this.checkInitialized();
-		let M = CDrawingIdAllocator.M;
-		let cnt = this.counter;
-		let attempts = 0;
-		do {
-			cnt++;
-			if (cnt >= M) return CreateDurableId();
-			if (++attempts >= M) return CreateDurableId();
-		} while (this.usedSet[cnt]);
-		this.usedSet[cnt] = true;
-		this.counter = cnt;
-		return this.currentNs * M + cnt;
-	};
-	CDrawingIdAllocator.prototype.observe = function(id) {
-		if (typeof id !== "number" || id <= 0) return;
-		let M = CDrawingIdAllocator.M;
-		let ns = Math.floor(id / M);
-		if (ns !== this.currentNs) return;
-		let cnt = id % M;
-		this.usedSet[cnt] = true;
+	CDrawingNameAllocator.prototype.next = function (itemCount) {
+		if (this.counter < itemCount) this.counter = itemCount;
+		return ++this.counter;
 	};
 
 	function ExtendPrototype(dst, src) {
@@ -8328,7 +8278,7 @@ function (window, undefined) {
 	window["AscCommon"].CreateUUID = CreateUUID;
 	window["AscCommon"].CreateUInt32 = CreateUInt32;
 	window["AscCommon"].CreateDurableId = CreateDurableId;
-	window["AscCommon"].CDrawingIdAllocator = CDrawingIdAllocator;
+	window["AscCommon"].CDrawingNameAllocator = CDrawingNameAllocator;
 	window["AscCommon"].FixDurableId = FixDurableId;
 	window["AscCommon"].ExtendPrototype = ExtendPrototype;
 

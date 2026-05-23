@@ -111,6 +111,7 @@
     CNotes.prototype.addToSpTreeToPos = function(pos, obj){
         var _pos = Math.max(0, Math.min(pos, this.cSld.spTree.length));
         this.cSld.addToSpTree(_pos, obj);
+        this.cSld.checkAndAssignName(obj);
         obj.setParent2(this);
     };
 
