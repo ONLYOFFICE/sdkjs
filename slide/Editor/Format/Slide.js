@@ -811,8 +811,8 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
     {
         this.checkDrawingUniNvPr(item);
         var _pos = (AscFormat.isRealNumber(pos) && pos > -1 && pos <= this.cSld.spTree.length) ? pos : this.cSld.spTree.length;
-        this.cSld.addToSpTree(_pos, item);
         this.cSld.checkAndAssignName(item);
+        this.cSld.addToSpTree(_pos, item);
         item.setParent2(this);
     };
 

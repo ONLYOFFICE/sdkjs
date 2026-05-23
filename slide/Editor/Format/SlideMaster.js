@@ -495,8 +495,8 @@ MasterSlide.prototype.shapeAdd = function (pos, item) {
         pos_ = this.cSld.spTree.length;
     }
     this.checkDrawingUniNvPr(item);
-    this.cSld.addToSpTree(pos_, item);
     this.cSld.checkAndAssignName(item);
+    this.cSld.addToSpTree(pos_, item);
     item.setParent2(this);
     this.recalcInfo.recalculateSpTree = true;
 };

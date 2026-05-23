@@ -463,10 +463,10 @@ CChangeContentDrawingWorksheet.prototype.constructor = CChangeContentDrawingWork
 
     function editorAddToDrawingObjects(oGraphicObject, pos, type)
     {
-        var position = addToDrawings(oGraphicObject.worksheet, oGraphicObject, pos, /*lockByDefault*/undefined, type);
         if (oGraphicObject.worksheet && oGraphicObject.worksheet.checkAndAssignName) {
             oGraphicObject.worksheet.checkAndAssignName(oGraphicObject);
         }
+        var position = addToDrawings(oGraphicObject.worksheet, oGraphicObject, pos, /*lockByDefault*/undefined, type);
         //var data = {Type: AscDFH.historyitem_AutoShapes_AddToDrawingObjects, Pos: position};
         History.Add(new CChangeContentDrawingWorksheetAdd(oGraphicObject, position));
         if(oGraphicObject.setDrawingBaseType)
