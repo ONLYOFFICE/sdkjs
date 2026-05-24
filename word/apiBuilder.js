@@ -5096,6 +5096,15 @@
 		return new ApiColor('theme', index);
 	};
 
+	function private_IsHexString(s) {
+		for (let i = 0; i < s.length; i++) {
+			const c = s.charCodeAt(i);
+			if (!((c >= 0x30 && c <= 0x39) || (c >= 0x41 && c <= 0x46) || (c >= 0x61 && c <= 0x66)))
+				return false;
+		}
+		return true;
+	}
+
 	/**
 	 * Creates an ApiColor from a universal input. The method recognizes several call signatures and either delegates to a narrower factory or constructs an ApiColor directly.
 	 * <b>Numeric components</b>: "Api.Color(r, g, b)" or "Api.Color(r, g, b, a)" creates an RGB or RGBA color from byte components (0-255).
@@ -5117,15 +5126,6 @@
 	 * @returns {ApiColor}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/Color.js
 	 */
-	function private_IsHexString(s) {
-		for (let i = 0; i < s.length; i++) {
-			const c = s.charCodeAt(i);
-			if (!((c >= 0x30 && c <= 0x39) || (c >= 0x41 && c <= 0x46) || (c >= 0x61 && c <= 0x66)))
-				return false;
-		}
-		return true;
-	}
-
 	Api.Color = function (r, g, b, a) {
 		if (arguments.length === 4)
 			return Api.RGBA(r, g, b, a);
@@ -29462,18 +29462,12 @@
 		return emu * AscCommonWord.g_dKoef_emu_to_mm;
 	};
 
-	/**
-	 * Compares the current document with the specified file.
-	 * @param {object} file - An object containing the information about the document for comparison.
-	 */
-	Api.CompareDocuments = function(file)
-	{
-		AscCommonWord.CompareDocuments(file);
-	};
 
 	/**
-	 * Merges the current document with the specified file.
-	 * @param {object} file - An object containing the information about the document for merging.
+	 * Merges the current document with another document opened via builderJS.OpenTmpFile. Its contents are merged into the current document.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {object} file - The second document, returned by builderJS.OpenTmpFile.
 	 */
 	Api.MergeDocuments = function(file)
 	{
