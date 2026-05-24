@@ -29463,6 +29463,18 @@
 	};
 
 
+
+	/**
+	 * Compares the current document with another document opened via builderJS.OpenTmpFile. Tracked changes between the two documents are produced in the current document.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {object} file - The second document, returned by builderJS.OpenTmpFile.
+	 */
+	Api.CompareDocuments = function(file)
+	{
+		AscCommonWord.CompareDocuments(file);
+	};
+
 	/**
 	 * Merges the current document with another document opened via builderJS.OpenTmpFile. Its contents are merged into the current document.
 	 * @memberof Api

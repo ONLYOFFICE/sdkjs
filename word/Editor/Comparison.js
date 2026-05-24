@@ -4525,9 +4525,9 @@
 		return oRun.Split2(bAfter ? this.runElementIndex + 1 : this.runElementIndex, this.parent, this.runIndex);
 	};
 
-    window['AscCommonWord']["CompareBinary"] =  window['AscCommonWord'].CompareBinary = CompareBinary;
-    window['AscCommonWord']["ComparisonOptions"] = window['AscCommonWord'].ComparisonOptions = ComparisonOptions;
-    window['AscCommonWord']['CompareDocuments'] = CompareDocuments;
+    window['AscCommonWord']['CompareBinary'] =  window['AscCommonWord'].CompareBinary = CompareBinary;
+    window['AscCommonWord']['ComparisonOptions'] = window['AscCommonWord'].ComparisonOptions = ComparisonOptions;
+    window['AscCommonWord']['CompareDocuments'] = window['AscCommonWord'].CompareDocuments = CompareDocuments;
     window['AscCommonWord'].CDocumentComparison = CDocumentComparison;
     window['AscCommonWord'].CNode = CNode;
     window['AscCommonWord'].CTextElement = CTextElement;
