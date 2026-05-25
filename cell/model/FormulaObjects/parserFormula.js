@@ -11511,8 +11511,14 @@ function parserFormula( formula, parent, _ws ) {
 					continue;
 				}
 				const nIndexNumValue = oNumber.toNumber() - 1;
+				if (oTableArrayArg.type === cElementType.name || oTableArrayArg.type === cElementType.name3D) {
+					oTableArrayArg = oTableArrayArg.toRef();
+				}
+				if (!oTableArrayArg.getRange) {
+					continue;
+				}
 				const nIndexTableArray = aRefElements.findIndex(function (oElem) {
-					return oElem.getRange().getBBox0().isEqualAll(oTableArrayArg.getRange().getBBox0());
+					return oElem.getRange && oElem.getRange().getBBox0().isEqualAll(oTableArrayArg.getRange().getBBox0());
 				});
 				const oTableArrayRange = oTableArrayArg.getRange().clone();
 				const oTableArrayBbox = oTableArrayRange.getBBox0();
