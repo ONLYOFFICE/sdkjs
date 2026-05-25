@@ -147,9 +147,19 @@
 		
 		this.bidiFlow.add([element, run], element.getBidiType());
 	};
+	ParagraphContentDrawState.prototype.handleParaMath = function(paraMath)
+	{
+		if (!paraMath || paraMath.Root.IsEmptyRange(this.Line, this.Range))
+			return;
+		
+		this.bidiFlow.add([paraMath], paraMath.getBidiType());
+	}
 	ParagraphContentDrawState.prototype.handleBidiFlow = function(data, direction)
 	{
 		let element = data[0];
+		if (element instanceof AscWord.ParaMath)
+			return this.handleBidiFlowParaMath(element);
+		
 		this.handleRun(data[1]);
 		
 		switch (element.Type)
@@ -176,6 +186,14 @@
 				this.handleRegularElement(element, direction);
 				break;
 		}
+	};
+	ParagraphContentDrawState.prototype.handleBidiFlowParaMath = function(paraMath)
+	{
+		let x = this.X;
+		paraMath.Root.Draw_Elements(this);
+		this.X = x + paraMath.Root.GetWidth(this.Line, this.Range);
+		if (this.Graphics.m_bIsTextDrawer)
+			this.Graphics.CheckSpaceDraw(null, true);
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area

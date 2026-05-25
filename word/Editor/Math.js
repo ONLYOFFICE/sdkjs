@@ -591,6 +591,10 @@ ParaMath.prototype.IsMath = function()
 {
 	return true;
 };
+ParaMath.prototype.getBidiType = function()
+{
+	return AscBidi.TYPE.L;
+};
 ParaMath.prototype.Copy = function(Selected, oPr)
 {
     var NewMath = new ParaMath();
@@ -2002,23 +2006,9 @@ ParaMath.prototype.UpdateWidthLine = function(PRS, Width)
 			this.private_SetRestartRecalcInfo(PRS);
 	}
 };
-ParaMath.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange, _CurPage)
+ParaMath.prototype.Recalculate_Range_Spaces = function(alignState, _CurLine, _CurRange, _CurPage)
 {
-    // до пересчета Bounds для текущей строки ранее должны быть вызваны Recalculate_Range_Width (для ширины), Recalculate_LineMetrics(для высоты и аскента)
-
-    // для инлайновой формулы не вызывается ф-ия setPosition, поэтому необходимо вызвать здесь
-    // для неилайновой setPosition вызывается на Get_AlignToLine
-    var PosInfo = new CMathPosInfo();
-
-    PosInfo.CurLine  = _CurLine;
-    PosInfo.CurRange = _CurRange;
-
-    var pos   = new CMathPosition();
-    this.Root.setPosition(pos, PosInfo);
-
-    // страиницу для смещния параграфа относительно документа добавим на Get_Bounds, т.к. если формула находится в автофигуре, то для нее не прийдет Recalculate_Range_Spaces при перемещении автофигуры а другую страницу
-    this.Root.UpdateBoundsPosInfo(PRSA, _CurLine, _CurRange, _CurPage);
-    this.Root.Recalculate_Range_Spaces(PRSA, _CurLine, _CurRange, _CurPage);
+	alignState.handleParaMath(this);
 };
 ParaMath.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
 {
@@ -2541,21 +2531,9 @@ ParaMath.prototype.Draw_HighLights = function(drawState)
 {
 	drawState.handleParaMath(this);
 };
-ParaMath.prototype.Draw_Elements = function(PDSE)
+ParaMath.prototype.Draw_Elements = function(drawState)
 {
-    /*PDSE.Graphics.p_color(255,0,0, 255);
-     PDSE.Graphics.drawHorLine(0, PDSE.Y - this.Ascent, PDSE.X - 30, PDSE.X + this.Width + 30 , 1);*/
-
-    var X = PDSE.X;
-
-    this.Root.Draw_Elements(PDSE);
-
-    PDSE.X = X + this.Root.GetWidth(PDSE.Line, PDSE.Range);
-		if (PDSE.Graphics.m_bIsTextDrawer) {
-			PDSE.Graphics.CheckSpaceDraw(null, true);
-		}
-    /*PDSE.Graphics.p_color(255,0,0, 255);
-     PDSE.Graphics.drawHorLine(0, PDSE.Y - this.Ascent + this.Height, PDSE.X - 30, PDSE.X + this.Width + 30 , 1);*/
+	drawState.handleParaMath(this);
 };
 ParaMath.prototype.GetLinePosition = function(Line, Range)
 {

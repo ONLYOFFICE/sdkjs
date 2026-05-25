@@ -160,9 +160,19 @@
 		
 		this.bidiFlow.add([element, run], element.getBidiType());
 	};
+	AlignRecalcState.prototype.handleParaMath = function(paraMath)
+	{
+		if (!paraMath || paraMath.Root.IsEmptyRange(this.CurLine, this.CurRange))
+			return;
+		
+		this.bidiFlow.add([paraMath], paraMath.getBidiType());
+	};
 	AlignRecalcState.prototype.handleBidiFlow = function(data, direction)
 	{
 		let element = data[0];
+		if (element instanceof AscWord.ParaMath)
+			return this.handleBidiFlowParaMath(element);
+		
 		let run     = data[1];
 		let type = element.Type;
 		switch (type)
@@ -284,6 +294,23 @@
 			}
 
 		}
+	};
+	AlignRecalcState.prototype.handleBidiFlowParaMath = function(paraMath)
+	{
+		// до пересчета Bounds для текущей строки ранее должны быть вызваны Recalculate_Range_Width (для ширины), Recalculate_LineMetrics(для высоты и аскента)
+
+		// для инлайновой формулы не вызывается ф-ия setPosition, поэтому необходимо вызвать здесь
+		// для неилайновой setPosition вызывается на Get_AlignToLine
+		var PosInfo = new CMathPosInfo();
+
+		PosInfo.CurLine  = this.CurLine;
+		PosInfo.CurRange = this.CurRange;
+
+		paraMath.Root.setPosition(new CMathPosition(), PosInfo);
+
+		// страиницу для смещния параграфа относительно документа добавим на Get_Bounds, т.к. если формула находится в автофигуре, то для нее не прийдет Recalculate_Range_Spaces при перемещении автофигуры а другую страницу
+		paraMath.Root.UpdateBoundsPosInfo(this, this.CurLine, this.CurRange, this.CurPage);
+		paraMath.Root.Recalculate_Range_Spaces(this, this.CurLine, this.CurRange, this.CurPage);
 	};
 	AlignRecalcState.prototype.handleDrawing = function(element)
 	{
