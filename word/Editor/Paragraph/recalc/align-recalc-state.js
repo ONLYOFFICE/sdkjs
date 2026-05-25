@@ -154,6 +154,9 @@
 			element.WidthVisible = 0;
 			return;
 		}
+	
+		if (para_FieldChar === type)
+			this.ComplexFields.processFieldChar(element);
 		
 		this.bidiFlow.add([element, run], element.getBidiType());
 	};
@@ -271,9 +274,6 @@
 			}
 			case para_FieldChar:
 			{
-				this.ComplexFields.processFieldChar(element);
-				isHiddenCFPart = this.ComplexFields.isHiddenComplexFieldPart();
-
 				if (element.IsVisual())
 				{
 					this.X += element.GetWidthVisible();
