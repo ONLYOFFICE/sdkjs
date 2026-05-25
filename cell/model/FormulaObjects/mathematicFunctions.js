@@ -528,9 +528,9 @@ function (window, undefined) {
 	cAGGREGATE.prototype.argumentsMax = 253;
 	cAGGREGATE.prototype.isXLFN = true;
 	cAGGREGATE.prototype.argumentsType = [argType.number, argType.number, [argType.reference]];
-	cAGGREGATE.prototype.arrayIndexes = {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1};
+	cAGGREGATE.prototype.arrayIndexes = {/*1: 1,*/ 2: 1, 3: 1, 4: 1, 5: 1, 6: 1};
 	cAGGREGATE.prototype.getArrayIndex = function (index) {
-		if (index === 0) {
+		if (index < 2) {
 			return undefined;
 		}
 		return 1;
@@ -551,6 +551,18 @@ function (window, undefined) {
 		}
 		return null;
 	};
+	/**
+	 * Returns an aggregate value in a list or database,
+ 	 * with options to ignore hidden rows, errors, and nested aggregates.
+	 *
+	 * @param {number} function_num - A number from 1 to 19 specifying which aggregate function to use.
+ 	 * @param {number} options - A number from 0 to 7 specifying which values to ignore during calculation.
+ 	 * @param {(number | Array | Range | number[])} ref1 - The first numeric value, array, or range to aggregate.
+	 * @param {(number | Array | Range | number[])} [refN] - Additional numeric values, arrays, or ranges.
+	 * @param {(number | Array | Range | number[])} args - Up to 255 numeric values for which the average value will be returned.
+	 * Required for functions such as LARGE, SMALL, PERCENTILE.*, and QUARTILE.*.
+ 	 * @returns {number} Result of the selected aggregate calculation.
+	 */
 	cAGGREGATE.prototype.Calculate = function (arg) {
 		let oArguments = this._prepareArguments([arg[0], arg[1]], arguments[1]);
 		let argClone = oArguments.args;
@@ -567,7 +579,7 @@ function (window, undefined) {
 		let f = getAggregateFuncMap()[nFunc];
 		
 		if (!f) {
-			return new cError(cErrorType.not_numeric);
+			return new cError(cErrorType.wrong_value_type);
 		}
 		
 		if (nFunc >= 14 && nFunc <= 19) {
@@ -614,7 +626,7 @@ function (window, undefined) {
 				ignoreErrorsVal = true;
 				break;
 			default :
-				return new cError(cErrorType.not_numeric);
+				return new cError(cErrorType.wrong_value_type);
 		}
 
 		let res;
@@ -635,6 +647,8 @@ function (window, undefined) {
 				//otherwise - error
 				if (doNotCheckRef || this.checkRef(arg[i])) {
 					newArgs.push(arg[i]);
+				} else if (arg[i].type === cElementType.error) {
+					return arg[i];
 				} else {
 					return new cError(cErrorType.wrong_value_type);
 				}
