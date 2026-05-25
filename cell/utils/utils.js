@@ -3318,6 +3318,30 @@
 			this.pdfContent = val;
 		};
 
+		asc_CAdjustPrint.prototype.getLayoutKey = function () {
+			var mapKey = '';
+			if (this.pageOptionsMap) {
+				for (var idx in this.pageOptionsMap) {
+					var opt = this.pageOptionsMap[idx];
+					if (!opt) { mapKey += idx + ':null;'; continue; }
+					var s = opt.pageSetup;
+					var m = opt.pageMargins;
+					mapKey += idx + ':[' +
+						(s ? [s.orientation, s.width, s.height, s.scale, s.fitToWidth, s.fitToHeight, s.printArea, s.selection].join(',') : '') +
+						'][' +
+						(m ? [m.left, m.right, m.top, m.bottom, m.header, m.footer].join(',') : '') +
+						'];';
+				}
+			}
+			return [
+				this.printType,
+				this.ignorePrintArea ? 1 : 0,
+				this.isOnlyFirstPage ? 1 : 0,
+				this.activeSheetsArray ? this.activeSheetsArray.join(',') : '',
+				mapKey
+			].join('|');
+		};
+
 		/** @constructor */
 		function asc_CLockInfo() {
 			this["sheetId"] = null;

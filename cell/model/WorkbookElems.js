@@ -14911,6 +14911,10 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 	CPrintPreviewState.prototype.recalculatePageClipRect = function () {
+		if (this._lastLayoutKey != null && this.advancedOptions && this.advancedOptions.getLayoutKey &&
+			this.advancedOptions.getLayoutKey() === this._lastLayoutKey) {
+			return;
+		}
 		var pages = this.wb.calcPagesPrint(this.advancedOptions);
 		if (pages && pages.arrPages && this.pages.arrPages && this.pages.arrPages.length === pages.arrPages.length) {
 			for (var i in this.pages.arrPages) {

@@ -1644,11 +1644,21 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_updatePrintPreview = function (options) {
-		this.wb.printPreviewState.isDrawPrintPreview = true;
-		var pages = this.wb.calcPagesPrint(options.advancedOptions);
-		this.wb.printPreviewState.setPages(pages);
-		this.wb.printPreviewState.setAdvancedOptions(options && options.advancedOptions);
-		this.wb.printPreviewState.isDrawPrintPreview = false;
+		var adjustPrint = options && options.advancedOptions;
+		var previewState = this.wb.printPreviewState;
+
+		if (previewState.pages && previewState.pages.arrPages &&
+			previewState._lastLayoutKey != null && adjustPrint && adjustPrint.getLayoutKey) {
+			if (adjustPrint.getLayoutKey() === previewState._lastLayoutKey) {
+				return previewState.pages.arrPages.length;
+			}
+		}
+
+		previewState.isDrawPrintPreview = true;
+		var pages = this.wb.calcPagesPrint(adjustPrint);
+		previewState.setPages(pages);
+		previewState.setAdvancedOptions(adjustPrint);
+		previewState.isDrawPrintPreview = false;
 		return pages.arrPages.length;
 	};
 

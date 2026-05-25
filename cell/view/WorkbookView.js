@@ -4266,6 +4266,10 @@
 		AscCommonExcel.cFormulaFunctionToLocale = trueFormulaFunctionToLocale;
 	}
 
+	if (this.printPreviewState && this.printPreviewState.isStart()) {
+		this.printPreviewState._lastLayoutKey = adjustPrint.getLayoutKey ? adjustPrint.getLayoutKey() : null;
+	}
+
     return printPagesData;
   };
 
@@ -5587,6 +5591,7 @@
 		if (!this.printPreviewState || !this.printPreviewState.isStart()) {
 			return;
 		}
+		this.printPreviewState._lastLayoutKey = null;
 		for (var i in this.wsViews) {
 			this.wsViews[i]._recalculate();
 		}
