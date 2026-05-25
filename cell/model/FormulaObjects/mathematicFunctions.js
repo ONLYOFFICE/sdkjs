@@ -2053,34 +2053,57 @@ function (window, undefined) {
 	cFACT.prototype.argumentsMax = 1;
 	cFACT.prototype.argumentsType = [argType.number];
 	cFACT.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		let arg0 = arg[0];
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+			arg0 = arg0.getValue();
+		}
+ 
+		if (arg0.type === cElementType.cellsRange3D && !arg0.isSingleSheet()) {
+			return new cError(cErrorType.bad_reference);
+		} else if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
 		}
-		arg0 = arg0.tocNumber();
-		if (arg0 instanceof cError) {
-			return arg0;
-		} else if (arg0 instanceof cArray) {
-			arg0.foreach(function (elem, r, c) {
-				if (elem instanceof cNumber) {
-					if (elem.getValue() < 0) {
-						this.array[r][c] = new cError(cErrorType.not_numeric);
+
+		if (arg0.type === cElementType.array) {
+			let resArr = new cArray();
+			let dimensions = arg0.getDimensions();
+
+			for (let row = 0; row < dimensions.row; row++) {
+				resArr.addRow();
+				for (let col = 0; col < dimensions.col; col++) {
+					let arg0Elem = arg0.getElementRowCol ? arg0.getElementRowCol(row, col) : arg0.getValueByRowCol(row, col, true);
+
+					arg0Elem = arg0Elem.tocNumber();
+					if (arg0Elem.type === cElementType.error) {
+						resArr.addElement(arg0Elem);
+					} else if (arg0Elem.type === cElementType.number) {
+						let arg0ElemVal = Math.floor(arg0Elem.getValue());
+						if (arg0ElemVal < 0) {
+							resArr.addElement(new cError(cErrorType.not_numeric));
+						} else {
+							let a = Math.fact(arg0ElemVal);
+							resArr.addElement(!Number.isFinite(a) ? new cError(cErrorType.not_numeric) : new cNumber(a));
+						}
 					} else {
-						var a = Math.fact(elem.getValue());
-						this.array[r][c] = isNaN(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
+						resArr.addElement(new cError(cErrorType.wrong_value_type));
 					}
-				} else {
-					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
-			})
+			}
+
+			return resArr;
+		}
+
+		arg0 = arg0.tocNumber();
+		if (arg0.type === cElementType.error) {
+			return arg0;
 		} else {
-			if (arg0.getValue() < 0) {
+			let arg0Val = Math.floor(arg0.getValue());
+			if (arg0Val < 0) {
 				return new cError(cErrorType.not_numeric);
 			}
-			var a = Math.fact(arg0.getValue());
-			return isNaN(a) || a == Infinity ? new cError(cErrorType.not_numeric) : new cNumber(a);
+			let a = Math.fact(arg0Val);
+			return !Number.isFinite(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
 		}
-		return arg0;
 	};
 
 	/**
@@ -2100,58 +2123,107 @@ function (window, undefined) {
 	cFACTDOUBLE.prototype.argumentsType = [argType.any];
 	cFACTDOUBLE.prototype.enabledToSingle = {"0": true};
 	cFACTDOUBLE.prototype.Calculate = function (arg) {
+		// function factDoubleOld(n) {
+		// 	n = Math.floor(n);
+
+		// 	if (n === 0) {
+		// 		return 1;
+		// 	} else if (n < 0) {
+		// 		return Number.NaN;
+		// 	} else if (n > 300) {
+		// 		return Number.Infinity;
+		// 	}
+			
+		// 	let res = n, _n = n, ost = -(_n & 1);
+		// 	n -= 2;
+
+		// 	while (n !== ost) {
+		// 		res *= n;
+		// 		n -= 2;
+		// 		if (n <= 0) break;
+		// 	}
+		// 	return res;
+		// }
+
 		function factDouble(n) {
+			let result = 1;
+
 			n = Math.floor(n);
 
-			if (n === 0) {
+			if (n === 0 || n === 1 || n === -1) {
+				// Exceptional cases - always returns 1
 				return 1;
-			} else if (n < 0) {
-				return Number.NaN;
+			} else if (n < -1) {
+				return Number.NaN
 			} else if (n > 300) {
+				// Infinity - overflow
 				return Number.Infinity;
 			}
-			
-			let res = n, _n = n, ost = -(_n & 1);
-			n -= 2;
 
-			while (n != ost) {
-				res *= n;
-				n -= 2;
-				if (n <= 0) break;
+			for (let i = n; i > 1; i -= 2) {
+				result *= i;
+				if (!isFinite(result)) {
+					// Infinity - overflow
+					return Number.Infinity;
+				} 
 			}
-			return res;
+			return result;
 		}
 
 		let arg0 = arg[0];
-		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
-			arg0 = arg0.cross(arguments[1]);
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+			arg0 = arg0.getValue();
+		} else if ((arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) && !arg0.isOneElement()) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (arg0.type === cElementType.cellsRange3D && (!arg0.isOneElement() || !arg0.isSingleSheet())) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (arg0.type === cElementType.array) {
+			let resArr = new cArray();
+			let dimensions = arg0.getDimensions();
+
+			for (let row = 0; row < dimensions.row; row++) {
+				resArr.addRow();
+				for (let col = 0; col < dimensions.col; col++) {
+					let arg0Elem = arg0.getElementRowCol(row, col);
+
+					if (arg0Elem.type === cElementType.bool) {
+						resArr.addElement(new cError(cErrorType.wrong_value_type));
+						continue;
+					}
+
+					arg0Elem = arg0Elem.tocNumber();
+					if (arg0Elem.type === cElementType.error) {
+						resArr.addElement(arg0Elem);
+					} else if (arg0Elem.type === cElementType.number) {
+						if (arg0Elem.getValue() < -1) {
+							resArr.addElement(new cError(cErrorType.not_numeric));
+						} else {
+							let a = factDouble(arg0Elem.getValue());
+							resArr.addElement(!Number.isFinite(a) ? new cError(cErrorType.not_numeric) : new cNumber(a));
+						}
+					} else {
+						resArr.addElement(new cError(cErrorType.wrong_value_type));
+					}
+				}
+			}
+
+			return resArr;
+		}
+
+		if (arg0.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 		
 		arg0 = arg0.tocNumber();
-
 		if (arg0.type === cElementType.error) {
 			return arg0;
-		} else if (arg0.type === cElementType.array) {
-			arg0.foreach(function (elem, r, c) {
-				if (elem.type && elem.type === cElementType.number) {
-					if (elem.getValue() < 0) {
-						this.array[r][c] = new cError(cErrorType.not_numeric);
-					} else {
-						let a = factDouble(elem.getValue());
-						this.array[r][c] = isNaN(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
-					}
-				} else {
-					this.array[r][c] = new cError(cErrorType.wrong_value_type);
-				}
-			})
 		} else {
-			if (arg0.getValue() < 0) {
+			if (arg0.getValue() < -1) {
 				return new cError(cErrorType.not_numeric);
 			}
 			let a = factDouble(arg0.getValue());
-			return isNaN(a) || a == Infinity ? new cError(cErrorType.not_numeric) : new cNumber(a);
+			return !Number.isFinite(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
 		}
-		return arg0;
 	};
 
 	/**
