@@ -3181,7 +3181,7 @@
 
             this.skipHelpSelector = false;
         } else {
-            if (c_oAscPopUpSelectorType.FuncConstant === type) {
+            if (c_oAscPopUpSelectorType.FuncConstant === type || c_oAscPopUpSelectorType.None === type) {
 				ws.executeWithFirstActiveCellInMerge(function () {
 					ws.setSelectionInfo("value", name, /*onlyActive*/true);
 				});

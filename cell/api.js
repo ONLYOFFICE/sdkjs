@@ -6630,7 +6630,7 @@ var editor;
     };
 
   spreadsheet_api.prototype.asc_insertInCell = function(functionName, type, autoComplete) {
-    this.wb.insertInCellEditor(functionName ? functionName + "" : functionName, type, autoComplete);
+    this.wb.insertInCellEditor(typeof functionName === 'number' ? functionName + "" : functionName, type, autoComplete);
     this.wb.restoreFocus();
   };
 
