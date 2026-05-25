@@ -384,10 +384,15 @@
       const frame = document.getElementById(frameId);
       if (frame && frame.contentWindow) {
         const safeChanges = Array.isArray(arrayChanges) ? arrayChanges : [];
+         const safeDeleteIndex =
+          typeof deleteIndex === "number" && deleteIndex >= 0 ? deleteIndex : null;
         frame.contentWindow.postMessage(
           JSON.stringify({
             type: "FILE_DELTA_CHANGES",
-            payload: safeChanges,
+            payload: {
+              changes: safeChanges,
+              deleteIndex: safeDeleteIndex,
+            },
           }),
           "*"
         );
