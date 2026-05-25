@@ -10975,10 +10975,10 @@ drawAreaChart.prototype = {
 			pen = seria.pen;
 
 			numCache = this.cChartDrawer.getNumCache(seria.val);
-			if (numCache && numCache.pts[0].pen) {
+			if (numCache && numCache.pts[0] && numCache.pts[0].pen) {
 				pen = numCache.pts[0].pen;
 			}
-			if (numCache && numCache.pts[0].brush) {
+			if (numCache && numCache.pts[0] && numCache.pts[0].brush) {
 				brush = numCache.pts[0].brush;
 			}
 
@@ -15484,6 +15484,9 @@ drawStockChart.prototype = {
 
 		let _numCache = this.chart.series[ser].getNumLit();
 		var point = _numCache && _numCache.pts[val];
+		if (!point) {
+			return {x: null, y: null};
+		}
 
 		var x = this.chartProp.chartGutter._left + (val) * koffX + koffX / 2;
 		var y = this.chartProp.trueHeight - (point.val - min) * koffY + this.chartProp.chartGutter._top;
