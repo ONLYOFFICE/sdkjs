@@ -2857,7 +2857,7 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 				else
 					pGraphics.set_fillColor(Element.r, Element.g, Element.b);
 				
-				pGraphics.drawCommentArea(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0);
+				pGraphics.drawCommentArea(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0, Element);
 				DocumentComments.Add_DrawingRect(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0, Page_abs, Element.Additional.CommentId, ParentInvertTransform);
 				Element = aComm.Get_Next();
 			}
@@ -3178,6 +3178,7 @@ Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState
 		// aSpelling сохраним позиции начала и конца продолжительных одинаковых настроек зачеркивания,
 		// двойного зачеркивания, подчеркивания и подчеркивания орфографии.
 
+		pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, Line, CurLine, AscFormat.CLineStructure_DrawType_Foregrounds);
 		var RangesCount = Line.Ranges.length;
 		for (var CurRange = 0; CurRange < RangesCount; CurRange++)
 		{
@@ -3204,6 +3205,7 @@ Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState
 			
 			PDSL.endRange();
 		}
+		pGraphics.End_Command();
 
 		var aStrikeout  = PDSL.Strikeout;
 		var aDStrikeout = PDSL.DStrikeout;

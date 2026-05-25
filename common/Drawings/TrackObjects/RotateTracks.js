@@ -315,26 +315,31 @@
 	{
 		if(this.Comment)
 		{
-			var oComment = AscCommon.g_oTableId.Get_ById(this.Comment.Additional.CommentId);
-			if(oComment)
+			const commentIds = this.Comment.Additional.CommentId;
+			const comment    = AscCommon.g_oTableId.Get_ById(commentIds[0]);
+			if(comment)
 			{
-
-				if( editor && editor.WordControl && editor.WordControl.m_oLogicDocument && editor.WordControl.m_oLogicDocument.Comments &&
-					(graphics instanceof AscCommon.CGraphics) && ( editor.WordControl.m_oLogicDocument.Comments.Is_Use() && true != editor.isViewMode))
+				const logicDocument = Asc.editor && Asc.editor.getLogicDocument && Asc.editor.getLogicDocument();
+				if( logicDocument && logicDocument.Comments &&
+					(graphics instanceof AscCommon.CGraphics) && ( logicDocument.Comments.Is_Use() && true != Asc.editor.isViewMode))
 				{
-					var oComments = editor.WordControl.m_oLogicDocument.Comments;
-					if(this.Comment.Additional.CommentId === oComments.Get_CurrentId())
+					const comments = logicDocument.Comments;
+					const currentId = comments.Get_CurrentId();
+					let isCurrent = false;
+					for (let i = 0; i < commentIds.length; ++i)
 					{
-						this.brush = AscFormat.G_O_ACTIVE_COMMENT_BRUSH;
+						if (commentIds[i] === currentId)
+						{
+							isCurrent = true;
+							break;
+						}
 					}
-					else
-					{
-						this.brush = AscFormat.G_O_NO_ACTIVE_COMMENT_BRUSH;
-					}
-					var oComm = this.Comment;
+					const color = AscCommon.getUserColorById(comment.GetUserId(), comment.GetUserName(), isCurrent ? 0 : -1, false);
+					this.brush  = AscFormat.CreateUniFillByUniColor(AscFormat.CreateUniColorRGB(color.r, color.g, color.b));
+					const commentRect = this.Comment;
 					if(!graphics.isBoundsChecker() && !AscCommon.IsShapeToImageConverter)
 					{
-						oComments.Add_DrawingRect(oComm.x0, oComm.y0, oComm.x1 - oComm.x0, oComm.y1 - oComm.y0, graphics.PageNum, this.Comment.Additional.CommentId, global_MatrixTransformer.Invert(oTransform));
+						comments.Add_DrawingRect(commentRect.x0, commentRect.y0, commentRect.x1 - commentRect.x0, commentRect.y1 - commentRect.y0, graphics.PageNum, commentIds, global_MatrixTransformer.Invert(oTransform));
 					}
 				}
 			}
