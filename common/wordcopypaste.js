@@ -531,11 +531,34 @@ CopyProcessor.prototype =
 				oSpan.addChild(new CopyElement("&nbsp;", true));
 				oTarget.addChild(oSpan);
 				break;
-            case para_Drawing:
-                let oGraphicObj = ParaItem.GraphicObj;
-                let sSrc = oGraphicObj.getBase64Img();
-                if(sSrc.length > 0)
-                {
+			case para_Drawing:
+				let oGraphicObj = ParaItem.GraphicObj;
+				if(oGraphicObj.isHorizontalRule && oGraphicObj.isHorizontalRule()) {
+					let oHR = new CopyElement("hr");
+					let oHRData = oGraphicObj.getHorizontalRule();
+					if(oHRData) {
+						let hrStyle = "";
+						let pct = oHRData.asc_getPct();
+						if(pct) {
+							hrStyle += "width:" + pct + "%;";
+						}
+						let align = oHRData.asc_getAlign();
+						if(align) {
+							hrStyle += "text-align:" + align + ";";
+						}
+						if(hrStyle) {
+							oHR.oAttributes["style"] = hrStyle;
+						}
+						if(oHRData.asc_getNoShade()) {
+							oHR.oAttributes["noshade"] = "noshade";
+						}
+					}
+					oTarget.addChild(oHR);
+					break;
+				}
+				let sSrc = oGraphicObj.getBase64Img();
+				if(sSrc.length > 0)
+				{
 					let _h, _w;
 					if(oGraphicObj.cachedPixH)
 						_h = oGraphicObj.cachedPixH;
@@ -553,9 +576,9 @@ CopyProcessor.prototype =
 					oImg.oAttributes["height"] = Math.round(_h);
 					oImg.oAttributes["src"] = sSrc;
 					oTarget.addChild(oImg);
-                    break;
-                }
-                break;
+					break;
+				}
+				break;
 			case para_PageNum:
 				if(null != ParaItem.String && "string" === typeof(ParaItem.String))
 					oTarget.addChild(new CopyElement(CopyPasteCorrectString(ParaItem.String), true));
