@@ -314,6 +314,7 @@
 			"word/Editor/FlowObjects.js",
 			"word/Editor/Paragraph.js",
 			"word/Editor/ParagraphChanges.js",
+			"word/Editor/Paragraph/paragraph-bidi-flow.js",
 			"word/Editor/Paragraph/recalc/counter-recalc-state.js",
 			"word/Editor/Paragraph/recalc/align-recalc-state.js",
 			"word/Editor/Paragraph_Recalculate.js",

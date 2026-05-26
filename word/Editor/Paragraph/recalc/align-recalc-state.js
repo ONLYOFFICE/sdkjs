@@ -43,6 +43,7 @@
 	 */
 	function AlignRecalcState(wrapState)
 	{
+		AscWord.ParagraphBidiFlow.call(this);
 		this.wrapState     = wrapState;
 		this.X             = 0; // Текущая позиция по горизонтали
 		this.Y             = 0; // Текущая позиция по вертикали
@@ -72,10 +73,10 @@
 		this.RecalcFast2   = false; // Второй вариант быстрого пересчета
 
 		this.ComplexFields = new AscWord.ParagraphComplexFieldStack();
-		
-		this.bidiFlow = new AscWord.BidiFlow(this);
-		this.bidiFlowStack = [];
 	}
+	AlignRecalcState.prototype = Object.create(AscWord.ParagraphBidiFlow.prototype);
+	AlignRecalcState.prototype.constructor = AlignRecalcState;
+	
 	AlignRecalcState.prototype.beginPage = function(paragraph, pageNum, isFast)
 	{
 		this.Paragraph = paragraph;
@@ -138,17 +139,11 @@
 			this.Range.XEndVisible -= this.Range.WBreak + this.Range.WEnd;
 		}
 	};
-	AlignRecalcState.prototype.pushBidiFlow = function()
+	AlignRecalcState.prototype.checkStopFlow = function()
 	{
-		this.bidiFlowStack.push(this.bidiFlow);
-		this.bidiFlow = new AscWord.BidiFlow(this);
+		return !(this.RecalcResult & recalcresult_NextElement);
 	};
-	AlignRecalcState.prototype.popBidiFlow = function()
-	{
-		this.bidiFlow.end();
-		this.bidiFlow = this.bidiFlowStack.pop();
-	};
-	AlignRecalcState.prototype.handleRunElement = function(element, run)
+	AlignRecalcState.prototype.handleFlowRunElement = function(element, run)
 	{
 		let type = element.Type;
 

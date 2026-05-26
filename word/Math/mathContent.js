@@ -5139,6 +5139,13 @@ CMathContent.prototype.Recalculate_Range_Spaces = function(alignState, _CurLine,
 	CParagraphContentWithParagraphLikeContent.prototype.Recalculate_Range_Spaces.apply(this, arguments);
 	alignState.popBidiFlow();
 };
+CMathContent.prototype.walkBidiFlow = function(flow)
+{
+	flow.pushBidiFlow();
+	let result = AscWord.ParagraphContentWithParagraphLikeContent.prototype.walkBidiFlow.apply(this, arguments);
+	flow.popBidiFlow();
+	return result;
+};
 CMathContent.prototype.private_ForceBreakBox = function(PRS, Box, _Depth, PrevLastPos, LastPos)
 {
     var BoxLen = Box.size.width;
@@ -6933,4 +6940,5 @@ var g_AutoCorrectMathsList = {
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CMathContent = CMathContent;
 window['AscCommonWord'].g_AutoCorrectMathsList = g_AutoCorrectMathsList;
+AscWord.MathContent = CMathContent;
 

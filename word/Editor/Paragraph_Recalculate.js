@@ -2150,17 +2150,25 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 		if (true === this.Numbering.checkRange(CurRange, CurLine))
 			PRSA.X += this.Numbering.WidthVisible;
 		
-		for (var Pos = StartPos; Pos <= EndPos; Pos++)
-		{
-			var Item = this.Content[Pos];
-			Item.Recalculate_Range_Spaces(PRSA, CurLine, CurRange, CurPage);
-			if (!(PRSA.RecalcResult & recalcresult_NextElement))
-			{
-				PRSW.RecalcResult = PRSA.RecalcResult;
-				return PRSA.RecalcResult;
-			}
-		}
+		this.walkBidiFlow(PRSA);
+		
+		// for (var Pos = StartPos; Pos <= EndPos; Pos++)
+		// {
+		// 	var Item = this.Content[Pos];
+		// 	Item.Recalculate_Range_Spaces(PRSA, CurLine, CurRange, CurPage);
+		// 	if (!(PRSA.RecalcResult & recalcresult_NextElement))
+		// 	{
+		// 		PRSW.RecalcResult = PRSA.RecalcResult;
+		// 		return PRSA.RecalcResult;
+		// 	}
+		// }
 		PRSA.endRange();
+		
+		if (!(PRSA.RecalcResult & recalcresult_NextElement))
+		{
+			PRSW.RecalcResult = PRSA.RecalcResult;
+			return PRSA.RecalcResult;
+		}
     }
 
     return PRSA.RecalcResult;
