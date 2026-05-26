@@ -13611,6 +13611,20 @@ background-repeat: no-repeat;\
 				_ret += ("<meta name=\"language\" content=\"" + language + "\" />");
 			}
 		}
+		var oCustomProperties = this.WordControl.m_oLogicDocument.CustomProperties;
+		if (oCustomProperties) {
+			var aProperties = oCustomProperties.getAllProperties();
+			for (var i = 0; i < aProperties.length; i++) {
+				var oProp = aProperties[i];
+				var sPropName = oProp.asc_getName();
+				var sPropValue = oProp.asc_getValue();
+				if (sPropName && sPropValue !== null && sPropValue !== undefined) {
+					var sEscName = AscCommon.escapeHtmlCharacters(String(sPropName));
+					var sEscValue = AscCommon.escapeHtmlCharacters(String(sPropValue));
+					_ret += ("<meta name=\"" + sEscName + "\" content=\"" + sEscValue + "\" />");
+				}
+			}
+		}
 		_ret += ("</head><body>" + oCopyProcessor.getInnerHtml() + "</body></html>");
 
 		this.WordControl.m_oLogicDocument.RemoveSelection();
