@@ -531,6 +531,7 @@
 			AscCommonExcel.g_oCountIFSCache.clean();
 			AscCommonExcel.g_oSumIfCache.clean();
 			AscCommonExcel.g_oSumIFSCache.clean();
+			AscCommonExcel.g_oAverageIFCache.clean();
 			AscCommonExcel.g_oAverageIFSCache.clean();
 			AscCommonExcel.g_oMaxIFSCache.clean();
 			AscCommonExcel.g_oMinIFSCache.clean();
