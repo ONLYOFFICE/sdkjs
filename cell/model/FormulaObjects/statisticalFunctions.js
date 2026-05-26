@@ -14640,18 +14640,14 @@ function parseStringToCElement (val, cultureInfo) {
 		for (let k = 1; k < ranges.length; k += 1) {
 			const dim = ranges[k].getDimensions();
 			if (dim.row !== baseDim.row || dim.col !== baseDim.col) {
-				const errDim = new cError(cErrorType.wrong_value_type);
-				cacheElem.results[sKey] = errDim;
-				return errDim;
+				return new cError(cErrorType.wrong_value_type);
 			}
 		}
 
 		// Also validate that the sum range has the same dimensions as the criteria ranges.
 		const sumDim = sumRange.getDimensions();
 		if (sumDim.row !== baseDim.row || sumDim.col !== baseDim.col) {
-			const errSum = new cError(cErrorType.wrong_value_type);
-			cacheElem.results[sKey] = errSum;
-			return errSum;
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		// Register every bbox (criteria ranges + sum range) in cacheRanges so that
