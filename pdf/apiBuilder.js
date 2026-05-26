@@ -52,12 +52,14 @@
 	 */
 
 	/**
+	 * A tuple representing a list option with a display value and an export value.
 	 * @typedef {Object} ListOptionTuple
-	 * @property {string} 0 - displayed value
-	 * @property {string} 1 - exported value
+	 * @property {string} 0 - The value displayed to the user.
+	 * @property {string} 1 - The value exported when the option is selected.
 	 */
 
 	/**
+	 * A single list option, either a plain string (used as both display and export value) or a tuple.
 	 * @typedef {(string | ListOptionTuple)} ListOption
 	 */
 
@@ -201,8 +203,8 @@
 	/**
 	 * Axis-aligned point.
 	 * @typedef {object} Point
-	 * @property {pt} x
-	 * @property {pt} y
+	 * @property {pt} x - The horizontal coordinate in points.
+	 * @property {pt} y - The vertical coordinate in points.
 	 */
 
 	/**
@@ -269,6 +271,7 @@
 	 */
 
 	/**
+	 * Search options used when performing text search operations.
 	 * @typedef {Object} SearchProps
 	 * @property {string} text - The text to search for.
 	 * @property {boolean} matchCase - Whether the search is case-sensitive.
@@ -1481,7 +1484,7 @@
 	 * Searchs words and adds redact to it.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
-	 * @param {SearchProps} props
+	 * @param {SearchProps} props - The search options.
 	 * @returns {ApiRedactAnnotation[]}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SearchAndRedact.js
 	 */
@@ -1557,17 +1560,17 @@
 	 * Sets page rotation angle
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} nAngle
+	 * @param {number} angle - The rotation angle in degrees. Must be a multiple of 90.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/SetRotation.js
 	 */
-	ApiPage.prototype.SetRotation = function(nAngle) {
-		if (nAngle % 90 !== 0) {
+	ApiPage.prototype.SetRotation = function(angle) {
+		if (angle % 90 !== 0) {
 			return false;
 		}
 
 		let oDoc = private_GetLogicDocument();
-		oDoc.SetPageRotate(this.GetIndex(), nAngle);
+		oDoc.SetPageRotate(this.GetIndex(), angle);
 		return true;
 	};
 
@@ -1608,7 +1611,7 @@
 	 * Adds an available object to a page.
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
-	 * @param {FloatObject} object
+	 * @param {FloatObject} object - The annotation, field, or drawing to add to the page.
 	 * @returns {FloatObject}
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/AddObject.js
 	 */
@@ -1662,7 +1665,7 @@
 	 * Search words and returns their quads.
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
-	 * @param {SearchProps} props
+	 * @param {SearchProps} props - The search options.
 	 * @returns {Quads[]}
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/Search.js
 	 */
@@ -1706,8 +1709,8 @@
 	 * Sets page selection.
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
-	 * @param {Point} startPoint
-	 * @param {Point} endPoint
+	 * @param {Point} startPoint - The start point of the selection.
+	 * @param {Point} endPoint - The end point of the selection.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/SetSelection.js
 	 */
@@ -1829,12 +1832,12 @@
 	 * Sets new field name if possible.
 	 * @memberof ApiBaseField
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sName
+	 * @param {string} name - The new full name for the field.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseField/Methods/SetFullName.js
 	 */
-	ApiBaseField.prototype.SetFullName = function(sName) {
-		return this.Field.SetName(sName);
+	ApiBaseField.prototype.SetFullName = function(name) {
+		return this.Field.SetName(name);
 	};
 
 	/**
@@ -1852,12 +1855,12 @@
 	 * Sets new field partial name.
 	 * @memberof ApiBaseField
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sName
+	 * @param {string} name - The new partial name for the field.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseField/Methods/SetPartialName.js
 	 */
-	ApiBaseField.prototype.SetPartialName = function(sName) {
-		return this.Field.SetPartialName(sName);
+	ApiBaseField.prototype.SetPartialName = function(name) {
+		return this.Field.SetPartialName(name);
 	};
 
 	/**
@@ -1875,12 +1878,12 @@
 	 * Sets field required
 	 * @memberof ApiBaseField
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bRequired
+	 * @param {boolean} required - Specifies whether the field is required.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseField/Methods/SetRequired.js
 	 */
-	ApiBaseField.prototype.SetRequired = function(bRequired) {
-		this.Field.SetRequired(bRequired);
+	ApiBaseField.prototype.SetRequired = function(required) {
+		this.Field.SetRequired(required);
 		return true;
 	};
 
@@ -1899,12 +1902,12 @@
 	 * Sets field read only
 	 * @memberof ApiBaseField
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bRequired
+	 * @param {boolean} readOnly - Specifies whether the field is read-only.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseField/Methods/SetReadOnly.js
 	 */
-	ApiBaseField.prototype.SetReadOnly = function(bReadOnly) {
-		this.Field.SetReadOnly(bReadOnly);
+	ApiBaseField.prototype.SetReadOnly = function(readOnly) {
+		this.Field.SetReadOnly(readOnly);
 		return true;
 	};
 
@@ -1923,11 +1926,11 @@
 	 * Sets field value
 	 * @memberof ApiBaseField
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sValue
+	 * @param {string} value - The new value for the field.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseField/Methods/SetValue.js
 	 */
-	ApiBaseField.prototype.SetValue = function(sValue) {
+	ApiBaseField.prototype.SetValue = function(value) {
 		let oDoc = private_GetLogicDocument();
 
 		let oFieldToCommit;
@@ -1937,19 +1940,19 @@
 		else {
 			if (this instanceof ApiCheckboxField) {
 				oFieldToCommit = this.Field.GetKids().find(function(widget) {
-					return widget.GetExportValue() == sValue;
+					return widget.GetExportValue() == value;
 				});
 			}
 			else {
 				oFieldToCommit = this.Field.GetKid(0);
 			}
 		}
-		
-		if (sValue != undefined && sValue.toString) {
-			sValue = sValue.toString();
+
+		if (value != undefined && value.toString) {
+			value = value.toString();
 		}
 
-		oFieldToCommit.SetValue(sValue);
+		oFieldToCommit.SetValue(value);
 		return oDoc.private_CommitField(oFieldToCommit);
 	};
 
@@ -2042,7 +2045,7 @@
 	 * Sets field rect.
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {Rect} rect
+	 * @param {Rect} rect - The new bounding rectangle for the widget.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetRect.js
 	 */
@@ -2070,7 +2073,7 @@
 	 * Sets widget position.
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {Point} position
+	 * @param {Point} position - The new position of the widget.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetPosition.js
 	 */
@@ -2100,7 +2103,7 @@
 	 * Sets widget border color.
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The border color.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetBorderColor.js
 	 */
@@ -2143,16 +2146,16 @@
 	 * Sets widget border width.
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {WidgetBorderWidth} sBorderWidth
+	 * @param {WidgetBorderWidth} borderWidth - The border width: <b>"none"</b>, <b>"thin"</b>, <b>"medium"</b>, or <b>"thick"</b>.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetBorderWidth.js
 	 */
-	ApiBaseWidget.prototype.SetBorderWidth = function(sBorderWidth) {
-		if (!Object.keys(AscPDF.BORDER_WIDTH).includes(sBorderWidth)) {
+	ApiBaseWidget.prototype.SetBorderWidth = function(borderWidth) {
+		if (!Object.keys(AscPDF.BORDER_WIDTH).includes(borderWidth)) {
 			return false;
 		}
 
-		this.Field.SetBorderWidth(private_GetInnerBorderWidth(sBorderWidth));
+		this.Field.SetBorderWidth(private_GetInnerBorderWidth(borderWidth));
 		return true;
 	};
 
@@ -2171,16 +2174,16 @@
 	 * Sets widget border style.
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {WidgetBorderStyle} sBorderStyle
+	 * @param {WidgetBorderStyle} borderStyle - The border style.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetBorderStyle.js
 	 */
-	ApiBaseWidget.prototype.SetBorderStyle = function(sBorderStyle) {
-		if (!Object.keys(AscPDF.BORDER_TYPES).includes(sBorderStyle)) {
+	ApiBaseWidget.prototype.SetBorderStyle = function(borderStyle) {
+		if (!Object.keys(AscPDF.BORDER_TYPES).includes(borderStyle)) {
 			return false;
 		}
 
-		this.Field.SetBorderStyle(private_GetInnerBorderStyle(sBorderStyle));
+		this.Field.SetBorderStyle(private_GetInnerBorderStyle(borderStyle));
 		return true;
 	};
 
@@ -2199,7 +2202,7 @@
 	 * Sets widget background color.
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The background color.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetBackgroundColor.js
 	 */
@@ -2234,7 +2237,7 @@
 	 * Sets widget text color.
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The text color.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetTextColor.js
 	 */
@@ -2270,16 +2273,16 @@
 	 * <note> Text size === 0 means autofit </note>
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {pt} nSize
+	 * @param {pt} size - The font size in points.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetTextSize.js
 	 */
-	ApiBaseWidget.prototype.SetTextSize = function(nSize) {
-		if (typeof(nSize) != 'number' || nSize < 0) {
+	ApiBaseWidget.prototype.SetTextSize = function(size) {
+		if (typeof(size) != 'number' || size < 0) {
 			return false;
 		}
 
-		this.Field.SetTextSize(nSize);
+		this.Field.SetTextSize(size);
 		return true;
 	};
 
@@ -2299,12 +2302,12 @@
 	 * Sets text autofit.
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bAuto
+	 * @param {boolean} auto - Specifies whether text autofit is enabled.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetAutoFit.js
 	 */
-	ApiBaseWidget.prototype.SetAutoFit = function(bAuto) {
-		return this.Field.SetTextSize(bAuto ? 0 : 11);
+	ApiBaseWidget.prototype.SetAutoFit = function(auto) {
+		return this.Field.SetTextSize(auto ? 0 : 11);
 	};
 
 	/**
@@ -3390,17 +3393,17 @@
 	 * Sets checkbox widget checked.
 	 * @memberof ApiCheckboxWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bChecked
+	 * @param {boolean} checked - Specifies whether the checkbox is checked.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiCheckboxWidget/Methods/SetChecked.js
 	 */
-	ApiCheckboxWidget.prototype.SetChecked = function(bChecked) {
+	ApiCheckboxWidget.prototype.SetChecked = function(checked) {
 		let oDoc = private_GetLogicDocument();
-		if (this.Field.IsChecked() == bChecked) {
+		if (this.Field.IsChecked() == checked) {
 			return true;
 		}
 
-		this.Field.SetChecked(bChecked);
+		this.Field.SetChecked(checked);
 		this.Field.SetNeedCommit(true);
 		oDoc.private_CommitField(this.Field);
 
@@ -3422,12 +3425,12 @@
 	 * Sets widget checkbox style.
 	 * @memberof ApiCheckboxWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {CheckStyle} sStyle
+	 * @param {CheckStyle} style - The checkbox style.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiCheckboxWidget/Methods/SetCheckStyle.js
 	 */
-	ApiCheckboxWidget.prototype.SetCheckStyle = function(sStyle) {
-		let nType = private_GetInnerCheckStyle(sStyle);
+	ApiCheckboxWidget.prototype.SetCheckStyle = function(style) {
+		let nType = private_GetInnerCheckStyle(style);
 		if (undefined == nType) {
 			return false;
 		}
@@ -3452,16 +3455,16 @@
 	 * Sets widget export value.
 	 * @memberof ApiCheckboxWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sValue
+	 * @param {string} value - The value to be exported when the checkbox is checked.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiCheckboxWidget/Methods/SetExportValue.js
 	 */
-	ApiCheckboxWidget.prototype.SetExportValue = function(sValue) {
-		if (!sValue) {
+	ApiCheckboxWidget.prototype.SetExportValue = function(value) {
+		if (!value) {
 			return false;
 		}
 
-		this.Field.SetExportValue(sValue);
+		this.Field.SetExportValue(value);
 		return true;
 	};
 
@@ -3480,12 +3483,12 @@
 	 * Sets widget checked by default.
 	 * @memberof ApiCheckboxWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bChecked
+	 * @param {boolean} checked - Specifies whether the checkbox is checked by default.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiCheckboxWidget/Methods/SetCheckedByDefault.js
 	 */
-	ApiCheckboxWidget.prototype.SetCheckedByDefault = function(bChecked) {
-		if (bChecked) {
+	ApiCheckboxWidget.prototype.SetCheckedByDefault = function(checked) {
+		if (checked) {
 			this.Field.SetDefaultValue(this.Field.GetExportValue());
 		}
 		else {
@@ -3657,12 +3660,12 @@
 	 * Sets button widget fit bounds.
 	 * @memberof ApiButtonWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bFit
+	 * @param {boolean} fit - Specifies whether the icon is scaled to fit the button bounds.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiButtonWidget/Methods/SetFitBounds.js
 	 */
-	ApiButtonWidget.prototype.SetFitBounds = function(bFit) {
-		this.Field.SetFitBounds(bFit);
+	ApiButtonWidget.prototype.SetFitBounds = function(fit) {
+		this.Field.SetFitBounds(fit);
 		return true;
 	};
 
@@ -3681,18 +3684,18 @@
 	 * Sets button widget icon x position.
 	 * @memberof ApiButtonWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {percentage} nPosX
+	 * @param {percentage} posX - The horizontal position of the icon as a percentage of the button width.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiButtonWidget/Methods/SetIconXPos.js
 	 */
-	ApiButtonWidget.prototype.SetIconXPos = function(nPosX) {
-		if (typeof(nPosX) !== "number" || nPosX < 0) {
+	ApiButtonWidget.prototype.SetIconXPos = function(posX) {
+		if (typeof(posX) !== "number" || posX < 0) {
 			return false;
 		}
 
 		let oCurPos = this.Field.GetIconPosition();
 
-		this.Field.SetIconPosition(nPosX / 100, oCurPos.Y);
+		this.Field.SetIconPosition(posX / 100, oCurPos.Y);
 		return true;
 	};
 
@@ -3713,18 +3716,18 @@
 	 * Sets button widget icon y position.
 	 * @memberof ApiButtonWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {percentage} nPosY
+	 * @param {percentage} posY - The vertical position of the icon as a percentage of the button height.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiButtonWidget/Methods/SetIconYPos.js
 	 */
-	ApiButtonWidget.prototype.SetIconYPos = function(nPosY) {
-		if (typeof(nPosY) !== "number" || nPosY < 0) {
+	ApiButtonWidget.prototype.SetIconYPos = function(posY) {
+		if (typeof(posY) !== "number" || posY < 0) {
 			return false;
 		}
 
 		let oCurPos = this.Field.GetIconPosition();
 
-		this.Field.SetIconPosition(oCurPos.X, nPosY / 100);
+		this.Field.SetIconPosition(oCurPos.X, posY / 100);
 		return true;
 	};
 
@@ -3745,16 +3748,16 @@
 	 * Sets button widget behavior.
 	 * @memberof ApiButtonWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {ButtonBehavior} sType
+	 * @param {ButtonBehavior} type - The highlight behavior when the button is clicked.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiButtonWidget/Methods/SetBehavior.js
 	 */
-	ApiButtonWidget.prototype.SetBehavior = function(sType) {
-		if (false == Object.keys(AscPDF.BUTTON_HIGHLIGHT_TYPES).includes(sType)) {
+	ApiButtonWidget.prototype.SetBehavior = function(type) {
+		if (false == Object.keys(AscPDF.BUTTON_HIGHLIGHT_TYPES).includes(type)) {
 			return false;
 		}
 
-		this.Field.SetHighlight(private_GetInnerButtonBehaviorType(sType));
+		this.Field.SetHighlight(private_GetInnerButtonBehaviorType(type));
 		return true;
 	};
 
@@ -3874,7 +3877,7 @@
 	 * Sets annotation rect.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {Rect} rect
+	 * @param {Rect} rect - The new bounding rectangle for the annotation.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetRect.js
 	 */
@@ -3905,7 +3908,7 @@
 	 * Sets annotation position.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {Point} position
+	 * @param {Point} position - The new position of the annotation.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetPosition.js
 	 */
@@ -3935,7 +3938,7 @@
 	 * Sets annotation border color.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The border color.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetBorderColor.js
 	 */
@@ -4018,7 +4021,7 @@
 	 * Sets annotation border width.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {pt} width
+	 * @param {pt} width - The border width in points.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetBorderWidth.js
 	 */
@@ -4044,7 +4047,7 @@
 	 * Sets annotation border style.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {AnnotBorderStyle} borderStyle
+	 * @param {AnnotBorderStyle} borderStyle - The border style: <b>"solid"</b> or <b>"dashed"</b>.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetBorderStyle.js
 	 */
@@ -4072,7 +4075,7 @@
 	 * Sets annotation author name.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} name
+	 * @param {string} name - The author name.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetAuthorName.js
 	 */
@@ -4101,7 +4104,7 @@
 	 * Sets annotation contents.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {?string} contents
+	 * @param {?string} contents - The annotation text contents.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetContents.js
 	 */
@@ -4126,7 +4129,7 @@
 	 * Sets annotation creation date.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} timeStamp
+	 * @param {number} timeStamp - The annotation creation date as a numeric timestamp.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetCreationDate.js
 	 */
@@ -4155,7 +4158,7 @@
 	 * Sets annotation last modification date.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} timeStamp
+	 * @param {number} timeStamp - The annotation last modification date as a numeric timestamp.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetModDate.js
 	 */
@@ -4184,7 +4187,7 @@
 	 * Sets annotation unique name.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} name
+	 * @param {string} name - The unique name for the annotation.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetUniqueName.js
 	 */
@@ -4217,7 +4220,7 @@
 	 * Sets annotation opacity.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {percentage} name
+	 * @param {percentage} value - The opacity value from 0 (transparent) to 100 (opaque).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetOpacity.js
 	 */
@@ -4246,7 +4249,7 @@
 	 * Sets annotation subject.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {?string} subject
+	 * @param {?string} subject - The annotation subject text.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetSubject.js
 	 */
@@ -4275,7 +4278,7 @@
 	 * Sets annotation display type.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {DisplayType} display
+	 * @param {DisplayType} display - The display type for the annotation.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetDisplay.js
 	 */
@@ -4348,7 +4351,7 @@
 	 * <note> Can be applied to circle, square, freeText and polygon annotations </note>
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {AnnotBorderEffectStyle} style
+	 * @param {AnnotBorderEffectStyle} style - The border effect style: <b>"none"</b> or <b>"cloud"</b>.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetBorderEffectStyle.js
 	 */
@@ -4388,7 +4391,7 @@
 	 * <note> Can be applied to circle, square, freeText and polygon annotations </note>
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} value
+	 * @param {number} value - The border effect intensity. Must be greater than or equal to 0.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetBorderEffectIntensity.js
 	 */
@@ -4409,8 +4412,7 @@
 	 * Gets annotation border effect intensity.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} value
-	 * @returns {boolean}
+	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/GetBorderEffectIntensity.js
 	 */
 	ApiBaseAnnotation.prototype.GetBorderEffectIntensity = function() {
@@ -4421,7 +4423,7 @@
 	 * Adds reply on this annot.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiTextAnnotation} textAnnot
+	 * @param {ApiTextAnnotation} textAnnot - The text annotation to use as a reply.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/AddReply.js
 	 */
@@ -4497,7 +4499,7 @@
 	 * Sets icon type for this annotation.
 	 * @memberof ApiTextAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {TextIconType} iconType
+	 * @param {TextIconType} iconType - The icon type for the text annotation.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTextAnnotation/Methods/SetIconType.js
 	 */
@@ -4723,7 +4725,7 @@
 	 * Sets intent type for this annotation.
 	 * @memberof ApiFreeTextAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {FreeTextIntent} intentType
+	 * @param {FreeTextIntent} intentType - The intent type of the free text annotation.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiFreeTextAnnotation/Methods/SetIntent.js
 	 */
@@ -4760,7 +4762,7 @@
 	 * Sets annot callout.
 	 * @memberof ApiFreeTextAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {FreeTextCallout} callout
+	 * @param {FreeTextCallout} callout - An array of 3 points defining the callout line.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiFreeTextAnnotation/Methods/SetCallout.js
 	 */
@@ -4877,7 +4879,7 @@
 	 * Sets a line start point.
 	 * @memberof ApiLineAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {Point} point
+	 * @param {Point} point - The start point of the line.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiLineAnnotation/Methods/SetStartPoint.js
 	 */
@@ -4913,7 +4915,7 @@
 	 * Sets a line end point.
 	 * @memberof ApiLineAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {Point} point
+	 * @param {Point} point - The end point of the line.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiLineAnnotation/Methods/SetEndPoint.js
 	 */
@@ -4949,7 +4951,7 @@
 	 * Sets a line start style.
 	 * @memberof ApiLineAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {LineEndStyle} style
+	 * @param {LineEndStyle} style - The style of the line start endpoint.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiLineAnnotation/Methods/SetStartStyle.js
 	 */
@@ -4979,7 +4981,7 @@
 	 * Sets a line end style.
 	 * @memberof ApiLineAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {LineEndStyle} style
+	 * @param {LineEndStyle} style - The style of the line end endpoint.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiLineAnnotation/Methods/SetEndStyle.js
 	 */
@@ -5251,7 +5253,7 @@
 	 * Sets a line start style.
 	 * @memberof ApiPolyLineAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {LineEndStyle} style
+	 * @param {LineEndStyle} style - The style of the polyline start endpoint.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiPolyLineAnnotation/Methods/SetStartStyle.js
 	 */
@@ -5281,7 +5283,7 @@
 	 * Sets a line end style.
 	 * @memberof ApiPolyLineAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {LineEndStyle} style
+	 * @param {LineEndStyle} style - The style of the polyline end endpoint.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiPolyLineAnnotation/Methods/SetEndStyle.js
 	 */
@@ -5430,7 +5432,7 @@
 	 * Sets stamp rotate.
 	 * @memberof ApiStampAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {Degree} angle
+	 * @param {Degree} angle - The rotation angle in degrees.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiStampAnnotation/Methods/SetRotation.js
 	 */
@@ -5478,7 +5480,7 @@
 	 * Sets quads to current markup annotation.
 	 * @memberof ApiBaseMarkupAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {Quad[]} quads
+	 * @param {Quad[]} quads - An array of quadrilaterals defining the highlighted regions.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseMarkupAnnotation/Methods/SetQuads.js
 	 */
@@ -5989,7 +5991,7 @@
 	 * Sets the paragraph properties.
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiRichParaPr} paraPr
+	 * @param {ApiRichParaPr} paraPr - The paragraph properties to apply.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRichParagraph/Methods/SetParaPr.js
 	 */
@@ -6060,7 +6062,7 @@
 	 * Adds an element to the current paragraph.
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
-	 * @param {ParagraphContent} richRun
+	 * @param {ParagraphContent} richRun - The element to add at the end of the paragraph.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRichParagraph/Methods/Push.js
 	 */

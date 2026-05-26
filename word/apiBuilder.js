@@ -5055,7 +5055,7 @@
 	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {string} hexString
+	 * @param {string} hexString - The HEX string representing a color.
 	 * @returns {ApiColor}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/HexColor.js
 	 */
@@ -19282,21 +19282,21 @@
 	 * Sets the relative height of the object (image, shape, chart) bounding box.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @param {SizeRelFromV} [sRelativeFrom="page"] - The document element which will be taken as a countdown point for the object height.
-	 * @param {percentage} nPercent
+	 * @param {SizeRelFromV} [relativeFrom="page"] - The document element which will be taken as a countdown point for the object height.
+	 * @param {percentage} percent - The height of the object as a percentage of the specified element.
 	 * @since 9.3.0
 	 * @returns {boolean}
-	 * 
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetRelativeHeight.js
 	 */
-	ApiDrawing.prototype.SetRelativeHeight = function(sRelativeFrom, nPercent)
+	ApiDrawing.prototype.SetRelativeHeight = function(relativeFrom, percent)
 	{
-		let nRelativeFrom = private_GetRelativeFromV(sRelativeFrom);
+		let nRelativeFrom = private_GetRelativeFromV(relativeFrom);
 		let nRelSize = AscFormat.ConvertRelPositionVToRelSize(nRelativeFrom);
 
 		this.getParaDrawing().SetSizeRelV({
 			RelativeFrom: nRelSize,
-			Percent: nPercent / 100
+			Percent: percent / 100
 		});
 		return true;
 	};
@@ -19304,20 +19304,20 @@
 	 * Sets the relative width of the object (image, shape, chart) bounding box.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @param {SizeRelFromH} [sRelativeFrom="page"] - The document element which will be taken as a countdown point for the object width.
-	 * @param {percentage} nPercent
+	 * @param {SizeRelFromH} [relativeFrom="page"] - The document element which will be taken as a countdown point for the object width.
+	 * @param {percentage} percent - The width of the object as a percentage of the specified element.
 	 * @since 9.3.0
 	 * @returns {boolean}
-	 * 
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetRelativeWidth.js
 	 */
-	ApiDrawing.prototype.SetRelativeWidth = function(sRelativeFrom, nPercent)
+	ApiDrawing.prototype.SetRelativeWidth = function(relativeFrom, percent)
 	{
-		let nRelativeFrom = private_GetRelativeFromH(sRelativeFrom);
+		let nRelativeFrom = private_GetRelativeFromH(relativeFrom);
 		let nRelSize = AscFormat.ConvertRelPositionHToRelSize(nRelativeFrom);
 		this.getParaDrawing().SetSizeRelH({
 			RelativeFrom: nRelSize,
-			Percent: nPercent / 100
+			Percent: percent / 100
 		});
 		return true;
 	};
@@ -29020,8 +29020,8 @@
 	 * The result is an integer value.
 	 *
 	 * @memberof Api
-	 * @typeofeditors ["CDE", CSE", "CPE", "PDFE"]
-	 * @param {mm} mm
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @param {mm} mm - The value in millimeters.
 	 * @returns {EMU} - The value in English Metric Units (EMUs), as an integer.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/MillimetersToEmus.js
 	 */
@@ -29030,11 +29030,11 @@
 	};
 
 	/**
-	 * Converts English measure units (EMU) to millimeters.
+	 * Converts English Metric Units (EMUs) to millimeters.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {EMU} emu
-	 * @returns {mm}
+	 * @param {EMU} emu - The value in English Metric Units (EMUs).
+	 * @returns {mm} - The value in millimeters.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/EmusToMillimeters.js
 	 */
 	Api.EmusToMillimeters = function EmusToMillimeters(emu) {
