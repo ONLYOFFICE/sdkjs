@@ -318,14 +318,12 @@
 		return maxR;
 	}
 
-	// Yields data and style-only cells in column order. Style-only
-	// emissions use a shared read-only transient Cell. Data+style at the
-	// same coord emits once through the data path (Cell.loadContent
-	// resolves the direct xf).
+	// Yields data and direct-style-only cells in column order. Style-only
+	// emissions reuse a shared _isTransient Cell (read-only).
 	function OccupiedRowIterator() {
 	}
-	// r2 is optional; forwarded to the inner RowIterator so the adaptive
-	// active-extent clip is correct when adaptive mode is active.
+	// r2 is the highest row setRow may be called with; the sweep clips
+	// event enumeration to [r1..r2].
 	OccupiedRowIterator.prototype.init = function (ws, r1, c1, c2, r2) {
 		this.ws = ws;
 		this.c1 = c1;
@@ -345,30 +343,98 @@
 		this.transientCell = new ns.Cell(ws);
 		this.transientCell._isTransient = true;
 		this.row = r1 - 1;
-		// Snapshot the columns that carry any style entry in [c1..c2] once,
-		// so per-row setRow does not re-walk the full cellStylesByCol array.
-		this._activeStoreCols = null;
-		this._activeStores = null;
-		var maxStoreC = stylesByCol.length - 1;
-		if (maxStoreC > c2) {
-			maxStoreC = c2;
-		}
-		for (var sc = c1; sc <= maxStoreC; sc++) {
-			var s = stylesByCol[sc];
-			if (s && !s.isEmpty()) {
-				if (this._activeStoreCols === null) {
-					this._activeStoreCols = [];
-					this._activeStores = [];
-				}
-				this._activeStoreCols.push(sc);
-				this._activeStores.push(s);
-			}
-		}
 		this._styleCols = null;
 		this._styleColsIdx = 0;
 		this._pendingData = null;
 		this._pendingDataCol = -1;
 		this._dataExhausted = (this.dataIter === null);
+
+		// Collect active stores in [c1..c2] and cache their first/last row.
+		this._activeStoreCols = null;
+		this._activeStores = null;
+		this._styleMinR = -1;
+		this._styleMaxR = -1;
+		var maxStoreC = styleMaxC > c2 ? c2 : styleMaxC;
+		for (var sc = c1; sc <= maxStoreC; sc++) {
+			var s = stylesByCol[sc];
+			if (!s || s.isEmpty()) {
+				continue;
+			}
+			if (this._activeStoreCols === null) {
+				this._activeStoreCols = [];
+				this._activeStores = [];
+			}
+			this._activeStoreCols.push(sc);
+			this._activeStores.push(s);
+			var fr = s.firstRow();
+			var lr = s.lastRow();
+			if (fr >= 0 && (this._styleMinR === -1 || fr < this._styleMinR)) {
+				this._styleMinR = fr;
+			}
+			if (lr > this._styleMaxR) {
+				this._styleMaxR = lr;
+			}
+		}
+
+		// Sweep state: enter/leave events per style run in [r1..sweepR2].
+		this._sweepRows = null;
+		this._sweepStores = null;
+		this._sweepDeltas = null;
+		this._sweepCursor = 0;
+		this._sweepActive = null;
+		this._sweepActiveCount = 0;
+		this._styleColsBuf = null;
+		this._sweepDirty = false;
+		if (this._activeStores) {
+			var maxRow = (window['AscCommon'] && window['AscCommon'].gc_nMaxRow0 != null)
+				? window['AscCommon'].gc_nMaxRow0 : 1048575;
+			var sweepR2 = (typeof r2 === 'number' && r2 >= 0) ? r2 : maxRow;
+			if (sweepR2 < r1) {
+				sweepR2 = r1;
+			}
+			this._buildSweepEvents(r1, sweepR2);
+		}
+	};
+	// Build (row, storeIdx, delta) events for every run in [r1..r2], sorted
+	// by (row, originalIndex). The originalIndex tiebreaker keeps the order
+	// deterministic.
+	OccupiedRowIterator.prototype._buildSweepEvents = function (r1, r2) {
+		var stores = this._activeStores;
+		var n = stores.length;
+		var rowsBuf = [];
+		var storesBuf = [];
+		var deltasBuf = [];
+		for (var ii = 0; ii < n; ii++) {
+			// store.iter is synchronous, so `ii` is correct inside the callback.
+			stores[ii].iter(r1, r2, function (lo, hi, v) {
+				if (v == null || v === 0) {
+					return;
+				}
+				rowsBuf.push(lo);          storesBuf.push(ii); deltasBuf.push(1);
+				rowsBuf.push(hi + 1);      storesBuf.push(ii); deltasBuf.push(-1);
+			});
+		}
+		var nev = rowsBuf.length;
+		if (nev > 0) {
+			var order = new Array(nev);
+			for (var k = 0; k < nev; k++) order[k] = k;
+			order.sort(function (a, b) { return rowsBuf[a] - rowsBuf[b] || a - b; });
+			this._sweepRows = new Int32Array(nev);
+			this._sweepStores = new Int32Array(nev);
+			this._sweepDeltas = new Int8Array(nev);
+			for (var kk = 0; kk < nev; kk++) {
+				var p = order[kk];
+				this._sweepRows[kk] = rowsBuf[p];
+				this._sweepStores[kk] = storesBuf[p];
+				this._sweepDeltas[kk] = deltasBuf[p];
+			}
+		} else {
+			this._sweepRows = new Int32Array(0);
+			this._sweepStores = new Int32Array(0);
+			this._sweepDeltas = new Int8Array(0);
+		}
+		this._sweepActive = new Int8Array(n);
+		this._styleColsBuf = [];
 	};
 	OccupiedRowIterator.prototype.release = function () {
 		if (this.dataIter) {
@@ -376,44 +442,27 @@
 			this.dataIter = null;
 		}
 	};
-	// Combined data + style row extent for the _foreachNoEmpty outer-loop clip.
-	// Returns -1 when the clip is not safe: dataIter.getEffMinR() < 0 means
-	// baseline mode (SweepLine doesn't publish an extent), so we cannot
-	// know which rows have data. The caller's gate `effMin/effMax >= 0`
-	// then keeps the legacy r1..minR walk.
+	OccupiedRowIterator.prototype.getStyleMinR = function () { return this._styleMinR; };
+	OccupiedRowIterator.prototype.getStyleMaxR = function () { return this._styleMaxR; };
+	// Combined data + style row extent. Returns -1 when the inner data
+	// iterator does not publish an extent; callers must keep the full walk.
 	OccupiedRowIterator.prototype.getEffMinR = function () {
 		if (!this.dataIter) return -1;
 		var dataMin = this.dataIter.getEffMinR();
 		if (dataMin < 0) return -1;
 		var dataKnown = this.dataIter.getEffMaxR() >= 0;
-		var styleMin = -1;
-		if (this._activeStores) {
-			for (var i = 0; i < this._activeStores.length; i++) {
-				var s = this._activeStores[i];
-				var f = s.firstRow();
-				if (f >= 0 && (styleMin === -1 || f < styleMin)) styleMin = f;
-			}
-		}
-		if (!dataKnown) return styleMin;
-		if (styleMin < 0) return dataMin;
-		return dataMin < styleMin ? dataMin : styleMin;
+		if (!dataKnown) return this._styleMinR;
+		if (this._styleMinR < 0) return dataMin;
+		return dataMin < this._styleMinR ? dataMin : this._styleMinR;
 	};
 	OccupiedRowIterator.prototype.getEffMaxR = function () {
 		if (!this.dataIter) return -1;
 		var dataMin = this.dataIter.getEffMinR();
 		if (dataMin < 0) return -1;
 		var dataMax = this.dataIter.getEffMaxR();
-		var styleMax = -1;
-		if (this._activeStores) {
-			for (var i = 0; i < this._activeStores.length; i++) {
-				var s = this._activeStores[i];
-				var l = s.lastRow();
-				if (l > styleMax) styleMax = l;
-			}
-		}
-		if (dataMax < 0) return styleMax;
-		if (styleMax < 0) return dataMax;
-		return dataMax > styleMax ? dataMax : styleMax;
+		if (dataMax < 0) return this._styleMaxR;
+		if (this._styleMaxR < 0) return dataMax;
+		return dataMax > this._styleMaxR ? dataMax : this._styleMaxR;
 	};
 	OccupiedRowIterator.prototype.setRow = function (row) {
 		this.row = row;
@@ -426,23 +475,50 @@
 		this._styleCols = this._computeStyleOnlyCols(row);
 		this._styleColsIdx = 0;
 	};
+	// Col-sorted style-only column list at `row`, or null. The returned
+	// buffer is reused across setRow calls; callers must not mutate it.
 	OccupiedRowIterator.prototype._computeStyleOnlyCols = function (row) {
-		var stores = this._activeStores;
-		if (!stores) {
+		if (this._sweepRows === null) {
 			return null;
 		}
-		var cols = null;
-		for (var i = 0; i < stores.length; i++) {
-			var xf = stores[i].get(row);
-			if (xf == null || xf === 0) {
-				continue;
+		var rows = this._sweepRows;
+		var storesIdx = this._sweepStores;
+		var deltas = this._sweepDeltas;
+		var active = this._sweepActive;
+		var cur = this._sweepCursor;
+		var len = rows.length;
+		var activeCount = this._sweepActiveCount;
+		while (cur < len && rows[cur] <= row) {
+			var si = storesIdx[cur];
+			var before = active[si];
+			var after = before + deltas[cur];
+			active[si] = after;
+			if (before <= 0 && after > 0) {
+				activeCount++;
+			} else if (before > 0 && after <= 0) {
+				activeCount--;
 			}
-			if (cols === null) {
-				cols = [];
-			}
-			cols.push(this._activeStoreCols[i]);
+			this._sweepDirty = true;
+			cur++;
 		}
-		return cols;
+		this._sweepCursor = cur;
+		this._sweepActiveCount = activeCount;
+		if (this._sweepDirty) {
+			this._sweepDirty = false;
+			if (activeCount === 0) {
+				return null;
+			}
+			var buf = this._styleColsBuf;
+			buf.length = 0;
+			var cols = this._activeStoreCols;
+			for (var i = 0; i < active.length; i++) {
+				if (active[i] > 0) {
+					buf.push(cols[i]);
+				}
+			}
+			return buf;
+		}
+		return activeCount > 0 ? this._styleColsBuf : null;
 	};
 	OccupiedRowIterator.prototype._peekData = function () {
 		if (this._pendingData) {
@@ -571,72 +647,77 @@
 	Range.prototype._foreachNoEmpty = function(actionCell, actionRow, excludeHiddenRows) {
 		var oRes, i, oBBox = this.bbox;
 		var ws = this.worksheet;
+		if (!actionCell && !actionRow) {
+			return;
+		}
+		// actionCell path reuses the iterator's cached styleMaxR; the
+		// actionRow-only path queries the standalone helper.
+		var itRow = null;
+		var styleMaxR;
+		if (actionCell) {
+			itRow = new OccupiedRowIterator();
+			itRow.init(ws, oBBox.r1, oBBox.c1, oBBox.c2, oBBox.r2);
+			styleMaxR = itRow.getStyleMaxR();
+		} else {
+			styleMaxR = maxStyleOnlyRow(ws, oBBox.c1, oBBox.c2);
+		}
 		var dataMaxR = Math.max(ws.cellsByColRowsCount - 1, ws.rowsData.getMaxIndex());
-		var styleMaxR = maxStyleOnlyRow(ws, oBBox.c1, oBBox.c2);
 		var minR = Math.max(dataMaxR, styleMaxR);
 		minR = Math.min(minR, oBBox.r2);
-		if (actionCell || actionRow) {
-			var itRow = null;
-			if (actionCell) {
-				itRow = new OccupiedRowIterator();
-				itRow.init(ws, oBBox.r1, oBBox.c1, oBBox.c2, oBBox.r2);
+		// Outer-loop clip is only applied when actionRow is null; actionRow
+		// needs per-row callbacks across the full bbox.
+		var startR = oBBox.r1;
+		var stopR = minR;
+		if (itRow && !actionRow && itRow.getEffMinR) {
+			var effMin = itRow.getEffMinR();
+			var effMax = itRow.getEffMaxR();
+			if (effMin >= 0 && effMax >= 0) {
+				if (effMin > startR) startR = effMin;
+				if (effMax < stopR) stopR = effMax;
 			}
-			// Outer-loop clip. Only safe when actionRow is null: an actionRow
-			// callback may read excludedCount and may rely on per-row row
-			// metadata over the full bbox, so we keep the legacy walk there.
-			var startR = oBBox.r1;
-			var stopR = minR;
-			if (itRow && !actionRow && itRow.getEffMinR) {
-				var effMin = itRow.getEffMinR();
-				var effMax = itRow.getEffMaxR();
-				if (effMin >= 0 && effMax >= 0) {
-					if (effMin > startR) startR = effMin;
-					if (effMax < stopR) stopR = effMax;
-				}
-			}
-			var bExcludeHiddenRows = (ws.bExcludeHiddenRows || excludeHiddenRows);
-			var excludedCount = 0;
-			var tempCell;
-			var tempRow = new Row(ws);
-			var allRow = ws.getAllRow();
-			var allRowHidden = allRow && allRow.getHidden();
-			for (i = startR; i <= stopR; i++) {
-				if (actionRow) {
-					if (tempRow.loadContent(i)) {
-						if (bExcludeHiddenRows && tempRow.getHidden()) {
-							excludedCount++;
-							continue;
-						}
-						oRes = actionRow(tempRow, excludedCount);
-						tempRow.saveContent(true);
-						if (null != oRes) {
-							if (itRow) {
-								itRow.release();
-							}
-							return oRes;
-						}
-					} else if (bExcludeHiddenRows && allRowHidden) {
+		}
+		var bExcludeHiddenRows = (ws.bExcludeHiddenRows || excludeHiddenRows);
+		var excludedCount = 0;
+		var tempCell;
+		var tempRow = new Row(ws);
+		var allRow = ws.getAllRow();
+		var allRowHidden = allRow && allRow.getHidden();
+		for (i = startR; i <= stopR; i++) {
+			if (actionRow) {
+				if (tempRow.loadContent(i)) {
+					if (bExcludeHiddenRows && tempRow.getHidden()) {
 						excludedCount++;
 						continue;
 					}
-				} else if (bExcludeHiddenRows && ws.getRowHidden(i)) {
+					oRes = actionRow(tempRow, excludedCount);
+					tempRow.saveContent(true);
+					if (null != oRes) {
+						if (itRow) {
+							itRow.release();
+						}
+						return oRes;
+					}
+				} else if (bExcludeHiddenRows && allRowHidden) {
 					excludedCount++;
 					continue;
 				}
-				if (itRow) {
-					itRow.setRow(i);
-					while (tempCell = itRow.next()) {
-						oRes = actionCell(tempCell, i, tempCell.nCol, oBBox.r1, oBBox.c1, excludedCount);
-						if (null != oRes) {
-							itRow.release();
-							return oRes;
-						}
+			} else if (bExcludeHiddenRows && ws.getRowHidden(i)) {
+				excludedCount++;
+				continue;
+			}
+			if (itRow) {
+				itRow.setRow(i);
+				while (tempCell = itRow.next()) {
+					oRes = actionCell(tempCell, i, tempCell.nCol, oBBox.r1, oBBox.c1, excludedCount);
+					if (null != oRes) {
+						itRow.release();
+						return oRes;
 					}
 				}
 			}
-			if (itRow) {
-				itRow.release();
-			}
+		}
+		if (itRow) {
+			itRow.release();
 		}
 	};
 	// Data-only row-major iteration; no transient style-only emissions.

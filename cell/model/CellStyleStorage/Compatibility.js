@@ -302,9 +302,9 @@
 
 	// Legacy mode has no style-only cells, so getRowIterator collapses to the
 	// data-only RowIterator. Callers see plain Cell instances (no transients).
-	function legacyWorksheetGetRowIterator(r1, c1, c2, callback) {
+	function legacyWorksheetGetRowIterator(r1, c1, r2, c2, callback) {
 		var it = new RowIterator();
-		it.init(this, r1, c1, c2);
+		it.init(this, r1, c1, c2, r2);
 		callback(it);
 		it.release();
 	}
