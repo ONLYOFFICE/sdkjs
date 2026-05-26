@@ -10735,6 +10735,32 @@ background-repeat: no-repeat;\
     let logicDocument = this.getLogicDocument();
     if (!logicDocument) return false;
 
+    // Snapshot the redo slice so that a no-op builder script (e.g. a plugin reading
+    // paragraph context on a timer) cannot silently destroy the user's redo stack.
+    //
+    // Why this is needed:
+    //   `StartAction(historydescription_BuilderScript)` -> `History.Create_NewPoint`
+    //   executes `this.Points[++this.Index] = newPoint` (History.js:348), which
+    //   *overwrites* `Points[Index + 1]` — the very slot that holds the redo target
+    //   when the user has just pressed Cmd+Z. Then, if the builder script produced
+    //   no items, `FinalizeAction` -> `private_CheckEmptyPointsInAction` calls
+    //   `Remove_LastPoint` which truncates `Points.length` (History.js:390-398),
+    //   permanently dropping the future. Net effect: Cmd+Z works, but the next
+    //   Cmd+Y / Cmd+Shift+Z silently does nothing because `Can_Redo()` is now false.
+    //
+    const history = AscCommon.History;
+    this._builderScriptRedoSnapshot = null;
+    if (
+      history &&
+      history.Index >= 0 &&
+      history.Index < history.Points.length - 1
+    ) {
+      this._builderScriptRedoSnapshot = {
+        preIndex: history.Index,
+        futurePoints: history.Points.slice(history.Index + 1),
+      };
+    }
+
     // Разрешаем всегда выполнять скрипт билдера, даже если это вьювер, а скрипт меняет содержимое
     // В конце действия по выполненным изменениям проверяем можно ли оставлять данные изменения
     logicDocument.StartAction(AscDFH.historydescription_BuilderScript);
@@ -10748,6 +10774,36 @@ background-repeat: no-repeat;\
     logicDocument.UpdateSelection();
     logicDocument.UpdateInterface();
     let result = logicDocument.FinalizeAction();
+
+    // Restore the redo slice captured in `canRunBuilderScript` when the builder
+    // script was a no-op edit-wise. Diagnostic for "no-op":
+    //   `History.Index` is back to its pre-script value (meaning
+    //   `private_CheckEmptyPointsInAction` -> `Remove_LastPoint` ran on the empty
+    //   builder-script point) AND `History.Points.length === preIndex + 1`
+    //   (the array was truncated). In that state we push the original future-points
+    //   back so that `Can_Redo()` flips back to true and the next Cmd+Y / Cmd+Shift+Z
+    //   reaches the original redo target.
+    //
+    // If the script committed real items, `Remove_LastPoint` did not run and `Index`
+    // is advanced; the restore branch is skipped and the redo stack is consumed as
+    // expected for any new user edit.
+    const history = AscCommon.History;
+    const snapshot = this._builderScriptRedoSnapshot;
+    this._builderScriptRedoSnapshot = null;
+    if (
+      snapshot &&
+      history &&
+      history.Index === snapshot.preIndex &&
+      history.Points.length === snapshot.preIndex + 1
+    ) {
+      for (let i = 0; i < snapshot.futurePoints.length; i++) {
+        history.Points.push(snapshot.futurePoints[i]);
+      }
+      if (logicDocument.Document_UpdateUndoRedoState) {
+        logicDocument.Document_UpdateUndoRedoState();
+      }
+    }
+
     if (callback) callback(result);
 
     return result;
