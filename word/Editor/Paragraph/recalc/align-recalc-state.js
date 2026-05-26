@@ -74,6 +74,7 @@
 		this.ComplexFields = new AscWord.ParagraphComplexFieldStack();
 		
 		this.bidiFlow = new AscWord.BidiFlow(this);
+		this.bidiFlowStack = [];
 	}
 	AlignRecalcState.prototype.beginPage = function(paragraph, pageNum, isFast)
 	{
@@ -136,6 +137,16 @@
 			this.Range.XVisible -= this.Range.WBreak + this.Range.WEnd;
 			this.Range.XEndVisible -= this.Range.WBreak + this.Range.WEnd;
 		}
+	};
+	AlignRecalcState.prototype.pushBidiFlow = function()
+	{
+		this.bidiFlowStack.push(this.bidiFlow);
+		this.bidiFlow = new AscWord.BidiFlow(this);
+	};
+	AlignRecalcState.prototype.popBidiFlow = function()
+	{
+		this.bidiFlow.end();
+		this.bidiFlow = this.bidiFlowStack.pop();
 	};
 	AlignRecalcState.prototype.handleRunElement = function(element, run)
 	{
@@ -267,7 +278,9 @@
 				element.CheckMark(this.Paragraph, this.RTL ? this.LeftSpace : this.XEnd - this.X);
 				let paraEndW = element.GetWidthVisible();
 				this.Range.WEnd = paraEndW;
-				this.X += paraEndW;
+				
+				if (!this.RTL)
+					this.X += paraEndW;
 
 				break;
 			}

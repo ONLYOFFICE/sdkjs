@@ -84,6 +84,7 @@
 		this.paraMath     = null;
 		
 		this.bidiFlow = new AscWord.BidiFlow(this);
+		this.bidiFlowStack = [];
 	}
 	ParagraphContentDrawState.prototype.init = function()
 	{
@@ -135,6 +136,16 @@
 		let isRtl = this.Paragraph.isRtlDirection();
 		if (this.Paragraph.Numbering.checkRange(this.Range, this.Line) && isRtl)
 			this.handleNumbering();
+	};
+	ParagraphContentDrawState.prototype.pushBidiFlow = function()
+	{
+		this.bidiFlowStack.push(this.bidiFlow);
+		this.bidiFlow = new AscWord.BidiFlow(this);
+	};
+	ParagraphContentDrawState.prototype.popBidiFlow = function()
+	{
+		this.bidiFlow.end();
+		this.bidiFlow = this.bidiFlowStack.pop();
 	};
 	/**
 	 * @param element {AscWord.CRunElementBase}

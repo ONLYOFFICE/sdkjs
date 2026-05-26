@@ -1435,14 +1435,16 @@ CMathContent.prototype.draw = function(x, y, pGraphics, PDSE)
         }
     }
 };
-CMathContent.prototype.Draw_Elements = function(PDSE)
+CMathContent.prototype.Draw_Elements = function(drawState)
 {
+	drawState.pushBidiFlow();
+	
     var StartPos, EndPos;
 
     if(this.protected_GetLinesCount() > 0)
     {
-        var CurLine  = PDSE.Line - this.StartLine;
-        var CurRange = ( 0 === CurLine ? PDSE.Range - this.StartRange : PDSE.Range );
+        var CurLine  = drawState.Line - this.StartLine;
+        var CurRange = ( 0 === CurLine ? drawState.Range - this.StartRange : drawState.Range );
 
         StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
         EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
@@ -1458,9 +1460,10 @@ CMathContent.prototype.Draw_Elements = function(PDSE)
     if( !bHidePlh )
     {
         for(var CurPos = StartPos; CurPos <= EndPos;CurPos++)
-            this.Content[CurPos].Draw_Elements(PDSE);
+            this.Content[CurPos].Draw_Elements(drawState);
     }
-
+	
+	drawState.popBidiFlow();
 };
 CMathContent.prototype.setCtrPrp = function(oPr)
 {
@@ -5129,6 +5132,12 @@ CMathContent.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
     PRS.bSingleBarFraction = bSingleBarFraction;
 
     this.protected_FillRange(CurLine, CurRange, RangeStartPos, RangeEndPos);
+};
+CMathContent.prototype.Recalculate_Range_Spaces = function(alignState, _CurLine, _CurRange, _CurPage)
+{
+	alignState.pushBidiFlow();
+	CParagraphContentWithParagraphLikeContent.prototype.Recalculate_Range_Spaces.apply(this, arguments);
+	alignState.popBidiFlow();
 };
 CMathContent.prototype.private_ForceBreakBox = function(PRS, Box, _Depth, PrevLastPos, LastPos)
 {

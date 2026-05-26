@@ -171,7 +171,10 @@
 	};
 	ParagraphPositionCalculator.prototype.handleBidiFlow = function(data, direction)
 	{
-		let element   = data[0];
+		let element = data[0];
+		if (element instanceof AscWord.ParaMath)
+			return this.handleBidiFlowParaMath(data);
+
 		let run       = data[1];
 		let isCurrent = data[2];
 		
@@ -223,24 +226,29 @@
 	};
 	ParagraphPositionCalculator.prototype.handleParaMath = function(math, isCurrent)
 	{
-		this.bidi.end();
-		
+		this.bidi.add([math, isCurrent], math.getBidiType());
+	};
+	ParagraphPositionCalculator.prototype.handleBidiFlowParaMath = function(data)
+	{
+		let math      = data[0];
+		let isCurrent = data[1];
+
 		if (this.isNextCurrent && !this.stop)
 		{
 			this.posInfo.x   = this.x;
 			this.posInfo.y   = this.y;
 			this.posInfo.run = this.nextRun;
-			
+
 			this.isNextCurrent = false;
 			this.nextRun       = null;
 		}
-		
+
 		let mathW = math.Root.GetWidth(this.line, this.range);
 		let x = this.x;
-		
+
 		if (isCurrent)
 			math.Root.recalculateCursorPosition(this, true);
-		
+
 		this.x = x + mathW;
 	};
 	ParagraphPositionCalculator.prototype.handleMathRun = function(run, isCurrentRun, currentPos)

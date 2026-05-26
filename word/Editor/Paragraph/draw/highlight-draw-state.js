@@ -280,9 +280,19 @@
 		let hyperlink = this.getHyperlinkObject();
 		this.bidiFlow.add([element, run, flags, hyperlink, collaborationColor, this.comments.slice(), this.haveCurrentComment], element.getBidiType());
 	};
+	ParagraphHighlightDrawState.prototype.handleParaMath = function(math)
+	{
+		if (!math || math.Root.IsEmptyRange(this.Line, this.Range))
+			return;
+		
+		this.bidiFlow.add([math], math.getBidiType());
+	};
 	ParagraphHighlightDrawState.prototype.handleBidiFlow = function(data)
 	{
-		let element    = data[0];
+		let element = data[0];
+		if (element instanceof AscWord.ParaMath)
+			return this.handleBidiFlowParaMath(element);
+		
 		let run        = data[1];
 		let flags      = data[2];
 		let hyperlink  = data[3];
@@ -302,13 +312,8 @@
 		
 		this.X += w;
 	};
-	ParagraphHighlightDrawState.prototype.handleParaMath = function(math)
+	ParagraphHighlightDrawState.prototype.handleBidiFlowParaMath = function(math)
 	{
-		if (!math || math.Root.IsEmptyRange(this.Line, this.Range))
-			return;
-		
-		this.bidiFlow.end();
-		
 		let y0 = this.Y0;
 		let y1 = this.Y1;
 		
