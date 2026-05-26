@@ -3330,6 +3330,10 @@
 						(s ? [s.orientation, s.width, s.height, s.scale, s.fitToWidth, s.fitToHeight, s.printArea, s.selection].join(',') : '') +
 						'][' +
 						(m ? [m.left, m.right, m.top, m.bottom, m.header, m.footer].join(',') : '') +
+						'][' +
+						[opt.headings ? 1 : 0, opt.gridLines ? 1 : 0, opt.horizontalCentered ? 1 : 0, opt.verticalCentered ? 1 : 0,
+						 opt.printTitlesHeight != null ? opt.printTitlesHeight : '',
+						 opt.printTitlesWidth != null ? opt.printTitlesWidth : ''].join(',') +
 						'];';
 				}
 			}

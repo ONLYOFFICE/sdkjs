@@ -3396,6 +3396,49 @@ function isAllowPasteLink(pastedWb) {
 			this._prepareCellTextMetricsCache(_range);
 			prepareTextMetricsRowMax = range.r1 + step;
 		}
+
+		let _printOptimize = false;
+
+		let _retinaRatio, _retinaInv, _printRowH, _realRowH, _printColW, _realColW;
+		let _colLayoutCache, _rowBreaks, _colBreaks, _bPrintAreaR1, _bPrintAreaR2, _bPrintAreaC1, _bPrintAreaC2;
+
+		if (_printOptimize) {
+			_retinaRatio = this.getRetinaPixelRatio();
+			_retinaInv = 1 / _retinaRatio;
+			let _zoomForRow = this.getZoom();
+			let _defRowHPt = this.defaultRowHeightForPrintPt;
+			let _beyondRowHPt = (!this.model.isDefaultHeightHidden()) * _defRowHPt;
+			_printRowH = new Array(range.r2 - range.r1 + 1);
+			_realRowH = new Array(range.r2 - range.r1 + 1);
+			AscBrowser.retinaPixelRatio = 1;
+			for (let _ri = range.r1; _ri <= range.r2; _ri++) {
+				let _hpt = (_ri < this.rows.length)
+					? (this.rows[_ri]._heightForPrint !== null ? this.rows[_ri]._heightForPrint : _defRowHPt)
+					: _beyondRowHPt;
+				_printRowH[_ri - range.r1] = AscCommonExcel.convertPtToPx(_hpt) * _zoomForRow;
+			}
+			AscBrowser.retinaPixelRatio = _retinaRatio;
+			for (let _ri = range.r1; _ri <= range.r2; _ri++) {
+				_realRowH[_ri - range.r1] = t._getRowHeight(_ri) * _retinaInv;
+			}
+
+			_printColW = new Array(range.c2 - range.c1 + 1);
+			_realColW = new Array(range.c2 - range.c1 + 1);
+			for (let _ci = range.c1; _ci <= range.c2; _ci++) {
+				let _w = t._getWidthForPrint(_ci);
+				_printColW[_ci - range.c1] = _w || t._getColumnWidth(_ci);
+				_realColW[_ci - range.c1] = t._getColumnWidth(_ci) * _retinaInv;
+			}
+
+			_colLayoutCache = {};
+			_rowBreaks = !bFitToHeight && t.model.rowBreaks ? t.model.rowBreaks : null;
+			_colBreaks = !bFitToWidth && t.model.colBreaks ? t.model.colBreaks : null;
+			_bPrintAreaR1 = bPrintArea ? range.r1 : false;
+			_bPrintAreaR2 = bPrintArea ? range.r2 : false;
+			_bPrintAreaC1 = bPrintArea ? range.c1 : false;
+			_bPrintAreaC2 = bPrintArea ? range.c2 : false;
+		}
+
 		while (AscCommonExcel.c_kMaxPrintPages > arrPages.length) {
 			if(isOnlyFirstPage && nCountPages > 0) {
 				break;
@@ -3444,9 +3487,11 @@ function isAllowPasteLink(pastedWb) {
 					this._prepareCellTextMetricsCache(_range);
 				}
 
-				let currentRowHeight = _getRowHeight(rowIndex) * scale;
-				let currentRowHeightReal = (t._getRowHeight(rowIndex)/this.getRetinaPixelRatio()) *scale;
-				rowBreak = !bFitToHeight && rowIndex !== currentRowIndex && t.model.rowBreaks && t.model.rowBreaks.isBreak(rowIndex, bPrintArea && range.c1, bPrintArea && range.c2);
+				let currentRowHeight = (_printOptimize ? _printRowH[rowIndex - range.r1] : _getRowHeight(rowIndex)) * scale;
+				let currentRowHeightReal = (_printOptimize ? _realRowH[rowIndex - range.r1] : (t._getRowHeight(rowIndex) / this.getRetinaPixelRatio())) * scale;
+				rowBreak = _printOptimize
+					? (!!_rowBreaks && rowIndex !== currentRowIndex && _rowBreaks.isBreak(rowIndex, _bPrintAreaC1, _bPrintAreaC2))
+					: (!bFitToHeight && rowIndex !== currentRowIndex && t.model.rowBreaks && t.model.rowBreaks.isBreak(rowIndex, bPrintArea && range.c1, bPrintArea && range.c2));
 				if ((currentHeight + currentRowHeight + curTitleHeight > pageHeightWithFieldsHeadings
 					&& rowIndex !== currentRowIndex) || rowBreak) {
 					// Finished drawing the page
@@ -3454,75 +3499,101 @@ function isAllowPasteLink(pastedWb) {
 					break;
 				}
 				if (isCalcColumnsWidth) {
-					if(range.c1 === colIndex) {
-						curTitleWidth = 0;
-						addedTitleWidth = 0;
-					}
-
-					if (baseTitleWidth) {
-						curTitleWidth += baseTitleWidth;
-						//addedTitleWidth += baseTitleWidth;
-					}
-
-					newPagePrint.titleWidth = curTitleWidth;
-
-					for (colIndex = currentColIndex; colIndex <= range.c2; ++colIndex) {
-						let currentColWidth = _getColumnWidth(colIndex) * scale;
-						let currentRowWidthReal = (t._getColumnWidth(colIndex)/this.getRetinaPixelRatio()) *scale;
-						if (bIsAddOffset) {
-							newPagePrint.startOffset = ++nCountOffset;
-							newPagePrint.startOffsetPx = (pageWidthWithFieldsHeadings * newPagePrint.startOffset);
-							currentColWidth -= newPagePrint.startOffsetPx;
+					let _cachedCol = _printOptimize && !bIsAddOffset ? _colLayoutCache[currentColIndex] : undefined;
+					if (_cachedCol) {
+						colIndex = _cachedCol.colIndex;
+						curTitleWidth = _cachedCol.curTitleWidth;
+						addedTitleWidth = _cachedCol.addedTitleWidth;
+						newPagePrint.titleWidth = _cachedCol.titleWidth;
+						newPagePrint.pageClipRectWidth = _cachedCol.pageClipRectWidth;
+						realPageWidth = _cachedCol.realPageWidth;
+					} else {
+						if(range.c1 === colIndex) {
+							curTitleWidth = 0;
+							addedTitleWidth = 0;
 						}
 
-						colBreak = !bFitToWidth && colIndex !== currentColIndex && t.model.colBreaks && t.model.colBreaks.isBreak(colIndex, bPrintArea && range.r1, bPrintArea && range.r2);
-						if ((currentWidth + currentColWidth + curTitleWidth > pageWidthWithFieldsHeadings
-							&& colIndex !== currentColIndex) || colBreak) {
-							curTitleWidth = addedTitleWidth;
-							break;
+						if (baseTitleWidth) {
+							curTitleWidth += baseTitleWidth;
+							//addedTitleWidth += baseTitleWidth;
 						}
 
-						currentWidth += currentColWidth;
-						currentWidthReal += currentRowWidthReal;
-						if(tCol1 !== undefined && colIndex >= tCol1 && colIndex <= tCol2) {
-							addedTitleWidth += currentColWidth;
+						newPagePrint.titleWidth = curTitleWidth;
+
+						for (colIndex = currentColIndex; colIndex <= range.c2; ++colIndex) {
+							let currentColWidth = (_printOptimize ? _printColW[colIndex - range.c1] : _getColumnWidth(colIndex)) * scale;
+							let currentRowWidthReal = (_printOptimize ? _realColW[colIndex - range.c1] : (t._getColumnWidth(colIndex) / this.getRetinaPixelRatio())) * scale;
+							if (bIsAddOffset) {
+								newPagePrint.startOffset = ++nCountOffset;
+								newPagePrint.startOffsetPx = (pageWidthWithFieldsHeadings * newPagePrint.startOffset);
+								currentColWidth -= newPagePrint.startOffsetPx;
+							}
+
+							colBreak = _printOptimize
+								? (!!_colBreaks && colIndex !== currentColIndex && _colBreaks.isBreak(colIndex, _bPrintAreaR1, _bPrintAreaR2))
+								: (!bFitToWidth && colIndex !== currentColIndex && t.model.colBreaks && t.model.colBreaks.isBreak(colIndex, bPrintArea && range.r1, bPrintArea && range.r2));
+							if ((currentWidth + currentColWidth + curTitleWidth > pageWidthWithFieldsHeadings
+								&& colIndex !== currentColIndex) || colBreak) {
+								curTitleWidth = addedTitleWidth;
+								break;
+							}
+
+							currentWidth += currentColWidth;
+							currentWidthReal += currentRowWidthReal;
+							if(tCol1 !== undefined && colIndex >= tCol1 && colIndex <= tCol2) {
+								addedTitleWidth += currentColWidth;
+							}
+
+							if (currentWidth > pageWidthWithFieldsHeadings && colIndex === currentColIndex) {
+								// Shift the cell next time
+								bIsAddOffset = true;
+								++colIndex;
+								break;
+							} else {
+								bIsAddOffset = false;
+							}
 						}
 
-						if (currentWidth > pageWidthWithFieldsHeadings && colIndex === currentColIndex) {
-							// Shift the cell next time
-							bIsAddOffset = true;
-							++colIndex;
-							break;
+						if (pageHeadings) {
+							currentWidth += this.cellsLeft;
+							currentWidthReal += this.cellsLeft;
+						}
+
+						if (startPrintPreview && (bFitToWidth || bFitToHeight)) {
+							newPagePrint.pageClipRectWidth = Math.max(currentWidth, newPagePrint.pageClipRectWidth, currentWidthReal);
+							//newPagePrint.pageWidth = newPagePrint.pageClipRectWidth * vector_koef + (pageLeftField + pageRightField);
 						} else {
-							bIsAddOffset = false;
+							newPagePrint.pageClipRectWidth = Math.min(currentWidth, newPagePrint.pageClipRectWidth);
+						}
+						realPageWidth = currentWidth;
+
+						if (_printOptimize && !bIsAddOffset) {
+							_colLayoutCache[currentColIndex] = {
+								colIndex: colIndex,
+								curTitleWidth: curTitleWidth,
+								addedTitleWidth: addedTitleWidth,
+								titleWidth: newPagePrint.titleWidth,
+								pageClipRectWidth: newPagePrint.pageClipRectWidth,
+								realPageWidth: realPageWidth
+							};
 						}
 					}
 					isCalcColumnsWidth = false;
-					if (pageHeadings) {
-						currentWidth += this.cellsLeft;
-						currentWidthReal += this.cellsLeft;
-					}
-
-					if (startPrintPreview && (bFitToWidth || bFitToHeight)) {
-						newPagePrint.pageClipRectWidth = Math.max(currentWidth, newPagePrint.pageClipRectWidth, currentWidthReal);
-						//newPagePrint.pageWidth = newPagePrint.pageClipRectWidth * vector_koef + (pageLeftField + pageRightField);
-					} else {
-						newPagePrint.pageClipRectWidth = Math.min(currentWidth, newPagePrint.pageClipRectWidth);
-					}
-					realPageWidth = currentWidth;
 				}
 
 
-				let endCell = t.model.getCell3(rowIndex, colIndex - 1);
-				let fullBordersEndCell = endCell.getBorderFull();
-				if (fullBordersEndCell && fullBordersEndCell.r) {
-					rightBorderWidth = Math.max(fullBordersEndCell.r.w, rightBorderWidth);
-				}
+				if (!_printOptimize || currentRowHeight > 0) {
+					let endCell = t.model.getCell3(rowIndex, colIndex - 1);
+					let fullBordersEndCell = endCell.getBorderFull();
+					if (fullBordersEndCell && fullBordersEndCell.r) {
+						rightBorderWidth = Math.max(fullBordersEndCell.r.w, rightBorderWidth);
+					}
 
-				currentHeight += currentRowHeight;
-				currentHeightReal += currentRowHeightReal;
-				if(tRow1 !== undefined && rowIndex >= tRow1 && rowIndex <= tRow2) {
-					addedTitleHeight += currentRowHeight;
+					currentHeight += currentRowHeight;
+					currentHeightReal += currentRowHeightReal;
+					if(tRow1 !== undefined && rowIndex >= tRow1 && rowIndex <= tRow2) {
+						addedTitleHeight += currentRowHeight;
+					}
 				}
 				currentWidth = 0;
 				currentWidthReal = 0;
