@@ -407,7 +407,7 @@ StartAddNewShape.prototype =
                         };
 
                     if (oAPI.editorId === AscCommon.c_oEditorId.Presentation)
-                        oDoc.FinalizeAction(AscDFH.historydescription_Presentation_AddShape, undefined, macroData);
+                        oDoc.FinalizeAction(undefined, undefined, macroData, AscDFH.historydescription_Presentation_AddShape);
                     else
                         oDoc.FinalizeAction(AscDFH.historydescription_Spreadsheet_AddShape, macroData);
                 }

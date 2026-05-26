@@ -3451,7 +3451,49 @@ CPresentation.prototype.private_ClearSearchOnRecalculate = function () {
 	this.ClearSearch();
 };
 
+CPresentation.prototype.GetActiveShape = function() {
+	var oController = this.GetCurrentController();
+	if (!oController) return null;
 
+	var textSel = oController.selection && oController.selection.textSelection;
+	if (textSel && textSel.getObjectType() === AscDFH.historyitem_type_Shape) {
+		return textSel;
+	}
+
+	var aSelected = oController.selectedObjects;
+	let aShapes = [];
+	for (var i = 0; i < aSelected.length; i++) {
+		if (aSelected[i].getObjectType() === AscDFH.historyitem_type_Shape) {
+			aShapes.push(aSelected[i]);
+		}
+	}
+	if (aShapes.length === 1)
+		return aShapes[0];
+
+	return null;
+};
+
+CPresentation.prototype.GetActiveTable = function() {
+	var oController = this.GetCurrentController();
+	if (!oController) return null;
+
+	var textSel = oController.selection && oController.selection.textSelection;
+	if (textSel && textSel.getObjectType() === AscDFH.historyitem_type_GraphicFrame && textSel.isTable()) {
+		return textSel;
+	}
+
+	var aSelected = oController.selectedObjects;
+	var aTables = [];
+	for (var i = 0; i < aSelected.length; i++) {
+		if (aSelected[i].getObjectType() === AscDFH.historyitem_type_GraphicFrame && aSelected[i].isTable()) {
+			aTables.push(aSelected[i]);
+		}
+	}
+	if (aTables.length === 1)
+		return aTables[0];
+
+	return null;
+};
 CPresentation.prototype.GetSearchElementId = function (isNext) {
 	if (this.Slides.length > 0) {
 		var i, Id, content, start_index;
