@@ -261,28 +261,14 @@
 	ApiTableRow.prototype.constructor = ApiTableRow;
 
 	/**
-	 * Class representing the table cell properties.
-	 * @constructor
-	 */
-	function ApiTableCellPr(Parent, CellPr)
-	{
-		this.Parent = Parent;
-		this.CellPr = CellPr;
-	}
-
-	/**
 	 * Class representing a table cell.
 	 * @constructor
-	 * @extends {ApiTableCellPr}
 	 * @param oCell
-     * @constructor
 	 */
 	function ApiTableCell(oCell)
 	{
-		ApiTableCellPr.call(this, this, oCell.Pr.Copy());
 		this.Cell = oCell;
 	}
-	ApiTableCell.prototype = Object.create(ApiTableCellPr.prototype);
 	ApiTableCell.prototype.constructor = ApiTableCell;
 
 	/**
@@ -1034,18 +1020,6 @@
         }
         return null;
     };
-
-	/**
-	 * Creates the empty table cell properties.
-	 * @memberof Api
-	 * @typeofeditors ["CPE"]
-	 * @returns {ApiTableCellPr}
-	 * @since 9.5.0
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateTableCellPr.js
-	 */
-	Api.CreateTableCellPr = function(){
-		return this.private_CreateApiTableCellPr(new CTableCellPr());
-	};
 
 	/**
 	 * Creates the empty table row properties.
@@ -8826,8 +8800,22 @@
 
         this.Cell.Set_Pr(oPr);
     };
-
-
+    /**
+	 * Specifies the preferred width for this cell.
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CPE"]
+	 * @param {TableWidth} sType - The type of the width value.
+	 * @param {number} [nValue] - The table width value measured in positive integers.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetWidth.js
+	 */
+    ApiTableCell.prototype.SetWidth = function(sType, nValue)
+    {
+        var oPr = this.Cell.Pr.Copy();
+        oPr.TableCellW = private_GetTableMeasure(sType, nValue);
+        this.Cell.Set_Pr(oPr);
+        return true;
+    };
     /**
      * Specifies an amount of space which shall be left between the bottom extent of the cell contents and the border
      * of a specific individual table cell within a table.
@@ -9125,30 +9113,6 @@
 		table.SelectRange(cellIndex, rowIndex, cellIndex, rowIndex);
 		table.Document_SetThisElementCurrent(true);
     };
-	/**
-	 * Applies the given cell properties to the current table cell.
-	 * @memberof ApiTableCell
-	 * @typeofeditors ["CPE"]
-	 * @param {ApiTableCellPr} oApiTableCellPr - The cell properties to apply.
-	 * @returns {boolean}
-	 * @since 9.5.0
-	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellPr.js
-	 */
-	ApiTableCell.prototype.SetCellPr = function(oApiTableCellPr)
-	{
-		if (!oApiTableCellPr || !oApiTableCellPr.GetClassType || oApiTableCellPr.GetClassType() !== "tableCellPr")
-			return false;
-		this.OnChangeTableCellPr(oApiTableCellPr);
-		return true;
-	};
-
-	ApiTableCell.prototype.OnChangeTableCellPr = function(oApiTableCellPr)
-	{
-		this.Cell.Set_Pr(oApiTableCellPr.CellPr);
-		this.CellPr = this.Cell.Pr.Copy();
-		oApiTableCellPr.CellPr = this.Cell.Pr.Copy();
-	};
-
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiTableStylePr
@@ -9172,45 +9136,10 @@
 		this.OnChangeTablePr(oTablePr);
 		return true;
 	};
-	/**
-	 * Sets the table cell properties to the current table style properties.
-	 * @memberof ApiTableStylePr
-	 * @typeofeditors ["CPE"]
-	 * @param {ApiTableCellPr} oTableCellPr - The table cell properties to apply.
-	 * @returns {boolean}
-	 * @since 9.5.0
-	 * @see office-js-api/Examples/{Editor}/ApiTableStylePr/Methods/SetTableCellPr.js
-	 */
-	ApiTableStylePr.prototype.SetTableCellPr = function(oTableCellPr)
-	{
-		if (!oTableCellPr || !(oTableCellPr instanceof ApiTableCellPr))
-			return false;
-		this.OnChangeTableCellPr(oTableCellPr);
-		return true;
-	};
-
 	ApiTableStylePr.prototype.private_OnChange = function()
 	{
 		if (this.Parent)
 			this.Parent.OnChangeTableStylePr(this);
-	};
-	ApiTableStylePr.prototype.OnChangeTablePr = function(oApiTablePr)
-	{
-		this.TableStylePr = this.TableStylePr.Copy();
-		this.TableStylePr.TablePr = oApiTablePr.TablePr;
-
-		oApiTablePr.TablePr = this.TableStylePr.TablePr.Copy();
-
-		this.private_OnChange();
-	};
-	ApiTableStylePr.prototype.OnChangeTableCellPr = function(oApiTableCellPr)
-	{
-		this.TableStylePr = this.TableStylePr.Copy();
-		this.TableStylePr.TableCellPr = oApiTableCellPr.CellPr;
-
-		oApiTableCellPr.CellPr = this.TableStylePr.TableCellPr.Copy();
-
-		this.private_OnChange();
 	};
 	ApiTableStylePr.prototype.OnChangeTablePr = function(oApiTablePr)
 	{
@@ -9271,15 +9200,6 @@
 
 		this.private_OnChange();
 	};
-	ApiTableStylePr.prototype.OnChangeTableCellPr = function(oApiTableCellPr)
-	{
-		this.TableStylePr = this.TableStylePr.Copy();
-		this.TableStylePr.TableCellPr = oApiTableCellPr.CellPr;
-
-		oApiTableCellPr.CellPr = this.TableStylePr.TableCellPr.Copy();
-
-		this.private_OnChange();
-	};
 	ApiTableRow.prototype.OnChangeTableRowPr = function(oApiTableRowPr)
 	{
 		this.Row.Set_Pr(oApiTableRowPr.RowPr);
@@ -9290,11 +9210,6 @@
 	{
 		if (this.Parent)
 			this.Parent.OnChangeTableRowPr(this);
-	};
-	ApiTableCellPr.prototype.private_OnChange = function()
-	{
-		if (this.Parent)
-			this.Parent.OnChangeTableCellPr(this);
 	};
 	ApiTablePr.prototype.private_OnChange = function()
 	{
@@ -9315,7 +9230,6 @@
     Api["CreateGroup"]                          = Api.CreateGroup;
     Api["CreateOleObject"]                      = Api.CreateOleObject;
     Api["CreateTable"]                          = Api.CreateTable;
-    Api["CreateTableCellPr"]                    = Api.CreateTableCellPr;
     Api["CreateTableRowPr"]                     = Api.CreateTableRowPr;
     Api["CreateParagraph"]                      = Api.CreateParagraph;
     Api["CreateHyperlink"]                      = Api.CreateHyperlink;
@@ -9759,8 +9673,8 @@
     ApiTableCell.prototype["RemoveRow"]					= ApiTableCell.prototype.RemoveRow					= AscBuilder.ApiTableCell.prototype.RemoveRow;
     ApiTableCell.prototype["GetNext"]					= ApiTableCell.prototype.GetNext;
     ApiTableCell.prototype["GetPrevious"]				= ApiTableCell.prototype.GetPrevious;
-    ApiTableCell.prototype["SetCellPr"]					= ApiTableCell.prototype.SetCellPr;
     //ApiTableCell.prototype["SetTextPr"]				= ApiTableCell.prototype.SetTextPr					= AscBuilder.ApiTableCell.prototype.SetTextPr;
+    ApiTableCell.prototype["SetWidth"]					= ApiTableCell.prototype.SetWidth;
     ApiTableCell.prototype["Clear"]						= ApiTableCell.prototype.Clear						= AscBuilder.ApiTableCell.prototype.Clear;
     ApiTableCell.prototype["GetBackgroundColor"]		= ApiTableCell.prototype.GetBackgroundColor;
     ApiTableCell.prototype["GetContent"]				= ApiTableCell.prototype.GetContent;
@@ -9782,16 +9696,10 @@
     ApiTableCell.prototype["SetText"]					= ApiTableCell.prototype.SetText;
 	ApiTableCell.prototype["GetTextRange"]				= ApiTableCell.prototype.GetTextRange;
 
-	ApiTableCellPr.prototype["GetClassType"]			= ApiTableCellPr.prototype.GetClassType				= AscBuilder.ApiTableCellPr.prototype.GetClassType;
-	ApiTableCellPr.prototype["SetWidth"]				= ApiTableCellPr.prototype.SetWidth					= AscBuilder.ApiTableCellPr.prototype.SetWidth;
-	ApiTableCellPr.prototype["SetNoWrap"]				= ApiTableCellPr.prototype.SetNoWrap				= AscBuilder.ApiTableCellPr.prototype.SetNoWrap;
-	
 	ApiTableStylePr.prototype["GetClassType"]			= ApiTableStylePr.prototype.GetClassType			= AscBuilder.ApiTableStylePr.prototype.GetClassType;
 	ApiTableStylePr.prototype["GetType"]				= ApiTableStylePr.prototype.GetType 				= AscBuilder.ApiTableStylePr.prototype.GetType;
 	ApiTableStylePr.prototype["GetTablePr"]				= ApiTableStylePr.prototype.GetTablePr				= AscBuilder.ApiTableStylePr.prototype.GetTablePr;
 	ApiTableStylePr.prototype["SetTablePr"]				= ApiTableStylePr.prototype.SetTablePr;
-	ApiTableStylePr.prototype["GetTableCellPr"]			= ApiTableStylePr.prototype.GetTableCellPr			= AscBuilder.ApiTableStylePr.prototype.GetTableCellPr;
-	ApiTableStylePr.prototype["SetTableCellPr"]			= ApiTableStylePr.prototype.SetTableCellPr;
 	
     Api.private_CreateApiSlide = function(oSlide){
         return new ApiSlide(oSlide);
@@ -9811,10 +9719,6 @@
 	Api.private_CreateApiTableRowPr = function(oRowPr){
 		return new ApiTableRowPr(null, oRowPr);
 	};
-	Api.private_CreateApiTableCellPr = function(oCellPr){
-		return new ApiTableCellPr(null, oCellPr);
-	};
-
 	/**
 	 * Class representing the selection in the presentation.
 	 * @constructor
