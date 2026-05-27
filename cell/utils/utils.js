@@ -1101,9 +1101,18 @@
 		Range.prototype.isAbsAll = function () {
 			return this.isAbsR1() && this.isAbsC1() && this.isAbsR2() && this.isAbsC2();
 		};
-		Range.prototype.switchReference = function () {
-			this.refType1 = (this.refType1 + 1) % 4;
-			this.refType2 = (this.refType2 + 1) % 4;
+		Range.prototype.switchReference = function (part) {
+			if (part !== 1 && part !== 2) {
+				// OR-normalize so asymmetric ranges ($B1:B$2) always land on the same canonical type
+				const rowAbs = this.isAbsRow(this.refType1) || this.isAbsRow(this.refType2);
+				const colAbs = this.isAbsCol(this.refType1) || this.isAbsCol(this.refType2);
+				const nextType = ((rowAbs ? 0 : 2) + (colAbs ? 0 : 1) + 1) % 4;
+				this.refType1 = nextType;
+				this.refType2 = nextType;
+			} else {
+				if (part !== 2) this.refType1 = (this.refType1 + 1) % 4;
+				if (part !== 1) this.refType2 = (this.refType2 + 1) % 4;
+			}
 		};
 		Range.prototype.getWidth = function () {
 			return this.c2 - this.c1 + 1;
