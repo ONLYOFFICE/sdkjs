@@ -631,7 +631,7 @@ function (window, undefined) {
 	cISFORMULA.prototype.argumentsMax = 1;
 	cISFORMULA.prototype.isXLFN = true;
 	cISFORMULA.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
-	cISFORMULA.prototype.exactTypes = {0: 1};
+	// cISFORMULA.prototype.exactTypes = {0: 1};
 	cISFORMULA.prototype.argumentsType = [argType.reference];
 	cISFORMULA.prototype.enabledToSingle = {"0": true};
 	cISFORMULA.prototype.Calculate = function (arg) {
@@ -1068,35 +1068,50 @@ function (window, undefined) {
 	cTYPE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cTYPE.prototype.arrayIndexes = {0: 1};
 	cTYPE.prototype.argumentsType = [argType.any];
+	cTYPE.prototype.enabledToSingle = {"0": true};
 	cTYPE.prototype.Calculate = function (arg) {
+		// TODO
+		// The formula must accept pure arguments (bypassing checkFormulaArray),
+		// And the SINGLE(@) operator must not remain when using in the file when saving.
+		// Now the formula is working correctly except for writing to a file, there is a similar notes in DynamicArraysTests.js
+		// The behavior should be the same as the SIN formula, but without preserving the @(SINGLE) sign and without using .cross inside the formula
+		const argTypeCheck = function (argToCheck) {
+			if (argToCheck.type === cElementType.number || argToCheck.type === cElementType.empty) {
+				return 1;
+			} else if (argToCheck.type === cElementType.string) {
+				return 2;
+			} else if (argToCheck.type === cElementType.bool) {
+				return 4;
+			} else if (argToCheck.type === cElementType.error) {
+				return 16;
+			} else {
+				return 64;
+			}
+		}
+
 		let arg0 = arg[0];
 		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
+			let res = new cArray();
 			if (arg0.type === cElementType.cellsRange3D && !arg0.isSingleSheet()) {
 				// #REF! error
-				return new cNumber(16);
+				res.addElement(new cNumber(16));
+				return res;
 			}
 
 			if (arg0.isOneElement()) {
 				arg0 = arg0.getFirstElement();
+				let numToReturn = argTypeCheck(arg0);
+				res.addElement(new cNumber(numToReturn));
 			} else {
-				return new cNumber(64);
+				res.addElement(new cNumber(64));
 			}
+
+			return res;
 		} else if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
 			arg0 = arg0.getValue();
 		}
 
-		if (arg0.type === cElementType.number) {
-			return new cNumber(1);
-		} else if (arg0.type === cElementType.string) {
-			return new cNumber(2);
-		} else if (arg0.type === cElementType.bool) {
-			return new cNumber(4);
-		} else if (arg0.type === cElementType.error) {
-			return new cNumber(16);
-		} else if (arg0.type === cElementType.empty) {
-			return new cNumber(1);
-		} else {
-			return new cNumber(64);
-		}
+		let numToReturn = argTypeCheck(arg0);
+		return new cNumber(numToReturn);
 	};
 })(window);
