@@ -19629,6 +19629,23 @@ Paragraph.prototype.asc_getText = function()
 	sText += this.GetText();
 	return sText;
 };
+Paragraph.prototype.walkBidiFlow = function(flow)
+{
+	let curLine   = flow.CurLine;
+	let curRange  = flow.CurRange;
+	
+	let range    = this.Lines[curLine].Ranges[curRange];
+	let startPos = range.StartPos;
+	let endPos   = range.EndPos;
+	
+	for (let pos = startPos; pos <= endPos; ++pos)
+	{
+		if (!this.Content[pos].walkBidiFlow(flow) || flow.checkStopFlow())
+			return false;
+	}
+	
+	return true;
+};
 Paragraph.prototype.asc_canAddRefToCaptionText = Paragraph.prototype.CanAddRefAfterSEQ;
 //export
 Paragraph.prototype["asc_getText"]                = Paragraph.prototype.asc_getText;

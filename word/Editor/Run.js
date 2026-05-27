@@ -5313,6 +5313,11 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(alignState, _CurLine, _Cur
 		alignState.handleRunElement(item, this);
 	}
 };
+ParaRun.prototype.walkBidiFlow = function(flow)
+{
+	flow.handleFlowRun(this);
+	return true;
+};
 
 ParaRun.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
 {
@@ -6224,7 +6229,7 @@ ParaRun.prototype.getParagraphContentPosByXY = function(searchState)
 	for (let pos = startPos; pos < endPos; ++pos)
 	{
 		let item = this.private_CheckInstrText(this.Content[pos]);
-		searchState.handleRunElement(item, this, pos);
+		searchState.handleFlowRunElement(item, this, pos);
 	}
 	
 	searchState.handleRun(this);

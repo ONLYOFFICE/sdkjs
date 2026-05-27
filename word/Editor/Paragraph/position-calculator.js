@@ -48,8 +48,8 @@
 	{
 		this.paragraph = paragraph
 		
-		this.page = 0;
-		this.line = 0;
+		this.page  = 0;
+		this.line  = 0;
 		this.range = 0;
 		
 		this.x = 0;
@@ -96,6 +96,10 @@
 		this.page  = page;
 		this.line  = line;
 		this.range = range;
+		
+		this.CurPage  = this.page;
+		this.CurLine  = this.line;
+		this.CurRange = this.range;
 		
 		let p = this.paragraph;
 		

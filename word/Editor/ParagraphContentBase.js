@@ -1015,6 +1015,10 @@ CParagraphContentBase.prototype.createDuplicateForSmartArt = function(oPr)
  * @param oEngine {CTextToTableEngine}
  */
 CParagraphContentBase.prototype.CalculateTextToTable = function(oEngine){};
+CParagraphContentBase.prototype.walkBidiFlow = function(flow)
+{
+	return true;
+};
 
 CParagraphContentBase.prototype.GetAllPermRangeMarks = function(marks)
 {
@@ -4999,6 +5003,25 @@ CParagraphContentWithParagraphLikeContent.prototype.CalculateTextToTable = funct
 
 		this.Content[nIndex].CalculateTextToTable(oEngine);
 	}
+};
+CParagraphContentWithParagraphLikeContent.prototype.walkBidiFlow = function(flow)
+{
+	let _curLine   = flow.CurLine;
+	let _curRange  = flow.CurRange;
+	
+	let curLine  = _curLine - this.StartLine;
+	let curRange = (0 === curLine ? _curRange - this.StartRange : _curRange );
+
+	let startPos = this.protected_GetRangeStartPos(curLine, curRange);
+	let endPos   = this.protected_GetRangeEndPos(curLine, curRange);
+	
+	for (let pos = startPos; pos <= endPos; ++pos)
+	{
+		if (!this.Content[pos].walkBidiFlow(flow) || flow.checkStopFlow())
+			return false;
+	}
+	
+	return true;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

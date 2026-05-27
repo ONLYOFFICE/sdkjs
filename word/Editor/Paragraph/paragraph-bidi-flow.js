@@ -53,18 +53,13 @@
 		this.bidiFlow      = new AscWord.BidiFlow(this);
 		this.bidiFlowStack = [];
 	}
-	ParagraphBidiFlow.prototype.initBidiFlow = function()
+	ParagraphBidiFlow.prototype.resetBidiFlow = function()
 	{
-		this.bidiFlow = new AscWord.BidiFlow(this);
+		this.bidiFlow.reset();
 		this.bidiFlowStack = [];
-	};
-	ParagraphBidiFlow.prototype.handleContent = function(data, bidiType)
-	{
-		this.bidiFlow.add(data, bidiType);
 	};
 	ParagraphBidiFlow.prototype.handleBidiFlow = function(data, direction)
 	{
-		
 	};
 	ParagraphBidiFlow.prototype.pushBidiFlow = function()
 	{
@@ -117,63 +112,7 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	AscWord.Paragraph.prototype.walkBidiFlow = function(flow)
-	{
-		let paragraph = flow.Paragraph;
-		let curLine   = flow.CurLine;
-		let curRange  = flow.CurRange;
-		
-		let range    = paragraph.Lines[curLine].Ranges[curRange];
-		let startPos = range.StartPos;
-		let endPos   = range.EndPos;
-		
-		for (let pos = startPos; pos <= endPos; ++pos)
-		{
-			if (!this.Content[pos].walkBidiFlow(flow) || flow.checkStopFlow())
-				return false;
-		}
-		
-		return true;
-	};
-	AscWord.ParagraphContentBase.prototype.walkBidiFlow = function(flow)
-	{
-		return true;
-	};
-	AscWord.ParagraphContentWithParagraphLikeContent.prototype.walkBidiFlow = function(flow)
-	{
-		let _curLine   = flow.CurLine;
-		let _curRange  = flow.CurRange;
-		
-		let curLine  = _curLine - this.StartLine;
-		let curRange = (0 === curLine ? _curRange - this.StartRange : _curRange );
-
-		let startPos = this.protected_GetRangeStartPos(curLine, curRange);
-		let endPos   = this.protected_GetRangeEndPos(curLine, curRange);
-		
-		for (let pos = startPos; pos <= endPos; ++pos)
-		{
-			if (!this.Content[pos].walkBidiFlow(flow) || flow.checkStopFlow())
-				return false;
-		}
-		
-		return true;
-	};
-	AscWord.Run.prototype.walkBidiFlow = function(flow)
-	{
-		flow.handleFlowRun(this);
-		return true;
-	};
-	// AscWord.InlineLvlSdt.prototype.walkBidiFlow = function(flow)
-	// {
-	// 	return flow.handleFlowInlineLvlSdt(this);
-	// };
-	// AscWord.MathContent.prototype.walkBidiFlow = function(flow)
-	// {
-	// 	flow.pushBidiFlow();
-	// 	let result = AscWord.ParagraphContentBase.ParagraphContentWithParagraphLikeContent.prototype.walkBidiFlow.apply(this, arguments);
-	// 	flow.popBidiFlow();
-	// 	return result;
-	// };
+	
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.ParagraphBidiFlow = ParagraphBidiFlow;
 	

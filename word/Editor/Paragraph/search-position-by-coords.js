@@ -46,28 +46,28 @@
 	 */
 	function ParagraphSearchPositionXY()
 	{
+		AscWord.ParagraphBidiFlow.call(this);
+
 		this.line  = 0;
 		this.range = 0;
 		this.page  = 0;
-		
+
 		this.paragraph  = null;
 		this.centerMode = true;  // Search the closest position (relative to the middle of the element), or we search a position beyond the specified x-coordinate
 		this.stepEnd    = false; // Search for position beyond the mark of paragraph
-		
+
 		this.curX    = 0;
 		this.curY    = 0;
 		this.x       = 0;
 		this.y       = 0;
 		this.diffX   = MAX_DIFF;
 		this.diffAbs = MAX_DIFF;
-		
+
 		this.numbering = false;
 		this.inText    = false;
 		this.inTextX   = false;
 		this.paraEnd   = false;
-		
-		this.bidiFlow = new AscWord.BidiFlow(this);
-		
+
 		this.emptyRun = null;
 		this.emptyRunHandler = {};
 		
@@ -86,6 +86,8 @@
 		
 		this.complexFields = new AscWord.ParagraphComplexFieldStack();
 	}
+	ParagraphSearchPositionXY.prototype = Object.create(AscWord.ParagraphBidiFlow.prototype);
+	ParagraphSearchPositionXY.prototype.constructor = ParagraphSearchPositionXY;
 	ParagraphSearchPositionXY.prototype.init = function(paragraph, stepEnd, centerMode)
 	{
 		this.paragraph  = paragraph;
@@ -299,7 +301,7 @@
 		base.Content[targetPos].getParagraphContentPosByXY(this);
 		this.reset();
 	};
-	ParagraphSearchPositionXY.prototype.handleRunElement = function(element, run, inRunPos)
+	ParagraphSearchPositionXY.prototype.handleFlowRunElement = function(element, run, inRunPos)
 	{
 		if (!this.complexFields.checkRunElement(element))
 			return;
