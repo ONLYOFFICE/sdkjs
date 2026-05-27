@@ -15724,11 +15724,17 @@
         }
         this.drawerData = oDrawerData;
         let aC = oDrawerData.coefficients;
+        let bDispRSqr = AscFormat.isRealNumber(oDrawerData.rSquared);
         let oParagraph = oDrawingContent.Content[0];
+        let oRSqrParagraph = oParagraph;
         let oRun;
         function r(dVal) {
             let dNumVal = (dVal * 10000 + 0.5 >> 0) / 10000;
             return dNumVal.toString()
+        }
+        if(bDispRSqr) {
+            oRSqrParagraph = oParagraph.Copy(oDrawingContent);
+            oDrawingContent.Internal_Content_Add(oDrawingContent.Content.length, oRSqrParagraph, false);
         }
         switch (this.trendlineType) {
             case AscFormat.TRENDLINE_TYPE_EXP: {
@@ -15810,6 +15816,18 @@
                 break;
             }
 
+        }
+        if(bDispRSqr) {
+            oRun = new AscWord.ParaRun(oRSqrParagraph, false);
+            oRun.AddText("R");
+            oRSqrParagraph.AddToContentToEnd(oRun);
+            oRun = new AscWord.ParaRun(oRSqrParagraph, false);
+            oRun.SetVertAlign(AscCommon.vertalign_SuperScript);
+            oRun.AddText("2");
+            oRSqrParagraph.AddToContentToEnd(oRun);
+            oRun = new AscWord.ParaRun(oRSqrParagraph, false);
+            oRun.AddText(" = " + r(oDrawerData.rSquared));
+            oRSqrParagraph.AddToContentToEnd(oRun);
         }
     };
 
