@@ -2869,7 +2869,9 @@
 		const context = AscCommon.AscBrowser.getContext2D(canvas);
 		context.clearRect(0, 0, canvas.width, canvas.height);
 		const graphics = this.getOutlineGraphics(context);
-
+		if (AscCommon.GlobalSkin.Type === "dark") {
+			graphics.setDarkMode(1);
+		}
 		const scaleFactor = g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
 		const widthMM = canvas.width * scaleFactor;
 		const outlineTopMarginMM = this.const_offset_y * scaleFactor;

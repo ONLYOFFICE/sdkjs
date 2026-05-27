@@ -32,6 +32,13 @@
 
 (function (undefined) {
 
+	function getRGBFromHex(color) {
+		if (!color) {
+			return {R: 0, G: 0, B: 0};
+		}
+		const prepareColor = parseInt(color.slice(1), 16);
+		return {R: (prepareColor >> 16) & 0xff, G: (prepareColor >> 8) & 0xff, B: prepareColor & 0xff};
+	}
 	function rebuildPos(pos, sourceContent, sourceParagraph) {
 		const newPos = pos.slice();
 		newPos[0] = {Class: sourceContent, Position: sourceParagraph.GetIndex()};
@@ -77,7 +84,7 @@
 		this.focusSlideIndex = focusSlideIndex;
 
 		this.backgroundColor = AscCommon.GlobalSkin.BackgroundColorThumbnails;
-		this.normalSlideColor = AscCommon.GlobalSkin.ThumbnailsPageOutline;
+		this.normalSlideColor = AscCommon.GlobalSkin.ThumbnailsPageOutline || "#C0C0C0";
 		this.activeSlideColor = AscCommon.GlobalSkin.ThumbnailsPageOutlineActive;
 		this.hoverSlideColor = AscCommon.GlobalSkin.ThumbnailsPageOutlineHover;
 
@@ -1048,7 +1055,7 @@
 			return null;
 		}
 		if (!this.brushes[hex]) {
-			const rgb = this.getRGBFromHex(hex);
+			const rgb = getRGBFromHex(hex);
 			this.brushes[hex] = AscFormat.CreateSolidFillRGBA(rgb.R, rgb.G, rgb.B, 255);
 		}
 		return this.brushes[hex];
@@ -1097,10 +1104,6 @@
 		this.recalculateShape(this.emptySlideShape, null, null, 0, width, height, true);
 		return this.emptySlideShape;
 	};
-	DecorCacheManager.prototype.getRGBFromHex = function (color) {
-		const prepareColor = parseInt(color.slice(1), 16);
-		return {R: (prepareColor >> 16) & 0xff, G: (prepareColor >> 8) & 0xff, B: prepareColor & 0xff};
-	};
 	DecorCacheManager.prototype.checkShapeSizes = function (shape, width, height, isRecalculateContent) {
 		if (!(AscFormat.fApproxEqual(shape.extX, width) && AscFormat.fApproxEqual(shape.extY, height))) {
 			this.recalculateShapeSizes(shape, width, height);
@@ -1131,6 +1134,8 @@
 			if (fontSize !== undefined) {
 				textPr.SetFontSize(fontSize);
 			}
+			const rgb = getRGBFromHex(AscCommon.GlobalSkin.ThumbnailsPageNumberText);
+			textPr.SetColor(rgb.R, rgb.G, rgb.B);
 			run.Set_Pr(textPr);
 			run.AddText(label);
 			para.Content[0] = run;
