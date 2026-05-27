@@ -721,6 +721,10 @@ CPresentation.prototype.GetHistory = function () {
 CPresentation.prototype.IsDocumentEditor = function () {
 	return false;
 };
+CPresentation.prototype.IsMovingTableBorder = function () {
+	const controller = this.GetCurrentController();
+	return !!(controller && controller.isMovingTableBorder());
+};
 CPresentation.prototype.IsPresentationEditor = function () {
 	return true;
 };
