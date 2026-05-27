@@ -772,6 +772,13 @@ CShape.prototype.OnContentReDraw = function(){
             oPresentation.checkShapeOutlineView(this);
         }
     };
+    CShape.prototype.isGeneralTitle = function () {
+        if (!this.isTitlePlaceholder()) {
+            return false;
+        }
+        const slide = this.parent;
+        return !!(slide && slide.getOutlineTitleShape() === this);
+    };
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].editorDeleteDrawingBase = editorDeleteDrawingBase;

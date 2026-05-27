@@ -711,7 +711,7 @@
 	RemoveOutlineParagraphsManager.prototype.processLastContent = function (lastContent, firstOutlineParagraph) {
 		const content = lastContent.Content;
 		const shape = lastContent.Is_DrawingShape(true);
-		if (shape.isOutlineTitlePlaceholder()) {
+		if (shape.isGeneralTitle()) {
 			this.saveManager.saveStartPosSourceParagraph(content[0]);
 		} else if (firstOutlineParagraph.Index !== 0) {
 			const outlineContent = this.outlineView.getDocContent();
@@ -825,7 +825,7 @@
 			lastContent.Remove_FromContent(0, 1);
 		}
 		let isNeedUseNextShapeForInsert = false;
-		if (firstShape.isOutlineTitlePlaceholder()) {
+		if (firstShape.isGeneralTitle()) {
 			isNeedUseNextShapeForInsert = true;
 		}
 
@@ -1678,7 +1678,7 @@
 	OutlineView.prototype.getPropertiesFromSourceShape = function (sourceParagraph) {
 		if (sourceParagraph.Index === 0) {
 			const parentShape = sourceParagraph.GetParentShape();
-			if (parentShape.getPlaceholderType() === AscFormat.phType_ctrTitle || parentShape.getPlaceholderType() === AscFormat.phType_title) {
+			if (parentShape.isGeneralTitle()) {
 				return new OutlineSlideInfo(parentShape.parent);
 			}
 		}
@@ -1731,7 +1731,7 @@
 				if (!sourceParagraph) {
 					updateData.existingParagraphs.push(paragraph)
 				}
-			} else if (shape && shape.isOutlinePlaceholder()) {
+			} else if (shape.isOutlinePlaceholder()) {
 				const content = shape.getDocContent();
 				if (shape.parent && shape.parent.getObjectType() === AscDFH.historyitem_type_Slide) {
 					const outlineParagraph = this.sourceToOutlineMap[paragraph.Get_Id()];
@@ -1739,7 +1739,7 @@
 						updateData.existingParagraphs.push(outlineParagraph);
 					} else if (paragraph.IsUseInDocument()) {
 						const isEmptyContent = content.IsEmpty();
-						if (isEmptyContent && shape.isOutlineTitlePlaceholder() || !isEmptyContent) {
+						if (isEmptyContent && shape.isGeneralTitle() || !isEmptyContent) {
 							updateData.newParagraphs.push(paragraph);
 						}
 					}
@@ -1831,7 +1831,7 @@
 			return false;
 		}
 		const shape = sourceParagraph.GetParentShape();
-		if (!shape.isOutlineTitlePlaceholder() || this.useInDocumentManager.isUseInDocumentShape(shape)) {
+		if (!shape.isGeneralTitle() || this.useInDocumentManager.isUseInDocumentShape(shape)) {
 			return false;
 		}
 
@@ -1859,7 +1859,7 @@
 				shape = content.Is_DrawingShape(true);
 			}
 
-			if (this.useInDocumentManager.isUseInDocumentParagraph(sourceParagraph) && (!isEmptyContent || isEmptyContent && shape.isOutlineTitlePlaceholder())) {
+			if (this.useInDocumentManager.isUseInDocumentParagraph(sourceParagraph) && (!isEmptyContent || isEmptyContent && shape.isGeneralTitle())) {
 				outlineView.updateFromSourceParagraph(sourceParagraph);
 			} else {
 				this.unlinkOutlineParagraph(outlineParagraph, sourceParagraph);
@@ -2496,7 +2496,7 @@
 						this.Recalculate();
 					}
 				} else if (!e.ShiftKey) {
-					if (oShape.isOutlineTitlePlaceholder()) {
+					if (oShape.isGeneralTitle()) {
 						const sourceParagraph = content.Content[0];
 						const outlineParagraph = oThis.sourceToOutlineMap[sourceParagraph.GetId()];
 						newSlide = oThis.handleTitleEnter(outlineParagraph);

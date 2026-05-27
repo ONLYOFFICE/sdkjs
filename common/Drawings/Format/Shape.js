@@ -7633,7 +7633,7 @@
 		CShape.prototype.isSlideNoteShape = function() {
 			return false;
 		};
-		CShape.prototype.isOutlineContentPlaceholder = function () {
+		CShape.prototype.isContentPlaceholder = function () {
 			switch (this.getPlaceholderType()) {
 				case AscFormat.phType_subTitle:
 				case AscFormat.phType_body:
@@ -7645,7 +7645,7 @@
 				}
 			}
 		};
-		CShape.prototype.isOutlineTitlePlaceholder = function () {
+		CShape.prototype.isTitlePlaceholder = function () {
 			switch (this.getPlaceholderType()) {
 				case AscFormat.phType_ctrTitle:
 				case AscFormat.phType_title: {
@@ -7656,8 +7656,11 @@
 				}
 			}
 		};
+		CShape.prototype.isGeneralTitle = function () {
+			return false;
+		};
 		CShape.prototype.isOutlinePlaceholder = function () {
-			return this.isOutlineContentPlaceholder() || this.isOutlineTitlePlaceholder();
+			return this.isContentPlaceholder() || this.isTitlePlaceholder();
 		};
 		CShape.prototype.isOutlinePlaceholderWithContent = function () {
 			if (this.isOutlinePlaceholder()) {

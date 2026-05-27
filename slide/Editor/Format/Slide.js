@@ -1464,17 +1464,34 @@ Slide.prototype.collectRedrawSlides = function (redrawSlides, force) {
     }
     redrawSlides.addRedrawSlide(this);
 };
+Slide.prototype.getOutlineTitleShape = function () {
+    let titleShape = null;
+    let minIdx = 0;
+    for (let i = 0; i < this.cSld.spTree.length; i += 1) {
+        const shape = this.cSld.spTree[i];
+        if (shape.getObjectType() !== AscDFH.historyitem_type_Shape || !shape.isTitlePlaceholder()) {
+            continue;
+        }
+
+        const idx = parseInt(shape.getPlaceholderIndex() || "0", 10);
+        if (titleShape === null || idx < minIdx) {
+            titleShape = shape;
+            minIdx = idx;
+        }
+    }
+    return titleShape;
+};
 Slide.prototype.getOutlineSlide = function () {
     const result = new AscCommonSlide.OutlineSlide();
     result.setSlide(this);
+    const titleShape = this.getOutlineTitleShape();
+    result.setTitle(titleShape);
     for (let i = 0; i < this.cSld.spTree.length; i += 1) {
         const shape = this.cSld.spTree[i];
         if (shape.getObjectType() !== AscDFH.historyitem_type_Shape) {
             continue;
         }
-        if (shape.isOutlineTitlePlaceholder()) {
-            result.setTitle(shape);
-        } else if (shape.isOutlineContentPlaceholder()) {
+        if (shape.isContentPlaceholder() || shape.isTitlePlaceholder() && shape !== titleShape) {
             result.addContent(shape);
         }
     }

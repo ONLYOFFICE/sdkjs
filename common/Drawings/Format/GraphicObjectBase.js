@@ -4079,10 +4079,10 @@
 		return false;
 	};
 	CGraphicObjectBase.prototype.collectRedrawSlides = function (redrawSlides, force) {};
-	CGraphicObjectBase.prototype.isOutlineContentPlaceholder = function () {
+	CGraphicObjectBase.prototype.isContentPlaceholder = function () {
 		return false;
 	};
-	CGraphicObjectBase.prototype.isOutlineTitlePlaceholder = function () {
+	CGraphicObjectBase.prototype.isTitlePlaceholder = function () {
 		return false;
 	};
 	CGraphicObjectBase.prototype.isOutlinePlaceholder = function () {
