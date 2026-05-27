@@ -15730,7 +15730,7 @@
         }
         this.drawerData = oDrawerData;
         let aC = oDrawerData.coefficients;
-        let bDispRSqr = AscFormat.isRealNumber(oDrawerData.rSquared);
+        let bDispRSqr = oDrawerData.rSquared !== null && oDrawerData.rSquared !== undefined;
         let oParagraph = oDrawingContent.Content[0];
         let oRSqrParagraph = oParagraph;
         let oRun;
@@ -15845,7 +15845,7 @@
             oRun.AddText("2");
             oRSqrParagraph.AddToContentToEnd(oRun);
             oRun = new AscWord.ParaRun(oRSqrParagraph, false);
-            oRun.AddText(" = " + r(oDrawerData.rSquared));
+            oRun.AddText(" = " + (AscFormat.isRealNumber(oDrawerData.rSquared) ? r(oDrawerData.rSquared) : "#N/A"));
             oRSqrParagraph.AddToContentToEnd(oRun);
         }
     };

@@ -19218,7 +19218,7 @@ CErrBarsDraw.prototype = {
 				const correlation = ((N * XY) - (X * Y)) / divisor;
 				return correlation * correlation;
 			}
-			return null;
+			return NaN;
 		},
 
 		draw: function () {
