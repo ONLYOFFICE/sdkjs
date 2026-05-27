@@ -66,6 +66,9 @@
 		this.Y1            = 0; // Нижняя граница строки
 
 		this.CurPage       = 0;
+		this.CurLine       = 0;
+		this.CurRange      = 0;
+		
 		this.PageY         = 0;
 		this.PageX         = 0;
 
@@ -143,6 +146,100 @@
 	{
 		return !(this.RecalcResult & recalcresult_NextElement);
 	};
+	AlignRecalcState.prototype.handleFlowInlineLvlSdt = function(sdt)
+	{
+		var isFastRangeRecalc = this.IsFastRangeRecalc();
+
+		var CurLine  = this.CurLine - sdt.StartLine;
+		var CurRange = (0 === CurLine ? this.CurRange - sdt.StartRange : this.CurRange);
+
+		if (0 === CurLine && 0 === CurRange && !isFastRangeRecalc)
+			sdt.Bounds = {};
+
+		var oParagraph = this.Paragraph;
+		var Y0         = oParagraph.Lines[this.CurLine].Top + oParagraph.Pages[this.CurPage].Y;
+		var Y1         = oParagraph.Lines[this.CurLine].Y + oParagraph.Pages[this.CurPage].Y + oParagraph.Lines[this.CurLine].Metrics.Descent;
+		var X0         = this.X;
+
+		if (0 === CurLine)
+			Y0 = oParagraph.Lines[this.CurLine].Y + oParagraph.Pages[this.CurPage].Y - oParagraph.Lines[this.CurLine].Metrics.Ascent;
+
+		let isSimpleForm = (sdt.IsForm() && !sdt.IsComplexForm() && (sdt === sdt.GetMainForm()));
+
+		if (isSimpleForm
+			&& !sdt.IsPicture()
+			&& (sdt.Content[0] instanceof ParaRun))
+		{
+			var oRun    = sdt.Content[0];
+			var oTextPr = oRun.Get_CompiledPr(false);
+
+			g_oTextMeasurer.SetTextPr(oTextPr, oParagraph.GetTheme());
+			g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
+
+			var nTextHeight  = g_oTextMeasurer.GetHeight();
+			var nTextDescent = Math.abs(g_oTextMeasurer.GetDescender());
+			var nTextAscent  = nTextHeight - nTextDescent;
+			var nYOffset     = oTextPr.Position;
+
+			if (0 === CurLine)
+				Y0 = oParagraph.Lines[this.CurLine].Y + oParagraph.Pages[this.CurPage].Y - nTextAscent - nYOffset;
+
+			Y1 = oParagraph.Lines[this.CurLine].Y + oParagraph.Pages[this.CurPage].Y + nTextDescent - nYOffset;
+		}
+
+		if (!isFastRangeRecalc)
+		{
+			for (var Key in sdt.Bounds)
+			{
+				var __CurLine = (Key | 0) >> 16;
+				if (__CurLine === CurLine - 1 && sdt.Bounds[Key].PageInternal === this.CurPage)
+				{
+					sdt.Bounds[Key].H = Y0 - sdt.Bounds[Key].Y;
+				}
+			}
+		}
+
+		let result = AscWord.ParagraphContentWithParagraphLikeContent.prototype.walkBidiFlow.call(sdt, this);
+
+		var X1 = this.X;
+
+		if (isSimpleForm
+			&& sdt.IsPicture()
+			&& Math.abs(X1 - X0) > 0.001)
+		{
+			var arrDrawings = sdt.GetAllDrawingObjects();
+			if (arrDrawings.length > 0 && arrDrawings[0].IsPicture())
+			{
+				Y0 = arrDrawings[0].GraphicObj.y;
+				Y1 = arrDrawings[0].GraphicObj.y + arrDrawings[0].GraphicObj.extY;
+				X0 = arrDrawings[0].GraphicObj.x;
+				X1 = arrDrawings[0].GraphicObj.x + arrDrawings[0].GraphicObj.extX;
+			}
+		}
+
+		if (isFastRangeRecalc && sdt.Bounds[((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF)])
+		{
+			var oBounds = sdt.Bounds[((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF)];
+			oBounds.X = X0;
+			oBounds.W = X1 - X0;
+		}
+		else
+		{
+			sdt.Bounds[((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF)] = {
+				X            : X0,
+				W            : X1 - X0,
+				Y            : Y0,
+				H            : Y1 - Y0,
+				TextLineH    : Y1 - Y0,
+				Page         : this.Paragraph.GetAbsolutePage(this.CurPage),
+				PageInternal : this.CurPage
+			};
+		}
+
+		sdt.BoundsPaths = null;
+		
+		return result;
+	};
 	AlignRecalcState.prototype.handleFlowRunElement = function(element, run)
 	{
 		let type = element.Type;
@@ -165,13 +262,6 @@
 			this.ComplexFields.processFieldChar(element);
 		
 		this.bidiFlow.add([element, run], element.getBidiType());
-	};
-	AlignRecalcState.prototype.handleParaMath = function(paraMath)
-	{
-		if (!paraMath || paraMath.Root.IsEmptyRange(this.CurLine, this.CurRange))
-			return;
-		
-		this.bidiFlow.add([paraMath], paraMath.getBidiType());
 	};
 	AlignRecalcState.prototype.handleBidiFlow = function(data, direction)
 	{
@@ -318,7 +408,9 @@
 
 		// страиницу для смещния параграфа относительно документа добавим на Get_Bounds, т.к. если формула находится в автофигуре, то для нее не прийдет Recalculate_Range_Spaces при перемещении автофигуры а другую страницу
 		paraMath.Root.UpdateBoundsPosInfo(this, this.CurLine, this.CurRange, this.CurPage);
-		paraMath.Root.Recalculate_Range_Spaces(this, this.CurLine, this.CurRange, this.CurPage);
+		
+		paraMath.Root.walkBidiFlow(this);
+		//paraMath.Root.Recalculate_Range_Spaces(this, this.CurLine, this.CurRange, this.CurPage);
 	};
 	AlignRecalcState.prototype.handleDrawing = function(element)
 	{

@@ -389,6 +389,10 @@ CInlineLevelSdt.prototype.CanSplit = function()
 {
 	return false;
 };
+CInlineLevelSdt.prototype.walkBidiFlow = function(flow)
+{
+	return flow.handleFlowInlineLvlSdt(this);
+};
 CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange, _CurPage)
 {
 	var isFastRangeRecalc = PRSA.IsFastRangeRecalc();

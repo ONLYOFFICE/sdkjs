@@ -58,10 +58,6 @@
 		this.bidiFlow = new AscWord.BidiFlow(this);
 		this.bidiFlowStack = [];
 	};
-	ParagraphBidiFlow.prototype.handleFlowRunElement = function(element, run)
-	{
-		this.bidiFlow.add([element, run], element.getBidiType());
-	};
 	ParagraphBidiFlow.prototype.handleContent = function(data, bidiType)
 	{
 		this.bidiFlow.add(data, bidiType);
@@ -87,6 +83,10 @@
 	{
 		return false;
 	};
+	ParagraphBidiFlow.prototype.handleFlowRunElement = function(element, run)
+	{
+		this.bidiFlow.add([element, run], element.getBidiType());
+	};
 	ParagraphBidiFlow.prototype.handleFlowRun = function(run)
 	{
 		// This is simple implementation, can be overriden if needed
@@ -101,6 +101,18 @@
 			let item = run.private_CheckInstrText(run.Content[pos]);
 			this.handleFlowRunElement(item, run);
 		}
+	};
+	ParagraphBidiFlow.prototype.handleFlowInlineLvlSdt = function(sdt)
+	{
+		return AscWord.ParagraphContentWithParagraphLikeContent.prototype.walkBidiFlow.call(sdt, this);
+	};
+	ParagraphBidiFlow.prototype.handleFlowParaMath = function(math)
+	{
+		if (!math || math.Root.IsEmptyRange(this.CurLine, this.CurRange))
+			return true;
+		
+		this.bidiFlow.add([math], math.getBidiType());
+		return true;
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
@@ -151,6 +163,10 @@
 		flow.handleFlowRun(this);
 		return true;
 	};
+	// AscWord.InlineLvlSdt.prototype.walkBidiFlow = function(flow)
+	// {
+	// 	return flow.handleFlowInlineLvlSdt(this);
+	// };
 	// AscWord.MathContent.prototype.walkBidiFlow = function(flow)
 	// {
 	// 	flow.pushBidiFlow();
