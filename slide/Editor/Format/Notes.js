@@ -41,7 +41,6 @@
     AscDFH.changesFactory[AscDFH.historyitem_NotesSetShowMasterSp]  = AscDFH.CChangesDrawingsBool;
     AscDFH.changesFactory[AscDFH.historyitem_NotesSetSlide]        = AscDFH.CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_NotesSetNotesMaster]        = AscDFH.CChangesDrawingsObject;
-    AscDFH.changesFactory[AscDFH.historyitem_NotesSetCSld]               = AscDFH.CChangesDrawingsObject;
 
 
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesSetClrMap]  = function(oClass, value){oClass.clrMap = value;};
@@ -49,10 +48,6 @@
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesSetShowMasterSp]  = function(oClass, value){oClass.showMasterSp = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesSetSlide]        = function(oClass, value){oClass.slide = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesSetNotesMaster]        = function(oClass, value){oClass.Master = value;};
-    AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesSetCSld]               = function(oClass, value){
-        oClass.cSld = value;
-        if (value) value.parent = oClass;
-    };
 
     //Temporary function
     function GetNotesWidth(){
@@ -60,10 +55,9 @@
     }
 
     function CNotes() {
+        this.cSld = new AscFormat.CSld(this);
         AscFormat.CBaseFormatObject.call(this);
         this.clrMap = null;
-        this.cSld = null;
-        this.setCSld(new AscFormat.CSld(this));
         this.showMasterPhAnim = null;
         this.showMasterSp     = null;
         this.slide            = null;
@@ -137,9 +131,15 @@
     CNotes.prototype.setCSldName = function(pr){
         this.cSld.setName(pr);
     };
-    CNotes.prototype.setCSld = function(cSld){
-        History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesSetCSld, this.cSld, cSld));
-        this.cSld = cSld;
+    CNotes.prototype.Write_ToBinary2 = function(w){
+        w.WriteLong(this.getObjectType());
+        w.WriteString2(this.Id);
+        AscFormat.writeObject(w, this.cSld);
+    };
+    CNotes.prototype.Read_FromBinary2 = function(r){
+        this.Id = r.GetString2();
+        this.cSld = AscFormat.readObject(r);
+        if (this.cSld) this.cSld.parent = this;
     };
     CNotes.prototype.setSlide = function(pr){
         History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesSetSlide, this.slide , pr));
