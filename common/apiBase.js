@@ -5482,6 +5482,10 @@
 
 	baseEditorsApi.prototype.asc_openDocumentFromBytes = function(data)
 	{
+		// Reloading bin on an already-open document requires teardown first (see pluginMethod_OpenFile).
+		if (this.WordControl && this.WordControl.m_oLogicDocument && this.asc_CloseFile) {
+			this.asc_CloseFile();
+		}
 		let file = new AscCommon.OpenFileResult();
 		file.data = data;
 		file.bSerFormat = AscCommon.checkStreamSignature(file.data, AscCommon.c_oSerFormat.Signature);
