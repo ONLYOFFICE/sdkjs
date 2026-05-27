@@ -2397,6 +2397,12 @@
     CBaseChartObject.prototype.isControl = function() {
         return false;
     };
+    CBaseChartObject.prototype.IsTableBorder = function() {
+        return false;
+    };
+    CBaseChartObject.prototype.Get_ShapeStyleForPara = function() {
+        return null;
+    };
 
     function getMinMaxFromArrPoints(aPoints) {
         if(Array.isArray(aPoints) && aPoints.length > 0) {
@@ -15729,7 +15735,13 @@
         let oRSqrParagraph = oParagraph;
         let oRun;
         function r(dVal) {
-            let dNumVal = (dVal * 10000 + 0.5 >> 0) / 10000;
+            let dNumVal = Math.round(dVal * 10000) / 10000;
+            if(dNumVal === 0 && dVal !== 0) {
+                let aParts = dVal.toExponential(0).split("e");
+                let nExp = parseInt(aParts[1], 10);
+                let nAbsExp = Math.abs(nExp);
+                return aParts[0] + "E" + (nExp < 0 ? "-" : "+") + (nAbsExp < 10 ? "0" : "") + nAbsExp;
+            }
             return dNumVal.toString()
         }
         if(bDispRSqr) {
@@ -15751,10 +15763,17 @@
             }
             case AscFormat.TRENDLINE_TYPE_LINEAR: {
                 oRun = new AscWord.ParaRun(oParagraph, false);
-                let s = "y = " + r(aC[0]) + "x";
+                let a = r(aC[0]);
                 let b = r(aC[1]);
+                let s = "y = ";
+                if(a !== "0") {
+                    s += a + "x";
+                }
                 if(b !== "0") {
-                    s += (" + " + b);
+                    s += (a !== "0" ? " + " + b : b);
+                }
+                if(a === "0" && b === "0") {
+                    s += "0";
                 }
                 oRun.AddText(s);
                 oParagraph.AddToContentToEnd(oRun);
