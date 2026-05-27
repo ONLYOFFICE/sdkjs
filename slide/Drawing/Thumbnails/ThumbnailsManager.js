@@ -2574,7 +2574,7 @@
 			return false;
 		}
 
-		AscCommon.check_MouseDownEvent(e);
+		AscCommon.check_MouseDownEvent(e, true);
 		global_mouseEvent.LockMouse();
 		const oPresentation = this.m_oWordControl.m_oLogicDocument;
 		let nStartHistoryIndex = oPresentation.History.Index;
