@@ -819,7 +819,7 @@
     Api.CreateSlide = function(){
         var oPresentation = private_GetPresentation();
         var oSlide = new AscCommonSlide.Slide(oPresentation, oPresentation.slideMasters[0].sldLayoutLst[0], 0);
-        oSlide.setNotes(AscCommonSlide.CreateNotes());
+        oSlide.setNotes(AscCommonSlide.CreateNotes(oPresentation.notesMasters[0]));
         oSlide.notes.setNotesMaster(oPresentation.notesMasters[0]);
         oSlide.notes.setSlide(oSlide);
         return new ApiSlide(oSlide);
@@ -4463,7 +4463,7 @@
 		let oNotesPage = this.GetNotesPage();
 		if (!oNotesPage) {
 			const presentation = private_GetPresentation();
-			const notes = AscCommonSlide.CreateNotes();
+			const notes = AscCommonSlide.CreateNotes(presentation.notesMasters[0]);
 			notes.setNotesMaster(presentation.notesMasters[0]);
 
 			notes.setSlide(this.Slide);

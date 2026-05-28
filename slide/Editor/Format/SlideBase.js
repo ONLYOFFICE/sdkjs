@@ -859,6 +859,7 @@
 		var oSp = createPlaceholderShape(oNvSpPr, 0, 0, placeholderWidth, placeholderHeight, AscCommon.align_Left, AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
 		oSp.setParent(slideObject);
 		slideObject.addToSpTreeToPos(slideObject.cSld.spTree.length, oSp);
+		return oSp;
 	}
 
 	function addDateShape(slideObject) {
@@ -878,6 +879,7 @@
 		oSp.setParent(slideObject);
 		slideObject.addToSpTreeToPos(slideObject.cSld.spTree.length, oSp);
 		AscCommonSlide.addDateTimeToSlideLikeObject(slideObject, "datetimeFigureOut");
+		return oSp;
 	}
 
 	function addFooterShape(slideObject) {
@@ -897,6 +899,7 @@
 		const oSp = createPlaceholderShape(oNvSpPr, 0, notesHeight - placeholderHeight, placeholderWidth, placeholderHeight, AscCommon.align_Left, AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
 		oSp.setParent(slideObject);
 		slideObject.addToSpTreeToPos(slideObject.cSld.spTree.length, oSp);
+		return oSp;
 	}
 
 	function addNumberShape(slideObject) {
@@ -925,6 +928,7 @@
 		}
 		oSp.setParent(slideObject);
 		slideObject.addToSpTreeToPos(slideObject.cSld.spTree.length, oSp);
+		return oSp;
 	}
 
 	function createBodyShapeLevel(content, text, lvl) {
@@ -964,6 +968,7 @@
 		createBodyShapeLevel(content, AscCommon.translateManager.getValue("Fourth level"), 3);
 		createBodyShapeLevel(content, AscCommon.translateManager.getValue("Fifth level"), 4);
 		slideObject.addToSpTreeToPos(slideObject.cSld.spTree.length, oSp);
+		return oSp;
 	}
 
 	const PLACEHOLDERSLIDESHAPE_WIDTH_COEFFICIENT = 5486400 / 6858000;
@@ -992,6 +997,7 @@
 		ln.Fill.fill.setColor(AscFormat.builder_CreatePresetColor("black"));
 		spPr.setLn(ln);
 		slideObject.addToSpTreeToPos(slideObject.cSld.spTree.length, oSp);
+		return oSp;
 	}
 
 	function createPlaceholderShape(oNvSpPr, x, y, width, height, textAlign, bodyPrAlign) {

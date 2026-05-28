@@ -539,7 +539,7 @@
 				} else {
 					oSlide.setLayout(oCurrentMaster.sldLayoutLst[0]);
 				}
-				const oNotes = oContent.Notes[i] || AscCommonSlide.CreateNotes();
+				const oNotes = oContent.Notes[i] || AscCommonSlide.CreateNotes(presentation.notesMasters[0]);
 				oSlide.setNotes(oNotes);
 				oSlide.notes.setNotesMaster(presentation.notesMasters[0]);
 				oSlide.notes.setSlide(oSlide);
@@ -588,7 +588,7 @@
 					oLayout.setMaster(oMaster);
 				}
 				if (!oNotes || !oNotesMaster || !oNotesTheme) {
-					oSlide.setNotes(AscCommonSlide.CreateNotes());
+					oSlide.setNotes(AscCommonSlide.CreateNotes(presentation.notesMasters[0]));
 					oSlide.notes.setNotesMaster(presentation.notesMasters[0]);
 					oSlide.notes.setSlide(oSlide);
 				} else {

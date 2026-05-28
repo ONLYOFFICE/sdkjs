@@ -8537,7 +8537,7 @@ CPresentation.prototype.addNextSlideAction = function (layoutIndex) {
 	}
 	hf = layout.hf || layout.Master.hf;
 	new_slide = new Slide(this, layout, this.CurPage + 1);
-	new_slide.setNotes(AscCommonSlide.CreateNotes());
+	new_slide.setNotes(AscCommonSlide.CreateNotes(this.notesMasters[0]));
 	new_slide.notes.setNotesMaster(this.notesMasters[0]);
 	new_slide.notes.setSlide(new_slide);
 	bRemoveOnTitle = layout.type === AscFormat.nSldLtTTitle && this.showSpecialPlsOnTitleSld === false;
@@ -10455,7 +10455,7 @@ CPresentation.prototype.createNecessaryObjectsIfNoPresent = function () {
 	for (let nSlide = 0; nSlide < this.Slides.length; ++nSlide) {
 		let oSlide = this.Slides[nSlide];
 		if (!oSlide.notes) {
-			const oNotes = AscCommonSlide.CreateNotes();
+			const oNotes = AscCommonSlide.CreateNotes(this.notesMasters[0]);
 			oSlide.setNotes(oNotes);
 		}
 		oSlide.notes.setSlide(oSlide);
