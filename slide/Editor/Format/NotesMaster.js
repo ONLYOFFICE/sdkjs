@@ -96,11 +96,6 @@
 
 	AscFormat.InitClass(CNotesMaster, AscCommonSlide.SlideBase, AscDFH.historyitem_type_NotesMaster);
 
-
-	CNotesMaster.prototype.getObjectType = function() {
-		return AscDFH.historyitem_type_NotesMaster;
-	};
-
 	CNotesMaster.prototype.setTheme = function(pr) {
 		History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesMasterSetNotesTheme, this.Theme, pr));
 		this.Theme = pr;

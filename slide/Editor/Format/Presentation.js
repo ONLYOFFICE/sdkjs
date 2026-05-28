@@ -400,6 +400,9 @@ AscDFH.changesFactory[AscDFH.historyitem_Presentation_SetFirstSlideNum] = AscDFH
 AscDFH.changesFactory[AscDFH.historyitem_Presentation_SetShowSpecialPlsOnTitleSld] = AscDFH.CChangesDrawingsBool;
 AscDFH.changesFactory[AscDFH.historyitem_Presentation_RemoveSlideMaster] = AscDFH.CChangesDrawingsContent;
 AscDFH.changesFactory[AscDFH.historyitem_Presentation_AddHandoutMaster] = AscDFH.CChangesDrawingsContent;
+AscDFH.changesFactory[AscDFH.historyitem_Presentation_AddNotesMaster] = AscDFH.CChangesDrawingsContent;
+AscDFH.changesFactory[AscDFH.historyitem_Presentation_AddNote] = AscDFH.CChangesDrawingsContent;
+AscDFH.changesFactory[AscDFH.historyitem_Presentation_RemoveNote] = AscDFH.CChangesDrawingsContent;
 
 
 AscDFH.changesFactory[AscDFH.historyitem_PresentationSectionSetName] = AscDFH.CChangesDrawingsString;
@@ -465,6 +468,15 @@ AscDFH.drawingContentChanges[AscDFH.historyitem_Presentation_RemoveSlideMaster] 
 };
 AscDFH.drawingContentChanges[AscDFH.historyitem_Presentation_AddHandoutMaster] = function (oClass) {
 	return oClass.handoutMasters;
+};
+AscDFH.drawingContentChanges[AscDFH.historyitem_Presentation_AddNotesMaster] = function (oClass) {
+	return oClass.notesMaster;
+};
+AscDFH.drawingContentChanges[AscDFH.historyitem_Presentation_AddNote] = function (oClass) {
+	return oClass.notes;
+};
+AscDFH.drawingContentChanges[AscDFH.historyitem_Presentation_RemoveNote] = function (oClass) {
+	return oClass.notes;
 };
 
 AscDFH.drawingsConstructorsMap[AscDFH.historyitem_Presentation_SetShowPr] = CShowPr;
@@ -1972,6 +1984,18 @@ CPresentation.prototype.addSlideMaster = function (pos, master) {
 	History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_Presentation_AddSlideMaster, pos, [master], true));
 	this.slideMasters.splice(pos, 0, master);
 };
+CPresentation.prototype.removeSlideMaster = function (pos, count) {
+	History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_Presentation_RemoveSlideMaster, pos, this.slideMasters.slice(pos, pos + count), false));
+	this.slideMasters.splice(pos, count);
+};
+CPresentation.prototype.removeSlideMasterObject = function (oMaster) {
+	for(let nMaster = 0; nMaster < this.slideMasters.length; ++nMaster) {
+		if(this.slideMasters[nMaster] === oMaster) {
+			this.removeSlideMaster(nMaster, 1);
+			return;
+		}
+	}
+};
 CPresentation.prototype.addNotesMaster = function (pos, master) {
 	History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_Presentation_AddNotesMaster, pos, [master], true));
 	this.notesMasters.splice(pos, 0, master);
@@ -1984,18 +2008,9 @@ CPresentation.prototype.addNote = function (pos, note) {
 	History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_Presentation_AddNote, pos, [note], true));
 	this.notes.splice(pos, 0, note);
 };
-
-CPresentation.prototype.removeSlideMaster = function (pos, count) {
-	History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_Presentation_RemoveSlideMaster, pos, this.slideMasters.slice(pos, pos + count), false));
-	this.slideMasters.splice(pos, count);
-};
-CPresentation.prototype.removeSlideMasterObject = function (oMaster) {
-	for(let nMaster = 0; nMaster < this.slideMasters.length; ++nMaster) {
-		if(this.slideMasters[nMaster] === oMaster) {
-			this.removeSlideMaster(nMaster, 1);
-			return;
-		}
-	}
+CPresentation.prototype.removeNote = function (pos, count) {
+	History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_Presentation_RemoveNote, pos, this.notes.slice(pos, pos + count), false));
+	this.notes.splice(pos, count);
 };
 
 CPresentation.prototype.Get_Id = function () {
@@ -8862,6 +8877,7 @@ CPresentation.prototype.removeSlideByObject = function (oSlide, bNoCheck, pos) {
 					oSlide.removeComment(sId, true);
 				}
 			}
+			this.removeNote(pos, 1);
 			this.Slides.splice(pos, 1);
 			this.checkSlideOutlineView(oSlide);
 			break;
