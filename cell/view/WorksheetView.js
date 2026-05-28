@@ -63,6 +63,8 @@
     var History = AscCommon.History;
 	var c_oAscFillType = Asc.c_oAscFillType;
 
+	var c_oAscCutRangeAnimation = true;
+
     var asc = window["Asc"];
     var asc_applyFunction = AscCommonExcel.applyFunction;
     var asc_getcvt = asc.getCvtRatio;
@@ -528,6 +530,10 @@ function isAllowPasteLink(pastedWb) {
 		this.viewPrintLines = false;
 
 		this.copyCutRange = null;
+		this.copyRangeAnimationOffset = 0;
+		this._copyRangeAnimationId = null;
+		this._copyRangeAnimationIsRetina = false;
+		this._cutRangeClearTimer = null;
 
 		this.usePrintScale = false;//flag needed so that scale is returned only for printing, while for drawing (e.g. grid) it equals 1
 
@@ -6918,11 +6924,116 @@ function isAllowPasteLink(pastedWb) {
 
 	WorksheetView.prototype._drawCutRange = function () {
 		let cutRange = this.getCutRange();
-		if(cutRange) {
-			for (var i in cutRange) {
-				this._drawElements(this._drawSelectionElement, cutRange[i], AscCommonExcel.selectionLineType.DashThick, this.settings.activeCellBorderColor);
+		if (cutRange) {
+			if (!c_oAscCutRangeAnimation) {
+				for (let i in cutRange) {
+					this._drawElements(this._drawSelectionElement, cutRange[i], AscCommonExcel.selectionLineType.DashThick, this.settings.activeCellBorderColor);
+				}
+				return;
+			}
+			let offset = this.copyRangeAnimationOffset || 0;
+			for (let i in cutRange) {
+				this._drawElements(this._drawCutRangeElement, cutRange[i], offset, this.settings.activeCellBorderColor);
 			}
 		}
+	};
+
+	WorksheetView.prototype._drawCutRangeElement = function (visibleRange, offsetX, offsetY, args) {
+		let range = args[0];
+		let animOffset = args[1];
+		let color = args[2];
+		let ctx = this.overlayCtx;
+		let oIntersection = range.intersectionSimple(visibleRange);
+
+		if (!oIntersection) {
+			return true;
+		}
+
+		let firstCol = oIntersection.c1 === visibleRange.c1;
+		let firstRow = oIntersection.r1 === visibleRange.r1;
+		let drawLeftSide = oIntersection.c1 === range.c1;
+		let drawRightSide = oIntersection.c2 === range.c2;
+		let drawTopSide = oIntersection.r1 === range.r1;
+		let drawBottomSide = oIntersection.r2 === range.r2;
+
+		let x1 = this._getColLeft(oIntersection.c1) - offsetX;
+		let x2 = this._getColLeft(oIntersection.c2 + 1) - offsetX;
+		let y1 = this._getRowTop(oIntersection.r1) - offsetY;
+		let y2 = this._getRowTop(oIntersection.r2 + 1) - offsetY;
+
+		let isRetina = this.getRetinaPixelRatio() >= 2;
+		let widthLine = isRetina ? 4 : 2;
+		let w_dot = isRetina ? 12 : 6;
+		let w_dist = isRetina ? 8 : 4;
+		let inset = isRetina ? 3 : 1;
+		if (drawLeftSide) {
+			x1 += inset;
+		}
+		if (drawRightSide) {
+			x2 -= inset - 1;
+		}
+		if (drawTopSide) {
+			y1 += inset;
+		}
+		if (drawBottomSide) {
+			y2 -= inset - 1;
+		}
+		let nativeCtx = ctx.ctx;
+
+		if (!nativeCtx.setLineDash) {
+			this._drawElements(this._drawSelectionElement, range, AscCommonExcel.selectionLineType.DashThick, color);
+			return true;
+		}
+
+		nativeCtx.save();
+		ctx.setLineWidth(widthLine);
+
+		nativeCtx.setLineDash([w_dot, w_dist]);
+		ctx.setStrokeStyle(color);
+		nativeCtx.lineDashOffset = -animOffset;
+		ctx.beginPath();
+		if (drawTopSide && !firstRow) {
+			this._lineHorPrevPx(ctx, x1, y1, x2);
+		}
+		if (drawRightSide) {
+			this._lineVerPrevPx(ctx, x2, y1, y2);
+		}
+		ctx.stroke();
+
+		nativeCtx.lineDashOffset = animOffset;
+		ctx.beginPath();
+		if (drawBottomSide) {
+			this._lineHorPrevPx(ctx, x1, y2, x2);
+		}
+		if (drawLeftSide && !firstCol) {
+			this._lineVerPrevPx(ctx, x1, y1, y2);
+		}
+		ctx.stroke();
+
+		nativeCtx.setLineDash([w_dist, w_dot]);
+		ctx.setStrokeStyle(new CColor(255, 255, 255));
+		nativeCtx.lineDashOffset = -(animOffset + w_dot);
+		ctx.beginPath();
+		if (drawTopSide && !firstRow) {
+			this._lineHorPrevPx(ctx, x1, y1, x2);
+		}
+		if (drawRightSide) {
+			this._lineVerPrevPx(ctx, x2, y1, y2);
+		}
+		ctx.stroke();
+
+		nativeCtx.lineDashOffset = animOffset - w_dot;
+		ctx.beginPath();
+		if (drawBottomSide) {
+			this._lineHorPrevPx(ctx, x1, y2, x2);
+		}
+		if (drawLeftSide && !firstCol) {
+			this._lineVerPrevPx(ctx, x1, y1, y2);
+		}
+		ctx.stroke();
+
+		nativeCtx.restore();
+		return true;
 	};
 
 	WorksheetView.prototype._drawDynamicArraysRange = function () {
@@ -6951,11 +7062,67 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 	WorksheetView.prototype.setCutRange = function (val) {
-		this.copyCutRange = val;
+		if (!c_oAscCutRangeAnimation) {
+			this.copyCutRange = val;
+			return;
+		}
+		if (this._cutRangeClearTimer) {
+			clearTimeout(this._cutRangeClearTimer);
+			this._cutRangeClearTimer = null;
+		}
+		if (val) {
+			this.copyCutRange = val;
+			this.startCopyRangeAnimation();
+		} else if (this.copyCutRange) {
+			let t = this;
+			this._cutRangeClearTimer = setTimeout(function () {
+				t._cutRangeClearTimer = null;
+				t.copyCutRange = null;
+				t.stopCopyRangeAnimation();
+				if (t.overlayCtx) {
+					t.overlayCtx.clear();
+					t._drawSelection();
+				}
+			}, 0);
+		}
 	};
 
 	WorksheetView.prototype.getCutRange = function () {
 		return this.copyCutRange;
+	};
+
+	WorksheetView.prototype.startCopyRangeAnimation = function () {
+		if (this._copyRangeAnimationId) {
+			return;
+		}
+		let t = this;
+		let isRetina = this.getRetinaPixelRatio() >= 2;
+		let period = isRetina ? 20 : 10;
+		let interval = isRetina ? 60 : 120;
+		this._copyRangeAnimationIsRetina = isRetina;
+		this.copyRangeAnimationOffset = 0;
+		this._copyRangeAnimationId = setInterval(function () {
+			if (!t.getCutRange() || !t.overlayCtx) {
+				t.stopCopyRangeAnimation();
+				return;
+			}
+			if ((t.getRetinaPixelRatio() >= 2) !== t._copyRangeAnimationIsRetina) {
+				t.stopCopyRangeAnimation();
+				t.startCopyRangeAnimation();
+				return;
+			}
+			t.copyRangeAnimationOffset = (t.copyRangeAnimationOffset + 1) % period;
+			t.overlayCtx.clear();
+			t._drawSelection();
+		}, interval);
+	};
+
+	WorksheetView.prototype.stopCopyRangeAnimation = function () {
+		if (this._copyRangeAnimationId) {
+			clearInterval(this._copyRangeAnimationId);
+			this._copyRangeAnimationId = null;
+		}
+		this.copyRangeAnimationOffset = 0;
 	};
 
 	WorksheetView.prototype.drawTraceDependents = function () {
@@ -8615,8 +8782,6 @@ function isAllowPasteLink(pastedWb) {
 			this._drawPrintArea();
 		}
 
-		this._drawCutRange();
-
         if (dialogOtherRanges) {
             this._drawCollaborativeElements();
         }
@@ -8674,6 +8839,8 @@ function isAllowPasteLink(pastedWb) {
                 this._drawElements(this.drawOverlayButtons);
             }
         }
+
+		this._drawCutRange();
 
         let searchSpecificRange = this.handlers.trigger('selectSearchingResults') && this.workbook.SearchEngine && this.workbook.SearchEngine.getSpecificRange();
         if (searchSpecificRange) {
