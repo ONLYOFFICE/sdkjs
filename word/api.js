@@ -8492,6 +8492,8 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asyncImageEndLoadedBackground = function(_image)
 	{
+		if (this.FontLoader.isFontLoadInProgress())
+			return;
 		this.WordControl.m_oDrawingDocument.CheckRasterImageOnScreen(_image.src);
 		if (this.WordControl.m_oDrawingDocument.LastDrawingUrl == _image.src)
 		{
