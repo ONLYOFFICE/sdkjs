@@ -5617,10 +5617,12 @@
 					graphics.reset();
 					graphics.SetIntegerGrid(false);
 					graphics.AddClipRect(0, 0, presentation.GetWidthMM(), presentation.GetHeightMM());
+					const oldIsShapeToImageConverter = AscCommon.IsShapeToImageConverter;
+					AscCommon.IsShapeToImageConverter = true;
 					graphics.isSlidePaceholder = true;
 					slideObject.draw(graphics, 0);
 					graphics.isSlidePaceholder = false;
-
+					AscCommon.IsShapeToImageConverter = oldIsShapeToImageConverter;
 					graphics.SetBaseTransform(existingBase);
 					graphics.reset();
 					graphics.RestoreGrState();
