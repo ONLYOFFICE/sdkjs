@@ -705,10 +705,23 @@ function BinaryPPTYLoader()
         }
         else if (this.Api != null && this.IsThemeLoader)
         {
-            var theme_loader = this.Api.ThemeLoader;
-            var _info = theme_loader.themes_info_editor[theme_loader.CurrentLoadThemeIndex];
-            _info.ImageMap = this.presentation.ImageMap;
-            _info.FontMap = this.presentation.Fonts;
+            let allNames = {};
+            for (let i = 0; i < this.presentation.slideMasters.length; ++i)
+            {
+                let master = this.presentation.slideMasters[i];
+                if (master)
+                    master.getAllFonts(allNames);
+            }
+            let fonts = [];
+            for (let name in allNames)
+                fonts.push(new AscFonts.CFont(name));
+            AscFonts.FontPickerByCharacter.extendFonts(fonts);
+            this.presentation.Fonts = fonts;
+
+            let themeLoader = this.Api.ThemeLoader;
+            let info = themeLoader.themes_info_editor[themeLoader.CurrentLoadThemeIndex];
+            info.ImageMap = this.presentation.ImageMap;
+            info.FontMap = this.presentation.Fonts;
         }
     };
 
