@@ -6464,6 +6464,7 @@ CPresentation.prototype.IsFocusOnNotes = function () {
 
 	if(!this.IsMasterMode() && this.FocusOnNotes) {
 		let oCurSlide = this.GetCurrentSlide();
+		if (!oCurSlide) return false;
 		return !!oCurSlide.notes;
 	}
 	return false;
