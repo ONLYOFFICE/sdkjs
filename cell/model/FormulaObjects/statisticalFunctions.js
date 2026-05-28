@@ -13423,13 +13423,16 @@ function parseStringToCElement (val, cultureInfo) {
 	 * data storage, meaning a single lazy-loaded typed-column pool is reused across
 	 * both COUNTIF and COUNTIFS.
 	 *
-	 * Algorithm: mask-based multi-criteria intersection using Uint32 bit-packing.
-	 *   1. Allocate a flat Uint32Array of ceil(numRows/32) x numCols words, all bits 1.
-	 *   2. For each criteria pair call _applyOneCriteria(), which uses the typed
-	 *      column cache to mark non-matching positions as 0 without allocating
-	 *      intermediate matrices.
-	 *   3. Early-exit as soon as the remaining count reaches 0.
-	 *   4. Count surviving 1-bits in the mask as the final result.
+	 * Algorithm: column-major multi-criteria intersection using a single
+	 * Uint32 column-mask.
+	 *   1. Allocate one Uint32Array(ceil(numRows/32)) - the per-column mask,
+	 *      reused across columns.  Memory is O(numRows / 32), independent of
+	 *      numCols, so even A:XFD-sized ranges fit in a few KB.
+	 *   2. For each column: reset colMask to all-1s, then for each criterion
+	 *      call _applyCriterionToColumn() which uses the typed column cache to
+	 *      AND a per-criterion matching set into colMask.  Sparse iteration
+	 *      over column.indexes[*] - empty cells are never visited.
+	 *   3. Popcount surviving 1-bits in colMask, accumulate into total.
 	 *
 	 * @constructor
 	 */
@@ -13647,7 +13650,7 @@ function parseStringToCElement (val, cultureInfo) {
 	};
 
 	/**
-	 * Parse a single criteria value into a descriptor used by _applyOneCriteria.
+	 * Parse a single criteria value into a descriptor used by _applyCriterionToColumn.
 	 *
 	 * Returns an object:
 	 *   { op, type, searchValue, matchingFn, isEmptyStr }
@@ -13683,7 +13686,7 @@ function parseStringToCElement (val, cultureInfo) {
 			const re = _buildWildcardRegex(searchValue);
 			matchingFn = function (v) { return re.test(v); };
 		} else if (isEmptyStr) {
-			// handled specially in _applyOneCriteria
+			// handled specially in _applyCriterionToColumn (modes 1 & 2)
 			matchingFn = null;
 		} else {
 			matchingFn = getMatchingFunction(type, op || '=', isWildcard);
@@ -13693,125 +13696,70 @@ function parseStringToCElement (val, cultureInfo) {
 	};
 
 	/**
-	 * Iterates every position in the mask column-by-column and clears those for
-	 * which shouldClear(column, absRow) returns true.  Shared by the two
-	 * hasDataAtRow-based branches in _applyOneCriteria.
+	 * Apply a single criterion to a single-column mask in place.
 	 *
-	 * @param {Uint32Array} mask - bit-packed row-major mask (words layout)
-	 * @param {Object} ws
-	 * @param {string} wsId
-	 * @param {Object} bbox
-	 * @param {number} numRows
-	 * @param {number} numCols
-	 * @param {function(Object, number): boolean} shouldClear
-	 * @returns {number} positions cleared
+	 * Three dispatch paths:
+	 *   1. isEmptyStr && op '=' / null  -> matching set = empty cells.
+	 *      Start matchingRelRows at all-1s, sparse-clear bits where any data
+	 *      exists (empty strings excluded - they count as empty per legacy
+	 *      hasDataAtRow(checkEmptyString=true) semantics).
+	 *   2. isEmptyStr && op '<>'        -> matching set = any-data cells (incl. '').
+	 *      Start at 0, sparse-set bits where any indexed cell exists.
+	 *   3. Otherwise                    -> general equality/comparison/wildcard.
+	 *      Complement mode for '<>X' starts at all-1s and clears bits where v===X.
+	 *
+	 * After building the matching set the helper ANDs it into colMask.  Total
+	 * work per call is O(typed-cells-in-column) - it never iterates empty cells.
+	 *
+	 * @param {Uint32Array} colMask          - in/out, length = words
+	 * @param {Object}      info             - parsed criterion descriptor
+	 * @param {Object}      ws
+	 * @param {string}      wsId
+	 * @param {Object}      bbox
+	 * @param {number}      relCol           - column index within bbox
+	 * @param {number}      words            - ceil(numRows / 32)
+	 * @param {number}      lastWordMask     - padding mask for colMask[words - 1]
+	 * @param {Uint32Array} matchingRelRows  - scratch buffer, length = words
 	 */
-	CountIFSCache.prototype._iterateByRow = function (mask, ws, wsId, bbox, numRows, numCols, shouldClear) {
-		let eliminated = 0;
+	CountIFSCache.prototype._applyCriterionToColumn = function (colMask, info, ws, wsId, bbox, relCol, words, lastWordMask, matchingRelRows) {
 		const typedCache = this.typedCache;
-		const words = (numRows + 31) >> 5;
-		for (let relCol = 0; relCol < numCols; relCol += 1) {
-			const absCol = bbox.c1 + relCol;
-			typedCache.updateColumnData(ws, absCol, bbox.r1, bbox.r2);
-			const column = typedCache.data[wsId][absCol];
-			const wordBase = relCol * words;
+		const absCol = bbox.c1 + relCol;
+		typedCache.updateColumnData(ws, absCol, bbox.r1, bbox.r2);
+		const column = typedCache.data[wsId][absCol];
+
+		// Flush deferred string changes before reading data/indexes references.
+		typedCache._applyPendingStringChanges(column);
+
+		const op = info.op;
+
+		// Mode 1: '=""' - matching = cells with no non-empty-string data.
+		if (info.isEmptyStr && (op === '=' || op === null)) {
+			matchingRelRows.fill(0xFFFFFFFF);
+			matchingRelRows[words - 1] = lastWordMask;
+			this._sparseClearDataBits(matchingRelRows, column, bbox, true);
 			for (let w = 0; w < words; w += 1) {
-				let bits = mask[wordBase + w];
-				if (bits === 0) { continue; }
-				let clearMask = 0;
-				const rowBase = w << 5;
-				let tmp = bits;
-				while (tmp !== 0) {
-					const lsb = tmp & -tmp;
-					const bitPos = 31 - Math.clz32(lsb);
-					const relRow = rowBase | bitPos;
-					if (shouldClear(column, bbox.r1 + relRow)) {
-						clearMask |= lsb;
-					}
-					tmp = (tmp & (tmp - 1)) | 0;
-				}
-				if (clearMask !== 0) {
-					mask[wordBase + w] ^= clearMask;
-					eliminated += popcount32(clearMask);
-				}
+				colMask[w] &= matchingRelRows[w];
 			}
-		}
-		return eliminated;
-	};
-
-	/**
-	 * Apply one criteria pair to the bit-packed mask.
-	 *
-	 * @param {Uint32Array} mask - bit-packed row-major mask (words layout)
-	 * @param {Object} info - descriptor from _parseCriteria
-	 * @param {Object} ws - worksheet
-	 * @param {string} wsId - worksheet id
-	 * @param {Object} bbox - bounding box of the criteria range
-	 * @param {number} numRows - height of the criteria range
-	 * @param {number} numCols - width of the criteria range
-	 * @param {Uint32Array} matchingRelRows - scratch buffer, length ceil(numRows/32)
-	 * @param {number} remaining - surviving positions before this criteria
-	 * @returns {number} number of positions set to 0 (newly eliminated)
-	 */
-	CountIFSCache.prototype._applyOneCriteria = function (mask, info, ws, wsId, bbox, numRows, numCols, matchingRelRows, remaining) {
-		const typedCache = this.typedCache;
-
-		if (info.isEmptyStr && (info.op === '=' || info.op === null)) {
-			// Positions with any non-empty value are eliminated.
-			return this._iterateByRow(mask, ws, wsId, bbox, numRows, numCols, function (column, absRow) {
-				return typedCache.hasDataAtRow(column, absRow, true);
-			});
+			return;
 		}
 
-		if (info.op === '<>') {
-			if (info.isEmptyStr) {
-				// <>"" -> keep only non-empty cells.
-				return this._iterateByRow(mask, ws, wsId, bbox, numRows, numCols, function (column, absRow) {
-					return !typedCache.hasDataAtRow(column, absRow, false);
-				});
+		// Mode 2: '<>""' - matching = cells with any indexed data (incl. '').
+		if (info.isEmptyStr && op === '<>') {
+			matchingRelRows.fill(0);
+			this._sparseSetDataBits(matchingRelRows, column, bbox, false);
+			for (let w = 0; w < words; w += 1) {
+				colMask[w] &= matchingRelRows[w];
 			}
-			// <>X: all rows satisfy by default; only rows where value === X are cleared.
-			// Empty cells are intentionally kept since empty <> X.
-			return this._applyEqualsOneCriteria(mask, info, ws, wsId, bbox, numRows, numCols, true, matchingRelRows, remaining);
+			return;
 		}
-		return this._applyEqualsOneCriteria(mask, info, ws, wsId, bbox, numRows, numCols, false, matchingRelRows, remaining);
-	};
 
-	/**
-	 * Apply an equality/comparison-style criteria to the mask.
-	 *
-	 * Normal mode (isComplement = false):
-	 *   matchingRelRows starts at 0; bits set for rows where info.matchingFn returns true.
-	 *   Sweep clears mask positions where matchingRelRows = 0 (no match).
-	 *
-	 * Complement mode (isComplement = true, used for '<>X', X = ''):
-	 *   matchingRelRows starts at all-1s - every row tentatively satisfies '<>X'.
-	 *   Bits cleared for rows where value === X (using an equality comparator).
-	 *   Empty cells are never touched, so they remain 1 and are correctly counted.
-	 *
-	 * @param {Uint32Array} mask - bit-packed row-major mask (words layout)
-	 * @param {Object} info
-	 * @param {Object} ws
-	 * @param {string} wsId
-	 * @param {Object} bbox
-	 * @param {number} numRows
-	 * @param {number} numCols
-	 * @param {boolean} isComplement
-	 * @param {Uint32Array} matchingRelRows - scratch buffer, length ceil(numRows/32)
-	 * @param {number} remaining - surviving positions before this criteria; used for
-	 *   early column exit: once eliminated >= remaining, no further columns can match.
-	 * @returns {number} positions cleared
-	 */
-	CountIFSCache.prototype._applyEqualsOneCriteria = function (mask, info, ws, wsId, bbox, numRows, numCols, isComplement, matchingRelRows, remaining) {
-		let eliminated = 0;
-		const typedCache = this.typedCache;
+		// Mode 3: general path. Complement mode handles '<>X' (X != '').
+		const isComplement = op === '<>';
 		const type = info.type;
 		const searchValue = info.searchValue;
 		const isWildcard = info.isWildcard;
-		const op = info.op;
-		const words = (numRows + 31) >> 5;
 
-		// Complement mode uses an equality comparator to find rows to exclude;
+		// Complement uses an equality comparator to find rows to exclude;
 		// normal mode uses info.matchingFn (may be =, <, >, <=, >=).
 		const matchFn = isComplement ? getMatchingFunction(type, '=', isWildcard) : info.matchingFn;
 
@@ -13820,201 +13768,289 @@ function parseStringToCElement (val, cultureInfo) {
 		const checkStrNums = type === cElementType.number && (isComplement || op === '=' || op === null);
 		const numMatchFn = checkStrNums ? getMatchingFunction(cElementType.number, '=', false) : null;
 
-		// Padding mask for the last word when numRows is not a multiple of 32.
-		const remBits = numRows & 31;
-		const lastWordMask = remBits !== 0 ? (1 << remBits) - 1 : 0xFFFFFFFF;
-
-		// Rank-based comparison replaces per-cell stringCompare with a `lower <= rank < upper`
-		// integer check.  Eligible for string criteria with any of '<', '>', '<=', '>=',
-		// '=' / null (normal mode) and '<>' (isComplement, treated as '=' with inverted result).
-		// Wildcards are excluded: they go through the precompiled regex matchFn and are not
-		// a collation operation.
-		// isEmptyStr is excluded: matchFn is null and the expected result is 0 matches;
-		// the empty-cells path runs upstream in _applyOneCriteria.
+		// Rank-based comparison replaces per-cell stringCompare with `lower <= rank < upper`.
+		// Eligible for string criteria with <, >, <=, >=, = / null (normal) and <> (complement).
+		// Wildcards and isEmptyStr are excluded.
 		const useRankCompare = type === cElementType.string && !info.isEmptyStr && !isWildcard &&
 			(isComplement || op === '<' || op === '>' || op === '<=' || op === '>=' ||
 				op === '=' || op === null);
 
-		for (let relCol = 0; relCol < numCols; relCol += 1) {
-			const absCol = bbox.c1 + relCol;
-			typedCache.updateColumnData(ws, absCol, bbox.r1, bbox.r2);
-			const column = typedCache.data[wsId][absCol];
+		const typedData = column.data[type];
+		const typedIndexes = column.indexes[type];
 
-			// Apply deferred string changes before reading data/indexes references.
-			typedCache._applyPendingStringChanges(column);
+		if (isComplement) {
+			matchingRelRows.fill(0xFFFFFFFF);
+			matchingRelRows[words - 1] = lastWordMask;
+		} else {
+			matchingRelRows.fill(0);
+		}
 
-			const typedData = column.data[type];
-			const typedIndexes = column.indexes[type];
-
-			if (isComplement) {
-				// All rows start as satisfying '<>X'; rows where v===X are removed below.
-				matchingRelRows.fill(0xFFFFFFFF);
-				matchingRelRows[words - 1] = lastWordMask;
-			} else {
-				matchingRelRows.fill(0);
-			}
-
-			if (useRankCompare && typedData && typedData.length) {
-				// Single rank loop covers '<', '>', '<=', '>=', '=' / null, and '<>'.
-				// In complement mode ('<>') the loop clears bits; in normal mode it sets
-				// them.  When searchValue is absent (rb null or lower === upper) the loop
-				// is skipped - matchingRelRows is left at its initial fill (all-1s for
-				// complement, all-0s for normal), which is the correct outcome for both.
-				// In complement mode the rank range is the collation-equality run ('=').
-				const rb = typedCache._setupRankRange(column, searchValue, isComplement ? '=' : op);
-				if (rb && rb.lower < rb.upper) {
-					const lower = rb.lower;
-					const upper = rb.upper;
-					const rankData = rb.rankData;
-					const first = typedCache.findLowerIndexInTyped(bbox.r1, typedIndexes);
-					const last = typedCache.findHigherIndexInTyped(bbox.r2, typedIndexes);
-					if (isComplement) {
-						for (let j = first; j < last; j += 1) {
-							const r = rankData[j];
-							if (r >= lower && r < upper) {
-								const relRow = typedIndexes[j] - bbox.r1;
-								matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
-							}
-						}
-					} else {
-						for (let j = first; j < last; j += 1) {
-							const r = rankData[j];
-							if (r >= lower && r < upper) {
-								const relRow = typedIndexes[j] - bbox.r1;
-								matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
-							}
-						}
-					}
-				}
-			} else if (typedData && matchFn) {
+		if (useRankCompare && typedData && typedData.length) {
+			const rb = typedCache._setupRankRange(column, searchValue, isComplement ? '=' : op);
+			if (rb && rb.lower < rb.upper) {
+				const lower = rb.lower;
+				const upper = rb.upper;
+				const rankData = rb.rankData;
 				const first = typedCache.findLowerIndexInTyped(bbox.r1, typedIndexes);
 				const last = typedCache.findHigherIndexInTyped(bbox.r2, typedIndexes);
 				if (isComplement) {
 					for (let j = first; j < last; j += 1) {
-						if (matchFn(typedData[j], searchValue)) {
+						const r = rankData[j];
+						if (r >= lower && r < upper) {
 							const relRow = typedIndexes[j] - bbox.r1;
 							matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
 						}
 					}
 				} else {
 					for (let j = first; j < last; j += 1) {
-						if (matchFn(typedData[j], searchValue)) {
+						const r = rankData[j];
+						if (r >= lower && r < upper) {
 							const relRow = typedIndexes[j] - bbox.r1;
 							matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
 						}
 					}
 				}
 			}
+		} else if (typedData && matchFn) {
+			const first = typedCache.findLowerIndexInTyped(bbox.r1, typedIndexes);
+			const last = typedCache.findHigherIndexInTyped(bbox.r2, typedIndexes);
+			if (isComplement) {
+				for (let j = first; j < last; j += 1) {
+					if (matchFn(typedData[j], searchValue)) {
+						const relRow = typedIndexes[j] - bbox.r1;
+						matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
+					}
+				}
+			} else {
+				for (let j = first; j < last; j += 1) {
+					if (matchFn(typedData[j], searchValue)) {
+						const relRow = typedIndexes[j] - bbox.r1;
+						matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+					}
+				}
+			}
+		}
 
-			// checkStrNums is intentionally outside typedData: a column may have
-			// string-encoded numbers and no number-typed cells at all.
-			if (checkStrNums && column.hasNumericStrings) {
-				const strData = column.data[cElementType.string];
-				const strIndexes = column.indexes[cElementType.string];
-				if (strData) {
-					const strFirst = typedCache.findLowerIndexInTyped(bbox.r1, strIndexes);
-					const strLast = typedCache.findHigherIndexInTyped(bbox.r2, strIndexes);
-					if (isComplement) {
-						for (let j = strFirst; j < strLast; j += 1) {
-							const parsed = typedCache.parseAnyNumber(strData[j]);
-							if (parsed !== null && numMatchFn(parsed, searchValue)) {
-								const relRow = strIndexes[j] - bbox.r1;
-								matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
-							}
+		// checkStrNums is intentionally outside typedData: a column may have
+		// string-encoded numbers and no number-typed cells at all.
+		if (checkStrNums && column.hasNumericStrings) {
+			const strData = column.data[cElementType.string];
+			const strIndexes = column.indexes[cElementType.string];
+			if (strData) {
+				const strFirst = typedCache.findLowerIndexInTyped(bbox.r1, strIndexes);
+				const strLast = typedCache.findHigherIndexInTyped(bbox.r2, strIndexes);
+				if (isComplement) {
+					for (let j = strFirst; j < strLast; j += 1) {
+						const parsed = typedCache.parseAnyNumber(strData[j]);
+						if (parsed !== null && numMatchFn(parsed, searchValue)) {
+							const relRow = strIndexes[j] - bbox.r1;
+							matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
 						}
-					} else {
-						for (let j = strFirst; j < strLast; j += 1) {
-							const parsed = typedCache.parseAnyNumber(strData[j]);
-							if (parsed !== null && numMatchFn(parsed, searchValue)) {
-								const relRow = strIndexes[j] - bbox.r1;
-								matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
-							}
+					}
+				} else {
+					for (let j = strFirst; j < strLast; j += 1) {
+						const parsed = typedCache.parseAnyNumber(strData[j]);
+						if (parsed !== null && numMatchFn(parsed, searchValue)) {
+							const relRow = strIndexes[j] - bbox.r1;
+							matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
 						}
 					}
 				}
 			}
+		}
 
-			// Sweep: AND the column's mask words with matchingRelRows.
-			// Bits that were 1 in mask but 0 in matchingRelRows are newly eliminated.
-			const wordBase = relCol * words;
-			for (let w = 0; w < words; w += 1) {
-				const oldWord = mask[wordBase + w];
-				if (oldWord === 0) { continue; }
-				const clearBits = oldWord & ~matchingRelRows[w];
-				if (clearBits !== 0) {
-					mask[wordBase + w] = oldWord ^ clearBits;
-					eliminated += popcount32(clearBits);
+		// AND matching set into colMask.
+		for (let w = 0; w < words; w += 1) {
+			colMask[w] &= matchingRelRows[w];
+		}
+	};
+
+	/**
+	 * Walk every typed index of a column (number, string, bool, error) for rows
+	 * in [bbox.r1, bbox.r2] and CLEAR the corresponding bits in matchingRelRows.
+	 * When excludeEmptyStrings is true, string cells with value '' are skipped
+	 * (treated as empty) so the '=""' branch leaves them as matches.
+	 *
+	 * @param {Uint32Array} matchingRelRows
+	 * @param {Object}      column
+	 * @param {Object}      bbox
+	 * @param {boolean}     excludeEmptyStrings
+	 */
+	CountIFSCache.prototype._sparseClearDataBits = function (matchingRelRows, column, bbox, excludeEmptyStrings) {
+		const typedCache = this.typedCache;
+		const r1 = bbox.r1;
+		const r2 = bbox.r2;
+
+		const numIdx = column.indexes[cElementType.number];
+		if (numIdx) {
+			const first = typedCache.findLowerIndexInTyped(r1, numIdx);
+			const last = typedCache.findHigherIndexInTyped(r2, numIdx);
+			for (let j = first; j < last; j += 1) {
+				const relRow = numIdx[j] - r1;
+				matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
+			}
+		}
+
+		const strIdx = column.indexes[cElementType.string];
+		if (strIdx) {
+			const strData = column.data[cElementType.string];
+			const first = typedCache.findLowerIndexInTyped(r1, strIdx);
+			const last = typedCache.findHigherIndexInTyped(r2, strIdx);
+			if (excludeEmptyStrings && strData) {
+				for (let j = first; j < last; j += 1) {
+					if (strData[j] !== '') {
+						const relRow = strIdx[j] - r1;
+						matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
+					}
+				}
+			} else {
+				for (let j = first; j < last; j += 1) {
+					const relRow = strIdx[j] - r1;
+					matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
 				}
 			}
-
-			// Early exit: once eliminated >= remaining, every surviving position has
-			// been cleared.  Processing further columns cannot increase eliminated further.
-			if (eliminated >= remaining) { break; }
 		}
-		return eliminated;
-	};
 
-	/**
-	 * Builds a flat Uint32 bitmask encoding which (relRow, relCol) positions satisfy
-	 * all criteria pairs and returns the count of surviving positions.
-	 *
-	 * Bit layout: bit (relRow & 31) of mask[relCol * words + (relRow >> 5)] is 1 when
-	 * the position still satisfies every criteria seen so far.
-	 *
-	 * @param {Array}  ranges      - criteria range arguments (one per pair)
-	 * @param {Array}  criteriaVals - normalised criteria cElement values
-	 * @param {Array}  bboxes      - pre-computed bounding boxes
-	 * @param {Array}  wsIds       - pre-computed worksheet ids
-	 * @param {number} numRows     - height of the criteria ranges
-	 * @param {number} numCols     - width of the criteria ranges
-	 * @returns {{mask: Uint32Array, remaining: number}}
-	 */
-	CountIFSCache.prototype._buildMask = function (ranges, criteriaVals, bboxes, wsIds, numRows, numCols) {
-		const words = (numRows + 31) >> 5;
-		const mask = new Uint32Array(words * numCols);
-		mask.fill(0xFFFFFFFF);
-
-		// Clear padding bits in the last word of each column so that surplus bits
-		// beyond numRows are never counted as surviving positions.
-		const remBits = numRows & 31;
-		if (remBits !== 0) {
-			const lastMask = (1 << remBits) - 1;
-			for (let relCol = 0; relCol < numCols; relCol += 1) {
-				mask[relCol * words + words - 1] = lastMask;
+		const boolIdx = column.indexes[cElementType.bool];
+		if (boolIdx) {
+			const first = typedCache.findLowerIndexInTyped(r1, boolIdx);
+			const last = typedCache.findHigherIndexInTyped(r2, boolIdx);
+			for (let j = first; j < last; j += 1) {
+				const relRow = boolIdx[j] - r1;
+				matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
 			}
 		}
 
-		let remaining = numRows * numCols;
-
-		// Pre-allocated scratch buffer reused across all K criteria to avoid K separate
-		// Uint32Array allocations inside _applyEqualsOneCriteria.
-		const matchingRelRows = new Uint32Array(words);
-
-		for (let k = 0; k < ranges.length && remaining > 0; k += 1) {
-			const info = this._parseCriteria(criteriaVals[k]);
-			remaining -= this._applyOneCriteria(
-				mask, info, ranges[k].getWS(), wsIds[k], bboxes[k],
-				numRows, numCols, matchingRelRows, remaining);
+		const errIdx = column.indexes[cElementType.error];
+		if (errIdx) {
+			const first = typedCache.findLowerIndexInTyped(r1, errIdx);
+			const last = typedCache.findHigherIndexInTyped(r2, errIdx);
+			for (let j = first; j < last; j += 1) {
+				const relRow = errIdx[j] - r1;
+				matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
+			}
 		}
-
-		return {mask: mask, remaining: remaining};
 	};
 
 	/**
-	 * Core calculation.  Delegates mask construction to _buildMask, then counts
-	 * surviving positions.
+	 * Sparse-set variant: SET bits in matchingRelRows for every typed cell in
+	 * column in [bbox.r1, bbox.r2].  Used by the '<>""' branch where empty
+	 * strings must count as "has data".
 	 *
-	 * @param {Array}  ranges      - criteria range arguments
+	 * @param {Uint32Array} matchingRelRows
+	 * @param {Object}      column
+	 * @param {Object}      bbox
+	 * @param {boolean}     excludeEmptyStrings
+	 */
+	CountIFSCache.prototype._sparseSetDataBits = function (matchingRelRows, column, bbox, excludeEmptyStrings) {
+		const typedCache = this.typedCache;
+		const r1 = bbox.r1;
+		const r2 = bbox.r2;
+
+		const numIdx = column.indexes[cElementType.number];
+		if (numIdx) {
+			const first = typedCache.findLowerIndexInTyped(r1, numIdx);
+			const last = typedCache.findHigherIndexInTyped(r2, numIdx);
+			for (let j = first; j < last; j += 1) {
+				const relRow = numIdx[j] - r1;
+				matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+			}
+		}
+
+		const strIdx = column.indexes[cElementType.string];
+		if (strIdx) {
+			const strData = column.data[cElementType.string];
+			const first = typedCache.findLowerIndexInTyped(r1, strIdx);
+			const last = typedCache.findHigherIndexInTyped(r2, strIdx);
+			if (excludeEmptyStrings && strData) {
+				for (let j = first; j < last; j += 1) {
+					if (strData[j] !== '') {
+						const relRow = strIdx[j] - r1;
+						matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+					}
+				}
+			} else {
+				for (let j = first; j < last; j += 1) {
+					const relRow = strIdx[j] - r1;
+					matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+				}
+			}
+		}
+
+		const boolIdx = column.indexes[cElementType.bool];
+		if (boolIdx) {
+			const first = typedCache.findLowerIndexInTyped(r1, boolIdx);
+			const last = typedCache.findHigherIndexInTyped(r2, boolIdx);
+			for (let j = first; j < last; j += 1) {
+				const relRow = boolIdx[j] - r1;
+				matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+			}
+		}
+
+		const errIdx = column.indexes[cElementType.error];
+		if (errIdx) {
+			const first = typedCache.findLowerIndexInTyped(r1, errIdx);
+			const last = typedCache.findHigherIndexInTyped(r2, errIdx);
+			for (let j = first; j < last; j += 1) {
+				const relRow = errIdx[j] - r1;
+				matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+			}
+		}
+	};
+
+	/**
+	 * Core calculation for COUNTIFS.  Column-major: for each column build an
+	 * O(words) colMask by ANDing all K criteria's per-column matching sets,
+	 * then popcount surviving bits into the running total.  Memory is O(words)
+	 * total - independent of numCols - so even A:XFD-sized ranges fit in a
+	 * handful of KB.
+	 *
+	 * @param {Array}  ranges       - criteria range arguments
 	 * @param {Array}  criteriaVals - normalised criteria cElement values
-	 * @param {Array}  bboxes      - pre-computed bounding boxes
-	 * @param {Array}  wsIds       - pre-computed worksheet ids
-	 * @param {Object} baseDim     - {row, col}
+	 * @param {Array}  bboxes       - pre-computed bounding boxes
+	 * @param {Array}  wsIds        - pre-computed worksheet ids
+	 * @param {Object} baseDim      - {row, col}
 	 * @returns {cNumber}
 	 */
 	CountIFSCache.prototype._calculate = function (ranges, criteriaVals, bboxes, wsIds, baseDim) {
-		const res = this._buildMask(ranges, criteriaVals, bboxes, wsIds, baseDim.row, baseDim.col);
-		return new cNumber(res.remaining);
+		const numRows = baseDim.row;
+		const numCols = baseDim.col;
+		const words = (numRows + 31) >> 5;
+		const remBits = numRows & 31;
+		const lastWordMask = remBits !== 0 ? (1 << remBits) - 1 : 0xFFFFFFFF;
+
+		// Pre-parse criteria so we pay parser cost once, not per column.
+		const K = ranges.length;
+		const infos = new Array(K);
+		for (let k = 0; k < K; k += 1) {
+			infos[k] = this._parseCriteria(criteriaVals[k]);
+		}
+
+		// Single-column scratch buffers reused across all columns.
+		const colMask = new Uint32Array(words);
+		const matchingRelRows = new Uint32Array(words);
+
+		let total = 0;
+
+		for (let relCol = 0; relCol < numCols; relCol += 1) {
+			colMask.fill(0xFFFFFFFF);
+			colMask[words - 1] = lastWordMask;
+
+			for (let k = 0; k < K; k += 1) {
+				this._applyCriterionToColumn(
+					colMask, infos[k], ranges[k].getWS(), wsIds[k], bboxes[k],
+					relCol, words, lastWordMask, matchingRelRows);
+			}
+
+			for (let w = 0; w < words; w += 1) {
+				const v = colMask[w];
+				if (v !== 0) { total += popcount32(v); }
+			}
+		}
+
+		return new cNumber(total);
 	};
+
 
 	// -------------------------------------------------------SumIfSumRangeCache------------------------------------------
 
@@ -14866,8 +14902,12 @@ function parseStringToCElement (val, cultureInfo) {
 	};
 
 	/**
-	 * Builds the criteria bitmask via _buildMask, then iterates surviving bits
-	 * column-by-column and feeds matching numeric values into _accumulate.
+	 * Column-major calculation for SUMIFS-family functions (SUMIFS / AVERAGEIFS /
+	 * MAXIFS / MINIFS).  For each column:
+	 *   1. Build per-column colMask by ANDing every criterion's matching set,
+	 *      via _applyCriterionToColumn inherited from CountIFSCache.
+	 *   2. If any bits survive, walk numeric sum-range data and feed matched
+	 *      values into the _accumulate hook.
 	 *
 	 * Value range stores only numeric cells (cElementType.number); non-numeric
 	 * cells are absent from the typed index and contribute nothing - matching
@@ -14876,24 +14916,34 @@ function parseStringToCElement (val, cultureInfo) {
 	 * Bit iteration order: LSB-first within each 32-bit word -> ascending relRow.
 	 * The sum-pointer advances monotonically, giving O(sumLen + matchBits) per column.
 	 *
+	 * Memory: a single Uint32Array(words) for colMask plus another for the
+	 * per-criterion matching scratch, total O(words) - independent of numCols.
+	 *
 	 * @param {Array}  ranges      - criteria range arguments
 	 * @param {Array}  criteriaVals - normalised criteria cElement values
 	 * @param {Array}  bboxes      - pre-computed bounding boxes
 	 * @param {Array}  wsIds       - pre-computed worksheet ids
 	 * @param {Object} baseDim     - {row, col} - dimensions shared by all ranges
 	 * @param {Object} sumRange    - sum range argument
-	 * @returns {cNumber}
+	 * @returns {cNumber|cError}
 	 */
 	SumIFSCache.prototype._calculate = function (ranges, criteriaVals, bboxes, wsIds, baseDim, sumRange) {
 		const numRows = baseDim.row;
 		const numCols = baseDim.col;
-		const res = this._buildMask(ranges, criteriaVals, bboxes, wsIds, numRows, numCols);
-		if (res.remaining === 0) {
-			return this._finalizeResult(this._initAccumulator(), 0);
+		const words = (numRows + 31) >> 5;
+		const remBits = numRows & 31;
+		const lastWordMask = remBits !== 0 ? (1 << remBits) - 1 : 0xFFFFFFFF;
+
+		// Pre-parse criteria once.
+		const K = ranges.length;
+		const infos = new Array(K);
+		for (let k = 0; k < K; k += 1) {
+			infos[k] = this._parseCriteria(criteriaVals[k]);
 		}
 
-		const mask = res.mask;
-		const words = (numRows + 31) >> 5;
+		const colMask = new Uint32Array(words);
+		const matchingRelRows = new Uint32Array(words);
+
 		const sumBbox = sumRange.getBBox0();
 		const sumWs = sumRange.getWS();
 		const sumWsId = sumWs.getId();
@@ -14901,12 +14951,19 @@ function parseStringToCElement (val, cultureInfo) {
 		let count = 0;
 
 		for (let relCol = 0; relCol < numCols; relCol += 1) {
-			const wordBase = relCol * words;
+			colMask.fill(0xFFFFFFFF);
+			colMask[words - 1] = lastWordMask;
+
+			for (let k = 0; k < K; k += 1) {
+				this._applyCriterionToColumn(
+					colMask, infos[k], ranges[k].getWS(), wsIds[k], bboxes[k],
+					relCol, words, lastWordMask, matchingRelRows);
+			}
 
 			// Quick check: any surviving bits in this column?
 			let hasAny = false;
 			for (let wi = 0; wi < words; wi += 1) {
-				if (mask[wordBase + wi] !== 0) {
+				if (colMask[wi] !== 0) {
 					hasAny = true;
 					break;
 				}
@@ -14916,8 +14973,6 @@ function parseStringToCElement (val, cultureInfo) {
 			}
 
 			// Load numeric data for the corresponding sum column.
-			// Non-numeric cells (errors, strings, booleans) are absent from the typed
-			// index and treated as 0 - consistent with legacy SUMIFS behaviour.
 			const sumColIdx = sumBbox.c1 + relCol;
 			this.sumRangeCache.updateColumnData(sumWs, sumColIdx, sumBbox.r1, sumBbox.r2);
 			const sumColumn = this.sumRangeCache.data[sumWsId][sumColIdx];
@@ -14933,12 +14988,11 @@ function parseStringToCElement (val, cultureInfo) {
 			// Iterate surviving bits in ascending relRow order (LSB-first within each word).
 			// sumPtr advances monotonically across the inner loop - no rewind needed.
 			for (let w = 0; w < words && sumPtr < sumLen; w += 1) {
-				let word = mask[wordBase + w];
+				let word = colMask[w];
 				while (word !== 0) {
-					// Isolate lowest set bit and compute the trailing-zero count (= relRow within word).
 					const lsb = word & -word;
 					const relRow = (w << 5) + (31 - Math.clz32(lsb));
-					word = (word & (word - 1)) | 0;  // clear lowest set bit, keep 32-bit int
+					word = (word & (word - 1)) | 0;
 
 					const targetSumRow = sumBbox.r1 + relRow;
 					while (sumPtr < sumLen && sumIndexes[sumPtr] < targetSumRow) {
