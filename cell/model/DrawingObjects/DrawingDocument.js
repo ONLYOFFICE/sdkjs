@@ -882,6 +882,15 @@ function CDrawingDocument()
     {
         var PixelError = this.GetMMPerDot(1) * 3;
         this.MathTrack.Update(IsActive, IsContentActive, oMath, PixelError);
+        
+        // Force overlay redraw so the math selection highlight follows the caret.
+        // Without this the new polygons sit in memory until some other event repaints
+        // the overlay, leaving a stale highlight on the previously active math block
+        // (e.g. caret moves into the denominator but the numerator stays highlighted).
+        var drawingObjects = this.getDrawingObjects();
+        if (drawingObjects) {
+            drawingObjects.OnUpdateOverlay();
+        }
     };
 
     this.Update_ParaTab = function(Default_Tab, ParaTabs)
