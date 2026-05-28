@@ -4623,8 +4623,8 @@
 		}
 		if (this.m_oLogicDocument.IsEmpty())
 			return;
-
-
+		if (this.m_oApi.FontLoader.isFontLoadInProgress())
+			return;
 
 		let aAllLayouts = this.m_oLogicDocument.GetAllLayouts();
 		let oLtDrawer = this.m_oLayoutDrawer;
