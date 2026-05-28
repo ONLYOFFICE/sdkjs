@@ -9345,18 +9345,18 @@
 	Worksheet.prototype.getRange4=function(r, c){
 		return new Range(this, r, c, r, c);
 	};
-	// Occupied: data + direct-style-only. Style-only emissions are
-	// transient; never saveContent / mutate them.
-	Worksheet.prototype.getRowIterator=function(r1, c1, c2, callback){
+	// Occupied: data + direct-style-only over [r1..r2] x [c1..c2].
+	// Style-only emissions are transient; never saveContent / mutate them.
+	Worksheet.prototype.getRowIterator=function(r1, c1, r2, c2, callback){
 		var it = new AscCommonExcel.OccupiedRowIterator();
-		it.init(this, r1, c1, c2);
+		it.init(this, r1, c1, c2, r2);
 		callback(it);
 		it.release();
 	};
 	// Data-only: skips direct-style-only entries.
-	Worksheet.prototype.getDataRowIterator=function(r1, c1, c2, callback){
+	Worksheet.prototype.getDataRowIterator=function(r1, c1, r2, c2, callback){
 		var it = new RowIterator();
-		it.init(this, r1, c1, c2);
+		it.init(this, r1, c1, c2, r2);
 		callback(it);
 		it.release();
 	};
@@ -10788,7 +10788,7 @@
 	};
 	Worksheet.prototype.forEachFormula = function(callback) {
 		var range = this.getRange3(0, 0, gc_nMaxRow0, gc_nMaxCol0);
-		range._setPropertyNoEmpty(null, null, function(cell) {
+		range._foreachDataOnly(function(cell) {
 			if (cell.isFormula()) {
 				callback(cell.getFormulaParsed());
 			}

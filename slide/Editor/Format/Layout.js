@@ -51,7 +51,6 @@ AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetClrMapOverride] = AscDFH.
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetSize]           = AscDFH.CChangesDrawingsObjectNoId;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetTransition] = AscDFH.CChangesDrawingsObjectNoId;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetTiming] = AscDFH.CChangesDrawingsObject;
-AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetCSld]   = AscDFH.CChangesDrawingsObject;
 
 AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideLayoutSetSize]  = AscFormat.CDrawingBaseCoordsWritable;
 AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideLayoutSetTransition] = Asc.CAscSlideTransition;
@@ -68,18 +67,13 @@ AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetSize]              = 
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetTiming]            = function(oClass, value){oClass.timing = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetTransition]        = function(oClass, value){oClass.transition = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetPreserve]        = function(oClass, value){oClass.preserve = value;};
-AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetCSld]            = function(oClass, value){
-    oClass.cSld = value;
-    if (value) value.parent = oClass;
-};
 
 
 function SlideLayout()
 {
+    this.cSld = new AscFormat.CSld(this);
     AscFormat.CBaseFormatObject.call(this);
     this.kind = AscFormat.TYPE_KIND.LAYOUT;
-    this.cSld = null;
-    this.setCSld(new AscFormat.CSld(this));
     this.clrMap = null; // override ClrMap
 
     this.hf = null;
@@ -340,10 +334,17 @@ SlideLayout.prototype.getMaster = function(){
         History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SlideLayoutSetClrMapOverride, this.clrMap, clrMap));
         this.clrMap = clrMap;
     };
-    SlideLayout.prototype.setCSld = function(cSld)
+    SlideLayout.prototype.Write_ToBinary2 = function(w)
     {
-        History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SlideLayoutSetCSld, this.cSld, cSld));
-        this.cSld = cSld;
+        w.WriteLong(this.getObjectType());
+        w.WriteString2(this.Id);
+        AscFormat.writeObject(w, this.cSld);
+    };
+    SlideLayout.prototype.Read_FromBinary2 = function(r)
+    {
+        this.Id = r.GetString2();
+        this.cSld = AscFormat.readObject(r);
+        if (this.cSld) this.cSld.parent = this;
     };
     SlideLayout.prototype.handleAfterCSldSpTreeChange = function()
     {

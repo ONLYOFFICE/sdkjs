@@ -624,6 +624,9 @@
     CTextBody.prototype.GetParent = function() {
         return this.parent;
     };
+    CTextBody.prototype.Get_ShapeStyleForPara = function() {
+        return null;
+    };
 
     function GetContentOneStringSizes(oContent) {
         oContent.Reset(0, 0, 20000, 20000);

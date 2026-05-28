@@ -685,13 +685,25 @@ function (window, undefined) {
 		return (this.rangeChars && this.rangeChars.indexOf(char) >= 0) || char === AscCommon.FormulaSeparators.functionArgumentSeparator;
 	};
 
-	CellEditor.prototype.changeCellRange = function (range, moveEndOfText) {
+	CellEditor.prototype.changeCellRange = function (range, moveEndOfText, switchPart) {
 		this.skipTLUpdate = false;
 		this._moveCursor(kPosition, range.cursorePos);
 		this._selectChars(kPositionLength, range.formulaRangeLength);
-		this._addChars(range.getName(), undefined, /*isRange*/true);
+		const newName = range.getName();
+		this._addChars(newName, undefined, /*isRange*/true);
 		if (moveEndOfText) {
 			this._moveCursor(kEndOfText);
+		} else if (switchPart !== undefined) {
+			if (switchPart) {
+				const colonIdx = newName.indexOf(':');
+				const fragStart = switchPart === 1 ? range.cursorePos : range.cursorePos + colonIdx + 1;
+				const fragLen = switchPart === 1 ? colonIdx : newName.length - colonIdx - 1;
+				this._moveCursor(kPosition, fragStart);
+				this._selectChars(kPositionLength, fragLen);
+			} else {
+				this._moveCursor(kPosition, range.cursorePos);
+				this._selectChars(kPositionLength, newName.length);
+			}
 		}
 		this.skipTLUpdate = true;
 	};
@@ -1067,25 +1079,121 @@ function (window, undefined) {
 		this.handlers.trigger("newRanges", 0 !== oSelectionRange.ranges.length ? oSelectionRange : null);
 	};
 
+	CellEditor.prototype._getSwitchPart = function (colonEditorPos) {
+		const hasSelection = this.selectionBegin !== this.selectionEnd;
+		if (hasSelection) {
+			const selMin = Math.min(this.selectionBegin, this.selectionEnd);
+			const selMax = Math.max(this.selectionBegin, this.selectionEnd);
+			if (selMin <= colonEditorPos && selMax >= colonEditorPos + 1) {
+				return null;
+			}
+			return selMax <= colonEditorPos + 1 ? 1 : 2;
+		}
+		return this.cursorPos <= colonEditorPos ? 1 : 2;
+	};
+
 	CellEditor.prototype._findRangeUnderCursor = function () {
 		// Get character string
 		let s = this.textRender.getChars(0, this.textRender.getCharsCount());
 		s = AscCommonExcel.convertUnicodeToSimpleString(s);
 		let arrFR = this.handlers.trigger("getFormulaRanges");
 
-		// Check cached formula ranges first
+		const hasSelection = this.selectionBegin !== this.selectionEnd;
+		const selMin = hasSelection ? Math.min(this.selectionBegin, this.selectionEnd) : this.cursorPos;
+		const selMax = hasSelection ? Math.max(this.selectionBegin, this.selectionEnd) : this.cursorPos;
+		const checkPos = selMin;
+
+		var t = this;
+		function buildCachedResult(a) {
+			let range = a.clone(true);
+			range.isName = a.isName;
+			range.formulaRangeLength = a.formulaRangeLength;
+			range.cursorePos = a.cursorePos;
+			let switchPart = null;
+			if (!a.isName) {
+				const rangeStr = s.substr(a.cursorePos, a.formulaRangeLength);
+				const colonIdx = rangeStr.indexOf(':');
+				if (colonIdx !== -1) {
+					switchPart = t._getSwitchPart(a.cursorePos + colonIdx);
+				}
+			}
+			return {range: range, switchPart: switchPart};
+		}
+
 		if (arrFR) {
 			let ranges = arrFR.ranges;
-			// Check if cursor is over any existing ranges before re-parsing formula
+
+			if (hasSelection) {
+				const overlapping = [];
+				for (let i = 0, l = ranges.length; i < l; ++i) {
+					const a = ranges[i];
+					if (selMin <= a.cursorePos + a.formulaRangeLength && selMax >= a.cursorePos) {
+						overlapping.push(a);
+					}
+				}
+				if (overlapping.length >= 2) {
+					overlapping.sort(function (a, b) { return a.cursorePos - b.cursorePos; });
+					const firstOverlapping = overlapping[0];
+					const lastOverlapping  = overlapping[overlapping.length - 1];
+
+					let depth = 0, depthAtMin = 0, depthChangedWithin = false;
+					for (let i = 1; i < selMax; i++) {
+						if (i === selMin) {
+							depthAtMin = depth;
+						}
+						const ch = s.charAt(i);
+						if (ch === '(') {
+							depth++;
+						} else if (ch === ')') {
+							depth--;
+						}
+						if (i >= selMin && depth !== depthAtMin) {
+							depthChangedWithin = true;
+						}
+					}
+					if (selMin >= selMax) {
+						depthAtMin = depth;
+					}
+					const depthAtMax = depth;
+					const isValidDepth = depthAtMin === depthAtMax && (depthAtMin === 0 || !depthChangedWithin);
+
+					if (isValidDepth && selMin <= firstOverlapping.cursorePos) {
+						const fullyContained = overlapping.filter(function (a) {
+							return a.cursorePos >= selMin && a.cursorePos + a.formulaRangeLength <= selMax;
+						});
+						if (fullyContained.length > 0) {
+							const lastEnd = lastOverlapping.cursorePos + lastOverlapping.formulaRangeLength;
+							let displaySelMin = selMin;
+							while (displaySelMin > 1 && !this.reNotFormula.test(s.charAt(displaySelMin - 1))) {
+								displaySelMin--;
+							}
+							return {
+								range: null,
+								allRanges: fullyContained.map(function (a) { return buildCachedResult(a); }),
+								selMin: displaySelMin,
+								selMax: selMax,
+								lastOverlappingEnd: lastEnd,
+								expandToLast: lastEnd > selMax
+							};
+						}
+					}
+					return {range: null};
+				}
+			}
+
 			// Needed for cases like sumnas2:K2 where sumnas2 is invalid reference
 			for (let i = 0, l = ranges.length; i < l; ++i) {
 				let a = ranges[i];
-				if (this.cursorPos >= a.cursorePos && this.cursorPos <= a.cursorePos + a.formulaRangeLength) {
-					let range = a.clone(true);
-					range.isName = a.isName;
-					range.formulaRangeLength = a.formulaRangeLength;
-					range.cursorePos = a.cursorePos;
-					return {range: range};
+				if (checkPos >= a.cursorePos && checkPos <= a.cursorePos + a.formulaRangeLength) {
+					return buildCachedResult(a);
+				}
+			}
+			if (hasSelection) {
+				for (let i = 0, l = ranges.length; i < l; ++i) {
+					let a = ranges[i];
+					if (selMin <= a.cursorePos + a.formulaRangeLength && selMax >= a.cursorePos) {
+						return buildCachedResult(a);
+					}
 				}
 			}
 		}
@@ -1108,8 +1216,9 @@ function (window, undefined) {
 				r = this._parseResult.refPos[index];
 
 				offset = r.end;
-				_e = r.end; 
-				_sColorPos = _s = r.start;
+				_e = r.end;
+				_sColorPos = r.start;
+				_s = r.start + 1;
 
 				switch (r.oper.type) {
 					case cElementType.cell: {
@@ -1174,13 +1283,20 @@ function (window, undefined) {
 						continue;
 				}
 
-				if (ret && this.cursorPos > _s && this.cursorPos <= _s + refStr.length) {
+				if (ret && checkPos >= _s && checkPos <= _s + refStr.length) {
 					range = this._parseRangeStr(refStr);
 					if (range) {
 						range.isName = isName;
 						range.formulaRangeLength = refStr.length;
 						range.cursorePos = _s;
-						return {range: range, wsName: wsName};
+						let switchPart = null;
+						if (!isName) {
+							const colonIdx = refStr.indexOf(':');
+							if (colonIdx !== -1) {
+								switchPart = this._getSwitchPart(_s + colonIdx);
+							}
+						}
+						return {range: range, wsName: wsName, switchPart: switchPart};
 					}
 				}
 			}
@@ -2813,10 +2929,32 @@ function (window, undefined) {
 			}
 			case Asc.c_oAscSpreadsheetShortcutType.CellEditorSwitchReference: {
 				const oRes = this._findRangeUnderCursor();
-				if (oRes.range) {
-					oRes.range.switchReference();
+				if (oRes.allRanges) {
+					const sortedAsc = oRes.allRanges.slice().sort(function (a, b) { return a.range.cursorePos - b.range.cursorePos; });
+					const anchor = sortedAsc[0].range;
+					const rowAbs = anchor.isAbsRow(anchor.refType1) || anchor.isAbsRow(anchor.refType2);
+					const colAbs = anchor.isAbsCol(anchor.refType1) || anchor.isAbsCol(anchor.refType2);
+					const nextType = ((rowAbs ? 0 : 2) + (colAbs ? 0 : 1) + 1) % 4;
+					let totalLengthChange = 0;
+					for (let i = sortedAsc.length - 1; i >= 0; i--) {
+						const item = sortedAsc[i];
+						item.range.refType1 = nextType;
+						item.range.refType2 = nextType;
+						totalLengthChange += item.range.getName().length - item.range.formulaRangeLength;
+						// ToDo add change ref to other sheet
+						this.changeCellRange(item.range);
+					}
+					const baseMax = oRes.expandToLast ? oRes.lastOverlappingEnd : oRes.selMax;
+					const newSelMax = baseMax + totalLengthChange;
+					this.skipTLUpdate = false;
+					this._moveCursor(kPosition, oRes.selMin);
+					this._selectChars(kPosition, newSelMax);
+					this.skipTLUpdate = true;
+				} else if (oRes.range) {
+					const switchPart = oRes.switchPart;
+					oRes.range.switchReference(switchPart);
 					// ToDo add change ref to other sheet
-					this.changeCellRange(oRes.range);
+					this.changeCellRange(oRes.range, undefined, switchPart);
 				}
 				break;
 			}
