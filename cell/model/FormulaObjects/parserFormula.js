@@ -3561,13 +3561,25 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 			if (matrix1 || matrix2) {
 				res = new cArray();
-				for (var iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? res.addRow() : true) {
+				var resArray = new Array(rowCount);
+				var resCounts = new Array(rowCount);
+				var br1 = dimension1.row === 1, bc1 = dimension1.col === 1;
+				var br2 = dimension2.row === 1, bc2 = dimension2.col === 1;
+				for (var iRow = 0; iRow < rowCount; iRow++) {
+					var rowArr = new Array(colCount);
+					var r1 = br1 ? 0 : iRow, r2 = br2 ? 0 : iRow;
 					for (var iCol = 0; iCol < colCount; iCol++) {
-						var elem1 = matrix1 ? matrix1.getElementRowCol(dimension1.row === 1 ? 0 : iRow, dimension1.col === 1 ? 0 : iCol, true) : operand1;
-						var elem2 = matrix2 ? matrix2.getElementRowCol(dimension2.row === 1 ? 0 : iRow, dimension2.col === 1 ? 0 : iCol, true) : operand2;
-						res.addElement(func(elem1, elem2));
+						var elem1 = matrix1 ? matrix1.getElementRowCol(r1, bc1 ? 0 : iCol, true) : operand1;
+						var elem2 = matrix2 ? matrix2.getElementRowCol(r2, bc2 ? 0 : iCol, true) : operand2;
+						rowArr[iCol] = func(elem1, elem2);
 					}
+					resArray[iRow] = rowArr;
+					resCounts[iRow] = colCount;
 				}
+				res.array = resArray;
+				res.countElementInRow = resCounts;
+				res.rowCount = rowCount;
+				res.countElement = rowCount * colCount;
 			}
 		}
 
@@ -5572,16 +5584,16 @@ _func[cElementType.string][cElementType.number] = function ( arg0, arg1, what ) 
 	return new cError(cErrorType.wrong_value_type);
 };
 
+function _isEqualStrings(str1, str2, caseSensitive) {
+	return caseSensitive
+		? AscCommon.stringCompare(str1, str2) === 0
+		: AscCommon.stringCompare(str1.toLowerCase(), str2.toLowerCase()) === 0;
+}
+
 _func[cElementType.string][cElementType.string] = function ( arg0, arg1, what ) {
 	//TODO need change opt_return_bool. for example >  change on props -> .returnBool & .useLowerCase & ...
 	let opt_return_bool = arguments[5];
 	let res = null;
-
-	let isEqualStrings = function (str1, str2) {
-		return opt_return_bool
-			? AscCommon.stringCompare(str1, str2) === 0
-			: AscCommon.stringCompare(str1.toLowerCase(), str2.toLowerCase()) === 0;
-	};
 
 	let _arg0, _arg1;
 	if (what === ">") {
@@ -5593,9 +5605,9 @@ _func[cElementType.string][cElementType.string] = function ( arg0, arg1, what ) 
 	} else if (what === "<=") {
 		res = AscCommon.stringCompare(arg0.getValue(true), arg1.getValue(true)) <= 0;
 	} else if (what === "=") {
-		res = isEqualStrings(arg0.getValue(true), arg1.getValue(true));
+		res = _isEqualStrings(arg0.getValue(true), arg1.getValue(true), opt_return_bool);
 	} else if (what === "<>") {
-		res = !isEqualStrings(arg0.getValue(true), arg1.getValue(true));
+		res = !_isEqualStrings(arg0.getValue(true), arg1.getValue(true), opt_return_bool);
 	} else if (what === "-") {
 		_arg0 = arg0.tocNumber();
 		_arg1 = arg1.tocNumber();
@@ -13115,12 +13127,21 @@ function parserFormula( formula, parent, _ws ) {
 				}
 
 			} else {
-				for ( let iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? retArr.addRow() : true ) {
+				let resArray = new Array(rowCount);
+				let resCounts = new Array(rowCount);
+				for ( let iRow = 0; iRow < rowCount; iRow++ ) {
+					let srcRow = area[iRow];
+					let rowArr = new Array(colCount);
 					for ( let iCol = 0; iCol < colCount; iCol++ ) {
-						_arg0 = area[iRow] && area[iRow][iCol] ? area[iRow][iCol] : new cEmpty();
-						retArr.addElement(_arg0);
+						rowArr[iCol] = srcRow && srcRow[iCol] ? srcRow[iCol] : new cEmpty();
 					}
+					resArray[iRow] = rowArr;
+					resCounts[iRow] = colCount;
 				}
+				retArr.array = resArray;
+				retArr.countElementInRow = resCounts;
+				retArr.rowCount = rowCount;
+				retArr.countElement = rowCount * colCount;
 			}
 		}
 
