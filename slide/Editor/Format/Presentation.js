@@ -4271,13 +4271,82 @@ CPresentation.prototype.AddToParagraph = function (ParaItem, bRecalculate, noUpd
 };
 
 CPresentation.prototype.ConvertMathView = function (isToLinear, isAll) {
-	let oController = this.GetCurrentController();
-	if (!oController) {
+	if (isAll)
+	{
+		this.ConvertAllMathView(isToLinear);
 		return;
 	}
-	oController.convertMathView(isToLinear, isAll);
+	let oController = this.GetCurrentController();
+	if (!oController)
+		return;
+
+	oController.convertMathView(isToLinear);
 	this.UpdateSelection();
 	this.UpdateInterface();
+};
+
+CPresentation.prototype.GetAllParaMaths = function () {
+	let arrParaMaths = [];
+	
+	let fCollect = function (oDrawing) {
+		if (oDrawing && oDrawing.GetAllParaMaths) {
+			oDrawing.GetAllParaMaths(arrParaMaths);
+		}
+	};
+	
+	for (let i = 0; i < this.Slides.length; ++i) {
+		let oSlide = this.Slides[i];
+		let aSpTree = oSlide.cSld && oSlide.cSld.spTree;
+		
+		if (aSpTree) {
+			for (let j = 0; j < aSpTree.length; ++j) {
+				fCollect(aSpTree[j]);
+			}
+		}
+
+		if (oSlide.notesShape) {
+			fCollect(oSlide.notesShape);
+		}
+	}
+
+	return arrParaMaths;
+};
+
+CPresentation.prototype.ConvertAllMathView = function (isToLinear) {
+	let arrParaMaths = this.GetAllParaMaths();
+	
+	if (!arrParaMaths.length)
+		return;
+
+	let arrParagraphs = arrParaMaths
+		.map(function (oMath) { return oMath.Paragraph; })
+		.filter(function (p) { return !!p; });
+
+	let addData = {
+		Type:		AscCommon.changestype_2_ElementsArray_and_Type,
+		CheckType:	AscCommon.changestype_Paragraph_Content,
+		Elements:	arrParagraphs
+	};
+
+	if (this.Document_Is_SelectionLocked(AscCommon.changestype_None, addData))
+		return;
+
+	this.StartAction(AscDFH.historydescription_Document_ConvertMathView);
+
+	let nInputType = this.Api.getMathInputType();
+	for (let i = 0; i < arrParaMaths.length; ++i)
+	{
+		arrParaMaths[i].ConvertView(isToLinear, nInputType);
+	}
+
+	let oController = this.GetCurrentController();
+	if (oController)
+		oController.checkCurrentTextObjectExtends();
+
+	this.Recalculate();
+	this.UpdateSelection();
+	this.UpdateInterface();
+	this.FinalizeAction();
 };
 
 CPresentation.prototype.ClearParagraphFormatting = function (isClearParaPr, isClearTextPr) {

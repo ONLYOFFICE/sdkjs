@@ -1015,6 +1015,19 @@
 			}
 		};
 
+		CGroupShape.prototype.GetAllParaMaths = function (arrParaMaths) {
+			if (!arrParaMaths) {
+				arrParaMaths = [];
+			}
+			var Len = this.arrGraphicObjects.length;
+			for (var i = 0; i < Len; ++i) {
+				if (this.arrGraphicObjects[i].GetAllParaMaths) {
+					this.arrGraphicObjects[i].GetAllParaMaths(arrParaMaths);
+				}
+			}
+			return arrParaMaths;
+		};
+
 		CGroupShape.prototype.GetSearchElementId = function (bNext, bCurrent) {
 			var Current = -1;
 			var Len = this.arrGraphicObjects.length;

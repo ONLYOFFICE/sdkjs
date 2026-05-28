@@ -3163,7 +3163,7 @@
 					}
 				},
 
-				convertMathView: function (isToLinear, isAll) {
+				convertMathView: function (isToLinear) {
 					let oDocContent = this.getTargetDocContent();
 					if (!oDocContent) {
 						return;
@@ -3173,15 +3173,17 @@
 					if (!oMath) {
 						return;
 					}
+					let oThis = this;
 					let oApi = this.getEditorApi();
 					this.checkSelectedObjectsAndCallback(function () {
 							let nInputType = oApi.getMathInputType();
-							if (isAll || !oDocContent.IsTextSelectionUse()) {
+							if (!oDocContent.IsTextSelectionUse()) {
 								oDocContent.RemoveTextSelection();
 								oMath.ConvertView(isToLinear, nInputType);
 							} else {
 								oMath.ConvertViewBySelection(isToLinear, nInputType);
 							}
+							oThis.checkCurrentTextObjectExtends();
 						},
 						[], false, AscDFH.historydescription_Document_ConvertMathView, [], false);
 				},

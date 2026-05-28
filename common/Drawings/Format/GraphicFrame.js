@@ -276,6 +276,20 @@
 		}
 	};
 
+	CGraphicFrame.prototype.GetAllParaMaths = function (arrParaMaths) {
+		if (!arrParaMaths) {
+			arrParaMaths = [];
+		}
+		if (this.graphicObject && this.graphicObject.GetAllParagraphs) {
+			let aParagraphs = [];
+			this.graphicObject.GetAllParagraphs({All: true}, aParagraphs);
+			for (let i = 0; i < aParagraphs.length; ++i) {
+				aParagraphs[i].GetAllParaMaths(arrParaMaths);
+			}
+		}
+		return arrParaMaths;
+	};
+
 	CGraphicFrame.prototype.GetSearchElementId = function (bNext, bCurrent) {
 		if (this.graphicObject) {
 			return this.graphicObject.GetSearchElementId(bNext, bCurrent);

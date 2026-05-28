@@ -4910,8 +4910,56 @@ var editor;
   };
   spreadsheet_api.prototype.asc_ConvertMathView = function(isToLinear, isAll)
   {
+    if (isAll) {
+      this.asc_ConvertAllMathView(isToLinear);
+      return;
+    }
     var ws = this.wb.getWorksheet();
-    ws.objectRender.convertMathView(isToLinear, isAll);
+    ws.objectRender.convertMathView(isToLinear);
+  };
+  spreadsheet_api.prototype.asc_ConvertAllMathView = function(isToLinear)
+  {
+    var arrParaMaths = [];
+    var arrParentShapes = [];
+    var aWorksheets = this.wbModel.aWorksheets;
+
+    for (var s = 0; s < aWorksheets.length; ++s)
+	{
+		var aDrawings = aWorksheets[s].Drawings;
+		if (!aDrawings)
+			continue;
+
+		for (var d = 0; d < aDrawings.length; ++d)
+		{
+			var oGraphic = aDrawings[d] && aDrawings[d].graphicObject;
+			if (!oGraphic || !oGraphic.GetAllParaMaths)
+				continue;
+
+			var nBefore = arrParaMaths.length;
+			oGraphic.GetAllParaMaths(arrParaMaths);
+			if (arrParaMaths.length > nBefore)
+				arrParentShapes.push(oGraphic);
+		}
+    }
+
+    if (!arrParaMaths.length)
+      return;
+
+    var nInputType = this.getMathInputType();
+    var oController = this.wb.getWorksheet().objectRender.controller;
+    var aIds = arrParentShapes.map(function (s) { return s.Get_Id(); });
+
+    this.checkObjectsLock(aIds, function (bNoLock) {
+      if (!bNoLock)
+        return;
+      oController.checkSelectedObjectsAndCallback(function () {
+        for (var i = 0; i < arrParaMaths.length; ++i)
+        {
+          arrParaMaths[i].ConvertView(isToLinear, nInputType);
+        }
+        oController.checkCurrentTextObjectExtends();
+      }, [], false, AscDFH.historydescription_Document_ConvertMathView, [], true);
+    });
   };
 
   spreadsheet_api.prototype.asc_SetMathProps = function(MathProps)

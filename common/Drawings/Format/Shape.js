@@ -1554,6 +1554,20 @@
 			}
 		};
 
+		CShape.prototype.GetAllParaMaths = function (arrParaMaths) {
+			if (!arrParaMaths) {
+				arrParaMaths = [];
+			}
+			var oContent = this.getDocContent();
+			if (oContent) {
+				var aParagraphs = oContent.GetAllParagraphs({All: true});
+				for (var i = 0; i < aParagraphs.length; ++i) {
+					aParagraphs[i].GetAllParaMaths(arrParaMaths);
+				}
+			}
+			return arrParaMaths;
+		};
+
 		CShape.prototype.GetSearchElementId = function (bNext, bCurrent) {
 			if (this.textBoxContent)
 				return this.textBoxContent.GetSearchElementId(bNext, bCurrent);
