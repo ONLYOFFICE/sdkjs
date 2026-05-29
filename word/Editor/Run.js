@@ -315,7 +315,7 @@ ParaRun.prototype.Copy = function(Selected, oPr)
 ParaRun.prototype.CopyComparison = function (oComparisonPr)
 {
 	var NewRun = new ParaRun(this.Paragraph);
-	NewRun.Set_Pr( this.Pr.Copy(undefined, oPr) );
+	NewRun.Set_Pr( this.Pr.Copy(undefined, oComparisonPr) );
 	oComparisonPr.Comparison.checkCopyParaRun(NewRun, this);
 	var StartPos = 0;
 	var EndPos   = this.Content.length;
