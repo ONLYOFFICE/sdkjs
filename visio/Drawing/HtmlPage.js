@@ -249,7 +249,7 @@
 		this.m_bIsIE = AscCommon.AscBrowser.isIE;
 
 		// thumbnails
-		this.Thumbnails = new CThumbnailsManager(this);//todo override CThumbnailsManager
+		this.Thumbnails = new AscCommon.CThumbnailsManager(this);//todo override CThumbnailsManager
 		this.Thumbnails.showContextMenu = function(bPosBySelect) {}
 		this.Thumbnails.onKeyDown = function(e) {return true;}
 
@@ -4598,7 +4598,7 @@
 
 		this.CalculateDocumentSize(false);
 
-		this.Thumbnails.SelectPage(lPageNum);
+		this.Thumbnails.SelectPage(lPageNum, _bIsUpdate);
 
 		this.CreateBackgroundHorRuler();
 		this.CreateBackgroundVerRuler();

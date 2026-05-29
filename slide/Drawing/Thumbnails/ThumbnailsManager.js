@@ -1947,7 +1947,7 @@
 		return false;
 	};
 
-	CThumbnailsManager.prototype.SelectPage = function (pageNum) {
+	CThumbnailsManager.prototype.SelectPage = function (pageNum, isChangedPage) {
 		if (!this.SelectPageEnabled)
 			return;
 
@@ -2983,8 +2983,8 @@
 		return false;
 	};
 
-	COutlineThumbnailsManager.prototype.SelectPage = function (pageNum) {
-		if (!this.SelectPageEnabled)
+	COutlineThumbnailsManager.prototype.SelectPage = function (pageNum, isChangedPage) {
+		if (!this.SelectPageEnabled || !isChangedPage)
 			return;
 
 		const outlineView = this.GetOutlineView();
@@ -2992,7 +2992,32 @@
 			return;
 		}
 
-		outlineView.selectPage(pageNum);
+		outlineView.removeSelection();
+		this.SetFocusElement(FOCUS_OBJECT_MAIN);
+		if (!this.m_oWordControl.m_oScrollThumbApi) {
+			return;
+		}
+
+		const penW = 1 * g_dKoef_mm_to_pix;
+		const pageY = outlineView.getPageY(pageNum);
+		let pxPageY = pageY * g_dKoef_mm_to_pix;
+		const thumbnailsContainerHeight = this.m_oWordControl.m_oThumbnails.HtmlElement.height / AscCommon.AscBrowser.retinaPixelRatio;
+		const thumbnailHeight = outlineView.getThumbnailHeight() * g_dKoef_mm_to_pix;
+		let nValueScrollVer = 0;
+		const topY = pxPageY - penW;
+		if (topY < 0) {
+			nValueScrollVer = topY >> 0;
+		}
+		const bottomY = pxPageY + thumbnailHeight + penW;
+		if (bottomY > thumbnailsContainerHeight) {
+			nValueScrollVer = (bottomY - thumbnailsContainerHeight) >> 0;
+		}
+
+		if (0 != nValueScrollVer) {
+			this.m_oWordControl.m_bIsUpdateTargetNoAttack = true;
+			this.m_oWordControl.m_oScrollThumbApi.scrollByY(nValueScrollVer);
+			this.m_oWordControl.OnScroll();
+		}
 	};
 
 	// position

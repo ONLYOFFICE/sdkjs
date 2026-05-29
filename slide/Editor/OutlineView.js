@@ -2215,16 +2215,25 @@
 			}
 		}
 	};
-	OutlineView.prototype.selectPage = function (pageNum) {
+	OutlineView.prototype.getPageY = function (pageNum) {
 		const docContent = this.getDocContent();
 		if (docContent) {
 			const paragraph = this.getTitleSlideParagraph(pageNum);
 			if (paragraph) {
-				paragraph.MoveCursorToStartPos();
-				paragraph.SetThisElementCurrent();
+				return this.getParagraphY(paragraph);
 			}
 
-			this.updateSelectionState();
+		}
+		return 0;
+	};
+	OutlineView.prototype.getThumbnailHeight = function () {
+		return this.decorCacheManager.getMeasureInfo().height;
+	};
+	OutlineView.prototype.removeSelection = function () {
+		const docContent = this.getDocContent();
+		if (docContent) {
+			docContent.RemoveSelection();
+			this.outlineShape.resetSelectionState();
 		}
 	};
 

@@ -4866,7 +4866,7 @@
 
 		this.CalculateDocumentSize(false);
 
-		this.Thumbnails.SelectPage(lPageNum);
+		this.Thumbnails.SelectPage(lPageNum, _bIsUpdate);
 
 		this.CreateBackgroundHorRuler();
 		this.CreateBackgroundVerRuler();
