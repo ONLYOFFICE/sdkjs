@@ -61,11 +61,11 @@
 	ParagraphBidiFlow.prototype.handleBidiFlow = function(data, direction)
 	{
 	};
-	ParagraphBidiFlow.prototype.pushBidiFlow = function()
+	ParagraphBidiFlow.prototype.pushBidiFlow = function(isRtlDirection)
 	{
 		this.bidiFlowStack.push(this.bidiFlow);
 		this.bidiFlow = new AscWord.BidiFlow(this);
-		this.bidiFlow.begin(this.Paragraph.isRtlDirection());
+		this.bidiFlow.begin(undefined === isRtlDirection ? this.Paragraph.isRtlDirection() : isRtlDirection);
 	};
 	ParagraphBidiFlow.prototype.popBidiFlow = function()
 	{

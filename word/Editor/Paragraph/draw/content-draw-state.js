@@ -44,6 +44,7 @@
 	 */
 	function ParagraphContentDrawState(drawState)
 	{
+		AscWord.ParagraphBidiFlow.call(this);
 		this.drawState = drawState;
 		
 		this.Paragraph = undefined;
@@ -86,6 +87,8 @@
 		this.bidiFlow = new AscWord.BidiFlow(this);
 		this.bidiFlowStack = [];
 	}
+	ParagraphContentDrawState.prototype = Object.create(AscWord.ParagraphBidiFlow.prototype);
+	ParagraphContentDrawState.prototype.constructor = ParagraphContentDrawState;
 	ParagraphContentDrawState.prototype.init = function()
 	{
 		this.Paragraph = this.drawState.getParagraph();
@@ -136,16 +139,6 @@
 		let isRtl = this.Paragraph.isRtlDirection();
 		if (this.Paragraph.Numbering.checkRange(this.Range, this.Line) && isRtl)
 			this.handleNumbering();
-	};
-	ParagraphContentDrawState.prototype.pushBidiFlow = function()
-	{
-		this.bidiFlowStack.push(this.bidiFlow);
-		this.bidiFlow = new AscWord.BidiFlow(this);
-	};
-	ParagraphContentDrawState.prototype.popBidiFlow = function()
-	{
-		this.bidiFlow.end();
-		this.bidiFlow = this.bidiFlowStack.pop();
 	};
 	/**
 	 * @param element {AscWord.CRunElementBase}

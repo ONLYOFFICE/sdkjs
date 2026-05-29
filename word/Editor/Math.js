@@ -2766,9 +2766,9 @@ ParaMath.prototype.SelectAll = function(Direction)
     this.Root.SelectAll(Direction);
 };
 
-ParaMath.prototype.drawSelectionInRange = function(line, range, drawState)
+ParaMath.prototype.drawSelectionInRange = function(drawState)
 {
-    this.Root.drawSelectionInRange(line, range, drawState);
+	drawState.handleParaMath(this);
 };
 
 ParaMath.prototype.IsSelectionEmpty = function(CheckEnd)

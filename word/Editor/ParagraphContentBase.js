@@ -661,7 +661,7 @@ CParagraphContentBase.prototype.RemoveSelection = function(preserveCursorPositio
 CParagraphContentBase.prototype.SelectAll = function(Direction)
 {
 };
-CParagraphContentBase.prototype.drawSelectionInRange = function(line, range, drawState)
+CParagraphContentBase.prototype.drawSelectionInRange = function(drawState)
 {
 };
 CParagraphContentBase.prototype.IsSelectionEmpty = function(CheckEnd)
@@ -3943,14 +3943,14 @@ CParagraphContentWithParagraphLikeContent.prototype.SelectAll = function(Directi
         this.Content[CurPos].SelectAll( Direction );
     }
 };
-CParagraphContentWithParagraphLikeContent.prototype.drawSelectionInRange = function(line, range, drawState)
+CParagraphContentWithParagraphLikeContent.prototype.drawSelectionInRange = function(drawState)
 {
-	let rangeInfo  = this.getRangePos(line, range);
+	let rangeInfo  = this.getRangePos(drawState.line, drawState.range);
 	let rangeStart = rangeInfo[0];
 	let rangeEnd   = rangeInfo[1];
 	for (let pos = rangeStart; pos <= rangeEnd; ++pos)
 	{
-		this.Content[pos].drawSelectionInRange(line, range, drawState);
+		this.Content[pos].drawSelectionInRange(drawState);
 	}
 };
 CParagraphContentWithParagraphLikeContent.prototype.IsSelectionEmpty = function(CheckEnd)

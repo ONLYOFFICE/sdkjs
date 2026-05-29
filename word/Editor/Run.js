@@ -6990,9 +6990,9 @@ ParaRun.prototype.SelectAll = function(nDirection)
 	}
 };
 
-ParaRun.prototype.drawSelectionInRange = function(line, range, drawSelectionState)
+ParaRun.prototype.drawSelectionInRange = function(drawSelectionState)
 {
-	let rangeInfo  = this.getRangePos(line, range);
+	let rangeInfo  = this.getRangePos(drawSelectionState.line, drawSelectionState.range);
 	let rangeStart = rangeInfo[0];
 	let rangeEnd   = rangeInfo[1];
 	if (rangeStart >= rangeEnd)

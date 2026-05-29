@@ -1437,7 +1437,7 @@ CMathContent.prototype.draw = function(x, y, pGraphics, PDSE)
 };
 CMathContent.prototype.Draw_Elements = function(drawState)
 {
-	drawState.pushBidiFlow();
+	drawState.pushBidiFlow(false);
 	
     var StartPos, EndPos;
 
@@ -4142,7 +4142,7 @@ CMathContent.prototype.Add_MatrixWithBrackets = function(begChr, endChr, ctrPr, 
 };
 CMathContent.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
 {
-	positionCalculator.pushBidiFlow();
+	positionCalculator.pushBidiFlow(false);
 	
 	let line  = positionCalculator.line;
 	let range = positionCalculator.range;
@@ -4679,8 +4679,13 @@ CMathContent.prototype.SelectAll = function(Direction)
         this.Content[nPos].SelectAll(Direction);
     }
 };
-CMathContent.prototype.drawSelectionInRange = function(line, range, drawSelectionState)
+CMathContent.prototype.drawSelectionInRange = function(drawSelectionState)
 {
+	drawSelectionState.pushBidiFlow(false);
+	
+	let line  = drawSelectionState.line;
+	let range = drawSelectionState.range;
+	
 	let rangeInfo  = this.getRangePos(line, range);
 	let rangeStart = rangeInfo[0];
 	let rangeEnd   = rangeInfo[1];
@@ -4707,10 +4712,12 @@ CMathContent.prototype.drawSelectionInRange = function(line, range, drawSelectio
 		let isSelected = this.Selection.Use && selectionStart <= pos && pos <= selectionEnd;
 		
 		if (para_Math_Composition !== item.Type || (isSelected && selectionStart === selectionEnd))
-			item.drawSelectionInRange(line, range, drawSelectionState);
+			item.drawSelectionInRange(drawSelectionState);
 		else
 			drawSelectionState.handleMathElement(item, isSelected);
 	}
+	
+	drawSelectionState.popBidiFlow();
 };
 CMathContent.prototype.SelectElementByPos = function(nPos)
 {
@@ -5139,7 +5146,7 @@ CMathContent.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 };
 CMathContent.prototype.recalculateRangeAlign = function(alignState)
 {
-	alignState.pushBidiFlow();
+	alignState.pushBidiFlow(false);
 	CParagraphContentWithParagraphLikeContent.prototype.recalculateRangeAlign.call(this, alignState);
 	alignState.popBidiFlow();
 };

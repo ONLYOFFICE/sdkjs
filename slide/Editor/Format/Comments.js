@@ -374,7 +374,7 @@ function (window, undefined) {
 	ParaComment.prototype.SelectAll = function (Direction) {
 	};
 
-	ParaComment.prototype.drawSelectionInRange = function (line, range, drawState) {
+	ParaComment.prototype.drawSelectionInRange = function (drawState) {
 	};
 
 	ParaComment.prototype.IsSelectionEmpty = function (CheckEnd) {

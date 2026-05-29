@@ -47,7 +47,7 @@
 	function ParagraphPositionCalculator(paragraph)
 	{
 		AscWord.ParagraphBidiFlow.call(this);
-		this.Paragraph = paragraph;
+		this.paragraph = paragraph;
 
 		this.page  = 0;
 		this.line  = 0;
@@ -98,11 +98,7 @@
 		this.line  = line;
 		this.range = range;
 		
-		this.CurPage  = this.page;
-		this.CurLine  = this.line;
-		this.CurRange = this.range;
-		
-		let p = this.Paragraph;
+		let p = this.paragraph;
 		
 		this.x = p.Lines[line].Ranges[range].XVisible;
 		this.y = p.Pages[page].Y + p.Lines[line].Y;
@@ -112,9 +108,9 @@
 		if (p.Numbering.checkRange(range, line) && !p.isRtlDirection())
 			this.x += p.Numbering.WidthVisible;
 		
-		this.bidiFlow.begin(this.Paragraph.isRtlDirection());
+		this.bidiFlow.begin(this.paragraph.isRtlDirection());
 
-		this.complexFields.resetRange(this.Paragraph, this.line, this.range);
+		this.complexFields.resetRange(this.paragraph, this.line, this.range);
 	};
 	ParagraphPositionCalculator.prototype.setNextCurrent = function(run, lastCombItem)
 	{
@@ -259,7 +255,7 @@
 	ParagraphPositionCalculator.prototype.handleMathRun = function(run, isCurrentRun, currentPos)
 	{
 		this.bidiFlow.end();
-		this.bidiFlow.begin(this.Paragraph.isRtlDirection());
+		this.bidiFlow.begin(this.paragraph.isRtlDirection());
 		
 		if (!isCurrentRun)
 			return;
@@ -317,7 +313,7 @@
 		let isNearFootnoteRef = run.IsCurPosNearFootEndnoteReference();
 		
 		let fontCoef = isNearFootnoteRef ? 1 : textPr.getFontCoef();
-		AscCommon.g_oTextMeasurer.SetTextPr(textPr, this.Paragraph.getTheme());
+		AscCommon.g_oTextMeasurer.SetTextPr(textPr, this.paragraph.getTheme());
 		AscCommon.g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, fontCoef);
 		
 		let textHeight = AscCommon.g_oTextMeasurer.GetHeight();
@@ -363,7 +359,7 @@
 		if (!this.finalize())
 			return BLACK_COLOR;
 		
-		let p      = this.Paragraph;
+		let p      = this.paragraph;
 		let textPr = this.posInfo.run.getCompiledPr();
 		let color  = textPr.Color;
 		
@@ -398,7 +394,7 @@
 		
 		if (this.isNextCurrent && !this.stop)
 		{
-			this.posInfo.x   = this.Paragraph.isRtlDirection() ? this.startX : this.x;
+			this.posInfo.x   = this.paragraph.isRtlDirection() ? this.startX : this.x;
 			this.posInfo.y   = this.y;
 			this.posInfo.run = this.nextRun;
 			

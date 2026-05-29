@@ -1777,7 +1777,7 @@ CMathBase.prototype.Set_ParaContentPos = function(ContentPos, Depth)
         this.Content[this.CurPos].Set_ParaContentPos(ContentPos, Depth + 1);
     }
 };
-CMathBase.prototype.drawSelectionInRange = function(line, range, drawSelectionState)
+CMathBase.prototype.drawSelectionInRange = function(drawSelectionState)
 {
 	let selectionStart = this.Selection.StartPos;
 	let selectionEnd   = this.Selection.EndPos;
@@ -1785,7 +1785,7 @@ CMathBase.prototype.drawSelectionInRange = function(line, range, drawSelectionSt
 	let isSelected = this.Selection.Use;
 	if (isSelected && !this.bOneLine)
 	{
-		let rangeInfo  = this.getRangePos(line, range);
+		let rangeInfo  = this.getRangePos(drawSelectionState.line, drawSelectionState.range);
 		let rangeStart = rangeInfo[0];
 		let rangeEnd   = rangeInfo[1];
 		
@@ -1795,10 +1795,10 @@ CMathBase.prototype.drawSelectionInRange = function(line, range, drawSelectionSt
 	if (isSelected && selectionStart === selectionEnd)
 	{
 		let item   = this.Content[this.Selection.StartPos];
-		let bounds = item.Get_LineBound(line, range);
+		let bounds = item.Get_LineBound(drawSelectionState.line, drawSelectionState.range);
 		
 		drawSelectionState.x = bounds.X;
-		item.drawSelectionInRange(line, range, drawSelectionState);
+		item.drawSelectionInRange(drawSelectionState);
 	}
 	else
 	{

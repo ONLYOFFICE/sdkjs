@@ -8895,7 +8895,7 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 					
 					for (let pos = rangeStart; pos <= rangeEnd; ++pos)
 					{
-						this.Content[pos].drawSelectionInRange(iLine, iRange, drawSelectionState);
+						this.Content[pos].drawSelectionInRange(drawSelectionState);
 					}
 					
 					drawSelectionState.endRange();
@@ -9364,7 +9364,7 @@ Paragraph.prototype.GetSelectionBounds = function()
 				for (var CurPos = rangeStart; CurPos <= rangeEnd; CurPos++)
 				{
 					var Item = this.Content[CurPos];
-					Item.drawSelectionInRange(iLine, iRange, drawSelectionState);
+					Item.drawSelectionInRange(drawSelectionState);
 				}
 				drawSelectionState.endRange();
 				
@@ -9511,7 +9511,7 @@ Paragraph.prototype.GetSelectionAnchorPos = function()
 				for (var CurPos = RStartPos; CurPos <= REndPos; CurPos++)
 				{
 					var Item = this.Content[CurPos];
-					Item.drawSelectionInRange(iLine, iRange, drawSelectionState);
+					Item.drawSelectionInRange(drawSelectionState);
 				}
 				drawSelectionState.endRange();
 				

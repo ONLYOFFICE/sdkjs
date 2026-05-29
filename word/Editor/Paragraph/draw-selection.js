@@ -46,14 +46,13 @@
 	 */
 	function ParagraphDrawSelectionState(paragraph)
 	{
+		AscWord.ParagraphBidiFlow.call(this);
 		this.paragraph     = paragraph;
 		this.logicDocument = paragraph ? paragraph.GetLogicDocument() : null;
 		
 		this.y = 0;
 		this.h = 0;
 		this.x = 0;
-		
-		this.bidi = new AscWord.BidiFlow(this);
 		
 		this.page  = 0;
 		this.range = 0;
@@ -70,6 +69,8 @@
 		
 		this.complexFields = new AscWord.ParagraphComplexFieldStack();
 	}
+	ParagraphDrawSelectionState.prototype = Object.create(AscWord.ParagraphBidiFlow.prototype);
+	ParagraphDrawSelectionState.prototype.constructor = ParagraphDrawSelectionState;
 	ParagraphDrawSelectionState.prototype.resetPage = function(page)
 	{
 		this.page = page;
@@ -93,7 +94,7 @@
 		if (this.paragraph.Numbering.checkRange(this.line, this.range) && !this.paragraph.isRtlDirection())
 			this.x += this.paragraph.Numbering.WidthVisible;
 		
-		this.bidi.begin(this.paragraph.isRtlDirection());
+		this.bidiFlow.begin(this.paragraph.isRtlDirection());
 		
 		this.beginElement = null;
 		this.endElement   = null;
@@ -102,7 +103,7 @@
 	};
 	ParagraphDrawSelectionState.prototype.endRange = function()
 	{
-		this.bidi.end();
+		this.bidiFlow.end();
 	};
 	ParagraphDrawSelectionState.prototype.getSelectionRanges = function()
 	{
@@ -153,12 +154,26 @@
 			this.endElement = element;
 		}
 		
-		this.bidi.add([element, isSelected], element.getBidiType());
+		this.bidiFlow.add([element, isSelected, false], element.getBidiType());
+	};
+	ParagraphDrawSelectionState.prototype.handleParaMath = function(paraMath)
+	{
+		this.bidiFlow.add([paraMath, false, false], paraMath.getBidiType());
+	};
+	ParagraphDrawSelectionState.prototype.handleMathElement = function(mathElement, isSelected)
+	{
+		this.bidiFlow.add([mathElement, isSelected, true]);
 	};
 	ParagraphDrawSelectionState.prototype.handleBidiFlow = function(data, direction)
 	{
-		let element    = data[0];
-		let isSelected = data[1];
+		let element       = data[0];
+		let isSelected    = data[1];
+		let isMathElement = data[2];
+		
+		if (element instanceof AscWord.ParaMath)
+			return this.handleBidiFlowParaMath(element);
+		else if (isMathElement)
+			return this.handleBidiFlowMathElement(element, isSelected);
 		
 		let w = element.GetWidthVisible();
 		if (isSelected)
@@ -193,10 +208,12 @@
 		
 		this.x += w;
 	};
-	ParagraphDrawSelectionState.prototype.handleMathElement = function(mathElement, isSelected)
+	ParagraphDrawSelectionState.prototype.handleBidiFlowParaMath = function(paraMath)
 	{
-		this.bidi.end();
-		
+		paraMath.Root.drawSelectionInRange(this);
+	};
+	ParagraphDrawSelectionState.prototype.handleBidiFlowMathElement = function(mathElement, isSelected)
+	{		
 		let w = mathElement.GetWidth(this.line, this.range);
 		
 		if (isSelected)
