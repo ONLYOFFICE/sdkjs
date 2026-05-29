@@ -9842,9 +9842,12 @@
 				moveCells(copyRange, oBBoxFrom.c1 + i, oBBoxTo.c1 + i, oBBoxFrom.r1, oBBoxTo.r1, oBBoxFrom.r2 - oBBoxFrom.r1 + 1);
 			}
 		}
-		// ToDo possibly need to reduce the update range
+		let updateRange = new Asc.Range(oBBoxFrom.c1, oBBoxFrom.r1, oBBoxFrom.c2, oBBoxFrom.r2);
+		if (!moveToOtherSheet) {
+			updateRange = updateRange.union(oBBoxTo);
+		}
 		AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_MoveRange,
-			this.getId(), new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0),
+			this.getId(), updateRange,
 			new UndoRedoData_FromTo(new UndoRedoData_BBox(oBBoxFrom), new UndoRedoData_BBox(oBBoxTo), copyRange, wsTo.getId()));
 		if(moveToOtherSheet) {
 			//done so that recalculation/data update happens on another sheet
