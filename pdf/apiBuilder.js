@@ -52,12 +52,14 @@
 	 */
 
 	/**
+	 * A tuple representing a list option with a display value and an export value.
 	 * @typedef {Object} ListOptionTuple
-	 * @property {string} 0 - displayed value
-	 * @property {string} 1 - exported value
+	 * @property {string} 0 - The value displayed to the user.
+	 * @property {string} 1 - The value exported when the option is selected.
 	 */
 
 	/**
+	 * A single list option, either a plain string (used as both display and export value) or a tuple.
 	 * @typedef {(string | ListOptionTuple)} ListOption
 	 */
 
@@ -201,8 +203,8 @@
 	/**
 	 * Axis-aligned point.
 	 * @typedef {object} Point
-	 * @property {pt} x
-	 * @property {pt} y
+	 * @property {pt} x - The horizontal coordinate in points.
+	 * @property {pt} y - The vertical coordinate in points.
 	 */
 
 	/**
@@ -269,6 +271,7 @@
 	 */
 
 	/**
+	 * Search options used when performing text search operations.
 	 * @typedef {Object} SearchProps
 	 * @property {string} text - The text to search for.
 	 * @property {boolean} matchCase - Whether the search is case-sensitive.
@@ -406,14 +409,14 @@
 	 * Creates a text field.
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
-	 * @param {Rect} aRect - widget rect
+	 * @param {Rect} rect - widget rect
 	 * @returns {ApiTextField}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateTextField.js
 	 */
-	Api.CreateTextField = function(aRect) {
+	Api.CreateTextField = function(rect) {
 		let oDoc = private_GetLogicDocument();
 		let oField = oDoc.CreateTextField();
-		oField.SetRect(aRect);
+		oField.SetRect(rect);
 
 		return new ApiTextField(oField);
 	};
@@ -422,14 +425,14 @@
 	 * Creates a text date field.
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
-	 * @param {Rect} aRect - widget rect
+	 * @param {Rect} rect - widget rect
 	 * @returns {ApiTextField}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateDateField.js
 	 */
-	Api.CreateDateField = function(aRect) {
+	Api.CreateDateField = function(rect) {
 		let oDoc = private_GetLogicDocument();
 		let oField = oDoc.CreateTextField(true);
-		oField.SetRect(aRect);
+		oField.SetRect(rect);
 
 		return new ApiTextField(oField);
 	};
@@ -438,14 +441,14 @@
 	 * Creates a image field.
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
-	 * @param {Rect} aRect - widget rect
+	 * @param {Rect} rect - widget rect
 	 * @returns {ApiButtonField}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateImageField.js
 	 */
-	Api.CreateImageField = function(aRect) {
+	Api.CreateImageField = function(rect) {
 		let oDoc = private_GetLogicDocument();
 		let oField = oDoc.CreateButtonField(true);
-		oField.SetRect(aRect);
+		oField.SetRect(rect);
 
 		return new ApiButtonField(oField);
 	};
@@ -454,14 +457,14 @@
 	 * Creates a checkbox field.
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
-	 * @param {Rect} aRect - widget rect
+	 * @param {Rect} rect - widget rect
 	 * @returns {ApiCheckboxField}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateCheckboxField.js
 	 */
-	Api.CreateCheckboxField = function(aRect) {
+	Api.CreateCheckboxField = function(rect) {
 		let oDoc = private_GetLogicDocument();
 		let oField = oDoc.CreateCheckboxField();
-		oField.SetRect(aRect);
+		oField.SetRect(rect);
 
 		return new ApiCheckboxField(oField);
 	};
@@ -470,14 +473,14 @@
 	 * Creates a radiobutton field.
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
-	 * @param {Rect} aRect - widget rect
+	 * @param {Rect} rect - widget rect
 	 * @returns {ApiRadiobuttonField}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateRadiobuttonField.js
 	 */
-	Api.CreateRadiobuttonField = function(aRect) {
+	Api.CreateRadiobuttonField = function(rect) {
 		let oDoc = private_GetLogicDocument();
 		let oField = oDoc.CreateRadiobuttonField();
-		oField.SetRect(aRect);
+		oField.SetRect(rect);
 
 		return new ApiRadiobuttonField(oField);
 	};
@@ -486,14 +489,14 @@
 	 * Creates a combobox field.
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
-	 * @param {Rect} aRect - widget rect
+	 * @param {Rect} rect - widget rect
 	 * @returns {ApiComboboxField}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateComboboxField.js
 	 */
-	Api.CreateComboboxField = function(aRect) {
+	Api.CreateComboboxField = function(rect) {
 		let oDoc = private_GetLogicDocument();
 		let oField = oDoc.CreateComboboxField();
-		oField.SetRect(aRect);
+		oField.SetRect(rect);
 
 		return new ApiComboboxField(oField);
 	};
@@ -502,14 +505,14 @@
 	 * Creates a listbox field.
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
-	 * @param {Rect} aRect - widget rect
+	 * @param {Rect} rect - widget rect
 	 * @returns {ApiListboxField}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateListboxField.js
 	 */
-	Api.CreateListboxField = function(aRect) {
+	Api.CreateListboxField = function(rect) {
 		let oDoc = private_GetLogicDocument();
 		let oField = oDoc.CreateListboxField();
-		oField.SetRect(aRect);
+		oField.SetRect(rect);
 
 		return new ApiListboxField(oField);
 	};
@@ -682,7 +685,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} rect - annotation rect.
-	 * @param {PathList} pathList - ink path list
+	 * @param {PathList} inkPaths - The ink path list.
 	 * @returns {ApiInkAnnotation}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateInkAnnot.js
 	 */
@@ -1255,39 +1258,39 @@
 	 * Creates a shape with the parameters specified.
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
-	 * @param {ShapeType} [sType= "rect"] - The shape type which specifies the preset shape geometry.
-	 * @param {EMU} [nWidth = 72] - The shape width in English measure units.
-	 * @param {EMU} [nHeight = 72] - The shape height in English measure units.
-	 * @param {ApiFill} [oFill = Api.CreateNoFill()] - The color or pattern used to fill the shape.
-	 * @param {ApiStroke} [oStroke = Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the element shadow.
+	 * @param {ShapeType} [shapeType= "rect"] - The shape type which specifies the preset shape geometry.
+	 * @param {EMU} [width = 72] - The shape width in English measure units.
+	 * @param {EMU} [height = 72] - The shape height in English measure units.
+	 * @param {ApiFill} [fill = Api.CreateNoFill()] - The color or pattern used to fill the shape.
+	 * @param {ApiStroke} [stroke = Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the element shadow.
 	 * @returns {ApiShape}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateShape.js
 	 */
-	Api.CreateShape = function(sType, nWidth, nHeight, oFill, oStroke) {
+	Api.CreateShape = function(shapeType, width, height, fill, stroke) {
 		let oDoc = private_GetLogicDocument();
-		sType = sType || "rect";
-		if (!AscFormat.isValidShapeType(sType)) sType = "rect";
-		nWidth = nWidth || 72;
-		nHeight = nHeight || 72;
-		oFill = oFill || Api.CreateNoFill();
-		oStroke = oStroke || Api.CreateStroke(0, Api.CreateNoFill());
+		shapeType = shapeType || "rect";
+		if (!AscFormat.isValidShapeType(shapeType)) shapeType = "rect";
+		width = width || 72;
+		height = height || 72;
+		fill = fill || Api.CreateNoFill();
+		stroke = stroke || Api.CreateStroke(0, Api.CreateNoFill());
 
-		return new ApiShape(AscFormat.builder_CreateShape(sType, private_EMU2MM(nWidth), private_EMU2MM(nHeight), oFill.UniFill, oStroke.Ln, null, oDoc.GetTheme(), private_GetDrawingDocument(), false));
+		return new ApiShape(AscFormat.builder_CreateShape(shapeType, private_EMU2MM(width), private_EMU2MM(height), fill.UniFill, stroke.Ln, null, oDoc.GetTheme(), private_GetDrawingDocument(), false));
 	};
 
 	/**
 	 * Creates an image with the parameters specified.
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently,
+	 * @param {string} imageSrc - The image source where the image to be inserted should be taken from (currently,
 	 * only internet URL or Base64 encoded images are supported).
-	 * @param {EMU} nWidth - The image width in English measure units.
-	 * @param {EMU} nHeight - The image height in English measure units.
+	 * @param {EMU} width - The image width in English measure units.
+	 * @param {EMU} height - The image height in English measure units.
 	 * @returns {ApiImage}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateImage.js
 	 */
-	Api.CreateImage = function(sImageSrc, nWidth, nHeight) {
-		let oImage = AscFormat.DrawingObjectsController.prototype.createImage(sImageSrc, 0, 0, private_EMU2MM(nWidth), private_EMU2MM(nHeight));
+	Api.CreateImage = function(imageSrc, width, height) {
+		let oImage = AscFormat.DrawingObjectsController.prototype.createImage(imageSrc, 0, 0, private_EMU2MM(width), private_EMU2MM(height));
 
 		return new ApiImage(oImage);
 	};
@@ -1296,8 +1299,8 @@
 	 * Creates a table.
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
-	 * @param rows - Number of rows.
-	 * @param cols - Number of columns.
+	 * @param {number} rows - Number of rows.
+	 * @param {number} cols - Number of columns.
 	 * @returns {ApiTable}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateTable.js
 	 */
@@ -1325,20 +1328,20 @@
 	 * :::
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
-	 * @param {ChartType} [sType="bar"] - The chart type used for the chart display.
-	 * @param {number[][]} aSeries - The array of the data used to build the chart from.
-	 * @param {number[] | string[]} aSeriesNames - The array of the names (the source table column names) used for the data which the chart will be build from.
-	 * @param {number[] | string[]} aCatNames - The array of the names (the source table row names) used for the data which the chart will be build from.
-	 * @param {EMU} nWidth - The chart width in English measure units.
-	 * @param {EMU} nHeight - The chart height in English measure units.
-	 * @param {number} nStyleIndex - The chart color style index (can be <b>1 - 48</b>, as described in OOXML specification).
-	 * @param {NumFormat[] | String[]} aNumFormats - Numeric formats which will be applied to the series (can be custom formats).
+	 * @param {ChartType} [chartType="bar"] - The chart type used for the chart display.
+	 * @param {number[][]} series - The array of the data used to build the chart from.
+	 * @param {number[] | string[]} seriesNames - The array of the names (the source table column names) used for the data which the chart will be build from.
+	 * @param {number[] | string[]} categoryNames - The array of the names (the source table row names) used for the data which the chart will be build from.
+	 * @param {EMU} width - The chart width in English measure units.
+	 * @param {EMU} height - The chart height in English measure units.
+	 * @param {number} styleIndex - The chart color style index (can be <b>1 - 48</b>, as described in OOXML specification).
+	 * @param {NumFormat[] | String[]} numFormats - Numeric formats which will be applied to the series (can be custom formats).
 	 * The default numeric format is "General".
 	 * @returns {ApiChart}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateChart.js
 	 */
-	Api.CreateChart = function(sType, aSeries, aSeriesNames, aCatNames, nWidth, nHeight, nStyleIndex, aNumFormats) {
-		let oChartSpace = AscFormat.builder_CreateChart(private_EMU2MM(nWidth), private_EMU2MM(nHeight), sType, aCatNames, aSeriesNames, aSeries, nStyleIndex, aNumFormats);
+	Api.CreateChart = function(chartType, series, seriesNames, categoryNames, width, height, styleIndex, numFormats) {
+		let oChartSpace = AscFormat.builder_CreateChart(private_EMU2MM(width), private_EMU2MM(height), chartType, categoryNames, seriesNames, series, styleIndex, numFormats);
 		return new ApiChart(oChartSpace);
 	};
 
@@ -1372,41 +1375,41 @@
 	 * Adds a new page to document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} nPos - pos to add page.
-	 * @param {pt} [nWidth] - page width.
-	 * @param {pt} [nHeight] - page height.
+	 * @param {number} index - The index where the page will be added.
+	 * @param {pt} [width] - The page width.
+	 * @param {pt} [height] - The page height.
 	 * @returns {ApiPage}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddPage.js
 	 */
-	ApiDocument.prototype.AddPage = function(nPos, nWidth, nHeight) {
+	ApiDocument.prototype.AddPage = function(index, width, height) {
 		let oDoc = private_GetLogicDocument();
 		let oFile = oDoc.GetFile();
 
-		let oPageToClone = oFile.pages[nPos - 1] || oFile.pages[nPos];
+		let oPageToClone = oFile.pages[index - 1] || oFile.pages[index];
 
 		let oPage = {
 			fonts: [],
 			Rotate: 0,
 			Dpi: 72,
-			W: nWidth || oPageToClone.W,
-			H: nHeight || oPageToClone.H
+			W: width || oPageToClone.W,
+			H: height || oPageToClone.H
 		}
 
-		this.Document.AddPage(nPos, oPage);
+		this.Document.AddPage(index, oPage);
 
-		return new ApiPage(this.Document.GetPageInfo(nPos));
+		return new ApiPage(this.Document.GetPageInfo(index));
 	};
 
 	/**
 	 * Gets page by index from document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} nPos - page position
+	 * @param {number} index - page index.
 	 * @returns {ApiPage}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetPage.js
 	 */
-	ApiDocument.prototype.GetPage = function(nPos) {
-		let oPageInfo = this.Document.GetPageInfo(nPos);
+	ApiDocument.prototype.GetPage = function(index) {
+		let oPageInfo = this.Document.GetPageInfo(index);
 		if (!oPageInfo) {
 			return null;
 		}
@@ -1419,19 +1422,19 @@
 	 * <note> You can't delete last page </note>
 	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} pos - page position
+	 * @param {number} index - page index
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/RemovePage.js
 	 */
-	ApiDocument.prototype.RemovePage = function(pos) {
+	ApiDocument.prototype.RemovePage = function(index) {
 		let oFile = this.Document.GetFile();
 
-		pos = AscBuilder.GetNumberParameter(pos, null);
-		if (null == pos || pos < 0 || pos > oFile.pages.length - 1) {
-			AscBuilder.throwException("The pos parameter must be a valid position");
+		index = AscBuilder.GetNumberParameter(index, null);
+		if (null == index || index < 0 || index > oFile.pages.length - 1) {
+			AscBuilder.throwException("The index parameter must be a valid index");
 		}
 
-		return !!this.Document.RemovePage(pos);
+		return !!this.Document.RemovePage(index);
 	};
 
 	/**
@@ -1480,11 +1483,12 @@
 	 * Gets field by it's name.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
+	 * @param {string} name - the full name parameter.
 	 * @returns {?ApiField}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetFieldByName.js
 	 */
-	ApiDocument.prototype.GetFieldByName = function(sName) {
-		let oField = this.Document.GetField(sName);
+	ApiDocument.prototype.GetFieldByName = function(name) {
+		let oField = this.Document.GetField(name);
 		if (!oField)
 			return null;
 
@@ -1504,7 +1508,7 @@
 	 * Searchs words and adds redact to it.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
-	 * @param {SearchProps} props
+	 * @param {SearchProps} props - The search options.
 	 * @returns {ApiRedactAnnotation[]}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SearchAndRedact.js
 	 */
@@ -1684,17 +1688,17 @@
 	 * Sets page rotation angle
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} nAngle
+	 * @param {number} angle - The rotation angle in degrees. Must be a multiple of 90.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/SetRotation.js
 	 */
-	ApiPage.prototype.SetRotation = function(nAngle) {
-		if (nAngle % 90 !== 0) {
+	ApiPage.prototype.SetRotation = function(angle) {
+		if (angle % 90 !== 0) {
 			return false;
 		}
 
 		let oDoc = private_GetLogicDocument();
-		oDoc.SetPageRotate(this.GetIndex(), nAngle);
+		oDoc.SetPageRotate(this.GetIndex(), angle);
 		return true;
 	};
 
@@ -1735,7 +1739,7 @@
 	 * Adds an available object to a page.
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
-	 * @param {FloatObject} object
+	 * @param {FloatObject} object - The annotation, field, or drawing to add to the page.
 	 * @returns {FloatObject}
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/AddObject.js
 	 */
@@ -1789,7 +1793,7 @@
 	 * Search words and returns their quads.
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
-	 * @param {SearchProps} props
+	 * @param {SearchProps} props - The search options.
 	 * @returns {Quads[]}
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/Search.js
 	 */
@@ -1872,7 +1876,8 @@
 	 * Sets page selection.
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
-	 * @param {PageSelection} selection
+	 * @param {Point} startPoint - The start point of the selection.
+	 * @param {Point} endPoint - The end point of the selection.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/SetSelection.js
 	 */
@@ -1998,12 +2003,12 @@
 	 * Sets new field name if possible.
 	 * @memberof ApiBaseField
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sName
+	 * @param {string} name - The new full name for the field.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseField/Methods/SetFullName.js
 	 */
-	ApiBaseField.prototype.SetFullName = function(sName) {
-		return this.Field.SetName(sName);
+	ApiBaseField.prototype.SetFullName = function(name) {
+		return this.Field.SetName(name);
 	};
 
 	/**
@@ -2021,12 +2026,12 @@
 	 * Sets new field partial name.
 	 * @memberof ApiBaseField
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sName
+	 * @param {string} name - The new partial name for the field.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseField/Methods/SetPartialName.js
 	 */
-	ApiBaseField.prototype.SetPartialName = function(sName) {
-		return this.Field.SetPartialName(sName);
+	ApiBaseField.prototype.SetPartialName = function(name) {
+		return this.Field.SetPartialName(name);
 	};
 
 	/**
@@ -2044,12 +2049,12 @@
 	 * Sets field required
 	 * @memberof ApiBaseField
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bRequired
+	 * @param {boolean} required - Specifies whether the field is required.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseField/Methods/SetRequired.js
 	 */
-	ApiBaseField.prototype.SetRequired = function(bRequired) {
-		this.Field.SetRequired(bRequired);
+	ApiBaseField.prototype.SetRequired = function(required) {
+		this.Field.SetRequired(required);
 		return true;
 	};
 
@@ -2068,12 +2073,12 @@
 	 * Sets field read only
 	 * @memberof ApiBaseField
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bRequired
+	 * @param {boolean} readOnly - Specifies whether the field is read-only.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseField/Methods/SetReadOnly.js
 	 */
-	ApiBaseField.prototype.SetReadOnly = function(bReadOnly) {
-		this.Field.SetReadOnly(bReadOnly);
+	ApiBaseField.prototype.SetReadOnly = function(readOnly) {
+		this.Field.SetReadOnly(readOnly);
 		return true;
 	};
 
@@ -2092,11 +2097,11 @@
 	 * Sets field value
 	 * @memberof ApiBaseField
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sValue
+	 * @param {string} value - The new value for the field.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseField/Methods/SetValue.js
 	 */
-	ApiBaseField.prototype.SetValue = function(sValue) {
+	ApiBaseField.prototype.SetValue = function(value) {
 		let oDoc = private_GetLogicDocument();
 
 		let oFieldToCommit;
@@ -2106,19 +2111,19 @@
 		else {
 			if (this instanceof ApiCheckboxField) {
 				oFieldToCommit = this.Field.GetKids().find(function(widget) {
-					return widget.GetExportValue() == sValue;
+					return widget.GetExportValue() == value;
 				});
 			}
 			else {
 				oFieldToCommit = this.Field.GetKid(0);
 			}
 		}
-		
-		if (sValue != undefined && sValue.toString) {
-			sValue = sValue.toString();
+
+		if (value != undefined && value.toString) {
+			value = value.toString();
 		}
 
-		oFieldToCommit.SetValue(sValue);
+		oFieldToCommit.SetValue(value);
 		return oDoc.private_CommitField(oFieldToCommit);
 	};
 
@@ -2137,22 +2142,22 @@
 	 * Adds new widget - visual representation for field
 	 * @memberof ApiBaseField
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} nPage - page to add widget
-	 * @param {Rect} aRect - field rect
+	 * @param {number} pageIndex - page index to add widget
+	 * @param {Rect} rect - field rect
 	 * @returns {?ApiWidget}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseField/Methods/AddWidget.js
 	 */
-	ApiBaseField.prototype.AddWidget = function(nPage, aRect) {
+	ApiBaseField.prototype.AddWidget = function(pageIndex, rect) {
 		let oDoc		= private_GetLogicDocument();
-		let oPage		= oDoc.GetPageInfo(nPage);
+		let oPage		= oDoc.GetPageInfo(pageIndex);
 		let nFieldType	= this.Field.GetType();
 
 		if (!oPage) {
 			return null;
 		}
 
-		let oWidget = oDoc.CreateField(this.Field.GetFullName(), nFieldType, aRect);
-		oDoc.AddField(oWidget, nPage);
+		let oWidget = oDoc.CreateField(this.Field.GetFullName(), nFieldType, rect);
+		oDoc.AddField(oWidget, pageIndex);
 
 		this.Field = oWidget.GetParent();
 
@@ -2211,7 +2216,7 @@
 	 * Sets field rect.
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {Rect} rect
+	 * @param {Rect} rect - The new bounding rectangle for the widget.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetRect.js
 	 */
@@ -2239,7 +2244,7 @@
 	 * Sets widget position.
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {Point} position
+	 * @param {Point} position - The new position of the widget.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetPosition.js
 	 */
@@ -2269,7 +2274,7 @@
 	 * Sets widget border color.
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The border color.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetBorderColor.js
 	 */
@@ -2312,16 +2317,16 @@
 	 * Sets widget border width.
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {WidgetBorderWidth} sBorderWidth
+	 * @param {WidgetBorderWidth} borderWidth - the width to set to the border.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetBorderWidth.js
 	 */
-	ApiBaseWidget.prototype.SetBorderWidth = function(sBorderWidth) {
-		if (!Object.keys(AscPDF.BORDER_WIDTH).includes(sBorderWidth)) {
+	ApiBaseWidget.prototype.SetBorderWidth = function(borderWidth) {
+		if (!Object.keys(AscPDF.BORDER_WIDTH).includes(borderWidth)) {
 			return false;
 		}
 
-		this.Field.SetBorderWidth(private_GetInnerBorderWidth(sBorderWidth));
+		this.Field.SetBorderWidth(private_GetInnerBorderWidth(borderWidth));
 		return true;
 	};
 
@@ -2340,16 +2345,16 @@
 	 * Sets widget border style.
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {WidgetBorderStyle} sBorderStyle
+	 * @param {WidgetBorderStyle} borderStyle - The border style.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetBorderStyle.js
 	 */
-	ApiBaseWidget.prototype.SetBorderStyle = function(sBorderStyle) {
-		if (!Object.keys(AscPDF.BORDER_TYPES).includes(sBorderStyle)) {
+	ApiBaseWidget.prototype.SetBorderStyle = function(borderStyle) {
+		if (!Object.keys(AscPDF.BORDER_TYPES).includes(borderStyle)) {
 			return false;
 		}
 
-		this.Field.SetBorderStyle(private_GetInnerBorderStyle(sBorderStyle));
+		this.Field.SetBorderStyle(private_GetInnerBorderStyle(borderStyle));
 		return true;
 	};
 
@@ -2368,7 +2373,7 @@
 	 * Sets widget background color.
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The background color.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetBackgroundColor.js
 	 */
@@ -2403,7 +2408,7 @@
 	 * Sets widget text color.
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The text color.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetTextColor.js
 	 */
@@ -2439,16 +2444,16 @@
 	 * <note> Text size === 0 means autofit </note>
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {pt} nSize
+	 * @param {pt} size - The font size in points.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetTextSize.js
 	 */
-	ApiBaseWidget.prototype.SetTextSize = function(nSize) {
-		if (typeof(nSize) != 'number' || nSize < 0) {
+	ApiBaseWidget.prototype.SetTextSize = function(size) {
+		if (typeof(size) != 'number' || size < 0) {
 			return false;
 		}
 
-		this.Field.SetTextSize(nSize);
+		this.Field.SetTextSize(size);
 		return true;
 	};
 
@@ -2468,12 +2473,12 @@
 	 * Sets text autofit.
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bAuto
+	 * @param {boolean} auto - Specifies whether text autofit is enabled.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetAutoFit.js
 	 */
-	ApiBaseWidget.prototype.SetAutoFit = function(bAuto) {
-		return this.Field.SetTextSize(bAuto ? 0 : 11);
+	ApiBaseWidget.prototype.SetAutoFit = function(auto) {
+		return this.Field.SetTextSize(auto ? 0 : 11);
 	};
 
 	/**
@@ -2533,12 +2538,12 @@
 	 * Sets text field multiline prop.
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bMultiline - will the field be multiline
+	 * @param {boolean} multiline - will the field be multiline
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/SetMultiline.js
 	 */
-	ApiTextField.prototype.SetMultiline = function(bMultiline) {
-		return this.Field.SetMultiline(bMultiline)
+	ApiTextField.prototype.SetMultiline = function(multiline) {
+		return this.Field.SetMultiline(multiline)
 	};
 
 	/**
@@ -2553,20 +2558,20 @@
 	};
 
 	/**
-	 * Sets text field chars limit.
-	 * <note> Char limit 0 means field doesn't have char limit
+	 * Sets the text field character limit.
+	 * <note> Character limit 0 means the field doesn't have a character limit.
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} nChars - chars limit number
+	 * @param {number} charLimit - The maximum number of characters allowed in the field.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/SetCharLimit.js
 	 */
-	ApiTextField.prototype.SetCharLimit = function(nChars) {
-		return this.Field.SetCharLimit(nChars)
+	ApiTextField.prototype.SetCharLimit = function(charLimit) {
+		return this.Field.SetCharLimit(charLimit)
 	};
 
 	/**
-	 * Gets text field chars limit.
+	 * Gets the text field character limit.
 	 * <note> Char limit 0 means field doesn't have char limit
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
@@ -2578,20 +2583,20 @@
 	};
 
 	/**
-	 * Sets text field comb prop.
-	 * <note> Should have char limit more then 0 </note>
+	 * Sets whether the text field uses comb formatting.
+	 * <note>The character limit must be greater than 0.</note>
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bComb - will the field be comb
+	 * @param {boolean} comb - Specifies whether comb formatting is enabled.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/SetComb.js
 	 */
-	ApiTextField.prototype.SetComb = function(bComb) {
-		return this.Field.SetComb(bComb)
+	ApiTextField.prototype.SetComb = function(comb) {
+		return this.Field.SetComb(comb)
 	};
 
 	/**
-	 * Checks if text field is comb.
+	 * Checks if the text field uses comb formatting.
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
@@ -2602,15 +2607,15 @@
 	};
 
 	/**
-	 * Sets text field can scroll long text prop.
+	 * Sets whether the text field can scroll long text.
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bScroll - can the field scroll long text 
+	 * @param {boolean} allowScroll - Specifies whether long text can be scrolled.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/SetScrollLongText.js
 	 */
-	ApiTextField.prototype.SetScrollLongText = function(bScroll) {
-		return this.Field.SetDoNotScroll(!bScroll)
+	ApiTextField.prototype.SetScrollLongText = function(allowScroll) {
+		return this.Field.SetDoNotScroll(!allowScroll)
 	};
 
 	/**
@@ -2628,27 +2633,27 @@
 	 * Sets number format for field.
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} nDemical - number of decimals
-	 * @param {NumberSepStyle} - number separate style
-	 * @param {NumberNegStyle} - number negative style
-	 * @param {string} sCurrency - currency sybmol
-	 * @param {boolean} bCurrencyPrepend - If true, places the currency symbol before the number (e.g., $1,234.56); 
+	 * @param {number} decimalPlaces - The number of digits after the decimal point.
+	 * @param {NumberSepStyle} separatorStyle - The number separator style.
+	 * @param {NumberNegStyle} negativeStyle - The negative number display style.
+	 * @param {string} currency - The currency symbol.
+	 * @param {boolean} currencyPrepend - If true, places the currency symbol before the number (e.g., $1,234.56);
 	 * if false, places it after (e.g., 1,234.56$).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/SetNumberFormat.js
 	 */
-	ApiTextField.prototype.SetNumberFormat = function(nDemical, sSepStyle, sNegStyle, sCurrency, bCurrencyPrepend) {
+	ApiTextField.prototype.SetNumberFormat = function(decimalPlaces, separatorStyle, negativeStyle, currency, currencyPrepend) {
 		this.Field.ClearFormat();
 
 		let aActionsFormat = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": "AFNumber_Format(" + nDemical + "," + private_GetInnerNumberSeparateType(sSepStyle) + "," + private_GetInnerNumberNegType(sNegStyle) + "," + "0" + ',"' + sCurrency + '",' + bCurrencyPrepend + ");"
+			"JS": "AFNumber_Format(" + decimalPlaces + "," + private_GetInnerNumberSeparateType(separatorStyle) + "," + private_GetInnerNumberNegType(negativeStyle) + "," + "0" + ',"' + currency + '",' + currencyPrepend + ");"
 		}];
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": "AFNumber_Keystroke(" + nDemical + "," + private_GetInnerNumberSeparateType(sSepStyle) + "," + private_GetInnerNumberNegType(sNegStyle) + "," + "0" + ',"' + sCurrency + '",' + bCurrencyPrepend + ");"
+			"JS": "AFNumber_Keystroke(" + decimalPlaces + "," + private_GetInnerNumberSeparateType(separatorStyle) + "," + private_GetInnerNumberNegType(negativeStyle) + "," + "0" + ',"' + currency + '",' + currencyPrepend + ");"
 		}];
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 
@@ -2661,23 +2666,23 @@
 	 * Sets percentage format for field.
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} nDemical - number of decimals
-	 * @param {NumberSepStyle} sSepStyle - number separate style
+	 * @param {number} decimalPlaces - The number of digits after the decimal point.
+	 * @param {NumberSepStyle} separatorStyle - The number separator style.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/SetPercentageFormat.js
 	 */
-	ApiTextField.prototype.SetPercentageFormat = function(nDemical, sSepStyle) {
+	ApiTextField.prototype.SetPercentageFormat = function(decimalPlaces, separatorStyle) {
 		this.Field.ClearFormat();
 
 		let aActionsFormat = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": "AFPercent_Format(" + nDemical + "," + private_GetInnerNumberSeparateType(sSepStyle) + ");"
+			"JS": "AFPercent_Format(" + decimalPlaces + "," + private_GetInnerNumberSeparateType(separatorStyle) + ");"
 		}]
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": "AFPercent_Keystroke(" + nDemical + "," + private_GetInnerNumberSeparateType(sSepStyle) + ");"
+			"JS": "AFPercent_Keystroke(" + decimalPlaces + "," + private_GetInnerNumberSeparateType(separatorStyle) + ");"
 		}];
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 		this.Field.Commit();
@@ -2689,22 +2694,22 @@
 	 * Sets date format for field.
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sFormat - date format (e.g. "dd.mm.yyyy")
+	 * @param {string} format - date format (e.g. "dd.mm.yyyy")
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/SetDateFormat.js
 	 */
-	ApiTextField.prototype.SetDateFormat = function(sFormat) {
+	ApiTextField.prototype.SetDateFormat = function(format) {
 		this.Field.ClearFormat();
 
 		let aActionsFormat = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": 'AFDate_Format("' + sFormat + '");'
+			"JS": 'AFDate_Format("' + format + '");'
 		}]
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": 'AFDate_Keystroke("' + sFormat + '");'
+			"JS": 'AFDate_Keystroke("' + format + '");'
 		}];
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 		this.Field.Commit();
@@ -2716,22 +2721,22 @@
 	 * Sets time format for field.
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
-	 * @param {TimeFormat} sFormat - available time format
+	 * @param {TimeFormat} format - available time format
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/SetTimeFormat.js
 	 */
-	ApiTextField.prototype.SetTimeFormat = function(sFormat) {
+	ApiTextField.prototype.SetTimeFormat = function(format) {
 		this.Field.ClearFormat();
 
 		let aActionsFormat = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": 'AFTime_Format(' + private_GetInnerTimeFormatType(sFormat) + ');'
+			"JS": 'AFTime_Format(' + private_GetInnerTimeFormatType(format) + ');'
 		}]
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": 'AFTime_Keystroke(' + private_GetInnerTimeFormatType(sFormat) + ');'
+			"JS": 'AFTime_Keystroke(' + private_GetInnerTimeFormatType(format) + ');'
 		}];
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 		this.Field.Commit();
@@ -2743,22 +2748,22 @@
 	 * Sets special format for field.
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
-	 * @param {PsfFormat} sFormat - the formatting style to apply to the value
+	 * @param {PsfFormat} format - the formatting style to apply to the value
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/SetSpecialFormat.js
 	 */
-	ApiTextField.prototype.SetSpecialFormat = function(sFormat) {
+	ApiTextField.prototype.SetSpecialFormat = function(format) {
 		this.Field.ClearFormat();
 				
 		let aActionsFormat = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": "AFSpecial_Format(" + private_GetInnerSpecialPsfType(sFormat) + ");"
+			"JS": "AFSpecial_Format(" + private_GetInnerSpecialPsfType(format) + ");"
 		}]
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": "AFSpecial_Keystroke(" + private_GetInnerSpecialPsfType(sFormat) + ");"
+			"JS": "AFSpecial_Keystroke(" + private_GetInnerSpecialPsfType(format) + ");"
 		}];
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 		this.Field.Commit();
@@ -2767,16 +2772,16 @@
 	};
 
 	/**
-	 * Sets mask for entered text for field.
+	 * Sets the input mask for entered text.
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sMask - field mask (e.g. "(999)999-9999")
+	 * @param {string} inputMask - The input mask (e.g. "(999)999-9999").
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/SetMask.js
 	 */
-	ApiTextField.prototype.SetMask = function(sMask) {
+	ApiTextField.prototype.SetMask = function(inputMask) {
 		this.Field.ClearFormat();
-		this.Field.SetArbitaryMask(sMask);
+		this.Field.SetArbitaryMask(inputMask);
 		this.Field.Commit();
 
 		return true;
@@ -2786,13 +2791,13 @@
 	 * Sets regular expression validate string for field.
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sReg - field regular expression (e.g. "\\S+@\\S+\\.\\S+")
+	 * @param {string} regularExpression - The validation regular expression (e.g. "\\S+@\\S+\\.\\S+")
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/SetRegularExp.js
 	 */
-	ApiTextField.prototype.SetRegularExp = function(sReg) {
+	ApiTextField.prototype.SetRegularExp = function(regularExpression) {
 		this.Field.ClearFormat();
-		this.Field.SetRegularExp(sReg);
+		this.Field.SetRegularExp(regularExpression);
 		this.Field.Commit();
 
 		return true;
@@ -2817,28 +2822,28 @@
 	 * <note> Can only be applied to fields with a percentage or number format. </note>
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} [bGreaterThan=false] - If true, enables minimum value check using `nGreaterThan`.
-	 * @param {number} nGreaterThan - Minimum allowed value (inclusive or exclusive based on implementation).
-	 * @param {boolean} [bLessThan=false] - If true, enables maximum value check using `nLessThan`.
-	 * @param {number} nLessThan - Maximum allowed value (inclusive or exclusive based on implementation).
+	 * @param {boolean} [greaterThan=false] - If true, enables minimum value validation using `greaterThanValue`.
+	 * @param {number} greaterThanValue - The minimum allowed value.
+	 * @param {boolean} [lessThan=false] - If true, enables maximum value validation using `lessThanValue`.
+	 * @param {number} lessThanValue - The maximum allowed value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/SetValidateRange.js
 	 */
-	ApiTextField.prototype.SetValidateRange = function(bGreaterThan, nGreaterThan, bLessThan, nLessThan) {
+	ApiTextField.prototype.SetValidateRange = function(greaterThan, greaterThanValue, lessThan, lessThanValue) {
 		if (false == this.Field.IsNumberFormat()) {
 			return false;
 		}
 		
-		if (bGreaterThan == undefined) {
-			bGreaterThan = false;
+		if (greaterThan == undefined) {
+			greaterThan = false;
 		}
-		if (bLessThan == undefined) {
-			bLessThan = false;
+		if (lessThan == undefined) {
+			lessThan = false;
 		}
 
 		let aActionsValidate = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": 'AFRange_Validate(' + bGreaterThan +  ',' + nGreaterThan + ',' + bLessThan + ',' + nLessThan +  ');'
+			"JS": 'AFRange_Validate(' + greaterThan +  ',' + greaterThanValue + ',' + lessThan + ',' + lessThanValue +  ');'
 		}];
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Validate, aActionsValidate);
 
@@ -2873,12 +2878,12 @@
 	 * Sets text field placeholder.
 	 * @memberof ApiTextWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sPlaceholder - field placeholder 
+	 * @param {string} placeholder - The placeholder text.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTextWidget/Methods/SetPlaceholder.js
 	 */
-	ApiTextWidget.prototype.SetPlaceholder = function(sText) {
-		return this.Field.SetPlaceholder(sText)
+	ApiTextWidget.prototype.SetPlaceholder = function(placeholder) {
+		return this.Field.SetPlaceholder(placeholder)
 	};
 
 	/**
@@ -2893,19 +2898,19 @@
 	};
 
 	/**
-	 * Sets text widget regular validate expression.
+	 * Sets the text widget regular validation expression.
 	 * @memberof ApiTextWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sReg - field regular exp 
+	 * @param {string} regularExpression - The validation regular expression.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTextWidget/Methods/SetRegularExp.js
 	 */
-	ApiTextWidget.prototype.SetRegularExp = function(sReg) {
-		return this.Field.SetRegularExp(sReg)
+	ApiTextWidget.prototype.SetRegularExp = function(regularExpression) {
+		return this.Field.SetRegularExp(regularExpression)
 	};
 
 	/**
-	 * Gets text widget regular validate expression.
+	 * Gets the text widget regular validation expression.
 	 * @memberof ApiTextWidget
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
@@ -2939,44 +2944,44 @@
 	 * @memberof ApiBaseListField
 	 * @typeofeditors ["PDFE"]
 	 * @param {ListOption} option - list option to add
-	 * @param {number} [nPos=this.GetOptions().lenght] - pos to add option
+	 * @param {number} [index=this.GetOptions().lenght] - index to add option.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseListField/Methods/AddOption.js
 	 */
-	ApiBaseListField.prototype.AddOption = function(option, nPos) {
-		return this.Field.AddOption(option, nPos);
+	ApiBaseListField.prototype.AddOption = function(option, index) {
+		return this.Field.AddOption(option, index);
 	};
 
 	/**
 	 * Removes option from list options.
 	 * @memberof ApiBaseListField
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} nPos - pos to remove option
+	 * @param {number} index - The option index.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseListField/Methods/RemoveOption.js
 	 */
-	ApiBaseListField.prototype.RemoveOption = function(nPos) {
-		return !!this.Field.RemoveOption(nPos);
+	ApiBaseListField.prototype.RemoveOption = function(index) {
+		return !!this.Field.RemoveOption(index);
 	};
 
 	/**
 	 * Moves option to specified position in list options.
 	 * @memberof ApiBaseListField
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} nCurPos - index of moved option
-	 * @param {number} nNewPos - new positon for option
+	 * @param {number} currentIndex - The current index of the option to move.
+	 * @param {number} newIndex - The target index for the option.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseListField/Methods/MoveOption.js
 	 */
-	ApiBaseListField.prototype.MoveOption = function(nCurPos, nNewPos) {
+	ApiBaseListField.prototype.MoveOption = function(currentIndex, newIndex) {
 		let aOptions = this.GetOptions();
-		if (nCurPos < 0 || nCurPos >= aOptions.length || nNewPos < 0) return false;
+		if (currentIndex < 0 || currentIndex >= aOptions.length || newIndex < 0) return false;
 	
-		let opt = this.Field.RemoveOption(nCurPos);
+		let opt = this.Field.RemoveOption(currentIndex);
 		if (!opt)
 			return false;
 	
-		let nTargetPos = Math.min(nNewPos, aOptions.length);
+		let nTargetPos = Math.min(newIndex, aOptions.length);
 		
 		this.Field.AddOption(opt, nTargetPos);
 		return true;
@@ -2986,14 +2991,14 @@
 	 * Gets option from list options.
 	 * @memberof ApiBaseListField
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} nPos - option index to get
+	 * @param {number} index - The option index.
 	 * @returns {ListOption}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseListField/Methods/GetOption.js
 	 */
-	ApiBaseListField.prototype.GetOption = function(nPos) {
+	ApiBaseListField.prototype.GetOption = function(index) {
 		let aOptions = this.Field.GetOptions();
 		if (aOptions) {
-			return aOptions[nPos];
+			return aOptions[index];
 		}
 
 		return null;
@@ -3012,15 +3017,15 @@
 	};
 
 	/**
-	 * Sets field commit on selection change prop.
+	 * Sets whether the field commits changes immediately after selection changes.
 	 * @memberof ApiBaseListField
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bCommit - will the field value be applied to all with the same name immediately after the change
+	 * @param {boolean} commitOnSelectionChange - Specifies whether selection changes are committed immediately.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseListField/Methods/SetCommitOnSelChange.js
 	 */
-	ApiBaseListField.prototype.SetCommitOnSelChange = function(bCommit) {
-		return this.Field.SetCommitOnSelChange(bCommit)
+	ApiBaseListField.prototype.SetCommitOnSelChange = function(commitOnSelectionChange) {
+		return this.Field.SetCommitOnSelChange(commitOnSelectionChange)
 	};
 
 	/**
@@ -3038,16 +3043,16 @@
 	 * Sets selected value indexes.
 	 * @memberof ApiBaseListField
 	 * @typeofeditors ["PDFE"]
-	 * @param {number[]} aIndexes - selected indexes
+	 * @param {number[]} valueIndexes - The indexes of the selected values.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseListField/Methods/SetValueIndexes.js
 	 */
-	ApiBaseListField.prototype.SetValueIndexes = function(aIndexes) {
+	ApiBaseListField.prototype.SetValueIndexes = function(valueIndexes) {
 		let oDoc = private_GetLogicDocument();
 
 		let oFieldToCommit = this.Field.IsWidget() ? this.Field : this.Field.GetKid(0);
 
-		oFieldToCommit.SetCurIdxs(aIndexes);
+		oFieldToCommit.SetCurIdxs(valueIndexes);
 		return oDoc.private_CommitField(oFieldToCommit);
 	};
 
@@ -3093,15 +3098,15 @@
 	};
 
 	/**
-	 * Sets field editable prop.
+	 * Sets whether custom text can be entered.
 	 * @memberof ApiComboboxField
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bEditable - allow user enter custom text
+	 * @param {boolean} allowCustomText - Specifies whether custom text can be entered.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/SetEditable.js
 	 */
-	ApiComboboxField.prototype.SetEditable = function(bEditable) {
-		return this.Field.SetEditable(bEditable)
+	ApiComboboxField.prototype.SetEditable = function(allowCustomText) {
+		return this.Field.SetEditable(allowCustomText)
 	};
 
 	/**
@@ -3119,27 +3124,27 @@
 	 * Sets number format for field.
 	 * @memberof ApiComboboxField
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} nDemical - number of decimals
-	 * @param {NumberSepStyle} sSepStyle - number separate style
-	 * @param {NumberNegStyle} sNegStyle - number negative style
-	 * @param {string} sCurrency - currency sybmol
-	 * @param {boolean} bCurrencyPrepend - If true, places the currency symbol before the number (e.g., $1,234.56); 
+	 * @param {number} decimalPlaces - The number of digits after the decimal point.
+	 * @param {NumberSepStyle} separatorStyle - The number separator style.
+	 * @param {NumberNegStyle} negativeStyle - The negative number display style.
+	 * @param {string} currency - The currency symbol.
+	 * @param {boolean} currencyPrepend - If true, places the currency symbol before the number (e.g., $1,234.56);
 	 * if false, places it after (e.g., 1,234.56$).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/SetNumberFormat.js
 	 */
-	ApiComboboxField.prototype.SetNumberFormat = function(nDemical, sSepStyle, sNegStyle, sCurrency, bCurrencyPrepend) {
+	ApiComboboxField.prototype.SetNumberFormat = function(decimalPlaces, separatorStyle, negativeStyle, currency, currencyPrepend) {
 		this.Field.ClearFormat();
 
 		let aActionsFormat = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": "AFNumber_Format(" + nDemical + "," + private_GetInnerNumberSeparateType(sSepStyle) + "," + private_GetInnerNumberNegType(sNegStyle) + "," + "0" + ',"' + sCurrency + '",' + bCurrencyPrepend + ");"
+			"JS": "AFNumber_Format(" + decimalPlaces + "," + private_GetInnerNumberSeparateType(separatorStyle) + "," + private_GetInnerNumberNegType(negativeStyle) + "," + "0" + ',"' + currency + '",' + currencyPrepend + ");"
 		}];
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": "AFNumber_Keystroke(" + nDemical + "," + private_GetInnerNumberSeparateType(sSepStyle) + "," + private_GetInnerNumberNegType(sNegStyle) + "," + "0" + ',"' + sCurrency + '",' + bCurrencyPrepend + ");"
+			"JS": "AFNumber_Keystroke(" + decimalPlaces + "," + private_GetInnerNumberSeparateType(separatorStyle) + "," + private_GetInnerNumberNegType(negativeStyle) + "," + "0" + ',"' + currency + '",' + currencyPrepend + ");"
 		}];
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 
@@ -3152,23 +3157,23 @@
 	 * Sets percentage format for field.
 	 * @memberof ApiComboboxField
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} nDemical - number of decimals
-	 * @param {NumberSepStyle} sSepStyle - number separate style
+	 * @param {number} decimalPlaces - The number of digits after the decimal point.
+	 * @param {NumberSepStyle} separatorStyle - The number separator style.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/SetPercentageFormat.js
 	 */
-	ApiComboboxField.prototype.SetPercentageFormat = function(nDemical, sSepStyle) {
+	ApiComboboxField.prototype.SetPercentageFormat = function(decimalPlaces, separatorStyle) {
 		this.Field.ClearFormat();
 
 		let aActionsFormat = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": "AFPercent_Format(" + nDemical + "," + private_GetInnerNumberSeparateType(sSepStyle) + ");"
+			"JS": "AFPercent_Format(" + decimalPlaces + "," + private_GetInnerNumberSeparateType(separatorStyle) + ");"
 		}]
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": "AFPercent_Keystroke(" + nDemical + "," + private_GetInnerNumberSeparateType(sSepStyle) + ");"
+			"JS": "AFPercent_Keystroke(" + decimalPlaces + "," + private_GetInnerNumberSeparateType(separatorStyle) + ");"
 		}];
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 		this.Field.Commit();
@@ -3180,22 +3185,22 @@
 	 * Sets date format for field.
 	 * @memberof ApiComboboxField
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sFormat - date format (e.g. "dd.mm.yyyy")
+	 * @param {string} format - date format (e.g. "dd.mm.yyyy")
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/SetDateFormat.js
 	 */
-	ApiComboboxField.prototype.SetDateFormat = function(sFormat) {
+	ApiComboboxField.prototype.SetDateFormat = function(format) {
 		this.Field.ClearFormat();
 
 		let aActionsFormat = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": 'AFDate_Format("' + sFormat + '");'
+			"JS": 'AFDate_Format("' + format + '");'
 		}]
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": 'AFDate_Keystroke("' + sFormat + '");'
+			"JS": 'AFDate_Keystroke("' + format + '");'
 		}];
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 		this.Field.Commit();
@@ -3207,22 +3212,22 @@
 	 * Sets time format for field.
 	 * @memberof ApiComboboxField
 	 * @typeofeditors ["PDFE"]
-	 * @param {TimeFormat} sFormat - available time format
+	 * @param {TimeFormat} format - available time format
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/SetTimeFormat.js
 	 */
-	ApiComboboxField.prototype.SetTimeFormat = function(sFormat) {
+	ApiComboboxField.prototype.SetTimeFormat = function(format) {
 		this.Field.ClearFormat();
 
 		let aActionsFormat = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": 'AFTime_Format(' + private_GetInnerTimeFormatType(sFormat) + ');'
+			"JS": 'AFTime_Format(' + private_GetInnerTimeFormatType(format) + ');'
 		}]
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": 'AFTime_Keystroke(' + private_GetInnerTimeFormatType(sFormat) + ');'
+			"JS": 'AFTime_Keystroke(' + private_GetInnerTimeFormatType(format) + ');'
 		}];
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 		this.Field.Commit();
@@ -3234,22 +3239,22 @@
 	 * Sets special format for field.
 	 * @memberof ApiComboboxField
 	 * @typeofeditors ["PDFE"]
-	 * @param {PsfFormat} sFormat - the formatting style to apply to the value
+	 * @param {PsfFormat} format - the formatting style to apply to the value
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/SetSpecialFormat.js
 	 */
-	ApiComboboxField.prototype.SetSpecialFormat = function(sFormat) {
+	ApiComboboxField.prototype.SetSpecialFormat = function(format) {
 		this.Field.ClearFormat();
 				
 		let aActionsFormat = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": "AFSpecial_Format(" + private_GetInnerSpecialPsfType(sFormat) + ");"
+			"JS": "AFSpecial_Format(" + private_GetInnerSpecialPsfType(format) + ");"
 		}]
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": "AFSpecial_Keystroke(" + private_GetInnerSpecialPsfType(sFormat) + ");"
+			"JS": "AFSpecial_Keystroke(" + private_GetInnerSpecialPsfType(format) + ");"
 		}];
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 		this.Field.Commit();
@@ -3261,13 +3266,13 @@
 	 * Sets mask for field.
 	 * @memberof ApiComboboxField
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sMask - field mask (e.g. "(999)999-9999")
+	 * @param {string} inputMask - The input mask (e.g. "(999)999-9999").
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/SetMask.js
 	 */
-	ApiComboboxField.prototype.SetMask = function(sMask) {
+	ApiComboboxField.prototype.SetMask = function(inputMask) {
 		this.Field.ClearFormat();
-		this.Field.SetArbitaryMask(sMask);
+		this.Field.SetArbitaryMask(inputMask);
 		this.Field.Commit();
 
 		return true;
@@ -3277,13 +3282,13 @@
 	 * Sets regular expression for field.
 	 * @memberof ApiComboboxField
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sReg - field regular expression (e.g. "\\S+@\\S+\\.\\S+")
+	 * @param {string} regularExpression - The validation regular expression (e.g. "\\S+@\\S+\\.\\S+")
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/SetRegularExp.js
 	 */
-	ApiComboboxField.prototype.SetRegularExp = function(sReg) {
+	ApiComboboxField.prototype.SetRegularExp = function(regularExpression) {
 		this.Field.ClearFormat();
-		this.Field.SetRegularExp(sReg);
+		this.Field.SetRegularExp(regularExpression);
 		this.Field.Commit();
 
 		return true;
@@ -3308,28 +3313,28 @@
 	 * <note> Can only be applied to fields with a percentage or number format. </note>
 	 * @memberof ApiComboboxField
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} [bGreaterThan=false] - If true, enables minimum value check using `nGreaterThan`.
-	 * @param {number} nGreaterThan - Minimum allowed value (inclusive or exclusive based on implementation).
-	 * @param {boolean} [bLessThan=false] - If true, enables maximum value check using `nLessThan`.
-	 * @param {number} nLessThan - Maximum allowed value (inclusive or exclusive based on implementation).
+	 * @param {boolean} [greaterThan=false] - If true, enables minimum value validation using `greaterThanValue`.
+	 * @param {number} greaterThanValue - The minimum allowed value.
+	 * @param {boolean} [lessThan=false] - If true, enables maximum value validation using `lessThanValue`.
+	 * @param {number} lessThanValue - The maximum allowed value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/SetValidateRange.js
 	 */
-	ApiComboboxField.prototype.SetValidateRange = function(bGreaterThan, nGreaterThan, bLessThan, nLessThan) {
+	ApiComboboxField.prototype.SetValidateRange = function(greaterThan, greaterThanValue, lessThan, lessThanValue) {
 		if (false == this.Field.IsNumberFormat()) {
 			return false;
 		}
 		
-		if (bGreaterThan == undefined) {
-			bGreaterThan = false;
+		if (greaterThan == undefined) {
+			greaterThan = false;
 		}
-		if (bLessThan == undefined) {
-			bLessThan = false;
+		if (lessThan == undefined) {
+			lessThan = false;
 		}
 
 		let aActionsValidate = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
-			"JS": 'AFRange_Validate(' + bGreaterThan +  ',' + nGreaterThan + ',' + bLessThan + ',' + nLessThan +  ');'
+			"JS": 'AFRange_Validate(' + greaterThan +  ',' + greaterThanValue + ',' + lessThan + ',' + lessThanValue +  ');'
 		}];
 		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Validate, aActionsValidate);
 
@@ -3367,26 +3372,26 @@
 	};
 
 	/**
-	 * Sets field multiselect prop.
+	 * Sets whether multiple values can be selected.
 	 * @memberof ApiListboxField
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bMulti - allow user select multi values
+	 * @param {boolean} allowMultipleSelection - Specifies whether multiple values can be selected.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiListboxField/Methods/SetMultipleSelection.js
 	 */
-	ApiListboxField.prototype.SetMultipleSelection = function(bMulti) {
-		return this.Field.SetMultipleSelection(bMulti)
+	ApiListboxField.prototype.SetMultipleSelection = function(allowMultipleSelection) {
+		return this.Field.SetMultipleSelection(allowMultipleSelection)
 	};
 
 	/**
-	 * Checks if field is multiselect.
+	 * Checks if the field supports multiple selection.
 	 * @memberof ApiListboxField
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiListboxField/Methods/IsMultipleSelection.js
 	 */
-	ApiListboxField.prototype.IsMultipleSelection = function(bMulti) {
-		return this.Field.IsMultipleSelection(bMulti)
+	ApiListboxField.prototype.IsMultipleSelection = function() {
+		return this.Field.IsMultipleSelection()
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -3420,19 +3425,19 @@
 	};
 
 	/**
-	 * Sets field toggle to off prop.
+	 * Sets whether the checked state can be toggled off.
 	 * @memberof ApiCheckboxField
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bToggle - can toggle to off
+	 * @param {boolean} allowToggleOff - Specifies whether the checked state can be toggled off.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiCheckboxField/Methods/SetToggleToOff.js
 	 */
-	ApiCheckboxField.prototype.SetToggleToOff = function(bToggle) {
-		return this.Field.SetNoToggleToOff(!bToggle);
+	ApiCheckboxField.prototype.SetToggleToOff = function(allowToggleOff) {
+		return this.Field.SetNoToggleToOff(!allowToggleOff);
 	};
 
 	/**
-	 * Checks if field is toggle to off.
+	 * Checks if the field can be toggled off.
 	 * @memberof ApiCheckboxField
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
@@ -3446,14 +3451,14 @@
 	 * Adds options to checkbox group.
 	 * @memberof ApiCheckboxField
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} nPage - page to add option
-	 * @param {Rect} - rect of new option
-	 * @param {string} [sExportValue] - option checked value
+	 * @param {number} pageIndex - The page where the option will be added.
+	 * @param {Rect} rect - The option rectangle.
+	 * @param {string} [exportValue] - The option checked value.
 	 * @returns {ApiCheckboxWidget}
 	 * @see office-js-api/Examples/{Editor}/ApiCheckboxField/Methods/AddOption.js
 	 */
-	ApiCheckboxField.prototype.AddOption = function(nPage, aRect, sExportValue) {
-		if (!sExportValue) {
+	ApiCheckboxField.prototype.AddOption = function(pageIndex, rect, exportValue) {
+		if (!exportValue) {
 			return null;
 		}
 
@@ -3467,12 +3472,12 @@
 			oField = oDoc.CreateRadiobuttonField();
 		}
 
-		oField.SetRect(aRect);
+		oField.SetRect(rect);
 		oField.SetPartialName(this.GetFullName());
-		oDoc.AddField(oField, nPage);
+		oDoc.AddField(oField, pageIndex);
 
-		if (sExportValue) {
-			oField.SetExportValue(sExportValue);
+		if (exportValue) {
+			oField.SetExportValue(exportValue);
 		}
 
 		return new ApiRadiobuttonField(oField);
@@ -3512,12 +3517,12 @@
 	 * Sets field in unison prop.
 	 * @memberof ApiRadiobuttonField
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bInUnison - will fields with the same export value be checked at the same time
+	 * @param {boolean} checkInUnison - Specifies whether fields with the same export value are checked together.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRadiobuttonField/Methods/SetCheckInUnison.js
 	 */
-	ApiRadiobuttonField.prototype.SetCheckInUnison = function(bInUnison) {
-		return this.Field.SetRadiosInUnison(bInUnison);
+	ApiRadiobuttonField.prototype.SetCheckInUnison = function(checkInUnison) {
+		return this.Field.SetRadiosInUnison(checkInUnison);
 	};
 
 	/**
@@ -3559,17 +3564,17 @@
 	 * Sets checkbox widget checked.
 	 * @memberof ApiCheckboxWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bChecked
+	 * @param {boolean} checked - Specifies whether the checkbox is checked.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiCheckboxWidget/Methods/SetChecked.js
 	 */
-	ApiCheckboxWidget.prototype.SetChecked = function(bChecked) {
+	ApiCheckboxWidget.prototype.SetChecked = function(checked) {
 		let oDoc = private_GetLogicDocument();
-		if (this.Field.IsChecked() == bChecked) {
+		if (this.Field.IsChecked() == checked) {
 			return true;
 		}
 
-		this.Field.SetChecked(bChecked);
+		this.Field.SetChecked(checked);
 		this.Field.SetNeedCommit(true);
 		oDoc.private_CommitField(this.Field);
 
@@ -3591,12 +3596,12 @@
 	 * Sets widget checkbox style.
 	 * @memberof ApiCheckboxWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {CheckStyle} sStyle
+	 * @param {CheckStyle} style - The checkbox style.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiCheckboxWidget/Methods/SetCheckStyle.js
 	 */
-	ApiCheckboxWidget.prototype.SetCheckStyle = function(sStyle) {
-		let nType = private_GetInnerCheckStyle(sStyle);
+	ApiCheckboxWidget.prototype.SetCheckStyle = function(style) {
+		let nType = private_GetInnerCheckStyle(style);
 		if (undefined == nType) {
 			return false;
 		}
@@ -3621,16 +3626,16 @@
 	 * Sets widget export value.
 	 * @memberof ApiCheckboxWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sValue
+	 * @param {string} value - The value to be exported when the checkbox is checked.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiCheckboxWidget/Methods/SetExportValue.js
 	 */
-	ApiCheckboxWidget.prototype.SetExportValue = function(sValue) {
-		if (!sValue) {
+	ApiCheckboxWidget.prototype.SetExportValue = function(value) {
+		if (!value) {
 			return false;
 		}
 
-		this.Field.SetExportValue(sValue);
+		this.Field.SetExportValue(value);
 		return true;
 	};
 
@@ -3649,12 +3654,12 @@
 	 * Sets widget checked by default.
 	 * @memberof ApiCheckboxWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bChecked
+	 * @param {boolean} checked - Specifies whether the checkbox is checked by default.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiCheckboxWidget/Methods/SetCheckedByDefault.js
 	 */
-	ApiCheckboxWidget.prototype.SetCheckedByDefault = function(bChecked) {
-		if (bChecked) {
+	ApiCheckboxWidget.prototype.SetCheckedByDefault = function(checked) {
+		if (checked) {
 			this.Field.SetDefaultValue(this.Field.GetExportValue());
 		}
 		else {
@@ -3733,16 +3738,16 @@
 	 * Sets button widget layout type
 	 * @memberof ApiButtonWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {ButtonLayout} sType - button layout type
+	 * @param {ButtonLayout} layout - The button layout.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiButtonWidget/Methods/SetLayout.js
 	 */
-	ApiButtonWidget.prototype.SetLayout = function(sType) {
-		if (false == Object.keys(AscPDF.Api.Types.position).includes(sType)) {
+	ApiButtonWidget.prototype.SetLayout = function(layout) {
+		if (false == Object.keys(AscPDF.Api.Types.position).includes(layout)) {
 			return false;
 		}
 
-		this.Field.SetLayout(AscPDF.Api.Types.position[sType]);
+		this.Field.SetLayout(AscPDF.Api.Types.position[layout]);
 		return true;
 	};
 
@@ -3764,16 +3769,16 @@
 	 * Sets button widget scale when type
 	 * @memberof ApiButtonWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {ButtonScaleWhen} sType - button widget scale when type
+	 * @param {ButtonScaleWhen} scaleWhen - The condition that controls when the icon is scaled.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiButtonWidget/Methods/SetScaleWhen.js
 	 */
-	ApiButtonWidget.prototype.SetScaleWhen = function(sType) {
-		if (false == Object.keys(AscPDF.Api.Types.scaleWhen).includes(sType)) {
+	ApiButtonWidget.prototype.SetScaleWhen = function(scaleWhen) {
+		if (false == Object.keys(AscPDF.Api.Types.scaleWhen).includes(scaleWhen)) {
 			return false;
 		}
 
-		this.Field.SetScaleWhen(AscPDF.Api.Types.scaleWhen[sType]);
+		this.Field.SetScaleWhen(AscPDF.Api.Types.scaleWhen[scaleWhen]);
 		return true;
 	};
 
@@ -3795,16 +3800,16 @@
 	 * Sets button widget scale how type
 	 * @memberof ApiButtonWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {ButtonScaleHow} sType - button widget scale how type
+	 * @param {ButtonScaleHow} scaleHow - The icon scaling mode.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiButtonWidget/Methods/SetScaleHow.js
 	 */
-	ApiButtonWidget.prototype.SetScaleHow = function(sType) {
-		if (false == Object.keys(AscPDF.Api.Types.scaleHow).includes(sType)) {
+	ApiButtonWidget.prototype.SetScaleHow = function(scaleHow) {
+		if (false == Object.keys(AscPDF.Api.Types.scaleHow).includes(scaleHow)) {
 			return false;
 		}
 
-		this.Field.SetScaleHow(AscPDF.Api.Types.scaleHow[sType]);
+		this.Field.SetScaleHow(AscPDF.Api.Types.scaleHow[scaleHow]);
 		return true;
 	};
 
@@ -3826,12 +3831,12 @@
 	 * Sets button widget fit bounds.
 	 * @memberof ApiButtonWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {boolean} bFit
+	 * @param {boolean} fit - Specifies whether the icon is scaled to fit the button bounds.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiButtonWidget/Methods/SetFitBounds.js
 	 */
-	ApiButtonWidget.prototype.SetFitBounds = function(bFit) {
-		this.Field.SetFitBounds(bFit);
+	ApiButtonWidget.prototype.SetFitBounds = function(fit) {
+		this.Field.SetFitBounds(fit);
 		return true;
 	};
 
@@ -3850,18 +3855,18 @@
 	 * Sets button widget icon x position.
 	 * @memberof ApiButtonWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {percentage} nPosX
+	 * @param {percentage} posX - The horizontal position of the icon as a percentage of the button width.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiButtonWidget/Methods/SetIconXPos.js
 	 */
-	ApiButtonWidget.prototype.SetIconXPos = function(nPosX) {
-		if (typeof(nPosX) !== "number" || nPosX < 0) {
+	ApiButtonWidget.prototype.SetIconXPos = function(posX) {
+		if (typeof(posX) !== "number" || posX < 0) {
 			return false;
 		}
 
 		let oCurPos = this.Field.GetIconPosition();
 
-		this.Field.SetIconPosition(nPosX / 100, oCurPos.Y);
+		this.Field.SetIconPosition(posX / 100, oCurPos.Y);
 		return true;
 	};
 
@@ -3882,18 +3887,18 @@
 	 * Sets button widget icon y position.
 	 * @memberof ApiButtonWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {percentage} nPosY
+	 * @param {percentage} posY - The vertical position of the icon as a percentage of the button height.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiButtonWidget/Methods/SetIconYPos.js
 	 */
-	ApiButtonWidget.prototype.SetIconYPos = function(nPosY) {
-		if (typeof(nPosY) !== "number" || nPosY < 0) {
+	ApiButtonWidget.prototype.SetIconYPos = function(posY) {
+		if (typeof(posY) !== "number" || posY < 0) {
 			return false;
 		}
 
 		let oCurPos = this.Field.GetIconPosition();
 
-		this.Field.SetIconPosition(oCurPos.X, nPosY / 100);
+		this.Field.SetIconPosition(oCurPos.X, posY / 100);
 		return true;
 	};
 
@@ -3914,16 +3919,16 @@
 	 * Sets button widget behavior.
 	 * @memberof ApiButtonWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {ButtonBehavior} sType
+	 * @param {ButtonBehavior} behavior - The highlight behavior when the button is clicked.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiButtonWidget/Methods/SetBehavior.js
 	 */
-	ApiButtonWidget.prototype.SetBehavior = function(sType) {
-		if (false == Object.keys(AscPDF.BUTTON_HIGHLIGHT_TYPES).includes(sType)) {
+	ApiButtonWidget.prototype.SetBehavior = function(behavior) {
+		if (false == Object.keys(AscPDF.BUTTON_HIGHLIGHT_TYPES).includes(behavior)) {
 			return false;
 		}
 
-		this.Field.SetHighlight(private_GetInnerButtonBehaviorType(sType));
+		this.Field.SetHighlight(private_GetInnerButtonBehaviorType(behavior));
 		return true;
 	};
 
@@ -3942,25 +3947,25 @@
 	 * Sets label to button widget field.
 	 * @memberof ApiButtonWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sLabel - button label
-	 * @param {ButtonAppearance} [sApType='normal'] - for what state is the label set 
+	 * @param {string} label - The button label.
+	 * @param {ButtonAppearance} [appearance="normal"] - The appearance state.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiButtonWidget/Methods/SetLabel.js
 	 */
-	ApiButtonWidget.prototype.SetLabel = function(sLabel, sApType) {
+	ApiButtonWidget.prototype.SetLabel = function(label, appearance) {
 		if (this.Field.GetLayout() == AscPDF.Api.Types.position["iconOnly"]) {
 			return false;
 		}
 
-		if (undefined == sApType) {
-			sApType = 'normal';
+		if (undefined == appearance) {
+			appearance = 'normal';
 		}
 
-		if (false == ['normal', 'down', 'hover'].includes(sApType)) {
+		if (false == ['normal', 'down', 'hover'].includes(appearance)) {
 			return false;
 		}
 
-		this.Field.SetCaption(sLabel, private_GetInnerButtonApType(sApType));
+		this.Field.SetCaption(label, private_GetInnerButtonApType(appearance));
 		return true;
 	};
 
@@ -3968,53 +3973,53 @@
 	 * Gets label from button widget field.
 	 * @memberof ApiButtonWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {ButtonAppearance} [sApType='normal'] - from what state is the label set 
+	 * @param {ButtonAppearance} [appearance="normal"] - The appearance state.
 	 * @returns {?string}
 	 * @see office-js-api/Examples/{Editor}/ApiButtonWidget/Methods/GetLabel.js
 	 */
-	ApiButtonWidget.prototype.GetLabel = function(sApType) {
+	ApiButtonWidget.prototype.GetLabel = function(appearance) {
 		if (this.Field.GetLayout() == AscPDF.Api.Types.position["iconOnly"]) {
 			return null;
 		}
 
-		if (undefined == sApType) {
-			sApType = 'normal';
+		if (undefined == appearance) {
+			appearance = 'normal';
 		}
 
-		if (false == ['normal', 'down', 'hover'].includes(sApType)) {
+		if (false == ['normal', 'down', 'hover'].includes(appearance)) {
 			return null;
 		}
 
-		return this.Field.GetCaption(private_GetInnerButtonApType(sApType));
+		return this.Field.GetCaption(private_GetInnerButtonApType(appearance));
 	};
 
 	/**
 	 * Sets image to button widget field.
 	 * @memberof ApiButtonWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} [sImageUrl=''] - image url
-	 * @param {ButtonAppearance} [sApType='normal'] - for what state is the picture set 
+	 * @param {string} [imageUrl=""] - The image URL.
+	 * @param {ButtonAppearance} [appearance="normal"] - The appearance state.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiButtonWidget/Methods/SetImage.js
 	 */
-	ApiButtonWidget.prototype.SetImage = function(sImageUrl, sApType) {
+	ApiButtonWidget.prototype.SetImage = function(imageUrl, appearance) {
 		if (this.Field.GetLayout() == AscPDF.Api.Types.position["textOnly"]) {
 			return false;
 		}
 
-		if (undefined == sApType) {
-			sApType = 'normal';
+		if (undefined == appearance) {
+			appearance = 'normal';
 		}
 
-		if (undefined == sImageUrl) {
-			sImageUrl = '';
+		if (undefined == imageUrl) {
+			imageUrl = '';
 		}
 
-		if (false == ['normal', 'down', 'hover'].includes(sApType)) {
+		if (false == ['normal', 'down', 'hover'].includes(appearance)) {
 			return false;
 		}
 
-		this.Field.SetImageRasterId(sImageUrl, private_GetInnerButtonApType(sApType));
+		this.Field.SetImageRasterId(imageUrl, private_GetInnerButtonApType(appearance));
 		this.Field.SetNeedUpdateImage(true);
 
 		return true;
@@ -4043,7 +4048,7 @@
 	 * Sets annotation rect.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {Rect} rect
+	 * @param {Rect} rect - The new bounding rectangle for the annotation.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetRect.js
 	 */
@@ -4074,7 +4079,7 @@
 	 * Sets annotation position.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {Point} position
+	 * @param {Point} position - The new position of the annotation.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetPosition.js
 	 */
@@ -4104,7 +4109,7 @@
 	 * Sets annotation border color.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The border color.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetBorderColor.js
 	 */
@@ -4187,7 +4192,7 @@
 	 * Sets annotation border width.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {pt} width
+	 * @param {pt} width - The border width in points.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetBorderWidth.js
 	 */
@@ -4213,7 +4218,7 @@
 	 * Sets annotation border style.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {AnnotBorderStyle} borderStyle
+	 * @param {AnnotBorderStyle} borderStyle - The border style: <b>"solid"</b> or <b>"dashed"</b>.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetBorderStyle.js
 	 */
@@ -4241,7 +4246,7 @@
 	 * Sets annotation author name.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} name
+	 * @param {string} name - The author name.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetAuthorName.js
 	 */
@@ -4270,7 +4275,7 @@
 	 * Sets annotation contents.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {?string} contents
+	 * @param {?string} contents - The annotation text contents.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetContents.js
 	 */
@@ -4295,7 +4300,7 @@
 	 * Sets annotation creation date.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} timeStamp
+	 * @param {number} timeStamp - The annotation creation date as a numeric timestamp.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetCreationDate.js
 	 */
@@ -4324,7 +4329,7 @@
 	 * Sets annotation last modification date.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} timeStamp
+	 * @param {number} timeStamp - The annotation last modification date as a numeric timestamp.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetModDate.js
 	 */
@@ -4353,7 +4358,7 @@
 	 * Sets annotation unique name.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} name
+	 * @param {string} name - The unique name for the annotation.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetUniqueName.js
 	 */
@@ -4386,7 +4391,7 @@
 	 * Sets annotation opacity.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {percentage} name
+	 * @param {percentage} value - The opacity value from 0 (transparent) to 100 (opaque).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetOpacity.js
 	 */
@@ -4415,7 +4420,7 @@
 	 * Sets annotation subject.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {?string} subject
+	 * @param {?string} subject - The annotation subject text.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetSubject.js
 	 */
@@ -4444,7 +4449,7 @@
 	 * Sets annotation display type.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {DisplayType} display
+	 * @param {DisplayType} display - The display type for the annotation.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetDisplay.js
 	 */
@@ -4517,7 +4522,7 @@
 	 * <note> Can be applied to circle, square, freeText and polygon annotations </note>
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {AnnotBorderEffectStyle} style
+	 * @param {AnnotBorderEffectStyle} style - The border effect style: <b>"none"</b> or <b>"cloud"</b>.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetBorderEffectStyle.js
 	 */
@@ -4557,7 +4562,7 @@
 	 * <note> Can be applied to circle, square, freeText and polygon annotations </note>
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} value
+	 * @param {number} value - The border effect intensity. Must be greater than or equal to 0.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetBorderEffectIntensity.js
 	 */
@@ -4578,8 +4583,7 @@
 	 * Gets annotation border effect intensity.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} value
-	 * @returns {boolean}
+	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/GetBorderEffectIntensity.js
 	 */
 	ApiBaseAnnotation.prototype.GetBorderEffectIntensity = function() {
@@ -4590,7 +4594,7 @@
 	 * Adds reply on this annot.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiTextAnnotation} textAnnot
+	 * @param {ApiTextAnnotation} textAnnot - The text annotation to use as a reply.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/AddReply.js
 	 */
@@ -4666,7 +4670,7 @@
 	 * Sets icon type for this annotation.
 	 * @memberof ApiTextAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {TextIconType} iconType
+	 * @param {TextIconType} iconType - The icon type for the text annotation.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTextAnnotation/Methods/SetIconType.js
 	 */
@@ -4892,7 +4896,7 @@
 	 * Sets intent type for this annotation.
 	 * @memberof ApiFreeTextAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {FreeTextIntent} intentType
+	 * @param {FreeTextIntent} intentType - The intent type of the free text annotation.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiFreeTextAnnotation/Methods/SetIntent.js
 	 */
@@ -4929,7 +4933,7 @@
 	 * Sets annot callout.
 	 * @memberof ApiFreeTextAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {FreeTextCallout} callout
+	 * @param {FreeTextCallout} callout - An array of 3 points defining the callout line.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiFreeTextAnnotation/Methods/SetCallout.js
 	 */
@@ -5046,7 +5050,7 @@
 	 * Sets a line start point.
 	 * @memberof ApiLineAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {Point} point
+	 * @param {Point} point - The start point of the line.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiLineAnnotation/Methods/SetStartPoint.js
 	 */
@@ -5082,7 +5086,7 @@
 	 * Sets a line end point.
 	 * @memberof ApiLineAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {Point} point
+	 * @param {Point} point - The end point of the line.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiLineAnnotation/Methods/SetEndPoint.js
 	 */
@@ -5118,7 +5122,7 @@
 	 * Sets a line start style.
 	 * @memberof ApiLineAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {LineEndStyle} style
+	 * @param {LineEndStyle} style - The style of the line start endpoint.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiLineAnnotation/Methods/SetStartStyle.js
 	 */
@@ -5148,7 +5152,7 @@
 	 * Sets a line end style.
 	 * @memberof ApiLineAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {LineEndStyle} style
+	 * @param {LineEndStyle} style - The style of the line end endpoint.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiLineAnnotation/Methods/SetEndStyle.js
 	 */
@@ -5420,7 +5424,7 @@
 	 * Sets a line start style.
 	 * @memberof ApiPolyLineAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {LineEndStyle} style
+	 * @param {LineEndStyle} style - The style of the polyline start endpoint.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiPolyLineAnnotation/Methods/SetStartStyle.js
 	 */
@@ -5450,7 +5454,7 @@
 	 * Sets a line end style.
 	 * @memberof ApiPolyLineAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {LineEndStyle} style
+	 * @param {LineEndStyle} style - The style of the polyline end endpoint.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiPolyLineAnnotation/Methods/SetEndStyle.js
 	 */
@@ -5599,7 +5603,7 @@
 	 * Sets stamp rotate.
 	 * @memberof ApiStampAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {Degree} angle
+	 * @param {Degree} angle - The rotation angle in degrees.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiStampAnnotation/Methods/SetRotation.js
 	 */
@@ -5647,7 +5651,7 @@
 	 * Sets quads to current markup annotation.
 	 * @memberof ApiBaseMarkupAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {Quad[]} quads
+	 * @param {Quad[]} quads - An array of quadrilaterals defining the highlighted regions.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseMarkupAnnotation/Methods/SetQuads.js
 	 */
@@ -6158,7 +6162,7 @@
 	 * Sets the paragraph properties.
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiRichParaPr} paraPr
+	 * @param {ApiRichParaPr} paraPr - The paragraph properties to apply.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRichParagraph/Methods/SetParaPr.js
 	 */
@@ -6229,7 +6233,7 @@
 	 * Adds an element to the current paragraph.
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
-	 * @param {ParagraphContent} richRun
+	 * @param {ParagraphContent} richRun - The element to add at the end of the paragraph.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRichParagraph/Methods/Push.js
 	 */
@@ -6516,7 +6520,7 @@
 	 * Sets the font size to the characters of the current text run.
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
-	 * @param {hps} nSize - The text size value measured in half-points (1/144 of an inch).
+	 * @param {hps} size - The text size value measured in half-points (1/144 of an inch).
 	 * @return {ApiRichTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiRichTextPr/Methods/SetFontSize.js
 	 */
@@ -6707,7 +6711,7 @@
 		if (!oPara)
 			return null;
 
-		return new ApiRichParagraph(oPara); 
+		return new ApiRichParagraph(oPara);
 	};
 
 	ApiRichRun.prototype.OnChangeTextPr = function(oApiTextPr) {
@@ -7055,13 +7059,13 @@
 	 * Sets a custom geometry for the current shape.
 	 * @memberof ApiShape
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiGeometry} oGeometry - The geometry to set.
+	 * @param {ApiGeometry} geometry - The geometry to set.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetGeometry.js
 	 */
-	ApiShape.prototype.SetGeometry = function(oGeometry) {
-		if (this.Shape && this.Shape.spPr && oGeometry && oGeometry.geometry) {
-			this.Shape.spPr.setGeometry(oGeometry.geometry);
+	ApiShape.prototype.SetGeometry = function(geometry) {
+		if (this.Shape && this.Shape.spPr && geometry && geometry.geometry) {
+			this.Shape.spPr.setGeometry(geometry.geometry);
 			return true;
 		}
 
@@ -7072,16 +7076,16 @@
 	 * Sets the fill properties to the current shape.
 	 * @memberof ApiShape
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiFill} oFill - The fill type used to fill the shape.
+	 * @param {ApiFill} fill - The fill type used to fill the shape.
 	 * @returns {boolean} - returns false if param is invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetFill.js
 	 */
-	ApiShape.prototype.SetFill = function(oFill) {
-		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
+	ApiShape.prototype.SetFill = function(fill) {
+		if (!fill || !fill.GetClassType || fill.GetClassType() !== "fill")
 			return false;
 
 		if (this.Shape && this.Shape.spPr) {
-			this.Shape.spPr.setFill(oFill.UniFill);
+			this.Shape.spPr.setFill(fill.UniFill);
 			return true;
 		}
 
@@ -7112,16 +7116,16 @@
 	 * Sets the outline properties to the current shape.
 	 * @memberof ApiShape
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiStroke} oStroke - The stroke used to create the shape outline.
+	 * @param {ApiStroke} stroke - The stroke used to create the shape outline.
 	 * @returns {boolean} - returns false if param is invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetLine.js
 	 */
-	ApiShape.prototype.SetLine = function(oStroke) {
-		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
+	ApiShape.prototype.SetLine = function(stroke) {
+		if (!stroke || !stroke.GetClassType || stroke.GetClassType() !== "stroke")
 			return false;
 
 		if (this.Shape && this.Shape.spPr) {
-			this.Shape.spPr.setLn(oStroke.Ln);
+			this.Shape.spPr.setLn(stroke.Ln);
 			return true;
 		}
 
@@ -7211,17 +7215,17 @@
 	 * Adds a new row to the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiTableCell} [oCell] - If not specified, a new row will be added to the end of the table.
+	 * @param {ApiTableCell} [referenceCell] - The cell used as an insertion reference.
 	 * @param {boolean} [isBefore=false] - Adds a new row before or after the specified cell. If no cell is specified,
 	 * then this parameter will be ignored.
 	 * @returns {ApiTableRow}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/AddRow.js
 	 */
-	ApiTable.prototype.AddRow = function(oCell, isBefore) {
+	ApiTable.prototype.AddRow = function(referenceCell, isBefore) {
 		this.private_PrepareTableForActions();
 
 		let _isBefore = AscBuilder.GetBoolParameter(isBefore, false);
-		let _oCell = (oCell instanceof ApiTableCell ? oCell.Cell : undefined);
+		let _oCell = (referenceCell instanceof ApiTableCell ? referenceCell.Cell : undefined);
 		if (_oCell && this.Table !== _oCell.Row.Table)
 			_oCell = undefined;
 
@@ -7243,38 +7247,38 @@
 	 * Returns a row by its index.
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
-	 * @param nIndex {number} - The row index (position) in the table.
+	 * @param {number} rowIndex - The zero-based row index in the table.
 	 * @returns {?ApiTableRow}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetRow.js
 	 */
-	ApiTable.prototype.GetRow = function(nIndex) {
+	ApiTable.prototype.GetRow = function(rowIndex) {
 		if (!this.Drawing) {
 			return null;
 		}
 
 		let aTableContent = this.Table.Content;
-		if (!aTableContent[nIndex]) {
+		if (!aTableContent[rowIndex]) {
 			return null;
 		}
 
-		return new ApiTableRow(aTableContent[nIndex]);
+		return new ApiTableRow(aTableContent[rowIndex]);
 	};
 
 	/**
 	 * Removes a table row with the specified cell.
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiTableCell} oCell - The table cell from the row which will be removed.
+	 * @param {ApiTableCell} rowCell - A cell from the row to remove.
 	 * @returns {boolean} - defines if the table is empty after removing or not.
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveRow.js
 	 */
-	ApiTable.prototype.RemoveRow = function(oCell) {
-		if (!(oCell instanceof ApiTableCell) || this.Table !== oCell.Cell.Row.Table)
+	ApiTable.prototype.RemoveRow = function(rowCell) {
+		if (!(rowCell instanceof ApiTableCell) || this.Table !== rowCell.Cell.Row.Table)
 			return false;
 
 		this.private_PrepareTableForActions();
 		this.Table.RemoveSelection();
-		this.Table.CurCell = oCell.Cell;
+		this.Table.CurCell = rowCell.Cell;
 		return !(this.Table.RemoveTableRow());
 	};
 
@@ -7283,11 +7287,11 @@
 	 * <b>Warning</b>: The number of cells in any row and the number of rows in the current table may be changed.
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiTableCell[]} aCells - The array of cells.
+	 * @param {ApiTableCell[]} cells - The cells to merge.
 	 * @returns {?ApiTableCell}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/MergeCells.js
 	 */
-	ApiTable.prototype.MergeCells = function(aCells) {
+	ApiTable.prototype.MergeCells = function(cells) {
 		this.private_PrepareTableForActions();
 
 		let oTable = this.Table;
@@ -7295,11 +7299,11 @@
 		oTable.Selection.Type = table_Selection_Cell;
 		oTable.Selection.Data = [];
 
-		for (let nPos = 0, nCount = aCells.length; nPos < nCount; ++nPos) {
-			let oCell = aCells[nPos].Cell;
+		for (let nPos = 0, nCount = cells.length; nPos < nCount; ++nPos) {
+			let cell = cells[nPos].Cell;
 			let oPos = {
-				Cell: oCell.Index,
-				Row: oCell.Row.Index
+				Cell: cell.Index,
+				Row: cell.Row.Index
 			};
 
 			let nResultPos = 0;
@@ -7370,17 +7374,17 @@
 	 * Adds a new column to the end of the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiTableCell} [oCell] - If not specified, a new column will be added to the end of the table.
-	 * @param {boolean} [isBefore=false] - Add a new column before or after the specified cell. If no cell is specified,
+	 * @param {ApiTableCell} [referenceCell] - The cell used as an insertion reference.
+	 * @param {boolean} [before=false] - Add a new column before or after the specified cell. If no cell is specified,
 	 * then this parameter will be ignored.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/AddColumn.js
 	 */
-	ApiTable.prototype.AddColumn = function(oCell, isBefore) {
+	ApiTable.prototype.AddColumn = function(referenceCell, before) {
 		this.private_PrepareTableForActions();
 
-		let _isBefore = AscBuilder.GetBoolParameter(isBefore, false);
-		let _oCell = (oCell instanceof ApiTableCell ? oCell.Cell : undefined);
+		let _isBefore = AscBuilder.GetBoolParameter(before, false);
+		let _oCell = (referenceCell instanceof ApiTableCell ? referenceCell.Cell : undefined);
 		if (_oCell && this.Table !== _oCell.Row.Table)
 			_oCell = undefined;
 
@@ -7400,16 +7404,16 @@
 	 * Removes a table column with the specified cell.
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiTableCell} oCell - The table cell from the column which will be removed.
+	 * @param {ApiTableCell} columnCell - A cell from the column to remove.
 	 * @returns {boolean} - defines if the table is empty after removing or not.
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveColumn.js
 	 */
-	ApiTable.prototype.RemoveColumn = function(oCell) {
-		if (!(oCell instanceof ApiTableCell) || this.Table !== oCell.Cell.Row.Table)
+	ApiTable.prototype.RemoveColumn = function(columnCell) {
+		if (!(columnCell instanceof ApiTableCell) || this.Table !== columnCell.Cell.Row.Table)
 			return false;
 		this.private_PrepareTableForActions();
 		this.Table.RemoveSelection();
-		this.Table.CurCell = oCell.Cell;
+		this.Table.CurCell = columnCell.Cell;
 		return !(this.Table.RemoveTableColumn());
 	};
 
@@ -7417,14 +7421,14 @@
 	 * Specifies the shading which shall be applied to the extents of the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
-	 * @param {ShdType | ApiFill} sType - The shading type applied to the contents of the current table. Can be ShdType or ApiFill.
+	 * @param {ShdType | ApiFill} shadingType - The shading type or fill to apply.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetShd.js
 	 */
-	ApiTable.prototype.SetShd = function(sType, r, g, b) {
+	ApiTable.prototype.SetShd = function(shadingType, r, g, b) {
 		let oPr = this.Table.Pr.Copy();
 		let color = new Asc.asc_CColor({
 			r: r,
@@ -7435,13 +7439,13 @@
 		let oShd = new CDocumentShd();
 		let _Shd = null;
 
-		if (sType === "nil") {
+		if (shadingType === "nil") {
 			_Shd = {
 				Value: Asc.c_oAscShdNil
 			};
 			oShd.Set_FromObject(_Shd);
 			oPr.Shd = oShd;
-		} else if (sType === "clear") {
+		} else if (shadingType === "clear") {
 
 			let Unifill = new AscFormat.CUniFill();
 			Unifill.fill = new AscFormat.CSolidFill();
@@ -7458,9 +7462,9 @@
 
 			oShd.Set_FromObject(_Shd);
 			oPr.Shd = oShd;
-		} else if (sType.GetClassType && sType.GetClassType() === "fill") {
+		} else if (shadingType.GetClassType && shadingType.GetClassType() === "fill") {
 			oShd.Value = Asc.c_oAscShdClear;
-			oShd.Unifill = sType.UniFill;
+			oShd.Unifill = shadingType.UniFill;
 			oPr.Shd = oShd;
 		} else
 			oPr.Shd = null;
@@ -7517,35 +7521,35 @@
 	 * Returns a cell by its position in the current row.
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} nPos - The cell position in the table row.
+	 * @param {number} cellIndex - The zero-based cell index in the table row.
 	 * @returns {ApiTableCell}
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetCell.js
 	 */
-	ApiTableRow.prototype.GetCell = function(nPos) {
-		if (nPos < 0 || nPos >= this.Row.Content.length)
+	ApiTableRow.prototype.GetCell = function(cellIndex) {
+		if (cellIndex < 0 || cellIndex >= this.Row.Content.length)
 			return null;
 
-		return new ApiTableCell(this.Row.Content[nPos]);
+		return new ApiTableCell(this.Row.Content[cellIndex]);
 	};
 
 	/**
 	 * Sets the height to the current table row.
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
-	 * @param {EMU} [nValue] - The row height in English measure units.
+	 * @param {EMU} height - The row height in English measure units.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetHeight.js
 	 */
-	ApiTableRow.prototype.SetHeight = function(nValue) {
+	ApiTableRow.prototype.SetHeight = function(height) {
 		let fMaxTopMargin = 0,
 			fMaxBottomMargin = 0,
 			fMaxTopBorder = 0,
 			fMaxBottomBorder = 0;
 
 		for (let i = 0; i < this.Row.Content.length; ++i) {
-			let oCell = this.Row.Content[i];
+			let cell = this.Row.Content[i];
 
-			let oMargins = oCell.GetMargins();
+			let oMargins = cell.GetMargins();
 			if (oMargins.Bottom.W > fMaxBottomMargin) {
 				fMaxBottomMargin = oMargins.Bottom.W;
 			}
@@ -7553,7 +7557,7 @@
 				fMaxTopMargin = oMargins.Top.W;
 			}
 
-			let oBorders = oCell.Get_Borders();
+			let oBorders = cell.Get_Borders();
 			if (oBorders.Top.Size > fMaxTopBorder) {
 				fMaxTopBorder = oBorders.Top.Size;
 			}
@@ -7562,7 +7566,7 @@
 			}
 		}
 
-		this.Row.Set_Height(Math.max(1, private_EMU2MM(nValue) - fMaxTopMargin - fMaxBottomMargin - fMaxTopBorder / 2 - fMaxBottomBorder / 2), Asc.linerule_AtLeast);
+		this.Row.Set_Height(Math.max(1, private_EMU2MM(height) - fMaxTopMargin - fMaxBottomMargin - fMaxTopBorder / 2 - fMaxBottomBorder / 2), Asc.linerule_AtLeast);
 		return true;
 	};
 
@@ -7607,14 +7611,14 @@
 	 * Specifies the shading which shall be applied to the extents of the current table cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
-	 * @param {ShdType | ApiFill} sType - The shading type applied to the contents of the current table. Can be ShdType or ApiFill.
+	 * @param {ShdType | ApiFill} shadingType - The shading type or fill to apply.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetShd.js
 	 */
-	ApiTableCell.prototype.SetShd = function(sType, r, g, b) {
+	ApiTableCell.prototype.SetShd = function(shadingType, r, g, b) {
 		let oPr = this.Cell.Pr.Copy();
 		let color = new Asc.asc_CColor({
 			r: r,
@@ -7625,13 +7629,13 @@
 		let oShd = new CDocumentShd();
 		let _Shd = null;
 
-		if (sType === "nil") {
+		if (shadingType === "nil") {
 			_Shd = {
 				Value: Asc.c_oAscShdNil
 			};
 			oShd.Set_FromObject(_Shd);
 			oPr.Shd = oShd;
-		} else if (sType === "clear") {
+		} else if (shadingType === "clear") {
 
 			let Unifill = new AscFormat.CUniFill();
 			Unifill.fill = new AscFormat.CSolidFill();
@@ -7648,9 +7652,9 @@
 
 			oShd.Set_FromObject(_Shd);
 			oPr.Shd = oShd;
-		} else if (sType.GetClassType && sType.GetClassType() === "fill") {
+		} else if (shadingType.GetClassType && shadingType.GetClassType() === "fill") {
 			oShd.Value = Asc.c_oAscShdClear;
-			oShd.Unifill = sType.UniFill;
+			oShd.Unifill = shadingType.UniFill;
 			oPr.Shd = oShd;
 		} else
 			oPr.Shd = null;
@@ -7664,12 +7668,12 @@
 	 * of a specific individual table cell within a table.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
-	 * @param {?twips} nValue - If this value is <code>null</code>, then default table cell bottom margin shall be used,
+	 * @param {?twips} margin - The cell margin. If this value is <code>null</code>, the default margin is used.
 	 * otherwise override the table cell bottom margin with specified value for the current cell.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellMarginBottom.js
 	 */
-	ApiTableCell.prototype.SetCellMarginBottom = function(nValue) {
+	ApiTableCell.prototype.SetCellMarginBottom = function(margin) {
 		let oPr = this.Cell.Pr.Copy();
 		if (!oPr.TableCellMar) {
 			oPr.TableCellMar = {
@@ -7680,10 +7684,10 @@
 			};
 		}
 
-		if (null === nValue)
+		if (null === margin)
 			oPr.TableCellMar.Bottom = undefined;
 		else
-			oPr.TableCellMar.Bottom = private_GetTableMeasure("twips", nValue);
+			oPr.TableCellMar.Bottom = private_GetTableMeasure("twips", margin);
 
 		this.Cell.Set_Pr(oPr);
 		return true;
@@ -7694,12 +7698,12 @@
 	 * left edge border of a specific individual table cell within a table.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
-	 * @param {?twips} nValue - If this value is <code>null</code>, then default table cell left margin shall be used,
+	 * @param {?twips} margin - The cell margin. If this value is <code>null</code>, the default margin is used.
 	 * otherwise override the table cell left margin with specified value for the current cell.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellMarginLeft.js
 	 */
-	ApiTableCell.prototype.SetCellMarginLeft = function(nValue) {
+	ApiTableCell.prototype.SetCellMarginLeft = function(margin) {
 		let oPr = this.Cell.Pr.Copy();
 		if (!oPr.TableCellMar) {
 			oPr.TableCellMar = {
@@ -7710,10 +7714,10 @@
 			};
 		}
 
-		if (null === nValue)
+		if (null === margin)
 			oPr.TableCellMar.Left = undefined;
 		else
-			oPr.TableCellMar.Left = private_GetTableMeasure("twips", nValue);
+			oPr.TableCellMar.Left = private_GetTableMeasure("twips", margin);
 
 		this.Cell.Set_Pr(oPr);
 		return true;
@@ -7724,12 +7728,12 @@
 	 * right edge border of a specific individual table cell within a table.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
-	 * @param {?twips} nValue - If this value is <code>null</code>, then default table cell right margin shall be used,
+	 * @param {?twips} margin - The cell margin. If this value is <code>null</code>, the default margin is used.
 	 * otherwise override the table cell right margin with specified value for the current cell.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellMarginRight.js
 	 */
-	ApiTableCell.prototype.SetCellMarginRight = function(nValue) {
+	ApiTableCell.prototype.SetCellMarginRight = function(margin) {
 		let oPr = this.Cell.Pr.Copy();
 		if (!oPr.TableCellMar) {
 			oPr.TableCellMar = {
@@ -7740,10 +7744,10 @@
 			};
 		}
 
-		if (null === nValue)
+		if (null === margin)
 			oPr.TableCellMar.Right = undefined;
 		else
-			oPr.TableCellMar.Right = private_GetTableMeasure("twips", nValue);
+			oPr.TableCellMar.Right = private_GetTableMeasure("twips", margin);
 
 		this.Cell.Set_Pr(oPr);
 		return true;
@@ -7754,12 +7758,12 @@
 	 * top edge border of a specific individual table cell within a table.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
-	 * @param {?twips} nValue - If this value is <code>null</code>, then default table cell top margin shall be used,
+	 * @param {?twips} margin - The cell margin. If this value is <code>null</code>, the default margin is used.
 	 * otherwise override the table cell top margin with specified value for the current cell.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellMarginTop.js
 	 */
-	ApiTableCell.prototype.SetCellMarginTop = function(nValue) {
+	ApiTableCell.prototype.SetCellMarginTop = function(margin) {
 		let oPr = this.Cell.Pr.Copy();
 		if (!oPr.TableCellMar) {
 			oPr.TableCellMar = {
@@ -7770,10 +7774,10 @@
 			};
 		}
 
-		if (null === nValue)
+		if (null === margin)
 			oPr.TableCellMar.Top = undefined;
 		else
-			oPr.TableCellMar.Top = private_GetTableMeasure("twips", nValue);
+			oPr.TableCellMar.Top = private_GetTableMeasure("twips", margin);
 
 		this.Cell.Set_Pr(oPr);
 		return true;
@@ -7783,17 +7787,17 @@
 	 * Sets the border which shall be displayed at the bottom of the current table cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
-	 * @param {mm} fSize - The width of the current border.
-	 * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
+	 * @param {mm} borderWidth - The width of the current border.
+	 * @param {ApiFill} fill - The color or pattern used to fill the current border.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderBottom.js
 	 */
-	ApiTableCell.prototype.SetCellBorderBottom = function(fSize, oApiFill) {
+	ApiTableCell.prototype.SetCellBorderBottom = function(borderWidth, fill) {
 		let oBorder = new CDocumentBorder();
 		oBorder.Value = border_Single;
-		oBorder.Size = fSize;
+		oBorder.Size = borderWidth;
 		oBorder.Space = 0;
-		oBorder.Unifill = oApiFill.UniFill;
+		oBorder.Unifill = fill.UniFill;
 
 		let oPr = this.Cell.Pr.Copy();
 		oPr.TableCellBorders.Bottom = oBorder;
@@ -7806,17 +7810,17 @@
 	 * Sets the border which shall be displayed at the left of the current table cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
-	 * @param {mm} fSize - The width of the current border.
-	 * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
+	 * @param {mm} borderWidth - The width of the current border.
+	 * @param {ApiFill} fill - The color or pattern used to fill the current border.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderLeft.js
 	 */
-	ApiTableCell.prototype.SetCellBorderLeft = function(fSize, oApiFill) {
+	ApiTableCell.prototype.SetCellBorderLeft = function(borderWidth, fill) {
 		let oBorder = new CDocumentBorder();
 		oBorder.Value = border_Single;
-		oBorder.Size = fSize;
+		oBorder.Size = borderWidth;
 		oBorder.Space = 0;
-		oBorder.Unifill = oApiFill.UniFill;
+		oBorder.Unifill = fill.UniFill;
 
 		let oPr = this.Cell.Pr.Copy();
 		oPr.TableCellBorders.Left = oBorder;
@@ -7829,17 +7833,17 @@
 	 * Sets the border which shall be displayed at the right of the current table cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
-	 * @param {mm} fSize - The width of the current border.
-	 * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
+	 * @param {mm} borderWidth - The width of the current border.
+	 * @param {ApiFill} fill - The color or pattern used to fill the current border.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderRight.js
 	 */
-	ApiTableCell.prototype.SetCellBorderRight = function(fSize, oApiFill) {
+	ApiTableCell.prototype.SetCellBorderRight = function(borderWidth, fill) {
 		let oBorder = new CDocumentBorder();
 		oBorder.Value = border_Single;
-		oBorder.Size = fSize;
+		oBorder.Size = borderWidth;
 		oBorder.Space = 0;
-		oBorder.Unifill = oApiFill.UniFill;
+		oBorder.Unifill = fill.UniFill;
 
 		let oPr = this.Cell.Pr.Copy();
 		oPr.TableCellBorders.Right = oBorder;
@@ -7852,17 +7856,17 @@
 	 * Sets the border which shall be displayed at the top of the current table cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
-	 * @param {mm} fSize - The width of the current border.
-	 * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
+	 * @param {mm} borderWidth - The width of the current border.
+	 * @param {ApiFill} fill - The color or pattern used to fill the current border.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderTop.js
 	 */
-	ApiTableCell.prototype.SetCellBorderTop = function(fSize, oApiFill) {
+	ApiTableCell.prototype.SetCellBorderTop = function(borderWidth, fill) {
 		let oBorder = new CDocumentBorder();
 		oBorder.Value = border_Single;
-		oBorder.Size = fSize;
+		oBorder.Size = borderWidth;
 		oBorder.Space = 0;
-		oBorder.Unifill = oApiFill.UniFill;
+		oBorder.Unifill = fill.UniFill;
 
 		let oPr = this.Cell.Pr.Copy();
 		oPr.TableCellBorders.Top = oBorder;
@@ -7875,17 +7879,17 @@
 	 * Specifies the vertical alignment for text within the current table cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
-	 * @param {VerticalTextAlign} sType - The type of the vertical alignment.
+	 * @param {VerticalTextAlign} verticalAlign - The vertical alignment type.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetVerticalAlign.js
 	 */
-	ApiTableCell.prototype.SetVerticalAlign = function(sType) {
+	ApiTableCell.prototype.SetVerticalAlign = function(verticalAlign) {
 		let oPr = this.Cell.Pr.Copy();
-		if ("top" === sType)
+		if ("top" === verticalAlign)
 			oPr.VAlign = vertalignjc_Top;
-		else if ("bottom" === sType)
+		else if ("bottom" === verticalAlign)
 			oPr.VAlign = vertalignjc_Bottom;
-		else if ("center" === sType)
+		else if ("center" === verticalAlign)
 			oPr.VAlign = vertalignjc_Center;
 
 		this.Cell.Set_Pr(oPr);
@@ -7896,17 +7900,17 @@
 	 * Specifies the direction of the text flow for the current table cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
-	 * @param {TextFlowDirection} sType - The type of the text flow direction. 
+	 * @param {TextFlowDirection} textDirection - The text flow direction.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetTextDirection.js
 	 */
-	ApiTableCell.prototype.SetTextDirection = function(sType) {
+	ApiTableCell.prototype.SetTextDirection = function(textDirection) {
 		let oPr = this.Cell.Pr.Copy();
-		if ("lrtb" === sType)
+		if ("lrtb" === textDirection)
 			oPr.TextDirection = textdirection_LRTB;
-		else if ("tbrl" === sType)
+		else if ("tbrl" === textDirection)
 			oPr.TextDirection = textdirection_TBRL;
-		else if ("btlr" === sType)
+		else if ("btlr" === textDirection)
 			oPr.TextDirection = textdirection_BTLR;
 
 		this.Cell.Set_Pr(oPr);

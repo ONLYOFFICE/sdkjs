@@ -1546,17 +1546,17 @@
      * Adds the slide master to the presentation slide masters collection.
      * @memberof ApiPresentation
      * @typeofeditors ["CPE"]
-     * @param {number} [nPos    = ApiPresentation.GetMastersCount()]
-     * @param {ApiMaster} oApiMaster - The slide master to be added.
-     * @returns {boolean} - return false if position is invalid or oApiMaster doesn't exist.
+     * @param {number} [pos = ApiPresentation.GetMastersCount()] - The position where the slide master will be added.
+     * @param {ApiMaster} apiMaster - The slide master to be added.
+     * @returns {boolean} - return false if position is invalid or apiMaster doesn't exist.
      * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/AddMaster.js
 	 */
-    ApiPresentation.prototype.AddMaster = function(nPos, oApiMaster)
+    ApiPresentation.prototype.AddMaster = function(pos, apiMaster)
     {
-        if (oApiMaster && oApiMaster.GetClassType && oApiMaster.GetClassType() === "master")
+        if (apiMaster && apiMaster.GetClassType && apiMaster.GetClassType() === "master")
         {
-			let master = oApiMaster.Master;
-			let position = getArrayAddIndex(nPos, master, this.Presentation.slideMasters);
+			let master = apiMaster.Master;
+			let position = getArrayAddIndex(pos, master, this.Presentation.slideMasters);
 			if (position === null)
 				return false;
 
@@ -2661,7 +2661,7 @@
 	 */
     ApiLayout.prototype.AddObject = function(oDrawing)
     {
-        if (this.Layout) 
+        if (this.Layout)
         {
             if (oDrawing.Drawing.group || oDrawing.Drawing.IsUseInDocument())
                 return false;
@@ -6870,11 +6870,11 @@
 	 * Replaces the placeholder by a drawing on the slide.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
-	 * @param {Drawing} oDrawing
+	 * @param {Drawing} drawing - The drawing object that will replace the placeholder.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/ReplacePlaceholder.js
 	 */
-	ApiDrawing.prototype.ReplacePlaceholder = function(oDrawing)
+	ApiDrawing.prototype.ReplacePlaceholder = function(drawing)
 	{
 		let ph = this.GetPlaceholder();
 		if (!ph) return false;
@@ -6882,12 +6882,12 @@
 		let slide = this.Drawing.parent;
 		if (!slide || !slide.graphicObjects) return false;
 
-		let oldSpPr = oDrawing.Drawing.spPr;
+		let oldSpPr = drawing.Drawing.spPr;
 
-		slide.replaceSp(this.Drawing, oDrawing.Drawing);
+		slide.replaceSp(this.Drawing, drawing.Drawing);
 
-		oDrawing.Drawing.setSpPr(this.Drawing.spPr.createDuplicate());
-        if(oDrawing.GetClassType() === "table")
+		drawing.Drawing.setSpPr(this.Drawing.spPr.createDuplicate());
+        if(drawing.GetClassType() === "table")
         {
             let pr = {};
             pr.FrameX = this.GetPosX() / 36000;
@@ -6895,24 +6895,24 @@
             pr.FrameWidth = this.GetWidth() / 36000;
             pr.FrameHeight = this.GetHeight() / 36000;
             pr.Force = true;
-            oDrawing.Drawing.recalculate();
+            drawing.Drawing.recalculate();
 
-            oDrawing.Drawing.setFrameTransform(pr);
+            drawing.Drawing.setFrameTransform(pr);
         }
-        else if(oDrawing.GetClassType() === "chart")
+        else if(drawing.GetClassType() === "chart")
         {
-            AscFormat.CheckSpPrXfrm(oDrawing.Drawing);
-            let xfrm = oDrawing.Drawing.spPr.xfrm;
+            AscFormat.CheckSpPrXfrm(drawing.Drawing);
+            let xfrm = drawing.Drawing.spPr.xfrm;
             xfrm.setOffX(this.GetPosX() / 36000);
             xfrm.setOffY(this.GetPosY() / 36000);
             xfrm.setExtX(this.GetWidth() / 36000);
             xfrm.setExtY(this.GetHeight() / 36000);
             if (oldSpPr)
             {
-                oDrawing.Drawing.spPr.setFill(oldSpPr.Fill ? oldSpPr.Fill.createDuplicate() : null);
-                oDrawing.Drawing.spPr.setLn(oldSpPr.ln ? oldSpPr.ln.createDuplicate() : null);
+                drawing.Drawing.spPr.setFill(oldSpPr.Fill ? oldSpPr.Fill.createDuplicate() : null);
+                drawing.Drawing.spPr.setLn(oldSpPr.ln ? oldSpPr.ln.createDuplicate() : null);
             }
-            oDrawing.Drawing.recalculate();
+            drawing.Drawing.recalculate();
         }
         return true;
 	};
