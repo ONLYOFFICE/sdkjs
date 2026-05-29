@@ -5068,6 +5068,7 @@
 
 		this.IsSupportThumbnails = bEnabled;
 		this.ShowThumbnails(bEnabled);
+		this.SyncThumbnails(bEnabled);
 	};
 	CEditorPage.prototype.SetThumbnails = function (bIsOutlineThumbnails) {
 		if (!this.Thumbnails.isInit || !this.IsSupportThumbnails) {
@@ -5087,10 +5088,14 @@
 			}
 		}
 	}
-	CEditorPage.prototype.ShowThumbnails = function (bShow) {
-		if (this.IsThumbnailsShown() === bShow)
-			return;
-
+	CEditorPage.prototype.ShowThumbnails = function (bIsShow) {
+		const savedSplitterPosition = this.splitters[0].savedPosition;
+		bIsShow
+			? this.splitters[0].setPosition(savedSplitterPosition <= 0 ? 70 : savedSplitterPosition, true)
+			: this.splitters[0].setPosition(0, false, true);
+		this.onSplitterResize();
+	};
+	CEditorPage.prototype.SyncThumbnails = function (bShow) {
 		Asc.editor.syncOnThumbnailsShowWithFlag(bShow);
 	};
 	CEditorPage.prototype.IsThumbnailsShown = function () {

@@ -6616,11 +6616,7 @@ background-repeat: no-repeat;\
 	};
 
 	asc_docs_api.prototype.ShowThumbnails = function (bIsShow) {
-		const savedSplitterPosition = this.WordControl.splitters[0].savedPosition;
-		bIsShow
-			? this.WordControl.splitters[0].setPosition(savedSplitterPosition <= 0 ? 70 : savedSplitterPosition, true)
-			: this.WordControl.splitters[0].setPosition(0, false, true);
-		this.WordControl.onSplitterResize();
+		this.WordControl.ShowThumbnails(bIsShow);
 	};
 
 	asc_docs_api.prototype.asc_ShowNotes = function(bIsShow)
