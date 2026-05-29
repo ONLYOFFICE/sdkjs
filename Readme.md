@@ -56,4 +56,4 @@ We welcome community participation, technical insights, and feedback. For questi
 
 ## 📜 License
 
-**SDKJS** is licensed under the **GNU Affero General Public License (AGPL) v3.0**. For full details, refer to the [LICENSE](https://github.com/ONLYOFFICE/sdkjs/blob/master/LICENSE.txt) file.
+**SDKJS** is licensed under the **GNU Affero General Public License (AGPL) v3.0**. For full details, refer to the [LICENSE](https://github.com/ONLYOFFICE/sdkjs/blob/master/LICENSE) file.

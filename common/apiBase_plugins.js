@@ -73,10 +73,10 @@
 	 * <b>html</b> - HTML formatted code,
 	 * <b>ole</b> - OLE object data,
      * <b>desktop</b> - the desktop editor data,
-     * <b>destop-external</b> - the main page data of the desktop app (system messages),
+     * <b>desktop-external</b> - the main page data of the desktop app (system messages),
      * <b>none</b> - no data will be send to the plugin from the editor,
 	 * <b>sign</b> - the sign for the keychain plugin.
-	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none" | "sign")} initDataType
+	 * @typedef {("text" | "html" | "ole" | "desktop" | "desktop-external" | "none" | "sign")} initDataType
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/initDataType.js
 	 */
 
@@ -126,7 +126,7 @@
 	 * Specifies if the plugin is not displayed in the editor interface and is started in the background with the server (or desktop editors start) not interfering with the other plugins, so that they can work simultaneously.
      *
 	 * @pr {initDataType} initDataType
-	 * The data type selected in the editor and sent to the plugin: "text" - the text data, "html" - HTML formatted code, "ole" - OLE object data, "desktop" - the desktop editor data, "destop-external" - the main page data of the desktop app (system messages), "none" - no data will be send to the plugin from the editor.
+	 * The data type selected in the editor and sent to the plugin: "text" - the text data, "html" - HTML formatted code, "ole" - OLE object data, "desktop" - the desktop editor data, "desktop-external" - the main page data of the desktop app (system messages), "none" - no data will be send to the plugin from the editor.
      *
 	 * @pr {string} initData
      * Is usually equal to "" - this is the data which is sent from the editor to the plugin at the plugin start (e.g. if initDataType == "text", the plugin will receive the selected text when run). It may also be equal to encryption in the encryption plugins.
