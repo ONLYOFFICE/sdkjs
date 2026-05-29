@@ -213,7 +213,7 @@ function (window, undefined) {
 	ParaComment.prototype.Recalculate_Range_Width = function (PRSC, _CurLine, _CurRange) {
 	};
 
-	ParaComment.prototype.Recalculate_Range_Spaces = function (PRSA, CurLine, CurRange, CurPage) {
+	ParaComment.prototype.recalculateRangeAlign = function (alignState) {
 	};
 
 	ParaComment.prototype.Recalculate_PageEndInfo = function (PRSI, _CurLine, _CurRange) {

@@ -4437,7 +4437,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     }
                     else if (!Item.IsSkipOnRecalculate())
                     {
-                        // Основная обработка происходит в Recalculate_Range_Spaces. Здесь обрабатывается единственный случай,
+                        // Основная обработка происходит в recalculateRangeAlign. Здесь обрабатывается единственный случай,
                         // когда после второго пересчета с уже добавленной картинкой оказывается, что место в параграфе, где
                         // идет картинка ушло на следующую страницу. В этом случае мы ставим перенос страницы перед картинкой.
 
@@ -5299,10 +5299,10 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
 	}
 };
 
-ParaRun.prototype.Recalculate_Range_Spaces = function(alignState, _CurLine, _CurRange, CurPage)
+ParaRun.prototype.recalculateRangeAlign = function(alignState)
 {
-	var CurLine  = _CurLine - this.StartLine;
-	var CurRange = (0 === CurLine ? _CurRange - this.StartRange : _CurRange);
+	var CurLine  = alignState.CurLine - this.StartLine;
+	var CurRange = (0 === CurLine ? alignState.CurRange - this.StartRange : alignState.CurRange);
 
 	let startPos = this.protected_GetRangeStartPos(CurLine, CurRange);
 	let endPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
@@ -5313,12 +5313,6 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(alignState, _CurLine, _Cur
 		alignState.handleRunElement(item, this);
 	}
 };
-ParaRun.prototype.walkBidiFlow = function(flow)
-{
-	flow.handleFlowRun(this);
-	return true;
-};
-
 ParaRun.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
 {
 	var CurLine  = _CurLine - this.StartLine;

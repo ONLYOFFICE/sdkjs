@@ -1505,25 +1505,25 @@ CMathBase.prototype.Get_EndRangePos = function(_CurLine, _CurRange, SearchPos, D
     return Result;
 
 };
-CMathBase.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange, _CurPage)
+CMathBase.prototype.recalculateRangeAlign = function(alignState)
 {
-    var CurLine  = _CurLine - this.StartLine;
-    var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
+    var CurLine  = alignState.CurLine - this.StartLine;
+    var CurRange = ( 0 === CurLine ? alignState.CurRange - this.StartRange : alignState.CurRange );
 
     var WidthVisible;
 
-    if ( 0 !== PRSA.LettersSkip )
+    if ( 0 !== alignState.LettersSkip )
     {
         WidthVisible = this.Bounds.GetWidth(CurLine, CurRange);
-        PRSA.LettersSkip--;
+        alignState.LettersSkip--;
     }
     else
     {
-        WidthVisible = this.Bounds.GetWidth(CurLine, CurRange) + PRSA.JustifyWord;
+        WidthVisible = this.Bounds.GetWidth(CurLine, CurRange) + alignState.JustifyWord;
     }
 
-    PRSA.X    += WidthVisible;
-    PRSA.LastW = WidthVisible;
+    alignState.X    += WidthVisible;
+    alignState.LastW = WidthVisible;
 };
 CMathBase.prototype.GetWidth = function(_CurLine, _CurRange)
 {

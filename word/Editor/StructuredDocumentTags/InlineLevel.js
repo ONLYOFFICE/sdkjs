@@ -389,27 +389,23 @@ CInlineLevelSdt.prototype.CanSplit = function()
 {
 	return false;
 };
-CInlineLevelSdt.prototype.walkBidiFlow = function(flow)
+CInlineLevelSdt.prototype.recalculateRangeAlign = function(alignState)
 {
-	return flow.handleFlowInlineLvlSdt(this);
-};
-CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange, _CurPage)
-{
-	var isFastRangeRecalc = PRSA.IsFastRangeRecalc();
+	var isFastRangeRecalc = alignState.IsFastRangeRecalc();
 
-	var CurLine  = _CurLine - this.StartLine;
-	var CurRange = (0 === CurLine ? _CurRange - this.StartRange : _CurRange);
+	var CurLine  = alignState.CurLine - this.StartLine;
+	var CurRange = (0 === CurLine ? alignState.CurRange - this.StartRange : alignState.CurRange);
 
 	if (0 === CurLine && 0 === CurRange && !isFastRangeRecalc)
 		this.Bounds = {};
 
-	var oParagraph = PRSA.Paragraph;
-	var Y0         = oParagraph.Lines[_CurLine].Top + oParagraph.Pages[_CurPage].Y;
-	var Y1         = oParagraph.Lines[_CurLine].Y + oParagraph.Pages[_CurPage].Y + oParagraph.Lines[_CurLine].Metrics.Descent;
-	var X0         = PRSA.X;
+	var oParagraph = alignState.Paragraph;
+	var Y0         = oParagraph.Lines[alignState.CurLine].Top + oParagraph.Pages[alignState.CurPage].Y;
+	var Y1         = oParagraph.Lines[alignState.CurLine].Y + oParagraph.Pages[alignState.CurPage].Y + oParagraph.Lines[alignState.CurLine].Metrics.Descent;
+	var X0         = alignState.X;
 
 	if (0 === CurLine)
-		Y0 = oParagraph.Lines[_CurLine].Y + oParagraph.Pages[_CurPage].Y - oParagraph.Lines[_CurLine].Metrics.Ascent;
+		Y0 = oParagraph.Lines[alignState.CurLine].Y + oParagraph.Pages[alignState.CurPage].Y - oParagraph.Lines[alignState.CurLine].Metrics.Ascent;
 
 	let isSimpleForm = (this.IsForm() && !this.IsComplexForm() && (this === this.GetMainForm()));
 
@@ -429,9 +425,9 @@ CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _C
 		var nYOffset     = oTextPr.Position;
 
 		if (0 === CurLine)
-			Y0 = oParagraph.Lines[_CurLine].Y + oParagraph.Pages[_CurPage].Y - nTextAscent - nYOffset;
+			Y0 = oParagraph.Lines[alignState.CurLine].Y + oParagraph.Pages[alignState.CurPage].Y - nTextAscent - nYOffset;
 
-		Y1 = oParagraph.Lines[_CurLine].Y + oParagraph.Pages[_CurPage].Y + nTextDescent - nYOffset;
+		Y1 = oParagraph.Lines[alignState.CurLine].Y + oParagraph.Pages[alignState.CurPage].Y + nTextDescent - nYOffset;
 	}
 
 	if (!isFastRangeRecalc)
@@ -439,16 +435,16 @@ CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _C
 		for (var Key in this.Bounds)
 		{
 			var __CurLine = (Key | 0) >> 16;
-			if (__CurLine === CurLine - 1 && this.Bounds[Key].PageInternal === _CurPage)
+			if (__CurLine === CurLine - 1 && this.Bounds[Key].PageInternal === alignState.CurPage)
 			{
 				this.Bounds[Key].H = Y0 - this.Bounds[Key].Y;
 			}
 		}
 	}
 
-	CParagraphContentWithParagraphLikeContent.prototype.Recalculate_Range_Spaces.apply(this, arguments);
+	CParagraphContentWithParagraphLikeContent.prototype.recalculateRangeAlign.call(this, alignState);
 
-	var X1 = PRSA.X;
+	var X1 = alignState.X;
 
 	if (isSimpleForm
 		&& this.IsPicture()
@@ -478,8 +474,8 @@ CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _C
 			Y            : Y0,
 			H            : Y1 - Y0,
 			TextLineH    : Y1 - Y0,
-			Page         : PRSA.Paragraph.GetAbsolutePage(_CurPage),
-			PageInternal : _CurPage
+			Page         : alignState.Paragraph.GetAbsolutePage(alignState.CurPage),
+			PageInternal : alignState.CurPage
 		};
 	}
 

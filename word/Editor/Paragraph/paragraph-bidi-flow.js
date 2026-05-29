@@ -65,6 +65,7 @@
 	{
 		this.bidiFlowStack.push(this.bidiFlow);
 		this.bidiFlow = new AscWord.BidiFlow(this);
+		this.bidiFlow.begin(this.Paragraph.isRtlDirection());
 	};
 	ParagraphBidiFlow.prototype.popBidiFlow = function()
 	{
@@ -74,40 +75,9 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Override area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	ParagraphBidiFlow.prototype.checkStopFlow = function()
-	{
-		return false;
-	};
-	ParagraphBidiFlow.prototype.handleFlowRunElement = function(element, run)
+	ParagraphBidiFlow.prototype.handleRunElement = function(element, run)
 	{
 		this.bidiFlow.add([element, run], element.getBidiType());
-	};
-	ParagraphBidiFlow.prototype.handleFlowRun = function(run)
-	{
-		// This is simple implementation, can be overriden if needed
-		let rangePos = run.getRangePos(this.CurLine, this.CurRange);
-		let startPos = rangePos[0];
-		let endPos   = rangePos[1];
-		if (startPos >= endPos)
-			return;
-		
-		for (let pos = startPos; pos < endPos; ++pos)
-		{
-			let item = run.private_CheckInstrText(run.Content[pos]);
-			this.handleFlowRunElement(item, run);
-		}
-	};
-	ParagraphBidiFlow.prototype.handleFlowInlineLvlSdt = function(sdt)
-	{
-		return AscWord.ParagraphContentWithParagraphLikeContent.prototype.walkBidiFlow.call(sdt, this);
-	};
-	ParagraphBidiFlow.prototype.handleFlowParaMath = function(math)
-	{
-		if (!math || math.Root.IsEmptyRange(this.CurLine, this.CurRange))
-			return true;
-		
-		this.bidiFlow.add([math], math.getBidiType());
-		return true;
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area

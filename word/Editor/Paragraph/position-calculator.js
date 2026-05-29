@@ -46,19 +46,18 @@
 	 */
 	function ParagraphPositionCalculator(paragraph)
 	{
-		this.paragraph = paragraph
-		
+		AscWord.ParagraphBidiFlow.call(this);
+		this.Paragraph = paragraph;
+
 		this.page  = 0;
 		this.line  = 0;
 		this.range = 0;
-		
+
 		this.x = 0;
 		this.y = 0;
-		
+
 		this.startX = 0;
-		
-		this.bidi = new AscWord.BidiFlow(this);
-		
+
 		this.isNextCurrent = false;
 		this.nextRun       = null;
 		this.stop          = false;
@@ -84,6 +83,8 @@
 		
 		this.complexFields = new AscWord.ParagraphComplexFieldStack();
 	}
+	ParagraphPositionCalculator.prototype = Object.create(AscWord.ParagraphBidiFlow.prototype);
+	ParagraphPositionCalculator.prototype.constructor = ParagraphPositionCalculator;
 	ParagraphPositionCalculator.prototype.reset = function(page, line, range)
 	{
 		this.prev.element = null;
@@ -101,7 +102,7 @@
 		this.CurLine  = this.line;
 		this.CurRange = this.range;
 		
-		let p = this.paragraph;
+		let p = this.Paragraph;
 		
 		this.x = p.Lines[line].Ranges[range].XVisible;
 		this.y = p.Pages[page].Y + p.Lines[line].Y;
@@ -111,9 +112,9 @@
 		if (p.Numbering.checkRange(range, line) && !p.isRtlDirection())
 			this.x += p.Numbering.WidthVisible;
 		
-		this.bidi.begin(this.paragraph.isRtlDirection());
-		
-		this.complexFields.resetRange(this.paragraph, this.line, this.range);
+		this.bidiFlow.begin(this.Paragraph.isRtlDirection());
+
+		this.complexFields.resetRange(this.Paragraph, this.line, this.range);
 	};
 	ParagraphPositionCalculator.prototype.setNextCurrent = function(run, lastCombItem)
 	{
@@ -122,7 +123,7 @@
 		
 		if (lastCombItem && lastCombItem.RGap)
 		{
-			this.bidi.end();
+			this.bidiFlow.end();
 			
 			this.posInfo.x = this.x;
 			this.posInfo.y = this.y;
@@ -171,7 +172,7 @@
 			this.prev.direction = (element.getBidiType() & AscBidi.FLAG.RTL) ? AscBidi.DIRECTION.R : AscBidi.DIRECTION.L;
 		}
 		
-		this.bidi.add([element, run, isCurrent, isNearFootnoteRef], element.getBidiType());
+		this.bidiFlow.add([element, run, isCurrent, isNearFootnoteRef], element.getBidiType());
 	};
 	ParagraphPositionCalculator.prototype.handleBidiFlow = function(data, direction)
 	{
@@ -230,7 +231,7 @@
 	};
 	ParagraphPositionCalculator.prototype.handleParaMath = function(math, isCurrent)
 	{
-		this.bidi.add([math, isCurrent], math.getBidiType());
+		this.bidiFlow.add([math, isCurrent], math.getBidiType());
 	};
 	ParagraphPositionCalculator.prototype.handleBidiFlowParaMath = function(data)
 	{
@@ -257,8 +258,8 @@
 	};
 	ParagraphPositionCalculator.prototype.handleMathRun = function(run, isCurrentRun, currentPos)
 	{
-		this.bidi.end();
-		this.bidi.begin(this.paragraph.isRtlDirection());
+		this.bidiFlow.end();
+		this.bidiFlow.begin(this.Paragraph.isRtlDirection());
 		
 		if (!isCurrentRun)
 			return;
@@ -316,7 +317,7 @@
 		let isNearFootnoteRef = run.IsCurPosNearFootEndnoteReference();
 		
 		let fontCoef = isNearFootnoteRef ? 1 : textPr.getFontCoef();
-		AscCommon.g_oTextMeasurer.SetTextPr(textPr, this.paragraph.getTheme());
+		AscCommon.g_oTextMeasurer.SetTextPr(textPr, this.Paragraph.getTheme());
 		AscCommon.g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, fontCoef);
 		
 		let textHeight = AscCommon.g_oTextMeasurer.GetHeight();
@@ -362,7 +363,7 @@
 		if (!this.finalize())
 			return BLACK_COLOR;
 		
-		let p      = this.paragraph;
+		let p      = this.Paragraph;
 		let textPr = this.posInfo.run.getCompiledPr();
 		let color  = textPr.Color;
 		
@@ -393,11 +394,11 @@
 	 */
 	ParagraphPositionCalculator.prototype.finalize = function()
 	{
-		this.bidi.end();
+		this.bidiFlow.end();
 		
 		if (this.isNextCurrent && !this.stop)
 		{
-			this.posInfo.x   = this.paragraph.isRtlDirection() ? this.startX : this.x;
+			this.posInfo.x   = this.Paragraph.isRtlDirection() ? this.startX : this.x;
 			this.posInfo.y   = this.y;
 			this.posInfo.run = this.nextRun;
 			

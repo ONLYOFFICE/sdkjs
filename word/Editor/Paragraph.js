@@ -1728,7 +1728,7 @@ Paragraph.prototype.Internal_Recalculate_CurPos = function(updateCurPos, updateT
 	
 	let startPos = this.Lines[CurLine].Ranges[CurRange].StartPos;
 	let endPos   = this.Lines[CurLine].Ranges[CurRange].EndPos;
-	
+
 	let positionCalculator = new AscWord.ParagraphPositionCalculator(this);
 	positionCalculator.reset(CurPage, CurLine, CurRange);
 	for (let pos = startPos; pos <= endPos; ++pos)
@@ -1736,7 +1736,7 @@ Paragraph.prototype.Internal_Recalculate_CurPos = function(updateCurPos, updateT
 		let item = this.Content[pos];
 		item.recalculateCursorPosition(positionCalculator, pos === this.CurPos.ContentPos);
 	}
-	
+
 	let point  = positionCalculator.getXY();
 	result.X = point.x;
 	result.Y = point.y;
@@ -19628,23 +19628,6 @@ Paragraph.prototype.asc_getText = function()
 	}
 	sText += this.GetText();
 	return sText;
-};
-Paragraph.prototype.walkBidiFlow = function(flow)
-{
-	let curLine   = flow.CurLine;
-	let curRange  = flow.CurRange;
-	
-	let range    = this.Lines[curLine].Ranges[curRange];
-	let startPos = range.StartPos;
-	let endPos   = range.EndPos;
-	
-	for (let pos = startPos; pos <= endPos; ++pos)
-	{
-		if (!this.Content[pos].walkBidiFlow(flow) || flow.checkStopFlow())
-			return false;
-	}
-	
-	return true;
 };
 Paragraph.prototype.asc_canAddRefToCaptionText = Paragraph.prototype.CanAddRefAfterSEQ;
 //export

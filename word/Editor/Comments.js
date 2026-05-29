@@ -1280,15 +1280,21 @@ ParaComment.prototype.IsAnnotationMark = function()
 {
 	return true;
 };
-ParaComment.prototype.Recalculate_Range_Spaces = function(PRSA, CurLine, CurRange, CurPage)
+ParaComment.prototype.recalculateRangeAlign = function(alignState)
 {
-	var Para             = PRSA.Paragraph;
+	// TODO: We should move all this logic to AlignRecalcState
+	
+	let Para     = alignState.Paragraph;
+	let CurLine  = alignState.CurLine;
+	let CurRange = alignState.CurRange;
+	let CurPage  = alignState.CurPage;
+
 	var DocumentComments = Para.LogicDocument.Comments;
 	var Comment          = DocumentComments.Get_ById(this.CommentId);
 	if (null === Comment)
 		return;
 
-	var X    = PRSA.X;
+	var X    = alignState.X;
 	var Y    = Para.Pages[CurPage].Y + Para.Lines[CurLine].Y - Para.Lines[CurLine].Metrics.Ascent;
 	var H    = Para.Lines[CurLine].Metrics.Ascent + Para.Lines[CurLine].Metrics.Descent;
 	var Page = Para.GetAbsolutePage(CurPage);

@@ -4142,6 +4142,8 @@ CMathContent.prototype.Add_MatrixWithBrackets = function(begChr, endChr, ctrPr, 
 };
 CMathContent.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
 {
+	positionCalculator.pushBidiFlow();
+	
 	let line  = positionCalculator.line;
 	let range = positionCalculator.range;
 	
@@ -4153,6 +4155,8 @@ CMathContent.prototype.recalculateCursorPosition = function(positionCalculator, 
 	{
 		this.Content[pos].recalculateCursorPosition(positionCalculator, isCurrent && pos === this.CurPos);
 	}
+	
+	positionCalculator.popBidiFlow();
 };
 CMathContent.prototype.getParagraphContentPosByXY = function(searchState)
 {
@@ -5133,18 +5137,11 @@ CMathContent.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 
     this.protected_FillRange(CurLine, CurRange, RangeStartPos, RangeEndPos);
 };
-CMathContent.prototype.Recalculate_Range_Spaces = function(alignState, _CurLine, _CurRange, _CurPage)
+CMathContent.prototype.recalculateRangeAlign = function(alignState)
 {
 	alignState.pushBidiFlow();
-	CParagraphContentWithParagraphLikeContent.prototype.Recalculate_Range_Spaces.apply(this, arguments);
+	CParagraphContentWithParagraphLikeContent.prototype.recalculateRangeAlign.call(this, alignState);
 	alignState.popBidiFlow();
-};
-CMathContent.prototype.walkBidiFlow = function(flow)
-{
-	flow.pushBidiFlow();
-	let result = AscWord.ParagraphContentWithParagraphLikeContent.prototype.walkBidiFlow.apply(this, arguments);
-	flow.popBidiFlow();
-	return result;
 };
 CMathContent.prototype.private_ForceBreakBox = function(PRS, Box, _Depth, PrevLastPos, LastPos)
 {

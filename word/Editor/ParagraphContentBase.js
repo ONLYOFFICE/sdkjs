@@ -378,7 +378,7 @@ CParagraphContentBase.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, 
 CParagraphContentBase.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
 {
 };
-CParagraphContentBase.prototype.Recalculate_Range_Spaces = function(PRSA, CurLine, CurRange, CurPage)
+CParagraphContentBase.prototype.recalculateRangeAlign = function(alignState)
 {
 };
 CParagraphContentBase.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
@@ -1015,11 +1015,6 @@ CParagraphContentBase.prototype.createDuplicateForSmartArt = function(oPr)
  * @param oEngine {CTextToTableEngine}
  */
 CParagraphContentBase.prototype.CalculateTextToTable = function(oEngine){};
-CParagraphContentBase.prototype.walkBidiFlow = function(flow)
-{
-	return true;
-};
-
 CParagraphContentBase.prototype.GetAllPermRangeMarks = function(marks)
 {
 	return [];
@@ -2839,18 +2834,18 @@ CParagraphContentWithParagraphLikeContent.prototype.Recalculate_Range_Width = fu
         this.Content[CurPos].Recalculate_Range_Width( PRSC, _CurLine, _CurRange );
     }
 };
-CParagraphContentWithParagraphLikeContent.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange, _CurPage)
+CParagraphContentWithParagraphLikeContent.prototype.recalculateRangeAlign = function(alignState) 
 {
-    var CurLine = _CurLine - this.StartLine;
-    var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
+	var CurLine = alignState.CurLine - this.StartLine;
+	var CurRange = (0 === CurLine ? alignState.CurRange - this.StartRange : alignState.CurRange);
 
-    var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
+	var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
+	var EndPos = this.protected_GetRangeEndPos(CurLine, CurRange);
 
-    for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
-    {
-        this.Content[CurPos].Recalculate_Range_Spaces( PRSA, _CurLine, _CurRange, _CurPage );
-    }
+	for (var CurPos = StartPos; CurPos <= EndPos; CurPos++) 
+	{
+		this.Content[CurPos].recalculateRangeAlign(alignState);
+	}
 };
 CParagraphContentWithParagraphLikeContent.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
 {
@@ -5004,26 +4999,6 @@ CParagraphContentWithParagraphLikeContent.prototype.CalculateTextToTable = funct
 		this.Content[nIndex].CalculateTextToTable(oEngine);
 	}
 };
-CParagraphContentWithParagraphLikeContent.prototype.walkBidiFlow = function(flow)
-{
-	let _curLine   = flow.CurLine;
-	let _curRange  = flow.CurRange;
-	
-	let curLine  = _curLine - this.StartLine;
-	let curRange = (0 === curLine ? _curRange - this.StartRange : _curRange );
-
-	let startPos = this.protected_GetRangeStartPos(curLine, curRange);
-	let endPos   = this.protected_GetRangeEndPos(curLine, curRange);
-	
-	for (let pos = startPos; pos <= endPos; ++pos)
-	{
-		if (!this.Content[pos].walkBidiFlow(flow) || flow.checkStopFlow())
-			return false;
-	}
-	
-	return true;
-};
-
 //----------------------------------------------------------------------------------------------------------------------
 // Функции, которые должны быть реализованы в классах наследниках
 //----------------------------------------------------------------------------------------------------------------------

@@ -2006,11 +2006,7 @@ ParaMath.prototype.UpdateWidthLine = function(PRS, Width)
 			this.private_SetRestartRecalcInfo(PRS);
 	}
 };
-ParaMath.prototype.walkBidiFlow = function(flow)
-{
-	return flow.handleFlowParaMath(this);
-};
-ParaMath.prototype.Recalculate_Range_Spaces = function(alignState, _CurLine, _CurRange, _CurPage)
+ParaMath.prototype.recalculateRangeAlign = function(alignState)
 {
 	alignState.handleParaMath(this);
 };
