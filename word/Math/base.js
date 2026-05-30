@@ -220,6 +220,10 @@ CMathBase.prototype.setDimension = function(countRow, countCol)
     }
 
 };
+CMathBase.prototype.getBidiType = function()
+{
+	return AscBidi.TYPE.L;
+};
 CMathBase.prototype.SetParent = function(parent)
 {
 	this.Parent = parent;

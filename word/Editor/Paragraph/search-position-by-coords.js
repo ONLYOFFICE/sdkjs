@@ -40,6 +40,10 @@
 	const EPSILON  = 0.001;
 	const MAX_DIFF = 1000000;
 	
+	const TYPE_RUN_ELEMENT = 0x01;
+	const TYPE_PARA_MATH   = 0x02;
+	const TYPE_MATH_BASE   = 0x03;
+	
 	/**
 	 * Class for searching position in the paragraph
 	 * @constructor
@@ -175,28 +179,120 @@
 		else
 			this.emptyRun = run;
 	};
-	ParagraphSearchPositionXY.prototype.handleEmptyRun = function(run)
+	ParagraphSearchPositionXY.prototype.handleParaMath = function(math)
 	{
-		let curX = this.curX;
-		if (run.IsMathRun())
+		this.bidiFlow.add([math, TYPE_PARA_MATH], math.getBidiType());
+	};
+	ParagraphSearchPositionXY.prototype.handleMathBase = function(mathBase)
+	{
+		this.bidiFlow.add([mathBase, TYPE_MATH_BASE], mathBase.getBidiType());
+	};
+	ParagraphSearchPositionXY.prototype.handleRunElement = function(element, run, inRunPos)
+	{
+		if (!this.complexFields.checkRunElement(element))
+			return;
+		
+		if (this.emptyRun)
 		{
-			let mathPos = run.ParaMath.GetLinePosition(this.line, this.range);
-			curX        = mathPos.x + run.pos.x;
+			this.emptyRunHandler[element] = this.emptyRun;
+			this.emptyRun = null;
 		}
 		
-		let diff = this.x - curX;
-		if (this.checkPosition(diff))
+		this.bidiFlow.add([element, TYPE_RUN_ELEMENT, run, inRunPos], element.getBidiType());
+	};
+	ParagraphSearchPositionXY.prototype.handleBidiFlow = function(data, direction)
+	{
+		let item     = data[0];
+		let itemType = data[1];
+		switch (itemType)
 		{
-			this.setDiff(diff);
-			this.posInfo.run = run;
-			this.posInfo.pos = run.GetElementsCount();
+			case TYPE_RUN_ELEMENT:
+				this.handleBidiFlowRunElement(data, direction);
+				break;
+			case TYPE_PARA_MATH:
+				this.handleBidiFlowParaMath(item);
+				break;
+			case TYPE_MATH_BASE:
+				this.handleBidiFlowMathBase(item);
+				break;
 		}
 	};
-	ParagraphSearchPositionXY.prototype.handleParaMath = function(math)
+	ParagraphSearchPositionXY.prototype.handleBidiFlowRunElement = function(data, direction)
+	{
+		let item     = data[0];
+		let run      = data[2];
+		let inRunPos = data[3];
+		
+		if (this.emptyRunHandler[item] && direction === AscBidi.DIRECTION.L)
+		{
+			this.handleBidiFlowEmptyRun(this.emptyRunHandler[item]);
+			delete this.emptyRunHandler[item];
+		}
+		
+		let w = 0;
+		if (!item.IsDrawing() || item.IsInline())
+			w = item.GetWidthVisible();
+		
+		if (run.IsMathRun())
+		{
+			let posLine = run.ParaMath.GetLinePosition(this.line, this.range);
+			let loc     = item.GetLocationOfLetter();
+			this.curX   = posLine.x + loc.x;
+		}
+		
+		let diffL = this.x - this.curX;
+		let diffR = this.x - this.curX - w + (item.RGap ? item.RGap : 0);
+		
+		if (-EPSILON <= diffL && diffL <= w + EPSILON)
+		{
+			this.inTextX = true;
+			this.inTextPosInfo.run = run;
+			this.inTextPosInfo.pos = inRunPos;
+		}
+		
+		if (direction === AscBidi.DIRECTION.R)
+		{
+			let tmp = diffR;
+			diffR = diffL;
+			diffL = tmp;
+		}
+		
+		if (this.checkPosition(diffL))
+		{
+			this.setDiff(diffL);
+			this.posInfo.run = run;
+			this.posInfo.pos = inRunPos;
+		}
+		
+		if (!item.IsBreak() && this.checkPosition(diffR))
+		{
+			if (item.IsParaEnd())
+				this.paraEnd = true;
+			
+			if (!item.IsParaEnd() || this.stepEnd)
+			{
+				if (item.RGap)
+					diffR = Math.min(diffR, diffR - item.RGap);
+				
+				this.setDiff(diffR);
+				this.posInfo.run = run;
+				this.posInfo.pos = inRunPos + 1;
+			}
+		}
+		
+		this.curX += w;
+		
+		if (this.emptyRunHandler[item] && direction === AscBidi.DIRECTION.R)
+		{
+			this.handleBidiFlowEmptyRun(this.emptyRunHandler[item]);
+			delete this.emptyRunHandler[item];
+		}
+	};
+	ParagraphSearchPositionXY.prototype.handleBidiFlowParaMath = function(math)
 	{
 		if (this.emptyRun)
 		{
-			this.handleEmptyRun(this.emptyRun);
+			this.handleBidiFlowEmptyRun(this.emptyRun);
 			this.emptyRun = null;
 		}
 		
@@ -231,14 +327,12 @@
 		}
 		
 		this.curX = curX + mathW;
-		
-		this.reset();
 	};
-	ParagraphSearchPositionXY.prototype.handleMathBase = function(base)
+	ParagraphSearchPositionXY.prototype.handleBidiFlowMathBase = function(base)
 	{
 		if (this.emptyRun)
 		{
-			this.handleEmptyRun(this.emptyRun);
+			this.handleBidiFlowEmptyRun(this.emptyRun);
 			this.emptyRun = null;
 		}
 		
@@ -299,90 +393,22 @@
 		this.curY = targetBounds.Y;
 		
 		base.Content[targetPos].getParagraphContentPosByXY(this);
-		this.reset();
 	};
-	ParagraphSearchPositionXY.prototype.handleFlowRunElement = function(element, run, inRunPos)
+	ParagraphSearchPositionXY.prototype.handleBidiFlowEmptyRun = function(run)
 	{
-		if (!this.complexFields.checkRunElement(element))
-			return;
-		
-		if (this.emptyRun)
-		{
-			this.emptyRunHandler[element] = this.emptyRun;
-			this.emptyRun = null;
-		}
-		
-		this.bidiFlow.add([element, run, inRunPos], element.getBidiType());
-	};
-	ParagraphSearchPositionXY.prototype.handleBidiFlow = function(data, direction)
-	{
-		let item     = data[0];
-		let run      = data[1];
-		let inRunPos = data[2];
-		
-		if (this.emptyRunHandler[item] && direction === AscBidi.DIRECTION.L)
-		{
-			this.handleEmptyRun(this.emptyRunHandler[item]);
-			delete this.emptyRunHandler[item];
-		}
-		
-		let w = 0;
-		if (!item.IsDrawing() || item.IsInline())
-			w = item.GetWidthVisible();
-		
+		let curX = this.curX;
 		if (run.IsMathRun())
 		{
-			let posLine = run.ParaMath.GetLinePosition(this.line, this.range);
-			let loc     = item.GetLocationOfLetter();
-			this.curX   = posLine.x + loc.x;
+			let mathPos = run.ParaMath.GetLinePosition(this.line, this.range);
+			curX        = mathPos.x + run.pos.x;
 		}
 		
-		let diffL = this.x - this.curX;
-		let diffR = this.x - this.curX - w + (item.RGap ? item.RGap : 0);
-		
-		if (-EPSILON <= diffL && diffL <= w + EPSILON)
+		let diff = this.x - curX;
+		if (this.checkPosition(diff))
 		{
-			this.inTextX = true;
-			this.inTextPosInfo.run = run;
-			this.inTextPosInfo.pos = inRunPos;
-		}
-		
-		if (direction === AscBidi.DIRECTION.R)
-		{
-			let tmp = diffR;
-			diffR = diffL;
-			diffL = tmp;
-		}
-		
-		if (this.checkPosition(diffL))
-		{
-			this.setDiff(diffL);
+			this.setDiff(diff);
 			this.posInfo.run = run;
-			this.posInfo.pos = inRunPos;
-		}
-		
-		if (!item.IsBreak() && this.checkPosition(diffR))
-		{
-			if (item.IsParaEnd())
-				this.paraEnd = true;
-			
-			if (!item.IsParaEnd() || this.stepEnd)
-			{
-				if (item.RGap)
-					diffR = Math.min(diffR, diffR - item.RGap);
-				
-				this.setDiff(diffR);
-				this.posInfo.run = run;
-				this.posInfo.pos = inRunPos + 1;
-			}
-		}
-		
-		this.curX += w;
-		
-		if (this.emptyRunHandler[item] && direction === AscBidi.DIRECTION.R)
-		{
-			this.handleEmptyRun(this.emptyRunHandler[item]);
-			delete this.emptyRunHandler[item];
+			this.posInfo.pos = run.GetElementsCount();
 		}
 	};
 	ParagraphSearchPositionXY.prototype.getPos = function()

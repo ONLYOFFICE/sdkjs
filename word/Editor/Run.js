@@ -6223,7 +6223,7 @@ ParaRun.prototype.getParagraphContentPosByXY = function(searchState)
 	for (let pos = startPos; pos < endPos; ++pos)
 	{
 		let item = this.private_CheckInstrText(this.Content[pos]);
-		searchState.handleFlowRunElement(item, this, pos);
+		searchState.handleRunElement(item, this, pos);
 	}
 	
 	searchState.handleRun(this);

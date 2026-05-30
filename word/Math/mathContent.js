@@ -4160,8 +4160,9 @@ CMathContent.prototype.recalculateCursorPosition = function(positionCalculator, 
 };
 CMathContent.prototype.getParagraphContentPosByXY = function(searchState)
 {
-	searchState.reset();
+	searchState.pushBidiFlow(false);
 	CParagraphContentWithParagraphLikeContent.prototype.getParagraphContentPosByXY.call(this, searchState);
+	searchState.popBidiFlow();
 };
 CMathContent.prototype.GetCurrentParaPos = function(align)
 {
