@@ -181,11 +181,11 @@
 	};
 	ParagraphSearchPositionXY.prototype.handleParaMath = function(math)
 	{
-		this.bidiFlow.add([math, TYPE_PARA_MATH], math.getBidiType());
+		this.bidiFlow.add([TYPE_PARA_MATH, math], math.getBidiType());
 	};
 	ParagraphSearchPositionXY.prototype.handleMathBase = function(mathBase)
 	{
-		this.bidiFlow.add([mathBase, TYPE_MATH_BASE], mathBase.getBidiType());
+		this.bidiFlow.add([TYPE_MATH_BASE, mathBase], mathBase.getBidiType());
 	};
 	ParagraphSearchPositionXY.prototype.handleRunElement = function(element, run, inRunPos)
 	{
@@ -198,28 +198,26 @@
 			this.emptyRun = null;
 		}
 		
-		this.bidiFlow.add([element, TYPE_RUN_ELEMENT, run, inRunPos], element.getBidiType());
+		this.bidiFlow.add([TYPE_RUN_ELEMENT, element, run, inRunPos], element.getBidiType());
 	};
 	ParagraphSearchPositionXY.prototype.handleBidiFlow = function(data, direction)
 	{
-		let item     = data[0];
-		let itemType = data[1];
-		switch (itemType)
+		switch (data[0])
 		{
 			case TYPE_RUN_ELEMENT:
 				this.handleBidiFlowRunElement(data, direction);
 				break;
 			case TYPE_PARA_MATH:
-				this.handleBidiFlowParaMath(item);
+				this.handleBidiFlowParaMath(data[1]);
 				break;
 			case TYPE_MATH_BASE:
-				this.handleBidiFlowMathBase(item);
+				this.handleBidiFlowMathBase(data[1]);
 				break;
 		}
 	};
 	ParagraphSearchPositionXY.prototype.handleBidiFlowRunElement = function(data, direction)
 	{
-		let item     = data[0];
+		let item     = data[1];
 		let run      = data[2];
 		let inRunPos = data[3];
 		

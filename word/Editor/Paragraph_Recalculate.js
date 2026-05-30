@@ -2145,11 +2145,6 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 			this.Lines[CurLine].X = X - PRSW.XStart;
 		
 		PRSA.beginRange(Range, CurRange, CurLine, X, PRSC, JustifyWord, JustifySpace);
-
-		// TODO: RTL ?
-		if (true === this.Numbering.checkRange(CurRange, CurLine))
-			PRSA.X += this.Numbering.WidthVisible;
-
 		for (var Pos = StartPos; Pos <= EndPos; Pos++)
 		{
 			var Item = this.Content[Pos];

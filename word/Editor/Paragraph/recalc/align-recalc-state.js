@@ -108,7 +108,6 @@
 		if (lineMetrics.LineGap < 0)
 			y1 += lineMetrics.LineGap;
 		
-		this.X = x;
 		this.Y = y;
 		this.XEnd = range.XEnd;
 		
@@ -128,6 +127,11 @@
 		
 		range.XVisible = x;
 		
+		if (paragraph.Numbering.checkRange(this.CurRange, this.CurLine) && !this.RTL)
+			x += paragraph.Numbering.WidthVisible;
+		
+		this.X = x;
+		
 		this.bidiFlow.begin(this.RTL);
 	};
 	AlignRecalcState.prototype.endRange = function()
@@ -139,7 +143,7 @@
 		if (this.RTL)
 		{
 			this.Range.XVisible -= this.Range.WBreak + this.Range.WEnd;
-			this.Range.XEndVisible -= this.Range.WBreak + this.Range.WEnd;
+			//this.Range.XEndVisible -= this.Range.WBreak + this.Range.WEnd;
 		}
 	};
 	AlignRecalcState.prototype.handleRunElement = function(element, run)

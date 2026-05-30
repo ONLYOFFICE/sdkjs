@@ -8985,21 +8985,21 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 			if (this.isRtlDirection())
 			{
 				let xEnd = this.Lines[CurLine].Ranges[CurRange].XEndVisible;
-				SelectX = xEnd - ParaNum.WidthVisible;
+				SelectX = xEnd;
 				if (AscCommon.align_Center === numJc)
 				{
 					SelectW  = ParaNum.WidthVisible + ParaNum.WidthNum / 2;
-					SelectX2 = xEnd - ParaNum.WidthNum / 2;
+					SelectX2 = xEnd + ParaNum.WidthVisible - ParaNum.WidthNum / 2;
 				}
 				else if (AscCommon.align_Right === numJc)
 				{
 					SelectW  = ParaNum.WidthVisible + ParaNum.WidthNum;
-					SelectX2 = xEnd;
+					SelectX2 = xEnd + ParaNum.WidthVisible;
 				}
 				else // if (AscCommon.align_Left === numJc)
 				{
 					SelectW  = ParaNum.WidthVisible;
-					SelectX2 = xEnd - ParaNum.WidthNum;
+					SelectX2 = xEnd + ParaNum.WidthVisible - ParaNum.WidthNum;
 				}
 			}
 			else
