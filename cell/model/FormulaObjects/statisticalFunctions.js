@@ -13763,9 +13763,9 @@ function parseStringToCElement (val, cultureInfo) {
 		// normal mode uses info.matchingFn (may be =, <, >, <=, >=).
 		const matchFn = isComplement ? getMatchingFunction(type, '=', isWildcard) : info.matchingFn;
 
-		// Numeric criteria also probe string-typed column data for numerically equal strings.
-		// In complement mode we always need equality; in normal mode only for = / null ops.
-		const checkStrNums = type === cElementType.number && (isComplement || op === '=' || op === null);
+		// Probe string-typed cells for numerically-equal text only on '=' / null. Excel keeps
+		// text-encoded numbers in '<>N' (text "1" matches both =1 and <>1), so complement skips it.
+		const checkStrNums = type === cElementType.number && (op === '=' || op === null);
 		const numMatchFn = checkStrNums ? getMatchingFunction(cElementType.number, '=', false) : null;
 
 		// Rank-based comparison replaces per-cell stringCompare with `lower <= rank < upper`.
