@@ -141,10 +141,7 @@
 		this.Range.XEndVisible = this.X;
 		
 		if (this.RTL)
-		{
 			this.Range.XVisible -= this.Range.WBreak + this.Range.WEnd;
-			//this.Range.XEndVisible -= this.Range.WBreak + this.Range.WEnd;
-		}
 	};
 	AlignRecalcState.prototype.handleRunElement = function(element, run)
 	{
@@ -289,7 +286,9 @@
 
 				let breakW = element.GetWidthVisible();
 				this.Range.WBreak = breakW;
-				this.X += breakW;
+				
+				if (!this.RTL)
+					this.X += breakW;
 
 				break;
 			}
