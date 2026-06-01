@@ -11166,12 +11166,12 @@ PasteProcessor.prototype =
 				levelSdt.ApplyComboBoxPr(oPr);
 			}
 
-			if (_type === "complexform" && AscCommon.IsSupportOFormFeature()) {
+			if (_type === "complexform" && AscCommon.IsSupportOFormFeature() && isForm) {
 				let complexFormPr = this._createComplexFormPr(node);
 				levelSdt.SetComplexFormPr(complexFormPr);
 			}
 
-			if (_type === "text" && AscCommon.IsSupportOFormFeature()) {
+			if (_type === "text" && AscCommon.IsSupportOFormFeature() && isForm) {
 				let textFormPr = this._createTextFormPr(node);
 				levelSdt.ApplyTextFormPr(textFormPr);
 			}
