@@ -6236,7 +6236,13 @@ function(window, undefined) {
 				let oLbl = trendline.trendlineLbl;
 				let oDrawerData = trendline.drawerData;
 				if(oLbl && oDrawerData && oDrawerData.coordinate) {
-					pos = {x: oDrawerData.coordinate.catVal, y: oDrawerData.coordinate.valVal};
+					const coord = oDrawerData.coordinate;
+					// MS Excel positions trendline label so the trendline curve passes through it:
+					// label CENTER vertically at endpoint Y, label RIGHT edge at endpoint X.
+					pos = {
+						x: coord.catVal - oLbl.extX,
+						y: coord.valVal - oLbl.extY / 2
+					};
 					if (oLbl.layout) {
 						const layout = oLbl.layout;
 						if (AscFormat.isRealNumber(layout.x)) {

@@ -18574,28 +18574,38 @@ CErrBarsDraw.prototype = {
 
 		getAdditionalInfo: function (chartId, seriesId) {
 			if (this.storage[chartId] && this.storage[chartId][seriesId]) {
-				const coefficients = this.storage[chartId][seriesId].getCoefficients();
-				const rSquared = this.storage[chartId][seriesId].getRSquared();
-				const lastPoint = this.storage[chartId][seriesId].getLastPoint();
+				const storageEl = this.storage[chartId][seriesId];
+				const coefficients = storageEl.getCoefficients();
+				const rSquared = storageEl.getRSquared();
+				const lastPoint = storageEl.getLastPoint();
 
 				let startCat = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
 				let startVal = (this.cChartDrawer.calcProp.chartGutter._top) / this.cChartDrawer.calcProp.pxToMM;
 				let endCat = (this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM) + startCat;
 				let endVal = (this.cChartDrawer.calcProp.trueHeight / this.cChartDrawer.calcProp.pxToMM) + startVal;
-				
-				if (lastPoint.catVal < startCat || lastPoint.catVal > endCat) {
-					lastPoint.catVal = 0;
-				}
 
-				if (lastPoint.valVal < startVal || lastPoint.valVal > endVal) {
-					lastPoint.valVal = 0;
+				let catVal = lastPoint.catVal;
+				let valVal = lastPoint.valVal;
+
+				if (catVal < startCat) {
+					catVal = startCat;
+				} else if (catVal > endCat) {
+					catVal = endCat;
+				}
+				if (valVal < startVal) {
+					valVal = startVal;
+				} else if (valVal > endVal) {
+					valVal = endVal;
 				}
 
 				if (coefficients || rSquared) {
 					const additionalInfo = {
 						coefficients : coefficients,
 						rSquared : rSquared,
-						coordinate : lastPoint
+						coordinate : {
+							catVal: catVal,
+							valVal: valVal
+						}
 					}
 					return additionalInfo;
 				}
@@ -18789,6 +18799,31 @@ CErrBarsDraw.prototype = {
 				}
 				storageElement.setLastPoint(positions.xPos, positions.yPos);
 				storageElement.setPointPath(pathId);
+			}
+
+			// override lastPoint:
+			//   catVal — chart X at the LAST VISIBLE data point (right edge of plot area)
+			//   valVal — chart Y at the trendline value at the FORECAST-EXTENDED endpoint (catAxis.max),
+			//            which is past last data X if c:forward is set.
+			// The asymmetry matches MS Excel behavior: label anchored to the visible plot edge horizontally,
+			// but vertically aligned with the trend value at the forecast endpoint (where the trendline really ends).
+			const coefficients = storageElement.getCoefficients();
+			const coords = storageElement.getCoords();
+			if (coefficients && coords && coords.catVals && coords.catVals.length > 0) {
+				const lastDataX = coords.catVals[coords.catVals.length - 1];
+				const extendedX = (catAxis && AscFormat.isRealNumber(catAxis.max)) ? catAxis.max : lastDataX;
+				let lastDataY = null;
+				if (coefficients.length === 2) {
+					lastDataY = coefficients[0] * extendedX + coefficients[1];
+				}
+				if (lastDataY !== null && isFinite(lastDataY)) {
+					const pos1 = this.cChartDrawer.getYPosition(lastDataX, catAxis, true);
+					const pos2 = this.cChartDrawer.getYPosition(lastDataY, valAxis, true);
+					const catPos = horOrientation ? pos1 : pos2;
+					const valPos = horOrientation ? pos2 : pos1;
+					storageElement.lastPoint.catVal = catPos;
+					storageElement.lastPoint.valVal = valPos;
+				}
 			}
 		},
 
