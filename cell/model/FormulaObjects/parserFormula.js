@@ -2952,6 +2952,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		this.realSize = null;
 		this.missedValue = null;
+		//optional generator for "missed" tail values (within realSize but beyond physically stored rows/cols).
+		//used when the tail is not a constant (e.g. ROW()/COLUMN() over a clamped full-column/row reference).
+		//takes priority over missedValue. signature: (row, col) -> cElement
+		this.missedValueFn = null;
 	}
 
 	cArray.prototype = Object.create(cBaseType.prototype);
@@ -3013,6 +3017,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArray.prototype.getElementRowCol = function (row, col, checkRealSize) {
 		if (row > this.rowCount || col > this.getCountElementInRow()) {
 			if (checkRealSize && this.realSize && row <= this.realSize.row && col <= this.realSize.col) {
+				if (this.missedValueFn) {
+					return this.missedValueFn(row, col);
+				}
 				if (this.missedValue) {
 					return this.missedValue
 				}
@@ -3060,6 +3067,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArray.prototype.foreach = function (action) {
 		if (typeof (action) !== 'function') {
 			return true;
+		}
+		//a full physical scan must see the whole logical array: materialize a generator-backed tail first
+		if (this.missedValueFn) {
+			this._expandGenerator();
 		}
 		for (var ir = 0; ir < this.rowCount; ir++) {
 			for (var ic = 0; ic < this.countElementInRow[ir]; ic++) {
@@ -3122,6 +3133,45 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		return this.missedValue;
 	};
+	cArray.prototype.getMissedValueFn = function () {
+		if (!this.missedValueFn) {
+			return;
+		}
+
+		return this.missedValueFn;
+	};
+	//materialize a generator-backed array (e.g. ROW/COLUMN over a clamped full-column/row reference)
+	//into a regular fully-physical array: expands realSize using the generator for the tail and drops it.
+	//called lazily before a physical full scan (getMatrix/foreach) so that all consumers
+	//(including in-place mutators and the 200+ direct .array accesses) see correct data.
+	//cost is O(logical size) - matches the inherent cost of such formulas in Excel; only triggered
+	//for bare ROW/COLUMN results (nothing else sets missedValueFn), so neutral-tail arrays and the
+	//filter pattern (IF result carries no generator) are unaffected.
+	cArray.prototype._expandGenerator = function () {
+		if (!this.missedValueFn || !this.realSize) {
+			return;
+		}
+		var fn = this.missedValueFn;
+		var rows = this.realSize.row, cols = this.realSize.col;
+		var newArray = new Array(rows), counts = new Array(rows);
+		for (var r = 0; r < rows; r++) {
+			var srcRow = r < this.rowCount ? this.array[r] : null;
+			var physCols = srcRow ? srcRow.length : 0;
+			var rowArr = new Array(cols);
+			for (var c = 0; c < cols; c++) {
+				rowArr[c] = (c < physCols && srcRow[c]) ? srcRow[c] : fn(r, c);
+			}
+			newArray[r] = rowArr;
+			counts[r] = cols;
+		}
+		this.array = newArray;
+		this.countElementInRow = counts;
+		this.rowCount = rows;
+		this.countElement = rows * cols;
+		this.realSize = null;
+		this.missedValue = null;
+		this.missedValueFn = null;
+	};
 	cArray.prototype.setRealArraySize = function (row, col) {
 		if (row > 0 && col > 0) {
 			this.realSize = {row: row, col: col}
@@ -3131,6 +3181,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		let retArr = new cArray();
 		retArr.realSize = this.getRealArraySize();
 		retArr.missedValue = this.getMissedValue();
+		if (this.missedValueFn) {
+			let fn = this.missedValueFn;
+			retArr.missedValueFn = function (row, col) {
+				return fn(row, col).tocNumber();
+			};
+		}
 		for (let ir = 0; ir < this.rowCount; ir++, retArr.addRow()) {
 			for (let ic = 0; ic < this.countElementInRow[ir]; ic++) {
 				retArr.addElement(this.array[ir][ic].tocNumber());
@@ -3143,6 +3199,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.tocString = function () {
 		var retArr = new cArray();
+		if (this.missedValueFn) {
+			retArr.realSize = this.getRealArraySize();
+			retArr.missedValue = this.missedValue ? this.missedValue.tocString() : null;
+			let fn = this.missedValueFn;
+			retArr.missedValueFn = function (row, col) {
+				return fn(row, col).tocString();
+			};
+		}
 		for (var ir = 0; ir < this.rowCount; ir++, retArr.addRow()) {
 			for (var ic = 0; ic < this.countElementInRow[ir]; ic++) {
 				retArr.addElement(this.array[ir][ic].tocString());
@@ -3155,6 +3219,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.tocBool = function () {
 		var retArr = new cArray();
+		if (this.missedValueFn) {
+			retArr.realSize = this.getRealArraySize();
+			retArr.missedValue = this.missedValue ? this.missedValue.tocBool() : null;
+			let fn = this.missedValueFn;
+			retArr.missedValueFn = function (row, col) {
+				return fn(row, col).tocBool();
+			};
+		}
 		for (var ir = 0; ir < this.rowCount; ir++, retArr.addRow()) {
 			for (var ic = 0; ic < this.countElementInRow[ir]; ic++) {
 				retArr.addElement(this.array[ir][ic].tocBool());
@@ -3229,6 +3301,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return result && result[0] ? result[0].getValue() : result;
 	};
 	cArray.prototype.getMatrix = function () {
+
+		//a full physical scan must see the whole logical array: materialize a generator-backed tail first
+		if (this.missedValueFn) {
+			this._expandGenerator();
+		}
 
 		//excludeErrorsVal - arguments[1]
 		if(arguments[1]) {
@@ -4214,6 +4291,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				var array = new cArray();
 				array.realSize = firstArray.realSize;
 				array.missedValue = firstArray.missedValue;
+				array.missedValueFn = firstArray.missedValueFn;
 
 				//pre-compute: hoist invariant argument properties out of the per-element loop
 				var _argInfo = new Array(argumentsCount);
@@ -6079,18 +6157,29 @@ _func[cElementType.array][cElementType.number] = _func[cElementType.array][cElem
         _func[cElementType.array][cElementType.empty] = function ( arg0, arg1, what ) {
             let res = new cArray(), realArraySize, rowDiff, colDiff, funcResult, arrayDimensions = arg0.getDimensions();
 
-			if (arg0.realSize && arg0.missedValue) {
+			if (arg0.realSize && (arg0.missedValue || arg0.missedValueFn)) {
 				realArraySize = arg0.getRealArraySize();
 				rowDiff = realArraySize.row - arg0.getRowCount();
 				colDiff = realArraySize.col - arg0.getCountElementInRow();
-				funcResult = _func[arg0.missedValue.type][arg1.type](arg0.missedValue, arg1, what);
 
 				// set realSize to res
 				res.setRealArraySize(realArraySize.row, realArraySize.col);
-				res.missedValue = funcResult;
+				if (arg0.missedValueFn) {
+					//tail is not a constant: compose a generator instead of collapsing to a single value
+					let genFn = arg0.missedValueFn;
+					res.missedValueFn = function (row, col) {
+						let tail = genFn(row, col);
+						return _func[tail.type][arg1.type](tail, arg1, what);
+					};
+				} else {
+					funcResult = _func[arg0.missedValue.type][arg1.type](arg0.missedValue, arg1, what);
+					res.missedValue = funcResult;
+				}
 			}
 
-			arg0.foreach( function ( elem, r ) {
+			//foreach2 = physical-only iteration: build the stored part here while the tail stays lazy
+			//in res.missedValueFn (composed above). using foreach would materialize the generator.
+			arg0.foreach2( function ( elem, r ) {
                 if ( !res.array[r] ) {
                     res.addRow();
                 }
@@ -6105,18 +6194,29 @@ _func[cElementType.number][cElementType.array] = _func[cElementType.string][cEle
         _func[cElementType.empty][cElementType.array] = function ( arg0, arg1, what ) {
 			let res = new cArray(), realArraySize, rowDiff, colDiff, funcResult, arrayDimensions = arg1.getDimensions();
 
-			if (arg1.realSize && arg1.missedValue) {
+			if (arg1.realSize && (arg1.missedValue || arg1.missedValueFn)) {
 				realArraySize = arg1.getRealArraySize();
 				rowDiff = realArraySize.row - arg1.getRowCount();
 				colDiff = realArraySize.col - arg1.getCountElementInRow();
-				funcResult = _func[arg0.type][arg1.missedValue.type](arg0, arg1.missedValue, what);
 
 				// set realSize to res
 				res.setRealArraySize(realArraySize.row, realArraySize.col);
-				res.missedValue = funcResult;
+				if (arg1.missedValueFn) {
+					//tail is not a constant: compose a generator instead of collapsing to a single value
+					let genFn = arg1.missedValueFn;
+					res.missedValueFn = function (row, col) {
+						let tail = genFn(row, col);
+						return _func[arg0.type][tail.type](arg0, tail, what);
+					};
+				} else {
+					funcResult = _func[arg0.type][arg1.missedValue.type](arg0, arg1.missedValue, what);
+					res.missedValue = funcResult;
+				}
 			}
 
-			arg1.foreach( function ( elem, r ) {
+			//foreach2 = physical-only iteration: build the stored part here while the tail stays lazy
+			//in res.missedValueFn (composed above). using foreach would materialize the generator.
+			arg1.foreach2( function ( elem, r ) {
                 if ( !res.array[r] ) {
                     res.addRow();
                 }
@@ -11272,6 +11372,10 @@ function parserFormula( formula, parent, _ws ) {
 				col = (val.array[0] && 1 === val.array[0].length) ? 0 : opt_col - ref.c1;
 				if (val.array[row] && val.array[row][col]) {
 					val = val.getElementRowCol(row, col);
+				} else if (val.missedValueFn && val.realSize && row >= 0 && col >= 0 &&
+					row < val.realSize.row && col < val.realSize.col) {
+					//tail of a clamped full-column/row array (e.g. ROW/COLUMN): value comes from the generator
+					val = val.getElementRowCol(row, col, true);
 				} else {
 					val = new window['AscCommonExcel'].cError(window['AscCommonExcel'].cErrorType.not_available);
 				}
