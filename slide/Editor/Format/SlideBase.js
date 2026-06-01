@@ -663,7 +663,7 @@
 	SlideBase.prototype.needRecalc = function() {
 		if (this.recalcInfo) {
 			for (let flag in this.recalcInfo) {
-				if (flag) {
+				if (this.recalcInfo[flag]) {
 					return true;
 				}
 			}

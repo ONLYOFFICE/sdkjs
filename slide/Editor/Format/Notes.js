@@ -339,6 +339,11 @@
 			this.recalcInfo.recalculateSlide = false;
 			this.recalculateSlide();
 		}
+		if (this.slide) {
+			this.slide.isSkipNotesRecalculate = true;
+			this.slide.recalculate();
+			this.slide.isSkipNotesRecalculate = false;
+		}
 		this.Master.recalculate();
 		if(this.recalcInfo.recalculateBackground) {
 			this.recalculateBackground();
@@ -360,7 +365,6 @@
 				const slide = presentation.Slides[i];
 				if (slide.notes === this) {
 					this.slide = slide;
-					slide.recalculate();
 					return;
 				}
 			}

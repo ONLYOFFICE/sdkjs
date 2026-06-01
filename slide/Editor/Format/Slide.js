@@ -225,6 +225,8 @@ function Slide(presentation, slideLayout, slideNum)
     {
         this.setSlideNum(slideNum);
     }
+
+		this.isSkipNotesRecalculate = false;
 }
 AscFormat.InitClass(Slide, AscCommonSlide.SlideBase, AscDFH.historyitem_type_Slide);
     Slide.prototype.Clear_CollaborativeMarks = function()
@@ -789,7 +791,9 @@ AscFormat.InitClass(Slide, AscCommonSlide.SlideBase, AscDFH.historyitem_type_Sli
             this.recalculateSpTree();
             this.recalcInfo.recalculateSpTree = false;
         }
-        this.recalculateNotesShape();
+				if (!this.isSkipNotesRecalculate) {
+					this.recalculateNotesShape();
+				}
         this.cachedImage = null;
     };
 
