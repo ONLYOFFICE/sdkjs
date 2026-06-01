@@ -143,7 +143,7 @@
 	};
 	SlideModeManagerBase.prototype.goToSavedAnimationStartObject = function(object) {
 	};
-	SlideModeManagerBase.prototype.getSlideNumber = function(object) {
+	SlideModeManagerBase.prototype.getSlideNumber = function(idx) {
 		return null;
 	};
 	SlideModeManagerBase.prototype.insertSlideObjectToPos = function(pos, slide) {
@@ -786,6 +786,7 @@
 				}
 			}
 		}
+		return null;
 	};
 	MasterSlideModeManager.prototype.insertSlideObjectToPos = function(pos, slide) {
 		const presentation = this.getPresentation();
