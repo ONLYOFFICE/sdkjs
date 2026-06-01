@@ -624,8 +624,13 @@
 	};
 	RemoveOutlineParagraphsManager.prototype.processRealCursorAtBegin = function (outlineParagraph) {
 		const docContent = this.getDocContent();
-		const previousOutlineParagraph = docContent.Content[outlineParagraph.Index - 1];
-		this.checkRemoveEdgeParagraphs(previousOutlineParagraph, outlineParagraph);
+		const currentSourceParagraph = this.getSourceParagraph(outlineParagraph);
+		if (currentSourceParagraph && (currentSourceParagraph.Index !== 0 || currentSourceParagraph.IsPresentationBulleted())) {
+			this.processCommonPosContent();
+		} else {
+			const previousOutlineParagraph = docContent.Content[outlineParagraph.Index - 1];
+			this.checkRemoveEdgeParagraphs(previousOutlineParagraph, outlineParagraph);
+		}
 	};
 	RemoveOutlineParagraphsManager.prototype.checkRemoveEdgeParagraphs = function (firstParagraph, lastParagraph, isSkipConcatContents) {
 		const lastSourceParagraph = this.getSourceParagraph(lastParagraph);

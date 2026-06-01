@@ -10735,16 +10735,13 @@ Paragraph.prototype.IsEmptyWithBullet = function()
 {
 	if(this.IsEmpty())
 	{
-		var oBullet =  this.PresentationPr && this.PresentationPr.Bullet;
-		if(oBullet)
-		{
-			if(!oBullet.IsNone())
-			{
-				return true;
-			}
-		}
+		return this.IsPresentationBulleted();
 	}
 	return false;
+};
+Paragraph.prototype.IsPresentationBulleted = function()
+{
+	return this.PresentationPr && this.PresentationPr.Bullet && !this.PresentationPr.Bullet.IsNone();
 };
 //----------------------------------------------------------------------------------------------------------------------
 /**
