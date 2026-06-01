@@ -1541,6 +1541,7 @@ background-repeat: no-repeat;\
 
   function BeforeOpenDocument() {
     AscCommon.History.TurnOff()
+    console.log("Setting hostoryOff")
     this.InitEditor();
     this.DocumentType = 2;
     this.LoadedObjectDS = this.WordControl.m_oLogicDocument.CopyStyle();
@@ -1548,6 +1549,7 @@ background-repeat: no-repeat;\
     g_oIdCounter.Set_Load(true);
     AscFonts.IsCheckSymbols = true;
     AscCommon.History.TurnOn()
+        console.log("Setting hostoryonn");
   }
   function AfterOpenDocument(data, size) {
     if (History && History.Update_FileDescription)
