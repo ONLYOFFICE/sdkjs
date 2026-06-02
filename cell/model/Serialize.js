@@ -6378,7 +6378,7 @@
 					}
 					this.WriteControlPr(oControl);
 						this.bs.WriteItem(c_oSerControlTypes.Shape, function() {
-							oThis.bs.WriteItem(c_oSer_DrawingType.pptxDrawing, function(){pptx_content_writer.WriteDrawing(oThis.memory, oControl, null, null, null);});
+							pptx_content_writer.WriteDrawing(oThis.memory, oControl, null, null, null);
 						});
 				};
 				this.WriteControlPr = function(oControl) {
