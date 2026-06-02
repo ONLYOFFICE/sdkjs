@@ -3015,13 +3015,20 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return col;
 	};
 	cArray.prototype.getElementRowCol = function (row, col, checkRealSize) {
+		var srcRow = this.array[row];
+		var physElem = srcRow && srcRow[col];
+		if (physElem) {
+			return physElem;
+		}
+		//0-based indices: a missing physical cell inside realSize is a tail value, so check the tail
+		//with 0-based bounds before #N/A - else the seam cell at row===rowCount (or col===len) is lost.
+		if (checkRealSize && this.realSize && row < this.realSize.row && col < this.realSize.col) {
+			return this.getMissedElement(row, col);
+		}
 		if (row > this.rowCount || col > this.getCountElementInRow()) {
-			if (checkRealSize && this.realSize && row <= this.realSize.row && col <= this.realSize.col) {
-				return this.getMissedElement(row, col);
-			}
 			return new cError(cErrorType.not_available);
 		}
-		return this.array[row] && this.array[row][col] ? this.array[row][col] : new cEmpty();
+		return new cEmpty();
 	};
 	cArray.prototype.getElement = function (index) {
 		for (var i = 0; i < this.rowCount; i++) {
@@ -6193,12 +6200,10 @@ _func[cElementType.array][cElementType.array] = function ( arg0, arg1, what, bbo
 _func[cElementType.array][cElementType.number] = _func[cElementType.array][cElementType.string] =
     _func[cElementType.array][cElementType.bool] = _func[cElementType.array][cElementType.error] =
         _func[cElementType.array][cElementType.empty] = function ( arg0, arg1, what ) {
-            let res = new cArray(), realArraySize, rowDiff, colDiff, funcResult, arrayDimensions = arg0.getDimensions();
+            let res = new cArray(), realArraySize;
 
 			if (arg0.hasLazyTail()) {
 				realArraySize = arg0.getRealArraySize();
-				rowDiff = realArraySize.row - arg0.getRowCount();
-				colDiff = realArraySize.col - arg0.getCountElementInRow();
 
 				// set realSize to res
 				res.setRealArraySize(realArraySize.row, realArraySize.col);
@@ -6228,12 +6233,10 @@ _func[cElementType.array][cElementType.number] = _func[cElementType.array][cElem
 _func[cElementType.number][cElementType.array] = _func[cElementType.string][cElementType.array] =
     _func[cElementType.bool][cElementType.array] = _func[cElementType.error][cElementType.array] =
         _func[cElementType.empty][cElementType.array] = function ( arg0, arg1, what ) {
-			let res = new cArray(), realArraySize, rowDiff, colDiff, funcResult, arrayDimensions = arg1.getDimensions();
+			let res = new cArray(), realArraySize;
 
 			if (arg1.hasLazyTail()) {
 				realArraySize = arg1.getRealArraySize();
-				rowDiff = realArraySize.row - arg1.getRowCount();
-				colDiff = realArraySize.col - arg1.getCountElementInRow();
 
 				// set realSize to res
 				res.setRealArraySize(realArraySize.row, realArraySize.col);
