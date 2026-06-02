@@ -1015,8 +1015,11 @@
 		return !oParaDrawing || !oParaDrawing.Is_Inline || oParaDrawing.Is_Inline();
 	};
 	CGraphicObjectBase.prototype.getHorizontalRule = function () {
-		let oGeom = this.getGeometry && this.getGeometry();
-		return oGeom && oGeom.hr || null;
+		let geometry = this.getGeometry && this.getGeometry();
+		let horizontalRule = geometry && geometry.hr || null;
+		if (horizontalRule)
+			horizontalRule._shape = this;
+		return horizontalRule;
 	};
 	CGraphicObjectBase.prototype.canRotate = function () {
 		if (!this.canEdit()) {

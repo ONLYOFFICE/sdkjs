@@ -533,7 +533,7 @@ CopyProcessor.prototype =
 				break;
 			case para_Drawing:
 				let oGraphicObj = ParaItem.GraphicObj;
-				if(oGraphicObj.isHorizontalRule && oGraphicObj.isHorizontalRule()) {
+				if(oGraphicObj.isHorizontalRule()) {
 					let oHR = new CopyElement("hr");
 					let oHRData = oGraphicObj.getHorizontalRule();
 					if(oHRData) {
@@ -551,6 +551,10 @@ CopyProcessor.prototype =
 						}
 						if(oHRData.asc_getNoShade()) {
 							oHR.oAttributes["noshade"] = "noshade";
+						}
+						let color = oHRData.asc_getColor();
+						if(color) {
+							oHR.oAttributes["color"] = this.RGBToCSS(color, null);
 						}
 					}
 					oTarget.addChild(oHR);
