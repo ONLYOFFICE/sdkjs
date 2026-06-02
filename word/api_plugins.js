@@ -1136,9 +1136,6 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias AddAddinField
-	 * @param {Object} data - Addin field data.
-	 * @param {string} data.Value - Field value.
-	 * @param {string} data.Content - Field text content.
 	 * @param {AddinFieldData} data - Addin field data.
 	 * @returns {AddinFieldData} - An AddinFieldData object containing the data about the current added field, or null if no addin field was added.
 	 * @since 7.3.3
