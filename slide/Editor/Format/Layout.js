@@ -242,15 +242,6 @@ SlideLayout.prototype.getColorMap = function() {
         History.Add(new AscDFH.CChangesDrawingsLong(this, AscDFH.historyitem_SlideLayoutSetType, this.type, type));
         this.type = type;
     };
-    SlideLayout.prototype.changeBackground = function(bg)
-    {
-        this.cSld.setBg(bg);
-        this.recalcInfo.recalculateBackground = true;
-    };
-    SlideLayout.prototype.setCSldName = function(name)
-    {
-        this.cSld.setName(name);
-    };
     SlideLayout.prototype.setShow = function(bShow)
     {
         History.Add(new AscDFH.CChangesDrawingsBool(this, AscDFH.historyitem_SlideLayoutSetShow, this.show, bShow));
@@ -272,18 +263,8 @@ SlideLayout.prototype.getColorMap = function() {
         History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SlideLayoutSetClrMapOverride, this.clrMap, clrMap));
         this.clrMap = clrMap;
     };
-    SlideLayout.prototype.Write_ToBinary2 = function(w)
-    {
-        w.WriteLong(this.getObjectType());
-        w.WriteString2(this.Id);
-        AscFormat.writeObject(w, this.cSld);
-    };
-    SlideLayout.prototype.Read_FromBinary2 = function(r)
-    {
-        this.Id = r.GetString2();
-        this.cSld = AscFormat.readObject(r);
-        if (this.cSld) this.cSld.parent = this;
-    };
+SlideLayout.prototype.Write_ToBinary2 = AscCommonSlide.SlideBase.prototype.writeSlideBinary;
+SlideLayout.prototype.Read_FromBinary2 = AscCommonSlide.SlideBase.prototype.readSlideBinary;
     SlideLayout.prototype.handleAfterCSldSpTreeChange = function()
     {
         this.recalcInfo.recalculateBounds = true;

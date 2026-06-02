@@ -110,16 +110,8 @@
     CNotes.prototype.setCSldName = function(pr){
         this.cSld.setName(pr);
     };
-    CNotes.prototype.Write_ToBinary2 = function(w){
-        w.WriteLong(this.getObjectType());
-        w.WriteString2(this.Id);
-        AscFormat.writeObject(w, this.cSld);
-    };
-    CNotes.prototype.Read_FromBinary2 = function(r){
-        this.Id = r.GetString2();
-        this.cSld = AscFormat.readObject(r);
-        if (this.cSld) this.cSld.parent = this;
-    };
+	CNotes.prototype.Write_ToBinary2 = AscCommonSlide.SlideBase.prototype.writeSlideBinary;
+	CNotes.prototype.Read_FromBinary2 = AscCommonSlide.SlideBase.prototype.readSlideBinary;
     CNotes.prototype.setSlide = function(pr){
         History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesSetSlide, this.slide , pr));
         this.slide = pr;
@@ -182,7 +174,19 @@
         return null;
     };
 
-    CNotes.prototype.Refresh_RecalcData = function(data){
+	CNotes.prototype.handleCSldRecalc = function(data)
+	{
+		if (data) {
+			switch (data.Type) {
+				case AscDFH.historyitem_CSld_SetBg:
+					this.recalcInfo.recalculateBackground = true;
+					break;
+			}
+			this.addToRecalculate();
+		}
+	};
+
+	CNotes.prototype.Refresh_RecalcData = function(data){
         if(data)
         {
             this.addToRecalculate();
@@ -395,22 +399,18 @@
 	};
 	CNotes.prototype.shapeRemove = function(pos, count) {
 		if(pos > -1 && pos < this.cSld.spTree.length){
-			History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_NotesRemoveFromTree, pos, this.cSld.spTree.splice(pos, 1), false));
+			this.cSld.removeFromSpTree(pos, 1);
 		}
 	};
 	CNotes.prototype.shapeAdd = function(pos, obj) {
 		var _pos = Math.max(0, Math.min(pos, this.cSld.spTree.length));
-		History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_NotesAddToSpTree, _pos, [obj], true));
-		this.cSld.spTree.splice(_pos, 0, obj);
+		this.cSld.checkAndAssignName(obj);
+		this.cSld.addToSpTree(_pos, obj);
 		obj.setParent2(this);
 	};
 	CNotes.prototype.setSlideSize = function(w, h) {
 		this.Width = w;
 		this.Height = h;
-	};
-	CNotes.prototype.changeBackground = function(bg) {
-		History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_NotesSetBg, this.cSld.Bg , bg));
-		this.cSld.Bg = bg;
 	};
 	CNotes.prototype.isNote = function() {
 		return true;

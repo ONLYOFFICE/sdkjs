@@ -74,9 +74,7 @@ AscDFH.drawingContentChanges[AscDFH.historyitem_SlideMasterRemoveLayout]      = 
 function MasterSlide(presentation, theme)
 {
     AscCommonSlide.SlideBase.call(this);
-    this.cSld = new AscFormat.CSld(this);
-    this.clrMap = new AscFormat.ClrMap();
-
+		this.clrMap = new AscFormat.ClrMap();
     this.hf = null;
 
     this.sldLayoutLst = [];
@@ -143,18 +141,8 @@ MasterSlide.prototype.getColorMap = function() {
 MasterSlide.prototype.getDrawingsForController = function(){
     return this.cSld.spTree;
 };
-MasterSlide.prototype.Write_ToBinary2 = function (w) {
-    w.WriteLong(AscDFH.historyitem_type_SlideMaster);
-    w.WriteString2(this.Id);
-    AscFormat.writeObject(w, this.theme);
-    AscFormat.writeObject(w, this.cSld);
-};
-MasterSlide.prototype.Read_FromBinary2 = function (r) {
-    this.Id = r.GetString2();
-    this.theme = AscFormat.readObject(r);
-    this.cSld = AscFormat.readObject(r);
-    if (this.cSld) this.cSld.parent = this;
-};
+MasterSlide.prototype.Write_ToBinary2 = AscCommonSlide.SlideBase.prototype.writeMasterBinary;
+MasterSlide.prototype.Read_FromBinary2 = AscCommonSlide.SlideBase.prototype.readMasterBinary;
 
 
 MasterSlide.prototype.recalculateBackground = function() {
@@ -416,10 +404,6 @@ MasterSlide.prototype.shapeAdd = function (pos, item) {
 };
 MasterSlide.prototype.shapeRemove = function (pos, count) {
     this.cSld.removeFromSpTree(pos, count);
-};
-MasterSlide.prototype.changeBackground = function (bg) {
-    this.cSld.setBg(bg);
-    this.recalcInfo.recalculateBackground = true;
 };
 MasterSlide.prototype.setHF = function(pr) {
     History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SlideMasterSetHF, this.hf, pr));

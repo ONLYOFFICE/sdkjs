@@ -516,10 +516,6 @@ AscFormat.InitClass(Slide, AscCommonSlide.SlideBase, AscDFH.historyitem_type_Sli
         this.Width = w;
         this.Height = h;
     };
-    Slide.prototype.changeBackground = function(bg)
-    {
-        this.cSld.setBg(bg);
-    };
     Slide.prototype.setLocks = function(deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock)
     {
         this.deleteLock = deleteLock;
@@ -662,18 +658,8 @@ AscFormat.InitClass(Slide, AscCommonSlide.SlideBase, AscDFH.historyitem_type_Sli
        History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SlideSetClrMapOverride, this.clrMap, clrMap));
         this.clrMap = clrMap;
     };
-    Slide.prototype.Write_ToBinary2 = function(w)
-    {
-        w.WriteLong(this.getObjectType());
-        w.WriteString2(this.Id);
-        AscFormat.writeObject(w, this.cSld);
-    };
-    Slide.prototype.Read_FromBinary2 = function(r)
-    {
-        this.Id = r.GetString2();
-        this.cSld = AscFormat.readObject(r);
-        if (this.cSld) this.cSld.parent = this;
-    };
+Slide.prototype.Write_ToBinary2 = AscCommonSlide.SlideBase.prototype.writeSlideBinary;
+Slide.prototype.Read_FromBinary2 = AscCommonSlide.SlideBase.prototype.readSlideBinary;
     Slide.prototype.getAllFonts = function(fonts)
     {
 	    this.cSld.forEachSp(function(oSp) {

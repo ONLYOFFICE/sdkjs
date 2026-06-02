@@ -36,7 +36,7 @@
 	function SlideBase() {
 		AscFormat.CBaseFormatObject.call(this);
 		this.cSld = new AscFormat.CSld(this);
-		this.clrMap = new AscFormat.ClrMap();
+		this.clrMap = null;
 		this.presentation = editor && editor.WordControl && editor.WordControl.m_oLogicDocument;
 		this.graphicObjects = new AscFormat.DrawingObjectsController(this);
 
@@ -682,6 +682,35 @@
 		this.shapeAdd(pos, item);
 	};
 
+	SlideBase.prototype.changeBackground = function(bg) {
+		this.cSld.setBg(bg);
+	};
+	SlideBase.prototype.setCSldName = function(pr) {
+		this.cSld.setName(pr);
+	};
+	SlideBase.prototype.writeSlideBinary = function(w){
+		w.WriteLong(this.getObjectType());
+		w.WriteString2(this.Id);
+		AscFormat.writeObject(w, this.cSld);
+	};
+	SlideBase.prototype.readSlideBinary = function(r){
+		this.Id = r.GetString2();
+		this.cSld = AscFormat.readObject(r);
+		if (this.cSld) this.cSld.parent = this;
+	};
+	SlideBase.prototype.writeMasterBinary = function(w){
+		w.WriteLong(this.getObjectType());
+		w.WriteString2(this.Id);
+		AscFormat.writeObject(w, this.theme);
+		AscFormat.writeObject(w, this.cSld);
+	};
+	SlideBase.prototype.readMasterBinary = function(r){
+		this.Id = r.GetString2();
+		this.theme = AscFormat.readObject(r);
+		this.cSld = AscFormat.readObject(r);
+		if (this.cSld) this.cSld.parent = this;
+	};
+
 	// todo end check slides methods
 
 	SlideBase.prototype.getDrawingsForController = function() {
@@ -764,8 +793,6 @@
 	SlideBase.prototype.shapeAdd = function(pos, item) {
 	};
 	SlideBase.prototype.setSlideSize = function(w, h) {
-	};
-	SlideBase.prototype.changeBackground = function(bg) {
 	};
 	SlideBase.prototype.collectRedrawSlides = function (redrawSlides, force) {};
 	SlideBase.prototype.getOutlineSlide = function () {
