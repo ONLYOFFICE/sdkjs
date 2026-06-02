@@ -9282,6 +9282,10 @@ function BinaryPPTYLoader()
 				hyper.id = hyper.action + '?file=' + hyper.id;
 				break;
 
+			case "ppaction://noaction":
+				hyper.id = hyper.action;
+				break;
+
 			default:
 				hyper.id = null;
 		}

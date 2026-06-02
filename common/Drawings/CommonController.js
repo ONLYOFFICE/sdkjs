@@ -810,7 +810,8 @@
 								if (oTextHyperlink &&
 									typeof oTextHyperlink.Value === "string" &&
 									oTextHyperlink.Value.length > 0) {
-									sHyperlink = oTextHyperlink.GetValue();
+									var logicDocument = Asc.editor.getLogicDocument();
+									sHyperlink = (logicDocument && logicDocument.resolveSlideJumpValue) ? logicDocument.resolveSlideJumpValue(oTextHyperlink) : oTextHyperlink.GetValue();
 									sTooltip = oTextHyperlink.GetToolTip() || "";
 									if (this.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
 										var bOldVisitedValue = oTextHyperlink.GetVisited();
@@ -840,7 +841,8 @@
 								&& oNvPr.hlinkClick
 								&& typeof oNvPr.hlinkClick.id === "string"
 								&& oNvPr.hlinkClick.id.length > 0) {
-								sHyperlink = oNvPr.hlinkClick.id;
+								var logicDocument = Asc.editor.getLogicDocument();
+								sHyperlink = (logicDocument && logicDocument.resolveSlideJumpValue) ? logicDocument.resolveSlideJumpValue(oNvPr.hlinkClick) : oNvPr.hlinkClick.id;
 								sTooltip = oNvPr.hlinkClick.tooltip || "";
 							}
 						}
@@ -953,7 +955,8 @@
 
 						const oTextHyperlink = fCheckObjectHyperlink(drawing, x, y);
 						if (oTextHyperlink && typeof oTextHyperlink.Value === "string" && oTextHyperlink.Value.length > 0) {
-							textHyperlinkId = oTextHyperlink.GetValue();
+							let logicDocument = Asc.editor.getLogicDocument();
+							textHyperlinkId = (logicDocument && logicDocument.resolveSlideJumpValue) ? logicDocument.resolveSlideJumpValue(oTextHyperlink) : oTextHyperlink.GetValue();
 							textHyperlinkTooltip = oTextHyperlink.GetToolTip() || "";
 						}
 
@@ -961,7 +964,8 @@
 						let shapeHyperlinkId = null;
 						let shapeHyperlinkTooltip = "";
 						if (oNvPr && oNvPr.hlinkClick) {
-							shapeHyperlinkId = oNvPr.hlinkClick.id;
+							let logicDocument = Asc.editor.getLogicDocument();
+							shapeHyperlinkId = (logicDocument && logicDocument.resolveSlideJumpValue) ? logicDocument.resolveSlideJumpValue(oNvPr.hlinkClick) : oNvPr.hlinkClick.id;
 							shapeHyperlinkTooltip = oNvPr.hlinkClick.tooltip;
 						}
 
@@ -8387,7 +8391,8 @@
 							if (oNvPr && oNvPr.hlinkClick && oNvPr.hlinkClick.id) {
 								hyperlink_properties = new Asc.CHyperlinkProperty();
 
-								const hyperlinkId = oNvPr.hlinkClick.id;
+								const logicDocument = Asc.editor.getLogicDocument();
+								const hyperlinkId = (logicDocument && logicDocument.resolveSlideJumpValue) ? logicDocument.resolveSlideJumpValue(oNvPr.hlinkClick) : oNvPr.hlinkClick.id;
 								if (typeof hyperlinkId === 'string') {
 
 									if (hyperlinkId[0] === '#') {
@@ -8397,7 +8402,24 @@
 										hyperlink_properties.Value = hyperlinkId;
 									}
 
-									hyperlink_properties.ToolTip = oNvPr.hlinkClick.tooltip;
+									hyperlink_properties.ToolTip = this.private_GetSlideJumpScreenTip(hyperlinkId, oNvPr.hlinkClick.tooltip);
+								}
+							}
+
+							if (!hyperlink_properties && Asc.editor.isPresentationEditor && oTargetDocContent && oTargetDocContent.IsCursorInHyperlink) {
+								const textHyperlink = oTargetDocContent.IsCursorInHyperlink(false);
+								if (textHyperlink) {
+									hyperlink_properties = new Asc.CHyperlinkProperty();
+									const logicDocument = Asc.editor.getLogicDocument();
+									const textHyperlinkValue = (logicDocument && logicDocument.resolveSlideJumpValue) ? logicDocument.resolveSlideJumpValue(textHyperlink) : textHyperlink.GetValue();
+									const textHyperlinkAnchor = textHyperlink.GetAnchor ? textHyperlink.GetAnchor() : null;
+									if (textHyperlinkAnchor) {
+										hyperlink_properties.Value = "";
+										hyperlink_properties.Anchor = textHyperlinkAnchor;
+									} else {
+										hyperlink_properties.Value = textHyperlinkValue;
+									}
+									hyperlink_properties.ToolTip = this.private_GetSlideJumpScreenTip(textHyperlinkValue, textHyperlink.GetToolTip ? textHyperlink.GetToolTip() : "");
 								}
 							}
 						}
@@ -8414,6 +8436,17 @@
 						animProps: anim_props,
 						horizontalRuleProps: horizontal_rule_props
 					};
+				},
+
+				private_GetSlideJumpScreenTip: function (value, fallback) {
+					let mask = "ppaction://hlinksldjumpslide";
+					if (typeof value === "string" && 0 === value.indexOf(mask)) {
+						return AscCommon.translateManager.getValue("Slide") + " " + (parseInt(value.substring(mask.length)) + 1);
+					}
+					if (value === "ppaction://noaction") {
+						return "";
+					}
+					return fallback;
 				},
 
 				getDrawingProps: function () {

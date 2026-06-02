@@ -2281,15 +2281,28 @@ function CBinaryFileWriter()
 			action = parts[0];
 			url = parts[1];
 		}
+        else if (url == "ppaction://noaction")
+        {
+            action = url;
+            url = "";
+        }
         else
         {
             var mask = "ppaction://hlinksldjumpslide";
-            var indSlide = url.indexOf(mask);
-            if (0 == indSlide)
+            if (0 == url.indexOf(mask))
             {
-                var slideNum = parseInt(url.substring(mask.length));
-                url = "slide" + (slideNum + 1) + ".xml";
-                action = "ppaction://hlinksldjump";
+                var logicDocument = Asc.editor.getLogicDocument();
+                var slideNum = (logicDocument && logicDocument.getSlideJumpTargetIndex) ? logicDocument.getSlideJumpTargetIndex(hlink) : parseInt(url.substring(mask.length));
+                if (slideNum >= 0)
+                {
+                    url = "slide" + (slideNum + 1) + ".xml";
+                    action = "ppaction://hlinksldjump";
+                }
+                else
+                {
+                    url = "";
+                    action = "ppaction://noaction";
+                }
             }
         }
 
@@ -4656,17 +4669,30 @@ function CBinaryFileWriter()
 			action = parts[0];
 			id = parts[1];
 		}
+        else if (id === "ppaction://noaction")
+        {
+            action = id;
+            id = "";
+        }
         else
         {
             if(typeof id === "string")
             {
                 var mask = "ppaction://hlinksldjumpslide";
-                var indSlide = id.indexOf(mask);
-                if (0 === indSlide)
+                if (0 === id.indexOf(mask))
                 {
-                    var slideNum = parseInt(id.substring(mask.length));
-                    id = "slide" + (slideNum + 1) + ".xml";
-                    action = "ppaction://hlinksldjump";
+                    var logicDocument = Asc.editor.getLogicDocument();
+                    var slideNum = (logicDocument && logicDocument.getSlideJumpTargetIndex) ? logicDocument.getSlideJumpTargetIndex(hyper) : parseInt(id.substring(mask.length));
+                    if (slideNum >= 0)
+                    {
+                        id = "slide" + (slideNum + 1) + ".xml";
+                        action = "ppaction://hlinksldjump";
+                    }
+                    else
+                    {
+                        id = "";
+                        action = "ppaction://noaction";
+                    }
                 }
             }
         }

@@ -2961,11 +2961,13 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 							else
 							{
 								let mask	= "ppaction://hlinksldjumpslide";
-								let posNum	= sValue.indexOf(mask);
-								if (0 == posNum)
+								if (0 == sValue.indexOf(mask))
 								{
-									let pageNum = parseInt(sValue.substring(mask.length));
-									pGraphics.AddLink(_l, _t, _r - _l, _b - _t, 0, 0, pageNum);
+									let pageNum = (oLogicDocument && oLogicDocument.getSlideJumpTargetIndex) ? oLogicDocument.getSlideJumpTargetIndex(oCF) : parseInt(sValue.substring(mask.length));
+									if (pageNum >= 0)
+									{
+										pGraphics.AddLink(_l, _t, _r - _l, _b - _t, 0, 0, pageNum);
+									}
 								}
 							}
 						}
