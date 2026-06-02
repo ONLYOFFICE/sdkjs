@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -75,6 +78,33 @@ function (window, undefined) {
 	var AGGREGATE_FUNC_QRTINC  = 17;
 	var AGGREGATE_FUNC_PERCEXC = 18;
 	var AGGREGATE_FUNC_QRTEXC  = 19;
+
+	var AGGREGATE_FUNC_MAP = null;
+	function getAggregateFuncMap() {
+		if (AGGREGATE_FUNC_MAP === null) {
+			AGGREGATE_FUNC_MAP = {};
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_AVE]     = AscCommonExcel.cAVERAGE.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_CNT]     = AscCommonExcel.cCOUNT.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_CNTA]    = AscCommonExcel.cCOUNTA.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_MAX]     = AscCommonExcel.cMAX.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_MIN]     = AscCommonExcel.cMIN.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_PROD]    = AscCommonExcel.cPRODUCT.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_STD]     = AscCommonExcel.cSTDEV_S.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_STDP]    = AscCommonExcel.cSTDEV_P.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_SUM]     = AscCommonExcel.cSUM.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_VAR]     = AscCommonExcel.cVAR_S.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_VARP]    = AscCommonExcel.cVAR_P.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_MEDIAN]  = AscCommonExcel.cMEDIAN.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_MODSNGL] = AscCommonExcel.cMODE_SNGL.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_LARGE]   = AscCommonExcel.cLARGE.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_SMALL]   = AscCommonExcel.cSMALL.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_PERCINC] = AscCommonExcel.cPERCENTILE_INC.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_QRTINC]  = AscCommonExcel.cQUARTILE_INC.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_PERCEXC] = AscCommonExcel.cPERCENTILE_EXC.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_QRTEXC]  = AscCommonExcel.cQUARTILE_EXC.prototype;
+		}
+		return AGGREGATE_FUNC_MAP;
+	}
 
 	cFormulaFunctionGroup['Mathematic'] = cFormulaFunctionGroup['Mathematic'] || [];
 	cFormulaFunctionGroup['Mathematic'].push(cABS, cACOS, cACOSH, cACOT, cACOTH, cAGGREGATE, cARABIC, cASIN, cASINH,
@@ -498,14 +528,41 @@ function (window, undefined) {
 	cAGGREGATE.prototype.argumentsMax = 253;
 	cAGGREGATE.prototype.isXLFN = true;
 	cAGGREGATE.prototype.argumentsType = [argType.number, argType.number, [argType.reference]];
-	cAGGREGATE.prototype.arrayIndexes = {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1};
+	cAGGREGATE.prototype.arrayIndexes = {/*1: 1,*/ 2: 1, 3: 1, 4: 1, 5: 1, 6: 1};
 	cAGGREGATE.prototype.getArrayIndex = function (index) {
-		if (index === 0) {
+		if (index < 2) {
 			return undefined;
 		}
 		return 1;
 	};
 	cAGGREGATE.prototype.enabledToSingle = {"allFrom": 2};
+	cAGGREGATE.prototype.getArgHelpList = function (index) {
+		if (index === 0) {
+			var result = [];
+			let _AGGREGATE_FUNC_MAP = getAggregateFuncMap();
+			for (var key in _AGGREGATE_FUNC_MAP) {
+				if (_AGGREGATE_FUNC_MAP.hasOwnProperty(key)) {
+					let name = _AGGREGATE_FUNC_MAP[key].name;
+					name = AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[name] : name;
+					result.push([parseInt(key), name]);
+				}
+			}
+			return result;
+		}
+		return null;
+	};
+	/**
+	 * Returns an aggregate value in a list or database,
+ 	 * with options to ignore hidden rows, errors, and nested aggregates.
+	 *
+	 * @param {number} function_num - A number from 1 to 19 specifying which aggregate function to use.
+ 	 * @param {number} options - A number from 0 to 7 specifying which values to ignore during calculation.
+ 	 * @param {(number | Array | Range | number[])} ref1 - The first numeric value, array, or range to aggregate.
+	 * @param {(number | Array | Range | number[])} [refN] - Additional numeric values, arrays, or ranges.
+	 * @param {(number | Array | Range | number[])} args - Up to 255 numeric values for which the average value will be returned.
+	 * Required for functions such as LARGE, SMALL, PERCENTILE.*, and QUARTILE.*.
+ 	 * @returns {number} Result of the selected aggregate calculation.
+	 */
 	cAGGREGATE.prototype.Calculate = function (arg) {
 		let oArguments = this._prepareArguments([arg[0], arg[1]], arguments[1]);
 		let argClone = oArguments.args;
@@ -519,79 +576,16 @@ function (window, undefined) {
 		}
 
 		let nFunc = Math.floor(argClone[0].getValue());
-		let f = null;
-		switch (nFunc) {
-			case AGGREGATE_FUNC_AVE:
-				f = AscCommonExcel.cAVERAGE.prototype;
-				break;
-			case AGGREGATE_FUNC_CNT:
-				f = AscCommonExcel.cCOUNT.prototype;
-				break;
-			case AGGREGATE_FUNC_CNTA:
-				f = AscCommonExcel.cCOUNTA.prototype;
-				break;
-			case AGGREGATE_FUNC_MAX:
-				f = AscCommonExcel.cMAX.prototype;
-				break;
-			case AGGREGATE_FUNC_MIN:
-				f = AscCommonExcel.cMIN.prototype;
-				break;
-			case AGGREGATE_FUNC_PROD:
-				f = AscCommonExcel.cPRODUCT.prototype;
-				break;
-			case AGGREGATE_FUNC_STD:
-				f = AscCommonExcel.cSTDEV_S.prototype;
-				break;
-			case AGGREGATE_FUNC_STDP:
-				f = AscCommonExcel.cSTDEV_P.prototype;
-				break;
-			case AGGREGATE_FUNC_SUM:
-				f = AscCommonExcel.cSUM.prototype;
-				break;
-			case AGGREGATE_FUNC_VAR:
-				f = AscCommonExcel.cVAR_S.prototype;
-				break;
-			case AGGREGATE_FUNC_VARP:
-				f = AscCommonExcel.cVAR_P.prototype;
-				break;
-			case AGGREGATE_FUNC_MEDIAN:
-				f = AscCommonExcel.cMEDIAN.prototype;
-				break;
-			case AGGREGATE_FUNC_MODSNGL:
-				f = AscCommonExcel.cMODE_SNGL.prototype;
-				break;
-			case AGGREGATE_FUNC_LARGE:
-				if (arg[3]) {
-					f = AscCommonExcel.cLARGE.prototype;
-				}
-				break;
-			case AGGREGATE_FUNC_SMALL:
-				if (arg[3]) {
-					f = AscCommonExcel.cSMALL.prototype;
-				}
-				break;
-			case AGGREGATE_FUNC_PERCINC:
-				if (arg[3]) {
-					f = AscCommonExcel.cPERCENTILE_INC.prototype;
-				}
-				break;
-			case AGGREGATE_FUNC_QRTINC:
-				if (arg[3]) {
-					f = AscCommonExcel.cQUARTILE_INC.prototype;
-				}
-				break;
-			case AGGREGATE_FUNC_PERCEXC:
-				if (arg[3]) {
-					f = AscCommonExcel.cPERCENTILE_EXC.prototype;
-				}
-				break;
-			case AGGREGATE_FUNC_QRTEXC:
-				if (arg[3]) {
-					f = AscCommonExcel.cQUARTILE_EXC.prototype;
-				}
-				break;
-			default:
-				return new cError(cErrorType.not_numeric);
+		let f = getAggregateFuncMap()[nFunc];
+		
+		if (!f) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+		
+		if (nFunc >= 14 && nFunc <= 19) {
+			if (!arg[3]) {
+				f = null;
+			}
 		}
 
 		if (null === f) {
@@ -632,7 +626,7 @@ function (window, undefined) {
 				ignoreErrorsVal = true;
 				break;
 			default :
-				return new cError(cErrorType.not_numeric);
+				return new cError(cErrorType.wrong_value_type);
 		}
 
 		let res;
@@ -653,6 +647,8 @@ function (window, undefined) {
 				//otherwise - error
 				if (doNotCheckRef || this.checkRef(arg[i])) {
 					newArgs.push(arg[i]);
+				} else if (arg[i].type === cElementType.error) {
+					return arg[i];
 				} else {
 					return new cError(cErrorType.wrong_value_type);
 				}
@@ -935,27 +931,47 @@ function (window, undefined) {
 	cATAN.prototype.argumentsMax = 1;
 	cATAN.prototype.argumentsType = [argType.number];
 	cATAN.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		let arg0 = arg[0];
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
 		}
 		arg0 = arg0.tocNumber();
-		if (arg0 instanceof cError) {
+
+		if (arg0.type === cElementType.error) {
 			return arg0;
-		} else if (arg0 instanceof cArray) {
-			arg0.foreach(function (elem, r, c) {
-				if (elem instanceof cNumber) {
-					var a = Math.atan(elem.getValue());
-					this.array[r][c] = isNaN(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
-				} else {
-					this.array[r][c] = new cError(cErrorType.wrong_value_type);
+		} else if (arg0.type === cElementType.array) {
+			let resArray = new cArray();
+			let dimensions = arg0.getDimensions();
+
+			for (let row = 0; row < dimensions.row; row++) {
+				resArray.addRow();
+				for (let col = 0; col < dimensions.col; col++) {
+					let elemVal = arg0.getValueByRowCol ? arg0.getValueByRowCol(row,col,true) : arg0.getElementRowCol(row,col);
+	
+					elemVal = elemVal.tocNumber();
+					if (elemVal.type === cElementType.number) {
+						elemVal = elemVal.getValue();
+
+						let a = Math.atan(elemVal);
+						if (Number.isFinite(a)) {
+							resArray.addElement(new cNumber(a));
+						} else {
+							resArray.addElement(new cError(cErrorType.not_numeric));
+						}
+					} else if (elemVal.type === cElementType.error) {
+						resArray.addElement(elemVal);
+					} else {
+						resArray.addElement(new cError(cErrorType.not_numeric));
+					}
 				}
-			});
-			return arg0;
+			}
+
+			return resArray;
 		} else {
-			var a = Math.atan(arg0.getValue());
+			let a = Math.atan(arg0.getValue());
 			return isNaN(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
 		}
+
 	};
 
 	/**
@@ -972,62 +988,81 @@ function (window, undefined) {
 	cATAN2.prototype.argumentsMax = 2;
 	cATAN2.prototype.argumentsType = [argType.number, argType.number];
 	cATAN2.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1];
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		const MAX_USED_VALUE = 1E+308;
+		const MIN_USED_VALUE = 1E-308;
+		let arg0 = arg[0], arg1 = arg[1];
+
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
 		}
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
 			arg1 = arg1.cross(arguments[1]);
 		}
+
 		arg0 = arg0.tocNumber();
 		arg1 = arg1.tocNumber();
-		if (arg0 instanceof cArray && arg1 instanceof cArray) {
-			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
-				return new cError(cErrorType.not_available);
-			} else {
-				arg0.foreach(function (elem, r, c) {
-					var a = elem, b = arg1.getElementRowCol(r, c);
-					if (a instanceof cNumber && b instanceof cNumber) {
-						this.array[r][c] =
-							a.getValue() == 0 && b.getValue() == 0 ? new cError(cErrorType.division_by_zero) :
-								new cNumber(Math.atan2(b.getValue(), a.getValue()))
-					} else {
-						this.array[r][c] = new cError(cErrorType.wrong_value_type);
-					}
-				});
-				return arg0;
-			}
-		} else if (arg0 instanceof cArray) {
-			arg0.foreach(function (elem, r, c) {
-				var a = elem, b = arg1;
-				if (a instanceof cNumber && b instanceof cNumber) {
-					this.array[r][c] =
-						a.getValue() == 0 && b.getValue() == 0 ? new cError(cErrorType.division_by_zero) :
-							new cNumber(Math.atan2(b.getValue(), a.getValue()))
-				} else {
-					this.array[r][c] = new cError(cErrorType.wrong_value_type);
-				}
-			});
+
+		if (arg0.type === cElementType.error) {
 			return arg0;
-		} else if (arg1 instanceof cArray) {
-			arg1.foreach(function (elem, r, c) {
-				var a = arg0, b = elem;
-				if (a instanceof cNumber && b instanceof cNumber) {
-					this.array[r][c] =
-						a.getValue() == 0 && b.getValue() == 0 ? new cError(cErrorType.division_by_zero) :
-							new cNumber(Math.atan2(b.getValue(), a.getValue()))
-				} else {
-					this.array[r][c] = new cError(cErrorType.wrong_value_type);
-				}
-			});
+		}
+		if (arg1.type === cElementType.error) {
 			return arg1;
 		}
 
-		return (arg0 instanceof cError ? arg0 : arg1 instanceof cError ? arg1 :
-				arg1.getValue() == 0 && arg0.getValue() == 0 ? new cError(cErrorType.division_by_zero) :
-					new cNumber(Math.atan2(arg1.getValue(), arg0.getValue()))
-		)
+		if (arg0.type === cElementType.array || arg1.type === cElementType.array) {
+			if (arg0.type === cElementType.array && arg1.type === cElementType.array &&
+				(arg0.getCountElement() !== arg1.getCountElement() || arg0.getRowCount() !== arg1.getRowCount())) {
+				return new cError(cErrorType.not_available);
+			}
+
+			let resArray = new cArray();
+			let dimensions = arg0.type === cElementType.array ? arg0.getDimensions() : arg1.getDimensions();
+
+			for (let row = 0; row < dimensions.row; row++) {
+				resArray.addRow();
+				for (let col = 0; col < dimensions.col; col++) {
+					let a = arg0.type === cElementType.array
+						? (arg0.getValueByRowCol ? arg0.getValueByRowCol(row, col, true) : arg0.getElementRowCol(row, col))
+						: arg0;
+					let b = arg1.type === cElementType.array
+						? (arg1.getValueByRowCol ? arg1.getValueByRowCol(row, col, true) : arg1.getElementRowCol(row, col))
+						: arg1;
+
+					a = a.tocNumber();
+					b = b.tocNumber();
+
+					if (a.type === cElementType.error) {
+						resArray.addElement(a);
+					} else if (b.type === cElementType.error) {
+						resArray.addElement(b);
+					} else if (a.type === cElementType.number && b.type === cElementType.number) {
+						resArray.addElement(
+							a.getValue() === 0 && b.getValue() === 0
+								? new cError(cErrorType.division_by_zero)
+								: new cNumber(Math.atan2(b.getValue(), a.getValue()))
+						);
+					} else {
+						resArray.addElement(new cError(cErrorType.not_numeric));
+					}
+				}
+			}
+
+			return resArray;
+		}
+
+		let arg0Val = arg0.getValue(),
+			arg1Val = arg1.getValue();
+
+		if (arg0Val === 0 && arg1Val === 0) {
+			return new cError(cErrorType.division_by_zero);
+		} 
+
+		let atan2Calc = Math.atan2(arg1Val, arg0Val);
+
+		return (atan2Calc > 0 && atan2Calc <= MIN_USED_VALUE) ? new cNumber(0) : new cNumber(atan2Calc);
+
 	};
+
 
 	/**
 	 * @constructor
@@ -1044,27 +1079,48 @@ function (window, undefined) {
 	cATANH.prototype.argumentsMax = 1;
 	cATANH.prototype.argumentsType = [argType.number];
 	cATANH.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		let arg0 = arg[0];
+
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
 		}
 		arg0 = arg0.tocNumber();
-		if (arg0 instanceof cError) {
+
+		if (arg0.type === cElementType.error) {
 			return arg0;
-		} else if (arg0 instanceof cArray) {
-			arg0.foreach(function (elem, r, c) {
-				if (elem instanceof cNumber) {
-					var a = Math.atanh(elem.getValue());
-					this.array[r][c] = isNaN(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
-				} else {
-					this.array[r][c] = new cError(cErrorType.wrong_value_type);
+		} else if (arg0.type === cElementType.array) {
+			let resArray = new cArray();
+			let dimensions = arg0.getDimensions();
+
+			for (let row = 0; row < dimensions.row; row++) {
+				resArray.addRow();
+				for (let col = 0; col < dimensions.col; col++) {
+					let elemVal = arg0.getValueByRowCol ? arg0.getValueByRowCol(row,col,true) : arg0.getElementRowCol(row,col);
+	
+					elemVal = elemVal.tocNumber();
+					if (elemVal.type === cElementType.number) {
+						elemVal = elemVal.getValue();
+
+						let a = Math.atanh(elemVal);
+						if (Number.isFinite(a)) {
+							resArray.addElement(new cNumber(a));
+						} else {
+							resArray.addElement(new cError(cErrorType.not_numeric));
+						}
+					} else if (elemVal.type === cElementType.error) {
+						resArray.addElement(elemVal);
+					} else {
+						resArray.addElement(new cError(cErrorType.not_numeric));
+					}
 				}
-			})
+			}
+
+			return resArray;
 		} else {
-			var a = Math.atanh(arg0.getValue());
+			let a = Math.atanh(arg0.getValue());
 			return isNaN(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
 		}
-		return arg0;
+
 	};
 
 	/**
@@ -1997,34 +2053,57 @@ function (window, undefined) {
 	cFACT.prototype.argumentsMax = 1;
 	cFACT.prototype.argumentsType = [argType.number];
 	cFACT.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		let arg0 = arg[0];
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+			arg0 = arg0.getValue();
+		}
+ 
+		if (arg0.type === cElementType.cellsRange3D && !arg0.isSingleSheet()) {
+			return new cError(cErrorType.bad_reference);
+		} else if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
 		}
-		arg0 = arg0.tocNumber();
-		if (arg0 instanceof cError) {
-			return arg0;
-		} else if (arg0 instanceof cArray) {
-			arg0.foreach(function (elem, r, c) {
-				if (elem instanceof cNumber) {
-					if (elem.getValue() < 0) {
-						this.array[r][c] = new cError(cErrorType.not_numeric);
+
+		if (arg0.type === cElementType.array) {
+			let resArr = new cArray();
+			let dimensions = arg0.getDimensions();
+
+			for (let row = 0; row < dimensions.row; row++) {
+				resArr.addRow();
+				for (let col = 0; col < dimensions.col; col++) {
+					let arg0Elem = arg0.getElementRowCol ? arg0.getElementRowCol(row, col) : arg0.getValueByRowCol(row, col, true);
+
+					arg0Elem = arg0Elem.tocNumber();
+					if (arg0Elem.type === cElementType.error) {
+						resArr.addElement(arg0Elem);
+					} else if (arg0Elem.type === cElementType.number) {
+						let arg0ElemVal = Math.floor(arg0Elem.getValue());
+						if (arg0ElemVal < 0) {
+							resArr.addElement(new cError(cErrorType.not_numeric));
+						} else {
+							let a = Math.fact(arg0ElemVal);
+							resArr.addElement(!Number.isFinite(a) ? new cError(cErrorType.not_numeric) : new cNumber(a));
+						}
 					} else {
-						var a = Math.fact(elem.getValue());
-						this.array[r][c] = isNaN(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
+						resArr.addElement(new cError(cErrorType.wrong_value_type));
 					}
-				} else {
-					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
-			})
+			}
+
+			return resArr;
+		}
+
+		arg0 = arg0.tocNumber();
+		if (arg0.type === cElementType.error) {
+			return arg0;
 		} else {
-			if (arg0.getValue() < 0) {
+			let arg0Val = Math.floor(arg0.getValue());
+			if (arg0Val < 0) {
 				return new cError(cErrorType.not_numeric);
 			}
-			var a = Math.fact(arg0.getValue());
-			return isNaN(a) || a == Infinity ? new cError(cErrorType.not_numeric) : new cNumber(a);
+			let a = Math.fact(arg0Val);
+			return !Number.isFinite(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
 		}
-		return arg0;
 	};
 
 	/**
@@ -2044,58 +2123,107 @@ function (window, undefined) {
 	cFACTDOUBLE.prototype.argumentsType = [argType.any];
 	cFACTDOUBLE.prototype.enabledToSingle = {"0": true};
 	cFACTDOUBLE.prototype.Calculate = function (arg) {
+		// function factDoubleOld(n) {
+		// 	n = Math.floor(n);
+
+		// 	if (n === 0) {
+		// 		return 1;
+		// 	} else if (n < 0) {
+		// 		return Number.NaN;
+		// 	} else if (n > 300) {
+		// 		return Number.Infinity;
+		// 	}
+			
+		// 	let res = n, _n = n, ost = -(_n & 1);
+		// 	n -= 2;
+
+		// 	while (n !== ost) {
+		// 		res *= n;
+		// 		n -= 2;
+		// 		if (n <= 0) break;
+		// 	}
+		// 	return res;
+		// }
+
 		function factDouble(n) {
+			let result = 1;
+
 			n = Math.floor(n);
 
-			if (n === 0) {
+			if (n === 0 || n === 1 || n === -1) {
+				// Exceptional cases - always returns 1
 				return 1;
-			} else if (n < 0) {
-				return Number.NaN;
+			} else if (n < -1) {
+				return Number.NaN
 			} else if (n > 300) {
+				// Infinity - overflow
 				return Number.Infinity;
 			}
-			
-			let res = n, _n = n, ost = -(_n & 1);
-			n -= 2;
 
-			while (n != ost) {
-				res *= n;
-				n -= 2;
-				if (n <= 0) break;
+			for (let i = n; i > 1; i -= 2) {
+				result *= i;
+				if (!isFinite(result)) {
+					// Infinity - overflow
+					return Number.Infinity;
+				} 
 			}
-			return res;
+			return result;
 		}
 
 		let arg0 = arg[0];
-		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
-			arg0 = arg0.cross(arguments[1]);
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+			arg0 = arg0.getValue();
+		} else if ((arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) && !arg0.isOneElement()) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (arg0.type === cElementType.cellsRange3D && (!arg0.isOneElement() || !arg0.isSingleSheet())) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (arg0.type === cElementType.array) {
+			let resArr = new cArray();
+			let dimensions = arg0.getDimensions();
+
+			for (let row = 0; row < dimensions.row; row++) {
+				resArr.addRow();
+				for (let col = 0; col < dimensions.col; col++) {
+					let arg0Elem = arg0.getElementRowCol(row, col);
+
+					if (arg0Elem.type === cElementType.bool) {
+						resArr.addElement(new cError(cErrorType.wrong_value_type));
+						continue;
+					}
+
+					arg0Elem = arg0Elem.tocNumber();
+					if (arg0Elem.type === cElementType.error) {
+						resArr.addElement(arg0Elem);
+					} else if (arg0Elem.type === cElementType.number) {
+						if (arg0Elem.getValue() < -1) {
+							resArr.addElement(new cError(cErrorType.not_numeric));
+						} else {
+							let a = factDouble(arg0Elem.getValue());
+							resArr.addElement(!Number.isFinite(a) ? new cError(cErrorType.not_numeric) : new cNumber(a));
+						}
+					} else {
+						resArr.addElement(new cError(cErrorType.wrong_value_type));
+					}
+				}
+			}
+
+			return resArr;
+		}
+
+		if (arg0.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 		
 		arg0 = arg0.tocNumber();
-
 		if (arg0.type === cElementType.error) {
 			return arg0;
-		} else if (arg0.type === cElementType.array) {
-			arg0.foreach(function (elem, r, c) {
-				if (elem.type && elem.type === cElementType.number) {
-					if (elem.getValue() < 0) {
-						this.array[r][c] = new cError(cErrorType.not_numeric);
-					} else {
-						let a = factDouble(elem.getValue());
-						this.array[r][c] = isNaN(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
-					}
-				} else {
-					this.array[r][c] = new cError(cErrorType.wrong_value_type);
-				}
-			})
 		} else {
-			if (arg0.getValue() < 0) {
+			if (arg0.getValue() < -1) {
 				return new cError(cErrorType.not_numeric);
 			}
 			let a = factDouble(arg0.getValue());
-			return isNaN(a) || a == Infinity ? new cError(cErrorType.not_numeric) : new cNumber(a);
+			return !Number.isFinite(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
 		}
-		return arg0;
 	};
 
 	/**
@@ -2662,36 +2790,62 @@ function (window, undefined) {
 	cLN.prototype.argumentsMax = 1;
 	cLN.prototype.argumentsType = [argType.number];
 	cLN.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		let arg0 = arg[0];
+		if (arg0.type === cElementType.cellsRange3D && !arg0.isSingleSheet()) {
+			return new cError(cErrorType.bad_reference);
+		}
+
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+			arg0 = arg0.getValue();
+		}
+
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
-		}
-		arg0 = arg0.tocNumber();
-		if (arg0 instanceof cError) {
-			return arg0;
-		}
-		if (arg0 instanceof cString) {
-			return new cError(cErrorType.wrong_value_type);
-		} else if (arg0 instanceof cArray) {
-			arg0.foreach(function (elem, r, c) {
-				if (elem instanceof cNumber) {
-					if (elem.getValue() <= 0) {
-						this.array[r][c] = new cError(cErrorType.not_numeric);
+		} else if (arg0.type === cElementType.array) {
+			let resArray = new cArray();
+			let dimensions = arg0.getDimensions();
+
+			for (let row = 0; row < dimensions.row; row++) {
+				resArray.addRow();
+				for (let col = 0; col < dimensions.col; col++) {
+					let elemVal = arg0.getValueByRowCol ? arg0.getValueByRowCol(row,col,true) : arg0.getElementRowCol(row,col);
+	
+					elemVal = elemVal.tocNumber();
+					if (elemVal.type === cElementType.number) {
+						elemVal = elemVal.getValue();
+						if (elemVal <= 0) {
+							resArray.addElement(new cError(cErrorType.not_numeric));
+						} else {
+							resArray.addElement(new cNumber(Math.log(elemVal)));
+						}
+					} else if (elemVal.type === cElementType.error) {
+						resArray.addElement(elemVal);
 					} else {
-						this.array[r][c] = new cNumber(Math.log(elem.getValue()));
+						resArray.addElement(new cError(cErrorType.not_numeric));
 					}
-				} else {
-					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
-			})
+			}
+
+			return resArray;
+		}
+
+
+		arg0 = arg0.tocNumber();
+		if (arg0.type === cElementType.error) {
 			return arg0;
-		} else {
-			if (arg0.getValue() <= 0) {
+		}
+
+		if (arg0.type === cElementType.number) {
+			let arg0Val = arg0.getValue();
+
+			if (arg0Val <= 0) {
 				return new cError(cErrorType.not_numeric);
 			} else {
-				return new cNumber(Math.log(arg0.getValue()));
+				return new cNumber(Math.log(arg0Val));
 			}
 		}
+
+		return new cError(cErrorType.not_numeric);
 	};
 
 	/**
@@ -2706,98 +2860,119 @@ function (window, undefined) {
 	cLOG.prototype.name = 'LOG';
 	cLOG.prototype.argumentsMin = 1;
 	cLOG.prototype.argumentsMax = 2;
+	cLOG.prototype.arrayIndexes = {0: 1, 1: 1};
 	cLOG.prototype.argumentsType = [argType.number, argType.number];
 	cLOG.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cNumber(10);
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
-			arg0 = arg0.cross(arguments[1]);
-		}
-		arg0 = arg0.tocNumber();
 
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
-			arg1 = arg1.cross(arguments[1]);
-		}
-		arg1 = arg1.tocNumber();
+		const _getValue = function (arg, row, col) {
+			if (arg.isOneElement()) {
+				return arg.getFirstElement ? arg.getFirstElement() : arg;
+			}	
 
-		if (arg0 instanceof cError) {
-			return arg0;
-		}
-		if (arg1 instanceof cError) {
-			return arg1;
+			const dimensions = arg.getDimensions();
+			if (dimensions.row === 1) {
+				return _getValueInRange(arg, 0, col);
+			}
+
+			if (dimensions.col === 1) {
+				return _getValueInRange(arg, row, 0);
+			}
+
+			return _getValueInRange(arg, row, col);
+		};
+
+		const _getValueInRange = function (array, _row, _col) {
+			return array.getValueByRowCol ? array.getValueByRowCol(_row, _col, true) : array.getElementRowCol(_row, _col);
+		};
+
+		let arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cNumber(10);
+		let isArrayMode, resArraySize = {row: 1, col: 1};
+
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+			arg0 = arg0.getValue();
+		} else if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D || arg0.type === cElementType.array) {
+			isArrayMode = true;
+			
+			let dimensions = arg0.getDimensions();
+			resArraySize.row = dimensions.row;
+			resArraySize.col = dimensions.col;
 		}
 
-		if (arg0 instanceof cArray && arg1 instanceof cArray) {
-			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
-				return new cError(cErrorType.not_available);
-			} else {
-				arg0.foreach(function (elem, r, c) {
-					var a = elem;
-					var b = arg1.getElementRowCol(r, c);
-					if (a instanceof cNumber && b instanceof cNumber) {
-						if (1 === b.getValue()) {
-							return new cError(cErrorType.division_by_zero);
+		if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+			arg1 = arg1.getValue();
+		} else if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D || arg1.type === cElementType.array) {
+			isArrayMode = true;
+			
+			let dimensions = arg1.getDimensions();
+			resArraySize.row = Math.max(dimensions.row, resArraySize.row);
+			resArraySize.col = Math.max(dimensions.col, resArraySize.col);
+		}
+
+		if (isArrayMode) {
+			let resArray = new cArray();
+
+			for (let row = 0; row < resArraySize.row; row++) {
+				resArray.addRow();
+				for (let col = 0; col < resArraySize.col; col++) {
+					let arg0Val = _getValue(arg0, row, col);
+					let arg1Val = _getValue(arg1, row, col);
+	
+					arg0Val = arg0Val.tocNumber();
+					arg1Val = arg1Val.tocNumber();
+
+					if (arg0Val.type !== cElementType.number || arg1Val.type !== cElementType.number) {
+						resArray.addElement(new cError(cErrorType.wrong_value_type));
+					} else if (arg0Val.type === cElementType.number || arg1Val.type === cElementType.number) {
+						arg0Val = arg0Val.getValue();
+						arg1Val = arg1Val.getValue();
+
+						if (arg0Val <= 0 || (arg1Val <= 0)) {
+							resArray.addElement(new cError(cErrorType.not_numeric));
+						} else if (1 === arg1Val) {
+							resArray.addElement(new cError(cErrorType.division_by_zero));
+						} else {
+							resArray.addElement(new cNumber(Math.log(arg0Val) / Math.log(arg1Val)));
 						}
 
-						this.array[r][c] = new cNumber(Math.log(a.getValue()) / Math.log(b.getValue()));
+					} else if (arg0Val.type === cElementType.error) {
+						resArray.addElement(arg0Val);
+					} else if (arg1Val.type === cElementType.error) {
+						resArray.addElement(arg1Val);
 					} else {
-						this.array[r][c] = new cError(cErrorType.wrong_value_type);
+						resArray.addElement(new cError(cErrorType.not_numeric));
 					}
-				});
-				return arg0;
+				}
 			}
-		} else if (arg0 instanceof cArray) {
-			arg0.foreach(function (elem, r, c) {
-				var a = elem, b = arg1 ? arg1 : new cNumber(10);
-				if (a instanceof cNumber && b instanceof cNumber) {
 
-					if (a.getValue() <= 0 || a.getValue() <= 0) {
-						this.array[r][c] = new cError(cErrorType.not_numeric);
-					}
+			return resArray;
+		}
 
-					if (1 === b.getValue()) {
-						return new cError(cErrorType.division_by_zero);
-					}
-
-					this.array[r][c] = new cNumber(Math.log(a.getValue()) / Math.log(b.getValue()));
-				} else {
-					this.array[r][c] = new cError(cErrorType.wrong_value_type);
-				}
-			});
+		arg0 = arg0.tocNumber();
+		if (arg0.type === cElementType.error) {
 			return arg0;
-		} else if (arg1 instanceof cArray) {
-			arg1.foreach(function (elem, r, c) {
-				var a = arg0, b = elem;
-				if (a instanceof cNumber && b instanceof cNumber) {
+		}
 
-					if (a.getValue() <= 0 || a.getValue() <= 0) {
-						this.array[r][c] = new cError(cErrorType.not_numeric);
-					}
-
-					if (1 === b.getValue()) {
-						return new cError(cErrorType.division_by_zero);
-					}
-
-					this.array[r][c] = new cNumber(Math.log(a.getValue()) / Math.log(b.getValue()));
-				} else {
-					this.array[r][c] = new cError(cErrorType.wrong_value_type);
-				}
-			});
+		arg1 = arg1.tocNumber();
+		if (arg1.type === cElementType.error) {
 			return arg1;
 		}
 
-		if (!(arg0 instanceof cNumber) || (arg1 && !(arg0 instanceof cNumber))) {
+		if (arg0.type !== cElementType.number || arg0.type !== cElementType.number) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		if (arg0.getValue() <= 0 || (arg1 && arg1.getValue() <= 0)) {
+		let arg0Val = arg0.getValue(),
+			arg1Val = arg1.getValue();
+
+		if (arg0Val <= 0 || (arg1Val <= 0)) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		if (1 === arg1.getValue()) {
+		if (1 === arg1Val) {
 			return new cError(cErrorType.division_by_zero);
 		}
 
-		return new cNumber(Math.log(arg0.getValue()) / Math.log(arg1.getValue()));
+		return new cNumber(Math.log(arg0Val) / Math.log(arg1Val));
 	};
 
 	/**
@@ -2815,36 +2990,61 @@ function (window, undefined) {
 	cLOG10.prototype.argumentsMax = 1;
 	cLOG10.prototype.argumentsType = [argType.number];
 	cLOG10.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		let arg0 = arg[0];
+		if (arg0.type === cElementType.cellsRange3D && !arg0.isSingleSheet()) {
+			return new cError(cErrorType.bad_reference);
+		}
+
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+			arg0 = arg0.getValue();
+		}
+
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
-		}
-		arg0 = arg0.tocNumber();
-		if (arg0 instanceof cError) {
-			return arg0;
-		}
-		if (arg0 instanceof cString) {
-			return new cError(cErrorType.wrong_value_type);
-		} else if (arg0 instanceof cArray) {
-			arg0.foreach(function (elem, r, c) {
-				if (elem instanceof cNumber) {
-					if (elem.getValue() <= 0) {
-						this.array[r][c] = new cError(cErrorType.not_numeric);
+		} else if (arg0.type === cElementType.array) {
+			let resArray = new cArray();
+			let dimensions = arg0.getDimensions();
+
+			for (let row = 0; row < dimensions.row; row++) {
+				resArray.addRow();
+				for (let col = 0; col < dimensions.col; col++) {
+					let elemVal = arg0.getValueByRowCol ? arg0.getValueByRowCol(row,col,true) : arg0.getElementRowCol(row,col);
+	
+					elemVal = elemVal.tocNumber();
+					if (elemVal.type === cElementType.number) {
+						elemVal = elemVal.getValue();
+						if (elemVal <= 0) {
+							resArray.addElement(new cError(cErrorType.not_numeric));
+						} else {
+							resArray.addElement(new cNumber(Math.log10(elemVal)));
+						}
+					} else if (elemVal.type === cElementType.error) {
+						resArray.addElement(elemVal);
 					} else {
-						this.array[r][c] = new cNumber(Math.log10(elem.getValue()));
+						resArray.addElement(new cError(cErrorType.not_numeric));
 					}
-				} else {
-					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
-			})
+			}
+
+			return resArray;
+		}
+
+		arg0 = arg0.tocNumber();
+		if (arg0.type === cElementType.error) {
 			return arg0;
-		} else {
+		}
+
+		if (arg0.type === cElementType.number) {
+			let arg0Val = arg0.getValue();
+
 			if (arg0.getValue() <= 0) {
 				return new cError(cErrorType.not_numeric);
 			} else {
-				return new cNumber(Math.log10(arg0.getValue()));
+				return new cNumber(Math.log10(arg0Val));
 			}
 		}
+
+		return new cError(cErrorType.not_numeric);
 	};
 
 	/**
@@ -6156,27 +6356,53 @@ function (window, undefined) {
 	cTAN.prototype.argumentsMax = 1;
 	cTAN.prototype.argumentsType = [argType.number];
 	cTAN.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		const MAX_USED_VALUE = Math.pow(2,27); // the accuracy limit for double using the formula x mod pi has been exceeded
+		let arg0 = arg[0];
+
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
 		}
 		arg0 = arg0.tocNumber();
-		if (arg0 instanceof cError) {
+
+		if (arg0.type === cElementType.error) {
 			return arg0;
-		} else if (arg0 instanceof cArray) {
-			arg0.foreach(function (elem, r, c) {
-				if (elem instanceof cNumber) {
-					var a = Math.tan(elem.getValue());
-					this.array[r][c] = isNaN(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
-				} else {
-					this.array[r][c] = new cError(cErrorType.wrong_value_type);
+		} else if (arg0.type === cElementType.array) {
+			let resArray = new cArray();
+			let dimensions = arg0.getDimensions();
+
+			for (let row = 0; row < dimensions.row; row++) {
+				resArray.addRow();
+				for (let col = 0; col < dimensions.col; col++) {
+					let elemVal = arg0.getValueByRowCol ? arg0.getValueByRowCol(row,col,true) : arg0.getElementRowCol(row,col);
+	
+					elemVal = elemVal.tocNumber();
+					if (elemVal.type === cElementType.number) {
+						elemVal = elemVal.getValue();
+
+						let a = Math.tan(elemVal);
+						if (Number.isFinite(a) || (elemVal < MAX_USED_VALUE && elemVal > -MAX_USED_VALUE)) {
+							resArray.addElement(new cNumber(a));
+						} else {
+							resArray.addElement(new cError(cErrorType.not_numeric));
+						}
+					} else if (elemVal.type === cElementType.error) {
+						resArray.addElement(elemVal);
+					} else {
+						resArray.addElement(new cError(cErrorType.not_numeric));
+					}
 				}
-			})
+			}
+
+			return resArray;
 		} else {
-			var a = Math.tan(arg0.getValue());
+			let arg0Val = arg0.getValue();
+			if (arg0Val >= MAX_USED_VALUE || arg0Val <= -MAX_USED_VALUE) {
+				return new cError(cErrorType.not_numeric) 
+			}
+
+			let a = Math.tan(arg0Val);
 			return isNaN(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
 		}
-		return arg0;
 	};
 
 	/**
@@ -6194,27 +6420,50 @@ function (window, undefined) {
 	cTANH.prototype.argumentsMax = 1;
 	cTANH.prototype.argumentsType = [argType.number];
 	cTANH.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		let arg0 = arg[0];
+
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
 		}
 		arg0 = arg0.tocNumber();
-		if (arg0 instanceof cError) {
+
+		if (arg0.type === cElementType.error) {
 			return arg0;
-		} else if (arg0 instanceof cArray) {
-			arg0.foreach(function (elem, r, c) {
-				if (elem instanceof cNumber) {
-					var a = Math.tanh(elem.getValue());
-					this.array[r][c] = isNaN(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
-				} else {
-					this.array[r][c] = new cError(cErrorType.wrong_value_type);
+		} else if (arg0.type === cElementType.array) {
+			let resArray = new cArray();
+			let dimensions = arg0.getDimensions();
+
+			for (let row = 0; row < dimensions.row; row++) {
+				resArray.addRow();
+				for (let col = 0; col < dimensions.col; col++) {
+					let elemVal = arg0.getValueByRowCol ? arg0.getValueByRowCol(row,col,true) : arg0.getElementRowCol(row,col);
+	
+					elemVal = elemVal.tocNumber();
+					if (elemVal.type === cElementType.number) {
+						elemVal = elemVal.getValue();
+
+						let a = Math.tanh(elemVal);
+						if (Number.isFinite(a)) {
+							resArray.addElement(new cNumber(a));
+						} else {
+							resArray.addElement(new cError(cErrorType.not_numeric));
+						}
+					} else if (elemVal.type === cElementType.error) {
+						resArray.addElement(elemVal);
+					} else {
+						resArray.addElement(new cError(cErrorType.not_numeric));
+					}
 				}
-			})
+			}
+
+			return resArray;
 		} else {
-			var a = Math.tanh(arg0.getValue());
+			let arg0Val = arg0.getValue();
+			let a = Math.tanh(arg0Val);
+
 			return isNaN(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
 		}
-		return arg0;
+
 	};
 
 	/**

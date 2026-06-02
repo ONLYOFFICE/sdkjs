@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -288,6 +291,64 @@ function (window, undefined) {
 				return new cError(cErrorType.not_numeric);
 		}
 	}
+
+	function actualDays(a, b) {
+		return Math.round((a - b) / c_msPerDay);
+	}
+
+	function daysInYearBasisFinancial(issue, settl, basis) {
+		switch (basis) {
+			case DayCountBasis.UsPsa30_360:         // 0=USA (NASD) 30/360
+			case DayCountBasis.Actual360:         // 2=exact/360
+			case DayCountBasis.Europ30_360:         // 4=Europe 30/360
+				return new cNumber(360);
+			case DayCountBasis.ActualActual: {         // 1=exact/exact
+				if (!lessOrEqualToAYearApart(issue, settl)) {
+					let actualYears = (settl.getFullYear() - issue.getFullYear()) + 1;
+					let totalDays = actualDays(new Date(settl.getFullYear() + 1, 0, 1), new Date(issue.getFullYear(), 0, 1));
+
+					return totalDays / actualYears;
+				}
+				return considerAsLeap(issue, settl) ? 366 : 365;
+			}
+			case DayCountBasis.Actual365:         //3=exact/365
+				return new cNumber(365);
+			default:
+				return new cError(cErrorType.not_numeric);
+		}
+	}
+
+	function lessOrEqualToAYearApart(issue, settl) {
+		if (settl.getFullYear() - issue.getFullYear() > 1) {
+			return false;
+		} 
+
+		if (settl.getFullYear() === issue.getFullYear()) {
+			return true;
+		} 
+
+		// exactly 1 year apart in calendar years
+		return settl.getMonth() < issue.getMonth() || (settl.getMonth() === issue.getMonth() && settl.getDate() <= issue.getDate());
+	}
+
+	function considerAsLeap(issue, settl) {
+		if (issue.getFullYear() === settl.getFullYear()) {
+			return issue.isLeapYear();
+		}
+		
+		// spans two calendar years - check if either year's Feb 29 falls in [issue, settl]
+		let y1 = issue.getFullYear(), y2 = settl.getFullYear();
+		for (let y = y1; y <= y2; y++) {
+			if (y.isLeapYear()) {
+				let feb29 = new Date(y, 1, 29);
+				if (feb29 >= issue && feb29 <= settl) {
+					return true;
+				} 
+			}
+		}
+		return false;
+	}
+
 
 	function getCorrectDate(val) {
 		// function with shift for dates of the first two months of 1900 (until February)
@@ -2694,5 +2755,6 @@ function (window, undefined) {
 	window['AscCommonExcel'].days360 = days360;
 	window['AscCommonExcel'].getCorrectDate = getCorrectDate;
 	window['AscCommonExcel'].daysInYear = daysInYear;
+	window['AscCommonExcel'].daysInYearBasisFinancial = daysInYearBasisFinancial;
 	window['AscCommonExcel'].getLastDayInMonth = getLastDayInMonth;
 })(window);

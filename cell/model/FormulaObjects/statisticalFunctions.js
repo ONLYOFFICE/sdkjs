@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -519,14 +522,108 @@ function (window, undefined) {
 	}
 
 	function GetLowRegIGamma(fA, fX) {
-		var fLnFactor = fA * Math.log(fX) - fX - getLogGamma(fA);
-		var fFactor = Math.exp(fLnFactor);
+		let fLnFactor = fA * Math.log(fX) - fX - getLogGamma(fA);
+		let fFactor = Math.exp(fLnFactor);
 
 		if (fX > fA + 1) {
 			return 1 - fFactor * getGammaContFraction(fA, fX);
 		} else {
 			return fFactor * getGammaSeries(fA, fX);
 		}
+	}
+
+	function lowerRegularizedGamma(fA, fX) {
+		if (fX === 0) {
+			return 0;
+		}
+
+		if (fX < fA + 1) {
+			return gammaSeries(fA, fX);
+		} else {
+			return 1 - gammaCF(fA, fX);
+		}
+	}
+
+	// Series expansion: P(a,x) = e^(-x) * x^a * sum(x^n / G(a+1+n))
+	function gammaSeries(a, x) {
+		const maxIter = 200;
+		const eps = 1e-14;
+		let ap = a;
+		let sum = 1 / a;
+		let del = sum;
+		for (let i = 0; i < maxIter; i++) {
+			ap += 1;
+			del *= x / ap;
+			sum += del;
+			if (Math.abs(del) < Math.abs(sum) * eps) {
+				break;
+			} 
+		}
+		return sum * Math.exp(-x + a * Math.log(x) - lgamma(a));
+	}
+
+	function gammaCF(a, x) {
+		const maxIter = 200;
+		const eps = 1e-14;
+		const tiny = 1e-30;
+		let b = x + 1 - a;
+		let c = 1 / tiny;
+		let d = 1 / b;
+		let h = d;
+		for (let i = 1; i <= maxIter; i++) {
+			const an = -i * (i - a);
+			b += 2;
+			d = an * d + b;
+
+			if (Math.abs(d) < tiny) {
+				d = tiny;
+			}
+
+			c = b + an / c;
+
+			if (Math.abs(c) < tiny) {
+				c = tiny;
+			}
+
+			d = 1 / d;
+
+			const delta = d * c;
+			h *= delta;
+			if (Math.abs(delta - 1) < eps) {
+				break;
+			} 
+		}
+
+		return Math.exp(-x + a * Math.log(x) - lgamma(a)) * h;
+	}
+
+	// --- Log-gamma (Lanczos approximation) ---
+	function lgamma(z) {
+		const g = 7;
+		const c = [
+			0.99999999999980993,
+			676.5203681218851,
+			-1259.1392167224028,
+			771.32342877765313,
+			-176.61502916214059,
+			12.507343278686905,
+			-0.13857109526572012,
+			9.9843695780195716e-6,
+			1.5056327351493116e-7,
+		];
+		if (z < 0.5) {
+			// Reflection
+			return Math.log(Math.PI / Math.sin(Math.PI * z)) - lgamma(1 - z);
+		}
+		z -= 1;
+
+		let a = c[0];
+		for (let i = 1; i < g + 2; i++) {
+			a += c[i] / (z + i);
+		}
+
+		const t = z + g + 0.5;
+		return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(a);
 	}
 
 	function getGammaContFraction(fA, fX) {
@@ -3984,13 +4081,22 @@ function (window, undefined) {
 	cAVERAGE.prototype.inheritFormat = true;
 	cAVERAGE.prototype.argumentsType = [[argType.number]];
 	cAVERAGE.prototype.enabledToSingle = {"*": true};
+	/**
+	 * Returns the average (arithmetic mean) of the specified arguments.
+	 *
+	 * @param {(number | Array | Range | number[])} args - Up to 255 numeric values for which the average value will be returned.
+	 * The first argument is required, subsequent arguments are optional.
+	 * Arguments can be numbers, names, or arrays of numbers.
+	 * Text, logical values, and empty cells in references are ignored.
+	 * @returns {number} Average of the supplied numeric values.
+	 */
 	cAVERAGE.prototype.Calculate = function (arg) {
-		var count = 0, sum = new cNumber(0);
-		for (var i = 0; i < arg.length; i++) {
-			var _arg = arg[i];
+		let count = 0, sum = new cNumber(0);
+		for (let i = 0; i < arg.length; i++) {
+			let _arg = arg[i];
 			if (cElementType.cell === _arg.type || cElementType.cell3D === _arg.type) {
 				if (!this.checkExclude || !_arg.isHidden(this.excludeHiddenRows)) {
-					var _argV = _arg.getValue();
+					let _argV = _arg.getValue();
 					if (cElementType.string === _argV.type || cElementType.empty === _argV.type ||
 						cElementType.bool === _argV.type) {
 						continue;
@@ -4002,7 +4108,7 @@ function (window, undefined) {
 					}
 				}
 			} else if (cElementType.cellsRange === _arg.type || cElementType.cellsRange3D === _arg.type) {
-				var _argAreaValue = _arg.getValue(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal,
+				let _argAreaValue = _arg.getValue(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal,
 					this.excludeNestedStAg);
 				for (var j = 0; j < _argAreaValue.length; j++) {
 					var __arg = _argAreaValue[j];
@@ -4017,17 +4123,27 @@ function (window, undefined) {
 					}
 				}
 			} else if (cElementType.array === _arg.type) {
+				let isError;
 				_arg.foreach(function (elem) {
 					if (cElementType.string === elem.type || cElementType.empty === elem.type ||
 						cElementType.bool === elem.type) {
 						return false;
+					} else if (cElementType.error === elem.type) {
+						isError = elem;
+						return true;
 					}
-					var e = elem.tocNumber();
+
+					let e = elem.tocNumber();
 					if (cElementType.number === e.type) {
 						sum = _func[sum.type][e.type](sum, e, "+");
 						count++;
 					}
-				})
+				});
+
+				if (isError) {
+					return isError;
+				}
+
 			} else {
 				_arg = _arg.tocNumber();
 				if (cElementType.error === _arg.type) {
@@ -4037,6 +4153,11 @@ function (window, undefined) {
 				count++;
 			}
 		}
+
+		if (count === 0) {
+			return new cError(cErrorType.division_by_zero);
+		}
+
 		return new cNumber(sum.getValue() / count);
 	};
 
@@ -4055,12 +4176,19 @@ function (window, undefined) {
 	cAVERAGEA.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cAVERAGEA.prototype.argumentsType = [[argType.number]];
 	cAVERAGEA.prototype.enabledToSingle = {"*": true};
+	/**
+	 * Returns the average (arithmetic mean) of the specified arguments, evaluating text and FALSE in arguments as 0; TRUE evaluates as 1.
+	 *
+	 * @param {(number | Array | Range | string | number[])} args - Up to 255 numeric values for which the average value will be returned. The first argument is required,
+	 * subsequent arguments are optional. Arguments can be numbers, text, or logical values, such as TRUE and FALSE, names, or arrays of numbers.
+	 * @returns {number} Average of the supplied values.
+	 */
 	cAVERAGEA.prototype.Calculate = function (arg) {
-		var count = 0, sum = new cNumber(0);
-		for (var i = 0; i < arg.length; i++) {
-			var _arg = arg[i];
+		let count = 0, sum = new cNumber(0);
+		for (let i = 0; i < arg.length; i++) {
+			let _arg = arg[i];
 			if (cElementType.cell === _arg.type || cElementType.cell3D === _arg.type) {
-				var _argV = _arg.getValue();
+				let _argV = _arg.getValue();
 				if (cElementType.number === _argV.type || cElementType.bool === _argV.type) {
 					sum = _func[sum.type][_argV.type](sum, _argV, "+");
 					count++;
@@ -4070,9 +4198,9 @@ function (window, undefined) {
 					return _argV;
 				}
 			} else if (cElementType.cellsRange === _arg.type || cElementType.cellsRange3D === _arg.type) {
-				var _argAreaValue = _arg.getValue();
-				for (var j = 0; j < _argAreaValue.length; j++) {
-					var __arg = _argAreaValue[j];
+				let _argAreaValue = _arg.getValue();
+				for (let j = 0; j < _argAreaValue.length; j++) {
+					let __arg = _argAreaValue[j];
 					if (cElementType.number === __arg.type || cElementType.bool === __arg.type) {
 						sum = _func[sum.type][__arg.type](sum, __arg, "+");
 						count++;
@@ -4089,7 +4217,7 @@ function (window, undefined) {
 						return false;
 					}
 
-					var e = elem.tocNumber();
+					let e = elem.tocNumber();
 					if (cElementType.number === e.type) {
 						sum = _func[sum.type][e.type](sum, e, "+");
 						count++;
@@ -4104,6 +4232,11 @@ function (window, undefined) {
 				count++;
 			}
 		}
+
+		if (count === 0) {
+			return new cError(cErrorType.division_by_zero);
+		}
+
 		return new cNumber(sum.getValue() / count);
 	};
 
@@ -6824,22 +6957,27 @@ function (window, undefined) {
 	cGAMMA.prototype.isXLFN = true;
 	cGAMMA.prototype.argumentsType = [argType.number];
 	cGAMMA.prototype.Calculate = function (arg) {
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
+		let arg0 = arg[0];
+		if (arg0.type === cElementType.cellsRange3D && !arg0.isSingleSheet()) {
+			return new cError(cErrorType.bad_reference);
+		}
+
+		const oArguments = this._prepareArguments(arg, arguments[1], true);
+		const argClone = oArguments.args;
 
 		argClone[0] = argClone[0].tocNumber();
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var calcGamma = function (argArray) {
+		const calcGamma = function (argArray) {
 			if (argArray[0] <= 0 && Number.isInteger(argArray[0])) {
 				return new cError(cErrorType.not_numeric);
 			}
-			var res = getGamma(argArray[0]);
-			return null !== res && !isNaN(res) ? new cNumber(res) : new cError(cErrorType.wrong_value_type);
+			let res = getGamma(argArray[0]);
+			return null !== res && !isNaN(res) ? new cNumber(res) : new cError(cErrorType.not_numeric);
 		};
 
 		return this._findArrayInNumberArguments(oArguments, calcGamma);
@@ -6861,31 +6999,38 @@ function (window, undefined) {
 	cGAMMA_DIST.prototype.isXLFN = true;
 	cGAMMA_DIST.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.logical];
 	cGAMMA_DIST.prototype.Calculate = function (arg) {
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
+		const oArguments = this._prepareArguments(arg, arguments[1], true);
+		const argClone = oArguments.args;
+
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arg3 = arg[3];
 
 		argClone[0] = argClone[0].tocNumber();
 		argClone[1] = argClone[1].tocNumber();
 		argClone[2] = argClone[2].tocNumber();
+
+		if (argClone[3].type === cElementType.string) {
+			return new cError(cErrorType.wrong_value_type);
+		}
 		argClone[3] = argClone[3].tocNumber();
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var calcGamma = function (argArray) {
-			var fX = argArray[0];
-			var fAlpha = argArray[1];
-			var fBeta = argArray[2];
-			var bCumulative = argArray[3];
+		const calcGamma = function (argArray) {
+			let fX = argArray[0];
+			let fAlpha = argArray[1];
+			let fBeta = argArray[2];
+			let bCumulative = argArray[3];
 
-			var res = null;
+			let res = null;
 			if ((fX < 0) || fAlpha <= 0 || fBeta <= 0) {
 				return new cError(cErrorType.not_numeric);
 			} else {
 				if (bCumulative) {
-					res = getGammaDist(fX, fAlpha, fBeta);
+					// res = getGammaDist(fX, fAlpha, fBeta);
+					res = lowerRegularizedGamma(fAlpha, fX / fBeta);
 				} else {
 					res = getGammaDistPDF(fX, fAlpha, fBeta);
 				}
@@ -6926,35 +7071,35 @@ function (window, undefined) {
 	cGAMMA_INV.prototype.isXLFN = true;
 	cGAMMA_INV.prototype.argumentsType = [argType.number, argType.number, argType.number];
 	cGAMMA_INV.prototype.Calculate = function (arg) {
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
+		const oArguments = this._prepareArguments(arg, arguments[1], true);
+		const argClone = oArguments.args;
 
 		argClone[0] = argClone[0].tocNumber();
 		argClone[1] = argClone[1].tocNumber();
 		argClone[2] = argClone[2].tocNumber();
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var calcGamma = function (argArray) {
-			var fP = argArray[0];
-			var fAlpha = argArray[1];
-			var fBeta = argArray[2];
+		const calcGamma = function (argArray) {
+			let fP = argArray[0];
+			let fAlpha = argArray[1];
+			let fBeta = argArray[2];
 
 			if (fAlpha <= 0 || fBeta <= 0 || fP < 0 || fP >= 1) {
 				return new cError(cErrorType.not_numeric);
 			}
 
-			var res = null;
+			let res = null;
 			if (fP === 0) {
 				res = 0;
 			} else {
-				var aFunc = new GAMMADISTFUNCTION(fP, fAlpha, fBeta);
-				var fStart = fAlpha * fBeta;
-				var oVal = iterateInverse(aFunc, fStart * 0.5, fStart);
-				var bConvError = oVal.bError;
+				let aFunc = new GAMMADISTFUNCTION(fP, fAlpha, fBeta);
+				let fStart = fAlpha * fBeta;
+				let oVal = iterateInverse(aFunc, fStart * 0.5, fStart);
+				let bConvError = oVal.bError;
 
 				if (bConvError) {
 					return new cError(cErrorType.not_numeric);
@@ -6998,32 +7143,62 @@ function (window, undefined) {
 	cGAMMALN.prototype.argumentsType = [argType.number];
 	cGAMMALN.prototype.Calculate = function (arg) {
 
-		/*
-		 from OpenOffice Source.
-		 end
-		 */
+		let arg0 = arg[0];
+		if (arg0.type === cElementType.cellsRange3D && !arg0.isSingleSheet()) {
+			return new cError(cErrorType.bad_reference);
+		}
 
-		var arg0 = arg[0];
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+			arg0 = arg0.getValue();
+		} else if (arg0.type === cElementType.array) {
+			let resArray = new cArray();
+			let dimensions = arg0.getDimensions();
+
+			for (let row = 0; row < dimensions.row; row++) {
+				resArray.addRow();
+				for (let col = 0; col < dimensions.col; col++) {
+					let elemVal = arg0.getValueByRowCol ? arg0.getValueByRowCol(row,col,true) : arg0.getElementRowCol(row,col);
+	
+					elemVal = elemVal.tocNumber();
+					if (elemVal.type === cElementType.number) {
+						elemVal = elemVal.getValue();
+						if (elemVal <= 0) {
+							resArray.addElement(new cError(cErrorType.not_numeric));
+						} else if (elemVal === 1 || elemVal === 2) {
+							// exact result to avoid cumulative rounding error in lgamma approximation
+							resArray.addElement(new cNumber(0));
+						} else {
+							let lGammaRes = lgamma(elemVal);
+							resArray.addElement(isNaN(lGammaRes) ? new cError(cErrorType.not_numeric) : new cNumber(lGammaRes));
+						}
+					} else if (elemVal.type === cElementType.error) {
+						resArray.addElement(elemVal);
+					} else {
+						resArray.addElement(new cError(cErrorType.not_numeric));
+					}
+				}
+			}
+
+			return resArray;
+		} else if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
 		}
+
 		arg0 = arg0.tocNumber();
-		if (arg0 instanceof cError) {
+		if (arg0.type === cElementType.error) {
 			return arg0;
-		} else if (arg0 instanceof cArray) {
-			arg0.foreach(function (elem, r, c) {
-				if (elem instanceof cNumber) {
-					var a = getLogGamma(elem.getValue());
-					this.array[r][c] = isNaN(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
-				} else {
-					this.array[r][c] = new cError(cErrorType.wrong_value_type);
-				}
-			})
 		} else {
-			var a = getLogGamma(arg0.getValue());
-			return isNaN(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
+			let arg0Val = arg0.getValue();
+			if (arg0Val <= 0) {
+				return new cError(cErrorType.not_numeric);
+			} else if (arg0Val === 1 || arg0Val === 2) {
+				// exact result to avoid cumulative rounding error in lgamma approximation
+				return new cNumber(0);
+			}
+
+			let lGammaRes = lgamma(arg0Val);
+			return isNaN(lGammaRes) ? new cError(cErrorType.not_numeric) : new cNumber(lGammaRes);
 		}
-		return arg0;
 	};
 
 	/**
@@ -7034,31 +7209,13 @@ function (window, undefined) {
 	}
 
 	//***array-formula***
-	cGAMMALN_PRECISE.prototype = Object.create(cBaseFunction.prototype);
+	cGAMMALN_PRECISE.prototype = Object.create(cGAMMALN.prototype);
 	cGAMMALN_PRECISE.prototype.constructor = cGAMMALN_PRECISE;
 	cGAMMALN_PRECISE.prototype.name = 'GAMMALN.PRECISE';
 	cGAMMALN_PRECISE.prototype.argumentsMin = 1;
 	cGAMMALN_PRECISE.prototype.argumentsMax = 1;
 	cGAMMALN_PRECISE.prototype.isXLFN = true;
 	cGAMMALN_PRECISE.prototype.argumentsType = [argType.number];
-	cGAMMALN_PRECISE.prototype.Calculate = function (arg) {
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
-
-		argClone[0] = argClone[0].tocNumber();
-
-		var argError;
-		if (argError = this._checkErrorArg(argClone)) {
-			return argError;
-		}
-
-		var calcGamma = function (argArray) {
-			var a = getLogGamma(argArray[0]);
-			return isNaN(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
-		};
-
-		return this._findArrayInNumberArguments(oArguments, calcGamma);
-	};
 
 	/**
 	 * @constructor
@@ -7677,7 +7834,7 @@ function (window, undefined) {
 
 		arg1 = arg1.getValue();
 		if (arg1 <= 0) {
-			return new cError(cErrorType.not_available);
+			return new cError(cErrorType.not_numeric);
 		}
 
 		let v, tA = [];
@@ -7705,33 +7862,59 @@ function (window, undefined) {
 	};
 	cLARGE.prototype.Calculate = function (arg) {
 		let arg0 = arg[0], arg1 = arg[1];
-
-		if (cElementType.error === arg0.type) {
-			return arg0;
-		}
-
-		if (cElementType.error === arg1.type) {
-			return arg1;
-		}
+		let isArrayMode = false;	// is first arg array or range
 
 		if (cElementType.cellsRange === arg0.type) {
 			arg0 = arg0.getValuesNoEmpty(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal,
 				this.excludeNestedStAg);
+			isArrayMode = true;
 		} else if (cElementType.array === arg0.type) {
 			arg0 = arg0.getMatrix();
+			isArrayMode = true;
 		} else if (cElementType.cellsRange3D === arg0.type) {
 			arg0 = arg0.getMatrix()[0];
-		} else {
-			return new cError(cErrorType.not_numeric);
+			isArrayMode = true;
+		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+			arg0 = arg0.getValue();
 		}
+
+		if (cElementType.string === arg0.type) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+
 
 		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
 			arg1 = arg1.cross(arguments[1]);
 		} else if (cElementType.array === arg1.type) {
 			arg1 = arg1.getElement(0);
+		} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
+			arg1 = arg1.getValue();
 		}
 
 		arg1 = arg1.tocNumber();
+		if (cElementType.string === arg1.type) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.error === arg1.type) {
+			return arg1;
+		}
+
+		if (!isArrayMode) {
+			arg0 = arg0.tocNumber();
+			if (arg0.type !== cElementType.number) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			let arg0Val = arg0.getValue();
+			let arg1Val = Math.ceil(arg1.getValue());
+			if (arg1Val !== 1) {
+				return new cError(cErrorType.not_numeric);
+			}
+
+			return new cNumber(arg0Val);
+		}
+
 		return this._getValue(arg0, arg1);
 	};
 
@@ -12359,7 +12542,7 @@ function parseStringToCElement (val, cultureInfo) {
 		column.start = startIndex;
 		const unshiftDataArrays = {};
 		const unshiftIndexesArrays = {};
-		range._foreachNoEmpty(function (cell, r, c) {
+		range._foreachDataOnly(function (cell, r, c) {
 			const value = AscCommonExcel.checkTypeCell(cell, true, true);
 			if (value.type !== cElementType.empty) {
 				if (!unshiftDataArrays[value.type]) {
@@ -12398,7 +12581,7 @@ function parseStringToCElement (val, cultureInfo) {
 	};
 	CountIfTypedCache.prototype.updateDataAfter = function (range, column, endIndex) {
 		const t = this;
-		range._foreachNoEmpty(function (cell, r, c) {
+		range._foreachDataOnly(function (cell, r, c) {
 			const value = AscCommonExcel.checkTypeCell(cell, true, true);
 			if (r > column.end) {
 				if (value.type !== cElementType.empty) {
@@ -12874,7 +13057,7 @@ function parseStringToCElement (val, cultureInfo) {
 		column.start = startIndex;
 		const unshiftDataArrays = {};
 		const unshiftIndexesArrays = {};
-		range._foreachNoEmpty(function (cell, r, c) {
+		range._foreachDataOnly(function (cell, r, c) {
 			const value = checkTypeCell(cell, true, true);
 			if (value.type === cElementType.number || value.type === cElementType.error) {
 				if (!unshiftDataArrays[value.type]) {
@@ -12895,7 +13078,7 @@ function parseStringToCElement (val, cultureInfo) {
 
 	SumIfSumRangeCache.prototype.updateDataAfter = function (range, column, endIndex) {
 		const t = this;
-		range._foreachNoEmpty(function (cell, r, c) {
+		range._foreachDataOnly(function (cell, r, c) {
 			const value = checkTypeCell(cell, true, true);
 			if (r > column.end) {
 				if (value.type === cElementType.number || value.type === cElementType.error) {

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -1260,7 +1263,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
 	 *
-	 * @param {string} link - The hyperlink address.
+	 * @param {string} link - The hyperlink address. Accepts an external URL (http, https, mailto, ftp) or one of the internal slide actions: "ppaction://hlinkshowjump?jump=firstslide", "ppaction://hlinkshowjump?jump=lastslide", "ppaction://hlinkshowjump?jump=nextslide", "ppaction://hlinkshowjump?jump=previousslide", "ppaction://hlinksldjumpslide{N}" (N is the zero-based slide index), "ppaction://hlinkfile?file={path}" (opens an external file).
 	 * @param {string} tooltip - The tooltip text.
 	 *
 	 * @returns {ApiHyperlink}
@@ -1349,6 +1352,7 @@
         }
         return null;
     };
+    ApiPresentation.prototype.GetSlide = ApiPresentation.prototype.GetSlideByIndex;
 
     /**
      * Returns the current slide.
@@ -1542,17 +1546,17 @@
      * Adds the slide master to the presentation slide masters collection.
      * @memberof ApiPresentation
      * @typeofeditors ["CPE"]
-     * @param {number} [nPos    = ApiPresentation.GetMastersCount()]
-     * @param {ApiMaster} oApiMaster - The slide master to be added.
-     * @returns {boolean} - return false if position is invalid or oApiMaster doesn't exist.
+     * @param {number} [pos = ApiPresentation.GetMastersCount()] - The position where the slide master will be added.
+     * @param {ApiMaster} apiMaster - The slide master to be added.
+     * @returns {boolean} - return false if position is invalid or apiMaster doesn't exist.
      * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/AddMaster.js
 	 */
-    ApiPresentation.prototype.AddMaster = function(nPos, oApiMaster)
+    ApiPresentation.prototype.AddMaster = function(pos, apiMaster)
     {
-        if (oApiMaster && oApiMaster.GetClassType && oApiMaster.GetClassType() === "master")
+        if (apiMaster && apiMaster.GetClassType && apiMaster.GetClassType() === "master")
         {
-			let master = oApiMaster.Master;
-			let position = getArrayAddIndex(nPos, master, this.Presentation.slideMasters);
+			let master = apiMaster.Master;
+			let position = getArrayAddIndex(pos, master, this.Presentation.slideMasters);
 			if (position === null)
 				return false;
 
@@ -2657,7 +2661,7 @@
 	 */
     ApiLayout.prototype.AddObject = function(oDrawing)
     {
-        if (this.Layout) 
+        if (this.Layout)
         {
             if (oDrawing.Drawing.group || oDrawing.Drawing.IsUseInDocument())
                 return false;
@@ -6517,8 +6521,85 @@
 
 		return false;
 	};
+	/**
+	 * Sets the title of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @since 9.5.0
+	 * @param {string} title - The title to set for the current drawing.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetTitle.js
+	 */
+	ApiDrawing.prototype.SetTitle = function(title)
+	{
+		if (!title)
+			return false;
 
-    /**
+		let oDrawing = this.Drawing;
+		if (oDrawing)
+		{
+			oDrawing.setTitle(title);
+			return true;
+		}
+		return false;
+	};
+	/**
+	 * Gets the title of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @since 9.5.0
+	 * @returns {string | null} - The title of the current drawing, or null if not set.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetTitle.js
+	 */
+	ApiDrawing.prototype.GetTitle = function()
+	{
+		let oDrawing = this.Drawing;
+		let title = oDrawing.getTitle();
+		if (title)
+			return title;
+
+		return null;
+	};
+	/**
+	 * Sets the description of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @since 9.5.0
+	 * @param {string} description - The description to set for the current drawing.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetDescription.js
+	 */
+	ApiDrawing.prototype.SetDescription = function(description)
+	{
+		if (!description)
+			return false;
+
+		let oDrawing = this.Drawing;
+		if (oDrawing)
+		{
+			oDrawing.setDescription(description);
+			return true;
+		}
+		return false;
+	};
+	/**
+	 * Gets the description of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @since 9.5.0
+	 * @returns {string | null} - The description of the current drawing, or null if not set.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetDescription.js
+	 */
+	ApiDrawing.prototype.GetDescription = function()
+	{
+		let oDrawing = this.Drawing;
+		let description = oDrawing.getDescription();
+		if (description)
+			return description;
+
+		return null;
+	};
+  /**
 	 * Converts the ApiDrawing object into the JSON object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
@@ -6701,6 +6782,37 @@
 	};
 
 	/**
+	 * Sets whether the aspect ratio of the drawing is locked.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @param {boolean} bAspect - Specifies whether the aspect ratio of this drawing is locked.
+	 * @returns {boolean} Returns `true` if the lock aspect was successfully set, otherwise returns `false`.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLockAspect.js
+	 */
+	ApiDrawing.prototype.SetLockAspect = function(bAspect)
+	{
+		if (bAspect !== false && bAspect !== true)
+			return false;
+
+		this.Drawing.setNoChangeAspect(bAspect);
+		return true;
+	};
+
+	/**
+	 * Returns whether the aspect ratio of the drawing is locked.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockAspect.js
+	 */
+	ApiDrawing.prototype.GetLockAspect = function()
+	{
+		return this.Drawing.getNoChangeAspect();
+	};
+
+	/**
 	 * Gets the x position of the drawing on the slide.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
@@ -6758,11 +6870,11 @@
 	 * Replaces the placeholder by a drawing on the slide.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
-	 * @param {Drawing} oDrawing
+	 * @param {Drawing} drawing - The drawing object that will replace the placeholder.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/ReplacePlaceholder.js
 	 */
-	ApiDrawing.prototype.ReplacePlaceholder = function(oDrawing)
+	ApiDrawing.prototype.ReplacePlaceholder = function(drawing)
 	{
 		let ph = this.GetPlaceholder();
 		if (!ph) return false;
@@ -6770,12 +6882,12 @@
 		let slide = this.Drawing.parent;
 		if (!slide || !slide.graphicObjects) return false;
 
-		let oldSpPr = oDrawing.Drawing.spPr;
+		let oldSpPr = drawing.Drawing.spPr;
 
-		slide.replaceSp(this.Drawing, oDrawing.Drawing);
+		slide.replaceSp(this.Drawing, drawing.Drawing);
 
-		oDrawing.Drawing.setSpPr(this.Drawing.spPr.createDuplicate());
-        if(oDrawing.GetClassType() === "table")
+		drawing.Drawing.setSpPr(this.Drawing.spPr.createDuplicate());
+        if(drawing.GetClassType() === "table")
         {
             let pr = {};
             pr.FrameX = this.GetPosX() / 36000;
@@ -6783,24 +6895,24 @@
             pr.FrameWidth = this.GetWidth() / 36000;
             pr.FrameHeight = this.GetHeight() / 36000;
             pr.Force = true;
-            oDrawing.Drawing.recalculate();
+            drawing.Drawing.recalculate();
 
-            oDrawing.Drawing.setFrameTransform(pr);
+            drawing.Drawing.setFrameTransform(pr);
         }
-        else if(oDrawing.GetClassType() === "chart")
+        else if(drawing.GetClassType() === "chart")
         {
-            AscFormat.CheckSpPrXfrm(oDrawing.Drawing);
-            let xfrm = oDrawing.Drawing.spPr.xfrm;
+            AscFormat.CheckSpPrXfrm(drawing.Drawing);
+            let xfrm = drawing.Drawing.spPr.xfrm;
             xfrm.setOffX(this.GetPosX() / 36000);
             xfrm.setOffY(this.GetPosY() / 36000);
             xfrm.setExtX(this.GetWidth() / 36000);
             xfrm.setExtY(this.GetHeight() / 36000);
             if (oldSpPr)
             {
-                oDrawing.Drawing.spPr.setFill(oldSpPr.Fill ? oldSpPr.Fill.createDuplicate() : null);
-                oDrawing.Drawing.spPr.setLn(oldSpPr.ln ? oldSpPr.ln.createDuplicate() : null);
+                drawing.Drawing.spPr.setFill(oldSpPr.Fill ? oldSpPr.Fill.createDuplicate() : null);
+                drawing.Drawing.spPr.setLn(oldSpPr.ln ? oldSpPr.ln.createDuplicate() : null);
             }
-            oDrawing.Drawing.recalculate();
+            drawing.Drawing.recalculate();
         }
         return true;
 	};
@@ -8254,6 +8366,7 @@
     ApiPresentation.prototype["GetClassType"]             = ApiPresentation.prototype.GetClassType;
     ApiPresentation.prototype["GetCurSlideIndex"]         = ApiPresentation.prototype.GetCurSlideIndex;
     ApiPresentation.prototype["GetSlideByIndex"]          = ApiPresentation.prototype.GetSlideByIndex;
+    ApiPresentation.prototype["GetSlide"]                 = ApiPresentation.prototype.GetSlide;
     ApiPresentation.prototype["GetCurrentSlide"]          = ApiPresentation.prototype.GetCurrentSlide;
     ApiPresentation.prototype["GetCurrentVisibleSlide"]   = ApiPresentation.prototype.GetCurrentVisibleSlide;
     ApiPresentation.prototype["AddSlide"]                 = ApiPresentation.prototype.AddSlide;
@@ -8485,6 +8598,8 @@
     ApiDrawing.prototype["GetFlipV"]                      = ApiDrawing.prototype.GetFlipV;
     ApiDrawing.prototype["SetFlipH"]                      = ApiDrawing.prototype.SetFlipH;
     ApiDrawing.prototype["SetFlipV"]                      = ApiDrawing.prototype.SetFlipV;
+    ApiDrawing.prototype["SetLockAspect"]                 = ApiDrawing.prototype.SetLockAspect;
+    ApiDrawing.prototype["GetLockAspect"]                 = ApiDrawing.prototype.GetLockAspect;
     ApiDrawing.prototype["GetPosX"]                       = ApiDrawing.prototype.GetPosX;
     ApiDrawing.prototype["GetPosY"]                       = ApiDrawing.prototype.GetPosY;
     ApiDrawing.prototype["SetPosX"]                       = ApiDrawing.prototype.SetPosX;

@@ -1,33 +1,36 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -100,6 +103,7 @@
 	 * @property {ApiFreezePanes} FreezePanes - Returns the freeze panes for the current worksheet.
 	 * @property {ApiProtectedRange[]} AllProtectedRanges - Returns all protected ranges from the current worksheet.
 	 * @property {ApiPivotTable[]} PivotTables - Returns all pivot tables from the current worksheet.
+	 * @property {ApiHyperlink[]} Hyperlinks - Returns an array of all the hyperlinks on the worksheet.
 	 */
 	function ApiWorksheet(worksheet) {
 		this.worksheet = worksheet;
@@ -154,6 +158,7 @@
 	 * @property {number} RowsCount - Returns a number of rows in the current range.
 	 * @property {ApiFormatConditions} FormatConditions - Returns the collection of conditional formatting rules for the current range.
      * @property {ApiValidation} Validation - Returns the ApiValidation class instance associated with this range. If no validation instance exists yet, it will be created.
+	 * @property {ApiHyperlink[]} Hyperlinks - Returns an array of all the hyperlinks in the range.
 	 */
 	function ApiRange(range, areas) {
 		this.range = range;
@@ -438,6 +443,22 @@
 		for (var i = 0; i < items.length; i++) {
 			this.Items.push(new ApiRange(items[i]));
 		}
+	}
+
+	/**
+	 * Class representing a hyperlink.
+	 * @constructor
+	 * @property {string} Address - Returns or sets the address of the target document.
+	 * @property {string} SubAddress - Returns or sets the subaddress of the target document.
+	 * @property {string} ScreenTip - Returns or sets the screen tip text for the hyperlink.
+	 * @property {string} TextToDisplay - Returns or sets the text to be displayed for the hyperlink.
+	 * @property {ApiRange} Range - Returns the range the hyperlink is attached to.
+	 * @property {string} Name - Returns the name of the hyperlink.
+	 * @property {number} Type - Returns the type of the hyperlink.
+	 */
+	function ApiHyperlink(oElem, oWorksheet) {
+		this._elem = oElem;
+		this._ws   = oWorksheet;
 	}
 
 	/**
@@ -7899,7 +7920,7 @@
 	Api.GetComments = function () {
 		var comments = [];
 		for (var i = 0; i < Asc.editor.wbModel.aComments.length; i++) {
-			comments.push(new ApiComment(Asc.editor.wbModel.aComments[i], this.wb));
+			comments.push(new ApiComment(Asc.editor.wbModel.aComments[i], Asc['editor'].wb));
 		}
 		return comments;
 	};
@@ -9108,7 +9129,7 @@
 	 */
 	ApiWorksheet.prototype.SetHyperlink = function (sRange, sAddress, subAddress, sScreenTip, sTextToDisplay) {
 		// Validate required parameters
-		if (!sRange || !sAddress) {
+		if (!sRange || sAddress == null) {
 			throwException(new Error('Incorrect required parameters'));
 			return false;
 		}
@@ -9160,6 +9181,25 @@
 		}
 		return true;
 	};
+
+	/**
+	 * Returns a collection of all the hyperlinks on the worksheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiHyperlinks}
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetHyperlinks.js
+	 */
+	ApiWorksheet.prototype.GetHyperlinks = function () {
+		var ws    = this.worksheet;
+		var items = ws.hyperlinkManager.getAll();
+		return items.map(function (elem) { return new ApiHyperlink(elem, ws); });
+	};
+
+	Object.defineProperty(ApiWorksheet.prototype, "Hyperlinks", {
+		get: function () {
+			return this.GetHyperlinks();
+		}
+	});
 
 	/**
 	 * Creates a chart of the specified type from the selected data range of the current sheet.
@@ -9898,6 +9938,25 @@
 		}
         this.range.cleanHyperlinks();
     };
+
+	/**
+	 * Returns a collection of all the hyperlinks in the range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiHyperlinks}
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetHyperlinks.js
+	 */
+	ApiRange.prototype.GetHyperlinks = function () {
+		var ws    = this.range.worksheet;
+		var items = ws.hyperlinkManager.get(this.range.bbox).all;
+		return items.map(function (elem) { return new ApiHyperlink(elem, ws); });
+	};
+
+	Object.defineProperty(ApiRange.prototype, "Hyperlinks", {
+		get: function () {
+			return this.GetHyperlinks();
+		}
+	});
 
 	/**
 	 * Returns a Range object that represents the rows in the specified range. If the specified row is outside the Range object, a new Range will be returned that represents the cells between the columns of the original range in the specified row.
@@ -11420,14 +11479,15 @@
 			obj = ws.AutoFilter;
 		}
 
+		var sortRange = range.clone();
 		if (sortSettings.hasHeaders) {
 			if (sortSettings.columnSort) {
-				range.r1++;
+				sortRange.r1++;
 			} else {
-				range.c1++;
+				sortRange.c1++;
 			}
 		}
-		ws.setCustomSort(sortSettings, obj, null, oWorksheet && oWorksheet.cellCommentator, range);
+		ws.setCustomSort(sortSettings, obj, null, oWorksheet && oWorksheet.cellCommentator, sortRange);
 	};
 
 	/*Object.defineProperty(ApiRange.prototype, "Sort", {
@@ -11442,7 +11502,7 @@
 	 * Deletes the Range object.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {DeleteShiftDirection} [shift] - Specifies how to shift cells to replace the deleted cells.
+	 * @param {DeleteShiftDirection} [shift] - Specifies how to shift cells to replace the deleted cells. If omitted, the direction is determined automatically: <em>"up"</em> if the range has more columns than rows, otherwise <em>"left"</em>.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Delete.js
 	 */
 	ApiRange.prototype.Delete = function (shift) {
@@ -11831,7 +11891,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Find.js
 	 */
 	ApiRange.prototype.Find = function (oSearchData) {
-		let What, After, LookIn, LookAt, SearchOrder, SearchDirection, MatchCase;
+		let What, After, LookIn, LookAt, SearchOrder, SearchDirection, MatchCase, Wildcards;
 
 		if (arguments.length === 1) {
 			if (AscCommon.isRealObject(oSearchData)) {
@@ -11842,6 +11902,7 @@
 				SearchOrder = oSearchData['SearchOrder'];
 				SearchDirection = oSearchData['SearchDirection'];
 				MatchCase = oSearchData['MatchCase'];
+				Wildcards = oSearchData['Wildcards'];
 			} else {
 				return null;
 			}
@@ -11874,6 +11935,10 @@
 
 			options.asc_setLookIn((LookIn === 'xlValues' ? 2 : 1));
 			options.asc_setNotSearchEmptyCells(!(What === "" && !options.isWholeCell));
+			if (Wildcards) {
+				options.isWildcard = true;
+				options.findRegExp = AscCommonExcel.getFindRegExp(What, options);
+			}
 			let start = (After instanceof ApiRange && After.range.isOneCell() && this.range.containsRange(After.range))
 				? {row: After.range.bbox.r1, col: After.range.bbox.c1}
 				: {row: this.range.bbox.r1, col: this.range.bbox.c1};
@@ -13392,6 +13457,37 @@
 	};
 
 	/**
+	 * Sets whether the aspect ratio of the drawing is locked.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} bAspect - Specifies whether the aspect ratio of this drawing is locked.
+	 * @returns {boolean} Returns `true` if the lock aspect was successfully set, otherwise returns `false`.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLockAspect.js
+	 */
+	ApiDrawing.prototype.SetLockAspect = function(bAspect)
+	{
+		if (bAspect !== false && bAspect !== true)
+			return false;
+
+		this.Drawing.setNoChangeAspect(bAspect);
+		return true;
+	};
+
+	/**
+	 * Returns whether the aspect ratio of the drawing is locked.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockAspect.js
+	 */
+	ApiDrawing.prototype.GetLockAspect = function()
+	{
+		return this.Drawing.getNoChangeAspect();
+	};
+
+	/**
 	 * Selects the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
@@ -13526,6 +13622,84 @@
 
 		this.Drawing.spPr.setLn(oStroke.Ln);
 		return true;
+	};
+	/**
+	 * Sets the title of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 9.5.0
+	 * @param {string} title - The title to set for the current drawing.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetTitle.js
+	 */
+	ApiDrawing.prototype.SetTitle = function(title)
+	{
+		if (!title)
+			return false;
+
+		let oDrawing = this.Drawing;
+		if (oDrawing)
+		{
+			oDrawing.setTitle(title);
+			return true;
+		}
+		return false;
+	};
+	/**
+	 * Gets the title of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 9.5.0
+	 * @returns {string | null} - The title of the current drawing, or null if not set.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetTitle.js
+	 */
+	ApiDrawing.prototype.GetTitle = function()
+	{
+		let oDrawing = this.Drawing;
+		let title = oDrawing.getTitle();
+		if (title)
+			return title;
+
+		return null;
+	};
+	/**
+	 * Sets the description of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 9.5.0
+	 * @param {string} description - The description to set for the current drawing.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetDescription.js
+	 */
+	ApiDrawing.prototype.SetDescription = function(description)
+	{
+		if (!description)
+			return false;
+
+		let oDrawing = this.Drawing;
+		if (oDrawing)
+		{
+			oDrawing.setDescription(description);
+			return true;
+		}
+		return false;
+	};
+	/**
+	 * Gets the description of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 9.5.0
+	 * @returns {string | null} - The description of the current drawing, or null if not set.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetDescription.js
+	 */
+	ApiDrawing.prototype.GetDescription = function()
+	{
+		let oDrawing = this.Drawing;
+		let description = oDrawing.getDescription();
+		if (description)
+			return description;
+
+		return null;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -14763,6 +14937,224 @@
 			return this.GetParent();
 		}
 	});
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiHyperlink
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns a type of the ApiHyperlink class.
+	 * @memberof ApiHyperlink
+	 * @typeofeditors ["CSE"]
+	 * @returns {"hyperlink"}
+	 */
+	ApiHyperlink.prototype.GetClassType = function () {
+		return "hyperlink";
+	};
+
+	ApiHyperlink.prototype._applyData = function (oData) {
+		var bbox = this._elem.bbox;
+		this._ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2).setHyperlink(oData, true);
+		var oNewElem = this._ws.hyperlinkManager.getFirst(bbox);
+		if (oNewElem) {
+			this._elem = oNewElem;
+		}
+	};
+
+	/**
+	 * Returns the address of the target document.
+	 * @memberof ApiHyperlink
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetAddress.js
+	 */
+	ApiHyperlink.prototype.GetAddress = function () {
+		return this._elem.data.Hyperlink || "";
+	};
+
+	/**
+	 * Sets the address of the target document.
+	 * @memberof ApiHyperlink
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sAddress - The hyperlink address.
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetAddress.js
+	 */
+	ApiHyperlink.prototype.SetAddress = function (sAddress) {
+		var clone = this._elem.data.clone();
+		clone.Hyperlink = sAddress || null;
+		this._applyData(clone);
+	};
+
+	Object.defineProperty(ApiHyperlink.prototype, "Address", {
+		get: function () {
+			return this.GetAddress();
+		},
+		set: function (v) {
+			this.SetAddress(v);
+		}
+	});
+
+	/**
+	 * Returns the subaddress of the target document.
+	 * @memberof ApiHyperlink
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetSubAddress.js
+	 */
+	ApiHyperlink.prototype.GetSubAddress = function () {
+		return this._elem.data.getLocation() || "";
+	};
+
+	/**
+	 * Sets the subaddress of the target document.
+	 * @memberof ApiHyperlink
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sSubAddress - The subaddress in "Sheet1!A1" format.
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetSubAddress.js
+	 */
+	ApiHyperlink.prototype.SetSubAddress = function (sSubAddress) {
+		var clone = this._elem.data.clone();
+		clone.setLocation(sSubAddress || null);
+		this._applyData(clone);
+	};
+
+	Object.defineProperty(ApiHyperlink.prototype, "SubAddress", {
+		get: function () {
+			return this.GetSubAddress();
+		},
+		set: function (v) {
+			this.SetSubAddress(v);
+		}
+	});
+
+	/**
+	 * Returns the screen tip text for the hyperlink.
+	 * @memberof ApiHyperlink
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetScreenTip.js
+	 */
+	ApiHyperlink.prototype.GetScreenTip = function () {
+		return this._elem.data.Tooltip || "";
+	};
+
+	/**
+	 * Sets the screen tip text for the hyperlink.
+	 * @memberof ApiHyperlink
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sScreenTip - The screen tip text.
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetScreenTip.js
+	 */
+	ApiHyperlink.prototype.SetScreenTip = function (sScreenTip) {
+		var clone = this._elem.data.clone();
+		clone.Tooltip = sScreenTip || null;
+		this._applyData(clone);
+	};
+
+	Object.defineProperty(ApiHyperlink.prototype, "ScreenTip", {
+		get: function () {
+			return this.GetScreenTip();
+		},
+		set: function (v) {
+			this.SetScreenTip(v);
+		}
+	});
+
+	/**
+	 * Returns the text displayed for the hyperlink.
+	 * @memberof ApiHyperlink
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetTextToDisplay.js
+	 */
+	ApiHyperlink.prototype.GetTextToDisplay = function () {
+		return this.GetRange().GetText();
+	};
+
+	/**
+	 * Sets the text to be displayed for the hyperlink.
+	 * @memberof ApiHyperlink
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sText - The text to display.
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetTextToDisplay.js
+	 */
+	ApiHyperlink.prototype.SetTextToDisplay = function (sText) {
+		this.GetRange().SetValue(sText);
+	};
+
+	Object.defineProperty(ApiHyperlink.prototype, "TextToDisplay", {
+		get: function () {
+			return this.GetTextToDisplay();
+		},
+		set: function (v) {
+			this.SetTextToDisplay(v);
+		}
+	});
+
+	/**
+	 * Returns the range the hyperlink is attached to.
+	 * @memberof ApiHyperlink
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange}
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetRange.js
+	 */
+	ApiHyperlink.prototype.GetRange = function () {
+		var bbox = this._elem.bbox;
+		return new ApiRange(this._ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2));
+	};
+
+	Object.defineProperty(ApiHyperlink.prototype, "Range", {
+		get: function () {
+			return this.GetRange();
+		}
+	});
+
+	/**
+	 * Returns the name of the hyperlink.
+	 * @memberof ApiHyperlink
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetName.js
+	 */
+	ApiHyperlink.prototype.GetName = function () {
+		return this.GetTextToDisplay();
+	};
+
+	Object.defineProperty(ApiHyperlink.prototype, "Name", {
+		get: function () {
+			return this.GetName();
+		}
+	});
+
+	/**
+	 * Returns the type of the hyperlink.
+	 * @memberof ApiHyperlink
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetType.js
+	 */
+	ApiHyperlink.prototype.GetType = function () {
+		return Asc.c_oAscMsoHyperlinkType.Range;
+	};
+
+	Object.defineProperty(ApiHyperlink.prototype, "Type", {
+		get: function () {
+			return this.GetType();
+		}
+	});
+
+	/**
+	 * Deletes the hyperlink.
+	 * @memberof ApiHyperlink
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/Delete.js
+	 */
+	ApiHyperlink.prototype.Delete = function () {
+		var bbox = this._elem.bbox;
+		this._ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2).removeHyperlink(this._elem, true);
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -28183,7 +28575,8 @@
 	ApiWorksheet.prototype["AddDefName"] = ApiWorksheet.prototype.AddDefName;
 	ApiWorksheet.prototype["GetComments"] = ApiWorksheet.prototype.GetComments;
 	ApiWorksheet.prototype["Delete"] = ApiWorksheet.prototype.Delete;
-	ApiWorksheet.prototype["SetHyperlink"] = ApiWorksheet.prototype.SetHyperlink;
+	ApiWorksheet.prototype["SetHyperlink"]   = ApiWorksheet.prototype.SetHyperlink;
+	ApiWorksheet.prototype["GetHyperlinks"] = ApiWorksheet.prototype.GetHyperlinks;
 	ApiWorksheet.prototype["AddChart"] = ApiWorksheet.prototype.AddChart;
 	ApiWorksheet.prototype["AddShape"] = ApiWorksheet.prototype.AddShape;
 	ApiWorksheet.prototype["AddImage"] = ApiWorksheet.prototype.AddImage;
@@ -28237,6 +28630,7 @@
     ApiRange.prototype["ClearFormats"] = ApiRange.prototype.ClearFormats;
     ApiRange.prototype["ClearContents"] = ApiRange.prototype.ClearContents;
     ApiRange.prototype["ClearHyperlinks"] = ApiRange.prototype.ClearHyperlinks;
+	ApiRange.prototype["GetHyperlinks"]   = ApiRange.prototype.GetHyperlinks;
 	ApiRange.prototype["GetRows"] = ApiRange.prototype.GetRows;
 	ApiRange.prototype["GetCols"] = ApiRange.prototype.GetCols;
 	ApiRange.prototype["End"] = ApiRange.prototype.End;
@@ -28328,6 +28722,8 @@
 	ApiDrawing.prototype["GetFlipV"]                   =  ApiDrawing.prototype.GetFlipV;
 	ApiDrawing.prototype["SetFlipH"]                   =  ApiDrawing.prototype.SetFlipH;
 	ApiDrawing.prototype["SetFlipV"]                   =  ApiDrawing.prototype.SetFlipV;
+	ApiDrawing.prototype["SetLockAspect"]              =  ApiDrawing.prototype.SetLockAspect;
+	ApiDrawing.prototype["GetLockAspect"]              =  ApiDrawing.prototype.GetLockAspect;
 	ApiDrawing.prototype["Select"]                     =  ApiDrawing.prototype.Select;
 	ApiDrawing.prototype["SetFill"]                    =  ApiDrawing.prototype.SetFill;
 	ApiDrawing.prototype["GetFill"]                    =  ApiDrawing.prototype.GetFill;
@@ -28459,6 +28855,21 @@
 	ApiAreas.prototype["GetCount"]               = ApiAreas.prototype.GetCount;
 	ApiAreas.prototype["GetItem"]                = ApiAreas.prototype.GetItem;
 	ApiAreas.prototype["GetParent"]              = ApiAreas.prototype.GetParent;
+
+
+	ApiHyperlink.prototype["GetClassType"]     = ApiHyperlink.prototype.GetClassType;
+	ApiHyperlink.prototype["GetAddress"]       = ApiHyperlink.prototype.GetAddress;
+	ApiHyperlink.prototype["SetAddress"]       = ApiHyperlink.prototype.SetAddress;
+	ApiHyperlink.prototype["GetSubAddress"]    = ApiHyperlink.prototype.GetSubAddress;
+	ApiHyperlink.prototype["SetSubAddress"]    = ApiHyperlink.prototype.SetSubAddress;
+	ApiHyperlink.prototype["GetScreenTip"]     = ApiHyperlink.prototype.GetScreenTip;
+	ApiHyperlink.prototype["SetScreenTip"]     = ApiHyperlink.prototype.SetScreenTip;
+	ApiHyperlink.prototype["GetTextToDisplay"] = ApiHyperlink.prototype.GetTextToDisplay;
+	ApiHyperlink.prototype["SetTextToDisplay"] = ApiHyperlink.prototype.SetTextToDisplay;
+	ApiHyperlink.prototype["GetRange"]         = ApiHyperlink.prototype.GetRange;
+	ApiHyperlink.prototype["GetName"]          = ApiHyperlink.prototype.GetName;
+	ApiHyperlink.prototype["GetType"]          = ApiHyperlink.prototype.GetType;
+	ApiHyperlink.prototype["Delete"]           = ApiHyperlink.prototype.Delete;
 
 
 	ApiCharacters.prototype["GetCount"]          = ApiCharacters.prototype.GetCount;
@@ -29620,6 +30031,8 @@
 	AscBuilder.Cell["ApiPivotDataField"]         = AscBuilder.Cell.ApiPivotDataField         = ApiPivotDataField;
 	AscBuilder.Cell["ApiPivotItem"]              = AscBuilder.Cell.ApiPivotItem              = ApiPivotItem;
 	AscBuilder.Cell["ApiPivotFilters"]           = AscBuilder.Cell.ApiPivotFilters           = ApiPivotFilters;
+	AscBuilder.Cell["ApiWorkbook"]               = AscBuilder.Cell.ApiWorkbook               = ApiWorkbook;
+	AscBuilder.Cell["ApiHyperlink"]              = AscBuilder.Cell.ApiHyperlink              = ApiHyperlink;
 
 	AscBuilder.Cell.init = function()
 	{

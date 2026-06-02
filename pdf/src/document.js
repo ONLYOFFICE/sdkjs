@@ -1,34 +1,39 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
+
+"use strict";
 
 // TODO: Temporary
 var CPresentation = CPresentation || function(){};
@@ -123,10 +128,6 @@ var CPresentation = CPresentation || function(){};
 	 * @constructor
 	 */
     function CPDFDoc(viewer) {
-        this.widgets    = []; // the actual fields that we draw (children without descendants)
-        this.annots     = [];
-        this.drawings   = []; // from presentations (charts, shapes, images)
-
         this.maxApIdx               = -1;
         this.CollaborativeEditing   = AscCommon.CollaborativeEditing;
         this.CollaborativeEditing.SetLogicDocument(this);
@@ -736,12 +737,12 @@ var CPresentation = CPresentation || function(){};
 
         for (let i = 0; i < this.widgets.length; i++) {
             let oField = this.widgets[i];
-            if ((oField.GetPartialName() == null || oField.GetParentValue(bInberitValue) == null) && oField.GetParent()) {
+            if ((oField.GetPartialName() == null || oField.GetLogicValue(bInberitValue) == null) && oField.GetParent()) {
                 let oParent = oField.GetParent();
-                if (oParent.GetType() == AscPDF.FIELD_TYPES.radiobutton && oParent.IsAllKidsWidgets())
+                if (oParent.GetType() == AscPDF.FIELD_TYPES.radiobutton && oParent.IsLogicalRoot())
                     aRadios.push(oParent);
 
-                value = oParent.GetParentValue(false);
+                value = oParent.GetLogicValue(false);
                 if (value != null && value.toString) {
                     value = value.toString();
                 }
@@ -750,7 +751,7 @@ var CPresentation = CPresentation || function(){};
                     oField.SetCurIdxs(oParent._currentValueIndexes);
                 }
                 else {
-                    if (oField.GetType() !== AscPDF.FIELD_TYPES.radiobutton && oParent.IsAllKidsWidgets())
+                    if (oField.GetType() !== AscPDF.FIELD_TYPES.radiobutton && oParent.IsLogicalRoot())
                         oField.SetValue(value, true);
                 }
             }
@@ -2151,6 +2152,12 @@ var CPresentation = CPresentation || function(){};
 
 									if (Asc.editor.embeddedFontsMap[sFont]) {
 										run.Pr.RFonts.SetAll(Asc.editor.embeddedFontsMap[sFont]);
+										
+										for (let i = 0; i < run.Content.length; i++) {
+											let oItem = run.Content[i];
+											run.Remove_FromContent(i, 1);
+											run.Add_ToContent(i, oItem.IsSpace() ? new AscWord.CRunSpace(oItem.Value) : new AscWord.CRunText(oItem.Value));
+										}
 									}
 								});
 							}
@@ -3386,6 +3393,8 @@ var CPresentation = CPresentation || function(){};
         if (!oPagesInfo)
             return false;
 
+		this.BlurActiveObject();
+		
         let sFieldName = oField.GetFullName();
         let oExistsField = this.GetField(sFieldName);
         if (oExistsField) {
@@ -3613,7 +3622,7 @@ var CPresentation = CPresentation || function(){};
             oParentsMap[nIdx] = oParent;
 
             if (aParentsInfo[i]["value"] != null)
-                oParent.SetParentValue(aParentsInfo[i]["value"]);
+                oParent.SetLogicValue(aParentsInfo[i]["value"]);
             if (aParentsInfo[i]["Parent"] != null)
                 this.private_AddFieldToChildsMap(oParent, aParentsInfo[i]["Parent"]);
             if (aParentsInfo[i]["defaultValue"] != null)
@@ -3621,7 +3630,7 @@ var CPresentation = CPresentation || function(){};
             if (aParentsInfo[i]["i"] != null)
                 oParent.SetApIdx(aParentsInfo[i]["i"]);
             if (aParentsInfo[i]["curIdxs"])
-                oParent.SetParentCurIdxs(aParentsInfo[i]["curIdxs"]);
+                oParent.SetLogicCurIdxs(aParentsInfo[i]["curIdxs"]);
             if (aParentsInfo[i]["opt"])
                 oParent.SetOptions(aParentsInfo[i]["opt"]);
             if (aParentsInfo[i]["MEOptions"] != null)
@@ -4052,8 +4061,44 @@ var CPresentation = CPresentation || function(){};
         this.TextSelectTrackHandler.OnChangePosition();
     };
     CPDFDoc.prototype.ConvertMathView = function (isToLinear, isAll) {
+        if (isAll) {
+            this.ConvertAllMathView(isToLinear);
+            return;
+        }
         let oController = this.GetController();
-        oController.convertMathView(isToLinear, isAll);
+        oController.convertMathView(isToLinear);
+    };
+    CPDFDoc.prototype.GetAllParaMaths = function () {
+        let arrParaMaths = [];
+        let aDrawings = this.drawings;
+
+        for (let i = 0; i < aDrawings.length; ++i)
+        {
+            let oDrawing = aDrawings[i];
+            if (oDrawing && oDrawing.GetAllParaMaths)
+                oDrawing.GetAllParaMaths(arrParaMaths);
+        }
+        return arrParaMaths;
+    };
+    CPDFDoc.prototype.ConvertAllMathView = function (isToLinear) {
+        let arrParaMaths = this.GetAllParaMaths();
+
+        if (!arrParaMaths.length)
+            return;
+
+        let oThis = this;
+        this.DoAction(function () {
+            let nInputType = oThis.Api.getMathInputType();
+            for (let i = 0; i < arrParaMaths.length; ++i)
+            {
+                arrParaMaths[i].ConvertView(isToLinear, nInputType);
+            }
+
+            let oController = oThis.GetController();
+            if (oController)
+                oController.checkCurrentTextObjectExtends();
+            
+        }, AscDFH.historydescription_Document_ConvertMathView, this);
     };
     CPDFDoc.prototype.Set_MathProps = function (oMathProps) {
         let oController = this.GetController();
@@ -4707,7 +4752,7 @@ var CPresentation = CPresentation || function(){};
         }
         function AddJsAction(form, trigger, script)
         {
-            form.SetAction(trigger, script);
+            form.SetActions(trigger, [{"S": AscPDF.ACTIONS_TYPES.JavaScript, "JS": script}]);
         }
 	
         let textForm1 = CreateTextForm("TextForm1", [0, 0, 50, 50]);
@@ -6268,17 +6313,6 @@ var CPresentation = CPresentation || function(){};
             }
         }
 
-        const fEndCallback = function() {
-			AscCommon.History.Add(new CChangesEmbedFontsMap(_this, sOldEmbedFontsMap, JSON.stringify(Asc.editor.embeddedFontsMap)));
-
-            _this.FinalizeAction();
-            _this.Viewer.file.removeSelection();
-            _this.Viewer.paint(function() {
-                _this.Viewer.thumbnails._repaintPage(nPage);
-            });
-            Asc.editor.canSave = true;
-        };
-
         const aFonts = [];
         for (let sFont in oFontMap) {
             if (oFontMap.hasOwnProperty(sFont)) {
@@ -6301,14 +6335,10 @@ var CPresentation = CPresentation || function(){};
                 for (let nIdx = 0; nIdx < data.length; ++nIdx) {
                     _file.nativeFile["changeImageUrl"](allImages[nIdx], AscCommon.g_oDocumentUrls.imagePath2Local(data[nIdx].path));
                 }
-
-                Asc.editor.pre_Paste(aFonts, oLoadUrls, fEndCallback);
             });
         }
-        else {
 
-            Asc.editor.pre_Paste(aFonts, oLoadUrls, fEndCallback);
-        }
+		AscCommon.History.Add(new CChangesEmbedFontsMap(_this, sOldEmbedFontsMap, JSON.stringify(Asc.editor.embeddedFontsMap)));
 
 		for (let idx = 0; idx < aPageDrawings.length; idx++) {
 			const drawing = aPageDrawings[idx];
@@ -6317,7 +6347,7 @@ var CPresentation = CPresentation || function(){};
 			drawing.SetNeedRecalc(true);
 		}
 
-        return true;
+        return {fonts: aFonts, images: oLoadUrls};
     };
 
 
@@ -7789,13 +7819,23 @@ var CPresentation = CPresentation || function(){};
 				const oFillRGB = annot.GetRGBColor(annot.GetFillColor());
 
 				const aQuadsParts = annot.GetQuads();
-				aQuadsParts.forEach(function(quads) {
-					aQuadsFlat = aQuadsFlat.concat(quads);
-					
+				if (aQuadsParts.length > 0) {
+					aQuadsParts.forEach(function(quads) {
+						aQuadsFlat = aQuadsFlat.concat(quads);
+
+						oMemory.WriteLong(oFillRGB.r);
+						oMemory.WriteLong(oFillRGB.g);
+						oMemory.WriteLong(oFillRGB.b);
+					});
+				}
+				else {
+					let aRect = annot.GetRect();
+					aQuadsFlat = aQuadsFlat.concat([aRect[0], aRect[1], aRect[2], aRect[1], aRect[0], aRect[3], aRect[2], aRect[3]]);
+
 					oMemory.WriteLong(oFillRGB.r);
 					oMemory.WriteLong(oFillRGB.g);
 					oMemory.WriteLong(oFillRGB.b);
-				});
+				}
 
 				pagesIdxMap.set(pageIdx, nOrigPageIdx);
 			});
@@ -9826,7 +9866,7 @@ var CPresentation = CPresentation || function(){};
         if (Array.isArray(formJson["curIdxs"]) && formJson["curIdxs"].length != 0) {
             oForm.SetCurIdxs(formJson["curIdxs"]);
             if (formJson["value"] != null)
-                oForm.SetParentValue(formJson["value"]);
+                oForm.SetLogicValue(formJson["value"]);
         }
         else if (formJson["value"] != null && oForm.GetType() != AscPDF.FIELD_TYPES.button) {
             oForm.SetValue(formJson["value"], true);

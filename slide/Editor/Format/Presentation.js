@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -547,7 +550,7 @@ CSlideSize.prototype.fillObject = function (oCopy, oIdMap) {
 const CONFORMANCE_STRICT = 0;
 const CONFORMANCE_TRANSITIONAL = 1;
 
-function CPresentation(DrawingDocument) {
+function CPresentation(DrawingDocument, isMainLogicDocument) {
 	AscFormat.CBaseFormatObject.call(this);
 	this.History = History;
 	this.IdCounter = AscCommon.g_oIdCounter;
@@ -556,7 +559,7 @@ function CPresentation(DrawingDocument) {
 	this.Api = Asc.editor;
 	this.TurnOffInterfaceEvents = false;
 	//------------------------------------------------------------------------
-	if (DrawingDocument) {
+	if (DrawingDocument && false !== isMainLogicDocument) {
 		if (this.History)
 			this.History.Set_LogicDocument(this);
 
@@ -735,6 +738,10 @@ CPresentation.prototype.GetHistory = function () {
 };
 CPresentation.prototype.IsDocumentEditor = function () {
 	return false;
+};
+CPresentation.prototype.IsMovingTableBorder = function () {
+	const controller = this.GetCurrentController();
+	return !!(controller && controller.isMovingTableBorder());
 };
 CPresentation.prototype.IsPresentationEditor = function () {
 	return true;
@@ -3223,14 +3230,13 @@ CPresentation.prototype.findText = function (text, scanForward) {
 
 CPresentation.prototype.groupShapes = function () {
 	var oController = this.GetCurrentController();
-	oController && oController.checkSelectedObjectsAndCallback(oController.createGroup, [], false, AscDFH.historydescription_Presentation_CreateGroup);
+	oController && oController.checkSelectedObjectsAndCallback(oController.createGroup, oController.selectedObjects.slice(), false, AscDFH.historydescription_Presentation_CreateGroup);
 	this.Document_UpdateInterfaceState();
 };
 
 CPresentation.prototype.unGroupShapes = function () {
 	var oController = this.GetCurrentController();
-	oController && oController.checkSelectedObjectsAndCallback(oController.unGroupCallback, [], false, AscDFH.historydescription_Presentation_UnGroup);
-	this.Document_UpdateInterfaceState();
+	oController && oController.checkSelectedObjectsAndCallback(oController.unGroupCallback, oController.selectedObjects.slice(), false, AscDFH.historydescription_Presentation_UnGroup);
 };
 
 CPresentation.prototype.mergeSelectedShapes = function (operation) {
@@ -3722,13 +3728,82 @@ CPresentation.prototype.AddToParagraph = function (ParaItem, bRecalculate, noUpd
 };
 
 CPresentation.prototype.ConvertMathView = function (isToLinear, isAll) {
-	let oController = this.GetCurrentController();
-	if (!oController) {
+	if (isAll)
+	{
+		this.ConvertAllMathView(isToLinear);
 		return;
 	}
-	oController.convertMathView(isToLinear, isAll);
+	let oController = this.GetCurrentController();
+	if (!oController)
+		return;
+
+	oController.convertMathView(isToLinear);
 	this.UpdateSelection();
 	this.UpdateInterface();
+};
+
+CPresentation.prototype.GetAllParaMaths = function () {
+	let arrParaMaths = [];
+	
+	let fCollect = function (oDrawing) {
+		if (oDrawing && oDrawing.GetAllParaMaths) {
+			oDrawing.GetAllParaMaths(arrParaMaths);
+		}
+	};
+	
+	for (let i = 0; i < this.Slides.length; ++i) {
+		let oSlide = this.Slides[i];
+		let aSpTree = oSlide.cSld && oSlide.cSld.spTree;
+		
+		if (aSpTree) {
+			for (let j = 0; j < aSpTree.length; ++j) {
+				fCollect(aSpTree[j]);
+			}
+		}
+
+		if (oSlide.notesShape) {
+			fCollect(oSlide.notesShape);
+		}
+	}
+
+	return arrParaMaths;
+};
+
+CPresentation.prototype.ConvertAllMathView = function (isToLinear) {
+	let arrParaMaths = this.GetAllParaMaths();
+	
+	if (!arrParaMaths.length)
+		return;
+
+	let arrParagraphs = arrParaMaths
+		.map(function (oMath) { return oMath.Paragraph; })
+		.filter(function (p) { return !!p; });
+
+	let addData = {
+		Type:		AscCommon.changestype_2_ElementsArray_and_Type,
+		CheckType:	AscCommon.changestype_Paragraph_Content,
+		Elements:	arrParagraphs
+	};
+
+	if (this.Document_Is_SelectionLocked(AscCommon.changestype_None, addData))
+		return;
+
+	this.StartAction(AscDFH.historydescription_Document_ConvertMathView);
+
+	let nInputType = this.Api.getMathInputType();
+	for (let i = 0; i < arrParaMaths.length; ++i)
+	{
+		arrParaMaths[i].ConvertView(isToLinear, nInputType);
+	}
+
+	let oController = this.GetCurrentController();
+	if (oController)
+		oController.checkCurrentTextObjectExtends();
+
+	this.Recalculate();
+	this.UpdateSelection();
+	this.UpdateInterface();
+	this.FinalizeAction();
 };
 
 CPresentation.prototype.ClearParagraphFormatting = function (isClearParaPr, isClearTextPr) {
@@ -5044,15 +5119,29 @@ CPresentation.prototype.OnKeyDown = function (e) {
 			bRetValue = keydownresult_PreventAll;
 		} else if (e.KeyCode === 27) // Esc
 		{
+			if (this.DrawingDocument.IsTrackRuler()) {
+				this.DrawingDocument.CancelTrackRuler();
+				bRetValue = keydownresult_PreventAll;
+				return bRetValue;
+			}
 			const bCancelEyedropper = this.CancelEyedropper();
 			const bCancelInkDrawer = this.CancelInkDrawer();
 			if (oController && !this.IsFocusOnNotes()) {
 				if(!bCancelEyedropper && !bCancelInkDrawer) {
 					var oDrawingObjects = oController;
+					if (oDrawingObjects.cancelTableBorderMove()) {
+						this.DrawingDocument.UnlockCursorType();
+						this.DrawingDocument.m_oWordControl.OnUpdateOverlay();
+						this.OnMouseMove(global_mouseEvent, 0, 0, this.CurPage);
+						this.UpdateInterface();
+						return;
+					}
 					if (oDrawingObjects.isTrackingDrawings()) {
+						oDrawingObjects.resetTrackState();
+						this.DrawingDocument.m_oWordControl.OnUpdateOverlay();
 						this.Api.sync_EndAddShape();
-						oDrawingObjects.endTrackNewShape();
-						this.UpdateCursorType(0, 0, new AscCommon.CMouseEventHandler());
+						this.DrawingDocument.UnlockCursorType();
+						this.OnMouseMove(global_mouseEvent, 0, 0, this.CurPage);
 						this.UpdateInterface();
 						return;
 					}
@@ -5897,6 +5986,7 @@ CPresentation.prototype.IsFocusOnNotes = function () {
 
 	if(this.IsSlidePageMode() && this.FocusOnNotes) {
 		let oCurSlide = this.GetCurrentSlide();
+		if (!oCurSlide) return false;
 		return !!oCurSlide.notes;
 	}
 	return false;
@@ -8935,6 +9025,7 @@ CPresentation.prototype.insertSlide = function (pos, slide) {
 	}
 	this.checkSlideOutlineView(slide);
 };
+
 CPresentation.prototype.insertSlideObjectToPos = function (pos, slide) {
 	const view = this.getViewManager();
 	view.insertSlideObjectToPos(pos, slide);

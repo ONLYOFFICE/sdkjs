@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -1035,6 +1038,7 @@ Paragraph.prototype.Internal_Content_Add = function(Pos, Item)
 	if (Item.SetParagraph)
 		Item.SetParagraph(this);
 
+	Item.OnAttach();
 	this.OnContentChange();
 };
 Paragraph.prototype.Add_ToContent = function(Pos, Item)
@@ -1106,6 +1110,9 @@ Paragraph.prototype.Internal_Content_Remove = function(Pos)
 
 	if (Item.PreDelete)
 		Item.PreDelete();
+
+	if (Item.OnDetach)
+		Item.OnDetach();
 
 	this.Content.splice(Pos, 1);
 	this.updateTrackRevisions();
@@ -1184,6 +1191,8 @@ Paragraph.prototype.Internal_Content_Remove2 = function(Pos, Count)
 	{
 		if (this.Content[nIndex].PreDelete)
 			this.Content[nIndex].PreDelete();
+
+		this.Content[nIndex].OnDetach();
 	}
 
 	var DeletedItems = this.Content.slice(Pos, Pos + Count);
@@ -1415,38 +1424,22 @@ Paragraph.prototype.Get_ParaPosByContentPos = function(ContentPos)
 };
 /**
  * Функция для перевода позиции внутри параграфа в специальную позицию используемую в ApiRange
- * @param {AscWord.CParagraphContentPos} oContentPos
+ * @param {AscWord.CParagraphContentPos} contentPos
  * @return {number}
  */
-Paragraph.prototype.ConvertParaContentPosToRangePos = function(oContentPos)
+Paragraph.prototype.GetFlatPos = function(contentPos)
 {
-	var nRangePos = 0;
-
-	var nCurPos = oContentPos ? Math.max(0, Math.min(this.Content.length - 1, oContentPos.Get(0))) : this.Content.length;
-	
-	for (var nPos = 0; nPos < nCurPos; ++nPos)
+	let rangePos = 0;
+	let endPos   = contentPos ? Math.max(0, Math.min(this.Content.length - 1, contentPos.Get(0))) : this.Content.length - 1;
+	for (let pos = 0; pos <= endPos; ++pos)
 	{
-		if (this.Content[nPos] instanceof CParagraphContentWithContentBase)
-		{
-			if (nPos != 0 && this.Content[nPos] instanceof ParaRun)
-				nRangePos++;
-			
-			nRangePos += this.Content[nPos].ConvertParaContentPosToRangePos(null);
-		}
+		if (0 !== pos && this.Content[pos] instanceof ParaRun)
+			rangePos++;
+
+		rangePos += this.Content[pos].GetFlatPos(pos === endPos && contentPos ? contentPos : null, 1);
 	}
 
-	if (this.Content[nCurPos])
-	{
-		if (this.Content[nCurPos] instanceof CParagraphContentWithContentBase)
-		{
-			if (nCurPos != 0 && this.Content[nCurPos] instanceof ParaRun)
-				nRangePos++;
-
-			nRangePos += this.Content[nCurPos].ConvertParaContentPosToRangePos(oContentPos, 1);
-		}
-	}
-		
-	return nRangePos;
+	return rangePos;
 };
 Paragraph.prototype.Check_Range_OnlyMath = function(CurRange, CurLine)
 {
@@ -2864,7 +2857,7 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 				else
 					pGraphics.set_fillColor(Element.r, Element.g, Element.b);
 				
-				pGraphics.drawCommentArea(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0);
+				pGraphics.drawCommentArea(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0, Element);
 				DocumentComments.Add_DrawingRect(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0, Page_abs, Element.Additional.CommentId, ParentInvertTransform);
 				Element = aComm.Get_Next();
 			}
@@ -3185,6 +3178,7 @@ Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState
 		// aSpelling сохраним позиции начала и конца продолжительных одинаковых настроек зачеркивания,
 		// двойного зачеркивания, подчеркивания и подчеркивания орфографии.
 
+		pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, Line, CurLine, AscFormat.CLineStructure_DrawType_Foregrounds);
 		var RangesCount = Line.Ranges.length;
 		for (var CurRange = 0; CurRange < RangesCount; CurRange++)
 		{
@@ -3211,6 +3205,7 @@ Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState
 			
 			PDSL.endRange();
 		}
+		pGraphics.End_Command();
 
 		var aStrikeout  = PDSL.Strikeout;
 		var aDStrikeout = PDSL.DStrikeout;
@@ -11105,6 +11100,14 @@ Paragraph.prototype.private_CompileParaPr = function(isForce)
 };
 Paragraph.prototype.GetCompiledInheritedPr = function()
 {
+	if (!this.Parent)
+	{
+		return {
+			ParaPr : new AscWord.CParaPr(),
+			TextPr : new AscWord.CTextPr()
+		};
+	}
+
 	var Styles     = this.Parent.Get_Styles();
 	var Numbering  = this.Parent.GetNumbering();
 	var TableStyle = this.Parent.Get_TableStyleForPara();
@@ -11330,25 +11333,28 @@ Paragraph.prototype.getCompiledPrFromStyle = function()
 Paragraph.prototype.GetParaPrForWrite = function(paraPr)
 {
 	paraPr = paraPr.Copy();
+	if (!this.Parent)
+		return paraPr;
+
 	let inheritedPr = this.GetCompiledInheritedPr().ParaPr;
 	
 	// TODO: Check other properties
 	
-	if (paraPr.Brd)
+	if (paraPr.Brd && inheritedPr.Brd)
 	{
-		if (paraPr.Brd.Top && inheritedPr.Brd.Top.IsEqualWeak(paraPr.Brd.Top))
+		if (paraPr.Brd.Top && paraPr.Brd.Top.IsEqualWeak(inheritedPr.Brd.Top))
 			paraPr.Brd.Top = undefined;
 		
-		if (paraPr.Brd.Left && inheritedPr.Brd.Left.IsEqualWeak(paraPr.Brd.Left))
+		if (paraPr.Brd.Left && paraPr.Brd.Left.IsEqualWeak(inheritedPr.Brd.Left))
 			paraPr.Brd.Left = undefined;
 		
-		if (paraPr.Brd.Right && inheritedPr.Brd.Right.IsEqualWeak(paraPr.Brd.Right))
+		if (paraPr.Brd.Right && paraPr.Brd.Right.IsEqualWeak(inheritedPr.Brd.Right))
 			paraPr.Brd.Right = undefined;
 		
-		if (paraPr.Brd.Bottom && inheritedPr.Brd.Bottom.IsEqualWeak(paraPr.Brd.Bottom))
+		if (paraPr.Brd.Bottom && paraPr.Brd.Bottom.IsEqualWeak(inheritedPr.Brd.Bottom))
 			paraPr.Brd.Bottom = undefined;
 		
-		if (paraPr.Brd.Between && inheritedPr.Brd.Between.IsEqualWeak(paraPr.Brd.Between))
+		if (paraPr.Brd.Between && paraPr.Brd.Between.IsEqualWeak(inheritedPr.Brd.Between))
 			paraPr.Brd.Between = undefined;
 		
 		
@@ -13105,6 +13111,34 @@ Paragraph.prototype.DocumentPreDelete = function ()
 Paragraph.prototype.PresentationPreDelete = function ()
 {
 	this.UpdatePresentationOutline();
+};
+Paragraph.prototype.OnDetach = function()
+{
+	if (!this.IsUseInDocument())
+		return;
+
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsDocumentEditor())
+		logicDocument.OnDetachParagraph(this);
+
+	for (let i = this.Content.length - 1; i >= 0; --i)
+	{
+		this.Content[i].OnDetach();
+	}
+};
+Paragraph.prototype.OnAttach = function()
+{
+	if (!this.IsUseInDocument())
+		return;
+
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsDocumentEditor())
+		logicDocument.OnAttachParagraph(this);
+
+	for (let i = 0; i < this.Content.length; ++i)
+	{
+		this.Content[i].OnAttach();
+	}
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Дополнительные функции
@@ -17029,18 +17063,21 @@ Paragraph.prototype.SetParagraphBidi = function(isRtl)
 {
 	if (this.Pr.Bidi === isRtl)
 		return;
-	
-	this.private_AddPrChange();
-	AscCommon.AddAndExecuteChange(new CChangesParagraphBidi(this, this.Pr.Bidi, isRtl));
-	
+
 	if (!this.bFromDocument)
 	{
-		let jc = this.GetParagraphAlign();
-		if (AscCommon.align_Left === jc)
-			this.Set_Align(AscCommon.align_Right);
-		else if (AscCommon.align_Right === jc)
-			this.Set_Align(AscCommon.align_Left);
+		if (this.GetParagraphBidi() !== isRtl)
+		{
+			let jc = this.GetParagraphAlign();
+			if (AscCommon.align_Left === jc)
+				this.Set_Align(AscCommon.align_Right);
+			else if (AscCommon.align_Right === jc)
+				this.Set_Align(AscCommon.align_Left);
+		}
 	}
+
+	this.private_AddPrChange();
+	AscCommon.AddAndExecuteChange(new CChangesParagraphBidi(this, this.Pr.Bidi, isRtl));
 };
 Paragraph.prototype.GetParagraphBidi = function()
 {

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -70,10 +73,10 @@
 	 * <b>html</b> - HTML formatted code,
 	 * <b>ole</b> - OLE object data,
      * <b>desktop</b> - the desktop editor data,
-     * <b>destop-external</b> - the main page data of the desktop app (system messages),
+     * <b>desktop-external</b> - the main page data of the desktop app (system messages),
      * <b>none</b> - no data will be send to the plugin from the editor,
 	 * <b>sign</b> - the sign for the keychain plugin.
-	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none" | "sign")} initDataType
+	 * @typedef {("text" | "html" | "ole" | "desktop" | "desktop-external" | "none" | "sign")} initDataType
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/initDataType.js
 	 */
 
@@ -123,7 +126,7 @@
 	 * Specifies if the plugin is not displayed in the editor interface and is started in the background with the server (or desktop editors start) not interfering with the other plugins, so that they can work simultaneously.
      *
 	 * @pr {initDataType} initDataType
-	 * The data type selected in the editor and sent to the plugin: "text" - the text data, "html" - HTML formatted code, "ole" - OLE object data, "desktop" - the desktop editor data, "destop-external" - the main page data of the desktop app (system messages), "none" - no data will be send to the plugin from the editor.
+	 * The data type selected in the editor and sent to the plugin: "text" - the text data, "html" - HTML formatted code, "ole" - OLE object data, "desktop" - the desktop editor data, "desktop-external" - the main page data of the desktop app (system messages), "none" - no data will be send to the plugin from the editor.
      *
 	 * @pr {string} initData
      * Is usually equal to "" - this is the data which is sent from the editor to the plugin at the plugin start (e.g. if initDataType == "text", the plugin will receive the selected text when run). It may also be equal to encryption in the encryption plugins.
@@ -483,19 +486,12 @@
 
     /**
      * Specifies the start action for long operations.
-	 * :::note
-	 * GroupActions are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices.aspx?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices.aspx?from=api).
-	 * :::
      * @memberof Api
      * @alias StartAction
-     * @param {"Information" | "Block" | "GroupActions"} type - The action type:
+     * @param {"Information" | "Block"} type - The action type:
      * <b>"Information"</b> - a non-blocking informational action,
-     * <b>"Block"</b> - a blocking interaction action,
-     * <b>"GroupActions"</b> - groups multiple editor operations into a single undoable step.
-     * @param {string | Object} [description] - For <b>"Information"</b> and <b>"Block"</b> types: a string description displayed during the action.
-     * For <b>"GroupActions"</b> type: an optional object with the following properties:
-     * @param {boolean} [description.lockScroll] - If <em>true</em>, the editor scroll position will be locked during the group operation.
-     * @param {boolean} [description.keepSelection] - If <em>true</em>, the cursor position and selection will be preserved after the group operation ends.
+     * <b>"Block"</b> - a blocking interaction action.
+     * @param {string} [description] - A string description displayed during the action.
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/StartAction.js
 	 */
     Api.prototype["pluginMethod_StartAction"] = function(type, description)
@@ -513,20 +509,13 @@
 
     /**
      * Specifies the end action for long operations.
-	 * :::note
-	 * GroupActions are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices.aspx?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices.aspx?from=api).
-	 * :::
      * @memberof Api
      * @alias EndAction
-     * @param {"Information" | "Block" | "GroupActions"} type - The action type:
+     * @param {"Information" | "Block"} type - The action type:
      * <b>"Information"</b> - ends a non-blocking informational action,
-     * <b>"Block"</b> - ends a blocking interaction action,
-     * <b>"GroupActions"</b> - ends the grouped operations started with <em>StartAction("GroupActions")</em>.
-     * @param {string | Object} [description] - For <b>"Information"</b> and <b>"Block"</b> types: a string description displayed during the action.
-     * For <b>"GroupActions"</b> type: an optional object with the following properties:
-     * @param {boolean} [description.scrollToTarget=true] - If <em>false</em>, the editor will not scroll to the target after the group operation ends.
-     * @param {boolean} [description.cancel=false] - If <em>true</em>, the group operation is cancelled and rolled back instead of committed.
-     * @param {string} [status] - For <b>"Information"</b> and <b>"Block"</b> types: the error status code. If no error occurs, then an empty string is passed.
+     * <b>"Block"</b> - ends a blocking interaction action.
+     * @param {string} [description] - A string description displayed during the action.
+     * @param {string} [status] - The error status code. If no error occurs, then an empty string is passed.
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/EndAction.js
      */
     Api.prototype["pluginMethod_EndAction"] = function(type, description, status)

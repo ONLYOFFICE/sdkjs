@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -5886,11 +5889,15 @@ StyleManager.prototype =
 	};
 	var g_StyleCache = new StyleCache();
 
+	// Shared empty result for getStyle fast path; callers treat as read-only.
+	var EMPTY_STYLE_COMPONENTS = {table: [], conditional: []};
+
 	/** @constructor */
 	function SheetMergedStyles() {
 		this.stylesTablePivot = [];
 		this.stylesConditional = {};
 		this.stylesConditionalIterator = null;
+		this._stylesConditionalEmpty = true;
 	}
 
 	SheetMergedStyles.prototype.setTablePivotStyle = function(range, xf, stripe) {
@@ -5921,17 +5928,22 @@ StyleManager.prototype =
 		}
 	};
 	SheetMergedStyles.prototype.getStyle = function(hiddenManager, row, col, opt_ws, opt_AffectingText) {
-		var res = {table: [], conditional: []};
 		if (opt_ws) {
 			opt_ws._updateConditionalFormatting();
 		}
 		if (!this.stylesConditionalIterator) {
 			this.stylesConditionalIterator = new AscCommon.RangeTopBottomIterator();
 			//todo lose stylesConditional sorting
-			this.stylesConditionalIterator.init(Object.values(this.stylesConditional), function(elem) {
+			var values = Object.values(this.stylesConditional);
+			this.stylesConditionalIterator.init(values, function(elem) {
 				return elem.ranges;
 			});
+			this._stylesConditionalEmpty = (values.length === 0);
 		}
+		if (this._stylesConditionalEmpty && this.stylesTablePivot.length === 0) {
+			return EMPTY_STYLE_COMPONENTS;
+		}
+		var res = {table: [], conditional: []};
 		var rules = this.stylesConditionalIterator.get(row, col);
 		//todo sort inside RangeTopBottomIterator ?
 		rules.sort(function(v1, v2) {
@@ -6735,6 +6747,7 @@ StyleManager.prototype =
 		this._hasChanged = false;
 
 		this._tempCell = new AscCommonExcel.Cell(worksheet);
+		this._tempCell._isTransient = true;
 	}
 	Row.prototype.clear = function () {
 		this.index = null;
@@ -7490,7 +7503,24 @@ function RangeDataManagerElem(bbox, data)
 
 		this.initData = null;
 		this.worksheet = null;
+		// Interval-tree row records can remain after their inner tree is empty.
+		this._count = 0;
 	}
+	RangeDataManager.prototype.isEmpty = function () {
+		if (this.initData && this.initData.length > 0) {
+			return false;
+		}
+		if (this._count > 0) {
+			return false;
+		}
+		if (this.oDependenceManager) {
+			var depTree = this.oDependenceManager.tree && this.oDependenceManager.tree.tree;
+			if (depTree && depTree.root !== undefined) {
+				return false;
+			}
+		}
+		return true;
+	};
 	RangeDataManager.prototype._delayedInit = function () {
 		if (this.initData) {
 			var initData = this.initData;
@@ -7512,6 +7542,7 @@ function RangeDataManagerElem(bbox, data)
 		this._delayedInit();
 		var oNewElem = new RangeDataManagerElem(new Asc.Range(bbox.c1, bbox.r1, bbox.c2, bbox.r2), data);
 		this.tree.insert(bbox, oNewElem);
+		this._count++;
 		if (null != this.fChange) {
 			this.fChange.call(this, oNewElem.data, null, oNewElem.bbox, oChangeParam);
 		}
@@ -7580,6 +7611,7 @@ function RangeDataManagerElem(bbox, data)
 		this._delayedInit();
 		if (null != elemToDelete) {
 			this.tree.remove(elemToDelete.bbox, elemToDelete);
+			if (this._count > 0) this._count--;
 			if (null != this.fChange) {
 				this.fChange.call(this, elemToDelete.data, elemToDelete.bbox, null, oChangeParam);
 			}
@@ -14605,6 +14637,8 @@ function RangeDataManagerElem(bbox, data)
 		this.activeArgPos = null;
 		this.activeArgsCount = null;
 
+		this.argHelpList = null;
+
 		this._init(name);
 
 		return this;
@@ -14654,6 +14688,9 @@ function RangeDataManagerElem(bbox, data)
 	};
 	CFunctionInfo.prototype.asc_getActiveArgsCount = function () {
 		return this.activeArgsCount;
+	};
+	CFunctionInfo.prototype.asc_getActiveArgHelpList = function () {
+		return this.argHelpList;
 	};
 
 
@@ -14874,6 +14911,10 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 	CPrintPreviewState.prototype.recalculatePageClipRect = function () {
+		if (this._lastLayoutKey != null && this.advancedOptions && this.advancedOptions.getLayoutKey &&
+			this.advancedOptions.getLayoutKey() === this._lastLayoutKey) {
+			return;
+		}
 		var pages = this.wb.calcPagesPrint(this.advancedOptions);
 		if (pages && pages.arrPages && this.pages.arrPages && this.pages.arrPages.length === pages.arrPages.length) {
 			for (var i in this.pages.arrPages) {
@@ -22396,6 +22437,7 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_setArguments"] = prot.asc_setArguments;
 	prot["asc_getActiveArgPos"] = prot.asc_getActiveArgPos;
 	prot["asc_getActiveArgsCount"] = prot.asc_getActiveArgsCount
+	prot["asc_getActiveArgHelpList"] = prot.asc_getActiveArgHelpList
 
 
 	window["Asc"]["asc_CExternalReference"] = window["Asc"].asc_CExternalReference = asc_CExternalReference;

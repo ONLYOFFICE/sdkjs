@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -702,10 +705,23 @@ function BinaryPPTYLoader()
         }
         else if (this.Api != null && this.IsThemeLoader)
         {
-            var theme_loader = this.Api.ThemeLoader;
-            var _info = theme_loader.themes_info_editor[theme_loader.CurrentLoadThemeIndex];
-            _info.ImageMap = this.presentation.ImageMap;
-            _info.FontMap = this.presentation.Fonts;
+            let allNames = {};
+            for (let i = 0; i < this.presentation.slideMasters.length; ++i)
+            {
+                let master = this.presentation.slideMasters[i];
+                if (master)
+                    master.getAllFonts(allNames);
+            }
+            let fonts = [];
+            for (let name in allNames)
+                fonts.push(new AscFonts.CFont(name));
+            AscFonts.FontPickerByCharacter.extendFonts(fonts);
+            this.presentation.Fonts = fonts;
+
+            let themeLoader = this.Api.ThemeLoader;
+            let info = themeLoader.themes_info_editor[themeLoader.CurrentLoadThemeIndex];
+            info.ImageMap = this.presentation.ImageMap;
+            info.FontMap = this.presentation.Fonts;
         }
     };
 
@@ -4014,9 +4030,7 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
-                    var cSld = new AscFormat.CSld(master);
-                    this.ReadCSld(cSld);
-                    AscCommonSlide.fFillFromCSld(master, cSld);
+                    this.ReadCSld(master.cSld);
                     break;
                 }
                 case 1:
@@ -4176,9 +4190,7 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
-                    var cSld = new AscFormat.CSld(layout);
-                    this.ReadCSld(cSld);
-                    AscCommonSlide.fFillFromCSld(layout, cSld);
+                    this.ReadCSld(layout.cSld);
                     break;
                 }
                 case 1:
@@ -4257,9 +4269,7 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
-                    var cSld = new AscFormat.CSld(slide);
-                    this.ReadCSld(cSld);
-                    AscCommonSlide.fFillFromCSld(slide, cSld);
+                    this.ReadCSld(slide.cSld);
                     break;
                 }
                 case 1:
@@ -4565,16 +4575,7 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
-                    var cSld = new AscFormat.CSld(oNotesMaster);
-                    this.ReadCSld(cSld);
-                    for(var i = 0; i < cSld.spTree.length; ++i){
-                        oNotesMaster.addToSpTreeToPos(i, cSld.spTree[i]);
-                    }
-                    if(cSld.Bg)
-                    {
-                        oNotesMaster.changeBackground(cSld.Bg);
-                    }
-                    oNotesMaster.setCSldName(cSld.name);
+                    this.ReadCSld(oNotesMaster.cSld);
                     break;
                 }
                 case 1:
@@ -4638,16 +4639,7 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
-                    var cSld = new AscFormat.CSld(oNotes);
-                    this.ReadCSld(cSld);
-                    for(var i = 0; i < cSld.spTree.length; ++i){
-                        oNotes.addToSpTreeToPos(i, cSld.spTree[i]);
-                    }
-                    if(cSld.Bg)
-                    {
-                        oNotes.changeBackground(cSld.Bg);
-                    }
-                    oNotes.setCSldName(cSld.name);
+                    this.ReadCSld(oNotes.cSld);
                     break;
                 }
                 case 1:
@@ -4682,7 +4674,7 @@ function BinaryPPTYLoader()
                 break;
 
             if (0 == _at)
-                csld.name = s.GetString2();
+                csld.setName(s.GetString2());
             else
                 break;
         }
@@ -4695,12 +4687,16 @@ function BinaryPPTYLoader()
                 case 0:
                 {
                     // themeElements
-                    csld.Bg = this.ReadBg();
+                    csld.setBg(this.ReadBg());
                     break;
                 }
                 case 1:
                 {
-                    csld.spTree = this.ReadGroupShapeMain();
+                    var arr = this.ReadGroupShapeMain();
+                    for (var i = 0; i < arr.length; i++) {
+                        csld.addToSpTree(csld.spTree.length, arr[i]);
+                        if (csld.parent) arr[i].setParent2(csld.parent);
+                    }
                     break;
                 }
                 default:
@@ -6676,6 +6672,11 @@ function BinaryPPTYLoader()
                 case 0:
                 {
                     shape.setUseBgFill(s.GetBool());
+                    break;
+                }
+                case 1:
+                {
+                    shape.setTextLink(s.GetString2());
                     break;
                 }
                 default:
@@ -11156,6 +11157,11 @@ function BinaryPPTYLoader()
                     case 0:
                     {
                         shape.setUseBgFill(s.GetBool());
+                        break;
+                    }
+                    case 1:
+                    {
+                        shape.setTextLink(s.GetString2());
                         break;
                     }
                     default:

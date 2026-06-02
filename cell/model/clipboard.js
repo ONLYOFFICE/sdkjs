@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -558,8 +561,6 @@
 		};
 
 		Clipboard.prototype.drawSelectedArea = function (ws, opt_get_bytes) {
-			let activeRange = ws.model.selectionRange.getLast();
-
 			// Canvas limitations for different browsers:
 			// Chrome/Edge: 32767px x 32767px
 			// Firefox: 32767px x 32767px
@@ -587,54 +588,71 @@
 				maxCanvasArea = 8192 * 8192;
 			}
 
-			let estimatedHeight = ws._getRowTop(activeRange.r2 + 1) - ws._getRowTop(activeRange.r1);
-			let estimatedWidth = ws._getColLeft(activeRange.c2 + 1) - ws._getColLeft(activeRange.c1);
-
-			// Check height limitations
-			if (estimatedHeight > maxCanvasHeight) {
-				let currentHeight = 0;
-				let maxRow = activeRange.r1;
-
-				for (let row = activeRange.r1; row <= activeRange.r2; row++) {
-					let rowHeight = ws._getRowHeight(row);
-					if (currentHeight + rowHeight > maxCanvasHeight) {
-						break;
-					}
-					currentHeight += rowHeight;
-					maxRow = row;
-				}
-
-				activeRange = new Asc.Range(activeRange.c1, activeRange.r1, activeRange.c2, maxRow);
-				estimatedHeight = ws._getRowTop(activeRange.r2 + 1) - ws._getRowTop(activeRange.r1);
-			}
-
-			// Check width limitations
-			if (estimatedWidth > maxCanvasWidth) {
-				let currentWidth = 0;
-				let maxCol = activeRange.c1;
-
-				for (let col = activeRange.c1; col <= activeRange.c2; col++) {
-					let colWidth = ws._getColLeft(col + 1) - ws._getColLeft(col);
-					if (currentWidth + colWidth > maxCanvasWidth) {
-						break;
-					}
-					currentWidth += colWidth;
-					maxCol = col;
-				}
-
-				activeRange = new Asc.Range(activeRange.c1, activeRange.r1, maxCol, activeRange.r2);
-				estimatedWidth = ws._getColLeft(activeRange.c2 + 1) - ws._getColLeft(activeRange.c1);
-			}
-
-			//TODO cut by max size
-			if (estimatedHeight * estimatedWidth >= maxCanvasArea) {
-				return;
-			}
-
 			let base64;
-			let ctx = ws.workbook.printForCopyPaste(ws, activeRange, true);
-			if (ctx && ctx.canvas) {
-				base64 = ctx.canvas.toDataURL("image/png");
+
+			if (ws.objectRender && ws.objectRender.selectedGraphicObjectsExists()) {
+				let controller = ws.objectRender.controller;
+				if (controller.getTargetDocContent()) {
+					return;
+				}
+				let imgProperty = controller.getSelectionImage();
+				if (!imgProperty) {
+					return;
+				}
+				base64 = imgProperty.asc_getImageUrl();
+				if (!base64) {
+					return;
+				}
+			} else {
+				let activeRange = ws.model.selectionRange.getLast();
+				let estimatedHeight = ws._getRowTop(activeRange.r2 + 1) - ws._getRowTop(activeRange.r1);
+				let estimatedWidth = ws._getColLeft(activeRange.c2 + 1) - ws._getColLeft(activeRange.c1);
+
+				// Check height limitations
+				if (estimatedHeight > maxCanvasHeight) {
+					let currentHeight = 0;
+					let maxRow = activeRange.r1;
+
+					for (let row = activeRange.r1; row <= activeRange.r2; row++) {
+						let rowHeight = ws._getRowHeight(row);
+						if (currentHeight + rowHeight > maxCanvasHeight) {
+							break;
+						}
+						currentHeight += rowHeight;
+						maxRow = row;
+					}
+
+					activeRange = new Asc.Range(activeRange.c1, activeRange.r1, activeRange.c2, maxRow);
+					estimatedHeight = ws._getRowTop(activeRange.r2 + 1) - ws._getRowTop(activeRange.r1);
+				}
+
+				// Check width limitations
+				if (estimatedWidth > maxCanvasWidth) {
+					let currentWidth = 0;
+					let maxCol = activeRange.c1;
+
+					for (let col = activeRange.c1; col <= activeRange.c2; col++) {
+						let colWidth = ws._getColLeft(col + 1) - ws._getColLeft(col);
+						if (currentWidth + colWidth > maxCanvasWidth) {
+							break;
+						}
+						currentWidth += colWidth;
+						maxCol = col;
+					}
+
+					activeRange = new Asc.Range(activeRange.c1, activeRange.r1, maxCol, activeRange.r2);
+					estimatedWidth = ws._getColLeft(activeRange.c2 + 1) - ws._getColLeft(activeRange.c1);
+				}
+
+				//TODO cut by max size
+				if (estimatedHeight * estimatedWidth >= maxCanvasArea) {
+					return;
+				}
+
+				let ctx = ws.workbook.printForCopyPaste(ws, activeRange, true);
+				if (ctx && ctx.canvas) {
+					base64 = ctx.canvas.toDataURL("image/png");
+				}
 			}
 
 			if (opt_get_bytes && base64) {
