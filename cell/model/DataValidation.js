@@ -526,10 +526,15 @@
 			AscCommonExcel.g_oVLOOKUPCache.clean();
 			AscCommonExcel.g_oHLOOKUPCache.clean();
 			AscCommonExcel.g_oMatchCache.clean();
-			AscCommonExcel.g_oSUMIFSCache.clean();
 			AscCommonExcel.g_oFormulaRangesCache.clean();
 			AscCommonExcel.g_oCountIfCache.clean();
+			AscCommonExcel.g_oCountIFSCache.clean();
 			AscCommonExcel.g_oSumIfCache.clean();
+			AscCommonExcel.g_oAverageIfCache.clean();
+			AscCommonExcel.g_oSumIFSCache.clean();
+			AscCommonExcel.g_oAverageIFSCache.clean();
+			AscCommonExcel.g_oMaxIFSCache.clean();
+			AscCommonExcel.g_oMinIFSCache.clean();
 		};
 
 		let cellType = cell.getType();
