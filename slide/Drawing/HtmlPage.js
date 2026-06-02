@@ -223,10 +223,10 @@
 		this.m_oLogicDocument = null;
 
 		// interface (master & layout)
-		this.m_oLayoutDrawer = new CLayoutThumbnailDrawer();
+		this.m_oLayoutDrawer = new AscCommonSlide.CLayoutThumbnailDrawer();
 		this.m_oLayoutDrawer.DrawingDocument = this.m_oDrawingDocument;
 
-		this.m_oMasterDrawer = new CMasterThumbnailDrawer();
+		this.m_oMasterDrawer = new AscCommonSlide.CMasterThumbnailDrawer();
 		this.m_oMasterDrawer.DrawingDocument = this.m_oDrawingDocument;
 
 		this.AllLayouts = [];

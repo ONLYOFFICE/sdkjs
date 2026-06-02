@@ -75,12 +75,12 @@
 
 		this.Lock = new AscCommon.CLock();
 		this.graphicObjects = new AscFormat.DrawingObjectsController(this);
-		this.deleteLock = new PropLocker(this.Id);
-		this.backgroundLock = new PropLocker(this.Id);
-		this.timingLock = new PropLocker(this.Id);
-		this.transitionLock = new PropLocker(this.Id);
-		this.layoutLock = new PropLocker(this.Id);
-		this.showLock = new PropLocker(this.Id);
+		this.deleteLock = new AscCommon.PropLocker(this.Id);
+		this.backgroundLock = new AscCommon.PropLocker(this.Id);
+		this.timingLock = new AscCommon.PropLocker(this.Id);
+		this.transitionLock = new AscCommon.PropLocker(this.Id);
+		this.layoutLock = new AscCommon.PropLocker(this.Id);
+		this.showLock = new AscCommon.PropLocker(this.Id);
 	}
 
 	AscFormat.InitClass(CNotes, AscCommonSlide.SlideBase, AscDFH.historyitem_type_Notes);
@@ -122,8 +122,6 @@
 		History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesSetNotesMaster, this.Master, pr));
 		this.Master = pr;
 	};
-
-	CNotes.prototype.getMatchingShape = Slide.prototype.getMatchingShape;
 
 	CNotes.prototype.getWidth = function () {
 		return GetNotesWidth();

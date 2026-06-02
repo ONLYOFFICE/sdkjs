@@ -3994,7 +3994,7 @@ function BinaryPPTYLoader()
 
     this.ReadSlideMaster = function()
     {
-        var master = new MasterSlide(this.presentation, null);
+        var master = new AscCommonSlide.MasterSlide(this.presentation, null);
         this.ClearConnectedObjects();
         this.TempMainObject = master;
 
@@ -4129,7 +4129,7 @@ function BinaryPPTYLoader()
 
     this.ReadSlideLayout = function()
     {
-        var layout = new SlideLayout(null);
+        var layout = new AscCommonSlide.SlideLayout(null);
         this.ClearConnectedObjects();
         this.TempMainObject = layout;
 
@@ -4238,7 +4238,7 @@ function BinaryPPTYLoader()
 
     this.ReadSlide = function(sldIndex)
     {
-        var slide = new Slide(this.presentation, null, sldIndex);
+        var slide = new AscCommonSlide.Slide(this.presentation, null, sldIndex);
         this.ClearConnectedObjects();
         this.TempMainObject = slide;
 

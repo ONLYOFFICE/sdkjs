@@ -57,6 +57,7 @@
 			"common/NumFormatData.js",
 			"common/NumFormat.js",
 			"common/SerializeChart.js",
+		  	"common/prop-locker.js",
 
 			"common/libfont/common.js",
 			"common/libfont/map.js",

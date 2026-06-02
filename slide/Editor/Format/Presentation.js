@@ -662,20 +662,20 @@ function CPresentation(DrawingDocument, isMainLogicDocument) {
 	this.Sections = [];//array of CPrSection
 
 
-	this.comments = new SlideComments(this);
+	this.comments = new AscCommonSlide.SlideComments(this);
 
 	this.CheckLanguageOnTextAdd = false;
 
 	// Add this class to the Id table (must be at the end of the constructor)
 	g_oTableId.Add(this, this.Id);
 	//
-	this.hdrFtrLock = new PropLocker(this.Id);
-	this.themeLock = new PropLocker(this.Id);
-	this.schemeLock = new PropLocker(this.Id);
-	this.slideSizeLock = new PropLocker(this.Id);
-	this.defaultTextStyleLock = new PropLocker(this.Id);
-	this.commentsLock = new PropLocker(this.Id);
-	this.viewPrLock = new PropLocker(this.Id);
+	this.hdrFtrLock = new AscCommon.PropLocker(this.Id);
+	this.themeLock = new AscCommon.PropLocker(this.Id);
+	this.schemeLock = new AscCommon.PropLocker(this.Id);
+	this.slideSizeLock = new AscCommon.PropLocker(this.Id);
+	this.defaultTextStyleLock = new AscCommon.PropLocker(this.Id);
+	this.commentsLock = new AscCommon.PropLocker(this.Id);
+	this.viewPrLock = new AscCommon.PropLocker(this.Id);
 
 	this.RecalcId = 0; // Recalculation number
 	this.CommentAuthors = {};
@@ -8641,7 +8641,7 @@ CPresentation.prototype.addNextSlideAction = function (layoutIndex) {
 		layout = oMaster.sldLayoutLst[0];
 	}
 	hf = layout.hf || layout.Master.hf;
-	new_slide = new Slide(this, layout, this.CurPage + 1);
+	new_slide = new AscCommonSlide.Slide(this, layout, this.CurPage + 1);
 	new_slide.setNotes(AscCommonSlide.CreateNotes(this.notesMasters[0]));
 	new_slide.notes.setNotesMaster(this.notesMasters[0]);
 	new_slide.notes.setSlide(new_slide);

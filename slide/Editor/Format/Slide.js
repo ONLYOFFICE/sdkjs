@@ -188,7 +188,7 @@
 		if (presentation) {
 			this.setSlideSize(presentation.GetWidthMM(), presentation.GetHeightMM());
 			this.setSlideComments(new SlideComments(this));
-			this.setLocks(new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id));
+			this.setLocks(new AscCommon.PropLocker(this.Id), new AscCommon.PropLocker(this.Id), new AscCommon.PropLocker(this.Id), new AscCommon.PropLocker(this.Id), new AscCommon.PropLocker(this.Id), new AscCommon.PropLocker(this.Id), new AscCommon.PropLocker(this.Id));
 		}
 
 		if (slideLayout) {
@@ -1511,43 +1511,6 @@
 		oObject.writecomments = [];
 	}
 
-	function PropLocker(objectId) {
-		this.objectId = null;
-		this.Lock = new AscCommon.CLock();
-		this.Id = AscCommon.g_oIdCounter.Get_NewId();
-		g_oTableId.Add(this, this.Id);
-
-		if (typeof objectId === "string") {
-			this.setObjectId(objectId);
-		}
-
-	}
-
-	PropLocker.prototype = {
-
-		getObjectType  : function () {
-			return AscDFH.historyitem_type_PropLocker;
-		},
-		setObjectId    : function (id) {
-			History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_PropLockerSetId, this.objectId, id));
-			this.objectId = id;
-		},
-		Get_Id         : function () {
-			return this.Id;
-		},
-		Write_ToBinary2: function (w) {
-			w.WriteLong(AscDFH.historyitem_type_PropLocker);
-			w.WriteString2(this.Id);
-		},
-
-		Read_FromBinary2: function (r) {
-			this.Id = r.GetString2();
-		},
-
-		Refresh_RecalcData: function () {}
-
-	};
-
 	AscFormat.CTextBody.prototype.GetAbsoluteStartPage = function () {
 		if (this.parent && this.parent.GetAbsoluteStartPage) {
 			return this.parent.GetAbsoluteStartPage();
@@ -1762,7 +1725,6 @@
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommonSlide'] = window['AscCommonSlide'] || {};
 	window['AscCommonSlide'].Slide = Slide;
-	window['AscCommonSlide'].PropLocker = PropLocker;
 	window['AscCommonSlide'].SlideComments = SlideComments;
 	window['AscCommonSlide'].fLoadComments = fLoadComments;
 	window['AscCommonSlide'].CStrideData = CStrideData;

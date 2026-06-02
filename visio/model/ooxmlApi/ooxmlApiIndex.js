@@ -2074,54 +2074,6 @@
 	}
 	AscFormat.InitClass(Icon_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
-
-	//todo move to commons
-	function PropLocker(objectId)
-	{
-		this.objectId = null;
-		this.Lock = new AscCommon.CLock();
-		this.Id = AscCommon.g_oIdCounter.Get_NewId();
-		g_oTableId.Add(this, this.Id);
-
-		if(typeof  objectId === "string")
-		{
-			this.setObjectId(objectId);
-		}
-
-	}
-
-	PropLocker.prototype = {
-
-		getObjectType: function()
-		{
-			return AscDFH.historyitem_type_PropLocker;
-		},
-		setObjectId: function(id)
-		{
-			//todo
-			//History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_PropLockerSetId, this.objectId, id));
-			this.objectId = id;
-		},
-		Get_Id: function()
-		{
-			return this.Id;
-		},
-		Write_ToBinary2: function(w)
-		{
-			w.WriteLong(AscDFH.historyitem_type_PropLocker);
-			w.WriteString2(this.Id);
-		},
-
-		Read_FromBinary2: function(r)
-		{
-			this.Id = r.GetString2();
-		},
-
-		Refresh_RecalcData: function()
-		{}
-
-	};
-
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']            = window['Asc'] || {};
 	window['AscCommon']      = window['AscCommon'] || {};
