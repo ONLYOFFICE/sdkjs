@@ -32,7 +32,7 @@
 
 "use strict";
 
-(function() {
+(function () {
 	function SlideBase() {
 		AscFormat.CBaseFormatObject.call(this);
 		this.cSld = new AscFormat.CSld(this);
@@ -51,7 +51,7 @@
 
 		this.recalcInfo = {
 			recalculateBackground: true,
-			recalculateSpTree:     true
+			recalculateSpTree    : true
 		};
 		this.m_oContentChanges = new AscCommon.CContentChanges();
 		this.deleteLock = new PropLocker(this.Id);
@@ -63,16 +63,16 @@
 	}
 
 	AscFormat.InitClass(SlideBase, AscFormat.CBaseFormatObject, 0);
-	SlideBase.prototype.isSlideLikeObject = function() {
+	SlideBase.prototype.isSlideLikeObject = function () {
 		return true;
 	};
-	SlideBase.prototype.getDrawingDocument = function() {
+	SlideBase.prototype.getDrawingDocument = function () {
 		return editor.WordControl.m_oLogicDocument.DrawingDocument;
 	};
-	SlideBase.prototype.OnUpdateOverlay = function() {
+	SlideBase.prototype.OnUpdateOverlay = function () {
 		this.presentation.DrawingDocument.m_oWordControl.OnUpdateOverlay();
 	};
-	SlideBase.prototype.getNum = function() {
+	SlideBase.prototype.getNum = function () {
 		let aSlides = this.presentation.GetAllSlides();
 		for (let nIdx = 0; nIdx < aSlides.length; ++nIdx) {
 			if (aSlides[nIdx] === this)
@@ -80,7 +80,7 @@
 		}
 		return -1;
 	};
-	SlideBase.prototype.drawSelect = function(_type) {
+	SlideBase.prototype.drawSelect = function (_type) {
 		if (_type === undefined) {
 			this.graphicObjects.drawTextSelection(this.getNum());
 			this.graphicObjects.drawSelect(0, this.presentation.DrawingDocument);
@@ -89,41 +89,41 @@
 		else if (_type == 2)
 			this.graphicObjects.drawSelect(0, this.presentation.DrawingDocument);
 	};
-	SlideBase.prototype.showDrawingObjects = function() {
+	SlideBase.prototype.showDrawingObjects = function () {
 		editor.WordControl.m_oDrawingDocument.OnRecalculateSlide(this.getNum());
 	};
-	SlideBase.prototype.sendGraphicObjectProps = function() {
+	SlideBase.prototype.sendGraphicObjectProps = function () {
 		editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
 	};
-	SlideBase.prototype.getMaster = function() {
+	SlideBase.prototype.getMaster = function () {
 		return this.getParentObjects().master;
 	};
-	SlideBase.prototype.addToRecalculate = function() {
+	SlideBase.prototype.addToRecalculate = function () {
 		AscCommon.History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: this});
 	};
-	SlideBase.prototype.convertPixToMM = function(pix) {
+	SlideBase.prototype.convertPixToMM = function (pix) {
 		return editor.WordControl.m_oDrawingDocument.GetMMPerDot(pix);
 	};
 
 	//todo check slides methods
-	SlideBase.prototype.changeSize = function(width, height) {
+	SlideBase.prototype.changeSize = function (width, height) {
 		var kw = width / this.Width, kh = height / this.Height;
 		this.setSlideSize(width, height);
-		this.cSld.forEachSp(function(oSp) {
+		this.cSld.forEachSp(function (oSp) {
 			oSp.changeSize(kw, kh);
 		});
 	};
-	SlideBase.prototype.getAllRasterImages = function(images) {
+	SlideBase.prototype.getAllRasterImages = function (images) {
 		let oBgPr = this.cSld.Bg && this.cSld.Bg.bgPr;
 		if (oBgPr) {
 			oBgPr.checkBlipFillRasterImage(images);
 		}
-		this.cSld.forEachSp(function(oSp) {
+		this.cSld.forEachSp(function (oSp) {
 			oSp.getAllRasterImages(images);
 		});
 	};
-	SlideBase.prototype.Reassign_ImageUrls = function(images_rename) {
-		this.cSld.forEachSp(function(oSp) {
+	SlideBase.prototype.Reassign_ImageUrls = function (images_rename) {
+		this.cSld.forEachSp(function (oSp) {
 			oSp.Reassign_ImageUrls(images_rename);
 		});
 		let bg = this.cSld && this.cSld.Bg;
@@ -142,18 +142,18 @@
 			}
 		}
 	};
-	SlideBase.prototype.checkDrawingUniNvPr = function(drawing) {
+	SlideBase.prototype.checkDrawingUniNvPr = function (drawing) {
 		if (drawing) {
 			drawing.checkDrawingUniNvPr();
 		}
 	};
-	SlideBase.prototype.handleAllContents = function(fCallback) {
+	SlideBase.prototype.handleAllContents = function (fCallback) {
 		this.cSld.handleAllContents(fCallback);
 		if (this.notesShape) {
 			this.notesShape.handleAllContents(fCallback);
 		}
 	};
-	SlideBase.prototype.getAllRasterImagesForDraw = function(images) {
+	SlideBase.prototype.getAllRasterImagesForDraw = function (images) {
 		let aImages = images;
 		if (!aImages) {
 			aImages = [];
@@ -169,7 +169,7 @@
 				aImages.push(sImageId);
 			}
 		}
-		this.cSld.forEachSp(function(oSp) {
+		this.cSld.forEachSp(function (oSp) {
 			oSp.getAllRasterImages(aImages);
 		});
 		if (this.Layout) {
@@ -184,7 +184,7 @@
 		}
 		return aImages;
 	};
-	SlideBase.prototype.checkImageDraw = function(sImageSrc) {
+	SlideBase.prototype.checkImageDraw = function (sImageSrc) {
 		const aImages = this.getAllRasterImagesForDraw();
 		for (let nIdx = 0; nIdx < aImages.length; ++nIdx) {
 			let sImage = aImages[nIdx];
@@ -194,13 +194,13 @@
 		}
 		return false;
 	};
-	SlideBase.prototype.openChartEditor = function() {
+	SlideBase.prototype.openChartEditor = function () {
 		this.graphicObjects.openChartEditor();
 	};
-	SlideBase.prototype.openOleEditor = function() {
+	SlideBase.prototype.openOleEditor = function () {
 		this.graphicObjects.openOleEditor();
 	};
-	SlideBase.prototype.getNativeImg = function() {
+	SlideBase.prototype.getNativeImg = function () {
 		if (window["NATIVE_EDITOR_ENJINE"]) {
 			return null;
 		}
@@ -242,7 +242,7 @@
 
 		return _canvas;
 	};
-	SlideBase.prototype.getBase64Img = function() {
+	SlideBase.prototype.getBase64Img = function () {
 		if (window["NATIVE_EDITOR_ENJINE"]) {
 			return "";
 		}
@@ -290,7 +290,7 @@
 		}
 		return _ret.ImageUrl;
 	};
-	SlideBase.prototype.getMatchingShape = function(type, idx, bSingleBody, info) {
+	SlideBase.prototype.getMatchingShape = function (type, idx, bSingleBody, info) {
 		var _input_reduced_type;
 		if (type == null) {
 			_input_reduced_type = AscFormat.phType_body;
@@ -430,28 +430,28 @@
 
 		return null;
 	};
-	SlideBase.prototype.checkSlideSize = function() {
+	SlideBase.prototype.checkSlideSize = function () {
 		this.recalcInfo.recalculateSpTree = true;
-		this.cSld.forEachSp(function(oSp) {
+		this.cSld.forEachSp(function (oSp) {
 			oSp.handleUpdateExtents();
 		});
 	};
-	SlideBase.prototype.recalcText = function() {
+	SlideBase.prototype.recalcText = function () {
 		this.recalcInfo.recalculateSpTree = true;
-		this.cSld.forEachSp(function(oSp) {
+		this.cSld.forEachSp(function (oSp) {
 			oSp.recalcText();
 		});
 	};
-	SlideBase.prototype.checkSlideTheme = function() {
+	SlideBase.prototype.checkSlideTheme = function () {
 
 		this.bChangeLayout = undefined;
 		this.recalcInfo.recalculateSpTree = true;
 		this.recalcInfo.recalculateBackground = true;
-		this.cSld.forEachSp(function(oSp) {
+		this.cSld.forEachSp(function (oSp) {
 			oSp.handleUpdateTheme();
 		});
 	};
-	SlideBase.prototype.copySelectedObjects = function() {
+	SlideBase.prototype.copySelectedObjects = function () {
 		var aSelectedObjects, i, fShift = 5.0;
 		var oSelector = this.graphicObjects.selection.groupSelection ? this.graphicObjects.selection.groupSelection : this.graphicObjects;
 		aSelectedObjects = [].concat(oSelector.selectedObjects);
@@ -482,7 +482,7 @@
 			oSelector.updateCoordinatesAfterInternalResize();
 		}
 	};
-	SlideBase.prototype.getPlaceholdersControls = function() {
+	SlideBase.prototype.getPlaceholdersControls = function () {
 		var ret = [];
 		var aSpTree = this.cSld.spTree;
 		for (var i = 0; i < aSpTree.length; ++i) {
@@ -491,10 +491,10 @@
 		}
 		return ret;
 	};
-	SlideBase.prototype.getDrawingObjects = function() {
+	SlideBase.prototype.getDrawingObjects = function () {
 		return this.cSld.spTree;
 	};
-	SlideBase.prototype.removeFromSpTreeById = function(id) {
+	SlideBase.prototype.removeFromSpTreeById = function (id) {
 		var sp_tree = this.cSld.spTree;
 		for (var i = 0; i < sp_tree.length; ++i) {
 			if (sp_tree[i].Get_Id() === id) {
@@ -504,7 +504,7 @@
 		}
 		return null;
 	};
-	SlideBase.prototype.removeFromSpTreeByPos = function(pos) {
+	SlideBase.prototype.removeFromSpTreeByPos = function (pos) {
 		if (pos > -1 && pos < this.cSld.spTree.length) {
 			var oSp = this.cSld.spTree[pos];
 			if (oSp.isPlaceholder() || this.isMaster() || this.isLayout()) {
@@ -515,14 +515,14 @@
 				if (this.isMaster()) {
 					for (let nLt = 0; nLt < this.sldLayoutLst.length; ++nLt) {
 						let oLt = this.sldLayoutLst[nLt];
-						oLt.cSld.forEachSp(function(oSp) {
+						oLt.cSld.forEachSp(function (oSp) {
 							oSp.checkOnDeletePlaceholder(oMap);
 						});
 					}
 					for (let nSld = 0; nSld < aSlides.length; ++nSld) {
 						let oSld = aSlides[nSld];
 						if (oSld.getMaster() === this) {
-							oSld.cSld.forEachSp(function(oSp) {
+							oSld.cSld.forEachSp(function (oSp) {
 								oSp.checkOnDeletePlaceholder(oMap);
 							});
 						}
@@ -532,7 +532,7 @@
 					for (let nSld = 0; nSld < aSlides.length; ++nSld) {
 						let oSld = aSlides[nSld];
 						if (oSld.Layout === this) {
-							oSld.cSld.forEachSp(function(oSp) {
+							oSld.cSld.forEachSp(function (oSp) {
 								oSp.checkOnDeletePlaceholder(oMap);
 							});
 						}
@@ -556,7 +556,7 @@
 		}
 		return null;
 	};
-	SlideBase.prototype.RestartSpellCheck = function() {
+	SlideBase.prototype.RestartSpellCheck = function () {
 		for (var i = 0; i < this.cSld.spTree.length; ++i) {
 			this.cSld.spTree[i].RestartSpellCheck();
 		}
@@ -567,7 +567,7 @@
 			}
 		}
 	};
-	SlideBase.prototype.Search = function(Engine, Type) {
+	SlideBase.prototype.Search = function (Engine, Type) {
 		var sp_tree = this.cSld.spTree;
 		for (var i = 0; i < sp_tree.length; ++i) {
 			if (sp_tree[i].Search) {
@@ -578,7 +578,7 @@
 			this.notesShape.Search(Engine, Type);
 		}
 	};
-	SlideBase.prototype.GetSearchElementId = function(isNext, StartPos) {
+	SlideBase.prototype.GetSearchElementId = function (isNext, StartPos) {
 		var sp_tree = this.cSld.spTree, i, Id;
 		if (isNext) {
 			for (i = StartPos; i < sp_tree.length; ++i) {
@@ -601,7 +601,7 @@
 		}
 		return null;
 	};
-	SlideBase.prototype.replaceSp = function(oPh, oObject) {
+	SlideBase.prototype.replaceSp = function (oPh, oObject) {
 		var aSpTree = this.cSld.spTree;
 		for (var i = 0; i < aSpTree.length; ++i) {
 			if (aSpTree[i] === oPh) {
@@ -621,7 +621,7 @@
 			}
 		}
 	};
-	SlideBase.prototype.drawViewPrMarks = function(oGraphics) {
+	SlideBase.prototype.drawViewPrMarks = function (oGraphics) {
 		let oContext = oGraphics.m_oContext;
 		if (!oContext ||
 			AscCommon.IsShapeToImageConverter ||
@@ -651,16 +651,16 @@
 			oPresentation.drawGuides(oGraphics);
 		}
 	};
-	SlideBase.prototype.removeAllInks = function() {
+	SlideBase.prototype.removeAllInks = function () {
 		this.cSld.removeAllInks();
 	};
-	SlideBase.prototype.getAllInks = function(arrInks) {
+	SlideBase.prototype.getAllInks = function (arrInks) {
 		arrInks = arrInks || [];
 		this.cSld.getAllInks(arrInks);
 		return arrInks;
 	};
-	SlideBase.prototype.setSlideCount = function() {};
-	SlideBase.prototype.needRecalc = function() {
+	SlideBase.prototype.setSlideCount = function () {};
+	SlideBase.prototype.needRecalc = function () {
 		if (this.recalcInfo) {
 			for (let flag in this.recalcInfo) {
 				if (this.recalcInfo[flag]) {
@@ -670,41 +670,41 @@
 		}
 		return false;
 	};
-	SlideBase.prototype.getDefaultBackFill = function() {
+	SlideBase.prototype.getDefaultBackFill = function () {
 		const ret = {backFill: new AscFormat.CUniFill()};
 		ret.backFill.fill = new AscFormat.CSolidFill();
-		ret.backFill.fill.color =  new AscFormat.CUniColor();
+		ret.backFill.fill.color = new AscFormat.CUniColor();
 		ret.backFill.fill.color.color = new AscFormat.CRGBColor();
-		ret.backFill.fill.color.color.RGBA = {R:255, G:255, B:255, A:255};
+		ret.backFill.fill.color.color.RGBA = {R: 255, G: 255, B: 255, A: 255};
 		return ret;
 	};
-	SlideBase.prototype.addToSpTreeToPos = function(pos, item) {
+	SlideBase.prototype.addToSpTreeToPos = function (pos, item) {
 		this.shapeAdd(pos, item);
 	};
 
-	SlideBase.prototype.changeBackground = function(bg) {
+	SlideBase.prototype.changeBackground = function (bg) {
 		this.cSld.setBg(bg);
 	};
-	SlideBase.prototype.setCSldName = function(pr) {
+	SlideBase.prototype.setCSldName = function (pr) {
 		this.cSld.setName(pr);
 	};
-	SlideBase.prototype.writeSlideBinary = function(w){
+	SlideBase.prototype.writeSlideBinary = function (w) {
 		w.WriteLong(this.getObjectType());
 		w.WriteString2(this.Id);
 		AscFormat.writeObject(w, this.cSld);
 	};
-	SlideBase.prototype.readSlideBinary = function(r){
+	SlideBase.prototype.readSlideBinary = function (r) {
 		this.Id = r.GetString2();
 		this.cSld = AscFormat.readObject(r);
 		if (this.cSld) this.cSld.parent = this;
 	};
-	SlideBase.prototype.writeMasterBinary = function(w){
+	SlideBase.prototype.writeMasterBinary = function (w) {
 		w.WriteLong(this.getObjectType());
 		w.WriteString2(this.Id);
 		AscFormat.writeObject(w, this.theme);
 		AscFormat.writeObject(w, this.cSld);
 	};
-	SlideBase.prototype.readMasterBinary = function(r){
+	SlideBase.prototype.readMasterBinary = function (r) {
 		this.Id = r.GetString2();
 		this.theme = AscFormat.readObject(r);
 		this.cSld = AscFormat.readObject(r);
@@ -713,86 +713,86 @@
 
 	// todo end check slides methods
 
-	SlideBase.prototype.getDrawingsForController = function() {
+	SlideBase.prototype.getDrawingsForController = function () {
 	};
-	SlideBase.prototype.getTheme = function() {
+	SlideBase.prototype.getTheme = function () {
 	};
-	SlideBase.prototype.getColorMap = function() {
+	SlideBase.prototype.getColorMap = function () {
 	};
-	SlideBase.prototype.recalculateBackground = function() {
+	SlideBase.prototype.recalculateBackground = function () {
 	};
-	SlideBase.prototype.getAllFonts = function(fonts) {
+	SlideBase.prototype.getAllFonts = function (fonts) {
 	};
-	SlideBase.prototype.createFontMap = function(oFontsMap, oCheckedMap, isNoPh) {
+	SlideBase.prototype.createFontMap = function (oFontsMap, oCheckedMap, isNoPh) {
 	};
-	SlideBase.prototype.recalculate = function() {
+	SlideBase.prototype.recalculate = function () {
 	};
-	SlideBase.prototype.isAnimated = function() {
+	SlideBase.prototype.isAnimated = function () {
 		return false;
 	};
-	SlideBase.prototype.isLockedObject = function() {
+	SlideBase.prototype.isLockedObject = function () {
 		return false;
 	};
 
-	SlideBase.prototype.Clear_ContentChanges = function() {
+	SlideBase.prototype.Clear_ContentChanges = function () {
 	};
-	SlideBase.prototype.Add_ContentChanges = function(Changes) {
+	SlideBase.prototype.Add_ContentChanges = function (Changes) {
 	};
-	SlideBase.prototype.Refresh_ContentChanges = function() {
+	SlideBase.prototype.Refresh_ContentChanges = function () {
 	};
-	SlideBase.prototype.checkSlideColorScheme = function() {
+	SlideBase.prototype.checkSlideColorScheme = function () {
 	};
-	SlideBase.prototype.isSlide = function() {
+	SlideBase.prototype.isSlide = function () {
 		return false;
 	};
-	SlideBase.prototype.isLayout = function() {
+	SlideBase.prototype.isLayout = function () {
 		return false;
 	};
-	SlideBase.prototype.isMaster = function() {
+	SlideBase.prototype.isMaster = function () {
 		return false;
 	};
-	SlideBase.prototype.isNote = function() {
+	SlideBase.prototype.isNote = function () {
 		return false;
 	};
-	SlideBase.prototype.isNoteMaster = function() {
+	SlideBase.prototype.isNoteMaster = function () {
 		return false;
 	};
-	SlideBase.prototype.isHandoutMaster = function() {
+	SlideBase.prototype.isHandoutMaster = function () {
 		return false;
 	};
-	SlideBase.prototype.getParentObjects = function() {
+	SlideBase.prototype.getParentObjects = function () {
 		return {};
 	};
-	SlideBase.prototype.recalculateNotesShape = function() {
+	SlideBase.prototype.recalculateNotesShape = function () {
 	};
-	SlideBase.prototype.getNotesHeight = function() {
+	SlideBase.prototype.getNotesHeight = function () {
 		return 0;
 	};
-	SlideBase.prototype.isVisible = function() {
+	SlideBase.prototype.isVisible = function () {
 		return true;
 	};
-	SlideBase.prototype.getWorksheet = function() {
+	SlideBase.prototype.getWorksheet = function () {
 		return null;
 	};
-	SlideBase.prototype.Get_ColorMap = function() {
+	SlideBase.prototype.Get_ColorMap = function () {
 		return AscFormat.GetDefaultColorMap();
 	};
-	SlideBase.prototype.IsUseInDocument = function() {
+	SlideBase.prototype.IsUseInDocument = function () {
 		return false;
 	};
-	SlideBase.prototype.IsUseInSlides = function() {
+	SlideBase.prototype.IsUseInSlides = function () {
 		return false
 	};
-	SlideBase.prototype.isPreserve = function() {
+	SlideBase.prototype.isPreserve = function () {
 		return false
 	};
-	SlideBase.prototype.draw = function(graphics, slide) {
+	SlideBase.prototype.draw = function (graphics, slide) {
 	};
-	SlideBase.prototype.shapeRemove = function(pos, count) {
+	SlideBase.prototype.shapeRemove = function (pos, count) {
 	};
-	SlideBase.prototype.shapeAdd = function(pos, item) {
+	SlideBase.prototype.shapeAdd = function (pos, item) {
 	};
-	SlideBase.prototype.setSlideSize = function(w, h) {
+	SlideBase.prototype.setSlideSize = function (w, h) {
 	};
 	SlideBase.prototype.collectRedrawSlides = function (redrawSlides, force) {};
 	SlideBase.prototype.getOutlineSlide = function () {
@@ -800,7 +800,7 @@
 	};
 
 	function fAddTextToPhInSlideLikeObject(oSlideLikeObject, nPhType, sText) {
-		if(typeof sText === "string") {
+		if (typeof sText === "string") {
 			let oSp = oSlideLikeObject.getMatchingShape(nPhType, null, false, {});
 			let oContent = oSp && oSp.getDocContent && oSp.getDocContent();
 			if (oContent) {
@@ -810,7 +810,7 @@
 					oParaPr = oFirstParaOld.GetDirectParaPr();
 				}
 				AscFormat.CheckContentTextAndAdd(oContent, sText);
-				if(oParaPr) {
+				if (oParaPr) {
 					let oFirstParaNew = oContent.GetFirstParagraph();
 					if (oFirstParaNew) {
 						oFirstParaNew.SetPr(oParaPr);
@@ -819,12 +819,15 @@
 			}
 		}
 	}
+
 	function addFooterToSlideLikeObject(oSlideLikeObject, sFooterText) {
 		fAddTextToPhInSlideLikeObject(oSlideLikeObject, AscFormat.phType_ftr, sFooterText);
 	}
+
 	function addHeaderToSlideLikeObject(oSlideLikeObject, sHeaderText) {
 		fAddTextToPhInSlideLikeObject(oSlideLikeObject, AscFormat.phType_hdr, sHeaderText);
 	}
+
 	function addDateTimeToSlideLikeObject(oSlideLikeObject, sDateTimeFieldType, sCustomDateTime, nLang) {
 
 		let oSp = oSlideLikeObject.getMatchingShape(AscFormat.phType_dt, null, false, {});
@@ -837,12 +840,11 @@
 					let oFld = new AscCommonWord.CPresentationField(oParagraph);
 					oFld.SetGuid(AscCommon.CreateGUID());
 					oFld.SetFieldType(sDateTimeFieldType);
-					if(AscFormat.isRealNumber(nLang)) {
+					if (AscFormat.isRealNumber(nLang)) {
 						oFld.Set_Lang_Val(nLang);
-					}
-					else {
-					const presentation = oSlideLikeObject.presentation;
-					const nDefaultLang = presentation && presentation.GetDefaultLanguage() || null;
+					} else {
+						const presentation = oSlideLikeObject.presentation;
+						const nDefaultLang = presentation && presentation.GetDefaultLanguage() || null;
 						oFld.Set_Lang_Val(nDefaultLang);
 					}
 					if (typeof sCustomDateTime === "string") {
@@ -857,6 +859,7 @@
 			}
 		}
 	}
+
 	function copyPlaceholderToLikeObject(oSlide, oTemplate, nPhType) {
 		let oSp = oTemplate.getMatchingShape(nPhType, null, false, {});
 		if (oSp) {
@@ -945,7 +948,7 @@
 		const placeholderHeight = notesHeight * PLACEHOLDERSHAPE_HEIGHT_COEFFICIENT;
 		const oSp = createPlaceholderShape(oNvSpPr, notesWidth - placeholderWidth, notesHeight - placeholderHeight, placeholderWidth, placeholderHeight, AscCommon.align_Right, AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
 		const oContent = oSp.getDocContent();
-		if(oContent) {
+		if (oContent) {
 			oContent.ClearContent(true);
 			const oParagraph = oContent.Content[0];
 			const oFld = new AscCommonWord.CPresentationField(oParagraph);
@@ -968,9 +971,11 @@
 		paragraph.AddToContent(0, run);
 		content.AddToContent(content.Content.length, paragraph);
 	}
+
 	const PLACEHOLDERBODYSHAPE_WIDTH_COEFFICIENT = 5486400 / 6858000;
 	const PLACEHOLDERBODYSHAPE_HEIGHT_COEFFICIENT = 3600450 / 9144000;
 	const PLACEHOLDERBODYSHAPE_YOFFSET_COEFFICIENT = 0.51875;
+
 	function addBodyShape(slideObject) {
 		const oNvSpPr = new AscFormat.UniNvPr();
 		const oCNvPr = oNvSpPr.cNvPr;
@@ -1001,6 +1006,7 @@
 	const PLACEHOLDERSLIDESHAPE_WIDTH_COEFFICIENT = 5486400 / 6858000;
 	const PLACEHOLDERSLIDESHAPE_HEIGHT_COEFFICIENT = 3086100 / 9144000;
 	const PLACEHOLDERSLIDESHAPE_YOFFSET_COEFFICIENT = 0.4625;
+
 	function addSlideImage(slideObject) {
 		const oNvSpPr = new AscFormat.UniNvPr();
 		const oCNvPr = oNvSpPr.cNvPr;
@@ -1066,7 +1072,7 @@
 		return oSp;
 	}
 
-//--------------------------------------------------------export----------------------------------------------------
+	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommonSlide'] = window['AscCommonSlide'] || {};
 	window['AscCommonSlide'].SlideBase = SlideBase;
 	window['AscCommonSlide'].addFooterToSlideLikeObject = addFooterToSlideLikeObject;
