@@ -7966,6 +7966,7 @@ var CPresentation = CPresentation || function(){};
 
         this.CollaborativeEditing.WatchDocumentPositionsByState(State);
 
+		State.fileSelection = this.GetFile().getSelection();
         return State;
     };
 	CPDFDoc.prototype.Load_DocumentStateAfterLoadChanges = function(oState) {
@@ -7973,9 +7974,15 @@ var CPresentation = CPresentation || function(){};
 
 		this.RemoveSelection();
 		if (!oState.DrawingsSelectionState.textObject || !oState.DrawingsSelectionState.textObject.IsForm() || !this.IsEditFieldsMode()) {
-			this.SetMouseDownObject(oState.activeObject);
-			if (oState.activeObject && oState.activeObject.IsForm && oState.activeObject.IsForm() && oState.activeObject.IsUseInDocument && oState.activeObject.IsUseInDocument()) {
-				this.activeForm = oState.activeObject;
+			if (oState.activeObject && oState.activeObject.IsUseInDocument && oState.activeObject.IsUseInDocument()) {
+				this.SetMouseDownObject(oState.activeObject);
+
+				if (oState.activeObject.IsForm && oState.activeObject.IsForm()) {
+					this.activeForm = oState.activeObject;
+				}
+			}
+			else {
+				this.SetMouseDownObject(null);
 			}
 
 			this.GetController().Load_DocumentStateAfterLoadChanges(oState);
@@ -8465,9 +8472,15 @@ var CPresentation = CPresentation || function(){};
 
 		this.RemoveSelection();
 		if (!oState.drawingSelection[0].textObject || !oState.drawingSelection[0].textObject.IsForm() || !this.IsEditFieldsMode()) {
-			this.SetMouseDownObject(oState.activeObject);
-			if (oState.activeObject && oState.activeObject.IsForm && oState.activeObject.IsForm() && oState.activeObject.IsUseInDocument && oState.activeObject.IsUseInDocument()) {
-				this.activeForm = oState.activeObject;
+			if (oState.activeObject && oState.activeObject.IsUseInDocument && oState.activeObject.IsUseInDocument()) {
+				this.SetMouseDownObject(oState.activeObject);
+
+				if (oState.activeObject.IsForm && oState.activeObject.IsForm()) {
+					this.activeForm = oState.activeObject;
+				}
+			}
+			else {
+				this.SetMouseDownObject(null);
 			}
 			
 			oController.setSelectionState(oState.drawingSelection);
