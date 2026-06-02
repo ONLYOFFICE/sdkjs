@@ -3017,13 +3017,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArray.prototype.getElementRowCol = function (row, col, checkRealSize) {
 		if (row > this.rowCount || col > this.getCountElementInRow()) {
 			if (checkRealSize && this.realSize && row <= this.realSize.row && col <= this.realSize.col) {
-				if (this.missedValueFn) {
-					return this.missedValueFn(row, col);
-				}
-				if (this.missedValue) {
-					return this.missedValue
-				}
-				return new cEmpty();
+				return this.getMissedElement(row, col);
 			}
 			return new cError(cErrorType.not_available);
 		}
@@ -3069,9 +3063,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			return true;
 		}
 		//a full physical scan must see the whole logical array: materialize a generator-backed tail first
-		if (this.missedValueFn) {
-			this._expandGenerator();
-		}
+		this.ensureMaterialized();
 		for (var ir = 0; ir < this.rowCount; ir++) {
 			for (var ic = 0; ic < this.countElementInRow[ir]; ic++) {
 				if (action.call(this, this.array[ir][ic], ir, ic)) {
@@ -3140,6 +3132,61 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		return this.missedValueFn;
 	};
+	cArray.prototype.setMissedValue = function (value) {
+		this.missedValue = value;
+	};
+	cArray.prototype.setMissedValueFn = function (fn) {
+		this.missedValueFn = fn;
+	};
+	//resolve a position that lies inside realSize but beyond the physically stored data:
+	//generator first, then a constant tail, then empty
+	cArray.prototype.getMissedElement = function (row, col) {
+		if (this.missedValueFn) {
+			return this.missedValueFn(row, col);
+		}
+		if (this.missedValue) {
+			return this.missedValue;
+		}
+		return new cEmpty();
+	};
+	//true when the array carries a logical tail (realSize) backed by a constant value or a generator
+	cArray.prototype.hasLazyTail = function () {
+		return !!(this.realSize && (this.missedValue || this.missedValueFn));
+	};
+	//true when (row, col) falls into a generator-backed tail (inside realSize, beyond stored data)
+	cArray.prototype.isInLazyTail = function (row, col) {
+		return !!(this.missedValueFn && this.realSize && row >= 0 && col >= 0 &&
+			row < this.realSize.row && col < this.realSize.col);
+	};
+	//build a new tail generator that maps this array's generator output through mapElem; null if no generator
+	cArray.prototype.mapMissedValueFn = function (mapElem) {
+		var fn = this.missedValueFn;
+		if (!fn) {
+			return null;
+		}
+		return function (row, col) {
+			return mapElem(fn(row, col));
+		};
+	};
+	//materialize a generator-backed tail before a full physical scan (no-op when there is no generator)
+	cArray.prototype.ensureMaterialized = function () {
+		if (this.missedValueFn) {
+			this._expandGenerator();
+		}
+	};
+	//copy realSize from another array (no-op when the source has none)
+	cArray.prototype.copyRealSizeFrom = function (other) {
+		var size = other.getRealArraySize();
+		if (size) {
+			this.realSize = size;
+		}
+	};
+	//inherit the whole lazy tail (realSize + constant value + generator) from another array as-is
+	cArray.prototype.inheritLazyTailFrom = function (other) {
+		this.realSize = other.getRealArraySize();
+		this.setMissedValue(other.getMissedValue());
+		this.setMissedValueFn(other.getMissedValueFn());
+	};
 	//materialize a generator-backed array (e.g. ROW/COLUMN over a clamped full-column/row reference)
 	//into a regular fully-physical array: expands realSize using the generator for the tail and drops it.
 	//called lazily before a physical full scan (getMatrix/foreach) so that all consumers
@@ -3179,14 +3226,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.tocNumber = function () {
 		let retArr = new cArray();
-		retArr.realSize = this.getRealArraySize();
-		retArr.missedValue = this.getMissedValue();
-		if (this.missedValueFn) {
-			let fn = this.missedValueFn;
-			retArr.missedValueFn = function (row, col) {
-				return fn(row, col).tocNumber();
-			};
-		}
+		retArr.copyRealSizeFrom(this);
+		retArr.setMissedValue(this.getMissedValue());
+		retArr.setMissedValueFn(this.mapMissedValueFn(function (elem) {
+			return elem.tocNumber();
+		}));
 		for (let ir = 0; ir < this.rowCount; ir++, retArr.addRow()) {
 			for (let ic = 0; ic < this.countElementInRow[ir]; ic++) {
 				retArr.addElement(this.array[ir][ic].tocNumber());
@@ -3199,13 +3243,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.tocString = function () {
 		var retArr = new cArray();
-		if (this.missedValueFn) {
-			retArr.realSize = this.getRealArraySize();
-			retArr.missedValue = this.missedValue ? this.missedValue.tocString() : null;
-			let fn = this.missedValueFn;
-			retArr.missedValueFn = function (row, col) {
-				return fn(row, col).tocString();
-			};
+		if (this.getMissedValueFn()) {
+			retArr.copyRealSizeFrom(this);
+			retArr.setMissedValue(this.missedValue ? this.missedValue.tocString() : null);
+			retArr.setMissedValueFn(this.mapMissedValueFn(function (elem) {
+				return elem.tocString();
+			}));
 		}
 		for (var ir = 0; ir < this.rowCount; ir++, retArr.addRow()) {
 			for (var ic = 0; ic < this.countElementInRow[ir]; ic++) {
@@ -3219,13 +3262,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.tocBool = function () {
 		var retArr = new cArray();
-		if (this.missedValueFn) {
-			retArr.realSize = this.getRealArraySize();
-			retArr.missedValue = this.missedValue ? this.missedValue.tocBool() : null;
-			let fn = this.missedValueFn;
-			retArr.missedValueFn = function (row, col) {
-				return fn(row, col).tocBool();
-			};
+		if (this.getMissedValueFn()) {
+			retArr.copyRealSizeFrom(this);
+			retArr.setMissedValue(this.missedValue ? this.missedValue.tocBool() : null);
+			retArr.setMissedValueFn(this.mapMissedValueFn(function (elem) {
+				return elem.tocBool();
+			}));
 		}
 		for (var ir = 0; ir < this.rowCount; ir++, retArr.addRow()) {
 			for (var ic = 0; ic < this.countElementInRow[ir]; ic++) {
@@ -3303,9 +3345,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArray.prototype.getMatrix = function () {
 
 		//a full physical scan must see the whole logical array: materialize a generator-backed tail first
-		if (this.missedValueFn) {
-			this._expandGenerator();
-		}
+		this.ensureMaterialized();
 
 		//excludeErrorsVal - arguments[1]
 		if(arguments[1]) {
@@ -4289,9 +4329,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 			if (firstArray) {
 				var array = new cArray();
-				array.realSize = firstArray.realSize;
-				array.missedValue = firstArray.missedValue;
-				array.missedValueFn = firstArray.missedValueFn;
+				array.inheritLazyTailFrom(firstArray);
 
 				//pre-compute: hoist invariant argument properties out of the per-element loop
 				var _argInfo = new Array(argumentsCount);
@@ -6157,23 +6195,21 @@ _func[cElementType.array][cElementType.number] = _func[cElementType.array][cElem
         _func[cElementType.array][cElementType.empty] = function ( arg0, arg1, what ) {
             let res = new cArray(), realArraySize, rowDiff, colDiff, funcResult, arrayDimensions = arg0.getDimensions();
 
-			if (arg0.realSize && (arg0.missedValue || arg0.missedValueFn)) {
+			if (arg0.hasLazyTail()) {
 				realArraySize = arg0.getRealArraySize();
 				rowDiff = realArraySize.row - arg0.getRowCount();
 				colDiff = realArraySize.col - arg0.getCountElementInRow();
 
 				// set realSize to res
 				res.setRealArraySize(realArraySize.row, realArraySize.col);
-				if (arg0.missedValueFn) {
+				if (arg0.getMissedValueFn()) {
 					//tail is not a constant: compose a generator instead of collapsing to a single value
-					let genFn = arg0.missedValueFn;
-					res.missedValueFn = function (row, col) {
-						let tail = genFn(row, col);
+					res.setMissedValueFn(arg0.mapMissedValueFn(function (tail) {
 						return _func[tail.type][arg1.type](tail, arg1, what);
-					};
+					}));
 				} else {
-					funcResult = _func[arg0.missedValue.type][arg1.type](arg0.missedValue, arg1, what);
-					res.missedValue = funcResult;
+					let missed = arg0.getMissedValue();
+					res.setMissedValue(_func[missed.type][arg1.type](missed, arg1, what));
 				}
 			}
 
@@ -6194,23 +6230,21 @@ _func[cElementType.number][cElementType.array] = _func[cElementType.string][cEle
         _func[cElementType.empty][cElementType.array] = function ( arg0, arg1, what ) {
 			let res = new cArray(), realArraySize, rowDiff, colDiff, funcResult, arrayDimensions = arg1.getDimensions();
 
-			if (arg1.realSize && (arg1.missedValue || arg1.missedValueFn)) {
+			if (arg1.hasLazyTail()) {
 				realArraySize = arg1.getRealArraySize();
 				rowDiff = realArraySize.row - arg1.getRowCount();
 				colDiff = realArraySize.col - arg1.getCountElementInRow();
 
 				// set realSize to res
 				res.setRealArraySize(realArraySize.row, realArraySize.col);
-				if (arg1.missedValueFn) {
+				if (arg1.getMissedValueFn()) {
 					//tail is not a constant: compose a generator instead of collapsing to a single value
-					let genFn = arg1.missedValueFn;
-					res.missedValueFn = function (row, col) {
-						let tail = genFn(row, col);
+					res.setMissedValueFn(arg1.mapMissedValueFn(function (tail) {
 						return _func[arg0.type][tail.type](arg0, tail, what);
-					};
+					}));
 				} else {
-					funcResult = _func[arg0.type][arg1.missedValue.type](arg0, arg1.missedValue, what);
-					res.missedValue = funcResult;
+					let missed = arg1.getMissedValue();
+					res.setMissedValue(_func[arg0.type][missed.type](arg0, missed, what));
 				}
 			}
 
@@ -11372,8 +11406,7 @@ function parserFormula( formula, parent, _ws ) {
 				col = (val.array[0] && 1 === val.array[0].length) ? 0 : opt_col - ref.c1;
 				if (val.array[row] && val.array[row][col]) {
 					val = val.getElementRowCol(row, col);
-				} else if (val.missedValueFn && val.realSize && row >= 0 && col >= 0 &&
-					row < val.realSize.row && col < val.realSize.col) {
+				} else if (val.isInLazyTail(row, col)) {
 					//tail of a clamped full-column/row array (e.g. ROW/COLUMN): value comes from the generator
 					val = val.getElementRowCol(row, col, true);
 				} else {

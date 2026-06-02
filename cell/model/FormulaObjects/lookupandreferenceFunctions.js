@@ -926,15 +926,13 @@ function (window, undefined) {
 		} else {
 			var arg0 = arg[0];
 			if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
-				bbox = arg0.getRange();
-				bbox = bbox && bbox.bbox;
+				bbox = arg0.getBBox0();
 				res = bbox ? new cNumber(bbox.c1 + 1) : null;
 			} else if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-				bbox = arg0.getRange();
-				bbox = bbox && bbox.bbox;
+				bbox = arg0.getBBox0();
 
 				if (bbox && bbox.c2 > bbox.c1) {
-					var colWs = arg0.getWS ? arg0.getWS() : arg0.ws;
+					var colWs = arg0.getWS();
 					var dataC2 = colWs ? Math.max(bbox.c1, Math.min(bbox.c2, colWs.getColDataLength())) : bbox.c2;
 					res = new cArray();
 					for (var i = bbox.c1; i <= dataC2; i++) {
@@ -943,9 +941,9 @@ function (window, undefined) {
 					if (dataC2 < bbox.c2) {
 						res.setRealArraySize(1, bbox.c2 - bbox.c1 + 1);
 						var colBase = bbox.c1 + 1;
-						res.missedValueFn = function (row, col) {
+						res.setMissedValueFn(function (row, col) {
 							return new cNumber(colBase + col);
-						};
+						});
 					}
 				} else {
 					res = bbox ? new cNumber(bbox.c1 + 1) : null;
@@ -2002,15 +2000,13 @@ function (window, undefined) {
 		} else {
 			var arg0 = arg[0];
 			if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
-				bbox = arg0.getRange();
-				bbox = bbox && bbox.bbox;
+				bbox = arg0.getBBox0();
 				res = bbox ? new cNumber(bbox.r1 + 1) : null;
 			} else if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-				bbox = arg0.getRange();
-				bbox = bbox && bbox.bbox;
+				bbox = arg0.getBBox0();
 
 				if (bbox && bbox.r2 > bbox.r1) {
-					var rowWs = arg0.getWS ? arg0.getWS() : arg0.ws;
+					var rowWs = arg0.getWS();
 					var dataR2 = rowWs ? Math.max(bbox.r1, Math.min(bbox.r2, rowWs.cellsByColRowsCount - 1)) : bbox.r2;
 					res = new cArray();
 					for (var i = bbox.r1; i <= dataR2; i++) {
@@ -2020,9 +2016,9 @@ function (window, undefined) {
 					if (dataR2 < bbox.r2) {
 						res.setRealArraySize(bbox.r2 - bbox.r1 + 1, 1);
 						var rowBase = bbox.r1 + 1;
-						res.missedValueFn = function (row) {
+						res.setMissedValueFn(function (row) {
 							return new cNumber(rowBase + row);
-						};
+						});
 					}
 				} else {
 					res = bbox ? new cNumber(bbox.r1 + 1) : null;
