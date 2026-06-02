@@ -2527,7 +2527,7 @@ ParaMath.prototype.Get_Default_TPrp = function()
 //-----------------------------------------------------------------------------------
 // Функции отрисовки
 //-----------------------------------------------------------------------------------
-ParaMath.prototype.Draw_HighLights = function(drawState)
+ParaMath.prototype.drawHighLights = function(drawState)
 {
 	drawState.handleParaMath(this);
 };

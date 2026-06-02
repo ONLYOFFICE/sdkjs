@@ -5967,7 +5967,7 @@ ParaRun.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 //-----------------------------------------------------------------------------------
 // Функции отрисовки
 //-----------------------------------------------------------------------------------
-ParaRun.prototype.Draw_HighLights = function(drawState)
+ParaRun.prototype.drawHighLights = function(drawState)
 {
 	let rangePos = this.getRangePos(drawState.Line, drawState.Range);
 	let startPos = rangePos[0];

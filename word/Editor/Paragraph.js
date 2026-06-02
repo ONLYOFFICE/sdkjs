@@ -2366,7 +2366,7 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 	// Рисуем подсветку Fixed форм. Рисуем отдельно, т.к. заливка делается для внешней формы
 	//------------------------------------------------------------------------------------------------------------------
 
-	// TODO: Сейчас здесь используется функция Draw_HighLights, хотя нам нужно пробежаться и найти все fixed form
+	// TODO: Сейчас здесь используется функция drawHighLights, хотя нам нужно пробежаться и найти все fixed form
 	let fixedForms = [];
 	PDSH.SetCollectFixedForms(true);
 	for (let curLine = StartLine; curLine <= EndLine; ++curLine)
@@ -2389,7 +2389,7 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 
 			for (let contentPos = range.StartPos; contentPos <= range.EndPos; ++contentPos)
 			{
-				this.Content[contentPos].Draw_HighLights(PDSH);
+				this.Content[contentPos].drawHighLights(PDSH);
 			}
 		
 			PDSH.endRange();
@@ -2502,7 +2502,7 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 			for (var Pos = StartPos; Pos <= EndPos; Pos++)
 			{
 				var Item = this.Content[Pos];
-				Item.Draw_HighLights(PDSH);
+				Item.drawHighLights(PDSH);
 			}
 			PDSH.endRange();
 

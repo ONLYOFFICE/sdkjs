@@ -458,7 +458,7 @@ CParagraphContentBase.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRan
 //----------------------------------------------------------------------------------------------------------------------
 // Функции отрисовки
 //----------------------------------------------------------------------------------------------------------------------
-CParagraphContentBase.prototype.Draw_HighLights = function(PDSH)
+CParagraphContentBase.prototype.drawHighLights = function(drawState)
 {
 };
 CParagraphContentBase.prototype.Draw_Elements = function(PDSE)
@@ -3056,18 +3056,18 @@ CParagraphContentWithParagraphLikeContent.prototype.Shift_Range = function(Dx, D
 //----------------------------------------------------------------------------------------------------------------------
 // Функции отрисовки
 //----------------------------------------------------------------------------------------------------------------------
-CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights = function(PDSH)
+CParagraphContentWithParagraphLikeContent.prototype.drawHighLights = function(drawState)
 {
-    var CurLine  = PDSH.Line - this.StartLine;
-    var CurRange = ( 0 === CurLine ? PDSH.Range - this.StartRange : PDSH.Range );
+	var CurLine  = drawState.Line - this.StartLine;
+	var CurRange = (0 === CurLine ? drawState.Range - this.StartRange : drawState.Range);
 
-    var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
+	var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
+	var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
 
-    for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
-    {
-        this.Content[CurPos].Draw_HighLights( PDSH );
-    }
+	for (var CurPos = StartPos; CurPos <= EndPos; CurPos++)
+	{
+		this.Content[CurPos].drawHighLights(drawState);
+	}
 };
 CParagraphContentWithParagraphLikeContent.prototype.Draw_Elements = function(PDSE)
 {

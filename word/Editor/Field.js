@@ -202,19 +202,21 @@ ParaField.prototype.recalculateRangeAlign = function(alignState)
 		PageInternal : alignState.CurPage
 	};
 };
-ParaField.prototype.Draw_HighLights = function(PDSH)
+ParaField.prototype.drawHighLights = function(drawState)
 {
-    var X0 = PDSH.X;
-    var Y0 = PDSH.Y0;
-    var Y1 = PDSH.Y1;
+	// TODO: We should move all this logic to AlignRecalcState
+	
+    var X0 = drawState.X;
+    var Y0 = drawState.Y0;
+    var Y1 = drawState.Y1;
 
-    CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights.apply(this, arguments);
+    CParagraphContentWithParagraphLikeContent.prototype.drawHighLights.apply(this, arguments);
 
-    var X1 = PDSH.X;
+    var X1 = drawState.X;
 
-    if (Math.abs(X0 - X1) > 0.001 && (true === PDSH.DrawMMFields || AscWord.fieldtype_FORMTEXT === this.Get_FieldType()))
+    if (Math.abs(X0 - X1) > 0.001 && (true === drawState.DrawMMFields || AscWord.fieldtype_FORMTEXT === this.Get_FieldType()))
     {
-        PDSH.MMFields.Add(Y0, Y1, X0, X1, 0, 0, 0, 0  );
+        drawState.MMFields.Add(Y0, Y1, X0, X1, 0, 0, 0, 0  );
     }
 };
 ParaField.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, UseContentPos)

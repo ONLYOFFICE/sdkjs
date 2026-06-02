@@ -481,23 +481,23 @@ CInlineLevelSdt.prototype.recalculateRangeAlign = function(alignState)
 
 	this.BoundsPaths = null;
 };
-CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
+CInlineLevelSdt.prototype.drawHighLights = function(drawState)
 {
-	PDSH.AddInlineSdt(this);
+	drawState.AddInlineSdt(this);
 
-	if (PDSH.IsCollectFixedForms())
-		return CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights.apply(this, arguments);
+	if (drawState.IsCollectFixedForms())
+		return CParagraphContentWithParagraphLikeContent.prototype.drawHighLights.apply(this, arguments);
 
-	var oGraphics = PDSH.Graphics;
+	var oGraphics = drawState.Graphics;
 
 	if (this.IsSkipDraw(oGraphics))
-		return this.SkipDraw(PDSH);
+		return this.SkipDraw(drawState);
 
 	// Для экспорта в PDF записываем поля. Поля, находящиеся в автофигурах, пока не пишем
 	var oTransform = this.Get_ParentTextTransform();
 	if (this.private_IsAddFormFieldToGraphics(oGraphics, oTransform))
 	{
-		this.SkipDraw(PDSH);
+		this.SkipDraw(drawState);
 
 		// Ищем первый ненулевой промежуток, если он на данной странице, тогда сохраняем его в форму
 		var oBounds = null;
@@ -505,11 +505,11 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 		{
 			if (this.Bounds[Key].W > 0.001 && this.Bounds[Key].H > 0.001)
 			{
-				if (this.Bounds[Key].PageInternal === PDSH.Page)
+				if (this.Bounds[Key].PageInternal === drawState.Page)
 					oBounds = this.Bounds[Key];
 
-				var CurLine = PDSH.Line - this.StartLine;
-				var CurRange = (0 === CurLine ? PDSH.Range - this.StartRange : PDSH.Range);
+				var CurLine = drawState.Line - this.StartLine;
+				var CurRange = (0 === CurLine ? drawState.Range - this.StartRange : drawState.Range);
 
 				if ((Key | 0) !== ((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF))
 					return;
@@ -524,7 +524,7 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 			var oShape       = this.GetParagraph().Parent.Is_DrawingShape(true);
 			var oShapeBounds = oShape.getFormRelRect();
 
-			if (oShapeBounds.Page === PDSH.Paragraph.GetAbsolutePage(PDSH.Page))
+			if (oShapeBounds.Page === drawState.Paragraph.GetAbsolutePage(drawState.Page))
 				oBounds = oShapeBounds;
 		}
 
@@ -542,15 +542,15 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 
 			var oTextPr = oRun.Get_CompiledPr(false);
 
-			g_oTextMeasurer.SetTextPr(oTextPr, PDSH.Paragraph.GetTheme());
+			g_oTextMeasurer.SetTextPr(oTextPr, drawState.Paragraph.GetTheme());
 			g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
 
 			var nTextHeight  = g_oTextMeasurer.GetHeight();
 			var nTextDescent = Math.abs(g_oTextMeasurer.GetDescender());
 			var nTextAscent  = nTextHeight - nTextDescent;
 
-			var oColor = oTextPr.GetSimpleTextColor(PDSH.Paragraph.GetTheme(), PDSH.Paragraph.GetColorMap());
-			oGraphics.SetTextPr(oTextPr, PDSH.Paragraph.GetTheme());
+			var oColor = oTextPr.GetSimpleTextColor(drawState.Paragraph.GetTheme(), drawState.Paragraph.GetColorMap());
+			oGraphics.SetTextPr(oTextPr, drawState.Paragraph.GetTheme());
 			oGraphics.b_color1(oColor.r, oColor.g, oColor.b, this.IsPlaceHolder() ? 127 : 255);
 			oGraphics.SetFontSlot(AscWord.fontslot_ASCII); // Именно на этой функции записываются настройки шрифта в метафайл
 
@@ -586,7 +586,7 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 	}
 	else
 	{
-		CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights.apply(this, arguments);
+		CParagraphContentWithParagraphLikeContent.prototype.drawHighLights.apply(this, arguments);
 	}
 };
 CInlineLevelSdt.prototype.Draw_Elements = function(PDSE)

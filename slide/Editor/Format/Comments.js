@@ -262,7 +262,7 @@ function (window, undefined) {
 //-----------------------------------------------------------------------------------
 // Drawing functions
 //-----------------------------------------------------------------------------------
-	ParaComment.prototype.Draw_HighLights = function (PDSH) {
+	ParaComment.prototype.drawHighLights = function (highLightState) {
 	};
 
 	ParaComment.prototype.Draw_Elements = function (PDSE) {

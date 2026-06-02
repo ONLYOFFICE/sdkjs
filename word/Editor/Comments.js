@@ -1418,12 +1418,12 @@ ParaComment.prototype.getMarkColor = function()
 	let userName = comment.GetUserName();
 	return AscCommon.getUserColorById(userId, userName, 1, false);
 };
-ParaComment.prototype.Draw_HighLights = function(PDSH)
+ParaComment.prototype.drawHighLights = function(highLightState)
 {
 	if (true === this.Start)
-		PDSH.addComment(this.CommentId);
+		highLightState.addComment(this.CommentId);
 	else
-		PDSH.removeComment(this.CommentId);
+		highLightState.removeComment(this.CommentId);
 };
 ParaComment.prototype.Refresh_RecalcData = function()
 {

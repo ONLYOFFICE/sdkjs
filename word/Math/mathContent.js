@@ -4588,10 +4588,12 @@ CMathContent.prototype.Get_EndPos = function(BehindEnd, ContentPos, Depth)
     if(undefined !== this.Content[nLastPos])
         this.Content[nLastPos].Get_EndPos(BehindEnd, ContentPos, Depth + 1);
 };
-CMathContent.prototype.Draw_HighLights = function(drawState)
+CMathContent.prototype.drawHighLights = function(drawState)
 {
 	if (!this.bRoot && this.Parent && true !== this.ParentElement.Is_ContentUse(this))
 		return;
+	
+	drawState.pushBidiFlow(false);
 	
 	let rangeInfo  = this.getRangePos(drawState.Line, drawState.Range);
 	let rangeStart = rangeInfo[0];
@@ -4613,8 +4615,10 @@ CMathContent.prototype.Draw_HighLights = function(drawState)
 	{
 		drawState.Y0 = Y0;
 		drawState.Y1 = Y1;
-		this.Content[pos].Draw_HighLights(drawState);
+		this.Content[pos].drawHighLights(drawState);
 	}
+	
+	drawState.popBidiFlow();
 };
 CMathContent.prototype.Draw_Lines = function(PDSL)
 {

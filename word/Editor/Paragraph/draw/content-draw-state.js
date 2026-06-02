@@ -83,9 +83,6 @@
 		// for Math
 		this.mathTextInfo = null;
 		this.paraMath     = null;
-		
-		this.bidiFlow = new AscWord.BidiFlow(this);
-		this.bidiFlowStack = [];
 	}
 	ParagraphContentDrawState.prototype = Object.create(AscWord.ParagraphBidiFlow.prototype);
 	ParagraphContentDrawState.prototype.constructor = ParagraphContentDrawState;

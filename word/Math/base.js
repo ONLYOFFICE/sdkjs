@@ -1876,7 +1876,7 @@ CMathBase.prototype.SetCurrentMathContent = function(oMathContent)
 		}
 	}
 };
-CMathBase.prototype.Draw_HighLights = function(drawState, bAll)
+CMathBase.prototype.drawHighLights = function(drawState)
 {
 	drawState.handleMathBase(this);
 };

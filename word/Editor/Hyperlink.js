@@ -227,10 +227,10 @@ ParaHyperlink.prototype.Draw_Lines = function(PDSL)
 	PDSL.VisitedHyperlink = false;
 	PDSL.Hyperlink        = false;
 };
-ParaHyperlink.prototype.Draw_HighLights = function(drawState)
+ParaHyperlink.prototype.drawHighLights = function(drawState)
 {
 	drawState.pushHyperlink(this);
-	CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights.apply(this, arguments);
+	CParagraphContentWithParagraphLikeContent.prototype.drawHighLights.apply(this, arguments);
 	drawState.popHyperlink();
 };
 //-----------------------------------------------------------------------------------
