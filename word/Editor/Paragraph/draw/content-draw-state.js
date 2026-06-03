@@ -146,22 +146,19 @@
 		if (!this.complexFields.checkRunElement(element))
 			return;
 		
-		this.bidiFlow.add([element, run], element.getBidiType());
+		this.bidiFlow.add([para_RunBase, element, run], element.getBidiType());
 	};
 	ParagraphContentDrawState.prototype.handleParaMath = function(paraMath)
 	{
 		if (!paraMath || paraMath.Root.IsEmptyRange(this.Line, this.Range))
 			return;
 		
-		this.bidiFlow.add([paraMath], paraMath.getBidiType());
-	}
-	ParagraphContentDrawState.prototype.handleBidiFlow = function(data, direction)
+		this.bidiFlow.add([para_Math, paraMath], paraMath.getBidiType());
+	};
+	ParagraphContentDrawState.prototype.handleBidiFlowRunElement = function(data, direction)
 	{
-		let element = data[0];
-		if (element instanceof AscWord.ParaMath)
-			return this.handleBidiFlowParaMath(element);
-		
-		this.handleRun(data[1]);
+		let element = data[1];
+		this.handleRun(data[2]);
 		
 		switch (element.Type)
 		{
@@ -188,8 +185,9 @@
 				break;
 		}
 	};
-	ParagraphContentDrawState.prototype.handleBidiFlowParaMath = function(paraMath)
+	ParagraphContentDrawState.prototype.handleBidiFlowParaMath = function(data, direction)
 	{
+		let paraMath = data[1];
 		let x = this.X;
 		paraMath.Root.Draw_Elements(this);
 		this.X = x + paraMath.Root.GetWidth(this.Line, this.Range);

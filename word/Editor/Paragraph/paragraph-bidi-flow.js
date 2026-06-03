@@ -62,9 +62,6 @@
 		this.bidiFlow.reset();
 		this.bidiFlowStack = [];
 	};
-	ParagraphBidiFlow.prototype.handleBidiFlow = function(data, direction)
-	{
-	};
 	ParagraphBidiFlow.prototype.pushBidiFlow = function(isRtlDirection)
 	{
 		this.bidiFlowStack.push(this.bidiFlow);
@@ -76,34 +73,18 @@
 		this.bidiFlow.end();
 		this.bidiFlow = this.bidiFlowStack.pop();
 	};
-	ParagraphBidiFlow.prototype.addBidiFlowRunElement = function(data, bidiType)
-	{
-		data.push(TYPE_RUN_ELEMENT);
-		this.bidiFlow.add(data, bidiType);
-	};
-	ParagraphBidiFlow.prototype.addBidiFlowParaMath = function(data, bidiType)
-	{
-		data.push(TYPE_PARA_MATH);
-		this.bidiFlow.add(data, bidiType);
-	};
-	ParagraphBidiFlow.prototype.addBidiFlowMathBase = function(data, bidiType)
-	{
-		data.push(TYPE_MATH_BASE);
-		this.bidiFlow.add(data, bidiType);
-	};
 	ParagraphBidiFlow.prototype.handleBidiFlow = function(data, direction)
 	{
-		let type = data[data.length - 1];
-		--data.length;
+		let type = data[0];
 		switch(type)
 		{
-			case TYPE_RUN_ELEMENT:
+			case para_RunBase:
 				this.handleBidiFlowRunElement(data, direction);
 				break;
-			case TYPE_PARA_MATH:
+			case para_Math:
 				this.handleBidiFlowParaMath(data, direction);
 				break;
-			case TYPE_MATH_BASE:
+			case para_Math_Composition:
 				this.handleBidiFlowMathBase(data, direction);
 				break;
 		}

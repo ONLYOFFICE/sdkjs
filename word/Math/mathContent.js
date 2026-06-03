@@ -4720,7 +4720,7 @@ CMathContent.prototype.drawSelectionInRange = function(drawSelectionState)
 		if (para_Math_Composition !== item.Type || (isSelected && selectionStart === selectionEnd))
 			item.drawSelectionInRange(drawSelectionState);
 		else
-			drawSelectionState.handleMathElement(item, isSelected);
+			drawSelectionState.handleMathBase(item, isSelected);
 	}
 	
 	drawSelectionState.popBidiFlow();

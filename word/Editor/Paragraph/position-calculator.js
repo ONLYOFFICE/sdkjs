@@ -168,16 +168,17 @@
 			this.prev.direction = (element.getBidiType() & AscBidi.FLAG.RTL) ? AscBidi.DIRECTION.R : AscBidi.DIRECTION.L;
 		}
 		
-		this.bidiFlow.add([element, run, isCurrent, isNearFootnoteRef], element.getBidiType());
+		this.bidiFlow.add([para_RunBase, element, run, isCurrent, isNearFootnoteRef], element.getBidiType());
 	};
-	ParagraphPositionCalculator.prototype.handleBidiFlow = function(data, direction)
+	ParagraphPositionCalculator.prototype.handleParaMath = function(math, isCurrent)
 	{
-		let element = data[0];
-		if (element instanceof AscWord.ParaMath)
-			return this.handleBidiFlowParaMath(data);
-
-		let run       = data[1];
-		let isCurrent = data[2];
+		this.bidiFlow.add([para_Math, math, isCurrent], math.getBidiType());
+	};
+	ParagraphPositionCalculator.prototype.handleBidiFlowRunElement = function(data, direction)
+	{
+		let element   = data[1];
+		let run       = data[2];
+		let isCurrent = data[3];
 		
 		if (element === this.prev.element)
 		{
@@ -225,14 +226,10 @@
 		
 		this.x += w;
 	};
-	ParagraphPositionCalculator.prototype.handleParaMath = function(math, isCurrent)
-	{
-		this.bidiFlow.add([math, isCurrent], math.getBidiType());
-	};
 	ParagraphPositionCalculator.prototype.handleBidiFlowParaMath = function(data)
 	{
-		let math      = data[0];
-		let isCurrent = data[1];
+		let math      = data[1];
+		let isCurrent = data[2];
 
 		if (this.isNextCurrent && !this.stop)
 		{
@@ -292,7 +289,7 @@
 		this.posInfo.mathY = mathY;
 		this.posInfo.run   = run;
 	};
-	ParagraphPositionCalculator.prototype.handleMathElement = function(element)
+	ParagraphPositionCalculator.prototype.handleMathBase = function(element)
 	{
 		let w = element.GetWidth(this.line, this.range);
 		this.x += w;

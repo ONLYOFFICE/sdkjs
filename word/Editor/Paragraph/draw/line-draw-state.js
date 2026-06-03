@@ -210,7 +210,7 @@
 		
 		this.checkCustomMarks(inRunPos);
 		
-		this.addBidiFlowRunElement([element, run, inRunPos, misspell, this.annotationMarks, this.currentCustomMarks.length ? this.currentCustomMarks.slice() : null], element.getBidiType());
+		this.bidiFlow.add([para_RunBase, element, run, inRunPos, misspell, this.annotationMarks, this.currentCustomMarks.length ? this.currentCustomMarks.slice() : null], element.getBidiType());
 		
 		this.annotationMarks = [];
 	};
@@ -219,20 +219,20 @@
 		if (paraMath.Root.IsEmptyRange(this.Line, this.Range))
 			return;
 		
-		this.addBidiFlowParaMath([paraMath], paraMath.getBidiType());
+		this.bidiFlow.add([para_Math, paraMath], paraMath.getBidiType());
 	};
 	ParagraphLineDrawState.prototype.handleMathBase = function(mathBase)
 	{
-		this.addBidiFlowMathBase([mathBase], mathBase.getBidiType());
+		this.bidiFlow.add([para_Math_Composition, mathBase], mathBase.getBidiType());
 	};
 	ParagraphLineDrawState.prototype.handleBidiFlowRunElement = function(data, direction)
 	{
-		let element     = data[0];
-		let run         = data[1];
-		let inRunPos    = data[2];
-		let misspell    = data[3];
-		let marks       = data[4];
-		let customMarks = data[5];
+		let element     = data[1];
+		let run         = data[2];
+		let inRunPos    = data[3];
+		let misspell    = data[4];
+		let marks       = data[5];
+		let customMarks = data[6];
 		
 		this.handleRun(run);
 		
@@ -322,9 +322,9 @@
 		
 		this.X = endX;
 	};
-	ParagraphLineDrawState.prototype.handleBidiFlowParaMath = function(data)
+	ParagraphLineDrawState.prototype.handleBidiFlowParaMath = function(data, direction)
 	{
-		let paraMath = data[0];
+		let paraMath = data[1];
 		let FirstRPrp = paraMath.GetFirstRPrp();
 
 		let Para = this.Paragraph;
@@ -374,9 +374,9 @@
 
 		this.X = Bound.X + Width;
 	};
-	ParagraphLineDrawState.prototype.handleBidiFlowMathBase = function(data)
+	ParagraphLineDrawState.prototype.handleBidiFlowMathBase = function(data, direction)
 	{
-		let mathBase = data[0];
+		let mathBase = data[1];
 
 		let CtrPrp		= mathBase.Get_CompiledCtrPrp(false);
 

@@ -164,22 +164,19 @@
 		if (para_FieldChar === type)
 			this.ComplexFields.processFieldChar(element);
 		
-		this.bidiFlow.add([element, run], element.getBidiType());
+		this.bidiFlow.add([para_RunBase, element, run], element.getBidiType());
 	};
 	AlignRecalcState.prototype.handleParaMath = function(math)
 	{
 		if (!math || math.Root.IsEmptyRange(this.CurLine, this.CurRange))
 			return;
 
-		this.bidiFlow.add([math], math.getBidiType());
+		this.bidiFlow.add([para_Math, math], math.getBidiType());
 	};
-	AlignRecalcState.prototype.handleBidiFlow = function(data, direction)
+	AlignRecalcState.prototype.handleBidiFlowRunElement = function(data, direction)
 	{
-		let element = data[0];
-		if (element instanceof AscWord.ParaMath)
-			return this.handleBidiFlowParaMath(element);
-		
-		let run     = data[1];
+		let element = data[1];
+		let run     = data[2];
 		let type = element.Type;
 		switch (type)
 		{
@@ -305,8 +302,9 @@
 
 		}
 	};
-	AlignRecalcState.prototype.handleBidiFlowParaMath = function(paraMath)
+	AlignRecalcState.prototype.handleBidiFlowParaMath = function(data, direction)
 	{
+		let paraMath = data[1];
 		// до пересчета Bounds для текущей строки ранее должны быть вызваны Recalculate_Range_Width (для ширины), Recalculate_LineMetrics(для высоты и аскента)
 
 		// для инлайновой формулы не вызывается ф-ия setPosition, поэтому необходимо вызвать здесь

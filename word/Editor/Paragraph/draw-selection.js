@@ -154,26 +154,20 @@
 			this.endElement = element;
 		}
 		
-		this.bidiFlow.add([element, isSelected, false], element.getBidiType());
+		this.bidiFlow.add([para_RunBase, element, isSelected], element.getBidiType());
 	};
 	ParagraphDrawSelectionState.prototype.handleParaMath = function(paraMath)
 	{
-		this.bidiFlow.add([paraMath, false, false], paraMath.getBidiType());
+		this.bidiFlow.add([para_Math, paraMath, false], paraMath.getBidiType());
 	};
-	ParagraphDrawSelectionState.prototype.handleMathElement = function(mathElement, isSelected)
+	ParagraphDrawSelectionState.prototype.handleMathBase = function(mathElement, isSelected)
 	{
-		this.bidiFlow.add([mathElement, isSelected, true]);
+		this.bidiFlow.add([para_Math_Composition, mathElement, isSelected]);
 	};
-	ParagraphDrawSelectionState.prototype.handleBidiFlow = function(data, direction)
+	ParagraphDrawSelectionState.prototype.handleBidiFlowRunElement = function(data, direction)
 	{
-		let element       = data[0];
-		let isSelected    = data[1];
-		let isMathElement = data[2];
-		
-		if (element instanceof AscWord.ParaMath)
-			return this.handleBidiFlowParaMath(element);
-		else if (isMathElement)
-			return this.handleBidiFlowMathElement(element, isSelected);
+		let element       = data[1];
+		let isSelected    = data[2];
 		
 		let w = element.GetWidthVisible();
 		if (isSelected)
@@ -208,12 +202,16 @@
 		
 		this.x += w;
 	};
-	ParagraphDrawSelectionState.prototype.handleBidiFlowParaMath = function(paraMath)
+	ParagraphDrawSelectionState.prototype.handleBidiFlowParaMath = function(data, direction)
 	{
+		let paraMath = data[1];
 		paraMath.Root.drawSelectionInRange(this);
 	};
-	ParagraphDrawSelectionState.prototype.handleBidiFlowMathElement = function(mathElement, isSelected)
-	{		
+	ParagraphDrawSelectionState.prototype.handleBidiFlowMathBase = function(data, direction)
+	{
+		let mathElement = data[1];
+		let isSelected  = data[2];
+		
 		let w = mathElement.GetWidth(this.line, this.range);
 		
 		if (isSelected)

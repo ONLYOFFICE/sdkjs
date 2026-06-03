@@ -40,10 +40,6 @@
 	const EPSILON  = 0.001;
 	const MAX_DIFF = 1000000;
 	
-	const TYPE_RUN_ELEMENT = 0x01;
-	const TYPE_PARA_MATH   = 0x02;
-	const TYPE_MATH_BASE   = 0x03;
-	
 	/**
 	 * Class for searching position in the paragraph
 	 * @constructor
@@ -181,11 +177,11 @@
 	};
 	ParagraphSearchPositionXY.prototype.handleParaMath = function(math)
 	{
-		this.bidiFlow.add([TYPE_PARA_MATH, math], math.getBidiType());
+		this.bidiFlow.add([para_Math, math], math.getBidiType());
 	};
 	ParagraphSearchPositionXY.prototype.handleMathBase = function(mathBase)
 	{
-		this.bidiFlow.add([TYPE_MATH_BASE, mathBase], mathBase.getBidiType());
+		this.bidiFlow.add([para_Math_Composition, mathBase], mathBase.getBidiType());
 	};
 	ParagraphSearchPositionXY.prototype.handleRunElement = function(element, run, inRunPos)
 	{
@@ -198,22 +194,7 @@
 			this.emptyRun = null;
 		}
 		
-		this.bidiFlow.add([TYPE_RUN_ELEMENT, element, run, inRunPos], element.getBidiType());
-	};
-	ParagraphSearchPositionXY.prototype.handleBidiFlow = function(data, direction)
-	{
-		switch (data[0])
-		{
-			case TYPE_RUN_ELEMENT:
-				this.handleBidiFlowRunElement(data, direction);
-				break;
-			case TYPE_PARA_MATH:
-				this.handleBidiFlowParaMath(data[1]);
-				break;
-			case TYPE_MATH_BASE:
-				this.handleBidiFlowMathBase(data[1]);
-				break;
-		}
+		this.bidiFlow.add([para_RunBase, element, run, inRunPos], element.getBidiType());
 	};
 	ParagraphSearchPositionXY.prototype.handleBidiFlowRunElement = function(data, direction)
 	{
@@ -286,8 +267,9 @@
 			delete this.emptyRunHandler[item];
 		}
 	};
-	ParagraphSearchPositionXY.prototype.handleBidiFlowParaMath = function(math)
+	ParagraphSearchPositionXY.prototype.handleBidiFlowParaMath = function(data, direction)
 	{
+		let math = data[1];
 		if (this.emptyRun)
 		{
 			this.handleBidiFlowEmptyRun(this.emptyRun);
@@ -326,8 +308,9 @@
 		
 		this.curX = curX + mathW;
 	};
-	ParagraphSearchPositionXY.prototype.handleBidiFlowMathBase = function(base)
+	ParagraphSearchPositionXY.prototype.handleBidiFlowMathBase = function(data, direction)
 	{
+		let base = data[1];
 		if (this.emptyRun)
 		{
 			this.handleBidiFlowEmptyRun(this.emptyRun);

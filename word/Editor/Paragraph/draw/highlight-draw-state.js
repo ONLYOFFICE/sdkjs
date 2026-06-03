@@ -47,10 +47,6 @@
 	
 	const DEFAULT_COMMENT_COLOR = new AscCommon.CColor(248, 231, 195, 255);
 	
-	const TYPE_RUN_ELEMENT = 0x01;
-	const TYPE_PARA_MATH   = 0x02;
-	const TYPE_MATH_BASE   = 0x03;
-	
 	/**
 	 * Class for storing the current draw state of paragraph highlight (text/paragraph/field/etc. background)
 	 * @param {AscWord.ParagraphDrawState} drawState
@@ -284,28 +280,28 @@
 		
 		let flags = this.getFlags(element, !!collaborationColor);
 		let hyperlink = this.getHyperlinkObject();
-		this.addBidiFlowRunElement([element, run, flags, hyperlink, collaborationColor, this.comments.slice(), this.haveCurrentComment], element.getBidiType());
+		this.bidiFlow.add([para_RunBase, element, run, flags, hyperlink, collaborationColor, this.comments.slice(), this.haveCurrentComment], element.getBidiType());
 	};
 	ParagraphHighlightDrawState.prototype.handleParaMath = function(math)
 	{
 		if (!math || math.Root.IsEmptyRange(this.Line, this.Range))
 			return;
 		
-		this.addBidiFlowParaMath([math], math.getBidiType());
+		this.bidiFlow.add([para_Math, math], math.getBidiType());
 	};
 	ParagraphHighlightDrawState.prototype.handleMathBase = function(mathBase)
 	{
-		this.addBidiFlowMathBase([mathBase], mathBase.getBidiType());
+		this.bidiFlow.add([para_Math_Composition, mathBase], mathBase.getBidiType());
 	};
 	ParagraphHighlightDrawState.prototype.handleBidiFlowRunElement = function(data, direction)
 	{
-		let element    = data[0];
-		let run        = data[1];
-		let flags      = data[2];
-		let hyperlink  = data[3];
-		let collColor  = data[4];
-		let comments   = data[5];
-		let curComment = data[6];
+		let element    = data[1];
+		let run        = data[2];
+		let flags      = data[3];
+		let hyperlink  = data[4];
+		let collColor  = data[5];
+		let comments   = data[6];
+		let curComment = data[7];
 		let highlightAdditional;
 		
 		let w = element.GetWidthVisible();
@@ -321,7 +317,7 @@
 	};
 	ParagraphHighlightDrawState.prototype.handleBidiFlowParaMath = function(data, direction)
 	{
-		let math = data[0];
+		let math = data[1];
 		
 		let y0 = this.Y0;
 		let y1 = this.Y1;
@@ -357,7 +353,7 @@
 	};
 	ParagraphHighlightDrawState.prototype.handleBidiFlowMathBase = function(data, direction)
 	{
-		let element = data[0];
+		let element = data[1];
 		
 		let textPr = element.Get_CompiledCtrPrp();
 		

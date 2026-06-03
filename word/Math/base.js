@@ -1747,7 +1747,7 @@ CMathBase.prototype.recalculateCursorPosition = function(positionCalculator, isC
 	if (isCurrent)
 		this.Content[this.CurPos].recalculateCursorPosition(positionCalculator, true);
 	else
-		positionCalculator.handleMathElement(this);
+		positionCalculator.handleMathBase(this);
 };
 CMathBase.prototype.getParagraphContentPosByXY = function(searchState)
 {
@@ -1806,7 +1806,7 @@ CMathBase.prototype.drawSelectionInRange = function(drawSelectionState)
 	}
 	else
 	{
-		drawSelectionState.handleMathElement(this, isSelected);
+		drawSelectionState.handleMathBase(this, isSelected);
 	}
 };
 /**
