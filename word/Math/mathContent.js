@@ -4620,26 +4620,27 @@ CMathContent.prototype.drawHighLights = function(drawState)
 	
 	drawState.popBidiFlow();
 };
-CMathContent.prototype.Draw_Lines = function(PDSL)
+CMathContent.prototype.drawLines = function(drawState)
 {
-    var CurLine  = PDSL.Line - this.StartLine;
-    var CurRange = ( 0 === CurLine ? PDSL.Range - this.StartRange : PDSL.Range );
-
-    var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-
-    var Bound = this.Get_LineBound(PDSL.Line, PDSL.Range);
-
-    var Baseline = Bound.Y + Bound.Asc;
-
-    PDSL.Baseline = Baseline;
-    PDSL.X        = Bound.X;
-
-    for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
-    {
-        this.Content[CurPos].Draw_Lines(PDSL);
-        PDSL.Baseline = Baseline;
-    }
+	drawState.pushBidiFlow(false);
+	
+	let bounds     = this.Get_LineBound(drawState.Line, drawState.Range);
+	let rangeInfo  = this.getRangePos(drawState.Line, drawState.Range);
+	let rangeStart = rangeInfo[0];
+	let rangeEnd   = rangeInfo[1];
+	
+	let baseline = bounds.Y + bounds.Asc;
+	
+	drawState.Baseline = baseline;
+	drawState.X        = bounds.X;
+	
+	for (let pos = rangeStart; pos <= rangeEnd; ++pos)
+	{
+		this.Content[pos].drawLines(drawState);
+		drawState.Baseline = baseline;
+	}
+	
+	drawState.popBidiFlow();
 };
 CMathContent.prototype.RemoveSelection = function(preserveCursorPosition)
 {

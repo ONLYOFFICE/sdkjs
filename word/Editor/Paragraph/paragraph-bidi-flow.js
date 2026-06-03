@@ -37,6 +37,10 @@
 
 (function(window)
 {
+	const TYPE_RUN_ELEMENT = 0x01;
+	const TYPE_PARA_MATH   = 0x02;
+	const TYPE_MATH_BASE   = 0x03;
+	
 	/**
 	 * Class for handling bidirectional flow of paragraph content
 	 * @param handler - handler for elements in the flow
@@ -72,12 +76,49 @@
 		this.bidiFlow.end();
 		this.bidiFlow = this.bidiFlowStack.pop();
 	};
+	ParagraphBidiFlow.prototype.addBidiFlowRunElement = function(data, bidiType)
+	{
+		data.push(TYPE_RUN_ELEMENT);
+		this.bidiFlow.add(data, bidiType);
+	};
+	ParagraphBidiFlow.prototype.addBidiFlowParaMath = function(data, bidiType)
+	{
+		data.push(TYPE_PARA_MATH);
+		this.bidiFlow.add(data, bidiType);
+	};
+	ParagraphBidiFlow.prototype.addBidiFlowMathBase = function(data, bidiType)
+	{
+		data.push(TYPE_MATH_BASE);
+		this.bidiFlow.add(data, bidiType);
+	};
+	ParagraphBidiFlow.prototype.handleBidiFlow = function(data, direction)
+	{
+		let type = data[data.length - 1];
+		--data.length;
+		switch(type)
+		{
+			case TYPE_RUN_ELEMENT:
+				this.handleBidiFlowRunElement(data, direction);
+				break;
+			case TYPE_PARA_MATH:
+				this.handleBidiFlowParaMath(data, direction);
+				break;
+			case TYPE_MATH_BASE:
+				this.handleBidiFlowMathBase(data, direction);
+				break;
+		}
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Override area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	ParagraphBidiFlow.prototype.handleRunElement = function(element, run)
+	ParagraphBidiFlow.prototype.handleBidiFlowRunElement = function(data, direction)
 	{
-		this.bidiFlow.add([element, run], element.getBidiType());
+	};
+	ParagraphBidiFlow.prototype.handleBidiFlowParaMath = function(data, direction)
+	{
+	};
+	ParagraphBidiFlow.prototype.handleBidiFlowMathBase = function(data, direction)
+	{
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area

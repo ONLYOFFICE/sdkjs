@@ -605,15 +605,15 @@ CInlineLevelSdt.prototype.Draw_Elements = function(PDSE)
 			this.DrawPictureSign(PDSE.Graphics);
 	}
 };
-CInlineLevelSdt.prototype.Draw_Lines = function(PDSL)
+CInlineLevelSdt.prototype.drawLines = function(drawState)
 {
 	// Не отключаем отрисовку линий для PlaceHolder, т.к. рамка рисуется через данную функцию
-	// отключение остальных отрисовок идет внутри ParaRun.Draw_Lines
+	// отключение остальных отрисовок идет внутри ParaRun.drawLines
 
-	if (this.private_IsAddFormFieldToGraphics(PDSL.Graphics))
-		this.SkipDraw(PDSL);
+	if (this.private_IsAddFormFieldToGraphics(drawState.Graphics))
+		this.SkipDraw(drawState);
 	else
-		CParagraphContentWithParagraphLikeContent.prototype.Draw_Lines.apply(this, arguments);
+		CParagraphContentWithParagraphLikeContent.prototype.drawLines.apply(this, arguments);
 };
 CInlineLevelSdt.prototype.DrawSignatureSign = function(graphics)
 {

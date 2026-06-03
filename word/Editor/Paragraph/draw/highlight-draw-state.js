@@ -284,43 +284,28 @@
 		
 		let flags = this.getFlags(element, !!collaborationColor);
 		let hyperlink = this.getHyperlinkObject();
-		this.bidiFlow.add([TYPE_RUN_ELEMENT, element, run, flags, hyperlink, collaborationColor, this.comments.slice(), this.haveCurrentComment], element.getBidiType());
+		this.addBidiFlowRunElement([element, run, flags, hyperlink, collaborationColor, this.comments.slice(), this.haveCurrentComment], element.getBidiType());
 	};
 	ParagraphHighlightDrawState.prototype.handleParaMath = function(math)
 	{
 		if (!math || math.Root.IsEmptyRange(this.Line, this.Range))
 			return;
 		
-		this.bidiFlow.add([TYPE_PARA_MATH, math], math.getBidiType());
+		this.addBidiFlowParaMath([math], math.getBidiType());
 	};
 	ParagraphHighlightDrawState.prototype.handleMathBase = function(mathBase)
 	{
-		this.bidiFlow.add([TYPE_MATH_BASE, mathBase], mathBase.getBidiType());
-	};
-	ParagraphHighlightDrawState.prototype.handleBidiFlow = function(data, direction)
-	{
-		switch(data[0])
-		{
-			case TYPE_RUN_ELEMENT:
-				this.handleBidiFlowRunElement(data, direction);
-				break;
-			case TYPE_PARA_MATH:
-				this.handleBidiFlowParaMath(data[1]);
-				break;
-			case TYPE_MATH_BASE:
-				this.handleBidiFlowMathBase(data[1]);
-				break;
-		}
+		this.addBidiFlowMathBase([mathBase], mathBase.getBidiType());
 	};
 	ParagraphHighlightDrawState.prototype.handleBidiFlowRunElement = function(data, direction)
 	{
-		let element    = data[1];
-		let run        = data[2];
-		let flags      = data[3];
-		let hyperlink  = data[4];
-		let collColor  = data[5];
-		let comments   = data[6];
-		let curComment = data[7];
+		let element    = data[0];
+		let run        = data[1];
+		let flags      = data[2];
+		let hyperlink  = data[3];
+		let collColor  = data[4];
+		let comments   = data[5];
+		let curComment = data[6];
 		let highlightAdditional;
 		
 		let w = element.GetWidthVisible();
@@ -334,8 +319,10 @@
 		
 		this.X += w;
 	};
-	ParagraphHighlightDrawState.prototype.handleBidiFlowParaMath = function(math)
+	ParagraphHighlightDrawState.prototype.handleBidiFlowParaMath = function(data, direction)
 	{
+		let math = data[0];
+		
 		let y0 = this.Y0;
 		let y1 = this.Y1;
 		
@@ -368,8 +355,10 @@
 		this.Y0 = y0;
 		this.Y1 = y1;
 	};
-	ParagraphHighlightDrawState.prototype.handleBidiFlowMathBase = function(element)
+	ParagraphHighlightDrawState.prototype.handleBidiFlowMathBase = function(data, direction)
 	{
+		let element = data[0];
+		
 		let textPr = element.Get_CompiledCtrPrp();
 		
 		let shdColor = (textPr.Shd && !textPr.Shd.IsNil() ? textPr.Shd.GetSimpleColor(this.drawState.getTheme(), this.drawState.getColorMap()) : null);

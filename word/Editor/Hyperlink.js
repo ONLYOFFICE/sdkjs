@@ -219,13 +219,13 @@ ParaHyperlink.prototype.Draw_Elements = function(PDSE)
     PDSE.Hyperlink        = false;
 };
 
-ParaHyperlink.prototype.Draw_Lines = function(PDSL)
+ParaHyperlink.prototype.drawLines = function(lineDrawState)
 {
-	PDSL.VisitedHyperlink = this.Visited;
-	PDSL.Hyperlink        = true;
-	CParagraphContentWithParagraphLikeContent.prototype.Draw_Lines.apply(this, arguments);
-	PDSL.VisitedHyperlink = false;
-	PDSL.Hyperlink        = false;
+	lineDrawState.VisitedHyperlink = this.Visited;
+	lineDrawState.Hyperlink        = true;
+	CParagraphContentWithParagraphLikeContent.prototype.drawLines.apply(this, arguments);
+	lineDrawState.VisitedHyperlink = false;
+	lineDrawState.Hyperlink        = false;
 };
 ParaHyperlink.prototype.drawHighLights = function(drawState)
 {

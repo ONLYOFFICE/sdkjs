@@ -268,7 +268,7 @@ function (window, undefined) {
 	ParaComment.prototype.Draw_Elements = function (PDSE) {
 	};
 
-	ParaComment.prototype.Draw_Lines = function (PDSL) {
+	ParaComment.prototype.drawLines = function (drawState) {
 	};
 //-----------------------------------------------------------------------------------
 // Functions for working with cursor

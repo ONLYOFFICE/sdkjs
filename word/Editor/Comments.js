@@ -1386,7 +1386,7 @@ ParaComment.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPa
 		Comment.m_oStartInfo.Y += Dy;
 	}
 };
-ParaComment.prototype.Draw_Lines = function(lineDrawState)
+ParaComment.prototype.drawLines = function(lineDrawState)
 {
 	lineDrawState.handleAnnotationMark(this);
 };

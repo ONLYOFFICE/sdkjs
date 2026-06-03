@@ -3189,18 +3189,13 @@ Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState
 			
 			var StartPos = Range.StartPos;
 			var EndPos   = Range.EndPos;
-
-			// TODO: Нумерация подчеркивается и зачеркивается в Draw_Elements, неплохо бы сюда перенести
-			if (this.Numbering.checkRange(CurRange, CurLine) && !this.isRtlDirection())
-				PDSL.X += this.Numbering.WidthVisible;
-
 			for (var Pos = StartPos; Pos <= EndPos; Pos++)
 			{
 				PDSL.CurPos.Update(Pos, 0);
 				PDSL.CurDepth = 1;
 
 				var Item = this.Content[Pos];
-				Item.Draw_Lines(PDSL);
+				Item.drawLines(PDSL);
 			}
 			
 			PDSL.endRange();

@@ -2539,62 +2539,9 @@ ParaMath.prototype.GetLinePosition = function(Line, Range)
 {
     return this.Root.GetPos(Line, Range);
 };
-ParaMath.prototype.Draw_Lines = function(PDSL)
+ParaMath.prototype.drawLines = function(drawState)
 {
-    if(false == this.Root.IsEmptyRange(PDSL.Line, PDSL.Range))
-    {
-        // Underline всей формулы
-        var FirstRPrp = this.GetFirstRPrp();
-
-        var Para = PDSL.Paragraph;
-
-        var aUnderline  = PDSL.Underline;
-
-        var X          = PDSL.X;
-        var Y          = PDSL.Baseline;
-        var UndOff     = PDSL.UnderlineOffset;
-        var UnderlineY = Y + UndOff;
-        var LineW      = (FirstRPrp.FontSize / 18) * g_dKoef_pt_to_mm;
-
-
-        var BgColor = PDSL.BgColor;
-        if ( undefined !== FirstRPrp.Shd && Asc.c_oAscShdNil !== FirstRPrp.Shd.Value )
-            BgColor = FirstRPrp.Shd.Get_Color( Para );
-        var AutoColor = ( undefined != BgColor && false === BgColor.Check_BlackAutoColor() ? new CDocumentColor( 255, 255, 255, false ) : new CDocumentColor( 0, 0, 0, false ) );
-        var CurColor, RGBA, Theme = this.Paragraph.Get_Theme(), ColorMap = this.Paragraph.Get_ColorMap();
-
-        // Выставляем цвет обводки
-        if ( true === PDSL.VisitedHyperlink && ( undefined === FirstRPrp.Color && undefined === FirstRPrp.Unifill ) )
-            CurColor = new CDocumentColor( 128, 0, 151 );
-        else if ( true === FirstRPrp.Color.Auto && !FirstRPrp.Unifill)
-            CurColor = new CDocumentColor( AutoColor.r, AutoColor.g, AutoColor.b );
-        else
-        {
-            if(FirstRPrp.Unifill)
-            {
-                FirstRPrp.Unifill.check(Theme, ColorMap);
-                RGBA = FirstRPrp.Unifill.getRGBAColor();
-                CurColor = new CDocumentColor( RGBA.R, RGBA.G, RGBA.B );
-            }
-            else
-            {
-                CurColor = new CDocumentColor( FirstRPrp.Color.r, FirstRPrp.Color.g, FirstRPrp.Color.b );
-            }
-        }
-
-        var Bound = this.Root.Get_LineBound(PDSL.Line, PDSL.Range),
-            Width = Bound.W;
-
-        if ( true === FirstRPrp.Underline ) {
-					aUnderline.set(UnderlineY, LineW);
-	        aUnderline.Add(X, X + Width, CurColor);
-        }
-
-
-        this.Root.Draw_Lines(PDSL);
-
-        PDSL.X = Bound.X + Width;
-    }
+	drawState.handleParaMath(this);
 };
 
 //-----------------------------------------------------------------------------------

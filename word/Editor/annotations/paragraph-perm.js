@@ -110,7 +110,7 @@
 	{
 		state.checkPermRange(this);
 	};
-	ParagraphPermBase.prototype.Draw_Lines = function(lineDrawState)
+	ParagraphPermBase.prototype.drawLines = function(lineDrawState)
 	{
 		lineDrawState.handleAnnotationMark(this);
 	};

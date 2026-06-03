@@ -464,7 +464,7 @@ CParagraphContentBase.prototype.drawHighLights = function(drawState)
 CParagraphContentBase.prototype.Draw_Elements = function(PDSE)
 {
 };
-CParagraphContentBase.prototype.Draw_Lines = function(PDSL)
+CParagraphContentBase.prototype.drawLines = function(drawState)
 {
 };
 CParagraphContentBase.prototype.SkipDraw = function(PDS)
@@ -3093,21 +3093,20 @@ CParagraphContentWithParagraphLikeContent.prototype.Draw_Elements = function(PDS
 	if (placeholderAlpha)
 		PDSE.Graphics.setTextGlobalAlpha(textAlpha);
 };
-CParagraphContentWithParagraphLikeContent.prototype.Draw_Lines = function(PDSL)
+CParagraphContentWithParagraphLikeContent.prototype.drawLines = function(drawState)
 {
-	var CurLine  = PDSL.Line - this.StartLine;
-	var CurRange = ( 0 === CurLine ? PDSL.Range - this.StartRange : PDSL.Range );
+	var CurLine  = drawState.Line - this.StartLine;
+	var CurRange = ( 0 === CurLine ? drawState.Range - this.StartRange : drawState.Range );
 
 	var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
 	var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
 
-	var nCurDepth = PDSL.CurDepth;
+	var nCurDepth = drawState.CurDepth;
 	for (var CurPos = StartPos; CurPos <= EndPos; CurPos++)
 	{
-		PDSL.CurPos.Update(CurPos, nCurDepth);
-		PDSL.CurDepth = nCurDepth + 1;
-
-		this.Content[CurPos].Draw_Lines(PDSL);
+		drawState.CurPos.Update(CurPos, nCurDepth);
+		drawState.CurDepth = nCurDepth + 1;
+		this.Content[CurPos].drawLines(drawState);
 	}
 };
 CParagraphContentWithParagraphLikeContent.prototype.SkipDraw = function(PDS)

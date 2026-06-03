@@ -6017,7 +6017,7 @@ ParaRun.prototype.Draw_Elements = function(drawState)
 		drawState.handleRunElement(item, this);
 	}
 };
-ParaRun.prototype.Draw_Lines = function(lineDrawState)
+ParaRun.prototype.drawLines = function(lineDrawState)
 {
 	let rangePos = this.getRangePos(lineDrawState.Line, lineDrawState.Range);
 	let startPos = rangePos[0];
