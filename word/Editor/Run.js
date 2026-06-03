@@ -2264,12 +2264,6 @@ ParaRun.prototype.Get_ParaPosByContentPos = function(ContentPos, Depth)
 
 ParaRun.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
 {
-	if (this.IsMathRun())
-	{
-		positionCalculator.handleMathRun(this, isCurrent, this.State.ContentPos);
-		return;
-	}
-	
 	let rangePos = this.getRangePos(positionCalculator.line, positionCalculator.range);
 	let startPos = rangePos[0];
 	let endPos   = rangePos[1];

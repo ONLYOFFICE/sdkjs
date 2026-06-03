@@ -180,6 +180,9 @@
 		let run       = data[2];
 		let isCurrent = data[3];
 		
+		if (run.IsMathRun() && isCurrent)
+			this.handleBidiFlowCurrentMathRun(run);
+		
 		if (element === this.prev.element)
 		{
 			this.prev.x         = this.x;
@@ -249,13 +252,14 @@
 
 		this.x = x + mathW;
 	};
-	ParagraphPositionCalculator.prototype.handleMathRun = function(run, isCurrentRun, currentPos)
+	ParagraphPositionCalculator.prototype.handleBidiFlowCurrentMathRun = function(run)
 	{
-		this.bidiFlow.end();
-		this.bidiFlow.begin(this.paragraph.isRtlDirection());
-		
-		if (!isCurrentRun)
+		if (this.stop)
 			return;
+		
+		this.stop = true;
+		
+		let currentPos = run.State.ContentPos;
 		
 		let paraMathLocation = run.ParaMath.GetLinePosition(this.line, this.range);
 		
@@ -283,7 +287,6 @@
 			this.y += elementLocation.y;
 		}
 		
-		// TODO: Пометить данное место, как текущее
 		this.posInfo.x     = this.x;
 		this.posInfo.y     = this.y;
 		this.posInfo.mathY = mathY;
