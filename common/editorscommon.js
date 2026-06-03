@@ -15020,7 +15020,12 @@
 			return;
 		}
 		if (level === "error") {
-			console.error(msg);
+			// error logging must not abort the save: native console.error throws "param is not defined"
+			try {
+				console.error(msg);
+			} catch (e) {
+				console.log(msg);
+			}
 		}
 		if (api.documentOpenOptions && api.documentOpenOptions["debug"]) {
 			console.log("[speed]: "+ msg);
