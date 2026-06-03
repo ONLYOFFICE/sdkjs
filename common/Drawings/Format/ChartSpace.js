@@ -6339,6 +6339,43 @@ function(window, undefined) {
 		return aStrings;
 	};
 
+	CChartSpace.prototype.getDateAxisMajorStep = function (oAxis, aScale) {
+		if (AscFormat.isRealNumber(oAxis.majorUnit) && oAxis.majorUnit >= 1 &&
+			(!AscFormat.isRealNumber(oAxis.majorTimeUnit) || oAxis.majorTimeUnit === oAxis.baseTimeUnit)) {
+			return Math.max(1, Math.floor(oAxis.majorUnit));
+		}
+		let nCount = aScale.length;
+		let nTarget = 12;
+		if (nCount <= nTarget) {
+			return 1;
+		}
+		let nRaw = Math.ceil(nCount / nTarget);
+		let aNice = [1, 2, 3, 5, 10, 15, 20, 30, 50, 100];
+		for (let i = 0; i < aNice.length; ++i) {
+			if (aNice[i] >= nRaw) {
+				return aNice[i];
+			}
+		}
+		return nRaw;
+	};
+	CChartSpace.prototype.getDateLabels = function (oAxis) {
+		let aStrings = [];
+		let aScale = Array.isArray(oAxis.scale) ? oAxis.scale : [];
+		if (!aScale.length) {
+			return aStrings;
+		}
+		const oNumFormat = this.getNumFmt(oAxis);
+		const fMultiplier = this.getMultiplier(oAxis);
+		let nMajorStep = this.getDateAxisMajorStep(oAxis, aScale);
+		for (let i = 0; i < aScale.length; ++i) {
+			if (i % nMajorStep === 0) {
+				aStrings.push(this.getFormattedString(aScale[i], oNumFormat, fMultiplier));
+			} else {
+				aStrings.push(null);
+			}
+		}
+		return aStrings;
+	};
 	CChartSpace.prototype.getLabelsForAxis = function (oAxis) {
 		let aStrings = [];
 		let oPlotArea = this.chart.plotArea, i;
@@ -6346,7 +6383,10 @@ function(window, undefined) {
 		let oSeries = oPlotArea.getSeriesWithSmallestIndexForAxis(oAxis);
 		let bCat = false;
 		switch (nAxisType) {
-			case AscDFH.historyitem_type_DateAx:
+			case AscDFH.historyitem_type_DateAx: {
+				aStrings = this.getDateLabels(oAxis);
+				break;
+			}
 			case AscDFH.historyitem_type_CatAx: {
 				//calculate labels for horizontal axis
 				let nPtsLen = 0;

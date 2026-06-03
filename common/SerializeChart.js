@@ -9170,40 +9170,40 @@ BinaryChartReader.prototype.ReadCT_DateAx = function (type, length, val) {
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_TimeUnit(t, l, oNewVal);
         });
-        // if (null != oNewVal.m_val) {
-        // val.setMinorTimeUnit(oNewVal.m_val);
+        if (null != oNewVal.m_val)
+            val.setBaseTimeUnit(oNewVal.m_val);
     }
     else if (c_oserct_dateaxMAJORUNIT === type) {
         var oNewVal = { m_val: null };
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_AxisUnit(t, l, oNewVal);
         });
-        // if (null != oNewVal.m_val)
-        // val.setMajorUnit(oNewVal.m_val);
+        if (null != oNewVal.m_val)
+            val.setMajorUnit(oNewVal.m_val);
     }
     else if (c_oserct_dateaxMAJORTIMEUNIT === type) {
         var oNewVal = { m_val: null };
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_TimeUnit(t, l, oNewVal);
         });
-        // if (null != oNewVal.m_val) {
-        // val.setMinorTimeUnit(oNewVal.m_val);
+        if (null != oNewVal.m_val)
+            val.setMajorTimeUnit(oNewVal.m_val);
     }
     else if (c_oserct_dateaxMINORUNIT === type) {
         var oNewVal = { m_val: null };
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_AxisUnit(t, l, oNewVal);
         });
-        // if (null != oNewVal.m_val)
-        // val.setMinorUnit(oNewVal.m_val);
+        if (null != oNewVal.m_val)
+            val.setMinorUnit(oNewVal.m_val);
     }
     else if (c_oserct_dateaxMINORTIMEUNIT === type) {
         var oNewVal = { m_val: null };
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_TimeUnit(t, l, oNewVal);
         });
-        // if (null != oNewVal.m_val)
-        // val.setMinorTimeUnit(oNewVal.m_val);
+        if (null != oNewVal.m_val)
+            val.setMinorTimeUnit(oNewVal.m_val);
     }
     else if (c_oserct_dateaxEXTLST === type) {
         var oNewVal;
@@ -10772,9 +10772,8 @@ BinaryChartReader.prototype.ReadCT_NumVal = function (type, length, val) {
     var oThis = this;
     if (c_oserct_numvalV === type) {
         var nVal = parseFloat(this.stream.GetString2LE(length));
-        if(isNaN(nVal))
-            nVal = 0;
-        val.setVal(nVal);
+        if (!isNaN(nVal))
+            val.setVal(nVal);
     }
     else if (c_oserct_numvalIDX === type) {
         val.setIdx(this.stream.GetULongLE());
