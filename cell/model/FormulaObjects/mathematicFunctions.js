@@ -5827,7 +5827,9 @@ function (window, undefined) {
 					}
 				}
 			} else if (cElementType.array === element.type) {
-				element.foreach(function (arrElem) {
+				//foreachValue streams each element (via the generator for a lazy array) without
+				//materializing - SUM over a huge SEQUENCE stays single-pass and O(1) memory.
+				element.foreachValue(function (arrElem) {
 					if (cElementType.cell === arrElem.type || cElementType.cell3D === arrElem.type) {
 						arrElem = arrElem.getValue();
 					}
@@ -6449,18 +6451,15 @@ function (window, undefined) {
 	cSEQUENCE.prototype.Calculate = function (arg) {
 		// TODO after implementing array autoexpanding, reconsider the behavior of the function when receiving cellsRange as arguments
 		function sequenceArray(row, column, start, step) {
-			let res = new cArray(),
-				startNum = start,
-				stepNum = step;
-
-			for (let i = 0; i < row; i++) {
-				res.addRow();
-				for (let j = 0; j < column; j++) {
-					res.addElement(new cNumber(startNum));
-					startNum += stepNum;
-				}
-			}
-
+			//generator-backed (fully-lazy) array: store realSize + a positional generator instead of
+			//materializing up to EXPECTED_MAX_ARRAY cNumber objects. value at (r,c) reproduces the
+			//original row-major increment: start + (r*column + c)*step. The array materializes itself
+			//(_expandGenerator) the moment a consumer needs a full physical scan.
+			let res = new cArray();
+			res.setRealArraySize(row, column);
+			res.setMissedValueFn(function (r, c) {
+				return new cNumber(start + (r * column + c) * step);
+			});
 			return res;
 		}
 

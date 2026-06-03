@@ -2988,18 +2988,21 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		this.countElement++;
 	};
 	cArray.prototype.getRow = function (rowIndex) {
+		this.ensureMaterialized();
 		if (rowIndex < 0 || rowIndex > this.array.length - 1) {
 			return null;
 		}
 		return this.array[rowIndex];
 	};
 	cArray.prototype._getRow = function (rowIndex) {
+		this.ensureMaterialized();
 		if (rowIndex < 0 || rowIndex > this.array.length - 1) {
 			return null;
 		}
 		return [this.array[rowIndex]];
 	};
 	cArray.prototype.getCol = function (colIndex) {
+		this.ensureMaterialized();
 		var col = [];
 		for (var i = 0; i < this.rowCount; i++) {
 			col.push(this.array[i][colIndex]);
@@ -3007,6 +3010,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return col;
 	};
 	cArray.prototype._getCol = function (colIndex) {
+		this.ensureMaterialized();
 		let col = [];
 		for (let i = 0; i < this.rowCount; i++) {
 			col[i] = [];
@@ -3022,15 +3026,21 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		//0-based indices: a missing physical cell inside realSize is a tail value, so check the tail
 		//with 0-based bounds before #N/A - else the seam cell at row===rowCount (or col===len) is lost.
-		if (checkRealSize && this.realSize && row < this.realSize.row && col < this.realSize.col) {
+		//a fully-lazy array (rowCount===0) has no physical cells at all - the generator IS its data, so
+		//serve from it regardless of checkRealSize; head+tail arrays (rowCount>0) keep the checkRealSize gate.
+		if ((checkRealSize || this.rowCount === 0) && this.realSize &&
+			row >= 0 && col >= 0 && row < this.realSize.row && col < this.realSize.col) {
 			return this.getMissedElement(row, col);
 		}
-		if (row > this.rowCount || col > this.getCountElementInRow()) {
+		//use the logical counts (realSize for fully-lazy arrays) so the seam/out-of-bounds verdict
+		//matches a materialized array: index===count stays in-bounds (cEmpty), only index>count is #N/A.
+		if (row > this.getRowCount() || col > this.getCountElementInRow()) {
 			return new cError(cErrorType.not_available);
 		}
 		return new cEmpty();
 	};
 	cArray.prototype.getElement = function (index) {
+		this.ensureMaterialized();
 		for (var i = 0; i < this.rowCount; i++) {
 			//TODO length
 			if (index > this.countElementInRow[i].length) {
@@ -3084,6 +3094,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (typeof (action) !== 'function') {
 			return true;
 		}
+		//full iteration over the whole logical array: materialize a generator-backed tail first so that
+		//consumers (financial/statistical/text/lookup aggregators) see every element, not just the head.
+		this.ensureMaterialized();
 
 		let ir, ic;
 		if (byCol) {
@@ -3100,16 +3113,71 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		}
 	};
+	//physical-only iteration (row-major) that deliberately does NOT materialize a generator tail:
+	//used to build the stored "head" of a result while the tail stays lazy (see _func[array][scalar]).
+	cArray.prototype.foreachPhysical = function (action) {
+		if (typeof (action) !== 'function') {
+			return true;
+		}
+		for (var ir = 0; ir < this.rowCount; ir++) {
+			for (var ic = 0; ic < this.countElementInRow[ir]; ic++) {
+				action.call(this, this.array[ir][ic], ir, ic);
+			}
+		}
+	};
+	//read-only iteration over every LOGICAL element WITHOUT materializing: for a generator-backed array
+	//it streams each value from the generator (single pass, no N-element allocation), so reducers like
+	//SUM stay O(1) memory. For non-generator arrays it behaves exactly like the physical foreach (which,
+	//lacking a generator, also never expands a constant/empty tail). action(elem, ir, ic); truthy = stop.
+	cArray.prototype.foreachValue = function (action) {
+		if (typeof (action) !== 'function') {
+			return true;
+		}
+		if (this.missedValueFn && this.realSize) {
+			for (var r = 0; r < this.realSize.row; r++) {
+				for (var c = 0; c < this.realSize.col; c++) {
+					if (action.call(this, this.getElementRowCol(r, c, true), r, c)) {
+						return true;
+					}
+				}
+			}
+			return undefined;
+		}
+		for (var ir = 0; ir < this.rowCount; ir++) {
+			for (var ic = 0; ic < this.countElementInRow[ir]; ic++) {
+				if (action.call(this, this.array[ir][ic], ir, ic)) {
+					return true;
+				}
+			}
+		}
+		return undefined;
+	};
+	//a "fully-lazy" array stores no physical rows (rowCount===0) but carries realSize + a generator
+	//(e.g. SEQUENCE). For it the physical counts are 0, so dimension queries must fall back to realSize -
+	//otherwise consumers see a 0x0 / 1x1 array. Head+tail arrays (ROW/COLUMN, rowCount>0) are unaffected.
+	cArray.prototype.isFullyLazy = function () {
+		return !!(this.realSize && this.rowCount === 0);
+	};
 	cArray.prototype.getCountElement = function () {
+		if (this.isFullyLazy()) {
+			return this.realSize.row * this.realSize.col;
+		}
 		return this.countElement;
 	};
 	cArray.prototype.getCountElementInRow = function (getRealSize) {
-		return getRealSize && this.realSize ? this.realSize.col : this.countElementInRow[0];
+		if (this.realSize && (getRealSize || this.rowCount === 0)) {
+			return this.realSize.col;
+		}
+		return this.countElementInRow[0];
 	};
 	cArray.prototype.getRowCount = function (getRealSize) {
-		return getRealSize && this.realSize ? this.realSize.row : this.rowCount;
+		if (this.realSize && (getRealSize || this.rowCount === 0)) {
+			return this.realSize.row;
+		}
+		return this.rowCount;
 	};
 	cArray.prototype.geMaxElementInRow = function () {
+		this.ensureMaterialized();
 		var max = 0;
 		for (var i = 0, len = this.countElementInRow.length; i < len; i++) {
 			if (this.countElementInRow[i] > max) {
@@ -3287,6 +3355,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return retArr;
 	};
 	cArray.prototype.toString = function () {
+		this.ensureMaterialized();
 		var ret = "";
 		for (var ir = 0; ir < this.rowCount; ir++, ret += FormulaSeparators.arrayRowSeparatorDef) {
 			for (var ic = 0; ic < this.countElementInRow[ir]; ic++, ret += FormulaSeparators.arrayColSeparatorDef) {
@@ -3306,6 +3375,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return "{" + ret + "}";
 	};
 	cArray.prototype.toLocaleString = function (digitDelim) {
+		this.ensureMaterialized();
 		var ret = "";
 		for (var ir = 0; ir < this.rowCount;
 			 ir++, ret += digitDelim ? FormulaSeparators.arrayRowSeparator : FormulaSeparators.arrayRowSeparatorDef) {
@@ -3331,6 +3401,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return "{" + ret + "}";
 	};
 	cArray.prototype.isValidArray = function () {
+		this.ensureMaterialized();
 		if (this.countElement < 1) {
 			return false;
 		}
@@ -3342,12 +3413,24 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return true;
 	};
 	cArray.prototype.getValue2 = function (i, j) {
+		//generator-backed array: serve the single element lazily instead of materializing the whole array
+		//(keeps INDEX/point access over a huge SEQUENCE O(1)). Non-generator arrays keep the raw fast path.
+		if (this.missedValueFn) {
+			return this.getElementRowCol(i, j, true);
+		}
 		var result = this.array[i];
 		return result ? result[j] : result;
 	};
 	cArray.prototype.getValue = function () {
 		var result = this.array[0];
-		return result && result[0] ? result[0].getValue() : result;
+		if (result && result[0]) {
+			return result[0].getValue();
+		}
+		//fully-lazy array: the (0,0) value comes from the generator, no need to materialize the whole thing
+		if (this.isFullyLazy()) {
+			return this.getMissedElement(0, 0).getValue();
+		}
+		return result;
 	};
 	cArray.prototype.getMatrix = function () {
 
@@ -3375,6 +3458,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return this.array;
 	};
 	cArray.prototype.getMatrixCopy = function () {
+		this.ensureMaterialized();
 		let retArrCopy = [];
 		for (let ir = 0; ir < this.array.length; ir++) {
 			retArrCopy[ir] = [];
@@ -6218,9 +6302,9 @@ _func[cElementType.array][cElementType.number] = _func[cElementType.array][cElem
 				}
 			}
 
-			//foreach2 = physical-only iteration: build the stored part here while the tail stays lazy
-			//in res.missedValueFn (composed above). using foreach would materialize the generator.
-			arg0.foreach2( function ( elem, r ) {
+			//foreachPhysical = physical-only iteration: build the stored part here while the tail stays lazy
+			//in res.missedValueFn (composed above). using foreach/foreach2 would materialize the generator.
+			arg0.foreachPhysical( function ( elem, r ) {
                 if ( !res.array[r] ) {
                     res.addRow();
                 }
@@ -6251,9 +6335,9 @@ _func[cElementType.number][cElementType.array] = _func[cElementType.string][cEle
 				}
 			}
 
-			//foreach2 = physical-only iteration: build the stored part here while the tail stays lazy
-			//in res.missedValueFn (composed above). using foreach would materialize the generator.
-			arg1.foreach2( function ( elem, r ) {
+			//foreachPhysical = physical-only iteration: build the stored part here while the tail stays lazy
+			//in res.missedValueFn (composed above). using foreach/foreach2 would materialize the generator.
+			arg1.foreachPhysical( function ( elem, r ) {
                 if ( !res.array[r] ) {
                     res.addRow();
                 }

@@ -1571,6 +1571,8 @@ function (window, undefined) {
 		}
 
 		const generateArray = function (_from, row, col) {
+			//reads _from.array/_from.rowCount raw, so a generator-backed arg must be materialized first
+			_from.ensureMaterialized && _from.ensureMaterialized();
 			let ret = null;
 			let _colCount = _from.getCountElementInRow();
 			let _rowCount = _from.rowCount;
