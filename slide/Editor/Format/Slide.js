@@ -751,9 +751,20 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
                     if (matching_shape == null && layout.cSld.spTree[j]) {
                         var sp = layout.cSld.spTree[j].copy(undefined);
                         sp.setParent(this);
-											if (sp.txBody) {
-												sp.txBody.setBodyPr(new AscFormat.CBodyPr());
-											}
+                        if (sp.txBody) {
+                            sp.txBody.setBodyPr(new AscFormat.CBodyPr());
+                            if (sp.txBody.lstStyle) {
+                                sp.txBody.setLstStyle(null);
+                            }
+                        }
+                        if (sp.spPr) {
+                            if (sp.spPr.xfrm) {
+                                sp.spPr.setXfrm(null);
+                            }
+                            if (sp.spPr.Fill) {
+                                sp.spPr.setFill(null);
+                            }
+                        }
                         !bIsSpecialPh && sp.clearContent && sp.clearContent();
                         this.addToSpTreeToPos(this.cSld.spTree.length, sp)
                     }
