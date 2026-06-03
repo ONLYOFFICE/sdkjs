@@ -684,6 +684,595 @@
 			return false;
 		}
 
+		const SVG_EMU_PER_MM = 36000;
+
+		const svgNamedColors = {
+			"black": [0, 0, 0], "white": [255, 255, 255], "red": [255, 0, 0],
+			"green": [0, 128, 0], "blue": [0, 0, 255], "yellow": [255, 255, 0],
+			"gray": [128, 128, 128], "grey": [128, 128, 128], "silver": [192, 192, 192],
+			"maroon": [128, 0, 0], "olive": [128, 128, 0], "lime": [0, 255, 0],
+			"aqua": [0, 255, 255], "cyan": [0, 255, 255], "teal": [0, 128, 128],
+			"navy": [0, 0, 128], "fuchsia": [255, 0, 255], "magenta": [255, 0, 255],
+			"purple": [128, 0, 128], "orange": [255, 165, 0]
+		};
+
+		function svgArcToCubics(startX, startY, endX, endY, rx, ry, rotation, largeArc, sweep) {
+			rx = Math.abs(rx);
+			ry = Math.abs(ry);
+			if (rx === 0 || ry === 0 || (startX === endX && startY === endY)) {
+				return [{type: "lineto", x: endX, y: endY}];
+			}
+			const phi = (rotation * Math.PI) / 180;
+			const cosPhi = Math.cos(phi);
+			const sinPhi = Math.sin(phi);
+			const dx = (startX - endX) / 2;
+			const dy = (startY - endY) / 2;
+			const x1p = cosPhi * dx + sinPhi * dy;
+			const y1p = -sinPhi * dx + cosPhi * dy;
+
+			let rx2 = rx * rx, ry2 = ry * ry;
+			const lambda = (x1p * x1p) / rx2 + (y1p * y1p) / ry2;
+			if (lambda > 1) {
+				const s = Math.sqrt(lambda);
+				rx *= s;
+				ry *= s;
+				rx2 = rx * rx;
+				ry2 = ry * ry;
+			}
+
+			let factor = (rx2 * ry2 - rx2 * y1p * y1p - ry2 * x1p * x1p) / (rx2 * y1p * y1p + ry2 * x1p * x1p);
+			factor = Math.sqrt(Math.max(0, factor));
+			if (largeArc === sweep) {
+				factor = -factor;
+			}
+			const cxp = (factor * rx * y1p) / ry;
+			const cyp = (-factor * ry * x1p) / rx;
+			const cx = cosPhi * cxp - sinPhi * cyp + (startX + endX) / 2;
+			const cy = sinPhi * cxp + cosPhi * cyp + (startY + endY) / 2;
+
+			const ux = (x1p - cxp) / rx;
+			const uy = (y1p - cyp) / ry;
+			const vx = (-x1p - cxp) / rx;
+			const vy = (-y1p - cyp) / ry;
+			let theta1 = Math.atan2(uy, ux);
+			let theta2 = Math.atan2(vy, vx);
+			if (sweep === 0 && theta2 > theta1) {
+				theta2 -= 2 * Math.PI;
+			} else if (sweep !== 0 && theta2 < theta1) {
+				theta2 += 2 * Math.PI;
+			}
+
+			const segments = Math.max(1, Math.ceil(Math.abs(theta2 - theta1) / (Math.PI / 2)));
+			const delta = (theta2 - theta1) / segments;
+			const alpha = (Math.sin(delta) * (Math.sqrt(4 + 3 * Math.pow(Math.tan(delta / 2), 2)) - 1)) / 3;
+
+			const commands = [];
+			let theta = theta1;
+			for (let i = 0; i < segments; ++i) {
+				const next = theta + delta;
+				const cosT1 = Math.cos(theta), sinT1 = Math.sin(theta);
+				const cosT2 = Math.cos(next), sinT2 = Math.sin(next);
+
+				const p1x = cx + rx * cosT1 * cosPhi - ry * sinT1 * sinPhi;
+				const p1y = cy + rx * cosT1 * sinPhi + ry * sinT1 * cosPhi;
+				const p2x = cx + rx * cosT2 * cosPhi - ry * sinT2 * sinPhi;
+				const p2y = cy + rx * cosT2 * sinPhi + ry * sinT2 * cosPhi;
+
+				const d1x = -rx * sinT1 * cosPhi - ry * cosT1 * sinPhi;
+				const d1y = -rx * sinT1 * sinPhi + ry * cosT1 * cosPhi;
+				const d2x = -rx * sinT2 * cosPhi - ry * cosT2 * sinPhi;
+				const d2y = -rx * sinT2 * sinPhi + ry * cosT2 * cosPhi;
+
+				commands.push({
+					type: "cubicBezier",
+					x1: p1x + alpha * d1x, y1: p1y + alpha * d1y,
+					x2: p2x - alpha * d2x, y2: p2y - alpha * d2y,
+					x: p2x, y: p2y
+				});
+				theta = next;
+			}
+			return commands;
+		}
+
+		function parseSvgPathData(d) {
+			const commands = [];
+			if (typeof d !== "string" || d.length === 0) {
+				return commands;
+			}
+			const regex = /([MLHVCSQTAZ])([^MLHVCSQTAZ]*)/gi;
+			let curX = 0, curY = 0, startSubX = 0, startSubY = 0;
+			let prevType = "", prevC2X = 0, prevC2Y = 0, prevQX = 0, prevQY = 0;
+			let match;
+			while ((match = regex.exec(d)) !== null) {
+				const letter = match[1];
+				const upper = letter.toUpperCase();
+				const absolute = (letter === upper);
+				const p = match[2].trim().replace(/(\d)-/g, "$1 -").replace(/(\.\d+)(?=\.)/g, "$1 ").split(/[\s,]+/);
+				const nums = [];
+				for (let i = 0; i < p.length; ++i) {
+					if (p[i] !== "") {
+						const v = parseFloat(p[i]);
+						if (!isNaN(v)) {
+							nums.push(v);
+						}
+					}
+				}
+
+				if (upper === "M") {
+					for (let i = 0; i + 1 < nums.length; i += 2) {
+						let x = nums[i], y = nums[i + 1];
+						if (!absolute) { x += curX; y += curY; }
+						if (i === 0) {
+							commands.push({type: "moveto", x: x, y: y});
+							startSubX = x; startSubY = y;
+						} else {
+							commands.push({type: "lineto", x: x, y: y});
+						}
+						curX = x; curY = y;
+					}
+					prevType = "M";
+				} else if (upper === "L") {
+					for (let i = 0; i + 1 < nums.length; i += 2) {
+						let x = nums[i], y = nums[i + 1];
+						if (!absolute) { x += curX; y += curY; }
+						commands.push({type: "lineto", x: x, y: y});
+						curX = x; curY = y;
+					}
+					prevType = "L";
+				} else if (upper === "H") {
+					for (let i = 0; i < nums.length; ++i) {
+						let x = nums[i];
+						if (!absolute) { x += curX; }
+						commands.push({type: "lineto", x: x, y: curY});
+						curX = x;
+					}
+					prevType = "H";
+				} else if (upper === "V") {
+					for (let i = 0; i < nums.length; ++i) {
+						let y = nums[i];
+						if (!absolute) { y += curY; }
+						commands.push({type: "lineto", x: curX, y: y});
+						curY = y;
+					}
+					prevType = "V";
+				} else if (upper === "C") {
+					for (let i = 0; i + 5 < nums.length; i += 6) {
+						let x1 = nums[i], y1 = nums[i + 1], x2 = nums[i + 2], y2 = nums[i + 3], x = nums[i + 4], y = nums[i + 5];
+						if (!absolute) { x1 += curX; y1 += curY; x2 += curX; y2 += curY; x += curX; y += curY; }
+						commands.push({type: "cubicBezier", x1: x1, y1: y1, x2: x2, y2: y2, x: x, y: y});
+						prevC2X = x2; prevC2Y = y2;
+						curX = x; curY = y;
+					}
+					prevType = "C";
+				} else if (upper === "S") {
+					for (let i = 0; i + 3 < nums.length; i += 4) {
+						let x2 = nums[i], y2 = nums[i + 1], x = nums[i + 2], y = nums[i + 3];
+						if (!absolute) { x2 += curX; y2 += curY; x += curX; y += curY; }
+						let x1 = curX, y1 = curY;
+						if (prevType === "C" || prevType === "S") {
+							x1 = 2 * curX - prevC2X;
+							y1 = 2 * curY - prevC2Y;
+						}
+						commands.push({type: "cubicBezier", x1: x1, y1: y1, x2: x2, y2: y2, x: x, y: y});
+						prevC2X = x2; prevC2Y = y2;
+						curX = x; curY = y;
+						prevType = "S";
+					}
+					prevType = "S";
+				} else if (upper === "Q") {
+					for (let i = 0; i + 3 < nums.length; i += 4) {
+						let x1 = nums[i], y1 = nums[i + 1], x = nums[i + 2], y = nums[i + 3];
+						if (!absolute) { x1 += curX; y1 += curY; x += curX; y += curY; }
+						commands.push({type: "quadraticBezier", x1: x1, y1: y1, x2: x, y2: y});
+						prevQX = x1; prevQY = y1;
+						curX = x; curY = y;
+					}
+					prevType = "Q";
+				} else if (upper === "T") {
+					for (let i = 0; i + 1 < nums.length; i += 2) {
+						let x = nums[i], y = nums[i + 1];
+						if (!absolute) { x += curX; y += curY; }
+						let x1 = curX, y1 = curY;
+						if (prevType === "Q" || prevType === "T") {
+							x1 = 2 * curX - prevQX;
+							y1 = 2 * curY - prevQY;
+						}
+						commands.push({type: "quadraticBezier", x1: x1, y1: y1, x2: x, y2: y});
+						prevQX = x1; prevQY = y1;
+						curX = x; curY = y;
+						prevType = "T";
+					}
+					prevType = "T";
+				} else if (upper === "A") {
+					for (let i = 0; i + 6 < nums.length; i += 7) {
+						const rx = nums[i], ry = nums[i + 1], rot = nums[i + 2];
+						const largeArc = nums[i + 3] ? 1 : 0, sweep = nums[i + 4] ? 1 : 0;
+						let x = nums[i + 5], y = nums[i + 6];
+						if (!absolute) { x += curX; y += curY; }
+						const arcCmds = svgArcToCubics(curX, curY, x, y, rx, ry, rot, largeArc, sweep);
+						for (let j = 0; j < arcCmds.length; ++j) {
+							commands.push(arcCmds[j]);
+						}
+						curX = x; curY = y;
+					}
+					prevType = "A";
+				} else if (upper === "Z") {
+					commands.push({type: "closepath"});
+					curX = startSubX; curY = startSubY;
+					prevType = "Z";
+				}
+			}
+			return commands;
+		}
+
+		function svgRectToPath(el) {
+			const x = parseFloat(el.getAttribute("x")) || 0;
+			const y = parseFloat(el.getAttribute("y")) || 0;
+			const w = parseFloat(el.getAttribute("width")) || 0;
+			const h = parseFloat(el.getAttribute("height")) || 0;
+			return "M " + x + " " + y + " L " + (x + w) + " " + y + " L " + (x + w) + " " + (y + h) + " L " + x + " " + (y + h) + " Z";
+		}
+
+		function svgCircleToPath(el) {
+			const cx = parseFloat(el.getAttribute("cx")) || 0;
+			const cy = parseFloat(el.getAttribute("cy")) || 0;
+			const r = parseFloat(el.getAttribute("r")) || 0;
+			return "M " + (cx - r) + " " + cy + " a " + r + " " + r + " 0 1 0 " + (r * 2) + " 0 a " + r + " " + r + " 0 1 0 " + (-r * 2) + " 0 Z";
+		}
+
+		function svgEllipseToPath(el) {
+			const cx = parseFloat(el.getAttribute("cx")) || 0;
+			const cy = parseFloat(el.getAttribute("cy")) || 0;
+			const rx = parseFloat(el.getAttribute("rx")) || 0;
+			const ry = parseFloat(el.getAttribute("ry")) || 0;
+			return "M " + (cx - rx) + " " + cy + " a " + rx + " " + ry + " 0 1 0 " + (rx * 2) + " 0 a " + rx + " " + ry + " 0 1 0 " + (-rx * 2) + " 0 Z";
+		}
+
+		function svgPointsToPath(el, close) {
+			const raw = (el.getAttribute("points") || "").trim();
+			if (!raw) {
+				return "";
+			}
+			const nums = raw.split(/[\s,]+/);
+			let d = "";
+			for (let i = 0; i + 1 < nums.length; i += 2) {
+				d += (i === 0 ? "M " : "L ") + nums[i] + " " + nums[i + 1] + " ";
+			}
+			return close ? d + "Z" : d;
+		}
+
+		function getSvgElementStyle(el) {
+			const style = {
+				fill: el.getAttribute("fill"),
+				stroke: el.getAttribute("stroke")
+			};
+			const inline = el.getAttribute("style");
+			if (inline) {
+				const parts = inline.split(";");
+				for (let i = 0; i < parts.length; ++i) {
+					const kv = parts[i].split(":");
+					if (kv.length === 2) {
+						style[kv[0].trim()] = kv[1].trim();
+					}
+				}
+			}
+			return style;
+		}
+
+		function parseSvgColor(value) {
+			if (!value) {
+				return null;
+			}
+			value = ("" + value).trim().toLowerCase();
+			if (value === "none" || value === "transparent") {
+				return false;
+			}
+			if (value === "currentcolor") {
+				return [0, 0, 0];
+			}
+			if (value.charAt(0) === "#") {
+				let hex = value.substring(1);
+				if (hex.length === 3) {
+					hex = hex.charAt(0) + hex.charAt(0) + hex.charAt(1) + hex.charAt(1) + hex.charAt(2) + hex.charAt(2);
+				}
+				if (hex.length >= 6) {
+					const r = parseInt(hex.substring(0, 2), 16);
+					const g = parseInt(hex.substring(2, 4), 16);
+					const b = parseInt(hex.substring(4, 6), 16);
+					if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+						return [r, g, b];
+					}
+				}
+				return null;
+			}
+			if (value.indexOf("rgb") === 0) {
+				const m = value.match(/[\d.]+/g);
+				if (m && m.length >= 3) {
+					return [Math.round(parseFloat(m[0])), Math.round(parseFloat(m[1])), Math.round(parseFloat(m[2]))];
+				}
+				return null;
+			}
+			if (svgNamedColors[value]) {
+				return svgNamedColors[value];
+			}
+			return null;
+		}
+
+		function parseSvgString(svgString) {
+			if (typeof DOMParser === "undefined") {
+				return null;
+			}
+			const doc = new DOMParser().parseFromString(svgString, "image/svg+xml");
+			const svg = doc.querySelector("svg");
+			if (!svg) {
+				return null;
+			}
+			let width = parseFloat(svg.getAttribute("width"));
+			let height = parseFloat(svg.getAttribute("height"));
+			const viewBox = svg.getAttribute("viewBox");
+			if (viewBox) {
+				const vb = viewBox.split(/[\s,]+/);
+				if (vb.length >= 4) {
+					width = parseFloat(vb[2]);
+					height = parseFloat(vb[3]);
+				}
+			}
+			if (!(width > 0) || !(height > 0)) {
+				return null;
+			}
+
+			const elements = [];
+			function pushPath(node, d) {
+				const commands = parseSvgPathData(d);
+				if (commands.length > 0) {
+					elements.push({commands: commands, style: getSvgElementStyle(node)});
+				}
+			}
+			const all = svg.querySelectorAll("path, rect, circle, ellipse, line, polyline, polygon");
+			for (let i = 0; i < all.length; ++i) {
+				const node = all[i];
+				const tag = node.tagName.toLowerCase();
+				if (tag === "path") {
+					pushPath(node, node.getAttribute("d"));
+				} else if (tag === "rect") {
+					pushPath(node, svgRectToPath(node));
+				} else if (tag === "circle") {
+					pushPath(node, svgCircleToPath(node));
+				} else if (tag === "ellipse") {
+					pushPath(node, svgEllipseToPath(node));
+				} else if (tag === "line") {
+					pushPath(node, "M " + (node.getAttribute("x1") || 0) + " " + (node.getAttribute("y1") || 0) + " L " + (node.getAttribute("x2") || 0) + " " + (node.getAttribute("y2") || 0));
+				} else if (tag === "polyline") {
+					pushPath(node, svgPointsToPath(node, false));
+				} else if (tag === "polygon") {
+					pushPath(node, svgPointsToPath(node, true));
+				}
+			}
+			if (elements.length === 0) {
+				return null;
+			}
+			return {width: width, height: height, elements: elements};
+		}
+
+		function getSvgCommandsBounds(commands) {
+			let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+			let curX = 0, curY = 0, has = false;
+
+			function point(x, y) {
+				if (x < minX) minX = x;
+				if (y < minY) minY = y;
+				if (x > maxX) maxX = x;
+				if (y > maxY) maxY = y;
+				has = true;
+			}
+
+			function addBezierAxis(v0, v1, v2, v3, isX) {
+				const a = -v0 + 3 * v1 - 3 * v2 + v3;
+				const b = 2 * (v0 - 2 * v1 + v2);
+				const c = -v0 + v1;
+				const roots = [];
+				if (Math.abs(a) < 1e-9) {
+					if (Math.abs(b) > 1e-9) {
+						roots.push(-c / b);
+					}
+				} else {
+					const disc = b * b - 4 * a * c;
+					if (disc >= 0) {
+						const sq = Math.sqrt(disc);
+						roots.push((-b + sq) / (2 * a));
+						roots.push((-b - sq) / (2 * a));
+					}
+				}
+				for (let i = 0; i < roots.length; ++i) {
+					const t = roots[i];
+					if (t > 0 && t < 1) {
+						const mt = 1 - t;
+						const val = mt * mt * mt * v0 + 3 * mt * mt * t * v1 + 3 * mt * t * t * v2 + t * t * t * v3;
+						if (isX) {
+							if (val < minX) minX = val;
+							if (val > maxX) maxX = val;
+						} else {
+							if (val < minY) minY = val;
+							if (val > maxY) maxY = val;
+						}
+					}
+				}
+			}
+
+			for (let i = 0; i < commands.length; ++i) {
+				const cmd = commands[i];
+				if (cmd.type === "moveto" || cmd.type === "lineto") {
+					point(cmd.x, cmd.y);
+					curX = cmd.x; curY = cmd.y;
+				} else if (cmd.type === "cubicBezier") {
+					point(curX, curY);
+					point(cmd.x, cmd.y);
+					addBezierAxis(curX, cmd.x1, cmd.x2, cmd.x, true);
+					addBezierAxis(curY, cmd.y1, cmd.y2, cmd.y, false);
+					curX = cmd.x; curY = cmd.y;
+				} else if (cmd.type === "quadraticBezier") {
+					point(curX, curY);
+					point(cmd.x2, cmd.y2);
+					addBezierAxis(curX, (curX + 2 * cmd.x1) / 3, (cmd.x2 + 2 * cmd.x1) / 3, cmd.x2, true);
+					addBezierAxis(curY, (curY + 2 * cmd.y1) / 3, (cmd.y2 + 2 * cmd.y1) / 3, cmd.y2, false);
+					curX = cmd.x2; curY = cmd.y2;
+				}
+			}
+			if (!has) {
+				return null;
+			}
+			return {minX: minX, minY: minY, w: maxX - minX, h: maxY - minY};
+		}
+
+		function buildSvgGeometry(commands, bounds, scaleX, scaleY) {
+			const pathW = Math.max(1, Math.round(bounds.w * scaleX));
+			const pathH = Math.max(1, Math.round(bounds.h * scaleY));
+			const geometry = new AscFormat.Geometry();
+			const path = new AscFormat.Path();
+			path.setStroke(false);
+			path.setFill("norm");
+			path.setExtrusionOk(false);
+			path.setPathW(pathW);
+			path.setPathH(pathH);
+
+			function sx(v) { return Math.round((v - bounds.minX) * scaleX); }
+			function sy(v) { return Math.round((v - bounds.minY) * scaleY); }
+
+			for (let i = 0; i < commands.length; ++i) {
+				const cmd = commands[i];
+				if (cmd.type === "moveto") {
+					path.moveTo(sx(cmd.x), sy(cmd.y));
+				} else if (cmd.type === "lineto") {
+					path.lnTo(sx(cmd.x), sy(cmd.y));
+				} else if (cmd.type === "cubicBezier") {
+					path.cubicBezTo(sx(cmd.x1), sy(cmd.y1), sx(cmd.x2), sy(cmd.y2), sx(cmd.x), sy(cmd.y));
+				} else if (cmd.type === "quadraticBezier") {
+					path.quadBezTo(sx(cmd.x1), sy(cmd.y1), sx(cmd.x2), sy(cmd.y2));
+				} else if (cmd.type === "closepath") {
+					path.close();
+				}
+			}
+			geometry.AddPath(path);
+			return geometry;
+		}
+
+		function createSvgShape(isPdf, isWord, worksheet) {
+			const shape = isPdf ? new AscPDF.CPdfShape() : new AscFormat.CShape();
+			shape.setWordShape(isWord === true);
+			shape.setBDeleted(false);
+			if (worksheet) {
+				shape.setWorksheet(worksheet);
+			}
+			return shape;
+		}
+
+		function createShapesFromSvg(svgString, opts) {
+			const parsed = parseSvgString(svgString);
+			if (!parsed) {
+				return null;
+			}
+			const mmPerSvgX = opts.extX / parsed.width;
+			const mmPerSvgY = opts.extY / parsed.height;
+			const scaleX = mmPerSvgX * SVG_EMU_PER_MM;
+			const scaleY = mmPerSvgY * SVG_EMU_PER_MM;
+
+			const shapes = [];
+			for (let i = 0; i < parsed.elements.length; ++i) {
+				const element = parsed.elements[i];
+				const bounds = getSvgCommandsBounds(element.commands);
+				if (!bounds || !(bounds.w > 0) || !(bounds.h > 0)) {
+					continue;
+				}
+
+				const fillColor = parseSvgColor(element.style.fill !== null ? element.style.fill : "#000000");
+				const strokeColor = parseSvgColor(element.style.stroke);
+
+				const shape = createSvgShape(opts.isPdf, opts.isWord, opts.worksheet);
+				const spPr = new AscFormat.CSpPr();
+				const xfrm = new AscFormat.CXfrm();
+				xfrm.setOffX(opts.x + bounds.minX * mmPerSvgX);
+				xfrm.setOffY(opts.y + bounds.minY * mmPerSvgY);
+				xfrm.setExtX(bounds.w * mmPerSvgX);
+				xfrm.setExtY(bounds.h * mmPerSvgY);
+				spPr.setXfrm(xfrm);
+				xfrm.setParent(spPr);
+
+				if (fillColor) {
+					spPr.setFill(AscFormat.CreateSolidFillRGB(fillColor[0], fillColor[1], fillColor[2]));
+				} else {
+					spPr.setFill(AscFormat.CreateNoFillUniFill());
+				}
+				if (!fillColor && strokeColor) {
+					spPr.setLn(AscFormat.CreateSolidFillLine ? AscFormat.CreateSolidFillLine(strokeColor) : AscFormat.CreateNoFillLine());
+				} else {
+					spPr.setLn(AscFormat.CreateNoFillLine());
+				}
+
+				spPr.setGeometry(buildSvgGeometry(element.commands, bounds, scaleX, scaleY));
+				shape.setSpPr(spPr);
+				spPr.setParent(shape);
+				shapes.push(shape);
+			}
+			return shapes.length > 0 ? shapes : null;
+		}
+
+		function isSvgImage(rasterImageId) {
+			if (typeof rasterImageId !== "string" || rasterImageId.length === 0) {
+				return false;
+			}
+			if (rasterImageId.indexOf("data:image/svg") === 0) {
+				return true;
+			}
+			if (AscCommon.GetFileExtension(rasterImageId) === "svg") {
+				return true;
+			}
+			const local = AscCommon.g_oDocumentUrls.getImageLocal(rasterImageId);
+			return !!(local && AscCommon.GetFileExtension(local) === "svg");
+		}
+
+		function decodeSvgDataUri(uri) {
+			const comma = uri.indexOf(",");
+			if (comma === -1) {
+				return null;
+			}
+			const meta = uri.substring(0, comma);
+			const data = uri.substring(comma + 1);
+			try {
+				if (meta.indexOf("base64") !== -1) {
+					return decodeURIComponent(escape(window.atob(data)));
+				}
+				return decodeURIComponent(data);
+			} catch (e) {
+				return null;
+			}
+		}
+
+		function loadSvgText(rasterImageId, callback) {
+			if (rasterImageId.indexOf("data:") === 0) {
+				callback(decodeSvgDataUri(rasterImageId));
+				return;
+			}
+			try {
+				const xhr = new XMLHttpRequest();
+				xhr.open("GET", AscCommon.getFullImageSrc2(rasterImageId), true);
+				xhr.responseType = "arraybuffer";
+				xhr.onload = function () {
+					if ((xhr.status === 200 || xhr.status === 0) && xhr.response) {
+						const bytes = new Uint8Array(xhr.response);
+						callback(AscCommon.UTF8ArrayToString(bytes, 0, bytes.length));
+					} else {
+						callback(null);
+					}
+				};
+				xhr.onerror = function () {
+					callback(null);
+				};
+				xhr.send(null);
+			} catch (e) {
+				callback(null);
+			}
+		}
+
 		function DrawingObjectsController(drawingObjects) {
 			this.drawingObjects = drawingObjects;
 
@@ -7062,6 +7651,66 @@
 					return group;
 				},
 
+				convertImageToShapes: function (image) {
+					if (!image || !image.blipFill || !isSvgImage(image.blipFill.RasterImageId)) {
+						return false;
+					}
+					const controller = this;
+					loadSvgText(image.blipFill.RasterImageId, function (svgText) {
+						if (svgText) {
+							controller.private_ApplySvgToShapes(image, svgText);
+						}
+					});
+					return true;
+				},
+
+				private_ApplySvgToShapes: function (image, svgText) {
+					if (image.bDeleted) {
+						return;
+					}
+					const controller = this;
+					const api = Asc.editor;
+					const isPdf = api.isPdfEditor();
+					const isWord = !isPdf && api.getEditorId() === AscCommon.c_oEditorId.Word;
+					this.checkSelectedObjectsAndCallback(function () {
+						const drawingObjects = controller.drawingObjects;
+						const opts = {
+							x: image.x,
+							y: image.y,
+							extX: image.extX,
+							extY: image.extY,
+							isWord: isWord,
+							isPdf: isPdf,
+							worksheet: drawingObjects.getWorksheetModel ? drawingObjects.getWorksheetModel() : null
+						};
+						const shapes = createShapesFromSvg(svgText, opts);
+						if (shapes && shapes.length > 0) {
+							controller.private_InsertShapesFromSvg(image, shapes);
+						}
+					}, [], false, AscDFH.historydescription_CommonControllerConvertSvgToShapes, [image]);
+				},
+
+				private_InsertShapesFromSvg: function (image, shapes) {
+					const drawingObjects = this.drawingObjects;
+					const worksheet = drawingObjects.getWorksheetModel ? drawingObjects.getWorksheetModel() : null;
+					this.resetSelection();
+					image.deleteDrawingBase();
+					image.setBDeleted(true);
+					for (let i = 0; i < shapes.length; ++i) {
+						const shape = shapes[i];
+						if (worksheet) {
+							shape.setWorksheet(worksheet);
+							shape.setDrawingObjects(drawingObjects);
+							shape.addToDrawingObjects(undefined, AscCommon.c_oAscCellAnchorType.cellanchorOneCell);
+						} else {
+							shape.setParent(drawingObjects);
+							shape.addToDrawingObjects();
+						}
+						shape.checkDrawingBaseCoords();
+						this.selectObject(shape, 0);
+					}
+				},
+
 				unGroup: function () {
 					if (this.checkSelectedObjectsProtection()) {
 						return;
@@ -8451,6 +9100,17 @@
 
 				getDrawingProps: function () {
 					return this.getDrawingPropsFromArray(this.getSelectedArray());
+				},
+
+				getSingleSelectedSvgImage: function () {
+					if (this.selectedObjects.length !== 1) {
+						return null;
+					}
+					const drawing = this.selectedObjects[0];
+					if (drawing && drawing.blipFill && isSvgImage(drawing.blipFill.RasterImageId)) {
+						return drawing;
+					}
+					return null;
 				},
 
 				getDrawingsPasteShift: function (aDrawings) {

@@ -48,6 +48,18 @@
 	CGraphicObjects.prototype.createShape = function() {
 		return new AscPDF.CPdfShape();
 	};
+	CGraphicObjects.prototype.private_InsertShapesFromSvg = function(image, shapes) {
+		let doc = this.document;
+		let pageIndex = image.GetPage();
+		this.resetSelection();
+		image.deleteDrawingBase();
+		for (let i = 0; i < shapes.length; ++i) {
+			let shape = shapes[i];
+			doc.AddDrawing(shape, pageIndex);
+			shape.SetNeedRecalc(true);
+			this.selectObject(shape, pageIndex);
+		}
+	};
     CGraphicObjects.prototype.updateSelectionState = function(bNoCheck) {
         let text_object, drawingDocument = this.drawingDocument;
         if (this.selection.textSelection) {

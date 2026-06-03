@@ -70,6 +70,9 @@
 			case AscDFH.historydescription_CommonControllerSetGraphicObject            :
 				sString = "CommonControllerSetGraphicObject";
 				break;
+			case AscDFH.historydescription_CommonControllerConvertSvgToShapes          :
+				sString = "CommonControllerConvertSvgToShapes";
+				break;
 			case AscDFH.historydescription_CommonStatesAddNewShape                     :
 				sString = "CommonStatesAddNewShape";
 				break;
@@ -4830,6 +4833,7 @@
 	window['AscDFH'].historydescription_Document_InsertHorizontalRule               = 0x01fe;
 	window['AscDFH'].historydescription_Document_SetParagraphHtml                   = 0x01ff;
 	window['AscDFH'].historydescription_Document_SetHorizontalRuleProps             = 0x0200;
+	window['AscDFH'].historydescription_CommonControllerConvertSvgToShapes          = 0x0201;
 
 	// pdf
 	window['AscDFH'].historydescription_Pdf_AddAnnot			= 0x29a;

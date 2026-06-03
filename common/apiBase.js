@@ -2958,6 +2958,21 @@
 
 	baseEditorsApi.prototype.getGraphicController = function() {};
 
+	baseEditorsApi.prototype.asc_canConvertImageToShapes = function()
+	{
+		var controller = this.getGraphicController();
+		return !!(controller && controller.getSingleSelectedSvgImage());
+	};
+	baseEditorsApi.prototype.asc_convertImageToShapes = function()
+	{
+		var controller = this.getGraphicController();
+		if (!controller)
+			return;
+		var image = controller.getSingleSelectedSvgImage();
+		if (image)
+			controller.convertImageToShapes(image);
+	};
+
 	baseEditorsApi.prototype.asc_canEditTableOleObject = function(bReturnOle) {
 		var oController = this.getGraphicController();
 		if(oController) {
@@ -6245,6 +6260,9 @@
 	prot["asc_setPutImageToClipboard"] = prot.asc_setPutImageToClipboard;
 
 	prot["asc_mergeSelectedShapes"] = prot.asc_mergeSelectedShapes;
+
+	prot["asc_canConvertImageToShapes"] = prot.asc_canConvertImageToShapes;
+	prot["asc_convertImageToShapes"] = prot.asc_convertImageToShapes;
 
 	prot["asc_SetRTLInterface"] = prot.asc_SetRTLInterface;
 
