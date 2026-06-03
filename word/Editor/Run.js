@@ -2264,12 +2264,6 @@ ParaRun.prototype.Get_ParaPosByContentPos = function(ContentPos, Depth)
 
 ParaRun.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
 {
-	if (this.IsMathRun())
-	{
-		positionCalculator.handleMathRun(this, isCurrent, this.State.ContentPos);
-		return;
-	}
-	
 	let rangePos = this.getRangePos(positionCalculator.line, positionCalculator.range);
 	let startPos = rangePos[0];
 	let endPos   = rangePos[1];
@@ -4437,7 +4431,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     }
                     else if (!Item.IsSkipOnRecalculate())
                     {
-                        // Основная обработка происходит в Recalculate_Range_Spaces. Здесь обрабатывается единственный случай,
+                        // Основная обработка происходит в recalculateRangeAlign. Здесь обрабатывается единственный случай,
                         // когда после второго пересчета с уже добавленной картинкой оказывается, что место в параграфе, где
                         // идет картинка ушло на следующую страницу. В этом случае мы ставим перенос страницы перед картинкой.
 
@@ -5299,10 +5293,10 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
 	}
 };
 
-ParaRun.prototype.Recalculate_Range_Spaces = function(alignState, _CurLine, _CurRange, CurPage)
+ParaRun.prototype.recalculateRangeAlign = function(alignState)
 {
-	var CurLine  = _CurLine - this.StartLine;
-	var CurRange = (0 === CurLine ? _CurRange - this.StartRange : _CurRange);
+	var CurLine  = alignState.CurLine - this.StartLine;
+	var CurRange = (0 === CurLine ? alignState.CurRange - this.StartRange : alignState.CurRange);
 
 	let startPos = this.protected_GetRangeStartPos(CurLine, CurRange);
 	let endPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
@@ -5313,7 +5307,6 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(alignState, _CurLine, _Cur
 		alignState.handleRunElement(item, this);
 	}
 };
-
 ParaRun.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
 {
 	var CurLine  = _CurLine - this.StartLine;
@@ -5968,7 +5961,7 @@ ParaRun.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 //-----------------------------------------------------------------------------------
 // Функции отрисовки
 //-----------------------------------------------------------------------------------
-ParaRun.prototype.Draw_HighLights = function(drawState)
+ParaRun.prototype.drawHighLights = function(drawState)
 {
 	let rangePos = this.getRangePos(drawState.Line, drawState.Range);
 	let startPos = rangePos[0];
@@ -6018,7 +6011,7 @@ ParaRun.prototype.Draw_Elements = function(drawState)
 		drawState.handleRunElement(item, this);
 	}
 };
-ParaRun.prototype.Draw_Lines = function(lineDrawState)
+ParaRun.prototype.drawLines = function(lineDrawState)
 {
 	let rangePos = this.getRangePos(lineDrawState.Line, lineDrawState.Range);
 	let startPos = rangePos[0];
@@ -6991,9 +6984,9 @@ ParaRun.prototype.SelectAll = function(nDirection)
 	}
 };
 
-ParaRun.prototype.drawSelectionInRange = function(line, range, drawSelectionState)
+ParaRun.prototype.drawSelectionInRange = function(drawSelectionState)
 {
-	let rangeInfo  = this.getRangePos(line, range);
+	let rangeInfo  = this.getRangePos(drawSelectionState.line, drawSelectionState.range);
 	let rangeStart = rangeInfo[0];
 	let rangeEnd   = rangeInfo[1];
 	if (rangeStart >= rangeEnd)

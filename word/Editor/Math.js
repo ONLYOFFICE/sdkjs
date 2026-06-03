@@ -591,6 +591,10 @@ ParaMath.prototype.IsMath = function()
 {
 	return true;
 };
+ParaMath.prototype.getBidiType = function()
+{
+	return AscBidi.TYPE.L;
+};
 ParaMath.prototype.Copy = function(Selected, oPr)
 {
     var NewMath = new ParaMath();
@@ -2002,23 +2006,9 @@ ParaMath.prototype.UpdateWidthLine = function(PRS, Width)
 			this.private_SetRestartRecalcInfo(PRS);
 	}
 };
-ParaMath.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange, _CurPage)
+ParaMath.prototype.recalculateRangeAlign = function(alignState)
 {
-    // до пересчета Bounds для текущей строки ранее должны быть вызваны Recalculate_Range_Width (для ширины), Recalculate_LineMetrics(для высоты и аскента)
-
-    // для инлайновой формулы не вызывается ф-ия setPosition, поэтому необходимо вызвать здесь
-    // для неилайновой setPosition вызывается на Get_AlignToLine
-    var PosInfo = new CMathPosInfo();
-
-    PosInfo.CurLine  = _CurLine;
-    PosInfo.CurRange = _CurRange;
-
-    var pos   = new CMathPosition();
-    this.Root.setPosition(pos, PosInfo);
-
-    // страиницу для смещния параграфа относительно документа добавим на Get_Bounds, т.к. если формула находится в автофигуре, то для нее не прийдет Recalculate_Range_Spaces при перемещении автофигуры а другую страницу
-    this.Root.UpdateBoundsPosInfo(PRSA, _CurLine, _CurRange, _CurPage);
-    this.Root.Recalculate_Range_Spaces(PRSA, _CurLine, _CurRange, _CurPage);
+	alignState.handleParaMath(this);
 };
 ParaMath.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
 {
@@ -2537,86 +2527,21 @@ ParaMath.prototype.Get_Default_TPrp = function()
 //-----------------------------------------------------------------------------------
 // Функции отрисовки
 //-----------------------------------------------------------------------------------
-ParaMath.prototype.Draw_HighLights = function(drawState)
+ParaMath.prototype.drawHighLights = function(drawState)
 {
 	drawState.handleParaMath(this);
 };
-ParaMath.prototype.Draw_Elements = function(PDSE)
+ParaMath.prototype.Draw_Elements = function(drawState)
 {
-    /*PDSE.Graphics.p_color(255,0,0, 255);
-     PDSE.Graphics.drawHorLine(0, PDSE.Y - this.Ascent, PDSE.X - 30, PDSE.X + this.Width + 30 , 1);*/
-
-    var X = PDSE.X;
-
-    this.Root.Draw_Elements(PDSE);
-
-    PDSE.X = X + this.Root.GetWidth(PDSE.Line, PDSE.Range);
-		if (PDSE.Graphics.m_bIsTextDrawer) {
-			PDSE.Graphics.CheckSpaceDraw(null, true);
-		}
-    /*PDSE.Graphics.p_color(255,0,0, 255);
-     PDSE.Graphics.drawHorLine(0, PDSE.Y - this.Ascent + this.Height, PDSE.X - 30, PDSE.X + this.Width + 30 , 1);*/
+	drawState.handleParaMath(this);
 };
 ParaMath.prototype.GetLinePosition = function(Line, Range)
 {
     return this.Root.GetPos(Line, Range);
 };
-ParaMath.prototype.Draw_Lines = function(PDSL)
+ParaMath.prototype.drawLines = function(drawState)
 {
-    if(false == this.Root.IsEmptyRange(PDSL.Line, PDSL.Range))
-    {
-        // Underline всей формулы
-        var FirstRPrp = this.GetFirstRPrp();
-
-        var Para = PDSL.Paragraph;
-
-        var aUnderline  = PDSL.Underline;
-
-        var X          = PDSL.X;
-        var Y          = PDSL.Baseline;
-        var UndOff     = PDSL.UnderlineOffset;
-        var UnderlineY = Y + UndOff;
-        var LineW      = (FirstRPrp.FontSize / 18) * g_dKoef_pt_to_mm;
-
-
-        var BgColor = PDSL.BgColor;
-        if ( undefined !== FirstRPrp.Shd && Asc.c_oAscShdNil !== FirstRPrp.Shd.Value )
-            BgColor = FirstRPrp.Shd.Get_Color( Para );
-        var AutoColor = ( undefined != BgColor && false === BgColor.Check_BlackAutoColor() ? new CDocumentColor( 255, 255, 255, false ) : new CDocumentColor( 0, 0, 0, false ) );
-        var CurColor, RGBA, Theme = this.Paragraph.Get_Theme(), ColorMap = this.Paragraph.Get_ColorMap();
-
-        // Выставляем цвет обводки
-        if ( true === PDSL.VisitedHyperlink && ( undefined === FirstRPrp.Color && undefined === FirstRPrp.Unifill ) )
-            CurColor = new CDocumentColor( 128, 0, 151 );
-        else if ( true === FirstRPrp.Color.Auto && !FirstRPrp.Unifill)
-            CurColor = new CDocumentColor( AutoColor.r, AutoColor.g, AutoColor.b );
-        else
-        {
-            if(FirstRPrp.Unifill)
-            {
-                FirstRPrp.Unifill.check(Theme, ColorMap);
-                RGBA = FirstRPrp.Unifill.getRGBAColor();
-                CurColor = new CDocumentColor( RGBA.R, RGBA.G, RGBA.B );
-            }
-            else
-            {
-                CurColor = new CDocumentColor( FirstRPrp.Color.r, FirstRPrp.Color.g, FirstRPrp.Color.b );
-            }
-        }
-
-        var Bound = this.Root.Get_LineBound(PDSL.Line, PDSL.Range),
-            Width = Bound.W;
-
-        if ( true === FirstRPrp.Underline ) {
-					aUnderline.set(UnderlineY, LineW);
-	        aUnderline.Add(X, X + Width, CurColor);
-        }
-
-
-        this.Root.Draw_Lines(PDSL);
-
-        PDSL.X = Bound.X + Width;
-    }
+	drawState.handleParaMath(this);
 };
 
 //-----------------------------------------------------------------------------------
@@ -2788,9 +2713,9 @@ ParaMath.prototype.SelectAll = function(Direction)
     this.Root.SelectAll(Direction);
 };
 
-ParaMath.prototype.drawSelectionInRange = function(line, range, drawState)
+ParaMath.prototype.drawSelectionInRange = function(drawState)
 {
-    this.Root.drawSelectionInRange(line, range, drawState);
+	drawState.handleParaMath(this);
 };
 
 ParaMath.prototype.IsSelectionEmpty = function(CheckEnd)

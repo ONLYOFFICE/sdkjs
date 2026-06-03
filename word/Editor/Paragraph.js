@@ -1728,7 +1728,7 @@ Paragraph.prototype.Internal_Recalculate_CurPos = function(updateCurPos, updateT
 	
 	let startPos = this.Lines[CurLine].Ranges[CurRange].StartPos;
 	let endPos   = this.Lines[CurLine].Ranges[CurRange].EndPos;
-	
+
 	let positionCalculator = new AscWord.ParagraphPositionCalculator(this);
 	positionCalculator.reset(CurPage, CurLine, CurRange);
 	for (let pos = startPos; pos <= endPos; ++pos)
@@ -1736,7 +1736,7 @@ Paragraph.prototype.Internal_Recalculate_CurPos = function(updateCurPos, updateT
 		let item = this.Content[pos];
 		item.recalculateCursorPosition(positionCalculator, pos === this.CurPos.ContentPos);
 	}
-	
+
 	let point  = positionCalculator.getXY();
 	result.X = point.x;
 	result.Y = point.y;
@@ -2366,7 +2366,7 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 	// Рисуем подсветку Fixed форм. Рисуем отдельно, т.к. заливка делается для внешней формы
 	//------------------------------------------------------------------------------------------------------------------
 
-	// TODO: Сейчас здесь используется функция Draw_HighLights, хотя нам нужно пробежаться и найти все fixed form
+	// TODO: Сейчас здесь используется функция drawHighLights, хотя нам нужно пробежаться и найти все fixed form
 	let fixedForms = [];
 	PDSH.SetCollectFixedForms(true);
 	for (let curLine = StartLine; curLine <= EndLine; ++curLine)
@@ -2389,7 +2389,7 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 
 			for (let contentPos = range.StartPos; contentPos <= range.EndPos; ++contentPos)
 			{
-				this.Content[contentPos].Draw_HighLights(PDSH);
+				this.Content[contentPos].drawHighLights(PDSH);
 			}
 		
 			PDSH.endRange();
@@ -2502,7 +2502,7 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 			for (var Pos = StartPos; Pos <= EndPos; Pos++)
 			{
 				var Item = this.Content[Pos];
-				Item.Draw_HighLights(PDSH);
+				Item.drawHighLights(PDSH);
 			}
 			PDSH.endRange();
 
@@ -3191,18 +3191,13 @@ Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState
 			
 			var StartPos = Range.StartPos;
 			var EndPos   = Range.EndPos;
-
-			// TODO: Нумерация подчеркивается и зачеркивается в Draw_Elements, неплохо бы сюда перенести
-			if (this.Numbering.checkRange(CurRange, CurLine) && !this.isRtlDirection())
-				PDSL.X += this.Numbering.WidthVisible;
-
 			for (var Pos = StartPos; Pos <= EndPos; Pos++)
 			{
 				PDSL.CurPos.Update(Pos, 0);
 				PDSL.CurDepth = 1;
 
 				var Item = this.Content[Pos];
-				Item.Draw_Lines(PDSL);
+				Item.drawLines(PDSL);
 			}
 			
 			PDSL.endRange();
@@ -8897,7 +8892,7 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 					
 					for (let pos = rangeStart; pos <= rangeEnd; ++pos)
 					{
-						this.Content[pos].drawSelectionInRange(iLine, iRange, drawSelectionState);
+						this.Content[pos].drawSelectionInRange(drawSelectionState);
 					}
 					
 					drawSelectionState.endRange();
@@ -8987,21 +8982,21 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 			if (this.isRtlDirection())
 			{
 				let xEnd = this.Lines[CurLine].Ranges[CurRange].XEndVisible;
-				SelectX = xEnd - ParaNum.WidthVisible;
+				SelectX = xEnd;
 				if (AscCommon.align_Center === numJc)
 				{
 					SelectW  = ParaNum.WidthVisible + ParaNum.WidthNum / 2;
-					SelectX2 = xEnd - ParaNum.WidthNum / 2;
+					SelectX2 = xEnd + ParaNum.WidthVisible - ParaNum.WidthNum / 2;
 				}
 				else if (AscCommon.align_Right === numJc)
 				{
 					SelectW  = ParaNum.WidthVisible + ParaNum.WidthNum;
-					SelectX2 = xEnd;
+					SelectX2 = xEnd + ParaNum.WidthVisible;
 				}
 				else // if (AscCommon.align_Left === numJc)
 				{
 					SelectW  = ParaNum.WidthVisible;
-					SelectX2 = xEnd - ParaNum.WidthNum;
+					SelectX2 = xEnd + ParaNum.WidthVisible - ParaNum.WidthNum;
 				}
 			}
 			else
@@ -9366,7 +9361,7 @@ Paragraph.prototype.GetSelectionBounds = function()
 				for (var CurPos = rangeStart; CurPos <= rangeEnd; CurPos++)
 				{
 					var Item = this.Content[CurPos];
-					Item.drawSelectionInRange(iLine, iRange, drawSelectionState);
+					Item.drawSelectionInRange(drawSelectionState);
 				}
 				drawSelectionState.endRange();
 				
@@ -9513,7 +9508,7 @@ Paragraph.prototype.GetSelectionAnchorPos = function()
 				for (var CurPos = RStartPos; CurPos <= REndPos; CurPos++)
 				{
 					var Item = this.Content[CurPos];
-					Item.drawSelectionInRange(iLine, iRange, drawSelectionState);
+					Item.drawSelectionInRange(drawSelectionState);
 				}
 				drawSelectionState.endRange();
 				

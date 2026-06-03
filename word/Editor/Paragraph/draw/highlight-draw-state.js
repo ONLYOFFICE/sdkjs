@@ -54,6 +54,7 @@
 	 */
 	function ParagraphHighlightDrawState(drawState)
 	{
+		AscWord.ParagraphBidiFlow.call(this);
 		this.drawState = drawState;
 		
 		this.Page   = 0;
@@ -81,7 +82,7 @@
 		this.haveCurrentComment = false;
 		this.currentCommentId   = null;
 		this.comments           = []; // current list of comments
-		this.permRanges         = {};
+		this.permRanges         = [];
 		
 		this.hyperlinks = [];
 		
@@ -101,8 +102,6 @@
 		
 		this.complexFields = new AscWord.ParagraphComplexFieldStack();
 		
-		this.bidiFlow = new AscWord.BidiFlow(this);
-		
 		this.run       = null;
 		this.highlight = highlight_None;
 		this.shdColor  = null;
@@ -111,6 +110,9 @@
 		
 		this.permColor = null;
 	}
+	ParagraphHighlightDrawState.prototype = Object.create(AscWord.ParagraphBidiFlow.prototype);
+	ParagraphHighlightDrawState.prototype.constructor = ParagraphHighlightDrawState;
+
 	ParagraphHighlightDrawState.prototype.init = function(paragraph, graphics)
 	{
 		this.Paragraph = paragraph;
@@ -278,17 +280,28 @@
 		
 		let flags = this.getFlags(element, !!collaborationColor);
 		let hyperlink = this.getHyperlinkObject();
-		this.bidiFlow.add([element, run, flags, hyperlink, collaborationColor, this.comments.slice(), this.haveCurrentComment], element.getBidiType());
+		this.bidiFlow.add([para_RunBase, element, run, flags, hyperlink, collaborationColor, this.comments.slice(), this.haveCurrentComment], element.getBidiType());
 	};
-	ParagraphHighlightDrawState.prototype.handleBidiFlow = function(data)
+	ParagraphHighlightDrawState.prototype.handleParaMath = function(math)
 	{
-		let element    = data[0];
-		let run        = data[1];
-		let flags      = data[2];
-		let hyperlink  = data[3];
-		let collColor  = data[4];
-		let comments   = data[5];
-		let curComment = data[6];
+		if (!math || math.Root.IsEmptyRange(this.Line, this.Range))
+			return;
+		
+		this.bidiFlow.add([para_Math, math], math.getBidiType());
+	};
+	ParagraphHighlightDrawState.prototype.handleMathBase = function(mathBase)
+	{
+		this.bidiFlow.add([para_Math_Composition, mathBase], mathBase.getBidiType());
+	};
+	ParagraphHighlightDrawState.prototype.handleBidiFlowRunElement = function(data, direction)
+	{
+		let element    = data[1];
+		let run        = data[2];
+		let flags      = data[3];
+		let hyperlink  = data[4];
+		let collColor  = data[5];
+		let comments   = data[6];
+		let curComment = data[7];
 		let highlightAdditional;
 		
 		let w = element.GetWidthVisible();
@@ -302,12 +315,9 @@
 		
 		this.X += w;
 	};
-	ParagraphHighlightDrawState.prototype.handleParaMath = function(math)
+	ParagraphHighlightDrawState.prototype.handleBidiFlowParaMath = function(data, direction)
 	{
-		if (!math || math.Root.IsEmptyRange(this.Line, this.Range))
-			return;
-		
-		this.bidiFlow.end();
+		let math = data[1];
 		
 		let y0 = this.Y0;
 		let y1 = this.Y1;
@@ -318,7 +328,7 @@
 		this.Coll = new CParaDrawingRangeLines();
 		this.Comm = new CParaDrawingRangeLines();
 		
-		math.Root.Draw_HighLights(this);
+		math.Root.drawHighLights(this);
 		
 		let mathComments = this.Comm.getNext();
 		if (mathComments)
@@ -341,9 +351,9 @@
 		this.Y0 = y0;
 		this.Y1 = y1;
 	};
-	ParagraphHighlightDrawState.prototype.handleMathBase = function(element)
+	ParagraphHighlightDrawState.prototype.handleBidiFlowMathBase = function(data, direction)
 	{
-		this.bidiFlow.end();
+		let element = data[1];
 		
 		let textPr = element.Get_CompiledCtrPrp();
 		
@@ -367,7 +377,7 @@
 		
 		for (let pos = startPos; pos <= endPos; ++pos)
 		{
-			element.Content[pos].Draw_HighLights(this);
+			element.Content[pos].drawHighLights(this);
 		}
 		
 		// Add after because we are rendering in reverse direction

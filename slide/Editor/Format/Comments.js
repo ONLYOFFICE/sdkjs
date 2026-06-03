@@ -213,7 +213,7 @@ function (window, undefined) {
 	ParaComment.prototype.Recalculate_Range_Width = function (PRSC, _CurLine, _CurRange) {
 	};
 
-	ParaComment.prototype.Recalculate_Range_Spaces = function (PRSA, CurLine, CurRange, CurPage) {
+	ParaComment.prototype.recalculateRangeAlign = function (alignState) {
 	};
 
 	ParaComment.prototype.Recalculate_PageEndInfo = function (PRSI, _CurLine, _CurRange) {
@@ -262,13 +262,13 @@ function (window, undefined) {
 //-----------------------------------------------------------------------------------
 // Drawing functions
 //-----------------------------------------------------------------------------------
-	ParaComment.prototype.Draw_HighLights = function (PDSH) {
+	ParaComment.prototype.drawHighLights = function (highLightState) {
 	};
 
 	ParaComment.prototype.Draw_Elements = function (PDSE) {
 	};
 
-	ParaComment.prototype.Draw_Lines = function (PDSL) {
+	ParaComment.prototype.drawLines = function (drawState) {
 	};
 //-----------------------------------------------------------------------------------
 // Functions for working with cursor
@@ -374,7 +374,7 @@ function (window, undefined) {
 	ParaComment.prototype.SelectAll = function (Direction) {
 	};
 
-	ParaComment.prototype.drawSelectionInRange = function (line, range, drawState) {
+	ParaComment.prototype.drawSelectionInRange = function (drawState) {
 	};
 
 	ParaComment.prototype.IsSelectionEmpty = function (CheckEnd) {

@@ -46,19 +46,18 @@
 	 */
 	function ParagraphPositionCalculator(paragraph)
 	{
-		this.paragraph = paragraph
-		
-		this.page = 0;
-		this.line = 0;
+		AscWord.ParagraphBidiFlow.call(this);
+		this.paragraph = paragraph;
+
+		this.page  = 0;
+		this.line  = 0;
 		this.range = 0;
-		
+
 		this.x = 0;
 		this.y = 0;
-		
+
 		this.startX = 0;
-		
-		this.bidi = new AscWord.BidiFlow(this);
-		
+
 		this.isNextCurrent = false;
 		this.nextRun       = null;
 		this.stop          = false;
@@ -84,6 +83,8 @@
 		
 		this.complexFields = new AscWord.ParagraphComplexFieldStack();
 	}
+	ParagraphPositionCalculator.prototype = Object.create(AscWord.ParagraphBidiFlow.prototype);
+	ParagraphPositionCalculator.prototype.constructor = ParagraphPositionCalculator;
 	ParagraphPositionCalculator.prototype.reset = function(page, line, range)
 	{
 		this.prev.element = null;
@@ -107,8 +108,8 @@
 		if (p.Numbering.checkRange(range, line) && !p.isRtlDirection())
 			this.x += p.Numbering.WidthVisible;
 		
-		this.bidi.begin(this.paragraph.isRtlDirection());
-		
+		this.bidiFlow.begin(this.paragraph.isRtlDirection());
+
 		this.complexFields.resetRange(this.paragraph, this.line, this.range);
 	};
 	ParagraphPositionCalculator.prototype.setNextCurrent = function(run, lastCombItem)
@@ -118,7 +119,7 @@
 		
 		if (lastCombItem && lastCombItem.RGap)
 		{
-			this.bidi.end();
+			this.bidiFlow.end();
 			
 			this.posInfo.x = this.x;
 			this.posInfo.y = this.y;
@@ -167,13 +168,20 @@
 			this.prev.direction = (element.getBidiType() & AscBidi.FLAG.RTL) ? AscBidi.DIRECTION.R : AscBidi.DIRECTION.L;
 		}
 		
-		this.bidi.add([element, run, isCurrent, isNearFootnoteRef], element.getBidiType());
+		this.bidiFlow.add([para_RunBase, element, run, isCurrent, isNearFootnoteRef], element.getBidiType());
 	};
-	ParagraphPositionCalculator.prototype.handleBidiFlow = function(data, direction)
+	ParagraphPositionCalculator.prototype.handleParaMath = function(math, isCurrent)
 	{
-		let element   = data[0];
-		let run       = data[1];
-		let isCurrent = data[2];
+		this.bidiFlow.add([para_Math, math, isCurrent], math.getBidiType());
+	};
+	ParagraphPositionCalculator.prototype.handleBidiFlowRunElement = function(data, direction)
+	{
+		let element   = data[1];
+		let run       = data[2];
+		let isCurrent = data[3];
+		
+		if (run.IsMathRun() && isCurrent)
+			this.handleBidiFlowCurrentMathRun(run);
 		
 		if (element === this.prev.element)
 		{
@@ -221,35 +229,37 @@
 		
 		this.x += w;
 	};
-	ParagraphPositionCalculator.prototype.handleParaMath = function(math, isCurrent)
+	ParagraphPositionCalculator.prototype.handleBidiFlowParaMath = function(data)
 	{
-		this.bidi.end();
-		
+		let math      = data[1];
+		let isCurrent = data[2];
+
 		if (this.isNextCurrent && !this.stop)
 		{
 			this.posInfo.x   = this.x;
 			this.posInfo.y   = this.y;
 			this.posInfo.run = this.nextRun;
-			
+
 			this.isNextCurrent = false;
 			this.nextRun       = null;
 		}
-		
+
 		let mathW = math.Root.GetWidth(this.line, this.range);
 		let x = this.x;
-		
+
 		if (isCurrent)
 			math.Root.recalculateCursorPosition(this, true);
-		
+
 		this.x = x + mathW;
 	};
-	ParagraphPositionCalculator.prototype.handleMathRun = function(run, isCurrentRun, currentPos)
+	ParagraphPositionCalculator.prototype.handleBidiFlowCurrentMathRun = function(run)
 	{
-		this.bidi.end();
-		this.bidi.begin(this.paragraph.isRtlDirection());
-		
-		if (!isCurrentRun)
+		if (this.stop)
 			return;
+		
+		this.stop = true;
+		
+		let currentPos = run.State.ContentPos;
 		
 		let paraMathLocation = run.ParaMath.GetLinePosition(this.line, this.range);
 		
@@ -277,13 +287,12 @@
 			this.y += elementLocation.y;
 		}
 		
-		// TODO: Пометить данное место, как текущее
 		this.posInfo.x     = this.x;
 		this.posInfo.y     = this.y;
 		this.posInfo.mathY = mathY;
 		this.posInfo.run   = run;
 	};
-	ParagraphPositionCalculator.prototype.handleMathElement = function(element)
+	ParagraphPositionCalculator.prototype.handleMathBase = function(element)
 	{
 		let w = element.GetWidth(this.line, this.range);
 		this.x += w;
@@ -381,7 +390,7 @@
 	 */
 	ParagraphPositionCalculator.prototype.finalize = function()
 	{
-		this.bidi.end();
+		this.bidiFlow.end();
 		
 		if (this.isNextCurrent && !this.stop)
 		{
