@@ -607,9 +607,8 @@ CInlineLevelSdt.prototype.Draw_Elements = function(PDSE)
 };
 CInlineLevelSdt.prototype.drawLines = function(drawState)
 {
-	// Не отключаем отрисовку линий для PlaceHolder, т.к. рамка рисуется через данную функцию
-	// отключение остальных отрисовок идет внутри ParaRun.drawLines
-
+	// We don't disable line drawing for PlaceHolder, because the border is drawn through this function
+	// Other drawing is disabled inside ParaRun.drawLines
 	if (this.private_IsAddFormFieldToGraphics(drawState.Graphics))
 		this.SkipDraw(drawState);
 	else

@@ -305,18 +305,17 @@
 	AlignRecalcState.prototype.handleBidiFlowParaMath = function(data, direction)
 	{
 		let paraMath = data[1];
-		// до пересчета Bounds для текущей строки ранее должны быть вызваны Recalculate_Range_Width (для ширины), Recalculate_LineMetrics(для высоты и аскента)
+		
+		// for inline equation setPosition wasn't called, so we need to call it here
+		// for not-inline setPosition must be called on Get_AlignToLine
+		let posInfo = new CMathPosInfo();
 
-		// для инлайновой формулы не вызывается ф-ия setPosition, поэтому необходимо вызвать здесь
-		// для неилайновой setPosition вызывается на Get_AlignToLine
-		var PosInfo = new CMathPosInfo();
+		posInfo.CurLine  = this.CurLine;
+		posInfo.CurRange = this.CurRange;
 
-		PosInfo.CurLine  = this.CurLine;
-		PosInfo.CurRange = this.CurRange;
+		paraMath.Root.setPosition(new CMathPosition(), posInfo);
 
-		paraMath.Root.setPosition(new CMathPosition(), PosInfo);
-
-		// страиницу для смещния параграфа относительно документа добавим на Get_Bounds, т.к. если формула находится в автофигуре, то для нее не прийдет recalculateRangeAlign при перемещении автофигуры а другую страницу
+		// update page index here, because if the equation is inside a shape, recalculateRangeAlign  will be called
 		paraMath.Root.UpdateBoundsPosInfo(this, this.CurLine, this.CurRange, this.CurPage);
 		paraMath.Root.recalculateRangeAlign(this);
 	};

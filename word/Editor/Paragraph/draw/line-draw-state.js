@@ -182,7 +182,7 @@
 		
 		let isRtl = this.Paragraph.isRtlDirection();
 		
-		// TODO: Нумерация подчеркивается и зачеркивается в Draw_Elements, неплохо бы сюда перенести
+		// TODO: Numering strikeout and underline are rendering in Draw_Element, we should move it here
 		if (this.Paragraph.Numbering.checkRange(this.Range, this.Line) && !isRtl)
 			this.X += this.Paragraph.Numbering.WidthVisible;
 
@@ -394,11 +394,11 @@
 		let ArgSize		= mathBase.Get_CompiledArgSize();
 		let fontCoeff	= MatGetKoeffArgSize(CtrPrp.FontSize, ArgSize.value);
 
-		// вычисляем координату Y и LineW также как в Run
-		let X			= this.X;
-		let Y			= this.Baseline - CtrPrp.FontSize * fontCoeff * g_dKoef_pt_to_mm * 0.27;
-		let LineW		= (CtrPrp.FontSize / 18) * g_dKoef_pt_to_mm;
-		let Para		= this.Paragraph;
+		// calculate y-coordinate and LineW like we do it in AscWord.Run
+		let X     = this.X;
+		let Y     = this.Baseline - CtrPrp.FontSize * fontCoeff * g_dKoef_pt_to_mm * 0.27;
+		let LineW = (CtrPrp.FontSize / 18) * g_dKoef_pt_to_mm;
+		let Para  = this.Paragraph;
 
 		// set aStrikeout && aDStrikeout
 		if (true === bRemReview || true === CtrPrp.Strikeout)
@@ -419,7 +419,7 @@
 			Theme		= this.Paragraph.Get_Theme(),
 			ColorMap	= this.Paragraph.Get_ColorMap();
 
-		// Выставляем цвет обводки
+		// stroke color
 		if ( true === this.VisitedHyperlink && ( undefined === mathBase.Pr.Color && undefined === mathBase.Pr.Unifill ) )
 			CurColor = new CDocumentColor( 128, 0, 151 );
 		else if ( true === CtrPrp.Color.Auto && !CtrPrp.Unifill)
