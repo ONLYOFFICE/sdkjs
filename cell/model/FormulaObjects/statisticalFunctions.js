@@ -4124,7 +4124,7 @@ function (window, undefined) {
 				}
 			} else if (cElementType.array === _arg.type) {
 				let isError;
-				_arg.foreach(function (elem) {
+				_arg.foreachValue(function (elem) {
 					if (cElementType.string === elem.type || cElementType.empty === elem.type ||
 						cElementType.bool === elem.type) {
 						return false;
@@ -4211,7 +4211,7 @@ function (window, undefined) {
 					}
 				}
 			} else if (cElementType.array === _arg.type) {
-				_arg.foreach(function (elem) {
+				_arg.foreachValue(function (elem) {
 
 					if (cElementType.string === elem.type || cElementType.empty === elem.type) {
 						return false;
@@ -5167,7 +5167,7 @@ function (window, undefined) {
 					count++;
 				}
 			} else if (cElementType.array === _arg.type) {
-				_arg.foreach(function (elem) {
+				_arg.foreachValue(function (elem) {
 					if (cElementType.number === elem.type) {
 						count++;
 					}
@@ -5213,7 +5213,7 @@ function (window, undefined) {
 					}
 				}
 			} else if (cElementType.array === element.type) {
-				element.foreach(function (elem) {
+				element.foreachValue(function (elem) {
 					if (cElementType.empty !== elem.type) {
 						count++;
 					}
@@ -8200,7 +8200,7 @@ function (window, undefined) {
 					max = v.getValue();
 				}
 			} else if (cElementType.array === element.type) {
-				element.foreach(function (elem) {
+				element.foreachValue(function (elem) {
 					if (cElementType.number === elem.type) {
 						if (elem.getValue() > max) {
 							max = elem.getValue();
@@ -8282,7 +8282,7 @@ function (window, undefined) {
 					max = v.getValue();
 				}
 			} else if (argI instanceof cArray) {
-				argI.foreach(function (elem) {
+				argI.foreachValue(function (elem) {
 					if (elem instanceof cError) {
 						max = elem;
 						return true;
@@ -8501,7 +8501,7 @@ function (window, undefined) {
 					min = v.getValue();
 				}
 			} else if (cElementType.array === element.type) {
-				element.foreach(function (elem) {
+				element.foreachValue(function (elem) {
 					if (cElementType.number === elem.type) {
 						if (elem.getValue() < min) {
 							min = elem.getValue();
@@ -8583,7 +8583,7 @@ function (window, undefined) {
 					min = v.getValue();
 				}
 			} else if (argI instanceof cArray) {
-				argI.foreach(function (elem) {
+				argI.foreachValue(function (elem) {
 					if (elem instanceof cError) {
 						min = elem;
 						return true;
