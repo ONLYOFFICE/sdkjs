@@ -5938,6 +5938,9 @@
         }
     };
     CPlotArea.prototype.getChartType = function() {
+        if(this.isChartEx()) {
+            return this.getChartExType();
+        }
         if(this.charts.length > 0) {
             if(this.charts.length > 1) {
                 if(this.charts.length === 2) {
@@ -5968,6 +5971,23 @@
             return this.charts[0].getChartType();
         }
         return Asc.c_oAscChartTypeSettings.unknown;
+    };
+    CPlotArea.prototype.getChartExType = function() {
+        const types = Asc.c_oAscChartTypeSettings;
+        const seria = this.plotAreaRegion.series[0];
+        if (seria) {
+            switch (seria.layoutId) {
+                case AscFormat.SERIES_LAYOUT_FUNNEL: return types.funnel;
+                case AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN: return types.histogram;
+                case AscFormat.SERIES_LAYOUT_WATERFALL: return types.waterfall;
+                case AscFormat.SERIES_LAYOUT_SUNBURST: return types.sunburst;
+                case AscFormat.SERIES_LAYOUT_TREEMAP: return types.treemap;
+                case AscFormat.SERIES_LAYOUT_BOX_WHISKER: return types.boxWhisker;
+                case AscFormat.SERIES_LAYOUT_PARETO_LINE: return types.pareto;
+                case AscFormat.SERIES_LAYOUT_REGION_MAP: return types.regionMap;
+            }
+        }
+        return types.unknown;
     };
     CPlotArea.prototype.addChartWithAxes = function(oTypedChart) {
         this.removeAllCharts();

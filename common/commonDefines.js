@@ -906,7 +906,15 @@ window.AscCommon.g_cIsBeta = "false";
 		radar                  : 42,
 		radarMarker            : 43,
 		radarFilled            : 44,
-		unknown                : 45
+		funnel                 : 45,
+		histogram              : 46,
+		waterfall              : 47,
+		sunburst               : 48,
+		treemap                : 49,
+		boxWhisker             : 50,
+		pareto                 : 51,
+		regionMap              : 52,
+		unknown                : 100
 	};
 
 	var c_oAscValAxisRule = {
@@ -5262,6 +5270,14 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['radar']                      = prot.radar;
 	prot['radarMarker']                = prot.radarMarker;
 	prot['radarFilled']                = prot.radarFilled;
+	prot['funnel']                     = prot.funnel;
+	prot['histogram']                  = prot.histogram;
+	prot['waterfall']                  = prot.waterfall;
+	prot['sunburst']                   = prot.sunburst;
+	prot['treemap']                    = prot.treemap;
+	prot['boxWhisker']                 = prot.boxWhisker;
+	prot['pareto']                     = prot.pareto;
+	prot['regionMap']                  = prot.regionMap;
 	prot['unknown']                    = prot.unknown;
 
 	window['Asc']['c_oAscValAxisRule'] = window['Asc'].c_oAscValAxisRule = c_oAscValAxisRule;
