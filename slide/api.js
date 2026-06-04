@@ -1893,7 +1893,7 @@ background-repeat: no-repeat;\
 			if(oThumbnails.isThumbnailsShown())
 			{
 				let oPos = this.WordControl.Thumbnails.getSpecialPasteButtonCoords(fixPos.slideId);
-				curCoord = new AscCommon.asc_CRect( oPos.X, oPos.Y, 1, 1 );
+				curCoord = oPos ? new AscCommon.asc_CRect( oPos.X, oPos.Y, 1, 1 ) : new AscCommon.asc_CRect( -1, -1, 0, 0 );
 			}
 			else
 			{
