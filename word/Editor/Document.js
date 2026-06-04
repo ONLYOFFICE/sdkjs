@@ -16137,7 +16137,13 @@ CDocument.prototype.private_StoreViewPositions = function(state)
 			xyInfo = this.private_GetXYByDocumentPosition(anchorPos);
 		}
 		
-		// TODO: Надо проверить, что совпали страница viewPort[0].Page и xyInfo.Page
+		// The anchor must resolve onto the same page as the top of the viewport.
+		// Otherwise (e.g. the viewport top is inside a multi-page table whose left
+		// column ended on an earlier page) AnchorDistance would mix coordinates from
+		// two different pages and the view jumps a page or more after another user's
+		// edit (bug #3054). In that case skip the anchor and leave the scroll as-is.
+		if (xyInfo.Page !== viewPort[0].Page)
+			return;
 		
 		state.AnchorType     = AscWord.ViewPositionType.Common;
 		state.AnchorPos      = anchorPos;
