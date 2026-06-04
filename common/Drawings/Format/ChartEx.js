@@ -313,6 +313,13 @@ function (window, undefined) {
 		}
 		return this.isValuesAxis();
 	};
+	CAxis.prototype.getMenuProps = function() {
+		const ret = this.isVertical() ? new AscCommon.asc_ValAxisSettings() : new AscCommon.asc_CatAxisSettings();
+		ret.putShow(!this.bDelete);
+		ret.putLabel(this.getLabelSetting());
+		ret.putGridlines(this.getGridlinesSetting());
+		return ret;
+	};
 
 	// AxisUnits
 	drawingsChangesMap[AscDFH.historyitem_AxisUnits_SetUnitsLabel] = function (oClass, value) {

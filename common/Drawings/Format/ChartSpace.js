@@ -9496,6 +9496,21 @@ function(window, undefined) {
 		if (this.chart && this.chart.plotArea) {
 			var oThis = this;
 			var calcMajorMinorGridLines = function (axis, defaultStyle, subtleLine, parents) {
+				if (oThis.isChartEx() && oThis.chartStyle && oThis.chartColors) {
+					const styleEntry = axis.isValuesAxis() ? oThis.chartStyle.valueAxis : oThis.chartStyle.categoryAxis;
+					if (styleEntry) {
+						const spPr = axis.getSpPrFormStyleEntry(styleEntry, oThis.chartColors.generateColors(1), 0);
+						if (spPr && spPr.ln) {
+							const ln = spPr.ln.createDuplicate();
+							ln.calculate(parents.theme, parents.slide, parents.layout, parents.master, {R: 0, G: 0, B: 0, A: 255}, oThis.clrMapOvr);
+							axis.compiledLn = ln;
+							axis.compiledTickMarkLn = ln.createDuplicate();
+							axis.compiledTickMarkLn.headEnd = null;
+							axis.compiledTickMarkLn.tailEnd = null;
+							return;
+						}
+					}
+				}
 				function calcGridLine(defaultStyle, spPr, subtleLine, parents) {
 					var compiled_grid_lines = new AscFormat.CLn();
 					compiled_grid_lines.merge(subtleLine);

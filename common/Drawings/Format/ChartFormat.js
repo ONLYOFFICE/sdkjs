@@ -5838,6 +5838,15 @@
                     ret.serAx.push(axis);
                     break;
                 }
+                case AscDFH.historyitem_type_Axis:
+                {
+                    if (axis.isVertical()) {
+                        ret.valAx.push(axis);
+                    } else {
+                        ret.catAx.push(axis);
+                    }
+                    break;
+                }
             }
         }
         return ret;
@@ -7281,6 +7290,18 @@
         this.verticalAxes = [];
         this.horizontalAxes = [];
         this.depthAxes = [];
+        if (oPlotArea.isChartEx()) {
+            const chartExAxes = oPlotArea.axId || [];
+            for (let i = 0; i < chartExAxes.length; ++i) {
+                const axis = chartExAxes[i];
+                if (axis.isVertical()) {
+                    this.verticalAxes.push(axis);
+                } else {
+                    this.horizontalAxes.push(axis);
+                }
+            }
+            return;
+        }
         var aTypedCharts = oPlotArea.charts;
         var oCheckedAxes = {};
         var nChart;
