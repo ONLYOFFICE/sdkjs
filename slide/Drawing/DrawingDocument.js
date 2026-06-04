@@ -2687,13 +2687,9 @@ function CDrawingDocument()
 
 			return {X: x_pix, Y: y_pix, Error: false};
 		}
-		else
-		{
-			var x_pix = (_x * g_dKoef_mm_to_pix + 10 + (wc.m_oMainParent.AbsolutePosition.L + wc.m_oBottomPanesContainer.AbsolutePosition.L + wc.m_oNotesContainer.AbsolutePosition.L) * g_dKoef_mm_to_pix) >> 0;
-			var y_pix = (_y * g_dKoef_mm_to_pix      + (wc.m_oMainParent.AbsolutePosition.T + wc.m_oBottomPanesContainer.AbsolutePosition.T + wc.m_oNotesContainer.AbsolutePosition.T) * g_dKoef_mm_to_pix) >> 0;
-
-			return {X: x_pix, Y: y_pix, Error: false};
-		}
+		var x_pix = (_x * g_dKoef_mm_to_pix + 10 + (wc.m_oMainParent.AbsolutePosition.L + wc.m_oBottomPanesContainer.AbsolutePosition.L + wc.m_oNotesContainer.AbsolutePosition.L) * g_dKoef_mm_to_pix) >> 0;
+		var y_pix = (_y * g_dKoef_mm_to_pix      + (wc.m_oMainParent.AbsolutePosition.T + wc.m_oBottomPanesContainer.AbsolutePosition.T + wc.m_oNotesContainer.AbsolutePosition.T) * g_dKoef_mm_to_pix) >> 0;
+		return {X: x_pix, Y: y_pix, Error: false};
 	};
 
 	this.ConvertAnimPaneCoordsToCursor = function(x, y)

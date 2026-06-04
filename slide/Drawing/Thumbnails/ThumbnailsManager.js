@@ -3092,6 +3092,10 @@
 		if (nSlideIdx === -1) return null;
 
 		const menuPos = this.GetThumbnailPagePosition(nSlideIdx);
+		if (!menuPos) {
+			return null;
+		}
+
 		const oThContainer = editor.WordControl.m_oThumbnailsContainer;
 		const offsetX = oThContainer.AbsolutePosition.L * g_dKoef_mm_to_pix;
 		const offsetY = oThContainer.AbsolutePosition.T * g_dKoef_mm_to_pix;

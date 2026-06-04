@@ -2312,17 +2312,18 @@
 		return this.outlineToSourceMap[outlineParagraph.Get_Id()];
 	};
 	OutlineView.prototype.getOutlineSlideParagraphs = function (slide) {
-		const result = [];
 		const info = this.outlineInfo.getSlideInfoBySlide(slide);
 		if (!info) {
-			return result;
+			return [];
 		}
 		const content = this.getDocContent();
 		if (!content) {
-			return result;
+			return [];
 		}
 		const outlineParagraph = info.outlineParagraph;
-		for (let i = outlineParagraph.Index; i < content.Content.length; i += 1) {
+		const startIndex = outlineParagraph.Index + 1;
+		const result = [outlineParagraph];
+		for (let i = startIndex; i < content.Content.length; i += 1) {
 			const currentOutlineParagraph = content.Content[i];
 			if (this.isTitleOutlineParagraph(currentOutlineParagraph)) {
 				break;
