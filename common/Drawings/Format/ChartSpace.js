@@ -13840,6 +13840,67 @@ function(window, undefined) {
 		return aSeries;
 	}
 
+	function fillAscCacheFromLit(cache, lit, numFormat) {
+		if (!lit || !Array.isArray(lit.pts)) {
+			return;
+		}
+		let count = AscFormat.isRealNumber(lit.ptCount) ? lit.ptCount : lit.pts.length;
+		for (let i = 0; i < lit.pts.length; ++i) {
+			const pt = lit.pts[i];
+			if (pt && pt.idx + 1 > count) {
+				count = pt.idx + 1;
+			}
+		}
+		for (let i = 0; i < count; ++i) {
+			cache[i] = {numFormatStr: numFormat, isDateTimeFormat: false, val: null, isHidden: false};
+		}
+		for (let i = 0; i < lit.pts.length; ++i) {
+			const pt = lit.pts[i];
+			if (pt && cache[pt.idx]) {
+				cache[pt.idx].val = pt.val;
+			}
+		}
+	}
+
+	function getChartExAscSeriesFromCache(chartSpace) {
+		if (!chartSpace) {
+			return [];
+		}
+		const allSeries = chartSpace.getAllSeries();
+		const result = [];
+		for (let i = 0; i < allSeries.length; ++i) {
+			const seria = allSeries[i];
+			const numLit = seria.getValLit();
+			if (!numLit || !Array.isArray(numLit.pts) || numLit.pts.length === 0) {
+				continue;
+			}
+			const data = seria.getData();
+			const numDim = data ? data.getValDimensions()[0] : null;
+			const strDim = data ? data.getCatDimensions()[0] : null;
+			const strLit = seria.getCatLit(seria.layoutId);
+
+			const ascSeries = new AscFormat.asc_CChartSeria();
+			ascSeries.Val.NumCache = [];
+			if (numDim && numDim.f) {
+				ascSeries.Val.Formula = numDim.f.content;
+			}
+			const numFormat = typeof numLit.formatCode === "string" && numLit.formatCode.length > 0 ? numLit.formatCode : "General";
+			fillAscCacheFromLit(ascSeries.Val.NumCache, numLit, numFormat);
+
+			if (strLit) {
+				const cat = {Formula: undefined, NumCache: []};
+				if (strDim && strDim.f) {
+					cat.Formula = strDim.f.content;
+				}
+				fillAscCacheFromLit(cat.NumCache, strLit, "General");
+				ascSeries.Cat = cat;
+				ascSeries.xVal = cat;
+			}
+			result.push(ascSeries);
+		}
+		return result;
+	}
+
 	function checkSpPrRasterImages(spPr) {
 		if (spPr && spPr.Fill && spPr.Fill && spPr.Fill.fill && spPr.Fill.fill.type === Asc.c_oAscFill.FILL_TYPE_BLIP) {
 			var copyBlipFill = spPr.Fill.createDuplicate();
@@ -14695,6 +14756,7 @@ function(window, undefined) {
 	window['AscFormat'].CreateDefaultAxes = CreateDefaultAxes;
 	window['AscFormat'].CreateScatterAxis = CreateScatterAxis;
 	window['AscFormat'].getChartSeries = getChartSeries;
+	window['AscFormat'].getChartExAscSeriesFromCache = getChartExAscSeriesFromCache;
 	window['AscFormat'].checkSpPrRasterImages = checkSpPrRasterImages;
 	window['AscFormat'].checkBlipFillRasterImages = checkBlipFillRasterImages;
 

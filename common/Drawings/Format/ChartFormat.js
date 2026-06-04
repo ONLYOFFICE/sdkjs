@@ -6517,7 +6517,10 @@
 		const settings = AscFormat.DrawingObjectsController.prototype.getPropsFromChart(chartSpace);
 		settings.type = type;
 
-		const series = AscFormat.getChartSeries(settings);
+		let series = AscFormat.getChartExAscSeriesFromCache(chartSpace);
+		if (!series || series.length === 0) {
+			series = AscFormat.getChartSeries(settings);
+		}
 		const useCache = true;
 		const newChartSpace = AscFormat.DrawingObjectsController.prototype._getChartSpace.call(this, series, settings, useCache);
 		if (!newChartSpace) {
@@ -6539,6 +6542,13 @@
 		}
 
 		chartSpace.setChart(newChart);
+
+		const newRegion = newChart.plotArea && newChart.plotArea.plotAreaRegion;
+		if (newRegion) {
+			newRegion.setDlblsProps(settings);
+		} else {
+			newChart.setDlblsProps(settings);
+		}
 	};
     CPlotArea.prototype.changeChartType = function(nType) {
         if(!this.parent) {
