@@ -4633,7 +4633,7 @@ function (window, undefined) {
 				}
 				return arg2.getElementRowCol(0, lookingIndex);
 			} else if (arg2Cols === 1) {
-				if (lookingIndex >= arg2.rowCount) {
+				if (lookingIndex >= arg2Rows) {
 					return new cError(cErrorType.not_available)
 				}
 				return arg2.getElementRowCol(lookingIndex, 0);

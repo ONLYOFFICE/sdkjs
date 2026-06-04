@@ -3415,8 +3415,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArray.prototype.getValue2 = function (i, j) {
 		//generator-backed array: serve the single element lazily instead of materializing the whole array
 		//(keeps INDEX/point access over a huge SEQUENCE O(1)). Non-generator arrays keep the raw fast path.
+		//out of realSize: stay undefined (old out-of-bounds contract, keeps broadcast #N/A guards working).
 		if (this.missedValueFn) {
-			return this.getElementRowCol(i, j, true);
+			if (this.realSize && i >= 0 && j >= 0 && i < this.realSize.row && j < this.realSize.col) {
+				return this.getElementRowCol(i, j, true);
+			}
+			return undefined;
 		}
 		var result = this.array[i];
 		return result ? result[j] : result;
@@ -4452,15 +4456,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 						newArg = tempArgs[j];
 						var info = _argInfo[j];
 						if (info.isArray) {
-							if (1 === info.rows && 1 === info.cols) {
-								newArg = newArg.array[0] ? newArg.array[0][0] : null;
-							} else if (1 === info.rows) {
-								newArg = newArg.array[0] ? newArg.array[0][c] : null;
-							} else if (1 === info.cols) {
-								newArg = newArg.array[r] ? newArg.array[r][0] : null;
-							} else {
-								newArg = newArg.array[r] ? newArg.array[r][c] : null;
-							}
+							//getValue2 is lazy-aware: a fully-lazy arg has an empty .array, so read via its generator.
+							var srcRow = 1 === info.rows ? 0 : r;
+							var srcCol = 1 === info.cols ? 0 : c;
+							newArg = newArg.getValue2(srcRow, srcCol);
 							if (!newArg) {
 								//TODO check what to set if this array element is unavailable
 								//for now doing this - if not the last argument, then empty element, if last - undefined
