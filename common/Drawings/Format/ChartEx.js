@@ -1010,6 +1010,36 @@ function (window, undefined) {
 	AscDFH.changesFactory[AscDFH.historyitem_DataLabels_AddDataLabelHidden] = window['AscDFH'].CChangesDrawingsContent;
 	AscDFH.changesFactory[AscDFH.historyitem_DataLabels_RemoveDataLabelHidden] = window['AscDFH'].CChangesDrawingsContent;
 
+	function chartExPosFromAscPos(ascPos) {
+		switch (ascPos) {
+			case Asc.c_oAscChartDataLabelsPos.b: return DATA_LABEL_POS_B;
+			case Asc.c_oAscChartDataLabelsPos.bestFit: return DATA_LABEL_POS_BEST_FIT;
+			case Asc.c_oAscChartDataLabelsPos.ctr: return DATA_LABEL_POS_CTR;
+			case Asc.c_oAscChartDataLabelsPos.inBase: return DATA_LABEL_POS_IN_BASE;
+			case Asc.c_oAscChartDataLabelsPos.inEnd: return DATA_LABEL_POS_IN_END;
+			case Asc.c_oAscChartDataLabelsPos.l: return DATA_LABEL_POS_L;
+			case Asc.c_oAscChartDataLabelsPos.outEnd: return DATA_LABEL_POS_OUT_END;
+			case Asc.c_oAscChartDataLabelsPos.r: return DATA_LABEL_POS_R;
+			case Asc.c_oAscChartDataLabelsPos.t: return DATA_LABEL_POS_T;
+		}
+		return null;
+	}
+
+	function ascPosFromChartExPos(chartExPos) {
+		switch (chartExPos) {
+			case DATA_LABEL_POS_B: return Asc.c_oAscChartDataLabelsPos.b;
+			case DATA_LABEL_POS_BEST_FIT: return Asc.c_oAscChartDataLabelsPos.bestFit;
+			case DATA_LABEL_POS_CTR: return Asc.c_oAscChartDataLabelsPos.ctr;
+			case DATA_LABEL_POS_IN_BASE: return Asc.c_oAscChartDataLabelsPos.inBase;
+			case DATA_LABEL_POS_IN_END: return Asc.c_oAscChartDataLabelsPos.inEnd;
+			case DATA_LABEL_POS_L: return Asc.c_oAscChartDataLabelsPos.l;
+			case DATA_LABEL_POS_OUT_END: return Asc.c_oAscChartDataLabelsPos.outEnd;
+			case DATA_LABEL_POS_R: return Asc.c_oAscChartDataLabelsPos.r;
+			case DATA_LABEL_POS_T: return Asc.c_oAscChartDataLabelsPos.t;
+		}
+		return null;
+	}
+
 	function CDataLabels() {
 		CBaseChartObject.call(this);
 		this.numFmt = null;
@@ -1133,6 +1163,85 @@ function (window, undefined) {
 	CDataLabels.prototype.setPos = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_DataLabels_SetPos, this.pos, pr));
 		this.pos = pr;
+	};
+	CDataLabels.prototype.setMenuProps = function (props) {
+		let visibility = this.visibility;
+		if (!visibility) {
+			visibility = new CDataLabelVisibilities();
+			this.setVisibility(visibility);
+		}
+		if (props.getDataLabelsPos() === Asc.c_oAscChartDataLabelsPos.none) {
+			if (visibility.seriesName !== false) {
+				visibility.setSeriesName(false);
+			}
+			if (visibility.categoryName !== false) {
+				visibility.setCategoryName(false);
+			}
+			if (visibility.value !== false) {
+				visibility.setValue(false);
+			}
+			return;
+		}
+		const chartExPos = chartExPosFromAscPos(props.getDataLabelsPos());
+		if (chartExPos !== null && this.pos !== chartExPos) {
+			this.setPos(chartExPos);
+		}
+		if (AscFormat.isRealBool(props.getShowSerName())) {
+			visibility.setSeriesName(props.getShowSerName());
+		}
+		if (AscFormat.isRealBool(props.getShowCatName())) {
+			visibility.setCategoryName(props.getShowCatName());
+		}
+		if (AscFormat.isRealBool(props.getShowVal())) {
+			visibility.setValue(props.getShowVal());
+		}
+		const separator = props.getSeparator();
+		if (typeof separator === "string" && separator.length > 0 && this.separator !== separator) {
+			this.setSeparator(separator);
+		}
+	};
+	CDataLabels.prototype.setMenuDisplay = function (show, ascPos) {
+		if (!show) {
+			if (this.visibility) {
+				this.visibility.setSeriesName(false);
+				this.visibility.setCategoryName(false);
+				this.visibility.setValue(false);
+			}
+			return;
+		}
+		let visibility = this.visibility;
+		if (!visibility) {
+			visibility = new CDataLabelVisibilities();
+			this.setVisibility(visibility);
+		}
+		if (visibility.value !== true) {
+			visibility.setValue(true);
+		}
+		if (ascPos !== Asc.c_oAscChartDataLabelsPos.show && ascPos !== Asc.c_oAscChartDataLabelsPos.none) {
+			const chartExPos = chartExPosFromAscPos(ascPos);
+			if (chartExPos !== null && this.pos !== chartExPos) {
+				this.setPos(chartExPos);
+			}
+		}
+	};
+	CDataLabels.prototype.fillAscDataLabels = function (settings, defaultPos) {
+		const visibility = this.visibility;
+		const showSeriesName = !!(visibility && visibility.seriesName);
+		const showCategoryName = !!(visibility && visibility.categoryName);
+		const showValue = !!(visibility && visibility.value);
+		settings.putShowSerName(showSeriesName);
+		settings.putShowCatName(showCategoryName);
+		settings.putShowVal(showValue);
+		settings.putSeparator(this.separator);
+		if (showSeriesName || showCategoryName || showValue) {
+			let ascPos = ascPosFromChartExPos(this.pos);
+			if (ascPos === null) {
+				ascPos = AscFormat.isRealNumber(defaultPos) ? defaultPos : Asc.c_oAscChartDataLabelsPos.ctr;
+			}
+			settings.putDataLabelsPos(ascPos);
+		} else {
+			settings.putDataLabelsPos(Asc.c_oAscChartDataLabelsPos.none);
+		}
 	};
 	CDataLabels.prototype.Refresh_RecalcData = function () {
 		this.Refresh_RecalcData2();
@@ -3142,6 +3251,24 @@ function (window, undefined) {
 	};
 	CPlotAreaRegion.prototype.getAllSeries = function () {
 		return [].concat(this.series);
+	};
+	CPlotAreaRegion.prototype.setDlblsProps = function (props) {
+		const isNone = props.getDataLabelsPos() === Asc.c_oAscChartDataLabelsPos.none;
+		for (let i = 0; i < this.series.length; i++) {
+			const seria = this.series[i];
+			if (!seria) {
+				continue;
+			}
+			let dataLabels = seria.dataLabels;
+			if (!dataLabels) {
+				if (isNone) {
+					continue;
+				}
+				dataLabels = new CDataLabels();
+				seria.setDataLabels(dataLabels);
+			}
+			dataLabels.setMenuProps(props);
+		}
 	};
 	CPlotAreaRegion.prototype.getAllRasterImages = function (images) {
 		for(let nIdx = 0; nIdx < this.series.length; ++nIdx) {

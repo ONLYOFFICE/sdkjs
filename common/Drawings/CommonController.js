@@ -4978,22 +4978,34 @@
 					var aSeries = oFirstChart.series;
 					var nSer, oSeries;
 					var oFirstSeries = aSeries[0];
-					var data_labels = oFirstChart.dLbls;
-					if (data_labels) {
-						if (oFirstSeries && oFirstSeries.dLbls) {
-							this.collectPropsFromDLbls(nDefaultDatalabelsPos, oFirstSeries.dLbls, ret);
-						} else {
-							this.collectPropsFromDLbls(nDefaultDatalabelsPos, data_labels, ret);
-						}
-					} else {
-						if (oFirstSeries && oFirstSeries.dLbls) {
-							this.collectPropsFromDLbls(nDefaultDatalabelsPos, oFirstSeries.dLbls, ret);
+					if (plot_area.isChartEx()) {
+						if (oFirstSeries && oFirstSeries.dataLabels) {
+							oFirstSeries.dataLabels.fillAscDataLabels(ret, nDefaultDatalabelsPos);
 						} else {
 							ret.putShowSerName(false);
 							ret.putShowCatName(false);
 							ret.putShowVal(false);
 							ret.putSeparator("");
 							ret.putDataLabelsPos(c_oAscChartDataLabelsPos.none);
+						}
+					} else {
+						var data_labels = oFirstChart.dLbls;
+						if (data_labels) {
+							if (oFirstSeries && oFirstSeries.dLbls) {
+								this.collectPropsFromDLbls(nDefaultDatalabelsPos, oFirstSeries.dLbls, ret);
+							} else {
+								this.collectPropsFromDLbls(nDefaultDatalabelsPos, data_labels, ret);
+							}
+						} else {
+							if (oFirstSeries && oFirstSeries.dLbls) {
+								this.collectPropsFromDLbls(nDefaultDatalabelsPos, oFirstSeries.dLbls, ret);
+							} else {
+								ret.putShowSerName(false);
+								ret.putShowCatName(false);
+								ret.putShowVal(false);
+								ret.putSeparator("");
+								ret.putDataLabelsPos(c_oAscChartDataLabelsPos.none);
+							}
 						}
 					}
 					var bNoLine, bSmooth;

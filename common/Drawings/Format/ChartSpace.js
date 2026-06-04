@@ -2652,22 +2652,34 @@ function(window, undefined) {
 		const selectedSeries = this.getSelectedSeries();
 		const targetSeries = selectedSeries || aSeries[0];
 
-		const data_labels = oFirstChart.dLbls;
-		if (data_labels) {
-			if (targetSeries && targetSeries.dLbls) {
-				ret._collectPropsFromDLbls(nDefaultDatalabelsPos, targetSeries.dLbls);
-			} else {
-				ret._collectPropsFromDLbls(nDefaultDatalabelsPos, data_labels);
-			}
-		} else {
-			if (targetSeries && targetSeries.dLbls) {
-				ret._collectPropsFromDLbls(nDefaultDatalabelsPos, targetSeries.dLbls);
+		if (plot_area.isChartEx()) {
+			if (targetSeries && targetSeries.dataLabels) {
+				targetSeries.dataLabels.fillAscDataLabels(ret, nDefaultDatalabelsPos);
 			} else {
 				ret.putShowSerName(false);
 				ret.putShowCatName(false);
 				ret.putShowVal(false);
 				ret.putSeparator("");
 				ret.putDataLabelsPos(Asc.c_oAscChartDataLabelsPos.none);
+			}
+		} else {
+			const data_labels = oFirstChart.dLbls;
+			if (data_labels) {
+				if (targetSeries && targetSeries.dLbls) {
+					ret._collectPropsFromDLbls(nDefaultDatalabelsPos, targetSeries.dLbls);
+				} else {
+					ret._collectPropsFromDLbls(nDefaultDatalabelsPos, data_labels);
+				}
+			} else {
+				if (targetSeries && targetSeries.dLbls) {
+					ret._collectPropsFromDLbls(nDefaultDatalabelsPos, targetSeries.dLbls);
+				} else {
+					ret.putShowSerName(false);
+					ret.putShowCatName(false);
+					ret.putShowVal(false);
+					ret.putSeparator("");
+					ret.putDataLabelsPos(Asc.c_oAscChartDataLabelsPos.none);
+				}
 			}
 		}
 		let bNoLine, bSmooth;
@@ -2741,6 +2753,7 @@ function(window, undefined) {
 			if (oTitle.overlay !== bOverlay) {
 				oTitle.setOverlay(bOverlay);
 			}
+			this.checkElementChartStyle(oTitle);
 		}
 
 
@@ -2780,6 +2793,11 @@ function(window, undefined) {
 				}
 				this.checkElementChartStyle(oLegend);
 			}
+		}
+
+		const plotAreaRegion = oChart.plotArea && oChart.plotArea.plotAreaRegion;
+		if (plotAreaRegion) {
+			plotAreaRegion.setDlblsProps(oProps);
 		}
 	};
 	CChartSpace.prototype.applyChartSettings = function (oProps)
@@ -6041,8 +6059,9 @@ function(window, undefined) {
 			return String(idx + 1);
 		}
 
-		//seria.dataLabels.visibility optional
 		if (cachedData && seria && seria.dataLabels) {
+			const visibility = seria.dataLabels.visibility;
+			const showLabels = !visibility || visibility.value === true || visibility.seriesName === true || visibility.categoryName === true;
 			const chartType = cachedData.type;
 			const default_lbl = new AscFormat.CDLbl();
 			const nDefaultPosition = seria.dataLabels.pos ? seria.dataLabels.pos : AscFormat.DATA_LABEL_POS_OUT_END;
@@ -6060,6 +6079,10 @@ function(window, undefined) {
 				// 	pt = aPts[nPt];
 				// }
 				pt = aPts[nPt];
+				if (!showLabels) {
+					pt.compiledDlb = null;
+					continue;
+				}
 				const compiled_dlb = new AscFormat.CDLbl();
 				compiled_dlb.merge(default_lbl);
 				compiled_dlb.merge(seria.dataLabels);
@@ -9559,6 +9582,30 @@ function(window, undefined) {
 	CChartSpace.prototype.showDataLabels = function (bDisplay, nDataLabelPos, useSeriesSelection) {
 		const plotArea = this.getPlotArea();
 		if (!plotArea) {
+			return;
+		}
+
+		if (this.isChartEx()) {
+			if (nDataLabelPos === Asc.c_oAscChartDataLabelsPos.none) {
+				bDisplay = false;
+			}
+			const selectedSeries = useSeriesSelection && this.getSelectedSeries();
+			const seriesToProcess = selectedSeries ? [selectedSeries] : this.getAllSeries();
+			for (let i = 0; i < seriesToProcess.length; i++) {
+				const seria = seriesToProcess[i];
+				if (!seria) {
+					continue;
+				}
+				let dataLabels = seria.dataLabels;
+				if (!dataLabels) {
+					if (!bDisplay) {
+						continue;
+					}
+					dataLabels = new AscFormat.CDataLabels();
+					seria.setDataLabels(dataLabels);
+				}
+				dataLabels.setMenuDisplay(bDisplay, nDataLabelPos);
+			}
 			return;
 		}
 
@@ -13792,7 +13839,6 @@ function(window, undefined) {
 		}
 		return aSeries;
 	}
-
 
 	function checkSpPrRasterImages(spPr) {
 		if (spPr && spPr.Fill && spPr.Fill && spPr.Fill.fill && spPr.Fill.fill.type === Asc.c_oAscFill.FILL_TYPE_BLIP) {
