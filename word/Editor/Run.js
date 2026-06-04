@@ -2272,7 +2272,7 @@ ParaRun.prototype.recalculateCursorPosition = function(positionCalculator, isCur
 		let item = this.private_CheckInstrText(this.Content[pos]);
 		let isCurPos = isCurrent && pos === this.State.ContentPos;
 		let isNearNoteRef = isCurPos ? this.IsCurPosNearFootEndnoteReference() : false;
-		positionCalculator.handleRunElement(item, this, isCurPos, isNearNoteRef, pos);
+		positionCalculator.handleRunElement(item, this, isCurPos, isNearNoteRef, pos, isCurrent);
 	}
 	
 	if (isCurrent && endPos === this.State.ContentPos)
