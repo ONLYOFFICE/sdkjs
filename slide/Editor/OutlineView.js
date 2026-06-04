@@ -1555,6 +1555,13 @@
 		return manager.forEachSelectedContent(callback);
 	}
 
+	OutlineView.prototype.getSelectedText = function (oPr) {
+		const docContent = this.getDocContent();
+		if (!docContent) {
+			return "";
+		}
+		return docContent.GetSelectedText(false, oPr);
+	};
 	OutlineView.prototype.remove = function (bOnAddText) {
 		const manager = new RemoveOutlineParagraphsManager(this);
 		manager.remove(bOnAddText);

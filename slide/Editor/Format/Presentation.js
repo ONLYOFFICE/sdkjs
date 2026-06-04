@@ -6270,6 +6270,11 @@ CPresentation.prototype.GetSelectedText = function (bClearText, oPr) {
 	if (undefined === bClearText)
 		bClearText = false;
 
+	if (this.IsFocusOnOutline()) {
+		let oOutlineView = this.GetOutlineView();
+		return oOutlineView ? oOutlineView.getSelectedText(oPr) : "";
+	}
+
 	var oController = this.GetCurrentController();
 	if (oController) {
 		return oController.GetSelectedText(bClearText, oPr);
