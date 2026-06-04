@@ -2209,6 +2209,70 @@
 	};
 
 	/**
+	 * @typedef {Object} WindowHeaderMenuItem
+	 * The window header menu item.
+	 * @property {string} id - The item ID.
+	 * @property {"button"} type - The item type.
+	 * @property {string} [text] - The item text.
+	 * @property {string} [hint] - The item hint.
+	 * @property {"left" | "right"} [align] - The item alignment in the window header.
+	 * @property {string} [icons] - The item icons (see the plugins {@link /docs/plugin-and-macros/structure/configuration/ config} documentation).
+	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
+	 * @property {boolean} [enableToggle] - Specifies if an item toggle is enabled or not.
+	 * @property {boolean} [split] - Specifies if the button is split (button + dropdown arrow) or not.
+	 * @property {boolean} [isTitle] - Specifies if the item replaces the window title or not.
+	 * @property {boolean} [removed] - Specifies if the item must be removed from the header.
+	 * @property {ContextMenuItem[]} [items] - An array containing the dropdown menu items for the current header item.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/WindowHeaderMenuItem.js
+	 */
+
+	/**
+	 * @typedef {Object} WindowHeaderMainItem
+	 * The main window header item.
+	 * @property {string} guid - The plugin guid.
+	 * @property {string} [windowID] - The plugin child window ID. When omitted, the items are placed on the plugin's main frame header.
+	 * @property {WindowHeaderMenuItem[]} items - An array containing the window header items.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/WindowHeaderMainItem.js
+	 */
+
+	function correctWindowHeaderItems(api, items)
+	{
+		let baseUrl = api.pluginsManager.pluginsMap[items["guid"]].baseUrl;
+		if (items["frames"][0]["items"])
+			correctItemsWithData(items["frames"][0]["items"], baseUrl);
+	}
+
+	/**
+	 * Adds buttons to the plugin window header.
+	 * @undocumented
+	 * @memberof Api
+	 * @alias AddWindowHeaderItem
+	 * @param {WindowHeaderMainItem} items - The window header items for the plugin.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddWindowHeaderItem.js
+	 */
+	Api.prototype["pluginMethod_AddWindowHeaderItem"] = function(items)
+	{
+		correctWindowHeaderItems(this, items);
+		this.sendEvent("onPluginWindowHeaderMenu", [items]);
+	};
+
+	/**
+	 * Updates buttons in the plugin window header.
+	 * @undocumented
+	 * @memberof Api
+	 * @alias UpdateWindowHeaderItem
+	 * @param {WindowHeaderMainItem} items - The window header items for the plugin.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/UpdateWindowHeaderItem.js
+	 */
+	Api.prototype["pluginMethod_UpdateWindowHeaderItem"] = function(items)
+	{
+		correctWindowHeaderItems(this, items);
+		this.sendEvent("onPluginUpdateWindowHeaderMenu", [items]);
+	};
+
+	/**
 	 * Shows the plugin modal window.
 	 * @undocumented
 	 * @memberof Api

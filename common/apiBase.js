@@ -5370,6 +5370,11 @@
 		let guids = {}; guids[guid] = true;
 		window.g_asc_plugins.onPluginEvent2("onToolbarMenuClick", itemId, guids);
 	};
+	baseEditorsApi.prototype["onPluginWindowHeaderMenuItemClick"] = function(guid, windowId, itemId, pressed)
+	{
+		let guids = {}; guids[guid] = true;
+		window.g_asc_plugins.onPluginEvent2("onWindowHeaderMenuClick", itemId, guids);
+	};
 	baseEditorsApi.prototype.onPluginCloseContextMenuItem = function(guid)
 	{
 		if (!this.contextMenuPlugins)
