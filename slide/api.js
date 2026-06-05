@@ -334,7 +334,7 @@
 		this.mouseMode = "select";
 
 
-		this.presentationViewManager = AscCommon.getViewModeByType(Asc.c_oAscPresentationViewMode.outline, this);
+		this.presentationViewManager = AscCommon.getViewModeByType(Asc.c_oAscPresentationViewMode.normal, this);
 		this.frameLoader = null;
 
 		if (window.editor == undefined)

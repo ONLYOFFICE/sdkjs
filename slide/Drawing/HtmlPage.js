@@ -321,7 +321,7 @@
 		this.initThumbnails();
 		this.recalculateThumbnailsBounds();
 
-		this.Thumbnails = new AscCommon.COutlineThumbnailsManager(this);
+		this.Thumbnails = new AscCommon.CThumbnailsManager(this);
 
 		this.initMainContent();
 		this.recalculateMainContentBounds();
