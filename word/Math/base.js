@@ -2301,21 +2301,25 @@ CMathBase.prototype.UpdateMetrics = function(PRS, Size)
     if(PRS.LineDescent < Size.height - Size.ascent)
         PRS.LineDescent = Size.height - Size.ascent;
 };
-CMathBase.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
+CMathBase.prototype.recalculateRangeWidth = function(widthState)
 {
-    var RangeW = PRSC.Range.W;
+	widthState.handleMathBase(this);
+};
+CMathBase.prototype._recalculateRangeWidth = function(widthState)
+{
+    var RangeW = widthState.Range.W;
 
-    var CurLine = _CurLine - this.StartLine;
-    var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
+    var CurLine = widthState.CurLine - this.StartLine;
+    var CurRange = ( 0 === CurLine ? widthState.CurRange - this.StartRange : widthState.CurRange );
 
     if(this.bOneLine)
     {
         for (var Pos = 0; Pos <= this.Content.length - 1; Pos++)
         {
-            this.Content[Pos].Recalculate_Range_Width( PRSC, _CurLine, _CurRange );
+            this.Content[Pos].recalculateRangeWidth(widthState);
         }
 
-        PRSC.Range.W = RangeW + this.size.width;
+        widthState.Range.W = RangeW + this.size.width;
     }
     else
     {
@@ -2323,30 +2327,30 @@ CMathBase.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange
         var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
 
         if(CurLine == 0 && CurRange == 0)
-            PRSC.Range.W += this.BrGapLeft;
+            widthState.Range.W += this.BrGapLeft;
 
         for (var CurPos = StartPos; CurPos <= EndPos; CurPos++)
         {
-            this.Content[CurPos].Recalculate_Range_Width( PRSC, _CurLine, _CurRange );
+            this.Content[CurPos].recalculateRangeWidth(widthState);
         }
 
-        PRSC.Range.W += this.dW*(EndPos - StartPos);
+        widthState.Range.W += this.dW*(EndPos - StartPos);
 
         // Здесь проверяем не на то, что это последний Range (т.к. на данном этапе еще идет вычисление строк) а на конец контента !
 
         var Len = this.Content.length;
-        var EndBrContentEnd = this.NumBreakContent == EndPos && this.Content[EndPos].Math_Is_End( _CurLine, _CurRange),
+        var EndBrContentEnd = this.NumBreakContent == EndPos && this.Content[EndPos].Math_Is_End(widthState.CurLine, widthState.CurRange),
             NotBrContent = this.NumBreakContent !== EndPos;
 
         var bEnd = EndBrContentEnd || NotBrContent;
 
         if(EndPos == Len - 1 && true === bEnd)
         {
-            PRSC.Range.W += this.BrGapRight;
+            widthState.Range.W += this.BrGapRight;
         }
     }
 
-    this.Bounds.SetWidth(CurLine, CurRange, PRSC.Range.W - RangeW);
+    this.Bounds.SetWidth(CurLine, CurRange, widthState.Range.W - RangeW);
 };
 CMathBase.prototype.UpdateOperators = function(_CurLine, _CurRange, bEmptyGapLeft, bEmptyGapRight)
 {

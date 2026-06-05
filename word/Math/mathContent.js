@@ -5338,21 +5338,23 @@ CMathContent.prototype.Displace_BreakOperator = function(isForward, bBrkBefore, 
 		this.Content[Pos].Displace_BreakOperator(isForward, bBrkBefore, CountOperators);
 	}
 };
-CMathContent.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
+CMathContent.prototype.recalculateRangeWidth = function(widthState)
 {
-    var RangeW = PRSC.Range.W;
-    var CurLine = _CurLine - this.StartLine;
-    var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
+	widthState.pushBidiFlow(false);
+    var RangeW = widthState.Range.W;
+    var CurLine = widthState.CurLine - this.StartLine;
+    var CurRange = ( 0 === CurLine ? widthState.CurRange - this.StartRange : widthState.CurRange );
 
     var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
     var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
 
     for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
     {
-        this.Content[CurPos].Recalculate_Range_Width( PRSC, _CurLine, _CurRange );
+        this.Content[CurPos].recalculateRangeWidth(widthState);
     }
 
-    this.Bounds.SetWidth(CurLine, CurRange, PRSC.Range.W - RangeW);
+    this.Bounds.SetWidth(CurLine, CurRange, widthState.Range.W - RangeW);
+	widthState.popBidiFlow();
 };
 CMathContent.prototype.recalculateAllSize = function(textMeasurer)
 {

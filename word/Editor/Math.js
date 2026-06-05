@@ -1973,23 +1973,9 @@ ParaMath.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cu
 
     this.Root.Math_UpdateLineMetrics(PRS, ParaPr);
 };
-ParaMath.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
+ParaMath.prototype.recalculateRangeWidth = function(widthState)
 {
-    var SpaceLen   = PRSC.SpaceLen;
-
-    var bBrkBefore = this.Is_BrkBinBefore();
-
-    var bGapLeft  = bBrkBefore == true,
-        bGapRight = bBrkBefore == false;
-
-    this.Root.UpdateOperators(_CurLine, _CurRange, bGapLeft, bGapRight);
-
-    this.Root.Recalculate_Range_Width(PRSC, _CurLine, _CurRange);
-
-    PRSC.Range.W        += PRSC.SpaceLen - SpaceLen;
-    PRSC.Range.SpaceLen = SpaceLen;
-
-    PRSC.Words++;
+	widthState.handleParaMath(this);
 };
 ParaMath.prototype.UpdateWidthLine = function(PRS, Width)
 {

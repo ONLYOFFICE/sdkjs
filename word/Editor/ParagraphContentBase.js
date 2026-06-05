@@ -375,7 +375,7 @@ CParagraphContentBase.prototype.GetContentWidthInRange = function(oStartPos, oEn
 CParagraphContentBase.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _CurRange)
 {
 };
-CParagraphContentBase.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
+CParagraphContentBase.prototype.recalculateRangeWidth = function(widthState)
 {
 };
 CParagraphContentBase.prototype.recalculateRangeAlign = function(alignState)
@@ -1097,7 +1097,18 @@ CParagraphContentWithContentBase.prototype.protected_GetRangesCount = function(L
     else
         return (this.Lines[1 + LineIndex + 1] - this.Lines[1 + LineIndex]) / 2;
 };
-
+CParagraphContentWithContentBase.prototype.getRangeStartPos = function(line, range)
+{
+	let _line  = line - this.StartLine;
+	let _range = _line ? range : range - this.StartRange;
+	return this.protected_GetRangeStartPos(_line, _range);
+};
+CParagraphContentWithContentBase.prototype.getRangeEndPos = function(line, range)
+{
+	let _line  = line - this.StartLine;
+	let _range = _line ? range : range - this.StartRange;
+	return this.protected_GetRangeEndPos(_line, _range);
+};
 CParagraphContentWithContentBase.prototype.getRangePos = function(line, range)
 {
 	let _line  = line - this.StartLine;
@@ -2821,30 +2832,22 @@ CParagraphContentWithParagraphLikeContent.prototype.Recalculate_LineMetrics = fu
         this.Content[CurPos].Recalculate_LineMetrics(PRS, ParaPr, _CurLine, _CurRange);
     }
 };
-CParagraphContentWithParagraphLikeContent.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
+CParagraphContentWithParagraphLikeContent.prototype.recalculateRangeWidth = function(widthState)
 {
-    var CurLine = _CurLine - this.StartLine;
-    var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
-
-    var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-
-    for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
-    {
-        this.Content[CurPos].Recalculate_Range_Width( PRSC, _CurLine, _CurRange );
-    }
+	let startPos = this.getRangeStartPos(widthState.CurLine, widthState.CurRange);
+	let endPos   = this.getRangeEndPos(widthState.CurLine, widthState.CurRange);
+	for (let pos = startPos; pos <= endPos; ++pos)
+	{
+		this.Content[pos].recalculateRangeWidth(widthState);
+	}
 };
 CParagraphContentWithParagraphLikeContent.prototype.recalculateRangeAlign = function(alignState) 
 {
-	var CurLine = alignState.CurLine - this.StartLine;
-	var CurRange = (0 === CurLine ? alignState.CurRange - this.StartRange : alignState.CurRange);
-
-	var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-	var EndPos = this.protected_GetRangeEndPos(CurLine, CurRange);
-
-	for (var CurPos = StartPos; CurPos <= EndPos; CurPos++) 
+	let startPos = this.getRangeStartPos(alignState.CurLine, alignState.CurRange);
+	let endPos   = this.getRangeEndPos(alignState.CurLine, alignState.CurRange);
+	for (let pos = startPos; pos <= endPos; ++pos)
 	{
-		this.Content[CurPos].recalculateRangeAlign(alignState);
+		this.Content[pos].recalculateRangeAlign(alignState);
 	}
 };
 CParagraphContentWithParagraphLikeContent.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)

@@ -1945,20 +1945,12 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
         var StartPos = Range.StartPos;
         var EndPos   = Range.EndPos;
 
-        PRSC.beginRange( this, Range );
-
-		PRSC.Range.W      = 0;
-		PRSC.Range.WEnd   = 0;
-		PRSC.Range.WBreak = 0;
-        if ( true === this.Numbering.checkRange(CurRange, CurLine) )
-            PRSC.Range.W += this.Numbering.WidthVisible;
-
+        PRSC.beginRange(this, Range, CurLine, CurRange);
         for ( var Pos = StartPos; Pos <= EndPos; Pos++ )
         {
             var Item = this.Content[Pos];
-            Item.Recalculate_Range_Width( PRSC, CurLine, CurRange );
+            Item.recalculateRangeWidth(PRSC);
         }
-
         PRSC.endRange();
 
 

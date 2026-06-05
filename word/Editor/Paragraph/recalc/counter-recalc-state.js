@@ -43,6 +43,7 @@
 	 */
 	function CounterRecalcState(wrapState)
 	{
+		AscWord.ParagraphBidiFlow.call(this);
 		this.wrapState   = wrapState;
 		this.Paragraph   = undefined;
 		this.Range       = undefined;
@@ -55,69 +56,96 @@
 		this.Letters     = 0;
 		this.SpacesSkip  = 0;
 		this.LettersSkip = 0;
+		
+		this.CurRange = 0;
+		this.CurLine  = 0;
+		
+		this.SpacesL = 0;
+		this.SpacesR = 0;
 
 		this.ComplexFields = new AscWord.ParagraphComplexFieldStack();
 	}
-	CounterRecalcState.prototype.beginRange = function(paragraph, range)
+	CounterRecalcState.prototype = Object.create(AscWord.ParagraphBidiFlow.prototype);
+	CounterRecalcState.prototype.constructor = CounterRecalcState;
+	
+	CounterRecalcState.prototype.beginRange = function(paragraph, range, lineNum, rangeNum)
 	{
 		this.Paragraph   = paragraph;
 		this.Range       = range;
 		this.Word        = false;
 		this.SpaceLen    = 0;
 		this.SpacesCount = 0;
+		
+		this.CurRange = rangeNum;
+		this.CurLine  = lineNum;
 
 		this.Words       = 0;
 		this.Spaces      = 0;
 		this.Letters     = 0;
 		this.SpacesSkip  = 0;
 		this.LettersSkip = 0;
-
+		
+		this.SpacesL = 0;
+		this.SpacesR = 0;
+		
 		this.ParaEnd   = false;
 		this.LineBreak = false;
+		
+		this.Range.W      = 0;
+		this.Range.WEnd   = 0;
+		this.Range.WBreak = 0;
+		
+		if (this.Paragraph.Numbering.checkRange(this.CurRange, this.CurLine))
+			this.Range.W += this.Paragraph.Numbering.WidthVisible;
+		
+		this.bidiFlow.begin();
 	};
 	CounterRecalcState.prototype.endRange = function()
 	{
+		this.bidiFlow.end();
+		
+		this.SpacesL = this.SpacesSkip;
+		this.SpacesR = this.SpacesCount;
 	};
-	/**
-	 * @param {AscWord.CRunElementBase} element
-	 * @param {AscWord.CRun} run
-	 */
 	CounterRecalcState.prototype.handleRunElement = function(element, run)
 	{
 		let type = element.Type;
-
+		if (this.ComplexFields.isHiddenFieldContent() && para_End !== type && para_FieldChar !== type)
+			return;
+		
+		let isHiddenCFPart = this.ComplexFields.isHiddenComplexFieldPart();
+		if (isHiddenCFPart && para_End !== type && para_InstrText !== type && para_FieldChar !== type)
+			return;
+		
 		if (para_FieldChar === type)
 		{
 			if (this.isFastRecalculation())
 				this.ComplexFields.processFieldChar(element);
 			else
 				this.ComplexFields.processFieldCharAndCollectComplexField(element);
-
-			if (element.IsVisual())
-			{
-				this.Words++;
-				this.Range.W += this.SpaceLen;
-
-				if (this.Words > 1)
-					this.Spaces += this.SpacesCount;
-				else
-					this.SpacesSkip += this.SpacesCount;
-
-				this.Word        = false;
-				this.SpacesCount = 0;
-				this.SpaceLen    = 0;
-				this.Range.W += element.GetWidth();
-			}
-			return;
 		}
-
-		if (this.ComplexFields.isHiddenFieldContent() && para_End !== type)
-			return;
 		
+		this.bidiFlow.add([para_RunBase, element, run], element.getBidiType());
+	};
+	CounterRecalcState.prototype.handleParaMath = function(paraMath)
+	{
+		this.bidiFlow.add([para_Math, paraMath], paraMath.getBidiType());
+	};
+	CounterRecalcState.prototype.handleMathBase = function(mathBase)
+	{
+		this.bidiFlow.add([para_Math_Composition, mathBase], mathBase.getBidiType());
+	};
+	/**
+	 * @param {AscWord.CRunElementBase} element
+	 * @param {AscWord.CRun} run
+	 */
+	CounterRecalcState.prototype.handleBidiFlowRunElement = function(data, direction)
+	{
+		let element = data[1];
+		let run     = data[2];
+		
+		let type = element.Type;
 		let isHiddenCFPart = this.ComplexFields.isHiddenComplexFieldPart();
-		if (isHiddenCFPart && para_End !== type && para_InstrText !== type)
-			return;
-		
 		if (!isHiddenCFPart && para_InstrText === type)
 			type = para_Text;
 		
@@ -260,7 +288,47 @@
 				this.ComplexFields.processInstruction(element);
 				break;
 			}
+			case para_FieldChar:
+			{
+				if (!element.IsVisual())
+					break;
+				
+				this.Words++;
+				this.Range.W += this.SpaceLen;
+
+				if (this.Words > 1)
+					this.Spaces += this.SpacesCount;
+				else
+					this.SpacesSkip += this.SpacesCount;
+
+				this.Word        = false;
+				this.SpacesCount = 0;
+				this.SpaceLen    = 0;
+				this.Range.W += element.GetWidth();
+				
+				break;
+			}
 		}
+	};
+	CounterRecalcState.prototype.handleBidiFlowParaMath = function(data, direction)
+	{
+		let paraMath = data[1];
+		
+		let spaceLen    = this.SpaceLen;
+		let breakBefore = paraMath.Is_BrkBinBefore();
+		
+		paraMath.Root.UpdateOperators(this.CurLine, this.CurRange, !!breakBefore, !breakBefore);
+		paraMath.Root.recalculateRangeWidth(this);
+
+		this.Range.W        += this.SpaceLen - spaceLen;
+		this.Range.SpaceLen = spaceLen;
+
+		this.Words++;
+	};
+	CounterRecalcState.prototype.handleBidiFlowMathBase = function(data, direction)
+	{
+		let mathBase = data[1];
+		mathBase._recalculateRangeWidth(this);
 	};
 	CounterRecalcState.prototype.isFastRecalculation = function()
 	{

@@ -1107,48 +1107,48 @@ CDegreeSubSup.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
         PRS.bContainCompareOper = bContainCompareOper;
     }
 };
-CDegreeSubSup.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
+CDegreeSubSup.prototype.recalculateRangeWidth = function(widthState)
 {
     if(this.bOneLine == true)
     {
-        CDegreeSubSupBase.prototype.Recalculate_Range_Width.call(this, PRSC, _CurLine, _CurRange);
+        CDegreeSubSupBase.prototype.recalculateRangeWidth.call(this, widthState);
     }
     else
     {
-        var CurLine = _CurLine - this.StartLine;
-        var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
+        var CurLine = widthState.CurLine - this.StartLine;
+        var CurRange = ( 0 === CurLine ? widthState.CurRange - this.StartRange : widthState.CurRange );
 
-        var RangeW = PRSC.Range.W;
+        var RangeW = widthState.Range.W;
 
         if(CurLine == 0 && CurRange == 0)
         {
-            PRSC.Range.W += this.BrGapLeft;
+            widthState.Range.W += this.BrGapLeft;
         }
 
         if(this.Pr.type == DEGREE_SubSup) // baseContent, iters
-            this.baseContent.Recalculate_Range_Width(PRSC, _CurLine, _CurRange);
+            this.baseContent.recalculateRangeWidth(widthState);
 
-        if(this.Need_Iters(_CurLine, _CurRange))
+        if(this.Need_Iters(widthState.CurLine, widthState.CurRange))
         {
-            var RangeW2 = PRSC.Range.W;
+            var RangeW2 = widthState.Range.W;
 
-            this.iters.iterUp.Recalculate_Range_Width(PRSC, _CurLine, _CurRange);
-            this.iters.iterDn.Recalculate_Range_Width(PRSC, _CurLine, _CurRange);
+            this.iters.iterUp.recalculateRangeWidth(widthState);
+            this.iters.iterDn.recalculateRangeWidth(widthState);
 
             this.iters.Bounds.SetWidth(0, 0, this.iters.size.width);
 
-            PRSC.Range.W = RangeW2 + this.iters.size.width + this.dW;
+            widthState.Range.W = RangeW2 + this.iters.size.width + this.dW;
         }
 
         if(this.Pr.type == DEGREE_PreSubSup) // iters, baseContent
-            this.baseContent.Recalculate_Range_Width(PRSC, _CurLine, _CurRange);
+            this.baseContent.recalculateRangeWidth(widthState);
 
-        if(this.baseContent.Math_Is_End(_CurLine, _CurRange))
+        if(this.baseContent.Math_Is_End(widthState.CurLine, widthState.CurRange))
         {
-            PRSC.Range.W += this.BrGapRight;
+            widthState.Range.W += this.BrGapRight;
         }
 
-        this.Bounds.SetWidth(CurLine, CurRange, PRSC.Range.W - RangeW);
+        this.Bounds.SetWidth(CurLine, CurRange, widthState.Range.W - RangeW);
     }
 };
 CDegreeSubSup.prototype.setPosition = function(pos, PosInfo)

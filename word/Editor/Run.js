@@ -5280,16 +5280,14 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 	}
 };
 
-ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
+ParaRun.prototype.recalculateRangeWidth = function(widthState)
 {
-	var CurLine  = _CurLine - this.StartLine;
-	var CurRange = (0 === CurLine ? _CurRange - this.StartRange : _CurRange);
-	var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-	var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-	for (var Pos = StartPos; Pos < EndPos; Pos++)
+	let startPos = this.getRangeStartPos(widthState.CurLine, widthState.CurRange);
+	let endPos   = this.getRangeEndPos(widthState.CurLine, widthState.CurRange);
+	for (let pos = startPos; pos < endPos; ++pos)
 	{
-		var Item = this.private_CheckInstrText(this.Content[Pos]);
-		PRSC.handleRunElement(Item, this);
+		let item = this.private_CheckInstrText(this.Content[pos]);
+		widthState.handleRunElement(item, this);
 	}
 };
 

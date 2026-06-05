@@ -210,7 +210,7 @@ function (window, undefined) {
 	ParaComment.prototype.Recalculate_LineMetrics = function (PRS, ParaPr, _CurLine, _CurRange) {
 	};
 
-	ParaComment.prototype.Recalculate_Range_Width = function (PRSC, _CurLine, _CurRange) {
+	ParaComment.prototype.recalculateRangeWidth = function (widthState) {
 	};
 
 	ParaComment.prototype.recalculateRangeAlign = function (alignState) {
