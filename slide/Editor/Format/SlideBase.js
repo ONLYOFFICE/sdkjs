@@ -34,8 +34,8 @@
 
 (function () {
 	function SlideBase() {
-		AscFormat.CBaseFormatObject.call(this);
 		this.cSld = new AscFormat.CSld(this);
+		AscFormat.CBaseFormatObject.call(this);
 		this.clrMap = null;
 		this.presentation = editor && editor.WordControl && editor.WordControl.m_oLogicDocument;
 		this.graphicObjects = new AscFormat.DrawingObjectsController(this);
