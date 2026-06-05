@@ -312,6 +312,8 @@
 		
 		let w = element.GetWidthVisible();
 		
+		flags = this.updateFlags(element, flags);
+		
 		this.handleRun(run);
 
 		if (this.Graphics.m_bIsTextDrawer) {
@@ -568,8 +570,24 @@
 			flags |= FLAG_COMPLEX_FIELD;
 		if (this.permRanges.length > 0)
 			flags |= FLAG_PERM_RANGE;
+		if (this.DrawComments && this.comments.length > 0)
+			flags |= FLAG_COMMENT;
+		if (this.DrawColl && isCollaboration)
+			flags |= FLAG_COLLABORATION;
 		
-		if (element.Type !== para_End)
+		return flags;
+	};
+	ParagraphHighlightDrawState.prototype.updateFlags = function(element, f)
+	{
+		let flags = 0;
+		if (f & FLAG_SEARCH)
+			flags |= FLAG_SEARCH;
+		if (f & FLAG_COMPLEX_FIELD)
+			flags |= FLAG_COMPLEX_FIELD;
+		if (f & FLAG_PERM_RANGE)
+			flags |= FLAG_PERM_RANGE;
+		
+		if (element.Type !== para_End && element.Type !== para_Space)
 			flags |= FLAG_SHD;
 		
 		switch (element.Type)
@@ -591,14 +609,14 @@
 			case para_EndnoteReference:
 			case para_EndnoteRef:
 			{
-				if (this.DrawComments && this.comments.length > 0)
+				if (f & FLAG_COMMENT)
 					flags |= FLAG_COMMENT;
 				else
 					flags |= FLAG_HIGHLIGHT;
 				
-				if (this.DrawSearch && this.searchCounter > 0)
+				if (f & FLAG_SEARCH)
 					flags |= FLAG_SEARCH;
-				else if (this.DrawColl && isCollaboration)
+				else if (f & FLAG_COLLABORATION)
 					flags |= FLAG_COLLABORATION;
 				
 				break;
@@ -611,7 +629,9 @@
 				}
 				else if (this.spaces)
 				{
-					if (this.DrawComments && this.comments.length > 0)
+					flags |= FLAG_SHD;
+					
+					if (f & FLAG_COMMENT)
 						flags |= FLAG_COMMENT;
 					else
 						flags |= FLAG_HIGHLIGHT;
@@ -619,16 +639,16 @@
 					--this.spaces;
 				}
 				
-				if (this.DrawSearch && this.searchCounter > 0)
+				if (f & FLAG_SEARCH)
 					flags |= FLAG_SEARCH;
-				else if (this.DrawColl && isCollaboration)
+				else if (f & FLAG_COLLABORATION)
 					flags |= FLAG_COLLABORATION;
 				
 				break;
 			}
 			case para_End:
 			{
-				if (this.DrawColl && isCollaboration)
+				if (f & FLAG_COLLABORATION)
 					flags |= FLAG_COLLABORATION;
 				
 				break;
@@ -637,14 +657,14 @@
 			{
 				if (element.IsVisual())
 				{
-					if (this.DrawComments && this.comments.length > 0)
+					if (f & FLAG_COMMENT)
 						flags |= FLAG_COMMENT;
 					else
 						flags |= FLAG_HIGHLIGHT;
 					
-					if (this.DrawSearch && this.searchCounter > 0)
+					if (f & FLAG_SEARCH)
 						flags |= FLAG_SEARCH;
-					else if (this.DrawColl && isCollaboration)
+					else if (f & FLAG_COLLABORATION)
 						flags |= FLAG_COLLABORATION;
 					
 					if (element.IsFormField())
