@@ -1052,7 +1052,7 @@
 		if (!(oContent.Layouts.length > 0 || oContent.Masters.length > 0)) {
 			return false;
 		}
-		const presentation = this.getPresention();
+		const presentation = this.getPresentation();
 		const bChangeSize = kw !== 1 || kh !== 1;
 		for (let i = 0; i < oContent.Layouts.length; ++i) {
 			const oLayout = oContent.Layouts[i];

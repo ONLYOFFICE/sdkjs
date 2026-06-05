@@ -157,7 +157,7 @@
 
 			"slide/Editor/copy/content-trimmer.js",
 			"slide/Editor/copy/content-formatter.js",
-			"slide/Editor/copy/slide-collector.js",
+			"slide/Editor/copy/collectors.js",
 			"slide/Editor/copy/text-image-builder.js",
 			"slide/Editor/copy/selected-content-builder.js",
 			"slide/Editor/copy/selected-content-manager.js",

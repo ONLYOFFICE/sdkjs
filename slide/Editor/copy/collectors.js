@@ -202,10 +202,57 @@
 			} else {
 				this.collectLayouts(selectedSlides);
 			}
+			this.fillIndexes();
+			this.fillEndFormatting();
 		}
 	};
+
+	function collectSelectedObjects(spTree, collectArray, isRecursive, idMap, isSourceFormatting) {
+		const props = new AscFormat.CCopyObjectProperties();
+		props.idMap = idMap;
+		props.bSaveSourceFormatting = isSourceFormatting;
+		for (let i = 0; i < spTree.length; ++i) {
+			const shape = spTree[i];
+			if (shape.selected) {
+				let copy;
+				if (shape.isGroupObject()) {
+					copy = shape.copy(props);
+					copy.setParent(shape.parent);
+				} else {
+					if (!isSourceFormatting) {
+						copy = shape.copy(props);
+						copy.setParent(shape.parent);
+						if (shape.isPlaceholder && shape.isPlaceholder()) {
+							copy.x = shape.x;
+							copy.y = shape.y;
+							copy.extX = shape.extX;
+							copy.extY = shape.extY;
+							copy.rot = shape.rot;
+							AscFormat.CheckSpPrXfrm(copy, true);
+						}
+						copy.convertFromSmartArt(true);
+					} else {
+						copy = shape.getCopyWithSourceFormatting();
+						copy.convertFromSmartArt(true);
+						copy.setParent(shape.parent);
+					}
+
+				}
+
+				collectArray.push(new DrawingCopyObject(copy, shape.x, shape.y, shape.extX, shape.extY, shape.getBase64Img()));
+				if (AscCommon.isRealObject(idMap)) {
+					idMap[shape.Id] = copy.Id;
+				}
+			}
+			if (isRecursive && shape.isGroupObject()) {
+				collectSelectedObjects(shape.spTree, collectArray, isRecursive, idMap, isSourceFormatting);
+			}
+		}
+	}
 
 	window["AscCommonSlide"] = window["AscCommonSlide"] || {};
 	window["AscCommonSlide"].MasterSlideCollector = MasterSlideCollector;
 	window["AscCommonSlide"].NormalSlidesCollector = NormalSlidesCollector;
+	window["AscCommonSlide"].NormalSlidesCollector = NormalSlidesCollector;
+	window["AscCommonSlide"].collectSelectedObjects = collectSelectedObjects;
 })();

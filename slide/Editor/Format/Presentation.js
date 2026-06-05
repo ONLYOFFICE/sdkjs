@@ -7309,7 +7309,7 @@ CPresentation.prototype.GetSelectedContent = function () {
 							var bRecursive = isRealObject(oController.selection.groupSelection);
 							var aSpTree = bRecursive ? oController.selection.groupSelection.spTree : oSlide.cSld.spTree;
 							oIdMap = {};
-							collectSelectedObjects(aSpTree, ret.Drawings, bRecursive, oIdMap);
+							AscCommonSlide.collectSelectedObjects(aSpTree, ret.Drawings, bRecursive, oIdMap);
 							AscFormat.fResetConnectorsIds(ret.Drawings, oIdMap);
 						}
 					}
@@ -7409,10 +7409,9 @@ CPresentation.prototype.internalResetElementsFontSize = function (aContent) {
  **/
 CPresentation.prototype.GetSelectedContent2 = function () {
 	return AscFormat.ExecuteNoHistory(function () {
-		var aRet = [], oIdMap;
-		var oSourceFormattingContent = new PresentationSelectedContent();
-		var oEndFormattingContent = new PresentationSelectedContent();
-		var oImagesSelectedContent = new PresentationSelectedContent();
+		const oSourceFormattingContent = new PresentationSelectedContent();
+		const oEndFormattingContent = new PresentationSelectedContent();
+		const oImagesSelectedContent = new PresentationSelectedContent();
 
 		oSourceFormattingContent.PresentationWidth = this.GetWidthMM();
 		oSourceFormattingContent.PresentationHeight = this.GetHeightMM();
@@ -7420,392 +7419,37 @@ CPresentation.prototype.GetSelectedContent2 = function () {
 		oEndFormattingContent.PresentationHeight = this.GetHeightMM();
 		oImagesSelectedContent.PresentationWidth = this.GetWidthMM();
 		oImagesSelectedContent.PresentationHeight = this.GetHeightMM();
-		var oSelectedContent, oDocContent, oController, oTargetTextObject, oGraphicFrame, oTable, oImage, dImageWidth,
-			dImageHeight, bNeedSelectAll,
-			oDocContentForDraw, oParagraph, aParagraphs, dMaxWidth, oCanvas, oContext, oGraphics,
-			dContentHeight, nContentIndents = 30, bOldShowParaMarks, oSelector;
-		var i, j;
 		if (this.Slides.length > 0) {
-			var FocusObjectType = this.GetFocusObjType();
+			let selectedContentManager;
+			const FocusObjectType = this.GetFocusObjType();
 			switch (FocusObjectType) {
 				case FOCUS_OBJECT_MAIN: {
-					oController = this.GetCurrentController();
-					oSelector = oController.selection.groupSelection ? oController.selection.groupSelection : oController;
-					oTargetTextObject = AscFormat.getTargetTextObject(oController);
-					bNeedSelectAll = false;
-					if (!oTargetTextObject) {
-						if (oSelector.selection.chartSelection && oSelector.selection.chartSelection.selection.title) {
-							oDocContent = oSelector.selection.chartSelection.selection.title.getDocContent();
-							if (oDocContent) {
-								bNeedSelectAll = true;
-							}
-						}
-					}
-					if (oTargetTextObject) {
-						if (!oDocContent) {
-							oDocContent = oController.getTargetDocContent();
-						}
-						if (oTargetTextObject.getObjectType() === AscDFH.historyitem_type_GraphicFrame && !oDocContent) {
-							if (oTargetTextObject.graphicObject) {
-								oGraphicFrame = oTargetTextObject.copy(undefined);
-								oSelectedContent = new AscCommonWord.CSelectedContent();
-								oTargetTextObject.graphicObject.GetSelectedContent(oSelectedContent);
-								oTable = oSelectedContent.Elements[0].Element;
-								oGraphicFrame.setGraphicObject(oTable);
-								oTable.Set_Parent(oGraphicFrame);
-								oEndFormattingContent.Drawings.push(new DrawingCopyObject(oGraphicFrame, oTargetTextObject.x, oTargetTextObject.y, oTargetTextObject.extX, oTargetTextObject.extY, oTargetTextObject.getBase64Img()));
-								oGraphicFrame.parent = oTargetTextObject.parent;
-								oGraphicFrame.bDeleted = false;
-								oGraphicFrame.recalculate();
-								oSourceFormattingContent.Drawings.push(new DrawingCopyObject(oGraphicFrame.getCopyWithSourceFormatting(), oTargetTextObject.x, oTargetTextObject.y, oTargetTextObject.extX, oTargetTextObject.extY, oTargetTextObject.getBase64Img()));
-								oImage = oController.createImage(oGraphicFrame.getBase64Img(), 0, 0, oGraphicFrame.extX, oGraphicFrame.extY);
-								oImagesSelectedContent.Drawings.push(new DrawingCopyObject(oImage, 0, 0, oTargetTextObject.extX, oTargetTextObject.extY, oTargetTextObject.getBase64Img()));
-								oGraphicFrame.parent = null;
-								oGraphicFrame.bDeleted = true;
-							}
-						} else {
-							if (oDocContent) {
-								if (bNeedSelectAll) {
-									oDocContent.SetApplyToAll(true);
-								}
-								oSelectedContent = oDocContent.GetSelectedContent();
-								oEndFormattingContent.DocContent = oSelectedContent;
-								for (i = 0; i < oSelectedContent.Elements.length; ++i) {
-									var oElem = oSelectedContent.Elements[i].Element;
-									if (oElem.GetType() === AscCommonWord.type_Paragraph) {
-										if (oElem.Pr && oElem.Pr.DefaultRunPr && AscFormat.isRealNumber(oElem.Pr.DefaultRunPr.FontSize)) {
-											var oPr = oElem.Pr.Copy();
-											oPr.DefaultRunPr.FontSize = undefined;
-											oElem.Set_Pr(oPr);
-										}
-										this.internalResetElementsFontSize(oElem.Content);
-									}
-								}
-								oSelectedContent = oDocContent.GetSelectedContent();
-								var aContent = [];
-								for (i = 0; i < oSelectedContent.Elements.length; ++i) {
-									oParagraph = oSelectedContent.Elements[i].Element;
-									oParagraph.Parent = oDocContent;
-									oParagraph.private_CompileParaPr();
-									aContent.push(oParagraph);
-								}
-								AscFormat.SaveContentSourceFormatting(aContent, aContent, oDocContent.Get_Theme(), oDocContent.Get_ColorMap());
-								oSourceFormattingContent.DocContent = oSelectedContent;
-
-								var oSelectedContent2 = oDocContent.GetSelectedContent();
-								aContent = [];
-								for (i = 0; i < oSelectedContent2.Elements.length; ++i) {
-									oParagraph = oSelectedContent2.Elements[i].Element;
-									oParagraph.Parent = oDocContent;
-									oParagraph.private_CompileParaPr();
-									aContent.push(oParagraph);
-								}
-								AscFormat.SaveContentSourceFormatting(aContent, aContent, oDocContent.Get_Theme(), oDocContent.Get_ColorMap());
-
-								if (bNeedSelectAll) {
-									oDocContent.SetApplyToAll(false);
-								}
-								if (oSelectedContent2.Elements.length > 0) {
-									oDocContentForDraw = new AscFormat.CDrawingDocContent(oDocContent.Parent, oDocContent.DrawingDocument, 0, 0, 20000, 20000);
-									oSelectedContent2.ReplaceContent(oDocContentForDraw);
-
-									var oCheckParagraph, aRuns;
-									for (i = oDocContentForDraw.Content.length - 1; i > -1; --i) {
-										oCheckParagraph = oDocContentForDraw.Content[i];
-										if (!oCheckParagraph.IsEmpty()) {
-											aRuns = oCheckParagraph.Content;
-											if (aRuns.length > 1) {
-												for (j = aRuns.length - 2; j > -1; --j) {
-													var oRun = aRuns[j];
-													if (oRun.Type === para_Run) {
-														for (var k = oRun.Content.length - 1; k > -1; --k) {
-															if (oRun.Content[k].Type === para_NewLine) {
-																oRun.Content.splice(k, 1);
-															} else {
-																break;
-															}
-														}
-														if (oRun.Content.length === 0) {
-															aRuns.splice(j, 1);
-														} else {
-															break;
-														}
-													}
-												}
-											}
-										}
-										if (oCheckParagraph.IsEmpty()) {
-											oDocContentForDraw.Internal_Content_Remove(i, 1, false);
-										} else {
-
-											break;
-										}
-									}
-									for (i = 0; i < oDocContentForDraw.Content.length; ++i) {
-										oCheckParagraph = oDocContentForDraw.Content[i];
-										if (!oCheckParagraph.IsEmpty()) {
-											aRuns = oCheckParagraph.Content;
-											if (aRuns.length > 1) {
-												for (j = 0; j < aRuns.length - 1; ++j) {
-													var oRun = aRuns[j];
-													if (oRun.Type === para_Run) {
-														for (var k = 0; k < oRun.Content.length; ++k) {
-															if (oRun.Content[k].Type === para_NewLine) {
-																oRun.Content.splice(k, 1);
-																k--;
-															} else {
-																break;
-															}
-														}
-														if (oRun.Content.length === 0) {
-															aRuns.splice(j, 1);
-															j--;
-														} else {
-															break;
-														}
-													}
-												}
-											}
-										}
-										if (oCheckParagraph.IsEmpty()) {
-											oDocContentForDraw.Internal_Content_Remove(i, 1, false);
-											i--;
-										} else {
-
-											break;
-										}
-									}
-									if (oDocContentForDraw.Content.length > 0) {
-
-										oDocContentForDraw.Reset(0, 0, 20000, 20000);
-										oDocContentForDraw.Recalculate_Page(0, true);
-										aParagraphs = oDocContentForDraw.Content;
-										dMaxWidth = 0;
-										for (i = 0; i < aParagraphs.length; ++i) {
-											oParagraph = aParagraphs[i];
-											for (j = 0; j < oParagraph.Lines.length; ++j) {
-												if (oParagraph.Lines[j].Ranges[0].W > dMaxWidth) {
-													dMaxWidth = oParagraph.Lines[j].Ranges[0].W;
-												}
-											}
-										}
-										dMaxWidth += 1;
-
-
-										oDocContentForDraw.Reset(0, 0, dMaxWidth, 20000);
-										oDocContentForDraw.Recalculate_Page(0, true);
-										dContentHeight = oDocContentForDraw.GetSummaryHeight();
-
-										var oTextWarpObject = null;
-										if (oDocContentForDraw.Parent && oDocContentForDraw.Parent.parent && oDocContentForDraw.Parent.parent instanceof AscFormat.CShape) {
-											oTextWarpObject = oDocContentForDraw.Parent.parent.checkTextWarp(oDocContentForDraw, oDocContentForDraw.Parent.parent.getBodyPr(), dMaxWidth, dContentHeight, true, false);
-										}
-
-
-										oCanvas = document.createElement('canvas');
-										dImageWidth = dMaxWidth;
-										dImageHeight = dContentHeight;
-										oCanvas.width = ((dImageWidth * AscCommon.g_dKoef_mm_to_pix) + 2 * nContentIndents + 0.5) >> 0;
-										oCanvas.height = ((dImageHeight * AscCommon.g_dKoef_mm_to_pix) + 2 * nContentIndents + 0.5) >> 0;
-										//if (AscCommon.AscBrowser.isRetina) {
-										//    oCanvas.width <<= 1;
-										//    oCanvas.height <<= 1;
-										//}
-
-										var sImageUrl;
-										if (!window["NATIVE_EDITOR_ENJINE"]) {
-											oContext = oCanvas.getContext('2d');
-											oGraphics = new AscCommon.CGraphics();
-
-											oGraphics.init(oContext, oCanvas.width, oCanvas.height, dImageWidth + 2.0 * nContentIndents / AscCommon.g_dKoef_mm_to_pix, dImageHeight + 2.0 * nContentIndents / AscCommon.g_dKoef_mm_to_pix);
-											oGraphics.m_oFontManager = AscCommon.g_fontManager;
-											oGraphics.m_oCoordTransform.tx = nContentIndents;
-											oGraphics.m_oCoordTransform.ty = nContentIndents;
-											oGraphics.transform(1, 0, 0, 1, 0, 0);
-
-											if (oTextWarpObject && oTextWarpObject.oTxWarpStructNoTransform) {
-												oTextWarpObject.oTxWarpStructNoTransform.draw(oGraphics, oDocContentForDraw.Parent.parent.Get_Theme(), oDocContentForDraw.Parent.parent.Get_ColorMap());
-											} else {
-
-												bOldShowParaMarks = this.Api.ShowParaMarks;
-												this.Api.ShowParaMarks = false;
-												oDocContentForDraw.Draw(0, oGraphics);
-												this.Api.ShowParaMarks = bOldShowParaMarks;
-											}
-											sImageUrl = oCanvas.toDataURL("image/png");
-										} else {
-											sImageUrl = "";
-										}
-
-										oImage = oController.createImage(sImageUrl, 0, 0, oCanvas.width * AscCommon.g_dKoef_pix_to_mm, oCanvas.height * AscCommon.g_dKoef_pix_to_mm);
-										oImagesSelectedContent.Drawings.push(new DrawingCopyObject(oImage, 0, 0, dImageWidth, dImageHeight, sImageUrl));
-									}
-								}
-							}
-						}
+					const oController = this.GetCurrentController();
+					const oTargetTextObject = AscFormat.getTargetTextObject(oController);
+					const oDocContent = oController.getTargetDocContent();
+					if (oTargetTextObject && oTargetTextObject.getObjectType() === AscDFH.historyitem_type_GraphicFrame && !oDocContent) {
+						selectedContentManager = new AscCommonSlide.GraphicFrameSelectedContentManager(this, oSourceFormattingContent, oEndFormattingContent, oImagesSelectedContent, oTargetTextObject);
+					} else if (oDocContent) {
+						selectedContentManager = new AscCommonSlide.DocSelectedContentManager(this, oSourceFormattingContent, oEndFormattingContent, oImagesSelectedContent, oDocContent);
 					} else {
-						var bRecursive = isRealObject(oController.selection.groupSelection);
-						var aSpTree = bRecursive ? oController.selection.groupSelection.spTree : this.GetCurrentSlide().cSld.spTree;
-						oIdMap = {};
-
-						var oTheme = oController.getTheme();
-						if (oTheme) {
-							oEndFormattingContent.ThemeName = oTheme.name;
-							oSourceFormattingContent.ThemeName = oTheme.name;
-							oImagesSelectedContent.ThemeName = oTheme.name;
-						}
-						collectSelectedObjects(aSpTree, oEndFormattingContent.Drawings, bRecursive, oIdMap);
-						AscFormat.fResetConnectorsIds(oEndFormattingContent.Drawings, oIdMap);
-						oIdMap = {};
-						collectSelectedObjects(aSpTree, oSourceFormattingContent.Drawings, bRecursive, oIdMap, true);
-						AscFormat.fResetConnectorsIds(oSourceFormattingContent.Drawings, oIdMap);
-						let oImageData = oController.getSelectionImageData();
-						if (oImageData) {
-							let oBounds = oImageData.bounds;
-							let sImageUrl = oImageData.src;
-							oImage = oController.createImage(sImageUrl, oBounds.min_x * AscCommon.g_dKoef_pix_to_mm, oBounds.min_y * AscCommon.g_dKoef_pix_to_mm, (oImageData.width) * AscCommon.g_dKoef_pix_to_mm, (oImageData.height) * AscCommon.g_dKoef_pix_to_mm);
-							oImagesSelectedContent.Drawings.push(new DrawingCopyObject(oImage, 0, 0, (oImageData.width) * AscCommon.g_dKoef_pix_to_mm, (oImageData.height) * AscCommon.g_dKoef_pix_to_mm, sImageUrl));
-						}
+						selectedContentManager = new AscCommonSlide.ShapeSelectedContentManager(this, oSourceFormattingContent, oEndFormattingContent, oImagesSelectedContent);
 					}
 					break;
 				}
-				case FOCUS_OBJECT_THUMBNAILS : {
-
-					let oMastersMap = {}, oSlide, oSlideCopy, oLayout, oMaster, oNotesCopy, oNotes;
-					function fAddMaster() {
-						oSourceFormattingContent.Masters.push(oMaster);
-						let aLayouts = oMaster.sldLayoutLst;
-						for (let nLayout = 0; nLayout < aLayouts.length; ++nLayout) {
-							let oCurLayout = aLayouts[nLayout];
-							oSourceFormattingContent.Layouts.push(oCurLayout);
-						}
-						oTheme = oMaster.Theme;
-						oSourceFormattingContent.Themes.push(oTheme);
+				case FOCUS_OBJECT_THUMBNAILS: {
+					if (this.IsFocusOnOutline()) {
+						selectedContentManager = new AscCommonSlide.OutlineSelectedContentManager(this, oSourceFormattingContent, oEndFormattingContent, oImagesSelectedContent)
+					} else {
+						selectedContentManager = new AscCommonSlide.ThumbnailSelectedContentManager(this, oSourceFormattingContent, oEndFormattingContent, oImagesSelectedContent);
 					}
-					if(this.IsSlidePageMode()) {
-						let aSelectedSlidesIdx = this.GetSelectedSlides();
-						for (let nSldIdx = 0; nSldIdx < aSelectedSlidesIdx.length; ++nSldIdx) {
-							oIdMap = {};
-							oSlide = this.Slides[aSelectedSlidesIdx[nSldIdx]];
-							oSlideCopy = oSlide;
-							oLayout = oSlide.Layout;
-							oMaster = oLayout.Master;
-							let sMasterId = oMaster.Get_Id();
-							if (!oMastersMap[sMasterId]) {
-								oMastersMap[sMasterId] = oMaster;
-								fAddMaster();
-							}
-							oSourceFormattingContent.SlideObjects.push(oSlideCopy);
-							let oEndFmtSld = oSlideCopy;
-							if (oEndFmtSld.cSld && oEndFmtSld.cSld.Bg) {
-								oEndFmtSld = oEndFmtSld.createDuplicate();
-								oEndFmtSld.changeBackground(null);
-							}
-							oEndFormattingContent.SlideObjects.push(oEndFmtSld);
-
-							if (nSldIdx === 0) {
-								let sRasterImageId = oSlide.getBase64Img();
-								oImage = AscFormat.DrawingObjectsController.prototype.createImage(sRasterImageId, 0, 0, this.GetWidthMM() / 2.0, this.GetHeightMM() / 2.0);
-								oImagesSelectedContent.Drawings.push(new DrawingCopyObject(oImage, 0, 0, this.GetWidthMM() / 2.0, this.GetHeightMM() / 2.0, sRasterImageId));
-							}
-							oNotes = null;
-							if (oSlide.notes) {
-								oNotes = oSlide.notes;
-								oNotesCopy = oNotes;//.createDuplicate();
-								oSourceFormattingContent.Notes.push(oNotesCopy);
-								oEndFormattingContent.Notes.push(oNotesCopy);
-								for (j = 0; j < oSourceFormattingContent.NotesMasters.length; ++j) {
-									if (oSourceFormattingContent.NotesMasters[j] === oNotes.Master) {
-										oSourceFormattingContent.NotesMastersIndexes.push(j);
-										oEndFormattingContent.NotesMastersIndexes.push(j);
-										break;
-									}
-								}
-								if (j === oSourceFormattingContent.NotesMasters.length) {
-									oSourceFormattingContent.NotesMastersIndexes.push(j);
-									oSourceFormattingContent.NotesMasters.push(oNotes.Master);
-									oSourceFormattingContent.NotesThemes.push(oNotes.Master.Theme);
-									oEndFormattingContent.NotesMastersIndexes.push(j);
-									oEndFormattingContent.NotesMasters.push(oNotes.Master);
-									oEndFormattingContent.NotesThemes.push(oNotes.Master.Theme);
-								}
-							} else {
-								oSourceFormattingContent.Notes.push(null);
-								oSourceFormattingContent.NotesMastersIndexes.push(-1);
-								oEndFormattingContent.Notes.push(null);
-								oEndFormattingContent.NotesMastersIndexes.push(-1);
-							}
-						}
-
-
-					}
-					else {
-						let aSelectedSlides = this.GetSelectedSlideObjects();
-						if(aSelectedSlides.length > 0) {
-							let oFirstSlide = aSelectedSlides[0];
-							if(oFirstSlide.isMaster()) {
-								for(let nIdx = 0; nIdx < aSelectedSlides.length; ++nIdx) {
-									let oSld = aSelectedSlides[nIdx];
-									if(oSld.isMaster()) {
-										oMaster = oSld;
-										fAddMaster();
-									}
-									if (nIdx === 0) {
-										let sRasterImageId = oSld.getBase64Img();
-										oImage = AscFormat.DrawingObjectsController.prototype.createImage(sRasterImageId, 0, 0, this.GetWidthMM() / 2.0, this.GetHeightMM() / 2.0);
-										oImagesSelectedContent.Drawings.push(new DrawingCopyObject(oImage, 0, 0, this.GetWidthMM() / 2.0, this.GetHeightMM() / 2.0, sRasterImageId));
-									}
-								}
-							}
-							else {
-								for(let nIdx = 0; nIdx < aSelectedSlides.length; ++nIdx) {
-									let oSld = aSelectedSlides[nIdx];
-									if(oSld.isLayout()) {
-										oSourceFormattingContent.Layouts.push(oSld);
-									}
-									if (nIdx === 0) {
-										let sRasterImageId = oSld.getBase64Img();
-										oImage = AscFormat.DrawingObjectsController.prototype.createImage(sRasterImageId, 0, 0, this.GetWidthMM() / 2.0, this.GetHeightMM() / 2.0);
-										oImagesSelectedContent.Drawings.push(new DrawingCopyObject(oImage, 0, 0, this.GetWidthMM() / 2.0, this.GetHeightMM() / 2.0, sRasterImageId));
-									}
-								}
-							}
-						}
-					}
-					let aSlides = oSourceFormattingContent.SlideObjects;
-					let aLayouts = oSourceFormattingContent.Layouts;
-					let aMasters = oSourceFormattingContent.Masters;
-					let aThemes = oSourceFormattingContent.Themes;
-					for (let nSldIdx = 0; nSldIdx < aSlides.length; ++nSldIdx) {
-						let oSlide = aSlides[nSldIdx];
-						let oLayout = oSlide.Layout;
-						for (let nIdx = 0; nIdx < aLayouts.length; ++nIdx) {
-							if (aLayouts[nIdx] === oLayout) {
-								oSourceFormattingContent.LayoutsIndexes[nSldIdx] = nIdx;
-								break;
-							}
-						}
-					}
-					for (let nLtIdx = 0; nLtIdx < aLayouts.length; ++nLtIdx) {
-						let oCurLayout = aLayouts[nLtIdx];
-						for (let nIdx = 0; nIdx < aMasters.length; ++nIdx) {
-							if (aMasters[nIdx] === oCurLayout.Master) {
-								oSourceFormattingContent.MastersIndexes[nLtIdx] = nIdx;
-								break;
-							}
-						}
-					}
-					for (let nMasterIdx = 0; nMasterIdx < aMasters.length; ++nMasterIdx) {
-						oSourceFormattingContent.ThemesIndexes[nMasterIdx] = nMasterIdx;
-					}
-					oEndFormattingContent = oSourceFormattingContent;
+					break;
 				}
 			}
+			if (selectedContentManager) {
+				selectedContentManager.fillSelectedContent();
+			}
 		}
-		aRet.push(oEndFormattingContent);
-		aRet.push(oSourceFormattingContent);
-		aRet.push(oImagesSelectedContent);
-		return aRet;
+		return [oEndFormattingContent, oSourceFormattingContent, oImagesSelectedContent];
 	}, this, []);
 };
 
@@ -10840,53 +10484,6 @@ CPresentation.prototype.internalChangeNoteSizes = function (width, height, type)
 	}
 	this.setNotesSz(sldSize);
 };
-function collectSelectedObjects(aSpTree, aCollectArray, bRecursive, oIdMap, bSourceFormatting) {
-	var oSp;
-	var oPr = new AscFormat.CCopyObjectProperties();
-	oPr.idMap = oIdMap;
-	oPr.bSaveSourceFormatting = bSourceFormatting;
-	for (var i = 0; i < aSpTree.length; ++i) {
-		oSp = aSpTree[i];
-		// if(oSp.isEmptyPlaceholder())
-		// {
-		//     continue;
-		// }
-		if (oSp.selected) {
-			var oCopy;
-			if (oSp.isGroupObject()) {
-				oCopy = oSp.copy(oPr);
-				oCopy.setParent(oSp.parent);
-			} else {
-				if (!bSourceFormatting) {
-					oCopy = oSp.copy(oPr);
-					oCopy.setParent(oSp.parent);
-					if (oSp.isPlaceholder && oSp.isPlaceholder()) {
-						oCopy.x = oSp.x;
-						oCopy.y = oSp.y;
-						oCopy.extX = oSp.extX;
-						oCopy.extY = oSp.extY;
-						oCopy.rot = oSp.rot;
-						AscFormat.CheckSpPrXfrm(oCopy, true);
-					}
-					oCopy.convertFromSmartArt(true);
-				} else {
-					oCopy = oSp.getCopyWithSourceFormatting();
-					oCopy.convertFromSmartArt(true);
-					oCopy.setParent(oSp.parent);
-				}
-
-			}
-
-			aCollectArray.push(new DrawingCopyObject(oCopy, oSp.x, oSp.y, oSp.extX, oSp.extY, oSp.getBase64Img()));
-			if (AscCommon.isRealObject(oIdMap)) {
-				oIdMap[oSp.Id] = oCopy.Id;
-			}
-		}
-		if (bRecursive && oSp.isGroupObject()) {
-			collectSelectedObjects(oSp.spTree, aCollectArray, bRecursive, oIdMap, bSourceFormatting);
-		}
-	}
-}
 
 function IdList(name) {
 	AscFormat.CBaseNoIdObject.call(this);

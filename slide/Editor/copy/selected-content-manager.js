@@ -59,21 +59,8 @@
 		return shapeCount;
 	};
 	OutlineSelectedContentManager.prototype.extractTextFromContent = function (docContent) {
-		const presentation = this.presentation;
-		const selectedContentBuilder = new AscCommonSlide.DocSelectedContentBuilder(docContent);
-
-		const endFormatter = new AscCommonSlide.EndContentFormatter(presentation, selectedContentBuilder);
-		this.endFormattingContent.DocContent = endFormatter.getFormattedContent();
-
-		const sourceFormatter = new AscCommonSlide.SourceContentFormatter(presentation, selectedContentBuilder);
-		this.sourceFormattingContent.DocContent = sourceFormatter.getFormattedContent();
-
-		const selectedContentToDraw = sourceFormatter.getFormattedContent();
-		const imageBuilder = new SelectedTextImageBuilder(presentation, docContent);
-		const drawingCopy = imageBuilder.build(selectedContentToDraw);
-		if (drawingCopy) {
-			this.imagesSelectedContent.Drawings.push(drawingCopy);
-		}
+		const docSelectedContentManager = new DocSelectedContentManager(this.presentation, this.sourceFormattingContent, this.endFormattingContent, this.imagesSelectedContent, docContent);
+		docSelectedContentManager.fillSelectedContent();
 	};
 	OutlineSelectedContentManager.prototype.fillDocContent = function () {
 		const oThis = this;
@@ -140,7 +127,106 @@
 		}
 	};
 
+	function GraphicFrameSelectedContentManager(presentation, sourceFormattingContent, endFormattingContent, imagesSelectedContent, graphicFrame) {
+		SelectedContentManager.call(this, presentation, sourceFormattingContent, endFormattingContent, imagesSelectedContent);
+		this.graphicGrame = graphicFrame;
+	}
+	AscFormat.InitClassWithoutType(GraphicFrameSelectedContentManager, SelectedContentManager);
+	GraphicFrameSelectedContentManager.prototype.fillSelectedContent = function () {
+		if (this.graphicGrame.graphicObject) {
+			const copyGraphicFrame = this.graphicGrame.copy(undefined);
+			const selectedContent = new AscCommonWord.CSelectedContent();
+			this.graphicGrame.graphicObject.GetSelectedContent(selectedContent);
+			const table = selectedContent.Elements[0].Element;
+			copyGraphicFrame.setGraphicObject(table);
+			table.Set_Parent(copyGraphicFrame);
+			this.endFormattingContent.Drawings.push(new DrawingCopyObject(copyGraphicFrame, this.graphicGrame.x, this.graphicGrame.y, this.graphicGrame.extX, this.graphicGrame.extY, this.graphicGrame.getBase64Img()));
+			copyGraphicFrame.parent = this.graphicGrame.parent;
+			copyGraphicFrame.bDeleted = false;
+			copyGraphicFrame.recalculate();
+			const controller = this.presentation.GetCurrentController();
+			this.sourceFormattingContent.Drawings.push(new DrawingCopyObject(copyGraphicFrame.getCopyWithSourceFormatting(), this.graphicGrame.x, this.graphicGrame.y, this.graphicGrame.extX, this.graphicGrame.extY, this.graphicGrame.getBase64Img()));
+			const image = controller.createImage(copyGraphicFrame.getBase64Img(), 0, 0, copyGraphicFrame.extX, copyGraphicFrame.extY);
+			this.imagesSelectedContent.Drawings.push(new DrawingCopyObject(image, 0, 0, this.graphicGrame.extX, this.graphicGrame.extY, this.graphicGrame.getBase64Img()));
+			copyGraphicFrame.parent = null;
+			copyGraphicFrame.bDeleted = true;
+		}
+	};
+
+	function DocSelectedContentManager(presentation, sourceFormattingContent, endFormattingContent, imagesSelectedContent, docContent) {
+		SelectedContentManager.call(this, presentation, sourceFormattingContent, endFormattingContent, imagesSelectedContent);
+		this.docContent = docContent;
+	}
+	AscFormat.InitClassWithoutType(DocSelectedContentManager, SelectedContentManager);
+	DocSelectedContentManager.prototype.fillSelectedContent = function () {
+		const presentation = this.presentation;
+		const selectedContentBuilder = new AscCommonSlide.DocSelectedContentBuilder(this.docContent);
+
+		const endFormatter = new AscCommonSlide.EndContentFormatter(presentation, selectedContentBuilder);
+		this.endFormattingContent.DocContent = endFormatter.getFormattedContent();
+
+		const sourceFormatter = new AscCommonSlide.SourceContentFormatter(presentation, selectedContentBuilder);
+		this.sourceFormattingContent.DocContent = sourceFormatter.getFormattedContent();
+
+		const selectedContentToDraw = sourceFormatter.getFormattedContent();
+		const imageBuilder = new AscCommonSlide.SelectedTextImageBuilder(presentation, this.docContent);
+		const drawingCopy = imageBuilder.build(selectedContentToDraw);
+		if (drawingCopy) {
+			this.imagesSelectedContent.Drawings.push(drawingCopy);
+		}
+	};
+
+	function ShapeSelectedContentManager(presentation, sourceFormattingContent, endFormattingContent, imagesSelectedContent) {
+		SelectedContentManager.call(this, presentation, sourceFormattingContent, endFormattingContent, imagesSelectedContent);
+		this.controller = this.presentation.GetCurrentController();
+	}
+	AscFormat.InitClassWithoutType(ShapeSelectedContentManager, SelectedContentManager);
+
+	ShapeSelectedContentManager.prototype.fillThemeName = function () {
+		var theme = this.controller.getTheme();
+		if (theme) {
+			this.endFormattingContent.ThemeName = theme.name;
+			this.sourceFormattingContent.ThemeName = theme.name;
+			this.imagesSelectedContent.ThemeName = theme.name;
+		}
+	}
+	ShapeSelectedContentManager.prototype.fillEndFormattingContent = function (spTree, isRecursive) {
+		const idMap = {};
+		AscCommonSlide.collectSelectedObjects(spTree, this.endFormattingContent.Drawings, isRecursive, idMap);
+		AscFormat.fResetConnectorsIds(this.endFormattingContent.Drawings, idMap);
+	};
+	ShapeSelectedContentManager.prototype.fillSourceFormattingContent = function (spTree, isRecursive) {
+		const idMap = {};
+		AscCommonSlide.collectSelectedObjects(spTree, this.sourceFormattingContent.Drawings, isRecursive, idMap, true);
+		AscFormat.fResetConnectorsIds(this.sourceFormattingContent.Drawings, idMap);
+	};
+	ShapeSelectedContentManager.prototype.fillImageSelectedContent = function () {
+		const controller = this.controller;
+		const imageData = controller.getSelectionImageData();
+		if (imageData) {
+			const bounds = imageData.bounds;
+			const imageUrl = imageData.src;
+			const image = controller.createImage(imageUrl, bounds.min_x * AscCommon.g_dKoef_pix_to_mm, bounds.min_y * AscCommon.g_dKoef_pix_to_mm, (imageData.width) * AscCommon.g_dKoef_pix_to_mm, (imageData.height) * AscCommon.g_dKoef_pix_to_mm);
+			this.imagesSelectedContent.Drawings.push(new DrawingCopyObject(image, 0, 0, (imageData.width) * AscCommon.g_dKoef_pix_to_mm, (imageData.height) * AscCommon.g_dKoef_pix_to_mm, imageUrl));
+		}
+	};
+	ShapeSelectedContentManager.prototype.fillSelectedContent = function () {
+		this.fillThemeName();
+		const presentation = this.presentation;
+		const controller = this.controller;
+		const isRecursive = isRealObject(controller.selection.groupSelection);
+		const spTree = isRecursive ? controller.selection.groupSelection.spTree : presentation.GetCurrentSlide().cSld.spTree;
+
+		this.fillEndFormattingContent(spTree, isRecursive);
+		this.fillSourceFormattingContent(spTree, isRecursive);
+		this.fillImageSelectedContent();
+	};
+
+
 	window["AscCommonSlide"] = window["AscCommonSlide"] || {};
 	window["AscCommonSlide"].OutlineSelectedContentManager = OutlineSelectedContentManager;
 	window["AscCommonSlide"].ThumbnailSelectedContentManager = ThumbnailSelectedContentManager;
+	window["AscCommonSlide"].GraphicFrameSelectedContentManager = GraphicFrameSelectedContentManager;
+	window["AscCommonSlide"].DocSelectedContentManager = DocSelectedContentManager;
+	window["AscCommonSlide"].ShapeSelectedContentManager = ShapeSelectedContentManager;
 })();
