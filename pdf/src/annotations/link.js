@@ -98,10 +98,6 @@
 			AscCommon.History.EndNoHistoryMode();
 		}
 		
-		if (!rect) {
-			rect = [];
-		}
-		
 		let oGrBounds = this.bounds;
 		let oShapeBounds = this.getRectBounds();
 
@@ -109,24 +105,33 @@
 		this._rectDiff = aCurRD;
 
 		if (this.GetBorderStyle() == AscPDF.BORDER_TYPES.underline) {
-			rect[0] = Math.round(oShapeBounds.l - nLineW) * g_dKoef_mm_to_pt;
-			rect[1] = Math.round(oShapeBounds.t - nLineW) * g_dKoef_mm_to_pt;
-			rect[2] = Math.round(oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt;
-			rect[3] = Math.round(oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt;
+			if (!rect) {
+				rect = [
+					(oShapeBounds.l - nLineW) * g_dKoef_mm_to_pt,
+					(oShapeBounds.t - nLineW) * g_dKoef_mm_to_pt,
+					(oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
+					(oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
+				];
+			}
+
 			this.SetRect(rect);
 		}
 		else {
-			rect[0] = Math.round(oGrBounds.l - nLineW) * g_dKoef_mm_to_pt;
-			rect[1] = Math.round(oGrBounds.t - nLineW) * g_dKoef_mm_to_pt;
-			rect[2] = Math.round(oGrBounds.r + nLineW) * g_dKoef_mm_to_pt;
-			rect[3] = Math.round(oGrBounds.b + nLineW) * g_dKoef_mm_to_pt;
+			if (!rect) {
+				rect = [
+					(oGrBounds.l - nLineW) * g_dKoef_mm_to_pt,
+					(oGrBounds.t - nLineW) * g_dKoef_mm_to_pt,
+					(oGrBounds.r + nLineW) * g_dKoef_mm_to_pt,
+					(oGrBounds.b + nLineW) * g_dKoef_mm_to_pt
+				]
+			}
 
 			this.SetRect(rect);
 			this.SetRectangleDiff([
-				Math.round(oShapeBounds.l - oGrBounds.l + nLineW) * g_dKoef_mm_to_pt,
-				Math.round(oShapeBounds.t - oGrBounds.t + nLineW) * g_dKoef_mm_to_pt,
-				Math.round(oGrBounds.r - oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
-				Math.round(oGrBounds.b - oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
+				(oShapeBounds.l - oGrBounds.l + nLineW) * g_dKoef_mm_to_pt,
+				(oShapeBounds.t - oGrBounds.t + nLineW) * g_dKoef_mm_to_pt,
+				(oGrBounds.r - oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
+				(oGrBounds.b - oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
 			]);
 		}
 	};

@@ -1283,20 +1283,20 @@ RotateState.prototype =
                                         let oGrBounds = oAnnot.bounds;
                                         let oShapeBounds = oAnnot.getRectBounds();
 
-                                        aRect[0] = Math.round(oGrBounds.l - nLineW) * g_dKoef_mm_to_pt;
-                                        aRect[1] = Math.round(oGrBounds.t - nLineW) * g_dKoef_mm_to_pt;
-                                        aRect[2] = Math.round(oGrBounds.r + nLineW) * g_dKoef_mm_to_pt;
-                                        aRect[3] = Math.round(oGrBounds.b + nLineW) * g_dKoef_mm_to_pt;
+                                        aRect[0] = (oGrBounds.l - nLineW) * g_dKoef_mm_to_pt;
+                                        aRect[1] = (oGrBounds.t - nLineW) * g_dKoef_mm_to_pt;
+                                        aRect[2] = (oGrBounds.r + nLineW) * g_dKoef_mm_to_pt;
+                                        aRect[3] = (oGrBounds.b + nLineW) * g_dKoef_mm_to_pt;
 
                                         oAnnot._rect = aCurRect;
                                         oAnnot._rectDiff = aCurRD;
 
                                         oAnnot.SetRect(aRect);
                                         oAnnot.SetRectangleDiff([
-                                            Math.round(oShapeBounds.l - oGrBounds.l + nLineW) * g_dKoef_mm_to_pt,
-                                            Math.round(oShapeBounds.t - oGrBounds.t + nLineW) * g_dKoef_mm_to_pt,
-                                            Math.round(oGrBounds.r - oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
-                                            Math.round(oGrBounds.b - oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
+                                            (oShapeBounds.l - oGrBounds.l + nLineW) * g_dKoef_mm_to_pt,
+                                            (oShapeBounds.t - oGrBounds.t + nLineW) * g_dKoef_mm_to_pt,
+                                            (oGrBounds.r - oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
+                                            (oGrBounds.b - oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
                                         ]);
                                     }
                                     else if (oAnnot.IsLink()) {

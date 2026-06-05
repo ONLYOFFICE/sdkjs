@@ -157,7 +157,7 @@ CChangesPDFFormParentValue.prototype.Type = AscDFH.historyitem_Pdf_Form_Parent_V
 CChangesPDFFormParentValue.prototype.private_SetValue = function(Value)
 {
 	let oField = this.Class;
-	oField.SetLogicValue(Value);
+	oField._value = Value;
 };
 
 CChangesPDFFormValue.prototype.WriteToBinary = function(Writer)

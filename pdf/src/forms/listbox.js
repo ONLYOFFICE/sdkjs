@@ -215,8 +215,12 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CListBoxField.prototype.Commit = function() {
-        let oDoc    = this.GetDocument();
-        let aFields = oDoc.GetAllWidgets(this.GetFullName());
+		if (this.IsLogicalRoot() && !this.IsWidget()) {
+			this.GetKid(0).Commit();
+			return;
+		}
+		
+        let aFields = this.GetAllWidgets();
         
         let aCurIdxs = this.GetCurIdxs();
         let aApiIdxs = this.GetLogicCurIdxs();

@@ -3391,7 +3391,7 @@
 
 		if (sLink !== "")
 		{
-			const isPresentationEditor = Asc.editor && Asc.editor.editorId === AscCommon.c_oEditorId.Presentation;
+			const isPresentationEditor = Asc.editor && (Asc.editor.editorId === AscCommon.c_oEditorId.Presentation || Asc.editor.isPdfEditor());
 			if (isPresentationEditor && AscCommon.IsLinkPPAction(sLink)) {
 				this.ParaHyperlink.SetValue(sLink);
 				return true;
@@ -11360,7 +11360,7 @@
 		{
 			if (editor.editorId === AscCommon.c_oEditorId.Word)
 				this.Paragraph.Add(new ParaTextPr({HighLight : highlight_None}));
-			else if (editor.editorId === AscCommon.c_oEditorId.Presentation)
+			else if (editor.editorId === AscCommon.c_oEditorId.Presentation || Asc.editor.isPdfEditor())
 				this.Paragraph.Add(new ParaTextPr({HighlightColor : null}));
 		}
 		else
@@ -11371,7 +11371,7 @@
 				color = new CDocumentColor(color.r, color.g, color.b);
 				this.Paragraph.Add(new ParaTextPr({HighLight : color}));
 			}
-			else if (color && editor.editorId === AscCommon.c_oEditorId.Presentation)
+			else if (color && editor.editorId === AscCommon.c_oEditorId.Presentation || Asc.editor.isPdfEditor())
 			{
 				color = AscFormat.CreateUniColorRGB(color.r, color.g, color.b);
 				this.Paragraph.Add(new ParaTextPr({HighlightColor : color}));
@@ -12949,114 +12949,7 @@
 
 		return runTextPr;
 	};
-	/**
-	 * Sets the bold property to the text character.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {boolean} isBold - Specifies that the contents of the current run are displayed bold.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetBold.js
-	 */
-	ApiRun.prototype.SetBold = function(isBold)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetBold(isBold);
-		
-		return oTextPr;
-	};
-	/**
-	 * Specifies that any lowercase characters in the current text run are formatted for display only as their capital letter character equivalents.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {boolean} isCaps - Specifies that the contents of the current run are displayed capitalized.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetCaps.js
-	 */
-	ApiRun.prototype.SetCaps = function(isCaps)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetCaps(isCaps);
-		
-		return oTextPr;
-	};
-
-	/**
-	 * Sets the text color for the current text run.
-	 *
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE"]
-	 *
-	 * @deprecated since 9.1.0 version.
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then (r, g, b) parameters will be ignored.
-	 * @return {ApiTextPr}
-	 *
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetColor.js
-	 */
-	/**
-	 * Sets the text color for the current text run.
-	 *
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 *
-	 * @since 9.1.0
-	 * @param {ApiColor} color - The text color.
-	 * @return {ApiTextPr}
-	 *
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetColor.js
-	 */
-	ApiRun.prototype.SetColor = function (color) {
-		const oTextPr = this.GetTextPr();
-		oTextPr.SetColor.apply(oTextPr, arguments);
-		return oTextPr;
-	};
-	/**
-	 * Specifies that the contents of the current run are displayed with two horizontal lines through each character displayed on the line.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {boolean} isDoubleStrikeout - Specifies that the contents of the current run are displayed double struck through.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetDoubleStrikeout.js
-	 */
-	ApiRun.prototype.SetDoubleStrikeout = function(isDoubleStrikeout)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetDoubleStrikeout(isDoubleStrikeout);
-		
-		return oTextPr;
-	};
-	/**
-	 * Sets the text color to the current text run.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CSE", "CPE", "PDFE"]
-	 * @param {ApiFill} oApiFill - The color or pattern used to fill the text color.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetFill.js
-	 */
-	ApiRun.prototype.SetFill = function(oApiFill)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetFill(oApiFill);
-		
-		return oTextPr;
-	};
-	/**
-	 * Sets all 4 font slots with the specified font family.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {string} sFontFamily - The font family or families used for the current text run.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetFontFamily.js
-	 */
-	ApiRun.prototype.SetFontFamily = function(sFontFamily)
-	{
-		LoadFont(sFontFamily);
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetFontFamily(sFontFamily);
-		return oTextPr;
-	};
+	
 	/**
 	 * Returns all font names from all elements inside the current run.
 	 * @memberof ApiRun
@@ -13076,215 +12969,7 @@
 		}
 		return arrFonts;
 	};
-	/**
-	 * Sets the font size to the characters of the current text run.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {hps} nSize - The text size value measured in half-points (1/144 of an inch).
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetFontSize.js
-	 */
-	ApiRun.prototype.SetFontSize = function(nSize)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetFontSize(nSize);
-		
-		return oTextPr;
-	};
-	/**
-	 * Specifies a highlighting color which is applied as a background to the contents of the current run.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {highlightColor} sColor - Available highlight color.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetHighlight.js
-	 */
-	ApiRun.prototype.SetHighlight = function(sColor)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetHighlight(sColor);
-		
-		return oTextPr;
-	};
-	/**
-	 * Sets the italic property to the text character.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {boolean} isItalic - Specifies that the contents of the current run are displayed italicized.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetItalic.js
-	 */
-	ApiRun.prototype.SetItalic = function(isItalic)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetItalic(isItalic);
-		
-		return oTextPr;
-	};
-	/**
-	 * Specifies the languages which will be used to check spelling and grammar (if requested) when processing
-	 * the contents of this text run.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {string} sLangId - The possible value for this parameter is a language identifier as defined by
-	 * RFC 4646/BCP 47. Example: "en-CA".
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetLanguage.js
-	 */
-	ApiRun.prototype.SetLanguage = function(sLangId)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetLanguage(sLangId);
-		
-		return oTextPr;
-	};
-	/**
-	 * Specifies an amount by which text is raised or lowered for this run in relation to the default
-	 * baseline of the surrounding non-positioned text.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {hps} nPosition - Specifies a positive (raised text) or negative (lowered text)
-	 * measurement in half-points (1/144 of an inch).
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetPosition.js
-	 */
-	ApiRun.prototype.SetPosition = function(nPosition)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetPosition(nPosition);
-		
-		return oTextPr;
-	};
-
-	/**
-	 * Specifies the shading applied to the contents of the current text run.
-	 *
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE"]
-	 *
-	 * @deprecated since 9.1.0 version.
-	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @returns {ApiTextPr}
-	 *
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetShd.js
-	 */
-	/**
-	 * Specifies the shading applied to the contents of the current text run.
-	 *
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE"]
-	 *
-	 * @since 9.1.0
-	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
-	 * @param {ApiColor} color - The shading color.
-	 * @returns {ApiTextPr}
-	 *
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetShd.js
-	 */
-	ApiRun.prototype.SetShd = function (type, color)
-	{
-		const oTextPr = this.GetTextPr();
-		oTextPr.SetShd.apply(oTextPr, arguments);
-		return oTextPr;
-	};
-	/**
-	 * Specifies that all the small letter characters in this text run are formatted for display only as their capital
-	 * letter character equivalents which are two points smaller than the actual font size specified for this text.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {boolean} isSmallCaps - Specifies if the contents of the current run are displayed capitalized two points smaller or not.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetSmallCaps.js
-	 */
-	ApiRun.prototype.SetSmallCaps = function(isSmallCaps)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetSmallCaps(isSmallCaps);
-		
-		return oTextPr;
-	};
-	/**
-	 * Sets the text spacing measured in twentieths of a point.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {twips} nSpacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetSpacing.js
-	 */
-	ApiRun.prototype.SetSpacing = function(nSpacing)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetSpacing(nSpacing);
-		
-		return oTextPr;
-	};
-	/**
-	 * Specifies that the contents of the current run are displayed with a single horizontal line through the center of the line.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {boolean} isStrikeout - Specifies that the contents of the current run are displayed struck through.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetStrikeout.js
-	 */
-	ApiRun.prototype.SetStrikeout = function(isStrikeout)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetStrikeout(isStrikeout);
-		
-		return oTextPr;
-	};
-	/**
-	 * Sets a style to the current run.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE"]
-	 * @param {ApiStyle} oStyle - The style which must be applied to the text run.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetStyle.js
-	 */
-	ApiRun.prototype.SetStyle = function(oStyle)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetStyle(oStyle);
-		
-		return oTextPr;
-	};
-	/**
-	 * Specifies that the contents of the current run are displayed along with a line appearing directly below the character
-	 * (less than all the spacing above and below the characters on the line).
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {boolean} isUnderline - Specifies that the contents of the current run are displayed underlined.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetUnderline.js
-	 */
-	ApiRun.prototype.SetUnderline = function(isUnderline)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetUnderline(isUnderline);
-		
-		return oTextPr;
-	};
-	/**
-	 * Specifies the alignment which will be applied to the contents of the current run in relation to the default appearance of the text run:
-	 * <b>"baseline"</b> - the characters in the current text run will be aligned by the default text baseline.
-	 * <b>"subscript"</b> - the characters in the current text run will be aligned below the default text baseline.
-	 * <b>"superscript"</b> - the characters in the current text run will be aligned above the default text baseline.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {("baseline" | "subscript" | "superscript")} sType - The vertical alignment type applied to the text contents.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetVertAlign.js
-	 */
-	ApiRun.prototype.SetVertAlign = function(sType)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetVertAlign(sType);
-		
-		return oTextPr;
-	};
+	
 	/**
 	 * Wraps a run in a mail merge field.
 	 * @memberof ApiRun
@@ -14455,7 +14140,7 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiTableCell} oCell - The cell which is placed in the row that will be removed.
-	 * @returns {boolean} Is the table empty after removing.
+	 * @returns {boolean} - result of deletion
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveRow.js
 	 */
 	ApiTable.prototype.RemoveRow = function(oCell)
@@ -14468,17 +14153,17 @@
 
 		this.Table.RemoveSelection();
 		this.Table.CurCell = oCell.Cell;
-		var isEmpty = !(this.Table.RemoveTableRow());
+		let result = this.Table.RemoveTableRow();
 
 		private_EndSilentMode();
-		return isEmpty;
+		return result;
 	};
 	/**
 	 * Removes a table column with a specified cell.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiTableCell} oCell - The cell which is placed in the column that will be removed.
-	 * @returns {boolean} Is the table empty after removing.
+	 * @returns {boolean} - result of deletion
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveColumn.js
 	 */
 	ApiTable.prototype.RemoveColumn = function(oCell)
@@ -14491,10 +14176,10 @@
 
 		this.Table.RemoveSelection();
 		this.Table.CurCell = oCell.Cell;
-		var isEmpty = !(this.Table.RemoveTableColumn());
+		let result = this.Table.RemoveTableColumn();
 
 		private_EndSilentMode();
-		return isEmpty;
+		return result;
 	};
 	/**
 	 * Creates a copy of the current table.
@@ -16699,7 +16384,7 @@
 		{
 			if (editor.editorId === AscCommon.c_oEditorId.Word)
 				this.TextPr.HighLight = AscCommonWord.highlight_None;
-			else if (editor.editorId === AscCommon.c_oEditorId.Presentation)
+			else if (editor.editorId === AscCommon.c_oEditorId.Presentation || Asc.editor.isPdfEditor())
 				this.TextPr.HighlightColor = null;
 		}
 		else
@@ -16707,7 +16392,7 @@
 			var color = private_getHighlightColorByName(sColor);
 			if (color && editor.editorId === AscCommon.c_oEditorId.Word)
 				this.TextPr.HighLight = new CDocumentColor(color.r, color.g, color.b)
-			else if (color && editor.editorId === AscCommon.c_oEditorId.Presentation)
+			else if (color && editor.editorId === AscCommon.c_oEditorId.Presentation || Asc.editor.isPdfEditor())
 				this.TextPr.HighlightColor = AscFormat.CreateUniColorRGB(color.r, color.g, color.b)
 		}
 		this.private_OnChange();
@@ -16728,7 +16413,7 @@
 		let HighLight;
 		if (Asc.editor.editorId === AscCommon.c_oEditorId.Word)
 			HighLight = this.TextPr.HighLight;
-		else if (Asc.editor.editorId === AscCommon.c_oEditorId.Presentation)
+		else if (Asc.editor.editorId === AscCommon.c_oEditorId.Presentation || Asc.editor.isPdfEditor())
 			HighLight = this.TextPr.HighlightColor;
 
 		return private_getHighlightNameByColor(HighLight);
@@ -20927,6 +20612,18 @@
 		if (parent.recalculateGeometry) parent.recalculateGeometry();
 		return this.geometry.isCalculated();
 	};
+
+	/**
+	 * Returns a type of the ApiGeometry class.
+	 * @memberof ApiGeometry
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @returns {"geometry"}
+	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/GetClassType.js
+	 */
+	ApiGeometry.prototype.GetClassType = function() {
+		return "geometry";
+	};
+
 	/**
 	 * Checks whether the current geometry is custom.
 	 * @memberof ApiGeometry
@@ -31253,25 +30950,7 @@
 	ApiRun.prototype["GetParentTableCell"]           = ApiRun.prototype.GetParentTableCell;
 	ApiRun.prototype["GetParentParagraph"]           = ApiRun.prototype.GetParentParagraph;
 	ApiRun.prototype["SetTextPr"]                    = ApiRun.prototype.SetTextPr;
-	ApiRun.prototype["SetBold"]                      = ApiRun.prototype.SetBold;
-	ApiRun.prototype["SetCaps"]                      = ApiRun.prototype.SetCaps;
-	ApiRun.prototype["SetColor"]                     = ApiRun.prototype.SetColor;
-	ApiRun.prototype["SetDoubleStrikeout"]           = ApiRun.prototype.SetDoubleStrikeout;
-	ApiRun.prototype["SetFill"]                      = ApiRun.prototype.SetFill;
-	ApiRun.prototype["SetFontFamily"]                = ApiRun.prototype.SetFontFamily;
 	ApiRun.prototype["GetFontNames"]                 = ApiRun.prototype.GetFontNames;
-	ApiRun.prototype["SetFontSize"]                  = ApiRun.prototype.SetFontSize;
-	ApiRun.prototype["SetHighlight"]                 = ApiRun.prototype.SetHighlight;
-	ApiRun.prototype["SetItalic"]                    = ApiRun.prototype.SetItalic;
-	ApiRun.prototype["SetLanguage"]                  = ApiRun.prototype.SetLanguage;
-	ApiRun.prototype["SetPosition"]                  = ApiRun.prototype.SetPosition;
-	ApiRun.prototype["SetShd"]                       = ApiRun.prototype.SetShd;
-	ApiRun.prototype["SetSmallCaps"]                 = ApiRun.prototype.SetSmallCaps;
-	ApiRun.prototype["SetSpacing"]                   = ApiRun.prototype.SetSpacing;
-	ApiRun.prototype["SetStrikeout"]                 = ApiRun.prototype.SetStrikeout;
-	ApiRun.prototype["SetStyle"]                     = ApiRun.prototype.SetStyle;
-	ApiRun.prototype["SetUnderline"]                 = ApiRun.prototype.SetUnderline;
-	ApiRun.prototype["SetVertAlign"]                 = ApiRun.prototype.SetVertAlign;
 	ApiRun.prototype["WrapInMailMergeField"]         = ApiRun.prototype.WrapInMailMergeField;
 	ApiRun.prototype["ToJSON"]                       = ApiRun.prototype.ToJSON;
 	ApiRun.prototype["AddComment"]                   = ApiRun.prototype.AddComment;
@@ -31663,6 +31342,7 @@
 	ApiShape.prototype["SetLine"]                    = ApiShape.prototype.SetLine;
 	ApiShape.prototype["GetLine"]                    = ApiShape.prototype.GetLine;
 
+	ApiGeometry.prototype["GetClassType"]            = ApiGeometry.prototype.GetClassType;
 	ApiGeometry.prototype["IsCustom"]                = ApiGeometry.prototype.IsCustom;
 	ApiGeometry.prototype["GetPreset"]               = ApiGeometry.prototype.GetPreset;
 	ApiGeometry.prototype["GetPathCount"]            = ApiGeometry.prototype.GetPathCount;
@@ -33092,7 +32772,7 @@
 					return c[3];
 			}
 		}
-		else if (AscCommon.c_oEditorId.Presentation === Asc.editor.editorId)
+		else if (AscCommon.c_oEditorId.Presentation === Asc.editor.editorId || Asc.editor.isPdfEditor())
 		{
 			for (let i = 0; i < colorMap.length; ++i)
 			{

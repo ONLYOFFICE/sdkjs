@@ -4171,7 +4171,7 @@
 				AscPDF.stampsLocale = lang;
 
 				// fonts
-				let sText = Asc.editor.User.asc_getUserName();
+				let sText = AscCommon.UserInfoParser.getCurrentName();
 				for (let type in AscPDF.STAMPS_JSON) {
 					AscPDF.STAMPS_JSON[type]['content']['content'].forEach(function(para) {
 						para['content'].forEach(function(run) {

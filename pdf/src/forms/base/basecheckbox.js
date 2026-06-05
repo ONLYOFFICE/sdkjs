@@ -452,6 +452,11 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseCheckBoxField.prototype.Commit = function() {
+		if (this.IsLogicalRoot() && !this.IsWidget()) {
+			this.GetKid(0).Commit();
+			return;
+		}
+
         this.SetNeedCommit(false);
 
         let oParent = this.GetParent(true);

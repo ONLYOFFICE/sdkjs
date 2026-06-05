@@ -53,7 +53,6 @@
 
         this._commitOnSelChange     = false;
         this._currentValueIndexes   = [];
-        this._textFont              = AscPDF.DEFAULT_FIELD_FONT;
         this._options               = [];
     }
     CBaseListField.prototype = Object.create(AscPDF.CBaseField.prototype);
