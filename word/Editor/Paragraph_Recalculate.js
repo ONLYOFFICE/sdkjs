@@ -1960,7 +1960,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 
         var X = 0;
 		
-		let rtlShift = PRSC.SpaceLen;
+		let rtlShift = PRSC.SpacesLeftW;
 		let bRtlAlign = ParaPr.Bidi;
 		let jc = ParaPr.Jc;
 	
@@ -3075,9 +3075,11 @@ function CParaLineRange(X, XEnd)
 	this.StartPos    = 0;    // Позиция в контенте параграфа, с которой начинается данный отрезок
 	this.EndPos      = 0;    // Позиция в контенте параграфа, на которой заканчиваетсяданный отрезок
 	this.W           = 0;
-	this.Spaces      = 0;    // Количество пробелов в отрезке, без учета пробелов в конце отрезка
+	this.Spaces      = 0;    // Количество пробелов в отрезке, без учета пробелов в конце/начале
 	this.WEnd        = 0;    // Если есть знак конца параграфа в данном отрезке, то это его ширина
 	this.WBreak      = 0;    // Если в конце отрезка есть разрыв строки/колонки/страницы
+	this.SpacesLeft  = 0;
+	this.SpacesRight = 0;
 }
 
 CParaLineRange.prototype =
@@ -3105,6 +3107,8 @@ CParaLineRange.prototype =
         NewRange.EndPos      = this.EndPos;
         NewRange.W           = this.W;
         NewRange.Spaces      = this.Spaces;
+		NewRange.SpacesLeft  = this.SpacesLeft;
+		NewRange.SpacesRight = this.SpacesRight;
 		
 		if (this.XEndOrigin)
 			NewRange.XEndOrigin = this.XEndOrigin;

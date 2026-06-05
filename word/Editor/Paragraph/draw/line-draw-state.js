@@ -79,9 +79,10 @@
 		this.X               = 0;
 		this.BaseLine        = 0;
 		this.UnderlineOffset = 0;
-		this.Spaces          = 0;
 		this.LineY0          = 0;
 		this.LineY1          = 0;
+		this.Spaces          = 0;
+		this.SpacesSkip      = 0;
 		
 		this.complexFields = new AscWord.ParagraphComplexFieldStack();
 		this.contentControls = [];
@@ -172,23 +173,33 @@
 		
 		this.CustomLines = {};
 	};
-	ParagraphLineDrawState.prototype.beginRange = function(range, x, spaces)
+	ParagraphLineDrawState.prototype.beginRange = function(rangeNum, x)
 	{
 		this.run = null;
 		
-		this.Range  = range;
+		this.Range  = rangeNum;
 		this.X      = x;
-		this.Spaces = spaces;
+		
+		let range = this.Paragraph.Lines[this.Line].Ranges[this.Range];
+		this.paraLineRange = range;
 		
 		let isRtl = this.Paragraph.isRtlDirection();
+		
+		this.SpacesSkip = isRtl && !this.ulTrailSpace ? range.SpacesLeft : 0;
+		this.Spaces     = range.Spaces;
+		
+		if (this.ulTrailSpace)
+			this.Spaces += range.SpacesLeft + range.SpacesRight;
+		else if (isRtl)
+			this.Spaces += range.SpacesRight;
+		else
+			this.Spaces += range.SpacesLeft;
 		
 		// TODO: Numering strikeout and underline are rendering in Draw_Element, we should move it here
 		if (this.Paragraph.Numbering.checkRange(this.Range, this.Line) && !isRtl)
 			this.X += this.Paragraph.Numbering.WidthVisible;
 
 		this.bidiFlow.begin(isRtl);
-		
-		this.paraLineRange = this.Paragraph.Lines[this.Line].Ranges[this.Range];
 	};
 	ParagraphLineDrawState.prototype.endRange = function()
 	{
@@ -271,14 +282,17 @@
 				this.addLines(startX, endX, undefined, oTextDrawerInfo);
 				break;
 			case para_Space:
-				if (this.paraLineRange)
+				if (this.SpacesSkip)
 				{
-					startX = this.paraLineRange.CorrectX(startX);
-					endX   = this.paraLineRange.CorrectX(endX);
+					--this.SpacesSkip;
 				}
-				
-				if (this.Spaces > 0 || this.ulTrailSpace)
+				else if (this.Spaces)
 				{
+					if (this.paraLineRange)
+					{
+						startX = this.paraLineRange.CorrectX(startX);
+						endX   = this.paraLineRange.CorrectX(endX);
+					}					
 					--this.Spaces;
 					this.addLines(startX, endX, undefined, oTextDrawerInfo);
 				}

@@ -50,19 +50,17 @@
 		this.Word        = false;
 		this.SpaceLen    = 0;
 		this.SpacesCount = 0;
+		this.SpacesLeftW = 0;
 
 		this.Words       = 0;
 		this.Spaces      = 0;
 		this.Letters     = 0;
 		this.SpacesSkip  = 0;
-		this.LettersSkip = 0;
+		this.LettersSkip = 0;	
 		
 		this.CurRange = 0;
 		this.CurLine  = 0;
 		
-		this.SpacesL = 0;
-		this.SpacesR = 0;
-
 		this.ComplexFields = new AscWord.ParagraphComplexFieldStack();
 	}
 	CounterRecalcState.prototype = Object.create(AscWord.ParagraphBidiFlow.prototype);
@@ -75,6 +73,7 @@
 		this.Word        = false;
 		this.SpaceLen    = 0;
 		this.SpacesCount = 0;
+		this.SpacesLeftW = 0;
 		
 		this.CurRange = rangeNum;
 		this.CurLine  = lineNum;
@@ -84,9 +83,6 @@
 		this.Letters     = 0;
 		this.SpacesSkip  = 0;
 		this.LettersSkip = 0;
-		
-		this.SpacesL = 0;
-		this.SpacesR = 0;
 		
 		this.ParaEnd   = false;
 		this.LineBreak = false;
@@ -98,14 +94,18 @@
 		if (this.Paragraph.Numbering.checkRange(this.CurRange, this.CurLine))
 			this.Range.W += this.Paragraph.Numbering.WidthVisible;
 		
-		this.bidiFlow.begin();
+		this.bidiFlow.begin(this.Paragraph.isRtlDirection());
 	};
 	CounterRecalcState.prototype.endRange = function()
 	{
 		this.bidiFlow.end();
 		
-		this.SpacesL = this.SpacesSkip;
-		this.SpacesR = this.SpacesCount;
+		this.Range.Spaces      = this.Spaces;
+		this.Range.SpacesLeft  = this.SpacesSkip;
+		this.Range.SpacesRight = this.SpacesCount;
+		
+		if (this.Paragraph.isRtlDirection())
+			this.Range.W += this.SpaceLen - this.SpacesLeftW;
 	};
 	CounterRecalcState.prototype.handleRunElement = function(element, run)
 	{
@@ -162,24 +162,16 @@
 			case para_ContinuationSeparator:
 			{
 				this.Letters++;
+				
+				this.flushSpaces();
 
-				if (true !== this.Word)
+				if (!this.Word)
 				{
 					this.Word = true;
 					this.Words++;
 				}
 
 				this.Range.W += element.GetWidth(textPr);
-				this.Range.W += this.SpaceLen;
-				this.SpaceLen = 0;
-
-				if (this.Words > 1)
-					this.Spaces += this.SpacesCount;
-				else
-					this.SpacesSkip += this.SpacesCount;
-
-				this.SpacesCount = 0;
-
 				if (element.IsSpaceAfter())
 					this.Word = false;
 
@@ -213,35 +205,19 @@
 			{
 				if (!element.IsInline() && !this.Paragraph.Parent.Is_DrawingShape())
 					break;
-
+				
+				this.flushSpaces();
 				this.Words++;
-				this.Range.W += this.SpaceLen;
-
-				if (this.Words > 1)
-					this.Spaces += this.SpacesCount;
-				else
-					this.SpacesSkip += this.SpacesCount;
-
-				this.Word        = false;
-				this.SpacesCount = 0;
-				this.SpaceLen    = 0;
+				this.Word = false;
 				this.Range.W += element.GetWidth();
 				break;
 			}
 			case para_PageNum:
 			case para_PageCount:
 			{
+				this.flushSpaces();
 				this.Words++;
-				this.Range.W += this.SpaceLen;
-
-				if (this.Words > 1)
-					this.Spaces += this.SpacesCount;
-				else
-					this.SpacesSkip += this.SpacesCount;
-
-				this.Word        = false;
-				this.SpacesCount = 0;
-				this.SpaceLen    = 0;
+				this.Word = false;
 				this.Range.W += element.GetWidth();
 				break;
 			}
@@ -333,6 +309,23 @@
 	CounterRecalcState.prototype.isFastRecalculation = function()
 	{
 		return this.wrapState.isFastRecalculation();
+	};
+	CounterRecalcState.prototype.flushSpaces = function()
+	{
+		if (!this.Words)
+		{
+			this.SpacesSkip += this.SpacesCount;
+			this.SpacesLeftW += this.SpaceLen;
+		}
+		else
+		{
+			++this.Spaces;
+		}
+		
+		this.Range.W += this.SpaceLen;
+		
+		this.SpaceLen    = 0;
+		this.SpacesCount = 0;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.Paragraph.CounterRecalcState = CounterRecalcState;

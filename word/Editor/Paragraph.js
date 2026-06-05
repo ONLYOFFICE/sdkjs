@@ -3187,7 +3187,7 @@ Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState
 			var Range = Line.Ranges[CurRange];
 			var X     = Range.XVisible;
 			
-			PDSL.beginRange(CurRange, X, Range.Spaces);
+			PDSL.beginRange(CurRange, X);
 			
 			var StartPos = Range.StartPos;
 			var EndPos   = Range.EndPos;
