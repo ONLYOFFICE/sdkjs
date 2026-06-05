@@ -1965,8 +1965,13 @@ function (window, undefined) {
 			}
 		}
 
-		const categoryAxis = plotArea.catAx;
-		const valueAxis = plotArea.valAx;
+		let categoryAxis = plotArea.catAx;
+		let valueAxis = plotArea.valAx;
+		if (!categoryAxis && !valueAxis) {
+			const axes = plotArea.getAxisByTypes();
+			categoryAxis = axes.catAx[0] || axes.dateAx[0] || null;
+			valueAxis = axes.valAx[0] || null;
+		}
 
 		if (categoryAxis || valueAxis) {
 			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
