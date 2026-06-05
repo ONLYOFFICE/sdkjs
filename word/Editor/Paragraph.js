@@ -2385,7 +2385,7 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 		{
 			let range = line.Ranges[curRange];
 			
-			PDSH.beginRange(curRange, range.XVisible, range.Spaces)
+			PDSH.beginRange(curRange, range.XVisible)
 
 			for (let contentPos = range.StartPos; contentPos <= range.EndPos; ++contentPos)
 			{
@@ -2498,7 +2498,7 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 			// сохраним позиции начала и конца продолжительных одинаковых настроек
 			// выделения, совместного редактирования и поиска соответственно.
 
-			PDSH.beginRange(CurRange, X, _Range.Spaces);
+			PDSH.beginRange(CurRange, X);
 			for (var Pos = StartPos; Pos <= EndPos; Pos++)
 			{
 				var Item = this.Content[Pos];

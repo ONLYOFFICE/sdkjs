@@ -319,7 +319,7 @@
 		}
 		else
 		{
-			++this.Spaces;
+			this.Spaces += this.SpacesCount;
 		}
 		
 		this.Range.W += this.SpaceLen;

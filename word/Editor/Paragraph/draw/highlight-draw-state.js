@@ -95,7 +95,8 @@
 		this.Y0 = 0;
 		this.Y1 = 0;
 		
-		this.spaces = 0;
+		this.spaces     = 0;
+		this.spacesSkip = 0;
 		
 		this.InlineSdt = [];
 		this.CollectFixedForms = false;
@@ -170,7 +171,7 @@
 		this.Y0   = top;
 		this.Y1   = bottom;
 	};
-	ParagraphHighlightDrawState.prototype.beginRange = function(range, X, spaceCount)
+	ParagraphHighlightDrawState.prototype.beginRange = function(rangeNum, X)
 	{
 		this.High.Clear();
 		this.Coll.Clear();
@@ -181,15 +182,20 @@
 		this.CFields.Clear();
 		this.HyperCF.Clear();
 		this.Perm.Clear();
-		
-		this.Range = range;
+
+		this.Range = rangeNum;
 		this.X = X;
-		
-		if (!this.Paragraph.isRtlDirection())
+
+		let isRtl = this.Paragraph.isRtlDirection();
+		let range = this.Paragraph.Lines[this.Line].Ranges[this.Range];
+
+		if (!isRtl)
 			this.checkNumbering(false);
-		
-		this.spaces = spaceCount;
-		this.bidiFlow.begin(this.Paragraph.isRtlDirection());
+
+		this.spaces     = range.Spaces + (isRtl ? range.SpacesRight : range.SpacesLeft);
+		this.spacesSkip = isRtl ? range.SpacesLeft : 0;
+
+		this.bidiFlow.begin(isRtl);
 		
 		this.InlineSdt = [];
 		
@@ -599,7 +605,11 @@
 			}
 			case para_Space:
 			{
-				if (this.spaces > 0)
+				if (this.spacesSkip)
+				{
+					--this.spacesSkip;
+				}
+				else if (this.spaces)
 				{
 					if (this.DrawComments && this.comments.length > 0)
 						flags |= FLAG_COMMENT;

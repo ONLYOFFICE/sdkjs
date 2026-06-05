@@ -119,8 +119,8 @@
 		this.JustifyWord   = justifyWord;
 		this.JustifySpace  = justifySpace;
 		
-		this.SpacesCounter = counterState.Spaces;
-		this.SpacesSkip    = counterState.SpacesSkip;
+		this.SpacesCounter = range.Spaces;
+		this.SpacesSkip    = range.SpacesLeft;
 		this.LettersSkip   = counterState.LettersSkip;
 
 		this.RecalcResult  = recalcresult_NextElement;

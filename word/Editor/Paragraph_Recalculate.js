@@ -2132,7 +2132,6 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 			}
 		}
 		
-		Range.Spaces = PRSC.Spaces + PRSC.SpacesSkip;
 		if (0 === CurRange)
 			this.Lines[CurLine].X = X - PRSW.XStart;
 		
