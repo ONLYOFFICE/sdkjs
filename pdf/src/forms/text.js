@@ -55,7 +55,6 @@
         this._password          = false;
         this._richText          = false; // to do related properties, methods
         this._richValue         = [];
-        this._textFont          = AscPDF.DEFAULT_FIELD_FONT;
         this._fileSelect        = false;
         this._value             = undefined;
 		this._displayValue      = "";
@@ -1871,7 +1870,12 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CTextField.prototype.Commit = function() {
-        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
+		if (this.IsLogicalRoot() && !this.IsWidget()) {
+			this.GetKid(0).Commit();
+			return;
+		}
+
+        let aFields = this.GetAllWidgets();
 
         this.DoFormatAction();
         

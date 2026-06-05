@@ -683,6 +683,9 @@
 		this.onRepaintCallbacks = [];
 		this.onAfterPaintCallback = [];
 
+		this.IsOpenFormsInProgress = false;
+		this.IsOpenAnnotsInProgress = false;
+		
 		this.updateSkin = function()
 		{
 			this.backgroundColor = AscCommon.GlobalSkin.BackgroundColor;

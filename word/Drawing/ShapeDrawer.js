@@ -1473,7 +1473,7 @@ CShapeDrawer.prototype =
 
     draw : function(geom)
     {
-        if (this.bIsNoStrokeAttack && this.bIsNoFillAttack)
+        if (this.bIsNoStrokeAttack && this.bIsNoFillAttack || this.Graphics.isPdfTextMetafile)
             return;
 
         var bIsPatt = false;
@@ -1834,7 +1834,7 @@ CShapeDrawer.prototype =
 	},
 
     df: function (mode) {
-        if (mode == "none" || this.bIsNoFillAttack)
+        if (mode == "none" || this.bIsNoFillAttack || this.Graphics.isPdfTextMetafile)
             return;
 
         if (this.Graphics.isTrack())

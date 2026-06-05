@@ -7689,7 +7689,7 @@
      * @memberof ApiTable
      * @typeofeditors ["CPE"]
      * @param {ApiTableCell} oCell - The table cell from the row which will be removed.
-     * @returns {boolean} - defines if the table is empty after removing or not.
+     * @returns {boolean} - result of deletion
      * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveRow.js
 	 */
     ApiTable.prototype.RemoveRow = function(oCell)
@@ -7699,14 +7699,14 @@
         this.private_PrepareTableForActions();
         this.Table.RemoveSelection();
         this.Table.CurCell = oCell.Cell;
-        return !(this.Table.RemoveTableRow());
+        return this.Table.RemoveTableRow();
     };
     /**
      * Removes a table column with the specified cell.
      * @memberof ApiTable
      * @typeofeditors ["CPE"]
      * @param {ApiTableCell} oCell - The table cell from the column which will be removed.
-     * @returns {boolean} - defines if the table is empty after removing or not.
+     * @returns {boolean} - result of deletion
      * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveColumn.js
 	 */
     ApiTable.prototype.RemoveColumn = function(oCell)
@@ -7716,7 +7716,7 @@
         this.private_PrepareTableForActions();
         this.Table.RemoveSelection();
         this.Table.CurCell = oCell.Cell;
-        return !(this.Table.RemoveTableColumn());
+        return this.Table.RemoveTableColumn();
     };
 
     /**

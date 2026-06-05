@@ -417,12 +417,12 @@ void main() {\n\
     };
 
     // TEXT
-	CFile.prototype.getPageTextStream = function(pageIndex) {
+	CFile.prototype.getPageTextStream = function(pageIndex, onlyPageContent) {
 		let page = this.pages[pageIndex];
 		let textLen = page.text ? page.text.length : 0;
 		let drawingsLen = page.drawingsText ? page.drawingsText.length : 0;
 
-		if (Asc.editor.canEdit()) {
+		if (onlyPageContent) {
 			if (this.pages[pageIndex].isRecognized) {
 				return null;
 			}
@@ -1632,8 +1632,8 @@ void main() {\n\
             if (iLine > endLine)
                 break;
 
-            let startChar = pageIndex == Page1 && iLine == Line1 ? Glyph1 : 0;
-            let endChar   = pageIndex == Page2 && iLine == Line2 ? Glyph2 : Infinity;
+            let startChar = pageIndex == Page1 && iLine == Line1 ? Glyph1 : -2;
+            let endChar   = pageIndex == Page2 && iLine == Line2 ? Glyph2 : -1;
 
             if (startChar == -2)
                 startChar = 0;
@@ -1914,7 +1914,7 @@ void main() {\n\
         if (0 == searchText.length)
             return oResult;
 
-        let stream = this.getPageTextStream(pageIndex);
+        let stream = this.getPageTextStream(pageIndex, Asc.editor.canEdit());
         if (!stream)
             return oResult;
         
@@ -2113,16 +2113,6 @@ void main() {\n\
                 let startChar = _numLine == oMatch.Line ? oMatch.Char : -2;
                 let endChar   = _numLine == curLine     ? curChar     : -1;
 
-                if (startChar == -2)
-                    startChar = 0;
-                else if (startChar == -1)
-                    startChar = Infinity;
-
-                if (endChar == -2)
-                    endChar = 0;
-                else if (endChar == -1)
-                    endChar = Infinity;
-
                 _text = "";
                 _lineEx = 1;
                 _lineEy = 0;
@@ -2140,6 +2130,19 @@ void main() {\n\
                 _lineDescent = stream.GetDouble();
                 _lineWidth   = stream.GetDouble();
                 let nChars = stream.GetLong();
+
+				let startPos = startChar; 
+				if (startChar == -2)
+                    startPos = 0;
+                else if (startChar == -1)
+                    startPos = nChars - 1;
+
+				let endPos = endChar; 
+                if (endChar == -2)
+                    endPos = 0;
+                else if (endChar == -1)
+                    endPos = nChars - 1;
+
                 for (let i = 0; i < nChars; ++i)
                 {
                     if (i)
@@ -2147,17 +2150,17 @@ void main() {\n\
                     _arrayGlyphOffsets[i] = _linePrevCharX;
                     let nChar = stream.GetLong();
                     stream.Skip(4);
-                    if (i >= endChar)
+                    if (i >= endPos)
                         break;
-                    if (i >= startChar)
+                    if (i >= startPos)
                         _text += (nChar == 0xFFFF ? " " : String.fromCharCode(nChar));
                 }
 
-                let off1 = _arrayGlyphOffsets[startChar];
-                let off2 = _arrayGlyphOffsets[endChar];
-                if (startChar == Infinity)
+                let off1 = _arrayGlyphOffsets[startPos];
+                let off2 = _arrayGlyphOffsets[endPos];
+				if (startPos == nChars - 1)
                     off1 = _lineWidth;
-                if (endChar == Infinity)
+                if (endPos == nChars - 1)
                     off2 = _lineWidth;
 
                 if (off2 < off1)
@@ -2275,7 +2278,15 @@ void main() {\n\
     };
 	window["AscViewer"].createEmptyFile = function()
 	{
-		return new CFile();
+		let file = new CFile();
+        file.addPage = function(pageIndex, pageObj) {
+			this.pages.splice(pageIndex, 0, pageObj);
+		};
+		file.removePage = function(pageIndex) {
+			return this.pages.splice(pageIndex, 1);
+		};
+		
+		return file;
 	};
 
     //--------------------------------------------------------export----------------------------------------------------

@@ -99,7 +99,7 @@
     function CBaseField(sName, nType, aRect, oDoc)
     {
         this.Id = AscCommon.g_oIdCounter.Get_NewId();
-        if ((AscCommon.g_oIdCounter.m_bLoad || AscCommon.History.CanAddChanges())) {
+        if (AscCommon.g_oTableId.IsOn()) {
             AscCommon.g_oTableId.Add(this, this.Id);
         }
 
@@ -116,8 +116,8 @@
         this._bgColor       = undefined;          // prop for old versions (fillColor)
         this._fgColor       = undefined;
         this._textColor     = [0,0,0];
-        this._textFont      = "";           // original
-        this._textFontActual= undefined;    // actually used
+        this._textFont      = AscPDF.DEFAULT_FIELD_FONT; // original
+        this._textFontActual= AscPDF.DEFAULT_FIELD_FONT;    // actually used
         this._textSize      = 10;
         this._fontStyle     = 0;    // font style information (bold, italic)
         this._meOptions     = 0;    // middle-east text options (flags)
@@ -970,7 +970,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseField.prototype.SetLogicValue = function(value) {
-        if (value && typeof(value) !== "string" && value.toString) {
+        if (value && !Array.isArray(value) && typeof(value) !== "string" && value.toString) {
             value = value.toString();
         }
 
@@ -2706,7 +2706,7 @@
         this.SetRect(aNewRect);
     };
     CBaseField.prototype.GetRect = function() {
-        return this._rect;
+        return this._rect ? this._rect.slice() : this._rect;
     };
     CBaseField.prototype.GetWidth = function() {
         let aRect = this.GetRect();

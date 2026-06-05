@@ -129,6 +129,9 @@
     }
 
     function FormatDateValue(nValue, sFormat) {
+        if (undefined == nValue)
+            return "";
+
         let oNumFormat = AscCommon.oNumFormatCache.get(sFormat, AscCommon.NumFormatType.PDFFormDate);
         oNumFormat.oNegativeFormat.bAddMinusIfNes = false;
 
@@ -202,6 +205,8 @@
      * @returns {string} - The formatted value.
      */
     function FormatValueSpecial(value, psf) {
+		value = toString(value, "");
+
         value = value.replace(/\D/g, ""); // Remove all non-numeric characters
         
         switch (psf) {
@@ -436,6 +441,10 @@
             sCurValue = nCurIdx == undefined ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
         }
 
+		if (sCurValue == undefined) {
+			sCurValue = "";
+		}
+
         let oFormatParser = AscCommon.g_oFormatParser;
 
         function getShortPattern(aRawFormat) {
@@ -508,8 +517,7 @@
             return;
         }
 
-        oDateFormat.oTextFormat.formatType = AscCommon.NumFormatType.PDFFormDate;
-        sRes = oDateFormat.oTextFormat.format(oResParsed.value, 0, AscCommon.gc_nMaxDigCount, oCultureInfo)[0].text;
+        sRes = FormatDateValue(oResParsed.value * 86400 * 1000, cFormat);
 
         oCurForm.SetFormatValue(sRes);
     }
@@ -539,6 +547,10 @@
             let nCurIdx = oForm.GetCurIdxs()[0];
             sCurValue = nCurIdx == undefined ? oForm.GetValue() : oForm.GetFormApi().getItemAt(nCurIdx, false);
         }
+
+		if (sCurValue == undefined) {
+			sCurValue = "";
+		}
 
         let oFormatParser = AscCommon.g_oFormatParser;
 
@@ -629,10 +641,6 @@
         let oDoc = editor.getDocumentRenderer().doc;
         let oForm = oDoc.event["target"].field;
         
-        // TODO implement ms handling 
-        let oCultureInfo = {};
-        Object.assign(oCultureInfo, AscCommon.g_aCultureInfos[9]);
-
         let sFormat;
         let fIsValidTime = null;
         switch (ptf) {
@@ -666,9 +674,6 @@
                 break;
         }
 
-        let oNumFormat = AscCommon.oNumFormatCache.get(sFormat, AscCommon.NumFormatType.PDFFormDate);
-        oNumFormat.oNegativeFormat.bAddMinusIfNes = false;
-        
         let oTargetRun = oForm.contentFormat.GetElement(0).GetElement(0);
 
         let sCurValue;
@@ -678,6 +683,10 @@
             let nCurIdx = oForm.GetCurIdxs()[0];
             sCurValue = nCurIdx == undefined ? oForm.GetValue() : oForm.api.getItemAt(nCurIdx, false);
         }
+
+		if (sCurValue == undefined) {
+			sCurValue = "";
+		}
         
         if (sCurValue == "")
             oTargetRun.ClearContent();
@@ -694,8 +703,7 @@
             return;
         }
         
-        oNumFormat.oTextFormat.formatType = AscCommon.NumFormatType.PDFFormDate;
-        let sRes = oNumFormat.format(oResParsed.value, 0, AscCommon.gc_nMaxDigCount, true, undefined, true)[0].text;
+        let sRes = FormatDateValue(oResParsed.value * 86400 * 1000, sFormat);
         oForm.SetFormatValue(sRes);
     }
     /**
@@ -766,6 +774,10 @@
             let nCurIdx = oForm.GetCurIdxs()[0];
             sCurValue = nCurIdx == undefined ? oForm.GetValue() : oForm.api.getItemAt(nCurIdx, false);
         }
+
+		if (sCurValue == undefined) {
+			sCurValue = "";
+		}
         
        if (fIsValidTime && fIsValidTime(sCurValue) == false) {
             oDoc.event["rc"] = false;
@@ -813,6 +825,10 @@
             let nCurIdx = oCurForm.GetCurIdxs()[0];
             sCurValue = nCurIdx == undefined ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
         }
+
+		if (sCurValue == undefined) {
+			sCurValue = "";
+		}
 
         let oTargetRun = oCurForm.contentFormat.GetElement(0).GetElement(0);
 
