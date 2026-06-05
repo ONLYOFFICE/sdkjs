@@ -1827,15 +1827,13 @@ CopyProcessor.prototype =
 			oThis.oPresentationWriter.WriteString2("SlideObjects");
 			oThis.oPresentationWriter.WriteULong(selected_slides.length);
 
-			var layouts_map = {};
-			var layout_count = 0;
 			editor.WordControl.m_oLogicDocument.CalculateComments();
 
-			//write slide
+			const isWriteHTMLSlideImage = !elementsContent.DocContent;
 			var slide;
 			for (var i = 0; i < selected_slides.length; ++i) {
 				slide = selected_slides[i];
-				if(i === 0){
+				if(i === 0 && isWriteHTMLSlideImage){
 					oThis.CopySlide(oDomTarget, slide);
 				} else{
 					oThis.CopySlide(null, slide);
