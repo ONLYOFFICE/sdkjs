@@ -19849,7 +19849,7 @@ function isAllowPasteLink(pastedWb) {
 			fragments.push(_fragmentsTmp[i].clone());
 		}
 
-		var arrAutoComplete = this.getCellAutoCompleteValues(cell, kMaxAutoCompleteCellEdit);
+		var arrAutoComplete = this.workbook.getAutoCompleteEnabled() ? this.getCellAutoCompleteValues(cell, kMaxAutoCompleteCellEdit) : [];
 		var arrAutoCompleteLC = asc.arrayToLowerCase(arrAutoComplete);
 
 		this.model.workbook.handlers.trigger("cleanCutData", true, true);

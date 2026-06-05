@@ -9869,6 +9869,22 @@ var editor;
 		}
 	};
 
+	spreadsheet_api.prototype.asc_setAutoCompleteEnabled = function(val) {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		wb.setAutoCompleteEnabled(val);
+	};
+
+	spreadsheet_api.prototype.asc_getAutoCompleteEnabled = function() {
+		let wb = this.wb;
+		if (!wb) {
+			return true;
+		}
+		return wb.getAutoCompleteEnabled();
+	};
+
 	spreadsheet_api.prototype.asc_SetSmoothScrolling  = function(val) {
 		let wb = this.wb;
 		if (!wb) {
@@ -10709,6 +10725,9 @@ var editor;
   prot["asc_cancelMoveCopyWorksheet"]= prot.asc_cancelMoveCopyWorksheet;
   prot["asc_getOpeningDocumentsList"]= prot.asc_getOpeningDocumentsList;
   prot["asc_isSupportCopySheetsBetweenBooks"]= prot.asc_isSupportCopySheetsBetweenBooks;
+
+  prot["asc_setAutoCompleteEnabled"]= prot.asc_setAutoCompleteEnabled;
+  prot["asc_getAutoCompleteEnabled"]= prot.asc_getAutoCompleteEnabled;
 
   prot["asc_SetSmoothScrolling"]= prot.asc_SetSmoothScrolling;
   prot["asc_GetSmoothScrolling"]= prot.asc_GetSmoothScrolling;

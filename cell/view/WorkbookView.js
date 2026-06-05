@@ -341,6 +341,7 @@
 	this.customFunctionEngine = null;
 
 	this.smoothScroll = true;
+	this.autoCompleteEnabled = true;
 
 	this.externalReferenceUpdateTimer = null;
 
@@ -6785,6 +6786,14 @@
 		if (!this.customFunctionEngine) {
 			this.customFunctionEngine = new AscCommonExcel.CCustomFunctionEngine(this);
 		}
+	};
+
+	WorkbookView.prototype.setAutoCompleteEnabled = function(val) {
+		this.autoCompleteEnabled = val;
+	};
+
+	WorkbookView.prototype.getAutoCompleteEnabled = function() {
+		return this.autoCompleteEnabled;
 	};
 
 	WorkbookView.prototype.setSmoothScrolling = function(val) {
