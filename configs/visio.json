@@ -86,6 +86,7 @@
 			"common/Drawings/ColorArray.js",
 
 			"common/Drawings/CommonController.js",
+			"common/Drawings/Format/svg-converter.js",
 			"common/Drawings/States.js",
 			"common/Drawings/DrawingsChanges.js",
 			"common/Drawings/Format/Format.js",

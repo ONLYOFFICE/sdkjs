@@ -100,6 +100,7 @@
 			"common/SmartArts/SmartArtCache.js",
 
 			"common/Drawings/CommonController.js",
+			"common/Drawings/Format/svg-converter.js",
 			"word/Editor/GraphicObjects/DrawingStates.js",
 			"common/Drawings/DrawingsChanges.js",
 			"common/Drawings/Format/Format.js",
