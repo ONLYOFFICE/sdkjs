@@ -7090,24 +7090,11 @@
 					}
 					const controller = this;
 					const api = Asc.editor;
-					if (api && api.collaborativeEditing && api.collaborativeEditing.getGlobalLock()) {
-						return;
-					}
 					const isPdf = api.isPdfEditor();
 					const isWord = !isPdf && api.getEditorId() === AscCommon.c_oEditorId.Word;
-					const drawingObjects = controller.drawingObjects;
-					const mainObject = image.getMainGroup() || image;
-					const selectionState = controller.getSelectionState();
-					api.checkObjectsLock([mainObject.Get_Id()], function (bLock, bSync) {
-						if (!bLock || image.bDeleted) {
-							return;
-						}
-						api.sendEvent("asc_onUserActionStart");
-						History.Create_NewPoint(AscDFH.historydescription_CommonControllerConvertSvgToShapes);
-						if (bSync !== true) {
-							controller.setSelectionState(selectionState);
-							mainObject.lockType = c_oAscLockTypes.kLockTypeMine;
-						}
+					const historyType = AscDFH.historydescription_CommonControllerConvertSvgToShapes;
+					const convertAndFinalize = function (finalize) {
+						const drawingObjects = controller.drawingObjects;
 						const opts = {
 							x: image.x,
 							y: image.y,
@@ -7130,27 +7117,49 @@
 							fonts.push(new AscFonts.CFont(fontName));
 						}
 						AscFonts.FontPickerByCharacter.extendFonts(fonts);
-						const finalize = function (insertShapes) {
+						const done = function (insertShapes) {
 							if (insertShapes && !image.bDeleted && shapes.length > 0) {
 								controller.private_InsertShapesFromSvg(image, shapes);
 							}
-							controller.startRecalculate();
-							api.checkChangesSize();
-							api.sendEvent("asc_onUserActionEnd");
-							controller.drawingObjects.sendGraphicObjectProps();
+							finalize();
 						};
 						if (fonts.length > 0 && AscCommon.g_font_loader.CheckFontsNeedLoading(fonts)) {
 							if (AscCommon.g_font_loader.isWorking()) {
-								finalize(false);
+								done(false);
 							} else {
 								AscCommon.g_font_loader.LoadDocumentFonts2(fonts, undefined, function () {
-									finalize(true);
+									done(true);
 								});
 							}
 						} else {
-							finalize(true);
+							done(true);
 						}
-					});
+					};
+					const logicDocument = api.getLogicDocument();
+					if (logicDocument) {
+						if (logicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props, null, false, false) === false) {
+							logicDocument.StartAction(historyType);
+							convertAndFinalize(function () {
+								logicDocument.Recalculate();
+								logicDocument.FinalizeAction();
+							});
+						}
+					} else {
+						const mainObject = image.getMainGroup() || image;
+						api.checkObjectsLock([mainObject.Get_Id()], function (bLock) {
+							if (!bLock) {
+								return;
+							}
+							api.sendEvent("asc_onUserActionStart");
+							History.Create_NewPoint(historyType);
+							convertAndFinalize(function () {
+								controller.startRecalculate();
+								api.checkChangesSize();
+								api.sendEvent("asc_onUserActionEnd");
+								controller.drawingObjects.sendGraphicObjectProps();
+							});
+						});
+					}
 				},
 
 				private_InsertShapesFromSvg: function (image, drawings) {

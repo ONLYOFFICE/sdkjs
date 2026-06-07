@@ -837,6 +837,10 @@
 		tspan: 1, textpath: 1
 	};
 
+	function resolveSvgFontFamily(value) {
+		return AscFonts.g_fontApplication.GetFontNameDictionary("" + (value || ""), true);
+	}
+
 	function pushSvgTextElement(node, matrix, style) {
 		const text = (node.textContent || "").replace(/\s+/g, " ").trim();
 		if (!text) {
@@ -871,7 +875,7 @@
 			x: pt,
 			y: py,
 			fontSize: fontSize * matScaleSvg(matrix),
-			fontFamily: (prop("font-family") || "Arial").split(",")[0].replace(/['"]/g, "").trim(),
+			fontFamily: resolveSvgFontFamily(prop("font-family")),
 			bold: (weight === "bold" || weight === "bolder" || parseInt(weight, 10) >= 600),
 			italic: (fontStyle === "italic" || fontStyle === "oblique"),
 			color: (fillCol && fillCol.length === 3) ? fillCol : [0, 0, 0],
@@ -1313,7 +1317,12 @@
 			shape.createTextBodyOnEdit();
 		}
 
-		const ptSize = Math.max(1, el.fontSize * mmPerSvgY * 72 / 25.4);
+		let ptSize = Math.round(el.fontSize * mmPerSvgY * 72 / 25.4 * 2) / 2;
+		if (ptSize < 1) {
+			ptSize = 1;
+		} else if (ptSize > 300) {
+			ptSize = 300;
+		}
 		const ascent = el.fontSize * 0.8;
 		const estWidthSvg = Math.max(1, el.text.length * el.fontSize * 0.6);
 		let leftSvg = el.x;
@@ -1678,6 +1687,9 @@
 			const scaleY = mmPerSvgY * SVG_EMU_PER_MM;
 			const top = [];
 			buildSvgTree(parsed.elements, top, opts, mmPerSvgX, mmPerSvgY, scaleX, scaleY);
+			for (let i = 0; i < top.length; ++i) {
+				top[i].checkDrawingUniNvPr();
+			}
 			return top;
 		} catch (e) {
 			return [];
