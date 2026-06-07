@@ -7129,13 +7129,37 @@ StyleManager.prototype =
 		return this.outlineLevel;
 	};
 
+	// Static Row.getHidden equivalent for raw row flags.
+	Row.isHiddenFromFlags = function (ws, rowIndex, flags) {
+		var bCollaborativeChanges = !(ws.autoFilters && ws.autoFilters.useViewLocalChange) && ws.workbook.bCollaborativeChanges;
+		var bViewLocalChange = !bCollaborativeChanges && ws.getActiveNamedSheetViewId() !== null && ws.autoFilters && ws.autoFilters.containInFilter(rowIndex);
+		var _rowFlag_hd = bViewLocalChange ? g_nRowFlag_hdView : g_nRowFlag_hd;
+		return 0 !== (_rowFlag_hd & flags);
+	};
 	Row.prototype.getHidden = function (bViewLocalChange) {
 		if (undefined === bViewLocalChange) {
-			var bCollaborativeChanges = !(this.ws.autoFilters && this.ws.autoFilters.useViewLocalChange) && this.ws.workbook.bCollaborativeChanges;
-			bViewLocalChange = !bCollaborativeChanges && this.ws.getActiveNamedSheetViewId() !== null && this.ws.autoFilters.containInFilter(this.index);
+			return Row.isHiddenFromFlags(this.ws, this.index, this.flags);
 		}
 		var _rowFlag_hd = bViewLocalChange ? g_nRowFlag_hdView : g_nRowFlag_hd;
 		return 0 !== (_rowFlag_hd & this.flags);
+	};
+	// Fast scan of initialized row flags without materializing Row.
+	Row.forEachFlags = function (ws, visitor) {
+		var rd = ws.rowsData;
+		if (!rd || !rd.dataInt32) {
+			return;
+		}
+		var data = rd.dataInt32;
+		var indexA = rd.indexA;
+		var structSize = rd.structSize;
+		var maxR = rd.getMaxIndex();
+		for (var r = rd.getMinIndex(); r <= maxR; ++r) {
+			var mix = data[((r - indexA) * structSize) >> 2];
+			var flags = mix & 0xff;
+			if (flags & g_nRowFlag_init) {
+				visitor(r, flags, (mix >> 8) & 0xff);
+			}
+		}
 	};
 	Row.prototype.setCustomHeight = function (val) {
 		if (true === val) {
@@ -9620,6 +9644,8 @@ function RangeDataManagerElem(bbox, data)
 		var hiddenObj = {start: this.Ref.r1 + 1, h: null};
 		var nHiddenRowCount = 0;
 		var nRowsCount = 0;
+		// Apply row visibility after value/format reads so hidden state stays stable during the scan.
+		var pendingHidden = [];
 		for (var i = startRow; i <= endRow; i++) {
 
 			var isHidden = this.hiddenByAnotherFilter(worksheet, colId, i, this.Ref.c1, opt_columnsFilter);
@@ -9631,7 +9657,7 @@ function RangeDataManagerElem(bbox, data)
 				}
 
 				if (true === isHidden) {
-					worksheet.setRowHidden(isHidden, i, i);
+					pendingHidden.push(isHidden, i, i);
 				}
 			} else {
 				if (!isHidden) {
@@ -9657,7 +9683,7 @@ function RangeDataManagerElem(bbox, data)
 						hiddenObj.h = isSetHidden;
 						hiddenObj.start = i;
 					} else if (hiddenObj.h !== isSetHidden) {
-						worksheet.setRowHidden(hiddenObj.h, hiddenObj.start, i - 1);
+						pendingHidden.push(hiddenObj.h, hiddenObj.start, i - 1);
 						if (true === hiddenObj.h) {
 							nHiddenRowCount += i - hiddenObj.start;
 						}
@@ -9667,14 +9693,14 @@ function RangeDataManagerElem(bbox, data)
 					}
 
 					if (i === endRow) {
-						worksheet.setRowHidden(hiddenObj.h, hiddenObj.start, i);
+						pendingHidden.push(hiddenObj.h, hiddenObj.start, i);
 						if (true === hiddenObj.h) {
 							nHiddenRowCount += i + 1 - hiddenObj.start;
 						}
 					}
 					nRowsCount++;
 				} else if (hiddenObj.h !== null) {
-					worksheet.setRowHidden(hiddenObj.h, hiddenObj.start, i - 1);
+					pendingHidden.push(hiddenObj.h, hiddenObj.start, i - 1);
 					if (true === hiddenObj.h) {
 						nHiddenRowCount += i - hiddenObj.start;
 					}
@@ -9682,9 +9708,13 @@ function RangeDataManagerElem(bbox, data)
 				}
 
 				if (true === isHidden) {
-					worksheet.setRowHidden(isHidden, i, i);
+					pendingHidden.push(isHidden, i, i);
 				}
 			}
+		}
+
+		for (var p = 0; p < pendingHidden.length; p += 3) {
+			worksheet.setRowHidden(pendingHidden[p], pendingHidden[p + 1], pendingHidden[p + 2]);
 		}
 
 		return {nOpenRowsCount: nRowsCount - nHiddenRowCount, nAllRowsCount: endRow - startRow + 1, minChangeRow: minChangeRow};

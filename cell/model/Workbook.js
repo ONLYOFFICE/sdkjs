@@ -13170,7 +13170,11 @@
 	};
 
 	Worksheet.prototype.setActiveNamedSheetView = function (id) {
+		var oldId = this.activeNamedSheetViewId;
 		this.activeNamedSheetViewId = id;
+		if (oldId !== id && this.hiddenManager) {
+			this.hiddenManager.setDirty(true);
+		}
 		this.workbook.handlers && this.workbook.handlers.trigger("asc_onChangeActiveNamedSheetView");
 	};
 
@@ -23907,10 +23911,13 @@
 		var hiddenSum = [];
 		if (this.ws) {
 			var i;
+			var ws = this.ws;
 			var hiddenFlags = [];
-			this.ws._forEachRow(function(row) {
-				if (row.getHidden()) {
-					hiddenFlags[row.getIndex()] = 1;
+			var Row = AscCommonExcel.Row;
+			// Only initialized rows participate, matching row iteration semantics.
+			Row.forEachFlags(ws, function (r, flags) {
+				if (Row.isHiddenFromFlags(ws, r, flags)) {
+					hiddenFlags[r] = 1;
 				}
 			});
 			var sum = 0;
