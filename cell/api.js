@@ -2293,7 +2293,7 @@ var editor;
 						if (contentCacheDefinition) {
 							var pivotTableCacheDefinition = new Asc.CT_PivotCacheDefinition();
 
-							new openXml.SaxParserBase().parse(contentCacheDefinition, pivotTableCacheDefinition);
+							pivotTableCacheDefinition.fromXml(new StaxParser(contentCacheDefinition, null, null));
 
 							if (pivotTableCacheDefinition.isValidCacheSource()) {
 								initOpenManager.oReadResult.pivotCacheDefinitions[wbPivotCacheXml.cacheId] = pivotTableCacheDefinition;
@@ -2302,7 +2302,7 @@ var editor;
 									var contentCacheRecords = partPivotTableCacheRecords.getDocumentContent();
 									if (contentCacheRecords) {
 										var pivotTableCacheRecords = new Asc.CT_PivotCacheRecords();
-										new openXml.SaxParserBase().parse(contentCacheRecords, pivotTableCacheRecords);
+										pivotTableCacheRecords.setRawXml(contentCacheRecords, pivotTableCacheDefinition.recordCount);
 										pivotTableCacheDefinition.cacheRecords = pivotTableCacheRecords;
 									}
 								}
@@ -2395,7 +2395,7 @@ var editor;
 								for (i = 0; i < pivotParts.length; ++i) {
 									var contentPivotTable = pivotParts[i].getDocumentContent();
 									var pivotTable = new Asc.CT_pivotTableDefinition(true);
-									new openXml.SaxParserBase().parse(contentPivotTable, pivotTable);
+									pivotTable.fromXml(new StaxParser(contentPivotTable, null, null));
 									var cacheDefinition = initOpenManager.oReadResult.pivotCacheDefinitions[pivotTable.cacheId];
 									if (cacheDefinition) {
 										pivotTable.cacheDefinition = cacheDefinition;
