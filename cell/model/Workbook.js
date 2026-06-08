@@ -19240,12 +19240,9 @@
 		t.worksheet.dynamicArrayManager.recalculateVolatileArrays();
 		AscCommon.History.EndTransaction();
 	};
-	// Shim for setters where row / col / cell all delegate to the same method.
-	Range.prototype._setRangeXfByMethod = function (styleOnlyApply, methodName, val) {
-		this._setRangeXfProperty(styleOnlyApply,
-			function (row)  { row[methodName](val); },
-			function (col)  { col[methodName](val); },
-			function (cell) { cell[methodName](val); });
+	// applyFn runs for each row/col/cell; use dot notation (el.setBold(val)) - a string name breaks under Closure ADVANCED.
+	Range.prototype._setRangeXfByMethod = function (styleOnlyApply, applyFn) {
+		this._setRangeXfProperty(styleOnlyApply, applyFn, applyFn, applyFn);
 	};
 	// Row / Col / All ranges route style-only entries through `styleOnlyApply`
 	// (a run-rewrite helper from CellStyleStorage) and visit only data cells
@@ -19346,7 +19343,7 @@
 		this.createCellOnRowColCross();
 		this._setRangeXfByMethod(function (ws, bbox) {
 			AscCommonExcel.CellStyleStorage.applyXfsReplaceToStyleOnlyRunsInBBox(ws, bbox, val);
-		}, 'setStyle', val);
+		}, function (el) { el.setStyle(val); });
 	};
 	Range.prototype.clearTableStyle = function() {
 		this.worksheet.sheetMergedStyles.clearTablePivotStyle(this.bbox);
@@ -19374,7 +19371,7 @@
 				ws, bbox, 'num', val,
 				AscCommonExcel.CellXfs.prototype.setNum,
 				AscCommonExcel.g_StyleCache.addNum);
-		}, 'setNum', val);
+		}, function (el) { el.setNum(val); });
 	};
 	Range.prototype.getShiftedNumFormat=function(nShift, dDigitsCount){
 		AscCommon.History.Create_NewPoint();
@@ -19392,7 +19389,7 @@
 				ws, bbox, 'font', val,
 				AscCommonExcel.CellXfs.prototype.setFont,
 				AscCommonExcel.g_StyleCache.addFont);
-		}, 'setFont', val);
+		}, function (el) { el.setFont(val); });
 	};
 	Range.prototype.setFontname=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19402,7 +19399,7 @@
 				ws, bbox, 'name', val,
 				AscCommonExcel.Font.prototype.getName,
 				function (v) { this.setName(v); this.setScheme(null); });
-		}, 'setFontname', val);
+		}, function (el) { el.setFontname(val); });
 	};
 	Range.prototype.setFontsize=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19412,7 +19409,7 @@
 				ws, bbox, 'size', val,
 				AscCommonExcel.Font.prototype.getSize,
 				AscCommonExcel.Font.prototype.setSize);
-		}, 'setFontsize', val);
+		}, function (el) { el.setFontsize(val); });
 	};
 	Range.prototype.setFontcolor=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19422,7 +19419,7 @@
 				ws, bbox, 'color', val,
 				AscCommonExcel.Font.prototype.getColor,
 				AscCommonExcel.Font.prototype.setColor);
-		}, 'setFontcolor', val);
+		}, function (el) { el.setFontcolor(val); });
 	};
 	Range.prototype.setBold=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19432,7 +19429,7 @@
 				ws, bbox, 'bold', val,
 				AscCommonExcel.Font.prototype.getBold,
 				AscCommonExcel.Font.prototype.setBold);
-		}, 'setBold', val);
+		}, function (el) { el.setBold(val); });
 	};
 	Range.prototype.setItalic=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19442,7 +19439,7 @@
 				ws, bbox, 'italic', val,
 				AscCommonExcel.Font.prototype.getItalic,
 				AscCommonExcel.Font.prototype.setItalic);
-		}, 'setItalic', val);
+		}, function (el) { el.setItalic(val); });
 	};
 	Range.prototype.setUnderline=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19452,7 +19449,7 @@
 				ws, bbox, 'underline', val,
 				AscCommonExcel.Font.prototype.getUnderline,
 				AscCommonExcel.Font.prototype.setUnderline);
-		}, 'setUnderline', val);
+		}, function (el) { el.setUnderline(val); });
 	};
 	Range.prototype.setStrikeout=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19462,7 +19459,7 @@
 				ws, bbox, 'strikeout', val,
 				AscCommonExcel.Font.prototype.getStrikeout,
 				AscCommonExcel.Font.prototype.setStrikeout);
-		}, 'setStrikeout', val);
+		}, function (el) { el.setStrikeout(val); });
 	};
 	Range.prototype.setFontAlign=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19472,7 +19469,7 @@
 				ws, bbox, 'fontAlign', val,
 				AscCommonExcel.Font.prototype.getVerticalAlign,
 				AscCommonExcel.Font.prototype.setVerticalAlign);
-		}, 'setFontAlign', val);
+		}, function (el) { el.setFontAlign(val); });
 	};
 	Range.prototype.setAlignVertical=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19481,7 +19478,7 @@
 			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'alignVertical', val,
 				AscCommonExcel.Align.prototype.setAlignVertical);
-		}, 'setAlignVertical', val);
+		}, function (el) { el.setAlignVertical(val); });
 	};
 	Range.prototype.setAlignHorizontal=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19490,7 +19487,7 @@
 			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'alignHorizontal', val,
 				AscCommonExcel.Align.prototype.setAlignHorizontal);
-		}, 'setAlignHorizontal', val);
+		}, function (el) { el.setAlignHorizontal(val); });
 	};
 	Range.prototype.setReadingOrder=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19499,7 +19496,7 @@
 			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'readingOrder', val,
 				AscCommonExcel.Align.prototype.setReadingOrder);
-		}, 'setReadingOrder', val);
+		}, function (el) { el.setReadingOrder(val); });
 	};
 	Range.prototype.setFill=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19510,7 +19507,7 @@
 				ws, bbox, 'fill', val,
 				AscCommonExcel.CellXfs.prototype.setFill,
 				AscCommonExcel.g_StyleCache.addFill);
-		}, 'setFill', val);
+		}, function (el) { el.setFill(val); });
 	};
 	Range.prototype.setFillColor=function(val){
 		var fill = new AscCommonExcel.Fill();
@@ -19700,7 +19697,7 @@
 			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'shrinkToFit', val,
 				AscCommonExcel.Align.prototype.setShrinkToFit);
-		}, 'setShrinkToFit', val);
+		}, function (el) { el.setShrinkToFit(val); });
 	};
 	Range.prototype.setWrap=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19709,7 +19706,7 @@
 			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'wrap', val,
 				AscCommonExcel.Align.prototype.setWrap);
-		}, 'setWrap', val);
+		}, function (el) { el.setWrap(val); });
 	};
 	Range.prototype.setAngle=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19718,7 +19715,7 @@
 			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'angle', val,
 				AscCommonExcel.Align.prototype.setAngle);
-		}, 'setAngle', val);
+		}, function (el) { el.setAngle(val); });
 	};
 	Range.prototype.setIndent = function (val) {
 		if (val < 0) {
@@ -19730,7 +19727,7 @@
 			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'indent', val,
 				AscCommonExcel.Align.prototype.setIndent);
-		}, 'setIndent', val);
+		}, function (el) { el.setIndent(val); });
 	};
 	Range.prototype.setApplyProtection = function (val) {
 		AscCommon.History.Create_NewPoint();
@@ -19739,7 +19736,7 @@
 			AscCommonExcel.CellStyleStorage.applyXfsPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'applyProtection', val,
 				AscCommonExcel.CellXfs.prototype.setApplyProtection);
-		}, 'setApplyProtection', val);
+		}, function (el) { el.setApplyProtection(val); });
 	};
 	Range.prototype.setLocked = function (val) {
 		AscCommon.History.Create_NewPoint();
@@ -19748,7 +19745,7 @@
 			AscCommonExcel.CellStyleStorage.applyXfsPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'locked', val,
 				AscCommonExcel.CellXfs.prototype.setLocked);
-		}, 'setLocked', val);
+		}, function (el) { el.setLocked(val); });
 	};
 	Range.prototype.setHiddenFormulas = function (val) {
 		AscCommon.History.Create_NewPoint();
@@ -19757,7 +19754,7 @@
 			AscCommonExcel.CellStyleStorage.applyXfsPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'hidden', val,
 				AscCommonExcel.CellXfs.prototype.setHidden);
-		}, 'setHiddenFormulas', val);
+		}, function (el) { el.setHiddenFormulas(val); });
 	};
 	Range.prototype.setType=function(type){
 		AscCommon.History.Create_NewPoint();
