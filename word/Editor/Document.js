@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -2229,7 +2232,13 @@ CDocument.prototype.FinalizeAction = function(checkEmptyAction, additional)
 	this.ResumeRecalculate();
 
 	this.private_CheckAdditionalOnFinalize();
-	this.private_CheckEmptyPointsInAction(checkEmptyAction);
+	
+	if (!this.private_CheckEmptyPointsInAction(checkEmptyAction))
+	{
+		if (!window['AscCommon'].g_specialPasteHelper.pasteStart)
+			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
+	}
+	
 	this.private_CheckActionLock();
 
 	let actionCompleted = true;
@@ -2454,16 +2463,18 @@ CDocument.prototype.private_CheckAdditionalOnFinalize = function()
 CDocument.prototype.private_CheckEmptyPointsInAction = function(checkEmptyAction)
 {
 	if (false === checkEmptyAction)
-		return;
+		return false;
 
 	for (let pointIndex = 0, pointCount = this.Action.PointsCount; pointIndex < pointCount; ++pointIndex)
 	{
 		if (!this.History.Is_LastPointEmpty())
-			break;
+			return false;
 
 		this.History.Remove_LastPoint();
 		--this.Action.PointsCount;
 	}
+	
+	return true;
 };
 CDocument.prototype.private_CheckActionLock = function()
 {
@@ -5958,6 +5969,67 @@ CDocument.prototype.AddHorizontalRule = function()
 	this.Recalculate();
 	this.UpdateInterface();
 };
+CDocument.prototype.SetHorizontalRuleProperties = function(hrUpdate)
+{
+	let selectedObjects = this.DrawingObjects && this.DrawingObjects.selectedObjects;
+	if (!selectedObjects || selectedObjects.length !== 1)
+		return false;
+	let shape = selectedObjects[0];
+	if (!shape.isHorizontalRule())
+		return false;
+
+	let geom = shape.spPr && shape.spPr.geometry;
+	let oldHr = geom && geom.hr;
+	if (!oldHr)
+		return false;
+
+	let newHr = oldHr.createDuplicate();
+	newHr.pct = hrUpdate.pct;
+	newHr.align = hrUpdate.align;
+	newHr.noshade = hrUpdate.noshade;
+	geom.setHR(newHr);
+
+	let xfrm = shape.spPr.xfrm;
+	let bSizeChanged = false;
+	if (xfrm)
+	{
+		if (AscFormat.isRealNumber(hrUpdate._newHeight))
+		{
+			xfrm.setExtY(hrUpdate._newHeight);
+			bSizeChanged = true;
+		}
+		if (newHr.pct > 0)
+		{
+			let paraDrawing = shape.parent;
+			let paragraph = paraDrawing && paraDrawing.Get_ParentParagraph && paraDrawing.Get_ParentParagraph();
+			let sectPr = paragraph && paragraph.Get_SectPr();
+			if (sectPr)
+			{
+				let nColIdx = paragraph.ColumnNum || 0;
+				let columnWidth = sectPr.GetColumnWidth(nColIdx);
+				let paraInd = paragraph.Get_CompiledPr2(true).ParaPr.Ind;
+				columnWidth -= paraInd.Left + paraInd.Right;
+				columnWidth = Math.max(0, columnWidth);
+				xfrm.setExtX(columnWidth * newHr.pct / 1000);
+				bSizeChanged = true;
+			}
+		}
+		else if (AscFormat.isRealNumber(hrUpdate._newWidth))
+		{
+			xfrm.setExtX(hrUpdate._newWidth);
+			bSizeChanged = true;
+		}
+	}
+
+	if (hrUpdate._newColor)
+		shape.setFill(AscFormat.CreateUnifillFromAscColor(hrUpdate._newColor, 1));
+
+	if (bSizeChanged && shape.parent && shape.parent.CheckWH)
+		shape.parent.CheckWH();
+
+	this.Recalculate();
+	return true;
+};
 CDocument.prototype.AddImages = function(aImages){
     this.Controller.AddImages(aImages);
 };
@@ -7413,8 +7485,10 @@ CDocument.prototype.Interface_Update_DrawingPr = function()
 	for (let i = 0; i < drawingProps.length; ++i)
 	{
 		let pr = drawingProps[i];
-		
-		if (!(pr instanceof Asc.CHyperlinkProperty))
+
+		if (pr instanceof AscFormat.CHorizontalRule)
+			this.Api.sync_HorizontalRulePropCallback(pr);
+		else if (!(pr instanceof Asc.CHyperlinkProperty))
 			this.Api.sync_ImgPropCallback(pr);
 		else if (showHyperlinks)
 			this.Api.sync_HyperlinkPropCallback(pr);
@@ -8075,6 +8149,11 @@ CDocument.prototype.IsMovingTableBorder = function()
 {
 	return this.Controller.IsMovingTableBorder();
 };
+CDocument.prototype.CancelTableBorderMove = function()
+{
+	this.Controller.CancelTableBorderMove();
+	this.DrawingDocument.OnUpdateOverlay();
+};
 /**
  * Проверяем попали ли мы в селект.
  * @param X
@@ -8527,7 +8606,7 @@ CDocument.prototype.IsTableBorder = function(X, Y, PageIndex)
 	{
 		if (-1 != this.DrawingObjects.IsInDrawingObject(X, Y, PageIndex, this))
 		{
-			return null;
+			return this.DrawingObjects.IsTableBorderInDrawing(X, Y, PageIndex);
 		}
 		else if (true === this.Footnotes.CheckHitInFootnote(X, Y, PageIndex))
 		{
@@ -8947,6 +9026,16 @@ CDocument.prototype.OnKeyDown = function(e)
 
 				this.DrawingDocument.CancelTrackText();
 			}
+			else if (this.DrawingDocument.IsTrackTable())
+			{
+				let table = this.GetCurrentTable();
+				this.DrawingDocument.CancelTrackTable();
+				if (table)
+				{
+					table.SelectAll();
+					table.Document_SetThisElementCurrent(true);
+				}
+			}
 			else if (true === this.Api.isMarkerFormat)
 			{
 				this.Api.sync_MarkerFormatCallback(false);
@@ -8961,7 +9050,27 @@ CDocument.prototype.OnKeyDown = function(e)
 			{
 				this.Api.sync_StartAddShapeCallback(false);
 				this.Api.sync_EndAddShape();
-				this.DrawingObjects.endTrackNewShape();
+				if (this.Is_TrackingDrawingObjects())
+					this.DrawingObjects.resetTrackState();
+				else
+					this.DrawingObjects.endTrackNewShape();
+				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
+			}
+			else if (this.IsMovingTableBorder())
+			{
+				this.CancelTableBorderMove();
+				this.DrawingDocument.UnlockCursorType();
+				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
+			}
+			else if (this.DrawingDocument.IsTrackRuler())
+			{
+				this.DrawingDocument.CancelTrackRuler();
+			}
+			else if (this.Is_TrackingDrawingObjects())
+			{
+				this.DrawingObjects.resetTrackState();
+				this.DrawingDocument.OnUpdateOverlay();
+				this.DrawingDocument.UnlockCursorType();
 				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
 			}
 			else if (this.Api.isInkDrawerOn())
@@ -21691,6 +21800,19 @@ CDocument.prototype.controller_IsMovingTableBorder = function()
 		return true;
 
 	return false;
+};
+CDocument.prototype.controller_CancelTableBorderMove = function()
+{
+	if (null == this.Selection.Data || true !== this.Selection.Data.TableBorder)
+		return;
+
+	let table = this.Content[this.Selection.Data.Pos];
+	if (table && type_Table === table.GetType())
+		table.CancelBorderMove();
+
+	this.Selection.Start = false;
+	this.Selection.Use   = this.Selection.Data.Selection;
+	this.Selection.Data  = null;
 };
 CDocument.prototype.controller_CheckPosInSelection = function(X, Y, PageAbs, NearPos)
 {

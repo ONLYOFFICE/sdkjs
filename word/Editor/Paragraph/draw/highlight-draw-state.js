@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -51,6 +54,7 @@
 	 */
 	function ParagraphHighlightDrawState(drawState)
 	{
+		AscWord.ParagraphBidiFlow.call(this);
 		this.drawState = drawState;
 		
 		this.Page   = 0;
@@ -78,7 +82,7 @@
 		this.haveCurrentComment = false;
 		this.currentCommentId   = null;
 		this.comments           = []; // current list of comments
-		this.permRanges         = {};
+		this.permRanges         = [];
 		
 		this.hyperlinks = [];
 		
@@ -91,14 +95,13 @@
 		this.Y0 = 0;
 		this.Y1 = 0;
 		
-		this.spaces = 0;
+		this.spaces     = 0;
+		this.spacesSkip = 0;
 		
 		this.InlineSdt = [];
 		this.CollectFixedForms = false;
 		
 		this.complexFields = new AscWord.ParagraphComplexFieldStack();
-		
-		this.bidiFlow = new AscWord.BidiFlow(this);
 		
 		this.run       = null;
 		this.highlight = highlight_None;
@@ -108,6 +111,9 @@
 		
 		this.permColor = null;
 	}
+	ParagraphHighlightDrawState.prototype = Object.create(AscWord.ParagraphBidiFlow.prototype);
+	ParagraphHighlightDrawState.prototype.constructor = ParagraphHighlightDrawState;
+
 	ParagraphHighlightDrawState.prototype.init = function(paragraph, graphics)
 	{
 		this.Paragraph = paragraph;
@@ -165,7 +171,7 @@
 		this.Y0   = top;
 		this.Y1   = bottom;
 	};
-	ParagraphHighlightDrawState.prototype.beginRange = function(range, X, spaceCount)
+	ParagraphHighlightDrawState.prototype.beginRange = function(rangeNum, X)
 	{
 		this.High.Clear();
 		this.Coll.Clear();
@@ -176,15 +182,20 @@
 		this.CFields.Clear();
 		this.HyperCF.Clear();
 		this.Perm.Clear();
-		
-		this.Range = range;
+
+		this.Range = rangeNum;
 		this.X = X;
-		
-		if (!this.Paragraph.isRtlDirection())
+
+		let isRtl = this.Paragraph.isRtlDirection();
+		let range = this.Paragraph.Lines[this.Line].Ranges[this.Range];
+
+		if (!isRtl)
 			this.checkNumbering(false);
-		
-		this.spaces = spaceCount;
-		this.bidiFlow.begin(this.Paragraph.isRtlDirection());
+
+		this.spaces     = range.Spaces + (isRtl ? range.SpacesRight : range.SpacesLeft);
+		this.spacesSkip = isRtl ? range.SpacesLeft : 0;
+
+		this.bidiFlow.begin(isRtl);
 		
 		this.InlineSdt = [];
 		
@@ -275,20 +286,33 @@
 		
 		let flags = this.getFlags(element, !!collaborationColor);
 		let hyperlink = this.getHyperlinkObject();
-		this.bidiFlow.add([element, run, flags, hyperlink, collaborationColor, this.comments.slice(), this.haveCurrentComment], element.getBidiType());
+		this.bidiFlow.add([para_RunBase, element, run, flags, hyperlink, collaborationColor, this.comments.slice(), this.haveCurrentComment], element.getBidiType());
 	};
-	ParagraphHighlightDrawState.prototype.handleBidiFlow = function(data)
+	ParagraphHighlightDrawState.prototype.handleParaMath = function(math)
 	{
-		let element    = data[0];
-		let run        = data[1];
-		let flags      = data[2];
-		let hyperlink  = data[3];
-		let collColor  = data[4];
-		let comments   = data[5];
-		let curComment = data[6];
+		if (!math || math.Root.IsEmptyRange(this.Line, this.Range))
+			return;
+		
+		this.bidiFlow.add([para_Math, math], math.getBidiType());
+	};
+	ParagraphHighlightDrawState.prototype.handleMathBase = function(mathBase)
+	{
+		this.bidiFlow.add([para_Math_Composition, mathBase], mathBase.getBidiType());
+	};
+	ParagraphHighlightDrawState.prototype.handleBidiFlowRunElement = function(data, direction)
+	{
+		let element    = data[1];
+		let run        = data[2];
+		let flags      = data[3];
+		let hyperlink  = data[4];
+		let collColor  = data[5];
+		let comments   = data[6];
+		let curComment = data[7];
 		let highlightAdditional;
 		
 		let w = element.GetWidthVisible();
+		
+		flags = this.updateFlags(element, flags);
 		
 		this.handleRun(run);
 
@@ -299,12 +323,9 @@
 		
 		this.X += w;
 	};
-	ParagraphHighlightDrawState.prototype.handleParaMath = function(math)
+	ParagraphHighlightDrawState.prototype.handleBidiFlowParaMath = function(data, direction)
 	{
-		if (!math || math.Root.IsEmptyRange(this.Line, this.Range))
-			return;
-		
-		this.bidiFlow.end();
+		let math = data[1];
 		
 		let y0 = this.Y0;
 		let y1 = this.Y1;
@@ -315,7 +336,7 @@
 		this.Coll = new CParaDrawingRangeLines();
 		this.Comm = new CParaDrawingRangeLines();
 		
-		math.Root.Draw_HighLights(this);
+		math.Root.drawHighLights(this);
 		
 		let mathComments = this.Comm.getNext();
 		if (mathComments)
@@ -338,9 +359,9 @@
 		this.Y0 = y0;
 		this.Y1 = y1;
 	};
-	ParagraphHighlightDrawState.prototype.handleMathBase = function(element)
+	ParagraphHighlightDrawState.prototype.handleBidiFlowMathBase = function(data, direction)
 	{
-		this.bidiFlow.end();
+		let element = data[1];
 		
 		let textPr = element.Get_CompiledCtrPrp();
 		
@@ -364,7 +385,7 @@
 		
 		for (let pos = startPos; pos <= endPos; ++pos)
 		{
-			element.Content[pos].Draw_HighLights(this);
+			element.Content[pos].drawHighLights(this);
 		}
 		
 		// Add after because we are rendering in reverse direction
@@ -549,8 +570,24 @@
 			flags |= FLAG_COMPLEX_FIELD;
 		if (this.permRanges.length > 0)
 			flags |= FLAG_PERM_RANGE;
+		if (this.DrawComments && this.comments.length > 0)
+			flags |= FLAG_COMMENT;
+		if (this.DrawColl && isCollaboration)
+			flags |= FLAG_COLLABORATION;
 		
-		if (element.Type !== para_End)
+		return flags;
+	};
+	ParagraphHighlightDrawState.prototype.updateFlags = function(element, f)
+	{
+		let flags = 0;
+		if (f & FLAG_SEARCH)
+			flags |= FLAG_SEARCH;
+		if (f & FLAG_COMPLEX_FIELD)
+			flags |= FLAG_COMPLEX_FIELD;
+		if (f & FLAG_PERM_RANGE)
+			flags |= FLAG_PERM_RANGE;
+		
+		if (element.Type !== para_End && element.Type !== para_Space)
 			flags |= FLAG_SHD;
 		
 		switch (element.Type)
@@ -572,23 +609,29 @@
 			case para_EndnoteReference:
 			case para_EndnoteRef:
 			{
-				if (this.DrawComments && this.comments.length > 0)
+				if (f & FLAG_COMMENT)
 					flags |= FLAG_COMMENT;
 				else
 					flags |= FLAG_HIGHLIGHT;
 				
-				if (this.DrawSearch && this.searchCounter > 0)
+				if (f & FLAG_SEARCH)
 					flags |= FLAG_SEARCH;
-				else if (this.DrawColl && isCollaboration)
+				else if (f & FLAG_COLLABORATION)
 					flags |= FLAG_COLLABORATION;
 				
 				break;
 			}
 			case para_Space:
 			{
-				if (this.spaces > 0)
+				if (this.spacesSkip)
 				{
-					if (this.DrawComments && this.comments.length > 0)
+					--this.spacesSkip;
+				}
+				else if (this.spaces)
+				{
+					flags |= FLAG_SHD;
+					
+					if (f & FLAG_COMMENT)
 						flags |= FLAG_COMMENT;
 					else
 						flags |= FLAG_HIGHLIGHT;
@@ -596,16 +639,16 @@
 					--this.spaces;
 				}
 				
-				if (this.DrawSearch && this.searchCounter > 0)
+				if (f & FLAG_SEARCH)
 					flags |= FLAG_SEARCH;
-				else if (this.DrawColl && isCollaboration)
+				else if (f & FLAG_COLLABORATION)
 					flags |= FLAG_COLLABORATION;
 				
 				break;
 			}
 			case para_End:
 			{
-				if (this.DrawColl && isCollaboration)
+				if (f & FLAG_COLLABORATION)
 					flags |= FLAG_COLLABORATION;
 				
 				break;
@@ -614,14 +657,14 @@
 			{
 				if (element.IsVisual())
 				{
-					if (this.DrawComments && this.comments.length > 0)
+					if (f & FLAG_COMMENT)
 						flags |= FLAG_COMMENT;
 					else
 						flags |= FLAG_HIGHLIGHT;
 					
-					if (this.DrawSearch && this.searchCounter > 0)
+					if (f & FLAG_SEARCH)
 						flags |= FLAG_SEARCH;
-					else if (this.DrawColl && isCollaboration)
+					else if (f & FLAG_COLLABORATION)
 						flags |= FLAG_COLLABORATION;
 					
 					if (element.IsFormField())

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 /**
@@ -1012,8 +1015,11 @@
 		return !oParaDrawing || !oParaDrawing.Is_Inline || oParaDrawing.Is_Inline();
 	};
 	CGraphicObjectBase.prototype.getHorizontalRule = function () {
-		let oGeom = this.getGeometry && this.getGeometry();
-		return oGeom && oGeom.hr || null;
+		let geometry = this.getGeometry && this.getGeometry();
+		let horizontalRule = geometry && geometry.hr || null;
+		if (horizontalRule)
+			horizontalRule._shape = this;
+		return horizontalRule;
 	};
 	CGraphicObjectBase.prototype.canRotate = function () {
 		if (!this.canEdit()) {
@@ -1066,22 +1072,30 @@
 		return !this.isObjectInSmartArt() && this.getNoAdjustHandles() === false;
 	};
 	CGraphicObjectBase.prototype.Reassign_ImageUrls = function (mapUrl) {
-		if (this.blipFill) {
-			if (mapUrl[this.blipFill.RasterImageId]) {
-				if (this.setBlipFill) {
-					const blip_fill = this.blipFill.createDuplicate();
-					blip_fill.setRasterImageId(mapUrl[this.blipFill.RasterImageId]);
-					this.setBlipFill(blip_fill);
-				}
+		if (this.blipFill && mapUrl[this.blipFill.RasterImageId]) {
+			if (this.setBlipFill) {
+				const oNew = this.blipFill.createDuplicate();
+				oNew.ReplaceImageUrl(mapUrl);
+				this.setBlipFill(oNew);
 			}
 		}
 		if (this.spPr) {
-			const oNewFill = this.spPr.Fill && this.spPr.Fill.reassignImageUrl(mapUrl);
-			if (oNewFill)
-				this.spPr.setFill(oNewFill);
-			const oNewLn = this.spPr.ln && this.spPr.ln.reassignImageUrl(mapUrl);
-			if (oNewLn)
-				this.spPr.setLn(oNewLn);
+			if (this.spPr.Fill) {
+				const sId = this.spPr.Fill.checkRasterImageId();
+				if (sId && mapUrl[sId]) {
+					const oNew = this.spPr.Fill.createDuplicate();
+					oNew.ReplaceImageUrl(mapUrl);
+					this.spPr.setFill(oNew);
+				}
+			}
+			if (this.spPr.ln) {
+				const sId = this.spPr.ln.checkRasterImageId();
+				if (sId && mapUrl[sId]) {
+					const oNew = this.spPr.ln.createDuplicate();
+					oNew.ReplaceImageUrl(mapUrl);
+					this.spPr.setLn(oNew);
+				}
+			}
 		}
 		if (Array.isArray(this.spTree)) {
 			for (let i = 0; i < this.spTree.length; ++i) {
@@ -1855,6 +1869,35 @@
 		}
 		return null;
 	};
+	CGraphicObjectBase.prototype.countDrawings = function () {
+		let count = 1;
+		if (Array.isArray(this.spTree)) {
+			for (let i = 0; i < this.spTree.length; ++i) {
+				count += this.spTree[i].countDrawings();
+			}
+		}
+		return count;
+	};
+	CGraphicObjectBase.prototype.assignNameInContainer = function (container) {
+		let oCNvPr = this.getCNvProps && this.getCNvProps();
+		if (oCNvPr) {
+			let typeName = this.getTypeName();
+			if (!oCNvPr.name || this.isStandardName(oCNvPr.name, typeName)) {
+				oCNvPr.setName(typeName + " " + container.getNextNameIndex());
+			}
+		}
+		if (Array.isArray(this.spTree)) {
+			for (let i = 0; i < this.spTree.length; ++i) {
+				this.spTree[i].assignNameInContainer(container);
+			}
+		}
+	};
+	CGraphicObjectBase.prototype.isStandardName = function (name, typeName) {
+		let prefix = typeName + " ";
+		if (name.indexOf(prefix) !== 0) return false;
+		let rest = name.substring(prefix.length);
+		return /^\d+$/.test(rest);
+	};
 	CGraphicObjectBase.prototype.getFormatIdString = function () {
 		let nId = this.getFormatId();
 		if (nId !== null) {
@@ -2501,6 +2544,9 @@
 
 	CGraphicObjectBase.prototype.onMouseMove = function (e, x, y) {
 		return this.hit(x, y);
+	};
+	CGraphicObjectBase.prototype.IsTableBorder = function (x, y, pageIndex) {
+		return null;
 	};
 	CGraphicObjectBase.prototype.drawLocks = function (transform, graphics) {
 		if (AscCommon.IsShapeToImageConverter) {
@@ -3618,33 +3664,35 @@
 				this.changePositionInSmartArt(posX, posY);
 			}
 
-			if (this.isShape() || this.isImage())
+			if ((this.isShape() || this.isImage()) && dAngle !== originalRot)
 				Asc.editor.addMacroStepData('SetDrawingRotation', dAngle);
 		}
 	};
 	CGraphicObjectBase.prototype.changeFlipH = function (bFlipH) {
 		if (this.spPr && this.spPr.xfrm) {
-			var oXfrm = this.spPr.xfrm;
+      let bPrevValue = this.getFullFlipH();
+			let oXfrm = this.spPr.xfrm;
 			oXfrm.setFlipH(bFlipH);
 			if (this.isObjectInSmartArt()) {
-				var point = this.getSmartArtShapePoint();
+				let point = this.getSmartArtShapePoint();
 				point && point.changeFlipH(bFlipH);
 			}
 
-			if (this.isShape() || this.isImage())
+			if ((this.isShape() || this.isImage()) && bFlipH !== bPrevValue)
 				Asc.editor.addMacroStepData('SetDrawingFlipH', bFlipH);
 		}
 	};
 	CGraphicObjectBase.prototype.changeFlipV = function (bFlipV) {
 		if (this.spPr && this.spPr.xfrm) {
-			var oXfrm = this.spPr.xfrm;
+      let bPrevValue = this.getFullFlipV();
+			let oXfrm = this.spPr.xfrm;
 			oXfrm.setFlipV(bFlipV);
 			if (this.isObjectInSmartArt()) {
-				var point = this.getSmartArtShapePoint();
+				let point = this.getSmartArtShapePoint();
 				point && point.changeFlipV(bFlipV);
 			}
 
-			if (this.isShape() || this.isImage())
+			if ((this.isShape() || this.isImage()) && bFlipV !== bPrevValue)
 				Asc.editor.addMacroStepData('SetDrawingFlipV', bFlipV);
 		}
 	};

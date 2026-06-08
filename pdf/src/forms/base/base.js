@@ -1,34 +1,39 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
+
+"use strict";
 
 (function(){
 
@@ -94,7 +99,7 @@
     function CBaseField(sName, nType, aRect, oDoc)
     {
         this.Id = AscCommon.g_oIdCounter.Get_NewId();
-        if ((AscCommon.g_oIdCounter.m_bLoad || AscCommon.History.CanAddChanges())) {
+        if (AscCommon.g_oTableId.IsOn()) {
             AscCommon.g_oTableId.Add(this, this.Id);
         }
 
@@ -111,8 +116,8 @@
         this._bgColor       = undefined;          // prop for old versions (fillColor)
         this._fgColor       = undefined;
         this._textColor     = [0,0,0];
-        this._textFont      = "";           // original
-        this._textFontActual= undefined;    // actually used
+        this._textFont      = AscPDF.DEFAULT_FIELD_FONT; // original
+        this._textFontActual= AscPDF.DEFAULT_FIELD_FONT;    // actually used
         this._textSize      = 10;
         this._fontStyle     = 0;    // font style information (bold, italic)
         this._meOptions     = 0;    // middle-east text options (flags)
@@ -425,6 +430,7 @@
 
         this._kids.push(oField);
         oField._parent = this;
+		oField.SetNeedUpdateEditShape(true);
 
         if (false == Asc.editor.getDocumentRenderer().IsOpenFormsInProgress) {
             if (oField.IsWidget()) {
@@ -453,6 +459,7 @@
         if (nIndex != -1) {
             this._kids.splice(nIndex, 1);
             AscCommon.History.Add(new CChangesPDFFormKidsContent(this, nIndex, [oField], false))
+			oField.SetNeedUpdateEditShape(true);
             oField._parent = null;
             return true;
         }
@@ -732,59 +739,6 @@
         return aActionsInfo;
     };
 
-
-    /**
-	 * Sets the JavaScript action of the field for a given trigger.
-     * Note: This method will overwrite any action already defined for the chosen trigger.
-	 * @memberof CBaseField
-     * @param {number} nTriggerType - A string that sets the trigger for the action.
-     * @param {string} sScript - The JavaScript code to be executed when the trigger is activated.
-	 * @typeofeditors ["PDF"]
-	 */
-    CBaseField.prototype.SetAction = function(nTriggerType, sScript) {
-        let oDoc        = this.GetDocument();
-        let oCalcInfo   = oDoc.GetCalculateInfo();
-        let oAction     = new AscPDF.CActionRunScript(sScript);
-
-        let oTrigger = new AscPDF.CPdfTrigger(nTriggerType, [oAction]);
-        oTrigger.SetParentField(this);
-
-        switch (nTriggerType) {
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseUp:
-                this._triggers.MouseUp = oTrigger;
-                break;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseDown:
-                this._triggers.MouseDown = oTrigger;
-                break;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseEnter:
-                this._triggers.MouseEnter = oTrigger;
-                break;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseExit:
-                this._triggers.MouseExit = oTrigger;
-                break;
-            case AscPDF.PDF_TRIGGERS_TYPES.OnFocus:
-                this._triggers.OnFocus = oTrigger;
-                break;
-            case AscPDF.PDF_TRIGGERS_TYPES.OnBlur:
-                this._triggers.OnBlur = oTrigger;
-                break;
-            case AscPDF.PDF_TRIGGERS_TYPES.Keystroke:
-                this._triggers.Keystroke = oTrigger;
-                break;
-            case AscPDF.PDF_TRIGGERS_TYPES.Validate:
-                this._triggers.Validate = oTrigger;
-                break;
-            case AscPDF.PDF_TRIGGERS_TYPES.Calculate:
-                this._triggers.Calculate = oTrigger;
-                oCalcInfo.RemoveFieldFromOrder(this.GetFullName());
-                oCalcInfo.AddFieldToOrder(oDoc.GetField(this.GetFullName()).GetApIdx());
-                break;
-            case AscPDF.PDF_TRIGGERS_TYPES.Format:
-                this._triggers.Format = oTrigger;
-                break;
-        }
-    };
-
     /**
 	 * Sets a flag that we have entered the field.
      * This is not the same as an doc.activeField.
@@ -954,7 +908,7 @@
             oCopy.SetActions(type, _t.GetActions(type));
         });
 
-        oCopy.private_SetValue(this.GetParentValue());
+        oCopy.private_SetValue(this.GetLogicValue());
         oCopy.DrainViewPropsFrom(this);
         oCopy.SetMeta(this.GetMeta());
         
@@ -987,7 +941,7 @@
             return this._parent;
         }
 
-        if (this._parent && this._parent.IsAllKidsWidgets()) {
+        if (this._parent && this._parent.IsLogicalRoot()) {
             return this._parent;
         }
         
@@ -999,12 +953,12 @@
 	 * @memberof CBaseField
 	 * @typeofeditors ["PDF"]
 	 */
-    CBaseField.prototype.GetParentValue = function(bInherit) {
+    CBaseField.prototype.GetLogicValue = function(bInherit) {
         let oParent = this.GetParent(true);
         if (oParent == null && this._value == null)
             return undefined;
 		else if (oParent && bInherit !== false) {
-			return oParent.GetParentValue();
+			return oParent.GetLogicValue();
 		}
         else {
             return this._value;
@@ -1015,14 +969,14 @@
 	 * @memberof CBaseField
 	 * @typeofeditors ["PDF"]
 	 */
-    CBaseField.prototype.SetParentValue = function(value) {
-        if (value && typeof(value) !== "string" && value.toString) {
+    CBaseField.prototype.SetLogicValue = function(value) {
+        if (value && !Array.isArray(value) && typeof(value) !== "string" && value.toString) {
             value = value.toString();
         }
 
         let oParent = this.GetParent(true);
         if (oParent && this.IsWidget())
-            oParent.SetParentValue(value);
+            oParent.SetLogicValue(value);
         else {
             if (this._value === value) {
                 return true;
@@ -1041,9 +995,12 @@
 	 * @memberof CBaseField
 	 * @typeofeditors ["PDF"]
 	 */
-    CBaseField.prototype.IsAllKidsWidgets = function() {
-        let aKids = this.GetKids();
+    CBaseField.prototype.IsLogicalRoot = function() {
+		if (this.IsWidget()) {
+			return true;
+		}
 
+        let aKids = this.GetKids();
         if (aKids.length > 0) {
             if (aKids[0].IsWidget() == false)
                 return false;
@@ -1599,7 +1556,7 @@
         }
     };
     CBaseField.prototype.DrainLogicFrom = function(oFieldToInherit, bClearFrom) {
-        this.SetParentValue(oFieldToInherit.GetParentValue());
+        this.SetLogicValue(oFieldToInherit.GetLogicValue());
         this.SetDefaultValue(oFieldToInherit.GetDefaultValue());
         this.SetReadOnly(oFieldToInherit.IsReadOnly());
         this.SetNoExport(oFieldToInherit.IsNoExport());
@@ -1609,7 +1566,7 @@
 
         if (bClearFrom !== false) {
             oFieldToInherit.SetDefaultValue(undefined);
-            oFieldToInherit.SetParentValue(undefined);
+            oFieldToInherit.SetLogicValue(undefined);
             oFieldToInherit.SetReadOnly(false);
             oFieldToInherit.SetNoExport(false);
             oFieldToInherit.SetRequired(false);
@@ -1669,7 +1626,7 @@
 
             if (oExistsField) {
                 if (!oExistsField.IsWidget()) {
-                    if (!oExistsField.IsAllKidsWidgets()) {
+                    if (!oExistsField.IsLogicalRoot()) {
                         return false;
                     }
                     else {
@@ -1753,7 +1710,7 @@
 
     CBaseField.prototype.UndoNotAppliedChanges = function() {
         let isChanged = this.IsChanged();
-        this.SetValue(this.GetParentValue());
+        this.SetValue(this.GetLogicValue());
         this.SetNeedRecalc(true);
         this.SetNeedCommit(false);
 
@@ -2066,7 +2023,7 @@
             return;
         }
         
-        const shouldUpdate = !value && this.GetParentValue() === sOldDefValue || value && !this.GetParentValue();
+        const shouldUpdate = !value && this.GetLogicValue() === sOldDefValue || value && !this.GetLogicValue();
 
         let oWidget = this.IsWidget() ? this : this.GetKid(0);
 
@@ -2076,7 +2033,7 @@
                 oWidget.Commit();
             }
             else {
-                this.SetParentValue(value);
+                this.SetLogicValue(value);
             }
         }
 
@@ -2337,42 +2294,43 @@
         let oFile   = oViewer.file;
         
         let oApearanceInfo  = this.GetOriginViewInfo(nPageW, nPageH);
-        let oSavedView, oApInfoTmp;
-        if (!oApearanceInfo)
-            return null;
+        let oSavedView, oTargetApInfo;
             
         switch (nAPType) {
             case AscPDF.APPEARANCE_TYPES.normal:
-                oApInfoTmp = oApearanceInfo["N"];
+                oTargetApInfo = oApearanceInfo && oApearanceInfo["N"];
                 oSavedView = this._originView.normal;
                 break;
             case AscPDF.APPEARANCE_TYPES.rollover:
-                if (oApearanceInfo["R"]) {
-                    oApInfoTmp = oApearanceInfo["R"]
+                if (oApearanceInfo && oApearanceInfo["R"]) {
+                    oTargetApInfo = oApearanceInfo && oApearanceInfo["R"]
                     oSavedView = this._originView.rollover;
                 }
                 else {
-                    oApInfoTmp = oApearanceInfo["N"]
+                    oTargetApInfo = oApearanceInfo && oApearanceInfo["N"]
                     oSavedView = this._originView.normal;
                 }
                 break;
             case AscPDF.APPEARANCE_TYPES.mouseDown:
-                if (oApearanceInfo["D"]) {
-                    oApInfoTmp = oApearanceInfo["D"]
+                if (oApearanceInfo && oApearanceInfo["D"]) {
+                    oTargetApInfo = oApearanceInfo && oApearanceInfo["D"]
                     oSavedView = this._originView.mouseDown;
                 }
                 else {
-                    oApInfoTmp = oApearanceInfo["N"]
+                    oTargetApInfo = oApearanceInfo && oApearanceInfo["N"]
                     oSavedView = this._originView.normal;
                 }
                 break;
             default:
-                oApInfoTmp = oApearanceInfo["N"];
+                oTargetApInfo = oApearanceInfo && oApearanceInfo["N"];
                 oSavedView = this._originView.normal;
                 break;
         }
 
-        if (oSavedView && oSavedView.width == oApearanceInfo["w"] && oSavedView.height == oApearanceInfo["h"])
+		if (!oApearanceInfo && !oSavedView)
+            return null;
+
+        if (oSavedView && (!oApearanceInfo || oSavedView.width == oApearanceInfo["w"] && oSavedView.height == oApearanceInfo["h"]))
             return oSavedView;
         
         let canvas  = document.createElement("canvas");
@@ -2385,13 +2343,13 @@
         canvas.x    = oApearanceInfo["x"];
         canvas.y    = oApearanceInfo["y"];
         
-        if (!oApInfoTmp)
+        if (!oTargetApInfo)
             return null;
 
         let supportImageDataConstructor = (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge) ? false : true;
 
         let ctx             = canvas.getContext("2d");
-        let mappedBuffer    = oFile.getUint8ClampedArray(oApInfoTmp["retValue"], 4 * nWidth * nHeight);
+        let mappedBuffer    = oFile.getUint8ClampedArray(oTargetApInfo["retValue"], 4 * nWidth * nHeight);
         let imageData       = null;
 
         if (supportImageDataConstructor)
@@ -2406,7 +2364,7 @@
         if (ctx)
             ctx.putImageData(imageData, 0, 0);
         
-        oViewer.file.free(oApInfoTmp["retValue"]);
+        oViewer.file.free(oTargetApInfo["retValue"]);
 
         switch (nAPType) {
             case AscPDF.APPEARANCE_TYPES.normal:
@@ -2460,8 +2418,10 @@
         }
         
         for (let i = 0; i < oOriginPage.fieldsAPInfo.info.length; i++) {
-            if (oOriginPage.fieldsAPInfo.info[i]["i"] == this._apIdx)
-                return oOriginPage.fieldsAPInfo.info[i];
+            if (oOriginPage.fieldsAPInfo.info[i]["i"] == this._apIdx) {
+				let oInfo = oOriginPage.fieldsAPInfo.info.splice(i, 1)[0];
+                return oInfo; 
+			}
         }
 
         return null;
@@ -2746,7 +2706,7 @@
         this.SetRect(aNewRect);
     };
     CBaseField.prototype.GetRect = function() {
-        return this._rect;
+        return this._rect ? this._rect.slice() : this._rect;
     };
     CBaseField.prototype.GetWidth = function() {
         let aRect = this.GetRect();
@@ -3347,7 +3307,7 @@
         }
 
         // value
-        let value = this.GetParentValue();
+        let value = this.GetLogicValue();
         if (value != null && Array.isArray(value) == false) {
             nFlags |= (1 << 1);
             memory.WriteString(value);
@@ -3363,7 +3323,7 @@
         // combobox/listbox
         let curIdxs = [];
         if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
-            curIdxs = this.GetParentCurIdxs();
+            curIdxs = this.GetLogicCurIdxs();
         }
         if (curIdxs.length > 0) {
             nFlags |= (1 << 3);
@@ -3408,7 +3368,7 @@
         nFlags |= (1 << 7);
 
         let nFieldType = this.GetType();
-        let bWriteType = this.IsAllKidsWidgets();
+        let bWriteType = this.IsLogicalRoot();
 
         let nWidgetFlags = 0;
         if (bWriteType) {

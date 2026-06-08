@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -2393,6 +2396,12 @@
     };
     CBaseChartObject.prototype.isControl = function() {
         return false;
+    };
+    CBaseChartObject.prototype.IsTableBorder = function() {
+        return false;
+    };
+    CBaseChartObject.prototype.Get_ShapeStyleForPara = function() {
+        return null;
     };
 
     function getMinMaxFromArrPoints(aPoints) {
@@ -13260,7 +13269,9 @@
 					}
 					oCell = oWS.getCell3(nR, nC);
 					dVal = oCell.getNumberValue();
-					if (!AscFormat.isRealNumber(dVal) && (!AscFormat.isRealNumber(displayEmptyCellsAs) || displayEmptyCellsAs === 1)) {
+					if (oCell.getType() === AscCommon.CellValueType.Error) {
+						dVal = null;
+					} else if (!AscFormat.isRealNumber(dVal) && (!AscFormat.isRealNumber(displayEmptyCellsAs) || displayEmptyCellsAs === 1)) {
 						sVal = oCell.getValueForEdit();
 						if ((typeof sVal === "string") && sVal.length > 0) {
 							dVal = 0;
@@ -15721,11 +15732,23 @@
         }
         this.drawerData = oDrawerData;
         let aC = oDrawerData.coefficients;
+        let bDispRSqr = oDrawerData.rSquared !== null && oDrawerData.rSquared !== undefined;
         let oParagraph = oDrawingContent.Content[0];
+        let oRSqrParagraph = oParagraph;
         let oRun;
         function r(dVal) {
-            let dNumVal = (dVal * 10000 + 0.5 >> 0) / 10000;
+            let dNumVal = Math.round(dVal * 10000) / 10000;
+            if(dNumVal === 0 && dVal !== 0) {
+                let aParts = dVal.toExponential(0).split("e");
+                let nExp = parseInt(aParts[1], 10);
+                let nAbsExp = Math.abs(nExp);
+                return aParts[0] + "E" + (nExp < 0 ? "-" : "+") + (nAbsExp < 10 ? "0" : "") + nAbsExp;
+            }
             return dNumVal.toString()
+        }
+        if(bDispRSqr) {
+            oRSqrParagraph = oParagraph.Copy(oDrawingContent);
+            oDrawingContent.Internal_Content_Add(oDrawingContent.Content.length, oRSqrParagraph, false);
         }
         switch (this.trendlineType) {
             case AscFormat.TRENDLINE_TYPE_EXP: {
@@ -15742,10 +15765,17 @@
             }
             case AscFormat.TRENDLINE_TYPE_LINEAR: {
                 oRun = new AscWord.ParaRun(oParagraph, false);
-                let s = "y = " + r(aC[0]) + "x";
+                let a = r(aC[0]);
                 let b = r(aC[1]);
+                let s = "y = ";
+                if(a !== "0") {
+                    s += a + "x";
+                }
                 if(b !== "0") {
-                    s += (" + " + b);
+                    s += (a !== "0" ? " + " + b : b);
+                }
+                if(a === "0" && b === "0") {
+                    s += "0";
                 }
                 oRun.AddText(s);
                 oParagraph.AddToContentToEnd(oRun);
@@ -15807,6 +15837,18 @@
                 break;
             }
 
+        }
+        if(bDispRSqr) {
+            oRun = new AscWord.ParaRun(oRSqrParagraph, false);
+            oRun.AddText("R");
+            oRSqrParagraph.AddToContentToEnd(oRun);
+            oRun = new AscWord.ParaRun(oRSqrParagraph, false);
+            oRun.SetVertAlign(AscCommon.vertalign_SuperScript);
+            oRun.AddText("2");
+            oRSqrParagraph.AddToContentToEnd(oRun);
+            oRun = new AscWord.ParaRun(oRSqrParagraph, false);
+            oRun.AddText(" = " + (AscFormat.isRealNumber(oDrawerData.rSquared) ? r(oDrawerData.rSquared) : "#N/A"));
+            oRSqrParagraph.AddToContentToEnd(oRun);
         }
     };
 

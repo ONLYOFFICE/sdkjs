@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -50,6 +53,7 @@ const isDesktopEditor = navigator.userAgent.indexOf("AscDesktopEditor") !== -1;
 let g_storageInfoCache = null;
 let g_storageInfoCacheTime = 0;
 const STORAGE_INFO_CACHE_DURATION = 30000; // 30 seconds
+const STORAGE_ENTRY_HEADROOM_MULTIPLIER = 2;
 
 // === FIFO Cache for Dynamic Document Files ===
 // Used for cache/files/data/ URLs (including WOPI integration where WOPISrc may be reused).
@@ -284,6 +288,53 @@ function getStorageInfo() {
 }
 
 /**
+ * Check whether a diagnostic storage snapshot explains a failed cache write.
+ * @param {Object} storage - storage snapshot from getStorageEstimateSnapshot()
+ * @param {number} size - response size in bytes, or 0 when unknown
+ * @returns {boolean} true if storage headroom is clearly too low
+ */
+function isStorageTooLowForEntry(storage, size) {
+	return !!size && storage && typeof storage.availableStorage === 'number' &&
+		storage.availableStorage < size * STORAGE_ENTRY_HEADROOM_MULTIPLIER;
+}
+
+/**
+ * Check whether a cache write failure should be treated as quota-related.
+ * @param {Object} err - error from cache.put()
+ * @param {Object} storage - storage snapshot from getStorageEstimateSnapshot()
+ * @param {number} size - response size in bytes, or 0 when unknown
+ * @returns {boolean} true if failure is clearly or likely storage quota related
+ */
+function isQuotaRelatedCacheError(err, storage, size) {
+	return (err && err.name === 'QuotaExceededError') || isStorageTooLowForEntry(storage, size);
+}
+
+/**
+ * Read a fresh storage estimate for diagnostics; never rejects.
+ * Used in error paths to reveal whether a failure was a quota/disk issue.
+ * @returns {Promise<Object>} storage estimate, with quota/usage/availableStorage in bytes, or { error }
+ */
+function getStorageEstimateSnapshot() {
+	if (!navigator.storage || typeof navigator.storage.estimate !== 'function') {
+		return Promise.resolve({ error: 'estimate-unavailable' });
+	}
+	return navigator.storage.estimate()
+		.then(function(estimate) {
+			const quota = estimate && typeof estimate.quota === 'number' ? estimate.quota : null;
+			const usage = estimate && typeof estimate.usage === 'number' ? estimate.usage : null;
+			return {
+				quota: quota,
+				usage: usage,
+				usageRatio: (quota && usage !== null) ? usage / quota : null,
+				availableStorage: (quota !== null && usage !== null) ? Math.max(0, quota - usage) : null
+			};
+		})
+		.catch(function(e) {
+			return { error: e && (e.message || String(e)) };
+		});
+}
+
+/**
  * Put response in cache with retry logic for transient errors
  * @param {Request} request
  * @param {Response} response - Response to cache; this function clones per attempt to preserve the original for retries
@@ -308,14 +359,25 @@ function putInCache(request, response, attempt) {
 					return putInCache(request, response, attempt + 1);
 				});
 			} else {
-				const size = response.headers ? response.headers.get('content-length') : 'unknown';
-				console.error('putInCache failed after max retries:', {
+				const sizeHeader = response.headers ? response.headers.get('content-length') : null;
+				const size = Number(sizeHeader) || 0;
+				const details = {
 					url: request.url,
 					method: request.method,
-					responseSize: size,
+					responseSize: sizeHeader || 'unknown',
 					responseType: response.type,
 					cacheName: g_cacheName,
+					errorName: err && err.name,
 					error: err && (err.message || err)
+				};
+				// Snapshot live storage estimate so the log shows whether this was a quota/disk failure
+				return getStorageEstimateSnapshot().then(function(storage) {
+					details.storage = storage;
+					if (isQuotaRelatedCacheError(err, storage, size)) {
+						console.warn('putInCache failed after max retries due to low storage quota:', details);
+					} else {
+						console.error('putInCache failed after max retries:', details);
+					}
 				});
 			}
 		});

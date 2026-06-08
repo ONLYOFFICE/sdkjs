@@ -289,7 +289,7 @@ def main():
     with open(os.path.join(SCRIPT_DIR, 'license.header'), encoding='utf-8') as f:
         license_text = (f.read()
             .replace('@@AppCopyright', os.environ.get('APP_COPYRIGHT',
-                f'Copyright (C) Ascensio System SIA 2012-{year}. All rights reserved'))
+                f'Copyright (C) Ascensio System SIA 2009-{year}. All rights reserved'))
             .replace('@@PublisherUrl',  os.environ.get('PUBLISHER_URL', 'https://www.onlyoffice.com/'))
             .replace('@@Version',       version)
             .replace('@@Build',         build_number))

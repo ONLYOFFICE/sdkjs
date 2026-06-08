@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 
@@ -6233,7 +6236,13 @@ function(window, undefined) {
 				let oLbl = trendline.trendlineLbl;
 				let oDrawerData = trendline.drawerData;
 				if(oLbl && oDrawerData && oDrawerData.coordinate) {
-					pos = {x: oDrawerData.coordinate.catVal, y: oDrawerData.coordinate.valVal};
+					const coord = oDrawerData.coordinate;
+					// MS Excel positions trendline label so the trendline curve passes through it:
+					// label CENTER vertically at endpoint Y, label RIGHT edge at endpoint X.
+					pos = {
+						x: coord.catVal - oLbl.extX,
+						y: coord.valVal - oLbl.extY / 2
+					};
 					if (oLbl.layout) {
 						const layout = oLbl.layout;
 						if (AscFormat.isRealNumber(layout.x)) {
@@ -6330,6 +6339,43 @@ function(window, undefined) {
 		return aStrings;
 	};
 
+	CChartSpace.prototype.getDateAxisMajorStep = function (oAxis, aScale) {
+		if (AscFormat.isRealNumber(oAxis.majorUnit) && oAxis.majorUnit >= 1 &&
+			(!AscFormat.isRealNumber(oAxis.majorTimeUnit) || oAxis.majorTimeUnit === oAxis.baseTimeUnit)) {
+			return Math.max(1, Math.floor(oAxis.majorUnit));
+		}
+		let nCount = aScale.length;
+		let nTarget = 12;
+		if (nCount <= nTarget) {
+			return 1;
+		}
+		let nRaw = Math.ceil(nCount / nTarget);
+		let aNice = [1, 2, 3, 5, 10, 15, 20, 30, 50, 100];
+		for (let i = 0; i < aNice.length; ++i) {
+			if (aNice[i] >= nRaw) {
+				return aNice[i];
+			}
+		}
+		return nRaw;
+	};
+	CChartSpace.prototype.getDateLabels = function (oAxis) {
+		let aStrings = [];
+		let aScale = Array.isArray(oAxis.scale) ? oAxis.scale : [];
+		if (!aScale.length) {
+			return aStrings;
+		}
+		const oNumFormat = this.getNumFmt(oAxis);
+		const fMultiplier = this.getMultiplier(oAxis);
+		let nMajorStep = this.getDateAxisMajorStep(oAxis, aScale);
+		for (let i = 0; i < aScale.length; ++i) {
+			if (i % nMajorStep === 0) {
+				aStrings.push(this.getFormattedString(aScale[i], oNumFormat, fMultiplier));
+			} else {
+				aStrings.push(null);
+			}
+		}
+		return aStrings;
+	};
 	CChartSpace.prototype.getLabelsForAxis = function (oAxis) {
 		let aStrings = [];
 		let oPlotArea = this.chart.plotArea, i;
@@ -6337,7 +6383,10 @@ function(window, undefined) {
 		let oSeries = oPlotArea.getSeriesWithSmallestIndexForAxis(oAxis);
 		let bCat = false;
 		switch (nAxisType) {
-			case AscDFH.historyitem_type_DateAx:
+			case AscDFH.historyitem_type_DateAx: {
+				aStrings = this.getDateLabels(oAxis);
+				break;
+			}
 			case AscDFH.historyitem_type_CatAx: {
 				//calculate labels for horizontal axis
 				let nPtsLen = 0;

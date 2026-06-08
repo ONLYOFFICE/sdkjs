@@ -1,34 +1,39 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
+
+"use strict";
 
 (function(window, undefined) {
     function TextStreamReader(data, size)
@@ -412,12 +417,12 @@ void main() {\n\
     };
 
     // TEXT
-	CFile.prototype.getPageTextStream = function(pageIndex) {
+	CFile.prototype.getPageTextStream = function(pageIndex, onlyPageContent) {
 		let page = this.pages[pageIndex];
 		let textLen = page.text ? page.text.length : 0;
 		let drawingsLen = page.drawingsText ? page.drawingsText.length : 0;
 
-		if (Asc.editor.canEdit()) {
+		if (onlyPageContent) {
 			if (this.pages[pageIndex].isRecognized) {
 				return null;
 			}
@@ -1627,8 +1632,8 @@ void main() {\n\
             if (iLine > endLine)
                 break;
 
-            let startChar = pageIndex == Page1 && iLine == Line1 ? Glyph1 : 0;
-            let endChar   = pageIndex == Page2 && iLine == Line2 ? Glyph2 : Infinity;
+            let startChar = pageIndex == Page1 && iLine == Line1 ? Glyph1 : -2;
+            let endChar   = pageIndex == Page2 && iLine == Line2 ? Glyph2 : -1;
 
             if (startChar == -2)
                 startChar = 0;
@@ -1909,7 +1914,7 @@ void main() {\n\
         if (0 == searchText.length)
             return oResult;
 
-        let stream = this.getPageTextStream(pageIndex);
+        let stream = this.getPageTextStream(pageIndex, Asc.editor.canEdit());
         if (!stream)
             return oResult;
         
@@ -2108,16 +2113,6 @@ void main() {\n\
                 let startChar = _numLine == oMatch.Line ? oMatch.Char : -2;
                 let endChar   = _numLine == curLine     ? curChar     : -1;
 
-                if (startChar == -2)
-                    startChar = 0;
-                else if (startChar == -1)
-                    startChar = Infinity;
-
-                if (endChar == -2)
-                    endChar = 0;
-                else if (endChar == -1)
-                    endChar = Infinity;
-
                 _text = "";
                 _lineEx = 1;
                 _lineEy = 0;
@@ -2135,6 +2130,19 @@ void main() {\n\
                 _lineDescent = stream.GetDouble();
                 _lineWidth   = stream.GetDouble();
                 let nChars = stream.GetLong();
+
+				let startPos = startChar; 
+				if (startChar == -2)
+                    startPos = 0;
+                else if (startChar == -1)
+                    startPos = nChars - 1;
+
+				let endPos = endChar; 
+                if (endChar == -2)
+                    endPos = 0;
+                else if (endChar == -1)
+                    endPos = nChars - 1;
+
                 for (let i = 0; i < nChars; ++i)
                 {
                     if (i)
@@ -2142,17 +2150,17 @@ void main() {\n\
                     _arrayGlyphOffsets[i] = _linePrevCharX;
                     let nChar = stream.GetLong();
                     stream.Skip(4);
-                    if (i >= endChar)
+                    if (i >= endPos)
                         break;
-                    if (i >= startChar)
+                    if (i >= startPos)
                         _text += (nChar == 0xFFFF ? " " : String.fromCharCode(nChar));
                 }
 
-                let off1 = _arrayGlyphOffsets[startChar];
-                let off2 = _arrayGlyphOffsets[endChar];
-                if (startChar == Infinity)
+                let off1 = _arrayGlyphOffsets[startPos];
+                let off2 = _arrayGlyphOffsets[endPos];
+				if (startPos == nChars - 1)
                     off1 = _lineWidth;
-                if (endChar == Infinity)
+                if (endPos == nChars - 1)
                     off2 = _lineWidth;
 
                 if (off2 < off1)
@@ -2270,7 +2278,15 @@ void main() {\n\
     };
 	window["AscViewer"].createEmptyFile = function()
 	{
-		return new CFile();
+		let file = new CFile();
+        file.addPage = function(pageIndex, pageObj) {
+			this.pages.splice(pageIndex, 0, pageObj);
+		};
+		file.removePage = function(pageIndex) {
+			return this.pages.splice(pageIndex, 1);
+		};
+		
+		return file;
 	};
 
     //--------------------------------------------------------export----------------------------------------------------

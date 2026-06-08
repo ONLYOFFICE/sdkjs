@@ -76,6 +76,7 @@
 		
 		this._transform = new AscCommon.CMatrix();
 		this._states = []; // we need only transform here
+		this.isPdfTextMetafile = true;
 	}
 
 	CPdfTextMetafile.prototype = Object.create(AscCommon.CGraphicsBase.prototype);
@@ -248,6 +249,13 @@
 	CPdfTextMetafile.prototype.getData = function() {
 		return this._memory.data.subarray(0, this._memory.pos);
 	};
+	CPdfTextMetafile.prototype.isPdf = function() {
+		return true;
+	};
+	CPdfTextMetafile.prototype.put_TextureBoundsEnabled = function() {};
+	CPdfTextMetafile.prototype.put_TextureBounds = function() {};
+	CPdfTextMetafile.prototype.put_BrushGradient = function() {};
+	CPdfTextMetafile.prototype.put_brushTexture = function() {};
 
 	window['AscPDF'].CPdfTextMetafile = CPdfTextMetafile;
 

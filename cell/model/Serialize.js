@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -6814,10 +6817,13 @@
 		this.WriteSheetDataXLSB = function(ws)
         {
             var oThis = this;
+            var bbox;
             var range;
             if(oThis.isCopyPaste ){
-                range = ws.getRange3(oThis.isCopyPaste.r1, oThis.isCopyPaste.c1, oThis.isCopyPaste.r2, oThis.isCopyPaste.c2);
+                bbox = {c1: oThis.isCopyPaste.c1, r1: oThis.isCopyPaste.r1, c2: oThis.isCopyPaste.c2, r2: oThis.isCopyPaste.r2};
+                range = ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2);
             } else {
+                bbox = {c1: 0, r1: 0, c2: gc_nMaxCol0, r2: gc_nMaxRow0};
                 range = ws.getRange3(0, 0, gc_nMaxRow0, gc_nMaxCol0);
             }
 
@@ -6830,17 +6836,34 @@
 			this.memory.XlsbStartRecord(AscCommonExcel.XLSB.rt_BEGIN_SHEET_DATA, 0);
 			this.memory.XlsbEndRecord();
 
-            range._foreachRowNoEmpty(function(row, excludedCount) {
-                oThis.WriteRowAndFixEmpty(oThis.memory, cur, allRow, row, excludedCount, oThis.stylesForWrite);
-            }, function(cell, nRow0, nCol0, nRowStart0, nColStart0, excludedCount) {
+            // Style-only events are streamed alongside the data walker via
+            // a shared drain (O(events)). Occupied _foreachNoEmpty would be
+            // O(maxRow) for a sparse far style entry.
+            var bExcludeHiddenRows = !!(ws.bExcludeHiddenRows && oThis.isCopyPaste);
+            var styleCell = new AscCommonExcel.Cell(ws);
+            styleCell._isTransient = true;
+            var styleDrain = AscCommonExcel.CellStyleStorage.createStyleOnlyDrain(
+                ws, bbox, {excludeHiddenRows: bExcludeHiddenRows},
+                function (r, col, xfIndex, rowExcl) {
+                    if (cur.rowIndex !== r) {
+                        tempRow.setIndex(r);
+                        oThis.WriteRowAndFixEmpty(oThis.memory, cur, allRow, tempRow, rowExcl, oThis.stylesForWrite);
+                    }
+                    var xfsObj = AscCommonExcel.g_StyleCache.getXf(xfIndex);
+                    var nStyleXfsId = oThis.stylesForWrite.add(xfsObj);
+                    styleCell.clearData();
+                    styleCell.setRowCol(r, col);
+                    styleCell.toXLSB(oThis.memory, nStyleXfsId, null, oThis.InitSaveManager.oSharedStrings);
+                });
+
+            range._foreachDataOnly(function(cell, nRow0, nCol0, nRowStart0, nColStart0, excludedCount) {
+                styleDrain.drainBefore(nRow0, nCol0);
                 if (cur.rowIndex != nRow0) {
                     tempRow.setIndex(nRow0);
                     oThis.WriteRowAndFixEmpty(oThis.memory, cur, allRow, tempRow, excludedCount, oThis.stylesForWrite);
                 }
-                //prepare cell for writing
-                var nXfsId;
                 var cellXfs = cell.xfs;
-                nXfsId = oThis.stylesForWrite.add(cell.xfs);
+                var nXfsId = oThis.stylesForWrite.add(cellXfs);
 
                 // save even an empty style like Excel (needed to remove row/column style)
                 let needWrite = cellXfs || !cell.isNullText()
@@ -6858,7 +6881,12 @@
                     }
 					cell.toXLSB(oThis.memory, nXfsId, formulaToWrite, oThis.InitSaveManager.oSharedStrings);
 				}
+            }, function(row, excludedCount) {
+                styleDrain.drainBefore(row.index, 0);
+                oThis.WriteRowAndFixEmpty(oThis.memory, cur, allRow, row, excludedCount, oThis.stylesForWrite);
             }, (ws.bExcludeHiddenRows && oThis.isCopyPaste));
+
+            styleDrain.drainTail();
 
             this.WriteRowAndFixEmpty(oThis.memory, cur, allRow);
 
@@ -11049,6 +11077,13 @@
                     return oThis.ReadSheetData(t, l, tmp);
                 });
 
+				// Migrate any legacy SheetMemory xf bits that did not pass
+				// through initCellAfterRead. Must run BEFORE the
+				// formula-array build pass: that pass materializes cells
+				// via loadContent + saveContent, which zeroes the legacy
+				// shadow bits without mirroring them.
+				AscCommonExcel.CellStyleStorage.hydrateAllColumnsFromSheetMemory(tmp.ws);
+
 				if (!bNoBuildDep) {
 					//TODO perhaps this should be done in worksheet after complete reading
 					//***array-formula***
@@ -14979,7 +15014,12 @@
         if(!(this.copyPasteObj && this.copyPasteObj.isCopyPaste && typeof editor != "undefined" && editor)) {
             this.setFormulaOpen(tmp);
         }
-        tmp.cell.saveContent();
+        // Skip SheetMemory init row for pure style-only cells; their xf
+        // lives in cellStylesByCol only.
+        AscCommonExcel.CellStyleStorage.saveContentSkipStyleOnly(tmp.cell);
+        // Re-mirror in case binary Style was read before Ref/RefRowCol
+        // (nRow/nCol negative when the earlier setStyleInternal ran).
+        AscCommonExcel.CellStyleStorage.mirrorCellStyle(tmp.cell);
         if (tmp.cell.nCol >= tmp.ws.nColsCount) {
             tmp.ws.nColsCount = tmp.cell.nCol + 1;
         }

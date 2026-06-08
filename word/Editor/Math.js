@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -587,6 +590,10 @@ ParaMath.prototype.Get_Id = function()
 ParaMath.prototype.IsMath = function()
 {
 	return true;
+};
+ParaMath.prototype.getBidiType = function()
+{
+	return AscBidi.TYPE.L;
 };
 ParaMath.prototype.Copy = function(Selected, oPr)
 {
@@ -1966,23 +1973,9 @@ ParaMath.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cu
 
     this.Root.Math_UpdateLineMetrics(PRS, ParaPr);
 };
-ParaMath.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
+ParaMath.prototype.recalculateRangeWidth = function(widthState)
 {
-    var SpaceLen   = PRSC.SpaceLen;
-
-    var bBrkBefore = this.Is_BrkBinBefore();
-
-    var bGapLeft  = bBrkBefore == true,
-        bGapRight = bBrkBefore == false;
-
-    this.Root.UpdateOperators(_CurLine, _CurRange, bGapLeft, bGapRight);
-
-    this.Root.Recalculate_Range_Width(PRSC, _CurLine, _CurRange);
-
-    PRSC.Range.W        += PRSC.SpaceLen - SpaceLen;
-    PRSC.Range.SpaceLen = SpaceLen;
-
-    PRSC.Words++;
+	widthState.handleParaMath(this);
 };
 ParaMath.prototype.UpdateWidthLine = function(PRS, Width)
 {
@@ -1999,23 +1992,9 @@ ParaMath.prototype.UpdateWidthLine = function(PRS, Width)
 			this.private_SetRestartRecalcInfo(PRS);
 	}
 };
-ParaMath.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange, _CurPage)
+ParaMath.prototype.recalculateRangeAlign = function(alignState)
 {
-    // до пересчета Bounds для текущей строки ранее должны быть вызваны Recalculate_Range_Width (для ширины), Recalculate_LineMetrics(для высоты и аскента)
-
-    // для инлайновой формулы не вызывается ф-ия setPosition, поэтому необходимо вызвать здесь
-    // для неилайновой setPosition вызывается на Get_AlignToLine
-    var PosInfo = new CMathPosInfo();
-
-    PosInfo.CurLine  = _CurLine;
-    PosInfo.CurRange = _CurRange;
-
-    var pos   = new CMathPosition();
-    this.Root.setPosition(pos, PosInfo);
-
-    // страиницу для смещния параграфа относительно документа добавим на Get_Bounds, т.к. если формула находится в автофигуре, то для нее не прийдет Recalculate_Range_Spaces при перемещении автофигуры а другую страницу
-    this.Root.UpdateBoundsPosInfo(PRSA, _CurLine, _CurRange, _CurPage);
-    this.Root.Recalculate_Range_Spaces(PRSA, _CurLine, _CurRange, _CurPage);
+	alignState.handleParaMath(this);
 };
 ParaMath.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
 {
@@ -2534,86 +2513,21 @@ ParaMath.prototype.Get_Default_TPrp = function()
 //-----------------------------------------------------------------------------------
 // Функции отрисовки
 //-----------------------------------------------------------------------------------
-ParaMath.prototype.Draw_HighLights = function(drawState)
+ParaMath.prototype.drawHighLights = function(drawState)
 {
 	drawState.handleParaMath(this);
 };
-ParaMath.prototype.Draw_Elements = function(PDSE)
+ParaMath.prototype.Draw_Elements = function(drawState)
 {
-    /*PDSE.Graphics.p_color(255,0,0, 255);
-     PDSE.Graphics.drawHorLine(0, PDSE.Y - this.Ascent, PDSE.X - 30, PDSE.X + this.Width + 30 , 1);*/
-
-    var X = PDSE.X;
-
-    this.Root.Draw_Elements(PDSE);
-
-    PDSE.X = X + this.Root.GetWidth(PDSE.Line, PDSE.Range);
-		if (PDSE.Graphics.m_bIsTextDrawer) {
-			PDSE.Graphics.CheckSpaceDraw(null, true);
-		}
-    /*PDSE.Graphics.p_color(255,0,0, 255);
-     PDSE.Graphics.drawHorLine(0, PDSE.Y - this.Ascent + this.Height, PDSE.X - 30, PDSE.X + this.Width + 30 , 1);*/
+	drawState.handleParaMath(this);
 };
 ParaMath.prototype.GetLinePosition = function(Line, Range)
 {
     return this.Root.GetPos(Line, Range);
 };
-ParaMath.prototype.Draw_Lines = function(PDSL)
+ParaMath.prototype.drawLines = function(drawState)
 {
-    if(false == this.Root.IsEmptyRange(PDSL.Line, PDSL.Range))
-    {
-        // Underline всей формулы
-        var FirstRPrp = this.GetFirstRPrp();
-
-        var Para = PDSL.Paragraph;
-
-        var aUnderline  = PDSL.Underline;
-
-        var X          = PDSL.X;
-        var Y          = PDSL.Baseline;
-        var UndOff     = PDSL.UnderlineOffset;
-        var UnderlineY = Y + UndOff;
-        var LineW      = (FirstRPrp.FontSize / 18) * g_dKoef_pt_to_mm;
-
-
-        var BgColor = PDSL.BgColor;
-        if ( undefined !== FirstRPrp.Shd && Asc.c_oAscShdNil !== FirstRPrp.Shd.Value )
-            BgColor = FirstRPrp.Shd.Get_Color( Para );
-        var AutoColor = ( undefined != BgColor && false === BgColor.Check_BlackAutoColor() ? new CDocumentColor( 255, 255, 255, false ) : new CDocumentColor( 0, 0, 0, false ) );
-        var CurColor, RGBA, Theme = this.Paragraph.Get_Theme(), ColorMap = this.Paragraph.Get_ColorMap();
-
-        // Выставляем цвет обводки
-        if ( true === PDSL.VisitedHyperlink && ( undefined === FirstRPrp.Color && undefined === FirstRPrp.Unifill ) )
-            CurColor = new CDocumentColor( 128, 0, 151 );
-        else if ( true === FirstRPrp.Color.Auto && !FirstRPrp.Unifill)
-            CurColor = new CDocumentColor( AutoColor.r, AutoColor.g, AutoColor.b );
-        else
-        {
-            if(FirstRPrp.Unifill)
-            {
-                FirstRPrp.Unifill.check(Theme, ColorMap);
-                RGBA = FirstRPrp.Unifill.getRGBAColor();
-                CurColor = new CDocumentColor( RGBA.R, RGBA.G, RGBA.B );
-            }
-            else
-            {
-                CurColor = new CDocumentColor( FirstRPrp.Color.r, FirstRPrp.Color.g, FirstRPrp.Color.b );
-            }
-        }
-
-        var Bound = this.Root.Get_LineBound(PDSL.Line, PDSL.Range),
-            Width = Bound.W;
-
-        if ( true === FirstRPrp.Underline ) {
-					aUnderline.set(UnderlineY, LineW);
-	        aUnderline.Add(X, X + Width, CurColor);
-        }
-
-
-        this.Root.Draw_Lines(PDSL);
-
-        PDSL.X = Bound.X + Width;
-    }
+	drawState.handleParaMath(this);
 };
 
 //-----------------------------------------------------------------------------------
@@ -2785,9 +2699,9 @@ ParaMath.prototype.SelectAll = function(Direction)
     this.Root.SelectAll(Direction);
 };
 
-ParaMath.prototype.drawSelectionInRange = function(line, range, drawState)
+ParaMath.prototype.drawSelectionInRange = function(drawState)
 {
-    this.Root.drawSelectionInRange(line, range, drawState);
+	drawState.handleParaMath(this);
 };
 
 ParaMath.prototype.IsSelectionEmpty = function(CheckEnd)

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -807,7 +810,8 @@
 								if (oTextHyperlink &&
 									typeof oTextHyperlink.Value === "string" &&
 									oTextHyperlink.Value.length > 0) {
-									sHyperlink = oTextHyperlink.GetValue();
+									var logicDocument = Asc.editor.getLogicDocument();
+									sHyperlink = (logicDocument && logicDocument.resolveSlideJumpValue) ? logicDocument.resolveSlideJumpValue(oTextHyperlink) : oTextHyperlink.GetValue();
 									sTooltip = oTextHyperlink.GetToolTip() || "";
 									if (this.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
 										var bOldVisitedValue = oTextHyperlink.GetVisited();
@@ -837,7 +841,8 @@
 								&& oNvPr.hlinkClick
 								&& typeof oNvPr.hlinkClick.id === "string"
 								&& oNvPr.hlinkClick.id.length > 0) {
-								sHyperlink = oNvPr.hlinkClick.id;
+								var logicDocument = Asc.editor.getLogicDocument();
+								sHyperlink = (logicDocument && logicDocument.resolveSlideJumpValue) ? logicDocument.resolveSlideJumpValue(oNvPr.hlinkClick) : oNvPr.hlinkClick.id;
 								sTooltip = oNvPr.hlinkClick.tooltip || "";
 							}
 						}
@@ -950,7 +955,8 @@
 
 						const oTextHyperlink = fCheckObjectHyperlink(drawing, x, y);
 						if (oTextHyperlink && typeof oTextHyperlink.Value === "string" && oTextHyperlink.Value.length > 0) {
-							textHyperlinkId = oTextHyperlink.GetValue();
+							let logicDocument = Asc.editor.getLogicDocument();
+							textHyperlinkId = (logicDocument && logicDocument.resolveSlideJumpValue) ? logicDocument.resolveSlideJumpValue(oTextHyperlink) : oTextHyperlink.GetValue();
 							textHyperlinkTooltip = oTextHyperlink.GetToolTip() || "";
 						}
 
@@ -958,7 +964,8 @@
 						let shapeHyperlinkId = null;
 						let shapeHyperlinkTooltip = "";
 						if (oNvPr && oNvPr.hlinkClick) {
-							shapeHyperlinkId = oNvPr.hlinkClick.id;
+							let logicDocument = Asc.editor.getLogicDocument();
+							shapeHyperlinkId = (logicDocument && logicDocument.resolveSlideJumpValue) ? logicDocument.resolveSlideJumpValue(oNvPr.hlinkClick) : oNvPr.hlinkClick.id;
 							shapeHyperlinkTooltip = oNvPr.hlinkClick.tooltip;
 						}
 
@@ -1957,7 +1964,7 @@
 						if (content && invert_transform_text) {
 							tx = invert_transform_text.TransformPointX(x, y);
 							ty = invert_transform_text.TransformPointY(x, y);
-							if (!this.isSlideShow() && (this.document || (this.drawingObjects.cSld && !(this.noNeedUpdateCursorType === true)))) {
+							if (!this.isSlideShow() && !(this.noNeedUpdateCursorType === true) && (this.document || this.drawingObjects.cSld)) {
 								if (this.document && this.document.IsDocumentEditor() && object instanceof AscFormat.CShape && object.isForm()) {
 									var oForm = object.getInnerForm();
 									if (oForm)
@@ -3160,7 +3167,7 @@
 					}
 				},
 
-				convertMathView: function (isToLinear, isAll) {
+				convertMathView: function (isToLinear) {
 					let oDocContent = this.getTargetDocContent();
 					if (!oDocContent) {
 						return;
@@ -3170,15 +3177,17 @@
 					if (!oMath) {
 						return;
 					}
+					let oThis = this;
 					let oApi = this.getEditorApi();
 					this.checkSelectedObjectsAndCallback(function () {
 							let nInputType = oApi.getMathInputType();
-							if (isAll || !oDocContent.IsTextSelectionUse()) {
+							if (!oDocContent.IsTextSelectionUse()) {
 								oDocContent.RemoveTextSelection();
 								oMath.ConvertView(isToLinear, nInputType);
 							} else {
 								oMath.ConvertViewBySelection(isToLinear, nInputType);
 							}
+							oThis.checkCurrentTextObjectExtends();
 						},
 						[], false, AscDFH.historydescription_Document_ConvertMathView, [], false);
 				},
@@ -4140,6 +4149,16 @@
 						for (i = 0; i < objects_by_type.oleObjects.length; ++i) {
 							objects_by_type.oleObjects[i].setTitle(props.title);
 						}
+
+						if (objects_by_type.shapes.length
+							|| objects_by_type.groups.length
+							|| objects_by_type.charts.length
+							|| objects_by_type.images.length
+							|| objects_by_type.smartArts.length
+							|| objects_by_type.oleObjects.length)
+							{
+								Asc.editor.addMacroStepData('SetDrawingTitle', props.title);
+							}
 					}
 					if (props.description !== null && props.description !== undefined) {
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
@@ -4159,6 +4178,16 @@
 						}
 						for (i = 0; i < objects_by_type.oleObjects.length; ++i) {
 							objects_by_type.oleObjects[i].setDescription(props.description);
+						}
+
+						if (objects_by_type.shapes.length
+						|| objects_by_type.groups.length
+						|| objects_by_type.charts.length
+						|| objects_by_type.images.length
+						|| objects_by_type.smartArts.length
+						|| objects_by_type.oleObjects.length)
+						{
+							Asc.editor.addMacroStepData('SetDrawingDescription', props.description);
 						}
 					}
 					if (props.name !== null && props.name !== undefined && props.name !== "") {
@@ -4385,6 +4414,9 @@
 						for (i = 0; i < objects_by_type.smartArts.length; ++i) {
 							objects_by_type.smartArts[i].setNoChangeAspect(props.lockAspect ? true : undefined);
 						}
+            
+            if (objects_by_type.shapes.length || objects_by_type.images.lengt || objects_by_type.charts.length)
+              Asc.editor.addMacroStepData('SetDrawingAspectRatio', props.lockAspect);
 					}
 					if (isRealObject(props.Position) && AscFormat.isRealNumber(props.Position.X) && AscFormat.isRealNumber(props.Position.Y)
 						|| AscFormat.isRealBool(props.flipH) || AscFormat.isRealBool(props.flipV) || AscFormat.isRealBool(props.flipHInvert) || AscFormat.isRealBool(props.flipVInvert) || AscFormat.isRealNumber(props.rotAdd) || AscFormat.isRealNumber(props.rot) || AscFormat.isRealNumber(props.anchor)) {
@@ -6519,7 +6551,8 @@
 
 				checkEndAddShape: function () {
 					if (this.checkTrackDrawings()) {
-						this.endTrackNewShape();
+						this.resetTrackState();
+						this.updateOverlay();
 						if (Asc["editor"] && Asc["editor"].wb) {
 							Asc["editor"].asc_endAddShape();
 							var ws = Asc["editor"].wb.getWorksheet();
@@ -7027,6 +7060,127 @@
 					}
 					group.setBDeleted(false);
 					return group;
+				},
+
+				convertImageToShapes: function (image) {
+					if (!image || !image.blipFill || !AscFormat.IsSvgImage(image.blipFill.RasterImageId)) {
+						return false;
+					}
+					const controller = this;
+					AscFormat.LoadSvgText(image.blipFill.RasterImageId, function (svgText) {
+						if (!svgText) {
+							return;
+						}
+						if (svgText.indexOf("clip-path") !== -1 && !AscCommon["PathBoolean"]) {
+							AscCommon.loadPathBoolean(function () {
+								controller.private_ApplySvgToShapes(image, svgText);
+							}, function () {
+								controller.private_ApplySvgToShapes(image, svgText);
+							});
+						} else {
+							controller.private_ApplySvgToShapes(image, svgText);
+						}
+					});
+					return true;
+				},
+
+				private_ApplySvgToShapes: function (image, svgText) {
+					if (image.bDeleted) {
+						return;
+					}
+					const controller = this;
+					const api = Asc.editor;
+					const isPdf = api.isPdfEditor();
+					const isWord = !isPdf && api.getEditorId() === AscCommon.c_oEditorId.Word;
+					const historyType = AscDFH.historydescription_CommonControllerConvertSvgToShapes;
+					const convertAndFinalize = function (finalize) {
+						const drawingObjects = controller.drawingObjects;
+						const opts = {
+							x: image.x,
+							y: image.y,
+							extX: image.extX,
+							extY: image.extY,
+							isWord: isWord,
+							isPdf: isPdf,
+							worksheet: drawingObjects.getWorksheetModel ? drawingObjects.getWorksheetModel() : null
+						};
+						const prevCheckSymbols = AscFonts.IsCheckSymbols;
+						AscFonts.IsCheckSymbols = true;
+						const shapes = AscFormat.CreateShapesFromSvg(svgText, opts);
+						AscFonts.IsCheckSymbols = prevCheckSymbols;
+						const fontMap = {};
+						for (let i = 0; i < shapes.length; ++i) {
+							shapes[i].getAllFonts(fontMap);
+						}
+						const fonts = [];
+						for (let fontName in fontMap) {
+							fonts.push(new AscFonts.CFont(fontName));
+						}
+						AscFonts.FontPickerByCharacter.extendFonts(fonts);
+						const done = function (insertShapes) {
+							if (insertShapes && !image.bDeleted && shapes.length > 0) {
+								controller.private_InsertShapesFromSvg(image, shapes);
+							}
+							finalize();
+						};
+						if (fonts.length > 0 && AscCommon.g_font_loader.CheckFontsNeedLoading(fonts)) {
+							if (AscCommon.g_font_loader.isWorking()) {
+								done(false);
+							} else {
+								AscCommon.g_font_loader.LoadDocumentFonts2(fonts, undefined, function () {
+									done(true);
+								});
+							}
+						} else {
+							done(true);
+						}
+					};
+					const logicDocument = api.getLogicDocument();
+					if (logicDocument) {
+						if (logicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props, null, false, false) === false) {
+							logicDocument.StartAction(historyType);
+							convertAndFinalize(function () {
+								logicDocument.Recalculate();
+								logicDocument.FinalizeAction();
+							});
+						}
+					} else {
+						const mainObject = image.getMainGroup() || image;
+						api.checkObjectsLock([mainObject.Get_Id()], function (bLock) {
+							if (!bLock) {
+								return;
+							}
+							api.sendEvent("asc_onUserActionStart");
+							History.Create_NewPoint(historyType);
+							convertAndFinalize(function () {
+								controller.startRecalculate();
+								api.checkChangesSize();
+								api.sendEvent("asc_onUserActionEnd");
+								controller.drawingObjects.sendGraphicObjectProps();
+							});
+						});
+					}
+				},
+
+				private_InsertShapesFromSvg: function (image, drawings) {
+					const drawingObjects = this.drawingObjects;
+					const worksheet = drawingObjects.getWorksheetModel ? drawingObjects.getWorksheetModel() : null;
+					this.resetSelection();
+					image.deleteDrawingBase();
+					image.setBDeleted(true);
+					for (let i = 0; i < drawings.length; ++i) {
+						const obj = drawings[i];
+						if (worksheet) {
+							obj.setWorksheet(worksheet);
+							obj.setDrawingObjects(drawingObjects);
+							obj.addToDrawingObjects(undefined, AscCommon.c_oAscCellAnchorType.cellanchorOneCell);
+						} else {
+							obj.setParent(drawingObjects);
+							obj.addToDrawingObjects();
+						}
+						obj.checkDrawingBaseCoords();
+						this.selectObject(obj, 0);
+					}
 				},
 
 				unGroup: function () {
@@ -7647,6 +7801,14 @@
 
 				getDrawingPropsFromArray: function (drawings) {
 					const editorId = Asc.editor.getEditorId();
+
+					var horizontal_rule_props = null;
+					if (drawings.length === 1 && drawings[0].isHorizontalRule && drawings[0].isHorizontalRule()) {
+						let oDrawing = drawings[0];
+						let oCurHr = oDrawing.getHorizontalRule();
+						horizontal_rule_props = oCurHr.createDuplicate();
+						horizontal_rule_props._shape = oDrawing;
+					}
 
 					var image_props, shape_props, chart_props, table_props = undefined, new_image_props,
 						new_shape_props, new_chart_props, new_table_props, shape_chart_props, locked;
@@ -8350,7 +8512,8 @@
 							if (oNvPr && oNvPr.hlinkClick && oNvPr.hlinkClick.id) {
 								hyperlink_properties = new Asc.CHyperlinkProperty();
 
-								const hyperlinkId = oNvPr.hlinkClick.id;
+								const logicDocument = Asc.editor.getLogicDocument();
+								const hyperlinkId = (logicDocument && logicDocument.resolveSlideJumpValue) ? logicDocument.resolveSlideJumpValue(oNvPr.hlinkClick) : oNvPr.hlinkClick.id;
 								if (typeof hyperlinkId === 'string') {
 
 									if (hyperlinkId[0] === '#') {
@@ -8360,7 +8523,24 @@
 										hyperlink_properties.Value = hyperlinkId;
 									}
 
-									hyperlink_properties.ToolTip = oNvPr.hlinkClick.tooltip;
+									hyperlink_properties.ToolTip = this.private_GetSlideJumpScreenTip(hyperlinkId, oNvPr.hlinkClick.tooltip);
+								}
+							}
+
+							if (!hyperlink_properties && Asc.editor.isPresentationEditor && oTargetDocContent && oTargetDocContent.IsCursorInHyperlink) {
+								const textHyperlink = oTargetDocContent.IsCursorInHyperlink(false);
+								if (textHyperlink) {
+									hyperlink_properties = new Asc.CHyperlinkProperty();
+									const logicDocument = Asc.editor.getLogicDocument();
+									const textHyperlinkValue = (logicDocument && logicDocument.resolveSlideJumpValue) ? logicDocument.resolveSlideJumpValue(textHyperlink) : textHyperlink.GetValue();
+									const textHyperlinkAnchor = textHyperlink.GetAnchor ? textHyperlink.GetAnchor() : null;
+									if (textHyperlinkAnchor) {
+										hyperlink_properties.Value = "";
+										hyperlink_properties.Anchor = textHyperlinkAnchor;
+									} else {
+										hyperlink_properties.Value = textHyperlinkValue;
+									}
+									hyperlink_properties.ToolTip = this.private_GetSlideJumpScreenTip(textHyperlinkValue, textHyperlink.GetToolTip ? textHyperlink.GetToolTip() : "");
 								}
 							}
 						}
@@ -8374,12 +8554,35 @@
 						hyperlinkProps: hyperlink_properties,
 						shapeChartProps: shape_chart_props,
 						slicerProps: slicer_props,
-						animProps: anim_props
+						animProps: anim_props,
+						horizontalRuleProps: horizontal_rule_props
 					};
+				},
+
+				private_GetSlideJumpScreenTip: function (value, fallback) {
+					let mask = "ppaction://hlinksldjumpslide";
+					if (typeof value === "string" && 0 === value.indexOf(mask)) {
+						return AscCommon.translateManager.getValue("Slide") + " " + (parseInt(value.substring(mask.length)) + 1);
+					}
+					if (value === "ppaction://noaction") {
+						return "";
+					}
+					return fallback;
 				},
 
 				getDrawingProps: function () {
 					return this.getDrawingPropsFromArray(this.getSelectedArray());
+				},
+
+				getSingleSelectedSvgImage: function () {
+					if (this.selectedObjects.length !== 1) {
+						return null;
+					}
+					const drawing = this.selectedObjects[0];
+					if (drawing && drawing.blipFill && AscFormat.IsSvgImage(drawing.blipFill.RasterImageId)) {
+						return drawing;
+					}
+					return null;
 				},
 
 				getDrawingsPasteShift: function (aDrawings) {

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -2194,7 +2197,29 @@ CChartsDrawer.prototype =
 					}
 				}
 			} else {
-				if(series.length > 0) {
+				let dateMin = null, dateMax = null;
+				if (AscDFH.historyitem_type_DateAx === axis.getObjectType()) {
+					for (let i = 0; i < series.length; i++) {
+						const seria = series[i];
+						const catLit = seria && !seria.isHidden && seria.cat ? seria.cat.getLit() : null;
+						if (!catLit) {
+							continue;
+						}
+						for (let j = 0; j < catLit.ptCount; j++) {
+							const oPt = catLit.getPtByIndex(j);
+							const dateVal = oPt ? parseFloat(oPt.val) : NaN;
+							if (isNaN(dateVal)) {
+								continue;
+							}
+							dateMin = dateMin === null || dateVal < dateMin ? dateVal : dateMin;
+							dateMax = dateMax === null || dateVal > dateMax ? dateVal : dateMax;
+						}
+					}
+				}
+				if (dateMin !== null && dateMax !== null) {
+					min = dateMin;
+					max = dateMax;
+				} else if(series.length > 0) {
 					// every chart except scatter should start from 1
 					min = 1;
 					max = 1;
@@ -2313,12 +2338,58 @@ CChartsDrawer.prototype =
 		return res;
 	},
 
+	_addDateTimeUnit: function (serial, timeUnit, count, cDate) {
+		if (!cDate || timeUnit === AscFormat.TIME_UNIT_DAYS) {
+			return serial + count;
+		}
+		let oDate = new cDate().getDateFromExcel(serial);
+		if (timeUnit === AscFormat.TIME_UNIT_MONTHS) {
+			oDate.addMonths(count);
+		} else if (timeUnit === AscFormat.TIME_UNIT_YEARS) {
+			oDate.addYears(count);
+		} else {
+			return serial + count;
+		}
+		return oDate.getExcelDate();
+	},
+
+	_getDateAxisValues: function (axis) {
+		let manualMin = axis.scaling && AscFormat.isRealNumber(axis.scaling.min) ? axis.scaling.min : null;
+		let manualMax = axis.scaling && AscFormat.isRealNumber(axis.scaling.max) ? axis.scaling.max : null;
+		let axisMin = manualMin !== null ? manualMin : axis.min;
+		let axisMax = manualMax !== null ? manualMax : axis.max;
+		if (!AscFormat.isRealNumber(axisMin) || !AscFormat.isRealNumber(axisMax) || axisMax < axisMin) {
+			return [AscFormat.isRealNumber(axisMin) ? axisMin : 0];
+		}
+
+		let cDate = typeof AscCommonExcel !== "undefined" && AscCommonExcel.cDate ? AscCommonExcel.cDate : null;
+		let baseTimeUnit = AscFormat.isRealNumber(axis.baseTimeUnit) ? axis.baseTimeUnit : AscFormat.TIME_UNIT_DAYS;
+
+		let arrayValues = [];
+		let value = Math.floor(axisMin);
+		axisMax = Math.floor(axisMax);
+		let guard = 0;
+		while (value <= axisMax && guard < 100000) {
+			arrayValues.push(value);
+			let next = this._addDateTimeUnit(value, baseTimeUnit, 1, cDate);
+			if (next <= value) {
+				break;
+			}
+			value = next;
+			guard++;
+		}
+		return arrayValues;
+	},
+
 	_getAxisValues2: function (axis, chartSpace, isStackedType, isScatter) {
 		let isOx = axis.axPos === window['AscFormat'].AX_POS_B || axis.axPos === window['AscFormat'].AX_POS_T;
 		//for category axis we take interval 1
 		let arrayValues;
 		const axisType = axis.getObjectType();
-		if(AscDFH.historyitem_type_CatAx === axisType || AscDFH.historyitem_type_DateAx === axisType) {
+		if(AscDFH.historyitem_type_DateAx === axisType) {
+			return this._getDateAxisValues(axis);
+		}
+		if(AscDFH.historyitem_type_CatAx === axisType) {
 			arrayValues = [];
 			let max = axis.max;
 			for(let i = axis.min; i <= max; i++) {
@@ -3370,6 +3441,18 @@ CChartsDrawer.prototype =
 		}
 
 		return {framePaths: framePathsId, path: pathId};
+	},
+
+	getCatValForPoint: function (catAx, seria, n) {
+		if (catAx && catAx.getObjectType() === AscDFH.historyitem_type_DateAx && seria && seria.cat) {
+			let catLit = seria.cat.getLit();
+			let oPt = catLit ? catLit.getPtByIndex(n) : null;
+			let dateVal = oPt ? parseFloat(oPt.val) : NaN;
+			if (!isNaN(dateVal)) {
+				return dateVal;
+			}
+		}
+		return n + 1;
 	},
 
 	getYPosition: function (val, axis, ignoreAxisLimits, isRect) {
@@ -6501,12 +6584,14 @@ CChartsDrawer.prototype =
 
 	getNextCachePoint: function (oNumCache, index, dispBlanksAs) {
 		let pt = oNumCache.getPtByIndex(index + 1);
-		if (!pt) {
+		if (!pt || isNaN(parseFloat(pt.val))) {
+			pt = null;
 			if (dispBlanksAs === AscFormat.DISP_BLANKS_AS_SPAN) {
 				//search next real pt
 				for (let i = index + 2; i < oNumCache.ptCount; i++) {
-					pt = oNumCache.getPtByIndex(i);
-					if (pt) {
+					let oPt = oNumCache.getPtByIndex(i);
+					if (oPt && !isNaN(parseFloat(oPt.val))) {
+						pt = oPt;
 						break;
 					}
 				}
@@ -9183,7 +9268,7 @@ drawLineChart.prototype = {
 				//using n for search - idx with 0 index may not exist, but point at zero position needs to be drawn
 				val = this._getYVal(n, i);
 
-				x = this.catAx ? this.cChartDrawer.getYPosition(n + 1, this.catAx) : xPoints[n].pos;
+				x = this.catAx ? this.cChartDrawer.getYPosition(this.cChartDrawer.getCatValForPoint(this.catAx, seria, n), this.catAx) : xPoints[n].pos;
 				y = this.cChartDrawer.getYPosition(val, this.valAx);
 
 				if (!this.paths.points) {
@@ -9456,7 +9541,7 @@ drawLineChart.prototype = {
 			idxPoint = this.cChartDrawer.getPointByIndex(this.chart.series[i], n);
 			//TODO blank SPAN option
 			var dispBlanksAs =  this.cChartSpace.chart.dispBlanksAs;
-			if(idxPoint) {
+			if(idxPoint && !isNaN(parseFloat(idxPoint.val))) {
 				val = parseFloat(idxPoint.val);
 			} else if(dispBlanksAs === AscFormat.DISP_BLANKS_AS_ZERO) {
 				val = 0;
@@ -9740,7 +9825,7 @@ drawAreaChart.prototype = {
 				}
 				const trendline = this.chart.series[i].getLastTrendline();
 				let idx = n != null ? n + Math.floor(trendline && trendline.backward ? trendline.backward : 0) : n;
-				x = this.xPoints[idx].pos;
+				x = (this.catAx && this.catAx.getObjectType() === AscDFH.historyitem_type_DateAx) ? this.cChartDrawer.getYPosition(this.cChartDrawer.getCatValForPoint(this.catAx, seria, n), this.catAx) : this.xPoints[idx].pos;
 
 				y = this.cChartDrawer.getYPosition(val, this.valAx);
 
@@ -10997,7 +11082,7 @@ drawAreaChart.prototype = {
 			idxPoint = this.cChartDrawer.getPointByIndex(this.chart.series[i], n);
 			//TODO blank SPAN option
 			var dispBlanksAs =  this.cChartSpace.chart.dispBlanksAs;
-			if(idxPoint) {
+			if(idxPoint && !isNaN(parseFloat(idxPoint.val))) {
 				val = parseFloat(idxPoint.val);
 			} else if(dispBlanksAs === AscFormat.DISP_BLANKS_AS_ZERO) {
 				val = 0;
@@ -11100,10 +11185,10 @@ drawAreaChart.prototype = {
 			pen = seria.pen;
 
 			numCache = this.cChartDrawer.getNumCache(seria.val);
-			if (numCache && numCache.pts[0].pen) {
+			if (numCache && numCache.pts[0] && numCache.pts[0].pen) {
 				pen = numCache.pts[0].pen;
 			}
-			if (numCache && numCache.pts[0].brush) {
+			if (numCache && numCache.pts[0] && numCache.pts[0].brush) {
 				brush = numCache.pts[0].brush;
 			}
 
@@ -15257,7 +15342,7 @@ drawScatterChart.prototype = {
 
 	_getYVal: function (n, i) {
 		var idxPoint = this.cChartDrawer.getPointByIndex(this.chart.series[i], n);
-		return idxPoint ? parseFloat(idxPoint.val) : null;
+		return idxPoint && !isNaN(parseFloat(idxPoint.val)) ? parseFloat(idxPoint.val) : null;
 	},
 
 	_drawScatter: function () {
@@ -15617,6 +15702,9 @@ drawStockChart.prototype = {
 
 		let _numCache = this.chart.series[ser].getNumLit();
 		var point = _numCache && _numCache.pts[val];
+		if (!point) {
+			return {x: null, y: null};
+		}
 
 		var x = this.chartProp.chartGutter._left + (val) * koffX + koffX / 2;
 		var y = this.chartProp.trueHeight - (point.val - min) * koffY + this.chartProp.chartGutter._top;
@@ -16467,7 +16555,7 @@ drawSurfaceChart.prototype = {
 
 	_getYVal: function (n, i) {
 		var idxPoint = this.cChartDrawer.getIdxPoint(this.chart.series[i], n);
-		var val = idxPoint ? parseFloat(idxPoint.val) : null;
+		var val = idxPoint && !isNaN(parseFloat(idxPoint.val)) ? parseFloat(idxPoint.val) : null;
 
 		return val;
 	},
@@ -16562,7 +16650,7 @@ axisChart.prototype = {
 			if (this.axisType === AscDFH.historyitem_type_ValAx) {
 				this._calculateValAxis();
 				this._calculateValTickMark();
-			} else if (this.axisType === AscDFH.historyitem_type_CatAx) {
+			} else if (this.axisType === AscDFH.historyitem_type_CatAx || this.axisType === AscDFH.historyitem_type_DateAx) {
 				this._calculateCatAxis();
 				this._calculateCatTickMark();
 			} else if (this.axisType === AscDFH.historyitem_type_SerAx) {
@@ -16580,9 +16668,9 @@ axisChart.prototype = {
 		} else {
 			if (this.axis.axPos === window['AscFormat'].AX_POS_L || this.axis.axPos === window['AscFormat'].AX_POS_R) {
 				//axis on left or right, lines are horizontal
-				paths = this.cChartDrawer.getHorizontalGridLines(this.axis, this.axisType === AscDFH.historyitem_type_CatAx);
+				paths = this.cChartDrawer.getHorizontalGridLines(this.axis, this.axisType === AscDFH.historyitem_type_CatAx || this.axisType === AscDFH.historyitem_type_DateAx);
 			} else {
-				paths = this.cChartDrawer.getVerticalGridLines(this.axis, this.axisType === AscDFH.historyitem_type_CatAx);
+				paths = this.cChartDrawer.getVerticalGridLines(this.axis, this.axisType === AscDFH.historyitem_type_CatAx || this.axisType === AscDFH.historyitem_type_DateAx);
 			}
 		}
 		this.paths.gridLines = paths ? paths.gridLines : null;
@@ -18568,28 +18656,38 @@ CErrBarsDraw.prototype = {
 
 		getAdditionalInfo: function (chartId, seriesId) {
 			if (this.storage[chartId] && this.storage[chartId][seriesId]) {
-				const coefficients = this.storage[chartId][seriesId].getCoefficients();
-				const rSquared = this.storage[chartId][seriesId].getRSquared();
-				const lastPoint = this.storage[chartId][seriesId].getLastPoint();
+				const storageEl = this.storage[chartId][seriesId];
+				const coefficients = storageEl.getCoefficients();
+				const rSquared = storageEl.getRSquared();
+				const lastPoint = storageEl.getLastPoint();
 
 				let startCat = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
 				let startVal = (this.cChartDrawer.calcProp.chartGutter._top) / this.cChartDrawer.calcProp.pxToMM;
 				let endCat = (this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM) + startCat;
 				let endVal = (this.cChartDrawer.calcProp.trueHeight / this.cChartDrawer.calcProp.pxToMM) + startVal;
-				
-				if (lastPoint.catVal < startCat || lastPoint.catVal > endCat) {
-					lastPoint.catVal = 0;
-				}
 
-				if (lastPoint.valVal < startVal || lastPoint.valVal > endVal) {
-					lastPoint.valVal = 0;
+				let catVal = lastPoint.catVal;
+				let valVal = lastPoint.valVal;
+
+				if (catVal < startCat) {
+					catVal = startCat;
+				} else if (catVal > endCat) {
+					catVal = endCat;
+				}
+				if (valVal < startVal) {
+					valVal = startVal;
+				} else if (valVal > endVal) {
+					valVal = endVal;
 				}
 
 				if (coefficients || rSquared) {
 					const additionalInfo = {
 						coefficients : coefficients,
 						rSquared : rSquared,
-						coordinate : lastPoint
+						coordinate : {
+							catVal: catVal,
+							valVal: valVal
+						}
 					}
 					return additionalInfo;
 				}
@@ -18783,6 +18881,31 @@ CErrBarsDraw.prototype = {
 				}
 				storageElement.setLastPoint(positions.xPos, positions.yPos);
 				storageElement.setPointPath(pathId);
+			}
+
+			// override lastPoint:
+			//   catVal — chart X at the LAST VISIBLE data point (right edge of plot area)
+			//   valVal — chart Y at the trendline value at the FORECAST-EXTENDED endpoint (catAxis.max),
+			//            which is past last data X if c:forward is set.
+			// The asymmetry matches MS Excel behavior: label anchored to the visible plot edge horizontally,
+			// but vertically aligned with the trend value at the forecast endpoint (where the trendline really ends).
+			const coefficients = storageElement.getCoefficients();
+			const coords = storageElement.getCoords();
+			if (coefficients && coords && coords.catVals && coords.catVals.length > 0) {
+				const lastDataX = coords.catVals[coords.catVals.length - 1];
+				const extendedX = (catAxis && AscFormat.isRealNumber(catAxis.max)) ? catAxis.max : lastDataX;
+				let lastDataY = null;
+				if (coefficients.length === 2) {
+					lastDataY = coefficients[0] * extendedX + coefficients[1];
+				}
+				if (lastDataY !== null && isFinite(lastDataY)) {
+					const pos1 = this.cChartDrawer.getYPosition(lastDataX, catAxis, true);
+					const pos2 = this.cChartDrawer.getYPosition(lastDataY, valAxis, true);
+					const catPos = horOrientation ? pos1 : pos2;
+					const valPos = horOrientation ? pos2 : pos1;
+					storageElement.lastPoint.catVal = catPos;
+					storageElement.lastPoint.valVal = valPos;
+				}
 			}
 		},
 
@@ -19212,7 +19335,7 @@ CErrBarsDraw.prototype = {
 				const correlation = ((N * XY) - (X * Y)) / divisor;
 				return correlation * correlation;
 			}
-			return null;
+			return NaN;
 		},
 
 		draw: function () {

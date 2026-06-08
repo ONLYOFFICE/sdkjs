@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -929,6 +932,7 @@
 			ret.history = this.history;
 			ret.highlightClick = this.highlightClick;
 			ret.endSnd = this.endSnd;
+			ret.slideJumpTargetId = this.slideJumpTargetId;
 			return ret;
 		};
 
@@ -953,6 +957,36 @@
 		drawingsChangesMap[AscDFH.historyitem_CNvPr_SetId] = function (oClass, value) {
 			oClass.id = value;
 		};
+		drawingsChangesMap[AscDFH.historyitem_CSld_SetBg] = function (oClass, value, FromLoad) {
+			oClass.Bg = value;
+			if (FromLoad && typeof AscCommon.CollaborativeEditing !== "undefined") {
+				let Fill = oClass.Bg && oClass.Bg.bgPr && oClass.Bg.bgPr.Fill;
+				let sRasterImageId = Fill && Fill.checkRasterImageId && Fill.checkRasterImageId();
+				if (sRasterImageId) {
+					AscCommon.CollaborativeEditing.Add_NewImage(sRasterImageId);
+				}
+			}
+		};
+		drawingsChangesMap[AscDFH.historyitem_CSld_SetName] = function (oClass, value) {
+			oClass.name = value;
+		};
+		AscDFH.drawingContentChanges[AscDFH.historyitem_CSld_AddToSpTree]      = function(oClass){
+			if (oClass.parent && oClass.parent.handleAfterCSldSpTreeChange) {
+				oClass.parent.handleAfterCSldSpTreeChange();
+			}
+			return oClass.spTree;
+		};
+		AscDFH.drawingContentChanges[AscDFH.historyitem_CSld_RemoveFromSpTree] = function(oClass){
+			if (oClass.parent && oClass.parent.handleAfterCSldSpTreeChange) {
+				oClass.parent.handleAfterCSldSpTreeChange();
+			}
+			return oClass.spTree;
+		};
+		AscDFH.changesFactory[AscDFH.historyitem_CSld_SetBg]              = AscDFH.CChangesDrawingsObjectNoId;
+		AscDFH.changesFactory[AscDFH.historyitem_CSld_SetName]            = AscDFH.CChangesDrawingsString;
+		AscDFH.changesFactory[AscDFH.historyitem_CSld_AddToSpTree]        = AscDFH.CChangesDrawingsContentPresentation;
+		AscDFH.changesFactory[AscDFH.historyitem_CSld_RemoveFromSpTree]   = AscDFH.CChangesDrawingsContentPresentation;
+		AscDFH.drawingsConstructorsMap[AscDFH.historyitem_CSld_SetBg]     = AscFormat.CBg;
 		drawingsChangesMap[AscDFH.historyitem_CNvPr_SetName] = function (oClass, value) {
 			oClass.name = value;
 		};
@@ -967,9 +1001,11 @@
 		};
 		drawingsChangesMap[AscDFH.historyitem_CNvPr_SetHlinkClick] = function (oClass, value) {
 			oClass.hlinkClick = value;
+			oClass.checkSlideJumpLink();
 		};
 		drawingsChangesMap[AscDFH.historyitem_CNvPr_SetHlinkHover] = function (oClass, value) {
 			oClass.hlinkHover = value;
+			oClass.checkSlideJumpLink();
 		};
 		drawingsChangesMap[AscDFH.historyitem_NvPr_SetIsPhoto] = function (oClass, value) {
 			oClass.isPhoto = value;
@@ -1193,6 +1229,7 @@
 		drawingConstructorsMap[AscDFH.historyitem_CNvPr_SetHlinkClick] = CT_Hyperlink;
 		drawingConstructorsMap[AscDFH.historyitem_CNvPr_SetHlinkHover] = CT_Hyperlink;
 		drawingConstructorsMap[AscDFH.historyitem_CustomPropertiesAddProperty] = CCustomProperty;
+		drawingConstructorsMap[AscDFH.historyitem_CSld_SetBg] = CBg;
 
 		AscDFH.changesFactory[AscDFH.historyitem_DefaultShapeDefinition_SetSpPr] = CChangesDrawingsObject;
 		AscDFH.changesFactory[AscDFH.historyitem_DefaultShapeDefinition_SetBodyPr] = CChangesDrawingsObjectNoId;
@@ -3536,6 +3573,13 @@
 		CBlipFill.prototype.setRasterImageId = function (rasterImageId) {
 			this.RasterImageId = checkRasterImageId(rasterImageId);
 		};
+		CBlipFill.prototype.ReplaceImageUrl = function (mapUrl) {
+			if (typeof this.RasterImageId !== "string") return false;
+			const sId = this.RasterImageId;
+			if (!mapUrl[sId]) return false;
+			this.RasterImageId = checkRasterImageId(mapUrl[sId]);
+			return true;
+		};
 		CBlipFill.prototype.createDuplicate = function () {
 			var duplicate = new CBlipFill();
 			duplicate.RasterImageId = this.RasterImageId;
@@ -3755,14 +3799,6 @@
 				}
 			}
 		};
-		CBlipFill.prototype.createDuplicateNoRaster = function(transparent) {
-			let sId = this.RasterImageId;
-			this.RasterImageId = null;
-			let copy = this.createDuplicate();
-			this.RasterImageId = sId;
-			return copy;
-		};
-
 		CBlipFill.prototype.getTile = function () { return this.tile; };
 		CBlipFill.prototype.setTile = function (tile) { this.tile = tile; };
 		CBlipFill.prototype.getStretch = function () { return this.stretch; };
@@ -6692,18 +6728,9 @@
 				return this.fill.RasterImageId;
 			return null;
 		};
-		CUniFill.prototype.reassignImageUrl = function(mapUrl) {
-			const sId = this.checkRasterImageId();
-			if (sId && mapUrl[sId] && mapUrl[sId] !== sId) {
-				const oNewBlipFill = this.fill.createDuplicate();
-				oNewBlipFill.setRasterImageId(mapUrl[sId]);
-				const oNewUniFill = this.createDuplicate();
-				oNewUniFill.setFill(oNewBlipFill);
-				return oNewUniFill;
-			}
-			return null;
+		CUniFill.prototype.ReplaceImageUrl = function (mapUrl) {
+			return this.fill && this.fill.ReplaceImageUrl ? this.fill.ReplaceImageUrl(mapUrl) : false;
 		};
-
 		function CBuBlip() {
 			CBaseNoIdObject.call(this);
 			this.blip = null;
@@ -6712,6 +6739,9 @@
 		InitClass(CBuBlip, CBaseNoIdObject, 0);
 		CBuBlip.prototype.setBlip = function (oPr) {
 			this.blip = oPr;
+		};
+		CBuBlip.prototype.ReplaceImageUrl = function (mapUrl) {
+			return this.blip && this.blip.ReplaceImageUrl ? this.blip.ReplaceImageUrl(mapUrl) : false;
 		};
 		CBuBlip.prototype.fillObject = function (oCopy, oIdMap) {
 			if (this.blip) {
@@ -7752,16 +7782,8 @@
 		CLn.prototype.checkRasterImageId = function() {
 			return this.Fill && this.Fill.checkRasterImageId();
 		};
-		CLn.prototype.reassignImageUrl = function(mapUrl) {
-			if (this.Fill) {
-				const oNewFill = this.Fill.reassignImageUrl(mapUrl);
-				if (oNewFill) {
-					const oNewLn = this.createDuplicate();
-					oNewLn.setFill(oNewFill);
-					return oNewLn;
-				}
-			}
-			return null;
+		CLn.prototype.ReplaceImageUrl = function (mapUrl) {
+			return this.Fill && this.Fill.ReplaceImageUrl ? this.Fill.ReplaceImageUrl(mapUrl) : false;
 		};
 		CLn.prototype.GetCapCode = function (sVal) {
 			switch (sVal) {
@@ -8099,10 +8121,24 @@
 		CNvPr.prototype.setHlinkClick = function (pr) {
 			AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_CNvPr_SetHlinkClick, this.hlinkClick, pr));
 			this.hlinkClick = pr;
+			this.checkSlideJumpLink();
 		};
 		CNvPr.prototype.setHlinkHover = function (pr) {
 			AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_CNvPr_SetHlinkHover, this.hlinkHover, pr));
 			this.hlinkHover = pr;
+			this.checkSlideJumpLink();
+		};
+		CNvPr.prototype.checkSlideJumpLink = function () {
+			let logicDocument = Asc.editor.getLogicDocument();
+			if (!logicDocument || !logicDocument.bindSlideJumpLink) {
+				return;
+			}
+			if (this.hlinkClick && AscFormat.IsSlideJumpLinkValue(this.hlinkClick.id)) {
+				logicDocument.bindSlideJumpLink(this.hlinkClick);
+			}
+			if (this.hlinkHover && AscFormat.IsSlideJumpLinkValue(this.hlinkHover.id)) {
+				logicDocument.bindSlideJumpLink(this.hlinkHover);
+			}
 		};
 		CNvPr.prototype.setTitle = function (title) {
 			AscCommon.History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_CNvPr_SetTitle, this.title, title));
@@ -9404,8 +9440,7 @@
 			this.handleUpdateGeometry();
 		};
 		CSpPr.prototype.setFill = function (pr) {
-			if(!pr || !pr.isBlipFill() || !Asc.editor.evalCommand)
-				AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SpPr_SetFill, this.Fill, pr));
+			AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SpPr_SetFill, this.Fill, pr));
 			this.Fill = pr;
 			if (this.parent && this.parent.handleUpdateFill) {
 				this.parent.handleUpdateFill();
@@ -10199,23 +10234,20 @@
 			}
 		};
 		FmtScheme.prototype.Reassign_ImageUrls = function(oImageMap) {
-			const aFillLists = [this.fillStyleLst, this.bgFillStyleLst];
+			this.ReplaceImageUrl(oImageMap);
+		};
+		FmtScheme.prototype.ReplaceImageUrl = function(mapUrl) {
+			let bChanged = false;
+			const aFillLists = [this.fillStyleLst, this.bgFillStyleLst, this.lnStyleLst];
 			for(let i = 0; i < aFillLists.length; ++i) {
 				for(let nIdx = 0; nIdx < aFillLists[i].length; ++nIdx) {
-					const oUnifill = aFillLists[i][nIdx];
-					const sId = oUnifill && oUnifill.checkRasterImageId();
-					if(sId && oImageMap[sId]) {
-						oUnifill.fill.RasterImageId = oImageMap[sId];
+					const oItem = aFillLists[i][nIdx];
+					if (oItem && oItem.ReplaceImageUrl && oItem.ReplaceImageUrl(mapUrl)) {
+						bChanged = true;
 					}
 				}
 			}
-			for(let nIdx = 0; nIdx < this.lnStyleLst.length; ++nIdx) {
-				const oLn = this.lnStyleLst[nIdx];
-				const sId = oLn && oLn.checkRasterImageId();
-				if(sId && oImageMap[sId]) {
-					oLn.Fill.fill.RasterImageId = oImageMap[sId];
-				}
-			}
+			return bChanged;
 		};
 		
 		function CEffectStyle() {
@@ -10941,6 +10973,9 @@
 			if (fill_image_id !== null)
 				images.push(fill_image_id);
 		};
+		CBgPr.prototype.ReplaceImageUrl = function (mapUrl) {
+			return this.Fill && this.Fill.ReplaceImageUrl ? this.Fill.ReplaceImageUrl(mapUrl) : false;
+		};
 
 
 
@@ -10960,6 +10995,9 @@
 		};
 		CBg.prototype.setBgRef = function (pr) {
 			this.bgRef = pr;
+		};
+		CBg.prototype.ReplaceImageUrl = function (mapUrl) {
+			return this.bgPr && this.bgPr.ReplaceImageUrl ? this.bgPr.ReplaceImageUrl(mapUrl) : false;
 		};
 		CBg.prototype.merge = function (bg) {
 			if (this.bgPr == null) {
@@ -11002,14 +11040,114 @@
 		};
 
 		function CSld(parent) {
-			CBaseNoIdObject.call(this);
+			CBaseFormatObject.call(this);
 			this.name = "";
 			this.Bg = null;
 			this.spTree = [];//new GroupShape();
-			this.parent = parent;
+			this.parent = parent || null;
+			this.drawingNameAllocator = null;
+			this.m_oContentChanges = new AscCommon.CContentChanges();
+			this.collaborativeMarks = null;
 		}
 
-		InitClass(CSld, CBaseNoIdObject, 0);
+		InitClass(CSld, CBaseFormatObject, AscDFH.historyitem_type_CSld);
+		CSld.prototype.setBg = function (bg) {
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_CSld_SetBg, this.Bg, bg));
+			this.Bg = bg;
+		};
+		CSld.prototype.setName = function (name) {
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_CSld_SetName, this.name, name));
+			this.name = name;
+		};
+		CSld.prototype.addToSpTree = function (pos, item) {
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_CSld_AddToSpTree, pos, [item], true, true));
+			this.spTree.splice(pos, 0, item);
+			if (this.collaborativeMarks) {
+				this.collaborativeMarks.Update_OnAdd(pos);
+			}
+			this.processSlideJumpLinks(item, true);
+		};
+		CSld.prototype.removeFromSpTree = function (pos, count) {
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_CSld_RemoveFromSpTree, pos, this.spTree.slice(pos, pos + count), false));
+			let aRemoved = this.spTree.splice(pos, count);
+			if (this.collaborativeMarks) {
+				this.collaborativeMarks.Update_OnRemove(pos, count);
+			}
+			for (let i = 0; i < aRemoved.length; ++i) {
+				this.processSlideJumpLinks(aRemoved[i], false);
+			}
+			return aRemoved;
+		};
+		CSld.prototype.processSlideJumpLinks = function (item, isAdd) {
+			let logicDocument = Asc.editor.getLogicDocument();
+			if (logicDocument && logicDocument.processSlideJumpLinksInSubtree) {
+				logicDocument.processSlideJumpLinksInSubtree(item, isAdd);
+			}
+		};
+		CSld.prototype.Clear_CollaborativeMarks = function () {
+			if (this.collaborativeMarks) {
+				this.collaborativeMarks.Clear();
+			}
+		};
+		CSld.prototype.Refresh_RecalcData = function (data) {
+			if (this.parent && this.parent.handleCSldRecalc) {
+				this.parent.handleCSldRecalc(data);
+			}
+		};
+		CSld.prototype.fillObject = function (oCopy, oPr) {
+			if (typeof this.name === "string" && this.name.length > 0) {
+				oCopy.setName(this.name);
+			}
+			if (this.Bg) {
+				oCopy.setBg(this.Bg.createFullCopy());
+			}
+			if (!oPr) {
+				oPr = new AscFormat.CCopyObjectProperties();
+			}
+			if (!oPr.idMap) oPr.idMap = {};
+			for (let i = 0; i < this.spTree.length; ++i) {
+				let oSp = this.spTree[i];
+				let oSpCopy = oSp.copy(oPr);
+				oPr.idMap[oSp.Id] = oSpCopy.Id;
+				oCopy.addToSpTree(oCopy.spTree.length, oSpCopy);
+				if (oCopy.parent) {
+					oSpCopy.setParent2(oCopy.parent);
+				}
+			}
+		};
+		CSld.prototype.Refresh_RecalcData2 = function (pageIndex, object) {
+			if (this.parent && this.parent.Refresh_RecalcData2) {
+				this.parent.Refresh_RecalcData2(pageIndex, object);
+			}
+		};
+		CSld.prototype.initCollaborativeMarks = function () {
+			if (!this.collaborativeMarks && typeof CRunCollaborativeMarks !== "undefined") {
+				this.collaborativeMarks = new CRunCollaborativeMarks();
+			}
+		};
+		CSld.prototype.Clear_ContentChanges = function () {
+			this.m_oContentChanges.Clear();
+		};
+		CSld.prototype.Add_ContentChanges = function (changes) {
+			this.m_oContentChanges.Add(changes);
+		};
+		CSld.prototype.Refresh_ContentChanges = function () {
+			this.m_oContentChanges.Refresh();
+		};
+		CSld.prototype.checkAndAssignName = function (item) {
+			item.assignNameInContainer(this);
+		};
+		CSld.prototype.getNextNameIndex = function () {
+			if (!this.drawingNameAllocator) this.drawingNameAllocator = new AscCommon.CDrawingNameAllocator();
+			return this.drawingNameAllocator.next(this.countDrawings());
+		};
+		CSld.prototype.countDrawings = function () {
+			let count = 0;
+			for (let i = 0; i < this.spTree.length; ++i) {
+				count += this.spTree[i].countDrawings();
+			}
+			return count;
+		};
 		CSld.prototype.removeAllInks = function () {
 			const oController = this.parent && this.parent.graphicObjects;
 			if (!oController) {
@@ -12438,6 +12576,9 @@
 		};
 		CBullet.prototype.isBullet = function () {
 			return this.bulletType != null && this.bulletType.type != null;
+		};
+		CBullet.prototype.ReplaceImageUrl = function (mapUrl) {
+			return this.Bullet && this.Bullet.ReplaceImageUrl ? this.Bullet.ReplaceImageUrl(mapUrl) : false;
 		};
 		CBullet.prototype.isNone = function() {
 			if (!this.bulletType)
@@ -20651,6 +20792,9 @@
 		window['AscFormat'].CLn = CLn;
 		window['AscFormat'].DefaultShapeDefinition = DefaultShapeDefinition;
 		window['AscFormat'].CNvPr = CNvPr;
+		window['AscFormat'].IsSlideJumpLinkValue = function (value) {
+			return typeof value === "string" && (0 === value.indexOf("ppaction://hlinksldjumpslide") || "ppaction://noaction" === value);
+		};
 		window['AscFormat'].NvPr = NvPr;
 		window['AscFormat'].Ph = Ph;
 		window['AscFormat'].UniNvPr = UniNvPr;

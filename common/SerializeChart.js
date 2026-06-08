@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -9167,40 +9170,40 @@ BinaryChartReader.prototype.ReadCT_DateAx = function (type, length, val) {
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_TimeUnit(t, l, oNewVal);
         });
-        // if (null != oNewVal.m_val) {
-        // val.setMinorTimeUnit(oNewVal.m_val);
+        if (null != oNewVal.m_val)
+            val.setBaseTimeUnit(oNewVal.m_val);
     }
     else if (c_oserct_dateaxMAJORUNIT === type) {
         var oNewVal = { m_val: null };
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_AxisUnit(t, l, oNewVal);
         });
-        // if (null != oNewVal.m_val)
-        // val.setMajorUnit(oNewVal.m_val);
+        if (null != oNewVal.m_val)
+            val.setMajorUnit(oNewVal.m_val);
     }
     else if (c_oserct_dateaxMAJORTIMEUNIT === type) {
         var oNewVal = { m_val: null };
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_TimeUnit(t, l, oNewVal);
         });
-        // if (null != oNewVal.m_val) {
-        // val.setMinorTimeUnit(oNewVal.m_val);
+        if (null != oNewVal.m_val)
+            val.setMajorTimeUnit(oNewVal.m_val);
     }
     else if (c_oserct_dateaxMINORUNIT === type) {
         var oNewVal = { m_val: null };
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_AxisUnit(t, l, oNewVal);
         });
-        // if (null != oNewVal.m_val)
-        // val.setMinorUnit(oNewVal.m_val);
+        if (null != oNewVal.m_val)
+            val.setMinorUnit(oNewVal.m_val);
     }
     else if (c_oserct_dateaxMINORTIMEUNIT === type) {
         var oNewVal = { m_val: null };
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_TimeUnit(t, l, oNewVal);
         });
-        // if (null != oNewVal.m_val)
-        // val.setMinorTimeUnit(oNewVal.m_val);
+        if (null != oNewVal.m_val)
+            val.setMinorTimeUnit(oNewVal.m_val);
     }
     else if (c_oserct_dateaxEXTLST === type) {
         var oNewVal;
@@ -10769,9 +10772,8 @@ BinaryChartReader.prototype.ReadCT_NumVal = function (type, length, val) {
     var oThis = this;
     if (c_oserct_numvalV === type) {
         var nVal = parseFloat(this.stream.GetString2LE(length));
-        if(isNaN(nVal))
-            nVal = 0;
-        val.setVal(nVal);
+        if (!isNaN(nVal))
+            val.setVal(nVal);
     }
     else if (c_oserct_numvalIDX === type) {
         val.setIdx(this.stream.GetULongLE());

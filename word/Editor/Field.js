@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -172,44 +175,48 @@ ParaField.prototype.CanSplit = function()
 {
 	return false;
 };
-ParaField.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange, _CurPage)
+ParaField.prototype.recalculateRangeAlign = function(alignState)
 {
-	var CurLine  = _CurLine - this.StartLine;
-	var CurRange = (0 === _CurLine ? _CurRange - this.StartRange : _CurRange);
+	// TODO: We should move all this logic to AlignRecalcState
 
-	if (0 === CurLine && 0 === CurRange && true !== PRSA.RecalcFast)
+	var CurLine  = alignState.CurLine - this.StartLine;
+	var CurRange = (0 === alignState.CurLine ? alignState.CurRange - this.StartRange : alignState.CurRange);
+
+	if (0 === CurLine && 0 === CurRange && true !== alignState.RecalcFast)
 		this.Bounds = {};
 
-	var X0 = PRSA.X;
-	var Y0 = PRSA.Y0;
-	var Y1 = PRSA.Y1;
+	var X0 = alignState.X;
+	var Y0 = alignState.Y0;
+	var Y1 = alignState.Y1;
 
-	CParagraphContentWithParagraphLikeContent.prototype.Recalculate_Range_Spaces.apply(this, arguments);
+	CParagraphContentWithParagraphLikeContent.prototype.recalculateRangeAlign.call(this, alignState);
 
-	var X1 = PRSA.X;
+	var X1 = alignState.X;
 
 	this.Bounds[((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF)] = {
 		X0           : X0,
 		X1           : X1,
 		Y0           : Y0,
 		Y1           : Y1,
-		PageIndex    : PRSA.Paragraph.GetAbsolutePage(_CurPage),
-		PageInternal : _CurPage
+		PageIndex    : alignState.Paragraph.GetAbsolutePage(alignState.CurPage),
+		PageInternal : alignState.CurPage
 	};
 };
-ParaField.prototype.Draw_HighLights = function(PDSH)
+ParaField.prototype.drawHighLights = function(drawState)
 {
-    var X0 = PDSH.X;
-    var Y0 = PDSH.Y0;
-    var Y1 = PDSH.Y1;
+	// TODO: We should move all this logic to AlignRecalcState
+	
+    var X0 = drawState.X;
+    var Y0 = drawState.Y0;
+    var Y1 = drawState.Y1;
 
-    CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights.apply(this, arguments);
+    CParagraphContentWithParagraphLikeContent.prototype.drawHighLights.apply(this, arguments);
 
-    var X1 = PDSH.X;
+    var X1 = drawState.X;
 
-    if (Math.abs(X0 - X1) > 0.001 && (true === PDSH.DrawMMFields || AscWord.fieldtype_FORMTEXT === this.Get_FieldType()))
+    if (Math.abs(X0 - X1) > 0.001 && (true === drawState.DrawMMFields || AscWord.fieldtype_FORMTEXT === this.Get_FieldType()))
     {
-        PDSH.MMFields.Add(Y0, Y1, X0, X1, 0, 0, 0, 0  );
+        drawState.MMFields.Add(Y0, Y1, X0, X1, 0, 0, 0, 0  );
     }
 };
 ParaField.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, UseContentPos)

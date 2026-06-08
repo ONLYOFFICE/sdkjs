@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -386,23 +389,23 @@ CInlineLevelSdt.prototype.CanSplit = function()
 {
 	return false;
 };
-CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange, _CurPage)
+CInlineLevelSdt.prototype.recalculateRangeAlign = function(alignState)
 {
-	var isFastRangeRecalc = PRSA.IsFastRangeRecalc();
+	var isFastRangeRecalc = alignState.IsFastRangeRecalc();
 
-	var CurLine  = _CurLine - this.StartLine;
-	var CurRange = (0 === CurLine ? _CurRange - this.StartRange : _CurRange);
+	var CurLine  = alignState.CurLine - this.StartLine;
+	var CurRange = (0 === CurLine ? alignState.CurRange - this.StartRange : alignState.CurRange);
 
 	if (0 === CurLine && 0 === CurRange && !isFastRangeRecalc)
 		this.Bounds = {};
 
-	var oParagraph = PRSA.Paragraph;
-	var Y0         = oParagraph.Lines[_CurLine].Top + oParagraph.Pages[_CurPage].Y;
-	var Y1         = oParagraph.Lines[_CurLine].Y + oParagraph.Pages[_CurPage].Y + oParagraph.Lines[_CurLine].Metrics.Descent;
-	var X0         = PRSA.X;
+	var oParagraph = alignState.Paragraph;
+	var Y0         = oParagraph.Lines[alignState.CurLine].Top + oParagraph.Pages[alignState.CurPage].Y;
+	var Y1         = oParagraph.Lines[alignState.CurLine].Y + oParagraph.Pages[alignState.CurPage].Y + oParagraph.Lines[alignState.CurLine].Metrics.Descent;
+	var X0         = alignState.X;
 
 	if (0 === CurLine)
-		Y0 = oParagraph.Lines[_CurLine].Y + oParagraph.Pages[_CurPage].Y - oParagraph.Lines[_CurLine].Metrics.Ascent;
+		Y0 = oParagraph.Lines[alignState.CurLine].Y + oParagraph.Pages[alignState.CurPage].Y - oParagraph.Lines[alignState.CurLine].Metrics.Ascent;
 
 	let isSimpleForm = (this.IsForm() && !this.IsComplexForm() && (this === this.GetMainForm()));
 
@@ -422,9 +425,9 @@ CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _C
 		var nYOffset     = oTextPr.Position;
 
 		if (0 === CurLine)
-			Y0 = oParagraph.Lines[_CurLine].Y + oParagraph.Pages[_CurPage].Y - nTextAscent - nYOffset;
+			Y0 = oParagraph.Lines[alignState.CurLine].Y + oParagraph.Pages[alignState.CurPage].Y - nTextAscent - nYOffset;
 
-		Y1 = oParagraph.Lines[_CurLine].Y + oParagraph.Pages[_CurPage].Y + nTextDescent - nYOffset;
+		Y1 = oParagraph.Lines[alignState.CurLine].Y + oParagraph.Pages[alignState.CurPage].Y + nTextDescent - nYOffset;
 	}
 
 	if (!isFastRangeRecalc)
@@ -432,16 +435,16 @@ CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _C
 		for (var Key in this.Bounds)
 		{
 			var __CurLine = (Key | 0) >> 16;
-			if (__CurLine === CurLine - 1 && this.Bounds[Key].PageInternal === _CurPage)
+			if (__CurLine === CurLine - 1 && this.Bounds[Key].PageInternal === alignState.CurPage)
 			{
 				this.Bounds[Key].H = Y0 - this.Bounds[Key].Y;
 			}
 		}
 	}
 
-	CParagraphContentWithParagraphLikeContent.prototype.Recalculate_Range_Spaces.apply(this, arguments);
+	CParagraphContentWithParagraphLikeContent.prototype.recalculateRangeAlign.call(this, alignState);
 
-	var X1 = PRSA.X;
+	var X1 = alignState.X;
 
 	if (isSimpleForm
 		&& this.IsPicture()
@@ -471,30 +474,30 @@ CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _C
 			Y            : Y0,
 			H            : Y1 - Y0,
 			TextLineH    : Y1 - Y0,
-			Page         : PRSA.Paragraph.GetAbsolutePage(_CurPage),
-			PageInternal : _CurPage
+			Page         : alignState.Paragraph.GetAbsolutePage(alignState.CurPage),
+			PageInternal : alignState.CurPage
 		};
 	}
 
 	this.BoundsPaths = null;
 };
-CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
+CInlineLevelSdt.prototype.drawHighLights = function(drawState)
 {
-	PDSH.AddInlineSdt(this);
+	drawState.AddInlineSdt(this);
 
-	if (PDSH.IsCollectFixedForms())
-		return CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights.apply(this, arguments);
+	if (drawState.IsCollectFixedForms())
+		return CParagraphContentWithParagraphLikeContent.prototype.drawHighLights.apply(this, arguments);
 
-	var oGraphics = PDSH.Graphics;
+	var oGraphics = drawState.Graphics;
 
 	if (this.IsSkipDraw(oGraphics))
-		return this.SkipDraw(PDSH);
+		return this.SkipDraw(drawState);
 
 	// Для экспорта в PDF записываем поля. Поля, находящиеся в автофигурах, пока не пишем
 	var oTransform = this.Get_ParentTextTransform();
 	if (this.private_IsAddFormFieldToGraphics(oGraphics, oTransform))
 	{
-		this.SkipDraw(PDSH);
+		this.SkipDraw(drawState);
 
 		// Ищем первый ненулевой промежуток, если он на данной странице, тогда сохраняем его в форму
 		var oBounds = null;
@@ -502,11 +505,11 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 		{
 			if (this.Bounds[Key].W > 0.001 && this.Bounds[Key].H > 0.001)
 			{
-				if (this.Bounds[Key].PageInternal === PDSH.Page)
+				if (this.Bounds[Key].PageInternal === drawState.Page)
 					oBounds = this.Bounds[Key];
 
-				var CurLine = PDSH.Line - this.StartLine;
-				var CurRange = (0 === CurLine ? PDSH.Range - this.StartRange : PDSH.Range);
+				var CurLine = drawState.Line - this.StartLine;
+				var CurRange = (0 === CurLine ? drawState.Range - this.StartRange : drawState.Range);
 
 				if ((Key | 0) !== ((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF))
 					return;
@@ -521,7 +524,7 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 			var oShape       = this.GetParagraph().Parent.Is_DrawingShape(true);
 			var oShapeBounds = oShape.getFormRelRect();
 
-			if (oShapeBounds.Page === PDSH.Paragraph.GetAbsolutePage(PDSH.Page))
+			if (oShapeBounds.Page === drawState.Paragraph.GetAbsolutePage(drawState.Page))
 				oBounds = oShapeBounds;
 		}
 
@@ -539,15 +542,15 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 
 			var oTextPr = oRun.Get_CompiledPr(false);
 
-			g_oTextMeasurer.SetTextPr(oTextPr, PDSH.Paragraph.GetTheme());
+			g_oTextMeasurer.SetTextPr(oTextPr, drawState.Paragraph.GetTheme());
 			g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
 
 			var nTextHeight  = g_oTextMeasurer.GetHeight();
 			var nTextDescent = Math.abs(g_oTextMeasurer.GetDescender());
 			var nTextAscent  = nTextHeight - nTextDescent;
 
-			var oColor = oTextPr.GetSimpleTextColor(PDSH.Paragraph.GetTheme(), PDSH.Paragraph.GetColorMap());
-			oGraphics.SetTextPr(oTextPr, PDSH.Paragraph.GetTheme());
+			var oColor = oTextPr.GetSimpleTextColor(drawState.Paragraph.GetTheme(), drawState.Paragraph.GetColorMap());
+			oGraphics.SetTextPr(oTextPr, drawState.Paragraph.GetTheme());
 			oGraphics.b_color1(oColor.r, oColor.g, oColor.b, this.IsPlaceHolder() ? 127 : 255);
 			oGraphics.SetFontSlot(AscWord.fontslot_ASCII); // Именно на этой функции записываются настройки шрифта в метафайл
 
@@ -583,7 +586,7 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 	}
 	else
 	{
-		CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights.apply(this, arguments);
+		CParagraphContentWithParagraphLikeContent.prototype.drawHighLights.apply(this, arguments);
 	}
 };
 CInlineLevelSdt.prototype.Draw_Elements = function(PDSE)
@@ -602,15 +605,14 @@ CInlineLevelSdt.prototype.Draw_Elements = function(PDSE)
 			this.DrawPictureSign(PDSE.Graphics);
 	}
 };
-CInlineLevelSdt.prototype.Draw_Lines = function(PDSL)
+CInlineLevelSdt.prototype.drawLines = function(drawState)
 {
-	// Не отключаем отрисовку линий для PlaceHolder, т.к. рамка рисуется через данную функцию
-	// отключение остальных отрисовок идет внутри ParaRun.Draw_Lines
-
-	if (this.private_IsAddFormFieldToGraphics(PDSL.Graphics))
-		this.SkipDraw(PDSL);
+	// We don't disable line drawing for PlaceHolder, because the border is drawn through this function
+	// Other drawing is disabled inside ParaRun.drawLines
+	if (this.private_IsAddFormFieldToGraphics(drawState.Graphics))
+		this.SkipDraw(drawState);
 	else
-		CParagraphContentWithParagraphLikeContent.prototype.Draw_Lines.apply(this, arguments);
+		CParagraphContentWithParagraphLikeContent.prototype.drawLines.apply(this, arguments);
 };
 CInlineLevelSdt.prototype.DrawSignatureSign = function(graphics)
 {
