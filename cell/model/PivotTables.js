@@ -9064,6 +9064,9 @@ CT_pivotTableDefinition.prototype.showDetailsHeaderByCell = function(api, row, c
 };
 
 CT_pivotTableDefinition.prototype.asc_canShowDetails = function(row, col) {
+	if (!this.checkPivotUnderlyingData()) {
+		return false;
+	}
 	let indexes = this.getItemsIndexesByActiveCell(row, col);
 	if (indexes === null) {
 		return false;

@@ -7596,6 +7596,9 @@ var editor;
 		if (!pivotTable) {
 			return false;
 		}
+		if (!pivotTable.checkPivotUnderlyingData()) {
+			return false;
+		}
 		this._addWorksheetsCheck(function(res){
 			if (!res) {
 				return;
