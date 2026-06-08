@@ -331,7 +331,8 @@ function (window, undefined) {
 		ConnectionsLive: 13,
 		UsersViewCount: 14,
 		UsersViewCountOS: 15,
-		NotBefore: 16
+		NotBefore: 16,
+		NotEnoughResources: 17
 	};
 
 	let c_oRights = {
@@ -8300,6 +8301,7 @@ function (window, undefined) {
 	prot['UsersViewCount'] = prot.UsersViewCount;
 	prot['UsersViewCountOS'] = prot.UsersViewCountOS;
 	prot['NotBefore'] = prot.NotBefore;
+	prot['NotEnoughResources'] = prot.NotEnoughResources;
 
 	window['Asc']['c_oRights'] = window['Asc'].c_oRights = c_oRights;
 	prot = c_oRights;

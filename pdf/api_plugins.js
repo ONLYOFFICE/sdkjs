@@ -236,8 +236,8 @@
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
 	 * @alias GoToPage
-	 * @param {number} pageIndex
-	 * @param {?Rect} [rect=undefined] - if specified only x1, y1 (ex. [10, 10]) - then moves to them with inherited zoom, if specified whole rect (ex. [10, 10, 100, 100]) then zoom to rect
+	 * @param {number} pageIndex - Zero-based page index to navigate to.
+	 * @param {?Rect} [rect=undefined] - If specified only x1, y1 (ex. [10, 10]) - then moves to them with inherited zoom, if specified whole rect (ex. [10, 10, 100, 100]) then zoom to rect
 	 * @returns {boolean} 
 	 * @see office-js-api/Examples/Plugins/PDF/Api/Methods/GoToPage.js
 	 */

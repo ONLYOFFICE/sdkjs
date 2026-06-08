@@ -15285,16 +15285,17 @@ function isAllowPasteLink(pastedWb) {
 			arn = arn.clone();
 			if (this.fillHandleArea === 3) { // From top to bottom
 				arn.r2 = arn.r1;
-				arn.c2 = arn.c1;
 			} else { // From bottom to top
 				arn.r1 = arn.r2;
-				arn.c1 = arn.c2;
 			}
 			range = t.model.getRange3(arn.r1, arn.c1, arn.r2, arn.c2);
-			// Change ctrlPress flag to copy pattern
-			const numFormat = range.getXfs() && range.getXfs().num && range.getXfs().num.getFormat();
-			const dateType = !!(numFormat && AscCommon.oNumFormatCache.get(numFormat).isDateTimeFormat());
-			ctrlPress = !(range.getType() === AscCommon.CellValueType.Number && !dateType);
+			if (arn.c1 === arn.c2) {
+				const numFormat = range.getXfs() && range.getXfs().num && range.getXfs().num.getFormat();
+				const dateType = !!(numFormat && AscCommon.oNumFormatCache.get(numFormat).isDateTimeFormat());
+				ctrlPress = !(range.getType() === AscCommon.CellValueType.Number && !dateType);
+			} else {
+				ctrlPress = true;
+			}
 		}
 
 		// Were there changes
