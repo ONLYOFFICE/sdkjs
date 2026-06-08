@@ -35,7 +35,23 @@
 		this.api = api;
 		this.type = null;
 	}
-
+	SlideModeManagerBase.prototype.updatePlaceholderCheckboxState = function (placeholderEvent, slide, placeholderTypes) {
+		let isMatching = true;
+		if (slide) {
+			for (let idx = 0; idx < placeholderTypes.length; ++idx) {
+				const type = placeholderTypes[idx];
+				const shape = slide.getMatchingShape(type, null, false, {});
+				if (!shape) {
+					isMatching = false;
+					break;
+				}
+			}
+		} else {
+			isMatching = false;
+		}
+		const api = this.getApi();
+		api.sendEvent(placeholderEvent, isMatching);
+	};
 	SlideModeManagerBase.prototype.startAction = function(description) {
 		const presentation = this.getPresentation();
 		presentation.StartAction(description);
@@ -865,32 +881,17 @@
 		presentation.AddForceNewLayout();
 	};
 	MasterSlideModeManager.prototype.updateInterfaceState = function() {
-		let isTitle = false;
-		let isFooter = false;
-		let isCanDeleteLayout = false;
 		const curSlide = this.getCurrentSlide();
-		const presentation = this.getPresentation();
+		this.updateTitleCheckboxState(curSlide);
+		this.updateFooterCheckBoxState(curSlide);
+		this.updateCanDeleteMasterState();
+		this.updateCanDeleteLayoutState(curSlide);
+	};
+	MasterSlideModeManager.prototype.updateCanDeleteLayoutState = function (curSlide) {
 		const api = this.getApi();
+		let isCanDeleteLayout = false;
 		if (curSlide && curSlide.isLayout()) {
-			let shape = curSlide.getMatchingShape(AscFormat.phType_title, null, false, {});
-			if (!shape) {
-				shape = curSlide.getMatchingShape(AscFormat.phType_ctrTitle, null, false, {});
-			}
-			if (shape) {
-				isTitle = true;
-			}
-			isFooter = true;
-			let types = [AscFormat.phType_ftr, AscFormat.phType_dt, AscFormat.phType_sldNum];
-			for (let nIdx = 0; nIdx < types.length; ++nIdx) {
-				const type = types[nIdx];
-				const shape = curSlide.getMatchingShape(type, null, false, {});
-				if (!shape) {
-					isFooter = false;
-					break;
-				}
-			}
-
-
+			const presentation = this.getPresentation();
 			isCanDeleteLayout = true;
 			let selectedSlides = presentation.GetSelectedSlides();
 			for (let nIdx = 0; nIdx < selectedSlides.length; ++nIdx) {
@@ -906,10 +907,30 @@
 				}
 			}
 		}
-		api.sendEvent("asc_onLayoutTitle", isTitle);
-		api.sendEvent("asc_onLayoutFooter", isFooter);
-		api.sendEvent("asc_onCanDeleteMaster", presentation.CanRemoveMaster(presentation.lastMaster));
 		api.sendEvent("asc_onCanDeleteLayout", isCanDeleteLayout);
+	};
+	MasterSlideModeManager.prototype.updateCanDeleteMasterState = function () {
+		const presentation = this.getPresentation();
+		const api = this.getApi();
+		api.sendEvent("asc_onCanDeleteMaster", presentation.CanRemoveMaster(presentation.lastMaster));
+	};
+	MasterSlideModeManager.prototype.updateFooterCheckBoxState = function (curSlide) {
+		const api = this.getApi();
+		const eventName = "asc_onFooter";
+		if (curSlide && curSlide.isLayout()) {
+			this.updatePlaceholderCheckboxState(eventName, curSlide, [AscFormat.phType_ftr, AscFormat.phType_dt, AscFormat.phType_sldNum]);
+		} else {
+			api.sendEvent(eventName, false);
+		}
+	};
+	MasterSlideModeManager.prototype.updateTitleCheckboxState = function (curSlide) {
+		const api = this.getApi();
+		const eventName = "asc_onTitle";
+		if (curSlide && curSlide.isLayout()) {
+			this.updatePlaceholderCheckboxState(eventName, curSlide, [AscFormat.phType_title]);
+		} else {
+			api.sendEvent(eventName, false);
+		}
 	};
 	MasterSlideModeManager.prototype.getSlidesForChangeColorScheme = function() {
 		return this.getSelectedSlides();
@@ -1434,6 +1455,33 @@
 		presentation.Recalculate({Drawings: {All: true, Map: {}}});
 		presentation.Document_UpdateInterfaceState();
 	};
+	MasterNoteModeManager.prototype.updateInterfaceState = function() {
+		const currentSlide = this.getCurrentSlide();
+		this.updateHeaderCheckboxState(currentSlide);
+		this.updateSlideImageCheckboxState(currentSlide);
+		this.updateFooterCheckboxState(currentSlide);
+		this.updateDateCheckboxState(currentSlide);
+		this.updateBodyCheckboxState(currentSlide);
+		this.updatePageNumberCheckboxState(currentSlide);
+	};
+	MasterNoteModeManager.prototype.updateHeaderCheckboxState = function (currentSlide) {
+		this.updatePlaceholderCheckboxState("asc_onHeader", currentSlide, [AscFormat.phType_hdr]);
+	};
+	MasterNoteModeManager.prototype.updateSlideImageCheckboxState = function (currentSlide) {
+		this.updatePlaceholderCheckboxState("asc_onSlideImage", currentSlide, [AscFormat.phType_sldImg]);
+	};
+	MasterNoteModeManager.prototype.updateFooterCheckboxState = function (currentSlide) {
+		this.updatePlaceholderCheckboxState("asc_onFooter", currentSlide, [AscFormat.phType_ftr]);
+	};
+	MasterNoteModeManager.prototype.updateDateCheckboxState = function (currentSlide) {
+		this.updatePlaceholderCheckboxState("asc_onDate", currentSlide, [AscFormat.phType_dt]);
+	};
+	MasterNoteModeManager.prototype.updateBodyCheckboxState = function (currentSlide) {
+		this.updatePlaceholderCheckboxState("asc_onBody", currentSlide, [AscFormat.phType_body]);
+	};
+	MasterNoteModeManager.prototype.updatePageNumberCheckboxState = function (currentSlide) {
+		this.updatePlaceholderCheckboxState("asc_onPageNumber", currentSlide, [AscFormat.phType_sldNum]);
+	};
 
 	function MasterHandoutModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -1480,6 +1528,17 @@
 		AscFormat.redrawSlide(presentation.handoutMaster[aIdx[nStartIdx]], presentation, aIdx, nStartIdx, 0, this.getAllSlides());
 	};
 	MasterHandoutModeManager.prototype.updateViewMode = MasterNoteModeManager.prototype.updateViewMode;
+	MasterHandoutModeManager.prototype.updateInterfaceState = function() {
+		const currentSlide = this.getCurrentSlide();
+		this.updateHeaderCheckboxState(currentSlide);
+		this.updateFooterCheckboxState(currentSlide);
+		this.updateDateCheckboxState(currentSlide);
+		this.updatePageNumberCheckboxState(currentSlide);
+	};
+	MasterHandoutModeManager.prototype.updateHeaderCheckboxState = MasterNoteModeManager.prototype.updateHeaderCheckboxState;
+	MasterHandoutModeManager.prototype.updateFooterCheckboxState = MasterNoteModeManager.prototype.updateFooterCheckboxState;
+	MasterHandoutModeManager.prototype.updateDateCheckboxState = MasterNoteModeManager.prototype.updateDateCheckboxState;
+	MasterHandoutModeManager.prototype.updatePageNumberCheckboxState = MasterNoteModeManager.prototype.updatePageNumberCheckboxState;
 
 	function SorterModeManager(api) {
 		SlideModeManagerBase.call(this, api);
