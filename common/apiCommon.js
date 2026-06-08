@@ -7374,6 +7374,7 @@ function (window, undefined) {
 		this.isModal = true;     // used only if this.type === PluginType.Window
 
 		this.isCanDocked = false;
+		this.hideHeaderDefaultButtons = [];
 
 		this.initDataType = EPluginDataType.none;
 		this.initData = "";
@@ -7434,6 +7435,10 @@ function (window, undefined) {
 		return this.isCanDocked;
 	};
 
+	CPluginVariation.prototype["get_HideHeaderDefaultButtons"] = function () {
+		return this.hideHeaderDefaultButtons;
+	};
+
 	CPluginVariation.prototype["get_Buttons"] = function () {
 		return this.buttons;
 	};
@@ -7473,6 +7478,7 @@ function (window, undefined) {
 		_object["isModal"] = this.isModal;
 
 		_object["isCanDocked"] = this.isCanDocked;
+		_object["hideHeaderDefaultButtons"] = this.hideHeaderDefaultButtons;
 
 		_object["initDataType"] = this.initDataType;
 		_object["initData"] = this.initData;
@@ -7525,6 +7531,7 @@ function (window, undefined) {
 		this.isModal = (_object["isModal"] != null) ? _object["isModal"] : this.isModal;
 
 		this.isCanDocked = (_object["isCanDocked"] != null) ? _object["isCanDocked"] : this.isCanDocked;
+		this.hideHeaderDefaultButtons = (_object["hideHeaderDefaultButtons"] != null) ? _object["hideHeaderDefaultButtons"] : this.hideHeaderDefaultButtons;
 
 		this.initDataType = (_object["initDataType"] != null) ? _object["initDataType"] : this.initDataType;
 		this.initData = (_object["initData"] != null) ? _object["initData"] : this.initData;
