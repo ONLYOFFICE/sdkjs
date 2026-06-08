@@ -1581,11 +1581,11 @@
 			for (var i = 0; i < this.ranges.length; ++i) {
 				var range = this.ranges[i];
 				var type = range.getType();
-				if (byCol && c_oAscSelectionType.RangeCol !== type) {
+				if (byCol && c_oAscSelectionType.RangeCol !== type && c_oAscSelectionType.RangeMax !== type) {
 					res = false;
 					break;
 				}
-				if (!byCol && c_oAscSelectionType.RangeRow !== type) {
+				if (!byCol && c_oAscSelectionType.RangeRow !== type && c_oAscSelectionType.RangeMax !== type) {
 					res = false;
 					break;
 				}
@@ -3497,6 +3497,7 @@
 		function RedoObjectParam() {
 			this.bIsOn = false;
 			this.oChangeWorksheetUpdate = {};
+			this.oUpdateDefaultWidthSheets = {};
 			this.bUpdateWorksheetByModel = false;
 			this.bOnSheetsChanged = false;
 			this.oOnUpdateTabColor = {};

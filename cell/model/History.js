@@ -796,7 +796,7 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 		//changeWorksheetUpdate before cleanCellCache to call _calcHeightRows
 		for (i in oRedoObjectParam.oChangeWorksheetUpdate)
 			this.workbook.handlers.trigger("changeWorksheetUpdate",
-				oRedoObjectParam.oChangeWorksheetUpdate[i],{lockDraw: true, reinitRanges: true});
+				oRedoObjectParam.oChangeWorksheetUpdate[i],{lockDraw: true, reinitRanges: true, isUpdateDefaultWidth: !!oRedoObjectParam.oUpdateDefaultWidthSheets[i]});
 
 		this.updateDrawingsByRegions(Point.UpdateRigions, oRedoObjectParam);
 
@@ -903,8 +903,13 @@ CHistory.prototype._addRedoObjectParam = function (oRedoObjectParam, Point) {
 		AscCH.historyitem_Worksheet_SetDisplayHeadings === Point.Type)) {
 		oRedoObjectParam.oOnUpdateSheetViewSettings[Point.SheetId] = Point.SheetId;
 	}
-	else if (AscCommonExcel.g_oUndoRedoWorksheet === Point.Class && (AscCH.historyitem_Worksheet_RowProp === Point.Type || AscCH.historyitem_Worksheet_ColProp === Point.Type || AscCH.historyitem_Worksheet_RowHide === Point.Type || AscCH.historyitem_Worksheet_AddCols === Point.Type || AscCH.historyitem_Worksheet_RemoveCols === Point.Type))
+	else if (AscCommonExcel.g_oUndoRedoWorksheet === Point.Class && (AscCH.historyitem_Worksheet_RowProp === Point.Type || AscCH.historyitem_Worksheet_ColProp === Point.Type || AscCH.historyitem_Worksheet_RowHide === Point.Type || AscCH.historyitem_Worksheet_AddCols === Point.Type || AscCH.historyitem_Worksheet_RemoveCols === Point.Type)) {
 		oRedoObjectParam.oChangeWorksheetUpdate[Point.SheetId] = Point.SheetId;
+		if ((AscCH.historyitem_Worksheet_ColProp === Point.Type || AscCH.historyitem_Worksheet_RowProp === Point.Type) &&
+			Point.Data && Point.Data.index === AscCommonExcel.g_nAllColIndex) {
+			oRedoObjectParam.oUpdateDefaultWidthSheets[Point.SheetId] = true;
+		}
+	}
 	else if (AscCommonExcel.g_oUndoRedoWorkbook === Point.Class && (AscCH.historyitem_Workbook_SheetAdd === Point.Type || AscCH.historyitem_Workbook_SheetRemove === Point.Type)) {
 		oRedoObjectParam.bUpdateWorksheetByModel = true;
 		oRedoObjectParam.bOnSheetsChanged = true;

@@ -1818,6 +1818,7 @@ function isAllowPasteLink(pastedWb) {
 			var _selectionRange = t.model.selectionRange;
 			if (_selectionRange && _selectionRange.ranges && _selectionRange.isContainsOnlyFullRowOrCol(true) && _selectionRange.containsCol(col)) {
 				bIsHiddenArr = [];
+				var needUpdateDefaultWidth = false;
 				for (var i = 0; i < _selectionRange.ranges.length; i++) {
 					var _range = _selectionRange.ranges[i];
 					var _tempArr = getHiddenMap(_range.c1, _range.c2);
@@ -1826,6 +1827,12 @@ function isAllowPasteLink(pastedWb) {
 						startUpdateCol = _range.c1;
 					}
 					getRangesFromMap(getHiddenMap(_range.c1, _range.c2, _tempArr), bIsHiddenArr);
+					if (_range.c1 === 0 && _range.c2 === gc_nMaxCol0) {
+						needUpdateDefaultWidth = true;
+					}
+				}
+				if (needUpdateDefaultWidth) {
+					t._initWorksheetDefaultWidth();
 				}
 			} else {
 				t.model.setColWidth(cc, col, col);
@@ -1958,6 +1965,7 @@ function isAllowPasteLink(pastedWb) {
 			var _selectionRange = t.model.selectionRange;
 			if (_selectionRange && _selectionRange.ranges && _selectionRange.isContainsOnlyFullRowOrCol() && _selectionRange.containsRow(row)) {
 				bIsHiddenArr = [];
+				var needUpdateDefaultWidth = false;
 				for (var i = 0; i < _selectionRange.ranges.length; i++) {
 					var _range = _selectionRange.ranges[i];
 					var _tempArr = getHiddenMap(_range.r1, _range.r2);
@@ -1969,6 +1977,12 @@ function isAllowPasteLink(pastedWb) {
 						endUpdateRow = _range.r2;
 					}
 					getRangesFromMap(getHiddenMap(_range.r1, _range.r2, _tempArr), bIsHiddenArr);
+					if (_range.r1 === 0 && _range.r2 === gc_nMaxRow0) {
+						needUpdateDefaultWidth = true;
+					}
+				}
+				if (needUpdateDefaultWidth) {
+					t._initWorksheetDefaultWidth();
 				}
 			} else {
 				t.model.setRowHeight(AscCommonExcel.convertPxToPt(newHeight), row, row, true);
@@ -18530,6 +18544,7 @@ function isAllowPasteLink(pastedWb) {
 				if (val !== undefined) {
 					lockDraw = true === val.lockDraw;
 					reinitRanges = !!val.reinitRanges;
+					isUpdateDefaultWidth = !!val.isUpdateDefaultWidth;
 				}
 				onChangeWorksheetCallback(true);
 				break;
