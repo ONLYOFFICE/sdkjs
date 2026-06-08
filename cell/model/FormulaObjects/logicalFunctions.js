@@ -185,7 +185,7 @@ function (window, undefined) {
 		}
 		return res;
 	};
-	cIF.prototype.enabledToSingle = {"1": true, "2": true};
+	cIF.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cIF.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
 
