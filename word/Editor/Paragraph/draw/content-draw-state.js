@@ -83,6 +83,9 @@
 		// for Math
 		this.mathTextInfo = null;
 		this.paraMath     = null;
+		
+		this.needClip = false;
+		this.lineClip = false;
 	}
 	ParagraphContentDrawState.prototype = Object.create(AscWord.ParagraphBidiFlow.prototype);
 	ParagraphContentDrawState.prototype.constructor = ParagraphContentDrawState;
@@ -100,12 +103,21 @@
 		
 		this.CurPos = new AscWord.CParagraphContentPos();
 	};
-	ParagraphContentDrawState.prototype.resetPage = function(page)
+	ParagraphContentDrawState.prototype.beginPage = function(page)
 	{
+		let paraPr = this.Paragraph.getCompiledPr().ParaPr;
+		this.needClip = (linerule_Exact === paraPr.Spacing.LineRule || (linerule_Auto === paraPr.Spacing.LineRule && paraPr.Spacing.Line < 1 - AscWord.EPSILON));
+		
 		this.Page = page;
 		this.complexFields.resetPage(this.Paragraph, page);
+		
+		this.addPageClip();
 	};
-	ParagraphContentDrawState.prototype.resetLine = function(line, baseLine, lineTop, lineBottom)
+	ParagraphContentDrawState.prototype.endPage = function()
+	{
+		this.removePageClip();
+	};
+	ParagraphContentDrawState.prototype.beginLine = function(line, baseLine, lineTop, lineBottom)
 	{
 		this.Line = line;
 		
@@ -114,6 +126,13 @@
 		this.BaseLine   = baseLine;
 		
 		this.Y = baseLine;
+		
+		this.lineClip = this.needClip;
+		this.addLineClip();
+	};
+	ParagraphContentDrawState.prototype.endLine = function()
+	{
+		this.removeLineClip();
 	};
 	ParagraphContentDrawState.prototype.beginRange = function(range, x)
 	{
@@ -136,6 +155,43 @@
 		let isRtl = this.Paragraph.isRtlDirection();
 		if (this.Paragraph.Numbering.checkRange(this.Range, this.Line) && isRtl)
 			this.handleNumbering();
+	};
+	ParagraphContentDrawState.prototype.addPageClip = function()
+	{
+		if (!this.needClip)
+			return;
+		
+		let pageBounds = this.Paragraph.Get_PageBounds(this.Page);
+		
+		this.Graphics.SaveGrState();
+		this.Graphics.AddClipRect(0, pageBounds.Top, AscWord.MAX_MM_VALUE, Math.abs(pageBounds.Bottom - pageBounds.Top));
+	};
+	ParagraphContentDrawState.prototype.removePageClip = function()
+	{
+		if (!this.needClip)
+			return;
+		
+		this.Graphics.RestoreGrState();
+	};
+	ParagraphContentDrawState.prototype.addLineClip = function()
+	{
+		if (!this.lineClip)
+			return;
+		
+		this.Graphics.SaveGrState();
+		
+		let p = this.Paragraph;
+		let page = p.Pages[this.Page];
+		let pageLine = p.Lines[this.Line];
+		
+		this.Graphics.AddClipRect(0, page.Y + pageLine.Top, AscWord.MAX_MM_VALUE, pageLine.Bottom - pageLine.Top);
+	};
+	ParagraphContentDrawState.prototype.removeLineClip = function()
+	{
+		if (!this.lineClip)
+			return;
+		
+		this.Graphics.RestoreGrState();
 	};
 	/**
 	 * @param element {AscWord.CRunElementBase}
@@ -344,8 +400,12 @@
 		if (!drawing.IsInline())
 			return;
 		
+		this.removeLineClip();
+		
 		drawing.Draw(this.X, this.calcY - this.yOffset, this.Graphics, this, this.textPr);
 		this.X += drawing.GetWidthVisible();
+		
+		this.addLineClip();
 		
 		// Внутри отрисовки инлайн-автофигур могут изменится цвета и шрифт, поэтому восстанавливаем настройки
 		this.updateGraphicsState();
