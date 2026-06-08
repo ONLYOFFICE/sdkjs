@@ -7557,6 +7557,7 @@ CDocumentContent.prototype.Internal_Content_Add = function(Position, NewObject, 
 	this.OnContentChange();
 	this.UpdateSectionsAfterAdd([NewObject]);
 	NewObject.OnAttach();
+	NewObject.UpdatePresentationOutline();
 	this.Recalculated = false;
 };
 CDocumentContent.prototype.Internal_Content_Remove = function(Position, Count, isCorrectContent)

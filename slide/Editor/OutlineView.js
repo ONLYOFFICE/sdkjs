@@ -974,6 +974,42 @@
 		this.processParagraphAdd(paraItem);
 	};
 
+	function OutlineContentInsertManager(outlineView) {
+		this.outlineView = outlineView;
+	}
+	OutlineContentInsertManager.prototype.insertIntoSourceContent = function (content, selectedContent) {
+		const paragraph = content.Content[content.CurPos.ContentPos];
+		if (!paragraph || !paragraph.IsParagraph()) {
+			return false;
+		}
+		const nearPos = {Paragraph: paragraph, ContentPos: paragraph.Get_ParaContentPos(false, false)};
+		paragraph.Check_NearestPos(nearPos);
+		selectedContent.Insert(nearPos);
+		return true;
+	};
+	OutlineContentInsertManager.prototype.insert = function (selectedContent) {
+		const outlineView = this.outlineView;
+		const oThis = this;
+		const presentation = outlineView.getPresentation();
+		outlineView.remove(true);
+		let inserted = false;
+		outlineView.forEachSelectedContent(function (selectProps) {
+			let content = selectProps.content;
+			if (!content && selectProps.outlineParagraph) {
+				content = outlineView.createTitleContent(selectProps.outlineParagraph);
+			}
+			if (content) {
+				const shape = content.Is_DrawingShape(true);
+				presentation.PrepareInsertedDocContent(selectedContent, content, shape);
+				selectedContent.EndCollect(outlineView.getPresentation());
+				inserted = oThis.insertIntoSourceContent(content, selectedContent);
+				outlineView.setSavedRealContentState(content, selectProps.index, selectProps.count, selectProps.direction);
+			}
+			return inserted;
+		});
+		return inserted;
+	};
+
 	function OutlineInfo() {
 		this.outlineParagraphToInfoMap = {};
 		this.slideToInfoMap = {};
@@ -1685,6 +1721,13 @@
 		this.update();
 		this.applySavedPositionToOutline();
 	}
+	OutlineView.prototype.insertContent = function (selectedContent) {
+		const manager = new OutlineContentInsertManager(this);
+		const inserted = manager.insert(selectedContent);
+		this.update();
+		this.applySavedPositionToOutline();
+		return inserted;
+	}
 
 	OutlineView.prototype.getParagraphParaPr = function () {
 		let paraPr;
@@ -1770,7 +1813,7 @@
 		for (let id in this.mapToCheckParagraphs) {
 			const paragraph = this.mapToCheckParagraphs[id];
 			const shape = paragraph.GetParentShape();
-			if (shape.getObjectType() !== AscDFH.historyitem_type_Shape) {
+			if (!shape || shape.getObjectType() !== AscDFH.historyitem_type_Shape) {
 				continue;
 			}
 			if (shape === this.outlineShape) {
