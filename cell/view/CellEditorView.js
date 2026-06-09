@@ -153,6 +153,7 @@ function (window, undefined) {
 		this.skipTLUpdate = true;
 		this.loadFonts = false;
 		this.isOpened = false;
+		this._programmaticInput = false;
 		this.callTopLineMouseup = false;
 		this.m_nEditorState = c_oAscCellEditorState.editEnd; // Editor's status
 
@@ -317,6 +318,292 @@ function (window, undefined) {
 		});
 	};
 
+	CellEditor.prototype._isContentEditable = function () {
+		return !!(this.input && this.input.getAttribute && this.input.getAttribute('contenteditable') === 'true');
+	};
+
+	CellEditor.prototype._getInputValue = function () {
+		if (!this.input) {
+			return '';
+		}
+		if (this._isContentEditable()) {
+			var divs = this.input.children;
+			if (!divs.length) {
+				return this.input.textContent || '';
+			}
+			var lines = [];
+			for (var i = 0; i < divs.length; i++) {
+				lines.push(divs[i].textContent || '');
+			}
+			return lines.join('\n');
+		}
+		return this.input.value || '';
+	};
+
+	CellEditor.prototype._setInputValue = function (text) {
+		if (!this.input) {
+			return;
+		}
+		if (this._isContentEditable()) {
+			var lines = (text || '').split('\n');
+			var html = '';
+			for (var i = 0; i < lines.length; i++) {
+				html += '<div>';
+				html += lines[i]
+					? lines[i].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+					: '<br>';
+				html += '</div>';
+			}
+			this.input.innerHTML = html || '<div><br></div>';
+		} else {
+			this.input.value = text;
+		}
+	};
+
+	CellEditor.prototype._getInputSelectionStart = function () {
+		if (!this.input) {
+			return undefined;
+		}
+		if (this._isContentEditable()) {
+			var sel = window.getSelection();
+			if (!sel || !sel.rangeCount) {
+				return 0;
+			}
+			var range = sel.getRangeAt(0);
+			if (!this.input.contains(range.startContainer)) {
+				return 0;
+			}
+			return this._getContentEditableOffset(range.startContainer, range.startOffset);
+		}
+		return this.input.selectionStart;
+	};
+
+	CellEditor.prototype._getInputSelectionEnd = function () {
+		if (!this.input) {
+			return undefined;
+		}
+		if (this._isContentEditable()) {
+			var sel = window.getSelection();
+			if (!sel || !sel.rangeCount) {
+				return 0;
+			}
+			var range = sel.getRangeAt(0);
+			if (!this.input.contains(range.endContainer)) {
+				return 0;
+			}
+			return this._getContentEditableOffset(range.endContainer, range.endOffset);
+		}
+		return this.input.selectionEnd;
+	};
+
+	CellEditor.prototype._getInputSelectionDirection = function () {
+		if (!this.input) return 'none';
+		if (this._isContentEditable()) {
+			var sel = window.getSelection();
+			if (!sel || !sel.rangeCount || sel.isCollapsed) return 'none';
+			if (sel.anchorNode === sel.focusNode) {
+				return sel.anchorOffset > sel.focusOffset ? 'backward' : 'forward';
+			}
+			var pos = sel.anchorNode.compareDocumentPosition(sel.focusNode);
+			return (pos & Node.DOCUMENT_POSITION_FOLLOWING) ? 'forward' : 'backward';
+		}
+		return this.input['selectionDirection'] || 'none';
+	};
+
+	CellEditor.prototype._setInputSelectionRange = function (start, end) {
+		if (!this.input) return;
+		if (this._isContentEditable()) {
+			try {
+				var startPos = this._getNodeAtOffset(this.input, start);
+				var endPos = this._getNodeAtOffset(this.input, end);
+				if (!startPos || !endPos) return;
+				var range = document.createRange();
+				var sel = window.getSelection();
+				range.setStart(startPos.node, startPos.offset);
+				range.setEnd(endPos.node, endPos.offset);
+				sel.removeAllRanges();
+				sel.addRange(range);
+			} catch (e) {}
+		} else if (this.input.setSelectionRange) {
+			this.input.setSelectionRange(start, end);
+		}
+	};
+
+	CellEditor.prototype._getNodeAtOffset = function (container, charOffset) {
+		return this._getNodeAtOffsetForDivs(container, charOffset);
+	};
+
+	CellEditor.prototype._getTextNodeInSpan = function (child) {
+		if (child.nodeType === 3) {
+			return child;
+		}
+		if (child.firstChild && child.firstChild.nodeType === 3) {
+			return child.firstChild;
+		}
+		return null;
+	};
+
+	CellEditor.prototype._getNodeAtOffsetForDivs = function (container, charOffset) {
+		var divs = container.children;
+		var cumulative = 0;
+		var i, j, div, textNode, lastTextNode;
+		for (i = 0; i < divs.length; i++) {
+			div = divs[i];
+			if (i > 0) {
+				if (cumulative === charOffset) {
+					return this._getLastNodeInDiv(divs[i - 1]);
+				}
+				cumulative++;
+			}
+			lastTextNode = null;
+			for (j = 0; j < div.childNodes.length; j++) {
+				textNode = this._getTextNodeInSpan(div.childNodes[j]);
+				if (textNode) {
+					lastTextNode = textNode;
+					if (cumulative + textNode.length >= charOffset) {
+						return { node: textNode, offset: charOffset - cumulative };
+					}
+					cumulative += textNode.length;
+				}
+			}
+			if (!lastTextNode && cumulative === charOffset) {
+				return { node: div, offset: 0 };
+			}
+		}
+		if (divs.length > 0) {
+			return this._getLastNodeInDiv(divs[divs.length - 1]);
+		}
+		return null;
+	};
+
+	CellEditor.prototype._getLastNodeInDiv = function (div) {
+		var textNode;
+		for (var j = div.childNodes.length - 1; j >= 0; j--) {
+			textNode = this._getTextNodeInSpan(div.childNodes[j]);
+			if (textNode) {
+				return { node: textNode, offset: textNode.length };
+			}
+		}
+		return { node: div, offset: div.childNodes.length };
+	};
+
+	CellEditor.prototype._getContentEditableOffset = function (targetNode, targetOffset) {
+		var divs = this.input.children;
+		var cumulative = 0;
+		var i, j, div, textNode;
+		for (i = 0; i < divs.length; i++) {
+			div = divs[i];
+			if (i > 0) {
+				cumulative++;
+			}
+			if (div === targetNode || div.contains(targetNode)) {
+				if (div === targetNode) {
+					return cumulative;
+				}
+				for (j = 0; j < div.childNodes.length; j++) {
+					textNode = this._getTextNodeInSpan(div.childNodes[j]);
+					if (textNode) {
+						if (textNode === targetNode) {
+							return cumulative + targetOffset;
+						}
+						cumulative += textNode.length;
+					}
+				}
+				return cumulative;
+			}
+			for (j = 0; j < div.childNodes.length; j++) {
+				textNode = this._getTextNodeInSpan(div.childNodes[j]);
+				if (textNode) {
+					cumulative += textNode.length;
+				}
+			}
+		}
+		return cumulative;
+	};
+
+	CellEditor.prototype._colorToCSS = function (color) {
+		if (color && typeof color.getR === 'function') {
+			return 'rgb(' + color.getR() + ',' + color.getG() + ',' + color.getB() + ')';
+		}
+		return '';
+	};
+
+	CellEditor.prototype._buildLineHTML = function (fragments) {
+		if (!fragments || !fragments.length) {
+			return '<div><br></div>';
+		}
+		var i, j, fr, text, color, parts, currentLine;
+		currentLine = [];
+		var lines = [currentLine];
+		for (i = 0; i < fragments.length; i++) {
+			fr = fragments[i];
+			text = fr.getFragmentText ? fr.getFragmentText() : (fr.text || '');
+			color = (fr.isFormulaRange && fr.format && fr.format.c) ? this._colorToCSS(fr.format.c) : '';
+			parts = text.split('\n');
+			for (j = 0; j < parts.length; j++) {
+				if (j > 0) {
+					currentLine = [];
+					lines.push(currentLine);
+				}
+				if (parts[j]) {
+					currentLine.push({ text: parts[j], color: color });
+				}
+			}
+		}
+		var html = '';
+		var l, k, item, escaped;
+		var divOpen = this._ceDivStyle ? '<div style="' + this._ceDivStyle + '">' : '<div>';
+		for (l = 0; l < lines.length; l++) {
+			html += divOpen;
+			if (lines[l].length === 0) {
+				html += '<br>';
+			} else {
+				for (k = 0; k < lines[l].length; k++) {
+					item = lines[l][k];
+					escaped = item.text
+						.replace(/&/g, '&amp;')
+						.replace(/</g, '&lt;')
+						.replace(/>/g, '&gt;');
+					if (item.color) {
+						html += '<span style="color:' + item.color + '">' + escaped + '</span>';
+					} else {
+						html += '<span>' + escaped + '</span>';
+					}
+				}
+			}
+			html += '</div>';
+		}
+		return html;
+	};
+
+	CellEditor.prototype._updateContentEditableLayout = function () {
+		if (!this._isContentEditable() || !this.input || !this.input.parentElement) {
+			return;
+		}
+		//TODO exception only for 1 string
+		var parentH = this.input.parentElement.clientHeight;
+		var naturalLH = parseFloat(window.getComputedStyle(this.input).lineHeight);
+		var singleLine = parentH > 0 && naturalLH > 0 && parentH <= naturalLH * 1.5;
+		this._ceDivStyle = singleLine ? 'line-height:' + parentH + 'px' : '';
+		this.input.style.height = singleLine ? parentH + 'px' : '';
+		this.input.style.overflow = singleLine ? 'hidden' : '';
+	};
+
+	CellEditor.prototype._setInputFragments = function (fragments) {
+		if (!this.input) {
+			return;
+		}
+		if (this._isContentEditable()) {
+			this._updateContentEditableLayout();
+
+			this._programmaticInput = true;
+			this.input.innerHTML = this._buildLineHTML(fragments);
+			this._programmaticInput = false;
+		} else {
+			this.input.value = AscCommonExcel.getFragmentsText(fragments);
+		}
+	};
+
 	/**
 	 * @param {Object} options
 	 *   fragments  - text fragments
@@ -331,8 +618,8 @@ function (window, undefined) {
 		if (AscCommon.g_inputContext) {
 			AscCommon.g_inputContext.moveAccurateForce();
 		}
-		
-		var b = this.input.selectionStart;
+
+		var b = this._getInputSelectionStart();
 
 		this.isOpened = true;
 		if (window.addEventListener) {
@@ -362,6 +649,15 @@ function (window, undefined) {
 			this._onMouseUp(options.enterOptions.eventPos);
 		} else {
 			this._moveCursor(kEndOfText);
+		}
+
+		// If the formula bar had focus when open() was called (async lock path where
+		// _topLineGotFocus fired before isOpened was true), ensure the cursor is visible now.
+		if (this.isTopLineActive && this._isContentEditable()) {
+			var tmp = this.skipTLUpdate;
+			this.skipTLUpdate = false;
+			this._updateTopLineCurPos();
+			this.skipTLUpdate = tmp;
 		}
 
 		/*
@@ -802,9 +1098,24 @@ function (window, undefined) {
 	};
 
 	CellEditor.prototype.restoreFocus = function () {
-		if (this.isTopLineActive) {
-			this.input.focus();
+		if (!this.isTopLineActive) {
+			return;
 		}
+		if (!this._isContentEditable() || !this.isOpened) {
+			this.input.focus();
+			return;
+		}
+		var t = this;
+		requestAnimationFrame(function () {
+			if (!t.isTopLineActive || !t.isOpened) {
+				return;
+			}
+			t.input.focus();
+			var tmp = t.skipTLUpdate;
+			t.skipTLUpdate = false;
+			t._updateTopLineCurPos();
+			t.skipTLUpdate = tmp;
+		});
 	};
 
 	CellEditor.prototype.copySelection = function () {
@@ -1379,6 +1690,7 @@ function (window, undefined) {
 					if (first && last) {
 						for (k = first.index; k <= last.index; ++k) {
 							fragments[k].format.setColor(AscCommonExcel.c_oAscFormulaRangeBorderColor[colorIndex % lengthColors]);
+							fragments[k].isFormulaRange = true;
 						}
 					}
 				}
@@ -1411,7 +1723,7 @@ function (window, undefined) {
 			for (var i = 0; i < this.options.fragments.length; i++) {
 				this.options.fragments[i].initText();
 			}
-			this.input.value = AscCommonExcel.getFragmentsText((this.options.fragments));
+			this._setInputFragments(this._getRenderFragments());
 		}
 		this._updateCursorPosition();
 		this._updateCursor();
@@ -1449,7 +1761,7 @@ function (window, undefined) {
 		var fPos, fName, match, fCurrent;
 
 		if (!this.isTopLineActive || !this.skipTLUpdate || this.undoMode) {
-			this.input.value = s;
+			this._setInputFragments(this._getRenderFragments());
 		}
 
 		//get a string without double-byte characters and pass it to the regular expression
@@ -2032,8 +2344,11 @@ function (window, undefined) {
 			AscCommon.g_inputContext.moveAccurate(this.left * this.kx + curLeft, this.top * this.ky + curTop);
 		}
 
-		if (cur) {
-			this.input.scrollTop = this.input.clientHeight * cur.lineIndex;
+		if (cur && this._isContentEditable()) {
+			var lineH = this.input.children.length ? this.input.children[0].offsetHeight : 0;
+			if (lineH > 0) {
+				this.input.scrollTop = lineH * cur.lineIndex;
+			}
 		}
 		if (this.isTopLineActive && !this.skipTLUpdate) {
 			this._updateTopLineCurPos();
@@ -2161,9 +2476,7 @@ function (window, undefined) {
 		var isSelected = this.selectionBegin !== this.selectionEnd;
 		var b = isSelected ? this.selectionBegin : this.cursorPos;
 		var e = isSelected ? this.selectionEnd : this.cursorPos;
-		if (this.input.setSelectionRange) {
-			this.input.setSelectionRange(Math.min(b, e), Math.max(b, e));
-		}
+		this._setInputSelectionRange(Math.min(b, e), Math.max(b, e));
 	};
 
 	CellEditor.prototype._topLineGotFocus = function () {
@@ -2172,25 +2485,41 @@ function (window, undefined) {
 		this.setFocus(true);
 		this._updateCursor();
 		this._cleanSelection();
+		if (this.isOpened && !this.getMenuEditorMode()) {
+			this._setInputFragments(this._getRenderFragments());
+			var tmp = this.skipTLUpdate;
+			this.skipTLUpdate = false;
+			this._updateTopLineCurPos();
+			this.skipTLUpdate = tmp;
+		}
 	};
 
 	CellEditor.prototype._topLineMouseUp = function () {
 		this.callTopLineMouseup = false;
 		// with this combination ctrl+a, click, ctrl+a, click selectionStart is not updated
 		// therefore we perform processing after the system handler
-		this._delayedUpdateCursorByTopLine();
+		this._delayedUpdateCursorByTopLine(this._isContentEditable());
 	};
-	CellEditor.prototype._delayedUpdateCursorByTopLine = function () {
+	CellEditor.prototype._delayedUpdateCursorByTopLine = function (cleanRange) {
 		var t = this;
-		setTimeout(function () {
-			t._updateCursorByTopLine();
-		});
+		if (this._isContentEditable()) {
+			requestAnimationFrame(function () {
+				t._updateCursorByTopLine();
+				if (cleanRange) {
+					t.cleanSelectRange();
+				}
+			});
+		} else {
+			setTimeout(function () {
+				t._updateCursorByTopLine();
+			});
+		}
 	};
 	CellEditor.prototype._updateCursorByTopLine = function () {
-		var b = this.input.selectionStart;
-		var e = this.input.selectionEnd;
+		var b = this._getInputSelectionStart();
+		var e = this._getInputSelectionEnd();
 		// ToDo replace code to input.selectionDirection after updating closure-compiler to version 20200719
-		if ('backward' === this.input["selectionDirection"]) {
+		if ('backward' === this._getInputSelectionDirection()) {
 			var tmp = b;
 			b = e;
 			e = tmp;
@@ -2213,7 +2542,7 @@ function (window, undefined) {
 	CellEditor.prototype._syncEditors = function () {
 		var t = this;
 		var s1 = AscCommonExcel.getFragmentsCharCodes(t.options.fragments);
-		var s2 = AscCommon.convertUTF16toUnicode(t.input.value);
+		var s2 = AscCommon.convertUTF16toUnicode(t._getInputValue());
 		var l = Math.min(s1.length, s2.length);
 		var i1 = 0, i2;
 
@@ -2357,9 +2686,19 @@ function (window, undefined) {
 	};
 
 	CellEditor.prototype._addNewLine = function () {
+		if (this.isTopLineActive) {
+			this._updateCursorByTopLine();
+		}
 		this._wrapText();
 		let sNewLine = "\n";
 		this._addChars( /*codeNewLine*/sNewLine);
+		if (this.isTopLineActive) {
+			// Force immediate scroll to new line
+			let skipTL = this.skipTLUpdate;
+			this.skipTLUpdate = false;
+			this._updateTopLineCurPos();
+			this.skipTLUpdate = skipTL;
+		}
 	};
 
 	CellEditor.prototype._removeChars = function (pos, length, isRange) {
@@ -2841,7 +3180,7 @@ function (window, undefined) {
 	CellEditor.prototype.executeShortcut = function(nShortcutAction) {
 		let oResult = {keyResult: keydownresult_PreventAll};
 		const oApi = window["Asc"]["editor"];
-		const bHieroglyph = this.isTopLineActive && AscCommonExcel.getFragmentsLength(this.options.fragments) !== this.input.value.length;
+		const bHieroglyph = this.isTopLineActive && AscCommonExcel.getFragmentsLength(this.options.fragments) !== this._getInputValue().length;
 		switch (nShortcutAction) {
 			case Asc.c_oAscSpreadsheetShortcutType.Strikeout: {
 				if (bHieroglyph) {
@@ -2999,7 +3338,7 @@ function (window, undefined) {
 		oThis.skipTLUpdate = false;
 
 		// hieroglyph input definition
-		const bHieroglyph = oThis.isTopLineActive && AscCommonExcel.getFragmentsLength(oThis.options.fragments) !== oThis.input.value.length;
+		const bHieroglyph = oThis.isTopLineActive && AscCommonExcel.getFragmentsLength(oThis.options.fragments) !== oThis._getInputValue().length;
 
 		nRetValue = keydownresult_PreventKeyPress;
 		const nShortcutAction = oApi.getShortcut(oEvent);
@@ -3250,7 +3589,7 @@ function (window, undefined) {
 				return true;
 			}
 			// hieroglyph input definition
-			if (t.isTopLineActive && AscCommonExcel.getFragmentsLength(t.options.fragments) !== t.input.value.length) {
+			if (t.isTopLineActive && AscCommonExcel.getFragmentsLength(t.options.fragments) !== t._getInputValue().length) {
 				t._syncEditors();
 			}
 		}
@@ -3434,6 +3773,9 @@ function (window, undefined) {
 	/** @param event {jQuery.Event} */
 	CellEditor.prototype._onInputTextArea = function (event) {
 		//TODO save the text!
+		if (this._programmaticInput) {
+			return true;
+		}
 		var t = this;
 		if (!this.handlers.trigger("canEdit") || this.loadFonts) {
 			return true;
@@ -3447,17 +3789,14 @@ function (window, undefined) {
 		}
 		this.loadFonts = true;
 
-		let checkedText = this.input.value.replace(/[\r\n]+/g, '');
+		let checkedText = t._getInputValue().replace(/[\r\n]+/g, '');
 		AscFonts.FontPickerByCharacter.checkText(checkedText, this, function () {
 			t.loadFonts = false;
 			t.skipTLUpdate = true;
-			var length = t.replaceText(0, t.textRender.getEndOfText(), t.input.value);
+			t.replaceText(0, t.textRender.getEndOfText(), t._getInputValue());
 			t._updateCursorByTopLine();
-
-			if (length !== t.input.value.length) {
-				t.input.value = AscCommonExcel.getFragmentsText((t.options.fragments));
-				t._updateTopLineCurPos();
-			}
+			t._setInputFragments(t._getRenderFragments());
+			t._updateTopLineCurPos();
 		});
 		return true;
 	};

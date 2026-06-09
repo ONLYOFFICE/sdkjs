@@ -349,6 +349,45 @@
 	return this;
   }
 
+  WorkbookView.prototype._isInputContentEditable = function () {
+    return !!(this.input && this.input.getAttribute && this.input.getAttribute('contenteditable') === 'true');
+  };
+
+  WorkbookView.prototype._setInputDisabled = function (disabled) {
+    if (!this.input) return;
+    if (this._isInputContentEditable()) {
+      this.input.contentEditable = disabled ? 'false' : 'true';
+    } else {
+      this.input.disabled = disabled;
+    }
+  };
+
+  WorkbookView.prototype._setInputValue = function (text) {
+    if (!this.input) {
+      return;
+    }
+    if (this._isInputContentEditable()) {
+      if (this.cellEditor) {
+        this.cellEditor._updateContentEditableLayout();
+      }
+      var divOpen = (this.cellEditor && this.cellEditor._ceDivStyle)
+        ? '<div style="' + this.cellEditor._ceDivStyle + '">'
+        : '<div>';
+      var lines = (text || '').split('\n');
+      var html = '';
+      for (var i = 0; i < lines.length; i++) {
+        html += divOpen;
+        html += lines[i]
+          ? lines[i].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          : '<br>';
+        html += '</div>';
+      }
+      this.input.innerHTML = html || (divOpen + '<br></div>');
+    } else {
+      this.input.value = text;
+    }
+  };
+
   WorkbookView.prototype._init = function(fontRenderingMode) {
     var self = this;
 
@@ -1299,11 +1338,11 @@
     if (this.input && !this.getCellEditMode()) {
       // We will forbid entering the formula bar when a shape is selected
       if (this.lastSendInfoRangeIsSelectOnShape) {
-        this.input.disabled = true;
-        this.input.value = '';
+        this._setInputDisabled(true);
+        this._setInputValue('');
       } else {
-        this.input.disabled = false;
-        this.input.value = this.oSelectionInfo.text;
+        this._setInputDisabled(false);
+        this._setInputValue(this.oSelectionInfo.text);
       }
 	  AscCommon.applyElementDirection(this.input);
     }
@@ -1535,6 +1574,9 @@
 	}
   	this.keepType = false;
     if (this.selectionDialogMode) {
+      if (this.isFormulaEditMode && this.cellEditor && this.cellEditor.isTopLineActive) {
+        this.cellEditor.restoreFocus();
+      }
       return;
     }
     var formatPainterState = this.Api.getFormatPainterState();
@@ -2242,7 +2284,7 @@
       t.handlers.trigger("asc_onToggleAutoCorrectOptions");
 
       ws.openCellEditor(t.cellEditor, enterOptions, selectionRange);
-      t.input.disabled = false;
+      t._setInputDisabled(false);
 
       t.Api.cleanSpelling(true);
 
@@ -2255,7 +2297,7 @@
     var editLockCallback = function(res) {
       if (!res) {
         t.setCellEditMode(false);
-        t.input.disabled = true;
+        t._setInputDisabled(true);
 
         // Disable lock for cell editing
         t.collaborativeEditing.onStopEditCell();
@@ -2827,7 +2869,7 @@
 				this.cellEditor.updateWizardMode(this.isWizardMode);
 				this._onCleanSelectRange(true);
 			}
-			this.input.disabled = this.isWizardMode;
+			this._setInputDisabled(this.isWizardMode);
 		}
 	};
 
@@ -3745,7 +3787,7 @@
               this.getWorksheet().cloneSelection(true, tmpSelectRange && AscCommonExcel.g_oRangeCache.getAscRange(tmpSelectRange));
           }
           this.selectionDialogMode = newSelectionDialogMode;
-          this.input.disabled = !this.isFormulaEditMode || this.isWizardMode;
+          this._setInputDisabled(!this.isFormulaEditMode || this.isWizardMode);
           drawSelection = true;
       } else {
           this.selectionDialogMode = newSelectionDialogMode;
@@ -3757,7 +3799,7 @@
           }
 
           this.copyActiveSheet = -1;
-          this.input.disabled = false;
+          this._setInputDisabled(false);
       }
 
       if (drawSelection) {
@@ -7777,7 +7819,7 @@
 		oThis.wb.cellEditor.setSelectionState(oThis.activeTabFormula);
 		oThis.lockSendChangeSelection = false;
 
-		oThis.wb.input.disabled = false;
+		oThis.wb._setInputDisabled(false);
 		oThis.lockApplyChangeSelection = false;
 	};
 

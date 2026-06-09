@@ -15300,7 +15300,7 @@
 	function applyElementDirection(element) {
 		if (!element)
 			return;
-		const text = element.value || '';
+		const text = (element.value != null ? element.value : (element.textContent || ''));
 		let dir = 'ltr';
 		for (let iter = text.getUnicodeIterator(); iter.check(); iter.next()) {
 			let charDir = AscCommon.getCharStrongDir(iter.value());
