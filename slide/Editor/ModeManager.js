@@ -1477,6 +1477,7 @@
 		this.updateDateCheckboxState(currentSlide);
 		this.updateBodyCheckboxState(currentSlide);
 		this.updatePageNumberCheckboxState(currentSlide);
+		this.updatePageOrientationState();
 	};
 	MasterNoteModeManager.prototype.updateHeaderCheckboxState = function (currentSlide) {
 		this.updatePlaceholderCheckboxState("asc_onHeader", currentSlide, [AscFormat.phType_hdr]);
@@ -1503,6 +1504,17 @@
 	};
 	MasterNoteModeManager.prototype.updatePageNumberCheckboxState = function (currentSlide) {
 		this.updatePlaceholderCheckboxState("asc_onPageNumber", currentSlide, [AscFormat.phType_sldNum]);
+	};
+	MasterNoteModeManager.prototype.updatePageOrientationState = function () {
+		const sizes = this.getSizesMM();
+		const api = this.getApi();
+		let pageOrientation;
+		if (sizes.width >= sizes.height) {
+			pageOrientation = Asc.c_oAscPageOrientation.PageLandscape;
+		} else {
+			pageOrientation = Asc.c_oAscPageOrientation.PagePortrait;
+		}
+		api.sendEvent("asc_onPageOrientation", pageOrientation);
 	};
 
 	function MasterHandoutModeManager(api) {
@@ -1556,11 +1568,13 @@
 		this.updateFooterCheckboxState(currentSlide);
 		this.updateDateCheckboxState(currentSlide);
 		this.updatePageNumberCheckboxState(currentSlide);
+		this.updateSlidesPerPageState(currentSlide);
 	};
 	MasterHandoutModeManager.prototype.updateHeaderCheckboxState = MasterNoteModeManager.prototype.updateHeaderCheckboxState;
 	MasterHandoutModeManager.prototype.updateFooterCheckboxState = MasterNoteModeManager.prototype.updateFooterCheckboxState;
 	MasterHandoutModeManager.prototype.updateDateCheckboxState = MasterNoteModeManager.prototype.updateDateCheckboxState;
 	MasterHandoutModeManager.prototype.updatePageNumberCheckboxState = MasterNoteModeManager.prototype.updatePageNumberCheckboxState;
+	MasterHandoutModeManager.prototype.updatePageOrientationState = MasterNoteModeManager.prototype.updatePageOrientationState;
 
 	function SorterModeManager(api) {
 		SlideModeManagerBase.call(this, api);
