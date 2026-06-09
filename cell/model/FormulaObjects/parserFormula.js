@@ -4517,6 +4517,40 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					}
 				}
 
+				if (lazyCoversTarget && array.getRealArraySize()) {
+					var _headRows = array.rowCount;
+					var _headCols = array.countElementInRow.length ? array.countElementInRow[0] : 0;
+					var _composable = true, _tailArgs = new Array(argumentsCount);
+					for (var _tj = 0; _tj < argumentsCount; _tj++) {
+						var _tta = tempArgs[_tj], _ttInfo = _argInfo[_tj];
+						if (_ttInfo.isArray) {
+							var _argCols = _tta.countElementInRow.length ? _tta.countElementInRow[0] : 0;
+							if ((_tta.getMissedValueFn && _tta.getMissedValueFn()) ||
+								_tta.rowCount > _headRows || _argCols > _headCols) {
+								//generator tail, or this arg's head reaches past the result head (so the result tail
+								//is not a flat constant) - fall back to the inherited tail
+								_composable = false;
+								break;
+							}
+							_tailArgs[_tj] = (_tta.getMissedValue && _tta.getMissedValue()) || new cEmpty();
+						} else if (_ttInfo.isRange) {
+							_composable = false;
+							break;
+						} else {
+							_tailArgs[_tj] = _tta;
+						}
+					}
+					if (_composable) {
+						var _tailRes = t.Calculate(_tailArgs, opt_bbox, opt_defName, parserFormula.ws);
+						if (_tailRes && _tailRes.type === cElementType.array) {
+							_tailRes = _tailRes.getElementRowCol(0, 0);
+						}
+						if (_tailRes) {
+							array.setMissedValueFn(null);
+							array.setMissedValue(_tailRes);
+						}
+					}
+				}
 
 				res = array;
 
