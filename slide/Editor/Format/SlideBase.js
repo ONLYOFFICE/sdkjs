@@ -105,7 +105,6 @@
 		return editor.WordControl.m_oDrawingDocument.GetMMPerDot(pix);
 	};
 
-	//todo check slides methods
 	SlideBase.prototype.changeSize = function (width, height) {
 		var kw = width / this.Width, kh = height / this.Height;
 		this.setSlideSize(width, height);

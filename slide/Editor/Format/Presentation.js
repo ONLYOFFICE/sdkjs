@@ -857,6 +857,21 @@ CPresentation.prototype.changeSlideSizeFunction = function () {
 		}
 	}, this, []);
 };
+CPresentation.prototype.changeNoteSizeFunction = function () {
+	AscFormat.ExecuteNoHistory(function () {
+		const width = this.GetNotesWidthMM();
+		const height = this.GetNotesHeightMM();
+		for (let i = 0; i < this.notes.length; i += 1) {
+			this.notes[i].changeSize(width, height);
+		}
+		for (let i = 0; i < this.notesMasters.length; i += 1) {
+			this.notesMasters[i].changeSize(width, height);
+		}
+		for (let i = 0; i < this.handoutMasters.length; i += 1) {
+			this.handoutMasters[i].changeSize(width, height);
+		}
+	}, this, []);
+};
 
 CPresentation.prototype.internalChangeSizes = function (nWidth, nHeight, nType) {
 	var oSldSize = new CSlideSize();
@@ -10496,10 +10511,9 @@ CPresentation.prototype.getCumulativeThumbnailsLength = function (isHorizontalOr
 	return viewManager.getCumulativeThumbnailsLength(isHorizontalOrientation, thumbnailWidth, thumbnailHeight);
 }
 CPresentation.prototype.changeNoteSize = function (width, height, type) {
-	//todo think about change note size
 	if (this.Document_Is_SelectionLocked(AscCommon.changestype_SlideSize) === false) {
 		History.Create_NewPoint(AscDFH.historydescription_Presentation_ChangeSlideSize);
-		this.internalChangeSizes(width, height, type);
+		this.internalChangeNoteSizes(width, height, type);
 		this.Recalculate();
 		this.Document_UpdateInterfaceState();
 	}
@@ -10513,6 +10527,7 @@ CPresentation.prototype.internalChangeNoteSizes = function (width, height, type)
 		sldSize.setType(type);
 	}
 	this.setNotesSz(sldSize);
+	this.changeNoteSizeFunction();
 };
 
 function IdList(name) {
