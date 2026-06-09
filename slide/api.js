@@ -508,7 +508,7 @@
 						// Set the ID of the user who locked this element
 						Lock.Set_UserId(e["user"]);
 
-						if (Class instanceof AscCommonSlide.PropLocker)
+						if (Class instanceof AscCommon.PropLocker)
 						{
 							var object = g_oTableId.Get_ById(Class.objectId);
 							if (object instanceof AscCommonSlide.CPresentation)
@@ -646,7 +646,7 @@
 						}
 
 						Lock.Set_Type(NewType, true);
-						if (Class instanceof AscCommonSlide.PropLocker)
+						if (Class instanceof AscCommon.PropLocker)
 						{
 							var object = g_oTableId.Get_ById(Class.objectId);
 							if (object instanceof AscCommonSlide.CPresentation)

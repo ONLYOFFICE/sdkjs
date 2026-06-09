@@ -263,7 +263,7 @@ CCollaborativeEditing.prototype.Release_Locks = function()
         if  ( AscCommon.c_oAscLockTypes.kLockTypeOther3 != CurLockType && AscCommon.c_oAscLockTypes.kLockTypeOther != CurLockType )
         {
 			Class.Lock.Set_Type( AscCommon.c_oAscLockTypes.kLockTypeNone, false);
-            if ( Class instanceof AscCommonSlide.PropLocker )
+            if ( Class instanceof AscCommon.PropLocker )
             {
 				let object = AscCommon.g_oTableId.Get_ById(Class.objectId);
                 if(object instanceof AscCommonSlide.CPresentation)
