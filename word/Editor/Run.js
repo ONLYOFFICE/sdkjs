@@ -5063,8 +5063,9 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 	var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
 	var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
 
-	var UpdateLineMetricsText = false;
-	var LineRule              = ParaPr.Spacing.LineRule;
+	let UpdateLineMetricsText       = false;
+	let UpdateLineMetricsNonVisible = false;
+	let LineRule                    = ParaPr.Spacing.LineRule;
 	
 	let textPr = this.Get_CompiledPr(false);
 	if (this.IsUseAscFont(textPr))
@@ -5129,6 +5130,7 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 			}
 			case para_Space:
 			{
+				UpdateLineMetricsNonVisible = true;
 				break;
 			}
 			case para_Drawing:
@@ -5204,6 +5206,7 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 
 			case para_End:
 			{
+				UpdateLineMetricsNonVisible = true;
 				break;
 			}
 			case para_FieldChar:
@@ -5271,12 +5274,40 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 		// Пересчитаем метрику строки относительно размера данного текста
 		if (PRS.LineTextAscent < textAscent)
 			PRS.LineTextAscent = textAscent;
-		
+
 		if (PRS.LineTextAscent2 < textAscent2)
 			PRS.LineTextAscent2 = textAscent2;
-		
+
 		if (PRS.LineTextDescent < textDescent)
 			PRS.LineTextDescent = textDescent;
+	}
+	else if (UpdateLineMetricsNonVisible)
+	{
+		let metrics = textPr.GetTextMetrics(textPr.CS || textPr.RTL ? AscWord.fontslot_CS : AscWord.fontslot_ASCII, this.Paragraph.GetTheme());
+
+		let nonVisAscent2 = metrics.Ascent;
+		let nonVisAscent  = nonVisAscent2 + metrics.LineGap;
+		let nonVisDescent = metrics.Descent;
+
+		if (Asc.linerule_Exact !== LineRule)
+		{
+			let yOffset = this.getYOffset();
+			if (yOffset >= 0)
+			{
+				nonVisDescent = Math.max(0, nonVisDescent - yOffset);
+			}
+			else
+			{
+				nonVisAscent2 = Math.max(0, nonVisAscent2 + yOffset);
+				nonVisAscent  = nonVisAscent2 + metrics.LineGap;
+			}
+		}
+
+		if (PRS.LineTextAscentNonVisible < nonVisAscent)
+			PRS.LineTextAscentNonVisible = nonVisAscent;
+
+		if (PRS.LineTextDescentNonVisible < nonVisDescent)
+			PRS.LineTextDescentNonVisible = nonVisDescent;
 	}
 };
 

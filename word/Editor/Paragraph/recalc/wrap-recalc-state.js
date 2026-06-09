@@ -96,11 +96,13 @@
 	    this.SpacesCount     = 0;
 	    this.LastTab         = new CParagraphRecalculateTabInfo();
 
-	    this.LineTextAscent  = 0;
-	    this.LineTextDescent = 0;
-	    this.LineTextAscent2 = 0;
-	    this.LineAscent      = 0;
-	    this.LineDescent     = 0;
+	    this.LineTextAscent            = 0;
+	    this.LineTextDescent           = 0;
+	    this.LineTextAscent2           = 0;
+	    this.LineAscent                = 0;
+	    this.LineDescent               = 0;
+	    this.LineTextAscentNonVisible  = 0;
+	    this.LineTextDescentNonVisible = 0;
 
 	    this.LineTop        = 0;
 	    this.LineBottom     = 0;
@@ -245,11 +247,13 @@
 		this.BadLeftTab        = false
 		this.TextOnLine        = false;
 
-		this.LineTextAscent  = 0;
-		this.LineTextAscent2 = 0;
-		this.LineTextDescent = 0;
-		this.LineAscent      = 0;
-		this.LineDescent     = 0;
+		this.LineTextAscent            = 0;
+		this.LineTextAscent2           = 0;
+		this.LineTextDescent           = 0;
+		this.LineAscent                = 0;
+		this.LineDescent               = 0;
+		this.LineTextAscentNonVisible  = 0;
+		this.LineTextDescentNonVisible = 0;
 
 		this.NewPage      = false;
 		this.ForceNewPage = false;
