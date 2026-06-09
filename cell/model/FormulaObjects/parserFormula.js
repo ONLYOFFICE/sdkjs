@@ -4411,8 +4411,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			let targetRows = needRefExpand ? Math.max(maxArrayRows, refSize.row) : maxArrayRows;
 			let targetCols = needRefExpand ? Math.max(maxArrayCols, refSize.col) : maxArrayCols;
 
-			if (needRefExpand || (firstArray && firstArray.foreach &&
-				(firstArray.getRowCount() < targetRows || firstArray.getCountElementInRow() < targetCols))) {
+			let lazyCoversTarget = firstArray && firstArray.hasLazyTail && firstArray.hasLazyTail() &&
+				targetRows <= firstArray.getRowCount(true) && targetCols <= firstArray.getCountElementInRow(true);
+
+			if (!lazyCoversTarget && (needRefExpand || (firstArray && firstArray.foreach &&
+				(firstArray.getRowCount() < targetRows || firstArray.getCountElementInRow() < targetCols)))) {
 				firstArray = new cArray();
 				for (var _ri = 0; _ri < targetRows; _ri++) {
 					firstArray.addRow();
@@ -11492,8 +11495,8 @@ function parserFormula( formula, parent, _ws ) {
 				col = (val.array[0] && 1 === val.array[0].length) ? 0 : opt_col - ref.c1;
 				if (val.array[row] && val.array[row][col]) {
 					val = val.getElementRowCol(row, col);
-				} else if (val.isInLazyTail(row, col)) {
-					//tail of a clamped full-column/row array (e.g. ROW/COLUMN): value comes from the generator
+				} else if (val.hasLazyTail && val.hasLazyTail() && row >= 0 && col >= 0 &&
+					val.realSize && row < val.realSize.row && col < val.realSize.col) {
 					val = val.getElementRowCol(row, col, true);
 				} else {
 					val = new window['AscCommonExcel'].cError(window['AscCommonExcel'].cErrorType.not_available);
