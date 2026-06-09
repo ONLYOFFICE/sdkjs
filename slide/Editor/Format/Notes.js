@@ -160,19 +160,6 @@
 		return oSp;
 	};
 
-	CNotes.prototype.getBodyShape = function () {
-		var aSpTree = this.cSld.spTree;
-		for (var i = 0; i < aSpTree.length; ++i) {
-			var sp = aSpTree[i];
-			if (sp.isPlaceholder()) {
-				if (sp.getPlaceholderType() === AscFormat.phType_body) {
-					return sp;
-				}
-			}
-		}
-		return null;
-	};
-
 	CNotes.prototype.handleCSldRecalc = function (data) {
 		if (data) {
 			switch (data.Type) {
@@ -406,9 +393,6 @@
 		return true;
 	};
 	CNotes.prototype.collectRedrawSlides = function (redrawSlides, force) {
-		if (!force && !this.needRecalc()) {
-			return;
-		}
 		redrawSlides.addRedrawSlide(this);
 	};
 	CNotes.prototype.recalcBody = function () {

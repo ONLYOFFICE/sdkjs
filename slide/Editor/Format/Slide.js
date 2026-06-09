@@ -1308,9 +1308,6 @@
 		return this.IsUseInDocument();
 	};
 	Slide.prototype.collectRedrawSlides = function (redrawSlides, force) {
-		if (!force && !this.needRecalc()) {
-			return;
-		}
 		redrawSlides.addRedrawSlide(this);
 	};
 	Slide.prototype.getOutlineTitleShape = function () {

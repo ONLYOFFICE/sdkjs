@@ -672,10 +672,10 @@
 		return this.preserve;
 	};
 	MasterSlide.prototype.collectRedrawSlides = function (redrawSlides, force) {
+		redrawSlides.addRedrawSlide(this);
 		if (!force && !this.needRecalc()) {
 			return;
 		}
-		redrawSlides.addRedrawSlide(this);
 		for (let i = 0; i < this.sldLayoutLst.length; i += 1) {
 			redrawSlides.addRedrawSlide(this.sldLayoutLst[i]);
 		}

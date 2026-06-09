@@ -642,9 +642,6 @@
 		this.preserve = bPr;
 	};
 	SlideLayout.prototype.collectRedrawSlides = function (redrawSlides, force) {
-		if (!force && !this.needRecalc()) {
-			return;
-		}
 		redrawSlides.addRedrawSlide(this);
 		const presentation = redrawSlides.presentation;
 		for (let i = 0; i < presentation.Slides.length; i += 1) {

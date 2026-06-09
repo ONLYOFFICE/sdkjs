@@ -445,9 +445,6 @@
 	};
 
 	CHandoutMaster.prototype.collectRedrawSlides = function (redrawSlides, force) {
-		if (!force && !this.needRecalc()) {
-			return;
-		}
 		redrawSlides.addRedrawSlide(this);
 	};
 	CHandoutMaster.prototype.isHandoutMaster = function () {

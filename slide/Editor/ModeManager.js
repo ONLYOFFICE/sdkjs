@@ -1388,7 +1388,21 @@
 	};
 
 	MasterNoteModeManager.prototype.setBody = function(val) {
-		this.setPlaceholder(val, AscFormat.phType_body, AscCommonSlide.addBodyShape);
+		const slide = this.getCurrentSlide();
+		if (!slide) {
+			return;
+		}
+		this.startAction(0);
+		const shape = slide.getBodyShape();
+		if (!val) {
+			if (shape) {
+				slide.graphicObjects.deselectObject(shape);
+				slide.removeFromSpTreeById(shape.Get_Id());
+			}
+		} else if (!shape) {
+			AscCommonSlide.addBodyShape(slide);
+		}
+		this.finalizeAction(true);
 	};
 	MasterNoteModeManager.prototype.setSlideImage = function(val) {
 		this.setPlaceholder(val, AscFormat.phType_sldImg, AscCommonSlide.addSlideImage);
@@ -1399,7 +1413,7 @@
 			return;
 		}
 		this.startAction(0);
-		let shape = slide.getMatchingShape(type, null, type === AscFormat.phType_body);
+		const shape = slide.getMatchingShape(type, null, false, {});
 		if (!val) {
 			if (shape) {
 				slide.graphicObjects.deselectObject(shape);
@@ -1477,7 +1491,15 @@
 		this.updatePlaceholderCheckboxState("asc_onDate", currentSlide, [AscFormat.phType_dt]);
 	};
 	MasterNoteModeManager.prototype.updateBodyCheckboxState = function (currentSlide) {
-		this.updatePlaceholderCheckboxState("asc_onBody", currentSlide, [AscFormat.phType_body]);
+		let isMatching = false;
+		if (currentSlide) {
+			const body = currentSlide.getBodyShape();
+			if (body) {
+				isMatching = true;
+			}
+		}
+		const api = this.getApi();
+		api.sendEvent("asc_onBody", isMatching);
 	};
 	MasterNoteModeManager.prototype.updatePageNumberCheckboxState = function (currentSlide) {
 		this.updatePlaceholderCheckboxState("asc_onPageNumber", currentSlide, [AscFormat.phType_sldNum]);
@@ -1503,7 +1525,7 @@
 	MasterHandoutModeManager.prototype.setFooter = MasterNoteModeManager.prototype.setFooter;
 	MasterHandoutModeManager.prototype.setHeader = MasterNoteModeManager.prototype.setHeader;
 	MasterHandoutModeManager.prototype.setDate = MasterNoteModeManager.prototype.setDate;
-	MasterHandoutModeManager.prototype.setNumber = MasterNoteModeManager.prototype.setNumber;
+	MasterHandoutModeManager.prototype.setPageNumber = MasterNoteModeManager.prototype.setPageNumber;
 	MasterHandoutModeManager.prototype.setPlaceholder = MasterNoteModeManager.prototype.setPlaceholder;
 	MasterHandoutModeManager.prototype.setHandoutPageCount = function(val) {
 		const slide = this.getCurrentSlide();

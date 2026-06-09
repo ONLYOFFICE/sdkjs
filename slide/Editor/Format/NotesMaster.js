@@ -323,10 +323,14 @@
 		return true;
 	};
 	CNotesMaster.prototype.collectRedrawSlides = function (redrawSlides, force) {
-		if (!force && !this.needRecalc()) {
-			return;
-		}
 		redrawSlides.addRedrawSlide(this);
+		const presentation = redrawSlides.presentation;
+		for (let i = 0; i < presentation.notes.length; i += 1) {
+			const note = presentation.notes[i];
+			if (note.Master === this) {
+				redrawSlides.addRedrawSlide(note);
+			}
+		}
 	};
 	CNotesMaster.prototype.Write_ToBinary2 = AscCommonSlide.SlideBase.prototype.writeMasterBinary;
 	CNotesMaster.prototype.Read_FromBinary2 = AscCommonSlide.SlideBase.prototype.readMasterBinary;

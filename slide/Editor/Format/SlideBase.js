@@ -193,6 +193,18 @@
 		}
 		return false;
 	};
+	SlideBase.prototype.getBodyShape = function () {
+		var aSpTree = this.cSld.spTree;
+		for (var i = 0; i < aSpTree.length; ++i) {
+			var sp = aSpTree[i];
+			if (sp.isPlaceholder()) {
+				if (sp.getPlaceholderType() === AscFormat.phType_body) {
+					return sp;
+				}
+			}
+		}
+		return null;
+	};
 	SlideBase.prototype.openChartEditor = function () {
 		this.graphicObjects.openChartEditor();
 	};
