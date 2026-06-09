@@ -106,6 +106,8 @@
 	ParagraphContentDrawState.prototype.beginPage = function(page)
 	{
 		let paraPr = this.Paragraph.getCompiledPr().ParaPr;
+		
+		// TODO: see bug 41412. It seems like we need to clip everytime
 		this.needClip = (linerule_Exact === paraPr.Spacing.LineRule || (linerule_Auto === paraPr.Spacing.LineRule && paraPr.Spacing.Line < 1 - AscWord.EPSILON));
 		
 		this.Page = page;
@@ -127,7 +129,9 @@
 		
 		this.Y = baseLine;
 		
-		this.lineClip = this.needClip;
+		let lineInfo = this.Paragraph.Lines[line].Info;
+		
+		this.lineClip = (this.needClip && (lineInfo & paralineinfo_Clip)) || ((lineInfo & paralineinfo_ClipNonVisible) && editor && editor.ShowParaMarks);
 		this.addLineClip();
 	};
 	ParagraphContentDrawState.prototype.endLine = function()
