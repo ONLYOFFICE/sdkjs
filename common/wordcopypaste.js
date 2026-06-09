@@ -712,7 +712,24 @@ CopyProcessor.prototype =
 					oTarget.addChild(oImg);
 				}
 			} else if (para_InlineLevelSdt === item.Type) {
-				this.CopyRunContent(item, oTarget);
+				var sSdtTag = item.GetTag ? item.GetTag() : "";
+				if ("oo-inline-code" === sSdtTag) {
+					var oInlineCode = new CopyElement("code");
+					this.CopyRunContent(item, oInlineCode);
+					if (!oInlineCode.isEmptyChild()) {
+						oTarget.addChild(oInlineCode);
+					}
+				} else if ("oo-block-code" === sSdtTag) {
+					var oBlockCode = new CopyElement("code");
+					this.CopyRunContent(item, oBlockCode);
+					if (!oBlockCode.isEmptyChild()) {
+						var oPre = new CopyElement("pre");
+						oPre.addChild(oBlockCode);
+						oTarget.addChild(oPre);
+					}
+				} else {
+					this.CopyRunContent(item, oTarget);
+				}
 			} else if (para_Field === item.Type) {
 
 				this.CopyRunContent(item, oTarget);
