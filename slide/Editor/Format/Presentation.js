@@ -445,6 +445,7 @@ AscDFH.drawingsChangesMap[AscDFH.historyitem_Presentation_SlideSize] = function 
 };
 AscDFH.drawingsChangesMap[AscDFH.historyitem_Presentation_NotesSz] = function (oClass, value) {
 	oClass.notesSz = value;
+	oClass.changeNoteSizeFunction();
 };
 AscDFH.drawingsChangesMap[AscDFH.historyitem_Presentation_SetDefaultTextStyle] = function (oClass, value) {
 	oClass.defaultTextStyle = value;
@@ -8028,6 +8029,18 @@ CPresentation.prototype.Refresh_RecalcData = function (Data) {
 			}
 			break;
 		}
+		case AscDFH.historyitem_Presentation_NotesSz: {
+			for (let i = 0; i < this.handoutMasters.length; i += 1) {
+				this.handoutMasters[i].checkSlideSize();
+			}
+			for (let i = 0; i < this.notesMasters.length; i += 1) {
+				this.notesMasters[i].checkSlideSize();
+			}
+			for (let i = 0; i < this.notes.length; i += 1) {
+				this.notes[i].checkSlideSize();
+			}
+			break;
+		}
 		case AscDFH.historyitem_Presentation_AddSlideMaster: {
 			this.bNeedUpdateThemes = true;
 			break;
@@ -8074,6 +8087,7 @@ CPresentation.prototype.Refresh_RecalcData2 = function (Data) {
 			break;
 		}
 		case AscDFH.historyitem_Presentation_SlideSize:
+		case AscDFH.historyitem_Presentation_NotesSz:
 		case AscDFH.historyitem_Presentation_SetDefaultTextStyle: {
 			History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, All: true});
 			break;
