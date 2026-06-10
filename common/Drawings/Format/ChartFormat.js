@@ -10870,7 +10870,7 @@
                 if (!charts.hasOwnProperty(id)) continue;
                 let ch = charts[id];
                 if (ch && Array.isArray(ch.series) && ch.series.length > 0) {
-                    seriesCount = ch.series.length;
+                    seriesCount += ch.series.length;
                     for (let i = 0; i < ch.series.length; i++) {
 
                         const seria = ch.series[i];
