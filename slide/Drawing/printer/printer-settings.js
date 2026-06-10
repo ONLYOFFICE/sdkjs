@@ -68,16 +68,9 @@
 	};
 
 	function CAscPageOptions() {
-		this.orientationType = Asc.c_oAscPageOrientation.PagePortrait;
 		this.width = 210;
 		this.height = 297;
 	}
-	CAscPageOptions.prototype.asc_setOrientationType = function(type) {
-		this.orientationType = type;
-	};
-	CAscPageOptions.prototype.asc_getOrientationType = function() {
-		return this.orientationType;
-	};
 	CAscPageOptions.prototype.asc_setWidth = function(width) {
 		this.width = width;
 	};
@@ -249,8 +242,6 @@
 	CAscPageRange.prototype["asc_getCustomRange"] = CAscPageRange.prototype.asc_getCustomRange;
 
 	window["Asc"]["CAscPageOptions"] = window["Asc"].CAscPageOptions = CAscPageOptions;
-	CAscPageOptions.prototype["asc_setOrientationType"] = CAscPageOptions.prototype.asc_setOrientationType;
-	CAscPageOptions.prototype["asc_getOrientationType"] = CAscPageOptions.prototype.asc_getOrientationType;
 	CAscPageOptions.prototype["asc_setWidth"] = CAscPageOptions.prototype.asc_setWidth;
 	CAscPageOptions.prototype["asc_getWidth"] = CAscPageOptions.prototype.asc_getWidth;
 	CAscPageOptions.prototype["asc_setHeight"] = CAscPageOptions.prototype.asc_setHeight;

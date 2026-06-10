@@ -31,10 +31,6 @@
  */
 
 (function () {
-
-	const PRINTER_HORIZONTAL_FIELD = 20;
-	const PRINTER_VERTICAL_FIELD = 15;
-
 	function executeWithContentLimits(callback, content, x, y, xLimit, yLimit) {
 		const oldX = content.X;
 		const oldY = content.Y;
@@ -53,6 +49,4 @@
 
 	window["AscCommonSlide"] = window["AscCommonSlide"] || {};
 	window["AscCommonSlide"].executeWithContentLimits = executeWithContentLimits;
-	window["AscCommonSlide"].PRINTER_HORIZONTAL_FIELD = PRINTER_HORIZONTAL_FIELD;
-	window["AscCommonSlide"].PRINTER_VERTICAL_FIELD = PRINTER_VERTICAL_FIELD;
 })();

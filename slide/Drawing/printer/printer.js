@@ -33,8 +33,8 @@
 (function () {
 
 	const executeWithContentLimits = AscCommonSlide.executeWithContentLimits;
-	const PRINTER_HORIZONTAL_FIELD = AscCommonSlide.PRINTER_HORIZONTAL_FIELD;
-	const PRINTER_VERTICAL_FIELD = AscCommonSlide.PRINTER_VERTICAL_FIELD;
+	const CHANDOUTMASTER_HORIZONTAL_FIELD = AscCommonSlide.CHANDOUTMASTER_HORIZONTAL_FIELD;
+	const CHANDOUTMASTER_VERTICAL_FIELD = AscCommonSlide.CHANDOUTMASTER_VERTICAL_FIELD;
 	const SPECIFICPRINTER_FITPAGE_MARGIN = 1 * AscCommon.g_dKoef_pix_to_mm;
 	const OUTLINEPRINTER_DECORATIONS_OFFSET_LEFT = 15;
 
@@ -45,13 +45,10 @@
 		const printer = this.printer;
 		const pageSizes = printer.getPageSizes();
 		const contentSizes = printer.getContentSizes();
-		const margin = printer.isScaleToFitPaper() ? SPECIFICPRINTER_FITPAGE_MARGIN : 0;
-		const scale = printer.isScaleToFitPaper()
-			? Math.min((pageSizes.width - 2 * margin) / contentSizes.width, (pageSizes.height - 2 * margin) / contentSizes.height)
-			: 1;
+		const scaleCoefficient = printer.isScaleToFitPaper() ? printer.getScaleToFitPaperCoefficient() : 1;
 		const m = new AscCommon.CMatrix();
-		m.Scale(scale, scale);
-		m.Translate((pageSizes.width - contentSizes.width * scale) / 2, (pageSizes.height - contentSizes.height * scale) / 2);
+		m.Scale(scaleCoefficient, scaleCoefficient);
+		m.Translate((pageSizes.width - contentSizes.width * scaleCoefficient) / 2, (pageSizes.height - contentSizes.height * scaleCoefficient) / 2);
 		const baseTransform = graphics.GetBaseTransform();
 		const composedTransform = baseTransform ? baseTransform.CreateDublicate() : new AscCommon.CMatrix();
 		composedTransform.Multiply(m, AscCommon.MATRIX_ORDER_PREPEND);
@@ -139,8 +136,8 @@
 			graphics.SaveGrState();
 			printer.drawPlaceholders(note, graphics);
 			const transform = new AscCommon.CMatrix();
-			transform.tx = PRINTER_HORIZONTAL_FIELD;
-			transform.ty = PRINTER_VERTICAL_FIELD;
+			transform.tx = CHANDOUTMASTER_HORIZONTAL_FIELD;
+			transform.ty = CHANDOUTMASTER_VERTICAL_FIELD;
 			graphics.transform3(transform);
 			const notesShape = note.getBodyShape();
 			const docContent = notesShape.getDocContent();
@@ -156,20 +153,35 @@
 		this.pageIndex = pageIndex;
 	}
 	AscFormat.InitClassWithoutType(COutlinePage, CPrinterPage);
-	COutlinePage.prototype.drawContent = function (graphics) {
+	COutlinePage.prototype.draw = function (graphics) {
+		CPrinterPage.prototype.draw.call(this, graphics);
+		this.drawOutline(graphics);
+	}
+	COutlinePage.prototype.drawOutline = function (graphics) {
 		const printer = this.printer;
 		const pageSize = printer.getPageSizes();
 		graphics.SaveGrState();
 		graphics.AddClipRect(0, 0, pageSize.width, pageSize.height);
 		printer.drawDecorationsByPage(graphics, this.pageIndex);
+		const outlinePosition = printer.getOutlinePosition();
 		const t = new AscCommon.CMatrix();
-		t.tx = PRINTER_HORIZONTAL_FIELD + OUTLINEPRINTER_DECORATIONS_OFFSET_LEFT;
-		t.ty = PRINTER_VERTICAL_FIELD;
+		t.tx = outlinePosition.x;
+		t.ty = outlinePosition.y;
 		graphics.transform3(t);
 		const shape = printer.getOutlineShape();
 		const content = shape.getDocContent();
 		content.Set_StartPage(0);
 		content.Draw(this.pageIndex, graphics);
+		graphics.RestoreGrState();
+	};
+	COutlinePage.prototype.drawContent = function (graphics) {
+		const printer = this.printer;
+		const presentation = printer.getPresentation();
+		const handoutMaster = presentation.handoutMasters[0];
+		const contentSizes = printer.getContentSizes();
+		graphics.SaveGrState();
+		graphics.AddClipRect(0, 0, contentSizes.width, contentSizes.height);
+		handoutMaster.drawMainPage(graphics, this.pageIndex);
 		graphics.RestoreGrState();
 	};
 
@@ -446,6 +458,13 @@
 			graphics.ds();
 		}
 	};
+	SpecificPrinter.prototype.getScaleToFitPaperCoefficient = function () {
+		const pageSizes = this.getPageSizes();
+		const contentSizes = this.getContentSizes();
+		const widthScale = (pageSizes.width - 2 * SPECIFICPRINTER_FITPAGE_MARGIN) / contentSizes.width;
+		const heightScale = (pageSizes.height - 2 * SPECIFICPRINTER_FITPAGE_MARGIN) / contentSizes.height;
+		return Math.min(widthScale, heightScale);
+	}
 
 	function NotesPrinter(presentation, printOptions) {
 		SpecificPrinter.call(this, presentation, printOptions);
@@ -503,8 +522,8 @@
 			const pages = [];
 			const printer = this;
 			const presentation = this.getPresentation();
-			const notesPageHeight = presentation.GetNotesHeightMM() - PRINTER_VERTICAL_FIELD * 2;
-			const notesPageWidth = presentation.GetNotesWidthMM() - PRINTER_HORIZONTAL_FIELD * 2;
+			const notesPageHeight = presentation.GetNotesHeightMM() - CHANDOUTMASTER_VERTICAL_FIELD * 2;
+			const notesPageWidth = presentation.GetNotesWidthMM() - CHANDOUTMASTER_HORIZONTAL_FIELD * 2;
 			const printSlides = this.getPrintSlides();
 			for (let i = 0; i < printSlides.length; i += 1) {
 				const slide = printSlides[i];
@@ -557,7 +576,8 @@
 	OutlinePrinter.prototype.getSpecificCache = function () {
 		return {
 			outlineView: null,
-			decorationsByPage: null
+			decorationsByPage: null,
+			outlinePosition: null
 		};
 	};
 	OutlinePrinter.prototype.getPages = function () {
@@ -573,13 +593,33 @@
 		this.cache.pages = pages;
 		return pages;
 	};
-	OutlinePrinter.prototype.getPageOptions = function () {
-		const pageOptions = this.printOptions.pageOptions;
-		return {width: pageOptions.width - PRINTER_HORIZONTAL_FIELD * 2 - OUTLINEPRINTER_DECORATIONS_OFFSET_LEFT, height: pageOptions.height - PRINTER_VERTICAL_FIELD * 2};
+	OutlinePrinter.prototype.getOutlinePosition = function () {
+		if (this.cache.outlinePosition === null) {
+			const contentSizes = this.getContentSizes();
+			const pageSizes = this.getPageSizes();
+			const scaleCoefficient = this.isScaleToFitPaper() ? this.getScaleToFitPaperCoefficient() : 1;
+			const horizontalFieldSize = CHANDOUTMASTER_HORIZONTAL_FIELD;
+			const verticalFieldSize = CHANDOUTMASTER_VERTICAL_FIELD;
+			const scaledContentWidth = contentSizes.width * scaleCoefficient;
+			const scaledContentHeight = contentSizes.height * scaleCoefficient;
+			const outlineWidth = scaledContentWidth - horizontalFieldSize * 2;
+			const textWidth = outlineWidth - OUTLINEPRINTER_DECORATIONS_OFFSET_LEFT;
+			const height = scaledContentHeight - verticalFieldSize * 2;
+
+			const x = horizontalFieldSize + OUTLINEPRINTER_DECORATIONS_OFFSET_LEFT + (pageSizes.width - scaledContentWidth) / 2;
+			const y = verticalFieldSize + (pageSizes.height - scaledContentHeight) / 2;
+			this.cache.outlinePosition = {
+				decorX: horizontalFieldSize,
+				x: x,
+				y: y,
+				width: textWidth,
+				height: height
+			}
+		}
+		return this.cache.outlinePosition;
 	};
 	OutlinePrinter.prototype.getOutlineView = function () {
 		if (this.cache.outlineView === null) {
-			const pageOptions = this.getPageOptions();
 			const presentation = this.getPresentation();
 			const outlineSlides = [];
 			const printSlides = this.getPrintSlides();
@@ -587,8 +627,9 @@
 				const slide = printSlides[i];
 				outlineSlides.push(slide.getOutlineSlide());
 			}
+			const outlinePosition = this.getOutlinePosition();
 			const outlineView = new AscCommonSlide.OutlineView(presentation.Api);
-			outlineView.createOutlineShape(outlineSlides, pageOptions.width, pageOptions.height);
+			outlineView.createOutlineShape(outlineSlides, outlinePosition.width, outlinePosition.height);
 			this.cache.outlineView = outlineView;
 			this.recalculateOutlinePages();
 		}
@@ -652,8 +693,9 @@
 	};
 	OutlinePrinter.prototype.drawDecorationsByPage = function (graphics, index) {
 		const t = new AscCommon.CMatrix();
-		t.tx = PRINTER_HORIZONTAL_FIELD;
-		t.ty = PRINTER_VERTICAL_FIELD;
+		const position = this.getOutlinePosition();
+		t.tx = position.decorX;
+		t.ty = position.y;
 		const decorationsInfo = this.getDecorationsByPage();
 		const outlineView = this.getOutlineView();
 
@@ -674,8 +716,8 @@
 		}
 	};
 	OutlinePrinter.prototype.getContentSizes = function () {
-		const pageOptions = this.printOptions.pageOptions;
-		return { width: pageOptions.width, height: pageOptions.height };
+		const presentation = this.getPresentation();
+		return { width: presentation.GetNotesWidthMM(), height: presentation.GetNotesHeightMM() };
 	};
 	OutlinePrinter.prototype.isDrawFrame = function () {
 		return false;

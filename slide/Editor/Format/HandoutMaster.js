@@ -52,8 +52,9 @@
 	const HANDOUT_ALIGNMENT_HORIZONTAL = 0;
 	const HANDOUT_ALIGNMENT_VERTICAL = 1;
 
+	const OUTLINE_LAYOUT_COUNT = -1;
 	function HandoutSettings() {
-		this.slideCount = 6;
+		this.slideCount = OUTLINE_LAYOUT_COUNT;
 		this.align = HANDOUT_ALIGNMENT_HORIZONTAL;
 	}
 
@@ -63,7 +64,13 @@
 	HandoutSettings.prototype.setAlign = function (align) {
 		this.align = align;
 	};
+	HandoutSettings.prototype.isOutlineLayout = function () {
+		return this.slideCount === OUTLINE_LAYOUT_COUNT;
+	};
 
+	const CHANDOUTMASTER_GAP = 10;
+	const CHANDOUTMASTER_HORIZONTAL_FIELD = 20;
+	const CHANDOUTMASTER_VERTICAL_FIELD = 20;
 	function CHandoutMaster() {
 		AscCommonSlide.SlideBase.call(this);
 		this.clrMap = new AscFormat.ClrMap();
@@ -164,6 +171,10 @@
 
 	};
 	CHandoutMaster.prototype.draw = function (graphics, slideNum, handoutSlides, isDrawFrame, isDrawSlideNumber) {
+		this.drawMainPage(graphics, slideNum);
+		this.drawPlaceholders(graphics, handoutSlides, isDrawFrame, isDrawSlideNumber);
+	};
+	CHandoutMaster.prototype.drawMainPage = function (graphics, slideNum) {
 		if (AscFormat.isRealNumber(slideNum)) {
 			if (slideNum !== this.lastRecalcSlideIndex) {
 				this.recalcSpTree();
@@ -186,10 +197,7 @@
 				oSp.draw(graphics);
 			}
 		});
-		this.drawPlaceholders(graphics, handoutSlides, isDrawFrame, isDrawSlideNumber);
 	};
-	const CHANDOUTMASTER_GAP = 10;
-	const CHANDOUTMASTER_FIELDSIZE = 20;
 	CHandoutMaster.prototype.getGap = function (paperSize, slideSize, scale, repeatCount) {
 		return repeatCount === 1 ? 0 : (paperSize - slideSize * repeatCount * scale) / (repeatCount - 1);
 	}
@@ -197,9 +205,18 @@
 		return this.handoutSettings.align;
 	};
 	CHandoutMaster.prototype.getSlidesCount = function () {
-		return this.handoutSettings.slideCount;
+		return this.handoutSettings.layout;
 	};
-	CHandoutMaster.prototype.getHandouts = function (slides) {
+	CHandoutMaster.prototype.getOutlineHandouts = function () {
+		const pageWidth = this.presentation.GetNotesWidthMM();
+		const pageHeight = this.presentation.GetNotesHeightMM();
+		const x = CHANDOUTMASTER_HORIZONTAL_FIELD;
+		const y = CHANDOUTMASTER_VERTICAL_FIELD;
+		const width = pageWidth - 2 * CHANDOUTMASTER_HORIZONTAL_FIELD;
+		const height = pageHeight - 2 * CHANDOUTMASTER_VERTICAL_FIELD;
+		return [new SlidePlaceholder(x, y, width, height)];
+	};
+	CHandoutMaster.prototype.getSlideHandouts = function (slides) {
 		let align = this.getAlign();
 		const handouts = [];
 		let slidesCount = this.getSlidesCount();
@@ -208,7 +225,7 @@
 			isDrawWithSlideTextPlaceholder = true;
 			slidesCount = 6;
 		}
-		const scaledFieldSize = CHANDOUTMASTER_FIELDSIZE;
+		const scaledFieldSize = CHANDOUTMASTER_HORIZONTAL_FIELD;
 		let countSlidesOnRow = this.getSlidesCountOnRow(slidesCount);
 		let rowsCount = Math.floor(slidesCount / countSlidesOnRow);
 		if (this.presentation.GetNotesWidthMM() < this.presentation.GetNotesHeightMM()) {
@@ -220,7 +237,7 @@
 		const w_mm = this.presentation.GetWidthMM();
 		const h_mm = this.presentation.GetHeightMM();
 		const paperWidth = this.presentation.GetNotesWidthMM() - scaledFieldSize * 2;
-		const paperHeight = this.presentation.GetNotesHeightMM() - scaledFieldSize * 2;
+		const paperHeight = this.presentation.GetNotesHeightMM() - CHANDOUTMASTER_VERTICAL_FIELD * 2;
 		const slidesWidth = w_mm * countSlidesOnRow;
 		const slidesHeight = h_mm * rowsCount;
 		const resultWidthWithMaxGap = (countSlidesOnRow - 1) * CHANDOUTMASTER_GAP;
@@ -283,6 +300,16 @@
 			}
 		}
 		return handouts;
+	};
+	CHandoutMaster.prototype.getHandouts = function (slides) {
+		if (this.isOutlineLayout()) {
+			return this.getOutlineHandouts();
+		} else {
+			return this.getSlideHandouts(slides);
+		}
+	};
+	CHandoutMaster.prototype.isOutlineLayout = function () {
+		return this.handoutSettings.isOutlineLayout();
 	};
 	CHandoutMaster.prototype.drawPlaceholders = function (g, handoutSlides, isDrawFrame, isDrawSlideNumber) {
 		const handouts = this.getHandouts(handoutSlides);
@@ -643,4 +670,6 @@
 	window['AscCommonSlide'].HandoutSettings = HandoutSettings;
 	window['AscCommonSlide'].HANDOUT_ALIGNMENT_HORIZONTAL = HANDOUT_ALIGNMENT_HORIZONTAL;
 	window['AscCommonSlide'].HANDOUT_ALIGNMENT_VERTICAL = HANDOUT_ALIGNMENT_VERTICAL;
+	window['AscCommonSlide'].CHANDOUTMASTER_HORIZONTAL_FIELD = CHANDOUTMASTER_HORIZONTAL_FIELD;
+	window['AscCommonSlide'].CHANDOUTMASTER_VERTICAL_FIELD = CHANDOUTMASTER_VERTICAL_FIELD;
 })();
