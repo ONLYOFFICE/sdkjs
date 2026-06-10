@@ -10909,8 +10909,20 @@
 
         this.rows = seriesCount + 1;
         this.cols = ptsCount + 1;
-        this.rowHeight = this.rowNameLabels.length ? this.rowNameLabels[0].extY : this.colNameLabels.length ? this.colNameLabels[0].extY : 0;
-        this.firstColumnWidth = this.rowNameLabels.length ? this.rowNameLabels[0].extX : 0;
+
+        let maxRowNameWidth = 0, maxRowNameHeight = 0;
+        for (let k = 0; k < this.rowNameLabels.length; k++) {
+            const lbl = this.rowNameLabels[k];
+            if (lbl.extX > maxRowNameWidth) {
+                maxRowNameWidth = lbl.extX;
+            }
+            if (lbl.extY > maxRowNameHeight) {
+                maxRowNameHeight = lbl.extY;
+            }
+        }
+        this.rowHeight = this.rowNameLabels.length ? maxRowNameHeight : this.colNameLabels.length ? this.colNameLabels[0].extY : 0;
+        this.firstColumnWidth = maxRowNameWidth;
+
         if (this.showKeys && this.rowNameMarkers.length > 0 && this.rowHeight > 0) {
             let markerSize, distanceToText;
             if (this._bLineSeries) {
