@@ -440,11 +440,20 @@
 			(0 !== url.indexOf("file://")) &&
 			(0 !== url.indexOf("www.")))
 		{
-			let location  = window.location;
+			let location = window.location;
 			let start = location.pathname.lastIndexOf('/') + 1;
 			let file = location.pathname.substring(start);
-			url = location.href.replace(file, url);
+
+			if (file !== "")
+				url = location.href.replace(file, url);
+			else
+			{
+				let pos = location.href.lastIndexOf("/") + 1;
+				url = location.href.slice(0, pos) + url + location.href.slice(pos);
+			}
 		}
+
+
 
 		if (-1 === url.indexOf(".html?"))
 			url += "?windowID=";
