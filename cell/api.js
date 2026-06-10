@@ -1560,10 +1560,13 @@ var editor;
     } else if(this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml")) {
 		var t = this;
 		var title = this.documentTitle;
+		var canDownloadFromBytes = !window.isCloudCryptoDownloadAs && AscCommon.DownloadType.None === downloadType
+			&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome)
+			&& !AscCommon.AscBrowser.isAndroidNativeApp;
 		AscCommonExcel.executeInR1C1Mode(false, function () {
 			t.saveLogicDocumentToZip(undefined, undefined, function(data) {
 				if (data) {
-					if (c_oAscFileType.XLSX === fileType && !window.isCloudCryptoDownloadAs) {
+					if (c_oAscFileType.XLSX === fileType && canDownloadFromBytes) {
 						AscCommon.DownloadFileFromBytes(data, title, AscCommon.openXml.GetMimeType("xlsx"));
 					} else {
 						dataContainer.data = data;

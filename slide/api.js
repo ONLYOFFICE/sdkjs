@@ -8553,10 +8553,13 @@ background-repeat: no-repeat;\
 		else if(this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml"))
 		{
 			var title = this.documentTitle;
+			var canDownloadFromBytes = !window.isCloudCryptoDownloadAs && AscCommon.DownloadType.None === downloadType
+				&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome)
+				&& !AscCommon.AscBrowser.isAndroidNativeApp;
 			this.saveLogicDocumentToZip(undefined, undefined,
 				function(data) {
 					if (data) {
-						if (c_oAscFileType.PPTX === fileType && !window.isCloudCryptoDownloadAs) {
+						if (c_oAscFileType.PPTX === fileType && canDownloadFromBytes) {
 							AscCommon.DownloadFileFromBytes(data, title, AscCommon.openXml.GetMimeType("pptx"));
 						} else {
 							dataContainer.data = data;
