@@ -219,22 +219,7 @@ var c_oAscGroupBy = {
 	Quarters: 6,
 	Years: 7
 };
-var c_oAscCalendarType = {
-	Gregorian: 0,
-	GregorianUs: 1,
-	GregorianMeFrench: 2,
-	GregorianArabic: 3,
-	Hijri: 4,
-	Hebrew: 5,
-	Taiwan: 6,
-	Japan: 7,
-	Thai: 8,
-	Korea: 9,
-	Saka: 10,
-	GregorianXlitEnglish: 11,
-	GregorianXlitFrench: 12,
-	None: 13
-};
+var c_oAscCalendarType = window['Asc'].c_oAscCalendarType;
 var c_oAscIconSetType = {
 	ThreeArrows: 0,
 	ThreeArrowsGray: 1,
@@ -22920,23 +22905,6 @@ prot['Days'] = prot.Days;
 prot['Months'] = prot.Months;
 prot['Quarters'] = prot.Quarters;
 prot['Years'] = prot.Years;
-
-window['Asc']['c_oAscCalendarType'] = window['Asc'].c_oAscCalendarType = c_oAscCalendarType;
-prot = c_oAscCalendarType;
-prot['Gregorian'] = prot.Gregorian;
-prot['GregorianUs'] = prot.GregorianUs;
-prot['GregorianMeFrench'] = prot.GregorianMeFrench;
-prot['GregorianArabic'] = prot.GregorianArabic;
-prot['Hijri'] = prot.Hijri;
-prot['Hebrew'] = prot.Hebrew;
-prot['Taiwan'] = prot.Taiwan;
-prot['Japan'] = prot.Japan;
-prot['Thai'] = prot.Thai;
-prot['Korea'] = prot.Korea;
-prot['Saka'] = prot.Saka;
-prot['GregorianXlitEnglish'] = prot.GregorianXlitEnglish;
-prot['GregorianXlitFrench'] = prot.GregorianXlitFrench;
-prot['None'] = prot.None;
 
 window['Asc']['c_oAscIconSetType'] = window['Asc'].c_oAscIconSetType = c_oAscIconSetType;
 prot = c_oAscIconSetType;

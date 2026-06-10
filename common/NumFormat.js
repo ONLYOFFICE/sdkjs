@@ -2747,12 +2747,33 @@ NumFormat.prototype =
         }
         return res;
     },
+	_hasJapanEraToken: function() {
+		for (var i = 0; i < this.aRawFormat.length; ++i) {
+			var type = this.aRawFormat[i].type;
+			if (numFormat_JapanEra === type || numFormat_JapanEraYear === type) {
+				return true;
+			}
+		}
+		return false;
+	},
+	// Asc.c_oAscCalendarType for the format dialog, or null when the locale has one calendar.
+	_getCalendarType: function() {
+		if (!c_oAscDateCalendars || null == this.LCID || !c_oAscDateCalendars[this.LCID]) {
+			return null;
+		}
+		var bEra = !this.bJapanEraCalendarOverride
+			&& AscCommon.isJapanEraLcid && AscCommon.isJapanEraLcid(this.LCID)
+			&& this._hasJapanEraToken();
+		return bEra ? Asc.c_oAscCalendarType.Japan : Asc.c_oAscCalendarType.Gregorian;
+	},
 	getFormatCellsInfo: function() {
 		var info = new Asc.asc_CFormatCellsInfo();
 		info.asc_setDecimalPlaces(this.aFracFormat.length);
 		info.asc_setSeparator(this.bThousandSep);
 		info.asc_setSymbol(this.LCID);
 		info.asc_setCurrencySymbol(this.CurrencyString);
+		info.asc_setCalendar(this._getCalendarType());
+		info.asc_setGannen(this.bGannen);
 		return info;
 	},
 	isGeneral: function() {
@@ -5653,6 +5674,25 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 		return positiveFormat + ';' + negativeFormat + ';' + nullFormat + ';' + textFormat;
 	}
 
+	function getDateCalendars(lcid) {
+		return c_oAscDateCalendars && c_oAscDateCalendars[lcid] ? c_oAscDateCalendars[lcid] : null;
+	}
+
+	// Format list for a calendar; uses the Gannen variant when requested and supported.
+	function getDateFormatsByCalendar(lcid, calendar, gannen) {
+		var groups = getDateCalendars(lcid);
+		if (!groups) {
+			return null;
+		}
+		for (var i = 0; i < groups.length; ++i) {
+			if (groups[i].calendar === calendar) {
+				var formats = gannen && groups[i].gannenSupported ? groups[i].gannenFormats : groups[i].formats;
+				return formats.slice();
+			}
+		}
+		return null;
+	}
+
 	function getFormatCells(info) {
 		var res = [];
 		if (info) {
@@ -5682,8 +5722,13 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 					res.push(getShortDateFormat(cultureInfo));
 					res.push('[$-F800]' + cultureInfo.LongDatePattern);
 				}
-				if (c_oAscDateFormatExcel[info.symbol]) {
-					res = res.concat(c_oAscDateFormatExcel[info.symbol]);
+				var calendarFormats = null != info.calendar ? getDateFormatsByCalendar(info.symbol, info.calendar, info.gannen) : null;
+				if (calendarFormats) {
+					res = res.concat(calendarFormats);
+				} else {
+					if (c_oAscDateFormatExcel[info.symbol]) {
+						res = res.concat(c_oAscDateFormatExcel[info.symbol]);
+					}
 				}
 				//todo remove (backward compat)
 				res.push(getShortDateFormat2(1, 1, 0, cultureInfo) + ';@');
@@ -6047,6 +6092,7 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 var g_aCultureInfos = AscCommon.g_aCultureInfos;
 var g_aAdditionalCurrencySymbols = AscCommon.g_aAdditionalCurrencySymbols;
 var c_oAscDateFormatExcel = AscCommon.c_oAscDateFormatExcel;
+var c_oAscDateCalendars = AscCommon.c_oAscDateCalendars;
 
 var g_oDefaultCultureInfo, g_oLCID;
 setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049//hindi//1081
@@ -6066,6 +6112,32 @@ function getGannenFormatCodes(format) {
 
 	var fallback = cf.toString(undefined, undefined, {gannenFallback: true});
 	return fallback !== canonical ? {fallback: fallback, formatCode16: canonical} : null;
+}
+
+// Calendar enum values (Asc.c_oAscCalendarType) per group, or null for single-calendar locales.
+function getDateCalendarTypes(lcid) {
+	var groups = getDateCalendars(lcid);
+	if (!groups) {
+		return null;
+	}
+	var res = [];
+	for (var i = 0; i < groups.length; ++i) {
+		res.push(groups[i].calendar);
+	}
+	return res;
+}
+
+// Gannen-supported flags parallel to getDateCalendarTypes, or null for single-calendar locales.
+function getDateCalendarGannen(lcid) {
+	var groups = getDateCalendars(lcid);
+	if (!groups) {
+		return null;
+	}
+	var res = [];
+	for (var i = 0; i < groups.length; ++i) {
+		res.push(!!groups[i].gannenSupported);
+	}
+	return res;
 }
 
 	//---------------------------------------------------------export---------------------------------------------------
@@ -6089,6 +6161,8 @@ function getGannenFormatCodes(format) {
 	window['AscCommon'].getCurrencyFormatSimple2 = getCurrencyFormatSimple2;
 	window['AscCommon'].getCurrencyFormat = getCurrencyFormat;
 	window['AscCommon'].getFormatCells = getFormatCells;
+	window['AscCommon'].getDateCalendarTypes = getDateCalendarTypes;
+	window['AscCommon'].getDateCalendarGannen = getDateCalendarGannen;
 	window['AscCommon'].canGetFormatByStandardId = canGetFormatByStandardId;
 	window['AscCommon'].getFormatByStandardId = getFormatByStandardId;
 	window['AscCommon'].is12HourTimeFormat = is12HourTimeFormat;

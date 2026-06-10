@@ -7694,6 +7694,8 @@ function (window, undefined) {
 		this.separator = false;
 		this.symbol = null;
 		this.currency = null;
+		this.calendar = null;
+		this.gannen = false;
 	}
 	asc_CFormatCellsInfo.prototype.asc_setType = function (val) {
 		this.type = val;
@@ -7710,6 +7712,12 @@ function (window, undefined) {
 	asc_CFormatCellsInfo.prototype.asc_setCurrencySymbol = function (val) {
 		this.currency = val;
 	};
+	asc_CFormatCellsInfo.prototype.asc_setCalendar = function (val) {
+		this.calendar = val;
+	};
+	asc_CFormatCellsInfo.prototype.asc_setGannen = function (val) {
+		this.gannen = val;
+	};
 	asc_CFormatCellsInfo.prototype.asc_getType = function () {
 		return this.type;
 	};
@@ -7724,6 +7732,12 @@ function (window, undefined) {
 	};
 	asc_CFormatCellsInfo.prototype.asc_getCurrencySymbol = function () {
 		return this.currency;
+	};
+	asc_CFormatCellsInfo.prototype.asc_getCalendar = function () {
+		return this.calendar;
+	};
+	asc_CFormatCellsInfo.prototype.asc_getGannen = function () {
+		return this.gannen;
 	};
 
 	/**
@@ -9687,11 +9701,15 @@ function (window, undefined) {
 	prot["asc_setSeparator"] = prot.asc_setSeparator;
 	prot["asc_setSymbol"] = prot.asc_setSymbol;
 	prot["asc_setCurrencySymbol"] = prot.asc_setCurrencySymbol;
+	prot["asc_setCalendar"] = prot.asc_setCalendar;
+	prot["asc_setGannen"] = prot.asc_setGannen;
 	prot["asc_getType"] = prot.asc_getType;
 	prot["asc_getDecimalPlaces"] = prot.asc_getDecimalPlaces;
 	prot["asc_getSeparator"] = prot.asc_getSeparator;
 	prot["asc_getSymbol"] = prot.asc_getSymbol;
 	prot["asc_getCurrencySymbol"] = prot.asc_getCurrencySymbol;
+	prot["asc_getCalendar"] = prot.asc_getCalendar;
+	prot["asc_getGannen"] = prot.asc_getGannen;
 
 	window['Asc']['CAscChartProp'] = window['Asc'].CAscChartProp = CAscChartProp;
 	prot = CAscChartProp.prototype;

@@ -282,6 +282,12 @@ var editor;
 		}
 		return res;
 	};
+	spreadsheet_api.prototype.asc_getDateCalendars = function(lcid) {
+		return AscCommon.getDateCalendarTypes(lcid);
+	};
+	spreadsheet_api.prototype.asc_getDateCalendarGannen = function(lcid) {
+		return AscCommon.getDateCalendarGannen(lcid);
+	};
   spreadsheet_api.prototype.asc_getLocaleCurrency = function(val) {
     var cultureInfo = AscCommon.g_aCultureInfos[val];
     if (!cultureInfo) {
@@ -10096,6 +10102,8 @@ var editor;
   prot['asc_getFunctionArgumentSeparator'] = prot.asc_getFunctionArgumentSeparator;
   prot['asc_getLocaleExample'] = prot.asc_getLocaleExample;
   prot['asc_getFormatCells'] = prot.asc_getFormatCells;
+  prot['asc_getDateCalendars'] = prot.asc_getDateCalendars;
+  prot['asc_getDateCalendarGannen'] = prot.asc_getDateCalendarGannen;
   prot["asc_getLocaleCurrency"] = prot.asc_getLocaleCurrency;
   prot["asc_setLocale"] = prot.asc_setLocale;
   prot["asc_getLocale"] = prot.asc_getLocale;
