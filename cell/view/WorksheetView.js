@@ -16871,9 +16871,15 @@ function isAllowPasteLink(pastedWb) {
                             t.handlers.trigger("slowOperation", true);
                         }
                        	var opt_by_rows = false;
+						
+						//don't guess header for an choosen multi-cell selection. guess it only when
+						//the range was expanded from a single cell (sortRange passes guessHeader flag)
+						//default to true to keep old behaviour for callers which do not pass the flag
+						let opt_guessHeader = false !== val.guessHeader;
+
 						//var props = t.getSortProps(true);
-                        //t.cellCommentator.sortComments(range.sort(val.type, opt_by_rows ? activeCell.row : activeCell.col, val.color, true, opt_by_rows, props.levels));
-                        t.cellCommentator.sortComments(t.model._doSort(range, val.type, opt_by_rows ? activeCell.row : activeCell.col, val.color, true, opt_by_rows));
+                        //t.cellCommentator.sortComments(range.sort(val.type, opt_by_rows ? activeCell.row : activeCell.col, val.color, opt_guessHeader, opt_by_rows, props.levels));
+                        t.cellCommentator.sortComments(t.model._doSort(range, val.type, opt_by_rows ? activeCell.row : activeCell.col, val.color, opt_guessHeader, opt_by_rows));
 
 						if (t.model.getSheetProtection()) {
 							if (!(t.model.protectedRangesContainsRange(range.bbox) || !t.model.isLockedRange(range.bbox))) {
@@ -16882,7 +16888,7 @@ function isAllowPasteLink(pastedWb) {
 							}
 						}
 
-						t.setSortProps(t._generateSortProps(val.type, opt_by_rows ? activeCell.row : activeCell.col, val.color, true, opt_by_rows, range.bbox), true);
+						t.setSortProps(t._generateSortProps(val.type, opt_by_rows ? activeCell.row : activeCell.col, val.color, opt_guessHeader, opt_by_rows, range.bbox), true);
                         break;
 
 					case "customSort":
@@ -20979,7 +20985,8 @@ function isAllowPasteLink(pastedWb) {
 				}
 
 				//sort
-				t.setSelectionInfo("sort", {type: type, color: rgbColor});
+				//guess header only when expanding from a single cell, never for an choosen selection
+				t.setSelectionInfo("sort", {type: type, color: rgbColor, guessHeader: !!bIsExpandRange});
 				//TODO maybe should return selection back
 
             } else if (false !== sortProps) {
