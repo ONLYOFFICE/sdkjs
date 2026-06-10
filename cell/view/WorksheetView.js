@@ -19500,6 +19500,10 @@ function isAllowPasteLink(pastedWb) {
 				/* if we write not through cse, then check the formula for the presence of ref */
 				/* if ref exists, write the formula as an array formula and also find its dimensions for further expansion */
 				dynamicSelectionRange = t.model.dynamicArrayManager.getDynamicRangeByFormula(newFP, calculateResult, !userCtrlKey, needReparse);
+				if (!dynamicSelectionRange && newFP.findRefByOutStack(true, true)) {
+					let _aCol = newFP.parent.nCol, _aRow = newFP.parent.nRow;
+					dynamicSelectionRange = new Asc.Range(_aCol, _aRow, _aCol, _aRow);
+				}
 				if (dynamicSelectionRange) {
 					if (userCtrlKey && !userShiftKey) {
 						ctrlEnterWithDynamicArray = true;
