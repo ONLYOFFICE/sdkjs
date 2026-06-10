@@ -1569,12 +1569,20 @@
 		this.updateDateCheckboxState(currentSlide);
 		this.updatePageNumberCheckboxState(currentSlide);
 		this.updateSlidesPerPageState(currentSlide);
+		this.updatePageOrientationState();
 	};
 	MasterHandoutModeManager.prototype.updateHeaderCheckboxState = MasterNoteModeManager.prototype.updateHeaderCheckboxState;
 	MasterHandoutModeManager.prototype.updateFooterCheckboxState = MasterNoteModeManager.prototype.updateFooterCheckboxState;
 	MasterHandoutModeManager.prototype.updateDateCheckboxState = MasterNoteModeManager.prototype.updateDateCheckboxState;
 	MasterHandoutModeManager.prototype.updatePageNumberCheckboxState = MasterNoteModeManager.prototype.updatePageNumberCheckboxState;
 	MasterHandoutModeManager.prototype.updatePageOrientationState = MasterNoteModeManager.prototype.updatePageOrientationState;
+	MasterHandoutModeManager.prototype.updateSlidesPerPageState = function (currentPage) {
+		let slidesCount = 1;
+		if (currentPage) {
+			slidesCount = currentPage.getSlidesCount();
+		}
+		api.sendEvent("asc_onSlidesPerPage", slidesCount);
+	};
 
 	function SorterModeManager(api) {
 		SlideModeManagerBase.call(this, api);
