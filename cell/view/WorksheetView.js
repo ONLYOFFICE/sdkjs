@@ -6963,8 +6963,8 @@ function isAllowPasteLink(pastedWb) {
 			return true;
 		}
 
-		let firstCol = oIntersection.c1 === visibleRange.c1;
-		let firstRow = oIntersection.r1 === visibleRange.r1;
+		//let firstCol = oIntersection.c1 === visibleRange.c1;
+		//let firstRow = oIntersection.r1 === visibleRange.r1;
 		let drawLeftSide = oIntersection.c1 === range.c1;
 		let drawRightSide = oIntersection.c2 === range.c2;
 		let drawTopSide = oIntersection.r1 === range.r1;
@@ -7006,7 +7006,7 @@ function isAllowPasteLink(pastedWb) {
 		ctx.setStrokeStyle(color);
 		nativeCtx.lineDashOffset = -animOffset;
 		ctx.beginPath();
-		if (drawTopSide && !firstRow) {
+		if (drawTopSide /*&& !firstRow*/) {
 			this._lineHorPrevPx(ctx, x1, y1, x2);
 		}
 		if (drawRightSide) {
@@ -7019,7 +7019,7 @@ function isAllowPasteLink(pastedWb) {
 		if (drawBottomSide) {
 			this._lineHorPrevPx(ctx, x1, y2, x2);
 		}
-		if (drawLeftSide && !firstCol) {
+		if (drawLeftSide/* && !firstCol*/) {
 			this._lineVerPrevPx(ctx, x1, y1, y2);
 		}
 		ctx.stroke();
@@ -7028,7 +7028,7 @@ function isAllowPasteLink(pastedWb) {
 		ctx.setStrokeStyle(new CColor(255, 255, 255));
 		nativeCtx.lineDashOffset = -(animOffset + w_dot);
 		ctx.beginPath();
-		if (drawTopSide && !firstRow) {
+		if (drawTopSide/* && !firstRow*/) {
 			this._lineHorPrevPx(ctx, x1, y1, x2);
 		}
 		if (drawRightSide) {
@@ -7041,7 +7041,7 @@ function isAllowPasteLink(pastedWb) {
 		if (drawBottomSide) {
 			this._lineHorPrevPx(ctx, x1, y2, x2);
 		}
-		if (drawLeftSide && !firstCol) {
+		if (drawLeftSide/* && !firstCol*/) {
 			this._lineVerPrevPx(ctx, x1, y1, y2);
 		}
 		ctx.stroke();
