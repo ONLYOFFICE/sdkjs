@@ -555,6 +555,21 @@
 		}, 2000);
 	}
 
+	// Addinf Image mapsinternally to set into media mapper
+	baseEditorsApi.prototype.asc_addDocumentUrls = function(urls) {
+		if (!urls || typeof urls !== 'object') {
+			return;
+		}
+		AscCommon.g_oDocumentUrls.addUrls(urls);
+		if (this.ImageLoader && this.WordControl && this.WordControl.m_oLogicDocument) {
+			var imageMap = this.WordControl.m_oLogicDocument.ImageMap;
+			if (imageMap) {
+				// console.log("IMAGE_MAPS:::", imageMap);
+				this.ImageLoader.LoadDocumentImages(imageMap, false);
+			}
+		}
+	};
+
 	baseEditorsApi.prototype.asc_setDocInfo                  = function(oDocInfo)
 	{
 		var oldInfo = this.DocInfo;
