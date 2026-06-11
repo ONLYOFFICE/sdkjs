@@ -6494,6 +6494,9 @@ CPresentation.prototype.Document_Get_AllFontNames = function () {
 	for (i = 0; i < this.notes.length; ++i) {
 		this.notes[i].getAllFonts(AllFonts);
 	}
+	for (i = 0; i < this.handoutMasters.length; ++i) {
+		this.handoutMasters[i].getAllFonts(AllFonts);
+	}
 	delete AllFonts["+mj-lt"];
 	delete AllFonts["+mn-lt"];
 	delete AllFonts["+mj-ea"];
