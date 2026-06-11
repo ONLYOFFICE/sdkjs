@@ -3529,6 +3529,10 @@
     g_clipboardExcel.pasteData(ws, _format, data1, data2, text_data, null, doNotShowButton, null, callback);
   };
 
+  WorkbookView.prototype.pasteHtmlLite = function(sHtml, callback) {
+    g_clipboardExcel.pasteHtmlLite(this.getWorksheet(), sHtml, callback);
+  };
+
   WorkbookView.prototype.specialPasteData = function(props, isPasteOptions) {
     if (!this.getCellEditMode()) {
 		this.getWorksheet().specialPaste(props, isPasteOptions);

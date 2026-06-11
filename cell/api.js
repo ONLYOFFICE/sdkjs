@@ -1026,6 +1026,12 @@ var editor;
     }
   };
 
+  spreadsheet_api.prototype.asc_PasteHtmlAsText = function (sHtml, callback) {
+    if (this.canEdit()) {
+      this.wb.pasteHtmlLite(sHtml, callback);
+    }
+  };
+
   spreadsheet_api.prototype.asc_CheckCopy = function (_clipboard /* CClipboardData */, _formats) {
     return this.wb.checkCopyToClipboard(_clipboard, _formats);
   };
@@ -10124,6 +10130,7 @@ var editor;
   prot["asc_Copy"] = prot.asc_Copy;
   prot["asc_Paste"] = prot.asc_Paste;
   prot["asc_SpecialPaste"] = prot.asc_SpecialPaste;
+  prot["asc_PasteHtmlAsText"] = prot.asc_PasteHtmlAsText;
   prot["asc_Cut"] = prot.asc_Cut;
   prot["asc_Undo"] = prot.asc_Undo;
   prot["asc_Redo"] = prot.asc_Redo;

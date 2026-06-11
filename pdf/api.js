@@ -424,6 +424,24 @@
 			oDoc.FinalizeAction(true);
 		}
 	};
+	PDFEditorApi.prototype.asc_PasteHtmlAsText = function(sHtml, callback) {
+		if (!this.DocumentRenderer)
+			return;
+
+		if (!this.DocumentRenderer.canInteract()) {
+			let _t = this;
+			let args = arguments;
+			this.DocumentRenderer.paint(null, function() {
+				_t.asc_PasteHtmlAsText.apply(_t, args);
+			});
+			return;
+		}
+
+		let oDoc = this.DocumentRenderer.getPDFDoc();
+		oDoc.StartAction(AscDFH.historydescription_Document_PasteHotKey);
+		window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
+		AscCommon.Editor_Paste_Html_Lite_Exec(this, sHtml, callback);
+	};
 	PDFEditorApi.prototype.asc_setAdvancedOptions = function(idOption, option) {
 		if (this.advancedOptionsAction !== AscCommon.c_oAscAdvancedOptionsAction.Open
 			|| AscCommon.EncryptionWorker.asc_setAdvancedOptions(this, idOption, option)
