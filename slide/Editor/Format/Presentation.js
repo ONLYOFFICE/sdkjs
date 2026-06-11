@@ -8324,7 +8324,8 @@ CPresentation.prototype.addForceNextSlide = function (layoutIndex) {
 };
 CPresentation.prototype.addNextSlideAction = function (layoutIndex) {
 	var new_slide, layout, i, _ph_type, sp, hf, bIsSpecialPh, aLayouts, bRemoveOnTitle;
-	var cur_slide = this.GetCurrentSlide();
+	let cur_slide = this.GetCurrentSlide();
+	cur_slide = (cur_slide && cur_slide.isNote()) ? cur_slide.slide : cur_slide;
 	if (cur_slide) {
 		aLayouts = this.GetAllLayouts();
 		if (AscFormat.isRealNumber(layoutIndex) && aLayouts[layoutIndex]) {

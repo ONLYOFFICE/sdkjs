@@ -206,6 +206,18 @@
 	SlideModeManagerBase.prototype.isFocusOnOutline = function () {
 		return false;
 	};
+	SlideModeManagerBase.prototype.addNextSlide = function (layoutIndex) {};
+	SlideModeManagerBase.prototype.changeTheme = function (themeInfo, arrInd) {};
+	SlideModeManagerBase.prototype.insertContent2 = function (oContent, aContents, kw, kh, bEndFormatting) {
+		return false;
+	};
+	SlideModeManagerBase.prototype.addNewMasterSlide = function () {};
+	SlideModeManagerBase.prototype.addNewLayout = function () {};
+	SlideModeManagerBase.prototype.deleteMaster = function () {};
+	SlideModeManagerBase.prototype.setPreserve = function (bPr) {};
+	SlideModeManagerBase.prototype.recalculateNotesShape = function (slide) {
+
+	};
 
 	function SlideModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -686,6 +698,9 @@
 	};
 	SlideModeManager.prototype.isDrawingSlide = function (slideObject) {
 		return slideObject.isSlide();
+	};
+	SlideModeManager.prototype.recalculateNotesShape = function (slide) {
+		slide.recalculateNotesShape();
 	};
 
 	function MasterSlideModeManager(api) {
@@ -1354,6 +1369,11 @@
 		api.asc_hideComments();
 		presentation.Recalculate({Drawings: {All: true, Map: {}}});
 		presentation.Document_UpdateInterfaceState();
+	};
+
+	NoteModeManager.prototype.addNextSlide = function (layoutIndex) {
+		const presentation = this.getPresentation();
+		presentation.addForceNextSlide(layoutIndex);
 	};
 
 	function MasterNoteModeManager(api) {

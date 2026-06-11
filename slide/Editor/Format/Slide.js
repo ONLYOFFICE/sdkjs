@@ -679,7 +679,10 @@
 			this.recalcInfo.recalculateSpTree = false;
 		}
 		if (!this.isSkipNotesRecalculate) {
-			this.recalculateNotesShape();
+			const viewManager = this.presentation && this.presentation.getViewManager();
+			if (viewManager) {
+				viewManager.recalculateNotesShape(this);
+			}
 		}
 		this.cachedImage = null;
 	};
