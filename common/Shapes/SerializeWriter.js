@@ -74,7 +74,8 @@ var c_oMainTables = {
 	SlideNotesRels	: 45,
 	NotesRels		: 46,
 	NotesMastersRels: 47,
-	CustomProperties: 48
+	CustomProperties: 48,
+	HandoutMastersRels: 49
 };
 
 function CSeekTableEntry()
@@ -652,6 +653,19 @@ function CBinaryFileWriter()
     //////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////
 
+	function collectThemes(slides, themes) {
+		const themeRels = [];
+		for (let i = 0; i < slides.length; i++) {
+			var theme = slides[i].Theme;
+			let themeIndex = themes.indexOf(theme);
+			if (themeIndex === -1) {
+				themeIndex = themes.length;
+				themes.push(theme);
+			}
+			themeRels.push(themeIndex);
+		}
+		return themeRels;
+	}
     this.WriteDocument2 = function(presentation)
     {
         this.font_map = {};
@@ -709,7 +723,7 @@ function CBinaryFileWriter()
             let _len_dst = _dst_masters.length;
             _dst_masters[_len_dst] = _m;
 
-            let _m_rels = { ThemeIndex : 0, Layouts : [] };
+            let _m_rels = { Layouts : [] };
             let _lay_c = _m.sldLayoutLst.length;
 
             let _ind_l = _dst_layouts.length;
@@ -755,65 +769,11 @@ function CBinaryFileWriter()
             }
         }
 
-        var _dst_masters_len = _dst_masters.length;
-        if (0 == _dst_masters_len && presentation.slideMasters.length > 0)
-        {
-            var _m = presentation.slideMasters[0];
-
-            _dst_masters[0] = _m;
-
-            var _m_rels = { ThemeIndex : 0, Layouts : [] };
-            var _lay_c = _m.sldLayoutLst.length;
-
-            var _ind_l = _dst_layouts.length;
-            for (var k = 0; k < _lay_c; k++)
-            {
-                _dst_layouts[_ind_l] = _m.sldLayoutLst[k];
-                _m_rels.Layouts[k] = _ind_l;
-                _ind_l++;
-            }
-
-            _master_rels[0] = _m_rels;
-            _dst_masters_len = 1;
-        }
-
-        for (var i = 0; i < _dst_masters_len; i++)
-        {
-            var _t = _dst_masters[i].Theme;
-
-            var is_found = false;
-            var _len_dst = _dst_themes.length;
-            for (var j = 0; j < _len_dst; j++)
-            {
-                if (_dst_themes[j] == _t)
-                {
-                    is_found = true;
-                    break;
-                }
-            }
-
-            if (!is_found)
-            {
-                _dst_themes[_len_dst] = _t;
-                _master_rels[i].ThemeIndex = _len_dst;
-            }
-        }
+	    const slideMasterThemeRels = collectThemes(_dst_masters, _dst_themes);
+	    const handoutMasterThemeRels = collectThemes(presentation.handoutMasters, _dst_themes);
+			const noteMasterThemeRels = collectThemes(_dst_notesMasters, _dst_themes);
 
         var i, j;
-        for(i = 0; i < _dst_notesMasters.length; ++i){
-            for(j = 0; j < _dst_themes.length; ++j){
-                if(_dst_themes[j] === _dst_notesMasters[i].Theme){
-                    break;
-                }
-            }
-            if(j === _dst_themes.length){
-                _dst_themes.push(_dst_notesMasters[i].Theme);
-            }
-        }
-
-        //var _count_table_styles = presentation.globalTableStyles.length;
-        //if (0 < _count_table_styles)
-        //{
 
         var oTableStyleIdMap;
         if(presentation.GetTableStyleIdMap)
@@ -909,22 +869,20 @@ function CBinaryFileWriter()
         this.WriteUChar(g_nodeAttributeStart);
         var _notes_masters = _dst_notesMasters;
         var _notes_masters_count = _notes_masters.length;
-        var _themes = _dst_themes;
-        var _thems_count = _themes.length;
-        var _theme;
-        for(i = 0; i < _notes_masters_count; ++i){
-            _theme = _notes_masters[i].Theme;
-            _rels = -1;
-            for(j = 0; j < _thems_count; ++j){
-                if(_theme === _themes[j]){
-                    _rels = j;
-                    break;
-                }
-            }
-            this._WriteInt1(0, _rels);
-        }
+				for (let i = 0; i < noteMasterThemeRels.length; i += 1) {
+					this._WriteInt1(0, noteMasterThemeRels[i]);
+				}
         this.WriteUChar(g_nodeAttributeEnd);
         this.EndRecord();
+
+	    this.StartMainRecord(c_oMainTables.HandoutMastersRels);
+	    this.StartRecord(c_oMainTables.HandoutMastersRels);
+	    this.WriteUChar(g_nodeAttributeStart);
+	    for (let i = 0; i < handoutMasterThemeRels.length; i += 1) {
+		    this._WriteInt1(0, handoutMasterThemeRels[i]);
+	    }
+	    this.WriteUChar(g_nodeAttributeEnd);
+	    this.EndRecord();
 
         this.StartMainRecord(c_oMainTables.NotesRels);
         this.StartRecord(c_oMainTables.NotesRels);
@@ -957,7 +915,7 @@ function CBinaryFileWriter()
 
             this.WriteUChar(g_nodeAttributeStart);
 
-            this._WriteInt1(0, _master_rels[i].ThemeIndex);
+            this._WriteInt1(0, slideMasterThemeRels[i]);
             this.WriteUChar(1);
             this.WriteString(_dst_masters[i].ImageBase64);
 
@@ -1019,6 +977,12 @@ function CBinaryFileWriter()
         this.WriteULong(_count_arr);
         for (var i = 0; i < _count_arr; i++)
             this.WriteNoteMaster(_dst_notesMasters[i]);
+
+	    _count_arr = presentation.handoutMasters.length;
+	    this.StartMainRecord(c_oMainTables.HandoutMasters);
+	    this.WriteULong(_count_arr);
+	    for (var i = 0; i < _count_arr; i++)
+		    presentation.handoutMasters[i].toPPTY(this);
 
         // during writing - we also need to generate FontMap and ImagesMap
         this.StartMainRecord(c_oMainTables.FontMap);

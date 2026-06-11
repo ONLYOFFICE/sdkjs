@@ -519,7 +519,6 @@ function BinaryPPTYLoader()
                 var _nm_count = s.GetULong();
                 for (var i = 0; i < _nm_count; i++){
                     this.presentation.notesMasters[i] = this.ReadNoteMaster();
-                    this.presentation.notesMasters[i].setTheme(this.aThemes[0]);//TODO: remove after rels are implemented
                 }
             }
 
@@ -532,6 +531,17 @@ function BinaryPPTYLoader()
                 for (var i = 0; i < _n_count; i++)
                     this.presentation.notes[i] = this.ReadNote();
             }
+
+	        if (undefined != _main_tables[AscCommon.c_oMainTables.HandoutMasters])
+	        {
+		        // handout masters
+		        s.Seek2(_main_tables[AscCommon.c_oMainTables.HandoutMasters]);
+		        var _n_count = s.GetULong();
+		        for (var i = 0; i < _n_count; i++) {
+			        this.presentation.handoutMasters[i] = new AscCommonSlide.CHandoutMaster();
+			        this.presentation.handoutMasters[i].fromPPTY(this);
+		        }
+	        }
         }
 
         // now we need to read fonts and images used in the presentation
@@ -692,6 +702,27 @@ function BinaryPPTYLoader()
 					_noteMasterNum++;
 				}
 			}
+	        if (undefined !== _main_tables[AscCommon.c_oMainTables.HandoutMastersRels])
+	        {
+		        s.Seek2(_main_tables[AscCommon.c_oMainTables.HandoutMastersRels]);
+		        s.Skip2(6); // type + len + start attr
+
+		        let handoutMasterNum = 0;
+		        while (true)
+		        {
+			        var _at = s.GetUChar();
+			        if (_at == g_nodeAttributeEnd)
+				        break;
+
+			        var indexL = s.GetLong();
+			        var handoutMaster = this.presentation.handoutMasters[handoutMasterNum];
+			        var handoutMasterTheme = this.aThemes[indexL];
+			        if (handoutMaster && handoutMasterTheme) {
+				        handoutMaster.setTheme(handoutMasterTheme);
+			        }
+			        handoutMasterNum++;
+		        }
+	        }
         }
 				if (this.IsThemeLoader) {
 					this.ClearSmartArts();

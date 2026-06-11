@@ -88,6 +88,47 @@
 	}
 
 	AscFormat.InitClass(CHandoutMaster, AscCommonSlide.SlideBase, AscDFH.historyitem_type_HandoutMaster);
+	CHandoutMaster.prototype.fromPPTY = function (pReader) {
+		var oStream = pReader.stream;
+		var nStart = oStream.cur;
+		oStream.Skip2(1);
+		var nEnd = nStart + oStream.GetULong() + 4;
+		this.readChildren(nEnd, pReader);
+		oStream.Seek2(nEnd);
+	};
+	CHandoutMaster.prototype.readChild = function (nType, pReader) {
+		var s = pReader.stream;
+			switch (nType) {
+				case 0: {
+					pReader.ReadCSld(this.cSld);
+					break;
+				}
+				case 1: {
+					var clrMap = new AscFormat.ClrMap();
+					pReader.ReadClrMap(clrMap);
+					this.setClrMap(clrMap);
+					break;
+				}
+				case 2: {
+					this.setHF(pReader.ReadHF());
+					break;
+				}
+				default: {
+					s.SkipRecord();
+					break;
+				}
+			}
+	};
+	CHandoutMaster.prototype.privateWriteAttributes = undefined;
+	CHandoutMaster.prototype.writeChildren = function (pWriter) {
+		pWriter.StartRecord(AscCommon.c_oMainTables.HandoutMasters);
+
+		pWriter.WriteRecord1(0, this.cSld, pWriter.WriteCSld);
+		pWriter.WriteRecord1(1, this.clrMap, pWriter.WriteClrMap);
+		pWriter.WriteRecord2(2, this.hf, pWriter.WriteHF);
+
+		pWriter.EndRecord();
+	};
 	CHandoutMaster.prototype.recalcSpTree = function () {
 		this.recalcInfo.recalculateSpTree = true;
 	};
@@ -205,7 +246,7 @@
 		return this.handoutSettings.align;
 	};
 	CHandoutMaster.prototype.getSlidesCount = function () {
-		return this.handoutSettings.layout;
+		return this.handoutSettings.slideCount;
 	};
 	CHandoutMaster.prototype.getOutlineHandouts = function () {
 		const pageWidth = this.presentation.GetNotesWidthMM();
@@ -391,6 +432,7 @@
 			}
 		}
 		if (this.recalcInfo.recalculateBackground) {
+			this.recalculateBackground();
 			this.recalcInfo.recalculateBackground = false;
 		}
 	};

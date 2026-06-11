@@ -63,7 +63,7 @@
 		this.hf = null;
 		this.txStyles = null;
 
-		this.Theme = AscFormat.GenerateDefaultTheme();
+		this.Theme = null;
 		this.kind = AscFormat.TYPE_KIND.NOTES_MASTER;
 		this.setSlideSize(this.presentation.GetNotesWidthMM(), this.presentation.GetNotesHeightMM());
 	}

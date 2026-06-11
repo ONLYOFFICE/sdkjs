@@ -1581,6 +1581,7 @@
 		if (currentPage) {
 			slidesCount = currentPage.getSlidesCount();
 		}
+		const api = this.getApi();
 		api.sendEvent("asc_onSlidesPerPage", slidesCount);
 	};
 
