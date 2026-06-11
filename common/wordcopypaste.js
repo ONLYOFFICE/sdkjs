@@ -9827,9 +9827,16 @@ PasteProcessor.prototype =
 						background_color = null;
 				}
 				if (null == vertical_align || "baseline" === vertical_align) {
-					vertical_align = this._getStyle(node, tempComputedStyle, "vertical-align");
-					if (!vertical_align)
-						vertical_align = null;
+					var sVertAlignTag = oTempNode.nodeName ? oTempNode.nodeName.toLowerCase() : "";
+					if ("sub" === sVertAlignTag) {
+						vertical_align = "sub";
+					} else if ("sup" === sVertAlignTag) {
+						vertical_align = "super";
+					} else {
+						vertical_align = this._getStyle(node, tempComputedStyle, "vertical-align");
+						if (!vertical_align)
+							vertical_align = null;
+					}
 				}
 				if (vertical_align && background_color && Strikeout && underline)
 					break;
