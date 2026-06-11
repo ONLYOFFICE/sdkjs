@@ -9050,10 +9050,10 @@ CDocument.prototype.OnKeyDown = function(e)
 			{
 				this.Api.sync_StartAddShapeCallback(false);
 				this.Api.sync_EndAddShape();
-				if (this.Is_TrackingDrawingObjects())
-					this.DrawingObjects.resetTrackState();
-				else
+				if (this.DrawingObjects.isPolylineAddition())
 					this.DrawingObjects.endTrackNewShape();
+				else
+					this.DrawingObjects.resetTrackState();
 				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
 			}
 			else if (this.IsMovingTableBorder())

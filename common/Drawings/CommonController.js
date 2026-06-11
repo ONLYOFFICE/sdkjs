@@ -6549,9 +6549,16 @@
 						|| this.haveTrackedObjects();
 				},
 
+				isPolylineAddition: function () {
+					return this.curState.polylineFlag === true;
+				},
+
 				checkEndAddShape: function () {
 					if (this.checkTrackDrawings()) {
-						this.resetTrackState();
+						if (this.isPolylineAddition())
+							this.endTrackNewShape();
+						else
+							this.resetTrackState();
 						this.updateOverlay();
 						if (Asc["editor"] && Asc["editor"].wb) {
 							Asc["editor"].asc_endAddShape();

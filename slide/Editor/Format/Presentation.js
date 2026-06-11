@@ -5798,7 +5798,10 @@ CPresentation.prototype.OnKeyDown = function (e) {
 						return;
 					}
 					if (oDrawingObjects.isTrackingDrawings()) {
-						oDrawingObjects.resetTrackState();
+						if (oDrawingObjects.isPolylineAddition())
+							oDrawingObjects.endTrackNewShape();
+						else
+							oDrawingObjects.resetTrackState();
 						this.DrawingDocument.m_oWordControl.OnUpdateOverlay();
 						this.Api.sync_EndAddShape();
 						this.DrawingDocument.UnlockCursorType();
