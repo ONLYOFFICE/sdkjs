@@ -4025,7 +4025,7 @@ function BinaryPPTYLoader()
 
     this.ReadSlideMaster = function()
     {
-        var master = new AscCommonSlide.MasterSlide(this.presentation, null);
+        var master = new AscCommonSlide.MasterSlide();
         this.ClearConnectedObjects();
         this.TempMainObject = master;
 

@@ -1925,7 +1925,7 @@
 
 	ReaderFromJSON.prototype.MasterSlideFromJSON = function(oParsedMaster, oPres)
 	{
-		var oMasterSlide = new AscCommonSlide.MasterSlide(undefined, null);
+		var oMasterSlide = new AscCommonSlide.MasterSlide();
 
 		var oTheme  = oParsedMaster["theme"] ? this.ThemeFromJSON(oParsedMaster["theme"]) : null;
 		var oClrMap = oParsedMaster["clrMapOvr"] ? this.ColorMapOvrFromJSON(oParsedMaster["clrMapOvr"]) : null;

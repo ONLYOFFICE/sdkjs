@@ -712,12 +712,12 @@
 	SlideBase.prototype.writeMasterBinary = function (w) {
 		w.WriteLong(this.getObjectType());
 		w.WriteString2(this.Id);
-		AscFormat.writeObject(w, this.theme);
+		AscFormat.writeObject(w, this.Theme);
 		AscFormat.writeObject(w, this.cSld);
 	};
 	SlideBase.prototype.readMasterBinary = function (r) {
 		this.Id = r.GetString2();
-		this.theme = AscFormat.readObject(r);
+		this.Theme = AscFormat.readObject(r);
 		this.cSld = AscFormat.readObject(r);
 		if (this.cSld) this.cSld.parent = this;
 	};

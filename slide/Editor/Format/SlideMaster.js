@@ -74,7 +74,7 @@
 	AscDFH.drawingContentChanges[AscDFH.historyitem_SlideMasterRemoveLayout] = function (oClass) {return oClass.sldLayoutLst;};
 
 
-	function MasterSlide(presentation, theme) {
+	function MasterSlide() {
 		AscCommonSlide.SlideBase.call(this);
 		this.clrMap = new AscFormat.ClrMap();
 		this.hf = null;
@@ -101,7 +101,6 @@
 		this.bounds = new AscFormat.CGraphicBounds(0, 0, this.Width, this.Height);
 
 		//----------------------------------------------
-		this.theme = theme;
 
 		this.kind = AscFormat.TYPE_KIND.MASTER;
 		this.recalcInfo =
@@ -559,7 +558,7 @@
 		oCheckedMap[this.Get_Id()] = this;
 	};
 	MasterSlide.prototype.createDuplicate = function (IdMap) {
-		var copy = new MasterSlide(null, null);
+		var copy = new MasterSlide();
 		var oIdMap = IdMap || {};
 		var oPr = new AscFormat.CCopyObjectProperties();
 		oPr.idMap = oIdMap;

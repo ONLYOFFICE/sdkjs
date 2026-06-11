@@ -16519,7 +16519,7 @@
 		}
 
 		function GenerateDefaultMasterSlide(theme) {
-			var master = new AscCommonSlide.MasterSlide(theme.presentation, theme);
+			var master = new AscCommonSlide.MasterSlide();
 			master.Theme = theme;
 
 			master.sldLayoutLst[0] = GenerateDefaultSlideLayout(master);
