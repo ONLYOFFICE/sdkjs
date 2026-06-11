@@ -526,6 +526,10 @@
 								{
 									editor.sendEvent("asc_onLockDocumentProps");
 								}
+								else if (Class === oPresentation.noteSizeLock)
+								{
+									editor.sendEvent("asc_onLockDocumentNoteProps");
+								}
 								else if (Class === oPresentation.viewPrLock)
 								{
 									editor.sendEvent("asc_onLockViewProps");
@@ -671,6 +675,17 @@
 									else
 									{
 										editor.sendEvent("asc_onUnLockDocumentProps");
+									}
+								}
+								if (Class === object.noteSizeLock)
+								{
+									if (NewType !== locktype_Mine && NewType !== locktype_None)
+									{
+										editor.sendEvent("asc_onLockDocumentNoteProps");
+									}
+									else
+									{
+										editor.sendEvent("asc_onUnLockDocumentNoteProps");
 									}
 								}
 								if (Class === object.viewPrLock)

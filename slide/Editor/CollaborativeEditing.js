@@ -280,6 +280,10 @@ CCollaborativeEditing.prototype.Release_Locks = function()
                     {
 						Asc.editor.sendEvent("asc_onUnLockDocumentProps");
                     }
+                    else if(Class === presentation.noteSizeLock)
+                    {
+	                    Asc.editor.sendEvent("asc_onUnLockDocumentNoteProps");
+                    }
                     else if(Class === presentation.viewPrLock)
                     {
 						Asc.editor.sendEvent("asc_onUnLockViewProps");

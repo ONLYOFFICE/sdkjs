@@ -674,6 +674,7 @@ function CPresentation(DrawingDocument, isMainLogicDocument) {
 	this.themeLock = new AscCommon.PropLocker(this.Id);
 	this.schemeLock = new AscCommon.PropLocker(this.Id);
 	this.slideSizeLock = new AscCommon.PropLocker(this.Id);
+	this.noteSizeLock = new AscCommon.PropLocker(this.Id);
 	this.defaultTextStyleLock = new AscCommon.PropLocker(this.Id);
 	this.commentsLock = new AscCommon.PropLocker(this.Id);
 	this.viewPrLock = new AscCommon.PropLocker(this.Id);
@@ -9163,6 +9164,16 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
 		this.slideSizeLock.Lock.Check(check_obj);
 	}
 
+	if (CheckType === AscCommon.changestype_NoteSize) {
+		var check_obj =
+			{
+				"type": c_oAscLockTypeElemPresentation.Slide,
+				"val": this.noteSizeLock.Get_Id(),
+				"guid": this.noteSizeLock.Get_Id()
+			};
+		this.noteSizeLock.Lock.Check(check_obj);
+	}
+
 	if (CheckType === AscCommon.changestype_PresDefaultLang) {
 		var check_obj =
 			{
@@ -10528,7 +10539,7 @@ CPresentation.prototype.getCumulativeThumbnailsLength = function (isHorizontalOr
 	return viewManager.getCumulativeThumbnailsLength(isHorizontalOrientation, thumbnailWidth, thumbnailHeight);
 }
 CPresentation.prototype.changeNoteSize = function (width, height, type) {
-	if (this.Document_Is_SelectionLocked(AscCommon.changestype_SlideSize) === false) {
+	if (this.Document_Is_SelectionLocked(AscCommon.changestype_NoteSize) === false) {
 		History.Create_NewPoint(AscDFH.historydescription_Presentation_ChangeSlideSize);
 		this.internalChangeNoteSizes(width, height, type);
 		this.Recalculate();
