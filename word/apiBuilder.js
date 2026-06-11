@@ -4208,6 +4208,23 @@
 	/**
 	 * This type specifies the available chart types which can be used to create a new chart.
 	 * @typedef {(
+	 *     "ColumnClustered" | "ColumnStacked" | "ColumnStacked100" | "3DColumnClustered" | "3DColumnStacked" | "3DColumnStacked100" | "3DColumn" |
+	 *     "BarClustered" | "BarStacked" | "BarStacked100" | "3DBarClustered" | "3DBarStacked" | "3DBarStacked100" |
+	 *     "Line" | "LineStacked" | "LineStacked100" | "LineMarkers" | "LineMarkersStacked" | "LineMarkersStacked100" | "3DLine" |
+	 *     "Pie" | "3DPie" | "Doughnut" |
+	 *     "XYScatter" | "XYScatterLines" | "XYScatterLinesNoMarkers" | "XYScatterSmooth" | "XYScatterSmoothNoMarkers" |
+	 *     "StockHLC" | "StockOHLC" | "StockVHLC" | "StockVOHLC" |
+	 *     "Area" | "AreaStacked" | "AreaStacked100" |
+	 *     "Combo" | "ComboColumnClusteredLine" | "ComboColumnClusteredLineSecondaryAxis" |
+	 *     "Radar" | "RadarMarkers" | "RadarFilled" |
+	 *     "unknown"
+	 * )} ChartType
+	 * @see office-js-api/Examples/Enumerations/ChartType.js
+	 */
+
+	/**
+	 * This type specifies the legacy chart type names which are kept for backward compatibility.
+	 * @typedef {(
 	 *     "bar" | "barStacked" | "barStackedPercent" | "bar3D" | "barStacked3D" | "barStackedPercent3D" | "barStackedPercent3DPerspective" |
 	 *     "horizontalBar" | "horizontalBarStacked" | "horizontalBarStackedPercent" | "horizontalBar3D" | "horizontalBarStacked3D" | "horizontalBarStackedPercent3D" |
 	 *     "lineNormal" | "lineStacked" | "lineStackedPercent" | "lineNormalMarker" | "lineStackedMarker" | "lineStackedPerMarker" | "line3D" |
@@ -4218,8 +4235,8 @@
 	 *     "comboCustom" | "comboBarLine" | "comboBarLineSecondary" |
 	 *     "radar" | "radarMarker" | "radarFilled" |
 	 *     "unknown"
-	 * )} ChartType
-	 * @see office-js-api/Examples/Enumerations/ChartType.js
+	 * )} ChartTypeLegacy
+	 * @see office-js-api/Examples/Enumerations/ChartTypeLegacy.js
 	 */
 
 	/**
@@ -21346,7 +21363,7 @@
 	 * Returns a type of the chart object.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @returns {ChartType}
+	 * @returns {ChartTypeLegacy}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/GetChartType.js
 	 */
 	ApiChart.prototype.GetChartType = function()
@@ -21357,6 +21374,23 @@
 		}
 		let nType = this.Chart.getChartType();
 		return private_ChartInternalTypeToBuilder(nType);
+	};
+
+	/**
+	 * Returns a type of the chart object using the chart type names from the {@link ChartType} enumeration.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @returns {ChartType}
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/GetType.js
+	 */
+	ApiChart.prototype.GetType = function()
+	{
+		if(!this.Chart)
+		{
+			return "unknown";
+		}
+		let nType = this.Chart.getChartType();
+		return private_ChartInternalTypeToBuilderEx(nType);
 	};
 
 	/**
@@ -22278,7 +22312,7 @@
 	 * Returns a chart type of the current series.
 	 * @memberof ApiChartSeries
 	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
-	 * @returns {ChartType}
+	 * @returns {ChartTypeLegacy}
 	 * @see office-js-api/Examples/{Editor}/ApiChartSeries/Methods/GetChartType.js
 	 */
 	ApiChartSeries.prototype.GetChartType = function()
@@ -22290,6 +22324,24 @@
 		}
 		let nType = oSeries.asc_getChartType();
 		return private_ChartInternalTypeToBuilder(nType);
+	};
+
+	/**
+	 * Returns a chart type of the current series using the chart type names from the {@link ChartType} enumeration.
+	 * @memberof ApiChartSeries
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
+	 * @returns {ChartType}
+	 * @see office-js-api/Examples/{Editor}/ApiChartSeries/Methods/GetType.js
+	 */
+	ApiChartSeries.prototype.GetType = function()
+	{
+		let oSeries = this.private_GetSeries();
+		if(!oSeries)
+		{
+			return "unknown";
+		}
+		let nType = oSeries.asc_getChartType();
+		return private_ChartInternalTypeToBuilderEx(nType);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -31390,6 +31442,7 @@
 
 	ApiChart.prototype["GetClassType"]                 = ApiChart.prototype.GetClassType;
 	ApiChart.prototype["GetChartType"]                 = ApiChart.prototype.GetChartType;
+	ApiChart.prototype["GetType"]                      = ApiChart.prototype.GetType;
 	ApiChart.prototype["SetTitle"]                     = ApiChart.prototype.SetTitle;
 	ApiChart.prototype["GetTitle"]                     = ApiChart.prototype.GetTitle;
 	ApiChart.prototype["SetHorAxisTitle"]              = ApiChart.prototype.SetHorAxisTitle;
@@ -31819,7 +31872,8 @@
 	ApiChartSeries.prototype["GetClassType"]      =  ApiChartSeries.prototype.GetClassType;
 	ApiChartSeries.prototype["ChangeChartType"]   =  ApiChartSeries.prototype.ChangeChartType;
 	ApiChartSeries.prototype["GetChartType"]      =  ApiChartSeries.prototype.GetChartType;
-	
+	ApiChartSeries.prototype["GetType"]           =  ApiChartSeries.prototype.GetType;
+
 	ApiCustomXmlParts.prototype["Add"]            = ApiCustomXmlParts.prototype.Add;
 	ApiCustomXmlParts.prototype["GetById"]        = ApiCustomXmlParts.prototype.GetById;
 	ApiCustomXmlParts.prototype["GetByNamespace"] = ApiCustomXmlParts.prototype.GetByNamespace;
@@ -32887,8 +32941,128 @@
 			case Asc.c_oAscChartTypeSettings.comboCustom: {
 				return "comboCustom";
 			}
+		}
+		return "unknown";
+	}
+
+	function private_ChartInternalTypeToBuilderEx(sType) {
+		switch (sType) {
+			case Asc.c_oAscChartTypeSettings.unknown: {
+				return "unknown";
+			}
+			case Asc.c_oAscChartTypeSettings.barNormal: {
+				return "ColumnClustered";
+			}
+			case Asc.c_oAscChartTypeSettings.barStacked: {
+				return "ColumnStacked";
+			}
+			case Asc.c_oAscChartTypeSettings.barStackedPer: {
+				return "ColumnStacked100";
+			}
+			case Asc.c_oAscChartTypeSettings.barNormal3d: {
+				return "3DColumnClustered";
+			}
+			case Asc.c_oAscChartTypeSettings.barStacked3d: {
+				return "3DColumnStacked";
+			}
+			case Asc.c_oAscChartTypeSettings.barStackedPer3d: {
+				return "3DColumnStacked100";
+			}
+			case Asc.c_oAscChartTypeSettings.barNormal3dPerspective: {
+				return "3DColumn";
+			}
+			case Asc.c_oAscChartTypeSettings.hBarNormal: {
+				return "BarClustered";
+			}
+			case Asc.c_oAscChartTypeSettings.hBarStacked: {
+				return "BarStacked";
+			}
+			case Asc.c_oAscChartTypeSettings.hBarStackedPer: {
+				return "BarStacked100";
+			}
+			case Asc.c_oAscChartTypeSettings.hBarNormal3d: {
+				return "3DBarClustered";
+			}
+			case Asc.c_oAscChartTypeSettings.hBarStacked3d: {
+				return "3DBarStacked";
+			}
+			case Asc.c_oAscChartTypeSettings.hBarStackedPer3d: {
+				return "3DBarStacked100";
+			}
+			case Asc.c_oAscChartTypeSettings.lineNormal: {
+				return "Line";
+			}
+			case Asc.c_oAscChartTypeSettings.lineStacked: {
+				return "LineStacked";
+			}
+			case Asc.c_oAscChartTypeSettings.lineStackedPer: {
+				return "LineStacked100";
+			}
+			case Asc.c_oAscChartTypeSettings.lineNormalMarker: {
+				return "LineMarkers";
+			}
+			case Asc.c_oAscChartTypeSettings.lineStackedMarker: {
+				return "LineMarkersStacked";
+			}
+			case Asc.c_oAscChartTypeSettings.lineStackedPerMarker: {
+				return "LineMarkersStacked100";
+			}
+			case Asc.c_oAscChartTypeSettings.line3d: {
+				return "3DLine";
+			}
+			case Asc.c_oAscChartTypeSettings.pie: {
+				return "Pie";
+			}
+			case Asc.c_oAscChartTypeSettings.pie3d: {
+				return "3DPie";
+			}
+			case Asc.c_oAscChartTypeSettings.doughnut: {
+				return "Doughnut";
+			}
+			case Asc.c_oAscChartTypeSettings.scatter: {
+				return "XYScatter";
+			}
+			case Asc.c_oAscChartTypeSettings.scatterLine: {
+				return "XYScatterLinesNoMarkers";
+			}
+			case Asc.c_oAscChartTypeSettings.scatterLineMarker: {
+				return "XYScatterLines";
+			}
+			case Asc.c_oAscChartTypeSettings.scatterSmooth: {
+				return "XYScatterSmoothNoMarkers";
+			}
+			case Asc.c_oAscChartTypeSettings.scatterSmoothMarker: {
+				return "XYScatterSmooth";
+			}
+			case Asc.c_oAscChartTypeSettings.stock: {
+				return "StockHLC";
+			}
+			case Asc.c_oAscChartTypeSettings.areaNormal: {
+				return "Area";
+			}
+			case Asc.c_oAscChartTypeSettings.areaStacked: {
+				return "AreaStacked";
+			}
+			case Asc.c_oAscChartTypeSettings.areaStackedPer: {
+				return "AreaStacked100";
+			}
+			case Asc.c_oAscChartTypeSettings.comboBarLine: {
+				return "ComboColumnClusteredLine";
+			}
+			case Asc.c_oAscChartTypeSettings.comboBarLineSecondary: {
+				return "ComboColumnClusteredLineSecondaryAxis";
+			}
 			case Asc.c_oAscChartTypeSettings.comboCustom: {
-				return "comboCustom";
+				return "Combo";
+			}
+			case Asc.c_oAscChartTypeSettings.radar: {
+				return "Radar";
+			}
+			case Asc.c_oAscChartTypeSettings.radarMarker: {
+				return "RadarMarkers";
+			}
+			case Asc.c_oAscChartTypeSettings.radarFilled: {
+				return "RadarFilled";
 			}
 		}
 		return "unknown";
