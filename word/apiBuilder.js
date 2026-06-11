@@ -10773,6 +10773,17 @@
 		return this.Paragraph.Content.length - 1;
 	};
 	/**
+	 * Returns true if the paragraph has no content elements (only the paragraph end mark).
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @since 9.5.0
+	 * @returns {boolean}
+	 */
+	ApiParagraph.prototype.IsEmpty = function()
+	{
+		return this.Paragraph.IsEmpty();
+	};
+	/**
 	 * Returns a paragraph element using the position specified.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
@@ -30915,6 +30926,7 @@
 	ApiParagraph.prototype["GetNumbering"]           = ApiParagraph.prototype.GetNumbering;
 	ApiParagraph.prototype["SetNumbering"]           = ApiParagraph.prototype.SetNumbering;
 	ApiParagraph.prototype["GetElementsCount"]       = ApiParagraph.prototype.GetElementsCount;
+	ApiParagraph.prototype["IsEmpty"]                = ApiParagraph.prototype.IsEmpty;
 	ApiParagraph.prototype["GetElement"]             = ApiParagraph.prototype.GetElement;
 	ApiParagraph.prototype["RemoveElement"]          = ApiParagraph.prototype.RemoveElement;
 	ApiParagraph.prototype["Delete"]                 = ApiParagraph.prototype.Delete;
