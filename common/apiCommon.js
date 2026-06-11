@@ -1918,6 +1918,15 @@ function (window, undefined) {
 			}
 		}
 	};
+	asc_ChartSettings.prototype.getDataTable = function () {
+		if (this.chartSpace) {
+			let oDataTable = this.chartSpace.getDataTable();
+			if (oDataTable) {
+				return !!oDataTable.showKeys;
+			}
+		}
+		return null;
+	};
 	asc_ChartSettings.prototype.setDisplayErrorBars = function (bShowErrorBars, nErrorValueType) {
 		if (!this.chartSpace) {
 			return;
@@ -8589,6 +8598,7 @@ function (window, undefined) {
 	prot["setDisplayChartTitle"] = prot.setDisplayChartTitle;
 	prot["setDisplayDataLabels"] = prot.setDisplayDataLabels;
 	prot["setDisplayDataTable"] = prot.setDisplayDataTable;
+	prot["getDataTable"] = prot.getDataTable;
 	prot["setDisplayErrorBars"] = prot.setDisplayErrorBars;
 	prot["setDisplayGridlines"] = prot.setDisplayGridlines;
 	prot["setDisplayLegend"] = prot.setDisplayLegend;

@@ -21590,6 +21590,26 @@
 		return true;
 	};
 
+	/**
+	 * Specifies whether the data table is displayed below the chart, optionally with the legend keys.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @param {boolean} bShow - Whether to show or hide the data table below the chart.
+	 * @param {boolean} [bShowKeys=false] - Whether to show the legend keys in the data table.
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetShowDataTable.js
+	 */
+	ApiChart.prototype.SetShowDataTable = function(bShow, bShowKeys)
+	{
+		if(this.Chart && this.Chart.chart)
+		{
+			this.Chart.showDataTable(bShow, bShowKeys);
+			return true;
+		}
+		return false;
+	};
+
 
 	/**
 	 * Spicifies the show options for data labels.
@@ -31473,6 +31493,7 @@
 	ApiChart.prototype["SetLegendPos"]                 = ApiChart.prototype.SetLegendPos;
 	ApiChart.prototype["SetLegendFontSize"]            = ApiChart.prototype.SetLegendFontSize;
 	ApiChart.prototype["SetShowDataLabels"]            = ApiChart.prototype.SetShowDataLabels;
+	ApiChart.prototype["SetShowDataTable"]             = ApiChart.prototype.SetShowDataTable;
 	ApiChart.prototype["SetShowPointDataLabel"]        = ApiChart.prototype.SetShowPointDataLabel;
 	ApiChart.prototype["SetDataLabelsTextPr"]          = ApiChart.prototype.SetDataLabelsTextPr;
 	ApiChart.prototype["SetPointDataLabelTextPr"]      = ApiChart.prototype.SetPointDataLabelTextPr;

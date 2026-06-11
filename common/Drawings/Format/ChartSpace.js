@@ -11624,7 +11624,13 @@ function(window, undefined) {
 			} else {
 				dataTable.resetFormatting();
 			}
+
+			return dataTable;
 		}
+	};
+	CChartSpace.prototype.getDataTable = function () {
+		let plotArea = this.getPlotArea();
+		return plotArea ? plotArea.dTable : null;
 	};
 	CChartSpace.prototype.getSpPrFormStyleEntry = function (oStyleEntry, aColors, nIdx) {
 		return AscFormat.CBaseChartObject.prototype.getSpPrFormStyleEntry.call(this, oStyleEntry, aColors, nIdx);
