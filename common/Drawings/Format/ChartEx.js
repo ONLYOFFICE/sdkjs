@@ -3744,6 +3744,11 @@ function (window, undefined) {
 			sContent = sContent.slice(1);
 		}
 		if (typeof sContent !== "string" || sContent.length === 0) {
+			if (oDim.f) {
+				oDim.setF(null);
+				oDim.updateCache();
+				oDim.onUpdate();
+			}
 			return;
 		}
 		if (oDim.f) {
@@ -3764,6 +3769,46 @@ function (window, undefined) {
 		this.setDimensionFormula(this.getCatDimension(), sValues, FORMULA_DIRECTION_COL);
 	};
 	CSeries.prototype.setName = function (sName) {
+		if (typeof sName !== "string" || sName.length === 0) {
+			if (this.tx) {
+				this.setTx(null);
+			}
+			return;
+		}
+		let oTx = this.tx;
+		if (!oTx) {
+			oTx = new AscFormat.CChartText();
+			this.setTx(oTx);
+		}
+		let oTxData = oTx.txData;
+		if (!oTxData) {
+			oTxData = new AscFormat.CTextData();
+			oTx.setTxData(oTxData);
+		}
+		let sContent = sName.charAt(0) === "=" ? sName.slice(1) : sName;
+		if (sContent.length >= 2 && sContent.charAt(0) === "\"" && sContent.charAt(sContent.length - 1) === "\"") {
+			if (oTxData.f) {
+				oTxData.setF(null);
+			}
+			oTxData.setV(sContent.slice(1, sContent.length - 1));
+			return;
+		}
+		let aParsed = AscFormat.fParseChartFormula(sContent);
+		if (Array.isArray(aParsed) && aParsed.length > 0) {
+			if (oTxData.f) {
+				oTxData.f.setContent(sContent);
+			} else {
+				let oF = new CFormula();
+				oF.setContent(sContent);
+				oTxData.setF(oF);
+			}
+			oTxData.updateCache();
+		} else {
+			if (oTxData.f) {
+				oTxData.setF(null);
+			}
+			oTxData.setV(sContent);
+		}
 	};
 	CSeries.prototype.getName = function () {
 		let oTxData = this.tx && this.tx.txData;
