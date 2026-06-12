@@ -3824,10 +3824,10 @@ function (window, undefined) {
 	};
 	CSeries.prototype.getSeriesName = function () {
 		let oTxData = this.tx && this.tx.txData;
-		if (oTxData && typeof oTxData.v === "string") {
+		if (oTxData && typeof oTxData.v === "string" && oTxData.v.length > 0) {
 			return oTxData.v;
 		}
-		return "";
+		return AscCommon.translateManager.getValue('Series') + " " + (this.getIdx() + 1);
 	};
 	CSeries.prototype.asc_getNameVal = function () {
 		let oThis = this;
