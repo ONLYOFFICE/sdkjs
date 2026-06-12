@@ -1235,20 +1235,16 @@ function (window, undefined) {
 		const visibility = this.visibility;
 		const showSeriesName = !!(visibility && visibility.seriesName);
 		const showCategoryName = !!(visibility && visibility.categoryName);
-		const showValue = !!(visibility && visibility.value);
+		const showValue = !!(visibility && visibility.value) || (!showSeriesName && !showCategoryName);
 		settings.putShowSerName(showSeriesName);
 		settings.putShowCatName(showCategoryName);
 		settings.putShowVal(showValue);
 		settings.putSeparator(this.separator);
-		if (showSeriesName || showCategoryName || showValue) {
-			let ascPos = ascPosFromChartExPos(this.pos);
-			if (ascPos === null) {
-				ascPos = AscFormat.isRealNumber(defaultPos) ? defaultPos : Asc.c_oAscChartDataLabelsPos.ctr;
-			}
-			settings.putDataLabelsPos(ascPos);
-		} else {
-			settings.putDataLabelsPos(Asc.c_oAscChartDataLabelsPos.none);
+		let ascPos = ascPosFromChartExPos(this.pos);
+		if (ascPos === null) {
+			ascPos = AscFormat.isRealNumber(defaultPos) ? defaultPos : Asc.c_oAscChartDataLabelsPos.ctr;
 		}
+		settings.putDataLabelsPos(ascPos);
 	};
 	CDataLabels.prototype.Refresh_RecalcData = function () {
 		this.Refresh_RecalcData2();
@@ -3266,11 +3262,14 @@ function (window, undefined) {
 			if (!seria) {
 				continue;
 			}
+			if (isNone) {
+				if (seria.dataLabels) {
+					seria.setDataLabels(null);
+				}
+				continue;
+			}
 			let dataLabels = seria.dataLabels;
 			if (!dataLabels) {
-				if (isNone) {
-					continue;
-				}
 				dataLabels = new CDataLabels();
 				seria.setDataLabels(dataLabels);
 			}

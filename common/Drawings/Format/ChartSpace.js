@@ -6061,8 +6061,9 @@ function(window, undefined) {
 
 		if (cachedData && seria && seria.dataLabels) {
 			const visibility = seria.dataLabels.visibility;
-			const showLabels = !visibility || visibility.value === true || visibility.seriesName === true || visibility.categoryName === true;
 			const chartType = cachedData.type;
+			const isHierarchical = chartType === AscFormat.SERIES_LAYOUT_TREEMAP || chartType === AscFormat.SERIES_LAYOUT_SUNBURST;
+			const showLabels = !isHierarchical || !visibility || visibility.value === true || visibility.seriesName === true || visibility.categoryName === true;
 			const default_lbl = new AscFormat.CDLbl();
 			const nDefaultPosition = seria.dataLabels.pos ? seria.dataLabels.pos : AscFormat.DATA_LABEL_POS_OUT_END;
 			default_lbl.initDefault(nDefaultPosition);
@@ -9611,11 +9612,14 @@ function(window, undefined) {
 				if (!seria) {
 					continue;
 				}
+				if (!bDisplay) {
+					if (seria.dataLabels) {
+						seria.setDataLabels(null);
+					}
+					continue;
+				}
 				let dataLabels = seria.dataLabels;
 				if (!dataLabels) {
-					if (!bDisplay) {
-						continue;
-					}
 					dataLabels = new AscFormat.CDataLabels();
 					seria.setDataLabels(dataLabels);
 				}
