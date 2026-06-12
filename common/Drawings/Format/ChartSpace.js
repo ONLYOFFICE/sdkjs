@@ -6613,7 +6613,7 @@ function(window, undefined) {
 								aStrings.push(strCache.pts[j].val);
 								j--;
 							} else {
-								aStrings.push('');
+								aStrings.push((i + 1) + "");
 							}
 						}
 					} else if (type === AscFormat.SERIES_LAYOUT_FUNNEL || type === AscFormat.SERIES_LAYOUT_WATERFALL || type === AscFormat.SERIES_LAYOUT_BOX_WHISKER) {
@@ -11190,6 +11190,9 @@ function(window, undefined) {
 		return this.spPr && this.spPr.Fill && this.spPr.Fill.isAccent1();
 	};
 	CChartSpace.prototype.addNewSeries = function () {
+		if (this.isChartEx()) {
+			return this.addSeriesChartEx();
+		}
 		var oLastChart = this.chart.plotArea.charts[this.chart.plotArea.charts.length - 1];
 		if (!oLastChart) {
 			return null;
@@ -11199,6 +11202,41 @@ function(window, undefined) {
 		} else {
 			return this.addSeries(null, "={1}");
 		}
+	};
+	CChartSpace.prototype.addSeriesChartEx = function () {
+		let plotAreaRegion = this.getPlotAreaRegion();
+		let oChartData = this.chartData;
+		if (!plotAreaRegion || !oChartData) {
+			return null;
+		}
+		let aSeries = plotAreaRegion.series;
+		let oLastSeries = aSeries[aSeries.length - 1];
+		let oLastData = oLastSeries && oLastSeries.getData();
+		if (!oLastSeries || !oLastData) {
+			return null;
+		}
+		AscCommon.History.Create_NewPoint(0);
+		let nNewId = 0;
+		for (let nData = 0; nData < oChartData.data.length; ++nData) {
+			if (AscFormat.isRealNumber(oChartData.data[nData].id) && oChartData.data[nData].id >= nNewId) {
+				nNewId = oChartData.data[nData].id + 1;
+			}
+		}
+		let oNewData = oLastData.createDuplicate();
+		oNewData.setId(nNewId);
+		oChartData.addData(oNewData);
+		let nFormatIdx = 0;
+		for (let nSer = 0; nSer < aSeries.length; ++nSer) {
+			if (AscFormat.isRealNumber(aSeries[nSer].formatIdx) && aSeries[nSer].formatIdx >= nFormatIdx) {
+				nFormatIdx = aSeries[nSer].formatIdx + 1;
+			}
+		}
+		let oNewSeries = oLastSeries.createDuplicate();
+		oNewSeries.setDataId(nNewId);
+		oNewSeries.setFormatIdx(nFormatIdx);
+		oNewSeries.setUniqueId(AscCommon.CreateGUID());
+		plotAreaRegion.addSeries(oNewSeries);
+		return oNewSeries;
 	};
 	CChartSpace.prototype.setNewSeriesIdxAndOrder = function (oSeries) {
 		var aAllSeries = this.getAllSeries();
@@ -11387,7 +11425,7 @@ function(window, undefined) {
 			return Asc.c_oAscError.ID.No;
 		}
 		if(this.isChartEx()) {
-			return Asc.c_oAscError.ID.CannotFillRange;
+			return this.buildSeriesChartEx(aRefs);
 		}
 		if (aRefs.length > MAX_SERIES_COUNT) {
 			return Asc.c_oAscError.ID.MaxDataSeriesError;
@@ -11471,7 +11509,6 @@ function(window, undefined) {
 		return nResult;
 	};
 	CChartSpace.prototype.fillDataFromTrack = function (oSelectedRange) {
-		if(this.isChartEx()) return;
 		if (this.pivotSource) {
 			this.setPivotSource(null);
 		}
@@ -11481,11 +11518,37 @@ function(window, undefined) {
 			this.recalculate();
 			return;
 		}
+		if (this.isChartEx()) {
+			this.fillChartExDataFromTrack(oSelectedRange);
+			return;
+		}
 		let oDataRange = this.getDataRefs();
 		let nResult = this.buildSeries(oDataRange.getSeriesRefsFromSelectedRange(oSelectedRange, this.isScatterChartType(), this.getChartType()));
 		if (Asc.c_oAscError.ID.No === nResult) {
 			this.recalculate();
 		}
+	};
+	CChartSpace.prototype.fillChartExDataFromTrack = function (oSelectedRange) {
+		let oDataRange = this.getDataRefs();
+		let aRefs = oDataRange.getSeriesRefsFromSelectedRange(oSelectedRange, this.isScatterChartType(), this.getChartType());
+		if (Array.isArray(aRefs)) {
+			this.buildSeriesChartEx(aRefs);
+			this.recalculate();
+		}
+	};
+	CChartSpace.prototype.buildSeriesChartEx = function (aRefs) {
+		if (!Array.isArray(aRefs)) {
+			return Asc.c_oAscError.ID.No;
+		}
+		let aAllSeries = this.getAllSeries();
+		aAllSeries.sort(function (a, b) {
+			return a.formatIdx - b.formatIdx;
+		});
+		let nCount = Math.min(aRefs.length, aAllSeries.length);
+		for (let nRef = 0; nRef < nCount; ++nRef) {
+			aAllSeries[nRef].setData(aRefs[nRef]);
+		}
+		return Asc.c_oAscError.ID.No;
 	};
 	CChartSpace.prototype.checkLegendLayoutSize = function () {
 		var oChart = this.chart;

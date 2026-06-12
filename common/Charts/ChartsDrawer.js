@@ -3002,6 +3002,7 @@ CChartsDrawer.prototype =
 		}
 
 		const plotArea = chartSpace.chart.plotArea;
+		plotArea.plotAreaRegion.clearCachedData();
         const axisProperties = {
 			isValid: false,
             cat : {max: null, min:null, scale : []},
