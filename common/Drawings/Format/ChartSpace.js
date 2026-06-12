@@ -5283,6 +5283,10 @@ function(window, undefined) {
 			case AscDFH.historyitem_NumericDimension_RemoveLevelData:
 			case AscDFH.historyitem_StringDimension_RemoveLevelData:
 			case AscDFH.historyitem_type_StringDimension:
+			case AscDFH.historyitem_PlotAreaRegion_AddSeries:
+			case AscDFH.historyitem_PlotAreaRegion_RemoveSeries:
+			case AscDFH.historyitem_ChartData_AddData:
+			case AscDFH.historyitem_ChartData_RemoveData:
 			case AscDFH.historyitem_ChartSpace_SetChart: {
 				this.handleUpdateType();
 				break;
@@ -5611,9 +5615,6 @@ function(window, undefined) {
 			if (!plotAreaRegion) {
 				return false;
 			}
-
-			let oSeries = plotAreaRegion.series[0];
-			if(!oSeries) return false;
 			return true;
 		}
 		if (this.chart && this.chart.plotArea && this.chart.plotArea.charts.length > 0) {
@@ -10978,6 +10979,8 @@ function(window, undefined) {
 			if (this.chart.legend) {
 				this.chart.legend.draw(graphics);
 			}
+		} else if (this.chart && this.chart.title && this.isChartEx()) {
+			this.chart.title.draw(graphics);
 		}
 		for (var i = 0; i < this.userShapes.length; ++i) {
 			if (this.userShapes[i].object) {

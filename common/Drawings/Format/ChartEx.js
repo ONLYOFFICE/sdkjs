@@ -635,6 +635,12 @@ function (window, undefined) {
 			History.CanAddChanges() && History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_ChartData_RemoveData, pos, [data], false));
 		}
 	};
+	CChartData.prototype.Refresh_RecalcData = function (data) {
+		const chartSpace = this.getChartSpace();
+		if (chartSpace) {
+			chartSpace.Refresh_RecalcData(data);
+		}
+	};
 	CChartData.prototype.updateReferences = function (bDisplayEmptyCellsAs, bDisplayHidden) {
 		for (let nData = 0; nData < this.data.length; ++nData) {
 			this.data[nData].updateReferences(bDisplayEmptyCellsAs, bDisplayHidden);
@@ -3260,6 +3266,12 @@ function (window, undefined) {
 		if (this.series[pos]) {
 			let series = this.series.splice(pos, 1)[0];
 			History.CanAddChanges() && History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_PlotAreaRegion_RemoveSeries, pos, [series], false));
+		}
+	};
+	CPlotAreaRegion.prototype.Refresh_RecalcData = function (data) {
+		const chartSpace = this.getChartSpace();
+		if (chartSpace) {
+			chartSpace.Refresh_RecalcData(data);
 		}
 	};
 	CPlotAreaRegion.prototype.updateReferences = function (bDisplayEmptyCellsAs, bDisplayHidden) {

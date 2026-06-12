@@ -220,6 +220,9 @@ CChartsDrawer.prototype =
 
 	createChartEx: function (seria) {
 		this.charts = {};
+		if (!seria) {
+			return;
+		}
 		switch (seria.layoutId) {
 			case AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN :
 				this.charts.chartEx = new drawClusteredColumn(seria, this);
@@ -652,8 +655,9 @@ CChartsDrawer.prototype =
 	//****positions text labels****
 	recalculatePositionText: function (obj, idx) {
 		var pos;
+		const bChartTitle = this.cChartSpace.isChartEx() && obj.getObjectType() === AscDFH.historyitem_type_Title && obj.parent && obj.parent.getObjectType() === AscDFH.historyitem_type_Chart;
 
-		if (!this.cChartSpace.bEmptySeries) {
+		if (!this.cChartSpace.bEmptySeries || bChartTitle) {
 			var type = obj.getObjectType();
 
 			switch (type) {
