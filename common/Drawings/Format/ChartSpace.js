@@ -6603,7 +6603,7 @@ function(window, undefined) {
 								aStrings.push(strCache.pts[j].val);
 								j++;
 							} else {
-								aStrings.push('');
+								aStrings.push((i + 1) + "");
 							}
 						}
 					} else if (strCache && type === AscFormat.SERIES_LAYOUT_FUNNEL) {
