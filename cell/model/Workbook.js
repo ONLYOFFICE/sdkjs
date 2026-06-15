@@ -7806,22 +7806,26 @@
 							case Asc.ECfType.beginsWith:
 							case Asc.ECfType.endsWith:
 								var operator;
-								switch (oRule.type) {
-									case Asc.ECfType.containsText:
-										operator = AscCommonExcel.ECfOperator.Operator_containsText;
-										break;
-									case Asc.ECfType.notContainsText:
-										operator = AscCommonExcel.ECfOperator.Operator_notContains;
-										break;
-									case Asc.ECfType.beginsWith:
-										operator = AscCommonExcel.ECfOperator.Operator_beginsWith;
-										break;
-									case Asc.ECfType.endsWith:
-										operator = AscCommonExcel.ECfOperator.Operator_endsWith;
-										break;
-								}
-								if (operator) {
-									oRule.asc_setOperator(operator);
+								if (oRule.operator !== null && oRule.operator !== undefined) {
+									operator = oRule.operator;
+								} else {
+									switch (oRule.type) {
+										case Asc.ECfType.containsText:
+											operator = AscCommonExcel.ECfOperator.Operator_containsText;
+											break;
+										case Asc.ECfType.notContainsText:
+											operator = AscCommonExcel.ECfOperator.Operator_notContains;
+											break;
+										case Asc.ECfType.beginsWith:
+											operator = AscCommonExcel.ECfOperator.Operator_beginsWith;
+											break;
+										case Asc.ECfType.endsWith:
+											operator = AscCommonExcel.ECfOperator.Operator_endsWith;
+											break;
+									}
+									if (operator !== null && operator !== undefined) {
+										oRule.asc_setOperator(operator);
+									}
 								}
 								formulaParent = new AscCommonExcel.CConditionalFormattingFormulaParent(this, oRule, true);
 								oRuleElement =  oRule.getFormulaCellIs(Asc.ECfType.notContainsText === oRule.type || Asc.ECfType.containsText === oRule.type);
