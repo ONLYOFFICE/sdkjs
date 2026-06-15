@@ -5519,7 +5519,7 @@ background-repeat: no-repeat;\
 			if (logicDocument.IsSelectionLocked(AscCommon.changestype_None, {Type : AscCommon.changestype_2_HdrFtr}))
 				return;
 			
-			logicDocument.StartAction(AscDFH.historydescription_Document_AddPageNumToHdrFtr);
+			logicDocument.StartAction(AscDFH.historydescription_Document_AddPageNumToHdrFtr, null, null, {AlignV: where, AlignH: align});
 			logicDocument.Document_AddPageNum(where, align);
 			logicDocument.Recalculate();
 			logicDocument.FinalizeAction();
@@ -5529,7 +5529,7 @@ background-repeat: no-repeat;\
 			if (logicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
 				return;
 			
-			logicDocument.StartAction(AscDFH.historydescription_Document_AddPageNumToCurrentPos);
+			logicDocument.StartAction(AscDFH.historydescription_Document_AddPageNumToCurrentPos, null, null, true);
 			logicDocument.Document_AddPageNum(where, align);
 			logicDocument.Recalculate();
 			logicDocument.FinalizeAction();
@@ -5554,7 +5554,7 @@ background-repeat: no-repeat;\
 	{
 		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_HdrFtr))
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetHdrFtrFirstPage);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetHdrFtrFirstPage, null, null, {isOn: isOn});
 			this.WordControl.m_oLogicDocument.Document_SetHdrFtrFirstPage(isOn);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
@@ -5564,7 +5564,7 @@ background-repeat: no-repeat;\
 	{
 		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_HdrFtr))
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetHdrFtrEvenAndOdd);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetHdrFtrEvenAndOdd, null, null, {isOn: isOn});
 			this.WordControl.m_oLogicDocument.Document_SetHdrFtrEvenAndOddHeaders(isOn);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}

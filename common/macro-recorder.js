@@ -872,6 +872,19 @@
 				return "square";
 		}
 	}
+	function GetDocAlignName(nData)
+	{
+		let align = null;
+
+		switch (nData) {
+			case AscCommon.align_Left:		align = 'left';		break;
+			case AscCommon.align_Right:		align = 'right';	break;
+			case AscCommon.align_Center:	align = 'center';	break;
+			default:						align = 'center';
+		}
+
+		return align;
+	}
 
 	function tabLeaderToType(leader)
 	{
@@ -1937,9 +1950,47 @@
 
 			let object = buildTocPrObject(oPr);
 			return "\tdoc.GetTablesOfContents().GetItem(" + index + ").SetPr(" + JSON.stringify(object, null, "\t").replace(/\n/g, "\n\t") + ");\n";
-		}
-	};
+		},
+		addPageNumToHdrFtr: function(data)
+		{
+			let str		= "\tlet p = doc.GetFinalSection()";
+			let AlignV	= data.AlignV;
+			let AlignH	= data.AlignH;
+			let align	= GetDocAlignName(AlignH);
 
+			if (AscCommon.hdrftr_Header === AlignV)
+			{
+				str += "\n\t\t.GetHeader(\"default\", true)"
+			}
+			else if (AscCommon.hdrftr_Footer === AlignV)
+			{
+				str += "\n\t\t.GetFooter(\"default\", true)"
+			}
+
+			str += "\n\t\t.GetElement(0);\n\n\tp.RemoveAllElements();\n\tp.AddPageNumber();\n\tp.SetJc(\"" + align + "\");\n"
+
+			return str;
+		},
+		addPageNumToCurrentPos: function()
+		{
+			return "\tdoc.GetCurrentParagraph().AddPageNumber();\n";
+		},
+		addPageCount: function()
+		{
+			return "\tdoc.GetCurrentParagraph().AddPagesCount();\n";
+		},
+		setHdrFtrEvenAndOdd: function(data)
+		{
+			let isOn = data.isOn;
+			return "\tdoc.SetEvenAndOddHdrFtr(" + isOn + ");\n";
+		},
+		setHdrFtrFirstPage: function()
+		{
+			return ""; //no api
+		}
+
+	};
+	
 	const DEActionMap = {};
 	// home tab and general changes
 	DEActionMap[AscDFH.historydescription_Document_SetTextBold]				= wordActions.setTextBold;
@@ -2060,6 +2111,11 @@
 	DEActionMap[AscDFH.historydescription_Document_AddTableOfContents]			= wordActions.addTableOfContents;
 	DEActionMap[AscDFH.historydescription_Document_UpdateTableOfContents]		= wordActions.updateTableOfContents;
 	DEActionMap[AscDFH.historydescription_Document_SetComplexFieldPr]			= wordActions.setComplexFieldPr;
+	WordActionsMacroList[AscDFH.historydescription_Document_AddPageNumToHdrFtr]			= wordActions.addPageNumToHdrFtr;
+	WordActionsMacroList[AscDFH.historydescription_Document_AddPageNumToCurrentPos]		= wordActions.addPageNumToCurrentPos;
+	WordActionsMacroList[AscDFH.historydescription_Document_AddPageCount]				= wordActions.addPageCount;
+	WordActionsMacroList[AscDFH.historydescription_Document_SetHdrFtrEvenAndOdd]		= wordActions.setHdrFtrEvenAndOdd;
+	WordActionsMacroList[AscDFH.historydescription_Document_SetHdrFtrFirstPage]			= wordActions.setHdrFtrFirstPage;
 
 	const cellActions = {
 		setCellIncreaseFontSize	: function(){return "\tApi.GetSelection().FontIncrease();\n"},
