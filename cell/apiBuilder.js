@@ -13568,6 +13568,36 @@
 	};
 
 	/**
+	 * Sets the fill formatting properties to the current graphic object.
+	 *
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 *
+	 * @param {ApiFill} fill - The fill type used to fill the graphic object.
+	 * @returns {boolean} - returns false if param is invalid.
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Fill.js
+	 */
+	ApiDrawing.prototype.Fill = function (fill) {
+		const classType = this.GetClassType();
+		if (classType !== 'shape' && classType !== 'image' && classType !== 'chart') {
+			return false;
+		}
+
+		if (!fill || !fill.GetClassType || fill.GetClassType() !== 'fill') {
+			return false;
+		}
+
+		if (this.Drawing && this.Drawing.spPr) {
+			this.Drawing.spPr.setFill(fill.UniFill);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
 	 * Gets the fill formatting properties from the current graphic object.
 	 *
 	 * @memberof ApiDrawing
@@ -28730,6 +28760,7 @@
 	ApiDrawing.prototype["GetDescription"]             =  ApiDrawing.prototype.GetDescription;
 	ApiDrawing.prototype["Select"]                     =  ApiDrawing.prototype.Select;
 	ApiDrawing.prototype["SetFill"]                    =  ApiDrawing.prototype.SetFill;
+	ApiDrawing.prototype["Fill"]                       =  ApiDrawing.prototype.Fill;
 	ApiDrawing.prototype["GetFill"]                    =  ApiDrawing.prototype.GetFill;
 	ApiDrawing.prototype["SetOutLine"]                 =  ApiDrawing.prototype.SetOutLine;
 	ApiDrawing.prototype["Unselect"]                   =  ApiDrawing.prototype.Unselect;
