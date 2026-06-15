@@ -2405,6 +2405,10 @@
 				window["AscDesktopEditor"]["SpellCheck"]("clear");
 			};
 
+			this.SpellCheckApi.checkDictionary = function () {
+				return true;
+			};
+
 			if (window["AscDesktopEditor"]["IsLocalFile"] && !window["AscDesktopEditor"]["IsLocalFile"]())
 			{
 				let langs = AscCommon.spellcheckGetLanguages();
