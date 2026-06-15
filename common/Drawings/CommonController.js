@@ -11849,7 +11849,7 @@
 
 
 		function isSlideLikeObject(oObject) {
-			return !!oObject.isSlideLikeObject && oObject.isSlideLikeObject();
+			return oObject && !!oObject.isSlideLikeObject && oObject.isSlideLikeObject();
 		}
 
 		// Shapes merge

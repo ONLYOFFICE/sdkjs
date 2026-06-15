@@ -97,7 +97,6 @@
 	AscDFH.changesFactory[AscDFH.historyitem_SlideSetTransition] = AscDFH.CChangesDrawingsObjectNoId;
 	AscDFH.changesFactory[AscDFH.historyitem_SlideSetSize] = AscDFH.CChangesDrawingsObjectNoId;
 	AscDFH.changesFactory[AscDFH.historyitem_SlideSetClrMapOverride] = AscDFH.CChangesDrawingsObject;
-	AscDFH.changesFactory[AscDFH.historyitem_PropLockerSetId] = AscDFH.CChangesDrawingsString;
 	AscDFH.changesFactory[AscDFH.historyitem_SlideCommentsAddComment] = AscDFH.CChangesDrawingsContentComments;
 	AscDFH.changesFactory[AscDFH.historyitem_SlideCommentsRemoveComment] = AscDFH.CChangesDrawingsContentComments;
 	AscDFH.changesFactory[AscDFH.historyitem_SlideSetNotes] = AscDFH.CChangesDrawingsObject;
@@ -117,7 +116,6 @@
 		oClass.Height = value.b;
 	};
 	AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetClrMapOverride] = function (oClass, value) {oClass.clrMap = value;};
-	AscDFH.drawingsChangesMap[AscDFH.historyitem_PropLockerSetId] = function (oClass, value) {oClass.objectId = value;};
 	AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetNotes] = function (oClass, value) {oClass.notes = value;};
 
 

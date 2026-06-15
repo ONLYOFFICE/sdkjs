@@ -2502,7 +2502,7 @@
 		return {hit: false};
 	};
 	CGraphicObjectBase.prototype.hitToHandles = function (x, y) {
-		if (this.isSlideNoteShape()) {
+		if (this.isSlideNoteShape && this.isSlideNoteShape()) {
 			return -1;
 		}
 		if (!AscFormat.canSelectDrawing(this)) {
@@ -2514,7 +2514,7 @@
 		return AscFormat.hitToHandles(x, y, this);
 	};
 	CGraphicObjectBase.prototype.hitInBoundingRect = function (x, y) {
-		if (this.isSlideNoteShape()) {
+		if (this.isSlideNoteShape && this.isSlideNoteShape()) {
 			return false;
 		}
 		if (!AscFormat.canSelectDrawing(this)) {
@@ -2549,7 +2549,7 @@
 		if (AscCommon.IsShapeToImageConverter) {
 			return;
 		}
-		var bNotes = !!(this.isSlideNoteShape());
+		var bNotes = !!(this.isSlideNoteShape && this.isSlideNoteShape());
 		if (!this.group && !bNotes) {
 			var oLock;
 			if (this.parent instanceof AscCommonWord.ParaDrawing) {

@@ -896,9 +896,6 @@ function getFlatPenColor() {
 	CCheckBoxController.prototype.drawBounds = function (graphics, transform, transformText, pageIndex, opt) {
 		this.draw(graphics, transform, transformText, pageIndex, opt);
 	};
-	CCheckBoxController.prototype.specialDraw = AscFormat.CShape.prototype.specialDraw;
-	CCheckBoxController.prototype.drawShape = AscFormat.CShape.prototype.drawShape;
-	CCheckBoxController.prototype.isSlideImagePlaceholder = function () {return false;};
 	CCheckBoxController.prototype.draw = function (graphics, transform, transformText, pageIndex, opt) {
 		const oControl = this.control;
 		AscFormat.CShape.prototype.draw.call(oControl, graphics, transform, transformText, pageIndex, opt);
@@ -1125,7 +1122,7 @@ function getFlatPenColor() {
 		graphics.transform3(transform);
 		const endRoundControl = startRoundControl(graphics, 0, 0, oControl.extX, oControl.extY, 4, getFlatPenColor());
 		this.button.draw(graphics);
-		oControl.drawTxBody(graphics, transform, transformText, pageIndex);
+		AscCommon.drawTxBodyWithGraphicObjectDrawer(oControl, graphics, transform, transformText, pageIndex);
 		endRoundControl();
 		graphics.RestoreGrState();
 	};
