@@ -326,6 +326,12 @@
 	 * @typedef {("lrtb" | "tbrl" | "btlr")} TextFlowDirection
 	 */
 
+	/**
+	 * The available text autofit types inside a shape.
+	 * @typedef {("noAutoFit" | "normAutoFit" | "autoFit")} TextFitType
+	 * @see office-js-api/Examples/Enumerations/TextFitType.js
+	 */
+
     /**
      * The available color scheme identifiers.
      * @typedef {("accent1" | "accent2" | "accent3" | "accent4" | "accent5" | "accent6" | "bg1" | "bg2" | "dk1" | "dk2" | "lt1" | "lt2" | "tx1" | "tx2")} SchemeColorId
@@ -2315,6 +2321,22 @@
     };
 
     /**
+     * Returns the background fill of the current slide master.
+     * @memberof ApiMaster
+     * @typeofeditors ["CPE"]
+     * @returns {ApiFill | null} - returns null if the slide master doesn't exist or has no background fill.
+     * @since 9.5.0
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetBackground.js
+     */
+    ApiMaster.prototype.GetBackground = function(){
+        let fill = this.Master && this.Master.cSld.getBgFill();
+        if (fill)
+            return new AscBuilder.ApiFill(fill);
+
+        return null;
+    };
+
+    /**
      * Creates a copy of the specified slide master object.
      * @memberof ApiMaster
      * @typeofeditors ["CPE"]
@@ -2740,6 +2762,22 @@
         this.Layout.changeBackground(bg);
 
         return true;
+    };
+
+    /**
+     * Returns the background fill of the current slide layout.
+     * @memberof ApiLayout
+     * @typeofeditors ["CPE"]
+     * @returns {ApiFill | null} - returns null if the slide layout doesn't exist or has no background fill.
+     * @since 9.5.0
+     * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetBackground.js
+     */
+    ApiLayout.prototype.GetBackground = function(){
+        let fill = this.Layout && this.Layout.cSld.getBgFill();
+        if (fill)
+            return new AscBuilder.ApiFill(fill);
+
+        return null;
     };
 
     /**
@@ -3843,6 +3881,22 @@
             return true;
         }
         return false;
+    };
+
+    /**
+     * Returns the background fill of the current presentation slide.
+     * @memberof ApiSlide
+     * @typeofeditors ["CPE"]
+     * @returns {ApiFill | null} - returns null if the slide doesn't exist or has no background fill.
+     * @since 9.5.0
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetBackground.js
+     */
+    ApiSlide.prototype.GetBackground = function(){
+        let fill = this.Slide && this.Slide.cSld.getBgFill();
+        if (fill)
+            return new AscBuilder.ApiFill(fill);
+
+        return null;
     };
 
 
@@ -7237,6 +7291,33 @@
         }
     };
 
+    /**
+     * Sets the text autofit type to the current shape.
+     * @memberof ApiShape
+     * @typeofeditors ["CPE"]
+     * @param {TextFitType} fitType - The text autofit type.
+     * @returns {boolean} - returns false if the type is invalid or the shape doesn't exist.
+     * @since 9.5.0
+     * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetTextFit.js
+     */
+    ApiShape.prototype.SetTextFit = function(fitType)
+    {
+        let type;
+        switch (fitType)
+        {
+            case "noAutoFit":   type = AscFormat.text_fit_No;       break;
+            case "autoFit":     type = AscFormat.text_fit_Auto;     break;
+            case "normAutoFit": type = AscFormat.text_fit_NormAuto; break;
+            default: return false;
+        }
+
+        if (!this.Shape)
+            return false;
+
+        this.Shape.setTextFitType(type);
+        return true;
+    };
+
 
 	/**
 	 * Returns the geometry object from the current shape.
@@ -8414,6 +8495,7 @@
     ApiMaster.prototype["RemoveObject"]                   = ApiMaster.prototype.RemoveObject;
     ApiMaster.prototype["SetBackground"]                  = ApiMaster.prototype.SetBackground;
     ApiMaster.prototype["ClearBackground"]                = ApiMaster.prototype.ClearBackground;
+    ApiMaster.prototype["GetBackground"]                  = ApiMaster.prototype.GetBackground;
     ApiMaster.prototype["Copy"]                           = ApiMaster.prototype.Copy;
     ApiMaster.prototype["Duplicate"]                      = ApiMaster.prototype.Duplicate;
     ApiMaster.prototype["Delete"]                         = ApiMaster.prototype.Delete;
@@ -8438,6 +8520,7 @@
     ApiLayout.prototype["RemoveObject"]                   = ApiLayout.prototype.RemoveObject;
     ApiLayout.prototype["SetBackground"]                  = ApiLayout.prototype.SetBackground;
     ApiLayout.prototype["ClearBackground"]                = ApiLayout.prototype.ClearBackground;
+    ApiLayout.prototype["GetBackground"]                  = ApiLayout.prototype.GetBackground;
     ApiLayout.prototype["FollowMasterBackground"]         = ApiLayout.prototype.FollowMasterBackground;
     ApiLayout.prototype["Copy"]                           = ApiLayout.prototype.Copy;
     ApiLayout.prototype["Delete"]                         = ApiLayout.prototype.Delete;
@@ -8495,6 +8578,7 @@
     ApiSlide.prototype["AddComment"]                      = ApiSlide.prototype.AddComment;
     ApiSlide.prototype["RemoveObject"]                    = ApiSlide.prototype.RemoveObject;
     ApiSlide.prototype["SetBackground"]                   = ApiSlide.prototype.SetBackground;
+    ApiSlide.prototype["GetBackground"]                   = ApiSlide.prototype.GetBackground;
     ApiSlide.prototype["GetVisible"]                      = ApiSlide.prototype.GetVisible;
     ApiSlide.prototype["SetVisible"]                      = ApiSlide.prototype.SetVisible;
     ApiSlide.prototype["GetWidth"]                        = ApiSlide.prototype.GetWidth;
@@ -8600,6 +8684,10 @@
     ApiDrawing.prototype["SetFlipV"]                      = ApiDrawing.prototype.SetFlipV;
     ApiDrawing.prototype["SetLockAspect"]                 = ApiDrawing.prototype.SetLockAspect;
     ApiDrawing.prototype["GetLockAspect"]                 = ApiDrawing.prototype.GetLockAspect;
+    ApiDrawing.prototype["SetTitle"]                      = ApiDrawing.prototype.SetTitle;
+    ApiDrawing.prototype["GetTitle"]                      = ApiDrawing.prototype.GetTitle;
+    ApiDrawing.prototype["SetDescription"]                = ApiDrawing.prototype.SetDescription;
+    ApiDrawing.prototype["GetDescription"]                = ApiDrawing.prototype.GetDescription;
     ApiDrawing.prototype["GetPosX"]                       = ApiDrawing.prototype.GetPosX;
     ApiDrawing.prototype["GetPosY"]                       = ApiDrawing.prototype.GetPosY;
     ApiDrawing.prototype["SetPosX"]                       = ApiDrawing.prototype.SetPosX;
@@ -8668,6 +8756,8 @@
 	ApiChart.prototype["SetDataPointNumFormat"] = ApiChart.prototype.SetDataPointNumFormat = AscBuilder.ApiChart.prototype.SetDataPointNumFormat;
 	ApiChart.prototype["GetAllSeries"] = ApiChart.prototype.GetAllSeries = AscBuilder.ApiChart.prototype.GetAllSeries;
 	ApiChart.prototype["GetSeries"] = ApiChart.prototype.GetSeries = AscBuilder.ApiChart.prototype.GetSeries;
+	ApiChart.prototype["SetDataLabelsTextPr"] = ApiChart.prototype.SetDataLabelsTextPr = AscBuilder.ApiChart.prototype.SetDataLabelsTextPr;
+	ApiChart.prototype["SetPointDataLabelTextPr"] = ApiChart.prototype.SetPointDataLabelTextPr = AscBuilder.ApiChart.prototype.SetPointDataLabelTextPr;
 
     ApiImage.prototype["GetClassType"]                    = ApiImage.prototype.GetClassType;
 
@@ -8677,6 +8767,7 @@
     ApiShape.prototype["GetDocContent"]                   = ApiShape.prototype.GetDocContent;
     ApiShape.prototype["GetContent"]                      = ApiShape.prototype.GetContent;
     ApiShape.prototype["SetVerticalTextAlign"]            = ApiShape.prototype.SetVerticalTextAlign;
+    ApiShape.prototype["SetTextFit"]                      = ApiShape.prototype.SetTextFit;
 	ApiShape.prototype["GetGeometry"]                     = ApiShape.prototype.GetGeometry;
 	ApiShape.prototype["SetGeometry"]                     = ApiShape.prototype.SetGeometry;
 	ApiShape.prototype["SetFill"]                         = ApiShape.prototype.SetFill;

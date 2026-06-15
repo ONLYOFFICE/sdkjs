@@ -28724,6 +28724,10 @@
 	ApiDrawing.prototype["SetFlipV"]                   =  ApiDrawing.prototype.SetFlipV;
 	ApiDrawing.prototype["SetLockAspect"]              =  ApiDrawing.prototype.SetLockAspect;
 	ApiDrawing.prototype["GetLockAspect"]              =  ApiDrawing.prototype.GetLockAspect;
+	ApiDrawing.prototype["SetTitle"]                   =  ApiDrawing.prototype.SetTitle;
+	ApiDrawing.prototype["GetTitle"]                   =  ApiDrawing.prototype.GetTitle;
+	ApiDrawing.prototype["SetDescription"]             =  ApiDrawing.prototype.SetDescription;
+	ApiDrawing.prototype["GetDescription"]             =  ApiDrawing.prototype.GetDescription;
 	ApiDrawing.prototype["Select"]                     =  ApiDrawing.prototype.Select;
 	ApiDrawing.prototype["SetFill"]                    =  ApiDrawing.prototype.SetFill;
 	ApiDrawing.prototype["GetFill"]                    =  ApiDrawing.prototype.GetFill;

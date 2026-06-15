@@ -11055,6 +11055,9 @@
 			AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_CSld_SetBg, this.Bg, bg));
 			this.Bg = bg;
 		};
+		CSld.prototype.getBgFill = function () {
+			return this.Bg && this.Bg.bgPr ? this.Bg.bgPr.Fill : null;
+		};
 		CSld.prototype.setName = function (name) {
 			AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_CSld_SetName, this.name, name));
 			this.name = name;

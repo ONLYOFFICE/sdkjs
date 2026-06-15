@@ -31385,6 +31385,14 @@
 	ApiDrawing.prototype["GetFlipV"]				 = ApiDrawing.prototype.GetFlipV;
 	ApiDrawing.prototype["SetFlipH"]				 = ApiDrawing.prototype.SetFlipH;
 	ApiDrawing.prototype["SetFlipV"]				 = ApiDrawing.prototype.SetFlipV;
+	ApiDrawing.prototype["SetTitle"]				 = ApiDrawing.prototype.SetTitle;
+	ApiDrawing.prototype["GetTitle"]				 = ApiDrawing.prototype.GetTitle;
+	ApiDrawing.prototype["SetDescription"]			 = ApiDrawing.prototype.SetDescription;
+	ApiDrawing.prototype["GetDescription"]			 = ApiDrawing.prototype.GetDescription;
+	ApiDrawing.prototype["SetLockAspect"]			 = ApiDrawing.prototype.SetLockAspect;
+	ApiDrawing.prototype["GetLockAspect"]			 = ApiDrawing.prototype.GetLockAspect;
+	ApiDrawing.prototype["SetAllowOverlap"]			 = ApiDrawing.prototype.SetAllowOverlap;
+	ApiDrawing.prototype["GetAllowOverlap"]			 = ApiDrawing.prototype.GetAllowOverlap;
 
 	ApiDrawing.prototype["ToJSON"]                   = ApiDrawing.prototype.ToJSON;
 
