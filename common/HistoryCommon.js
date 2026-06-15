@@ -1884,7 +1884,6 @@
 	window['AscDFH'].historyitem_type_Pdf_Drawing			= 2228 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Page				= 2229 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Annot_Stamp		= 2230 << 16;
-	window['AscDFH'].historyitem_type_Pdf_PropLocker		= 2231 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Checkbox_Field	= 2232 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Combobox_Field	= 2233 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Listbox_Field		= 2234 << 16;
@@ -4309,7 +4308,6 @@
 	window['AscDFH'].historyitem_PDF_Document_RecognizePage		= window['AscDFH'].historyitem_type_PDF_Document | 6;
 	window['AscDFH'].historyitem_PDF_Document_SetDocument		= window['AscDFH'].historyitem_type_PDF_Document | 7;
 	window['AscDFH'].historyitem_PDF_Document_PageLocks			= window['AscDFH'].historyitem_type_PDF_Document | 8;
-	window['AscDFH'].historyitem_PDF_PropLocker_ObjectId		= window['AscDFH'].historyitem_type_PDF_Document | 9;
 	window['AscDFH'].historyitem_Pdf_Document_Start_Merge_Pages	= window['AscDFH'].historyitem_type_PDF_Document | 10;
 	window['AscDFH'].historyitem_Pdf_Document_Part_Merge_Pages	= window['AscDFH'].historyitem_type_PDF_Document | 11;
 	window['AscDFH'].historyitem_Pdf_Document_End_Merge_Pages	= window['AscDFH'].historyitem_type_PDF_Document | 12;

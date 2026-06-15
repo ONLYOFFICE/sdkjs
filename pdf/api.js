@@ -4278,7 +4278,7 @@
 					}
 
 					if (Class && e["blockValue"]["type"] == AscPDF.AscLockTypeElemPDF.Page) {
-						let oPage = (Class instanceof AscPDF.PropLocker) ? AscCommon.g_oTableId.Get_ById(Class.objectId) : Class;
+						let oPage = (Class instanceof AscCommon.PropLocker) ? AscCommon.g_oTableId.Get_ById(Class.objectId) : Class;
 						oThumbnails && oThumbnails._repaintPage(oPage.GetIndex());
 					}
                     if (Class.IsAnnot && Class.IsAnnot()) {
@@ -4351,7 +4351,7 @@
 					updateLock(Class);
 				}
 				if (Class && e["block"]["type"] == AscPDF.AscLockTypeElemPDF.Page) {
-					let oPage = (Class instanceof AscPDF.PropLocker) ? AscCommon.g_oTableId.Get_ById(Class.objectId) : Class;
+					let oPage = (Class instanceof AscCommon.PropLocker) ? AscCommon.g_oTableId.Get_ById(Class.objectId) : Class;
 					oThumbnails && oThumbnails._repaintPage(oPage.GetIndex());
 				}
 

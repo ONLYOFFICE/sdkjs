@@ -200,7 +200,7 @@
 		this.rotateLock = null;
 		this.editPageLock = null;
 
-		this.SetLocks(new AscPDF.PropLocker(this.GetId()), new AscPDF.PropLocker(this.GetId()), new AscPDF.PropLocker(this.GetId()));
+		this.SetLocks(new AscCommon.PropLocker(this.GetId()), new AscCommon.PropLocker(this.GetId()), new AscCommon.PropLocker(this.GetId()));
 	}
 	AscFormat.InitClass(CPageInfo, AscFormat.CBaseNoIdObject, AscDFH.historyitem_type_Pdf_Page);
 	CPageInfo.prototype.constructor = CPageInfo;
@@ -5643,6 +5643,5 @@
 	window["AscPDF"].PARTIAL_REDRAW_EXT = 5;
 	window["AscPDF"].collectDrawingsForPartialRedraw = collectDrawingsForPartialRedraw;
 	window["AscPDF"].CPageInfo = CPageInfo;
-	window["AscPDF"].PropLocker = PropLocker;
 
 })();

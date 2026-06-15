@@ -2101,7 +2101,6 @@
 	window['AscVisio'].StyleSheet_Type = StyleSheet_Type;
 	window['AscVisio'].ShapeSheet_Type = ShapeSheet_Type;
 	window['AscVisio'].Icon_Type = Icon_Type;
-	window['AscVisio'].PropLocker = PropLocker;
 	window['AscVisio'].createKeyFromSheetObject = createKeyFromSheetObject;
 
 })(window, window.document);

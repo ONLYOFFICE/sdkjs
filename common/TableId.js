@@ -490,7 +490,6 @@
 
 			// other
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Page]				= AscPDF.CPageInfo;
-			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_PropLocker]        = AscPDF.PropLocker;
 		}
 
 		this.m_oFactoryClass[AscDFH.historyitem_type_DocumentMacros] = AscCommon.CDocumentMacros;
