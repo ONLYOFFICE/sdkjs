@@ -768,6 +768,17 @@
 			AscCommon.g_clipboardBase.bPutImage = !!bPutImage;
 		}
 	};
+	baseEditorsApi.prototype.asc_CopyData = function(sText, sHtml, sInternal, oImage)
+	{
+		if (AscCommon.g_clipboardBase)
+			return AscCommon.g_clipboardBase.CopyData({
+				text     : sText,
+				html     : sHtml,
+				internal : sInternal,
+				image    : oImage
+			});
+		return false;
+	};
 	baseEditorsApi.prototype.sync_CanCopyCutCallback = function (bCanCopyCut, bCanCut)
 	{
 		this.sendEvent("asc_onCanCopyCut", bCanCopyCut, bCanCut);
@@ -6263,6 +6274,7 @@
 	prot["asc_setPdfViewer"] = prot.asc_setPdfViewer;
 
 	prot["asc_setPutImageToClipboard"] = prot.asc_setPutImageToClipboard;
+	prot["asc_CopyData"] = prot.asc_CopyData;
 
 	prot["asc_mergeSelectedShapes"] = prot.asc_mergeSelectedShapes;
 
