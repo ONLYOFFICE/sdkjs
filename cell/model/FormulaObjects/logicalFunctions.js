@@ -171,15 +171,14 @@ function (window, undefined) {
 	cIF.prototype.arrayIndexes = {1: 1, 2: 1};
 	cIF.prototype.getArrayIndex = function (index, type, args) {
 		let res = false;
-
-		//TODO need recheck
 		if (args && args[0].type === cElementType.array) {
 			return false;
 		}
 
-		if (type === cElementType.array) {
-			return false;
-		}
+		// if (type === cElementType.array) {
+		// 	return false;
+		// }
+
 		if (this.arrayIndexes) {
 			res = this.arrayIndexes[index];
 		}
@@ -187,27 +186,26 @@ function (window, undefined) {
 	};
 	cIF.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cIF.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
-
-		if (arg0 instanceof cArray) {
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
+		if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElement(0);
 		}
-		if (arg1 instanceof cArray) {
-			arg1 = arg1.getElement(0);
-		}
-		if (arg2 instanceof cArray) {
-			arg2 = arg2.getElement(0);
-		}
+		// if (arg1 instanceof cArray) {
+		// 	arg1 = arg1.getElement(0);
+		// }
+		// if (arg2 instanceof cArray) {
+		// 	arg2 = arg2.getElement(0);
+		// }
 
 		arg0 = arg0.tocBool();
-		if (arg0 instanceof cError) {
+		if (arg0.type === cElementType.error) {
 			return arg0;
-		} else if (arg0 instanceof cString) {
+		} else if (arg0.type === cElementType.string) {
 			return new cError(cErrorType.wrong_value_type);
 		} else if (arg0.value) {
-			return arg1 ? arg1 instanceof cEmpty ? new cNumber(0) : arg1 : new cBool(true);
+			return arg1 ? arg1.type === cElementType.empty ? new cNumber(0) : arg1 : new cBool(true);
 		} else {
-			return arg2 ? arg2 instanceof cEmpty ? new cNumber(0) : arg2 : new cBool(false);
+			return arg2 ? arg2.type === cElementType.empty ? new cNumber(0) : arg2 : new cBool(false);
 		}
 	};
 
