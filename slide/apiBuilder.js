@@ -516,6 +516,16 @@
 	 * )}
 	*/
 
+	/**
+	 * @typedef {Object} TableLook
+	 * @property {boolean} firstCol - Specifies that the first column conditional formatting shall be applied to the table.
+	 * @property {boolean} firstRow - Specifies that the first row conditional formatting shall be applied to the table.
+	 * @property {boolean} lastCol - Specifies that the last column conditional formatting shall be applied to the table.
+	 * @property {boolean} lastRow - Specifies that the last row conditional formatting shall be applied to the table.
+	 * @property {boolean} bandHor - Specifies that the horizontal banding conditional formatting shall not be applied to the table.
+	 * @property {boolean} bandVer - Specifies that the vertical banding conditional formatting shall not be applied to the table.
+	 */
+
     //------------------------------------------------------------------------------------------------------------------
     //
     // Base Api
@@ -7264,6 +7274,7 @@
      * @memberof ApiShape
      * @typeofeditors ["CPE"]
      * @param {VerticalTextAlign} verticalAlign - The type of the vertical alignment for the shape inner contents.
+	 * @returns {boolean}
      * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetVerticalTextAlign.js
 	 */
     ApiShape.prototype.SetVerticalTextAlign = function(verticalAlign)
@@ -7274,21 +7285,28 @@
             {
                 case "top":
                 {
-                    this.Shape.setVerticalAlign(4);
+                    this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
                     break;
                 }
                 case "center":
                 {
-                    this.Shape.setVerticalAlign(1);
+                    this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
                     break;
                 }
                 case "bottom":
                 {
-                    this.Shape.setVerticalAlign(0);
+                    this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
                     break;
                 }
+				default: {
+					return false;
+				}
             }
+
+			return true;
         }
+
+		return false;
     };
 
     /**
@@ -7318,6 +7336,32 @@
         return true;
     };
 
+	/**
+	 * Gets the vertical alignment from the shape content where a paragraph or text runs can be inserted.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CPE"]
+	 * @returns {VerticalTextAlign}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetVerticalTextAlign.js
+	 */
+	ApiShape.prototype.GetVerticalTextAlign = function() {
+		let vAlign = this.Shape.getVerticalAlign();
+
+		switch(vAlign)
+		{
+			case AscFormat.VERTICAL_ANCHOR_TYPE_TOP:
+			{
+				return "top";
+			}
+			case AscFormat.VERTICAL_ANCHOR_TYPE_CENTER:
+			{
+				return "center";
+			}
+			case AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM:
+			{
+				return "bottom";
+			}
+		}
+	};
 
 	/**
 	 * Returns the geometry object from the current shape.
@@ -7704,6 +7748,25 @@
             private_GetBoolean(isVerBand));
         this.Table.Set_TableLook(oTableLook);
     };
+	/**
+	 * Gets table look properties
+	 * @memberof ApiTable
+	 * @typeofeditors ["CPE"]
+	 * @returns {TableLook}
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetTableLook.js
+	 */
+	ApiTable.prototype.GetTableLook = function() {
+		let oTableLook = this.Table.Get_TableLook();
+
+		return {
+			firstCol:	oTableLook.IsFirstCol(),
+			firstRow:	oTableLook.IsFirstRow(),
+			lastCol:	oTableLook.IsLastCol(),
+			lastRow:	oTableLook.IsLastRow(),
+			bandHor:	oTableLook.IsBandHor(),
+			bandVer:	oTableLook.IsBandVer()
+		}
+	};
     /**
      * Adds a new row to the current table.
      * @memberof ApiTable
@@ -8345,6 +8408,9 @@
             oPr.VAlign = vertalignjc_Bottom;
         else if ("center" === sType)
             oPr.VAlign = vertalignjc_Center;
+		else
+			return false;
+
         this.Cell.Set_Pr(oPr);
     };
     /**
@@ -8363,6 +8429,9 @@
             oPr.TextDirection = textdirection_TBRL;
         else if ("btlr" === sType)
             oPr.TextDirection = textdirection_BTLR;
+		else
+			return false;
+
         this.Cell.Set_Pr(oPr);
     };
     /**
@@ -8769,6 +8838,7 @@
     ApiShape.prototype["GetContent"]                      = ApiShape.prototype.GetContent;
     ApiShape.prototype["SetVerticalTextAlign"]            = ApiShape.prototype.SetVerticalTextAlign;
     ApiShape.prototype["SetTextFit"]                      = ApiShape.prototype.SetTextFit;
+    ApiShape.prototype["GetVerticalTextAlign"]            = ApiShape.prototype.GetVerticalTextAlign;
 	ApiShape.prototype["GetGeometry"]                     = ApiShape.prototype.GetGeometry;
 	ApiShape.prototype["SetGeometry"]                     = ApiShape.prototype.SetGeometry;
 	ApiShape.prototype["SetFill"]                         = ApiShape.prototype.SetFill;
@@ -8787,6 +8857,7 @@
     ApiTable.prototype["GetRow"]                          = ApiTable.prototype.GetRow;
     ApiTable.prototype["MergeCells"]                      = ApiTable.prototype.MergeCells;
     ApiTable.prototype["SetTableLook"]                    = ApiTable.prototype.SetTableLook;
+    ApiTable.prototype["GetTableLook"]                    = ApiTable.prototype.GetTableLook;
     ApiTable.prototype["AddRow"]                          = ApiTable.prototype.AddRow;
     ApiTable.prototype["AddColumn"]                       = ApiTable.prototype.AddColumn;
     ApiTable.prototype["RemoveRow"]                       = ApiTable.prototype.RemoveRow;

@@ -397,6 +397,16 @@
 	 * @property {Point} end - end selection point
 	 */
 
+	/**
+	 * @typedef {Object} TableLook
+	 * @property {boolean} firstCol - Specifies that the first column conditional formatting shall be applied to the table.
+	 * @property {boolean} firstRow - Specifies that the first row conditional formatting shall be applied to the table.
+	 * @property {boolean} lastCol - Specifies that the last column conditional formatting shall be applied to the table.
+	 * @property {boolean} lastRow - Specifies that the last row conditional formatting shall be applied to the table.
+	 * @property {boolean} bandHor - Specifies that the horizontal banding conditional formatting shall not be applied to the table.
+	 * @property {boolean} bandVer - Specifies that the vertical banding conditional formatting shall not be applied to the table.
+	 */
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// Api
@@ -904,6 +914,7 @@
 			type:           AscPDF.ANNOTATIONS_TYPES.Stamp,
 			creationDate:   creationDate ? creationDate : new Date().getTime(),
 			modDate:        creationDate ? creationDate : new Date().getTime(),
+			author:			author,
 			hidden:         false
 		}
 
@@ -1276,8 +1287,8 @@
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
 	 * @param {ShapeType} [shapeType= "rect"] - The shape type which specifies the preset shape geometry.
-	 * @param {EMU} [width = 72] - The shape width in English measure units.
-	 * @param {EMU} [height = 72] - The shape height in English measure units.
+	 * @param {EMU} [width = 914400] - The shape width in English measure units.
+	 * @param {EMU} [height = 914400] - The shape height in English measure units.
 	 * @param {ApiFill} [fill = Api.CreateNoFill()] - The color or pattern used to fill the shape.
 	 * @param {ApiStroke} [stroke = Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the element shadow.
 	 * @returns {ApiShape}
@@ -1287,8 +1298,8 @@
 		let oDoc = private_GetLogicDocument();
 		shapeType = shapeType || "rect";
 		if (!AscFormat.isValidShapeType(shapeType)) shapeType = "rect";
-		width = width || 72;
-		height = height || 72;
+		width = width || 914400;
+		height = height || 914400;
 		fill = fill || Api.CreateNoFill();
 		stroke = stroke || Api.CreateStroke(0, Api.CreateNoFill());
 
@@ -1786,6 +1797,10 @@
 			oDoc.AddAnnot(oInnerObj, this.GetIndex());
 		}
 		else if (object instanceof ApiBaseField) {
+			if (!oInnerObj.IsWidget()) {
+				AscBuilder.throwException("The field has been removed and is no longer available.");
+			}
+			
 			oDoc.AddField(oInnerObj, this.GetIndex());
 		}
 		else if (object instanceof ApiDrawing) {
@@ -2143,6 +2158,11 @@
 			oFieldToCommit = aWidgets.find(function(widget) {
 				return widget.GetExportValue() == value;
 			});
+
+			if (!oFieldToCommit) {
+				oFieldToCommit = this.Field.GetKid(0);
+				value = "Off";
+			}
 		}
 		else {
 			oFieldToCommit = aWidgets[0];
@@ -2152,7 +2172,11 @@
 			value = value.toString();
 		}
 
-		oFieldToCommit.SetValue(value);
+		let res = oFieldToCommit.SetValue(value);
+		if (!res) {
+			return false;
+		}
+
 		return oDoc.private_CommitField(oFieldToCommit);
 	};
 
@@ -2168,7 +2192,7 @@
 		if (this instanceof ApiCheckboxField) {
 			let aOptions = this.Field.GetOptions();
 			if (aOptions && aOptions.length !== 0 && value != undefined) {
-				return aOptions[value];
+				return aOptions[value] || "Off";
 			}
 		}
 
@@ -2190,7 +2214,10 @@
 		let nFieldType	= this.Field.GetType();
 
 		if (!oPage) {
-			return null;
+			AscBuilder.throwException("The pageIndex parameter must be a valid index");
+		}
+		if (!this.Field.IsUseInDocument()) {
+			AscBuilder.throwException("The field is not in document");
 		}
 
 		let oWidget = oDoc.CreateField(this.Field.GetFullName(), nFieldType, rect);
@@ -2205,11 +2232,16 @@
 	 * Gets array with widgets of the current field.
 	 * @memberof ApiBaseField
 	 * @typeofeditors ["PDFE"]
-	 * @returns {ApiWidget[]}
+	 * @returns {ApiWidget[]} - returns emptry array if the field is not added to the document.
 	 * @see office-js-api/Examples/{Editor}/ApiBaseField/Methods/GetAllWidgets.js
 	 */
 	ApiBaseField.prototype.GetAllWidgets = function() {
-		return this.Field.GetAllWidgets().map(GetWidgetApi);
+		if (this.Field.IsUseInDocument()) {
+			return this.Field.GetAllWidgets().map(GetWidgetApi);
+		}
+		else {
+			return [];
+		}
 	};
 
 	/**
@@ -3528,7 +3560,10 @@
 	 */
 	ApiCheckboxField.prototype.AddOption = function(pageIndex, rect, exportValue) {
 		if (!exportValue) {
-			return null;
+			AscBuilder.throwException("The pageIndex parameter must be a valid string");
+		}
+		if (!this.Field.IsUseInDocument()) {
+			AscBuilder.throwException("The field is not in document");
 		}
 
 		let oDoc = private_GetLogicDocument();
@@ -3543,13 +3578,13 @@
 
 		oField.SetRect(rect);
 		oField.SetPartialName(this.GetFullName());
-		oDoc.AddField(oField, pageIndex);
-
 		if (exportValue) {
 			oField.SetExportValue(exportValue);
 		}
 
-		return new ApiRadiobuttonField(oField);
+		oDoc.AddField(oField, pageIndex);
+
+		return new ApiCheckboxWidget(oField);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -4620,6 +4655,9 @@
 			case AscPDF.BORDER_EFFECT_STYLES.cloud: {
 				return "cloud";
 			}
+			default: {
+				return "none";
+			}
 		}
 	};
 
@@ -5000,10 +5038,14 @@
 	 * @memberof ApiFreeTextAnnotation
 	 * @typeofeditors ["PDFE"]
 	 * @param {FreeTextCallout} callout - An array of 3 points defining the callout line.
-	 * @returns {boolean}
+	 * @returns {boolean} - returns false if intent is not equal "freeTextCallout"
 	 * @see office-js-api/Examples/{Editor}/ApiFreeTextAnnotation/Methods/SetCallout.js
 	 */
 	ApiFreeTextAnnotation.prototype.SetCallout = function(callout) {
+		if (this.GetIntent() !== "freeTextCallout") {
+			return false;
+		}
+
 		callout = AscBuilder.GetArrayParameter(callout, null);
 		if (!callout || callout.length !== 3) {
 			AscBuilder.throwException("The callout parameter must be an array with 3 Point elements.");
@@ -5026,10 +5068,14 @@
 	 * Gets annot callout.
 	 * @memberof ApiFreeTextAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @returns {FreeTextCallout}
+	 * @returns {?FreeTextCallout}
 	 * @see office-js-api/Examples/{Editor}/ApiFreeTextAnnotation/Methods/GetCallout.js
 	 */
 	ApiFreeTextAnnotation.prototype.GetCallout = function() {
+		if (this.GetIntent() !== "freeTextCallout") {
+			return null;
+		}
+
 		let aCallout = this.Annot.GetCallout();
 
 		let aResult = [];
@@ -7107,20 +7153,50 @@
 	ApiShape.prototype.SetVerticalTextAlign = function(verticalAlign) {
 		switch (verticalAlign) {
 			case "top": {
-				this.Shape.setVerticalAlign(4);
+				this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
 				break;
 			}
 			case "center": {
-				this.Shape.setVerticalAlign(1);
+				this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
 				break;
 			}
 			case "bottom": {
-				this.Shape.setVerticalAlign(0);
+				this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
 				break;
+			}
+			default: {
+				return false;
 			}
 		}
 
 		return true;
+	};
+
+	/**
+	 * Gets the vertical alignment from the shape content where a paragraph or text runs can be inserted.
+	 * @memberof ApiShape
+	 * @typeofeditors ["PDFE"]
+	 * @returns {VerticalTextAlign}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetVerticalTextAlign.js
+	 */
+	ApiShape.prototype.GetVerticalTextAlign = function() {
+		let vAlign = this.Shape.getVerticalAlign();
+
+		switch(vAlign)
+		{
+			case AscFormat.VERTICAL_ANCHOR_TYPE_TOP:
+			{
+				return "top";
+			}
+			case AscFormat.VERTICAL_ANCHOR_TYPE_CENTER:
+			{
+				return "center";
+			}
+			case AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM:
+			{
+				return "bottom";
+			}
+		}
 	};
 
 	/**
@@ -7352,7 +7428,7 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiTableCell} rowCell - A cell from the row to remove.
-	 * @returns {boolean} - defines if the table is empty after removing or not.
+	 * @returns {boolean} - result of deletion
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveRow.js
 	 */
 	ApiTable.prototype.RemoveRow = function(rowCell) {
@@ -7454,6 +7530,26 @@
 	};
 
 	/**
+	 * Gets table look properties
+	 * @memberof ApiTable
+	 * @typeofeditors ["PDFE"]
+	 * @returns {TableLook}
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetTableLook.js
+	 */
+	ApiTable.prototype.GetTableLook = function() {
+		let oTableLook = this.Table.Get_TableLook();
+
+		return {
+			firstCol:	oTableLook.IsFirstCol(),
+			firstRow:	oTableLook.IsFirstRow(),
+			lastCol:	oTableLook.IsLastCol(),
+			lastRow:	oTableLook.IsLastRow(),
+			bandHor:	oTableLook.IsBandHor(),
+			bandVer:	oTableLook.IsBandVer()
+		}
+	};
+
+	/**
 	 * Adds a new column to the end of the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
@@ -7488,7 +7584,7 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiTableCell} columnCell - A cell from the column to remove.
-	 * @returns {boolean} - defines if the table is empty after removing or not.
+	 * @returns {boolean} - result of deletion
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveColumn.js
 	 */
 	ApiTable.prototype.RemoveColumn = function(columnCell) {
@@ -7624,33 +7720,32 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetHeight.js
 	 */
 	ApiTableRow.prototype.SetHeight = function(height) {
-		let fMaxTopMargin = 0,
-			fMaxBottomMargin = 0,
-			fMaxTopBorder = 0,
-			fMaxBottomBorder = 0;
+		this.Row.Set_Height(private_EMU2MM(height), Asc.linerule_AtLeast);
+		return true;
+	};
 
-		for (let i = 0; i < this.Row.Content.length; ++i) {
-			let cell = this.Row.Content[i];
-
-			let oMargins = cell.GetMargins();
-			if (oMargins.Bottom.W > fMaxBottomMargin) {
-				fMaxBottomMargin = oMargins.Bottom.W;
-			}
-			if (oMargins.Top.W > fMaxTopMargin) {
-				fMaxTopMargin = oMargins.Top.W;
-			}
-
-			let oBorders = cell.Get_Borders();
-			if (oBorders.Top.Size > fMaxTopBorder) {
-				fMaxTopBorder = oBorders.Top.Size;
-			}
-			if (oBorders.Bottom.Size > fMaxBottomBorder) {
-				fMaxBottomBorder = oBorders.Bottom.Size;
-			}
+	/**
+	 * Gets the height from the current table row.
+	 * @memberof ApiTableRow
+	 * @typeofeditors ["PDFE"]
+	 * @returns {EMU}
+	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetHeight.js
+	 */
+	ApiTableRow.prototype.GetHeight = function(height) {
+		const table = this.Row.Table;
+		if (!table || !table.Parent) {
+			return null;
 		}
 
-		this.Row.Set_Height(Math.max(1, private_EMU2MM(height) - fMaxTopMargin - fMaxBottomMargin - fMaxTopBorder / 2 - fMaxBottomBorder / 2), Asc.linerule_AtLeast);
-		return true;
+		table.Parent.recalculateTable();
+		table.Parent.recalculateSizes();
+
+		const rowInfo = table.RowsInfo[this.Row.Index];
+		if (!rowInfo || !rowInfo.H[0]) {
+			return null;
+		}
+
+		return private_MM2EMU(rowInfo.H[0]);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -7974,7 +8069,9 @@
 			oPr.VAlign = vertalignjc_Bottom;
 		else if ("center" === verticalAlign)
 			oPr.VAlign = vertalignjc_Center;
-
+		else
+			return false;
+		
 		this.Cell.Set_Pr(oPr);
 		return true;
 	};
@@ -7995,7 +8092,9 @@
 			oPr.TextDirection = textdirection_TBRL;
 		else if ("btlr" === textDirection)
 			oPr.TextDirection = textdirection_BTLR;
-
+		else
+			return false;
+		
 		this.Cell.Set_Pr(oPr);
 		return true;
 	};
@@ -9175,6 +9274,7 @@
 	ApiShape.prototype["GetClassType"]						= ApiShape.prototype.GetClassType;
 	ApiShape.prototype["GetContent"]						= ApiShape.prototype.GetContent;
 	ApiShape.prototype["SetVerticalTextAlign"]				= ApiShape.prototype.SetVerticalTextAlign;
+	ApiShape.prototype["GetVerticalTextAlign"]				= ApiShape.prototype.GetVerticalTextAlign;
 	ApiShape.prototype["GetGeometry"]						= ApiShape.prototype.GetGeometry;
 	ApiShape.prototype["SetGeometry"]						= ApiShape.prototype.SetGeometry;
 	ApiShape.prototype["SetFill"]							= ApiShape.prototype.SetFill;
@@ -9192,6 +9292,7 @@
 	ApiTable.prototype["RemoveRow"]							= ApiTable.prototype.RemoveRow;
 	ApiTable.prototype["MergeCells"]						= ApiTable.prototype.MergeCells;
 	ApiTable.prototype["SetTableLook"]						= ApiTable.prototype.SetTableLook;
+	ApiTable.prototype["GetTableLook"]						= ApiTable.prototype.GetTableLook;
 	ApiTable.prototype["AddColumn"]							= ApiTable.prototype.AddColumn;
 	ApiTable.prototype["RemoveColumn"]						= ApiTable.prototype.RemoveColumn;
 	ApiTable.prototype["SetShd"]							= ApiTable.prototype.SetShd;
@@ -9201,6 +9302,7 @@
 	ApiTableRow.prototype["GetCellsCount"]					= ApiTableRow.prototype.GetCellsCount;
 	ApiTableRow.prototype["GetCell"]						= ApiTableRow.prototype.GetCell;
 	ApiTableRow.prototype["SetHeight"]						= ApiTableRow.prototype.SetHeight;
+	ApiTableRow.prototype["GetHeight"]						= ApiTableRow.prototype.GetHeight;
 
 	// ApiTableCell
 	ApiTableCell.prototype["GetClassType"]					= ApiTableCell.prototype.GetClassType;

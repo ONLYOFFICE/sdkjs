@@ -368,6 +368,8 @@
 		else {
 			this.SetLogicValue(sValue);
 		}
+
+		return true;
 	};
     CTextField.prototype.private_SetValue = function(sValue) {
         if (this.IsWidget()) {
@@ -722,13 +724,15 @@
         this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, []);
         this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Validate, []);
 
-        const oCurMeta = this.GetMeta();
-        if (oCurMeta['regular']) {
-            oCurMeta['regular'] = undefined
-            this.SetMeta(oCurMeta);
-        }
-        
-        this.SetFormatValue(undefined);
+		this.GetAllWidgets().forEach(function(widget) {
+			const oCurMeta = widget.GetMeta();
+			if (oCurMeta['regular']) {
+				oCurMeta['regular'] = undefined
+				widget.SetMeta(oCurMeta);
+			}
+
+			widget.SetFormatValue(undefined);
+		});
     };
     CTextField.prototype.GetFormatType = function() {
         let oFormatTrigger      = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format);

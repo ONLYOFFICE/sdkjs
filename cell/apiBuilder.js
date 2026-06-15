@@ -13874,15 +13874,15 @@
 		if (this.Shape) {
 			switch (verticalAlign) {
 				case "top": {
-					this.Shape.setVerticalAlign(4);
+					this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
 					break;
 				}
 				case "center": {
-					this.Shape.setVerticalAlign(1);
+					this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
 					break;
 				}
 				case "bottom": {
-					this.Shape.setVerticalAlign(0);
+					this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
 					break;
 				}
 				default:
@@ -13892,6 +13892,33 @@
 		}
 
 		return false;
+	};
+
+	/**
+	 * Gets the vertical alignment from the shape content where a paragraph or text runs can be inserted.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CSE"]
+	 * @returns {VerticalTextAlign}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetVerticalTextAlign.js
+	 */
+	ApiShape.prototype.GetVerticalTextAlign = function() {
+		let vAlign = this.Shape.getVerticalAlign();
+
+		switch(vAlign)
+		{
+			case AscFormat.VERTICAL_ANCHOR_TYPE_TOP:
+			{
+				return "top";
+			}
+			case AscFormat.VERTICAL_ANCHOR_TYPE_CENTER:
+			{
+				return "center";
+			}
+			case AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM:
+			{
+				return "bottom";
+			}
+		}
 	};
 
 	/**
@@ -28796,6 +28823,7 @@
 	ApiShape.prototype["GetDocContent"]                =  ApiShape.prototype.GetDocContent;
 	ApiShape.prototype["GetContent"]                   =  ApiShape.prototype.GetContent;
 	ApiShape.prototype["SetVerticalTextAlign"]         =  ApiShape.prototype.SetVerticalTextAlign;
+	ApiShape.prototype["GetVerticalTextAlign"]         =  ApiShape.prototype.GetVerticalTextAlign;
 	ApiShape.prototype["SetPaddings"]                  =  ApiShape.prototype.SetPaddings;
 	ApiShape.prototype["GetGeometry"]                  =  ApiShape.prototype.GetGeometry;
 	ApiShape.prototype["SetGeometry"]                  =  ApiShape.prototype.SetGeometry;

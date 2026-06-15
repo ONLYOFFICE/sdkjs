@@ -346,8 +346,14 @@
                 }
             }
             
-            if (sTextToAdd == "")
-                sTextToAdd = sValue;
+			if (sTextToAdd == "") {
+				if (this.IsEditable()) {
+					sTextToAdd = sValue;
+				}
+				else {
+					return false;
+				}
+			}
 
             AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetLogicValue(), sValue));
 
@@ -364,6 +370,8 @@
             this.SetLogicValue(sValue);
             this.SetLogicCurIdxs(aIdxs);
         }
+
+		return true;
     };
     CComboBoxField.prototype.private_SetValue = function(sValue) {
         let aIdxs = [];
