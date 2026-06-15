@@ -1973,11 +1973,13 @@
 		},
 		addPageNumToCurrentPos: function()
 		{
-			return "\tdoc.GetCurrentParagraph().AddPageNumber();\n";
+			return "\tlet " + CounterStore.inc('run') + " = doc.GetCurrentParagraph().AddPageNumber();\n" 
+				+ "\t" + CounterStore.get('run') + ".MoveCursorToPos("+ CounterStore.get('run') + ".GetText().length + 1);\n";
 		},
 		addPageCount: function()
 		{
-			return "\tdoc.GetCurrentParagraph().AddPagesCount();\n";
+			return "\tlet " + CounterStore.inc('run') + " = doc.GetCurrentParagraph().AddPagesCount();\n"
+				+"\t" + CounterStore.get('run') + ".MoveCursorToPos(" + CounterStore.get('run') + ".GetText().length + 1);\n";
 		},
 		setHdrFtrEvenAndOdd: function(data)
 		{

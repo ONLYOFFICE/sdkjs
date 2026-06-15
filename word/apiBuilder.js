@@ -10542,9 +10542,6 @@
 		var oRun = new ParaRun(this.Paragraph, false);
 		oRun.Add_ToContent(0, new AscWord.CRunPageNum());
 		private_PushElementToParagraph(this.Paragraph, oRun);
-		var pos = oRun.GetElementsCount();
-		oRun.Make_ThisElementCurrent();
-		oRun.SetCursorPosition(pos);
 		return new ApiRun(oRun);
 	};
 	/**
@@ -10556,12 +10553,11 @@
 	 */
 	ApiParagraph.prototype.AddPagesCount = function()
 	{
+		var oLogicDocument = private_GetLogicDocument();
 		var oRun = new ParaRun(this.Paragraph, false);
-		oRun.Add_ToContent(0, new AscWord.CRunPagesCount());
+		var nCount = oLogicDocument ? oLogicDocument.GetPagesCount() : undefined;
+		oRun.Add_ToContent(0, new AscWord.CRunPagesCount(nCount));
 		private_PushElementToParagraph(this.Paragraph, oRun);
-		var pos = oRun.GetElementsCount();
-		oRun.Make_ThisElementCurrent();
-		oRun.SetCursorPosition(pos);
 		return new ApiRun(oRun);
 	};
 	/**
