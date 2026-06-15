@@ -10778,6 +10778,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.5.0
 	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/IsEmpty.js
 	 */
 	ApiParagraph.prototype.IsEmpty = function()
 	{
