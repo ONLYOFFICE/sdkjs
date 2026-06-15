@@ -9500,7 +9500,7 @@ function(window, undefined) {
 			var calcMajorMinorGridLines = function (axis, defaultStyle, subtleLine, parents) {
 				if (oThis.isChartEx() && oThis.chartStyle && oThis.chartColors) {
 					const styleEntry = axis.isValuesAxis() ? oThis.chartStyle.valueAxis : oThis.chartStyle.categoryAxis;
-					if (styleEntry) {
+					if (styleEntry && ((styleEntry.lnRef && styleEntry.lnRef.idx > 0) || (styleEntry.spPr && styleEntry.spPr.ln))) {
 						const spPr = axis.getSpPrFormStyleEntry(styleEntry, oThis.chartColors.generateColors(1), 0);
 						if (spPr && spPr.ln) {
 							const ln = spPr.ln.createDuplicate();
