@@ -252,6 +252,7 @@
 		g.IsNoDrawingEmptyPlaceholderText = true;
 		g.IsNoDrawingEmptyPlaceholder = true;
 		g.isPrintMode = true;
+		g.IsPrintPreview = true;
 		g.isSupportEditFeatures = function() { return false; };
 		return g;
 	};
