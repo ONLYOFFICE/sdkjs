@@ -134,6 +134,9 @@
     var kCurEWResize = "ew-resize";
     var kCurNSResize = "ns-resize";
 
+    var kSelectionMarkerSize = 5;
+    var kSelectionMarkerBorderSize = 2;
+
     AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.CellCur, "6 6", "cell");
 	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.CellFormatPainter, "1 1", "pointer");
 	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.MoveBorderVer, "9 9", "default");
@@ -8614,10 +8617,10 @@ function isAllowPasteLink(pastedWb) {
         if (isResize || isPromote) {
             //isResize - not increasing square when selecting range in formula for now, since need to change selection clearing logic in formula mode
 			let retinaKf = isRetina && (!isResize || isAllowRetinaResize) ? 2 : 1;
-			let size = 5 * retinaKf;
-			let sizeBorder = size + 2 * retinaKf;
+			let size = kSelectionMarkerSize * retinaKf;
+			let sizeBorder = size + kSelectionMarkerBorderSize * retinaKf;
 			let diff = Math.floor(size/2) + 1;
-			let diffBorder = Math.floor(sizeBorder/2) + 1 * retinaKf;
+			let diffBorder = Math.floor(sizeBorder/2) + retinaKf;
 
 			ctx.setFillStyle(colorN);
             if (drawRightSide && drawBottomSide) {
@@ -11931,8 +11934,16 @@ function isAllowPasteLink(pastedWb) {
 		return null;
 	};
 
-    WorksheetView.prototype._hitResizeCorner = function (x1, y1, x2, y2) {
+    WorksheetView.prototype._hitResizeCorner = function (x1, y1, x2, y2, opt_isFillHandle) {
         var wEps = AscCommon.global_mouseEvent.KoefPixToMM, hEps = AscCommon.global_mouseEvent.KoefPixToMM;
+        if (opt_isFillHandle) {
+            var retinaKf = (this.getRetinaPixelRatio() >= 2) ? 2 : 1;
+            var sizeBorder = kSelectionMarkerSize * retinaKf + kSelectionMarkerBorderSize * retinaKf;
+            var diffBorder = Math.floor(sizeBorder / 2) + retinaKf;
+            var centerOffset = diffBorder - sizeBorder / 2;
+            var half = sizeBorder / 2 + (retinaKf - 1) * 2 + 1;
+            return Math.abs(x2 - (x1 - centerOffset)) <= half && Math.abs(y2 - (y1 - centerOffset)) <= half;
+        }
         return Math.abs(x2 - x1) <= wEps + 2 && Math.abs(y2 - y1) <= hEps + 2;
     };
     WorksheetView.prototype._hitInRange = function (range, rangeType, vr, x, y, offsetX, offsetY, opt_pageBreakPreviewRange) {
@@ -11950,6 +11961,7 @@ function isAllowPasteLink(pastedWb) {
             y2 = this._getRowTop(oFormulaRangeIn.r2 + 1) - offsetY;
 
             isResize = AscCommonExcel.selectionLineType.Resize & rangeType;
+            var isPromote = AscCommonExcel.selectionLineType.Promote & rangeType;
 
             if (isResize && this._hitResizeCorner(x1 - 1, y1 - 1, x, y)) {
                 /*TOP-LEFT*/
@@ -11966,7 +11978,7 @@ function isAllowPasteLink(pastedWb) {
                 cursor = kCurNEResize;
                 col = range.c2;
                 row = range.r1;
-            } else if (this._hitResizeCorner(x2, y2, x, y)) {
+            } else if (this._hitResizeCorner(x2, y2, x, y, !!isPromote)) {
                 /*BOTTOM-RIGHT*/
                 cursor = kCurSEResize;
                 col = range.c1;
