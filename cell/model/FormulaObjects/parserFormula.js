@@ -3423,7 +3423,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			return undefined;
 		}
 		var result = this.array[i];
-		return result ? result[j] : result;
+		var elem = result ? result[j] : result;
+		if (elem) {
+			return elem;
+		}
+		if (this.missedValue && this.realSize && i >= 0 && j >= 0 && i < this.realSize.row && j < this.realSize.col) {
+			return this.missedValue;
+		}
+		return elem;
 	};
 	cArray.prototype.getValue = function () {
 		var result = this.array[0];
@@ -3769,6 +3776,32 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 			if (operand2.type === cElementType.cellsRange || operand2.type === cElementType.cellsRange3D) {
 				matrix2 = convertAreaToArray(operand2);
+			}
+
+			//fast path: both operands are full-column/row arrays with a lazy
+			//tail and the same logical shape -> compose the head over the union of the PHYSICAL heads + a
+			//composed tail, instead of materializing the whole logical size.
+			if (matrix1 && matrix2 && matrix1.hasLazyTail && matrix1.hasLazyTail() && matrix2.hasLazyTail && matrix2.hasLazyTail() &&
+				matrix1.getRowCount(true) === matrix2.getRowCount(true) && matrix1.getCountElementInRow(true) === matrix2.getCountElementInRow(true)) {
+				res = new cArray();
+				res.setRealArraySize(matrix1.getRowCount(true), matrix1.getCountElementInRow(true));
+				var hRows = Math.max(matrix1.rowCount, matrix2.rowCount);
+				var hCols = Math.max(matrix1.countElementInRow.length ? matrix1.countElementInRow[0] : 0,
+					matrix2.countElementInRow.length ? matrix2.countElementInRow[0] : 0);
+				for (var hr = 0; hr < hRows; hr++) {
+					res.addRow();
+					for (var hc = 0; hc < hCols; hc++) {
+						res.addElement(func(matrix1.getElementRowCol(hr, hc, true), matrix2.getElementRowCol(hr, hc, true)));
+					}
+				}
+				if ((matrix1.getMissedValueFn && matrix1.getMissedValueFn()) || (matrix2.getMissedValueFn && matrix2.getMissedValueFn())) {
+					res.setMissedValueFn(function (r, c) {
+						return func(matrix1.getMissedElement(r, c), matrix2.getMissedElement(r, c));
+					});
+				} else {
+					res.setMissedValue(func(matrix1.getMissedValue() || new cEmpty(), matrix2.getMissedValue() || new cEmpty()));
+				}
+				return res;
 			}
 
 			if (matrix1 || matrix2) {
@@ -13350,19 +13383,13 @@ function parserFormula( formula, parent, _ws ) {
 	}
 
 	function convertAreaToArray(area){
-		let retArr = new cArray(), _arg0;
+		let retArr = new cArray();
 		let dimension = area.getDimensions();
 
 		retArr.realSize = {row: dimension.row, col: dimension.col}
 
-		let ws;
-		if(cElementType.cellsRange3D === area.type) {
-			ws = area.wsFrom;
-			area = area.getMatrixNoEmpty()[0];
-		} else {
-			ws = area.ws;
-			area = area.getMatrixNoEmpty();
-		}
+		const ws = area.getWS();
+		let src = (cElementType.cellsRange3D === area.type) ? area.getMatrixNoEmpty()[0] : area.getMatrixNoEmpty();
 
 		if (dimension) {
 			let oBBox = dimension.bbox,
@@ -13371,40 +13398,72 @@ function parserFormula( formula, parent, _ws ) {
 				rowCount = (minR - oBBox.r1) >= 0 ? minR - oBBox.r1 + 1 : 0,
 				colCount = (minC - oBBox.c1) >= 0 ? minC - oBBox.c1 + 1 : 0;
 
+			let emptyElem = new cEmpty();
+
 			if (rowCount < dimension.row || colCount < dimension.col) {
-				retArr.missedValue = new cEmpty();
+				retArr.missedValue = emptyElem;
 			} else {
 				retArr.realSize = null;
 			}
 
-			if (area && area.length < 1) {
-				// let emptyElem = new cEmpty();
-				// if array is empty - add info about range size and set missedValue
+			if (!src || src.length < 1) {
+				// if range is empty - keep only size info + missedValue, plus a single seed element
 				retArr.setRealArraySize(dimension.row, dimension.col);
-				retArr.missedValue = new cEmpty();
+				retArr.missedValue = emptyElem;
 
 				/* we add one element to the array so as not to return a completely empty array to the formula */
 				if (!retArr.countElement) {
 					retArr.addRow();
-					retArr.addElement(retArr.missedValue);
+					retArr.addElement(emptyElem);
 				}
 
 			} else {
-				let resArray = new Array(rowCount);
-				let resCounts = new Array(rowCount);
-				for ( let iRow = 0; iRow < rowCount; iRow++ ) {
-					let srcRow = area[iRow];
-					let rowArr = new Array(colCount);
-					for ( let iCol = 0; iCol < colCount; iCol++ ) {
-						rowArr[iCol] = srcRow && srcRow[iCol] ? srcRow[iCol] : new cEmpty();
+				//head size: when a dimension extends beyond the used data (clamp < logical dimension, i.e. a
+				//full-column/row reference), build the head ONLY over the ACTUAL data extent of THIS range (src),
+				//not the sheet-wide clamp. A sparse column in a tall sheet then materializes just its own data
+				//rows; the realSize tail (missedValue) covers everything beyond. Finite ranges (no tail) keep the
+				//full clamp, so they stay fully physical and unchanged.
+				let headRows = (rowCount < dimension.row) ? src.length : rowCount;
+				let headCols = colCount;
+				if (colCount < dimension.col) {
+					headCols = 0;
+					for (let i = 0; i < src.length; i++) {
+						let w = src[i] ? src[i].length : 0;
+						if (w > headCols) {
+							headCols = w;
+						}
 					}
-					resArray[iRow] = rowArr;
-					resCounts[iRow] = colCount;
 				}
-				retArr.array = resArray;
+
+				//densify the sparse matrix IN PLACE up to headRows x headCols: reuse existing row arrays, only
+				//allocate the missing ones, and fill every gap with the shared empty - no second array, no
+				//per-empty-cell allocation.
+				src.length = headRows;
+				let resCounts = new Array(headRows);
+				for ( let iRow = 0; iRow < headRows; iRow++ ) {
+					let rowArr = src[iRow];
+					if (!rowArr) {
+						rowArr = new Array(headCols);
+						for ( let iCol = 0; iCol < headCols; iCol++ ) {
+							rowArr[iCol] = emptyElem;
+						}
+						src[iRow] = rowArr;
+					} else {
+						if (rowArr.length < headCols) {
+							rowArr.length = headCols;
+						}
+						for ( let iCol = 0; iCol < headCols; iCol++ ) {
+							if (!rowArr[iCol]) {
+								rowArr[iCol] = emptyElem;
+							}
+						}
+					}
+					resCounts[iRow] = headCols;
+				}
+				retArr.array = src;
 				retArr.countElementInRow = resCounts;
-				retArr.rowCount = rowCount;
-				retArr.countElement = rowCount * colCount;
+				retArr.rowCount = headRows;
+				retArr.countElement = headRows * headCols;
 			}
 		}
 
@@ -13461,6 +13520,40 @@ function parserFormula( formula, parent, _ws ) {
 			arg0ColCount = arg0.getCountElementInRow(true),
 			arg1RowCount = arg1.getRowCount(true),
 			arg1ColCount = arg1.getCountElementInRow(true);
+
+		//fast path: both operands carry a lazy tail (full-column/row arrays) AND have the same logical shape.
+		//compose the head over the union of the PHYSICAL heads + a composed tail, instead of materializing the
+		//whole logical size. keeps e.g. multi-criteria SUMPRODUCT((A:A=x)*(B:B=y)) from building 1048576 cells.
+		//mismatched shapes and literal arrays (no lazy tail) fall through to the broadcast branches below.
+		if (arg0RowCount === arg1RowCount && arg0ColCount === arg1ColCount &&
+			arg0.hasLazyTail && arg0.hasLazyTail() && arg1.hasLazyTail && arg1.hasLazyTail()) {
+			let res = new cArray();
+			res.setRealArraySize(arg0RowCount, arg0ColCount);
+			let headRows = Math.max(arg0.rowCount, arg1.rowCount);
+			let headCols = Math.max(
+				arg0.countElementInRow.length ? arg0.countElementInRow[0] : 0,
+				arg1.countElementInRow.length ? arg1.countElementInRow[0] : 0);
+			for (iRow = 0; iRow < headRows; iRow++) {
+				res.addRow();
+				for (iCol = 0; iCol < headCols; iCol++) {
+					_arg0 = arg0.getElementRowCol(iRow, iCol, true);
+					_arg1 = arg1.getElementRowCol(iRow, iCol, true);
+					res.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
+				}
+			}
+			//tail (positions beyond both heads): a single composed constant when neither operand has a
+			//generator tail, otherwise a composed generator.
+			if ((arg0.getMissedValueFn && arg0.getMissedValueFn()) || (arg1.getMissedValueFn && arg1.getMissedValueFn())) {
+				res.setMissedValueFn(function (r, c) {
+					let e0 = arg0.getMissedElement(r, c), e1 = arg1.getMissedElement(r, c);
+					return _func[e0.type][e1.type](e0, e1, what);
+				});
+			} else {
+				let t0 = arg0.getMissedValue() || new cEmpty(), t1 = arg1.getMissedValue() || new cEmpty();
+				res.setMissedValue(_func[t0.type][t1.type](t0, t1, what));
+			}
+			return res;
+		}
 
 		if (arg0RowCount === arg1RowCount && 1 === arg0ColCount) {
 			retArr = new cArray();
