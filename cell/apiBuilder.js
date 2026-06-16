@@ -15111,6 +15111,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetTextToDisplay.js
 	 */
 	ApiHyperlink.prototype.SetTextToDisplay = function (sText) {
+		// As in MS: an empty value keeps the current display text
+		if (!sText) {
+			return;
+		}
 		this.GetRange().SetValue(sText);
 	};
 
