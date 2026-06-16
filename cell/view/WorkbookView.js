@@ -351,7 +351,7 @@
   }
 
   WorkbookView.prototype._isInputContentEditable = function () {
-    return !!(this.input && this.input.getAttribute && this.input.getAttribute('contenteditable') === 'true');
+    return !!(this.input && this.input.getAttribute && this.input.getAttribute('contenteditable') !== null);
   };
 
   WorkbookView.prototype._setInputDisabled = function (disabled) {
