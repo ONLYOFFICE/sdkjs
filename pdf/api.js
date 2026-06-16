@@ -1632,7 +1632,7 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			let oField = oDoc.CreateTextField(true);
+			let oField = oDoc.CreateTextField();
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
@@ -1641,7 +1641,7 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			let oField = oDoc.CreateButtonField(true);
+			let oField = oDoc.CreateButtonField();
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
@@ -1668,7 +1668,7 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			let oField = oDoc.CreateComboboxField(true);
+			let oField = oDoc.CreateComboboxField();
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
@@ -1677,7 +1677,7 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			let oField = oDoc.CreateListboxField(true);
+			let oField = oDoc.CreateListboxField();
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
