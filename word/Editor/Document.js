@@ -4075,24 +4075,27 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 					_SectionIndex = 0;
 				else
 					_SectionIndex = this.Pages[_PageIndex].Sections.length - 1;
-            }
+			}
 
-            _StartIndex = this.Pages[_PageIndex].Sections[_SectionIndex].Columns[_ColumnIndex].Pos;
+			_StartIndex = this.Pages[_PageIndex].Sections[_SectionIndex].Columns[_ColumnIndex].Pos;
 			_sectPr     = this.Pages[_PageIndex].Sections[_SectionIndex].GetSectPr();
-            _bStart     = false;
+			_bStart     = false;
 
-			let currPageSection = this.Pages[_PageIndex].Sections[_SectionIndex];
-			currPageSection.Init(_PageIndex, _sectPr, this.Layout.GetSectionIndex(_sectPr));
-			if (_SectionIndex > 0)
+			if (0 === _ColumnIndex)
 			{
-				let prevPageSection = this.Pages[_PageIndex].Sections[_SectionIndex - 1];
-				currPageSection.Y       = prevPageSection.GetBottomLimit() + 0.001;
-				currPageSection.YLimit  = this.Pages[_PageIndex].YLimit;
-				currPageSection.YLimit2 = this.Pages[_PageIndex].YLimit;
+				let currPageSection = this.Pages[_PageIndex].Sections[_SectionIndex];
+				currPageSection.Init(_PageIndex, _sectPr, this.Layout.GetSectionIndex(_sectPr));
+				if (_SectionIndex > 0)
+				{
+					let prevPageSection = this.Pages[_PageIndex].Sections[_SectionIndex - 1];
+					currPageSection.Y       = prevPageSection.GetBottomLimit() + 0.001;
+					currPageSection.YLimit  = this.Pages[_PageIndex].YLimit;
+					currPageSection.YLimit2 = this.Pages[_PageIndex].YLimit;
+				}
 			}
 			
-            break;
-        }
+			break;
+		}
 		else if ((RecalcResult & recalcresult_NextSection) || (RecalcResult & recalcresult_NextSection_Cur))
 		{
 			let nextIndex = RecalcResult & recalcresult_NextSection ? Index + 1 : Index;
