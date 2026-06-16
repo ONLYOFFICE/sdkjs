@@ -9173,6 +9173,10 @@
 			}
 			if (externalLink) {
 				Hyperlink.asc_setHyperlinkUrl(sAddress);
+				// As in MS: an external URL keeps the subaddress ("URL#subaddress").
+				if (subAddress) {
+					Hyperlink.asc_setLocation(subAddress);
+				}
 			} else {
 				Hyperlink.asc_setRange(address[1]);
 				Hyperlink.asc_setSheet(address[0]);
@@ -15047,6 +15051,10 @@
 	ApiHyperlink.prototype.SetSubAddress = function (sSubAddress) {
 		var clone = this._elem.data.clone();
 		clone.setLocation(sSubAddress || null);
+		// As in MS: a subaddress drops the external URL
+		if (sSubAddress) {
+			clone.Hyperlink = null;
+		}
 		this._applyData(clone);
 	};
 
