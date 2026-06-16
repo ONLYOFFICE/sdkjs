@@ -3330,6 +3330,9 @@
 		this.externalReferences.forEach(function(elem){
 			elem && elem.initPostOpen && elem.initPostOpen();
 		});
+		this.forEach(function (ws) {
+			ws.initConditionalFormattingFormulas();
+		});
 		if (bSnapshot) {
 			this.snapshot = this._getSnapshot();
 		}
@@ -13497,6 +13500,12 @@
 			this.aConditionalFormattingRules = {};
 		}
 		this.aConditionalFormattingRules[rule.id] = rule;
+	};
+	Worksheet.prototype.initConditionalFormattingFormulas = function () {
+		var t = this;
+		this.forEachConditionalFormattingRules(function (oRule) {
+			oRule.initRuleElements && oRule.initRuleElements(t);
+		});
 	};
 
 	Worksheet.prototype.changeCFRule = function (from, to, addToHistory) {

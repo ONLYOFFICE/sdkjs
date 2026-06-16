@@ -15583,7 +15583,8 @@
     };
     InitOpenManager.prototype.prepareConditionalFormatting = function (oWorksheet, oConditionalFormatting) {
         if (oConditionalFormatting && oConditionalFormatting.isValid()) {
-            oConditionalFormatting.initRules(oWorksheet);
+            //skip formula parsing here - not all sheets are read yet (parsed later in Workbook.init)
+            oConditionalFormatting.initRules(oWorksheet, true);
             for (let i = 0; i < oConditionalFormatting.aRules.length; i++) {
                 oWorksheet.addConditionalFormattingRule(oConditionalFormatting.aRules[i]);
             }
