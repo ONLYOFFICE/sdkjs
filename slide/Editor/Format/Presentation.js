@@ -2350,10 +2350,6 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 			oCalcSlide.recalculate();
 		}
 	} else {
-		let oCurNotesShape = null;
-		if (oCurSlide) {
-			oCurNotesShape = oCurSlide.notesShape;
-		}
 		let oPlaceholders = {};
 		let oMasterPlaceholders = {};
 		let bPlaceholders = false;
@@ -2416,12 +2412,6 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 									oCalcSlide.recalculate();
 								}
 							}
-						}
-						if (oCurNotesShape && oCurNotesShape === oDrawingObject) {
-							if (oCurSlide) {
-								oCurSlide.recalculateNotesShape();
-							}
-							bRedrawNotes = true;
 						}
 					}
 					if(oDrawingObject.isDrawing ) {

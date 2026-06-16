@@ -42,6 +42,7 @@ var CGroupShape = AscFormat.CGroupShape;
 CGroupShape.prototype.addToRecalculate = CShape.prototype.addToRecalculate;
 CGroupShape.prototype.handleUpdateTheme = CShape.prototype.handleUpdateTheme;
 CGroupShape.prototype.getSlideIndex = CShape.prototype.getSlideIndex;
+CGroupShape.prototype.collectRedrawSlides = CShape.prototype.collectRedrawSlides;
 
 CGroupShape.prototype.getEditorType = function()
 {

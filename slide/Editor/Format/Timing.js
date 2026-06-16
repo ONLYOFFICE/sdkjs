@@ -2001,6 +2001,11 @@
         }
         return null;
     };
+		CTiming.prototype.collectRedrawSlides = function (redrawSlides, force) {
+			if (this.parent) {
+				redrawSlides.collectRedrawSlides(this.parent, true);
+			}
+		}
     CTiming.prototype.getChildren = function () {
         return [this.bldLst, this.tnLst];
     };
