@@ -10237,20 +10237,20 @@ PasteProcessor.prototype =
 				if (nType === Asc.c_oAscNumberingFormat.Bullet) {
 					var LvlText = String.fromCharCode(0x00B7);
 					var NumTextPr = new CTextPr();
-
-					var fontFamily = curNumbering["font-family"];
+					let sBulletText = sTextFormatString ? correctText(sTextFormatString) : null;
+					let fontFamily = curNumbering["font-family"] || curNumbering["mso-ascii-font-family"] || curNumbering["mso-hansi-font-family"];
 					if (fontFamily && -1 !== fontFamily.indexOf("Symbol")) {
 						NumTextPr.RFonts.SetAll("Symbol", -1);
-						LvlText = sTextFormatString ? sTextFormatString : String.fromCharCode(0x00B7);
+						LvlText = sBulletText ? sBulletText : String.fromCharCode(0x00B7);
 					} else if (fontFamily && -1 !== fontFamily.indexOf("Courier New")) {
 						NumTextPr.RFonts.SetAll("Courier New", -1);
-						LvlText = sTextFormatString ? sTextFormatString : "o";
+						LvlText = sBulletText ? sBulletText : "o";
 					} else if (fontFamily && -1 !== fontFamily.indexOf("Wingdings")) {
 						NumTextPr.RFonts.SetAll("Wingdings", -1);
-						LvlText = sTextFormatString ? sTextFormatString : String.fromCharCode(0x00A7);
+						LvlText = sBulletText ? sBulletText : String.fromCharCode(0x00A7);
 					} else {
 						NumTextPr.RFonts.SetAll("Symbol", -1);
-						LvlText = sTextFormatString ? sTextFormatString : String.fromCharCode(0x00B7);
+						LvlText = sBulletText ? sBulletText : String.fromCharCode(0x00B7);
 					}
 
 					res.SetLvlByType(i-1, c_oAscNumberingLevel.Bullet, LvlText, NumTextPr);
