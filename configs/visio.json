@@ -53,7 +53,7 @@
 			"common/NumFormatData.js",
 			"common/NumFormat.js",
 			"common/SerializeChart.js",
-		  	"common/prop-locker.js",
+
 
 			"common/libfont/common.js",
 			"common/libfont/map.js",
@@ -89,6 +89,7 @@
 			"common/Drawings/CommonController.js",
 			"common/Drawings/States.js",
 			"common/Drawings/DrawingsChanges.js",
+		  "common/prop-locker.js",
 			"common/Drawings/Format/Format.js",
 			"common/Drawings/Format/CreateGeometry.js",
 			"common/Drawings/Format/Geometry.js",
