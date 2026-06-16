@@ -368,6 +368,20 @@
 			this.drawViewPrMarks(graphics);
 		}
 	};
+	CNotes.prototype.drawForNextPrintPage = function (graphics) {
+		this.drawBgMaster(graphics);
+		this.cSld.forEachSp(function (shape) {
+			const placeholderType = shape.getPlaceholderType();
+			switch (placeholderType) {
+				case AscFormat.phType_dt:
+				case AscFormat.phType_sldNum:
+				case AscFormat.phType_ftr:
+				case AscFormat.phType_hdr: {
+					shape.draw(graphics);
+				}
+			}
+		});
+	};
 	CNotes.prototype.drawBgMaster = function (graphics) {
 		DrawBackground(graphics, this.backgroundFill, this.Width, this.Height);
 		if (this.needMasterSpDraw()) {

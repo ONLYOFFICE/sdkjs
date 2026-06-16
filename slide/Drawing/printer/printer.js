@@ -134,7 +134,7 @@
 			graphics.m_bNoPrintSlideBackground = false;
 		} else {
 			graphics.SaveGrState();
-			printer.drawPlaceholders(note, graphics);
+			note.drawForNextPrintPage(graphics);
 			const transform = new AscCommon.CMatrix();
 			transform.tx = CHANDOUTMASTER_HORIZONTAL_FIELD;
 			transform.ty = CHANDOUTMASTER_VERTICAL_FIELD;
@@ -503,19 +503,6 @@
 			map[noteId].push(page);
 		}
 		return map;
-	};
-	NotesPrinter.prototype.drawPlaceholders = function (note, graphics) {
-		note.cSld.forEachSp(function (shape) {
-			const placeholderType = shape.getPlaceholderType();
-			switch (placeholderType) {
-				case AscFormat.phType_dt:
-				case AscFormat.phType_sldNum:
-				case AscFormat.phType_ftr:
-				case AscFormat.phType_hdr: {
-					shape.draw(graphics);
-				}
-			}
-		});
 	};
 	NotesPrinter.prototype.getNotesPages = function () {
 		if (this.cache.notePages === null) {
