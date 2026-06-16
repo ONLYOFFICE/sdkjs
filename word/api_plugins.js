@@ -495,7 +495,7 @@
 		
 		if (this.isPdfEditor()) {
 			let oViewer = logicDocument.Viewer;
-			oViewer.findText(searchProps, isForward);
+			oViewer.findText(searchProps, isForward !== false);
 			this._selectSearchingResults(true);
 			return 0 !== logicDocument.SearchEngine.Count;
 		}
