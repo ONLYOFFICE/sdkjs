@@ -55,7 +55,6 @@
         this._password          = false;
         this._richText          = false; // to do related properties, methods
         this._richValue         = [];
-        this._textFont          = AscPDF.DEFAULT_FIELD_FONT;
         this._fileSelect        = false;
         this._value             = undefined;
 		this._displayValue      = "";
@@ -1114,8 +1113,10 @@
                 nNewFontSize = AscCommon.CorrectFontSize(nFontSize, true);
                 while (nNewFontSize > 1)
                 {
-                    oRun.SetFontSize(nNewFontSize);
-                    oPara.Recalculate_Page(0);
+					oPara.SetApplyToAll(true);
+					oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+					oPara.SetApplyToAll(false);
+					oPara.Recalculate_Page(0);
 
                     oContentBounds = oContent.GetContentBounds(0);
                     if (oContentBounds.Bottom - oContentBounds.Top < oBounds.H)
@@ -1130,16 +1131,19 @@
 
                 while (nNewFontSize <= nMaxFontSize)
                 {
-                    oRun.SetFontSize(nNewFontSize);
-                    
-                    oPara.Recalculate_Page(0);
+					oPara.SetApplyToAll(true);
+					oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+					oPara.SetApplyToAll(false);
+					oPara.Recalculate_Page(0);
 
                     let oContentBounds = oContent.GetContentBounds(0);
                     if (oContentBounds.Bottom - oContentBounds.Top > oBounds.H)
                     {
                         nNewFontSize -= nFontStep;
-                        oRun.SetFontSize(nNewFontSize);
-                        oPara.Recalculate_Page(0);
+						oPara.SetApplyToAll(true);
+						oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+						oPara.SetApplyToAll(false);
+						oPara.Recalculate_Page(0);
                         break;
                     }
 
@@ -1152,8 +1156,10 @@
         }
         else {
             nNewFontSize = (Math.min(nFontSize * oBounds.H / nTextHeight * 0.9, 100, nFontSize * oBounds.W / nMaxWidth) * 100 >> 0) / 100;
-            oRun.SetFontSize(nNewFontSize);
-            oPara.Recalculate_Page(0);
+			oPara.SetApplyToAll(true);
+			oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+			oPara.SetApplyToAll(false);
+			oPara.Recalculate_Page(0);
         }
 
         if (this.IsPassword()) {
@@ -1871,7 +1877,12 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CTextField.prototype.Commit = function() {
-        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
+		if (this.IsLogicalRoot() && !this.IsWidget()) {
+			this.GetKid(0).Commit();
+			return;
+		}
+
+        let aFields = this.GetAllWidgets();
 
         this.DoFormatAction();
         

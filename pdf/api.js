@@ -424,6 +424,24 @@
 			oDoc.FinalizeAction(true);
 		}
 	};
+	PDFEditorApi.prototype.asc_PasteHtmlAsText = function(sHtml, callback) {
+		if (!this.DocumentRenderer)
+			return;
+
+		if (!this.DocumentRenderer.canInteract()) {
+			let _t = this;
+			let args = arguments;
+			this.DocumentRenderer.paint(null, function() {
+				_t.asc_PasteHtmlAsText.apply(_t, args);
+			});
+			return;
+		}
+
+		let oDoc = this.DocumentRenderer.getPDFDoc();
+		oDoc.StartAction(AscDFH.historydescription_Document_PasteHotKey);
+		window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
+		AscCommon.Editor_Paste_Html_Lite_Exec(this, sHtml, callback);
+	};
 	PDFEditorApi.prototype.asc_setAdvancedOptions = function(idOption, option) {
 		if (this.advancedOptionsAction !== AscCommon.c_oAscAdvancedOptionsAction.Open
 			|| AscCommon.EncryptionWorker.asc_setAdvancedOptions(this, idOption, option)
@@ -1614,7 +1632,7 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			let oField = oDoc.CreateTextField(true);
+			let oField = oDoc.CreateTextField();
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
@@ -1623,7 +1641,7 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			let oField = oDoc.CreateButtonField(true);
+			let oField = oDoc.CreateButtonField();
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
@@ -1650,7 +1668,7 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			let oField = oDoc.CreateComboboxField(true);
+			let oField = oDoc.CreateComboboxField();
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
@@ -1659,7 +1677,7 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			let oField = oDoc.CreateListboxField(true);
+			let oField = oDoc.CreateListboxField();
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
@@ -4171,7 +4189,7 @@
 				AscPDF.stampsLocale = lang;
 
 				// fonts
-				let sText = Asc.editor.User.asc_getUserName();
+				let sText = AscCommon.UserInfoParser.getCurrentName();
 				for (let type in AscPDF.STAMPS_JSON) {
 					AscPDF.STAMPS_JSON[type]['content']['content'].forEach(function(para) {
 						para['content'].forEach(function(run) {

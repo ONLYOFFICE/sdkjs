@@ -42,27 +42,21 @@
     AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetNotesStyle]  = AscDFH.CChangesDrawingsObjectNoId;
     AscDFH.changesFactory[AscDFH.historyitem_NotesMasterAddToNotesLst]  = AscDFH.CChangesDrawingsContentPresentation;
     AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetClrMap]      = AscDFH.CChangesDrawingsObject;
-    AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetCSld]        = AscDFH.CChangesDrawingsObject;
 
 
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetNotesTheme]  = function(oClass, value){oClass.Theme = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetHF]          = function(oClass, value){oClass.hf = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetNotesStyle]  = function(oClass, value){oClass.txStyles = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetClrMap]      = function(oClass, value){oClass.clrMap = value;};
-    AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetCSld]        = function(oClass, value){
-        oClass.cSld = value;
-        if (value) value.parent = oClass;
-    };
 
     AscDFH.drawingsConstructorsMap[AscDFH.historyitem_NotesMasterSetNotesStyle] = AscFormat.TextListStyle;
 
     AscDFH.drawingContentChanges[AscDFH.historyitem_NotesMasterAddToNotesLst]  = function(oClass){return oClass.notesLst;};
 
     function CNotesMaster() {
+        this.cSld = new AscFormat.CSld(this);
         AscFormat.CBaseFormatObject.call(this);
         this.clrMap = new AscFormat.ClrMap();
-        this.cSld = null;
-        this.setCSld(new AscFormat.CSld(this));
         this.hf = null;
         this.txStyles = null;
 
@@ -127,9 +121,15 @@
     CNotesMaster.prototype.setCSldName = function(pr){
         this.cSld.setName(pr);
     };
-    CNotesMaster.prototype.setCSld = function(cSld){
-        History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesMasterSetCSld, this.cSld, cSld));
-        this.cSld = cSld;
+    CNotesMaster.prototype.Write_ToBinary2 = function(w){
+        w.WriteLong(this.getObjectType());
+        w.WriteString2(this.Id);
+        AscFormat.writeObject(w, this.cSld);
+    };
+    CNotesMaster.prototype.Read_FromBinary2 = function(r){
+        this.Id = r.GetString2();
+        this.cSld = AscFormat.readObject(r);
+        if (this.cSld) this.cSld.parent = this;
     };
 
 

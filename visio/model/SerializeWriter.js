@@ -1445,14 +1445,6 @@
 	};
 
 	AscVisio.CSolutions.prototype.privateWriteAttributes = undefined;
-	/**
-	 * Write attributes to stream for CSolutions
-	 * 
-	 * @param {CBinaryFileWriter} pWriter - The binary writer
-	 */
-	AscVisio.CSolutions.prototype.privateWriteAttributes = function (pWriter) {
-		pWriter._WriteString2(0, this.current);
-	};
 
 	/**
 	 * Write children to stream for CSolutions

@@ -11502,7 +11502,7 @@
 	 * Deletes the Range object.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {DeleteShiftDirection} [shift] - Specifies how to shift cells to replace the deleted cells.
+	 * @param {DeleteShiftDirection} [shift] - Specifies how to shift cells to replace the deleted cells. If omitted, the direction is determined automatically: <em>"up"</em> if the range has more columns than rows, otherwise <em>"left"</em>.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Delete.js
 	 */
 	ApiRange.prototype.Delete = function (shift) {
@@ -13568,6 +13568,36 @@
 	};
 
 	/**
+	 * Sets the fill formatting properties to the current graphic object.
+	 *
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 *
+	 * @param {ApiFill} fill - The fill type used to fill the graphic object.
+	 * @returns {boolean} - returns false if param is invalid.
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Fill.js
+	 */
+	ApiDrawing.prototype.Fill = function (fill) {
+		const classType = this.GetClassType();
+		if (classType !== 'shape' && classType !== 'image' && classType !== 'chart') {
+			return false;
+		}
+
+		if (!fill || !fill.GetClassType || fill.GetClassType() !== 'fill') {
+			return false;
+		}
+
+		if (this.Drawing && this.Drawing.spPr) {
+			this.Drawing.spPr.setFill(fill.UniFill);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
 	 * Gets the fill formatting properties from the current graphic object.
 	 *
 	 * @memberof ApiDrawing
@@ -15081,6 +15111,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetTextToDisplay.js
 	 */
 	ApiHyperlink.prototype.SetTextToDisplay = function (sText) {
+		// As in MS: an empty value keeps the current display text
+		if (!sText) {
+			return;
+		}
 		this.GetRange().SetValue(sText);
 	};
 
@@ -28724,8 +28758,13 @@
 	ApiDrawing.prototype["SetFlipV"]                   =  ApiDrawing.prototype.SetFlipV;
 	ApiDrawing.prototype["SetLockAspect"]              =  ApiDrawing.prototype.SetLockAspect;
 	ApiDrawing.prototype["GetLockAspect"]              =  ApiDrawing.prototype.GetLockAspect;
+	ApiDrawing.prototype["SetTitle"]                   =  ApiDrawing.prototype.SetTitle;
+	ApiDrawing.prototype["GetTitle"]                   =  ApiDrawing.prototype.GetTitle;
+	ApiDrawing.prototype["SetDescription"]             =  ApiDrawing.prototype.SetDescription;
+	ApiDrawing.prototype["GetDescription"]             =  ApiDrawing.prototype.GetDescription;
 	ApiDrawing.prototype["Select"]                     =  ApiDrawing.prototype.Select;
 	ApiDrawing.prototype["SetFill"]                    =  ApiDrawing.prototype.SetFill;
+	ApiDrawing.prototype["Fill"]                       =  ApiDrawing.prototype.Fill;
 	ApiDrawing.prototype["GetFill"]                    =  ApiDrawing.prototype.GetFill;
 	ApiDrawing.prototype["SetOutLine"]                 =  ApiDrawing.prototype.SetOutLine;
 	ApiDrawing.prototype["Unselect"]                   =  ApiDrawing.prototype.Unselect;
@@ -28748,6 +28787,7 @@
 
 	ApiChart.prototype["GetClassType"] = ApiChart.prototype.GetClassType = AscBuilder.ApiChart.prototype.GetClassType;
 	ApiChart.prototype["GetChartType"] = ApiChart.prototype.GetChartType = AscBuilder.ApiChart.prototype.GetChartType;
+	ApiChart.prototype["GetType"] = ApiChart.prototype.GetType = AscBuilder.ApiChart.prototype.GetType;
 	ApiChart.prototype["SetTitle"] = ApiChart.prototype.SetTitle = AscBuilder.ApiChart.prototype.SetTitle;
 	ApiChart.prototype["GetTitle"] = ApiChart.prototype.GetTitle = AscBuilder.ApiChart.prototype.GetTitle;
 	ApiChart.prototype["SetHorAxisTitle"] = ApiChart.prototype.SetHorAxisTitle = AscBuilder.ApiChart.prototype.SetHorAxisTitle;

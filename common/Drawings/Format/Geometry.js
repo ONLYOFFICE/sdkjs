@@ -1788,8 +1788,13 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
     CHorizontalRule.prototype.asc_getColor = function() {
         let shape = this._shape;
         let unifill = shape && shape.spPr && shape.spPr.Fill;
-        let unicolor = unifill && unifill.fill && unifill.fill.color;
-        return unicolor ? AscCommon.CreateAscColor(unicolor) : null;
+        if (!unifill || !unifill.fill || !unifill.fill.color)
+            return null;
+        let theme = shape.Get_Theme && shape.Get_Theme();
+        let colorMap = shape.Get_ColorMap && shape.Get_ColorMap();
+        if (theme && colorMap)
+            unifill.check(theme, colorMap);
+        return AscCommon.CreateAscColor(unifill.fill.color);
     };
     CHorizontalRule.prototype.asc_putColor = function(v) {
         this._newColor = v;

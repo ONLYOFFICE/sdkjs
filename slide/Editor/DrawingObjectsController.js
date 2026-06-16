@@ -260,6 +260,22 @@ DrawingObjectsController.prototype.cancelTableBorderMove = function()
     return false;
 };
 
+DrawingObjectsController.prototype.isMovingTableBorder = function()
+{
+    const selected = this.selectedObjects || [];
+    for (let i = 0; i < selected.length; ++i)
+    {
+        const drawing = selected[i];
+        if (drawing.getObjectType() === AscDFH.historyitem_type_GraphicFrame)
+        {
+            const table = drawing.graphicObject;
+            if (table && table.IsBorderMove())
+                return true;
+        }
+    }
+    return false;
+};
+
 
 DrawingObjectsController.prototype.convertPixToMM = function(pix)
 {

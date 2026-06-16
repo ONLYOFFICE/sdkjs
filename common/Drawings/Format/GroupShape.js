@@ -247,6 +247,13 @@
 				item.setGroup(this);
 			}
 			this.spTree.splice(pos, 0, item);
+			this.processSlideJumpLinks(item, true);
+		};
+		CGroupShape.prototype.processSlideJumpLinks = function (item, isAdd) {
+			var logicDocument = Asc.editor.getLogicDocument();
+			if (logicDocument && logicDocument.processSlideJumpLinksInSubtree) {
+				logicDocument.processSlideJumpLinksInSubtree(item, isAdd);
+			}
 		};
 
 		CGroupShape.prototype.setParent = function (pr) {
@@ -280,6 +287,9 @@
 			var aSplicedShape = this.spTree.splice(pos, 1);
 			AscCommon.History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_GroupShapeRemoveFromSpTree, pos, aSplicedShape, false));
 			this.handleUpdateSpTree();
+			if (aSplicedShape[0]) {
+				this.processSlideJumpLinks(aSplicedShape[0], false);
+			}
 			return aSplicedShape[0];
 		};
 
@@ -1013,6 +1023,19 @@
 					this.arrGraphicObjects[i].Search(SearchEngine, Type);
 				}
 			}
+		};
+
+		CGroupShape.prototype.GetAllParaMaths = function (arrParaMaths) {
+			if (!arrParaMaths) {
+				arrParaMaths = [];
+			}
+			var Len = this.arrGraphicObjects.length;
+			for (var i = 0; i < Len; ++i) {
+				if (this.arrGraphicObjects[i].GetAllParaMaths) {
+					this.arrGraphicObjects[i].GetAllParaMaths(arrParaMaths);
+				}
+			}
+			return arrParaMaths;
 		};
 
 		CGroupShape.prototype.GetSearchElementId = function (bNext, bCurrent) {

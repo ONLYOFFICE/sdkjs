@@ -1810,6 +1810,7 @@
 	};
 	WriterToJSON.prototype.SerPivotCacheRecords = function(oRecords) // CT_PivotCacheRecords
 	{
+		var oCols = oRecords.getParsedCols();
 		var count = oRecords.getRowsCount();
 
 		let oResult = {
@@ -1820,8 +1821,8 @@
 
 		for (let i = 0; i < count; i++) {
 			let aRow = [];
-			for (let j = 0; j < oRecords._cols.length; j++)
-				aRow = aRow.concat(this.SerPivotRecords(oRecords._cols[j], i));
+			for (let j = 0; j < oCols.length; j++)
+				aRow = aRow.concat(this.SerPivotRecords(oCols[j], i));
 			
 			oResult["records"].push(aRow);
 		}

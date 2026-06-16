@@ -1688,11 +1688,15 @@
 			AscCommonExcel.g_oVLOOKUPCache.clean();
 			AscCommonExcel.g_oHLOOKUPCache.clean();
 			AscCommonExcel.g_oMatchCache.clean();
-			AscCommonExcel.g_oSUMIFSCache.clean();
 			AscCommonExcel.g_oFormulaRangesCache.clean();
 			AscCommonExcel.g_oCountIfCache.clean();
+			AscCommonExcel.g_oCountIFSCache.clean();
 			AscCommonExcel.g_oSumIfCache.clean();
 			AscCommonExcel.g_oAverageIfCache.clean();
+			AscCommonExcel.g_oSumIFSCache.clean();
+			AscCommonExcel.g_oAverageIFSCache.clean();
+			AscCommonExcel.g_oMaxIFSCache.clean();
+			AscCommonExcel.g_oMinIFSCache.clean();
 		},
 		notifyAllFormulasInChangedWs: function() {
 			let sheetIds = {};
@@ -3325,6 +3329,9 @@
 		//external references
 		this.externalReferences.forEach(function(elem){
 			elem && elem.initPostOpen && elem.initPostOpen();
+		});
+		this.forEach(function (ws) {
+			ws.initConditionalFormattingFormulas();
 		});
 		if (bSnapshot) {
 			this.snapshot = this._getSnapshot();
@@ -7802,22 +7809,26 @@
 							case Asc.ECfType.beginsWith:
 							case Asc.ECfType.endsWith:
 								var operator;
-								switch (oRule.type) {
-									case Asc.ECfType.containsText:
-										operator = AscCommonExcel.ECfOperator.Operator_containsText;
-										break;
-									case Asc.ECfType.notContainsText:
-										operator = AscCommonExcel.ECfOperator.Operator_notContains;
-										break;
-									case Asc.ECfType.beginsWith:
-										operator = AscCommonExcel.ECfOperator.Operator_beginsWith;
-										break;
-									case Asc.ECfType.endsWith:
-										operator = AscCommonExcel.ECfOperator.Operator_endsWith;
-										break;
-								}
-								if (operator) {
-									oRule.asc_setOperator(operator);
+								if (oRule.operator !== null && oRule.operator !== undefined) {
+									operator = oRule.operator;
+								} else {
+									switch (oRule.type) {
+										case Asc.ECfType.containsText:
+											operator = AscCommonExcel.ECfOperator.Operator_containsText;
+											break;
+										case Asc.ECfType.notContainsText:
+											operator = AscCommonExcel.ECfOperator.Operator_notContains;
+											break;
+										case Asc.ECfType.beginsWith:
+											operator = AscCommonExcel.ECfOperator.Operator_beginsWith;
+											break;
+										case Asc.ECfType.endsWith:
+											operator = AscCommonExcel.ECfOperator.Operator_endsWith;
+											break;
+									}
+									if (operator !== null && operator !== undefined) {
+										oRule.asc_setOperator(operator);
+									}
 								}
 								formulaParent = new AscCommonExcel.CConditionalFormattingFormulaParent(this, oRule, true);
 								oRuleElement =  oRule.getFormulaCellIs(Asc.ECfType.notContainsText === oRule.type || Asc.ECfType.containsText === oRule.type);
@@ -9345,18 +9356,18 @@
 	Worksheet.prototype.getRange4=function(r, c){
 		return new Range(this, r, c, r, c);
 	};
-	// Occupied: data + direct-style-only. Style-only emissions are
-	// transient; never saveContent / mutate them.
-	Worksheet.prototype.getRowIterator=function(r1, c1, c2, callback){
+	// Occupied: data + direct-style-only over [r1..r2] x [c1..c2].
+	// Style-only emissions are transient; never saveContent / mutate them.
+	Worksheet.prototype.getRowIterator=function(r1, c1, r2, c2, callback){
 		var it = new AscCommonExcel.OccupiedRowIterator();
-		it.init(this, r1, c1, c2);
+		it.init(this, r1, c1, c2, r2);
 		callback(it);
 		it.release();
 	};
 	// Data-only: skips direct-style-only entries.
-	Worksheet.prototype.getDataRowIterator=function(r1, c1, c2, callback){
+	Worksheet.prototype.getDataRowIterator=function(r1, c1, r2, c2, callback){
 		var it = new RowIterator();
-		it.init(this, r1, c1, c2);
+		it.init(this, r1, c1, c2, r2);
 		callback(it);
 		it.release();
 	};
@@ -9842,9 +9853,12 @@
 				moveCells(copyRange, oBBoxFrom.c1 + i, oBBoxTo.c1 + i, oBBoxFrom.r1, oBBoxTo.r1, oBBoxFrom.r2 - oBBoxFrom.r1 + 1);
 			}
 		}
-		// ToDo possibly need to reduce the update range
+		let updateRange = new Asc.Range(oBBoxFrom.c1, oBBoxFrom.r1, oBBoxFrom.c2, oBBoxFrom.r2);
+		if (!moveToOtherSheet) {
+			updateRange = updateRange.union(oBBoxTo);
+		}
 		AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_MoveRange,
-			this.getId(), new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0),
+			this.getId(), updateRange,
 			new UndoRedoData_FromTo(new UndoRedoData_BBox(oBBoxFrom), new UndoRedoData_BBox(oBBoxTo), copyRange, wsTo.getId()));
 		if(moveToOtherSheet) {
 			//done so that recalculation/data update happens on another sheet
@@ -10788,7 +10802,7 @@
 	};
 	Worksheet.prototype.forEachFormula = function(callback) {
 		var range = this.getRange3(0, 0, gc_nMaxRow0, gc_nMaxCol0);
-		range._setPropertyNoEmpty(null, null, function(cell) {
+		range._foreachDataOnly(function(cell) {
 			if (cell.isFormula()) {
 				callback(cell.getFormulaParsed());
 			}
@@ -13163,7 +13177,11 @@
 	};
 
 	Worksheet.prototype.setActiveNamedSheetView = function (id) {
+		var oldId = this.activeNamedSheetViewId;
 		this.activeNamedSheetViewId = id;
+		if (oldId !== id && this.hiddenManager) {
+			this.hiddenManager.setDirty(true);
+		}
 		this.workbook.handlers && this.workbook.handlers.trigger("asc_onChangeActiveNamedSheetView");
 	};
 
@@ -13482,6 +13500,12 @@
 			this.aConditionalFormattingRules = {};
 		}
 		this.aConditionalFormattingRules[rule.id] = rule;
+	};
+	Worksheet.prototype.initConditionalFormattingFormulas = function () {
+		var t = this;
+		this.forEachConditionalFormattingRules(function (oRule) {
+			oRule.initRuleElements && oRule.initRuleElements(t);
+		});
 	};
 
 	Worksheet.prototype.changeCFRule = function (from, to, addToHistory) {
@@ -17582,11 +17606,15 @@
 			AscCommonExcel.g_oVLOOKUPCache.remove(this, DataOld, res);
 			AscCommonExcel.g_oHLOOKUPCache.remove(this, DataOld, res);
 			AscCommonExcel.g_oMatchCache.remove(this);
-			AscCommonExcel.g_oSUMIFSCache.remove(this);
 			AscCommonExcel.g_oFormulaRangesCache.remove(this);
 			AscCommonExcel.g_oCountIfCache.remove(this, DataOld, res);
+			AscCommonExcel.g_oCountIFSCache.remove(this, DataOld, res);
 			AscCommonExcel.g_oSumIfCache.remove(this, DataOld, res);
 			AscCommonExcel.g_oAverageIfCache.remove(this, DataOld, res);
+			AscCommonExcel.g_oSumIFSCache.remove(this, DataOld, res);
+			AscCommonExcel.g_oAverageIFSCache.remove(this, DataOld, res);
+			AscCommonExcel.g_oMaxIFSCache.remove(this, DataOld, res);
+			AscCommonExcel.g_oMinIFSCache.remove(this, DataOld, res);
 		}
 	};
 	Cell.prototype.cleanText = function() {
@@ -19225,12 +19253,9 @@
 		t.worksheet.dynamicArrayManager.recalculateVolatileArrays();
 		AscCommon.History.EndTransaction();
 	};
-	// Shim for setters where row / col / cell all delegate to the same method.
-	Range.prototype._setRangeXfByMethod = function (styleOnlyApply, methodName, val) {
-		this._setRangeXfProperty(styleOnlyApply,
-			function (row)  { row[methodName](val); },
-			function (col)  { col[methodName](val); },
-			function (cell) { cell[methodName](val); });
+	// applyFn runs for each row/col/cell; use dot notation (el.setBold(val)) - a string name breaks under Closure ADVANCED.
+	Range.prototype._setRangeXfByMethod = function (styleOnlyApply, applyFn) {
+		this._setRangeXfProperty(styleOnlyApply, applyFn, applyFn, applyFn);
 	};
 	// Row / Col / All ranges route style-only entries through `styleOnlyApply`
 	// (a run-rewrite helper from CellStyleStorage) and visit only data cells
@@ -19331,7 +19356,7 @@
 		this.createCellOnRowColCross();
 		this._setRangeXfByMethod(function (ws, bbox) {
 			AscCommonExcel.CellStyleStorage.applyXfsReplaceToStyleOnlyRunsInBBox(ws, bbox, val);
-		}, 'setStyle', val);
+		}, function (el) { el.setStyle(val); });
 	};
 	Range.prototype.clearTableStyle = function() {
 		this.worksheet.sheetMergedStyles.clearTablePivotStyle(this.bbox);
@@ -19359,7 +19384,7 @@
 				ws, bbox, 'num', val,
 				AscCommonExcel.CellXfs.prototype.setNum,
 				AscCommonExcel.g_StyleCache.addNum);
-		}, 'setNum', val);
+		}, function (el) { el.setNum(val); });
 	};
 	Range.prototype.getShiftedNumFormat=function(nShift, dDigitsCount){
 		AscCommon.History.Create_NewPoint();
@@ -19377,7 +19402,7 @@
 				ws, bbox, 'font', val,
 				AscCommonExcel.CellXfs.prototype.setFont,
 				AscCommonExcel.g_StyleCache.addFont);
-		}, 'setFont', val);
+		}, function (el) { el.setFont(val); });
 	};
 	Range.prototype.setFontname=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19387,7 +19412,7 @@
 				ws, bbox, 'name', val,
 				AscCommonExcel.Font.prototype.getName,
 				function (v) { this.setName(v); this.setScheme(null); });
-		}, 'setFontname', val);
+		}, function (el) { el.setFontname(val); });
 	};
 	Range.prototype.setFontsize=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19397,7 +19422,7 @@
 				ws, bbox, 'size', val,
 				AscCommonExcel.Font.prototype.getSize,
 				AscCommonExcel.Font.prototype.setSize);
-		}, 'setFontsize', val);
+		}, function (el) { el.setFontsize(val); });
 	};
 	Range.prototype.setFontcolor=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19407,7 +19432,7 @@
 				ws, bbox, 'color', val,
 				AscCommonExcel.Font.prototype.getColor,
 				AscCommonExcel.Font.prototype.setColor);
-		}, 'setFontcolor', val);
+		}, function (el) { el.setFontcolor(val); });
 	};
 	Range.prototype.setBold=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19417,7 +19442,7 @@
 				ws, bbox, 'bold', val,
 				AscCommonExcel.Font.prototype.getBold,
 				AscCommonExcel.Font.prototype.setBold);
-		}, 'setBold', val);
+		}, function (el) { el.setBold(val); });
 	};
 	Range.prototype.setItalic=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19427,7 +19452,7 @@
 				ws, bbox, 'italic', val,
 				AscCommonExcel.Font.prototype.getItalic,
 				AscCommonExcel.Font.prototype.setItalic);
-		}, 'setItalic', val);
+		}, function (el) { el.setItalic(val); });
 	};
 	Range.prototype.setUnderline=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19437,7 +19462,7 @@
 				ws, bbox, 'underline', val,
 				AscCommonExcel.Font.prototype.getUnderline,
 				AscCommonExcel.Font.prototype.setUnderline);
-		}, 'setUnderline', val);
+		}, function (el) { el.setUnderline(val); });
 	};
 	Range.prototype.setStrikeout=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19447,7 +19472,7 @@
 				ws, bbox, 'strikeout', val,
 				AscCommonExcel.Font.prototype.getStrikeout,
 				AscCommonExcel.Font.prototype.setStrikeout);
-		}, 'setStrikeout', val);
+		}, function (el) { el.setStrikeout(val); });
 	};
 	Range.prototype.setFontAlign=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19457,7 +19482,7 @@
 				ws, bbox, 'fontAlign', val,
 				AscCommonExcel.Font.prototype.getVerticalAlign,
 				AscCommonExcel.Font.prototype.setVerticalAlign);
-		}, 'setFontAlign', val);
+		}, function (el) { el.setFontAlign(val); });
 	};
 	Range.prototype.setAlignVertical=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19466,7 +19491,7 @@
 			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'alignVertical', val,
 				AscCommonExcel.Align.prototype.setAlignVertical);
-		}, 'setAlignVertical', val);
+		}, function (el) { el.setAlignVertical(val); });
 	};
 	Range.prototype.setAlignHorizontal=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19475,7 +19500,7 @@
 			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'alignHorizontal', val,
 				AscCommonExcel.Align.prototype.setAlignHorizontal);
-		}, 'setAlignHorizontal', val);
+		}, function (el) { el.setAlignHorizontal(val); });
 	};
 	Range.prototype.setReadingOrder=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19484,7 +19509,7 @@
 			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'readingOrder', val,
 				AscCommonExcel.Align.prototype.setReadingOrder);
-		}, 'setReadingOrder', val);
+		}, function (el) { el.setReadingOrder(val); });
 	};
 	Range.prototype.setFill=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19495,7 +19520,7 @@
 				ws, bbox, 'fill', val,
 				AscCommonExcel.CellXfs.prototype.setFill,
 				AscCommonExcel.g_StyleCache.addFill);
-		}, 'setFill', val);
+		}, function (el) { el.setFill(val); });
 	};
 	Range.prototype.setFillColor=function(val){
 		var fill = new AscCommonExcel.Fill();
@@ -19685,7 +19710,7 @@
 			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'shrinkToFit', val,
 				AscCommonExcel.Align.prototype.setShrinkToFit);
-		}, 'setShrinkToFit', val);
+		}, function (el) { el.setShrinkToFit(val); });
 	};
 	Range.prototype.setWrap=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19694,7 +19719,7 @@
 			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'wrap', val,
 				AscCommonExcel.Align.prototype.setWrap);
-		}, 'setWrap', val);
+		}, function (el) { el.setWrap(val); });
 	};
 	Range.prototype.setAngle=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -19703,7 +19728,7 @@
 			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'angle', val,
 				AscCommonExcel.Align.prototype.setAngle);
-		}, 'setAngle', val);
+		}, function (el) { el.setAngle(val); });
 	};
 	Range.prototype.setIndent = function (val) {
 		if (val < 0) {
@@ -19715,7 +19740,7 @@
 			AscCommonExcel.CellStyleStorage.applyAlignPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'indent', val,
 				AscCommonExcel.Align.prototype.setIndent);
-		}, 'setIndent', val);
+		}, function (el) { el.setIndent(val); });
 	};
 	Range.prototype.setApplyProtection = function (val) {
 		AscCommon.History.Create_NewPoint();
@@ -19724,7 +19749,7 @@
 			AscCommonExcel.CellStyleStorage.applyXfsPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'applyProtection', val,
 				AscCommonExcel.CellXfs.prototype.setApplyProtection);
-		}, 'setApplyProtection', val);
+		}, function (el) { el.setApplyProtection(val); });
 	};
 	Range.prototype.setLocked = function (val) {
 		AscCommon.History.Create_NewPoint();
@@ -19733,7 +19758,7 @@
 			AscCommonExcel.CellStyleStorage.applyXfsPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'locked', val,
 				AscCommonExcel.CellXfs.prototype.setLocked);
-		}, 'setLocked', val);
+		}, function (el) { el.setLocked(val); });
 	};
 	Range.prototype.setHiddenFormulas = function (val) {
 		AscCommon.History.Create_NewPoint();
@@ -19742,7 +19767,7 @@
 			AscCommonExcel.CellStyleStorage.applyXfsPropToStyleOnlyRunsInBBox(
 				ws, bbox, 'hidden', val,
 				AscCommonExcel.CellXfs.prototype.setHidden);
-		}, 'setHiddenFormulas', val);
+		}, function (el) { el.setHiddenFormulas(val); });
 	};
 	Range.prototype.setType=function(type){
 		AscCommon.History.Create_NewPoint();
@@ -23896,10 +23921,13 @@
 		var hiddenSum = [];
 		if (this.ws) {
 			var i;
+			var ws = this.ws;
 			var hiddenFlags = [];
-			this.ws._forEachRow(function(row) {
-				if (row.getHidden()) {
-					hiddenFlags[row.getIndex()] = 1;
+			var Row = AscCommonExcel.Row;
+			// Only initialized rows participate, matching row iteration semantics.
+			Row.forEachFlags(ws, function (r, flags) {
+				if (Row.isHiddenFromFlags(ws, r, flags)) {
+					hiddenFlags[r] = 1;
 				}
 			});
 			var sum = 0;
@@ -25438,7 +25466,7 @@
 			}
 		} else if (fromCmIndex != null && from && from.checkFirstCellArray(parent)) {
 			if (fromVmIndex != null && (toVmIndex == null || toVmIndex === 0)) {
-				// cm unchanged, but vm cleared: formula unblocked (e.g. redo of expand) → remove listener
+				// cm unchanged, but vm cleared: formula unblocked (e.g. redo of expand) -> remove listener
 				var listenerId = from.getListenerId();
 				this.ws.workbook.dependencyFormulas.endListeningVolatileArray(listenerId);
 			}
@@ -25638,7 +25666,7 @@
 			const newR2 = (formula.parent.nRow + arraySize.row) > AscCommon.gc_nMaxRow ? AscCommon.gc_nMaxRow - 1 : (formula.parent.nRow + arraySize.row - 1);
 			const newC2 = (formula.parent.nCol + arraySize.col) > AscCommon.gc_nMaxCol ? AscCommon.gc_nMaxCol - 1 : (formula.parent.nCol + arraySize.col - 1);
 
-			// cellsRange/cellsRange3D is produced by ANCHORARRAY (`A1#`) — treat as a spillable source.
+			// cellsRange/cellsRange3D is produced by ANCHORARRAY (`A1#`) - treat as a spillable source.
 			if (formulaResult.type !== cElementType.array &&
 				formulaResult.type !== cElementType.cellsRange &&
 				formulaResult.type !== cElementType.cellsRange3D) {
@@ -26543,7 +26571,7 @@
 					}
 					// arrV: [colOffset, errorType, rwOffset, subType]
 					if (rv.arrV[0] === colOffset && rv.arrV[2] === rwOffset) {
-						// found existing match — reuse its vmIndex (1-based)
+						// found existing match - reuse its vmIndex (1-based)
 						vmIndex = vi + 1;
 						needGenerateVm = false;
 						break;
@@ -26551,7 +26579,7 @@
 				}
 			}
 
-			// If not found — create new rich value and metadata as before
+			// If not found - create new rich value and metadata as before
 			if (needGenerateVm) {
 				const oldRichValueData = this.ws.workbook.richValueData ? this.ws.workbook.richValueData.clone() : null;
 				// Initialize richValueData if needed

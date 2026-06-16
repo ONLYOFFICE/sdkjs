@@ -442,8 +442,12 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CComboBoxField.prototype.Commit = function() {
-        let oDoc        = this.GetDocument();
-        let aFields     = oDoc.GetAllWidgets(this.GetFullName());
+		if (this.IsLogicalRoot() && !this.IsWidget()) {
+			this.GetKid(0).Commit();
+			return;
+		}
+		
+        let aFields     = this.GetAllWidgets();
 
         let aCurIdxs = this.GetCurIdxs();
         let aApiIdxs = this.GetLogicCurIdxs();
@@ -711,8 +715,10 @@
     	    return nTextHeight;
 
         let nNewFontSize = (Math.min(nFontSize * oBounds.H / nTextHeight * 0.9, 100, nFontSize * oBounds.W / nMaxWidth) * 100 >> 0) / 100;
-        oRun.SetFontSize(nNewFontSize);
-        oPara.Recalculate_Page(0);
+		oPara.SetApplyToAll(true);
+		oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+		oPara.SetApplyToAll(false);
+		oPara.Recalculate_Page(0);
 
         oTextPr.FontSize    = nNewFontSize;
         oTextPr.FontSizeCS  = nNewFontSize;

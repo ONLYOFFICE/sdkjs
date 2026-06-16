@@ -2183,6 +2183,11 @@ function handleInlineHitNoText(drawing, drawingObjects, e, x, y, pageIndex, bInS
                     bHandleDblClick = true;
                     drawingObjects.handleSignatureDblClick(drawing.signatureLine.id, drawing.extX, drawing.extY);
                 }
+				else if (drawing.isHorizontalRule())
+				{
+					bHandleDblClick = true;
+					Asc.editor.sendEvent("asc_onHorRuleDblClick");
+				}
                 else if (2 === e.ClickCount && drawing.parent instanceof AscCommonWord.ParaDrawing && drawing.parent.IsMathEquation())
                 {
                     bHandleDblClick = true;

@@ -100,13 +100,13 @@
 		let oShapeBounds = this.getRectBounds();
 
 		if (!rect) {
-			rect = [];
+			rect = [
+				(oGrBounds.l) * g_dKoef_mm_to_pt,
+				(oGrBounds.t) * g_dKoef_mm_to_pt,
+				(oGrBounds.r) * g_dKoef_mm_to_pt,
+				(oGrBounds.b) * g_dKoef_mm_to_pt
+			];
 		}
-
-		rect[0] = (oGrBounds.l) * g_dKoef_mm_to_pt;
-		rect[1] = (oGrBounds.t) * g_dKoef_mm_to_pt;
-		rect[2] = (oGrBounds.r) * g_dKoef_mm_to_pt;
-		rect[3] = (oGrBounds.b) * g_dKoef_mm_to_pt;
 
 		this._rect = aCurRect;
 		this._rectDiff = aCurRD;

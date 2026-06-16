@@ -101,7 +101,6 @@ AscDFH.changesFactory[AscDFH.historyitem_SlideSetNum               ] = AscDFH.CC
 AscDFH.changesFactory[AscDFH.historyitem_SlideSetTransition        ] = AscDFH.CChangesDrawingsObjectNoId;
 AscDFH.changesFactory[AscDFH.historyitem_SlideSetSize              ] = AscDFH.CChangesDrawingsObjectNoId;
 AscDFH.changesFactory[AscDFH.historyitem_SlideSetClrMapOverride    ] = AscDFH.CChangesDrawingsObject    ;
-AscDFH.changesFactory[AscDFH.historyitem_SlideSetCSld              ] = AscDFH.CChangesDrawingsObject    ;
 AscDFH.changesFactory[AscDFH.historyitem_PropLockerSetId           ] = AscDFH.CChangesDrawingsString    ;
 AscDFH.changesFactory[AscDFH.historyitem_SlideCommentsAddComment   ] = AscDFH.CChangesDrawingsContentComments   ;
 AscDFH.changesFactory[AscDFH.historyitem_SlideCommentsRemoveComment] = AscDFH.CChangesDrawingsContentComments   ;
@@ -119,10 +118,6 @@ AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetNum               ] = funct
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetTransition        ] = function(oClass, value){oClass.transition = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetSize              ] = function(oClass, value){oClass.Width = value.a; oClass.Height = value.b;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetClrMapOverride    ] = function(oClass, value){oClass.clrMap = value;};
-AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetCSld              ] = function(oClass, value){
-    oClass.cSld = value;
-    if (value) value.parent = oClass;
-};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_PropLockerSetId           ] = function(oClass, value){oClass.objectId = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideSetNotes             ] = function(oClass, value){oClass.notes = value;};
 
@@ -137,13 +132,12 @@ AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideSetTransition        ] = 
 
 function Slide(presentation, slideLayout, slideNum)
 {
+    this.cSld = new AscFormat.CSld(this);
     AscFormat.CBaseFormatObject.call(this);
     this.kind = AscFormat.TYPE_KIND.SLIDE;
 
     this.presentation = editor && editor.WordControl && editor.WordControl.m_oLogicDocument;
     this.graphicObjects = new AscFormat.DrawingObjectsController(this);
-    this.cSld = null;
-    this.setCSld(new AscFormat.CSld(this));
     this.cSld.initCollaborativeMarks();
     this.clrMap = null; // override ClrMap
 
@@ -757,9 +751,20 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
                     if (matching_shape == null && layout.cSld.spTree[j]) {
                         var sp = layout.cSld.spTree[j].copy(undefined);
                         sp.setParent(this);
-											if (sp.txBody) {
-												sp.txBody.setBodyPr(new AscFormat.CBodyPr());
-											}
+                        if (sp.txBody) {
+                            sp.txBody.setBodyPr(new AscFormat.CBodyPr());
+                            if (sp.txBody.lstStyle) {
+                                sp.txBody.setLstStyle(null);
+                            }
+                        }
+                        if (sp.spPr) {
+                            if (sp.spPr.xfrm) {
+                                sp.spPr.setXfrm(null);
+                            }
+                            if (sp.spPr.Fill) {
+                                sp.spPr.setFill(null);
+                            }
+                        }
                         !bIsSpecialPh && sp.clearContent && sp.clearContent();
                         this.addToSpTreeToPos(this.cSld.spTree.length, sp)
                     }
@@ -1010,12 +1015,18 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
        History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SlideSetClrMapOverride, this.clrMap, clrMap));
         this.clrMap = clrMap;
     };
-    Slide.prototype.setCSld = function(cSld)
+    Slide.prototype.Write_ToBinary2 = function(w)
     {
-        History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SlideSetCSld, this.cSld, cSld));
-        this.cSld = cSld;
+        w.WriteLong(this.getObjectType());
+        w.WriteString2(this.Id);
+        AscFormat.writeObject(w, this.cSld);
     };
-
+    Slide.prototype.Read_FromBinary2 = function(r)
+    {
+        this.Id = r.GetString2();
+        this.cSld = AscFormat.readObject(r);
+        if (this.cSld) this.cSld.parent = this;
+    };
     Slide.prototype.getAllFonts = function(fonts)
     {
 	    this.cSld.forEachSp(function(oSp) {

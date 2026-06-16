@@ -375,10 +375,10 @@ CParagraphContentBase.prototype.GetContentWidthInRange = function(oStartPos, oEn
 CParagraphContentBase.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _CurRange)
 {
 };
-CParagraphContentBase.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
+CParagraphContentBase.prototype.recalculateRangeWidth = function(widthState)
 {
 };
-CParagraphContentBase.prototype.Recalculate_Range_Spaces = function(PRSA, CurLine, CurRange, CurPage)
+CParagraphContentBase.prototype.recalculateRangeAlign = function(alignState)
 {
 };
 CParagraphContentBase.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
@@ -458,13 +458,13 @@ CParagraphContentBase.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRan
 //----------------------------------------------------------------------------------------------------------------------
 // Функции отрисовки
 //----------------------------------------------------------------------------------------------------------------------
-CParagraphContentBase.prototype.Draw_HighLights = function(PDSH)
+CParagraphContentBase.prototype.drawHighLights = function(drawState)
 {
 };
 CParagraphContentBase.prototype.Draw_Elements = function(PDSE)
 {
 };
-CParagraphContentBase.prototype.Draw_Lines = function(PDSL)
+CParagraphContentBase.prototype.drawLines = function(drawState)
 {
 };
 CParagraphContentBase.prototype.SkipDraw = function(PDS)
@@ -661,7 +661,7 @@ CParagraphContentBase.prototype.RemoveSelection = function(preserveCursorPositio
 CParagraphContentBase.prototype.SelectAll = function(Direction)
 {
 };
-CParagraphContentBase.prototype.drawSelectionInRange = function(line, range, drawState)
+CParagraphContentBase.prototype.drawSelectionInRange = function(drawState)
 {
 };
 CParagraphContentBase.prototype.IsSelectionEmpty = function(CheckEnd)
@@ -1015,7 +1015,6 @@ CParagraphContentBase.prototype.createDuplicateForSmartArt = function(oPr)
  * @param oEngine {CTextToTableEngine}
  */
 CParagraphContentBase.prototype.CalculateTextToTable = function(oEngine){};
-
 CParagraphContentBase.prototype.GetAllPermRangeMarks = function(marks)
 {
 	return [];
@@ -1098,7 +1097,18 @@ CParagraphContentWithContentBase.prototype.protected_GetRangesCount = function(L
     else
         return (this.Lines[1 + LineIndex + 1] - this.Lines[1 + LineIndex]) / 2;
 };
-
+CParagraphContentWithContentBase.prototype.getRangeStartPos = function(line, range)
+{
+	let _line  = line - this.StartLine;
+	let _range = _line ? range : range - this.StartRange;
+	return this.protected_GetRangeStartPos(_line, _range);
+};
+CParagraphContentWithContentBase.prototype.getRangeEndPos = function(line, range)
+{
+	let _line  = line - this.StartLine;
+	let _range = _line ? range : range - this.StartRange;
+	return this.protected_GetRangeEndPos(_line, _range);
+};
 CParagraphContentWithContentBase.prototype.getRangePos = function(line, range)
 {
 	let _line  = line - this.StartLine;
@@ -2822,31 +2832,23 @@ CParagraphContentWithParagraphLikeContent.prototype.Recalculate_LineMetrics = fu
         this.Content[CurPos].Recalculate_LineMetrics(PRS, ParaPr, _CurLine, _CurRange);
     }
 };
-CParagraphContentWithParagraphLikeContent.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
+CParagraphContentWithParagraphLikeContent.prototype.recalculateRangeWidth = function(widthState)
 {
-    var CurLine = _CurLine - this.StartLine;
-    var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
-
-    var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-
-    for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
-    {
-        this.Content[CurPos].Recalculate_Range_Width( PRSC, _CurLine, _CurRange );
-    }
+	let startPos = this.getRangeStartPos(widthState.CurLine, widthState.CurRange);
+	let endPos   = this.getRangeEndPos(widthState.CurLine, widthState.CurRange);
+	for (let pos = startPos; pos <= endPos; ++pos)
+	{
+		this.Content[pos].recalculateRangeWidth(widthState);
+	}
 };
-CParagraphContentWithParagraphLikeContent.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange, _CurPage)
+CParagraphContentWithParagraphLikeContent.prototype.recalculateRangeAlign = function(alignState) 
 {
-    var CurLine = _CurLine - this.StartLine;
-    var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
-
-    var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-
-    for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
-    {
-        this.Content[CurPos].Recalculate_Range_Spaces( PRSA, _CurLine, _CurRange, _CurPage );
-    }
+	let startPos = this.getRangeStartPos(alignState.CurLine, alignState.CurRange);
+	let endPos   = this.getRangeEndPos(alignState.CurLine, alignState.CurRange);
+	for (let pos = startPos; pos <= endPos; ++pos)
+	{
+		this.Content[pos].recalculateRangeAlign(alignState);
+	}
 };
 CParagraphContentWithParagraphLikeContent.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
 {
@@ -3057,18 +3059,18 @@ CParagraphContentWithParagraphLikeContent.prototype.Shift_Range = function(Dx, D
 //----------------------------------------------------------------------------------------------------------------------
 // Функции отрисовки
 //----------------------------------------------------------------------------------------------------------------------
-CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights = function(PDSH)
+CParagraphContentWithParagraphLikeContent.prototype.drawHighLights = function(drawState)
 {
-    var CurLine  = PDSH.Line - this.StartLine;
-    var CurRange = ( 0 === CurLine ? PDSH.Range - this.StartRange : PDSH.Range );
+	var CurLine  = drawState.Line - this.StartLine;
+	var CurRange = (0 === CurLine ? drawState.Range - this.StartRange : drawState.Range);
 
-    var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
+	var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
+	var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
 
-    for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
-    {
-        this.Content[CurPos].Draw_HighLights( PDSH );
-    }
+	for (var CurPos = StartPos; CurPos <= EndPos; CurPos++)
+	{
+		this.Content[CurPos].drawHighLights(drawState);
+	}
 };
 CParagraphContentWithParagraphLikeContent.prototype.Draw_Elements = function(PDSE)
 {
@@ -3094,21 +3096,20 @@ CParagraphContentWithParagraphLikeContent.prototype.Draw_Elements = function(PDS
 	if (placeholderAlpha)
 		PDSE.Graphics.setTextGlobalAlpha(textAlpha);
 };
-CParagraphContentWithParagraphLikeContent.prototype.Draw_Lines = function(PDSL)
+CParagraphContentWithParagraphLikeContent.prototype.drawLines = function(drawState)
 {
-	var CurLine  = PDSL.Line - this.StartLine;
-	var CurRange = ( 0 === CurLine ? PDSL.Range - this.StartRange : PDSL.Range );
+	var CurLine  = drawState.Line - this.StartLine;
+	var CurRange = ( 0 === CurLine ? drawState.Range - this.StartRange : drawState.Range );
 
 	var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
 	var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
 
-	var nCurDepth = PDSL.CurDepth;
+	var nCurDepth = drawState.CurDepth;
 	for (var CurPos = StartPos; CurPos <= EndPos; CurPos++)
 	{
-		PDSL.CurPos.Update(CurPos, nCurDepth);
-		PDSL.CurDepth = nCurDepth + 1;
-
-		this.Content[CurPos].Draw_Lines(PDSL);
+		drawState.CurPos.Update(CurPos, nCurDepth);
+		drawState.CurDepth = nCurDepth + 1;
+		this.Content[CurPos].drawLines(drawState);
 	}
 };
 CParagraphContentWithParagraphLikeContent.prototype.SkipDraw = function(PDS)
@@ -3944,14 +3945,14 @@ CParagraphContentWithParagraphLikeContent.prototype.SelectAll = function(Directi
         this.Content[CurPos].SelectAll( Direction );
     }
 };
-CParagraphContentWithParagraphLikeContent.prototype.drawSelectionInRange = function(line, range, drawState)
+CParagraphContentWithParagraphLikeContent.prototype.drawSelectionInRange = function(drawState)
 {
-	let rangeInfo  = this.getRangePos(line, range);
+	let rangeInfo  = this.getRangePos(drawState.line, drawState.range);
 	let rangeStart = rangeInfo[0];
 	let rangeEnd   = rangeInfo[1];
 	for (let pos = rangeStart; pos <= rangeEnd; ++pos)
 	{
-		this.Content[pos].drawSelectionInRange(line, range, drawState);
+		this.Content[pos].drawSelectionInRange(drawState);
 	}
 };
 CParagraphContentWithParagraphLikeContent.prototype.IsSelectionEmpty = function(CheckEnd)
@@ -4845,7 +4846,10 @@ CParagraphContentWithParagraphLikeContent.prototype.CorrectContentPos = function
 
 	var nCount = this.Content.length;
 	var nCurPos = Math.min(Math.max(0, this.State.ContentPos), nCount - 1);
-
+	
+	if (nCount <= 0)
+		return;
+	
 	// Ищем элемент, в котором может стоять курсор
 	while (nCurPos > 0 && !this.Content[nCurPos].IsCursorPlaceable())
 	{
@@ -4853,33 +4857,44 @@ CParagraphContentWithParagraphLikeContent.prototype.CorrectContentPos = function
 		this.Content[nCurPos].MoveCursorToEndPos();
 	}
 
-	while (nCurPos < nCount && !this.Content[nCurPos].IsCursorPlaceable())
+	while (nCurPos < nCount - 1 && !this.Content[nCurPos].IsCursorPlaceable())
 	{
 		nCurPos++;
 		this.Content[nCurPos].MoveCursorToStartPos(false);
 	}
+	
+	if (!this.Content[nCurPos].IsCursorPlaceable())
+	{
+		this.State.ContentPos = 0;
+		return;
+	}
 
 	// Если курсор находится в начале или конце гиперссылки, тогда выводим его из гиперссылки
-	while (nCurPos > 0 && para_Run !== this.Content[nCurPos].Type && para_Math !== this.Content[nCurPos].Type && para_Field !== this.Content[nCurPos].Type && para_InlineLevelSdt !== this.Content[nCurPos].Type && true === this.Content[nCurPos].Cursor_Is_Start())
+	while (nCurPos > 0 
+		&& this.Content[nCurPos - 1].IsCursorPlaceable()
+		&& para_Run !== this.Content[nCurPos].Type
+		&& para_Math !== this.Content[nCurPos].Type
+		&& para_Field !== this.Content[nCurPos].Type
+		&& para_InlineLevelSdt !== this.Content[nCurPos].Type
+		&& true === this.Content[nCurPos].Cursor_Is_Start())
 	{
-		if (!this.Content[nCurPos - 1].IsCursorPlaceable())
-			break;
-
 		nCurPos--;
 		this.Content[nCurPos].MoveCursorToEndPos();
 	}
 
-	while (nCurPos < nCount && para_Run !== this.Content[nCurPos].Type && para_Math !== this.Content[nCurPos].Type && para_Field !== this.Content[nCurPos].Type && para_InlineLevelSdt !== this.Content[nCurPos].Type && true === this.Content[nCurPos].Cursor_Is_End())
+	while (nCurPos < nCount - 1
+		&& this.Content[nCurPos + 1].IsCursorPlaceable()
+		&& para_Run !== this.Content[nCurPos].Type
+		&& para_Math !== this.Content[nCurPos].Type
+		&& para_Field !== this.Content[nCurPos].Type
+		&& para_InlineLevelSdt !== this.Content[nCurPos].Type
+		&& true === this.Content[nCurPos].Cursor_Is_End())
 	{
-		if (!this.Content[nCurPos + 1].IsCursorPlaceable())
-			break;
-
 		nCurPos++;
 		this.Content[nCurPos].MoveCursorToStartPos(false);
 	}
 
 	this.State.ContentPos = nCurPos;
-
 	this.Content[this.State.ContentPos].CorrectContentPos();
 };
 CParagraphContentWithParagraphLikeContent.prototype.GetFirstRun = function()
@@ -5000,7 +5015,6 @@ CParagraphContentWithParagraphLikeContent.prototype.CalculateTextToTable = funct
 		this.Content[nIndex].CalculateTextToTable(oEngine);
 	}
 };
-
 //----------------------------------------------------------------------------------------------------------------------
 // Функции, которые должны быть реализованы в классах наследниках
 //----------------------------------------------------------------------------------------------------------------------

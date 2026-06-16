@@ -444,6 +444,22 @@
 			}
 		};
 
+		Clipboard.prototype.pasteHtmlLite = function (ws, sHtml, callback) {
+			var wb = window["Asc"]["editor"].wb;
+			if (wb.getCellEditMode() || ws.getSelectionDialogMode()) {
+				if (callback) {
+					callback(false);
+				}
+				return;
+			}
+			this.pasteProcessor.clean();
+			if (!window['AscCommon'].g_specialPasteHelper.specialPasteStart) {
+				window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
+			}
+			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(true);
+			this.pasteProcessor.pasteHtmlLite(ws, sHtml, callback);
+		};
+
 		Clipboard.prototype.pasteData = function (ws, _format, data1, data2, text_data, bIsSpecialPaste, doNotShowButton, isPasteAll, callback) {
 			var t = this;
 			var wb = window["Asc"]["editor"].wb;
@@ -3264,6 +3280,34 @@
 				History.TurnOn();
 
 				oPasteFromBinaryWord._paste(ws, {content: [drawingObject.graphicObject.graphicObject]});
+			},
+
+			pasteHtmlLite: function (worksheet, sHtml, cb) {
+				var t = this;
+				AscCommonExcel.g_clipboardExcel.pasteProcessor.pasteCallBack = cb;
+				this.activeRange = worksheet.model.selectionRange.getLast().clone();
+				worksheet.workbook.handlers.trigger("cleanCopyData", true);
+
+				History.TurnOff();
+				var oTempDrawingDocument = worksheet.getDrawingDocument();
+				var newCDocument = new CDocument(oTempDrawingDocument, false);
+				newCDocument.bFromDocument = true;
+				newCDocument.Content[0].bFromDocument = true;
+				newCDocument.theme = window["Asc"]["editor"].wbModel.theme;
+
+				var oOldLogicDocument = oTempDrawingDocument.m_oLogicDocument;
+				oTempDrawingDocument.m_oLogicDocument = newCDocument;
+				var oOldEditor = ("undefined" !== typeof editor) ? editor : undefined;
+				editor = {WordControl: oTempDrawingDocument, isDocumentEditor: true};
+
+				var aContent = AscCommon.GetContentFromHtmlLite(newCDocument, newCDocument, sHtml, false);
+
+				editor = oOldEditor;
+				oTempDrawingDocument.m_oLogicDocument = oOldLogicDocument;
+				History.TurnOn();
+
+				var oPasteFromBinaryWord = new pasteFromBinaryWord(t, worksheet);
+				oPasteFromBinaryWord._paste(worksheet, {content: aContent});
 			},
 
 			editorPasteExec: function (worksheet, node, isText, cb) {

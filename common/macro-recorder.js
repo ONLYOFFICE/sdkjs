@@ -681,97 +681,97 @@
 				return "unknown";
 			}
 			case Asc.c_oAscChartTypeSettings.barNormal: {
-				return "bar";
+				return "ColumnClustered";
 			}
 			case Asc.c_oAscChartTypeSettings.barStacked: {
-				return "barStacked";
+				return "ColumnStacked";
 			}
 			case Asc.c_oAscChartTypeSettings.barStackedPer: {
-				return "barStackedPercent";
+				return "ColumnStacked100";
 			}
 			case Asc.c_oAscChartTypeSettings.barNormal3d: {
-				return "bar3D";
+				return "3DColumnClustered";
 			}
 			case Asc.c_oAscChartTypeSettings.barStacked3d: {
-				return "barStacked3D";
+				return "3DColumnStacked";
 			}
 			case Asc.c_oAscChartTypeSettings.barStackedPer3d: {
-				return "barStackedPercent3D";
+				return "3DColumnStacked100";
 			}
 			case Asc.c_oAscChartTypeSettings.barNormal3dPerspective: {
-				return "barStackedPercent3DPerspective";
+				return "3DColumn";
 			}
 			case Asc.c_oAscChartTypeSettings.hBarNormal: {
-				return "horizontalBar";
+				return "BarClustered";
 			}
 			case Asc.c_oAscChartTypeSettings.hBarStacked: {
-				return "horizontalBarStacked";
+				return "BarStacked";
 			}
 			case Asc.c_oAscChartTypeSettings.hBarStackedPer: {
-				return "horizontalBarStackedPercent";
+				return "BarStacked100";
 			}
 			case Asc.c_oAscChartTypeSettings.hBarNormal3d: {
-				return "horizontalBar3D";
+				return "3DBarClustered";
 			}
 			case Asc.c_oAscChartTypeSettings.hBarStacked3d: {
-				return "horizontalBarStacked3D";
+				return "3DBarStacked";
 			}
 			case Asc.c_oAscChartTypeSettings.hBarStackedPer3d: {
-				return "horizontalBarStackedPercent3D";
+				return "3DBarStacked100";
 			}
 			case Asc.c_oAscChartTypeSettings.lineNormal: {
-				return "lineNormal";
+				return "Line";
 			}
 			case Asc.c_oAscChartTypeSettings.lineStacked: {
-				return "lineStacked";
+				return "LineStacked";
 			}
 			case Asc.c_oAscChartTypeSettings.lineStackedPer: {
-				return "lineStackedPercent";
+				return "LineStacked100";
 			}
 			case Asc.c_oAscChartTypeSettings.line3d: {
-				return "line3D";
+				return "3DLine";
 			}
 			case Asc.c_oAscChartTypeSettings.pie: {
-				return "pie";
+				return "Pie";
 			}
 			case Asc.c_oAscChartTypeSettings.pie3d: {
-				return "pie3D";
+				return "3DPie";
 			}
 			case Asc.c_oAscChartTypeSettings.doughnut: {
-				return "doughnut";
+				return "Doughnut";
 			}
 			case Asc.c_oAscChartTypeSettings.scatter: {
-				return "scatter";
+				return "XYScatter";
 			}
 			case Asc.c_oAscChartTypeSettings.stock: {
-				return "stock";
+				return "StockHLC";
 			}
 			case Asc.c_oAscChartTypeSettings.areaNormal: {
-				return "area";
+				return "Area";
 			}
 			case Asc.c_oAscChartTypeSettings.areaStacked: {
-				return "areaStacked";
+				return "AreaStacked";
 			}
 			case Asc.c_oAscChartTypeSettings.areaStackedPer: {
-				return "areaStackedPercent";
+				return "AreaStacked100";
 			}
 			case Asc.c_oAscChartTypeSettings.comboBarLine: {
-				return "comboBarLine";
+				return "ComboColumnClusteredLine";
 			}
 			case Asc.c_oAscChartTypeSettings.comboBarLineSecondary: {
-				return "comboBarLineSecondary";
+				return "ComboColumnClusteredLineSecondaryAxis";
 			}
 			case Asc.c_oAscChartTypeSettings.comboCustom: {
-				return "comboCustom";
+				return "Combo";
 			}
 			case Asc.c_oAscChartTypeSettings.radar: {
-				return "radar";
+				return "Radar";
 			}
 			case Asc.c_oAscChartTypeSettings.radarMarker: {
-				return "radarMarker";
+				return "RadarMarkers";
 			}
 			case Asc.c_oAscChartTypeSettings.radarFilled: {
-				return "radarFilled";
+				return "RadarFilled";
 			}
 		}
 		return "unknown";

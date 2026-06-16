@@ -214,7 +214,7 @@
                     oDrawSelectionState.beginRange(iRange);
                     
                     for (let pos = nRangeStart; pos <= nRangeEnd; ++pos) {
-                        oPara.Content[pos].drawSelectionInRange(iLine, iRange, oDrawSelectionState);
+                        oPara.Content[pos].drawSelectionInRange(oDrawSelectionState);
                     }
                     
                     oDrawSelectionState.endRange();

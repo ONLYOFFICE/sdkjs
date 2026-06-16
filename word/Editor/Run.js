@@ -2264,12 +2264,6 @@ ParaRun.prototype.Get_ParaPosByContentPos = function(ContentPos, Depth)
 
 ParaRun.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
 {
-	if (this.IsMathRun())
-	{
-		positionCalculator.handleMathRun(this, isCurrent, this.State.ContentPos);
-		return;
-	}
-	
 	let rangePos = this.getRangePos(positionCalculator.line, positionCalculator.range);
 	let startPos = rangePos[0];
 	let endPos   = rangePos[1];
@@ -2278,7 +2272,7 @@ ParaRun.prototype.recalculateCursorPosition = function(positionCalculator, isCur
 		let item = this.private_CheckInstrText(this.Content[pos]);
 		let isCurPos = isCurrent && pos === this.State.ContentPos;
 		let isNearNoteRef = isCurPos ? this.IsCurPosNearFootEndnoteReference() : false;
-		positionCalculator.handleRunElement(item, this, isCurPos, isNearNoteRef, pos);
+		positionCalculator.handleRunElement(item, this, isCurPos, isNearNoteRef, pos, isCurrent);
 	}
 	
 	if (isCurrent && endPos === this.State.ContentPos)
@@ -4437,7 +4431,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     }
                     else if (!Item.IsSkipOnRecalculate())
                     {
-                        // Основная обработка происходит в Recalculate_Range_Spaces. Здесь обрабатывается единственный случай,
+                        // Основная обработка происходит в recalculateRangeAlign. Здесь обрабатывается единственный случай,
                         // когда после второго пересчета с уже добавленной картинкой оказывается, что место в параграфе, где
                         // идет картинка ушло на следующую страницу. В этом случае мы ставим перенос страницы перед картинкой.
 
@@ -5069,8 +5063,9 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 	var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
 	var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
 
-	var UpdateLineMetricsText = false;
-	var LineRule              = ParaPr.Spacing.LineRule;
+	let UpdateLineMetricsText       = false;
+	let UpdateLineMetricsNonVisible = false;
+	let LineRule                    = ParaPr.Spacing.LineRule;
 	
 	let textPr = this.Get_CompiledPr(false);
 	if (this.IsUseAscFont(textPr))
@@ -5135,6 +5130,7 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 			}
 			case para_Space:
 			{
+				UpdateLineMetricsNonVisible = true;
 				break;
 			}
 			case para_Drawing:
@@ -5210,6 +5206,7 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 
 			case para_End:
 			{
+				UpdateLineMetricsNonVisible = true;
 				break;
 			}
 			case para_FieldChar:
@@ -5277,32 +5274,58 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 		// Пересчитаем метрику строки относительно размера данного текста
 		if (PRS.LineTextAscent < textAscent)
 			PRS.LineTextAscent = textAscent;
-		
+
 		if (PRS.LineTextAscent2 < textAscent2)
 			PRS.LineTextAscent2 = textAscent2;
-		
+
 		if (PRS.LineTextDescent < textDescent)
 			PRS.LineTextDescent = textDescent;
 	}
-};
-
-ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
-{
-	var CurLine  = _CurLine - this.StartLine;
-	var CurRange = (0 === CurLine ? _CurRange - this.StartRange : _CurRange);
-	var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-	var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-	for (var Pos = StartPos; Pos < EndPos; Pos++)
+	else if (UpdateLineMetricsNonVisible)
 	{
-		var Item = this.private_CheckInstrText(this.Content[Pos]);
-		PRSC.handleRunElement(Item, this);
+		let metrics = textPr.GetTextMetrics(textPr.CS || textPr.RTL ? AscWord.fontslot_CS : AscWord.fontslot_ASCII, this.Paragraph.GetTheme());
+
+		let nonVisAscent2 = metrics.Ascent;
+		let nonVisAscent  = nonVisAscent2 + metrics.LineGap;
+		let nonVisDescent = metrics.Descent;
+
+		if (Asc.linerule_Exact !== LineRule)
+		{
+			let yOffset = this.getYOffset();
+			if (yOffset >= 0)
+			{
+				nonVisDescent = Math.max(0, nonVisDescent - yOffset);
+			}
+			else
+			{
+				nonVisAscent2 = Math.max(0, nonVisAscent2 + yOffset);
+				nonVisAscent  = nonVisAscent2 + metrics.LineGap;
+			}
+		}
+
+		if (PRS.LineTextAscentNonVisible < nonVisAscent)
+			PRS.LineTextAscentNonVisible = nonVisAscent;
+
+		if (PRS.LineTextDescentNonVisible < nonVisDescent)
+			PRS.LineTextDescentNonVisible = nonVisDescent;
 	}
 };
 
-ParaRun.prototype.Recalculate_Range_Spaces = function(alignState, _CurLine, _CurRange, CurPage)
+ParaRun.prototype.recalculateRangeWidth = function(widthState)
 {
-	var CurLine  = _CurLine - this.StartLine;
-	var CurRange = (0 === CurLine ? _CurRange - this.StartRange : _CurRange);
+	let startPos = this.getRangeStartPos(widthState.CurLine, widthState.CurRange);
+	let endPos   = this.getRangeEndPos(widthState.CurLine, widthState.CurRange);
+	for (let pos = startPos; pos < endPos; ++pos)
+	{
+		let item = this.private_CheckInstrText(this.Content[pos]);
+		widthState.handleRunElement(item, this);
+	}
+};
+
+ParaRun.prototype.recalculateRangeAlign = function(alignState)
+{
+	var CurLine  = alignState.CurLine - this.StartLine;
+	var CurRange = (0 === CurLine ? alignState.CurRange - this.StartRange : alignState.CurRange);
 
 	let startPos = this.protected_GetRangeStartPos(CurLine, CurRange);
 	let endPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
@@ -5313,7 +5336,6 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(alignState, _CurLine, _Cur
 		alignState.handleRunElement(item, this);
 	}
 };
-
 ParaRun.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
 {
 	var CurLine  = _CurLine - this.StartLine;
@@ -5968,7 +5990,7 @@ ParaRun.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 //-----------------------------------------------------------------------------------
 // Функции отрисовки
 //-----------------------------------------------------------------------------------
-ParaRun.prototype.Draw_HighLights = function(drawState)
+ParaRun.prototype.drawHighLights = function(drawState)
 {
 	let rangePos = this.getRangePos(drawState.Line, drawState.Range);
 	let startPos = rangePos[0];
@@ -6018,7 +6040,7 @@ ParaRun.prototype.Draw_Elements = function(drawState)
 		drawState.handleRunElement(item, this);
 	}
 };
-ParaRun.prototype.Draw_Lines = function(lineDrawState)
+ParaRun.prototype.drawLines = function(lineDrawState)
 {
 	let rangePos = this.getRangePos(lineDrawState.Line, lineDrawState.Range);
 	let startPos = rangePos[0];
@@ -6991,9 +7013,9 @@ ParaRun.prototype.SelectAll = function(nDirection)
 	}
 };
 
-ParaRun.prototype.drawSelectionInRange = function(line, range, drawSelectionState)
+ParaRun.prototype.drawSelectionInRange = function(drawSelectionState)
 {
-	let rangeInfo  = this.getRangePos(line, range);
+	let rangeInfo  = this.getRangePos(drawSelectionState.line, drawSelectionState.range);
 	let rangeStart = rangeInfo[0];
 	let rangeEnd   = rangeInfo[1];
 	if (rangeStart >= rangeEnd)

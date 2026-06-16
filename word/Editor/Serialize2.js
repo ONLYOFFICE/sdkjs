@@ -17712,6 +17712,18 @@ DocReadResult.prototype = {
 					oPrevElement.SetReviewType(reviewtype_Common);
 					if (oNextElement instanceof AscWord.Paragraph) {
 						oPrevElement.Concat(oNextElement);
+						const arrComments = oPrevElement.GetAllComments();
+						for (let nComment = 0; nComment < arrComments.length; ++nComment) {
+							const oMark  = arrComments[nComment].Comment;
+							const oPlace = this.oCommentsPlaces[oMark.GetCommentId()];
+							if (!oPlace)
+								continue;
+							const oSide = oMark.IsCommentStart() ? oPlace.Start : oPlace.End;
+							if (oSide) {
+								oSide.oParaComment = oMark;
+								oSide.oParent      = oPrevElement;
+							}
+						}
 						arrContent.splice(i + 1, 1);
 					}
 				}

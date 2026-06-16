@@ -1289,6 +1289,7 @@ CChangesPDFDocumentEndMergePages.prototype.Redo = function()
     });
 
     oDoc.Viewer.checkLoadCMap();
+	oDoc.Viewer.isFullText = false;
 };
 CChangesPDFDocumentEndMergePages.prototype.WriteToBinary = function(Writer)
 {

@@ -43,6 +43,7 @@
 	 */
 	function AlignRecalcState(wrapState)
 	{
+		AscWord.ParagraphBidiFlow.call(this);
 		this.wrapState     = wrapState;
 		this.X             = 0; // Текущая позиция по горизонтали
 		this.Y             = 0; // Текущая позиция по вертикали
@@ -65,6 +66,9 @@
 		this.Y1            = 0; // Нижняя граница строки
 
 		this.CurPage       = 0;
+		this.CurLine       = 0;
+		this.CurRange      = 0;
+		
 		this.PageY         = 0;
 		this.PageX         = 0;
 
@@ -72,9 +76,10 @@
 		this.RecalcFast2   = false; // Второй вариант быстрого пересчета
 
 		this.ComplexFields = new AscWord.ParagraphComplexFieldStack();
-		
-		this.bidiFlow = new AscWord.BidiFlow(this);
 	}
+	AlignRecalcState.prototype = Object.create(AscWord.ParagraphBidiFlow.prototype);
+	AlignRecalcState.prototype.constructor = AlignRecalcState;
+	
 	AlignRecalcState.prototype.beginPage = function(paragraph, pageNum, isFast)
 	{
 		this.Paragraph = paragraph;
@@ -103,7 +108,6 @@
 		if (lineMetrics.LineGap < 0)
 			y1 += lineMetrics.LineGap;
 		
-		this.X = x;
 		this.Y = y;
 		this.XEnd = range.XEnd;
 		
@@ -115,13 +119,18 @@
 		this.JustifyWord   = justifyWord;
 		this.JustifySpace  = justifySpace;
 		
-		this.SpacesCounter = counterState.Spaces;
-		this.SpacesSkip    = counterState.SpacesSkip;
+		this.SpacesCounter = range.Spaces;
+		this.SpacesSkip    = range.SpacesLeft;
 		this.LettersSkip   = counterState.LettersSkip;
 
 		this.RecalcResult  = recalcresult_NextElement;
 		
 		range.XVisible = x;
+		
+		if (paragraph.Numbering.checkRange(this.CurRange, this.CurLine) && !this.RTL)
+			x += paragraph.Numbering.WidthVisible;
+		
+		this.X = x;
 		
 		this.bidiFlow.begin(this.RTL);
 	};
@@ -132,10 +141,7 @@
 		this.Range.XEndVisible = this.X;
 		
 		if (this.RTL)
-		{
 			this.Range.XVisible -= this.Range.WBreak + this.Range.WEnd;
-			this.Range.XEndVisible -= this.Range.WBreak + this.Range.WEnd;
-		}
 	};
 	AlignRecalcState.prototype.handleRunElement = function(element, run)
 	{
@@ -158,12 +164,19 @@
 		if (para_FieldChar === type)
 			this.ComplexFields.processFieldChar(element);
 		
-		this.bidiFlow.add([element, run], element.getBidiType());
+		this.bidiFlow.add([para_RunBase, element, run], element.getBidiType());
 	};
-	AlignRecalcState.prototype.handleBidiFlow = function(data, direction)
+	AlignRecalcState.prototype.handleParaMath = function(math)
 	{
-		let element = data[0];
-		let run     = data[1];
+		if (!math || math.Root.IsEmptyRange(this.CurLine, this.CurRange))
+			return;
+
+		this.bidiFlow.add([para_Math, math], math.getBidiType());
+	};
+	AlignRecalcState.prototype.handleBidiFlowRunElement = function(data, direction)
+	{
+		let element = data[1];
+		let run     = data[2];
 		let type = element.Type;
 		switch (type)
 		{
@@ -257,7 +270,9 @@
 				element.CheckMark(this.Paragraph, this.RTL ? this.LeftSpace : this.XEnd - this.X);
 				let paraEndW = element.GetWidthVisible();
 				this.Range.WEnd = paraEndW;
-				this.X += paraEndW;
+				
+				if (!this.RTL)
+					this.X += paraEndW;
 
 				break;
 			}
@@ -268,7 +283,9 @@
 
 				let breakW = element.GetWidthVisible();
 				this.Range.WBreak = breakW;
-				this.X += breakW;
+				
+				if (!this.RTL)
+					this.X += breakW;
 
 				break;
 			}
@@ -284,6 +301,23 @@
 			}
 
 		}
+	};
+	AlignRecalcState.prototype.handleBidiFlowParaMath = function(data, direction)
+	{
+		let paraMath = data[1];
+		
+		// for inline equation setPosition wasn't called, so we need to call it here
+		// for not-inline setPosition must be called on Get_AlignToLine
+		let posInfo = new CMathPosInfo();
+
+		posInfo.CurLine  = this.CurLine;
+		posInfo.CurRange = this.CurRange;
+
+		paraMath.Root.setPosition(new CMathPosition(), posInfo);
+
+		// update page index here, because if the equation is inside a shape, recalculateRangeAlign  will be called
+		paraMath.Root.UpdateBoundsPosInfo(this, this.CurLine, this.CurRange, this.CurPage);
+		paraMath.Root.recalculateRangeAlign(this);
 	};
 	AlignRecalcState.prototype.handleDrawing = function(element)
 	{

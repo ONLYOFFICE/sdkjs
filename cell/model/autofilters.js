@@ -1291,7 +1291,7 @@
 						let cellFormat = cell.getNumFormat();
 						let isDateTimeFormat = cellFormat && cellFormat.isDateTimeFormat() &&
 							cell.getType() === window["AscCommon"].CellValueType.Number &&
-							cellFormat.getType() !== Asc.c_oAscNumFormatType.Time;
+							cellFormat.getType() !== Asc.c_oAscNumFormatType.Time && val !== "";
 
 						let dataValue = isDateTimeFormat ? AscCommon.NumFormat.prototype.parseDate(val) : null;
 
@@ -5144,7 +5144,7 @@
 					let cellFormat = cell.getNumFormat();
 					isDateTimeFormat = cellFormat && cellFormat.isDateTimeFormat() &&
 						cell.getType() === window["AscCommon"].CellValueType.Number &&
-						cellFormat.getType() !== Asc.c_oAscNumFormatType.Time;
+						cellFormat.getType() !== Asc.c_oAscNumFormatType.Time && val !== "";
 
 					if (isDateTimeFormat) {
 						dataValue = AscCommon.NumFormat.prototype.parseDate(val);

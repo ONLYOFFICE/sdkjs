@@ -83,16 +83,13 @@
 		saveContentSkipStyleOnly: CSS.saveContentSkipStyleOnly
 	};
 
-	// SheetMemory.prototype.clearExceptLocked is unique because separated mode
-	// does not define it at all -- legacy mode installs it lazily. Snapshot
-	// whether the baseline owned the property and the current implementation
-	// (if any) so installSeparatedMode can return the prototype to the exact
-	// shape it had before installLegacyMode ran.
-	var sepHadClearExceptLocked = Object.prototype.hasOwnProperty.call(
-		SheetMemory.prototype, 'clearExceptLocked');
-	var sepClearExceptLocked = sepHadClearExceptLocked
+	// clearExceptLocked exists only in legacy mode (installed lazily); snapshot the
+	// baseline so installSeparatedMode can restore the pre-legacy shape. Probe via
+	// dot notation - a string name (hasOwnProperty) breaks under Closure ADVANCED.
+	var sepClearExceptLocked = (typeof SheetMemory.prototype.clearExceptLocked === 'function')
 		? SheetMemory.prototype.clearExceptLocked
 		: null;
+	var sepHadClearExceptLocked = (sepClearExceptLocked != null);
 
 	// _moveCells calls this AFTER mirroring the band to cellStylesByCol.
 	// Separated mode: xf is already off the SheetMemory shadow, so just zero
@@ -302,9 +299,9 @@
 
 	// Legacy mode has no style-only cells, so getRowIterator collapses to the
 	// data-only RowIterator. Callers see plain Cell instances (no transients).
-	function legacyWorksheetGetRowIterator(r1, c1, c2, callback) {
+	function legacyWorksheetGetRowIterator(r1, c1, r2, c2, callback) {
 		var it = new RowIterator();
-		it.init(this, r1, c1, c2);
+		it.init(this, r1, c1, c2, r2);
 		callback(it);
 		it.release();
 	}

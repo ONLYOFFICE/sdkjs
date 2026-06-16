@@ -2397,6 +2397,12 @@
     CBaseChartObject.prototype.isControl = function() {
         return false;
     };
+    CBaseChartObject.prototype.IsTableBorder = function() {
+        return false;
+    };
+    CBaseChartObject.prototype.Get_ShapeStyleForPara = function() {
+        return null;
+    };
 
     function getMinMaxFromArrPoints(aPoints) {
         if(Array.isArray(aPoints) && aPoints.length > 0) {
@@ -10864,7 +10870,7 @@
                 if (!charts.hasOwnProperty(id)) continue;
                 let ch = charts[id];
                 if (ch && Array.isArray(ch.series) && ch.series.length > 0) {
-                    seriesCount = ch.series.length;
+                    seriesCount += ch.series.length;
                     for (let i = 0; i < ch.series.length; i++) {
 
                         const seria = ch.series[i];
@@ -10903,8 +10909,20 @@
 
         this.rows = seriesCount + 1;
         this.cols = ptsCount + 1;
-        this.rowHeight = this.rowNameLabels.length ? this.rowNameLabels[0].extY : this.colNameLabels.length ? this.colNameLabels[0].extY : 0;
-        this.firstColumnWidth = this.rowNameLabels.length ? this.rowNameLabels[0].extX : 0;
+
+        let maxRowNameWidth = 0, maxRowNameHeight = 0;
+        for (let k = 0; k < this.rowNameLabels.length; k++) {
+            const lbl = this.rowNameLabels[k];
+            if (lbl.extX > maxRowNameWidth) {
+                maxRowNameWidth = lbl.extX;
+            }
+            if (lbl.extY > maxRowNameHeight) {
+                maxRowNameHeight = lbl.extY;
+            }
+        }
+        this.rowHeight = this.rowNameLabels.length ? maxRowNameHeight : this.colNameLabels.length ? this.colNameLabels[0].extY : 0;
+        this.firstColumnWidth = maxRowNameWidth;
+
         if (this.showKeys && this.rowNameMarkers.length > 0 && this.rowHeight > 0) {
             let markerSize, distanceToText;
             if (this._bLineSeries) {
@@ -13263,7 +13281,9 @@
 					}
 					oCell = oWS.getCell3(nR, nC);
 					dVal = oCell.getNumberValue();
-					if (!AscFormat.isRealNumber(dVal) && (!AscFormat.isRealNumber(displayEmptyCellsAs) || displayEmptyCellsAs === 1)) {
+					if (oCell.getType() === AscCommon.CellValueType.Error) {
+						dVal = null;
+					} else if (!AscFormat.isRealNumber(dVal) && (!AscFormat.isRealNumber(displayEmptyCellsAs) || displayEmptyCellsAs === 1)) {
 						sVal = oCell.getValueForEdit();
 						if ((typeof sVal === "string") && sVal.length > 0) {
 							dVal = 0;
@@ -15724,11 +15744,23 @@
         }
         this.drawerData = oDrawerData;
         let aC = oDrawerData.coefficients;
+        let bDispRSqr = oDrawerData.rSquared !== null && oDrawerData.rSquared !== undefined;
         let oParagraph = oDrawingContent.Content[0];
+        let oRSqrParagraph = oParagraph;
         let oRun;
         function r(dVal) {
-            let dNumVal = (dVal * 10000 + 0.5 >> 0) / 10000;
+            let dNumVal = Math.round(dVal * 10000) / 10000;
+            if(dNumVal === 0 && dVal !== 0) {
+                let aParts = dVal.toExponential(0).split("e");
+                let nExp = parseInt(aParts[1], 10);
+                let nAbsExp = Math.abs(nExp);
+                return aParts[0] + "E" + (nExp < 0 ? "-" : "+") + (nAbsExp < 10 ? "0" : "") + nAbsExp;
+            }
             return dNumVal.toString()
+        }
+        if(bDispRSqr) {
+            oRSqrParagraph = oParagraph.Copy(oDrawingContent);
+            oDrawingContent.Internal_Content_Add(oDrawingContent.Content.length, oRSqrParagraph, false);
         }
         switch (this.trendlineType) {
             case AscFormat.TRENDLINE_TYPE_EXP: {
@@ -15745,10 +15777,17 @@
             }
             case AscFormat.TRENDLINE_TYPE_LINEAR: {
                 oRun = new AscWord.ParaRun(oParagraph, false);
-                let s = "y = " + r(aC[0]) + "x";
+                let a = r(aC[0]);
                 let b = r(aC[1]);
+                let s = "y = ";
+                if(a !== "0") {
+                    s += a + "x";
+                }
                 if(b !== "0") {
-                    s += (" + " + b);
+                    s += (a !== "0" ? " + " + b : b);
+                }
+                if(a === "0" && b === "0") {
+                    s += "0";
                 }
                 oRun.AddText(s);
                 oParagraph.AddToContentToEnd(oRun);
@@ -15810,6 +15849,18 @@
                 break;
             }
 
+        }
+        if(bDispRSqr) {
+            oRun = new AscWord.ParaRun(oRSqrParagraph, false);
+            oRun.AddText("R");
+            oRSqrParagraph.AddToContentToEnd(oRun);
+            oRun = new AscWord.ParaRun(oRSqrParagraph, false);
+            oRun.SetVertAlign(AscCommon.vertalign_SuperScript);
+            oRun.AddText("2");
+            oRSqrParagraph.AddToContentToEnd(oRun);
+            oRun = new AscWord.ParaRun(oRSqrParagraph, false);
+            oRun.AddText(" = " + (AscFormat.isRealNumber(oDrawerData.rSquared) ? r(oDrawerData.rSquared) : "#N/A"));
+            oRSqrParagraph.AddToContentToEnd(oRun);
         }
     };
 

@@ -5107,6 +5107,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['Hyperlink']         = prot.Hyperlink;
 	prot['SpellCheck']        = prot.SpellCheck;
 	prot['Shape']             = prot.Shape;
+	prot['HorizontalLine']    = prot.HorizontalLine;
 	prot['Slide']             = prot.Slide;
 	prot['Chart']             = prot.Chart;
 	prot['Math']              = prot.Math;
