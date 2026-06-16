@@ -715,8 +715,10 @@
     	    return nTextHeight;
 
         let nNewFontSize = (Math.min(nFontSize * oBounds.H / nTextHeight * 0.9, 100, nFontSize * oBounds.W / nMaxWidth) * 100 >> 0) / 100;
-        oRun.SetFontSize(nNewFontSize);
-        oPara.Recalculate_Page(0);
+		oPara.SetApplyToAll(true);
+		oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+		oPara.SetApplyToAll(false);
+		oPara.Recalculate_Page(0);
 
         oTextPr.FontSize    = nNewFontSize;
         oTextPr.FontSizeCS  = nNewFontSize;
