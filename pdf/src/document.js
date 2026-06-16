@@ -7688,7 +7688,8 @@ var CPresentation = CPresentation || function(){};
 
         this.Viewer.checkLoadCMap();
         this.Viewer.navigateToPage(nNavigateTo);
-
+		this.Viewer.isFullText = false;
+		
         return res;
     };
     CPDFDoc.prototype.private_GetNextMergeName = function() {
