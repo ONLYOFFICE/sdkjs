@@ -9039,6 +9039,16 @@
 	 */
 	ApiWorksheet.prototype.GetDefNames = function () {
 		var res = this.worksheet.workbook.getDefinedNamesWS(this.worksheet.getId());
+		res.sort(function (a, b) {
+			var aName = a.name.toLowerCase();
+			var bName = b.name.toLowerCase();
+			if (aName > bName) {
+				return 1;
+			} else if (aName < bName) {
+				return -1;
+			}
+			return 0;
+		});
 		var name = [];
 		for (var i = 0; i < res.length; i++) {
 			name.push(new ApiName(res[i]));
