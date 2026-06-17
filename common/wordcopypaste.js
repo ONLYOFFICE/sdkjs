@@ -12301,7 +12301,7 @@ PasteProcessor.prototype =
 		//var presentation = editor.WordControl.m_oLogicDocument;
 
 		//for release bug fix adding handling only for paste from ms excel, later make this class main for getting data from ms styles
-		if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel) {
+		if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel || this.pasteInExcel) {
 			if (!this.oMsoStylesParser) {
 				this.oMsoStylesParser = new MsoStylesParser(node);
 			}
@@ -12884,7 +12884,16 @@ PasteProcessor.prototype =
 						if (breakLine.Flags && oThis.pasteInExcel) {
 							//save mso flag for unite cell text with line breaks
 							//use only in excel
-							breakLine.Flags.sameCell = pPr["mso-data-placement"] === "same-cell";
+							let bSameCell = pPr["mso-data-placement"] === "same-cell";
+							if (!bSameCell && oThis.oMsoStylesParser) {
+								//WPS sets it in head style for br tag, not inline
+								let msoBrClass = oThis.oMsoStylesParser.getMsoClassByName(sNodeName);
+								if (msoBrClass) {
+									let msoDataPlacement = msoBrClass.getAttributeByName("mso-data-placement");
+									bSameCell = msoDataPlacement != null && trimString(msoDataPlacement) === "same-cell";
+								}
+							}
+							breakLine.Flags.sameCell = bSameCell;
 						}
 						oThis._AddToParagraph(breakLine);
 					} /*else {
