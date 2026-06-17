@@ -2940,8 +2940,7 @@
 				const pos = this.ConvertCoords(global_mouseEvent.X, global_mouseEvent.Y);
 				shape.selectionSetEnd(global_mouseEvent, pos.X * g_dKoef_pix_to_mm, pos.Y * g_dKoef_pix_to_mm, 0);
 				shape.updateSelectionState(this.m_oWordControl.m_oDrawingDocument);
-			}
-			if (this.m_oWordControl.m_oLogicDocument.IsFocusOnOutline()) {
+			} else if (this.m_oWordControl.m_oLogicDocument.IsFocusOnOutline()) {
 				if (shape.getDocContent().IsSelectionUse()) {
 					this.m_oWordControl.m_oDrawingDocument.SelectShow();
 				} else {
