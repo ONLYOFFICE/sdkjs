@@ -65,6 +65,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Align]			= CChangesPDFFormAlig
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Ap_Idx]			= CChangesPDFFormApIdx;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Changed_View]		= CChangesPDFFormChangedView;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Orig_Page]		= CChangesPDFFormOrigPage;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Redacted]			= CChangesPDFFormRedacted;
 
 
 // text
@@ -928,30 +929,6 @@ CChangesPDFFormMEOptions.prototype.private_SetValue = function(Value)
 	oField.UpdateMEOptions();
 };
 
-
-//------------------------------------------------------------------------------------------------------------------
-//
-// Text Form
-//
-//------------------------------------------------------------------------------------------------------------------
-
-/**
- * @constructor
- * @extends {AscDFH.CChangesBaseBoolProperty}
- */
-function CChangesPDFTextFormMultiline(Class, Old, New, Color)
-{
-	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
-}
-CChangesPDFTextFormMultiline.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
-CChangesPDFTextFormMultiline.prototype.constructor = CChangesPDFTextFormMultiline;
-CChangesPDFTextFormMultiline.prototype.Type = AscDFH.historyitem_Pdf_Text_Form_Multiline;
-CChangesPDFTextFormMultiline.prototype.private_SetValue = function(Value)
-{
-	let oForm = this.Class;
-	oForm.SetMultiline(Value);
-};
-
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
@@ -1021,6 +998,50 @@ CChangesPDFFormOrigPage.prototype.private_SetValue = function(Value)
 {
 	let oForm = this.Class;
 	oForm._origPage = Value;
+};
+
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFFormRedacted(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormRedacted.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFFormRedacted.prototype.constructor = CChangesPDFFormRedacted;
+CChangesPDFFormRedacted.prototype.Type = AscDFH.historyitem_Pdf_Form_Redacted;
+CChangesPDFFormRedacted.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	
+	oForm._isRedacted = Value;
+	oForm.AddToRedraw();
+};
+
+
+//------------------------------------------------------------------------------------------------------------------
+//
+// Text Form
+//
+//------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFTextFormMultiline(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFTextFormMultiline.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFTextFormMultiline.prototype.constructor = CChangesPDFTextFormMultiline;
+CChangesPDFTextFormMultiline.prototype.Type = AscDFH.historyitem_Pdf_Text_Form_Multiline;
+CChangesPDFTextFormMultiline.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm.SetMultiline(Value);
 };
 
 /**
