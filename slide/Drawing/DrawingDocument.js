@@ -2664,14 +2664,29 @@ function CDrawingDocument()
 
 	this.ConvertCoordsToCursorWR = function(x, y, pageIndex, transform, isMainAttack)
 	{
-		var wc = this.m_oWordControl;
+		const wc = this.m_oWordControl;
 
-		var _x = x;
-		var _y = y;
+		let _x = x;
+		let _y = y;
 		if (transform)
 		{
 			_x = transform.TransformPointX(x, y);
 			_y = transform.TransformPointY(x, y);
+		}
+
+		if (wc.m_oLogicDocument.IsFocusOnOutline()) {
+			const view = wc.m_oLogicDocument.GetOutlineView();
+			const transform = view && view.outlineShape && view.outlineShape.transformText;
+			let scrollX = _x;
+			let scrollY = _y;
+			if (transform) {
+				scrollX = transform.TransformPointX(_x, _y);
+				scrollY = transform.TransformPointY(_x, _y);
+			}
+
+			const x_pix = (scrollX * g_dKoef_mm_to_pix + (wc.m_oThumbnailsContainer.AbsolutePosition.L) * g_dKoef_mm_to_pix) >> 0;
+			const y_pix = (scrollY * g_dKoef_mm_to_pix + (wc.m_oThumbnailsContainer.AbsolutePosition.T) * g_dKoef_mm_to_pix) >> 0;
+			return {X: x_pix, Y: y_pix, Error: false};
 		}
 
 		if (isMainAttack || !wc.m_oLogicDocument.IsFocusOnNotes())
@@ -2681,14 +2696,14 @@ function CDrawingDocument()
 				return wc.DemonstrationManager.convertCoordsToCursorWR(_x, _y);
 			}
 
-			var dKoef = (this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100);
-			var x_pix = (this.SlideCurrectRect.left + _x * dKoef + (wc.m_oMainParent.AbsolutePosition.L + wc.m_oMainView.AbsolutePosition.L) * g_dKoef_mm_to_pix) >> 0;
-			var y_pix = (this.SlideCurrectRect.top  + _y * dKoef + (wc.m_oMainParent.AbsolutePosition.T + wc.m_oMainView.AbsolutePosition.T) * g_dKoef_mm_to_pix) >> 0;
+			const dKoef = (this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100);
+			const x_pix = (this.SlideCurrectRect.left + _x * dKoef + (wc.m_oMainParent.AbsolutePosition.L + wc.m_oMainView.AbsolutePosition.L) * g_dKoef_mm_to_pix) >> 0;
+			const y_pix = (this.SlideCurrectRect.top  + _y * dKoef + (wc.m_oMainParent.AbsolutePosition.T + wc.m_oMainView.AbsolutePosition.T) * g_dKoef_mm_to_pix) >> 0;
 
 			return {X: x_pix, Y: y_pix, Error: false};
 		}
-		var x_pix = (_x * g_dKoef_mm_to_pix + 10 + (wc.m_oMainParent.AbsolutePosition.L + wc.m_oBottomPanesContainer.AbsolutePosition.L + wc.m_oNotesContainer.AbsolutePosition.L) * g_dKoef_mm_to_pix) >> 0;
-		var y_pix = (_y * g_dKoef_mm_to_pix      + (wc.m_oMainParent.AbsolutePosition.T + wc.m_oBottomPanesContainer.AbsolutePosition.T + wc.m_oNotesContainer.AbsolutePosition.T) * g_dKoef_mm_to_pix) >> 0;
+		const x_pix = (_x * g_dKoef_mm_to_pix + 10 + (wc.m_oMainParent.AbsolutePosition.L + wc.m_oBottomPanesContainer.AbsolutePosition.L + wc.m_oNotesContainer.AbsolutePosition.L) * g_dKoef_mm_to_pix) >> 0;
+		const y_pix = (_y * g_dKoef_mm_to_pix      + (wc.m_oMainParent.AbsolutePosition.T + wc.m_oBottomPanesContainer.AbsolutePosition.T + wc.m_oNotesContainer.AbsolutePosition.T) * g_dKoef_mm_to_pix) >> 0;
 		return {X: x_pix, Y: y_pix, Error: false};
 	};
 

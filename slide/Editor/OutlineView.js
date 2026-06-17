@@ -2310,6 +2310,18 @@
 		}
 		return 0;
 	};
+	OutlineView.prototype.selectPage = function (pageNum) {
+		const docContent = this.getDocContent();
+		if (docContent) {
+			docContent.RemoveSelection();
+			const paragraph = this.getTitleSlideParagraph(pageNum);
+			if (paragraph) {
+				paragraph.MoveCursorToStartPos();
+				paragraph.SetThisElementCurrent();
+			}
+			this.updateSelectionState();
+		}
+	};
 	OutlineView.prototype.getThumbnailHeight = function () {
 		return this.decorCacheManager.getMeasureInfo().height;
 	};

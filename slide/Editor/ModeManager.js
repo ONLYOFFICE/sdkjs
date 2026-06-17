@@ -261,7 +261,7 @@
 			y = pos.Y;
 		}
 		let screenPos;
-		let bThumbnals = presentation.IsFocusOnThumbnails();
+		let bThumbnals = presentation.IsFocusOnThumbnails() && !presentation.IsFocusOnOutline();
 		let sSlideId = null;
 
 		let aSelectedSlides = presentation.GetSelectedSlides();

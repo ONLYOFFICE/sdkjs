@@ -2872,22 +2872,29 @@
 		if (AscCommon.GlobalSkin.Type === "dark") {
 			graphics.setDarkMode(1);
 		}
-		const scaleFactor = g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
-		const widthMM = canvas.width * scaleFactor;
-		const outlineTopMarginMM = this.const_offset_y * scaleFactor;
-		const outlineLeftMarginMM = this.const_offset_x * scaleFactor;
-		const scrollYMm = this.m_dScrollY * g_dKoef_pix_to_mm;
-
 
 		if (!outlineView.outlineShape) {
+			const scaleFactor = g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
+			const widthMM = canvas.width * scaleFactor;
+			const outlineLeftMarginMM = this.const_offset_x * scaleFactor;
 			const outlineWidth = widthMM - outlineLeftMarginMM;
 			outlineView.updateAll(outlineWidth);
+			this.updateOutlineShapeTransform();
 		}
 
-		outlineView.updateOutlineShapeTransform(outlineLeftMarginMM, -scrollYMm + outlineTopMarginMM);
 		this.m_oWordControl.m_oApi.clearEyedropperImgData();
 		outlineView.draw(graphics);
 		this.OnUpdateOverlay();
+	};
+	COutlineThumbnailsManager.prototype.updateOutlineShapeTransform = function () {
+		const outlineView = this.GetOutlineView();
+		if (outlineView) {
+			const scaleFactor = g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
+			const outlineTopMarginMM = this.const_offset_y * scaleFactor;
+			const outlineLeftMarginMM = this.const_offset_x * scaleFactor;
+			const scrollYMm = this.m_dScrollY * g_dKoef_pix_to_mm;
+			outlineView.updateOutlineShapeTransform(outlineLeftMarginMM, -scrollYMm + outlineTopMarginMM);
+		}
 	};
 
 	COutlineThumbnailsManager.prototype.onCheckUpdate = function()
@@ -2991,31 +2998,34 @@
 			return;
 		}
 
-		outlineView.removeSelection();
-		this.SetFocusElement(FOCUS_OBJECT_MAIN);
 		if (!this.m_oWordControl.m_oScrollThumbApi) {
 			return;
 		}
 
-		const penW = 1 * g_dKoef_mm_to_pix;
-		const pageY = outlineView.getPageY(pageNum);
-		let pxPageY = pageY * g_dKoef_mm_to_pix;
-		const thumbnailsContainerHeight = this.m_oWordControl.m_oThumbnails.HtmlElement.height / AscCommon.AscBrowser.retinaPixelRatio;
-		const thumbnailHeight = outlineView.getThumbnailHeight() * g_dKoef_mm_to_pix;
-		let nValueScrollVer = 0;
-		const topY = pxPageY - penW;
-		if (topY < 0) {
-			nValueScrollVer = topY >> 0;
-		}
-		const bottomY = pxPageY + thumbnailHeight + penW;
-		if (bottomY > thumbnailsContainerHeight) {
-			nValueScrollVer = (bottomY - thumbnailsContainerHeight) >> 0;
-		}
+		if (this.FocusObjType === FOCUS_OBJECT_THUMBNAILS) {
+			outlineView.selectPage(pageNum);
+		} else {
+			outlineView.removeSelection();
+			const penW = 1 * g_dKoef_mm_to_pix;
+			const pageY = outlineView.getPageY(pageNum);
+			let pxPageY = pageY * g_dKoef_mm_to_pix;
+			const thumbnailsContainerHeight = this.m_oWordControl.m_oThumbnails.HtmlElement.height / AscCommon.AscBrowser.retinaPixelRatio;
+			const thumbnailHeight = outlineView.getThumbnailHeight() * g_dKoef_mm_to_pix;
+			let nValueScrollVer = 0;
+			const topY = pxPageY - penW;
+			if (topY < 0) {
+				nValueScrollVer = topY >> 0;
+			}
+			const bottomY = pxPageY + thumbnailHeight + penW;
+			if (bottomY > thumbnailsContainerHeight) {
+				nValueScrollVer = (bottomY - thumbnailsContainerHeight) >> 0;
+			}
 
-		if (0 != nValueScrollVer) {
-			this.m_oWordControl.m_bIsUpdateTargetNoAttack = true;
-			this.m_oWordControl.m_oScrollThumbApi.scrollByY(nValueScrollVer);
-			this.m_oWordControl.OnScroll();
+			if (0 != nValueScrollVer) {
+				this.m_oWordControl.m_bIsUpdateTargetNoAttack = true;
+				this.m_oWordControl.m_oScrollThumbApi.scrollByY(nValueScrollVer);
+				this.m_oWordControl.OnScroll();
+			}
 		}
 	};
 
@@ -3161,6 +3171,7 @@
 		this.m_dScrollY_max = maxScrollPosition;
 
 		this.CalculatePlaces();
+		this.updateOutlineShapeTransform();
 		AscCommon.g_specialPasteHelper.SpecialPasteButton_Update_Position();
 		this.m_bIsUpdate = true;
 

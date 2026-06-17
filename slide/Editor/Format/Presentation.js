@@ -1711,9 +1711,14 @@ CPresentation.prototype.IsEmpty = function() {
 	return this.GetSlidesCount() === 0;
 };
 CPresentation.prototype.Get_TargetDocContent = function () {
-	var oController = this.GetCurrentController();
-	if (oController) {
-		return oController.getTargetDocContent(true);
+	if (this.IsFocusOnOutline()) {
+		const view = this.GetOutlineView();
+		return view.getDocContent();
+	} else {
+		var oController = this.GetCurrentController();
+		if (oController) {
+			return oController.getTargetDocContent(true);
+		}
 	}
 	return null;
 };
@@ -2836,7 +2841,24 @@ CPresentation.prototype.RefreshDocumentPositions = function (arrPositions) {
 	}
 };
 
+CPresentation.prototype.GetOutlineTargetPosition = function () {
+	const view = this.GetOutlineView();
+	if (view) {
+		const oTargetDocContent = view.getDocContent();
+		if (oTargetDocContent) {
+			var oElem = oTargetDocContent.Content[oTargetDocContent.CurPos.ContentPos];
+			if (oElem) {
+				var oPos = oElem.GetTargetPos();
+				return {X: oPos.X, Y: oPos.Y + oPos.Height};
+			}
+		}
+	}
+	return null;
+};
 CPresentation.prototype.GetTargetPosition = function () {
+	if (this.IsFocusOnOutline()) {
+		return this.GetOutlineTargetPosition();
+	}
 	var oController = this.GetCurrentController();
 	var oPosition = null;
 	if (oController) {
