@@ -32996,6 +32996,15 @@
 			case Asc.c_oAscChartTypeSettings.line3d: {
 				return "line3D";
 			}
+			case Asc.c_oAscChartTypeSettings.lineNormalMarker: {
+				return "lineNormalMarker";
+			}
+			case Asc.c_oAscChartTypeSettings.lineStackedMarker: {
+				return "lineStackedMarker";
+			}
+			case Asc.c_oAscChartTypeSettings.lineStackedPerMarker: {
+				return "lineStackedPerMarker";
+			}
 			case Asc.c_oAscChartTypeSettings.pie: {
 				return "pie";
 			}
@@ -33008,6 +33017,18 @@
 			case Asc.c_oAscChartTypeSettings.scatter: {
 				return "scatter";
 			}
+			case Asc.c_oAscChartTypeSettings.scatterLine: {
+				return "scatterLine";
+			}
+			case Asc.c_oAscChartTypeSettings.scatterLineMarker: {
+				return "scatterLineMarker";
+			}
+			case Asc.c_oAscChartTypeSettings.scatterSmooth: {
+				return "scatterSmooth";
+			}
+			case Asc.c_oAscChartTypeSettings.scatterSmoothMarker: {
+				return "scatterSmoothMarker";
+			}
 			case Asc.c_oAscChartTypeSettings.stock: {
 				return "stock";
 			}
@@ -33019,6 +33040,15 @@
 			}
 			case Asc.c_oAscChartTypeSettings.areaStackedPer: {
 				return "areaStackedPercent";
+			}
+			case Asc.c_oAscChartTypeSettings.radar: {
+				return "radar";
+			}
+			case Asc.c_oAscChartTypeSettings.radarMarker: {
+				return "radarMarker";
+			}
+			case Asc.c_oAscChartTypeSettings.radarFilled: {
+				return "radarFilled";
 			}
 			case Asc.c_oAscChartTypeSettings.comboBarLine: {
 				return "comboBarLine";
