@@ -16770,7 +16770,8 @@ function isAllowPasteLink(pastedWb) {
                         const _tableInfo = t.model.autoFilters.getTableByActiveCell();
                         if (_tableInfo) {
                             const _table = _tableInfo.table;
-                            var _tF = t.model.autoFilters._changeTotalsRowData(_table, range.bbox, {totalFunction: val});
+                            var _totalFunction = "string" === typeof val ? parseInt(val) : val;
+                            var _tF = t.model.autoFilters._changeTotalsRowData(_table, range.bbox, {totalFunction: _totalFunction});
                             if (_tF) {
                                 range.setValue(_tF[0]);
                             }

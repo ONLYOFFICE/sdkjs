@@ -10223,6 +10223,7 @@ function RangeDataManagerElem(bbox, data)
 					break;
 				}
 				case Asc.ETotalsRowFunction.totalrowfunctionCountNums: {
+					res = generateFunction(102);
 					break;
 				}
 				case Asc.ETotalsRowFunction.totalrowfunctionCustom: {
