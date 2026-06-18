@@ -21145,8 +21145,9 @@
 		let formula1 = validation.getFormula1();
 		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (formula1 && worksheet) {
+			let activeCell = this.range.range.bbox && {row: this.range.range.bbox.r1, col: this.range.range.bbox.c1};
 			formula1 = formula1.clone(true);
-			formula1.correctToInterface(worksheet, validation);
+			formula1.correctToInterface(worksheet, validation, activeCell);
 		}
 		return formula1 ? formula1.asc_getValue() : "";
 	};
@@ -21166,8 +21167,9 @@
 		let formula2 = validation.getFormula2();
 		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (formula2 && worksheet) {
+			let activeCell = this.range.range.bbox && {row: this.range.range.bbox.r1, col: this.range.range.bbox.c1};
 			formula2 = formula2.clone(true);
-			formula2.correctToInterface(worksheet, validation);
+			formula2.correctToInterface(worksheet, validation, activeCell);
 		}
 		return formula2 ? formula2.asc_getValue() : "";
 	};
