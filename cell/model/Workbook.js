@@ -1890,11 +1890,17 @@
 			// go through  all intersected listeners only if we do not change the cell inside the table
 			if (isDefnameTable && notifyData.type !== c_oNotifyType.Dirty) {
 				// we are getting table info and notify all range listeners that intersects with the table ref
-				let table = wb.getTableByName(nameIndex);
+				let tableWithIndex = wb.getTableByName(nameIndex, true);
+				let table = tableWithIndex && tableWithIndex.table;
 				if (table) {
 					let tableRef = table.Ref;
-					let sheetId = defNameObj.parsedRef && defNameObj.parsedRef.outStack && 
+					let sheetId = defNameObj.parsedRef && defNameObj.parsedRef.outStack &&
 						defNameObj.parsedRef.outStack[0] && defNameObj.parsedRef.outStack[0].getWsId && defNameObj.parsedRef.outStack[0].getWsId();
+					// parsedRef may be unparsed (e.g. on redo) - take sheetId from the table's worksheet
+					if (sheetId === undefined || sheetId === false || sheetId === null) {
+						let tableWs = wb.aWorksheets[tableWithIndex.index];
+						sheetId = tableWs && tableWs.getId();
+					}
 					let areaMap = sheetId !== undefined && this.sheetListeners[sheetId] && this.sheetListeners[sheetId].areaMap;
 					let cellMap = sheetId !== undefined && this.sheetListeners[sheetId] && this.sheetListeners[sheetId].cellMap;
 
