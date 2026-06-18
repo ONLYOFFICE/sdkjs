@@ -621,29 +621,30 @@ CInlineLevelSdt.prototype.DrawSignatureSign = function(graphics)
 		return;
 	
 	let _t = this;
-	
 	let parentShape = this.Paragraph && this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
 	if (!parentShape)
 		return;
 	
-	let boundsW = parentShape.getXfrmExtX();
-	let boundsH = parentShape.getXfrmExtY();
+	let layoutScale = this.Paragraph ? this.Paragraph.getLayoutScaleCoefficient() : 1;
+	let isReadMode  = layoutScale < 0.9;
+	
+	let boundsW = parentShape.getXfrmExtX() * layoutScale;
+	let boundsH = parentShape.getXfrmExtY() * layoutScale;
 	
 	let drawingDocument = logicDocument.getDrawingDocument();
 	let icons = drawingDocument.contentControls.icons;
 	
-	
 	AscCommon.ExecuteNoHistory(function() {
 		let intGrid = graphics.GetIntegerGrid();
 		graphics.SetIntegerGrid(false);
-		
-		let zoomCoeff = (drawingDocument.m_oWordControl.m_nZoomValue * 1.0 / 100);
-		
+
+		let zoomCoeff = drawingDocument.m_oWordControl.m_nZoomValue * 1.0 / 100;
+
 		const imageH_px = 20;
 		const imageW_px = 20;
-		
+
 		const rPR = AscCommon.AscBrowser.retinaPixelRatio;
-		const offset_px = 10 * Math.round(rPR);
+		const offset_px = (isReadMode ? 2 : 10) * Math.round(rPR);
 		const offset_mm = offset_px * AscCommon.g_dKoef_pix_to_mm / zoomCoeff;
 		const gap = offset_mm / 2;
 		const clip_offset = Math.round(rPR) * AscCommon.g_dKoef_pix_to_mm / zoomCoeff;
@@ -651,11 +652,12 @@ CInlineLevelSdt.prototype.DrawSignatureSign = function(graphics)
 		let imageH_mm = imageH_px * AscCommon.g_dKoef_pix_to_mm / zoomCoeff;
 		let imageW_mm = imageW_px * AscCommon.g_dKoef_pix_to_mm / zoomCoeff;
 		
-		
 		let docContent = new AscWord.CDocumentContent();
 		let p = docContent.GetElement(0);
 		let run = new AscWord.Run();
-		run.SetFontSize(12 / zoomCoeff);
+		
+		let fontSize = (isReadMode ? 8 : 12) / zoomCoeff;
+		run.SetFontSize(fontSize);
 		run.SetRFontsAscii("Arial");
 		run.AddText(_t.GetPlaceholderText());
 		p.AddToContent(0, run);
@@ -725,8 +727,10 @@ CInlineLevelSdt.prototype.DrawPictureSign = function(graphics)
 	if (!parentShape)
 		return;
 	
-	let boundsW = parentShape.getXfrmExtX();
-	let boundsH = parentShape.getXfrmExtY();
+	let layoutScale = this.Paragraph ? this.Paragraph.getLayoutScaleCoefficient() : 1;
+	
+	let boundsW = parentShape.getXfrmExtX() * layoutScale;
+	let boundsH = parentShape.getXfrmExtY() * layoutScale;
 	
 	let drawingDocument = logicDocument.getDrawingDocument();
 	let icons = drawingDocument.contentControls.icons;
@@ -734,12 +738,12 @@ CInlineLevelSdt.prototype.DrawPictureSign = function(graphics)
 	AscCommon.ExecuteNoHistory(function() {
 		let intGrid = graphics.GetIntegerGrid();
 		graphics.SetIntegerGrid(false);
-		
-		let zoomCoeff = (drawingDocument.m_oWordControl.m_nZoomValue * 1.0 / 100);
-		
+
+		let zoomCoeff = drawingDocument.m_oWordControl.m_nZoomValue * 1.0 / 100;
+
 		const imageH_px = 20;
 		const imageW_px = 20;
-		
+
 		let imageH_mm = imageH_px * AscCommon.g_dKoef_pix_to_mm / zoomCoeff;
 		let imageW_mm = imageW_px * AscCommon.g_dKoef_pix_to_mm / zoomCoeff;
 	
