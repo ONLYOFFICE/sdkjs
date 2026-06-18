@@ -2169,17 +2169,16 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 		{
 			var Item = this.Content[Pos];
 			Item.recalculateRangeAlign(PRSA);
-			if (!(PRSA.RecalcResult & recalcresult_NextElement))
-			{
-				PRSW.RecalcResult = PRSA.RecalcResult;
+			if (!PRSA.canContinue())
 				return PRSA.RecalcResult;
-			}
 		}
 
 		PRSA.endRange();
-    }
-
-    return PRSA.RecalcResult;
+		if (!PRSA.canContinue())
+			return PRSA.RecalcResult;
+	}
+	
+	return PRSA.RecalcResult;
 };
 
 Paragraph.prototype.private_RecalculateLineCheckFootnotes = function(CurLine, CurPage, PRS, ParaPr)
