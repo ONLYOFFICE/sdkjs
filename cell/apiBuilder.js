@@ -22308,6 +22308,7 @@
 			case Asc.ECfType.top10:
 				return new ApiTop10(rule, range, parent);
 			case Asc.ECfType.uniqueValues:
+			case Asc.ECfType.duplicateValues:
 				return new ApiUniqueValues(rule, range, parent);
 			default:
 				return new ApiFormatCondition(rule, range, parent);
