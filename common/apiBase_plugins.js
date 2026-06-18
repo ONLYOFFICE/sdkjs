@@ -1710,7 +1710,7 @@
      * @property {string} url The URL to plugin config.
      * @property {string} guid The plugin identifier. It must be of the *asc.{UUID}* type.
 	 * @property {boolean} canRemoved Specifies if the plugin can be removed (**true**) or not (**false**).
-     * @property {object} obj The {@link /docs/plugin-and-macros/structure/configuration/ config} of the installed plugin. The version is taken from the config and compared with the current one to check for updates.
+     * @property {object} obj The {@link /docs/plugins/configuration/configuration config} of the installed plugin. The version is taken from the config and compared with the current one to check for updates.
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/PluginData.js
 	 */
 
@@ -1868,7 +1868,7 @@
 	/**
     * Installs a plugin using the specified plugin config.
      * @memberof Api
-     * @param {object} [config] - The plugin {@link /docs/plugin-and-macros/structure/configuration/ config}.
+     * @param {object} [config] - The plugin {@link /docs/plugins/configuration/configuration config}.
      * @alias InstallPlugin
      * @returns {object} - An object with the result information.
      * @since 7.2.0
@@ -1881,7 +1881,7 @@
 	/**
     * Updates a plugin using the specified plugin config.
      * @memberof Api
-     * @param {object} [config] - The plugin {@link /docs/plugin-and-macros/structure/configuration/ config}.
+     * @param {object} [config] - The plugin {@link /docs/plugins/configuration/configuration config}.
      * @alias UpdatePlugin
      * @returns {object} - An object with the result information.
      * @since 7.3.0
@@ -2070,7 +2070,7 @@
 	 * @property {string} text - The item text.
 	 * @property {string} [data] - The item data (this data will be sent to the click event callback).
 	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
-	 * @property {string} [icons] - The item icons (see the plugins {@link /docs/plugin-and-macros/structure/configuration/ config} documentation).
+	 * @property {string} [icons] - The item icons (see the plugins {@link /docs/plugins/configuration/configuration config} documentation).
 	 * @property {ContextMenuItem[]} items - An array containing the context menu items for the current item.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContextMenuItem.js
 	 */
@@ -2137,7 +2137,7 @@
 	 * @property {ToolbarMenuItemType} type - The item type.
 	 * @property {string} text - The item text.
 	 * @property {string} hint - The item hint.
-	 * @property {string} [icons] - The item icons (see the plugins {@link /docs/plugin-and-macros/structure/configuration/ config} documentation).
+	 * @property {string} [icons] - The item icons (see the plugins {@link /docs/plugins/configuration/configuration config} documentation).
 	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
 	 * @property {boolean} [enableToggle] - Specifies if an item toggle is enabled or not.
 	 * @property {boolean} [lockInViewMode] - Specifies if the current item is locked in the view mode or not.

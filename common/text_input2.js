@@ -970,8 +970,7 @@
 				_style += (AscCommon.AscBrowser.isAppleDevices && !AscCommon.AscBrowser.isTelegramWebView && (AscCommon.AscBrowser.maxTouchPoints > 0)) ? "font-size:0px;" : "font-size:8px;";
 			else
 			{
-				this.lastFontSize = 8;
-				_style += ("font-size:" + this.lastFontSize + "px;");
+				_style += ("font-size:8px;");
 			}
 		}
 		else

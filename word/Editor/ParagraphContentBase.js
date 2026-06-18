@@ -4813,7 +4813,10 @@ CParagraphContentWithParagraphLikeContent.prototype.CorrectContentPos = function
 
 	var nCount = this.Content.length;
 	var nCurPos = Math.min(Math.max(0, this.State.ContentPos), nCount - 1);
-
+	
+	if (nCount <= 0)
+		return;
+	
 	// Ищем элемент, в котором может стоять курсор
 	while (nCurPos > 0 && !this.Content[nCurPos].IsCursorPlaceable())
 	{
@@ -4821,33 +4824,44 @@ CParagraphContentWithParagraphLikeContent.prototype.CorrectContentPos = function
 		this.Content[nCurPos].MoveCursorToEndPos();
 	}
 
-	while (nCurPos < nCount && !this.Content[nCurPos].IsCursorPlaceable())
+	while (nCurPos < nCount - 1 && !this.Content[nCurPos].IsCursorPlaceable())
 	{
 		nCurPos++;
 		this.Content[nCurPos].MoveCursorToStartPos(false);
 	}
+	
+	if (!this.Content[nCurPos].IsCursorPlaceable())
+	{
+		this.State.ContentPos = 0;
+		return;
+	}
 
 	// Если курсор находится в начале или конце гиперссылки, тогда выводим его из гиперссылки
-	while (nCurPos > 0 && para_Run !== this.Content[nCurPos].Type && para_Math !== this.Content[nCurPos].Type && para_Field !== this.Content[nCurPos].Type && para_InlineLevelSdt !== this.Content[nCurPos].Type && true === this.Content[nCurPos].Cursor_Is_Start())
+	while (nCurPos > 0 
+		&& this.Content[nCurPos - 1].IsCursorPlaceable()
+		&& para_Run !== this.Content[nCurPos].Type
+		&& para_Math !== this.Content[nCurPos].Type
+		&& para_Field !== this.Content[nCurPos].Type
+		&& para_InlineLevelSdt !== this.Content[nCurPos].Type
+		&& true === this.Content[nCurPos].Cursor_Is_Start())
 	{
-		if (!this.Content[nCurPos - 1].IsCursorPlaceable())
-			break;
-
 		nCurPos--;
 		this.Content[nCurPos].MoveCursorToEndPos();
 	}
 
-	while (nCurPos < nCount && para_Run !== this.Content[nCurPos].Type && para_Math !== this.Content[nCurPos].Type && para_Field !== this.Content[nCurPos].Type && para_InlineLevelSdt !== this.Content[nCurPos].Type && true === this.Content[nCurPos].Cursor_Is_End())
+	while (nCurPos < nCount - 1
+		&& this.Content[nCurPos + 1].IsCursorPlaceable()
+		&& para_Run !== this.Content[nCurPos].Type
+		&& para_Math !== this.Content[nCurPos].Type
+		&& para_Field !== this.Content[nCurPos].Type
+		&& para_InlineLevelSdt !== this.Content[nCurPos].Type
+		&& true === this.Content[nCurPos].Cursor_Is_End())
 	{
-		if (!this.Content[nCurPos + 1].IsCursorPlaceable())
-			break;
-
 		nCurPos++;
 		this.Content[nCurPos].MoveCursorToStartPos(false);
 	}
 
 	this.State.ContentPos = nCurPos;
-
 	this.Content[this.State.ContentPos].CorrectContentPos();
 };
 CParagraphContentWithParagraphLikeContent.prototype.GetFirstRun = function()

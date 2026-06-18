@@ -7726,7 +7726,7 @@
 									return false;
 								};
 							})(oRule, oRule.aRuleElements[0],
-								new AscCommonExcel.CConditionalFormattingFormulaParent(this, oRule, true),
+								new AscCommonExcel.CConditionalFormattingFormulaParent(t, oRule, true),
 								bboxCf ? bboxCf.r1 : 0, bboxCf ? bboxCf.c1 : 0));
 						};
 

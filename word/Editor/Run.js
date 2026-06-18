@@ -8304,7 +8304,7 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 	{
 		let fontName = run.Pr.GetFontFamily();
 		let prefix = AscFonts.getEmbeddedFontPrefix();
-		if (!fontName || !fontName.startsWith(prefix))
+		if (!fontName || !fontName.startsWith(prefix) || run.GetFormPDF())
 			return;
 
 		if (!!run.Pr.Bold !== !!newTextPr.Bold || !!run.Pr.Italic !== !!newTextPr.Italic || (newTextPr.GetFontFamily() && fontName != newTextPr.GetFontFamily()))
