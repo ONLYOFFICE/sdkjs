@@ -13644,11 +13644,7 @@
 
 		return null;
 	};
-
-	Object.defineProperty(ApiDrawing.prototype, 'Fill', {
-		set: function (fill) { this.SetFill(fill); },
-		get: function () { return this.GetFill(); }
-	});
+	
 
 	/**
 	 * Sets the outline properties to the specified graphic object.
