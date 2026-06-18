@@ -2801,7 +2801,15 @@
 		}
 		AscCommon.check_KeyboardEvent(e);
 		const outlineView = this.GetOutlineView();
-		return outlineView && outlineView.onKeyDown(global_keyboardEvent);
+		const res = outlineView && outlineView.onKeyDown(global_keyboardEvent);
+		if (res & keydownresult_PreventDefault) {
+			e.preventDefault();
+			return false;
+		}
+		if (res === keydownresult_PreventNothing) {
+			return true;
+		}
+		return res;
 	};
 
 	COutlineThumbnailsManager.prototype.SetFocusElement = function(type)

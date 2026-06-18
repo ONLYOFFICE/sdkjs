@@ -4097,12 +4097,9 @@
 			}
 
 			var ret = oWordControl.Thumbnails.onKeyDown(e);
-			if (oWordControl.m_oLogicDocument.IsFocusOnOutline()) {
-				return;
-			}
 			if (false === ret)
 				return false;
-			if (undefined === ret)
+			if (undefined === ret || null === ret)
 				return;
 		}
 

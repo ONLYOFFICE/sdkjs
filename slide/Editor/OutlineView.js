@@ -2041,6 +2041,11 @@
 				this.selectAll();
 				break;
 			}
+			case Asc.c_oAscPresentationShortcutType.EditUndo:
+			case Asc.c_oAscPresentationShortcutType.EditUndo: {
+				res.keyResult = keydownresult_PreventNothing;
+				break;
+			}
 			default: {
 				res = null;
 			}
@@ -2496,7 +2501,7 @@
 			}
 		}
 	};
-	OutlineView.prototype.saveDocumentState = function (docState) {
+	OutlineView.prototype.saveDocumentStateBeforeLoadChanges = function (docState) {
 		const presentation = this.getPresentation();
 		const docContent = this.getDocContent();
 		if (!docContent || !presentation) {
@@ -2532,7 +2537,7 @@
 		this.resetPosition();
 	};
 
-	OutlineView.prototype.applyDocumentState = function (docState) {
+	OutlineView.prototype.applyDocumentStateAfterLoadChanges = function (docState) {
 		this.update();
 		const savedPosition = docState.SavedOutlinePosition;
 		if (savedPosition) {
@@ -2633,6 +2638,32 @@
 		if (newSlide) {
 			presentation.DrawingDocument.m_oWordControl.GoToPage(newSlide.num);
 		}
+	};
+	OutlineView.prototype.setSelectionState = function (slideSelectionState) {
+		const state = slideSelectionState[0];
+		if (state && state.textSelection) {
+			this.update();
+			const thumbnailsManager = Asc.editor.getThumbnailsManager();
+			if (!thumbnailsManager) {
+				return;
+			}
+			thumbnailsManager.SetFocusElement(AscCommon.FOCUS_OBJECT_THUMBNAILS);
+			const docContent = this.getDocContent();
+			if (docContent) {
+				docContent.SetSelectionState(state.textSelection);
+			}
+		}
+	};
+	OutlineView.prototype.getSelectionState = function () {
+		const selectionState = {};
+		const docContent = this.getDocContent();
+		if (docContent) {
+			selectionState.focus = true;
+			selectionState.textObject = this.outlineShape;
+			selectionState.selectStartPage = selectionState.textObject.selectStartPage;
+			selectionState.textSelection = docContent.GetSelectionState();
+		}
+		return [selectionState];
 	};
 
 

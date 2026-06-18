@@ -68,9 +68,9 @@ CChangesDocumentContentAddItem.prototype.Undo = function()
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 	{
 		var Pos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
-		
-		oDocument.UpdateSectionsBeforeRemove([oDocument.Content[Pos]], false);
-		oDocument.Content[Pos].OnDetach();
+		const RemovedElement = oDocument.Content[Pos];
+		oDocument.UpdateSectionsBeforeRemove([RemovedElement], false);
+		RemovedElement.OnDetach();
 
 		var Elements = oDocument.Content.splice(Pos, 1);
 		oDocument.private_RecalculateNumbering(Elements);
@@ -93,6 +93,7 @@ CChangesDocumentContentAddItem.prototype.Undo = function()
 		{
 			oDocument.Content[Pos].Prev = null;
 		}
+		RemovedElement.UpdatePresentationOutline();
 	}
 	this.Class.Recalculated = false;
 };
@@ -132,6 +133,7 @@ CChangesDocumentContentAddItem.prototype.Redo = function()
 		Element.Parent = oDocument;
 		oDocument.UpdateSectionsAfterAdd([Element]);
 		Element.OnAttach();
+		Element.UpdatePresentationOutline();
 	}
 	this.Class.Recalculated = false;
 };
@@ -187,6 +189,7 @@ CChangesDocumentContentAddItem.prototype.Load = function(Color)
 			AscCommon.CollaborativeEditing.Update_DocumentPositionsOnAdd(oDocument, Pos);
 			oDocument.UpdateSectionsAfterAdd([Element]);
 			Element.OnAttach();
+			Element.UpdatePresentationOutline();
 		}
 	}
 
@@ -250,7 +253,12 @@ CChangesDocumentContentRemoveItem.prototype.Undo = function()
 	this.Class.Recalculated = false;
 	oDocument.UpdateSectionsAfterAdd(this.Items);
 	for (let i = 0; i < this.Items.length; ++i)
-		this.Items[i].OnAttach();
+	{
+		const oElement = this.Items[i];
+		oElement.OnAttach();
+		oElement.UpdatePresentationOutline();
+	}
+
 };
 CChangesDocumentContentRemoveItem.prototype.Redo = function()
 {
@@ -262,8 +270,11 @@ CChangesDocumentContentRemoveItem.prototype.Redo = function()
 	let removedElements = oDocument.Content.slice(this.Pos, this.Pos + this.Items.length);
 	oDocument.UpdateSectionsBeforeRemove(removedElements, false);
 
-	for (let i = 0; i < removedElements.length; ++i)
-		removedElements[i].OnDetach();
+	for (let i = 0; i < removedElements.length; ++i) {
+		const oRemovedElement = removedElements[i];
+		oRemovedElement.OnDetach();
+		oRemovedElement.UpdatePresentationOutline();
+	}
 
 	var Elements = oDocument.Content.splice(this.Pos, this.Items.length);
 	oDocument.private_RecalculateNumbering(Elements);
@@ -310,6 +321,7 @@ CChangesDocumentContentRemoveItem.prototype.Load = function(Color)
 		
 		oDocument.UpdateSectionsBeforeRemove([oDocument.Content[Pos]], false);
 		oDocument.Content[Pos].OnDetach();
+		oDocument.Content[Pos].UpdatePresentationOutline();
 
 		var Elements = oDocument.Content.splice(Pos, 1);
 		oDocument.private_RecalculateNumbering(Elements);

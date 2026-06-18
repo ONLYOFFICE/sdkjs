@@ -1964,7 +1964,7 @@ ParaRun.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 	
 	this.private_UpdateMarksOnAdd(Pos, 1);
 	
-	this.private_UpdateDocumentOutline();
+	this.private_UpdateOutline();
     this.private_UpdateTrackRevisionOnChangeContent(true);
 
     // Обновляем позиции меток совместного редактирования
@@ -2017,7 +2017,7 @@ ParaRun.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition)
 
 	this.private_UpdateMarksOnRemove(Pos, Count);
 
-	this.private_UpdateDocumentOutline();
+	this.private_UpdateOutline();
 	this.private_UpdateTrackRevisionOnChangeContent(true);
 
     // Обновляем позиции меток совместного редактирования

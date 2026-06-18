@@ -376,6 +376,7 @@ CChangesParagraphAddItem.prototype.Undo = function()
 	oParagraph.private_CheckUpdateBookmarks(this.Items);
 	oParagraph.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
 	private_ParagraphChangesOnSetValue(this.Class);
+	oParagraph.UpdatePresentationOutline();
 };
 CChangesParagraphAddItem.prototype.Redo = function()
 {
@@ -405,6 +406,7 @@ CChangesParagraphAddItem.prototype.Redo = function()
 		
 		oItem.OnAttach();
 	}
+	oParagraph.UpdatePresentationOutline();
 };
 CChangesParagraphAddItem.prototype.private_WriteItem = function(Writer, Item)
 {
@@ -523,6 +525,7 @@ CChangesParagraphRemoveItem.prototype.Undo = function()
 
 		oItem.OnAttach();
 	}
+	oParagraph.UpdatePresentationOutline();
 };
 CChangesParagraphRemoveItem.prototype.Redo = function()
 {
@@ -536,6 +539,7 @@ CChangesParagraphRemoveItem.prototype.Redo = function()
 	oParagraph.private_CheckUpdateBookmarks(this.Items);
 	oParagraph.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
 	private_ParagraphChangesOnSetValue(this.Class);
+	oParagraph.UpdatePresentationOutline();
 };
 CChangesParagraphRemoveItem.prototype.private_WriteItem = function(Writer, Item)
 {

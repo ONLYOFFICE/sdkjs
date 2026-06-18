@@ -7093,16 +7093,34 @@ CPresentation.prototype.Document_Redo = function () {
 CPresentation.prototype.Set_FastCollaborativeEditing = function (isOn) {
 	AscCommon.CollaborativeEditing.Set_Fast(isOn);
 };
-
+CPresentation.prototype.GetOutlineSelectionState = function (oSelectionState) {
+	const view = this.GetOutlineView();
+	if (view) {
+		oSelectionState.slideSelection = view.getSelectionState();
+	}
+};
+CPresentation.prototype.SetOutlineSelectionState = function (oSelectionState) {
+	const view = this.GetOutlineView();
+	if (view) {
+		if (oSelectionState.slideSelection) {
+			view.setSelectionState(oSelectionState.slideSelection);
+		}
+	}
+};
 CPresentation.prototype.GetSelectionState = function () {
 	const oSelectionState = {};
 	oSelectionState.mode = Asc.editor.presentationViewManager.type;
 	oSelectionState.CurPage = this.CurPage;
 	oSelectionState.FocusOnNotes = this.FocusOnNotes;
+	oSelectionState.IsFocusOnOutline = this.IsFocusOnOutline();
 	oSelectionState.SelectedSlides = this.GetSelectedSlides();
-	let oController = this.GetCurrentController();
-	if (oController) {
-		oSelectionState.slideSelection = oController.getSelectionState();
+	if (oSelectionState.IsFocusOnOutline) {
+		this.GetOutlineSelectionState(oSelectionState);
+	} else {
+		let oController = this.GetCurrentController();
+		if (oController) {
+			oSelectionState.slideSelection = oController.getSelectionState();
+		}
 	}
 	oSelectionState.HistoryIndex = this.History.Index;
 	return oSelectionState;
@@ -7116,18 +7134,22 @@ CPresentation.prototype.SetSelectionState = function (State) {
 		}
 		var oSlide = this.GetSlide(State.CurPage);
 		if (oSlide) {
-			if (State.FocusOnNotes) {
+			if (State.IsFocusOnOutline || State.FocusOnNotes) {
 				oSlide.graphicObjects.resetSelection();
 				oSlide.graphicObjects.clearPreTrackObjects();
 				oSlide.graphicObjects.clearTrackObjects();
 				oSlide.graphicObjects.changeCurrentState(new AscFormat.NullState(oSlide.graphicObjects));
-				if (oSlide.notes) {
-					this.FocusOnNotes = true;
-					if (State.slideSelection) {
-						oSlide.notes.graphicObjects.setSelectionState(State.slideSelection);
+				if (State.IsFocusOnOutline) {
+					this.SetOutlineSelectionState(State);
+				} else if (State.FocusOnNotes) {
+					if (oSlide.notes) {
+						this.FocusOnNotes = true;
+						if (State.slideSelection) {
+							oSlide.notes.graphicObjects.setSelectionState(State.slideSelection);
+						}
+					} else {
+						this.FocusOnNotes = false;
 					}
-				} else {
-					this.FocusOnNotes = false;
 				}
 			} else {
 				if (State.slideSelection) {
@@ -7156,11 +7178,11 @@ CPresentation.prototype.Get_SelectionState2 = function () {
 };
 CPresentation.prototype.SaveOutlineStateBeforeLoadChanges = function (docState) {
 	const outlineView = this.GetOutlineView();
-	outlineView && outlineView.saveDocumentState(docState);
+	outlineView && outlineView.saveDocumentStateBeforeLoadChanges(docState);
 };
 CPresentation.prototype.LoadOutlineStateAfterLoadChanges = function (docState) {
 	const outlineView = this.GetOutlineView();
-	outlineView && outlineView.applyDocumentState(docState);
+	outlineView && outlineView.applyDocumentStateAfterLoadChanges(docState);
 };
 CPresentation.prototype.ResetOutlineSelection = function () {
 	const view = this.GetOutlineView();

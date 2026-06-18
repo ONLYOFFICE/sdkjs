@@ -1315,10 +1315,15 @@ CParagraphContentWithContentBase.prototype.OnDetach = function()
 CParagraphContentWithContentBase.prototype.OnAttach = function()
 {
 };
-CParagraphContentWithContentBase.prototype.private_UpdateDocumentOutline = function()
+CParagraphContentWithContentBase.prototype.private_UpdateOutline = function()
 {
 	if (this.Paragraph)
 		this.Paragraph.UpdateOutline();
+};
+CParagraphContentWithContentBase.prototype.private_UpdatePresentationOutline = function()
+{
+	if (this.Paragraph)
+		this.Paragraph.UpdatePresentationOutline();
 };
 CParagraphContentWithContentBase.prototype.IsSolid = function()
 {
@@ -1731,7 +1736,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Add_ToContent = function(Pos
 {
     this.Content.splice(Pos, 0, Item);
     this.updateTrackRevisions();
-	this.private_UpdateDocumentOutline();
+	this.private_UpdateOutline();
     this.private_CheckUpdateBookmarks([Item]);
 	this.private_UpdateSelectionPosOnAdd(Pos, 1);
 
@@ -1816,7 +1821,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove_FromContent = functio
 	var DeletedItems = this.Content.slice(Pos, Pos + Count);
 	this.Content.splice(Pos, Count);
     this.updateTrackRevisions();
-	this.private_UpdateDocumentOutline();
+	this.private_UpdateOutline();
 	this.private_CheckUpdateBookmarks(DeletedItems);
 	this.private_UpdateSelectionPosOnRemove(Pos, Count);
 
