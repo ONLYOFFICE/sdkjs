@@ -16834,7 +16834,15 @@ Paragraph.prototype.GetText = function(oPr)
 	{
 		var oNumPr = this.GetNumPr();
 		if (oNumPr && oNumPr.IsValid())
+		{
 			oText.Text += this.GetNumberingTextWithSuffix(oPr);
+		}
+		else
+		{
+			var oBullet = this.Get_CompiledPr2(false).ParaPr.Bullet;
+			if (oBullet)
+				oText.Text += oBullet.getChar();
+		}
 	}
 
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
