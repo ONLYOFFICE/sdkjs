@@ -5268,6 +5268,9 @@
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.onPluginEvent("onSelectionCancel");
 	};
+	PDFEditorApi.prototype.asc_SetSilentMode = function(bEnabled, bAddition) {
+		return;
+	};
 	
 	function CPdfContextMenuData(obj) {
 		if (obj) {
@@ -5599,6 +5602,8 @@
 	
 	PDFEditorApi.prototype['asc_CheckEditPassword']			= PDFEditorApi.prototype.asc_CheckEditPassword;
 	PDFEditorApi.prototype['asc_CheckPrintPassword']		= PDFEditorApi.prototype.asc_CheckPrintPassword;
+	
+	PDFEditorApi.prototype['asc_SetSilentMode']				= PDFEditorApi.prototype.asc_SetSilentMode;
 	
 	PDFEditorApi.prototype['getJsApi'] = PDFEditorApi.prototype.getJsApi;
 	
