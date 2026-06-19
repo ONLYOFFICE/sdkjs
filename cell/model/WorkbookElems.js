@@ -9635,7 +9635,21 @@ function RangeDataManagerElem(bbox, data)
 		return result;
 	};
 
+	AutoFilter.prototype.reinitDynamicFilters = function(worksheet, opt_columnsFilter) {
+		var columns = opt_columnsFilter ? opt_columnsFilter : this.FilterColumns;
+		if (columns) {
+			for (var i = 0; i < columns.length; i++) {
+				var filterColumn = opt_columnsFilter ? columns[i].filter : columns[i];
+				if (filterColumn.DynamicFilter) {
+					filterColumn.DynamicFilter.init(worksheet.getRange3(this.Ref.r1 + 1, filterColumn.ColId + this.Ref.c1, this.Ref.r2, filterColumn.ColId + this.Ref.c1));
+				}
+			}
+		}
+	};
+
 	AutoFilter.prototype.setRowHidden = function(worksheet, newFilterColumn, opt_columnsFilter) {
+		this.reinitDynamicFilters(worksheet, opt_columnsFilter);
+
 		var startRow = this.Ref.r1 + 1;
 		var endRow = this.Ref.r2;
 

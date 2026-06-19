@@ -5446,7 +5446,7 @@
 				}
 			},
 
-			_openHiddenRowsAfterDeleteColumn: function (filter, colId) {
+			_openHiddenRowsAfterDeleteColumn: function (filter, colId, updateDynamic) {
 				var autoFilter = filter.getAutoFilter();
 				var ref = autoFilter.Ref;
 				var filterColumns = autoFilter.FilterColumns;
@@ -5468,13 +5468,20 @@
 
 				worksheet.workbook.dependencyFormulas.lockRecal();
 				this.useViewLocalChange = true;
+				if (updateDynamic) {
+					autoFilter.reinitDynamicFilters(worksheet, opt_columnsFilter);
+				}
 				for (var i = ref.r1 + 1; i <= ref.r2; i++) {
-					if (worksheet.getRowHidden(i) === false) {
+					if (!updateDynamic && worksheet.getRowHidden(i) === false) {
 						continue;
 					}
 
-					if (!autoFilter.hiddenByAnotherFilter(worksheet, colId, i, ref.c1, opt_columnsFilter))//filter another button
-					{
+					var hide = autoFilter.hiddenByAnotherFilter(worksheet, colId, i, ref.c1, opt_columnsFilter);//filter another button
+					if (updateDynamic) {
+						if (worksheet.getRowHidden(i) !== hide) {
+							worksheet.setRowHidden(hide, i, i);
+						}
+					} else if (!hide) {
 						worksheet.setRowHidden(false, i, i);
 					}
 				}
@@ -6031,7 +6038,7 @@
 				if (colId !== null) {
 					var index = autoFilterObj.getIndexByColId(colId);
 					if (!viewId || viewId === this.worksheet.getActiveNamedSheetViewId()) {
-						this._openHiddenRowsAfterDeleteColumn(filter, colId);
+						this._openHiddenRowsAfterDeleteColumn(filter, colId, true);
 					}
 
 					var filterColumn = autoFilterObj.getFilterColumnByIndex(index);
