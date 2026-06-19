@@ -9636,6 +9636,9 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	AutoFilter.prototype.reinitDynamicFilters = function(worksheet, opt_columnsFilter) {
+		if (worksheet.workbook.bUndoChanges || worksheet.workbook.bRedoChanges) {
+			return;
+		}
 		var columns = opt_columnsFilter ? opt_columnsFilter : this.FilterColumns;
 		if (columns) {
 			for (var i = 0; i < columns.length; i++) {
