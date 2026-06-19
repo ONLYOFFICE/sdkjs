@@ -351,6 +351,12 @@
 		}
 		return this.calculatedValues.canvasWidth;
 	};
+	CPresentationPrintPreview.prototype.updateInterfaceState = function () {
+		const presentation = this.getPresentation();
+		if (presentation) {
+			presentation.UpdateNotePageOrientationState();
+		}
+	};
 
 	AscCommon.CDocumentPrintPreview = CDocumentPrintPreview;
 	AscCommon.CPdfPrintPreview = CPdfPrintPreview;

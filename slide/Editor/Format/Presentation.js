@@ -6739,6 +6739,9 @@ CPresentation.prototype.Document_UpdateInterfaceState = function () {
 	this.Api.sendEvent("asc_onCanGroup", this.canGroup());
 	this.Api.sendEvent("asc_onCanUnGroup", this.canUnGroup());
 	this.Api.sendEvent("asc_onCanCopyCut", this.Can_CopyCut());
+	if (this.Api.printPreview) {
+		this.Api.printPreview.updateInterfaceState();
+	}
 	this.getViewManager().updateInterfaceState();
 
 	this.Api.externalChartCollector.onUpdateExternalList();
@@ -10591,6 +10594,36 @@ CPresentation.prototype.internalChangeNoteSizes = function (width, height, type)
 	}
 	this.setNotesSz(sldSize);
 	this.changeNoteSizeFunction();
+};
+CPresentation.prototype.SetSlidePageOrientation = function (val) {
+	const sizes = this.GetSlideSizesMM();
+
+	if (sizes.width > sizes.height && val === Asc.c_oAscPageOrientation.PagePortrait || sizes.width < sizes.height && val === Asc.c_oAscPageOrientation.PageLandscape) {
+		this.changeSlideSize(sizes.height * AscCommonWord.g_dKoef_mm_to_emu, sizes.width * AscCommonWord.g_dKoef_mm_to_emu, sizes.type);
+	}
+};
+CPresentation.prototype.SetNotePageOrientation = function (val) {
+	const sizes = this.GetNotesSizesMM();
+
+	if (sizes.width > sizes.height && val === Asc.c_oAscPageOrientation.PagePortrait || sizes.width < sizes.height && val === Asc.c_oAscPageOrientation.PageLandscape) {
+		this.changeNoteSize(sizes.height * AscCommonWord.g_dKoef_mm_to_emu, sizes.width * AscCommonWord.g_dKoef_mm_to_emu, sizes.type);
+	}
+};
+CPresentation.prototype.SetNoteSizesByPrinter = function (width, height) {
+	const fields = 12.7;
+	const newWidth = Math.round((width - fields) * AscCommonWord.g_dKoef_mm_to_emu);
+	const newHeight = Math.round((height - fields) * AscCommonWord.g_dKoef_mm_to_emu);
+	this.changeNoteSize(newWidth, newHeight, Asc.c_oAscSlideSZType.SzCustom);
+};
+CPresentation.prototype.UpdateNotePageOrientationState = function () {
+	const sizes = this.GetNotesSizesMM();
+	let pageOrientation;
+	if (sizes.width >= sizes.height) {
+		pageOrientation = Asc.c_oAscPageOrientation.PageLandscape;
+	} else {
+		pageOrientation = Asc.c_oAscPageOrientation.PagePortrait;
+	}
+	this.Api.sync_notePageOrientation(pageOrientation);
 };
 
 function IdList(name) {

@@ -387,11 +387,8 @@
 		return presentation.GetSlideSizesMM();
 	};
 	SlideModeManager.prototype.setPageOrientation = function(val) {
-		const sizes = this.getSizesMM();
 		const presentation = this.getPresentation();
-		if (sizes.width > sizes.height && val === Asc.c_oAscPageOrientation.PagePortrait || sizes.width < sizes.height && val === Asc.c_oAscPageOrientation.PageLandscape) {
-			presentation.changeSlideSize(sizes.height * AscCommonWord.g_dKoef_mm_to_emu, sizes.width * AscCommonWord.g_dKoef_mm_to_emu, sizes.type);
-		}
+		presentation.SetSlidePageOrientation(val);
 	};
 	SlideModeManager.prototype.addNextSlide = function(layoutIndex) {
 		const presentation = this.getPresentation();
@@ -1304,11 +1301,8 @@
 		return presentation.GetNotesSizesMM();
 	};
 	NoteModeManager.prototype.setPageOrientation = function(val) {
-		const sizes = this.getSizesMM();
 		const presentation = this.getPresentation();
-		if (sizes.width > sizes.height && val === Asc.c_oAscPageOrientation.PagePortrait || sizes.width < sizes.height && val === Asc.c_oAscPageOrientation.PageLandscape) {
-			presentation.changeNoteSize(sizes.height * AscCommonWord.g_dKoef_mm_to_emu, sizes.width * AscCommonWord.g_dKoef_mm_to_emu, sizes.type);
-		}
+		presentation.SetNotePageOrientation(val);
 	};
 	NoteModeManager.prototype.changeTheme = function(themeInfo, arrInd) {
 		const presentation = this.getPresentation();
@@ -1526,15 +1520,10 @@
 		this.updatePlaceholderCheckboxState("asc_onPageNumber", currentSlide, [AscFormat.phType_sldNum]);
 	};
 	MasterNoteModeManager.prototype.updatePageOrientationState = function () {
-		const sizes = this.getSizesMM();
-		const api = this.getApi();
-		let pageOrientation;
-		if (sizes.width >= sizes.height) {
-			pageOrientation = Asc.c_oAscPageOrientation.PageLandscape;
-		} else {
-			pageOrientation = Asc.c_oAscPageOrientation.PagePortrait;
+		const presentation = this.getPresentation();
+		if (presentation) {
+			presentation.UpdateNotePageOrientationState();
 		}
-		api.sendEvent("asc_onPageOrientation", pageOrientation);
 	};
 
 	function MasterHandoutModeManager(api) {

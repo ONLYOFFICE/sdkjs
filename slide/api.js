@@ -848,6 +848,27 @@
 	asc_docs_api.prototype.asc_setPageOrientation = function(val) {
 		return this.presentationViewManager.setPageOrientation(val);
 	};
+	asc_docs_api.prototype.asc_setNotePageOrientation = function(val) {
+		const presentation = this.private_GetLogicDocument();
+		if (!presentation) {
+			return;
+		}
+		presentation.SetNotePageOrientation(val);
+	};
+	asc_docs_api.prototype.asc_setSlidePageOrientation = function(val) {
+		const presentation = this.private_GetLogicDocument();
+		if (!presentation) {
+			return;
+		}
+		presentation.SetSlidePageOrientation(val);
+	};
+	asc_docs_api.prototype.asc_setNoteSizesByPrinter = function(width, height) {
+		const presentation = this.private_GetLogicDocument();
+		if (!presentation) {
+			return;
+		}
+		presentation.SetNoteSizesByPrinter(width, height);
+	};
 
 
     //----------------------------------------------------------------------------------------------------------------------
@@ -9592,6 +9613,9 @@ background-repeat: no-repeat;\
 			}
 		}
 	};
+	asc_docs_api.prototype.sync_notePageOrientation = function (value) {
+		this.sendEvent("asc_onNotePageOrientation", value);
+	};
 
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};
@@ -10189,6 +10213,9 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype["asc_setHandoutPageCount"] = asc_docs_api.prototype.asc_setHandoutPageCount;
 	asc_docs_api.prototype["asc_setPageOrientation"] = asc_docs_api.prototype.asc_setPageOrientation;
+	asc_docs_api.prototype["asc_setNotePageOrientation"] = asc_docs_api.prototype.asc_setNotePageOrientation;
+	asc_docs_api.prototype["asc_setSlidePageOrientation"] = asc_docs_api.prototype.asc_setSlidePageOrientation;
+	asc_docs_api.prototype["asc_setNoteSizesByPrinter"] = asc_docs_api.prototype.asc_setNoteSizesByPrinter;
 	asc_docs_api.prototype["asc_setTitle"] = asc_docs_api.prototype.asc_setTitle;
 	asc_docs_api.prototype["asc_setFooter"] = asc_docs_api.prototype.asc_setFooter;
 	asc_docs_api.prototype["asc_setHeader"] = asc_docs_api.prototype.asc_setHeader;
