@@ -8411,6 +8411,10 @@ var CPresentation = CPresentation || function(){};
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Required extensions
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	CPDFDoc.prototype.Start_SilentMode = function() {
+	};
+	CPDFDoc.prototype.End_SilentMode = function(bUpdate) {
+	};
     CPDFDoc.prototype.Document_UpdateSelectionState = function() {};
     CPDFDoc.prototype.Document_UpdateRulersState = function() {};
     CPDFDoc.prototype.private_UpdatePlaceholders = function() {
