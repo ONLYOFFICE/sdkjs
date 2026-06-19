@@ -71,7 +71,7 @@
         this._lineEnd       = undefined;
         this._callout       = [];
         this._rectDiff      = [0, 0, 0, 0];
-        this._alignment     = undefined;
+        this._alignment     = AscPDF.ALIGN_TYPE.left;
         this._defaultStyle  = undefined;
 
         this.recalcInfo.recalculateGeometry = true;
