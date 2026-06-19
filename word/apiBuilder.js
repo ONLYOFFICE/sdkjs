@@ -4643,6 +4643,16 @@
 	 */
 
 	/**
+	 * @typedef {Object} TableLook
+	 * @property {boolean} firstCol - Specifies that the first column conditional formatting shall be applied to the table.
+	 * @property {boolean} firstRow - Specifies that the first row conditional formatting shall be applied to the table.
+	 * @property {boolean} lastCol - Specifies that the last column conditional formatting shall be applied to the table.
+	 * @property {boolean} lastRow - Specifies that the last row conditional formatting shall be applied to the table.
+	 * @property {boolean} bandHor - Specifies that the horizontal banding conditional formatting shall not be applied to the table.
+	 * @property {boolean} bandVer - Specifies that the vertical banding conditional formatting shall not be applied to the table.
+	 */
+
+	/**
 	 * Returns the main document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
@@ -4836,7 +4846,7 @@
 	 * @param {EMU} [height = 914400] - The shape height in English measure units.
 	 * @param {ApiFill} [fill = Api.CreateNoFill()] - The color or pattern used to fill the shape.
 	 * @param {ApiStroke} [stroke = Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the element shadow.
-	 * @returns {ApiShape}
+	 * @returns {?ApiShape}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateShape.js
 	 */
 	Api.CreateShape = function(shapeType, width, height, fill, stroke)
@@ -4979,18 +4989,16 @@
 	 * Creates a geometry using one of the available preset shapes.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {ShapeType} sPreset - The preset name.
-	 * @returns {ApiGeometry | null}
+	 * @param {ShapeType} [preset="rect"] - The preset name.
+	 * @returns {?ApiGeometry}
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreatePresetGeometry.js
 	 */
-	Api.CreatePresetGeometry = function(sPreset)
+	Api.CreatePresetGeometry = function(preset)
 	{
-		let geometry = AscFormat.CreateGeometry(sPreset);
-		if (!geometry)
-		{
-			return null;
-		}
+		if (!AscFormat.isValidShapeType(preset)) preset = "rect";
+
+		let geometry = AscFormat.CreateGeometry(preset);
 		return Api.private_CreateGeometry(geometry);
 	};
 
@@ -12550,18 +12558,6 @@
 		return true;
 	};
 
-
-	/**
-	 * Returns an internal ID of the current content paragraph.
-	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @returns {string}
-	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetInternalId.js
-	 */
-	ApiParagraph.prototype.GetInternalId = function()
-	{
-		return this.Paragraph.GetId();
-	};
 	/**
 	 * Forces a page break before the paragraph.
 	 * @memberof ApiParagraph
@@ -13986,6 +13982,27 @@
 		this.Table.Set_TableLook(oTableLook);
 		return true;
 	};
+
+	/**
+	 * Gets table look properties
+	 * @memberof ApiTable
+	 * @typeofeditors ["CDE"]
+	 * @returns {TableLook}
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetTableLook.js
+	 */
+	ApiTable.prototype.GetTableLook = function() {
+		let oTableLook = this.Table.Get_TableLook();
+
+		return {
+			firstCol:	oTableLook.IsFirstCol(),
+			firstRow:	oTableLook.IsFirstRow(),
+			lastCol:	oTableLook.IsLastCol(),
+			lastRow:	oTableLook.IsLastRow(),
+			bandHor:	oTableLook.IsBandHor(),
+			bandVer:	oTableLook.IsBandVer()
+		}
+	};
+
 	/**
 	 * Splits the cell into a given number of rows and columns.
 	 * @memberof ApiTable
@@ -16414,7 +16431,7 @@
 			if (editor.editorId === AscCommon.c_oEditorId.Word)
 				this.TextPr.HighLight = AscCommonWord.highlight_None;
 			else if (editor.editorId === AscCommon.c_oEditorId.Presentation || Asc.editor.isPdfEditor())
-				this.TextPr.HighlightColor = null;
+				this.TextPr.HighlightColor = undefined;
 		}
 		else
 		{
@@ -16443,7 +16460,7 @@
 		if (Asc.editor.editorId === AscCommon.c_oEditorId.Word)
 			HighLight = this.TextPr.HighLight;
 		else if (Asc.editor.editorId === AscCommon.c_oEditorId.Presentation || Asc.editor.isPdfEditor())
-			HighLight = this.TextPr.HighlightColor;
+			HighLight = this.TextPr.HighlightColor ? this.TextPr.HighlightColor : AscCommonWord.highlight_None;
 
 		return private_getHighlightNameByColor(HighLight);
 	};
@@ -20384,17 +20401,17 @@
 			{
 				case "top":
 				{
-					this.Shape.setVerticalAlign(4);
+					this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
 					break;
 				}
 				case "center":
 				{
-					this.Shape.setVerticalAlign(1);
+					this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
 					break;
 				}
 				case "bottom":
 				{
-					this.Shape.setVerticalAlign(0);
+					this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
 					break;
 				}
 				default:
@@ -20406,6 +20423,34 @@
 
 		return false;
 	};
+
+	/**
+	 * Gets the vertical alignment from the shape content where a paragraph or text runs can be inserted.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CDE"]
+	 * @returns {VerticalTextAlign}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetVerticalTextAlign.js
+	 */
+	ApiShape.prototype.GetVerticalTextAlign = function() {
+		let vAlign = this.Shape.getVerticalAlign();
+
+		switch(vAlign)
+		{
+			case AscFormat.VERTICAL_ANCHOR_TYPE_TOP:
+			{
+				return "top";
+			}
+			case AscFormat.VERTICAL_ANCHOR_TYPE_CENTER:
+			{
+				return "center";
+			}
+			case AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM:
+			{
+				return "bottom";
+			}
+		}
+	};
+
 	/**
 	 * Sets the text paddings to the current shape.
 	 * @memberof ApiShape
@@ -20670,7 +20715,7 @@
 	 * Returns the name of the preset shape if the current geometry is based on a preset.
 	 * @memberof ApiGeometry
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @returns {ShapeType | null}
+	 * @returns {?ShapeType}
 	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/GetPreset.js
 	 * @since 9.1.0
 	 */
@@ -31011,7 +31056,6 @@
 	ApiParagraph.prototype["AddCaption"]             = ApiParagraph.prototype.AddCaption;
 	ApiParagraph.prototype["SetSection"]             = ApiParagraph.prototype.SetSection;
 	ApiParagraph.prototype["GetSection"]             = ApiParagraph.prototype.GetSection;
-	ApiParagraph.prototype["GetInternalId"]          = ApiParagraph.prototype.GetInternalId;
 	ApiParagraph.prototype["ToJSON"]                 = ApiParagraph.prototype.ToJSON;
 	ApiParagraph.prototype["AddPageBreakBefore"]     = ApiParagraph.prototype.AddPageBreakBefore;
 
@@ -31096,6 +31140,7 @@
 	ApiTable.prototype["MergeCells"]                 = ApiTable.prototype.MergeCells;
 	ApiTable.prototype["SetStyle"]                   = ApiTable.prototype.SetStyle;
 	ApiTable.prototype["SetTableLook"]               = ApiTable.prototype.SetTableLook;
+	ApiTable.prototype["GetTableLook"]               = ApiTable.prototype.GetTableLook;
 	ApiTable.prototype["AddRow"]                     = ApiTable.prototype.AddRow;
 	ApiTable.prototype["AddRows"]                    = ApiTable.prototype.AddRows;
 	ApiTable.prototype["AddColumn"]                  = ApiTable.prototype.AddColumn;
@@ -31425,6 +31470,7 @@
 	ApiShape.prototype["GetClassType"]               = ApiShape.prototype.GetClassType;
 	ApiShape.prototype["GetDocContent"]              = ApiShape.prototype.GetDocContent;
 	ApiShape.prototype["SetVerticalTextAlign"]       = ApiShape.prototype.SetVerticalTextAlign;
+	ApiShape.prototype["GetVerticalTextAlign"]       = ApiShape.prototype.GetVerticalTextAlign;
 	ApiShape.prototype["SetPaddings"]                = ApiShape.prototype.SetPaddings;
 	ApiShape.prototype["GetNextShape"]               = ApiShape.prototype.GetNextShape;
 	ApiShape.prototype["GetPrevShape"]               = ApiShape.prototype.GetPrevShape;
@@ -32950,6 +32996,15 @@
 			case Asc.c_oAscChartTypeSettings.line3d: {
 				return "line3D";
 			}
+			case Asc.c_oAscChartTypeSettings.lineNormalMarker: {
+				return "lineNormalMarker";
+			}
+			case Asc.c_oAscChartTypeSettings.lineStackedMarker: {
+				return "lineStackedMarker";
+			}
+			case Asc.c_oAscChartTypeSettings.lineStackedPerMarker: {
+				return "lineStackedPerMarker";
+			}
 			case Asc.c_oAscChartTypeSettings.pie: {
 				return "pie";
 			}
@@ -32962,6 +33017,18 @@
 			case Asc.c_oAscChartTypeSettings.scatter: {
 				return "scatter";
 			}
+			case Asc.c_oAscChartTypeSettings.scatterLine: {
+				return "scatterLine";
+			}
+			case Asc.c_oAscChartTypeSettings.scatterLineMarker: {
+				return "scatterLineMarker";
+			}
+			case Asc.c_oAscChartTypeSettings.scatterSmooth: {
+				return "scatterSmooth";
+			}
+			case Asc.c_oAscChartTypeSettings.scatterSmoothMarker: {
+				return "scatterSmoothMarker";
+			}
 			case Asc.c_oAscChartTypeSettings.stock: {
 				return "stock";
 			}
@@ -32973,6 +33040,15 @@
 			}
 			case Asc.c_oAscChartTypeSettings.areaStackedPer: {
 				return "areaStackedPercent";
+			}
+			case Asc.c_oAscChartTypeSettings.radar: {
+				return "radar";
+			}
+			case Asc.c_oAscChartTypeSettings.radarMarker: {
+				return "radarMarker";
+			}
+			case Asc.c_oAscChartTypeSettings.radarFilled: {
+				return "radarFilled";
 			}
 			case Asc.c_oAscChartTypeSettings.comboBarLine: {
 				return "comboBarLine";

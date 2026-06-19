@@ -12586,8 +12586,13 @@
 		CBullet.prototype.isNone = function() {
 			if (!this.bulletType)
 				return true;
-			
+
 			return this.bulletType.type === AscFormat.BULLET_TYPE_TYPEFACE_NONE;
+		};
+		CBullet.prototype.getChar = function() {
+			if (this.bulletType && AscFormat.BULLET_TYPE_BULLET_CHAR === this.bulletType.type && typeof this.bulletType.Char === "string")
+				return this.bulletType.Char;
+			return "";
 		};
 		CBullet.prototype.getPresentationBullet = function (theme, color) {
 			var para_pr = new CParaPr();

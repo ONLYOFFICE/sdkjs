@@ -54,6 +54,7 @@
 
     CAnnotationTextMarkup.prototype.select = AscFormat.CGraphicObjectBase.prototype.select;
     CAnnotationTextMarkup.prototype.deselect = AscFormat.CGraphicObjectBase.prototype.deselect;
+    CAnnotationTextMarkup.prototype.recalcGeometry = function() {};
     CAnnotationTextMarkup.prototype.canChangeAdjustments = function() {};
     CAnnotationTextMarkup.prototype.hitToHandles = function() {};
     CAnnotationTextMarkup.prototype.hitInBoundingRect = function() {};

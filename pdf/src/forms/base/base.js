@@ -1040,6 +1040,13 @@
         }
     };
     CBaseField.prototype.IsUseInDocument = function() {
+		if (this.IsLogicalRoot() && !this.IsWidget()) {
+			let aWidgets = this.GetAllWidgets();
+			return !!aWidgets.find(function(widget) {
+				return widget.IsUseInDocument();
+			});
+		}
+		
         let oPage = this.GetParentPage();
         if (oPage && oPage.fields.includes(this) && oPage.GetIndex() !== -1) {
             return true;

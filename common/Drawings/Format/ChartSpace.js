@@ -12340,13 +12340,15 @@ function(window, undefined) {
 
 			if (oPt.compiledMarker) {
 				oDataPoint.setMarker(oPt.compiledMarker.createDuplicate());
-				if (!oDataPoint.marker.spPr) {
-					oDataPoint.marker.setSpPr(new AscFormat.CSpPr());
-					oDataPoint.marker.spPr.setParent(oDataPoint.marker);
-				}
-				oDataPoint.marker.spPr.setFill(oFill);
-				return true;
+			} else if (!oDataPoint.marker) {
+				oDataPoint.setMarker(oSeries.marker ? oSeries.marker.createDuplicate() : new AscFormat.CMarker());
 			}
+			if (!oDataPoint.marker.spPr) {
+				oDataPoint.marker.setSpPr(new AscFormat.CSpPr());
+				oDataPoint.marker.spPr.setParent(oDataPoint.marker);
+			}
+			oDataPoint.marker.spPr.setFill(oFill);
+			return true;
 		}
 
 		return false;
@@ -12409,13 +12411,15 @@ function(window, undefined) {
 
 			if (oPt.compiledMarker) {
 				oDataPoint.setMarker(oPt.compiledMarker.createDuplicate());
-				if (!oDataPoint.marker.spPr) {
-					oDataPoint.marker.setSpPr(new AscFormat.CSpPr());
-					oDataPoint.marker.spPr.setParent(oDataPoint.marker);
-				}
-				oDataPoint.marker.spPr.setLn(oLn);
-				return true;
+			} else if (!oDataPoint.marker) {
+				oDataPoint.setMarker(oSeries.marker ? oSeries.marker.createDuplicate() : new AscFormat.CMarker());
 			}
+			if (!oDataPoint.marker.spPr) {
+				oDataPoint.marker.setSpPr(new AscFormat.CSpPr());
+				oDataPoint.marker.spPr.setParent(oDataPoint.marker);
+			}
+			oDataPoint.marker.spPr.setLn(oLn);
+			return true;
 		}
 
 		return false;

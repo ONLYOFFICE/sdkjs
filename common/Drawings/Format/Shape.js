@@ -1980,6 +1980,15 @@
 				}
 			}
 		};
+		CShape.prototype.getVerticalAlign = function() {
+			let bodyPr = this.getBodyPr();
+			if (bodyPr) {
+				return bodyPr.anchor;
+			}
+
+			return;
+		};
+
 		CShape.prototype.setVert = function (vert) {
 			var content_to_add = this.getDocContent();
 			if (!content_to_add) {

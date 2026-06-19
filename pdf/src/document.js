@@ -771,7 +771,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         aRadios.forEach(function(field) {
-            field.GetKid(0).UpdateAll();
+            field.UpdateAll();
         });
     };
     
@@ -3438,6 +3438,10 @@ var CPresentation = CPresentation || function(){};
             function checkFieldParams() {
                 switch (oExistsField.GetType()) {
                     case AscPDF.FIELD_TYPES.radiobutton: {
+						if (oField.GetExportValue() != "Choice1") {
+							return;
+						}
+						
                         function getNextAvailableChoice(choices) {
                             let usedNumbers = {};
                         
@@ -3503,7 +3507,9 @@ var CPresentation = CPresentation || function(){};
             oEditShape.select(oController, oField.GetPage());
         }
 
-        oField.Commit();
+		if (!(oField instanceof AscPDF.CBaseCheckBoxField)) {
+	        oField.Commit();
+		}
 
         return true;
     };
@@ -8405,6 +8411,10 @@ var CPresentation = CPresentation || function(){};
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Required extensions
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	CPDFDoc.prototype.Start_SilentMode = function() {
+	};
+	CPDFDoc.prototype.End_SilentMode = function(bUpdate) {
+	};
     CPDFDoc.prototype.Document_UpdateSelectionState = function() {};
     CPDFDoc.prototype.Document_UpdateRulersState = function() {};
     CPDFDoc.prototype.private_UpdatePlaceholders = function() {

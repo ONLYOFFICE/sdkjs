@@ -474,6 +474,7 @@
         let aInnerColor = this.GetTextColor();
         let oRGB = this.GetRGBColor(aInnerColor);
         let oDocColor = new AscCommonWord.CDocumentColor(oRGB.r, oRGB.g, oRGB.b, false);
+		let _t = this;
 
         if (typeof option === "string" && option !== "") {
             formattedOption = option;
@@ -503,7 +504,7 @@
                     AscCommon.History.StartNoHistoryMode();
 
                     AscFonts.FontPickerByCharacter.getFontsByString(sCaption);
-                    let oPara = new AscWord.Paragraph(this.content, false);
+                    let oPara = new AscWord.Paragraph(_t.content, false);
                     let oRun = new AscWord.ParaRun(oPara, false);
                     field.content.Internal_Content_Add(nPos, oPara);
                     oPara.Add(oRun);
@@ -597,6 +598,10 @@
                 }
             }
 
+			if (aIndexes.length == 0) {
+				return false;
+			}
+
 			let oShd = private_GetShd('nil');
             this.content.Content.forEach(function(para) {
 				para.Pr.Shd = oShd;
@@ -621,6 +626,8 @@
             this.SetLogicValue(value);
             this.SetLogicCurIdxs(aIndexes);
         }
+
+		return true;
     };
     CListBoxField.prototype.private_SetValue = CListBoxField.prototype.SetValue;
     
