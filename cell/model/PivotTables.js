@@ -7456,9 +7456,9 @@ CT_pivotTableDefinition.prototype.filterPivotItems = function(index, autoFilterO
 		var pageFieldItem = null;
 		if (!pivotField.multipleItemSelectionAllowed) {
 			var visible = [];
-			autoFilterObject.values.forEach(function(value, index) {
+			autoFilterObject.values.forEach(function(value) {
 				if (value.visible) {
-					visible.push(index);
+					visible.push(pivotField.getItemIndexByValue(value.val));
 				}
 			});
 			if (1 === visible.length) {
@@ -17426,6 +17426,7 @@ CT_PivotField.prototype.isAllVisible = function() {
 CT_PivotField.prototype.getFilterObject = function(cacheField, pageFilterItem, num) {
 	const res = {values: [], isTimeFormat: false};
 	var items = this.getItems();
+	let hasDateValues = false;
 	if (items) {
 		for (var i = 0; i < items.length; ++i) {
 			var item = items[i];
@@ -17455,6 +17456,7 @@ CT_PivotField.prototype.getFilterObject = function(cacheField, pageFilterItem, n
 						elem.asc_setMinute(date.getUTCMinutes());
 						elem.asc_setSecond(date.getUTCSeconds());
 						elem.asc_setDateTimeGrouping(Asc.EDateTimeGroup.datetimegroupYear);
+						hasDateValues = true;
 					} else {
 						isDateTimeFormat = false;
 					}
@@ -17464,6 +17466,13 @@ CT_PivotField.prototype.getFilterObject = function(cacheField, pageFilterItem, n
 				res.values.push(elem);
 			}
 		}
+	}
+	if (hasDateValues) {
+		//the date filter UI needs values sorted by date; non-date values keep pivot order
+		res.values.sort(function (a, b) {
+			var dateCmp = AscCommonExcel.compareDateFilterValues(a, b);
+			return undefined !== dateCmp ? dateCmp : 0;
+		});
 	}
 	return res;
 };
@@ -17681,8 +17690,16 @@ CT_PivotField.prototype.getFilterMap = function() {
 CT_PivotField.prototype.applyFilterObject = function(values) {
 	var items = this.getItems();
 	if (items) {
-		for (var i = 0; i < values.length && i < items.length; ++i) {
-			items[i].h = !values[i].visible;
+		//values may be reordered (sorted dates), so map back by value (item.x)
+		var indexByX = {};
+		this.getValuebleIndexes().forEach(function(idx) {
+			indexByX[items[idx].x] = idx;
+		});
+		for (var i = 0; i < values.length; ++i) {
+			var idx = indexByX[values[i].val];
+			if (undefined !== idx) {
+				items[idx].h = !values[i].visible;
+			}
 		}
 	}
 };
