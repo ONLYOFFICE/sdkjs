@@ -828,6 +828,24 @@ function (window, undefined) {
 	asc_ValAxisSettings.prototype.putCrosses = function (v) {
 		this.crosses = v;
 	};
+	asc_ValAxisSettings.prototype.putCrossesVal = function (input) {
+		if (typeof input === 'number') {
+			this.crosses = input;
+			return true;
+		}
+
+		if (typeof input !== 'string' || input.length === 0) {
+			return false;
+		}
+
+		const numericValue = this._parseStringValue(input);
+		if (numericValue === null) {
+			return false;
+		}
+
+		this.crosses = numericValue;
+		return true;
+	};
 	asc_ValAxisSettings.prototype.putDispUnitsRule = function (v) {
 		this.dispUnitsRule = v;
 	};
@@ -893,6 +911,9 @@ function (window, undefined) {
 	};
 	asc_ValAxisSettings.prototype.getCrosses = function () {
 		return this.crosses;
+	};
+	asc_ValAxisSettings.prototype.getCrossesVal = function () {
+		return this._formatNumericValue(this.crosses);
 	};
 	asc_ValAxisSettings.prototype.setDefault = function () {
 		this.putMinValRule(Asc.c_oAscValAxisRule.auto);
@@ -8430,6 +8451,7 @@ function (window, undefined) {
 	prot["putTickLabelsPos"] = prot.putTickLabelsPos;
 	prot["putCrossesRule"] = prot.putCrossesRule;
 	prot["putCrosses"] = prot.putCrosses;
+	prot["putCrossesVal"] = prot.putCrossesVal;
 	prot["putDispUnitsRule"] = prot.putDispUnitsRule;
 	prot["getDispUnitsRule"] = prot.getDispUnitsRule;
 	prot["putAxisType"] = prot.putAxisType;
@@ -8448,6 +8470,7 @@ function (window, undefined) {
 	prot["getTickLabelsPos"] = prot.getTickLabelsPos;
 	prot["getCrossesRule"] = prot.getCrossesRule;
 	prot["getCrosses"] = prot.getCrosses;
+	prot["getCrossesVal"] = prot.getCrossesVal;
 	prot["setDefault"] = prot.setDefault;
 	prot["getShow"] = prot.getShow;
 	prot["putShow"] = prot.putShow;
