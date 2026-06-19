@@ -2995,6 +2995,8 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
+                    s.GetLong();
+                    s.Skip2(1);
                     var count_effects = s.GetULong();
                     for (var _eff = 0; _eff < count_effects; ++_eff)
                     {
