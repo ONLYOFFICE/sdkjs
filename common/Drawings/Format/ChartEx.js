@@ -2751,7 +2751,6 @@ function (window, undefined) {
 	};
 	CDimension.prototype.updateReferences = function (bDisplayEmptyCellsAs, bDisplayHidden) {
 
-		this.clearLevelData();
 		if (!this.f) {
 			return;
 		}
@@ -2761,6 +2760,7 @@ function (window, undefined) {
 		if (!Array.isArray(aParsedRef) || aParsedRef.length === 0) {
 			return false;
 		}
+		this.clearLevelData();
 		let nPtCount = 0;
 		if (aParsedRef.length > 0) {
 			let nRows = 0, nRef, oRef, oBBox, nPtIdx, nCol, oWS, oCell, sVal, nCols = 0, nRow;

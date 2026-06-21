@@ -2150,8 +2150,13 @@ function(window, undefined) {
 			oInitOpenManager.initSchemeAndTheme(oWorkbook);
 			oInitOpenManager.readDefStyles(oWorkbook, oWorkbook.CellStyles.DefaultStyles);
 			const mapWorksheets = this.getWorksheetsFromCache(oWorkbook, false, true);
+			let bHasWorksheets = false;
 			for (let sSheetName in mapWorksheets) {
 				oWorkbook.aWorksheets.push(mapWorksheets[sSheetName].ws);
+				bHasWorksheets = true;
+			}
+			if (!bHasWorksheets) {
+				return null;
 			}
 			if (oApi.isOpenOOXInBrowser) {
 				let arrData;
@@ -14799,6 +14804,9 @@ function(window, undefined) {
 		}
 
 		const result = arrInnerResultRefs || [];
+		if (typeof sFormula !== "string" || sFormula.length === 0) {
+			return result;
+		}
 		if (sFormula[0] === '(')
 			sFormula = sFormula.slice(1);
 		if (sFormula[sFormula.length - 1] === ')')
