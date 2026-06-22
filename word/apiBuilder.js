@@ -14727,21 +14727,6 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedCells.js
 	 */
 	/**
-	 * Returns the current table cell (where the cursor is placed).
-	 * @memberof ApiTable
-	 * @typeofeditors ["CDE"]
-	 * @returns {ApiTableCell | null}
-	 * @since 9.5.0
-	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetCurCell.js
-	 */
-	ApiTable.prototype.GetCurCell = function(){
-		let cell = this.Table.GetCurCell();
-		if (cell)
-			return new ApiTableCell(cell);
-
-		return null;
-	};
-	/**
 	 * Sets the width of the specified column (by index) of the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
@@ -14804,23 +14789,29 @@
 		return null;
 	};
 	/**
-	 * Sets the total height of the current table. The height is distributed proportionally among the rows
-	 * (the same way as resizing the table by its outer handle).
+	 * Sets the total height of the current table, distributing it evenly among the table rows.
+	 * The value is applied as a minimum height for each row, so a row can be taller if its content requires more space.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @param {EMU} nValue - The table height in English measure units.
-	 * @returns {EMU | null} - Returns the requested height (in EMU), or null if the table is not recalculated yet.
+	 * @returns {EMU | null} - Returns the requested height (in EMU), or null if the table has no rows.
 	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetHeight.js
 	 */
 	ApiTable.prototype.SetHeight = function(nValue){
 		const table = this.Table;
-		if (!table || !table.Pages || table.Pages.length <= 0)
+		const rowsCount = table ? table.GetRowsCount() : 0;
+		if (!table || rowsCount <= 0)
 			return null;
 
 		const heightMM = Math.max(0, nValue / 36000);
-		const bounds = table.GetPageBounds(table.Pages.length - 1);
-		table.Resize(bounds.Right - bounds.Left, heightMM);
+		const perRowMM = heightMM / rowsCount;
+		for (let nRow = 0; nRow < rowsCount; nRow++)
+		{
+			const oRow = table.GetRow(nRow);
+			if (oRow)
+				oRow.Set_Height(perRowMM, Asc.linerule_AtLeast);
+		}
 
 		return private_MM2EMU(heightMM);
 	};
@@ -31333,7 +31324,6 @@
 	ApiTable.prototype["RemoveColumn"]               = ApiTable.prototype.RemoveColumn;
 	ApiTable.prototype["Copy"]                       = ApiTable.prototype.Copy;
 	ApiTable.prototype["GetCell"]                    = ApiTable.prototype.GetCell;
-	ApiTable.prototype["GetCurCell"]                 = ApiTable.prototype.GetCurCell;
 	ApiTable.prototype["SetColumnWidth"]             = ApiTable.prototype.SetColumnWidth;
 	ApiTable.prototype["GetColumnWidth"]             = ApiTable.prototype.GetColumnWidth;
 	ApiTable.prototype["SetHeight"]                  = ApiTable.prototype.SetHeight;

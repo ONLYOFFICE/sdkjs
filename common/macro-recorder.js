@@ -623,24 +623,14 @@
 	{
 		let getter = getterName || "GetSelectedCells";
 		let cellsVar = varRegistry.inc('cells');
-		let cellVar = varRegistry.inc('cell');
-		let declaration = "\tlet " + cellsVar + " = " + reg.varName + "." + getter + "();\n"
-			+ "\tif (!" + cellsVar + ".length) {\n"
-			+ "\t\tlet " + cellVar + " = " + reg.varName + ".GetCurCell();\n"
-			+ "\t\tif (" + cellVar + ") " + cellsVar + ".push(" + cellVar + ");\n"
-			+ "\t}\n";
+		let declaration = "\tlet " + cellsVar + " = " + reg.varName + "." + getter + "();\n";
 		return { varName: cellsVar, declaration: declaration };
 	}
 
 	function private_getSelectedRowsVar(reg)
 	{
 		let rowsVar = varRegistry.inc('rows');
-		let cellVar = varRegistry.inc('cell');
-		let declaration = "\tlet " + rowsVar + " = " + reg.varName + ".GetSelectedRows();\n"
-			+ "\tif (!" + rowsVar + ".length) {\n"
-			+ "\t\tlet " + cellVar + " = " + reg.varName + ".GetCurCell();\n"
-			+ "\t\tif (" + cellVar + ") " + rowsVar + ".push(" + reg.varName + ".GetRow(" + cellVar + ".GetRowIndex()));\n"
-			+ "\t}\n";
+		let declaration = "\tlet " + rowsVar + " = " + reg.varName + ".GetSelectedRows();\n";
 		return { varName: rowsVar, declaration: declaration };
 	}
 
@@ -1660,14 +1650,16 @@
 		},
 		setCellWidth			: function(oAdditional){
 			let reg = private_getTableVar(oAdditional.tableId);
-			let cellPrVar = varRegistry.inc('cellPr');
 			let cellsReg = private_getSelectedCellsVar(reg, "GetSelectedColumnsCells");
-			return reg.declaration
-				+ "\tlet " + cellPrVar + " = Api.CreateTableCellPr();\n"
-				+ "\t" + cellPrVar + ".SetWidth(\"twips\", " + AscCommon.MMToTwips(oAdditional.data, -1) + ");\n"
-				+ cellsReg.declaration
+			let seenVar = varRegistry.inc('seenCols');
+			let widthEMU = Math.round(oAdditional.data * 36000);
+			return reg.declaration + cellsReg.declaration
+				+ "\tlet " + seenVar + " = {};\n"
 				+ "\t" + cellsReg.varName + ".forEach(function(cell){\n"
-				+ "\t\tcell.SetCellPr(" + cellPrVar + ");\n"
+				+ "\t\tlet idx = cell.GetIndex();\n"
+				+ "\t\tif (" + seenVar + "[idx]) return;\n"
+				+ "\t\t" + seenVar + "[idx] = true;\n"
+				+ "\t\t" + reg.varName + ".SetColumnWidth(idx, " + widthEMU + ");\n"
 				+ "\t});\n";
 		},
 		setCellWrap				: function(oAdditional){
