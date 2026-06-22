@@ -702,7 +702,7 @@
     };
 
     // rendering
-    CDocument.prototype._paint= function() {
+    CDocument.prototype._paint = function() {
         if (!this.canvas) return;
         if (this.isNeedResize()) {
             this.resize();
