@@ -798,6 +798,22 @@ function (window, undefined) {
 		this.maxVal = numericValue;
 		return true;
 	};
+	asc_ValAxisSettings.prototype.putMinValDate = function (date) {
+		const serial = this._serialFromDate(date);
+		if (serial === null) {
+			return false;
+		}
+		this.minVal = serial;
+		return true;
+	};
+	asc_ValAxisSettings.prototype.putMaxValDate = function (date) {
+		const serial = this._serialFromDate(date);
+		if (serial === null) {
+			return false;
+		}
+		this.maxVal = serial;
+		return true;
+	};
 	asc_ValAxisSettings.prototype.putInvertValOrder = function (v) {
 		this.invertValOrder = v;
 	};
@@ -846,6 +862,14 @@ function (window, undefined) {
 		this.crosses = numericValue;
 		return true;
 	};
+	asc_ValAxisSettings.prototype.putCrossesDate = function (date) {
+		const serial = this._serialFromDate(date);
+		if (serial === null) {
+			return false;
+		}
+		this.crosses = serial;
+		return true;
+	};
 	asc_ValAxisSettings.prototype.putDispUnitsRule = function (v) {
 		this.dispUnitsRule = v;
 	};
@@ -870,6 +894,34 @@ function (window, undefined) {
 		return numFormat.formatToChart(value);
 	};
 
+	asc_ValAxisSettings.prototype._dateFromSerial = function (serial) {
+		if (serial == null) {
+			return null;
+		}
+
+		const type = this.getFormatType();
+		if (type !== Asc.c_oAscNumFormatType.Date && type !== Asc.c_oAscNumFormatType.Time) {
+			return null;
+		}
+
+		const date = new Asc.cDate().getDateFromExcelWithTime2(serial);
+		return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(),
+			date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds());
+	};
+
+	asc_ValAxisSettings.prototype._serialFromDate = function (date) {
+		if (!(date instanceof Date)) {
+			return null;
+		}
+
+		const utc = new Asc.cDate(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(),
+			date.getHours(), date.getMinutes(), date.getSeconds()));
+		const serial = utc.getExcelDateWithTime2();
+		return this.getFormatType() === Asc.c_oAscNumFormatType.Time
+			? serial - Math.floor(serial)
+			: serial;
+	};
+
 	asc_ValAxisSettings.prototype.getMinValRule = function () {
 		return this.minValRule;
 	};
@@ -881,6 +933,12 @@ function (window, undefined) {
 	};
 	asc_ValAxisSettings.prototype.getMaxVal = function () {
 		return this._formatNumericValue(this.maxVal);
+	};
+	asc_ValAxisSettings.prototype.getMinValDate = function () {
+		return this._dateFromSerial(this.minVal);
+	};
+	asc_ValAxisSettings.prototype.getMaxValDate = function () {
+		return this._dateFromSerial(this.maxVal);
 	};
 	asc_ValAxisSettings.prototype.getInvertValOrder = function () {
 		return this.invertValOrder;
@@ -914,6 +972,12 @@ function (window, undefined) {
 	};
 	asc_ValAxisSettings.prototype.getCrossesVal = function () {
 		return this._formatNumericValue(this.crosses);
+	};
+	asc_ValAxisSettings.prototype.getCrossesVal = function () {
+		return this._formatNumericValue(this.crosses);
+	};
+	asc_ValAxisSettings.prototype.getCrossesDate = function () {
+		return this._dateFromSerial(this.crosses);
 	};
 	asc_ValAxisSettings.prototype.setDefault = function () {
 		this.putMinValRule(Asc.c_oAscValAxisRule.auto);
@@ -8441,6 +8505,8 @@ function (window, undefined) {
 	prot["putMinVal"] = prot.putMinVal;
 	prot["putMaxValRule"] = prot.putMaxValRule;
 	prot["putMaxVal"] = prot.putMaxVal;
+	prot["putMinValDate"] = prot.putMinValDate;
+	prot["putMaxValDate"] = prot.putMaxValDate;
 	prot["putInvertValOrder"] = prot.putInvertValOrder;
 	prot["putLogScale"] = prot.putLogScale;
 	prot["putLogBase"] = prot.putLogBase;
@@ -8452,6 +8518,7 @@ function (window, undefined) {
 	prot["putCrossesRule"] = prot.putCrossesRule;
 	prot["putCrosses"] = prot.putCrosses;
 	prot["putCrossesVal"] = prot.putCrossesVal;
+	prot["putCrossesDate"] = prot.putCrossesDate;
 	prot["putDispUnitsRule"] = prot.putDispUnitsRule;
 	prot["getDispUnitsRule"] = prot.getDispUnitsRule;
 	prot["putAxisType"] = prot.putAxisType;
@@ -8460,6 +8527,8 @@ function (window, undefined) {
 	prot["getMinVal"] = prot.getMinVal;
 	prot["getMaxValRule"] = prot.getMaxValRule;
 	prot["getMaxVal"] = prot.getMaxVal;
+	prot["getMinValDate"] = prot.getMinValDate;
+	prot["getMaxValDate"] = prot.getMaxValDate;
 	prot["getInvertValOrder"] = prot.getInvertValOrder;
 	prot["getLogScale"] = prot.getLogScale;
 	prot["getLogBase"] = prot.getLogBase;
@@ -8470,7 +8539,9 @@ function (window, undefined) {
 	prot["getTickLabelsPos"] = prot.getTickLabelsPos;
 	prot["getCrossesRule"] = prot.getCrossesRule;
 	prot["getCrosses"] = prot.getCrosses;
+
 	prot["getCrossesVal"] = prot.getCrossesVal;
+	prot["getCrossesDate"] = prot.getCrossesDate;
 	prot["setDefault"] = prot.setDefault;
 	prot["getShow"] = prot.getShow;
 	prot["putShow"] = prot.putShow;
