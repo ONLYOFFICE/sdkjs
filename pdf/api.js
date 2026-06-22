@@ -4167,9 +4167,25 @@
 		this.stampAnnotPreviewManager = new AscPDF.StampAnnotPreviewManager();
 		AscBuilder.Pdf.init();
 	};
-	PDFEditorApi.prototype.getJsApi = function()
-	{
+	PDFEditorApi.prototype.getJsApi = function() {
 		return AscBuilder.Pdf.Api;
+	};
+	PDFEditorApi.prototype._onEndBuilderScript = function(callback) {
+		let doc = this.getPDFDoc();
+		doc.CollaborativeEditing.Clear_DocumentPositions();
+		doc.Recalculate();
+
+		if (doc.Viewer.canInteract()) {
+			doc.Viewer.onUpdateOverlay();
+			doc.UpdateInterface();
+		}
+		
+		let result = doc.FinalizeAction();
+		if (callback)
+			callback(result);
+		
+		this.executeGroupActionsEnd();
+		return result;
 	};
 	PDFEditorApi.prototype.asc_getPropertyEditorStamps = function() {
 		if (this.loadStampsJSON()) {
