@@ -4264,7 +4264,7 @@ var CPresentation = CPresentation || function(){};
             AscCommon.History = this.History;
         }
 
-        if (checkEmptyAction && AscCommon.History.Is_LastPointEmpty()) {
+        if (checkEmptyAction !== false && AscCommon.History.Is_LastPointEmpty()) {
             AscCommon.History.Remove_LastPoint();
             this.UpdateInterface();
             this.ResetLastAction();
