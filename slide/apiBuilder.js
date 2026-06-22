@@ -8375,6 +8375,37 @@
 	};
 
 	/**
+	 * Returns all rows of the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CPE"]
+	 * @type {ApiTableRow[]}
+	 * @since 9.5.0
+	 */
+	Object.defineProperty(ApiTable.prototype, "Rows", {
+		get: function()
+		{
+			return this.Table.Content.map(function(row) { return new ApiTableRow(row); });
+		}
+	});
+
+	/**
+	 * Returns all cells of the current table as a two-dimensional array indexed by [row][cell].
+	 * @memberof ApiTable
+	 * @typeofeditors ["CPE"]
+	 * @type {ApiTableCell[][]}
+	 * @since 9.5.0
+	 */
+	Object.defineProperty(ApiTable.prototype, "Cells", {
+		get: function()
+		{
+			return this.Table.Content.map(function(row)
+			{
+				return row.Content.map(function(cell) { return new ApiTableCell(cell); });
+			});
+		}
+	});
+
+	/**
 	 * Sets the style for the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
