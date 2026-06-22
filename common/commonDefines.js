@@ -1671,7 +1671,8 @@ window.AscCommon.g_cIsBeta = "false";
 	var c_oAscOleObjectTypes = {
 		document:    1,
 		spreadsheet: 2,
-		formula:     4
+		formula:     4,
+		visio:       5
 	}
 
 	// image wrap style

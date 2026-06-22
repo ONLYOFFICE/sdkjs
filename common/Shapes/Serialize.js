@@ -6044,6 +6044,14 @@ function BinaryPPTYLoader()
                             }
                             break;
                         }
+                        case 5://Visio
+                        {
+                            ole.setObjectFile("maskFile.vsdx");
+                            binary_length = s.GetULong();
+                            ole.setBinaryData(s.data.slice(s.cur, s.cur + binary_length));
+                            s.Seek2(s.cur + binary_length);
+                            break;
+                        }
                         default:
                         {
                             s.SkipRecord();
@@ -11651,6 +11659,14 @@ function BinaryPPTYLoader()
                                 {
                                     s.SkipRecord();
                                 }
+                                break;
+                            }
+                            case 5://Visio
+                            {
+                                ole.setObjectFile("maskFile.vsdx");
+                                binary_length = s.GetULong();
+                                ole.setBinaryData(s.data.slice(s.cur, s.cur + binary_length));
+                                s.Seek2(s.cur + binary_length);
                                 break;
                             }
                             default:
