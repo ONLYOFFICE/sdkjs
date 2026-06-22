@@ -776,22 +776,33 @@ function (window, undefined) {
 		}
 
 		let arg1 = arg[0];
+		// realSize-aware path ONLY for a lazy head+tail array (e.g. A:A/B:B): index its LOGICAL size and read the
+		// tail via getElementRowCol(...,true) instead of materializing getMatrix()'s physical head. all other arg
+		// kinds (ranges, cells, literal arrays, scalars) keep the original matrix + pushRow/pushCol path untouched.
+		let isLazyArray = arg1.type === cElementType.array && arg1.hasLazyTail && arg1.hasLazyTail();
+
 		let matrix;
-		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.array || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
-			matrix = arg1.getMatrix();
-		} else if (arg1.type === cElementType.cellsRange3D) {
-			if (arg1.isSingleSheet()) {
-				matrix = arg1.getMatrix()[0];
+		if (!isLazyArray) {
+			if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.array || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+				matrix = arg1.getMatrix();
+			} else if (arg1.type === cElementType.cellsRange3D) {
+				if (arg1.isSingleSheet()) {
+					matrix = arg1.getMatrix()[0];
+				} else {
+					return new cError(cErrorType.bad_reference);
+				}
+			} else if (arg1.type === cElementType.error) {
+				return arg1;
+			} else if (arg1.type === cElementType.empty) {
+				return new cError(cErrorType.wrong_value_type);
 			} else {
-				return new cError(cErrorType.bad_reference);
+				matrix = [[arg1]];
 			}
-		} else if (arg1.type === cElementType.error) {
-			return arg1;
-		} else if (arg1.type === cElementType.empty) {
-			return new cError(cErrorType.wrong_value_type);
-		} else {
-			matrix = [[arg1]];
 		}
+
+		let dimension = isLazyArray ? arg1.getDimensions(true) : arg1.getDimensions();
+		let error;
+		let indices = [];   // collected 0-based row (byCol=false) or column (byCol=true) indices, in request order
 
 		let pushData = function (_argInside) {
 			_argInside = _argInside.tocNumber();
@@ -807,37 +818,25 @@ function (window, undefined) {
 				error = new cError(cErrorType.wrong_value_type);
 				return false;
 			}
-
-			if (!res) {
-				res = new cArray();
-			}
-
-			if (byCol) {
-				res.pushCol(matrix, reverse ? dimension.col - (_argInside - 1) - 1 : _argInside - 1);
-			} else {
-				res.pushRow(matrix, reverse ? dimension.row - (_argInside - 1) - 1 : _argInside - 1);
-			}
-
+			let size = byCol ? dimension.col : dimension.row;
+			indices.push(reverse ? size - _argInside : _argInside - 1);
 			return true;
 		};
 
-		let dimension = arg1.getDimensions();
-		let res;
-		let error;
 		for (let i = 1; i < arg.length; i++) {
 			let _arg = arg[i];
 
 			if (cElementType.cellsRange === _arg.type || cElementType.cellsRange3D === _arg.type || cElementType.array === _arg.type) {
 				let argDimensions = _arg.getDimensions();
 				if (argDimensions.col === 1 || argDimensions.row === 1) {
-					let byCol = argDimensions.row > 1;
+					let byColInner = argDimensions.row > 1;
 					for (let j = 0; j < Math.max(argDimensions.col, argDimensions.row); j++) {
 						if (cElementType.array === _arg.type) {
-							if (!pushData(_arg.getElementRowCol(!byCol ? 0 : j, !byCol ? j : 0))) {
+							if (!pushData(_arg.getElementRowCol(!byColInner ? 0 : j, !byColInner ? j : 0))) {
 								return error;
 							}
 						} else {
-							if (!pushData(_arg.getValue2(!byCol ? 0 : j, !byCol ? j : 0))) {
+							if (!pushData(_arg.getValue2(!byColInner ? 0 : j, !byColInner ? j : 0))) {
 								return error;
 							}
 						}
@@ -854,7 +853,41 @@ function (window, undefined) {
 			}
 		}
 
-		return res ? res : new cError(cErrorType.wrong_value_type);
+		if (!indices.length) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		let res = new cArray();
+		if (isLazyArray) {
+			// read the LOGICAL array via getElementRowCol(...,true) so the lazy tail is served without
+			// materialization. CHOOSEROWS with few indices stays small; CHOOSECOLS of a full-column-derived array
+			// is large because the picked column itself spans the whole logical column.
+			if (byCol) {
+				for (let r = 0; r < dimension.row; r++) {
+					res.addRow();
+					for (let k = 0; k < indices.length; k++) {
+						res.addElement(arg1.getElementRowCol(r, indices[k], true));
+					}
+				}
+			} else {
+				for (let k = 0; k < indices.length; k++) {
+					res.addRow();
+					for (let c = 0; c < dimension.col; c++) {
+						res.addElement(arg1.getElementRowCol(indices[k], c, true));
+					}
+				}
+			}
+		} else {
+			// original behaviour: push the picked row/col straight from the materialized matrix
+			for (let k = 0; k < indices.length; k++) {
+				if (byCol) {
+					res.pushCol(matrix, indices[k]);
+				} else {
+					res.pushRow(matrix, indices[k]);
+				}
+			}
+		}
+		return res;
 	}
 
 	/**
