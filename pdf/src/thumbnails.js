@@ -647,9 +647,6 @@
                     rotatedContext.drawImage(oImage, -oImage.width / 2 >> 0, -oImage.height / 2 >> 0);
                     rotatedContext.restore();
 
-                    rotatedCanvas.width = rotatedCanvas.width;
-                    rotatedCanvas.height = rotatedCanvas.height;
-
                     needPage.page.image = rotatedCanvas;
                 }
 

@@ -1681,7 +1681,7 @@
 
 		let oResult = {};
 		aDocQuads.forEach(function(pageQuads) {
-			oResult[pageQuads["page"]] = pageQuads["quads"];
+			oResult[pageQuads.page] = pageQuads.quads;
 		});
 
 		return oResult;
@@ -7126,6 +7126,17 @@
 	 * @memberof ApiShape
 	 * @typeofeditors ["PDFE"]
 	 * @returns {?ApiDocumentContent}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetDocContent.js
+	 */
+	ApiShape.prototype.GetDocContent = function() {
+		return this.GetContent();
+	};
+
+	/**
+	 * Returns the shape inner contents where a paragraph or text runs can be inserted.
+	 * @memberof ApiShape
+	 * @typeofeditors ["PDFE"]
+	 * @returns {?ApiDocumentContent}
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetContent.js
 	 */
 	ApiShape.prototype.GetContent = function() {
@@ -9272,6 +9283,7 @@
 
 	// ApiShape
 	ApiShape.prototype["GetClassType"]						= ApiShape.prototype.GetClassType;
+	ApiShape.prototype["GetDocContent"]						= ApiShape.prototype.GetDocContent;
 	ApiShape.prototype["GetContent"]						= ApiShape.prototype.GetContent;
 	ApiShape.prototype["SetVerticalTextAlign"]				= ApiShape.prototype.SetVerticalTextAlign;
 	ApiShape.prototype["GetVerticalTextAlign"]				= ApiShape.prototype.GetVerticalTextAlign;
