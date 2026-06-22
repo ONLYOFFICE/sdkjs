@@ -3302,7 +3302,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArray.prototype.tocNumber = function () {
 		let retArr = new cArray();
 		retArr.copyRealSizeFrom(this);
-		retArr.setMissedValue(this.getMissedValue());
+		const missedValue = this.getMissedValue();
+		retArr.setMissedValue(missedValue ? missedValue.tocNumber() : null);
 		retArr.setMissedValueFn(this.mapMissedValueFn(function (elem) {
 			return elem.tocNumber();
 		}));
@@ -3320,7 +3321,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var retArr = new cArray();
 		if (this.getMissedValueFn()) {
 			retArr.copyRealSizeFrom(this);
-			retArr.setMissedValue(this.missedValue ? this.missedValue.tocString() : null);
+			const missedValue = this.getMissedValue();
+			retArr.setMissedValue(missedValue ? missedValue.tocString() : null);
 			retArr.setMissedValueFn(this.mapMissedValueFn(function (elem) {
 				return elem.tocString();
 			}));
@@ -3339,7 +3341,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var retArr = new cArray();
 		if (this.getMissedValueFn()) {
 			retArr.copyRealSizeFrom(this);
-			retArr.setMissedValue(this.missedValue ? this.missedValue.tocBool() : null);
+			const missedValue = this.getMissedValue();
+			retArr.setMissedValue(missedValue ? missedValue.tocBool() : null);
 			retArr.setMissedValueFn(this.mapMissedValueFn(function (elem) {
 				return elem.tocBool();
 			}));
@@ -3427,8 +3430,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (elem) {
 			return elem;
 		}
-		if (this.missedValue && this.realSize && i >= 0 && j >= 0 && i < this.realSize.row && j < this.realSize.col) {
-			return this.missedValue;
+		const missedValue = this.getMissedValue();
+		if (missedValue && this.realSize && i >= 0 && j >= 0 && i < this.realSize.row && j < this.realSize.col) {
+			return missedValue;
 		}
 		return elem;
 	};
@@ -3601,26 +3605,33 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 	};
 	cArray.prototype.crop = function (row, col) {
-		let newArray = this.array;
-		let dimensions = this.getDimensions();
+		//realSize-aware + non-mutating: keep the requested rows/cols of the LOGICAL array (physical head plus
+		//any lazy tail), reading each kept cell via getElementRowCol(...,true). a positive count keeps the first
+		//|n|, a negative count keeps the last |n|, |n| >= size keeps all. used by TAKE/DROP, which may receive a
+		//lazy full-column array (e.g. A:A/B:B) - the old version spliced the physical head and dropped the tail.
+		let dimensions = this.getDimensions(true);
+		let r0 = 0, r1 = dimensions.row, c0 = 0, c1 = dimensions.col;
 		if (row && Math.abs(row) < dimensions.row) {
 			if (row < 0) {
-				newArray = newArray.splice(this.array.length - Math.abs(row));
+				r0 = dimensions.row - Math.abs(row);
 			} else {
-				newArray = newArray.splice(0, row);
+				r1 = row;
 			}
 		}
 		if (col && Math.abs(col) < dimensions.col) {
-			for (let i = 0; i < newArray.length; i++) {
-				if (col < 0) {
-					newArray[i] = newArray[i].splice(newArray[i].length - Math.abs(col));
-				} else {
-					newArray[i] = newArray[i].splice(0, col);
-				}
+			if (col < 0) {
+				c0 = dimensions.col - Math.abs(col);
+			} else {
+				c1 = col;
 			}
 		}
 		let res = new cArray();
-		res.fillFromArray(newArray);
+		for (let r = r0; r < r1; r++) {
+			res.addRow();
+			for (let c = c0; c < c1; c++) {
+				res.addElement(this.getElementRowCol(r, c, true));
+			}
+		}
 		return res;
 	};
 	cArray.prototype.getFirstElement = function () {

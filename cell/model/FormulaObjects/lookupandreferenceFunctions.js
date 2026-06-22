@@ -1607,7 +1607,9 @@ function (window, undefined) {
 		};
 
 		AscCommonExcel.executeInR1C1Mode(false, function () {
-			let dimension = arg0.getDimensions();
+			//getDimensions(true): use the LOGICAL size (realSize) of a lazy head+tail array (e.g. A:A/B:B),
+			//not its physical head - otherwise INDEX rejects valid indices into the tail as #REF!.
+			let dimension = arg0.getDimensions(true);
 			let isSingleRowCol = (dimension.row > 1 && dimension.col > 1) ? false : true;
 			let isByColumn = (dimension.row > 1) ? true : false;
 			let isArray = cElementType.array === arg0.type;
@@ -2638,28 +2640,31 @@ function (window, undefined) {
 		}
 
 		let arg1 = arg[0];
-		let matrix;
+		let array;
 		if (arg1.type === cElementType.array) {
-			// array.getMatrix() doesn't make an independent copy and leaves a link to the original array
-			matrix = arg1.getMatrixCopy();
-		} else if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {		
-			matrix = arg1.getMatrix();
-		} else if (arg1.type === cElementType.cellsRange3D) {
-			if (arg1.isSingleSheet()) {
-				matrix = arg1.getMatrix()[0];
-			} else {
-				return new cError(cErrorType.bad_reference);
-			}
-		} else if (arg1.type === cElementType.error) {
-			return arg1;
-		} else if (arg1.type === cElementType.empty) {
-			return new cError(cErrorType.wrong_value_type);
+			// use the array directly: it may be a lazy head+tail array (e.g. A:A/B:B). crop below is
+			// realSize-aware and non-mutating, so neither a copy nor materialization of the tail is needed.
+			array = arg1;
 		} else {
-			matrix = [[arg1]];
+			let matrix;
+			if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+				matrix = arg1.getMatrix();
+			} else if (arg1.type === cElementType.cellsRange3D) {
+				if (arg1.isSingleSheet()) {
+					matrix = arg1.getMatrix()[0];
+				} else {
+					return new cError(cErrorType.bad_reference);
+				}
+			} else if (arg1.type === cElementType.error) {
+				return arg1;
+			} else if (arg1.type === cElementType.empty) {
+				return new cError(cErrorType.wrong_value_type);
+			} else {
+				matrix = [[arg1]];
+			}
+			array = new cArray();
+			array.fillFromArray(matrix);
 		}
-
-		let array = new cArray();
-		array.fillFromArray(matrix);
 
 		let arg2 = arg[1];
 		if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
@@ -2716,7 +2721,7 @@ function (window, undefined) {
 		}
 
 		if (isDrop) {
-			let dimensions = array.getDimensions();
+			let dimensions = array.getDimensions(true);
 
 			if (arg2 && dimensions.row <= Math.abs(arg2)) {
 				return new cError(cErrorType.array_not_calc);
