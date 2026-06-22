@@ -3616,7 +3616,12 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 					--lastRow;
 				}
 				
-				if (lastRow !== FirstRow)
+				if (0 === lastRow && 0 === CurPage && this.private_IsRowWithKeepNext(0))
+				{
+					this.Pages[CurPage].LastRow = -1;
+					this.Pages[CurPage].LastRowSplit = false;
+				}
+				else if (lastRow !== FirstRow)
 				{
 					this.Pages[CurPage].LastRow = lastRow;
 					this.Pages[CurPage].LastRowSplit = false;
@@ -3627,11 +3632,32 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 		{
 			this.Pages[CurPage].LastRowSplit = true;
 			
-			// If row is splitted into pages, we check "Keep with next" only for this row
-			if (canMoveRows && (lastRow > FirstRow || (0 === CurPage && !this.Parent.IsFirstElementOnPage(this.GetRelativePage(CurPage), this.GetIndex()))) && this.private_IsRowWithKeepNext(lastRow))
+			if (canMoveRows)
 			{
-				this.Pages[CurPage].LastRow = lastRow - 1;
-				this.Pages[CurPage].LastRowSplit = false;
+				// MS behaviour
+				// If row is splitted into pages, we check "Keep with next" only for this row (if it occurs no on the first page)
+				// If it the first page we can check rows till the first one
+				
+				let moveRows = false;
+				if (0 === CurPage)
+				{
+					while (lastRow >= 0 && this.private_IsRowWithKeepNext(lastRow))
+					{
+						moveRows = true;
+						--lastRow;
+					}
+				}
+				else if (lastRow > FirstRow && this.private_IsRowWithKeepNext(lastRow))
+				{
+					moveRows = true;
+					--lastRow;
+				}
+				
+				if (moveRows)
+				{
+					this.Pages[CurPage].LastRow = lastRow;
+					this.Pages[CurPage].LastRowSplit = false;
+				}
 			}
 		}
     }
