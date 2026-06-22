@@ -3293,7 +3293,7 @@
 					const scaleCoefficient = slideCoefficient / shapeCoefficient;
 					const cx = xfrm.offX + xfrm.extX / 2;
 					const newExtX = xfrm.extX * scaleCoefficient;
-					xfrm.setOffX(xfrm.offX + cx - (xfrm.offX + newExtX / 2));
+					xfrm.setOffX(cx - newExtX / 2);
 					xfrm.setExtX(newExtX);
 					return true;
 				}
