@@ -17177,32 +17177,34 @@ function RangeDataManagerElem(bbox, data)
 	 */
 	function _getFilledRange(oRange, bVertical) {
 		let oFilledRange = oRange.clone();
-		let nRow = oFilledRange.bbox.r1;
-		let nCol = oFilledRange.bbox.c1;
-		let sFirstValue = null;
+		let oBBox = oRange.bbox;
+		let nMinRow = null, nMaxRow = null, nMinCol = null, nMaxCol = null;
 
-		oRange._foreach(function (oCell, nCurRow, nCurCol) {
-			if (oCell && oCell.getValueWithoutFormat()) {
-				nRow = nCurRow;
-				nCol = nCurCol;
-				if (nCurRow === oRange.bbox.r1 && nCurCol === oRange.bbox.c1) {
-					sFirstValue = oCell.getValueWithoutFormat();
-				}
-			} else {
-				let sNextValue = _getNextValueFromRange(oRange, oCell, bVertical);
-				if (!sFirstValue && sNextValue) {
-					if (bVertical) {
-						oFilledRange.bbox.r1 = nCurRow + 1;
-						oFilledRange.bbox.c1 = nCurCol;
-					} else {
-						oFilledRange.bbox.c1 = nCurCol + 1;
-						oFilledRange.bbox.r1 = nCurRow;
-					}
-				}
+		oRange.forEachDataValue(function (nCurRow, nCurCol) {
+			if (nMinRow === null || nCurRow < nMinRow) {
+				nMinRow = nCurRow;
+			}
+			if (nMaxRow === null || nCurRow > nMaxRow) {
+				nMaxRow = nCurRow;
+			}
+			if (nMinCol === null || nCurCol < nMinCol) {
+				nMinCol = nCurCol;
+			}
+			if (nMaxCol === null || nCurCol > nMaxCol) {
+				nMaxCol = nCurCol;
 			}
 		});
-		oFilledRange.bbox.r2 = nRow;
-		oFilledRange.bbox.c2 = nCol;
+
+		if (nMinRow === null) {
+			oFilledRange.bbox.r2 = oBBox.r1;
+			oFilledRange.bbox.c2 = oBBox.c1;
+			return oFilledRange;
+		}
+
+		oFilledRange.bbox.r1 = nMinRow;
+		oFilledRange.bbox.c1 = nMinCol;
+		oFilledRange.bbox.r2 = nMaxRow;
+		oFilledRange.bbox.c2 = nMaxCol;
 
 		return oFilledRange;
 	}
