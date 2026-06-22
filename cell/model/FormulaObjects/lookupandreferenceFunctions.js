@@ -5306,7 +5306,10 @@ function (window, undefined) {
 			res.addElement(valueError);
 			return res;
 		}
-		let arg1Dimensions = arg1.getDimensions();
+		// realSize-aware only for a lazy head+tail array (e.g. A:A/B:B, SEQUENCE): use its LOGICAL size and read
+		// every element via getElementRowCol(...,true) below, instead of the physical head that foreach2 sees.
+		let isLazyArray = arg1.type === cElementType.array && arg1.hasLazyTail && arg1.hasLazyTail();
+		let arg1Dimensions = isLazyArray ? arg1.getDimensions(true) : arg1.getDimensions();
 		if (arg1Dimensions.col > 1 && arg1Dimensions.row > 1) {
 			res.addElement(valueError);
 			return res;
@@ -5357,11 +5360,8 @@ function (window, undefined) {
 
 			let rowCounter = 0, colCounter = 0;
 
-			arg1.foreach2(function (val) {
+			let processVal = function (val) {
 				if (toCol) {
-					/*if (res.array.l && res.array[res.array.length - 1].length === arg2) {
-						res.addRow();
-					}*/
 					if (rowCounter === arg2) {
 						colCounter++;
 						rowCounter = 0;
@@ -5377,7 +5377,18 @@ function (window, undefined) {
 					}
 					res.addElement(val);
 				}
-			});
+			};
+
+			if (isLazyArray) {
+				// iterate the LOGICAL vector in order, serving the tail via getElementRowCol(...,true); foreach2
+				// would see only the physical head of a constant-tail array (e.g. A:A/B:B).
+				let total = isSingleColumn ? arg1Dimensions.row : arg1Dimensions.col;
+				for (let i = 0; i < total; i++) {
+					processVal(isSingleColumn ? arg1.getElementRowCol(i, 0, true) : arg1.getElementRowCol(0, i, true));
+				}
+			} else {
+				arg1.foreach2(processVal);
+			}
 			if (toCol) {
 				res.recalculate();
 			}
