@@ -1650,16 +1650,18 @@
 		},
 		setCellWidth			: function(oAdditional){
 			let reg = private_getTableVar(oAdditional.tableId);
-			let cellsReg = private_getSelectedCellsVar(reg, "GetSelectedColumnsCells");
-			let seenVar = varRegistry.inc('seenCols');
 			let widthEMU = Math.round(oAdditional.data * 36000);
+			if (oAdditional.columns)
+			{
+				let text = reg.declaration;
+				for (let i = 0; i < oAdditional.columns.length; i++)
+					text += "\t" + reg.varName + ".SetColumnWidth(" + oAdditional.columns[i] + ", " + widthEMU + ");\n";
+				return text;
+			}
+			let cellsReg = private_getSelectedCellsVar(reg, "GetSelectedColumnsCells");
 			return reg.declaration + cellsReg.declaration
-				+ "\tlet " + seenVar + " = {};\n"
 				+ "\t" + cellsReg.varName + ".forEach(function(cell){\n"
-				+ "\t\tlet idx = cell.GetIndex();\n"
-				+ "\t\tif (" + seenVar + "[idx]) return;\n"
-				+ "\t\t" + seenVar + "[idx] = true;\n"
-				+ "\t\t" + reg.varName + ".SetColumnWidth(idx, " + widthEMU + ");\n"
+				+ "\t\t" + reg.varName + ".SetColumnWidth(cell.GetIndex(), " + widthEMU + ");\n"
 				+ "\t});\n";
 		},
 		setCellWrap				: function(oAdditional){
@@ -2746,7 +2748,6 @@
 		},
 		selectDrawing				: function(shapes)
 		{
-			debugger
 			let str = "";
 			let shapesSort = [];
 			function isDrawingOnSlide(oDrawing) {
@@ -3185,16 +3186,18 @@
 		},
 		setCellWidth		: function(oAdditional){
 			let reg = private_getTableVar(oAdditional.tableId);
-			let cellsReg = private_getSelectedCellsVar(reg, "GetSelectedColumnsCells");
-			let seenVar = varRegistry.inc('seenCols');
 			let widthEMU = Math.round(oAdditional.data * 36000);
+			if (oAdditional.columns)
+			{
+				let text = reg.declaration;
+				for (let i = 0; i < oAdditional.columns.length; i++)
+					text += "\t" + reg.varName + ".SetColumnWidth(" + oAdditional.columns[i] + ", " + widthEMU + ");\n";
+				return text;
+			}
+			let cellsReg = private_getSelectedCellsVar(reg, "GetSelectedColumnsCells");
 			return reg.declaration + cellsReg.declaration
-				+ "\tlet " + seenVar + " = {};\n"
 				+ "\t" + cellsReg.varName + ".forEach(function(cell){\n"
-				+ "\t\tlet idx = cell.GetIndex();\n"
-				+ "\t\tif (" + seenVar + "[idx]) return;\n"
-				+ "\t\t" + seenVar + "[idx] = true;\n"
-				+ "\t\t" + reg.varName + ".SetColumnWidth(idx, " + widthEMU + ");\n"
+				+ "\t\t" + reg.varName + ".SetColumnWidth(cell.GetIndex(), " + widthEMU + ");\n"
 				+ "\t});\n";
 		},
 		setRowHeightTable	: function(oAdditional){

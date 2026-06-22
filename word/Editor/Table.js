@@ -2190,7 +2190,7 @@ CTable.prototype.Set_Props = function(Props)
 	// CellsWidth
 	if (undefined !== Props.CellsWidth)
 	{
-		Asc.editor.addMacroStepData("SetCellWidth", {data: Props.CellsWidth, tableId: this.Id});
+		Asc.editor.addMacroStepData("SetCellWidth", {data: Props.CellsWidth, tableId: this.Id, columns: this.private_GetMacroColumnIndexes()});
 		var CellsWidth = Props.CellsWidth;
 		if (null !== CellsWidth && Math.abs(CellsWidth) < 0.001)
 			CellsWidth = null;
@@ -2242,10 +2242,36 @@ CTable.prototype.Set_Props = function(Props)
 
 	if (undefined !== Props.ColumnWidth)
 	{
+		var aMacroCols = this.private_GetMacroColumnIndexes();
 		this.SetColumnWidth(Props.ColumnWidth);
-		Asc.editor.addMacroStepData("SetCellWidth", {data: Props.ColumnWidth, tableId: this.Id});
+		Asc.editor.addMacroStepData("SetCellWidth", {data: Props.ColumnWidth, tableId: this.Id, columns: aMacroCols});
 	}
 	return true;
+};
+/**
+ * Returns column indexes for deterministic macro recording:
+ *  - whole table (ApplyToAll) — all columns;
+ *  - cursor in a single cell — its column;
+ *  - cell range selection — undefined (recorded by selection instead).
+ * @returns {number[]|undefined}
+ */
+CTable.prototype.private_GetMacroColumnIndexes = function()
+{
+	if (true === this.ApplyToAll)
+	{
+		var aCols = [];
+		for (var nCol = 0, nCount = this.TableGrid.length; nCol < nCount; ++nCol)
+			aCols.push(nCol);
+		return aCols;
+	}
+
+	if (true === this.Selection.Use && table_Selection_Cell === this.Selection.Type)
+		return undefined;
+
+	if (this.CurCell)
+		return [this.CurCell.Index];
+
+	return undefined;
 };
 CTable.prototype.Get_Styles = function(Lvl)
 {
