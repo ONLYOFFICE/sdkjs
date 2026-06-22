@@ -7016,7 +7016,12 @@ function isAllowPasteLink(pastedWb) {
 				}
 			}
 
-			this._drawText(this.stringRender.restoreInternalState(ct.state), ctx, textX, textY, textW, color);
+			var _textX = textX, _textW = textW;
+			if (ct.drawTrimWidth != null) {
+				_textX = textX + ct.drawTrimLead;
+				_textW = ct.drawTrimWidth;
+			}
+			this._drawText(this.stringRender.restoreInternalState(ct.state), ctx, _textX, textY, _textW, color);
 			this._RemoveClipRect(ctx);
 		}
 
@@ -10305,6 +10310,11 @@ function isAllowPasteLink(pastedWb) {
 
 		this._updateRowHeight(cache, row, maxW, colWidth);
 
+        if (!angle && !verticalText && !mc && !fl.wrapText && !fl.shrinkToFit &&
+            (ha === AscCommon.align_Center || ha === AscCommon.align_Distributed)) {
+            this._trimCenterOverflowDrawState(cache, cache.cellW);
+        }
+
         return mc ? mc.c2 : col;
     };
 
@@ -10540,6 +10550,107 @@ function isAllowPasteLink(pastedWb) {
             return this._getColumnWidthInner(col);
         }
         return this._getColumnWidthInner(mc.c1) + (this._getColLeft(mc.c2 + 1) - this._getColLeft(mc.c1 + 1));
+    };
+
+    WorksheetView.prototype._trimCenterOverflowDrawState = function (cache, clipWidth) {
+        var st = cache.state;
+        if (!st || !st.lines || st.lines.length !== 1 || !st.chars) {
+            return false;
+        }
+        var chars = st.chars, cw = st.charWidths, props = st.charProps;
+        var n = chars.length;
+        if (n <= 256 || !cw || !props || !props[0] || !props[0].clone) {
+            return false;
+        }
+        if (this.getRightToLeft()) {
+            return false;
+        }
+        if (st.flags && st.flags.getReadingOrder && st.flags.getReadingOrder() === Asc.c_oReadingOrderTypes.RTL) {
+            return false;
+        }
+
+        var W = cache.metrics.width;
+        if (!(clipWidth > 0) || !(W > clipWidth * 1.5)) {
+            return false;
+        }
+
+        for (var k = 0; k < n; k++) {
+            var ch = chars[k];
+            if ((ch >= 0x590 && ch <= 0x8FF) || (ch >= 0xFB1D && ch <= 0xFDFF) || (ch >= 0xFE70 && ch <= 0xFEFF)) {
+                return false;
+            }
+        }
+
+        var margin = clipWidth;
+        var startX = W / 2 - clipWidth / 2 - margin;
+        var endX = W / 2 + clipWidth / 2 + margin;
+        if (startX <= 0) {
+            return false;
+        }
+
+        var cum = 0, visBeg = 0, lead = 0, i;
+        for (i = 0; i < n; i++) {
+            if (cum + cw[i] > startX) {
+                visBeg = i;
+                lead = cum;
+                break;
+            }
+            cum += cw[i];
+        }
+        var visEnd = n - 1;
+        for (; i < n; i++) {
+            cum += cw[i];
+            if (cum >= endX) {
+                visEnd = i;
+                break;
+            }
+        }
+        if (visBeg <= 0 && visEnd >= n - 1) {
+            return false;
+        }
+
+        var fontProp = null;
+        for (var j = visBeg; j >= 0; j--) {
+            if (props[j] && props[j].font) {
+                fontProp = props[j];
+                break;
+            }
+        }
+        if (!fontProp) {
+            return false;
+        }
+
+        var chars2 = chars.slice(visBeg, visEnd + 1);
+        var cw2 = cw.slice(visBeg, visEnd + 1);
+        var props2 = props.slice(visBeg, visEnd + 1);
+        if (!props2[0]) {
+            return false;
+        }
+        var first = props2[0].clone();
+        first.font = fontProp.font;
+        first.fm = fontProp.fm;
+        first.c = fontProp.c;
+        props2[0] = first;
+
+        var trimmedWidth = 0;
+        for (i = 0; i < cw2.length; i++) {
+            trimmedWidth += cw2[i];
+        }
+
+        var line = st.lines[0];
+        line.beg = 0;
+        line.end = chars2.length - 1;
+
+        cache.state = {
+            flags: st.flags,
+            chars: chars2,
+            charWidths: cw2,
+            charProps: props2,
+            lines: [line]
+        };
+        cache.drawTrimLead = lead;
+        cache.drawTrimWidth = trimmedWidth;
+        return true;
     };
 
     WorksheetView.prototype._calcCellTextOffset = function (col, row, textAlign, textWidth) {
