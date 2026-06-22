@@ -109,7 +109,16 @@
 		var kw = width / this.Width, kh = height / this.Height;
 		this.setSlideSize(width, height);
 		this.cSld.forEachSp(function (oSp) {
-			oSp.changeSize(kw, kh);
+			if (oSp.isSlideImagePlaceholder && oSp.isSlideImagePlaceholder()) {
+				oSp.changeSlideImagePlaceholderSize(kw, kh);
+			} else {
+				oSp.changeSize(kw, kh);
+			}
+		});
+	};
+	SlideBase.prototype.onChangeSlideSize = function (width, height) {
+		this.cSld.forEachSp(function (shape) {
+			return shape.onChangeSlideSize && shape.onChangeSlideSize(width, height);
 		});
 	};
 	SlideBase.prototype.getAllRasterImages = function (images) {

@@ -3268,6 +3268,39 @@
 			}
 			this.recalcTransform && this.recalcTransform();
 		};
+		CShape.prototype.changeSlideImagePlaceholderSize = function (kw, kh) {
+			if (this.spPr && this.spPr.xfrm && this.spPr.xfrm.isNotNull()) {
+				const xfrm = this.spPr.xfrm;
+				const cx = xfrm.offX + xfrm.extX / 2;
+				const cy = xfrm.offY + xfrm.extY / 2;
+				const newCX = cx * kw;
+				const newCY = cy * kh;
+				const newExtX = xfrm.extX * kh;
+				const newExtY = xfrm.extY * kh;
+				xfrm.setOffX(newCX - newExtX / 2);
+				xfrm.setOffY(newCY - newExtY / 2);
+				xfrm.setExtX(newExtX);
+				xfrm.setExtY(newExtY);
+			}
+			this.recalcTransform && this.recalcTransform();
+		};
+		CShape.prototype.onChangeSlideSize = function (slideWidth, slideHeight) {
+			if (this.isSlideImagePlaceholder()) {
+				if (this.spPr && this.spPr.xfrm && this.spPr.xfrm.isNotNull()) {
+					const slideCoefficient = slideWidth / slideHeight;
+					const xfrm = this.spPr.xfrm;
+					const shapeCoefficient = xfrm.extX / xfrm.extY;
+					const scaleCoefficient = slideCoefficient / shapeCoefficient;
+					const cx = xfrm.offX + xfrm.extX / 2;
+					const newExtX = xfrm.extX * scaleCoefficient;
+					xfrm.setOffX(xfrm.offX + cx - (xfrm.offX + newExtX / 2));
+					xfrm.setExtX(newExtX);
+					return true;
+				}
+				this.recalcTransform && this.recalcTransform();
+				return false;
+			}
+		};
 
 		CShape.prototype.recalculateTransform = function () {
 			this.cachedImage = null;

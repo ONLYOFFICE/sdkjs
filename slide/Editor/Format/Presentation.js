@@ -857,6 +857,12 @@ CPresentation.prototype.changeSlideSizeFunction = function () {
 		for (i = 0; i < this.Slides.length; ++i) {
 			this.Slides[i].changeSize(dWidth, dHeight);
 		}
+		for (i = 0; i < this.notes.length; ++i) {
+			this.notes[i].onChangeSlideSize(dWidth, dHeight);
+		}
+		for (i = 0; i < this.notesMasters.length; ++i) {
+			this.notesMasters[i].onChangeSlideSize(dWidth, dHeight);
+		}
 	}, this, []);
 };
 CPresentation.prototype.changeNoteSizeFunction = function () {
