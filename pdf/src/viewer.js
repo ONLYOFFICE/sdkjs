@@ -4763,7 +4763,7 @@
 				}
 
 				// create new appearance
-				if (field.IsNeedWriteOnSave()) {
+				if (!field.IsNeedDrawFromStream()) {
 					oMemory.WriteBool(true);
 					field.WriteToBinary(oMemory);
 				}

@@ -72,7 +72,7 @@
         this.Recalculate();
         this.DrawBackground(oGraphicsPDF);
         
-        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) && this.IsNeedDrawHighlight() ? this.contentFormat : this.content;
+        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) && !this.IsInForm() ? this.contentFormat : this.content;
         this.curContent = oContentToDraw; // remember current content
 
         if (oDoc.activeForm == this)
