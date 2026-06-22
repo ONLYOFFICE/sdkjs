@@ -1681,7 +1681,7 @@
 
 		let oResult = {};
 		aDocQuads.forEach(function(pageQuads) {
-			oResult[pageQuads["page"]] = pageQuads["quads"];
+			oResult[pageQuads.page] = pageQuads.quads;
 		});
 
 		return oResult;
