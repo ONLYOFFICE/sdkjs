@@ -1368,6 +1368,16 @@
 		}
 		return false;
 	};
+	Slide.prototype.isHaveTitleShape = function () {
+		for (let i = 0; i < this.cSld.spTree.length; i += 1) {
+			const shape = this.cSld.spTree[i];
+			if (shape.isTitlePlaceholder()) {
+				return true;
+			}
+		}
+		return false;
+	};
+
 	Slide.prototype.createTitle = function () {
 		const titleSp = this.getMatchingShape(AscFormat.phType_title, null, false, {});
 		if (titleSp) {

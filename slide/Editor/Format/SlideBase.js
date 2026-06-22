@@ -818,6 +818,9 @@
 	SlideBase.prototype.getOutlineSlide = function () {
 		return new AscCommonSlide.OutlineSlide();
 	};
+	SlideBase.prototype.isHaveTitleShape = function () {
+		return false;
+	};
 
 	function fAddTextToPhInSlideLikeObject(oSlideLikeObject, nPhType, sText) {
 		if (typeof sText === "string") {

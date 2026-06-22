@@ -10631,6 +10631,14 @@ CPresentation.prototype.UpdateNotePageOrientationState = function () {
 	}
 	this.Api.sync_notePageOrientation(pageOrientation);
 };
+CPresentation.prototype.GetUsedSlidesMap = function () {
+	const usedSlidesMap = {};
+	for (let i = 0; i < this.Slides.length; i += 1) {
+		const slide = this.Slides[i];
+		usedSlidesMap[slide.GetId()] = slide;
+	}
+	return usedSlidesMap;
+};
 
 function IdList(name) {
 	AscFormat.CBaseNoIdObject.call(this);

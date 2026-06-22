@@ -604,6 +604,7 @@
                 }
             }
         }
+	    this.CheckOutlineView();
     };
 
     CChangesDrawingsContentPresentation.prototype.CheckCorrect = function(){
