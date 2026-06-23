@@ -5075,11 +5075,9 @@
 			return;
 		}
 		if (bIsOutlineThumbnails) {
-			if (this.Thumbnails instanceof AscCommon.CThumbnailsManager) {
-				this.Thumbnails.ClearAllCanvases();
-				this.Thumbnails = new AscCommon.COutlineThumbnailsManager(this);
-				this.Thumbnails.Init();
-			}
+			this.Thumbnails.ClearAllCanvases();
+			this.Thumbnails = new AscCommon.COutlineThumbnailsManager(this);
+			this.Thumbnails.Init();
 		} else {
 			if (this.Thumbnails instanceof AscCommon.COutlineThumbnailsManager) {
 				this.Thumbnails.ClearAllCanvases();

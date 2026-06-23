@@ -1628,12 +1628,11 @@
 		const wordControl = this.getWordControl();
 		const presentation = this.getPresentation();
 		const api = this.getApi();
-		wordControl.GoToPage(0);
 		wordControl.setNotesEnable(true);
 		wordControl.setAnimPaneEnable(true);
 		wordControl.setThumbnailsEnable(true);
 		wordControl.SetThumbnails(true);
-		this.outlineView.updateAll(0);
+		wordControl.GoToPage(0);
 		api.hideMediaControl();
 		api.asc_hideComments();
 		presentation.Recalculate({Drawings: {All: true, Map: {}}});

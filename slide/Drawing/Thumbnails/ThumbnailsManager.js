@@ -2462,6 +2462,11 @@
 		this.m_oFontManager.SetHintsProps(true, true);
 
 		this.InitCheckOnResize();
+		const outlineView = this.GetOutlineView();
+		if (outlineView) {
+			outlineView.updateAll(0);
+			this.updateOutlineShapeTransform();
+		}
 	};
 
 	COutlineThumbnailsManager.prototype.InitCheckOnResize = function()
@@ -2881,15 +2886,6 @@
 			graphics.setDarkMode(1);
 		}
 
-		if (!outlineView.outlineShape) {
-			const scaleFactor = g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
-			const widthMM = canvas.width * scaleFactor;
-			const outlineLeftMarginMM = this.const_offset_x * scaleFactor;
-			const outlineWidth = widthMM - outlineLeftMarginMM;
-			outlineView.updateAll(outlineWidth);
-			this.updateOutlineShapeTransform();
-		}
-
 		this.m_oWordControl.m_oApi.clearEyedropperImgData();
 		outlineView.draw(graphics);
 		this.OnUpdateOverlay();
@@ -3094,6 +3090,7 @@
 		if (outlineView) {
 			const newWidth = AscCommon.AscBrowser.convertToRetinaValue(thumbnailsCanvas.width - this.const_offset_x) * AscCommon.g_dKoef_pix_to_mm;
 			outlineView.checkOutlineWidth(newWidth);
+			this.updateOutlineShapeTransform();
 		}
 	};
 
