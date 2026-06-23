@@ -3647,10 +3647,20 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 						--lastRow;
 					}
 				}
-				else if (lastRow > FirstRow && this.private_IsRowWithKeepNext(lastRow))
+				else if (this.private_IsRowWithKeepNext(lastRow))
 				{
+					let _lastRow = lastRow;
+					while (_lastRow > FirstRow && this.private_IsRowWithKeepNext(_lastRow))
+					{
+						--_lastRow;
+					}
+					
+					if (_lastRow !== FirstRow)
+						lastRow = _lastRow;
+					else
+						lastRow = lastRow - 1;
+					
 					moveRows = true;
-					--lastRow;
 				}
 				
 				if (moveRows)
