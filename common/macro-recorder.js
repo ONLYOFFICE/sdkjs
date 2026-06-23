@@ -1698,6 +1698,13 @@
 		setRowHeightTable		: function(oAdditional){
 			let reg = private_getTableVar(oAdditional.tableId);
 			let twips = AscCommon.MMToTwips(oAdditional.data, -1);
+			if (oAdditional.rows)
+			{
+				let text = reg.declaration;
+				for (let i = 0; i < oAdditional.rows.length; i++)
+					text += "\t" + reg.varName + ".GetRow(" + oAdditional.rows[i] + ").SetHeight(\"atLeast\", " + twips + ");\n";
+				return text;
+			}
 			let rowsReg = private_getSelectedRowsVar(reg);
 			return reg.declaration + rowsReg.declaration
 				+ "\t" + rowsReg.varName + ".forEach(function(row){\n"
@@ -3203,6 +3210,13 @@
 		setRowHeightTable	: function(oAdditional){
 			let reg = private_getTableVar(oAdditional.tableId);
 			let heightEMU = Math.round(oAdditional.data * 36000);
+			if (oAdditional.rows)
+			{
+				let text = reg.declaration;
+				for (let i = 0; i < oAdditional.rows.length; i++)
+					text += "\t" + reg.varName + ".GetRow(" + oAdditional.rows[i] + ").SetHeight(" + heightEMU + ");\n";
+				return text;
+			}
 			let rowsReg = private_getSelectedRowsVar(reg);
 			return reg.declaration + rowsReg.declaration
 				+ "\t" + rowsReg.varName + ".forEach(function(row){\n"

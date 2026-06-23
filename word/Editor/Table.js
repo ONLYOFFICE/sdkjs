@@ -2237,7 +2237,7 @@ CTable.prototype.Set_Props = function(Props)
 	if (undefined !== Props.RowHeight)
 	{
 		this.SetRowHeight(Props.RowHeight);
-		Asc.editor.addMacroStepData("SetRowHeightTable", {data: Props.RowHeight, tableId: this.Id});
+		Asc.editor.addMacroStepData("SetRowHeightTable", {data: Props.RowHeight, tableId: this.Id, rows: this.private_GetMacroRowIndexes()});
 	}
 
 	if (undefined !== Props.ColumnWidth)
@@ -2270,6 +2270,31 @@ CTable.prototype.private_GetMacroColumnIndexes = function()
 
 	if (this.CurCell)
 		return [this.CurCell.Index];
+
+	return undefined;
+};
+/**
+ * Returns row indexes for deterministic macro recording:
+ *  - whole table (ApplyToAll) — all rows;
+ *  - cursor in a single cell — its row;
+ *  - cell range selection — undefined (recorded by selection instead).
+ * @returns {number[]|undefined}
+ */
+CTable.prototype.private_GetMacroRowIndexes = function()
+{
+	if (true === this.ApplyToAll)
+	{
+		var aRows = [];
+		for (var nRow = 0, nCount = this.GetRowsCount(); nRow < nCount; ++nRow)
+			aRows.push(nRow);
+		return aRows;
+	}
+
+	if (true === this.Selection.Use && table_Selection_Cell === this.Selection.Type)
+		return undefined;
+
+	if (this.CurCell && this.CurCell.Row)
+		return [this.CurCell.Row.Index];
 
 	return undefined;
 };
@@ -5747,7 +5772,7 @@ CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 								hRule = Asc.linerule_AtLeast;
 							
 							row.SetHeight(NewH, hRule);
-							Asc.editor.addMacroStepData("SetRowHeightTable", {data: NewH, tableId: this.Id});
+							Asc.editor.addMacroStepData("SetRowHeightTable", {data: NewH, tableId: this.Id, rows: [RowIndex - 1]});
 						}
 					}
 				}
