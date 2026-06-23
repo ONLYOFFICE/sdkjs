@@ -5714,7 +5714,7 @@ background-repeat: no-repeat;\
 			let tableStyleName = this.WordControl.m_oLogicDocument.Styles.GetName(tableStyle);
 			let tableGrid = oTable.TableGrid;
 
-			this.WordControl.m_oLogicDocument.FinalizeAction(undefined, {col: col, row: row, style: tableStyleName, tableGrid: tableGrid});
+			this.WordControl.m_oLogicDocument.FinalizeAction(undefined, {col: col, row: row, style: tableStyleName, tableGrid: tableGrid, tableId: oTable.Id});
 		}
 	};
 	asc_docs_api.prototype.asc_IsTable = function()
