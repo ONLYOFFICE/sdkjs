@@ -776,14 +776,11 @@ function (window, undefined) {
 		}
 
 		let arg1 = arg[0];
-		// realSize-aware path ONLY for a lazy head+tail array (e.g. A:A/B:B): index its LOGICAL size and read the
-		// tail via getElementRowCol(...,true) instead of materializing getMatrix()'s physical head. all other arg
-		// kinds (ranges, cells, literal arrays, scalars) keep the original matrix + pushRow/pushCol path untouched.
-		let isLazyArray = arg1.type === cElementType.array && arg1.hasLazyTail && arg1.hasLazyTail();
-
+		// split on type, not hasLazyTail: arrays read via getRowLogical/getColLogical (tail-safe); ranges keep matrix
+		let isArr = arg1.type === cElementType.array;
 		let matrix;
-		if (!isLazyArray) {
-			if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.array || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+		if (!isArr) {
+			if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
 				matrix = arg1.getMatrix();
 			} else if (arg1.type === cElementType.cellsRange3D) {
 				if (arg1.isSingleSheet()) {
@@ -800,7 +797,8 @@ function (window, undefined) {
 			}
 		}
 
-		let dimension = isLazyArray ? arg1.getDimensions(true) : arg1.getDimensions();
+		// logical size: realSize for a lazy array, bbox for a range, physical dims otherwise (one call, no branch).
+		let dimension = arg1.getDimensionsLogical();
 		let error;
 		let indices = [];   // collected 0-based row (byCol=false) or column (byCol=true) indices, in request order
 
@@ -858,27 +856,30 @@ function (window, undefined) {
 		}
 
 		let res = new cArray();
-		if (isLazyArray) {
-			// read the LOGICAL array via getElementRowCol(...,true) so the lazy tail is served without
-			// materialization. CHOOSEROWS with few indices stays small; CHOOSECOLS of a full-column-derived array
-			// is large because the picked column itself spans the whole logical column.
+		if (isArr) {
+			// array source: pick each row/col via the tail-aware logical slice, assemble with existing addRow/addElement
 			if (byCol) {
-				for (let r = 0; r < dimension.row; r++) {
-					res.addRow();
-					for (let k = 0; k < indices.length; k++) {
-						res.addElement(arg1.getElementRowCol(r, indices[k], true));
+				// build column-by-column (getColLogical + addElementInRow) so only one logical column is held at a time
+				for (let k = 0; k < indices.length; k++) {
+					let colArr = arg1.getColLogical(indices[k]);
+					for (let r = 0; r < colArr.length; r++) {
+						if (k === 0) {
+							res.addRow();
+						}
+						res.addElementInRow(colArr[r], r);
 					}
 				}
 			} else {
 				for (let k = 0; k < indices.length; k++) {
+					let rowArr = arg1.getRowLogical(indices[k]);
 					res.addRow();
 					for (let c = 0; c < dimension.col; c++) {
-						res.addElement(arg1.getElementRowCol(indices[k], c, true));
+						res.addElement(rowArr[c]);
 					}
 				}
 			}
 		} else {
-			// original behaviour: push the picked row/col straight from the materialized matrix
+			// live range/scalar (never lazy): push the picked row/col straight from the materialized matrix.
 			for (let k = 0; k < indices.length; k++) {
 				if (byCol) {
 					res.pushCol(matrix, indices[k]);
@@ -5306,10 +5307,8 @@ function (window, undefined) {
 			res.addElement(valueError);
 			return res;
 		}
-		// realSize-aware only for a lazy head+tail array (e.g. A:A/B:B, SEQUENCE): use its LOGICAL size and read
-		// every element via getElementRowCol(...,true) below, instead of the physical head that foreach2 sees.
-		let isLazyArray = arg1.type === cElementType.array && arg1.hasLazyTail && arg1.hasLazyTail();
-		let arg1Dimensions = isLazyArray ? arg1.getDimensions(true) : arg1.getDimensions();
+		// logical size (realSize for a lazy array, physical otherwise); iteration below uses forEachLogical
+		let arg1Dimensions = arg1.getDimensionsLogical();
 		if (arg1Dimensions.col > 1 && arg1Dimensions.row > 1) {
 			res.addElement(valueError);
 			return res;
@@ -5379,16 +5378,8 @@ function (window, undefined) {
 				}
 			};
 
-			if (isLazyArray) {
-				// iterate the LOGICAL vector in order, serving the tail via getElementRowCol(...,true); foreach2
-				// would see only the physical head of a constant-tail array (e.g. A:A/B:B).
-				let total = isSingleColumn ? arg1Dimensions.row : arg1Dimensions.col;
-				for (let i = 0; i < total; i++) {
-					processVal(isSingleColumn ? arg1.getElementRowCol(i, 0, true) : arg1.getElementRowCol(0, i, true));
-				}
-			} else {
-				arg1.foreach2(processVal);
-			}
+			// single logical iteration: forEachLogical serves a lazy tail and walks a range/non-lazy array, no branch
+			arg1.forEachLogical(processVal);
 			if (toCol) {
 				res.recalculate();
 			}

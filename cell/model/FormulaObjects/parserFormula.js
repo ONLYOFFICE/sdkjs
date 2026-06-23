@@ -656,6 +656,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseType.prototype.getDimensions = function () {
 		return {col: 1, row: 1};
 	};
+	//logical size of any value (realSize for a lazy cArray, bbox/physical otherwise); size without testing hasLazyTail
+	cBaseType.prototype.getDimensionsLogical = function () {
+		return this.getDimensions(true);
+	};
+	//visit every logical element as action(elem, row, col); scalar fallback, overridden by cArray and cArea/cArea3D
+	cBaseType.prototype.forEachLogical = function (action) {
+		if (typeof action === 'function') {
+			action.call(this, this, 0, 0);
+		}
+	};
 	cBaseType.prototype.isOneElement = function () {
 		let dimensions = this.getDimensions(true);
 		if (dimensions.col === 1 && dimensions.row === 1) {
@@ -1351,6 +1361,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			});
 		}
 	};
+	//logical iteration over the live range via foreach2; early-stop is callback-level only (the foreach2 scan completes)
+	cArea.prototype.forEachLogical = function (action) {
+		let stopped = false;
+		this.foreach2(function (elem, cell, row, col) {
+			if (!stopped && action(elem, row, col)) {
+				stopped = true;
+			}
+		});
+		return stopped ? true : undefined;
+	};
 	cArea.prototype.getMatrix = function (excludeHiddenRows, excludeErrorsVal, excludeNestedStAg) {
 		var arr = [], r = this.getRange();
 
@@ -1884,6 +1904,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				}
 			}
 		}
+	};
+	//logical iteration over the live range cells via foreach2; early-stop is callback-level only (the scan completes)
+	cArea3D.prototype.forEachLogical = function (action) {
+		let stopped = false;
+		this.foreach2(function (elem, cell, row, col) {
+			if (!stopped && action(elem, row, col)) {
+				stopped = true;
+			}
+		});
+		return stopped ? true : undefined;
 	};
 	cArea3D.prototype.isSingleSheet = function () {
 		return this.wsFrom === this.wsTo;
@@ -3151,6 +3181,60 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		}
 		return undefined;
+	};
+	//visit every logical element row-major (lazy tail via getElementRowCol, non-lazy walks .array); truthy return stops
+	cArray.prototype.forEachLogical = function (action) {
+		if (typeof action !== 'function') {
+			return true;
+		}
+		if (this.hasLazyTail()) {
+			let dim = this.getDimensions(true);
+			for (let r = 0; r < dim.row; r++) {
+				for (let c = 0; c < dim.col; c++) {
+					if (action.call(this, this.getElementRowCol(r, c, true), r, c)) {
+						return true;
+					}
+				}
+			}
+			return undefined;
+		}
+		for (let ir = 0; ir < this.rowCount; ir++) {
+			for (let ic = 0; ic < this.countElementInRow[ir]; ic++) {
+				if (action.call(this, this.array[ir][ic], ir, ic)) {
+					return true;
+				}
+			}
+		}
+		return undefined;
+	};
+	//logical row slice (tail-aware; non-lazy returns the stored row by reference) - read-only, callers must not mutate it
+	cArray.prototype.getRowLogical = function (row) {
+		if (this.hasLazyTail()) {
+			let cols = this.getDimensions(true).col;
+			let res = new Array(cols);
+			for (let c = 0; c < cols; c++) {
+				res[c] = this.getElementRowCol(row, c, true);
+			}
+			return res;
+		}
+		return this.array[row];
+	};
+	//logical column slice (tail-aware via getElementRowCol; non-lazy reads stored rows) - read-only, do not mutate cells
+	cArray.prototype.getColLogical = function (col) {
+		let rows = this.getDimensions(true).row;
+		let res = new Array(rows);
+		if (this.hasLazyTail()) {
+			for (let r = 0; r < rows; r++) {
+				res[r] = this.getElementRowCol(r, col, true);
+			}
+			return res;
+		}
+		for (let r = 0; r < rows; r++) {
+			//guard the row like getElementRowCol does, so a short/absent physical row never throws
+			let srcRow = this.array[r];
+			res[r] = srcRow && srcRow[col];
+		}
+		return res;
 	};
 	//a "fully-lazy" array stores no physical rows (rowCount===0) but carries realSize + a generator
 	//(e.g. SEQUENCE). For it the physical counts are 0, so dimension queries must fall back to realSize -
