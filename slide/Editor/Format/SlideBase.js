@@ -680,6 +680,7 @@
 		return arrInks;
 	};
 	SlideBase.prototype.setSlideCount = function () {};
+	SlideBase.prototype.getSlideCount = function () {return 0};
 	SlideBase.prototype.needRecalc = function () {
 		if (this.recalcInfo) {
 			for (let flag in this.recalcInfo) {

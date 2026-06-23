@@ -1550,7 +1550,14 @@
 	MasterHandoutModeManager.prototype.setPlaceholder = MasterNoteModeManager.prototype.setPlaceholder;
 	MasterHandoutModeManager.prototype.setHandoutPageCount = function(val) {
 		const slide = this.getCurrentSlide();
-		slide && slide.setSlideCount(val);
+		if (slide) {
+			const oldCount = slide.getSlideCount();
+			if (oldCount !== val) {
+				const presentation = this.getPresentation();
+				slide.setSlideCount(val);
+				presentation.DrawingDocument.OnRecalculateSlide(presentation.CurPage);
+			}
+		}
 	};
 	MasterHandoutModeManager.prototype.getSizesMM = NoteModeManager.prototype.getSizesMM;
 	MasterHandoutModeManager.prototype.setPageOrientation = NoteModeManager.prototype.setPageOrientation;

@@ -512,6 +512,9 @@
 	CHandoutMaster.prototype.setSlideCount = function (count) {
 		this.handoutSettings.setSlideCount(count);
 	};
+	CHandoutMaster.prototype.getSlideCount = function (count) {
+		return this.handoutSettings.slideCount;
+	};
 
 	CHandoutMaster.prototype.collectRedrawSlides = function (redrawSlides, force) {
 		redrawSlides.addRedrawSlide(this);
