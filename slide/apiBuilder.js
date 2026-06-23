@@ -2954,7 +2954,7 @@
      * @memberof ApiLayout
      * @memberOf ApiLayout
      * @typeofeditors ["CPE"]
-     * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide layout background.\
+     * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide layout background.
      * @returns {boolean}
      * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/SetBackground.js
 	 */
