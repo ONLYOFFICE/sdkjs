@@ -341,6 +341,7 @@
 	this.customFunctionEngine = null;
 
 	this.smoothScroll = true;
+	this.autoCompleteEnabled = true;
 
 	this.externalReferenceUpdateTimer = null;
 
@@ -348,6 +349,45 @@
 
 	return this;
   }
+
+  WorkbookView.prototype._isInputContentEditable = function () {
+    return !!(this.input && this.input.getAttribute && this.input.getAttribute('contenteditable') !== null);
+  };
+
+  WorkbookView.prototype._setInputDisabled = function (disabled) {
+    if (!this.input) return;
+    if (this._isInputContentEditable()) {
+      this.input.contentEditable = disabled ? 'false' : 'true';
+    } else {
+      this.input.disabled = disabled;
+    }
+  };
+
+  WorkbookView.prototype._setInputValue = function (text) {
+    if (!this.input) {
+      return;
+    }
+    if (this._isInputContentEditable()) {
+      if (this.cellEditor) {
+        this.cellEditor._updateContentEditableLayout();
+      }
+      var divOpen = (this.cellEditor && this.cellEditor._ceDivStyle)
+        ? '<div style="' + this.cellEditor._ceDivStyle + '">'
+        : '<div>';
+      var lines = (text || '').split('\n');
+      var html = '';
+      for (var i = 0; i < lines.length; i++) {
+        html += divOpen;
+        html += lines[i]
+          ? lines[i].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          : '<br>';
+        html += '</div>';
+      }
+      this.input.innerHTML = html || (divOpen + '<br></div>');
+    } else {
+      this.input.value = text;
+    }
+  };
 
   WorkbookView.prototype._init = function(fontRenderingMode) {
     var self = this;
@@ -528,6 +568,8 @@
 				  return null;
 			  }, "showFormulas": function () {
 				  self._onShowFormulas.apply(self, arguments);
+			  }, "fillDown": function () {
+				  self.Api.asc_FillCells(Asc.c_oAscFillType.fillDown);
 			  },
 
 
@@ -1297,11 +1339,11 @@
     if (this.input && !this.getCellEditMode()) {
       // We will forbid entering the formula bar when a shape is selected
       if (this.lastSendInfoRangeIsSelectOnShape) {
-        this.input.disabled = true;
-        this.input.value = '';
+        this._setInputDisabled(true);
+        this._setInputValue('');
       } else {
-        this.input.disabled = false;
-        this.input.value = this.oSelectionInfo.text;
+        this._setInputDisabled(false);
+        this._setInputValue(this.oSelectionInfo.text);
       }
 	  AscCommon.applyElementDirection(this.input);
     }
@@ -1533,6 +1575,9 @@
 	}
   	this.keepType = false;
     if (this.selectionDialogMode) {
+      if (this.isFormulaEditMode && this.cellEditor && this.cellEditor.isTopLineActive) {
+        this.cellEditor.restoreFocus();
+      }
       return;
     }
     var formatPainterState = this.Api.getFormatPainterState();
@@ -2240,7 +2285,7 @@
       t.handlers.trigger("asc_onToggleAutoCorrectOptions");
 
       ws.openCellEditor(t.cellEditor, enterOptions, selectionRange);
-      t.input.disabled = false;
+      t._setInputDisabled(false);
 
       t.Api.cleanSpelling(true);
 
@@ -2253,7 +2298,7 @@
     var editLockCallback = function(res) {
       if (!res) {
         t.setCellEditMode(false);
-        t.input.disabled = true;
+        t._setInputDisabled(true);
 
         // Disable lock for cell editing
         t.collaborativeEditing.onStopEditCell();
@@ -2825,7 +2870,7 @@
 				this.cellEditor.updateWizardMode(this.isWizardMode);
 				this._onCleanSelectRange(true);
 			}
-			this.input.disabled = this.isWizardMode;
+			this._setInputDisabled(this.isWizardMode);
 		}
 	};
 
@@ -3165,14 +3210,21 @@
 
                 this.cellEditor.replaceText(this.lastFPos, this.lastFNameLength, type === c_oAscPopUpSelectorType.TableThisRow ? "@" : name);
                 this.cellEditor.skipTLUpdate = tmp;
-            } else if (false === this.cellEditor.insertFormula(name, isNotFunction)) {
-                // Could not insert formula, close editor with saving text
-                this.cellEditor.close(true);
+            } else {
+                if (isNotFunction && c_oAscPopUpSelectorType.FuncConstant === type) {
+                    let argHelpName = this._prepareArgHelpInsertion(name);
+                    if (argHelpName != null) {
+                        name = argHelpName;
+                    }
+                }
+                if (false === this.cellEditor.insertFormula(name, isNotFunction)) {
+                    this.cellEditor.close(true);
+                }
             }
 
             this.skipHelpSelector = false;
         } else {
-            if (c_oAscPopUpSelectorType.None === type) {
+            if (c_oAscPopUpSelectorType.FuncConstant === type || c_oAscPopUpSelectorType.None === type) {
 				ws.executeWithFirstActiveCellInMerge(function () {
 					ws.setSelectionInfo("value", name, /*onlyActive*/true);
 				});
@@ -3232,6 +3284,52 @@
                 this._onEditCell(enterOptions, callback);
             }
         }
+    };
+
+    WorkbookView.prototype._prepareArgHelpInsertion = function (name) {
+        let cellEditor = this.cellEditor;
+        let parseResult = cellEditor && cellEditor._parseResult;
+        if (!parseResult || parseResult.argPos == null || !parseResult.argPosArr) {
+            return null;
+        }
+        let argInfo = parseResult.argPosArr[parseResult.argPos - 1];
+        if (!argInfo || argInfo.start == null) {
+            return null;
+        }
+
+        let editableFunc = cellEditor._getEditableFunction(parseResult);
+        let fnName = editableFunc && editableFunc.func;
+        let oCurFunc = fnName && AscCommonExcel.cFormulaFunction[fnName];
+        let argHelpList = oCurFunc && oCurFunc.prototype.getArgHelpList(parseResult.argPos - 1);
+        if (!argHelpList || !argHelpList.length) {
+            return null;
+        }
+
+        let isLastArgUnclosed = (parseResult.argPos === parseResult.argPosArr.length) &&
+                                (parseResult.error === c_oAscError.ID.FrmlParenthesesCorrectCount);
+        let argStart = argInfo.start;
+        let argEnd = argInfo.end != null ? argInfo.end + (isLastArgUnclosed ? 1 : 0) : cellEditor.cursorPos;
+
+        let s = cellEditor.options.fragments.reduce(function (pv, cv) {
+            return pv + AscCommonExcel.convertUnicodeToSimpleString(cv.getCharCodes());
+        }, "");
+       
+        if (cellEditor.cursorPos > argEnd && cellEditor.cursorPos <= s.length) {
+            argEnd = cellEditor.cursorPos;
+        }
+        if (argEnd > s.length) {
+            argEnd = s.length;
+        }
+        if (argEnd < argStart) {
+            argEnd = argStart;
+        }
+        let prefixMatch = s.substring(argStart, argEnd).match(/^\d*\s?/);
+        let prefix = prefixMatch ? prefixMatch[0] : '';
+
+        cellEditor.cursorPos = argEnd;
+        cellEditor.selectionBegin = argStart;
+        cellEditor.selectionEnd = argEnd;
+        return prefix + "" + name;
     };
 
     WorkbookView.prototype.startWizard = function (name, doCleanCellContent) {
@@ -3430,6 +3528,10 @@
     var t = this, ws;
     ws = t.getWorksheet();
     g_clipboardExcel.pasteData(ws, _format, data1, data2, text_data, null, doNotShowButton, null, callback);
+  };
+
+  WorkbookView.prototype.pasteHtmlLite = function(sHtml, callback) {
+    g_clipboardExcel.pasteHtmlLite(this.getWorksheet(), sHtml, callback);
   };
 
   WorkbookView.prototype.specialPasteData = function(props, isPasteOptions) {
@@ -3690,7 +3792,7 @@
               this.getWorksheet().cloneSelection(true, tmpSelectRange && AscCommonExcel.g_oRangeCache.getAscRange(tmpSelectRange));
           }
           this.selectionDialogMode = newSelectionDialogMode;
-          this.input.disabled = !this.isFormulaEditMode || this.isWizardMode;
+          this._setInputDisabled(!this.isFormulaEditMode || this.isWizardMode);
           drawSelection = true;
       } else {
           this.selectionDialogMode = newSelectionDialogMode;
@@ -3702,7 +3804,7 @@
           }
 
           this.copyActiveSheet = -1;
-          this.input.disabled = false;
+          this._setInputDisabled(false);
       }
 
       if (drawSelection) {
@@ -4209,6 +4311,10 @@
 
 	if (trueFormulaFunctionToLocale) {
 		AscCommonExcel.cFormulaFunctionToLocale = trueFormulaFunctionToLocale;
+	}
+
+	if (this.printPreviewState && this.printPreviewState.isStart()) {
+		this.printPreviewState._lastLayoutKey = adjustPrint.getLayoutKey ? adjustPrint.getLayoutKey() : null;
 	}
 
     return printPagesData;
@@ -5532,6 +5638,7 @@
 		if (!this.printPreviewState || !this.printPreviewState.isStart()) {
 			return;
 		}
+		this.printPreviewState._lastLayoutKey = null;
 		for (var i in this.wsViews) {
 			this.wsViews[i]._recalculate();
 		}
@@ -6507,7 +6614,7 @@
 		const oStartChangedCells = oSolver && oSolver.getStartChangingCells();
 
 		if (!bSave && oStartChangedCells) {
-			oChangedCells && oChangedCells._foreachNoEmpty(function (oCell) {
+			oChangedCells && oChangedCells._foreachDataOnly(function (oCell) {
 				const sOriginalValue = oStartChangedCells[oCell.getName()];
 				oCell.setValue(sOriginalValue);
 			});
@@ -6679,6 +6786,14 @@
 		if (!this.customFunctionEngine) {
 			this.customFunctionEngine = new AscCommonExcel.CCustomFunctionEngine(this);
 		}
+	};
+
+	WorkbookView.prototype.setAutoCompleteEnabled = function(val) {
+		this.autoCompleteEnabled = val;
+	};
+
+	WorkbookView.prototype.getAutoCompleteEnabled = function() {
+		return this.autoCompleteEnabled;
 	};
 
 	WorkbookView.prototype.setSmoothScrolling = function(val) {
@@ -7717,7 +7832,7 @@
 		oThis.wb.cellEditor.setSelectionState(oThis.activeTabFormula);
 		oThis.lockSendChangeSelection = false;
 
-		oThis.wb.input.disabled = false;
+		oThis.wb._setInputDisabled(false);
 		oThis.lockApplyChangeSelection = false;
 	};
 

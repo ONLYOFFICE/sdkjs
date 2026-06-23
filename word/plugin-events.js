@@ -46,7 +46,7 @@
  * @property {1 | 2} Appearance - The visualization type of the content control: <b>1</b> - frame (bounding box), <b>2</b> - hidden.
  * @property {string} [FormKey] - A unique form key. Present only if the content control is a form field.
  * @property {string} [RadioGroup] - A group key of the radio button. Present only if the content control is a radio button form field .
- * @property {*} [FormValue] - The current value of the form field. Present only if the content control is a form field.
+ * @property {string | boolean | Date} [FormValue] - The current value of the form field. Present only if the content control is a form field.
  * @property {{R: number, G: number, B: number}} [Color] - The tag color of the content control. Present only if the tag color is set.
  * @property {{Color: {R: number, G: number, B: number, A: number}}} [Border] - The border color of the content control. Present only if the border color is set.
  * @property {{Color: {R: number, G: number, B: number, A: number}}} [Shd] - The shading color of the content control. Present only if the shading color is set.
@@ -93,7 +93,7 @@
  * @memberof Plugin
  * @typeofeditors ["CDE"]
  * @alias onAddComment
- * @description The function called when a comment is added to the document with the {@link /docs/plugin-and-macros/interacting-with-editors/text-document-api/Methods/AddComment AddComment} method.
+ * @description The function called when a comment is added to the document with the {@link /docs/plugins/interacting-with-editors/document-api/Methods/AddComment AddComment} method.
  * @param {comment} comment - Defines the comment object containing the comment data.
  * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onAddComment.js
  */
@@ -104,7 +104,7 @@
  * @memberof Plugin
  * @typeofeditors ["CDE"]
  * @alias onChangeCommentData
- * @description The function called when the specified comment is changed with the {@link /docs/plugin-and-macros/interacting-with-editors/text-document-api/Methods/ChangeComment ChangeComment} method.
+ * @description The function called when the specified comment is changed with the {@link /docs/plugins/interacting-with-editors/document-api/Methods/ChangeComment ChangeComment} method.
  * @param {comment} comment - Defines the comment object containing the comment data.
  * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onChangeCommentData.js
  */
@@ -126,7 +126,7 @@
  * @memberof Plugin
  * @typeofeditors ["CDE"]
  * @alias onRemoveComment
- * @description The function called when the specified comment is removed with the {@link /docs/plugin-and-macros/interacting-with-editors/text-document-api/Methods/RemoveComments RemoveComments} method.
+ * @description The function called when the specified comment is removed with the {@link /docs/plugins/interacting-with-editors/document-api/Methods/RemoveComments RemoveComments} method.
  * @param {comment} comment - Defines the comment object containing the comment data.
  * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onRemoveComment.js
  */

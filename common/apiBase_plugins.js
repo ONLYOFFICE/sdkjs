@@ -73,10 +73,10 @@
 	 * <b>html</b> - HTML formatted code,
 	 * <b>ole</b> - OLE object data,
      * <b>desktop</b> - the desktop editor data,
-     * <b>destop-external</b> - the main page data of the desktop app (system messages),
+     * <b>desktop-external</b> - the main page data of the desktop app (system messages),
      * <b>none</b> - no data will be send to the plugin from the editor,
 	 * <b>sign</b> - the sign for the keychain plugin.
-	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none" | "sign")} initDataType
+	 * @typedef {("text" | "html" | "ole" | "desktop" | "desktop-external" | "none" | "sign")} initDataType
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/initDataType.js
 	 */
 
@@ -126,7 +126,7 @@
 	 * Specifies if the plugin is not displayed in the editor interface and is started in the background with the server (or desktop editors start) not interfering with the other plugins, so that they can work simultaneously.
      *
 	 * @pr {initDataType} initDataType
-	 * The data type selected in the editor and sent to the plugin: "text" - the text data, "html" - HTML formatted code, "ole" - OLE object data, "desktop" - the desktop editor data, "destop-external" - the main page data of the desktop app (system messages), "none" - no data will be send to the plugin from the editor.
+	 * The data type selected in the editor and sent to the plugin: "text" - the text data, "html" - HTML formatted code, "ole" - OLE object data, "desktop" - the desktop editor data, "desktop-external" - the main page data of the desktop app (system messages), "none" - no data will be send to the plugin from the editor.
      *
 	 * @pr {string} initData
      * Is usually equal to "" - this is the data which is sent from the editor to the plugin at the plugin start (e.g. if initDataType == "text", the plugin will receive the selected text when run). It may also be equal to encryption in the encryption plugins.
@@ -1696,7 +1696,7 @@
      * @property {string} url The URL to plugin config.
      * @property {string} guid The plugin identifier. It must be of the *asc.{UUID}* type.
 	 * @property {boolean} canRemoved Specifies if the plugin can be removed (**true**) or not (**false**).
-     * @property {object} obj The {@link /docs/plugin-and-macros/structure/configuration/ config} of the installed plugin. The version is taken from the config and compared with the current one to check for updates.
+     * @property {object} obj The {@link /docs/plugins/configuration/configuration config} of the installed plugin. The version is taken from the config and compared with the current one to check for updates.
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/PluginData.js
 	 */
 
@@ -1854,7 +1854,7 @@
 	/**
     * Installs a plugin using the specified plugin config.
      * @memberof Api
-     * @param {object} [config] - The plugin {@link /docs/plugin-and-macros/structure/configuration/ config}.
+     * @param {object} [config] - The plugin {@link /docs/plugins/configuration/configuration config}.
      * @alias InstallPlugin
      * @returns {object} - An object with the result information.
      * @since 7.2.0
@@ -1867,7 +1867,7 @@
 	/**
     * Updates a plugin using the specified plugin config.
      * @memberof Api
-     * @param {object} [config] - The plugin {@link /docs/plugin-and-macros/structure/configuration/ config}.
+     * @param {object} [config] - The plugin {@link /docs/plugins/configuration/configuration config}.
      * @alias UpdatePlugin
      * @returns {object} - An object with the result information.
      * @since 7.3.0
@@ -2074,7 +2074,7 @@
 	 * @property {string} text - The item text.
 	 * @property {string} [data] - The item data (this data will be sent to the click event callback).
 	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
-	 * @property {string} [icons] - The item icons (see the plugins {@link /docs/plugin-and-macros/structure/configuration/ config} documentation).
+	 * @property {string} [icons] - The item icons (see the plugins {@link /docs/plugins/configuration/configuration config} documentation).
 	 * @property {ContextMenuItem[]} items - An array containing the context menu items for the current item.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContextMenuItem.js
 	 */
@@ -2141,7 +2141,7 @@
 	 * @property {ToolbarMenuItemType} type - The item type.
 	 * @property {string} text - The item text.
 	 * @property {string} hint - The item hint.
-	 * @property {string} [icons] - The item icons (see the plugins {@link /docs/plugin-and-macros/structure/configuration/ config} documentation).
+	 * @property {string} [icons] - The item icons (see the plugins {@link /docs/plugins/configuration/configuration config} documentation).
 	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
 	 * @property {boolean} [enableToggle] - Specifies if an item toggle is enabled or not.
 	 * @property {boolean} [lockInViewMode] - Specifies if the current item is locked in the view mode or not.
@@ -2206,6 +2206,70 @@
 	{
 		correctToolbarItems(this, items);
 		this.sendEvent("onPluginUpdateToolbarMenu", [items]);
+	};
+
+	/**
+	 * @typedef {Object} WindowHeaderMenuItem
+	 * The window header menu item.
+	 * @property {string} id - The item ID.
+	 * @property {"button"} type - The item type.
+	 * @property {string} [text] - The item text.
+	 * @property {string} [hint] - The item hint.
+	 * @property {"left" | "right"} [align] - The item alignment in the window header.
+	 * @property {string} [icons] - The item icons (see the plugins {@link /docs/plugin-and-macros/structure/configuration/ config} documentation).
+	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
+	 * @property {boolean} [enableToggle] - Specifies if an item toggle is enabled or not.
+	 * @property {boolean} [split] - Specifies if the button is split (button + dropdown arrow) or not.
+	 * @property {boolean} [isTitle] - Specifies if the item replaces the window title or not.
+	 * @property {boolean} [removed] - Specifies if the item must be removed from the header.
+	 * @property {ContextMenuItem[]} [items] - An array containing the dropdown menu items for the current header item.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/WindowHeaderMenuItem.js
+	 */
+
+	/**
+	 * @typedef {Object} WindowHeaderMainItem
+	 * The main window header item.
+	 * @property {string} guid - The plugin guid.
+	 * @property {string} [windowID] - The plugin child window ID. When omitted, the items are placed on the plugin's main frame header.
+	 * @property {WindowHeaderMenuItem[]} items - An array containing the window header items.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/WindowHeaderMainItem.js
+	 */
+
+	function correctWindowHeaderItems(api, items)
+	{
+		let baseUrl = api.pluginsManager.pluginsMap[items["guid"]].baseUrl;
+		if (items["frames"][0]["items"])
+			correctItemsWithData(items["frames"][0]["items"], baseUrl);
+	}
+
+	/**
+	 * Adds buttons to the plugin window header.
+	 * @undocumented
+	 * @memberof Api
+	 * @alias AddWindowHeaderItem
+	 * @param {WindowHeaderMainItem} items - The window header items for the plugin.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddWindowHeaderItem.js
+	 */
+	Api.prototype["pluginMethod_AddWindowHeaderItem"] = function(items)
+	{
+		correctWindowHeaderItems(this, items);
+		this.sendEvent("onPluginWindowHeaderMenu", [items]);
+	};
+
+	/**
+	 * Updates buttons in the plugin window header.
+	 * @undocumented
+	 * @memberof Api
+	 * @alias UpdateWindowHeaderItem
+	 * @param {WindowHeaderMainItem} items - The window header items for the plugin.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/UpdateWindowHeaderItem.js
+	 */
+	Api.prototype["pluginMethod_UpdateWindowHeaderItem"] = function(items)
+	{
+		correctWindowHeaderItems(this, items);
+		this.sendEvent("onPluginUpdateWindowHeaderMenu", [items]);
 	};
 
 	/**

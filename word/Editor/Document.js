@@ -4075,24 +4075,27 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 					_SectionIndex = 0;
 				else
 					_SectionIndex = this.Pages[_PageIndex].Sections.length - 1;
-            }
+			}
 
-            _StartIndex = this.Pages[_PageIndex].Sections[_SectionIndex].Columns[_ColumnIndex].Pos;
+			_StartIndex = this.Pages[_PageIndex].Sections[_SectionIndex].Columns[_ColumnIndex].Pos;
 			_sectPr     = this.Pages[_PageIndex].Sections[_SectionIndex].GetSectPr();
-            _bStart     = false;
+			_bStart     = false;
 
-			let currPageSection = this.Pages[_PageIndex].Sections[_SectionIndex];
-			currPageSection.Init(_PageIndex, _sectPr, this.Layout.GetSectionIndex(_sectPr));
-			if (_SectionIndex > 0)
+			if (0 === _ColumnIndex)
 			{
-				let prevPageSection = this.Pages[_PageIndex].Sections[_SectionIndex - 1];
-				currPageSection.Y       = prevPageSection.GetBottomLimit() + 0.001;
-				currPageSection.YLimit  = this.Pages[_PageIndex].YLimit;
-				currPageSection.YLimit2 = this.Pages[_PageIndex].YLimit;
+				let currPageSection = this.Pages[_PageIndex].Sections[_SectionIndex];
+				currPageSection.Init(_PageIndex, _sectPr, this.Layout.GetSectionIndex(_sectPr));
+				if (_SectionIndex > 0)
+				{
+					let prevPageSection = this.Pages[_PageIndex].Sections[_SectionIndex - 1];
+					currPageSection.Y       = prevPageSection.GetBottomLimit() + 0.001;
+					currPageSection.YLimit  = this.Pages[_PageIndex].YLimit;
+					currPageSection.YLimit2 = this.Pages[_PageIndex].YLimit;
+				}
 			}
 			
-            break;
-        }
+			break;
+		}
 		else if ((RecalcResult & recalcresult_NextSection) || (RecalcResult & recalcresult_NextSection_Cur))
 		{
 			let nextIndex = RecalcResult & recalcresult_NextSection ? Index + 1 : Index;
@@ -8149,6 +8152,11 @@ CDocument.prototype.IsMovingTableBorder = function()
 {
 	return this.Controller.IsMovingTableBorder();
 };
+CDocument.prototype.CancelTableBorderMove = function()
+{
+	this.Controller.CancelTableBorderMove();
+	this.DrawingDocument.OnUpdateOverlay();
+};
 /**
  * Проверяем попали ли мы в селект.
  * @param X
@@ -8601,7 +8609,7 @@ CDocument.prototype.IsTableBorder = function(X, Y, PageIndex)
 	{
 		if (-1 != this.DrawingObjects.IsInDrawingObject(X, Y, PageIndex, this))
 		{
-			return null;
+			return this.DrawingObjects.IsTableBorderInDrawing(X, Y, PageIndex);
 		}
 		else if (true === this.Footnotes.CheckHitInFootnote(X, Y, PageIndex))
 		{
@@ -9021,6 +9029,16 @@ CDocument.prototype.OnKeyDown = function(e)
 
 				this.DrawingDocument.CancelTrackText();
 			}
+			else if (this.DrawingDocument.IsTrackTable())
+			{
+				let table = this.GetCurrentTable();
+				this.DrawingDocument.CancelTrackTable();
+				if (table)
+				{
+					table.SelectAll();
+					table.Document_SetThisElementCurrent(true);
+				}
+			}
 			else if (true === this.Api.isMarkerFormat)
 			{
 				this.Api.sync_MarkerFormatCallback(false);
@@ -9035,7 +9053,27 @@ CDocument.prototype.OnKeyDown = function(e)
 			{
 				this.Api.sync_StartAddShapeCallback(false);
 				this.Api.sync_EndAddShape();
-				this.DrawingObjects.endTrackNewShape();
+				if (this.DrawingObjects.isPolylineAddition())
+					this.DrawingObjects.endTrackNewShape();
+				else
+					this.DrawingObjects.resetTrackState();
+				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
+			}
+			else if (this.IsMovingTableBorder())
+			{
+				this.CancelTableBorderMove();
+				this.DrawingDocument.UnlockCursorType();
+				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
+			}
+			else if (this.DrawingDocument.IsTrackRuler())
+			{
+				this.DrawingDocument.CancelTrackRuler();
+			}
+			else if (this.Is_TrackingDrawingObjects())
+			{
+				this.DrawingObjects.resetTrackState();
+				this.DrawingDocument.OnUpdateOverlay();
+				this.DrawingDocument.UnlockCursorType();
 				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
 			}
 			else if (this.Api.isInkDrawerOn())
@@ -21765,6 +21803,19 @@ CDocument.prototype.controller_IsMovingTableBorder = function()
 		return true;
 
 	return false;
+};
+CDocument.prototype.controller_CancelTableBorderMove = function()
+{
+	if (null == this.Selection.Data || true !== this.Selection.Data.TableBorder)
+		return;
+
+	let table = this.Content[this.Selection.Data.Pos];
+	if (table && type_Table === table.GetType())
+		table.CancelBorderMove();
+
+	this.Selection.Start = false;
+	this.Selection.Use   = this.Selection.Data.Selection;
+	this.Selection.Data  = null;
 };
 CDocument.prototype.controller_CheckPosInSelection = function(X, Y, PageAbs, NearPos)
 {

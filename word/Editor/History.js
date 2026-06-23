@@ -1237,7 +1237,6 @@ CHistory.prototype.private_IsContentChange = function(Class, Data)
 {
 	// TODO: Заменить на проверку через change.IsContentChange
 	var bPresentation = !(typeof CPresentation === "undefined");
-	var bSlide = !(typeof Slide === "undefined");
 	if ( ( Class instanceof CDocument        && ( AscDFH.historyitem_Document_AddItem        === Data.Type || AscDFH.historyitem_Document_RemoveItem        === Data.Type ) ) ||
 		(((Class instanceof CDocumentContent || Class instanceof AscFormat.CDrawingDocContent)) && ( AscDFH.historyitem_DocumentContent_AddItem === Data.Type || AscDFH.historyitem_DocumentContent_RemoveItem === Data.Type ) ) ||
 		( Class instanceof CTable           && ( AscDFH.historyitem_Table_AddRow            === Data.Type || AscDFH.historyitem_Table_RemoveRow            === Data.Type ) ) ||
@@ -1246,7 +1245,7 @@ CHistory.prototype.private_IsContentChange = function(Class, Data)
 		( Class instanceof ParaHyperlink    && ( AscDFH.historyitem_Hyperlink_AddItem       === Data.Type || AscDFH.historyitem_Hyperlink_RemoveItem       === Data.Type ) ) ||
 		( Class instanceof ParaRun          && ( AscDFH.historyitem_ParaRun_AddItem         === Data.Type || AscDFH.historyitem_ParaRun_RemoveItem         === Data.Type ) ) ||
 		( bPresentation && Class instanceof CPresentation && (AscDFH.historyitem_Presentation_AddSlide === Data.Type || AscDFH.historyitem_Presentation_RemoveSlide === Data.Type)) ||
-		( bSlide && Class instanceof Slide && (AscDFH.historyitem_SlideAddToSpTree === Data.Type || AscDFH.historyitem_SlideRemoveFromSpTree === Data.Type))
+		( Class instanceof AscFormat.CSld && (AscDFH.historyitem_CSld_AddToSpTree === Data.Type || AscDFH.historyitem_CSld_RemoveFromSpTree === Data.Type))
 	)
 		return true;
 
@@ -1255,7 +1254,6 @@ CHistory.prototype.private_IsContentChange = function(Class, Data)
 CHistory.prototype.private_IsAddContentChange = function(Class, Data)
 {
 	var bPresentation = !(typeof CPresentation === "undefined");
-	var bSlide = !(typeof Slide === "undefined");
 	return ( ( Class instanceof CDocument        && AscDFH.historyitem_Document_AddItem        === Data.Type ) ||
 		( ((Class instanceof CDocumentContent || Class instanceof AscFormat.CDrawingDocContent)) && AscDFH.historyitem_DocumentContent_AddItem === Data.Type ) ||
 		( Class instanceof CTable           && AscDFH.historyitem_Table_AddRow            === Data.Type ) ||
@@ -1264,7 +1262,7 @@ CHistory.prototype.private_IsAddContentChange = function(Class, Data)
 		( Class instanceof ParaHyperlink    && AscDFH.historyitem_Hyperlink_AddItem       === Data.Type ) ||
 		( Class instanceof ParaRun          && AscDFH.historyitem_ParaRun_AddItem         === Data.Type ) ||
 		( bPresentation && Class instanceof CPresentation && (AscDFH.historyitem_Presentation_AddSlide === Data.Type )) ||
-		( bSlide && Class instanceof Slide && (AscDFH.historyitem_SlideAddToSpTree === Data.Type))
+		( Class instanceof AscFormat.CSld && AscDFH.historyitem_CSld_AddToSpTree === Data.Type)
 	) ? true : false;
 };
 CHistory.prototype.private_GetItemsCountInContentChange = function(Class, Data)

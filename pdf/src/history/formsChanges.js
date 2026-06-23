@@ -65,6 +65,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Align]			= CChangesPDFFormAlig
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Ap_Idx]			= CChangesPDFFormApIdx;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Changed_View]		= CChangesPDFFormChangedView;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Orig_Page]		= CChangesPDFFormOrigPage;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Redacted]			= CChangesPDFFormRedacted;
 
 
 // text
@@ -157,7 +158,7 @@ CChangesPDFFormParentValue.prototype.Type = AscDFH.historyitem_Pdf_Form_Parent_V
 CChangesPDFFormParentValue.prototype.private_SetValue = function(Value)
 {
 	let oField = this.Class;
-	oField.SetParentValue(Value);
+	oField._value = Value;
 };
 
 CChangesPDFFormValue.prototype.WriteToBinary = function(Writer)
@@ -268,6 +269,7 @@ CChangesPDFFormKidsContent.prototype.Undo = function()
 			oParentField._kids.splice(this.Pos, 1);
 			oItem._parent = null;
 			oItem.AddToRedraw();
+			oItem.SetNeedUpdateEditShape(true);
 		}
 	}
 	else {
@@ -277,6 +279,7 @@ CChangesPDFFormKidsContent.prototype.Undo = function()
 			oParentField._kids.splice(this.Pos, 0, oItem);
 			oItem._parent = oParentField;
 			oItem.AddToRedraw();
+			oItem.SetNeedUpdateEditShape(true);
 		}
 	}
 	
@@ -296,6 +299,7 @@ CChangesPDFFormKidsContent.prototype.Redo = function()
 			oParentField._kids.splice(this.Pos, 0, oItem);
 			oItem._parent = oParentField;
 			oItem.AddToRedraw();
+			oItem.SetNeedUpdateEditShape(true);
 		}
 	}
 	else {
@@ -305,6 +309,7 @@ CChangesPDFFormKidsContent.prototype.Redo = function()
 			oParentField._kids.splice(this.Pos, 1);
 			oItem._parent = null;
 			oItem.AddToRedraw();
+			oItem.SetNeedUpdateEditShape(true);
 		}
 	}
 	
@@ -333,6 +338,7 @@ CChangesPDFFormKidsContent.prototype.private_InsertInArrayLoad = function()
 		oItem._parent = oParentField;
 
         oItem.AddToRedraw();
+		oItem.SetNeedUpdateEditShape(true);
     }
 
     oDocument.SetMouseDownObject(null);
@@ -361,6 +367,7 @@ CChangesPDFFormKidsContent.prototype.private_RemoveInArrayLoad = function()
 		oItem._parent = null;
 
 		oItem.AddToRedraw();
+		oItem.SetNeedUpdateEditShape(true);
     }
 
     oDocument.SetMouseDownObject(null);
@@ -922,30 +929,6 @@ CChangesPDFFormMEOptions.prototype.private_SetValue = function(Value)
 	oField.UpdateMEOptions();
 };
 
-
-//------------------------------------------------------------------------------------------------------------------
-//
-// Text Form
-//
-//------------------------------------------------------------------------------------------------------------------
-
-/**
- * @constructor
- * @extends {AscDFH.CChangesBaseBoolProperty}
- */
-function CChangesPDFTextFormMultiline(Class, Old, New, Color)
-{
-	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
-}
-CChangesPDFTextFormMultiline.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
-CChangesPDFTextFormMultiline.prototype.constructor = CChangesPDFTextFormMultiline;
-CChangesPDFTextFormMultiline.prototype.Type = AscDFH.historyitem_Pdf_Text_Form_Multiline;
-CChangesPDFTextFormMultiline.prototype.private_SetValue = function(Value)
-{
-	let oForm = this.Class;
-	oForm.SetMultiline(Value);
-};
-
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
@@ -1015,6 +998,50 @@ CChangesPDFFormOrigPage.prototype.private_SetValue = function(Value)
 {
 	let oForm = this.Class;
 	oForm._origPage = Value;
+};
+
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFFormRedacted(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormRedacted.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFFormRedacted.prototype.constructor = CChangesPDFFormRedacted;
+CChangesPDFFormRedacted.prototype.Type = AscDFH.historyitem_Pdf_Form_Redacted;
+CChangesPDFFormRedacted.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	
+	oForm._isRedacted = Value;
+	oForm.AddToRedraw();
+};
+
+
+//------------------------------------------------------------------------------------------------------------------
+//
+// Text Form
+//
+//------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFTextFormMultiline(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFTextFormMultiline.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFTextFormMultiline.prototype.constructor = CChangesPDFTextFormMultiline;
+CChangesPDFTextFormMultiline.prototype.Type = AscDFH.historyitem_Pdf_Text_Form_Multiline;
+CChangesPDFTextFormMultiline.prototype.private_SetValue = function(Value)
+{
+	let oForm = this.Class;
+	oForm.SetMultiline(Value);
 };
 
 /**
@@ -1240,7 +1267,7 @@ CChangesPDFListFormParentCurIdxs.prototype.Type = AscDFH.historyitem_Pdf_List_Fo
 CChangesPDFListFormParentCurIdxs.prototype.private_SetValue = function(Value)
 {
 	var oField = this.Class;
-	oField.SetParentCurIdxs(Value);
+	oField.SetLogicCurIdxs(Value);
 };
 
 CChangesPDFListFormParentCurIdxs.prototype.WriteToBinary = function(Writer)

@@ -2513,15 +2513,35 @@
 		}
 	};
 
-	CTextDrawer.prototype.drawCommentArea = function (x, y, w, h) {
-		this.m_oCurComment = null;
+	CTextDrawer.prototype.drawCommentArea = function (x, y, w, h, Element) {
+		this.m_oCurComment = Element || null;
 		this.rect(x, y, w, h);
 		this.df();
 		this.m_oCurComment = null;
 	};
 	CTextDrawer.prototype.drawCommentMark = function(x, y, h, isStart)
 	{
-		this.drawVerLine(0, x, y, y + h, 2, false);
+		let penW = 0.4;
+		let oTextPr = this.GetTextPr();
+		let oCopyTextPr = null;
+		if (oTextPr) {
+			oCopyTextPr = oTextPr.Copy();
+			if (!oCopyTextPr.TextOutline) {
+				oCopyTextPr.TextOutline = new AscFormat.CLn();
+			}
+			oCopyTextPr.TextOutline.w = (36000.0 * penW) >> 0;
+			if (!oCopyTextPr.TextOutline.Fill) {
+				oCopyTextPr.TextOutline.Fill = this.CreateUnfilFromRGB(this.m_oPen.Color.R, this.m_oPen.Color.G, this.m_oPen.Color.B);
+			}
+			this.SetTextPr(oCopyTextPr, this.m_oTheme);
+		}
+		this._s();
+		this._m(x, y);
+		this._l(x, y + h);
+		this.ds();
+		if (oCopyTextPr) {
+			this.SetTextPr(oTextPr, this.m_oTheme);
+		}
 	};
 
 	CTextDrawer.prototype.rect = function (x, y, w, h) {

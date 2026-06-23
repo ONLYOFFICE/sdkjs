@@ -42,41 +42,19 @@ var History = AscCommon.History;
  AscDFH.changesFactory[AscDFH.historyitem_SlideMasterSetThemeIndex]     = AscDFH.CChangesDrawingsLong            ;
  AscDFH.changesFactory[AscDFH.historyitem_SlideMasterSetSize]           = AscDFH.CChangesDrawingsObjectNoId      ;
  AscDFH.changesFactory[AscDFH.historyitem_SlideMasterSetTheme]          = AscDFH.CChangesDrawingsObject          ;
- AscDFH.changesFactory[AscDFH.historyitem_SlideMasterAddToSpTree]       = AscDFH.CChangesDrawingsContent         ;
- AscDFH.changesFactory[AscDFH.historyitem_SlideMasterSetBg]             = AscDFH.CChangesDrawingsObjectNoId      ;
  AscDFH.changesFactory[AscDFH.historyitem_SlideMasterSetTxStyles]       = AscDFH.CChangesDrawingsObjectNoId      ;
- AscDFH.changesFactory[AscDFH.historyitem_SlideMasterSetCSldName]       = AscDFH.CChangesDrawingsString          ;
  AscDFH.changesFactory[AscDFH.historyitem_SlideMasterSetClrMapOverride] = AscDFH.CChangesDrawingsObject          ;
  AscDFH.changesFactory[AscDFH.historyitem_SlideMasterSetHF]             = AscDFH.CChangesDrawingsObject          ;
  AscDFH.changesFactory[AscDFH.historyitem_SlideMasterAddLayout]         = AscDFH.CChangesDrawingsContent         ;
  AscDFH.changesFactory[AscDFH.historyitem_SlideMasterSetTransition]     = AscDFH.CChangesDrawingsObjectNoId         ;
  AscDFH.changesFactory[AscDFH.historyitem_SlideMasterSetTiming]         = AscDFH.CChangesDrawingsObject         ;
  AscDFH.changesFactory[AscDFH.historyitem_SlideMasterRemoveLayout]      = AscDFH.CChangesDrawingsContent         ;
- AscDFH.changesFactory[AscDFH.historyitem_SlideMasterRemoveFromSpTree]  = AscDFH.CChangesDrawingsContent         ;
  AscDFH.changesFactory[AscDFH.historyitem_SlideMasterSetPreserve]       = AscDFH.CChangesDrawingsBool            ;
 
  AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideMasterSetThemeIndex]     = function(oClass, value){oClass.ThemeIndex = value;};
  AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideMasterSetSize]           = function(oClass, value){oClass.Width = value.a; oClass.Height = value.b;};
  AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideMasterSetTheme]          = function(oClass, value){oClass.Theme = value;};
- AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideMasterSetBg]             = function(oClass, value, FromLoad){
-     oClass.cSld.Bg = value;
-     if(FromLoad){
-         var Fill;
-         if(oClass.cSld.Bg && oClass.cSld.Bg.bgPr && oClass.cSld.Bg.bgPr.Fill)
-         {
-             Fill = oClass.cSld.Bg.bgPr.Fill;
-         }
-         if(typeof AscCommon.CollaborativeEditing !== "undefined")
-         {
-             if(Fill && Fill.fill && Fill.fill.type === Asc.c_oAscFill.FILL_TYPE_BLIP && typeof Fill.fill.RasterImageId === "string" && Fill.fill.RasterImageId.length > 0)
-             {
-                 AscCommon.CollaborativeEditing.Add_NewImage(Fill.fill.RasterImageId);
-             }
-         }
-     }
- };
  AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideMasterSetTxStyles]       = function(oClass, value){oClass.txStyles = value;};
- AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideMasterSetCSldName]       = function(oClass, value){oClass.cSld.name = value;};
  AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideMasterSetClrMapOverride] = function(oClass, value){oClass.clrMap = value;};
  AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideMasterSetHF]             = function(oClass, value){oClass.hf = value;};
  AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideMasterSetTransition]     = function(oClass, value){oClass.transition = value;};
@@ -85,21 +63,18 @@ var History = AscCommon.History;
 
 
 AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideMasterSetSize]      = AscFormat.CDrawingBaseCoordsWritable;
-AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideMasterSetBg]        = AscFormat.CBg;
 AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideMasterSetTxStyles]  = AscFormat.CTextStyles;
 AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideMasterSetTransition]  = Asc.CAscSlideTransition;
 
 
-AscDFH.drawingContentChanges[AscDFH.historyitem_SlideMasterAddToSpTree]       = function(oClass){return oClass.cSld.spTree;};
 AscDFH.drawingContentChanges[AscDFH.historyitem_SlideMasterAddLayout]         = function(oClass){return oClass.sldLayoutLst;};
 AscDFH.drawingContentChanges[AscDFH.historyitem_SlideMasterRemoveLayout]      = function(oClass){return oClass.sldLayoutLst;};
-AscDFH.drawingContentChanges[AscDFH.historyitem_SlideMasterRemoveFromSpTree]  = function(oClass){return oClass.cSld.spTree;};
 
 
 function MasterSlide(presentation, theme)
 {
-    AscFormat.CBaseFormatObject.call(this);
     this.cSld = new AscFormat.CSld(this);
+    AscFormat.CBaseFormatObject.call(this);
     this.clrMap = new AscFormat.ClrMap();
 
     this.hf = null;
@@ -220,10 +195,13 @@ MasterSlide.prototype.Write_ToBinary2 = function (w) {
     w.WriteLong(AscDFH.historyitem_type_SlideMaster);
     w.WriteString2(this.Id);
     AscFormat.writeObject(w, this.theme);
+    AscFormat.writeObject(w, this.cSld);
 };
 MasterSlide.prototype.Read_FromBinary2 = function (r) {
     this.Id = r.GetString2();
     this.theme = AscFormat.readObject(r);
+    this.cSld = AscFormat.readObject(r);
+    if (this.cSld) this.cSld.parent = this;
 };
 
 
@@ -514,8 +492,8 @@ MasterSlide.prototype.shapeAdd = function (pos, item) {
         pos_ = this.cSld.spTree.length;
     }
     this.checkDrawingUniNvPr(item);
-    History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideMasterAddToSpTree, pos_, [item], true));
-    this.cSld.spTree.splice(pos_, 0, item);
+    this.cSld.checkAndAssignName(item);
+    this.cSld.addToSpTree(pos_, item);
     item.setParent2(this);
     this.recalcInfo.recalculateSpTree = true;
 };
@@ -524,12 +502,10 @@ MasterSlide.prototype.addToSpTreeToPos = function(pos, obj)
     this.shapeAdd(pos, obj);
 };
 MasterSlide.prototype.shapeRemove = function (pos, count) {
-    History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideMasterRemoveFromSpTree, pos, this.cSld.spTree.slice(pos, pos + count), false));
-    this.cSld.spTree.splice(pos, count);
+    this.cSld.removeFromSpTree(pos, count);
 };
 MasterSlide.prototype.changeBackground = function (bg) {
-    History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SlideMasterSetBg, this.cSld.Bg, bg));
-    this.cSld.Bg = bg;
+    this.cSld.setBg(bg);
     this.recalcInfo.recalculateBackground = true;
 };
 MasterSlide.prototype.setHF = function(pr) {
@@ -541,8 +517,7 @@ MasterSlide.prototype.setTxStyles = function (txStyles) {
     this.txStyles = txStyles;
 };
 MasterSlide.prototype.setCSldName = function (name) {
-    History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_SlideMasterSetCSldName, this.cSld.name, name));
-    this.cSld.name = name;
+    this.cSld.setName(name);
 };
 MasterSlide.prototype.setClMapOverride = function (clrMap) {
     History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SlideMasterSetClrMapOverride, this.clrMap, clrMap));
@@ -641,25 +616,28 @@ MasterSlide.prototype.setName = function (sName) {
 MasterSlide.prototype.Refresh_RecalcData = function (data) {
     if(data)
     {
-        switch(data.Type)
-        {
-            case AscDFH.historyitem_SlideMasterSetBg:
-            {
+        this.addToRecalculate();
+    }
+};
+MasterSlide.prototype.handleCSldRecalc = function (data) {
+    if (data) {
+        switch (data.Type) {
+            case AscDFH.historyitem_CSld_SetBg:
                 this.recalcInfo.recalculateBackground = true;
-                for (var _slideLayout_index = 0; _slideLayout_index < this.sldLayoutLst.length; _slideLayout_index++) {
-                    this.sldLayoutLst[_slideLayout_index].addToRecalculate();
+                for (var i = 0; i < this.sldLayoutLst.length; i++) {
+                    this.sldLayoutLst[i].addToRecalculate();
                 }
                 break;
-            }
-            case AscDFH.historyitem_SlideMasterAddToSpTree:
+            case AscDFH.historyitem_CSld_AddToSpTree:
+            case AscDFH.historyitem_CSld_RemoveFromSpTree:
                 this.recalcInfo.recalculateSpTree = true;
-                for (var _slideLayout_index = 0; _slideLayout_index < this.sldLayoutLst.length; _slideLayout_index++) {
-                    this.sldLayoutLst[_slideLayout_index].addToRecalculate();
+                for (var j = 0; j < this.sldLayoutLst.length; j++) {
+                    this.sldLayoutLst[j].addToRecalculate();
                 }
                 break;
         }
-        this.addToRecalculate();
     }
+    this.addToRecalculate();
 };
 MasterSlide.prototype.getAllFonts = function (fonts) {
     var i;
@@ -709,21 +687,10 @@ MasterSlide.prototype.createDuplicate = function (IdMap) {
     if (this.clrMap) {
         copy.setClMapOverride(this.clrMap.createDuplicate());
     }
-    if (typeof this.cSld.name === "string" && this.cSld.name.length > 0) {
-        copy.setCSldName(this.cSld.name);
-    }
-    if (this.cSld.Bg) {
-        copy.changeBackground(this.cSld.Bg.createFullCopy());
-    }
     if(this.hf) {
         copy.setHF(this.hf.createDuplicate());
     }
-    for (i = 0; i < this.cSld.spTree.length; ++i) {
-        var _copy = this.cSld.spTree[i].copy(oPr);
-        oIdMap[this.cSld.spTree[i].Id] = _copy.Id;
-        copy.shapeAdd(copy.cSld.spTree.length, _copy);
-        copy.cSld.spTree[copy.cSld.spTree.length - 1].setParent2(copy);
-    }
+    this.cSld.fillObject(copy.cSld, oPr);
     if (this.txStyles) {
         copy.setTxStyles(this.txStyles.createDuplicate());
     }
@@ -1426,18 +1393,6 @@ function CMasterThumbnailDrawer()
     }
 }
 
-function fFillFromCSld(oSlideLikeObject, oCSld) {
-    for(var i = 0; i < oCSld.spTree.length; ++i)
-    {
-        oSlideLikeObject.addToSpTreeToPos(i, oCSld.spTree[i]);
-    }
-    if(oCSld.Bg)
-    {
-        oSlideLikeObject.changeBackground(oCSld.Bg);
-    }
-    oSlideLikeObject.setCSldName(oCSld.name);
-	oSlideLikeObject.changeBackground(oCSld.Bg);
-}
 
 const DEFAULT_SLIDE_W = 338.6666666666667;
 const DEFAULT_SLIDE_H = 190.5;
@@ -1533,7 +1488,6 @@ function CreatePlaceholder(nType, bVertical) {
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonSlide'] = window['AscCommonSlide'] || {};
 window['AscCommonSlide'].MasterSlide = MasterSlide;
-window['AscCommonSlide'].fFillFromCSld = fFillFromCSld;
 window['AscCommonSlide'].CreateDefaultMaster = CreateDefaultMaster;
 window['AscCommonSlide'].CreateDefaultLayout = CreateDefaultLayout;
 window['AscCommonSlide'].CreatePlaceholder = CreatePlaceholder;

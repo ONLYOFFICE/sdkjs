@@ -3391,7 +3391,7 @@
 
 		if (sLink !== "")
 		{
-			const isPresentationEditor = Asc.editor && Asc.editor.editorId === AscCommon.c_oEditorId.Presentation;
+			const isPresentationEditor = Asc.editor && (Asc.editor.editorId === AscCommon.c_oEditorId.Presentation || Asc.editor.isPdfEditor());
 			if (isPresentationEditor && AscCommon.IsLinkPPAction(sLink)) {
 				this.ParaHyperlink.SetValue(sLink);
 				return true;
@@ -4208,6 +4208,23 @@
 	/**
 	 * This type specifies the available chart types which can be used to create a new chart.
 	 * @typedef {(
+	 *     "ColumnClustered" | "ColumnStacked" | "ColumnStacked100" | "3DColumnClustered" | "3DColumnStacked" | "3DColumnStacked100" | "3DColumn" |
+	 *     "BarClustered" | "BarStacked" | "BarStacked100" | "3DBarClustered" | "3DBarStacked" | "3DBarStacked100" |
+	 *     "Line" | "LineStacked" | "LineStacked100" | "LineMarkers" | "LineMarkersStacked" | "LineMarkersStacked100" | "3DLine" |
+	 *     "Pie" | "3DPie" | "Doughnut" |
+	 *     "XYScatter" | "XYScatterLines" | "XYScatterLinesNoMarkers" | "XYScatterSmooth" | "XYScatterSmoothNoMarkers" |
+	 *     "StockHLC" | "StockOHLC" | "StockVHLC" | "StockVOHLC" |
+	 *     "Area" | "AreaStacked" | "AreaStacked100" |
+	 *     "Combo" | "ComboColumnClusteredLine" | "ComboColumnClusteredLineSecondaryAxis" |
+	 *     "Radar" | "RadarMarkers" | "RadarFilled" |
+	 *     "unknown"
+	 * )} ChartType
+	 * @see office-js-api/Examples/Enumerations/ChartType.js
+	 */
+
+	/**
+	 * This type specifies the legacy chart type names which are kept for backward compatibility.
+	 * @typedef {(
 	 *     "bar" | "barStacked" | "barStackedPercent" | "bar3D" | "barStacked3D" | "barStackedPercent3D" | "barStackedPercent3DPerspective" |
 	 *     "horizontalBar" | "horizontalBarStacked" | "horizontalBarStackedPercent" | "horizontalBar3D" | "horizontalBarStacked3D" | "horizontalBarStackedPercent3D" |
 	 *     "lineNormal" | "lineStacked" | "lineStackedPercent" | "lineNormalMarker" | "lineStackedMarker" | "lineStackedPerMarker" | "line3D" |
@@ -4218,8 +4235,8 @@
 	 *     "comboCustom" | "comboBarLine" | "comboBarLineSecondary" |
 	 *     "radar" | "radarMarker" | "radarFilled" |
 	 *     "unknown"
-	 * )} ChartType
-	 * @see office-js-api/Examples/Enumerations/ChartType.js
+	 * )} ChartTypeLegacy
+	 * @see office-js-api/Examples/Enumerations/ChartTypeLegacy.js
 	 */
 
 	/**
@@ -4626,6 +4643,16 @@
 	 */
 
 	/**
+	 * @typedef {Object} TableLook
+	 * @property {boolean} firstCol - Specifies that the first column conditional formatting shall be applied to the table.
+	 * @property {boolean} firstRow - Specifies that the first row conditional formatting shall be applied to the table.
+	 * @property {boolean} lastCol - Specifies that the last column conditional formatting shall be applied to the table.
+	 * @property {boolean} lastRow - Specifies that the last row conditional formatting shall be applied to the table.
+	 * @property {boolean} bandHor - Specifies that the horizontal banding conditional formatting shall not be applied to the table.
+	 * @property {boolean} bandVer - Specifies that the vertical banding conditional formatting shall not be applied to the table.
+	 */
+
+	/**
 	 * Returns the main document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
@@ -4819,7 +4846,7 @@
 	 * @param {EMU} [height = 914400] - The shape height in English measure units.
 	 * @param {ApiFill} [fill = Api.CreateNoFill()] - The color or pattern used to fill the shape.
 	 * @param {ApiStroke} [stroke = Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the element shadow.
-	 * @returns {ApiShape}
+	 * @returns {?ApiShape}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateShape.js
 	 */
 	Api.CreateShape = function(shapeType, width, height, fill, stroke)
@@ -4962,18 +4989,16 @@
 	 * Creates a geometry using one of the available preset shapes.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {ShapeType} sPreset - The preset name.
-	 * @returns {ApiGeometry | null}
+	 * @param {ShapeType} [preset="rect"] - The preset name.
+	 * @returns {?ApiGeometry}
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreatePresetGeometry.js
 	 */
-	Api.CreatePresetGeometry = function(sPreset)
+	Api.CreatePresetGeometry = function(preset)
 	{
-		let geometry = AscFormat.CreateGeometry(sPreset);
-		if (!geometry)
-		{
-			return null;
-		}
+		if (!AscFormat.isValidShapeType(preset)) preset = "rect";
+
+		let geometry = AscFormat.CreateGeometry(preset);
 		return Api.private_CreateGeometry(geometry);
 	};
 
@@ -5068,7 +5093,7 @@
 	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {string} hexString
+	 * @param {string} hexString - The HEX string representing a color.
 	 * @returns {ApiColor}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/HexColor.js
 	 */
@@ -5096,6 +5121,15 @@
 		return new ApiColor('theme', index);
 	};
 
+	function private_IsHexString(s) {
+		for (let i = 0; i < s.length; i++) {
+			const c = s.charCodeAt(i);
+			if (!((c >= 0x30 && c <= 0x39) || (c >= 0x41 && c <= 0x46) || (c >= 0x61 && c <= 0x66)))
+				return false;
+		}
+		return true;
+	}
+
 	/**
 	 * Creates an ApiColor from a universal input. The method recognizes several call signatures and either delegates to a narrower factory or constructs an ApiColor directly.
 	 * <b>Numeric components</b>: "Api.Color(r, g, b)" or "Api.Color(r, g, b, a)" creates an RGB or RGBA color from byte components (0-255).
@@ -5117,15 +5151,6 @@
 	 * @returns {ApiColor}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/Color.js
 	 */
-	function private_IsHexString(s) {
-		for (let i = 0; i < s.length; i++) {
-			const c = s.charCodeAt(i);
-			if (!((c >= 0x30 && c <= 0x39) || (c >= 0x41 && c <= 0x46) || (c >= 0x61 && c <= 0x66)))
-				return false;
-		}
-		return true;
-	}
-
 	Api.Color = function (r, g, b, a) {
 		if (arguments.length === 4)
 			return Api.RGBA(r, g, b, a);
@@ -10756,6 +10781,18 @@
 		return this.Paragraph.Content.length - 1;
 	};
 	/**
+	 * Returns true if the paragraph has no content elements (only the paragraph end mark).
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @since 9.5.0
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/IsEmpty.js
+	 */
+	ApiParagraph.prototype.IsEmpty = function()
+	{
+		return this.Paragraph.IsEmpty();
+	};
+	/**
 	 * Returns a paragraph element using the position specified.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
@@ -11360,7 +11397,7 @@
 		{
 			if (editor.editorId === AscCommon.c_oEditorId.Word)
 				this.Paragraph.Add(new ParaTextPr({HighLight : highlight_None}));
-			else if (editor.editorId === AscCommon.c_oEditorId.Presentation)
+			else if (editor.editorId === AscCommon.c_oEditorId.Presentation || Asc.editor.isPdfEditor())
 				this.Paragraph.Add(new ParaTextPr({HighlightColor : null}));
 		}
 		else
@@ -11371,7 +11408,7 @@
 				color = new CDocumentColor(color.r, color.g, color.b);
 				this.Paragraph.Add(new ParaTextPr({HighLight : color}));
 			}
-			else if (color && editor.editorId === AscCommon.c_oEditorId.Presentation)
+			else if (color && editor.editorId === AscCommon.c_oEditorId.Presentation || Asc.editor.isPdfEditor())
 			{
 				color = AscFormat.CreateUniColorRGB(color.r, color.g, color.b);
 				this.Paragraph.Add(new ParaTextPr({HighlightColor : color}));
@@ -12521,18 +12558,6 @@
 		return true;
 	};
 
-
-	/**
-	 * Returns an internal ID of the current content paragraph.
-	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @returns {string}
-	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetInternalId.js
-	 */
-	ApiParagraph.prototype.GetInternalId = function()
-	{
-		return this.Paragraph.GetId();
-	};
 	/**
 	 * Forces a page break before the paragraph.
 	 * @memberof ApiParagraph
@@ -12949,114 +12974,7 @@
 
 		return runTextPr;
 	};
-	/**
-	 * Sets the bold property to the text character.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {boolean} isBold - Specifies that the contents of the current run are displayed bold.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetBold.js
-	 */
-	ApiRun.prototype.SetBold = function(isBold)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetBold(isBold);
-		
-		return oTextPr;
-	};
-	/**
-	 * Specifies that any lowercase characters in the current text run are formatted for display only as their capital letter character equivalents.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {boolean} isCaps - Specifies that the contents of the current run are displayed capitalized.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetCaps.js
-	 */
-	ApiRun.prototype.SetCaps = function(isCaps)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetCaps(isCaps);
-		
-		return oTextPr;
-	};
-
-	/**
-	 * Sets the text color for the current text run.
-	 *
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE"]
-	 *
-	 * @deprecated since 9.1.0 version.
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then (r, g, b) parameters will be ignored.
-	 * @return {ApiTextPr}
-	 *
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetColor.js
-	 */
-	/**
-	 * Sets the text color for the current text run.
-	 *
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 *
-	 * @since 9.1.0
-	 * @param {ApiColor} color - The text color.
-	 * @return {ApiTextPr}
-	 *
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetColor.js
-	 */
-	ApiRun.prototype.SetColor = function (color) {
-		const oTextPr = this.GetTextPr();
-		oTextPr.SetColor.apply(oTextPr, arguments);
-		return oTextPr;
-	};
-	/**
-	 * Specifies that the contents of the current run are displayed with two horizontal lines through each character displayed on the line.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {boolean} isDoubleStrikeout - Specifies that the contents of the current run are displayed double struck through.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetDoubleStrikeout.js
-	 */
-	ApiRun.prototype.SetDoubleStrikeout = function(isDoubleStrikeout)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetDoubleStrikeout(isDoubleStrikeout);
-		
-		return oTextPr;
-	};
-	/**
-	 * Sets the text color to the current text run.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CSE", "CPE", "PDFE"]
-	 * @param {ApiFill} oApiFill - The color or pattern used to fill the text color.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetFill.js
-	 */
-	ApiRun.prototype.SetFill = function(oApiFill)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetFill(oApiFill);
-		
-		return oTextPr;
-	};
-	/**
-	 * Sets all 4 font slots with the specified font family.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {string} sFontFamily - The font family or families used for the current text run.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetFontFamily.js
-	 */
-	ApiRun.prototype.SetFontFamily = function(sFontFamily)
-	{
-		LoadFont(sFontFamily);
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetFontFamily(sFontFamily);
-		return oTextPr;
-	};
+	
 	/**
 	 * Returns all font names from all elements inside the current run.
 	 * @memberof ApiRun
@@ -13076,215 +12994,7 @@
 		}
 		return arrFonts;
 	};
-	/**
-	 * Sets the font size to the characters of the current text run.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {hps} nSize - The text size value measured in half-points (1/144 of an inch).
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetFontSize.js
-	 */
-	ApiRun.prototype.SetFontSize = function(nSize)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetFontSize(nSize);
-		
-		return oTextPr;
-	};
-	/**
-	 * Specifies a highlighting color which is applied as a background to the contents of the current run.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {highlightColor} sColor - Available highlight color.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetHighlight.js
-	 */
-	ApiRun.prototype.SetHighlight = function(sColor)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetHighlight(sColor);
-		
-		return oTextPr;
-	};
-	/**
-	 * Sets the italic property to the text character.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {boolean} isItalic - Specifies that the contents of the current run are displayed italicized.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetItalic.js
-	 */
-	ApiRun.prototype.SetItalic = function(isItalic)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetItalic(isItalic);
-		
-		return oTextPr;
-	};
-	/**
-	 * Specifies the languages which will be used to check spelling and grammar (if requested) when processing
-	 * the contents of this text run.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {string} sLangId - The possible value for this parameter is a language identifier as defined by
-	 * RFC 4646/BCP 47. Example: "en-CA".
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetLanguage.js
-	 */
-	ApiRun.prototype.SetLanguage = function(sLangId)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetLanguage(sLangId);
-		
-		return oTextPr;
-	};
-	/**
-	 * Specifies an amount by which text is raised or lowered for this run in relation to the default
-	 * baseline of the surrounding non-positioned text.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {hps} nPosition - Specifies a positive (raised text) or negative (lowered text)
-	 * measurement in half-points (1/144 of an inch).
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetPosition.js
-	 */
-	ApiRun.prototype.SetPosition = function(nPosition)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetPosition(nPosition);
-		
-		return oTextPr;
-	};
-
-	/**
-	 * Specifies the shading applied to the contents of the current text run.
-	 *
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE"]
-	 *
-	 * @deprecated since 9.1.0 version.
-	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @returns {ApiTextPr}
-	 *
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetShd.js
-	 */
-	/**
-	 * Specifies the shading applied to the contents of the current text run.
-	 *
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE"]
-	 *
-	 * @since 9.1.0
-	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
-	 * @param {ApiColor} color - The shading color.
-	 * @returns {ApiTextPr}
-	 *
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetShd.js
-	 */
-	ApiRun.prototype.SetShd = function (type, color)
-	{
-		const oTextPr = this.GetTextPr();
-		oTextPr.SetShd.apply(oTextPr, arguments);
-		return oTextPr;
-	};
-	/**
-	 * Specifies that all the small letter characters in this text run are formatted for display only as their capital
-	 * letter character equivalents which are two points smaller than the actual font size specified for this text.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {boolean} isSmallCaps - Specifies if the contents of the current run are displayed capitalized two points smaller or not.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetSmallCaps.js
-	 */
-	ApiRun.prototype.SetSmallCaps = function(isSmallCaps)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetSmallCaps(isSmallCaps);
-		
-		return oTextPr;
-	};
-	/**
-	 * Sets the text spacing measured in twentieths of a point.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {twips} nSpacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetSpacing.js
-	 */
-	ApiRun.prototype.SetSpacing = function(nSpacing)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetSpacing(nSpacing);
-		
-		return oTextPr;
-	};
-	/**
-	 * Specifies that the contents of the current run are displayed with a single horizontal line through the center of the line.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {boolean} isStrikeout - Specifies that the contents of the current run are displayed struck through.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetStrikeout.js
-	 */
-	ApiRun.prototype.SetStrikeout = function(isStrikeout)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetStrikeout(isStrikeout);
-		
-		return oTextPr;
-	};
-	/**
-	 * Sets a style to the current run.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE"]
-	 * @param {ApiStyle} oStyle - The style which must be applied to the text run.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetStyle.js
-	 */
-	ApiRun.prototype.SetStyle = function(oStyle)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetStyle(oStyle);
-		
-		return oTextPr;
-	};
-	/**
-	 * Specifies that the contents of the current run are displayed along with a line appearing directly below the character
-	 * (less than all the spacing above and below the characters on the line).
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {boolean} isUnderline - Specifies that the contents of the current run are displayed underlined.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetUnderline.js
-	 */
-	ApiRun.prototype.SetUnderline = function(isUnderline)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetUnderline(isUnderline);
-		
-		return oTextPr;
-	};
-	/**
-	 * Specifies the alignment which will be applied to the contents of the current run in relation to the default appearance of the text run:
-	 * <b>"baseline"</b> - the characters in the current text run will be aligned by the default text baseline.
-	 * <b>"subscript"</b> - the characters in the current text run will be aligned below the default text baseline.
-	 * <b>"superscript"</b> - the characters in the current text run will be aligned above the default text baseline.
-	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {("baseline" | "subscript" | "superscript")} sType - The vertical alignment type applied to the text contents.
-	 * @returns {ApiTextPr}
-	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetVertAlign.js
-	 */
-	ApiRun.prototype.SetVertAlign = function(sType)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetVertAlign(sType);
-		
-		return oTextPr;
-	};
+	
 	/**
 	 * Wraps a run in a mail merge field.
 	 * @memberof ApiRun
@@ -14272,6 +13982,27 @@
 		this.Table.Set_TableLook(oTableLook);
 		return true;
 	};
+
+	/**
+	 * Gets table look properties
+	 * @memberof ApiTable
+	 * @typeofeditors ["CDE"]
+	 * @returns {TableLook}
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetTableLook.js
+	 */
+	ApiTable.prototype.GetTableLook = function() {
+		let oTableLook = this.Table.Get_TableLook();
+
+		return {
+			firstCol:	oTableLook.IsFirstCol(),
+			firstRow:	oTableLook.IsFirstRow(),
+			lastCol:	oTableLook.IsLastCol(),
+			lastRow:	oTableLook.IsLastRow(),
+			bandHor:	oTableLook.IsBandHor(),
+			bandVer:	oTableLook.IsBandVer()
+		}
+	};
+
 	/**
 	 * Splits the cell into a given number of rows and columns.
 	 * @memberof ApiTable
@@ -14455,7 +14186,7 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiTableCell} oCell - The cell which is placed in the row that will be removed.
-	 * @returns {boolean} Is the table empty after removing.
+	 * @returns {boolean} - result of deletion
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveRow.js
 	 */
 	ApiTable.prototype.RemoveRow = function(oCell)
@@ -14468,17 +14199,17 @@
 
 		this.Table.RemoveSelection();
 		this.Table.CurCell = oCell.Cell;
-		var isEmpty = !(this.Table.RemoveTableRow());
+		let result = this.Table.RemoveTableRow();
 
 		private_EndSilentMode();
-		return isEmpty;
+		return result;
 	};
 	/**
 	 * Removes a table column with a specified cell.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiTableCell} oCell - The cell which is placed in the column that will be removed.
-	 * @returns {boolean} Is the table empty after removing.
+	 * @returns {boolean} - result of deletion
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveColumn.js
 	 */
 	ApiTable.prototype.RemoveColumn = function(oCell)
@@ -14491,10 +14222,10 @@
 
 		this.Table.RemoveSelection();
 		this.Table.CurCell = oCell.Cell;
-		var isEmpty = !(this.Table.RemoveTableColumn());
+		let result = this.Table.RemoveTableColumn();
 
 		private_EndSilentMode();
-		return isEmpty;
+		return result;
 	};
 	/**
 	 * Creates a copy of the current table.
@@ -16699,15 +16430,15 @@
 		{
 			if (editor.editorId === AscCommon.c_oEditorId.Word)
 				this.TextPr.HighLight = AscCommonWord.highlight_None;
-			else if (editor.editorId === AscCommon.c_oEditorId.Presentation)
-				this.TextPr.HighlightColor = null;
+			else if (editor.editorId === AscCommon.c_oEditorId.Presentation || Asc.editor.isPdfEditor())
+				this.TextPr.HighlightColor = undefined;
 		}
 		else
 		{
 			var color = private_getHighlightColorByName(sColor);
 			if (color && editor.editorId === AscCommon.c_oEditorId.Word)
 				this.TextPr.HighLight = new CDocumentColor(color.r, color.g, color.b)
-			else if (color && editor.editorId === AscCommon.c_oEditorId.Presentation)
+			else if (color && editor.editorId === AscCommon.c_oEditorId.Presentation || Asc.editor.isPdfEditor())
 				this.TextPr.HighlightColor = AscFormat.CreateUniColorRGB(color.r, color.g, color.b)
 		}
 		this.private_OnChange();
@@ -16728,8 +16459,8 @@
 		let HighLight;
 		if (Asc.editor.editorId === AscCommon.c_oEditorId.Word)
 			HighLight = this.TextPr.HighLight;
-		else if (Asc.editor.editorId === AscCommon.c_oEditorId.Presentation)
-			HighLight = this.TextPr.HighlightColor;
+		else if (Asc.editor.editorId === AscCommon.c_oEditorId.Presentation || Asc.editor.isPdfEditor())
+			HighLight = this.TextPr.HighlightColor ? this.TextPr.HighlightColor : AscCommonWord.highlight_None;
 
 		return private_getHighlightNameByColor(HighLight);
 	};
@@ -19392,21 +19123,21 @@
 	 * Sets the relative height of the object (image, shape, chart) bounding box.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @param {SizeRelFromV} [sRelativeFrom="page"] - The document element which will be taken as a countdown point for the object height.
-	 * @param {percentage} nPercent
+	 * @param {SizeRelFromV} [relativeFrom="page"] - The document element which will be taken as a countdown point for the object height.
+	 * @param {percentage} percent - The height of the object as a percentage of the specified element.
 	 * @since 9.3.0
 	 * @returns {boolean}
-	 * 
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetRelativeHeight.js
 	 */
-	ApiDrawing.prototype.SetRelativeHeight = function(sRelativeFrom, nPercent)
+	ApiDrawing.prototype.SetRelativeHeight = function(relativeFrom, percent)
 	{
-		let nRelativeFrom = private_GetRelativeFromV(sRelativeFrom);
+		let nRelativeFrom = private_GetRelativeFromV(relativeFrom);
 		let nRelSize = AscFormat.ConvertRelPositionVToRelSize(nRelativeFrom);
 
 		this.getParaDrawing().SetSizeRelV({
 			RelativeFrom: nRelSize,
-			Percent: nPercent / 100
+			Percent: percent / 100
 		});
 		return true;
 	};
@@ -19414,20 +19145,20 @@
 	 * Sets the relative width of the object (image, shape, chart) bounding box.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @param {SizeRelFromH} [sRelativeFrom="page"] - The document element which will be taken as a countdown point for the object width.
-	 * @param {percentage} nPercent
+	 * @param {SizeRelFromH} [relativeFrom="page"] - The document element which will be taken as a countdown point for the object width.
+	 * @param {percentage} percent - The width of the object as a percentage of the specified element.
 	 * @since 9.3.0
 	 * @returns {boolean}
-	 * 
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetRelativeWidth.js
 	 */
-	ApiDrawing.prototype.SetRelativeWidth = function(sRelativeFrom, nPercent)
+	ApiDrawing.prototype.SetRelativeWidth = function(relativeFrom, percent)
 	{
-		let nRelativeFrom = private_GetRelativeFromH(sRelativeFrom);
+		let nRelativeFrom = private_GetRelativeFromH(relativeFrom);
 		let nRelSize = AscFormat.ConvertRelPositionHToRelSize(nRelativeFrom);
 		this.getParaDrawing().SetSizeRelH({
 			RelativeFrom: nRelSize,
-			Percent: nPercent / 100
+			Percent: percent / 100
 		});
 		return true;
 	};
@@ -20155,6 +19886,86 @@
 		return null;
 	};
 	/**
+	 * Sets the title of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @param {string} title - The title to set for the current drawing.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetTitle.js
+	 */
+	ApiDrawing.prototype.SetTitle = function(title)
+	{
+		if (!title)
+			return false;
+
+		let oDrawing = this.getParaDrawing();
+		let oDocPr = oDrawing.docPr;
+		if (oDocPr)
+		{
+			oDocPr.setTitle(title);
+			return true;
+		}
+		return false;
+	};
+	/**
+	 * Gets the title of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {string | null} - The title of the current drawing, or null if not set.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetTitle.js
+	 */
+	ApiDrawing.prototype.GetTitle = function()
+	{
+		let oDrawing = this.getParaDrawing();
+		let oDocPr = oDrawing.docPr;
+		if (oDocPr && oDocPr.title)
+			return oDocPr.title;
+
+		return null;
+	};
+	/**
+	 * Sets the description of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @param {string} description - The description to set for the current drawing.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetDescription.js
+	 */
+	ApiDrawing.prototype.SetDescription = function(description)
+	{
+		if (!description)
+			return false;
+
+		let oDrawing = this.getParaDrawing();
+		let oDocPr = oDrawing.docPr;
+		if (oDocPr)
+		{
+			oDocPr.setDescr(description);
+			return true;
+		}
+		return false;
+	};
+	/**
+	 * Gets the description of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {string | null} - The description of the current drawing, or null if not set.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetDescription.js
+	 */
+	ApiDrawing.prototype.GetDescription = function()
+	{
+		let oDrawing = this.getParaDrawing();
+		let oDocPr = oDrawing.docPr;
+		if (oDocPr && oDocPr.descr)
+			return oDocPr.descr;
+
+		return null;
+	};
+	/**
 	 * Converts the ApiDrawing object into the JSON object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
@@ -20337,7 +20148,60 @@
 
 		return nRad * 180 / Math.PI
 	};
+	/**
+	 * Sets whether the aspect ratio of the drawing is locked.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @param {boolean} bAspect - Specifies whether the aspect ratio of this drawing is locked.
+	 * @returns {boolean} Returns `true` if the lock aspect was successfully set, otherwise returns `false`.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLockAspect.js
+	 */
+	ApiDrawing.prototype.SetLockAspect = function(bAspect)
+	{
+		if (bAspect !== false && bAspect !== true)
+			return false;
 
+		this.Drawing.setNoChangeAspect(bAspect);
+		return true;
+	};
+	/**
+	 * Returns whether the aspect ratio of the drawing is locked.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockAspect.js
+	 */
+	ApiDrawing.prototype.GetLockAspect = function()
+	{
+		return this.Drawing.getNoChangeAspect();
+	};
+	/**
+	 * Sets whether the drawing object is allowed to overlap other drawing objects.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @param {boolean} bOverlap - Specifies whether this drawing object can overlap other drawing objects.
+	 * @returns {void}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetAllowOverlap.js
+	 */
+	ApiDrawing.prototype.SetAllowOverlap = function(bOverlap) {
+		let drawing = this.getParaDrawing();
+		drawing.Set_AllowOverlap(bOverlap);
+	};
+	/**
+	 * Returns whether the drawing object is allowed to overlap other drawing objects.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetAllowOverlap.js
+	 */
+	ApiDrawing.prototype.GetAllowOverlap = function() {
+		let drawing = this.getParaDrawing();
+		return drawing.Get_AllowOverlap();
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiImage
@@ -20537,17 +20401,17 @@
 			{
 				case "top":
 				{
-					this.Shape.setVerticalAlign(4);
+					this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
 					break;
 				}
 				case "center":
 				{
-					this.Shape.setVerticalAlign(1);
+					this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
 					break;
 				}
 				case "bottom":
 				{
-					this.Shape.setVerticalAlign(0);
+					this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
 					break;
 				}
 				default:
@@ -20559,6 +20423,34 @@
 
 		return false;
 	};
+
+	/**
+	 * Gets the vertical alignment from the shape content where a paragraph or text runs can be inserted.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CDE"]
+	 * @returns {VerticalTextAlign}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetVerticalTextAlign.js
+	 */
+	ApiShape.prototype.GetVerticalTextAlign = function() {
+		let vAlign = this.Shape.getVerticalAlign();
+
+		switch(vAlign)
+		{
+			case AscFormat.VERTICAL_ANCHOR_TYPE_TOP:
+			{
+				return "top";
+			}
+			case AscFormat.VERTICAL_ANCHOR_TYPE_CENTER:
+			{
+				return "center";
+			}
+			case AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM:
+			{
+				return "bottom";
+			}
+		}
+	};
+
 	/**
 	 * Sets the text paddings to the current shape.
 	 * @memberof ApiShape
@@ -20794,6 +20686,18 @@
 		if (parent.recalculateGeometry) parent.recalculateGeometry();
 		return this.geometry.isCalculated();
 	};
+
+	/**
+	 * Returns a type of the ApiGeometry class.
+	 * @memberof ApiGeometry
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @returns {"geometry"}
+	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/GetClassType.js
+	 */
+	ApiGeometry.prototype.GetClassType = function() {
+		return "geometry";
+	};
+
 	/**
 	 * Checks whether the current geometry is custom.
 	 * @memberof ApiGeometry
@@ -20811,7 +20715,7 @@
 	 * Returns the name of the preset shape if the current geometry is based on a preset.
 	 * @memberof ApiGeometry
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @returns {ShapeType | null}
+	 * @returns {?ShapeType}
 	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/GetPreset.js
 	 * @since 9.1.0
 	 */
@@ -21516,7 +21420,7 @@
 	 * Returns a type of the chart object.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @returns {ChartType}
+	 * @returns {ChartTypeLegacy}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/GetChartType.js
 	 */
 	ApiChart.prototype.GetChartType = function()
@@ -21527,6 +21431,23 @@
 		}
 		let nType = this.Chart.getChartType();
 		return private_ChartInternalTypeToBuilder(nType);
+	};
+
+	/**
+	 * Returns a type of the chart object using the chart type names from the {@link ChartType} enumeration.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @returns {ChartType}
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/GetType.js
+	 */
+	ApiChart.prototype.GetType = function()
+	{
+		if(!this.Chart)
+		{
+			return "unknown";
+		}
+		let nType = this.Chart.getChartType();
+		return private_ChartInternalTypeToBuilderEx(nType);
 	};
 
 	/**
@@ -21712,6 +21633,26 @@
 	{
 		AscFormat.builder_SetShowDataLabels(this.Chart, bShowSerName, bShowCatName, bShowVal, bShowPercent);
 		return true;
+	};
+
+	/**
+	 * Specifies whether the data table is displayed below the chart, optionally with the legend keys.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @param {boolean} bShow - Whether to show or hide the data table below the chart.
+	 * @param {boolean} [bShowKeys=false] - Whether to show the legend keys in the data table.
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetShowDataTable.js
+	 */
+	ApiChart.prototype.SetShowDataTable = function(bShow, bShowKeys)
+	{
+		if(this.Chart && this.Chart.chart)
+		{
+			this.Chart.showDataTable(bShow, bShowKeys);
+			return true;
+		}
+		return false;
 	};
 
 
@@ -22448,7 +22389,7 @@
 	 * Returns a chart type of the current series.
 	 * @memberof ApiChartSeries
 	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
-	 * @returns {ChartType}
+	 * @returns {ChartTypeLegacy}
 	 * @see office-js-api/Examples/{Editor}/ApiChartSeries/Methods/GetChartType.js
 	 */
 	ApiChartSeries.prototype.GetChartType = function()
@@ -22460,6 +22401,24 @@
 		}
 		let nType = oSeries.asc_getChartType();
 		return private_ChartInternalTypeToBuilder(nType);
+	};
+
+	/**
+	 * Returns a chart type of the current series using the chart type names from the {@link ChartType} enumeration.
+	 * @memberof ApiChartSeries
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
+	 * @returns {ChartType}
+	 * @see office-js-api/Examples/{Editor}/ApiChartSeries/Methods/GetType.js
+	 */
+	ApiChartSeries.prototype.GetType = function()
+	{
+		let oSeries = this.private_GetSeries();
+		if(!oSeries)
+		{
+			return "unknown";
+		}
+		let nType = oSeries.asc_getChartType();
+		return private_ChartInternalTypeToBuilderEx(nType);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -29308,8 +29267,8 @@
 	 * The result is an integer value.
 	 *
 	 * @memberof Api
-	 * @typeofeditors ["CDE", CSE", "CPE", "PDFE"]
-	 * @param {mm} mm
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @param {mm} mm - The value in millimeters.
 	 * @returns {EMU} - The value in English Metric Units (EMUs), as an integer.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/MillimetersToEmus.js
 	 */
@@ -29318,20 +29277,24 @@
 	};
 
 	/**
-	 * Converts English measure units (EMU) to millimeters.
+	 * Converts English Metric Units (EMUs) to millimeters.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {EMU} emu
-	 * @returns {mm}
+	 * @param {EMU} emu - The value in English Metric Units (EMUs).
+	 * @returns {mm} - The value in millimeters.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/EmusToMillimeters.js
 	 */
 	Api.EmusToMillimeters = function EmusToMillimeters(emu) {
 		return emu * AscCommonWord.g_dKoef_emu_to_mm;
 	};
 
+
+
 	/**
-	 * Compares the current document with the specified file.
-	 * @param {object} file - An object containing the information about the document for comparison.
+	 * Compares the current document with another document opened via builderJS.OpenTmpFile. Tracked changes between the two documents are produced in the current document.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {object} file - The second document, returned by builderJS.OpenTmpFile.
 	 */
 	Api.CompareDocuments = function(file)
 	{
@@ -29339,8 +29302,10 @@
 	};
 
 	/**
-	 * Merges the current document with the specified file.
-	 * @param {object} file - An object containing the information about the document for merging.
+	 * Merges the current document with another document opened via builderJS.OpenTmpFile. Its contents are merged into the current document.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {object} file - The second document, returned by builderJS.OpenTmpFile.
 	 */
 	Api.MergeDocuments = function(file)
 	{
@@ -31027,6 +30992,7 @@
 	ApiParagraph.prototype["GetNumbering"]           = ApiParagraph.prototype.GetNumbering;
 	ApiParagraph.prototype["SetNumbering"]           = ApiParagraph.prototype.SetNumbering;
 	ApiParagraph.prototype["GetElementsCount"]       = ApiParagraph.prototype.GetElementsCount;
+	ApiParagraph.prototype["IsEmpty"]                = ApiParagraph.prototype.IsEmpty;
 	ApiParagraph.prototype["GetElement"]             = ApiParagraph.prototype.GetElement;
 	ApiParagraph.prototype["RemoveElement"]          = ApiParagraph.prototype.RemoveElement;
 	ApiParagraph.prototype["Delete"]                 = ApiParagraph.prototype.Delete;
@@ -31090,7 +31056,6 @@
 	ApiParagraph.prototype["AddCaption"]             = ApiParagraph.prototype.AddCaption;
 	ApiParagraph.prototype["SetSection"]             = ApiParagraph.prototype.SetSection;
 	ApiParagraph.prototype["GetSection"]             = ApiParagraph.prototype.GetSection;
-	ApiParagraph.prototype["GetInternalId"]          = ApiParagraph.prototype.GetInternalId;
 	ApiParagraph.prototype["ToJSON"]                 = ApiParagraph.prototype.ToJSON;
 	ApiParagraph.prototype["AddPageBreakBefore"]     = ApiParagraph.prototype.AddPageBreakBefore;
 
@@ -31114,25 +31079,7 @@
 	ApiRun.prototype["GetParentTableCell"]           = ApiRun.prototype.GetParentTableCell;
 	ApiRun.prototype["GetParentParagraph"]           = ApiRun.prototype.GetParentParagraph;
 	ApiRun.prototype["SetTextPr"]                    = ApiRun.prototype.SetTextPr;
-	ApiRun.prototype["SetBold"]                      = ApiRun.prototype.SetBold;
-	ApiRun.prototype["SetCaps"]                      = ApiRun.prototype.SetCaps;
-	ApiRun.prototype["SetColor"]                     = ApiRun.prototype.SetColor;
-	ApiRun.prototype["SetDoubleStrikeout"]           = ApiRun.prototype.SetDoubleStrikeout;
-	ApiRun.prototype["SetFill"]                      = ApiRun.prototype.SetFill;
-	ApiRun.prototype["SetFontFamily"]                = ApiRun.prototype.SetFontFamily;
 	ApiRun.prototype["GetFontNames"]                 = ApiRun.prototype.GetFontNames;
-	ApiRun.prototype["SetFontSize"]                  = ApiRun.prototype.SetFontSize;
-	ApiRun.prototype["SetHighlight"]                 = ApiRun.prototype.SetHighlight;
-	ApiRun.prototype["SetItalic"]                    = ApiRun.prototype.SetItalic;
-	ApiRun.prototype["SetLanguage"]                  = ApiRun.prototype.SetLanguage;
-	ApiRun.prototype["SetPosition"]                  = ApiRun.prototype.SetPosition;
-	ApiRun.prototype["SetShd"]                       = ApiRun.prototype.SetShd;
-	ApiRun.prototype["SetSmallCaps"]                 = ApiRun.prototype.SetSmallCaps;
-	ApiRun.prototype["SetSpacing"]                   = ApiRun.prototype.SetSpacing;
-	ApiRun.prototype["SetStrikeout"]                 = ApiRun.prototype.SetStrikeout;
-	ApiRun.prototype["SetStyle"]                     = ApiRun.prototype.SetStyle;
-	ApiRun.prototype["SetUnderline"]                 = ApiRun.prototype.SetUnderline;
-	ApiRun.prototype["SetVertAlign"]                 = ApiRun.prototype.SetVertAlign;
 	ApiRun.prototype["WrapInMailMergeField"]         = ApiRun.prototype.WrapInMailMergeField;
 	ApiRun.prototype["ToJSON"]                       = ApiRun.prototype.ToJSON;
 	ApiRun.prototype["AddComment"]                   = ApiRun.prototype.AddComment;
@@ -31193,6 +31140,7 @@
 	ApiTable.prototype["MergeCells"]                 = ApiTable.prototype.MergeCells;
 	ApiTable.prototype["SetStyle"]                   = ApiTable.prototype.SetStyle;
 	ApiTable.prototype["SetTableLook"]               = ApiTable.prototype.SetTableLook;
+	ApiTable.prototype["GetTableLook"]               = ApiTable.prototype.GetTableLook;
 	ApiTable.prototype["AddRow"]                     = ApiTable.prototype.AddRow;
 	ApiTable.prototype["AddRows"]                    = ApiTable.prototype.AddRows;
 	ApiTable.prototype["AddColumn"]                  = ApiTable.prototype.AddColumn;
@@ -31502,6 +31450,14 @@
 	ApiDrawing.prototype["GetFlipV"]				 = ApiDrawing.prototype.GetFlipV;
 	ApiDrawing.prototype["SetFlipH"]				 = ApiDrawing.prototype.SetFlipH;
 	ApiDrawing.prototype["SetFlipV"]				 = ApiDrawing.prototype.SetFlipV;
+	ApiDrawing.prototype["SetTitle"]				 = ApiDrawing.prototype.SetTitle;
+	ApiDrawing.prototype["GetTitle"]				 = ApiDrawing.prototype.GetTitle;
+	ApiDrawing.prototype["SetDescription"]			 = ApiDrawing.prototype.SetDescription;
+	ApiDrawing.prototype["GetDescription"]			 = ApiDrawing.prototype.GetDescription;
+	ApiDrawing.prototype["SetLockAspect"]			 = ApiDrawing.prototype.SetLockAspect;
+	ApiDrawing.prototype["GetLockAspect"]			 = ApiDrawing.prototype.GetLockAspect;
+	ApiDrawing.prototype["SetAllowOverlap"]			 = ApiDrawing.prototype.SetAllowOverlap;
+	ApiDrawing.prototype["GetAllowOverlap"]			 = ApiDrawing.prototype.GetAllowOverlap;
 
 	ApiDrawing.prototype["ToJSON"]                   = ApiDrawing.prototype.ToJSON;
 
@@ -31514,6 +31470,7 @@
 	ApiShape.prototype["GetClassType"]               = ApiShape.prototype.GetClassType;
 	ApiShape.prototype["GetDocContent"]              = ApiShape.prototype.GetDocContent;
 	ApiShape.prototype["SetVerticalTextAlign"]       = ApiShape.prototype.SetVerticalTextAlign;
+	ApiShape.prototype["GetVerticalTextAlign"]       = ApiShape.prototype.GetVerticalTextAlign;
 	ApiShape.prototype["SetPaddings"]                = ApiShape.prototype.SetPaddings;
 	ApiShape.prototype["GetNextShape"]               = ApiShape.prototype.GetNextShape;
 	ApiShape.prototype["GetPrevShape"]               = ApiShape.prototype.GetPrevShape;
@@ -31524,6 +31481,7 @@
 	ApiShape.prototype["SetLine"]                    = ApiShape.prototype.SetLine;
 	ApiShape.prototype["GetLine"]                    = ApiShape.prototype.GetLine;
 
+	ApiGeometry.prototype["GetClassType"]            = ApiGeometry.prototype.GetClassType;
 	ApiGeometry.prototype["IsCustom"]                = ApiGeometry.prototype.IsCustom;
 	ApiGeometry.prototype["GetPreset"]               = ApiGeometry.prototype.GetPreset;
 	ApiGeometry.prototype["GetPathCount"]            = ApiGeometry.prototype.GetPathCount;
@@ -31571,6 +31529,7 @@
 
 	ApiChart.prototype["GetClassType"]                 = ApiChart.prototype.GetClassType;
 	ApiChart.prototype["GetChartType"]                 = ApiChart.prototype.GetChartType;
+	ApiChart.prototype["GetType"]                      = ApiChart.prototype.GetType;
 	ApiChart.prototype["SetTitle"]                     = ApiChart.prototype.SetTitle;
 	ApiChart.prototype["GetTitle"]                     = ApiChart.prototype.GetTitle;
 	ApiChart.prototype["SetHorAxisTitle"]              = ApiChart.prototype.SetHorAxisTitle;
@@ -31580,6 +31539,7 @@
 	ApiChart.prototype["SetLegendPos"]                 = ApiChart.prototype.SetLegendPos;
 	ApiChart.prototype["SetLegendFontSize"]            = ApiChart.prototype.SetLegendFontSize;
 	ApiChart.prototype["SetShowDataLabels"]            = ApiChart.prototype.SetShowDataLabels;
+	ApiChart.prototype["SetShowDataTable"]             = ApiChart.prototype.SetShowDataTable;
 	ApiChart.prototype["SetShowPointDataLabel"]        = ApiChart.prototype.SetShowPointDataLabel;
 	ApiChart.prototype["SetDataLabelsTextPr"]          = ApiChart.prototype.SetDataLabelsTextPr;
 	ApiChart.prototype["SetPointDataLabelTextPr"]      = ApiChart.prototype.SetPointDataLabelTextPr;
@@ -32000,7 +31960,8 @@
 	ApiChartSeries.prototype["GetClassType"]      =  ApiChartSeries.prototype.GetClassType;
 	ApiChartSeries.prototype["ChangeChartType"]   =  ApiChartSeries.prototype.ChangeChartType;
 	ApiChartSeries.prototype["GetChartType"]      =  ApiChartSeries.prototype.GetChartType;
-	
+	ApiChartSeries.prototype["GetType"]           =  ApiChartSeries.prototype.GetType;
+
 	ApiCustomXmlParts.prototype["Add"]            = ApiCustomXmlParts.prototype.Add;
 	ApiCustomXmlParts.prototype["GetById"]        = ApiCustomXmlParts.prototype.GetById;
 	ApiCustomXmlParts.prototype["GetByNamespace"] = ApiCustomXmlParts.prototype.GetByNamespace;
@@ -32953,7 +32914,7 @@
 					return c[3];
 			}
 		}
-		else if (AscCommon.c_oEditorId.Presentation === Asc.editor.editorId)
+		else if (AscCommon.c_oEditorId.Presentation === Asc.editor.editorId || Asc.editor.isPdfEditor())
 		{
 			for (let i = 0; i < colorMap.length; ++i)
 			{
@@ -33035,6 +32996,15 @@
 			case Asc.c_oAscChartTypeSettings.line3d: {
 				return "line3D";
 			}
+			case Asc.c_oAscChartTypeSettings.lineNormalMarker: {
+				return "lineNormalMarker";
+			}
+			case Asc.c_oAscChartTypeSettings.lineStackedMarker: {
+				return "lineStackedMarker";
+			}
+			case Asc.c_oAscChartTypeSettings.lineStackedPerMarker: {
+				return "lineStackedPerMarker";
+			}
 			case Asc.c_oAscChartTypeSettings.pie: {
 				return "pie";
 			}
@@ -33046,6 +33016,18 @@
 			}
 			case Asc.c_oAscChartTypeSettings.scatter: {
 				return "scatter";
+			}
+			case Asc.c_oAscChartTypeSettings.scatterLine: {
+				return "scatterLine";
+			}
+			case Asc.c_oAscChartTypeSettings.scatterLineMarker: {
+				return "scatterLineMarker";
+			}
+			case Asc.c_oAscChartTypeSettings.scatterSmooth: {
+				return "scatterSmooth";
+			}
+			case Asc.c_oAscChartTypeSettings.scatterSmoothMarker: {
+				return "scatterSmoothMarker";
 			}
 			case Asc.c_oAscChartTypeSettings.stock: {
 				return "stock";
@@ -33059,6 +33041,15 @@
 			case Asc.c_oAscChartTypeSettings.areaStackedPer: {
 				return "areaStackedPercent";
 			}
+			case Asc.c_oAscChartTypeSettings.radar: {
+				return "radar";
+			}
+			case Asc.c_oAscChartTypeSettings.radarMarker: {
+				return "radarMarker";
+			}
+			case Asc.c_oAscChartTypeSettings.radarFilled: {
+				return "radarFilled";
+			}
 			case Asc.c_oAscChartTypeSettings.comboBarLine: {
 				return "comboBarLine";
 			}
@@ -33068,8 +33059,128 @@
 			case Asc.c_oAscChartTypeSettings.comboCustom: {
 				return "comboCustom";
 			}
+		}
+		return "unknown";
+	}
+
+	function private_ChartInternalTypeToBuilderEx(sType) {
+		switch (sType) {
+			case Asc.c_oAscChartTypeSettings.unknown: {
+				return "unknown";
+			}
+			case Asc.c_oAscChartTypeSettings.barNormal: {
+				return "ColumnClustered";
+			}
+			case Asc.c_oAscChartTypeSettings.barStacked: {
+				return "ColumnStacked";
+			}
+			case Asc.c_oAscChartTypeSettings.barStackedPer: {
+				return "ColumnStacked100";
+			}
+			case Asc.c_oAscChartTypeSettings.barNormal3d: {
+				return "3DColumnClustered";
+			}
+			case Asc.c_oAscChartTypeSettings.barStacked3d: {
+				return "3DColumnStacked";
+			}
+			case Asc.c_oAscChartTypeSettings.barStackedPer3d: {
+				return "3DColumnStacked100";
+			}
+			case Asc.c_oAscChartTypeSettings.barNormal3dPerspective: {
+				return "3DColumn";
+			}
+			case Asc.c_oAscChartTypeSettings.hBarNormal: {
+				return "BarClustered";
+			}
+			case Asc.c_oAscChartTypeSettings.hBarStacked: {
+				return "BarStacked";
+			}
+			case Asc.c_oAscChartTypeSettings.hBarStackedPer: {
+				return "BarStacked100";
+			}
+			case Asc.c_oAscChartTypeSettings.hBarNormal3d: {
+				return "3DBarClustered";
+			}
+			case Asc.c_oAscChartTypeSettings.hBarStacked3d: {
+				return "3DBarStacked";
+			}
+			case Asc.c_oAscChartTypeSettings.hBarStackedPer3d: {
+				return "3DBarStacked100";
+			}
+			case Asc.c_oAscChartTypeSettings.lineNormal: {
+				return "Line";
+			}
+			case Asc.c_oAscChartTypeSettings.lineStacked: {
+				return "LineStacked";
+			}
+			case Asc.c_oAscChartTypeSettings.lineStackedPer: {
+				return "LineStacked100";
+			}
+			case Asc.c_oAscChartTypeSettings.lineNormalMarker: {
+				return "LineMarkers";
+			}
+			case Asc.c_oAscChartTypeSettings.lineStackedMarker: {
+				return "LineMarkersStacked";
+			}
+			case Asc.c_oAscChartTypeSettings.lineStackedPerMarker: {
+				return "LineMarkersStacked100";
+			}
+			case Asc.c_oAscChartTypeSettings.line3d: {
+				return "3DLine";
+			}
+			case Asc.c_oAscChartTypeSettings.pie: {
+				return "Pie";
+			}
+			case Asc.c_oAscChartTypeSettings.pie3d: {
+				return "3DPie";
+			}
+			case Asc.c_oAscChartTypeSettings.doughnut: {
+				return "Doughnut";
+			}
+			case Asc.c_oAscChartTypeSettings.scatter: {
+				return "XYScatter";
+			}
+			case Asc.c_oAscChartTypeSettings.scatterLine: {
+				return "XYScatterLinesNoMarkers";
+			}
+			case Asc.c_oAscChartTypeSettings.scatterLineMarker: {
+				return "XYScatterLines";
+			}
+			case Asc.c_oAscChartTypeSettings.scatterSmooth: {
+				return "XYScatterSmoothNoMarkers";
+			}
+			case Asc.c_oAscChartTypeSettings.scatterSmoothMarker: {
+				return "XYScatterSmooth";
+			}
+			case Asc.c_oAscChartTypeSettings.stock: {
+				return "StockHLC";
+			}
+			case Asc.c_oAscChartTypeSettings.areaNormal: {
+				return "Area";
+			}
+			case Asc.c_oAscChartTypeSettings.areaStacked: {
+				return "AreaStacked";
+			}
+			case Asc.c_oAscChartTypeSettings.areaStackedPer: {
+				return "AreaStacked100";
+			}
+			case Asc.c_oAscChartTypeSettings.comboBarLine: {
+				return "ComboColumnClusteredLine";
+			}
+			case Asc.c_oAscChartTypeSettings.comboBarLineSecondary: {
+				return "ComboColumnClusteredLineSecondaryAxis";
+			}
 			case Asc.c_oAscChartTypeSettings.comboCustom: {
-				return "comboCustom";
+				return "Combo";
+			}
+			case Asc.c_oAscChartTypeSettings.radar: {
+				return "Radar";
+			}
+			case Asc.c_oAscChartTypeSettings.radarMarker: {
+				return "RadarMarkers";
+			}
+			case Asc.c_oAscChartTypeSettings.radarFilled: {
+				return "RadarFilled";
 			}
 		}
 		return "unknown";

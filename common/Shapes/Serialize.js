@@ -705,10 +705,23 @@ function BinaryPPTYLoader()
         }
         else if (this.Api != null && this.IsThemeLoader)
         {
-            var theme_loader = this.Api.ThemeLoader;
-            var _info = theme_loader.themes_info_editor[theme_loader.CurrentLoadThemeIndex];
-            _info.ImageMap = this.presentation.ImageMap;
-            _info.FontMap = this.presentation.Fonts;
+            let allNames = {};
+            for (let i = 0; i < this.presentation.slideMasters.length; ++i)
+            {
+                let master = this.presentation.slideMasters[i];
+                if (master)
+                    master.getAllFonts(allNames);
+            }
+            let fonts = [];
+            for (let name in allNames)
+                fonts.push(new AscFonts.CFont(name));
+            AscFonts.FontPickerByCharacter.extendFonts(fonts);
+            this.presentation.Fonts = fonts;
+
+            let themeLoader = this.Api.ThemeLoader;
+            let info = themeLoader.themes_info_editor[themeLoader.CurrentLoadThemeIndex];
+            info.ImageMap = this.presentation.ImageMap;
+            info.FontMap = this.presentation.Fonts;
         }
     };
 
@@ -2982,6 +2995,8 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
+                    s.GetLong();
+                    s.Skip2(1);
                     var count_effects = s.GetULong();
                     for (var _eff = 0; _eff < count_effects; ++_eff)
                     {
@@ -4017,9 +4032,7 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
-                    var cSld = new AscFormat.CSld(master);
-                    this.ReadCSld(cSld);
-                    AscCommonSlide.fFillFromCSld(master, cSld);
+                    this.ReadCSld(master.cSld);
                     break;
                 }
                 case 1:
@@ -4179,9 +4192,7 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
-                    var cSld = new AscFormat.CSld(layout);
-                    this.ReadCSld(cSld);
-                    AscCommonSlide.fFillFromCSld(layout, cSld);
+                    this.ReadCSld(layout.cSld);
                     break;
                 }
                 case 1:
@@ -4260,9 +4271,7 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
-                    var cSld = new AscFormat.CSld(slide);
-                    this.ReadCSld(cSld);
-                    AscCommonSlide.fFillFromCSld(slide, cSld);
+                    this.ReadCSld(slide.cSld);
                     break;
                 }
                 case 1:
@@ -4568,16 +4577,7 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
-                    var cSld = new AscFormat.CSld(oNotesMaster);
-                    this.ReadCSld(cSld);
-                    for(var i = 0; i < cSld.spTree.length; ++i){
-                        oNotesMaster.addToSpTreeToPos(i, cSld.spTree[i]);
-                    }
-                    if(cSld.Bg)
-                    {
-                        oNotesMaster.changeBackground(cSld.Bg);
-                    }
-                    oNotesMaster.setCSldName(cSld.name);
+                    this.ReadCSld(oNotesMaster.cSld);
                     break;
                 }
                 case 1:
@@ -4641,16 +4641,7 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
-                    var cSld = new AscFormat.CSld(oNotes);
-                    this.ReadCSld(cSld);
-                    for(var i = 0; i < cSld.spTree.length; ++i){
-                        oNotes.addToSpTreeToPos(i, cSld.spTree[i]);
-                    }
-                    if(cSld.Bg)
-                    {
-                        oNotes.changeBackground(cSld.Bg);
-                    }
-                    oNotes.setCSldName(cSld.name);
+                    this.ReadCSld(oNotes.cSld);
                     break;
                 }
                 case 1:
@@ -4685,7 +4676,7 @@ function BinaryPPTYLoader()
                 break;
 
             if (0 == _at)
-                csld.name = s.GetString2();
+                csld.setName(s.GetString2());
             else
                 break;
         }
@@ -4698,12 +4689,16 @@ function BinaryPPTYLoader()
                 case 0:
                 {
                     // themeElements
-                    csld.Bg = this.ReadBg();
+                    csld.setBg(this.ReadBg());
                     break;
                 }
                 case 1:
                 {
-                    csld.spTree = this.ReadGroupShapeMain();
+                    var arr = this.ReadGroupShapeMain();
+                    for (var i = 0; i < arr.length; i++) {
+                        csld.addToSpTree(csld.spTree.length, arr[i]);
+                        if (csld.parent) arr[i].setParent2(csld.parent);
+                    }
                     break;
                 }
                 default:
@@ -9287,6 +9282,10 @@ function BinaryPPTYLoader()
 
 			case "ppaction://hlinkfile":
 				hyper.id = hyper.action + '?file=' + hyper.id;
+				break;
+
+			case "ppaction://noaction":
+				hyper.id = hyper.action;
 				break;
 
 			default:

@@ -5899,6 +5899,21 @@ CTable.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 		}
 	}
 };
+CTable.prototype.IsBorderMove = function()
+{
+	return table_Selection_Border === this.Selection.Type2 || table_Selection_Border_InnerTable === this.Selection.Type2;
+};
+CTable.prototype.CancelBorderMove = function()
+{
+	if (!this.IsBorderMove())
+		return;
+
+	if (table_Selection_Border_InnerTable === this.Selection.Type2 && this.Selection.Data2 && this.Selection.Data2.Content)
+		this.Selection.Data2.Content.CancelTableBorderMove();
+
+	this.Selection.Type2 = table_Selection_Common;
+	this.Selection.Data2 = null;
+};
 CTable.prototype.RemoveSelection = function()
 {
 	if (false === this.Selection.Use)

@@ -51,7 +51,6 @@
         this._chStyle       = AscPDF.CHECKBOX_STYLES.check;
         this._checked       = false;
         this._options       = undefined; // used to store export values of child fields
-        this._textSize      = 0;
         
         // states
         this._pressed = false;
@@ -77,7 +76,7 @@
     CBaseCheckBoxField.prototype.SetDefaultValue = function(value) {
         let oParent = this.GetParent(true);
         if (oParent || this.IsWidget()) {
-            const shouldUpdate = value && !this.GetParentValue() || this.GetParentValue() !== value;
+            const shouldUpdate = value && !this.GetLogicValue() || this.GetLogicValue() !== value;
 
             if (shouldUpdate) {
                 this.SetValue(value);
@@ -452,6 +451,11 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseCheckBoxField.prototype.Commit = function() {
+		if (this.IsLogicalRoot() && !this.IsWidget()) {
+			this.GetKid(0).Commit();
+			return;
+		}
+
         this.SetNeedCommit(false);
 
         let oParent = this.GetParent(true);
@@ -460,18 +464,18 @@
         if (this.IsChecked()) {
             if (aOpt && aKids) {
                 if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this.IsRadiosInUnison() || this.GetType() == AscPDF.FIELD_TYPES.checkbox) {
-                    this.SetParentValue(aOpt.indexOf(this.GetExportValue()));
+                    this.SetLogicValue(aOpt.indexOf(this.GetExportValue()));
                 }
                 else {
-                    this.SetParentValue(String(aKids.indexOf(this)));
+                    this.SetLogicValue(String(aKids.indexOf(this)));
                 }
             }
             else {
-                this.SetParentValue(this.GetExportValue());
+                this.SetLogicValue(this.GetExportValue());
             }
         }
         else {
-            this.SetParentValue("Off");
+            this.SetLogicValue("Off");
         }
 
         this.Commit2();
@@ -522,17 +526,29 @@
         });
 
         let sDefValue = this.GetDefaultValue();
-        let sCurExpValue;
-
+        let sExpValue;
         if (sDefValue) {
             if (!hasOptions) {
-                sCurExpValue = this.GetDefaultValue();
+                sExpValue = this.GetDefaultValue();
             }
             else {
-                sCurExpValue = aOpt[sDefValue];
+                sExpValue = aOpt[sDefValue];
             }
 
-            this.SetDefaultValue(String(aOpt.indexOf(sCurExpValue)));
+            this.SetDefaultValue(String(aOpt.indexOf(sExpValue)));
+        }
+
+        let sLogicValue = this.GetLogicValue();
+        sExpValue;
+        if (sLogicValue) {
+            if (!hasOptions) {
+                sExpValue = this.GetLogicValue();
+            }
+            else {
+                sExpValue = aOpt[sLogicValue];
+            }
+
+            this.SetLogicValue(String(aOpt.indexOf(sExpValue)));
         }
 
         return true;
@@ -640,6 +656,7 @@
     
             if (aExpValues.includes(sValue) || aCurOptions) {
                 oParent.SetOptions(newValues);
+				this.SyncValue();
                 return true;
             }
         }
@@ -651,6 +668,7 @@
         AscCommon.History.Add(new CChangesPDFCheckboxExpValue(this, this._exportValue, sValue));
         this._exportValue = sValue;
         this.SetWasChanged(true);
+		this.SyncValue();
     };
     CBaseCheckBoxField.prototype.GetExportValue = function(bInherit) {
         if (bInherit !== false) {
@@ -703,6 +721,8 @@
 		else {
 			this.SetChecked(false);
 		}
+
+		return true;
     };
     CBaseCheckBoxField.prototype.private_SetValue = CBaseCheckBoxField.prototype.SetValue;
     CBaseCheckBoxField.prototype.GetValue = function() {
@@ -732,7 +752,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseCheckBoxField.prototype.SyncValue = function() {
-        if (this.GetExportValue() == this.GetParentValue()) {
+        if (this.GetExportValue() == this.GetLogicValue()) {
             this.SetChecked(true);
             this.AddToRedraw();
         }

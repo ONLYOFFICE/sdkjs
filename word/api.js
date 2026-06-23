@@ -2438,6 +2438,23 @@ background-repeat: no-repeat;\
 			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback, rejectCallback);
 		}
 	};
+	asc_docs_api.prototype.asc_PasteHtmlAsText = function(sHtml, callback, rejectCallback) {
+		if (AscCommon.CollaborativeEditing.Get_GlobalLock())
+			return;
+
+		var _logicDoc = this.WordControl.m_oLogicDocument;
+		if (!_logicDoc)
+			return;
+
+		if (_logicDoc.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, _logicDoc.IsFormFieldEditing())) {
+			rejectCallback && rejectCallback();
+			return;
+		}
+
+		window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
+		_logicDoc.StartAction(AscDFH.historydescription_Document_PasteHotKey);
+		AscCommon.Editor_Paste_Html_Lite_Exec(this, sHtml, callback, rejectCallback);
+	};
 
 	asc_docs_api.prototype.GetContentFromHtml = function(html, callback)
 	{
@@ -8492,6 +8509,8 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asyncImageEndLoadedBackground = function(_image)
 	{
+		if (this.FontLoader.isFontLoadInProgress())
+			return;
 		this.WordControl.m_oDrawingDocument.CheckRasterImageOnScreen(_image.src);
 		if (this.WordControl.m_oDrawingDocument.LastDrawingUrl == _image.src)
 		{
@@ -13326,8 +13345,6 @@ background-repeat: no-repeat;\
 	window["asc_docs_api"]                                      = asc_docs_api;
 	window["asc_docs_api"].prototype["asc_nativeOpenFile"]      = function(base64File, version)
 	{
-		this.SpellCheckUrl = '';
-
 		this.User = new AscCommon.asc_CUser();
 		this.User.setId("TM");
 		this.User.setUserName("native");
@@ -13611,6 +13628,20 @@ background-repeat: no-repeat;\
 			{
 				var language = AscCommon.escapeHtmlCharacters(oCore.asc_getLanguage());
 				_ret += ("<meta name=\"language\" content=\"" + language + "\" />");
+			}
+		}
+		var oCustomProperties = this.WordControl.m_oLogicDocument.CustomProperties;
+		if (oCustomProperties) {
+			var aProperties = oCustomProperties.getAllProperties();
+			for (var i = 0; i < aProperties.length; i++) {
+				var oProp = aProperties[i];
+				var sPropName = oProp.asc_getName();
+				var sPropValue = oProp.asc_getValue();
+				if (sPropName && sPropValue !== null && sPropValue !== undefined) {
+					var sEscName = AscCommon.escapeHtmlCharacters(String(sPropName));
+					var sEscValue = AscCommon.escapeHtmlCharacters(String(sPropValue));
+					_ret += ("<meta name=\"" + sEscName + "\" content=\"" + sEscValue + "\" />");
+				}
 			}
 		}
 		_ret += ("</head><body>" + oCopyProcessor.getInnerHtml() + "</body></html>");
@@ -15777,6 +15808,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_updateExternalReferences"] = asc_docs_api.prototype.asc_updateExternalReferences;
 	asc_docs_api.prototype["asc_removeExternalReferences"] = asc_docs_api.prototype.asc_removeExternalReferences;
 	asc_docs_api.prototype["asc_changeExternalReference"]  = asc_docs_api.prototype.asc_changeExternalReference;
+
+	asc_docs_api.prototype["asc_PasteHtmlAsText"] = asc_docs_api.prototype.asc_PasteHtmlAsText;
 	
 	asc_docs_api.prototype['asc_getRestrictionSettings'] = asc_docs_api.prototype.asc_getRestrictionSettings = asc_docs_api.prototype.getRestrictionSettings;
 	asc_docs_api.prototype['asc_markAsFinal'] = asc_docs_api.prototype.asc_markAsFinal = asc_docs_api.prototype.markAsFinal;

@@ -67,9 +67,9 @@
 		//todo more checks
 		return this.ranges && this.ranges.length > 0;
 	};
-	CConditionalFormatting.prototype.initRules = function (ws) {
+	CConditionalFormatting.prototype.initRules = function (ws, opt_skipFormulaInit) {
 		for (var i = 0; i < this.aRules.length; ++i) {
-			this.aRules[i].updateConditionalFormatting(this, ws);
+			this.aRules[i].updateConditionalFormatting(this, ws, opt_skipFormulaInit);
 		}
 	};
 
@@ -930,7 +930,7 @@
 	CConditionalFormattingRule.prototype.hasStdDev = function () {
 		return null !== this.stdDev;
 	};
-	CConditionalFormattingRule.prototype.updateConditionalFormatting = function (cf, ws) {
+	CConditionalFormattingRule.prototype.updateConditionalFormatting = function (cf, ws, opt_skipFormulaInit) {
 		var i;
 		this.pivot = cf.pivot;
 		if (cf.ranges) {
@@ -939,11 +939,15 @@
 				this.ranges.push(cf.ranges[i].clone());
 			}
 		}
-		if (ws) {
-			if (this.aRuleElements) {
-				for (let i = 0 ; i < this.aRuleElements.length; i++) {
-					this.aRuleElements[i] && this.aRuleElements[i].init && this.aRuleElements[i].init(ws);
-				}
+		//opt_skipFormulaInit - on open parse formulas later, when all sheets are loaded (cross-sheet refs)
+		if (ws && !opt_skipFormulaInit) {
+			this.initRuleElements(ws);
+		}
+	};
+	CConditionalFormattingRule.prototype.initRuleElements = function (ws) {
+		if (ws && this.aRuleElements) {
+			for (let i = 0; i < this.aRuleElements.length; i++) {
+				this.aRuleElements[i] && this.aRuleElements[i].init && this.aRuleElements[i].init(ws);
 			}
 		}
 	};

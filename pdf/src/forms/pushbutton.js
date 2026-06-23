@@ -65,7 +65,6 @@
         this._buttonScaleHow    = scaleHow["proportional"];
         this._buttonScaleWhen   = scaleWhen["always"];
         this._highlight         = AscPDF.BUTTON_HIGHLIGHT_TYPES.invert;
-        this._textFont          = AscPDF.DEFAULT_FIELD_FONT;
 
         this._buttonCaption     = undefined;
         this._downCaption       = undefined;
@@ -140,7 +139,7 @@
 
         let oDoc    = this.GetDocument();
         let oViewer = Asc.editor.getDocumentRenderer();
-        let aFields = oViewer.IsOpenFormsInProgress == false ? oDoc.GetAllWidgets(this.GetFullName()) : [this];
+        let aFields = oViewer.IsOpenFormsInProgress == false ? this.GetAllWidgets() : [this];
 
         let aFonts = aFields.map(function(field) {
             return field.GetTextFontActual();
@@ -709,7 +708,7 @@
         this.SetNeedRecalc(true);
     };
     CPushButtonField.prototype.SetValue = function() {
-        return;
+        return true;
     };
     CPushButtonField.prototype.private_SetValue = CPushButtonField.prototype.SetValue;
     CPushButtonField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {

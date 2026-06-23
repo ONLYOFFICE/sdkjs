@@ -2772,37 +2772,67 @@
 				t.documentShardKey, t.documentWopiSrc, t.documentUserSessionId, function(error, files)
 			{
 				if (Asc.c_oAscError.ID.No !== error)
-				{
 					t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
-				}
 				else
-				{
-					t.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-					AscCommon.UploadImageFiles(files, t.documentId, t.documentUserId, t.CoAuthoringApi.get_jwt(),
-						t.documentShardKey, t.documentWopiSrc, t.documentUserSessionId, function(error, urls)
-					{
-						if (Asc.c_oAscError.ID.No !== error)
-						{
-							t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
-							t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-						}
-						else
-						{
-							t.ImageLoader.LoadImagesWithCallback(urls, function()
-							{
-								if (urls.length > 0)
-								{
-									_this.ImageUrl = urls[0];
-									_this.ProcessedCanvas = null;
-									t.sendEvent("asc_onSignatureImageLoaded");
-								}
-								t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-							});
-						}
-					});
-				}
+					_this._uploadFiles(files);
 			});
 		}
+	};
+
+	CSignatureFormProps.prototype.putFile = function(file)
+	{
+		const t = this.Api;
+		if (!t || !file)
+			return;
+
+		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]() && file["path"])
+		{
+			const _this = this;
+			const url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](file["path"]);
+			const urls = [AscCommon.g_oDocumentUrls.getImageUrl(url)];
+			t.ImageLoader.LoadImagesWithCallback(urls, function()
+			{
+				if (urls.length > 0)
+				{
+					_this.ImageUrl = urls[0];
+					_this.ProcessedCanvas = null;
+					t.sendEvent("asc_onSignatureImageLoaded");
+				}
+			});
+			return;
+		}
+
+		this._uploadFiles([file]);
+	};
+
+	CSignatureFormProps.prototype._uploadFiles = function(files)
+	{
+		const t = this.Api;
+		const _this = this;
+
+		t.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+		AscCommon.UploadImageFiles(files, t.documentId, t.documentUserId, t.CoAuthoringApi.get_jwt(),
+			t.documentShardKey, t.documentWopiSrc, t.documentUserSessionId, function(error, urls)
+		{
+			if (Asc.c_oAscError.ID.No !== error)
+			{
+				t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
+				t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+			}
+			else
+			{
+				t.ImageLoader.LoadImagesWithCallback(urls, function()
+				{
+					if (urls.length > 0)
+					{
+						_this.ImageUrl = urls[0];
+						_this.ProcessedCanvas = null;
+						t.sendEvent("asc_onSignatureImageLoaded");
+					}
+					t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+				});
+			}
+		});
 	};
 
 	CSignatureFormProps.prototype.put_ImageUrl = function(sUrl, token)
@@ -3446,6 +3476,11 @@
 		return this.Mode;
 	};
 
+	CSignatureFormProps.prototype.get_FormId = function()
+	{
+		return this.FormObj.get_ObjId();
+	};
+
 	CSignatureFormProps.prototype.getText = function()
 	{
 		return this.TypeText;
@@ -3687,6 +3722,7 @@
 	prot['put_PreviewTypeId']   = prot.put_PreviewTypeId;
 	prot['updateView']          = prot.updateView;
 	prot['showFileDialog']      = prot.showFileDialog;
+	prot['putFile']             = prot.putFile;
 	prot['put_ImageUrl']        = prot.put_ImageUrl;
 	prot['put_RemoveBackground'] = prot.put_RemoveBackground;
 	prot['clearImg']            = prot.clearImg;
@@ -3705,6 +3741,7 @@
 	prot['clearType']           = prot.clearType;
 	prot['getSignatureImage']   = prot.getSignatureImage;
 	prot['get_Mode']            = prot.get_Mode;
+	prot['get_FormId']          = prot.get_FormId;
 	prot['getText']             = prot.getText;
 	prot['get_TypeFont']        = prot.get_TypeFont;
 	prot['get_TypeFontSize']    = prot.get_TypeFontSize;

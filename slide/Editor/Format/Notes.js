@@ -39,10 +39,6 @@
     AscDFH.changesFactory[AscDFH.historyitem_NotesSetClrMap]  = AscDFH.CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_NotesSetShowMasterPhAnim]  = AscDFH.CChangesDrawingsBool;
     AscDFH.changesFactory[AscDFH.historyitem_NotesSetShowMasterSp]  = AscDFH.CChangesDrawingsBool;
-    AscDFH.changesFactory[AscDFH.historyitem_NotesAddToSpTree]  = AscDFH.CChangesDrawingsContentPresentation;
-    AscDFH.changesFactory[AscDFH.historyitem_NotesRemoveFromTree]  = AscDFH.CChangesDrawingsContentPresentation;
-    AscDFH.changesFactory[AscDFH.historyitem_NotesSetBg]  = AscDFH.CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_NotesSetName]        = AscDFH.CChangesDrawingsString;
     AscDFH.changesFactory[AscDFH.historyitem_NotesSetSlide]        = AscDFH.CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_NotesSetNotesMaster]        = AscDFH.CChangesDrawingsObject;
 
@@ -50,31 +46,8 @@
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesSetClrMap]  = function(oClass, value){oClass.clrMap = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesSetShowMasterPhAnim]  = function(oClass, value){oClass.showMasterPhAnim = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesSetShowMasterSp]  = function(oClass, value){oClass.showMasterSp = value;};
-    AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesSetName]        = function(oClass, value){oClass.cSld.name = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesSetSlide]        = function(oClass, value){oClass.slide = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesSetNotesMaster]        = function(oClass, value){oClass.Master = value;};
-    AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesSetBg]  = function(oClass, value, FromLoad){
-        oClass.cSld.Bg = value;
-        if(FromLoad){
-            var Fill;
-            if(oClass.cSld.Bg && oClass.cSld.Bg.bgPr && oClass.cSld.Bg.bgPr.Fill)
-            {
-                Fill = oClass.cSld.Bg.bgPr.Fill;
-            }
-            if(typeof AscCommon.CollaborativeEditing !== "undefined")
-            {
-                if(Fill && Fill.fill && Fill.fill.type === Asc.c_oAscFill.FILL_TYPE_BLIP && typeof Fill.fill.RasterImageId === "string" && Fill.fill.RasterImageId.length > 0)
-                {
-                    AscCommon.CollaborativeEditing.Add_NewImage(Fill.fill.RasterImageId);
-                }
-            }
-        }
-    };
-
-    AscDFH.drawingsConstructorsMap[AscDFH.historyitem_NotesSetBg]         = AscFormat.CBg;
-
-    AscDFH.drawingContentChanges[AscDFH.historyitem_NotesAddToSpTree]    = function(oClass){return oClass.cSld.spTree;};
-    AscDFH.drawingContentChanges[AscDFH.historyitem_NotesRemoveFromTree] = function(oClass){return oClass.cSld.spTree;};
 
     //Temporary function
     function GetNotesWidth(){
@@ -82,9 +55,9 @@
     }
 
     function CNotes() {
+        this.cSld = new AscFormat.CSld(this);
         AscFormat.CBaseFormatObject.call(this);
         this.clrMap = null;
-        this.cSld = new AscFormat.CSld(this);
         this.showMasterPhAnim = null;
         this.showMasterSp     = null;
         this.slide            = null;
@@ -131,14 +104,14 @@
 
     CNotes.prototype.addToSpTreeToPos = function(pos, obj){
         var _pos = Math.max(0, Math.min(pos, this.cSld.spTree.length));
-        History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_NotesAddToSpTree, _pos, [obj], true));
-        this.cSld.spTree.splice(_pos, 0, obj);
+        this.cSld.checkAndAssignName(obj);
+        this.cSld.addToSpTree(_pos, obj);
         obj.setParent2(this);
     };
 
     CNotes.prototype.removeFromSpTreeByPos = function(pos){
         if(pos > -1 && pos < this.cSld.spTree.length){
-            History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_NotesRemoveFromTree, pos, this.cSld.spTree.splice(pos, 1), false));
+            this.cSld.removeFromSpTree(pos, 1);
         }
     };
 
@@ -151,14 +124,22 @@
     };
 
     CNotes.prototype.changeBackground = function(bg){
-        History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_NotesSetBg, this.cSld.Bg , bg));
-        this.cSld.Bg = bg;
+        this.cSld.setBg(bg);
     };
 
 
     CNotes.prototype.setCSldName = function(pr){
-        History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_NotesSetName, this.cSld.name , pr));
-        this.cSld.name = pr;
+        this.cSld.setName(pr);
+    };
+    CNotes.prototype.Write_ToBinary2 = function(w){
+        w.WriteLong(this.getObjectType());
+        w.WriteString2(this.Id);
+        AscFormat.writeObject(w, this.cSld);
+    };
+    CNotes.prototype.Read_FromBinary2 = function(r){
+        this.Id = r.GetString2();
+        this.cSld = AscFormat.readObject(r);
+        if (this.cSld) this.cSld.parent = this;
     };
     CNotes.prototype.setSlide = function(pr){
         History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesSetSlide, this.slide , pr));
@@ -282,21 +263,7 @@
             copy.setClMapOverride(this.clrMap.createDuplicate());
         }
 
-        if(typeof this.cSld.name === "string" && this.cSld.name.length > 0)
-        {
-            copy.setCSldName(this.cSld.name);
-        }
-        if(this.cSld.Bg)
-        {
-            copy.changeBackground(this.cSld.Bg.createFullCopy());
-        }
-        for(var i = 0; i < this.cSld.spTree.length; ++i)
-        {
-            var _copy = this.cSld.spTree[i].copy(oPr);
-            oIdMap[this.cSld.spTree[i].Id] = _copy.Id;
-            copy.addToSpTreeToPos(copy.cSld.spTree.length, _copy);
-            copy.cSld.spTree[copy.cSld.spTree.length - 1].setParent2(copy);
-        }
+        this.cSld.fillObject(copy.cSld, oPr);
         if(AscFormat.isRealBool(this.showMasterPhAnim))
         {
             copy.setShowMasterPhAnim(this.showMasterPhAnim);

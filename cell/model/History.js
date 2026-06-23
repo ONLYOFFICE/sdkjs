@@ -195,6 +195,12 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Cell_SetHidden = 29;
 	window['AscCH'].historyitem_Cell_SetLocked = 30;
 	window['AscCH'].historyitem_Cell_ReadingOrder = 31;
+	// Direct xf change on a style-only cell; undo applies to
+	// ws.cellStylesByCol without creating a SheetMemory init row.
+	window['AscCH'].historyitem_Cell_SetStyleOnly = 32;
+	// Range-form companion of SetStyleOnly: one record per CRangeAttrArray
+	// run (bbox + uniform oldXfs/newXfs); splits to per-cell on OT conflict.
+	window['AscCH'].historyitem_Cell_SetStyleOnlyRange = 33;
 
 	window['AscCH'].historyitem_Comment_Add = 1;
 	window['AscCH'].historyitem_Comment_Remove = 2;
@@ -790,7 +796,7 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 		//changeWorksheetUpdate before cleanCellCache to call _calcHeightRows
 		for (i in oRedoObjectParam.oChangeWorksheetUpdate)
 			this.workbook.handlers.trigger("changeWorksheetUpdate",
-				oRedoObjectParam.oChangeWorksheetUpdate[i],{lockDraw: true, reinitRanges: true});
+				oRedoObjectParam.oChangeWorksheetUpdate[i],{lockDraw: true, reinitRanges: true, isUpdateDefaultWidth: !!oRedoObjectParam.oUpdateDefaultWidthSheets[i]});
 
 		this.updateDrawingsByRegions(Point.UpdateRigions, oRedoObjectParam);
 
@@ -897,8 +903,13 @@ CHistory.prototype._addRedoObjectParam = function (oRedoObjectParam, Point) {
 		AscCH.historyitem_Worksheet_SetDisplayHeadings === Point.Type)) {
 		oRedoObjectParam.oOnUpdateSheetViewSettings[Point.SheetId] = Point.SheetId;
 	}
-	else if (AscCommonExcel.g_oUndoRedoWorksheet === Point.Class && (AscCH.historyitem_Worksheet_RowProp === Point.Type || AscCH.historyitem_Worksheet_ColProp === Point.Type || AscCH.historyitem_Worksheet_RowHide === Point.Type || AscCH.historyitem_Worksheet_AddCols === Point.Type || AscCH.historyitem_Worksheet_RemoveCols === Point.Type))
+	else if (AscCommonExcel.g_oUndoRedoWorksheet === Point.Class && (AscCH.historyitem_Worksheet_RowProp === Point.Type || AscCH.historyitem_Worksheet_ColProp === Point.Type || AscCH.historyitem_Worksheet_RowHide === Point.Type || AscCH.historyitem_Worksheet_AddCols === Point.Type || AscCH.historyitem_Worksheet_RemoveCols === Point.Type)) {
 		oRedoObjectParam.oChangeWorksheetUpdate[Point.SheetId] = Point.SheetId;
+		if ((AscCH.historyitem_Worksheet_ColProp === Point.Type || AscCH.historyitem_Worksheet_RowProp === Point.Type) &&
+			Point.Data && Point.Data.index === AscCommonExcel.g_nAllColIndex) {
+			oRedoObjectParam.oUpdateDefaultWidthSheets[Point.SheetId] = true;
+		}
+	}
 	else if (AscCommonExcel.g_oUndoRedoWorkbook === Point.Class && (AscCH.historyitem_Workbook_SheetAdd === Point.Type || AscCH.historyitem_Workbook_SheetRemove === Point.Type)) {
 		oRedoObjectParam.bUpdateWorksheetByModel = true;
 		oRedoObjectParam.bOnSheetsChanged = true;

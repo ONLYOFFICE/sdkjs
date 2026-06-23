@@ -4986,6 +4986,34 @@ function CDrawingDocument()
 			}
 		}
 	};
+	this.IsTrackTable = function()
+	{
+		return !!(this.TableOutlineDr && this.TableOutlineDr.bIsTracked);
+	};
+	this.CancelTrackTable = function()
+	{
+		if (!this.TableOutlineDr.bIsTracked)
+			return;
+
+		this.TableOutlineDr.TableOutline = null;
+		this.TableOutlineDr.bIsTracked = false;
+		this.TableOutlineDr.InlinePos = null;
+		this.TableOutlineDr.IsResizeTableTrack = false;
+		this.TableOutlineDr.Counter = 0;
+
+		this.m_oWordControl.OnUpdateOverlay();
+	};
+	this.IsTrackRuler = function()
+	{
+		return this.m_oWordControl.m_oHorRuler.IsTracking() || this.m_oWordControl.m_oVerRuler.IsTracking();
+	};
+	this.CancelTrackRuler = function()
+	{
+		if (this.m_oWordControl.m_oHorRuler.IsTracking())
+			this.m_oWordControl.m_oHorRuler.CancelTracking();
+		if (this.m_oWordControl.m_oVerRuler.IsTracking())
+			this.m_oWordControl.m_oVerRuler.CancelTracking();
+	};
 
 	this.DrawFrameTrack = function (overlay)
 	{

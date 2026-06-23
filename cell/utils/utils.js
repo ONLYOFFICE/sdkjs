@@ -1101,9 +1101,18 @@
 		Range.prototype.isAbsAll = function () {
 			return this.isAbsR1() && this.isAbsC1() && this.isAbsR2() && this.isAbsC2();
 		};
-		Range.prototype.switchReference = function () {
-			this.refType1 = (this.refType1 + 1) % 4;
-			this.refType2 = (this.refType2 + 1) % 4;
+		Range.prototype.switchReference = function (part) {
+			if (part !== 1 && part !== 2) {
+				// OR-normalize so asymmetric ranges ($B1:B$2) always land on the same canonical type
+				const rowAbs = this.isAbsRow(this.refType1) || this.isAbsRow(this.refType2);
+				const colAbs = this.isAbsCol(this.refType1) || this.isAbsCol(this.refType2);
+				const nextType = ((rowAbs ? 0 : 2) + (colAbs ? 0 : 1) + 1) % 4;
+				this.refType1 = nextType;
+				this.refType2 = nextType;
+			} else {
+				if (part !== 2) this.refType1 = (this.refType1 + 1) % 4;
+				if (part !== 1) this.refType2 = (this.refType2 + 1) % 4;
+			}
 		};
 		Range.prototype.getWidth = function () {
 			return this.c2 - this.c1 + 1;
@@ -1572,11 +1581,11 @@
 			for (var i = 0; i < this.ranges.length; ++i) {
 				var range = this.ranges[i];
 				var type = range.getType();
-				if (byCol && c_oAscSelectionType.RangeCol !== type) {
+				if (byCol && c_oAscSelectionType.RangeCol !== type && c_oAscSelectionType.RangeMax !== type) {
 					res = false;
 					break;
 				}
-				if (!byCol && c_oAscSelectionType.RangeRow !== type) {
+				if (!byCol && c_oAscSelectionType.RangeRow !== type && c_oAscSelectionType.RangeMax !== type) {
 					res = false;
 					break;
 				}
@@ -3318,6 +3327,34 @@
 			this.pdfContent = val;
 		};
 
+		asc_CAdjustPrint.prototype.getLayoutKey = function () {
+			var mapKey = '';
+			if (this.pageOptionsMap) {
+				for (var idx in this.pageOptionsMap) {
+					var opt = this.pageOptionsMap[idx];
+					if (!opt) { mapKey += idx + ':null;'; continue; }
+					var s = opt.pageSetup;
+					var m = opt.pageMargins;
+					mapKey += idx + ':[' +
+						(s ? [s.orientation, s.width, s.height, s.scale, s.fitToWidth, s.fitToHeight, s.printArea, s.selection].join(',') : '') +
+						'][' +
+						(m ? [m.left, m.right, m.top, m.bottom, m.header, m.footer].join(',') : '') +
+						'][' +
+						[opt.headings ? 1 : 0, opt.gridLines ? 1 : 0, opt.horizontalCentered ? 1 : 0, opt.verticalCentered ? 1 : 0,
+						 opt.printTitlesHeight != null ? opt.printTitlesHeight : '',
+						 opt.printTitlesWidth != null ? opt.printTitlesWidth : ''].join(',') +
+						'];';
+				}
+			}
+			return [
+				this.printType,
+				this.ignorePrintArea ? 1 : 0,
+				this.isOnlyFirstPage ? 1 : 0,
+				this.activeSheetsArray ? this.activeSheetsArray.join(',') : '',
+				mapKey
+			].join('|');
+		};
+
 		/** @constructor */
 		function asc_CLockInfo() {
 			this["sheetId"] = null;
@@ -3460,6 +3497,7 @@
 		function RedoObjectParam() {
 			this.bIsOn = false;
 			this.oChangeWorksheetUpdate = {};
+			this.oUpdateDefaultWidthSheets = {};
 			this.bUpdateWorksheetByModel = false;
 			this.bOnSheetsChanged = false;
 			this.oOnUpdateTabColor = {};
@@ -3566,6 +3604,7 @@
 			this.isMatchCase = false;					// case sensitive
 			this.isWholeCell = false;
 			this.isWholeWord = false;
+			this.isWildcard = false;
 			this.isSpellCheck = false;		    // change triggered by spell check
 			this.scanOnOnlySheet = Asc.c_oAscSearchBy.Sheet;				// search only on sheet/in workbook c_oAscSearchBy
 			this.lookIn = Asc.c_oAscFindLookIn.Formulas;	// search in formulas/values/comments
@@ -3610,11 +3649,12 @@
 			result.isMatchCase = this.isMatchCase;
 			result.isWholeCell = this.isWholeCell;
 			result.isWholeWord = this.isWholeWord;
+			result.isWildcard = this.isWildcard;
 			result.isSpellCheck = this.isSpellCheck;
 			result.scanOnOnlySheet = this.scanOnOnlySheet;
 			result.lookIn = this.lookIn;
 
-
+			result.findRegExp = this.findRegExp;
 			result.replaceWith = this.replaceWith;
 			result.isReplaceAll = this.isReplaceAll;
 
@@ -3645,7 +3685,7 @@
 		asc_CFindOptions.prototype.isEqual2 = function (obj) {
 			return obj && this.findWhat === obj.findWhat && this.scanByRows === obj.scanByRows && this.isMatchCase === obj.isMatchCase && this.isWholeCell === obj.isWholeCell &&
 				this.lookIn === obj.lookIn && this.specificRange == obj.specificRange && this.isNotSearchEmptyCells == obj.isNotSearchEmptyCells &&
-				this.wsIndex === obj.wsIndex;
+				this.wsIndex === obj.wsIndex && this.isWildcard === obj.isWildcard;
 		};
 		asc_CFindOptions.prototype.clearFindAll = function () {
 			this.countFindAll = 0;

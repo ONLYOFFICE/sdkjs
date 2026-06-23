@@ -1934,11 +1934,7 @@
 		oClrMap && oMasterSlide.setClMapOverride(oClrMap);
 
 		// cSld
-		var oCSld = this.CSldFromJSON(oParsedMaster["cSld"]);
-		for (var nShape = 0; nShape < oCSld.spTree.length; nShape++)
-			oMasterSlide.shapeAdd(nShape, oCSld.spTree[nShape]);
-		oCSld.Bg && oMasterSlide.changeBackground(oCSld.Bg);
-		oCSld.name && oMasterSlide.setCSldName(oCSld.name);
+		this.CSldFromJSON(oParsedMaster["cSld"], oMasterSlide.cSld);
 
 		// hf
 		oParsedMaster["hf"] && oMasterSlide.setHF(this.HFFromJSON(oParsedMaster["hf"]));
@@ -2248,11 +2244,7 @@
 		oClrMap && oLayout.setClMapOverride(oClrMap);
 
 		// cSld
-		var oCSld = this.CSldFromJSON(oParsedLayout["cSld"]);
-		for (var nShape = 0; nShape < oCSld.spTree.length; nShape++)
-			oLayout.shapeAdd(nShape, oCSld.spTree[nShape]);
-		oCSld.Bg && oLayout.changeBackground(oCSld.Bg);
-		oCSld.name && oLayout.setCSldName(oCSld.name);
+		this.CSldFromJSON(oParsedLayout["cSld"], oLayout.cSld);
 
 		// hf
 		oParsedLayout["hf"] && oLayout.setHF(this.HFFromJSON(oParsedLayout["hf"]));
@@ -2332,11 +2324,7 @@
 		oParsedSlide["clrMapOvr"] && oSlide.setClMapOverride(this.ColorMapOvrFromJSON(oParsedSlide["clrMapOvr"]));
 
 		// cSld
-		var oCSld = this.CSldFromJSON(oParsedSlide["cSld"]);
-		for (var nShape = 0; nShape < oCSld.spTree.length; nShape++)
-			oSlide.shapeAdd(nShape, oCSld.spTree[nShape]);
-		oCSld.Bg && oSlide.changeBackground(oCSld.Bg);
-		oCSld.name && oSlide.setCSldName(oCSld.name);
+		this.CSldFromJSON(oParsedSlide["cSld"], oSlide.cSld);
 
 		// comments
 		for (var nComment = 0; nComment < oParsedSlide["comments"].length; nComment++)
@@ -2473,11 +2461,7 @@
 
 		oParsedNotes["clrMapOvr"] && oNotes.setClMapOverride(this.ColorMapOvrFromJSON(oParsedNotes["clrMapOvr"]));
 		// cSld
-		var oCSld = this.CSldFromJSON(oParsedNotes["cSld"]);
-		for (var nShape = 0; nShape < oCSld.spTree.length; nShape++)
-			oNotes.addToSpTreeToPos(nShape, oCSld.spTree[nShape]);
-		oCSld.Bg && oNotes.changeBackground(oCSld.Bg);
-		oCSld.name && oNotes.setCSldName(oCSld.name);
+		this.CSldFromJSON(oParsedNotes["cSld"], oNotes.cSld);
 
 		oParsedNotes["showMasterPhAnim"] != undefined && oNotes.setShowMasterPhAnim(oParsedNotes["showMasterPhAnim"]);
 		oParsedNotes["showMasterSp"] != undefined && oNotes.setShowMasterSp(oParsedNotes["showMasterSp"]);
@@ -2495,11 +2479,7 @@
 			oNotesMaster.setClrMap(this.ColorMapOvrFromJSON(oParsedNotesMaster["clrMap"]));
 	
 		// cSld
-		var oCSld = this.CSldFromJSON(oParsedNotesMaster["cSld"]);
-		for (var nShape = 0; nShape < oCSld.spTree.length; nShape++)
-			oNotesMaster.addToSpTreeToPos(nShape, oCSld.spTree[nShape]);
-		oCSld.Bg && oNotesMaster.changeBackground(oCSld.Bg);
-		oCSld.name && oNotesMaster.setCSldName(oCSld.name);
+		this.CSldFromJSON(oParsedNotesMaster["cSld"], oNotesMaster.cSld);
 
 		oParsedNotesMaster["hf"] && oNotesMaster.setHF(this.HFFromJSON(oParsedNotesMaster["hf"]));
 		oParsedNotesMaster["notesStyle"] && oNotesMaster.setNotesStyle(this.LstStyleFromJSON(oParsedNotesMaster["notesStyle"]));
@@ -3764,15 +3744,18 @@
 
 		return oHF;
 	};
-	ReaderFromJSON.prototype.CSldFromJSON = function(oParsedCSld)
+	ReaderFromJSON.prototype.CSldFromJSON = function(oParsedCSld, oCSld)
 	{
-		var oCSld = new AscFormat.CSld();
+		oCSld = oCSld || new AscFormat.CSld();
 
-		for (var nShape = 0; nShape < oParsedCSld["spTree"].length; nShape++)
-			oCSld.spTree.push(this.GraphicObjFromJSON(oParsedCSld["spTree"][nShape]));
-			
-		oCSld.Bg   = oParsedCSld["bg"] ? this.BgFromJSON(oParsedCSld["bg"]) : oCSld.Bg;
-		oCSld.name = oParsedCSld.name;
+		for (var nShape = 0; nShape < oParsedCSld["spTree"].length; nShape++) {
+			var sp = this.GraphicObjFromJSON(oParsedCSld["spTree"][nShape]);
+			oCSld.addToSpTree(oCSld.spTree.length, sp);
+			if (oCSld.parent) sp.setParent2(oCSld.parent);
+		}
+
+		if (oParsedCSld["bg"]) oCSld.setBg(this.BgFromJSON(oParsedCSld["bg"]));
+		if (oParsedCSld.name) oCSld.setName(oParsedCSld.name);
 
 		return oCSld;
 	};

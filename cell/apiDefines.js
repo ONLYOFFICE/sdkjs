@@ -338,7 +338,8 @@ var c_oAscPopUpSelectorType = {
   TableAll: 8,
   TableData: 9,
   TableHeaders: 10,
-  TableTotals: 11
+  TableTotals: 11,
+  FuncConstant: 12
 };
   /** @enum */
   var c_oSerFormat = {
@@ -680,7 +681,8 @@ var c_oAscPopUpSelectorType = {
 		RemoveGraphicalObject:      172,
 		ExitAddingShapesMode:       173,
 		SpeechWorker:               174,
-		EnDash:                     175
+		EnDash:                     175,
+		FillDown:                   176
 	};
 
   var c_oAscCalcMode = {
@@ -879,6 +881,8 @@ var c_oAscPopUpSelectorType = {
   prot['TableData'] = prot.TableData;
   prot['TableHeaders'] = prot.TableHeaders;
   prot['TableTotals'] = prot.TableTotals;
+  prot['FuncConstant'] = prot.FuncConstant;
+
 
   window['Asc']['c_oAscAutoCorrectOptions'] = window['Asc'].c_oAscAutoCorrectOptions = c_oAscAutoCorrectOptions;
   prot = c_oAscAutoCorrectOptions;
@@ -1202,6 +1206,7 @@ var c_oAscPopUpSelectorType = {
 	prot["ExitAddingShapesMode"] = prot.ExitAddingShapesMode;
 	prot["SpeechWorker"] = prot.SpeechWorker;
 	prot["EnDash"] = prot.EnDash;
+	prot["FillDown"] = prot.FillDown;
 
   window['Asc']['c_oAscCalcMode'] = window['Asc'].c_oAscCalcMode = c_oAscCalcMode;
   prot = c_oAscCalcMode;

@@ -274,6 +274,10 @@ CLogicDocumentController.prototype.IsMovingTableBorder = function()
 {
 	return this.LogicDocument.controller_IsMovingTableBorder();
 };
+CLogicDocumentController.prototype.CancelTableBorderMove = function()
+{
+	this.LogicDocument.controller_CancelTableBorderMove();
+};
 CLogicDocumentController.prototype.CheckPosInSelection = function(X, Y, PageAbs, NearPos)
 {
 	return this.LogicDocument.controller_CheckPosInSelection(X, Y, PageAbs, NearPos);

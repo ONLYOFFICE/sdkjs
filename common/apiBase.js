@@ -151,9 +151,6 @@
 		// Array of locks that existed when the document was opened
 		this.arrPreOpenLocksObjects = [];
 
-		// Spell Checking
-		this.SpellCheckUrl = '';    // Spell check service URL
-
 		// License retrieval result
 		this.licenseResult       = null;
 		// Whether license was received
@@ -222,7 +219,7 @@
 		this.SaveAfterMacros = false;
 
 		// Spell Checking
-		this.SpellCheckApi = new AscCommon.CSpellCheckApi();
+		this.SpellCheckApi = {};
 		this.isSpellCheckEnable = true;
 
 		// macros & plugins events
@@ -770,6 +767,17 @@
 		if (AscCommon.g_clipboardBase) {
 			AscCommon.g_clipboardBase.bPutImage = !!bPutImage;
 		}
+	};
+	baseEditorsApi.prototype.asc_CopyData = function(sText, sHtml, sInternal, oImage)
+	{
+		if (AscCommon.g_clipboardBase)
+			return AscCommon.g_clipboardBase.CopyData({
+				text     : sText,
+				html     : sHtml,
+				internal : sInternal,
+				image    : oImage
+			});
+		return false;
 	};
 	baseEditorsApi.prototype.sync_CanCopyCutCallback = function (bCanCopyCut, bCanCut)
 	{
@@ -1955,9 +1963,8 @@
 		{
 			t.sendEvent("asc_onParticipantsChanged", users);
 		};
-		this.CoAuthoringApi.onSpellCheckInit          = function(e)
+		this.CoAuthoringApi.onSpellCheckInit          = function()
 		{
-			t.SpellCheckUrl = e;
 			t._coSpellCheckInit();
 		};
 		this.CoAuthoringApi.onSetIndexUser            = function(e)
@@ -2351,7 +2358,7 @@
 	// SpellCheck
 	baseEditorsApi.prototype.asc_SpellCheckDisconnect            = function()
 	{
-		if (!this.SpellCheckApi)
+		if (!this.SpellCheckApi || !this.SpellCheckApi.disconnect)
 			return; // Error
 		this.SpellCheckApi.disconnect();
 		this.isSpellCheckEnable = false;
@@ -2384,7 +2391,8 @@
 					}
 					if (_editor.SpellCheckApi.isRestart === true)
 						return;
-					_editor.SpellCheckApi.onSpellCheck(response);
+
+					_editor.SpellCheck_CallBack(response);
 				}
             };
 
@@ -2396,6 +2404,10 @@
 			this.SpellCheckApi.restart = function() {
 				this.isRestart = true;
 				window["AscDesktopEditor"]["SpellCheck"]("clear");
+			};
+
+			this.SpellCheckApi.checkDictionary = function () {
+				return true;
 			};
 
 			if (window["AscDesktopEditor"]["IsLocalFile"] && !window["AscDesktopEditor"]["IsLocalFile"]())
@@ -2412,12 +2424,12 @@
 				this.sendEvent('asc_onSpellCheckInit', langs_array);
 			}
 		} else {
-			if (!this.SpellCheckUrl && !window['NATIVE_EDITOR_ENJINE']) {
+			if (!window['NATIVE_EDITOR_ENJINE']) {
 				this.SpellCheckApi = {};
 				this.SpellCheckApi.log = false;
 				this.SpellCheckApi.worker = new CSpellchecker({
-					enginePath: "../../../../sdkjs/common/spell/spell",
-					dictionariesPath: "./../../../../dictionaries"
+					enginePath: AscCommon.RELATIVE_SDKJS_PATH + "common/spell/spell",
+					dictionariesPath: AscCommon.RELATIVE_SDKJS_PATH + "../dictionaries"
 				});
 				this.SpellCheckApi.worker.restartCallback = function() {
 					t.asc_restartCheckSpelling();
@@ -2448,22 +2460,8 @@
 				};
 
 				this.sendEvent('asc_onSpellCheckInit', this.SpellCheckApi.worker.getLanguages());
-				return;
-			}
-			
-			// Deprecated old scheme with server
-			if (this.SpellCheckUrl && this.isSpellCheckEnable) {
-				this.SpellCheckApi.set_url(this.SpellCheckUrl);
 			}
 		}
-
-		this.SpellCheckApi.onInit = function (e) {
-			t.sendEvent('asc_onSpellCheckInit', e);
-		};
-		this.SpellCheckApi.onSpellCheck = function (e) {
-			t.SpellCheck_CallBack(e);
-		};
-		this.SpellCheckApi.init(this.documentId);
 	};
     baseEditorsApi.prototype.asc_spellCheckAddToDictionary       = function(SpellCheckProperty)
     {
@@ -2975,6 +2973,21 @@
 	};
 
 	baseEditorsApi.prototype.getGraphicController = function() {};
+
+	baseEditorsApi.prototype.asc_canConvertImageToShapes = function()
+	{
+		var controller = this.getGraphicController();
+		return !!(controller && controller.getSingleSelectedSvgImage());
+	};
+	baseEditorsApi.prototype.asc_convertImageToShapes = function()
+	{
+		var controller = this.getGraphicController();
+		if (!controller)
+			return;
+		var image = controller.getSingleSelectedSvgImage();
+		if (image)
+			controller.convertImageToShapes(image);
+	};
 
 	baseEditorsApi.prototype.asc_canEditTableOleObject = function(bReturnOle) {
 		var oController = this.getGraphicController();
@@ -5373,6 +5386,11 @@
 		let guids = {}; guids[guid] = true;
 		window.g_asc_plugins.onPluginEvent2("onToolbarMenuClick", itemId, guids);
 	};
+	baseEditorsApi.prototype["onPluginWindowHeaderMenuItemClick"] = function(guid, windowId, itemId, pressed)
+	{
+		let guids = {}; guids[guid] = true;
+		window.g_asc_plugins.onPluginEvent2("onWindowHeaderMenuClick", itemId, guids);
+	};
 	baseEditorsApi.prototype.onPluginCloseContextMenuItem = function(guid)
 	{
 		if (!this.contextMenuPlugins)
@@ -6261,8 +6279,12 @@
 	prot["asc_setPdfViewer"] = prot.asc_setPdfViewer;
 
 	prot["asc_setPutImageToClipboard"] = prot.asc_setPutImageToClipboard;
+	prot["asc_CopyData"] = prot.asc_CopyData;
 
 	prot["asc_mergeSelectedShapes"] = prot.asc_mergeSelectedShapes;
+
+	prot["asc_canConvertImageToShapes"] = prot.asc_canConvertImageToShapes;
+	prot["asc_convertImageToShapes"] = prot.asc_convertImageToShapes;
 
 	prot["asc_SetRTLInterface"] = prot.asc_SetRTLInterface;
 

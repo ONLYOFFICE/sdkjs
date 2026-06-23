@@ -55,7 +55,6 @@
         this._password          = false;
         this._richText          = false; // to do related properties, methods
         this._richValue         = [];
-        this._textFont          = AscPDF.DEFAULT_FIELD_FONT;
         this._fileSelect        = false;
         this._value             = undefined;
 		this._displayValue      = "";
@@ -296,9 +295,9 @@
             this.GetAllWidgets().forEach(updateWidget);
 
             if (bMultiline == false) {
-                let sText = this.GetParentValue();
+                let sText = this.GetLogicValue();
                 if (sText && sText.search("\r") !== -1) {
-                    this.SetParentValue(sText.split("\r").join(""));
+                    this.SetLogicValue(sText.split("\r").join(""));
                 }
             }
         }
@@ -362,20 +361,22 @@
 				this.SetWasChanged(true);
 			
 			if (isOnOpen == true && !this.GetParent(true))
-				this.SetParentValue(sValue);
+				this.SetLogicValue(sValue);
 			
 			this.UpdateDisplayValue(sValue);
 		}
 		else {
-			this.SetParentValue(sValue);
+			this.SetLogicValue(sValue);
 		}
+
+		return true;
 	};
     CTextField.prototype.private_SetValue = function(sValue) {
         if (this.IsWidget()) {
 			this.UpdateDisplayValue(sValue);
 		}
 		else {
-			this.SetParentValue(sValue);
+			this.SetLogicValue(sValue);
 		}
     };
 
@@ -465,8 +466,8 @@
     CTextField.prototype.SetCalcOrderIndex = function(nIdx) {
         let oCalcInfo   = this.GetDocument().GetCalculateInfo();
         let oWidget     = null;
-        if (this.IsWidget() || this.IsAllKidsWidgets()) {
-            oWidget = this.GetKid(0) || this;
+        if (this.IsLogicalRoot()) {
+            oWidget = this.GetKid(0);
         }
         let oCalcTrigget = oWidget.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Calculate);
         if (oCalcTrigget == null || nIdx < 0)
@@ -507,7 +508,7 @@
         this.Recalculate();
         this.DrawBackground(oGraphicsPDF);
                 
-        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) && this.IsNeedDrawHighlight() ? this.contentFormat : this.content;
+        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) && !this.IsInForm() ? this.contentFormat : this.content;
         this.curContent = oContentToDraw; // remember current content
 
         if (this.IsMultiline() == true) {
@@ -723,13 +724,15 @@
         this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, []);
         this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Validate, []);
 
-        const oCurMeta = this.GetMeta();
-        if (oCurMeta['regular']) {
-            oCurMeta['regular'] = undefined
-            this.SetMeta(oCurMeta);
-        }
-        
-        this.SetFormatValue(undefined);
+		this.GetAllWidgets().forEach(function(widget) {
+			const oCurMeta = widget.GetMeta();
+			if (oCurMeta['regular']) {
+				oCurMeta['regular'] = undefined
+				widget.SetMeta(oCurMeta);
+			}
+
+			widget.SetFormatValue(undefined);
+		});
     };
     CTextField.prototype.GetFormatType = function() {
         let oFormatTrigger      = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format);
@@ -1114,8 +1117,10 @@
                 nNewFontSize = AscCommon.CorrectFontSize(nFontSize, true);
                 while (nNewFontSize > 1)
                 {
-                    oRun.SetFontSize(nNewFontSize);
-                    oPara.Recalculate_Page(0);
+					oPara.SetApplyToAll(true);
+					oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+					oPara.SetApplyToAll(false);
+					oPara.Recalculate_Page(0);
 
                     oContentBounds = oContent.GetContentBounds(0);
                     if (oContentBounds.Bottom - oContentBounds.Top < oBounds.H)
@@ -1130,16 +1135,19 @@
 
                 while (nNewFontSize <= nMaxFontSize)
                 {
-                    oRun.SetFontSize(nNewFontSize);
-                    
-                    oPara.Recalculate_Page(0);
+					oPara.SetApplyToAll(true);
+					oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+					oPara.SetApplyToAll(false);
+					oPara.Recalculate_Page(0);
 
                     let oContentBounds = oContent.GetContentBounds(0);
                     if (oContentBounds.Bottom - oContentBounds.Top > oBounds.H)
                     {
                         nNewFontSize -= nFontStep;
-                        oRun.SetFontSize(nNewFontSize);
-                        oPara.Recalculate_Page(0);
+						oPara.SetApplyToAll(true);
+						oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+						oPara.SetApplyToAll(false);
+						oPara.Recalculate_Page(0);
                         break;
                     }
 
@@ -1152,8 +1160,10 @@
         }
         else {
             nNewFontSize = (Math.min(nFontSize * oBounds.H / nTextHeight * 0.9, 100, nFontSize * oBounds.W / nMaxWidth) * 100 >> 0) / 100;
-            oRun.SetFontSize(nNewFontSize);
-            oPara.Recalculate_Page(0);
+			oPara.SetApplyToAll(true);
+			oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+			oPara.SetApplyToAll(false);
+			oPara.Recalculate_Page(0);
         }
 
         if (this.IsPassword()) {
@@ -1871,7 +1881,12 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CTextField.prototype.Commit = function() {
-        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
+		if (this.IsLogicalRoot() && !this.IsWidget()) {
+			this.GetKid(0).Commit();
+			return;
+		}
+
+        let aFields = this.GetAllWidgets();
 
         this.DoFormatAction();
         
@@ -1901,8 +1916,8 @@
             aFields[i].SetFormatValue(sFormatValue);
         }
 
-        if (this.GetParentValue() != sNewValue) {
-            this.SetParentValue(sNewValue);
+        if (this.GetLogicValue() != sNewValue) {
+            this.SetLogicValue(sNewValue);
         }
         // when alignment is center or right, after content width becomes larger than form size,
         // alignment becomes left, until text becomes smaller than form size again
@@ -2115,7 +2130,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CTextField.prototype.SyncValue = function() {
-        this.SetValue(this.GetParentValue());
+        this.SetValue(this.GetLogicValue());
         this.SetFormatValue(this.GetFormatValue());
         
         this.SetNeedRecalc(true);
@@ -2304,7 +2319,7 @@
         this.WriteToBinaryBase(memory);
         this.WriteToBinaryBase2(memory);
 
-        let sValue = this.GetParentValue(memory.isCopyPaste);
+        let sValue = this.GetLogicValue(memory.isCopyPaste);
         if (sValue != null) {
             memory.fieldDataFlags |= (1 << 9);
             memory.WriteString(sValue);

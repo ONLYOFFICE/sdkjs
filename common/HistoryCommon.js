@@ -70,6 +70,9 @@
 			case AscDFH.historydescription_CommonControllerSetGraphicObject            :
 				sString = "CommonControllerSetGraphicObject";
 				break;
+			case AscDFH.historydescription_CommonControllerConvertSvgToShapes          :
+				sString = "CommonControllerConvertSvgToShapes";
+				break;
 			case AscDFH.historydescription_CommonStatesAddNewShape                     :
 				sString = "CommonStatesAddNewShape";
 				break;
@@ -1715,9 +1718,6 @@
 	window['AscDFH'].historyitem_type_ChartStyleEntry        = 1198 << 16;
 	window['AscDFH'].historyitem_type_MarkerLayout           = 1199 << 16;
 	window['AscDFH'].historyitem_type_TimelineSlicerView     = 1200 << 16;
-	window['AscDFH'].historyitem_type_ImageBlipFillPart      = 1201 << 16;
-	window['AscDFH'].historyitem_type_ImageBlipStart         = 1202 << 16;
-	window['AscDFH'].historyitem_type_ImageBlipEnd           = 1203 << 16;
 
 
 	window['AscDFH'].historyitem_type_Address                          = 1201 << 16;
@@ -1857,6 +1857,8 @@
 	window['AscDFH'].historyitem_type_CViewPr                = 2115 << 16;
 	window['AscDFH'].historyitem_type_ViewPrScale            = 2116 << 16;
 	window['AscDFH'].historyitem_type_ViewPrGuide            = 2117 << 16;
+
+	window['AscDFH'].historyitem_type_CSld                   = 2118 << 16;
 
 	window['AscDFH'].historyitem_type_OForm_UserMaster       = 2200 << 16;
 	window['AscDFH'].historyitem_type_OForm_User             = 2201 << 16;
@@ -3244,6 +3246,7 @@
 	window['AscDFH'].historyitem_SlideSetClrMapOverride = window['AscDFH'].historyitem_type_Slide | 14;
 	window['AscDFH'].historyitem_SlideSetNotes          = window['AscDFH'].historyitem_type_Slide | 15;
 	window['AscDFH'].historyitem_SlideSetTiming         = window['AscDFH'].historyitem_type_Slide | 16;
+	window['AscDFH'].historyitem_SlideSetCSld           = window['AscDFH'].historyitem_type_Slide | 17;
 
 	window['AscDFH'].historyitem_SlideLayoutSetMaster         = window['AscDFH'].historyitem_type_SlideLayout | 1;
 	window['AscDFH'].historyitem_SlideLayoutSetMatchingName   = window['AscDFH'].historyitem_type_SlideLayout | 2;
@@ -3261,6 +3264,7 @@
 	window['AscDFH'].historyitem_SlideLayoutSetTransition     = window['AscDFH'].historyitem_type_SlideLayout | 14;
 	window['AscDFH'].historyitem_SlideLayoutRemoveFromSpTree  = window['AscDFH'].historyitem_type_SlideLayout | 15;
 	window['AscDFH'].historyitem_SlideLayoutSetPreserve       = window['AscDFH'].historyitem_type_SlideLayout | 16;
+	window['AscDFH'].historyitem_SlideLayoutSetCSld           = window['AscDFH'].historyitem_type_SlideLayout | 17;
 
 	window['AscDFH'].historyitem_SlideMasterAddToSpTree       = window['AscDFH'].historyitem_type_SlideMaster | 1;
 	window['AscDFH'].historyitem_SlideMasterSetTheme          = window['AscDFH'].historyitem_type_SlideMaster | 2;
@@ -3277,6 +3281,7 @@
 	window['AscDFH'].historyitem_SlideMasterRemoveLayout      = window['AscDFH'].historyitem_type_SlideMaster | 13;
 	window['AscDFH'].historyitem_SlideMasterRemoveFromSpTree  = window['AscDFH'].historyitem_type_SlideMaster | 14;
 	window['AscDFH'].historyitem_SlideMasterSetPreserve       = window['AscDFH'].historyitem_type_SlideMaster | 15;
+	window['AscDFH'].historyitem_SlideMasterSetCSld           = window['AscDFH'].historyitem_type_SlideMaster | 16;
 
 	window['AscDFH'].historyitem_SlideCommentsAddComment    = window['AscDFH'].historyitem_type_SlideComments | 1;
 	window['AscDFH'].historyitem_SlideCommentsRemoveComment = window['AscDFH'].historyitem_type_SlideComments | 2;
@@ -3342,6 +3347,7 @@
     window['AscDFH'].historyitem_NotesMasterAddToNotesLst  = window['AscDFH'].historyitem_type_NotesMaster | 7;
     window['AscDFH'].historyitem_NotesMasterSetName        = window['AscDFH'].historyitem_type_NotesMaster | 8;
     window['AscDFH'].historyitem_NotesMasterSetClrMap      = window['AscDFH'].historyitem_type_NotesMaster | 9;
+    window['AscDFH'].historyitem_NotesMasterSetCSld        = window['AscDFH'].historyitem_type_NotesMaster | 10;
 
 
     window['AscDFH'].historyitem_NotesSetClrMap           = window['AscDFH'].historyitem_type_Notes | 1;
@@ -3353,6 +3359,7 @@
     window['AscDFH'].historyitem_NotesSetName             = window['AscDFH'].historyitem_type_Notes | 7;
     window['AscDFH'].historyitem_NotesSetSlide            = window['AscDFH'].historyitem_type_Notes | 8;
     window['AscDFH'].historyitem_NotesSetNotesMaster      = window['AscDFH'].historyitem_type_Notes | 9;
+    window['AscDFH'].historyitem_NotesSetCSld             = window['AscDFH'].historyitem_type_Notes | 10;
 
     window['AscDFH'].historyitem_PresentationSectionSetName       = window['AscDFH'].historyitem_type_PresentationSection | 1;
     window['AscDFH'].historyitem_PresentationSectionSetGuid       = window['AscDFH'].historyitem_type_PresentationSection | 2;
@@ -4094,6 +4101,11 @@
 	AscDFH.historyitem_FormControlPr_AddItemToLst      = AscDFH.historyitem_type_FormControlPr | 32;
 	AscDFH.historyitem_FormControlPr_RemoveItemFromLst = AscDFH.historyitem_type_FormControlPr | 33;
 
+	AscDFH.historyitem_CSld_SetBg              = AscDFH.historyitem_type_CSld | 1;
+	AscDFH.historyitem_CSld_SetName            = AscDFH.historyitem_type_CSld | 2;
+	AscDFH.historyitem_CSld_AddToSpTree        = AscDFH.historyitem_type_CSld | 3;
+	AscDFH.historyitem_CSld_RemoveFromSpTree   = AscDFH.historyitem_type_CSld | 4;
+
 	AscDFH.historyitem_ControlPr_AltText       = AscDFH.historyitem_type_ControlPr | 1;
 	AscDFH.historyitem_ControlPr_AutoFill      = AscDFH.historyitem_type_ControlPr | 2;
 	AscDFH.historyitem_ControlPr_AutoLine      = AscDFH.historyitem_type_ControlPr | 3;
@@ -4149,6 +4161,7 @@
 	AscDFH.historyitem_Pdf_Form_Ap_Idx			= AscDFH.historyitem_type_Pdf_Form | 28;
 	AscDFH.historyitem_Pdf_Form_Changed_View	= AscDFH.historyitem_type_Pdf_Form | 29;
 	AscDFH.historyitem_Pdf_Form_Orig_Page		= AscDFH.historyitem_type_Pdf_Form | 30;
+	AscDFH.historyitem_Pdf_Form_Redacted		= AscDFH.historyitem_type_Pdf_Form | 31;
 
 
 
@@ -4279,24 +4292,26 @@
 	//------------------------------------------------------------------------------------------------------------------
 	// Types of changes in CPDFDoc class
 	//------------------------------------------------------------------------------------------------------------------
-	window['AscDFH'].historyitem_PDF_Document_AnnotsContent		= window['AscDFH'].historyitem_type_PDF_Document | 1;
-	window['AscDFH'].historyitem_PDF_Document_DrawingsContent	= window['AscDFH'].historyitem_type_PDF_Document | 2;
-	window['AscDFH'].historyitem_PDF_Document_FieldsContent		= window['AscDFH'].historyitem_type_PDF_Document | 3;
-	window['AscDFH'].historyitem_PDF_Document_PagesContent		= window['AscDFH'].historyitem_type_PDF_Document | 4;
-	window['AscDFH'].historyitem_PDF_Document_RotatePage		= window['AscDFH'].historyitem_type_PDF_Document | 5;
-	window['AscDFH'].historyitem_PDF_Document_RecognizePage		= window['AscDFH'].historyitem_type_PDF_Document | 6;
-	window['AscDFH'].historyitem_PDF_Document_SetDocument		= window['AscDFH'].historyitem_type_PDF_Document | 7;
-	window['AscDFH'].historyitem_PDF_Document_PageLocks			= window['AscDFH'].historyitem_type_PDF_Document | 8;
-	window['AscDFH'].historyitem_PDF_PropLocker_ObjectId		= window['AscDFH'].historyitem_type_PDF_Document | 9;
-	window['AscDFH'].historyitem_Pdf_Document_Start_Merge_Pages	= window['AscDFH'].historyitem_type_PDF_Document | 10;
-	window['AscDFH'].historyitem_Pdf_Document_Part_Merge_Pages	= window['AscDFH'].historyitem_type_PDF_Document | 11;
-	window['AscDFH'].historyitem_Pdf_Document_End_Merge_Pages	= window['AscDFH'].historyitem_type_PDF_Document | 12;
-	window['AscDFH'].historyitem_Pdf_Document_Calc_Order		= window['AscDFH'].historyitem_type_PDF_Document | 13;
-	window['AscDFH'].historyitem_PDF_Document_Locks				= window['AscDFH'].historyitem_type_PDF_Document | 14;
-	window['AscDFH'].historyitem_Pdf_Document_Start_Redact		= window['AscDFH'].historyitem_type_PDF_Document | 15;
-	window['AscDFH'].historyitem_Pdf_Document_Part_Redact		= window['AscDFH'].historyitem_type_PDF_Document | 16;
-	window['AscDFH'].historyitem_Pdf_Document_End_Redact		= window['AscDFH'].historyitem_type_PDF_Document | 17;
-	window['AscDFH'].historyitem_Pdf_Embed_Fonts_Map			= window['AscDFH'].historyitem_type_PDF_Document | 18;
+	window['AscDFH'].historyitem_PDF_Document_AnnotsContent			= window['AscDFH'].historyitem_type_PDF_Document | 1;
+	window['AscDFH'].historyitem_PDF_Document_DrawingsContent		= window['AscDFH'].historyitem_type_PDF_Document | 2;
+	window['AscDFH'].historyitem_PDF_Document_FieldsContent			= window['AscDFH'].historyitem_type_PDF_Document | 3;
+	window['AscDFH'].historyitem_PDF_Document_PagesContent			= window['AscDFH'].historyitem_type_PDF_Document | 4;
+	window['AscDFH'].historyitem_PDF_Document_RotatePage			= window['AscDFH'].historyitem_type_PDF_Document | 5;
+	window['AscDFH'].historyitem_PDF_Document_RecognizePage			= window['AscDFH'].historyitem_type_PDF_Document | 6;
+	window['AscDFH'].historyitem_PDF_Document_SetDocument			= window['AscDFH'].historyitem_type_PDF_Document | 7;
+	window['AscDFH'].historyitem_PDF_Document_PageLocks				= window['AscDFH'].historyitem_type_PDF_Document | 8;
+	window['AscDFH'].historyitem_PDF_PropLocker_ObjectId			= window['AscDFH'].historyitem_type_PDF_Document | 9;
+	window['AscDFH'].historyitem_Pdf_Document_Start_Merge_Pages		= window['AscDFH'].historyitem_type_PDF_Document | 10;
+	window['AscDFH'].historyitem_Pdf_Document_Part_Merge_Pages		= window['AscDFH'].historyitem_type_PDF_Document | 11;
+	window['AscDFH'].historyitem_Pdf_Document_End_Merge_Pages		= window['AscDFH'].historyitem_type_PDF_Document | 12;
+	window['AscDFH'].historyitem_Pdf_Document_Calc_Order			= window['AscDFH'].historyitem_type_PDF_Document | 13;
+	window['AscDFH'].historyitem_PDF_Document_Locks					= window['AscDFH'].historyitem_type_PDF_Document | 14;
+	window['AscDFH'].historyitem_Pdf_Document_Start_Redact			= window['AscDFH'].historyitem_type_PDF_Document | 15;
+	window['AscDFH'].historyitem_Pdf_Document_Part_Redact			= window['AscDFH'].historyitem_type_PDF_Document | 16;
+	window['AscDFH'].historyitem_Pdf_Document_End_Redact			= window['AscDFH'].historyitem_type_PDF_Document | 17;
+	window['AscDFH'].historyitem_Pdf_Embed_Fonts_Map				= window['AscDFH'].historyitem_type_PDF_Document | 18;
+	window['AscDFH'].historyitem_Pdf_Document_Redact_Meta			= window['AscDFH'].historyitem_type_PDF_Document | 19;
+	window['AscDFH'].historyitem_PDF_Document_RedactedFieldsContent	= window['AscDFH'].historyitem_type_PDF_Document | 20;
 
 
 	AscDFH.historyitem_CustomPropertiesAddProperty = AscDFH.historyitem_type_CustomProperties | 0;
@@ -4821,6 +4836,7 @@
 	window['AscDFH'].historydescription_Document_InsertHorizontalRule               = 0x01fe;
 	window['AscDFH'].historydescription_Document_SetParagraphHtml                   = 0x01ff;
 	window['AscDFH'].historydescription_Document_SetHorizontalRuleProps             = 0x0200;
+	window['AscDFH'].historydescription_CommonControllerConvertSvgToShapes          = 0x0201;
 
 	// pdf
 	window['AscDFH'].historydescription_Pdf_AddAnnot			= 0x29a;

@@ -405,7 +405,7 @@
 		this.hotspot = _hotspot;
 		this.default = _default;
 	}
-	CHTMLCursorItemBase.prototype.baseUrl = "../../../../sdkjs/common/Images/cursors/";
+	CHTMLCursorItemBase.prototype.baseUrl = AscCommon.RELATIVE_SDKJS_PATH + "common/Images/cursors/";
 	CHTMLCursorItemBase.prototype.getValue = function() { return this.default; };
 
 	/**
@@ -533,7 +533,7 @@
 			try
 			{
 				var xhr = new XMLHttpRequest();
-				xhr.open("GET", "../../../../sdkjs/common/Images/cursors/svg.json", true);
+				xhr.open("GET", AscCommon.RELATIVE_SDKJS_PATH + "common/Images/cursors/svg.json", true);
 				var t = this;
 				xhr.onload = function()
 				{
@@ -1729,7 +1729,7 @@
 	//todo get from server config
 	var c_oAscImageUploadProp = {//Not all browsers allow getting file info before upload (e.g. ie9); if params change here, change matching params in web.common
 		MaxFileSize:      25000000, //25 mb
-		SupportedFormats: ["jpg", "jpeg", "jpe", "png", "gif", "bmp", "svg", "tiff", "tif"]
+		SupportedFormats: ["jpg", "jpeg", "jpe", "jfif", "jif", "png", "gif", "bmp", "svg", "tiff", "tif", "webp", "heic", "heif", "avif"]
 	};
 
 	var c_oAscDocumentUploadProp = {
@@ -11669,17 +11669,17 @@
 			if (scriptDirectory) {
 				loadScript(scriptDirectory + 'sdk-all.js', onSuccess, onError);
 			} else {
-				loadScript('./../../../../sdkjs/' + sdkName + '/sdk-all.js', onSuccess, onError);
+				loadScript(AscCommon.RELATIVE_SDKJS_PATH + sdkName + '/sdk-all.js', onSuccess, onError);
 			}
 		}
 	}
 
 	function loadChartStyles(onSuccess, onError) {
-		loadScript('../../../../sdkjs/common/Charts/ChartStyles.js', onSuccess, onError);
+		loadScript(AscCommon.RELATIVE_SDKJS_PATH + 'common/Charts/ChartStyles.js', onSuccess, onError);
 	}
 
 	function loadPathBoolean(onSuccess, onError) {
-		loadScript('../../../../sdkjs/common/Drawings/Format/path-boolean-min.js', onSuccess, onError);
+		loadScript(AscCommon.RELATIVE_SDKJS_PATH + 'common/Drawings/Format/path-boolean-min.js', onSuccess, onError);
 	}
 
 	function getAltGr(e)
@@ -15055,7 +15055,12 @@
 			return;
 		}
 		if (level === "error") {
-			console.error(msg);
+			// error logging must not abort the save: native console.error throws "param is not defined"
+			try {
+				console.error(msg);
+			} catch (e) {
+				console.log(msg);
+			}
 		}
 		if (api.documentOpenOptions && api.documentOpenOptions["debug"]) {
 			console.log("[speed]: "+ msg);
@@ -15295,7 +15300,7 @@
 	function applyElementDirection(element) {
 		if (!element)
 			return;
-		const text = element.value || '';
+		const text = (element.value != null ? element.value : (element.textContent || ''));
 		let dir = 'ltr';
 		for (let iter = text.getUnicodeIterator(); iter.check(); iter.next()) {
 			let charDir = AscCommon.getCharStrongDir(iter.value());
@@ -15987,10 +15992,16 @@ window["asc_IsNeedBuildCryptedFile"] = function()
 window["UpdateSystemPlugins"] = function()
 {
     var _plugins = JSON.parse(window["AscDesktopEditor"]["GetInstallPlugins"]());
-    _plugins[0]["url"] = _plugins[0]["url"].replace(" ", "%20");
-    _plugins[1]["url"] = _plugins[1]["url"].replace(" ", "%20");
+	let lenTypes = 2;
+	_plugins[0]["url"] = _plugins[0]["url"].split(" ").join("%20");
+	_plugins[1]["url"] = _plugins[1]["url"].split(" ").join("%20");
+	if (_plugins.length > 2)
+	{
+		lenTypes = 3;
+		_plugins[2]["url"] = _plugins[2]["url"].split(" ").join("%20");
+	}
 
-    for (var k = 0; k < 2; k++)
+    for (var k = 0; k < lenTypes; k++)
     {
         var _pluginsCur = _plugins[k];
 

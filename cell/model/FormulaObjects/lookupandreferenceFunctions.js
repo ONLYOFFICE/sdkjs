@@ -3090,7 +3090,7 @@ function (window, undefined) {
 	TypedCache.prototype.updateDataBerofe = function (range, rowColAxisData, bHor, startIndex) {
 		rowColAxisData.start = startIndex;
 		const unshiftArrays = {};
-		range._foreachNoEmpty(function (cell, r, c) {
+		range._foreachDataOnly(function (cell, r, c) {
 			const value = checkTypeCell(cell, true);
 			const index = bHor ? c : r;
 			if (!unshiftArrays[value.type]) {
@@ -3104,7 +3104,7 @@ function (window, undefined) {
 
 	TypedCache.prototype.updateDataAfter = function (range, rowColAxisData, bHor, endIndex) {
 		const t = this;
-		range._foreachNoEmpty(function (cell, r, c) {
+		range._foreachDataOnly(function (cell, r, c) {
 			const value = checkTypeCell(cell, true);
 			const index = bHor ? c : r;
 			if (index > rowColAxisData.end) {
@@ -3160,7 +3160,7 @@ function (window, undefined) {
 	TypedMapCache.prototype.updateDataBerofe = function (range, rowColAxisData, bHor, startIndex) {
 		rowColAxisData.start = startIndex;
 		const unshiftMaps = {};
-		range._foreachNoEmpty(function (cell, r, c) {
+		range._foreachDataOnly(function (cell, r, c) {
 			const value = checkTypeCell(cell, true);
 			const index = bHor ? c : r;
 			if (!rowColAxisData.data[value.type]) {
@@ -4129,7 +4129,7 @@ function (window, undefined) {
 		if (!cacheElem) {
 			cacheElem = {elements: [], results: {}};
 
-			range._foreachNoEmpty(function (cell, r, c) {
+			range._foreachDataOnly(function (cell, r, c) {
 				cacheElem.elements.push({v: checkTypeCell(cell), i: (bHor ? c - range.bbox.c1 : r -  range.bbox.r1)});
 			});
 			this.cacheId[sRangeName] = cacheElem;
@@ -5489,7 +5489,7 @@ function (window, undefined) {
 
 		// propagate #SPILL! from a blocked anchor formula
 		var anchorCell = null;
-		anchorWs.getCell3(spillRef.r1, spillRef.c1)._foreachNoEmpty(function (c) { anchorCell = c; });
+		anchorWs.getCell3(spillRef.r1, spillRef.c1)._foreachDataOnly(function (c) { anchorCell = c; });
 		if (anchorCell && anchorCell.formulaParsed && anchorCell.formulaParsed.aca && anchorCell.formulaParsed.ca) {
 			return new cError(cErrorType.cannot_be_spilled);
 		}

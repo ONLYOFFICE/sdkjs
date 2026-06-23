@@ -790,6 +790,9 @@ CGraphicObjects.prototype =
 
     checkSelectedObjectsForMove: DrawingObjectsController.prototype.checkSelectedObjectsForMove,
 
+	private_GetSlideJumpScreenTip: function (value, fallback) {
+		return fallback;
+	},
     getDrawingProps: DrawingObjectsController.prototype.getDrawingProps,
     getDrawingPropsFromArray: DrawingObjectsController.prototype.getDrawingPropsFromArray,
     getSelectedObjectsByTypes: DrawingObjectsController.prototype.getSelectedObjectsByTypes,
@@ -1586,6 +1589,13 @@ CGraphicObjects.prototype =
         return false;
     },
 
+    cancelSelectionTableBorder: function()
+    {
+        var content = this.getTargetDocContent();
+        if(content)
+            content.CancelTableBorderMove();
+    },
+
 
     getTableByXY: function(x, y, pageIndex, documentContent)
     {
@@ -1606,7 +1616,7 @@ CGraphicObjects.prototype =
         this.checkInkState();
         var nSavedSelType = this.document.Selection.Type;
         this.curState.onMouseDown(e, x, y, pageIndex);
-        if(this.arrTrackObjects.length === 0)
+        if(this.arrTrackObjects.length === 0 && this.arrPreTrackObjects.length === 0)
         {
             this.document.GetApi().sendEvent("asc_onSelectionEnd");
         }
@@ -2742,7 +2752,10 @@ CGraphicObjects.prototype =
                 return null;
         }
         this.handleEventMode = HANDLE_EVENT_MODE_CURSOR;
+        var savedNoNeedUpdateCursorType = this.noNeedUpdateCursorType;
+        this.noNeedUpdateCursorType = true;
         var cursor_type = this.nullState.onMouseDown(global_mouseEvent, x, y, pageIndex);
+        this.noNeedUpdateCursorType = savedNoNeedUpdateCursorType;
         this.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
         var object;
         if(cursor_type )
@@ -3069,6 +3082,101 @@ CGraphicObjects.prototype =
     },
 
     getGroup: DrawingObjectsController.prototype.getGroup,
+
+    convertImageToShapes: DrawingObjectsController.prototype.convertImageToShapes,
+
+    getSingleSelectedSvgImage: DrawingObjectsController.prototype.getSingleSelectedSvgImage,
+
+    private_ApplySvgToShapes: DrawingObjectsController.prototype.private_ApplySvgToShapes,
+
+    private_InsertShapesFromSvg: function(image, shapes)
+    {
+        if (!image.parent || !image.parent.Get_ParentParagraph)
+            return;
+        let anchorPara = image.parent.Get_ParentParagraph();
+        if (!anchorPara)
+            return;
+
+        let trackRevisions = false;
+        if (this.document.IsTrackRevisions())
+        {
+            trackRevisions = this.document.GetLocalTrackRevisions();
+            this.document.SetLocalTrackRevisions(false);
+        }
+
+        let i, xfrm;
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (i = 0; i < shapes.length; ++i)
+        {
+            xfrm = shapes[i].spPr.xfrm;
+            minX = Math.min(minX, xfrm.offX);
+            minY = Math.min(minY, xfrm.offY);
+            maxX = Math.max(maxX, xfrm.offX + xfrm.extX);
+            maxY = Math.max(maxY, xfrm.offY + xfrm.extY);
+        }
+        let extX = maxX - minX;
+        let extY = maxY - minY;
+
+        let group = new AscFormat.CGroupShape();
+        group.setBDeleted(false);
+        group.setSpPr(new AscFormat.CSpPr());
+        group.spPr.setParent(group);
+        group.spPr.setXfrm(new AscFormat.CXfrm());
+        let groupXfrm = group.spPr.xfrm;
+        groupXfrm.setParent(group.spPr);
+        groupXfrm.setOffX(0);
+        groupXfrm.setOffY(0);
+        groupXfrm.setExtX(extX);
+        groupXfrm.setExtY(extY);
+        groupXfrm.setChOffX(0);
+        groupXfrm.setChOffY(0);
+        groupXfrm.setChExtX(extX);
+        groupXfrm.setChExtY(extY);
+
+        for (i = 0; i < shapes.length; ++i)
+        {
+            let shape = shapes[i];
+            shape.spPr.xfrm.setOffX(shape.spPr.xfrm.offX - minX);
+            shape.spPr.xfrm.setOffY(shape.spPr.xfrm.offY - minY);
+            shape.setGroup(group);
+            group.addToSpTree(group.spTree.length, shape);
+        }
+
+        let paraDrawing = new ParaDrawing(extX, extY, null, this.drawingDocument, null, null);
+        paraDrawing.Set_WrappingType(WRAPPING_TYPE_NONE);
+        paraDrawing.Set_DrawingType(drawing_Anchor);
+        group.setParent(paraDrawing);
+        paraDrawing.Set_GraphicObject(group);
+        paraDrawing.setExtent(extX, extY);
+
+        let pageIndex = image.parent.pageIndex;
+        let anchorPos = this.document.Get_NearestPos(pageIndex, minX, minY, true, paraDrawing);
+
+        image.parent.bNotPreDelete = true;
+        image.parent.Remove_FromDocument(false);
+        image.parent.bNotPreDelete = undefined;
+
+        paraDrawing.Set_Props(new asc_CImgProperty(
+            {
+                PositionH: { RelativeFrom: Asc.c_oAscRelativeFromH.Page, UseAlign: false, Align: undefined, Value: minX },
+                PositionV: { RelativeFrom: Asc.c_oAscRelativeFromV.Page, UseAlign: false, Align: undefined, Value: minY }
+            }));
+
+        if (anchorPos && anchorPos.Paragraph)
+        {
+            anchorPos.Paragraph.Check_NearestPos(anchorPos);
+            paraDrawing.Set_XYForAdd(minX, minY, anchorPos, pageIndex);
+        }
+
+        paraDrawing.AddToParagraph(anchorPara);
+        paraDrawing.Parent = anchorPara;
+        this.addGraphicObject(paraDrawing);
+        this.resetSelection();
+        this.selectObject(group, pageIndex);
+
+        if (false !== trackRevisions)
+            this.document.SetLocalTrackRevisions(trackRevisions);
+    },
 
 	addObjectOnPage : function(pageIndex, object)
 	{
@@ -3706,6 +3814,22 @@ CGraphicObjects.prototype =
         return this.maximalGraphicObjectZIndex;
     },
 
+    IsTableBorderInDrawing: function(X, Y, nPageIndex){
+        this.handleEventMode = HANDLE_EVENT_MODE_CURSOR;
+        const savedNoNeedUpdateCursorType = this.noNeedUpdateCursorType;
+        this.noNeedUpdateCursorType = true;
+        const ret = this.curState.onMouseDown(global_mouseEvent, X, Y, nPageIndex);
+        this.noNeedUpdateCursorType = savedNoNeedUpdateCursorType;
+        this.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
+        if(ret && ret.objectId)
+        {
+            const oObject = AscCommon.g_oTableId.Get_ById(ret.objectId);
+            if(oObject)
+                return oObject.IsTableBorder(X, Y, nPageIndex);
+        }
+        return null;
+    },
+
     IsInDrawingObject: function(X, Y, nPageIndex, oContent){
         var _X, _Y, oTransform, oInvertTransform;
         if(oContent){
@@ -3731,7 +3855,10 @@ CGraphicObjects.prototype =
     {
         var ret;
         this.handleEventMode = HANDLE_EVENT_MODE_CURSOR;
+        var savedNoNeedUpdateCursorType = this.noNeedUpdateCursorType;
+        this.noNeedUpdateCursorType = true;
         ret = this.curState.onMouseDown(global_mouseEvent, x, y, pageIndex);
+        this.noNeedUpdateCursorType = savedNoNeedUpdateCursorType;
         this.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
         if(isRealObject(ret))
         {

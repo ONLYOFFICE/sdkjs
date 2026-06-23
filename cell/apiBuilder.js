@@ -9039,6 +9039,16 @@
 	 */
 	ApiWorksheet.prototype.GetDefNames = function () {
 		var res = this.worksheet.workbook.getDefinedNamesWS(this.worksheet.getId());
+		res.sort(function (a, b) {
+			var aName = a.name.toLowerCase();
+			var bName = b.name.toLowerCase();
+			if (aName > bName) {
+				return 1;
+			} else if (aName < bName) {
+				return -1;
+			}
+			return 0;
+		});
 		var name = [];
 		for (var i = 0; i < res.length; i++) {
 			name.push(new ApiName(res[i]));
@@ -9173,6 +9183,10 @@
 			}
 			if (externalLink) {
 				Hyperlink.asc_setHyperlinkUrl(sAddress);
+				// As in MS: an external URL keeps the subaddress ("URL#subaddress").
+				if (subAddress) {
+					Hyperlink.asc_setLocation(subAddress);
+				}
 			} else {
 				Hyperlink.asc_setRange(address[1]);
 				Hyperlink.asc_setSheet(address[0]);
@@ -11502,7 +11516,7 @@
 	 * Deletes the Range object.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {DeleteShiftDirection} [shift] - Specifies how to shift cells to replace the deleted cells.
+	 * @param {DeleteShiftDirection} [shift] - Specifies how to shift cells to replace the deleted cells. If omitted, the direction is determined automatically: <em>"up"</em> if the range has more columns than rows, otherwise <em>"left"</em>.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Delete.js
 	 */
 	ApiRange.prototype.Delete = function (shift) {
@@ -11891,7 +11905,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Find.js
 	 */
 	ApiRange.prototype.Find = function (oSearchData) {
-		let What, After, LookIn, LookAt, SearchOrder, SearchDirection, MatchCase;
+		let What, After, LookIn, LookAt, SearchOrder, SearchDirection, MatchCase, Wildcards;
 
 		if (arguments.length === 1) {
 			if (AscCommon.isRealObject(oSearchData)) {
@@ -11902,6 +11916,7 @@
 				SearchOrder = oSearchData['SearchOrder'];
 				SearchDirection = oSearchData['SearchDirection'];
 				MatchCase = oSearchData['MatchCase'];
+				Wildcards = oSearchData['Wildcards'];
 			} else {
 				return null;
 			}
@@ -11934,6 +11949,10 @@
 
 			options.asc_setLookIn((LookIn === 'xlValues' ? 2 : 1));
 			options.asc_setNotSearchEmptyCells(!(What === "" && !options.isWholeCell));
+			if (Wildcards) {
+				options.isWildcard = true;
+				options.findRegExp = AscCommonExcel.getFindRegExp(What, options);
+			}
 			let start = (After instanceof ApiRange && After.range.isOneCell() && this.range.containsRange(After.range))
 				? {row: After.range.bbox.r1, col: After.range.bbox.c1}
 				: {row: this.range.bbox.r1, col: this.range.bbox.c1};
@@ -13452,6 +13471,37 @@
 	};
 
 	/**
+	 * Sets whether the aspect ratio of the drawing is locked.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} bAspect - Specifies whether the aspect ratio of this drawing is locked.
+	 * @returns {boolean} Returns `true` if the lock aspect was successfully set, otherwise returns `false`.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLockAspect.js
+	 */
+	ApiDrawing.prototype.SetLockAspect = function(bAspect)
+	{
+		if (bAspect !== false && bAspect !== true)
+			return false;
+
+		this.Drawing.setNoChangeAspect(bAspect);
+		return true;
+	};
+
+	/**
+	 * Returns whether the aspect ratio of the drawing is locked.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockAspect.js
+	 */
+	ApiDrawing.prototype.GetLockAspect = function()
+	{
+		return this.Drawing.getNoChangeAspect();
+	};
+
+	/**
 	 * Selects the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
@@ -13532,6 +13582,36 @@
 	};
 
 	/**
+	 * Sets the fill formatting properties to the current graphic object.
+	 *
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 *
+	 * @param {ApiFill} fill - The fill type used to fill the graphic object.
+	 * @returns {boolean} - returns false if param is invalid.
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Fill.js
+	 */
+	ApiDrawing.prototype.Fill = function (fill) {
+		const classType = this.GetClassType();
+		if (classType !== 'shape' && classType !== 'image' && classType !== 'chart') {
+			return false;
+		}
+
+		if (!fill || !fill.GetClassType || fill.GetClassType() !== 'fill') {
+			return false;
+		}
+
+		if (this.Drawing && this.Drawing.spPr) {
+			this.Drawing.spPr.setFill(fill.UniFill);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
 	 * Gets the fill formatting properties from the current graphic object.
 	 *
 	 * @memberof ApiDrawing
@@ -13564,11 +13644,7 @@
 
 		return null;
 	};
-
-	Object.defineProperty(ApiDrawing.prototype, 'Fill', {
-		set: function (fill) { this.SetFill(fill); },
-		get: function () { return this.GetFill(); }
-	});
+	
 
 	/**
 	 * Sets the outline properties to the specified graphic object.
@@ -13586,6 +13662,84 @@
 
 		this.Drawing.spPr.setLn(oStroke.Ln);
 		return true;
+	};
+	/**
+	 * Sets the title of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 9.5.0
+	 * @param {string} title - The title to set for the current drawing.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetTitle.js
+	 */
+	ApiDrawing.prototype.SetTitle = function(title)
+	{
+		if (!title)
+			return false;
+
+		let oDrawing = this.Drawing;
+		if (oDrawing)
+		{
+			oDrawing.setTitle(title);
+			return true;
+		}
+		return false;
+	};
+	/**
+	 * Gets the title of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 9.5.0
+	 * @returns {string | null} - The title of the current drawing, or null if not set.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetTitle.js
+	 */
+	ApiDrawing.prototype.GetTitle = function()
+	{
+		let oDrawing = this.Drawing;
+		let title = oDrawing.getTitle();
+		if (title)
+			return title;
+
+		return null;
+	};
+	/**
+	 * Sets the description of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 9.5.0
+	 * @param {string} description - The description to set for the current drawing.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetDescription.js
+	 */
+	ApiDrawing.prototype.SetDescription = function(description)
+	{
+		if (!description)
+			return false;
+
+		let oDrawing = this.Drawing;
+		if (oDrawing)
+		{
+			oDrawing.setDescription(description);
+			return true;
+		}
+		return false;
+	};
+	/**
+	 * Gets the description of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 9.5.0
+	 * @returns {string | null} - The description of the current drawing, or null if not set.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetDescription.js
+	 */
+	ApiDrawing.prototype.GetDescription = function()
+	{
+		let oDrawing = this.Drawing;
+		let description = oDrawing.getDescription();
+		if (description)
+			return description;
+
+		return null;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -13720,15 +13874,15 @@
 		if (this.Shape) {
 			switch (verticalAlign) {
 				case "top": {
-					this.Shape.setVerticalAlign(4);
+					this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
 					break;
 				}
 				case "center": {
-					this.Shape.setVerticalAlign(1);
+					this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
 					break;
 				}
 				case "bottom": {
-					this.Shape.setVerticalAlign(0);
+					this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
 					break;
 				}
 				default:
@@ -13738,6 +13892,33 @@
 		}
 
 		return false;
+	};
+
+	/**
+	 * Gets the vertical alignment from the shape content where a paragraph or text runs can be inserted.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CSE"]
+	 * @returns {VerticalTextAlign}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetVerticalTextAlign.js
+	 */
+	ApiShape.prototype.GetVerticalTextAlign = function() {
+		let vAlign = this.Shape.getVerticalAlign();
+
+		switch(vAlign)
+		{
+			case AscFormat.VERTICAL_ANCHOR_TYPE_TOP:
+			{
+				return "top";
+			}
+			case AscFormat.VERTICAL_ANCHOR_TYPE_CENTER:
+			{
+				return "center";
+			}
+			case AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM:
+			{
+				return "bottom";
+			}
+		}
 	};
 
 	/**
@@ -14903,6 +15084,10 @@
 	ApiHyperlink.prototype.SetSubAddress = function (sSubAddress) {
 		var clone = this._elem.data.clone();
 		clone.setLocation(sSubAddress || null);
+		// As in MS: a subaddress drops the external URL
+		if (sSubAddress) {
+			clone.Hyperlink = null;
+		}
 		this._applyData(clone);
 	};
 
@@ -14967,6 +15152,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetTextToDisplay.js
 	 */
 	ApiHyperlink.prototype.SetTextToDisplay = function (sText) {
+		// As in MS: an empty value keeps the current display text
+		if (!sText) {
+			return;
+		}
 		this.GetRange().SetValue(sText);
 	};
 
@@ -20979,8 +21168,9 @@
 		let formula1 = validation.getFormula1();
 		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (formula1 && worksheet) {
+			let activeCell = this.range.range.bbox && {row: this.range.range.bbox.r1, col: this.range.range.bbox.c1};
 			formula1 = formula1.clone(true);
-			formula1.correctToInterface(worksheet, validation);
+			formula1.correctToInterface(worksheet, validation, activeCell);
 		}
 		return formula1 ? formula1.asc_getValue() : "";
 	};
@@ -21000,8 +21190,9 @@
 		let formula2 = validation.getFormula2();
 		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (formula2 && worksheet) {
+			let activeCell = this.range.range.bbox && {row: this.range.range.bbox.r1, col: this.range.range.bbox.c1};
 			formula2 = formula2.clone(true);
-			formula2.correctToInterface(worksheet, validation);
+			formula2.correctToInterface(worksheet, validation, activeCell);
 		}
 		return formula2 ? formula2.asc_getValue() : "";
 	};
@@ -22144,6 +22335,7 @@
 			case Asc.ECfType.top10:
 				return new ApiTop10(rule, range, parent);
 			case Asc.ECfType.uniqueValues:
+			case Asc.ECfType.duplicateValues:
 				return new ApiUniqueValues(rule, range, parent);
 			default:
 				return new ApiFormatCondition(rule, range, parent);
@@ -28608,8 +28800,15 @@
 	ApiDrawing.prototype["GetFlipV"]                   =  ApiDrawing.prototype.GetFlipV;
 	ApiDrawing.prototype["SetFlipH"]                   =  ApiDrawing.prototype.SetFlipH;
 	ApiDrawing.prototype["SetFlipV"]                   =  ApiDrawing.prototype.SetFlipV;
+	ApiDrawing.prototype["SetLockAspect"]              =  ApiDrawing.prototype.SetLockAspect;
+	ApiDrawing.prototype["GetLockAspect"]              =  ApiDrawing.prototype.GetLockAspect;
+	ApiDrawing.prototype["SetTitle"]                   =  ApiDrawing.prototype.SetTitle;
+	ApiDrawing.prototype["GetTitle"]                   =  ApiDrawing.prototype.GetTitle;
+	ApiDrawing.prototype["SetDescription"]             =  ApiDrawing.prototype.SetDescription;
+	ApiDrawing.prototype["GetDescription"]             =  ApiDrawing.prototype.GetDescription;
 	ApiDrawing.prototype["Select"]                     =  ApiDrawing.prototype.Select;
 	ApiDrawing.prototype["SetFill"]                    =  ApiDrawing.prototype.SetFill;
+	ApiDrawing.prototype["Fill"]                       =  ApiDrawing.prototype.Fill;
 	ApiDrawing.prototype["GetFill"]                    =  ApiDrawing.prototype.GetFill;
 	ApiDrawing.prototype["SetOutLine"]                 =  ApiDrawing.prototype.SetOutLine;
 	ApiDrawing.prototype["Unselect"]                   =  ApiDrawing.prototype.Unselect;
@@ -28624,6 +28823,7 @@
 	ApiShape.prototype["GetDocContent"]                =  ApiShape.prototype.GetDocContent;
 	ApiShape.prototype["GetContent"]                   =  ApiShape.prototype.GetContent;
 	ApiShape.prototype["SetVerticalTextAlign"]         =  ApiShape.prototype.SetVerticalTextAlign;
+	ApiShape.prototype["GetVerticalTextAlign"]         =  ApiShape.prototype.GetVerticalTextAlign;
 	ApiShape.prototype["SetPaddings"]                  =  ApiShape.prototype.SetPaddings;
 	ApiShape.prototype["GetGeometry"]                  =  ApiShape.prototype.GetGeometry;
 	ApiShape.prototype["SetGeometry"]                  =  ApiShape.prototype.SetGeometry;
@@ -28632,6 +28832,7 @@
 
 	ApiChart.prototype["GetClassType"] = ApiChart.prototype.GetClassType = AscBuilder.ApiChart.prototype.GetClassType;
 	ApiChart.prototype["GetChartType"] = ApiChart.prototype.GetChartType = AscBuilder.ApiChart.prototype.GetChartType;
+	ApiChart.prototype["GetType"] = ApiChart.prototype.GetType = AscBuilder.ApiChart.prototype.GetType;
 	ApiChart.prototype["SetTitle"] = ApiChart.prototype.SetTitle = AscBuilder.ApiChart.prototype.SetTitle;
 	ApiChart.prototype["GetTitle"] = ApiChart.prototype.GetTitle = AscBuilder.ApiChart.prototype.GetTitle;
 	ApiChart.prototype["SetHorAxisTitle"] = ApiChart.prototype.SetHorAxisTitle = AscBuilder.ApiChart.prototype.SetHorAxisTitle;
@@ -28641,6 +28842,7 @@
 	ApiChart.prototype["SetLegendPos"] = ApiChart.prototype.SetLegendPos = AscBuilder.ApiChart.prototype.SetLegendPos;
 	ApiChart.prototype["SetLegendFontSize"] = ApiChart.prototype.SetLegendFontSize = AscBuilder.ApiChart.prototype.SetLegendFontSize;
 	ApiChart.prototype["SetShowDataLabels"] = ApiChart.prototype.SetShowDataLabels = AscBuilder.ApiChart.prototype.SetShowDataLabels;
+	ApiChart.prototype["SetShowDataTable"] = ApiChart.prototype.SetShowDataTable = AscBuilder.ApiChart.prototype.SetShowDataTable;
 	ApiChart.prototype["SetShowPointDataLabel"] = ApiChart.prototype.SetShowPointDataLabel = AscBuilder.ApiChart.prototype.SetShowPointDataLabel;
 	ApiChart.prototype["SetDataLabelsTextPr"] = ApiChart.prototype.SetDataLabelsTextPr = AscBuilder.ApiChart.prototype.SetDataLabelsTextPr;
 	ApiChart.prototype["SetPointDataLabelTextPr"] = ApiChart.prototype.SetPointDataLabelTextPr = AscBuilder.ApiChart.prototype.SetPointDataLabelTextPr;

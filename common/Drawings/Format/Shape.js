@@ -1554,6 +1554,20 @@
 			}
 		};
 
+		CShape.prototype.GetAllParaMaths = function (arrParaMaths) {
+			if (!arrParaMaths) {
+				arrParaMaths = [];
+			}
+			var oContent = this.getDocContent();
+			if (oContent) {
+				var aParagraphs = oContent.GetAllParagraphs({All: true});
+				for (var i = 0; i < aParagraphs.length; ++i) {
+					aParagraphs[i].GetAllParaMaths(arrParaMaths);
+				}
+			}
+			return arrParaMaths;
+		};
+
 		CShape.prototype.GetSearchElementId = function (bNext, bCurrent) {
 			if (this.textBoxContent)
 				return this.textBoxContent.GetSearchElementId(bNext, bCurrent);
@@ -1966,6 +1980,15 @@
 				}
 			}
 		};
+		CShape.prototype.getVerticalAlign = function() {
+			let bodyPr = this.getBodyPr();
+			if (bodyPr) {
+				return bodyPr.anchor;
+			}
+
+			return;
+		};
+
 		CShape.prototype.setVert = function (vert) {
 			var content_to_add = this.getDocContent();
 			if (!content_to_add) {
@@ -5374,6 +5397,14 @@
 			}
 		};
 
+		CShape.prototype.IsTableBorder = function (x, y, pageIndex) {
+			const content = this.getDocContent();
+			if (!content || !this.invertTransformText)
+				return null;
+			const tx = this.invertTransformText.TransformPointX(x, y);
+			const ty = this.invertTransformText.TransformPointY(x, y);
+			return content.IsTableBorder(tx, ty, pageIndex - content.GetRelativeStartPage());
+		};
 		CShape.prototype.selectionSetStart = function (e, x, y, slideIndex) {
 			if (this.isProtectedText && this.isProtectedText()) {
 				return;
@@ -5633,8 +5664,10 @@
 					geometry.check_bounds(graphics, this);
 				}
 
-				graphics.CheckLineWidth(this);
-				graphics.CorrectBounds2();
+				if (graphics.AutoCheckLineWidth) {
+					graphics.CheckLineWidth(this);
+					graphics.CorrectBounds2();
+				}
 
 				if (this.txBody) {
 					graphics.SetIntegerGrid(false);

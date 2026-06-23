@@ -869,6 +869,17 @@ function CDrawingDocument()
 	{
 		this.m_sLockedCursorType = "";
 	};
+	this.IsTrackRuler = function()
+	{
+		return this.m_oWordControl.m_oHorRuler.IsTracking() || this.m_oWordControl.m_oVerRuler.IsTracking();
+	};
+	this.CancelTrackRuler = function()
+	{
+		if (this.m_oWordControl.m_oHorRuler.IsTracking())
+			this.m_oWordControl.m_oHorRuler.CancelTracking();
+		if (this.m_oWordControl.m_oVerRuler.IsTracking())
+			this.m_oWordControl.m_oVerRuler.CancelTracking();
+	};
 
 	this.TargetStart          = function()
 	{
@@ -2763,11 +2774,18 @@ function CDrawingDocument()
 			dKoefY = g_dKoef_mm_to_pix;
 		}
 		let oTextMatrix = this.TextMatrix;
-		for (nIndex = 0; nIndex < PathLng; nIndex++)
+
+		// Hide the track polygon in DE and CE to match MS behavior.
+		let editorId = Asc.editor && Asc.editor.getEditorId();
+		let bDrawRect = editorId !== AscCommon.c_oEditorId.Presentation && editorId !== AscCommon.c_oEditorId.Spreadsheet;
+		if (bDrawRect)
 		{
-			oPath = this.MathTrack.GetPolygon(nIndex);
-			this.MathTrack.Draw(overlay, oPath, 0, 0, "#939393", dKoefX, dKoefY, xDst, yDst, oTextMatrix);
-			this.MathTrack.Draw(overlay, oPath, 1, 1, "#FFFFFF", dKoefX, dKoefY, xDst, yDst, oTextMatrix);
+			for (nIndex = 0; nIndex < PathLng; nIndex++)
+			{
+				oPath = this.MathTrack.GetPolygon(nIndex);
+				this.MathTrack.Draw(overlay, oPath, 0, 0, "#939393", dKoefX, dKoefY, xDst, yDst, oTextMatrix);
+				this.MathTrack.Draw(overlay, oPath, 1, 1, "#FFFFFF", dKoefX, dKoefY, xDst, yDst, oTextMatrix);
+			}
 		}
 		for (nIndex = 0, nCount = this.MathTrack.GetSelectPathsCount(); nIndex < nCount; nIndex++)
 		{

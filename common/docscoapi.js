@@ -1578,7 +1578,7 @@
       this._onLicenseChanged(data);
       this._onAuthParticipantsChanged(data['participants']);
 
-      this._onSpellCheckInit(data['g_cAscSpellCheckUrl']);
+      this._onSpellCheckInit();
       this._onSetIndexUser(this._indexUser);
 
       this._onMessages(data, false);

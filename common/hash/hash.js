@@ -53,7 +53,7 @@
 			}
 		}
 
-		this.enginePath = "./../../../../sdkjs/common/hash/hash/";
+		this.enginePath = AscCommon.RELATIVE_SDKJS_PATH + "common/hash/hash/";
 		this.worker = null;
 
 		this.stop = function()

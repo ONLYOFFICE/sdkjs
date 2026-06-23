@@ -4099,6 +4099,7 @@
 			});
 			if (pivotCache.cacheRecords) {
 				this.bs.WriteItem(c_oSer_PivotTypes.record, function() {
+					// untouched records are written back verbatim; toXml parses only when the pivot was edited
 					pivotCache.cacheRecords.toXml(oThis.memory);
 				});
 			}
@@ -6386,7 +6387,7 @@
 					}
 					this.WriteControlPr(oControl);
 						this.bs.WriteItem(c_oSerControlTypes.Shape, function() {
-							oThis.bs.WriteItem(c_oSer_DrawingType.pptxDrawing, function(){pptx_content_writer.WriteDrawing(oThis.memory, oControl, null, null, null);});
+							pptx_content_writer.WriteDrawing(oThis.memory, oControl, null, null, null);
 						});
 				};
 				this.WriteControlPr = function(oControl) {
@@ -6817,10 +6818,13 @@
 		this.WriteSheetDataXLSB = function(ws)
         {
             var oThis = this;
+            var bbox;
             var range;
             if(oThis.isCopyPaste ){
-                range = ws.getRange3(oThis.isCopyPaste.r1, oThis.isCopyPaste.c1, oThis.isCopyPaste.r2, oThis.isCopyPaste.c2);
+                bbox = {c1: oThis.isCopyPaste.c1, r1: oThis.isCopyPaste.r1, c2: oThis.isCopyPaste.c2, r2: oThis.isCopyPaste.r2};
+                range = ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2);
             } else {
+                bbox = {c1: 0, r1: 0, c2: gc_nMaxCol0, r2: gc_nMaxRow0};
                 range = ws.getRange3(0, 0, gc_nMaxRow0, gc_nMaxCol0);
             }
 
@@ -6833,17 +6837,34 @@
 			this.memory.XlsbStartRecord(AscCommonExcel.XLSB.rt_BEGIN_SHEET_DATA, 0);
 			this.memory.XlsbEndRecord();
 
-            range._foreachRowNoEmpty(function(row, excludedCount) {
-                oThis.WriteRowAndFixEmpty(oThis.memory, cur, allRow, row, excludedCount, oThis.stylesForWrite);
-            }, function(cell, nRow0, nCol0, nRowStart0, nColStart0, excludedCount) {
+            // Style-only events are streamed alongside the data walker via
+            // a shared drain (O(events)). Occupied _foreachNoEmpty would be
+            // O(maxRow) for a sparse far style entry.
+            var bExcludeHiddenRows = !!(ws.bExcludeHiddenRows && oThis.isCopyPaste);
+            var styleCell = new AscCommonExcel.Cell(ws);
+            styleCell._isTransient = true;
+            var styleDrain = AscCommonExcel.CellStyleStorage.createStyleOnlyDrain(
+                ws, bbox, {excludeHiddenRows: bExcludeHiddenRows},
+                function (r, col, xfIndex, rowExcl) {
+                    if (cur.rowIndex !== r) {
+                        tempRow.setIndex(r);
+                        oThis.WriteRowAndFixEmpty(oThis.memory, cur, allRow, tempRow, rowExcl, oThis.stylesForWrite);
+                    }
+                    var xfsObj = AscCommonExcel.g_StyleCache.getXf(xfIndex);
+                    var nStyleXfsId = oThis.stylesForWrite.add(xfsObj);
+                    styleCell.clearData();
+                    styleCell.setRowCol(r, col);
+                    styleCell.toXLSB(oThis.memory, nStyleXfsId, null, oThis.InitSaveManager.oSharedStrings);
+                });
+
+            range._foreachDataOnly(function(cell, nRow0, nCol0, nRowStart0, nColStart0, excludedCount) {
+                styleDrain.drainBefore(nRow0, nCol0);
                 if (cur.rowIndex != nRow0) {
                     tempRow.setIndex(nRow0);
                     oThis.WriteRowAndFixEmpty(oThis.memory, cur, allRow, tempRow, excludedCount, oThis.stylesForWrite);
                 }
-                //prepare cell for writing
-                var nXfsId;
                 var cellXfs = cell.xfs;
-                nXfsId = oThis.stylesForWrite.add(cell.xfs);
+                var nXfsId = oThis.stylesForWrite.add(cellXfs);
 
                 // save even an empty style like Excel (needed to remove row/column style)
                 let needWrite = cellXfs || !cell.isNullText()
@@ -6861,7 +6882,12 @@
                     }
 					cell.toXLSB(oThis.memory, nXfsId, formulaToWrite, oThis.InitSaveManager.oSharedStrings);
 				}
+            }, function(row, excludedCount) {
+                styleDrain.drainBefore(row.index, 0);
+                oThis.WriteRowAndFixEmpty(oThis.memory, cur, allRow, row, excludedCount, oThis.stylesForWrite);
             }, (ws.bExcludeHiddenRows && oThis.isCopyPaste));
+
+            styleDrain.drainTail();
 
             this.WriteRowAndFixEmpty(oThis.memory, cur, allRow);
 
@@ -9853,12 +9879,29 @@
 				pivotCache.id = this.stream.GetLong();
 			} else if ( c_oSer_PivotTypes.cache === type ) {
 				let idOld = pivotCache.id;
-				new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(this.stream, length), pivotCache);
+				pivotCache.fromXml(new AscCommon.StaxParser(AscCommon.GetStringUtf8(this.stream, length), null, null));
 				pivotCache.id = idOld;
 			} else if ( c_oSer_PivotTypes.record === type ) {
-				var cacheRecords = new Asc.CT_PivotCacheRecords();
-				new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(this.stream, length), cacheRecords);
-				pivotCache.cacheRecords = cacheRecords;
+				// store records raw (no parse) so an untouched pivot is written back verbatim on save
+				var recordStream = this.stream;
+				var recordStart = recordStream.cur;
+				if (length >= 0 && recordStart + length <= recordStream.size) {
+					var cacheRecords = new Asc.CT_PivotCacheRecords();
+					var recordSrc = recordStream.data;
+					if (recordSrc.subarray) {
+						// native/browser binary is a Uint8Array: copy the records payload as raw bytes
+						var recordBytes = new Uint8Array(length);
+						recordBytes.set(recordSrc.subarray(recordStart, recordStart + length));
+						recordStream.cur = recordStart + length;
+						cacheRecords.setRawBytes(recordBytes, pivotCache.recordCount);
+					} else {
+						cacheRecords.setRawXml(AscCommon.GetStringUtf8(recordStream, length), pivotCache.recordCount);
+					}
+					pivotCache.cacheRecords = cacheRecords;
+				} else {
+					// corrupt/invalid item length: do not over-read, surface the stream error
+					res = c_oSerConstants.ErrorStream;
+				}
 			} else
 				res = c_oSerConstants.ReadUnknown;
 			return res;
@@ -11052,6 +11095,13 @@
                     return oThis.ReadSheetData(t, l, tmp);
                 });
 
+				// Migrate any legacy SheetMemory xf bits that did not pass
+				// through initCellAfterRead. Must run BEFORE the
+				// formula-array build pass: that pass materializes cells
+				// via loadContent + saveContent, which zeroes the legacy
+				// shadow bits without mirroring them.
+				AscCommonExcel.CellStyleStorage.hydrateAllColumnsFromSheetMemory(tmp.ws);
+
 				if (!bNoBuildDep) {
 					//TODO perhaps this should be done in worksheet after complete reading
 					//***array-formula***
@@ -11618,7 +11668,7 @@
 				data.cacheId = this.stream.GetLong();
 			} else if (c_oSer_PivotTypes.table == type) {
 				data.table = new Asc.CT_pivotTableDefinition(true);
-				new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(this.stream, length), data.table);
+				data.table.fromXml(new AscCommon.StaxParser(AscCommon.GetStringUtf8(this.stream, length), null, null));
 			} else
 				res = c_oSerConstants.ReadUnknown;
 			return res;
@@ -12280,7 +12330,7 @@
 					tmp.row.index = tmp.prevRow + 1;
 				}
 				tmp.row.saveContent();
-				tmp.ws.cellsByColRowsCount = Math.max(tmp.ws.cellsByColRowsCount, tmp.row.index + 1);
+				tmp.ws.setCellsByColRowsCount(Math.max(tmp.ws.cellsByColRowsCount, tmp.row.index + 1));
 				tmp.ws.nRowsCount = Math.max(tmp.ws.nRowsCount, tmp.ws.cellsByColRowsCount);
 				tmp.prevRow = tmp.row.index;
 				tmp.prevCol = -1;
@@ -14982,7 +15032,12 @@
         if(!(this.copyPasteObj && this.copyPasteObj.isCopyPaste && typeof editor != "undefined" && editor)) {
             this.setFormulaOpen(tmp);
         }
-        tmp.cell.saveContent();
+        // Skip SheetMemory init row for pure style-only cells; their xf
+        // lives in cellStylesByCol only.
+        AscCommonExcel.CellStyleStorage.saveContentSkipStyleOnly(tmp.cell);
+        // Re-mirror in case binary Style was read before Ref/RefRowCol
+        // (nRow/nCol negative when the earlier setStyleInternal ran).
+        AscCommonExcel.CellStyleStorage.mirrorCellStyle(tmp.cell);
         if (tmp.cell.nCol >= tmp.ws.nColsCount) {
             tmp.ws.nColsCount = tmp.cell.nCol + 1;
         }
@@ -15528,7 +15583,8 @@
     };
     InitOpenManager.prototype.prepareConditionalFormatting = function (oWorksheet, oConditionalFormatting) {
         if (oConditionalFormatting && oConditionalFormatting.isValid()) {
-            oConditionalFormatting.initRules(oWorksheet);
+            //skip formula parsing here - not all sheets are read yet (parsed later in Workbook.init)
+            oConditionalFormatting.initRules(oWorksheet, true);
             for (let i = 0; i < oConditionalFormatting.aRules.length; i++) {
                 oWorksheet.addConditionalFormattingRule(oConditionalFormatting.aRules[i]);
             }

@@ -76,6 +76,7 @@
 	c_oAscUnlockedShortcutActionTypes[Asc.c_oAscSpreadsheetShortcutType.RightPara] = true;
 	c_oAscUnlockedShortcutActionTypes[Asc.c_oAscSpreadsheetShortcutType.CellEditorSwitchReference] = true;
 	c_oAscUnlockedShortcutActionTypes[Asc.c_oAscSpreadsheetShortcutType.EnDash] = true;
+	c_oAscUnlockedShortcutActionTypes[Asc.c_oAscSpreadsheetShortcutType.FillDown] = true;
 
 	const c_oAscDefaultShortcuts = {};
 
@@ -224,6 +225,7 @@
 	c_oAscDefaultShortcuts[Asc.c_oAscSpreadsheetShortcutType.ExitAddingShapesMode] = [new AscShortcut(Asc.c_oAscSpreadsheetShortcutType.ExitAddingShapesMode, keyCodes.Escape, false, false, false, false)];
 	c_oAscDefaultShortcuts[Asc.c_oAscSpreadsheetShortcutType.SpeechWorker] = [new AscShortcut(Asc.c_oAscSpreadsheetShortcutType.SpeechWorker, keyCodes.KeyZ, true, false, true, false)];
 	c_oAscDefaultShortcuts[Asc.c_oAscSpreadsheetShortcutType.EnDash] = [new AscShortcut(Asc.c_oAscSpreadsheetShortcutType.EnDash, keyCodes.KeyMinus, true, true, false, false)];
+	c_oAscDefaultShortcuts[Asc.c_oAscSpreadsheetShortcutType.FillDown] = [new AscShortcut(Asc.c_oAscSpreadsheetShortcutType.FillDown, keyCodes.KeyD, true, false, false, false)];
 	c_oAscDefaultShortcuts[Asc.c_oAscSpreadsheetShortcutType.SelectNonblankLeft] = [new AscShortcut(Asc.c_oAscSpreadsheetShortcutType.SelectNonblankLeft, keyCodes.ArrowLeft, true, true, false, false)];
 	c_oAscDefaultShortcuts[Asc.c_oAscSpreadsheetShortcutType.SelectNearestNonblankDown] = [new AscShortcut(Asc.c_oAscSpreadsheetShortcutType.SelectNearestNonblankDown, keyCodes.ArrowDown, true, true, false, false)];
 	c_oAscDefaultShortcuts[Asc.c_oAscSpreadsheetShortcutType.SelectNearestNonblankUp] = [new AscShortcut(Asc.c_oAscSpreadsheetShortcutType.SelectNearestNonblankUp, keyCodes.ArrowUp, true, true, false, false)];
@@ -708,6 +710,8 @@
 				return "SpeechWorker";
 			case Asc.c_oAscSpreadsheetShortcutType.EnDash:
 				return "EnDash";
+			case Asc.c_oAscSpreadsheetShortcutType.FillDown:
+				return "FillDown";
 
 			default:
 				return null;
@@ -1066,6 +1070,8 @@
 				return Asc.c_oAscSpreadsheetShortcutType.SpeechWorker;
 			case "EnDash":
 				return Asc.c_oAscSpreadsheetShortcutType.EnDash;
+			case "FillDown":
+				return Asc.c_oAscSpreadsheetShortcutType.FillDown;
 			default:
 				return null;
 		}

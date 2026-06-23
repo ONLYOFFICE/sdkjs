@@ -61,8 +61,8 @@
 	 */
     CRadioButtonField.prototype.UpdateAll = function() {
         let aOptions    = this.GetOptions();
-        let aFields     = this.GetDocument().GetAllWidgets(this.GetFullName());
-        let value       = this.GetParentValue();
+        let aFields     = this.GetAllWidgets();
+        let value       = this.GetLogicValue();
 
         let bFromOpt = false;
         let sExportValue;
@@ -164,10 +164,11 @@
             return oParent.SetRadiosInUnison(bValue);
 
         if (this._radiosInUnison === bValue) {
+			this.UpdateAll();
             return true;
         }
         
-        AscCommon.History.Add(new CChangesPDFRadiobuttonIsUnison(this, this._radiosInUnison, bValue));
+		AscCommon.History.Add(new CChangesPDFRadiobuttonIsUnison(this, this._radiosInUnison, bValue));
 
         this._radiosInUnison = bValue;
         this.SetWasChanged(true);

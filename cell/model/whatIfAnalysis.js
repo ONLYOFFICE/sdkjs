@@ -1627,7 +1627,7 @@ function (window, undefined) {
 		const aArgsFormula = [];
 
 		AscCommonExcel.foreachRefElements(function (oRange) {
-			oRange._foreachNoEmpty(function (oCell) {
+			oRange._foreachDataOnly(function (oCell) {
 				if (oCell.isFormula() || oCell.getNumberValue() !== null || bIsEmpty) {
 					const oTempCell = oCell.clone();
 					if (oCell.isFormula()) {
@@ -2078,7 +2078,7 @@ function (window, undefined) {
 				bVertical = oConstraintBbox.c1 === oConstraintBbox.c2;
 				oConstraintWs = constraintData.worksheet;
 			}
-			oRefCellsRange._foreachNoEmpty(function (oRefCell) {
+			oRefCellsRange._foreachDataOnly(function (oRefCell) {
 				/** @type {Cell} */
 				const oCell = oRefCell.clone();
 				let oNewConstraint, nConstraintVal;
@@ -2215,7 +2215,7 @@ function (window, undefined) {
 		const oVarIndexByCellName = this.getVarIndexByCellName();
 
 		this.oUnrestrictedVars = {};
-		oVariables._foreachNoEmpty(function (oVariableCell) {
+		oVariables._foreachDataOnly(function (oVariableCell) {
 			const sCellKey = oVariableCell.ws.getName() + '_' + oVariableCell.getName();
 			const bConstraintsHasVarCell = aSimplexConstraints.some(function (oConstraint) {
 				const oRefCell = oConstraint.getCell();
@@ -2362,7 +2362,7 @@ function (window, undefined) {
 		// Links variable with variable's index
 		let nIter = 0;
 		const oVarIndexByCellName = this.getVarIndexByCellName();
-		oVariables._foreachNoEmpty(function (oCell) {
+		oVariables._foreachDataOnly(function (oCell) {
 			oVarIndexByCellName[oCell.getName()] = aVariablesIndexes[nIter];
 			nIter++;
 		});
@@ -2821,7 +2821,7 @@ function (window, undefined) {
 		const aMatrix = this.getMatrix();
 		const sRegNumDecimalSeparator = this.getModel().getRegNumDecimalSeparator();
 
-		oVariablesCells._foreachNoEmpty(function (oCell) {
+		oVariablesCells._foreachDataOnly(function (oCell) {
 			const sCellName = oCell.getName();
 			const nVarIndex = oVarIndexByCellName[sCellName];
 			const nRowId = aRowByVarIndex[nVarIndex];
@@ -2883,7 +2883,7 @@ function (window, undefined) {
 		const oChangingCells = this.getChangingCell();
 
 		// Fills empty cells to 0 value for changing cells
-		oChangingCells._foreachNoEmpty(function (oCell) {
+		oChangingCells._foreachDataOnly(function (oCell) {
 			oThis.setStartChangingCells(oCell.getName(), oCell.getValueWithoutFormat()); // Saves original data
 			if (oCell.getNumberValue() === null) {
 				oCell.setValue("0");
@@ -3028,7 +3028,7 @@ function (window, undefined) {
 			/** @type {Cell} */
 			let oPrevConstraintCell = null;
 
-			oConstraintCell._foreachNoEmpty(function (oElem, nIndex, nCol, nStartRow) {
+			oConstraintCell._foreachDataOnly(function (oElem, nIndex, nCol, nStartRow) {
 				if (oElem.getNumberValue() !== null) {
 					const constraintData = aConstraints[i].getConstraint();
 					const nOperator = aConstraints[i].getOperator();
@@ -3117,7 +3117,7 @@ function (window, undefined) {
 			return false;
 		}
 		// Checks whether variable cells have only the number of type values
-		oVariablesCells._foreachNoEmpty(function (oCell) {
+		oVariablesCells._foreachDataOnly(function (oCell) {
 			if (oCell.getValueText() !== null) {
 				bVariablesIsCorrect = false;
 				return true;
@@ -3134,7 +3134,7 @@ function (window, undefined) {
 			const constraintData = oConstraint.getConstraint();
 			if (typeof constraintData === 'object') {
 				let bConstraintIsCorrect = true;
-				constraintData._foreachNoEmpty(function (oCell) {
+				constraintData._foreachDataOnly(function (oCell) {
 					if (oCell.getNumberValue() === null) {
 						bConstraintIsCorrect = false;
 						return true;
@@ -3145,7 +3145,7 @@ function (window, undefined) {
 					return false;
 				}
 			}
-			oRefCells._foreachNoEmpty(function (oCell) {
+			oRefCells._foreachDataOnly(function (oCell) {
 				checkLinks(oCell, oVariablesCells);
 				if (bIsConnected) {
 					return true;
@@ -3228,7 +3228,7 @@ function (window, undefined) {
 		const oOptions = this.getOptions();
 		const nDerivatives = oOptions.asc_getDerivatives();
 
-		oChangingCells._foreachNoEmpty(function (oChangingCell) {
+		oChangingCells._foreachDataOnly(function (oChangingCell) {
 
 		});
 	};
