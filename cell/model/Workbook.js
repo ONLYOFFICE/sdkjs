@@ -9173,7 +9173,23 @@
 			};
 			if(0 == _start && gc_nMaxRow0 == _stop)
 			{
-				// ToDo implement hiding all rows!
+				let allRow = false == bHidden ? oThis.oSheetFormatPr.oAllRow : oThis.getAllRow();
+				if(allRow && bHidden != allRow.getHidden())
+				{
+					let oOldAllRowProps = allRow.getHeightProp();
+					allRow.setHidden(bHidden, localChange);
+					let oNewAllRowProps = allRow.getHeightProp();
+					if(false == oOldAllRowProps.isEqual(oNewAllRowProps))
+						AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_RowProp, oThis.getId(),
+									allRow._getUpdateRange(),
+									new UndoRedoData_IndexSimpleProp(allRow.index, true, oOldAllRowProps, oNewAllRowProps));
+				}
+				oThis._forEachRow(fProcessRow);
+				if(startIndex !== null)
+				{
+					updateRange = new Asc.Range(0, startIndex, gc_nMaxCol0, endIndex);
+					AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_RowHide, oThis.getId(), updateRange, new UndoRedoData_FromToRowCol(bHidden, startIndex, endIndex));
+				}
 			}
 			else
 			{
