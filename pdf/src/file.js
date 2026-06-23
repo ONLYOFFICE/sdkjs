@@ -637,7 +637,7 @@ void main() {\n\
         if (glyph === -2) {
             off = 0;
         } else if (glyph === -1) {
-            off = _lineWidth;
+            off = _lineWidth + 10;
         } else {
             let left  = _arrayGlyphOffsets[glyph] || 0;
             let right = (glyph + 1 < nChars) ? _arrayGlyphOffsets[glyph + 1] : _lineWidth;
@@ -2292,5 +2292,6 @@ void main() {\n\
 
     //--------------------------------------------------------export----------------------------------------------------
 	window['AscPDF'].PdfPageMatch = PdfPageMatch;
+	window['AscPDF'].TextStreamReader = TextStreamReader;
 
 })(window, undefined);
