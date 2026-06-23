@@ -3182,6 +3182,41 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return undefined;
 	};
+	//fold every LOGICAL element into an accumulator: reducer(acc, value, count) -> acc, where `count` is how many
+	//times `value` occurs. The physical head is folded one element at a time (count=1); a CONSTANT tail
+	//(missedValue) is folded in a SINGLE O(1) call with count = logicalSize - headCount (so SUM(A:A+1) correctly
+	//adds the tail value times its count instead of skipping it); a GENERATOR tail is streamed element by element.
+	//This is the aggregator-side counterpart of forEachLogical - use it for SUM/COUNT/MAX/... so a non-neutral
+	//constant tail is accounted for without iterating realSize.
+	cArray.prototype.reduceLogical = function (reducer, acc) {
+		if (typeof reducer !== 'function') {
+			return acc;
+		}
+		if (this.missedValueFn && this.realSize) {
+			//generator tail: every logical position differs, so stream them all (head + generated tail), count=1
+			for (let r = 0; r < this.realSize.row; r++) {
+				for (let c = 0; c < this.realSize.col; c++) {
+					acc = reducer.call(this, acc, this.getElementRowCol(r, c, true), 1);
+				}
+			}
+			return acc;
+		}
+		let headCount = 0;
+		for (let ir = 0; ir < this.rowCount; ir++) {
+			for (let ic = 0; ic < this.countElementInRow[ir]; ic++) {
+				acc = reducer.call(this, acc, this.array[ir][ic], 1);
+				headCount++;
+			}
+		}
+		let missedValue = this.getMissedValue();
+		if (missedValue && this.realSize) {
+			let tailCount = this.realSize.row * this.realSize.col - headCount;
+			if (tailCount > 0) {
+				acc = reducer.call(this, acc, missedValue, tailCount);
+			}
+		}
+		return acc;
+	};
 	//visit every logical element row-major (lazy tail via getElementRowCol, non-lazy walks .array); truthy return stops
 	cArray.prototype.forEachLogical = function (action) {
 		if (typeof action !== 'function') {

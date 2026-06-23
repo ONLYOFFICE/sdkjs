@@ -97,27 +97,25 @@ function (window, undefined) {
 				}
 				if (arg[i].type === cElementType.string) {
 					// skip string check
-					continue
+					continue;
 				} else if (arg[i].type === cElementType.error) {
 					return arg[i];
 				} else if (arg[i].type === cElementType.array) {
-					arg[i].foreach(function (elem) {
-						if (elem && elem.type === cElementType.error) {
-							argResult = elem;
-							return true;
-						} else if (elem.type === cElementType.string || elem.type === cElementType.empty) {
-							return false;
-						} else {
-							if (argResult === null) {
-								argResult = elem.tocBool();
-							} else {
-								argResult = new cBool(argResult.value && elem.tocBool().value);
-							}
-							if (argResult.value === false) {
-								return true;
-							}
+					//reduceLogical folds the head + the constant tail; AND is idempotent so the tail value is
+					//AND-ed once (count ignored) - a FALSE tail (e.g. A:A>0 over empties) correctly yields FALSE.
+					argResult = arg[i].reduceLogical(function (acc, elem, n) {
+						if (acc && acc.type === cElementType.error) {
+							return acc;
 						}
-					});
+						if (elem && elem.type === cElementType.error) {
+							return elem;
+						}
+						if (elem.type === cElementType.string || elem.type === cElementType.empty) {
+							return acc;
+						}
+						let b = elem.tocBool().value;
+						return (acc === null) ? new cBool(b) : new cBool(acc.value && b);
+					}, argResult);
 				} else {
 					if (argResult === null) {
 						argResult = arg[i].tocBool();

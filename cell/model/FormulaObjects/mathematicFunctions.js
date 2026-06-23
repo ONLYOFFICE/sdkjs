@@ -4001,7 +4001,28 @@ function (window, undefined) {
 
 			let is3DArea = cElementType.cellsRange3D === element.type;
 
-			if (cElementType.cellsRange === element.type || is3DArea || cElementType.array === element.type) {
+			if (cElementType.array === element.type) {
+				//reduceLogical accounts for a CONSTANT tail in O(1): the product picks up tailValue^tailCount
+				//(an empty tail like A:A*2 -> 0 zeroes the product; A:A+1 -> 1 leaves it unchanged).
+				arg0 = element.reduceLogical(function (acc, elem, n) {
+					if (acc.type === cElementType.error) {
+						return acc;
+					}
+					if (!elem || elem.type === cElementType.empty || elem.type === cElementType.bool) {
+						return acc;
+					}
+					if (elem.type === cElementType.error) {
+						return elem;
+					}
+					elem = elem.tocNumber();
+					if (elem.type === cElementType.number) {
+						isFoundValue = true;
+						let factor = (n === 1) ? elem : new cNumber(Math.pow(elem.getValue(), n));
+						acc = _func[acc.type][factor.type](acc, factor, "*");
+					}
+					return acc;
+				}, arg0);
+			} else if (cElementType.cellsRange === element.type || is3DArea) {
 				let dimensions = element.getDimensions();
 				for (let row = 0; row < dimensions.row; row++) {
 					for (let col = 0; col < dimensions.col; col++) {
@@ -4019,7 +4040,7 @@ function (window, undefined) {
 							isFoundValue = true;
 							arg0 = _func[arg0.type][elem.type](arg0, elem, "*");
 						}
-						
+
 					}
 				}
 			} else if (cElementType.cell === element.type || cElementType.cell3D === element.type) {
@@ -5827,17 +5848,23 @@ function (window, undefined) {
 					}
 				}
 			} else if (cElementType.array === element.type) {
-				//foreachValue streams each element (via the generator for a lazy array) without
-				//materializing - SUM over a huge SEQUENCE stays single-pass and O(1) memory.
-				element.foreachValue(function (arrElem) {
+				//reduceLogical folds the physical head one-by-one AND accounts for a CONSTANT tail in O(1)
+				//(count = number of tail cells) - so SUM(A:A+1) adds the tail value times its count instead of
+				//skipping it. A generator tail (SEQUENCE) is streamed single-pass, O(1) memory.
+				arg0 = element.reduceLogical(function (acc, arrElem, count) {
 					if (cElementType.cell === arrElem.type || cElementType.cell3D === arrElem.type) {
 						arrElem = arrElem.getValue();
 					}
-					if (cElementType.bool !== arrElem.type && cElementType.string !== arrElem.type &&
-						cElementType.empty !== arrElem.type) {
-						arg0 = _func[arg0.type][arrElem.type](arg0, arrElem, "+");
+					if (cElementType.bool === arrElem.type || cElementType.string === arrElem.type ||
+						cElementType.empty === arrElem.type) {
+						return acc;
 					}
-				});
+					if (count !== 1) {
+						//tail: the value repeated `count` times; multiply via _func so coercion/error propagation match
+						arrElem = _func[arrElem.type][cElementType.number](arrElem, new cNumber(count), "*");
+					}
+					return _func[acc.type][arrElem.type](acc, arrElem, "+");
+				}, arg0);
 			} else {
 				_arg = element.tocNumber();
 				arg0 = _func[arg0.type][_arg.type](arg0, _arg, "+");
@@ -5994,6 +6021,31 @@ function (window, undefined) {
 	cSUMPRODUCT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cSUMPRODUCT.prototype.enabledToSingle = {"*": true};
 	cSUMPRODUCT.prototype.Calculate = function (arg) {
+		// the common full-column form SUMPRODUCT((A:A=x)*(B:B=y)) collapses the '*' first, so SUMPRODUCT receives
+		// ONE array. Sum it via reduceLogical: a CONSTANT tail is accounted for in O(1) - a neutral 0 tail (the
+		// multi-criteria case) stays fast, while a non-neutral tail (e.g. (A:A=x)+1 -> 1) is no longer skipped.
+		if (arg.length === 1 && cElementType.array === arg[0].type) {
+			let res = arg[0].reduceLogical(function (acc, v, n) {
+				if (acc instanceof cError) {
+					return acc;
+				}
+				if (cElementType.error === v.type) {
+					return v;
+				}
+				let x;
+				if (cElementType.string === v.type) {
+					let t = v.tocNumber();
+					x = (cElementType.error === t.type) ? 0 : t.getValue();
+				} else if (cElementType.bool === v.type) {
+					x = 0;
+				} else {
+					x = v.tocNumber().getValue();
+				}
+				return acc + x * n;
+			}, 0);
+			return (res instanceof cError) ? res : new cNumber(res);
+		}
+
 		let arg0 = new cNumber(0), resArr = [], col = 0, row = 0, res = 1, _res = [], i;
 
 		for (i = 0; i < arg.length; i++) {
@@ -6103,11 +6155,17 @@ function (window, undefined) {
 					arg0 = sumsqHelper(arg0, _arg);
 				}
 			} else if (arg[i] instanceof cArray) {
-				arg[i].foreach(function (arrElem) {
+				arg0 = arg[i].reduceLogical(function (acc, arrElem, n) {
 					if (arrElem instanceof cNumber) {
-						arg0 = sumsqHelper(arg0, arrElem);
+						//square the value; a constant tail occurs n times -> add value^2 * n in O(1)
+						let sq = _func[arrElem.type][arrElem.type](arrElem, arrElem, "*");
+						if (n !== 1) {
+							sq = _func[sq.type][cElementType.number](sq, new cNumber(n), "*");
+						}
+						acc = _func[acc.type][sq.type](acc, sq, "+");
 					}
-				})
+					return acc;
+				}, arg0);
 			} else {
 				_arg = arg[i].tocNumber();
 				arg0 = sumsqHelper(arg0, _arg);

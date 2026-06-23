@@ -4123,26 +4123,36 @@ function (window, undefined) {
 					}
 				}
 			} else if (cElementType.array === _arg.type) {
-				let isError;
-				_arg.foreachValue(function (elem) {
+				//reduceLogical folds the head + the constant tail in O(1) (count = tail cells); the tail value is
+				//added count times and contributes count to the divisor. generator tail is streamed.
+				let acc = _arg.reduceLogical(function (a, elem, n) {
+					if (a.error) {
+						return a;
+					}
 					if (cElementType.string === elem.type || cElementType.empty === elem.type ||
 						cElementType.bool === elem.type) {
-						return false;
-					} else if (cElementType.error === elem.type) {
-						isError = elem;
-						return true;
+						return a;
 					}
-
+					if (cElementType.error === elem.type) {
+						a.error = elem;
+						return a;
+					}
 					let e = elem.tocNumber();
 					if (cElementType.number === e.type) {
-						sum = _func[sum.type][e.type](sum, e, "+");
-						count++;
+						if (n !== 1) {
+							e = _func[e.type][cElementType.number](e, new cNumber(n), "*");
+						}
+						a.sum = _func[a.sum.type][e.type](a.sum, e, "+");
+						a.count += n;
 					}
-				});
+					return a;
+				}, {sum: sum, count: count, error: null});
 
-				if (isError) {
-					return isError;
+				if (acc.error) {
+					return acc.error;
 				}
+				sum = acc.sum;
+				count = acc.count;
 
 			} else {
 				_arg = _arg.tocNumber();
@@ -5167,11 +5177,9 @@ function (window, undefined) {
 					count++;
 				}
 			} else if (cElementType.array === _arg.type) {
-				_arg.foreachValue(function (elem) {
-					if (cElementType.number === elem.type) {
-						count++;
-					}
-				})
+				count = _arg.reduceLogical(function (acc, elem, n) {
+					return (cElementType.number === elem.type) ? acc + n : acc;
+				}, count);
 			}
 		}
 		return new cNumber(count);
@@ -5213,11 +5221,9 @@ function (window, undefined) {
 					}
 				}
 			} else if (cElementType.array === element.type) {
-				element.foreachValue(function (elem) {
-					if (cElementType.empty !== elem.type) {
-						count++;
-					}
-				})
+				count = element.reduceLogical(function (acc, elem, n) {
+					return (cElementType.empty !== elem.type) ? acc + n : acc;
+				}, count);
 			} else if (cElementType.empty !== element.type) {
 				count++;
 			}
@@ -8200,16 +8206,18 @@ function (window, undefined) {
 					max = v.getValue();
 				}
 			} else if (cElementType.array === element.type) {
-				element.foreachValue(function (elem) {
-					if (cElementType.number === elem.type) {
-						if (elem.getValue() > max) {
-							max = elem.getValue();
-						}
-					} else if (cElementType.error === elem.type) {
-						max = elem;
-						return true;
+				max = element.reduceLogical(function (acc, elem, n) {
+					if (acc.type === cElementType.error) {
+						return acc;
 					}
-				});
+					if (cElementType.number === elem.type) {
+						let val = elem.getValue();
+						return val > acc ? val : acc;
+					} else if (cElementType.error === elem.type) {
+						return elem;
+					}
+					return acc;
+				}, max);
 				if (cElementType.error === max.type) {
 					return max;
 				}
@@ -8282,17 +8290,19 @@ function (window, undefined) {
 					max = v.getValue();
 				}
 			} else if (argI instanceof cArray) {
-				argI.foreachValue(function (elem) {
+				max = argI.reduceLogical(function (acc, elem, n) {
+					if (acc instanceof cError) {
+						return acc;
+					}
 					if (elem instanceof cError) {
-						max = elem;
-						return true;
+						return elem;
 					}
 					elem = elem.tocNumber();
-
-					if (elem instanceof cNumber && elem.getValue() > max) {
-						max = elem.getValue();
+					if (elem instanceof cNumber && elem.getValue() > acc) {
+						return elem.getValue();
 					}
-				});
+					return acc;
+				}, max);
 				if (max instanceof cError) {
 					return max;
 				}
@@ -8501,16 +8511,18 @@ function (window, undefined) {
 					min = v.getValue();
 				}
 			} else if (cElementType.array === element.type) {
-				element.foreachValue(function (elem) {
-					if (cElementType.number === elem.type) {
-						if (elem.getValue() < min) {
-							min = elem.getValue();
-						}
-					} else if (cElementType.error === elem.type) {
-						min = elem;
-						return true;
+				min = element.reduceLogical(function (acc, elem, n) {
+					if (acc.type === cElementType.error) {
+						return acc;
 					}
-				});
+					if (cElementType.number === elem.type) {
+						let val = elem.getValue();
+						return val < acc ? val : acc;
+					} else if (cElementType.error === elem.type) {
+						return elem;
+					}
+					return acc;
+				}, min);
 				if (cElementType.error === min.type) {
 					return min;
 				}
@@ -8583,18 +8595,19 @@ function (window, undefined) {
 					min = v.getValue();
 				}
 			} else if (argI instanceof cArray) {
-				argI.foreachValue(function (elem) {
+				min = argI.reduceLogical(function (acc, elem, n) {
+					if (acc instanceof cError) {
+						return acc;
+					}
 					if (elem instanceof cError) {
-						min = elem;
-						return true;
+						return elem;
 					}
-
 					elem = elem.tocNumber();
-
-					if (elem instanceof cNumber && elem.getValue() < min) {
-						min = elem.getValue();
+					if (elem instanceof cNumber && elem.getValue() < acc) {
+						return elem.getValue();
 					}
-				});
+					return acc;
+				}, min);
 				if (min instanceof cError) {
 					return min;
 				}
@@ -11451,32 +11464,23 @@ function (window, undefined) {
 	cVAR.prototype.argumentsType = [[argType.number]];
 	cVAR.prototype.enabledToSingle = {"*": true};
 	cVAR.prototype.Calculate = function (arg) {
-		function _var(x) {
-			if (x.length <= 1) {
+		//pairs: [{v:<number>, n:<count>}]. A lazy array's constant tail becomes ONE weighted pair (n = tail cells),
+		//so the weighted two-pass equals the expanded two-pass EXACTLY, without iterating realSize.
+		function _var(pairs) {
+			var i, N = 0, _x = 0, sumSQRDeltaX = 0;
+			for (i = 0; i < pairs.length; i++) {
+				N += pairs[i].n;
+				_x += pairs[i].v * pairs[i].n;
+			}
+			if (N <= 1) {
 				return new cError(cErrorType.division_by_zero);
 			}
-
-			var i, tA = [], sumSQRDeltaX = 0, _x = 0, xLength = 0;
-			for (i = 0; i < x.length; i++) {
-
-				if (cElementType.number === x[i].type) {
-					_x += x[i].getValue();
-					tA.push(x[i].getValue());
-					xLength++;
-				} else if (cElementType.error === x[i].type) {
-					return x[i];
-				}
-
+			_x /= N;
+			for (i = 0; i < pairs.length; i++) {
+				var d = pairs[i].v - _x;
+				sumSQRDeltaX += pairs[i].n * d * d;
 			}
-
-			_x /= xLength;
-
-			for (i = 0; i < x.length; i++) {
-				sumSQRDeltaX += (tA[i] - _x) * (tA[i] - _x)
-			}
-
-			return new cNumber(sumSQRDeltaX / (xLength - 1))
-
+			return new cNumber(sumSQRDeltaX / (N - 1));
 		}
 
 		var element, arr0 = [];
@@ -11488,7 +11492,7 @@ function (window, undefined) {
 				var _arrVal = element.getValue(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg);
 				_arrVal.forEach(function (elem) {
 					if (cElementType.number === elem.type) {
-						arr0.push(elem);
+						arr0.push({v: elem.getValue(), n: 1});
 					} else if (cElementType.error === elem.type && !error) {
 						error = elem;
 					}
@@ -11500,24 +11504,29 @@ function (window, undefined) {
 				if (!this.checkExclude || !element.isHidden(this.excludeHiddenRows)) {
 					var a = element.getValue();
 					if (cElementType.number === a.type) {
-						arr0.push(a);
+						arr0.push({v: a.getValue(), n: 1});
 					} else if (cElementType.error === a.type) {
 						return a;
 					}
 				}
 			} else if (cElementType.array === element.type) {
-				element.foreach(function (elem) {
-					if (cElementType.number === elem.type) {
-						arr0.push(elem);
-					} else if (cElementType.error === elem.type && !error) {
-						error = elem;
+				//reduceLogical: head cells become unit pairs; the constant tail becomes ONE pair with n = tail count
+				error = element.reduceLogical(function (acc, elem, n) {
+					if (acc) {
+						return acc;
 					}
-				});
+					if (cElementType.number === elem.type) {
+						arr0.push({v: elem.getValue(), n: n});
+					} else if (cElementType.error === elem.type) {
+						return elem;
+					}
+					return acc;
+				}, error);
 				if (error) {
 					return error;
 				}
 			} else if (cElementType.number === element.type || cElementType.bool === element.type) {
-				arr0.push(element.tocNumber());
+				arr0.push({v: element.tocNumber().getValue(), n: 1});
 			} else if (cElementType.string === element.type || cElementType.empty === element.type) {
 				continue;
 			} else if (cElementType.error === element.type) {
