@@ -478,7 +478,10 @@
         AscCommon.History.Add(new CChangesPDFDocumentRecognizePage(this, oFile.pages[nIndex].isRecognized, isRecognized));
 		oFile.pages[nIndex].isRecognized = isRecognized;
 
-		delete oViewer.drawingPages[nIndex].Image;
+		if (oViewer.drawingPages[nIndex]) {
+			delete oViewer.drawingPages[nIndex].Image;
+		}
+		
 		let oThumbnails = oDoc.GetThumbnails();
 		if (oThumbnails) {
 			let oPage = oThumbnails.getDrawingPage(nIndex);
