@@ -822,6 +822,9 @@
 	SlideBase.prototype.isHaveTitleShape = function () {
 		return false;
 	};
+	SlideBase.prototype.isMasterLikeObject = function () {
+		return false;
+	};
 
 	function fAddTextToPhInSlideLikeObject(oSlideLikeObject, nPhType, sText) {
 		if (typeof sText === "string") {

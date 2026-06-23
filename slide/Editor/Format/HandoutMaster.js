@@ -524,6 +524,9 @@
 	};
 	CHandoutMaster.prototype.Write_ToBinary2 = AscCommonSlide.SlideBase.prototype.writeMasterBinary;
 	CHandoutMaster.prototype.Read_FromBinary2 = AscCommonSlide.SlideBase.prototype.readMasterBinary;
+	CHandoutMaster.prototype.isMasterLikeObject = function () {
+		return true;
+	};
 
 	function PlaceholderBase(x, y, width, height) {
 		this.x = x;

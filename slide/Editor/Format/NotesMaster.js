@@ -334,7 +334,9 @@
 	};
 	CNotesMaster.prototype.Write_ToBinary2 = AscCommonSlide.SlideBase.prototype.writeMasterBinary;
 	CNotesMaster.prototype.Read_FromBinary2 = AscCommonSlide.SlideBase.prototype.readMasterBinary;
-
+	CNotesMaster.prototype.isMasterLikeObject = function () {
+		return true;
+	};
 
 	function CreateNotesMaster() {
 		var oNM = new CNotesMaster();

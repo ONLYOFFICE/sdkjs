@@ -10356,37 +10356,14 @@ CPresentation.prototype.getDrawingObjects = function() {
 };
 
 CPresentation.prototype.applySlideBackgroundToAll = function() {
-	if(!this.IsSlidePageMode()) return;
-	if (this.Document_Is_SelectionLocked(AscCommon.changestype_SlideBg, this.Slides) === false) {
+	const viewManager = this.getViewManager();
+	if (!viewManager) {
+		return;
+	}
+	if (!viewManager.isLockBackgroundSlides()) {
 		this.StartAction(AscDFH.historydescription_Presentation_ApplyBackgroundToAll);
-		const oCurSlide = this.GetCurrentSlide();
-		if (!oCurSlide) {
-			return;
-		}
-		const oBg = oCurSlide.cSld.Bg;
-		const bShowMasterShapes = oCurSlide.showMasterSp;
-		for (let i = 0; i < this.Slides.length; i += 1) {
-			const oSlide = this.Slides[i];
-			oSlide.changeBackground(null);
-			oSlide.setShowMasterSp(bShowMasterShapes);
-		}
-		for (let i = 0; i < this.slideMasters.length; i += 1) {
-			const oMaster = this.slideMasters[i];
-			for (let j = 0; j < oMaster.sldLayoutLst.length; j += 1) {
-				const oLayout = oMaster.sldLayoutLst[j];
-				oLayout.changeBackground(null);
-			}
-			if (oBg) {
-				oMaster.changeBackground(oBg.createFullCopy());
-			}
-		}
-
+		viewManager.applySlideBackgroundToAll();
 		this.FinalizeAction();
-		for (let i = 0; i < this.Slides.length; i += 1) {
-			this.DrawingDocument.OnRecalculateSlide(i);
-		}
-
-		this.DrawingDocument.OnEndRecalculate(true, false);
 		this.Document_UpdateInterfaceState();
 	}
 };

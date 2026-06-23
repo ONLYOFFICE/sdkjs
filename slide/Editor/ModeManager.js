@@ -75,12 +75,18 @@
 	};
 	SlideModeManagerBase.prototype.getSelectedSlides = function() {
 		const wordControl = this.getWordControl();
+		let selectedArray = [];
 		if (!window["NATIVE_EDITOR_ENJINE"] && wordControl.Thumbnails) {
-			return wordControl.Thumbnails.GetSelectedArray();
-		} else {
-			const presentation = this.getPresentation();
-			return [presentation.CurPage];
+			selectedArray = wordControl.Thumbnails.GetSelectedArray();
 		}
+
+		if (!selectedArray.length) {
+			const presentation = this.getPresentation();
+			if (presentation.CurPage >= 0) {
+				selectedArray = [presentation.CurPage];
+			}
+		}
+		return selectedArray;
 	};
 	SlideModeManagerBase.prototype.getSlideIndex = function(object) {
 		const allSlides = this.getAllSlides();
@@ -217,6 +223,12 @@
 	SlideModeManagerBase.prototype.setPreserve = function (bPr) {};
 	SlideModeManagerBase.prototype.recalculateNotesShape = function (slide) {
 
+	};
+	SlideModeManagerBase.prototype.applySlideBackgroundToAll = function () {
+
+	};
+	SlideModeManagerBase.prototype.isLockBackgroundSlides = function () {
+		return true;
 	};
 
 	function SlideModeManager(api) {
@@ -698,6 +710,61 @@
 	};
 	SlideModeManager.prototype.recalculateNotesShape = function (slide) {
 		slide.recalculateNotesShape();
+	};
+	SlideModeManager.prototype.isLockBackgroundSlides = function () {
+		const slides = [];
+
+		const presentation = this.getPresentation();
+		const masterMap = {};
+		for (let i = 0; i < presentation.Slides.length; i += 1) {
+			const slide = presentation.Slides[i];
+			slides.push(presentation.Slides[i]);
+			const master = slide.Layout && slide.Layout.Master;
+			if (master) {
+				masterMap[master.GetId()] = master;
+			}
+		}
+		for (let masterId in masterMap) {
+			const master = masterMap[masterId];
+			slides.push(master);
+			for (let i = 0; i < master.sldLayoutLst.length; i += 1) {
+				slides.push(master.sldLayoutLst[i]);
+			}
+		}
+
+		return presentation.Document_Is_SelectionLocked(AscCommon.changestype_SlideBg, slides);
+	};
+	SlideModeManager.prototype.applySlideBackgroundToAll = function () {
+		const presentation = this.getPresentation();
+		const currentSlide = this.getCurrentSlide();
+		if (!currentSlide) {
+			return;
+		}
+		const bg = currentSlide.cSld.Bg;
+		const isShowMasterShapes = currentSlide.showMasterSp;
+		const mastersMap = {};
+		for (let i = 0; i < presentation.Slides.length; i += 1) {
+			const slide = presentation.Slides[i];
+			slide.changeBackground(null);
+			slide.setShowMasterSp(isShowMasterShapes);
+			const master = slide.Layout && slide.Layout.Master;
+			if (master) {
+				mastersMap[master.GetId()] = master;
+			}
+		}
+		for (let masterId in mastersMap) {
+			const master = mastersMap[masterId];
+			for (let j = 0; j < master.sldLayoutLst.length; j += 1) {
+				const layout = master.sldLayoutLst[j];
+				layout.changeBackground(null);
+				layout.setShowMasterSp(isShowMasterShapes);
+			}
+			if (bg) {
+				master.changeBackground(bg.createFullCopy());
+			} else {
+				master.changeBackground(null);
+			}
+		}
 	};
 
 	function MasterSlideModeManager(api) {
@@ -1281,6 +1348,50 @@
 	MasterSlideModeManager.prototype.isDrawingSlide = function (slideObject) {
 		return slideObject.isMaster() || slideObject.isLayout();
 	};
+	MasterSlideModeManager.prototype.isLockBackgroundSlides = function () {
+		const slides = [];
+
+		const presentation = this.getPresentation();
+		for (let i = 0; i < presentation.Slides.length; i += 1) {
+			const slide = presentation.Slides[i];
+			slides.push(slide);
+		}
+		for (let i = 0; i < presentation.slideMasters.length; i += 1) {
+			const master = presentation.slideMasters[i];
+			slides.push(master);
+			for (let j = 0; j < master.sldLayoutLst.length; j += 1) {
+				slides.push(master.sldLayoutLst[j]);
+			}
+		}
+		return presentation.Document_Is_SelectionLocked(AscCommon.changestype_SlideBg, slides);
+	};
+	MasterSlideModeManager.prototype.applySlideBackgroundToAll = function () {
+		const presentation = this.getPresentation();
+		const currentSlide = this.getCurrentSlide();
+		if (!currentSlide) {
+			return;
+		}
+		const bg = currentSlide.cSld.Bg;
+		const isShowMasterShapes = currentSlide.isLayout() ? currentSlide.showMasterSp : true;
+		for (let i = 0; i < presentation.slideMasters.length; i += 1) {
+			const master = presentation.slideMasters[i];
+			if (bg) {
+				master.changeBackground(bg.createFullCopy());
+			} else {
+				master.changeBackground(null);
+			}
+			for (let j = 0; j < presentation.sldLayoutLst.length; j += 1) {
+				const layout = presentation.sldLayoutLst[j];
+				layout.changeBackground(null);
+				layout.setShowMasterSp(isShowMasterShapes);
+			}
+		}
+		for (let i = 0; i < presentation.Slides.length; i += 1) {
+			const slide = presentation.Slides[i];
+			slide.changeBackground(null);
+			slide.setShowMasterSp(isShowMasterShapes);
+		}
+	};
 
 
 	function NoteModeManager(api) {
@@ -1369,6 +1480,52 @@
 		const presentation = this.getPresentation();
 		presentation.addForceNextSlide(layoutIndex);
 	};
+	NoteModeManager.prototype.isLockBackgroundSlides = function () {
+		const notes = [];
+
+		const presentation = this.getPresentation();
+		const masterMap = {};
+		for (let i = 0; i < presentation.notes.length; i += 1) {
+			const note = presentation.notes[i];
+			notes.push(note);
+			if (note.Master) {
+				masterMap[note.Master.GetId()] = note.Master;
+			}
+		}
+		for (let masterId in masterMap) {
+			const master = masterMap[masterId];
+			notes.push(master);
+		}
+		return presentation.Document_Is_SelectionLocked(AscCommon.changestype_SlideBg, notes);
+	};
+	NoteModeManager.prototype.applySlideBackgroundToAll = function () {
+		const presentation = this.getPresentation();
+		const currentSlide = this.getCurrentSlide();
+		if (!currentSlide) {
+			return;
+		}
+		const bg = currentSlide.cSld.Bg;
+		const isShowMasterShapes = currentSlide.showMasterSp;
+		const mastersMap = {};
+		for (let i = 0; i < presentation.notes.length; i += 1) {
+			const note = presentation.notes[i];
+			note.changeBackground(null);
+			note.setShowMasterSp(isShowMasterShapes);
+			const master = note.Master;
+			if (master) {
+				mastersMap[master.GetId()] = master;
+			}
+		}
+		for (let masterId in mastersMap) {
+			const master = mastersMap[masterId];
+			if (bg) {
+				master.changeBackground(bg.createFullCopy());
+			} else {
+				master.changeBackground(null);
+			}
+		}
+	};
+
 
 	function MasterNoteModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -1525,6 +1682,41 @@
 			presentation.UpdateNotePageOrientationState();
 		}
 	};
+	MasterNoteModeManager.prototype.isLockBackgroundSlides = function () {
+		const notes = [];
+
+		const presentation = this.getPresentation();
+		for (let i = 0; i < presentation.notes.length; i += 1) {
+			const note = presentation.notes[i];
+			notes.push(note);
+		}
+		for (let i = 0; i < presentation.notesMasters.length; i += 1) {
+			const master = presentation.notesMasters[i];
+			notes.push(master);
+		}
+		return presentation.Document_Is_SelectionLocked(AscCommon.changestype_SlideBg, notes);
+	};
+	MasterNoteModeManager.prototype.applySlideBackgroundToAll = function () {
+		const presentation = this.getPresentation();
+		const currentSlide = this.getCurrentSlide();
+		if (!currentSlide) {
+			return;
+		}
+		const bg = currentSlide.cSld.Bg;
+		for (let i = 0; i < presentation.notesMasters.length; i += 1) {
+			const master = presentation.notesMasters[i];
+			if (bg) {
+				master.changeBackground(bg.createFullCopy());
+			} else {
+				master.changeBackground(null);
+			}
+		}
+		for (let i = 0; i < presentation.notes.length; i += 1) {
+			const note = presentation.notes[i];
+			note.changeBackground(null);
+			note.setShowMasterSp(true);
+		}
+	};
 
 	function MasterHandoutModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -1599,6 +1791,26 @@
 		}
 		const api = this.getApi();
 		api.sendEvent("asc_onSlidesPerPage", slidesCount);
+	};
+	MasterHandoutModeManager.prototype.isLockBackgroundSlides = function () {
+		const presentation = this.getPresentation();
+		return presentation.Document_Is_SelectionLocked(AscCommon.changestype_SlideBg, presentation.handoutMasters);
+	};
+	MasterHandoutModeManager.prototype.applySlideBackgroundToAll = function () {
+		const presentation = this.getPresentation();
+		const currentSlide = this.getCurrentSlide();
+		if (!currentSlide) {
+			return;
+		}
+		const bg = currentSlide.cSld.Bg;
+		for (let i = 0; i < presentation.handoutMasters.length; i += 1) {
+			const master = presentation.handoutMasters[i];
+			if (bg) {
+				master.changeBackground(bg.createFullCopy());
+			} else {
+				master.changeBackground(null);
+			}
+		}
 	};
 
 	function SorterModeManager(api) {

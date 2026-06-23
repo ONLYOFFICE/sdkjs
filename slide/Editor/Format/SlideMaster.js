@@ -686,6 +686,9 @@
 			}
 		}
 	};
+	MasterSlide.prototype.isMasterLikeObject = function () {
+		return true;
+	};
 
 
 	function CMasterThumbnailDrawer() {

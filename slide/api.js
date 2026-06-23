@@ -7054,7 +7054,7 @@ background-repeat: no-repeat;\
 		for(let nIdx = 0; nIdx < aSlides.length; ++nIdx)
 		{
 			let oSlide = aSlides[nIdx];
-			if(oSlide.getObjectType() === AscDFH.historyitem_type_SlideMaster)
+			if(oSlide.isMasterLikeObject())
 			{
 				obj.IsMaster = true;
 				break;
