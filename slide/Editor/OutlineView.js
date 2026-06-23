@@ -1951,6 +1951,8 @@
 	OutlineView.prototype.updateParagraphData = function () {
 		const updateData = this.getParagraphUpdateData();
 		if (updateData.isNeedRecalculate()) {
+			const presentation = this.getPresentation();
+			presentation.updateSlideIndexes();
 			this.updateExistingParagraphs(updateData.existingParagraphs);
 			this.updateNewParagraphs(updateData.newParagraphs);
 			return true;
@@ -1960,6 +1962,8 @@
 	OutlineView.prototype.updateSlideData = function () {
 		const updateData = this.getSlideUpdateData();
 		if (updateData.isNeedRecalculate()) {
+			const presentation = this.getPresentation();
+			presentation.updateSlideIndexes();
 			this.updateAddedSlides(updateData.addedSlides);
 			this.updateRemovedSlides(updateData.removedSlides);
 			return true;
@@ -2139,8 +2143,6 @@
 		if (!content) {
 			return;
 		}
-		const presentation = this.getPresentation();
-		presentation.updateSlideIndexes();
 		content.Update_ContentIndexing();
 		const updateManager = new UpdateAddedSlidesManager(this, addedSlides);
 		updateManager.update();
@@ -2153,8 +2155,6 @@
 		if (!content) {
 			return;
 		}
-		const presentation = this.getPresentation();
-		presentation.updateSlideIndexes();
 		content.Update_ContentIndexing();
 		const updateManager = new UpdateRemovedSlidesManager(this, removedSlides);
 		updateManager.update();
