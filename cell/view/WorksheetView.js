@@ -12922,7 +12922,10 @@ function isAllowPasteLink(pastedWb) {
 
         if (ar.c2 === ar.c1) {
             if (0 !== dc && 0 === this._getColumnWidth(ar.c1)) {
-                c1 = c2 = this._findVisibleCol(ar.c1, dc);
+                let _c = this._findVisibleCol(ar.c1, dc);
+                if (_c >= 0) {
+                    c1 = c2 = _c;
+                }
             }
         } else {
             if (0 !== dc && this.nColsCount > ar.c2 && 0 === this._getColumnWidth(ar.c2)) {
@@ -12934,17 +12937,20 @@ function isAllowPasteLink(pastedWb) {
                     }
                 }
                 if (!mc) {
-                    c2 = this._findVisibleCol(ar.c2, dc);
+                    let _c2 = this._findVisibleCol(ar.c2, dc);
+                    if (_c2 >= 0) {
+                        c2 = _c2;
+                    }
                 }
             }
-        }
-        if (c1 < 0 || c2 < 0) {
-            throw new Error("Error: all columns are hidden");
         }
 
         if (ar.r2 === ar.r1) {
             if (0 !== dr && 0 === this._getRowHeight(ar.r1)) {
-                r1 = r2 = this._findVisibleRow(ar.r1, dr);
+                let _r = this._findVisibleRow(ar.r1, dr);
+                if (_r >= 0) {
+                    r1 = r2 = _r;
+                }
             }
         } else {
             if (0 !== dr && this.nRowsCount > ar.r2 && 0 === this._getRowHeight(ar.r2)) {
@@ -12956,7 +12962,10 @@ function isAllowPasteLink(pastedWb) {
                     }
                 }
                 if (!mc) {
-                    r2 = this._findVisibleRow(ar.r2, dr);
+                    var _r2 = this._findVisibleRow(ar.r2, dr);
+                    if (_r2 >= 0) {
+                        r2 = _r2;
+                    }
                 }
             }
         }
@@ -13119,12 +13128,18 @@ function isAllowPasteLink(pastedWb) {
 
         var bIsHidden = false;
         if (0 !== dc && 0 === this._getColumnWidth(c2)) {
-            c2 = this._findVisibleCol(c2, dc);
-            bIsHidden = true;
+            let _vc = this._findVisibleCol(c2, dc);
+            if (_vc >= 0) {
+                c2 = _vc;
+                bIsHidden = true;
+            }
         }
         if (0 !== dr && 0 === this._getRowHeight(r2)) {
-            r2 = this._findVisibleRow(r2, dr);
-            bIsHidden = true;
+            let _vr = this._findVisibleRow(r2, dr);
+            if (_vr >= 0) {
+                r2 = _vr;
+                bIsHidden = true;
+            }
         }
         if (bIsHidden) {
             res.assign(c1, r1, c2, r2, true);

@@ -1294,6 +1294,15 @@ CTableRow.prototype.FindParaWithOutlineLvl = function (nOutlineLvl, bBackward, n
 	};
 	return this.FindParagraph(fCondition, bBackward, nStartIdx);
 };
+/**
+ * @returns {boolean}
+ */
+CTableRow.prototype.IsContentWithKeepNext = function()
+{
+	let cell = this.GetCell(0); 
+	let para = cell ? cell.GetContent().GetFirstParagraph() : null;
+	return para && para.IsKeepNext();
+};
 
 function CTableRowRecalculateObject()
 {
