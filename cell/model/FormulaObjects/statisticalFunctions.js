@@ -5682,27 +5682,19 @@ function (window, undefined) {
 	 */
 	cDEVSQ.prototype.Calculate = function (arg) {
 
-		function devsq(x) {
-
-			let s1 = 0, _x = 0, xLength = 0, i;
-			for (i = 0; i < x.length; i++) {
-
-				if (x[i].type === cElementType.number) {
-					_x += x[i].getValue();
-					xLength++;
-				}
-
+		//pairs: [{v,n}] - a lazy array's constant tail is ONE weighted pair (n = tail cells); weighted SS equals
+		//the expanded SS exactly (Sum n*(v-mean)^2, mean = Sum n*v / Sum n).
+		function devsq(pairs) {
+			let s1 = 0, _x = 0, N = 0, i;
+			for (i = 0; i < pairs.length; i++) {
+				_x += pairs[i].v * pairs[i].n;
+				N += pairs[i].n;
 			}
-
-			_x /= xLength;
-
-			for (i = 0; i < x.length; i++) {
-				if (x[i].type === cElementType.number) {
-					s1 += Math.pow(x[i].getValue() - _x, 2);
-				}
-
+			_x /= N;
+			for (i = 0; i < pairs.length; i++) {
+				let d = pairs[i].v - _x;
+				s1 += pairs[i].n * d * d;
 			}
-
 			return new cNumber(s1);
 		}
 
@@ -5716,14 +5708,28 @@ function (window, undefined) {
 
 			if (arg[i].type === cElementType.error) {
 				return arg[i];
-			} else if (arg[i].type === cElementType.cellsRange || arg[i].type === cElementType.cellsRange3D || arg[i].type === cElementType.array) {
-
-				let isArray = arg[i].type === cElementType.array;
-
+			} else if (arg[i].type === cElementType.array) {
+				//reduceLogical: head -> unit pairs, constant tail -> ONE pair with n = tail count
+				errorByType = arg[i].reduceLogical(function (acc, elem, n) {
+					if (acc) {
+						return acc;
+					}
+					if (elem) {
+						if (elem.type === cElementType.error) {
+							return elem.errorType;
+						}
+						elem = elem.tocNumber();
+						if (elem.type === cElementType.number) {
+							arr0.push({v: elem.getValue(), n: n});
+						}
+					}
+					return acc;
+				}, errorByType);
+			} else if (arg[i].type === cElementType.cellsRange || arg[i].type === cElementType.cellsRange3D) {
 				arg[i].foreach(function (cell) {
 					let elem;
 					if (cell) {
-						elem = isArray ? cell : checkTypeCell(cell);
+						elem = checkTypeCell(cell);
 						if (elem) {
 							if (elem.type === cElementType.error) {
 								errorByType = elem.errorType;
@@ -5732,7 +5738,7 @@ function (window, undefined) {
 
 							elem = elem.tocNumber();
 							if (elem.type === cElementType.number) {
-								arr0.push(elem);
+								arr0.push({v: elem.getValue(), n: 1});
 							}
 						}
 					}
@@ -5750,7 +5756,7 @@ function (window, undefined) {
 				}
 
 				if (elem.type === cElementType.number) {
-					arr0.push(elem); 
+					arr0.push({v: elem.getValue(), n: 1});
 				}
 			} else if (arg[i].type === cElementType.string || arg[i].type === cElementType.bool || arg[i].type === cElementType.number || arg[i].type === cElementType.empty) {
 				let elem = arg[i].tocNumber();
@@ -5759,7 +5765,7 @@ function (window, undefined) {
 					return elem;
 				}
 
-				arr0.push(elem);
+				arr0.push({v: elem.getValue(), n: 1});
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}
@@ -10539,51 +10545,49 @@ function (window, undefined) {
 	cSTDEV.prototype.argumentsType = [[argType.number]];
 	cSTDEV.prototype.enabledToSingle = {"*": true};
 	cSTDEV.prototype.Calculate = function (arg) {
-		var i, element, count = 0, sum = new cNumber(0), member = [];
+		//collect {v,n} pairs (a lazy array's constant tail is ONE pair with n = tail count), then weighted two-pass
+		var i, j, element, member = [];
 		for (i = 0; i < arg.length; i++) {
 			element = arg[i];
 			if (cElementType.cell === element.type || cElementType.cell3D === element.type) {
 				if (!this.checkExclude || !element.isHidden(this.excludeHiddenRows)) {
 					var _argV = element.getValue();
 					if (cElementType.number === _argV.type) {
-						member.push(_argV);
-						sum = _func[sum.type][_argV.type](sum, _argV, "+");
-						count++;
+						member.push({v: _argV.getValue(), n: 1});
 					}
 				}
 			} else if (cElementType.cellsRange === element.type || cElementType.cellsRange3D === element.type) {
 				var _argAreaValue = element.getValue(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal,
 					this.excludeNestedStAg);
-				for (var j = 0; j < _argAreaValue.length; j++) {
-					var __arg = _argAreaValue[j];
-					if (cElementType.number === __arg.type) {
-						member.push(__arg);
-						sum = _func[sum.type][__arg.type](sum, __arg, "+");
-						count++;
+				for (j = 0; j < _argAreaValue.length; j++) {
+					if (cElementType.number === _argAreaValue[j].type) {
+						member.push({v: _argAreaValue[j].getValue(), n: 1});
 					}
 				}
 			} else if (cElementType.array === element.type) {
-				element.foreach(function (elem) {
+				element.reduceLogical(function (acc, elem, n) {
 					var e = elem.tocNumber();
 					if (cElementType.number === e.type) {
-						member.push(e);
-						sum = _func[sum.type][e.type](sum, e, "+");
-						count++;
+						member.push({v: e.getValue(), n: n});
 					}
-				})
+					return acc;
+				}, null);
 			} else {
 				element = element.tocNumber();
 				if (cElementType.number === element.type) {
-					member.push(element);
-					sum = _func[sum.type][element.type](sum, element, "+");
-					count++;
+					member.push({v: element.getValue(), n: 1});
 				}
 			}
 		}
-		var average = sum.getValue() / count, res = 0, av;
+		var count = 0, sumv = 0;
 		for (i = 0; i < member.length; i++) {
-			av = member[i] - average;
-			res += av * av;
+			count += member[i].n;
+			sumv += member[i].v * member[i].n;
+		}
+		var average = sumv / count, res = 0, av;
+		for (i = 0; i < member.length; i++) {
+			av = member[i].v - average;
+			res += member[i].n * av * av;
 		}
 
 		if (1 === count) {
@@ -10624,48 +10628,47 @@ function (window, undefined) {
 	cSTDEVA.prototype.argumentsType = [[argType.number]];
 	cSTDEVA.prototype.enabledToSingle = {"*": true};
 	cSTDEVA.prototype.Calculate = function (arg) {
-		var count = 0, sum = new cNumber(0), member = [], i;
+		//collect {v,n} pairs (lazy array's constant tail -> ONE pair with n = tail count), then weighted two-pass
+		var member = [], i, j;
 		for (i = 0; i < arg.length; i++) {
 			var _arg = arg[i];
 			if (_arg instanceof cRef || _arg instanceof cRef3D) {
 				var _argV = _arg.getValue().tocNumber();
 				if (_argV instanceof cNumber) {
-					member.push(_argV);
-					sum = _func[sum.type][_argV.type](sum, _argV, "+");
-					count++;
+					member.push({v: _argV.getValue(), n: 1});
 				}
 			} else if (_arg instanceof cArea || _arg instanceof cArea3D) {
 				var _argAreaValue = _arg.getValue();
-				for (var j = 0; j < _argAreaValue.length; j++) {
+				for (j = 0; j < _argAreaValue.length; j++) {
 					var __arg = _argAreaValue[j].tocNumber();
 					if (__arg instanceof cNumber) {
-						member.push(__arg);
-						sum = _func[sum.type][__arg.type](sum, __arg, "+");
-						count++;
+						member.push({v: __arg.getValue(), n: 1});
 					}
 				}
 			} else if (_arg instanceof cArray) {
-				_arg.foreach(function (elem) {
+				_arg.reduceLogical(function (acc, elem, n) {
 					var e = elem.tocNumber();
 					if (e instanceof cNumber) {
-						member.push(e);
-						sum = _func[sum.type][e.type](sum, e, "+");
-						count++;
+						member.push({v: e.getValue(), n: n});
 					}
-				})
+					return acc;
+				}, null);
 			} else {
 				_arg = _arg.tocNumber();
 				if (_arg instanceof cNumber) {
-					member.push(_arg);
-					sum = _func[sum.type][_arg.type](sum, _arg, "+");
-					count++;
+					member.push({v: _arg.getValue(), n: 1});
 				}
 			}
 		}
-		var average = sum.getValue() / count, res = 0, av;
+		var count = 0, sumv = 0;
 		for (i = 0; i < member.length; i++) {
-			av = member[i] - average;
-			res += av * av;
+			count += member[i].n;
+			sumv += member[i].v * member[i].n;
+		}
+		var average = sumv / count, res = 0, av;
+		for (i = 0; i < member.length; i++) {
+			av = member[i].v - average;
+			res += member[i].n * av * av;
 		}
 		return new cNumber(Math.sqrt(res / (count - 1)));
 	};
@@ -10686,27 +10689,19 @@ function (window, undefined) {
 	cSTDEVP.prototype.argumentsType = [[argType.number]];
 	cSTDEVP.prototype.enabledToSingle = {"*": true};
 	cSTDEVP.prototype.Calculate = function (arg) {
-		function _var(x) {
-			var i, tA = [], sumSQRDeltaX = 0, _x = 0, xLength = 0;
-			for (i = 0; i < x.length; i++) {
-
-				if (cElementType.number === x[i].type) {
-					_x += x[i].getValue();
-					tA.push(x[i].getValue());
-					xLength++;
-				} else if (cElementType.error === x[i].type) {
-					return x[i];
-				}
-
+		//pairs: [{v,n}] - constant tail folded as ONE weighted pair; population variance (/N), result sqrt.
+		function _var(pairs) {
+			var i, N = 0, _x = 0, sumSQRDeltaX = 0;
+			for (i = 0; i < pairs.length; i++) {
+				N += pairs[i].n;
+				_x += pairs[i].v * pairs[i].n;
 			}
-
-			_x /= xLength;
-
-			for (i = 0; i < x.length; i++) {
-				sumSQRDeltaX += (tA[i] - _x) * (tA[i] - _x)
+			_x /= N;
+			for (i = 0; i < pairs.length; i++) {
+				var d = pairs[i].v - _x;
+				sumSQRDeltaX += pairs[i].n * d * d;
 			}
-
-			return new cNumber(isNaN(_x) ? new cError(cErrorType.division_by_zero) : Math.sqrt(sumSQRDeltaX / xLength));
+			return new cNumber(isNaN(_x) ? new cError(cErrorType.division_by_zero) : Math.sqrt(sumSQRDeltaX / N));
 		}
 
 		var element, arr0 = [];
@@ -10717,7 +10712,7 @@ function (window, undefined) {
 				var _arrVal = element.getValue(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg);
 				_arrVal.forEach(function (elem) {
 					if (cElementType.number === elem.type) {
-						arr0.push(elem);
+						arr0.push({v: elem.getValue(), n: 1});
 					} else if (cElementType.error === elem.type && !error) {
 						error = elem;
 					}
@@ -10729,26 +10724,30 @@ function (window, undefined) {
 				if (!this.checkExclude || !element.isHidden(this.excludeHiddenRows)) {
 					var a = element.getValue();
 					if (cElementType.number === a.type) {
-						arr0.push(a);
+						arr0.push({v: a.getValue(), n: 1});
 					} else if (cElementType.error === a.type) {
 						return a;
 					}
 				}
 			} else if (cElementType.array === element.type) {
-				element.foreach(function (elem) {
-					if (cElementType.number === elem.type) {
-						arr0.push(elem);
-					} else if (cElementType.error === elem.type && !error) {
-						error = elem;
+				error = element.reduceLogical(function (acc, elem, n) {
+					if (acc) {
+						return acc;
 					}
-				});
+					if (cElementType.number === elem.type) {
+						arr0.push({v: elem.getValue(), n: n});
+					} else if (cElementType.error === elem.type) {
+						return elem;
+					}
+					return acc;
+				}, error);
 				if (error) {
 					return error;
 				}
 			} else if (cElementType.number === element.type || cElementType.bool === element.type) {
-				arr0.push(element.tocNumber());
+				arr0.push({v: element.tocNumber().getValue(), n: 1});
 			} else if (cElementType.string === element.type || cElementType.empty === element.type) {
-				arr0.push(new cNumber(0));
+				arr0.push({v: 0, n: 1});
 			} else if (cElementType.error === element.type) {
 				return element;
 			} else {
@@ -10790,74 +10789,72 @@ function (window, undefined) {
 	cSTDEVPA.prototype.enabledToSingle = {"*": true};
 	cSTDEVPA.prototype.Calculate = function (arg) {
 
-		function _var(x) {
-
-			var tA = [], sumSQRDeltaX = 0, _x = 0, xLength = 0, i;
-			for (i = 0; i < x.length; i++) {
-
-				if (x[i] instanceof cNumber) {
-					_x += x[i].getValue();
-					tA.push(x[i].getValue());
-					xLength++;
-				} else if (x[i] instanceof cError) {
-					return x[i];
-				}
-
+		//pairs: [{v,n}] - constant tail folded as ONE weighted pair; population variance (/N), result sqrt.
+		function _var(pairs) {
+			var i, N = 0, _x = 0, sumSQRDeltaX = 0;
+			for (i = 0; i < pairs.length; i++) {
+				N += pairs[i].n;
+				_x += pairs[i].v * pairs[i].n;
 			}
-
-			_x /= xLength;
-
-			for (i = 0; i < x.length; i++) {
-
-				sumSQRDeltaX += (tA[i] - _x) * (tA[i] - _x)
-
+			_x /= N;
+			for (i = 0; i < pairs.length; i++) {
+				var d = pairs[i].v - _x;
+				sumSQRDeltaX += pairs[i].n * d * d;
 			}
-
-			return new cNumber(Math.sqrt(sumSQRDeltaX / xLength));
-
+			return new cNumber(Math.sqrt(sumSQRDeltaX / N));
 		}
 
-		var arr0 = [];
+		var arr0 = [], error;
 
 		for (var j = 0; j < arg.length; j++) {
 
 			if (arg[j] instanceof cArea || arg[j] instanceof cArea3D) {
 				arg[j].foreach2(function (elem) {
-					if (elem instanceof cNumber || elem instanceof cError) {
-						arr0.push(elem);
+					if (elem instanceof cError) {
+						if (!error) { error = elem; }
+					} else if (elem instanceof cNumber) {
+						arr0.push({v: elem.getValue(), n: 1});
 					} else if (elem instanceof cBool) {
-						arr0.push(elem.tocNumber());
+						arr0.push({v: elem.tocNumber().getValue(), n: 1});
 					} else if (elem instanceof cString) {
-						arr0.push(new cNumber(0));
+						arr0.push({v: 0, n: 1});
 					}
 				});
 			} else if (arg[j] instanceof cRef || arg[j] instanceof cRef3D) {
 				var a = arg[j].getValue();
-				if (a instanceof cNumber || a instanceof cError) {
-					arr0.push(a);
+				if (a instanceof cError) {
+					if (!error) { error = a; }
+				} else if (a instanceof cNumber) {
+					arr0.push({v: a.getValue(), n: 1});
 				} else if (a instanceof cBool) {
-					arr0.push(a.tocNumber());
+					arr0.push({v: a.tocNumber().getValue(), n: 1});
 				} else if (a instanceof cString) {
-					arr0.push(new cNumber(0));
+					arr0.push({v: 0, n: 1});
 				}
 			} else if (arg[j] instanceof cArray) {
-				arg[j].foreach(function (elem) {
-					if (elem instanceof cNumber || elem instanceof cError) {
-						arr0.push(elem);
+				arg[j].reduceLogical(function (acc, elem, n) {
+					if (elem instanceof cError) {
+						if (!error) { error = elem; }
+					} else if (elem instanceof cNumber) {
+						arr0.push({v: elem.getValue(), n: n});
 					} else if (elem instanceof cBool) {
-						arr0.push(elem.tocNumber());
+						arr0.push({v: elem.tocNumber().getValue(), n: n});
 					} else if (elem instanceof cString) {
-						arr0.push(new cNumber(0));
+						arr0.push({v: 0, n: n});
 					}
-				});
+					return acc;
+				}, null);
 			} else if (arg[j] instanceof cNumber || arg[j] instanceof cBool) {
-				arr0.push(arg[j].tocNumber());
+				arr0.push({v: arg[j].tocNumber().getValue(), n: 1});
 			} else if (arg[j] instanceof cString) {
-				arr0.push(new cNumber(0));
+				arr0.push({v: 0, n: 1});
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}
 
+		}
+		if (error) {
+			return error;
 		}
 		return _var(arr0);
 	};
@@ -11557,78 +11554,75 @@ function (window, undefined) {
 	cVARA.prototype.enabledToSingle = {"*": true};
 	cVARA.prototype.Calculate = function (arg) {
 
-		function _var(x) {
-
-			if (x.length < 1) {
+		//pairs: [{v,n}] - constant tail folded as ONE weighted pair; sample variance (/(N-1)).
+		function _var(pairs) {
+			var i, N = 0, _x = 0, sumSQRDeltaX = 0;
+			for (i = 0; i < pairs.length; i++) {
+				N += pairs[i].n;
+				_x += pairs[i].v * pairs[i].n;
+			}
+			if (N < 1) {
 				return new cError(cErrorType.division_by_zero);
 			}
-
-			var tA = [], sumSQRDeltaX = 0, _x = 0, xLength = 0, i;
-			for (i = 0; i < x.length; i++) {
-
-				if (x[i] instanceof cNumber) {
-					_x += x[i].getValue();
-					tA.push(x[i].getValue());
-					xLength++;
-				} else if (x[i] instanceof cError) {
-					return x[i];
-				}
-
+			_x /= N;
+			for (i = 0; i < pairs.length; i++) {
+				var d = pairs[i].v - _x;
+				sumSQRDeltaX += pairs[i].n * d * d;
 			}
-
-			_x /= xLength;
-
-			for (i = 0; i < x.length; i++) {
-
-				sumSQRDeltaX += (tA[i] - _x) * (tA[i] - _x)
-
-			}
-
-			return new cNumber(sumSQRDeltaX / (xLength - 1))
-
+			return new cNumber(sumSQRDeltaX / (N - 1));
 		}
 
-		var arr0 = [];
+		var arr0 = [], error;
 
 		for (var j = 0; j < arg.length; j++) {
 
 			if (arg[j] instanceof cArea || arg[j] instanceof cArea3D) {
 				arg[j].foreach2(function (elem) {
-					if (elem instanceof cNumber || elem instanceof cError) {
-						arr0.push(elem);
+					if (elem instanceof cError) {
+						if (!error) { error = elem; }
+					} else if (elem instanceof cNumber) {
+						arr0.push({v: elem.getValue(), n: 1});
 					} else if (elem instanceof cBool) {
-						arr0.push(elem.tocNumber());
+						arr0.push({v: elem.tocNumber().getValue(), n: 1});
 					} else if (elem instanceof cString) {
-						arr0.push(new cNumber(0));
+						arr0.push({v: 0, n: 1});
 					}
 				});
 			} else if (arg[j] instanceof cRef || arg[j] instanceof cRef3D) {
 				var a = arg[j].getValue();
-				if (a instanceof cNumber || a instanceof cError) {
-					arr0.push(a);
+				if (a instanceof cError) {
+					if (!error) { error = a; }
+				} else if (a instanceof cNumber) {
+					arr0.push({v: a.getValue(), n: 1});
 				} else if (a instanceof cBool) {
-					arr0.push(a.tocNumber());
+					arr0.push({v: a.tocNumber().getValue(), n: 1});
 				} else if (a instanceof cString) {
-					arr0.push(new cNumber(0));
+					arr0.push({v: 0, n: 1});
 				}
 			} else if (arg[j] instanceof cArray) {
-				arg[j].foreach(function (elem) {
-					if (elem instanceof cNumber || elem instanceof cError) {
-						arr0.push(elem);
+				//NB: VARA's original array branch skipped strings (a `a instanceof cString` typo referencing the
+				//cRef-branch var); preserve that - strings in an ARRAY arg are not counted (unlike a range/scalar).
+				arg[j].reduceLogical(function (acc, elem, n) {
+					if (elem instanceof cError) {
+						if (!error) { error = elem; }
+					} else if (elem instanceof cNumber) {
+						arr0.push({v: elem.getValue(), n: n});
 					} else if (elem instanceof cBool) {
-						arr0.push(elem.tocNumber());
-					} else if (a instanceof cString) {
-						arr0.push(new cNumber(0));
+						arr0.push({v: elem.tocNumber().getValue(), n: n});
 					}
-				});
+					return acc;
+				}, null);
 			} else if (arg[j] instanceof cNumber || arg[j] instanceof cBool) {
-				arr0.push(arg[j].tocNumber());
+				arr0.push({v: arg[j].tocNumber().getValue(), n: 1});
 			} else if (arg[j] instanceof cString) {
-				arr0.push(new cNumber(0));
+				arr0.push({v: 0, n: 1});
 			} else if (arg[j] instanceof cError) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 
+		}
+		if (error) {
+			return error;
 		}
 		return _var(arr0);
 	};
@@ -11649,32 +11643,22 @@ function (window, undefined) {
 	cVARP.prototype.argumentsType = [[argType.number]];
 	cVARP.prototype.enabledToSingle = {"*": true};
 	cVARP.prototype.Calculate = function (arg) {
-		function _var(x) {
-			if (x.length < 1) {
+		//pairs: [{v,n}] - constant tail folded as ONE weighted pair; population variance (/N).
+		function _var(pairs) {
+			var i, N = 0, _x = 0, sumSQRDeltaX = 0;
+			for (i = 0; i < pairs.length; i++) {
+				N += pairs[i].n;
+				_x += pairs[i].v * pairs[i].n;
+			}
+			if (N < 1) {
 				return new cError(cErrorType.division_by_zero);
 			}
-
-			var tA = [], sumSQRDeltaX = 0, _x = 0, xLength = 0, i;
-			for (i = 0; i < x.length; i++) {
-
-				if (cElementType.number === x[i].type) {
-					_x += x[i].getValue();
-					tA.push(x[i].getValue());
-					xLength++;
-				} else if (cElementType.error === x[i].type) {
-					return x[i];
-				}
-
+			_x /= N;
+			for (i = 0; i < pairs.length; i++) {
+				var d = pairs[i].v - _x;
+				sumSQRDeltaX += pairs[i].n * d * d;
 			}
-
-			_x /= xLength;
-
-			for (i = 0; i < x.length; i++) {
-				sumSQRDeltaX += (tA[i] - _x) * (tA[i] - _x);
-			}
-
-			return new cNumber(sumSQRDeltaX / xLength);
-
+			return new cNumber(sumSQRDeltaX / N);
 		}
 
 		var element, arr0 = [];
@@ -11685,7 +11669,7 @@ function (window, undefined) {
 				var _arrVal = element.getValue(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg);
 				_arrVal.forEach(function (elem) {
 					if (cElementType.number === elem.type) {
-						arr0.push(elem);
+						arr0.push({v: elem.getValue(), n: 1});
 					} else if (cElementType.error === elem.type && !error) {
 						error = elem;
 					}
@@ -11697,26 +11681,30 @@ function (window, undefined) {
 				if (!this.checkExclude || !element.isHidden(this.excludeHiddenRows)) {
 					var a = element.getValue();
 					if (cElementType.number === a.type) {
-						arr0.push(a);
+						arr0.push({v: a.getValue(), n: 1});
 					} else if (cElementType.error === a.type) {
 						return a;
 					}
 				}
 			} else if (cElementType.array === element.type) {
-				element.foreach(function (elem) {
-					if (cElementType.number === elem.type) {
-						arr0.push(elem);
-					} else if (cElementType.error === elem.type && !error) {
-						error = elem;
+				error = element.reduceLogical(function (acc, elem, n) {
+					if (acc) {
+						return acc;
 					}
-				});
+					if (cElementType.number === elem.type) {
+						arr0.push({v: elem.getValue(), n: n});
+					} else if (cElementType.error === elem.type) {
+						return elem;
+					}
+					return acc;
+				}, error);
 				if (error) {
 					return error;
 				}
 			} else if (cElementType.number === element.type || cElementType.bool === element.type) {
-				arr0.push(element.tocNumber());
+				arr0.push({v: element.tocNumber().getValue(), n: 1});
 			} else if (cElementType.string === element.type || cElementType.empty === element.type) {
-				arr0.push(new cNumber(0));
+				arr0.push({v: 0, n: 1});
 			} else if (cElementType.error === element.type) {
 				return element;
 			} else {
@@ -11869,78 +11857,75 @@ function (window, undefined) {
 	cVARPA.prototype.enabledToSingle = {"*": true};
 	cVARPA.prototype.Calculate = function (arg) {
 
-		function _var(x) {
-
-			if (x.length < 1) {
+		//pairs: [{v,n}] - constant tail folded as ONE weighted pair; population variance (/N).
+		function _var(pairs) {
+			var i, N = 0, _x = 0, sumSQRDeltaX = 0;
+			for (i = 0; i < pairs.length; i++) {
+				N += pairs[i].n;
+				_x += pairs[i].v * pairs[i].n;
+			}
+			if (N < 1) {
 				return new cError(cErrorType.division_by_zero);
 			}
-
-			var tA = [], sumSQRDeltaX = 0, _x = 0, xLength = 0, i;
-			for (i = 0; i < x.length; i++) {
-
-				if (x[i] instanceof cNumber) {
-					_x += x[i].getValue();
-					tA.push(x[i].getValue());
-					xLength++;
-				} else if (x[i] instanceof cError) {
-					return x[i];
-				}
-
+			_x /= N;
+			for (i = 0; i < pairs.length; i++) {
+				var d = pairs[i].v - _x;
+				sumSQRDeltaX += pairs[i].n * d * d;
 			}
-
-			_x /= xLength;
-
-			for (i = 0; i < x.length; i++) {
-
-				sumSQRDeltaX += (tA[i] - _x) * (tA[i] - _x)
-
-			}
-
-			return new cNumber(sumSQRDeltaX / xLength);
-
+			return new cNumber(sumSQRDeltaX / N);
 		}
 
-		var arr0 = [];
+		var arr0 = [], error;
 
 		for (var j = 0; j < arg.length; j++) {
 
 			if (arg[j] instanceof cArea || arg[j] instanceof cArea3D) {
 				arg[j].foreach2(function (elem) {
-					if (elem instanceof cNumber || elem instanceof cError) {
-						arr0.push(elem);
+					if (elem instanceof cError) {
+						if (!error) { error = elem; }
+					} else if (elem instanceof cNumber) {
+						arr0.push({v: elem.getValue(), n: 1});
 					} else if (elem instanceof cBool) {
-						arr0.push(elem.tocNumber());
+						arr0.push({v: elem.tocNumber().getValue(), n: 1});
 					} else if (elem instanceof cString) {
-						arr0.push(new cNumber(0));
+						arr0.push({v: 0, n: 1});
 					}
 				});
 			} else if (arg[j] instanceof cRef || arg[j] instanceof cRef3D) {
 				var a = arg[j].getValue();
-				if (a instanceof cNumber || a instanceof cError) {
-					arr0.push(a);
+				if (a instanceof cError) {
+					if (!error) { error = a; }
+				} else if (a instanceof cNumber) {
+					arr0.push({v: a.getValue(), n: 1});
 				} else if (a instanceof cBool) {
-					arr0.push(a.tocNumber());
+					arr0.push({v: a.tocNumber().getValue(), n: 1});
 				} else if (a instanceof cString) {
-					arr0.push(new cNumber(0));
+					arr0.push({v: 0, n: 1});
 				}
 			} else if (arg[j] instanceof cArray) {
-				arg[j].foreach(function (elem) {
-					if (elem instanceof cNumber || elem instanceof cError) {
-						arr0.push(elem);
+				arg[j].reduceLogical(function (acc, elem, n) {
+					if (elem instanceof cError) {
+						if (!error) { error = elem; }
+					} else if (elem instanceof cNumber) {
+						arr0.push({v: elem.getValue(), n: n});
 					} else if (elem instanceof cBool) {
-						arr0.push(elem.tocNumber());
+						arr0.push({v: elem.tocNumber().getValue(), n: n});
 					} else if (elem instanceof cString) {
-						arr0.push(new cNumber(0));
+						arr0.push({v: 0, n: n});
 					}
-				});
+					return acc;
+				}, null);
 			} else if (arg[j] instanceof cNumber || arg[j] instanceof cBool) {
-				arr0.push(arg[j].tocNumber());
+				arr0.push({v: arg[j].tocNumber().getValue(), n: 1});
 			} else if (arg[j] instanceof cString) {
-				arr0.push(new cNumber(0));
+				arr0.push({v: 0, n: 1});
 			} else if (arg[j] instanceof cError) {
 				return arg[j];
 			}
 
+		}
+		if (error) {
+			return error;
 		}
 		return _var(arr0);
 	};
