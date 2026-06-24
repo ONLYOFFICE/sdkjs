@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -80,7 +83,7 @@ var c_oChartBar3dFaces =
 
 var globalGapDepth = 150;
 var isTurnOn3DCharts = true;
-var standartMarginForCharts = 13;
+var standartMarginForCharts = 14;
 
 function arrReverse(arr) {
 	if(!arr || !arr.length)
@@ -116,7 +119,6 @@ function CChartsDrawer()
 	this.errBars = new CErrBarsDraw(this);
 	this.trendline = new CTrendline(this);
 	this.upDownBars = new CUpDownBars(this);
-
 
 	this.changeAxisMap = null;
 
@@ -187,7 +189,6 @@ CChartsDrawer.prototype =
 			}
 
 		}
-
 		//CHARTS
 		if (!chartSpace.bEmptySeries) {
 			for(var i in this.charts) {
@@ -219,6 +220,9 @@ CChartsDrawer.prototype =
 
 	createChartEx: function (seria) {
 		this.charts = {};
+		if (!seria) {
+			return;
+		}
 		switch (seria.layoutId) {
 			case AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN :
 				this.charts.chartEx = new drawClusteredColumn(seria, this);
@@ -651,8 +655,9 @@ CChartsDrawer.prototype =
 	//****positions text labels****
 	recalculatePositionText: function (obj, idx) {
 		var pos;
+		const bChartTitle = this.cChartSpace.isChartEx() && obj.getObjectType() === AscDFH.historyitem_type_Title && obj.parent && obj.parent.getObjectType() === AscDFH.historyitem_type_Chart;
 
-		if (!this.cChartSpace.bEmptySeries) {
+		if (!this.cChartSpace.bEmptySeries || bChartTitle) {
 			var type = obj.getObjectType();
 
 			switch (type) {
@@ -960,7 +965,6 @@ CChartsDrawer.prototype =
 	//****calculate margins****
 	_calculateMarginsChart: function (chartSpace, dNotPutResult) {
 		this.calcProp.chartGutter = {};
-
 		if (this._isSwitchCurrent3DChart(chartSpace)) {
 			standartMarginForCharts = 16;
 		}
@@ -970,6 +974,9 @@ CChartsDrawer.prototype =
 
 		var pxToMM = this.calcProp.pxToMM;
 		var plotArea = chartSpace.chart.plotArea;
+		var charts = plotArea.charts;
+		const isChartEx = chartSpace ? chartSpace.isChartEx() : false;
+		let dataTableExtY = 0;
 
 		//if points are calculated - set margin based on them
 		var marginOnPoints = this._calculateMarginOnPoints(chartSpace/*, isHBar*/);
@@ -977,7 +984,10 @@ CChartsDrawer.prototype =
 
 		//calculate axis labels extending beyond bounds
 		var labelsMargin = this._calculateMarginLabels(chartSpace);
-		var left = labelsMargin.left, right = labelsMargin.right, top = labelsMargin.top, bottom = labelsMargin.bottom;
+		let left = labelsMargin.left;
+		let right = labelsMargin.right;
+		let top = 0;
+		let bottom = 0;
 
 
 		var leftTextLabels = 0;
@@ -988,10 +998,26 @@ CChartsDrawer.prototype =
 		//add axis label sizes + title sizes
 		//TODO generate extX for all axes
 		var axId = chartSpace.chart.plotArea.axId;
-		let isLeftAxis = false;
-		let isRightAxis = false;
-		let isTopExist = chartSpace && chartSpace.chart ? !!chartSpace.chart.title || (!!chartSpace.chart.legend && chartSpace.chart.legend.legendPos === Asc.c_oAscChartLegendShowSettings.top) : false;
-		let isVertAxisExist = false;
+		const axisSettings = [{ isExist: false, opKey: 1}, {isExist: false, opKey: 0}, {isExist: false, opKey : 3}, {isExist: false, opKey: 2}]; //L,R,T,D
+
+		const checkAxis = function (index, ax) {
+			if (ax.bDelete || ax.tickLblPos === Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE) {
+				return;
+			}
+
+			const isCurrAxis = ax.tickLblPos === AscFormat.TICK_LABEL_POSITION_NEXT_TO || ax.tickLblPos === AscFormat.TICK_LABEL_POSITION_LOW;
+			const isOpposite = ax.tickLblPos === AscFormat.TICK_LABEL_POSITION_HIGH;
+
+			if (isCurrAxis){
+				axisSettings[index].isExist = true;
+			}
+
+			if (isOpposite) {
+				const opKey = axisSettings[index].opKey;
+				axisSettings[opKey].isExist = true;
+			}
+		}
+
 		if(axId) {
 			for(var i = 0; i < axId.length; i++) {
 				switch (axId[i].axPos) {
@@ -999,47 +1025,33 @@ CChartsDrawer.prototype =
 						if (null !== axId[i].title) {
 							bottomTextLabels += axId[i].title.extY;
 						}
+						checkAxis(3, axId[i]);
 						break;
 					}
 					case window['AscFormat'].AX_POS_T: {
 						if (null !== axId[i].title) {
 							topTextLabels += axId[i].title.extY;
 						}
+						checkAxis(2, axId[i]);
 						break;
 					}
 					case window['AscFormat'].AX_POS_L: {
 						if (null !== axId[i].title) {
 							leftTextLabels += axId[i].title.extX;
 						}
+						checkAxis(0, axId[i]);
 						break;
 					}
 					case window['AscFormat'].AX_POS_R: {
 						if (null !== axId[i].title) {
 							rightTextLabels += axId[i].title.extX;
 						}
+						checkAxis(1, axId[i]);
 						break;
 					}
 				}
-				const bLeftVert = axId[i].axPos === AscFormat.AX_POS_L;
-				const bRigthVert = axId[i].axPos === AscFormat.AX_POS_R;
-				if (!axId[i].bDelete) {
-					if (bLeftVert) {
-						isLeftAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_NEXT_TO || axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_LOW;
-						isRightAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_HIGH;
-					}
-					if (bRigthVert) {
-						isLeftAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_HIGH;
-						isRightAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_NEXT_TO || axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_LOW;
-					}
-				}
-				if (!axId[i].bDelete && axId[i].tickLblPos !== Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE && (bLeftVert || bRigthVert) && !isVertAxisExist) {
-					isVertAxisExist = true;
-				}
 			}
 		}
-
-		// if no vetical axis when top is not exist, then should work as if top exist
-		isTopExist = !isTopExist && !isVertAxisExist ? true : isTopExist;
 
 		//TITLE
 		var topMainTitle = 0;
@@ -1079,6 +1091,7 @@ CChartsDrawer.prototype =
 					break;
 				}
 				case c_oAscChartLegendShowSettings.topRight: {
+					topKey += fLegendExtY;
 					rightKey += fLegendExtX;
 					break;
 				}
@@ -1086,20 +1099,36 @@ CChartsDrawer.prototype =
 		}
 
 		//exception - when there is a pie chart among the charts
-		var pieChart = null;
+		let isCircleShape = null;
 		var radarChart = null;
-		var charts = plotArea.charts;
-		for(i = 0; i < charts.length; i++) {
-			var chartType = this._getChartType(charts[i]);
-			if(c_oChartTypes.Pie === chartType || c_oChartTypes.DoughnutChart === chartType) {
-				pieChart = charts[i];
-				break;
-			} else if (c_oChartTypes.Radar === chartType) {
-				radarChart = charts[i];
+
+		// check whether chart is of type pie, doughnut or sunburst
+		if (isChartEx) {
+			const series = plotArea.plotAreaRegion ? plotArea.plotAreaRegion.series : null;
+			if (Array.isArray(series) && series.length > 0) {
+				for (let i = 0; i < series.length; i++) {
+					radarChart = charts[i];
+					const type = series[i].layoutId;
+					if (type === AscFormat.SERIES_LAYOUT_SUNBURST) {
+						isCircleShape = series[i];
+						break;
+					}
+				}
+			}
+		} else {
+			for(i = 0; i < charts.length; i++) {
+				var chartType = this._getChartType(charts[i]);
+				if(c_oChartTypes.Pie === chartType || c_oChartTypes.DoughnutChart === chartType) {
+					isCircleShape = charts[i];
+					break;
+				} else if (c_oChartTypes.Radar === chartType) {
+					radarChart = charts[i];
+				}
 			}
 		}
+
 		var is3dChart = this._isSwitchCurrent3DChart(chartSpace);
-		if(!is3dChart && null !== pieChart) {
+		if(!is3dChart && isCircleShape !== null) {
 			//calculate the true (original) width and height of the chart
 			left = this._getStandartMargin(left, leftKey, leftTextLabels, 0) + leftKey + leftTextLabels;
 			bottom = this._getStandartMargin(bottom, bottomKey, bottomTextLabels, 0) + bottomKey + bottomTextLabels;
@@ -1132,11 +1161,26 @@ CChartsDrawer.prototype =
 			}
 		}
 
-		if((null === pieChart) || is3dChart) {
-			left += this._getStandartMargin(isLeftAxis ? 1 : left, leftKey, leftTextLabels, 0) + leftKey + leftTextLabels;
+		if(is3dChart) {
+			left += this._getStandartMargin(left, leftKey, leftTextLabels, 0) + leftKey + leftTextLabels;
 			bottom += this._getStandartMargin(bottom, bottomKey, bottomTextLabels, 0) + bottomKey + bottomTextLabels;
-			top += this._getStandartMargin(isTopExist ? top : 1, topKey, topTextLabels, topMainTitle) + topKey + topTextLabels + topMainTitle;
-			right += this._getStandartMargin(isRightAxis ? 1 : right, rightKey, rightTextLabels, 0) + rightKey + rightTextLabels;
+			top += this._getStandartMargin(top, topKey, topTextLabels, topMainTitle) + topKey + topTextLabels + topMainTitle;
+			right += this._getStandartMargin(right, rightKey, rightTextLabels, 0) + rightKey + rightTextLabels;
+		}
+
+		if (!is3dChart && !isCircleShape && !radarChart) {
+			// barChart, hBarChart, lineChart, scatterChart, areaChart,
+			const info = this._calculateMarginsChartOrdinaryDiagrams(
+				topMainTitle,
+				dataTableExtY,
+				{left: axisSettings[0].isExist, right: axisSettings[1].isExist, top: axisSettings[2].isExist, bottom: axisSettings[3].isExist},
+				{left: leftTextLabels, right: rightTextLabels, top: topTextLabels, bottom: bottomTextLabels},
+				{left: leftKey, right: rightKey, top: topKey, bottom: bottomKey},
+			)
+			left = info.left;
+			right = info.right;
+			top = info.top;
+			bottom = info.bottom;
 		}
 
 		var pxLeft = calculateLeft ? calculateLeft * pxToMM : left * pxToMM;
@@ -1150,7 +1194,7 @@ CChartsDrawer.prototype =
 		}
 
 		//TODO review!!!
-		if(pieChart && plotArea.charts.length === 1) {
+		if(isCircleShape && plotArea.charts.length === 1) {
 			if (plotArea.layout) {
 				var oLayout = plotArea.layout;
 				pxLeft = chartSpace.calculatePosByLayout(pxLeft / pxToMM, oLayout.xMode, oLayout.x, (pxRight - pxLeft) / pxToMM, chartSpace.extX) * pxToMM;
@@ -1167,6 +1211,10 @@ CChartsDrawer.prototype =
 			}
 		}
 
+		if (plotArea.dTable && !this._isSwitchCurrent3DChart(chartSpace) &&
+				!(chartSpace.isLayoutSizes && chartSpace.isLayoutSizes()) && pxLeft < standartMarginForCharts * 1.5) {
+			pxLeft = standartMarginForCharts * 1.5;
+		}
 		if (dNotPutResult) {
 			return {left: pxLeft, right: pxRight, top: pxTop, bottom: pxBottom};
 		} else {
@@ -1177,6 +1225,71 @@ CChartsDrawer.prototype =
 		}
 
 		this._checkMargins();
+	},
+
+	// margin is combination of outward things + inward things
+	// outward things are: title and legend labels
+	// inward things are: axis titles, axes themselves and standard margin.
+	_calculateMarginsChartOrdinaryDiagrams: function (chartTitle, dataTableExtY, axes, axesTitles, legendTexts) {
+		if (true) {
+			return this._calculateMarginsChartOrdinaryDiagramsOld(chartTitle, axes, axesTitles, legendTexts);
+		}
+
+		const normalizedMargin = standartMarginForCharts / this.calcProp.pxToMM;
+		const marginWithOffsetApplied1 = normalizedMargin / 2;
+		const marginWithOffsetApplied2 = normalizedMargin / 2;
+		const marginWithOffsetApplied3 = normalizedMargin / 3;
+		const marginWithOffsetApplied4 = normalizedMargin + (normalizedMargin * 2 / 3);
+
+		const titleBasedMargin = chartTitle ? chartTitle + marginWithOffsetApplied1 : 0;
+
+		const labelBasedMarginTop = legendTexts && legendTexts.top ? legendTexts.top + marginWithOffsetApplied2 : 0;
+		const labelBasedMarginLeft = legendTexts && legendTexts.left ? legendTexts.left + marginWithOffsetApplied2 : 0;
+		const labelBasedMarginRight = legendTexts && legendTexts.right ? legendTexts.right + marginWithOffsetApplied2 : 0;
+		const labelBasedMarginBottom = legendTexts && legendTexts.bottom ? legendTexts.bottom + marginWithOffsetApplied2 : 0;
+
+		const decider = function (dataTableExtY, dataTableMargin, axisTitle, axisTitleMargin, axis, axisMargin, defaultMarginEffect) {
+			const dataTableEffect = dataTableExtY ? dataTableExtY + dataTableMargin : 0;
+			const axisTitleEffect = axisTitle ? axisTitle + axisTitleMargin : 0;
+			const axisEffect = axis ? axisMargin : 0;
+			return dataTableEffect || axisTitleEffect || axisEffect || defaultMarginEffect;
+		}
+
+		const left = labelBasedMarginLeft + decider(0, marginWithOffsetApplied4, axesTitles.left, normalizedMargin, axes.left, marginWithOffsetApplied1, normalizedMargin);
+		const bottom = labelBasedMarginBottom + decider(dataTableExtY, marginWithOffsetApplied2, axesTitles.bottom, normalizedMargin, axes.bottom || axes.left || axes.right, marginWithOffsetApplied2, normalizedMargin);
+		const right = labelBasedMarginRight + decider(0, 0, axesTitles.right, normalizedMargin, axes.right, marginWithOffsetApplied2, normalizedMargin);
+		const top = titleBasedMargin + labelBasedMarginTop + decider(0, 0, axesTitles.top, normalizedMargin, axes.top || axes.left || axes.right, (titleBasedMargin || axes.top) ? marginWithOffsetApplied1 : marginWithOffsetApplied3, (labelBasedMarginTop && labelBasedMarginRight) ? marginWithOffsetApplied1 : normalizedMargin);
+
+		return {left: left, right: right, top: top, bottom: bottom};
+	},
+
+	_calculateMarginsChartOrdinaryDiagramsOld: function (chartTitle, axes, axesTitles, legendTexts) {
+		const normalizedMargin = standartMarginForCharts / this.calcProp.pxToMM;
+		const marginWithOffsetApplied1 = normalizedMargin * 1 / 2;
+		const marginWithOffsetApplied2 = normalizedMargin * 2 / 3;
+		const marginWithOffsetApplied3 = normalizedMargin * 1 / 3;
+
+		// title can stay only in top
+		const titleBasedMargin = chartTitle ? chartTitle + marginWithOffsetApplied1 : 0;
+
+		const labelBasedMarginTop = legendTexts && legendTexts.top ? legendTexts.top + marginWithOffsetApplied2 : 0;
+		const labelBasedMarginLeft = legendTexts && legendTexts.left ? legendTexts.left + marginWithOffsetApplied2 : 0;
+		const labelBasedMarginRight = legendTexts && legendTexts.right ? legendTexts.right + marginWithOffsetApplied2 : 0;
+		const labelBasedMarginBottom = legendTexts && legendTexts.bottom ? legendTexts.bottom + marginWithOffsetApplied2 : 0;
+
+		// the gap from inward to outward depends on what type direction ends, the order is axisTitle > axis > normalMargin
+		const decider = function (axisTitle, axisTitleMargin, axis, axisMargin, defaultMargin) {
+			axisTitle = axisTitle ? axisTitle + axisTitleMargin : 0;
+			axis = axis ? axisMargin : 0;
+			return axisTitle || axis || defaultMargin;
+		}
+
+		const left = labelBasedMarginLeft + decider(axesTitles.left, normalizedMargin, axes.left, marginWithOffsetApplied1, normalizedMargin);
+		const right = labelBasedMarginRight + decider(axesTitles.right, normalizedMargin, axes.right, marginWithOffsetApplied2, normalizedMargin);
+		const top = titleBasedMargin + labelBasedMarginTop + decider(axesTitles.top, normalizedMargin, axes.top || axes.left || axes.right, (titleBasedMargin || axes.top) ? marginWithOffsetApplied1 : marginWithOffsetApplied3, (labelBasedMarginTop && labelBasedMarginRight) ? marginWithOffsetApplied1 : normalizedMargin);
+		const bottom = labelBasedMarginBottom + decider(axesTitles.bottom, normalizedMargin, axes.bottom || axes.left || axes.right, marginWithOffsetApplied2, normalizedMargin);
+
+		return {left : left, right: right, top: top, bottom: bottom};
 	},
 
 	_checkMargins: function () {
@@ -1301,7 +1414,17 @@ CChartsDrawer.prototype =
 
 		return {calculateLeft: calculateLeft, calculateRight : calculateRight, calculateTop: calculateTop, calculateBottom: calculateBottom};
 	},
-	
+
+	/**
+	 * Calculates and returns standard margins configuration for a chart.
+	 *
+	 * @param {number} labelsMargin - Margin responsible for labels positioning (affects potential label overlaps/leaks).
+	 * @param {number} keyMargin - Margin responsible for legend (key) positioning.
+	 * @param {number} textMargin - Margin responsible for axis titles positioning.
+	 * @param {number} topMainTitleMargin - Margin responsible for the main title positioning at the top.
+	 *
+	 * @returns {Object} Standard margin configuration object.
+	 */
 	_getStandartMargin: function(labelsMargin, keyMargin, textMargin, topMainTitleMargin)
 	{
 		var defMargin = standartMarginForCharts / this.calcProp.pxToMM;
@@ -2078,14 +2201,36 @@ CChartsDrawer.prototype =
 					}
 				}
 			} else {
-				if(series.length > 0) {
+				let dateMin = null, dateMax = null;
+				if (AscDFH.historyitem_type_DateAx === axis.getObjectType()) {
+					for (let i = 0; i < series.length; i++) {
+						const seria = series[i];
+						const catLit = seria && !seria.isHidden && seria.cat ? seria.cat.getLit() : null;
+						if (!catLit) {
+							continue;
+						}
+						for (let j = 0; j < catLit.ptCount; j++) {
+							const oPt = catLit.getPtByIndex(j);
+							const dateVal = oPt ? parseFloat(oPt.val) : NaN;
+							if (isNaN(dateVal)) {
+								continue;
+							}
+							dateMin = dateMin === null || dateVal < dateMin ? dateVal : dateMin;
+							dateMax = dateMax === null || dateVal > dateMax ? dateVal : dateMax;
+						}
+					}
+				}
+				if (dateMin !== null && dateMax !== null) {
+					min = dateMin;
+					max = dateMax;
+				} else if(series.length > 0) {
 					// every chart except scatter should start from 1
 					min = 1;
 					max = 1;
 					// find max value across each seria
 					for (let i = 0; i < series.length; i++) {
 						const seria = series[i];
-						if (seria) {
+						if (seria && !seria.isHidden) {
 							numCache = t.getNumCache(seria.val);
 							const ptCount = numCache && AscFormat.isRealNumber(numCache.ptCount) ? numCache.ptCount : 0;
 							// trendline can affect max value
@@ -2197,12 +2342,58 @@ CChartsDrawer.prototype =
 		return res;
 	},
 
+	_addDateTimeUnit: function (serial, timeUnit, count, cDate) {
+		if (!cDate || timeUnit === AscFormat.TIME_UNIT_DAYS) {
+			return serial + count;
+		}
+		let oDate = new cDate().getDateFromExcel(serial);
+		if (timeUnit === AscFormat.TIME_UNIT_MONTHS) {
+			oDate.addMonths(count);
+		} else if (timeUnit === AscFormat.TIME_UNIT_YEARS) {
+			oDate.addYears(count);
+		} else {
+			return serial + count;
+		}
+		return oDate.getExcelDate();
+	},
+
+	_getDateAxisValues: function (axis) {
+		let manualMin = axis.scaling && AscFormat.isRealNumber(axis.scaling.min) ? axis.scaling.min : null;
+		let manualMax = axis.scaling && AscFormat.isRealNumber(axis.scaling.max) ? axis.scaling.max : null;
+		let axisMin = manualMin !== null ? manualMin : axis.min;
+		let axisMax = manualMax !== null ? manualMax : axis.max;
+		if (!AscFormat.isRealNumber(axisMin) || !AscFormat.isRealNumber(axisMax) || axisMax < axisMin) {
+			return [AscFormat.isRealNumber(axisMin) ? axisMin : 0];
+		}
+
+		let cDate = typeof AscCommonExcel !== "undefined" && AscCommonExcel.cDate ? AscCommonExcel.cDate : null;
+		let baseTimeUnit = AscFormat.isRealNumber(axis.baseTimeUnit) ? axis.baseTimeUnit : AscFormat.TIME_UNIT_DAYS;
+
+		let arrayValues = [];
+		let value = Math.floor(axisMin);
+		axisMax = Math.floor(axisMax);
+		let guard = 0;
+		while (value <= axisMax && guard < 100000) {
+			arrayValues.push(value);
+			let next = this._addDateTimeUnit(value, baseTimeUnit, 1, cDate);
+			if (next <= value) {
+				break;
+			}
+			value = next;
+			guard++;
+		}
+		return arrayValues;
+	},
+
 	_getAxisValues2: function (axis, chartSpace, isStackedType, isScatter) {
 		let isOx = axis.axPos === window['AscFormat'].AX_POS_B || axis.axPos === window['AscFormat'].AX_POS_T;
 		//for category axis we take interval 1
 		let arrayValues;
 		const axisType = axis.getObjectType();
-		if(AscDFH.historyitem_type_CatAx === axisType || AscDFH.historyitem_type_DateAx === axisType) {
+		if(AscDFH.historyitem_type_DateAx === axisType) {
+			return this._getDateAxisValues(axis);
+		}
+		if(AscDFH.historyitem_type_CatAx === axisType) {
 			arrayValues = [];
 			let max = axis.max;
 			for(let i = axis.min; i <= max; i++) {
@@ -2815,6 +3006,7 @@ CChartsDrawer.prototype =
 		}
 
 		const plotArea = chartSpace.chart.plotArea;
+		plotArea.plotAreaRegion.clearCachedData();
         const axisProperties = {
 			isValid: false,
             cat : {max: null, min:null, scale : []},
@@ -2954,7 +3146,7 @@ CChartsDrawer.prototype =
 			this._calculateMarginsChart(chartSpace);
 		}
 
-		if (!this.calcProp.chartGutter.left && !this.calcProp.chartGutter.right && !this.calcProp.chartGutter._bottom && !this.calcProp.chartGutter.top) {
+		if (!this.calcProp.chartGutter._left && !this.calcProp.chartGutter._right && !this.calcProp.chartGutter._bottom && !this.calcProp.chartGutter._top) {
 			this._calculateMarginsChart(chartSpace);
 		}
 
@@ -3254,6 +3446,18 @@ CChartsDrawer.prototype =
 		}
 
 		return {framePaths: framePathsId, path: pathId};
+	},
+
+	getCatValForPoint: function (catAx, seria, n) {
+		if (catAx && catAx.getObjectType() === AscDFH.historyitem_type_DateAx && seria && seria.cat) {
+			let catLit = seria.cat.getLit();
+			let oPt = catLit ? catLit.getPtByIndex(n) : null;
+			let dateVal = oPt ? parseFloat(oPt.val) : NaN;
+			if (!isNaN(dateVal)) {
+				return dateVal;
+			}
+		}
+		return n + 1;
 	},
 
 	getYPosition: function (val, axis, ignoreAxisLimits, isRect) {
@@ -4699,7 +4903,7 @@ CChartsDrawer.prototype =
 			path.lnTo(constP * pathW, (p1 - l) * pathH);
 		} else {
 			path.moveTo(p1 * pathW, constP * pathH);
-			path.lnTo(p1 + l * pathW, constP * pathH);
+			path.lnTo((p1 + l) * pathW, constP * pathH);
 		}
 
 		return pathId;
@@ -6385,12 +6589,14 @@ CChartsDrawer.prototype =
 
 	getNextCachePoint: function (oNumCache, index, dispBlanksAs) {
 		let pt = oNumCache.getPtByIndex(index + 1);
-		if (!pt) {
+		if (!pt || isNaN(parseFloat(pt.val))) {
+			pt = null;
 			if (dispBlanksAs === AscFormat.DISP_BLANKS_AS_SPAN) {
 				//search next real pt
 				for (let i = index + 2; i < oNumCache.ptCount; i++) {
-					pt = oNumCache.getPtByIndex(i);
-					if (pt) {
+					let oPt = oNumCache.getPtByIndex(i);
+					if (oPt && !isNaN(parseFloat(oPt.val))) {
+						pt = oPt;
 						break;
 					}
 				}
@@ -7063,6 +7269,7 @@ drawBarChart.prototype = {
 		var centerX, centerY;
 		//TODO check revert valAx orientation for other charts labels
 		var maxMinAxis = this.valAx && this.valAx.isReversed();
+		const offset = 4 / pxToMm;
 
 		switch (point.compiledDlb.dLblPos) {
 			case c_oAscChartDataLabelsPos.bestFit: {
@@ -7083,6 +7290,7 @@ drawBarChart.prototype = {
 				if ((point.val > 0 && !maxMinAxis) || (point.val < 0 && maxMinAxis)) {
 					centerY = y - height;
 				}
+				centerY -= offset;
 				break;
 			}
 			case c_oAscChartDataLabelsPos.inEnd: {
@@ -7091,6 +7299,7 @@ drawBarChart.prototype = {
 				if ((point.val < 0 && !maxMinAxis) || (point.val > 0 && maxMinAxis)) {
 					centerY = centerY - height;
 				}
+				centerY += offset;
 				break;
 			}
 			case c_oAscChartDataLabelsPos.outEnd: {
@@ -7099,6 +7308,7 @@ drawBarChart.prototype = {
 				if ((point.val < 0 && !maxMinAxis) || (point.val > 0 && maxMinAxis)) {
 					centerY = centerY + height;
 				}
+				centerY -= offset;
 				break;
 			}
 		}
@@ -8343,46 +8553,80 @@ drawFunnelChart.prototype = {
 	constructor: drawFunnelChart,
 
 	recalculate: function () {
-		const cachedData = this.cChartSpace ? this.cChartSpace.getCachedData() : null;
-		if (!cachedData || !this.cChartSpace.chart.plotArea.axId) {
+		this.paths = {};
+		this.linePath = null;
+
+		const cachedData = this.cChartSpace && this.cChartSpace.getCachedData && this.cChartSpace.getCachedData();
+		if (!cachedData || !cachedData.data.length) {
 			return;
 		}
-		if (cachedData.data.length > 0 && this.chartProp && this.chartProp.chartGutter) {
-			const valAxis = this.cChartSpace.chart.plotArea.axId[0];
 
-			const catMiddle = (this.chartProp.trueWidth / 2 + this.chartProp.chartGutter._left);
-			let valStart = this.chartProp.chartGutter._top;
-			let chartHeight = this.chartProp.trueHeight;
+		if (!this.chartProp || !this.chartProp.chartGutter) {
+			return;
+		}
 
-			if (AscFormat.isRealNumber(valStart) && AscFormat.isRealNumber(catMiddle)) {
-				const coeff = valAxis.scaling.gapWidth;
-				// 1 px gap for each section length
-				const gapWidth = 0.5 / this.chartProp.pxToMM;
-				const gapNumber = cachedData.data.length;
-				//Each bar will have 2 gapWidth and 2 margins , on top and bottom sides
-				const initialBarHeight = (chartHeight - (2 * gapWidth * gapNumber))/ cachedData.data.length;
-				const barHeight = (initialBarHeight / (1 + coeff));
-				const margin = (initialBarHeight - barHeight) / 2;
+		const axes = this.cChartSpace.chart.plotArea.axId;
+		if (!axes) {
+			return;
+		}
 
-				// because calculate rect accepts bottom left point as starting y, we add barHeight to the calculation of starting point 
-				let startVertical = (valStart + margin + gapWidth + barHeight);
-
-				const cChartDrawer = this.cChartDrawer;
-				const chartProp = this.chartProp;
-				const paths = this.paths;
-
-				const recalculateBar = function (fVal, i) {
-					const barWidth = valAxis.max && fVal > 0 ? (fVal / valAxis.max) * chartProp.trueWidth: 0;
-					paths[i] = cChartDrawer._calculateRect(catMiddle - (barWidth / 2), startVertical, barWidth, barHeight);
-					startVertical += margin + gapWidth + gapWidth + margin + barHeight;
-				}
-
-				cachedData.forEach(recalculateBar);
-
-				// vertical line with 1 px from left 
-				this.linePath = this.cChartDrawer._calculateLine(startVertical, (startVertical - valStart), this.chartProp.chartGutter._left + 1, true);
+		let catAxis = null;
+		for (let i = 0; i < axes.length; i++) {
+			const axis = axes[i];
+			if (!catAxis && axis && axis.isChartExCat && axis.isChartExCat()) {
+				catAxis = axis;
 			}
 		}
+		if (!catAxis) {
+			catAxis = axes[1] || axes[0];
+		}
+
+		const barsCount = cachedData.data.length;
+		const minMargin = 0.5 * AscCommon.g_dKoef_pix_to_mm;
+		const minTotalHeight = 2 * minMargin * barsCount;
+		if (this.chartProp.trueHeight <= minTotalHeight) {
+			return;
+		}
+
+		const gapWidth = catAxis && catAxis.scaling && AscFormat.isRealNumber(catAxis.scaling.gapWidth)
+			? catAxis.scaling.gapWidth
+			: 0;
+
+		const minCoeff = (minTotalHeight) / (this.chartProp.trueHeight - minTotalHeight);
+		const coeff = Math.max(minCoeff, Math.abs(gapWidth));
+
+		const barHeight = this.chartProp.trueHeight / (barsCount * (1 + coeff));
+		const gapHeight = barHeight * coeff;
+
+		const catRowStart = this.chartProp.chartGutter._top;
+		const valCenterX = this.chartProp.chartGutter._left + this.chartProp.trueWidth / 2;
+		if (!AscFormat.isRealNumber(catRowStart) || !AscFormat.isRealNumber(valCenterX)) {
+			return;
+		}
+
+		let maxValue = 0;
+		cachedData.data.forEach(function (value) {
+			if (AscFormat.isRealNumber(value) && value > maxValue) {
+				maxValue = value;
+			}
+		});
+
+		let currentCatTop = catRowStart;
+		cachedData.data.forEach(function recalculateBar(value, i) {
+			currentCatTop += gapHeight / 2;
+
+			const barWidth = maxValue > 0 && value > 0
+				? (value / maxValue) * this.chartProp.trueWidth
+				: 0;
+
+			// Because calculate rect accepts bottom left point as starting y, we add barHeight to the calculation of starting point
+			this.paths[i] = this.cChartDrawer._calculateRect(valCenterX - (barWidth / 2), currentCatTop + barHeight, barWidth, barHeight);
+
+			currentCatTop += barHeight + gapHeight / 2;
+		}, this);
+
+		// Vertical line with 1 px from left
+		this.linePath = this.cChartDrawer._calculateLine(currentCatTop, (currentCatTop - catRowStart), this.chartProp.chartGutter._left + 1, true);
 	},
 
 	draw: function () {
@@ -8960,10 +9204,11 @@ drawBoxWhiskerChart.prototype = {
 				let pen = oSeria.compiledSeriesPen;
 				let brush = oSeria.compiledSeriesBrush;
 
-				if (pen) {
-					pen.Fill.fill.color.RGBA.R = pen.Fill.fill.color.RGBA.R * 0.8;
-					pen.Fill.fill.color.RGBA.B = pen.Fill.fill.color.RGBA.B * 0.8;
-					pen.Fill.fill.color.RGBA.G = pen.Fill.fill.color.RGBA.G * 0.8;
+				const penColor = pen && pen.Fill && pen.Fill.fill && pen.Fill.fill.color;
+				if (penColor && penColor.RGBA) {
+					penColor.RGBA.R = penColor.RGBA.R * 0.8;
+					penColor.RGBA.B = penColor.RGBA.B * 0.8;
+					penColor.RGBA.G = penColor.RGBA.G * 0.8;
 				}
 
 				if (this.paths.hasOwnProperty(key) && this.paths[key]) {
@@ -9063,7 +9308,7 @@ drawLineChart.prototype = {
 				//using n for search - idx with 0 index may not exist, but point at zero position needs to be drawn
 				val = this._getYVal(n, i);
 
-				x = this.catAx ? this.cChartDrawer.getYPosition(n + 1, this.catAx) : xPoints[n].pos;
+				x = this.catAx ? this.cChartDrawer.getYPosition(this.cChartDrawer.getCatValForPoint(this.catAx, seria, n), this.catAx) : xPoints[n].pos;
 				y = this.cChartDrawer.getYPosition(val, this.valAx);
 
 				if (!this.paths.points) {
@@ -9220,6 +9465,10 @@ drawLineChart.prototype = {
 			return;
 		}
 
+		if (!point.compiledDlb) {
+			return;
+		}
+
 		var oPath = this.cChartSpace.GetPath(path);
 		var oCommand0 = oPath.getCommandByIndex(commandIndex);
 		var x = oCommand0.X;
@@ -9332,7 +9581,7 @@ drawLineChart.prototype = {
 			idxPoint = this.cChartDrawer.getPointByIndex(this.chart.series[i], n);
 			//TODO blank SPAN option
 			var dispBlanksAs =  this.cChartSpace.chart.dispBlanksAs;
-			if(idxPoint) {
+			if(idxPoint && !isNaN(parseFloat(idxPoint.val))) {
 				val = parseFloat(idxPoint.val);
 			} else if(dispBlanksAs === AscFormat.DISP_BLANKS_AS_ZERO) {
 				val = 0;
@@ -9616,7 +9865,7 @@ drawAreaChart.prototype = {
 				}
 				const trendline = this.chart.series[i].getLastTrendline();
 				let idx = n != null ? n + Math.floor(trendline && trendline.backward ? trendline.backward : 0) : n;
-				x = this.xPoints[idx].pos;
+				x = (this.catAx && this.catAx.getObjectType() === AscDFH.historyitem_type_DateAx) ? this.cChartDrawer.getYPosition(this.cChartDrawer.getCatValForPoint(this.catAx, seria, n), this.catAx) : this.xPoints[idx].pos;
 
 				y = this.cChartDrawer.getYPosition(val, this.valAx);
 
@@ -10742,6 +10991,10 @@ drawAreaChart.prototype = {
 
 		var constMargin = 5 / pxToMm;
 
+		if (!point.compiledDlb) {
+			return;
+		}
+
 		var width = point.compiledDlb.extX;
 		var height = point.compiledDlb.extY;
 
@@ -10869,7 +11122,7 @@ drawAreaChart.prototype = {
 			idxPoint = this.cChartDrawer.getPointByIndex(this.chart.series[i], n);
 			//TODO blank SPAN option
 			var dispBlanksAs =  this.cChartSpace.chart.dispBlanksAs;
-			if(idxPoint) {
+			if(idxPoint && !isNaN(parseFloat(idxPoint.val))) {
 				val = parseFloat(idxPoint.val);
 			} else if(dispBlanksAs === AscFormat.DISP_BLANKS_AS_ZERO) {
 				val = 0;
@@ -10972,10 +11225,10 @@ drawAreaChart.prototype = {
 			pen = seria.pen;
 
 			numCache = this.cChartDrawer.getNumCache(seria.val);
-			if (numCache && numCache.pts[0].pen) {
+			if (numCache && numCache.pts[0] && numCache.pts[0].pen) {
 				pen = numCache.pts[0].pen;
 			}
-			if (numCache && numCache.pts[0].brush) {
+			if (numCache && numCache.pts[0] && numCache.pts[0].brush) {
 				brush = numCache.pts[0].brush;
 			}
 
@@ -11563,6 +11816,10 @@ drawHBarChart.prototype = {
 		var w = oCommand2.X - oCommand1.X;
 
 		var pxToMm = this.chartProp.pxToMM;
+
+		if (!point.compiledDlb) {
+			return;
+		}
 
 		var width = point.compiledDlb.extX;
 		var height = point.compiledDlb.extY;
@@ -14722,6 +14979,10 @@ drawRadarChart.prototype = {
 		var pxToMm = this.chartProp.pxToMM;
 		var constMargin = 5 / pxToMm;
 
+		if (!point.compiledDlb) {
+			return;
+		}
+
 		var width = point.compiledDlb.extX;
 		var height = point.compiledDlb.extY;
 
@@ -15121,7 +15382,7 @@ drawScatterChart.prototype = {
 
 	_getYVal: function (n, i) {
 		var idxPoint = this.cChartDrawer.getPointByIndex(this.chart.series[i], n);
-		return idxPoint ? parseFloat(idxPoint.val) : null;
+		return idxPoint && !isNaN(parseFloat(idxPoint.val)) ? parseFloat(idxPoint.val) : null;
 	},
 
 	_drawScatter: function () {
@@ -15481,6 +15742,9 @@ drawStockChart.prototype = {
 
 		let _numCache = this.chart.series[ser].getNumLit();
 		var point = _numCache && _numCache.pts[val];
+		if (!point) {
+			return {x: null, y: null};
+		}
 
 		var x = this.chartProp.chartGutter._left + (val) * koffX + koffX / 2;
 		var y = this.chartProp.trueHeight - (point.val - min) * koffY + this.chartProp.chartGutter._top;
@@ -16331,7 +16595,7 @@ drawSurfaceChart.prototype = {
 
 	_getYVal: function (n, i) {
 		var idxPoint = this.cChartDrawer.getIdxPoint(this.chart.series[i], n);
-		var val = idxPoint ? parseFloat(idxPoint.val) : null;
+		var val = idxPoint && !isNaN(parseFloat(idxPoint.val)) ? parseFloat(idxPoint.val) : null;
 
 		return val;
 	},
@@ -16426,12 +16690,14 @@ axisChart.prototype = {
 			if (this.axisType === AscDFH.historyitem_type_ValAx) {
 				this._calculateValAxis();
 				this._calculateValTickMark();
-			} else if (this.axisType === AscDFH.historyitem_type_CatAx) {
+			} else if (this.axisType === AscDFH.historyitem_type_CatAx || this.axisType === AscDFH.historyitem_type_DateAx) {
 				this._calculateCatAxis();
 				this._calculateCatTickMark();
 			} else if (this.axisType === AscDFH.historyitem_type_SerAx) {
 				this._calculateSerAxis();
 				this._calculateSerTickMark();
+			} else if (this.axisType === AscDFH.historyitem_type_Axis) {
+				this._calculateChartExAxis();
 			}
 		}
 	},
@@ -16444,9 +16710,9 @@ axisChart.prototype = {
 		} else {
 			if (this.axis.axPos === window['AscFormat'].AX_POS_L || this.axis.axPos === window['AscFormat'].AX_POS_R) {
 				//axis on left or right, lines are horizontal
-				paths = this.cChartDrawer.getHorizontalGridLines(this.axis, this.axisType === AscDFH.historyitem_type_CatAx);
+				paths = this.cChartDrawer.getHorizontalGridLines(this.axis, this.axisType === AscDFH.historyitem_type_CatAx || this.axisType === AscDFH.historyitem_type_DateAx);
 			} else {
-				paths = this.cChartDrawer.getVerticalGridLines(this.axis, this.axisType === AscDFH.historyitem_type_CatAx);
+				paths = this.cChartDrawer.getVerticalGridLines(this.axis, this.axisType === AscDFH.historyitem_type_CatAx || this.axisType === AscDFH.historyitem_type_DateAx);
 			}
 		}
 		this.paths.gridLines = paths ? paths.gridLines : null;
@@ -16516,6 +16782,20 @@ axisChart.prototype = {
 		} else {
 			axisPos = this.axis.posY;
 			this.paths.axisLine = this._calculateLine(left, axisPos, right, axisPos);
+		}
+	},
+
+	_calculateChartExAxis: function () {
+		const left = this.chartProp.chartGutter._left / this.chartProp.pxToMM;
+		const right = (this.chartProp.widthCanvas - this.chartProp.chartGutter._right) / this.chartProp.pxToMM;
+		const top = this.chartProp.chartGutter._top / this.chartProp.pxToMM;
+		const bottom = (this.chartProp.heightCanvas - this.chartProp.chartGutter._bottom) / this.chartProp.pxToMM;
+		if (this.axis.isVertical()) {
+			const x = this.axis.axPos === window['AscFormat'].AX_POS_R ? right : left;
+			this.paths.axisLine = this._calculateLine(x, top, x, bottom);
+		} else {
+			const y = this.axis.axPos === window['AscFormat'].AX_POS_T ? top : bottom;
+			this.paths.axisLine = this._calculateLine(left, y, right, y);
 		}
 	},
 
@@ -18432,28 +18712,38 @@ CErrBarsDraw.prototype = {
 
 		getAdditionalInfo: function (chartId, seriesId) {
 			if (this.storage[chartId] && this.storage[chartId][seriesId]) {
-				const coefficients = this.storage[chartId][seriesId].getCoefficients();
-				const rSquared = this.storage[chartId][seriesId].getRSquared();
-				const lastPoint = this.storage[chartId][seriesId].getLastPoint();
+				const storageEl = this.storage[chartId][seriesId];
+				const coefficients = storageEl.getCoefficients();
+				const rSquared = storageEl.getRSquared();
+				const lastPoint = storageEl.getLastPoint();
 
 				let startCat = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
 				let startVal = (this.cChartDrawer.calcProp.chartGutter._top) / this.cChartDrawer.calcProp.pxToMM;
 				let endCat = (this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM) + startCat;
 				let endVal = (this.cChartDrawer.calcProp.trueHeight / this.cChartDrawer.calcProp.pxToMM) + startVal;
-				
-				if (lastPoint.catVal < startCat || lastPoint.catVal > endCat) {
-					lastPoint.catVal = 0;
-				}
 
-				if (lastPoint.valVal < startVal || lastPoint.valVal > endVal) {
-					lastPoint.valVal = 0;
+				let catVal = lastPoint.catVal;
+				let valVal = lastPoint.valVal;
+
+				if (catVal < startCat) {
+					catVal = startCat;
+				} else if (catVal > endCat) {
+					catVal = endCat;
+				}
+				if (valVal < startVal) {
+					valVal = startVal;
+				} else if (valVal > endVal) {
+					valVal = endVal;
 				}
 
 				if (coefficients || rSquared) {
 					const additionalInfo = {
 						coefficients : coefficients,
 						rSquared : rSquared,
-						coordinate : lastPoint
+						coordinate : {
+							catVal: catVal,
+							valVal: valVal
+						}
 					}
 					return additionalInfo;
 				}
@@ -18647,6 +18937,31 @@ CErrBarsDraw.prototype = {
 				}
 				storageElement.setLastPoint(positions.xPos, positions.yPos);
 				storageElement.setPointPath(pathId);
+			}
+
+			// override lastPoint:
+			//   catVal — chart X at the LAST VISIBLE data point (right edge of plot area)
+			//   valVal — chart Y at the trendline value at the FORECAST-EXTENDED endpoint (catAxis.max),
+			//            which is past last data X if c:forward is set.
+			// The asymmetry matches MS Excel behavior: label anchored to the visible plot edge horizontally,
+			// but vertically aligned with the trend value at the forecast endpoint (where the trendline really ends).
+			const coefficients = storageElement.getCoefficients();
+			const coords = storageElement.getCoords();
+			if (coefficients && coords && coords.catVals && coords.catVals.length > 0) {
+				const lastDataX = coords.catVals[coords.catVals.length - 1];
+				const extendedX = (catAxis && AscFormat.isRealNumber(catAxis.max)) ? catAxis.max : lastDataX;
+				let lastDataY = null;
+				if (coefficients.length === 2) {
+					lastDataY = coefficients[0] * extendedX + coefficients[1];
+				}
+				if (lastDataY !== null && isFinite(lastDataY)) {
+					const pos1 = this.cChartDrawer.getYPosition(lastDataX, catAxis, true);
+					const pos2 = this.cChartDrawer.getYPosition(lastDataY, valAxis, true);
+					const catPos = horOrientation ? pos1 : pos2;
+					const valPos = horOrientation ? pos2 : pos1;
+					storageElement.lastPoint.catVal = catPos;
+					storageElement.lastPoint.valVal = valPos;
+				}
 			}
 		},
 
@@ -19076,7 +19391,7 @@ CErrBarsDraw.prototype = {
 				const correlation = ((N * XY) - (X * Y)) / divisor;
 				return correlation * correlation;
 			}
-			return null;
+			return NaN;
 		},
 
 		draw: function () {
@@ -20952,4 +21267,5 @@ CErrBarsDraw.prototype = {
 	window["AscFormat"].c_oChartTypes = c_oChartTypes;
 	window["AscCommon"]._roundValue = _roundValue;
 	window["AscFormat"].CachedClusteredColumn = CCachedClusteredColumn;
+	window["AscFormat"].CGeometry2 = CGeometry2;
 })(window);

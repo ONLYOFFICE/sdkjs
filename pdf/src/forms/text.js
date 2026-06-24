@@ -1,34 +1,39 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
+
+"use strict";
 
 (function(){
     /**
@@ -50,7 +55,6 @@
         this._password          = false;
         this._richText          = false; // to do related properties, methods
         this._richValue         = [];
-        this._textFont          = AscPDF.DEFAULT_FIELD_FONT;
         this._fileSelect        = false;
         this._value             = undefined;
 		this._displayValue      = "";
@@ -291,9 +295,9 @@
             this.GetAllWidgets().forEach(updateWidget);
 
             if (bMultiline == false) {
-                let sText = this.GetParentValue();
+                let sText = this.GetLogicValue();
                 if (sText && sText.search("\r") !== -1) {
-                    this.SetParentValue(sText.split("\r").join(""));
+                    this.SetLogicValue(sText.split("\r").join(""));
                 }
             }
         }
@@ -357,20 +361,22 @@
 				this.SetWasChanged(true);
 			
 			if (isOnOpen == true && !this.GetParent(true))
-				this.SetParentValue(sValue);
+				this.SetLogicValue(sValue);
 			
 			this.UpdateDisplayValue(sValue);
 		}
 		else {
-			this.SetParentValue(sValue);
+			this.SetLogicValue(sValue);
 		}
+
+		return true;
 	};
     CTextField.prototype.private_SetValue = function(sValue) {
         if (this.IsWidget()) {
 			this.UpdateDisplayValue(sValue);
 		}
 		else {
-			this.SetParentValue(sValue);
+			this.SetLogicValue(sValue);
 		}
     };
 
@@ -460,8 +466,8 @@
     CTextField.prototype.SetCalcOrderIndex = function(nIdx) {
         let oCalcInfo   = this.GetDocument().GetCalculateInfo();
         let oWidget     = null;
-        if (this.IsWidget() || this.IsAllKidsWidgets()) {
-            oWidget = this.GetKid(0) || this;
+        if (this.IsLogicalRoot()) {
+            oWidget = this.GetKid(0);
         }
         let oCalcTrigget = oWidget.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Calculate);
         if (oCalcTrigget == null || nIdx < 0)
@@ -502,7 +508,7 @@
         this.Recalculate();
         this.DrawBackground(oGraphicsPDF);
                 
-        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) && this.IsNeedDrawHighlight() ? this.contentFormat : this.content;
+        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) && !this.IsInForm() ? this.contentFormat : this.content;
         this.curContent = oContentToDraw; // remember current content
 
         if (this.IsMultiline() == true) {
@@ -718,13 +724,15 @@
         this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, []);
         this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Validate, []);
 
-        const oCurMeta = this.GetMeta();
-        if (oCurMeta['regular']) {
-            oCurMeta['regular'] = undefined
-            this.SetMeta(oCurMeta);
-        }
-        
-        this.SetFormatValue(undefined);
+		this.GetAllWidgets().forEach(function(widget) {
+			const oCurMeta = widget.GetMeta();
+			if (oCurMeta['regular']) {
+				oCurMeta['regular'] = undefined
+				widget.SetMeta(oCurMeta);
+			}
+
+			widget.SetFormatValue(undefined);
+		});
     };
     CTextField.prototype.GetFormatType = function() {
         let oFormatTrigger      = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format);
@@ -1109,8 +1117,10 @@
                 nNewFontSize = AscCommon.CorrectFontSize(nFontSize, true);
                 while (nNewFontSize > 1)
                 {
-                    oRun.SetFontSize(nNewFontSize);
-                    oPara.Recalculate_Page(0);
+					oPara.SetApplyToAll(true);
+					oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+					oPara.SetApplyToAll(false);
+					oPara.Recalculate_Page(0);
 
                     oContentBounds = oContent.GetContentBounds(0);
                     if (oContentBounds.Bottom - oContentBounds.Top < oBounds.H)
@@ -1125,16 +1135,19 @@
 
                 while (nNewFontSize <= nMaxFontSize)
                 {
-                    oRun.SetFontSize(nNewFontSize);
-                    
-                    oPara.Recalculate_Page(0);
+					oPara.SetApplyToAll(true);
+					oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+					oPara.SetApplyToAll(false);
+					oPara.Recalculate_Page(0);
 
                     let oContentBounds = oContent.GetContentBounds(0);
                     if (oContentBounds.Bottom - oContentBounds.Top > oBounds.H)
                     {
                         nNewFontSize -= nFontStep;
-                        oRun.SetFontSize(nNewFontSize);
-                        oPara.Recalculate_Page(0);
+						oPara.SetApplyToAll(true);
+						oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+						oPara.SetApplyToAll(false);
+						oPara.Recalculate_Page(0);
                         break;
                     }
 
@@ -1147,8 +1160,10 @@
         }
         else {
             nNewFontSize = (Math.min(nFontSize * oBounds.H / nTextHeight * 0.9, 100, nFontSize * oBounds.W / nMaxWidth) * 100 >> 0) / 100;
-            oRun.SetFontSize(nNewFontSize);
-            oPara.Recalculate_Page(0);
+			oPara.SetApplyToAll(true);
+			oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+			oPara.SetApplyToAll(false);
+			oPara.Recalculate_Page(0);
         }
 
         if (this.IsPassword()) {
@@ -1866,7 +1881,12 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CTextField.prototype.Commit = function() {
-        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
+		if (this.IsLogicalRoot() && !this.IsWidget()) {
+			this.GetKid(0).Commit();
+			return;
+		}
+
+        let aFields = this.GetAllWidgets();
 
         this.DoFormatAction();
         
@@ -1896,8 +1916,8 @@
             aFields[i].SetFormatValue(sFormatValue);
         }
 
-        if (this.GetParentValue() != sNewValue) {
-            this.SetParentValue(sNewValue);
+        if (this.GetLogicValue() != sNewValue) {
+            this.SetLogicValue(sNewValue);
         }
         // when alignment is center or right, after content width becomes larger than form size,
         // alignment becomes left, until text becomes smaller than form size again
@@ -2110,7 +2130,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CTextField.prototype.SyncValue = function() {
-        this.SetValue(this.GetParentValue());
+        this.SetValue(this.GetLogicValue());
         this.SetFormatValue(this.GetFormatValue());
         
         this.SetNeedRecalc(true);
@@ -2299,7 +2319,7 @@
         this.WriteToBinaryBase(memory);
         this.WriteToBinaryBase2(memory);
 
-        let sValue = this.GetParentValue(memory.isCopyPaste);
+        let sValue = this.GetLogicValue(memory.isCopyPaste);
         if (sValue != null) {
             memory.fieldDataFlags |= (1 << 9);
             memory.WriteString(sValue);

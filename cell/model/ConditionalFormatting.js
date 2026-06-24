@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -64,9 +67,9 @@
 		//todo more checks
 		return this.ranges && this.ranges.length > 0;
 	};
-	CConditionalFormatting.prototype.initRules = function (ws) {
+	CConditionalFormatting.prototype.initRules = function (ws, opt_skipFormulaInit) {
 		for (var i = 0; i < this.aRules.length; ++i) {
-			this.aRules[i].updateConditionalFormatting(this, ws);
+			this.aRules[i].updateConditionalFormatting(this, ws, opt_skipFormulaInit);
 		}
 	};
 
@@ -927,7 +930,7 @@
 	CConditionalFormattingRule.prototype.hasStdDev = function () {
 		return null !== this.stdDev;
 	};
-	CConditionalFormattingRule.prototype.updateConditionalFormatting = function (cf, ws) {
+	CConditionalFormattingRule.prototype.updateConditionalFormatting = function (cf, ws, opt_skipFormulaInit) {
 		var i;
 		this.pivot = cf.pivot;
 		if (cf.ranges) {
@@ -936,11 +939,15 @@
 				this.ranges.push(cf.ranges[i].clone());
 			}
 		}
-		if (ws) {
-			if (this.aRuleElements) {
-				for (let i = 0 ; i < this.aRuleElements.length; i++) {
-					this.aRuleElements[i] && this.aRuleElements[i].init && this.aRuleElements[i].init(ws);
-				}
+		//opt_skipFormulaInit - on open parse formulas later, when all sheets are loaded (cross-sheet refs)
+		if (ws && !opt_skipFormulaInit) {
+			this.initRuleElements(ws);
+		}
+	};
+	CConditionalFormattingRule.prototype.initRuleElements = function (ws) {
+		if (ws && this.aRuleElements) {
+			for (let i = 0; i < this.aRuleElements.length; i++) {
+				this.aRuleElements[i] && this.aRuleElements[i].init && this.aRuleElements[i].init(ws);
 			}
 		}
 	};
@@ -2181,11 +2188,18 @@
 				//todo realize removeDependencies
 				this._f.buildDependencies();
 			}
+		} else {
+			if (opt_parent && !this._f.parent) {
+				this._f.buildDependencies();
+				this._f.parent = opt_parent;
+			}
 		}
 	};
 	CFormulaCF.prototype.recalcFormula = function (ws, toInterface) {
 		var f = new AscCommonExcel.parserFormula(this.Text, null, ws);
-		if (f.parse(!toInterface)) {
+		//to interface we parse model formula without localization, from interface - with localization
+		let isParsed = toInterface ? f.parse() : f.parse(true, true);
+		if (isParsed) {
 			this.Text = toInterface ? f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true) : f.assemble();
 		}
 	};
@@ -2223,7 +2237,7 @@
 				var ws = oWB.getActiveWs();
 				if (ws) {
 					var _f = new AscCommonExcel.parserFormula(this.Text, null, ws);
-					_f.parse(true, true);
+					_f.parse();
 					res = _f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
 				}
 			}
@@ -2549,7 +2563,9 @@
 		return this.Type;
 	};
 	CConditionalFormatValueObject.prototype.asc_getVal = function () {
-		return !isNumeric(this.Val) ? "=" + this.Val : this.Val;
+		if (!isNumeric(this.Val))
+			return "=" + this.Val;
+		return AscCommon.g_oFormatParser.toLocaleNumber(this.Val);
 	};
 	CConditionalFormatValueObject.prototype.asc_setGte = function (val) {
 		this.Gte = val;
@@ -2558,8 +2574,7 @@
 		this.Type = val;
 	};
 	CConditionalFormatValueObject.prototype.asc_setVal = function (val) {
-		val = correctFromInterface(val);
-		this.Val = (val !== undefined && val !== null) ? val + "" : val;
+		this.Val = correctFromInterface(val);
 	};
 	CConditionalFormatValueObject.prototype.isEqual = function (elem) {
 		if (this.Gte === elem.Gte && this.Type === elem.Type && this.Val === elem.Val && this.Type === elem.Type) {
@@ -2834,8 +2849,8 @@
 
 			if (_prevNum && _isNum) {
 				if (_isNum && _prevNum) {
-					_val = parseFloat(_val);
-					_prevVal = parseFloat(_prevVal);
+					_val = AscCommon.g_oFormatParser.parseLocaleNumber(_val);
+					_prevVal = AscCommon.g_oFormatParser.parseLocaleNumber(_prevVal);
 				}
 				if (type === Asc.ECfType.colorScale) {
 					if (_prevType === _type && type !== AscCommonExcel.ECfvoType.Formula && _prevVal > _val) {
@@ -2858,7 +2873,7 @@
 		var _isNumeric;
 		for (i = 0; i < props.length; i++) {
 			if (undefined !== props[i][1] && type !== Asc.ECfType.top10) {
-				_isNumeric = isNumeric(props[i][0]);
+				_isNumeric = AscCommon.g_oFormatParser.tryParseLocaleNumber(props[i][0]) !== null;
 				nError = _checkValue(props[i][0], props[i][1], _isNumeric);
 				if (nError !== null) {
 					return [nError, i];
@@ -2915,8 +2930,12 @@
 	}
 
 	function correctFromInterface(val) {
-		let _isNumeric = isNumeric(val);
-		if (!_isNumeric) {
+		if (typeof val === "number")
+			return val + "";
+		let _num = AscCommon.g_oFormatParser.tryParseLocaleNumber(val);
+		if (_num !== null) {
+			val = String(_num);
+		} else {
 			let isDate;
 			let isFormula;
 
@@ -2930,7 +2949,7 @@
 			//store number
 			if (isDate) {
 				val = isDate.value;
-				return val;
+				return typeof val === "number" ? val + "" : val;
 			}
 
 			if (!isFormula) {

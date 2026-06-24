@@ -9,12 +9,12 @@
 			"common/commonDefines.js",
 			"common/docscoapicommon.js",
 			"common/docscoapi.js",
-			"common/spellcheckapi.js",
 			"common/apiCommon.js",
 			"common/SerializeCommonWordExcel.js",
 			"vendor/string.js",
 			"vendor/array.js",
 			"common/editorscommon.js",
+			"common/colorUtils.js",
             "common/BulletPreviewDrawer.js",
 			"common/frameManager.js",
 			"common/HistoryCommon.js",
@@ -50,6 +50,7 @@
 			
 			"common/nameMap.js",
 			"common/downloaderfiles.js",
+			"common/NumFormatData.js",
 			"common/NumFormat.js",
 			"common/SerializeChart.js",
 
@@ -85,6 +86,7 @@
 			"common/Drawings/ColorArray.js",
 
 			"common/Drawings/CommonController.js",
+			"common/Drawings/Format/svg-converter.js",
 			"common/Drawings/States.js",
 			"common/Drawings/DrawingsChanges.js",
 			"common/Drawings/Format/Format.js",
@@ -144,7 +146,16 @@
 			"cell/model/SheetMemory.js",
 			"cell/model/FormulaObjects/parserFormula.js",
 			"cell/model/WorkbookElems.js",
+			"cell/model/CellStyleStorage/RangeAttrArray.js",
+			"cell/model/CellStyleStorage/Core.js",
+			"cell/model/CellStyleStorage/Structural.js",
+			"cell/model/CellStyleStorage/ContentIterator.js",
+			"cell/model/CellStyleStorage/Serialization.js",
+			"cell/model/CellStyleStorage/LegacyMigration.js",
 			"cell/model/Workbook.js",
+			"cell/model/RowIteratorAdaptive.js",
+			"cell/model/CellIterators.js",
+			"cell/model/CellStyleStorage/Compatibility.js",
 			"cell/model/Serialize.js",
 			"cell/model/CellInfo.js",
 			"cell/view/DrawingObjectsController.js",
@@ -224,6 +235,7 @@
 			"word/Editor/ParagraphContent.js",
 			"word/Editor/ParagraphContentBase.js",
 			"word/Editor/Paragraph/bidi-flow.js",
+			"word/Editor/Paragraph/paragraph-bidi-flow.js",
 			"word/Editor/Paragraph/complex-field-stack.js",
 			"word/Editor/Paragraph/draw-selection.js",
 			"word/Editor/Paragraph/position-calculator.js",
@@ -274,7 +286,11 @@
 			"word/Editor/FlowObjects.js",
 			"word/Editor/Paragraph.js",
 			"word/Editor/ParagraphChanges.js",
+			"word/Editor/Paragraph/recalc/counter-recalc-state.js",
+			"word/Editor/Paragraph/recalc/align-recalc-state.js",
 			"word/Editor/Paragraph_Recalculate.js",
+			"word/Editor/Paragraph/recalc/info-recalc-state.js",
+			"word/Editor/Paragraph/recalc/wrap-recalc-state.js",
 			"word/Editor/Paragraph/draw/content-draw-state.js",
 			"word/Editor/Paragraph/draw/highlight-draw-state.js",
 			"word/Editor/Paragraph/draw/line-draw-state.js",
@@ -376,11 +392,7 @@
 			"visio/model/SerializeReader.js",
 			"visio/model/SerializeWriter.js",
 			
-			"word/Editor/document-visitor.js",
-			
-			"word/Editor/annotations/custom-text-annotator/custom-text-annotator.js",
-			"word/Editor/annotations/custom-text-annotator/range-marks.js",
-			"word/Editor/annotations/custom-text-annotator/text-annotator-manager.js"
+			"word/Editor/document-visitor.js"
 		],
 		"desktop": {
 			"min": [

@@ -1,57 +1,63 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
 
 
 // Update the changes factory mappings
-AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_AnnotsContent]	= CChangesPDFDocumentAnnotsContent;
-AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_FieldsContent]	= CChangesPDFDocumentFieldsContent;
-AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_DrawingsContent]	= CChangesPDFDocumentDrawingsContent;
-AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_PagesContent]		= CChangesPDFDocumentPagesContent;
-AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RotatePage]		= CChangesPDFDocumentRotatePage;
-AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RecognizePage]	= CChangesPDFDocumentRecognizePage;
-AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_SetDocument]      = CChangesPDFObjectSetDocument;
-AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_PageLocks]        = CChangesPDFDocumentPageLocks;
-AscDFH.changesFactory[AscDFH.historyitem_PDF_PropLocker_ObjectId]	    = CChangesPDFPropLockerObjectId;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Start_Merge_Pages]= CChangesPDFDocumentStartMergePages;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Part_Merge_Pages] = CChangesPDFDocumentPartMergePages;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_End_Merge_Pages]  = CChangesPDFDocumentEndMergePages;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Calc_Order]       = CChangesPDFCalcOrder;
-AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_Locks]            = CChangesPDFDocumentLocks;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Start_Redact]     = CChangesPDFDocumentStartRedact;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Part_Redact]      = CChangesPDFDocumentPartRedact;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_End_Redact]       = CChangesPDFDocumentEndRedact;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Embed_Fonts_Map]       	= CChangesEmbedFontsMap;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_AnnotsContent]			= CChangesPDFDocumentAnnotsContent;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_FieldsContent]			= CChangesPDFDocumentFieldsContent;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_DrawingsContent]			= CChangesPDFDocumentDrawingsContent;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_PagesContent]				= CChangesPDFDocumentPagesContent;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RotatePage]				= CChangesPDFDocumentRotatePage;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RecognizePage]			= CChangesPDFDocumentRecognizePage;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_SetDocument]      		= CChangesPDFObjectSetDocument;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_PageLocks]        		= CChangesPDFDocumentPageLocks;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_PropLocker_ObjectId]	    		= CChangesPDFPropLockerObjectId;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Start_Merge_Pages]		= CChangesPDFDocumentStartMergePages;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Part_Merge_Pages] 		= CChangesPDFDocumentPartMergePages;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_End_Merge_Pages]  		= CChangesPDFDocumentEndMergePages;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Calc_Order]       		= CChangesPDFCalcOrder;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_Locks]            		= CChangesPDFDocumentLocks;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Start_Redact]     		= CChangesPDFDocumentStartRedact;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Part_Redact]      		= CChangesPDFDocumentPartRedact;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_End_Redact]       		= CChangesPDFDocumentEndRedact;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Embed_Fonts_Map]       			= CChangesEmbedFontsMap;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Redact_Meta]				= CChangesPDFDocumentRedactMeta;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RedactedFieldsContent]	= CChangesPDFDocumentRedactedFieldsContent;
+
 
 function CChangesPDFArrayOfDoubleProperty(Class, Old, New) {
 	AscDFH.CChangesBaseProperty.call(this, Class, Old, New);
@@ -1071,7 +1077,13 @@ CChangesPDFDocumentRecognizePage.prototype.private_SetValue = function(bRecogniz
 
         oDoc.Viewer.paint(function() {
             let oThumbnails = oDoc.Viewer.thumbnails;
-            oThumbnails && oThumbnails._repaintPage(nPageIdx);
+			if (oThumbnails) {
+				oThumbnails._repaintPage(nPageIdx);
+				let oPage = oThumbnails.getDrawingPage(nPageIdx);
+				if (oPage) {
+					delete oPage.page.pageImage;
+				}
+			}
         });
     }
 };
@@ -1286,6 +1298,7 @@ CChangesPDFDocumentEndMergePages.prototype.Redo = function()
     });
 
     oDoc.Viewer.checkLoadCMap();
+	oDoc.Viewer.isFullText = false;
 };
 CChangesPDFDocumentEndMergePages.prototype.WriteToBinary = function(Writer)
 {
@@ -1627,4 +1640,221 @@ CChangesEmbedFontsMap.prototype.ReadFromBinary = function(Reader) {
 		this.Old = undefined;
 	else
 		this.Old = Reader.GetString2();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFDocumentRedactMeta(Class, Old, New, Color) {
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFDocumentRedactMeta.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFDocumentRedactMeta.prototype.constructor = CChangesPDFDocumentRedactMeta;
+CChangesPDFDocumentRedactMeta.prototype.Type = AscDFH.historyitem_Pdf_Document_Redact_Meta;
+CChangesPDFDocumentRedactMeta.prototype.private_SetValue = function(Value) {
+	let oDoc = this.Class;
+
+	oDoc.redactMetaFlags = Value;
+
+	if ((Value & (1 << 2)) !== 0) {
+		oDoc.Viewer.structure = oDoc.Viewer.file.getStructure();
+	}
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseContentChange}
+ */
+function CChangesPDFDocumentRedactedFieldsContent(Class, Pos, Items, bAdd)
+{
+    AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, bAdd);
+}
+CChangesPDFDocumentRedactedFieldsContent.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
+CChangesPDFDocumentRedactedFieldsContent.prototype.constructor = CChangesPDFDocumentRedactedFieldsContent;
+CChangesPDFDocumentRedactedFieldsContent.prototype.Type = AscDFH.historyitem_PDF_Document_RedactedFieldsContent;
+CChangesPDFDocumentRedactedFieldsContent.prototype.IsContentChange = function(){
+    return true;
+};
+
+CChangesPDFDocumentRedactedFieldsContent.prototype.ReadFromBinary = function (reader) {
+    this.Type = reader.GetLong();
+    this.Add = reader.GetBool();
+    this.Pos = reader.GetLong();
+    AscDFH.CChangesBaseContentChange.prototype.ReadFromBinary.call(this, reader);
+};
+CChangesPDFDocumentRedactedFieldsContent.prototype.WriteToBinary = function (writer) {
+    writer.WriteLong(this.Type);
+    writer.WriteBool(this.IsAdd());
+    writer.WriteLong(this.Pos);
+    AscDFH.CChangesBaseContentChange.prototype.WriteToBinary.call(this, writer);
+};
+
+CChangesPDFDocumentRedactedFieldsContent.prototype.Undo = function()
+{
+    let oPage = this.Class;
+    let oDocument = Asc.editor.getPDFDoc();
+
+    if (this.IsAdd()) {
+        // Undo addition by removing items
+        for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex) {
+            let oItem = this.Items[nIndex];
+            oItem.AddToRedraw();
+            oPage.redactedFields.splice(this.Pos, 1);
+
+            oItem.parentPage = null;
+            oItem._page = -1;
+            oItem.selectStartPage = -1;
+
+            oItem.AddToRedraw();
+        }
+    }
+    else {
+        // Undo removal by adding items back
+        for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex) {
+            let oItem = this.Items[nIndex];
+            oItem.AddToRedraw();
+            oPage.redactedFields.splice(this.Pos, 0, oItem);
+
+            oItem.parentPage = oPage;
+            oItem._page = oPage.GetIndex();
+            oItem.selectStartPage = oItem._page;
+
+            oItem.AddToRedraw();
+        }
+    }
+
+    oDocument.private_UpdateTargetForCollaboration(true);
+};
+CChangesPDFDocumentRedactedFieldsContent.prototype.Redo = function()
+{
+    let oPage = this.Class;
+    let oDocument = Asc.editor.getPDFDoc();
+
+    if (this.IsAdd()) {
+        // Redo addition by adding items
+        for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+        {
+            let oItem = this.Items[nIndex];
+            oItem.AddToRedraw();
+            oPage.redactedFields.splice(this.Pos, 0, oItem);
+
+            oItem.parentPage = oPage;
+            oItem._page = oPage.GetIndex();
+            oItem.selectStartPage = oItem._page;
+            
+            oItem.AddToRedraw();
+        }
+    }
+    else {
+        // Redo removal by removing items
+        for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+        {
+            let oItem = this.Items[nIndex];
+            oItem.AddToRedraw();
+            oPage.redactedFields.splice(this.Pos, 1);
+
+            oItem.parentPage = null;
+            oItem._page = -1;
+            oItem.selectStartPage = -1;
+
+            oItem.AddToRedraw();
+        }
+    }
+
+    oDocument.private_UpdateTargetForCollaboration(true);
+};
+CChangesPDFDocumentRedactedFieldsContent.prototype.Load = function() {
+    if (this.IsAdd()) {
+        this.private_InsertInArrayLoad();
+    }
+    else {
+        this.private_RemoveInArrayLoad();
+    }
+};
+CChangesPDFDocumentRedactedFieldsContent.prototype.private_InsertInArrayLoad = function()
+{
+    if (this.Items.length <= 0)
+        return;
+
+    let oPage = this.Class;
+    let oDocument = oPage.GetDocument();
+    let oContentChanges = this.private_GetContentChanges();
+
+    for (let i = 0; i < this.Items.length; ++i) {
+        let oItem = this.Items[i];
+        // Adjust position based on content changes
+        let nPos = oContentChanges.Check(AscCommon.contentchanges_Add, true !== this.UseArray ? this.Pos + i : this.PosArray[i]);
+        if (nPos === false) continue;
+
+        // Insert into viewer fields array
+        let fieldsArray = oPage.redactedFields;
+        nPos = Math.min(nPos, fieldsArray.length);
+        fieldsArray.splice(nPos, 0, oItem);
+
+        oItem.parentPage = oPage;
+        oItem._page = oPage.GetIndex();
+        oItem.selectStartPage = oItem._page;
+
+        oItem.AddToRedraw();
+    }
+
+    oDocument.private_UpdateTargetForCollaboration(true);
+};
+CChangesPDFDocumentRedactedFieldsContent.prototype.private_RemoveInArrayLoad = function()
+{
+    if (this.Items.length <= 0)
+        return;
+
+    let oPage = this.Class;
+    let oDocument = oPage.GetDocument();
+    let oContentChanges = this.private_GetContentChanges();
+
+    // Remove items in reverse order to maintain indices
+    for (let i = this.Items.length - 1; i >= 0; --i) {
+        let oItem = this.Items[i];
+        // Adjust position based on content changes
+        let nPos = oContentChanges.Check(AscCommon.contentchanges_Remove,  true !== this.UseArray ? this.Pos + i : this.PosArray[i]);
+        if (nPos === false) continue;
+
+        oItem.AddToRedraw();
+
+        // Remove from viewer fields array
+        let fieldsArray = oPage.redactedFields;
+        let indexInFields = fieldsArray.indexOf(oItem);
+        if (indexInFields !== -1)
+            fieldsArray.splice(indexInFields, 1);
+
+        oItem.parentPage = null;
+        oItem._page = -1;
+        oItem.selectStartPage = -1;
+    }
+
+    oDocument.private_UpdateTargetForCollaboration(true);
+};
+CChangesPDFDocumentRedactedFieldsContent.prototype.private_GetContentChanges = function() {
+    return this.Class.redactedFieldsContentChanges;
+};
+CChangesPDFDocumentRedactedFieldsContent.prototype.GetContentChangesClass = function() {
+	return this.private_GetContentChanges();
+};
+CChangesPDFDocumentRedactedFieldsContent.prototype.private_WriteItem = function (Writer, Item) {
+    Writer.WriteString2(Item.Get_Id());
+};
+CChangesPDFDocumentRedactedFieldsContent.prototype.private_ReadItem = function (Reader) {
+    var Id = Reader.GetString2();
+    return AscCommon.g_oTableId.Get_ById(Id);
+};
+CChangesPDFDocumentRedactedFieldsContent.prototype.Copy = function() {
+    let oChanges = new this.constructor(this.Class, this.Pos, this.Items, this.Add);
+
+    oChanges.UseArray = this.UseArray;
+
+    for (let nIndex = 0, nCount = this.PosArray.length; nIndex < nCount; ++nIndex)
+        oChanges.PosArray[nIndex] = this.PosArray[nIndex];
+
+    return oChanges;
+};
+CChangesPDFDocumentRedactedFieldsContent.prototype.CreateReverseChange = function(){
+    return this.private_CreateReverseChange(this.constructor);
 };

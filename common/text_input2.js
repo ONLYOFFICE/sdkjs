@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -87,8 +90,11 @@
 		// Notes offset for slides
 		this.TargetOffsetY = 0;
 
-		this.HtmlAreaOffset = 50; // height in pix
+		this.isUseLeftOffset = (AscCommon.AscBrowser.isAppleDevices || AscCommon.AscBrowser.isAndroid) ? true : false; // new browsers remove autoscroll textarea
+		this.HtmlAreaOffset = (AscCommon.AscBrowser.isAppleDevices || AscCommon.AscBrowser.isAndroid) ? 50 : 0; // height in pix
 		this.HtmlAreaWidth = 200;
+
+		this.lastFontSize = 0; // in pixels
 		// ---------------------------------------------------------------
 
 		// current text state information -------------------------
@@ -136,6 +142,15 @@
 			x : 0,
 			y : 0
 		};
+
+		this.oldBrowserZoom = 1;
+		this.oldParentForResize = "";
+
+		this.TextAreaHeightMin = 50;
+		this.TextAreaHeight = this.TextAreaHeightMin;
+
+		this.isMoveAccurateSync = false;
+		this.resizeOnMove = false;
 	}
 
 	var CTextInputPrototype = CTextInput2.prototype;
@@ -923,7 +938,7 @@
 			this.HtmlDiv.style.position   = "absolute";
 		this.HtmlDiv.style.zIndex     = 10;
 		this.HtmlDiv.style.width      = TEXT_INPUT_DEBUG ? "200px" : "20px";
-		this.HtmlDiv.style.height     = "50px";
+		this.HtmlDiv.style.height     = this.TextAreaHeight + "px";
 		this.HtmlDiv.style.overflow   = "hidden";
 
 		this.HtmlDiv.style.boxSizing 		= "content-box";
@@ -947,20 +962,32 @@
 		var _style = "";
 		if (!TEXT_INPUT_DEBUG)
 		{
-			_style = ("left:-" + (this.HtmlAreaWidth >> 1) + "px;top:" + (-this.HtmlAreaOffset) + "px;");
+			let _left = this.isUseLeftOffset ? (this.HtmlAreaWidth >> 1) : 0;
+			_style = ("left:-" +_left + "px;top:" + (-this.HtmlAreaOffset) + "px;");
 			_style += "color:transparent;caret-color:transparent;background:transparent;";
 
 			if (this.Api.isUseOldMobileVersion())
 				_style += (AscCommon.AscBrowser.isAppleDevices && !AscCommon.AscBrowser.isTelegramWebView && (AscCommon.AscBrowser.maxTouchPoints > 0)) ? "font-size:0px;" : "font-size:8px;";
 			else
-				_style += "font-size:8px;";
+			{
+				_style += ("font-size:8px;");
+			}
 		}
 		else
 		{
 			_style = "left:0px;top:0px;color:black;caret-color:black;font-size:16px;background:transparent;";
 		}
-		_style += ("border:none;position:absolute;text-shadow:0 0 0 #000;outline:none;width:" + this.HtmlAreaWidth + "px;height:50px;");
-		_style += "overflow:hidden;padding:0px;margin:0px;font-family:arial;resize:none;font-weight:normal;box-sizing:content-box;-moz-box-sizing:content-box;-webkit-box-sizing:content-box;";
+
+		_style += "margin:0px;";
+		let textAreaWidth = this.HtmlAreaWidth;
+		if (window.CSS && CSS.supports && CSS.supports("transform", "scaleX(0.2)")) {
+			textAreaWidth *= 5;
+			_style += "transform:scaleX(0.2);";
+			_style += "margin-right:-" + (textAreaWidth * 0.8) + "px;";
+		}
+
+		_style += ("border:none;position:absolute;text-shadow:0 0 0 #000;outline:none;width:" + textAreaWidth + "px;height:100%;");
+		_style += "overflow:hidden;padding:0px;font-family:arial;resize:none;font-weight:normal;box-sizing:content-box;-moz-box-sizing:content-box;-webkit-box-sizing:content-box;";
 		_style += "touch-action: none;-webkit-touch-callout: none;";
 
 		this.HtmlArea.setAttribute("style", _style);
@@ -1025,6 +1052,20 @@
 			}, false);
 		}
 
+		if (this.Api.isMobileVersion && AscCommon.AscBrowser.isAppleDevices)
+		{
+			var blockMouseEmulation = function(e)
+			{
+				if (document.activeElement === oThis.HtmlArea)
+				{
+					//e.stopImmediatePropagation();
+					e.preventDefault();
+				}
+			};
+			document.addEventListener("mousedown", blockMouseEmulation, true);
+			document.addEventListener("mouseup", blockMouseEmulation, true);
+		}
+
 		this.Api.Input_UpdatePos();
 
 		this.checkViewMode();
@@ -1040,7 +1081,7 @@
 		// need another parent. so that it scrolls, not oHtmlParent
 		var oHtmlDivScrollable = document.createElement("div");
 		oHtmlDivScrollable.id = "area_id_main";
-		let styleZIndex = TEXT_INPUT_DEBUG ? "z-index:50;" : "z-index:0;";
+		let styleZIndex = TEXT_INPUT_DEBUG ? "z-index:50;" : "z-index:-1;";
 		oHtmlDivScrollable.setAttribute("style", "background:transparent;border:none;position:absolute;padding:0px;margin:0px;pointer-events:none;" + styleZIndex);
 		var parentStyle = getComputedStyle(oHtmlParent);
 		oHtmlDivScrollable.style.left = parentStyle.left;
@@ -1059,11 +1100,19 @@
 		if (!_elem || !_elemSrc)
 			return;
 
+		this.oldBrowserZoom = AscCommon.AscBrowser.zoom;
+		this.oldParentForResize = editorContainerId;
+
 		if (AscCommon.AscBrowser.isChrome)
 		{
 			var rectObject = AscCommon.UI.getBoundingClientRect(_elemSrc);
 			this.FixedPosCheckElementX = rectObject.left;
 			this.FixedPosCheckElementY = rectObject.top;
+
+			if (rectObject.width < 1 && rectObject.height < 1)
+				this.resizeOnMove = true;
+			else
+				this.resizeOnMove = false;
 		}
 
 		var _width = _elemSrc.style.width;
@@ -1134,13 +1183,17 @@
 				focusHtmlElement(this.getFocusElement());
 		}
 	};
+	CTextInputPrototype.moveAccurateForce = function()
+	{
+		this.isMoveAccurateSync = true;
+	};
 	CTextInputPrototype.moveAccurate = function(x, y)
 	{
 		if (!this.moveAccurateFunc)
 		{
 			this.moveAccurateFunc = function() {
 				let ctx = AscCommon.g_inputContext;
-				ctx.move(ctx.moveAccurateInfo.x, ctx.moveAccurateInfo.y);
+				ctx.move(ctx.moveAccurateInfo.x / AscCommon.AscBrowser.retinaPixelRatio, ctx.moveAccurateInfo.y / AscCommon.AscBrowser.retinaPixelRatio);
 				ctx.moveAccurateInfo.id = -1;
 			};
 		}
@@ -1150,19 +1203,60 @@
 
 		this.moveAccurateInfo.x = x;
 		this.moveAccurateInfo.y = y;
-		this.moveAccurateInfo.id = setTimeout(this.moveAccurateFunc, 20);
+
+		if (true === this.isMoveAccurateSync)
+		{
+			this.isMoveAccurateSync = false;
+			this.moveAccurateFunc();
+		}
+		else
+			this.moveAccurateInfo.id = setTimeout(this.moveAccurateFunc, 20);
 	};
 	CTextInputPrototype.move = function(x, y)
 	{
 		if (this.Api.isUseOldMobileVersion())
 			return;
 
+		if (this.oldParentForResize)
+		{
+			if (this.resizeOnMove || Math.abs(AscCommon.AscBrowser.zoom - this.oldBrowserZoom) > 0.1)
+				this.onResize(this.oldParentForResize);
+		}
+
 		var oTarget = document.getElementById(this.TargetId);
 		if (!oTarget)
 			return;
 
+		let targetSize = parseInt(oTarget.style.height);
 		var xPos = x ? x : parseInt(oTarget.style.left);
-		var yPos = (y ? y : parseInt(oTarget.style.top)) + parseInt(oTarget.style.height);
+		var yPos = (y ? y : parseInt(oTarget.style.top));
+
+		if (this.isUseLeftOffset)
+			yPos += targetSize;
+
+		let addOffset = 0;
+		if (!this.isUseLeftOffset)
+		{
+			addOffset = 5;
+			if (targetSize > 100)
+				targetSize = 100;
+
+			let areaH = targetSize + 2 * addOffset;
+			if (areaH < this.TextAreaHeightMin)
+				areaH = this.TextAreaHeightMin;
+
+			if (areaH != this.TextAreaHeight)
+			{
+				this.TextAreaHeight = areaH;
+				this.HtmlDiv.style.height = this.TextAreaHeight + "px";
+			}
+
+			if (Math.abs(this.lastFontSize - targetSize) > 2)
+			{
+				this.lastFontSize = targetSize;
+				this.HtmlArea.style.fontSize = ((2 * addOffset) + this.lastFontSize) + "px";
+			}
+		}
 
 		if (AscCommon.AscBrowser.isSafari && AscCommon.AscBrowser.isMobile)
 			xPos = -100;
@@ -1175,7 +1269,7 @@
 		}
 
 		this.HtmlDiv.style.left = xPos + this.FixedPosCheckElementX + "px";
-		this.HtmlDiv.style.top  = yPos + this.FixedPosCheckElementY + this.TargetOffsetY + this.HtmlAreaOffset + "px";
+		this.HtmlDiv.style.top  = yPos - addOffset + this.FixedPosCheckElementY + this.TargetOffsetY + this.HtmlAreaOffset + "px";
 
 		this.HtmlArea.scrollTop = this.HtmlArea.scrollHeight;
 		//this.log("" + this.HtmlArea.scrollTop + ", " + this.HtmlArea.scrollHeight);

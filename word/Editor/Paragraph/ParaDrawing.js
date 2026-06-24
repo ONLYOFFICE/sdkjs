@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -245,6 +248,10 @@ ParaDrawing.prototype.GetWidthVisible = function()
 ParaDrawing.prototype.SetWidthVisible = function(WidthVisible)
 {
 	this.WidthVisible = WidthVisible;
+};
+ParaDrawing.prototype.getBidiType = function()
+{
+	return AscBidi.TYPE.ON;
 };
 ParaDrawing.prototype.GetSelectedContent = function(SelectedContent)
 {
@@ -618,6 +625,10 @@ ParaDrawing.prototype.Set_AllowOverlap = function(AllowOverlap)
 {
 	History.Add(new CChangesParaDrawingAllowOverlap(this, this.AllowOverlap, AllowOverlap));
 	this.AllowOverlap = AllowOverlap;
+};
+ParaDrawing.prototype.Get_AllowOverlap = function()
+{
+  return this.AllowOverlap
 };
 ParaDrawing.prototype.Set_PositionH = function(RelativeFrom, Align, Value, Percent)
 {
@@ -1096,9 +1107,11 @@ ParaDrawing.prototype.Set_Props = function(Props)
 
 	if(undefined != Props.description){
 		this.docPr.setDescr(Props.description);
+    Asc.editor.addMacroStepData('SetDrawingDescription', Props.description);
 	}
 	if(undefined != Props.title){
 		this.docPr.setTitle(Props.title);
+    Asc.editor.addMacroStepData('SetDrawingTitle', Props.title);
 	}
 };
 ParaDrawing.prototype.CheckFitToColumn = function()
@@ -1478,17 +1491,8 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 				this.Internal_Position.CalcX += hrLineW - hrExtX;
 		}
 	}
-
-	let bCorrect = false;
-	if(oDocumentContent && oDocumentContent.IsTableCellContent && oDocumentContent.IsTableCellContent(false))
-	{
-		bCorrect = true;
-	}
-	if(this.PositionH.RelativeFrom !== c_oAscRelativeFromH.Page || this.PositionV.RelativeFrom !== c_oAscRelativeFromV.Page)
-	{
-		bCorrect = true;
-	}
-	this.Internal_Position.Correct_Values(bInline, PageLimits, this.AllowOverlap, this.Use_TextWrap(), floatObjectsOnPage, bCorrect);
+	
+	this.Internal_Position.Correct_Values(bInline, PageLimits, this.AllowOverlap, this.IsUseTextWrap(), floatObjectsOnPage, this.CanBeBeyondPage());
 	this.GraphicObj.bounds.l = this.GraphicObj.bounds.x + this.Internal_Position.CalcX;
 	this.GraphicObj.bounds.r =  this.GraphicObj.bounds.x  + this.GraphicObj.bounds.w + this.Internal_Position.CalcX;
 	this.GraphicObj.bounds.t = this.GraphicObj.bounds.y + this.Internal_Position.CalcY;
@@ -1789,33 +1793,23 @@ ParaDrawing.prototype.Set_XY = function(X, Y, Paragraph, PageNum, bResetAlign)
 			Layout = Paragraph.Get_Layout(ContentPos, this);
 
 		this.private_SetXYByLayout(X, Y, PageNum, Layout, (bResetAlign || true !== this.PositionH.Align ? true : false), (bResetAlign || true !== this.PositionV.Align ? true : false));
-
 		if (this.IsShape() || this.IsPicture())
-			Asc.editor.addMacroStepData("SetDrawingPos", {x: this.X, y: this.Y, name: this.GraphicObj.getObjectName()});
+			Asc.editor.addMacroStepData("SetDrawingPos", {x: this.X, y: this.Y, id: this.GraphicObj.getObjectName()});
 	}
 };
 ParaDrawing.prototype.private_SetXYByLayout = function(X, Y, PageNum, Layout, bChangeX, bChangeY)
 {
-	if(!Layout)
-	{
+	if (!Layout)
 		return;
-	}
+	
 	this.PageNum = PageNum;
 	this.Internal_Position.SetScaleFactor(this.GetScaleCoefficient());
 	this.Internal_Position.Set(this.GraphicObj.extX, this.GraphicObj.extY, this.getXfrmRot(), this.EffectExtent, this.YOffset, Layout.ParagraphLayout, Layout.PageLimitsOrigin);
 	this.Internal_Position.Calculate_X(false, c_oAscRelativeFromH.Page, false, X - Layout.PageLimitsOrigin.X / this.Internal_Position.ScaleFactor, false);
 	this.Internal_Position.Calculate_Y(false, c_oAscRelativeFromV.Page, false, Y - Layout.PageLimitsOrigin.Y / this.Internal_Position.ScaleFactor, false);
-	let bCorrect = false;
-	if(this.isTableCellChild(false))
-	{
-		bCorrect = true;
-	}
-	if(this.PositionH.RelativeFrom !== c_oAscRelativeFromH.Page || this.PositionV.RelativeFrom !== c_oAscRelativeFromV.Page)
-	{
-		bCorrect = true;
-	}
-	this.Internal_Position.Correct_Values(false, Layout.PageLimits, this.AllowOverlap, this.Use_TextWrap(), [], bCorrect);
-
+	
+	this.Internal_Position.Correct_Values(false, Layout.PageLimits, this.AllowOverlap, this.IsUseTextWrap(), [], this.CanBeBeyondPage());
+	
 	if (true === bChangeX)
 	{
 		this.X = this.Internal_Position.CalcX;
@@ -1950,6 +1944,19 @@ ParaDrawing.prototype.Use_TextWrap = function()
 ParaDrawing.prototype.IsUseTextWrap = function()
 {
 	return this.Use_TextWrap();
+};
+ParaDrawing.prototype.CanBeBeyondPage = function()
+{
+	if (!this.IsUseTextWrap())
+		return true;
+	
+	if (this.isTableCellChild())
+		return false;
+	
+	if (this.isHdrFtrChild())
+		return true;
+	
+	return (Asc.c_oAscRelativeFromV.Paragraph !== this.PositionV.RelativeFrom && Asc.c_oAscRelativeFromV.Line !== this.PositionV.RelativeFrom);
 };
 ParaDrawing.prototype.Draw_Selection = function()
 {
@@ -4173,7 +4180,7 @@ CAnchorPosition.prototype.Update_PositionYHeaderFooter = function(TopMarginY, Bo
 	this.Top_Margin    = TopY;
 	this.Bottom_Margin = this.Page_H - BottomY;
 };
-CAnchorPosition.prototype.Correct_Values = function(bInline, PageLimits, AllowOverlap, UseTextWrap, OtherFlowObjects, bCorrect)
+CAnchorPosition.prototype.Correct_Values = function(bInline, PageLimits, AllowOverlap, useTextWrap, OtherFlowObjects, canBeBeyondPage)
 {
 	if (true != bInline)
 	{
@@ -4195,7 +4202,7 @@ CAnchorPosition.prototype.Correct_Values = function(bInline, PageLimits, AllowOv
 			for (var Index = 0; Index < OtherFlowObjects.length; Index++)
 			{
 				var Drawing = OtherFlowObjects[Index];
-				if (( false === AllowOverlap || false === Drawing.AllowOverlap ) && true === Drawing.Use_TextWrap() && true === UseTextWrap && ( CurX <= Drawing.X + Drawing.W && CurX + W >= Drawing.X && CurY <= Drawing.Y + Drawing.H && CurY + H >= Drawing.Y ))
+				if (( false === AllowOverlap || false === Drawing.AllowOverlap ) && true === Drawing.Use_TextWrap() && true === useTextWrap && ( CurX <= Drawing.X + Drawing.W && CurX + W >= Drawing.X && CurY <= Drawing.Y + Drawing.H && CurY + H >= Drawing.Y ))
 				{
 					// Если убирается справа, размещаем справа от картинки
 					if (Drawing.X + Drawing.W < X_max - W - 0.001)
@@ -4212,7 +4219,7 @@ CAnchorPosition.prototype.Correct_Values = function(bInline, PageLimits, AllowOv
 		}
 
 		// Автофигуры с обтеканием за/перед текстом могут лежать где угодно
-		if (true === UseTextWrap && true === bCorrect)
+		if (!canBeBeyondPage)
 		{
 			// Скорректируем рассчитанную позицию, так чтобы объект не выходил за заданные пределы
 			var _W, _H;

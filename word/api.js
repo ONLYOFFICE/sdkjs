@@ -1,33 +1,36 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -700,7 +703,7 @@
 						function()
 						{
 							var _api = window.g_asc_plugins.api;
-							_api.WordControl.m_oLogicDocument.Reassign_ImageUrls(window.g_asc_plugins.images_rename);
+							AscCommon.History.RewriteImageUrlsInLastPoint(window.g_asc_plugins.images_rename);
 							delete window.g_asc_plugins.images_rename;
 							_api.asc_Recalculate(true);
 							_api.WordControl.m_oLogicDocument.UnlockPanelStyles(true);
@@ -1159,6 +1162,9 @@
 				break;
 			case Asc.c_oAscTypeSelectElement.UnProtectedRegion:
 				oUnkTypeObj = new Asc.RangePermProp(obj);
+				break;
+			case c_oAscTypeSelectElement.HorizontalLine:
+				oUnkTypeObj = obj;
 				break;
 		}
 
@@ -2431,6 +2437,23 @@ background-repeat: no-repeat;\
 
 			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback, rejectCallback);
 		}
+	};
+	asc_docs_api.prototype.asc_PasteHtmlAsText = function(sHtml, callback, rejectCallback) {
+		if (AscCommon.CollaborativeEditing.Get_GlobalLock())
+			return;
+
+		var _logicDoc = this.WordControl.m_oLogicDocument;
+		if (!_logicDoc)
+			return;
+
+		if (_logicDoc.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, _logicDoc.IsFormFieldEditing())) {
+			rejectCallback && rejectCallback();
+			return;
+		}
+
+		window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
+		_logicDoc.StartAction(AscDFH.historydescription_Document_PasteHotKey);
+		AscCommon.Editor_Paste_Html_Lite_Exec(this, sHtml, callback, rejectCallback);
 	};
 
 	asc_docs_api.prototype.GetContentFromHtml = function(html, callback)
@@ -4929,12 +4952,30 @@ background-repeat: no-repeat;\
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
 			return false;
-		
+
 		if (logicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
 			return false;
-		
+
 		logicDocument.StartAction(AscDFH.historydescription_Document_InsertHorizontalRule);
 		let result = logicDocument.AddHorizontalRule();
+		logicDocument.FinalizeAction();
+		return result;
+	};
+	asc_docs_api.prototype.sync_HorizontalRulePropCallback = function(hr)
+	{
+		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new asc_CSelectedObject(c_oAscTypeSelectElement.HorizontalLine, hr);
+	};
+	asc_docs_api.prototype.asc_SetHorizontalRuleProperties = function(hrUpdate)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || !hrUpdate)
+			return false;
+
+		if (logicDocument.IsSelectionLocked(AscCommon.changestype_Drawing_Props))
+			return false;
+
+		logicDocument.StartAction(AscDFH.historydescription_Document_SetHorizontalRuleProps);
+		let result = logicDocument.SetHorizontalRuleProperties(hrUpdate);
 		logicDocument.FinalizeAction();
 		return result;
 	};
@@ -5673,7 +5714,7 @@ background-repeat: no-repeat;\
 			let tableStyleName = this.WordControl.m_oLogicDocument.Styles.GetName(tableStyle);
 			let tableGrid = oTable.TableGrid;
 
-			this.WordControl.m_oLogicDocument.FinalizeAction(undefined, {col: col, row: row, style: tableStyleName, tableGrid: tableGrid});
+			this.WordControl.m_oLogicDocument.FinalizeAction(undefined, {col: col, row: row, style: tableStyleName, tableGrid: tableGrid, tableId: oTable.Id});
 		}
 	};
 	asc_docs_api.prototype.asc_IsTable = function()
@@ -8468,6 +8509,8 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asyncImageEndLoadedBackground = function(_image)
 	{
+		if (this.FontLoader.isFontLoadInProgress())
+			return;
 		this.WordControl.m_oDrawingDocument.CheckRasterImageOnScreen(_image.src);
 		if (this.WordControl.m_oDrawingDocument.LastDrawingUrl == _image.src)
 		{
@@ -13302,8 +13345,6 @@ background-repeat: no-repeat;\
 	window["asc_docs_api"]                                      = asc_docs_api;
 	window["asc_docs_api"].prototype["asc_nativeOpenFile"]      = function(base64File, version)
 	{
-		this.SpellCheckUrl = '';
-
 		this.User = new AscCommon.asc_CUser();
 		this.User.setId("TM");
 		this.User.setUserName("native");
@@ -13587,6 +13628,20 @@ background-repeat: no-repeat;\
 			{
 				var language = AscCommon.escapeHtmlCharacters(oCore.asc_getLanguage());
 				_ret += ("<meta name=\"language\" content=\"" + language + "\" />");
+			}
+		}
+		var oCustomProperties = this.WordControl.m_oLogicDocument.CustomProperties;
+		if (oCustomProperties) {
+			var aProperties = oCustomProperties.getAllProperties();
+			for (var i = 0; i < aProperties.length; i++) {
+				var oProp = aProperties[i];
+				var sPropName = oProp.asc_getName();
+				var sPropValue = oProp.asc_getValue();
+				if (sPropName && sPropValue !== null && sPropValue !== undefined) {
+					var sEscName = AscCommon.escapeHtmlCharacters(String(sPropName));
+					var sEscValue = AscCommon.escapeHtmlCharacters(String(sPropValue));
+					_ret += ("<meta name=\"" + sEscName + "\" content=\"" + sEscValue + "\" />");
+				}
 			}
 		}
 		_ret += ("</head><body>" + oCopyProcessor.getInnerHtml() + "</body></html>");
@@ -14734,9 +14789,10 @@ background-repeat: no-repeat;\
 		if (this.WordControl && this.WordControl.m_oLogicDocument && this.WordControl.m_oLogicDocument.DrawingDocument)
 			this.WordControl.m_oLogicDocument.DrawingDocument.contentControls.removePluginButtons(guid);
 		
-		let logicDocument = this.private_GetLogicDocument();
-		if (logicDocument && logicDocument.IsDocumentEditor())
-			this.getTextAnnotatorEventManager().removePluginListener(guid);
+		this._onPluginClose(guid);
+	};
+	asc_docs_api.prototype._onPluginClose = function(guid)
+	{
 	};
 	asc_docs_api.prototype.onAttachPluginEvent = function(guid, name)
 	{
@@ -14747,9 +14803,10 @@ background-repeat: no-repeat;\
 			&& this.WordControl.m_oDrawingDocument)
 			this.WordControl.m_oDrawingDocument.contentControls.onAttachPluginEvent(guid);
 		
-		let logicDocument = this.private_GetLogicDocument();
-		if ("onParagraphText" === name && logicDocument && logicDocument.IsDocumentEditor())
-			this.getTextAnnotatorEventManager().addPluginListener(guid);
+		this._onAttachPluginEvent(guid, name);
+	};
+	asc_docs_api.prototype._onAttachPluginEvent = function(guid, name)
+	{
 	};
 	asc_docs_api.prototype.initBroadcastChannelListeners = function() {
 		let oThis = this;
@@ -14820,50 +14877,6 @@ background-repeat: no-repeat;\
 		this.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
 		logicDocument.RecalculateCurPos();
 		logicDocument.UpdateSelection();
-	};
-	
-	asc_docs_api.prototype._onStartGroupActions = function()
-	{
-		let logicDocument = this.private_GetLogicDocument();
-		if (!logicDocument)
-			return;
-		
-		logicDocument.GetSpellCheckManager().TurnOff();
-	};
-	asc_docs_api.prototype._onEndGroupActions = function(isFullEnd)
-	{
-		let logicDocument = this.private_GetLogicDocument();
-		if (!logicDocument)
-			return;
-
-		let groupChanges = AscCommon.History.getGroupChanges();
-		AscCommon.History.resetGroupChanges();
-		if (groupChanges.length)
-			logicDocument.RecalculateByChanges(groupChanges);
-
-		if (isFullEnd)
-		{
-			logicDocument.UpdateInterface();
-			logicDocument.UpdateSelection();
-			logicDocument.GetSpellCheckManager().TurnOn();
-		}
-	};
-	asc_docs_api.prototype._saveGroupActionsState = function()
-	{
-		let logicDocument = this.private_GetLogicDocument();
-		if (!logicDocument)
-			return;
-
-		this.groupActionsPr.selectionState = logicDocument.SaveDocumentState();
-	};
-	asc_docs_api.prototype._restoreGroupActionsState = function()
-	{
-		let logicDocument = this.private_GetLogicDocument();
-		if (!logicDocument || !this.groupActionsPr.selectionState)
-			return;
-
-		logicDocument.LoadDocumentState(this.groupActionsPr.selectionState);
-		this.groupActionsPr.selectionState = null;
 	};
 	
 	asc_docs_api.prototype.getJsApi = function()
@@ -15718,6 +15731,8 @@ background-repeat: no-repeat;\
 	// signatures
 	asc_docs_api.prototype["asc_addSignatureLine"] 						= asc_docs_api.prototype.asc_addSignatureLine;
 	asc_docs_api.prototype["asc_addHorizontalRule"] 					= asc_docs_api.prototype.asc_addHorizontalRule;
+	asc_docs_api.prototype["asc_SetHorizontalRuleProperties"]			= asc_docs_api.prototype.asc_SetHorizontalRuleProperties;
+	asc_docs_api.prototype["sync_HorizontalRulePropCallback"]			= asc_docs_api.prototype.sync_HorizontalRulePropCallback;
 	asc_docs_api.prototype["asc_CallSignatureDblClickEvent"]			= asc_docs_api.prototype.asc_CallSignatureDblClickEvent;
 	asc_docs_api.prototype["asc_getRequestSignatures"] 					= asc_docs_api.prototype.asc_getRequestSignatures;
 	asc_docs_api.prototype["asc_AddSignatureLine2"]             		= asc_docs_api.prototype.asc_AddSignatureLine2;
@@ -15793,6 +15808,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_updateExternalReferences"] = asc_docs_api.prototype.asc_updateExternalReferences;
 	asc_docs_api.prototype["asc_removeExternalReferences"] = asc_docs_api.prototype.asc_removeExternalReferences;
 	asc_docs_api.prototype["asc_changeExternalReference"]  = asc_docs_api.prototype.asc_changeExternalReference;
+
+	asc_docs_api.prototype["asc_PasteHtmlAsText"] = asc_docs_api.prototype.asc_PasteHtmlAsText;
 	
 	asc_docs_api.prototype['asc_getRestrictionSettings'] = asc_docs_api.prototype.asc_getRestrictionSettings = asc_docs_api.prototype.getRestrictionSettings;
 	asc_docs_api.prototype['asc_markAsFinal'] = asc_docs_api.prototype.asc_markAsFinal = asc_docs_api.prototype.markAsFinal;

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -235,6 +238,8 @@
 						this.formula = null;
 						this.val = null;
 						this.formatTable = null;
+						this.comment = null;
+						this.hyperlink = null;
 						break;
 					}
 					case c_oSpecialPasteProps.transpose: {
@@ -356,7 +361,15 @@
 
 
 				//TODO we need to ignore both formulas and hidden rows if the selection includes them + standard conditions in bIsExcludeHiddenRows
+				let aMultiRanges;
 				if (ws.model.autoFilters.bIsExcludeHiddenRows(selectionRange, activeCell, true)) {
+					var noHiddenRows = ws.model._getNoHiddenRowsArr(selectionRange.r1, selectionRange.r2);
+					if (noHiddenRows.length > 1) {
+						aMultiRanges = [];
+						for (var i = 0; i < noHiddenRows.length; i++) {
+							aMultiRanges.push(new Asc.Range(selectionRange.c1, noHiddenRows[i].start, selectionRange.c2, noHiddenRows[i].stop));
+						}
+					}
 					ws.model.excludeHiddenRows(true);
 					ws.model.ignoreWriteFormulas(true);
 				}
@@ -380,7 +393,7 @@
 				}
 				//HTML
 				if (AscCommon.c_oAscClipboardDataFormat.Html & _formats) {
-					_data = this.copyProcessor.getHtml(activeRange, ws);
+					_data = this.copyProcessor.getHtml(activeRange, ws, aMultiRanges);
 
 					if (null !== _data && "" !== _data.html) {
 						_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, _data.html)
@@ -388,6 +401,12 @@
 				}
 				//INTERNAL
 				if (AscCommon.c_oAscClipboardDataFormat.Internal & _formats) {
+					let origSelectionRanges = ws.model.selectionRange.ranges;
+					if (aMultiRanges) {
+						ws.model.selectionRange.ranges = aMultiRanges;
+						ws.model.excludeHiddenRows(false);
+						ws.model.ignoreWriteFormulas(false);
+					}
 					if (window["NATIVE_EDITOR_ENJINE"]) {
 						_data = this.copyProcessor.getBinaryForMobile();
 					} else {
@@ -396,6 +415,10 @@
 						} else {
 							_data = this.copyProcessor.getBinaryForCopy(ws.model, ws.objectRender);
 						}
+					}
+
+					if (aMultiRanges) {
+						ws.model.selectionRange.ranges = origSelectionRanges;
 					}
 
 					if (null !== _data) {
@@ -419,6 +442,22 @@
 					ws.setCutRange(ws.model.selectionRange.ranges);
 				}
 			}
+		};
+
+		Clipboard.prototype.pasteHtmlLite = function (ws, sHtml, callback) {
+			var wb = window["Asc"]["editor"].wb;
+			if (wb.getCellEditMode() || ws.getSelectionDialogMode()) {
+				if (callback) {
+					callback(false);
+				}
+				return;
+			}
+			this.pasteProcessor.clean();
+			if (!window['AscCommon'].g_specialPasteHelper.specialPasteStart) {
+				window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
+			}
+			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(true);
+			this.pasteProcessor.pasteHtmlLite(ws, sHtml, callback);
 		};
 
 		Clipboard.prototype.pasteData = function (ws, _format, data1, data2, text_data, bIsSpecialPaste, doNotShowButton, isPasteAll, callback) {
@@ -538,8 +577,6 @@
 		};
 
 		Clipboard.prototype.drawSelectedArea = function (ws, opt_get_bytes) {
-			let activeRange = ws.model.selectionRange.getLast();
-
 			// Canvas limitations for different browsers:
 			// Chrome/Edge: 32767px x 32767px
 			// Firefox: 32767px x 32767px
@@ -567,54 +604,71 @@
 				maxCanvasArea = 8192 * 8192;
 			}
 
-			let estimatedHeight = ws._getRowTop(activeRange.r2 + 1) - ws._getRowTop(activeRange.r1);
-			let estimatedWidth = ws._getColLeft(activeRange.c2 + 1) - ws._getColLeft(activeRange.c1);
-
-			// Check height limitations
-			if (estimatedHeight > maxCanvasHeight) {
-				let currentHeight = 0;
-				let maxRow = activeRange.r1;
-
-				for (let row = activeRange.r1; row <= activeRange.r2; row++) {
-					let rowHeight = ws._getRowHeight(row);
-					if (currentHeight + rowHeight > maxCanvasHeight) {
-						break;
-					}
-					currentHeight += rowHeight;
-					maxRow = row;
-				}
-
-				activeRange = new Asc.Range(activeRange.c1, activeRange.r1, activeRange.c2, maxRow);
-				estimatedHeight = ws._getRowTop(activeRange.r2 + 1) - ws._getRowTop(activeRange.r1);
-			}
-
-			// Check width limitations
-			if (estimatedWidth > maxCanvasWidth) {
-				let currentWidth = 0;
-				let maxCol = activeRange.c1;
-
-				for (let col = activeRange.c1; col <= activeRange.c2; col++) {
-					let colWidth = ws._getColLeft(col + 1) - ws._getColLeft(col);
-					if (currentWidth + colWidth > maxCanvasWidth) {
-						break;
-					}
-					currentWidth += colWidth;
-					maxCol = col;
-				}
-
-				activeRange = new Asc.Range(activeRange.c1, activeRange.r1, maxCol, activeRange.r2);
-				estimatedWidth = ws._getColLeft(activeRange.c2 + 1) - ws._getColLeft(activeRange.c1);
-			}
-
-			//TODO cut by max size
-			if (estimatedHeight * estimatedWidth >= maxCanvasArea) {
-				return;
-			}
-
 			let base64;
-			let ctx = ws.workbook.printForCopyPaste(ws, activeRange, true);
-			if (ctx && ctx.canvas) {
-				base64 = ctx.canvas.toDataURL("image/png");
+
+			if (ws.objectRender && ws.objectRender.selectedGraphicObjectsExists()) {
+				let controller = ws.objectRender.controller;
+				if (controller.getTargetDocContent()) {
+					return;
+				}
+				let imgProperty = controller.getSelectionImage();
+				if (!imgProperty) {
+					return;
+				}
+				base64 = imgProperty.asc_getImageUrl();
+				if (!base64) {
+					return;
+				}
+			} else {
+				let activeRange = ws.model.selectionRange.getLast();
+				let estimatedHeight = ws._getRowTop(activeRange.r2 + 1) - ws._getRowTop(activeRange.r1);
+				let estimatedWidth = ws._getColLeft(activeRange.c2 + 1) - ws._getColLeft(activeRange.c1);
+
+				// Check height limitations
+				if (estimatedHeight > maxCanvasHeight) {
+					let currentHeight = 0;
+					let maxRow = activeRange.r1;
+
+					for (let row = activeRange.r1; row <= activeRange.r2; row++) {
+						let rowHeight = ws._getRowHeight(row);
+						if (currentHeight + rowHeight > maxCanvasHeight) {
+							break;
+						}
+						currentHeight += rowHeight;
+						maxRow = row;
+					}
+
+					activeRange = new Asc.Range(activeRange.c1, activeRange.r1, activeRange.c2, maxRow);
+					estimatedHeight = ws._getRowTop(activeRange.r2 + 1) - ws._getRowTop(activeRange.r1);
+				}
+
+				// Check width limitations
+				if (estimatedWidth > maxCanvasWidth) {
+					let currentWidth = 0;
+					let maxCol = activeRange.c1;
+
+					for (let col = activeRange.c1; col <= activeRange.c2; col++) {
+						let colWidth = ws._getColLeft(col + 1) - ws._getColLeft(col);
+						if (currentWidth + colWidth > maxCanvasWidth) {
+							break;
+						}
+						currentWidth += colWidth;
+						maxCol = col;
+					}
+
+					activeRange = new Asc.Range(activeRange.c1, activeRange.r1, maxCol, activeRange.r2);
+					estimatedWidth = ws._getColLeft(activeRange.c2 + 1) - ws._getColLeft(activeRange.c1);
+				}
+
+				//TODO cut by max size
+				if (estimatedHeight * estimatedWidth >= maxCanvasArea) {
+					return;
+				}
+
+				let ctx = ws.workbook.printForCopyPaste(ws, activeRange, true);
+				if (ctx && ctx.canvas) {
+					base64 = ctx.canvas.toDataURL("image/png");
+				}
 			}
 
 			if (opt_get_bytes && base64) {
@@ -717,7 +771,7 @@
 
 			constructor: CopyProcessorExcel,
 
-			getHtml: function (range, worksheet) {
+			getHtml: function (range, worksheet, aMultiRanges) {
 				var t = this;
 				var sBase64 = null;
 
@@ -727,7 +781,18 @@
 				History.TurnOff();
 				//use binary strings
 				if (copyPasteUseBinary) {
+					let origSelectionRanges = worksheet.model.selectionRange.ranges;
+					if (aMultiRanges) {
+						worksheet.model.selectionRange.ranges = aMultiRanges;
+						worksheet.model.excludeHiddenRows(false);
+						worksheet.model.ignoreWriteFormulas(false);
+					}
 					sBase64 = this.getBinaryForCopy(worksheet.model, worksheet.objectRender);
+					if (aMultiRanges) {
+						worksheet.model.selectionRange.ranges = origSelectionRanges;
+						worksheet.model.excludeHiddenRows(true);
+						worksheet.model.ignoreWriteFormulas(true);
+					}
 				}
 				History.TurnOn();
 
@@ -2007,6 +2072,7 @@
 					//TODO if paste multiselect into multiselect - we must show error
 					let pastedWorksheet = tempWorkbook.aWorksheets && tempWorkbook.aWorksheets[0];
 					let _ranges = pastedWorksheet && pastedWorksheet.selectionRange && pastedWorksheet.selectionRange.ranges;
+					t.bIsMultiselectPaste = !!(_ranges && _ranges.length > 1);
 					if (_ranges && _ranges.length > 1) {
 						//paste - should only be with an equal number of rows/columns
 						//there should be only rows/columns between the ranges, then -> delete the extra rows/columns
@@ -3214,6 +3280,34 @@
 				History.TurnOn();
 
 				oPasteFromBinaryWord._paste(ws, {content: [drawingObject.graphicObject.graphicObject]});
+			},
+
+			pasteHtmlLite: function (worksheet, sHtml, cb) {
+				var t = this;
+				AscCommonExcel.g_clipboardExcel.pasteProcessor.pasteCallBack = cb;
+				this.activeRange = worksheet.model.selectionRange.getLast().clone();
+				worksheet.workbook.handlers.trigger("cleanCopyData", true);
+
+				History.TurnOff();
+				var oTempDrawingDocument = worksheet.getDrawingDocument();
+				var newCDocument = new CDocument(oTempDrawingDocument, false);
+				newCDocument.bFromDocument = true;
+				newCDocument.Content[0].bFromDocument = true;
+				newCDocument.theme = window["Asc"]["editor"].wbModel.theme;
+
+				var oOldLogicDocument = oTempDrawingDocument.m_oLogicDocument;
+				oTempDrawingDocument.m_oLogicDocument = newCDocument;
+				var oOldEditor = ("undefined" !== typeof editor) ? editor : undefined;
+				editor = {WordControl: oTempDrawingDocument, isDocumentEditor: true};
+
+				var aContent = AscCommon.GetContentFromHtmlLite(newCDocument, newCDocument, sHtml, false);
+
+				editor = oOldEditor;
+				oTempDrawingDocument.m_oLogicDocument = oOldLogicDocument;
+				History.TurnOn();
+
+				var oPasteFromBinaryWord = new pasteFromBinaryWord(t, worksheet);
+				oPasteFromBinaryWord._paste(worksheet, {content: aContent});
 			},
 
 			editorPasteExec: function (worksheet, node, isText, cb) {
@@ -4690,6 +4784,7 @@
 								} else {
 									oNewItem.hyperLink = null;
 									oNewItem.toolTip = null;
+									oNewItem.location = null;
 									oNewItem.doNotApplyHyperlink = true;
 								}
 							}

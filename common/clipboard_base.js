@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -116,6 +119,10 @@
 		this.needClearBuffer = false;
 
 		this.canUseNewCopy = null;
+
+		this.bPutImage = true;
+
+		this.customCopyData = null;
 	}
 
 	CClipboardBase.prototype =
@@ -147,10 +154,39 @@
                 return;
 			}
 
-			let res = this.Api.asc_CheckCopy(this, formats);
+			let res;
+			if (this.customCopyData)
+			{
+				this.pushCustomData(this, this.customCopyData, formats);
+				res = true;
+			}
+			else
+			{
+				res = this.Api.asc_CheckCopy(this, formats);
+			}
 			this.SendCopyEvent();
 
 			return res;
+		},
+
+		pushCustomData : function(collector, oData, formats)
+		{
+			if ((formats & AscCommon.c_oAscClipboardDataFormat.Text) && oData.text != null)
+			{
+				collector.pushData(AscCommon.c_oAscClipboardDataFormat.Text, oData.text);
+			}
+			if ((formats & AscCommon.c_oAscClipboardDataFormat.Html) && oData.html != null)
+			{
+				collector.pushData(AscCommon.c_oAscClipboardDataFormat.Html, oData.html);
+			}
+			if ((formats & AscCommon.c_oAscClipboardDataFormat.Internal) && oData.internal != null)
+			{
+				collector.pushData(AscCommon.c_oAscClipboardDataFormat.Internal, oData.internal);
+			}
+			if ((formats & AscCommon.c_oAscClipboardDataFormat.Image) && oData.image)
+			{
+				collector.pushData(AscCommon.c_oAscClipboardDataFormat.Image, Array.isArray(oData.image) ? oData.image : [oData.image]);
+			}
 		},
 
 		_private_oncopy : function(e)
@@ -1074,7 +1110,16 @@
 				{
 					this.bCut = isCut;
 
-					this.Api.asc_CheckCopy(copy_data, c_oAscClipboardDataFormat.Text | c_oAscClipboardDataFormat.Html | c_oAscClipboardDataFormat.Internal | c_oAscClipboardDataFormat.Image);
+					let nImageFormat = this.bPutImage ? c_oAscClipboardDataFormat.Image : 0;
+					let nFormats = c_oAscClipboardDataFormat.Text | c_oAscClipboardDataFormat.Html | c_oAscClipboardDataFormat.Internal | nImageFormat;
+					if (this.customCopyData)
+					{
+						this.pushCustomData(copy_data, this.customCopyData, nFormats);
+					}
+					else
+					{
+						this.Api.asc_CheckCopy(copy_data, nFormats);
+					}
 
 					let clipboardData = {};
 					if (copy_data.data[c_oAscClipboardDataFormat.Text]) {
@@ -1111,6 +1156,20 @@
 			return false;
 		},
 
+		CopyData : function(oData)
+		{
+			if (!oData)
+			{
+				return false;
+			}
+
+			this.customCopyData = oData;
+			let _ret = this.Button_Copy();
+			this.customCopyData = null;
+
+			return _ret;
+		},
+
 		Check_Paste_New : function(callback)
 		{
 			if (navigator.clipboard)
@@ -1127,9 +1186,8 @@
 
 							callback(true);
 						})
-						.catch(function(error) {
-							console.error('Failed to query clipboard permissions:', error);
-							callback(false);
+						.catch(function() {
+							callback(typeof navigator.clipboard.read === 'function');
 						});
 
 					return true;
@@ -1159,7 +1217,7 @@
 							callback && callback(true);
 						})
 						.catch(function() {
-							callback && callback(false);
+							callback && callback(typeof navigator.clipboard.write === 'function');
 						});
 
 					return true;
@@ -1371,7 +1429,7 @@
 				this.SendCopyDisabledEvent();
 				return;
 			}
-			if (window["AscDesktopEditor"])
+			if (window["AscDesktopEditor"] && !this.customCopyData)
 			{
 				window["asc_desktop_copypaste"](this.Api, "Copy");
 				return true;

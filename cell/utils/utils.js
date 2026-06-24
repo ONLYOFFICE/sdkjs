@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -1098,15 +1101,30 @@
 		Range.prototype.isAbsAll = function () {
 			return this.isAbsR1() && this.isAbsC1() && this.isAbsR2() && this.isAbsC2();
 		};
-		Range.prototype.switchReference = function () {
-			this.refType1 = (this.refType1 + 1) % 4;
-			this.refType2 = (this.refType2 + 1) % 4;
+		Range.prototype.switchReference = function (part) {
+			if (part !== 1 && part !== 2) {
+				// OR-normalize so asymmetric ranges ($B1:B$2) always land on the same canonical type
+				const rowAbs = this.isAbsRow(this.refType1) || this.isAbsRow(this.refType2);
+				const colAbs = this.isAbsCol(this.refType1) || this.isAbsCol(this.refType2);
+				const nextType = ((rowAbs ? 0 : 2) + (colAbs ? 0 : 1) + 1) % 4;
+				this.refType1 = nextType;
+				this.refType2 = nextType;
+			} else {
+				if (part !== 2) this.refType1 = (this.refType1 + 1) % 4;
+				if (part !== 1) this.refType2 = (this.refType2 + 1) % 4;
+			}
 		};
 		Range.prototype.getWidth = function () {
 			return this.c2 - this.c1 + 1;
 		};
 		Range.prototype.getHeight = function () {
 			return this.r2 - this.r1 + 1;
+		};
+		Range.prototype.getSize = function () {
+			return {
+				row: this.getHeight(),
+				col: this.getWidth()
+			}
 		};
 		Range.prototype.transpose = function (startCol, startRow) {
 			if (startCol === undefined) {
@@ -1563,11 +1581,11 @@
 			for (var i = 0; i < this.ranges.length; ++i) {
 				var range = this.ranges[i];
 				var type = range.getType();
-				if (byCol && c_oAscSelectionType.RangeCol !== type) {
+				if (byCol && c_oAscSelectionType.RangeCol !== type && c_oAscSelectionType.RangeMax !== type) {
 					res = false;
 					break;
 				}
-				if (!byCol && c_oAscSelectionType.RangeRow !== type) {
+				if (!byCol && c_oAscSelectionType.RangeRow !== type && c_oAscSelectionType.RangeMax !== type) {
 					res = false;
 					break;
 				}
@@ -3309,6 +3327,34 @@
 			this.pdfContent = val;
 		};
 
+		asc_CAdjustPrint.prototype.getLayoutKey = function () {
+			var mapKey = '';
+			if (this.pageOptionsMap) {
+				for (var idx in this.pageOptionsMap) {
+					var opt = this.pageOptionsMap[idx];
+					if (!opt) { mapKey += idx + ':null;'; continue; }
+					var s = opt.pageSetup;
+					var m = opt.pageMargins;
+					mapKey += idx + ':[' +
+						(s ? [s.orientation, s.width, s.height, s.scale, s.fitToWidth, s.fitToHeight, s.printArea, s.selection].join(',') : '') +
+						'][' +
+						(m ? [m.left, m.right, m.top, m.bottom, m.header, m.footer].join(',') : '') +
+						'][' +
+						[opt.headings ? 1 : 0, opt.gridLines ? 1 : 0, opt.horizontalCentered ? 1 : 0, opt.verticalCentered ? 1 : 0,
+						 opt.printTitlesHeight != null ? opt.printTitlesHeight : '',
+						 opt.printTitlesWidth != null ? opt.printTitlesWidth : ''].join(',') +
+						'];';
+				}
+			}
+			return [
+				this.printType,
+				this.ignorePrintArea ? 1 : 0,
+				this.isOnlyFirstPage ? 1 : 0,
+				this.activeSheetsArray ? this.activeSheetsArray.join(',') : '',
+				mapKey
+			].join('|');
+		};
+
 		/** @constructor */
 		function asc_CLockInfo() {
 			this["sheetId"] = null;
@@ -3451,6 +3497,7 @@
 		function RedoObjectParam() {
 			this.bIsOn = false;
 			this.oChangeWorksheetUpdate = {};
+			this.oUpdateDefaultWidthSheets = {};
 			this.bUpdateWorksheetByModel = false;
 			this.bOnSheetsChanged = false;
 			this.oOnUpdateTabColor = {};
@@ -3557,6 +3604,7 @@
 			this.isMatchCase = false;					// case sensitive
 			this.isWholeCell = false;
 			this.isWholeWord = false;
+			this.isWildcard = false;
 			this.isSpellCheck = false;		    // change triggered by spell check
 			this.scanOnOnlySheet = Asc.c_oAscSearchBy.Sheet;				// search only on sheet/in workbook c_oAscSearchBy
 			this.lookIn = Asc.c_oAscFindLookIn.Formulas;	// search in formulas/values/comments
@@ -3601,11 +3649,12 @@
 			result.isMatchCase = this.isMatchCase;
 			result.isWholeCell = this.isWholeCell;
 			result.isWholeWord = this.isWholeWord;
+			result.isWildcard = this.isWildcard;
 			result.isSpellCheck = this.isSpellCheck;
 			result.scanOnOnlySheet = this.scanOnOnlySheet;
 			result.lookIn = this.lookIn;
 
-
+			result.findRegExp = this.findRegExp;
 			result.replaceWith = this.replaceWith;
 			result.isReplaceAll = this.isReplaceAll;
 
@@ -3636,7 +3685,7 @@
 		asc_CFindOptions.prototype.isEqual2 = function (obj) {
 			return obj && this.findWhat === obj.findWhat && this.scanByRows === obj.scanByRows && this.isMatchCase === obj.isMatchCase && this.isWholeCell === obj.isWholeCell &&
 				this.lookIn === obj.lookIn && this.specificRange == obj.specificRange && this.isNotSearchEmptyCells == obj.isNotSearchEmptyCells &&
-				this.wsIndex === obj.wsIndex;
+				this.wsIndex === obj.wsIndex && this.isWildcard === obj.isWildcard;
 		};
 		asc_CFindOptions.prototype.clearFindAll = function () {
 			this.countFindAll = 0;

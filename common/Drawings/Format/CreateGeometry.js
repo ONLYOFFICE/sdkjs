@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -10326,10 +10329,69 @@ function CreatePrstTxWarpGeometry(prst, oGeom)
 
 }
 
+    var _validShapeTypes = {
+        "accentBorderCallout1": 1, "accentBorderCallout2": 1, "accentBorderCallout3": 1,
+        "accentCallout1": 1, "accentCallout2": 1, "accentCallout3": 1,
+        "actionButtonBackPrevious": 1, "actionButtonBeginning": 1, "actionButtonBlank": 1,
+        "actionButtonDocument": 1, "actionButtonEnd": 1, "actionButtonForwardNext": 1,
+        "actionButtonHelp": 1, "actionButtonHome": 1, "actionButtonInformation": 1,
+        "actionButtonMovie": 1, "actionButtonReturn": 1, "actionButtonSound": 1,
+        "arc": 1, "bentArrow": 1, "bentConnector2": 1, "bentConnector3": 1,
+        "bentConnector4": 1, "bentConnector5": 1, "bentUpArrow": 1, "bevel": 1,
+        "blockArc": 1, "borderCallout1": 1, "borderCallout2": 1, "borderCallout3": 1,
+        "bracePair": 1, "bracketPair": 1, "callout1": 1, "callout2": 1, "callout3": 1,
+        "can": 1, "chartPlus": 1, "chartStar": 1, "chartX": 1, "chevron": 1,
+        "chord": 1, "circularArrow": 1, "cloud": 1, "cloudCallout": 1, "corner": 1,
+        "cornerTabs": 1, "cube": 1, "curvedConnector2": 1, "curvedConnector3": 1,
+        "curvedConnector4": 1, "curvedConnector5": 1, "curvedDownArrow": 1,
+        "curvedLeftArrow": 1, "curvedRightArrow": 1, "curvedUpArrow": 1,
+        "decagon": 1, "diagStripe": 1, "diamond": 1, "dodecagon": 1, "donut": 1,
+        "doubleWave": 1, "downArrow": 1, "downArrowCallout": 1, "ellipse": 1,
+        "ellipseRibbon": 1, "ellipseRibbon2": 1,
+        "flowChartAlternateProcess": 1, "flowChartCollate": 1, "flowChartConnector": 1,
+        "flowChartDecision": 1, "flowChartDelay": 1, "flowChartDisplay": 1,
+        "flowChartDocument": 1, "flowChartExtract": 1, "flowChartInputOutput": 1,
+        "flowChartInternalStorage": 1, "flowChartMagneticDisk": 1, "flowChartMagneticDrum": 1,
+        "flowChartMagneticTape": 1, "flowChartManualInput": 1, "flowChartManualOperation": 1,
+        "flowChartMerge": 1, "flowChartMultidocument": 1, "flowChartOfflineStorage": 1,
+        "flowChartOffpageConnector": 1, "flowChartOnlineStorage": 1, "flowChartOr": 1,
+        "flowChartPredefinedProcess": 1, "flowChartPreparation": 1, "flowChartProcess": 1,
+        "flowChartPunchedCard": 1, "flowChartPunchedTape": 1, "flowChartSort": 1,
+        "flowChartSummingJunction": 1, "flowChartTerminator": 1,
+        "foldedCorner": 1, "frame": 1, "funnel": 1, "gear6": 1, "gear9": 1,
+        "halfFrame": 1, "heart": 1, "heptagon": 1, "hexagon": 1, "homePlate": 1,
+        "horizontalScroll": 1, "irregularSeal1": 1, "irregularSeal2": 1,
+        "leftArrow": 1, "leftArrowCallout": 1, "leftBrace": 1, "leftBracket": 1,
+        "leftCircularArrow": 1, "leftRightArrow": 1, "leftRightArrowCallout": 1,
+        "leftRightCircularArrow": 1, "leftRightRibbon": 1, "leftRightUpArrow": 1,
+        "leftUpArrow": 1, "lightningBolt": 1, "line": 1, "lineInv": 1,
+        "mathDivide": 1, "mathEqual": 1, "mathMinus": 1, "mathMultiply": 1,
+        "mathNotEqual": 1, "mathPlus": 1, "moon": 1, "nonIsoscelesTrapezoid": 1,
+        "noSmoking": 1, "notchedRightArrow": 1, "octagon": 1, "parallelogram": 1,
+        "pentagon": 1, "pie": 1, "pieWedge": 1, "plaque": 1, "plaqueTabs": 1,
+        "plus": 1, "quadArrow": 1, "quadArrowCallout": 1, "rect": 1,
+        "ribbon": 1, "ribbon2": 1, "rightArrow": 1, "rightArrowCallout": 1,
+        "rightBrace": 1, "rightBracket": 1, "round1Rect": 1, "round2DiagRect": 1,
+        "round2SameRect": 1, "roundRect": 1, "rtTriangle": 1, "smileyFace": 1,
+        "snip1Rect": 1, "snip2DiagRect": 1, "snip2SameRect": 1, "snipRoundRect": 1,
+        "squareTabs": 1, "star10": 1, "star12": 1, "star16": 1, "star24": 1,
+        "star32": 1, "star4": 1, "star5": 1, "star6": 1, "star7": 1, "star8": 1,
+        "straightConnector1": 1, "stripedRightArrow": 1, "sun": 1, "swooshArrow": 1,
+        "teardrop": 1, "trapezoid": 1, "triangle": 1, "upArrowCallout": 1,
+        "upDownArrow": 1, "upDownArrowCallout": 1, "uturnArrow": 1,
+        "verticalScroll": 1, "wave": 1, "wedgeEllipseCallout": 1,
+        "wedgeRectCallout": 1, "wedgeRoundRectCallout": 1
+    };
+
+    function isValidShapeType(sType) {
+        return typeof sType === "string" && _validShapeTypes[sType] === 1;
+    }
+
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].CreateGeometry = CreateGeometry;
     window['AscFormat'].getPrstByNumber = getPrstByNumber;
     window['AscFormat'].getNumByTxPrst = getNumByTxPrst;
     window['AscFormat'].CreatePrstTxWarpGeometry = CreatePrstTxWarpGeometry;
+    window['AscFormat'].isValidShapeType = isValidShapeType;
 })(window);

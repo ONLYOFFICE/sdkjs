@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -41,6 +44,7 @@
 	 */
 	function ParagraphContentDrawState(drawState)
 	{
+		AscWord.ParagraphBidiFlow.call(this);
 		this.drawState = drawState;
 		
 		this.Paragraph = undefined;
@@ -80,8 +84,11 @@
 		this.mathTextInfo = null;
 		this.paraMath     = null;
 		
-		this.bidiFlow = new AscWord.BidiFlow(this);
+		this.needClip = false;
+		this.lineClip = false;
 	}
+	ParagraphContentDrawState.prototype = Object.create(AscWord.ParagraphBidiFlow.prototype);
+	ParagraphContentDrawState.prototype.constructor = ParagraphContentDrawState;
 	ParagraphContentDrawState.prototype.init = function()
 	{
 		this.Paragraph = this.drawState.getParagraph();
@@ -96,12 +103,23 @@
 		
 		this.CurPos = new AscWord.CParagraphContentPos();
 	};
-	ParagraphContentDrawState.prototype.resetPage = function(page)
+	ParagraphContentDrawState.prototype.beginPage = function(page)
 	{
+		let paraPr = this.Paragraph.getCompiledPr().ParaPr;
+		
+		// TODO: see bug 41412. It seems like we need to clip everytime
+		this.needClip = (linerule_Exact === paraPr.Spacing.LineRule || (linerule_Auto === paraPr.Spacing.LineRule && paraPr.Spacing.Line < 1 - AscWord.EPSILON));
+		
 		this.Page = page;
 		this.complexFields.resetPage(this.Paragraph, page);
+		
+		this.addPageClip();
 	};
-	ParagraphContentDrawState.prototype.resetLine = function(line, baseLine, lineTop, lineBottom)
+	ParagraphContentDrawState.prototype.endPage = function()
+	{
+		this.removePageClip();
+	};
+	ParagraphContentDrawState.prototype.beginLine = function(line, baseLine, lineTop, lineBottom)
 	{
 		this.Line = line;
 		
@@ -110,6 +128,15 @@
 		this.BaseLine   = baseLine;
 		
 		this.Y = baseLine;
+		
+		let lineInfo = this.Paragraph.Lines[line].Info;
+		
+		this.lineClip = (this.needClip && (lineInfo & paralineinfo_Clip)) || ((lineInfo & paralineinfo_ClipNonVisible) && editor && editor.ShowParaMarks);
+		this.addLineClip();
+	};
+	ParagraphContentDrawState.prototype.endLine = function()
+	{
+		this.removeLineClip();
 	};
 	ParagraphContentDrawState.prototype.beginRange = function(range, x)
 	{
@@ -133,6 +160,43 @@
 		if (this.Paragraph.Numbering.checkRange(this.Range, this.Line) && isRtl)
 			this.handleNumbering();
 	};
+	ParagraphContentDrawState.prototype.addPageClip = function()
+	{
+		if (!this.needClip)
+			return;
+		
+		let pageBounds = this.Paragraph.Get_PageBounds(this.Page);
+		
+		this.Graphics.SaveGrState();
+		this.Graphics.AddClipRect(0, pageBounds.Top, AscWord.MAX_MM_VALUE, Math.abs(pageBounds.Bottom - pageBounds.Top));
+	};
+	ParagraphContentDrawState.prototype.removePageClip = function()
+	{
+		if (!this.needClip)
+			return;
+		
+		this.Graphics.RestoreGrState();
+	};
+	ParagraphContentDrawState.prototype.addLineClip = function()
+	{
+		if (!this.lineClip)
+			return;
+		
+		this.Graphics.SaveGrState();
+		
+		let p = this.Paragraph;
+		let page = p.Pages[this.Page];
+		let pageLine = p.Lines[this.Line];
+		
+		this.Graphics.AddClipRect(0, page.Y + pageLine.Top, AscWord.MAX_MM_VALUE, pageLine.Bottom - pageLine.Top);
+	};
+	ParagraphContentDrawState.prototype.removeLineClip = function()
+	{
+		if (!this.lineClip)
+			return;
+		
+		this.Graphics.RestoreGrState();
+	};
 	/**
 	 * @param element {AscWord.CRunElementBase}
 	 * @param run {AscWord.CRun}
@@ -142,12 +206,19 @@
 		if (!this.complexFields.checkRunElement(element))
 			return;
 		
-		this.bidiFlow.add([element, run], element.getBidiType());
+		this.bidiFlow.add([para_RunBase, element, run], element.getBidiType());
 	};
-	ParagraphContentDrawState.prototype.handleBidiFlow = function(data, direction)
+	ParagraphContentDrawState.prototype.handleParaMath = function(paraMath)
 	{
-		let element = data[0];
-		this.handleRun(data[1]);
+		if (!paraMath || paraMath.Root.IsEmptyRange(this.Line, this.Range))
+			return;
+		
+		this.bidiFlow.add([para_Math, paraMath], paraMath.getBidiType());
+	};
+	ParagraphContentDrawState.prototype.handleBidiFlowRunElement = function(data, direction)
+	{
+		let element = data[1];
+		this.handleRun(data[2]);
 		
 		switch (element.Type)
 		{
@@ -173,6 +244,15 @@
 				this.handleRegularElement(element, direction);
 				break;
 		}
+	};
+	ParagraphContentDrawState.prototype.handleBidiFlowParaMath = function(data, direction)
+	{
+		let paraMath = data[1];
+		let x = this.X;
+		paraMath.Root.Draw_Elements(this);
+		this.X = x + paraMath.Root.GetWidth(this.Line, this.Range);
+		if (this.Graphics.m_bIsTextDrawer)
+			this.Graphics.CheckSpaceDraw(null, true);
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
@@ -324,8 +404,12 @@
 		if (!drawing.IsInline())
 			return;
 		
+		this.removeLineClip();
+		
 		drawing.Draw(this.X, this.calcY - this.yOffset, this.Graphics, this, this.textPr);
 		this.X += drawing.GetWidthVisible();
+		
+		this.addLineClip();
 		
 		// Внутри отрисовки инлайн-автофигур могут изменится цвета и шрифт, поэтому восстанавливаем настройки
 		this.updateGraphicsState();

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -216,6 +219,10 @@ CMathBase.prototype.setDimension = function(countRow, countCol)
         this.alignment.hgt[j] = MCJC_CENTER;
     }
 
+};
+CMathBase.prototype.getBidiType = function()
+{
+	return AscBidi.TYPE.L;
 };
 CMathBase.prototype.SetParent = function(parent)
 {
@@ -1502,25 +1509,25 @@ CMathBase.prototype.Get_EndRangePos = function(_CurLine, _CurRange, SearchPos, D
     return Result;
 
 };
-CMathBase.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange, _CurPage)
+CMathBase.prototype.recalculateRangeAlign = function(alignState)
 {
-    var CurLine  = _CurLine - this.StartLine;
-    var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
+    var CurLine  = alignState.CurLine - this.StartLine;
+    var CurRange = ( 0 === CurLine ? alignState.CurRange - this.StartRange : alignState.CurRange );
 
     var WidthVisible;
 
-    if ( 0 !== PRSA.LettersSkip )
+    if ( 0 !== alignState.LettersSkip )
     {
         WidthVisible = this.Bounds.GetWidth(CurLine, CurRange);
-        PRSA.LettersSkip--;
+        alignState.LettersSkip--;
     }
     else
     {
-        WidthVisible = this.Bounds.GetWidth(CurLine, CurRange) + PRSA.JustifyWord;
+        WidthVisible = this.Bounds.GetWidth(CurLine, CurRange) + alignState.JustifyWord;
     }
 
-    PRSA.X    += WidthVisible;
-    PRSA.LastW = WidthVisible;
+    alignState.X    += WidthVisible;
+    alignState.LastW = WidthVisible;
 };
 CMathBase.prototype.GetWidth = function(_CurLine, _CurRange)
 {
@@ -1740,7 +1747,7 @@ CMathBase.prototype.recalculateCursorPosition = function(positionCalculator, isC
 	if (isCurrent)
 		this.Content[this.CurPos].recalculateCursorPosition(positionCalculator, true);
 	else
-		positionCalculator.handleMathElement(this);
+		positionCalculator.handleMathBase(this);
 };
 CMathBase.prototype.getParagraphContentPosByXY = function(searchState)
 {
@@ -1774,7 +1781,7 @@ CMathBase.prototype.Set_ParaContentPos = function(ContentPos, Depth)
         this.Content[this.CurPos].Set_ParaContentPos(ContentPos, Depth + 1);
     }
 };
-CMathBase.prototype.drawSelectionInRange = function(line, range, drawSelectionState)
+CMathBase.prototype.drawSelectionInRange = function(drawSelectionState)
 {
 	let selectionStart = this.Selection.StartPos;
 	let selectionEnd   = this.Selection.EndPos;
@@ -1782,7 +1789,7 @@ CMathBase.prototype.drawSelectionInRange = function(line, range, drawSelectionSt
 	let isSelected = this.Selection.Use;
 	if (isSelected && !this.bOneLine)
 	{
-		let rangeInfo  = this.getRangePos(line, range);
+		let rangeInfo  = this.getRangePos(drawSelectionState.line, drawSelectionState.range);
 		let rangeStart = rangeInfo[0];
 		let rangeEnd   = rangeInfo[1];
 		
@@ -1792,14 +1799,14 @@ CMathBase.prototype.drawSelectionInRange = function(line, range, drawSelectionSt
 	if (isSelected && selectionStart === selectionEnd)
 	{
 		let item   = this.Content[this.Selection.StartPos];
-		let bounds = item.Get_LineBound(line, range);
+		let bounds = item.Get_LineBound(drawSelectionState.line, drawSelectionState.range);
 		
 		drawSelectionState.x = bounds.X;
-		item.drawSelectionInRange(line, range, drawSelectionState);
+		item.drawSelectionInRange(drawSelectionState);
 	}
 	else
 	{
-		drawSelectionState.handleMathElement(this, isSelected);
+		drawSelectionState.handleMathBase(this, isSelected);
 	}
 };
 /**
@@ -1869,107 +1876,29 @@ CMathBase.prototype.SetCurrentMathContent = function(oMathContent)
 		}
 	}
 };
-CMathBase.prototype.Draw_HighLights = function(drawState, bAll)
+CMathBase.prototype.drawHighLights = function(drawState)
 {
 	drawState.handleMathBase(this);
 };
-CMathBase.prototype.Draw_Lines = function(PDSL)
+CMathBase.prototype.drawLines = function(drawState)
 {
-	var CtrPrp		= this.Get_CompiledCtrPrp(false);
-
-	var aStrikeout	= PDSL.Strikeout;
-	var aDStrikeout	= PDSL.DStrikeout;
-
-	var ReviewType	= this.GetReviewType();
-	var bAddReview	= reviewtype_Add === ReviewType ? true : false;
-	var bRemReview	= reviewtype_Remove === ReviewType ? true : false;
-	var ReviewColor	= null;
-
-	if (bAddReview || bRemReview)
-		ReviewColor	= this.ReviewInfo.Get_Color();
-
-	var ArgSize		= this.Get_CompiledArgSize();
-	var fontCoeff	= MatGetKoeffArgSize(CtrPrp.FontSize, ArgSize.value);
-
-	// вычисляем координату Y и LineW также как в Run
-	var X			= PDSL.X;
-	var Y			= PDSL.Baseline - CtrPrp.FontSize * fontCoeff * g_dKoef_pt_to_mm * 0.27;
-	var LineW		= (CtrPrp.FontSize / 18) * g_dKoef_pt_to_mm;
-	var Para		= PDSL.Paragraph;
-
-	// set aStrikeout && aDStrikeout
-	if (true === bRemReview || true === CtrPrp.Strikeout)
-		aStrikeout.set(Y, LineW);
-	else if (true === CtrPrp.DStrikeout)
-		aDStrikeout.set(Y, LineW);
-
-	var BgColor = PDSL.BgColor;
-	if (CtrPrp.Shd && !CtrPrp.Shd.IsNil())
-		BgColor = CtrPrp.Shd.GetSimpleColor(Para.GetTheme(), Para.GetColorMap());
-
-	var AutoColor = ( undefined != BgColor && false === BgColor.Check_BlackAutoColor() )
-		? new CDocumentColor( 255, 255, 255, false)
-		: new CDocumentColor( 0, 0, 0, false );
-
-	var CurColor,
-		RGBA,
-		Theme		= this.Paragraph.Get_Theme(),
-		ColorMap	= this.Paragraph.Get_ColorMap();
-
-	// Выставляем цвет обводки
-	if ( true === PDSL.VisitedHyperlink && ( undefined === this.Pr.Color && undefined === this.Pr.Unifill ) )
-		CurColor = new CDocumentColor( 128, 0, 151 );
-	else if ( true === CtrPrp.Color.Auto && !CtrPrp.Unifill)
-		CurColor = new CDocumentColor( AutoColor.r, AutoColor.g, AutoColor.b );
-	else
-	{
-		if(CtrPrp.Unifill)
-		{
-			CtrPrp.Unifill.check(Theme, ColorMap);
-			RGBA = CtrPrp.Unifill.getRGBAColor();
-			CurColor = new CDocumentColor( RGBA.R, RGBA.G, RGBA.B );
-		}
-		else
-		{
-			CurColor = new CDocumentColor( CtrPrp.Color.r, CtrPrp.Color.g, CtrPrp.Color.b );
-		}
-	}
-
-	var CurLine		= PDSL.Line - this.StartLine;
-	var CurRange	= ( 0 === CurLine ? PDSL.Range - this.StartRange : PDSL.Range );
-	var Bound		= this.Bounds.Get_LineBound(CurLine, CurRange);
-
-	if ( true === bRemReview )
-		aStrikeout.Add( X, X + Bound.W, CurColor );
-	else if ( true === CtrPrp.DStrikeout )
-		aDStrikeout.Add( X, X + Bound.W, CurColor );
-	else if ( true === CtrPrp.Strikeout )
-		aStrikeout.Add( X, X + Bound.W, CurColor );
-
-	this.Draw_LinesForContent(PDSL);
-
-	PDSL.X = Bound.X + Bound.W;
+	drawState.handleMathBase(this);
 };
-CMathBase.prototype.Draw_LinesForContent = function(PDSL)
+CMathBase.prototype.drawLinesForContent = function(drawState)
 {
-    var CurLine  = PDSL.Line - this.StartLine;
-    var CurRange = ( 0 === CurLine ? PDSL.Range - this.StartRange : PDSL.Range );
-    
-    var StartPos, EndPos;
-
-    if(this.bOneLine)
-    {
-        StartPos = 0;
-        EndPos   = this.Content.length - 1;
-    }
-    else
-    {
-        StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-        EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-    }
-
-    for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
-        this.Content[CurPos].Draw_Lines(PDSL);
+	let startPos = 0;
+	let endPos   = this.Content.length - 1;
+	if (!this.bOneLine)
+	{
+		let rangeInfo  = this.getRangePos(drawState.Line, drawState.Range);
+		startPos = rangeInfo[0];
+		endPos   = rangeInfo[1];
+	}
+	
+	for (let pos = startPos; pos <= endPos; ++pos)
+	{
+		this.Content[pos].drawLines(drawState);
+	}
 };
 CMathBase.prototype.Make_ShdColor = function(PDSE, CurTextPr)
 {
@@ -2372,21 +2301,25 @@ CMathBase.prototype.UpdateMetrics = function(PRS, Size)
     if(PRS.LineDescent < Size.height - Size.ascent)
         PRS.LineDescent = Size.height - Size.ascent;
 };
-CMathBase.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
+CMathBase.prototype.recalculateRangeWidth = function(widthState)
 {
-    var RangeW = PRSC.Range.W;
+	widthState.handleMathBase(this);
+};
+CMathBase.prototype._recalculateRangeWidth = function(widthState)
+{
+    var RangeW = widthState.Range.W;
 
-    var CurLine = _CurLine - this.StartLine;
-    var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
+    var CurLine = widthState.CurLine - this.StartLine;
+    var CurRange = ( 0 === CurLine ? widthState.CurRange - this.StartRange : widthState.CurRange );
 
     if(this.bOneLine)
     {
         for (var Pos = 0; Pos <= this.Content.length - 1; Pos++)
         {
-            this.Content[Pos].Recalculate_Range_Width( PRSC, _CurLine, _CurRange );
+            this.Content[Pos].recalculateRangeWidth(widthState);
         }
 
-        PRSC.Range.W = RangeW + this.size.width;
+        widthState.Range.W = RangeW + this.size.width;
     }
     else
     {
@@ -2394,30 +2327,30 @@ CMathBase.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange
         var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
 
         if(CurLine == 0 && CurRange == 0)
-            PRSC.Range.W += this.BrGapLeft;
+            widthState.Range.W += this.BrGapLeft;
 
         for (var CurPos = StartPos; CurPos <= EndPos; CurPos++)
         {
-            this.Content[CurPos].Recalculate_Range_Width( PRSC, _CurLine, _CurRange );
+            this.Content[CurPos].recalculateRangeWidth(widthState);
         }
 
-        PRSC.Range.W += this.dW*(EndPos - StartPos);
+        widthState.Range.W += this.dW*(EndPos - StartPos);
 
         // Здесь проверяем не на то, что это последний Range (т.к. на данном этапе еще идет вычисление строк) а на конец контента !
 
         var Len = this.Content.length;
-        var EndBrContentEnd = this.NumBreakContent == EndPos && this.Content[EndPos].Math_Is_End( _CurLine, _CurRange),
+        var EndBrContentEnd = this.NumBreakContent == EndPos && this.Content[EndPos].Math_Is_End(widthState.CurLine, widthState.CurRange),
             NotBrContent = this.NumBreakContent !== EndPos;
 
         var bEnd = EndBrContentEnd || NotBrContent;
 
         if(EndPos == Len - 1 && true === bEnd)
         {
-            PRSC.Range.W += this.BrGapRight;
+            widthState.Range.W += this.BrGapRight;
         }
     }
 
-    this.Bounds.SetWidth(CurLine, CurRange, PRSC.Range.W - RangeW);
+    this.Bounds.SetWidth(CurLine, CurRange, widthState.Range.W - RangeW);
 };
 CMathBase.prototype.UpdateOperators = function(_CurLine, _CurRange, bEmptyGapLeft, bEmptyGapRight)
 {

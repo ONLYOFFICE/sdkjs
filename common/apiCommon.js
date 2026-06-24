@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -142,6 +145,14 @@ function (window, undefined) {
 	function CreateDurableId() {
 		return FixDurableId(CreateUInt32());
 	}
+
+	function CDrawingNameAllocator() {
+		this.counter = 0;
+	}
+	CDrawingNameAllocator.prototype.next = function (itemCount) {
+		if (this.counter < itemCount) this.counter = itemCount;
+		return ++this.counter;
+	};
 
 	function ExtendPrototype(dst, src) {
 		for (let k in src.prototype) {
@@ -320,7 +331,8 @@ function (window, undefined) {
 		ConnectionsLive: 13,
 		UsersViewCount: 14,
 		UsersViewCountOS: 15,
-		NotBefore: 16
+		NotBefore: 16,
+		NotEnoughResources: 17
 	};
 
 	let c_oRights = {
@@ -586,6 +598,9 @@ function (window, undefined) {
 		let num_format = AscCommon.oNumFormatCache.get(this.getFormatCode());
 		return num_format.getTypeInfo();
 	};
+	asc_CAxNumFmt.prototype.getFormatType = function () {
+		return this.getFormatCellsInfo().asc_getType();
+	};
 	asc_CAxNumFmt.prototype.getSourceLinked = function () {
 		return this.sourceLinked;
 	};
@@ -722,17 +737,82 @@ function (window, undefined) {
 	asc_ValAxisSettings.prototype.putAxisType = function (v) {
 		this.axisType = v;
 	};
+
+	asc_ValAxisSettings.prototype._parseStringValue = function (str) {
+		const num = AscCommon.g_oFormatParser.tryParseLocaleNumber(str);
+		if (num !== null) {
+			return num;
+		}
+
+		let formatType, formatCode;
+		if (this.numFmt) {
+			const typeInfo = this.numFmt.getFormatCellsInfo();
+			formatType = typeInfo.asc_getType();
+			formatCode = this.numFmt.getFormatCode();
+		}
+
+		const res = AscCommon.g_oFormatParser.parse(str, null, formatType, formatCode);
+		return res && AscFormat.isRealNumber(res.value)
+			? res.value
+			: null;
+	};
+
 	asc_ValAxisSettings.prototype.putMinValRule = function (v) {
 		this.minValRule = v;
 	};
-	asc_ValAxisSettings.prototype.putMinVal = function (v) {
-		this.minVal = v;
+	asc_ValAxisSettings.prototype.putMinVal = function (input) {
+		if (typeof input === 'number') {
+			this.minVal = input;
+			return true;
+		}
+
+		if (typeof input !== 'string' || input.length === 0) {
+			return false;
+		}
+
+		const numericValue = this._parseStringValue(input);
+		if (numericValue === null) {
+			return false;
+		}
+
+		this.minVal = numericValue;
+		return true;
 	};
 	asc_ValAxisSettings.prototype.putMaxValRule = function (v) {
 		this.maxValRule = v;
 	};
-	asc_ValAxisSettings.prototype.putMaxVal = function (v) {
-		this.maxVal = v;
+	asc_ValAxisSettings.prototype.putMaxVal = function (input) {
+		if (typeof input === 'number') {
+			this.maxVal = input;
+			return true;
+		}
+
+		if (typeof input !== 'string' || input.length === 0) {
+			return false;
+		}
+
+		const numericValue = this._parseStringValue(input);
+		if (numericValue === null) {
+			return false;
+		}
+		this.maxVal = numericValue;
+		return true;
+	};
+	asc_ValAxisSettings.prototype.putMinValDate = function (date) {
+		const serial = this._serialFromDate(date);
+		if (serial === null) {
+			return false;
+		}
+		this.minVal = serial;
+		return true;
+	};
+	asc_ValAxisSettings.prototype.putMaxValDate = function (date) {
+		const serial = this._serialFromDate(date);
+		if (serial === null) {
+			return false;
+		}
+		this.maxVal = serial;
+		return true;
 	};
 	asc_ValAxisSettings.prototype.putInvertValOrder = function (v) {
 		this.invertValOrder = v;
@@ -764,6 +844,32 @@ function (window, undefined) {
 	asc_ValAxisSettings.prototype.putCrosses = function (v) {
 		this.crosses = v;
 	};
+	asc_ValAxisSettings.prototype.putCrossesVal = function (input) {
+		if (typeof input === 'number') {
+			this.crosses = input;
+			return true;
+		}
+
+		if (typeof input !== 'string' || input.length === 0) {
+			return false;
+		}
+
+		const numericValue = this._parseStringValue(input);
+		if (numericValue === null) {
+			return false;
+		}
+
+		this.crosses = numericValue;
+		return true;
+	};
+	asc_ValAxisSettings.prototype.putCrossesDate = function (date) {
+		const serial = this._serialFromDate(date);
+		if (serial === null) {
+			return false;
+		}
+		this.crosses = serial;
+		return true;
+	};
 	asc_ValAxisSettings.prototype.putDispUnitsRule = function (v) {
 		this.dispUnitsRule = v;
 	};
@@ -773,17 +879,66 @@ function (window, undefined) {
 	asc_ValAxisSettings.prototype.getDispUnitsRule = function () {
 		return this.dispUnitsRule;
 	};
+
+	asc_ValAxisSettings.prototype._formatNumericValue = function (value) {
+		if (value == null) {
+			return '';
+		}
+
+		if (!this.numFmt) {
+			return AscCommon.g_oFormatParser.toLocaleNumber(String(value));
+		}
+
+		const formatCode = this.numFmt.getFormatCode();
+		const numFormat = AscCommon.oNumFormatCache.get(formatCode);
+		return numFormat.formatToChart(value);
+	};
+
+	asc_ValAxisSettings.prototype._dateFromSerial = function (serial) {
+		if (serial == null) {
+			return null;
+		}
+
+		const type = this.getFormatType();
+		if (type !== Asc.c_oAscNumFormatType.Date && type !== Asc.c_oAscNumFormatType.Time) {
+			return null;
+		}
+
+		const date = new Asc.cDate().getDateFromExcelWithTime2(serial);
+		return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(),
+			date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds());
+	};
+
+	asc_ValAxisSettings.prototype._serialFromDate = function (date) {
+		if (!(date instanceof Date)) {
+			return null;
+		}
+
+		const utc = new Asc.cDate(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(),
+			date.getHours(), date.getMinutes(), date.getSeconds()));
+		const serial = utc.getExcelDateWithTime2();
+		return this.getFormatType() === Asc.c_oAscNumFormatType.Time
+			? serial - Math.floor(serial)
+			: serial;
+	};
+
 	asc_ValAxisSettings.prototype.getMinValRule = function () {
 		return this.minValRule;
 	};
 	asc_ValAxisSettings.prototype.getMinVal = function () {
-		return this.minVal;
+		return this._formatNumericValue(this.minVal);
 	};
 	asc_ValAxisSettings.prototype.getMaxValRule = function () {
 		return this.maxValRule;
 	};
 	asc_ValAxisSettings.prototype.getMaxVal = function () {
-		return this.maxVal;
+		return this._formatNumericValue(this.maxVal);
+	};
+	asc_ValAxisSettings.prototype.getMinValDate = function () {
+		return this._dateFromSerial(this.minVal);
+	};
+	asc_ValAxisSettings.prototype.getMaxValDate = function () {
+		return this._dateFromSerial(this.maxVal);
 	};
 	asc_ValAxisSettings.prototype.getInvertValOrder = function () {
 		return this.invertValOrder;
@@ -814,6 +969,15 @@ function (window, undefined) {
 	};
 	asc_ValAxisSettings.prototype.getCrosses = function () {
 		return this.crosses;
+	};
+	asc_ValAxisSettings.prototype.getCrossesVal = function () {
+		return this._formatNumericValue(this.crosses);
+	};
+	asc_ValAxisSettings.prototype.getCrossesVal = function () {
+		return this._formatNumericValue(this.crosses);
+	};
+	asc_ValAxisSettings.prototype.getCrossesDate = function () {
+		return this._dateFromSerial(this.crosses);
 	};
 	asc_ValAxisSettings.prototype.setDefault = function () {
 		this.putMinValRule(Asc.c_oAscValAxisRule.auto);
@@ -848,6 +1012,12 @@ function (window, undefined) {
 	};
 	asc_ValAxisSettings.prototype.getNumFmt = function () {
 		return this.numFmt;
+	};
+	asc_ValAxisSettings.prototype.getFormatType = function () {
+		const numFmt = this.getNumFmt();
+		return numFmt
+			? numFmt.getFormatType()
+			: Asc.c_oAscNumFormatType.General;
 	};
 	asc_ValAxisSettings.prototype.putNumFmt = function (v) {
 		this.numFmt = v;
@@ -1536,6 +1706,12 @@ function (window, undefined) {
 	asc_ChartSettings.prototype.getTrendlineType = function () {
 		return this.trendlineType;
 	};
+	asc_ChartSettings.prototype.getForecastForward = function () {
+		return this.forecastForward;
+	};
+	asc_ChartSettings.prototype.getForecastBackward = function () {
+		return this.forecastBackward;
+	};
 	asc_ChartSettings.prototype.getType = function () {
 		if (this.chartSpace) {
 			return this.chartSpace.getChartType();
@@ -1827,6 +2003,15 @@ function (window, undefined) {
 			}
 		}
 	};
+	asc_ChartSettings.prototype.getDataTable = function () {
+		if (this.chartSpace) {
+			let oDataTable = this.chartSpace.getDataTable();
+			if (oDataTable) {
+				return !!oDataTable.showKeys;
+			}
+		}
+		return null;
+	};
 	asc_ChartSettings.prototype.setDisplayErrorBars = function (bShowErrorBars, nErrorValueType) {
 		if (!this.chartSpace) {
 			return;
@@ -1874,8 +2059,13 @@ function (window, undefined) {
 			}
 		}
 
-		const categoryAxis = plotArea.catAx;
-		const valueAxis = plotArea.valAx;
+		let categoryAxis = plotArea.catAx;
+		let valueAxis = plotArea.valAx;
+		if (!categoryAxis && !valueAxis) {
+			const axes = plotArea.getAxisByTypes();
+			categoryAxis = axes.catAx[0] || axes.dateAx[0] || null;
+			valueAxis = axes.valAx[0] || null;
+		}
 
 		if (categoryAxis || valueAxis) {
 			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
@@ -2305,52 +2495,12 @@ function (window, undefined) {
 		return deltaE;
 	};
 	asc_CColor.prototype.RGB2LAB = function (R, G, B) {
-		let r, g, b, X, Y, Z, fx, fy, fz, xr, yr, zr;
-		let Ls, as, bs;
-		let eps = 216.0 / 24389.0;
-		let k = 24389.0 / 27.0;
-
-		let Xr = 0.95047;  // reference white D65
-		let Yr = 1.0;
-		let Zr = 1.08883;
-
-		// RGB to XYZ
-		r = R / 255; //R 0..1
-		g = G / 255; //G 0..1
-		b = B / 255; //B 0..1
-
-		// assuming sRGB (D65)
-		if (r <= 0.04045) r = r / 12.92; else r = Math.pow((r + 0.055) / 1.055, 2.4);
-
-		if (g <= 0.04045) g = g / 12.92; else g = Math.pow((g + 0.055) / 1.055, 2.4);
-
-		if (b <= 0.04045) b = b / 12.92; else b = Math.pow((b + 0.055) / 1.055, 2.4);
-
-
-		X = 0.4124564 * r + 0.3575761 * g + 0.1804375 * b;
-		Y = 0.2126729 * r + 0.7151522 * g + 0.0721750 * b;
-		Z = 0.0193339 * r + 0.1191920 * g + 0.9503041 * b;
-
-		// XYZ to Lab
-		xr = X / Xr;
-		yr = Y / Yr;
-		zr = Z / Zr;
-
-		if (xr > eps) fx = Math.pow(xr, 1 / 3.); else fx = ((k * xr + 16.) / 116.);
-
-		if (yr > eps) fy = Math.pow(yr, 1 / 3.); else fy = ((k * yr + 16.) / 116.);
-
-		if (zr > eps) fz = Math.pow(zr, 1 / 3.); else fz = ((k * zr + 16.) / 116);
-
-		Ls = (116 * fy) - 16;
-		as = 500 * (fx - fy);
-		bs = 200 * (fy - fz);
-
-		let lab = [];
-		lab[0] = (2.55 * Ls + .5) >> 0;
-		lab[1] = (as + .5) >> 0;
-		lab[2] = (bs + .5) >> 0;
-		return lab;
+		var lab = AscCommon.CU.rgbToLab({R: R, G: G, B: B});
+		return [
+			(2.55 * lab.L + .5) >> 0,
+			(lab.a + .5) >> 0,
+			(lab.b + .5) >> 0
+		];
 	};
 	asc_CColor.prototype.asc_getName = function () {
 		const nColorVal = this.getVal();
@@ -2447,7 +2597,7 @@ function (window, undefined) {
 				this.Color = obj.Color;
 			}
 			else {
-				this.Color = (undefined != obj.Color && null != obj.Color) ? CreateAscColorCustom(obj.Color.r, obj.Color.g, obj.Color.b) : null;
+				this.Color = (undefined != obj.Color && null != obj.Color) ? CreateAscColorCustom(obj.Color.r, obj.Color.g, obj.Color.b, !!obj.Color.Auto) : null;
 			}
 			this.Size = (undefined != obj.Size) ? obj.Size : null;
 			this.Value = (undefined != obj.Value) ? obj.Value : null;
@@ -3754,6 +3904,9 @@ function (window, undefined) {
 		}
 		if (this.type && this.annotProps) {
 			this.annotProps.compare(pr.annotProps);
+		}
+		else {
+			this.annotProps = null;
 		}
 	};
 
@@ -7321,6 +7474,7 @@ function (window, undefined) {
 		this.isModal = true;     // used only if this.type === PluginType.Window
 
 		this.isCanDocked = false;
+		this.hiddenHeaderButtons = [];
 
 		this.initDataType = EPluginDataType.none;
 		this.initData = "";
@@ -7381,6 +7535,10 @@ function (window, undefined) {
 		return this.isCanDocked;
 	};
 
+	CPluginVariation.prototype["get_HiddenHeaderButtons"] = function () {
+		return this.hiddenHeaderButtons;
+	};
+
 	CPluginVariation.prototype["get_Buttons"] = function () {
 		return this.buttons;
 	};
@@ -7420,6 +7578,7 @@ function (window, undefined) {
 		_object["isModal"] = this.isModal;
 
 		_object["isCanDocked"] = this.isCanDocked;
+		_object["hiddenHeaderButtons"] = this.hiddenHeaderButtons;
 
 		_object["initDataType"] = this.initDataType;
 		_object["initData"] = this.initData;
@@ -7472,6 +7631,7 @@ function (window, undefined) {
 		this.isModal = (_object["isModal"] != null) ? _object["isModal"] : this.isModal;
 
 		this.isCanDocked = (_object["isCanDocked"] != null) ? _object["isCanDocked"] : this.isCanDocked;
+		this.hiddenHeaderButtons = (_object["hiddenHeaderButtons"] != null) ? _object["hiddenHeaderButtons"] : this.hiddenHeaderButtons;
 
 		this.initDataType = (_object["initDataType"] != null) ? _object["initDataType"] : this.initDataType;
 		this.initData = (_object["initData"] != null) ? _object["initData"] : this.initData;
@@ -7640,6 +7800,8 @@ function (window, undefined) {
 		this.separator = false;
 		this.symbol = null;
 		this.currency = null;
+		this.calendar = null;
+		this.gannen = false;
 	}
 	asc_CFormatCellsInfo.prototype.asc_setType = function (val) {
 		this.type = val;
@@ -7656,6 +7818,12 @@ function (window, undefined) {
 	asc_CFormatCellsInfo.prototype.asc_setCurrencySymbol = function (val) {
 		this.currency = val;
 	};
+	asc_CFormatCellsInfo.prototype.asc_setCalendar = function (val) {
+		this.calendar = val;
+	};
+	asc_CFormatCellsInfo.prototype.asc_setGannen = function (val) {
+		this.gannen = val;
+	};
 	asc_CFormatCellsInfo.prototype.asc_getType = function () {
 		return this.type;
 	};
@@ -7670,6 +7838,12 @@ function (window, undefined) {
 	};
 	asc_CFormatCellsInfo.prototype.asc_getCurrencySymbol = function () {
 		return this.currency;
+	};
+	asc_CFormatCellsInfo.prototype.asc_getCalendar = function () {
+		return this.calendar;
+	};
+	asc_CFormatCellsInfo.prototype.asc_getGannen = function () {
+		return this.gannen;
 	};
 
 	/**
@@ -8225,6 +8399,7 @@ function (window, undefined) {
 	window["AscCommon"].CreateUUID = CreateUUID;
 	window["AscCommon"].CreateUInt32 = CreateUInt32;
 	window["AscCommon"].CreateDurableId = CreateDurableId;
+	window["AscCommon"].CDrawingNameAllocator = CDrawingNameAllocator;
 	window["AscCommon"].FixDurableId = FixDurableId;
 	window["AscCommon"].ExtendPrototype = ExtendPrototype;
 
@@ -8246,6 +8421,7 @@ function (window, undefined) {
 	prot['UsersViewCount'] = prot.UsersViewCount;
 	prot['UsersViewCountOS'] = prot.UsersViewCountOS;
 	prot['NotBefore'] = prot.NotBefore;
+	prot['NotEnoughResources'] = prot.NotEnoughResources;
 
 	window['Asc']['c_oRights'] = window['Asc'].c_oRights = c_oRights;
 	prot = c_oRights;
@@ -8319,6 +8495,7 @@ function (window, undefined) {
 	prot["getFormatCode"] = prot.getFormatCode;
 	prot["putFormatCode"] = prot.putFormatCode;
 	prot["getFormatCellsInfo"] = prot.getFormatCellsInfo;
+	prot["getFormatType"] = prot.getFormatType;
 	prot["getSourceLinked"] = prot.getSourceLinked;
 	prot["putSourceLinked"] = prot.putSourceLinked;
 
@@ -8328,6 +8505,8 @@ function (window, undefined) {
 	prot["putMinVal"] = prot.putMinVal;
 	prot["putMaxValRule"] = prot.putMaxValRule;
 	prot["putMaxVal"] = prot.putMaxVal;
+	prot["putMinValDate"] = prot.putMinValDate;
+	prot["putMaxValDate"] = prot.putMaxValDate;
 	prot["putInvertValOrder"] = prot.putInvertValOrder;
 	prot["putLogScale"] = prot.putLogScale;
 	prot["putLogBase"] = prot.putLogBase;
@@ -8338,6 +8517,8 @@ function (window, undefined) {
 	prot["putTickLabelsPos"] = prot.putTickLabelsPos;
 	prot["putCrossesRule"] = prot.putCrossesRule;
 	prot["putCrosses"] = prot.putCrosses;
+	prot["putCrossesVal"] = prot.putCrossesVal;
+	prot["putCrossesDate"] = prot.putCrossesDate;
 	prot["putDispUnitsRule"] = prot.putDispUnitsRule;
 	prot["getDispUnitsRule"] = prot.getDispUnitsRule;
 	prot["putAxisType"] = prot.putAxisType;
@@ -8346,6 +8527,8 @@ function (window, undefined) {
 	prot["getMinVal"] = prot.getMinVal;
 	prot["getMaxValRule"] = prot.getMaxValRule;
 	prot["getMaxVal"] = prot.getMaxVal;
+	prot["getMinValDate"] = prot.getMinValDate;
+	prot["getMaxValDate"] = prot.getMaxValDate;
 	prot["getInvertValOrder"] = prot.getInvertValOrder;
 	prot["getLogScale"] = prot.getLogScale;
 	prot["getLogBase"] = prot.getLogBase;
@@ -8356,6 +8539,9 @@ function (window, undefined) {
 	prot["getTickLabelsPos"] = prot.getTickLabelsPos;
 	prot["getCrossesRule"] = prot.getCrossesRule;
 	prot["getCrosses"] = prot.getCrosses;
+
+	prot["getCrossesVal"] = prot.getCrossesVal;
+	prot["getCrossesDate"] = prot.getCrossesDate;
 	prot["setDefault"] = prot.setDefault;
 	prot["getShow"] = prot.getShow;
 	prot["putShow"] = prot.putShow;
@@ -8365,6 +8551,7 @@ function (window, undefined) {
 	prot["getGridlines"] = prot.getGridlines;
 	prot["putNumFmt"] = prot.putNumFmt;
 	prot["getNumFmt"] = prot.getNumFmt;
+	prot["getFormatType"] = prot.getFormatType;
 	prot["isRadarAxis"] = prot.isRadarAxis;
 	prot["getMajorUnit"] = prot.getMajorUnit;
 	prot["getMinorUnit"] = prot.getMinorUnit;
@@ -8438,6 +8625,8 @@ function (window, undefined) {
 	prot["getDataLabelsPos"] = prot.getDataLabelsPos;
 	prot["getErrorBarsValueType"] = prot.getErrorBarsValueType;
 	prot["getTrendlineType"] = prot.getTrendlineType;
+	prot["getForecastForward"] = prot.getForecastForward;
+	prot["getForecastBackward"] = prot.getForecastBackward;
 	prot["getHorGridLines"] = prot.getHorGridLines;
 	prot["putHorGridLines"] = prot.putHorGridLines;
 	prot["getVertGridLines"] = prot.getVertGridLines;
@@ -8503,6 +8692,7 @@ function (window, undefined) {
 	prot["setDisplayChartTitle"] = prot.setDisplayChartTitle;
 	prot["setDisplayDataLabels"] = prot.setDisplayDataLabels;
 	prot["setDisplayDataTable"] = prot.setDisplayDataTable;
+	prot["getDataTable"] = prot.getDataTable;
 	prot["setDisplayErrorBars"] = prot.setDisplayErrorBars;
 	prot["setDisplayGridlines"] = prot.setDisplayGridlines;
 	prot["setDisplayLegend"] = prot.setDisplayLegend;
@@ -9627,11 +9817,15 @@ function (window, undefined) {
 	prot["asc_setSeparator"] = prot.asc_setSeparator;
 	prot["asc_setSymbol"] = prot.asc_setSymbol;
 	prot["asc_setCurrencySymbol"] = prot.asc_setCurrencySymbol;
+	prot["asc_setCalendar"] = prot.asc_setCalendar;
+	prot["asc_setGannen"] = prot.asc_setGannen;
 	prot["asc_getType"] = prot.asc_getType;
 	prot["asc_getDecimalPlaces"] = prot.asc_getDecimalPlaces;
 	prot["asc_getSeparator"] = prot.asc_getSeparator;
 	prot["asc_getSymbol"] = prot.asc_getSymbol;
 	prot["asc_getCurrencySymbol"] = prot.asc_getCurrencySymbol;
+	prot["asc_getCalendar"] = prot.asc_getCalendar;
+	prot["asc_getGannen"] = prot.asc_getGannen;
 
 	window['Asc']['CAscChartProp'] = window['Asc'].CAscChartProp = CAscChartProp;
 	prot = CAscChartProp.prototype;

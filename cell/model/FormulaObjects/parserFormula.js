@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -602,8 +605,6 @@ let cElementTypeWeight =  new Map();
 	cElementTypeWeight.set(cElementType.error, 3);
 
 
-
-
 Math.fmod = function ( a, b ) {
 	return Number( (a - (this.floor( a / b ) * b)).toPrecision( cExcelSignificantDigits ) );
 };
@@ -747,8 +748,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cNumber.prototype.constructor = cNumber;
 	cNumber.prototype.type = cElementType.number;
 	cNumber.prototype.tocString = function () {
-		return new cString(("" + this.value).replace(FormulaSeparators.digitSeparatorDef,
-			FormulaSeparators.digitSeparator));
+		// scientific number should be transformed to Upper case string
+		// 1e+307 -> '1E+307'
+		var s = ("" + this.value).replace('e', 'E');
+		var sep = FormulaSeparators.digitSeparator;
+		if (sep !== '.') {
+			s = s.replace('.', sep);
+		}
+		return new cString(s);
 	};
 	cNumber.prototype.tocNumber = function () {
 		return this;
@@ -1197,7 +1204,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			if (checkExclude && !excludeHiddenRows) {
 				excludeHiddenRows = this.ws.isApplyFilterBySheet();
 			}
-			r._foreachNoEmpty(function (cell) {
+			r._foreachDataOnly(function (cell) {
 				if(!(excludeNestedStAg && cell.formulaParsed && cell.formulaParsed.isFoundNestedStAg())){
 					var checkTypeVal = checkTypeCell(cell);
 					if(!(excludeErrorsVal && CellValueType.Error === checkTypeVal.type)){
@@ -1323,7 +1330,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArea.prototype.countCells = function () {
 		var r = this.getRange(), bbox = r.bbox, count = (Math.abs(bbox.c1 - bbox.c2) + 1) *
 			(Math.abs(bbox.r1 - bbox.r2) + 1);
-		r._foreachNoEmpty(function (cell) {
+		r._foreachDataOnly(function (cell) {
 			if (!cell || !cell.isEmptyTextString()) {
 				count--;
 			}
@@ -1349,7 +1356,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		var ws = r.worksheet;
 		var oldExcludeHiddenRows = ws.bExcludeHiddenRows;
-		ws.bExcludeHiddenRows = false;
+		ws.excludeHiddenRows(false);
 		r._foreach2(function (cell, i, j, r1, c1) {
 			if (!arr[i - r1]) {
 				arr[i - r1] = [];
@@ -1365,7 +1372,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 			arr[i - r1][j - c1] = resValue;
 		});
-		ws.bExcludeHiddenRows = oldExcludeHiddenRows;
+		ws.excludeHiddenRows(oldExcludeHiddenRows);
 
 		return arr;
 	};
@@ -1397,7 +1404,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArea.prototype.getMatrixNoEmpty = function () {
 		var arr = [], r = this.getRange(), res;
-		r._foreachNoEmpty(function (cell, i, j, r1, c1) {
+		r._foreachDataOnly(function (cell, i, j, r1, c1) {
 			if (!arr[i - r1]) {
 				arr[i - r1] = [];
 			}
@@ -1409,7 +1416,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArea.prototype.getValuesNoEmpty = function (checkExclude, excludeHiddenRows, excludeErrorsVal, excludeNestedStAg) {
 		var arr = [], r = this.getRange();
 
-		r._foreachNoEmpty(function (cell) {
+		r._foreachDataOnly(function (cell) {
 			if(!(excludeNestedStAg && cell.formulaParsed && cell.formulaParsed.isFoundNestedStAg())){
 				var checkTypeVal = checkTypeCell(cell);
 				if(!(excludeErrorsVal && CellValueType.Error === checkTypeVal.type)){
@@ -1577,7 +1584,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				_exclude = _wsA[i].isApplyFilterBySheet();
 			}
 
-			_r[i]._foreachNoEmpty(function (cell) {
+			_r[i]._foreachDataOnly(function (cell) {
 				if (!(excludeNestedStAg && cell.formulaParsed && cell.formulaParsed.isFoundNestedStAg())) {
 					var checkTypeVal = checkTypeCell(cell);
 					if (!(excludeErrorsVal && CellValueType.Error === checkTypeVal.type)) {
@@ -1740,7 +1747,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var _r = this.range(_wsA), bbox = _r[0].bbox, count = (Math.abs(bbox.c1 - bbox.c2) + 1) * (Math.abs(bbox.r1 - bbox.r2) + 1);
 		count = _r.length * count;
 		for (i = 0; i < _r.length; i++) {
-			_r[i]._foreachNoEmpty(function (cell) {
+			_r[i]._foreachDataOnly(function (cell) {
 				if (!cell || !cell.isEmptyTextString()) {
 					count--;
 				}
@@ -1754,7 +1761,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var ws = r[0] ? r[0].worksheet : null;
 		if (ws) {
 			var oldExcludeHiddenRows = ws.bExcludeHiddenRows;
-			ws.bExcludeHiddenRows = false;
+			ws.excludeHiddenRows(false);
 		}
 		for (var k = 0; k < r.length; k++) {
 			arr[k] = [];
@@ -1828,7 +1835,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		for (var k = 0; k < r.length; k++) {
 			arr[k] = [];
-			r[k]._foreachNoEmpty(function (cell, i, j, r1, c1) {
+			r[k]._foreachDataOnly(function (cell, i, j, r1, c1) {
 				if (!arr[k][i - r1]) {
 					arr[k][i - r1] = [];
 				}
@@ -1838,11 +1845,33 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			});
 		}
 		if (ws) {
-			ws.bExcludeHiddenRows = oldExcludeHiddenRows;
+			ws.excludeHiddenRows(oldExcludeHiddenRows);
 		}
 
 		return arr;
 	};
+	cArea3D.prototype.foreach = function (action) {
+		let _wsA = this.wsRange();
+		if (_wsA.length >= 1) {
+			let _r = this.range(_wsA);
+			let bBreak = false;
+			for (let i = 0; i < _r.length; i++) {
+				if (_r[i]) {
+					_r[i]._foreach2(function (cell, row, col) {
+						let res = action(cell, row, col);
+						if (res === true) {
+							bBreak = true;
+							return true;
+						}
+					});
+					if (bBreak) {
+						break;
+					}
+				}
+			}
+		}
+	};
+
 	cArea3D.prototype.foreach2 = function (action) {
 		var _wsA = this.wsRange();
 		if (_wsA.length >= 1) {
@@ -3333,7 +3362,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			this.countElement += lookingRow.length;
 		}
 	};
-	cArray.prototype.pushCol = function (matrix, colNum) {
+	cArray.prototype.pushCol = function (matrix, colNum, withoutRecalc) {
 		for (let i = 0; i < matrix.length; i++) {
 			if (matrix[i] && matrix[i][colNum]) {
 				if (!this.array[i]) {
@@ -3342,7 +3371,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				this.array[i].push(matrix[i][colNum]);
 			}
 		}
-		this.recalculate();
+		if (!withoutRecalc) {
+			this.recalculate();
+		}
 	};
 	cArray.prototype.pushRow = function (matrix, rowNum) {
 		if (matrix && matrix[rowNum]) {
@@ -3418,13 +3449,22 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cUndefined.prototype = Object.create(cBaseType.prototype);
 	cUndefined.prototype.constructor = cUndefined;
 
-	function checkTypeCell(cell, opt_toLowerCase) {
-		if (cell && !cell.isNullText()) {
-			var type = cell.getType();
+	/**
+	 * Returns typed cElement for a cell value.
+	 * When opt_noCalc is true, uses NoCalc getters to avoid triggering _checkDirty —
+	 * used by cache builders to read raw cell state without premature formula recalculation.
+	 * @param {Cell} cell
+	 * @param {boolean} [opt_toLowerCase]
+	 * @param {boolean} [opt_noCalc]
+	 * @returns {cNumber|cString|cBool|cError|cEmpty}
+	 */
+	function checkTypeCell(cell, opt_toLowerCase, opt_noCalc) {
+		if (cell && !cell.isNullText(opt_noCalc)) {
+			var type = cell.getType(opt_noCalc);
 			if (CellValueType.Number === type) {
-				return new cNumber(cell.getNumberValue());
+				return new cNumber(cell.getNumberValue(opt_noCalc));
 			} else {
-				var val = cell.getValueWithoutFormat();
+				var val = cell.getValueWithoutFormat(opt_noCalc);
 				if (CellValueType.Bool === type) {
 					return new cBool(val);
 				} else if (CellValueType.Error === type) {
@@ -3521,13 +3561,25 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 			if (matrix1 || matrix2) {
 				res = new cArray();
-				for (var iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? res.addRow() : true) {
+				var resArray = new Array(rowCount);
+				var resCounts = new Array(rowCount);
+				var br1 = dimension1.row === 1, bc1 = dimension1.col === 1;
+				var br2 = dimension2.row === 1, bc2 = dimension2.col === 1;
+				for (var iRow = 0; iRow < rowCount; iRow++) {
+					var rowArr = new Array(colCount);
+					var r1 = br1 ? 0 : iRow, r2 = br2 ? 0 : iRow;
 					for (var iCol = 0; iCol < colCount; iCol++) {
-						var elem1 = matrix1 ? matrix1.getElementRowCol(dimension1.row === 1 ? 0 : iRow, dimension1.col === 1 ? 0 : iCol, true) : operand1;
-						var elem2 = matrix2 ? matrix2.getElementRowCol(dimension2.row === 1 ? 0 : iRow, dimension2.col === 1 ? 0 : iCol, true) : operand2;
-						res.addElement(func(elem1, elem2));
+						var elem1 = matrix1 ? matrix1.getElementRowCol(r1, bc1 ? 0 : iCol, true) : operand1;
+						var elem2 = matrix2 ? matrix2.getElementRowCol(r2, bc2 ? 0 : iCol, true) : operand2;
+						rowArr[iCol] = func(elem1, elem2);
 					}
+					resArray[iRow] = rowArr;
+					resCounts[iRow] = colCount;
 				}
+				res.array = resArray;
+				res.countElementInRow = resCounts;
+				res.rowCount = rowCount;
+				res.countElement = rowCount * colCount;
 			}
 		}
 
@@ -3691,16 +3743,24 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				if (cElementType.cellsRange === arg.type || cElementType.array === arg.type) {
 					newArgs[i] = arg.getMatrix(excludeHiddenRows, excludeErrorsVal, excludeNestedStAg);
 				} else if (cElementType.cellsRange3D === arg.type) {
-					newArgs[i] = arg.getMatrix(excludeHiddenRows, excludeErrorsVal, excludeNestedStAg)[0];
+					if (!arg.isSingleSheet()) {
+						newArgs[i] = new cError(cErrorType.bad_reference);
+					} else {
+						newArgs[i] = arg.getMatrix(excludeHiddenRows, excludeErrorsVal, excludeNestedStAg)[0];
+					}
 				} else if (cElementType.error === arg.type) {
 					newArgs[i] = arg;
 				} else {
 					newArgs[i] = new cError(notArrayError ? notArrayError : cErrorType.division_by_zero);
 				}
 			} else if (cElementType.cellsRange === arg.type || cElementType.cellsRange3D === arg.type) {
-				newArgs[i] = bFirstRangeElem ? arg.getValueByRowCol(0,0) : arg.cross(arg1);
-				if (newArgs[i] == null) {
-					newArgs[i] = arg.cross(arg1);
+				if (cElementType.cellsRange3D === arg.type && !arg.isSingleSheet()) {
+					newArgs[i] = new cError(cErrorType.bad_reference);
+				} else {
+					newArgs[i] = bFirstRangeElem ? arg.getValueByRowCol(0,0) : arg.cross(arg1);
+					if (newArgs[i] === null) {
+						newArgs[i] = arg.cross(arg1);
+					}
 				}
 			} else if (cElementType.array === arg.type) {
 				if (bAddFirstArrElem) {
@@ -4006,6 +4066,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		//added special type for cT function, it always uses the first argument from the area
 		var replaceOnlyArray = cReturnFormulaType.replace_only_array === returnFormulaType;
 
+		const checkRange3d = function (_arg) {
+			if (_arg && _arg.type === cElementType.cellsRange3D && _arg.isSingleSheet && _arg.isSingleSheet()) {
+				return true;
+			}
+			return false;
+		};
+
 		// Check if the element should be passed to the formula unchanged
 		const checkArrayIndex = function(index, _arg_type, args) {
 			let res = false;
@@ -4018,7 +4085,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					//that determines whether this argument should be treated as an array or not
 					let tempsArgIndex = arrayIndex[0];
 					if(undefined !== tempsArgIndex && arg[tempsArgIndex]) {
-						if(cElementType.cellsRange === arg[tempsArgIndex].type || cElementType.cellsRange3D === arg[tempsArgIndex].type || cElementType.array === arg[tempsArgIndex].type) {
+						if(cElementType.cellsRange === arg[tempsArgIndex].type || checkRange3d(arg[tempsArgIndex]) || cElementType.array === arg[tempsArgIndex].type) {
 							res = true;
 						}
 					}
@@ -4067,13 +4134,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 
 			//first iterate over all arguments and convert from cellsRange to array or value depending on how the function should work
-			var tempArgs = [], tempArg, firstArray, _checkArrayIndex;
+			var tempArgs = [], tempArg, firstArray, _checkArrayIndex, maxArrayRows = 1, maxArrayCols = 1;
 			for (var j = 0; j < argumentsCount; j++) {
 				tempArg = arg[j];
 
 				_checkArrayIndex = checkArrayIndex(j, tempArg.type, arg);
 				if (!_checkArrayIndex) {
-					if (cElementType.cellsRange === tempArg.type || cElementType.cellsRange3D === tempArg.type) {
+					if (cElementType.cellsRange === tempArg.type || checkRange3d(tempArg)) {
 						if (checkArayIndexType(j, arrayIndexesType.range)) {
 							// transfer range to argument without changing 
 							tempArg = tempArg;
@@ -4103,12 +4170,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 						if (checkArayIndexType(j, arrayIndexesType.array)) {
 							// transfer array to argument without changing
 							tempArg = tempArg;
-						} else if (!firstArray) {	//trying to find an array that has more than 1 column and more than 1 row
-							firstArray = tempArg;
-						} else if((1 === firstArray.getRowCount() || 1 === firstArray.getCountElementInRow()) && 1 !== tempArg.getRowCount() && 1 !== tempArg.getCountElementInRow()) {
-							firstArray = tempArg;
-						} else if((1 === firstArray.getRowCount() && 1 === firstArray.getCountElementInRow()) && (1 !== tempArg.getRowCount() || 1 !== tempArg.getCountElementInRow())){
-							firstArray = tempArg;
+						} else {
+							maxArrayRows = Math.max(maxArrayRows, tempArg.getRowCount());
+							maxArrayCols = Math.max(maxArrayCols, tempArg.getCountElementInRow());
+							if (!firstArray) {
+								firstArray = tempArg;
+							} else if((1 === firstArray.getRowCount() || 1 === firstArray.getCountElementInRow()) && 1 !== tempArg.getRowCount() && 1 !== tempArg.getCountElementInRow()) {
+								firstArray = tempArg;
+							} else if((1 === firstArray.getRowCount() && 1 === firstArray.getCountElementInRow()) && (1 !== tempArg.getRowCount() || 1 !== tempArg.getCountElementInRow())){
+								firstArray = tempArg;
+							}
 						}
 					}
 				}
@@ -4121,15 +4192,46 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			//the value for each cell of the array, changing opt_bbox
 			//TODO added another check. Consider always using parserFormula.ref in the future.
 			//TODO review isOneCell/checkOneRowCol check - may need to look at data count and expand range if parserFormula.ref exceeds argument range
-			if ((replaceAreaByRefs && 0 === argumentsCount && parserFormula.ref) || (/*!bIsSpecialFunction &&*/ firstArray && parserFormula.ref && !parserFormula.ref.isOneCell() && checkOneRowCol())) {
+			let refSize = parserFormula.ref && parserFormula.ref.getSize();
+			let needRefExpand = (replaceAreaByRefs && 0 === argumentsCount && parserFormula.ref) ||
+				(firstArray && parserFormula.ref && !parserFormula.ref.isOneCell() &&
+				(refSize.row > firstArray.rowCount || refSize.col > firstArray.countElementInRow.length) && checkOneRowCol());
+			let targetRows = needRefExpand ? Math.max(maxArrayRows, refSize.row) : maxArrayRows;
+			let targetCols = needRefExpand ? Math.max(maxArrayCols, refSize.col) : maxArrayCols;
+
+			if (needRefExpand || (firstArray && firstArray.foreach &&
+				(firstArray.getRowCount() < targetRows || firstArray.getCountElementInRow() < targetCols))) {
 				firstArray = new cArray();
-				firstArray.fillEmptyFromRange(parserFormula.ref);
+				for (var _ri = 0; _ri < targetRows; _ri++) {
+					firstArray.addRow();
+					for (var _ci = 0; _ci < targetCols; _ci++) {
+						firstArray.addElement(null);
+					}
+				}
 			}
 
 			if (firstArray) {
 				var array = new cArray();
 				array.realSize = firstArray.realSize;
 				array.missedValue = firstArray.missedValue;
+
+				//pre-compute: hoist invariant argument properties out of the per-element loop
+				var _argInfo = new Array(argumentsCount);
+				var _needBboxPerElem = (0 === argumentsCount && parserFormula.ref);
+				for (var _j = 0; _j < argumentsCount; _j++) {
+					var _ta = tempArgs[_j];
+					var _isArrayArg = checkArrayIndex(_j, cElementType.array, tempArgs);
+					var _isRange = cElementType.cellsRange === _ta.type || checkRange3d(_ta);
+					_argInfo[_j] = {
+						isArrayArg: _isArrayArg,
+						isArray: cElementType.array === _ta.type && !_isArrayArg,
+						isRange: _isRange && !_isArrayArg && !checkArrayIndex(_j, cElementType.cellsRange),
+						rows: (cElementType.array === _ta.type) ? _ta.getRowCount() : 0,
+						cols: (cElementType.array === _ta.type) ? _ta.getCountElementInRow() : 0,
+						dimensions: _isRange ? _ta.getDimensions() : null
+					};
+				}
+
 				//bbox_elem -
 				var doCalc = function (elem, r, c, _row, _col) {
 					if (!array.array[r]) {
@@ -4137,16 +4239,17 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					}
 
 					//form new arguments (take r/c element of array from each argument)
-					var newArgs = [], newArg;
+					var newArgs = new Array(argumentsCount);
+					var newArg;
 					for (var j = 0; j < argumentsCount; j++) {
 						newArg = tempArgs[j];
-						let isArrayArg = checkArrayIndex(j, cElementType.array, tempArgs);
-						if (cElementType.array === newArg.type && !isArrayArg) {
-							if (1 === newArg.getRowCount() && 1 === newArg.getCountElementInRow()) {
+						var info = _argInfo[j];
+						if (info.isArray) {
+							if (1 === info.rows && 1 === info.cols) {
 								newArg = newArg.array[0] ? newArg.array[0][0] : null;
-							} else if (1 === newArg.getRowCount()) {
+							} else if (1 === info.rows) {
 								newArg = newArg.array[0] ? newArg.array[0][c] : null;
-							} else if (1 === newArg.getCountElementInRow()) {
+							} else if (1 === info.cols) {
 								newArg = newArg.array[r] ? newArg.array[r][0] : null;
 							} else {
 								newArg = newArg.array[r] ? newArg.array[r][c] : null;
@@ -4156,13 +4259,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 								//for now doing this - if not the last argument, then empty element, if last - undefined
 								newArg = /*j === argumentsCount - 1 ? undefined : */new cError(cErrorType.not_available);
 							}
-						} else if ((cElementType.cellsRange === newArg.type || cElementType.cellsRange3D === newArg.type) && !isArrayArg && !checkArrayIndex(j, cElementType.cellsRange)) {
-							let dimensions = newArg.getDimensions();
-							if (1 === dimensions.row && 1 === dimensions.col) {
+						} else if (info.isRange) {
+							if (1 === info.dimensions.row && 1 === info.dimensions.col) {
 								newArg = newArg.getValueByRowCol(0, 0);
-							} else if (1 === dimensions.row) {
+							} else if (1 === info.dimensions.row) {
 								newArg = newArg.getValueByRowCol(0, c);
-							} else if (1 === dimensions.col) {
+							} else if (1 === info.dimensions.col) {
 								newArg = newArg.getValueByRowCol(r, 0);
 							} else {
 								newArg = newArg.getValueByRowCol(r, c);
@@ -4174,13 +4276,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 							}
 						}
 
-						newArgs.push(newArg);
+						newArgs[j] = newArg;
 					}
 
 					//for case with 0 arguments
 					//may need to remove check for argument count and always replace bbox
 					var temp_opt_bbox = opt_bbox;
-					if (0 === argumentsCount && parserFormula.ref) {
+					if (_needBboxPerElem) {
 						temp_opt_bbox = new Asc.Range(c + parserFormula.ref.c1, r + parserFormula.ref.r1, c + parserFormula.ref.c1, r + parserFormula.ref.r1);
 					}
 					let _elem = t.Calculate(newArgs, temp_opt_bbox, opt_defName, parserFormula.ws, null, _row ? _row : r, _col ? _col : c);
@@ -4333,6 +4435,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return true;
 	};
+
+	cBaseFunction.prototype.getArgHelpList = function () {
+		return null;
+	};
+	
 
 	/** @constructor */
 	function cUnknownFunction(name) {
@@ -5477,28 +5584,30 @@ _func[cElementType.string][cElementType.number] = function ( arg0, arg1, what ) 
 	return new cError(cErrorType.wrong_value_type);
 };
 
+function _isEqualStrings(str1, str2, caseSensitive) {
+	return caseSensitive
+		? AscCommon.stringCompare(str1, str2) === 0
+		: AscCommon.stringCompare(str1.toLowerCase(), str2.toLowerCase()) === 0;
+}
+
 _func[cElementType.string][cElementType.string] = function ( arg0, arg1, what ) {
 	//TODO need change opt_return_bool. for example >  change on props -> .returnBool & .useLowerCase & ...
 	let opt_return_bool = arguments[5];
 	let res = null;
 
-	let isEqualStrings = function (str1, str2) {
-		return opt_return_bool ? str1 === str2 : str1.toLowerCase() === str2.toLowerCase();
-	};
-
 	let _arg0, _arg1;
 	if (what === ">") {
-		res = AscCommonExcel.stringCompare(arg0.getValue(true), arg1.getValue(true)) > 0;
+		res = AscCommon.stringCompare(arg0.getValue(true), arg1.getValue(true)) > 0;
 	} else if (what === ">=") {
-		res = AscCommonExcel.stringCompare(arg0.getValue(true), arg1.getValue(true)) >= 0;
+		res = AscCommon.stringCompare(arg0.getValue(true), arg1.getValue(true)) >= 0;
 	} else if (what === "<") {
-		res = AscCommonExcel.stringCompare(arg0.getValue(true), arg1.getValue(true)) < 0;
+		res = AscCommon.stringCompare(arg0.getValue(true), arg1.getValue(true)) < 0;
 	} else if (what === "<=") {
-		res = AscCommonExcel.stringCompare(arg0.getValue(true), arg1.getValue(true)) <= 0;
+		res = AscCommon.stringCompare(arg0.getValue(true), arg1.getValue(true)) <= 0;
 	} else if (what === "=") {
-		res = isEqualStrings(arg0.getValue(true), arg1.getValue(true));
+		res = _isEqualStrings(arg0.getValue(true), arg1.getValue(true), opt_return_bool);
 	} else if (what === "<>") {
-		res = !isEqualStrings(arg0.getValue(true), arg1.getValue(true));
+		res = !_isEqualStrings(arg0.getValue(true), arg1.getValue(true), opt_return_bool);
 	} else if (what === "-") {
 		_arg0 = arg0.tocNumber();
 		_arg1 = arg1.tocNumber();
@@ -6295,6 +6404,23 @@ _func[cElementType.cell3D] = _func[cElementType.cell];
 			this.atOperators = [];
 		}
 		this.atOperators.push({start: start, end: end, type: type});
+	};
+
+	ParseResult.prototype.addHashOperator = function(start, end, type) {
+		if (!this.hashOperators) {
+			this.hashOperators = [];
+		}
+		this.hashOperators.push({start: start, end: end, type: type});
+	};
+
+	ParseResult.prototype.addExternalReference = function(key, sheetData) {
+		if (!this.externalReferenesNeedAdd) {
+			this.externalReferenesNeedAdd = [];
+		}
+		if (!this.externalReferenesNeedAdd[key]) {
+			this.externalReferenesNeedAdd[key] = [];
+		}
+		this.externalReferenesNeedAdd[key].push(sheetData);
 	};
 
 	ParseResult.prototype.addRefPos = function(start, end, index, oper, isName) {
@@ -7257,7 +7383,7 @@ function parserFormula( formula, parent, _ws ) {
 			}
 			if (aArg[i] && (aArg[i].type === cElementType.cell || aArg[i].type === cElementType.cell3D)) {
 				let oRange = aArg[i].getRange();
-				oRange._foreachNoEmpty(function (oCell) {
+				oRange._foreachDataOnly(function (oCell) {
 					if (!bRecursiveCell) {
 						const sCellKey = oCell.ws.getId() + '_' + oCell.nRow + '_' + oCell.nCol;
 						if (g_cCalcRecursion.isCellChecked(sCellKey)) {
@@ -7307,7 +7433,7 @@ function parserFormula( formula, parent, _ws ) {
 		if (oOperand && aTypesWithRange.includes(oOperand.type)) {
 			if (oOperand.type === cElementType.cell || oOperand.type === cElementType.cell3D) {
 				let oRange = oOperand.getRange();
-				oRange._foreachNoEmpty(function (oCell) {
+				oRange._foreachDataOnly(function (oCell) {
 					bRecursiveCell = oCell.checkRecursiveFormula(oThis.getParent());
 				});
 				return bRecursiveCell;
@@ -8318,7 +8444,7 @@ function parserFormula( formula, parent, _ws ) {
 				oRange = found_operand && found_operand.getRange && found_operand.getRange();
 			}
 
-			oRange && oRange._foreachNoEmpty(function (oCell) {
+			oRange && oRange._foreachDataOnly(function (oCell) {
 				if (!bRecursiveCell) {
 					bRecursiveCell = oCell.checkRecursiveFormula(parserFormula.getParent());
 				}
@@ -8535,22 +8661,10 @@ function parserFormula( formula, parent, _ws ) {
 						externalLink = t.wb.getExternalLinkIndexByName(externalLink);
 						if (externalLink === null) {
 							externalLink = receivedLink ? receivedLink : _3DRefTmp[3];
-							if (!parseResult.externalReferenesNeedAdd) {
-								parseResult.externalReferenesNeedAdd = [];
-							}
-							if (!parseResult.externalReferenesNeedAdd[externalLink]) {
-								parseResult.externalReferenesNeedAdd[externalLink] = [];
-							}
-							parseResult.externalReferenesNeedAdd[externalLink].push({sheet: sheetName /*_3DRefTmp[1]*/});
+							parseResult.addExternalReference(externalLink, {sheet: sheetName /*_3DRefTmp[1]*/});
 						} else {
 							isExternalRefExist = true;
-							if (!parseResult.externalReferenesNeedAdd) {
-								parseResult.externalReferenesNeedAdd = [];
-							}
-							if (!parseResult.externalReferenesNeedAdd[externalName]) {
-								parseResult.externalReferenesNeedAdd[externalName] = [];
-							}
-							parseResult.externalReferenesNeedAdd[externalName].push({sheet: sheetName /*_3DRefTmp[1]*/});
+							parseResult.addExternalReference(externalName, {sheet: sheetName /*_3DRefTmp[1]*/, alreadyExists: true});
 						}
 					}
 
@@ -8853,6 +8967,31 @@ function parserFormula( formula, parent, _ws ) {
 					currentAtOperatorPos = null;
 				}
 
+				// Postfix spilled-range operator `#` (ANCHORARRAY).
+				// Only after a ref/area/name/table operand; at this point `operand_expected` has been false,
+				// so `#REF!` / `#N/A` / other error literals (consumed by parserHelp.isError while
+				// `operand_expected` is true) cannot be confused with this operator.
+				// Requires parseResult.refPos to locate the operand start precisely (handles Sheet!A1 etc.);
+				// without it we silently skip — that path (e.g. reading `_xlfn.ANCHORARRAY(A1)` from XLSX)
+				// does not contain a literal `#` anyway.
+				if (AscCommonExcel.bIsSupportDynamicArrays && local && t.Formula[ph.pCurrPos] === '#') {
+					var _hashOperandType = found_operand.type;
+					if (_hashOperandType === cElementType.cell ||
+						_hashOperandType === cElementType.cell3D ||
+						_hashOperandType === cElementType.name || _hashOperandType === cElementType.name3D ||
+						_hashOperandType === cElementType.table) {
+						var _lastRefPos = parseResult.refPos && parseResult.refPos[parseResult.refPos.length - 1];
+						if (_lastRefPos && _lastRefPos.end === ph.pCurrPos) {
+							parseResult.addHashOperator(_lastRefPos.start, ph.pCurrPos + 1, _hashOperandType);
+							ph.pCurrPos++;
+							// Extend refPos span to include '#' and mark it so CellEditorView
+							// can resolve the full spill-range for live formula highlighting.
+							_lastRefPos.end = ph.pCurrPos;
+							_lastRefPos.isHashRef = true;
+						}
+					}
+				}
+
 				t.outStack.push(found_operand);
 				parseResult.addElem(found_operand);
 				parseResult.operand_expected = false;
@@ -9071,7 +9210,7 @@ function parserFormula( formula, parent, _ws ) {
 						oRefElement = oRefElement.getValue();
 					}
 					const oRange = oRefElement && oRefElement.getRange && oRefElement.getRange();
-					oRange && oRange._foreachNoEmpty(function (oCell) {
+					oRange && oRange._foreachDataOnly(function (oCell) {
 						if (!bRecursiveCell) {
 							bRecursiveCell = oCell.checkRecursiveFormula(t.getParent(), {}, bRecheckFormula);
 						}
@@ -9095,19 +9234,12 @@ function parserFormula( formula, parent, _ws ) {
 
 				if (this.importFunctionsRangeLinks) {
 					for (let i in this.importFunctionsRangeLinks) {
-						let externalLink = this.wb.getExternalLinkIndexByName(i);
-						if (externalLink === null) {
-							externalLink = i;
-							if (!parseResult.externalReferenesNeedAdd) {
-								parseResult.externalReferenesNeedAdd = [];
-							}
-							if (!parseResult.externalReferenesNeedAdd[externalLink]) {
-								parseResult.externalReferenesNeedAdd[externalLink] = [];
-							}
-
-							for (var j = 0; j < this.importFunctionsRangeLinks[i].length; j++) {
-								parseResult.externalReferenesNeedAdd[externalLink].push({sheet: this.importFunctionsRangeLinks[i][j].sheet, notUpdateId: true});
-							}
+						// register every IMPORTRANGE link in parseResult.externalReferenesNeedAdd, including ones
+						// that already exist in the workbook (mark them with alreadyExists=true so
+						// addExternalReferencesAfterParseFormulas skips re-creation, but checkRemoveExternalReferences
+						let alreadyExists = this.wb.getExternalLinkIndexByName(i) !== null;
+						for (var j = 0; j < this.importFunctionsRangeLinks[i].length; j++) {
+							parseResult.addExternalReference(i, {sheet: this.importFunctionsRangeLinks[i][j].sheet, notUpdateId: true, alreadyExists: alreadyExists});
 						}
 					}
 
@@ -9320,7 +9452,29 @@ function parserFormula( formula, parent, _ws ) {
 		return {formula: formula, notReplaceDefaultSingle: formula};
 	};
 
-	parserFormula.prototype.findRefByOutStack = function (forceCheck) {
+	parserFormula.prototype._assembleWithHashOperators = function (hashOperators) {
+		if (!hashOperators || hashOperators.length === 0) {
+			return this.Formula;
+		}
+
+		// Sort by start descending so earlier replacements don't shift later positions.
+		var ops = hashOperators.slice().sort(function (a, b) { return b.start - a.start; });
+
+		var formula = this.Formula;
+		for (var i = 0; i < ops.length; i++) {
+			var op = ops[i];
+			// Safety: hash op must end with '#'.
+			if (formula.charAt(op.end - 1) !== '#') {
+				continue;
+			}
+			var operandStr = formula.substring(op.start, op.end - 1);
+			var replacement = "_xlfn.ANCHORARRAY(" + operandStr + ")";
+			formula = formula.substring(0, op.start) + replacement + formula.substring(op.end);
+		}
+		return formula;
+	};
+
+	parserFormula.prototype.findRefByOutStack = function (forceCheck, opt_ignoreAnchorArray) {
 		if (AscCommonExcel.bIsSupportDynamicArrays || forceCheck) {
 			// using outStack, look at all the arguments in the formulas and compare them with the arrayIndex positions for this formula
 			// go through the stack in the same order as .calculate method
@@ -9431,6 +9585,12 @@ function parserFormula( formula, parent, _ws ) {
 							}
 
 							if (isRef || (_tmp && (_tmp.type === cElementType.array /*|| _tmp.type === cElementType.cellsRange || _tmp.type === cElementType.cellsRange3D*/))) {
+								return true;
+							}
+							// ANCHORARRAY (`A1#`) returns the whole spilled range as cArea/cArea3D —
+							// treat it as a dynamic-array producer so the caller spills into it.
+							if (!opt_ignoreAnchorArray && _tmp && currentElement.type === cElementType.func && currentElement.name === "ANCHORARRAY" &&
+								(_tmp.type === cElementType.cellsRange || _tmp.type === cElementType.cellsRange3D)) {
 								return true;
 							}
 
@@ -9750,8 +9910,17 @@ function parserFormula( formula, parent, _ws ) {
 
 					this.value = new cError(cErrorType.cannot_be_spilled);
 				} else {
-					this.setAca(false);
-					this.setCa(false);
+					if (this.value.type === cElementType.error && this.value.errorType === cErrorType.cannot_be_spilled) {
+						// Inherited #SPILL! from upstream (e.g. =A1# when A1 itself is blocked).
+						// Mirror the head formula's collapsed state so recalculateVolatileArrays
+						// puts this formula through the collapsed branch (not the spurious expand-to-1x1 branch).
+						this.setAca(true);
+						this.setCa(true);
+						this.ws.dynamicArrayManager.checkVm(this, this.getDynamicRef());
+					} else {
+						this.setAca(false);
+						this.setCa(false);
+					}
 				}
 			}
 
@@ -9806,6 +9975,13 @@ function parserFormula( formula, parent, _ws ) {
 					//t.ws.dynamicArrayManager.changeCell(cell);
 				});
 			}
+			// Fallback for anchor formulas where checkVm could not assign a vm index
+			// (e.g. formula created while the upstream was already blocked and never expanded).
+			// aca/ca are already true (set in calculate before reaching here).
+			// Enqueue directly in case _foreachChanged misses the cell in this cycle.
+			if (this.ws.workbook && this.ws.workbook.dependencyFormulas) {
+				this.ws.workbook.dependencyFormulas.addToVolatileArrays(this);
+			}
 			return;
 		} else {
 			resultDimensions = {row: 1, col: 1};
@@ -9841,8 +10017,9 @@ function parserFormula( formula, parent, _ws ) {
 			let wasExpanded = oldDynamicRef && (oldDynamicRef.r2 > oldDynamicRef.r1 || oldDynamicRef.c2 > oldDynamicRef.c1);
 			if (wasExpanded) {
 				this._resizeDynamicArray(requiredRange, oldDynamicRef);
-			} else {
-				//this._expandDynamicArray(requiredRange, oldDynamicRef || currentRef);
+			} else if (oldDynamicRef && this.getCm() && this.ws.dynamicArrayManager &&
+					this.ws.dynamicArrayManager.isAutoExpandBBox(requiredRange)) {
+				//this._expandDynamicArray(requiredRange, oldDynamicRef);
 			}
 		}
 	};
@@ -9898,13 +10075,6 @@ function parserFormula( formula, parent, _ws ) {
 			return;
 		}
 
-		this.ref = new Asc.Range(this.parent.nCol, this.parent.nRow, this.parent.nCol, this.parent.nRow);
-		
-		let cmIndex = this.getCm();
-		if (cmIndex && this.ws.dynamicArrayManager) {
-			this.ws.dynamicArrayManager.updateDynamicArrayCollapsedState(cmIndex, true);
-		}
-		
 		if (oldRange && (oldRange.r2 > oldRange.r1 || oldRange.c2 > oldRange.c1)) {
 			for (let r = oldRange.r1; r <= oldRange.r2; r++) {
 				for (let c = oldRange.c1; c <= oldRange.c2; c++) {
@@ -9919,6 +10089,15 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			}
 		}
+
+		this.ref = new Asc.Range(this.parent.nCol, this.parent.nRow, this.parent.nCol, this.parent.nRow);
+		
+		let cmIndex = this.getCm();
+		if (cmIndex && this.ws.dynamicArrayManager) {
+			this.ws.dynamicArrayManager.updateDynamicArrayCollapsedState(cmIndex, true);
+		}
+		
+
 
 		if (this.ws.workbook && this.ws.workbook.dependencyFormulas) {
 			let firstCellRange = new Asc.Range(this.parent.nCol, this.parent.nRow, this.parent.nCol, this.parent.nRow);
@@ -10575,6 +10754,28 @@ function parserFormula( formula, parent, _ws ) {
 					continue;
 				}
 
+				if (bLocale && currentElement.type === cElementType.func && currentElement.name === "ANCHORARRAY" && needUseSingle) {
+					var hashArgIndex = j - _count_arg - _argDiff;
+					var hashArg = elemArr[hashArgIndex];
+					if (hashArg) {
+						var hashArgStr = bLocale ?
+							(hashArg.toLocaleString ? hashArg.toLocaleString(digitDelim) : hashArg.toString()) :
+							hashArg.toString();
+						res = new cString(hashArgStr + "#");
+					} else {
+						res = new cString("#");
+					}
+					j -= _count_arg + _argDiff;
+					elemArr[j] = res;
+					for (var k = 0; k < _count_arg; k++) {
+						parentFuncStack.pop();
+						argIndexInParentStack.pop();
+					}
+					parentFuncStack.push({func: currentElement, isSingle: false});
+					argIndexInParentStack.push(-1);
+					continue;
+				}
+
 				if (bLocale) {
 					res = currentElement.Assemble2Locale(elemArr, j - _count_arg - _argDiff, _count_arg, locale, digitDelim);
 				} else {
@@ -10683,7 +10884,7 @@ function parserFormula( formula, parent, _ws ) {
 							if (elem.name === "SINGLE" || isArgPosEnabledToSingle(elem, k)) {
 								return {func: elem, funcName: elem.name, argIndex: k};
 							}
-							break;
+							return null;
 						}
 					}
 				}
@@ -10736,7 +10937,19 @@ function parserFormula( formula, parent, _ws ) {
 				this.wb.dependencyFormulas.startListeningDefName(ref.value, this, ref.ws.getId());
 			} else if ((cElementType.cell === ref.type || cElementType.cell3D === ref.type ||
 				cElementType.cellsRange === ref.type) && ref.isValid()) {
-				this._buildDependenciesRef(ref.getWsId(), ref.getRange() && ref.getRange().getBBox0(), isDefName, true);
+				let _range = ref.getRange() && ref.getRange().getBBox0();
+				if (this.outStack[i + 2] && this.outStack[i + 2].type === cElementType.func && this.getCm() != null && this.outStack[i + 2].name === "ANCHORARRAY") {
+					let ahchorRef;
+					ref.getWS().getCell3(ref.range.bbox.r1, ref.range.bbox.c1)._foreachDataOnly(function (c) {
+						if (c && c.formulaParsed && c.formulaParsed.getCm() != null) {
+							ahchorRef = c.formulaParsed.getArrayFormulaRef();
+						}
+					});
+					if (ahchorRef) {
+						_range = ahchorRef;
+					}
+				}
+				this._buildDependenciesRef(ref.getWsId(), _range, isDefName, true);
 			} else if (cElementType.cellsRange3D === ref.type && ref.isValid()) {
 				wsR = ref.range(ref.wsRange());
 				for (var j = 0; j < wsR.length; j++) {
@@ -10805,6 +11018,7 @@ function parserFormula( formula, parent, _ws ) {
 			ref = this.outStack[i];
 
 			if (ref.type === cElementType.table) {
+				// analyze table structure - if its full link, write defnamelistener
 				const isFullTableLink = ref.reservedColumnIndex === AscCommon.FormulaTablePartInfo.all;
 				const refAreaRange = ref.area && ref.area.getRange && ref.area.getRange();
 				
@@ -11309,8 +11523,14 @@ function parserFormula( formula, parent, _ws ) {
 					continue;
 				}
 				const nIndexNumValue = oNumber.toNumber() - 1;
+				if (oTableArrayArg.type === cElementType.name || oTableArrayArg.type === cElementType.name3D) {
+					oTableArrayArg = oTableArrayArg.toRef();
+				}
+				if (!oTableArrayArg.getRange) {
+					continue;
+				}
 				const nIndexTableArray = aRefElements.findIndex(function (oElem) {
-					return oElem.getRange().getBBox0().isEqualAll(oTableArrayArg.getRange().getBBox0());
+					return oElem.getRange && oElem.getRange().getBBox0().isEqualAll(oTableArrayArg.getRange().getBBox0());
 				});
 				const oTableArrayRange = oTableArrayArg.getRange().clone();
 				const oTableArrayBbox = oTableArrayRange.getBBox0();
@@ -11748,7 +11968,7 @@ function parserFormula( formula, parent, _ws ) {
 				}
 				if (aCellTypes.includes(aOutStack[i].type)) {
 					let oRange = aOutStack[i].getRange();
-					oRange._foreachNoEmpty(function (oElem) {
+					oRange._foreachDataOnly(function (oElem) {
 						if (oElem.isFormula()) {
 							bHasInRecursiveCells = !!oThis.getRecursiveCells(oElem).length;
 							bHasListeners = !!oElem.getListeners();
@@ -12354,19 +12574,19 @@ function parserFormula( formula, parent, _ws ) {
 			switch (op) {
 				case ">":
 					return function (a, b) {
-						return AscCommonExcel.stringCompare(a, b) > 0;
+						return AscCommon.stringCompare(a, b) > 0;
 					};
 				case "<":
 					return function (a, b) {
-						return AscCommonExcel.stringCompare(a, b) < 0;
+						return AscCommon.stringCompare(a, b) < 0;
 					};
 				case ">=":
 					return function (a, b) {
-						return AscCommonExcel.stringCompare(a, b) >= 0;
+						return AscCommon.stringCompare(a, b) >= 0;
 					};
 				case "<=":
 					return function (a, b) {
-						return AscCommonExcel.stringCompare(a, b) <= 0;
+						return AscCommon.stringCompare(a, b) <= 0;
 					};
 				case "<>":
 					if (isWildcard) {
@@ -12375,7 +12595,7 @@ function parserFormula( formula, parent, _ws ) {
 						};
 					}
 					return function (a, b) {
-						return AscCommonExcel.stringCompare(a, b) !== 0;
+						return AscCommon.stringCompare(a, b) !== 0;
 					};
 				case "=":
 				default:
@@ -12385,7 +12605,7 @@ function parserFormula( formula, parent, _ws ) {
 						};
 					}
 					return function (a, b) {
-						return AscCommonExcel.stringCompare(a, b) === 0;
+						return AscCommon.stringCompare(a, b) === 0;
 					};
 			}
 		} else {
@@ -12907,12 +13127,21 @@ function parserFormula( formula, parent, _ws ) {
 				}
 
 			} else {
-				for ( let iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? retArr.addRow() : true ) {
+				let resArray = new Array(rowCount);
+				let resCounts = new Array(rowCount);
+				for ( let iRow = 0; iRow < rowCount; iRow++ ) {
+					let srcRow = area[iRow];
+					let rowArr = new Array(colCount);
 					for ( let iCol = 0; iCol < colCount; iCol++ ) {
-						_arg0 = area[iRow] && area[iRow][iCol] ? area[iRow][iCol] : new cEmpty();
-						retArr.addElement(_arg0);
+						rowArr[iCol] = srcRow && srcRow[iCol] ? srcRow[iCol] : new cEmpty();
 					}
+					resArray[iRow] = rowArr;
+					resCounts[iRow] = colCount;
 				}
+				retArr.array = resArray;
+				retArr.countElementInRow = resCounts;
+				retArr.rowCount = rowCount;
+				retArr.countElement = rowCount * colCount;
 			}
 		}
 

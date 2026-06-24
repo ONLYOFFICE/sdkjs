@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -528,11 +531,38 @@ CopyProcessor.prototype =
 				oSpan.addChild(new CopyElement("&nbsp;", true));
 				oTarget.addChild(oSpan);
 				break;
-            case para_Drawing:
-                let oGraphicObj = ParaItem.GraphicObj;
-                let sSrc = oGraphicObj.getBase64Img();
-                if(sSrc.length > 0)
-                {
+			case para_Drawing:
+				let oGraphicObj = ParaItem.GraphicObj;
+				if(oGraphicObj.isHorizontalRule()) {
+					let oHR = new CopyElement("hr");
+					let oHRData = oGraphicObj.getHorizontalRule();
+					if(oHRData) {
+						let hrStyle = "";
+						let pct = oHRData.asc_getPct();
+						if(pct) {
+							hrStyle += "width:" + pct + "%;";
+						}
+						let align = oHRData.asc_getAlign();
+						if(align) {
+							hrStyle += "text-align:" + align + ";";
+						}
+						if(hrStyle) {
+							oHR.oAttributes["style"] = hrStyle;
+						}
+						if(oHRData.asc_getNoShade()) {
+							oHR.oAttributes["noshade"] = "noshade";
+						}
+						let color = oHRData.asc_getColor();
+						if(color) {
+							oHR.oAttributes["color"] = this.RGBToCSS(color, null);
+						}
+					}
+					oTarget.addChild(oHR);
+					break;
+				}
+				let sSrc = oGraphicObj.getBase64Img();
+				if(sSrc.length > 0)
+				{
 					let _h, _w;
 					if(oGraphicObj.cachedPixH)
 						_h = oGraphicObj.cachedPixH;
@@ -550,9 +580,9 @@ CopyProcessor.prototype =
 					oImg.oAttributes["height"] = Math.round(_h);
 					oImg.oAttributes["src"] = sSrc;
 					oTarget.addChild(oImg);
-                    break;
-                }
-                break;
+					break;
+				}
+				break;
 			case para_PageNum:
 				if(null != ParaItem.String && "string" === typeof(ParaItem.String))
 					oTarget.addChild(new CopyElement(CopyPasteCorrectString(ParaItem.String), true));
@@ -682,7 +712,24 @@ CopyProcessor.prototype =
 					oTarget.addChild(oImg);
 				}
 			} else if (para_InlineLevelSdt === item.Type) {
-				this.CopyRunContent(item, oTarget);
+				var sSdtTag = item.GetTag ? item.GetTag() : "";
+				if ("oo-inline-code" === sSdtTag) {
+					var oInlineCode = new CopyElement("code");
+					this.CopyRunContent(item, oInlineCode);
+					if (!oInlineCode.isEmptyChild()) {
+						oTarget.addChild(oInlineCode);
+					}
+				} else if ("oo-block-code" === sSdtTag) {
+					var oBlockCode = new CopyElement("code");
+					this.CopyRunContent(item, oBlockCode);
+					if (!oBlockCode.isEmptyChild()) {
+						var oPre = new CopyElement("pre");
+						oPre.addChild(oBlockCode);
+						oTarget.addChild(oPre);
+					}
+				} else {
+					this.CopyRunContent(item, oTarget);
+				}
 			} else if (para_Field === item.Type) {
 
 				this.CopyRunContent(item, oTarget);
@@ -2722,6 +2769,18 @@ function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPastePr
 		}
 	}
 }
+function Editor_Paste_Html_Lite_Exec(api, sHtml, callback, rejectCallback) {
+	var oPasteProcessor = new PasteProcessor(api, true, true, false, undefined, callback, rejectCallback);
+	window['AscCommon'].g_specialPasteHelper.endRecalcDocument = false;
+
+	if (!oPasteProcessor._pasteHtmlLite(sHtml)) {
+		rejectCallback && rejectCallback();
+		callback && callback(false);
+		return false;
+	}
+	return true;
+}
+
 function trimString( str ){
     return str.replace(/^\s+|\s+$/g, '') ;
 }
@@ -7395,6 +7454,123 @@ PasteProcessor.prototype =
 		}
 	},
 
+	_pasteHtmlLite: function (sHtml) {
+		if (PasteElementsId.g_bIsPDFCopyPaste)
+			return this._pasteHtmlLitePDF(sHtml);
+		if (PasteElementsId.g_bIsDocumentCopyPaste)
+			return this._pasteHtmlLiteDocument(sHtml);
+		return this._pasteHtmlLitePresentation(sHtml);
+	},
+
+	_pasteHtmlLitePDF: function (sHtml) {
+		var oThis = this;
+		var oDoc = Asc.editor.getPDFDoc();
+		if (!oDoc)
+			return false;
+
+		var aContent = null;
+		AscCommon.ExecuteNoHistory(function () {
+			aContent = GetContentFromHtmlLite(oThis.oLogicDocument, null, sHtml, true);
+			var oParaTextPr = new AscCommonWord.ParaTextPr(oDoc.GetCalculatedTextPr());
+			for (var i = 0; i < aContent.length; ++i) {
+				if (aContent[i].Add)
+					aContent[i].Add(oParaTextPr);
+			}
+		});
+
+		oThis.aContent = aContent || [];
+		if (!oThis.aContent.length) {
+			oThis.pasteCallback && oThis.pasteCallback(false);
+			return true;
+		}
+
+		var executePaste = function () {
+			var oPDFSelContent = new AscPDF.PDFSelectedContent();
+			oPDFSelContent.DocContent = new AscCommonWord.CSelectedContent();
+			for (var i = 0; i < oThis.aContent.length; ++i) {
+				var oSelectedElement = new AscCommonWord.CSelectedElement();
+				oSelectedElement.Element = oThis.aContent[i];
+				oPDFSelContent.DocContent.Elements[i] = oSelectedElement;
+			}
+			oDoc.InsertContent2([oPDFSelContent], 0);
+			window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+			oThis.aContent = [];
+			if (oThis.pasteCallback)
+				oThis.pasteCallback(true);
+		};
+		oThis.api.pre_Paste([], [], executePaste);
+		return true;
+	},
+
+	_pasteHtmlLiteDocument: function (sHtml) {
+		var oThis = this;
+		oThis.oLogicDocument.RemoveBeforePaste();
+		oThis.oDocument = oThis._GetTargetDocument(oThis.oDocument);
+
+		var oCurParagraph = oThis.oDocument.GetCurrentParagraph();
+		var bPresentation = !!(oCurParagraph && !oCurParagraph.bFromDocument);
+
+		oThis.aContent = GetContentFromHtmlLite(oThis.oLogicDocument, oThis.oDocument, sHtml, bPresentation);
+		if (!oThis.aContent || !oThis.aContent.length) {
+			oThis.pasteCallback && oThis.pasteCallback(false);
+			return true;
+		}
+
+		oThis.aContent.push(new AscWord.Paragraph(oThis.oDocument, bPresentation));
+
+		oThis._AddNextPrevToContent(oThis.oDocument);
+
+		var executePaste = function () {
+			if (false === oThis.bNested) {
+				oThis.InsertInDocument(!window['AscCommon'].g_specialPasteHelper.specialPasteStart);
+				if (oThis.pasteCallback)
+					oThis.pasteCallback(true);
+			}
+		};
+		oThis.api.pre_Paste([], [], executePaste);
+		return true;
+	},
+
+	_pasteHtmlLitePresentation: function (sHtml) {
+		var oThis = this;
+		var presentation = oThis.api.WordControl.m_oLogicDocument;
+		if (!presentation || !presentation.Slides)
+			return false;
+		if (presentation.Slides.length === 0)
+			presentation.addNextSlide();
+
+		var shape = new CShape();
+		shape.setParent(presentation.Slides[presentation.CurPage]);
+		shape.setTxBody(AscFormat.CreateTextBodyFromString("", presentation.DrawingDocument, shape));
+		var content = shape.txBody.content;
+
+		var aBuilt = GetContentFromHtmlLite(presentation, content, sHtml, true);
+		if (!aBuilt || !aBuilt.length) {
+			oThis.pasteCallback && oThis.pasteCallback(false);
+			return true;
+		}
+
+		for (var i = 0; i < aBuilt.length; ++i)
+			content.Internal_Content_Add(content.Content.length, aBuilt[i], false);
+		if (content.Content.length > aBuilt.length)
+			content.Internal_Content_Remove(0, content.Content.length - aBuilt.length, false);
+
+		oThis.aContent = content.Content;
+
+		var oTextPr = presentation.GetCalculatedTextPr();
+		content.SetApplyToAll(true);
+		content.AddToParagraph(new AscCommonWord.ParaTextPr(oTextPr));
+		content.SetApplyToAll(false);
+
+		var executePaste = function () {
+			oThis.InsertInPlacePresentation(oThis.aContent, true);
+			if (oThis.pasteCallback)
+				oThis.pasteCallback(true);
+		};
+		oThis.api.pre_Paste([], [], executePaste);
+		return true;
+	},
+
 	_getContentFromText: function (text, getStyleCurSelection) {
 		var t = this;
 		var Count = text.length;
@@ -8880,19 +9056,9 @@ PasteProcessor.prototype =
 			} else {
 				text_align = t._getStyle(node, computedStyle, "text-align");
 			}
-			if (text_align) {
-				//Can receive -webkit-right
-				let Jc = null;
-				if (-1 !== text_align.indexOf('center')) {
-					Jc = align_Center;
-				} else if (-1 !== text_align.indexOf('right')) {
-					Jc = align_Right;
-				} else if (-1 !== text_align.indexOf('justify')) {
-					Jc = align_Justify;
-				}
-				if (null != Jc) {
-					Para.Set_Align(Jc, false);
-				}
+			let Jc = cssTextAlignToJc(text_align);
+			if (null != Jc) {
+				Para.Set_Align(Jc, false);
 			}
 		};
 
@@ -8972,24 +9138,9 @@ PasteProcessor.prototype =
 			}
 			font_size = CheckDefaultFontSize(font_size, this.apiEditor);
 			if (font_size && Para.TextPr && Para.TextPr.Value) {
-				var obj = AscCommon.valueToMmType(font_size);
-				if (obj && "%" !== obj.type && "none" !== obj.type) {
-					font_size = obj.val;
-					//If browser doesn't support non-integer pixels, cut off half-size fonts, they appear when pasting 8, 11, 14, 20, 26pt
-					if ("px" === obj.type && false === this.bIsDoublePx) {
-						font_size = Math.round(font_size * g_dKoef_mm_to_pt);
-					} else {
-						font_size = Math.round(2 * font_size * g_dKoef_mm_to_pt) / 2;
-					}//half values are acceptable.
-
-					//TODO use constant
-					if (font_size > 300) {
-						font_size = 300;
-					} else if (font_size === 0) {
-						font_size = 1;
-					}
-
-					Para.TextPr.Value.FontSize = font_size;
+				var nFontSize = cssFontSizeToPt(font_size, this.bIsDoublePx);
+				if (null !== nFontSize) {
+					Para.TextPr.Value.FontSize = nFontSize;
 				}
 			}
 
@@ -9608,23 +9759,9 @@ PasteProcessor.prototype =
 				font_size = this._getStyle(node, computedStyle, "font-size");
 			font_size = CheckDefaultFontSize(font_size, this.apiEditor);
 			if (font_size) {
-				var obj = AscCommon.valueToMmType(font_size);
-				if (obj && "%" !== obj.type && "none" !== obj.type) {
-					font_size = obj.val;
-					//If browser doesn't support non-integer pixels, cut off half-size fonts, they appear when pasting 8, 11, 14, 20, 26pt
-					if ("px" === obj.type && false === this.bIsDoublePx)
-						font_size = Math.round(font_size * g_dKoef_mm_to_pt);
-					else
-						font_size = Math.round(2 * font_size * g_dKoef_mm_to_pt) / 2;//half values are acceptable.
-
-					//TODO use constant
-					if (font_size > 300)
-						font_size = 300;
-					else if (font_size === 0)
-						font_size = 1;
-
-					rPr.FontSize = font_size;
-				}
+				var nFontSize = cssFontSizeToPt(font_size, this.bIsDoublePx);
+				if (null !== nFontSize)
+					rPr.FontSize = nFontSize;
 			}
 			var font_weight = this._getStyle(node, computedStyle, "font-weight");
 			if (font_weight) {
@@ -9690,9 +9827,16 @@ PasteProcessor.prototype =
 						background_color = null;
 				}
 				if (null == vertical_align || "baseline" === vertical_align) {
-					vertical_align = this._getStyle(node, tempComputedStyle, "vertical-align");
-					if (!vertical_align)
-						vertical_align = null;
+					var sVertAlignTag = oTempNode.nodeName ? oTempNode.nodeName.toLowerCase() : "";
+					if ("sub" === sVertAlignTag) {
+						vertical_align = "sub";
+					} else if ("sup" === sVertAlignTag) {
+						vertical_align = "super";
+					} else {
+						vertical_align = this._getStyle(node, tempComputedStyle, "vertical-align");
+						if (!vertical_align)
+							vertical_align = null;
+					}
 				}
 				if (vertical_align && background_color && Strikeout && underline)
 					break;
@@ -10093,20 +10237,20 @@ PasteProcessor.prototype =
 				if (nType === Asc.c_oAscNumberingFormat.Bullet) {
 					var LvlText = String.fromCharCode(0x00B7);
 					var NumTextPr = new CTextPr();
-
-					var fontFamily = curNumbering["font-family"];
+					let sBulletText = sTextFormatString ? correctText(sTextFormatString) : null;
+					let fontFamily = curNumbering["font-family"] || curNumbering["mso-ascii-font-family"] || curNumbering["mso-hansi-font-family"];
 					if (fontFamily && -1 !== fontFamily.indexOf("Symbol")) {
 						NumTextPr.RFonts.SetAll("Symbol", -1);
-						LvlText = sTextFormatString ? sTextFormatString : String.fromCharCode(0x00B7);
+						LvlText = sBulletText ? sBulletText : String.fromCharCode(0x00B7);
 					} else if (fontFamily && -1 !== fontFamily.indexOf("Courier New")) {
 						NumTextPr.RFonts.SetAll("Courier New", -1);
-						LvlText = sTextFormatString ? sTextFormatString : "o";
+						LvlText = sBulletText ? sBulletText : "o";
 					} else if (fontFamily && -1 !== fontFamily.indexOf("Wingdings")) {
 						NumTextPr.RFonts.SetAll("Wingdings", -1);
-						LvlText = sTextFormatString ? sTextFormatString : String.fromCharCode(0x00A7);
+						LvlText = sBulletText ? sBulletText : String.fromCharCode(0x00A7);
 					} else {
 						NumTextPr.RFonts.SetAll("Symbol", -1);
-						LvlText = sTextFormatString ? sTextFormatString : String.fromCharCode(0x00B7);
+						LvlText = sBulletText ? sBulletText : String.fromCharCode(0x00B7);
 					}
 
 					res.SetLvlByType(i-1, c_oAscNumberingLevel.Bullet, LvlText, NumTextPr);
@@ -10229,23 +10373,9 @@ PasteProcessor.prototype =
 		if (font_size) {
 			font_size = CheckDefaultFontSize(font_size, this.apiEditor);
 			if (font_size) {
-				var obj = AscCommon.valueToMmType(font_size);
-				if (obj && "%" !== obj.type && "none" !== obj.type) {
-					font_size = obj.val;
-					//If browser doesn't support non-integer pixels, cut off half-size fonts, they appear when pasting 8, 11, 14, 20, 26pt
-					if ("px" === obj.type && false === this.bIsDoublePx)
-						font_size = Math.round(font_size * g_dKoef_mm_to_pt);
-					else
-						font_size = Math.round(2 * font_size * g_dKoef_mm_to_pt) / 2;//half values are acceptable.
-
-					//TODO use constant
-					if (font_size > 300)
-						font_size = 300;
-					else if (font_size === 0)
-						font_size = 1;
-
-					rPr.FontSize = font_size;
-				}
+				var nFontSize = cssFontSizeToPt(font_size, this.bIsDoublePx);
+				if (null !== nFontSize)
+					rPr.FontSize = nFontSize;
 			}
 		}
 
@@ -11163,12 +11293,14 @@ PasteProcessor.prototype =
 				levelSdt.ApplyComboBoxPr(oPr);
 			}
 
-			if (_type === "complexform" && AscCommon.IsSupportOFormFeature()) {
-				this._applyComplexFormPr(node, levelSdt);
+			if (_type === "complexform" && AscCommon.IsSupportOFormFeature() && isForm) {
+				let complexFormPr = this._createComplexFormPr(node);
+				levelSdt.SetComplexFormPr(complexFormPr);
 			}
 
-			if (_type === "text" && AscCommon.IsSupportOFormFeature()) {
-				this._applyTextFormPr(node, levelSdt);
+			if (_type === "text" && AscCommon.IsSupportOFormFeature() && isForm) {
+				let textFormPr = this._createTextFormPr(node);
+				levelSdt.ApplyTextFormPr(textFormPr);
 			}
 
 			if (_type === "datetime" && AscCommon.IsSupportOFormFeature()) {
@@ -11330,18 +11462,18 @@ PasteProcessor.prototype =
 		return oPr;
 	},
 
-	_applyComplexFormPr: function (node, levelSdt) {
+	_createComplexFormPr: function (node) {
 		let complexFormType = node.attributes["complexformtype"];
 		if (complexFormType && complexFormType.value) {
 			let nType = parseInt(complexFormType.value);
 			if (!isNaN(nType)) {
-				let complexFormPr = new AscWord.CSdtComplexFormPr(nType);
-				levelSdt.SetComplexFormPr(complexFormPr);
+				return new AscWord.CSdtComplexFormPr(nType);
 			}
 		}
+		return new AscWord.CSdtComplexFormPr();
 	},
 
-	_applyTextFormPr: function (node, levelSdt) {
+	_createTextFormPr: function (node) {
 		let textFormNode = null;
 		for (let i = 0; i < node.childNodes.length; i++) {
 			let childNode = node.childNodes[i];
@@ -11350,12 +11482,11 @@ PasteProcessor.prototype =
 				break;
 			}
 		}
-
-		if (!textFormNode) {
-			return;
-		}
-
+		
 		let textFormPr = new AscWord.CSdtTextFormPr();
+		if (!textFormNode) {
+			return textFormPr;
+		}
 
 		let maxCharacters = textFormNode.attributes["maxcharacters"];
 		if (maxCharacters && maxCharacters.value) {
@@ -11439,7 +11570,7 @@ PasteProcessor.prototype =
 			}
 		}
 
-		levelSdt.ApplyTextFormPr(textFormPr);
+		return textFormPr;
 	},
 
 	_createDatePickerPr: function (node) {
@@ -12170,7 +12301,7 @@ PasteProcessor.prototype =
 		//var presentation = editor.WordControl.m_oLogicDocument;
 
 		//for release bug fix adding handling only for paste from ms excel, later make this class main for getting data from ms styles
-		if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel) {
+		if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel || this.pasteInExcel) {
 			if (!this.oMsoStylesParser) {
 				this.oMsoStylesParser = new MsoStylesParser(node);
 			}
@@ -12753,7 +12884,16 @@ PasteProcessor.prototype =
 						if (breakLine.Flags && oThis.pasteInExcel) {
 							//save mso flag for unite cell text with line breaks
 							//use only in excel
-							breakLine.Flags.sameCell = pPr["mso-data-placement"] === "same-cell";
+							let bSameCell = pPr["mso-data-placement"] === "same-cell";
+							if (!bSameCell && oThis.oMsoStylesParser) {
+								//WPS sets it in head style for br tag, not inline
+								let msoBrClass = oThis.oMsoStylesParser.getMsoClassByName(sNodeName);
+								if (msoBrClass) {
+									let msoDataPlacement = msoBrClass.getAttributeByName("mso-data-placement");
+									bSameCell = msoDataPlacement != null && trimString(msoDataPlacement) === "same-cell";
+								}
+							}
+							breakLine.Flags.sameCell = bSameCell;
 						}
 						oThis._AddToParagraph(breakLine);
 					} /*else {
@@ -13567,24 +13707,47 @@ PasteProcessor.prototype =
 		var nHeight = parseInt(node.getAttribute("height"));
 		if (!nWidth || !nHeight) {
 			var computedStyle = oThis._getComputedStyle(node);
-			nWidth = parseInt(oThis._getStyle(node, computedStyle, "width"));
-			nHeight = parseInt(oThis._getStyle(node, computedStyle, "height"));
+			if (!nWidth) {
+				var sWidth = oThis._getStyle(node, computedStyle, "width");
+				var oWidth = AscCommon.valueToMmType(sWidth);
+				if (oWidth && "%" !== oWidth.type) {
+					nWidth = Math.round(oWidth.val / AscCommon.g_dKoef_pix_to_mm);
+				}
+			}
+			if (!nHeight) {
+				var sHeight = oThis._getStyle(node, computedStyle, "height");
+				var oHeight = AscCommon.valueToMmType(sHeight);
+				if (oHeight && "%" !== oHeight.type) {
+					nHeight = Math.round(oHeight.val / AscCommon.g_dKoef_pix_to_mm);
+				}
+			}
 		}
 
 		//TODO review! node.getAttribute("width") in FF returns "auto" -> images in FF are not pasted
 		if ((!nWidth || !nHeight)) {
 			if (AscBrowser.isMozilla || AscBrowser.isIE) {
-				nWidth = parseInt(node.width);
-				nHeight = parseInt(node.height);
-			} else if (AscBrowser.isChrome) {
-				if (nWidth && !nHeight) {
-					nHeight = nWidth;
-				} else if (!nWidth && nHeight) {
-					nWidth = nHeight;
-				} else {
+				if (!nWidth) {
 					nWidth = parseInt(node.width);
+				}
+				if (!nHeight) {
 					nHeight = parseInt(node.height);
 				}
+			} else if (AscBrowser.isChrome) {
+				if (!nWidth) {
+					nWidth = parseInt(node.width);
+				}
+				if (!nHeight) {
+					nHeight = parseInt(node.height);
+				}
+			}
+		}
+
+		if ((!nWidth || !nHeight) && node.naturalWidth && node.naturalHeight) {
+			if (!nWidth) {
+				nWidth = node.naturalWidth;
+			}
+			if (!nHeight) {
+				nHeight = node.naturalHeight;
 			}
 		}
 
@@ -13838,6 +14001,39 @@ function CheckDefaultFontFamily(val, api)
 function CheckDefaultFontSize(val, api)
 {
 	return "0px" === val && api && api.getDefaultFontSize ? api.getDefaultFontSize() + "pt" : val;
+}
+
+function cssFontSizeToPt(sValue, bIsDoublePx)
+{
+	var obj = AscCommon.valueToMmType(sValue);
+	if (!obj || "%" === obj.type || "none" === obj.type)
+		return null;
+	var pt;
+	//If browser doesn't support non-integer pixels, cut off half-size fonts, they appear when pasting 8, 11, 14, 20, 26pt
+	if ("px" === obj.type && false === bIsDoublePx)
+		pt = Math.round(obj.val * g_dKoef_mm_to_pt);
+	else
+		pt = Math.round(2 * obj.val * g_dKoef_mm_to_pt) / 2;//half values are acceptable.
+	//TODO use constant
+	if (pt > 300)
+		pt = 300;
+	else if (pt === 0)
+		pt = 1;
+	return pt;
+}
+
+function cssTextAlignToJc(sValue)
+{
+	if (!sValue)
+		return null;
+	//Can receive -webkit-right
+	if (-1 !== sValue.indexOf('center'))
+		return align_Center;
+	if (-1 !== sValue.indexOf('right'))
+		return align_Right;
+	if (-1 !== sValue.indexOf('justify'))
+		return align_Justify;
+	return null;
 }
 
 function getPageWidth()
@@ -14459,23 +14655,10 @@ ParseHtmlStyle.prototype.applyStyles = function (textPr) {
 	var font_size = map.get('font-size');
 	//font_size = CheckDefaultFontSize(font_size, this.apiEditor);
 	if (font_size) {
-		var obj = AscCommon.valueToMmType(font_size);
-		if (obj && "%" !== obj.type && "none" !== obj.type) {
-			font_size = obj.val;
-			//If browser doesn't support non-integer pixels, cut off half-size fonts, they appear when pasting 8, 11, 14, 20, 26pt
-			if ("px" === obj.type && false === this.bIsDoublePx)
-				font_size = Math.round(font_size * g_dKoef_mm_to_pt);
-			else
-				font_size = Math.round(2 * font_size * g_dKoef_mm_to_pt) / 2;//half values are acceptable.
-
-			//TODO use constant
-			if (font_size > 300)
-				font_size = 300;
-			else if (font_size === 0)
-				font_size = 1;
-
-			textPr.FontSize = font_size;
-			textPr.FontSizeCS = font_size;
+		var nFontSize = cssFontSizeToPt(font_size, this.bIsDoublePx);
+		if (null !== nFontSize) {
+			textPr.FontSize = nFontSize;
+			textPr.FontSizeCS = nFontSize;
 		}
 	}
 
@@ -14602,6 +14785,840 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 	}
 }
 
+	function liteFromCodePoint(code) {
+		if (code <= 0xFFFF) {
+			return String.fromCharCode(code);
+		}
+		code -= 0x10000;
+		return String.fromCharCode(0xD800 + (code >> 10), 0xDC00 + (code & 0x3FF));
+	}
+
+	function liteParseColor(sColor) {
+		if (!sColor) {
+			return null;
+		}
+		return PasteProcessor.prototype._ParseColor.call(null, ("" + sColor).trim().toLowerCase());
+	}
+
+	var g_liteNamedEntities = {
+		"amp": "&", "lt": "<", "gt": ">", "quot": "\"", "apos": "'",
+		"nbsp": " ", "copy": "©", "reg": "®", "trade": "™",
+		"hellip": "…", "mdash": "—", "ndash": "–",
+		"lsquo": "‘", "rsquo": "’", "ldquo": "“", "rdquo": "”",
+		"laquo": "«", "raquo": "»", "deg": "°", "plusmn": "±",
+		"times": "×", "divide": "÷", "euro": "€", "pound": "£",
+		"cent": "¢", "yen": "¥", "sect": "§", "para": "¶",
+		"middot": "·", "bull": "•"
+	};
+
+	function liteDecodeEntities(str) {
+		if (!str || -1 === str.indexOf("&")) {
+			return str || "";
+		}
+		return str.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]*);/g, function (whole, body) {
+			if ("#" === body.charAt(0)) {
+				var code;
+				if ("x" === body.charAt(1) || "X" === body.charAt(1)) {
+					code = parseInt(body.substring(2), 16);
+				} else {
+					code = parseInt(body.substring(1), 10);
+				}
+				if (isNaN(code) || code <= 0) {
+					return whole;
+				}
+				return liteFromCodePoint(code);
+			}
+			var ch = g_liteNamedEntities[body];
+			return undefined !== ch ? ch : whole;
+		});
+	}
+
+	function CLiteNode(type, name) {
+		this.type     = type;
+		this.name     = name || "";
+		this.attrs    = null;
+		this.style    = null;
+		this.value    = "";
+		this.children = [];
+		this.parent   = null;
+	}
+	CLiteNode.prototype.getAttr = function (name) {
+		return this.attrs ? this.attrs[name] : undefined;
+	};
+	CLiteNode.prototype.getStyle = function (prop) {
+		return this.style ? this.style[prop] : undefined;
+	};
+	CLiteNode.prototype.addChild = function (child) {
+		child.parent = this;
+		this.children.push(child);
+	};
+
+	var g_liteVoidTags = {
+		"area": 1, "base": 1, "br": 1, "col": 1, "embed": 1, "hr": 1, "img": 1,
+		"input": 1, "link": 1, "meta": 1, "param": 1, "source": 1, "track": 1, "wbr": 1
+	};
+
+	function liteIsBlockTag(name) {
+		switch (name) {
+			case "p": case "div": case "ul": case "ol": case "li":
+			case "table": case "thead": case "tbody": case "tfoot": case "tr": case "td": case "th":
+			case "h1": case "h2": case "h3": case "h4": case "h5": case "h6":
+			case "center": case "blockquote": case "section": case "article":
+			case "header": case "footer": case "dd": case "dt": case "dl": case "pre":
+				return true;
+		}
+		return false;
+	}
+
+	function liteParseInlineStyle(sStyle) {
+		var res = null;
+		if (!sStyle) {
+			return res;
+		}
+		var parts = sStyle.split(";");
+		for (var i = 0; i < parts.length; ++i) {
+			var pair = parts[i];
+			var idx = pair.indexOf(":");
+			if (idx <= 0) {
+				continue;
+			}
+			var name = pair.substring(0, idx).trim().toLowerCase();
+			var val = pair.substring(idx + 1).trim();
+			if (name && val) {
+				if (!res) {
+					res = {};
+				}
+				res[name] = val;
+			}
+		}
+		return res;
+	}
+
+	function liteApplyAttrs(node, attrs) {
+		if (!attrs) {
+			return;
+		}
+		for (var rawName in attrs) {
+			if (!attrs.hasOwnProperty(rawName)) {
+				continue;
+			}
+			var name = rawName.toLowerCase();
+			var val = liteDecodeEntities(attrs[rawName]);
+			if ("style" === name) {
+				node.style = liteParseInlineStyle(val);
+			} else {
+				if (!node.attrs) {
+					node.attrs = {};
+				}
+				node.attrs[name] = val;
+			}
+		}
+	}
+
+	var g_liteAutoClose = {
+		"li": { "li": 1 },
+		"td": { "td": 1, "th": 1, "tr": 1 },
+		"th": { "td": 1, "th": 1, "tr": 1 },
+		"tr": { "tr": 1 },
+		"p":  { "p": 1, "div": 1, "ul": 1, "ol": 1, "table": 1, "h1": 1, "h2": 1, "h3": 1, "h4": 1, "h5": 1, "h6": 1, "blockquote": 1 },
+		"option": { "option": 1 },
+		"dd": { "dd": 1, "dt": 1 },
+		"dt": { "dd": 1, "dt": 1 }
+	};
+
+	var SAX_START_ELEMENT = 1;
+	var SAX_CHARACTERS    = 2;
+	var SAX_END_ELEMENT   = 3;
+
+	function liteStripUnscannable(sHtml) {
+		return sHtml
+			.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
+			.replace(/<!--[\s\S]*?-->/g, "")
+			.replace(/<\?[\s\S]*?\?>/g, "")
+			.replace(/<![^>]*>/g, "");
+	}
+
+	function liteAppendText(parent, raw) {
+		if (!raw) {
+			return;
+		}
+		var node = new CLiteNode("text");
+		node.value = liteDecodeEntities(raw);
+		parent.addChild(node);
+	}
+
+	function liteCloseTag(stack, name) {
+		for (var k = stack.length - 1; k >= 1; --k) {
+			if (stack[k].name === name) {
+				stack.length = k;
+				return;
+			}
+		}
+	}
+
+	function liteParseHtmlToTree(sHtml) {
+		var root = new CLiteNode("element", "#root");
+		if (!sHtml) {
+			return root;
+		}
+
+		var clean = liteStripUnscannable(sHtml);
+		var parser = new AscCommon.StaxParser(clean, null, null);
+
+		var stack = [root];
+		var skipEnd = false;
+
+		while (parser.hasNext()) {
+			var type = parser.next();
+			if (undefined === type) {
+				break;
+			}
+
+			var parent = stack[stack.length - 1];
+
+			if (SAX_START_ELEMENT === type) {
+				var name = (parser.GetName() || "").toLowerCase();
+				var attrs = parser.GetAttributes();
+				var empty = parser.IsEmptyNode();
+
+				var close = g_liteAutoClose[parent.name];
+				if (close && close[name]) {
+					stack.pop();
+					parent = stack[stack.length - 1];
+				}
+
+				var node = new CLiteNode("element", name);
+				liteApplyAttrs(node, attrs);
+				parent.addChild(node);
+
+				if (!empty && !g_liteVoidTags[name]) {
+					stack.push(node);
+				}
+				if (empty) {
+					skipEnd = true;
+				}
+			} else if (SAX_CHARACTERS === type) {
+				liteAppendText(parent, parser.GetValue());
+			} else if (SAX_END_ELEMENT === type) {
+				if (skipEnd) {
+					skipEnd = false;
+					continue;
+				}
+				var end = parser.index - 1;
+				var start = clean.lastIndexOf("</", end);
+				var closeName = start >= 0 ? clean.substring(start + 2, end).trim().toLowerCase() : "";
+				liteCloseTag(stack, closeName);
+			}
+		}
+		return root;
+	}
+
+	function liteFirstFamily(sValue) {
+		if (!sValue) {
+			return null;
+		}
+		var first = sValue.split(",")[0];
+		if (!first) {
+			return null;
+		}
+		first = first.trim().replace(/^['"]|['"]$/g, "").trim();
+		return first || null;
+	}
+
+	function liteHeadingLevel(name) {
+		switch (name) {
+			case "h1": return 0;
+			case "h2": return 1;
+			case "h3": return 2;
+			case "h4": return 3;
+			case "h5": return 4;
+			case "h6": return 5;
+		}
+		return -1;
+	}
+
+	function liteApplyTagDefaults(node, pr) {
+		switch (node.name) {
+			case "b": case "strong":
+				pr.bold = true;
+				break;
+			case "i": case "em": case "cite": case "var": case "dfn":
+				pr.italic = true;
+				break;
+			case "u": case "ins":
+				pr.underline = true;
+				break;
+			case "s": case "strike": case "del":
+				pr.strike = true;
+				break;
+			case "sub":
+				pr.vertAlign = "sub";
+				break;
+			case "sup":
+				pr.vertAlign = "super";
+				break;
+			case "code": case "kbd": case "samp": case "tt": case "pre":
+				pr.family = "Courier New";
+				break;
+			case "mark":
+				pr.highlight = "yellow";
+				break;
+			case "a":
+				pr.underline = true;
+				break;
+			case "th":
+				pr.bold = true;
+				break;
+		}
+	}
+
+	function liteApplyNodeStyle(node, pr) {
+		if ("font" === node.name) {
+			var attrColor = node.getAttr("color");
+			if (attrColor) {
+				pr.color = attrColor;
+			}
+			var attrFace = node.getAttr("face");
+			if (attrFace) {
+				pr.family = liteFirstFamily(attrFace);
+			}
+		}
+
+		var style = node.style;
+		if (!style) {
+			return;
+		}
+
+		var weight = style["font-weight"];
+		if (weight) {
+			var weightNum = parseInt(weight, 10);
+			if ("bold" === weight || "bolder" === weight || (!isNaN(weightNum) && weightNum > 400)) {
+				pr.bold = true;
+			} else if ("normal" === weight || (!isNaN(weightNum) && weightNum <= 400)) {
+				pr.bold = false;
+			}
+		}
+
+		var fontStyle = style["font-style"];
+		if ("italic" === fontStyle || "oblique" === fontStyle) {
+			pr.italic = true;
+		} else if ("normal" === fontStyle) {
+			pr.italic = false;
+		}
+
+		var decoration = style["text-decoration"] || style["text-decoration-line"];
+		if (decoration) {
+			if (-1 !== decoration.indexOf("underline")) {
+				pr.underline = true;
+			}
+			if (-1 !== decoration.indexOf("line-through")) {
+				pr.strike = true;
+			}
+			if (-1 !== decoration.indexOf("none")) {
+				pr.underline = false;
+				pr.strike = false;
+			}
+		}
+
+		var valign = style["vertical-align"];
+		if ("sub" === valign) {
+			pr.vertAlign = "sub";
+		} else if ("super" === valign) {
+			pr.vertAlign = "super";
+		}
+
+		var color = style["color"];
+		if (color) {
+			pr.color = color;
+		}
+
+		var bgColor = style["background-color"] || style["background"];
+		if (bgColor) {
+			pr.highlight = bgColor;
+		}
+
+		var size = style["font-size"];
+		if (size) {
+			pr.size = size;
+		}
+
+		var family = style["font-family"];
+		if (family) {
+			pr.family = liteFirstFamily(family);
+		}
+	}
+
+	function liteResolveTextPr(chain) {
+		var pr = {
+			bold: undefined, italic: undefined, underline: undefined, strike: undefined,
+			vertAlign: undefined, size: undefined,
+			family: undefined, color: undefined, highlight: undefined
+		};
+		for (var i = 0; i < chain.length; ++i) {
+			if ("element" !== chain[i].type) {
+				continue;
+			}
+			liteApplyTagDefaults(chain[i], pr);
+			liteApplyNodeStyle(chain[i], pr);
+		}
+
+		var rPr = new AscWord.CTextPr();
+		if (true === pr.bold) {
+			rPr.Bold = true;
+		}
+		if (true === pr.italic) {
+			rPr.Italic = true;
+		}
+		if (true === pr.underline) {
+			rPr.Underline = true;
+		} else if (false === pr.underline) {
+			rPr.Underline = false;
+		}
+		if (true === pr.strike) {
+			rPr.Strikeout = true;
+		}
+
+		if ("sub" === pr.vertAlign) {
+			rPr.VertAlign = AscCommon.vertalign_SubScript;
+		} else if ("super" === pr.vertAlign) {
+			rPr.VertAlign = AscCommon.vertalign_SuperScript;
+		}
+
+		if (pr.family && rPr.RFonts && rPr.RFonts.SetAll) {
+			rPr.RFonts.SetAll(pr.family, -1);
+		}
+
+		if (pr.size) {
+			var pt = cssFontSizeToPt(pr.size, false);
+			if (null != pt) {
+				rPr.FontSize = pt;
+			}
+		}
+
+		if (pr.color) {
+			var color = liteParseColor(pr.color);
+			if (color) {
+				rPr.Color = new AscWord.CDocumentColor(color.r, color.g, color.b);
+			}
+		}
+		if (pr.highlight) {
+			var highlight = liteParseColor(pr.highlight);
+			if (highlight) {
+				rPr.HighLight = new AscWord.CDocumentColor(highlight.r, highlight.g, highlight.b);
+			}
+		}
+		return rPr;
+	}
+
+	function liteResolveAlign(node) {
+		if ("center" === node.name) {
+			return align_Center;
+		}
+		var value = (node.style && node.style["text-align"]) || (node.getAttr && node.getAttr("align"));
+		return value ? cssTextAlignToJc(("" + value).toLowerCase()) : null;
+	}
+
+	function liteCollapseSpaces(text) {
+		if (!text) {
+			return "";
+		}
+		return text.replace(/[\t\n\r\f ]+/g, " ");
+	}
+
+	function liteIsListTag(name) {
+		return "ul" === name || "ol" === name;
+	}
+
+	function CHtmlPasteLiteBuilder(oLogicDocument, oTarget, bPresentation) {
+		this.oLogicDocument  = oLogicDocument || null;
+		this.oTarget         = (undefined !== oTarget) ? oTarget : (oLogicDocument || null);
+		this.bPresentation   = !!bPresentation;
+		this.DrawingDocument = this._getDrawingDocument();
+		this.aContent        = [];
+	}
+
+	CHtmlPasteLiteBuilder.prototype._getDrawingDocument = function () {
+		var doc = this.oLogicDocument;
+		if (!doc) {
+			return null;
+		}
+		if (doc.DrawingDocument) {
+			return doc.DrawingDocument;
+		}
+		if (doc.GetDrawingDocument) {
+			return doc.GetDrawingDocument();
+		}
+		return null;
+	};
+
+	CHtmlPasteLiteBuilder.prototype.generate = function (sHtml) {
+		this.aContent = [];
+		if (!sHtml) {
+			return this.aContent;
+		}
+		var root = liteParseHtmlToTree(sHtml);
+		var aContent = this.aContent;
+		this._processChildren(root, this.oTarget, [], function (el) {
+			aContent.push(el);
+		});
+		return this.aContent;
+	};
+
+	CHtmlPasteLiteBuilder.prototype._newParagraph = function (parent) {
+		return new AscWord.Paragraph(parent, this.bPresentation);
+	};
+
+	CHtmlPasteLiteBuilder.prototype._newRun = function (textPr) {
+		var run = new AscWord.ParaRun();
+		if (textPr && run.Set_Pr) {
+			run.Set_Pr(textPr);
+		}
+		return run;
+	};
+
+	CHtmlPasteLiteBuilder.prototype._addRun = function (para, run) {
+		para.Internal_Content_Add(para.Content.length - 1, run, false);
+	};
+
+	CHtmlPasteLiteBuilder.prototype._appendText = function (para, text, chain) {
+		if (!text) {
+			return;
+		}
+		var run = this._newRun(liteResolveTextPr(chain));
+		run.AddText(text);
+		this._addRun(para, run);
+	};
+
+	CHtmlPasteLiteBuilder.prototype._appendBreak = function (para, chain) {
+		var run = this._newRun(liteResolveTextPr(chain));
+		run.AddToContent(-1, new AscWord.CRunBreak(AscWord.break_Line), false);
+		this._addRun(para, run);
+	};
+
+	CHtmlPasteLiteBuilder.prototype._appendInline = function (para, node, chain) {
+		var inner = chain.concat(node);
+		for (var i = 0; i < node.children.length; ++i) {
+			var child = node.children[i];
+			if ("text" === child.type) {
+				this._appendText(para, liteCollapseSpaces(child.value), inner);
+			} else if ("br" === child.name) {
+				this._appendBreak(para, inner);
+			} else {
+				this._appendInline(para, child, inner);
+			}
+		}
+	};
+
+	CHtmlPasteLiteBuilder.prototype._applyHeadingStyle = function (para, level) {
+		if (this.bPresentation || !para.Style_Add) {
+			return;
+		}
+		var styles = this.oLogicDocument && this.oLogicDocument.Styles;
+		if (!styles || !styles.Get_Default_Heading) {
+			return;
+		}
+		para.Style_Add(styles.Get_Default_Heading(level));
+	};
+
+	CHtmlPasteLiteBuilder.prototype._applyListStyle = function (para) {
+		if (this.bPresentation || !para.Style_Add) {
+			return;
+		}
+		var styles = this.oLogicDocument && this.oLogicDocument.Styles;
+		if (!styles || !styles.Get_Default_ParaList) {
+			return;
+		}
+		para.Style_Add(styles.Get_Default_ParaList());
+	};
+
+	CHtmlPasteLiteBuilder.prototype._processChildren = function (node, parent, chain, emit) {
+		var t = this;
+		var para = null;
+		var isRoot = ("#root" === node.name);
+		var align = isRoot ? null : liteResolveAlign(node);
+		var heading = isRoot ? -1 : liteHeadingLevel(node.name);
+
+		var getPara = function () {
+			if (!para) {
+				para = t._newParagraph(parent);
+				if (heading >= 0) {
+					t._applyHeadingStyle(para, heading);
+				}
+				if (null != align && para.Set_Align) {
+					para.Set_Align(align);
+				}
+			}
+			return para;
+		};
+		var flush = function () {
+			if (para) {
+				emit(para);
+				para = null;
+			}
+		};
+
+		for (var i = 0; i < node.children.length; ++i) {
+			var child = node.children[i];
+			if ("text" === child.type) {
+				var text = liteCollapseSpaces(child.value);
+				if ("" === text || (" " === text && !para)) {
+					continue;
+				}
+				this._appendText(getPara(), text, chain);
+			} else if ("br" === child.name) {
+				this._appendBreak(getPara(), chain);
+			} else if (liteIsBlockTag(child.name)) {
+				flush();
+				this._processBlock(child, parent, chain, emit);
+			} else {
+				this._appendInline(getPara(), child, chain);
+			}
+		}
+		flush();
+	};
+
+	CHtmlPasteLiteBuilder.prototype._processBlock = function (node, parent, chain, emit) {
+		var name = node.name;
+		var inner = chain.concat(node);
+
+		if (liteIsListTag(name)) {
+			this._processList(node, parent, inner, emit, "ol" === name);
+			return;
+		}
+		if ("table" === name) {
+			this._processTable(node, parent, inner, emit);
+			return;
+		}
+		this._processChildren(node, parent, inner, emit);
+	};
+
+	CHtmlPasteLiteBuilder.prototype._createListNum = function (ordered) {
+		var doc = this.oLogicDocument;
+		if (this.bPresentation || !doc || !doc.GetNumbering) {
+			return null;
+		}
+		var numbering = doc.GetNumbering();
+		if (!numbering || !numbering.CreateNum) {
+			return null;
+		}
+		var num = numbering.CreateNum();
+		num.CreateDefault(ordered ? Asc.c_oAscMultiLevelNumbering.Numbered : Asc.c_oAscMultiLevelNumbering.Bullet);
+		return num.GetId();
+	};
+
+	CHtmlPasteLiteBuilder.prototype._processList = function (node, parent, chain, emit, ordered) {
+		var level = -1;
+		for (var k = 0; k < chain.length; ++k) {
+			if (liteIsListTag(chain[k].name)) {
+				level++;
+			}
+		}
+		if (level < 0) {
+			level = 0;
+		} else if (level > 8) {
+			level = 8;
+		}
+		var numId = this._createListNum(ordered);
+		var index = 1;
+		for (var i = 0; i < node.children.length; ++i) {
+			var child = node.children[i];
+			if ("li" !== child.name) {
+				if (liteIsBlockTag(child.name)) {
+					this._processBlock(child, parent, chain, emit);
+				}
+				continue;
+			}
+			var marker = ordered ? (index + ". ") : "• ";
+			index++;
+			this._processItem(child, parent, chain.concat(child), emit, numId, level, marker);
+		}
+	};
+
+	CHtmlPasteLiteBuilder.prototype._processItem = function (node, parent, chain, emit, numId, level, marker) {
+		var t = this;
+		var para = null;
+		var emitted = false;
+		var emitChild = function (el) {
+			emitted = true;
+			emit(el);
+		};
+		var getPara = function () {
+			if (!para) {
+				para = t._newParagraph(parent);
+				if (numId && para.SetNumPr) {
+					para.SetNumPr(numId, level);
+					t._applyListStyle(para);
+				} else {
+					if (level > 0 && para.Set_Ind) {
+						para.Set_Ind({ Left: (level + 1) * 7.5 }, false);
+					}
+					t._appendText(para, marker, chain);
+				}
+			}
+			return para;
+		};
+		var flush = function () {
+			if (para) {
+				emitChild(para);
+				para = null;
+			}
+		};
+
+		for (var i = 0; i < node.children.length; ++i) {
+			var child = node.children[i];
+			if ("text" === child.type) {
+				var text = liteCollapseSpaces(child.value);
+				if ("" === text || (" " === text && !para)) {
+					continue;
+				}
+				this._appendText(getPara(), text, chain);
+			} else if ("br" === child.name) {
+				this._appendBreak(getPara(), chain);
+			} else if (liteIsListTag(child.name)) {
+				flush();
+				this._processList(child, parent, chain.concat(child), emitChild, "ol" === child.name);
+			} else if (liteIsBlockTag(child.name)) {
+				flush();
+				this._processBlock(child, parent, chain, emitChild);
+			} else {
+				this._appendInline(getPara(), child, chain);
+			}
+		}
+		if (!emitted && !para) {
+			getPara();
+		}
+		flush();
+	};
+
+	CHtmlPasteLiteBuilder.prototype._collectRows = function (node, out) {
+		for (var i = 0; i < node.children.length; ++i) {
+			var child = node.children[i];
+			if ("tr" === child.name) {
+				out.push(child);
+			} else if ("thead" === child.name || "tbody" === child.name || "tfoot" === child.name) {
+				this._collectRows(child, out);
+			}
+		}
+	};
+
+	CHtmlPasteLiteBuilder.prototype._countColumns = function (rows) {
+		var count = 0;
+		for (var r = 0; r < rows.length; ++r) {
+			var span = 0;
+			var cells = rows[r].children;
+			for (var c = 0; c < cells.length; ++c) {
+				var name = cells[c].name;
+				if ("td" === name || "th" === name) {
+					span += (parseInt(cells[c].getAttr("colspan"), 10) || 1);
+				}
+			}
+			if (span > count) {
+				count = span;
+			}
+		}
+		return count;
+	};
+
+	CHtmlPasteLiteBuilder.prototype._processTable = function (node, parent, chain, emit) {
+		if (this.bPresentation || !this.DrawingDocument || "undefined" === typeof CTable || "undefined" === typeof CTableMeasurement) {
+			this._processChildren(node, parent, chain, emit);
+			return;
+		}
+
+		var rows = [];
+		this._collectRows(node, rows);
+		if (!rows.length) {
+			return;
+		}
+
+		var columns = this._countColumns(rows);
+		if (columns <= 0) {
+			return;
+		}
+
+		var columnWidth = this._getTableWidth() / columns;
+		var grid = [];
+		for (var g = 0; g < columns; ++g) {
+			grid.push(columnWidth);
+		}
+
+		var table = new CTable(this.DrawingDocument, parent, true, 0, 0, grid);
+		table.SetTableLayout(tbllayout_AutoFit);
+		if (table.Set_TableStyle && this.oLogicDocument && this.oLogicDocument.DefaultTableStyleId) {
+			table.Set_TableStyle(this.oLogicDocument.DefaultTableStyleId);
+		}
+		if (table.Set_TableBorder_InsideH) {
+			table.Set_TableBorder_InsideH(new CDocumentBorder());
+			table.Set_TableBorder_InsideV(new CDocumentBorder());
+			table.Set_TableBorder_Left(new CDocumentBorder());
+			table.Set_TableBorder_Top(new CDocumentBorder());
+			table.Set_TableBorder_Right(new CDocumentBorder());
+			table.Set_TableBorder_Bottom(new CDocumentBorder());
+		}
+
+		for (var r = 0; r < rows.length; ++r) {
+			var row = table.private_AddRow(table.Content.length, 0);
+			var cells = rows[r].children;
+			for (var c = 0; c < cells.length; ++c) {
+				var cellNode = cells[c];
+				if ("td" !== cellNode.name && "th" !== cellNode.name) {
+					continue;
+				}
+				var span = parseInt(cellNode.getAttr("colspan"), 10) || 1;
+				var cell = row.Add_Cell(row.Get_CellsCount(), row, null, false);
+				if (cell.Set_W) {
+					cell.Set_W(new CTableMeasurement(tblwidth_Mm, columnWidth * span));
+				}
+				if (span > 1 && cell.Set_GridSpan) {
+					cell.Set_GridSpan(span);
+				}
+				this._fillCell(cell, cellNode, chain.concat(cellNode));
+			}
+		}
+		emit(table);
+	};
+
+	CHtmlPasteLiteBuilder.prototype._getTableWidth = function () {
+		var doc = this.oLogicDocument;
+		try {
+			if (doc && doc.GetColumnContentWidth) {
+				return doc.GetColumnContentWidth(0) || 117;
+			}
+		} catch (e) {
+		}
+		return 117;
+	};
+
+	CHtmlPasteLiteBuilder.prototype._fillCell = function (cell, node, chain) {
+		var content = cell.GetContent && cell.GetContent();
+		if (!content) {
+			return;
+		}
+		var built = [];
+		this._processChildren(node, content, chain, function (el) {
+			built.push(el);
+		});
+		if (!built.length) {
+			return;
+		}
+		for (var i = 0; i < built.length; ++i) {
+			if (built[i].Set_Spacing) {
+				var spacing = new AscWord.ParaSpacing();
+				spacing.Set_FromObject({ After: 0, Before: 0, Line: Asc.linerule_Auto });
+				built[i].Set_Spacing(spacing);
+			}
+			content.Internal_Content_Add(content.Content.length, built[i], false);
+		}
+		if (content.Content.length > built.length) {
+			content.Internal_Content_Remove(0, content.Content.length - built.length, false);
+		}
+	};
+
+	function GetContentFromHtmlLite(oLogicDocument, oTarget, sHtml, bPresentation) {
+		var builder = new CHtmlPasteLiteBuilder(oLogicDocument, oTarget, bPresentation);
+		return builder.generate(sHtml);
+	}
+
   //---------------------------------------------------------export---------------------------------------------------
   window['AscCommon'] = window['AscCommon'] || {};
   window["AscCommon"].Check_LoadingDataBeforePrepaste = Check_LoadingDataBeforePrepaste;
@@ -14611,6 +15628,8 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
   window["AscCommon"].CopyProcessor = CopyProcessor;
   window["AscCommon"].CopyPasteCorrectString = CopyPasteCorrectString;
   window["AscCommon"].Editor_Paste_Exec = Editor_Paste_Exec;
+  window["AscCommon"].Editor_Paste_Html_Lite_Exec = Editor_Paste_Html_Lite_Exec;
+  window["AscCommon"].GetContentFromHtmlLite = GetContentFromHtmlLite;
   window["AscCommon"].sendImgUrls = sendImgUrls;
   window["AscCommon"].PasteProcessor = PasteProcessor;
   window["AscCommon"].GetContentFromHtml = GetContentFromHtml;

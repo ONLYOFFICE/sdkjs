@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -63,6 +66,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Workbook_RichValueStructures = 22;
 	window['AscCH'].historyitem_Workbook_RichValueTypesInfo = 23;
 	window['AscCH'].historyitem_Workbook_RichValueData = 24;
+	window['AscCH'].historyitem_Workbook_SpecialPaste = 25;
 
 	window['AscCH'].historyitem_Worksheet_RemoveCell = 1;
 	window['AscCH'].historyitem_Worksheet_RemoveRows = 2;
@@ -191,6 +195,12 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Cell_SetHidden = 29;
 	window['AscCH'].historyitem_Cell_SetLocked = 30;
 	window['AscCH'].historyitem_Cell_ReadingOrder = 31;
+	// Direct xf change on a style-only cell; undo applies to
+	// ws.cellStylesByCol without creating a SheetMemory init row.
+	window['AscCH'].historyitem_Cell_SetStyleOnly = 32;
+	// Range-form companion of SetStyleOnly: one record per CRangeAttrArray
+	// run (bbox + uniform oldXfs/newXfs); splits to per-cell on OT conflict.
+	window['AscCH'].historyitem_Cell_SetStyleOnlyRange = 33;
 
 	window['AscCH'].historyitem_Comment_Add = 1;
 	window['AscCH'].historyitem_Comment_Remove = 2;
@@ -786,7 +796,7 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 		//changeWorksheetUpdate before cleanCellCache to call _calcHeightRows
 		for (i in oRedoObjectParam.oChangeWorksheetUpdate)
 			this.workbook.handlers.trigger("changeWorksheetUpdate",
-				oRedoObjectParam.oChangeWorksheetUpdate[i],{lockDraw: true, reinitRanges: true});
+				oRedoObjectParam.oChangeWorksheetUpdate[i],{lockDraw: true, reinitRanges: true, isUpdateDefaultWidth: !!oRedoObjectParam.oUpdateDefaultWidthSheets[i]});
 
 		this.updateDrawingsByRegions(Point.UpdateRigions, oRedoObjectParam);
 
@@ -893,8 +903,13 @@ CHistory.prototype._addRedoObjectParam = function (oRedoObjectParam, Point) {
 		AscCH.historyitem_Worksheet_SetDisplayHeadings === Point.Type)) {
 		oRedoObjectParam.oOnUpdateSheetViewSettings[Point.SheetId] = Point.SheetId;
 	}
-	else if (AscCommonExcel.g_oUndoRedoWorksheet === Point.Class && (AscCH.historyitem_Worksheet_RowProp === Point.Type || AscCH.historyitem_Worksheet_ColProp === Point.Type || AscCH.historyitem_Worksheet_RowHide === Point.Type || AscCH.historyitem_Worksheet_AddCols === Point.Type || AscCH.historyitem_Worksheet_RemoveCols === Point.Type))
+	else if (AscCommonExcel.g_oUndoRedoWorksheet === Point.Class && (AscCH.historyitem_Worksheet_RowProp === Point.Type || AscCH.historyitem_Worksheet_ColProp === Point.Type || AscCH.historyitem_Worksheet_RowHide === Point.Type || AscCH.historyitem_Worksheet_AddCols === Point.Type || AscCH.historyitem_Worksheet_RemoveCols === Point.Type)) {
 		oRedoObjectParam.oChangeWorksheetUpdate[Point.SheetId] = Point.SheetId;
+		if ((AscCH.historyitem_Worksheet_ColProp === Point.Type || AscCH.historyitem_Worksheet_RowProp === Point.Type) &&
+			Point.Data && Point.Data.index === AscCommonExcel.g_nAllColIndex) {
+			oRedoObjectParam.oUpdateDefaultWidthSheets[Point.SheetId] = true;
+		}
+	}
 	else if (AscCommonExcel.g_oUndoRedoWorkbook === Point.Class && (AscCH.historyitem_Workbook_SheetAdd === Point.Type || AscCH.historyitem_Workbook_SheetRemove === Point.Type)) {
 		oRedoObjectParam.bUpdateWorksheetByModel = true;
 		oRedoObjectParam.bOnSheetsChanged = true;
@@ -1310,6 +1325,24 @@ CHistory.prototype.Add = function(Class, Type, sheetid, range, Data, LocalChange
 		let Binary_Len = this.BinaryWriter.GetCurPosition() - Binary_Pos;
 		item.Binary.Pos = Binary_Pos;
 		item.Binary.Len = Binary_Len;
+	};
+	CHistory.prototype.RefreshBinaryDataItem = function(item)
+	{
+		this.Refresh_SpreadsheetChanges(item);
+	};
+	CHistory.prototype.RewriteImageUrlsInLastPoint = function(mapUrl)
+	{
+		if (this.Index < 0 || !this.Points[this.Index])
+			return;
+		let items = this.Points[this.Index].Items;
+		for (let i = 0; i < items.length; ++i) {
+			let item   = items[i];
+			let change = item.Data || item.Class;
+			if (!change || !change.ReplaceImageUrl || !change.ReplaceImageUrl(mapUrl))
+				continue;
+			this.RefreshBinaryDataItem(item);
+			change.Redo();
+		}
 	};
 CHistory.prototype.CanAddChanges = function()
 {

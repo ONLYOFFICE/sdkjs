@@ -1,34 +1,39 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
+
+"use strict";
 
 (function() {
 
@@ -124,6 +129,9 @@
     }
 
     function FormatDateValue(nValue, sFormat) {
+        if (undefined == nValue)
+            return "";
+
         let oNumFormat = AscCommon.oNumFormatCache.get(sFormat, AscCommon.NumFormatType.PDFFormDate);
         oNumFormat.oNegativeFormat.bAddMinusIfNes = false;
 
@@ -197,6 +205,8 @@
      * @returns {string} - The formatted value.
      */
     function FormatValueSpecial(value, psf) {
+		value = toString(value, "");
+
         value = value.replace(/\D/g, ""); // Remove all non-numeric characters
         
         switch (psf) {
@@ -431,6 +441,10 @@
             sCurValue = nCurIdx == undefined ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
         }
 
+		if (sCurValue == undefined) {
+			sCurValue = "";
+		}
+
         let oFormatParser = AscCommon.g_oFormatParser;
 
         function getShortPattern(aRawFormat) {
@@ -503,8 +517,7 @@
             return;
         }
 
-        oDateFormat.oTextFormat.formatType = AscCommon.NumFormatType.PDFFormDate;
-        sRes = oDateFormat.oTextFormat.format(oResParsed.value, 0, AscCommon.gc_nMaxDigCount, oCultureInfo)[0].text;
+        sRes = FormatDateValue(oResParsed.value * 86400 * 1000, cFormat);
 
         oCurForm.SetFormatValue(sRes);
     }
@@ -534,6 +547,10 @@
             let nCurIdx = oForm.GetCurIdxs()[0];
             sCurValue = nCurIdx == undefined ? oForm.GetValue() : oForm.GetFormApi().getItemAt(nCurIdx, false);
         }
+
+		if (sCurValue == undefined) {
+			sCurValue = "";
+		}
 
         let oFormatParser = AscCommon.g_oFormatParser;
 
@@ -624,10 +641,6 @@
         let oDoc = editor.getDocumentRenderer().doc;
         let oForm = oDoc.event["target"].field;
         
-        // TODO implement ms handling 
-        let oCultureInfo = {};
-        Object.assign(oCultureInfo, AscCommon.g_aCultureInfos[9]);
-
         let sFormat;
         let fIsValidTime = null;
         switch (ptf) {
@@ -661,9 +674,6 @@
                 break;
         }
 
-        let oNumFormat = AscCommon.oNumFormatCache.get(sFormat, AscCommon.NumFormatType.PDFFormDate);
-        oNumFormat.oNegativeFormat.bAddMinusIfNes = false;
-        
         let oTargetRun = oForm.contentFormat.GetElement(0).GetElement(0);
 
         let sCurValue;
@@ -673,6 +683,10 @@
             let nCurIdx = oForm.GetCurIdxs()[0];
             sCurValue = nCurIdx == undefined ? oForm.GetValue() : oForm.api.getItemAt(nCurIdx, false);
         }
+
+		if (sCurValue == undefined) {
+			sCurValue = "";
+		}
         
         if (sCurValue == "")
             oTargetRun.ClearContent();
@@ -689,8 +703,7 @@
             return;
         }
         
-        oNumFormat.oTextFormat.formatType = AscCommon.NumFormatType.PDFFormDate;
-        let sRes = oNumFormat.format(oResParsed.value, 0, AscCommon.gc_nMaxDigCount, true, undefined, true)[0].text;
+        let sRes = FormatDateValue(oResParsed.value * 86400 * 1000, sFormat);
         oForm.SetFormatValue(sRes);
     }
     /**
@@ -761,6 +774,10 @@
             let nCurIdx = oForm.GetCurIdxs()[0];
             sCurValue = nCurIdx == undefined ? oForm.GetValue() : oForm.api.getItemAt(nCurIdx, false);
         }
+
+		if (sCurValue == undefined) {
+			sCurValue = "";
+		}
         
        if (fIsValidTime && fIsValidTime(sCurValue) == false) {
             oDoc.event["rc"] = false;
@@ -785,7 +802,7 @@
     }
 
     let AFTime_FormatEx = AFDate_FormatEx;
-    let AFTime_KeystrokeEx = AFTime_Keystroke;
+    let AFTime_KeystrokeEx = AFDate_KeystrokeEx;
 
     /**
      * Convert field value to specific special format.
@@ -808,6 +825,10 @@
             let nCurIdx = oCurForm.GetCurIdxs()[0];
             sCurValue = nCurIdx == undefined ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
         }
+
+		if (sCurValue == undefined) {
+			sCurValue = "";
+		}
 
         let oTargetRun = oCurForm.contentFormat.GetElement(0).GetElement(0);
 
@@ -1161,6 +1182,18 @@
             }
         }
     }
+
+	/**
+	 * Function for convertion field value to number.
+	 * @returns {number}
+	 */
+	function AFMakeNumber(value) {
+		let result = parseInt(value);
+		if (isNaN(result) || ("" + result) !== ("" + value))
+			return 0;
+		
+		return result;
+	}
 	
     function toString(value, defValue) {
         if (value && value.toString) {
@@ -1195,6 +1228,7 @@
         "AFSpecial_KeystrokeEx":  AFSpecial_KeystrokeEx,
         "AFSimple_Calculate":     AFSimple_Calculate,
         "AFRange_Validate":       AFRange_Validate,
+        "AFMakeNumber":           AFMakeNumber
     };
 })();
 

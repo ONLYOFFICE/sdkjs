@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -107,9 +110,7 @@
 		this.IsActionRestrictionCurrent  = 0;
 		this.IsActionRestrictionPrev  = null;
 		
-		this.groupActionsCounter        = 0;
-		this.groupActionsPr             = {};
-		this.groupActionsExecuteCounter = 0;
+		this.initGroupActions();
 
 		// AutoSave
 		this.autoSaveGap = 0;					// Autosave interval (0 means no autosave) in milliseconds
@@ -149,9 +150,6 @@
 		this.isCoAuthoringEnable    = true;
 		// Array of locks that existed when the document was opened
 		this.arrPreOpenLocksObjects = [];
-
-		// Spell Checking
-		this.SpellCheckUrl = '';    // Spell check service URL
 
 		// License retrieval result
 		this.licenseResult       = null;
@@ -220,10 +218,8 @@
 
 		this.SaveAfterMacros = false;
 
-		this.evalCommand = false;
-
 		// Spell Checking
-		this.SpellCheckApi = new AscCommon.CSpellCheckApi();
+		this.SpellCheckApi = {};
 		this.isSpellCheckEnable = true;
 
 		// macros & plugins events
@@ -256,8 +252,6 @@
 		this._correctEmbeddedWork();
 
 		this.broadcastChannel = null;
-		
-		this.textAnnotatorEventManager = null;
 
 		return this;
 	}
@@ -767,6 +761,23 @@
 	baseEditorsApi.prototype.isCopyEnabled                = function()
 	{
 		return this.copyEnabled;
+	};
+	baseEditorsApi.prototype.asc_setPutImageToClipboard = function(bPutImage)
+	{
+		if (AscCommon.g_clipboardBase) {
+			AscCommon.g_clipboardBase.bPutImage = !!bPutImage;
+		}
+	};
+	baseEditorsApi.prototype.asc_CopyData = function(sText, sHtml, sInternal, oImage)
+	{
+		if (AscCommon.g_clipboardBase)
+			return AscCommon.g_clipboardBase.CopyData({
+				text     : sText,
+				html     : sHtml,
+				internal : sInternal,
+				image    : oImage
+			});
+		return false;
 	};
 	baseEditorsApi.prototype.sync_CanCopyCutCallback = function (bCanCopyCut, bCanCut)
 	{
@@ -1952,9 +1963,8 @@
 		{
 			t.sendEvent("asc_onParticipantsChanged", users);
 		};
-		this.CoAuthoringApi.onSpellCheckInit          = function(e)
+		this.CoAuthoringApi.onSpellCheckInit          = function()
 		{
-			t.SpellCheckUrl = e;
 			t._coSpellCheckInit();
 		};
 		this.CoAuthoringApi.onSetIndexUser            = function(e)
@@ -2224,8 +2234,11 @@
 								if (t["asc_isSupportFeature"]("ooxml") && !documentUrl) {
 									documentUrl = urls['origin.docx'] || urls['origin.xlsx'] || urls['origin.pptx'];
 								}
-								if (t.isUseNativeViewer && !documentUrl)
-									documentUrl = urls['origin.pdf'] || urls['origin.xps'] || urls['origin.oxps'] || urls['origin.djvu'];
+								if (t.isUseNativeViewer && !documentUrl) {
+									var exts = Asc.c_sNativeViewerFormats.slice(1).split('.');
+									for (var i = 0; i < exts.length && !documentUrl; i++)
+										documentUrl = urls['origin.' + exts[i]];
+								}
 								if (null != documentUrl) {
 									if ('ok' === input["status"] || t.getViewMode()) {
 										t._onOpenCommand(documentUrl);
@@ -2345,7 +2358,7 @@
 	// SpellCheck
 	baseEditorsApi.prototype.asc_SpellCheckDisconnect            = function()
 	{
-		if (!this.SpellCheckApi)
+		if (!this.SpellCheckApi || !this.SpellCheckApi.disconnect)
 			return; // Error
 		this.SpellCheckApi.disconnect();
 		this.isSpellCheckEnable = false;
@@ -2378,7 +2391,8 @@
 					}
 					if (_editor.SpellCheckApi.isRestart === true)
 						return;
-					_editor.SpellCheckApi.onSpellCheck(response);
+
+					_editor.SpellCheck_CallBack(response);
 				}
             };
 
@@ -2390,6 +2404,10 @@
 			this.SpellCheckApi.restart = function() {
 				this.isRestart = true;
 				window["AscDesktopEditor"]["SpellCheck"]("clear");
+			};
+
+			this.SpellCheckApi.checkDictionary = function () {
+				return true;
 			};
 
 			if (window["AscDesktopEditor"]["IsLocalFile"] && !window["AscDesktopEditor"]["IsLocalFile"]())
@@ -2406,12 +2424,12 @@
 				this.sendEvent('asc_onSpellCheckInit', langs_array);
 			}
 		} else {
-			if (!this.SpellCheckUrl && !window['NATIVE_EDITOR_ENJINE']) {
+			if (!window['NATIVE_EDITOR_ENJINE']) {
 				this.SpellCheckApi = {};
 				this.SpellCheckApi.log = false;
 				this.SpellCheckApi.worker = new CSpellchecker({
-					enginePath: "../../../../sdkjs/common/spell/spell",
-					dictionariesPath: "./../../../../dictionaries"
+					enginePath: AscCommon.RELATIVE_SDKJS_PATH + "common/spell/spell",
+					dictionariesPath: AscCommon.RELATIVE_SDKJS_PATH + "../dictionaries"
 				});
 				this.SpellCheckApi.worker.restartCallback = function() {
 					t.asc_restartCheckSpelling();
@@ -2442,22 +2460,8 @@
 				};
 
 				this.sendEvent('asc_onSpellCheckInit', this.SpellCheckApi.worker.getLanguages());
-				return;
-			}
-			
-			// Deprecated old scheme with server
-			if (this.SpellCheckUrl && this.isSpellCheckEnable) {
-				this.SpellCheckApi.set_url(this.SpellCheckUrl);
 			}
 		}
-
-		this.SpellCheckApi.onInit = function (e) {
-			t.sendEvent('asc_onSpellCheckInit', e);
-		};
-		this.SpellCheckApi.onSpellCheck = function (e) {
-			t.SpellCheck_CallBack(e);
-		};
-		this.SpellCheckApi.init(this.documentId);
 	};
     baseEditorsApi.prototype.asc_spellCheckAddToDictionary       = function(SpellCheckProperty)
     {
@@ -2969,6 +2973,21 @@
 	};
 
 	baseEditorsApi.prototype.getGraphicController = function() {};
+
+	baseEditorsApi.prototype.asc_canConvertImageToShapes = function()
+	{
+		var controller = this.getGraphicController();
+		return !!(controller && controller.getSingleSelectedSvgImage());
+	};
+	baseEditorsApi.prototype.asc_convertImageToShapes = function()
+	{
+		var controller = this.getGraphicController();
+		if (!controller)
+			return;
+		var image = controller.getSingleSelectedSvgImage();
+		if (image)
+			controller.convertImageToShapes(image);
+	};
 
 	baseEditorsApi.prototype.asc_canEditTableOleObject = function(bReturnOle) {
 		var oController = this.getGraphicController();
@@ -4591,7 +4610,6 @@
 	baseEditorsApi.prototype._beforeEvalCommand = function()
 	{
 		let oApi = this;
-		this.evalCommand = true;
 		switch (this.editorId)
 		{
 			case AscCommon.c_oEditorId.Word:
@@ -4617,7 +4635,6 @@
 	baseEditorsApi.prototype._afterEvalCommand = function(endAction)
 	{
 		var oApi = this;
-		this.evalCommand = false;
 		switch (this.editorId)
 		{
 			case AscCommon.c_oEditorId.Word:
@@ -4636,8 +4653,7 @@
 					_images[_imagesArray[i]] = _imagesArray[i];
 
 				AscCommon.Check_LoadingDataBeforePrepaste(this, oLogicDocument.Document_Get_AllFontNames(), _images, function() {
-					if (oLogicDocument.Reassign_ImageUrls)
-						oLogicDocument.Reassign_ImageUrls(_images);
+					AscCommon.History.RewriteImageUrlsInLastPoint(_images);
 
 					if (AscCommon.c_oEditorId.Word === oApi.editorId)
 					{
@@ -4658,7 +4674,7 @@
 					_images[_imagesArray[i]] = _imagesArray[i];
 
 				AscCommon.Check_LoadingDataBeforePrepaste(this, oModel._generateFontMap(), _images, function() {
-					oModel.reassignImageUrls(_images);
+					AscCommon.History.RewriteImageUrlsInLastPoint(_images);
 					oApi.asc_Recalculate(true);
 					var wsView = oApi.wb && oApi.wb.getWorksheet();
 					if (wsView && wsView.objectRender && wsView.objectRender.controller)
@@ -5369,6 +5385,11 @@
 	{
 		let guids = {}; guids[guid] = true;
 		window.g_asc_plugins.onPluginEvent2("onToolbarMenuClick", itemId, guids);
+	};
+	baseEditorsApi.prototype["onPluginWindowHeaderMenuItemClick"] = function(guid, windowId, itemId, pressed)
+	{
+		let guids = {}; guids[guid] = true;
+		window.g_asc_plugins.onPluginEvent2("onWindowHeaderMenuClick", itemId, guids);
 	};
 	baseEditorsApi.prototype.onPluginCloseContextMenuItem = function(guid)
 	{
@@ -6083,142 +6104,39 @@
 	{
 	};
 
+	baseEditorsApi.prototype.initGroupActions = function()
+	{
+	};
 	baseEditorsApi.prototype.startGroupActions = function(pr)
 	{
-		++this.groupActionsCounter;
-
-		AscCommon.History.startGroupPoints();
-
-		if (this.groupActionsCounter > 1)
-			return;
-		
-		this.groupActionsExecuteCounter = 0;
-		this.groupActionsPr = {};
-		this.groupActionsPr.lockScroll = !!(pr && pr["lockScroll"]);
-
-		if (this.groupActionsPr.lockScroll && !this.isLockScrollToTarget)
-			this.asc_LockScrollToTarget(true);
-		else
-			this.groupActionsPr.lockScroll = false;
-
-		if (!!(pr && pr["keepSelection"]))
-			this._saveGroupActionsState();
-
-		this._onStartGroupActions();
-
-		AscCommon.CollaborativeEditing.Set_GlobalLock(true);
-		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(true);
 	};
 	baseEditorsApi.prototype.executeGroupActions = function(f)
 	{
-		if (!this.isGroupActions())
-			return f.call();
-
-		this.executeGroupActionsStart();
-		let res = f.call();
-		this.updateSelection();
-		this.executeGroupActionsEnd();
-		return res;
+		return f.call();
 	};
 	baseEditorsApi.prototype.executeGroupActionsStart = function()
 	{
-		if (!this.isGroupActions())
-			return;
-		
-		++this.groupActionsExecuteCounter;
-		if (this.groupActionsExecuteCounter > 1)
-			return;
-		
-		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
-		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
 	};
 	baseEditorsApi.prototype.executeGroupActionsEnd = function()
 	{
-		if (!this.isGroupActions())
-			return;
-		
-		--this.groupActionsExecuteCounter;
-		if (this.groupActionsExecuteCounter > 0)
-			return;
-		
-		AscCommon.CollaborativeEditing.Set_GlobalLock(true);
-		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(true);
 	};
 	baseEditorsApi.prototype.cancelGroupActions = function(pr)
 	{
-		if (!this.isGroupActions())
-			return;
-
-		--this.groupActionsCounter;
-
-		AscCommon.History.cancelGroupPoints();
-		
-		if (this.groupActionsCounter > 0)
-			return;
-		
-		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
-		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
-		
-		this._onEndGroupActions(false);
-
-		if (this.groupActionsPr.selectionState)
-			this._restoreGroupActionsState();
-
-		if (this.groupActionsPr.lockScroll)
-			this.asc_LockScrollToTarget(false);
-
-		if (!pr || false !== pr["scrollToTarget"])
-			this.scrollToTarget();
 	};
 	baseEditorsApi.prototype.endGroupActions = function(pr)
 	{
-		if (!this.isGroupActions())
-			return;
-
-		--this.groupActionsCounter;
-		AscCommon.History.endGroupPoints();
-
-		if (this.groupActionsCounter > 0)
-			return;
-
-		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
-		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
-
-		this._onEndGroupActions(true);
-
-		if (this.groupActionsPr.selectionState)
-			this._restoreGroupActionsState();
-
-		if (this.groupActionsPr.lockScroll)
-			this.asc_LockScrollToTarget(false);
-
-		if (!pr || false !== pr["scrollToTarget"])
-			this.scrollToTarget();
 	};
 	baseEditorsApi.prototype.isGroupActions = function()
 	{
-		return this.groupActionsCounter > 0;
+		return false;
 	};
-	baseEditorsApi.prototype._onStartGroupActions = function()
+	baseEditorsApi.prototype.setUserScrollGroupActions = function(isUserScroll)
 	{
 	};
-	baseEditorsApi.prototype._onEndGroupActions = function(isFullEnd)
-	{
-	};
-	baseEditorsApi.prototype._saveGroupActionsState = function()
-	{
-	};
-	baseEditorsApi.prototype._restoreGroupActionsState = function()
+	baseEditorsApi.prototype.resetUserScrollGroupActionsTimer = function()
 	{
 	};
 	
-	baseEditorsApi.prototype.getTextAnnotatorEventManager = function()
-	{
-		if (!this.textAnnotatorEventManager)
-			this.textAnnotatorEventManager = new AscCommon.TextAnnotatorEventManager(this);
-		
-		return this.textAnnotatorEventManager;
-	};
 	baseEditorsApi.prototype.getMacroRecorder = function()
 	{
 		return this.macroRecorder;
@@ -6360,7 +6278,13 @@
 	
 	prot["asc_setPdfViewer"] = prot.asc_setPdfViewer;
 
+	prot["asc_setPutImageToClipboard"] = prot.asc_setPutImageToClipboard;
+	prot["asc_CopyData"] = prot.asc_CopyData;
+
 	prot["asc_mergeSelectedShapes"] = prot.asc_mergeSelectedShapes;
+
+	prot["asc_canConvertImageToShapes"] = prot.asc_canConvertImageToShapes;
+	prot["asc_convertImageToShapes"] = prot.asc_convertImageToShapes;
 
 	prot["asc_SetRTLInterface"] = prot.asc_SetRTLInterface;
 

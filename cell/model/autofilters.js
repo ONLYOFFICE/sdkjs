@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -69,6 +72,27 @@
 			second           : 9,
 			dateTimeGrouping : 10
 		};
+
+		//sort dates: newest year first, then chronological. undefined if neither is a date
+		function compareDateFilterValues(a, b) {
+			var aDate = a.asc_getIsDateFormat();
+			var bDate = b.asc_getIsDateFormat();
+			if (aDate && bDate) {
+				if (a.asc_getYear() !== b.asc_getYear()) {
+					return a.asc_getYear() > b.asc_getYear() ? -1 : 1;
+				}
+				return (a.asc_getMonth() - b.asc_getMonth())
+					|| (a.asc_getDay() - b.asc_getDay())
+					|| (a.asc_getHour() - b.asc_getHour())
+					|| (a.asc_getMinute() - b.asc_getMinute())
+					|| (a.asc_getSecond() - b.asc_getSecond());
+			} else if (aDate) {
+				return -1;
+			} else if (bDate) {
+				return 1;
+			}
+			return undefined;
+		}
 
 		function AutoFiltersOptionsElements() {
 			if (!(this instanceof AutoFiltersOptionsElements)) {
@@ -1288,7 +1312,7 @@
 						let cellFormat = cell.getNumFormat();
 						let isDateTimeFormat = cellFormat && cellFormat.isDateTimeFormat() &&
 							cell.getType() === window["AscCommon"].CellValueType.Number &&
-							cellFormat.getType() !== Asc.c_oAscNumFormatType.Time;
+							cellFormat.getType() !== Asc.c_oAscNumFormatType.Time && val !== "";
 
 						let dataValue = isDateTimeFormat ? AscCommon.NumFormat.prototype.parseDate(val) : null;
 
@@ -1659,6 +1683,8 @@
 							var redrawTablesArr;
 							if (data.type === true) {
 								redrawTablesArr = this.insertLastTableColumn(data.displayName, data.activeCells);
+							} else if (data.type === undefined) {
+								redrawTablesArr = this.insertFirstTableColumn(data.displayName, data.activeCells);
 							} else if (data.type === false) {
 								redrawTablesArr = this.insertLastTableRow(data.displayName, data.activeCells);
 							}
@@ -2281,6 +2307,43 @@
 				return redrawTablesArr;
 			},
 
+			insertFirstTableColumn: function (displayNameFormatTable, activeRange) {
+				var worksheet = this.worksheet;
+				var t = this;
+				var bUndoChanges = worksheet.workbook.bUndoChanges;
+				var bRedoChanges = worksheet.workbook.bRedoChanges;
+
+				var redrawTablesArr = [];
+
+				var changeFilter = function (filter) {
+					var oldFilter = filter.clone(null);
+					filter.addTableFirstColumn(t);
+					filter.changeRef(-1, null, true);
+
+					//History
+					if (!bUndoChanges && !bRedoChanges && oldFilter) {
+						var changeElement = {
+							oldFilter: oldFilter, newFilterRef: filter.Ref.clone()
+						};
+						let historyObj = t._getHistoryObj(changeElement, AscCH.historyitem_AutoFilter_Change,
+							{displayName: displayNameFormatTable, activeCells: activeRange}, false,
+							oldFilter.Ref, null, activeRange);
+						History.Add(AscCommonExcel.g_oUndoRedoAutoFilters, AscCH.historyitem_AutoFilter_Change, worksheet.getId(), worksheet.selectionRange.getLast().clone(),
+							historyObj);
+					}
+
+					redrawTablesArr.push({oldfilterRef: oldFilter.Ref, newFilter: filter});
+				};
+
+				var tablePart = t._getFilterByDisplayName(displayNameFormatTable);
+
+				if (tablePart) {
+					changeFilter(tablePart);
+				}
+
+				return redrawTablesArr;
+			},
+
 			insertRows: function (type, activeRange, insertType, displayNameFormatTable) {
 				var worksheet = this.worksheet;
 				var t = this;
@@ -2309,8 +2372,9 @@
 				var changeFilter = function (filter, bTablePart) {
 					var ref = filter.Ref;
 					var oldFilter = null;
+					let bTableHeaders = !bTablePart || filter.isHeaderRow();
 					if (activeRange.c1 <= ref.c1 && activeRange.c2 >= ref.c2) {
-						if (activeRange.r1 <= ref.r1)//until
+						if ((activeRange.r1 <= ref.r1 && bTableHeaders) || (activeRange.r1 < ref.r1 && !bTableHeaders))//until
 						{
 							oldFilter = filter.clone(null);
 
@@ -3389,6 +3453,12 @@
 					return false;
 				}
 
+				// Prevent conflicts with existing tables or named ranges (case-insensitive)
+				if (newName && newName.toLowerCase() !== tableName.toLowerCase() &&
+					worksheet.workbook.dependencyFormulas.getDefNameByName(newName, null)) {
+					return false;
+				}
+
 				var oldFilter = tablePart.clone(null);
 				History.Create_NewPoint();
 				History.StartTransaction();
@@ -3571,10 +3641,9 @@
 				var worksheet = this.worksheet;
 				if (displayName === null) {
 					res = worksheet.AutoFilter;
-				} else if (worksheet.TableParts &&
-					worksheet.TableParts.length) {
+				} else if (worksheet.TableParts && worksheet.TableParts.length && displayName) {
 					for (var i = 0; i < worksheet.TableParts.length; i++) {
-						if (worksheet.TableParts[i].DisplayName === displayName) {
+						if (worksheet.TableParts[i].DisplayName.toLowerCase() === displayName.toLowerCase()) {
 							res = worksheet.TableParts[i];
 							break;
 						}
@@ -5096,7 +5165,7 @@
 					let cellFormat = cell.getNumFormat();
 					isDateTimeFormat = cellFormat && cellFormat.isDateTimeFormat() &&
 						cell.getType() === window["AscCommon"].CellValueType.Number &&
-						cellFormat.getType() !== Asc.c_oAscNumFormatType.Time;
+						cellFormat.getType() !== Asc.c_oAscNumFormatType.Time && val !== "";
 
 					if (isDateTimeFormat) {
 						dataValue = AscCommon.NumFormat.prototype.parseDate(val);
@@ -5296,20 +5365,11 @@
 					let val2 = b.val;
 					let isNumericA = isNumeric(val1);
 					let isNumericB = isNumeric(val2);
-					let isDateTimeA = a.isDateFormat;
-					let isDateTimeB = b.isDateFormat;
 
-					if (isDateTimeA && !isDateTimeB) {
-						//date have max priority
-						return -1;
-					} else if (!isDateTimeA && isDateTimeB) {
-						return 1;
-					} else if (isDateTimeA && isDateTimeB) {
-						if (a.year === b.year) {
-							return parseFloat(val1) > parseFloat(val2) ? 1 : -1;
-						} else {
-							return a.year > b.year ? -1 : 1;
-						}
+					//dates first, with their own ordering
+					let dateCmp = compareDateFilterValues(a, b);
+					if (undefined !== dateCmp) {
+						return dateCmp;
 					}
 
 					if (a.val === "") {
@@ -5386,7 +5446,7 @@
 				}
 			},
 
-			_openHiddenRowsAfterDeleteColumn: function (filter, colId) {
+			_openHiddenRowsAfterDeleteColumn: function (filter, colId, updateDynamic) {
 				var autoFilter = filter.getAutoFilter();
 				var ref = autoFilter.Ref;
 				var filterColumns = autoFilter.FilterColumns;
@@ -5408,13 +5468,20 @@
 
 				worksheet.workbook.dependencyFormulas.lockRecal();
 				this.useViewLocalChange = true;
+				if (updateDynamic) {
+					autoFilter.reinitDynamicFilters(worksheet, opt_columnsFilter);
+				}
 				for (var i = ref.r1 + 1; i <= ref.r2; i++) {
-					if (worksheet.getRowHidden(i) === false) {
+					if (!updateDynamic && worksheet.getRowHidden(i) === false) {
 						continue;
 					}
 
-					if (!autoFilter.hiddenByAnotherFilter(worksheet, colId, i, ref.c1, opt_columnsFilter))//filter another button
-					{
+					var hide = autoFilter.hiddenByAnotherFilter(worksheet, colId, i, ref.c1, opt_columnsFilter);//filter another button
+					if (updateDynamic) {
+						if (worksheet.getRowHidden(i) !== hide) {
+							worksheet.setRowHidden(hide, i, i);
+						}
+					} else if (!hide) {
 						worksheet.setRowHidden(false, i, i);
 					}
 				}
@@ -5423,25 +5490,20 @@
 			},
 
 			_isAddNameColumn: function (range) {
-				//if first three rows of any columns contain text data
-				var result = false;
-				var worksheet = this.worksheet;
-				if (range.r1 !== range.r2) {
-					for (var col = range.c1; col <= range.c2; col++) {
-						var valFirst = worksheet.getCell3(range.r1, col);
-						if (valFirst !== '') {
-							for (var row = range.r1; row <= range.r1 + 2; row++) {
-								var cell = worksheet.getCell3(row, col);
-								var type = cell.getType();
-								if (type === CellValueType.String) {
-									result = true;
-									break;
-								}
-							}
-						}
-					}
+				if (range.r1 === range.r2) {
+					return false;
 				}
-				return result;
+				var r1 = range.r1;
+				var r2 = Math.min(r1 + 2, range.r2);
+				var scanRange = this.worksheet.getRange3(r1, range.c1, r2, range.c2);
+				var found = false;
+				scanRange.forEachDataValue(function (row, col, type) {
+					if (type === CellValueType.String) {
+						found = true;
+						return true;
+					}
+				});
+				return found;
 			},
 
 			_generateColumnNameWithoutTitle: function (ref) {
@@ -5976,7 +6038,7 @@
 				if (colId !== null) {
 					var index = autoFilterObj.getIndexByColId(colId);
 					if (!viewId || viewId === this.worksheet.getActiveNamedSheetViewId()) {
-						this._openHiddenRowsAfterDeleteColumn(filter, colId);
+						this._openHiddenRowsAfterDeleteColumn(filter, colId, true);
 					}
 
 					var filterColumn = autoFilterObj.getFilterColumnByIndex(index);
@@ -6869,6 +6931,7 @@
 		prot["asc_setDescription"] = prot.asc_setDescription;
 
 		window["AscCommonExcel"].AutoFiltersOptionsElements = AutoFiltersOptionsElements;
+		window["AscCommonExcel"].compareDateFilterValues = compareDateFilterValues;
 		prot = AutoFiltersOptionsElements.prototype;
 		prot["asc_getText"] = prot.asc_getText;
 		prot["asc_getVisible"] = prot.asc_getVisible;

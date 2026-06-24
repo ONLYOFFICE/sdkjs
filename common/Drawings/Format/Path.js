@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -2256,54 +2259,84 @@ function (window, undefined) {
 		);
 	};
 
-	function getClosestIntersectionWithPath(circleCenter, circleRadius, pathCommands, searchFromEnd) {
-		let prevPoint;
-		const allIntersections = [];
+	function getFirstDistinctPoint(tipPoint, pathCommands, searchFromEnd) {
+		const epsilon = AscWord.EPSILON;
 
-		for (let i = 0; i < pathCommands.length; i++) {
+		const start = searchFromEnd ? pathCommands.length - 1 : 0;
+		const end = searchFromEnd ? -1 : pathCommands.length;
+		const step = searchFromEnd ? -1 : 1;
+
+		for (let i = start; i !== end; i += step) {
 			const command = pathCommands[i];
-			let intersections = [];
+			let point;
 
-			if (command.id === AscFormat.moveTo) {
-				prevPoint = { x: command.X, y: command.Y };
-				continue;
+			if (command.id === AscFormat.moveTo || command.id === AscFormat.lineTo) {
+				point = { x: command.X, y: command.Y };
+			} else if (command.id === AscFormat.bezier4) {
+				point = { x: command.X2, y: command.Y2 };
 			}
 
-			if (command.id === AscFormat.lineTo) {
-				intersections = getCircleIntersectionsWithLine(circleCenter, circleRadius, prevPoint, { x: command.X, y: command.Y });
-				prevPoint = { x: command.X, y: command.Y };
-			}
-
-			if (command.id === AscFormat.bezier4) {
-				intersections = getCircleIntersectionsWithBezierCurve(
-					circleCenter, circleRadius,
-					prevPoint,
-					{ x: command.X0, y: command.Y0 },
-					{ x: command.X1, y: command.Y1 },
-					{ x: command.X2, y: command.Y2 }
-				);
-				prevPoint = { x: command.X2, y: command.Y2 };
-			}
-
-			if (intersections.length > 0) {
-				allIntersections.push(intersections);
+			if (point) {
+				if (Math.abs(point.x - tipPoint.x) > epsilon || Math.abs(point.y - tipPoint.y) > epsilon) {
+					return point;
+				}
 			}
 		}
 
-		if (allIntersections.length === 0) {
+		return null;
+	}
+
+	function getClosestIntersectionWithPath(circleCenter, circleRadius, pathCommands, searchFromEnd) {
+		let tipSegmentIndex = -1;
+		if (searchFromEnd) {
+			for (let i = pathCommands.length - 1; i >= 0; i--) {
+				if (pathCommands[i].id === AscFormat.lineTo || pathCommands[i].id === AscFormat.bezier4) {
+					tipSegmentIndex = i;
+					break;
+				}
+			}
+		} else {
+			for (let i = 0; i < pathCommands.length; i++) {
+				if (pathCommands[i].id === AscFormat.lineTo || pathCommands[i].id === AscFormat.bezier4) {
+					tipSegmentIndex = i;
+					break;
+				}
+			}
+		}
+
+		if (tipSegmentIndex <= 0) {
 			return null;
 		}
 
-		const targetIntersections = searchFromEnd
-			? allIntersections[allIntersections.length - 1]
-			: allIntersections[0];
+		const prevCommand = pathCommands[tipSegmentIndex - 1];
+		const segmentStart = prevCommand.id === AscFormat.bezier4
+			? { x: prevCommand.X2, y: prevCommand.Y2 }
+			: { x: prevCommand.X, y: prevCommand.Y };
 
-		const closestPoint = targetIntersections.reduce(function (best, current) {
+		const command = pathCommands[tipSegmentIndex];
+		let intersections;
+		if (command.id === AscFormat.lineTo) {
+			intersections = getCircleIntersectionsWithLine(circleCenter, circleRadius, segmentStart, { x: command.X, y: command.Y });
+		} else {
+			intersections = getCircleIntersectionsWithBezierCurve(
+				circleCenter, circleRadius,
+				segmentStart,
+				{ x: command.X0, y: command.Y0 },
+				{ x: command.X1, y: command.Y1 },
+				{ x: command.X2, y: command.Y2 }
+			);
+		}
+
+		if (!intersections || intersections.length === 0) {
+			return null;
+		}
+
+		const closestPoint = intersections.reduce(function (best, current) {
 			const isCurrentBetter = searchFromEnd
 				? current.t > best.t
 				: current.t < best.t;
 			return isCurrentBetter ? current : best;
-		}, targetIntersections[0]);
+		}, intersections[0]);
 
 		return closestPoint;
 	}
@@ -2458,18 +2491,21 @@ function (window, undefined) {
 		}
 
 		const arrowTipPoint = { x: commands[0].X, y: commands[0].Y };
-		const arrowBasePoint = getClosestIntersectionWithPath(arrowTipPoint, arrowLength, commands, false);
-
+		let arrowBasePoint = getClosestIntersectionWithPath(arrowTipPoint, arrowLength, commands, false);
 		if (!arrowBasePoint) {
-			return null;
+			arrowBasePoint = getFirstDistinctPoint(arrowTipPoint, commands, false);
 		}
 
-		const diffX = arrowTipPoint.x - arrowBasePoint.x;
-		const diffY = arrowTipPoint.y - arrowBasePoint.y;
+		if (arrowBasePoint) {
+			const diffX = arrowTipPoint.x - arrowBasePoint.x;
+			const diffY = arrowTipPoint.y - arrowBasePoint.y;
 
-		const angleInRadians = Math.atan2(diffY, diffX);
-		const angleInDegrees = angleInRadians * 180 / Math.PI;
-		return angleInDegrees;
+			const angleInRadians = Math.atan2(diffY, diffX);
+			const angleInDegrees = angleInRadians * 180 / Math.PI;
+			return angleInDegrees;
+		}
+
+		return 180 + 45;
 	};
 	Path.prototype.getTailArrowAngle = function (arrowLength) {
 		// This path should contain cubicBezierTo, lineTo, and moveTo commands only,
@@ -2485,20 +2521,22 @@ function (window, undefined) {
 		}
 
 		const pathEndPoint = this.getEndPoint();
-
 		const arrowTipPoint = { x: pathEndPoint.x, y: pathEndPoint.y };
-		const arrowBasePoint = getClosestIntersectionWithPath(arrowTipPoint, arrowLength, commands, true);
-
+		let arrowBasePoint = getClosestIntersectionWithPath(arrowTipPoint, arrowLength, commands, true);
 		if (!arrowBasePoint) {
-			return null;
+			arrowBasePoint = getFirstDistinctPoint(arrowTipPoint, commands, true);
 		}
 
-		const diffX = arrowTipPoint.x - arrowBasePoint.x;
-		const diffY = arrowTipPoint.y - arrowBasePoint.y;
+		if (arrowBasePoint) {
+			const diffX = arrowTipPoint.x - arrowBasePoint.x;
+			const diffY = arrowTipPoint.y - arrowBasePoint.y;
 
-		const angleInRadians = Math.atan2(diffY, diffX);
-		const angleInDegrees = angleInRadians * 180 / Math.PI;
-		return angleInDegrees;
+			const angleInRadians = Math.atan2(diffY, diffX);
+			const angleInDegrees = angleInRadians * 180 / Math.PI;
+			return angleInDegrees;
+		}
+
+		return 45;
 	};
 	Path.prototype.isValid = function () {
 		if(this.ArrPathCommand.length === 0) return false;

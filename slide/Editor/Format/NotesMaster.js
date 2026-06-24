@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -37,48 +40,23 @@
     AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetNotesTheme]  = AscDFH.CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetHF]          = AscDFH.CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetNotesStyle]  = AscDFH.CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_NotesMasterAddToSpTree]    = AscDFH.CChangesDrawingsContentPresentation;
-    AscDFH.changesFactory[AscDFH.historyitem_NotesMasterRemoveFromTree] = AscDFH.CChangesDrawingsContentPresentation;
-    AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetBg]          = AscDFH.CChangesDrawingsObjectNoId;
     AscDFH.changesFactory[AscDFH.historyitem_NotesMasterAddToNotesLst]  = AscDFH.CChangesDrawingsContentPresentation;
-    AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetName]        = AscDFH.CChangesDrawingsString;
     AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetClrMap]      = AscDFH.CChangesDrawingsObject;
 
 
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetNotesTheme]  = function(oClass, value){oClass.Theme = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetHF]          = function(oClass, value){oClass.hf = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetNotesStyle]  = function(oClass, value){oClass.txStyles = value;};
-    AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetName]        = function(oClass, value){oClass.cSld.name = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetClrMap]      = function(oClass, value){oClass.clrMap = value;};
-    AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetBg]          = function(oClass, value, FromLoad){
-        oClass.cSld.Bg = value;
-        if(FromLoad){
-            var Fill;
-            if(oClass.cSld.Bg && oClass.cSld.Bg.bgPr && oClass.cSld.Bg.bgPr.Fill)
-            {
-                Fill = oClass.cSld.Bg.bgPr.Fill;
-            }
-            if(typeof AscCommon.CollaborativeEditing !== "undefined")
-            {
-                if(Fill && Fill.fill && Fill.fill.type === Asc.c_oAscFill.FILL_TYPE_BLIP && typeof Fill.fill.RasterImageId === "string" && Fill.fill.RasterImageId.length > 0)
-                {
-                    AscCommon.CollaborativeEditing.Add_NewImage(Fill.fill.RasterImageId);
-                }
-            }
-        }
-    };
 
     AscDFH.drawingsConstructorsMap[AscDFH.historyitem_NotesMasterSetNotesStyle] = AscFormat.TextListStyle;
-    AscDFH.drawingsConstructorsMap[AscDFH.historyitem_NotesMasterSetBg]         = AscFormat.CBg;
 
-    AscDFH.drawingContentChanges[AscDFH.historyitem_NotesMasterAddToSpTree]    = function(oClass){return oClass.cSld.spTree;};
-    AscDFH.drawingContentChanges[AscDFH.historyitem_NotesMasterRemoveFromTree] = function(oClass){return oClass.cSld.spTree;};
     AscDFH.drawingContentChanges[AscDFH.historyitem_NotesMasterAddToNotesLst]  = function(oClass){return oClass.notesLst;};
 
     function CNotesMaster() {
+        this.cSld = new AscFormat.CSld(this);
         AscFormat.CBaseFormatObject.call(this);
         this.clrMap = new AscFormat.ClrMap();
-        this.cSld =  new AscFormat.CSld(this);
         this.hf = null;
         this.txStyles = null;
 
@@ -117,14 +95,14 @@
 
     CNotesMaster.prototype.addToSpTreeToPos = function(pos, obj){
         var _pos = Math.max(0, Math.min(pos, this.cSld.spTree.length));
-        History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_NotesMasterAddToSpTree, _pos, [obj], true));
-        this.cSld.spTree.splice(_pos, 0, obj);
+        this.cSld.checkAndAssignName(obj);
+        this.cSld.addToSpTree(_pos, obj);
         obj.setParent2(this);
     };
 
     CNotesMaster.prototype.removeFromSpTreeByPos = function(pos){
         if(pos > -1 && pos < this.cSld.spTree.length){
-            History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_NotesMasterRemoveFromTree, pos, this.cSld.spTree.splice(pos, 1), false));
+            this.cSld.removeFromSpTree(pos, 1);
         }
     };
 
@@ -137,13 +115,21 @@
     };
 
     CNotesMaster.prototype.changeBackground = function(bg){
-        History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_NotesMasterSetBg, this.cSld.Bg , bg));
-        this.cSld.Bg = bg;
+        this.cSld.setBg(bg);
     };
 
     CNotesMaster.prototype.setCSldName = function(pr){
-        History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_NotesMasterSetName, this.cSld.name , pr));
-        this.cSld.name = pr;
+        this.cSld.setName(pr);
+    };
+    CNotesMaster.prototype.Write_ToBinary2 = function(w){
+        w.WriteLong(this.getObjectType());
+        w.WriteString2(this.Id);
+        AscFormat.writeObject(w, this.cSld);
+    };
+    CNotesMaster.prototype.Read_FromBinary2 = function(r){
+        this.Id = r.GetString2();
+        this.cSld = AscFormat.readObject(r);
+        if (this.cSld) this.cSld.parent = this;
     };
 
 
@@ -188,21 +174,7 @@
         {
             copy.setClrMap(this.clrMap.createDuplicate());
         }
-        if(typeof this.cSld.name === "string" && this.cSld.name.length > 0)
-        {
-            copy.setCSldName(this.cSld.name);
-        }
-        if(this.cSld.Bg)
-        {
-            copy.changeBackground(this.cSld.Bg.createFullCopy());
-        }
-        for(i = 0; i < this.cSld.spTree.length; ++i)
-        {
-            var _copy = this.cSld.spTree[i].copy(oPr);
-            oIdMap[this.cSld.spTree[i].Id] = _copy.Id;
-            copy.addToSpTreeToPos(copy.cSld.spTree.length, _copy);
-            copy.cSld.spTree[copy.cSld.spTree.length - 1].setParent2(copy);
-        }
+        this.cSld.fillObject(copy.cSld, oPr);
         if(this.hf)
         {
             copy.setHF(this.hf.createDuplicate());

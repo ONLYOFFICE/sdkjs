@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -2044,6 +2047,19 @@ background-repeat: no-repeat;\
 
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(arguments[5]);
 			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback);
+		}
+	};
+
+	asc_docs_api.prototype.asc_PasteHtmlAsText = function(sHtml, callback)
+	{
+		if (!this.canEdit())
+			return;
+		if (this.isSlideShow())
+			return;
+		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content, null, false)) {
+			this.WordControl.m_oLogicDocument.Create_NewHistoryPoint(AscDFH.historydescription_Document_PasteHotKey);
+			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
+			AscCommon.Editor_Paste_Html_Lite_Exec(this, sHtml, callback);
 		}
 	};
 
@@ -5824,6 +5840,8 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asyncImageEndLoadedBackground = function(_image)
 	{
+		if (this.FontLoader.isFontLoadInProgress())
+			return;
 		this.WordControl.m_oDrawingDocument.CheckRasterImageOnScreen(_image.src);
 	};
 
@@ -5843,6 +5861,7 @@ background-repeat: no-repeat;\
 			{
 				if (this.LoadedObject === 1)
 				{
+					this.WordControl.m_oLogicDocument.bindSlideJumpLinks();
 					if (this.isApplyChangesOnOpenEnabled)
 					{
                         if (AscCommon.EncryptionWorker)
@@ -6142,7 +6161,7 @@ background-repeat: no-repeat;\
 
 		if (editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd, {type: "font", value: fontinfo.Name});
 			this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({
 				FontFamily : {
 					Name  : fontinfo.Name,
@@ -6565,6 +6584,11 @@ background-repeat: no-repeat;\
 				else if (Url.indexOf("ppaction://hlinkfile") === 0) {
 					Data.Hyperlink.Value = Url.substring("ppaction://hlinkfile?file=".length);
 				}
+				else if (Url == "ppaction://noaction")
+				{
+					Data.Hyperlink.Value = "";
+					Data.Hyperlink.ToolTip = "";
+				}
 				else
 				{
 					let mask     = "ppaction://hlinksldjumpslide";
@@ -6573,6 +6597,7 @@ background-repeat: no-repeat;\
 					{
 						let slideNum = parseInt(Url.substring(mask.length));
 						Data.Hyperlink.Value = AscCommon.translateManager.getValue("Slide") + " " + (slideNum + 1);
+						Data.Hyperlink.ToolTip = Data.Hyperlink.Value;
 					}
 				}
 			}
@@ -7364,6 +7389,11 @@ background-repeat: no-repeat;\
 		this.WordControl.m_oLogicDocument.FinalizeAction(true);
 
 		this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.LoadTheme);
+
+		if (this._pluginApplyThemeCallback) {
+			this._pluginApplyThemeCallback();
+			this._pluginApplyThemeCallback = null;
+		}
 	};
 
 	asc_docs_api.prototype.ChangeLayout = function(layout_index)
@@ -8536,10 +8566,13 @@ background-repeat: no-repeat;\
 		else if(this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml"))
 		{
 			var title = this.documentTitle;
+			var canDownloadFromBytes = !window.isCloudCryptoDownloadAs && AscCommon.DownloadType.None === downloadType
+				&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome)
+				&& !AscCommon.AscBrowser.isAndroidNativeApp;
 			this.saveLogicDocumentToZip(undefined, undefined,
 				function(data) {
 					if (data) {
-						if (c_oAscFileType.PPTX === fileType && !window.isCloudCryptoDownloadAs) {
+						if (c_oAscFileType.PPTX === fileType && canDownloadFromBytes) {
 							AscCommon.DownloadFileFromBytes(data, title, AscCommon.openXml.GetMimeType("pptx"));
 						} else {
 							dataContainer.data = data;
@@ -8875,8 +8908,6 @@ background-repeat: no-repeat;\
 	window["asc_docs_api"]                                 = asc_docs_api;
 	window["asc_docs_api"].prototype["asc_nativeOpenFile"] = function(base64File, version)
 	{
-		this.SpellCheckUrl = '';
-
 		this.User = new AscCommon.asc_CUser();
 		this.User.setId("TM");
 		this.User.setUserName("native");
@@ -10111,6 +10142,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype["asc_SpecialPaste"]						= asc_docs_api.prototype.asc_SpecialPaste;
 	asc_docs_api.prototype["asc_getPasteOptions"]					= asc_docs_api.prototype.asc_getPasteOptions;
+	asc_docs_api.prototype["asc_PasteHtmlAsText"]					= asc_docs_api.prototype.asc_PasteHtmlAsText;
 
 	// signatures
 	asc_docs_api.prototype["asc_addSignatureLine"] 					= asc_docs_api.prototype.asc_addSignatureLine;

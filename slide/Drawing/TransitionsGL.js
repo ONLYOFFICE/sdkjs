@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -754,7 +757,7 @@
         let projection = _Mat4.perspective(fov, aspect, 0.1, 100.0);
 
         let isLeft = (param === c_oAscSlideTransitionParams.Flip_Left);
-        let dir = isLeft ? -1 : 1;
+        let dir = isLeft ? 1 : -1;
         let angle = dir * progress * Math.PI; // 0 to ±180°
 
         gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
@@ -1268,11 +1271,11 @@
         let originX = 0.5, originY = 0.5;
         switch (param)
         {
-            case c_oAscSlideTransitionParams.Ripple_LeftUp:    originX = 1.0; originY = 0.0; break;
-            case c_oAscSlideTransitionParams.Ripple_RightUp:   originX = 0.0; originY = 0.0; break;
-            case c_oAscSlideTransitionParams.Ripple_LeftDown:  originX = 1.0; originY = 1.0; break;
-            case c_oAscSlideTransitionParams.Ripple_RightDown: originX = 0.0; originY = 1.0; break;
-            case c_oAscSlideTransitionParams.Ripple_Center:    originX = 0.5; originY = 0.5; break;
+			case c_oAscSlideTransitionParams.Ripple_LeftUp: originX = 0.0; originY = 1.0; break;
+			case c_oAscSlideTransitionParams.Ripple_RightUp: originX = 1.0; originY = 1.0; break;
+			case c_oAscSlideTransitionParams.Ripple_LeftDown: originX = 0.0; originY = 0.0; break;
+			case c_oAscSlideTransitionParams.Ripple_RightDown: originX = 1.0; originY = 0.0; break;
+			case c_oAscSlideTransitionParams.Ripple_Center: originX = 0.5; originY = 0.5; break;
         }
 
         gl.activeTexture(gl.TEXTURE0);
@@ -1291,88 +1294,76 @@
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     };
 
-    CTransitionGL.prototype._prepareFerris = function()
-    {
-        this.GetProgram('flip3d', _VERT_3D, _FRAG_TEXTURED);
-        this._initQuadBuffer3D();
-    };
+	// ============================================================
+	// Transition: Ferris Wheel
+	// ============================================================
 
-    CTransitionGL.prototype._renderFerris = function(progress, param)
-    {
-        let gl = this.gl;
-        let prog = this.programs['flip3d'];
-        if (!prog) return;
+	CTransitionGL.prototype._prepareFerris = function () {
+		this.GetProgram('flip3d', _VERT_3D, _FRAG_TEXTURED);
+		this._initQuadBuffer3D();
+	};
 
-        gl.useProgram(prog.program);
-        gl.enable(gl.DEPTH_TEST);
+	CTransitionGL.prototype._renderFerris = function (progress, param) {
+		const prog = this.programs['flip3d'];
+		if (!prog) {
+			return;
+		}
 
-        let aspect = this.glCanvas.width / this.glCanvas.height;
-        let fov = Math.PI / 4;
-        let dist = 1.0 / Math.tan(fov / 2);
-        let projection = _Mat4.perspective(fov, aspect, 0.1, 100.0);
+		const aspect = this.glCanvas.width / this.glCanvas.height;
+		const halfWidth = aspect;
 
-        let isLeft = (param === c_oAscSlideTransitionParams.Ferris_Left);
-        let dir = isLeft ? 1 : -1;
-        let arcRadius = 2.0;
-        let arcAngle = progress * Math.PI / 2;
+		const axisGap = halfWidth * 0.8;
+		const arm = halfWidth + axisGap;
+		const fov = Math.PI / 6;
+		const dist = 1 / Math.tan(fov / 2);
+		const projection = _Mat4.perspective(fov, aspect, 0.1, 100.0);
 
-        // Old slide rotates away on arc
-        {
-            let x = dir * Math.sin(arcAngle) * arcRadius;
-            let y = -(1.0 - Math.cos(arcAngle)) * arcRadius;
-            let tilt = dir * arcAngle;
+		const srcAngle = progress * Math.PI / 2;
+		const newAngle = -(1.0 - progress) * Math.PI / 2;
+		const yShiftDelta = -3;
 
-            let mv = _Mat4.identity();
-            mv = _Mat4.translate(mv, x, y, -dist);
-            mv = _Mat4.rotateY(mv, 0);
-            // Tilt the slide as it goes around the wheel
-            mv[0] = Math.cos(tilt);  mv[4] = -Math.sin(tilt);
-            mv[1] = Math.sin(tilt);  mv[5] = Math.cos(tilt);
+		const isLeft = (param === c_oAscSlideTransitionParams.Ferris_Left);
+		const axisDir = isLeft ? 1 : -1;
 
-            let mvFull = _Mat4.identity();
-            mvFull = _Mat4.translate(mvFull, x, y, -dist);
-            // Apply Z-rotation for ferris wheel tilt
-            let cosT = Math.cos(tilt), sinT = Math.sin(tilt);
-            let rotZ = _Mat4.identity();
-            rotZ[0] = cosT; rotZ[4] = -sinT;
-            rotZ[1] = sinT; rotZ[5] = cosT;
-            mvFull = _Mat4.multiply(mvFull, rotZ);
+		const gl = this.gl;
+		gl.useProgram(prog.program);
+		gl.enable(gl.DEPTH_TEST);
 
-            gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
-            gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mvFull);
-            gl.uniform1f(prog.uniforms['uAlpha'], 1.0 - progress);
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, this.textures.slide1);
-            gl.uniform1i(prog.uniforms['uTexture'], 0);
-            this._bindQuad3D(prog);
-            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        }
+		gl.uniform1f(prog.uniforms['uAlpha'], 1.0);
+		gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
 
-        // New slide rotates in from opposite side
-        {
-            let revAngle = (1.0 - progress) * Math.PI / 2;
-            let x = -dir * Math.sin(revAngle) * arcRadius;
-            let y = -(1.0 - Math.cos(revAngle)) * arcRadius;
-            let tilt = -dir * revAngle;
+		let mv;
 
-            let mvFull = _Mat4.identity();
-            mvFull = _Mat4.translate(mvFull, x, y, -dist);
-            let cosT = Math.cos(tilt), sinT = Math.sin(tilt);
-            let rotZ = _Mat4.identity();
-            rotZ[0] = cosT; rotZ[4] = -sinT;
-            rotZ[1] = sinT; rotZ[5] = cosT;
-            mvFull = _Mat4.multiply(mvFull, rotZ);
+		mv = _Mat4.identity();
+		mv = _Mat4.translate(mv, 0, 0, -dist);
+		mv = _Mat4.translate(mv, -arm * axisDir, 0, 0);
+		mv = _Mat4.translate(mv, 0, yShiftDelta * Math.sin(newAngle), 0);
+		mv = _Mat4.rotateY(mv, axisDir * newAngle);
+		mv = _Mat4.rotateX(mv, -newAngle);
+		mv = _Mat4.translate(mv, arm * axisDir, 0, 0);
 
-            gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
-            gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mvFull);
-            gl.uniform1f(prog.uniforms['uAlpha'], progress);
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, this.textures.slide2);
-            gl.uniform1i(prog.uniforms['uTexture'], 0);
-            this._bindQuad3D(prog);
-            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        }
-    };
+		gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mv);
+		gl.activeTexture(gl.TEXTURE0);
+		gl.bindTexture(gl.TEXTURE_2D, this.textures.slide2);
+		gl.uniform1i(prog.uniforms['uTexture'], 0);
+		this._bindQuad3D(prog);
+		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+		mv = _Mat4.identity();
+		mv = _Mat4.translate(mv, 0, 0, -dist);
+		mv = _Mat4.translate(mv, -arm * axisDir, 0, 0);
+		mv = _Mat4.translate(mv, 0, yShiftDelta * Math.sin(srcAngle), 0);
+		mv = _Mat4.rotateY(mv, axisDir * srcAngle);
+		mv = _Mat4.rotateX(mv, -srcAngle);
+		mv = _Mat4.translate(mv, arm * axisDir, 0, 0);
+
+		gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mv);
+		gl.activeTexture(gl.TEXTURE0);
+		gl.bindTexture(gl.TEXTURE_2D, this.textures.slide1);
+		gl.uniform1i(prog.uniforms['uTexture'], 0);
+		this._bindQuad3D(prog);
+		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+	};
 
     // ============================================================
     // Transition: Prism — rectangular prism (cube) rotation, 90°
@@ -1410,7 +1401,8 @@
         let prismR = (dirIdx <= 1) ? aspect : 1.0;
 
         let isVertical = (dirIdx <= 1); // left/right rotate around Y
-        let dirSign = (dirIdx === 0 || dirIdx === 2) ? 1 : -1;
+		let dirSign = (dirIdx === 0 || dirIdx === 2) ? -1 : 1;
+		if (isInverted) dirSign = -dirSign;
 
         // isInverted=0 (default): faces on OUTSIDE (convex cube, axis behind faces)
         // isInverted=1: faces on INSIDE (concave, axis in front of faces)
@@ -1706,10 +1698,10 @@
         let projection = _Mat4.perspective(fov, aspect, 0.1, 100.0);
         let mv = _Mat4.translate(_Mat4.identity(), 0, 0, -dist);
 
-        let dir = 0;
-        if (param === c_oAscSlideTransitionParams.Vortex_Right) dir = 1;
-        else if (param === c_oAscSlideTransitionParams.Vortex_Up) dir = 2;
-        else if (param === c_oAscSlideTransitionParams.Vortex_Down) dir = 3;
+		let dir = 1;
+		if (param === c_oAscSlideTransitionParams.Vortex_Right) dir = 0;
+		else if (param === c_oAscSlideTransitionParams.Vortex_Up) dir = 3;
+		else if (param === c_oAscSlideTransitionParams.Vortex_Down) dir = 2;
 
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);

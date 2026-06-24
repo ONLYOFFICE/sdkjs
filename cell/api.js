@@ -1,33 +1,36 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -278,6 +281,12 @@ var editor;
 			});
 		}
 		return res;
+	};
+	spreadsheet_api.prototype.asc_getDateCalendars = function(lcid) {
+		return AscCommon.getDateCalendarTypes(lcid);
+	};
+	spreadsheet_api.prototype.asc_getDateCalendarGannen = function(lcid) {
+		return AscCommon.getDateCalendarGannen(lcid);
 	};
   spreadsheet_api.prototype.asc_getLocaleCurrency = function(val) {
     var cultureInfo = AscCommon.g_aCultureInfos[val];
@@ -1017,6 +1026,12 @@ var editor;
     }
   };
 
+  spreadsheet_api.prototype.asc_PasteHtmlAsText = function (sHtml, callback) {
+    if (this.canEdit()) {
+      this.wb.pasteHtmlLite(sHtml, callback);
+    }
+  };
+
   spreadsheet_api.prototype.asc_CheckCopy = function (_clipboard /* CClipboardData */, _formats) {
     return this.wb.checkCopyToClipboard(_clipboard, _formats);
   };
@@ -1551,10 +1566,13 @@ var editor;
     } else if(this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml")) {
 		var t = this;
 		var title = this.documentTitle;
+		var canDownloadFromBytes = !window.isCloudCryptoDownloadAs && AscCommon.DownloadType.None === downloadType
+			&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome)
+			&& !AscCommon.AscBrowser.isAndroidNativeApp;
 		AscCommonExcel.executeInR1C1Mode(false, function () {
 			t.saveLogicDocumentToZip(undefined, undefined, function(data) {
 				if (data) {
-					if (c_oAscFileType.XLSX === fileType && !window.isCloudCryptoDownloadAs) {
+					if (c_oAscFileType.XLSX === fileType && canDownloadFromBytes) {
 						AscCommon.DownloadFileFromBytes(data, title, AscCommon.openXml.GetMimeType("xlsx"));
 					} else {
 						dataContainer.data = data;
@@ -1641,11 +1659,21 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_updatePrintPreview = function (options) {
-		this.wb.printPreviewState.isDrawPrintPreview = true;
-		var pages = this.wb.calcPagesPrint(options.advancedOptions);
-		this.wb.printPreviewState.setPages(pages);
-		this.wb.printPreviewState.setAdvancedOptions(options && options.advancedOptions);
-		this.wb.printPreviewState.isDrawPrintPreview = false;
+		var adjustPrint = options && options.advancedOptions;
+		var previewState = this.wb.printPreviewState;
+
+		if (previewState.pages && previewState.pages.arrPages &&
+			previewState._lastLayoutKey != null && adjustPrint && adjustPrint.getLayoutKey) {
+			if (adjustPrint.getLayoutKey() === previewState._lastLayoutKey) {
+				return previewState.pages.arrPages.length;
+			}
+		}
+
+		previewState.isDrawPrintPreview = true;
+		var pages = this.wb.calcPagesPrint(adjustPrint);
+		previewState.setPages(pages);
+		previewState.setAdvancedOptions(adjustPrint);
+		previewState.isDrawPrintPreview = false;
 		return pages.arrPages.length;
 	};
 
@@ -2280,7 +2308,7 @@ var editor;
 						if (contentCacheDefinition) {
 							var pivotTableCacheDefinition = new Asc.CT_PivotCacheDefinition();
 
-							new openXml.SaxParserBase().parse(contentCacheDefinition, pivotTableCacheDefinition);
+							pivotTableCacheDefinition.fromXml(new StaxParser(contentCacheDefinition, null, null));
 
 							if (pivotTableCacheDefinition.isValidCacheSource()) {
 								initOpenManager.oReadResult.pivotCacheDefinitions[wbPivotCacheXml.cacheId] = pivotTableCacheDefinition;
@@ -2289,7 +2317,7 @@ var editor;
 									var contentCacheRecords = partPivotTableCacheRecords.getDocumentContent();
 									if (contentCacheRecords) {
 										var pivotTableCacheRecords = new Asc.CT_PivotCacheRecords();
-										new openXml.SaxParserBase().parse(contentCacheRecords, pivotTableCacheRecords);
+										pivotTableCacheRecords.setRawXml(contentCacheRecords, pivotTableCacheDefinition.recordCount);
 										pivotTableCacheDefinition.cacheRecords = pivotTableCacheRecords;
 									}
 								}
@@ -2382,7 +2410,7 @@ var editor;
 								for (i = 0; i < pivotParts.length; ++i) {
 									var contentPivotTable = pivotParts[i].getDocumentContent();
 									var pivotTable = new Asc.CT_pivotTableDefinition(true);
-									new openXml.SaxParserBase().parse(contentPivotTable, pivotTable);
+									pivotTable.fromXml(new StaxParser(contentPivotTable, null, null));
 									var cacheDefinition = initOpenManager.oReadResult.pivotCacheDefinitions[pivotTable.cacheId];
 									if (cacheDefinition) {
 										pivotTable.cacheDefinition = cacheDefinition;
@@ -2456,14 +2484,14 @@ var editor;
 								AscCommonExcel.PrepareComments(ws, xmlParserContext, comments, pThreadedComments, personList);
 
 								var timelines = wsPart.getPartsByRelationshipType(openXml.Types.timelines.relationType);
-								if (timelines && timelines.length) {
+								for (i = 0; i < timelines.length; ++i) {
 									let contentTimeline = timelines[i].getDocumentContent();
 									let oNewTimelines = new AscCommonExcel.CT_CTimelines();
 									reader = new StaxParser(contentTimeline, oNewTimelines, xmlParserContext);
 									oNewTimelines.fromXml(reader);
 
 									if (oNewTimelines.timelines && oNewTimelines.timelines.length) {
-										ws.timelines = oNewTimelines.timelines;
+										ws.timelines = (ws.timelines || []).concat(oNewTimelines.timelines);
 									}
 								}
 							}
@@ -4897,8 +4925,56 @@ var editor;
   };
   spreadsheet_api.prototype.asc_ConvertMathView = function(isToLinear, isAll)
   {
+    if (isAll) {
+      this.asc_ConvertAllMathView(isToLinear);
+      return;
+    }
     var ws = this.wb.getWorksheet();
-    ws.objectRender.convertMathView(isToLinear, isAll);
+    ws.objectRender.convertMathView(isToLinear);
+  };
+  spreadsheet_api.prototype.asc_ConvertAllMathView = function(isToLinear)
+  {
+    var arrParaMaths = [];
+    var arrParentShapes = [];
+    var aWorksheets = this.wbModel.aWorksheets;
+
+    for (var s = 0; s < aWorksheets.length; ++s)
+	{
+		var aDrawings = aWorksheets[s].Drawings;
+		if (!aDrawings)
+			continue;
+
+		for (var d = 0; d < aDrawings.length; ++d)
+		{
+			var oGraphic = aDrawings[d] && aDrawings[d].graphicObject;
+			if (!oGraphic || !oGraphic.GetAllParaMaths)
+				continue;
+
+			var nBefore = arrParaMaths.length;
+			oGraphic.GetAllParaMaths(arrParaMaths);
+			if (arrParaMaths.length > nBefore)
+				arrParentShapes.push(oGraphic);
+		}
+    }
+
+    if (!arrParaMaths.length)
+      return;
+
+    var nInputType = this.getMathInputType();
+    var oController = this.wb.getWorksheet().objectRender.controller;
+    var aIds = arrParentShapes.map(function (s) { return s.Get_Id(); });
+
+    this.checkObjectsLock(aIds, function (bNoLock) {
+      if (!bNoLock)
+        return;
+      oController.checkSelectedObjectsAndCallback(function () {
+        for (var i = 0; i < arrParaMaths.length; ++i)
+        {
+          arrParaMaths[i].ConvertView(isToLinear, nInputType);
+        }
+        oController.checkCurrentTextObjectExtends();
+      }, [], false, AscDFH.historydescription_Document_ConvertMathView, [], true);
+    });
   };
 
   spreadsheet_api.prototype.asc_SetMathProps = function(MathProps)
@@ -4937,6 +5013,10 @@ var editor;
           }
         }
       } else {
+        if (oWS.model.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
+          this.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+          return;
+        }
         oWS.objectRender.addImageDrawingObject(arrUrls, null);
       }
     }
@@ -5610,6 +5690,8 @@ var editor;
   };
 
   spreadsheet_api.prototype.asyncImageEndLoadedBackground = function() {
+    if (this.FontLoader.isFontLoadInProgress())
+      return;
     var worksheet = this.wb.getWorksheet();
     if (worksheet && worksheet.objectRender) {
       var drawing_area = worksheet.objectRender.drawingArea;
@@ -6623,7 +6705,7 @@ var editor;
     };
 
   spreadsheet_api.prototype.asc_insertInCell = function(functionName, type, autoComplete) {
-    this.wb.insertInCellEditor(functionName, type, autoComplete);
+    this.wb.insertInCellEditor(typeof functionName === 'number' ? functionName + "" : functionName, type, autoComplete);
     this.wb.restoreFocus();
   };
 
@@ -6938,8 +7020,6 @@ var editor;
   spreadsheet_api.prototype.asc_nativeOpenFile = function(base64File, version, isUser, xlsxPath) {
 	var t = this;
     asc["editor"] = this;
-
-    this.SpellCheckUrl = '';
 
     if (undefined == isUser) {
         this.User = new AscCommon.asc_CUser();
@@ -7529,6 +7609,9 @@ var editor;
 		let activeCell = opt_activeCell || ws.selectionRange.activeCell;
 		let pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
 		if (!pivotTable) {
+			return false;
+		}
+		if (!pivotTable.checkPivotUnderlyingData()) {
 			return false;
 		}
 		this._addWorksheetsCheck(function(res){
@@ -9786,6 +9869,22 @@ var editor;
 		}
 	};
 
+	spreadsheet_api.prototype.asc_setAutoCompleteEnabled = function(val) {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		wb.setAutoCompleteEnabled(val);
+	};
+
+	spreadsheet_api.prototype.asc_getAutoCompleteEnabled = function() {
+		let wb = this.wb;
+		if (!wb) {
+			return true;
+		}
+		return wb.getAutoCompleteEnabled();
+	};
+
 	spreadsheet_api.prototype.asc_SetSmoothScrolling  = function(val) {
 		let wb = this.wb;
 		if (!wb) {
@@ -10028,6 +10127,8 @@ var editor;
   prot['asc_getFunctionArgumentSeparator'] = prot.asc_getFunctionArgumentSeparator;
   prot['asc_getLocaleExample'] = prot.asc_getLocaleExample;
   prot['asc_getFormatCells'] = prot.asc_getFormatCells;
+  prot['asc_getDateCalendars'] = prot.asc_getDateCalendars;
+  prot['asc_getDateCalendarGannen'] = prot.asc_getDateCalendarGannen;
   prot["asc_getLocaleCurrency"] = prot.asc_getLocaleCurrency;
   prot["asc_setLocale"] = prot.asc_setLocale;
   prot["asc_getLocale"] = prot.asc_getLocale;
@@ -10045,6 +10146,7 @@ var editor;
   prot["asc_Copy"] = prot.asc_Copy;
   prot["asc_Paste"] = prot.asc_Paste;
   prot["asc_SpecialPaste"] = prot.asc_SpecialPaste;
+  prot["asc_PasteHtmlAsText"] = prot.asc_PasteHtmlAsText;
   prot["asc_Cut"] = prot.asc_Cut;
   prot["asc_Undo"] = prot.asc_Undo;
   prot["asc_Redo"] = prot.asc_Redo;
@@ -10623,6 +10725,9 @@ var editor;
   prot["asc_cancelMoveCopyWorksheet"]= prot.asc_cancelMoveCopyWorksheet;
   prot["asc_getOpeningDocumentsList"]= prot.asc_getOpeningDocumentsList;
   prot["asc_isSupportCopySheetsBetweenBooks"]= prot.asc_isSupportCopySheetsBetweenBooks;
+
+  prot["asc_setAutoCompleteEnabled"]= prot.asc_setAutoCompleteEnabled;
+  prot["asc_getAutoCompleteEnabled"]= prot.asc_getAutoCompleteEnabled;
 
   prot["asc_SetSmoothScrolling"]= prot.asc_SetSmoothScrolling;
   prot["asc_GetSmoothScrolling"]= prot.asc_GetSmoothScrolling;

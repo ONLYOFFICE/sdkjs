@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -1480,6 +1483,7 @@
 	var DRAW_COMMAND_NO_CREATE_GEOM = 0x07;
 	var DRAW_COMMAND_TABLE_ROW = 0x08;
 	var DRAW_COMMAND_SHAPE = 0x09;
+	var DRAW_COMMAND_LINE_RANGE = 0x0A;
 
 	function GetConstDescription(nConst) {
 		switch (nConst) {
@@ -2222,7 +2226,7 @@
 
 		if (AscCommon.g_oTextMeasurer.m_oManager) AscCommon.g_oTextMeasurer.m_oManager.LoadStringPathCode(code, false, x, y, this);
 	};
-	CTextDrawer.prototype.tg = function (gid, x, y) {
+	CTextDrawer.prototype.tg = function (gid, x, y, advX, advY) {
 		g_oTextMeasurer.SetFontInternal(this.m_oFont.Name, this.m_oFont.FontSize, Math.max(this.m_oFont.Style, 0));
 		g_oTextMeasurer.m_oManager.LoadStringPathCode(gid, true, x, y, this);
 	};
@@ -2509,15 +2513,35 @@
 		}
 	};
 
-	CTextDrawer.prototype.drawCommentArea = function (x, y, w, h) {
-		this.m_oCurComment = null;
+	CTextDrawer.prototype.drawCommentArea = function (x, y, w, h, Element) {
+		this.m_oCurComment = Element || null;
 		this.rect(x, y, w, h);
 		this.df();
 		this.m_oCurComment = null;
 	};
 	CTextDrawer.prototype.drawCommentMark = function(x, y, h, isStart)
 	{
-		this.drawVerLine(0, x, y, y + h, 2, false);
+		let penW = 0.4;
+		let oTextPr = this.GetTextPr();
+		let oCopyTextPr = null;
+		if (oTextPr) {
+			oCopyTextPr = oTextPr.Copy();
+			if (!oCopyTextPr.TextOutline) {
+				oCopyTextPr.TextOutline = new AscFormat.CLn();
+			}
+			oCopyTextPr.TextOutline.w = (36000.0 * penW) >> 0;
+			if (!oCopyTextPr.TextOutline.Fill) {
+				oCopyTextPr.TextOutline.Fill = this.CreateUnfilFromRGB(this.m_oPen.Color.R, this.m_oPen.Color.G, this.m_oPen.Color.B);
+			}
+			this.SetTextPr(oCopyTextPr, this.m_oTheme);
+		}
+		this._s();
+		this._m(x, y);
+		this._l(x, y + h);
+		this.ds();
+		if (oCopyTextPr) {
+			this.SetTextPr(oTextPr, this.m_oTheme);
+		}
 	};
 
 	CTextDrawer.prototype.rect = function (x, y, w, h) {
@@ -2793,6 +2817,7 @@
 	window['AscFormat'].DRAW_COMMAND_NO_CREATE_GEOM = DRAW_COMMAND_NO_CREATE_GEOM;
 	window['AscFormat'].DRAW_COMMAND_TABLE_ROW = DRAW_COMMAND_TABLE_ROW;
 	window['AscFormat'].DRAW_COMMAND_SHAPE = DRAW_COMMAND_SHAPE;
+	window['AscFormat'].DRAW_COMMAND_LINE_RANGE = DRAW_COMMAND_LINE_RANGE;
 	window['AscFormat'].CreatePenFromParams = CreatePenFromParams;
 	window['AscFormat'].CTextDrawer = CTextDrawer;
 	window['AscFormat'].PolygonWrapper = PolygonWrapper;

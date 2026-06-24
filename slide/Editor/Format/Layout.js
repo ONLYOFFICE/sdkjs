@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -40,20 +43,15 @@ AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetMaster]         = AscDFH.
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetHF]             = AscDFH.CChangesDrawingsObject;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetMatchingName]   = AscDFH.CChangesDrawingsString;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetType]           = AscDFH.CChangesDrawingsLong;
-AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetBg]             = AscDFH.CChangesDrawingsObjectNoId;
-AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetCSldName]       = AscDFH.CChangesDrawingsString;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetShow]           = AscDFH.CChangesDrawingsBool;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetPreserve]       = AscDFH.CChangesDrawingsBool;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetShowPhAnim]     = AscDFH.CChangesDrawingsBool;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetShowMasterSp]   = AscDFH.CChangesDrawingsBool;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetClrMapOverride] = AscDFH.CChangesDrawingsObject;
-AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutAddToSpTree]       = AscDFH.CChangesDrawingsContent;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetSize]           = AscDFH.CChangesDrawingsObjectNoId;
-AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutRemoveFromSpTree]  = AscDFH.CChangesDrawingsContent;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetTransition] = AscDFH.CChangesDrawingsObjectNoId;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetTiming] = AscDFH.CChangesDrawingsObject;
 
-AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideLayoutSetBg]    = AscFormat.CBg;
 AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideLayoutSetSize]  = AscFormat.CDrawingBaseCoordsWritable;
 AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideLayoutSetTransition] = Asc.CAscSlideTransition;
 
@@ -61,24 +59,6 @@ AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetMaster]            = 
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetHF]                = function(oClass, value){oClass.hf = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetMatchingName]      = function(oClass, value){oClass.matchingName = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetType]              = function(oClass, value){oClass.type = value;};
-AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetBg]                = function(oClass, value, FromLoad){
-    oClass.cSld.Bg = value;
-    if(FromLoad){
-        var Fill;
-        if(oClass.cSld.Bg && oClass.cSld.Bg.bgPr && oClass.cSld.Bg.bgPr.Fill)
-        {
-            Fill = oClass.cSld.Bg.bgPr.Fill;
-        }
-        if(typeof AscCommon.CollaborativeEditing !== "undefined")
-        {
-            if(Fill && Fill.fill && Fill.fill.type === Asc.c_oAscFill.FILL_TYPE_BLIP && typeof Fill.fill.RasterImageId === "string" && Fill.fill.RasterImageId.length > 0)
-            {
-                AscCommon.CollaborativeEditing.Add_NewImage(Fill.fill.RasterImageId);
-            }
-        }
-    }
-};
-AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetCSldName]          = function(oClass, value){oClass.cSld.name = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetShow]              = function(oClass, value){oClass.show = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetShowPhAnim]        = function(oClass, value){oClass.showMasterPhAnim = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetShowMasterSp]      = function(oClass, value){oClass.showMasterSp = value;};
@@ -88,21 +68,12 @@ AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetTiming]            = 
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetTransition]        = function(oClass, value){oClass.transition = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetPreserve]        = function(oClass, value){oClass.preserve = value;};
 
-AscDFH.drawingContentChanges[AscDFH.historyitem_SlideLayoutAddToSpTree] = function(oClass){
-    oClass.recalcInfo.recalculateBounds = true;
-    return oClass.cSld.spTree;
-};
-AscDFH.drawingContentChanges[AscDFH.historyitem_SlideLayoutRemoveFromSpTree] = function(oClass){
-    oClass.recalcInfo.recalculateBounds = true;
-    return oClass.cSld.spTree;
-};
-
 
 function SlideLayout()
 {
+    this.cSld = new AscFormat.CSld(this);
     AscFormat.CBaseFormatObject.call(this);
     this.kind = AscFormat.TYPE_KIND.LAYOUT;
-    this.cSld = new AscFormat.CSld(this);
     this.clrMap = null; // override ClrMap
 
     this.hf = null;
@@ -282,22 +253,7 @@ SlideLayout.prototype.getMaster = function(){
         var oPr = new AscFormat.CCopyObjectProperties();
         oPr.idMap = oIdMap;
         var copy = new SlideLayout();
-        if(typeof this.cSld.name === "string" && this.cSld.name.length > 0)
-        {
-            copy.setCSldName(this.cSld.name);
-        }
-        if(this.cSld.Bg)
-        {
-            copy.changeBackground(this.cSld.Bg.createFullCopy());
-        }
-        for(var i = 0; i < this.cSld.spTree.length; ++i)
-        {
-            var _copy;
-            _copy = this.cSld.spTree[i].copy(oPr);
-            oIdMap[this.cSld.spTree[i].Id] = _copy.Id;
-            copy.shapeAdd(copy.cSld.spTree.length, _copy);
-            copy.cSld.spTree[copy.cSld.spTree.length - 1].setParent2(copy);
-        }
+        this.cSld.fillObject(copy.cSld, oPr);
 
         if(this.clrMap){
             copy.setClMapOverride(this.clrMap.createDuplicate());
@@ -344,8 +300,7 @@ SlideLayout.prototype.getMaster = function(){
     };
     SlideLayout.prototype.changeBackground = function(bg)
     {
-        History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SlideLayoutSetBg, this.cSld.Bg, bg));
-        this.cSld.Bg = bg;
+        this.cSld.setBg(bg);
         this.recalcInfo.recalculateBackground = true;
     };
     SlideLayout.prototype.needRecalc = function()
@@ -356,8 +311,7 @@ SlideLayout.prototype.getMaster = function(){
     };
     SlideLayout.prototype.setCSldName = function(name)
     {
-        History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_SlideLayoutSetCSldName, this.cSld.name, name));
-        this.cSld.name = name;
+        this.cSld.setName(name);
     };
     SlideLayout.prototype.setShow = function(bShow)
     {
@@ -380,6 +334,22 @@ SlideLayout.prototype.getMaster = function(){
         History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SlideLayoutSetClrMapOverride, this.clrMap, clrMap));
         this.clrMap = clrMap;
     };
+    SlideLayout.prototype.Write_ToBinary2 = function(w)
+    {
+        w.WriteLong(this.getObjectType());
+        w.WriteString2(this.Id);
+        AscFormat.writeObject(w, this.cSld);
+    };
+    SlideLayout.prototype.Read_FromBinary2 = function(r)
+    {
+        this.Id = r.GetString2();
+        this.cSld = AscFormat.readObject(r);
+        if (this.cSld) this.cSld.parent = this;
+    };
+    SlideLayout.prototype.handleAfterCSldSpTreeChange = function()
+    {
+        this.recalcInfo.recalculateBounds = true;
+    };
     SlideLayout.prototype.shapeAdd = function(pos, item)
     {
         let pos_ = pos;
@@ -387,8 +357,8 @@ SlideLayout.prototype.getMaster = function(){
             pos_ = this.cSld.spTree.length;
         }
         this.checkDrawingUniNvPr(item);
-        History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideLayoutAddToSpTree, pos_, [item], true));
-        this.cSld.spTree.splice(pos_, 0, item);
+        this.cSld.checkAndAssignName(item);
+        this.cSld.addToSpTree(pos_, item);
         item.setParent2(this);
         this.recalcInfo.recalculateSpTree = true;
     };
@@ -397,8 +367,7 @@ SlideLayout.prototype.getMaster = function(){
         this.shapeAdd(pos, obj);
     };
     SlideLayout.prototype.shapeRemove = function (pos, count) {
-        History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideLayoutRemoveFromSpTree, pos, this.cSld.spTree.slice(pos, pos + count), false));
-        this.cSld.spTree.splice(pos, count);
+        this.cSld.removeFromSpTree(pos, count);
     };
     SlideLayout.prototype.setSlideSize = function(w, h)
     {
@@ -785,21 +754,23 @@ SlideLayout.prototype.getMaster = function(){
     {
         if(data)
         {
-            switch(data.Type)
-            {
-                case AscDFH.historyitem_SlideLayoutAddToSpTree:
-                {
-                    this.recalcInfo.recalculateBounds = true;
-                    break;
-                }
-                case AscDFH.historyitem_SlideLayoutSetBg:
-                {
-                    this.recalcInfo.recalculateBackground = true;
-                    break;
-                }
-            }
             this.addToRecalculate();
         }
+    };
+    SlideLayout.prototype.handleCSldRecalc = function(data)
+    {
+        if (data) {
+            switch (data.Type) {
+                case AscDFH.historyitem_CSld_AddToSpTree:
+                case AscDFH.historyitem_CSld_RemoveFromSpTree:
+                    this.recalcInfo.recalculateBounds = true;
+                    break;
+                case AscDFH.historyitem_CSld_SetBg:
+                    this.recalcInfo.recalculateBackground = true;
+                    break;
+            }
+        }
+        this.addToRecalculate();
     };
     SlideLayout.prototype.Clear_ContentChanges = function () {
     };

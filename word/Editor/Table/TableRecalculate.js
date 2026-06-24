@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -3596,13 +3599,77 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
     this.Pages[CurPage].Bounds.Right  = X_max + this.Pages[CurPage].X;
     this.Pages[CurPage].Height        = TableHeight;
 
-    if (true === bNextPage)
-    {
-        var LastRow = this.Pages[CurPage].LastRow;
-        if (false === this.RowsInfo[LastRow].FirstPage)
-            this.Pages[CurPage].LastRow = LastRow - 1;
-        else
-            this.Pages[CurPage].LastRowSplit = true;
+	if (true === bNextPage)
+	{
+		let lastRow = this.Pages[CurPage].LastRow;
+		let canMoveRows = CurPage || this.Get_DocumentPrev() || (this.Parent && !this.Parent.IsFirstElementOnPage(this.GetRelativePage(CurPage), this.GetIndex()));
+		if (false === this.RowsInfo[lastRow].FirstPage)
+		{
+			--lastRow;
+			this.Pages[CurPage].LastRow = lastRow;
+			
+			// Check "Keep with next" on paragraphs inside table cells
+			if (canMoveRows)
+			{
+				while (lastRow > FirstRow && this.private_IsRowWithKeepNext(lastRow))
+				{
+					--lastRow;
+				}
+				
+				if (0 === lastRow && 0 === CurPage && this.private_IsRowWithKeepNext(0))
+				{
+					this.Pages[CurPage].LastRow = -1;
+					this.Pages[CurPage].LastRowSplit = false;
+				}
+				else if (lastRow !== FirstRow)
+				{
+					this.Pages[CurPage].LastRow = lastRow;
+					this.Pages[CurPage].LastRowSplit = false;
+				}
+			}
+		}
+		else
+		{
+			this.Pages[CurPage].LastRowSplit = true;
+			
+			if (canMoveRows)
+			{
+				// MS behaviour
+				// If row is splitted into pages, we check "Keep with next" only for this row (if it occurs no on the first page)
+				// If it the first page we can check rows till the first one
+				
+				let moveRows = false;
+				if (0 === CurPage)
+				{
+					while (lastRow >= 0 && this.private_IsRowWithKeepNext(lastRow))
+					{
+						moveRows = true;
+						--lastRow;
+					}
+				}
+				else if (this.private_IsRowWithKeepNext(lastRow))
+				{
+					let _lastRow = lastRow;
+					while (_lastRow > FirstRow && this.private_IsRowWithKeepNext(_lastRow))
+					{
+						--_lastRow;
+					}
+					
+					if (_lastRow !== FirstRow)
+						lastRow = _lastRow;
+					else
+						lastRow = lastRow - 1;
+					
+					moveRows = true;
+				}
+				
+				if (moveRows)
+				{
+					this.Pages[CurPage].LastRow = lastRow;
+					this.Pages[CurPage].LastRowSplit = false;
+				}
+			}
+		}
     }
 
     this.TurnOffRecalc = false;
@@ -3613,6 +3680,17 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         return recalcresult_NextPage;
     else
         return recalcresult_NextElement;
+};
+/**
+ * @param {number} iRow - row index
+ * @returns {boolean}
+ */
+CTable.prototype.private_IsRowWithKeepNext = function(iRow)
+{
+	if (iRow < 0 || iRow >= this.Content.length - 1)
+		return false;
+	
+	return this.GetRow(iRow).IsContentWithKeepNext();
 };
 CTable.prototype.private_RecalculatePrepareHeaderPageRows = function(headerPage)
 {

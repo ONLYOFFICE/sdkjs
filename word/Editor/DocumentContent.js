@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -702,6 +705,25 @@ CDocumentContent.prototype.IsMovingTableBorder = function()
 	}
 
 	return false;
+};
+CDocumentContent.prototype.CancelTableBorderMove = function()
+{
+	if (docpostype_DrawingObjects === this.CurPos.Type)
+	{
+		this.DrawingObjects.cancelSelectionTableBorder();
+		return;
+	}
+
+	if (null == this.Selection.Data || true !== this.Selection.Data.TableBorder)
+		return;
+
+	let table = this.Content[this.Selection.Data.Pos];
+	if (table && type_Table === table.GetType())
+		table.CancelBorderMove();
+
+	this.Selection.Start = false;
+	this.Selection.Use   = this.Selection.Data.Selection;
+	this.Selection.Data  = null;
 };
 CDocumentContent.prototype.CheckTableCoincidence = function(Table)
 {
@@ -7523,6 +7545,7 @@ CDocumentContent.prototype.Internal_Content_Add = function(Position, NewObject, 
 	this.private_ReindexContent(Position);
 	this.OnContentChange();
 	this.UpdateSectionsAfterAdd([NewObject]);
+	NewObject.OnAttach();
 	this.Recalculated = false;
 };
 CDocumentContent.prototype.Internal_Content_Remove = function(Position, Count, isCorrectContent)
@@ -7535,7 +7558,10 @@ CDocumentContent.prototype.Internal_Content_Remove = function(Position, Count, i
 
 	for (var Index = 0; Index < Count; Index++)
 		this.Content[Position + Index].PreDelete();
-	
+
+	for (let i = 0; i < Count; ++i)
+		this.Content[Position + i].OnDetach();
+
 	let removedElements = this.Content.slice(Position, Position + Count);
 	this.UpdateSectionsBeforeRemove(removedElements, true);
 
@@ -7581,6 +7607,11 @@ CDocumentContent.prototype.Internal_Content_RemoveAll = function()
 	for (let index = 0, count = this.Content.length; index < count; ++index)
 	{
 		this.Content[index].PreDelete();
+	}
+	
+	for (let index = 0, count = this.Content.length; index < count; ++index)
+	{
+		this.Content[index].OnDetach();
 	}
 	
 	let removedElements = this.Content.slice(0, this.Content.length);
@@ -8828,6 +8859,28 @@ CDocumentContent.prototype.PreDelete = function()
 
 	this.RemoveSelection();
 };
+CDocumentContent.prototype.OnDetach = function()
+{
+	if (!this.IsUseInDocument())
+		return;
+
+	for (let i = this.Content.length - 1; i >= 0; --i)
+	{
+		this.Content[i].OnDetach();
+	}
+
+	this.RemoveSelection();
+};
+CDocumentContent.prototype.OnAttach = function()
+{
+	if (!this.IsUseInDocument())
+		return;
+
+	for (let i = 0; i < this.Content.length; ++i)
+	{
+		this.Content[i].OnAttach();
+	}
+};
 CDocumentContent.prototype.IsBlockLevelSdtContent = function()
 {
 	return (this.Parent && this.Parent instanceof CBlockLevelSdt);
@@ -9485,6 +9538,136 @@ CDocumentContent.prototype.CorrectEnterText = function(oldValue, newValue, check
 	}
 	
 	return true;
+};
+
+function private_GetParaContentPosForChar(oPara, nCharOffset)
+{
+	var nCount = 0;
+	for (var i = 0; i < oPara.Content.length; i++)
+	{
+		var oRun = oPara.Content[i];
+
+		if (!oRun || !oRun.Content)
+			continue;
+
+		for (var j = 0; j < oRun.Content.length; j++)
+		{
+			var nType = oRun.Content[j].Type;
+
+			if (nType === para_End)
+				break;
+
+			if (nType === para_Text || nType === para_Space || nType === para_Tab)
+			{
+				if (nCount === nCharOffset)
+				{
+					var oResult = new AscWord.CParagraphContentPos();
+					oResult.Update(i, 0);
+					oResult.Update(j, 1);
+					return oResult;
+				}
+				nCount++;
+			}
+		}
+	}
+	return oPara.Get_EndPos(true);
+}
+
+CDocumentContent.prototype.SelectCharRange = function(nStartChar, nEndChar, bMoveCursor)
+{
+	if (bMoveCursor === undefined)
+		bMoveCursor = true;
+
+	this.RemoveSelection();
+
+	if (this.SetDocPosType)
+		this.SetDocPosType(docpostype_Content);
+
+	var nPos				= 0;
+	var nStartParaIdx		= 0;
+	var nEndParaIdx			= 0;
+	var bSelectionStarted	= false;
+
+	for (var i = 0; i < this.Content.length; i++)
+	{
+		var oPara = this.Content[i];
+
+		if (!oPara || !oPara.Get_StartPos)
+		{
+			// non-paragraph item (e.g. table) — skip but keep separator accounting
+			if (i < this.Content.length - 1)
+				nPos++;
+			continue;
+		}
+
+		var nParaLen	= oPara.GetText
+			? oPara.GetText({ParaSeparator: "", Numbering: false, Math: false}).length 
+			: 0;
+		var nParaStart	= nPos;
+		var nParaEnd	= nPos + nParaLen;
+
+		nPos += nParaLen + (i < this.Content.length - 1 ? 1 : 0);
+
+		if (nParaEnd <= nStartChar || nParaStart >= nEndChar)
+		{
+			if (oPara.RemoveSelection)
+				oPara.RemoveSelection();
+
+			continue;
+		}
+
+		if (!bSelectionStarted)
+		{
+			nStartParaIdx = i;
+			bSelectionStarted = true;
+		}
+
+		nEndParaIdx = i;
+
+		if (nParaStart >= nStartChar && nParaEnd <= nEndChar)
+		{
+			if (bMoveCursor)
+			{
+				oPara.SelectAll();
+			}
+			else
+			{
+				oPara.Selection.Use = true;
+				oPara.Set_SelectionContentPos(oPara.Get_StartPos(), oPara.Get_EndPos(true));
+			}
+		} 
+		else
+		{
+			var nLocalStart = Math.max(0, nStartChar - nParaStart);
+			var nLocalEnd   = Math.min(nParaLen, nEndChar - nParaStart);
+
+			var oStartPos   = nLocalStart === 0
+				? oPara.Get_StartPos()
+				: private_GetParaContentPosForChar(oPara, nLocalStart);
+
+			var oEndPos     = nLocalEnd >= nParaLen
+				? oPara.Get_EndPos(true)
+				: private_GetParaContentPosForChar(oPara, nLocalEnd);
+			
+			oPara.Selection.Use = true;
+
+			if (bMoveCursor)
+				oPara.Set_ParaContentPos(oEndPos.Copy(), true, -1, -1);
+			
+			oPara.Set_SelectionContentPos(oStartPos, oEndPos);
+		}
+	}
+
+	if (!bSelectionStarted)
+		return;
+
+	this.Selection.Use      = true;
+	this.Selection.Start    = false;
+	this.Selection.Flag     = selectionflag_Common;
+	this.Selection.StartPos = nStartParaIdx;
+	this.Selection.EndPos   = nEndParaIdx;
+	if (bMoveCursor)
+		this.CurPos.ContentPos = nEndParaIdx;
 };
 
 function CDocumentContentStartState(DocContent)

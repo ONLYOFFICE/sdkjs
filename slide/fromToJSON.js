@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -1931,11 +1934,7 @@
 		oClrMap && oMasterSlide.setClMapOverride(oClrMap);
 
 		// cSld
-		var oCSld = this.CSldFromJSON(oParsedMaster["cSld"]);
-		for (var nShape = 0; nShape < oCSld.spTree.length; nShape++)
-			oMasterSlide.shapeAdd(nShape, oCSld.spTree[nShape]);
-		oCSld.Bg && oMasterSlide.changeBackground(oCSld.Bg);
-		oCSld.name && oMasterSlide.setCSldName(oCSld.name);
+		this.CSldFromJSON(oParsedMaster["cSld"], oMasterSlide.cSld);
 
 		// hf
 		oParsedMaster["hf"] && oMasterSlide.setHF(this.HFFromJSON(oParsedMaster["hf"]));
@@ -2245,11 +2244,7 @@
 		oClrMap && oLayout.setClMapOverride(oClrMap);
 
 		// cSld
-		var oCSld = this.CSldFromJSON(oParsedLayout["cSld"]);
-		for (var nShape = 0; nShape < oCSld.spTree.length; nShape++)
-			oLayout.shapeAdd(nShape, oCSld.spTree[nShape]);
-		oCSld.Bg && oLayout.changeBackground(oCSld.Bg);
-		oCSld.name && oLayout.setCSldName(oCSld.name);
+		this.CSldFromJSON(oParsedLayout["cSld"], oLayout.cSld);
 
 		// hf
 		oParsedLayout["hf"] && oLayout.setHF(this.HFFromJSON(oParsedLayout["hf"]));
@@ -2329,11 +2324,7 @@
 		oParsedSlide["clrMapOvr"] && oSlide.setClMapOverride(this.ColorMapOvrFromJSON(oParsedSlide["clrMapOvr"]));
 
 		// cSld
-		var oCSld = this.CSldFromJSON(oParsedSlide["cSld"]);
-		for (var nShape = 0; nShape < oCSld.spTree.length; nShape++)
-			oSlide.shapeAdd(nShape, oCSld.spTree[nShape]);
-		oCSld.Bg && oSlide.changeBackground(oCSld.Bg);
-		oCSld.name && oSlide.setCSldName(oCSld.name);
+		this.CSldFromJSON(oParsedSlide["cSld"], oSlide.cSld);
 
 		// comments
 		for (var nComment = 0; nComment < oParsedSlide["comments"].length; nComment++)
@@ -2470,11 +2461,7 @@
 
 		oParsedNotes["clrMapOvr"] && oNotes.setClMapOverride(this.ColorMapOvrFromJSON(oParsedNotes["clrMapOvr"]));
 		// cSld
-		var oCSld = this.CSldFromJSON(oParsedNotes["cSld"]);
-		for (var nShape = 0; nShape < oCSld.spTree.length; nShape++)
-			oNotes.addToSpTreeToPos(nShape, oCSld.spTree[nShape]);
-		oCSld.Bg && oNotes.changeBackground(oCSld.Bg);
-		oCSld.name && oNotes.setCSldName(oCSld.name);
+		this.CSldFromJSON(oParsedNotes["cSld"], oNotes.cSld);
 
 		oParsedNotes["showMasterPhAnim"] != undefined && oNotes.setShowMasterPhAnim(oParsedNotes["showMasterPhAnim"]);
 		oParsedNotes["showMasterSp"] != undefined && oNotes.setShowMasterSp(oParsedNotes["showMasterSp"]);
@@ -2492,11 +2479,7 @@
 			oNotesMaster.setClrMap(this.ColorMapOvrFromJSON(oParsedNotesMaster["clrMap"]));
 	
 		// cSld
-		var oCSld = this.CSldFromJSON(oParsedNotesMaster["cSld"]);
-		for (var nShape = 0; nShape < oCSld.spTree.length; nShape++)
-			oNotesMaster.addToSpTreeToPos(nShape, oCSld.spTree[nShape]);
-		oCSld.Bg && oNotesMaster.changeBackground(oCSld.Bg);
-		oCSld.name && oNotesMaster.setCSldName(oCSld.name);
+		this.CSldFromJSON(oParsedNotesMaster["cSld"], oNotesMaster.cSld);
 
 		oParsedNotesMaster["hf"] && oNotesMaster.setHF(this.HFFromJSON(oParsedNotesMaster["hf"]));
 		oParsedNotesMaster["notesStyle"] && oNotesMaster.setNotesStyle(this.LstStyleFromJSON(oParsedNotesMaster["notesStyle"]));
@@ -3761,15 +3744,18 @@
 
 		return oHF;
 	};
-	ReaderFromJSON.prototype.CSldFromJSON = function(oParsedCSld)
+	ReaderFromJSON.prototype.CSldFromJSON = function(oParsedCSld, oCSld)
 	{
-		var oCSld = new AscFormat.CSld();
+		oCSld = oCSld || new AscFormat.CSld();
 
-		for (var nShape = 0; nShape < oParsedCSld["spTree"].length; nShape++)
-			oCSld.spTree.push(this.GraphicObjFromJSON(oParsedCSld["spTree"][nShape]));
-			
-		oCSld.Bg   = oParsedCSld["bg"] ? this.BgFromJSON(oParsedCSld["bg"]) : oCSld.Bg;
-		oCSld.name = oParsedCSld.name;
+		for (var nShape = 0; nShape < oParsedCSld["spTree"].length; nShape++) {
+			var sp = this.GraphicObjFromJSON(oParsedCSld["spTree"][nShape]);
+			oCSld.addToSpTree(oCSld.spTree.length, sp);
+			if (oCSld.parent) sp.setParent2(oCSld.parent);
+		}
+
+		if (oParsedCSld["bg"]) oCSld.setBg(this.BgFromJSON(oParsedCSld["bg"]));
+		if (oParsedCSld.name) oCSld.setName(oParsedCSld.name);
 
 		return oCSld;
 	};

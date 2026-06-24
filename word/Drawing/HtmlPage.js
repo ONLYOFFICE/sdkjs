@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -1407,7 +1410,7 @@ function CEditorPage(api)
 	{
 		if (false === oThis.m_oApi.bInit_word_control)
 			return;
-
+		
 		var oWordControl                       = oThis;
 		oWordControl.m_dScrollY                = Math.max(0, Math.min(scrollPositionY, maxY));
 		oWordControl.m_dScrollY_max            = maxY;
@@ -1472,6 +1475,12 @@ function CEditorPage(api)
 			res.Pos = this.m_dScrollY_max;
 
 		return res;
+	};
+	this.onUserScroll = function()
+	{
+		let logicDocument = this.m_oLogicDocument;
+		if (logicDocument && logicDocument.IsDocumentEditor())
+			logicDocument.OnUserScroll();
 	};
 
 	this.horizontalScroll = function(sender, scrollPositionX, maxX, isAtLeft, isAtRight)
@@ -1594,6 +1603,8 @@ function CEditorPage(api)
 			this.m_oScrollVer_.bind("scrollvertical", function(evt)
 			{
 				oThis.verticalScroll(this, evt.scrollD, evt.maxScrollY);
+				if (evt.userScroll)
+					oThis.onUserScroll();
 			});
 			this.m_oScrollVer_.bind("correctVerticalScroll", function(yPos)
 			{
@@ -2413,6 +2424,8 @@ function CEditorPage(api)
 			_ctrl = e.ctrlKey || e.metaKey;
 		else
 			_ctrl = e.ctrlKey;
+		
+		e.userScroll = true;
 
 		if (true === _ctrl)
 		{
@@ -2431,9 +2444,9 @@ function CEditorPage(api)
 		});
 
 		if (0 !== values.x)
-			oThis.m_oScrollHorApi.scrollBy(values.x, 0, false);
+			oThis.m_oScrollHorApi.scrollBy(values.x, 0, false, e);
 		if (0 !== values.y)
-			oThis.m_oScrollVerApi.scrollBy(0, values.y, false);
+			oThis.m_oScrollVerApi.scrollBy(0, values.y, false, e);
 
 		// здесь - имитируем моус мув ---------------------------
 		var _e   = {};
@@ -2627,16 +2640,15 @@ function CEditorPage(api)
 			return;
 		}
 
-		if (oWordControl.m_bIsRuler && oWordControl.m_oHorRuler.m_bIsMouseDown)
+		if (oWordControl.m_bIsRuler && oWordControl.m_oHorRuler.m_bIsMouseDown && 27 !== e.keyCode)
 		{
 			AscCommon.check_KeyboardEvent2(e);
 			e.preventDefault();
 			return;
 		}
 
-		// Esc даем делать с клавы, даже когда мышка зажата, чтобы можно было сбросить drag-n-drop, но если у нас
-		// идет работа с автофигурами (любые движения), тогда не пропускаем.
-		if (oWordControl.m_bIsMouseLock === true && (27 !== e.keyCode || true === oWordControl.m_oLogicDocument.Is_TrackingDrawingObjects()))
+		// Esc даем делать с клавы, даже когда мышка зажата, чтобы можно было сбросить drag-n-drop.
+		if (oWordControl.m_bIsMouseLock === true && 27 !== e.keyCode)
 		{
 			if (!window.USER_AGENT_MACOS)
 			{
@@ -3412,10 +3424,12 @@ function CEditorPage(api)
 		let areaParent = "id_main_view";
 		if (this.m_oApi.isUseNativeViewer)
 		{
-			areaParent = "id_main";
 			var oViewer = this.m_oDrawingDocument.m_oDocumentRenderer;
 			if (oViewer)
+			{
+				areaParent = "id_main";
 				oViewer.resize();
+			}
 		}
 
 		if (AscCommon.g_inputContext)

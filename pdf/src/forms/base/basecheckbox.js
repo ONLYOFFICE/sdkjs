@@ -1,34 +1,39 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
+
+"use strict";
 
 (function(){
 
@@ -46,7 +51,6 @@
         this._chStyle       = AscPDF.CHECKBOX_STYLES.check;
         this._checked       = false;
         this._options       = undefined; // used to store export values of child fields
-        this._textSize      = 0;
         
         // states
         this._pressed = false;
@@ -72,7 +76,7 @@
     CBaseCheckBoxField.prototype.SetDefaultValue = function(value) {
         let oParent = this.GetParent(true);
         if (oParent || this.IsWidget()) {
-            const shouldUpdate = value && !this.GetParentValue() || this.GetParentValue() !== value;
+            const shouldUpdate = value && !this.GetLogicValue() || this.GetLogicValue() !== value;
 
             if (shouldUpdate) {
                 this.SetValue(value);
@@ -412,7 +416,9 @@
 
 		if (this.IsReadOnly()) {
             return;
-        }        let bCommit = false;
+        }
+
+		let bCommit = false;
         if (this.IsChecked()) {
             if (this.IsNoToggleToOff() == false) {
                 this.SetChecked(false);
@@ -445,6 +451,11 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseCheckBoxField.prototype.Commit = function() {
+		if (this.IsLogicalRoot() && !this.IsWidget()) {
+			this.GetKid(0).Commit();
+			return;
+		}
+
         this.SetNeedCommit(false);
 
         let oParent = this.GetParent(true);
@@ -453,18 +464,18 @@
         if (this.IsChecked()) {
             if (aOpt && aKids) {
                 if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this.IsRadiosInUnison() || this.GetType() == AscPDF.FIELD_TYPES.checkbox) {
-                    this.SetParentValue(aOpt.indexOf(this.GetExportValue()));
+                    this.SetLogicValue(aOpt.indexOf(this.GetExportValue()));
                 }
                 else {
-                    this.SetParentValue(String(aKids.indexOf(this)));
+                    this.SetLogicValue(String(aKids.indexOf(this)));
                 }
             }
             else {
-                this.SetParentValue(this.GetExportValue());
+                this.SetLogicValue(this.GetExportValue());
             }
         }
         else {
-            this.SetParentValue("Off");
+            this.SetLogicValue("Off");
         }
 
         this.Commit2();
@@ -501,7 +512,7 @@
         
         let hasOptions = !!this._options;
         
-        AscCommon.History.Add(new CChangesPDFCheckOptions(this, this._options, aOpt));
+        AscCommon.History.Add(new CChangesPDFCheckboxOptions(this, this._options, aOpt));
 
         if (this._options == aOpt) {
             return true;
@@ -515,17 +526,29 @@
         });
 
         let sDefValue = this.GetDefaultValue();
-        let sCurExpValue;
-
+        let sExpValue;
         if (sDefValue) {
             if (!hasOptions) {
-                sCurExpValue = this.GetDefaultValue();
+                sExpValue = this.GetDefaultValue();
             }
             else {
-                sCurExpValue = aOpt[sDefValue];
+                sExpValue = aOpt[sDefValue];
             }
 
-            this.SetDefaultValue(String(aOpt.indexOf(sCurExpValue)));
+            this.SetDefaultValue(String(aOpt.indexOf(sExpValue)));
+        }
+
+        let sLogicValue = this.GetLogicValue();
+        sExpValue;
+        if (sLogicValue) {
+            if (!hasOptions) {
+                sExpValue = this.GetLogicValue();
+            }
+            else {
+                sExpValue = aOpt[sLogicValue];
+            }
+
+            this.SetLogicValue(String(aOpt.indexOf(sExpValue)));
         }
 
         return true;
@@ -633,6 +656,7 @@
     
             if (aExpValues.includes(sValue) || aCurOptions) {
                 oParent.SetOptions(newValues);
+				this.SyncValue();
                 return true;
             }
         }
@@ -644,6 +668,7 @@
         AscCommon.History.Add(new CChangesPDFCheckboxExpValue(this, this._exportValue, sValue));
         this._exportValue = sValue;
         this.SetWasChanged(true);
+		this.SyncValue();
     };
     CBaseCheckBoxField.prototype.GetExportValue = function(bInherit) {
         if (bInherit !== false) {
@@ -690,13 +715,14 @@
             sExportValue = value;
         }
 
-        if (this.GetExportValue() == sExportValue)
-            this.SetChecked(true);
-        else
-            this.SetChecked(false);
-        
-        if (Asc.editor.getDocumentRenderer().IsOpenFormsInProgress && oParent == null)
-            this.SetParentValue(value);
+		if (this.GetExportValue() == sExportValue) {
+			this.SetChecked(true);
+		}
+		else {
+			this.SetChecked(false);
+		}
+
+		return true;
     };
     CBaseCheckBoxField.prototype.private_SetValue = CBaseCheckBoxField.prototype.SetValue;
     CBaseCheckBoxField.prototype.GetValue = function() {
@@ -714,17 +740,11 @@
         if (bChecked == this.IsChecked())
             return;
 
-        this.SetWasChanged(true);
-        this.AddToRedraw();
+        AscCommon.History.Add(new CChangesPDFCheckboxChecked(this, this._checked, bChecked));
+		this._checked = bChecked;
 
-        if (bChecked) {
-            AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetValue(), this.GetExportValue()));
-            this._checked = true;
-        }
-        else {
-            AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetValue(), "Off"));
-            this._checked = false;
-        }
+		this.SetWasChanged(true);
+        this.AddToRedraw();
     };
     /**
 	 * Synchronizes this field with fields with the same name.
@@ -732,7 +752,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseCheckBoxField.prototype.SyncValue = function() {
-        if (this.GetExportValue() == this.GetParentValue()) {
+        if (this.GetExportValue() == this.GetLogicValue()) {
             this.SetChecked(true);
             this.AddToRedraw();
         }

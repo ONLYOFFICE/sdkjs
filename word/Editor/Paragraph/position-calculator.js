@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -43,19 +46,18 @@
 	 */
 	function ParagraphPositionCalculator(paragraph)
 	{
-		this.paragraph = paragraph
-		
-		this.page = 0;
-		this.line = 0;
+		AscWord.ParagraphBidiFlow.call(this);
+		this.paragraph = paragraph;
+
+		this.page  = 0;
+		this.line  = 0;
 		this.range = 0;
-		
+
 		this.x = 0;
 		this.y = 0;
-		
+
 		this.startX = 0;
-		
-		this.bidi = new AscWord.BidiFlow(this);
-		
+
 		this.isNextCurrent = false;
 		this.nextRun       = null;
 		this.stop          = false;
@@ -81,6 +83,8 @@
 		
 		this.complexFields = new AscWord.ParagraphComplexFieldStack();
 	}
+	ParagraphPositionCalculator.prototype = Object.create(AscWord.ParagraphBidiFlow.prototype);
+	ParagraphPositionCalculator.prototype.constructor = ParagraphPositionCalculator;
 	ParagraphPositionCalculator.prototype.reset = function(page, line, range)
 	{
 		this.prev.element = null;
@@ -104,8 +108,8 @@
 		if (p.Numbering.checkRange(range, line) && !p.isRtlDirection())
 			this.x += p.Numbering.WidthVisible;
 		
-		this.bidi.begin(this.paragraph.isRtlDirection());
-		
+		this.bidiFlow.begin(this.paragraph.isRtlDirection());
+
 		this.complexFields.resetRange(this.paragraph, this.line, this.range);
 	};
 	ParagraphPositionCalculator.prototype.setNextCurrent = function(run, lastCombItem)
@@ -115,7 +119,7 @@
 		
 		if (lastCombItem && lastCombItem.RGap)
 		{
-			this.bidi.end();
+			this.bidiFlow.end();
 			
 			this.posInfo.x = this.x;
 			this.posInfo.y = this.y;
@@ -131,8 +135,13 @@
 			
 			this.isNextCurrent = false;
 		}
+		
+		if (run.IsMathRun())
+		{
+			this.bidiFlow.add([para_Math_Composition, run, true], AscBidi.TYPE.ON);
+		}
 	};
-	ParagraphPositionCalculator.prototype.handleRunElement = function(element, run, isCurrent, isNearFootnoteRef, inRunPos)
+	ParagraphPositionCalculator.prototype.handleRunElement = function(element, run, isCurrent, isNearFootnoteRef, inRunPos, isCurrentRun)
 	{
 		if (!this.complexFields.checkRunElement(element))
 			return;
@@ -164,13 +173,25 @@
 			this.prev.direction = (element.getBidiType() & AscBidi.FLAG.RTL) ? AscBidi.DIRECTION.R : AscBidi.DIRECTION.L;
 		}
 		
-		this.bidi.add([element, run, isCurrent, isNearFootnoteRef], element.getBidiType());
+		this.bidiFlow.add([para_RunBase, element, run, isCurrent, isNearFootnoteRef, isCurrentRun], element.getBidiType());
 	};
-	ParagraphPositionCalculator.prototype.handleBidiFlow = function(data, direction)
+	ParagraphPositionCalculator.prototype.handleParaMath = function(math, isCurrent)
 	{
-		let element   = data[0];
-		let run       = data[1];
-		let isCurrent = data[2];
+		this.bidiFlow.add([para_Math, math, isCurrent], math.getBidiType());
+	};
+	ParagraphPositionCalculator.prototype.handleMathBase = function(element)
+	{
+		this.bidiFlow.add([para_Math_Composition, element, false], element.getBidiType());
+	};	
+	ParagraphPositionCalculator.prototype.handleBidiFlowRunElement = function(data, direction)
+	{
+		let element      = data[1];
+		let run          = data[2];
+		let isCurrent    = data[3];
+		let isCurrentRun = data[5];
+		
+		if (run.IsMathRun() && isCurrentRun)
+			this.handleBidiFlowCurrentMathRun(run);
 		
 		if (element === this.prev.element)
 		{
@@ -218,35 +239,37 @@
 		
 		this.x += w;
 	};
-	ParagraphPositionCalculator.prototype.handleParaMath = function(math, isCurrent)
+	ParagraphPositionCalculator.prototype.handleBidiFlowParaMath = function(data)
 	{
-		this.bidi.end();
-		
+		let math      = data[1];
+		let isCurrent = data[2];
+
 		if (this.isNextCurrent && !this.stop)
 		{
 			this.posInfo.x   = this.x;
 			this.posInfo.y   = this.y;
 			this.posInfo.run = this.nextRun;
-			
+
 			this.isNextCurrent = false;
 			this.nextRun       = null;
 		}
-		
+
 		let mathW = math.Root.GetWidth(this.line, this.range);
 		let x = this.x;
-		
+
 		if (isCurrent)
 			math.Root.recalculateCursorPosition(this, true);
-		
+
 		this.x = x + mathW;
 	};
-	ParagraphPositionCalculator.prototype.handleMathRun = function(run, isCurrentRun, currentPos)
+	ParagraphPositionCalculator.prototype.handleBidiFlowCurrentMathRun = function(run)
 	{
-		this.bidi.end();
-		this.bidi.begin(this.paragraph.isRtlDirection());
-		
-		if (!isCurrentRun)
+		if (this.stop)
 			return;
+		
+		this.stop = true;
+		
+		let currentPos = run.State.ContentPos;
 		
 		let paraMathLocation = run.ParaMath.GetLinePosition(this.line, this.range);
 		
@@ -274,16 +297,23 @@
 			this.y += elementLocation.y;
 		}
 		
-		// TODO: Пометить данное место, как текущее
 		this.posInfo.x     = this.x;
 		this.posInfo.y     = this.y;
 		this.posInfo.mathY = mathY;
 		this.posInfo.run   = run;
 	};
-	ParagraphPositionCalculator.prototype.handleMathElement = function(element)
+	ParagraphPositionCalculator.prototype.handleBidiFlowMathBase = function(data, direction)
 	{
-		let w = element.GetWidth(this.line, this.range);
-		this.x += w;
+		if (data[2])
+		{
+			this.handleBidiFlowCurrentMathRun(data[1]);
+		}
+		else
+		{
+			let mathBase = data[1];
+			let w = mathBase.GetWidth(this.line, this.range);
+			this.x += w;
+		}
 	};
 	ParagraphPositionCalculator.prototype.getXY = function()
 	{
@@ -378,7 +408,7 @@
 	 */
 	ParagraphPositionCalculator.prototype.finalize = function()
 	{
-		this.bidi.end();
+		this.bidiFlow.end();
 		
 		if (this.isNextCurrent && !this.stop)
 		{

@@ -1,34 +1,39 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
+
+"use strict";
 
 (function(){
 
@@ -41,7 +46,7 @@
         // if the annotation is not shape based
         if (this.Id == undefined) {
             this.Id = AscCommon.g_oIdCounter.Get_NewId();
-            if ((AscCommon.g_oIdCounter.m_bLoad || AscCommon.History.CanAddChanges())) {
+            if (AscCommon.g_oTableId.IsOn()) {
 				AscCommon.g_oTableId.Add(this, this.Id);
 			}
         }
@@ -296,7 +301,8 @@
         }
     };
     CAnnotationBase.prototype.GetRectangleDiff = function() {
-        return this._rectDiff;
+		let aRectDiff = this._rectDiff;
+        return aRectDiff ? aRectDiff.slice() : aRectDiff;
     };
     CAnnotationBase.prototype.SetNoRotate = function(bValue) {
         this._noRotate = bValue;
@@ -312,7 +318,7 @@
         this._dash = aDash;
 
         this.SetWasChanged(true);
-        this.AddToRedraw();
+		this.SetNeedRecalc(true);
     };
     CAnnotationBase.prototype.GetDashPattern = function() {
         return this._dash;
@@ -344,7 +350,9 @@
         this._borderWidth = nWidthPt;
 
         this.SetWasChanged(true);
-        this.private_UpdateLn();
+        this.SetNeedUpdateLn(true);
+		this.SetNeedUpdateOpacity(true);
+		this.SetNeedRecalc(true);
     };
     CAnnotationBase.prototype.private_UpdateLn = function() {
         let nWidthPt = this.GetBorderWidth();
@@ -490,6 +498,12 @@
 
         AscCommon.History.Add(new CChangesPDFAnnotBorderType(this, this._borderStyle, nType));
         this._borderStyle = nType;
+
+		this.SetWasChanged(true);
+		this.SetNeedUpdateLn(true);
+		this.SetNeedUpdateOpacity(true);
+		this.recalcGeometry && this.recalcGeometry();
+		this.SetNeedRecalc(true);
     };
     CAnnotationBase.prototype.GetBorderStyle = function() {
         return this._borderStyle;
@@ -587,10 +601,17 @@
 
         AscCommon.History.Add(new CChangesPDFAnnotOpacity(this, this._opacity, value));
         this._opacity = value;
+		
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);
         this.SetNeedUpdateOpacity(true);
     };
+	CAnnotationBase.prototype.SetNeedUpdateLn = function(isNeed) {
+		this._needUpdateLn = isNeed;
+	};
+	CAnnotationBase.prototype.IsNeedUpdateLn = function() {
+		return this._needUpdateLn;
+	};
     CAnnotationBase.prototype.SetNeedUpdateOpacity = function(isNeed) {
         this._needUpdateOpacity = isNeed;
     };
@@ -602,7 +623,6 @@
         const t = this.GetOpacity() * 100 * 2.55;
 
         if (!this.IsShapeBased()) {
-            this.AddToRedraw();
             this.SetNeedUpdateOpacity(false);
             return;
         }
@@ -676,7 +696,7 @@
             if (this.IsHighlight())
                 AscPDF.startMultiplyMode(oGraphicsPDF.GetContext());
             
-            oGraphicsPDF.SetGlobalAlpha(1);
+            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
             oGraphicsPDF.DrawImageXY(originView, X, Y, undefined, true);
             AscPDF.endMultiplyMode(oGraphicsPDF.GetContext());
         }
@@ -940,7 +960,8 @@
         return this._needRecalc;
     };
     CAnnotationBase.prototype.GetRect = function() {
-        return this._rect || (this.GetInReplyTo() ? this.GetInReplyTo().GetRect() : this._rect);
+		let aRect = this._rect || (this.GetInReplyTo() ? this.GetInReplyTo().GetRect() : this._rect);
+        return aRect ? aRect.slice() : aRect;
     };
     CAnnotationBase.prototype.IsNeedDrawFromStream = function() {
         return this._bDrawFromStream;
@@ -1110,6 +1131,10 @@
             return;
         }
 
+		this.bSkipAddToRedraw = true;
+        if (this.IsNeedUpdateLn()) {
+            this.private_UpdateLn();
+        }
         if (this.IsNeedUpdateOpacity()) {
             this.private_UpdateOpacity();
         }
@@ -1120,6 +1145,7 @@
         if (this.recalcInfo.recalculateGeometry) {
             this.RefillGeometry();
         }
+		this.bSkipAddToRedraw = false;
 
         this.recalculateTransform();
         this.updateTransformMatrix();
@@ -1418,6 +1444,10 @@
         return this._apIdx == undefined;
     };
     CAnnotationBase.prototype.AddToRedraw = function() {
+		if (this.bSkipAddToRedraw) {
+			return;
+		}
+
         let oViewer = editor.getDocumentRenderer();
         let nPage   = this.GetPage();
 
@@ -1504,7 +1534,7 @@
         this.SetWasChanged(true);
 
         if (this.IsShapeBased()) {
-            this.private_UpdateLn();
+            this.SetNeedUpdateLn(true);
             this.SetNeedUpdateOpacity(true);
         }
         else {

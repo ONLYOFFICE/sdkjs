@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -199,7 +202,6 @@ function CMathText(bJDraw)
     this.RecalcInfo =
     {
         StyleCode:        null,
-        bAccentIJ:        false,
         bSpaceSpecial:    false,
         bApostrophe:      false,
         bSpecialOperator: false
@@ -255,6 +257,27 @@ CMathText.prototype.private_getCode = function()
 
     var Compiled_MPrp = this.Parent.GetCompiled_ScrStyles();
     var bAccent = this.Parent.IsAccent();
+
+	// dotless i/j under an accent: pick the Unicode dotless form by style (no hardcoded
+	// glyph ids, which broke on macOS).
+	//      lain  -> U+0131 / U+0237
+	//      italic -> U+1D6A4 / U+1D6A5
+	// 
+	// Unicode has no bold dotless form; bold/bold-italic fall back to plain/italic for now
+	// (proper bold to come later via the OpenType dtls feature).
+	if(bAccent && (code == 0x69 || code == 0x6A))
+	{
+		var nDotlessSty = Compiled_MPrp.sty;
+
+		if(nDotlessSty == STY_ITALIC || nDotlessSty == STY_BI)
+		{
+			return (code == 0x69)
+				? 0x1D6A4
+				: 0x1D6A5;
+		}
+
+		return (code == 0x69) ? 0x131 : 0x237;
+	}
 
     var bCapitale = (code > 0x0040 && code < 0x005B),
         bSmall = (code > 0x0060 && code < 0x007b),
@@ -728,18 +751,11 @@ CMathText.prototype.Measure = function(oMeasure, TextPr, InfoMathText)
 
 		this.FontSlot = InfoMathText.GetFontSlot(letter); // возвращает AscWord.fontslot_ASCII || AscWord.fontslot_EastAsia || AscWord.fontslot_CS || AscWord.fontslot_HAnsi
 
-		// в не математическом тексте i и j не подменяются на i и j без точек
-		var bAccentIJ = !InfoMathText.bNormalText && this.Parent.IsAccent() && (this.value == 0x69 || this.value == 0x6A);
-
-		this.RecalcInfo.StyleCode   = letter;
-		this.RecalcInfo.bAccentIJ   = bAccentIJ;
+		this.RecalcInfo.StyleCode = letter;
 
 		var bApostrophe = 1 == q_Math_Apostrophe[letter] && this.bJDraw == false;
 
-		if(bAccentIJ)
-			oMeasure.SetStringGid(true);
-
-		else if( InfoMathText.NeedUpdateFont(letter, this.FontSlot, this.IsPlaceholder(), bApostrophe) )
+		if( InfoMathText.NeedUpdateFont(letter, this.FontSlot, this.IsPlaceholder(), bApostrophe) )
 		{
 			if (this.Parent.Pr.SmallCaps || this.Parent.Pr.Caps)
 			{
@@ -779,9 +795,6 @@ CMathText.prototype.Measure = function(oMeasure, TextPr, InfoMathText)
 		this.RecalcInfo.bSpaceSpecial = letter == 0x2061;
 
 		metricsTxt = oMeasure.MeasureCode(letter);
-
-		if(bAccentIJ)
-			oMeasure.SetStringGid(false);
 	}
 
 	if(this.RecalcInfo.bApostrophe)
@@ -899,11 +912,7 @@ CMathText.prototype.Draw = function(x, y, pGraphics, InfoTextPr)
 			pGraphics.SetFontSlot(this.FontSlot, FontKoef);
 		}
 
-		if (this.RecalcInfo.bAccentIJ)
-		{
-			pGraphics.tg(this.RecalcInfo.StyleCode, X, Y);
-		}
-		else if (Asc.editor.ShowParaMarks && (this.value === 8195 || this.value === 8194 || this.value === 160))
+		if (Asc.editor.ShowParaMarks && (this.value === 8195 || this.value === 8194 || this.value === 160))
 		{
 			let widthOfCircle = g_oTextMeasurer.MeasureCode(176).Width / 2;
 			pGraphics.FillTextCode(X + this.size.width / 2 - widthOfCircle, Y, 176);

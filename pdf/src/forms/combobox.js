@@ -1,34 +1,39 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
+
+"use strict";
 
 (function(){
     /**
@@ -67,7 +72,7 @@
         this.Recalculate();
         this.DrawBackground(oGraphicsPDF);
         
-        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) && this.IsNeedDrawHighlight() ? this.contentFormat : this.content;
+        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) && !this.IsInForm() ? this.contentFormat : this.content;
         this.curContent = oContentToDraw; // remember current content
 
         if (oDoc.activeForm == this)
@@ -298,7 +303,7 @@
     };
     CComboBoxField.prototype.SetCurIdxs = function(aIdxs) {
         if (this.IsWidget()) {
-            AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetParentCurIdxs(), aIdxs));
+            AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetLogicCurIdxs(), aIdxs));
 
             let aOptions = this.GetOptions();
             if (undefined !== aIdxs[0]) {
@@ -309,10 +314,10 @@
             this.UpdateDisplayValue(sDisplayValue)
 
             if (Asc.editor.getDocumentRenderer().IsOpenFormsInProgress)
-                this.SetParentCurIdxs(aIdxs);
+                this.SetLogicCurIdxs(aIdxs);
         }
         else 
-            this.SetParentCurIdxs(aIdxs);
+            this.SetLogicCurIdxs(aIdxs);
 
         this.SetNeedCommit(false);
     };
@@ -341,24 +346,32 @@
                 }
             }
             
-            if (sTextToAdd == "")
-                sTextToAdd = sValue;
+			if (sTextToAdd == "") {
+				if (this.IsEditable()) {
+					sTextToAdd = sValue;
+				}
+				else {
+					return false;
+				}
+			}
 
-            AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetParentValue(), sValue));
+            AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetLogicValue(), sValue));
 
             this.UpdateDisplayValue(sTextToAdd);
             this.SetNeedRecalc(true);
             this.SetWasChanged(true);
 
             if (isOnOpen) {
-                this.SetParentValue(sValue);
-                this.SetParentCurIdxs(aIdxs);
+                this.SetLogicValue(sValue);
+                this.SetLogicCurIdxs(aIdxs);
             }
         }
         else {
-            this.SetParentValue(sValue);
-            this.SetParentCurIdxs(aIdxs);
+            this.SetLogicValue(sValue);
+            this.SetLogicCurIdxs(aIdxs);
         }
+
+		return true;
     };
     CComboBoxField.prototype.private_SetValue = function(sValue) {
         let aIdxs = [];
@@ -389,8 +402,8 @@
             this.SetNeedRecalc(true);
         }
         else {
-            this.SetParentValue(sValue);
-            this.SetParentCurIdxs(aIdxs);
+            this.SetLogicValue(sValue);
+            this.SetLogicCurIdxs(aIdxs);
         }
     };
     
@@ -398,13 +411,13 @@
         AscPDF.CBaseField.prototype.DrainLogicFrom.call(this, oFieldToInherit, bClearFrom);
 
         this.SetOptions(oFieldToInherit.GetOptions());
-        this.SetParentCurIdxs(oFieldToInherit.GetParentCurIdxs());
+        this.SetLogicCurIdxs(oFieldToInherit.GetLogicCurIdxs());
         this.SetEditable(oFieldToInherit.IsEditable());
         this.SetCommitOnSelChange(oFieldToInherit.IsCommitOnSelChange());
 
         if (bClearFrom !== false) {
             oFieldToInherit.SetOptions([]);
-            oFieldToInherit.SetParentCurIdxs([]);
+            oFieldToInherit.SetLogicCurIdxs([]);
             oFieldToInherit.SetEditable(false);
             oFieldToInherit.SetCommitOnSelChange(false);
         }
@@ -437,18 +450,22 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CComboBoxField.prototype.Commit = function() {
-        let oDoc        = this.GetDocument();
-        let aFields     = oDoc.GetAllWidgets(this.GetFullName());
+		if (this.IsLogicalRoot() && !this.IsWidget()) {
+			this.GetKid(0).Commit();
+			return;
+		}
+		
+        let aFields     = this.GetAllWidgets();
 
         let aCurIdxs = this.GetCurIdxs();
-        let aApiIdxs = this.GetParentCurIdxs();
+        let aApiIdxs = this.GetLogicCurIdxs();
 
         let sFormatValueBefore = this.GetFormatValue();
         this.DoFormatAction();
         let sFormatValue = this.GetFormatValue();
 
         let sNewValue = this.GetValue();
-        let isChanged = sNewValue !== this.GetParentValue();
+        let isChanged = sNewValue !== this.GetLogicValue();
         for (let i = 0; i < aCurIdxs.length; i++) {
             if (!aApiIdxs || aCurIdxs[i] === undefined || aApiIdxs[i] === undefined || aCurIdxs[i] !== aApiIdxs[i]) {
                 isChanged = true;
@@ -493,8 +510,8 @@
             aFields[i].SetFormatValue(sFormatValue);
         }
 
-        this.SetParentValue(this.GetValue());
-        this.SetParentCurIdxs(aCurIdxs);
+        this.SetLogicValue(this.GetValue());
+        this.SetLogicCurIdxs(aCurIdxs);
 
         // when alignment is center or right, then after
         // content width becomes larger than form size, alignment becomes left, until text is smaller than form size again
@@ -533,7 +550,7 @@
             }
         }
 
-        this.SetParentCurIdxs([nIdx]);
+        this.SetLogicCurIdxs([nIdx]);
         return nIdx;
     };
     
@@ -676,12 +693,12 @@
         return [];
     };
     CComboBoxField.prototype.SyncValue = function() {
-        const aCurIdxs = this.GetParentCurIdxs();
+        const aCurIdxs = this.GetLogicCurIdxs();
         if (aCurIdxs.length != 0) {
             this.SetCurIdxs(aCurIdxs);
         }
         else {
-            this.SetValue(this.GetParentValue());
+            this.SetValue(this.GetLogicValue());
         }
 
         this.SetFormatValue(this.GetFormatValue());
@@ -706,8 +723,10 @@
     	    return nTextHeight;
 
         let nNewFontSize = (Math.min(nFontSize * oBounds.H / nTextHeight * 0.9, 100, nFontSize * oBounds.W / nMaxWidth) * 100 >> 0) / 100;
-        oRun.SetFontSize(nNewFontSize);
-        oPara.Recalculate_Page(0);
+		oPara.SetApplyToAll(true);
+		oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+		oPara.SetApplyToAll(false);
+		oPara.Recalculate_Page(0);
 
         oTextPr.FontSize    = nNewFontSize;
         oTextPr.FontSizeCS  = nNewFontSize;
@@ -735,7 +754,7 @@
         this.WriteToBinaryBase(memory);
         this.WriteToBinaryBase2(memory);
 
-        let value = this.GetParentValue(memory.isCopyPaste);
+        let value = this.GetLogicValue(memory.isCopyPaste);
         if (value != null && Array.isArray(value) == false) {
             memory.fieldDataFlags |= (1 << 9);
             memory.WriteString(value);
@@ -764,7 +783,7 @@
         // I array (selected list values)
         let curIdxs;
         if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
-            curIdxs = this.GetParentCurIdxs(memory.isCopyPaste);
+            curIdxs = this.GetLogicCurIdxs(memory.isCopyPaste);
         }
         if (curIdxs) {
             memory.fieldDataFlags |= (1 << 14);

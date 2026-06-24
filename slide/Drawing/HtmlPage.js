@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -381,7 +384,7 @@
 			_ctrl.Anchor = (g_anchor_left | g_anchor_right | g_anchor_bottom);
 			this.m_oDemonstrationDivParent.AddControl(_ctrl);
 
-			var _images_url = "../../../../sdkjs/common/Images/reporter/";
+			var _images_url = AscCommon.RELATIVE_SDKJS_PATH + "common/Images/reporter/";
 			var _head = document.getElementsByTagName('head')[0];
 
 			var styleContent = ".block_elem_no_select { -khtml-user-select: none; user-select: none; -moz-user-select: none; -webkit-user-select: none; }";
@@ -467,8 +470,10 @@
 			_buttonsContent += ("<button class=\"btn-text-default\" id=\"dem_id_reset\" style=\"left: 85px; bottom: 2px; \">" + this.reporterTranslates[0] + "</button>");
 			_buttonsContent += ("<button class=\"btn-text-default\" id=\"dem_id_end\" style=\"right: 10px; bottom: 2px; \">" + this.reporterTranslates[2] + "</button>");
 
-			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_prev\"  data-tooltip=\"" + this.reporterTranslates[11] + "\" style=\"left: 150px; bottom: 3px; width: 20px; height: 20px;\"><span class=\"btn-prev back_image_buttons\" style=\"width:100%;height:100%;\"></span></button>";
-			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_next\" data-tooltip=\"" + this.reporterTranslates[12] + "\" style=\"left: 170px; bottom: 3px; width: 20px; height: 20px;\"><span class=\"btn-next back_image_buttons\" style=\"width:100%;height:100%;\"></span></button>";
+			const prevIcon = Asc.editor.isRtlInterface ? "btn-next" : "btn-prev";
+			const nextIcon = Asc.editor.isRtlInterface ? "btn-prev" : "btn-next";
+			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_prev\"  data-tooltip=\"" + this.reporterTranslates[11] + "\" style=\"left: 150px; bottom: 3px; width: 20px; height: 20px;\"><span id=\"dem_id_prev_span\" class=\"" + prevIcon + " back_image_buttons\" style=\"width:100%;height:100%;\"></span></button>";
+			_buttonsContent += "<button class=\"btn-text-default-img\" id=\"dem_id_next\" data-tooltip=\"" + this.reporterTranslates[12] + "\" style=\"left: 170px; bottom: 3px; width: 20px; height: 20px;\"><span id=\"dem_id_next_span\" class=\"" + nextIcon + " back_image_buttons\" style=\"width:100%;height:100%;\"></span></button>";
 
 			_buttonsContent += "<div class=\"separator block_elem_no_select\" id=\"dem_id_sep\" style=\"left: 185px; bottom: 3px;\"></div>";
 
@@ -3374,6 +3379,23 @@
 			var _drawMenu = document.getElementById("dem_id_draw_menu");
 			var _buttonEnd = document.getElementById("dem_id_end");
 
+			const prevSpan = document.getElementById('dem_id_prev_span');
+			const nextSpan = document.getElementById('dem_id_next_span');
+			prevSpan.classList.remove(Asc.editor.isRtlInterface ? 'btn-prev' : 'btn-next');
+			prevSpan.classList.add(Asc.editor.isRtlInterface ? 'btn-next' : 'btn-prev');
+			nextSpan.classList.remove(Asc.editor.isRtlInterface ? 'btn-next' : 'btn-prev');
+			nextSpan.classList.add(Asc.editor.isRtlInterface ? 'btn-prev' : 'btn-next');
+
+			const startSide = Asc.editor.isRtlInterface ? 'right' : 'left';
+			const endSide = Asc.editor.isRtlInterface ? 'left' : 'right';
+			function setHorizontalPosition(element, offset) {
+				element.style[endSide] = '';
+				element.style[startSide] = offset;
+			}
+
+			_buttonEnd.style[startSide] = '';
+			_buttonEnd.style[endSide] = '10px';
+
 			function redrawMenu() {
 				if (_drawMenu.style.display === "block") {
 					var offset = AscCommon.UI.getBoundingClientRect(_buttonDrawMenuTrigger);
@@ -3417,21 +3439,21 @@
 				_buttonReset.style.display = "block";
 				_buttonEnd.style.display = "block";
 
-				_label1.style.left = "10px";
-				_buttonPlay.style.left = (10 + _label1_width + 6) + "px";
-				_buttonReset.style.left = (10 + _label1_width + 6 + 20 + 6) + "px";
+				setHorizontalPosition(_label1, '10px');
+				setHorizontalPosition(_buttonPlay, (10 + _label1_width + 6) + 'px');
+				setHorizontalPosition(_buttonReset, (10 + _label1_width + 6 + 20 + 6) + 'px');
 
 				if (!_is1) {
 					_posCenter = 10 + _label1_width + 6 + 20 + 6 + _buttonReset_width + 10 + ((_width - _test_width1) >> 1);
 				}
 
-				_buttonPrev.style.left = _posCenter + "px";
-				_buttonNext.style.left = (_posCenter + 20) + "px";
-				_buttonSeparator.style.left = (_posCenter + 48 - 10) + "px";
-				_labelMain.style.left = (_posCenter + 55) + "px";
-				_buttonSeparator2.style.left = (_posCenter + 55 + _main_width + 7 - 10) + "px";
-				_buttonPointer.style.left = (_posCenter + 70 + _main_width) + "px";
-				_buttonDrawMenuTrigger.style.left = (_posCenter + 90 + _main_width) + "px";
+				setHorizontalPosition(_buttonPrev, _posCenter + 'px');
+				setHorizontalPosition(_buttonNext, (_posCenter + 20) + 'px');
+				setHorizontalPosition(_buttonSeparator, (_posCenter + 48 - 10) + 'px');
+				setHorizontalPosition(_labelMain, (_posCenter + 55) + 'px');
+				setHorizontalPosition(_buttonSeparator2, (_posCenter + 55 + _main_width + 7 - 10) + 'px');
+				setHorizontalPosition(_buttonPointer, (_posCenter + 70 + _main_width) + 'px');
+				setHorizontalPosition(_buttonDrawMenuTrigger, (_posCenter + 90 + _main_width) + 'px');
 				redrawMenu();
 
 				return;
@@ -3447,13 +3469,13 @@
 				_buttonReset.style.display = "none";
 				_buttonEnd.style.display = "block";
 
-				_buttonPrev.style.left = "10px";
-				_buttonNext.style.left = "30px";
-				_buttonSeparator.style.left = (58 - 10) + "px";
-				_labelMain.style.left = "65px";
-				_buttonSeparator2.style.left = (65 + _main_width + 7 - 10) + "px";
-				_buttonPointer.style.left = (80 + _main_width) + "px";
-				_buttonDrawMenuTrigger.style.left = (100 + _main_width) + "px";
+				setHorizontalPosition(_buttonPrev, '10px');
+				setHorizontalPosition(_buttonNext, '30px');
+				setHorizontalPosition(_buttonSeparator, (58 - 10) + 'px');
+				setHorizontalPosition(_labelMain, '65px');
+				setHorizontalPosition(_buttonSeparator2, (65 + _main_width + 7 - 10) + 'px');
+				setHorizontalPosition(_buttonPointer, (80 + _main_width) + 'px');
+				setHorizontalPosition(_buttonDrawMenuTrigger, (100 + _main_width) + 'px');
 				redrawMenu();
 
 				return;
@@ -3470,13 +3492,13 @@
 			_buttonReset.style.display = "none";
 			_buttonEnd.style.display = "none";
 
-			_buttonPrev.style.left = _posCenter + "px";
-			_buttonNext.style.left = (_posCenter + 20) + "px";
-			_buttonSeparator.style.left = (_posCenter + 48 - 10) + "px";
-			_labelMain.style.left = (_posCenter + 55) + "px";
-			_buttonSeparator2.style.left = (_posCenter + 55 + _main_width + 7 - 10) + "px";
-			_buttonPointer.style.left = (_posCenter + 70 + _main_width) + "px";
-			_buttonDrawMenuTrigger.style.left = (_posCenter + 90 + _main_width) + "px";
+			setHorizontalPosition(_buttonPrev, _posCenter + 'px');
+			setHorizontalPosition(_buttonNext, (_posCenter + 20) + 'px');
+			setHorizontalPosition(_buttonSeparator, (_posCenter + 48 - 10) + 'px');
+			setHorizontalPosition(_labelMain, (_posCenter + 55) + 'px');
+			setHorizontalPosition(_buttonSeparator2, (_posCenter + 55 + _main_width + 7 - 10) + 'px');
+			setHorizontalPosition(_buttonPointer, (_posCenter + 70 + _main_width) + 'px');
+			setHorizontalPosition(_buttonDrawMenuTrigger, (_posCenter + 90 + _main_width) + 'px');
 			redrawMenu();
 		}
 	};
@@ -4038,7 +4060,7 @@
 		if (oWordControl.IsFocus === false && e.emulated !== true)
 			return;
 
-		if (oWordControl.m_oApi.isLongAction() || oWordControl.m_bIsMouseLock === true) {
+		if (oWordControl.m_oApi.isLongAction() || (oWordControl.m_bIsMouseLock === true && 27 !== e.keyCode)) {
 			AscCommon.check_KeyboardEvent2(e);
 			e.preventDefault();
 			return;
@@ -4067,7 +4089,7 @@
 			oWordControl.m_oDrawingDocument.TransitionSlide.End(true);
 
 		var oWordControl = oThis;
-		if (false === oWordControl.m_oApi.bInit_word_control || oWordControl.IsFocus === false && e.emulated !== true || oWordControl.m_oApi.isLongAction() || oWordControl.m_bIsMouseLock === true)
+		if (false === oWordControl.m_oApi.bInit_word_control || oWordControl.IsFocus === false && e.emulated !== true || oWordControl.m_oApi.isLongAction() || (oWordControl.m_bIsMouseLock === true && 27 !== e.keyCode))
 			return;
 
 		AscCommon.check_KeyboardEvent(e);
@@ -4446,13 +4468,15 @@
 
 		var isDesktopVersion = window["AscDesktopEditor"] !== undefined;
 
-		if (this.splitters[0].position > 0.1 && !isDesktopVersion) {
+		if (this.Width > 0 && !isDesktopVersion) {
 			const maxSplitterThMax = Math.min(g_dKoef_pix_to_mm * this.Width / 3, 80);
 			this.splitters[0].setLimits(maxSplitterThMax >> 2, maxSplitterThMax >> 0);
+		}
 
-			const considerLimits = true;
-			this.splitters[0].setPosition(this.splitters[0].initialPosition, considerLimits);
-
+		if (this.splitters[0].position > 0.1 && !isDesktopVersion) {
+			if (this.Width > 0) {
+				this.splitters[0].setPosition(this.splitters[0].initialPosition, true, true);
+			}
 			this.onSplitterResize(true);
 		}
 
@@ -4618,8 +4642,8 @@
 		}
 		if (this.m_oLogicDocument.IsEmpty())
 			return;
-
-
+		if (this.m_oApi.FontLoader.isFontLoadInProgress())
+			return;
 
 		let aAllLayouts = this.m_oLogicDocument.GetAllLayouts();
 		let oLtDrawer = this.m_oLayoutDrawer;

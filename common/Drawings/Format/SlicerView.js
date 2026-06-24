@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -819,6 +822,16 @@
     CSlicer.prototype.getShowCaption = function() {
         return this.data.getShowCaption();
     };
+	CSlicer.prototype.isRightToLeft = function () {
+		const worksheet = this.getWorksheet();
+		if (worksheet) {
+			const sheetView = worksheet.getSheetViewSettings(true);
+			if (sheetView) {
+				return sheetView.rightToLeft === true;
+			}
+		}
+		return false;
+	};
     CSlicer.prototype.getTxStyles = function (nType) {
         var oFont = this.getFont(nType);
         if(!oFont) {
@@ -829,6 +842,7 @@
         oTextPr.FillFromExcelFont(oFont);
         var oParaPr = this.txStyles.Default.ParaPr;
         oParaPr.SetSpacing(1, undefined, 0, 0, undefined, undefined);
+		oParaPr.SetJc(this.isRightToLeft() ? AscCommon.align_Right : AscCommon.align_Left);
         return {styles: this.txStyles, lastId: undefined};
     };
     CSlicer.prototype.isMultiSelect = function() {
@@ -1253,6 +1267,11 @@
         if(this.bRecalcContent) {
             return;
         }
+
+		const isRightToLeft = this.slicer.isRightToLeft();
+		this.bodyPr.lIns = isRightToLeft ? HEADER_RIGHT_PADDING : HEADER_LEFT_PADDING;
+		this.bodyPr.rIns = isRightToLeft ? HEADER_LEFT_PADDING : HEADER_RIGHT_PADDING;
+
         this.setTransformParams(0, 0, this.slicer.extX, HEADER_BUTTON_WIDTH, 0, false, false);
         this.recalculateGeometry();
         this.recalculateTransform();
@@ -1274,18 +1293,22 @@
         this.calcGeometry = AscFormat.CreateGeometry("rect");
         this.calcGeometry.Recalculate(this.extX, this.extY);
     };
-    CHeader.prototype.recalculateButtons = function() {
-        var oButton = this.buttons[1];
-        var x, y;
-        x = this.extX - RIGHT_PADDING - HEADER_BUTTON_WIDTH;
-        y = this.extY / 2 - HEADER_BUTTON_WIDTH / 2;
-        oButton.setTransformParams(x, y, HEADER_BUTTON_WIDTH, HEADER_BUTTON_WIDTH, 0, false, false);
-        oButton.recalculate();
-        oButton = this.buttons[0];
-        x = this.extX - HEADER_RIGHT_PADDING;
-        oButton.setTransformParams(x, y, HEADER_BUTTON_WIDTH, HEADER_BUTTON_WIDTH, 0, false, false);
-        oButton.recalculate();
-    };
+	CHeader.prototype.recalculateButtons = function () {
+		const isRightToLeft = this.slicer.isRightToLeft();
+
+		const y = this.extY / 2 - HEADER_BUTTON_WIDTH / 2;
+		const x0 = isRightToLeft
+			? LEFT_PADDING + HEADER_BUTTON_WIDTH + HEADER_TOP_PADDING
+			: this.extX - HEADER_RIGHT_PADDING;
+		const x1 = isRightToLeft
+			? LEFT_PADDING
+			: this.extX - RIGHT_PADDING - HEADER_BUTTON_WIDTH;
+
+		this.buttons[0].setTransformParams(x0, y, HEADER_BUTTON_WIDTH, HEADER_BUTTON_WIDTH, 0, false, false);
+		this.buttons[0].recalculate();
+		this.buttons[1].setTransformParams(x1, y, HEADER_BUTTON_WIDTH, HEADER_BUTTON_WIDTH, 0, false, false);
+		this.buttons[1].recalculate();
+	};
     CHeader.prototype.draw = function (graphics) {
         var oUR = graphics.updatedRect;
         if(oUR && this.bounds) {
@@ -2028,11 +2051,14 @@
             return -1
         }
         var nCol, nColsCount = this.getColumnsCount();
-        for(nCol = 0; nCol < nColsCount; ++nCol) {
-            if(tx < this.getColumnStart(nCol)) {
-                break;
-            }
-        }
+		const isRightToLeft = this.slicer.isRightToLeft();
+		for (nCol = 0; nCol < nColsCount; ++nCol) {
+			const columnStart = this.getColumnStart(nCol);
+			const limit = isRightToLeft ? columnStart + this.getButtonWidth() : columnStart;
+			if (isRightToLeft ? tx > limit : tx < limit) {
+				break;
+			}
+		}
         --nCol;
         if(nCol === -1) {
             --nRow;
@@ -2126,9 +2152,12 @@
         var nRowsCount = this.getRowsCount();
         return  this.getButtonHeight() * nRowsCount + SPACE_BETWEEN * (nRowsCount - 1);
     };
-    CButtonsContainer.prototype.getColumnStart = function (nColumn) {
-        return this.x + (this.getButtonWidth() + SPACE_BETWEEN) * nColumn;
-    };
+	CButtonsContainer.prototype.getColumnStart = function (nColumn) {
+		const isRightToLeft = this.slicer.isRightToLeft();
+		return isRightToLeft
+			? this.x + this.extX - this.getButtonWidth() - nColumn * (this.getButtonWidth() + SPACE_BETWEEN)
+			: this.x + (this.getButtonWidth() + SPACE_BETWEEN) * nColumn;
+	};
     CButtonsContainer.prototype.getRowStart = function (nRow) {
         return this.y + (this.getButtonHeight() + SPACE_BETWEEN) * nRow;
     };
@@ -2481,9 +2510,12 @@
         oBorder.b.c = AscCommonExcel.createRgbColor(r, g, b);
         return oBorder;
     };
-    CScroll.prototype.getPosX = function () {
-        return this.parent.x + this.parent.extX - this.getWidth();
-    };
+	CScroll.prototype.getPosX = function () {
+		const isRightToLeft = this.parent.slicer.isRightToLeft();
+		return isRightToLeft
+			? this.parent.x
+			: this.parent.x + this.parent.extX - this.getWidth();
+	};
     CScroll.prototype.getPosY = function () {
         return this.parent.y;
     };
