@@ -2230,6 +2230,9 @@ CDocument.prototype.FinalizeAction = function(checkEmptyAction, additional)
 	}
 	
 	this.ResumeRecalculate();
+	
+	if (AscDFH.historydescription_BuilderScript === this.Action.Description)
+		this.History.ResetRecalcIndexToPoint(-this.Action.PointsCount);
 
 	this.private_CheckAdditionalOnFinalize();
 	
