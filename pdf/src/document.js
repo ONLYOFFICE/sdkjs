@@ -1657,7 +1657,6 @@ var CPresentation = CPresentation || function(){};
         let IsOnDrawer      = this.Api.isDrawInkMode();
         let IsOnEraser      = this.Api.isEraseInkMode();
         let IsOnAddAddShape = this.Api.isStartAddShape;
-        let IsPageHighlight = this.Api.IsCommentMarker();
         let IsOnRedact      = this.Api.IsRedactTool();
         let IsOnLink        = this.Api.IsLinkTool();
 
@@ -1721,14 +1720,6 @@ var CPresentation = CPresentation || function(){};
         else if (IsOnDrawer == true) {
             oController.OnMouseDown(e, X, Y, nPage);
             return;
-        }
-        // if text highlight (annotation) on page (select text on page if not clicking on shape in view mode).
-        // if clicking on shape, select inside it (since it's like text on page)
-        else if (IsPageHighlight) {
-            if (null == oMouseDownDrawing) {
-                oViewer.onMouseDownEpsilon(e);
-                return;
-            }
         }
         
         let isSameType = (oCurObject && oFloatObject) && ( (oCurObject.IsAnnot() && oFloatObject.IsAnnot()) || (oCurObject.IsDrawing() && oFloatObject.IsDrawing()) || (oCurObject.IsForm() && oFloatObject.IsForm()) ); 
@@ -2840,8 +2831,10 @@ var CPresentation = CPresentation || function(){};
         }
         else if (this.activeDrawing) {
             oController.OnMouseUp(e, X, Y, pageObjectMM.index);
-            if (this.Api.isMarkerFormat && !this.Api.IsCommentMarker() && this.HighlightColor && this.activeDrawing.IsInTextBox()) {
-                this.SetHighlight(this.HighlightColor.r, this.HighlightColor.g, this.HighlightColor.b);
+            if (this.Api.isMarkerFormat && this.Api.IsCommentMarker() && this.HighlightColor && this.activeDrawing.IsInTextBox()) {
+				oDoc.DoAction(function() {
+					this.SetHighlight(this.HighlightColor.r, this.HighlightColor.g, this.HighlightColor.b, this.HighlightColor.a);
+				}, AscDFH.historydescription_Pdf_AddAnnot, this);
             }
 
             oController.updateCursorType(pageObjectMM.index, X, Y, e, false);
