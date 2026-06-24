@@ -9540,6 +9540,136 @@ CDocumentContent.prototype.CorrectEnterText = function(oldValue, newValue, check
 	return true;
 };
 
+function private_GetParaContentPosForChar(oPara, nCharOffset)
+{
+	var nCount = 0;
+	for (var i = 0; i < oPara.Content.length; i++)
+	{
+		var oRun = oPara.Content[i];
+
+		if (!oRun || !oRun.Content)
+			continue;
+
+		for (var j = 0; j < oRun.Content.length; j++)
+		{
+			var nType = oRun.Content[j].Type;
+
+			if (nType === para_End)
+				break;
+
+			if (nType === para_Text || nType === para_Space || nType === para_Tab)
+			{
+				if (nCount === nCharOffset)
+				{
+					var oResult = new AscWord.CParagraphContentPos();
+					oResult.Update(i, 0);
+					oResult.Update(j, 1);
+					return oResult;
+				}
+				nCount++;
+			}
+		}
+	}
+	return oPara.Get_EndPos(true);
+}
+
+CDocumentContent.prototype.SelectCharRange = function(nStartChar, nEndChar, bMoveCursor)
+{
+	if (bMoveCursor === undefined)
+		bMoveCursor = true;
+
+	this.RemoveSelection();
+
+	if (this.SetDocPosType)
+		this.SetDocPosType(docpostype_Content);
+
+	var nPos				= 0;
+	var nStartParaIdx		= 0;
+	var nEndParaIdx			= 0;
+	var bSelectionStarted	= false;
+
+	for (var i = 0; i < this.Content.length; i++)
+	{
+		var oPara = this.Content[i];
+
+		if (!oPara || !oPara.Get_StartPos)
+		{
+			// non-paragraph item (e.g. table) — skip but keep separator accounting
+			if (i < this.Content.length - 1)
+				nPos++;
+			continue;
+		}
+
+		var nParaLen	= oPara.GetText
+			? oPara.GetText({ParaSeparator: "", Numbering: false, Math: false}).length 
+			: 0;
+		var nParaStart	= nPos;
+		var nParaEnd	= nPos + nParaLen;
+
+		nPos += nParaLen + (i < this.Content.length - 1 ? 1 : 0);
+
+		if (nParaEnd <= nStartChar || nParaStart >= nEndChar)
+		{
+			if (oPara.RemoveSelection)
+				oPara.RemoveSelection();
+
+			continue;
+		}
+
+		if (!bSelectionStarted)
+		{
+			nStartParaIdx = i;
+			bSelectionStarted = true;
+		}
+
+		nEndParaIdx = i;
+
+		if (nParaStart >= nStartChar && nParaEnd <= nEndChar)
+		{
+			if (bMoveCursor)
+			{
+				oPara.SelectAll();
+			}
+			else
+			{
+				oPara.Selection.Use = true;
+				oPara.Set_SelectionContentPos(oPara.Get_StartPos(), oPara.Get_EndPos(true));
+			}
+		} 
+		else
+		{
+			var nLocalStart = Math.max(0, nStartChar - nParaStart);
+			var nLocalEnd   = Math.min(nParaLen, nEndChar - nParaStart);
+
+			var oStartPos   = nLocalStart === 0
+				? oPara.Get_StartPos()
+				: private_GetParaContentPosForChar(oPara, nLocalStart);
+
+			var oEndPos     = nLocalEnd >= nParaLen
+				? oPara.Get_EndPos(true)
+				: private_GetParaContentPosForChar(oPara, nLocalEnd);
+			
+			oPara.Selection.Use = true;
+
+			if (bMoveCursor)
+				oPara.Set_ParaContentPos(oEndPos.Copy(), true, -1, -1);
+			
+			oPara.Set_SelectionContentPos(oStartPos, oEndPos);
+		}
+	}
+
+	if (!bSelectionStarted)
+		return;
+
+	this.Selection.Use      = true;
+	this.Selection.Start    = false;
+	this.Selection.Flag     = selectionflag_Common;
+	this.Selection.StartPos = nStartParaIdx;
+	this.Selection.EndPos   = nEndParaIdx;
+	if (bMoveCursor)
+		this.CurPos.ContentPos = nEndParaIdx;
+};
+
 function CDocumentContentStartState(DocContent)
 {
     this.Content = [];

@@ -34150,6 +34150,7 @@
 
 	AscBuilder.private_GetInt = private_GetInt;
 	AscBuilder.private_Twips2MM = private_Twips2MM;
+	AscBuilder.private_getHighlightColorByName = private_getHighlightColorByName;
 	
 	AscBuilder.Word.init = function()
 	{
