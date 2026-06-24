@@ -731,8 +731,7 @@
 	};
 	HandoutPrinter.prototype.getHandoutSettings = function () {
 		const printOptions = this.printOptions;
-		const slidesOnPagePrintOptions = printOptions.slidesOnPagePrintOptions;
-		return slidesOnPagePrintOptions.getHandoutSettings();
+		return AscCommonSlide.HandoutSettings.fromPrinterSettings(printOptions.slidesOnPagePrintOptions);
 	};
 	HandoutPrinter.prototype.getContentSizes = function () {
 		const presentation = this.getPresentation();

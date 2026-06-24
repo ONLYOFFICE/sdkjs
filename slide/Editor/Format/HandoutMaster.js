@@ -57,7 +57,12 @@
 		this.slideCount = OUTLINE_LAYOUT_COUNT;
 		this.align = HANDOUT_ALIGNMENT_HORIZONTAL;
 	}
-
+	HandoutSettings.fromPrinterSettings = function (slidesOnPagePrintOptions) {
+		const handoutSettings = new HandoutSettings();
+		handoutSettings.setSlideCount(slidesOnPagePrintOptions.slidesCount);
+		handoutSettings.setAlign(slidesOnPagePrintOptions.arrangementType === Asc.c_oAscSlidesOnPageArrangementType.Horizontal ? HANDOUT_ALIGNMENT_HORIZONTAL : HANDOUT_ALIGNMENT_VERTICAL);
+		return handoutSettings;
+	};
 	HandoutSettings.prototype.setSlideCount = function (count) {
 		this.slideCount = count;
 	};
