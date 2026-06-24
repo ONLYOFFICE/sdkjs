@@ -71,6 +71,11 @@ CChangesHyperlinkValue.prototype.Type = AscDFH.historyitem_Hyperlink_Value;
 CChangesHyperlinkValue.prototype.private_SetValue = function(Value)
 {
 	this.Class.Value = Value;
+	var logicDocument = Asc.editor.getLogicDocument();
+	if (logicDocument && logicDocument.bindSlideJumpLink)
+	{
+		logicDocument.bindSlideJumpLink(this.Class);
+	}
 };
 CChangesHyperlinkValue.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**

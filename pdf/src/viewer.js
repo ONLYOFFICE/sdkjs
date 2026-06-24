@@ -184,12 +184,14 @@
 		}
 		
 		this.annotsContentChanges = new AscCommon.CContentChanges(); // list of changes (add/remove elements)
-        this.fieldsContentChanges = new AscCommon.CContentChanges(); // list of changes (add/remove elements)
-        this.drawingsContentChanges = new AscCommon.CContentChanges(); // list of changes (add/remove elements)
+		this.fieldsContentChanges = new AscCommon.CContentChanges(); // list of changes (add/remove elements)
+		this.redactedFieldsContentChanges = new AscCommon.CContentChanges(); // list of changes (add/remove elements)
+		this.drawingsContentChanges = new AscCommon.CContentChanges(); // list of changes (add/remove elements)
 
 		this.isPainted				= false;
 		this.links					= null;
 		this.fields					= [];
+		this.redactedFields			= []; // field to delete via remove meta
 		this.annots					= [];
 		this.drawings				= [];
 		this.needRedrawForms		= true;
@@ -380,6 +382,17 @@
 
 		this.RedrawForms();
 	};
+	CPageInfo.prototype.AddRedactedField = function(oField, nPos) {
+		if (nPos == undefined) {
+            nPos = this.redactedFields.length;
+        }
+
+		this.redactedFields.splice(nPos, 0, oField);
+		oField.SetParentPage(this);
+
+        AscCommon.History.Add(new CChangesPDFDocumentRedactedFieldsContent(this, nPos, [oField], true));
+		this.RedrawForms();
+	};
 	CPageInfo.prototype.SetLocks = function(deleteLock, rotateLock, editPageLock) {
         this.deleteLock = deleteLock;
         this.rotateLock = rotateLock;
@@ -465,7 +478,10 @@
         AscCommon.History.Add(new CChangesPDFDocumentRecognizePage(this, oFile.pages[nIndex].isRecognized, isRecognized));
 		oFile.pages[nIndex].isRecognized = isRecognized;
 
-		delete oViewer.drawingPages[nIndex].Image;
+		if (oViewer.drawingPages[nIndex]) {
+			delete oViewer.drawingPages[nIndex].Image;
+		}
+		
 		let oThumbnails = oDoc.GetThumbnails();
 		if (oThumbnails) {
 			let oPage = oThumbnails.getDrawingPage(nIndex);
@@ -641,6 +657,9 @@
 		this.onRepaintCallbacks = [];
 		this.onAfterPaintCallback = [];
 
+		this.IsOpenFormsInProgress = false;
+		this.IsOpenAnnotsInProgress = false;
+		
 		this.updateSkin = function()
 		{
 			this.backgroundColor = AscCommon.GlobalSkin.BackgroundColor;
@@ -3761,8 +3780,9 @@
 			if (!page)
 				break;
 
-			let aForms = this.pagesInfo.pages[i].fields != null ? this.pagesInfo.pages[i].fields : null;
-			if (aForms.length == 0)
+			let aForms = this.pagesInfo.pages[i].fields;
+			let aRedactedForms = this.pagesInfo.pages[i].redactedFields;
+			if (aForms.length == 0 && aRedactedForms.length == 0)
 				continue;
 
 			let w = AscCommon.AscBrowser.convertToRetinaValue(page.W, true);
@@ -4282,6 +4302,9 @@
 		oGraphicsWord.isSkipEditShapes = isSkipEditShapes;
         
         if (this.pagesInfo.pages[nPage].fields != null) {
+            this.pagesInfo.pages[nPage].redactedFields.forEach(function(field) {
+                field.DrawOnPage(oGraphicsPDF, oGraphicsWord, nPage);
+            });
             this.pagesInfo.pages[nPage].fields.forEach(function(field) {
                 field.DrawOnPage(oGraphicsPDF, oGraphicsWord, nPage);
             });
@@ -4581,6 +4604,7 @@
 		oRenderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
 
 		oRenderer.Memory		= oMemory;
+		oRenderer.Page			= nPage;
 		oMemory.docRenderer	= oRenderer;
 
         oMemory.context = new AscCommon.XmlWriterContext(AscCommon.c_oEditorId.Presentation);
@@ -4679,7 +4703,45 @@
 
 		checkMemory();
 		
-		if (oDoc.HasAppliedRedact()) {
+		let nRedactMetaFlags = oDoc.GetRedactMetaFlags();
+		let isNewFile = oDoc.HasAppliedRedact() || nRedactMetaFlags;
+
+		if (nRedactMetaFlags) {
+        	let nStartPos = oMemory.GetCurPosition();
+       		oMemory.Skip(4);
+
+			oMemory.WriteByte(AscPDF.CommandType.redactInfo);
+			oMemory.WriteLong(nRedactMetaFlags);
+			
+			let aRedactedFields = oDoc.redactedFields;
+			oMemory.WriteLong(aRedactedFields.length);
+
+			let _t = this;
+			aRedactedFields.forEach(function(field) {
+				let nPage = field.GetPage();
+				if (!oMemory.docRenderer || oMemory.docRenderer.Page !== nPage) {
+					_t.InitDocRenderer(oMemory, nPage);
+				}
+
+				// create new appearance
+				if (!field.IsNeedDrawFromStream()) {
+					oMemory.WriteBool(true);
+					field.WriteToBinary(oMemory);
+				}
+				// use existing appearance
+				else {
+					oMemory.WriteBool(false);
+					oMemory.WriteLong(field.GetApIdx());
+				}
+			});
+
+			let nEndPos = oMemory.GetCurPosition();
+			oMemory.Seek(nStartPos);
+			oMemory.WriteLong(nEndPos - nStartPos);
+			oMemory.Seek(nEndPos);
+		}
+
+		if (isNewFile) {
 			oMemory.WriteLong(1);
 			oMemory.WriteByte(AscPDF.CommandType.saveModeNew);
 		}
@@ -5172,6 +5234,8 @@
 		aFormsInfo["Fields"] && aFormsInfo["Fields"].forEach(function(oInfo) {
 			let isInDoc = oDoc.widgets.find(function(widget) {
 				return widget.GetApIdx() == oInfo["AP"]["i"];
+			}) || oDoc.redactedFields.find(function(widget) {
+				return widget.GetApIdx() == oInfo["AP"]["i"];
 			});
 
 			if (!isInDoc) {
@@ -5359,6 +5423,13 @@
 						oPageInfo.fields[nForm].WriteToBinary(oMemory);
 				}
 			}
+			// redacted forms
+			if (oPageInfo.redactedFields) {
+				for (let nForm = 0; nForm < oPageInfo.redactedFields.length; nForm++) {
+					if (oPageInfo.redactedFields[nForm].IsChanged())
+						oPageInfo.redactedFields[nForm].WriteToBinary(oMemory);
+				}
+			}
 			
 			let nEndPos = oMemory.GetCurPosition();
 			oMemory.Seek(nStartPos);
@@ -5430,6 +5501,7 @@
 			let aDrawings		= aPagesInfo[nPage].drawings;
 			let aAnnots			= aPagesInfo[nPage].annots;
 			let aForms			= aPagesInfo[nPage].fields;
+			let aRedactedForms	= aPagesInfo[nPage].redactedFields;
 			let nOriginIndex	= oFile.pages[nPage].originIndex;
 			let aDeletedObj		= aDeleted[nOriginIndex] || [];
 			let nOrigRotAngle	= oFile.pages[nPage].originRotate;
@@ -5450,6 +5522,9 @@
 				});
 			})) bNeedEdit = true;
 			if (aForms.some(function(form) {
+				return form.IsChanged();
+			})) bNeedEdit = true;
+			if (aRedactedForms.some(function(form) {
 				return form.IsChanged();
 			})) bNeedEdit = true;
 			if (aDeletedObj.length != 0) bNeedEdit = true;

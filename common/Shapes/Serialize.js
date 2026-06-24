@@ -3026,6 +3026,8 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
+                    s.GetLong();
+                    s.Skip2(1);
                     var count_effects = s.GetULong();
                     for (var _eff = 0; _eff < count_effects; ++_eff)
                     {
@@ -9311,6 +9313,10 @@ function BinaryPPTYLoader()
 
 			case "ppaction://hlinkfile":
 				hyper.id = hyper.action + '?file=' + hyper.id;
+				break;
+
+			case "ppaction://noaction":
+				hyper.id = hyper.action;
 				break;
 
 			default:

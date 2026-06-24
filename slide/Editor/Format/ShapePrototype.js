@@ -521,6 +521,7 @@ CShape.prototype.recalculateBounds = function()
 {
     var boundsChecker = new  AscFormat.CSlideBoundsChecker();
     boundsChecker.DO_NOT_DRAW_ANIM_LABEL = true;
+    boundsChecker.AutoCheckLineWidth = true;
     this.draw(boundsChecker);
 
     this.bounds.x = boundsChecker.Bounds.min_x;

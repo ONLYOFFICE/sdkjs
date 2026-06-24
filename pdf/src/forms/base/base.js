@@ -99,7 +99,7 @@
     function CBaseField(sName, nType, aRect, oDoc)
     {
         this.Id = AscCommon.g_oIdCounter.Get_NewId();
-        if ((AscCommon.g_oIdCounter.m_bLoad || AscCommon.History.CanAddChanges())) {
+        if (AscCommon.g_oTableId.IsOn()) {
             AscCommon.g_oTableId.Add(this, this.Id);
         }
 
@@ -116,8 +116,8 @@
         this._bgColor       = undefined;          // prop for old versions (fillColor)
         this._fgColor       = undefined;
         this._textColor     = [0,0,0];
-        this._textFont      = "";           // original
-        this._textFontActual= undefined;    // actually used
+        this._textFont      = AscPDF.DEFAULT_FIELD_FONT; // original
+        this._textFontActual= AscPDF.DEFAULT_FIELD_FONT;    // actually used
         this._textSize      = 10;
         this._fontStyle     = 0;    // font style information (bold, italic)
         this._meOptions     = 0;    // middle-east text options (flags)
@@ -970,7 +970,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseField.prototype.SetLogicValue = function(value) {
-        if (value && typeof(value) !== "string" && value.toString) {
+        if (value && !Array.isArray(value) && typeof(value) !== "string" && value.toString) {
             value = value.toString();
         }
 
@@ -1040,6 +1040,13 @@
         }
     };
     CBaseField.prototype.IsUseInDocument = function() {
+		if (this.IsLogicalRoot() && !this.IsWidget()) {
+			let aWidgets = this.GetAllWidgets();
+			return !!aWidgets.find(function(widget) {
+				return widget.IsUseInDocument();
+			});
+		}
+		
         let oPage = this.GetParentPage();
         if (oPage && oPage.fields.includes(this) && oPage.GetIndex() !== -1) {
             return true;
@@ -1757,12 +1764,16 @@
         this._needDrawHighlight = bDraw;
     };
     CBaseField.prototype.IsNeedDrawHighlight = function() {
-        return false == this.IsReadOnly() && this._needDrawHighlight && (this.GetType() === AscPDF.FIELD_TYPES.button || !this.IsInForm());
+        return false == this.IsReadOnly() && this._needDrawHighlight && (this.GetType() === AscPDF.FIELD_TYPES.button || !this.IsInForm()) && !this.IsRedacted();
     };
 
     CBaseField.prototype.DrawEdit = function(oGraphicsWord) {
         let oDoc = this.GetDocument();
 
+		if (this.IsRedacted()) {
+			return;
+		}
+		
         if (this.IsNeedUpdateEditShape()) {
             this.UpdateEditShape();
         }
@@ -1840,6 +1851,30 @@
             return oParent.IsReadOnly();
 
         return this._readOnly;
+    };
+
+	CBaseField.prototype.SetRedacted = function(isRedacted) {
+        if (this._isRedacted === isRedacted) {
+            return true;
+        }
+
+        AscCommon.History.Add(new CChangesPDFFormRedacted(this, this._isRedacted, isRedacted));
+
+        this._isRedacted = isRedacted;
+
+        let oCurPage = this.GetParentPage();
+
+		let sId = this.GetId();
+		oCurPage.RemoveField(sId);
+		oCurPage.AddRedactedField(this);
+		
+		this.SetWasChanged(true, false);
+        this.AddToRedraw();
+
+        return true;
+    };
+    CBaseField.prototype.IsRedacted = function() {
+        return this._isRedacted;
     };
 
     CBaseField.prototype.SetNoExport = function(bNoExport) {
@@ -2706,7 +2741,7 @@
         this.SetRect(aNewRect);
     };
     CBaseField.prototype.GetRect = function() {
-        return this._rect;
+        return this._rect ? this._rect.slice() : this._rect;
     };
     CBaseField.prototype.GetWidth = function() {
         let aRect = this.GetRect();
@@ -2866,8 +2901,14 @@
                     "color": this.GetTextColor()
                 }
 
-				if (memory.isForSplit && this.contentFormat) {
-					oMeta["formatValue"] = this.GetFormatValue();
+				if (memory.isForSplit) {
+					if (this.contentFormat) {
+						oMeta["formatValue"] = this.GetFormatValue();
+					}
+					if (this.IsRedacted()) {
+						oMeta["isRedacted"] = true;
+						oMeta["isChanged"] = !this.IsNeedDrawFromStream();
+					}
 				}
             }
             memory.WriteString(JSON.stringify(oMeta));

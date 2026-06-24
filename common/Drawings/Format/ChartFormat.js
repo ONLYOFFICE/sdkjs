@@ -3173,7 +3173,9 @@
             }
             let bChartEx = this.isChartEx && this.isChartEx();
             if(this instanceof CTitle || this.parent instanceof CTitle) {
-                style.TextPr.Bold = true;
+                if (!bChartEx) {
+                    style.TextPr.Bold = true;
+                }
                 if(this.parent instanceof CChart || (this.parent && (this.parent.parent instanceof CChart))) {
                     if(chart_text_pr && typeof chart_text_pr.FontSize === "number")
                         style.TextPr.FontSize = (chart_text_pr.FontSize * 1.2) >> 0;
@@ -5837,6 +5839,15 @@
                     ret.serAx.push(axis);
                     break;
                 }
+                case AscDFH.historyitem_type_Axis:
+                {
+                    if (axis.isVertical()) {
+                        ret.valAx.push(axis);
+                    } else {
+                        ret.catAx.push(axis);
+                    }
+                    break;
+                }
             }
         }
         return ret;
@@ -5937,6 +5948,9 @@
         }
     };
     CPlotArea.prototype.getChartType = function() {
+        if(this.isChartEx()) {
+            return this.getChartExType();
+        }
         if(this.charts.length > 0) {
             if(this.charts.length > 1) {
                 if(this.charts.length === 2) {
@@ -5967,6 +5981,23 @@
             return this.charts[0].getChartType();
         }
         return Asc.c_oAscChartTypeSettings.unknown;
+    };
+    CPlotArea.prototype.getChartExType = function() {
+        const types = Asc.c_oAscChartTypeSettings;
+        const seria = this.plotAreaRegion.series[0];
+        if (seria) {
+            switch (seria.layoutId) {
+                case AscFormat.SERIES_LAYOUT_FUNNEL: return types.funnel;
+                case AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN: return types.histogram;
+                case AscFormat.SERIES_LAYOUT_WATERFALL: return types.waterfall;
+                case AscFormat.SERIES_LAYOUT_SUNBURST: return types.sunburst;
+                case AscFormat.SERIES_LAYOUT_TREEMAP: return types.treemap;
+                case AscFormat.SERIES_LAYOUT_BOX_WHISKER: return types.boxWhisker;
+                case AscFormat.SERIES_LAYOUT_PARETO_LINE: return types.pareto;
+                case AscFormat.SERIES_LAYOUT_REGION_MAP: return types.regionMap;
+            }
+        }
+        return types.unknown;
     };
     CPlotArea.prototype.addChartWithAxes = function(oTypedChart) {
         this.removeAllCharts();
@@ -6516,7 +6547,10 @@
 		const settings = AscFormat.DrawingObjectsController.prototype.getPropsFromChart(chartSpace);
 		settings.type = type;
 
-		const series = AscFormat.getChartSeries(settings);
+		let series = AscFormat.getChartExAscSeriesFromCache(chartSpace);
+		if (!series || series.length === 0) {
+			series = AscFormat.getChartSeries(settings);
+		}
 		const useCache = true;
 		const newChartSpace = AscFormat.DrawingObjectsController.prototype._getChartSpace.call(this, series, settings, useCache);
 		if (!newChartSpace) {
@@ -6538,6 +6572,13 @@
 		}
 
 		chartSpace.setChart(newChart);
+
+		const newRegion = newChart.plotArea && newChart.plotArea.plotAreaRegion;
+		if (newRegion) {
+			newRegion.setDlblsProps(settings);
+		} else {
+			newChart.setDlblsProps(settings);
+		}
 	};
     CPlotArea.prototype.changeChartType = function(nType) {
         if(!this.parent) {
@@ -7250,6 +7291,18 @@
         this.verticalAxes = [];
         this.horizontalAxes = [];
         this.depthAxes = [];
+        if (oPlotArea.isChartEx()) {
+            const chartExAxes = oPlotArea.axId || [];
+            for (let i = 0; i < chartExAxes.length; ++i) {
+                const axis = chartExAxes[i];
+                if (axis.isVertical()) {
+                    this.verticalAxes.push(axis);
+                } else {
+                    this.horizontalAxes.push(axis);
+                }
+            }
+            return;
+        }
         var aTypedCharts = oPlotArea.charts;
         var oCheckedAxes = {};
         var nChart;
@@ -10690,24 +10743,24 @@
         this.showHorzBorder = pr;
     };
     CDTable.prototype.setShowKeys = function(pr) {
-        AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_DTable_SetShowKeys, this.showHorzBorder, pr));
+        AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_DTable_SetShowKeys, this.showKeys, pr));
         this.showKeys = pr;
     };
     CDTable.prototype.setShowOutline = function(pr) {
-        AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_DTable_SetShowOutline, this.showHorzBorder, pr));
+        AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_DTable_SetShowOutline, this.showOutline, pr));
         this.showOutline = pr;
     };
     CDTable.prototype.setShowVertBorder = function(pr) {
-        AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_DTable_SetShowVertBorder, this.showHorzBorder, pr));
+        AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_DTable_SetShowVertBorder, this.showVertBorder, pr));
         this.showVertBorder = pr;
     };
     CDTable.prototype.setSpPr = function(pr) {
-        AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DTable_SetSpPr, this.showHorzBorder, pr));
+        AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DTable_SetSpPr, this.spPr, pr));
         this.spPr = pr;
         this.setParentToChild(pr);
     };
     CDTable.prototype.setTxPr = function(pr) {
-        AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DTable_SetTxPr, this.showHorzBorder, pr));
+        AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DTable_SetTxPr, this.txPr, pr));
         this.txPr = pr;
         this.setParentToChild(pr);
     };
@@ -10869,7 +10922,7 @@
                 if (!charts.hasOwnProperty(id)) continue;
                 let ch = charts[id];
                 if (ch && Array.isArray(ch.series) && ch.series.length > 0) {
-                    seriesCount = ch.series.length;
+                    seriesCount += ch.series.length;
                     for (let i = 0; i < ch.series.length; i++) {
 
                         const seria = ch.series[i];
@@ -10908,8 +10961,20 @@
 
         this.rows = seriesCount + 1;
         this.cols = ptsCount + 1;
-        this.rowHeight = this.rowNameLabels.length ? this.rowNameLabels[0].extY : this.colNameLabels.length ? this.colNameLabels[0].extY : 0;
-        this.firstColumnWidth = this.rowNameLabels.length ? this.rowNameLabels[0].extX : 0;
+
+        let maxRowNameWidth = 0, maxRowNameHeight = 0;
+        for (let k = 0; k < this.rowNameLabels.length; k++) {
+            const lbl = this.rowNameLabels[k];
+            if (lbl.extX > maxRowNameWidth) {
+                maxRowNameWidth = lbl.extX;
+            }
+            if (lbl.extY > maxRowNameHeight) {
+                maxRowNameHeight = lbl.extY;
+            }
+        }
+        this.rowHeight = this.rowNameLabels.length ? maxRowNameHeight : this.colNameLabels.length ? this.colNameLabels[0].extY : 0;
+        this.firstColumnWidth = maxRowNameWidth;
+
         if (this.showKeys && this.rowNameMarkers.length > 0 && this.rowHeight > 0) {
             let markerSize, distanceToText;
             if (this._bLineSeries) {
@@ -13267,7 +13332,9 @@
 					}
 					oCell = oWS.getCell3(nR, nC);
 					dVal = oCell.getNumberValue();
-					if (!AscFormat.isRealNumber(dVal) && (!AscFormat.isRealNumber(displayEmptyCellsAs) || displayEmptyCellsAs === 1)) {
+					if (oCell.getType() === AscCommon.CellValueType.Error) {
+						dVal = null;
+					} else if (!AscFormat.isRealNumber(dVal) && (!AscFormat.isRealNumber(displayEmptyCellsAs) || displayEmptyCellsAs === 1)) {
 						sVal = oCell.getValueForEdit();
 						if ((typeof sVal === "string") && sVal.length > 0) {
 							dVal = 0;

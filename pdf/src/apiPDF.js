@@ -92,7 +92,8 @@
 		logic: "InvalidSetError: The field is not a logical root.",
 		noProp: "InvalidSetError: field doesn't have this prop.",
 		invalidParam: "InvalidSetError: Set not possible, invalid parameter.",
-		actionInProgress: "InvalidSetError: Set not possible, action is in progress."
+		actionInProgress: "InvalidSetError: Set not possible, action is in progress.",
+		notEditable: "InvalidSetError: The field does not allow custom text"
 	}
 
 	const ERROR_GET_MESSAGES = {
@@ -996,8 +997,6 @@
 			if (this.field.IsLogicalRoot()) {
 				if (typeof(bValue) == "boolean") {
 					this.field.SetRadiosInUnison(bValue);
-					this.field.UpdateAll();
-
 					return this["radiosInUnison"];
 				}
 				else {
@@ -1645,28 +1644,14 @@
 						if (this["value"] == value)
 							return;
 						
-						let aOptions = this.field.GetOptions();
-						let sDisplayValue;
-
-						aOptions.forEach(function(option) {
-							if (Array.isArray(option)) {
-								if (option[1] == value) {
-									sDisplayValue = option[0];
-								}
-							}
-							else if (option == value) {
-								sDisplayValue = value;
-							}
-						});
-
-						if (sDisplayValue == undefined) {
-							sDisplayValue = value;
-						}
-
 						let oWidget = this.field.GetKid(0);
 						let isCanCommit = oWidget.IsCanCommit(value);
 						if (isCanCommit) {
-							oWidget.SetValue(value);
+							let res = oWidget.SetValue(value);
+							if (!res) {
+								throw Error(ERROR_SET_MESSAGES.notEditable);
+							}
+							
 							oWidget.Commit();
 							if (oCalcInfo.IsInProgress() == false) {
 								if (oDoc.IsNeedDoCalculate()) {
@@ -1880,7 +1865,11 @@
 							return;
 						
 						let oWidget = this.field.GetKid(0);
-						oWidget.SetValue(value);
+						let res = oWidget.SetValue(value);
+						if (!res) {
+							throw Error(ERROR_SET_MESSAGES.invalidParam);
+						}
+						
 						oWidget.Commit();
 
 						if (oCalcInfo.IsInProgress() == false && oDoc.IsNeedDoCalculate()) {

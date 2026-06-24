@@ -3599,13 +3599,77 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
     this.Pages[CurPage].Bounds.Right  = X_max + this.Pages[CurPage].X;
     this.Pages[CurPage].Height        = TableHeight;
 
-    if (true === bNextPage)
-    {
-        var LastRow = this.Pages[CurPage].LastRow;
-        if (false === this.RowsInfo[LastRow].FirstPage)
-            this.Pages[CurPage].LastRow = LastRow - 1;
-        else
-            this.Pages[CurPage].LastRowSplit = true;
+	if (true === bNextPage)
+	{
+		let lastRow = this.Pages[CurPage].LastRow;
+		let canMoveRows = CurPage || this.Get_DocumentPrev() || (this.Parent && !this.Parent.IsFirstElementOnPage(this.GetRelativePage(CurPage), this.GetIndex()));
+		if (false === this.RowsInfo[lastRow].FirstPage)
+		{
+			--lastRow;
+			this.Pages[CurPage].LastRow = lastRow;
+			
+			// Check "Keep with next" on paragraphs inside table cells
+			if (canMoveRows)
+			{
+				while (lastRow > FirstRow && this.private_IsRowWithKeepNext(lastRow))
+				{
+					--lastRow;
+				}
+				
+				if (0 === lastRow && 0 === CurPage && this.private_IsRowWithKeepNext(0))
+				{
+					this.Pages[CurPage].LastRow = -1;
+					this.Pages[CurPage].LastRowSplit = false;
+				}
+				else if (lastRow !== FirstRow)
+				{
+					this.Pages[CurPage].LastRow = lastRow;
+					this.Pages[CurPage].LastRowSplit = false;
+				}
+			}
+		}
+		else
+		{
+			this.Pages[CurPage].LastRowSplit = true;
+			
+			if (canMoveRows)
+			{
+				// MS behaviour
+				// If row is splitted into pages, we check "Keep with next" only for this row (if it occurs no on the first page)
+				// If it the first page we can check rows till the first one
+				
+				let moveRows = false;
+				if (0 === CurPage)
+				{
+					while (lastRow >= 0 && this.private_IsRowWithKeepNext(lastRow))
+					{
+						moveRows = true;
+						--lastRow;
+					}
+				}
+				else if (this.private_IsRowWithKeepNext(lastRow))
+				{
+					let _lastRow = lastRow;
+					while (_lastRow > FirstRow && this.private_IsRowWithKeepNext(_lastRow))
+					{
+						--_lastRow;
+					}
+					
+					if (_lastRow !== FirstRow)
+						lastRow = _lastRow;
+					else
+						lastRow = lastRow - 1;
+					
+					moveRows = true;
+				}
+				
+				if (moveRows)
+				{
+					this.Pages[CurPage].LastRow = lastRow;
+					this.Pages[CurPage].LastRowSplit = false;
+				}
+			}
+		}
     }
 
     this.TurnOffRecalc = false;
@@ -3616,6 +3680,17 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         return recalcresult_NextPage;
     else
         return recalcresult_NextElement;
+};
+/**
+ * @param {number} iRow - row index
+ * @returns {boolean}
+ */
+CTable.prototype.private_IsRowWithKeepNext = function(iRow)
+{
+	if (iRow < 0 || iRow >= this.Content.length - 1)
+		return false;
+	
+	return this.GetRow(iRow).IsContentWithKeepNext();
 };
 CTable.prototype.private_RecalculatePrepareHeaderPageRows = function(headerPage)
 {

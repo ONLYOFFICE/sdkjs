@@ -932,6 +932,7 @@
 			ret.history = this.history;
 			ret.highlightClick = this.highlightClick;
 			ret.endSnd = this.endSnd;
+			ret.slideJumpTargetId = this.slideJumpTargetId;
 			return ret;
 		};
 
@@ -1000,9 +1001,11 @@
 		};
 		drawingsChangesMap[AscDFH.historyitem_CNvPr_SetHlinkClick] = function (oClass, value) {
 			oClass.hlinkClick = value;
+			oClass.checkSlideJumpLink();
 		};
 		drawingsChangesMap[AscDFH.historyitem_CNvPr_SetHlinkHover] = function (oClass, value) {
 			oClass.hlinkHover = value;
+			oClass.checkSlideJumpLink();
 		};
 		drawingsChangesMap[AscDFH.historyitem_NvPr_SetIsPhoto] = function (oClass, value) {
 			oClass.isPhoto = value;
@@ -8183,10 +8186,24 @@
 		CNvPr.prototype.setHlinkClick = function (pr) {
 			AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_CNvPr_SetHlinkClick, this.hlinkClick, pr));
 			this.hlinkClick = pr;
+			this.checkSlideJumpLink();
 		};
 		CNvPr.prototype.setHlinkHover = function (pr) {
 			AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_CNvPr_SetHlinkHover, this.hlinkHover, pr));
 			this.hlinkHover = pr;
+			this.checkSlideJumpLink();
+		};
+		CNvPr.prototype.checkSlideJumpLink = function () {
+			let logicDocument = Asc.editor.getLogicDocument();
+			if (!logicDocument || !logicDocument.bindSlideJumpLink) {
+				return;
+			}
+			if (this.hlinkClick && AscFormat.IsSlideJumpLinkValue(this.hlinkClick.id)) {
+				logicDocument.bindSlideJumpLink(this.hlinkClick);
+			}
+			if (this.hlinkHover && AscFormat.IsSlideJumpLinkValue(this.hlinkHover.id)) {
+				logicDocument.bindSlideJumpLink(this.hlinkHover);
+			}
 		};
 		CNvPr.prototype.setTitle = function (title) {
 			AscCommon.History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_CNvPr_SetTitle, this.title, title));
@@ -11111,6 +11128,9 @@
 			AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_CSld_SetBg, this.Bg, bg));
 			this.Bg = bg;
 		};
+		CSld.prototype.getBgFill = function () {
+			return this.Bg && this.Bg.bgPr ? this.Bg.bgPr.Fill : null;
+		};
 		CSld.prototype.setName = function (name) {
 			AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_CSld_SetName, this.name, name));
 			this.name = name;
@@ -11121,6 +11141,7 @@
 			if (this.collaborativeMarks) {
 				this.collaborativeMarks.Update_OnAdd(pos);
 			}
+			this.processSlideJumpLinks(item, true);
 		};
 		CSld.prototype.removeFromSpTree = function (pos, count) {
 			AscCommon.History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_CSld_RemoveFromSpTree, pos, this.spTree.slice(pos, pos + count), false));
@@ -11128,7 +11149,16 @@
 			if (this.collaborativeMarks) {
 				this.collaborativeMarks.Update_OnRemove(pos, count);
 			}
+			for (let i = 0; i < aRemoved.length; ++i) {
+				this.processSlideJumpLinks(aRemoved[i], false);
+			}
 			return aRemoved;
+		};
+		CSld.prototype.processSlideJumpLinks = function (item, isAdd) {
+			let logicDocument = Asc.editor.getLogicDocument();
+			if (logicDocument && logicDocument.processSlideJumpLinksInSubtree) {
+				logicDocument.processSlideJumpLinksInSubtree(item, isAdd);
+			}
 		};
 		CSld.prototype.Clear_CollaborativeMarks = function () {
 			if (this.collaborativeMarks) {
@@ -12651,8 +12681,13 @@
 		CBullet.prototype.isNone = function() {
 			if (!this.bulletType)
 				return true;
-			
+
 			return this.bulletType.type === AscFormat.BULLET_TYPE_TYPEFACE_NONE;
+		};
+		CBullet.prototype.getChar = function() {
+			if (this.bulletType && AscFormat.BULLET_TYPE_BULLET_CHAR === this.bulletType.type && typeof this.bulletType.Char === "string")
+				return this.bulletType.Char;
+			return "";
 		};
 		CBullet.prototype.getPresentationBullet = function (theme, color) {
 			var para_pr = new CParaPr();
@@ -17319,143 +17354,226 @@
 
 		function ChartBuilderTypeToInternal(sType) {
 			switch (sType) {
+				case "ColumnClustered":
 				case "bar": {
 					return Asc.c_oAscChartTypeSettings.barNormal;
 				}
+				case "ColumnStacked":
 				case "barStacked": {
 					return Asc.c_oAscChartTypeSettings.barStacked;
 				}
+				case "ColumnStacked100":
 				case "barStackedPercent": {
 					return Asc.c_oAscChartTypeSettings.barStackedPer;
 				}
+				case "3DColumnClustered":
 				case "bar3D": {
 					return Asc.c_oAscChartTypeSettings.barNormal3d;
 				}
+				case "3DColumnStacked":
 				case "barStacked3D": {
 					return Asc.c_oAscChartTypeSettings.barStacked3d;
 				}
+				case "3DColumnStacked100":
 				case "barStackedPercent3D": {
 					return Asc.c_oAscChartTypeSettings.barStackedPer3d;
 				}
+				case "3DColumn":
 				case "barStackedPercent3DPerspective": {
 					return Asc.c_oAscChartTypeSettings.barNormal3dPerspective;
 				}
+				case "BarClustered":
 				case "horizontalBar": {
 					return Asc.c_oAscChartTypeSettings.hBarNormal;
 				}
+				case "BarStacked":
 				case "horizontalBarStacked": {
 					return Asc.c_oAscChartTypeSettings.hBarStacked;
 				}
+				case "BarStacked100":
 				case "horizontalBarStackedPercent": {
 					return Asc.c_oAscChartTypeSettings.hBarStackedPer;
 				}
+				case "3DBarClustered":
 				case "horizontalBar3D": {
 					return Asc.c_oAscChartTypeSettings.hBarNormal3d;
 				}
+				case "3DBarStacked":
 				case "horizontalBarStacked3D": {
 					return Asc.c_oAscChartTypeSettings.hBarStacked3d;
 				}
+				case "3DBarStacked100":
 				case "horizontalBarStackedPercent3D": {
 					return Asc.c_oAscChartTypeSettings.hBarStackedPer3d;
 				}
+				case "Line":
 				case "lineNormal": {
 					return Asc.c_oAscChartTypeSettings.lineNormal;
 				}
+				case "LineStacked":
 				case "lineStacked": {
 					return Asc.c_oAscChartTypeSettings.lineStacked;
 				}
+				case "LineStacked100":
 				case "lineStackedPercent": {
 					return Asc.c_oAscChartTypeSettings.lineStackedPer;
 				}
+				case "LineMarkers":
 				case "lineNormalMarker": {
 					return Asc.c_oAscChartTypeSettings.lineNormalMarker;
 				}
+				case "LineMarkersStacked":
 				case "lineStackedMarker": {
 					return Asc.c_oAscChartTypeSettings.lineStackedMarker;
 				}
+				case "LineMarkersStacked100":
 				case "lineStackedPerMarker": {
 					return Asc.c_oAscChartTypeSettings.lineStackedPerMarker;
 				}
+				case "3DLine":
 				case "line3D": {
 					return Asc.c_oAscChartTypeSettings.line3d;
 				}
+				case "Pie":
 				case "pie": {
 					return Asc.c_oAscChartTypeSettings.pie;
 				}
+				case "3DPie":
 				case "pie3D": {
 					return Asc.c_oAscChartTypeSettings.pie3d;
 				}
+				case "Doughnut":
 				case "doughnut": {
 					return Asc.c_oAscChartTypeSettings.doughnut;
 				}
+				case "XYScatter":
 				case "scatter": {
 					return Asc.c_oAscChartTypeSettings.scatter;
 				}
+				case "XYScatterLinesNoMarkers":
 				case "scatterLine": {
 					return Asc.c_oAscChartTypeSettings.scatterLine;
 				}
+				case "XYScatterLines":
 				case "scatterLineMarker": {
 					return Asc.c_oAscChartTypeSettings.scatterLineMarker;
 				}
+				case "XYScatterSmoothNoMarkers":
 				case "scatterSmooth": {
 					return Asc.c_oAscChartTypeSettings.scatterSmooth;
 				}
+				case "XYScatterSmooth":
 				case "scatterSmoothMarker": {
 					return Asc.c_oAscChartTypeSettings.scatterSmoothMarker;
 				}
+				case "StockHLC":
+				case "StockOHLC":
+				case "StockVHLC":
+				case "StockVOHLC":
 				case "stock": {
 					return Asc.c_oAscChartTypeSettings.stock;
 				}
+				case "Area":
 				case "area": {
 					return Asc.c_oAscChartTypeSettings.areaNormal;
 				}
+				case "AreaStacked":
 				case "areaStacked": {
 					return Asc.c_oAscChartTypeSettings.areaStacked;
 				}
+				case "AreaStacked100":
 				case "areaStackedPercent": {
 					return Asc.c_oAscChartTypeSettings.areaStackedPer;
 				}
+				case "Combo":
 				case "comboCustom": {
 					return Asc.c_oAscChartTypeSettings.comboCustom;
 				}
+				case "ComboColumnClusteredLine":
 				case "comboBarLine": {
 					return Asc.c_oAscChartTypeSettings.comboBarLine;
 				}
+				case "ComboColumnClusteredLineSecondaryAxis":
 				case "comboBarLineSecondary": {
 					return Asc.c_oAscChartTypeSettings.comboBarLineSecondary;
 				}
+				case "Radar":
 				case "radar": {
 					return Asc.c_oAscChartTypeSettings.radar;
 				}
+				case "RadarMarkers":
 				case "radarMarker": {
 					return Asc.c_oAscChartTypeSettings.radarMarker;
 				}
+				case "RadarFilled":
 				case "radarFilled": {
 					return Asc.c_oAscChartTypeSettings.radarFilled;
 				}
 
-				// Unhandled cases from Asc.c_oAscChartTypeSettings (v9.0.0)
-				// case "scatterMarker": {
-				// 	return Asc.c_oAscChartTypeSettings.scatterMarker;
-				// }
-				// case "scatterNone": {
-				// 	return Asc.c_oAscChartTypeSettings.scatterNone;
-				// }
-				// case "comboAreaBar": {
-				// 	return Asc.c_oAscChartTypeSettings.comboAreaBar;
-				// }
-				// case "contour": {
-				// 	return Asc.c_oAscChartTypeSettings.contourNormal;
-				// }
-				// case "contourWireframe": {
-				// 	return Asc.c_oAscChartTypeSettings.contourWireframe;
-				// }
-				// case "surfaceNormal": {
-				// 	return Asc.c_oAscChartTypeSettings.surfaceNormal;
-				// }
-				// case "surfaceWireframe": {
-				// 	return Asc.c_oAscChartTypeSettings.surfaceWireframe;
-				// }
+				case "3DArea":
+				case "3DAreaStacked":
+				case "3DAreaStacked100":
+				case "AreaEx":
+				case "AreaStackedEx":
+				case "AreaStacked100Ex":
+				case "ColumnClusteredEx":
+				case "ColumnStackedEx":
+				case "ColumnStacked100Ex":
+				case "BarClusteredEx":
+				case "BarStackedEx":
+				case "BarStacked100Ex":
+				case "LineEx":
+				case "LineStackedEx":
+				case "LineStacked100Ex":
+				case "PieEx":
+				case "PieExploded":
+				case "3DPieExploded":
+				case "PieOfPie":
+				case "BarOfPie":
+				case "DoughnutEx":
+				case "DoughnutExploded":
+				case "XYScatterEx":
+				case "Bubble":
+				case "Bubble3DEffect":
+				case "BubbleEx":
+				case "Boxwhisker":
+				case "Funnel":
+				case "Histogram":
+				case "Pareto":
+				case "RegionMap":
+				case "Sunburst":
+				case "Treemap":
+				case "Waterfall":
+				case "SuggestedChart":
+				case "OtherCombinations":
+				case "ComboAreaStackedColumnClustered":
+				case "ConeBarClustered":
+				case "ConeBarStacked":
+				case "ConeBarStacked100":
+				case "ConeCol":
+				case "ConeColClustered":
+				case "ConeColStacked":
+				case "ConeColStacked100":
+				case "CylinderBarClustered":
+				case "CylinderBarStacked":
+				case "CylinderBarStacked100":
+				case "CylinderCol":
+				case "CylinderColClustered":
+				case "CylinderColStacked":
+				case "CylinderColStacked100":
+				case "PyramidBarClustered":
+				case "PyramidBarStacked":
+				case "PyramidBarStacked100":
+				case "PyramidCol":
+				case "PyramidColClustered":
+				case "PyramidColStacked":
+				case "PyramidColStacked100":
+				case "Surface":
+				case "SurfaceWireframe":
+				case "SurfaceTopView":
+				case "SurfaceTopViewWireframe": {
+					return null;
+				}
 
 				default: return null;
 			}
@@ -20850,6 +20968,9 @@
 		window['AscFormat'].CLn = CLn;
 		window['AscFormat'].DefaultShapeDefinition = DefaultShapeDefinition;
 		window['AscFormat'].CNvPr = CNvPr;
+		window['AscFormat'].IsSlideJumpLinkValue = function (value) {
+			return typeof value === "string" && (0 === value.indexOf("ppaction://hlinksldjumpslide") || "ppaction://noaction" === value);
+		};
 		window['AscFormat'].NvPr = NvPr;
 		window['AscFormat'].Ph = Ph;
 		window['AscFormat'].UniNvPr = UniNvPr;

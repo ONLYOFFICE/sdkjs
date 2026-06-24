@@ -1280,15 +1280,21 @@ ParaComment.prototype.IsAnnotationMark = function()
 {
 	return true;
 };
-ParaComment.prototype.Recalculate_Range_Spaces = function(PRSA, CurLine, CurRange, CurPage)
+ParaComment.prototype.recalculateRangeAlign = function(alignState)
 {
-	var Para             = PRSA.Paragraph;
+	// TODO: We should move all this logic to AlignRecalcState
+	
+	let Para     = alignState.Paragraph;
+	let CurLine  = alignState.CurLine;
+	let CurRange = alignState.CurRange;
+	let CurPage  = alignState.CurPage;
+
 	var DocumentComments = Para.LogicDocument.Comments;
 	var Comment          = DocumentComments.Get_ById(this.CommentId);
 	if (null === Comment)
 		return;
 
-	var X    = PRSA.X;
+	var X    = alignState.X;
 	var Y    = Para.Pages[CurPage].Y + Para.Lines[CurLine].Y - Para.Lines[CurLine].Metrics.Ascent;
 	var H    = Para.Lines[CurLine].Metrics.Ascent + Para.Lines[CurLine].Metrics.Descent;
 	var Page = Para.GetAbsolutePage(CurPage);
@@ -1380,7 +1386,7 @@ ParaComment.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPa
 		Comment.m_oStartInfo.Y += Dy;
 	}
 };
-ParaComment.prototype.Draw_Lines = function(lineDrawState)
+ParaComment.prototype.drawLines = function(lineDrawState)
 {
 	lineDrawState.handleAnnotationMark(this);
 };
@@ -1412,12 +1418,12 @@ ParaComment.prototype.getMarkColor = function()
 	let userName = comment.GetUserName();
 	return AscCommon.getUserColorById(userId, userName, 1, false);
 };
-ParaComment.prototype.Draw_HighLights = function(PDSH)
+ParaComment.prototype.drawHighLights = function(highLightState)
 {
 	if (true === this.Start)
-		PDSH.addComment(this.CommentId);
+		highLightState.addComment(this.CommentId);
 	else
-		PDSH.removeComment(this.CommentId);
+		highLightState.removeComment(this.CommentId);
 };
 ParaComment.prototype.Refresh_RecalcData = function()
 {

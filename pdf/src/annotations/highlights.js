@@ -54,6 +54,7 @@
 
     CAnnotationTextMarkup.prototype.select = AscFormat.CGraphicObjectBase.prototype.select;
     CAnnotationTextMarkup.prototype.deselect = AscFormat.CGraphicObjectBase.prototype.deselect;
+    CAnnotationTextMarkup.prototype.recalcGeometry = function() {};
     CAnnotationTextMarkup.prototype.canChangeAdjustments = function() {};
     CAnnotationTextMarkup.prototype.hitToHandles = function() {};
     CAnnotationTextMarkup.prototype.hitInBoundingRect = function() {};
@@ -132,6 +133,9 @@
         }
         else {
             let aRect = this.GetRect && this.GetRect();
+			if (!aRect) {
+				return;
+			}
             oBounds = {
                 l: Math.min(aRect[0], aRect[2]) * g_dKoef_pt_to_mm,
                 t: Math.min(aRect[1], aRect[3]) * g_dKoef_pt_to_mm,

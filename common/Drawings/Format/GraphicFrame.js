@@ -643,6 +643,9 @@
 			xfrm.setOffY(newY);
 			bResult = true;
 			this.recalculate();
+
+			if (this.isTable())
+				Asc.editor.addMacroStepData("SetDrawingPos", {x: newX, y: newY});
 		}
 		return bResult;
 	};

@@ -46,7 +46,7 @@
         // if the annotation is not shape based
         if (this.Id == undefined) {
             this.Id = AscCommon.g_oIdCounter.Get_NewId();
-            if ((AscCommon.g_oIdCounter.m_bLoad || AscCommon.History.CanAddChanges())) {
+            if (AscCommon.g_oTableId.IsOn()) {
 				AscCommon.g_oTableId.Add(this, this.Id);
 			}
         }
@@ -301,7 +301,8 @@
         }
     };
     CAnnotationBase.prototype.GetRectangleDiff = function() {
-        return this._rectDiff;
+		let aRectDiff = this._rectDiff;
+        return aRectDiff ? aRectDiff.slice() : aRectDiff;
     };
     CAnnotationBase.prototype.SetNoRotate = function(bValue) {
         this._noRotate = bValue;
@@ -959,7 +960,8 @@
         return this._needRecalc;
     };
     CAnnotationBase.prototype.GetRect = function() {
-        return this._rect || (this.GetInReplyTo() ? this.GetInReplyTo().GetRect() : this._rect);
+		let aRect = this._rect || (this.GetInReplyTo() ? this.GetInReplyTo().GetRect() : this._rect);
+        return aRect ? aRect.slice() : aRect;
     };
     CAnnotationBase.prototype.IsNeedDrawFromStream = function() {
         return this._bDrawFromStream;

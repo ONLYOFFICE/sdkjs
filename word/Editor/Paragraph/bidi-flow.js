@@ -58,9 +58,7 @@
 	BidiFlow.prototype.begin = function(isRtlDirection)
 	{
 		this.direction            = isRtlDirection ? AscBidi.DIRECTION.R : AscBidi.DIRECTION.L;
-		this.buffer.length        = 0;
-		this.neutralBuffer.length = 0;
-		this.bufferLTR.length     = 0;
+		this.reset();
 	};
 	BidiFlow.prototype.add = function(element, bidiType)
 	{
@@ -120,6 +118,12 @@
 		}
 		
 		this.flush();
+	};
+	BidiFlow.prototype.reset = function()
+	{
+		this.buffer.length        = 0;
+		this.neutralBuffer.length = 0;
+		this.bufferLTR.length     = 0;
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area

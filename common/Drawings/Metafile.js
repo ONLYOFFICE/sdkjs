@@ -870,9 +870,14 @@
 		this.WriteBuffer = function(data, _pos, count)
 		{
 			this.CheckSize(count);
-			for (var i = 0; i < count; i++)
-			{
-				this.data[this.pos++] = data[_pos + i];
+			if (data && data.subarray) {
+				this.data.set(data.subarray(_pos, _pos + count), this.pos);
+				this.pos += count;
+			} else {
+				for (var i = 0; i < count; i++)
+				{
+					this.data[this.pos++] = data[_pos + i];
+				}
 			}
 		}
 

@@ -341,6 +341,7 @@
 	this.customFunctionEngine = null;
 
 	this.smoothScroll = true;
+	this.autoCompleteEnabled = true;
 
 	this.externalReferenceUpdateTimer = null;
 
@@ -348,6 +349,63 @@
 
 	return this;
   }
+
+  WorkbookView.prototype._isInputContentEditable = function () {
+    return !!(this.input && this.input.getAttribute && this.input.getAttribute('contenteditable') !== null);
+  };
+
+  WorkbookView.prototype._setInputDisabled = function (disabled) {
+    if (!this.input) return;
+    if (this._isInputContentEditable()) {
+      this.input.contentEditable = disabled ? 'false' : 'true';
+    } else {
+      this.input.disabled = disabled;
+    }
+  };
+
+  WorkbookView.prototype._setInputValue = function (text) {
+    if (!this.input) {
+      return;
+    }
+
+    var isDynamicArrayNotMainCell = this._isActiveCellDynamicArrayNotMain();
+
+    if (this._isInputContentEditable()) {
+      if (this.cellEditor) {
+        this.cellEditor._updateContentEditableLayout();
+      }
+      var divOpen = (this.cellEditor && this.cellEditor._ceDivStyle)
+        ? '<div style="' + this.cellEditor._ceDivStyle + '">'
+        : '<div>';
+      var lines = (text || '').split('\n');
+      var html = '';
+      for (var i = 0; i < lines.length; i++) {
+        html += divOpen;
+        html += lines[i]
+          ? lines[i].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          : '<br>';
+        html += '</div>';
+      }
+      this.input.innerHTML = html || (divOpen + '<br></div>');
+    } else {
+      this.input.value = text;
+    }
+
+    this.input.style.color = isDynamicArrayNotMainCell ? 'rgb(150, 150, 150)' : '';
+  };
+
+  WorkbookView.prototype._isActiveCellDynamicArrayNotMain = function () {
+    if (!AscCommonExcel.bIsSupportDynamicArrays) {
+      return false;
+    }
+    var ws = this.getWorksheet();
+    var selection = ws && ws.model.getSelection();
+    var activeCell = selection && selection.activeCell;
+    if (!activeCell) {
+      return false;
+    }
+    return ws.model.dynamicArrayManager.isSpilledNotFirstCell(activeCell.col, activeCell.row);
+  };
 
   WorkbookView.prototype._init = function(fontRenderingMode) {
     var self = this;
@@ -1299,11 +1357,11 @@
     if (this.input && !this.getCellEditMode()) {
       // We will forbid entering the formula bar when a shape is selected
       if (this.lastSendInfoRangeIsSelectOnShape) {
-        this.input.disabled = true;
-        this.input.value = '';
+        this._setInputDisabled(true);
+        this._setInputValue('');
       } else {
-        this.input.disabled = false;
-        this.input.value = this.oSelectionInfo.text;
+        this._setInputDisabled(false);
+        this._setInputValue(this.oSelectionInfo.text);
       }
 	  AscCommon.applyElementDirection(this.input);
     }
@@ -1535,6 +1593,9 @@
 	}
   	this.keepType = false;
     if (this.selectionDialogMode) {
+      if (this.isFormulaEditMode && this.cellEditor && this.cellEditor.isTopLineActive) {
+        this.cellEditor.restoreFocus();
+      }
       return;
     }
     var formatPainterState = this.Api.getFormatPainterState();
@@ -2242,7 +2303,7 @@
       t.handlers.trigger("asc_onToggleAutoCorrectOptions");
 
       ws.openCellEditor(t.cellEditor, enterOptions, selectionRange);
-      t.input.disabled = false;
+      t._setInputDisabled(false);
 
       t.Api.cleanSpelling(true);
 
@@ -2255,7 +2316,7 @@
     var editLockCallback = function(res) {
       if (!res) {
         t.setCellEditMode(false);
-        t.input.disabled = true;
+        t._setInputDisabled(true);
 
         // Disable lock for cell editing
         t.collaborativeEditing.onStopEditCell();
@@ -2827,7 +2888,7 @@
 				this.cellEditor.updateWizardMode(this.isWizardMode);
 				this._onCleanSelectRange(true);
 			}
-			this.input.disabled = this.isWizardMode;
+			this._setInputDisabled(this.isWizardMode);
 		}
 	};
 
@@ -3487,6 +3548,10 @@
     g_clipboardExcel.pasteData(ws, _format, data1, data2, text_data, null, doNotShowButton, null, callback);
   };
 
+  WorkbookView.prototype.pasteHtmlLite = function(sHtml, callback) {
+    g_clipboardExcel.pasteHtmlLite(this.getWorksheet(), sHtml, callback);
+  };
+
   WorkbookView.prototype.specialPasteData = function(props, isPasteOptions) {
     if (!this.getCellEditMode()) {
 		this.getWorksheet().specialPaste(props, isPasteOptions);
@@ -3745,7 +3810,7 @@
               this.getWorksheet().cloneSelection(true, tmpSelectRange && AscCommonExcel.g_oRangeCache.getAscRange(tmpSelectRange));
           }
           this.selectionDialogMode = newSelectionDialogMode;
-          this.input.disabled = !this.isFormulaEditMode || this.isWizardMode;
+          this._setInputDisabled(!this.isFormulaEditMode || this.isWizardMode);
           drawSelection = true;
       } else {
           this.selectionDialogMode = newSelectionDialogMode;
@@ -3757,7 +3822,7 @@
           }
 
           this.copyActiveSheet = -1;
-          this.input.disabled = false;
+          this._setInputDisabled(false);
       }
 
       if (drawSelection) {
@@ -6741,6 +6806,14 @@
 		}
 	};
 
+	WorkbookView.prototype.setAutoCompleteEnabled = function(val) {
+		this.autoCompleteEnabled = val;
+	};
+
+	WorkbookView.prototype.getAutoCompleteEnabled = function() {
+		return this.autoCompleteEnabled;
+	};
+
 	WorkbookView.prototype.setSmoothScrolling = function(val) {
 		if (this.smoothScroll !== val) {
 			this.smoothScroll = val;
@@ -7777,7 +7850,7 @@
 		oThis.wb.cellEditor.setSelectionState(oThis.activeTabFormula);
 		oThis.lockSendChangeSelection = false;
 
-		oThis.wb.input.disabled = false;
+		oThis.wb._setInputDisabled(false);
 		oThis.lockApplyChangeSelection = false;
 	};
 

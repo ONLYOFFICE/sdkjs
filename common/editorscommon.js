@@ -15055,7 +15055,12 @@
 			return;
 		}
 		if (level === "error") {
-			console.error(msg);
+			// error logging must not abort the save: native console.error throws "param is not defined"
+			try {
+				console.error(msg);
+			} catch (e) {
+				console.log(msg);
+			}
 		}
 		if (api.documentOpenOptions && api.documentOpenOptions["debug"]) {
 			console.log("[speed]: "+ msg);
@@ -15295,7 +15300,7 @@
 	function applyElementDirection(element) {
 		if (!element)
 			return;
-		const text = element.value || '';
+		const text = (element.value != null ? element.value : (element.textContent || ''));
 		let dir = 'ltr';
 		for (let iter = text.getUnicodeIterator(); iter.check(); iter.next()) {
 			let charDir = AscCommon.getCharStrongDir(iter.value());
@@ -15987,10 +15992,16 @@ window["asc_IsNeedBuildCryptedFile"] = function()
 window["UpdateSystemPlugins"] = function()
 {
     var _plugins = JSON.parse(window["AscDesktopEditor"]["GetInstallPlugins"]());
-    _plugins[0]["url"] = _plugins[0]["url"].replace(" ", "%20");
-    _plugins[1]["url"] = _plugins[1]["url"].replace(" ", "%20");
+	let lenTypes = 2;
+	_plugins[0]["url"] = _plugins[0]["url"].split(" ").join("%20");
+	_plugins[1]["url"] = _plugins[1]["url"].split(" ").join("%20");
+	if (_plugins.length > 2)
+	{
+		lenTypes = 3;
+		_plugins[2]["url"] = _plugins[2]["url"].split(" ").join("%20");
+	}
 
-    for (var k = 0; k < 2; k++)
+    for (var k = 0; k < lenTypes; k++)
     {
         var _pluginsCur = _plugins[k];
 

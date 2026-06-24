@@ -4284,70 +4284,7 @@ function (window, undefined) {
 	cAVERAGEIFS.prototype.argumentsType = [argType.reference, [argType.reference, argType.any]];
 	cAVERAGEIFS.prototype.enabledToSingle = {"arg0orOdd": true};
 	cAVERAGEIFS.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
-		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
-			cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		var arg0Matrix = arg0.getMatrix();
-		var i, j, arg1, arg2, matchingInfo;
-		for (var k = 1; k < arg.length; k += 2) {
-			arg1 = arg[k];
-			arg2 = arg[k + 1];
-
-			if (cElementType.cell !== arg1.type && cElementType.cell3D !== arg1.type && cElementType.cellsRange !==
-				arg1.type && cElementType.cellsRange3D !== arg1.type) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-
-			if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
-				arg2 = arg2.cross(arguments[1]);
-			} else if (cElementType.array === arg2.type) {
-				arg2 = arg2.getElementRowCol(0, 0);
-			}
-
-			arg2 = arg2.tocString();
-			if (cElementType.string !== arg2.type) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-			matchingInfo = AscCommonExcel.matchingValue(arg2);
-
-			var arg1Matrix = arg1.getMatrix();
-			if (arg0Matrix.length !== arg1Matrix.length) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-
-			for (i = 0; i < arg1Matrix.length; ++i) {
-				if (arg0Matrix[i].length !== arg1Matrix[i].length) {
-					return new cError(cErrorType.wrong_value_type);
-				}
-				for (j = 0; j < arg1Matrix[i].length; ++j) {
-					var arg1Val = arg1Matrix[i][j] && arg1Matrix[i][j][0] ? arg1Matrix[i][j][0] : arg1Matrix[i][j];
-					if (arg0Matrix[i][j] && !AscCommonExcel.matching(arg1Val, matchingInfo)) {
-						arg0Matrix[i][j] = null;
-					}
-				}
-			}
-		}
-
-		var _sum = 0, _count = 0;
-		var valMatrix0;
-		for (i = 0; i < arg0Matrix.length; ++i) {
-			for (j = 0; j < arg0Matrix[i].length; ++j) {
-				valMatrix0 = arg0Matrix[i][j] && arg0Matrix[i][j][0] ? arg0Matrix[i][j][0] : arg0Matrix[i][j];
-				if (valMatrix0 && cElementType.number === valMatrix0.type) {
-					_sum += valMatrix0.getValue();
-					++_count;
-				}
-			}
-		}
-
-		if (0 === _count) {
-			return new cError(cErrorType.division_by_zero);
-		} else {
-			return new cNumber(_sum / _count);
-		}
+		return AscCommonExcel.g_oAverageIFSCache.calculate(arg, arguments[1]);
 	};
 	cAVERAGEIFS.prototype.checkArguments = function (countArguments) {
 		return 1 === countArguments % 2 && cBaseFunction.prototype.checkArguments.apply(this, arguments);
@@ -5359,76 +5296,7 @@ function (window, undefined) {
 	cCOUNTIFS.prototype.argumentsType = [[argType.reference, argType.any]];
 	cCOUNTIFS.prototype.enabledToSingle = {"even": true};
 	cCOUNTIFS.prototype.Calculate = function (arg) {
-		let i, j, arg0, arg1, matchingInfo, arg0Matrix, arg1Matrix, _count = 0, argBaseDimension, argNextDimension;
-		let resArrayLength = 0;
-		for (let k = 0; k < arg.length; k += 2) {
-			arg0 = arg[k];
-			arg1 = arg[k + 1];
-			if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
-				cElementType.cellsRange !== arg0.type &&
-				!(cElementType.cellsRange3D === arg0.type && arg0.isSingleSheet())) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-
-			if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
-				arg1 = arg1.cross(arguments[1]);
-			} else if (cElementType.array === arg1.type) {
-				arg1 = arg1.getElementRowCol(0, 0);
-			}
-
-			if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
-				arg1 = arg1.getValue();
-			}
-
-			if (arg1.type === cElementType.empty) {
-				arg1 = arg1.tocNumber();
-			}
-
-			argNextDimension = arg0.getDimensions();
-			matchingInfo = AscCommonExcel.matchingValue(arg1);
-
-			if (arg1.value === "") {
-				arg1Matrix = arg0.getMatrix();
-			} else {
-				arg1Matrix = arg0.getMatrixNoEmpty ? arg0.getMatrixNoEmpty() : arg0.getMatrix();
-			}
-			if (cElementType.cellsRange3D === arg0.type) {
-				arg1Matrix = arg1Matrix[0];
-			}
-			if (!arg0Matrix) {
-				arg0Matrix = matrixClone(arg1Matrix);
-				argBaseDimension = argNextDimension;
-				resArrayLength = arg0Matrix.length;
-			}
-			if (argNextDimension.row !== argBaseDimension.row || argNextDimension.col !== argBaseDimension.col) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-			resArrayLength = resArrayLength > arg1Matrix.length ? arg1Matrix.length : resArrayLength;
-			for (i = 0; i < arg1Matrix.length; ++i) {
-				if (!arg1Matrix[i]) {
-					if (arg0Matrix[i]) {
-						arg0Matrix[i] = null;
-					}
-					continue;
-				}
-				for (j = 0; j < arg1Matrix[i].length; ++j) {
-					if (arg0Matrix[i] && arg0Matrix[i][j] && arg1Matrix[i] && arg1Matrix[i][j] && !matching(arg1Matrix[i][j], matchingInfo, true, true)) {
-						arg0Matrix[i][j] = null;
-					}
-				}
-			}
-		}
-		for (i = 0; i < resArrayLength; ++i) {
-			if (!arg0Matrix[i]) {
-				continue;
-			}
-			for (j = 0; j < arg0Matrix[i].length; ++j) {
-				if (arg0Matrix[i] && arg0Matrix[i][j]) {
-					++_count;
-				}
-			}
-		}
-		return new cNumber(_count);
+		return g_oCountIFSCache.calculate(arg, arguments[1]);
 	};
 	cCOUNTIFS.prototype.checkArguments = function (countArguments) {
 		return 0 === countArguments % 2 && cBaseFunction.prototype.checkArguments.apply(this, arguments);
@@ -8460,92 +8328,7 @@ function (window, undefined) {
 	};
 	cMAXIFS.prototype.enabledToSingle = {"arg0orOdd": true};
 	cMAXIFS.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
-		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
-			cElementType.cellsRange !== arg0.type) {
-			if (cElementType.cellsRange3D === arg0.type) {
-				arg0 = arg0.tocArea();
-				if (!arg0) {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			} else {
-				return new cError(cErrorType.wrong_value_type);
-			}
-		}
-
-		var arg0Matrix = arg0.getMatrix();
-		var i, j, arg1, arg2, matchingInfo;
-		for (var k = 1; k < arg.length; k += 2) {
-			arg1 = arg[k];
-			arg2 = arg[k + 1];
-
-			if (cElementType.cell !== arg1.type && cElementType.cell3D !== arg1.type &&
-				cElementType.cellsRange !== arg1.type) {
-				if (cElementType.cellsRange3D === arg1.type) {
-					arg1 = arg1.tocArea();
-					if (!arg1) {
-						return new cError(cErrorType.wrong_value_type);
-					}
-				} else {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			}
-
-			if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
-				arg2 = arg2.cross(arguments[1]);
-			} else if (cElementType.array === arg2.type) {
-				arg2 = arg2.getElementRowCol(0, 0);
-			}
-
-			arg2 = arg2.tocString();
-
-			if (cElementType.string !== arg2.type) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-
-			matchingInfo = AscCommonExcel.matchingValue(arg2);
-
-			var arg1Matrix = arg1.getMatrix();
-			if (arg0Matrix.length !== arg1Matrix.length) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-
-			//compare
-			for (i = 0; i < arg1Matrix.length; ++i) {
-				if (arg0Matrix[i].length !== arg1Matrix[i].length) {
-					return new cError(cErrorType.wrong_value_type);
-				}
-				for (j = 0; j < arg1Matrix[i].length; ++j) {
-					if (arg0Matrix[i][j] && !AscCommonExcel.matching(arg1Matrix[i][j], matchingInfo)) {
-						//MS considers in this case that value 0 (from the range of conditions) corresponds to the condition = ""
-						if (!(null === matchingInfo.op && "" === matchingInfo.val.value && 0 ===
-							arg1Matrix[i][j].value)) {
-							arg0Matrix[i][j] = null;
-						}
-					}
-				}
-			}
-		}
-
-		var resArr = [];
-		var valMatrix0;
-		for (i = 0; i < arg0Matrix.length; ++i) {
-			for (j = 0; j < arg0Matrix[i].length; ++j) {
-				if ((valMatrix0 = arg0Matrix[i][j]) && cElementType.number === valMatrix0.type) {
-					resArr.push(valMatrix0.getValue());
-				}
-			}
-		}
-
-		if (0 === resArr.length) {
-			return new cNumber(0);
-		}
-
-		resArr.sort(function (a, b) {
-			return b - a;
-		});
-
-		return new cNumber(resArr[0]);
+		return g_oMaxIFSCache.calculate(arg, arguments[1]);
 	};
 	cMAXIFS.prototype.checkArguments = function (countArguments) {
 		return 1 === countArguments % 2 && cBaseFunction.prototype.checkArguments.apply(this, arguments);
@@ -8574,92 +8357,7 @@ function (window, undefined) {
 	};
 	cMINIFS.prototype.enabledToSingle = {"arg0orOdd": true};
 	cMINIFS.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
-		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
-			cElementType.cellsRange !== arg0.type) {
-			if (cElementType.cellsRange3D === arg0.type) {
-				arg0 = arg0.tocArea();
-				if (!arg0) {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			} else {
-				return new cError(cErrorType.wrong_value_type);
-			}
-		}
-
-		var arg0Matrix = arg0.getMatrix();
-		var i, j, arg1, arg2, matchingInfo;
-		for (var k = 1; k < arg.length; k += 2) {
-			arg1 = arg[k];
-			arg2 = arg[k + 1];
-
-			if (cElementType.cell !== arg1.type && cElementType.cell3D !== arg1.type &&
-				cElementType.cellsRange !== arg1.type) {
-				if (cElementType.cellsRange3D === arg1.type) {
-					arg1 = arg1.tocArea();
-					if (!arg1) {
-						return new cError(cErrorType.wrong_value_type);
-					}
-				} else {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			}
-
-			if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
-				arg2 = arg2.cross(arguments[1]);
-			} else if (cElementType.array === arg2.type) {
-				arg2 = arg2.getElementRowCol(0, 0);
-			}
-
-			arg2 = arg2.tocString();
-
-			if (cElementType.string !== arg2.type) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-
-			matchingInfo = AscCommonExcel.matchingValue(arg2);
-
-			var arg1Matrix = arg1.getMatrix();
-			if (arg0Matrix.length !== arg1Matrix.length) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-
-			//compare
-			for (i = 0; i < arg1Matrix.length; ++i) {
-				if (arg0Matrix[i].length !== arg1Matrix[i].length) {
-					return new cError(cErrorType.wrong_value_type);
-				}
-				for (j = 0; j < arg1Matrix[i].length; ++j) {
-					if (arg0Matrix[i][j] && !AscCommonExcel.matching(arg1Matrix[i][j], matchingInfo)) {
-						//MS considers in this case that value 0 (from the range of conditions) corresponds to the condition = ""
-						if (!(null === matchingInfo.op && "" === matchingInfo.val.value && 0 ===
-							arg1Matrix[i][j].value)) {
-							arg0Matrix[i][j] = null;
-						}
-					}
-				}
-			}
-		}
-
-		var resArr = [];
-		var valMatrix0;
-		for (i = 0; i < arg0Matrix.length; ++i) {
-			for (j = 0; j < arg0Matrix[i].length; ++j) {
-				if ((valMatrix0 = arg0Matrix[i][j]) && cElementType.number === valMatrix0.type) {
-					resArr.push(valMatrix0.getValue());
-				}
-			}
-		}
-
-		if (0 === resArr.length) {
-			return new cNumber(0);
-		}
-
-		resArr.sort(function (a, b) {
-			return a - b;
-		});
-
-		return new cNumber(resArr[0]);
+		return g_oMinIFSCache.calculate(arg, arguments[1]);
 	};
 	cMINIFS.prototype.checkArguments = function (countArguments) {
 		return 1 === countArguments % 2 && cBaseFunction.prototype.checkArguments.apply(this, arguments);
@@ -12561,7 +12259,35 @@ function parseStringToCElement (val, cultureInfo) {
 				unshiftIndexesArray.push(r);
 			}
 		});
+		const strPrepend = unshiftDataArrays[cElementType.string] ? unshiftDataArrays[cElementType.string].length : 0;
 		this.unshiftValues(column, unshiftDataArrays, unshiftIndexesArrays);
+		if (strPrepend > 0) {
+			// Materialize prepended strings into _stringCounts immediately. A later
+			// changeColumnsData on the same rows expects counts to already reflect
+			// column.data; deferring this update lets in-place decrements underflow
+			// (count never incremented) and the next rebuild double-count via the
+			// SORTED_REBUILD path.
+			if (column._stringCounts) {
+				const stringData = column.data[cElementType.string];
+				const sCounts = column._stringCounts;
+				const hasSorted = !!column._sortedStrings;
+				for (let i = 0; i < strPrepend; i++) {
+					const s = stringData[i];
+					const oldC = sCounts[s] || 0;
+					sCounts[s] = oldC + 1;
+					if (oldC === 0 && hasSorted) {
+						if (!column._sortedChanged) {
+							column._sortedChanged = new Set();
+						}
+						column._sortedChanged.add(s);
+					}
+				}
+				if (hasSorted) {
+					column._sortedDirty = true;
+				}
+				column._rankStale = true;
+			}
+		}
 	};
 	CountIfTypedCache.prototype.pushValue = function (column, value, index) {
 		const data = column.data;
@@ -12575,9 +12301,29 @@ function parseStringToCElement (val, cultureInfo) {
 		let valueToAdd = value.value;
 		if (value.type === cElementType.error) {
 			valueToAdd = value.errorType;
+		} else if (value.type === cElementType.string && !column.hasNumericStrings &&
+			this.parseAnyNumber(valueToAdd) !== null) {
+			// Mark columns that contain at least one numeric-looking string.
+			column.hasNumericStrings = true;
 		}
 		data[value.type].push(valueToAdd);
 		indexes[value.type].push(index);
+		// Mirror of updateDataBefore: materialize the appended string into
+		// _stringCounts immediately so a same-tick changeColumnsData on this row
+		// observes consistent counts.
+		if (value.type === cElementType.string && column._stringCounts) {
+			const sCounts = column._stringCounts;
+			const oldC = sCounts[valueToAdd] || 0;
+			sCounts[valueToAdd] = oldC + 1;
+			if (oldC === 0 && column._sortedStrings) {
+				if (!column._sortedChanged) {
+					column._sortedChanged = new Set();
+				}
+				column._sortedChanged.add(valueToAdd);
+				column._sortedDirty = true;
+			}
+			column._rankStale = true;
+		}
 	};
 	CountIfTypedCache.prototype.updateDataAfter = function (range, column, endIndex) {
 		const t = this;
@@ -12585,7 +12331,7 @@ function parseStringToCElement (val, cultureInfo) {
 			const value = AscCommonExcel.checkTypeCell(cell, true, true);
 			if (r > column.end) {
 				if (value.type !== cElementType.empty) {
-					t.pushValue(column, value, r)
+					t.pushValue(column, value, r);
 				}
 				column.end = r;
 			}
@@ -12654,30 +12400,475 @@ function parseStringToCElement (val, cultureInfo) {
 		}
 		return convertedToNumber;
 	};
-	CountIfTypedCache.prototype.calculate = function(range, type, matchingFunction, searchValue, convertToNumber) {
+	/**
+	 * Apply deferred string data/indexes array changes in one O(N+K) pass.
+	 * Replaces repeated individual splice on large arrays (O(N) each) with
+	 * a single filter+merge (O(N+K)).
+	 *
+	 * Pending changes are stored in column._pendingStrChanges (Map: row -> value|null).
+	 *   row -> string value : the row should have this string value in the array
+	 *   row -> null         : the row should be removed from the array
+	 */
+	CountIfTypedCache.prototype._applyPendingStringChanges = function(column) {
+		const pending = column._pendingStrChanges;
+		if (!pending || pending.size === 0) {
+			return;
+		}
+
+		const stringData = column.data[cElementType.string] || [];
+		const stringIdx = column.indexes[cElementType.string] || [];
+		const oldDataLen = stringData.length;
+
+		// Fast path: for small batches of in-place value updates, use binary search
+		// instead of walking the entire array. O(K x log N) vs O(N+K).
+		const changedPositions = [];
+		if (pending.size <= 4 && stringIdx.length > 0) {
+			let allInPlace = true;
+			pending.forEach(function(val, row) {
+				if (!allInPlace) {
+					return;
+				}
+				if (val === null) {
+					allInPlace = false;
+					return;
+				}
+				let lo = 0, hi = stringIdx.length;
+				while (lo < hi) {
+					const mid = (lo + hi) >>> 1;
+					if (stringIdx[mid] < row) {
+						lo = mid + 1;
+					} else {
+						hi = mid;
+					}
+				}
+				if (lo < stringIdx.length && stringIdx[lo] === row) {
+					stringData[lo] = val;
+					changedPositions.push(lo);
+				} else {
+					allInPlace = false;
+				}
+			});
+			if (allInPlace) {
+				column._pendingApplyInPlace = true;
+				column._changedDataPositions = changedPositions;
+				column._pendingStrChanges = null;
+				return;
+			}
+			// Fast path failed - discard partial position list; slow path will rebuild.
+			changedPositions.length = 0;
+		}
+
+		// Phase 1: Walk current arrays - apply updates/removals in place.
+		const handledRows = new Set();
+		let writePos = 0;
+		for (let i = 0; i < stringData.length; i++) {
+			const row = stringIdx[i];
+			if (pending.has(row)) {
+				handledRows.add(row);
+				const newVal = pending.get(row);
+				if (newVal !== null) {
+					changedPositions.push(writePos);
+					stringData[writePos] = newVal;
+					stringIdx[writePos] = row;
+					writePos++;
+				}
+				// else: remove (skip this entry)
+			} else {
+				if (writePos !== i) {
+					stringData[writePos] = stringData[i];
+					stringIdx[writePos] = stringIdx[i];
+				}
+				writePos++;
+			}
+		}
+		stringData.length = writePos;
+		stringIdx.length = writePos;
+
+		// Phase 2: Collect new inserts - rows in pending but not in current array.
+		const newInserts = [];
+		pending.forEach(function(val, row) {
+			if (!handledRows.has(row) && val !== null) {
+				newInserts.push(row);
+			}
+		});
+
+		// Phase 3: Merge new inserts into the arrays (maintain sorted row order).
+		if (newInserts.length > 0) {
+			newInserts.sort(function(a, b) { return a - b; });
+			if (stringData.length === 0) {
+				const nd = new Array(newInserts.length);
+				const ni = new Array(newInserts.length);
+				for (let k = 0; k < newInserts.length; k++) {
+					nd[k] = pending.get(newInserts[k]);
+					ni[k] = newInserts[k];
+				}
+				column.data[cElementType.string] = nd;
+				column.indexes[cElementType.string] = ni;
+			} else {
+				const oldLen = stringData.length;
+				const totalLen = oldLen + newInserts.length;
+				const mergedData = new Array(totalLen);
+				const mergedIdx = new Array(totalLen);
+				let oi = oldLen - 1, nii = newInserts.length - 1, wi = totalLen - 1;
+				while (oi >= 0 && nii >= 0) {
+					if (stringIdx[oi] > newInserts[nii]) {
+						mergedData[wi] = stringData[oi];
+						mergedIdx[wi] = stringIdx[oi];
+						oi--;
+					} else {
+						mergedData[wi] = pending.get(newInserts[nii]);
+						mergedIdx[wi] = newInserts[nii];
+						nii--;
+					}
+					wi--;
+				}
+				while (oi >= 0) {
+					mergedData[wi] = stringData[oi];
+					mergedIdx[wi] = stringIdx[oi];
+					oi--;
+					wi--;
+				}
+				while (nii >= 0) {
+					mergedData[wi] = pending.get(newInserts[nii]);
+					mergedIdx[wi] = newInserts[nii];
+					nii--;
+					wi--;
+				}
+				column.data[cElementType.string] = mergedData;
+				column.indexes[cElementType.string] = mergedIdx;
+			}
+		}
+
+		const inPlaceOnly = (writePos === oldDataLen && newInserts.length === 0);
+		column._pendingApplyInPlace = inPlaceOnly;
+		// Only the in-place-only outcome makes positions meaningful for incremental
+		// FALLBACK; otherwise structural changes invalidated rank positions anyway.
+		column._changedDataPositions = inPlaceOnly ? changedPositions : null;
+		column._pendingStrChanges = null;
+	};
+	/**
+	 * Update column._sortedStrings and column._stringCounts for the strings that
+	 * changed unique status (column._sortedChanged), including any new prepend/append
+	 * entries. Returns rank-delta info needed by the caller to do an incremental
+	 * rank-buffer update instead of a full rebuild.
+	 * @returns {{delOldRank: number, addNewRank: number, delCount: number, addCount: number}}
+	 */
+	CountIfTypedCache.prototype._applySortedChanges = function(column, stringData) {
+		const self = this;
+		const sorted = column._sortedStrings;
+		const sCounts = column._stringCounts;
+		const sortedChanged = column._sortedChanged;
+		// Prepend/append counts are materialized eagerly in updateDataBefore/pushValue,
+		// so this method only processes sortedChanged from changeColumnsData.
+
+		let delCount = 0;
+		let addCount = 0;
+		let delOldRank = -1;
+		let addNewRank = -1;
+		if (sortedChanged && sortedChanged.size > 0) {
+			let toDel = null, toAdd = null;
+			let hasDel = false, hasAdd = false, multiChange = false;
+			sortedChanged.forEach(function(str) {
+				if (multiChange) {
+					return;
+				}
+				if (!sCounts[str]) {
+					if (hasDel) {
+						multiChange = true;
+						return;
+					}
+					toDel = str; hasDel = true;
+				} else {
+					if (hasAdd) {
+						multiChange = true;
+						return;
+					}
+					toAdd = str; hasAdd = true;
+				}
+			});
+
+			if (!multiChange && hasDel && hasAdd) {
+				// Fast path: single del + single add - use copyWithin instead of 2 splices.
+				// Identity match via _findExactInSorted so comparator-equal-but-distinct
+				// Unicode strings (e.g. NFC vs NFD forms) are not confused.
+				const dlo = self._findExactInSorted(sorted, toDel);
+				if (dlo >= 0) {
+					delOldRank = dlo;
+					delCount = 1;
+					const alo = self._binarySearchSorted(sorted, toAdd);
+					const eap = alo > dlo ? alo - 1 : alo;
+					if (dlo < eap) {
+						if (sorted.copyWithin) {
+							sorted.copyWithin(dlo, dlo + 1, eap + 1);
+						} else {
+							for (let ci = dlo; ci < eap; ci++) {
+								sorted[ci] = sorted[ci + 1];
+							}
+						}
+					} else if (dlo > eap) {
+						if (sorted.copyWithin) {
+							sorted.copyWithin(eap + 1, eap, dlo);
+						} else {
+							for (let ci = dlo; ci > eap; ci--) {
+								sorted[ci] = sorted[ci - 1];
+							}
+						}
+					}
+					sorted[eap] = toAdd;
+					addNewRank = eap;
+					addCount = 1;
+				}
+			} else {
+				sortedChanged.forEach(function(str) {
+					if (!sCounts[str]) {
+						const dlo = self._findExactInSorted(sorted, str);
+						if (dlo >= 0) {
+							delOldRank = dlo;
+							sorted.splice(dlo, 1);
+							delCount++;
+						}
+					} else if (self._findExactInSorted(sorted, str) < 0) {
+						const lo = self._binarySearchSorted(sorted, str);
+						sorted.splice(lo, 0, str);
+						addNewRank = lo;
+						addCount++;
+					}
+				});
+			}
+		}
+		column._sortedChanged = null;
+		return {delOldRank: delOldRank, addNewRank: addNewRank, delCount: delCount, addCount: addCount};
+	};
+	/**
+	 * Build (once) a sorted-rank index for a column's string data.
+	 * Stores on the column object:
+	 *   _sortedStrings   - unique string values sorted by stringCompare
+	 *   _stringRankArray - Int32Array: rank[i] = sorted position of stringData[i]
+	 *   _rankLen         - stringData.length at build time
+	 * Three rebuild tiers: full sort, incremental sorted update, cheap rank refresh.
+	 */
+	/**
+	 * Precondition: column._pendingStrChanges must already be flushed by the caller
+	 * (i.e. _applyPendingStringChanges must have been called before this method).
+	 * Use _setupRankRange instead of calling this directly - it handles the flush.
+	 */
+	CountIfTypedCache.prototype._ensureStringRank = function(column) {
+		const stringData = column.data[cElementType.string];
+		if (!stringData || !stringData.length) {
+			return;
+		}
+		const needsFull = column._rankDirty || !column._sortedStrings;
+		const needsSortedRebuild = column._sortedDirty;
+		const needsRefresh = column._rankStale || column._rankLen !== stringData.length;
+		if (!needsFull && !needsSortedRebuild && !needsRefresh) {
+			return;
+		}
+
+		let delOldRank = -1, addNewRank = -1, delCount = 0, addCount = 0;
+		if (needsFull) {
+			const seen = new Set();
+			const unique = [];
+			const counts = Object.create(null);
+			for (let i = 0; i < stringData.length; i++) {
+				const s = stringData[i];
+				counts[s] = (counts[s] || 0) + 1;
+				if (!seen.has(s)) {
+					seen.add(s);
+					unique.push(s);
+				}
+			}
+			unique.sort(function(a, b) { return AscCommon.stringCompare(a, b); });
+			column._sortedStrings = unique;
+			column._stringCounts = counts;
+			column._sortedChanged = null;
+		} else if (needsSortedRebuild) {
+			const changes = this._applySortedChanges(column, stringData);
+			delOldRank = changes.delOldRank;
+			addNewRank = changes.addNewRank;
+			delCount = changes.delCount;
+			addCount = changes.addCount;
+		}
+		// needsRefresh without _sortedDirty: counts/sorted were already materialized
+		// eagerly in updateDataBefore/pushValue. Fall through to FALLBACK to rebuild
+		// the rank array against the new length.
+
+		let sorted = column._sortedStrings;
+		const needed = stringData.length;
+		let buf = column._rankBuf;
+
+		const dc = delCount;
+		const ac = addCount;
+		const canIncremental = needsSortedRebuild
+			&& column._pendingApplyInPlace === true
+			&& buf && column._rankLen === needed
+			&& dc <= 1 && ac <= 1 && (dc + ac) > 0;
+
+		if (canIncremental) {
+			const dp = delOldRank;
+			const ap = addNewRank;
+			for (let j = 0; j < needed; j++) {
+				let r = buf[j];
+				if (dc === 1 && dp >= 0 && r > dp) {
+					r--;
+				}
+				if (ac === 1 && ap >= 0 && r >= ap) {
+					r++;
+				}
+				buf[j] = r;
+			}
+			// Look up the new rank for every row whose value changed. The rank-delta
+			// pass above only shifts existing ranks; changed positions still need
+			// their own lookup (identity-correct via _findExactInSorted to keep
+			// NFC/NFD twins distinct).
+			const positions = column._changedDataPositions;
+			if (positions && positions.length > 0) {
+				for (let pi = 0; pi < positions.length; pi++) {
+					const cp = positions[pi];
+					if (cp >= 0 && cp < needed) {
+						const exact = this._findExactInSorted(sorted, stringData[cp]);
+						buf[cp] = exact >= 0 ? exact : this._binarySearchSorted(sorted, stringData[cp]);
+					}
+				}
+			}
+			column._changedDataPositions = null;
+			column._rankMap = null;
+		} else {
+			const stringToRank = Object.create(null);
+			for (let k = 0; k < sorted.length; k++) {
+				stringToRank[sorted[k]] = k;
+			}
+			column._rankMap = stringToRank;
+			if (!buf || buf.length < needed) {
+				buf = new Int32Array(Math.max(needed, Math.ceil(needed * 1.25)));
+				column._rankBuf = buf;
+			}
+			for (let j = 0; j < needed; j++) {
+				buf[j] = stringToRank[stringData[j]];
+			}
+			column._changedDataPositions = null;
+		}
+
+		column._stringRankArray = buf;
+		column._rankLen = needed;
+		column._rankDirty = false;
+		column._rankStale = false;
+		column._sortedDirty = false;
+		column._pendingApplyInPlace = undefined;
+	};
+	/**
+	 * Binary-search `str` in a sorted unique-strings array using stringCompare.
+	 * Returns the leftmost insertion position (first index where sorted[i] >= str).
+	 * @param {string[]} sorted
+	 * @param {string}   str
+	 * @returns {number}
+	 */
+	CountIfTypedCache.prototype._binarySearchSorted = function(sorted, str) {
+		let lo = 0, hi = sorted.length;
+		while (lo < hi) {
+			const mid = (lo + hi) >>> 1;
+			if (AscCommon.stringCompare(sorted[mid], str) < 0) {
+				lo = mid + 1;
+			} else {
+				hi = mid;
+			}
+		}
+		return lo;
+	};
+	/**
+	 * Upper-bound search: leftmost index where stringCompare(sorted[i], str) > 0.
+	 * Together with _binarySearchSorted (lower bound), brackets the
+	 * comparator-equal run for `str` (entries where stringCompare === 0).
+	 */
+	CountIfTypedCache.prototype._upperBoundSorted = function(sorted, str) {
+		let lo = 0, hi = sorted.length;
+		while (lo < hi) {
+			const mid = (lo + hi) >>> 1;
+			if (AscCommon.stringCompare(sorted[mid], str) <= 0) {
+				lo = mid + 1;
+			} else {
+				hi = mid;
+			}
+		}
+		return lo;
+	};
+	/**
+	 * Find the exact identity-match index of `str` within `sorted`, scanning
+	 * the comparator-equal run starting from the lower bound. Returns -1 if
+	 * no identity match exists. Required because Unicode-normalisation can
+	 * make distinct Unicode identities (e.g. NFC and NFD forms of the same grapheme) compare equal
+	 * via localeCompare while remaining `===`-distinct.
+	 */
+	CountIfTypedCache.prototype._findExactInSorted = function(sorted, str) {
+		const lo = this._binarySearchSorted(sorted, str);
+		for (let i = lo; i < sorted.length; i++) {
+			if (sorted[i] === str) {
+				return i;
+			}
+			if (AscCommon.stringCompare(sorted[i], str) !== 0) {
+				break;
+			}
+		}
+		return -1;
+	};
+	CountIfTypedCache.prototype.calculate = function(range, type, matchingFunction, searchValue, convertToNumber, opt_op) {
 		let count = 0;
 		const ws = range.getWS();
 		const bbox = range.getBBox0();
 		const wsId = ws.getId();
+		// Rank-based comparison is eligible for string criteria with any of the
+		// supported ops ('<', '>', '<=', '>=', '=', or null).  Replaces per-cell
+		// stringCompare/localeCompare with a `lower <= rank < upper` integer check.
+		// Empty string is excluded: callers return 0 early for that case (consistent with COUNTIFS).
+		// Wildcard-bearing searchValue is also excluded - wildcards are not a collation
+		// operation; the caller is responsible for not passing opt_op when matchingFunction
+		// is a regex.
+		const useRankCompare = !convertToNumber && type === cElementType.string &&
+			searchValue !== "" &&
+			(opt_op === '<' || opt_op === '>' || opt_op === '<=' || opt_op === '>=' ||
+				opt_op === '=' || opt_op === null);
 		for (let i = bbox.c1; i <= bbox.c2; i += 1) {
 			this.updateColumnData(ws, i, bbox.r1, bbox.r2);
 			const column = this.data[wsId][i];
+			// Apply deferred string changes before reading data/indexes references.
+			// _applyPendingStringChanges may replace column.data[string]/indexes[string].
+			this._applyPendingStringChanges(column);
+			// Numeric string fallback is only needed for columns that actually
+			// contain a string parsable as a number.
+			if (convertToNumber && !column.hasNumericStrings) {
+				continue;
+			}
 			const typedData = column.data[type];
-			if (typedData) {
-				const typedIndexes = column.indexes[type];
-				const firstIndex = this.findLowerIndexInTyped(bbox.r1, typedIndexes);
-				const lastIndex = this.findHigherIndexInTyped(bbox.r2, typedIndexes);
-				if (convertToNumber) {
+			if (!typedData) {
+				continue;
+			}
+			const typedIndexes = column.indexes[type];
+			const firstIndex = this.findLowerIndexInTyped(bbox.r1, typedIndexes);
+			const lastIndex = this.findHigherIndexInTyped(bbox.r2, typedIndexes);
+			if (useRankCompare && typedData.length) {
+				// Single rank loop covers '<', '>', '<=', '>=', '=' / null.  When searchValue
+				// is absent (rb null or lower === upper), no string cells match.
+				const rb = this._setupRankRange(column, searchValue, opt_op);
+				if (rb && rb.lower < rb.upper) {
+					const lower = rb.lower;
+					const upper = rb.upper;
+					const rankData = rb.rankData;
 					for (let j = firstIndex; j < lastIndex; j += 1) {
-						let value = this.parseAnyNumber(typedData[j]);
-						if (value !== null) {
-							count += matchingFunction(value, searchValue);
+						const r = rankData[j];
+						if (r >= lower && r < upper) {
+							count += 1;
 						}
 					}
-				} else {
-					for (let j = firstIndex; j < lastIndex; j += 1) {
-						count += matchingFunction( typedData[j], searchValue);
+				}
+			} else if (convertToNumber) {
+				for (let j = firstIndex; j < lastIndex; j += 1) {
+					let value = this.parseAnyNumber(typedData[j]);
+					if (value !== null) {
+						count += matchingFunction(value, searchValue);
 					}
+				}
+			} else {
+				for (let j = firstIndex; j < lastIndex; j += 1) {
+					count += matchingFunction(typedData[j], searchValue);
 				}
 			}
 		}
@@ -12691,6 +12882,7 @@ function parseStringToCElement (val, cultureInfo) {
 		for (let i = bbox.c1; i <= bbox.c2; i += 1) {
 			this.updateColumnData(ws, i, bbox.r1, bbox.r2);
 			const column = this.data[wsId][i];
+			this._applyPendingStringChanges(column);
 			for (let type in column.indexes) {
 				const typedIndexes = column.indexes[type];
 				const firstIndex = this.findLowerIndexInTyped(bbox.r1, typedIndexes);
@@ -12702,13 +12894,14 @@ function parseStringToCElement (val, cultureInfo) {
 	};
 	/**
 	 * Checks whether a column has any non-empty data at a specific row.
-	 * Uses binary search per type — O(T × log K) where T ≤ 4.
+	 * Uses binary search per type - O(T x log K) where T <= 4.
 	 * @param {Object} column - column cache object with .indexes
 	 * @param {number} row - row index to check
 	 * @param {boolean} checkEmptyString - consider an empty string as a data
 	 * @returns {boolean}
 	 */
 	CountIfTypedCache.prototype.hasDataAtRow = function(column, row, checkEmptyString) {
+		this._applyPendingStringChanges(column);
 		const indexes = column.indexes;
 		const numIdx = indexes[cElementType.number];
 		if (numIdx) {
@@ -12737,33 +12930,153 @@ function parseStringToCElement (val, cultureInfo) {
 		}
 		return false;
 	};
+	/**
+	 * Build the half-open rank-match range [lower, upper) for `searchValue` under
+	 * comparison operator `op` on the column's sorted string index. Shared by all
+	 * rank fast paths (COUNTIF / COUNTIFS / SUMIF / SUMIFS / AVERAGEIF / AVERAGEIFS):
+	 * a cell matches iff its rank r satisfies lower <= r < upper.
+	 *
+	 * Supported ops:
+	 *   '<'  -> [0, binarySearchSorted(searchValue))
+	 *   '<=' -> [0, upperBoundSorted(searchValue))
+	 *   '>'  -> [upperBoundSorted(searchValue), sorted.length)
+	 *   '>=' -> [binarySearchSorted(searchValue), sorted.length)
+	 *   '='  -> [binarySearchSorted(searchValue), upperBoundSorted(searchValue))
+	 *           - the collation-equality run for searchValue.
+	 *   null -> same as '='  (default-equals when criterion has no operator prefix).
+	 *
+	 * For '<>' callers pass op = '=' here and treat matches as complement
+	 * (rank not in [lower, upper)). When searchValue is absent from the column the
+	 * returned bounds satisfy lower === upper, so the standard rank-in-range
+	 * check yields no matches - callers do not need to special-case this.
+	 *
+	 * Flushes pending string changes and ensures the rank index is built.
+	 * Returns null when the column has no sorted strings yet.
+	 *
+	 * @param {Object} column
+	 * @param {string} searchValue
+	 * @param {string|null} op
+	 * @returns {{rankData: Int32Array, lower: number, upper: number}|null}
+	 */
+	CountIfTypedCache.prototype._setupRankRange = function(column, searchValue, op) {
+		// Flush pending string changes before rank computation. Callers must also
+		// flush before reading column.data[string]/indexes[string]; their flush
+		// comes first and the one here is the no-op (never the other way around).
+		this._applyPendingStringChanges(column);
+		this._ensureStringRank(column);
+		const sorted = column._sortedStrings;
+		if (!sorted || !sorted.length) {
+			return null;
+		}
+		const len = sorted.length;
+		let lower, upper;
+		if (op === '<') {
+			lower = 0;
+			upper = this._binarySearchSorted(sorted, searchValue);
+		} else if (op === '<=') {
+			lower = 0;
+			upper = this._upperBoundSorted(sorted, searchValue);
+		} else if (op === '>') {
+			lower = this._upperBoundSorted(sorted, searchValue);
+			upper = len;
+		} else if (op === '>=') {
+			lower = this._binarySearchSorted(sorted, searchValue);
+			upper = len;
+		} else {
+			// '=' or null: collation-equality run.
+			lower = this._binarySearchSorted(sorted, searchValue);
+			upper = this._upperBoundSorted(sorted, searchValue);
+		}
+		return {rankData: column._stringRankArray, lower: lower, upper: upper};
+	};
 	CountIfTypedCache.prototype.changeColumnsData = function(wsId, cell, oldValue, oldType, newValue, newType) {
 		const columnIndex = cell.nCol;
 		const changedIndex = cell.nRow;
 		const data = this.data[wsId];
 		const column = data[columnIndex];
 		if (column && changedIndex >= column.start && changedIndex <= column.end) {
+			// --- Remove old value ---
 			if (oldValue !== null) {
-				const indexesArray = column.indexes[oldType];
-				const dataArray = column.data[oldType];
-				if (dataArray && indexesArray) {
-					const removeIndex = this.findLowerIndexInTyped(changedIndex, indexesArray);
-					if (removeIndex < indexesArray.length && indexesArray[removeIndex] === changedIndex) {
-						dataArray.splice(removeIndex, 1);
-						indexesArray.splice(removeIndex, 1);
+				if (oldType === cElementType.string) {
+					// Defer string array splice - O(1) Map.set vs O(N) splice on large arrays.
+					if (!column._pendingStrChanges) {
+						column._pendingStrChanges = new Map();
+					}
+					column._pendingStrChanges.set(changedIndex, null);
+				} else {
+					const indexesArray = column.indexes[oldType];
+					const dataArray = column.data[oldType];
+					if (dataArray && indexesArray) {
+						const removeIndex = this.findLowerIndexInTyped(changedIndex, indexesArray);
+						if (removeIndex < indexesArray.length && indexesArray[removeIndex] === changedIndex) {
+							dataArray.splice(removeIndex, 1);
+							indexesArray.splice(removeIndex, 1);
+						}
 					}
 				}
 			}
+			// --- Insert new value ---
 			if (newValue !== null && newType !== cElementType.empty) {
-				const indexesArray = column.indexes[newType];
-				const dataArray = column.data[newType];
-				if (dataArray && indexesArray) {
-					const insertIndex = this.findHigherIndexInTyped(changedIndex - 1, indexesArray);
-					dataArray.splice(insertIndex, 0, newValue);
-					indexesArray.splice(insertIndex, 0, changedIndex);
+				if (newType === cElementType.string) {
+					// Defer string array splice.
+					if (!column._pendingStrChanges) {
+						column._pendingStrChanges = new Map();
+					}
+					column._pendingStrChanges.set(changedIndex, newValue);
+					// Mirror pushValue on inline edits; the flag is sticky-true by design.
+					if (!column.hasNumericStrings && this.parseAnyNumber(newValue) !== null) {
+						column.hasNumericStrings = true;
+					}
 				} else {
-					column.data[newType] = [newValue];
-					column.indexes[newType] = [changedIndex];
+					const newIndexes = column.indexes[newType];
+					const newData = column.data[newType];
+					if (newData && newIndexes) {
+						const insertIndex = this.findHigherIndexInTyped(changedIndex - 1, newIndexes);
+						newData.splice(insertIndex, 0, newValue);
+						newIndexes.splice(insertIndex, 0, changedIndex);
+					} else {
+						column.data[newType] = [newValue];
+						column.indexes[newType] = [changedIndex];
+					}
+				}
+			}
+			if (oldType === cElementType.string || newType === cElementType.string) {
+				// Update string frequency counts (O(1) per change).
+				const sCounts = column._stringCounts;
+				if (sCounts) {
+					if (oldType === cElementType.string && oldValue !== null) {
+						const c = sCounts[oldValue] || 0;
+						if (c > 1) {
+							sCounts[oldValue] = c - 1;
+						} else {
+							delete sCounts[oldValue];
+						}
+					}
+					if (newType === cElementType.string && newValue !== null) {
+						sCounts[newValue] = (sCounts[newValue] || 0) + 1;
+					}
+					// Track strings that changed the unique set for targeted SORTED_REBUILD.
+					if (column._sortedStrings) {
+						if (oldType === cElementType.string && oldValue !== null && !sCounts[oldValue]) {
+							if (!column._sortedChanged) {
+								column._sortedChanged = new Set();
+							}
+							column._sortedChanged.add(oldValue);
+						}
+						if (newType === cElementType.string && newValue !== null && sCounts[newValue] === 1) {
+							if (!column._sortedChanged) {
+								column._sortedChanged = new Set();
+							}
+							column._sortedChanged.add(newValue);
+						}
+					}
+				}
+				// Defer _sortedStrings rebuild to _ensureStringRank.
+				if (column._sortedStrings) {
+					column._sortedDirty = true;
+					column._rankStale = true;
+				} else {
+					column._rankDirty = true;
 				}
 			}
 		}
@@ -12894,18 +13207,63 @@ function parseStringToCElement (val, cultureInfo) {
 		// 'i' flag: string comparison is case-insensitive (searchValue is already lowercased,
 		// but cell values retain their original case).
 		// If mask ends with an unescaped '*', omit '$': "^prefix.*" already matches the full string
-		// from the anchor — dropping the end-anchor lets V8 use a faster prefix-check path.
+		// from the anchor - dropping the end-anchor lets V8 use a faster prefix-check path.
 		return new RegExp(endsWithWildstar ? s : s + '$', 'i');
 	}
+
+	/**
+	 * Shared base for caches that combine a per-range result map with a per-column
+	 * typed index.  Factors the identical `remove` / `clean` logic out of
+	 * `CountIfCache` and `CountIFSCache` so that future invalidation changes stay
+	 * in one place.
+	 *
+	 * @constructor
+	 * @param {Object} typedCache - per-column typed index (CountIfTypedCache or subclass)
+	 */
+	function BaseTypedCache(typedCache) {
+		this.cacheId = {};
+		this.cacheRanges = {};
+		this.typedCache = typedCache;
+	}
+
+	/**
+	 * Invalidation callback invoked when a cell value changes.
+	 * Clears result entries for every bbox that contains the changed cell, then
+	 * patches the shared typed column index.
+	 *
+	 * @param {Object} cell    - changed cell
+	 * @param {*}      dataOld - previous cell data
+	 * @param {*}      dataNew - new cell data
+	 */
+	BaseTypedCache.prototype.remove = function (cell, dataOld, dataNew) {
+		const wsId = cell.ws.getId();
+		const cacheRange = this.cacheRanges[wsId];
+		if (cacheRange) {
+			const oGetRes = cacheRange.get(new Asc.Range(cell.nCol, cell.nRow, cell.nCol, cell.nRow));
+			for (let i = 0; i < oGetRes.all.length; i += 1) {
+				oGetRes.all[i].data.results = {};
+			}
+		}
+		this.typedCache.changeData(cell, dataOld, dataNew);
+	};
+
+	/**
+	 * Drop every cached result and rebuild the typed index from scratch on next
+	 * access.  Called on bulk resets (sheet reload, data-validation mass update).
+	 */
+	BaseTypedCache.prototype.clean = function () {
+		this.cacheId = {};
+		this.cacheRanges = {};
+		this.typedCache.clean();
+	};
 
 	/**
 	 * @constructor
 	 */
 	function CountIfCache() {
-		this.cacheId = {};
-		this.cacheRanges = {};
-		this.typedCache = new CountIfTypedCache();
+		BaseTypedCache.call(this, new CountIfTypedCache());
 	}
+	CountIfCache.prototype = Object.create(BaseTypedCache.prototype);
 	CountIfCache.prototype.constructor = CountIfCache;
 
 	CountIfCache.prototype.calculate = function (arg, _arg1) {
@@ -12997,12 +13355,18 @@ function parseStringToCElement (val, cultureInfo) {
 			} else if (matchingInfo.op === "<>") {
 				const elemsCount = this.typedCache.getElemsCount(range);
 				return new cNumber(elemsCount);
+			} else {
+				// >=, <=, >, < with empty string - no match (consistent with COUNTIFS behaviour).
+				return new cNumber(0);
 			}
 		}
 		const isWildcard = type === cElementType.string && (searchValue.indexOf('*') !== -1 || searchValue.indexOf('?') !== -1);
 		if ((matchingInfo.op === '=' || matchingInfo.op === null) && !isWildcard) {
 			const matchingFunction = getMatchingFunction(type, matchingInfo.op, isWildcard);
-			_count = this.typedCache.calculate(range, type, matchingFunction, searchValue);
+			// Pass '=' as opt_op only for the string path so the rank-equality fast path
+			// can be taken; the numeric-string fallback below must keep matchFn-linear.
+			const rankOp = type === cElementType.string ? '=' : undefined;
+			_count = this.typedCache.calculate(range, type, matchingFunction, searchValue, false, rankOp);
 			if (type === cElementType.number) {
 				_count += this.typedCache.calculate(range, cElementType.string, matchingFunction, searchValue, true);
 			}
@@ -13013,36 +13377,680 @@ function parseStringToCElement (val, cultureInfo) {
 			const matchingFunction = (type === cElementType.string && isWildcard)
 				? (function() { var re = _buildWildcardRegex(searchValue); return function(a) { return re.test(a); }; }())
 				: getMatchingFunction(type, '=', isWildcard);
-			_count = this.typedCache.calculate(range, type, matchingFunction, searchValue);
+			// '<>X' = cellsCount - equalCount.  Rank-equality applies only to the non-wildcard
+			// string-equality call; wildcard matchFn is a regex and must stay linear.
+			const rankOp = (type === cElementType.string && !isWildcard) ? '=' : undefined;
+			_count = this.typedCache.calculate(range, type, matchingFunction, searchValue, false, rankOp);
 			_count = cellsCount - _count;
 		} else {
 			// For wildcard = (e.g. "Asd1**"), pre-compile the pattern once per formula call.
-			// IMPORTANT: only pre-compile for '=' / null — inequality operators (<,>,<=,>=) treat
+			// IMPORTANT: only pre-compile for '=' / null - inequality operators (<,>,<=,>=) treat
 			// * and ? as literal characters (Excel behavior), so they must use stringCompare, not regex.
-			const matchingFunction = (type === cElementType.string && isWildcard && (matchingInfo.op === '=' || matchingInfo.op === null))
+			const isWildcardEq = type === cElementType.string && isWildcard && (matchingInfo.op === '=' || matchingInfo.op === null);
+			const matchingFunction = isWildcardEq
 				? (function() { var re = _buildWildcardRegex(searchValue); return function(a) { return re.test(a); }; }())
 				: getMatchingFunction(type, matchingInfo.op, isWildcard);
-			_count = this.typedCache.calculate(range, type, matchingFunction, searchValue);
+			// Pass opt_op for the rank fast path. Wildcard equality must stay linear:
+			// matchingFunction is a regex and the rank '=' path would bypass it.
+			const rankOp = isWildcardEq ? undefined : matchingInfo.op;
+			_count = this.typedCache.calculate(range, type, matchingFunction, searchValue, false, rankOp);
 		}
 		return new cNumber(_count);
 	};
-	CountIfCache.prototype.remove = function (cell, dataOld, dataNew) {
-		const wsId = cell.ws.getId();
-		const cacheRange = this.cacheRanges[wsId];
-		if (cacheRange) {
-			const oGetRes = cacheRange.get(new Asc.Range(cell.nCol, cell.nRow, cell.nCol, cell.nRow));
-			for (let i = 0; i < oGetRes.all.length; i += 1) {
-				const elem = oGetRes.all[i];
-				elem.data.results = {};
+
+	// -------------------------------------------------------CountIFSCache------------------------------------------
+
+	/**
+	 * Count the number of set bits in a 32-bit integer (Hamming weight).
+	 * Uses the standard parallel-prefix popcount algorithm.
+	 *
+	 * @param {number} n - 32-bit integer (treated as unsigned)
+	 * @returns {number} bit count in [0, 32]
+	 */
+	function popcount32(n) {
+		n = n - ((n >>> 1) & 0x55555555);
+		n = (n & 0x33333333) + ((n >>> 2) & 0x33333333);
+		n = (n + (n >>> 4)) & 0x0F0F0F0F;
+		return Math.imul(n, 0x01010101) >>> 24;
+	}
+
+	/**
+	 * Cache for the COUNTIFS function.
+	 *
+	 * Stores calculation results keyed by all criteria-range/criteria pairs so that
+	 * repeated calls with the same arguments return immediately without re-scanning
+	 * the sheet.  Shares a CountIfTypedCache instance with CountIfCache for column
+	 * data storage, meaning a single lazy-loaded typed-column pool is reused across
+	 * both COUNTIF and COUNTIFS.
+	 *
+	 * Algorithm: column-major multi-criteria intersection using a single
+	 * Uint32 column-mask.
+	 *   1. Allocate one Uint32Array(ceil(numRows/32)) - the per-column mask,
+	 *      reused across columns.  Memory is O(numRows / 32), independent of
+	 *      numCols, so even A:XFD-sized ranges fit in a few KB.
+	 *   2. For each column: reset colMask to all-1s, then for each criterion
+	 *      call _applyCriterionToColumn() which uses the typed column cache to
+	 *      AND a per-criterion matching set into colMask.  Sparse iteration
+	 *      over column.indexes[*] - empty cells are never visited.
+	 *   3. Popcount surviving 1-bits in colMask, accumulate into total.
+	 *
+	 * @constructor
+	 */
+	function CountIFSCache() {
+		BaseTypedCache.call(this, new CountIfTypedCache());
+	}
+	CountIFSCache.prototype = Object.create(BaseTypedCache.prototype);
+	CountIFSCache.prototype.constructor = CountIFSCache;
+
+	/**
+	 * Entry point called from cCOUNTIFS.prototype.Calculate.
+	 * Validates arguments, then delegates to _get for caching.
+	 *
+	 * @param {Array} arg - array of parsed formula arguments
+	 * @param {Object} _arg1 - second implicit argument (formula context)
+	 * @returns {cNumber|cError}
+	 */
+	CountIFSCache.prototype.calculate = function (arg, _arg1) {
+		// Validate range args and broadcast any array/range criteria into a cArray result.
+		const expanded = this._tryBroadcastArrays(arg, _arg1, 0);
+		if (expanded !== null) {
+			return expanded;
+		}
+
+		const pairs = arg.length >> 1;
+		const ranges = new Array(pairs);
+		const criteriaVals = new Array(pairs);
+		const bboxes = new Array(pairs);
+		const wsIds = new Array(pairs);
+
+		let sKey = '';
+		let cacheElem = null;
+
+		for (let k = 0; k < arg.length; k += 2) {
+			const rangeArg = arg[k];
+			let criteriaArg = arg[k + 1];
+
+			if (criteriaArg.type === cElementType.cell || criteriaArg.type === cElementType.cell3D) {
+				criteriaArg = criteriaArg.getValue();
+				if (criteriaArg.type === cElementType.empty) {
+					criteriaArg = new cNumber(0);
+				}
+			}
+
+			const ws = rangeArg.getWS();
+			const wsId = ws.getId();
+			const bbox = rangeArg.getBBox0();
+			const bboxName = bbox.getName();
+
+			if (k > 0) {
+				sKey += g_cCharDelimiter;
+			}
+			sKey += wsId + g_cCharDelimiter + bboxName + g_cCharDelimiter + criteriaArg.getValue();
+
+			if (k === 0) {
+				const sPrimaryKey = wsId + g_cCharDelimiter + bboxName;
+				cacheElem = this.cacheId[sPrimaryKey];
+				if (!cacheElem) {
+					cacheElem = {results: {}, bboxKeys: new Set()};
+					this.cacheId[sPrimaryKey] = cacheElem;
+				}
+			}
+
+			const idx = k >> 1;
+			ranges[idx] = rangeArg;
+			criteriaVals[idx] = criteriaArg;
+			bboxes[idx] = bbox;
+			wsIds[idx] = wsId;
+		}
+
+		// Cache hit: return immediately - no getDimensions, no array allocation.
+		if (cacheElem.results[sKey]) {
+			return cacheElem.results[sKey];
+		}
+
+		// Cache miss: delegate to the slow path with the already-normalised data.
+		return this._calculateMiss(ranges, criteriaVals, bboxes, wsIds, sKey, cacheElem);
+	};
+
+	/**
+	 * Validates range arguments and, if any criteria is an array/range/cellsRange3D,
+	 * expands the formula call into a cArray result by broadcasting each criterion
+	 * across the output shape and recursing into this.calculate per output cell.
+	 *
+	 * Shared by COUNTIFS (startIdx = 0) and SUMIFS/AVERAGEIFS (startIdx = 1).
+	 *
+	 * Broadcasting rules per criterion (R x C):
+	 *   - if R === 1: row index folds to 0 (replicate along rows);
+	 *   - if C === 1: col index folds to 0 (replicate along cols);
+	 *   - otherwise the criterion must cover that index, else the output cell is 0.
+	 * Scalar criteria (number, string, single cell) are 1x1 by definition and pass
+	 * through newArg unchanged - no special path needed.
+	 * Example: {1;2;3} (3x1) and {1,2} (1x2) => 3x2 result with full cross-product.
+	 *
+	 * Returns the cArray result when broadcasting occurred, a cError when a range
+	 * argument is invalid, or null when no array criteria were found (the caller
+	 * should proceed with the scalar path).
+	 *
+	 * @param {Array} arg - full argument list
+	 * @param {*} _arg1 - second formula arg, passed verbatim to the recursive call
+	 * @param {number} startIdx - index of the first range arg (0 for COUNTIFS, 1 for SUMIFS)
+	 * @returns {cArray|cError|null}
+	 */
+	CountIFSCache.prototype._tryBroadcastArrays = function (arg, _arg1, startIdx) {
+		const arrayCriteria = [];  // [{pos, dims}, ...]
+
+		for (let k = startIdx; k < arg.length; k += 2) {
+			const rangeArg = arg[k];
+			if (cElementType.error === rangeArg.type) {
+				return rangeArg;
+			}
+			if (cElementType.cell !== rangeArg.type && cElementType.cell3D !== rangeArg.type &&
+				cElementType.cellsRange !== rangeArg.type &&
+				!(cElementType.cellsRange3D === rangeArg.type && rangeArg.isSingleSheet())) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			const criteriaArg = arg[k + 1];
+			if (criteriaArg.type === cElementType.cellsRange ||
+				criteriaArg.type === cElementType.cellsRange3D ||
+				criteriaArg.type === cElementType.array) {
+				arrayCriteria.push({pos: k + 1, dims: criteriaArg.getDimensions()});
 			}
 		}
-		this.typedCache.changeData(cell, dataOld, dataNew);
+
+		if (arrayCriteria.length === 0) {
+			return null;
+		}
+
+		let maxRow = 0, maxCol = 0;
+		for (let i = 0; i < arrayCriteria.length; i += 1) {
+			const dims = arrayCriteria[i].dims;
+			if (dims.row > maxRow) {
+				maxRow = dims.row;
+			}
+			if (dims.col > maxCol) {
+				maxCol = dims.col;
+			}
+		}
+
+		const result = new cArray();
+		for (let row = 0; row < maxRow; row += 1) {
+			result.addRow();
+			for (let col = 0; col < maxCol; col += 1) {
+				const newArg = arg.slice();
+				let outOfRange = false;
+				for (let i = 0; i < arrayCriteria.length; i += 1) {
+					const pos = arrayCriteria[i].pos;
+					const dims = arrayCriteria[i].dims;
+					const effRow = (dims.row === 1) ? 0 : row;
+					const effCol = (dims.col === 1) ? 0 : col;
+					if (effRow >= dims.row || effCol >= dims.col) {
+						outOfRange = true;
+						break;
+					}
+					const crit = arg[pos];
+					let critElem = crit.type === cElementType.array
+						? crit.getElementRowCol(effRow, effCol)
+						: crit.getValueByRowCol(effRow, effCol, true);
+					if (critElem.type === cElementType.empty) {
+						critElem = new cNumber(0);
+					}
+					newArg[pos] = critElem;
+				}
+				const elem = outOfRange ? new cNumber(0) : this.calculate(newArg, _arg1);
+				result.addElementInRow(elem, row);
+			}
+		}
+		return result;
 	};
-	CountIfCache.prototype.clean = function () {
-		this.cacheId = {};
-		this.cacheRanges = {};
-		this.typedCache.clean();
+
+	/**
+	 * Slow path for cache misses.  Validates that all criteria ranges share the same
+	 * dimensions, registers each bbox in the per-worksheet RangeDataManager for
+	 * future invalidation, then runs _calculate and stores the result.
+	 *
+	 * @param {Array} ranges - range arguments (pre-normalised in calculate)
+	 * @param {Array} criteriaVals - normalised criteria cElement values
+	 * @param {Array} bboxes - pre-computed bounding boxes
+	 * @param {Array} wsIds - pre-computed worksheet ids
+	 * @param {string} sKey - pre-computed composite cache key
+	 * @param {Object} cacheElem - cache entry ({results: {}, bboxKeys: Set})
+	 * @returns {cNumber|cError}
+	 */
+	CountIFSCache.prototype._calculateMiss = function (ranges, criteriaVals, bboxes, wsIds, sKey, cacheElem) {
+		// Validate that all criteria ranges share the same dimensions.
+		const baseDim = ranges[0].getDimensions();
+		for (let k = 1; k < ranges.length; k += 1) {
+			const dim = ranges[k].getDimensions();
+			if (dim.row !== baseDim.row || dim.col !== baseDim.col) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		// Register every bbox in the RangeDataManager so that a cell change in any
+		// participating range invalidates this cache entry.
+		// bboxKeys guards against redundant add() calls on repeated cache misses for
+		// the same (bbox, cacheElem) pair - each add() triggers an expensive isSame
+		// traversal in the interval tree even when the record already exists.
+		for (let k = 0; k < ranges.length; k += 1) {
+			const wsId = wsIds[k];
+			const bboxKey = wsId + g_cCharDelimiter + bboxes[k].getName();
+			if (cacheElem.bboxKeys.has(bboxKey)) { continue; }
+			let cacheRange = this.cacheRanges[wsId];
+			if (!cacheRange) {
+				cacheRange = new AscCommonExcel.RangeDataManager(null);
+				this.cacheRanges[wsId] = cacheRange;
+			}
+			cacheRange.add(bboxes[k], cacheElem);
+			cacheElem.bboxKeys.add(bboxKey);
+		}
+
+		cacheElem.results[sKey] = this._calculate(ranges, criteriaVals, bboxes, wsIds, baseDim);
+		return cacheElem.results[sKey];
 	};
+
+	/**
+	 * Parse a single criteria value into a descriptor used by _applyCriterionToColumn.
+	 *
+	 * Returns an object:
+	 *   { op, type, searchValue, matchingFn, isEmptyStr }
+	 *
+	 * @param {Object} criteriaVal - cElement
+	 * @returns {Object}
+	 */
+	CountIFSCache.prototype._parseCriteria = function (criteriaVal) {
+		const matchingInfo = AscCommonExcel.matchingValue(criteriaVal, parseStringToCElement);
+		const op = matchingInfo.op;
+		const type = matchingInfo.val.type;
+
+		let searchValue = matchingInfo.val;
+		if (type === cElementType.string) {
+			searchValue = searchValue.toString().toLowerCase();
+		} else if (type === cElementType.error) {
+			searchValue = searchValue.errorType;
+		} else {
+			searchValue = searchValue.value;
+		}
+
+		const isEmptyStr = (searchValue === '' && type === cElementType.string);
+
+		// Precompile wildcard regex once - only for '=' / null operator.
+		// Comparison operators (<, >, <=, >=) treat * and ? as literal characters
+		// (Excel behaviour), so they must not use regex.
+		let matchingFn;
+		const isWildcard = type === cElementType.string &&
+			typeof searchValue === 'string' &&
+			(searchValue.indexOf('*') !== -1 || searchValue.indexOf('?') !== -1);
+
+		if (!isEmptyStr && isWildcard && (op === '=' || op === null)) {
+			const re = _buildWildcardRegex(searchValue);
+			matchingFn = function (v) { return re.test(v); };
+		} else if (isEmptyStr) {
+			// handled specially in _applyCriterionToColumn (modes 1 & 2)
+			matchingFn = null;
+		} else {
+			matchingFn = getMatchingFunction(type, op || '=', isWildcard);
+		}
+
+		return {op: op, type: type, searchValue: searchValue, matchingFn: matchingFn, isEmptyStr: isEmptyStr, isWildcard: isWildcard};
+	};
+
+	/**
+	 * Apply a single criterion to a single-column mask in place.
+	 *
+	 * Three dispatch paths:
+	 *   1. isEmptyStr && op '=' / null  -> matching set = empty cells.
+	 *      Start matchingRelRows at all-1s, sparse-clear bits where any data
+	 *      exists (empty strings excluded - they count as empty per legacy
+	 *      hasDataAtRow(checkEmptyString=true) semantics).
+	 *   2. isEmptyStr && op '<>'        -> matching set = any-data cells (incl. '').
+	 *      Start at 0, sparse-set bits where any indexed cell exists.
+	 *   3. Otherwise                    -> general equality/comparison/wildcard.
+	 *      Complement mode for '<>X' starts at all-1s and clears bits where v===X.
+	 *
+	 * After building the matching set the helper ANDs it into colMask.  Total
+	 * work per call is O(typed-cells-in-column) - it never iterates empty cells.
+	 *
+	 * @param {Uint32Array} colMask          - in/out, length = words
+	 * @param {Object}      info             - parsed criterion descriptor
+	 * @param {Object}      ws
+	 * @param {string}      wsId
+	 * @param {Object}      bbox
+	 * @param {number}      relCol           - column index within bbox
+	 * @param {number}      words            - ceil(numRows / 32)
+	 * @param {number}      lastWordMask     - padding mask for colMask[words - 1]
+	 * @param {Uint32Array} matchingRelRows  - scratch buffer, length = words
+	 */
+	CountIFSCache.prototype._applyCriterionToColumn = function (colMask, info, ws, wsId, bbox, relCol, words, lastWordMask, matchingRelRows) {
+		const typedCache = this.typedCache;
+		const absCol = bbox.c1 + relCol;
+		typedCache.updateColumnData(ws, absCol, bbox.r1, bbox.r2);
+		const column = typedCache.data[wsId][absCol];
+
+		// Flush deferred string changes before reading data/indexes references.
+		typedCache._applyPendingStringChanges(column);
+
+		const op = info.op;
+
+		// Mode 1: '=""' - matching = cells with no non-empty-string data.
+		if (info.isEmptyStr && (op === '=' || op === null)) {
+			matchingRelRows.fill(0xFFFFFFFF);
+			matchingRelRows[words - 1] = lastWordMask;
+			this._sparseClearDataBits(matchingRelRows, column, bbox, true);
+			for (let w = 0; w < words; w += 1) {
+				colMask[w] &= matchingRelRows[w];
+			}
+			return;
+		}
+
+		// Mode 2: '<>""' - matching = cells with any indexed data (incl. '').
+		if (info.isEmptyStr && op === '<>') {
+			matchingRelRows.fill(0);
+			this._sparseSetDataBits(matchingRelRows, column, bbox, false);
+			for (let w = 0; w < words; w += 1) {
+				colMask[w] &= matchingRelRows[w];
+			}
+			return;
+		}
+
+		// Mode 3: general path. Complement mode handles '<>X' (X != '').
+		const isComplement = op === '<>';
+		const type = info.type;
+		const searchValue = info.searchValue;
+		const isWildcard = info.isWildcard;
+
+		// Complement uses an equality comparator to find rows to exclude;
+		// normal mode uses info.matchingFn (may be =, <, >, <=, >=).
+		const matchFn = isComplement ? getMatchingFunction(type, '=', isWildcard) : info.matchingFn;
+
+		// Probe string-typed cells for numerically-equal text only on '=' / null. Excel keeps
+		// text-encoded numbers in '<>N' (text "1" matches both =1 and <>1), so complement skips it.
+		const checkStrNums = type === cElementType.number && (op === '=' || op === null);
+		const numMatchFn = checkStrNums ? getMatchingFunction(cElementType.number, '=', false) : null;
+
+		// Rank-based comparison replaces per-cell stringCompare with `lower <= rank < upper`.
+		// Eligible for string criteria with <, >, <=, >=, = / null (normal) and <> (complement).
+		// Wildcards and isEmptyStr are excluded.
+		const useRankCompare = type === cElementType.string && !info.isEmptyStr && !isWildcard &&
+			(isComplement || op === '<' || op === '>' || op === '<=' || op === '>=' ||
+				op === '=' || op === null);
+
+		const typedData = column.data[type];
+		const typedIndexes = column.indexes[type];
+
+		if (isComplement) {
+			matchingRelRows.fill(0xFFFFFFFF);
+			matchingRelRows[words - 1] = lastWordMask;
+		} else {
+			matchingRelRows.fill(0);
+		}
+
+		if (useRankCompare && typedData && typedData.length) {
+			const rb = typedCache._setupRankRange(column, searchValue, isComplement ? '=' : op);
+			if (rb && rb.lower < rb.upper) {
+				const lower = rb.lower;
+				const upper = rb.upper;
+				const rankData = rb.rankData;
+				const first = typedCache.findLowerIndexInTyped(bbox.r1, typedIndexes);
+				const last = typedCache.findHigherIndexInTyped(bbox.r2, typedIndexes);
+				if (isComplement) {
+					for (let j = first; j < last; j += 1) {
+						const r = rankData[j];
+						if (r >= lower && r < upper) {
+							const relRow = typedIndexes[j] - bbox.r1;
+							matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
+						}
+					}
+				} else {
+					for (let j = first; j < last; j += 1) {
+						const r = rankData[j];
+						if (r >= lower && r < upper) {
+							const relRow = typedIndexes[j] - bbox.r1;
+							matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+						}
+					}
+				}
+			}
+		} else if (typedData && matchFn) {
+			const first = typedCache.findLowerIndexInTyped(bbox.r1, typedIndexes);
+			const last = typedCache.findHigherIndexInTyped(bbox.r2, typedIndexes);
+			if (isComplement) {
+				for (let j = first; j < last; j += 1) {
+					if (matchFn(typedData[j], searchValue)) {
+						const relRow = typedIndexes[j] - bbox.r1;
+						matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
+					}
+				}
+			} else {
+				for (let j = first; j < last; j += 1) {
+					if (matchFn(typedData[j], searchValue)) {
+						const relRow = typedIndexes[j] - bbox.r1;
+						matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+					}
+				}
+			}
+		}
+
+		// checkStrNums is intentionally outside typedData: a column may have
+		// string-encoded numbers and no number-typed cells at all.
+		if (checkStrNums && column.hasNumericStrings) {
+			const strData = column.data[cElementType.string];
+			const strIndexes = column.indexes[cElementType.string];
+			if (strData) {
+				const strFirst = typedCache.findLowerIndexInTyped(bbox.r1, strIndexes);
+				const strLast = typedCache.findHigherIndexInTyped(bbox.r2, strIndexes);
+				if (isComplement) {
+					for (let j = strFirst; j < strLast; j += 1) {
+						const parsed = typedCache.parseAnyNumber(strData[j]);
+						if (parsed !== null && numMatchFn(parsed, searchValue)) {
+							const relRow = strIndexes[j] - bbox.r1;
+							matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
+						}
+					}
+				} else {
+					for (let j = strFirst; j < strLast; j += 1) {
+						const parsed = typedCache.parseAnyNumber(strData[j]);
+						if (parsed !== null && numMatchFn(parsed, searchValue)) {
+							const relRow = strIndexes[j] - bbox.r1;
+							matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+						}
+					}
+				}
+			}
+		}
+
+		// AND matching set into colMask.
+		for (let w = 0; w < words; w += 1) {
+			colMask[w] &= matchingRelRows[w];
+		}
+	};
+
+	/**
+	 * Walk every typed index of a column (number, string, bool, error) for rows
+	 * in [bbox.r1, bbox.r2] and CLEAR the corresponding bits in matchingRelRows.
+	 * When excludeEmptyStrings is true, string cells with value '' are skipped
+	 * (treated as empty) so the '=""' branch leaves them as matches.
+	 *
+	 * @param {Uint32Array} matchingRelRows
+	 * @param {Object}      column
+	 * @param {Object}      bbox
+	 * @param {boolean}     excludeEmptyStrings
+	 */
+	CountIFSCache.prototype._sparseClearDataBits = function (matchingRelRows, column, bbox, excludeEmptyStrings) {
+		const typedCache = this.typedCache;
+		const r1 = bbox.r1;
+		const r2 = bbox.r2;
+
+		const numIdx = column.indexes[cElementType.number];
+		if (numIdx) {
+			const first = typedCache.findLowerIndexInTyped(r1, numIdx);
+			const last = typedCache.findHigherIndexInTyped(r2, numIdx);
+			for (let j = first; j < last; j += 1) {
+				const relRow = numIdx[j] - r1;
+				matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
+			}
+		}
+
+		const strIdx = column.indexes[cElementType.string];
+		if (strIdx) {
+			const strData = column.data[cElementType.string];
+			const first = typedCache.findLowerIndexInTyped(r1, strIdx);
+			const last = typedCache.findHigherIndexInTyped(r2, strIdx);
+			if (excludeEmptyStrings && strData) {
+				for (let j = first; j < last; j += 1) {
+					if (strData[j] !== '') {
+						const relRow = strIdx[j] - r1;
+						matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
+					}
+				}
+			} else {
+				for (let j = first; j < last; j += 1) {
+					const relRow = strIdx[j] - r1;
+					matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
+				}
+			}
+		}
+
+		const boolIdx = column.indexes[cElementType.bool];
+		if (boolIdx) {
+			const first = typedCache.findLowerIndexInTyped(r1, boolIdx);
+			const last = typedCache.findHigherIndexInTyped(r2, boolIdx);
+			for (let j = first; j < last; j += 1) {
+				const relRow = boolIdx[j] - r1;
+				matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
+			}
+		}
+
+		const errIdx = column.indexes[cElementType.error];
+		if (errIdx) {
+			const first = typedCache.findLowerIndexInTyped(r1, errIdx);
+			const last = typedCache.findHigherIndexInTyped(r2, errIdx);
+			for (let j = first; j < last; j += 1) {
+				const relRow = errIdx[j] - r1;
+				matchingRelRows[relRow >> 5] &= ~(1 << (relRow & 31));
+			}
+		}
+	};
+
+	/**
+	 * Sparse-set variant: SET bits in matchingRelRows for every typed cell in
+	 * column in [bbox.r1, bbox.r2].  Used by the '<>""' branch where empty
+	 * strings must count as "has data".
+	 *
+	 * @param {Uint32Array} matchingRelRows
+	 * @param {Object}      column
+	 * @param {Object}      bbox
+	 * @param {boolean}     excludeEmptyStrings
+	 */
+	CountIFSCache.prototype._sparseSetDataBits = function (matchingRelRows, column, bbox, excludeEmptyStrings) {
+		const typedCache = this.typedCache;
+		const r1 = bbox.r1;
+		const r2 = bbox.r2;
+
+		const numIdx = column.indexes[cElementType.number];
+		if (numIdx) {
+			const first = typedCache.findLowerIndexInTyped(r1, numIdx);
+			const last = typedCache.findHigherIndexInTyped(r2, numIdx);
+			for (let j = first; j < last; j += 1) {
+				const relRow = numIdx[j] - r1;
+				matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+			}
+		}
+
+		const strIdx = column.indexes[cElementType.string];
+		if (strIdx) {
+			const strData = column.data[cElementType.string];
+			const first = typedCache.findLowerIndexInTyped(r1, strIdx);
+			const last = typedCache.findHigherIndexInTyped(r2, strIdx);
+			if (excludeEmptyStrings && strData) {
+				for (let j = first; j < last; j += 1) {
+					if (strData[j] !== '') {
+						const relRow = strIdx[j] - r1;
+						matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+					}
+				}
+			} else {
+				for (let j = first; j < last; j += 1) {
+					const relRow = strIdx[j] - r1;
+					matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+				}
+			}
+		}
+
+		const boolIdx = column.indexes[cElementType.bool];
+		if (boolIdx) {
+			const first = typedCache.findLowerIndexInTyped(r1, boolIdx);
+			const last = typedCache.findHigherIndexInTyped(r2, boolIdx);
+			for (let j = first; j < last; j += 1) {
+				const relRow = boolIdx[j] - r1;
+				matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+			}
+		}
+
+		const errIdx = column.indexes[cElementType.error];
+		if (errIdx) {
+			const first = typedCache.findLowerIndexInTyped(r1, errIdx);
+			const last = typedCache.findHigherIndexInTyped(r2, errIdx);
+			for (let j = first; j < last; j += 1) {
+				const relRow = errIdx[j] - r1;
+				matchingRelRows[relRow >> 5] |= (1 << (relRow & 31));
+			}
+		}
+	};
+
+	/**
+	 * Core calculation for COUNTIFS.  Column-major: for each column build an
+	 * O(words) colMask by ANDing all K criteria's per-column matching sets,
+	 * then popcount surviving bits into the running total.  Memory is O(words)
+	 * total - independent of numCols - so even A:XFD-sized ranges fit in a
+	 * handful of KB.
+	 *
+	 * @param {Array}  ranges       - criteria range arguments
+	 * @param {Array}  criteriaVals - normalised criteria cElement values
+	 * @param {Array}  bboxes       - pre-computed bounding boxes
+	 * @param {Array}  wsIds        - pre-computed worksheet ids
+	 * @param {Object} baseDim      - {row, col}
+	 * @returns {cNumber}
+	 */
+	CountIFSCache.prototype._calculate = function (ranges, criteriaVals, bboxes, wsIds, baseDim) {
+		const numRows = baseDim.row;
+		const numCols = baseDim.col;
+		const words = (numRows + 31) >> 5;
+		const remBits = numRows & 31;
+		const lastWordMask = remBits !== 0 ? (1 << remBits) - 1 : 0xFFFFFFFF;
+
+		// Pre-parse criteria so we pay parser cost once, not per column.
+		const K = ranges.length;
+		const infos = new Array(K);
+		for (let k = 0; k < K; k += 1) {
+			infos[k] = this._parseCriteria(criteriaVals[k]);
+		}
+
+		// Single-column scratch buffers reused across all columns.
+		const colMask = new Uint32Array(words);
+		const matchingRelRows = new Uint32Array(words);
+
+		let total = 0;
+
+		for (let relCol = 0; relCol < numCols; relCol += 1) {
+			colMask.fill(0xFFFFFFFF);
+			colMask[words - 1] = lastWordMask;
+
+			for (let k = 0; k < K; k += 1) {
+				this._applyCriterionToColumn(
+					colMask, infos[k], ranges[k].getWS(), wsIds[k], bboxes[k],
+					relCol, words, lastWordMask, matchingRelRows);
+			}
+
+			for (let w = 0; w < words; w += 1) {
+				const v = colMask[w];
+				if (v !== 0) { total += popcount32(v); }
+			}
+		}
+
+		return new cNumber(total);
+	};
+
 
 	// -------------------------------------------------------SumIfSumRangeCache------------------------------------------
 
@@ -13214,9 +14222,10 @@ function parseStringToCElement (val, cultureInfo) {
 
 			const searchColumn = this.data[searchRangeWsId][searchColumnIndex];
 			const sumColumn = sumCache.data[sumRangeWsId][i];
+			this._applyPendingStringChanges(searchColumn);
 			const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
 
-			// 4 advancing pointers, one per type — amortized O(1) per sum entry to check if search row has ANY data
+			// 4 advancing pointers, one per type - amortized O(1) per sum entry to check if search row has ANY data
 			const sNumIdx = searchColumn.indexes[cElementType.number];
 			const sStrIdx = searchColumn.indexes[cElementType.string];
 			const sBoolIdx = searchColumn.indexes[cElementType.bool];
@@ -13300,6 +14309,7 @@ function parseStringToCElement (val, cultureInfo) {
 
 			const searchColumn = this.data[searchRangeWsId][searchColumnIndex];
 			const sumColumn = sumCache.data[sumRangeWsId][i];
+			this._applyPendingStringChanges(searchColumn);
 			const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
 
 			const errorIndexes = sumColumn.indexes[cElementType.error];
@@ -13371,7 +14381,7 @@ function parseStringToCElement (val, cultureInfo) {
 		return null;
 	};
 
-	SumIfTypedCache.prototype.calculate = function(searchRange, sumRange, sumCache, type, matchingFunction, searchValue, convertToNumber, skipErrors) {
+	SumIfTypedCache.prototype.calculate = function(searchRange, sumRange, sumCache, type, matchingFunction, searchValue, convertToNumber, skipErrors, opt_op) {
 		let sum = 0;
 		let count = 0;
 
@@ -13384,6 +14394,17 @@ function parseStringToCElement (val, cultureInfo) {
 
 		const columnsOffset = sumRangeBbox.c1 - searchRangeBbox.c1;
 
+		// Rank-based comparison is eligible for string criteria with any of the supported
+		// ops ('<', '>', '<=', '>=', '=' or null).  Replaces per-cell stringCompare with a
+		// `lower <= rank < upper` integer check on the column's rank index.
+		// Empty string is excluded: callers return 0 early for that case (consistent with COUNTIFS).
+		// Wildcard-bearing searchValue is excluded - callers must not pass opt_op when
+		// matchingFunction is a regex.
+		const useRankCompare = !convertToNumber && type === cElementType.string &&
+			searchValue !== "" &&
+			(opt_op === '<' || opt_op === '>' || opt_op === '<=' || opt_op === '>=' ||
+				opt_op === '=' || opt_op === null);
+
 		for (let i = searchRangeBbox.c1; i <= searchRangeBbox.c2; i += 1) {
 			const sumColumnIndex = columnsOffset + i;
 
@@ -13392,6 +14413,14 @@ function parseStringToCElement (val, cultureInfo) {
 
 			const searchColumn = this.data[searchRangeWsId][i];
 			const sumColumn = sumCache.data[sumRangeWsId][sumColumnIndex];
+
+			// Apply deferred string changes before reading data/indexes references.
+			this._applyPendingStringChanges(searchColumn);
+
+			// Skip the string pass for columns with no numeric-looking strings.
+			if (convertToNumber && !searchColumn.hasNumericStrings) {
+				continue;
+			}
 
 			const searchTypedData = searchColumn.data[type];
 			const searchTypedIndexes = searchColumn.indexes[type];
@@ -13403,13 +14432,27 @@ function parseStringToCElement (val, cultureInfo) {
 			const errorData = skipErrors ? null : sumColumn.data[cElementType.error];
 
 			if (searchTypedData) {
+				// Build rank range once per column when eligible.  Single bracket covers
+				// all supported ops ('<', '>', '<=', '>=', '=' / null).  When the bracket
+				// is empty (searchValue absent or out of range) the rank loop iterates
+				// without matching any cell - correct outcome by construction.
+				const rb = useRankCompare && searchTypedData.length
+					? this._setupRankRange(searchColumn, searchValue, opt_op)
+					: null;
+				const rankData = rb ? rb.rankData : null;
+				const rankLower = rb ? rb.lower : 0;
+				const rankUpper = rb ? rb.upper : 0;
+
 				const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
 
 				const firstIndex = this.findLowerIndexInTyped(searchRangeBbox.r1, searchTypedIndexes);
 				const lastIndex = this.findHigherIndexInTyped(searchRangeBbox.r2, searchTypedIndexes);
 
-				let currentSumIndex = sumIndexes && sumCache.findLowerIndexInTyped(searchTypedIndexes[firstIndex] + rowSumOffset, sumIndexes);
-				let currentErrorIndex = errorIndexes && sumCache.findLowerIndexInTyped(searchTypedIndexes[firstIndex] + rowSumOffset, errorIndexes);
+				// Guard against empty range: if firstIndex >= lastIndex there are no matching rows,
+				// the loops below are skipped, and the starting pointer value is irrelevant.
+				const startRow = firstIndex < lastIndex ? searchTypedIndexes[firstIndex] + rowSumOffset : 0;
+				let currentSumIndex = sumIndexes && sumCache.findLowerIndexInTyped(startRow, sumIndexes);
+				let currentErrorIndex = errorIndexes && sumCache.findLowerIndexInTyped(startRow, errorIndexes);
 
 				const sumLen = sumIndexes ? sumIndexes.length : 0;
 				const errLen = errorIndexes ? errorIndexes.length : 0;
@@ -13424,6 +14467,24 @@ function parseStringToCElement (val, cultureInfo) {
 						currentSumIndex = gallopAdvance(sumIndexes, currentSumIndex, sumLen, targetRow);
 						currentErrorIndex = gallopAdvance(errorIndexes, currentErrorIndex, errLen, targetRow);
 						// Check after gallop: pointer may land on targetRow whether or not it needed to advance
+						if (errorIndexes && currentErrorIndex < errLen && errorIndexes[currentErrorIndex] === targetRow) {
+							return {sum: null, count: null, error: new cError(errorData[currentErrorIndex])};
+						}
+						if (sumIndexes && currentSumIndex < sumLen && sumIndexes[currentSumIndex] === targetRow) {
+							sum += sumData[currentSumIndex];
+							count += 1;
+							currentSumIndex += 1;
+						}
+					}
+				} else if (rankData) {
+					// Fast path: integer rank comparison instead of string comparison.
+					for (let j = firstIndex; j < lastIndex; j += 1) {
+						const r = rankData[j];
+						if (r < rankLower || r >= rankUpper) continue;
+						if ((!sumIndexes || currentSumIndex >= sumLen) && (!errorIndexes || currentErrorIndex >= errLen)) break;
+						const targetRow = searchTypedIndexes[j] + rowSumOffset;
+						currentSumIndex = gallopAdvance(sumIndexes, currentSumIndex, sumLen, targetRow);
+						currentErrorIndex = gallopAdvance(errorIndexes, currentErrorIndex, errLen, targetRow);
 						if (errorIndexes && currentErrorIndex < errLen && errorIndexes[currentErrorIndex] === targetRow) {
 							return {sum: null, count: null, error: new cError(errorData[currentErrorIndex])};
 						}
@@ -13547,12 +14608,18 @@ function parseStringToCElement (val, cultureInfo) {
 				}
 				_sum = calculatingResult.sum;
 				_count = calculatingResult.count;
+			} else {
+				// >=, <=, >, < with empty string - no match (consistent with COUNTIFS behaviour).
+				return this._finalizeResult(0, 0);
 			}
 		} else {
 			const isWildcard = type === cElementType.string && (searchValue.indexOf('*') !== -1 || searchValue.indexOf('?') !== -1);
 			if ((matchingInfo.op === '=' || matchingInfo.op === null) && !isWildcard) {
 				const matchingFunction = getMatchingFunction(type, matchingInfo.op, isWildcard);
-				let calculatingResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, matchingFunction, searchValue);
+				// Pass '=' as opt_op only for the string path so the rank-equality fast
+				// path can be taken; the numeric-string fallback below stays matchFn-linear.
+				const rankOp = type === cElementType.string ? '=' : undefined;
+				let calculatingResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, matchingFunction, searchValue, false, false, rankOp);
 				if (calculatingResult.error !== null) {
 					return calculatingResult.error;
 				}
@@ -13579,18 +14646,25 @@ function parseStringToCElement (val, cultureInfo) {
 				}
 
 				const total = this.typedCache.sumColumnTotalInRange(range, sumRange, this.sumRangeCache);
-				const matchResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, equalFn, searchValue, false, true);
+				// Rank-equality applies only to the non-wildcard string-equality call;
+				// wildcard equalFn is a regex and must stay linear.
+				const rankOp = (type === cElementType.string && !isWildcard) ? '=' : undefined;
+				const matchResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, equalFn, searchValue, false, true, rankOp);
 				_sum = total.sum - matchResult.sum;
 				_count = total.count - matchResult.count;
 			} else {
 				// For wildcard = (e.g. "Asd1**"), pre-compile the pattern once per formula call.
 				// This avoids re-parsing the mask and calling toLowerCase on every of N cell comparisons.
-				// IMPORTANT: only pre-compile for '=' / null — inequality operators (<,>,<=,>=) treat
+				// IMPORTANT: only pre-compile for '=' / null - inequality operators (<,>,<=,>=) treat
 				// * and ? as literal characters (Excel behavior), so they must use stringCompare, not regex.
-				const matchingFunction = (type === cElementType.string && isWildcard && (matchingInfo.op === '=' || matchingInfo.op === null))
+				const isWildcardEq = type === cElementType.string && isWildcard && (matchingInfo.op === '=' || matchingInfo.op === null);
+				const matchingFunction = isWildcardEq
 					? (function() { var re = _buildWildcardRegex(searchValue); return function(a) { return re.test(a); }; }())
 					: getMatchingFunction(type, matchingInfo.op, isWildcard);
-				const calculatingResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, matchingFunction, searchValue);
+				// Pass opt_op for the rank fast path. Wildcard equality must stay linear:
+				// matchingFunction is a regex and the rank '=' path would bypass it.
+				const rankOp = isWildcardEq ? undefined : matchingInfo.op;
+				const calculatingResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, matchingFunction, searchValue, false, false, rankOp);
 				if (calculatingResult.error !== null) {
 					return calculatingResult.error;
 				}
@@ -13661,10 +14735,439 @@ function parseStringToCElement (val, cultureInfo) {
 	};
 
 
+	// -------------------------------------------------------SumIFSCache---------------------------------------------------
+
+	/**
+	 * Cache for SUMIFS.  Inherits the bitmask infrastructure from CountIFSCache and
+	 * collects sum values from a separate sum range for surviving (relRow, relCol)
+	 * positions.
+	 *
+	 * Argument layout expected by calculate():
+	 *   arg[0]          = sum_range   (reference)
+	 *   arg[1], arg[2]  = criteria_range_1, criteria_1
+	 *   arg[3], arg[4]  = criteria_range_2, criteria_2  ...
+	 *
+	 * @constructor
+	 */
+	function SumIFSCache() {
+		CountIFSCache.call(this);
+		this.sumRangeCache = new SumIfSumRangeCache();
+	}
+
+	SumIFSCache.prototype = Object.create(CountIFSCache.prototype);
+	SumIFSCache.prototype.constructor = SumIFSCache;
+
+	/**
+	 * Entry point called from cSUMIFS.prototype.Calculate.
+	 * Validates arguments, handles array/range criteria expansion,
+	 * and delegates to _calculateMiss on a cache miss.
+	 *
+	 * @param {Array}  arg  - formula arguments (sum_range at [0], criteria pairs at [1..])
+	 * @param {Object} _arg1 - implicit formula context (passed through for array expansion)
+	 * @returns {cNumber|cError|cArray}
+	 */
+	SumIFSCache.prototype.calculate = function (arg, _arg1) {
+		// Validate sum_range (arg[0]).
+		const sumRangeArg = arg[0];
+		if (cElementType.error === sumRangeArg.type) {
+			return sumRangeArg;
+		}
+		if (cElementType.cell !== sumRangeArg.type && cElementType.cell3D !== sumRangeArg.type &&
+			cElementType.cellsRange !== sumRangeArg.type &&
+			!(cElementType.cellsRange3D === sumRangeArg.type && sumRangeArg.isSingleSheet())) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		// Validate criteria range args and broadcast any array/range criteria into a cArray result.
+		const expanded = this._tryBroadcastArrays(arg, _arg1, 1);
+		if (expanded !== null) {
+			return expanded;
+		}
+
+		// Scalar path: build cache key = sum_range bbox + all criteria pairs.
+		const sumBbox = sumRangeArg.getBBox0();
+		const sumWsId = sumRangeArg.getWS().getId();
+		const sPrimaryKey = sumWsId + g_cCharDelimiter + sumBbox.getName();
+
+		const pairs = (arg.length - 1) >> 1;
+		const ranges = new Array(pairs);
+		const criteriaVals = new Array(pairs);
+		const bboxes = new Array(pairs);
+		const wsIds = new Array(pairs);
+
+		let sKey = sPrimaryKey;
+
+		for (let k = 1; k < arg.length; k += 2) {
+			const cRangeArg = arg[k];
+			let cCriteriaArg = arg[k + 1];
+
+			if (cCriteriaArg.type === cElementType.cell || cCriteriaArg.type === cElementType.cell3D) {
+				cCriteriaArg = cCriteriaArg.getValue();
+				if (cCriteriaArg.type === cElementType.empty) {
+					cCriteriaArg = new cNumber(0);
+				}
+			}
+
+			const cWs = cRangeArg.getWS();
+			const cWsId = cWs.getId();
+			const cBbox = cRangeArg.getBBox0();
+
+			sKey += g_cCharDelimiter + cWsId + g_cCharDelimiter + cBbox.getName() +
+				g_cCharDelimiter + cCriteriaArg.getValue();
+
+			const idx = (k - 1) >> 1;
+			ranges[idx] = cRangeArg;
+			criteriaVals[idx] = cCriteriaArg;
+			bboxes[idx] = cBbox;
+			wsIds[idx] = cWsId;
+		}
+
+		let cacheElem = this.cacheId[sPrimaryKey];
+		if (!cacheElem) {
+			cacheElem = {results: {}, bboxKeys: new Set()};
+			this.cacheId[sPrimaryKey] = cacheElem;
+		}
+
+		// Cache hit: return immediately.
+		if (cacheElem.results[sKey]) {
+			return cacheElem.results[sKey];
+		}
+
+		// Cache miss: delegate to the slow path.
+		return this._calculateMiss(sumRangeArg, ranges, criteriaVals, bboxes, wsIds, sKey, cacheElem);
+	};
+
+	/**
+	 * Slow path for cache misses.  Validates range dimensions, registers all
+	 * bboxes (criteria AND sum range) for future invalidation, computes the result.
+	 *
+	 * @param {Object} sumRange     - sum range argument
+	 * @param {Array}  ranges       - criteria range arguments (pre-normalised)
+	 * @param {Array}  criteriaVals - normalised criteria cElement values
+	 * @param {Array}  bboxes       - pre-computed bounding boxes for criteria ranges
+	 * @param {Array}  wsIds        - pre-computed worksheet ids for criteria ranges
+	 * @param {string} sKey         - pre-computed composite cache key
+	 * @param {Object} cacheElem    - cache entry ({results: {}, bboxKeys: Set})
+	 * @returns {cNumber|cError}
+	 */
+	SumIFSCache.prototype._calculateMiss = function (sumRange, ranges, criteriaVals, bboxes, wsIds, sKey, cacheElem) {
+		// Validate that all criteria ranges share the same dimensions.
+		const baseDim = ranges[0].getDimensions();
+		for (let k = 1; k < ranges.length; k += 1) {
+			const dim = ranges[k].getDimensions();
+			if (dim.row !== baseDim.row || dim.col !== baseDim.col) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		// Also validate that the sum range has the same dimensions as the criteria ranges.
+		const sumDim = sumRange.getDimensions();
+		if (sumDim.row !== baseDim.row || sumDim.col !== baseDim.col) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		// Register every bbox (criteria ranges + sum range) in cacheRanges so that
+		// a cell change in any participating range invalidates cacheElem.results.
+		for (let k = 0; k < ranges.length; k += 1) {
+			const wsId = wsIds[k];
+			const bboxKey = wsId + g_cCharDelimiter + bboxes[k].getName();
+			if (!cacheElem.bboxKeys.has(bboxKey)) {
+				let cacheRange = this.cacheRanges[wsId];
+				if (!cacheRange) {
+					cacheRange = new AscCommonExcel.RangeDataManager(null);
+					this.cacheRanges[wsId] = cacheRange;
+				}
+				cacheRange.add(bboxes[k], cacheElem);
+				cacheElem.bboxKeys.add(bboxKey);
+			}
+		}
+
+		// Register sum_range bbox separately with a distinct prefix so it never
+		// collides with a criteria range that happens to occupy the same cells.
+		const sumBbox = sumRange.getBBox0();
+		const sumWsId = sumRange.getWS().getId();
+		const sumBboxKey = 's' + g_cCharDelimiter + sumWsId + g_cCharDelimiter + sumBbox.getName();
+		if (!cacheElem.bboxKeys.has(sumBboxKey)) {
+			let sumCacheRange = this.cacheRanges[sumWsId];
+			if (!sumCacheRange) {
+				sumCacheRange = new AscCommonExcel.RangeDataManager(null);
+				this.cacheRanges[sumWsId] = sumCacheRange;
+			}
+			sumCacheRange.add(sumBbox, cacheElem);
+			cacheElem.bboxKeys.add(sumBboxKey);
+		}
+
+		cacheElem.results[sKey] = this._calculate(ranges, criteriaVals, bboxes, wsIds, baseDim, sumRange);
+		return cacheElem.results[sKey];
+	};
+
+	/**
+	 * Column-major calculation for SUMIFS-family functions (SUMIFS / AVERAGEIFS /
+	 * MAXIFS / MINIFS).  For each column:
+	 *   1. Build per-column colMask by ANDing every criterion's matching set,
+	 *      via _applyCriterionToColumn inherited from CountIFSCache.
+	 *   2. If any bits survive, walk numeric sum-range data and feed matched
+	 *      values into the _accumulate hook.
+	 *
+	 * Value range stores only numeric cells (cElementType.number); non-numeric
+	 * cells are absent from the typed index and contribute nothing - matching
+	 * legacy SUMIFS (treated as 0) and legacy MAXIFS/MINIFS (skipped entirely).
+	 *
+	 * Bit iteration order: LSB-first within each 32-bit word -> ascending relRow.
+	 * The sum-pointer advances monotonically, giving O(sumLen + matchBits) per column.
+	 *
+	 * Memory: a single Uint32Array(words) for colMask plus another for the
+	 * per-criterion matching scratch, total O(words) - independent of numCols.
+	 *
+	 * @param {Array}  ranges      - criteria range arguments
+	 * @param {Array}  criteriaVals - normalised criteria cElement values
+	 * @param {Array}  bboxes      - pre-computed bounding boxes
+	 * @param {Array}  wsIds       - pre-computed worksheet ids
+	 * @param {Object} baseDim     - {row, col} - dimensions shared by all ranges
+	 * @param {Object} sumRange    - sum range argument
+	 * @returns {cNumber|cError}
+	 */
+	SumIFSCache.prototype._calculate = function (ranges, criteriaVals, bboxes, wsIds, baseDim, sumRange) {
+		const numRows = baseDim.row;
+		const numCols = baseDim.col;
+		const words = (numRows + 31) >> 5;
+		const remBits = numRows & 31;
+		const lastWordMask = remBits !== 0 ? (1 << remBits) - 1 : 0xFFFFFFFF;
+
+		// Pre-parse criteria once.
+		const K = ranges.length;
+		const infos = new Array(K);
+		for (let k = 0; k < K; k += 1) {
+			infos[k] = this._parseCriteria(criteriaVals[k]);
+		}
+
+		const colMask = new Uint32Array(words);
+		const matchingRelRows = new Uint32Array(words);
+
+		const sumBbox = sumRange.getBBox0();
+		const sumWs = sumRange.getWS();
+		const sumWsId = sumWs.getId();
+		let acc = this._initAccumulator();
+		let count = 0;
+
+		for (let relCol = 0; relCol < numCols; relCol += 1) {
+			colMask.fill(0xFFFFFFFF);
+			colMask[words - 1] = lastWordMask;
+
+			for (let k = 0; k < K; k += 1) {
+				this._applyCriterionToColumn(
+					colMask, infos[k], ranges[k].getWS(), wsIds[k], bboxes[k],
+					relCol, words, lastWordMask, matchingRelRows);
+			}
+
+			// Quick check: any surviving bits in this column?
+			let hasAny = false;
+			for (let wi = 0; wi < words; wi += 1) {
+				if (colMask[wi] !== 0) {
+					hasAny = true;
+					break;
+				}
+			}
+			if (!hasAny) {
+				continue;
+			}
+
+			// Load numeric data for the corresponding sum column.
+			const sumColIdx = sumBbox.c1 + relCol;
+			this.sumRangeCache.updateColumnData(sumWs, sumColIdx, sumBbox.r1, sumBbox.r2);
+			const sumColumn = this.sumRangeCache.data[sumWsId][sumColIdx];
+			const sumData = sumColumn.data[cElementType.number];
+			const sumIndexes = sumColumn.indexes[cElementType.number];
+			const errIndexes = sumColumn.indexes[cElementType.error];
+			if (!sumData || !sumIndexes) {
+				continue;
+			}
+
+			let sumPtr = this.sumRangeCache.findLowerIndexInTyped(sumBbox.r1, sumIndexes);
+			const sumLen = sumIndexes.length;
+
+			// Iterate surviving bits in ascending relRow order (LSB-first within each word).
+			// sumPtr advances monotonically across the inner loop - no rewind needed.
+			for (let w = 0; w < words && sumPtr < sumLen; w += 1) {
+				let word = colMask[w];
+				while (word !== 0) {
+					const lsb = word & -word;
+					const relRow = (w << 5) + (31 - Math.clz32(lsb));
+					word = (word & (word - 1)) | 0;
+
+					const targetSumRow = sumBbox.r1 + relRow;
+
+					// if we have an error in found indexes and it matched to criteria, return that error
+					if (errIndexes && errIndexes.includes(targetSumRow)) {
+						const errIndex = errIndexes.indexOf(targetSumRow);
+						const errData = sumColumn.data[cElementType.error];
+						const firstErrValueType = errData[errIndex];
+
+						return new cError(firstErrValueType);
+					}
+
+					while (sumPtr < sumLen && sumIndexes[sumPtr] < targetSumRow) {
+						sumPtr += 1;
+					}
+					if (sumPtr >= sumLen) {
+						break;
+					}
+					if (sumIndexes[sumPtr] === targetSumRow) {
+						acc = this._accumulate(acc, sumData[sumPtr]);
+						count += 1;
+						sumPtr += 1;
+					}
+				}
+			}
+		}
+
+		return this._finalizeResult(acc, count);
+	};
+
+	/**
+	 * Initial accumulator value. Default: 0 (additive accumulation for SUMIFS/AVERAGEIFS).
+	 * Subclasses override (e.g. MaxIFSCache returns -Infinity).
+	 * @returns {number}
+	 */
+	SumIFSCache.prototype._initAccumulator = function () {
+		return 0;
+	};
+
+	/**
+	 * Combine the next matching numeric value into the running accumulator.
+	 * Default: additive. Subclasses override for max/min/other reductions.
+	 * @param {number} acc
+	 * @param {number} value
+	 * @returns {number}
+	 */
+	SumIFSCache.prototype._accumulate = function (acc, value) {
+		return acc + value;
+	};
+
+	/**
+	 * @param {number} acc
+	 * @param {number} count
+	 * @returns {cNumber}
+	 */
+	SumIFSCache.prototype._finalizeResult = function (acc, count) {
+		return new cNumber(acc);
+	};
+
+	SumIFSCache.prototype.remove = function (cell, dataOld, dataNew) {
+		// Parent (CountIFSCache -> BaseTypedCache) clears result entries for the
+		// cell's position and updates the criteria-range typed column data.
+		CountIFSCache.prototype.remove.call(this, cell, dataOld, dataNew);
+		// Also update typed sum column data so the next calculate() gets fresh values.
+		this.sumRangeCache.changeData(cell, dataOld, dataNew);
+	};
+
+	SumIFSCache.prototype.clean = function () {
+		CountIFSCache.prototype.clean.call(this);
+		this.sumRangeCache.clean();
+	};
+
+	// -------------------------------------------------------AverageIFSCache----------------------------------------------
+
+	/**
+	 * Cache for AVERAGEIFS.  Extends SumIFSCache and overrides _finalizeResult
+	 * to return sum/count instead of sum alone.
+	 *
+	 * @constructor
+	 */
+	function AverageIFSCache() {
+		SumIFSCache.call(this);
+	}
+
+	AverageIFSCache.prototype = Object.create(SumIFSCache.prototype);
+	AverageIFSCache.prototype.constructor = AverageIFSCache;
+
+	/**
+	 * @param {number} sum
+	 * @param {number} count
+	 * @returns {cNumber|cError}
+	 */
+	AverageIFSCache.prototype._finalizeResult = function (sum, count) {
+		if (count === 0) {
+			return new cError(cErrorType.division_by_zero);
+		}
+		return new cNumber(sum / count);
+	};
+
+	// -------------------------------------------------------MaxIFSCache--------------------------------------------------
+
+	/**
+	 * Cache for MAXIFS.  Extends SumIFSCache; overrides accumulator hooks to
+	 * track the running maximum.  Returns cNumber(0) on empty match-set.
+	 *
+	 * @constructor
+	 */
+	function MaxIFSCache() {
+		SumIFSCache.call(this);
+	}
+
+	MaxIFSCache.prototype = Object.create(SumIFSCache.prototype);
+	MaxIFSCache.prototype.constructor = MaxIFSCache;
+
+	MaxIFSCache.prototype._initAccumulator = function () {
+		return -Infinity;
+	};
+
+	MaxIFSCache.prototype._accumulate = function (acc, value) {
+		return value > acc ? value : acc;
+	};
+
+	/**
+	 * @param {number} acc
+	 * @param {number} count
+	 * @returns {cNumber}
+	 */
+	MaxIFSCache.prototype._finalizeResult = function (acc, count) {
+		return count === 0 ? new cNumber(0) : new cNumber(acc);
+	};
+
+	// -------------------------------------------------------MinIFSCache--------------------------------------------------
+
+	/**
+	 * Cache for MINIFS.  Extends SumIFSCache; overrides accumulator hooks to
+	 * track the running minimum.  Returns cNumber(0) on empty match-set.
+	 *
+	 * @constructor
+	 */
+	function MinIFSCache() {
+		SumIFSCache.call(this);
+	}
+
+	MinIFSCache.prototype = Object.create(SumIFSCache.prototype);
+	MinIFSCache.prototype.constructor = MinIFSCache;
+
+	MinIFSCache.prototype._initAccumulator = function () {
+		return Infinity;
+	};
+
+	MinIFSCache.prototype._accumulate = function (acc, value) {
+		return value < acc ? value : acc;
+	};
+
+	/**
+	 * @param {number} acc
+	 * @param {number} count
+	 * @returns {cNumber}
+	 */
+	MinIFSCache.prototype._finalizeResult = function (acc, count) {
+		return count === 0 ? new cNumber(0) : new cNumber(acc);
+	};
+
+	// -------------------------------------------------------globals------------------------------------------------------
+
 	let g_oFormulaRangesCache = new FormulaRangesCache();
 	let g_oCountIfCache = new CountIfCache();
+	let g_oCountIFSCache = new CountIFSCache();
 	let g_oSumIfCache = new SumIfCache();
 	let g_oAverageIfCache = new AverageIfCache();
+	let g_oSumIFSCache = new SumIFSCache();
+	let g_oAverageIFSCache = new AverageIFSCache();
+	let g_oMaxIFSCache = new MaxIFSCache();
+	let g_oMinIFSCache = new MinIFSCache();
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
@@ -13699,8 +15202,13 @@ function parseStringToCElement (val, cultureInfo) {
 
 	window['AscCommonExcel'].g_oFormulaRangesCache = g_oFormulaRangesCache;
 	window['AscCommonExcel'].g_oCountIfCache = g_oCountIfCache;
+	window['AscCommonExcel'].g_oCountIFSCache = g_oCountIFSCache;
 	window['AscCommonExcel'].g_oSumIfCache = g_oSumIfCache;
 	window['AscCommonExcel'].g_oAverageIfCache = g_oAverageIfCache;
+	window['AscCommonExcel'].g_oSumIFSCache = g_oSumIFSCache;
+	window['AscCommonExcel'].g_oAverageIFSCache = g_oAverageIFSCache;
+	window['AscCommonExcel'].g_oMaxIFSCache = g_oMaxIFSCache;
+	window['AscCommonExcel'].g_oMinIFSCache = g_oMinIFSCache;
 	window['AscCommonExcel'].CountIfTypedCache = CountIfTypedCache;
 	window['AscCommonExcel'].parseStringToCElement = parseStringToCElement;
 	window['AscCommonExcel'].buildWildcardRegex = _buildWildcardRegex;

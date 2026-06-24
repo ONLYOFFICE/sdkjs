@@ -647,9 +647,6 @@
                     rotatedContext.drawImage(oImage, -oImage.width / 2 >> 0, -oImage.height / 2 >> 0);
                     rotatedContext.restore();
 
-                    rotatedCanvas.width = rotatedCanvas.width;
-                    rotatedCanvas.height = rotatedCanvas.height;
-
                     needPage.page.image = rotatedCanvas;
                 }
 
@@ -705,7 +702,7 @@
     };
 
     // rendering
-    CDocument.prototype._paint= function() {
+    CDocument.prototype._paint = function() {
         if (!this.canvas) return;
         if (this.isNeedResize()) {
             this.resize();

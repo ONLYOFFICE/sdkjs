@@ -522,25 +522,27 @@
         this.private_UpdateRichContent();
         this.SetNeedRecalc(true);
     };
-    CAnnotationLine.prototype.private_UpdateRect = function() {
-        this.recalcBounds();
-        this.recalcGeometry();
-        this.SetNeedRecalcSizes(true);
-        this.Recalculate(true);
+	CAnnotationLine.prototype.private_UpdateRect = function(rect) {
+		if (!rect) {
+			this.recalcBounds();
+			this.recalcGeometry();
+			this.SetNeedRecalcSizes(true);
+			this.Recalculate(true);
 
-        let nLineW = this.GetBorderWidth() * g_dKoef_pt_to_mm;
+			let nLineW = this.GetBorderWidth() * g_dKoef_pt_to_mm;
 
-        let oGrBounds = this.bounds;
+			let oGrBounds = this.bounds;
 
-        let aRect = [
-            (oGrBounds.l - nLineW) * g_dKoef_mm_to_pt,
-            (oGrBounds.t - nLineW) * g_dKoef_mm_to_pt,
-            (oGrBounds.r + nLineW) * g_dKoef_mm_to_pt,
-            (oGrBounds.b + nLineW) * g_dKoef_mm_to_pt
-        ];
+			rect = [
+				(oGrBounds.l - nLineW) * g_dKoef_mm_to_pt,
+				(oGrBounds.t - nLineW) * g_dKoef_mm_to_pt,
+				(oGrBounds.r + nLineW) * g_dKoef_mm_to_pt,
+				(oGrBounds.b + nLineW) * g_dKoef_mm_to_pt
+			];
+		}
 
-        this.SetRect(aRect);
-    };
+		this.SetRect(rect);
+	};
     CAnnotationLine.prototype.IsDoCaption = function() {
         return this._doCaption;
     };

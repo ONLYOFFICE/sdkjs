@@ -53,6 +53,7 @@ const isDesktopEditor = navigator.userAgent.indexOf("AscDesktopEditor") !== -1;
 let g_storageInfoCache = null;
 let g_storageInfoCacheTime = 0;
 const STORAGE_INFO_CACHE_DURATION = 30000; // 30 seconds
+const STORAGE_ENTRY_HEADROOM_MULTIPLIER = 2;
 
 // === FIFO Cache for Dynamic Document Files ===
 // Used for cache/files/data/ URLs (including WOPI integration where WOPISrc may be reused).
@@ -287,6 +288,53 @@ function getStorageInfo() {
 }
 
 /**
+ * Check whether a diagnostic storage snapshot explains a failed cache write.
+ * @param {Object} storage - storage snapshot from getStorageEstimateSnapshot()
+ * @param {number} size - response size in bytes, or 0 when unknown
+ * @returns {boolean} true if storage headroom is clearly too low
+ */
+function isStorageTooLowForEntry(storage, size) {
+	return !!size && storage && typeof storage.availableStorage === 'number' &&
+		storage.availableStorage < size * STORAGE_ENTRY_HEADROOM_MULTIPLIER;
+}
+
+/**
+ * Check whether a cache write failure should be treated as quota-related.
+ * @param {Object} err - error from cache.put()
+ * @param {Object} storage - storage snapshot from getStorageEstimateSnapshot()
+ * @param {number} size - response size in bytes, or 0 when unknown
+ * @returns {boolean} true if failure is clearly or likely storage quota related
+ */
+function isQuotaRelatedCacheError(err, storage, size) {
+	return (err && err.name === 'QuotaExceededError') || isStorageTooLowForEntry(storage, size);
+}
+
+/**
+ * Read a fresh storage estimate for diagnostics; never rejects.
+ * Used in error paths to reveal whether a failure was a quota/disk issue.
+ * @returns {Promise<Object>} storage estimate, with quota/usage/availableStorage in bytes, or { error }
+ */
+function getStorageEstimateSnapshot() {
+	if (!navigator.storage || typeof navigator.storage.estimate !== 'function') {
+		return Promise.resolve({ error: 'estimate-unavailable' });
+	}
+	return navigator.storage.estimate()
+		.then(function(estimate) {
+			const quota = estimate && typeof estimate.quota === 'number' ? estimate.quota : null;
+			const usage = estimate && typeof estimate.usage === 'number' ? estimate.usage : null;
+			return {
+				quota: quota,
+				usage: usage,
+				usageRatio: (quota && usage !== null) ? usage / quota : null,
+				availableStorage: (quota !== null && usage !== null) ? Math.max(0, quota - usage) : null
+			};
+		})
+		.catch(function(e) {
+			return { error: e && (e.message || String(e)) };
+		});
+}
+
+/**
  * Put response in cache with retry logic for transient errors
  * @param {Request} request
  * @param {Response} response - Response to cache; this function clones per attempt to preserve the original for retries
@@ -311,14 +359,25 @@ function putInCache(request, response, attempt) {
 					return putInCache(request, response, attempt + 1);
 				});
 			} else {
-				const size = response.headers ? response.headers.get('content-length') : 'unknown';
-				console.error('putInCache failed after max retries:', {
+				const sizeHeader = response.headers ? response.headers.get('content-length') : null;
+				const size = Number(sizeHeader) || 0;
+				const details = {
 					url: request.url,
 					method: request.method,
-					responseSize: size,
+					responseSize: sizeHeader || 'unknown',
 					responseType: response.type,
 					cacheName: g_cacheName,
+					errorName: err && err.name,
 					error: err && (err.message || err)
+				};
+				// Snapshot live storage estimate so the log shows whether this was a quota/disk failure
+				return getStorageEstimateSnapshot().then(function(storage) {
+					details.storage = storage;
+					if (isQuotaRelatedCacheError(err, storage, size)) {
+						console.warn('putInCache failed after max retries due to low storage quota:', details);
+					} else {
+						console.error('putInCache failed after max retries:', details);
+					}
 				});
 			}
 		});

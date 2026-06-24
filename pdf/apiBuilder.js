@@ -48,7 +48,7 @@
 
 	/**
 	 * Any valid field element.
-	 * @typedef {(ApiBaseWidget | ApiTextWidget | ApiCheckboxWidget | ApiButtonWidget )} ApiWidget
+	 * @typedef {(ApiBaseWidget | ApiCheckboxWidget | ApiButtonWidget )} ApiWidget
 	 */
 
 	/**
@@ -143,10 +143,10 @@
 	/**
 	 * @typedef {'HH:MM' | 'h:MM tt' | 'HH:MM:ss' | 'h:MM:ss tt'} TimeFormat
 	 * Time format options:
-	 * - "24HR_MM" — 24-hour format, hours and minutes (e.g., "14:30")
-	 * - "12HR_MM" — 12-hour format with AM/PM, hours and minutes (e.g., "2:30 PM")
-	 * - "24HR_MM_SS" — 24-hour format, hours, minutes, and seconds (e.g., "14:30:15")
-	 * - "12HR_MM_SS" — 12-hour format with AM/PM, hours, minutes, and seconds (e.g., "2:30:15 PM")
+	 * - "HH:MM" — 24-hour format, hours and minutes (e.g., "14:30")
+	 * - "h:MM tt" — 12-hour format with AM/PM, hours and minutes (e.g., "2:30 PM")
+	 * - "HH:MM:ss" — 24-hour format, hours, minutes, and seconds (e.g., "14:30:15")
+	 * - "h:MM:ss tt" — 12-hour format with AM/PM, hours, minutes, and seconds (e.g., "2:30:15 PM")
 	 */
 
 	/**
@@ -336,6 +336,22 @@
 	/**
 	 * This type specifies the available chart types which can be used to create a new chart.
 	 * @typedef {(
+	 *     "ColumnClustered" | "ColumnStacked" | "ColumnStacked100" | "3DColumnClustered" | "3DColumnStacked" | "3DColumnStacked100" | "3DColumn" |
+	 *     "BarClustered" | "BarStacked" | "BarStacked100" | "3DBarClustered" | "3DBarStacked" | "3DBarStacked100" |
+	 *     "Line" | "LineStacked" | "LineStacked100" | "LineMarkers" | "LineMarkersStacked" | "LineMarkersStacked100" | "3DLine" |
+	 *     "Pie" | "3DPie" | "Doughnut" |
+	 *     "XYScatter" | "XYScatterLines" | "XYScatterLinesNoMarkers" | "XYScatterSmooth" | "XYScatterSmoothNoMarkers" |
+	 *     "StockHLC" | "StockOHLC" | "StockVHLC" | "StockVOHLC" |
+	 *     "Area" | "AreaStacked" | "AreaStacked100" |
+	 *     "Combo" | "ComboColumnClusteredLine" | "ComboColumnClusteredLineSecondaryAxis" |
+	 *     "Radar" | "RadarMarkers" | "RadarFilled" |
+	 *     "unknown"
+	 * )} ChartType
+	 */
+
+	/**
+	 * This type specifies the legacy chart type names which are kept for backward compatibility.
+	 * @typedef {(
 	 *     "bar" | "barStacked" | "barStackedPercent" | "bar3D" | "barStacked3D" | "barStackedPercent3D" | "barStackedPercent3DPerspective" |
 	 *     "horizontalBar" | "horizontalBarStacked" | "horizontalBarStackedPercent" | "horizontalBar3D" | "horizontalBarStacked3D" | "horizontalBarStackedPercent3D" |
 	 *     "lineNormal" | "lineStacked" | "lineStackedPercent" | "lineNormalMarker" | "lineStackedMarker" | "lineStackedPerMarker" | "line3D" |
@@ -346,7 +362,8 @@
 	 *     "comboCustom" | "comboBarLine" | "comboBarLineSecondary" |
 	 *     "radar" | "radarMarker" | "radarFilled" |
 	 *     "unknown"
-	 * )} ChartType
+	 * )} ChartTypeLegacy
+	 * @see office-js-api/Examples/Enumerations/ChartTypeLegacy.js
 	 */
 
 	/**
@@ -378,6 +395,16 @@
 	 * @typedef {Object} PageSelection
 	 * @property {Point} start - start selection point
 	 * @property {Point} end - end selection point
+	 */
+
+	/**
+	 * @typedef {Object} TableLook
+	 * @property {boolean} firstCol - Specifies that the first column conditional formatting shall be applied to the table.
+	 * @property {boolean} firstRow - Specifies that the first row conditional formatting shall be applied to the table.
+	 * @property {boolean} lastCol - Specifies that the last column conditional formatting shall be applied to the table.
+	 * @property {boolean} lastRow - Specifies that the last row conditional formatting shall be applied to the table.
+	 * @property {boolean} bandHor - Specifies that the horizontal banding conditional formatting shall not be applied to the table.
+	 * @property {boolean} bandVer - Specifies that the vertical banding conditional formatting shall not be applied to the table.
 	 */
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -861,7 +888,7 @@
 			}
 		}
 		else {
-			author = Asc.editor.User.asc_getUserName();
+			author = AscCommon.UserInfoParser.getCurrentName();
 		}
 
 		if (creationDate != null) {
@@ -887,6 +914,7 @@
 			type:           AscPDF.ANNOTATIONS_TYPES.Stamp,
 			creationDate:   creationDate ? creationDate : new Date().getTime(),
 			modDate:        creationDate ? creationDate : new Date().getTime(),
+			author:			author,
 			hidden:         false
 		}
 
@@ -1259,8 +1287,8 @@
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
 	 * @param {ShapeType} [shapeType= "rect"] - The shape type which specifies the preset shape geometry.
-	 * @param {EMU} [width = 72] - The shape width in English measure units.
-	 * @param {EMU} [height = 72] - The shape height in English measure units.
+	 * @param {EMU} [width = 914400] - The shape width in English measure units.
+	 * @param {EMU} [height = 914400] - The shape height in English measure units.
 	 * @param {ApiFill} [fill = Api.CreateNoFill()] - The color or pattern used to fill the shape.
 	 * @param {ApiStroke} [stroke = Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the element shadow.
 	 * @returns {ApiShape}
@@ -1270,8 +1298,8 @@
 		let oDoc = private_GetLogicDocument();
 		shapeType = shapeType || "rect";
 		if (!AscFormat.isValidShapeType(shapeType)) shapeType = "rect";
-		width = width || 72;
-		height = height || 72;
+		width = width || 914400;
+		height = height || 914400;
 		fill = fill || Api.CreateNoFill();
 		stroke = stroke || Api.CreateStroke(0, Api.CreateNoFill());
 
@@ -1311,7 +1339,7 @@
 			nPage = 0;
 		}
 
-		let oGraphicFrame = oDoc.private_Create_TableGraphicFrame(cols, rows, oDoc.DefaultTableStyleId, undefined, undefined, undefined, undefined, nPage);
+		let oGraphicFrame = oDoc.private_Create_TableGraphicFrame(cols, rows, oDoc.DefaultTableStyleId, undefined, undefined, 0, 0, nPage);
 		
 		let content = oGraphicFrame.graphicObject.Content;
 		for (let i = 0; i < content.length; ++i) {
@@ -1375,7 +1403,7 @@
 	 * Adds a new page to document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} index - The index where the page will be added.
+	 * @param {number} [index=this.GetPagesCount()] - The index where the page will be added.
 	 * @param {pt} [width] - The page width.
 	 * @param {pt} [height] - The page height.
 	 * @returns {ApiPage}
@@ -1384,6 +1412,12 @@
 	ApiDocument.prototype.AddPage = function(index, width, height) {
 		let oDoc = private_GetLogicDocument();
 		let oFile = oDoc.GetFile();
+		let nPages = this.GetPagesCount();
+
+		index = AscBuilder.GetNumberParameter(index, this.GetPagesCount());
+		if (null == index || index < 0 || index > nPages) {
+			AscBuilder.throwException("The index parameter must be a valid index");
+		}
 
 		let oPageToClone = oFile.pages[index - 1] || oFile.pages[index];
 
@@ -1522,6 +1556,8 @@
 			AscBuilder.throwException("The text property must be a valid string");
 		}
 
+		this.Document.RecalculateAll();
+
 		let matchCase = AscBuilder.GetBoolParameter(props['matchCase'], false);
 		let wholeWords = AscBuilder.GetBoolParameter(props['wholeWords'], false);
 
@@ -1562,6 +1598,8 @@
 	 */
 	ApiDocument.prototype.GetSelection = function() {
 		let oDoc = private_GetLogicDocument();
+		this.Document.RecalculateAll();
+
 		let oSelCoords = oDoc.GetFile().getSelectionCoords();
 		if (!oSelCoords) {
 			return null;
@@ -1611,6 +1649,7 @@
 
 		let oFile = this.Document.GetFile();
 		this.Document.BlurActiveObject();
+		this.Document.RecalculateAll();
 
 		let startNearestPos = oFile.getNearestPos(selection['start']['page'], selection['start']['point']['x'] * g_dKoef_pt_to_mm, selection['start']['point']['y'] * g_dKoef_pt_to_mm);
 		let endNearestPos = oFile.getNearestPos(selection['end']['page'], selection['end']['point']['x'] * g_dKoef_pt_to_mm, selection['end']['point']['y'] * g_dKoef_pt_to_mm);
@@ -1642,7 +1681,7 @@
 
 		let oResult = {};
 		aDocQuads.forEach(function(pageQuads) {
-			oResult[pageQuads["page"]] = pageQuads["quads"];
+			oResult[pageQuads.page] = pageQuads.quads;
 		});
 
 		return oResult;
@@ -1758,6 +1797,10 @@
 			oDoc.AddAnnot(oInnerObj, this.GetIndex());
 		}
 		else if (object instanceof ApiBaseField) {
+			if (!oInnerObj.IsWidget()) {
+				AscBuilder.throwException("The field has been removed and is no longer available.");
+			}
+			
 			oDoc.AddField(oInnerObj, this.GetIndex());
 		}
 		else if (object instanceof ApiDrawing) {
@@ -1818,6 +1861,8 @@
 		let nPageIdx = this.GetIndex();
 
 		let oDoc = private_GetLogicDocument();
+		oDoc.RecalculateAll();
+		
 		let oSearchEngine = oDoc.Search(searchSettings);
 		let aResult = [];
 
@@ -1853,6 +1898,8 @@
 		if (nPageIdx < sel.Page1 || nPageIdx > sel.Page2) {
 			return null;
 		}
+
+		oDoc.RecalculateAll();
 
 		let startLine  = nPageIdx === sel.Page1 ? sel.Line1  : 0;
 		let startGlyph = nPageIdx === sel.Page1 ? sel.Glyph1 : -2;
@@ -1894,6 +1941,7 @@
 		let nPageIdx = this.GetIndex();
 
 		oDoc.BlurActiveObject();
+		oDoc.RecalculateAll();
 
 		let startNearestPos = oFile.getNearestPos(nPageIdx, selection['start']['x'] * g_dKoef_pt_to_mm, selection['start']['y'] * g_dKoef_pt_to_mm);
 		let endNearestPos   = oFile.getNearestPos(nPageIdx, selection['end']['x'] * g_dKoef_pt_to_mm, selection['end']['y'] * g_dKoef_pt_to_mm);
@@ -2105,25 +2153,30 @@
 		let oDoc = private_GetLogicDocument();
 
 		let oFieldToCommit;
-		if (this.Field.IsWidget()) {
-			oFieldToCommit = this.Field;
+		let aWidgets = this.Field.GetAllWidgets();
+		if (this instanceof ApiCheckboxField) {
+			oFieldToCommit = aWidgets.find(function(widget) {
+				return widget.GetExportValue() == value;
+			});
+
+			if (!oFieldToCommit) {
+				oFieldToCommit = this.Field.GetKid(0);
+				value = "Off";
+			}
 		}
 		else {
-			if (this instanceof ApiCheckboxField) {
-				oFieldToCommit = this.Field.GetKids().find(function(widget) {
-					return widget.GetExportValue() == value;
-				});
-			}
-			else {
-				oFieldToCommit = this.Field.GetKid(0);
-			}
+			oFieldToCommit = aWidgets[0];
 		}
 
 		if (value != undefined && value.toString) {
 			value = value.toString();
 		}
 
-		oFieldToCommit.SetValue(value);
+		let res = oFieldToCommit.SetValue(value);
+		if (!res) {
+			return false;
+		}
+
 		return oDoc.private_CommitField(oFieldToCommit);
 	};
 
@@ -2131,11 +2184,19 @@
 	 * Gets field value
 	 * @memberof ApiBaseField
 	 * @typeofeditors ["PDFE"]
-	 * @returns {string}
+	 * @returns {string | string[]}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseField/Methods/GetValue.js
 	 */
 	ApiBaseField.prototype.GetValue = function() {
-		return this.Field.GetLogicValue();
+		let value = this.Field.GetLogicValue();
+		if (this instanceof ApiCheckboxField) {
+			let aOptions = this.Field.GetOptions();
+			if (aOptions && aOptions.length !== 0 && value != undefined) {
+				return aOptions[value] || "Off";
+			}
+		}
+
+		return value != undefined ? value : "";
 	};
 
 	/**
@@ -2153,7 +2214,10 @@
 		let nFieldType	= this.Field.GetType();
 
 		if (!oPage) {
-			return null;
+			AscBuilder.throwException("The pageIndex parameter must be a valid index");
+		}
+		if (!this.Field.IsUseInDocument()) {
+			AscBuilder.throwException("The field is not in document");
 		}
 
 		let oWidget = oDoc.CreateField(this.Field.GetFullName(), nFieldType, rect);
@@ -2168,11 +2232,16 @@
 	 * Gets array with widgets of the current field.
 	 * @memberof ApiBaseField
 	 * @typeofeditors ["PDFE"]
-	 * @returns {ApiWidget[]}
+	 * @returns {ApiWidget[]} - returns emptry array if the field is not added to the document.
 	 * @see office-js-api/Examples/{Editor}/ApiBaseField/Methods/GetAllWidgets.js
 	 */
 	ApiBaseField.prototype.GetAllWidgets = function() {
-		return this.Field.GetAllWidgets().map(GetWidgetApi);
+		if (this.Field.IsUseInDocument()) {
+			return this.Field.GetAllWidgets().map(GetWidgetApi);
+		}
+		else {
+			return [];
+		}
 	};
 
 	/**
@@ -2649,13 +2718,13 @@
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": "AFNumber_Format(" + decimalPlaces + "," + private_GetInnerNumberSeparateType(separatorStyle) + "," + private_GetInnerNumberNegType(negativeStyle) + "," + "0" + ',"' + currency + '",' + currencyPrepend + ");"
 		}];
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": "AFNumber_Keystroke(" + decimalPlaces + "," + private_GetInnerNumberSeparateType(separatorStyle) + "," + private_GetInnerNumberNegType(negativeStyle) + "," + "0" + ',"' + currency + '",' + currencyPrepend + ");"
 		}];
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 
 		this.Field.Commit();
 
@@ -2678,13 +2747,13 @@
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": "AFPercent_Format(" + decimalPlaces + "," + private_GetInnerNumberSeparateType(separatorStyle) + ");"
 		}]
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": "AFPercent_Keystroke(" + decimalPlaces + "," + private_GetInnerNumberSeparateType(separatorStyle) + ");"
 		}];
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 		this.Field.Commit();
 
 		return true;
@@ -2705,13 +2774,13 @@
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": 'AFDate_Format("' + format + '");'
 		}]
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": 'AFDate_Keystroke("' + format + '");'
 		}];
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 		this.Field.Commit();
 
 		return true;
@@ -2732,13 +2801,13 @@
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": 'AFTime_Format(' + private_GetInnerTimeFormatType(format) + ');'
 		}]
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": 'AFTime_Keystroke(' + private_GetInnerTimeFormatType(format) + ');'
 		}];
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 		this.Field.Commit();
 
 		return true;
@@ -2759,13 +2828,13 @@
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": "AFSpecial_Format(" + private_GetInnerSpecialPsfType(format) + ");"
 		}]
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": "AFSpecial_Keystroke(" + private_GetInnerSpecialPsfType(format) + ");"
 		}];
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 		this.Field.Commit();
 
 		return true;
@@ -2788,6 +2857,33 @@
 	};
 
 	/**
+	 * Sets text field placeholder.
+	 * @memberof ApiTextField
+	 * @typeofeditors ["PDFE"]
+	 * @param {string} sPlaceholder - field placeholder 
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/SetPlaceholder.js
+	 */
+	ApiTextField.prototype.SetPlaceholder = function(sText) {
+		this.Field.GetAllWidgets().forEach(function(widget) {
+			widget.SetPlaceholder(sText);
+		});
+
+		return true;
+	};
+
+	/**
+	 * Gets text field placeholder.
+	 * @memberof ApiTextField
+	 * @typeofeditors ["PDFE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/GetPlaceholder.js
+	 */
+	ApiTextField.prototype.GetPlaceholder = function() {
+		return this.Field.GetKid(0).GetPlaceholder();
+	};
+
+	/**
 	 * Sets regular expression validate string for field.
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
@@ -2797,10 +2893,23 @@
 	 */
 	ApiTextField.prototype.SetRegularExp = function(regularExpression) {
 		this.Field.ClearFormat();
-		this.Field.SetRegularExp(regularExpression);
+		this.Field.GetAllWidgets().forEach(function(widget) {
+			widget.SetRegularExp(regularExpression);
+		});
 		this.Field.Commit();
 
 		return true;
+	};
+
+	/**
+	 * Gets text widget regular validate expression.
+	 * @memberof ApiTextField
+	 * @typeofeditors ["PDFE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/GetRegularExp.js
+	 */
+	ApiTextField.prototype.GetRegularExp = function() {
+		return this.Field.GetKid(0).GetRegularExp();
 	};
 
 	/**
@@ -2845,79 +2954,20 @@
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": 'AFRange_Validate(' + greaterThan +  ',' + greaterThanValue + ',' + lessThan + ',' + lessThanValue +  ');'
 		}];
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Validate, aActionsValidate);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Validate, aActionsValidate);
 
 		return true;
 	};
 
 	/**
-	 * Class representing a text field widget.
-	 * @constructor
-	 * @extends {ApiBaseWidget}
-	 * @typeofeditors ["PDFE"]
-	 */
-	function ApiTextWidget(oField) {
-		ApiBaseWidget.call(this, oField);
-	}
-
-	ApiTextWidget.prototype = Object.create(ApiBaseWidget.prototype);
-	ApiTextWidget.prototype.constructor = ApiTextWidget;
-
-	/**
-	 * Returns a type of the ApiTextWidget class.
-	 * @memberof ApiTextWidget
-	 * @typeofeditors ["PDFE"]
-	 * @returns {"textWidget"}
-	 * @see office-js-api/Examples/{Editor}/ApiTextWidget/Methods/GetClassType.js
-	 */
-	ApiTextWidget.prototype.GetClassType = function() {
-		return "textWidget";
-	};
-
-	/**
-	 * Sets text field placeholder.
-	 * @memberof ApiTextWidget
-	 * @typeofeditors ["PDFE"]
-	 * @param {string} placeholder - The placeholder text.
-	 * @returns {boolean}
-	 * @see office-js-api/Examples/{Editor}/ApiTextWidget/Methods/SetPlaceholder.js
-	 */
-	ApiTextWidget.prototype.SetPlaceholder = function(placeholder) {
-		return this.Field.SetPlaceholder(placeholder)
-	};
-
-	/**
-	 * Gets text field placeholder.
-	 * @memberof ApiTextWidget
+	 * Gets formatted value of a field.
+	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/{Editor}/ApiTextWidget/Methods/GetPlaceholder.js
+	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/GetFormattedValue.js
 	 */
-	ApiTextWidget.prototype.GetPlaceholder = function() {
-		return this.Field.GetPlaceholder()
-	};
-
-	/**
-	 * Sets the text widget regular validation expression.
-	 * @memberof ApiTextWidget
-	 * @typeofeditors ["PDFE"]
-	 * @param {string} regularExpression - The validation regular expression.
-	 * @returns {boolean}
-	 * @see office-js-api/Examples/{Editor}/ApiTextWidget/Methods/SetRegularExp.js
-	 */
-	ApiTextWidget.prototype.SetRegularExp = function(regularExpression) {
-		return this.Field.SetRegularExp(regularExpression)
-	};
-
-	/**
-	 * Gets the text widget regular validation expression.
-	 * @memberof ApiTextWidget
-	 * @typeofeditors ["PDFE"]
-	 * @returns {boolean}
-	 * @see office-js-api/Examples/{Editor}/ApiTextWidget/Methods/GetRegularExp.js
-	 */
-	ApiTextWidget.prototype.GetRegularExp = function() {
-		return this.Field.GetRegularExp()
+	ApiTextField.prototype.GetFormattedValue = function() {
+		return this.Field.GetKid(0).GetFormatValue();
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -3140,13 +3190,13 @@
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": "AFNumber_Format(" + decimalPlaces + "," + private_GetInnerNumberSeparateType(separatorStyle) + "," + private_GetInnerNumberNegType(negativeStyle) + "," + "0" + ',"' + currency + '",' + currencyPrepend + ");"
 		}];
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": "AFNumber_Keystroke(" + decimalPlaces + "," + private_GetInnerNumberSeparateType(separatorStyle) + "," + private_GetInnerNumberNegType(negativeStyle) + "," + "0" + ',"' + currency + '",' + currencyPrepend + ");"
 		}];
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 
 		this.Field.Commit();
 
@@ -3169,13 +3219,13 @@
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": "AFPercent_Format(" + decimalPlaces + "," + private_GetInnerNumberSeparateType(separatorStyle) + ");"
 		}]
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": "AFPercent_Keystroke(" + decimalPlaces + "," + private_GetInnerNumberSeparateType(separatorStyle) + ");"
 		}];
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 		this.Field.Commit();
 
 		return true;
@@ -3196,13 +3246,13 @@
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": 'AFDate_Format("' + format + '");'
 		}]
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": 'AFDate_Keystroke("' + format + '");'
 		}];
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 		this.Field.Commit();
 
 		return true;
@@ -3223,13 +3273,13 @@
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": 'AFTime_Format(' + private_GetInnerTimeFormatType(format) + ');'
 		}]
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": 'AFTime_Keystroke(' + private_GetInnerTimeFormatType(format) + ');'
 		}];
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 		this.Field.Commit();
 
 		return true;
@@ -3250,13 +3300,13 @@
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": "AFSpecial_Format(" + private_GetInnerSpecialPsfType(format) + ");"
 		}]
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
 
 		let aActionsKeystroke = [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": "AFSpecial_Keystroke(" + private_GetInnerSpecialPsfType(format) + ");"
 		}];
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 		this.Field.Commit();
 
 		return true;
@@ -3279,7 +3329,34 @@
 	};
 
 	/**
-	 * Sets regular expression for field.
+	 * Sets text field placeholder.
+	 * @memberof ApiComboboxField
+	 * @typeofeditors ["PDFE"]
+	 * @param {string} sPlaceholder - field placeholder 
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/SetPlaceholder.js
+	 */
+	ApiComboboxField.prototype.SetPlaceholder = function(sText) {
+		this.Field.GetAllWidgets().forEach(function(widget) {
+			widget.SetPlaceholder(sText);
+		});
+
+		return true;
+	};
+
+	/**
+	 * Gets text field placeholder.
+	 * @memberof ApiComboboxField
+	 * @typeofeditors ["PDFE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/GetPlaceholder.js
+	 */
+	ApiComboboxField.prototype.GetPlaceholder = function() {
+		return this.Field.GetKid(0).GetPlaceholder();
+	};
+
+	/**
+	 * Sets regular expression validate string for field.
 	 * @memberof ApiComboboxField
 	 * @typeofeditors ["PDFE"]
 	 * @param {string} regularExpression - The validation regular expression (e.g. "\\S+@\\S+\\.\\S+")
@@ -3288,10 +3365,23 @@
 	 */
 	ApiComboboxField.prototype.SetRegularExp = function(regularExpression) {
 		this.Field.ClearFormat();
-		this.Field.SetRegularExp(regularExpression);
+		this.Field.GetAllWidgets().forEach(function(widget) {
+			widget.SetRegularExp(regularExpression);
+		});
 		this.Field.Commit();
 
 		return true;
+	};
+
+	/**
+	 * Gets text widget regular validate expression.
+	 * @memberof ApiComboboxField
+	 * @typeofeditors ["PDFE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/GetRegularExp.js
+	 */
+	ApiComboboxField.prototype.GetRegularExp = function() {
+		return this.Field.GetKid(0).GetRegularExp();
 	};
 
 	/**
@@ -3336,9 +3426,20 @@
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": 'AFRange_Validate(' + greaterThan +  ',' + greaterThanValue + ',' + lessThan + ',' + lessThanValue +  ');'
 		}];
-		this.Field.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Validate, aActionsValidate);
+		this.Field.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Validate, aActionsValidate);
 
 		return true;
+	};
+
+	/**
+	 * Gets formatted value of a field.
+	 * @memberof ApiComboboxField
+	 * @typeofeditors ["PDFE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/GetFormattedValue.js
+	 */
+	ApiComboboxField.prototype.GetFormattedValue = function() {
+		return this.Field.GetKid(0).GetFormatValue();
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -3459,28 +3560,31 @@
 	 */
 	ApiCheckboxField.prototype.AddOption = function(pageIndex, rect, exportValue) {
 		if (!exportValue) {
-			return null;
+			AscBuilder.throwException("The pageIndex parameter must be a valid string");
+		}
+		if (!this.Field.IsUseInDocument()) {
+			AscBuilder.throwException("The field is not in document");
 		}
 
 		let oDoc = private_GetLogicDocument();
 
 		let oField;
 		if (this.GetClassType() == 'checkboxField') {
-			oField = oDoc.CreateCheckboxField();
+			oField = oDoc.CreateCheckboxField(true);
 		}
 		else {
-			oField = oDoc.CreateRadiobuttonField();
+			oField = oDoc.CreateRadiobuttonField(true);
 		}
 
 		oField.SetRect(rect);
 		oField.SetPartialName(this.GetFullName());
-		oDoc.AddField(oField, pageIndex);
-
 		if (exportValue) {
 			oField.SetExportValue(exportValue);
 		}
 
-		return new ApiRadiobuttonField(oField);
+		oDoc.AddField(oField, pageIndex);
+
+		return new ApiCheckboxWidget(oField);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -4062,17 +4166,14 @@
 	};
 
 	/**
-	 * Sets annotation rect.
+	 * Gets annotation rect.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
 	 * @returns {Rect}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/GetRect.js
 	 */
 	ApiBaseAnnotation.prototype.GetRect = function() {
-		let aRD = this.Annot.GetRectangleDiff() || [0, 0, 0, 0];
-		let aRect = this.Annot.GetRect();
-
-		return [aRect[0] + aRD[0], aRect[1] + aRD[1], aRect[2] - aRD[2], aRect[3] - aRD[3]];
+		return this.Annot.GetRect();
 	};
 
 	/**
@@ -4554,6 +4655,9 @@
 			case AscPDF.BORDER_EFFECT_STYLES.cloud: {
 				return "cloud";
 			}
+			default: {
+				return "none";
+			}
 		}
 	};
 
@@ -4934,10 +5038,14 @@
 	 * @memberof ApiFreeTextAnnotation
 	 * @typeofeditors ["PDFE"]
 	 * @param {FreeTextCallout} callout - An array of 3 points defining the callout line.
-	 * @returns {boolean}
+	 * @returns {boolean} - returns false if intent is not equal "freeTextCallout"
 	 * @see office-js-api/Examples/{Editor}/ApiFreeTextAnnotation/Methods/SetCallout.js
 	 */
 	ApiFreeTextAnnotation.prototype.SetCallout = function(callout) {
+		if (this.GetIntent() !== "freeTextCallout") {
+			return false;
+		}
+
 		callout = AscBuilder.GetArrayParameter(callout, null);
 		if (!callout || callout.length !== 3) {
 			AscBuilder.throwException("The callout parameter must be an array with 3 Point elements.");
@@ -4960,10 +5068,14 @@
 	 * Gets annot callout.
 	 * @memberof ApiFreeTextAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @returns {FreeTextCallout}
+	 * @returns {?FreeTextCallout}
 	 * @see office-js-api/Examples/{Editor}/ApiFreeTextAnnotation/Methods/GetCallout.js
 	 */
 	ApiFreeTextAnnotation.prototype.GetCallout = function() {
+		if (this.GetIntent() !== "freeTextCallout") {
+			return null;
+		}
+
 		let aCallout = this.Annot.GetCallout();
 
 		let aResult = [];
@@ -6080,6 +6192,14 @@
 		this.ParaPr = ParaPr;
 	}
 
+	ApiRichParaPr.prototype.GetEffectiveParaPr = function() {
+		let paragraph = this.Parent && this.Parent.private_GetImpl ? this.Parent.private_GetImpl() : null;
+		if (paragraph instanceof AscWord.Paragraph)
+			return paragraph.Get_CompiledPr2().ParaPr;
+		
+		return this.ParaPr;
+	};
+
 	/**
 	 * Returns a type of the ApiRichParaPr class.
 	 * @memberof ApiRichParaPr
@@ -6240,6 +6360,15 @@
 	ApiRichParagraph.prototype.Push = function(richRun) {
 		return this.AddElement(richRun, this.GetElementsCount());
 	};
+
+	/**
+	 * Returns the last Run with text in the current paragraph.
+	 * @memberof ApiRichParagraph
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiRun}
+	 * @see office-js-api/Examples/{Editor}/ApiRichParagraph/Methods/GetLastRunWithText.js
+	 */
+	ApiRichParagraph.prototype.GetLastRunWithText = AscBuilder.ApiParagraph.prototype.GetLastRunWithText;
 
 	/**
 	 * Returns a paragraph element using the position specified.
@@ -6997,6 +7126,17 @@
 	 * @memberof ApiShape
 	 * @typeofeditors ["PDFE"]
 	 * @returns {?ApiDocumentContent}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetDocContent.js
+	 */
+	ApiShape.prototype.GetDocContent = function() {
+		return this.GetContent();
+	};
+
+	/**
+	 * Returns the shape inner contents where a paragraph or text runs can be inserted.
+	 * @memberof ApiShape
+	 * @typeofeditors ["PDFE"]
+	 * @returns {?ApiDocumentContent}
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetContent.js
 	 */
 	ApiShape.prototype.GetContent = function() {
@@ -7024,20 +7164,50 @@
 	ApiShape.prototype.SetVerticalTextAlign = function(verticalAlign) {
 		switch (verticalAlign) {
 			case "top": {
-				this.Shape.setVerticalAlign(4);
+				this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
 				break;
 			}
 			case "center": {
-				this.Shape.setVerticalAlign(1);
+				this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
 				break;
 			}
 			case "bottom": {
-				this.Shape.setVerticalAlign(0);
+				this.Shape.setVerticalAlign(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
 				break;
+			}
+			default: {
+				return false;
 			}
 		}
 
 		return true;
+	};
+
+	/**
+	 * Gets the vertical alignment from the shape content where a paragraph or text runs can be inserted.
+	 * @memberof ApiShape
+	 * @typeofeditors ["PDFE"]
+	 * @returns {VerticalTextAlign}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetVerticalTextAlign.js
+	 */
+	ApiShape.prototype.GetVerticalTextAlign = function() {
+		let vAlign = this.Shape.getVerticalAlign();
+
+		switch(vAlign)
+		{
+			case AscFormat.VERTICAL_ANCHOR_TYPE_TOP:
+			{
+				return "top";
+			}
+			case AscFormat.VERTICAL_ANCHOR_TYPE_CENTER:
+			{
+				return "center";
+			}
+			case AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM:
+			{
+				return "bottom";
+			}
+		}
 	};
 
 	/**
@@ -7269,7 +7439,7 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiTableCell} rowCell - A cell from the row to remove.
-	 * @returns {boolean} - defines if the table is empty after removing or not.
+	 * @returns {boolean} - result of deletion
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveRow.js
 	 */
 	ApiTable.prototype.RemoveRow = function(rowCell) {
@@ -7279,7 +7449,7 @@
 		this.private_PrepareTableForActions();
 		this.Table.RemoveSelection();
 		this.Table.CurCell = rowCell.Cell;
-		return !(this.Table.RemoveTableRow());
+		return this.Table.RemoveTableRow();
 	};
 
 	/**
@@ -7371,6 +7541,26 @@
 	};
 
 	/**
+	 * Gets table look properties
+	 * @memberof ApiTable
+	 * @typeofeditors ["PDFE"]
+	 * @returns {TableLook}
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetTableLook.js
+	 */
+	ApiTable.prototype.GetTableLook = function() {
+		let oTableLook = this.Table.Get_TableLook();
+
+		return {
+			firstCol:	oTableLook.IsFirstCol(),
+			firstRow:	oTableLook.IsFirstRow(),
+			lastCol:	oTableLook.IsLastCol(),
+			lastRow:	oTableLook.IsLastRow(),
+			bandHor:	oTableLook.IsBandHor(),
+			bandVer:	oTableLook.IsBandVer()
+		}
+	};
+
+	/**
 	 * Adds a new column to the end of the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
@@ -7405,7 +7595,7 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiTableCell} columnCell - A cell from the column to remove.
-	 * @returns {boolean} - defines if the table is empty after removing or not.
+	 * @returns {boolean} - result of deletion
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveColumn.js
 	 */
 	ApiTable.prototype.RemoveColumn = function(columnCell) {
@@ -7414,7 +7604,7 @@
 		this.private_PrepareTableForActions();
 		this.Table.RemoveSelection();
 		this.Table.CurCell = columnCell.Cell;
-		return !(this.Table.RemoveTableColumn());
+		return this.Table.RemoveTableColumn();
 	};
 
 	/**
@@ -7541,33 +7731,32 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetHeight.js
 	 */
 	ApiTableRow.prototype.SetHeight = function(height) {
-		let fMaxTopMargin = 0,
-			fMaxBottomMargin = 0,
-			fMaxTopBorder = 0,
-			fMaxBottomBorder = 0;
+		this.Row.Set_Height(private_EMU2MM(height), Asc.linerule_AtLeast);
+		return true;
+	};
 
-		for (let i = 0; i < this.Row.Content.length; ++i) {
-			let cell = this.Row.Content[i];
-
-			let oMargins = cell.GetMargins();
-			if (oMargins.Bottom.W > fMaxBottomMargin) {
-				fMaxBottomMargin = oMargins.Bottom.W;
-			}
-			if (oMargins.Top.W > fMaxTopMargin) {
-				fMaxTopMargin = oMargins.Top.W;
-			}
-
-			let oBorders = cell.Get_Borders();
-			if (oBorders.Top.Size > fMaxTopBorder) {
-				fMaxTopBorder = oBorders.Top.Size;
-			}
-			if (oBorders.Bottom.Size > fMaxBottomBorder) {
-				fMaxBottomBorder = oBorders.Bottom.Size;
-			}
+	/**
+	 * Gets the height from the current table row.
+	 * @memberof ApiTableRow
+	 * @typeofeditors ["PDFE"]
+	 * @returns {EMU}
+	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetHeight.js
+	 */
+	ApiTableRow.prototype.GetHeight = function(height) {
+		const table = this.Row.Table;
+		if (!table || !table.Parent) {
+			return null;
 		}
 
-		this.Row.Set_Height(Math.max(1, private_EMU2MM(height) - fMaxTopMargin - fMaxBottomMargin - fMaxTopBorder / 2 - fMaxBottomBorder / 2), Asc.linerule_AtLeast);
-		return true;
+		table.Parent.recalculateTable();
+		table.Parent.recalculateSizes();
+
+		const rowInfo = table.RowsInfo[this.Row.Index];
+		if (!rowInfo || !rowInfo.H[0]) {
+			return null;
+		}
+
+		return private_MM2EMU(rowInfo.H[0]);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -7891,7 +8080,9 @@
 			oPr.VAlign = vertalignjc_Bottom;
 		else if ("center" === verticalAlign)
 			oPr.VAlign = vertalignjc_Center;
-
+		else
+			return false;
+		
 		this.Cell.Set_Pr(oPr);
 		return true;
 	};
@@ -7912,7 +8103,9 @@
 			oPr.TextDirection = textdirection_TBRL;
 		else if ("btlr" === textDirection)
 			oPr.TextDirection = textdirection_BTLR;
-
+		else
+			return false;
+		
 		this.Cell.Set_Pr(oPr);
 		return true;
 	};
@@ -8079,11 +8272,7 @@
 			case AscPDF.FIELD_TYPES.checkbox: {
 				return new ApiCheckboxWidget(field);
 			}
-			case AscPDF.FIELD_TYPES.text:
-			case AscPDF.FIELD_TYPES.combobox: {
-				return new ApiTextWidget(field);
-			}
-			case AscPDF.FIELD_TYPES.listbox: {
+			default: {
 				return new ApiBaseWidget(field);
 			}
 		}
@@ -8794,16 +8983,13 @@
 	ApiTextField.prototype["SetTimeFormat"]					= ApiTextField.prototype.SetTimeFormat;
 	ApiTextField.prototype["SetSpecialFormat"]				= ApiTextField.prototype.SetSpecialFormat;
 	ApiTextField.prototype["SetMask"]						= ApiTextField.prototype.SetMask;
+	ApiTextField.prototype["SetPlaceholder"]				= ApiTextField.prototype.SetPlaceholder;
+	ApiTextField.prototype["GetPlaceholder"]				= ApiTextField.prototype.GetPlaceholder;
 	ApiTextField.prototype["SetRegularExp"]					= ApiTextField.prototype.SetRegularExp;
+	ApiTextField.prototype["GetRegularExp"]					= ApiTextField.prototype.GetRegularExp;
 	ApiTextField.prototype["ClearFormat"]					= ApiTextField.prototype.ClearFormat;
 	ApiTextField.prototype["SetValidateRange"]				= ApiTextField.prototype.SetValidateRange;
-
-	// ApiTextWidget
-	ApiTextWidget.prototype["GetClassType"]					= ApiTextWidget.prototype.GetClassType;
-	ApiTextWidget.prototype["SetPlaceholder"]				= ApiTextWidget.prototype.SetPlaceholder;
-	ApiTextWidget.prototype["GetPlaceholder"]				= ApiTextWidget.prototype.GetPlaceholder;
-	ApiTextWidget.prototype["SetRegularExp"]				= ApiTextWidget.prototype.SetRegularExp;
-	ApiTextWidget.prototype["GetRegularExp"]				= ApiTextWidget.prototype.GetRegularExp;
+	ApiTextField.prototype["GetFormattedValue"]				= ApiTextField.prototype.GetFormattedValue;
 
 	// ApiBaseListField
 	ApiBaseListField.prototype["AddOption"]					= ApiBaseListField.prototype.AddOption;
@@ -8826,9 +9012,13 @@
 	ApiComboboxField.prototype["SetTimeFormat"]				= ApiComboboxField.prototype.SetTimeFormat;
 	ApiComboboxField.prototype["SetSpecialFormat"]			= ApiComboboxField.prototype.SetSpecialFormat;
 	ApiComboboxField.prototype["SetMask"]					= ApiComboboxField.prototype.SetMask;
+	ApiComboboxField.prototype["SetPlaceholder"]			= ApiComboboxField.prototype.SetPlaceholder;
+	ApiComboboxField.prototype["GetPlaceholder"]			= ApiComboboxField.prototype.GetPlaceholder;
 	ApiComboboxField.prototype["SetRegularExp"]				= ApiComboboxField.prototype.SetRegularExp;
+	ApiComboboxField.prototype["GetRegularExp"]				= ApiComboboxField.prototype.GetRegularExp;
 	ApiComboboxField.prototype["ClearFormat"]				= ApiComboboxField.prototype.ClearFormat;
 	ApiComboboxField.prototype["SetValidateRange"]			= ApiComboboxField.prototype.SetValidateRange;
+	ApiComboboxField.prototype["GetFormattedValue"]			= ApiComboboxField.prototype.GetFormattedValue;
 
 	// ApiListboxField
 	ApiListboxField.prototype["GetClassType"]				= ApiListboxField.prototype.GetClassType;
@@ -9030,6 +9220,7 @@
 	ApiRichParagraph.prototype["GetElementsCount"]			= ApiRichParagraph.prototype.GetElementsCount;
 	ApiRichParagraph.prototype["AddElement"]				= ApiRichParagraph.prototype.AddElement;
 	ApiRichParagraph.prototype["Push"]						= ApiRichParagraph.prototype.Push;
+	ApiRichParagraph.prototype["GetLastRunWithText"]		= ApiRichParagraph.prototype.GetLastRunWithText;
 	ApiRichParagraph.prototype["GetElement"]				= ApiRichParagraph.prototype.GetElement;
 	ApiRichParagraph.prototype["RemoveElement"]				= ApiRichParagraph.prototype.RemoveElement;
 	ApiRichParagraph.prototype["RemoveAllElements"]			= ApiRichParagraph.prototype.RemoveAllElements;
@@ -9092,8 +9283,10 @@
 
 	// ApiShape
 	ApiShape.prototype["GetClassType"]						= ApiShape.prototype.GetClassType;
+	ApiShape.prototype["GetDocContent"]						= ApiShape.prototype.GetDocContent;
 	ApiShape.prototype["GetContent"]						= ApiShape.prototype.GetContent;
 	ApiShape.prototype["SetVerticalTextAlign"]				= ApiShape.prototype.SetVerticalTextAlign;
+	ApiShape.prototype["GetVerticalTextAlign"]				= ApiShape.prototype.GetVerticalTextAlign;
 	ApiShape.prototype["GetGeometry"]						= ApiShape.prototype.GetGeometry;
 	ApiShape.prototype["SetGeometry"]						= ApiShape.prototype.SetGeometry;
 	ApiShape.prototype["SetFill"]							= ApiShape.prototype.SetFill;
@@ -9111,6 +9304,7 @@
 	ApiTable.prototype["RemoveRow"]							= ApiTable.prototype.RemoveRow;
 	ApiTable.prototype["MergeCells"]						= ApiTable.prototype.MergeCells;
 	ApiTable.prototype["SetTableLook"]						= ApiTable.prototype.SetTableLook;
+	ApiTable.prototype["GetTableLook"]						= ApiTable.prototype.GetTableLook;
 	ApiTable.prototype["AddColumn"]							= ApiTable.prototype.AddColumn;
 	ApiTable.prototype["RemoveColumn"]						= ApiTable.prototype.RemoveColumn;
 	ApiTable.prototype["SetShd"]							= ApiTable.prototype.SetShd;
@@ -9120,6 +9314,7 @@
 	ApiTableRow.prototype["GetCellsCount"]					= ApiTableRow.prototype.GetCellsCount;
 	ApiTableRow.prototype["GetCell"]						= ApiTableRow.prototype.GetCell;
 	ApiTableRow.prototype["SetHeight"]						= ApiTableRow.prototype.SetHeight;
+	ApiTableRow.prototype["GetHeight"]						= ApiTableRow.prototype.GetHeight;
 
 	// ApiTableCell
 	ApiTableCell.prototype["GetClassType"]					= ApiTableCell.prototype.GetClassType;
@@ -9142,6 +9337,7 @@
 	// ApiChart
 	ApiChart.prototype["GetClassType"]						= ApiChart.prototype.GetClassType = AscBuilder.ApiChart.prototype.GetClassType;
 	ApiChart.prototype["GetChartType"]						= ApiChart.prototype.GetChartType = AscBuilder.ApiChart.prototype.GetChartType;
+	ApiChart.prototype["GetType"]							= ApiChart.prototype.GetType = AscBuilder.ApiChart.prototype.GetType;
 	ApiChart.prototype["SetTitle"]							= ApiChart.prototype.SetTitle = AscBuilder.ApiChart.prototype.SetTitle;
 	ApiChart.prototype["GetTitle"]							= ApiChart.prototype.GetTitle = AscBuilder.ApiChart.prototype.GetTitle;
 	ApiChart.prototype["SetHorAxisTitle"]					= ApiChart.prototype.SetHorAxisTitle = AscBuilder.ApiChart.prototype.SetHorAxisTitle;
@@ -9151,6 +9347,7 @@
 	ApiChart.prototype["SetLegendPos"]						= ApiChart.prototype.SetLegendPos = AscBuilder.ApiChart.prototype.SetLegendPos;
 	ApiChart.prototype["SetLegendFontSize"]					= ApiChart.prototype.SetLegendFontSize = AscBuilder.ApiChart.prototype.SetLegendFontSize;
 	ApiChart.prototype["SetShowDataLabels"]					= ApiChart.prototype.SetShowDataLabels = AscBuilder.ApiChart.prototype.SetShowDataLabels;
+	ApiChart.prototype["SetShowDataTable"]					= ApiChart.prototype.SetShowDataTable = AscBuilder.ApiChart.prototype.SetShowDataTable;
 	ApiChart.prototype["SetShowPointDataLabel"]				= ApiChart.prototype.SetShowPointDataLabel = AscBuilder.ApiChart.prototype.SetShowPointDataLabel;
 	ApiChart.prototype["SetVertAxisTickLabelPosition"]		= ApiChart.prototype.SetVertAxisTickLabelPosition = AscBuilder.ApiChart.prototype.SetVertAxisTickLabelPosition;
 	ApiChart.prototype["SetHorAxisTickLabelPosition"]		= ApiChart.prototype.SetHorAxisTickLabelPosition = AscBuilder.ApiChart.prototype.SetHorAxisTickLabelPosition;
@@ -9223,6 +9420,7 @@
 		AscBuilder.ApiGroup     = ApiGroup;
 		AscBuilder.ApiSmartArt  = ApiSmartArt;
 		AscBuilder.ApiChart     = ApiChart;
+		AscBuilder.ApiTable     = ApiTable;
 	};
 
 }(window, null));

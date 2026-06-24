@@ -202,7 +202,6 @@ function CMathText(bJDraw)
     this.RecalcInfo =
     {
         StyleCode:        null,
-        bAccentIJ:        false,
         bSpaceSpecial:    false,
         bApostrophe:      false,
         bSpecialOperator: false
@@ -258,6 +257,27 @@ CMathText.prototype.private_getCode = function()
 
     var Compiled_MPrp = this.Parent.GetCompiled_ScrStyles();
     var bAccent = this.Parent.IsAccent();
+
+	// dotless i/j under an accent: pick the Unicode dotless form by style (no hardcoded
+	// glyph ids, which broke on macOS).
+	//      lain  -> U+0131 / U+0237
+	//      italic -> U+1D6A4 / U+1D6A5
+	// 
+	// Unicode has no bold dotless form; bold/bold-italic fall back to plain/italic for now
+	// (proper bold to come later via the OpenType dtls feature).
+	if(bAccent && (code == 0x69 || code == 0x6A))
+	{
+		var nDotlessSty = Compiled_MPrp.sty;
+
+		if(nDotlessSty == STY_ITALIC || nDotlessSty == STY_BI)
+		{
+			return (code == 0x69)
+				? 0x1D6A4
+				: 0x1D6A5;
+		}
+
+		return (code == 0x69) ? 0x131 : 0x237;
+	}
 
     var bCapitale = (code > 0x0040 && code < 0x005B),
         bSmall = (code > 0x0060 && code < 0x007b),
@@ -731,18 +751,11 @@ CMathText.prototype.Measure = function(oMeasure, TextPr, InfoMathText)
 
 		this.FontSlot = InfoMathText.GetFontSlot(letter); // возвращает AscWord.fontslot_ASCII || AscWord.fontslot_EastAsia || AscWord.fontslot_CS || AscWord.fontslot_HAnsi
 
-		// в не математическом тексте i и j не подменяются на i и j без точек
-		var bAccentIJ = !InfoMathText.bNormalText && this.Parent.IsAccent() && (this.value == 0x69 || this.value == 0x6A);
-
-		this.RecalcInfo.StyleCode   = letter;
-		this.RecalcInfo.bAccentIJ   = bAccentIJ;
+		this.RecalcInfo.StyleCode = letter;
 
 		var bApostrophe = 1 == q_Math_Apostrophe[letter] && this.bJDraw == false;
 
-		if(bAccentIJ)
-			oMeasure.SetStringGid(true);
-
-		else if( InfoMathText.NeedUpdateFont(letter, this.FontSlot, this.IsPlaceholder(), bApostrophe) )
+		if( InfoMathText.NeedUpdateFont(letter, this.FontSlot, this.IsPlaceholder(), bApostrophe) )
 		{
 			if (this.Parent.Pr.SmallCaps || this.Parent.Pr.Caps)
 			{
@@ -782,9 +795,6 @@ CMathText.prototype.Measure = function(oMeasure, TextPr, InfoMathText)
 		this.RecalcInfo.bSpaceSpecial = letter == 0x2061;
 
 		metricsTxt = oMeasure.MeasureCode(letter);
-
-		if(bAccentIJ)
-			oMeasure.SetStringGid(false);
 	}
 
 	if(this.RecalcInfo.bApostrophe)
@@ -902,11 +912,7 @@ CMathText.prototype.Draw = function(x, y, pGraphics, InfoTextPr)
 			pGraphics.SetFontSlot(this.FontSlot, FontKoef);
 		}
 
-		if (this.RecalcInfo.bAccentIJ)
-		{
-			pGraphics.tg(this.RecalcInfo.StyleCode, X, Y);
-		}
-		else if (Asc.editor.ShowParaMarks && (this.value === 8195 || this.value === 8194 || this.value === 160))
+		if (Asc.editor.ShowParaMarks && (this.value === 8195 || this.value === 8194 || this.value === 160))
 		{
 			let widthOfCircle = g_oTextMeasurer.MeasureCode(176).Width / 2;
 			pGraphics.FillTextCode(X + this.size.width / 2 - widthOfCircle, Y, 176);

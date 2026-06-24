@@ -54,7 +54,7 @@
 	 * @property {string} Alias - An alias of the content control.
 	 * @property {1 | 2} Appearance - The visualization type of the content control: <b>1</b> - frame (bounding box), <b>2</b> - hidden.
 	 * @property {string} [FormKey] - A unique form key. Present only if the content control is a form field.
-	 * @property {string} [RadioGroup] - A group key of the radio button. Present only if the content control is a radio button form field .
+	 * @property {string} [RadioGroup] - A group key of the radio button. Present only if the content control is a radio button form field.
 	 * @property {string | boolean | Date} [FormValue] - The current value of the form field. Present only if the content control is a form field.
 	 * @property {{R: number, G: number, B: number}} [Color] - The tag color of the content control. Present only if the tag color is set.
 	 * @property {{Color: {R: number, G: number, B: number, A: number}}} [Border] - The border color of the content control. Present only if the border color is set.
@@ -495,7 +495,7 @@
 		
 		if (this.isPdfEditor()) {
 			let oViewer = logicDocument.Viewer;
-			oViewer.findText(searchProps, isForward);
+			oViewer.findText(searchProps, isForward !== false);
 			this._selectSearchingResults(true);
 			return 0 !== logicDocument.SearchEngine.Count;
 		}
@@ -1143,9 +1143,6 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias AddAddinField
-	 * @param {Object} data - Addin field data.
-	 * @param {string} data.Value - Field value.
-	 * @param {string} data.Content - Field text content.
 	 * @param {AddinFieldData} data - Addin field data.
 	 * @returns {AddinFieldData} - An AddinFieldData object containing the data about the current added field, or null if no addin field was added.
 	 * @since 7.3.3
