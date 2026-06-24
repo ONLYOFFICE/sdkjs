@@ -1600,6 +1600,22 @@
 		let oDoc = private_GetLogicDocument();
 		this.Document.RecalculateAll();
 
+		let oDrawing = oDoc.activeDrawing;
+		if (oDrawing) {
+			let aQuadsParts = oDrawing.GetSelectionQuads();
+			if (!aQuadsParts) {
+				return null;
+			}
+
+			let firstQuad = aQuadsParts[0].quads[0];
+			let lastQuad = aQuadsParts[0].quads[aQuadsParts[0].quads.length - 1];
+
+			return {
+				"start": {"page": aQuadsParts[0].page, "point": {"x": firstQuad[0], "y": firstQuad[1]}},
+				"end":   {"page": aQuadsParts[0].page, "point": {"x": lastQuad[2], "y": lastQuad[3]}}
+			}
+		}
+
 		let oSelCoords = oDoc.GetFile().getSelectionCoords();
 		if (!oSelCoords) {
 			return null;
@@ -1677,6 +1693,8 @@
 	 */
 	ApiDocument.prototype.GetSelectionQuads = function() {
 		let oDoc = private_GetLogicDocument();
+		oDoc.RecalculateAll();
+
 		let aDocQuads = oDoc.GetFile().getSelectionQuads();
 
 		let oResult = {};
@@ -1893,13 +1911,29 @@
 			return null;
 		}
 
+		oDoc.RecalculateAll();
+		
+		let oDrawing = oDoc.activeDrawing;
+		if (oDrawing) {
+			let aQuadsParts = oDrawing.GetSelectionQuads();
+			if (!aQuadsParts) {
+				return null;
+			}
+
+			let firstQuad = aQuadsParts[0].quads[0];
+			let lastQuad = aQuadsParts[0].quads[aQuadsParts[0].quads.length - 1];
+
+			return {
+				"start": {"x": firstQuad[0], "y": firstQuad[1]},
+				"end":   {"x": lastQuad[2], "y": lastQuad[3]}
+			}
+		}
+
 		let sel = oFile.sortSelection();
 
 		if (nPageIdx < sel.Page1 || nPageIdx > sel.Page2) {
 			return null;
 		}
-
-		oDoc.RecalculateAll();
 
 		let startLine  = nPageIdx === sel.Page1 ? sel.Line1  : 0;
 		let startGlyph = nPageIdx === sel.Page1 ? sel.Glyph1 : -2;
@@ -1970,6 +2004,8 @@
 	 */
 	ApiPage.prototype.GetSelectionQuads = function() {
 		let oDoc = private_GetLogicDocument();
+		oDoc.RecalculateAll();
+		
 		let nPageIdx = this.GetIndex();
 		let aDocQuads = oDoc.GetFile().getSelectionQuads();
 
