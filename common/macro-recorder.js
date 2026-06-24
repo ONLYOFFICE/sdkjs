@@ -991,7 +991,7 @@
 
 			return "\tlet " + varName + " = (function()\n"
 				+ "\t{\n"
-				+ "\t\tlet table = Api.CreateTable(" + prop.col + ", " + prop.row + ");\n"
+				+ "\t\tlet table = Api.CreateTable(" + prop.row + ", " + prop.col + ");\n"
 				+ "\t\tlet " + styleVar + " = doc.GetStyle(\"" + styleStr + "\");\n"
 				+ "\t\tif (" + styleVar + ") table.SetStyle(" + styleVar + ");\n"
 				+ "\t\ttable.SetTableLayout(\"autofit\");\n"
@@ -2646,7 +2646,7 @@
 
 			return "\tlet " + varName + " = (function()\n"
 				+ "\t{\n"
-				+ "\t\tlet table = Api.CreateTable(" + prop.col + ", " + prop.row + ");\n"
+				+ "\t\tlet table = Api.CreateTable(" + prop.row + ", " + prop.col + ");\n"
 				+ "\t\tlet " + styleVar + " = presentation.GetStyle(\"" + styleStr + "\");\n"
 				+ "\t\tif (" + styleVar + ") table.SetStyle(" + styleVar + ");\n"
 				+ "\t\t[" + width.toString() + "].forEach(function(width, index){\n"
