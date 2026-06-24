@@ -9056,7 +9056,7 @@
 		const unifillColor = unifill && unifill.fill && unifill.fill.color && unifill.fill.color.color;
 		if (unifillColor) {
 			if (unifillColor instanceof AscFormat.CSchemeColor)
-				return new ApiColor('theme', unifillColor.id);
+				return new AscBuilder.ApiColor('theme', unifillColor.id);
 
 			if (unifillColor instanceof AscFormat.CRGBColor)
 				return Api.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
