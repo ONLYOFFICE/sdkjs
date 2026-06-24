@@ -367,6 +367,9 @@
     if (!this.input) {
       return;
     }
+
+    var isDynamicArrayNotMainCell = this._isActiveCellDynamicArrayNotMain();
+
     if (this._isInputContentEditable()) {
       if (this.cellEditor) {
         this.cellEditor._updateContentEditableLayout();
@@ -387,6 +390,21 @@
     } else {
       this.input.value = text;
     }
+
+    this.input.style.color = isDynamicArrayNotMainCell ? 'rgb(150, 150, 150)' : '';
+  };
+
+  WorkbookView.prototype._isActiveCellDynamicArrayNotMain = function () {
+    if (!AscCommonExcel.bIsSupportDynamicArrays) {
+      return false;
+    }
+    var ws = this.getWorksheet();
+    var selection = ws && ws.model.getSelection();
+    var activeCell = selection && selection.activeCell;
+    if (!activeCell) {
+      return false;
+    }
+    return ws.model.dynamicArrayManager.isSpilledNotFirstCell(activeCell.col, activeCell.row);
   };
 
   WorkbookView.prototype._init = function(fontRenderingMode) {
