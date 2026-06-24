@@ -12669,8 +12669,10 @@
             {
                 if (obj.options && obj.options.isImageDecrypt)
                 {
-                	AscCommon.CryptoProvider.resaveFile(obj.options.src, data[0]);
-                    obj.options.img["onload_crypto"](obj.options.src);
+                	// desktop: ResaveFile writes to disk and returns nothing -> re-display from src.
+                	// web: resaveFile returns a blob: URL for the decrypted bytes -> re-display from it.
+                	var _resavedSrc = AscCommon.CryptoProvider.resaveFile(obj.options.src, data[0]);
+                    obj.options.img["onload_crypto"](_resavedSrc || obj.options.src);
                 }
                 else
 				{

@@ -698,6 +698,12 @@
 			window["AscDesktopEditor"]["SetDocumentName"](this.documentTitle);
 		}
 
+		// TEMPORARY
+		try {
+			if ("true" === window.localStorage.getItem("test-crypto-mode"))
+				AscCommon.CryptoProvider.enableEncryption();
+		} catch(e) {}
+
 		if (!this.frameManager.isFrameEditor() && AscCommon.CryptoProvider)
 		{
 			this.DocInfo.put_Encrypted(0 < AscCommon.CryptoProvider.getCryptoMode());
