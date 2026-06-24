@@ -408,42 +408,35 @@
 					}
 				}
 			}
-			// else
-			// {
-			//     if(shape.isPlaceholder() && (!shape.spPr || !shape.spPr.xfrm || !shape.spPr.xfrm.isNotNull()))
-			//     {
-			//         var hierarchy = shape.getHierarchy();
-			//         for(var t = 0; t < hierarchy.length; ++t)
-			//         {
-			//             if(hierarchy[t] && hierarchy[t].spPr && hierarchy[t].spPr.xfrm && hierarchy[t].spPr.xfrm.isNotNull())
-			//             {
-			//                 break;
-			//             }
-			//         }
-			//         if(t === hierarchy.length)
-			//         {
-			//             AscFormat.CheckSpPrXfrm(shape);
-			//         }
-			//     }
-			// }
 		}
-		for (var j = 0; j < layout.cSld.spTree.length; ++j) {
-			if (layout.cSld.spTree[j].isPlaceholder()) {
-				var _ph_type = layout.cSld.spTree[j].getPlaceholderType();
-				var hf = layout.Master.hf;
-				var bIsSpecialPh = _ph_type === AscFormat.phType_dt || _ph_type === AscFormat.phType_ftr || _ph_type === AscFormat.phType_hdr || _ph_type === AscFormat.phType_sldNum;
-				if (!bIsSpecialPh || hf && ((_ph_type === AscFormat.phType_dt && (hf.dt !== false)) ||
-					(_ph_type === AscFormat.phType_ftr && (hf.ftr !== false)) ||
-					(_ph_type === AscFormat.phType_hdr && (hf.hdr !== false)) ||
-					(_ph_type === AscFormat.phType_sldNum && (hf.sldNum !== false)))) {
-					var matching_shape = this.getMatchingShape(layout.cSld.spTree[j].getPlaceholderType(), layout.cSld.spTree[j].getPlaceholderIndex(), layout.cSld.spTree[j].getIsSingleBody ? layout.cSld.spTree[j].getIsSingleBody() : false);
-					if (matching_shape == null && layout.cSld.spTree[j]) {
-						var sp = layout.cSld.spTree[j].copy(undefined);
+		for (let i = 0; i < layout.cSld.spTree.length; ++i) {
+			if (layout.cSld.spTree[i].isPlaceholder()) {
+				const phType = layout.cSld.spTree[i].getPlaceholderType();
+				const hf = layout.Master.hf;
+				const isSpecialPh = phType === AscFormat.phType_dt || phType === AscFormat.phType_ftr || phType === AscFormat.phType_hdr || phType === AscFormat.phType_sldNum;
+				if (!isSpecialPh || hf && ((phType === AscFormat.phType_dt && (hf.dt !== false)) ||
+					(phType === AscFormat.phType_ftr && (hf.ftr !== false)) ||
+					(phType === AscFormat.phType_hdr && (hf.hdr !== false)) ||
+					(phType === AscFormat.phType_sldNum && (hf.sldNum !== false)))) {
+					const matchingShape = this.getMatchingShape(layout.cSld.spTree[i].getPlaceholderType(), layout.cSld.spTree[i].getPlaceholderIndex(), layout.cSld.spTree[i].getIsSingleBody ? layout.cSld.spTree[i].getIsSingleBody() : false);
+					if (matchingShape == null && layout.cSld.spTree[i]) {
+						const sp = layout.cSld.spTree[i].copy(undefined);
 						sp.setParent(this);
 						if (sp.txBody) {
 							sp.txBody.setBodyPr(new AscFormat.CBodyPr());
+							if (sp.txBody.lstStyle) {
+								sp.txBody.setLstStyle(null);
+							}
 						}
-						!bIsSpecialPh && sp.clearContent && sp.clearContent();
+						if (sp.spPr) {
+							if (sp.spPr.xfrm) {
+								sp.spPr.setXfrm(null);
+							}
+							if (sp.spPr.Fill) {
+								sp.spPr.setFill(null);
+							}
+						}
+						!isSpecialPh && sp.clearContent && sp.clearContent();
 						this.addToSpTreeToPos(this.cSld.spTree.length, sp)
 					}
 				}

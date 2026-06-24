@@ -381,8 +381,12 @@
 		} else {
 			geometry.check_bounds(graphics, graphicObject);
 		}
-		graphics.CheckLineWidth(graphicObject);
-		graphics.CorrectBounds2();
+
+		if (graphics.AutoCheckLineWidth) {
+			graphics.CheckLineWidth(graphicObject);
+			graphics.CorrectBounds2();
+		}
+
 		if (graphicObject.txBody) {
 			graphics.SetIntegerGrid(false);
 
