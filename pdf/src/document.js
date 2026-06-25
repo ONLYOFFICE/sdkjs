@@ -10111,6 +10111,7 @@ var CPresentation = CPresentation || function(){};
         
         // fill
 		switch (nType) {
+			case AscPDF.ANNOTATIONS_TYPES.Text:
 			case AscPDF.ANNOTATIONS_TYPES.FreeText:
 			case AscPDF.ANNOTATIONS_TYPES.Square:
 			case AscPDF.ANNOTATIONS_TYPES.Circle:
@@ -10130,7 +10131,7 @@ var CPresentation = CPresentation || function(){};
 		}
 
         // stroke
-		if (nType !== AscPDF.ANNOTATIONS_TYPES.Stamp) {
+		if (nType !== AscPDF.ANNOTATIONS_TYPES.Stamp && nType !== AscPDF.ANNOTATIONS_TYPES.Text && nType !== AscPDF.ANNOTATIONS_TYPES.Redact) {
 			let oStrokeColor    = annot.GetBorderColor();
 			let oStrokeRGB      = annot.GetRGBColor(oStrokeColor);
 			oStrokeRGB["r"] = oStrokeRGB.r;

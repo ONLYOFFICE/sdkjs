@@ -239,6 +239,8 @@
         let oCtx = oGraphics.GetContext();
         oCtx.save();
         oGraphics.EnableTransform();
+		oGraphics.SetGlobalAlpha(this.GetOpacity());
+
         oCtx.iconFill = "rgb(" + oRGB.r + "," + oRGB.g + "," + oRGB.b + ")";
 
         let nScale = 1 / (oGraphics.isThumbnails ? 1 : oDoc.Viewer.zoom);
