@@ -9312,6 +9312,10 @@ background-repeat: no-repeat;\
 				this.WordControl.OnScroll();
 			}
 			this.turnOffSpecialModes();
+			
+			let logicDocument = this.private_GetLogicDocument();
+			if (logicDocument)
+				logicDocument.SetDisplayModeInReview(Asc.c_oAscDisplayModeInReview.Original, true);
 		}
 		else
 		{
