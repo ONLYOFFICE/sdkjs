@@ -37,6 +37,7 @@
 			"slide/api_plugins.js",
 			"common/spell/spell.js",
 			"word/Editor/Table/TableLook.js",
+			"slide/Drawing/printer/printer-settings.js",
 			"cell/utils/utils.js"
 		],
 		"common": [
@@ -260,7 +261,6 @@
 			"slide/Editor/Format/Comments.js",
 			"slide/Editor/Format/NotesMaster.js",
 			"slide/Editor/Format/Notes.js",
-			"slide/Drawing/printer/printer-settings.js",
 			"slide/Drawing/printer/common-printer.js",
 			"slide/Drawing/printer/comments-printer.js",
 			"slide/Drawing/printer/printer.js",

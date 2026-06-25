@@ -278,7 +278,6 @@
 			const temp = countSlidesOnRow;
 			countSlidesOnRow = rowsCount;
 			rowsCount = temp;
-			align = align === HANDOUT_ALIGNMENT_HORIZONTAL ? HANDOUT_ALIGNMENT_VERTICAL : HANDOUT_ALIGNMENT_HORIZONTAL;
 		}
 		const w_mm = this.presentation.GetWidthMM();
 		const h_mm = this.presentation.GetHeightMM();
@@ -304,7 +303,7 @@
 		const startY = scaledFieldSize + (paperHeight - resultHeight) / 2;
 
 		let slideIndex = 0;
-		if (align === HANDOUT_ALIGNMENT_VERTICAL) {
+		if (align === HANDOUT_ALIGNMENT_HORIZONTAL) {
 			for (let i = 0; i < rowsCount; i += 1) {
 				const slideY = startY + i * verticalGap + h_mm * i * slideScale;
 				for (let j = 0; j < countSlidesOnRow; j += 1) {

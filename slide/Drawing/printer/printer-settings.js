@@ -209,7 +209,6 @@
 	};
 
 	function CAscSlidesOnPageOptions() {
-		this.positionType = null;
 		this.isPrintSlideNumbersOnHandouts = false;
 		this.isFrameSlides = true;
 		this.isScaleToFitPaper = true;
@@ -220,7 +219,6 @@
 			return null;
 		}
 		const res = new CAscSlidesOnPageOptions();
-		res.positionType = jsonObj["positionType"];
 		res.isPrintSlideNumbersOnHandouts = jsonObj["isPrintSlideNumbersOnHandouts"];
 		res.isFrameSlides = jsonObj["isFrameSlides"];
 		res.isScaleToFitPaper = jsonObj["isScaleToFitPaper"];
@@ -229,18 +227,11 @@
 	};
 	CAscSlidesOnPageOptions.prototype.toJSON = function () {
 		const res = {};
-		res["positionType"] = this.positionType;
 		res["isPrintSlideNumbersOnHandouts"] = this.isPrintSlideNumbersOnHandouts;
 		res["isFrameSlides"] = this.isFrameSlides;
 		res["isScaleToFitPaper"] = this.isScaleToFitPaper;
 		res["isPrintComments"] = this.isPrintComments;
 		return res;
-	};
-	CAscSlidesOnPageOptions.prototype.asc_setPositionType = function(positionType) {
-		this.positionType = positionType;
-	};
-	CAscSlidesOnPageOptions.prototype.asc_getPositionType = function() {
-		return this.positionType;
 	};
 	CAscSlidesOnPageOptions.prototype.asc_setIsPrintSlideNumbersOnHandouts = function(isPrintSlideNumbersOnHandouts) {
 		this.isPrintSlideNumbersOnHandouts = isPrintSlideNumbersOnHandouts;
@@ -355,7 +346,6 @@
 		res.slidePrintOptions = CAscSlidePrintOptions.fromJSON(jsonObj["slidePrintOptions"]);
 		res.slidesOnPagePrintOptions = CAscSlidesOnPagePrintOptions.fromJSON(jsonObj["slidesOnPagePrintOptions"]);
 		res.copies = jsonObj["copies"];
-		res.nativeOptions = jsonObj["nativeOptions"];
 		return res;
 	};
 	CAscPresentationPrintOptions.prototype.toJSON = function () {
@@ -366,7 +356,6 @@
 		res["slidePrintOptions"] = this.slidePrintOptions.toJSON();
 		res["slidesOnPagePrintOptions"] = this.slidesOnPagePrintOptions.toJSON();
 		res["copies"] = this.copies;
-		res["nativeOptions"] = this.nativeOptions;
 		return res;
 	};
 	CAscPresentationPrintOptions.prototype.asc_setNativeOptions = function(nativeOptions) {
@@ -374,9 +363,6 @@
 	};
 	CAscPresentationPrintOptions.prototype.asc_getNativeOptions = function() {
 		return this.nativeOptions;
-	};
-	CAscPresentationPrintOptions.prototype.initFromNativeOptions = function () {
-
 	};
 
 	window["Asc"] = window["Asc"] || {};
@@ -417,8 +403,6 @@
 	CAscSlidesOnPagePrintOptions.prototype["asc_getPrintType"] = CAscSlidesOnPagePrintOptions.prototype.asc_getPrintType;
 
 	window["Asc"]["CAscSlidesOnPageOptions"] = window["Asc"].CAscSlidesOnPageOptions = CAscSlidesOnPageOptions;
-	CAscSlidesOnPageOptions.prototype["asc_setPositionType"] = CAscSlidesOnPageOptions.prototype.asc_setPositionType;
-	CAscSlidesOnPageOptions.prototype["asc_getPositionType"] = CAscSlidesOnPageOptions.prototype.asc_getPositionType;
 	CAscSlidesOnPageOptions.prototype["asc_setIsPrintSlideNumbersOnHandouts"] = CAscSlidesOnPageOptions.prototype.asc_setIsPrintSlideNumbersOnHandouts;
 	CAscSlidesOnPageOptions.prototype["asc_getIsPrintSlideNumbersOnHandouts"] = CAscSlidesOnPageOptions.prototype.asc_getIsPrintSlideNumbersOnHandouts;
 	CAscSlidesOnPageOptions.prototype["asc_setIsFrameSlides"] = CAscSlidesOnPageOptions.prototype.asc_setIsFrameSlides;

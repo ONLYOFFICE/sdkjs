@@ -334,7 +334,7 @@
 		this.mouseMode = "select";
 
 
-		this.presentationViewManager = AscCommon.getViewModeByType(Asc.c_oAscPresentationViewMode.normal, this);
+		this.presentationViewManager = null;
 		this.frameLoader = null;
 
 		if (window.editor == undefined)
@@ -1862,8 +1862,7 @@ background-repeat: no-repeat;\
 		var opt = {};
         if (options && options.advancedOptions)
 		{
-			if (Asc.c_oAscPrintType.Selection === options.advancedOptions.asc_getPrintType())
-				opt["printOptions"] = {"selection": 1};
+			opt["presentationPrintOptions"] = options.advancedOptions.toJSON();
 			opt["nativeOptions"] = options.advancedOptions.asc_getNativeOptions();
 		}
 
@@ -8421,6 +8420,7 @@ background-repeat: no-repeat;\
 	{
 		AscCommon.baseEditorsApi.prototype._onEndLoadSdk.call(this);
 
+		this.presentationViewManager = AscCommon.getViewModeByType(Asc.c_oAscPresentationViewMode.normal, this);
 		History           = AscCommon.History;
 		PasteElementsId   = AscCommon.PasteElementsId;
 		global_mouseEvent = AscCommon.global_mouseEvent;
@@ -9097,67 +9097,68 @@ background-repeat: no-repeat;\
 	{
 	};
 
-	window["asc_docs_api"].prototype["asc_nativePrint"] = function(_printer, _page, _options)
+	window["asc_docs_api"].prototype["asc_nativePrint"] = function(graphics, pageIndex, options)
 	{
-		if (undefined === _printer && _page === undefined)
+		let printerOptions;
+		if (options && options["presentationPrintOptions"]) {
+			printerOptions = Asc.CAscPresentationPrintOptions.fromJSON(options["presentationPrintOptions"]);
+		} else {
+			printerOptions = this.getRendererPrintOptions(options && options["printOptions"] && options["printOptions"]["selection"]);
+		}
+		const logicDocument = this.WordControl.m_oLogicDocument;
+		if (!logicDocument || !printerOptions) {
+			return;
+		}
+		const printer = new AscCommonSlide.PrintManager(logicDocument, printerOptions);
+		if (undefined === graphics && pageIndex === undefined)
 		{
 			if (undefined !== window["AscDesktopEditor"])
 			{
-				var isSelection = (_options && _options["printOptions"] && _options["printOptions"]["selection"]) ? true : false;
-				var _drawing_document = this.WordControl.m_oDrawingDocument;
-				var pagescount        = _drawing_document.GetSlidesCount();
-                if (isSelection)
-                    pagescount = this.WordControl.Thumbnails.GetSelectedArray().length;
+				const pagesCount        = printer.getPagesCount();
+				const sizes = printer.getPageSizes();
+				const height = sizes.height;
+				const width = sizes.width;
+				window["AscDesktopEditor"]["Print_Start"](this.DocumentUrl, pagesCount, this.ThemeLoader.ThemesUrl, this.getCurrentPage());
 
-				window["AscDesktopEditor"]["Print_Start"](this.DocumentUrl, pagescount, this.ThemeLoader.ThemesUrl, this.getCurrentPage());
-
-				var oDocRenderer                         = new AscCommon.CDocumentRenderer();
-                oDocRenderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
-				oDocRenderer.VectorMemoryForPrint        = new AscCommon.CMemory();
-				var bOldShowMarks                        = this.ShowParaMarks;
+				const documentRenderer                         = new AscCommon.CDocumentRenderer();
+                documentRenderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
+				documentRenderer.VectorMemoryForPrint        = new AscCommon.CMemory();
+				const isOldShowParaMarks                        = this.ShowParaMarks;
 				this.ShowParaMarks                       = false;
-				oDocRenderer.IsNoDrawingEmptyPlaceholder = true;
+				documentRenderer.IsNoDrawingEmptyPlaceholder = true;
 
-                pagescount = _drawing_document.GetSlidesCount();
-				for (var i = 0; i < pagescount; i++)
+				for (let i = 0; i < pagesCount; i++) {
+					documentRenderer.Memory.Seek(0);
+					documentRenderer.VectorMemoryForPrint.ClearNoAttack();
+
+					documentRenderer.BeginPage(width, height);
+					printer.drawPage(documentRenderer, i);
+					documentRenderer.EndPage();
+					window["AscDesktopEditor"]["Print_Page"](documentRenderer.Memory.GetBase64Memory(), width, height);
+				}
+				if (0 === pagesCount)
 				{
-					if (isSelection && !this.WordControl.Thumbnails.isSelectedPage(i))
-						continue;
+					documentRenderer.BeginPage(width, height);
+					documentRenderer.EndPage();
 
-					oDocRenderer.Memory.Seek(0);
-					oDocRenderer.VectorMemoryForPrint.ClearNoAttack();
-
-					oDocRenderer.BeginPage(_drawing_document.m_oLogicDocument.GetWidthMM(), _drawing_document.m_oLogicDocument.GetHeightMM());
-					this.WordControl.m_oLogicDocument.DrawPage(i, oDocRenderer);
-					oDocRenderer.EndPage();
-
-					window["AscDesktopEditor"]["Print_Page"](oDocRenderer.Memory.GetBase64Memory(), _drawing_document.m_oLogicDocument.GetWidthMM(), _drawing_document.m_oLogicDocument.GetHeightMM());
+					window["AscDesktopEditor"]["Print_Page"](documentRenderer.Memory.GetBase64Memory());
 				}
 
-				if (0 == pagescount)
-				{
-					oDocRenderer.BeginPage(_drawing_document.m_oLogicDocument.GetWidthMM(), _drawing_document.m_oLogicDocument.GetHeightMM());
-					oDocRenderer.EndPage();
-
-					window["AscDesktopEditor"]["Print_Page"](oDocRenderer.Memory.GetBase64Memory());
-				}
-
-				this.ShowParaMarks = bOldShowMarks;
+				this.ShowParaMarks = isOldShowParaMarks;
 
 				window["AscDesktopEditor"]["Print_End"]();
 			}
 			return;
 		}
 
-		let _logic_doc = this.WordControl.m_oLogicDocument;
-		let pageW = _logic_doc.GetWidthMM();
-		let pageH = _logic_doc.GetHeightMM();
-
-		_printer.BeginPage(pageW, pageH);
-		_logic_doc.DrawPage(_page, _printer);
+		const sizes = printer.getPageSizes();
+		const height = sizes.height;
+		const width = sizes.width;
+		graphics.BeginPage(width, height);
+		printer.drawPage(graphics, pageIndex);
 		if (this.watermarkDraw)
-			this.watermarkDraw.DrawOnRenderer(_printer, pageW, pageH);
-		_printer.EndPage();
+			this.watermarkDraw.DrawOnRenderer(graphics, width, height);
+		graphics.EndPage();
 	};
 
 	window["asc_docs_api"].prototype["asc_nativePrintPagesCount"] = function()
