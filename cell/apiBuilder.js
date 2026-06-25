@@ -8383,7 +8383,13 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetActive.js
 	 */
 	ApiWorksheet.prototype.SetActive = function () {
-		return this.worksheet.workbook.setActive(this.worksheet.index);
+		var nIndex = this.worksheet.index;
+		var oApi = Asc.editor;
+		if (oApi && oApi.wb) {
+			oApi.asc_showWorksheet(nIndex);
+			return this.worksheet.workbook.getActive() === nIndex;
+		}
+		return this.worksheet.workbook.setActive(nIndex);
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "Active", {
 		set: function () {
