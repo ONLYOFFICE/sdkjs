@@ -31169,6 +31169,7 @@
 	ApiDocument.prototype["GetAllStyles"]                  = ApiDocument.prototype.GetAllStyles;
 	ApiDocument.prototype["GetDocumentInfo"]               = ApiDocument.prototype.GetDocumentInfo;
 	ApiDocument.prototype["GetSelectedDrawings"]           = ApiDocument.prototype.GetSelectedDrawings;
+	ApiDocument.prototype["GetActiveTable"]                = ApiDocument.prototype.GetActiveTable;
 	ApiDocument.prototype["ReplaceCurrentImage"]           = ApiDocument.prototype.ReplaceCurrentImage;
 	ApiDocument.prototype["ReplaceDrawing"]                = ApiDocument.prototype.ReplaceDrawing;
 	ApiDocument.prototype["AcceptAllRevisionChanges"]      = ApiDocument.prototype.AcceptAllRevisionChanges;
@@ -31417,6 +31418,9 @@
 	ApiTable.prototype["AddComment"]                 = ApiTable.prototype.AddComment;
 	ApiTable.prototype["AddCaption"]                 = ApiTable.prototype.AddCaption;
 	ApiTable.prototype["GetAllCells"]                = ApiTable.prototype.GetAllCells;
+	ApiTable.prototype["GetSelectedCells"]           = ApiTable.prototype.GetSelectedCells;
+	ApiTable.prototype["GetSelectedRows"]            = ApiTable.prototype.GetSelectedRows;
+	ApiTable.prototype["GetSelectedColumnsCells"]    = ApiTable.prototype.GetSelectedColumnsCells;
 
 	ApiTableRow.prototype["GetClassType"]            = ApiTableRow.prototype.GetClassType;
 	ApiTableRow.prototype["GetInternalId"]           = ApiTableRow.prototype.GetInternalId;
@@ -31435,6 +31439,7 @@
 	ApiTableRow.prototype["SetTextPr"]          	 = ApiTableRow.prototype.SetTextPr;
 	ApiTableRow.prototype["Search"]          		 = ApiTableRow.prototype.Search;
 	ApiTableRow.prototype["SetBackgroundColor"]      = ApiTableRow.prototype.SetBackgroundColor;
+	ApiTableRow.prototype["SetRowPr"]                = ApiTableRow.prototype.SetRowPr;
 
 	ApiTableCell.prototype["GetClassType"]             = ApiTableCell.prototype.GetClassType;
 	ApiTableCell.prototype["GetInternalId"]            = ApiTableCell.prototype.GetInternalId;
