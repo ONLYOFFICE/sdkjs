@@ -618,6 +618,8 @@ AscDFH.historyitem_type_VisioWindow = 328;
 	 * @param {number} pageIndex
 	 */
 	CVisioDocument.prototype.draw = function(Zoom, pGraphics, pageIndex) {
+		// shared/background page fields read the current page, refresh them for the page being drawn
+		this.recalcPageFieldsForDraw(pageIndex);
 		/**
 		 *
 		 * @param graphics
@@ -929,6 +931,27 @@ AscDFH.historyitem_type_VisioWindow = 328;
 	}
 	CVisioDocument.prototype.Set_CurPage = CVisioDocument.prototype.setCurrentPage = function(pageIndex) {
 		return this.pageIndex = pageIndex;
+	}
+	CVisioDocument.prototype.recalcPageFieldsForDraw = function(pageIndex) {
+		let shapes = this.pageShapesCache[pageIndex];
+		// only refresh when the drawn page changes, so repeated repaints of one page stay cheap
+		if (!shapes || this.lastFieldDrawPage === pageIndex) {
+			return;
+		}
+		// point the current page at the page being drawn so shared/background PAGENUMBER recomputes, then restore
+		let oldPageIndex = this.getCurrentPage();
+		this.setCurrentPage(pageIndex);
+		// refresh only the fields (like presentations refreshAllContentsFields), then relayout the shapes
+		let oRecalcData = AscCommon.History && AscCommon.History.RecalculateData;
+		let bOldUpdate = oRecalcData && oRecalcData.Update;
+		if (oRecalcData) { oRecalcData.Update = false; }
+		for (let i = 0; i < shapes.length; i++) {
+			shapes[i].handleAllContents(AscFormat.RefreshContentAllFields);
+			shapes[i].recalculate();
+		}
+		if (oRecalcData) { oRecalcData.Update = bOldUpdate; }
+		this.setCurrentPage(oldPageIndex);
+		this.lastFieldDrawPage = pageIndex;
 	}
 	CVisioDocument.prototype.getFirstSlideNumber = function() {
 		//todo remove

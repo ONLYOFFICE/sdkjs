@@ -367,14 +367,6 @@
         ParaRun.prototype.Recalculate_MeasureContent.call(this);
     };
 
-    CPresentationField.prototype.Recalculate_MeasureContent = function()
-    {
-        if (!this.RecalcInfo.IsMeasureNeed())
-            return;
-        this.private_CalculateContent();
-        ParaRun.prototype.Recalculate_MeasureContent.call(this);
-    };
-
     CPresentationField.prototype.Write_ToBinary2 = function(Writer)
     {
         var StartPos = Writer.GetCurPosition();
