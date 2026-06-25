@@ -7375,8 +7375,7 @@
 	};
 
 	/**
-	 * Returns an ApiTextRange covering the full text content of the shape.
-	 * Creates a text body if the shape does not yet have one.
+	 * Returns an ApiTextRange covering the full text content of the shape, or null if the shape has no text body (use CreateTextRange to create one).
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTextRange|null}
