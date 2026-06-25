@@ -6982,9 +6982,7 @@
 		if (!oController)
 			return false;
 		oController.deselectObject(oDrawing);
-
-		let presentation = Asc.editor.getLogicDocument();
-		presentation.RemoveSelection();
+		oController.resetInternalSelection();
 		oController.updateSelectionState();
 		oController.updateOverlay();
 		return true;
@@ -11365,6 +11363,7 @@
 	ApiTable.prototype["MergeCells"]					= ApiTable.prototype.MergeCells;
 	ApiTable.prototype["SetStyle"]						= ApiTable.prototype.SetStyle;
 	ApiTable.prototype["SetTableLook"]					= ApiTable.prototype.SetTableLook;
+	ApiTable.prototype["GetTableLook"]					= ApiTable.prototype.GetTableLook;
     ApiTable.prototype["AddRow"]						= ApiTable.prototype.AddRow;
     ApiTable.prototype["AddRows"]						= ApiTable.prototype.AddRows;
     ApiTable.prototype["AddColumn"]						= ApiTable.prototype.AddColumn;
@@ -11447,6 +11446,7 @@
     ApiTableCell.prototype["GetText"]					= ApiTableCell.prototype.GetText;
     ApiTableCell.prototype["SetText"]					= ApiTableCell.prototype.SetText;
 	ApiTableCell.prototype["GetTextRange"]				= ApiTableCell.prototype.GetTextRange;
+	ApiTableCell.prototype["Select"]					= ApiTableCell.prototype.Select;
 
 	ApiTableStylePr.prototype["GetClassType"]			= ApiTableStylePr.prototype.GetClassType;
 	ApiTableStylePr.prototype["GetType"]				= ApiTableStylePr.prototype.GetType;
