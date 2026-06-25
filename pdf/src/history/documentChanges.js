@@ -1067,7 +1067,7 @@ CChangesPDFDocumentRecognizePage.prototype.private_SetValue = function(bRecogniz
     if (-1 !== nPageIdx) {
         oFile.pages[nPageIdx].isRecognized = bRecognize;
 		if (bRecognize) {
-			oFile.nativeFile["scanPageFonts"](oPage.GetOriginIndex());
+			oFile.nativeFile["scanPageFonts"]([oPage.GetOriginIndex()]);
 		}
 
         if (oDoc.Viewer.drawingPages[nPageIdx]) {
@@ -1282,6 +1282,7 @@ CChangesPDFDocumentEndMergePages.prototype.Redo = function()
 
     oDoc.Viewer.checkLoadCMap();
 	oDoc.Viewer.isFullText = false;
+	oDoc.pagesFontsScanned = false;
 };
 CChangesPDFDocumentEndMergePages.prototype.WriteToBinary = function(Writer)
 {

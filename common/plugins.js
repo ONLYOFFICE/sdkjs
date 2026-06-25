@@ -1614,28 +1614,34 @@
 				}
 				else if (!this.api.isLongAction() && (task.resize || this.api.canRunBuilderScript()))
 				{
-					this.api._beforeEvalCommand();
-					commandReturnValue = AscCommon.safePluginEval(value);
-
-					if (!Asc.checkReturnCommand(commandReturnValue))
-						commandReturnValue = undefined;
-					
 					let _t = this;
-					function onEndScript()
-					{
-						_t.api.onEndBuilderScript(function(result)
+
+					function continueEval() {
+						commandReturnValue = AscCommon.safePluginEval(value);
+
+						if (!Asc.checkReturnCommand(commandReturnValue))
+							commandReturnValue = undefined;
+						
+						function onEndScript()
 						{
-							if (!result)
-								commandReturnValue = undefined;
-							
-							_t.shiftCommand(commandReturnValue);
-						});
+							_t.api.onEndBuilderScript(function(result)
+							{
+								if (!result)
+									commandReturnValue = undefined;
+								
+								_t.shiftCommand(commandReturnValue);
+							});
+						}
+						
+						if (task.recalculate === true && !AscCommon.History.Is_LastPointEmpty())
+							_t.api._afterEvalCommand(onEndScript);
+						else
+							onEndScript();
 					}
-					
-					if (task.recalculate === true && !AscCommon.History.Is_LastPointEmpty())
-						this.api._afterEvalCommand(onEndScript);
-					else
-						onEndScript();
+
+					if (false !== this.api._beforeEvalCommand(continueEval)) {
+						continueEval();	
+					}
 					
 					return;
 				}

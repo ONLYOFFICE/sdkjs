@@ -4187,6 +4187,33 @@
 		this.stampAnnotPreviewManager = new AscPDF.StampAnnotPreviewManager();
 		AscBuilder.Pdf.init();
 	};
+	PDFEditorApi.prototype._beforeEvalCommand = function(callback) {
+		AscCommon.DocumentEditorApi.prototype._beforeEvalCommand.call(this);
+
+		let oDoc = this.getPDFDoc();
+		let oFile = oDoc.GetFile();
+
+		if (!oDoc.pagesFontsScanned) {
+			let aFontsNames = oFile.nativeFile["scanPageFonts"]();
+			let prefix = AscFonts.getEmbeddedFontPrefix();
+			oDoc.pagesFontsScanned = true;
+
+			let aFontsToLoad = [];
+			aFontsNames.forEach(function(name) {
+				let match = name.match(/ [0-9a-fA-F]+$/);
+				if (match) {
+					aFontsToLoad.push(prefix + name);
+				}
+				else {
+					aFontsToLoad.push(name);
+				}
+			});
+
+			return oDoc.checkFonts(aFontsToLoad, callback);
+		}
+
+		return true;		
+	};
 	PDFEditorApi.prototype.getJsApi = function() {
 		return AscBuilder.Pdf.Api;
 	};

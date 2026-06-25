@@ -1556,7 +1556,7 @@
 			AscBuilder.throwException("The text property must be a valid string");
 		}
 
-		this.Document.RecalculateAll();
+		this.Document.RecalculateAll(true);
 
 		let matchCase = AscBuilder.GetBoolParameter(props['matchCase'], false);
 		let wholeWords = AscBuilder.GetBoolParameter(props['wholeWords'], false);
@@ -1598,7 +1598,7 @@
 	 */
 	ApiDocument.prototype.GetSelection = function() {
 		let oDoc = private_GetLogicDocument();
-		this.Document.RecalculateAll();
+		this.Document.RecalculateAll(true);
 
 		let oDrawing = oDoc.activeDrawing;
 		if (oDrawing) {
@@ -1665,7 +1665,7 @@
 
 		let oFile = this.Document.GetFile();
 		this.Document.BlurActiveObject();
-		this.Document.RecalculateAll();
+		this.Document.RecalculateAll(true);
 
 		let startNearestPos = oFile.getNearestPos(selection['start']['page'], selection['start']['point']['x'] * g_dKoef_pt_to_mm, selection['start']['point']['y'] * g_dKoef_pt_to_mm);
 		let endNearestPos = oFile.getNearestPos(selection['end']['page'], selection['end']['point']['x'] * g_dKoef_pt_to_mm, selection['end']['point']['y'] * g_dKoef_pt_to_mm);
@@ -1693,7 +1693,7 @@
 	 */
 	ApiDocument.prototype.GetSelectionQuads = function() {
 		let oDoc = private_GetLogicDocument();
-		oDoc.RecalculateAll();
+		oDoc.RecalculateAll(true);
 
 		let aDocQuads = oDoc.GetFile().getSelectionQuads();
 
@@ -1879,7 +1879,7 @@
 		let nPageIdx = this.GetIndex();
 
 		let oDoc = private_GetLogicDocument();
-		oDoc.RecalculateAll();
+		oDoc.RecalculateAll(true);
 		
 		let oSearchEngine = oDoc.Search(searchSettings);
 		let aResult = [];
@@ -1911,7 +1911,7 @@
 			return null;
 		}
 
-		oDoc.RecalculateAll();
+		oDoc.RecalculateAll(true);
 		
 		let oDrawing = oDoc.activeDrawing;
 		if (oDrawing) {
@@ -1975,7 +1975,7 @@
 		let nPageIdx = this.GetIndex();
 
 		oDoc.BlurActiveObject();
-		oDoc.RecalculateAll();
+		oDoc.RecalculateAll(true);
 
 		let startNearestPos = oFile.getNearestPos(nPageIdx, selection['start']['x'] * g_dKoef_pt_to_mm, selection['start']['y'] * g_dKoef_pt_to_mm);
 		let endNearestPos   = oFile.getNearestPos(nPageIdx, selection['end']['x'] * g_dKoef_pt_to_mm, selection['end']['y'] * g_dKoef_pt_to_mm);
@@ -2004,7 +2004,7 @@
 	 */
 	ApiPage.prototype.GetSelectionQuads = function() {
 		let oDoc = private_GetLogicDocument();
-		oDoc.RecalculateAll();
+		oDoc.RecalculateAll(true);
 		
 		let nPageIdx = this.GetIndex();
 		let aDocQuads = oDoc.GetFile().getSelectionQuads();

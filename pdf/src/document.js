@@ -278,7 +278,7 @@ var CPresentation = CPresentation || function(){};
 
         return false;
 	};
-	CPDFDoc.prototype.RecalculateAll = function() {
+	CPDFDoc.prototype.RecalculateAll = function(bForceCalc) {
 		let fontMap = {};
 		
 		this.widgets.forEach(function(field) {
@@ -298,7 +298,7 @@ var CPresentation = CPresentation || function(){};
 			annot.GetAllFonts(fontMap);
 		});
 		
-        if (this.checkFonts(Object.keys(fontMap), this._RecalculateAll.bind(this))) {
+        if (bForceCalc || this.checkFonts(Object.keys(fontMap), this._RecalculateAll.bind(this))) {
             this._RecalculateAll();
         }
 	};
@@ -7763,6 +7763,7 @@ var CPresentation = CPresentation || function(){};
         this.Viewer.checkLoadCMap();
         this.Viewer.navigateToPage(nNavigateTo);
 		this.Viewer.isFullText = false;
+		this.pagesFontsScanned = false;
 		
         return res;
     };
