@@ -8578,8 +8578,8 @@ background-repeat: no-repeat;\
 							dataContainer.data = data;
 							if (window.isCloudCryptoDownloadAs)
 							{
-								AscCommon.CryptoProvider.cryptoDownloadAs(dataContainer.data, fileType);
-								return true;
+								if (AscCommon.CryptoProvider.cryptoDownloadAs(dataContainer.data, fileType))
+									return true;
 							}
 							t._downloadAsUsingServer(actionType, options, oAdditionalData, dataContainer, downloadType);
 							return;
@@ -8599,11 +8599,11 @@ background-repeat: no-repeat;\
 			dataContainer.data = this.WordControl.SaveDocument(oAdditionalData["nobase64"]);
 		}
 
-        if (window.isCloudCryptoDownloadAs)
-        {
-        	AscCommon.CryptoProvider.cryptoDownloadAs(dataContainer.data, fileType);
-			return true;
-        }
+		if (window.isCloudCryptoDownloadAs)
+		{
+			if (AscCommon.CryptoProvider.cryptoDownloadAs(dataContainer.data, fileType))
+				return true;
+		}
 	};
 
     asc_docs_api.prototype.SetFontRenderingMode         = function(mode)
