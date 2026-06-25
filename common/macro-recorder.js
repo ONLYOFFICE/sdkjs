@@ -1912,9 +1912,9 @@
 			let object = buildTocPrObject(oPr);
 
 			if (fieldType === "tof")
-				return "\tlet" + CounterStore.inc('tof') + " = doc.GetTablesOfFigures().Add(" + JSON.stringify(object, null, "\t").replace(/\n/g, "\n\t") + ");\n";
+				return "\tlet " + varRegistry.inc('tof') + " = doc.GetTablesOfFigures().Add(" + JSON.stringify(object, null, "\t").replace(/\n/g, "\n\t") + ");\n";
 
-			return "\tlet" + CounterStore.inc('toc') + " doc.GetTablesOfContents().Add(" + JSON.stringify(object, null, "\t").replace(/\n/g, "\n\t") + ");\n";
+			return "\tlet " + varRegistry.inc('toc') + " = doc.GetTablesOfContents().Add(" + JSON.stringify(object, null, "\t").replace(/\n/g, "\n\t") + ");\n";
 		},
 		updateTableOfContents: function(additional) {
 			let index = additional.index;
@@ -2057,9 +2057,9 @@
 	DEActionMap["SetTableVAlign"]												= wordActions.setTableVAlign;
 	DEActionMap["SetTableHAlign"]												= wordActions.setTableHAlign;
 	DEActionMap["SetTableResize"]												= wordActions.setTableResize;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddTableOfContents]			= wordActions.addTableOfContents;
-	WordActionsMacroList[AscDFH.historydescription_Document_UpdateTableOfContents]		= wordActions.updateTableOfContents;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetComplexFieldPr]			= wordActions.setComplexFieldPr;
+	DEActionMap[AscDFH.historydescription_Document_AddTableOfContents]			= wordActions.addTableOfContents;
+	DEActionMap[AscDFH.historydescription_Document_UpdateTableOfContents]		= wordActions.updateTableOfContents;
+	DEActionMap[AscDFH.historydescription_Document_SetComplexFieldPr]			= wordActions.setComplexFieldPr;
 
 	const cellActions = {
 		setCellIncreaseFontSize	: function(){return "\tApi.GetSelection().FontIncrease();\n"},
