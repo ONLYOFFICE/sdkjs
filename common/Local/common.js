@@ -433,11 +433,17 @@ window["NativeCorrectImageUrlOnPaste"] = function(url)
 window["UpdateInstallPlugins"] = function()
 {
 	var _pluginsTmp = JSON.parse(window["AscDesktopEditor"]["GetInstallPlugins"]());
+	let lenTypes = 2;
 	_pluginsTmp[0]["url"] = _pluginsTmp[0]["url"].split(" ").join("%20");
 	_pluginsTmp[1]["url"] = _pluginsTmp[1]["url"].split(" ").join("%20");
+	if (_pluginsTmp.length > 2)
+	{
+		lenTypes = 3;
+		_pluginsTmp[2]["url"] = _pluginsTmp[2]["url"].split(" ").join("%20");
+	}
 
 	var _plugins = { "url" : _pluginsTmp[0]["url"], "pluginsData" : [] };
-	for (var k = 0; k < 2; k++)
+	for (var k = 0; k < lenTypes; k++)
 	{
 		var _pluginsCur = _pluginsTmp[k];
 

@@ -126,7 +126,7 @@
 		}
 	};
 
-	CDataFormula.prototype.correctToInterface = function (ws, oValidation){
+	CDataFormula.prototype.correctToInterface = function (ws, oValidation, activeCell){
 		let data = {
 			val : this.text,
 			isNum: isNum(this.text),
@@ -199,7 +199,7 @@
 				toListPreview(data);
 			} else if (this && this._formula) {
 				//if the formula contains references to ranges, they need to be shifted depending on the active area
-				var offset = oValidation.calculateOffset(ws);
+				var offset = oValidation.calculateOffset(ws, activeCell);
 				if (offset) {
 					this._formula.changeOffset(offset);
 				}
@@ -1249,7 +1249,7 @@
 		return false;
 	};
 
-	CDataValidation.prototype.calculateOffset = function (ws) {
+	CDataValidation.prototype.calculateOffset = function (ws, activeCell) {
 		if (!this.ranges) {
 			return null;
 		}
@@ -1268,8 +1268,9 @@
 			}
 		}
 		if (_row !== null && _col !== null) {
-			var selectionRange = ws.getSelection();
-			var activeCell = selectionRange.activeCell;
+			if (!activeCell) {
+				activeCell = ws.getSelection().activeCell;
+			}
 			res = new AscCommon.CellBase(activeCell.row - _row, activeCell.col - _col);
 		}
 

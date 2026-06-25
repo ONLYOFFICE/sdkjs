@@ -3279,7 +3279,8 @@ function (window, undefined) {
 
 		let arg0 = arg[0];
 		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type || cElementType.array === arg0.type) {
-			if (cElementType.cellsRange3D === arg0.type && !arg0.isSingleSheet()) {
+			let is3D = cElementType.cellsRange3D === arg0.type;
+			if (is3D && !arg0.isSingleSheet()) {
 				return new cError(cErrorType.bad_reference);
 			}
 
@@ -3290,8 +3291,8 @@ function (window, undefined) {
 				}
 				return new cError(cErrorType.wrong_value_type);
 			}
-			// arg0 = arg0.getMatrix();
-			arg0 = _getArrayCopy(arg0.getMatrix());
+			
+			arg0 = _getArrayCopy(is3D ? arg0.getMatrix()[0] : arg0.getMatrix());
 		} else if (cElementType.number === arg0.type) {
 			return new cNumber(1 / arg0.getValue());
 		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
@@ -3305,7 +3306,7 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		if (arg0[0].length !== arg0.length) {
+		if (!arg0 || arg0.length === 0 || arg0[0].length !== arg0.length) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
@@ -5934,7 +5935,6 @@ function (window, undefined) {
 	function cSUMIFS() {
 	}
 
-	//TODO there is a discrepancy with MS - see file + arrayIndexes - need to form when all odd arguments are arrays (starting from 3rd argument)
 	//***array-formula***
 	cSUMIFS.prototype = Object.create(cBaseFunction.prototype);
 	cSUMIFS.prototype.constructor = cSUMIFS;
@@ -5947,7 +5947,7 @@ function (window, undefined) {
 		}
 		return index % 2 !== 0 ? 1 : undefined;
 	};
-	cSUMIFS.prototype.exactTypes = {0: 1, 1: 1};	// in this function every odd argument is should be checked for type reference
+	cSUMIFS.prototype.exactTypes = {0: 1, 1: 1};
 	cSUMIFS.prototype.argumentsType = [argType.reference, [argType.reference, argType.any]];
 	cSUMIFS.prototype.enabledToSingle = {"arg0orOdd": true};
 	cSUMIFS.prototype.Calculate = function (arg) {
@@ -5959,7 +5959,7 @@ function (window, undefined) {
 	cSUMIFS.prototype.checkArgumentsTypes = function (args) {
 		// check first element, then all odd ones
 		if (!cBaseFunction.prototype.checkArgumentsTypes.call(this, [args[0]])) {
-			return false
+			return false;
 		}
 
 		for (let i = 1; i < args.length; i += 2) {
@@ -5968,7 +5968,7 @@ function (window, undefined) {
 			if (oddArgument && this.exactTypes[1]) {
 				if (oddArgument.type !== cElementType.cellsRange && oddArgument.type !== cElementType.cellsRange3D 
 					&& oddArgument.type !== cElementType.cell && oddArgument.type !== cElementType.cell3D) {
-						return false
+						return false;
 				}
 			}
 		}

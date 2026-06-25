@@ -341,6 +341,7 @@
 	this.customFunctionEngine = null;
 
 	this.smoothScroll = true;
+	this.autoCompleteEnabled = true;
 
 	this.externalReferenceUpdateTimer = null;
 
@@ -350,7 +351,7 @@
   }
 
   WorkbookView.prototype._isInputContentEditable = function () {
-    return !!(this.input && this.input.getAttribute && this.input.getAttribute('contenteditable') === 'true');
+    return !!(this.input && this.input.getAttribute && this.input.getAttribute('contenteditable') !== null);
   };
 
   WorkbookView.prototype._setInputDisabled = function (disabled) {
@@ -366,6 +367,9 @@
     if (!this.input) {
       return;
     }
+
+    var isDynamicArrayNotMainCell = this._isActiveCellDynamicArrayNotMain();
+
     if (this._isInputContentEditable()) {
       if (this.cellEditor) {
         this.cellEditor._updateContentEditableLayout();
@@ -386,6 +390,21 @@
     } else {
       this.input.value = text;
     }
+
+    this.input.style.color = isDynamicArrayNotMainCell ? 'rgb(150, 150, 150)' : '';
+  };
+
+  WorkbookView.prototype._isActiveCellDynamicArrayNotMain = function () {
+    if (!AscCommonExcel.bIsSupportDynamicArrays) {
+      return false;
+    }
+    var ws = this.getWorksheet();
+    var selection = ws && ws.model.getSelection();
+    var activeCell = selection && selection.activeCell;
+    if (!activeCell) {
+      return false;
+    }
+    return ws.model.dynamicArrayManager.isSpilledNotFirstCell(activeCell.col, activeCell.row);
   };
 
   WorkbookView.prototype._init = function(fontRenderingMode) {
@@ -3527,6 +3546,10 @@
     var t = this, ws;
     ws = t.getWorksheet();
     g_clipboardExcel.pasteData(ws, _format, data1, data2, text_data, null, doNotShowButton, null, callback);
+  };
+
+  WorkbookView.prototype.pasteHtmlLite = function(sHtml, callback) {
+    g_clipboardExcel.pasteHtmlLite(this.getWorksheet(), sHtml, callback);
   };
 
   WorkbookView.prototype.specialPasteData = function(props, isPasteOptions) {
@@ -6781,6 +6804,14 @@
 		if (!this.customFunctionEngine) {
 			this.customFunctionEngine = new AscCommonExcel.CCustomFunctionEngine(this);
 		}
+	};
+
+	WorkbookView.prototype.setAutoCompleteEnabled = function(val) {
+		this.autoCompleteEnabled = val;
+	};
+
+	WorkbookView.prototype.getAutoCompleteEnabled = function() {
+		return this.autoCompleteEnabled;
 	};
 
 	WorkbookView.prototype.setSmoothScrolling = function(val) {

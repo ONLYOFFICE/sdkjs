@@ -3083,21 +3083,26 @@ Paragraph.prototype.drawRunContentElements = function(CurPage, pGraphics, drawSt
 {
 	let PDSE = drawState.getRunElementState();
 	
+	let page = this.Pages[CurPage];
+	
 	var StartLine = this.Pages[CurPage].StartLine;
 	var EndLine   = this.Pages[CurPage].EndLine;
 	
 	let Theme    = drawState.getTheme();
 	let ColorMap = drawState.getColorMap();
-	let Pr       = drawState.getParagraphCompiledPr();
+	let paraPr   = drawState.getParagraphCompiledPr().ParaPr;
 	
-	PDSE.resetPage(CurPage);
+	let pageX      = page.X;
+	let pageXLimit = page.XLimit;
+	
+	PDSE.beginPage(CurPage);
 	for (var CurLine = StartLine; CurLine <= EndLine; CurLine++)
 	{
 		var Line        = this.Lines[CurLine];
 		var RangesCount = Line.Ranges.length;
 
 		pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, Line, CurLine, AscFormat.CLineStructure_DrawType_Content);
-
+		
 		var Y = this.Pages[CurPage].Y + this.Lines[CurLine].Y;
 		var X = this.Pages[CurPage].X;
 
@@ -3109,7 +3114,7 @@ Paragraph.prototype.drawRunContentElements = function(CurPage, pGraphics, drawSt
 			this.private_DrawLineNumber(X, Y, pGraphics, this.LineNumbersInfo.StartNum + CurLine + 1, Theme, ColorMap, CurPage, CurLine);
 		}
 		
-		PDSE.resetLine(CurLine, Y, Y - Line.Metrics.Ascent, Y + Line.Metrics.Descent);
+		PDSE.beginLine(CurLine, Y, Y - Line.Metrics.Ascent, Y + Line.Metrics.Descent);
 		for (var CurRange = 0; CurRange < RangesCount; CurRange++)
 		{
 			pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE_RANGE, Line, CurLine, CurRange);
@@ -3134,9 +3139,10 @@ Paragraph.prototype.drawRunContentElements = function(CurPage, pGraphics, drawSt
 			
 			pGraphics.End_Command(AscFormat.DRAW_COMMAND_LINE_RANGE);
 		}
-
+		PDSE.endLine();
 		pGraphics.End_Command(AscFormat.DRAW_COMMAND_LINE);
 	}
+	PDSE.endPage();
 };
 Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState)
 {
@@ -16828,7 +16834,15 @@ Paragraph.prototype.GetText = function(oPr)
 	{
 		var oNumPr = this.GetNumPr();
 		if (oNumPr && oNumPr.IsValid())
+		{
 			oText.Text += this.GetNumberingTextWithSuffix(oPr);
+		}
+		else
+		{
+			var oBullet = this.Get_CompiledPr2(false).ParaPr.Bullet;
+			if (oBullet)
+				oText.Text += oBullet.getChar();
+		}
 	}
 
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)

@@ -985,10 +985,13 @@
 		else if(this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml"))
 		{
 			var title = this.documentTitle;
+			var canDownloadFromBytes = !window.isCloudCryptoDownloadAs && AscCommon.DownloadType.None === downloadType
+				&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome)
+				&& !AscCommon.AscBrowser.isAndroidNativeApp;
 			this.saveLogicDocumentToZip(undefined, undefined,
 				function(data) {
 					if (data) {
-						if (c_oAscFileType.VSDX === fileType && !window.isCloudCryptoDownloadAs) {
+						if (c_oAscFileType.VSDX === fileType && canDownloadFromBytes) {
 							AscCommon.DownloadFileFromBytes(data, title, AscCommon.openXml.GetMimeType("vsdx"));
 						} else {
 							dataContainer.data = data;

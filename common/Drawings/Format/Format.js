@@ -11055,6 +11055,9 @@
 			AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_CSld_SetBg, this.Bg, bg));
 			this.Bg = bg;
 		};
+		CSld.prototype.getBgFill = function () {
+			return this.Bg && this.Bg.bgPr ? this.Bg.bgPr.Fill : null;
+		};
 		CSld.prototype.setName = function (name) {
 			AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_CSld_SetName, this.name, name));
 			this.name = name;
@@ -12583,8 +12586,13 @@
 		CBullet.prototype.isNone = function() {
 			if (!this.bulletType)
 				return true;
-			
+
 			return this.bulletType.type === AscFormat.BULLET_TYPE_TYPEFACE_NONE;
+		};
+		CBullet.prototype.getChar = function() {
+			if (this.bulletType && AscFormat.BULLET_TYPE_BULLET_CHAR === this.bulletType.type && typeof this.bulletType.Char === "string")
+				return this.bulletType.Char;
+			return "";
 		};
 		CBullet.prototype.getPresentationBullet = function (theme, color) {
 			var para_pr = new CParaPr();
@@ -17261,143 +17269,226 @@
 
 		function ChartBuilderTypeToInternal(sType) {
 			switch (sType) {
+				case "ColumnClustered":
 				case "bar": {
 					return Asc.c_oAscChartTypeSettings.barNormal;
 				}
+				case "ColumnStacked":
 				case "barStacked": {
 					return Asc.c_oAscChartTypeSettings.barStacked;
 				}
+				case "ColumnStacked100":
 				case "barStackedPercent": {
 					return Asc.c_oAscChartTypeSettings.barStackedPer;
 				}
+				case "3DColumnClustered":
 				case "bar3D": {
 					return Asc.c_oAscChartTypeSettings.barNormal3d;
 				}
+				case "3DColumnStacked":
 				case "barStacked3D": {
 					return Asc.c_oAscChartTypeSettings.barStacked3d;
 				}
+				case "3DColumnStacked100":
 				case "barStackedPercent3D": {
 					return Asc.c_oAscChartTypeSettings.barStackedPer3d;
 				}
+				case "3DColumn":
 				case "barStackedPercent3DPerspective": {
 					return Asc.c_oAscChartTypeSettings.barNormal3dPerspective;
 				}
+				case "BarClustered":
 				case "horizontalBar": {
 					return Asc.c_oAscChartTypeSettings.hBarNormal;
 				}
+				case "BarStacked":
 				case "horizontalBarStacked": {
 					return Asc.c_oAscChartTypeSettings.hBarStacked;
 				}
+				case "BarStacked100":
 				case "horizontalBarStackedPercent": {
 					return Asc.c_oAscChartTypeSettings.hBarStackedPer;
 				}
+				case "3DBarClustered":
 				case "horizontalBar3D": {
 					return Asc.c_oAscChartTypeSettings.hBarNormal3d;
 				}
+				case "3DBarStacked":
 				case "horizontalBarStacked3D": {
 					return Asc.c_oAscChartTypeSettings.hBarStacked3d;
 				}
+				case "3DBarStacked100":
 				case "horizontalBarStackedPercent3D": {
 					return Asc.c_oAscChartTypeSettings.hBarStackedPer3d;
 				}
+				case "Line":
 				case "lineNormal": {
 					return Asc.c_oAscChartTypeSettings.lineNormal;
 				}
+				case "LineStacked":
 				case "lineStacked": {
 					return Asc.c_oAscChartTypeSettings.lineStacked;
 				}
+				case "LineStacked100":
 				case "lineStackedPercent": {
 					return Asc.c_oAscChartTypeSettings.lineStackedPer;
 				}
+				case "LineMarkers":
 				case "lineNormalMarker": {
 					return Asc.c_oAscChartTypeSettings.lineNormalMarker;
 				}
+				case "LineMarkersStacked":
 				case "lineStackedMarker": {
 					return Asc.c_oAscChartTypeSettings.lineStackedMarker;
 				}
+				case "LineMarkersStacked100":
 				case "lineStackedPerMarker": {
 					return Asc.c_oAscChartTypeSettings.lineStackedPerMarker;
 				}
+				case "3DLine":
 				case "line3D": {
 					return Asc.c_oAscChartTypeSettings.line3d;
 				}
+				case "Pie":
 				case "pie": {
 					return Asc.c_oAscChartTypeSettings.pie;
 				}
+				case "3DPie":
 				case "pie3D": {
 					return Asc.c_oAscChartTypeSettings.pie3d;
 				}
+				case "Doughnut":
 				case "doughnut": {
 					return Asc.c_oAscChartTypeSettings.doughnut;
 				}
+				case "XYScatter":
 				case "scatter": {
 					return Asc.c_oAscChartTypeSettings.scatter;
 				}
+				case "XYScatterLinesNoMarkers":
 				case "scatterLine": {
 					return Asc.c_oAscChartTypeSettings.scatterLine;
 				}
+				case "XYScatterLines":
 				case "scatterLineMarker": {
 					return Asc.c_oAscChartTypeSettings.scatterLineMarker;
 				}
+				case "XYScatterSmoothNoMarkers":
 				case "scatterSmooth": {
 					return Asc.c_oAscChartTypeSettings.scatterSmooth;
 				}
+				case "XYScatterSmooth":
 				case "scatterSmoothMarker": {
 					return Asc.c_oAscChartTypeSettings.scatterSmoothMarker;
 				}
+				case "StockHLC":
+				case "StockOHLC":
+				case "StockVHLC":
+				case "StockVOHLC":
 				case "stock": {
 					return Asc.c_oAscChartTypeSettings.stock;
 				}
+				case "Area":
 				case "area": {
 					return Asc.c_oAscChartTypeSettings.areaNormal;
 				}
+				case "AreaStacked":
 				case "areaStacked": {
 					return Asc.c_oAscChartTypeSettings.areaStacked;
 				}
+				case "AreaStacked100":
 				case "areaStackedPercent": {
 					return Asc.c_oAscChartTypeSettings.areaStackedPer;
 				}
+				case "Combo":
 				case "comboCustom": {
 					return Asc.c_oAscChartTypeSettings.comboCustom;
 				}
+				case "ComboColumnClusteredLine":
 				case "comboBarLine": {
 					return Asc.c_oAscChartTypeSettings.comboBarLine;
 				}
+				case "ComboColumnClusteredLineSecondaryAxis":
 				case "comboBarLineSecondary": {
 					return Asc.c_oAscChartTypeSettings.comboBarLineSecondary;
 				}
+				case "Radar":
 				case "radar": {
 					return Asc.c_oAscChartTypeSettings.radar;
 				}
+				case "RadarMarkers":
 				case "radarMarker": {
 					return Asc.c_oAscChartTypeSettings.radarMarker;
 				}
+				case "RadarFilled":
 				case "radarFilled": {
 					return Asc.c_oAscChartTypeSettings.radarFilled;
 				}
 
-				// Unhandled cases from Asc.c_oAscChartTypeSettings (v9.0.0)
-				// case "scatterMarker": {
-				// 	return Asc.c_oAscChartTypeSettings.scatterMarker;
-				// }
-				// case "scatterNone": {
-				// 	return Asc.c_oAscChartTypeSettings.scatterNone;
-				// }
-				// case "comboAreaBar": {
-				// 	return Asc.c_oAscChartTypeSettings.comboAreaBar;
-				// }
-				// case "contour": {
-				// 	return Asc.c_oAscChartTypeSettings.contourNormal;
-				// }
-				// case "contourWireframe": {
-				// 	return Asc.c_oAscChartTypeSettings.contourWireframe;
-				// }
-				// case "surfaceNormal": {
-				// 	return Asc.c_oAscChartTypeSettings.surfaceNormal;
-				// }
-				// case "surfaceWireframe": {
-				// 	return Asc.c_oAscChartTypeSettings.surfaceWireframe;
-				// }
+				case "3DArea":
+				case "3DAreaStacked":
+				case "3DAreaStacked100":
+				case "AreaEx":
+				case "AreaStackedEx":
+				case "AreaStacked100Ex":
+				case "ColumnClusteredEx":
+				case "ColumnStackedEx":
+				case "ColumnStacked100Ex":
+				case "BarClusteredEx":
+				case "BarStackedEx":
+				case "BarStacked100Ex":
+				case "LineEx":
+				case "LineStackedEx":
+				case "LineStacked100Ex":
+				case "PieEx":
+				case "PieExploded":
+				case "3DPieExploded":
+				case "PieOfPie":
+				case "BarOfPie":
+				case "DoughnutEx":
+				case "DoughnutExploded":
+				case "XYScatterEx":
+				case "Bubble":
+				case "Bubble3DEffect":
+				case "BubbleEx":
+				case "Boxwhisker":
+				case "Funnel":
+				case "Histogram":
+				case "Pareto":
+				case "RegionMap":
+				case "Sunburst":
+				case "Treemap":
+				case "Waterfall":
+				case "SuggestedChart":
+				case "OtherCombinations":
+				case "ComboAreaStackedColumnClustered":
+				case "ConeBarClustered":
+				case "ConeBarStacked":
+				case "ConeBarStacked100":
+				case "ConeCol":
+				case "ConeColClustered":
+				case "ConeColStacked":
+				case "ConeColStacked100":
+				case "CylinderBarClustered":
+				case "CylinderBarStacked":
+				case "CylinderBarStacked100":
+				case "CylinderCol":
+				case "CylinderColClustered":
+				case "CylinderColStacked":
+				case "CylinderColStacked100":
+				case "PyramidBarClustered":
+				case "PyramidBarStacked":
+				case "PyramidBarStacked100":
+				case "PyramidCol":
+				case "PyramidColClustered":
+				case "PyramidColStacked":
+				case "PyramidColStacked100":
+				case "Surface":
+				case "SurfaceWireframe":
+				case "SurfaceTopView":
+				case "SurfaceTopViewWireframe": {
+					return null;
+				}
 
 				default: return null;
 			}

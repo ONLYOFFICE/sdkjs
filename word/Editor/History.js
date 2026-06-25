@@ -955,6 +955,14 @@ CHistory.prototype =
         this.OnEnd_GetRecalcData();
         return this.RecalculateData;
     },
+	
+	ResetRecalcIndexToPoint : function(pointIndex)
+	{
+		if (pointIndex > 0)
+			this.RecIndex = Math.min(this.RecIndex, pointIndex - 1);
+		else
+			this.RecIndex = Math.min(this.RecIndex, this.Index + pointIndex);
+	},
 
     Reset_RecalcIndex : function()
     {

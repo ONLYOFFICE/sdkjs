@@ -2287,53 +2287,56 @@ function (window, undefined) {
 	}
 
 	function getClosestIntersectionWithPath(circleCenter, circleRadius, pathCommands, searchFromEnd) {
-		let prevPoint;
-		const allIntersections = [];
-
-		for (let i = 0; i < pathCommands.length; i++) {
-			const command = pathCommands[i];
-			let intersections = [];
-
-			if (command.id === AscFormat.moveTo) {
-				prevPoint = { x: command.X, y: command.Y };
-				continue;
+		let tipSegmentIndex = -1;
+		if (searchFromEnd) {
+			for (let i = pathCommands.length - 1; i >= 0; i--) {
+				if (pathCommands[i].id === AscFormat.lineTo || pathCommands[i].id === AscFormat.bezier4) {
+					tipSegmentIndex = i;
+					break;
+				}
 			}
-
-			if (command.id === AscFormat.lineTo) {
-				intersections = getCircleIntersectionsWithLine(circleCenter, circleRadius, prevPoint, { x: command.X, y: command.Y });
-				prevPoint = { x: command.X, y: command.Y };
-			}
-
-			if (command.id === AscFormat.bezier4) {
-				intersections = getCircleIntersectionsWithBezierCurve(
-					circleCenter, circleRadius,
-					prevPoint,
-					{ x: command.X0, y: command.Y0 },
-					{ x: command.X1, y: command.Y1 },
-					{ x: command.X2, y: command.Y2 }
-				);
-				prevPoint = { x: command.X2, y: command.Y2 };
-			}
-
-			if (intersections.length > 0) {
-				allIntersections.push(intersections);
+		} else {
+			for (let i = 0; i < pathCommands.length; i++) {
+				if (pathCommands[i].id === AscFormat.lineTo || pathCommands[i].id === AscFormat.bezier4) {
+					tipSegmentIndex = i;
+					break;
+				}
 			}
 		}
 
-		if (allIntersections.length === 0) {
+		if (tipSegmentIndex <= 0) {
 			return null;
 		}
 
-		const targetIntersections = searchFromEnd
-			? allIntersections[allIntersections.length - 1]
-			: allIntersections[0];
+		const prevCommand = pathCommands[tipSegmentIndex - 1];
+		const segmentStart = prevCommand.id === AscFormat.bezier4
+			? { x: prevCommand.X2, y: prevCommand.Y2 }
+			: { x: prevCommand.X, y: prevCommand.Y };
 
-		const closestPoint = targetIntersections.reduce(function (best, current) {
+		const command = pathCommands[tipSegmentIndex];
+		let intersections;
+		if (command.id === AscFormat.lineTo) {
+			intersections = getCircleIntersectionsWithLine(circleCenter, circleRadius, segmentStart, { x: command.X, y: command.Y });
+		} else {
+			intersections = getCircleIntersectionsWithBezierCurve(
+				circleCenter, circleRadius,
+				segmentStart,
+				{ x: command.X0, y: command.Y0 },
+				{ x: command.X1, y: command.Y1 },
+				{ x: command.X2, y: command.Y2 }
+			);
+		}
+
+		if (!intersections || intersections.length === 0) {
+			return null;
+		}
+
+		const closestPoint = intersections.reduce(function (best, current) {
 			const isCurrentBetter = searchFromEnd
 				? current.t > best.t
 				: current.t < best.t;
 			return isCurrentBetter ? current : best;
-		}, targetIntersections[0]);
+		}, intersections[0]);
 
 		return closestPoint;
 	}

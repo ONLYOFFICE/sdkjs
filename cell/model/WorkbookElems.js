@@ -9635,20 +9635,59 @@ function RangeDataManagerElem(bbox, data)
 		return result;
 	};
 
+	AutoFilter.prototype.reinitDynamicFilters = function(worksheet, opt_columnsFilter) {
+		if (worksheet.workbook.bUndoChanges || worksheet.workbook.bRedoChanges) {
+			return;
+		}
+		var columns = opt_columnsFilter ? opt_columnsFilter : this.FilterColumns;
+		if (columns) {
+			for (var i = 0; i < columns.length; i++) {
+				var filterColumn = opt_columnsFilter ? columns[i].filter : columns[i];
+				if (filterColumn.DynamicFilter) {
+					filterColumn.DynamicFilter.init(worksheet.getRange3(this.Ref.r1 + 1, filterColumn.ColId + this.Ref.c1, this.Ref.r2, filterColumn.ColId + this.Ref.c1));
+				}
+			}
+		}
+	};
+
 	AutoFilter.prototype.setRowHidden = function(worksheet, newFilterColumn, opt_columnsFilter) {
+		this.reinitDynamicFilters(worksheet, opt_columnsFilter);
+
 		var startRow = this.Ref.r1 + 1;
 		var endRow = this.Ref.r2;
 
+		var c1 = this.Ref.c1;
 		var colId = newFilterColumn ? newFilterColumn.ColId : null;
 		var minChangeRow = null;
 		var hiddenObj = {start: this.Ref.r1 + 1, h: null};
 		var nHiddenRowCount = 0;
 		var nRowsCount = 0;
+
+		var isHideByCurrentColumn = function (row) {
+			var cell = worksheet.getCell3(row, colId + c1);
+			var cellFormat = cell.getNumFormat();
+			var isDateTimeFormat = cellFormat && cellFormat.isDateTimeFormat() &&
+				cell.getType() === window["AscCommon"].CellValueType.Number &&
+				cellFormat.getType() !== Asc.c_oAscNumFormatType.Time;
+			var isNumberFilter = false;
+			if (newFilterColumn.CustomFiltersObj || newFilterColumn.Top10 || newFilterColumn.DynamicFilter) {
+				isNumberFilter = true;
+			}
+			var currentValue = (isDateTimeFormat || isNumberFilter) ? cell.getValueWithoutFormat() : cell.getValueWithFormat();
+			return newFilterColumn.isHideValue(currentValue, isDateTimeFormat, null, cell);
+		};
+
+		var usedExtent = worksheet._computeUsedExtent({includeValues: true, clipTo: this.Ref});
+		var scanEnd = usedExtent ? usedExtent.r2 : (startRow - 1);
+		if (scanEnd > endRow) {
+			scanEnd = endRow;
+		}
+
 		// Apply row visibility after value/format reads so hidden state stays stable during the scan.
 		var pendingHidden = [];
-		for (var i = startRow; i <= endRow; i++) {
+		for (var i = startRow; i <= scanEnd; i++) {
 
-			var isHidden = this.hiddenByAnotherFilter(worksheet, colId, i, this.Ref.c1, opt_columnsFilter);
+			var isHidden = this.hiddenByAnotherFilter(worksheet, colId, i, c1, opt_columnsFilter);
 			if(!newFilterColumn) {
 				if (isHidden !== worksheet.getRowHidden(i)) {
 					if (minChangeRow === null) {
@@ -9661,18 +9700,7 @@ function RangeDataManagerElem(bbox, data)
 				}
 			} else {
 				if (!isHidden) {
-					var cell = worksheet.getCell3(i, colId + this.Ref.c1);
-					let cellFormat = cell.getNumFormat();
-					let isDateTimeFormat = cellFormat && cellFormat.isDateTimeFormat() &&
-						cell.getType() === window["AscCommon"].CellValueType.Number &&
-						cellFormat.getType() !== Asc.c_oAscNumFormatType.Time;
-					var isNumberFilter = false;
-					if (newFilterColumn.CustomFiltersObj || newFilterColumn.Top10 || newFilterColumn.DynamicFilter) {
-						isNumberFilter = true;
-					}
-
-					var currentValue = (isDateTimeFormat || isNumberFilter) ? cell.getValueWithoutFormat() : cell.getValueWithFormat();
-					var isSetHidden = newFilterColumn.isHideValue(currentValue, isDateTimeFormat, null, cell);
+					var isSetHidden = isHideByCurrentColumn(i);
 
 					if (isSetHidden !== worksheet.getRowHidden(i) && minChangeRow === null) {
 						minChangeRow = i;
@@ -9692,12 +9720,6 @@ function RangeDataManagerElem(bbox, data)
 						hiddenObj.start = i;
 					}
 
-					if (i === endRow) {
-						pendingHidden.push(hiddenObj.h, hiddenObj.start, i);
-						if (true === hiddenObj.h) {
-							nHiddenRowCount += i + 1 - hiddenObj.start;
-						}
-					}
 					nRowsCount++;
 				} else if (hiddenObj.h !== null) {
 					pendingHidden.push(hiddenObj.h, hiddenObj.start, i - 1);
@@ -9711,6 +9733,57 @@ function RangeDataManagerElem(bbox, data)
 					pendingHidden.push(isHidden, i, i);
 				}
 			}
+		}
+
+		if (scanEnd < endRow) {
+			var tailStart = scanEnd + 1;
+			var tailHiddenByOther = this.hiddenByAnotherFilter(worksheet, colId, tailStart, c1, opt_columnsFilter);
+
+			if (!newFilterColumn) {
+				if (tailHiddenByOther) {
+					if (true !== worksheet.getRowHidden(tailStart) && minChangeRow === null) {
+						minChangeRow = tailStart;
+					}
+					pendingHidden.push(true, tailStart, endRow);
+				}
+			} else if (tailHiddenByOther) {
+				if (hiddenObj.h !== null) {
+					pendingHidden.push(hiddenObj.h, hiddenObj.start, scanEnd);
+					if (true === hiddenObj.h) {
+						nHiddenRowCount += scanEnd + 1 - hiddenObj.start;
+					}
+					hiddenObj.h = null;
+				}
+				if (true !== worksheet.getRowHidden(tailStart) && minChangeRow === null) {
+					minChangeRow = tailStart;
+				}
+				pendingHidden.push(true, tailStart, endRow);
+			} else {
+				var tailSetHidden = isHideByCurrentColumn(tailStart);
+				if (tailSetHidden !== worksheet.getRowHidden(tailStart) && minChangeRow === null) {
+					minChangeRow = tailStart;
+				}
+				if (hiddenObj.h === null) {
+					hiddenObj.h = tailSetHidden;
+					hiddenObj.start = tailStart;
+				} else if (hiddenObj.h !== tailSetHidden) {
+					pendingHidden.push(hiddenObj.h, hiddenObj.start, scanEnd);
+					if (true === hiddenObj.h) {
+						nHiddenRowCount += scanEnd + 1 - hiddenObj.start;
+					}
+					hiddenObj.h = tailSetHidden;
+					hiddenObj.start = tailStart;
+				}
+				nRowsCount += endRow - scanEnd;
+			}
+		}
+
+		if (newFilterColumn && hiddenObj.h !== null) {
+			pendingHidden.push(hiddenObj.h, hiddenObj.start, endRow);
+			if (true === hiddenObj.h) {
+				nHiddenRowCount += endRow + 1 - hiddenObj.start;
+			}
+			hiddenObj.h = null;
 		}
 
 		for (var p = 0; p < pendingHidden.length; p += 3) {
@@ -10167,6 +10240,7 @@ function RangeDataManagerElem(bbox, data)
 					break;
 				}
 				case Asc.ETotalsRowFunction.totalrowfunctionCountNums: {
+					res = generateFunction(102);
 					break;
 				}
 				case Asc.ETotalsRowFunction.totalrowfunctionCustom: {
@@ -17103,32 +17177,34 @@ function RangeDataManagerElem(bbox, data)
 	 */
 	function _getFilledRange(oRange, bVertical) {
 		let oFilledRange = oRange.clone();
-		let nRow = oFilledRange.bbox.r1;
-		let nCol = oFilledRange.bbox.c1;
-		let sFirstValue = null;
+		let oBBox = oRange.bbox;
+		let nMinRow = null, nMaxRow = null, nMinCol = null, nMaxCol = null;
 
-		oRange._foreach(function (oCell, nCurRow, nCurCol) {
-			if (oCell && oCell.getValueWithoutFormat()) {
-				nRow = nCurRow;
-				nCol = nCurCol;
-				if (nCurRow === oRange.bbox.r1 && nCurCol === oRange.bbox.c1) {
-					sFirstValue = oCell.getValueWithoutFormat();
-				}
-			} else {
-				let sNextValue = _getNextValueFromRange(oRange, oCell, bVertical);
-				if (!sFirstValue && sNextValue) {
-					if (bVertical) {
-						oFilledRange.bbox.r1 = nCurRow + 1;
-						oFilledRange.bbox.c1 = nCurCol;
-					} else {
-						oFilledRange.bbox.c1 = nCurCol + 1;
-						oFilledRange.bbox.r1 = nCurRow;
-					}
-				}
+		oRange.forEachDataValue(function (nCurRow, nCurCol) {
+			if (nMinRow === null || nCurRow < nMinRow) {
+				nMinRow = nCurRow;
+			}
+			if (nMaxRow === null || nCurRow > nMaxRow) {
+				nMaxRow = nCurRow;
+			}
+			if (nMinCol === null || nCurCol < nMinCol) {
+				nMinCol = nCurCol;
+			}
+			if (nMaxCol === null || nCurCol > nMaxCol) {
+				nMaxCol = nCurCol;
 			}
 		});
-		oFilledRange.bbox.r2 = nRow;
-		oFilledRange.bbox.c2 = nCol;
+
+		if (nMinRow === null) {
+			oFilledRange.bbox.r2 = oBBox.r1;
+			oFilledRange.bbox.c2 = oBBox.c1;
+			return oFilledRange;
+		}
+
+		oFilledRange.bbox.r1 = nMinRow;
+		oFilledRange.bbox.c1 = nMinCol;
+		oFilledRange.bbox.r2 = nMaxRow;
+		oFilledRange.bbox.c2 = nMaxCol;
 
 		return oFilledRange;
 	}

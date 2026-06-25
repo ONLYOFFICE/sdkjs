@@ -708,7 +708,7 @@
         this.SetNeedRecalc(true);
     };
     CPushButtonField.prototype.SetValue = function() {
-        return;
+        return true;
     };
     CPushButtonField.prototype.private_SetValue = CPushButtonField.prototype.SetValue;
     CPushButtonField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {

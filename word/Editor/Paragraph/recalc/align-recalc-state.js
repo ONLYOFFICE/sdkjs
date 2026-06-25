@@ -641,6 +641,16 @@
 	{
 		return this.Paragraph.IsStartFromNewPage();
 	};
+	AlignRecalcState.prototype.canContinue = function()
+	{
+		if (!(this.RecalcResult & recalcresult_NextElement))
+		{
+			this.wrapState.RecalcResult = this.RecalcResult;
+			this.bidiFlow.reset();
+			return false;
+		}
+		return true;
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.Paragraph.AlignRecalcState = AlignRecalcState;
 

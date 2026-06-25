@@ -3568,7 +3568,49 @@ CPresentation.prototype.private_ClearSearchOnRecalculate = function () {
 	this.ClearSearch();
 };
 
+CPresentation.prototype.GetActiveShape = function() {
+	var oController = this.GetCurrentController();
+	if (!oController) return null;
 
+	var textSel = oController.selection && oController.selection.textSelection;
+	if (textSel && textSel.getObjectType() === AscDFH.historyitem_type_Shape) {
+		return textSel;
+	}
+
+	var aSelected = oController.selectedObjects;
+	let aShapes = [];
+	for (var i = 0; i < aSelected.length; i++) {
+		if (aSelected[i].getObjectType() === AscDFH.historyitem_type_Shape) {
+			aShapes.push(aSelected[i]);
+		}
+	}
+	if (aShapes.length === 1)
+		return aShapes[0];
+
+	return null;
+};
+
+CPresentation.prototype.GetActiveTable = function() {
+	var oController = this.GetCurrentController();
+	if (!oController) return null;
+
+	var textSel = oController.selection && oController.selection.textSelection;
+	if (textSel && textSel.getObjectType() === AscDFH.historyitem_type_GraphicFrame && textSel.isTable()) {
+		return textSel;
+	}
+
+	var aSelected = oController.selectedObjects;
+	var aTables = [];
+	for (var i = 0; i < aSelected.length; i++) {
+		if (aSelected[i].getObjectType() === AscDFH.historyitem_type_GraphicFrame && aSelected[i].isTable()) {
+			aTables.push(aSelected[i]);
+		}
+	}
+	if (aTables.length === 1)
+		return aTables[0];
+
+	return null;
+};
 CPresentation.prototype.GetSearchElementId = function (isNext) {
 	if (this.Slides.length > 0) {
 		var i, Id, content, start_index;
@@ -4214,7 +4256,7 @@ CPresentation.prototype.Add_FlowTable = function (Cols, Rows, Placeholder, sStyl
 		}
 	}
 	this.Api.inkDrawer.startSilentMode();
-	this.StartAction(AscDFH.historydescription_Presentation_AddFlowTable, {col: Cols, row: Rows, ph: Placeholder, style: sStyleId});
+	this.StartAction(AscDFH.historydescription_Presentation_AddFlowTable);
 	var graphic_frame = this.Create_TableGraphicFrame(Cols, Rows, oSlide, sStyleId || this.DefaultTableStyleId, Width, Height, X, Y);
 
 	this.SetThumbnailsFocusElement(FOCUS_OBJECT_MAIN);
@@ -4230,7 +4272,12 @@ CPresentation.prototype.Add_FlowTable = function (Cols, Rows, Placeholder, sStyl
 	this.Recalculate();
 	this.Document_UpdateInterfaceState();
 	this.Api.inkDrawer.endSilentMode();
-	this.FinalizeAction();
+
+	let oTable = graphic_frame.graphicObject;
+	let tableStyle = oTable.Get_TableStyle();
+	let style = this.globalTableStyles.Get(tableStyle || this.DefaultTableStyleId).GetName();
+	let tableGrid = oTable.TableGrid;
+	this.FinalizeAction(undefined, undefined, {col: Cols, row: Rows, style: style, tableGrid: tableGrid, tableId: oTable.Id, x: graphic_frame.x, y: graphic_frame.y}, AscDFH.historydescription_Presentation_AddFlowTable);
 	return graphic_frame;
 };
 
@@ -5798,7 +5845,10 @@ CPresentation.prototype.OnKeyDown = function (e) {
 						return;
 					}
 					if (oDrawingObjects.isTrackingDrawings()) {
-						oDrawingObjects.resetTrackState();
+						if (oDrawingObjects.isPolylineAddition())
+							oDrawingObjects.endTrackNewShape();
+						else
+							oDrawingObjects.resetTrackState();
 						this.DrawingDocument.m_oWordControl.OnUpdateOverlay();
 						this.Api.sync_EndAddShape();
 						this.DrawingDocument.UnlockCursorType();
@@ -11454,7 +11504,7 @@ CPresentation.prototype.StartAction = function (nDescription, additional) {
 	this.Api.sendEvent("asc_onUserActionStart");
 	this.Api.getMacroRecorder().addStepData(nDescription, additional, true);
 };
-CPresentation.prototype.FinalizeAction = function (isCheckEmptyAction, isCheckLockedAction, additional) {
+CPresentation.prototype.FinalizeAction = function (isCheckEmptyAction, isCheckLockedAction, additional, nDescription) {
 	this.Recalculate();
 	this.Api.checkChangesSize();
 	if (false !== isCheckEmptyAction && AscCommon.History.Is_LastPointEmpty()) {
@@ -11464,7 +11514,7 @@ CPresentation.prototype.FinalizeAction = function (isCheckEmptyAction, isCheckLo
 		this.Recalculate(this.History.Get_RecalcData(null, arrChanges));
 	}
 	this.Api.sendEvent("asc_onUserActionEnd");
-	this.Api.getMacroRecorder().addStepData(null, additional, false);
+	this.Api.getMacroRecorder().addStepData(nDescription || null, additional, false);
 };
 CPresentation.prototype.AddMacroData = function(nDescription, additional)
 {

@@ -79,6 +79,7 @@
     
     CAnnotationText.prototype.select = AscFormat.CGraphicObjectBase.prototype.select;
     CAnnotationText.prototype.deselect = AscFormat.CGraphicObjectBase.prototype.deselect;
+    CAnnotationText.prototype.recalcGeometry = function() {};
     CAnnotationText.prototype.canChangeAdjustments = function() {};
     CAnnotationText.prototype.hitToHandles = function() {};
     CAnnotationText.prototype.hitInBoundingRect = function() {};
@@ -238,6 +239,8 @@
         let oCtx = oGraphics.GetContext();
         oCtx.save();
         oGraphics.EnableTransform();
+		oGraphics.SetGlobalAlpha(this.GetOpacity());
+
         oCtx.iconFill = "rgb(" + oRGB.r + "," + oRGB.g + "," + oRGB.b + ")";
 
         let nScale = 1 / (oGraphics.isThumbnails ? 1 : oDoc.Viewer.zoom);

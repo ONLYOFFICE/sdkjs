@@ -14978,6 +14978,7 @@ function parseStringToCElement (val, cultureInfo) {
 			const sumColumn = this.sumRangeCache.data[sumWsId][sumColIdx];
 			const sumData = sumColumn.data[cElementType.number];
 			const sumIndexes = sumColumn.indexes[cElementType.number];
+			const errIndexes = sumColumn.indexes[cElementType.error];
 			if (!sumData || !sumIndexes) {
 				continue;
 			}
@@ -14995,6 +14996,16 @@ function parseStringToCElement (val, cultureInfo) {
 					word = (word & (word - 1)) | 0;
 
 					const targetSumRow = sumBbox.r1 + relRow;
+
+					// if we have an error in found indexes and it matched to criteria, return that error
+					if (errIndexes && errIndexes.includes(targetSumRow)) {
+						const errIndex = errIndexes.indexOf(targetSumRow);
+						const errData = sumColumn.data[cElementType.error];
+						const firstErrValueType = errData[errIndex];
+
+						return new cError(firstErrValueType);
+					}
+
 					while (sumPtr < sumLen && sumIndexes[sumPtr] < targetSumRow) {
 						sumPtr += 1;
 					}

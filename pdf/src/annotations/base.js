@@ -301,7 +301,8 @@
         }
     };
     CAnnotationBase.prototype.GetRectangleDiff = function() {
-        return this._rectDiff;
+		let aRectDiff = this._rectDiff;
+        return aRectDiff ? aRectDiff.slice() : aRectDiff;
     };
     CAnnotationBase.prototype.SetNoRotate = function(bValue) {
         this._noRotate = bValue;

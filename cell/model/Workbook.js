@@ -1890,11 +1890,17 @@
 			// go through  all intersected listeners only if we do not change the cell inside the table
 			if (isDefnameTable && notifyData.type !== c_oNotifyType.Dirty) {
 				// we are getting table info and notify all range listeners that intersects with the table ref
-				let table = wb.getTableByName(nameIndex);
+				let tableWithIndex = wb.getTableByName(nameIndex, true);
+				let table = tableWithIndex && tableWithIndex.table;
 				if (table) {
 					let tableRef = table.Ref;
-					let sheetId = defNameObj.parsedRef && defNameObj.parsedRef.outStack && 
+					let sheetId = defNameObj.parsedRef && defNameObj.parsedRef.outStack &&
 						defNameObj.parsedRef.outStack[0] && defNameObj.parsedRef.outStack[0].getWsId && defNameObj.parsedRef.outStack[0].getWsId();
+					// parsedRef may be unparsed (e.g. on redo) - take sheetId from the table's worksheet
+					if (sheetId === undefined || sheetId === false || sheetId === null) {
+						let tableWs = wb.aWorksheets[tableWithIndex.index];
+						sheetId = tableWs && tableWs.getId();
+					}
 					let areaMap = sheetId !== undefined && this.sheetListeners[sheetId] && this.sheetListeners[sheetId].areaMap;
 					let cellMap = sheetId !== undefined && this.sheetListeners[sheetId] && this.sheetListeners[sheetId].cellMap;
 
@@ -3329,6 +3335,9 @@
 		//external references
 		this.externalReferences.forEach(function(elem){
 			elem && elem.initPostOpen && elem.initPostOpen();
+		});
+		this.forEach(function (ws) {
+			ws.initConditionalFormattingFormulas();
 		});
 		if (bSnapshot) {
 			this.snapshot = this._getSnapshot();
@@ -7201,7 +7210,7 @@
 		wsFrom._forEachColData(function(sheetMemory, index){
 			t.cellsByCol[index] = sheetMemory.clone();
 		});
-		this.cellsByColRowsCount = wsFrom.cellsByColRowsCount;
+		this.setCellsByColRowsCount(wsFrom.cellsByColRowsCount);
 
 		var aMerged = wsFrom.mergeManager.getAll();
 		for(i in aMerged)
@@ -7806,22 +7815,26 @@
 							case Asc.ECfType.beginsWith:
 							case Asc.ECfType.endsWith:
 								var operator;
-								switch (oRule.type) {
-									case Asc.ECfType.containsText:
-										operator = AscCommonExcel.ECfOperator.Operator_containsText;
-										break;
-									case Asc.ECfType.notContainsText:
-										operator = AscCommonExcel.ECfOperator.Operator_notContains;
-										break;
-									case Asc.ECfType.beginsWith:
-										operator = AscCommonExcel.ECfOperator.Operator_beginsWith;
-										break;
-									case Asc.ECfType.endsWith:
-										operator = AscCommonExcel.ECfOperator.Operator_endsWith;
-										break;
-								}
-								if (operator) {
-									oRule.asc_setOperator(operator);
+								if (oRule.operator !== null && oRule.operator !== undefined) {
+									operator = oRule.operator;
+								} else {
+									switch (oRule.type) {
+										case Asc.ECfType.containsText:
+											operator = AscCommonExcel.ECfOperator.Operator_containsText;
+											break;
+										case Asc.ECfType.notContainsText:
+											operator = AscCommonExcel.ECfOperator.Operator_notContains;
+											break;
+										case Asc.ECfType.beginsWith:
+											operator = AscCommonExcel.ECfOperator.Operator_beginsWith;
+											break;
+										case Asc.ECfType.endsWith:
+											operator = AscCommonExcel.ECfOperator.Operator_endsWith;
+											break;
+									}
+									if (operator !== null && operator !== undefined) {
+										oRule.asc_setOperator(operator);
+									}
 								}
 								formulaParent = new AscCommonExcel.CConditionalFormattingFormulaParent(this, oRule, true);
 								oRuleElement =  oRule.getFormulaCellIs(Asc.ECfType.notContainsText === oRule.type || Asc.ECfType.containsText === oRule.type);
@@ -8261,7 +8274,7 @@
 					t.workbook.dependencyFormulas.addToChangedCell(cellWithFormula);
 				}
 			}
-			t.cellsByColRowsCount = Math.max(t.cellsByColRowsCount, newNRow + 1);
+			t.setCellsByColRowsCount(Math.max(t.cellsByColRowsCount, newNRow + 1));
 			t.nRowsCount = Math.max(t.nRowsCount, t.cellsByColRowsCount);
 			t.setColsCount(Math.max(t.nColsCount, newNCol + 1));
 		});
@@ -8409,7 +8422,7 @@
 		this.nRowsCount = Math.max(this.nRowsCount, this.rowsData.getMaxIndex() + 1);
 		this._forEachColData(function(sheetMemory) {
 			sheetMemory.insertRange(index, count);
-			t.cellsByColRowsCount = Math.max(t.cellsByColRowsCount, sheetMemory.getMaxIndex() + 1);
+			t.setCellsByColRowsCount(Math.max(t.cellsByColRowsCount, sheetMemory.getMaxIndex() + 1));
 		});
 		this.nRowsCount = Math.max(this.nRowsCount, this.cellsByColRowsCount);
 		// Open the row band on cellStylesByCol.
@@ -8421,7 +8434,7 @@
 			this.nRowsCount = Math.max(this.nRowsCount, this.rowsData.getMaxIndex() + 1);
 			this._forEachColData(function(sheetMemory) {
 				sheetMemory.copyRangeByChunk((index - 1), 1, index, count);
-				t.cellsByColRowsCount = Math.max(t.cellsByColRowsCount, sheetMemory.getMaxIndex() + 1);
+				t.setCellsByColRowsCount(Math.max(t.cellsByColRowsCount, sheetMemory.getMaxIndex() + 1));
 			});
 			this.nRowsCount = Math.max(this.nRowsCount, this.cellsByColRowsCount);
 			// Mirror the inheritance copy on cellStylesByCol.
@@ -9160,7 +9173,23 @@
 			};
 			if(0 == _start && gc_nMaxRow0 == _stop)
 			{
-				// ToDo implement hiding all rows!
+				let allRow = false == bHidden ? oThis.oSheetFormatPr.oAllRow : oThis.getAllRow();
+				if(allRow && bHidden != allRow.getHidden())
+				{
+					let oOldAllRowProps = allRow.getHeightProp();
+					allRow.setHidden(bHidden, localChange);
+					let oNewAllRowProps = allRow.getHeightProp();
+					if(false == oOldAllRowProps.isEqual(oNewAllRowProps))
+						AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_RowProp, oThis.getId(),
+									allRow._getUpdateRange(),
+									new UndoRedoData_IndexSimpleProp(allRow.index, true, oOldAllRowProps, oNewAllRowProps));
+				}
+				oThis._forEachRow(fProcessRow);
+				if(startIndex !== null)
+				{
+					updateRange = new Asc.Range(0, startIndex, gc_nMaxCol0, endIndex);
+					AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_RowHide, oThis.getId(), updateRange, new UndoRedoData_FromToRowCol(bHidden, startIndex, endIndex));
+				}
 			}
 			else
 			{
@@ -9463,6 +9492,9 @@
 		});
 		return xfs;
 	};
+	Worksheet.prototype.setCellsByColRowsCount = function (val) {
+		this.cellsByColRowsCount = val;
+	};
 	Worksheet.prototype._initCell=function(cell, nRow, nCol){
 		cell.setChanged(true);
 		var xfs = this._directOrInheritedXfs(nRow, nCol);
@@ -9473,7 +9505,7 @@
 		} finally {
 			cell._isTransient = prevTransient;
 		}
-		this.cellsByColRowsCount = Math.max(this.cellsByColRowsCount, nRow + 1);
+		this.setCellsByColRowsCount(Math.max(this.cellsByColRowsCount, nRow + 1));
 		this.nRowsCount = Math.max(this.nRowsCount, this.cellsByColRowsCount);
 		if (nCol >= this.nColsCount)
 			this.setColsCount(nCol + 1);
@@ -9862,7 +9894,7 @@
 		var shiftedArrayFormula = {};
 		var oldNewArrayFormulaMap = {};
 		//modify nRowsCount/nColsCount for correct foreach functions
-		wsTo.cellsByColRowsCount = Math.max(wsTo.cellsByColRowsCount, nRowsCountNew);
+		wsTo.setCellsByColRowsCount(Math.max(wsTo.cellsByColRowsCount, nRowsCountNew));
 		wsTo.nRowsCount = Math.max(wsTo.nRowsCount, wsTo.cellsByColRowsCount);
 		wsTo.setColsCount(Math.max(wsTo.nColsCount, nColsCountNew));
 		wsTo.getRange3(oBBoxTo.r1, oBBoxTo.c1, oBBoxTo.r2, oBBoxTo.c2)._foreachNoEmpty(function(cell){
@@ -10225,7 +10257,7 @@
 			var sheetMemory = this.getColDataNoEmpty(i);
 			if (sheetMemory) {
 				sheetMemory.insertRange(nTop, dif);
-				t.cellsByColRowsCount = Math.max(t.cellsByColRowsCount, sheetMemory.getMaxIndex() + 1);
+				t.setCellsByColRowsCount(Math.max(t.cellsByColRowsCount, sheetMemory.getMaxIndex() + 1));
 			}
 			var styleStoreDown = this.cellStylesByCol[i];
 			if (styleStoreDown) {
@@ -10239,7 +10271,7 @@
 				var sheetMemory = this.getColDataNoEmpty(i);
 				if (sheetMemory) {
 					sheetMemory.copyRangeByChunk((nTop - 1), 1, nTop, dif);
-					t.cellsByColRowsCount = Math.max(t.cellsByColRowsCount, sheetMemory.getMaxIndex() + 1);
+					t.setCellsByColRowsCount(Math.max(t.cellsByColRowsCount, sheetMemory.getMaxIndex() + 1));
 				}
 				var styleStoreInherit = this.cellStylesByCol[i];
 				if (styleStoreInherit) {
@@ -12423,7 +12455,7 @@
 				tmp.row.clear();
 				tmp.row.fromXLSB(stream, aCellXfs);
 				tmp.row.saveContent();
-				tmp.ws.cellsByColRowsCount = Math.max(tmp.ws.cellsByColRowsCount, tmp.row.index + 1);
+				tmp.ws.setCellsByColRowsCount(Math.max(tmp.ws.cellsByColRowsCount, tmp.row.index + 1));
 				tmp.ws.nRowsCount = Math.max(tmp.ws.nRowsCount, tmp.ws.cellsByColRowsCount);
 			}
 			else if (AscCommonExcel.XLSB.rt_END_SHEET_DATA === type) {
@@ -13493,6 +13525,12 @@
 			this.aConditionalFormattingRules = {};
 		}
 		this.aConditionalFormattingRules[rule.id] = rule;
+	};
+	Worksheet.prototype.initConditionalFormattingFormulas = function () {
+		var t = this;
+		this.forEachConditionalFormattingRules(function (oRule) {
+			oRule.initRuleElements && oRule.initRuleElements(t);
+		});
 	};
 
 	Worksheet.prototype.changeCFRule = function (from, to, addToHistory) {
@@ -18505,7 +18543,7 @@
 			this.setRowCol(oCellAddress.getRow0(), oCellAddress.getCol0());
 			this.ws.nRowsCount = Math.max(this.ws.nRowsCount, this.nRow);
 			this.ws.nColsCount = Math.max(this.ws.nColsCount, this.nCol);
-			this.ws.cellsByColRowsCount = Math.max(this.ws.cellsByColRowsCount, this.nCol);
+			this.ws.setCellsByColRowsCount(Math.max(this.ws.cellsByColRowsCount, this.nCol));
 		}
 		val = vals["t"];
 		if (undefined !== val) {
@@ -22248,6 +22286,20 @@
 		}
 		var nWidth = from.c2 - from.c1 + 1;
 		var nHeight = from.r2 - from.r1 + 1;
+		var bWholeColFill = bVertical && from.r1 === from.r2 &&
+			0 === Math.min(from.r1, to.r1) && gc_nMaxRow0 === Math.max(from.r2, to.r2);
+		var bWholeRowFill = !bVertical && from.c1 === from.c2 &&
+			0 === Math.min(from.c1, to.c1) && gc_nMaxCol0 === Math.max(from.c2, to.c2);
+		var bStyleOnlyWholeLineFill = false;
+		if (bIsPromote && (bWholeColFill || bWholeRowFill)) {
+			bStyleOnlyWholeLineFill = true;
+			fromRange._foreachDataOnly(function (oCell) {
+				if (oCell && (oCell.isFormula() || "" !== oCell.getValueWithoutFormat())) {
+					bStyleOnlyWholeLineFill = false;
+					return true;
+				}
+			});
+		}
 		//delete text or everything in the fill area
 		if(bIsPromote && nIndex >= 0 && ((true == bVertical && nHeight > nIndex) || (false == bVertical && nWidth > nIndex)))
 		{
@@ -22420,7 +22472,7 @@
 				}
 				return res;
 			};
-			for(var i = nStartRow; i <= nEndRow; i ++)
+			for(var i = nStartRow; !bStyleOnlyWholeLineFill && i <= nEndRow; i ++)
 			{
 				oPromoteHelper.setIndex(i - nStartRow);
 				for(var j = nStartCol; (nStartCol - j) * (nEndCol - j) <= 0; j += nColDx)
@@ -22547,9 +22599,42 @@
 			//add merged areas
 			var nDx = from.c2 - from.c1 + 1;
 			var nDy = from.r2 - from.r1 + 1;
-			// Must run AFTER the data pass so data+style destinations
-			// already carry their copied style before tiling.
-			AscCommonExcel.CellStyleStorage.promoteStyleOnlyDirectStyles(wsFrom, from, wsTo, to, nDx, nDy);
+			if (bStyleOnlyWholeLineFill) {
+				var getSourceXfs = function (nSrcRow, nSrcCol) {
+					var oXfs = null;
+					wsFrom._getCellNoEmpty(nSrcRow, nSrcCol, function (oCell) {
+						if (oCell) {
+							oXfs = oCell.getStyle();
+						}
+					});
+					if (!oXfs) {
+						var nXfIndex = wsFrom.getCellXf(nSrcRow, nSrcCol);
+						if (nXfIndex > 0) {
+							oXfs = g_StyleCache.getXf(nXfIndex);
+						}
+					}
+					return oXfs;
+				};
+				if (bVertical) {
+					for (var nFillCol = from.c1; nFillCol <= from.c2; ++nFillCol) {
+						var oColXfs = getSourceXfs(from.r1, nFillCol);
+						if (oColXfs) {
+							wsTo.getRange3(0, nFillCol, gc_nMaxRow0, nFillCol).setStyle(oColXfs);
+						}
+					}
+				} else {
+					for (var nFillRow = from.r1; nFillRow <= from.r2; ++nFillRow) {
+						var oRowXfs = getSourceXfs(nFillRow, from.c1);
+						if (oRowXfs) {
+							wsTo.getRange3(nFillRow, 0, nFillRow, gc_nMaxCol0).setStyle(oRowXfs);
+						}
+					}
+				}
+			} else {
+				// Must run AFTER the data pass so data+style destinations
+				// already carry their copied style before tiling.
+				AscCommonExcel.CellStyleStorage.promoteStyleOnlyDirectStyles(wsFrom, from, wsTo, to, nDx, nDy);
+			}
 			var oMergedFrom = oCanPromote.oMergedFrom;
 			if(null != oMergedFrom && oMergedFrom.all.length > 0)
 			{
@@ -22622,7 +22707,8 @@
 								if (fromDataValidation) {
 									fromDataValidation = fromDataValidation.data;
 									var toDataValidation = fromDataValidation.clone();
-									toDataValidation.ranges = fromDataValidation.ranges.concat(newDataValidations[i]);
+									var aDataValidationRanges = fromDataValidation.ranges.concat(newDataValidations[i]);
+									toDataValidation.ranges = new AscCommonExcel.MultiplyRange(aDataValidationRanges).getUnionRanges();
 									wsTo.dataValidations.change(wsTo, fromDataValidation, toDataValidation, true);
 								}
 							}
@@ -25737,6 +25823,11 @@
 
 
 		return res;
+	};
+
+	CDynamicArrayManager.prototype.isSpilledNotFirstCell = function (col, row) {
+		const ref = this.getDynamicArrayFirstCell(col, row);
+		return !!(ref && (col !== ref.c1 || row !== ref.r1));
 	};
 
 	CDynamicArrayManager.prototype.addChangedArray = function (rangeName, arrayInfo) {

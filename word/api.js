@@ -2438,6 +2438,23 @@ background-repeat: no-repeat;\
 			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback, rejectCallback);
 		}
 	};
+	asc_docs_api.prototype.asc_PasteHtmlAsText = function(sHtml, callback, rejectCallback) {
+		if (AscCommon.CollaborativeEditing.Get_GlobalLock())
+			return;
+
+		var _logicDoc = this.WordControl.m_oLogicDocument;
+		if (!_logicDoc)
+			return;
+
+		if (_logicDoc.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, _logicDoc.IsFormFieldEditing())) {
+			rejectCallback && rejectCallback();
+			return;
+		}
+
+		window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
+		_logicDoc.StartAction(AscDFH.historydescription_Document_PasteHotKey);
+		AscCommon.Editor_Paste_Html_Lite_Exec(this, sHtml, callback, rejectCallback);
+	};
 
 	asc_docs_api.prototype.GetContentFromHtml = function(html, callback)
 	{
@@ -5700,7 +5717,7 @@ background-repeat: no-repeat;\
 			let tableStyleName = this.WordControl.m_oLogicDocument.Styles.GetName(tableStyle);
 			let tableGrid = oTable.TableGrid;
 
-			this.WordControl.m_oLogicDocument.FinalizeAction(undefined, {col: col, row: row, style: tableStyleName, tableGrid: tableGrid});
+			this.WordControl.m_oLogicDocument.FinalizeAction(undefined, {col: col, row: row, style: tableStyleName, tableGrid: tableGrid, tableId: oTable.Id});
 		}
 	};
 	asc_docs_api.prototype.asc_IsTable = function()
@@ -9298,6 +9315,10 @@ background-repeat: no-repeat;\
 				this.WordControl.OnScroll();
 			}
 			this.turnOffSpecialModes();
+			
+			let logicDocument = this.private_GetLogicDocument();
+			if (logicDocument)
+				logicDocument.SetDisplayModeInReview(Asc.c_oAscDisplayModeInReview.Original, true);
 		}
 		else
 		{
@@ -15804,6 +15825,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_updateExternalReferences"] = asc_docs_api.prototype.asc_updateExternalReferences;
 	asc_docs_api.prototype["asc_removeExternalReferences"] = asc_docs_api.prototype.asc_removeExternalReferences;
 	asc_docs_api.prototype["asc_changeExternalReference"]  = asc_docs_api.prototype.asc_changeExternalReference;
+
+	asc_docs_api.prototype["asc_PasteHtmlAsText"] = asc_docs_api.prototype.asc_PasteHtmlAsText;
 	
 	asc_docs_api.prototype['asc_getRestrictionSettings'] = asc_docs_api.prototype.asc_getRestrictionSettings = asc_docs_api.prototype.getRestrictionSettings;
 	asc_docs_api.prototype['asc_markAsFinal'] = asc_docs_api.prototype.asc_markAsFinal = asc_docs_api.prototype.markAsFinal;

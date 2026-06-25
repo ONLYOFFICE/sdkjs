@@ -220,6 +220,9 @@ CChartsDrawer.prototype =
 
 	createChartEx: function (seria) {
 		this.charts = {};
+		if (!seria) {
+			return;
+		}
 		switch (seria.layoutId) {
 			case AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN :
 				this.charts.chartEx = new drawClusteredColumn(seria, this);
@@ -652,8 +655,9 @@ CChartsDrawer.prototype =
 	//****positions text labels****
 	recalculatePositionText: function (obj, idx) {
 		var pos;
+		const bChartTitle = this.cChartSpace.isChartEx() && obj.getObjectType() === AscDFH.historyitem_type_Title && obj.parent && obj.parent.getObjectType() === AscDFH.historyitem_type_Chart;
 
-		if (!this.cChartSpace.bEmptySeries) {
+		if (!this.cChartSpace.bEmptySeries || bChartTitle) {
 			var type = obj.getObjectType();
 
 			switch (type) {
@@ -3002,6 +3006,7 @@ CChartsDrawer.prototype =
 		}
 
 		const plotArea = chartSpace.chart.plotArea;
+		plotArea.plotAreaRegion.clearCachedData();
         const axisProperties = {
 			isValid: false,
             cat : {max: null, min:null, scale : []},
@@ -8548,46 +8553,80 @@ drawFunnelChart.prototype = {
 	constructor: drawFunnelChart,
 
 	recalculate: function () {
-		const cachedData = this.cChartSpace ? this.cChartSpace.getCachedData() : null;
-		if (!cachedData || !this.cChartSpace.chart.plotArea.axId) {
+		this.paths = {};
+		this.linePath = null;
+
+		const cachedData = this.cChartSpace && this.cChartSpace.getCachedData && this.cChartSpace.getCachedData();
+		if (!cachedData || !cachedData.data.length) {
 			return;
 		}
-		if (cachedData.data.length > 0 && this.chartProp && this.chartProp.chartGutter) {
-			const valAxis = this.cChartSpace.chart.plotArea.axId[0];
 
-			const catMiddle = (this.chartProp.trueWidth / 2 + this.chartProp.chartGutter._left);
-			let valStart = this.chartProp.chartGutter._top;
-			let chartHeight = this.chartProp.trueHeight;
+		if (!this.chartProp || !this.chartProp.chartGutter) {
+			return;
+		}
 
-			if (AscFormat.isRealNumber(valStart) && AscFormat.isRealNumber(catMiddle)) {
-				const coeff = valAxis.scaling.gapWidth;
-				// 1 px gap for each section length
-				const gapWidth = 0.5 / this.chartProp.pxToMM;
-				const gapNumber = cachedData.data.length;
-				//Each bar will have 2 gapWidth and 2 margins , on top and bottom sides
-				const initialBarHeight = (chartHeight - (2 * gapWidth * gapNumber))/ cachedData.data.length;
-				const barHeight = (initialBarHeight / (1 + coeff));
-				const margin = (initialBarHeight - barHeight) / 2;
+		const axes = this.cChartSpace.chart.plotArea.axId;
+		if (!axes) {
+			return;
+		}
 
-				// because calculate rect accepts bottom left point as starting y, we add barHeight to the calculation of starting point 
-				let startVertical = (valStart + margin + gapWidth + barHeight);
-
-				const cChartDrawer = this.cChartDrawer;
-				const chartProp = this.chartProp;
-				const paths = this.paths;
-
-				const recalculateBar = function (fVal, i) {
-					const barWidth = valAxis.max && fVal > 0 ? (fVal / valAxis.max) * chartProp.trueWidth: 0;
-					paths[i] = cChartDrawer._calculateRect(catMiddle - (barWidth / 2), startVertical, barWidth, barHeight);
-					startVertical += margin + gapWidth + gapWidth + margin + barHeight;
-				}
-
-				cachedData.forEach(recalculateBar);
-
-				// vertical line with 1 px from left 
-				this.linePath = this.cChartDrawer._calculateLine(startVertical, (startVertical - valStart), this.chartProp.chartGutter._left + 1, true);
+		let catAxis = null;
+		for (let i = 0; i < axes.length; i++) {
+			const axis = axes[i];
+			if (!catAxis && axis && axis.isChartExCat && axis.isChartExCat()) {
+				catAxis = axis;
 			}
 		}
+		if (!catAxis) {
+			catAxis = axes[1] || axes[0];
+		}
+
+		const barsCount = cachedData.data.length;
+		const minMargin = 0.5 * AscCommon.g_dKoef_pix_to_mm;
+		const minTotalHeight = 2 * minMargin * barsCount;
+		if (this.chartProp.trueHeight <= minTotalHeight) {
+			return;
+		}
+
+		const gapWidth = catAxis && catAxis.scaling && AscFormat.isRealNumber(catAxis.scaling.gapWidth)
+			? catAxis.scaling.gapWidth
+			: 0;
+
+		const minCoeff = (minTotalHeight) / (this.chartProp.trueHeight - minTotalHeight);
+		const coeff = Math.max(minCoeff, Math.abs(gapWidth));
+
+		const barHeight = this.chartProp.trueHeight / (barsCount * (1 + coeff));
+		const gapHeight = barHeight * coeff;
+
+		const catRowStart = this.chartProp.chartGutter._top;
+		const valCenterX = this.chartProp.chartGutter._left + this.chartProp.trueWidth / 2;
+		if (!AscFormat.isRealNumber(catRowStart) || !AscFormat.isRealNumber(valCenterX)) {
+			return;
+		}
+
+		let maxValue = 0;
+		cachedData.data.forEach(function (value) {
+			if (AscFormat.isRealNumber(value) && value > maxValue) {
+				maxValue = value;
+			}
+		});
+
+		let currentCatTop = catRowStart;
+		cachedData.data.forEach(function recalculateBar(value, i) {
+			currentCatTop += gapHeight / 2;
+
+			const barWidth = maxValue > 0 && value > 0
+				? (value / maxValue) * this.chartProp.trueWidth
+				: 0;
+
+			// Because calculate rect accepts bottom left point as starting y, we add barHeight to the calculation of starting point
+			this.paths[i] = this.cChartDrawer._calculateRect(valCenterX - (barWidth / 2), currentCatTop + barHeight, barWidth, barHeight);
+
+			currentCatTop += barHeight + gapHeight / 2;
+		}, this);
+
+		// Vertical line with 1 px from left
+		this.linePath = this.cChartDrawer._calculateLine(currentCatTop, (currentCatTop - catRowStart), this.chartProp.chartGutter._left + 1, true);
 	},
 
 	draw: function () {
@@ -9165,10 +9204,11 @@ drawBoxWhiskerChart.prototype = {
 				let pen = oSeria.compiledSeriesPen;
 				let brush = oSeria.compiledSeriesBrush;
 
-				if (pen) {
-					pen.Fill.fill.color.RGBA.R = pen.Fill.fill.color.RGBA.R * 0.8;
-					pen.Fill.fill.color.RGBA.B = pen.Fill.fill.color.RGBA.B * 0.8;
-					pen.Fill.fill.color.RGBA.G = pen.Fill.fill.color.RGBA.G * 0.8;
+				const penColor = pen && pen.Fill && pen.Fill.fill && pen.Fill.fill.color;
+				if (penColor && penColor.RGBA) {
+					penColor.RGBA.R = penColor.RGBA.R * 0.8;
+					penColor.RGBA.B = penColor.RGBA.B * 0.8;
+					penColor.RGBA.G = penColor.RGBA.G * 0.8;
 				}
 
 				if (this.paths.hasOwnProperty(key) && this.paths[key]) {
@@ -16656,6 +16696,8 @@ axisChart.prototype = {
 			} else if (this.axisType === AscDFH.historyitem_type_SerAx) {
 				this._calculateSerAxis();
 				this._calculateSerTickMark();
+			} else if (this.axisType === AscDFH.historyitem_type_Axis) {
+				this._calculateChartExAxis();
 			}
 		}
 	},
@@ -16740,6 +16782,20 @@ axisChart.prototype = {
 		} else {
 			axisPos = this.axis.posY;
 			this.paths.axisLine = this._calculateLine(left, axisPos, right, axisPos);
+		}
+	},
+
+	_calculateChartExAxis: function () {
+		const left = this.chartProp.chartGutter._left / this.chartProp.pxToMM;
+		const right = (this.chartProp.widthCanvas - this.chartProp.chartGutter._right) / this.chartProp.pxToMM;
+		const top = this.chartProp.chartGutter._top / this.chartProp.pxToMM;
+		const bottom = (this.chartProp.heightCanvas - this.chartProp.chartGutter._bottom) / this.chartProp.pxToMM;
+		if (this.axis.isVertical()) {
+			const x = this.axis.axPos === window['AscFormat'].AX_POS_R ? right : left;
+			this.paths.axisLine = this._calculateLine(x, top, x, bottom);
+		} else {
+			const y = this.axis.axPos === window['AscFormat'].AX_POS_T ? top : bottom;
+			this.paths.axisLine = this._calculateLine(left, y, right, y);
 		}
 	},
 

@@ -2050,6 +2050,19 @@ background-repeat: no-repeat;\
 		}
 	};
 
+	asc_docs_api.prototype.asc_PasteHtmlAsText = function(sHtml, callback)
+	{
+		if (!this.canEdit())
+			return;
+		if (this.isSlideShow())
+			return;
+		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content, null, false)) {
+			this.WordControl.m_oLogicDocument.Create_NewHistoryPoint(AscDFH.historydescription_Document_PasteHotKey);
+			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
+			AscCommon.Editor_Paste_Html_Lite_Exec(this, sHtml, callback);
+		}
+	};
+
 	asc_docs_api.prototype.asc_SpecialPaste = function(props, isPasteOptions)
 	{
 		return AscCommon.g_specialPasteHelper.Special_Paste(props, isPasteOptions);
@@ -8553,10 +8566,13 @@ background-repeat: no-repeat;\
 		else if(this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml"))
 		{
 			var title = this.documentTitle;
+			var canDownloadFromBytes = !window.isCloudCryptoDownloadAs && AscCommon.DownloadType.None === downloadType
+				&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome)
+				&& !AscCommon.AscBrowser.isAndroidNativeApp;
 			this.saveLogicDocumentToZip(undefined, undefined,
 				function(data) {
 					if (data) {
-						if (c_oAscFileType.PPTX === fileType && !window.isCloudCryptoDownloadAs) {
+						if (c_oAscFileType.PPTX === fileType && canDownloadFromBytes) {
 							AscCommon.DownloadFileFromBytes(data, title, AscCommon.openXml.GetMimeType("pptx"));
 						} else {
 							dataContainer.data = data;
@@ -10126,6 +10142,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype["asc_SpecialPaste"]						= asc_docs_api.prototype.asc_SpecialPaste;
 	asc_docs_api.prototype["asc_getPasteOptions"]					= asc_docs_api.prototype.asc_getPasteOptions;
+	asc_docs_api.prototype["asc_PasteHtmlAsText"]					= asc_docs_api.prototype.asc_PasteHtmlAsText;
 
 	// signatures
 	asc_docs_api.prototype["asc_addSignatureLine"] 					= asc_docs_api.prototype.asc_addSignatureLine;

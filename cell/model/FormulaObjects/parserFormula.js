@@ -9474,7 +9474,7 @@ function parserFormula( formula, parent, _ws ) {
 		return formula;
 	};
 
-	parserFormula.prototype.findRefByOutStack = function (forceCheck) {
+	parserFormula.prototype.findRefByOutStack = function (forceCheck, opt_ignoreAnchorArray) {
 		if (AscCommonExcel.bIsSupportDynamicArrays || forceCheck) {
 			// using outStack, look at all the arguments in the formulas and compare them with the arrayIndex positions for this formula
 			// go through the stack in the same order as .calculate method
@@ -9589,7 +9589,7 @@ function parserFormula( formula, parent, _ws ) {
 							}
 							// ANCHORARRAY (`A1#`) returns the whole spilled range as cArea/cArea3D —
 							// treat it as a dynamic-array producer so the caller spills into it.
-							if (_tmp && currentElement.type === cElementType.func && currentElement.name === "ANCHORARRAY" &&
+							if (!opt_ignoreAnchorArray && _tmp && currentElement.type === cElementType.func && currentElement.name === "ANCHORARRAY" &&
 								(_tmp.type === cElementType.cellsRange || _tmp.type === cElementType.cellsRange3D)) {
 								return true;
 							}

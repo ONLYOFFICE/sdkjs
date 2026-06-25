@@ -1338,12 +1338,41 @@ Paragraph.prototype.private_RecalculateLineMetrics     = function(CurLine, CurPa
 				PRS.LineDescent = EndTextDescent;
 		}
 	}
-
-    // Рассчитаем метрики строки
-    this.Lines[CurLine].Metrics.Update( PRS.LineTextAscent, PRS.LineTextAscent2, PRS.LineTextDescent, PRS.LineAscent, PRS.LineDescent, ParaPr );
-
+	
+	let lineMetrics = this.Lines[CurLine].Metrics;
+	lineMetrics.Update(PRS.LineTextAscent, PRS.LineTextAscent2, PRS.LineTextDescent, PRS.LineAscent, PRS.LineDescent);
+	
+	let lineHeight = lineMetrics.Ascent + lineMetrics.Descent + lineMetrics.LineGap;
+	
+	lineMetrics.UpdateLineGap(ParaPr);
 	if (true === PRS.End && true !== PRS.EmptyLine && true !== PRS.TextOnLine && Math.abs(this.Lines[CurLine].Metrics.Descent - this.Lines[CurLine].Metrics.TextDescent) < 0.001)
-		this.Lines[CurLine].Metrics.Descent = 0;
+		lineMetrics.Descent = 0;
+	
+	let updatedLineHeight = lineMetrics.Ascent + lineMetrics.Descent + lineMetrics.LineGap;
+	
+	if (lineHeight - updatedLineHeight > AscWord.EPSILON)
+		this.Lines[CurLine].Info |= paralineinfo_Clip;
+	
+	if (PRS.End)
+	{
+		let textPr  = this.GetParaEndCompiledPr();
+		let endMetrics = textPr.GetTextMetrics(textPr.CS || textPr.RTL ? AscWord.fontslot_CS : AscWord.fontslot_ASCII, this.GetTheme());
+
+		let endTextDescent = endMetrics.Descent;
+		let endTextAscent  = endMetrics.Ascent + endMetrics.LineGap;
+
+		if (PRS.LineTextAscentNonVisible < endTextAscent)
+			PRS.LineTextAscentNonVisible = endTextAscent;
+
+		if (PRS.LineTextDescentNonVisible < endTextDescent)
+			PRS.LineTextDescentNonVisible = endTextDescent;
+	}
+	
+	let nonVisAscent  = Math.max(PRS.LineTextAscentNonVisible,  lineMetrics.TextAscent);
+	let nonVisDescent = Math.max(PRS.LineTextDescentNonVisible, lineMetrics.TextDescent);
+	
+	if (nonVisAscent + nonVisDescent > updatedLineHeight)
+		this.Lines[CurLine].Info |= paralineinfo_ClipNonVisible;
 };
 
 Paragraph.prototype.private_RecalculateLinePosition    = function(CurLine, CurPage, PRS, ParaPr)
@@ -2140,17 +2169,16 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 		{
 			var Item = this.Content[Pos];
 			Item.recalculateRangeAlign(PRSA);
-			if (!(PRSA.RecalcResult & recalcresult_NextElement))
-			{
-				PRSW.RecalcResult = PRSA.RecalcResult;
+			if (!PRSA.canContinue())
 				return PRSA.RecalcResult;
-			}
 		}
 
 		PRSA.endRange();
-    }
-
-    return PRSA.RecalcResult;
+		if (!PRSA.canContinue())
+			return PRSA.RecalcResult;
+	}
+	
+	return PRSA.RecalcResult;
 };
 
 Paragraph.prototype.private_RecalculateLineCheckFootnotes = function(CurLine, CurPage, PRS, ParaPr)
@@ -2795,17 +2823,19 @@ CRecalcPageType.prototype.Set_Y = function(Y)
     this.Y    = Y;
 };
 
-var paralineinfo_BreakPage     = 0x0001; // В строке есть PageBreak или ColumnBreak
-var paralineinfo_Empty         = 0x0002; // Строка пустая
-var paralineinfo_End           = 0x0004; // Последняя строка параграфа
-var paralineinfo_RangeY        = 0x0008; // Строка начинается после какого-либо объекта с обтеканием
-var paralineinfo_BreakRealPage = 0x0010; // В строке есть PageBreak
-var paralineinfo_BadLeftTab    = 0x0020; // В строке есть левый таб, который правее правой границы
-var paralineinfo_Notes         = 0x0040; // В строке есть сноски
-var paralineinfo_TextOnLine    = 0x0080; // Есть ли в строке текст
-var paralineinfo_BreakLine     = 0x0100; // Строка закончилась переносом строки
-var paralineinfo_LongWord      = 0x0200; // В строке длинное слово, которое не убралось
-let paralineinfo_AutoHyphen    = 0x0400; // Строка закончилась автопереносом
+var paralineinfo_BreakPage      = 0x0001; // В строке есть PageBreak или ColumnBreak
+var paralineinfo_Empty          = 0x0002; // Строка пустая
+var paralineinfo_End            = 0x0004; // Последняя строка параграфа
+var paralineinfo_RangeY         = 0x0008; // Строка начинается после какого-либо объекта с обтеканием
+var paralineinfo_BreakRealPage  = 0x0010; // В строке есть PageBreak
+var paralineinfo_BadLeftTab     = 0x0020; // В строке есть левый таб, который правее правой границы
+var paralineinfo_Notes          = 0x0040; // В строке есть сноски
+var paralineinfo_TextOnLine     = 0x0080; // Есть ли в строке текст
+var paralineinfo_BreakLine      = 0x0100; // Строка закончилась переносом строки
+var paralineinfo_LongWord       = 0x0200; // В строке длинное слово, которое не убралось
+let paralineinfo_AutoHyphen     = 0x0400; // Строка закончилась автопереносом
+let paralineinfo_Clip           = 0x0800;
+let paralineinfo_ClipNonVisible = 0x1000;
 
 function CParaLine()
 {
@@ -2905,133 +2935,130 @@ function CParaLineMetrics()
     this.TextDescent = 0; // Высота текста после BaseLine
     this.LineGap     = 0; // Дополнительное расстояние между строками
 }
-
-CParaLineMetrics.prototype =
+CParaLineMetrics.prototype.Update = function(TextAscent, TextAscent2, TextDescent, Ascent, Descent)
 {
-    Update : function(TextAscent, TextAscent2, TextDescent, Ascent, Descent, ParaPr)
-    {
-        if ( TextAscent > this.TextAscent )
-            this.TextAscent = TextAscent;
+	if ( TextAscent > this.TextAscent )
+		this.TextAscent = TextAscent;
 
-        if ( TextAscent2 > this.TextAscent2 )
-            this.TextAscent2 = TextAscent2;
+	if ( TextAscent2 > this.TextAscent2 )
+		this.TextAscent2 = TextAscent2;
 
-        if ( TextDescent > this.TextDescent )
-            this.TextDescent = TextDescent;
+	if ( TextDescent > this.TextDescent )
+		this.TextDescent = TextDescent;
 
-        if ( Ascent > this.Ascent )
-            this.Ascent = Ascent;
+	if ( Ascent > this.Ascent )
+		this.Ascent = Ascent;
 
-        if ( Descent > this.Descent )
-            this.Descent = Descent;
+	if ( Descent > this.Descent )
+		this.Descent = Descent;
 
-        if ( this.Ascent < this.TextAscent )
-            this.Ascent = this.TextAscent;
+	if ( this.Ascent < this.TextAscent )
+		this.Ascent = this.TextAscent;
 
-        if ( this.Descent < this.TextDescent )
-            this.Descent = this.TextDescent;
+	if ( this.Descent < this.TextDescent )
+		this.Descent = this.TextDescent;
+};
+CParaLineMetrics.prototype.UpdateLineGap = function(paraPr)
+{
+	this.LineGap = this.Recalculate_LineGap(paraPr, this.TextAscent, this.TextDescent);
 
-        this.LineGap = this.Recalculate_LineGap( ParaPr, this.TextAscent, this.TextDescent );
+	if (Asc.linerule_AtLeast === paraPr.Spacing.LineRule && (this.Ascent + this.Descent + this.LineGap) > (this.TextAscent + this.TextDescent))
+	{
+		// В такой ситуации Word располагает текст внизу строки
+		this.Ascent  = this.Ascent + this.LineGap;
+		this.LineGap = 0;
+	}
+};
+CParaLineMetrics.prototype.Recalculate_LineGap = function(ParaPr, TextAscent, TextDescent)
+{
+	var LineGap = 0;
+	switch ( ParaPr.Spacing.LineRule )
+	{
+		case Asc.linerule_Auto:
+		{
+			LineGap = ( TextAscent + TextDescent ) * ( ParaPr.Spacing.Line - 1 );
+			break;
+		}
+		case Asc.linerule_Exact:
+		{
+			var ExactValue = Math.max( 25.4 / 72, ParaPr.Spacing.Line );
+			LineGap = ExactValue - ( TextAscent + TextDescent );
 
-        if (Asc.linerule_AtLeast === ParaPr.Spacing.LineRule && (this.Ascent + this.Descent + this.LineGap) > (this.TextAscent + this.TextDescent))
-        {
-            // В такой ситуации Word располагает текст внизу строки
-            this.Ascent  = this.Ascent + this.LineGap;
-            this.LineGap = 0;
-        }
-    },
+			var Gap = this.Ascent + this.Descent - ExactValue;
 
-    Recalculate_LineGap : function(ParaPr, TextAscent, TextDescent)
-    {
-        var LineGap = 0;
-        switch ( ParaPr.Spacing.LineRule )
-        {
-            case Asc.linerule_Auto:
-            {
-                LineGap = ( TextAscent + TextDescent ) * ( ParaPr.Spacing.Line - 1 );
-                break;
-            }
-            case Asc.linerule_Exact:
-            {
-                var ExactValue = Math.max( 25.4 / 72, ParaPr.Spacing.Line );
-                LineGap = ExactValue - ( TextAscent + TextDescent );
+			if ( Gap > 0 )
+			{
+				var DescentDiff = this.Descent - this.TextDescent;
 
-                var Gap = this.Ascent + this.Descent - ExactValue;
+				if ( DescentDiff > 0 )
+				{
+					if ( DescentDiff < Gap )
+					{
+						this.Descent = this.TextDescent;
+						Gap -= DescentDiff;
+					}
+					else
+					{
+						this.Descent -= Gap;
+						Gap = 0;
+					}
+				}
 
-                if ( Gap > 0 )
-                {
-                    var DescentDiff = this.Descent - this.TextDescent;
+				var AscentDiff = this.Ascent - this.TextAscent;
 
-                    if ( DescentDiff > 0 )
-                    {
-                        if ( DescentDiff < Gap )
-                        {
-                            this.Descent = this.TextDescent;
-                            Gap -= DescentDiff;
-                        }
-                        else
-                        {
-                            this.Descent -= Gap;
-                            Gap = 0;
-                        }
-                    }
+				if ( AscentDiff > 0 )
+				{
+					if ( AscentDiff < Gap )
+					{
+						this.Ascent = this.TextAscent;
+						Gap -= AscentDiff;
+					}
+					else
+					{
+						this.Ascent -= Gap;
+						Gap = 0;
+					}
+				}
 
-                    var AscentDiff = this.Ascent - this.TextAscent;
+				if ( Gap > 0 )
+				{
+					// Уменьшаем пропорционально TextAscent и TextDescent
+					var OldTA = this.TextAscent;
+					var OldTD = this.TextDescent;
 
-                    if ( AscentDiff > 0 )
-                    {
-                        if ( AscentDiff < Gap )
-                        {
-                            this.Ascent = this.TextAscent;
-                            Gap -= AscentDiff;
-                        }
-                        else
-                        {
-                            this.Ascent -= Gap;
-                            Gap = 0;
-                        }
-                    }
+					var Sum = OldTA + OldTD;
 
-                    if ( Gap > 0 )
-                    {
-                        // Уменьшаем пропорционально TextAscent и TextDescent
-                        var OldTA = this.TextAscent;
-                        var OldTD = this.TextDescent;
+					this.Ascent  = OldTA * (Sum - Gap) / Sum;
+					this.Descent = OldTD * (Sum - Gap) / Sum;
+				}
+			}
+			else
+			{
+				this.Ascent -= Gap; // все в Ascent
+			}
 
-                        var Sum = OldTA + OldTD;
-
-                        this.Ascent  = OldTA * (Sum - Gap) / Sum;
-                        this.Descent = OldTD * (Sum - Gap) / Sum;
-                    }
-                }
-                else
-                {
-                    this.Ascent -= Gap; // все в Ascent
-                }
-
-                LineGap = 0;
+			LineGap = 0;
 
 
-                break;
-            }
-            case Asc.linerule_AtLeast:
-            {
-                var TargetLineGap = ParaPr.Spacing.Line;
-                var TextLineGap   = TextAscent + TextDescent;
-                var RealLineGap   = this.Ascent + this.Descent;
+			break;
+		}
+		case Asc.linerule_AtLeast:
+		{
+			var TargetLineGap = ParaPr.Spacing.Line;
+			var TextLineGap   = TextAscent + TextDescent;
+			var RealLineGap   = this.Ascent + this.Descent;
 
-                // Специальный случай, когда в строке нет никакого текста
-                if (Math.abs(TextLineGap) < 0.001 || RealLineGap >= TargetLineGap)
-                    LineGap = 0;
-                else
-                    LineGap = TargetLineGap - RealLineGap;
+			// Специальный случай, когда в строке нет никакого текста
+			if (Math.abs(TextLineGap) < 0.001 || RealLineGap >= TargetLineGap)
+				LineGap = 0;
+			else
+				LineGap = TargetLineGap - RealLineGap;
 
-                break;
-            }
+			break;
+		}
 
-        }
-        return LineGap;
-    }
+	}
+	return LineGap;
 };
 CParaLineMetrics.prototype.Copy = function()
 {

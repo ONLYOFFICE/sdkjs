@@ -1616,7 +1616,7 @@ CGraphicObjects.prototype =
         this.checkInkState();
         var nSavedSelType = this.document.Selection.Type;
         this.curState.onMouseDown(e, x, y, pageIndex);
-        if(this.arrTrackObjects.length === 0)
+        if(this.arrTrackObjects.length === 0 && this.arrPreTrackObjects.length === 0)
         {
             this.document.GetApi().sendEvent("asc_onSelectionEnd");
         }

@@ -768,6 +768,17 @@
 			AscCommon.g_clipboardBase.bPutImage = !!bPutImage;
 		}
 	};
+	baseEditorsApi.prototype.asc_CopyData = function(sText, sHtml, sInternal, oImage)
+	{
+		if (AscCommon.g_clipboardBase)
+			return AscCommon.g_clipboardBase.CopyData({
+				text     : sText,
+				html     : sHtml,
+				internal : sInternal,
+				image    : oImage
+			});
+		return false;
+	};
 	baseEditorsApi.prototype.sync_CanCopyCutCallback = function (bCanCopyCut, bCanCut)
 	{
 		this.sendEvent("asc_onCanCopyCut", bCanCopyCut, bCanCut);
@@ -2347,7 +2358,7 @@
 	// SpellCheck
 	baseEditorsApi.prototype.asc_SpellCheckDisconnect            = function()
 	{
-		if (!this.SpellCheckApi)
+		if (!this.SpellCheckApi || !this.SpellCheckApi.disconnect)
 			return; // Error
 		this.SpellCheckApi.disconnect();
 		this.isSpellCheckEnable = false;
@@ -2380,7 +2391,8 @@
 					}
 					if (_editor.SpellCheckApi.isRestart === true)
 						return;
-					_editor.SpellCheckApi.onSpellCheck(response);
+
+					_editor.SpellCheck_CallBack(response);
 				}
             };
 
@@ -2392,6 +2404,10 @@
 			this.SpellCheckApi.restart = function() {
 				this.isRestart = true;
 				window["AscDesktopEditor"]["SpellCheck"]("clear");
+			};
+
+			this.SpellCheckApi.checkDictionary = function () {
+				return true;
 			};
 
 			if (window["AscDesktopEditor"]["IsLocalFile"] && !window["AscDesktopEditor"]["IsLocalFile"]())
@@ -6263,6 +6279,7 @@
 	prot["asc_setPdfViewer"] = prot.asc_setPdfViewer;
 
 	prot["asc_setPutImageToClipboard"] = prot.asc_setPutImageToClipboard;
+	prot["asc_CopyData"] = prot.asc_CopyData;
 
 	prot["asc_mergeSelectedShapes"] = prot.asc_mergeSelectedShapes;
 

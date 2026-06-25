@@ -135,6 +135,11 @@
 			
 			this.isNextCurrent = false;
 		}
+		
+		if (run.IsMathRun())
+		{
+			this.bidiFlow.add([para_Math_Composition, run, true], AscBidi.TYPE.ON);
+		}
 	};
 	ParagraphPositionCalculator.prototype.handleRunElement = function(element, run, isCurrent, isNearFootnoteRef, inRunPos, isCurrentRun)
 	{
@@ -174,6 +179,10 @@
 	{
 		this.bidiFlow.add([para_Math, math, isCurrent], math.getBidiType());
 	};
+	ParagraphPositionCalculator.prototype.handleMathBase = function(element)
+	{
+		this.bidiFlow.add([para_Math_Composition, element, false], element.getBidiType());
+	};	
 	ParagraphPositionCalculator.prototype.handleBidiFlowRunElement = function(data, direction)
 	{
 		let element      = data[1];
@@ -293,10 +302,18 @@
 		this.posInfo.mathY = mathY;
 		this.posInfo.run   = run;
 	};
-	ParagraphPositionCalculator.prototype.handleMathBase = function(element)
+	ParagraphPositionCalculator.prototype.handleBidiFlowMathBase = function(data, direction)
 	{
-		let w = element.GetWidth(this.line, this.range);
-		this.x += w;
+		if (data[2])
+		{
+			this.handleBidiFlowCurrentMathRun(data[1]);
+		}
+		else
+		{
+			let mathBase = data[1];
+			let w = mathBase.GetWidth(this.line, this.range);
+			this.x += w;
+		}
 	};
 	ParagraphPositionCalculator.prototype.getXY = function()
 	{

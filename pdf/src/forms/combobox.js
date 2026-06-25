@@ -72,7 +72,7 @@
         this.Recalculate();
         this.DrawBackground(oGraphicsPDF);
         
-        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) && this.IsNeedDrawHighlight() ? this.contentFormat : this.content;
+        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) && !this.IsInForm() ? this.contentFormat : this.content;
         this.curContent = oContentToDraw; // remember current content
 
         if (oDoc.activeForm == this)
@@ -346,8 +346,14 @@
                 }
             }
             
-            if (sTextToAdd == "")
-                sTextToAdd = sValue;
+			if (sTextToAdd == "") {
+				if (this.IsEditable()) {
+					sTextToAdd = sValue;
+				}
+				else {
+					return false;
+				}
+			}
 
             AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetLogicValue(), sValue));
 
@@ -364,6 +370,8 @@
             this.SetLogicValue(sValue);
             this.SetLogicCurIdxs(aIdxs);
         }
+
+		return true;
     };
     CComboBoxField.prototype.private_SetValue = function(sValue) {
         let aIdxs = [];
@@ -715,8 +723,10 @@
     	    return nTextHeight;
 
         let nNewFontSize = (Math.min(nFontSize * oBounds.H / nTextHeight * 0.9, 100, nFontSize * oBounds.W / nMaxWidth) * 100 >> 0) / 100;
-        oRun.SetFontSize(nNewFontSize);
-        oPara.Recalculate_Page(0);
+		oPara.SetApplyToAll(true);
+		oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+		oPara.SetApplyToAll(false);
+		oPara.Recalculate_Page(0);
 
         oTextPr.FontSize    = nNewFontSize;
         oTextPr.FontSizeCS  = nNewFontSize;

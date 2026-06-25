@@ -4099,6 +4099,7 @@
 			});
 			if (pivotCache.cacheRecords) {
 				this.bs.WriteItem(c_oSer_PivotTypes.record, function() {
+					// untouched records are written back verbatim; toXml parses only when the pivot was edited
 					pivotCache.cacheRecords.toXml(oThis.memory);
 				});
 			}
@@ -9878,12 +9879,29 @@
 				pivotCache.id = this.stream.GetLong();
 			} else if ( c_oSer_PivotTypes.cache === type ) {
 				let idOld = pivotCache.id;
-				new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(this.stream, length), pivotCache);
+				pivotCache.fromXml(new AscCommon.StaxParser(AscCommon.GetStringUtf8(this.stream, length), null, null));
 				pivotCache.id = idOld;
 			} else if ( c_oSer_PivotTypes.record === type ) {
-				var cacheRecords = new Asc.CT_PivotCacheRecords();
-				new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(this.stream, length), cacheRecords);
-				pivotCache.cacheRecords = cacheRecords;
+				// store records raw (no parse) so an untouched pivot is written back verbatim on save
+				var recordStream = this.stream;
+				var recordStart = recordStream.cur;
+				if (length >= 0 && recordStart + length <= recordStream.size) {
+					var cacheRecords = new Asc.CT_PivotCacheRecords();
+					var recordSrc = recordStream.data;
+					if (recordSrc.subarray) {
+						// native/browser binary is a Uint8Array: copy the records payload as raw bytes
+						var recordBytes = new Uint8Array(length);
+						recordBytes.set(recordSrc.subarray(recordStart, recordStart + length));
+						recordStream.cur = recordStart + length;
+						cacheRecords.setRawBytes(recordBytes, pivotCache.recordCount);
+					} else {
+						cacheRecords.setRawXml(AscCommon.GetStringUtf8(recordStream, length), pivotCache.recordCount);
+					}
+					pivotCache.cacheRecords = cacheRecords;
+				} else {
+					// corrupt/invalid item length: do not over-read, surface the stream error
+					res = c_oSerConstants.ErrorStream;
+				}
 			} else
 				res = c_oSerConstants.ReadUnknown;
 			return res;
@@ -11650,7 +11668,7 @@
 				data.cacheId = this.stream.GetLong();
 			} else if (c_oSer_PivotTypes.table == type) {
 				data.table = new Asc.CT_pivotTableDefinition(true);
-				new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(this.stream, length), data.table);
+				data.table.fromXml(new AscCommon.StaxParser(AscCommon.GetStringUtf8(this.stream, length), null, null));
 			} else
 				res = c_oSerConstants.ReadUnknown;
 			return res;
@@ -12312,7 +12330,7 @@
 					tmp.row.index = tmp.prevRow + 1;
 				}
 				tmp.row.saveContent();
-				tmp.ws.cellsByColRowsCount = Math.max(tmp.ws.cellsByColRowsCount, tmp.row.index + 1);
+				tmp.ws.setCellsByColRowsCount(Math.max(tmp.ws.cellsByColRowsCount, tmp.row.index + 1));
 				tmp.ws.nRowsCount = Math.max(tmp.ws.nRowsCount, tmp.ws.cellsByColRowsCount);
 				tmp.prevRow = tmp.row.index;
 				tmp.prevCol = -1;
@@ -15565,7 +15583,8 @@
     };
     InitOpenManager.prototype.prepareConditionalFormatting = function (oWorksheet, oConditionalFormatting) {
         if (oConditionalFormatting && oConditionalFormatting.isValid()) {
-            oConditionalFormatting.initRules(oWorksheet);
+            //skip formula parsing here - not all sheets are read yet (parsed later in Workbook.init)
+            oConditionalFormatting.initRules(oWorksheet, true);
             for (let i = 0; i < oConditionalFormatting.aRules.length; i++) {
                 oWorksheet.addConditionalFormattingRule(oConditionalFormatting.aRules[i]);
             }

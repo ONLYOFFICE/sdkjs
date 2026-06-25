@@ -419,23 +419,21 @@ void main() {\n\
     // TEXT
 	CFile.prototype.getPageTextStream = function(pageIndex, onlyPageContent) {
 		let page = this.pages[pageIndex];
-		let textLen = page.text ? page.text.length : 0;
-		let drawingsLen = page.drawingsText ? page.drawingsText.length : 0;
-
-		if (onlyPageContent) {
-			if (this.pages[pageIndex].isRecognized) {
-				return null;
-			}
-			else {
-				return new TextStreamReader(page.text, textLen);
+		if (window["NATIVE_EDITOR_ENJINE"]) {
+			if (!page.text && undefined !== page.originIndex) {
+				page.text = this.getText(page.originIndex);
 			}
 		}
+
+		let textLen = page.text ? page.text.length : 0;
+		let drawingsTextLen = page.drawingsText ? page.drawingsText.length : 0;
 
 		let oDoc = this.viewer.getPDFDoc();
 		let oPageInfo = oDoc.GetPageInfo(pageIndex);
 		let aDrawings = oPageInfo.drawings;
-		if (aDrawings.length == 0) {
-			if (this.pages[pageIndex].isRecognized) {
+
+		if (onlyPageContent || aDrawings.length == 0) {
+			if (page.isRecognized || !page.text) {
 				return null;
 			}
 			else {
@@ -443,13 +441,16 @@ void main() {\n\
 			}
 		}
 
-		this.pages[pageIndex].drawingsText = this.getDrawingsGlyphs(pageIndex);
-		drawingsLen = page.drawingsText.length;
-		if (this.pages[pageIndex].isRecognized || textLen == 0) {
-			return new TextStreamReader(page.drawingsText, drawingsLen);
+		if (!page.drawingsText) {
+			page.drawingsText = this.getDrawingsGlyphs(pageIndex);
+		}
+		
+		drawingsTextLen = page.drawingsText.length;
+		if (page.isRecognized || textLen == 0) {
+			return new TextStreamReader(page.drawingsText, drawingsTextLen);
 		}
 
-		let totalLen = textLen + drawingsLen;
+		let totalLen = textLen + drawingsTextLen;
 		let merged = new Uint8Array(totalLen);
 		merged.set(page.text, 0);
 		merged.set(page.drawingsText, textLen);
@@ -636,7 +637,7 @@ void main() {\n\
         if (glyph === -2) {
             off = 0;
         } else if (glyph === -1) {
-            off = _lineWidth;
+            off = _lineWidth + 10;
         } else {
             let left  = _arrayGlyphOffsets[glyph] || 0;
             let right = (glyph + 1 < nChars) ? _arrayGlyphOffsets[glyph + 1] : _lineWidth;
@@ -2291,5 +2292,6 @@ void main() {\n\
 
     //--------------------------------------------------------export----------------------------------------------------
 	window['AscPDF'].PdfPageMatch = PdfPageMatch;
+	window['AscPDF'].TextStreamReader = TextStreamReader;
 
 })(window, undefined);

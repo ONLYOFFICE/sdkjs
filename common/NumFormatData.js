@@ -434,6 +434,15 @@ var g_aCultureInfos = {
 			"d/m/yyyy;@",
 			"[$-410]d\\-mmm\\-yyyy;@"
 		],
+		"1041": [
+			"yyyy\\-mm\\-dd;@",
+			"yyyy\"年\"m\"月\"d\"日\";@",
+			"yyyy\"年\"m\"月\";@",
+			"m\"月\"d\"日\";@",
+			"yyyy/m/d;@",
+			"[$-409]yyyy/m/d\\ h:mm\\ AM/PM;@",
+			"yyyy/m/d\\ h:mm;@"
+		],
 		"1042": [
 			"yyyy\\-mm\\-dd;@",
 			"yyyy\"년\"\\ m\"월\"\\ d\"일\";@",
@@ -2755,6 +2764,25 @@ var g_aCultureInfos = {
 		]
 	};
 
+	// Non-Gregorian date calendars per LCID. gannenSupported enables the Gannen toggle,
+	// which switches the format list from formats to gannenFormats.
+	let c_oAscDateCalendars = {
+		"1041": [
+			{
+				calendar: 8, // c_oAscCalendarType.Japan (Japanese Emperor era)
+				gannenSupported: true,
+				formats: [
+					"[$-411]ge\\.m\\.d;@",
+					"[$-411]ggge\"年\"m\"月\"d\"日\";@"
+				],
+				gannenFormats: [
+					"[$-411]ge\\.m\\.d;@",
+					"[$-ja-JP-x-gannen]ggge\"年\"m\"月\"d\"日\";@"
+				]
+			}
+		]
+	};
+
 	let c_oAscTimeFormatExcel = {
 		"1025": [
 			"[$-1000000]h:mm:ss;@",
@@ -4472,6 +4500,7 @@ var g_aCultureInfos = {
 	window["AscCommon"].g_aCultureInfos = g_aCultureInfos;
 	window["AscCommon"].g_aAdditionalCurrencySymbols = g_aAdditionalCurrencySymbols;
 	window["AscCommon"].c_oAscDateFormatExcel = c_oAscDateFormatExcel;
+	window["AscCommon"].c_oAscDateCalendars = c_oAscDateCalendars;
 	window["AscCommon"].c_oAscTimeFormatExcel = c_oAscTimeFormatExcel;
 	window["AscCommon"].g_aJapanEras = g_aJapanEras;
 	window["AscCommon"].g_oJapanEraLcids = g_oJapanEraLcids;

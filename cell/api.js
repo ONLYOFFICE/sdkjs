@@ -282,6 +282,12 @@ var editor;
 		}
 		return res;
 	};
+	spreadsheet_api.prototype.asc_getDateCalendars = function(lcid) {
+		return AscCommon.getDateCalendarTypes(lcid);
+	};
+	spreadsheet_api.prototype.asc_getDateCalendarGannen = function(lcid) {
+		return AscCommon.getDateCalendarGannen(lcid);
+	};
   spreadsheet_api.prototype.asc_getLocaleCurrency = function(val) {
     var cultureInfo = AscCommon.g_aCultureInfos[val];
     if (!cultureInfo) {
@@ -1020,6 +1026,12 @@ var editor;
     }
   };
 
+  spreadsheet_api.prototype.asc_PasteHtmlAsText = function (sHtml, callback) {
+    if (this.canEdit()) {
+      this.wb.pasteHtmlLite(sHtml, callback);
+    }
+  };
+
   spreadsheet_api.prototype.asc_CheckCopy = function (_clipboard /* CClipboardData */, _formats) {
     return this.wb.checkCopyToClipboard(_clipboard, _formats);
   };
@@ -1554,10 +1566,13 @@ var editor;
     } else if(this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml")) {
 		var t = this;
 		var title = this.documentTitle;
+		var canDownloadFromBytes = !window.isCloudCryptoDownloadAs && AscCommon.DownloadType.None === downloadType
+			&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome)
+			&& !AscCommon.AscBrowser.isAndroidNativeApp;
 		AscCommonExcel.executeInR1C1Mode(false, function () {
 			t.saveLogicDocumentToZip(undefined, undefined, function(data) {
 				if (data) {
-					if (c_oAscFileType.XLSX === fileType && !window.isCloudCryptoDownloadAs) {
+					if (c_oAscFileType.XLSX === fileType && canDownloadFromBytes) {
 						AscCommon.DownloadFileFromBytes(data, title, AscCommon.openXml.GetMimeType("xlsx"));
 					} else {
 						dataContainer.data = data;
@@ -2293,7 +2308,7 @@ var editor;
 						if (contentCacheDefinition) {
 							var pivotTableCacheDefinition = new Asc.CT_PivotCacheDefinition();
 
-							new openXml.SaxParserBase().parse(contentCacheDefinition, pivotTableCacheDefinition);
+							pivotTableCacheDefinition.fromXml(new StaxParser(contentCacheDefinition, null, null));
 
 							if (pivotTableCacheDefinition.isValidCacheSource()) {
 								initOpenManager.oReadResult.pivotCacheDefinitions[wbPivotCacheXml.cacheId] = pivotTableCacheDefinition;
@@ -2302,7 +2317,7 @@ var editor;
 									var contentCacheRecords = partPivotTableCacheRecords.getDocumentContent();
 									if (contentCacheRecords) {
 										var pivotTableCacheRecords = new Asc.CT_PivotCacheRecords();
-										new openXml.SaxParserBase().parse(contentCacheRecords, pivotTableCacheRecords);
+										pivotTableCacheRecords.setRawXml(contentCacheRecords, pivotTableCacheDefinition.recordCount);
 										pivotTableCacheDefinition.cacheRecords = pivotTableCacheRecords;
 									}
 								}
@@ -2395,7 +2410,7 @@ var editor;
 								for (i = 0; i < pivotParts.length; ++i) {
 									var contentPivotTable = pivotParts[i].getDocumentContent();
 									var pivotTable = new Asc.CT_pivotTableDefinition(true);
-									new openXml.SaxParserBase().parse(contentPivotTable, pivotTable);
+									pivotTable.fromXml(new StaxParser(contentPivotTable, null, null));
 									var cacheDefinition = initOpenManager.oReadResult.pivotCacheDefinitions[pivotTable.cacheId];
 									if (cacheDefinition) {
 										pivotTable.cacheDefinition = cacheDefinition;
@@ -9854,6 +9869,22 @@ var editor;
 		}
 	};
 
+	spreadsheet_api.prototype.asc_setAutoCompleteEnabled = function(val) {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		wb.setAutoCompleteEnabled(val);
+	};
+
+	spreadsheet_api.prototype.asc_getAutoCompleteEnabled = function() {
+		let wb = this.wb;
+		if (!wb) {
+			return true;
+		}
+		return wb.getAutoCompleteEnabled();
+	};
+
 	spreadsheet_api.prototype.asc_SetSmoothScrolling  = function(val) {
 		let wb = this.wb;
 		if (!wb) {
@@ -10096,6 +10127,8 @@ var editor;
   prot['asc_getFunctionArgumentSeparator'] = prot.asc_getFunctionArgumentSeparator;
   prot['asc_getLocaleExample'] = prot.asc_getLocaleExample;
   prot['asc_getFormatCells'] = prot.asc_getFormatCells;
+  prot['asc_getDateCalendars'] = prot.asc_getDateCalendars;
+  prot['asc_getDateCalendarGannen'] = prot.asc_getDateCalendarGannen;
   prot["asc_getLocaleCurrency"] = prot.asc_getLocaleCurrency;
   prot["asc_setLocale"] = prot.asc_setLocale;
   prot["asc_getLocale"] = prot.asc_getLocale;
@@ -10113,6 +10146,7 @@ var editor;
   prot["asc_Copy"] = prot.asc_Copy;
   prot["asc_Paste"] = prot.asc_Paste;
   prot["asc_SpecialPaste"] = prot.asc_SpecialPaste;
+  prot["asc_PasteHtmlAsText"] = prot.asc_PasteHtmlAsText;
   prot["asc_Cut"] = prot.asc_Cut;
   prot["asc_Undo"] = prot.asc_Undo;
   prot["asc_Redo"] = prot.asc_Redo;
@@ -10691,6 +10725,9 @@ var editor;
   prot["asc_cancelMoveCopyWorksheet"]= prot.asc_cancelMoveCopyWorksheet;
   prot["asc_getOpeningDocumentsList"]= prot.asc_getOpeningDocumentsList;
   prot["asc_isSupportCopySheetsBetweenBooks"]= prot.asc_isSupportCopySheetsBetweenBooks;
+
+  prot["asc_setAutoCompleteEnabled"]= prot.asc_setAutoCompleteEnabled;
+  prot["asc_getAutoCompleteEnabled"]= prot.asc_getAutoCompleteEnabled;
 
   prot["asc_SetSmoothScrolling"]= prot.asc_SetSmoothScrolling;
   prot["asc_GetSmoothScrolling"]= prot.asc_GetSmoothScrolling;

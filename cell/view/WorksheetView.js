@@ -134,6 +134,9 @@
     var kCurEWResize = "ew-resize";
     var kCurNSResize = "ns-resize";
 
+    var kSelectionMarkerSize = 5;
+    var kSelectionMarkerBorderSize = 2;
+
     AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.CellCur, "6 6", "cell");
 	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.CellFormatPainter, "1 1", "pointer");
 	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.MoveBorderVer, "9 9", "default");
@@ -6963,8 +6966,8 @@ function isAllowPasteLink(pastedWb) {
 			return true;
 		}
 
-		let firstCol = oIntersection.c1 === visibleRange.c1;
-		let firstRow = oIntersection.r1 === visibleRange.r1;
+		//let firstCol = oIntersection.c1 === visibleRange.c1;
+		//let firstRow = oIntersection.r1 === visibleRange.r1;
 		let drawLeftSide = oIntersection.c1 === range.c1;
 		let drawRightSide = oIntersection.c2 === range.c2;
 		let drawTopSide = oIntersection.r1 === range.r1;
@@ -7006,7 +7009,7 @@ function isAllowPasteLink(pastedWb) {
 		ctx.setStrokeStyle(color);
 		nativeCtx.lineDashOffset = -animOffset;
 		ctx.beginPath();
-		if (drawTopSide && !firstRow) {
+		if (drawTopSide /*&& !firstRow*/) {
 			this._lineHorPrevPx(ctx, x1, y1, x2);
 		}
 		if (drawRightSide) {
@@ -7019,7 +7022,7 @@ function isAllowPasteLink(pastedWb) {
 		if (drawBottomSide) {
 			this._lineHorPrevPx(ctx, x1, y2, x2);
 		}
-		if (drawLeftSide && !firstCol) {
+		if (drawLeftSide/* && !firstCol*/) {
 			this._lineVerPrevPx(ctx, x1, y1, y2);
 		}
 		ctx.stroke();
@@ -7028,7 +7031,7 @@ function isAllowPasteLink(pastedWb) {
 		ctx.setStrokeStyle(new CColor(255, 255, 255));
 		nativeCtx.lineDashOffset = -(animOffset + w_dot);
 		ctx.beginPath();
-		if (drawTopSide && !firstRow) {
+		if (drawTopSide/* && !firstRow*/) {
 			this._lineHorPrevPx(ctx, x1, y1, x2);
 		}
 		if (drawRightSide) {
@@ -7041,7 +7044,7 @@ function isAllowPasteLink(pastedWb) {
 		if (drawBottomSide) {
 			this._lineHorPrevPx(ctx, x1, y2, x2);
 		}
-		if (drawLeftSide && !firstCol) {
+		if (drawLeftSide/* && !firstCol*/) {
 			this._lineVerPrevPx(ctx, x1, y1, y2);
 		}
 		ctx.stroke();
@@ -8614,10 +8617,10 @@ function isAllowPasteLink(pastedWb) {
         if (isResize || isPromote) {
             //isResize - not increasing square when selecting range in formula for now, since need to change selection clearing logic in formula mode
 			let retinaKf = isRetina && (!isResize || isAllowRetinaResize) ? 2 : 1;
-			let size = 5 * retinaKf;
-			let sizeBorder = size + 2 * retinaKf;
+			let size = kSelectionMarkerSize * retinaKf;
+			let sizeBorder = size + kSelectionMarkerBorderSize * retinaKf;
 			let diff = Math.floor(size/2) + 1;
-			let diffBorder = Math.floor(sizeBorder/2) + 1 * retinaKf;
+			let diffBorder = Math.floor(sizeBorder/2) + retinaKf;
 
 			ctx.setFillStyle(colorN);
             if (drawRightSide && drawBottomSide) {
@@ -11931,8 +11934,16 @@ function isAllowPasteLink(pastedWb) {
 		return null;
 	};
 
-    WorksheetView.prototype._hitResizeCorner = function (x1, y1, x2, y2) {
+    WorksheetView.prototype._hitResizeCorner = function (x1, y1, x2, y2, opt_isFillHandle) {
         var wEps = AscCommon.global_mouseEvent.KoefPixToMM, hEps = AscCommon.global_mouseEvent.KoefPixToMM;
+        if (opt_isFillHandle) {
+            var retinaKf = (this.getRetinaPixelRatio() >= 2) ? 2 : 1;
+            var sizeBorder = kSelectionMarkerSize * retinaKf + kSelectionMarkerBorderSize * retinaKf;
+            var diffBorder = Math.floor(sizeBorder / 2) + retinaKf;
+            var centerOffset = diffBorder - sizeBorder / 2;
+            var half = sizeBorder / 2 + (retinaKf - 1) * 2 + 1;
+            return Math.abs(x2 - (x1 - centerOffset)) <= half && Math.abs(y2 - (y1 - centerOffset)) <= half;
+        }
         return Math.abs(x2 - x1) <= wEps + 2 && Math.abs(y2 - y1) <= hEps + 2;
     };
     WorksheetView.prototype._hitInRange = function (range, rangeType, vr, x, y, offsetX, offsetY, opt_pageBreakPreviewRange) {
@@ -11950,6 +11961,7 @@ function isAllowPasteLink(pastedWb) {
             y2 = this._getRowTop(oFormulaRangeIn.r2 + 1) - offsetY;
 
             isResize = AscCommonExcel.selectionLineType.Resize & rangeType;
+            var isPromote = AscCommonExcel.selectionLineType.Promote & rangeType;
 
             if (isResize && this._hitResizeCorner(x1 - 1, y1 - 1, x, y)) {
                 /*TOP-LEFT*/
@@ -11966,7 +11978,7 @@ function isAllowPasteLink(pastedWb) {
                 cursor = kCurNEResize;
                 col = range.c2;
                 row = range.r1;
-            } else if (this._hitResizeCorner(x2, y2, x, y)) {
+            } else if (this._hitResizeCorner(x2, y2, x, y, !!isPromote)) {
                 /*BOTTOM-RIGHT*/
                 cursor = kCurSEResize;
                 col = range.c1;
@@ -12910,7 +12922,10 @@ function isAllowPasteLink(pastedWb) {
 
         if (ar.c2 === ar.c1) {
             if (0 !== dc && 0 === this._getColumnWidth(ar.c1)) {
-                c1 = c2 = this._findVisibleCol(ar.c1, dc);
+                let _c = this._findVisibleCol(ar.c1, dc);
+                if (_c >= 0) {
+                    c1 = c2 = _c;
+                }
             }
         } else {
             if (0 !== dc && this.nColsCount > ar.c2 && 0 === this._getColumnWidth(ar.c2)) {
@@ -12922,17 +12937,20 @@ function isAllowPasteLink(pastedWb) {
                     }
                 }
                 if (!mc) {
-                    c2 = this._findVisibleCol(ar.c2, dc);
+                    let _c2 = this._findVisibleCol(ar.c2, dc);
+                    if (_c2 >= 0) {
+                        c2 = _c2;
+                    }
                 }
             }
-        }
-        if (c1 < 0 || c2 < 0) {
-            throw new Error("Error: all columns are hidden");
         }
 
         if (ar.r2 === ar.r1) {
             if (0 !== dr && 0 === this._getRowHeight(ar.r1)) {
-                r1 = r2 = this._findVisibleRow(ar.r1, dr);
+                let _r = this._findVisibleRow(ar.r1, dr);
+                if (_r >= 0) {
+                    r1 = r2 = _r;
+                }
             }
         } else {
             if (0 !== dr && this.nRowsCount > ar.r2 && 0 === this._getRowHeight(ar.r2)) {
@@ -12944,7 +12962,10 @@ function isAllowPasteLink(pastedWb) {
                     }
                 }
                 if (!mc) {
-                    r2 = this._findVisibleRow(ar.r2, dr);
+                    var _r2 = this._findVisibleRow(ar.r2, dr);
+                    if (_r2 >= 0) {
+                        r2 = _r2;
+                    }
                 }
             }
         }
@@ -13107,12 +13128,18 @@ function isAllowPasteLink(pastedWb) {
 
         var bIsHidden = false;
         if (0 !== dc && 0 === this._getColumnWidth(c2)) {
-            c2 = this._findVisibleCol(c2, dc);
-            bIsHidden = true;
+            let _vc = this._findVisibleCol(c2, dc);
+            if (_vc >= 0) {
+                c2 = _vc;
+                bIsHidden = true;
+            }
         }
         if (0 !== dr && 0 === this._getRowHeight(r2)) {
-            r2 = this._findVisibleRow(r2, dr);
-            bIsHidden = true;
+            let _vr = this._findVisibleRow(r2, dr);
+            if (_vr >= 0) {
+                r2 = _vr;
+                bIsHidden = true;
+            }
         }
         if (bIsHidden) {
             res.assign(c1, r1, c2, r2, true);
@@ -16758,7 +16785,8 @@ function isAllowPasteLink(pastedWb) {
                         const _tableInfo = t.model.autoFilters.getTableByActiveCell();
                         if (_tableInfo) {
                             const _table = _tableInfo.table;
-                            var _tF = t.model.autoFilters._changeTotalsRowData(_table, range.bbox, {totalFunction: val});
+                            var _totalFunction = "string" === typeof val ? parseInt(val) : val;
+                            var _tF = t.model.autoFilters._changeTotalsRowData(_table, range.bbox, {totalFunction: _totalFunction});
                             if (_tF) {
                                 range.setValue(_tF[0]);
                             }
@@ -16871,9 +16899,15 @@ function isAllowPasteLink(pastedWb) {
                             t.handlers.trigger("slowOperation", true);
                         }
                        	var opt_by_rows = false;
+						
+						//don't guess header for an choosen multi-cell selection. guess it only when
+						//the range was expanded from a single cell (sortRange passes guessHeader flag)
+						//default to true to keep old behaviour for callers which do not pass the flag
+						let opt_guessHeader = false !== val.guessHeader;
+
 						//var props = t.getSortProps(true);
-                        //t.cellCommentator.sortComments(range.sort(val.type, opt_by_rows ? activeCell.row : activeCell.col, val.color, true, opt_by_rows, props.levels));
-                        t.cellCommentator.sortComments(t.model._doSort(range, val.type, opt_by_rows ? activeCell.row : activeCell.col, val.color, true, opt_by_rows));
+                        //t.cellCommentator.sortComments(range.sort(val.type, opt_by_rows ? activeCell.row : activeCell.col, val.color, opt_guessHeader, opt_by_rows, props.levels));
+                        t.cellCommentator.sortComments(t.model._doSort(range, val.type, opt_by_rows ? activeCell.row : activeCell.col, val.color, opt_guessHeader, opt_by_rows));
 
 						if (t.model.getSheetProtection()) {
 							if (!(t.model.protectedRangesContainsRange(range.bbox) || !t.model.isLockedRange(range.bbox))) {
@@ -16882,7 +16916,7 @@ function isAllowPasteLink(pastedWb) {
 							}
 						}
 
-						t.setSortProps(t._generateSortProps(val.type, opt_by_rows ? activeCell.row : activeCell.col, val.color, true, opt_by_rows, range.bbox), true);
+						t.setSortProps(t._generateSortProps(val.type, opt_by_rows ? activeCell.row : activeCell.col, val.color, opt_guessHeader, opt_by_rows, range.bbox), true);
                         break;
 
 					case "customSort":
@@ -19500,6 +19534,10 @@ function isAllowPasteLink(pastedWb) {
 				/* if we write not through cse, then check the formula for the presence of ref */
 				/* if ref exists, write the formula as an array formula and also find its dimensions for further expansion */
 				dynamicSelectionRange = t.model.dynamicArrayManager.getDynamicRangeByFormula(newFP, calculateResult, !userCtrlKey, needReparse);
+				if (!dynamicSelectionRange && newFP.findRefByOutStack(true, true)) {
+					let _aCol = newFP.parent.nCol, _aRow = newFP.parent.nRow;
+					dynamicSelectionRange = new Asc.Range(_aCol, _aRow, _aCol, _aRow);
+				}
 				if (dynamicSelectionRange) {
 					if (userCtrlKey && !userShiftKey) {
 						ctrlEnterWithDynamicArray = true;
@@ -19839,13 +19877,23 @@ function isAllowPasteLink(pastedWb) {
 		// Hide comment edit window
 		this.model.workbook.handlers.trigger("asc_onHideComment");
 
-		var _fragmentsTmp = c.getValueForEdit2();
+		var isDynamicArrayNotMainCell = AscCommonExcel.bIsSupportDynamicArrays &&
+			this.model.dynamicArrayManager.isSpilledNotFirstCell(col, row);
+
 		var fragments = [];
-		for (var i = 0; i < _fragmentsTmp.length; ++i) {
-			fragments.push(_fragmentsTmp[i].clone());
+		if (isDynamicArrayNotMainCell) {
+			var emptyFragment = new AscCommonExcel.Fragment();
+			emptyFragment.setFragmentText("");
+			emptyFragment.format = font.clone();
+			fragments.push(emptyFragment);
+		} else {
+			var _fragmentsTmp = c.getValueForEdit2();
+			for (var i = 0; i < _fragmentsTmp.length; ++i) {
+				fragments.push(_fragmentsTmp[i].clone());
+			}
 		}
 
-		var arrAutoComplete = this.getCellAutoCompleteValues(cell, kMaxAutoCompleteCellEdit);
+		var arrAutoComplete = this.workbook.getAutoCompleteEnabled() ? this.getCellAutoCompleteValues(cell, kMaxAutoCompleteCellEdit) : [];
 		var arrAutoCompleteLC = asc.arrayToLowerCase(arrAutoComplete);
 
 		this.model.workbook.handlers.trigger("cleanCutData", true, true);
@@ -19864,6 +19912,9 @@ function isAllowPasteLink(pastedWb) {
 			bbox: c.bbox,
 			cellNumFormat: c.getNumFormatType(),
 			saveValueCallback: function (val, flags, callback) {
+				if (isDynamicArrayNotMainCell && 0 === AscCommonExcel.getFragmentsText(val).length) {
+					return callback ? callback(true) : true;
+				}
 				var saveCellValueCallback = function (success) {
 					if (!success) {
 						if (callback) {
@@ -20975,7 +21026,8 @@ function isAllowPasteLink(pastedWb) {
 				}
 
 				//sort
-				t.setSelectionInfo("sort", {type: type, color: rgbColor});
+				//guess header only when expanding from a single cell, never for an choosen selection
+				t.setSelectionInfo("sort", {type: type, color: rgbColor, guessHeader: !!bIsExpandRange});
 				//TODO maybe should return selection back
 
             } else if (false !== sortProps) {

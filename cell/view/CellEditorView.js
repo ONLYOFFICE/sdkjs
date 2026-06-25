@@ -319,7 +319,7 @@ function (window, undefined) {
 	};
 
 	CellEditor.prototype._isContentEditable = function () {
-		return !!(this.input && this.input.getAttribute && this.input.getAttribute('contenteditable') === 'true');
+		return !!(this.input && this.input.getAttribute && this.input.getAttribute('contenteditable') !== null);
 	};
 
 	CellEditor.prototype._getInputValue = function () {
