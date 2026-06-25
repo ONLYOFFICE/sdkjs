@@ -4559,7 +4559,8 @@
 	/**
 	 * Table of contents properties which specify whether to generate the table of contents from the outline levels or the specified styles.
 	 * @typedef {Object} TocBuildFromPr
-	 * @property {number} [OutlineLvls=9] - Maximum number of levels in the table of contents.
+	 * @property {number} [OutlineLvlStart=1] - The highest heading level included in the table of contents (the start of the outline range).
+	 * @property {number} [OutlineLvls=9] - The lowest heading level included in the table of contents (the end of the outline range).
 	 * @property {TocStyleLvl[]} StylesLvls - Style levels (for example, [{Name: "Heading 1", Lvl: 2}, {Name: "Heading 2", Lvl: 3}]).
 	 * <note>If StylesLvls.length > 0, then the OutlineLvls property will be ignored.</note>
 	 * @see office-js-api/Examples/Enumerations/TocBuildFromPr.js
@@ -9574,226 +9575,59 @@
 		const oColor = this.Document.GetSdtGlobalColor();
 		return Api.RGB(oColor.r, oColor.g, oColor.b);
 	};
-
 	/**
 	 * Adds a table of content to the current document.
-	 * <note>Please note that the new table of contents replaces the existing table of contents.</note>
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.5.0 version.
 	 * @param {TocPr} [oTocPr={}] - Table of contents properties.
-	 * @returns {boolean}
+	 * @returns {ApiTableOfContents}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddTableOfContents.js
 	 */
-	ApiDocument.prototype.AddTableOfContents = function(oTocPr)
+	/**
+	 * Adds a table of content to the current document.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.5.0
+	 * @param {TocPr} [oTocPr={}] - Table of contents properties.
+	 * @param {ApiRange} [oRange] - The range that the table of contents replaces. If omitted, the table of contents is inserted at the current position.
+	 * @returns {ApiTableOfContents}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddTableOfContents.js
+	 */
+	ApiDocument.prototype.AddTableOfContents = function(oTocPr, oRange)
 	{
-		if (typeof(oTocPr) !== "object")
-			oTocPr = {};
-
-		if (!oTocPr["BuildFrom"])
-			oTocPr["BuildFrom"] = {"OutlineLvls": 9};
-
-		let oTargetPr = new Asc.CTableOfContentsPr();
-		oTargetPr.PageNumbers = typeof(oTocPr["ShowPageNums"]) == "boolean" ? oTocPr["ShowPageNums"] : true;
-		oTargetPr.RightTab = typeof(oTocPr["RightAlgn"]) == "boolean" ? oTocPr["RightAlgn"] : true;
-		oTargetPr.Hyperlink = typeof(oTocPr["FormatAsLinks"]) == "boolean" ? oTocPr["FormatAsLinks"] : true;
-
-		if (oTocPr["LeaderType"] == null)
-			oTocPr["LeaderType"] = "dot";
-		switch (oTocPr["LeaderType"])
-		{
-			case "dot":
-				oTargetPr.TabLeader = 0;
-				break;
-			case "dash":
-				oTargetPr.TabLeader = 2;
-				break;
-			case "underline":
-				oTargetPr.TabLeader = 5;
-				break;
-			case "none":
-				oTargetPr.TabLeader = 4;
-				break;
-		}
-
-		if (Array.isArray(oTocPr["BuildFrom"]["StylesLvls"]) && oTocPr["BuildFrom"]["StylesLvls"].length > 0)
-		{
-			oTargetPr.Styles = oTocPr["BuildFrom"]["StylesLvls"].map(function(styleLvl) {
-				return {
-					Name: styleLvl['Name'],
-					Lvl: styleLvl['Lvl']
-				}
-			});
-			oTargetPr.OutlineEnd = -1;
-			oTargetPr.OutlineStart = -1;
-		}
-		else if (oTocPr["BuildFrom"]["OutlineLvls"] >= 1 && oTocPr["BuildFrom"]["OutlineLvls"] <= 9)
-		{
-			oTargetPr.OutlineEnd = oTocPr["BuildFrom"]["OutlineLvls"];
-		}
-
-		if (oTocPr["TocStyle"] == null)
-			oTocPr["TocStyle"] = "standard";
-		switch (oTocPr["TocStyle"])
-		{
-			case "simple":
-				oTargetPr.StylesType = 1;
-				break;
-			case "online":
-				oTargetPr.StylesType = 5;
-				break;
-			case "standard":
-				oTargetPr.StylesType = 2;
-				break;
-			case "modern":
-				oTargetPr.StylesType = 3;
-				break;
-			case "classic":
-				oTargetPr.StylesType = 4;
-				break;
-		}
-
-		var oTOC = this.Document.GetTableOfContents();
-		if (oTOC instanceof AscCommonWord.CBlockLevelSdt && oTOC.IsBuiltInUnique())
-		{
-			var oInnerTOC = oTOC.GetInnerTableOfContents();
-			oTOC = oInnerTOC;
-			if (!oTOC)
-				return false;
-
-			var oStyles = this.Document.GetStyles();
-			var nStylesType = oTargetPr.get_StylesType();
-			var isNeedChangeStyles = (Asc.c_oAscTOCStylesType.Current !== nStylesType && nStylesType !== oStyles.GetTOCStylesType());
-
-			oTOC.SelectField();
-			if (isNeedChangeStyles)
-				oStyles.SetTOCStylesType(nStylesType);
-
-			oTOC.SetPr(oTargetPr);
-			oTOC.Update();
-			return true;
-		}
-
-		this.Document.AddTableOfContents(null, oTargetPr, undefined);
-		return true;
+		return this.GetTablesOfContents().Add(oTocPr, oRange);
 	};
-
 	/**
 	 * Adds a table of figures to the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.5.0 version.
 	 * @param {TofPr} [oTofPr={}] - Table of figures properties.
 	 * <note>Please note that the table of figures properties will be filled with the default properties if they are undefined.</note>
 	 * @param {boolean} [bReplace=true] - Specifies whether to replace the selected table of figures instead of adding a new one.
-	 * @returns {boolean}
+	 * @returns {ApiTableOfFigures}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddTableOfFigures.js
 	 */
-	ApiDocument.prototype.AddTableOfFigures = function(oTofPr, bReplace)
+	/**
+	 * Adds a table of figures to the current document.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.5.0
+	 * @param {TofPr} [oTofPr={}] - Table of figures properties.
+	 * <note>Please note that the table of figures properties will be filled with the default properties if they are undefined.</note>
+	 * @param {ApiRange} [oRange] - The range that the table of figures replaces. If omitted, the table of figures is inserted at the current position.
+	 * @returns {ApiTableOfFigures}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddTableOfFigures.js
+	 */
+	ApiDocument.prototype.AddTableOfFigures = function(oTofPr, oRange)
 	{
-		if (typeof(oTofPr) !== "object")
-			oTofPr = {};
-		if (typeof(bReplace) !== "boolean")
-			bReplace = true;
-
-		let oTargetPr = new Asc.CTableOfContentsPr();
-		oTargetPr.PageNumbers = typeof(oTofPr["ShowPageNums"]) == "boolean" ? oTofPr["ShowPageNums"] : true;
-		oTargetPr.RightTab = typeof(oTofPr["RightAlgn"]) == "boolean" ? oTofPr["RightAlgn"] : true;
-		oTargetPr.Hyperlink = typeof(oTofPr["FormatAsLinks"]) == "boolean" ? oTofPr["FormatAsLinks"] : true;
-		oTargetPr.IsIncludeLabelAndNumber = typeof(oTofPr["LabelNumber"]) == "boolean" ? oTofPr["LabelNumber"] : true;
-		oTargetPr.OutlineEnd = -1;
-		oTargetPr.OutlineStart = -1;
-
-
-		if (oTofPr["LeaderType"] == null)
-			oTofPr["LeaderType"] = "dot";
-		switch (oTofPr["LeaderType"])
-		{
-			case "dot":
-				oTargetPr.TabLeader = 0;
-				break;
-			case "dash":
-				oTargetPr.TabLeader = 2;
-				break;
-			case "underline":
-				oTargetPr.TabLeader = 5;
-				break;
-			case "none":
-				oTargetPr.TabLeader = 4;
-				break;
-		}
-
-		if (typeof(oTofPr["BuildFrom"]) !== "string")
-			oTofPr["BuildFrom"] = "Figure";
-
-		let aStyles = this.Document.GetAllUsedParagraphStyles();
-		let isUsedStyle = false;
-		for (var i = 0; i < aStyles.length; i++)
-		{
-			if (aStyles[i].Name == oTofPr["BuildFrom"])
-			{
-				isUsedStyle = true;
-				break;
-			}
-		}
-
-		if (isUsedStyle)
-		{
-			oTargetPr.Styles = [{ Name: oTofPr["BuildFrom"], Lvl: undefined }];
-			oTargetPr.Caption = null;
-		}
-		else
-			oTargetPr.Caption = oTofPr["BuildFrom"];
-
-		if (oTofPr["TofStyle"] == null)
-			oTofPr["TofStyle"] = "distinctive";
-		switch (oTofPr["TofStyle"])
-		{
-			case "simple":
-				oTargetPr.StylesType = 5;
-				break;
-			case "online":
-				oTargetPr.StylesType = 6;
-				break;
-			case "classic":
-				oTargetPr.StylesType = 1;
-				break;
-			case "distinctive":
-				oTargetPr.StylesType = 2;
-				break;
-			case "centered":
-				oTargetPr.StylesType = 3;
-				break;
-			case "formal":
-				oTargetPr.StyleType = 4;
-				break;
-		}
-
-		let aTOF = this.Document.GetAllTablesOfFigures(true);
-		let oTOFToReplace = null;
-		if(aTOF.length > 0)
-		{
-			oTOFToReplace = aTOF[0];
-		}
-
-		if (oTOFToReplace && bReplace)
-		{
-			oTOFToReplace.SelectFieldValue();
-			oTargetPr.ComplexField = oTOFToReplace;
-
-			var oStyles     = this.Document.GetStyles();
-			var nStylesType = oTargetPr.get_StylesType();
-			var isNeedChangeStyles = (Asc.c_oAscTOFStylesType.Current !== nStylesType && nStylesType !== oStyles.GetTOFStyleType());
-			if (isNeedChangeStyles)
-				oStyles.SetTOFStyleType(nStylesType);
-
-			oTOFToReplace.SetPr(oTargetPr);
-			oTOFToReplace.Update();
-		}
-		else
-			this.Document.AddTableOfFigures(oTargetPr);
-
-		return true;
+		return this.GetTablesOfFigures().Add(oTofPr, oRange);
 	};
-
 	/**
 	 * Returns the document statistics represented as an object with the following parameters:
 	 * <b>PageCount</b> - number of pages;
@@ -32022,8 +31856,8 @@
 	ApiBlockLvlSdt.prototype["GetAppearance"]           = ApiBlockLvlSdt.prototype.GetAppearance;
 	ApiBlockLvlSdt.prototype["SetColor"]                = ApiBlockLvlSdt.prototype.SetColor;
 	ApiBlockLvlSdt.prototype["GetColor"]                = ApiBlockLvlSdt.prototype.GetColor;
-	
-	
+
+
 	ApiFormBase.prototype["GetClassType"]       = ApiFormBase.prototype.GetClassType;
 	ApiFormBase.prototype["GetInternalId"]      = ApiFormBase.prototype.GetInternalId;
 	ApiFormBase.prototype["GetFormType"]        = ApiFormBase.prototype.GetFormType;

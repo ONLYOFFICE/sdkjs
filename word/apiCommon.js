@@ -1449,7 +1449,7 @@
 			{
 				this.Caption = null;
 			}
-			this.IsIncludeLabelAndNumber = (this.CaptionOnlyText === undefined);
+			this.IsIncludeLabelAndNumber = (oInstruction.CaptionOnlyText === undefined);
 		}
 	};
 	CTableOfContentsPr.prototype.InitFromSdtTOC = function(oSdtTOC)

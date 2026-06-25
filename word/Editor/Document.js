@@ -24784,7 +24784,7 @@ CDocument.prototype.AddTableOfContents = function(sHeading, oPr, oSdt)
 		this.UpdateInterface();
 		this.UpdateSelection();
 		this.UpdateRulers();
-		this.FinalizeAction();
+		this.FinalizeAction(null, {pr: oPr, fieldType: 'toc'});
 	}
 };
 CDocument.prototype.AddTableOfFigures = function(oPr)
@@ -24868,7 +24868,7 @@ CDocument.prototype.AddTableOfFigures = function(oPr)
             this.UpdateInterface();
             this.UpdateSelection();
             this.UpdateRulers();
-            this.FinalizeAction();
+            this.FinalizeAction(null, {pr: oPr, fieldType: 'tof'});
         }
         else
         {
@@ -24954,6 +24954,19 @@ CDocument.prototype.GetAllTablesOfContentsInDoc = function()
 	}
 
 	return aTOC;
+};
+CDocument.prototype.GetIndexOfTOCInDoc = function(oTOC)
+{
+	let allTOC = this.GetAllTablesOfContentsInDoc();
+	for (let i = 0; i < allTOC.length; i++)
+	{
+		var oFieldItem = allTOC[i];
+		if (oFieldItem instanceof AscCommonWord.CBlockLevelSdt)
+			oFieldItem = oFieldItem.GetInnerTableOfContents();
+		if (oFieldItem === oTOC)
+			return i;
+	}
+	return -1;
 };
 /**
  * Данная функция получает все таблицы TOF в документе по схеме Word
