@@ -1435,31 +1435,26 @@ function (window, undefined) {
 		return res;
 	}
 
-	function skew(x, bSkewp) {
+	//pairs: [{v,n}] - a lazy array's constant tail is ONE weighted pair (n = tail cells); weighted moments equal
+	//the expanded moments exactly. For a finite arg every n is 1, so this matches the old per-element result.
+	function skew(pairs, bSkewp) {
 
 		let sumSQRDeltaX = 0, _x = 0, xLength = 0, sumSQRDeltaXDivstandDev = 0, i;
 
-		if (x.length <= 2) {
-			return new cError(cErrorType.division_by_zero);
+		for (i = 0; i < pairs.length; i++) {
+			_x += pairs[i].v * pairs[i].n;
+			xLength += pairs[i].n;
 		}
 
-		for (i = 0; i < x.length; i++) {
-
-			if (x[i] instanceof cNumber) {
-				_x += x[i].getValue();
-				xLength++;
-			}
-
+		if (xLength <= 2) {
+			return new cError(cErrorType.division_by_zero);
 		}
 
 		_x /= xLength;
 
-		for (i = 0; i < x.length; i++) {
-
-			if (x[i] instanceof cNumber) {
-				sumSQRDeltaX += Math.pow(x[i].getValue() - _x, 2);
-			}
-
+		for (i = 0; i < pairs.length; i++) {
+			//keep Math.pow (not d*d) so a finite arg (n===1) matches the old result bit-for-bit
+			sumSQRDeltaX += pairs[i].n * Math.pow(pairs[i].v - _x, 2);
 		}
 
 		let standDev;
@@ -1473,11 +1468,9 @@ function (window, undefined) {
 			return new cError(cErrorType.division_by_zero);
 		}
 
-		for (i = 0; i < x.length; i++) {
+		for (i = 0; i < pairs.length; i++) {
 
-			if (x[i] instanceof cNumber) {
-				sumSQRDeltaXDivstandDev += Math.pow((x[i].getValue() - _x) / standDev, 3);
-			}
+			sumSQRDeltaXDivstandDev += pairs[i].n * Math.pow((pairs[i].v - _x) / standDev, 3);
 
 			if (!Number.isFinite(sumSQRDeltaXDivstandDev)) {
 				return new cError(cErrorType.division_by_zero);
@@ -5692,8 +5685,8 @@ function (window, undefined) {
 			}
 			_x /= N;
 			for (i = 0; i < pairs.length; i++) {
-				let d = pairs[i].v - _x;
-				s1 += pairs[i].n * d * d;
+				//keep Math.pow (not d*d) so a finite arg (n===1) matches the old result bit-for-bit
+				s1 += pairs[i].n * Math.pow(pairs[i].v - _x, 2);
 			}
 			return new cNumber(s1);
 		}
@@ -7148,26 +7141,18 @@ function (window, undefined) {
 	cGEOMEAN.prototype.enabledToSingle = {"*": true};
 	cGEOMEAN.prototype.Calculate = function (arg) {
 
-		function geommean(x) {
-
-			var _x = 1, xLength = 0, _tx;
-			for (var i = 0; i < x.length; i++) {
-
-				if (x[i] instanceof cNumber) {
-					_x *= x[i].getValue();
-					xLength++;
-				} else if ((x[i] instanceof cString || x[i] instanceof cBool) &&
-					(_tx = x[i].tocNumber()) instanceof cNumber) {
-					_x *= _tx.getValue();
-					xLength++;
-				}
-
+		//pairs: [{v,n}] - constant tail folded as ONE weighted pair; geometric mean = (Prod v^n)^(1/Sum n).
+		//for a finite arg every n is 1, so Math.pow(v,1) === v and the result is identical to before.
+		function geommean(pairs) {
+			var _x = 1, N = 0;
+			for (var i = 0; i < pairs.length; i++) {
+				_x *= Math.pow(pairs[i].v, pairs[i].n);
+				N += pairs[i].n;
 			}
-
 			if (_x <= 0) {
 				return new cError(cErrorType.not_numeric);
 			} else {
-				return new cNumber(Math.pow(_x, 1 / xLength));
+				return new cNumber(Math.pow(_x, 1 / N));
 			}
 		}
 
@@ -7178,24 +7163,25 @@ function (window, undefined) {
 			if (arg[j] instanceof cArea || arg[j] instanceof cArea3D) {
 				arg[j].foreach2(function (elem) {
 					if (elem instanceof cNumber) {
-						arr0.push(elem);
+						arr0.push({v: elem.getValue(), n: 1});
 					}
 				});
 			} else if (arg[j] instanceof cRef || arg[j] instanceof cRef3D) {
 				var a = arg[j].getValue();
 				if (a instanceof cNumber) {
-					arr0.push(a);
+					arr0.push({v: a.getValue(), n: 1});
 				}
 			} else if (arg[j] instanceof cArray) {
-				arg[j].foreach(function (elem) {
+				arg[j].reduceLogical(function (acc, elem, n) {
 					if (elem instanceof cNumber) {
-						arr0.push(elem);
+						arr0.push({v: elem.getValue(), n: n});
 					}
-				});
+					return acc;
+				}, null);
 			} else if (arg[j] instanceof cNumber || arg[j] instanceof cBool) {
-				arr0.push(arg[j].tocNumber());
+				arr0.push({v: arg[j].tocNumber().getValue(), n: 1});
 			} else if (arg[j] instanceof cString && arg[j].tocNumber() instanceof cNumber) {
-				arr0.push(arg[j].tocNumber());
+				arr0.push({v: arg[j].tocNumber().getValue(), n: 1});
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}
@@ -7283,32 +7269,20 @@ function (window, undefined) {
 	cHARMEAN.prototype.enabledToSingle = {"*": true};
 	cHARMEAN.prototype.Calculate = function (arg) {
 
-		function harmmean(x) {
-
-			var _x = 0, xLength = 0, _tx;
-			for (var i = 0; i < x.length; i++) {
-
-				if (x[i] instanceof cNumber) {
-					if (x[i].getValue() == 0) {
-						return new cError(cErrorType.not_numeric);
-					}
-					_x += 1 / x[i].getValue();
-					xLength++;
-				} else if ((x[i] instanceof cString || x[i] instanceof cBool) &&
-					(_tx = x[i].tocNumber()) instanceof cNumber) {
-					if (_tx.getValue() == 0) {
-						return new cError(cErrorType.not_numeric);
-					}
-					_x += 1 / _tx.getValue();
-					xLength++;
+		//pairs: [{v,n}] - constant tail folded as ONE weighted pair; harmonic mean = (Sum n) / Sum n*(1/v).
+		function harmmean(pairs) {
+			var _x = 0, N = 0;
+			for (var i = 0; i < pairs.length; i++) {
+				if (pairs[i].v == 0) {
+					return new cError(cErrorType.not_numeric);
 				}
-
+				_x += pairs[i].n / pairs[i].v;
+				N += pairs[i].n;
 			}
-
 			if (_x <= 0) {
 				return new cError(cErrorType.not_numeric);
 			} else {
-				return new cNumber(xLength / _x);
+				return new cNumber(N / _x);
 			}
 		}
 
@@ -7319,24 +7293,25 @@ function (window, undefined) {
 			if (arg[j] instanceof cArea || arg[j] instanceof cArea3D) {
 				arg[j].foreach2(function (elem) {
 					if (elem instanceof cNumber) {
-						arr0.push(elem);
+						arr0.push({v: elem.getValue(), n: 1});
 					}
 				});
 			} else if (arg[j] instanceof cRef || arg[j] instanceof cRef3D) {
 				var a = arg[j].getValue();
 				if (a instanceof cNumber) {
-					arr0.push(a);
+					arr0.push({v: a.getValue(), n: 1});
 				}
 			} else if (arg[j] instanceof cArray) {
-				arg[j].foreach(function (elem) {
+				arg[j].reduceLogical(function (acc, elem, n) {
 					if (elem instanceof cNumber) {
-						arr0.push(elem);
+						arr0.push({v: elem.getValue(), n: n});
 					}
-				});
+					return acc;
+				}, null);
 			} else if (arg[j] instanceof cNumber || arg[j] instanceof cBool) {
-				arr0.push(arg[j].tocNumber());
+				arr0.push({v: arg[j].tocNumber().getValue(), n: 1});
 			} else if (arg[j] instanceof cString && arg[j].tocNumber() instanceof cNumber) {
-				arr0.push(arg[j].tocNumber());
+				arr0.push({v: arg[j].tocNumber().getValue(), n: 1});
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}
@@ -7617,36 +7592,26 @@ function (window, undefined) {
 	cKURT.prototype.enabledToSingle = {"*": true};
 	cKURT.prototype.Calculate = function (arg) {
 
-		function kurt(x) {
+		//pairs: [{v,n}] - constant tail folded as ONE weighted pair; weighted moments == expanded moments.
+		function kurt(pairs) {
 
 			let sumSQRDeltaX = 0, _x = 0, xLength = 0, sumSQRDeltaXDivstandDev = 0, i;
-			for (i = 0; i < x.length; i++) {
-
-				if (x[i] instanceof cNumber) {
-					_x += x[i].getValue();
-					xLength++;
-				}
-
+			for (i = 0; i < pairs.length; i++) {
+				_x += pairs[i].v * pairs[i].n;
+				xLength += pairs[i].n;
 			}
 
 			_x /= xLength;
 
-			for (i = 0; i < x.length; i++) {
-
-				if (x[i] instanceof cNumber) {
-					sumSQRDeltaX += Math.pow(x[i].getValue() - _x, 2);
-				}
-
+			for (i = 0; i < pairs.length; i++) {
+				//keep Math.pow (not d*d) so a finite arg (n===1) matches the old result bit-for-bit
+				sumSQRDeltaX += pairs[i].n * Math.pow(pairs[i].v - _x, 2);
 			}
 
 			let standDev = Math.sqrt(sumSQRDeltaX / (xLength - 1));
 
-			for (i = 0; i < x.length; i++) {
-
-				if (x[i] instanceof cNumber) {
-					sumSQRDeltaXDivstandDev += Math.pow((x[i].getValue() - _x) / standDev, 4);
-				}
-
+			for (i = 0; i < pairs.length; i++) {
+				sumSQRDeltaXDivstandDev += pairs[i].n * Math.pow((pairs[i].v - _x) / standDev, 4);
 			}
 
 			return new cNumber(xLength * (xLength + 1) / (xLength - 1) / (xLength - 2) / (xLength - 3) *
@@ -7661,22 +7626,23 @@ function (window, undefined) {
 			if (arg[j] instanceof cArea || arg[j] instanceof cArea3D) {
 				arg[j].foreach2(function (elem) {
 					if (elem instanceof cNumber) {
-						arr0.push(elem);
+						arr0.push({v: elem.getValue(), n: 1});
 					}
 				});
 			} else if (arg[j] instanceof cRef || arg[j] instanceof cRef3D) {
 				let a = arg[j].getValue();
 				if (a instanceof cNumber) {
-					arr0.push(a);
+					arr0.push({v: a.getValue(), n: 1});
 				}
 			} else if (arg[j] instanceof cArray) {
-				arg[j].foreach(function (elem) {
+				arg[j].reduceLogical(function (acc, elem, n) {
 					if (elem instanceof cNumber) {
-						arr0.push(elem);
+						arr0.push({v: elem.getValue(), n: n});
 					}
-				});
+					return acc;
+				}, null);
 			} else if (arg[j] instanceof cNumber || arg[j] instanceof cBool || arg[j] instanceof cEmpty) {
-				arr0.push(arg[j].tocNumber());
+				arr0.push({v: arg[j].tocNumber().getValue(), n: 1});
 			} else if (arg[j] instanceof cString) {
 				continue;
 			} else if (arg[j] instanceof cError) {
@@ -10196,18 +10162,36 @@ function (window, undefined) {
 
 		for (let j = 0; j < arg.length; j++) {
 
-			if (arg[j].type === cElementType.array || arg[j].type === cElementType.cellsRange || arg[j].type === cElementType.cellsRange3D) {
+			if (arg[j].type === cElementType.array) {
+				//array (maybe lazy): reduceLogical -> head unit pairs + constant tail as ONE pair {v, n=tailCount}
+				let err = arg[j].reduceLogical(function (acc, elem, n) {
+					if (acc) {
+						return acc;
+					}
+					if (elem) {
+						if (elem.type === cElementType.number) {
+							arr0.push({v: elem.getValue(), n: n});
+						} else if (elem.type === cElementType.error) {
+							return elem;
+						}
+					}
+					return acc;
+				}, null);
+				if (err) {
+					return err;
+				}
+			} else if (arg[j].type === cElementType.cellsRange || arg[j].type === cElementType.cellsRange3D) {
 				let dimensions = arg[j].getDimensions();
 
 				for (let row = 0; row < dimensions.row; row++) {
 					for (let col = 0; col < dimensions.col; col++) {
-						let elem = arg[j].getValueByRowCol ? arg[j].getValueByRowCol(row,col) : arg[j].getElementRowCol(row,col);
+						let elem = arg[j].getValueByRowCol(row, col);
 						if (!elem) {
 							continue;
 						}
 
 						if (elem.type === cElementType.number) {
-							arr0.push(elem);
+							arr0.push({v: elem.getValue(), n: 1});
 						} else if (elem.type === cElementType.error) {
 							return elem;
 						}
@@ -10218,10 +10202,10 @@ function (window, undefined) {
 			} else if (arg[j].type === cElementType.cell || arg[j].type === cElementType.cell3D) {
 				let a = arg[j].getValue();
 				if (a && a.type === cElementType.number) {
-					arr0.push(a);
+					arr0.push({v: a.getValue(), n: 1});
 				}
 			} else if (arg[j].type === cElementType.number) {
-				arr0.push(arg[j]);
+				arr0.push({v: arg[j].getValue(), n: 1});
 			} else if (arg[j].type === cElementType.string || arg[j].type === cElementType.empty || arg[j].type === cElementType.bool) {
 				continue;
 			} else if (arg[j].type === cElementType.error) {
@@ -10256,18 +10240,36 @@ function (window, undefined) {
 
 		for (let j = 0; j < arg.length; j++) {
 
-			if (arg[j].type === cElementType.array || arg[j].type === cElementType.cellsRange || arg[j].type === cElementType.cellsRange3D) {
+			if (arg[j].type === cElementType.array) {
+				//array (maybe lazy): reduceLogical -> head unit pairs + constant tail as ONE pair {v, n=tailCount}
+				let err = arg[j].reduceLogical(function (acc, elem, n) {
+					if (acc) {
+						return acc;
+					}
+					if (elem) {
+						if (elem.type === cElementType.number) {
+							arr0.push({v: elem.getValue(), n: n});
+						} else if (elem.type === cElementType.error) {
+							return elem;
+						}
+					}
+					return acc;
+				}, null);
+				if (err) {
+					return err;
+				}
+			} else if (arg[j].type === cElementType.cellsRange || arg[j].type === cElementType.cellsRange3D) {
 				let dimensions = arg[j].getDimensions();
 
 				for (let row = 0; row < dimensions.row; row++) {
 					for (let col = 0; col < dimensions.col; col++) {
-						let elem = arg[j].getValueByRowCol ? arg[j].getValueByRowCol(row,col) : arg[j].getElementRowCol(row,col);
+						let elem = arg[j].getValueByRowCol(row, col);
 						if (!elem) {
 							continue;
 						}
 
 						if (elem.type === cElementType.number) {
-							arr0.push(elem);
+							arr0.push({v: elem.getValue(), n: 1});
 						} else if (elem.type === cElementType.error) {
 							return elem;
 						}
@@ -10277,10 +10279,10 @@ function (window, undefined) {
 			} else if (arg[j].type === cElementType.cell || arg[j].type === cElementType.cell3D) {
 				let a = arg[j].getValue();
 				if (a && a.type === cElementType.number) {
-					arr0.push(a);
+					arr0.push({v: a.getValue(), n: 1});
 				}
 			} else if (arg[j].type === cElementType.number) {
-				arr0.push(arg[j]);
+				arr0.push({v: arg[j].getValue(), n: 1});
 			} else if (arg[j].type === cElementType.string || arg[j].type === cElementType.empty || arg[j].type === cElementType.bool) {
 				continue;
 			} else if (arg[j].type === cElementType.error) {
