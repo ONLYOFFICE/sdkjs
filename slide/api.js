@@ -8519,7 +8519,7 @@ background-repeat: no-repeat;\
 
 		AscCommon.CollaborativeEditing = new AscCommon.SlideCollaborativeEditing();
 	};
-	asc_docs_api.prototype.getRendererPrintOptions = function (isSelectedSlides) {
+	asc_docs_api.prototype.getRendererPrintOptions = function (isSelectedSlides, isPrintHiddenSlides) {
 		const presentation = this.private_GetLogicDocument();
 		if (!presentation) {
 			return null;
@@ -8531,7 +8531,7 @@ background-repeat: no-repeat;\
 			rangeOptions.asc_setRangeType(Asc.c_oAscPresentationRangeType.SelectedSlides);
 		}
 		const slidePrintOptions = printOptions.slidePrintOptions;
-		slidePrintOptions.asc_setIsPrintHiddenSlides(false);
+		slidePrintOptions.asc_setIsPrintHiddenSlides(!!isPrintHiddenSlides);
 
 		const pageOptions = printOptions.pageOptions;
 		pageOptions.asc_setHeight(presentation.GetHeightMM());
@@ -9103,7 +9103,7 @@ background-repeat: no-repeat;\
 		if (options && options["presentationPrintOptions"]) {
 			printerOptions = Asc.CAscPresentationPrintOptions.fromJSON(options["presentationPrintOptions"]);
 		} else {
-			printerOptions = this.getRendererPrintOptions(options && options["printOptions"] && options["printOptions"]["selection"]);
+			printerOptions = this.getRendererPrintOptions(options && options["printOptions"] && options["printOptions"]["selection"], true);
 		}
 		const logicDocument = this.WordControl.m_oLogicDocument;
 		if (!logicDocument || !printerOptions) {
