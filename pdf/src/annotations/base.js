@@ -1536,6 +1536,7 @@
         if (this.IsShapeBased()) {
             this.SetNeedUpdateLn(true);
             this.SetNeedUpdateOpacity(true);
+			this.SetNeedRecalc(true);
         }
         else {
             this.AddToRedraw();

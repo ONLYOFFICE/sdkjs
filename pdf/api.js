@@ -3383,6 +3383,7 @@
 			oController.selectedObjects.forEach(function(annot) {
 				if (annot.IsAnnot()) {
 					annot.SetBorderWidth(nValue);
+					annot.private_UpdateRect();
 				}
 			});
 
