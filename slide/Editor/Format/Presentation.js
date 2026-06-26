@@ -6300,7 +6300,7 @@ CPresentation.prototype.Notes_OnMouseMove = function (e, X, Y) {
 };
 
 CPresentation.prototype.Thumbnails_OnMouseDown = function (e, X, Y) {
-	// Сбрасываем текущий элемент в поиске
+	// Resetting the current element in the search
 	this.CancelEyedropper();
 	this.CancelInkDrawer();
 	if (this.SearchEngine.Count > 0)
