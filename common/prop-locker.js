@@ -43,7 +43,7 @@
 		this.objectId = null;
 		this.Lock = new AscCommon.CLock();
 		this.Id = AscCommon.g_oIdCounter.Get_NewId();
-		g_oTableId.Add(this, this.Id);
+		AscCommon.g_oTableId.Add(this, this.Id);
 
 		if (typeof objectId === "string") {
 			this.setObjectId(objectId);
@@ -55,7 +55,7 @@
 		return AscDFH.historyitem_type_PropLocker;
 	};
 	PropLocker.prototype.setObjectId = function (id) {
-		History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_PropLockerSetId, this.objectId, id));
+		AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_PropLockerSetId, this.objectId, id));
 		this.objectId = id;
 	};
 	PropLocker.prototype.Get_Id = function () {
