@@ -4571,7 +4571,10 @@ background-repeat: no-repeat;\
 	{
 		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Properties))
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetParagraphStyle, null, null, sName);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetParagraphStyle, null, null, {
+				name:sName,
+				use_select: this.WordControl.m_oLogicDocument.IsSelectionUse()
+			});
 			this.WordControl.m_oLogicDocument.SetParagraphStyle(sName, true);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
@@ -9312,6 +9315,10 @@ background-repeat: no-repeat;\
 				this.WordControl.OnScroll();
 			}
 			this.turnOffSpecialModes();
+			
+			let logicDocument = this.private_GetLogicDocument();
+			if (logicDocument)
+				logicDocument.SetDisplayModeInReview(Asc.c_oAscDisplayModeInReview.Original, true);
 		}
 		else
 		{
@@ -12100,7 +12107,11 @@ background-repeat: no-repeat;\
 
 		if (!isLocked)
 		{
-			oLogicDocument.StartAction(AscDFH.historydescription_Document_SetComplexFieldPr);
+			oLogicDocument.StartAction(AscDFH.historydescription_Document_SetComplexFieldPr, null, null, {
+				fieldType: isTOF ? "tof" : "toc",
+				fieldPr: oPr,
+				index: oLogicDocument.GetIndexOfTOCInDoc(oTOC)
+			});
 
 			if (isNeedChangeStyles)
 			{
@@ -12150,7 +12161,10 @@ background-repeat: no-repeat;\
 		{
 			if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content))
 			{
-				oLogicDocument.StartAction(AscDFH.historydescription_Document_UpdateTableOfContents);
+				oLogicDocument.StartAction(AscDFH.historydescription_Document_UpdateTableOfContents, null, null, {
+					isUpdateNum: isUpdatePageNumbers,
+					index: oLogicDocument.GetIndexOfTOCInDoc(oTOC)
+				});
 
 				var arrParagraphs = oLogicDocument.GetCurrentParagraph(false, true);
 
@@ -12174,7 +12188,10 @@ background-repeat: no-repeat;\
 		{
 			if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Document_Content))
 			{
-				oLogicDocument.StartAction(AscDFH.historydescription_Document_UpdateTableOfContents);
+				oLogicDocument.StartAction(AscDFH.historydescription_Document_UpdateTableOfContents, null, null, {
+					isUpdateNum: isUpdatePageNumbers,
+					index: oLogicDocument.GetIndexOfTOCInDoc(oTOC)
+				});
 
 				oTOC.Update();
 

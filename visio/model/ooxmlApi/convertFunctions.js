@@ -2167,8 +2167,16 @@
 						// text field
 
 						let oFld = new AscCommonWord.CPresentationField(currentParagraph);
+						if (pageInfo && !pageInfo.background) {
+							// reuse the presentation field SlideNum to cache this regular page own index
+							oFld.SlideNum = visioDocument.pages.page.indexOf(pageInfo);
+						}
 						let fieldRowNum = textElementPart.ix;
-						let fieldPropsFinal = fieldRowNum !== null && fieldPropsCommon.getRow(fieldRowNum);
+						let fieldPropsFinal = (fieldRowNum != null && fieldPropsCommon) ? fieldPropsCommon.getRow(fieldRowNum) : null;
+						if (!fieldPropsFinal) {
+							// no Field section row for this field, skip to avoid a crash on missing props
+							return;
+						}
 						initPresentationField(oFld, fieldPropsFinal, isTextInherited);
 
 						let fldTagText = textElementPart.value;

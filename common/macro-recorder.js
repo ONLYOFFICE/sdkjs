@@ -873,6 +873,99 @@
 		}
 	}
 
+	function tabLeaderToType(leader)
+	{
+		switch (leader) {
+			case 2:  return "dash";
+			case 5:  return "underline";
+			case 4:  return "none";
+			case 0:
+			default: return "dot";
+		}
+	}
+
+	function buildTocPrObject(oPr)
+	{
+		const tocStyle = function(type) {
+			switch (type) {
+				case 1: return "simple";
+				case 2: return "standard";
+				case 3: return "modern";
+				case 4: return "classic";
+				case 5: return "online";
+				default: return null;
+			}
+		};
+
+		let buildFrom;
+		let styles = oPr.get_Styles();
+		if (Array.isArray(styles) && styles.length > 0) {
+			buildFrom = {
+				StylesLvls: styles.map(function(s) {
+					return { Name: s.Name, Lvl: s.Lvl };
+				})
+			};
+		} else {
+			buildFrom = { OutlineLvlStart: oPr.get_OutlineStart(), OutlineLvls: oPr.get_OutlineEnd() };
+		}
+
+		let object = {
+			ShowPageNums:	oPr.get_ShowPageNumbers(),
+			RightAlgn:		oPr.get_RightAlignTab(),
+			LeaderType:		tabLeaderToType(oPr.get_TabLeader()),
+			FormatAsLinks:	oPr.get_Hyperlink(),
+			BuildFrom:		buildFrom,
+		};
+
+		const style = tocStyle(oPr.get_StylesType());
+		if (style !== null)
+			object.TocStyle = style;
+
+		return object;
+	}
+
+	function buildTofPrObject(oPr)
+	{
+		const tofStyle = function(type) {
+			switch (type) {
+				case 1: return "classic";
+				case 2: return "distinctive";
+				case 3: return "centered";
+				case 4: return "formal";
+				case 5: return "simple";
+				case 6: return "online";
+				default: return null;
+			}
+		};
+
+		let buildFrom;
+		let caption = oPr.get_Caption();
+		if (typeof caption === "string" && caption.length > 0) {
+			buildFrom = caption;
+		} else {
+			let styles = oPr.get_Styles();
+			if (Array.isArray(styles) && styles.length > 0)
+				buildFrom = styles[0].Name;
+		}
+
+		let object = {
+			ShowPageNums:	oPr.get_ShowPageNumbers(),
+			RightAlgn:		oPr.get_RightAlignTab(),
+			LeaderType:		tabLeaderToType(oPr.get_TabLeader()),
+			FormatAsLinks:	oPr.get_Hyperlink(),
+			LabelNumber:	oPr.get_IncludeLabelAndNumber(),
+		};
+
+		if (buildFrom !== undefined)
+			object.BuildFrom = buildFrom;
+
+		const style = tofStyle(oPr.get_StylesType());
+		if (style !== null)
+			object.TofStyle = style;
+
+		return object;
+	}
+
 	const wordActions = {
 		setTextBold				: function(bold){return "\tdoc.GetRangeBySelect().SetBold(" + bold + ");\n"},
 		setTextItalic			: function(italic){return "\tdoc.GetRangeBySelect().SetItalic(" + italic + ");\n"},
@@ -906,7 +999,15 @@
 			return "\tApi.GetDocument().GetRangeBySelect().SetVertAlign(\"" + align + "\");\n";
 		},
 		setTextColor			: function(color){return "\tdoc.GetRangeBySelect().SetColor(" + color.r + "," + color.g + "," + color.b  + ");\n"},
-		setStyleHeading			: function(name){return "\tdoc.GetRangeBySelect().SetStyle(doc.GetStyle(\"" + name + "\"));\n"},
+		setStyleHeading			: function(data){
+			let name		= data.name;
+			let use_select	= data.use_select;
+
+			if (use_select)
+				return "\tdoc.GetRangeBySelect().SetStyle(doc.GetStyle(\"" + name + "\"));\n"
+			else
+				return "\tdoc.GetCurrentParagraph().SetStyle(doc.GetStyle(\"" + name + "\"));\n"
+		},
 		clearFormat				: function(){return "\tdoc.GetRangeBySelect().ClearFormating()\n"},
 		cut						: function(){return "\tdoc.GetRangeBySelect().Cut();\n"},
 		changeTextCase			: function(changeType){return ""; return "\tdoc.GetRangeBySelect().SetTextCase(\"" + changeType + "\");\n"},
@@ -1804,6 +1905,39 @@
 				text += "\t" + reg.varName + ".SetColumnWidth(" + i + ", " + Math.round(grid[i] * 36000) + ");\n";
 			return text;
 		},
+		addTableOfContents: function(data)
+		{
+			let oPr = data.pr;
+			let fieldType = data.fieldType;
+			let object = buildTocPrObject(oPr);
+
+			if (fieldType === "tof")
+				return "\tlet " + varRegistry.inc('tof') + " = doc.GetTablesOfFigures().Add(" + JSON.stringify(object, null, "\t").replace(/\n/g, "\n\t") + ");\n";
+
+			return "\tlet " + varRegistry.inc('toc') + " = doc.GetTablesOfContents().Add(" + JSON.stringify(object, null, "\t").replace(/\n/g, "\n\t") + ");\n";
+		},
+		updateTableOfContents: function(additional) {
+			let index = additional.index;
+			let isOnlyNumbers = additional.isUpdateNum;
+			return "\tdoc.GetTablesOfContents().GetItem(" + index + ").Update("+ isOnlyNumbers +");\n";
+		},
+		setComplexFieldPr: function(additional) {
+			if (!additional || !additional.fieldPr)
+				return "";
+
+			let oPr = additional.fieldPr;
+			let index = (typeof additional.index === "number" && additional.index >= 0)
+				? additional.index
+				: 0;
+
+			if (additional.fieldType === "tof") {
+				let object = buildTofPrObject(oPr);
+				return "\tdoc.GetTablesOfFigures().GetItem(" + index + ").SetPr(" + JSON.stringify(object, null, "\t").replace(/\n/g, "\n\t") + ");\n";
+			}
+
+			let object = buildTocPrObject(oPr);
+			return "\tdoc.GetTablesOfContents().GetItem(" + index + ").SetPr(" + JSON.stringify(object, null, "\t").replace(/\n/g, "\n\t") + ");\n";
+		}
 	};
 
 	const DEActionMap = {};
@@ -1923,6 +2057,9 @@
 	DEActionMap["SetTableVAlign"]												= wordActions.setTableVAlign;
 	DEActionMap["SetTableHAlign"]												= wordActions.setTableHAlign;
 	DEActionMap["SetTableResize"]												= wordActions.setTableResize;
+	DEActionMap[AscDFH.historydescription_Document_AddTableOfContents]			= wordActions.addTableOfContents;
+	DEActionMap[AscDFH.historydescription_Document_UpdateTableOfContents]		= wordActions.updateTableOfContents;
+	DEActionMap[AscDFH.historydescription_Document_SetComplexFieldPr]			= wordActions.setComplexFieldPr;
 
 	const cellActions = {
 		setCellIncreaseFontSize	: function(){return "\tApi.GetSelection().FontIncrease();\n"},
