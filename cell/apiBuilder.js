@@ -8384,12 +8384,12 @@
 	 */
 	ApiWorksheet.prototype.SetActive = function () {
 		var nIndex = this.worksheet.index;
+		var bResult = this.worksheet.workbook.setActive(nIndex);
 		var oApi = Asc.editor;
-		if (oApi && oApi.wb) {
+		if (bResult && oApi && oApi.wb) {
 			oApi.asc_showWorksheet(nIndex);
-			return this.worksheet.workbook.getActive() === nIndex;
 		}
-		return this.worksheet.workbook.setActive(nIndex);
+		return bResult;
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "Active", {
 		set: function () {
