@@ -2180,7 +2180,7 @@ background-repeat: no-repeat;\
 			
 			// Check presentation state (similar to _setSpecialPasteShowOptionsPresentation)
 			var presentation = t.WordControl.m_oLogicDocument;
-			if (!presentation || presentation.IsMasterMode()) {
+			if (!presentation || !presentation.IsSlidePageMode()) {
 				callback(null);
 				return;
 			}
