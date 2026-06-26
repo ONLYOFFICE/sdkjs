@@ -3533,6 +3533,25 @@
 			return true;
         }, AscDFH.historydescription_Pdf_ChangeAnnot);
 	};
+	PDFEditorApi.prototype.SetTextAnnotIconType = function(nType) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oMouseDownAnnot = oDoc.mouseDownAnnot;
+
+		if (!oMouseDownAnnot) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(annot) {
+				if (annot.IsText()) {
+					annot.SetIconType(nType);
+				}
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeAnnot);
+	};
 	
 	PDFEditorApi.prototype.asc_CloseFile = function() {
 		AscCommon.History.Clear();
@@ -4325,7 +4344,7 @@
 					}
                     if (Class.IsAnnot && Class.IsAnnot()) {
 						// if annotation is a comment or annotation with a comment, then lock the comment too
-						if (Class.IsComment() || (Class.IsUseContentAsComment() && Class.GetContents() != undefined) || Class.GetReply(0) != null) {
+						if (Class.IsText() || (Class.IsUseContentAsComment() && Class.GetContents() != undefined) || Class.GetReply(0) != null) {
 							t.sync_LockComment(Class.Get_Id(), e["user"]);
 						}
 					}
@@ -4376,7 +4395,7 @@
 						Class.AddToRedraw && Class.AddToRedraw();
 						if (Class.IsAnnot && Class.IsAnnot()) {
 							// if annot is comment or annot with comment then release locks for it too
-							if (Class.IsComment() || (Class.IsUseContentAsComment() && Class.GetContents() != undefined) || Class.GetReply(0) != null) {
+							if (Class.IsText() || (Class.IsUseContentAsComment() && Class.GetContents() != undefined) || Class.GetReply(0) != null) {
 								Asc.editor.sync_UnLockComment(Class.Get_Id());
 							}
 						}
@@ -5471,6 +5490,7 @@
 	PDFEditorApi.prototype['SetAnnotStrokeStyle']			= PDFEditorApi.prototype.SetAnnotStrokeStyle;
 	PDFEditorApi.prototype['SetAnnotLineStart']				= PDFEditorApi.prototype.SetAnnotLineStart;
 	PDFEditorApi.prototype['SetAnnotLineEnd']				= PDFEditorApi.prototype.SetAnnotLineEnd;
+	PDFEditorApi.prototype['SetTextAnnotIconType']			= PDFEditorApi.prototype.SetTextAnnotIconType;
 	
 	// stamp
 	PDFEditorApi.prototype['AddStampAnnot']					= PDFEditorApi.prototype.AddStampAnnot;

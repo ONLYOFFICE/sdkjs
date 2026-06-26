@@ -2735,7 +2735,7 @@ var CPresentation = CPresentation || function(){};
         }
         else if (oMouseMoveAnnot) {
 
-            if (oMouseMoveAnnot.IsComment()) {
+            if (oMouseMoveAnnot.IsText()) {
                 cursorType = "move";
             }
             else if (oMouseMoveAnnot.IsTextMarkup()) {
@@ -3384,7 +3384,7 @@ var CPresentation = CPresentation || function(){};
 
         // sticky notes are always unrotated
         oViewer.pagesInfo.pages[nPage].annots.forEach(function(annot) {
-            if (annot.IsComment()) {
+            if (annot.IsText()) {
                 annot.AddToRedraw();
             }
         });
@@ -4049,7 +4049,7 @@ var CPresentation = CPresentation || function(){};
             
             let w = aOrigRect[2] - aOrigRect[0];
             let h = aOrigRect[3] - aOrigRect[1];
-            if (oAnnot.IsComment()) {
+            if (oAnnot.IsText()) {
                 w = 20 / this.Viewer.zoom;
                 h = 20 / this.Viewer.zoom;
             }
@@ -4057,22 +4057,22 @@ var CPresentation = CPresentation || function(){};
             let X, Y;
             switch (nPageRotate) {
                 case 0: {
-                    X = aOrigRect[0] + (oAnnot.IsComment() ? w / this.Viewer.zoom : w);
-                    Y = aOrigRect[1] + (oAnnot.IsComment() ? h / 2 / this.Viewer.zoom : h / 2);
+                    X = aOrigRect[0] + (oAnnot.IsText() ? w / this.Viewer.zoom : w);
+                    Y = aOrigRect[1] + (oAnnot.IsText() ? h / 2 / this.Viewer.zoom : h / 2);
                     break;
                 }
                 case 90: {
-                    X = aOrigRect[0] + (oAnnot.IsComment() ? w / this.Viewer.zoom / 2 : w / 2);
+                    X = aOrigRect[0] + (oAnnot.IsText() ? w / this.Viewer.zoom / 2 : w / 2);
                     Y = aOrigRect[1];
                     break;
                 }
                 case 180: {
                     X = aOrigRect[0];
-                    Y = aOrigRect[1] + (oAnnot.IsComment() ? h / 2 / this.Viewer.zoom : h / 2);
+                    Y = aOrigRect[1] + (oAnnot.IsText() ? h / 2 / this.Viewer.zoom : h / 2);
                     break;
                 }
                 case 270: {
-                    X = aOrigRect[0] + (oAnnot.IsComment() ? w / 2 / this.Viewer.zoom : w / 2);
+                    X = aOrigRect[0] + (oAnnot.IsText() ? w / 2 / this.Viewer.zoom : w / 2);
                     Y = aOrigRect[3];
                     break;
                 }
@@ -4455,7 +4455,7 @@ var CPresentation = CPresentation || function(){};
             
             let w = aOrigRect[2] - aOrigRect[0];
             let h = aOrigRect[3] - aOrigRect[1];
-            if (oAnnot.IsComment()) {
+            if (oAnnot.IsText()) {
                 w = 20 / this.Viewer.zoom;
                 h = 20 / this.Viewer.zoom;
             }
@@ -4463,22 +4463,22 @@ var CPresentation = CPresentation || function(){};
             let X, Y;
             switch (nPageRotate) {
                 case 0: {
-                    X = aOrigRect[0] + (oAnnot.IsComment() ? w / this.Viewer.zoom : w);
-                    Y = aOrigRect[1] + (oAnnot.IsComment() ? h / 2 / this.Viewer.zoom : h / 2);
+                    X = aOrigRect[0] + (oAnnot.IsText() ? w / this.Viewer.zoom : w);
+                    Y = aOrigRect[1] + (oAnnot.IsText() ? h / 2 / this.Viewer.zoom : h / 2);
                     break;
                 }
                 case 90: {
-                    X = aOrigRect[0] + (oAnnot.IsComment() ? w / this.Viewer.zoom / 2 : w / 2);
+                    X = aOrigRect[0] + (oAnnot.IsText() ? w / this.Viewer.zoom / 2 : w / 2);
                     Y = aOrigRect[1];
                     break;
                 }
                 case 180: {
                     X = aOrigRect[0];
-                    Y = aOrigRect[1] + (oAnnot.IsComment() ? h / 2 / this.Viewer.zoom : h / 2);
+                    Y = aOrigRect[1] + (oAnnot.IsText() ? h / 2 / this.Viewer.zoom : h / 2);
                     break;
                 }
                 case 270: {
-                    X = aOrigRect[0] + (oAnnot.IsComment() ? w / 2 / this.Viewer.zoom : w / 2);
+                    X = aOrigRect[0] + (oAnnot.IsText() ? w / 2 / this.Viewer.zoom : w / 2);
                     Y = aOrigRect[3];
                     break;
                 }
@@ -4545,7 +4545,7 @@ var CPresentation = CPresentation || function(){};
             return;
 
         Asc.editor.sync_HideComment();
-		if (oAnnot.IsComment()) {
+		if (oAnnot.IsText()) {
 			this.RemoveAnnot(oAnnot.GetId(), false, false);
 		}
 		else {
@@ -8332,7 +8332,7 @@ var CPresentation = CPresentation || function(){};
                 let Y = aRect[1] * nScale - 0.5 >> 0;
                 let W = (aRect[2] - aRect[0]) * nScale + 0.5 >> 0;
                 let H = (aRect[3] - aRect[1]) * nScale + 0.5 >> 0;
-                if (aObjects[i].IsAnnot() && aObjects[i].IsComment()) {
+                if (aObjects[i].IsAnnot() && aObjects[i].IsText()) {
                     X = aRect[0] * nScale + 0.5 >> 0;
                     Y = aRect[1] * nScale + 0.5 >> 0;
                     W = 21 * nScale / this.Viewer.zoom;
@@ -10145,6 +10145,11 @@ var CPresentation = CPresentation || function(){};
         
         let oAnnotProps = null;
         switch (annot.GetType()) {
+            case AscPDF.ANNOTATIONS_TYPES.Text: {
+                oAnnotProps = new Asc.asc_CTextAnnotProperty();
+                oAnnotProps.asc_putIconType(annot.GetIconType());
+                break;
+            }
             case AscPDF.ANNOTATIONS_TYPES.FreeText: {
                 oAnnotProps = new Asc.asc_CFreeTextAnnotProperty();
                 oAnnotProps.asc_putBorderWidth(annot.GetBorderWidth());

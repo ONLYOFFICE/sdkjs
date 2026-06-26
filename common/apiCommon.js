@@ -3910,6 +3910,18 @@ function (window, undefined) {
 		}
 	};
 
+	// text annot
+	function asc_CTextAnnotProperty() {
+		this.iconType = undefined;
+	}
+
+	asc_CTextAnnotProperty.prototype.asc_getIconType = function () {
+		return this.iconType;
+	};
+	asc_CTextAnnotProperty.prototype.asc_putIconType = function (v) {
+		this.iconType = v;
+	};
+
 	// free text
 	function asc_CFreeTextAnnotProperty() {
 		this.borderWidth		= undefined;
@@ -9078,6 +9090,11 @@ function (window, undefined) {
 	prot["asc_getAnnotProps"]		= prot.asc_getAnnotProps;
 	prot["asc_putAnnotProps"]		= prot.asc_putAnnotProps;
 	
+	window["Asc"]["asc_CTextAnnotProperty"] = window["Asc"].asc_CTextAnnotProperty = asc_CTextAnnotProperty;
+	prot = asc_CTextAnnotProperty.prototype;
+	prot["asc_getIconType"]	= prot.asc_getIconType;
+	prot["asc_putIconType"]	= prot.asc_putIconType;
+
 	window["Asc"]["asc_CFreeTextAnnotProperty"] = window["Asc"].asc_CFreeTextAnnotProperty = asc_CFreeTextAnnotProperty;
 	prot = asc_CFreeTextAnnotProperty.prototype;
 	prot["asc_getBorderWidth"]	= prot.asc_getBorderWidth;

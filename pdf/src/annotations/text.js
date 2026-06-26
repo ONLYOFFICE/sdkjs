@@ -166,6 +166,7 @@
         AscCommon.History.Add(new CChangesPDFTextAnnotIcon(this, this._noteIcon, nType));
         this._noteIcon = nType;
         this.SetWasChanged(true);
+		this.AddToRedraw();
     };
     CAnnotationText.prototype.GetIconType = function() {
         return this._noteIcon;
@@ -309,7 +310,7 @@
     CAnnotationText.prototype.IsNeedDrawFromStream = function() {
         return false;
     };
-    CAnnotationText.prototype.IsComment = function() {
+    CAnnotationText.prototype.IsText = function() {
         return true;
     };
     CAnnotationText.prototype.DrawSelected = function(overlay) {

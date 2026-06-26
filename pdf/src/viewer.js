@@ -1862,7 +1862,7 @@
 					let nAnnotWidth		= 20 / (this.zoom);
 					let nAnnotHeight	= 20 / (this.zoom);
 					
-					if (true !== bGetHidden && oAnnot.IsHidden() == true || false == oAnnot.IsComment())
+					if (true !== bGetHidden && oAnnot.IsHidden() == true || false == oAnnot.IsText())
 						continue;
 					
 					if (pageObject.x >= oAnnot._rect[0] && pageObject.x <= oAnnot._rect[0] + nAnnotWidth &&
@@ -1882,7 +1882,7 @@
 					let nAnnotWidth		= (oAnnot._rect[2] - oAnnot._rect[0]);
 					let nAnnotHeight	= (oAnnot._rect[3] - oAnnot._rect[1]);
 					
-					if (true !== bGetHidden && oAnnot.IsHidden() == true || oAnnot.IsComment())
+					if (true !== bGetHidden && oAnnot.IsHidden() == true || oAnnot.IsText())
 						continue;
 
 					// for draw annotations search by path

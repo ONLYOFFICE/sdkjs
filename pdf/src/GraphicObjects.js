@@ -1472,7 +1472,7 @@
 
                     let nType = oDrawing.IsAnnot() && oDrawing.IsStamp() ? AscFormat.TYPE_TRACK.ANNOT_STAMP : AscFormat.TYPE_TRACK.SHAPE;
 
-                    if (oDrawing.IsAnnot() && (oDrawing.IsTextMarkup() || oDrawing.IsComment())) {
+                    if (oDrawing.IsAnnot() && (oDrawing.IsTextMarkup() || oDrawing.IsText())) {
                         oDrawing.DrawSelected(drawingDocument.Overlay);
                     }
                     else {
