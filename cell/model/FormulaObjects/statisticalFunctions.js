@@ -1492,6 +1492,39 @@ function (window, undefined) {
 		return new cNumber(res);
 	}
 
+	//For two LAZY column cArrays with a CONSTANT tail and equal logical length, build aligned weighted paired data
+	//{xs, ys, ws}: the physical head region as unit-weight pairs, the shared constant tail as ONE pair weighted by
+	//its length. Returns null when the optimization does not apply (generator tail, range, 2D, size mismatch, no
+	//real tail) - the caller then uses its plain flat path. Lets CORREL/COVAR/PEARSON fold the tail in O(head)+O(1).
+	function pairedConstTailWeighted(arg0, arg1) {
+		if (!(arg0 instanceof cArray && arg1 instanceof cArray)) {
+			return null;
+		}
+		//both must carry a CONSTANT tail (a generator tail is already expanded by foreach)
+		if (arg0.missedValueFn || arg1.missedValueFn || !arg0.getMissedValue() || !arg1.getMissedValue()) {
+			return null;
+		}
+		var d0 = arg0.getDimensions(true), d1 = arg1.getDimensions(true);
+		if (d0.col !== 1 || d1.col !== 1 || d0.row !== d1.row) {
+			return null;   //equal-length column vectors only
+		}
+		var N = d0.row, H = Math.max(arg0.rowCount, arg1.rowCount);   //physical head rows of either array
+		if (H >= N) {
+			return null;   //no real tail -> the flat path is already correct and cheap
+		}
+		var xs = [], ys = [], ws = [], i;
+		for (i = 0; i < H; i++) {
+			//a shorter head returns its own tail value here via getElementRowCol(...,true)
+			xs.push(arg0.getElementRowCol(i, 0, true));
+			ys.push(arg1.getElementRowCol(i, 0, true));
+			ws.push(1);
+		}
+		xs.push(arg0.getMissedValue());
+		ys.push(arg1.getMissedValue());
+		ws.push(N - H);
+		return {xs: xs, ys: ys, ws: ws};
+	}
+
 	function convertToMatrix(val) {
 		var matrix;
 		if (undefined !== val.getMatrix) {
@@ -5062,9 +5095,10 @@ function (window, undefined) {
 	cCORREL.prototype.enabledToSingle = {"0": true, "1": true};
 	cCORREL.prototype.Calculate = function (arg) {
 
-		function correl(x, y) {
+		//w (optional) weights each pair; for a finite arg it is undefined -> wi=1 -> identical to before.
+		function correl(x, y, w) {
 
-			var s1 = 0, s2 = 0, s3 = 0, _x = 0, _y = 0, xLength = 0, i;
+			var s1 = 0, s2 = 0, s3 = 0, _x = 0, _y = 0, xLength = 0, i, wi;
 			if (x.length != y.length) {
 				return new cError(cErrorType.not_available);
 			}
@@ -5074,9 +5108,10 @@ function (window, undefined) {
 					continue;
 				}
 
-				_x += x[i].getValue();
-				_y += y[i].getValue();
-				xLength++;
+				wi = w ? w[i] : 1;
+				_x += x[i].getValue() * wi;
+				_y += y[i].getValue() * wi;
+				xLength += wi;
 			}
 
 			_x /= xLength;
@@ -5088,9 +5123,10 @@ function (window, undefined) {
 					continue;
 				}
 
-				s1 += (x[i].getValue() - _x) * (y[i].getValue() - _y);
-				s2 += (x[i].getValue() - _x) * (x[i].getValue() - _x);
-				s3 += (y[i].getValue() - _y) * (y[i].getValue() - _y);
+				wi = w ? w[i] : 1;
+				s1 += wi * (x[i].getValue() - _x) * (y[i].getValue() - _y);
+				s2 += wi * (x[i].getValue() - _x) * (x[i].getValue() - _x);
+				s3 += wi * (y[i].getValue() - _y) * (y[i].getValue() - _y);
 
 			}
 
@@ -5102,6 +5138,12 @@ function (window, undefined) {
 		}
 
 		var arg0 = arg[0], arg1 = arg[1], arr0 = [], arr1 = [];
+
+		//two lazy constant-tail columns: fold the shared tail in O(head)+O(1) instead of dropping it
+		var weighted = pairedConstTailWeighted(arg0, arg1);
+		if (weighted) {
+			return correl(weighted.xs, weighted.ys, weighted.ws);
+		}
 
 		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
 			arr0 = arg0.getValue();
@@ -5318,18 +5360,20 @@ function (window, undefined) {
 	cCOVAR.prototype.enabledToSingle = {"0": true, "1": true};
 	cCOVAR.prototype.Calculate = function (arg) {
 
-		function covar(x, y) {
+		//w (optional) weights each pair; for a finite arg it is undefined -> wi=1 -> identical to before.
+		function covar(x, y, w) {
 
-			var s1 = 0, _x = 0, _y = 0, xLength = 0, i;
+			var s1 = 0, _x = 0, _y = 0, xLength = 0, i, wi;
 			for (i = 0; i < x.length; i++) {
 
 				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
 					continue;
 				}
 
-				_x += x[i].getValue();
-				_y += y[i].getValue();
-				xLength++;
+				wi = w ? w[i] : 1;
+				_x += x[i].getValue() * wi;
+				_y += y[i].getValue() * wi;
+				xLength += wi;
 			}
 
 			if (xLength == 0) {
@@ -5345,13 +5389,20 @@ function (window, undefined) {
 					continue;
 				}
 
-				s1 += (x[i].getValue() - _x) * (y[i].getValue() - _y);
+				wi = w ? w[i] : 1;
+				s1 += wi * (x[i].getValue() - _x) * (y[i].getValue() - _y);
 
 			}
 			return new cNumber(s1 / xLength);
 		}
 
 		var arg0 = arg[0], arg1 = arg[1], arr0 = [], arr1 = [];
+
+		//two lazy constant-tail columns: fold the shared tail in O(head)+O(1) instead of dropping it
+		var weighted = pairedConstTailWeighted(arg0, arg1);
+		if (weighted) {
+			return covar(weighted.xs, weighted.ys, weighted.ws);
+		}
 
 		if (arg0 instanceof cArea) {
 			arr0 = arg0.getValue();
@@ -9195,9 +9246,10 @@ function (window, undefined) {
 	cPEARSON.prototype.enabledToSingle = {"0": true, "1": true};
 	cPEARSON.prototype.Calculate = function (arg) {
 
-		function pearson(x, y) {
+		//w (optional) weights each pair; for a finite arg it is undefined -> wi=1 -> identical to before.
+		function pearson(x, y, w) {
 
-			var sumXDeltaYDelta = 0, sqrXDelta = 0, sqrYDelta = 0, _x = 0, _y = 0, xLength = 0, i;
+			var sumXDeltaYDelta = 0, sqrXDelta = 0, sqrYDelta = 0, _x = 0, _y = 0, xLength = 0, i, wi;
 
 			if (x.length != y.length) {
 				return new cError(cErrorType.not_available);
@@ -9208,9 +9260,10 @@ function (window, undefined) {
 					continue;
 				}
 
-				_x += x[i].getValue();
-				_y += y[i].getValue();
-				xLength++;
+				wi = w ? w[i] : 1;
+				_x += x[i].getValue() * wi;
+				_y += y[i].getValue() * wi;
+				xLength += wi;
 			}
 
 			_x /= xLength;
@@ -9222,9 +9275,10 @@ function (window, undefined) {
 					continue;
 				}
 
-				sumXDeltaYDelta += (x[i].getValue() - _x) * (y[i].getValue() - _y);
-				sqrXDelta += (x[i].getValue() - _x) * (x[i].getValue() - _x);
-				sqrYDelta += (y[i].getValue() - _y) * (y[i].getValue() - _y);
+				wi = w ? w[i] : 1;
+				sumXDeltaYDelta += wi * (x[i].getValue() - _x) * (y[i].getValue() - _y);
+				sqrXDelta += wi * (x[i].getValue() - _x) * (x[i].getValue() - _x);
+				sqrYDelta += wi * (y[i].getValue() - _y) * (y[i].getValue() - _y);
 
 			}
 
@@ -9236,6 +9290,12 @@ function (window, undefined) {
 		}
 
 		var arg0 = arg[0], arg1 = arg[1], arr0 = [], arr1 = [];
+
+		//two lazy constant-tail columns: fold the shared tail in O(head)+O(1) instead of dropping it
+		var weighted = pairedConstTailWeighted(arg0, arg1);
+		if (weighted) {
+			return pearson(weighted.xs, weighted.ys, weighted.ws);
+		}
 
 		if (arg0 instanceof cArea) {
 			arr0 = arg0.getValue();
