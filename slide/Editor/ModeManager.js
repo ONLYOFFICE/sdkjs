@@ -847,7 +847,7 @@
 		return this.getCurrentSlide();
 	};
 	MasterSlideModeManager.prototype.goToSavedAnimationStartObject = function(object) {
-		const wordControl = this.getWordControl;
+		const wordControl = this.getWordControl();
 		if (!object) {
 			return;
 		}
@@ -1767,7 +1767,7 @@
 			}
 			aIdx.push(masterIndex);
 		}
-		AscFormat.redrawSlide(presentation.handoutMaster[aIdx[nStartIdx]], presentation, aIdx, nStartIdx, 0, this.getAllSlides());
+		AscFormat.redrawSlide(presentation.handoutMasters[aIdx[nStartIdx]], presentation, aIdx, nStartIdx, 0, this.getAllSlides());
 	};
 	MasterHandoutModeManager.prototype.updateViewMode = MasterNoteModeManager.prototype.updateViewMode;
 	MasterHandoutModeManager.prototype.updateInterfaceState = function() {
