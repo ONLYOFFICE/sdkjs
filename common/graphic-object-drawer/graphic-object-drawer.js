@@ -496,7 +496,7 @@
 		editor.WordControl.m_oDrawingDocument.AutoShapesTrack.AddRectDashClever(graphics.m_oContext, __x >> 0, __y >> 0, __r >> 0, __b >> 0, 2, 2, true);
 		graphics._s();
 	};
-	GraphicObjectDrawer.prototype.drawPlaceholderDashRect = function () {
+	GraphicObjectDrawer.prototype.drawPlaceholderRotatedDashRect = function () {
 		const graphics = this.getGraphics();
 		const transform = this.getTransform();
 		const graphicObject = this.graphicObject;
@@ -555,7 +555,7 @@
 				AscFormat.fApproxEqual(angle, 270.0, 0.0))) {
 			this.drawPlaceholderSmartDashRect();
 		} else {
-			this.drawPlaceholderDashRect();
+			this.drawPlaceholderRotatedDashRect();
 		}
 	};
 	GraphicObjectDrawer.prototype.drawPlaceholderRect = function () {
