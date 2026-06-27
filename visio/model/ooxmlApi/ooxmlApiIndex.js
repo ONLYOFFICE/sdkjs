@@ -1945,7 +1945,7 @@
 		this.rel = null;
 
 		//todo objectId
-		this.deleteLock = new AscVisio.PropLocker(undefined);
+		this.deleteLock = new AscCommon.PropLocker(undefined);
 		return this;
 	}
 	AscFormat.InitClass(Page_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);

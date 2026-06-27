@@ -1076,6 +1076,9 @@
 	{
 		this.sendEvent("asc_onCountPages", count);
 	};
+	VisioEditorApi.prototype.sync_updatePrintPreview = function()
+	{
+	};
 	VisioEditorApi.prototype.sync_currentPageCallback = function(number)
 	{
 		this.sendEvent("asc_onCurrentPage", number);

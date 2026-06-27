@@ -4782,6 +4782,9 @@
 	CEditorPage.prototype.IsNotesSupported = function () {
 		return this.IsSupportNotes;
 	};
+	CEditorPage.prototype.IsThumbnailsSupported = function () {
+		return true;
+	};
 
 	// Media player
 	CEditorPage.prototype.GetMediaPlayerData = function (mediaData) {
