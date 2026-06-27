@@ -474,7 +474,7 @@ AscDFH.drawingContentChanges[AscDFH.historyitem_Presentation_AddHandoutMaster] =
 	return oClass.handoutMasters;
 };
 AscDFH.drawingContentChanges[AscDFH.historyitem_Presentation_AddNotesMaster] = function (oClass) {
-	return oClass.notesMaster;
+	return oClass.notesMasters;
 };
 AscDFH.drawingContentChanges[AscDFH.historyitem_Presentation_AddNote] = function (oClass) {
 	return oClass.notes;

@@ -1172,7 +1172,7 @@
 		const oCurMaster = presentation.GetCurrentMaster();
 		if (oContent.Masters.length > 0) {
 			let nPos = presentation.slideMasters.length;
-			for (let nMaster = presentation.slideMasters.length; nMaster < presentation.slideMasters.length; ++nMaster) {
+			for (let nMaster = 0; nMaster < presentation.slideMasters.length; ++nMaster) {
 				if (presentation.slideMasters[nMaster] === oCurMaster) {
 					nPos = nMaster + 1;
 					break;
@@ -1380,8 +1380,8 @@
 			} else {
 				master.changeBackground(null);
 			}
-			for (let j = 0; j < presentation.sldLayoutLst.length; j += 1) {
-				const layout = presentation.sldLayoutLst[j];
+			for (let j = 0; j < master.sldLayoutLst.length; j += 1) {
+				const layout = master.sldLayoutLst[j];
 				layout.changeBackground(null);
 				layout.setShowMasterSp(isShowMasterShapes);
 			}

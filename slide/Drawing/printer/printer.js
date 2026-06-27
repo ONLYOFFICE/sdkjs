@@ -339,7 +339,7 @@
 								result.push(slideIndex);
 							}
 						} else {
-							for (let slideIndex = end; end >= start; slideIndex -= 1) {
+							for (let slideIndex = end; slideIndex >= start; slideIndex -= 1) {
 								result.push(slideIndex);
 							}
 						}
