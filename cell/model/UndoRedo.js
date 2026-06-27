@@ -5245,6 +5245,12 @@ function (window, undefined) {
 			case AscCH.historyitem_Layout_Bottom:
 				pageMargins.asc_setBottom(value);
 				break;
+			case AscCH.historyitem_Layout_Header:
+				pageMargins.asc_setHeader(value);
+				break;
+			case AscCH.historyitem_Layout_Footer:
+				pageMargins.asc_setFooter(value);
+				break;
 			case AscCH.historyitem_Layout_Width:
 				pageSetup.asc_setWidth(value);
 				break;

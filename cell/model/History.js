@@ -318,6 +318,8 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Layout_FirstPageNumber = 13;
 	window['AscCH'].historyitem_Layout_HorizontalCentered = 14;
 	window['AscCH'].historyitem_Layout_VerticalCentered = 15;
+	window['AscCH'].historyitem_Layout_Header = 16;
+	window['AscCH'].historyitem_Layout_Footer = 17;
 
 	
 	window['AscCH'].historyitem_ArrayFromula_AddFormula = 1;

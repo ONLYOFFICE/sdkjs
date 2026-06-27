@@ -13438,18 +13438,22 @@ function RangeDataManagerElem(bbox, data)
 	asc_CPageMargins.prototype.asc_setHeader = function (newVal) {
 		var oldVal = this.header;
 		this.header = newVal;
-		/*if (this.ws && AscCommon.History.Is_On() && oldVal !== this.top) {
-			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Top, this.ws.getId(),
+		if (this.ws && AscCommon.History.Is_On() && oldVal !== this.header) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Header, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
-		}*/
+		}
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageMargins.prototype.asc_setFooter = function (newVal) {
 		var oldVal = this.footer;
 		this.footer = newVal;
-		/*if (this.ws && AscCommon.History.Is_On() && oldVal !== this.bottom) {
-			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Bottom, this.ws.getId(),
+		if (this.ws && AscCommon.History.Is_On() && oldVal !== this.footer) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Footer, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
-		}*/
+		}
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageMargins.prototype.asc_setOptions = function (obj) {
 		var prop;
@@ -14022,10 +14026,6 @@ function RangeDataManagerElem(bbox, data)
 	CHeaderFooter.prototype.getOddFooter = function () { return this.oddFooter; };
 	CHeaderFooter.prototype.getOddHeader = function () { return this.oddHeader; };
 
-	CHeaderFooter.prototype.setAlignWithMargins = function (val) { this.alignWithMargins = val; };
-	CHeaderFooter.prototype.setDifferentFirst = function (val) { this.differentFirst = val; };
-	CHeaderFooter.prototype.setDifferentOddEven = function (val) { this.differentOddEven = val; };
-	CHeaderFooter.prototype.setScaleWithDoc = function (val) { this.scaleWithDoc = val; };
 	CHeaderFooter.prototype.setEvenFooter = function (newVal) {
 		var oldVal = this.evenFooter ? this.evenFooter.str : null;
 

@@ -4506,6 +4506,7 @@ function isAllowPasteLink(pastedWb) {
 				return;
 			}
 			t.fitToWidthHeight(width, height, ((width === null && height === null) || (width === 0 && height === 0)) ? scale : undefined);
+			window["Asc"]["editor"]._onUpdateLayoutMenu(t.model.Id);
 		});
 	};
 
@@ -23284,6 +23285,13 @@ function isAllowPasteLink(pastedWb) {
 				pageMargins.asc_setRight(oMargins.asc_getRight());
 				pageMargins.asc_setTop(oMargins.asc_getTop());
 				pageMargins.asc_setBottom(oMargins.asc_getBottom());
+			}
+
+			if (nHeader != null) {
+				pageMargins.asc_setHeader(nHeader);
+			}
+			if (nFooter != null) {
+				pageMargins.asc_setFooter(nFooter);
 			}
 
 			if (bHorCentered != null) {
