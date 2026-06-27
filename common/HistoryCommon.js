@@ -1859,6 +1859,7 @@
 	window['AscDFH'].historyitem_type_ViewPrGuide            = 2117 << 16;
 
 	window['AscDFH'].historyitem_type_CSld                   = 2118 << 16;
+	window['AscDFH'].historyitem_type_HandoutMaster          = 2119 << 16;
 
 	window['AscDFH'].historyitem_type_OForm_UserMaster       = 2200 << 16;
 	window['AscDFH'].historyitem_type_OForm_User             = 2201 << 16;
@@ -1905,8 +1906,6 @@
 	window['AscDFH'].historyitem_type_Control      = 2303 << 16;
 	window['AscDFH'].historyitem_type_ControlPr    = 2304 << 16;
 	window['AscDFH'].historyitem_type_FormControlPr= 2305 << 16;
-
-	window['AscDFH'].historyitem_type_HandoutMaster = 2306 << 16;
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
