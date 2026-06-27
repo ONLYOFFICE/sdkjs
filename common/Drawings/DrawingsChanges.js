@@ -624,6 +624,7 @@
             }
         }
         this.private_ProcessSlideJumpLinks(this.IsAdd());
+	    this.CheckOutlineView();
     };
 
     CChangesDrawingsContentPresentation.prototype.CheckCorrect = function(){
@@ -636,7 +637,20 @@
         }
         return true;
     };
-
+    CChangesDrawingsContentPresentation.prototype.CheckOutlineView = function () {
+        for (let i = 0; i < this.Items.length; i += 1) {
+            const item = this.Items[i];
+            item.checkOutlineView && item.checkOutlineView();
+        }
+    };
+    CChangesDrawingsContentPresentation.prototype.Undo = function () {
+        CChangesDrawingsContent.prototype.Undo.call(this);
+        this.CheckOutlineView();
+    };
+    CChangesDrawingsContentPresentation.prototype.Redo = function () {
+        CChangesDrawingsContent.prototype.Redo.call(this);
+        this.CheckOutlineView();
+    };
     window['AscDFH'].CChangesDrawingsContentPresentation = CChangesDrawingsContentPresentation;
 
     function CChangesDrawingsContentNoId(Class, Type, Pos, Items, isAdd){

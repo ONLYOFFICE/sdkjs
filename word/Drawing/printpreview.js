@@ -39,23 +39,20 @@
 
 	var AscCommon = window['AscCommon'];
 
-	function CPrintPreview(api, parentElementId)
-	{
+	function CPrintPreviewBase(api, parentElementId) {
 		this.api = api;
 		this.parentElementId = parentElementId;
 		this.page = null;
-
-		let parentElem = document.getElementById(this.parentElementId);
-		this.canvas = document.createElement("canvas");
-		parentElem.appendChild(this.canvas);
-
 		this.pageImage = null;
-
-		this.resize();
+		this.canvas = document.createElement("canvas");
+		this.init();
 	}
-
-	CPrintPreview.prototype.resize = function(parentElemSrc)
-	{
+	CPrintPreviewBase.prototype.init = function () {
+		let parentElem = document.getElementById(this.parentElementId);
+		parentElem.appendChild(this.canvas);
+		this.resize();
+	};
+	CPrintPreviewBase.prototype.resize = function (parentElemSrc) {
 		let parentElem = parentElemSrc ? parentElemSrc : document.getElementById(this.parentElementId);
 
 		this.canvas.style.width  = parentElem.offsetWidth + "px";
@@ -63,9 +60,7 @@
 
 		AscCommon.calculateCanvasSize(this.canvas);
 	};
-
-	CPrintPreview.prototype.checkGraphics = function(width, height, w_mm, h_mm)
-	{
+	CPrintPreviewBase.prototype.checkGraphics = function(width, height, w_mm, h_mm) {
 		let aspectMM = w_mm / h_mm;
 		let aspect = width / height;
 
@@ -104,10 +99,7 @@
 
 		return g;
 	};
-
-	CPrintPreview.prototype.update = function(paperSize)
-	{
-		// clear canvas
+	CPrintPreviewBase.prototype.update = function(paperSize) {
 		let width_canvas = this.canvas.width;
 		let height_canvas = this.canvas.height;
 
@@ -126,133 +118,7 @@
 
 		let ctx = this.canvas.getContext("2d");
 
-		let strokeRect = null;
-
-		switch (this.api.editorId)
-		{
-			case AscCommon.c_oEditorId.Word:
-			{
-				let isPdf = this.api.isPdfEditor();
-				if (!isPdf)
-				{
-					if (this.api.WordControl.m_oDrawingDocument.IsFreezePage(this.page))
-						return;
-
-					let page = this.api.WordControl.m_oDrawingDocument.m_arrPages[this.page];
-					let w_mm = page.width_mm;
-					let h_mm = page.height_mm;
-
-					let g = this.checkGraphics(width, height, w_mm, h_mm);
-
-					let oldViewMode = this.api.isViewMode;
-					let oldShowMarks = this.api.ShowParaMarks;
-
-					this.api.isViewMode = true;
-					this.api.ShowParaMarks = false;
-
-					this.api.WordControl.m_oLogicDocument.SetupBeforeNativePrint({
-						"drawPlaceHolders" : false,
-						"drawFormHighlight" : false,
-						"isPrint" : true
-					}, g);
-					this.api.WordControl.m_oLogicDocument.DrawPage(this.page, g);
-					this.api.WordControl.m_oLogicDocument.RestoreAfterNativePrint();
-
-					this.api.isViewMode = oldViewMode;
-					this.api.ShowParaMarks = oldShowMarks;
-				}
-				else
-				{
-					let viewer = this.api.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
-					let file = viewer.file;
-					
-					if (!file)
-						return;
-
-					let page = file.pages[this.page];
-
-					let w_mm = page.W * 25.4 / page.Dpi;
-					let h_mm = page.H * 25.4 / page.Dpi;
-
-					let aspectMM = w_mm / h_mm;
-					let aspect = width / height;
-					let w, h;
-
-					if (aspectMM > aspect)
-					{
-						w = width;
-						h = (width * h_mm / w_mm) >> 0;
-					}
-					else
-					{
-						w = (height * w_mm / h_mm) >> 0;
-						h = height;
-					}
-
-					this.pageImage = viewer.GetPrintPage(this.page, w, h, this.printContentType);
-				}
-
-				break;
-			}
-			case AscCommon.c_oEditorId.Visio:
-			case AscCommon.c_oEditorId.Presentation:
-			{
-				let w_mm = this.api.WordControl.m_oLogicDocument.GetWidthMM();
-				let h_mm = this.api.WordControl.m_oLogicDocument.GetHeightMM();
-
-				if (undefined !== paperSize)
-				{
-					let paperW = paperSize[0];
-					let paperH = paperSize[1];
-
-					if ((paperW > paperH && w_mm < h_mm) ||
-						(paperW < paperH && w_mm > h_mm))
-					{
-						let tmp = paperW;
-						paperW = paperH;
-						paperH = tmp;
-					}
-
-					let aspectMM = paperW / paperH;
-					let aspect = width / height;
-
-					let w, h;
-
-					if (aspectMM > aspect)
-					{
-						w = width;
-						h = (width * paperH / paperW) >> 0;
-					}
-					else
-					{
-						w = (height * paperW / paperH) >> 0;
-						h = height;
-					}
-
-					let x = (width_canvas - w) >> 1;
-					let y = (height_canvas - h) >> 1;
-
-					strokeRect = {
-						x : x,
-						y : y,
-						w : w,
-						h : h
-					};
-
-					ctx.fillStyle = "#FFFFFF";
-					ctx.fillRect(x, y, w, h);
-					ctx.beginPath();
-
-					width = w;
-					height = h;
-				}
-
-				let g = this.checkGraphics(width, height, w_mm, h_mm);
-				this.api.WordControl.m_oLogicDocument.DrawPage(this.page, g);
-
-				break;
-			}
-		}
+		let strokeRect = this.drawPrintPreview(width, height, paperSize);
 
 		if (this.pageImage)
 		{
@@ -282,9 +148,7 @@
 			}
 		}
 	};
-
-	CPrintPreview.prototype.close = function()
-	{
+	CPrintPreviewBase.prototype.close = function() {
 		if (this.canvas)
 		{
 			let parentElem = document.getElementById(this.parentElementId);
@@ -292,7 +156,209 @@
 			this.canvas = null;
 		}
 	};
+	CPrintPreviewBase.prototype.drawPrintPreview = function(width, height, paperSize) {};
 
-	AscCommon.CPrintPreview = CPrintPreview;
+	function CDocumentPrintPreview(api, parentElementId) {
+		CPrintPreviewBase.call(this, api, parentElementId);
+	}
+	AscFormat.InitClassWithoutType(CDocumentPrintPreview, CPrintPreviewBase);
+	CDocumentPrintPreview.prototype.drawPrintPreview = function (width, height, paperSize) {
+		if (this.api.WordControl.m_oDrawingDocument.IsFreezePage(this.page))
+			return;
 
+		let page = this.api.WordControl.m_oDrawingDocument.m_arrPages[this.page];
+		let w_mm = page.width_mm;
+		let h_mm = page.height_mm;
+
+		let g = this.checkGraphics(width, height, w_mm, h_mm);
+
+		let oldViewMode = this.api.isViewMode;
+		let oldShowMarks = this.api.ShowParaMarks;
+
+		this.api.isViewMode = true;
+		this.api.ShowParaMarks = false;
+
+		this.api.WordControl.m_oLogicDocument.SetupBeforeNativePrint({
+			"drawPlaceHolders" : false,
+			"drawFormHighlight" : false,
+			"isPrint" : true
+		}, g);
+		this.api.WordControl.m_oLogicDocument.DrawPage(this.page, g);
+		this.api.WordControl.m_oLogicDocument.RestoreAfterNativePrint();
+
+		this.api.isViewMode = oldViewMode;
+		this.api.ShowParaMarks = oldShowMarks;
+	};
+
+	function CPdfPrintPreview(api, parentElementId) {
+		CPrintPreviewBase.call(this, api, parentElementId);
+	}
+	AscFormat.InitClassWithoutType(CPdfPrintPreview, CPrintPreviewBase);
+	CPdfPrintPreview.prototype.drawPrintPreview = function (width, height, paperSize) {
+		let viewer = this.api.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
+		let file = viewer.file;
+
+		if (!file)
+			return;
+
+		let page = file.pages[this.page];
+
+		let w_mm = page.W * 25.4 / page.Dpi;
+		let h_mm = page.H * 25.4 / page.Dpi;
+
+		let aspectMM = w_mm / h_mm;
+		let aspect = width / height;
+		let w, h;
+
+		if (aspectMM > aspect)
+		{
+			w = width;
+			h = (width * h_mm / w_mm) >> 0;
+		}
+		else
+		{
+			w = (height * w_mm / h_mm) >> 0;
+			h = height;
+		}
+
+		this.pageImage = viewer.GetPrintPage(this.page, w, h, this.printContentType);
+	};
+
+	const PRESENTATION_PRINT_PREVIEW_OFFSET = 10;
+	function CPresentationPrintPreview(api, parentElementId) {
+		CPrintPreviewBase.call(this, api, parentElementId);
+		this.initCalculatedValues();
+		this.printer = null;
+	}
+	AscFormat.InitClassWithoutType(CPresentationPrintPreview, CPrintPreviewBase);
+	CPresentationPrintPreview.prototype.getPresentation = function () {
+		return this.api.WordControl.m_oLogicDocument;
+	};
+	CPresentationPrintPreview.prototype.initCalculatedValues = function() {
+		this.calculatedValues = {
+			canvasWidth: null,
+			canvasHeight: null
+		};
+	};
+	CPresentationPrintPreview.prototype.getPrintPreviewGraphics = function() {
+		let g = new AscCommon.CGraphics();
+		g.init(this.canvas.getContext("2d"), this.canvas.width, this.canvas.height, this.canvas.width * AscCommon.g_dKoef_pix_to_mm, this.canvas.height * AscCommon.g_dKoef_pix_to_mm);
+		g.m_oFontManager = AscCommon.g_fontManager;
+		g.transform(1, 0, 0, 1, 0, 0);
+		return g;
+	};
+	CPresentationPrintPreview.prototype.getGraphics = function() {
+		let g = this.getPrintPreviewGraphics();
+		g.IsNoDrawingEmptyPlaceholderText = true;
+		g.IsNoDrawingEmptyPlaceholder = true;
+		g.isPrintMode = true;
+		g.IsPrintPreview = true;
+		g.isSupportEditFeatures = function() { return false; };
+		return g;
+	};
+	CPresentationPrintPreview.prototype.draw = function (graphics, adaptSizes) {
+		graphics.b_color1(255, 255, 255, 255);
+		graphics.rect(adaptSizes.x, adaptSizes.y, adaptSizes.width, adaptSizes.height);
+		graphics.df();
+
+		const m = new AscCommon.CMatrix();
+		m.Scale(adaptSizes.scale, adaptSizes.scale);
+		m.Translate(adaptSizes.x, adaptSizes.y);
+
+		graphics.SaveGrState();
+		graphics.SetBaseTransform(m);
+		graphics.reset();
+		this.printer.drawPage(graphics, this.page);
+		graphics.SetBaseTransform(null);
+		graphics.reset();
+		graphics.RestoreGrState();
+	}
+	CPresentationPrintPreview.prototype.initPrinter = function(advancedOptions) {
+		this.printer = new AscCommonSlide.PrintManager(this.getPresentation(), advancedOptions);
+	}
+	CPresentationPrintPreview.prototype.update = function() {
+		this.initCalculatedValues();
+		if (null === this.page)
+			return;
+
+		const width_canvas = this.getCanvasWidthMM();
+		const height_canvas = this.getCanvasHeightMM();
+
+
+		let offset = 10;
+		if (width_canvas < offset || height_canvas < offset)
+			return;
+
+		const graphics = this.getGraphics();
+		graphics.b_color1(255, 255, 255, 255);
+		graphics.rect(0, 0, width_canvas, height_canvas);
+		graphics.df();
+		const adaptPaperSizes = this.getAdaptPaperSizes();
+		if (adaptPaperSizes)
+		{
+			this.draw(graphics, adaptPaperSizes);
+				const color = parseInt(AscCommon.GlobalSkin.PageOutline.slice(1), 16);
+				graphics.p_color((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, 0xFF);
+				graphics.p_width(0);
+				graphics._s();
+				graphics._m(adaptPaperSizes.x, adaptPaperSizes.y);
+				graphics._l(adaptPaperSizes.x + adaptPaperSizes.width, adaptPaperSizes.y);
+				graphics._l(adaptPaperSizes.x + adaptPaperSizes.width, adaptPaperSizes.y + adaptPaperSizes.height);
+				graphics._l(adaptPaperSizes.x, adaptPaperSizes.y + adaptPaperSizes.height);
+				graphics._z();
+				graphics.ds();
+		}
+	};
+	CPresentationPrintPreview.prototype.getPageSizes = function () {
+		return this.printer.getPageSizes();
+	};
+	CPresentationPrintPreview.prototype.getAdaptPaperSizes = function() {
+		const widthCanvas = this.getCanvasWidthMM();
+		const heightCanvas = this.getCanvasHeightMM();
+		const paperSize = this.getPageSizes();
+		let width = widthCanvas - PRESENTATION_PRINT_PREVIEW_OFFSET;
+		let height = heightCanvas - PRESENTATION_PRINT_PREVIEW_OFFSET;
+		let x = 0;
+		let y = 0;
+		let paperScale = 1;
+		if (paperSize)
+		{
+			let paperW = paperSize.width;
+			let paperH = paperSize.height;
+			paperScale = Math.min(width / paperW, height / paperH);
+			width = paperW * paperScale;
+			height = paperH * paperScale;
+			x = (widthCanvas - width) / 2;
+			y = (heightCanvas - height) / 2;
+		}
+		return {
+			x : x,
+			y : y,
+			width : width,
+			height : height,
+			scale: paperScale
+		};
+	}
+	CPresentationPrintPreview.prototype.getCanvasHeightMM = function() {
+		if (this.calculatedValues.canvasHeight === null) {
+			this.calculatedValues.canvasHeight = this.canvas.height * AscCommon.g_dKoef_pix_to_mm;
+		}
+		return this.calculatedValues.canvasHeight;
+	};
+	CPresentationPrintPreview.prototype.getCanvasWidthMM = function() {
+		if (this.calculatedValues.canvasWidth === null) {
+			this.calculatedValues.canvasWidth = this.canvas.width * AscCommon.g_dKoef_pix_to_mm;
+		}
+		return this.calculatedValues.canvasWidth;
+	};
+	CPresentationPrintPreview.prototype.updateInterfaceState = function () {
+		const presentation = this.getPresentation();
+		if (presentation) {
+			presentation.UpdateNotePageOrientationState();
+		}
+	};
+
+	AscCommon.CDocumentPrintPreview = CDocumentPrintPreview;
+	AscCommon.CPdfPrintPreview = CPdfPrintPreview;
+	AscCommon.CPresentationPrintPreview = CPresentationPrintPreview;
 })(window);

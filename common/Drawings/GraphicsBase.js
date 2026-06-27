@@ -96,6 +96,8 @@
 		this.IsDrawSmart = false;
 		this.IsPrintMode = false;
 		this.IsPrintPreview = false;
+		this.IsDrawSlideBackground = true;
+		// this.
 
 		if (true === isUseGrState)
 		{
@@ -911,7 +913,19 @@
 	CGraphicsBase.prototype.SetBorder = function(border)
 	{
 	};
-	
+	CGraphicsBase.prototype.SetBaseTransform = function(m)
+	{
+		this.m_oBaseTransform = m;
+	};
+	CGraphicsBase.prototype.ResetBaseTransform = function()
+	{
+		this.m_oBaseTransform = null;
+	};
+	CGraphicsBase.prototype.GetBaseTransform = function()
+	{
+		return this.m_oBaseTransform;
+	};
+
 	CGraphicsBase.prototype.drawpath = function(type)
 	{
 	};

@@ -1137,10 +1137,11 @@
 	};
 	CMobileDelegateThumbnails.prototype.GetScrollerSize = function()
 	{
+		const thumbnails = this.GetThumbnails();
 		const isHorizontalThumbnails = Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom;
 		return isHorizontalThumbnails
-			? { H : 1, W : AscCommon.AscBrowser.convertToRetinaValue(this.Thumbnails.ScrollerWidth) }
-			: { W : 1, H : AscCommon.AscBrowser.convertToRetinaValue(this.Thumbnails.ScrollerHeight) };
+			? { H : 1, W : AscCommon.AscBrowser.convertToRetinaValue(thumbnails.ScrollerWidth) }
+			: { W : 1, H : AscCommon.AscBrowser.convertToRetinaValue(thumbnails.ScrollerHeight) };
 	};
 	CMobileDelegateThumbnails.prototype.ScrollTo = function(_scroll)
 	{
@@ -1157,15 +1158,18 @@
 	};
 	CMobileDelegateThumbnails.prototype.Drawing_OnMouseDown = function(e)
 	{
-		return this.Thumbnails.onMouseDown(e);
+		const thumbnails = this.GetThumbnails();
+		return thumbnails.onMouseDown(e);
 	};
 	CMobileDelegateThumbnails.prototype.Drawing_OnMouseMove = function(e)
 	{
-		return this.Thumbnails.onMouseMove(e);
+		const thumbnails = this.GetThumbnails();
+		return thumbnails.onMouseMove(e);
 	};
 	CMobileDelegateThumbnails.prototype.Drawing_OnMouseUp = function(e)
 	{
-		return this.Thumbnails.onMouseUp(e);
+		const thumbnails = this.GetThumbnails();
+		return thumbnails.onMouseUp(e);
 	};
 	CMobileDelegateThumbnails.prototype.GetContextMenuType = function()
 	{
@@ -1174,16 +1178,17 @@
 	CMobileDelegateThumbnails.prototype.GetContextMenuInfo = function(info)
 	{
 		info.Clear();
-
-		var aSelected    = this.Thumbnails.GetSelectedArray();
+		const thumbnails = this.GetThumbnails();
+		var aSelected    = thumbnails.GetSelectedArray();
 		var nSlideIndex  = Math.min.apply(Math, aSelected);
 
 		info.objectSlideThumbnail = { Slide : nSlideIndex };
 	};
 	CMobileDelegateThumbnails.prototype.GetContextMenuPosition = function()
 	{
-		let selectedIndexes = this.Thumbnails.GetSelectedArray();
-		let menuPos = this.Thumbnails.GetThumbnailPagePosition(Math.min.apply(Math, selectedIndexes));
+		const thumbnails = this.GetThumbnails();
+		let selectedIndexes = thumbnails.GetSelectedArray();
+		let menuPos = thumbnails.GetThumbnailPagePosition(Math.min.apply(Math, selectedIndexes));
 		let pos = { X : 0, Y : 0, Mode : AscCommon.MobileTouchContextMenuType.Slide };
 		if (!menuPos)
 			return pos;
@@ -1191,6 +1196,10 @@
 		pos.X = menuPos.X + ((thCtrlPos.L * g_dKoef_mm_to_pix) >> 0) + this.HtmlPage.X;
 		pos.Y = menuPos.Y + ((thCtrlPos.T * g_dKoef_mm_to_pix) >> 0) + this.HtmlPage.Y;
 		return pos;
+	};
+	CMobileDelegateThumbnails.prototype.GetThumbnails = function()
+	{
+		return this.HtmlPage.Thumbnails;
 	};
 
 	/**

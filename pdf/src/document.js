@@ -174,7 +174,7 @@ var CPresentation = CPresentation || function(){};
         this.History.Set_LogicDocument(this);
 		this.pagesContentChanges = new AscCommon.CContentChanges();
         this.locks = {
-            merge: new AscPDF.PropLocker(this.GetId())
+            merge: new AscCommon.PropLocker(this.GetId())
         };
 
         if (AscCommon.History)

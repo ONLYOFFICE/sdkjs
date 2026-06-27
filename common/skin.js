@@ -102,6 +102,7 @@ var EditorSkins = {
 		BackgroundColorThumbnails       : "#F4F4F4",
 		BackgroundColorThumbnailsActive : "#F4F4F4",
 		BackgroundColorThumbnailsHover  : "#F4F4F4",
+		ThumbnailsPageOutline           : "#C0C0C0",
 		ThumbnailsPageOutlineActive     : "#848484",
 		ThumbnailsPageOutlineHover      : "#CFCFCF",
 		ThumbnailsPageNumberText        : "#000000",

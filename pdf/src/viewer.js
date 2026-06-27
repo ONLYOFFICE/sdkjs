@@ -202,7 +202,7 @@
 		this.rotateLock = null;
 		this.editPageLock = null;
 
-		this.SetLocks(new AscPDF.PropLocker(this.GetId()), new AscPDF.PropLocker(this.GetId()), new AscPDF.PropLocker(this.GetId()));
+		this.SetLocks(new AscCommon.PropLocker(this.GetId()), new AscCommon.PropLocker(this.GetId()), new AscCommon.PropLocker(this.GetId()));
 	}
 	AscFormat.InitClass(CPageInfo, AscFormat.CBaseNoIdObject, AscDFH.historyitem_type_Pdf_Page);
 	CPageInfo.prototype.constructor = CPageInfo;
@@ -519,48 +519,6 @@
 
 		return sText;
 	}
-	function PropLocker(objectId) {
-		this.objectId = null;
-		this.Lock = new AscCommon.CLock();
-		this.Id = AscCommon.g_oIdCounter.Get_NewId();
-		AscCommon.g_oTableId.Add(this, this.Id);
-
-		if (typeof objectId === "string") {
-			this.setObjectId(objectId);
-		}
-	}
-
-	PropLocker.prototype = {
-
-		getObjectType: function() {
-			return AscDFH.historyitem_type_Pdf_PropLocker;
-		},
-
-		setObjectId: function(id) {
-			AscCommon.History.Add(new CChangesPDFPropLockerObjectId(this, this.objectId, id));
-			this.objectId = id;
-		},
-
-		Get_Id: function() {
-			return this.Id;
-		},
-		GetId: function() {
-			return this.Get_Id();
-		},
-
-		Write_ToBinary2: function(w) {
-			w.WriteLong(AscDFH.historyitem_type_Pdf_PropLocker);
-			w.WriteString2(this.Id);
-		},
-
-		Read_FromBinary2: function(r) {
-			this.Id = r.GetString2();
-		},
-
-		Refresh_RecalcData: function()
-		{}
-	};
-
 	
 	function CDocumentPagesInfo()
 	{
@@ -5760,6 +5718,5 @@
 	window["AscPDF"].PARTIAL_REDRAW_EXT = 5;
 	window["AscPDF"].collectDrawingsForPartialRedraw = collectDrawingsForPartialRedraw;
 	window["AscPDF"].CPageInfo = CPageInfo;
-	window["AscPDF"].PropLocker = PropLocker;
 
 })();

@@ -12806,9 +12806,14 @@ function(window, undefined) {
 	function CreateUnfilFromRGB(r, g, b) {
 		var ret = new AscFormat.CUniFill();
 		ret.setFill(new AscFormat.CSolidFill());
-		ret.fill.setColor(new AscFormat.CUniColor());
-		ret.fill.color.setColor(new AscFormat.CRGBColor());
-		ret.fill.color.color.setColor(r, g, b);
+		ret.fill.setColor(CreateUniColorFromRGB(r, g, b));
+		return ret;
+	}
+
+	function CreateUniColorFromRGB(r, g, b) {
+		var ret = new AscFormat.CUniColor();
+		ret.setColor(new AscFormat.CRGBColor());
+		ret.color.setColor(r, g, b);
 		return ret;
 	}
 
@@ -14843,6 +14848,7 @@ function(window, undefined) {
 	window['AscFormat'].G_O_ACTIVE_COMMENT_BRUSH = G_O_ACTIVE_COMMENT_BRUSH;
 	window['AscFormat'].CChartSpace = CChartSpace;
 	window['AscFormat'].CreateUnifillFromRGB = window['AscFormat'].CreateUnfilFromRGB = CreateUnfilFromRGB;
+	window['AscFormat'].CreateUniColorFromRGB = CreateUniColorFromRGB;
 	window['AscFormat'].CreateUniFillSolidFillWidthTintOrShade = CreateUniFillSolidFillWidthTintOrShade;
 	window['AscFormat'].CreateUnifillSolidFillSchemeColor = CreateUnifillSolidFillSchemeColor;
 	window['AscFormat'].CreateNoFillLine = CreateNoFillLine;

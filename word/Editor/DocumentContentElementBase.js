@@ -1579,6 +1579,15 @@ CDocumentContentElementBase.prototype.Get_SectPr = function()
 	let sectPr = logicDocument.GetSections().GetSectPrByElement(this);
 	return logicDocument.Layout.CheckSectPr(sectPr);
 };
+CDocumentContentElementBase.prototype.UpdateOutline = function ()
+{
+};
+CDocumentContentElementBase.prototype.UpdatePresentationOutline = function ()
+{
+};
+CDocumentContentElementBase.prototype.UpdateDocumentOutline = function ()
+{
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

@@ -45,7 +45,6 @@ AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RotatePage]				= CChangesP
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RecognizePage]			= CChangesPDFDocumentRecognizePage;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_SetDocument]      		= CChangesPDFObjectSetDocument;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_PageLocks]        		= CChangesPDFDocumentPageLocks;
-AscDFH.changesFactory[AscDFH.historyitem_PDF_PropLocker_ObjectId]	    		= CChangesPDFPropLockerObjectId;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Start_Merge_Pages]		= CChangesPDFDocumentStartMergePages;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Part_Merge_Pages] 		= CChangesPDFDocumentPartMergePages;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_End_Merge_Pages]  		= CChangesPDFDocumentEndMergePages;
@@ -1155,22 +1154,6 @@ CChangesPDFDocumentPageLocks.prototype.CreateReverseChange = function()
     return new this.constructor(this.Class, null, null, null, null, null, null);
 };
 
-/**
- * @constructor
- * @extends {AscDFH.CChangesBaseStringProperty}
- */
-function CChangesPDFPropLockerObjectId(Class, Old, New)
-{
-	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New);
-}
-CChangesPDFPropLockerObjectId.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
-CChangesPDFPropLockerObjectId.prototype.constructor = CChangesPDFPropLockerObjectId;
-CChangesPDFPropLockerObjectId.prototype.Type = AscDFH.historyitem_PDF_PropLocker_ObjectId;
-CChangesPDFPropLockerObjectId.prototype.private_SetValue = function(value)
-{
-	this.Class.objectId = value;
-};
-
 function CChangesPDFDocumentStartMergePages(Class, Old, New, Color) {
     AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
 }
@@ -1742,7 +1725,7 @@ CChangesPDFDocumentRedactedFieldsContent.prototype.Redo = function()
             oItem.parentPage = oPage;
             oItem._page = oPage.GetIndex();
             oItem.selectStartPage = oItem._page;
-            
+
             oItem.AddToRedraw();
         }
     }

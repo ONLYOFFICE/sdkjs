@@ -7047,7 +7047,7 @@ CDocument.prototype.SetParagraphOutlineLvl = function(nLvl)
 	for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
 	{
 		arrParagraphs[nIndex].SetOutlineLvl(nLvl);
-		arrParagraphs[nIndex].UpdateDocumentOutline();
+		arrParagraphs[nIndex].UpdateOutline();
 	}
 
 	this.Recalculate();

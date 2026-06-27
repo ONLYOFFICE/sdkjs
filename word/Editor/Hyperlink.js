@@ -86,6 +86,20 @@ ParaHyperlink.prototype.Copy = function(Selected, oPr)
     NewHyperlink.Visited = this.Visited;
     return NewHyperlink;
 };
+ParaHyperlink.prototype.Copy2 = function(oPr)
+{
+	const CopyHyperlink = new ParaHyperlink();
+	CopyHyperlink.SetValue(this.Value);
+	CopyHyperlink.SetToolTip(this.ToolTip);
+	CopyHyperlink.SetAnchor(this.Anchor);
+	CopyHyperlink.Visited = this.Visited;
+	var Count = this.Content.length;
+	for (var Index = 0; Index < Count; Index++)
+	{
+		CopyHyperlink.AddToContent(Index, this.Content[Index].Copy2());
+	}
+	return CopyHyperlink;
+};
 
 ParaHyperlink.prototype.GetSelectedElementsInfo = function(Info, ContentPos, Depth)
 {

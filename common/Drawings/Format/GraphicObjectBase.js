@@ -1221,7 +1221,7 @@
 					oSpPr.setGeometry(geometry.createDuplicate());
 				}
 				if ((this.getObjectType() === AscDFH.historyitem_type_Shape || this.getObjectType() === AscDFH.historyitem_type_Control)
-					&& (!this.brush || !this.brush.isVisible())) {
+					&& (!this.brush || !this.brush.isVisible()) && !(this.isSlideImagePlaceholder && this.isSlideImagePlaceholder())) {
 					if (this.pen && this.pen.isVisible()) {
 						oSpPr.Fill = AscFormat.CreateNoFillUniFill();
 						oSpPr.ln = this.pen.createDuplicate();
@@ -2505,7 +2505,7 @@
 		return {hit: false};
 	};
 	CGraphicObjectBase.prototype.hitToHandles = function (x, y) {
-		if (this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) {
+		if (this.isSlideNoteShape && this.isSlideNoteShape()) {
 			return -1;
 		}
 		if (!AscFormat.canSelectDrawing(this)) {
@@ -2517,7 +2517,7 @@
 		return AscFormat.hitToHandles(x, y, this);
 	};
 	CGraphicObjectBase.prototype.hitInBoundingRect = function (x, y) {
-		if (this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) {
+		if (this.isSlideNoteShape && this.isSlideNoteShape()) {
 			return false;
 		}
 		if (!AscFormat.canSelectDrawing(this)) {
@@ -2552,7 +2552,7 @@
 		if (AscCommon.IsShapeToImageConverter) {
 			return;
 		}
-		var bNotes = !!(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES);
+		var bNotes = !!(this.isSlideNoteShape && this.isSlideNoteShape());
 		if (!this.group && !bNotes) {
 			var oLock;
 			if (this.parent instanceof AscCommonWord.ParaDrawing) {
@@ -3174,8 +3174,6 @@
 				break;
 			}
 			case AscFormat.phType_sldImg: {
-				aButtons.push(AscCommon.PlaceholderButtonType.Image);
-				aButtons.push(AscCommon.PlaceholderButtonType.ImageUrl);
 				break;
 			}
 			case AscFormat.phType_sldNum: {
@@ -4131,6 +4129,23 @@
 	CGraphicObjectBase.prototype.isControl = function() {
 		return false;
 	}
+	CGraphicObjectBase.prototype.isSlideNoteShape = function() {
+		return false;
+	};
+	CGraphicObjectBase.prototype.collectRedrawSlides = function (redrawSlides, force) {};
+	CGraphicObjectBase.prototype.isContentPlaceholder = function () {
+		return false;
+	};
+	CGraphicObjectBase.prototype.isTitlePlaceholder = function () {
+		return false;
+	};
+	CGraphicObjectBase.prototype.isOutlinePlaceholder = function () {
+		return false;
+	};
+	CGraphicObjectBase.prototype.isOutlinePlaceholderWithContent = function () {
+		return false;
+	};
+
 	var ANIM_LABEL_WIDTH_PIX = 22;
 	var ANIM_LABEL_HEIGHT_PIX = 17;
 
