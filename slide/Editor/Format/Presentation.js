@@ -2383,6 +2383,9 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 					else {
 						redrawSlidesMap.collectRedrawSlides(oDrawingObject);
 						oDrawingObject.recalculate();
+						if (oCurSlide && oCurSlide.notes && oCurSlide.notes === oDrawingObject.parent) {
+							bRedrawNotes = true;
+						}
 						if (oDrawingObject instanceof AscCommonSlide.MasterSlide) {
 							b_check_layout = true;
 							bAttack = true;
@@ -2490,10 +2493,12 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 			}
 			bEndRecalc = (aToRedrawSlides.length > 0) || AscFormat.isRealNumber(nSlideMinIdx);
 		}
-		if (bRedrawNotes) {
-			if (oCurSlide) {
-				this.DrawingDocument.Notes_OnRecalculate(this.CurPage, oCurSlide.NotesWidth, oCurSlide.getNotesHeight());
+		if (bRedrawNotes && oCurSlide && oCurSlide.notesShape) {
+			const viewManager = this.getViewManager();
+			if (viewManager) {
+				viewManager.recalculateNotesShape(oCurSlide);
 			}
+			this.DrawingDocument.Notes_OnRecalculate(this.CurPage, oCurSlide.NotesWidth, oCurSlide.getNotesHeight());
 		}
 		let nSlidesCount = this.GetSlidesCount();
 		if (bEndRecalc || nSlidesCount === 0 || nSlidesCount !== this.GetThumbnailsCount()) {
