@@ -619,7 +619,7 @@
 				const oTheme = oContent.Themes[nMasterIndex];
 				const oNotes = oContent.Notes[i];
 				const nNotesMasterIndex = oContent.NotesMastersIndexes[i];
-				const oNotesMaster = oContent.NotesMastersIndexes[nNotesMasterIndex];
+				const oNotesMaster = oContent.NotesMasters[nNotesMasterIndex];
 				const oNotesTheme = oContent.NotesThemes[nNotesMasterIndex];
 				if (!oMaster.Theme) {
 					oMaster.setTheme(oTheme);
@@ -632,11 +632,11 @@
 					oSlide.notes.setNotesMaster(presentation.notesMasters[0]);
 					oSlide.notes.setSlide(oSlide);
 				} else {
-					if (!oNotesMaster.Themes) {
+					if (!oNotesMaster.Theme) {
 						oNotesMaster.setTheme(oNotesTheme);
 					}
 					if (!oNotes.Master) {
-						oNotes.setNotes(oNotesMaster);
+						oNotes.setNotesMaster(oNotesMaster);
 					}
 					if (!oSlide.notes) {
 						oSlide.setNotes(oNotes);
