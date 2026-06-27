@@ -1894,12 +1894,18 @@ CopyProcessor.prototype =
 
 		var copyNotes = function(){
 			var selected_notes = elementsContent.Notes;
+			const realNotes = [];
+			for (let i = 0; i < selected_notes.length; ++i) {
+				if (selected_notes[i]) {
+					realNotes.push(selected_notes[i]);
+				}
+			}
 
 			oThis.oPresentationWriter.WriteString2("Notes");
-			oThis.oPresentationWriter.WriteULong(selected_notes.length);
+			oThis.oPresentationWriter.WriteULong(realNotes.length);
 
-			for (var i = 0; i < selected_notes.length; ++i) {
-				oThis.oPresentationWriter.WriteSlideNote(selected_notes[i]);
+			for (let i = 0; i < realNotes.length; ++i) {
+				oThis.oPresentationWriter.WriteSlideNote(realNotes[i]);
 			}
 		};
 
@@ -1990,10 +1996,7 @@ CopyProcessor.prototype =
 		}
 		//Notes
 		if (elementsContent.Notes && elementsContent.Notes.length) {
-			//TODO if there's no Notes, then Notes should be null. instead have to check 1st array element
-			if(!(elementsContent.Notes.length === 1 && null === elementsContent.Notes[0])){
-				copyNotes();
-			}
+			copyNotes();
 		}
 		//NotesMasters
 		if (elementsContent.NotesMasters && elementsContent.NotesMasters.length) {
@@ -6644,6 +6647,18 @@ PasteProcessor.prototype =
 						}
 						case "NotesMastersIndexes": {
 							presentationSelectedContent.NotesMastersIndexes = readIndexes();
+							const compactNotes = presentationSelectedContent.Notes || [];
+							const notesMasters = presentationSelectedContent.NotesMasters || [];
+							const perSlideNotes = [];
+							let noteCursor = 0;
+							for (let i = 0; i < presentationSelectedContent.NotesMastersIndexes.length; ++i) {
+								if (presentationSelectedContent.NotesMastersIndexes[i] < notesMasters.length) {
+									perSlideNotes.push(compactNotes[noteCursor++] || null);
+								} else {
+									perSlideNotes.push(null);
+								}
+							}
+							presentationSelectedContent.Notes = perSlideNotes;
 							break;
 						}
 						case "NotesThemes": {

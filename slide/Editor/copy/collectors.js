@@ -103,7 +103,12 @@
 			notesMastersIndexesMap[noteMaster.GetId()] = i;
 		}
 		for (let i = 0; i < notes.length; i += 1) {
-			const master = notes[i].Master;
+			const note = notes[i];
+			if (!note) {
+				sourceFormattingContent.NotesMastersIndexes.push(-1);
+				continue;
+			}
+			const master = note.Master;
 			sourceFormattingContent.NotesMastersIndexes.push(notesMastersIndexesMap[master.GetId()]);
 		}
 	};
@@ -122,6 +127,9 @@
 		const sourceFormattingContent = this.sourceFormattingContent;
 		const note = slide.notes;
 		sourceFormattingContent.Notes.push(note);
+		if (!note) {
+			return;
+		}
 		const master = note.Master;
 		if (!this.notesMastersMap[master.GetId()]) {
 			this.notesMastersMap[master.GetId()] = master;
