@@ -1474,7 +1474,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetCurrentVisibleSlide.js
 	 */
 	ApiPresentation.prototype.GetCurrentVisibleSlide = function () {
-		if (!Asc.editor.IsSlidePageMode()) {
+		if (!Asc.editor.IsSlidePageMode() || Asc.editor.isSlideShow()) {
 			return null;
 		}
 		return this.GetSlideByIndex(this.GetCurSlideIndex());
@@ -4705,7 +4705,7 @@
      * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/Select.js
 	 */
 	ApiSlide.prototype.Select = function() {
-		if(!Asc.editor.IsSlidePageMode())
+		if(!Asc.editor.IsSlidePageMode() || Asc.editor.isSlideShow())
 			return;
 
 		let oThumbnails = Asc.editor.getThumbnailsManager();
@@ -11577,7 +11577,7 @@
      * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetSlides.js
 	 */
 	ApiSelection.prototype.GetSlides = function() {
-		if(!Asc.editor.IsSlidePageMode()) {
+		if(!Asc.editor.IsSlidePageMode() || Asc.editor.isSlideShow()) {
 			return [];
 		}
 
