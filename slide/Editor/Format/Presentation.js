@@ -1342,7 +1342,7 @@ CPresentation.prototype.applyHFProps = function (oHFProps, nDefaultLang, bAll) {
 					}
 					oMaster.hf.applySettings(oSlideProps);
 					for (let j = 0; j < oMaster.sldLayoutLst.length; j++) {
-						const oLayout = oMaster.sldLayoutLst[i];
+						const oLayout = oMaster.sldLayoutLst[j];
 						normalHierarchySlides.push(oLayout);
 						oLayout.setHF(null);
 					}
