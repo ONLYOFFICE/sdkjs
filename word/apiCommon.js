@@ -2078,7 +2078,7 @@
 		return this.TextPr;
 	};
 	CAscWatermarkProperties.prototype['put_Opacity'] = CAscWatermarkProperties.prototype.put_Opacity = function (v) {
-		this.Opacity = v;
+		this.Opacity = Math.max(0, Math.min(255, (v + 0.5) | 0));
 	};
 	CAscWatermarkProperties.prototype['get_Opacity'] = CAscWatermarkProperties.prototype.get_Opacity = function () {
 		return this.Opacity;

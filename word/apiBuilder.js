@@ -29974,14 +29974,16 @@
 	 * Sets the opacity of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @param {number} nOpacity - The watermark opacity. This value must be from 0 to 255.
+	 * @param {number} opacity - The watermark opacity. This value must be from 0 to 255.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiWatermarkSettings/Methods/SetOpacity.js
 	 */
-	ApiWatermarkSettings.prototype.SetOpacity = function (nOpacity)
+	ApiWatermarkSettings.prototype.SetOpacity = function (opacity)
 	{
-		let nOpacityVal = Math.min(255, Math.max(0, nOpacity));
-		this.Settings.put_Opacity(nOpacityVal);
+		opacity = GetNumberParameter(opacity, 255);
+		if (opacity < 0 || opacity > 255)
+			throwException(new Error("The opacity parameter must be between 0 and 255"));
+		this.Settings.put_Opacity(opacity);
 		return true;
 	};
 
