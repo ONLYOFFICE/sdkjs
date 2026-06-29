@@ -8797,7 +8797,7 @@ var CPresentation = CPresentation || function(){};
                 if(oPage) {
                     let oLocker = GetLock(oPage);
                     if (oLocker) {
-                        let sId = oLocker.GetId();
+                        let sId = oLocker.Get_Id();
                         let oCheckData = {
                             "type":     AscLockTypeElemPDF.Page,
                             "objId":    sId,
