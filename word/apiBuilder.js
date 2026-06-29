@@ -9593,12 +9593,12 @@
 	 * @since 9.5.0
 	 * @param {TocPr} [oTocPr={}] - Table of contents properties.
 	 * @param {ApiRange} [oRange] - The range that the table of contents replaces. If omitted, the table of contents is inserted at the current position.
-	 * @returns {ApiTableOfContents}
+	 * @returns {?ApiTableOfContents}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddTableOfContents.js
 	 */
 	ApiDocument.prototype.AddTableOfContents = function(oTocPr, oRange)
 	{
-		return this.GetTablesOfContents().Add(oTocPr, oRange);
+		return this.GetTablesOfContents? this.GetTablesOfContents().Add(oTocPr, oRange) : null;
 	};
 	/**
 	 * Adds a table of figures to the current document.
@@ -9621,12 +9621,12 @@
 	 * @param {TofPr} [oTofPr={}] - Table of figures properties.
 	 * <note>Please note that the table of figures properties will be filled with the default properties if they are undefined.</note>
 	 * @param {ApiRange} [oRange] - The range that the table of figures replaces. If omitted, the table of figures is inserted at the current position.
-	 * @returns {ApiTableOfFigures}
+	 * @returns {?ApiTableOfFigures}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddTableOfFigures.js
 	 */
 	ApiDocument.prototype.AddTableOfFigures = function(oTofPr, oRange)
 	{
-		return this.GetTablesOfFigures().Add(oTofPr, oRange);
+		return this.GetTablesOfFigures ? this.GetTablesOfFigures().Add(oTofPr, oRange) : null;
 	};
 	/**
 	 * Returns the document statistics represented as an object with the following parameters:
