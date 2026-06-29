@@ -2769,17 +2769,12 @@ function BinaryPPTYLoader()
                     var _at = s.GetUChar();
                     switch (_at)
                     {
-                        case 0:
+                        case 1:
                         {
-                            var count_effects2 = s.GetULong();
-                            for (var _eff2 = 0; _eff2 < count_effects2; ++_eff2)
+                            var eff2 = this.ReadEffect();
+                            if(eff2)
                             {
-                                s.Skip2(1); // type
-                                var eff2 = this.ReadEffect();
-                                if(!eff2)
-                                {
-                                    oEffect.effectList.push(eff2);
-                                }
+                                oEffect.effectList.push(eff2);
                             }
                         }break;
                         default:
@@ -2800,6 +2795,13 @@ function BinaryPPTYLoader()
                 nRecEnd = nRecStart + nRecLen + 4;
                 oEffect = new AscFormat.CFillEffect();
 
+                s.Skip2(1);
+                while (true)
+                {
+                    var _at = s.GetUChar();
+                    if (_at == g_nodeAttributeEnd)
+                        break;
+                }
                 while (s.cur < nRecEnd)
                 {
                     var _at = s.GetUChar();
@@ -2827,6 +2829,13 @@ function BinaryPPTYLoader()
                 nRecEnd = nRecStart + nRecLen + 4;
                 oEffect = new AscFormat.CClrRepl();
 
+                s.Skip2(1);
+                while (true)
+                {
+                    var _at = s.GetUChar();
+                    if (_at == g_nodeAttributeEnd)
+                        break;
+                }
                 while (s.cur < nRecEnd)
                 {
                     var _at = s.GetUChar();
@@ -2898,6 +2907,13 @@ function BinaryPPTYLoader()
                 nRecEnd = nRecStart + nRecLen + 4;
                 oEffect = new AscFormat.CAlphaInv();
 
+                s.Skip2(1);
+                while (true)
+                {
+                    var _at = s.GetUChar();
+                    if (_at == g_nodeAttributeEnd)
+                        break;
+                }
                 while (s.cur < nRecEnd)
                 {
                     var _at = s.GetUChar();
@@ -2925,6 +2941,13 @@ function BinaryPPTYLoader()
                 nRecEnd = nRecStart + nRecLen + 4;
                 oEffect = new AscFormat.CAlphaMod();
 
+                s.Skip2(1);
+                while (true)
+                {
+                    var _at = s.GetUChar();
+                    if (_at == g_nodeAttributeEnd)
+                        break;
+                }
                 while (s.cur < nRecEnd)
                 {
                     var _at = s.GetUChar();
@@ -3024,19 +3047,12 @@ function BinaryPPTYLoader()
             var _at = s.GetUChar();
             switch (_at)
             {
-                case 0:
+                case 1:
                 {
-                    s.GetLong();
-                    s.Skip2(1);
-                    var count_effects = s.GetULong();
-                    for (var _eff = 0; _eff < count_effects; ++_eff)
+                    var effect = this.ReadEffect();
+                    if(effect)
                     {
-                        s.Skip2(1); // type
-                        var effect = this.ReadEffect();
-                        if(effect)
-                        {
-                            ret.effectList.push(effect);
-                        }
+                        ret.effectList.push(effect);
                     }
                 }break;
                 default:

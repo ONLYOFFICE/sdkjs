@@ -2538,15 +2538,11 @@ function CBinaryFileWriter()
         oThis._WriteLimit2(1, oEffect.type);
         oThis.WriteUChar(g_nodeAttributeEnd);
 
-        oThis.StartRecord(0);
         var len__ = oEffect.effectList.length;
-        oThis._WriteInt2(0, len__);
-
         for (var i = 0; i < len__; ++i)
         {
             oThis.WriteRecord1(1, oEffect.effectList[i], oThis.WriteEffect); // id doesn't matter
         }
-        oThis.EndRecord();
 
         oThis.EndRecord();
     };
@@ -2828,6 +2824,9 @@ function CBinaryFileWriter()
                 {
                     oThis.StartRecord(type);
 
+                    oThis.WriteUChar(g_nodeAttributeStart);
+                    oThis.WriteUChar(g_nodeAttributeEnd);
+
                     oThis.WriteRecord1(0, oEffect.Fill, oThis.WriteUniFill);
 
                     oThis.EndRecord();
@@ -2836,6 +2835,9 @@ function CBinaryFileWriter()
                 case 26:/*EFFECT_TYPE_CLRREPL		    =*/
                 {
                     oThis.StartRecord(type);
+
+                    oThis.WriteUChar(g_nodeAttributeStart);
+                    oThis.WriteUChar(g_nodeAttributeEnd);
 
                     oThis.WriteRecord1(0, oEffect.color, oThis.WriteUniColor);
 
@@ -2860,6 +2862,9 @@ function CBinaryFileWriter()
                 {
                     oThis.StartRecord(type);
 
+                    oThis.WriteUChar(g_nodeAttributeStart);
+                    oThis.WriteUChar(g_nodeAttributeEnd);
+
                     oThis.WriteRecord1(0, oEffect.color, oThis.WriteUniColor);
 
                     oThis.EndRecord();
@@ -2868,6 +2873,9 @@ function CBinaryFileWriter()
                 case 29:/*EFFECT_TYPE_ALPHAMOD		=*/
                 {
                     oThis.StartRecord(type);
+
+                    oThis.WriteUChar(g_nodeAttributeStart);
+                    oThis.WriteUChar(g_nodeAttributeEnd);
 
                     oThis.WriteRecord1(0, oEffect.cont, oThis.WriteEffectDag);
 
