@@ -13376,6 +13376,7 @@
 	/**
 	 * Sets the name of the current drawing.
 	 * If another drawing with the same name already exists, that drawing's name will be reset to a default auto-generated name.
+	 * OLE objects do not support a custom name, so for them this method always returns false.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
 	 * @param {string} name - The name which will be set to the current drawing.
@@ -13386,6 +13387,9 @@
 	ApiDrawing.prototype.SetName = function(name)
 	{
 		if (name === "" || name === null || name === undefined)
+			return false
+
+		if (this.Drawing.isOleObject())
 			return false
 
 		this.Drawing.setName(name);
