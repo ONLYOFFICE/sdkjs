@@ -9028,7 +9028,7 @@ var CPresentation = CPresentation || function(){};
     
         return result;
     };
-    CPDFDoc.prototype.Document_UpdateUndoRedoState = function() {};
+    CPDFDoc.prototype.SetDisplayModeInReview = function() {};
     CPDFDoc.prototype.SetHighlightRequiredFields = function() {};
     CPDFDoc.prototype.SetLocalTrackRevisions = function() {};
     CPDFDoc.prototype.Document_UpdateUndoRedoState = function() {
