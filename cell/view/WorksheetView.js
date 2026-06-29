@@ -17034,7 +17034,11 @@ function isAllowPasteLink(pastedWb) {
 						//don't guess header for an choosen multi-cell selection. guess it only when
 						//the range was expanded from a single cell (sortRange passes guessHeader flag)
 						//default to true to keep old behaviour for callers which do not pass the flag
-						let opt_guessHeader = false !== val.guessHeader;
+
+						// TODO does sorting and header huessing depend on whether strings or numbers are used 
+						// for the extended range we already count the first cell as header, so we don't skip it further in _doSort
+						// let opt_guessHeader = val.expandRange ? true : false;
+						let opt_guessHeader = true;
 
 						//var props = t.getSortProps(true);
                         //t.cellCommentator.sortComments(range.sort(val.type, opt_by_rows ? activeCell.row : activeCell.col, val.color, opt_guessHeader, opt_by_rows, props.levels));
@@ -17047,6 +17051,7 @@ function isAllowPasteLink(pastedWb) {
 							}
 						}
 
+						// TODO return select on a single cell
 						t.setSortProps(t._generateSortProps(val.type, opt_by_rows ? activeCell.row : activeCell.col, val.color, opt_guessHeader, opt_by_rows, range.bbox), true);
                         break;
 
@@ -21110,11 +21115,11 @@ function isAllowPasteLink(pastedWb) {
 			if (bIsExpandRange) {
 				expandRange = t.model.autoFilters.expandRange(activeRange);
 				expandRange = t.model.autoFilters.checkExpandRangeForSort(expandRange);
+			
+				// let bIgnoreFirstRow = window['AscCommonExcel'].ignoreFirstRowSort(t.model, expandRange);
+				expandRange.r1++;
 
-				var bIgnoreFirstRow = window['AscCommonExcel'].ignoreFirstRowSort(t.model, expandRange);
-				if (bIgnoreFirstRow) {
-					expandRange.r1++;
-				} else if(expandRange && filterRef && filterRef.containsRange(expandRange) && expandRange.r1 === filterRef.r1) {
+				if(expandRange && filterRef && filterRef.containsRange(expandRange) && expandRange.r1 === filterRef.r1) {
 					sortProps = cloneSortProps;
 				}
 			}
@@ -21151,14 +21156,14 @@ function isAllowPasteLink(pastedWb) {
 
 				//expand selectionRange
 				if(bIsExpandRange && expandRange) {
-					//change selection
+					// change selection
 					t.setSelection(expandRange);
 					selectionRange.activeCell = activeCell;
 				}
 
 				//sort
 				//guess header only when expanding from a single cell, never for an choosen selection
-				t.setSelectionInfo("sort", {type: type, color: rgbColor, guessHeader: !!bIsExpandRange});
+				t.setSelectionInfo("sort", {type: type, color: rgbColor, expandRange: expandRange});
 				//TODO maybe should return selection back
 
             } else if (false !== sortProps) {
