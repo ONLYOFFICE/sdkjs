@@ -14573,7 +14573,7 @@ CDocument.prototype.UpdateCommentPosition = function(oComment)
 	{
 		var oChangedComments = this.Comments.UpdateCommentPosition(oComment);
 		
-		if (this.Api)
+		if (this.Api && this.Api.sync_ChangeCommentLogicalPosition)
 			this.Api.sync_ChangeCommentLogicalPosition(oChangedComments, this.Comments.GetCommentsPositionsCount());
 
 		return;
