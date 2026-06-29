@@ -1800,6 +1800,17 @@ CHistory.prototype.GetSerializeArray = function()
 		}
 		this.workbook.handleDrawingsOnWorkbookChange(aRanges);
 	};
+
+	AscCommon.CContentChangesElement.prototype.Refresh_BinaryData = function()
+	{
+		if (!this.m_pData || !this.m_pData.Data || !this.m_pData.Item)
+			return;
+
+		this.m_pData.Data.UseArray = true;
+		this.m_pData.Data.PosArray = this.m_aPositions;
+
+		AscCommon.History.Refresh_SpreadsheetChanges(this.m_pData.Item);
+	};
 	//------------------------------------------------------------export--------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CHistory = CHistory;
