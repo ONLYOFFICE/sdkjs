@@ -4408,6 +4408,8 @@ function CNotesDrawer(page)
 
 	this.OnResize = function ()
 	{
+		if (!this.HtmlPage.IsNotesShown())
+			return;
 		if (this.HtmlPage.m_oLogicDocument)
 		{
 			var oldEmpty = this.IsEmptyDraw;
@@ -5147,6 +5149,8 @@ function CAnimationPaneDrawer(page, htmlElement)
 	};
 	oThis.OnResize = function ()
 	{
+		if (!oThis.HtmlPage.IsAnimPaneShown())
+			return;
 		oThis.header.OnResize();
 		oThis.list.OnResize();
 		oThis.timeline.OnResize();
