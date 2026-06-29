@@ -22537,10 +22537,16 @@
 										// if(oCopyCell.isEmptyTextString())
 										// wsTo._getHyperlink().remove({r1: oCopyCell.nRow, c1: oCopyCell.nCol, r2: oCopyCell.nRow, c2: oCopyCell.nCol});
 									} else {
-										var fromFormulaParsed = oFromCell.getFormulaParsed();
-										var formulaArrayRef = fromFormulaParsed.getArrayFormulaRef();
+										let fromFormulaParsed = oFromCell.getFormulaParsed();
+										let formulaArrayRef = fromFormulaParsed.getArrayFormulaRef();
 
-										var _p_,offset, offsetArray, assemb;
+										let dynamicRef = fromFormulaParsed.getDynamicRef(), isDynamicFirstCellSelected;
+										if (AscCommonExcel.bIsSupportDynamicArrays && dynamicRef && dynamicRef.c1 === oFromCell.nCol && dynamicRef.r1 === oFromCell.nRow) {
+											// only the first cell of dynamic array contain a value, other is "empty" to promote 
+											isDynamicFirstCellSelected = true;
+										}
+
+										let _p_,offset, offsetArray, assemb;
 										if(formulaArrayRef) {
 											var intersectionFrom = from.intersection(formulaArrayRef);
 											if(intersectionFrom) {
@@ -22557,13 +22563,47 @@
 														_p_ = oFromCell.getFormulaParsed().clone(null, oFromCell, this);
 														_p_.changeOffset(offset);
 
-														var rangeFormulaArray = oCopyCell.ws.getRange3(intersectionTo.r1, intersectionTo.c1, intersectionTo.r2, intersectionTo.c2);
-														rangeFormulaArray.setValue("=" + _p_.assemble(true), function (r) {}, null, intersectionTo);
+														let rangeFormulaArray;
+														if (!dynamicRef || isDynamicFirstCellSelected) {
+															rangeFormulaArray = oCopyCell.ws.getRange3(intersectionTo.r1, intersectionTo.c1, intersectionTo.r2, intersectionTo.c2);
+															let newRange, cmIndex, beforeSpillRange;
+															if (dynamicRef) {
+																// get new range and set it to the value
+																// dynamic ref can change after setValue, through the loop
+																// so we should use ArrayRef instead because it's immutable when we setting value
+																let dynamicNewR2 = intersectionTo.r2 + (formulaArrayRef.r2 - formulaArrayRef.r1),
+																	dynamicNewC2 = intersectionTo.c2 + (formulaArrayRef.c2 - formulaArrayRef.c1);
+																newRange = new Asc.Range(intersectionTo.c1, intersectionTo.r1, dynamicNewC2, dynamicNewR2);
+																if (!wsTo.dynamicArrayManager.isAutoExpandBBox(newRange)) {
+																	// cmIndex = fromFormulaParsed.cm;
+																	beforeSpillRange = intersectionTo;
+																	newRange = intersectionTo;
+																} else {
+																	rangeFormulaArray.bbox = newRange;
+																}
 
-														AscCommon.History.Add(AscCommonExcel.g_oUndoRedoArrayFormula,
-															AscCH.historyitem_ArrayFromula_AddFormula, oCopyCell.ws.getId(),
-															new Asc.Range(intersectionTo.c1, intersectionTo.r1, intersectionTo.c2, intersectionTo.r2),
-															new AscCommonExcel.UndoRedoData_ArrayFormula(intersectionTo, "=" + oCopyCell.getFormulaParsed().assemble(true)));
+																// TODO .setValue does not take into account the locale and the formula turns from SUM(2;2)->SUM(2,2)->SUM(2.2)->error because it cannot be calculated
+																// temporarily set the isCopyPaste=true flag for correct parsing inside .setValue
+																rangeFormulaArray.setValue(
+																	"=" + _p_.assemble(true), 
+																	function (r) {}, 
+																	true, 
+																	newRange, 
+																	null, 
+																	{range: newRange, beforeSpillRange: beforeSpillRange});
+															} else {
+																rangeFormulaArray.setValue("=" + _p_.assemble(true), function (r) {}, true, intersectionTo);
+															}
+															
+															let copyCellFP = oCopyCell.getFormulaParsed();
+															let copyCellFPAssembled = copyCellFP && copyCellFP.assemble ? copyCellFP.assemble(true) : null;
+															let undoRedoFormulaText = copyCellFPAssembled ? "=" + copyCellFPAssembled : "";
+
+															AscCommon.History.Add(AscCommonExcel.g_oUndoRedoArrayFormula,
+																AscCH.historyitem_ArrayFromula_AddFormula, oCopyCell.ws.getId(),
+																new Asc.Range(intersectionTo.c1, intersectionTo.r1, intersectionTo.c2, intersectionTo.r2),
+																new AscCommonExcel.UndoRedoData_ArrayFormula(intersectionTo, undoRedoFormulaText));
+														}
 													}
 
 												}
