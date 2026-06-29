@@ -500,7 +500,8 @@ CHistory.prototype =
 	
 	UpdateDocumentPositions : function(change, binaryData)
 	{
-		if (!this.CollaborativeEditing 
+		if (AscCommon.g_oIdCounter.IsLoad()
+			|| !this.CollaborativeEditing 
 			|| !this.CollaborativeEditing.IsTrackingPositions()
 			|| !change
 			|| !change.GetClass
