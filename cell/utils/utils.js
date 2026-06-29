@@ -1335,6 +1335,26 @@
 			this.activeCellId = this.ranges.push(new Range(0, 0, 0, 0)) - 1;
 			this.activeCell.clean();
 		};
+		SelectionRange.prototype.isMultiSelect = function () {
+			return this.ranges.length > 1;
+		};
+		SelectionRange.prototype.excludeRange = function (range) {
+			var newRanges = [];
+			for (var i = 0; i < this.ranges.length; ++i) {
+				var diff = range.difference(this.ranges[i]);
+				for (var j = 0; j < diff.length; ++j) {
+					newRanges.push(diff[j]);
+				}
+			}
+			if (0 === newRanges.length) {
+				return false;
+			}
+			this.ranges = newRanges;
+			if (this.activeCellId >= newRanges.length) {
+				this.activeCellId = newRanges.length - 1;
+			}
+			return true;
+		};
 		SelectionRange.prototype.assign2 = function (range) {
 			this.clean();
 			this.getLast().assign2(range);

@@ -65,6 +65,10 @@
 
 	var c_oAscCutRangeAnimation = true;
 
+	if (undefined === window["AscCommonExcel"].bDrawMultiSelectUnion) {
+		window["AscCommonExcel"].bDrawMultiSelectUnion = true;
+	}
+
     var asc = window["Asc"];
     var asc_applyFunction = AscCommonExcel.applyFunction;
     var asc_getcvt = asc.getCvtRatio;
@@ -5307,11 +5311,14 @@ function isAllowPasteLink(pastedWb) {
 		let isFirstRowSelection = isColHeader && checkSelectionFirstRowCol();
 		let isFirstColSelection = !isColHeader && checkSelectionFirstRowCol();
 
+		let isMultiSelectNoFrame = AscCommonExcel.bDrawMultiSelectUnion &&
+			!!(t.model.selectionRange && t.model.selectionRange.isMultiSelect());
+
 		let drawRightBorder = function (_selected) {
 			if (isColHeader || !window["IS_NATIVE_EDITOR"]) {
 				let y1Diff = 0;
 				let y2Diff = 0;
-				if (_selected) {
+				if (_selected && !isMultiSelectNoFrame) {
 					y1Diff = (isFirstColSelection ? (_toRetina(1) + 1) : 1);
 					y2Diff = (isFirstColSelection ? _toRetina(1) : 0);
 				}
@@ -5322,7 +5329,7 @@ function isAllowPasteLink(pastedWb) {
 			if (!isColHeader || !window["IS_NATIVE_EDITOR"]) {
 				let x1Diff = 0;
 				let x2Diff = 0;
-				if (_selected) {
+				if (_selected && !isMultiSelectNoFrame) {
 					x1Diff = (isFirstRowSelection ? (_toRetina(1) + 1) : (1 - t.getRightToLeftOffset()));
 					x2Diff = (isFirstRowSelection ? _toRetina(1) : 0);
 				}
@@ -8913,6 +8920,11 @@ function isAllowPasteLink(pastedWb) {
     WorksheetView.prototype._drawSelectionRange = function () {
         var type, selection = this.model.getSelection(), ranges = selection.ranges;
         var range, selectionLineType;
+        var isMultiSelectNoFrame = AscCommonExcel.bDrawMultiSelectUnion && selection.isMultiSelect();
+        if (isMultiSelectNoFrame && null === this.activeMoveRange) {
+            this._drawMultiSelectionRange(selection);
+            return;
+        }
         for (var i = 0, l = ranges.length; i < l; ++i) {
             range = ranges[i].clone();
 			type = range.getType();
@@ -8933,6 +8945,10 @@ function isAllowPasteLink(pastedWb) {
                 selectionLineType |= AscCommonExcel.selectionLineType.ActiveCell;
             }
 
+            if (isMultiSelectNoFrame) {
+                selectionLineType |= AscCommonExcel.selectionLineType.NotStroke;
+            }
+
             let fullColumnProps = this.startCellMoveRange && this.startCellMoveRange.colRowMoveProps;
             if (null !== this.activeMoveRange && fullColumnProps && i === l - 1) {
                 this._drawElements(this._drawSelectionElement, range, !fullColumnProps.ctrlKey ? AscCommonExcel.selectionLineType.DashThick : AscCommonExcel.selectionLineType.ActiveCell, this.settings.activeCellBorderColor);
@@ -8942,6 +8958,60 @@ function isAllowPasteLink(pastedWb) {
             }
         }
 		this.handlers.trigger("drawMobileSelection", this.workbook.mainOverlay, this.settings.activeCellBorderColor);
+    };
+
+    WorksheetView.prototype._clampSelectionRangeForDraw = function (range) {
+        switch (range.getType()) {
+            case c_oAscSelectionType.RangeMax:
+                range.c2 = this.nColsCount - 1;
+                range.r2 = this.nRowsCount - 1;
+                break;
+            case c_oAscSelectionType.RangeCol:
+                range.r2 = this.nRowsCount - 1;
+                break;
+            case c_oAscSelectionType.RangeRow:
+                range.c2 = this.nColsCount - 1;
+                break;
+        }
+        return range;
+    };
+
+    WorksheetView.prototype._drawMultiSelectionRange = function (selection) {
+        var ranges = selection.ranges;
+        var activeColor = this.settings.activeCellBorderColor;
+        var unionFillColor = new CColor(110, 110, 110);
+        var unionBorderColor = new CColor(166, 166, 166);
+        var fillType = AscCommonExcel.selectionLineType.Selection | AscCommonExcel.selectionLineType.NotStroke;
+
+        var disjoint = [];
+        for (var i = 0; i < ranges.length; ++i) {
+            var pieces = [this._clampSelectionRangeForDraw(ranges[i].clone())];
+            for (var j = 0; j < disjoint.length; ++j) {
+                var rest = [];
+                for (var k = 0; k < pieces.length; ++k) {
+                    rest = rest.concat(disjoint[j].difference(pieces[k]));
+                }
+                pieces = rest;
+            }
+            disjoint = disjoint.concat(pieces);
+        }
+        for (var d = 0; d < disjoint.length; ++d) {
+            this._drawElements(this._drawSelectionElement, disjoint[d], fillType, unionFillColor);
+        }
+
+        for (var b = 0; b < ranges.length; ++b) {
+            this._drawElements(this._drawSelectionElement, this._clampSelectionRangeForDraw(ranges[b].clone()),
+                AscCommonExcel.selectionLineType.ThinSolid, unionBorderColor);
+        }
+
+        var ac = selection.activeCell;
+        var mc = this.model.getMergedByCell(ac.row, ac.col);
+        var acRange = mc ? mc.clone() : new asc_Range(ac.col, ac.row, ac.col, ac.row);
+        this._drawElements(this._drawSelectionElement, acRange,
+            AscCommonExcel.selectionLineType.ActiveCell | AscCommonExcel.selectionLineType.NotStroke, activeColor);
+        this._drawElements(this._drawSelectionElement, acRange, AscCommonExcel.selectionLineType.None, activeColor);
+
+        this.handlers.trigger("drawMobileSelection", this.workbook.mainOverlay, activeColor);
     };
 
     WorksheetView.prototype._drawFormatPainterRange = function () {
@@ -13036,6 +13106,57 @@ function isAllowPasteLink(pastedWb) {
 		this._fixSelectionOfMergedCells(null, valid, customSelection);
 	};
 
+	WorksheetView.prototype._fixActiveCellAfterDeselect = function () {
+		var selection = this._getSelection();
+		var ranges = selection.ranges;
+		var ac = selection.activeCell;
+		for (var i = 0; i < ranges.length; ++i) {
+			if (ranges[i].contains(ac.col, ac.row)) {
+				if (i !== ranges.length - 1) {
+					ranges.push(ranges.splice(i, 1)[0]);
+				}
+				selection.activeCellId = ranges.length - 1;
+				this._fixSelectionOfMergedCells(null, !this.getFormulaEditMode() && selection.validActiveCell());
+				return;
+			}
+		}
+		var ar = selection.getLast();
+		var r = ar.r1, c = ar.c1;
+		switch (ar.getType()) {
+			case c_oAscSelectionType.RangeCol:
+				r = this.visibleRange.r1;
+				break;
+			case c_oAscSelectionType.RangeRow:
+				c = this.visibleRange.c1;
+				break;
+			case c_oAscSelectionType.RangeMax:
+				r = this.visibleRange.r1;
+				c = this.visibleRange.c1;
+				break;
+		}
+		selection.activeCellId = ranges.length - 1;
+		selection.setActiveCell(r, c);
+		var valid = !this.getFormulaEditMode() && selection.validActiveCell();
+		this._fixSelectionOfMergedCells(null, valid);
+	};
+
+	WorksheetView.prototype.ctrlDeselectRange = function (x, y) {
+		if (this.getCellEditMode() || this.getSelectionDialogMode()) {
+			return false;
+		}
+		var clickedRange = this._getRangeByXY(x, y);
+		if (!this.model.selectionRange.containsRange(clickedRange)) {
+			return false;
+		}
+		this.cleanSelection();
+		if (this.model.selectionRange.excludeRange(clickedRange)) {
+			this._fixActiveCellAfterDeselect();
+		}
+		this.updateSelectionWithSparklines();
+		this._updateSelectionNameAndInfo();
+		return true;
+	};
+
     WorksheetView.prototype._moveActiveCellToOffset = function (activeCell, dc, dr, customSelection) {
 			var selection = customSelection || this._getSelection();
         var ar = selection.getLast();
@@ -15630,6 +15751,8 @@ function isAllowPasteLink(pastedWb) {
 			if (colRowMoveProps) {
 				this.startCellMoveRange.colRowMoveProps = colRowMoveProps;
 			}
+			this.startCellMoveRange.downX = x;
+			this.startCellMoveRange.downY = y;
 
             return ret;
         }
@@ -16209,6 +16332,9 @@ function isAllowPasteLink(pastedWb) {
     /* Function for applying range movement */
     WorksheetView.prototype.applyMoveRangeHandle = function (ctrlKey) {
         if (null === this.activeMoveRange) {
+            if (ctrlKey && this.startCellMoveRange && undefined !== this.startCellMoveRange.downX) {
+                this.ctrlDeselectRange(this.startCellMoveRange.downX, this.startCellMoveRange.downY);
+            }
             // Reset parameters
             this.startCellMoveRange = null;
             return;
