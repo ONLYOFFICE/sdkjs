@@ -331,15 +331,19 @@ function (window, undefined) {
 		return settl.getMonth() < issue.getMonth() || (settl.getMonth() === issue.getMonth() && settl.getDate() <= issue.getDate());
 	}
 
+	function isLeapYearByNumber (year) {
+		return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0 || year === 1900;
+	}
+
 	function considerAsLeap(issue, settl) {
 		if (issue.getFullYear() === settl.getFullYear()) {
 			return issue.isLeapYear();
 		}
 		
 		// spans two calendar years - check if either year's Feb 29 falls in [issue, settl]
-		let y1 = issue.getFullYear(), y2 = settl.getFullYear();
+		let y1 = issue.getFullYear(), y2 = settl.getFullYear(); // years - simple numbers
 		for (let y = y1; y <= y2; y++) {
-			if (y.isLeapYear()) {
+			if (isLeapYearByNumber(y)) {
 				let feb29 = new Date(y, 1, 29);
 				if (feb29 >= issue && feb29 <= settl) {
 					return true;
