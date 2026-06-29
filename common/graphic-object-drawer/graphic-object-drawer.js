@@ -609,6 +609,8 @@
 
 		this.drawPlaceholderRect();
 
+		this.drawLocks();
+
 		graphics.SetIntegerGrid(true);
 		graphics.reset();
 
