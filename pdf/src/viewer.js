@@ -273,6 +273,10 @@
         this.drawingsContentChanges.Clear();
     };
     CPageInfo.prototype.Add_ContentChanges = function(Changes) {
+		if (!Changes.m_pData) {
+			return;
+		}
+		
         let oChange = Changes.m_pData.Data;
         
         switch (oChange.Type) {
