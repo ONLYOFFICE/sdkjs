@@ -580,7 +580,7 @@ CGraphicObjects.prototype =
                 {
                     let oBlipFill = oDrawing.blipFill.createDuplicate();
                     let oEffect = new AscFormat.CAlphaModFix();
-                    let nAmt = ((255 - nOpacity) / 255) * 100000 + 0.5 >> 0;
+                    let nAmt = (nOpacity / 255) * 100000 + 0.5 >> 0;
                     oEffect.amt = Math.max(0, Math.min(100000, nAmt));
                     oBlipFill.Effects.push(oEffect);
                     oDrawing.setBlipFill(oBlipFill);
