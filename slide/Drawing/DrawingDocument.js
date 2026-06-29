@@ -5196,6 +5196,8 @@ CAnimationPaneDrawer.prototype = Object.create(CPaneDrawerBase);
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommon']                  = window['AscCommon'] || {};
 window['AscCommon'].CDrawingDocument = CDrawingDocument;
+window['AscCommon'].CThPage          = CThPage;
+window['AscCommon'].GetWheelDeltaY   = GetWheelDeltaY;
 
 window['AscCommon'].g_comment_image = new Image();
 window['AscCommon'].g_comment_image;

@@ -81,7 +81,7 @@
 		const width = absolutePosition.R - absolutePosition.L;
 		const height = absolutePosition.B - absolutePosition.T;
 
-		const isHorizontalThumbnails = Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom;
+		const isHorizontalThumbnails = Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom;
 		return isHorizontalThumbnails
 			? width >= 0 && (height >= (1 + GlobalSkin.SplitterWidthMM))
 			: (width >= (1 + GlobalSkin.SplitterWidthMM)) && height >= 0;
@@ -118,7 +118,7 @@
 		settings.targetHoverColor = GlobalSkin.ScrollerTargetHoverColor;
 		settings.targetActiveColor = GlobalSkin.ScrollerTargetActiveColor;
 
-		if (Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom) {
+		if (Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom) {
 			settings.isHorizontalScroll = true;
 			settings.isVerticalScroll = false;
 			settings.contentW = totalContentLength;
@@ -203,7 +203,7 @@
 		this.calculateThumbnailsOffsets();
 		const wordControl = this.m_oWordControl;
 		const dKoefToPix = AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_mm_to_pix;
-		const isHorizontalOrientation = Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom;
+		const isHorizontalOrientation = Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom;
 		const dPosition = this.m_dScrollY_max != 0 ? this.m_dScrollY / this.m_dScrollY_max : 0;
 
 		// Width and Height of 'id_panel_thumbnails' in millimeters
@@ -440,7 +440,7 @@
 				this.DigitWidths[i] = 10;
 		}
 
-		if (Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom) {
+		if (Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom) {
 			this.const_offset_x = Math.round(this.lastPixelRatio * 17);
 			this.const_offset_r = this.const_offset_y;
 			this.const_offset_b = Math.round(this.lastPixelRatio * 10);
@@ -561,7 +561,7 @@
 			return false;
 		}
 
-		if (global_keyboardEvent.CtrlKey && !this.m_oWordControl.m_oApi.isReporterMode) {
+		if (AscCommon.global_keyboardEvent.CtrlKey && !this.m_oWordControl.m_oApi.isReporterMode) {
 			if (this.m_arrPages[pos.Page].IsSelected === true) {
 				this.m_arrPages[pos.Page].IsSelected = false;
 				var arr = this.GetSelectedArray();
@@ -588,7 +588,7 @@
 					this.ShowPage(pos.Page);
 				}
 			}
-		} else if (global_keyboardEvent.ShiftKey && !this.m_oWordControl.m_oApi.isReporterMode) {
+		} else if (AscCommon.global_keyboardEvent.ShiftKey && !this.m_oWordControl.m_oApi.isReporterMode) {
 
 			var pages_count = this.m_arrPages.length;
 			for (var i = 0; i < pages_count; i++) {
@@ -648,7 +648,7 @@
 					this.m_oWordControl.m_oNotesApi.IsRepaint = true;
 				}
 
-				if (global_mouseEvent.Button == 2 && !global_keyboardEvent.CtrlKey) {
+				if (global_mouseEvent.Button == 2 && !AscCommon.global_keyboardEvent.CtrlKey) {
 					this.showContextMenu(false);
 				}
 				checkSelectionEnd();
@@ -683,7 +683,7 @@
 			this.ShowPage(pos.Page);
 		}
 
-		if (global_mouseEvent.Button == 2 && !global_keyboardEvent.CtrlKey) {
+		if (global_mouseEvent.Button == 2 && !AscCommon.global_keyboardEvent.CtrlKey) {
 			this.showContextMenu(false);
 		}
 		checkSelectionEnd();
@@ -701,7 +701,7 @@
 			return res;
 		}
 
-		const isHorizontalThumbnails = Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom;
+		const isHorizontalThumbnails = Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom;
 
 		if (this.m_oWordControl)
 			this.m_oWordControl.m_oApi.checkLastWork();
@@ -896,14 +896,14 @@
 		if (false === this.m_bIsScrollVisible || !this.m_oWordControl.m_oScrollThumbApi)
 			return;
 
-		if (global_keyboardEvent.CtrlKey)
+		if (AscCommon.global_keyboardEvent.CtrlKey)
 			return;
 
 		if (undefined !== window["AscDesktopEditor"] && false === window["AscDesktopEditor"]["CheckNeedWheel"]())
 			return;
 
-		const delta = GetWheelDeltaY(e);
-		const isHorizontalOrientation = Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom;
+		const delta = AscCommon.GetWheelDeltaY(e);
+		const isHorizontalOrientation = Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom;
 		const isRightToLeft = Asc.editor.isRtlInterface;
 		isHorizontalOrientation
 			? this.m_oWordControl.m_oScrollThumbApi.scrollBy(isRightToLeft ? -delta : delta, 0)
@@ -930,7 +930,7 @@
 		let oApi = this.m_oWordControl.m_oApi;
 		let oPresentation = this.m_oWordControl.m_oLogicDocument;
 		let oDrawingDocument = this.m_oWordControl.m_oDrawingDocument;
-		let oEvent = global_keyboardEvent;
+		let oEvent = AscCommon.global_keyboardEvent;
 		let nShortCutAction = oApi.getShortcut(oEvent);
 		let bReturnValue = false, bPreventDefault = true;
 		let sSelectedIdx;
@@ -1202,7 +1202,7 @@
 		if (!scrollApi) return;
 
 		let startCoord, endCoord, visibleAreaSize, scrollTo, scrollBy;
-		if (Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom) {
+		if (Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom) {
 			startCoord = this.m_arrPages[pageNum].left - this.const_border_w;
 			endCoord = this.m_arrPages[pageNum].right + this.const_border_w;
 			visibleAreaSize = this.m_oWordControl.m_oThumbnails.HtmlElement.width;
@@ -1221,7 +1221,7 @@
 		if (startCoord < 0) {
 			const size = endCoord - startCoord;
 			const shouldReversePageIndexes = Asc.editor.isRtlInterface &&
-				Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom;
+				Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom;
 			const pos = shouldReversePageIndexes
 				? (size + this.const_border_w) * (this.m_arrPages.length - pageNum - 1)
 				: (size + this.const_border_w) * pageNum;
@@ -1443,7 +1443,7 @@
 				const canvasHeightMm = canvas.height * g_dKoef_pix_to_mm;
 
 				let textPosX, textPosY;
-				if (Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom) {
+				if (Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom) {
 					const textHeightMm = 10 * AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_pix_to_mm;
 					textPosY = (page.top * g_dKoef_pix_to_mm + textHeightMm) / 2;
 					textPosX = Asc.editor.isRtlInterface
@@ -1480,7 +1480,7 @@
 				let nBottomBounds = textBounds.b;
 				if (logicDocument.isSlideAnimated(slideIndex)) {
 					let iconX, iconY;
-					if (Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom) {
+					if (Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom) {
 						iconX = Asc.editor.isRtlInterface
 							? textBounds.x - 3 - AscCommon.AscBrowser.convertToRetinaValue(19, true)
 							: textBounds.r + 3;
@@ -1506,7 +1506,7 @@
 					const pinSizes = AscFormat.fGetOuterRectangle(pinOriginalWidth, pinOriginalHeight, pinAngle);
 
 					let pinX, pinY;
-					if (Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom) {
+					if (Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom) {
 						pinX = Asc.editor.isRtlInterface
 							? textBounds.x - 3 - pinSizes.width
 							: textBounds.r + 3 + pinSizes.width / 2;
@@ -1702,7 +1702,7 @@
 		}
 	};
 	CThumbnailsManager.prototype.drawThumbnailsInsertionLine = function (context, canvasWidth, canvasHeight) {
-		const isHorizontalThumbnails = Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom;
+		const isHorizontalThumbnails = Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom;
 		const isRightToLeft = Asc.editor.isRtlInterface;
 		const nPosition = this.MouseDownTrack.GetPosition();
 		const oPage = this.m_arrPages[nPosition - 1];
@@ -1982,17 +1982,17 @@
 	CThumbnailsManager.prototype.ConvertCoords = function (x, y) {
 		let posX, posY;
 		switch (Asc.editor.getThumbnailsPosition()) {
-			case thumbnailsPositionMap.left:
+			case AscCommon.thumbnailsPositionMap.left:
 				posX = x - this.m_oWordControl.X;
 				posY = y - this.m_oWordControl.Y;
 				break;
 
-			case thumbnailsPositionMap.right:
+			case AscCommon.thumbnailsPositionMap.right:
 				posX = x - this.m_oWordControl.X - this.m_oWordControl.Width + this.m_oWordControl.splitters[0].position * g_dKoef_mm_to_pix;
 				posY = y - this.m_oWordControl.Y;
 				break;
 
-			case thumbnailsPositionMap.bottom:
+			case AscCommon.thumbnailsPositionMap.bottom:
 				posX = x - this.m_oWordControl.X;
 				posY = y - this.m_oWordControl.Y - this.m_oWordControl.Height + this.m_oWordControl.splitters[0].position * g_dKoef_mm_to_pix;
 				break;
@@ -2020,17 +2020,17 @@
 
 		let posX, posY;
 		switch (Asc.editor.getThumbnailsPosition()) {
-			case thumbnailsPositionMap.left:
+			case AscCommon.thumbnailsPositionMap.left:
 				posX = x - this.m_oWordControl.X;
 				posY = y - this.m_oWordControl.Y;
 				break;
 
-			case thumbnailsPositionMap.right:
+			case AscCommon.thumbnailsPositionMap.right:
 				posX = x - this.m_oWordControl.X - this.m_oWordControl.Width + this.m_oWordControl.splitters[0].position * g_dKoef_mm_to_pix;
 				posY = y - this.m_oWordControl.Y;
 				break;
 
-			case thumbnailsPositionMap.bottom:
+			case AscCommon.thumbnailsPositionMap.bottom:
 				posX = x - this.m_oWordControl.X;
 				posY = y - this.m_oWordControl.Y - this.m_oWordControl.Height + this.m_oWordControl.splitters[0].position * g_dKoef_mm_to_pix;
 				break;
@@ -2050,7 +2050,7 @@
 		if (convertedX < 0 || convertedX > thControlWidth || convertedY < 0 || convertedY > thControlHeight)
 			return -1;
 
-		const isHorizontalThumbnails = Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom;
+		const isHorizontalThumbnails = Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom;
 		const isRightToLeft = Asc.editor.isRtlInterface;
 
 		let minDistance = Infinity;
@@ -2104,8 +2104,8 @@
 		const thumbnailsHeightMm = thumbnails.AbsolutePosition.B - thumbnails.AbsolutePosition.T;
 
 		const pixelRatio = AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_mm_to_pix;
-		const isVerticalThumbnails = Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.right
-			|| Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.left;
+		const isVerticalThumbnails = Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.right
+			|| Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.left;
 		const isRightToLeft = Asc.editor.isRtlInterface;
 
 		let thSlideWidthPx, thSlideHeightPx;
@@ -2149,7 +2149,7 @@
 			}
 
 			if (slideIndex >= this.m_arrPages.length) {
-				this.m_arrPages[slideIndex] = new CThPage();
+				this.m_arrPages[slideIndex] = new AscCommon.CThPage();
 				if (slideIndex === 0)
 					this.m_arrPages[0].IsSelected = true;
 			}
@@ -2269,7 +2269,7 @@
 
 		const oThContainer = editor.WordControl.m_oThumbnailsContainer;
 		const isHidden = oThContainer.HtmlElement.style.display === "none";
-		const isHorizontalThumbnails = Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom;
+		const isHorizontalThumbnails = Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom;
 
 		const offsetX = oThContainer.AbsolutePosition.L * g_dKoef_mm_to_pix;
 		const offsetY = oThContainer.AbsolutePosition.T * g_dKoef_mm_to_pix;
@@ -2323,12 +2323,12 @@
 		}
 	};
 	CThumbnailsManager.prototype.OnScrollTrackTop = function () {
-		Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom
+		Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom
 			? this.m_oWordControl.m_oScrollThumbApi.scrollByX(-45)
 			: this.m_oWordControl.m_oScrollThumbApi.scrollByY(-45);
 	};
 	CThumbnailsManager.prototype.OnScrollTrackBottom = function () {
-		Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom
+		Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom
 			? this.m_oWordControl.m_oScrollThumbApi.scrollByX(45)
 			: this.m_oWordControl.m_oScrollThumbApi.scrollByY(45);
 	};
@@ -2359,7 +2359,7 @@
 	};
 
 	CThumbnailsManager.prototype.calculateThumbnailsOffsets = function () {
-		const isHorizontalOrientation = Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom;
+		const isHorizontalOrientation = Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom;
 		if (isHorizontalOrientation) {
 			this.const_offset_y = 25 + Math.round(9 * AscCommon.AscBrowser.retinaPixelRatio)
 		} else {
@@ -2376,7 +2376,7 @@
 		const oPresentation = this.m_oWordControl.m_oLogicDocument;
 		const slidesCount = this.GetSlidesCount();
 
-		const isHorizontalOrientation = Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom;
+		const isHorizontalOrientation = Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom;
 
 		let thumbnailHeight, thumbnailWidth;
 		if (isHorizontalOrientation) {
@@ -2488,7 +2488,7 @@
 			FontSize: Math.round(10 * AscCommon.AscBrowser.retinaPixelRatio)
 		});
 
-		if (Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom) {
+		if (Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom) {
 			this.const_offset_x = Math.round(this.lastPixelRatio * 17);
 			this.const_offset_r = this.const_offset_y;
 			this.const_offset_b = Math.round(this.lastPixelRatio * 10);
@@ -2632,7 +2632,7 @@
 			return false;
 		}
 
-		if (global_mouseEvent.Button == 2 && !global_keyboardEvent.CtrlKey) {
+		if (global_mouseEvent.Button == 2 && !AscCommon.global_keyboardEvent.CtrlKey) {
 			this.showContextMenu(false);
 		}
 		this.SelectPageEnabled = false;
@@ -2653,7 +2653,7 @@
 			return res;
 		}
 
-		const isHorizontalThumbnails = Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom;
+		const isHorizontalThumbnails = Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom;
 
 		if (this.m_oWordControl)
 			this.m_oWordControl.m_oApi.checkLastWork();
@@ -2777,14 +2777,14 @@
 		if (false === this.m_bIsScrollVisible || !this.m_oWordControl.m_oScrollThumbApi)
 			return;
 
-		if (global_keyboardEvent.CtrlKey)
+		if (AscCommon.global_keyboardEvent.CtrlKey)
 			return;
 
 		if (undefined !== window["AscDesktopEditor"] && false === window["AscDesktopEditor"]["CheckNeedWheel"]())
 			return;
 
-		const delta = GetWheelDeltaY(e);
-		const isHorizontalOrientation = Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom;
+		const delta = AscCommon.GetWheelDeltaY(e);
+		const isHorizontalOrientation = Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom;
 		const isRightToLeft = Asc.editor.isRtlInterface;
 		isHorizontalOrientation
 			? this.m_oWordControl.m_oScrollThumbApi.scrollBy(isRightToLeft ? -delta : delta, 0)
@@ -2809,7 +2809,7 @@
 		}
 		AscCommon.check_KeyboardEvent(e);
 		const outlineView = this.GetOutlineView();
-		const res = outlineView && outlineView.onKeyDown(global_keyboardEvent);
+		const res = outlineView && outlineView.onKeyDown(AscCommon.global_keyboardEvent);
 		if (res & keydownresult_PreventDefault) {
 			e.preventDefault();
 			return false;
@@ -3041,17 +3041,17 @@
 		const outlineView = this.GetOutlineView();
 		let posX, posY;
 		switch (Asc.editor.getThumbnailsPosition()) {
-			case thumbnailsPositionMap.left:
+			case AscCommon.thumbnailsPositionMap.left:
 				posX = x - this.m_oWordControl.X;
 				posY = y - this.m_oWordControl.Y;
 				break;
 
-			case thumbnailsPositionMap.right:
+			case AscCommon.thumbnailsPositionMap.right:
 				posX = x - this.m_oWordControl.X - this.m_oWordControl.Width + this.m_oWordControl.splitters[0].position * g_dKoef_mm_to_pix;
 				posY = y - this.m_oWordControl.Y;
 				break;
 
-			case thumbnailsPositionMap.bottom:
+			case AscCommon.thumbnailsPositionMap.bottom:
 				posX = x - this.m_oWordControl.X;
 				posY = y - this.m_oWordControl.Y - this.m_oWordControl.Height + this.m_oWordControl.splitters[0].position * g_dKoef_mm_to_pix;
 				break;
@@ -3162,12 +3162,12 @@
 		}
 	};
 	COutlineThumbnailsManager.prototype.OnScrollTrackTop = function () {
-		Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom
+		Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom
 			? this.m_oWordControl.m_oScrollThumbApi.scrollByX(-45)
 			: this.m_oWordControl.m_oScrollThumbApi.scrollByY(-45);
 	};
 	COutlineThumbnailsManager.prototype.OnScrollTrackBottom = function () {
-		Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.bottom
+		Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom
 			? this.m_oWordControl.m_oScrollThumbApi.scrollByX(45)
 			: this.m_oWordControl.m_oScrollThumbApi.scrollByY(45);
 	};
