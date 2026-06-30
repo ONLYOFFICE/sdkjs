@@ -15134,12 +15134,12 @@ Paragraph.prototype.RequestSpellCheck = function()
 Paragraph.prototype.ContinueSpellCheck = function(isForceFullCheck)
 {
 	var oLogicDocument = this.GetLogicDocument();
-	if (!this.RecalcInfo.SpellCheck || !oLogicDocument)
+	if (!this.RecalcInfo.SpellCheck || !oLogicDocument || this.IsInPlaceholder())
 	{
 		this.RecalcInfo.SpellCheck = false;
 		return true;
 	}
-
+	
 	this.SpellChecker.UpdateSettings(oLogicDocument.GetSpellCheckManager().GetSettings());
 
 	if (!this.private_CollectSpellCheckerElements(isForceFullCheck))

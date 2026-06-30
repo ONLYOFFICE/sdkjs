@@ -4117,14 +4117,18 @@ CInlineLevelSdt.prototype.IsFormExceedsBounds = function()
 };
 CInlineLevelSdt.prototype.CheckSpelling = function(oCollector, nDepth)
 {
-	let isForm = this.IsForm();
-	if (isForm)
+	let needFlush = (this.IsPlaceHolder() || this.IsForm());
+	if (needFlush)
 		oCollector.FlushWord();
 
 	CParagraphContentWithParagraphLikeContent.prototype.CheckSpelling.apply(this, arguments);
 
-	if (isForm)
+	if (needFlush)
 		oCollector.FlushWord();
+};
+CInlineLevelSdt.prototype.CanCheckSpelling = function()
+{
+	return !(this.IsPlaceHolder());
 };
 CInlineLevelSdt.prototype.MoveCursorOutsideForm = function(isBefore)
 {

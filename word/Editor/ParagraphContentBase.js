@@ -4097,6 +4097,10 @@ CParagraphContentWithParagraphLikeContent.prototype.RestartSpellCheck = function
         this.Content[nIndex].RestartSpellCheck();
     }
 };
+CParagraphContentWithParagraphLikeContent.prototype.CanCheckSpelling = function()
+{
+	return true;
+};
 /**
  * @param oSpellCheckerEngine {AscWord.CParagraphSpellCheckerCollector}
  * @param nDepth {number}
@@ -4105,7 +4109,10 @@ CParagraphContentWithParagraphLikeContent.prototype.CheckSpelling = function(oSp
 {
 	if (oSpellCheckerEngine.IsExceedLimit())
 		return;
-
+	
+	if (!this.CanCheckSpelling())
+		return;
+	
 	var nStartPos = 0;
 	if (oSpellCheckerEngine.IsFindStart())
 		nStartPos = oSpellCheckerEngine.GetPos(nDepth);
