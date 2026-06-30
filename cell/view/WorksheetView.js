@@ -9797,7 +9797,7 @@ function isAllowPasteLink(pastedWb) {
 					self.stringRender.drawingCtx.scaleFactor = 1;
 					self.stringRender.fontNeedUpdate = true;
 
-					widthStr = self.stringRender.measureString(str, flags, width).width;
+					widthStr = self.stringRender.measureString(str, flags, widthWithoutZoom).width;
 
 					self.stringRender.drawingCtx.ppiX = realPpiX;
 					self.stringRender.drawingCtx.ppiY = realPpiY;
