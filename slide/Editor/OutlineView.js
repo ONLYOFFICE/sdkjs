@@ -1651,6 +1651,9 @@
 	OutlineView.prototype.getContentPos = function (callback) {
 		let res;
 		const content = this.getDocContent();
+		if (!content) {
+			return;
+		}
 		if (content.IsSelectionUse()) {
 			const startPos = content.GetContentPosition(true, true);
 			const endPos = content.GetContentPosition(true, false);
@@ -2439,13 +2442,14 @@
 		}
 		if (this.isFocusOnOutline()) {
 			const oThis = this;
-			return this.getContentPos(function (isSelectionUse, startPos, endPos) {
+			const selectedArray = this.getContentPos(function (isSelectionUse, startPos, endPos) {
 				if (isSelectionUse) {
 					return oThis.getSelectedSlideArrayFromSelection(startPos, endPos);
 				} else {
 					return oThis.getSelectedSlideArrayFromCurPos(startPos);
 				}
 			});
+			return selectedArray || [];
 		}
 		const drawingDocument = this.getDrawingDocument();
 		if (drawingDocument.SlideCurrent >= 0) {
