@@ -329,8 +329,8 @@
 				for (let i = 0; i < ranges.length; i += 1) {
 					const range = ranges[i].trim().split("-");
 					if (range.length === 2) {
-						const start = parseInt(range[0], 10);
-						const end = parseInt(range[1], 10);
+						const start = parseInt(range[0], 10) - 1;
+						const end = parseInt(range[1], 10) - 1;
 						if (Number.isNaN(start) || Number.isNaN(end)) {
 							return [];
 						}
@@ -347,7 +347,7 @@
 							}
 						}
 					} else if (range.length === 1) {
-						const slideIndex = parseInt(range[0], 10);
+						const slideIndex = parseInt(range[0], 10) - 1;
 						if (Number.isNaN(slideIndex) || slideIndex < 0 || slideIndex >= slides.length) {
 							return [];
 						}
