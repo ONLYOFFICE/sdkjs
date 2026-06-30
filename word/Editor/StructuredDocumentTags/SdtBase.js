@@ -224,7 +224,9 @@ CSdtBase.prototype.SetFormPr = function(oFormPr)
 		if (oldSpellCheck !== oFormPr.GetSpellCheck() && this.private_UpdateSpellChecking)
 		{
 			let paragraph = this.GetParagraph();
-			paragraph.GetSpellChecker().Clear();
+			if (paragraph)
+				paragraph.GetSpellChecker().Clear();
+			
 			this.private_UpdateSpellChecking();
 		}
 
