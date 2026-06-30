@@ -804,11 +804,7 @@
             "AFMakeNumber"
         ];
     
-        if (!oParentDoc.globalEventStack) {
-            oParentDoc.globalEventStack = [];    
-        }
-
-        oParentDoc.globalEventStack.push(oParentDoc.event);
+        oParentDoc.eventsStack.push(oParentDoc.event);
         oParentDoc.event = oEvent;
 
         let oApiFunc = AscPDF.Api.Functions;
