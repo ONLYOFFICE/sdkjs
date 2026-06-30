@@ -47,15 +47,16 @@
 	 */
 	function CSdtFormPr(sKey, sLabel, sHelpText, isRequired)
 	{
-		this.Key      = sKey;
-		this.Label    = sLabel;
-		this.HelpText = sHelpText;
-		this.Required = isRequired;
-		this.Fixed    = false;
-		this.Border   = undefined;
-		this.Shd      = undefined;
-		this.Field    = undefined;
-		this.RoleName = undefined; // Данное поле только для работы с интерфейсом, в бинарник его не пишем
+		this.Key        = sKey;
+		this.Label      = sLabel;
+		this.HelpText   = sHelpText;
+		this.Required   = isRequired;
+		this.Fixed      = false;
+		this.Border     = undefined;
+		this.Shd        = undefined;
+		this.Field      = undefined;
+		this.SpellCheck = undefined;
+		this.RoleName   = undefined; // Данное поле только для работы с интерфейсом, в бинарник его не пишем
 	}
 	CSdtFormPr.prototype.Copy = function()
 	{
@@ -77,8 +78,9 @@
 		// его вставки куда-либо
 		if (this.Field)
 			oFormPr.Field = this.Field;
-		
-		oFormPr.RoleName = this.RoleName;
+
+		oFormPr.SpellCheck = this.SpellCheck;
+		oFormPr.RoleName   = this.RoleName;
 
 		return oFormPr;
 	};
@@ -92,6 +94,7 @@
 			&& IsEqualStyleObjects(this.Border, oOther.Border)
 			&& IsEqualStyleObjects(this.Shd, oOther.Shd)
 			&& this.Field === oOther.Field
+			&& this.SpellCheck === oOther.SpellCheck
 			&& this.RoleName === oOther.RoleName);
 	};
 	CSdtFormPr.prototype.WriteToBinary = function(oWriter)
@@ -142,6 +145,12 @@
 			nFlags |= 64;
 		}
 
+		if (undefined !== this.SpellCheck)
+		{
+			oWriter.WriteBool(this.SpellCheck);
+			nFlags |= 128;
+		}
+
 		var nEndPos = oWriter.GetCurPosition();
 		oWriter.Seek(nStartPos);
 		oWriter.WriteLong(nFlags);
@@ -180,6 +189,9 @@
 			let fieldId = oReader.GetString2();
 			this.Field = AscCommon.g_oTableId.GetById(fieldId);
 		}
+
+		if (nFlags & 128)
+			this.SpellCheck = oReader.GetBool();
 	};
 	CSdtFormPr.prototype.Write_ToBinary = function(oWriter)
 	{
@@ -220,6 +232,14 @@
 	CSdtFormPr.prototype.SetRequired = function(isRequired)
 	{
 		this.Required = isRequired;
+	};
+	CSdtFormPr.prototype.GetSpellCheck = function()
+	{
+		return this.SpellCheck;
+	};
+	CSdtFormPr.prototype.SetSpellCheck = function(isSpellCheck)
+	{
+		this.SpellCheck = isSpellCheck;
 	};
 	CSdtFormPr.prototype.GetFixed = function()
 	{
@@ -356,20 +376,22 @@
 	window['AscCommon'].CSdtFormPr    = CSdtFormPr;
 	window['AscCommon']['CSdtFormPr'] = CSdtFormPr;
 	
-	CSdtFormPr.prototype['get_Key']      = CSdtFormPr.prototype.GetKey;
-	CSdtFormPr.prototype['put_Key']      = CSdtFormPr.prototype.SetKey;
-	CSdtFormPr.prototype['get_Label']    = CSdtFormPr.prototype.GetLabel;
-	CSdtFormPr.prototype['put_Label']    = CSdtFormPr.prototype.SetLabel;
-	CSdtFormPr.prototype['get_HelpText'] = CSdtFormPr.prototype.GetHelpText;
-	CSdtFormPr.prototype['put_HelpText'] = CSdtFormPr.prototype.SetHelpText;
-	CSdtFormPr.prototype['get_Required'] = CSdtFormPr.prototype.GetRequired;
-	CSdtFormPr.prototype['put_Required'] = CSdtFormPr.prototype.SetRequired;
-	CSdtFormPr.prototype['get_Fixed']    = CSdtFormPr.prototype.GetFixed;
-	CSdtFormPr.prototype['put_Fixed']    = CSdtFormPr.prototype.SetFixed;
-	CSdtFormPr.prototype['get_Border']   = CSdtFormPr.prototype.GetAscBorder;
-	CSdtFormPr.prototype['put_Border']   = CSdtFormPr.prototype.SetAscBorder;
-	CSdtFormPr.prototype['get_Shd']      = CSdtFormPr.prototype.GetAscShd;
-	CSdtFormPr.prototype['put_Shd']      = CSdtFormPr.prototype.SetAscShd;
-	CSdtFormPr.prototype['get_Role']     = CSdtFormPr.prototype.GetAscRole;
-	CSdtFormPr.prototype['put_Role']     = CSdtFormPr.prototype.SetAscRole;
+	CSdtFormPr.prototype['get_Key']        = CSdtFormPr.prototype.GetKey;
+	CSdtFormPr.prototype['put_Key']        = CSdtFormPr.prototype.SetKey;
+	CSdtFormPr.prototype['get_Label']      = CSdtFormPr.prototype.GetLabel;
+	CSdtFormPr.prototype['put_Label']      = CSdtFormPr.prototype.SetLabel;
+	CSdtFormPr.prototype['get_HelpText']   = CSdtFormPr.prototype.GetHelpText;
+	CSdtFormPr.prototype['put_HelpText']   = CSdtFormPr.prototype.SetHelpText;
+	CSdtFormPr.prototype['get_Required']   = CSdtFormPr.prototype.GetRequired;
+	CSdtFormPr.prototype['put_Required']   = CSdtFormPr.prototype.SetRequired;
+	CSdtFormPr.prototype['get_Fixed']      = CSdtFormPr.prototype.GetFixed;
+	CSdtFormPr.prototype['put_Fixed']      = CSdtFormPr.prototype.SetFixed;
+	CSdtFormPr.prototype['get_Border']     = CSdtFormPr.prototype.GetAscBorder;
+	CSdtFormPr.prototype['put_Border']     = CSdtFormPr.prototype.SetAscBorder;
+	CSdtFormPr.prototype['get_Shd']        = CSdtFormPr.prototype.GetAscShd;
+	CSdtFormPr.prototype['put_Shd']        = CSdtFormPr.prototype.SetAscShd;
+	CSdtFormPr.prototype['get_Role']       = CSdtFormPr.prototype.GetAscRole;
+	CSdtFormPr.prototype['put_Role']       = CSdtFormPr.prototype.SetAscRole;
+	CSdtFormPr.prototype['get_SpellCheck'] = CSdtFormPr.prototype.GetSpellCheck;
+	CSdtFormPr.prototype['put_SpellCheck'] = CSdtFormPr.prototype.SetSpellCheck;
 })(window);

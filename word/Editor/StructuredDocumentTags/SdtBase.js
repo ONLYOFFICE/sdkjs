@@ -220,6 +220,14 @@ CSdtBase.prototype.SetFormPr = function(oFormPr)
 
 	if ((!this.Pr.FormPr && oFormPr) || !this.Pr.FormPr.IsEqual(oFormPr))
 	{
+		let oldSpellCheck = this.Pr.FormPr ? this.Pr.FormPr.GetSpellCheck() : false;
+		if (oldSpellCheck !== oFormPr.GetSpellCheck() && this.private_UpdateSpellChecking)
+		{
+			let paragraph = this.GetParagraph();
+			paragraph.GetSpellChecker().Clear();
+			this.private_UpdateSpellChecking();
+		}
+
 		let change = new CChangesSdtPrFormPr(this, this.Pr.FormPr, oFormPr);
 		AscCommon.History.Add(change);
 		change.Redo();

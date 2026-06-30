@@ -4128,7 +4128,11 @@ CInlineLevelSdt.prototype.CheckSpelling = function(oCollector, nDepth)
 };
 CInlineLevelSdt.prototype.CanCheckSpelling = function()
 {
-	return !(this.IsPlaceHolder());
+	if (this.IsPlaceHolder())
+		return false;
+
+	let formPr = this.Pr.FormPr;
+	return (!formPr || !!formPr.GetSpellCheck());
 };
 CInlineLevelSdt.prototype.MoveCursorOutsideForm = function(isBefore)
 {
