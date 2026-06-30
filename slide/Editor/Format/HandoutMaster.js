@@ -251,6 +251,15 @@
 		return repeatCount === 1 ? 0 : (paperSize - slideSize * repeatCount * scale) / (repeatCount - 1);
 	}
 	CHandoutMaster.prototype.getAlign = function () {
+		if (this.handoutSettings.slideCount === 3) {
+			const pageWidth = this.presentation.GetNotesWidthMM();
+			const pageHeight = this.presentation.GetNotesHeightMM();
+			if (pageWidth >= pageHeight) {
+				return HANDOUT_ALIGNMENT_VERTICAL;
+			} else {
+				return HANDOUT_ALIGNMENT_HORIZONTAL;
+			}
+		}
 		return this.handoutSettings.align;
 	};
 	CHandoutMaster.prototype.getSlidesCount = function () {
