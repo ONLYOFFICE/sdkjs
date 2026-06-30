@@ -15426,6 +15426,7 @@ function isAllowPasteLink(pastedWb) {
 
 		// Current selection (autofill will be applied to it)
 		let arn = t.model.selectionRange.getLast();
+		let activeSelection = arn;
 		let range = t.model.getRange3(arn.r1, arn.c1, arn.r2, arn.c2);
 
 		// Check whether the filter is applied to the sheet
@@ -15557,6 +15558,9 @@ function isAllowPasteLink(pastedWb) {
 						// clear traces
 						if (t.traceDependentsManager) {
 							t.traceDependentsManager.clearAll();
+						}
+						if (activeSelection !== arn) {
+							activeSelection.assign2(arn);
 						}
 						// Update selected cells
 						t._updateRange(arn);
