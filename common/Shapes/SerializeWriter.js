@@ -2534,7 +2534,7 @@ function CBinaryFileWriter()
         oThis.StartRecord(oEffect.Type);
 
         oThis.WriteUChar(g_nodeAttributeStart);
-        oThis.WriteString2(0, oEffect.name);
+        oThis._WriteString2(0, oEffect.name);
         oThis._WriteLimit2(1, oEffect.type);
         oThis.WriteUChar(g_nodeAttributeEnd);
 
@@ -2601,7 +2601,7 @@ function CBinaryFileWriter()
                     oThis._WriteInt2(2, oEffect.sx);
                     oThis._WriteInt2(3, oEffect.sy);
                     oThis._WriteInt2(4, oEffect.tx);
-                    oThis._WriteInt2(5, oEffect.tx);
+                    oThis._WriteInt2(5, oEffect.ty);
                     oThis.WriteUChar(g_nodeAttributeEnd);
                     oThis.EndRecord();
                     break;
@@ -2624,6 +2624,7 @@ function CBinaryFileWriter()
                     oThis._WriteInt2(1, oEffect.dist);
                     oThis._WriteLimit1(2, oEffect.prst);
                     oThis.WriteUChar(g_nodeAttributeEnd);
+                    oThis.WriteRecord1(0, oEffect.color, oThis.WriteUniColor);
                     oThis.EndRecord();
                     break;
                 }
@@ -2753,7 +2754,7 @@ function CBinaryFileWriter()
                     oThis.StartRecord(type);
 
                     oThis.WriteUChar(g_nodeAttributeStart);
-                    oThis.WriteString2(0, oEffect.ref);
+                    oThis._WriteString2(0, oEffect.ref);
                     oThis.WriteUChar(g_nodeAttributeEnd);
 
                     oThis.EndRecord();
