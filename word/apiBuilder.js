@@ -30062,6 +30062,14 @@
 		{
 			return "clockwise45";
 		}
+		else if(AscFormat.fApproxEqual(90.0, nAngle))
+		{
+			return "clockwise90";
+		}
+		else if(AscFormat.fApproxEqual(270.0, nAngle))
+		{
+			return "counterclockwise90";
+		}
 		else if(AscFormat.fApproxEqual(315, nAngle))
 		{
 			return "counterclockwise45";
