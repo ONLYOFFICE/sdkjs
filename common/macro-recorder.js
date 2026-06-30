@@ -1973,13 +1973,13 @@
 		},
 		addPageNumToCurrentPos: function()
 		{
-			return "\tlet " + CounterStore.inc('run') + " = doc.GetCurrentParagraph().AddPageNumber();\n" 
-				+ "\t" + CounterStore.get('run') + ".MoveCursorToPos("+ CounterStore.get('run') + ".GetText().length + 1);\n";
+			return "\tlet " + varRegistry.inc('run') + " = doc.GetCurrentParagraph().AddPageNumber();\n" 
+				+ "\t" + varRegistry.get('run') + ".MoveCursorToPos("+ varRegistry.get('run') + ".GetText().length + 1);\n";
 		},
 		addPageCount: function()
 		{
-			return "\tlet " + CounterStore.inc('run') + " = doc.GetCurrentParagraph().AddPagesCount();\n"
-				+"\t" + CounterStore.get('run') + ".MoveCursorToPos(" + CounterStore.get('run') + ".GetText().length + 1);\n";
+			return "\tlet " + varRegistry.inc('run') + " = doc.GetCurrentParagraph().AddPagesCount();\n"
+				+"\t" + varRegistry.get('run') + ".MoveCursorToPos(" + varRegistry.get('run') + ".GetText().length + 1);\n";
 		},
 		setHdrFtrEvenAndOdd: function(data)
 		{
@@ -2113,11 +2113,11 @@
 	DEActionMap[AscDFH.historydescription_Document_AddTableOfContents]			= wordActions.addTableOfContents;
 	DEActionMap[AscDFH.historydescription_Document_UpdateTableOfContents]		= wordActions.updateTableOfContents;
 	DEActionMap[AscDFH.historydescription_Document_SetComplexFieldPr]			= wordActions.setComplexFieldPr;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddPageNumToHdrFtr]			= wordActions.addPageNumToHdrFtr;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddPageNumToCurrentPos]		= wordActions.addPageNumToCurrentPos;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddPageCount]				= wordActions.addPageCount;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetHdrFtrEvenAndOdd]		= wordActions.setHdrFtrEvenAndOdd;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetHdrFtrFirstPage]			= wordActions.setHdrFtrFirstPage;
+	DEActionMap[AscDFH.historydescription_Document_AddPageNumToHdrFtr]			= wordActions.addPageNumToHdrFtr;
+	DEActionMap[AscDFH.historydescription_Document_AddPageNumToCurrentPos]		= wordActions.addPageNumToCurrentPos;
+	DEActionMap[AscDFH.historydescription_Document_AddPageCount]				= wordActions.addPageCount;
+	DEActionMap[AscDFH.historydescription_Document_SetHdrFtrEvenAndOdd]			= wordActions.setHdrFtrEvenAndOdd;
+	DEActionMap[AscDFH.historydescription_Document_SetHdrFtrFirstPage]			= wordActions.setHdrFtrFirstPage;
 
 	const cellActions = {
 		setCellIncreaseFontSize	: function(){return "\tApi.GetSelection().FontIncrease();\n"},
