@@ -1467,7 +1467,9 @@
 			}
 		}
 		for (let i = 0; i < presentation.notes.length; i += 1) {
-			presentation.notes[i].recalcBody();
+			const note = presentation.notes[i];
+			note.recalcBody();
+			note.graphicObjects.resetSelection();
 		}
 		wordControl.GoToPage(nIdx);
 		wordControl.setNotesEnable(false);
