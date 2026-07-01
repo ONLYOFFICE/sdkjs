@@ -457,16 +457,31 @@
 	};
 	GraphicObjectDrawer.prototype.isNeedDrawPlaceholderRect = function () {
 		const graphics = this.getGraphics();
-		let isMasterPlaceholder = false;
+		if (graphics.IsPrintPreview) {
+			return false;
+		}
+		if (graphics.isSmartArtPreviewDrawer) {
+			return false;
+		}
+		if (graphics.isPdf()) {
+			return false;
+		}
+		if (AscCommon.IsShapeToImageConverter) {
+			return false;
+		}
 		const graphicObject = this.graphicObject;
+		let isMasterPlaceholder = false;
 		const viewManager = Asc.editor && Asc.editor.presentationViewManager;
-
 		if (viewManager && viewManager.isMasterPlaceholderShape(graphicObject)) {
 			isMasterPlaceholder = true;
 		}
 
-		return /*(!(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN) || */(!graphics.isSmartArtPreviewDrawer && !graphics.isPdf() && !graphicObject.bWordShape && (graphicObject.isEmptyPlaceholder() && !graphicObject.isObjectInSmartArt() || isMasterPlaceholder) && !graphicObject.isSlideNoteShape() && !(graphicObject.pen && graphicObject.pen.Fill && graphicObject.pen.Fill.fill && !(graphicObject.pen.Fill.fill instanceof AscFormat.CNoFill)) && (graphics.IsNoDrawingEmptyPlaceholder !== true || isMasterPlaceholder) && !AscCommon.IsShapeToImageConverter)
-			|| (Asc.editor.isPdfEditor() && !graphics.isPdf() && !graphics.isSmartArtPreviewDrawer && graphicObject.IsDrawing && graphicObject.IsDrawing() && graphicObject.ShouldDrawImaginaryBorder(graphics) && (graphics.IsNoDrawingEmptyPlaceholder !== true || isMasterPlaceholder) && !AscCommon.IsShapeToImageConverter);
+		if (graphics.IsNoDrawingEmptyPlaceholder === true && !isMasterPlaceholder) {
+			return false;
+		}
+		/*(!(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN) || */
+		return (!graphicObject.bWordShape && (graphicObject.isEmptyPlaceholder() && !graphicObject.isObjectInSmartArt() || isMasterPlaceholder) && !graphicObject.isSlideNoteShape() && !(graphicObject.pen && graphicObject.pen.isVisible()))
+			|| (Asc.editor.isPdfEditor() && graphicObject.IsDrawing && graphicObject.IsDrawing() && graphicObject.ShouldDrawImaginaryBorder(graphics));
 	};
 	GraphicObjectDrawer.prototype.isNeedDrawDashPlaceholderRect = function () {
 		const graphics = this.getGraphics();
