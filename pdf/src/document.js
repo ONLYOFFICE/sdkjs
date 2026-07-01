@@ -2547,7 +2547,7 @@ var CPresentation = CPresentation || function(){};
                 // freetext is a custom shape with its own interaction handlers, so need to call its own preMove (not a typical shape)
                 if (this.mouseDownAnnot.IsFreeText()) {
                     if (this.mouseDownAnnot.IsInTextBox()) {
-                        this.mouseDownAnnot.selectionSetEnd(e, pageObjectMM.x, pageObjectMM.y);
+                        oController.OnMouseMove(e, pageObjectMM.x, pageObjectMM.y, pageObjectMM.index);
                     }
                     // premove in group selection (inside freetext)
                     else if (oController.curState instanceof AscFormat.NullState && oController.selectedObjects.length < 2) {

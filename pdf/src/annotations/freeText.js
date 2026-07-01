@@ -933,37 +933,8 @@
                 return;
             }
 
-            if (e.ShiftKey) {
-                this.GetDocContent().StartSelectionFromCurPos();
-                this.selectionSetEnd(e, pageObjectMM.x, pageObjectMM.y);
-            }
-            else {
-                this.selectionSetStart(e, pageObjectMM.x, pageObjectMM.y);
-            }
+        	oController.OnMouseDown(e, pageObjectMM.x, pageObjectMM.y, pageObjectMM.index);
         }
-    };
-    CAnnotationFreeText.prototype.selectionSetStart = function(e, X, Y) {
-        this.selectStartPage = this.GetPage();
-
-        let oTextBoxShape   = this.GetTextBoxShape();
-        let oContent        = this.GetDocContent();
-        
-        let oTransform  = oTextBoxShape.invertTransformText;
-        let xContent    = oTransform.TransformPointX(X, 0);
-        let yContent    = oTransform.TransformPointY(0, Y);
-
-        oContent.Selection_SetStart(xContent, yContent, 0, e);
-        oContent.RecalculateCurPos();
-    };
-    CAnnotationFreeText.prototype.selectionSetEnd = function(e, X, Y) {
-        let oTextBoxShape   = this.GetTextBoxShape();
-        let oContent        = this.GetDocContent();
-        
-        let oTransform  = oTextBoxShape.invertTransformText;
-        let xContent    = oTransform.TransformPointX(X, 0);
-        let yContent    = oTransform.TransformPointY(0, Y);
-
-        oContent.Selection_SetEnd(xContent, yContent, 0, e);
     };
     CAnnotationFreeText.prototype.SetInTextBox = function(isIn) {
         let oDoc = this.GetDocument();
