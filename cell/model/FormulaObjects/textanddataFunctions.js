@@ -648,15 +648,21 @@ function (window, undefined) {
 			if (argI instanceof cError) {
 				return argI;
 			} else if (argI instanceof cArray) {
-				argI.foreach(function (elem) {
-					if (elem instanceof cError) {
-						arg0 = elem;
-						return true;
+				//reduceLogical folds head + constant tail; the tail string is repeated n times. A finite lazy range
+				//stays small; a full column trips the 32767 cap -> #VALUE (checked before building).
+				arg0 = argI.reduceLogical(function (acc, elem, n) {
+					if (acc instanceof cError) {
+						return acc;
 					}
-
-					arg0 = new cString(arg0.toString().concat(elem.toLocaleString()));
-
-				});
+					if (elem instanceof cError) {
+						return elem;
+					}
+					let s = elem.toLocaleString();
+					if (s.length > 0 && acc.toString().length + s.length * n > 32767) {
+						return new cError(cErrorType.wrong_value_type);
+					}
+					return new cString(acc.toString().concat(n === 1 ? s : s.repeat(n)));
+				}, arg0);
 				if (arg0 instanceof cError) {
 					return arg0;
 				}
@@ -723,19 +729,21 @@ function (window, undefined) {
 				if (cElementType.error === argI.type) {
 					return argI;
 				} else if (cElementType.array === argI.type) {
-					argI.foreach(function (elem) {
+					//reduceLogical folds head + constant tail; the tail string is repeated n times. A finite lazy
+					//range stays small; a full column trips the 32767 cap -> #VALUE (checked before building).
+					arg0 = argI.reduceLogical(function (acc, elem, n) {
+						if (cElementType.error === acc.type) {
+							return acc;
+						}
 						if (cElementType.error === elem.type) {
-							arg0 = elem;
-							return true;
+							return elem;
 						}
-
-						arg0 = new cString(arg0.toString().concat(elem.toLocaleString()));
-
-						if (!_checkMaxStringLength()) {
-							arg0 = new cError(cErrorType.wrong_value_type);
-							return true;
+						let s = elem.toLocaleString();
+						if (s.length > 0 && acc.toString().length + s.length * n > 32767) {
+							return new cError(cErrorType.wrong_value_type);
 						}
-					});
+						return new cString(acc.toString().concat(n === 1 ? s : s.repeat(n)));
+					}, arg0);
 					if (cElementType.error === arg0.type) {
 						return arg0;
 					}
@@ -3412,7 +3420,33 @@ function (window, undefined) {
 			argI = arg[i];
 
 			let type = argI.type;
-			if (cElementType.cellsRange === type || cElementType.cellsRange3D === type || cElementType.array === type) {
+			if (cElementType.array === type) {
+				//reduceLogical folds head + constant tail; concatString is applied n times for the tail (the
+				//delimiter cycles naturally). A finite lazy range stays small; a full column trips the 32767 cap.
+				let res = argI.reduceLogical(function (a, elem, cnt) {
+					if (a instanceof cError) {
+						return a;
+					}
+					if (elem.type === cElementType.error) {
+						return elem;
+					}
+					let s = elem.toLocaleString();
+					if (cnt === 1) {
+						return new cString(concatString(a.toString(), s));
+					}
+					for (let k = 0; k < cnt; k++) {
+						a = new cString(concatString(a.toString(), s));
+						if (a.toString().length > 32767) {
+							return new cError(cErrorType.wrong_value_type);
+						}
+					}
+					return a;
+				}, arg0);
+				if (res instanceof cError) {
+					return res;
+				}
+				arg0 = res;
+			} else if (cElementType.cellsRange === type || cElementType.cellsRange3D === type) {
 				// get a one-dimensional array
 				argI = this._getOneDimensionalArray(argI);
 

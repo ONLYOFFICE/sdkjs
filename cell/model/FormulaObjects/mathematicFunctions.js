@@ -2488,22 +2488,23 @@ function (window, undefined) {
 				}
 			} else if (argI.type === cElementType.array) {
 
-				if (argI.foreach(function (arrElem, row, col) {
-					let arrElemValue = checkElemType(arrElem);
-
-					if (arrElemValue.type === cElementType.error) {
-						_gcd = arrElemValue;
-						return true;
+				//reduceLogical folds head + constant tail; gcd is idempotent over repeats so the tail value is
+				//combined once (count ignored). a generator tail is streamed.
+				_gcd = argI.reduceLogical(function (acc, arrElem, n) {
+					if (acc && acc.type === cElementType.error) {
+						return acc;
 					}
-
+					let arrElemValue = checkElemType(arrElem);
+					if (arrElemValue.type === cElementType.error) {
+						return arrElemValue;
+					}
 					arrElemValue = arrElemValue.getValue();
 					if (arrElemValue < 0 || arrElemValue >= MAX_USED_VALUE) {
-						_gcd = new cError(cErrorType.not_numeric);
-						return true;
+						return new cError(cErrorType.not_numeric);
 					}
-					_gcd = gcd(_gcd, arrElemValue);
-
-				})) {
+					return gcd(acc, arrElemValue);
+				}, _gcd);
+				if (_gcd && _gcd.type === cElementType.error) {
 					return _gcd;
 				}
 			} else {
@@ -2689,52 +2690,43 @@ function (window, undefined) {
 					}
 				}
 			} else if (argI.type === cElementType.array) {
-				argArr = argI;
 
-				if (argI.foreach(function (arrElem) {
-
+				//reduceLogical folds head + constant tail; lcm is idempotent over repeats so the tail value is
+				//combined once (count ignored) - e.g. A:A+2 -> tail 2 changes the lcm. a generator tail is streamed.
+				_lcm = argI.reduceLogical(function (acc, arrElem, n) {
+					if (acc && acc.type === cElementType.error) {
+						return acc;
+					}
+					if (acc && acc.type === cElementType.number && acc.getValue() === 0) {
+						return acc;   // a <1 value already forced LCM to 0
+					}
 					let argValue = arrElem && arrElem.getValue();
 					if (arrElem.type === cElementType.error) {
-						_lcm = arrElem;
-						return true;
+						return arrElem;
 					}
-
 					if (arrElem.type === cElementType.bool) {
-						_lcm = new cError(cErrorType.wrong_value_type);
-						return;
+						return new cError(cErrorType.wrong_value_type);
 					}
-
 					if (arrElem.type === cElementType.string) {
 						arrElem = arrElem.tocNumber();
 						if (arrElem.type === cElementType.error) {
-							_lcm = new cError(cErrorType.wrong_value_type);
-							return;
+							return new cError(cErrorType.wrong_value_type);
 						}
 						argValue = arrElem.getValue();
 					}
-
 					if (arrElem.type === cElementType.empty) {
 						argValue = EMPTY_VAL;
 					}
-
 					if (argValue < 0) {
-						_lcm = new cError(cErrorType.not_numeric);
-						return true;
+						return new cError(cErrorType.not_numeric);
 					} else if (argValue < 1) {
-						_lcm = new cNumber(0);
-						return true;
+						return new cNumber(0);
 					} else if (argValue > INT_LIMIT) {
-						_lcm = new cError(cErrorType.not_numeric);
-						return true;
+						return new cError(cErrorType.not_numeric);
 					}
-
-					if (_lcm.type && _lcm.type === cElementType.error) {
-						return _lcm;
-					} else {
-						_lcm = lcm(_lcm, argValue);
-					}
-
-				})) {
+					return lcm(acc, argValue);
+				}, _lcm);
+				if (_lcm && _lcm.type === cElementType.error) {
 					return _lcm;
 				}
 			} else {
@@ -3628,18 +3620,24 @@ function (window, undefined) {
 					}
 				}
 			} else if (arg[i] instanceof cArray) {
-				if (arg[i].foreach(function (arrElem) {
+				//reduceLogical folds head + constant tail; for the tail (count n) the sum gets value*n and the
+				//factorial denominator gets (value!)^n. Over a small finite range with a lazy tail this stays finite
+				//and correct; over a full column the sum's factorial overflows (inherent - that case is degenerate).
+				var bad = arg[i].reduceLogical(function (acc, arrElem, n) {
+					if (acc) {
+						return acc;
+					}
 					if (arrElem instanceof cNumber) {
 						if (arrElem.getValue() < 0) {
 							return true;
 						}
-
-						arg0 = _func[arg0.type][arrElem.type](arg0, arrElem, "+");
-						fact *= Math.fact(arrElem.getValue());
-					} else {
-						return true;
+						arg0 = _func[arg0.type][cElementType.number](arg0, new cNumber(arrElem.getValue() * n), "+");
+						fact *= Math.pow(Math.fact(arrElem.getValue()), n);
+						return false;
 					}
-				})) {
+					return true;
+				}, false);
+				if (bad) {
 					return new cError(cErrorType.wrong_value_type);
 				}
 			} else if (arg[i] instanceof cRef || arg[i] instanceof cRef3D) {

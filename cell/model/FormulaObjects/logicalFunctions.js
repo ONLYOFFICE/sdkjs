@@ -399,13 +399,35 @@ function (window, undefined) {
 				return arg[i];
 			}
 
-			if (arg[i].type === cElementType.cellsRange || arg[i].type === cElementType.cellsRange3D || arg[i].type === cElementType.array) {
+			if (arg[i].type === cElementType.array) {
+				//reduceLogical folds head + constant tail; OR is idempotent so the tail value is OR-ed once
+				//(count ignored) - a TRUE tail (e.g. A:A>=0 over empties) correctly makes OR true.
+				argResult = arg[i].reduceLogical(function (acc, elemVal, n) {
+					if (acc && acc.type === cElementType.error) {
+						return acc;
+					}
+					if (acc && acc.value === true) {
+						return acc;
+					}
+					if (elemVal.type === cElementType.error) {
+						return elemVal;
+					}
+					let argToBool = elemVal.tocBool();
+					if (argToBool.type === cElementType.bool || argToBool.type === cElementType.error) {
+						return argToBool;
+					}
+					return acc;   // string -> skip
+				}, argResult);
+				if (argResult && argResult.type === cElementType.error) {
+					return argResult;
+				}
+			} else if (arg[i].type === cElementType.cellsRange || arg[i].type === cElementType.cellsRange3D) {
 				let dimensions = arg[i].getDimensions();
 
 				for (let row = 0; row < dimensions.row; row++) {
 					for (let col = 0; col < dimensions.col; col++) {
-						let elemVal = arg[i].getValueByRowCol ? arg[i].getValueByRowCol(row,col,true) : arg[i].getElementRowCol(row,col);
-						
+						let elemVal = arg[i].getValueByRowCol(row,col,true);
+
 						if (elemVal.type === cElementType.error) {
 							return elemVal;
 						}
@@ -644,22 +666,54 @@ function (window, undefined) {
 				return arg[i];
 			}
  
-			if (arg[i].type === cElementType.cellsRange || arg[i].type === cElementType.cellsRange3D || arg[i].type === cElementType.array) {
+			if (arg[i].type === cElementType.array) {
+				//reduceLogical folds head + constant tail; XOR is NOT idempotent - a TRUE tail contributes its
+				//full count to the parity (nTrueValues += n), so a tail of TRUE (e.g. A:A>=0) is counted right.
+				let hasNonEmpty = false;
+				let err = arg[i].reduceLogical(function (acc, elemVal, n) {
+					if (acc) {
+						return acc;
+					}
+					if (elemVal.type === cElementType.error) {
+						return elemVal;
+					}
+					if (elemVal.type === cElementType.empty) {
+						return acc;
+					}
+					let argToBool = elemVal.tocBool();
+					if (argToBool.type === cElementType.error) {
+						return argToBool;
+					} else if (argToBool.type === cElementType.bool) {
+						hasNonEmpty = true;
+						argResult = argToBool;
+						if (argToBool.value === true) {
+							nTrueValues += n;
+						}
+					}
+					return acc;   // string -> skip
+				}, null);
+				if (err) {
+					return err;
+				}
+				if (argResult === null && hasNonEmpty) {
+					argResult = new cBool(false);
+				}
+			} else if (arg[i].type === cElementType.cellsRange || arg[i].type === cElementType.cellsRange3D) {
 				let dimensions = arg[i].getDimensions();
 				let hasNonEmpty = false;
- 
+
 				for (let row = 0; row < dimensions.row; row++) {
 					for (let col = 0; col < dimensions.col; col++) {
-						let elemVal = arg[i].getValueByRowCol ? arg[i].getValueByRowCol(row, col, true) : arg[i].getElementRowCol(row, col);
- 
+						let elemVal = arg[i].getValueByRowCol(row, col, true);
+
 						if (elemVal.type === cElementType.error) {
 							return elemVal;
 						}
- 
+
 						if (elemVal.type === cElementType.empty) {
 							continue;
 						}
- 
+
 						let argToBool = elemVal.tocBool();
 						if (argToBool.type === cElementType.string) {
 							continue;
@@ -674,8 +728,7 @@ function (window, undefined) {
 						}
 					}
 				}
- 
-				// if the range contains at least one non-empty cell (without an error) - mark result as valid
+
 				if (argResult === null && hasNonEmpty) {
 					argResult = new cBool(false);
 				}
