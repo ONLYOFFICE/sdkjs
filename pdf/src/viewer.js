@@ -4718,7 +4718,9 @@
 			oMemory.WriteLong(nRedactMetaFlags);
 			
 			let aRedactedFields = oDoc.redactedFields;
-			oMemory.WriteLong(aRedactedFields.length);
+			if (aRedactedFields.length) {
+				oMemory.WriteLong(aRedactedFields.length);
+			}
 
 			let _t = this;
 			aRedactedFields.forEach(function(field) {
