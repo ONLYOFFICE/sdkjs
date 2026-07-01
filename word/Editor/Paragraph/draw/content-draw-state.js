@@ -108,7 +108,7 @@
 		let paraPr = this.Paragraph.getCompiledPr().ParaPr;
 		
 		// TODO: see bug 41412. It seems like we need to clip everytime
-		this.needClip = (linerule_Exact === paraPr.Spacing.LineRule || (linerule_Auto === paraPr.Spacing.LineRule && paraPr.Spacing.Line < 1 - AscWord.EPSILON));
+		this.needClip = this.Paragraph.bFromDocument && (linerule_Exact === paraPr.Spacing.LineRule || (linerule_Auto === paraPr.Spacing.LineRule && paraPr.Spacing.Line < 1 - AscWord.EPSILON));
 		
 		this.Page = page;
 		this.complexFields.resetPage(this.Paragraph, page);
