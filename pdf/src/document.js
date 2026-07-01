@@ -9490,7 +9490,7 @@ var CPresentation = CPresentation || function(){};
         };
     };
 
-	CPDFDoc.prototype.getTextController = function() {
+	CPDFDoc.prototype.getTextController = function(isOnEnterText) {
         let oController = this.GetController();
 
 		let activeForm      = this.activeForm;
@@ -9507,8 +9507,17 @@ var CPresentation = CPresentation || function(){};
 		else if (activeAnnot && ((activeAnnot.IsFreeText() && activeAnnot.IsInTextBox()) || (activeAnnot.IsLine() && activeAnnot.IsDoCaption()))) {
 			return activeAnnot;
 		}
-		else if (activeDrawing && (activeDrawing.GetDocContent() || oController.getTargetTextObject())) {
-			return activeDrawing;
+		else if (activeDrawing) {
+			if (activeDrawing.GetDocContent() || oController.getTargetTextObject()) {
+				return activeDrawing;
+			}
+			
+			if (activeDrawing.IsShape()) {
+				if (isOnEnterText) {
+					activeDrawing.createTextBody();
+					return activeDrawing;
+				}
+			}
 		}
 		
 		return null;

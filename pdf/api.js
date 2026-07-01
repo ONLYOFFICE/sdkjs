@@ -620,7 +620,7 @@
 		let drDoc  = doc.GetDrawingDocument();
 		let drController = doc.GetController();
 		
-		let textController = doc.getTextController();
+		let textController = doc.getTextController(true);
 		if (!textController)
 			return false;
 		if (textController.IsDrawing() && Asc.editor.isRestrictionView()) {
