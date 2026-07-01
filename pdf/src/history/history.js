@@ -262,7 +262,7 @@
                 // lock merge
                 else if (oClass instanceof AscPDF.CPDFDoc && point.Items[changeIndex].Data instanceof CChangesPDFDocumentStartMergePages) {
                     const oLocker = oClass.locks.merge; 
-                    let sId = oLocker.GetId();
+                    let sId = oLocker.Get_Id();
                     let oCheckData = {
                         "type":     AscPDF.AscLockTypeElemPDF.Document,
                         "objId":    sId,
