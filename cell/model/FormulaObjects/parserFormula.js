@@ -7466,6 +7466,9 @@ function parserFormula( formula, parent, _ws ) {
 		let nLen = sFunctionName === "SWITCH" ? Math.floor((nCountArgs - 1) / 2) : Math.floor(nCountArgs / 2);
 		for (let i = 0; i < nLen; i++) {
 			let logicalTest = aLogicalTest[i];
+			if (logicalTest == null) {
+				continue;
+			}
 			if (Array.isArray(logicalTest)) {
 				logicalTest = this._calculateLogicalTest(logicalTest);
 				if (logicalTest == null) {
