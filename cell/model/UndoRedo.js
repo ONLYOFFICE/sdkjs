@@ -3569,7 +3569,7 @@ function (window, undefined) {
 			AscCH.historyitem_Worksheet_SetSummaryBelow === Type || AscCH.historyitem_Worksheet_GroupRow === Type ||
 			AscCH.historyitem_Worksheet_GroupCol === Type || AscCH.historyitem_Worksheet_CollapsedRow === Type ||
 			AscCH.historyitem_Worksheet_CollapsedCol === Type || AscCH.historyitem_Worksheet_SetFitToPage === Type ||
-			AscCH.historyitem_Worksheet_SetTopLeftCell === Type) {
+			AscCH.historyitem_Worksheet_SetTopLeftCell === Type || AscCH.historyitem_Worksheet_SetActiveCell === Type) {
 			Data = Data.CreateReverseChangeSpreadsheet();
 		} else {
 			return;
@@ -4396,6 +4396,24 @@ function (window, undefined) {
 			}
 		} else if (AscCH.historyitem_Worksheet_SetTopLeftCell === Type) {
 			ws.setTopLeftCell(Data.to ? new Asc.Range(Data.to.c1, Data.to.r1, Data.to.c2, Data.to.r2) : null);
+		} else if (AscCH.historyitem_Worksheet_SetActiveCell === Type) {
+			if (!bUndo && (window["NATIVE_EDITOR_ENJINE"] || !wb.oApi.isDocumentLoadComplete || !wb.bCollaborativeChanges)) {
+				if (Data && Data.to && ws.selectionRange) {
+					var aSelectionRanges;
+					//the ranges are stored in A1 notation - parse them regardless of the current R1C1 display mode
+					AscCommonExcel.executeInR1C1Mode(false, function () {
+						aSelectionRanges = AscCommonExcel.g_oRangeCache.getRangesFromSqRef(Data.to);
+					});
+					if (aSelectionRanges && aSelectionRanges.length > 0) {
+						ws.selectionRange.ranges = aSelectionRanges;
+						ws.selectionRange.activeCellId = 0;
+						//the active cell is always the first cell of the first range
+						ws.selectionRange.activeCell.row = aSelectionRanges[0].r1;
+						ws.selectionRange.activeCell.col = aSelectionRanges[0].c1;
+						ws.selectionRange.update();
+					}
+				}
+			}
 		} else if (AscCH.historyitem_Worksheet_AddProtectedRange === Type) {
 			if (bUndo) {
 				ws.deleteProtectedRange(Data.id);

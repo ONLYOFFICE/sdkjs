@@ -13826,6 +13826,20 @@
 		return view && view.topLeftCell;
 	};
 
+	Worksheet.prototype.updateActiveCell = function() {
+		if (!this.selectionRange || !this.selectionRange.ranges) {
+			return;
+		}
+		var t = this;
+		var sSelection;
+		AscCommonExcel.executeInR1C1Mode(false, function () {
+			sSelection = AscCommonExcel.getSqRefString(t.selectionRange.ranges);
+		});
+		History.Create_NewPoint();
+		History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_SetActiveCell,
+			this.getId(), null, new UndoRedoData_FromTo(null, sSelection));
+	};
+
 	Worksheet.prototype.setCustomSort = function(props, obj, doNotSortRange, cellCommentator, opt_range) {
 		//form sortState from settings
 		var t = this;

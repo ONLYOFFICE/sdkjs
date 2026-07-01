@@ -139,6 +139,7 @@ function (window, undefined) {
 
 	window['AscCH'].historyitem_Worksheet_TimelineDelete = 65;
 
+	window['AscCH'].historyitem_Worksheet_SetActiveCell = 66;
 
 	window['AscCH'].historyitem_RowCol_Fontname = 1;
 	window['AscCH'].historyitem_RowCol_Fontsize = 2;
@@ -1455,6 +1456,7 @@ CHistory.prototype.EndTransaction = function(checkLockLastAction)
 			var wsView = api && api.wb && api.wb.getWorksheet();
 			if (wsView) {
 				wsView.updateTopLeftCell();
+				wsView.model.updateActiveCell();
 			}
 			t.workbook && t.workbook.handlers.trigger("EndTransactionCheckSize");
 		}
