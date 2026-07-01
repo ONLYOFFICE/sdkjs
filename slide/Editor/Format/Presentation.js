@@ -10769,6 +10769,12 @@ CPresentation.prototype.SetNotePageOrientation = function (val) {
 	}
 };
 CPresentation.prototype.SetNoteSizesByPrinter = function (width, height) {
+	const oldSizes = this.GetNotesSizesMM();
+	if ((oldSizes.width > oldSizes.height) !== (width > height)) {
+		const temp = width;
+		width = height;
+		height = temp;
+	}
 	const fields = 12.7;
 	const newWidth = Math.round((width - fields) * AscCommonWord.g_dKoef_mm_to_emu);
 	const newHeight = Math.round((height - fields) * AscCommonWord.g_dKoef_mm_to_emu);

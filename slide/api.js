@@ -9393,6 +9393,8 @@ background-repeat: no-repeat;\
 			return null;
 		this.printPreview = new AscCommon.CPresentationPrintPreview(this, containerId);
 		this.printPreview.initPrinter(options.advancedOptions);
+		const logicDocument = this.private_GetLogicDocument();
+		logicDocument && logicDocument.Document_UpdateInterfaceState();
 		return this.printPreview.printer.getPagesCount();
 	};
 	asc_docs_api.prototype.asc_updatePrintPreview = function (options) {
