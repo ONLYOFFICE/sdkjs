@@ -6423,7 +6423,7 @@
 	ApiDocumentContent.prototype.GetAllShapes = function()
 	{
 		let arrAllDrawing = this.Document.GetAllDrawingObjects();
-		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_Shape,
+		return private_GetAllDrawingsWithType(arrAllDrawing, [AscDFH.historyitem_type_Shape, AscDFH.historyitem_type_Cnx],
 			function(oDrawing) {return new ApiShape(oDrawing);});
 	};
 	/**
@@ -6436,7 +6436,7 @@
 	ApiDocumentContent.prototype.GetAllImages = function()
 	{
 		let arrAllDrawing = this.Document.GetAllDrawingObjects();
-		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_ImageShape,
+		return private_GetAllDrawingsWithType(arrAllDrawing, [AscDFH.historyitem_type_ImageShape],
 			function(oDrawing) {return new ApiImage(oDrawing);});
 	};
 	/**
@@ -6449,7 +6449,7 @@
 	ApiDocumentContent.prototype.GetAllCharts = function()
 	{
 		let arrAllDrawing = this.Document.GetAllDrawingObjects();
-		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_ChartSpace,
+		return private_GetAllDrawingsWithType(arrAllDrawing, [AscDFH.historyitem_type_ChartSpace],
 			function(oDrawing) {return new ApiChart(oDrawing);});
 	};
 	/**
@@ -6462,7 +6462,7 @@
 	ApiDocumentContent.prototype.GetAllOleObjects = function()
 	{
 		let arrAllDrawing = this.Document.GetAllDrawingObjects();
-		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_OleObject,
+		return private_GetAllDrawingsWithType(arrAllDrawing, [AscDFH.historyitem_type_OleObject],
 			function(oDrawing) {return new ApiOleObject(oDrawing);});
 	};
 	/**
@@ -11496,7 +11496,7 @@
 	ApiParagraph.prototype.GetAllShapes = function()
 	{
 		let arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
-		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_Shape,
+		return private_GetAllDrawingsWithType(arrAllDrawing, [AscDFH.historyitem_type_Shape, AscDFH.historyitem_type_Cnx],
 			function(oDrawing) {return new ApiShape(oDrawing);});
 	};
 	/**
@@ -11509,7 +11509,7 @@
 	ApiParagraph.prototype.GetAllImages = function()
 	{
 		let arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
-		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_ImageShape,
+		return private_GetAllDrawingsWithType(arrAllDrawing, [AscDFH.historyitem_type_ImageShape],
 			function(oDrawing) {return new ApiImage(oDrawing);});
 	};
 	/**
@@ -11522,7 +11522,7 @@
 	ApiParagraph.prototype.GetAllCharts = function()
 	{
 		let arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
-		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_ChartSpace,
+		return private_GetAllDrawingsWithType(arrAllDrawing, [AscDFH.historyitem_type_ChartSpace],
 			function(oDrawing) {return new ApiChart(oDrawing);});
 	};
 	/**
@@ -11535,7 +11535,7 @@
 	ApiParagraph.prototype.GetAllOleObjects = function()
 	{
 		let arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
-		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_OleObject,
+		return private_GetAllDrawingsWithType(arrAllDrawing, [AscDFH.historyitem_type_OleObject],
 			function(oDrawing) {return new ApiOleObject(oDrawing);});
 	};
 	/**
@@ -33027,12 +33027,12 @@
 		return undefined;
 	}
 
-	function private_GetAllDrawingsWithType(aDrawings, nObjectType, fCreateBuilderWrapper) {
+	function private_GetAllDrawingsWithType(aDrawings, aObjectTypes, fCreateBuilderWrapper) {
 		let aWrappers = [];
 		for(let nIdx = 0; nIdx < aDrawings.length; ++nIdx) {
 			let oDrawing = aDrawings[nIdx];
 			let oGrObj = oDrawing.GraphicObj;
-			if(oGrObj && oGrObj.getObjectType() === nObjectType) {
+			if(oGrObj && aObjectTypes.indexOf(oGrObj.getObjectType()) !== -1) {
 				aWrappers.push(fCreateBuilderWrapper(oGrObj));
 			}
 		}

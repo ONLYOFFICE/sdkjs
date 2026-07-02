@@ -2738,7 +2738,7 @@
         if(!this.Master) {
 			return [];
 		}
-		return private_GetAllDrawingsWithType(this.Master.cSld.spTree, AscDFH.historyitem_type_Shape,
+		return private_GetAllDrawingsWithType(this.Master.cSld.spTree, [AscDFH.historyitem_type_Shape, AscDFH.historyitem_type_Cnx],
 			function (oDrawing) {return new ApiShape(oDrawing);});
 
     };
@@ -2752,7 +2752,7 @@
 	 */
     ApiMaster.prototype.GetAllImages = function(){
 		if(!this.Master) return [];
-		return private_GetAllDrawingsWithType(this.Master.cSld.spTree, AscDFH.historyitem_type_ImageShape,
+		return private_GetAllDrawingsWithType(this.Master.cSld.spTree, [AscDFH.historyitem_type_ImageShape],
 			function (oDrawing) {return new ApiImage(oDrawing);});
     };
 
@@ -2765,7 +2765,7 @@
 	 */
     ApiMaster.prototype.GetAllCharts = function() {
 		if(!this.Master) return [];
-		return private_GetAllDrawingsWithType(this.Master.cSld.spTree, AscDFH.historyitem_type_ChartSpace,
+		return private_GetAllDrawingsWithType(this.Master.cSld.spTree, [AscDFH.historyitem_type_ChartSpace],
 			function (oDrawing) {return new ApiChart(oDrawing);});
     };
 
@@ -2778,7 +2778,7 @@
 	 */
     ApiMaster.prototype.GetAllOleObjects = function() {
 		if(!this.Master) return [];
-		return private_GetAllDrawingsWithType(this.Master.cSld.spTree, AscDFH.historyitem_type_OleObject,
+		return private_GetAllDrawingsWithType(this.Master.cSld.spTree, [AscDFH.historyitem_type_OleObject],
 			function (oDrawing) {return new ApiOleObject(oDrawing);});
     };
 
@@ -3182,7 +3182,7 @@
 		if(!this.Layout) {
 			return [];
 		}
-		return private_GetAllDrawingsWithType(this.Layout.cSld.spTree, AscDFH.historyitem_type_Shape,
+		return private_GetAllDrawingsWithType(this.Layout.cSld.spTree, [AscDFH.historyitem_type_Shape, AscDFH.historyitem_type_Cnx],
 			function (oDrawing) {return new ApiShape(oDrawing);});
     };
 
@@ -3197,7 +3197,7 @@
 		if(!this.Layout) {
 			return [];
 		}
-		return private_GetAllDrawingsWithType(this.Layout.cSld.spTree, AscDFH.historyitem_type_ImageShape,
+		return private_GetAllDrawingsWithType(this.Layout.cSld.spTree, [AscDFH.historyitem_type_ImageShape],
 			function (oDrawing) {return new ApiImage(oDrawing);});
     };
 
@@ -3212,7 +3212,7 @@
 		if(!this.Layout) {
 			return [];
 		}
-		return private_GetAllDrawingsWithType(this.Layout.cSld.spTree, AscDFH.historyitem_type_ChartSpace,
+		return private_GetAllDrawingsWithType(this.Layout.cSld.spTree, [AscDFH.historyitem_type_ChartSpace],
 			function (oDrawing) {return new ApiChart(oDrawing);});
     };
 
@@ -3225,7 +3225,7 @@
 	 */
     ApiLayout.prototype.GetAllOleObjects = function(){
 		if(!this.Layout) return [];
-		return private_GetAllDrawingsWithType(this.Layout.cSld.spTree, AscDFH.historyitem_type_OleObject,
+		return private_GetAllDrawingsWithType(this.Layout.cSld.spTree, [AscDFH.historyitem_type_OleObject],
 			function (oDrawing) {return new ApiOleObject(oDrawing);});
     };
 
@@ -4594,7 +4594,7 @@
 		if(!this.Slide) {
 			return [];
 		}
-		return private_GetAllDrawingsWithType(this.Slide.cSld.spTree, AscDFH.historyitem_type_Shape,
+		return private_GetAllDrawingsWithType(this.Slide.cSld.spTree, [AscDFH.historyitem_type_Shape, AscDFH.historyitem_type_Cnx],
 			function (oDrawing) {return new ApiShape(oDrawing);});
     };
 
@@ -4609,7 +4609,7 @@
 		if(!this.Slide) {
 			return [];
 		}
-		return private_GetAllDrawingsWithType(this.Slide.cSld.spTree, AscDFH.historyitem_type_ImageShape,
+		return private_GetAllDrawingsWithType(this.Slide.cSld.spTree, [AscDFH.historyitem_type_ImageShape],
 			function (oDrawing) {return new ApiImage(oDrawing);});
     };
 
@@ -4624,7 +4624,7 @@
 		if(!this.Slide) {
 			return [];
 		}
-		return private_GetAllDrawingsWithType(this.Slide.cSld.spTree, AscDFH.historyitem_type_ChartSpace,
+		return private_GetAllDrawingsWithType(this.Slide.cSld.spTree, [AscDFH.historyitem_type_ChartSpace],
 			function (oDrawing) {return new ApiChart(oDrawing);});
     };
 
@@ -4637,7 +4637,7 @@
 	 */
     ApiSlide.prototype.GetAllOleObjects = function() {
 		if(!this.Slide) return [];
-		return private_GetAllDrawingsWithType(this.Slide.cSld.spTree, AscDFH.historyitem_type_OleObject,
+		return private_GetAllDrawingsWithType(this.Slide.cSld.spTree, [AscDFH.historyitem_type_OleObject],
 			function (oDrawing) {return new ApiOleObject(oDrawing);});
     };
 
@@ -6332,6 +6332,7 @@
 					const objectType = drawing.getObjectType();
 					switch (objectType) {
 						case AscDFH.historyitem_type_Shape:
+						case AscDFH.historyitem_type_Cnx:
 							return new ApiShape(drawing);
 						case AscDFH.historyitem_type_ImageShape:
 							return new ApiImage(drawing);
@@ -11950,11 +11951,11 @@
         return sType;
     }
 
-	function private_GetAllDrawingsWithType(aDrawings, nObjectType, fCreateBuilderWrapper) {
+	function private_GetAllDrawingsWithType(aDrawings, aObjectTypes, fCreateBuilderWrapper) {
 		let aWrappers = [];
 		for(let nIdx = 0; nIdx < aDrawings.length; ++nIdx) {
 			let oDrawing = aDrawings[nIdx];
-			if(oDrawing.getObjectType() === nObjectType) {
+			if(aObjectTypes.indexOf(oDrawing.getObjectType()) !== -1) {
 				aWrappers.push(fCreateBuilderWrapper(oDrawing));
 			}
 		}
