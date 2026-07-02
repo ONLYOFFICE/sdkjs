@@ -1720,6 +1720,12 @@
 
 			Refresh_RecalcData: function () {
 				History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: this});
+			},
+
+			collectRedrawSlides: function (redrawSlides, force) {
+				if (this.slide) {
+					redrawSlides.collectRedrawSlides(this.slide, force);
+				}
 			}
 		};
 

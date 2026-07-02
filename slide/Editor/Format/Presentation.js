@@ -9597,12 +9597,14 @@ CPresentation.prototype.RemoveComment = function (Id, bSendEvent) {
 				if (this.CurPage !== i) {
 					this.DrawingDocument.m_oWordControl.GoToPage(i);
 				}
+				this.Document_UpdateInterfaceState();
 				return;
 			}
 		}
 	}
 	this.comments.removeComment(Id);
 	this.Api.sync_HideComment();
+	this.Document_UpdateInterfaceState();
 };
 
 CPresentation.prototype.CanAddComment = function () {
