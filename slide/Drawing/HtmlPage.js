@@ -5017,7 +5017,7 @@
 		}
 	};
 	CEditorPage.prototype.ChangeTimelineScale = function (bZoomOut) {
-		this.m_oAnimPaneApi.timeline.Control.timeline.changeTimelineScale(bZoomOut);
+		this.m_oAnimPaneApi.ChangeTimelineScale(bZoomOut);
 	};
 
 	// Notes

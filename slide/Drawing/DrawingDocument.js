@@ -5165,6 +5165,27 @@ function CAnimationPaneDrawer(page, htmlElement)
 		oThis.timeline.CheckPaint();
 	};
 
+	oThis.OnPreview = function (ticks)
+	{
+		if (oThis.timeline.Control)
+			oThis.timeline.Control.timeline.onPreview(ticks);
+	};
+	oThis.OnPreviewStart = function ()
+	{
+		if (oThis.timeline.Control)
+			oThis.timeline.Control.timeline.onPreviewStart();
+	};
+	oThis.OnPreviewStop = function ()
+	{
+		if (oThis.timeline.Control)
+			oThis.timeline.Control.timeline.onPreviewStop();
+	};
+	oThis.ChangeTimelineScale = function (bZoomOut)
+	{
+		if (oThis.timeline.Control)
+			oThis.timeline.Control.timeline.changeTimelineScale(bZoomOut);
+	};
+
 	oThis.UpdateState = function () {
 		if (!oThis.header.Control) { return }
 
