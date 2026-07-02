@@ -7363,13 +7363,16 @@ var editor;
 	  }
       this._onUpdateAfterApplyChanges();
   };
-	spreadsheet_api.prototype.canRunBuilderScript = function() {
+	spreadsheet_api.prototype.runBuilderScript = function(fRun) {
 		this.executeGroupActionsStart();
 		let res = this.asc_canPaste();
-		if (!res)
+		if (!res || !fRun)
+		{
 			this.executeGroupActionsEnd();
+			return;
+		}
 		
-		return res;
+		return fRun();
 	};
 	spreadsheet_api.prototype._onEndBuilderScript = function(callback) {
 		let needDraw = null;

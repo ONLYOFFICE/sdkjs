@@ -1554,7 +1554,6 @@
 			task.closed = isClose;
 			task.interface = isInterface;
 			task.recalculate = isRecalculate;
-			task.resize = isResize;
 
 			if (0 === this.queueCommands.length)
 			{
@@ -1612,11 +1611,11 @@
 				{
 					AscCommon.safePluginEval(value);
 				}
-				else if (!this.api.isLongAction() && (task.resize || this.api.canRunBuilderScript()))
+				else if (!this.api.isLongAction())
 				{
 					let _t = this;
-
-					function continueEval() {
+					this.api.runBuilderScript(function() {
+						_t.api._beforeEvalCommand();
 						commandReturnValue = AscCommon.safePluginEval(value);
 
 						if (!Asc.checkReturnCommand(commandReturnValue))
@@ -1637,12 +1636,7 @@
 							_t.api._afterEvalCommand(onEndScript);
 						else
 							onEndScript();
-					}
-
-					if (false !== this.api._beforeEvalCommand(continueEval)) {
-						continueEval();	
-					}
-					
+					});
 					return;
 				}
 			}

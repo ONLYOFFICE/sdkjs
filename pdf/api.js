@@ -4187,11 +4187,22 @@
 		this.stampAnnotPreviewManager = new AscPDF.StampAnnotPreviewManager();
 		AscBuilder.Pdf.init();
 	};
-	PDFEditorApi.prototype._beforeEvalCommand = function(callback) {
-		AscCommon.DocumentEditorApi.prototype._beforeEvalCommand.call(this);
-
+	PDFEditorApi.prototype.runBuilderScript = function(fRun) {	
+		if (!fRun)
+			return;
+		
 		let oDoc = this.getPDFDoc();
 		let oFile = oDoc.GetFile();
+		let _t = this;
+		
+		function _onLoad() {
+			_t.executeGroupActionsStart();
+
+			// Check action lock after performin the script
+			oDoc.StartAction(AscDFH.historydescription_BuilderScript);
+			oDoc.CheckActionLock();
+			return fRun();
+		}
 
 		if (!oDoc.pagesFontsScanned) {
 			let aFontsNames = oFile.nativeFile["scanPageFonts"]();
@@ -4209,10 +4220,12 @@
 				}
 			});
 
-			return oDoc.checkFonts(aFontsToLoad, callback);
+			if (true === oDoc.checkFonts(aFontsToLoad, _onLoad))
+				return _onLoad();
 		}
-
-		return true;		
+		else {
+			return _onLoad();
+		}
 	};
 	PDFEditorApi.prototype.getJsApi = function() {
 		return AscBuilder.Pdf.Api;

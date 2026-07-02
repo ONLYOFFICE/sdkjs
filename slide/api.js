@@ -8674,15 +8674,15 @@ background-repeat: no-repeat;\
 		this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_PasteHotKey);
 		return true;
 	};
-	asc_docs_api.prototype.canRunBuilderScript = function()
+	asc_docs_api.prototype.runBuilderScript = function(fRun)
 	{
 		let logicDocument = this.getLogicDocument();
-		if (!logicDocument)
-			return false;
+		if (!logicDocument || !fRun)
+			return;
 		
 		this.executeGroupActionsStart();
 		logicDocument.StartAction(AscDFH.historydescription_BuilderScript);
-		return true;
+		return fRun();
 	};
 	asc_docs_api.prototype._onEndBuilderScript = function(callback)
 	{
