@@ -4011,9 +4011,19 @@
 		let scaleY = 1.0;
 		let oldExtX = oXfrm.extX;
 		let oldExtY = oXfrm.extY;
-		if (!props.SizeRelH && AscFormat.isRealNumber(props.Width)) {
-			scaleX = props.Width / oXfrm.extX;
-			oXfrm.setExtX(props.Width);
+		let newWidth = props.Width;
+		let newHeight = props.Height;
+		let keepAspect = AscFormat.isRealBool(props.lockAspect) ? props.lockAspect : this.getNoChangeAspect();
+		if (keepAspect && !props.SizeRelH && !props.SizeRelV && oldExtX > 0 && oldExtY > 0) {
+			if (AscFormat.isRealNumber(newWidth) && !AscFormat.isRealNumber(newHeight)) {
+				newHeight = oldExtY * newWidth / oldExtX;
+			} else if (AscFormat.isRealNumber(newHeight) && !AscFormat.isRealNumber(newWidth)) {
+				newWidth = oldExtX * newHeight / oldExtY;
+			}
+		}
+		if (!props.SizeRelH && AscFormat.isRealNumber(newWidth)) {
+			scaleX = newWidth / oXfrm.extX;
+			oXfrm.setExtX(newWidth);
 			if (oSpParent instanceof AscCommonWord.ParaDrawing) {
 				oSpParent.SetSizeRelH({
 					RelativeFrom: AscCommon.c_oAscSizeRelFromH.sizerelfromhPage,
@@ -4021,9 +4031,9 @@
 				});
 			}
 		}
-		if (!props.SizeRelV && AscFormat.isRealNumber(props.Height)) {
-			scaleY = props.Height / oXfrm.extY;
-			oXfrm.setExtY(props.Height);
+		if (!props.SizeRelV && AscFormat.isRealNumber(newHeight)) {
+			scaleY = newHeight / oXfrm.extY;
+			oXfrm.setExtY(newHeight);
 			if (oSpParent instanceof AscCommonWord.ParaDrawing) {
 				oSpParent.SetSizeRelV({
 					RelativeFrom: AscCommon.c_oAscSizeRelFromV.sizerelfromvPage,
