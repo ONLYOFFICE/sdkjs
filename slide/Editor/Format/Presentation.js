@@ -2602,7 +2602,10 @@ CPresentation.prototype.updateSlideIndexes = function () {
 };
 
 CPresentation.prototype.private_GetSlideJumpValue = function (carrier) {
-	return (typeof carrier.GetValue === "function") ? carrier.GetValue() : carrier.id;
+	if (typeof carrier.GetValue === "function") {
+		return carrier.GetValue();
+	}
+	return (typeof carrier.Value === "string") ? carrier.Value : carrier.id;
 };
 CPresentation.prototype.private_ParseSlideJumpIndex = function (value) {
 	let mask = "ppaction://hlinksldjumpslide";
