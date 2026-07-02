@@ -1388,7 +1388,7 @@ ParaComment.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPa
 };
 ParaComment.prototype.drawLines = function(lineDrawState)
 {
-	lineDrawState.handleAnnotationMark(this);
+	lineDrawState.handleCommentMark(this);
 };
 ParaComment.prototype.drawMark = function(x, y, h, graphics, isRTL, lineDrawState)
 {

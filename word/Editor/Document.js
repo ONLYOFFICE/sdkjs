@@ -27954,6 +27954,14 @@ CDocument.prototype.GetCommentsManager = function()
 	return this.Comments;
 };
 /**
+ * Получаем класс, управляющий комментариями
+ * @returns {?AscCommonWord.CComments}
+ */
+CDocument.prototype.GetComments = function()
+{
+	return this.Comments;
+};
+/**
  * Убираем все, что связано с формами
  * @param {boolean} [isUseHistory=false] использовать ли историю и создать точку для этого действия
  */
