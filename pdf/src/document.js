@@ -1944,6 +1944,13 @@ var CPresentation = CPresentation || function(){};
             this.activeDrawing          = null;
             this.mouseDownLinkObject    = oObject;
         }
+
+		let oController = this.GetController();
+		if (oObject.IsForm() && this.IsEditFieldsMode()) {
+			oObject = oObject.GetEditShape();
+		}
+
+		oObject.select(oController, oObject.GetPage());
     };
     CPDFDoc.prototype.IsSelectionUse = function() {
         return this.GetFile().isSelectionUse();
