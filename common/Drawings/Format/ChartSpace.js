@@ -9830,6 +9830,10 @@ function(window, undefined) {
 			return;
 		}
 
+		if (ser.spPr && ser.spPr.Fill && ser.spPr.Fill.fill) {
+			return;
+		}
+
 		const subtotals = (ser.layoutPr && ser.layoutPr.subtotals) ? ser.layoutPr.subtotals.idx : [];
 		const subtotalsSet = {};
 		for (let i = 0; i < subtotals.length; i++) {
