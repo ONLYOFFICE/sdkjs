@@ -7149,6 +7149,9 @@
 		for(var i = 0; i < this.Drawings.length; ++i){
 			this.Drawings[i].graphicObject.getAllRasterImages(aImages);
 		}
+		if (this.picture) {
+			aImages.push(this.picture);
+		}
 	};
 	Worksheet.prototype.reassignImageUrls = function(oImages){
 		for(var i = 0; i < this.Drawings.length; ++i){

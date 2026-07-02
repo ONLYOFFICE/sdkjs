@@ -11312,8 +11312,8 @@
 				res = this.bcr.Read1(length, function (t, l) {
 					return oThis.ReadLegacyDrawingHF(t, l, oWorksheet.legacyDrawingHF);
 				});
-			// } else if (c_oSerWorksheetsTypes.Picture === type) {
-			//     oWorksheet.picture = this.stream.GetString2LE(length);
+			} else if (c_oSerWorksheetsTypes.Picture === type) {
+				oWorksheet.picture = this.stream.GetString2LE(length);
 			} else if (c_oSerWorksheetsTypes.DataValidations === type && typeof AscCommonExcel.CDataValidations != "undefined") {
 				oWorksheet.dataValidations = new AscCommonExcel.CDataValidations();
 				res = this.bcr.Read1(length, function(t, l) {

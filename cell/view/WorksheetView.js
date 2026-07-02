@@ -491,6 +491,11 @@ function isAllowPasteLink(pastedWb) {
 		this.highlightedRow = -1;
 		this.topLeftFrozenCell = null;	// Top cell for freezing range
 		this.visibleRange = new asc_Range(0, 0, 0, 0);
+
+		this._backgroundImageUrl = null;
+		this._backgroundImage = null;
+		this._backgroundImagePending = false;
+
 		this.isChanged = false;
 		this.isChartAreaEditMode = false;
 		this.lockDraw = false;
@@ -2683,6 +2688,7 @@ function isAllowPasteLink(pastedWb) {
         if (!AscCommon.isFileBuild()) {
             this.objectRender.init(this);
         }
+        this._getSheetBackgroundImage();
     };
 
     WorksheetView.prototype._initCellsArea = function (type) {
@@ -5818,6 +5824,10 @@ function isAllowPasteLink(pastedWb) {
 			this._fillRect(ctx, x1, y1, x2 - x1, y2 - y1);
 		}
 
+		if (this._backgroundImage && !drawingCtx) {
+			this._drawSheetBackgroundPicture(ctx, this._backgroundImage, x1, y1, x2, y2, offsetX, offsetY);
+		}
+
 		//draw text for print preview
 		//this._drawPageBreakPreviewText(drawingCtx, range, leftFieldInPx, topFieldInPx, width, height);
 
@@ -5867,6 +5877,86 @@ function isAllowPasteLink(pastedWb) {
 		}
 
 		//this._drawPageBreakPreviewLines(drawingCtx, range, leftFieldInPx, topFieldInPx, width, height);
+	};
+
+	WorksheetView.prototype._getSheetBackgroundImage = function () {
+		let src = this.model && this.model.picture;
+		if (!src) {
+			this._backgroundImageUrl = null;
+			this._backgroundImage = null;
+			this._backgroundImagePending = false;
+			return null;
+		}
+		let fullSrc = AscCommon.getFullImageSrc2(src);
+		if (!fullSrc || fullSrc === src) {
+			return null;
+		}
+		if (this._backgroundImageUrl === fullSrc) {
+			return this._backgroundImage;
+		}
+
+		this._backgroundImageUrl = fullSrc;
+		this._backgroundImage = null;
+		this._backgroundImagePending = false;
+
+		let oImage = AscCommon.g_image_loader.map_image_index[fullSrc];
+		if (oImage && oImage.Image && oImage.Status !== AscFonts.ImageLoadStatus.Loading) {
+			this._backgroundImage = oImage.Image;
+			return this._backgroundImage;
+		}
+
+		this._loadSheetBackgroundImage(fullSrc);
+		return null;
+	};
+
+	WorksheetView.prototype._loadSheetBackgroundImage = function (fullSrc) {
+		if (this._backgroundImagePending) {
+			return;
+		}
+		this._backgroundImagePending = true;
+		let t = this;
+		AscCommon.g_image_loader.LoadImagesWithCallback([fullSrc], function () {
+			t._backgroundImagePending = false;
+			if (t._backgroundImageUrl !== fullSrc) {
+				return;
+			}
+			let oImage = AscCommon.g_image_loader.map_image_index[fullSrc];
+			t._backgroundImage = (oImage && oImage.Image) ? oImage.Image : null;
+			if (t._backgroundImage) {
+				t.draw();
+			}
+		}, []);
+	};
+
+	WorksheetView.prototype._drawSheetBackgroundPicture = function (ctx, img, x1, y1, x2, y2, offsetX, offsetY) {
+		let tileW = img.width, tileH = img.height;
+		if (!tileW || !tileH) {
+			return;
+		}
+
+		let originX = this._getBaseCellsLeft() - offsetX;
+		let originY = this.cellsTop - offsetY;
+		let startX = originX + Math.floor((x1 - originX) / tileW) * tileW;
+		let startY = originY + Math.floor((y1 - originY) / tileH) * tileH;
+
+		let rtl = this.getRightToLeft();
+		let ctxWidth = rtl ? this.getCtxWidth(ctx) : 0;
+
+		for (let y = startY; y < y2; y += tileH) {
+			for (let x = startX; x < x2; x += tileW) {
+				let destX = rtl ? (ctxWidth - x - tileW) : x;
+				ctx.drawImage(img, 0, 0, tileW, tileH, destX, y, tileW, tileH);
+			}
+		}
+	};
+
+	WorksheetView.prototype._getBaseCellsLeft = function () {
+		if (false === this.model.getSheetView().asc_getShowRowColHeaders()) {
+			return this.headersLeft;
+		}
+		let nCharCount = this.model.charCountToModelColWidth(3);
+		let baseHeadersWidth = Asc.round(this.model.modelColWidthToColWidth(nCharCount) * this.getZoom() * this.getRetinaPixelRatio());
+		return this.headersLeft + baseHeadersWidth;
 	};
 
 	let clipType = {
@@ -11178,6 +11268,15 @@ function isAllowPasteLink(pastedWb) {
 		if (this.notUpdateRowHeight) {
 			return this;
 		}
+
+		//if changed cells left
+        if (this._backgroundImage && x !== this.cellsLeft) {
+            this.draw();
+            this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
+            this._reinitializeScroll();
+            this.handlers.trigger("onDocumentPlaceChanged");
+            return this;
+        }
 
         var oldW, dx;
 
