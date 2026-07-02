@@ -22727,7 +22727,7 @@
 	 * Sets the beginning arrow of the stroke.
 	 *
 	 * @memberof ApiStroke
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
 	 * @param {LineEndType} type - The type of the beginning arrow.
 	 * @param {LineEndSize} [width="medium"] - The width of the beginning arrow.
@@ -22774,7 +22774,7 @@
 	 * Returns the beginning arrow properties of the stroke.
 	 *
 	 * @memberof ApiStroke
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
 	 * @returns {{Type: LineEndType, Width: LineEndSize, Length: LineEndSize} | null}
 	 *
@@ -22796,7 +22796,7 @@
 	 * Sets the ending arrow of the stroke.
 	 *
 	 * @memberof ApiStroke
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
 	 * @param {LineEndType} type - The type of the ending arrow.
 	 * @param {LineEndSize} [width="medium"] - The width of the ending arrow.
@@ -22843,7 +22843,7 @@
 	 * Returns the ending arrow properties of the stroke.
 	 *
 	 * @memberof ApiStroke
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
 	 * @returns {{Type: LineEndType, Width: LineEndSize, Length: LineEndSize} | null}
 	 *
