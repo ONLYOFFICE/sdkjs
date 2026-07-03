@@ -97,7 +97,7 @@ function (window, undefined) {
 				}
 				if (arg[i].type === cElementType.string) {
 					// skip string check
-					continue;
+					continue
 				} else if (arg[i].type === cElementType.error) {
 					return arg[i];
 				} else if (arg[i].type === cElementType.array) {
@@ -426,7 +426,7 @@ function (window, undefined) {
 
 				for (let row = 0; row < dimensions.row; row++) {
 					for (let col = 0; col < dimensions.col; col++) {
-						let elemVal = arg[i].getValueByRowCol(row,col,true);
+						let elemVal = arg[i].getValueByRowCol ? arg[i].getValueByRowCol(row,col,true) : arg[i].getElementRowCol(row,col);
 
 						if (elemVal.type === cElementType.error) {
 							return elemVal;
@@ -704,7 +704,7 @@ function (window, undefined) {
 
 				for (let row = 0; row < dimensions.row; row++) {
 					for (let col = 0; col < dimensions.col; col++) {
-						let elemVal = arg[i].getValueByRowCol(row, col, true);
+						let elemVal = arg[i].getValueByRowCol ? arg[i].getValueByRowCol(row, col, true) : arg[i].getElementRowCol(row, col);
 
 						if (elemVal.type === cElementType.error) {
 							return elemVal;
@@ -729,6 +729,7 @@ function (window, undefined) {
 					}
 				}
 
+				// if the range contains at least one non-empty cell (without an error) - mark result as valid
 				if (argResult === null && hasNonEmpty) {
 					argResult = new cBool(false);
 				}
