@@ -392,6 +392,15 @@ var editor;
     if (this.isFrameEditor() || this.isLongAction()) {
       return;
     }
+    var t = this;
+    if (options && c_oAscFileType.XLS === options.fileType && this.wbModel && this.wbModel.checkExceedXlsLimit()) {
+      this.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmXlsFormatLimit, function (can) {
+        if (can) {
+          t.downloadAs(c_oAscAsyncAction.DownloadAs, options);
+        }
+      });
+      return;
+    }
     this.downloadAs(c_oAscAsyncAction.DownloadAs, options);
   };
 	spreadsheet_api.prototype._saveCheck = function() {

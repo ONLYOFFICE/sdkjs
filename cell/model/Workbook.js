@@ -3966,6 +3966,15 @@
 	Workbook.prototype.getWorksheetCount=function(){
 		return this.aWorksheets.length;
 	};
+	Workbook.prototype.checkExceedXlsLimit=function(){
+		var XLS_MAX_ROWS = 65536, XLS_MAX_COLS = 256;
+		for(var i = 0; i < this.aWorksheets.length; ++i){
+			var ws = this.aWorksheets[i];
+			if(ws.getRowsCount() > XLS_MAX_ROWS || ws.getColsCount() > XLS_MAX_COLS)
+				return true;
+		}
+		return false;
+	};
 	Workbook.prototype.createWorksheet=function(indexBefore, sName, sId){
 		this.dependencyFormulas.lockRecal();
 		AscCommon.History.Create_NewPoint();
