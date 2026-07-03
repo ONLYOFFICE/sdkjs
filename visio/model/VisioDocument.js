@@ -379,6 +379,10 @@ AscDFH.historyitem_type_VisioWindow = 328;
 	CVisioDocument.prototype.Get_CollaborativeEditing = function() {
 		return this.collaborativeEditing;
 	};
+	CVisioDocument.prototype.getViewManager = function() {
+		// slide CShape.isSlideNoteShape calls this on the logic document; visio has no view manager
+		return null;
+	};
 
 	/**
 	 * @memberOf CVisioDocument
