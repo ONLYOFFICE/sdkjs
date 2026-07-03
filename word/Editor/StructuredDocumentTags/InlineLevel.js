@@ -4132,7 +4132,15 @@ CInlineLevelSdt.prototype.CanCheckSpelling = function()
 		return false;
 
 	let formPr = this.Pr.FormPr;
-	return (!formPr || !!formPr.GetSpellCheck());
+	return (!formPr || false !== formPr.GetSpellCheck());
+};
+CInlineLevelSdt.prototype.private_OnChangeFormPrSpellCheck = function()
+{
+	let paragraph = this.GetParagraph();
+	if (paragraph)
+		paragraph.GetSpellChecker().Clear();
+	
+	this.private_UpdateSpellChecking();
 };
 CInlineLevelSdt.prototype.MoveCursorOutsideForm = function(isBefore)
 {

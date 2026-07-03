@@ -800,6 +800,12 @@ CChangesSdtPrFormPr.prototype.Type = AscDFH.historyitem_SdtPr_FormPr;
 CChangesSdtPrFormPr.prototype.private_SetValue = function(Value)
 {
 	let form = this.Class;
+	
+	let oldSpellCheck = form.Pr.FormPr ? form.Pr.FormPr.GetSpellCheck() : true;
+	let newSpellCheck = Value ? Value.GetSpellCheck() : true;
+	if (oldSpellCheck !== newSpellCheck)
+		form.private_OnChangeFormPrSpellCheck();
+	
 	if (this.OformSupport)
 	{
 		let oldFieldMaster = form.Pr.FormPr ? form.Pr.FormPr.Field : undefined;
