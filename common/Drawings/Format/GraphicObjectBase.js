@@ -1654,6 +1654,10 @@
 		}
 		return null;
 	};
+	CGraphicObjectBase.prototype.getPlaceholderTypeWithDefault = function () {
+		let type = this.getPlaceholderType();
+		return type == null ? AscFormat.phType_obj : type;
+	};
 	CGraphicObjectBase.prototype.getDrawingBaseType = function () {
 		if (this.drawingBase) {
 			if (this.drawingBase.Type === AscCommon.c_oAscCellAnchorType.cellanchorTwoCell) {

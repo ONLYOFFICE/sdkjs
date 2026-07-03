@@ -8339,7 +8339,7 @@
 			this.idx = null;
 			this.orient = null;
 			this.sz = null;
-			this.type = AscFormat.phType_obj;
+			this.type = null;
 		}
 
 		InitClass(Ph, CBaseFormatObject, AscDFH.historyitem_type_Ph);
@@ -11311,7 +11311,7 @@
 		CSld.prototype.getContentShape = function () {
 			let matchingShape;
 			function forEachSpCallback(shape) {
-				const placeholderType = shape.getPlaceholderType();
+				const placeholderType = shape.getPlaceholderTypeWithDefault();
 				if (placeholderType === AscFormat.phType_subTitle || placeholderType === AscFormat.phType_obj || placeholderType === AscFormat.phType_body) {
 					matchingShape = shape;
 					return true;

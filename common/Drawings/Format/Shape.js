@@ -7349,7 +7349,7 @@
 			return false;
 		};
 		CShape.prototype.isContentPlaceholder = function () {
-			switch (this.getPlaceholderType()) {
+			switch (this.getPlaceholderTypeWithDefault()) {
 				case AscFormat.phType_subTitle:
 				case AscFormat.phType_body:
 				case AscFormat.phType_obj: {
