@@ -1233,11 +1233,14 @@ function isAllowPasteLink(pastedWb) {
 	WorksheetView.prototype.getVerticalSmoothScrollRange = function (bCheckEqual) {
 		var offsetFrozen = this.getFrozenPaneOffset(true, false);
 		var ctxH = this.drawingCtx.getHeight() - offsetFrozen.offsetY - this.cellsTop;
+		let hOffset = 0;
 		for (var h = 0, i = this.getCurrentRowsCount() - 1; i >= 0; --i) {
 			h += this._getRowHeight(i);
 			if (h >= ctxH) {
 				if (bCheckEqual && h > ctxH) {
 					i++;
+				} else {
+					hOffset = (h - ctxH) > 0 ? ((h - ctxH) - 1) : 0;
 				}
 				break;
 			}
@@ -1255,7 +1258,7 @@ function isAllowPasteLink(pastedWb) {
 		let isMobileVersion = this.workbook && this.workbook.Api && this.workbook.Api.isMobileVersion;
 		let row = Math.max(0, i); // Scroll range should be less than the number of rows to prevent adding rows when dragging the scrollbar
 		let defaultScrollPxStep = Asc.round(this.getVScrollStep());
-		let beforeVisibleRangeHeight = this._getRowTop(row) - this.cellsTop;
+		let beforeVisibleRangeHeight = this._getRowTop(row) - this.cellsTop + hOffset;
 		if (isMobileVersion || AscCommonExcel.c_oAscScrollType.ScrollInitRowsColsCount & this.scrollType) {
 			beforeVisibleRangeHeight += this.getScrollCorrect();
 		}
@@ -11192,7 +11195,7 @@ function isAllowPasteLink(pastedWb) {
         
             delta = deltaRows;
         }
-       
+
 
         this._fixSelectionOfHiddenCells(0, delta >= 0 ? +1 : -1, fixStartRow);
         var start = this._calcCellPosition(vr.c1, isSmoothScroll ? vr.r1 : fixStartRow.r1, 0, delta).row;
