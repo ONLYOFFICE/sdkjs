@@ -2524,6 +2524,19 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 
     var bNextPage = false;
 
+	// Настройка "не отрывать от следующего" на элементе, следующем за таблицей: если элемент после
+	// таблицы был перенесен на следующую страницу, а последняя строка таблицы имеет данную настройку,
+	// принудительно переносим последние строки таблицы (связанные настройкой) на следующую страницу,
+	// чтобы они остались вместе с этим элементом.
+	var bKeepNextForced   = false;
+	var nKeepNextForceRow = -1;
+	if (oLogicDocument && oLogicDocument.RecalcInfo && oLogicDocument.RecalcInfo.Check_KeepNext(this) && this.IsLastRowKeepWithNext())
+	{
+		nKeepNextForceRow = this.Content.length - 1;
+		while (nKeepNextForceRow > 0 && this.private_IsRowWithKeepNext(nKeepNextForceRow - 1))
+			--nKeepNextForceRow;
+	}
+
     // Блок переменных для учета сносок
 	var nFootnotesHeight     = 0;
 	var arrSavedY            = [];
@@ -2557,6 +2570,20 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         }
 
         this.TableRowsBottom[CurRow][CurPage] = Y;
+
+		// Принудительный перенос последних строк таблицы из-за настройки "не отрывать от следующего"
+		// на следующем за таблицей элементе. Оставляем на текущей странице строки до nKeepNextForceRow,
+		// а начиная с нее - переносим на следующую страницу вместе со следующим элементом.
+		if (nKeepNextForceRow > FirstRow && CurRow === nKeepNextForceRow)
+		{
+			bNextPage       = true;
+			bKeepNextForced = true;
+
+			LastRow                          = CurRow - 1;
+			this.Pages[CurPage].LastRow      = CurRow - 1;
+			this.Pages[CurPage].LastRowSplit = false;
+			break;
+		}
 
         var Row         = this.Content[CurRow];
         var CellsCount  = Row.Get_CellsCount();
@@ -3599,7 +3626,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
     this.Pages[CurPage].Bounds.Right  = X_max + this.Pages[CurPage].X;
     this.Pages[CurPage].Height        = TableHeight;
 
-	if (true === bNextPage)
+	if (true === bNextPage && false === bKeepNextForced)
 	{
 		let lastRow = this.Pages[CurPage].LastRow;
 		let canMoveRows = CurPage || this.Get_DocumentPrev() || (this.Parent && !this.Parent.IsFirstElementOnPage(this.GetRelativePage(CurPage), this.GetIndex()));

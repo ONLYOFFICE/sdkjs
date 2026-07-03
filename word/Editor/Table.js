@@ -3584,6 +3584,20 @@ CTable.prototype.IsContentOnFirstPage = function()
 
 	return false;
 };
+/**
+ * Checks whether the last row of the table has the "keep with next" setting, i.e. it must be
+ * kept on the same page as the element following the table.
+ * @returns {boolean}
+ */
+CTable.prototype.IsLastRowKeepWithNext = function()
+{
+	let nRowsCount = this.GetRowsCount();
+	if (nRowsCount <= 0)
+		return false;
+
+	let oLastRow = this.GetRow(nRowsCount - 1);
+	return !!(oLastRow && oLastRow.IsContentWithKeepNext());
+};
 CTable.prototype.IsTableBorder = function(X, Y, CurPage)
 {
 	if (true === this.DrawingDocument.IsMobileVersion())
