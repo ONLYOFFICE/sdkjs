@@ -2363,6 +2363,156 @@
 		return true;
 	}
 
+	/**
+	 * Searches for the specified text in the presentation and returns all found occurrences as text ranges.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @param {string} text - The text to search for.
+	 * @param {boolean} [isMatchCase=false] - Case sensitive or not.
+	 * @param {boolean} [isWholeWords=false] - Whether to search for whole words only.
+	 * @returns {ApiTextRange[]}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/Search.js
+	 */
+	ApiPresentation.prototype.Search = function(text, isMatchCase, isWholeWords)
+	{
+		return private_SearchInSlideObjects(this.Presentation.Slides, text, isMatchCase, isWholeWords);
+	};
+
+	/**
+	 * Finds and replaces the text in the presentation.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @param {Object} properties - The properties to find and replace.
+	 * @param {string} properties.searchString - Search string.
+	 * @param {string} properties.replaceString - Replacement string.
+	 * @param {boolean} [properties.matchCase=false] - Case sensitive or not.
+	 * @param {boolean} [properties.wholeWords=false] - Whether to search for whole words only.
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/SearchAndReplace.js
+	 */
+	ApiPresentation.prototype.SearchAndReplace = function(properties)
+	{
+		properties = properties || {};
+
+		let searchString  = AscBuilder.GetStringParameter(properties["searchString"], '', true);
+		let replaceString = AscBuilder.GetStringParameter(properties["replaceString"], '');
+		if (searchString.length === 0)
+			return false;
+
+		let searchSettings = new AscCommon.CSearchSettings();
+		searchSettings.SetText(searchString);
+		searchSettings.SetMatchCase(AscBuilder.GetBoolParameter(properties["matchCase"], false));
+		searchSettings.SetWholeWords(AscBuilder.GetBoolParameter(properties["wholeWords"], false));
+
+		let searchEngine = this.Presentation.Search(searchSettings);
+		if (!searchEngine)
+			return false;
+
+		replaceString = replaceString
+			.replaceAll('\t', "^t")
+			.replaceAll('\v', "^l")
+			.replaceAll('\f', "^m")
+			.replaceAll('\x0e', "^n")
+			.replaceAll('\x1e', "^~");
+
+		this.Presentation.ReplaceSearchElement(replaceString, true, null, false);
+		return true;
+	};
+
+	function private_SearchInSlideObjects(aSlideObjects, text, isMatchCase, isWholeWords)
+	{
+		text         = AscBuilder.GetStringParameter(text, '', true);
+		isMatchCase  = AscBuilder.GetBoolParameter(isMatchCase, false);
+		isWholeWords = AscBuilder.GetBoolParameter(isWholeWords, false);
+
+		let results = [];
+		if (text.length === 0)
+			return results;
+
+		let searchSettings = new AscCommon.CSearchSettings();
+		searchSettings.SetText(text);
+		searchSettings.SetMatchCase(isMatchCase);
+		searchSettings.SetWholeWords(isWholeWords);
+
+		let searchEngine = new AscCommonWord.CDocumentSearch(Asc.editor.getLogicDocument());
+		searchEngine.Set(searchSettings);
+		for (let i = 0; i < aSlideObjects.length; ++i)
+			aSlideObjects[i].Search(searchEngine);
+
+		let docContents = [];
+		for (let id in searchEngine.Elements)
+		{
+			let paragraph  = searchEngine.Elements[id];
+			let docContent = paragraph.GetParent ? paragraph.GetParent() : paragraph.Parent;
+			if (docContent && docContents.indexOf(docContent) === -1)
+				docContents.push(docContent);
+		}
+
+		for (let i = 0; i < docContents.length; ++i)
+		{
+			let range  = new ApiTextRange(docContents[i], 0, -1);
+			let nAfter = 1;
+			let found;
+			while ((found = range.Find(text, nAfter, isMatchCase, isWholeWords)) !== null)
+			{
+				results.push(found);
+				nAfter = found.EndPos + 1;
+			}
+		}
+
+		return results;
+	}
+
+	/**
+	 * Searches for the specified text within the current slide and returns all found occurrences as text ranges.
+	 * @memberof ApiSlide
+	 * @typeofeditors ["CPE"]
+	 * @param {string} text - The text to search for.
+	 * @param {boolean} [isMatchCase=false] - Case sensitive or not.
+	 * @param {boolean} [isWholeWords=false] - Whether to search for whole words only.
+	 * @returns {ApiTextRange[]}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/Search.js
+	 */
+	ApiSlide.prototype.Search = function(text, isMatchCase, isWholeWords)
+	{
+		return private_SearchInSlideObjects([this.Slide], text, isMatchCase, isWholeWords);
+	};
+
+	/**
+	 * Searches for the specified text within the current slide master and returns all found occurrences as text ranges.
+	 * @memberof ApiMaster
+	 * @typeofeditors ["CPE"]
+	 * @param {string} text - The text to search for.
+	 * @param {boolean} [isMatchCase=false] - Case sensitive or not.
+	 * @param {boolean} [isWholeWords=false] - Whether to search for whole words only.
+	 * @returns {ApiTextRange[]}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/Search.js
+	 */
+	ApiMaster.prototype.Search = function(text, isMatchCase, isWholeWords)
+	{
+		return private_SearchInSlideObjects([this.Master], text, isMatchCase, isWholeWords);
+	};
+
+	/**
+	 * Searches for the specified text within the current slide layout and returns all found occurrences as text ranges.
+	 * @memberof ApiLayout
+	 * @typeofeditors ["CPE"]
+	 * @param {string} text - The text to search for.
+	 * @param {boolean} [isMatchCase=false] - Case sensitive or not.
+	 * @param {boolean} [isWholeWords=false] - Whether to search for whole words only.
+	 * @returns {ApiTextRange[]}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/Search.js
+	 */
+	ApiLayout.prototype.Search = function(text, isMatchCase, isWholeWords)
+	{
+		return private_SearchInSlideObjects([this.Layout], text, isMatchCase, isWholeWords);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
     //
     // ApiMaster
@@ -10577,7 +10727,7 @@
 			return null;
 
 		let nEffStart  = this.private_GetEffectiveStart();
-		let sText      = this.GetText();
+		let sText      = this.private_GetAllText().slice(nEffStart, this.private_GetEffectiveEnd());
 
 		let nFromLocal = nAfter - 1;
 		let sSlice     = sText.slice(nFromLocal);
@@ -11075,6 +11225,11 @@
 	ApiPresentation.prototype["MoveCursorDown"]           = ApiPresentation.prototype.MoveCursorDown;
 	ApiPresentation.prototype["EnterText"]                = ApiPresentation.prototype.EnterText;
 	ApiPresentation.prototype["InsertParagraphBreak"]     = ApiPresentation.prototype.InsertParagraphBreak;
+	ApiPresentation.prototype["Search"]                   = ApiPresentation.prototype.Search;
+	ApiPresentation.prototype["SearchAndReplace"]         = ApiPresentation.prototype.SearchAndReplace;
+	ApiSlide.prototype["Search"]                          = ApiSlide.prototype.Search;
+	ApiMaster.prototype["Search"]                         = ApiMaster.prototype.Search;
+	ApiLayout.prototype["Search"]                         = ApiLayout.prototype.Search;
 
     ApiMaster.prototype["GetClassType"]                   = ApiMaster.prototype.GetClassType;
     ApiMaster.prototype["GetInternalId"]                  = ApiMaster.prototype.GetInternalId;
