@@ -17347,8 +17347,12 @@
 			if (worksheet) {
 				oShape.setWorksheet(worksheet);
 			}
-			oShape.spPr.setFill(oFill);
-			oShape.spPr.setLn(oStroke);
+			if (oFill) {
+				oShape.spPr.setFill(oFill);
+			}
+			if (oStroke) {
+				oShape.spPr.setLn(oStroke);
+			}
 			return oShape;
 		}
 
