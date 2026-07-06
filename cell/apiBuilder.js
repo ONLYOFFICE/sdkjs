@@ -16728,6 +16728,12 @@
 	ApiPageSetup.prototype.private_GetPageMargins = function () {
 		return this.ws.PagePrintOptions.pageMargins;
 	};
+	ApiPageSetup.prototype.private_RoundMargin = function (nMargin) {
+		if (typeof nMargin !== 'number' || !isFinite(nMargin)) {
+			return nMargin;
+		}
+		return Math.round(nMargin * 1e6) / 1e6;
+	};
 	ApiPageSetup.prototype.private_SetMargin = function (sSide, nMargin) {
 		if (typeof nMargin !== 'number' || isNaN(nMargin)) {
 			return false;
@@ -16751,7 +16757,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetLeftMargin.js
 	 */
 	ApiPageSetup.prototype.GetLeftMargin = function () {
-		return this.private_GetPageMargins().asc_getLeft();
+		return this.private_RoundMargin(this.private_GetPageMargins().asc_getLeft());
 	};
 	/**
 	 * Sets the size of the left margin.
@@ -16783,7 +16789,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetRightMargin.js
 	 */
 	ApiPageSetup.prototype.GetRightMargin = function () {
-		return this.private_GetPageMargins().asc_getRight();
+		return this.private_RoundMargin(this.private_GetPageMargins().asc_getRight());
 	};
 	/**
 	 * Sets the size of the right margin.
@@ -16815,7 +16821,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetTopMargin.js
 	 */
 	ApiPageSetup.prototype.GetTopMargin = function () {
-		return this.private_GetPageMargins().asc_getTop();
+		return this.private_RoundMargin(this.private_GetPageMargins().asc_getTop());
 	};
 	/**
 	 * Sets the size of the top margin.
@@ -16847,7 +16853,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetBottomMargin.js
 	 */
 	ApiPageSetup.prototype.GetBottomMargin = function () {
-		return this.private_GetPageMargins().asc_getBottom();
+		return this.private_RoundMargin(this.private_GetPageMargins().asc_getBottom());
 	};
 	/**
 	 * Sets the size of the bottom margin.
