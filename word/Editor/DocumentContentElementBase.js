@@ -286,6 +286,10 @@ CDocumentContentElementBase.prototype.IsEmptyPage = function(nCurPage)
 CDocumentContentElementBase.prototype.Reset_RecalculateCache = function()
 {
 };
+CDocumentContentElementBase.prototype.IsNeedRecalculateKeepNext = function()
+{
+	return false;
+};
 /**
  * @param iPage {number} relative page index
  * @returns {recalcresult}
@@ -304,25 +308,29 @@ CDocumentContentElementBase.prototype.RecalculateKeepNext = function(iPage)
 		// И сам параграф не разбит на несколько страниц и не начинается с новой страницы,
 		// тогда мы должны пересчитать предыдущую страницу, с учетом того, что предыдущий параграф
 		// надо начать с новой страницы.
-		let curr = this.Get_DocumentPrev();
+		let curr = this.GetPrevDocumentElement();
 
-		// Предыдущий элемент - таблица, последняя строка которой должна оставаться на одной
-		// странице со следующим элементом. В этом случае таблица является началом
-		// последовательности "не отрывать от следующего" и сама перенесет свои последние
-		// строки на новую страницу.
-		if (this.private_IsKeepWithNextTable(curr) && this.Parent.RecalcInfo.Can_RecalcObject())
-		{
-			this.Parent.RecalcInfo.Set_KeepNext(curr, this);
-			return recalcresult_PrevPage | recalcresultflags_Column;
-		}
+		// // Предыдущий элемент - таблица, последняя строка которой должна оставаться на одной
+		// // странице со следующим элементом. В этом случае таблица является началом
+		// // последовательности "не отрывать от следующего" и сама перенесет свои последние
+		// // строки на новую страницу.
+		// if (this.private_IsKeepWithNextTable(curr) && this.Parent.RecalcInfo.Can_RecalcObject())
+		// {
+		// 	this.Parent.RecalcInfo.Set_KeepNext(curr, this);
+		// 	return recalcresult_PrevPage | recalcresultflags_Column;
+		// }
 
-		while (curr && curr.IsParagraph() && !curr.Get_SectionPr())
+		while (curr)
 		{
+			if (curr.IsParagraph() && curr.Get_SectionPr())
+				break;
+			
+			
 			let currKeepNext = curr.Get_CompiledPr2(false).ParaPr.KeepNext;
 			if (!currKeepNext || curr.getPageCount() > 1 || !curr.IsInline() || curr.Check_PageBreak())
 				break;
 
-			let prev = curr.Get_DocumentPrev();
+			let prev = curr.GetPrevDocumentElement();
 			if (!prev || (prev.IsParagraph() && prev.Get_SectionPr()))
 				break;
 

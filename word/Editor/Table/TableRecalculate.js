@@ -2019,7 +2019,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 	var oFootnotes         = (isTopLogicDocument && !isInnerTable ? oTopDocument.Footnotes : null);
 	var nPageAbs           = this.GetAbsolutePage(CurPage);
 	var nColumnAbs         = this.GetAbsoluteColumn(CurPage);
-
+	
     this.TurnOffRecalc = true;
 
     var FirstRow = 0;
@@ -2535,6 +2535,20 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 		nKeepNextForceRow = this.Content.length - 1;
 		while (nKeepNextForceRow > 0 && this.private_IsRowWithKeepNext(nKeepNextForceRow - 1))
 			--nKeepNextForceRow;
+		
+		if (0 === nKeepNextForceRow)
+		{
+			if (0 === CurPage && this.Get_DocumentPrev())
+			{
+				this.StartFromNewPage();
+				this.TurnOffRecalc = false;
+				return recalcresult_NextPage;
+			}
+			else
+			{
+				nKeepNextForceRow = -1;
+			}
+		}
 	}
 
     // Блок переменных для учета сносок
@@ -3648,7 +3662,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 					this.Pages[CurPage].LastRow = -1;
 					this.Pages[CurPage].LastRowSplit = false;
 				}
-				else if (lastRow !== FirstRow)
+				else if (lastRow !== FirstRow || 0 === CurPage)
 				{
 					this.Pages[CurPage].LastRow = lastRow;
 					this.Pages[CurPage].LastRowSplit = false;
