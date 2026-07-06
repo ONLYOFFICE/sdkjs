@@ -17050,9 +17050,16 @@
 		let sStr = private_buildHeaderFooterString(oSections) || null;
 		if (bFooter) {
 			oHeaderFooter.setOddFooter(sStr);
+			oData = oHeaderFooter.getOddFooter();
 		} else {
 			oHeaderFooter.setOddHeader(sStr);
+			oData = oHeaderFooter.getOddHeader();
 		}
+		if (oData) {
+			oData.parse();
+		}
+		let wb = this.ws && this.ws.workbook;
+		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 		return true;
 	};
 
