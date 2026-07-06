@@ -3492,7 +3492,8 @@ function (window, undefined) {
 				shedList.push(v.tocNumber());
 			})
 		} else if (schedule instanceof cArray) {
-			schedule.foreach(function (v) {
+			//forEachLogical includes the lazy tail (each schedule rate is a distinct period); foreach saw only the head
+			schedule.forEachLogical(function (v) {
 				shedList.push(v.tocNumber());
 			})
 		} else {
@@ -3840,7 +3841,8 @@ function (window, undefined) {
 
 		var arr = [];
 		if (arg0 instanceof cArray) {
-			arg0.foreach(function (v) {
+			//forEachLogical includes the lazy tail (each cash flow is a distinct period); foreach saw only the head
+			arg0.forEachLogical(function (v) {
 				if (v instanceof cNumber) {
 					arr.push(v);
 				}
@@ -4081,7 +4083,8 @@ function (window, undefined) {
 				}
 			})
 		} else if (arg0 instanceof cArray) {
-			arg0.foreach(function (c) {
+			//forEachLogical includes the lazy tail (each cash flow is a distinct period); foreach saw only the head
+			arg0.forEachLogical(function (c) {
 				if (c instanceof cNumber || c instanceof cError) {
 					valueArray.push(c);
 				}
@@ -4399,7 +4402,9 @@ function (window, undefined) {
 				}
 				continue;
 			} else if (argI instanceof cArray) {
-				argI.foreach(function (elem) {
+				//forEachLogical visits every LOGICAL cell (lazy tail via getElementRowCol) - each is a distinct period,
+				//so a constant tail (e.g. A1:A8+1) is discounted per position instead of being dropped by foreach.
+				argI.forEachLogical(function (elem) {
 					if (elem instanceof cNumber) {
 						res += elemCalc(rate, elem.getValue(), iStart++);
 					}
@@ -6753,7 +6758,7 @@ function (window, undefined) {
 				}
 			})
 		} else if (arg0.type === cElementType.array) {
-			arg0.foreach(function (c) {
+			arg0.forEachLogical(function (c) {
 				if (c) {
 					if (c.type === cElementType.bool) {
 						_values.push(new cError(cErrorType.wrong_value_type));
@@ -6803,7 +6808,7 @@ function (window, undefined) {
 				}
 			})
 		} else if (arg1.type === cElementType.array) {
-			arg1.foreach(function (c) {
+			arg1.forEachLogical(function (c) {
 				if (c) {
 					if (c.type === cElementType.bool) {
 						_dates.push(new cError(cErrorType.wrong_value_type));
@@ -6984,7 +6989,7 @@ function (window, undefined) {
 				}
 			});
 		} else if (arg1.type === cElementType.array) {
-			arg1.foreach(function (c) {
+			arg1.forEachLogical(function (c) {
 				if (c && c.type === cElementType.number) {
 					valueArray.push(c);
 				} else {
@@ -7021,7 +7026,7 @@ function (window, undefined) {
 				}
 			});
 		} else if (arg2.type === cElementType.array) {
-			arg2.foreach(function (c) {
+			arg2.forEachLogical(function (c) {
 				if (c && c.type === cElementType.number) {
 					dateArray.push(c);
 				} else {
