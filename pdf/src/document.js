@@ -5075,7 +5075,9 @@ var CPresentation = CPresentation || function(){};
         }
 
         this.UpdateUndoRedo();
-        Asc.editor.CheckChangedDocument();
+
+		Asc.editor.sync_UpdateRedactState();
+		Asc.editor.CheckChangedDocument();
         
         this.Api.sync_BeginCatchSelectedElements();
 

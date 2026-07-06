@@ -1477,7 +1477,9 @@
 			oDoc.ApplyRedact(undefined, undefined, isDelForms, isDelAnnots);
 		}, AscDFH.historydescription_Pdf_Apply_Redact);
 	};
-
+	PDFEditorApi.prototype.sync_UpdateRedactState = function() {
+		this.sendEvent("asc_onCanRedact", this.HasRedact());
+	};
 	PDFEditorApi.prototype.HasRedact = function() {
 		let oDoc = this.getPDFDoc();
 
