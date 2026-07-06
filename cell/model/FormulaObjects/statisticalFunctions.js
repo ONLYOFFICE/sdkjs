@@ -1544,6 +1544,152 @@ function (window, undefined) {
 		return {xs: xs, ys: ys, tails: tails};
 	}
 
+	//covariance over aligned paired data {xs, ys} + a shared constant tail (tails: [{x, y, n}]); bSample -> /(N-1),
+	//else population /N. Used by COVARIANCE.S/.P for two lazy constant-tail columns (getMatrix would drop the tail).
+	function covariance(x, y, tails, bSample) {
+		var s1 = 0, _x = 0, _y = 0, xLength = 0, i;
+		for (i = 0; i < x.length; i++) {
+			if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
+				continue;
+			}
+			_x += x[i].getValue();
+			_y += y[i].getValue();
+			xLength++;
+		}
+		for (i = 0; i < tails.length; i++) {
+			if (!(tails[i].x instanceof cNumber && tails[i].y instanceof cNumber)) {
+				continue;
+			}
+			_x += tails[i].x.getValue() * tails[i].n;
+			_y += tails[i].y.getValue() * tails[i].n;
+			xLength += tails[i].n;
+		}
+		if (bSample && xLength < 2.0) {
+			return new cError(cErrorType.division_by_zero);
+		}
+		_x /= xLength;
+		_y /= xLength;
+		for (i = 0; i < x.length; i++) {
+			if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
+				continue;
+			}
+			s1 += (x[i].getValue() - _x) * (y[i].getValue() - _y);
+		}
+		for (i = 0; i < tails.length; i++) {
+			if (!(tails[i].x instanceof cNumber && tails[i].y instanceof cNumber)) {
+				continue;
+			}
+			s1 += tails[i].n * (tails[i].x.getValue() - _x) * (tails[i].y.getValue() - _y);
+		}
+		return new cNumber(s1 / (bSample ? xLength - 1 : xLength));
+	}
+
+	//A lazy array's numeric constant tail as [{v, n}] (empty if none). `arr` is the ORIGINAL array; `mat` is the
+	//physical matrix from arr.getMatrix() (which drops the tail). tailCount = logical size - physical head cells.
+	function constTailFromMatrix(arr, mat) {
+		if (!arr || arr.type !== cElementType.array || !arr.getMissedValue || arr.missedValueFn) {
+			return [];
+		}
+		let mv = arr.getMissedValue();
+		if (!mv || mv.type !== cElementType.number) {
+			return [];
+		}
+		let d = arr.getDimensions(true), logical = d.row * d.col, headCount = 0;
+		for (let r = 0; r < mat.length; r++) {
+			headCount += mat[r].length;
+		}
+		return (logical - headCount > 0) ? [{v: mv.getValue(), n: logical - headCount}] : [];
+	}
+
+	//value at 0-based `idx` of `sortedHead` (sorted per `ascending`) merged with ONE constant-tail block of `n`
+	//copies of `v`. The v-block occupies merged indices [b, e + n); before it head values, after it the rest.
+	function kthOneTail(sortedHead, v, n, idx, ascending) {
+		let b = 0, e = 0, i;
+		for (i = 0; i < sortedHead.length; i++) {
+			if (ascending ? sortedHead[i] < v : sortedHead[i] > v) {
+				b++;
+			}
+			if (ascending ? sortedHead[i] <= v : sortedHead[i] >= v) {
+				e++;
+			}
+		}
+		if (idx < b) {
+			return sortedHead[idx];
+		}
+		if (idx < e + n) {
+			return v;
+		}
+		return sortedHead[idx - n];
+	}
+
+	//getPercentile with a constant-tail block (n copies of v) folded in: mirrors getPercentile but N = head + n and
+	//values[i] is served by kthOneTail (no materialization). Only used when n > 0; n === 0 equals the plain path.
+	function getPercentileTail(head, v, n, alpha) {
+		head.sort(fSortAscending);
+		var N = head.length + n;
+		if (N === 0) {
+			return new cError(cErrorType.not_available);
+		}
+		if (N === 1) {
+			return new cNumber(kthOneTail(head, v, n, 0, true));
+		}
+		var idx = Math.floor(alpha * (N - 1));
+		var fDiff = alpha * (N - 1) - idx;
+		var lo = kthOneTail(head, v, n, idx, true);
+		if (fDiff === 0.0) {
+			return new cNumber(lo);
+		}
+		return new cNumber(lo + fDiff * (kthOneTail(head, v, n, idx + 1, true) - lo));
+	}
+
+	//getPercentileExclusive with a constant-tail block folded in (mirrors getPercentileExclusive; N1 = head + n + 1).
+	function getPercentileExclusiveTail(head, v, n, alpha) {
+		head.sort(fSortAscending);
+		var N1 = head.length + n + 1;
+		if (N1 === 1) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+		if (alpha * N1 < 1 || alpha * N1 > N1 - 1) {
+			return new cError(cErrorType.not_numeric);
+		}
+		var idx = Math.floor(alpha * N1 - 1);
+		var fDiff = alpha * N1 - 1 - idx;
+		var lo = kthOneTail(head, v, n, idx, true);
+		if (fDiff === 0.0) {
+			return new cNumber(lo);
+		}
+		return new cNumber(lo + fDiff * (kthOneTail(head, v, n, idx + 1, true) - lo));
+	}
+
+	//RANK / RANK.AVG with a constant-tail block (n copies of v) folded in via counts: lt/eq/gt over head + tail.
+	//Returns null when fVal is not present (eq === 0). Matches plain rank() for present values; used only with a tail.
+	function rankWithTail(fVal, headArr, tails, bAscending, bAverage) {
+		var lt = 0, eq = 0, gt = 0, i;
+		for (i = 0; i < headArr.length; i++) {
+			if (headArr[i] < fVal) {
+				lt++;
+			} else if (headArr[i] > fVal) {
+				gt++;
+			} else {
+				eq++;
+			}
+		}
+		for (i = 0; i < tails.length; i++) {
+			if (tails[i].v < fVal) {
+				lt += tails[i].n;
+			} else if (tails[i].v > fVal) {
+				gt += tails[i].n;
+			} else {
+				eq += tails[i].n;
+			}
+		}
+		if (eq === 0) {
+			return null;
+		}
+		var base = bAscending ? lt + 1 : gt + 1;
+		return bAverage ? base + (eq - 1) / 2 : base;
+	}
+
 	function convertToMatrix(val) {
 		var matrix;
 		if (undefined !== val.getMatrix) {
@@ -5492,6 +5638,12 @@ function (window, undefined) {
 	cCOVARIANCE_P.prototype.enabledToSingle = {"0": true, "1": true};
 	cCOVARIANCE_P.prototype.Calculate = function (arg) {
 
+		//two lazy constant-tail columns: _prepareArguments' getMatrix drops the tail; fold it in O(head)+O(1)
+		var weighted = pairedConstTailWeighted(arg[0], arg[1]);
+		if (weighted) {
+			return covariance(weighted.xs, weighted.ys, weighted.tails, false);
+		}
+
 		var arg2 = [arg[0], arg[1]];
 		//if the first or second value is a string
 		if (cElementType.string === arg[0].type || cElementType.bool === arg[0].type) {
@@ -5587,6 +5739,12 @@ function (window, undefined) {
 	cCOVARIANCE_S.prototype.argumentsType = [argType.array, argType.array];
 	cCOVARIANCE_S.prototype.enabledToSingle = {"0": true, "1": true};
 	cCOVARIANCE_S.prototype.Calculate = function (arg) {
+
+		//two lazy constant-tail columns: _prepareArguments' getMatrix drops the tail; fold it in O(head)+O(1)
+		var weighted = pairedConstTailWeighted(arg[0], arg[1]);
+		if (weighted) {
+			return covariance(weighted.xs, weighted.ys, weighted.tails, true);
+		}
 
 		var arg2 = [arg[0], arg[1]];
 		//if the first or second value is a string
@@ -6773,7 +6931,7 @@ function (window, undefined) {
 	cFREQUENCY.prototype.enabledToSingle = {"0": true, "1": true};
 	cFREQUENCY.prototype.Calculate = function (arg) {
 
-		function frequency(A, B) {
+		function frequency(A, B, tails) {
 
 			let tA = [], tB = [Number.NEGATIVE_INFINITY], i, j;
 			for (i = 0; i < A.length; i++) {
@@ -6823,6 +6981,12 @@ function (window, undefined) {
 						C[k][0] = new cNumber(++a);
 					}
 				}
+				//data array's constant lazy tail: its n copies of v all fall into the interval that contains v
+				for (let t = 0; t < tails.length; t++) {
+					if (tails[t].v > tB[i - 1] && tails[t].v <= tB[i]) {
+						C[k][0] = new cNumber(C[k][0].getValue() + tails[t].n);
+					}
+				}
 			}
 			let res = new cArray();
 			res.fillFromArray(C);
@@ -6848,6 +7012,17 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
+		// capture a lazy constant-tail DATA array's tail before getMatrix() drops it (numeric tails only)
+		let dataTails = [], _mv0 = null, _logical0 = 0;
+		if (arg0.type === cElementType.array && arg0.getMissedValue && !arg0.missedValueFn) {
+			let mv0 = arg0.getMissedValue();
+			if (mv0 && mv0.type === cElementType.number) {
+				_mv0 = mv0.getValue();
+				let ld0 = arg0.getDimensions(true);
+				_logical0 = ld0.row * ld0.col;
+			}
+		}
+
 		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.array) {
 			arg0 = arg0.getMatrix();
 		} else if (arg0.type === cElementType.cellsRange3D) {
@@ -6855,6 +7030,16 @@ function (window, undefined) {
 		} else {
 			// create arr with single val
 			arg0 = [[arg0]];
+		}
+
+		if (_mv0 !== null) {
+			let headCount0 = 0;
+			for (let hr = 0; hr < arg0.length; hr++) {
+				headCount0 += arg0[hr].length;
+			}
+			if (_logical0 - headCount0 > 0) {
+				dataTails.push({v: _mv0, n: _logical0 - headCount0});
+			}
 		}
 
 		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.array) {
@@ -6866,7 +7051,7 @@ function (window, undefined) {
 			arg1 = [[arg1]];
 		}
 
-		return frequency(arg0, arg1);
+		return frequency(arg0, arg1, dataTails);
 
 	};
 
@@ -7861,7 +8046,7 @@ function (window, undefined) {
 	cLARGE.prototype.arrayIndexes = {0: 1};
 	cLARGE.prototype.argumentsType = [argType.number, argType.number];
 	cLARGE.prototype.enabledToSingle = {"0": true};
-	cLARGE.prototype._getValue = function (arg0, arg1) {
+	cLARGE.prototype._getValue = function (arg0, arg1, tails) {
 		if (cElementType.error === arg1.type) {
 			return arg1;
 		}
@@ -7888,14 +8073,18 @@ function (window, undefined) {
 		tA.sort(AscCommon.fSortDescending);
 
 		arg1 = Math.ceil(arg1);
-		if (arg1 > tA.length) {
+		let tailN = (tails && tails.length) ? tails[0].n : 0;
+		if (arg1 > tA.length + tailN) {
 			return new cError(cErrorType.not_numeric);
-		} else {
+		} else if (tailN === 0) {
 			return new cNumber(tA[arg1 - 1]);
+		} else {
+			//k-th LARGEST over head + the constant tail block, descending, without materializing the tail
+			return new cNumber(kthOneTail(tA, tails[0].v, tailN, arg1 - 1, false));
 		}
 	};
 	cLARGE.prototype.Calculate = function (arg) {
-		let arg0 = arg[0], arg1 = arg[1];
+		let arg0 = arg[0], arg1 = arg[1], dataTails = [];
 		let isArrayMode = false;	// is first arg array or range
 
 		if (cElementType.cellsRange === arg0.type) {
@@ -7903,7 +8092,10 @@ function (window, undefined) {
 				this.excludeNestedStAg);
 			isArrayMode = true;
 		} else if (cElementType.array === arg0.type) {
+			//capture a lazy array's numeric constant tail before getMatrix() drops it
+			let _origArg0 = arg0;
 			arg0 = arg0.getMatrix();
+			dataTails = constTailFromMatrix(_origArg0, arg0);
 			isArrayMode = true;
 		} else if (cElementType.cellsRange3D === arg0.type) {
 			arg0 = arg0.getMatrix()[0];
@@ -7949,7 +8141,7 @@ function (window, undefined) {
 			return new cNumber(arg0Val);
 		}
 
-		return this._getValue(arg0, arg1);
+		return this._getValue(arg0, arg1, dataTails);
 	};
 
 	/**
@@ -8551,11 +8743,11 @@ function (window, undefined) {
 	cMEDIAN.prototype.enabledToSingle = {"*": true};
 	cMEDIAN.prototype.Calculate = function (arg) {
 
-		function median(x) {
+		function median(x, tails) {
 
-			var medArr = [], t;
+			var medArr = [], t, i;
 
-			for (var i = 0; i < x.length; i++) {
+			for (i = 0; i < x.length; i++) {
 				t = x[i].tocNumber();
 				if (t instanceof cNumber) {
 					medArr.push(t.getValue())
@@ -8564,18 +8756,57 @@ function (window, undefined) {
 
 			medArr.sort(fSortAscending);
 
-			if (medArr.length < 1) {
+			//constant lazy tail(s): value v repeated n times, folded into the sorted order by weight
+			var tailN = 0;
+			for (i = 0; i < tails.length; i++) {
+				tailN += tails[i].n;
+			}
+			var M = medArr.length + tailN;
+
+			if (M < 1) {
 				return new cError(cErrorType.wrong_value_type);
-			} else {
+			}
+
+			if (tailN === 0) {
 				if (medArr.length % 2) {
 					return new cNumber(medArr[(medArr.length - 1) / 2]);
 				} else {
 					return new cNumber((medArr[medArr.length / 2 - 1] + medArr[medArr.length / 2]) / 2);
 				}
 			}
+
+			//weighted median: value at a 0-based merged index k, walking medArr (weight 1) and tail blocks in order
+			var sortedTails = tails.slice().sort(function (a, b) { return a.v - b.v; });
+			var at = function (k) {
+				var ai = 0, ti = 0, seen = 0;
+				while (ai < medArr.length || ti < sortedTails.length) {
+					var takeTail = (ti < sortedTails.length) &&
+						(ai >= medArr.length || sortedTails[ti].v <= medArr[ai]);
+					if (takeTail) {
+						seen += sortedTails[ti].n;
+						if (k < seen) {
+							return sortedTails[ti].v;
+						}
+						ti++;
+					} else {
+						seen += 1;
+						if (k < seen) {
+							return medArr[ai];
+						}
+						ai++;
+					}
+				}
+				return medArr.length ? medArr[medArr.length - 1] : sortedTails[sortedTails.length - 1].v;
+			};
+
+			if (M % 2) {
+				return new cNumber(at((M - 1) / 2));
+			} else {
+				return new cNumber((at(M / 2 - 1) + at(M / 2)) / 2);
+			}
 		}
 
-		var arr0 = [];
+		var arr0 = [], tails = [];
 
 		for (var j = 0; j < arg.length; j++) {
 
@@ -8591,11 +8822,17 @@ function (window, undefined) {
 					arr0.push(a);
 				}
 			} else if (arg[j] instanceof cArray) {
-				arg[j].foreach(function (elem) {
+				//head cells -> arr0 (cNumber, like a range); constant tail -> one weighted entry (numbers only)
+				arg[j].reduceLogical(function (acc, elem, n) {
 					if (elem instanceof cNumber) {
-						arr0.push(elem);
+						if (n === 1) {
+							arr0.push(elem);
+						} else {
+							tails.push({v: elem.getValue(), n: n});
+						}
 					}
-				});
+					return acc;
+				}, null);
 			} else if (arg[j] instanceof cNumber || arg[j] instanceof cBool) {
 				arr0.push(arg[j].tocNumber());
 			} else if (arg[j] instanceof cString) {
@@ -8605,7 +8842,7 @@ function (window, undefined) {
 			}
 
 		}
-		return median(arr0);
+		return median(arr0, tails);
 
 	};
 
@@ -8797,7 +9034,7 @@ function (window, undefined) {
 	cMODE.prototype.argumentsType = [[argType.array]];
 	cMODE.prototype.enabledToSingle = {"*": true};
 	cMODE.prototype.Calculate = function (arg) {
-		function mode(x) {
+		function mode(x, tails) {
 
 			var medArr = [], t, i;
 
@@ -8810,9 +9047,16 @@ function (window, undefined) {
 
 			medArr.sort(fSortAscending);
 
-			if (medArr.length < 1) {
+			var tailN = 0;
+			for (i = 0; i < tails.length; i++) {
+				tailN += tails[i].n;
+			}
+
+			if (medArr.length + tailN < 1) {
 				return new cError(cErrorType.wrong_value_type);
-			} else {
+			}
+
+			if (tailN === 0) {
 				var nMaxIndex = 0, nMax = 1, nCount = 1, nOldVal = medArr[0];
 
 				for (i = 1; i < medArr.length; i++) {
@@ -8839,9 +9083,45 @@ function (window, undefined) {
 					return new cNumber(medArr[nMaxIndex]);
 				}
 			}
+
+			//constant lazy tail(s): fold into per-value counts; the mode is the smallest value with the max count
+			//(matching the sorted-run scan). A tail block has n>=2 (a 1-cell tail is served as a head element).
+			var freq = [];
+			for (i = 0; i < medArr.length; i++) {
+				if (freq.length && freq[freq.length - 1].v === medArr[i]) {
+					freq[freq.length - 1].c++;
+				} else {
+					freq.push({v: medArr[i], c: 1});
+				}
+			}
+			for (i = 0; i < tails.length; i++) {
+				var found = false;
+				for (var f = 0; f < freq.length; f++) {
+					if (freq[f].v === tails[i].v) {
+						freq[f].c += tails[i].n;
+						found = true;
+						break;
+					}
+				}
+				if (!found) {
+					freq.push({v: tails[i].v, c: tails[i].n});
+				}
+			}
+			freq.sort(function (a, b) { return a.v - b.v; });
+			var bestV = null, bestC = 0;
+			for (i = 0; i < freq.length; i++) {
+				if (freq[i].c > bestC) {
+					bestC = freq[i].c;
+					bestV = freq[i].v;
+				}
+			}
+			if (bestC <= 1) {
+				return new cError(cErrorType.not_available);
+			}
+			return new cNumber(bestV);
 		}
 
-		let arr0 = [];
+		let arr0 = [], tails = [];
 
 		for (let j = 0; j < arg.length; j++) {
 
@@ -8857,11 +9137,17 @@ function (window, undefined) {
 					arr0.push(a);
 				}
 			} else if (cElementType.array === arg[j].type) {
-				arg[j].foreach(function (elem) {
+				//head cells -> arr0 (cNumber, like a range); constant tail -> one weighted entry (numbers only)
+				arg[j].reduceLogical(function (acc, elem, n) {
 					if (cElementType.number === elem.type) {
-						arr0.push(elem);
+						if (n === 1) {
+							arr0.push(elem);
+						} else {
+							tails.push({v: elem.getValue(), n: n});
+						}
 					}
-				});
+					return acc;
+				}, null);
 			} else if (cElementType.number === arg[j].type) {
 				arr0.push(arg[j].tocNumber());
 			} else if (cElementType.string === arg[j].type) {
@@ -8872,7 +9158,7 @@ function (window, undefined) {
 
 		}
 
-		return mode(arr0);
+		return mode(arr0, tails);
 	};
 
 	/**
@@ -8892,8 +9178,12 @@ function (window, undefined) {
 	cMODE_MULT.prototype.argumentsType = [[argType.array]];
 	cMODE_MULT.prototype.enabledToSingle = {"*": true};
 	cMODE_MULT.prototype.Calculate = function (arg) {
-		function modeMult(numArray) {
-			if (numArray.length < 1) {
+		function modeMult(numArray, tails) {
+			let totalLen = numArray.length;
+			for (let t = 0; t < tails.length; t++) {
+				totalLen += tails[t].n;
+			}
+			if (totalLen < 1) {
 				return new cError(cErrorType.wrong_value_type);
 			} else {
 				let res = new cArray(), i, maxEntry = 0;
@@ -8903,6 +9193,13 @@ function (window, undefined) {
 					let _elemIndex = elemMap.get(key);
 					let index = !_elemIndex ? 1 : _elemIndex + 1;
 					elemMap.set(key, index);
+					maxEntry = Math.max(maxEntry, index);
+				}
+				//fold constant lazy tail(s): each adds n to its value's count (appended after the head in first-appearance order)
+				for (i = 0; i < tails.length; i++) {
+					let cur = elemMap.get(tails[i].v);
+					let index = (undefined === cur ? 0 : cur) + tails[i].n;
+					elemMap.set(tails[i].v, index);
 					maxEntry = Math.max(maxEntry, index);
 				}
 
@@ -8920,7 +9217,7 @@ function (window, undefined) {
 			}
 		}
 
-		let arr0 = [];
+		let arr0 = [], tails = [];
 		for (let j = 0; j < arg.length; j++) {
 			if (cElementType.cellsRange === arg[j].type || cElementType.cellsRange3D === arg[j].type) {
 				arg[j].foreach2(function (elem) {
@@ -8934,11 +9231,17 @@ function (window, undefined) {
 					arr0.push(a.toNumber());
 				}
 			} else if (cElementType.array === arg[j].type) {
-				arg[j].foreach(function (elem) {
+				//head cells -> arr0 (like a range); constant tail -> one weighted entry (numbers only)
+				arg[j].reduceLogical(function (acc, elem, n) {
 					if (cElementType.number === elem.type) {
-						arr0.push(elem.toNumber());
+						if (n === 1) {
+							arr0.push(elem.toNumber());
+						} else {
+							tails.push({v: elem.toNumber(), n: n});
+						}
 					}
-				});
+					return acc;
+				}, null);
 			} else if (cElementType.number === arg[j].type) {
 				arr0.push(arg[j].toNumber());
 			} else if (cElementType.string === arg[j].type) {
@@ -8948,7 +9251,7 @@ function (window, undefined) {
 			}
 		}
 
-		return modeMult(arr0);
+		return modeMult(arr0, tails);
 	}
 
 	/**
@@ -9507,6 +9810,11 @@ function (window, undefined) {
 				}
 			}
 
+			//data array's constant lazy tail (getMatrix dropped it): fold it into the weighted percentile
+			var tails = constTailFromMatrix(arg[0], A);
+			if (tails.length) {
+				return getPercentileTail(tA, tails[0].v, tails[0].n, alpha);
+			}
 			return getPercentile(tA, alpha);
 		}
 
@@ -9558,6 +9866,11 @@ function (window, undefined) {
 				}
 			}
 
+			//data array's constant lazy tail (getMatrix dropped it): fold it into the weighted percentile
+			var tails = constTailFromMatrix(arg[0], A);
+			if (tails.length) {
+				return getPercentileExclusiveTail(tA, tails[0].v, tails[0].n, alpha);
+			}
 			return getPercentileExclusive(tA, alpha);
 		}
 
@@ -10047,6 +10360,15 @@ function (window, undefined) {
 				}
 			}
 
+			//data array's constant lazy tail (getMatrix dropped it): fold into the weighted percentile (flag 2 -> 0.5 == median)
+			var tails = constTailFromMatrix(arg[0], A);
+			if (tails.length) {
+				if (fFlag < 0.0 || fFlag > 4.0) {
+					return new cError(cErrorType.not_numeric);
+				}
+				return getPercentileTail(tA, tails[0].v, tails[0].n, 0.25 * fFlag);
+			}
+
 			var nSize = tA.length;
 			if (tA.length < 1 || nSize === 0) {
 				return new cError(cErrorType.not_available);
@@ -10108,6 +10430,15 @@ function (window, undefined) {
 						tA.push(A[i][j].tocNumber().getValue());
 					}
 				}
+			}
+
+			//data array's constant lazy tail (getMatrix dropped it): fold into the weighted percentile (flag 2 -> 0.5 == median)
+			var tails = constTailFromMatrix(arg[0], A);
+			if (tails.length) {
+				if (fFlag <= 0.0 || fFlag >= 4.0) {
+					return new cError(cErrorType.not_numeric);
+				}
+				return getPercentileExclusiveTail(tA, tails[0].v, tails[0].n, 0.25 * fFlag);
 			}
 
 			var nSize = tA.length;
@@ -10190,7 +10521,10 @@ function (window, undefined) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 
-			var res = rank(number, changedRef, order);
+			//ref's constant lazy tail (getMatrix dropped it): fold it into the rank via lt/eq/gt counts
+			var tails = constTailFromMatrix(arg[1], ref);
+			var res = tails.length ? rankWithTail(number, changedRef, tails, order, false)
+				: rank(number, changedRef, order);
 			return null !== res && !isNaN(res) ? new cNumber(res) : new cError(cErrorType.wrong_value_type);
 		};
 
@@ -10248,7 +10582,10 @@ function (window, undefined) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 
-			var res = rank(number, changedRef, order, true);
+			//ref's constant lazy tail (getMatrix dropped it): fold it into the rank via lt/eq/gt counts
+			var tails = constTailFromMatrix(arg[1], ref);
+			var res = tails.length ? rankWithTail(number, changedRef, tails, order, true)
+				: rank(number, changedRef, order, true);
 			return null !== res && !isNaN(res) ? new cNumber(res) : new cError(cErrorType.wrong_value_type);
 		};
 
@@ -10633,10 +10970,15 @@ function (window, undefined) {
 
 			tA.sort(fSortAscending);
 
-			if (k.getValue() > tA.length || k.getValue() <= 0) {
+			var kv = k.getValue();
+			var tailN = dataTails.length ? dataTails[0].n : 0;
+			if (kv > tA.length + tailN || kv <= 0) {
 				return new cError(cErrorType.not_numeric);
+			} else if (tailN === 0) {
+				return new cNumber(tA[kv - 1]);
 			} else {
-				return new cNumber(tA[k.getValue() - 1]);
+				//k-th SMALLEST over head + the constant tail block, ascending, without materializing the tail
+				return new cNumber(kthOneTail(tA, dataTails[0].v, tailN, kv - 1, true));
 			}
 		}
 
@@ -10650,7 +10992,7 @@ function (window, undefined) {
 			retArr.addElement(frequency(arg0, e));
 		}
 
-		let arg0 = arg[0], arg1 = arg[1], retArr = new cArray();
+		let arg0 = arg[0], arg1 = arg[1], retArr = new cArray(), dataTails = [];
 		if ((arg0.type !== cElementType.array && arg0.type !== cElementType.cellsRange && arg0.type !== cElementType.cellsRange3D) &&
 			(arg1.type !== cElementType.array && arg1.type !== cElementType.cellsRange && arg1.type !== cElementType.cellsRange3D)) {
 			/* value to value */
@@ -10670,8 +11012,11 @@ function (window, undefined) {
 			return arg0;
 		}
 
+		let _origArg0 = arg0;
 		if (cElementType.cellsRange === arg0.type || cElementType.array === arg0.type) {
 			arg0 = arg0.getMatrix(this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg);
+			//capture a lazy array's numeric constant tail (getMatrix drops it); [] for a range
+			dataTails = constTailFromMatrix(_origArg0, arg0);
 		} else if (cElementType.cellsRange3D === arg0.type) {
 			arg0 = arg0.getMatrix(this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg)[0];
 		} else {
