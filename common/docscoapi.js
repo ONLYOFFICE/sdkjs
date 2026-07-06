@@ -144,8 +144,8 @@
       this._CoAuthoringApi.onLicenseChanged = function(res) {
         t.callback_OnLicenseChanged(res);
       };
-      this._CoAuthoringApi.onAiPluginSettings = function(res) {
-        t.callback_OnAiPluginSettings(res);
+      this._CoAuthoringApi.onAiPluginSettings = function(res, allowBrowserProxy) {
+        t.callback_OnAiPluginSettings(res, allowBrowserProxy);
       };
       this._CoAuthoringApi.onMiscEvent = function(res) {
         t.callback_OnMiscEvent(res);
@@ -552,9 +552,9 @@
       this.onLicenseChanged(res);
     }
   };
-  CDocsCoApi.prototype.callback_OnAiPluginSettings = function(res) {
+  CDocsCoApi.prototype.callback_OnAiPluginSettings = function(res, allowBrowserProxy) {
     if (this.onAiPluginSettings) {
-      this.onAiPluginSettings(res);
+      this.onAiPluginSettings(res, allowBrowserProxy);
     }
   };
   CDocsCoApi.prototype.callback_OnMiscEvent = function(res) {
@@ -1506,7 +1506,7 @@
       this.isLicenseInit = true;
       this.onLicense(data['license']);
       if (this.onAiPluginSettings) {
-        this.onAiPluginSettings(data['aiPluginSettings']);
+        this.onAiPluginSettings(data['aiPluginSettings'], data['aiPluginSettingsAllowBrowserProxy']);
       }
     }
   };

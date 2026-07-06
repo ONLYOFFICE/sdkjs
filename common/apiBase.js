@@ -2021,12 +2021,13 @@
 			oResult.setLicenseType(licenseType);
 			t.sendEvent('asc_onLicenseChanged', oResult);
 		};
-		this.CoAuthoringApi.onAiPluginSettings = function(data)
+		this.CoAuthoringApi.onAiPluginSettings = function(data, allowBrowserProxy)
 		{
 			if (data) {
-				data.proxy = AscCommon.getBaseUrl() + "../../../../ai-proxy";
 				t.aiPluginSettings = JSON.stringify(data);
 			}
+			// Expose the proxy URL when the browser may use it: server settings present or browser-proxy allowed.
+			t.aiProxyUrl = (data || allowBrowserProxy) ? AscCommon.getBaseUrl() + "../../../../ai-proxy" : "";
 		};
 		this.CoAuthoringApi.onMiscEvent = function(data)
 		{

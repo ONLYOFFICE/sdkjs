@@ -1198,9 +1198,12 @@
 				}
 			}
 
-			if (this.api.aiPluginSettings && eventMap["onAIPluginSettings"])
+			if (eventMap["onAIPluginSettings"])
 			{
-				runObject.startData.setAttribute("aiPluginSettings", this.api.aiPluginSettings);
+				if (this.api.aiPluginSettings)
+					runObject.startData.setAttribute("aiPluginSettings", this.api.aiPluginSettings);
+				if (this.api.aiProxyUrl)
+					runObject.startData.setAttribute("aiProxyUrl", this.api.aiProxyUrl);
 			}
 
 			if (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge)
