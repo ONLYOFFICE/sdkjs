@@ -7814,7 +7814,7 @@ var CPresentation = CPresentation || function(){};
 			return annot.IsRedact() && annot.GetRedactId();
 		});
 	};
-    CPDFDoc.prototype.ApplyRedact = function(sRedactId, nPage) {
+    CPDFDoc.prototype.ApplyRedact = function(sRedactId, nPage, isDelForms, isDelAnnots) {
         let oFile = this.Viewer.file;
 		let oNativeFile = oFile.nativeFile;
         let _t = this;
@@ -7938,7 +7938,7 @@ var CPresentation = CPresentation || function(){};
 				this.SetRedactData(sRedactId, oPageInfo.GetId(), aQuadsFlat, oRender);
 			}
 
-            if (Asc.editor.IsRedactDelForms()) {
+            if (isDelForms !== false) {
                 oPageInfo.fields.slice().forEach(function(field) {
                     let aRect = field.GetRect();
 
@@ -7950,7 +7950,7 @@ var CPresentation = CPresentation || function(){};
                     } 
                 });
             }
-            if (Asc.editor.IsRedactDelAnnots()) {
+            if (isDelAnnots !== false) {
                 oPageInfo.annots.slice().forEach(function(annot) {
                     if (annot.IsRedact()) {
                         return;

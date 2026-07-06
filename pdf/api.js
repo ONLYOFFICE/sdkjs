@@ -1448,18 +1448,6 @@
 	PDFEditorApi.prototype.IsRedactTool = function() {
 		return !!this.isRedactTool;
 	};
-	PDFEditorApi.prototype.SetRedactDelForm = function(bDel) {
-		this.bRedactDelForms = bDel;
-	};
-	PDFEditorApi.prototype.IsRedactDelForms = function() {
-		return !!this.bRedactDelForms;
-	};
-	PDFEditorApi.prototype.SetRedactDelAnnots = function(bDel) {
-		this.bRedactDelAnnots = bDel;
-	};
-	PDFEditorApi.prototype.IsRedactDelAnnots = function() {
-		return !!this.bRedactDelAnnots;
-	};
 	PDFEditorApi.prototype.RedactPages = function(aIdxs) {
 		let oDoc = this.getPDFDoc();
 		let oFile = oDoc.Viewer.file;
@@ -1482,11 +1470,11 @@
 			})
 		}, AscDFH.historydescription_Pdf_AddAnnot);
 	};
-	PDFEditorApi.prototype.ApplyRedact = function() {
+	PDFEditorApi.prototype.ApplyRedact = function(isDelForms, isDelAnnots) {
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			oDoc.ApplyRedact()
+			oDoc.ApplyRedact(undefined, undefined, isDelForms, isDelAnnots);
 		}, AscDFH.historydescription_Pdf_Apply_Redact);
 	};
 
@@ -5543,8 +5531,6 @@
 	// redact
 	PDFEditorApi.prototype['SetRedactTool']		= PDFEditorApi.prototype.SetRedactTool;
 	PDFEditorApi.prototype['IsRedactTool']		= PDFEditorApi.prototype.IsRedactTool;
-	PDFEditorApi.prototype['SetRedactDelForm']	= PDFEditorApi.prototype.SetRedactDelForm;
-	PDFEditorApi.prototype['SetRedactDelAnnots']= PDFEditorApi.prototype.SetRedactDelAnnots;
 	PDFEditorApi.prototype['RedactPages']		= PDFEditorApi.prototype.RedactPages;
 	PDFEditorApi.prototype['ApplyRedact']		= PDFEditorApi.prototype.ApplyRedact;
 	PDFEditorApi.prototype['HasRedact']			= PDFEditorApi.prototype.HasRedact;
