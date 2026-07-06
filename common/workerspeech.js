@@ -485,13 +485,17 @@
 		this.onApplyChanges       = null;
 		this.onBeforeUndoRedo     = null;
 		this.onUndoRedo           = null;
+		this.onBeginGroupActions  = null;
+		this.onEndGroupActions    = null;
+		this.onCancelGroupActions = null;
 		this.onCloseFile          = null;
-		
+
 		this.selectionState = null;
 		this.isAction       = false;
 		this.isApplyChanges = false;
 		this.isKeyDown      = false;
 		this.isUndoRedo     = false;
+		this.groupActions   = 0;
 
 		if (AscCommon.EditorActionSpeakerInitData && AscCommon.EditorActionSpeakerInitData.isEnabled)
 			this.run();
@@ -524,17 +528,21 @@
 		this.editor.asc_registerCallback('asc_onUndoRedo', this.onUndoRedo);
 		this.editor.asc_registerCallback('asc_onBeforeUndoRedoInCollaboration', this.onBeforeUndoRedo);
 		this.editor.asc_registerCallback('asc_onUndoRedoInCollaboration', this.onUndoRedo);
+		this.editor.asc_registerCallback('asc_onBeginGroupActions', this.onBeginGroupActions);
+		this.editor.asc_registerCallback('asc_onEndGroupActions', this.onEndGroupActions);
+		this.editor.asc_registerCallback('asc_onCancelGroupActions', this.onCancelGroupActions);
 		this.editor.asc_registerCallback('asc_onCloseFile', this.onCloseFile);
 
 		//se
 		this.editor.asc_registerCallback('asc_onActiveSheetChanged', this.onActiveSheetChanged);
-		
+
 		this.selectionState = this.editor.isDocumentLoadComplete ? this.editor.getSelectionState() : null;
 		this.isAction       = false;
 		this.isApplyChanges = false;
 		this.isKeyDown      = false;
 		this.isUndoRedo     = false;
-		
+		this.groupActions   = 0;
+
 		this.speechWorker.setEnabled(true);
 	};
 	EditorActionSpeaker.prototype.stop = function()
@@ -554,16 +562,20 @@
 		this.editor.asc_unregisterCallback('asc_onUndoRedo', this.onUndoRedo);
 		this.editor.asc_unregisterCallback('asc_onBeforeUndoRedoInCollaboration', this.onBeforeUndoRedo);
 		this.editor.asc_unregisterCallback('asc_onUndoRedoInCollaboration', this.onUndoRedo);
+		this.editor.asc_unregisterCallback('asc_onBeginGroupActions', this.onBeginGroupActions);
+		this.editor.asc_unregisterCallback('asc_onEndGroupActions', this.onEndGroupActions);
+		this.editor.asc_unregisterCallback('asc_onCancelGroupActions', this.onCancelGroupActions);
 		this.editor.asc_unregisterCallback('asc_onCloseFile', this.onCloseFile);
-		
+
 		//se
 		this.editor.asc_unregisterCallback('asc_onActiveSheetChanged', this.onActiveSheetChanged);
-		
+
 		this.selectionState = null;
 		this.isAction       = false;
 		this.isKeyDown      = false;
 		this.isApplyChanges = false;
 		this.isUndoRedo     = false;
+		this.groupActions   = 0;
 		
 		this.speechWorker.setEnabled(false);
 		
@@ -578,9 +590,10 @@
 			if (_t.isAction
 				|| _t.isKeyDown
 				|| _t.isApplyChanges
-				|| _t.isUndoRedo)
+				|| _t.isUndoRedo
+				|| _t.groupActions > 0)
 				return;
-			
+
 			_t.handleSpeechDescription(null);
 		};
 		
@@ -630,6 +643,23 @@
 			_t.handleSpeechDescription({type: SpeakerActionType.undoRedo});
 			_t.updateState();
 			// TODO: If additional Undo/Redo notification is needed, add it here
+		};
+
+		this.onBeginGroupActions = function()
+		{
+			++_t.groupActions;
+		};
+
+		this.onEndGroupActions = function()
+		{
+			--_t.groupActions;
+			_t.updateState();
+		};
+
+		this.onCancelGroupActions = function()
+		{
+			--_t.groupActions;
+			_t.updateState();
 		};
 
 		this.onActiveSheetChanged = function(index)

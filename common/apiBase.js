@@ -6121,6 +6121,7 @@
 	};
 	baseEditorsApi.prototype.startGroupActions = function(pr)
 	{
+		this.sendEvent("asc_onBeginGroupActions");
 	};
 	baseEditorsApi.prototype.executeGroupActions = function(f)
 	{
@@ -6134,9 +6135,11 @@
 	};
 	baseEditorsApi.prototype.cancelGroupActions = function(pr)
 	{
+		this.sendEvent("asc_onCancelGroupActions");
 	};
 	baseEditorsApi.prototype.endGroupActions = function(pr)
 	{
+		this.sendEvent("asc_onEndGroupActions");
 	};
 	baseEditorsApi.prototype.isGroupActions = function()
 	{
