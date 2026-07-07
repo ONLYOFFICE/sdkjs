@@ -3845,7 +3845,9 @@ function (window, undefined) {
 			this.compositeLength = Math.max(this.selectionBegin, this.selectionEnd) - this.beginCompositePos;
 		}
 		this.lastCompositeCodes = null;
-		this.setTextStyle('u', Asc.EUnderline.underlineSingle);
+		if (this.compositeLength !== 0) {
+			this.setTextStyle('u', Asc.EUnderline.underlineSingle);
+		}
 	};
 	CellEditor.prototype.Replace_CompositeText = function (arrCharCodes) {
 		if (!this.isOpened) {
@@ -3885,8 +3887,7 @@ function (window, undefined) {
 		}
 		return true;
 	};
-
-	// Format for inserted composite (IME) text: format at the insertion point + underline (null for formulas).
+	
 	CellEditor.prototype._getCompositeTextFormat = function (pos) {
 		var opt = this.options;
 		if (this.isFormula() || !opt || !opt.fragments) {
