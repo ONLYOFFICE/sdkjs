@@ -17340,7 +17340,7 @@
 		 * @return {CShape}
 		 */
 		function builder_CreateShape(sType, nWidth, nHeight, oFill, oStroke, oParent, oTheme, oDrawingDocument, bWord, worksheet) {
-			var oShapeTrack = new AscFormat.NewShapeTrack(sType, 0, 0, oTheme, null, null, null, 0);
+			var oShapeTrack = new AscFormat.NewShapeTrack(sType, 0, 0, oTheme, null, null, null, 0, undefined, undefined, undefined, true);
 			oShapeTrack.track({}, nWidth, nHeight, true);
 			var oShape = oShapeTrack.getShape(bWord === true, oDrawingDocument, null);
 			oShape.setParent(oParent);
