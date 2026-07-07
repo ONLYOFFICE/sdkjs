@@ -16997,7 +16997,7 @@
 	});
 
 	function private_parseHeaderFooterSections(sStr) {
-		let oSections = {L: "", C: "", R: ""};
+		let oSections = {"L": "", "C": "", "R": ""};
 		if (typeof sStr !== 'string' || !sStr.length) {
 			return oSections;
 		}
@@ -17022,14 +17022,14 @@
 	}
 	function private_buildHeaderFooterString(oSections) {
 		let sStr = "";
-		if (oSections.L) {
-			sStr += "&L" + oSections.L;
+		if (oSections["L"]) {
+			sStr += "&L" + oSections["L"];
 		}
-		if (oSections.C) {
-			sStr += "&C" + oSections.C;
+		if (oSections["C"]) {
+			sStr += "&C" + oSections["C"];
 		}
-		if (oSections.R) {
-			sStr += "&R" + oSections.R;
+		if (oSections["R"]) {
+			sStr += "&R" + oSections["R"];
 		}
 		return sStr;
 	}
