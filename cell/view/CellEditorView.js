@@ -126,6 +126,7 @@ function (window, undefined) {
 		this.cursorPos = 0;
 		this.beginCompositePos = -1;
 		this.compositeLength = 0;
+		this.lastCompositeCodes = null;
 		this.topLineIndex = 0;
 		this.m_oFont = oFont;
 		this.fmgrGraphics = fmgrGraphics;
@@ -3843,10 +3844,17 @@ function (window, undefined) {
 			this.beginCompositePos = Math.min(this.selectionBegin, this.selectionEnd);
 			this.compositeLength = Math.max(this.selectionBegin, this.selectionEnd) - this.beginCompositePos;
 		}
+		this.lastCompositeCodes = null;
 		this.setTextStyle('u', Asc.EUnderline.underlineSingle);
 	};
 	CellEditor.prototype.Replace_CompositeText = function (arrCharCodes) {
 		if (!this.isOpened) {
+			return;
+		}
+
+		// The browser fires compositionstart/compositionupdate/input for a single keystroke,
+		// each re-applying the same composition text. Skip the redundant full re-measure.
+		if (this._isSameCompositeCodes(arrCharCodes)) {
 			return;
 		}
 
@@ -3857,9 +3865,25 @@ function (window, undefined) {
 		var compositeFormat = this._getCompositeTextFormat(this.beginCompositePos);
 		this.compositeLength = this.replaceText(this.beginCompositePos, this.compositeLength, newText, compositeFormat);
 
+		// remember codes only after they are actually applied
+		this.lastCompositeCodes = arrCharCodes.slice();
+
 		// Refreshing the selection
 		this._cleanSelection();
 		this._drawSelection();
+	};
+
+	CellEditor.prototype._isSameCompositeCodes = function (arrCharCodes) {
+		var prev = this.lastCompositeCodes;
+		if (!prev || prev.length !== arrCharCodes.length) {
+			return false;
+		}
+		for (var i = 0; i < arrCharCodes.length; ++i) {
+			if (prev[i] !== arrCharCodes[i]) {
+				return false;
+			}
+		}
+		return true;
 	};
 
 	// Format for inserted composite (IME) text: format at the insertion point + underline (null for formulas).
@@ -3889,6 +3913,7 @@ function (window, undefined) {
 
 		this.beginCompositePos = -1;
 		this.compositeLength = 0;
+		this.lastCompositeCodes = null;
 		this.selectionBegin = tmpBegin;
 		this.selectionEnd = tmpEnd;
 
