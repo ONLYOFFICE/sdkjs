@@ -1470,11 +1470,11 @@
 			})
 		}, AscDFH.historydescription_Pdf_AddAnnot);
 	};
-	PDFEditorApi.prototype.ApplyRedact = function(isDelForms, isDelAnnots) {
+	PDFEditorApi.prototype.ApplyRedact = function() {
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			oDoc.ApplyRedact(undefined, undefined, isDelForms, isDelAnnots);
+			oDoc.ApplyRedact();
 		}, AscDFH.historydescription_Pdf_Apply_Redact);
 	};
 	PDFEditorApi.prototype.sync_UpdateRedactState = function() {
@@ -3299,6 +3299,13 @@
 			oController.selectedObjects.forEach(function(annot) {
 				if (annot.IsAnnot()) {
 					if (annot.IsRedact()) {
+						oDoc.RedactColor = {
+							r: r,
+							g: g,
+							b: b,
+							a: 255
+						};
+
 						annot.SetFillColor(aColor);
 					}
 					else {

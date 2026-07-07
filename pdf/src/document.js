@@ -5811,7 +5811,7 @@ var CPresentation = CPresentation || function(){};
                 let oAnnot = this.AddAnnotByProps(oProps);
 
                 oAnnot.SetQuads(aQuads);
-                oAnnot.SetBorderColor([private_correctRGBColorComponent(r)/255, private_correctRGBColorComponent(g)/255, private_correctRGBColorComponent(b)/255]);
+                oAnnot.SetBorderColor([private_GetNumber(r / 255, 0), private_GetNumber(g / 255, 0), private_GetNumber(b / 255, 0)]);
                 oAnnot.SetOpacity(typeof(opacity) != "boolean" ? opacity / 100 : 1);
             }
         }
@@ -5882,7 +5882,7 @@ var CPresentation = CPresentation || function(){};
             let oAnnot = this.AddAnnotByProps(oProps);
 
             oAnnot.SetQuads(aQuads);
-            oAnnot.SetBorderColor([private_correctRGBColorComponent(r)/255, private_correctRGBColorComponent(g)/255, private_correctRGBColorComponent(b)/255]);
+            oAnnot.SetBorderColor([private_GetNumber(r / 255, 0), private_GetNumber(g / 255, 0), private_GetNumber(b / 255, 0)]);
             oAnnot.SetOpacity(opacity / 100);
         }
 
@@ -5933,7 +5933,7 @@ var CPresentation = CPresentation || function(){};
             let oAnnot = this.AddAnnotByProps(oProps);
 
             oAnnot.SetQuads(aQuads);
-            oAnnot.SetBorderColor([private_correctRGBColorComponent(r)/255, private_correctRGBColorComponent(g)/255, private_correctRGBColorComponent(b)/255]);
+            oAnnot.SetBorderColor([private_GetNumber(r / 255, 0), private_GetNumber(g / 255, 0), private_GetNumber(b / 255, 0)]);
             oAnnot.SetOpacity(opacity / 100);
         }
 
@@ -5976,7 +5976,13 @@ var CPresentation = CPresentation || function(){};
             let oAnnot = this.AddAnnotByProps(oProps);
 
             oAnnot.SetQuads(aQuads);
-            oAnnot.SetFillColor([0, 0, 0]);
+			if (this.RedactColor) {
+				oAnnot.SetFillColor([private_GetNumber(this.RedactColor.r / 255, 0), private_GetNumber(this.RedactColor.g / 255, 0), private_GetNumber(this.RedactColor.b / 255, 0)]);
+			}
+			else {
+				oAnnot.SetFillColor([0, 0, 0]);
+			}
+
             oAnnot.SetBorderColor([1, 0, 0]);
             oAnnot.SetOpacity(1);
 
@@ -10491,13 +10497,12 @@ var CPresentation = CPresentation || function(){};
         return oProps;
     }
 
-    function private_correctRGBColorComponent(component) {
-        if (typeof(component) != "number") {
-            component = 0;
-        }
+	function private_GetNumber(number, defaultValue) {
+		if (undefined !== number && typeof(number) === "number")
+			return number;
 
-        return component;
-    }
+		return defaultValue;
+	}
 
     function getMinRect(aPoints) {
         let xMax = aPoints[0], yMax = aPoints[1], xMin = xMax, yMin = yMax;
