@@ -72,6 +72,7 @@
         this.recalcInfo.recalculateTransform = true;
         this.recalcInfo.recalculateSizes = true;
         
+		this.recalcBounds();
         this.recalculate();
         this.updateTransformMatrix();
         this.SetNeedRecalc(false);

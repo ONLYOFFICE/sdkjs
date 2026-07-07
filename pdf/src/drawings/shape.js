@@ -131,6 +131,7 @@
 
         this.recalculateTransform();
         this.updateTransformMatrix();
+		this.recalcBounds();
         this.recalculate();
         this.recalculateShdw();
         this.SetNeedRecalc(false);

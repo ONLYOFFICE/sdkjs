@@ -76,6 +76,7 @@
             return;
 
         this.recalcGeometry();
+		this.recalcBounds();
         this.recalculate();
         this.recalculateTransform();
         this.updateTransformMatrix();
