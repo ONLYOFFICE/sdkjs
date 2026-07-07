@@ -1641,9 +1641,13 @@ CChangesPDFDocumentRedactMeta.prototype.private_SetValue = function(Value) {
 
 	oDoc.redactMetaFlags = Value;
 
-	if ((Value & (1 << 2)) !== 0) {
-		oDoc.Viewer.structure = oDoc.Viewer.file.getStructure();
+	let aHeadings = [];
+	if ((Value & (1 << 2)) === 0) {
+		aHeadings = oDoc.Viewer.file.getStructure();
 	}
+
+	oDoc.Viewer.structure = aHeadings;
+	oDoc.Viewer.sendEvent("onStructure", oDoc.Viewer.structure);
 };
 
 /**
