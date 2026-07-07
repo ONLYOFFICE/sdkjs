@@ -311,6 +311,9 @@
 			context.clearRect(0, 0, canvas.width, canvas.height);
 		}
 	};
+	CThumbnailsManagerBase.prototype.SelectAll = function () {
+
+	};
 
 	function CThumbnailsManager(editorPage) {
 		CThumbnailsManagerBase.call(this, editorPage);
@@ -481,12 +484,6 @@
 			oFontStyle = FontStyle.FontStyleBoldItalic;
 
 		g_fontApplication.LoadFont(font.FontFamily.Name, AscCommon.g_font_loader, this.m_oFontManager, font.FontSize, oFontStyle, 96, 96);
-	};
-
-	CThumbnailsManager.prototype.SelectAll = function()
-	{
-		this.thumbnails.SelectAll();
-		this.OnUpdateOverlay();
 	};
 
 	CThumbnailsManager.prototype.GetFirstSelectedType = function()
@@ -3247,6 +3244,12 @@
 			};
 		}
 		return null;
+	};
+	COutlineThumbnailsManager.prototype.SelectAll = function () {
+		const outlineView = this.GetOutlineView();
+		if (outlineView) {
+			outlineView.selectAll();
+		}
 	};
 
 

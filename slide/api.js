@@ -6476,17 +6476,9 @@ background-repeat: no-repeat;\
 		this.WordControl.m_oLogicDocument.DublicateLayout();
 	};
 
-	asc_docs_api.prototype.SelectAllSlides = function(layoutType)
+	asc_docs_api.prototype.SelectAllSlides = function()
 	{
-		var drDoc       = this.WordControl.m_oDrawingDocument;
-		var slidesCount = drDoc.GetSlidesCount();
-
-		for (var i = 0; i < slidesCount; i++)
-		{
-			this.WordControl.Thumbnails.m_arrPages[i].IsSelected = true;
-		}
-		this.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
-		this.WordControl.Thumbnails.OnUpdateOverlay();
+		this.WordControl.Thumbnails.SelectAll();
 	};
 	asc_docs_api.prototype.getThumbnailsManager = function()
 	{

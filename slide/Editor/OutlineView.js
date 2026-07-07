@@ -2211,7 +2211,7 @@
 				break;
 			}
 			case Asc.c_oAscPresentationShortcutType.EditUndo:
-			case Asc.c_oAscPresentationShortcutType.EditUndo: {
+			case Asc.c_oAscPresentationShortcutType.EditRedo: {
 				res.keyResult = keydownresult_PreventNothing;
 				break;
 			}
