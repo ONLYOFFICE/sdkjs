@@ -1044,7 +1044,7 @@ function (window, undefined) {
 						res.addElement(pad_with);
 						continue
 					}
-					let elem = arr.getElementRowCol ? arr.getElementRowCol(i,j) : arr.getValueByRowCol(i,j);
+					let elem = arr.getElementRowCol ? arr.getElementRowCol(i,j,true) : arr.getValueByRowCol(i,j);
 					elem ? res.addElement(elem) : res.addElement(new cEmpty());
 				}
 			}
@@ -1072,7 +1072,7 @@ function (window, undefined) {
 
 		// --------------------- arg1(row) type check ----------------------//
 		let rows = arg[1],
-			arg0Dimensions = array.getDimensions();
+			arg0Dimensions = array.getDimensions(true);
 
 		if (cElementType.empty === rows.type) {
 			rows = new cNumber(arg0Dimensions.row);
@@ -3361,9 +3361,9 @@ function (window, undefined) {
 		if (cElementType.array === arg1.type && !opt_xlookup) {
 			let arrayToSearch;
 			if (this.bHor) {
-				arrayToSearch = arg1.getRow(0);
+				arrayToSearch = arg1.getRowLogical(0);
 			} else {
-				arrayToSearch = arg1.getCol(0);
+				arrayToSearch = arg1.getColLogical(0);
 			}
 
 			if (arrayToSearch) {
@@ -3400,14 +3400,15 @@ function (window, undefined) {
 				return new cError(cErrorType.not_available);
 			}
 
-			count = this.bHor ? arg1.getRowCount() : arg1.getCountElementInRow();
+			let _ldim = arg1.getDimensions(true);
+			count = this.bHor ? _ldim.row : _ldim.col;
 			if (number > count - 1) {
 				return new cError(cErrorType.bad_reference);
 			}
 
 			r = this.bHor ? number : res;
 			c = this.bHor ? res : number;
-			return arg1.getElementRowCol(r, c);
+			return arg1.getElementRowCol(r, c, true);
 		}
 
 		let range;
@@ -3416,7 +3417,8 @@ function (window, undefined) {
 			range = arg1.getRange();
 		} else if (cElementType.array === arg1.type && opt_xlookup) {
 			let _cacheElem = {elements: []};
-			arg1.foreach(function (elem, r, c) {
+			//forEachLogical so a lazy tail is searched too (foreach saw only the physical head)
+			arg1.forEachLogical(function (elem, r, c) {
 				if (elem && elem.type === cElementType.string) {
 					elem.value = elem.value.toLowerCase();
 				}
@@ -4125,19 +4127,16 @@ function (window, undefined) {
 		}  
 		
 		if (cElementType.array === arg1.type) {
-			arg1 = arg1.getMatrix();
-
-			let i, a1RowCount = arg1.length, a1ColumnCount = arg1[0].length, arr;
+			//LOGICAL dims + tail-aware row/col slice so a lazy tail is searched too (getMatrix saw only the physical head)
+			let dim = arg1.getDimensions(true);
+			let a1RowCount = dim.row, a1ColumnCount = dim.col, arr;
 
 			if (a1RowCount > 1 && a1ColumnCount > 1) {
 				return new cError(cErrorType.not_available);
 			} else if (a1RowCount === 1 && a1ColumnCount >= 1) {
-				arr = arg1[0];
+				arr = arg1.getRowLogical(0);
 			} else {
-				arr = [];
-				for (i = 0; i < a1RowCount; i++) {
-					arr[i] = arg1[i][0];
-				}
+				arr = arg1.getColLogical(0);
 			}
 			return isXMatch ? this._xMatchCalculate(arr, arg0, a2Value, a3Value, true) : this._calculate(arr, arg0, a2Value);
 		} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type ||
@@ -4940,9 +4939,9 @@ function (window, undefined) {
 			}
 		}
 
-		//array arg1 must contain 1 row or 1 column
-		let dimensions1 = arg1.getDimensions();
-		let dimensions2 = arg2.getDimensions();
+		//array arg1 must contain 1 row or 1 column; getDimensions(true) = LOGICAL size so a lazy tail is counted
+		let dimensions1 = arg1.getDimensions(true);
+		let dimensions2 = arg2.getDimensions(true);
 		let bVertical = null;
 		if (dimensions1 && dimensions2) {
 			if (dimensions1.col === 1 && dimensions2.row === dimensions1.row) {
@@ -5008,7 +5007,7 @@ function (window, undefined) {
 					for (let i = 0; i < _length; i++) {
 						let _row = !bVertical ? i : res - _startRange;
 						let _col = bVertical ? i : res - _startRange;
-						let _elem = arg2.getElementRowCol ? arg2.getElementRowCol(_row, _col) : arg2.getValueByRowCol(_row, _col, true);
+						let _elem = arg2.getElementRowCol ? arg2.getElementRowCol(_row, _col, true) : arg2.getValueByRowCol(_row, _col, true);
 						if (!bVertical) {
 							_array.addRow();
 							_array.addElement(_elem);

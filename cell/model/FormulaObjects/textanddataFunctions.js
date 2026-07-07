@@ -322,11 +322,11 @@ function (window, undefined) {
 				array = tempArr;
 			}
 
-			arg0Dimensions = array.getDimensions();
+			arg0Dimensions = array.getDimensions(true);
 
 			for (let i = 0; i < arg0Dimensions.row; i++) {
 				for (let j = 0; j < arg0Dimensions.col; j++) {
-					let val = array.getValueByRowCol ? array.getValueByRowCol(i, j) : array.getElementRowCol(i, j);
+					let val = array.getValueByRowCol ? array.getValueByRowCol(i, j, true) : array.getElementRowCol(i, j, true);
 					if (!val) {
 						resStr += format === 1 ? "," : ", ";
 						continue;

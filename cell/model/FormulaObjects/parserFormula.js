@@ -3026,6 +3026,15 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype._getRow = function (rowIndex) {
 		this.ensureMaterialized();
+		//lazy CONSTANT tail: build the logical row via getElementRowCol so the tail is included (ensureMaterialized
+		//only expands a generator tail). Non-lazy path below is unchanged.
+		if (this.hasLazyTail()) {
+			let cols = this.getDimensions(true).col, row = [];
+			for (let c = 0; c < cols; c++) {
+				row.push(this.getElementRowCol(rowIndex, c, true));
+			}
+			return [row];
+		}
 		if (rowIndex < 0 || rowIndex > this.array.length - 1) {
 			return null;
 		}
@@ -3041,10 +3050,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype._getCol = function (colIndex) {
 		this.ensureMaterialized();
+		//lazy CONSTANT tail: iterate the LOGICAL row count and read via getElementRowCol so the tail is included
+		let lazy = this.hasLazyTail();
+		let rows = lazy ? this.getDimensions(true).row : this.rowCount;
 		let col = [];
-		for (let i = 0; i < this.rowCount; i++) {
+		for (let i = 0; i < rows; i++) {
 			col[i] = [];
-			col[i].push(this.array[i][colIndex]);
+			col[i].push(lazy ? this.getElementRowCol(i, colIndex, true) : this.array[i][colIndex]);
 		}
 		return col;
 	};
