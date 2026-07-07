@@ -2939,6 +2939,7 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
 	//for now introducing these parameters for special paste. may need to review and remove them later
 	this.pasteTypeContent = undefined;
 	this.pasteList = undefined;
+	this.pasteListCanUnite = false;
 	this.pasteIntoElem = undefined;//reference to content element that was selected before paste
 
 	this.apiEditor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window["editor"];
@@ -3141,6 +3142,38 @@ PasteProcessor.prototype =
 		var bIsSpecialPaste = specialPasteHelper.specialPasteStart;
 		var paragraph = oDoc.GetCurrentParagraph();
 		var oTable = oDoc.IsInTable() ? oDoc.GetParent().GetTable() : null;
+
+		var _self = this;
+		var _spHelper = window['AscCommon'].g_specialPasteHelper;
+		var _bRestartList = !!(_spHelper && _spHelper.specialPasteStart && _spHelper.specialPasteProps === Asc.c_oSpecialPasteProps.doNotUniteList);
+		if (paragraph && paragraph.GetNumPr && this.oLogicDocument && this.oLogicDocument.GetNumbering) {
+			var _destNumPr = paragraph.GetNumPr();
+			var _destNumId = _destNumPr ? _destNumPr.NumId : null;
+			var _numbering = this.oLogicDocument.GetNumbering();
+			var _destNum = (null != _destNumId && _numbering) ? _numbering.GetNum(_destNumId) : null;
+			if (_destNum) {
+				var _equalCache = {};
+				var _uniteListNum = function (elem) {
+					if (!elem || !elem.IsParagraph || !elem.IsParagraph())
+						return;
+					var _np = elem.Pr ? elem.Pr.NumPr : null;
+					if (!_np || null == _np.NumId || _np.NumId === _destNumId)
+						return;
+					var _key = "" + _np.NumId;
+					if (undefined === _equalCache[_key]) {
+						var _pastedNum = _numbering.GetNum(_np.NumId);
+						_equalCache[_key] = !!(_pastedNum && _destNum.IsEqual(_pastedNum));
+					}
+					if (_equalCache[_key]) {
+						_self.pasteListCanUnite = true;
+						if (!_bRestartList)
+							elem.SetNumPr(_destNumId, _np.Lvl);
+					}
+				};
+				for (var _ci = 0; _ci < aNewContent.length; ++_ci)
+					_uniteListNum(aNewContent[_ci]);
+			}
+		}
 
 		//pasteTypeContent - if all content is of one type
 		//TODO review pasteTypeContent
@@ -3576,6 +3609,9 @@ PasteProcessor.prototype =
 				this.pasteIntoElem.Parent && this.pasteIntoElem.Parent.IsInTable())
 			{
 				props = [sProps.overwriteCells, sProps.insertAsNestedTable, sProps.keepTextOnly];
+			} else if (this.pasteListCanUnite)
+			{
+				props = [sProps.uniteList, sProps.doNotUniteList, sProps.keepTextOnly];
 			} else if (this.specificPasteProps)
 			{
 					props = [].concat(this.specificPasteProps[sProps.sourceformatting]);
