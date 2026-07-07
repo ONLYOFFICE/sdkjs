@@ -1655,8 +1655,11 @@
 		return null;
 	};
 	CGraphicObjectBase.prototype.getPlaceholderTypeWithDefault = function () {
-		let type = this.getPlaceholderType();
-		return type == null ? AscFormat.phType_obj : type;
+		let oNvPr = this.getNvProps();
+		if (oNvPr && oNvPr.ph) {
+			return oNvPr.ph.type === null ? AscFormat.phType_obj : oNvPr.ph.type;
+		}
+		return null;
 	};
 	CGraphicObjectBase.prototype.getDrawingBaseType = function () {
 		if (this.drawingBase) {
