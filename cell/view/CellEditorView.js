@@ -1234,9 +1234,13 @@ function (window, undefined) {
 			AscCommon.align_Left : this.options.flags.textAlign;
 	};
 
-	CellEditor.prototype.replaceText = function (pos, len, newText) {
+	CellEditor.prototype.replaceText = function (pos, len, newText, format) {
 		this._moveCursor(kPosition, pos);
 		this._selectChars(kPosition, pos + len);
+		// set after _moveCursor() (it resets newTextFormat) so _addChars() applies it to the inserted text
+		if (format) {
+			this.newTextFormat = format;
+		}
 		return this._addChars(newText);
 	};
 
@@ -3847,20 +3851,30 @@ function (window, undefined) {
 		}
 
 		var newText = this.getTextFromCharCodes(arrCharCodes);
-		this.compositeLength = this.replaceText(this.beginCompositePos, this.compositeLength, newText);
 
-		var tmpBegin = this.selectionBegin, tmpEnd = this.selectionEnd;
-
-		this.selectionBegin = this.beginCompositePos;
-		this.selectionEnd = this.beginCompositePos + this.compositeLength;
-		this.setTextStyle('u', Asc.EUnderline.underlineSingle);
-
-		this.selectionBegin = tmpBegin;
-		this.selectionEnd = tmpEnd;
+		// Insert composite text already underlined so the whole replace needs a single re-measure,
+		// instead of a separate setTextStyle('u') pass that re-measured the cell a second time.
+		var compositeFormat = this._getCompositeTextFormat(this.beginCompositePos);
+		this.compositeLength = this.replaceText(this.beginCompositePos, this.compositeLength, newText, compositeFormat);
 
 		// Refreshing the selection
 		this._cleanSelection();
 		this._drawSelection();
+	};
+
+	// Format for inserted composite (IME) text: format at the insertion point + underline (null for formulas).
+	CellEditor.prototype._getCompositeTextFormat = function (pos) {
+		var opt = this.options;
+		if (this.isFormula() || !opt || !opt.fragments) {
+			return null;
+		}
+		var f = this._findFragmentToInsertInto(pos);
+		if (!f) {
+			return null;
+		}
+		var format = opt.fragments[f.index].format.clone();
+		this._setFormatProperty(format, 'u', Asc.EUnderline.underlineSingle, false);
+		return format;
 	};
 	CellEditor.prototype.End_CompositeInput = function () {
 		var tmpBegin = this.selectionBegin, tmpEnd = this.selectionEnd;
