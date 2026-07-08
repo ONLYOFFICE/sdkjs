@@ -2015,11 +2015,18 @@
     };
     CBaseField.prototype.IsHidden = function() {
         let nType = this.GetDisplay();
-        if (nType == window["AscPDF"].Api.Types.display["hidden"] || nType == window["AscPDF"].Api.Types.display["noView"])
+        if (nType == AscPDF.Api.Types.display["hidden"] || nType == AscPDF.Api.Types.display["noView"])
             return true;
 
         return false;
     };
+	CBaseField.prototype.IsNoPrint = function() {
+		let nType = this.GetDisplay();
+        if (nType == AscPDF.Api.Types.display["noPrint"] || nType == AscPDF.Api.Types.display["hidden"])
+            return true;
+
+        return false;
+	};
     CBaseField.prototype.SetDisplay = function(nType) {
         AscCommon.History.Add(new CChangesPDFFormDisplay(this, this._display, nType));
 
@@ -2463,9 +2470,15 @@
     };
 	
 	CBaseField.prototype.DrawOnPage = function(pdfGraphics, textBoxGraphics, pageIndex) {
-		if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
+		if (pdfGraphics.isPrint) {
+			if (this.IsNoPrint()) {
+				return;
+			}
+		}
+		else if (this.IsHidden() && !Asc.editor.IsEditFieldsMode()) {
 			return;
-		
+		}
+
         if (pdfGraphics.isThumbnails) {
             this.DrawBorders(pdfGraphics);
         }

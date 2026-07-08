@@ -500,9 +500,6 @@
 	};
         
     CTextField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
-            return;
-
         let oDoc = this.GetDocument();
 
         this.Recalculate();

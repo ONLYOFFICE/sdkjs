@@ -71,9 +71,6 @@
     AscFormat.InitClass(CListBoxField, AscPDF.CBaseListField, AscDFH.historyitem_type_Pdf_Listbox_Field);
 
     CListBoxField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
-            return;
-
         // when alignment is center or right, then after
         // paragraph width becomes larger than form size, alignment becomes left, until text is smaller than form size again
         this.CheckAlignInternal();
