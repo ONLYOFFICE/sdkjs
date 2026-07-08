@@ -4456,6 +4456,17 @@ function isAllowPasteLink(pastedWb) {
 				clipWidthShape = printPagesData.pageClipRectWidth - cellsLeft;
 				clipHeightShape = printPagesData.pageClipRectHeight - cellsTop;
 
+				//pageClipRectHeight is scaled linearly, but rows are re-measured at the preview zoom (nonlinear) and
+				//topFieldInPx = pageClipRectTop + 1, so the clip could fall short and cut the last row / bottom border.
+				//Grow the clip to the actual content bottom (never shrink; capped at the physical page).
+				let _contentBottomPx = printPagesData.topFieldInPx +
+					(this._getRowTop(printPagesData.pageRange.r2 + 1) - this._getRowTop(printPagesData.pageRange.r1));
+				let _contentBottomDevice = printPagesData.pageClipRectTop * (1 - printScale) + _contentBottomPx * printScale;
+				let _minClipHeight = Math.min(_contentBottomDevice + borderDiff, printPagesData.pageHeight / vector_koef) - clipTop;
+				if (clipHeight < _minClipHeight) {
+					clipHeight = _minClipHeight;
+				}
+
 				doDraw(printPagesData.pageRange, 0, 0);
 			}
 
