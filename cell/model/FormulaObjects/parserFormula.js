@@ -3620,6 +3620,22 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return retArrCopy;
 
 	};
+	//like getMatrix() but materializes a CONSTANT lazy tail too. getMatrix()/ensureMaterialized only expand a
+	//GENERATOR tail, so a constant missedValue tail is otherwise dropped by matrix-consuming functions
+	//(SUMPRODUCT/SUMXMY2/...). A non-lazy array falls through to getMatrix() unchanged.
+	cArray.prototype.getMatrixLogical = function () {
+		if (!this.hasLazyTail()) {
+			return this.getMatrix();
+		}
+		var dim = this.getDimensions(true), m = [];
+		for (var r = 0; r < dim.row; r++) {
+			m[r] = [];
+			for (var c = 0; c < dim.col; c++) {
+				m[r][c] = this.getElementRowCol(r, c, true);
+			}
+		}
+		return m;
+	};
 	cArray.prototype.fillFromArray = function (arr, fChangeElems) {
 		if (arr && arr.length !== undefined) {
 			this.array = arr;
@@ -4127,7 +4143,23 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 			//separate branch for arrays
 			if (typeArray && cElementType.array === typeArray[i]) {
-				if (cElementType.cellsRange === arg.type || cElementType.array === arg.type) {
+				if (cElementType.array === arg.type && arg.hasLazyTail() && !arg.getMissedValueFn()) {
+					//constant lazy tail: getMatrix() materializes the physical head only (the tail is kept
+					//lazy), so array-consuming functions (LINEST/TREND/GROWTH/LOGEST) would drop it. Build the
+					//full LOGICAL matrix instead; a generator tail still goes through getMatrix (it expands it).
+					var lazyDim = arg.getDimensions(true), lazyMat = [];
+					for (var lr = 0; lr < lazyDim.row; lr++) {
+						lazyMat[lr] = [];
+						for (var lc = 0; lc < lazyDim.col; lc++) {
+							var lazyEl = arg.getElementRowCol(lr, lc, true);
+							if (excludeErrorsVal && lazyEl && cElementType.error === lazyEl.type) {
+								lazyEl = new cEmpty();
+							}
+							lazyMat[lr][lc] = lazyEl;
+						}
+					}
+					newArgs[i] = lazyMat;
+				} else if (cElementType.cellsRange === arg.type || cElementType.array === arg.type) {
 					newArgs[i] = arg.getMatrix(excludeHiddenRows, excludeErrorsVal, excludeNestedStAg);
 				} else if (cElementType.cellsRange3D === arg.type) {
 					if (!arg.isSingleSheet()) {

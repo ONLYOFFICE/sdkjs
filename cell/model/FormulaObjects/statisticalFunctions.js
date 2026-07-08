@@ -4202,11 +4202,36 @@ function (window, undefined) {
 	 * @returns {cNumber|cError}
 	 */
 	cAVEDEV.prototype.Calculate = function (arg) {
-		let count = 0, sum = new cNumber(0), arrX = [], i;
+		let count = 0, sum = new cNumber(0), arrX = [], tails = [], i;
 		for (i = 0; i < arg.length; i++) {
 			let _arg = arg[i];
 
-			if (_arg.type === cElementType.array || _arg.type === cElementType.cellsRange || _arg.type === cElementType.cellsRange3D) {
+			if (_arg.type === cElementType.array) {
+				//head cells -> arrX (like a range); constant lazy tail -> one weighted {v, n} (getDimensions/
+				//getElementRowCol without the logical flag would iterate the physical head only and drop the tail)
+				let errElem = _arg.reduceLogical(function (acc, elem, n) {
+					if (acc) {
+						return acc;
+					}
+					if (elem) {
+						if (elem.type === cElementType.error) {
+							return elem;
+						}
+						if (elem.type === cElementType.number) {
+							if (n === 1) {
+								arrX.push(elem);
+								count++;
+							} else {
+								tails.push({v: elem.getValue(), n: n});
+							}
+						}
+					}
+					return acc;
+				}, null);
+				if (errElem) {
+					return errElem;
+				}
+			} else if (_arg.type === cElementType.cellsRange || _arg.type === cElementType.cellsRange3D) {
 				let dimensions = _arg.getDimensions();
 
 				for (let row = 0; row < dimensions.row; row++) {
@@ -4246,14 +4271,24 @@ function (window, undefined) {
 			sum = _func[sum.type][arrX[i].type](sum, arrX[i], "+");
 		}
 
-		sum = new cNumber(sum.getValue() / count);
+		//fold the constant lazy tail(s) into the mean: value v repeated n times
+		let total = count, totalSum = sum.getValue();
+		for (i = 0; i < tails.length; i++) {
+			totalSum += tails[i].v * tails[i].n;
+			total += tails[i].n;
+		}
+		sum = new cNumber(totalSum / total);
 
 		let a = 0;
 		for (i = 0; i < arrX.length; i++) {
 			a += Math.abs(_func[sum.type][arrX[i].type](sum, arrX[i], "-").getValue());
 		}
+		//tail absolute deviations: |v - mean| repeated n times
+		for (i = 0; i < tails.length; i++) {
+			a += tails[i].n * Math.abs(tails[i].v - sum.getValue());
+		}
 
-		return new cNumber(a / count);
+		return new cNumber(a / total);
 	};
 
 	/**
@@ -4412,18 +4447,26 @@ function (window, undefined) {
 					}
 				}
 			} else if (cElementType.array === _arg.type) {
-				_arg.foreachValue(function (elem) {
-
-					if (cElementType.string === elem.type || cElementType.empty === elem.type) {
-						return false;
+				//head cells via _func (as before); a constant lazy tail is folded as value*n (foreachValue would
+				//walk the physical head only and drop the tail)
+				_arg.reduceLogical(function (acc, elem, n) {
+					if (elem) {
+						if (cElementType.string === elem.type || cElementType.empty === elem.type) {
+							return acc;
+						}
+						let e = elem.tocNumber();
+						if (cElementType.number === e.type) {
+							if (n === 1) {
+								sum = _func[sum.type][e.type](sum, e, "+");
+								count++;
+							} else {
+								sum = new cNumber(sum.getValue() + e.getValue() * n);
+								count += n;
+							}
+						}
 					}
-
-					let e = elem.tocNumber();
-					if (cElementType.number === e.type) {
-						sum = _func[sum.type][e.type](sum, e, "+");
-						count++;
-					}
-				})
+					return acc;
+				}, null);
 			} else {
 				_arg = _arg.tocNumber();
 				if (cElementType.error === _arg.type) {
@@ -6508,7 +6551,7 @@ function (window, undefined) {
 	cFORECAST.prototype.enabledToSingle = {"1": true, "2": true};
 	cFORECAST.prototype.Calculate = function (arg) {
 
-		function forecast(fx, y, x) {
+		function forecast(fx, y, x, tails) {
 
 			let fSumDeltaXDeltaY = 0, fSumSqrDeltaX = 0, _x = 0, _y = 0, xLength = 0, i;
 			if (x.length !== y.length) {
@@ -6524,6 +6567,15 @@ function (window, undefined) {
 				_x += x[i].getValue();
 				_y += y[i].getValue();
 				xLength++;
+			}
+			//shared constant lazy tail(s): first array (y) <- tails.x, second array (x) <- tails.y
+			for (i = 0; i < tails.length; i++) {
+				if (!(tails[i].x.type === cElementType.number && tails[i].y.type === cElementType.number)) {
+					continue;
+				}
+				_y += tails[i].x.getValue() * tails[i].n;
+				_x += tails[i].y.getValue() * tails[i].n;
+				xLength += tails[i].n;
 			}
 
 			_x /= xLength;
@@ -6541,6 +6593,14 @@ function (window, undefined) {
 				fSumDeltaXDeltaY += (fValX - _x) * (fValY - _y);
 				fSumSqrDeltaX += (fValX - _x) * (fValX - _x);
 
+			}
+			for (i = 0; i < tails.length; i++) {
+				if (!(tails[i].x.type === cElementType.number && tails[i].y.type === cElementType.number)) {
+					continue;
+				}
+				let dx = tails[i].y.getValue() - _x, dy = tails[i].x.getValue() - _y;
+				fSumDeltaXDeltaY += tails[i].n * dx * dy;
+				fSumSqrDeltaX += tails[i].n * dx * dx;
 			}
 
 			if (fSumDeltaXDeltaY == 0) {
@@ -6561,6 +6621,12 @@ function (window, undefined) {
 		arg0 = arg0.tocNumber();
 		if (arg0.type === cElementType.error) {
 			return arg0;
+		}
+
+		//two lazy constant-tail columns (known_y, known_x): fold the shared tail (foreach would drop it)
+		var weighted = pairedConstTailWeighted(arg1, arg2);
+		if (weighted) {
+			return forecast(arg0, weighted.xs, weighted.ys, weighted.tails);
 		}
 
 		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
@@ -6587,7 +6653,7 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		return forecast(arg0, arr0, arr1);
+		return forecast(arg0, arr0, arr1, []);
 
 	};
 
@@ -7820,7 +7886,7 @@ function (window, undefined) {
 	cINTERCEPT.prototype.argumentsType = [argType.array, argType.array];
 	cINTERCEPT.prototype.enabledToSingle = {"0": true, "1": true};
 	cINTERCEPT.prototype.Calculate = function (arg) {
-		function intercept(y, x) {
+		function intercept(y, x, tails) {
 
 			let fSumDeltaXDeltaY = 0, fSumSqrDeltaX = 0, _x = 0, _y = 0, xLength = 0, i, xVal, yVal;
 			for (i = 0; i < x.length; i++) {
@@ -7838,6 +7904,15 @@ function (window, undefined) {
 				_x += xVal;
 				_y += yVal;
 				xLength++;
+			}
+			//shared constant lazy tail(s): first array (y) <- tails.x, second array (x) <- tails.y
+			for (i = 0; i < tails.length; i++) {
+				if (!(tails[i].x.type === cElementType.number && tails[i].y.type === cElementType.number)) {
+					continue;
+				}
+				_y += tails[i].x.getValue() * tails[i].n;
+				_x += tails[i].y.getValue() * tails[i].n;
+				xLength += tails[i].n;
 			}
 
 			_x /= xLength;
@@ -7860,6 +7935,14 @@ function (window, undefined) {
 				fSumSqrDeltaX += (fValX - _x) * (fValX - _x);
 
 			}
+			for (i = 0; i < tails.length; i++) {
+				if (!(tails[i].x.type === cElementType.number && tails[i].y.type === cElementType.number)) {
+					continue;
+				}
+				let dx = tails[i].y.getValue() - _x, dy = tails[i].x.getValue() - _y;
+				fSumDeltaXDeltaY += tails[i].n * dx * dy;
+				fSumSqrDeltaX += tails[i].n * dx * dx;
+			}
 
 			let res = _y - fSumDeltaXDeltaY / fSumSqrDeltaX * _x;
 			if (Number.isNaN(res)) {
@@ -7872,6 +7955,12 @@ function (window, undefined) {
 
 		const max_num = 1 * Math.pow(10,155); // 1E+155 - max number in this function (ms reference)
 		let arg0 = arg[0], arg1 = arg[1], arr0 = [], arr1 = [];
+
+		//two lazy constant-tail columns: fold the shared tail (getValue/foreach would drop it)
+		let weighted = pairedConstTailWeighted(arg0, arg1);
+		if (weighted) {
+			return intercept(weighted.xs, weighted.ys, weighted.tails);
+		}
 
 		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
 			arg0 = arg0.getValue();
@@ -7917,7 +8006,7 @@ function (window, undefined) {
 			return new cError(cErrorType.not_available);
 		}
 
-		return intercept(arr0, arr1);
+		return intercept(arr0, arr1, []);
 
 	};
 
@@ -10623,7 +10712,7 @@ function (window, undefined) {
 	cRSQ.prototype.enabledToSingle = {"0": true, "1": true};
 	cRSQ.prototype.Calculate = function (arg) {
 
-		function rsq(x, y) {
+		function rsq(x, y, tails) {
 
 			var sumXDeltaYDelta = 0, sqrXDelta = 0, sqrYDelta = 0, _x = 0, _y = 0, xLength = 0, i;
 
@@ -10640,6 +10729,15 @@ function (window, undefined) {
 				_y += y[i].getValue();
 				xLength++;
 			}
+			//shared constant lazy tail(s): paired value repeated n times (x <- tails.x, y <- tails.y)
+			for (i = 0; i < tails.length; i++) {
+				if (!(tails[i].x instanceof cNumber && tails[i].y instanceof cNumber)) {
+					continue;
+				}
+				_x += tails[i].x.getValue() * tails[i].n;
+				_y += tails[i].y.getValue() * tails[i].n;
+				xLength += tails[i].n;
+			}
 
 			_x /= xLength;
 			_y /= xLength;
@@ -10655,6 +10753,15 @@ function (window, undefined) {
 				sqrYDelta += (y[i].getValue() - _y) * (y[i].getValue() - _y);
 
 			}
+			for (i = 0; i < tails.length; i++) {
+				if (!(tails[i].x instanceof cNumber && tails[i].y instanceof cNumber)) {
+					continue;
+				}
+				var dx = tails[i].x.getValue() - _x, dy = tails[i].y.getValue() - _y;
+				sumXDeltaYDelta += tails[i].n * dx * dy;
+				sqrXDelta += tails[i].n * dx * dx;
+				sqrYDelta += tails[i].n * dy * dy;
+			}
 
 			if (sqrXDelta == 0 || sqrYDelta == 0) {
 				return new cError(cErrorType.division_by_zero);
@@ -10664,6 +10771,12 @@ function (window, undefined) {
 		}
 
 		var arg0 = arg[0], arg1 = arg[1], arr0 = [], arr1 = [];
+
+		//two lazy constant-tail columns: fold the shared tail (getValue/foreach would drop it)
+		var weighted = pairedConstTailWeighted(arg0, arg1);
+		if (weighted) {
+			return rsq(weighted.xs, weighted.ys, weighted.tails);
+		}
 
 		if (arg0 instanceof cArea) {
 			arr0 = arg0.getValue();
@@ -10685,7 +10798,7 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		return rsq(arr0, arr1);
+		return rsq(arr0, arr1, []);
 
 	};
 
@@ -10869,7 +10982,7 @@ function (window, undefined) {
 	cSLOPE.prototype.enabledToSingle = {"0": true, "1": true};
 	cSLOPE.prototype.Calculate = function (arg) {
 
-		function slope(y, x) {
+		function slope(y, x, tails) {
 
 			var sumXDeltaYDelta = 0, sqrXDelta = 0, _x = 0, _y = 0, xLength = 0, i;
 
@@ -10886,6 +10999,15 @@ function (window, undefined) {
 				_y += y[i].getValue();
 				xLength++;
 			}
+			//shared constant lazy tail(s): first array (y) <- tails.x, second array (x) <- tails.y
+			for (i = 0; i < tails.length; i++) {
+				if (!(tails[i].x instanceof cNumber && tails[i].y instanceof cNumber)) {
+					continue;
+				}
+				_y += tails[i].x.getValue() * tails[i].n;
+				_x += tails[i].y.getValue() * tails[i].n;
+				xLength += tails[i].n;
+			}
 
 			_x /= xLength;
 			_y /= xLength;
@@ -10900,6 +11022,14 @@ function (window, undefined) {
 				sqrXDelta += (x[i].getValue() - _x) * (x[i].getValue() - _x);
 
 			}
+			for (i = 0; i < tails.length; i++) {
+				if (!(tails[i].x instanceof cNumber && tails[i].y instanceof cNumber)) {
+					continue;
+				}
+				var dx = tails[i].y.getValue() - _x, dy = tails[i].x.getValue() - _y;
+				sumXDeltaYDelta += tails[i].n * dx * dy;
+				sqrXDelta += tails[i].n * dx * dx;
+			}
 
 			if (sqrXDelta == 0) {
 				return new cError(cErrorType.division_by_zero);
@@ -10909,6 +11039,12 @@ function (window, undefined) {
 		}
 
 		var arg0 = arg[0], arg1 = arg[1], arr0 = [], arr1 = [];
+
+		//two lazy constant-tail columns: fold the shared tail in O(head)+O(1) (getValue/foreach would drop it)
+		var weighted = pairedConstTailWeighted(arg0, arg1);
+		if (weighted) {
+			return slope(weighted.xs, weighted.ys, weighted.tails);
+		}
 
 		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
 			arr0 = arg0.getValue();
@@ -10930,7 +11066,7 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		return slope(arr0, arr1);
+		return slope(arr0, arr1, []);
 
 	};
 
@@ -11521,7 +11657,7 @@ function (window, undefined) {
 	cSTEYX.prototype.enabledToSingle = {"0": true, "1": true};
 	cSTEYX.prototype.Calculate = function (arg) {
 
-		function steyx(y, x) {
+		function steyx(y, x, tails) {
 
 			var sumXDeltaYDelta = 0, sqrXDelta = 0, sqrYDelta = 0, _x = 0, _y = 0, xLength = 0, i;
 
@@ -11538,6 +11674,15 @@ function (window, undefined) {
 				_y += y[i].getValue();
 				xLength++;
 			}
+			//shared constant lazy tail(s): first array (y) <- tails.x, second array (x) <- tails.y
+			for (i = 0; i < tails.length; i++) {
+				if (!(tails[i].x instanceof cNumber && tails[i].y instanceof cNumber)) {
+					continue;
+				}
+				_y += tails[i].x.getValue() * tails[i].n;
+				_x += tails[i].y.getValue() * tails[i].n;
+				xLength += tails[i].n;
+			}
 
 			_x /= xLength;
 			_y /= xLength;
@@ -11553,6 +11698,15 @@ function (window, undefined) {
 				sqrYDelta += (y[i].getValue() - _y) * (y[i].getValue() - _y);
 
 			}
+			for (i = 0; i < tails.length; i++) {
+				if (!(tails[i].x instanceof cNumber && tails[i].y instanceof cNumber)) {
+					continue;
+				}
+				var dx = tails[i].y.getValue() - _x, dy = tails[i].x.getValue() - _y;
+				sumXDeltaYDelta += tails[i].n * dx * dy;
+				sqrXDelta += tails[i].n * dx * dx;
+				sqrYDelta += tails[i].n * dy * dy;
+			}
 
 			if (sqrXDelta == 0 || sqrYDelta == 0 || xLength < 3) {
 				return new cError(cErrorType.division_by_zero);
@@ -11563,6 +11717,12 @@ function (window, undefined) {
 		}
 
 		var arg0 = arg[0], arg1 = arg[1], arr0 = [], arr1 = [];
+
+		//two lazy constant-tail columns: fold the shared tail (getValue/foreach would drop it)
+		var weighted = pairedConstTailWeighted(arg0, arg1);
+		if (weighted) {
+			return steyx(weighted.xs, weighted.ys, weighted.tails);
+		}
 
 		if (arg0 instanceof cArea) {
 			arr0 = arg0.getValue();
@@ -11584,7 +11744,7 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		return steyx(arr0, arr1);
+		return steyx(arr0, arr1, []);
 
 	};
 

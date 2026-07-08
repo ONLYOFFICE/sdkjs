@@ -184,7 +184,8 @@ function (window, undefined) {
 		}
 
 		if (arg0 instanceof cArea || arg0 instanceof cArray) {
-			arg0 = arg0.getMatrix();
+			//cArray: getMatrixLogical keeps a constant lazy tail (getMatrix would drop it)
+			arg0 = arg0 instanceof cArray ? arg0.getMatrixLogical() : arg0.getMatrix();
 		} else if (arg0 instanceof cError) {
 			return arg0;
 		} else if (arg0 instanceof cNumber) {
@@ -198,7 +199,8 @@ function (window, undefined) {
 		}
 
 		if (arg1 instanceof cArea || arg1 instanceof cArray || arg1 instanceof cArea3D) {
-			arg1 = arg1.getMatrix();
+			//cArray: getMatrixLogical keeps a constant lazy tail (getMatrix would drop it)
+			arg1 = arg1 instanceof cArray ? arg1.getMatrixLogical() : arg1.getMatrix();
 		} else if (arg1 instanceof cError) {
 			return arg1;
 		} else if (arg1 instanceof cNumber) {
@@ -5256,12 +5258,14 @@ function (window, undefined) {
 			m = m.getValue();
 
 			let sum = 0;
-			let dimensions = arr.getDimensions();
+			//cArray with a constant lazy tail: logical dims + tail-aware access (else the tail coefficients drop)
+			let arrLazy = arr.hasLazyTail && arr.hasLazyTail();
+			let dimensions = arrLazy ? arr.getDimensions(true) : arr.getDimensions();
 			let index = 0;
 
 			for (let row = 0; row < dimensions.row; row++) {
 				for (let col = 0; col < dimensions.col; col++) {
-					let elem = arr.getValueByRowCol ? arr.getValueByRowCol(row, col) : arr.getElementRowCol(row, col);
+					let elem = arrLazy ? arr.getElementRowCol(row, col, true) : (arr.getValueByRowCol ? arr.getValueByRowCol(row, col) : arr.getElementRowCol(row, col));
 					if (elem) {
 						if (elem.type === cElementType.error) {
 							return elem;
@@ -6048,7 +6052,8 @@ function (window, undefined) {
 
 		for (i = 0; i < arg.length; i++) {
 			if (cElementType.cellsRange === arg[i].type || cElementType.array === arg[i].type) {
-				resArr[i] = arg[i].getMatrix();
+				//cArray: getMatrixLogical keeps a constant lazy tail (getMatrix would drop it)
+				resArr[i] = cElementType.array === arg[i].type ? arg[i].getMatrixLogical() : arg[i].getMatrix();
 			} else if (cElementType.cellsRange3D === arg[i].type) {
 				if (arg[i].isSingleSheet()) {
 					resArr[i] = arg[i].getMatrix()[0];
@@ -6066,7 +6071,8 @@ function (window, undefined) {
 				resArr[i] = [[arg[i]]];
 			}
 
-			let matrixSize = arg[i].getDimensions();
+			//cArray: logical dimensions so a constant lazy tail is iterated (physical dims would stop at the head)
+			let matrixSize = cElementType.array === arg[i].type ? arg[i].getDimensions(true) : arg[i].getDimensions();
 
 			row = Math.max(matrixSize.row, row);
 			col = Math.max(matrixSize.col, col);
