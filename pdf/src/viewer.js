@@ -4708,7 +4708,7 @@
 			oMemory.WriteLong(nRedactMetaFlags);
 			
 			let aRedactedFields = oDoc.redactedFields;
-			if (aRedactedFields.length) {
+			if (nRedactMetaFlags & (1 << 6)) {
 				oMemory.WriteLong(aRedactedFields.length);
 			}
 
