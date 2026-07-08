@@ -3957,6 +3957,7 @@
 
 		let widthPx		= ctx.canvas.width;
 		let heightPx	= ctx.canvas.height;
+		ctx.globalAlpha = 1.0;
 
 		if (oDirtyBoundsMM) {
 			let oDoc = this.getPDFDoc();
@@ -4258,7 +4259,8 @@
 		let oDoc		= this.getPDFDoc();
         let widthPx		= ctx.canvas.width;
         let heightPx	= ctx.canvas.height;
-        
+        ctx.globalAlpha = 1.0;
+
 		let oGraphicsPDF = new AscPDF.CPDFGraphics();
 		oGraphicsPDF.isThumbnails = isThumbnails;
         oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage) , this.file.getPageHeight(nPage));
@@ -4292,7 +4294,8 @@
 		let oDoc		= this.getPDFDoc();
         let widthPx		= ctx.canvas.width;
         let heightPx    = ctx.canvas.height;
-        
+        ctx.globalAlpha = 1.0;
+
         let oGraphicsPDF = new AscPDF.CPDFGraphics();
 		oGraphicsPDF.isThumbnails = isThumbnails;
 		oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage) , this.file.getPageHeight(nPage));
@@ -4325,6 +4328,7 @@
 		let heightPx     = ctx.canvas.height;
 		let pageWidthMM  = oDoc.GetPageWidthMM(nPage);
 		let pageHeightMM = oDoc.GetPageHeightMM(nPage);
+		ctx.globalAlpha  = 1.0;
 
 		let drawingsToRender = aDrawings;
 		let bPartialRedraw   = !!oDirtyBoundsMM;
