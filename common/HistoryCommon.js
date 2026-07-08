@@ -1779,6 +1779,7 @@
 	window['AscDFH'].historyitem_type_ValueColorMiddlePosition         = 1255 << 16;
 	window['AscDFH'].historyitem_type_ValueColorPositions              = 1256 << 16;
 	window['AscDFH'].historyitem_type_ValueColors                      = 1257 << 16;
+	window['AscDFH'].historyitem_type_SlideComment                     = 1258 << 16;
 
 
 	window['AscDFH'].historyitem_type_DocumentMacros         = 2000 << 16;
@@ -3289,6 +3290,10 @@
 
 	window['AscDFH'].historyitem_SlideCommentsAddComment    = window['AscDFH'].historyitem_type_SlideComments | 1;
 	window['AscDFH'].historyitem_SlideCommentsRemoveComment = window['AscDFH'].historyitem_type_SlideComments | 2;
+
+	window['AscDFH'].historyitem_SlideComment_Change   = window['AscDFH'].historyitem_type_SlideComment | 1;
+	window['AscDFH'].historyitem_SlideComment_TypeInfo = window['AscDFH'].historyitem_type_SlideComment | 2;
+	window['AscDFH'].historyitem_SlideComment_Position = window['AscDFH'].historyitem_type_SlideComment | 3;
 
 	window['AscDFH'].historyitem_PropLockerSetId = window['AscDFH'].historyitem_type_PropLocker | 1;
 

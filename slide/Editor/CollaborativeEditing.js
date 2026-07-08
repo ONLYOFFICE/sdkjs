@@ -158,7 +158,7 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
 						"guid": Class.Get_Id()
 					};
 				}
-				else if(Class instanceof AscCommon.CComment){
+				else if(Class instanceof AscCommon.CSlideComment){
 					if(Class.Parent && Class.Parent.slide){
 						if(Class.Parent.slide === presentation){
 							check_obj =
@@ -294,7 +294,7 @@ CCollaborativeEditing.prototype.Release_Locks = function()
                     }
                 }
             }
-            if(Class instanceof AscCommon.CComment)
+            if(Class instanceof AscCommon.CSlideComment)
             {
 				Asc.editor.sync_UnLockComment(Class.Get_Id());
                 if(Class.Parent && Class.Parent.slide && presentation !== Class.Parent.slide)

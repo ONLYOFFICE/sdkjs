@@ -16192,7 +16192,7 @@
 									for (var i = 0; i < lCount; i++) {
 										s.Skip2(1);
 
-										var _author = new AscCommon.CCommentAuthor();
+										var _author = new AscCommon.CSlideCommentAuthor();
 
 										var _end_rec3 = s.cur + s.GetLong() + 4;
 										s.Skip2(1); // start attributes

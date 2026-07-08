@@ -4216,7 +4216,7 @@
 
 		const currentDate = new Date();
 
-		const commentData = new AscCommon.CCommentData();
+		const commentData = new AscCommon.CSlideCommentData();
 		commentData.m_sText = text;
 		commentData.m_sUserName = author || AscCommon.UserInfoParser.getCurrentName();
 		commentData.m_sUserId = userId || Asc.editor.documentUserId;

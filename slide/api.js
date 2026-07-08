@@ -540,7 +540,7 @@
 								}
 							}
 						}
-						if (Class instanceof AscCommon.CComment)
+						if (Class instanceof AscCommon.CSlideComment)
 						{
 							editor.sync_LockComment(Class.Get_Id(), e["user"]);
 						}
@@ -5540,7 +5540,7 @@ background-repeat: no-repeat;\
 			return;
 		}
 
-		var CommentData = new AscCommon.CCommentData();
+		var CommentData = new AscCommon.CSlideCommentData();
 		CommentData.Read_FromAscCommentData(AscCommentData);
 
 		var Comment = this.WordControl.m_oLogicDocument.AddComment(CommentData, AscCommentData.asc_getDocumentFlag());
@@ -5640,7 +5640,7 @@ background-repeat: no-repeat;\
 		if (null == this.WordControl.m_oLogicDocument)
 			return;
 
-		var CommentData = new AscCommon.CCommentData();
+		var CommentData = new AscCommon.CSlideCommentData();
 		CommentData.Read_FromAscCommentData(AscCommentData);
 		this.WordControl.m_oLogicDocument.EditComment(Id, CommentData);
 	};

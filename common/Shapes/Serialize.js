@@ -4379,7 +4379,7 @@ function BinaryPPTYLoader()
                     {
                         s.Skip2(1);
 
-                        var _comment = new AscCommon.CWriteCommentData();
+                        var _comment = new AscCommon.CSlideWriteCommentData();
 
                         var _end_rec3 = s.cur + s.GetLong() + 4;
 

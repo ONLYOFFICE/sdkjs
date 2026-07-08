@@ -9479,7 +9479,7 @@ CPresentation.prototype.AddComment = function (CommentData, bAll) {
 	var oSlideComments = bAll ? this.comments : (oCurSlide ? oCurSlide.slideComments : null);
 	if (oSlideComments) {
 		this.StartAction(AscDFH.historydescription_Presentation_AddComment)
-		var Comment = new AscCommon.CComment(oSlideComments, CommentData);
+		var Comment = new AscCommon.CSlideComment(oSlideComments, CommentData);
 		if (this.Document_Is_SelectionLocked(AscCommon.changestype_AddComment, Comment, this.IsEditCommentsMode()) === false) {
 			if (!bAll) {
 				var oSlide = oCurSlide;
@@ -10205,7 +10205,7 @@ CPresentation.prototype.internalCalculateData = function (aSlideComments, aWrite
 		var _autID = _data.m_sUserName;
 		var _author = this.CommentAuthors[_autID];
 		if (!_author) {
-			this.CommentAuthors[_autID] = new AscCommon.CCommentAuthor();
+			this.CommentAuthors[_autID] = new AscCommon.CSlideCommentAuthor();
 			_author = this.CommentAuthors[_autID];
 			_author.Name = _data.m_sUserName;
 			_author.Calculate();
@@ -10217,7 +10217,7 @@ CPresentation.prototype.internalCalculateData = function (aSlideComments, aWrite
 		_author.LastId++;
 		_commId = _author.LastId;
 
-		var _new_data = new AscCommon.CWriteCommentData();
+		var _new_data = new AscCommon.CSlideWriteCommentData();
 		_new_data.Data = _data;
 		_new_data.WriteAuthorId = _author.Id;
 		_new_data.WriteCommentId = _commId;
@@ -10238,7 +10238,7 @@ CPresentation.prototype.internalCalculateData = function (aSlideComments, aWrite
 			var _autID2 = _data2.m_sUserName;
 			var _author2 = this.CommentAuthors[_autID2];
 			if (!_author2) {
-				this.CommentAuthors[_autID2] = new AscCommon.CCommentAuthor();
+				this.CommentAuthors[_autID2] = new AscCommon.CSlideCommentAuthor();
 				_author2 = this.CommentAuthors[_autID2];
 				_author2.Name = _data2.m_sUserName;
 				_author2.Calculate();
@@ -10249,7 +10249,7 @@ CPresentation.prototype.internalCalculateData = function (aSlideComments, aWrite
 
 			_author2.LastId++;
 
-			var _new_data2 = new AscCommon.CWriteCommentData();
+			var _new_data2 = new AscCommon.CSlideWriteCommentData();
 			_new_data2.Data = _data2;
 			_new_data2.WriteAuthorId = _author2.Id;
 			_new_data2.WriteCommentId = _author2.LastId;

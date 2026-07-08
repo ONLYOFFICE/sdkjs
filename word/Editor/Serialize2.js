@@ -8874,7 +8874,7 @@ function BinaryFileReader(doc, openParams)
 			}
 		}
 		//посылаем событие о добавлении комментариев
-		if(api)
+		if(api && !(this.openParams && this.openParams.noSendComments))
 		{
 			for(var i in oCommentsNewId)
 			{
