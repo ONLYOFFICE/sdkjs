@@ -5362,7 +5362,7 @@ var CPresentation = CPresentation || function(){};
         if (!oViewer.file)
             return false;
 
-        let oActiveForm     = this.activeForm;
+        let oActiveForm     = this.activeForm || this.mouseDownField;
         let oActiveAnnot    = this.mouseDownAnnot;
         let oActiveDrawing  = this.activeDrawing;
 
@@ -5376,11 +5376,23 @@ var CPresentation = CPresentation || function(){};
         
         let oContent;
         if (oActiveForm) {
-            oContent = oActiveForm.GetDocContent();
+			if (this.IsEditFieldsMode()) {
+				isCanCopy = true;
+            	isCanCut = true;
+			}
+			else {
+            	oContent = oActiveForm.GetDocContent();
+			}
         }
         else if (oActiveAnnot) {
-            isCanCopy = true;
-            isCanCut = true;
+			if (oActiveAnnot.IsInTextBox && oActiveAnnot.IsInTextBox()) {
+				oContent = oActiveAnnot.GetDocContent();
+			}
+			
+			if (!oContent) {
+				isCanCopy = true;
+            	isCanCut = true;
+			}
         }
         else if (oActiveDrawing) {
             oContent = oActiveDrawing.GetDocContent();
@@ -5606,38 +5618,26 @@ var CPresentation = CPresentation || function(){};
 		let oContent;
 
         if (oAcitveObj) {
-			oContent = oAcitveObj.GetDocContent();
             oController.selectAll();
-
-            if (oController.getSelectedArray().length != 0) {
-                this.Viewer.onUpdateOverlay();
-                return;
-            }
+			this.Viewer.onUpdateOverlay();
+			this.UpdateCopyCutState();
+			return;
         }
 
-        if (oContent) {
-            if (false == oContent.IsEmpty()) {
-                oDrDoc.TargetEnd();
-                this.Viewer.onUpdateOverlay();
-            }
-            else {
-                oContent.RemoveSelection();
-            }
-        }
-        else {
-            if (!this.Viewer.isFullTextMessage) {
-                if (!this.Viewer.isFullText) {
-                    this.Viewer.fullTextMessageCallbackArgs = [];
-                    this.Viewer.fullTextMessageCallback = function() {
-                        this.selectAll();
-                    };
-                    this.Viewer.showTextMessage();
-                }
-                else {
-                    this.Viewer.file.selectAll();
-                }
-            }
-        }
+		if (!this.Viewer.isFullTextMessage) {
+			if (!this.Viewer.isFullText) {
+				this.Viewer.fullTextMessageCallbackArgs = [];
+				this.Viewer.fullTextMessageCallback = function() {
+					this.selectAll();
+				};
+				this.Viewer.showTextMessage();
+			}
+			else {
+				this.Viewer.file.selectAll();
+			}
+		}
+
+		this.UpdateCopyCutState();
     };
     CPDFDoc.prototype.GetCalculatedParaPr = function(bInitIfNull) {
         let oController = this.GetController();

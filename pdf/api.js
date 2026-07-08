@@ -4903,9 +4903,7 @@
 	PDFEditorApi.prototype.asc_EditSelectAll = function()
 	{
 		let oDoc = this.getPDFDoc();
-
 		oDoc.SelectAll();
-		oDoc.UpdateCopyCutState();
 	};
 	PDFEditorApi.prototype.asc_showComment = function(Id)
 	{

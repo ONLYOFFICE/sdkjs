@@ -58,7 +58,7 @@
     */
     function CAnnotationFreeText(sName, aRect, oDoc)
     {
-        AscFormat.CGroupShape.call(this);
+        AscPDF.CPdfGroupShape.call(this);
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.FreeText, aRect, oDoc);
         
         initGroupShape(this);
@@ -81,7 +81,7 @@
         this.lastClickCoords = {}; // for onPreMove
     };
     CAnnotationFreeText.prototype.constructor = CAnnotationFreeText;
-    AscFormat.InitClass(CAnnotationFreeText, AscFormat.CGroupShape, AscDFH.historyitem_type_Pdf_Annot_FreeText);
+    AscFormat.InitClass(CAnnotationFreeText, AscPDF.CPdfGroupShape, AscDFH.historyitem_type_Pdf_Annot_FreeText);
     Object.assign(CAnnotationFreeText.prototype, AscPDF.CAnnotationBase.prototype);
 
 	CAnnotationFreeText.prototype.private_UpdateRect = function(rect) {
