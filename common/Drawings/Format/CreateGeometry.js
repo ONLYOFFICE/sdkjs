@@ -10377,7 +10377,7 @@ function CreatePrstTxWarpGeometry(prst, oGeom)
         "squareTabs": 1, "star10": 1, "star12": 1, "star16": 1, "star24": 1,
         "star32": 1, "star4": 1, "star5": 1, "star6": 1, "star7": 1, "star8": 1,
         "straightConnector1": 1, "stripedRightArrow": 1, "sun": 1, "swooshArrow": 1,
-        "teardrop": 1, "trapezoid": 1, "triangle": 1, "upArrowCallout": 1,
+        "teardrop": 1, "trapezoid": 1, "triangle": 1, "upArrow": 1, "upArrowCallout": 1,
         "upDownArrow": 1, "upDownArrowCallout": 1, "uturnArrow": 1,
         "verticalScroll": 1, "wave": 1, "wedgeEllipseCallout": 1,
         "wedgeRectCallout": 1, "wedgeRoundRectCallout": 1
