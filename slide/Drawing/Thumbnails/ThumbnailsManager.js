@@ -311,6 +311,8 @@
 			context.clearRect(0, 0, canvas.width, canvas.height);
 		}
 	};
+	CThumbnailsManagerBase.prototype.UpdateLimits = function (isNoNeedResize) {
+	};
 
 	function CThumbnailsManager(editorPage) {
 		CThumbnailsManagerBase.call(this, editorPage);
@@ -2410,6 +2412,27 @@
 			thpages[index].IsRecalc = true;
 		}
 	};
+	CThumbnailsManager.prototype.UpdateLimits = function (isNoNeedResize) {
+		const isDesktopVersion = window["AscDesktopEditor"] !== undefined;
+		const wordControl = this.m_oWordControl;
+		const thumbnailSplitter = wordControl.splitters[0];
+		let isNeedCheckPosition = false;
+		if (wordControl.Width > 0 && !isDesktopVersion) {
+			isNeedCheckPosition = true;
+			const maxSplitterThMax = Math.min(g_dKoef_pix_to_mm * wordControl.Width / 3, 80);
+			thumbnailSplitter.setLimits(maxSplitterThMax >> 2, maxSplitterThMax >> 0);
+		} else if (!thumbnailSplitter.isEqualLimits(20, 80)) {
+			isNeedCheckPosition = true;
+			thumbnailSplitter.setLimits(20, 80);
+		}
+
+		if (thumbnailSplitter.position > 0.1 && isNeedCheckPosition) {
+			if (wordControl.Width > 0) {
+				thumbnailSplitter.setPosition(thumbnailSplitter.initialPosition, true, true);
+			}
+			wordControl.onSplitterResize(isNoNeedResize);
+		}
+	};
 
 
 	function COutlineThumbnailsManager(editorPage) {
@@ -3247,6 +3270,26 @@
 			};
 		}
 		return null;
+	};
+	COutlineThumbnailsManager.prototype.UpdateLimits = function (isNoNeedResize) {
+		const wordControl = this.m_oWordControl;
+		const thumbnailSplitter = wordControl.splitters[0];
+		let isNeedCheckPosition = false;
+		if (wordControl.Width > 0) {
+			isNeedCheckPosition = true;
+			const maxSplitterThMax = g_dKoef_pix_to_mm * wordControl.Width * 9 / 10;
+			thumbnailSplitter.setLimits(Math.min(maxSplitterThMax >> 2, 20), maxSplitterThMax >> 0);
+		} else if (!thumbnailSplitter.isEqualLimits(20, 80)) {
+			isNeedCheckPosition = true;
+			thumbnailSplitter.setLimits(20, 80);
+		}
+
+		if (thumbnailSplitter.position > 0.1 && isNeedCheckPosition) {
+			if (wordControl.Width > 0) {
+				thumbnailSplitter.setPosition(thumbnailSplitter.initialPosition, true, true);
+			}
+			wordControl.onSplitterResize(isNoNeedResize);
+		}
 	};
 
 
