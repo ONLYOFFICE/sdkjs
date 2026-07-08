@@ -8250,18 +8250,26 @@
 			CBaseNoIdObject.call(this);
 			this.type = null;
 			this.media = null;
+			this.start = null;
+			this.end = null;
 		}
 
 		InitClass(UniMedia, CBaseNoIdObject, 0);
 		UniMedia.prototype.Write_ToBinary = function (w) {
 			var bType = this.type !== null && this.type !== undefined;
 			var bMedia = typeof this.media === 'string';
+			var bStart = typeof this.start === 'number';
+			var bEnd = typeof this.end === 'number';
 			var nFlags = 0;
 			bType && (nFlags |= 1);
 			bMedia && (nFlags |= 2);
+			bStart && (nFlags |= 4);
+			bEnd && (nFlags |= 8);
 			w.WriteLong(nFlags);
 			bType && w.WriteLong(this.type);
 			bMedia && w.WriteString2(this.media);
+			bStart && w.WriteDouble(this.start);
+			bEnd && w.WriteDouble(this.end);
 		};
 		UniMedia.prototype.Read_FromBinary = function (r) {
 			var nFlags = r.GetLong();
@@ -8271,11 +8279,19 @@
 			if (nFlags & 2) {
 				this.media = r.GetString2();
 			}
+			if (nFlags & 4) {
+				this.start = r.GetDouble();
+			}
+			if (nFlags & 8) {
+				this.end = r.GetDouble();
+			}
 		};
 		UniMedia.prototype.createDuplicate = function () {
 			var _ret = new UniMedia();
 			_ret.type = this.type;
 			_ret.media = this.media;
+			_ret.start = this.start;
+			_ret.end = this.end;
 			return _ret;
 		};
 

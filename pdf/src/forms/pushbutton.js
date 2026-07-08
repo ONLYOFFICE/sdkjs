@@ -2193,6 +2193,7 @@
 
         function WriteImage(memory, nImgType) {
             let sPathToImg = AscCommon.getFullImageSrc2(this.GetImageRasterId(nImgType));
+            let nExistIdx = memory.images.indexOf(sPathToImg);
             if ((memory.isForSplit || memory.isCopyPaste) && sPathToImg) {
                 let mapItem = Asc.editor.ImageLoader.map_image_index[sPathToImg];
                 if (mapItem) {
@@ -2204,25 +2205,6 @@
 				}
             }
             
-            else if (sPathToImg) {
-                let sLocal = AscCommon.g_oDocumentUrls.getImageLocal(sPathToImg) || sPathToImg;
-                let bVector = sPathToImg.indexOf("data:image/svg") === 0 || sLocal.endsWith(".svg");
-                let oDrawing = this.GetDrawing();
-                let oShape = oDrawing ? oDrawing.GraphicObj : null;
-                if (bVector && oShape) {
-                    let oRect = this.IsButtonFitBounds() ? this.getFormRect() : this.getFormRelRect();
-                    let dLongMM = oRect ? Math.max(oRect.W, oRect.H) : 0;
-                    let dBaseLongPx = dLongMM * AscCommon.g_dKoef_mm_to_pix;
-                    let dScale = 3;
-                    if (dBaseLongPx > 0 && dBaseLongPx * dScale > 2000)
-                        dScale = Math.max(1, 2000 / dBaseLongPx);
-                    let oResult = AscCommon.ShapeToImageConverter(oShape, 0, "image/png", dScale);
-                    if (oResult && oResult.ImageUrl)
-                        sPathToImg = oResult.ImageUrl;
-                }
-            }
-
-            let nExistIdx = memory.images.indexOf(sPathToImg);
             if (nExistIdx === -1) {
                 memory.WriteLong(memory.images.length);
                 memory.images.push(sPathToImg);

@@ -3762,11 +3762,13 @@ function CBinaryFileWriter()
             oThis.WriteRecord1(4, image, oThis.WriteOleInfo);
         } else {
             var _type;
-            var bMedia = false, _fileMask;
+            var bMedia = false, _fileMask, _start, _end;
             if(image.nvPicPr && image.nvPicPr.nvPr && image.nvPicPr.nvPr.unimedia && image.nvPicPr.nvPr.unimedia.type !== null
                 && typeof image.nvPicPr.nvPr.unimedia.media === "string" && image.nvPicPr.nvPr.unimedia.media.length > 0){
                 _type = image.nvPicPr.nvPr.unimedia.type;
                 _fileMask = image.nvPicPr.nvPr.unimedia.media;
+                _start = image.nvPicPr.nvPr.unimedia.start;
+                _end = image.nvPicPr.nvPr.unimedia.end;
                 bMedia = true;
             }
             else{
@@ -3777,6 +3779,8 @@ function CBinaryFileWriter()
                 oThis.WriteRecord1(5, null, function(){
                     oThis.WriteUChar(g_nodeAttributeStart);
                     oThis._WriteString1(0, _fileMask);
+                    oThis._WriteDoubleReal2(2, _start);
+                    oThis._WriteDoubleReal2(3, _end);
                     oThis.WriteUChar(g_nodeAttributeEnd);
                 });
             }
@@ -5770,7 +5774,7 @@ function CBinaryFileWriter()
             var _writer = this.BinaryFileWriter;
 
             var isOle = AscDFH.historyitem_type_OleObject == image.getObjectType();
-            var _type, _fileMask;
+            var _type, _fileMask, _start, _end;
             if(isOle){
                 _writer.StartRecord(6);
                 //important to write at the beginning
@@ -5782,6 +5786,8 @@ function CBinaryFileWriter()
                 && typeof image.nvPicPr.nvPr.unimedia.media === "string" && image.nvPicPr.nvPr.unimedia.media.length > 0){
                     _type = image.nvPicPr.nvPr.unimedia.type;
                     _fileMask = image.nvPicPr.nvPr.unimedia.media;
+                    _start = image.nvPicPr.nvPr.unimedia.start;
+                    _end = image.nvPicPr.nvPr.unimedia.end;
                     bMedia = true;
                 }
                 else{
@@ -5792,6 +5798,8 @@ function CBinaryFileWriter()
                     _writer.WriteRecord1(5, null, function(){
                         _writer.WriteUChar(g_nodeAttributeStart);
                         _writer._WriteString2(0, _fileMask);
+                        _writer._WriteDoubleReal2(2, _start);
+                        _writer._WriteDoubleReal2(3, _end);
                         _writer.WriteUChar(g_nodeAttributeEnd);
                     });
                 }

@@ -7191,6 +7191,7 @@ function BinaryPPTYLoader()
         var _end_rec = _rec_start + s.GetULong() + 4;
 
         var sMaskFileName;
+        var mediaStart = null, mediaEnd = null;
         while (s.cur < _end_rec)
         {
             var _at = s.GetUChar();
@@ -7255,6 +7256,16 @@ function BinaryPPTYLoader()
                                     s.GetBool();
                                     break;
                                 }
+                                case 2:
+                                {
+                                    mediaStart = s.GetDouble();
+                                    break;
+                                }
+                                case 3:
+                                {
+                                    mediaEnd = s.GetDouble();
+                                    break;
+                                }
                                 default:
                                 {
                                     break;
@@ -7299,6 +7310,8 @@ function BinaryPPTYLoader()
                 var oUniMedia = new AscFormat.UniMedia();
                 oUniMedia.type = type;
                 oUniMedia.media = sMaskFileName;
+                oUniMedia.start = mediaStart;
+                oUniMedia.end = mediaEnd;
                 pic.nvPicPr.nvPr.setUniMedia(oUniMedia);
             }
         }
@@ -11486,6 +11499,7 @@ function BinaryPPTYLoader()
             var _end_rec = _rec_start + s.GetULong() + 4;
 
             var sMaskFileName = "";
+            var mediaStart = null, mediaEnd = null;
             while (s.cur < _end_rec)
             {
                 var _at = s.GetUChar();
@@ -11549,6 +11563,16 @@ function BinaryPPTYLoader()
                                         sMaskFileName = s.GetString2();
                                         break;
                                     }
+                                    case 2:
+                                    {
+                                        mediaStart = s.GetDouble();
+                                        break;
+                                    }
+                                    case 3:
+                                    {
+                                        mediaEnd = s.GetDouble();
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -11576,6 +11600,8 @@ function BinaryPPTYLoader()
                     var oUniMedia = new AscFormat.UniMedia();
                     oUniMedia.type = type;
                     oUniMedia.media = sMaskFileName;
+                    oUniMedia.start = mediaStart;
+                    oUniMedia.end = mediaEnd;
                     pic.nvPicPr.nvPr.setUniMedia(oUniMedia);
                 }
             }
