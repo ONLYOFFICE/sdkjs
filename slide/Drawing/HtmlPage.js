@@ -4527,6 +4527,7 @@
 		if (GlobalSkin.SupportNotes) {
 			const _pos = this.Height - ((this.splitters[1].position * g_dKoef_mm_to_pix) >> 0);
 			const _min = 30 * g_dKoef_mm_to_pix;
+			const isDesktopVersion = window["AscDesktopEditor"] !== undefined;
 			if (_pos < _min && !isDesktopVersion) {
 
 				const dPos = (this.Height - _min) * g_dKoef_pix_to_mm;
