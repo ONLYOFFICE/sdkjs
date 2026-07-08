@@ -4902,25 +4902,9 @@
 
 	PDFEditorApi.prototype.asc_EditSelectAll = function()
 	{
-		let oViewer			= this.getDocumentRenderer();
-		let oDoc			= oViewer.getPDFDoc();
-		let oActiveForm		= oDoc.activeForm;
-        let oActiveAnnot	= oDoc.mouseDownAnnot;
-		let oThumbnails		= oDoc.GetThumbnails();
+		let oDoc = this.getPDFDoc();
 
-		if (oActiveForm && oActiveForm.IsCanEditText()) {
-			oActiveForm.SelectAllText();
-		}
-		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
-            oActiveAnnot.SelectAllText();
-		}
-		else if (oThumbnails && oThumbnails.isInFocus) {
-			oThumbnails.selectAll();
-		}
-		else {
-			oViewer.file.selectAll();
-		}
-		
+		oDoc.SelectAll();
 		oDoc.UpdateCopyCutState();
 	};
 	PDFEditorApi.prototype.asc_showComment = function(Id)
