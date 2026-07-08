@@ -2377,6 +2377,20 @@ background-repeat: no-repeat;\
 			_data = sBase64;
 			_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Internal, checkData(_data))
 		}
+		//IMAGE
+		if (AscCommon.c_oAscClipboardDataFormat.Image & _formats)
+		{
+			var oDrawingObjects = this.WordControl.m_oLogicDocument.getDrawingObjects();
+			var oImageData = oDrawingObjects && oDrawingObjects.getSelectionImageData();
+			if (oImageData && oImageData.src)
+			{
+				var aImageSrc = oImageData.src.split(",");
+				if (aImageSrc[1])
+				{
+					_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Image, [AscCommon.Base64.decode(aImageSrc[1])]);
+				}
+			}
+		}
 	};
 
 	asc_docs_api.prototype.asc_SelectionCut = function()

@@ -1632,6 +1632,7 @@
 
 		isCopyOutEnabled : function()
 		{
+			return true;
 			if (this.Api && this.Api.isCopyOutEnabled)
 				return this.Api.isCopyOutEnabled();
 			return true;
