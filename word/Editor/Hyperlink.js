@@ -324,8 +324,9 @@ ParaHyperlink.prototype.GetToolTip = function()
 };
 ParaHyperlink.prototype.Set_Value = function(Value)
 {
-    AscCommon.History.Add(new CChangesHyperlinkValue(this, this.Value, Value));
-    this.Value = Value;
+    let change = new CChangesHyperlinkValue(this, this.Value, Value);
+    AscCommon.History.Add(change);
+    change.Redo();
 };
 ParaHyperlink.prototype.GetAnchor = function()
 {

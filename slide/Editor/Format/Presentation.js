@@ -8355,7 +8355,6 @@ CPresentation.prototype.AddHyperlink = function (HyperProps) {
 	var oController = this.GetCurrentController();
 	if (oController) {
 		oController.checkSelectedObjectsAndCallback(oController.hyperlinkAdd, [HyperProps], false, AscDFH.historydescription_Presentation_HyperlinkAdd);
-		this.bindNewSlideJumpLinks();
 		this.Document_UpdateInterfaceState();
 	}
 };
@@ -8364,14 +8363,7 @@ CPresentation.prototype.ModifyHyperlink = function (HyperProps) {
 	var oController = this.GetCurrentController();
 	if (oController) {
 		oController.checkSelectedObjectsAndCallback(oController.hyperlinkModify, [HyperProps], false, AscDFH.historydescription_Presentation_HyperlinkModify);
-		this.bindNewSlideJumpLinks();
 		this.Document_UpdateInterfaceState();
-	}
-};
-CPresentation.prototype.bindNewSlideJumpLinks = function () {
-	let hyperlink = this.IsCursorInHyperlink(false);
-	if (hyperlink) {
-		this.bindSlideJumpLink(hyperlink);
 	}
 };
 
