@@ -647,6 +647,20 @@
         
         return oPageInfo ? oPageInfo.drawings : [];
     };
+    CGraphicObjects.prototype.getAnnotObjects = function(nPage) {
+        let oViewer     = Asc.editor.getDocumentRenderer();
+        let oPageInfo   = oViewer.pagesInfo.pages[nPage];
+        
+        return oPageInfo ? oPageInfo.annots : [];
+    };
+    CGraphicObjects.prototype.getFieldEditShapeObjects = function(nPage) {
+        let oViewer     = Asc.editor.getDocumentRenderer();
+        let oPageInfo   = oViewer.pagesInfo.pages[nPage];
+        
+        return oPageInfo ? oPageInfo.fields.map(function(field) {
+			return field.GetEditShape();
+		}) : [];
+    };
 
     CGraphicObjects.prototype.getDrawingArray = function() {
         return this.document.drawings;
@@ -1116,7 +1130,7 @@
             }
         }
         else {
-            if (this.selection.groupSelection) {
+            if (this.selection.groupSelection && !this.selection.groupSelection.IsAnnot()) {
                 if (!this.selection.groupSelection.selection.chartSelection) {
                     this.selection.groupSelection.resetSelection(this);
                     for (i = this.selection.groupSelection.arrGraphicObjects.length - 1; i > -1; --i) {
@@ -1125,10 +1139,25 @@
                 }
             } else if (!this.selection.chartSelection) {
                 let nCurPage = this.document.GetCurPage();
+				let oActiveObj = this.document.GetActiveObject();
+				let aObjects;
+
+				if (oActiveObj) {
+					if (oActiveObj.IsDrawing()) {
+						aObjects = this.getDrawingObjects(nCurPage);
+					}
+					else if (oActiveObj.IsAnnot()) {
+						aObjects = this.getAnnotObjects(nCurPage);
+					}
+					else if (oActiveObj.IsForm()) {
+						aObjects = this.getFieldEditShapeObjects(nCurPage);
+					}
+				}
+
                 this.resetSelection();
-                var drawings = this.getDrawingObjects(nCurPage);
-                for (i = drawings.length - 1; i > -1; --i) {
-                    this.selectObject(drawings[i], nCurPage);
+
+                for (i = aObjects.length - 1; i > -1; --i) {
+                    this.selectObject(aObjects[i], nCurPage);
                 }
             }
         }
@@ -1177,18 +1206,6 @@
                     return true;
                 }
 				let sCursorType = ret.cursorType;
-				let oAPI = this.getEditorApi();
-				if(oAPI.isFormatPainterOn())
-				{
-					if(sCursorType !== "text")
-					{
-						let oData = oAPI.getFormatPainterData();
-						if(oData.isDrawingData())
-						{
-							sCursorType = AscCommon.Cursors.ShapeCopy;
-						}
-					}
-				}
                 this.drawingDocument.SetCursorType(sCursorType);
             }
             return true;
@@ -1238,7 +1255,7 @@
                 ty = invert_transform_text.TransformPointY(x, y);
     
                 // Render controls for Document Editor
-                if (this.document.IsDocumentEditor() && object instanceof AscFormat.CShape && object.isForm()) {
+                if (this.document.IsDocumentEditor() && object instanceof AscFormat.CShape && object.IsForm()) {
                     var oForm = object.getInnerForm();
                     if (oForm)
                         oForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Hover, tx, ty, 0, false);
@@ -1376,7 +1393,7 @@
             oGm.drawSelect(pageIndex, drawingDocument);
         } else if (oTx) {
             if (oTx.selectStartPage === pageIndex) {
-                if (!oTx.isForm()) {
+                if (!oTx.IsForm()) {
                     let isLineAnnot = oTx.IsAnnot() && oTx.IsLine();
 
                     drawingDocument.DrawTrack(
@@ -1473,7 +1490,7 @@
                     let nType = oDrawing.IsAnnot() && oDrawing.IsStamp() ? AscFormat.TYPE_TRACK.ANNOT_STAMP : AscFormat.TYPE_TRACK.SHAPE;
 
                     if (oDrawing.IsAnnot() && (oDrawing.IsTextMarkup() || oDrawing.IsText())) {
-                        oDrawing.DrawSelected(drawingDocument.Overlay);
+                        oDrawing.DrawSelected(this.document.Viewer.overlay);
                     }
                     else {
                         if (oDrawing.IsAnnot() && oDrawing.IsFreeText()) {

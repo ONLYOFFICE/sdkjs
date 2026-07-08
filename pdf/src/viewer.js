@@ -2669,40 +2669,19 @@
 			}
 			
 			this.DrawingObjects.updateSelectionState();
-			
+			let oAcitveObj = oDoc.GetActiveObject();
+
 			if (this.DrawingObjects.needUpdateOverlay()) {
 				oDrDoc.AutoShapesTrack.PageIndex = -1;
 				this.DrawingObjects.drawOnOverlay(oDrDoc.AutoShapesTrack);
 				oDrDoc.AutoShapesTrack.CorrectOverlayBounds();
 			}
-			else if (oDoc.mouseDownAnnot) {
-				let oController = Asc.editor.getPDFDoc().GetController();
-				let oContent = oController.getTargetDocContent();
-
-				if (oContent && oContent.IsSelectionUse()) {
-					ctx.beginPath();
-					oDrDoc.SetTextSelectionOutline(true);
-					oContent.DrawSelectionOnPage(0);
-					oDrDoc.private_EndDrawSelection();
-				}
-				else {
-					const nPage = oDoc.mouseDownAnnot.GetPage();
-					oDrDoc.AutoShapesTrack.SetCurrentPage(nPage, true);
-					this.DrawingObjects.drawSelect(nPage);
-				}
-			}
-			else if (oDoc.activeDrawing || (oDoc.activeForm && oDoc.IsEditFieldsMode())) {
-				let oObj = oDoc.activeDrawing || oDoc.activeForm;
-				const nPage = oObj.GetPage();
+			else if (oAcitveObj) {
+				const nPage = oAcitveObj.GetPage();
 				oDrDoc.SetTextSelectionOutline(true);
 				oDrDoc.private_EndDrawSelection();
-				oDrDoc.AutoShapesTrack.PageIndex = nPage;
+				oDrDoc.AutoShapesTrack.SetCurrentPage(nPage, true);
 				this.DrawingObjects.drawSelect(nPage);
-			}
-			else if (oDoc.activeForm && oDoc.activeForm.content && oDoc.activeForm.content.IsSelectionUse() && !oDoc.activeForm.content.IsSelectionEmpty()) {
-				ctx.beginPath();
-				oDoc.activeForm.content.DrawSelectionOnPage(0);
-				oDrDoc.private_EndDrawSelection();
 			}
 		};
 		

@@ -1893,10 +1893,8 @@ var CPresentation = CPresentation || function(){};
             return;
         }
 
-        if (oObject.IsDrawing && oObject.IsDrawing() && oObject.IsShape() && this.IsEditFieldsMode()) {
-            if (oObject.GetEditField()) {
-                return;
-            }
+        if (oObject.IsDrawing() && oObject.GetEditField()) {
+			oObject = oObject.GetEditField();
         }
 
         if (oObject.IsForm && oObject.IsForm()) {
@@ -3022,7 +3020,7 @@ var CPresentation = CPresentation || function(){};
 	 * Gets the active object
 	 */
     CPDFDoc.prototype.GetActiveObject = function() {
-        return this.activeForm || this.mouseDownAnnot || this.activeDrawing;
+        return (this.activeForm || this.mouseDownField) || this.mouseDownAnnot || this.activeDrawing;
     };
     /**
 	 * The difference from the previous method is that for fields, the field that was clicked will be returned, not the active one,
@@ -4569,7 +4567,6 @@ var CPresentation = CPresentation || function(){};
 
             Asc.editor.sync_HideComment();
             Asc.editor.sync_RemoveComment(Id);
-            this.RemoveSelection();
         }
         
         this.private_UpdateTargetForCollaboration(true);
@@ -5590,21 +5587,11 @@ var CPresentation = CPresentation || function(){};
         let oDrDoc      = this.GetDrawingDocument();
         let oController = this.GetController();
 
-        let oForm       = this.activeForm;
-        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
-        let oDrawing  = this.activeDrawing;
+        let oAcitveObj = this.GetActiveObject();
+		let oContent;
 
-        let oContent;
-        if (oForm && oForm.IsInForm() && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oForm.GetType())) {
-            oForm.SelectAllText();
-            oContent = oForm.GetDocContent();
-        }
-        else if (oFreeText && oFreeText.IsInTextBox()) {
-            oFreeText.SelectAllText();
-            oContent = oFreeText.GetDocContent();
-        }
-        else if (oDrawing) {
-            oContent = oDrawing.GetDocContent();
+        if (oAcitveObj) {
+			oContent = oAcitveObj.GetDocContent();
             oController.selectAll();
 
             if (oController.getSelectedArray().length != 0) {
@@ -6732,7 +6719,7 @@ var CPresentation = CPresentation || function(){};
         let nExtX = oShape.txBody.getMaxContentWidth(nPageW / 2, false) + oBodyPr.lIns + oBodyPr.rIns;
         let nExtY = oShape.txBody.content.GetSummaryHeight() + oBodyPr.tIns + oBodyPr.bIns;
 
-        let oPos = this.private_computeDrawingAddingPos(nPage, nExtX, nExtY);
+        let oPos = this.GetController().private_computeDrawingAddingPos(nPage, nExtX, nExtY);
 
         oShape.spPr.xfrm.setOffX(oPos.x);
         oShape.spPr.xfrm.setOffY(oPos.y);
