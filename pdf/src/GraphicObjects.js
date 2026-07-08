@@ -661,9 +661,158 @@
 			return field.GetEditShape();
 		}) : [];
     };
-
+	
     CGraphicObjects.prototype.getDrawingArray = function() {
         return this.document.drawings;
+    };
+    CGraphicObjects.prototype.getObjectPasteShift = function(aExisting, oRefObject, fGetBounds, dStep) {
+        if (!aExisting || !oRefObject) {
+            return 0;
+        }
+
+        let oRefBounds = fGetBounds(oRefObject);
+        if (!oRefBounds) {
+            return 0;
+        }
+
+        let fAE = AscFormat.fApproxEqual;
+        let dDelta = 0.1;
+        let fMatch = function(oCur, dCmpX, dCmpY) {
+            if (oCur === oRefObject) {
+                return false;
+            }
+            let oCurBounds = fGetBounds(oCur);
+            if (!oCurBounds) {
+                return false;
+            }
+            return fAE(dCmpX, oCurBounds.x, dDelta) &&
+                fAE(dCmpY, oCurBounds.y, dDelta) &&
+                fAE(oRefBounds.w, oCurBounds.w, dDelta) &&
+                fAE(oRefBounds.h, oCurBounds.h, dDelta);
+        };
+
+        let nBaseIdx = -1;
+        for (let i = 0; i < aExisting.length; ++i) {
+            if (fMatch(aExisting[i], oRefBounds.x, oRefBounds.y)) {
+                nBaseIdx = i;
+                break;
+            }
+        }
+        if (nBaseIdx === -1) {
+            return 0;
+        }
+
+        let dShift = dStep;
+        for (let i = nBaseIdx + 1; i < aExisting.length; ++i) {
+            if (fMatch(aExisting[i], oRefBounds.x + dShift, oRefBounds.y + dShift)) {
+                dShift += dStep;
+            }
+        }
+        return dShift;
+    };
+    CGraphicObjects.prototype.getDrawingPasteShift = function(oDrawing, nPage) {
+        let oPageInfo = this.document.GetPageInfo(nPage);
+        if (!oPageInfo) {
+            return 0;
+        }
+        let dStep = 12 * g_dKoef_pt_to_mm;
+        let fGetBounds = function(oDrawing) {
+            let dX = oDrawing.getXfrmOffX();
+            let dY = oDrawing.getXfrmOffY();
+            let dW = oDrawing.getXfrmExtX();
+            let dH = oDrawing.getXfrmExtY();
+            if (dX === null || dY === null || dW === null || dH === null) {
+                return null;
+            }
+            return {x: dX, y: dY, w: dW, h: dH};
+        };
+        return this.getObjectPasteShift(oPageInfo.GetDrawings(), oDrawing, fGetBounds, dStep);
+    };
+    CGraphicObjects.prototype.getAnnotPasteShift = function(oRefAnnot, nPage) {
+        let oPageInfo = this.document.GetPageInfo(nPage);
+        if (!oPageInfo) {
+            return 0;
+        }
+
+		function fGetBounds(oObject) {
+			let aRect = oObject.GetRect();
+			if (!aRect) {
+				return null;
+			}
+			return {x: aRect[0], y: aRect[1], w: aRect[2] - aRect[0], h: aRect[3] - aRect[1]};
+		}
+
+        let dStep = 12;
+        return this.getObjectPasteShift(oPageInfo.GetAnnots(), oRefAnnot, fGetBounds, dStep);
+    };
+    CGraphicObjects.prototype.getFieldPasteShift = function(oRefField, nPage) {
+        let oPageInfo = this.document.GetPageInfo(nPage);
+        if (!oPageInfo) {
+            return 0;
+        }
+
+		function fGetBounds(oObject) {
+			let aRect = oObject.GetRect();
+			if (!aRect) {
+				return null;
+			}
+			return {x: aRect[0], y: aRect[1], w: aRect[2] - aRect[0], h: aRect[3] - aRect[1]};
+		}
+
+        let dStep = 12;
+        return this.getObjectPasteShift(oPageInfo.GetFields(), oRefField, fGetBounds, dStep);
+    };
+    CGraphicObjects.prototype.ComputeDrawingAddingPos = function(nPage, nExtX, nExtY, isFromUI) {
+        let oDoc        = this.document;
+        let oViewRect   = oDoc.Viewer.getViewingRect(nPage);
+        let nRotAngle   = oDoc.Viewer.getPageRotate(nPage);
+        let nPageW      = oDoc.GetPageWidthMM(nPage);
+        let nPageH      = oDoc.GetPageHeightMM(nPage);
+        let nPosX;
+        let nPosY;
+
+        if (isFromUI) {
+            switch (nRotAngle) {
+                case 0:
+                    nPosX = nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
+                    nPosY = nPageH * (oViewRect.y + (oViewRect.b - oViewRect.y) / 4) - nExtY / 2;
+                    break;
+                case 90:
+                    nPosX = nPageW * ((oViewRect.y + oViewRect.b) / 4) - nExtX / 2;
+                    nPosY = nPageH - nPageH * (oViewRect.x + (oViewRect.r - oViewRect.x) / 2) - nExtY / 2;
+                    break;
+                case 180:
+                    nPosX = nPageW - nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
+                    nPosY = nPageH - nPageH * (oViewRect.y + (oViewRect.b - oViewRect.y) / 4) - nExtY / 2;
+                    break;
+                case 270:
+                    nPosX = nPageW - nPageW * ((oViewRect.y + oViewRect.b) / 4) - nExtX / 2;
+                    nPosY = nPageH * (oViewRect.x + (oViewRect.r - oViewRect.x) / 2) - nExtY / 2;
+                    break;
+            }
+        }
+        else {
+            switch (nRotAngle) {
+                case 0:
+                    nPosX = nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
+                    nPosY = nPageH * ((oViewRect.y + oViewRect.b) / 2) - nExtY / 2;
+                    break;
+                case 90:
+                    nPosX = nPageW * ((oViewRect.y + oViewRect.b) / 2) - nExtX / 2;
+                    nPosY = nPageH - nPageH * ((oViewRect.x + oViewRect.r) / 2) - nExtY / 2;
+                    break;
+                case 180:
+                    nPosX = nPageW - nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
+                    nPosY = nPageH - nPageH * ((oViewRect.y + oViewRect.b) / 2) - nExtY / 2;
+                    break;
+                case 270:
+                    nPosX = nPageW - nPageW * ((oViewRect.y + oViewRect.b) / 2) - nExtX / 2;
+                    nPosY = nPageH * ((oViewRect.x + oViewRect.r) / 2) - nExtY / 2;
+                    break;
+            }
+        }
+
+        return {x: nPosX, y: nPosY}
     };
 
     CGraphicObjects.prototype.canEditText = function () {
@@ -2157,7 +2306,6 @@
     CGraphicObjects.prototype.setDefaultTabSize         = AscFormat.DrawingObjectsController.prototype.setDefaultTabSize;
     CGraphicObjects.prototype.changeTextCase            = AscFormat.DrawingObjectsController.prototype.changeTextCase;
     CGraphicObjects.prototype.handleDblClickEmptyShape  = AscFormat.DrawingObjectsController.prototype.handleDblClickEmptyShape;
-    CGraphicObjects.prototype.getDrawingsPasteShift     = AscFormat.DrawingObjectsController.prototype.getDrawingsPasteShift;
     CGraphicObjects.prototype.getAllSingularDrawings    = AscFormat.DrawingObjectsController.prototype.getAllSingularDrawings;
     CGraphicObjects.prototype.setParagraphBidi          = AscFormat.DrawingObjectsController.prototype.setParagraphBidi;
     CGraphicObjects.prototype.loadDocumentStateAfterLoadChanges = AscFormat.DrawingObjectsController.prototype.loadDocumentStateAfterLoadChanges;

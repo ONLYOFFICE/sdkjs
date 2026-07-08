@@ -323,6 +323,9 @@
         
         AscCommon.History.Add(new CChangesPDFDocumentDrawingsContent(this, nPos, [oDrawing], false));
 	};
+	CPageInfo.prototype.GetDrawings = function() {
+		return this.drawings;
+	};
 	CPageInfo.prototype.AddAnnot = function(oAnnot, nPos) {
 		if (nPos == undefined) {
             nPos = this.annots.length;
@@ -396,6 +399,9 @@
 
         AscCommon.History.Add(new CChangesPDFDocumentRedactedFieldsContent(this, nPos, [oField], true));
 		this.RedrawForms();
+	};
+	CPageInfo.prototype.GetFields = function() {
+		return this.fields;
 	};
 	CPageInfo.prototype.SetLocks = function(deleteLock, rotateLock, editPageLock) {
         this.deleteLock = deleteLock;

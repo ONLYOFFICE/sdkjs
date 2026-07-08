@@ -3407,9 +3407,7 @@ var CPresentation = CPresentation || function(){};
         if (!oPagesInfo)
             return false;
 
-		this.BlurActiveObject();
-		
-        let sFieldName = oField.GetFullName();
+		let sFieldName = oField.GetFullName();
         let oExistsField = this.GetField(sFieldName);
         if (oExistsField) {
             let oParent;
@@ -3471,7 +3469,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (isFromUI) {
-            let nExtX = oField.GetWidth();
+			let nExtX = oField.GetWidth();
             let nExtY = oField.GetHeight();
 
             let nPageRotate = this.Viewer.getPageRotate(nPage);
@@ -3487,8 +3485,10 @@ var CPresentation = CPresentation || function(){};
                 nExtY = tmp;
             }
 
-            let oPos = this.private_computeFieldAddingPos(nPage, nExtX, nExtY);
-            oField.SetPosition(oPos.x, oPos.y)
+            let extXmm = nExtX * g_dKoef_pt_to_mm;
+            let extYmm = nExtY * g_dKoef_pt_to_mm;
+            let oPos = this.GetController().ComputeDrawingAddingPos(nPage, extXmm, extYmm, true);
+            oField.SetPosition(oPos.x * g_dKoef_mm_to_pt, oPos.y * g_dKoef_mm_to_pt)
         }
 
         oPagesInfo.AddField(oField);
@@ -3498,6 +3498,8 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (isFromUI) {
+			this.BlurActiveObject();
+			
             let oController = this.GetController();
             this.SetMouseDownObject(oField);
             this.activeForm = oField;
@@ -5679,7 +5681,7 @@ var CPresentation = CPresentation || function(){};
 
 				let nExtX   = oXfrm.extX;
 				let nExtY   = oXfrm.extY;
-				let oPos    = this.private_computeDrawingAddingPos(nCurPage, nExtX, nExtY);
+				let oPos    = this.GetController().ComputeDrawingAddingPos(nCurPage, nExtX, nExtY);
 				
 				if (nRotAngle != 0) {
 					oXfrm.setRot(-nRotAngle * Math.PI / 180);
@@ -6467,29 +6469,44 @@ var CPresentation = CPresentation || function(){};
             });
 
             if (true !== this.Action.PasteHtmlAction) {
-                aDrToPaste.forEach(function(drawing, index) {
+                // center the whole group in the viewing area, preserving relative layout
+                let dMinX = Infinity, dMinY = Infinity, dMaxX = -Infinity, dMaxY = -Infinity;
+                aDrToPaste.forEach(function(drawing) {
+                    let dX = drawing.getXfrmOffX();
+                    let dY = drawing.getXfrmOffY();
+                    dMinX = Math.min(dMinX, dX);
+                    dMinY = Math.min(dMinY, dY);
+                    dMaxX = Math.max(dMaxX, dX + drawing.getXfrmExtX());
+                    dMaxY = Math.max(dMaxY, dY + drawing.getXfrmExtY());
+                });
+
+                let oPos = oController.ComputeDrawingAddingPos(nCurPage, dMaxX - dMinX, dMaxY - dMinY);
+                let dDeltaX = oPos.x - dMinX;
+                let dDeltaY = oPos.y - dMinY;
+
+                aDrToPaste.forEach(function(drawing) {
                     let oXfrm = drawing.getXfrm();
-                    let oPos = oThis.private_computeDrawingAddingPos(nCurPage, oXfrm.extX, oXfrm.extY);
-                    oXfrm.setOffX(oPos.x);
-                    oXfrm.setOffY(oPos.y);
-    
-                    // slightly offset when pasting, so the pasted shape is visible
-                    let nShift = oController.getDrawingsPasteShift([drawing]);
-    
+                    oXfrm.setOffX(drawing.getXfrmOffX() + dDeltaX);
+                    oXfrm.setOffY(drawing.getXfrmOffY() + dDeltaY);
+                });
+
+                // slightly offset the whole group diagonally when pasting, so it doesn't overlap the source
+                let nShift = oController.getDrawingPasteShift(aDrToPaste[0], nCurPage);
+
+                aDrToPaste.forEach(function(drawing, index) {
                     if (nShift > 0) {
-                        oXfrm.shift(nShift, nShift);
+                        let oXfrm = drawing.getXfrm();
+                        oXfrm.setOffX(drawing.getXfrmOffX() + nShift);
+                        oXfrm.setOffY(drawing.getXfrmOffY() + nShift);
                     }
-    
+
                     oThis.AddDrawing(drawing, oThis.GetCurPage());
-    
+
                     if (drawing.IsGraphicFrame()) {
                         oController.Check_GraphicFrameRowHeight(drawing);
                     }
-                    
-                    if (index == 0) {
-                        oThis.SetMouseDownObject(drawing);
-                    }
-                    drawing.select(oController, nCurPage);
+
+                    oController.selectObject(drawing, nCurPage);
                 });
             }
             else {
@@ -6518,11 +6535,7 @@ var CPresentation = CPresentation || function(){};
                         oController.Check_GraphicFrameRowHeight(drawing);
                     }
                     
-                    if (index == 0) {
-                        oThis.SetMouseDownObject(drawing);
-                    }
-                    
-                    drawing.select(oController, nCurPage);
+					oController.selectObject(drawing, nCurPage);
                 });
             }
 
@@ -6535,22 +6548,39 @@ var CPresentation = CPresentation || function(){};
                 return pasteObj.Annot;
             });
 
-            let nShiftY = 0;
-            aAnnotsToPaste.forEach(function(annot, index) {
+            // center the whole group in the viewing area, preserving relative layout
+            let dMinX = Infinity, dMinY = Infinity, dMaxX = -Infinity, dMaxY = -Infinity;
+            aAnnotsToPaste.forEach(function(annot) {
                 let aRect = annot.GetRect();
-                let extXmm = (aRect[2] - aRect[0]) * g_dKoef_pt_to_mm;
-                let extYmm = (aRect[3] - aRect[1]) * g_dKoef_pt_to_mm;
+                dMinX = Math.min(dMinX, aRect[0]);
+                dMinY = Math.min(dMinY, aRect[1]);
+                dMaxX = Math.max(dMaxX, aRect[2]);
+                dMaxY = Math.max(dMaxY, aRect[3]);
+            });
 
-                let oPos = oThis.private_computeDrawingAddingPos(nCurPage, extXmm, extYmm);
-                annot.SetPosition(oPos.x * g_dKoef_mm_to_pt, (oPos.y + nShiftY) * g_dKoef_mm_to_pt)
-                nShiftY += extYmm + 3.5;
+            let extXmm = (dMaxX - dMinX) * g_dKoef_pt_to_mm;
+            let extYmm = (dMaxY - dMinY) * g_dKoef_pt_to_mm;
+            let oPos = oController.ComputeDrawingAddingPos(nCurPage, extXmm, extYmm);
+            let dDeltaX = oPos.x * g_dKoef_mm_to_pt - dMinX;
+            let dDeltaY = oPos.y * g_dKoef_mm_to_pt - dMinY;
+
+            aAnnotsToPaste.forEach(function(annot) {
+                let aRect = annot.GetRect();
+                annot.SetPosition(aRect[0] + dDeltaX, aRect[1] + dDeltaY);
+            });
+
+            // slightly offset the whole group diagonally when pasting, so it doesn't overlap the source
+            let nShift = oController.getAnnotPasteShift(aAnnotsToPaste[0], nCurPage);
+
+            aAnnotsToPaste.forEach(function(annot, index) {
+                if (nShift > 0) {
+                    let aRect = annot.GetRect();
+                    annot.SetPosition(aRect[0] + nShift, aRect[1] + nShift);
+                }
 
                 oThis.AddAnnot(annot, oThis.GetCurPage());
 
-                if (index == 0) {
-                    oThis.SetMouseDownObject(annot);
-                }
-                annot.select(oController, nCurPage);
+				oController.selectObject(annot, nCurPage);
             });
 
             bResult = true;
@@ -6562,25 +6592,40 @@ var CPresentation = CPresentation || function(){};
                 return pasteObj.Field;
             });
 
-            let nShiftY = 0;
-            aFieldsToPaste.forEach(function(field, index) {
+            // center the whole group in the viewing area, preserving relative layout
+            let dMinX = Infinity, dMinY = Infinity, dMaxX = -Infinity, dMaxY = -Infinity;
+            aFieldsToPaste.forEach(function(field) {
                 let aRect = field.GetRect();
-                let extXmm = (aRect[2] - aRect[0]);
-                let extYmm = (aRect[3] - aRect[1]);
+                dMinX = Math.min(dMinX, aRect[0]);
+                dMinY = Math.min(dMinY, aRect[1]);
+                dMaxX = Math.max(dMaxX, aRect[2]);
+                dMaxY = Math.max(dMaxY, aRect[3]);
+            });
 
-                let oPos = oThis.private_computeFieldAddingPos(nCurPage, extXmm, extYmm);
-                field.SetPosition(oPos.x, oPos.y + nShiftY);
-                nShiftY += extYmm + 10;
+            let extXmm = (dMaxX - dMinX) * g_dKoef_pt_to_mm;
+            let extYmm = (dMaxY - dMinY) * g_dKoef_pt_to_mm;
+            let oPos = oController.ComputeDrawingAddingPos(nCurPage, extXmm, extYmm);
+            let dDeltaX = oPos.x * g_dKoef_mm_to_pt - dMinX;
+            let dDeltaY = oPos.y * g_dKoef_mm_to_pt - dMinY;
+
+            aFieldsToPaste.forEach(function(field) {
+                let aRect = field.GetRect();
+                field.SetPosition(aRect[0] + dDeltaX, aRect[1] + dDeltaY);
+            });
+
+            // slightly offset the whole group diagonally when pasting, so it doesn't overlap the source
+            let nShift = oController.getFieldPasteShift(aFieldsToPaste[0], nCurPage);
+
+            aFieldsToPaste.forEach(function(field, index) {
+                if (nShift > 0) {
+                    let aRect = field.GetRect();
+                    field.SetPosition(aRect[0] + nShift, aRect[1] + nShift);
+                }
 
                 oThis.AddField(field, oThis.GetCurPage());
 
-                if (index == 0) {
-                    oThis.SetMouseDownObject(field);
-                    oThis.activeForm = field;
-                }
-
                 field.SetEditMode(true);
-                field.GetEditShape().select(oController, nCurPage);
+				oController.selectObject(field.GetEditShape(), nCurPage);
             });
 
             bResult = true;
@@ -6719,7 +6764,7 @@ var CPresentation = CPresentation || function(){};
         let nExtX = oShape.txBody.getMaxContentWidth(nPageW / 2, false) + oBodyPr.lIns + oBodyPr.rIns;
         let nExtY = oShape.txBody.content.GetSummaryHeight() + oBodyPr.tIns + oBodyPr.bIns;
 
-        let oPos = this.GetController().private_computeDrawingAddingPos(nPage, nExtX, nExtY);
+        let oPos = this.GetController().ComputeDrawingAddingPos(nPage, nExtX, nExtY);
 
         oShape.spPr.xfrm.setOffX(oPos.x);
         oShape.spPr.xfrm.setOffY(oPos.y);
@@ -6757,7 +6802,7 @@ var CPresentation = CPresentation || function(){};
 
         let nExtX   = oXfrm.extX;
         let nExtY   = oXfrm.extY;
-        let oPos    = this.private_computeDrawingAddingPos(nPage, nExtX, nExtY);
+        let oPos    = this.GetController().ComputeDrawingAddingPos(nPage, nExtX, nExtY);
 
         if (nRotAngle != 0) {
             oXfrm.setRot(-nRotAngle * Math.PI / 180);
@@ -6796,7 +6841,7 @@ var CPresentation = CPresentation || function(){};
         oSmartArt.recalculateBounds();
 
         let oXfrm   = oSmartArt.getXfrm();
-        let oPos    = this.private_computeDrawingAddingPos(nPage, oXfrm.extX, oXfrm.extY);
+        let oPos    = this.GetController().ComputeDrawingAddingPos(nPage, oXfrm.extX, oXfrm.extY);
 
         oXfrm.setOffX(oPos.x);
         oXfrm.setOffY(oPos.y);
@@ -6849,7 +6894,7 @@ var CPresentation = CPresentation || function(){};
 
         let nExtX   = oXfrm.extX;
         let nExtY   = oXfrm.extY;
-        let oPos    = this.private_computeDrawingAddingPos(nPage, nExtX, nExtY);
+        let oPos    = this.GetController().ComputeDrawingAddingPos(nPage, nExtX, nExtY);
 
         if (oPlaceholder) {
             let oPh = AscCommon.g_oTableId.Get_ById(oPlaceholder.id);
@@ -6923,7 +6968,7 @@ var CPresentation = CPresentation || function(){};
         } else {
             let nExtX   = Width;
             let nExtY   = RowHeight * Rows;
-            let oPos    = this.private_computeDrawingAddingPos(nPage, nExtX, nExtY);
+            let oPos    = this.GetController().ComputeDrawingAddingPos(nPage, nExtX, nExtY);
             
             X = oPos.x;
             Y = oPos.y;
@@ -7254,7 +7299,7 @@ var CPresentation = CPresentation || function(){};
             
             let nNewExtX    = Math.max(5, nExtX * nKoeff); 
             let nNewExtY    = Math.max(5, nExtY * nKoeff); 
-            let oPos        = this.private_computeDrawingAddingPos(nCurPage, nNewExtX, nNewExtY);
+            let oPos        = this.GetController().ComputeDrawingAddingPos(nCurPage, nNewExtX, nNewExtY);
 
             let oImage = new AscPDF.CPdfImage();
             AscFormat.fillImage(oImage, _image.src, 0, 0, nNewExtX, nNewExtY, _image.videoUrl, _image.audioUrl);
@@ -9299,67 +9344,6 @@ var CPresentation = CPresentation || function(){};
 	};
 	CPDFDoc.prototype.getDrawingObjects = CPDFDoc.prototype.GetController;
 
-    CPDFDoc.prototype.private_computeDrawingAddingPos = function(nPage, nExtX, nExtY) {
-        let oDoc        = Asc.editor.getPDFDoc();
-        let oViewRect   = oDoc.Viewer.getViewingRect(nPage);
-        let nRotAngle   = oDoc.Viewer.getPageRotate(nPage);
-        let nPageW      = oDoc.GetPageWidthMM(nPage);
-        let nPageH      = oDoc.GetPageHeightMM(nPage);
-        let nPosX;
-        let nPosY;
-
-        switch (nRotAngle) {
-            case 0:
-                nPosX = nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
-                nPosY = nPageH * ((oViewRect.y + oViewRect.b) / 2) - nExtY / 2;
-                break;
-            case 90:
-                nPosX = nPageW * ((oViewRect.y + oViewRect.b) / 2) - nExtX / 2;
-                nPosY = nPageH - nPageH * ((oViewRect.x + oViewRect.r) / 2) - nExtY / 2;
-                break;
-            case 180:
-                nPosX = nPageW - nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
-                nPosY = nPageH - nPageH * ((oViewRect.y + oViewRect.b) / 2) - nExtY / 2;
-                break;
-            case 270:
-                nPosX = nPageW - nPageW * ((oViewRect.y + oViewRect.b) / 2) - nExtX / 2;
-                nPosY = nPageH * ((oViewRect.x + oViewRect.r) / 2) - nExtY / 2;
-                break;
-        }
-
-        return {x: nPosX, y: nPosY}
-    }
-    CPDFDoc.prototype.private_computeFieldAddingPos = function(nPage, nExtX, nExtY) {
-        let oDoc = Asc.editor.getPDFDoc();
-        let oViewRect = oDoc.Viewer.getViewingRect(nPage);
-        let nRotAngle = oDoc.Viewer.getPageRotate(nPage);
-        let nPageW = oDoc.GetPageWidth(nPage);
-        let nPageH = oDoc.GetPageHeight(nPage);
-        let nPosX;
-        let nPosY;
-    
-        switch (nRotAngle) {
-            case 0:
-                nPosX = nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
-                // Position field above center vertically: take half the distance from top edge to center
-                nPosY = nPageH * (oViewRect.y + (oViewRect.b - oViewRect.y) / 4) - nExtY / 2;
-                break;
-            case 90:
-                nPosX = nPageW * ((oViewRect.y + oViewRect.b) / 4) - nExtX / 2;
-                nPosY = nPageH - nPageH * (oViewRect.x + (oViewRect.r - oViewRect.x) / 2) - nExtY / 2;
-                break;
-            case 180:
-                nPosX = nPageW - nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
-                nPosY = nPageH - nPageH * (oViewRect.y + (oViewRect.b - oViewRect.y) / 4) - nExtY / 2;
-                break;
-            case 270:
-                nPosX = nPageW - nPageW * ((oViewRect.y + oViewRect.b) / 4) - nExtX / 2;
-                nPosY = nPageH * (oViewRect.x + (oViewRect.r - oViewRect.x) / 2) - nExtY / 2;
-                break;
-        }
-    
-        return { x: nPosX, y: nPosY };
-    };
 	CPDFDoc.prototype.checkDefaultFieldFonts = function(callback) {
 		
 		if (1 === this.defaultFontsLoaded)
