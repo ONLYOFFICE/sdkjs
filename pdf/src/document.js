@@ -4186,6 +4186,19 @@ var CPresentation = CPresentation || function(){};
 		if (this.IsSelectionLocked(nChangesType, Additional)) {
 			return false;
 		}
+
+		// when change annot props -> exit from FreeText annot textbox and select it.
+		if (nDescription === AscDFH.historydescription_Pdf_ChangeAnnot) {
+			let oAcitveObj = this.GetActiveObject();
+			if (oAcitveObj && oAcitveObj.IsAnnot() && oAcitveObj.IsFreeText() && oAcitveObj.IsInTextBox()) {
+				this.BlurActiveObject();
+
+				let oController = this.GetController();
+				oController.selectObject(oAcitveObj, oAcitveObj.GetPage())
+				oController.selection.groupSelection = oAcitveObj;
+				oAcitveObj.selectedObjects = [oAcitveObj.GetTextBoxShape()];
+			}
+		}
 		
 		this.StartAction(nDescription);
 		let result = fAction.call(oThis);
