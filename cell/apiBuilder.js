@@ -16735,7 +16735,7 @@
 		return Math.round(nMargin * 1e6) / 1e6;
 	};
 	ApiPageSetup.prototype.private_SetMargin = function (sSide, nMargin) {
-		if (typeof nMargin !== 'number' || isNaN(nMargin)) {
+		if (typeof nMargin !== 'number' || !isFinite(nMargin)) {
 			return false;
 		}
 		let oCur = this.private_GetPageMargins();
@@ -17483,7 +17483,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetFitToPagesWide.js
 	 */
 	ApiPageSetup.prototype.SetFitToPagesWide = function (nPages) {
-		if (typeof nPages !== 'number' || nPages < 0) {
+		if (typeof nPages !== 'number' || !isFinite(nPages) || nPages < 0) {
 			return false;
 		}
 		this.private_SetPrintScale(nPages, this.ws.PagePrintOptions.pageSetup.asc_getFitToHeight(), 100);
@@ -17520,7 +17520,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetFitToPagesTall.js
 	 */
 	ApiPageSetup.prototype.SetFitToPagesTall = function (nPages) {
-		if (typeof nPages !== 'number' || nPages < 0) {
+		if (typeof nPages !== 'number' || !isFinite(nPages) || nPages < 0) {
 			return false;
 		}
 		this.private_SetPrintScale(this.ws.PagePrintOptions.pageSetup.asc_getFitToWidth(), nPages, 100);
@@ -17673,7 +17673,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetZoom.js
 	 */
 	ApiPageSetup.prototype.SetZoom = function (nZoom) {
-		if (typeof nZoom !== 'number' || nZoom < 10 || nZoom > 400) {
+		if (typeof nZoom !== 'number' || !isFinite(nZoom) || nZoom < 10 || nZoom > 400) {
 			return false;
 		}
 		this.private_SetPrintScale(0, 0, nZoom);
