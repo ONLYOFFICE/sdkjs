@@ -8756,7 +8756,7 @@
 			r1 = Math.min(Range1.bbox.r1, Range2.bbox.r1);
 			c1 = Math.min(Range1.bbox.c1, Range2.bbox.c1);
 			r2 = Math.max(Range1.bbox.r2, Range2.bbox.r2);
-			c2 = Math.max(Range1.bbox.c1, Range2.bbox.c2);
+			c2 = Math.max(Range1.bbox.c2, Range2.bbox.c2);
 		} else {
 			r1 = Range1.bbox.r1;
 			c1 = Range1.bbox.c1;
