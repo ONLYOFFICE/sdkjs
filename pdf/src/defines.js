@@ -150,8 +150,7 @@
         DATE:       2,
         TIME:       3,
         SPECIAL:    4,
-        REGULAR:    5,
-        CUSTOM:     6
+        CUSTOM:    	6
     }
 
     FormatType["NONE"]          = FormatType.NONE;
@@ -160,7 +159,6 @@
     FormatType["DATE"]          = FormatType.DATE;
     FormatType["TIME"]          = FormatType.TIME;
     FormatType["SPECIAL"]       = FormatType.SPECIAL;
-    FormatType["REGULAR"]       = FormatType.REGULAR;
     FormatType["CUSTOM"]        = FormatType.CUSTOM;
 
     const SpecialFormatType = {
@@ -208,29 +206,19 @@
     NegativeStyle["PARENS_BLACK"] = NegativeStyle.PARENS_BLACK;
     NegativeStyle["PARENS_RED"] = NegativeStyle.PARENS_RED;
 
-    const CalculateType = {
-        SUM:        0,
-        PRODUCT:    1,
-        AVERAGE:    2,
-        MIN:        3,
-        MAX:        4
+    const CalculateOperation = {
+        SUM:	"SUM",
+        PRD:	"PRD",
+        AVG:	"AVG",
+        MIN:	"MIN",
+        MAX:	"MAX"
     }
 
-    CalculateType["SUM"]        = CalculateType.SUM;
-    CalculateType["PRODUCT"]    = CalculateType.PRODUCT;
-    CalculateType["AVERAGE"]    = CalculateType.AVERAGE;
-    CalculateType["MIN"]        = CalculateType.MIN;
-    CalculateType["MAX"]        = CalculateType.MAX;
-
-    const ValidateType = {
-        NONE:   -1,
-        NUMBER: 0,
-        CUSTOM: 1
-    }
-
-    ValidateType["NONE"]      = ValidateType.NONE;
-    ValidateType["NUMBER"]    = ValidateType.NUMBER;
-    ValidateType["CUSTOM"]    = ValidateType.CUSTOM;
+    CalculateOperation["SUM"]	= CalculateOperation.SUM;
+    CalculateOperation["PRD"]	= CalculateOperation.PRD;
+    CalculateOperation["AVG"]	= CalculateOperation.AVG;
+    CalculateOperation["MIN"]	= CalculateOperation.MIN;
+    CalculateOperation["MAX"]	= CalculateOperation.MAX;
 
     Object.freeze(FIELD_TYPES);
 
@@ -440,6 +428,18 @@
     LINE_END_TYPE["rClosedArrow"]   = LINE_END_TYPE.rClosedArrow;
     LINE_END_TYPE["slash"]          = LINE_END_TYPE.slash;
 
+	const ACTION_NAMED_TYPES = {
+        NextPage:   "NextPage",
+        PrevPage:   "PrevPage",
+        FirstPage:  "FirstPage",
+        LastPage:   "LastPage"
+    }
+
+	ACTION_NAMED_TYPES["NextPage"]		= ACTION_NAMED_TYPES.NextPage;
+	ACTION_NAMED_TYPES["PrevPage"]		= ACTION_NAMED_TYPES.PrevPage;
+	ACTION_NAMED_TYPES["FirstPage"]		= ACTION_NAMED_TYPES.FirstPage;
+	ACTION_NAMED_TYPES["LastPage"]		= ACTION_NAMED_TYPES.LastPage;
+
     asc["FIELD_TYPES"]                  = asc.FIELD_TYPES                = FIELD_TYPES;
     asc["BORDER_EFFECT_STYLES"]         = asc.BORDER_EFFECT_STYLES       = BORDER_EFFECT_STYLES;
     asc["REF_TO_REASON"]                = asc.REF_TO_REASON              = REF_TO_REASON;
@@ -448,8 +448,7 @@
     asc["SeparatorStyle"]               = asc.SeparatorStyle             = SeparatorStyle;
     asc["TimeFormatType"]               = asc.TimeFormatType             = TimeFormatType;
     asc["NegativeStyle"]                = asc.NegativeStyle              = NegativeStyle;
-    asc["CalculateType"]                = asc.CalculateType              = CalculateType;
-    asc["ValidateType"]                 = asc.ValidateType               = ValidateType;
+    asc["CalculateOperation"]           = asc.CalculateOperation         = CalculateOperation;
     asc["CHECKBOX_STYLES"]              = asc.CHECKBOX_STYLES            = CHECKBOX_STYLES;
     asc["BORDER_TYPES"]                 = asc.BORDER_TYPES               = BORDER_TYPES;
     asc["ANNOT_COMPLEX_BORDER_TYPES"]   = asc.ANNOT_COMPLEX_BORDER_TYPES = ANNOT_COMPLEX_BORDER_TYPES;
@@ -460,8 +459,9 @@
     asc["DIGITS_TYPES"]                 = asc.DIGITS_TYPES               = DIGITS_TYPES;
     asc["USER_PERMISSIONS"]             = asc.USER_PERMISSIONS           = USER_PERMISSIONS;
     asc["GOTO_TYPES"]                   = asc.GOTO_TYPES                 = GOTO_TYPES;
-    asc["PRINT_CONTENT_TYPES"]         = asc.PRINT_CONTENT_TYPES        = PRINT_CONTENT_TYPES;
+    asc["PRINT_CONTENT_TYPES"]          = asc.PRINT_CONTENT_TYPES        = PRINT_CONTENT_TYPES;
     asc["TEXT_ICONS_TYPES"]             = asc.TEXT_ICONS_TYPES           = TEXT_ICONS_TYPES;
     asc["LINE_END_TYPE"]                = asc.LINE_END_TYPE              = LINE_END_TYPE;
+    asc["ACTION_NAMED_TYPES"]           = asc.ACTION_NAMED_TYPES         = ACTION_NAMED_TYPES;
     asc.CommandType                     = CommandType;
 })();

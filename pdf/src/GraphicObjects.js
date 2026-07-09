@@ -577,7 +577,7 @@
                         if (arr[i].getDocContent) {
                             if (arr[i].IsDrawing() && arr[i].IsEditFieldShape()) {
                                 let oField = arr[i].GetEditField();
-                                let oContent = oField.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) ? oField.contentFormat : oField.content;
+                                let oContent = oField.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.format) ? oField.contentFormat : oField.content;
                                 let oCalcedTextPr = oContent ? oContent.GetCalculatedTextPr() : null;
 
                                 cur_pr = new AscWord.CTextPr();
@@ -1974,7 +1974,7 @@
                                 oField.SetAlign(AscPDF.getPdfTypeAlignByInternal(args[0]));
                             }
                             else if (f == CDocumentContent.prototype.IncreaseDecreaseFontSize) {
-                                let oContent = oField.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) ? oField.contentFormat : oField.content;
+                                let oContent = oField.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.format) ? oField.contentFormat : oField.content;
                                 let oCalcedTextPr = oContent.GetCalculatedTextPr();
                                 
                                 let nCurFontSize = oCalcedTextPr.GetFontSize();

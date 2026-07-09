@@ -1463,7 +1463,7 @@
         
         this.DrawPressed();
         
-        let oOnFocus = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
+        let oOnFocus = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.onFocus);
         // call cursor positioning after onFocus. If already in focus, then immediately.
         if (false == isInFocus && oOnFocus && oOnFocus.Actions.length > 0)
             oActionsQueue.callbackAfterFocus = callbackAfterFocus.bind(this);
@@ -1471,10 +1471,10 @@
             callbackAfterFocus.bind(this)();
 
         if (isInFocus) {
-            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseDown);
+            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.mouseDown);
         }
         else {
-            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseDown, AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
+            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.mouseDown, AscPDF.PDF_TRIGGERS_TYPES.onFocus);
         }
     };
     CPushButtonField.prototype.onMouseUp = function() {
@@ -1488,16 +1488,16 @@
 			this.asc_OnShowSignature();
 		}
 		else {
-	        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
+	        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.mouseUp);
 		}
     };
     CPushButtonField.prototype.onMouseEnter = function() {
-        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseEnter);
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.mouseEnter);
         this.DrawRollover();
     };
 
     CPushButtonField.prototype.onMouseExit = function() {
-        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseExit);
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.mouseExit);
         this.OnEndRollover();
     };
     CPushButtonField.prototype.buttonImportIcon = function() {
