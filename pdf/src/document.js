@@ -540,7 +540,7 @@ var CPresentation = CPresentation || function(){};
             isEditMode = true;
         }
 
-        if (this.activeForm) {
+        if (this.activeForm || this.mouseDownField) {
             this.BlurActiveObject();
         }
         

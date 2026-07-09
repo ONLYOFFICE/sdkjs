@@ -1442,6 +1442,12 @@
         if (this.selectedObjects.length == 0 && !oDoc.GetActiveObject()) {
             oDoc.SetMouseDownObject(object);
         }
+
+		// for restore state in edit mode
+		if (object.IsForm() && oDoc.IsEditFieldsMode()) {
+			object = object.GetEditShape();
+		}
+
         object.select(this, pageIndex);
 
         if (AscFormat.MoveAnimationDrawObject) {
@@ -1633,7 +1639,7 @@
                 if (oDrawing.selectStartPage === pageIndex) {
 
                     if (oDrawing.IsForm()) {
-                        oDrawing = oDrawing.editShape;
+						return;
                     }
 
                     let nType = oDrawing.IsAnnot() && oDrawing.IsStamp() ? AscFormat.TYPE_TRACK.ANNOT_STAMP : AscFormat.TYPE_TRACK.SHAPE;
