@@ -720,37 +720,26 @@ function FrozenPlace(ws, type) {
 	};
 
 	_this.drawPaneBorder = function(autoShapeTrack) {
-		var fLeft, fTop, fRight, fBottom;
+		// displayed split boundary (accounts for the frozen area scroll origin), same as the line
+		var frozenOffset = this.worksheet.getFrozenPaneOffset();
+		var borderTop = this.worksheet.cellsTop + frozenOffset.offsetY;
+		var borderLeft = this.worksheet.cellsLeft + frozenOffset.offsetX;
 		if(_this.type === FrozenAreaType.Bottom){
-			fTop = this.worksheet._getRowTop(_this.frozenCell.row);
-			fLeft = 0;
-			this.drawFrozenPaneBorderHor(autoShapeTrack, fTop, fLeft, autoShapeTrack.Graphics.m_lWidthPix);
+			this.drawFrozenPaneBorderHor(autoShapeTrack, borderTop, 0, autoShapeTrack.Graphics.m_lWidthPix);
 		}
 		else if(_this.type === FrozenAreaType.Right){
-			fTop = 0;
-			fLeft = this.worksheet._getColLeft(_this.frozenCell.col);
-			this.drawFrozenPaneBorderVer(autoShapeTrack, fLeft, fTop, autoShapeTrack.Graphics.m_lHeightPix);
+			this.drawFrozenPaneBorderVer(autoShapeTrack, borderLeft, 0, autoShapeTrack.Graphics.m_lHeightPix);
 		}
 		else if(_this.type === FrozenAreaType.RightBottom){
 			//autoShapeTrack.Graphics.put_GlobalAlpha(true, 1);
-			fTop = this.worksheet._getRowTop(_this.frozenCell.row);
-			fLeft = this.worksheet._getColLeft(_this.frozenCell.col);
-
-			this.drawFrozenPaneBorderHor(autoShapeTrack, fTop, fLeft, autoShapeTrack.Graphics.m_lWidthPix);
-			this.drawFrozenPaneBorderVer(autoShapeTrack, fLeft, fTop, autoShapeTrack.Graphics.m_lHeightPix);
+			this.drawFrozenPaneBorderHor(autoShapeTrack, borderTop, borderLeft, autoShapeTrack.Graphics.m_lWidthPix);
+			this.drawFrozenPaneBorderVer(autoShapeTrack, borderLeft, borderTop, autoShapeTrack.Graphics.m_lHeightPix);
 		}
 		else if(_this.type === FrozenAreaType.LeftBottom){
-			fTop = this.worksheet._getRowTop(_this.frozenCell.row);
-			fLeft = 0;
-			fRight = this.worksheet._getColLeft(_this.frozenCell.col);
-
-			this.drawFrozenPaneBorderHor(autoShapeTrack, fTop, fLeft, fRight);
+			this.drawFrozenPaneBorderHor(autoShapeTrack, borderTop, 0, borderLeft);
 		}
 		else if(_this.type === FrozenAreaType.RightTop){
-			fTop = 0;
-			fLeft = this.worksheet._getColLeft(_this.frozenCell.col);
-			fBottom = this.worksheet._getRowTop(_this.frozenCell.row);
-			this.drawFrozenPaneBorderVer(autoShapeTrack, fLeft, fTop, fBottom);
+			this.drawFrozenPaneBorderVer(autoShapeTrack, borderLeft, 0, borderTop);
 		}
 	};
 	

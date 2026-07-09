@@ -13786,26 +13786,19 @@
 			return null;
 		}
 
-		//todo frozen panes
-		var newVal;
-		if (range.c1 === 0 && range.r1 === 0) {
-			newVal = null;
-		} else {
-			var topLeftFrozenCell = this.sheetViews[0] && this.sheetViews[0].pane && this.sheetViews[0].pane.topLeftFrozenCell;
-			if (topLeftFrozenCell && topLeftFrozenCell.col > 1 && topLeftFrozenCell.row > 1) {
-				newVal = null;
-			} else {
-				newVal = new Asc.Range(0, 0, 0, 0);
-				if (!topLeftFrozenCell || topLeftFrozenCell.col <= 1) {
-					newVal.c1 = newVal.c2 = range.c1;
-				}
-				if (!topLeftFrozenCell || topLeftFrozenCell.row <= 1) {
-					newVal.r1 = newVal.r2 = range.r1;
-				}
-			}
-		}
+		var topLeftFrozenCell = this.sheetViews[0] && this.sheetViews[0].pane && this.sheetViews[0].pane.topLeftFrozenCell;
+		var colFrozen = topLeftFrozenCell && topLeftFrozenCell.col > 1;
+		var rowFrozen = topLeftFrozenCell && topLeftFrozenCell.row > 1;
 
-		return newVal;
+		// frozen axis keeps the current (constant) origin; free axis follows the scroll
+		var cur = (colFrozen || rowFrozen) ? this.getTopLeftCell() : null;
+		var c = colFrozen ? (cur ? cur.c1 : 0) : range.c1;
+		var r = rowFrozen ? (cur ? cur.r1 : 0) : range.r1;
+
+		if (c === 0 && r === 0) {
+			return null;
+		}
+		return new Asc.Range(c, r, c, r);
 	};
 	Worksheet.prototype.setTopLeftCell = function(val, addToHistory) {
 		var view = this.sheetViews[0];

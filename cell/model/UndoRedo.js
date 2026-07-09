@@ -4175,7 +4175,9 @@ function (window, undefined) {
 			}
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			if (worksheetView) {
-				worksheetView._updateFreezePane(_c1, _r1, /*lockDraw*/true);
+				// frozen area origin travels in c2/r2 of the bbox
+				var frozenOrigin = (updateData.c2 > 0 || updateData.r2 > 0) ? {c: updateData.c2, r: updateData.r2} : null;
+				worksheetView._updateFreezePane(_c1, _r1, /*lockDraw*/true, frozenOrigin);
 			}
 		} else if (AscCH.historyitem_Worksheet_SetTabColor === Type) {
 			ws.setTabColor(bUndo ? Data.from : Data.to);
