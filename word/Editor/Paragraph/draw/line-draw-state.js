@@ -137,9 +137,7 @@
 		{
 			this.ulTrailSpace     = this.logicDocument.IsUnderlineTrailSpace();
 			this.activePermRanges = this.logicDocument.IsEditCommentsMode() || this.logicDocument.IsViewModeInEditor();
-			
-			this.customMarks = this.logicDocument.GetCustomMarks();
-			
+
 			let commentManager        = this.logicDocument.GetCommentsManager();
 			this.isDrawComments       = commentManager && commentManager.isUse();
 			this.isDrawSolvedComments = commentManager && commentManager.isUseSolved();
@@ -149,6 +147,9 @@
 			this.isDrawComments       = false;
 			this.isDrawSolvedComments = false;
 		}
+
+		if (this.logicDocument && this.logicDocument.GetCustomMarks)
+			this.customMarks = this.logicDocument.GetCustomMarks();
 	};
 	ParagraphLineDrawState.prototype.resetPage = function(page)
 	{

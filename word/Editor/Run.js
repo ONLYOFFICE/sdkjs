@@ -12387,28 +12387,28 @@ ParaRun.prototype.private_UpdateMarksOnConcat = function(pos, run)
 ParaRun.prototype.private_UpdateCustomMarksOnAdd = function(pos, count)
 {
 	let logicDocument = this.GetLogicDocument();
-	let customMarks   = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetCustomMarks() : null;
+	let customMarks   = logicDocument && logicDocument.GetCustomMarks ? logicDocument.GetCustomMarks() : null;
 	if (customMarks)
 		customMarks.onAddToRun(this.GetId(), pos, count);
 };
 ParaRun.prototype.private_UpdateCustomMarksOnRemove = function(pos, count)
 {
 	let logicDocument = this.GetLogicDocument();
-	let customMarks   = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetCustomMarks() : null;
+	let customMarks   = logicDocument && logicDocument.GetCustomMarks ? logicDocument.GetCustomMarks() : null;
 	if (customMarks)
 		customMarks.onRemoveFromRun(this.GetId(), pos, count);
 };
 ParaRun.prototype.private_UpdateCustomMarksOnSplit = function(pos, nextRun)
 {
 	let logicDocument = this.GetLogicDocument();
-	let customMarks   = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetCustomMarks() : null;
+	let customMarks   = logicDocument && logicDocument.GetCustomMarks ? logicDocument.GetCustomMarks() : null;
 	if (customMarks)
 		customMarks.onSplitRun(this.GetId(), pos, nextRun.GetId());
 };
 ParaRun.prototype.private_UpdateCustomMarksOnConcat = function(pos, run)
 {
 	let logicDocument = this.GetLogicDocument();
-	let customMarks   = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetCustomMarks() : null;
+	let customMarks   = logicDocument && logicDocument.GetCustomMarks ? logicDocument.GetCustomMarks() : null;
 	if (customMarks)
 		customMarks.onConcatRun(this.GetId(), pos, run.GetId());
 };

@@ -660,6 +660,9 @@ function CPresentation(DrawingDocument, isMainLogicDocument) {
 
 	this.Spelling = new AscWord.CDocumentSpellChecker();
 
+	if (false !== isMainLogicDocument)
+		this.InitCustomTextAnnotator();
+
 	this.Sections = [];//array of CPrSection
 
 
@@ -1579,6 +1582,14 @@ CPresentation.prototype.TurnOnSpellCheck = function () {
 };
 CPresentation.prototype.GetSpellCheckManager = function () {
 	return this.Spelling;
+};
+CPresentation.prototype.InitCustomTextAnnotator = function () {
+};
+CPresentation.prototype.GetCustomTextAnnotator = function () {
+	return null;
+};
+CPresentation.prototype.GetCustomMarks = function () {
+	return null;
 };
 
 CPresentation.prototype.Get_DrawingDocument = function () {

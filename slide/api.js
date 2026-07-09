@@ -1679,6 +1679,23 @@ background-repeat: no-repeat;\
 		_callbacks[name].push(callback);
 	};
 
+	asc_docs_api.prototype.onPluginClose = function(guid)
+	{
+		AscCommon.baseEditorsApi.prototype.onPluginClose.call(this, guid);
+		this._onPluginClose(guid);
+	};
+	asc_docs_api.prototype._onPluginClose = function(guid)
+	{
+	};
+	asc_docs_api.prototype.onAttachPluginEvent = function(guid, name)
+	{
+		AscCommon.baseEditorsApi.prototype.onAttachPluginEvent.call(this, guid, name);
+		this._onAttachPluginEvent(guid, name);
+	};
+	asc_docs_api.prototype._onAttachPluginEvent = function(guid, name)
+	{
+	};
+
 	asc_docs_api.prototype.asc_unregisterCallback = function(name, callback)
 	{
 		if (_callbacks.hasOwnProperty(name))
