@@ -778,11 +778,19 @@
             }
         };
         Object.freeze(oApiConsole);
-    
+		
+		let oApiApp = {
+			"alert": function(message) {
+				window.alert(message);
+			}
+		}
+		Object.freeze(oApiApp);
+
         let oApiObjects = AscPDF.Api.Types;
         let aArgsNamesPdfApi = [
             "event",
             "color",
+			"app",
 
             "AFNumber_Format",
             "AFNumber_Keystroke",
@@ -811,7 +819,8 @@
         let aArgsPdfApi = [
             oEvent,
             oApiObjects["color"],
-
+			oApiApp,
+			
             oApiFunc["AFNumber_Format"],
             oApiFunc["AFNumber_Keystroke"],
             oApiFunc["AFPercent_Format"],
