@@ -11122,7 +11122,7 @@
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
 			return false;
 		}
-		this.range.setFillColor(('No Fill' === color || null === color) ? null : color.color);
+		this.range.setFillColor(('No Fill' === color || null == color) ? null : color.color);
 		return true;
 	};
 	/**
