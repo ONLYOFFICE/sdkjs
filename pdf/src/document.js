@@ -4569,7 +4569,7 @@ var CPresentation = CPresentation || function(){};
             return annot.GetId() === Id;
         });
 
-        if (!oAnnot || (oAnnot.IsLink() && canRemoveLink === false))
+        if (!oAnnot || (oAnnot.IsLink() && canRemoveLink === false) || (oAnnot.IsRedact() && oAnnot.GetRedactId()))
             return;
 
         let oPage = oAnnot.GetParentPage();
