@@ -233,7 +233,7 @@
                 let nInsideH = nHeight - 2 * oMargins.bottom;
 
                 let oTr     = oGraphicsPDF.GetTransform();
-                let nScale  = Math.min((nInsideW - nInsideW * 0.2) / imgW, (nInsideH - nInsideW * 0.2) / imgH);
+                let nScale  = Math.min((nInsideW - nInsideW * 0.2) / imgW, (nInsideH - nInsideH * 0.2) / imgH);
 
                 let wScaled = Math.max(imgW * nScale, 1);
                 let hScaled = Math.max(imgH * nScale, 1);
