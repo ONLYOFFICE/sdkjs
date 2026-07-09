@@ -2804,6 +2804,283 @@
 		return max_width + 2;
 	}
 
+	function svgColorComponent(value) {
+		value = value < 0 ? 0 : (value > 255 ? 255 : (value | 0));
+		const hex = value.toString(16);
+		return hex.length === 1 ? "0" + hex : hex;
+	}
+
+	function svgColorToHex(r, g, b) {
+		return "#" + svgColorComponent(r) + svgColorComponent(g) + svgColorComponent(b);
+	}
+
+	function svgCoord(value) {
+		return Math.round(value * 1000) / 1000;
+	}
+
+	function svgToBase64DataUrl(svg) {
+		const bytes = encodeURIComponent(svg).replace(/%([0-9A-F]{2})/g, function (match, hex) {
+			return String.fromCharCode(parseInt(hex, 16));
+		});
+		return "data:image/svg+xml;base64," + window.btoa(bytes);
+	}
+
+	function CSvgDrawer(widthMM, heightMM) {
+		AscCommon.CGraphicsBase.call(this, AscCommon.RendererType.TextDrawer, true);
+
+		this.Width = widthMM;
+		this.Height = heightMM;
+
+		this.m_oTransform = new AscCommon.CMatrix();
+
+		this.m_oFont = {Name: "", FontSize: -1, Style: -1};
+		this.LastFontOriginInfo = {Name: "", Replace: null};
+
+		this.m_oTextPr = null;
+		this.m_oTheme = null;
+		this.m_oGrFonts = new AscCommon.CGrRFonts();
+		this.m_oFontSlotFont = new AscCommon.CFontSetup();
+
+		this.m_bIsTextDrawer = true;
+
+		this._paths = [];
+		this._pathData = "";
+		this._curFill = "#000000";
+		this._curStroke = "#000000";
+	}
+
+	CSvgDrawer.prototype = Object.create(AscCommon.CGraphicsBase.prototype);
+	CSvgDrawer.prototype.constructor = CSvgDrawer;
+
+	CSvgDrawer.prototype._tx = function (x, y) {
+		return this.m_oTransform.TransformPointX(x, y);
+	};
+	CSvgDrawer.prototype._ty = function (x, y) {
+		return this.m_oTransform.TransformPointY(x, y);
+	};
+
+	CSvgDrawer.prototype._s = function () {
+		this._pathData = "";
+	};
+	CSvgDrawer.prototype._e = function () {
+	};
+	CSvgDrawer.prototype._z = function () {
+		if (this._pathData.length > 0) this._pathData += "Z";
+	};
+	CSvgDrawer.prototype._m = function (x, y) {
+		this._pathData += "M" + svgCoord(this._tx(x, y)) + " " + svgCoord(this._ty(x, y)) + " ";
+	};
+	CSvgDrawer.prototype._l = function (x, y) {
+		this._pathData += "L" + svgCoord(this._tx(x, y)) + " " + svgCoord(this._ty(x, y)) + " ";
+	};
+	CSvgDrawer.prototype._c = function (x1, y1, x2, y2, x3, y3) {
+		this._pathData += "C" + svgCoord(this._tx(x1, y1)) + " " + svgCoord(this._ty(x1, y1)) + " "
+			+ svgCoord(this._tx(x2, y2)) + " " + svgCoord(this._ty(x2, y2)) + " "
+			+ svgCoord(this._tx(x3, y3)) + " " + svgCoord(this._ty(x3, y3)) + " ";
+	};
+	CSvgDrawer.prototype._c2 = function (x1, y1, x2, y2) {
+		this._pathData += "Q" + svgCoord(this._tx(x1, y1)) + " " + svgCoord(this._ty(x1, y1)) + " "
+			+ svgCoord(this._tx(x2, y2)) + " " + svgCoord(this._ty(x2, y2)) + " ";
+	};
+	CSvgDrawer.prototype.df = function () {
+		if (this._pathData.length > 0) {
+			this._paths.push('<path d="' + this._pathData + '" fill="' + this._curFill + '"/>');
+		}
+	};
+	CSvgDrawer.prototype.ds = function () {
+		if (this._pathData.length > 0) {
+			this._paths.push('<path d="' + this._pathData + '" fill="none" stroke="' + this._curStroke + '"/>');
+		}
+	};
+	CSvgDrawer.prototype.drawpath = function (type) {
+	};
+
+	CSvgDrawer.prototype.b_color1 = function (r, g, b, a) {
+		this._curFill = svgColorToHex(r, g, b);
+	};
+	CSvgDrawer.prototype.b_color2 = function (r, g, b, a) {
+	};
+	CSvgDrawer.prototype.set_fillColor = function (r, g, b) {
+		this._curFill = svgColorToHex(r, g, b);
+	};
+	CSvgDrawer.prototype.p_color = function (r, g, b, a) {
+		this._curStroke = svgColorToHex(r, g, b);
+	};
+	CSvgDrawer.prototype.p_width = function (w) {
+	};
+	CSvgDrawer.prototype.put_brushTexture = function (src, mode) {
+	};
+
+	CSvgDrawer.prototype.transform = function (sx, shy, shx, sy, tx, ty) {
+		this.m_oTransform.sx = sx;
+		this.m_oTransform.shx = shx;
+		this.m_oTransform.shy = shy;
+		this.m_oTransform.sy = sy;
+		this.m_oTransform.tx = tx;
+		this.m_oTransform.ty = ty;
+	};
+	CSvgDrawer.prototype.transform3 = function (m) {
+		this.transform(m.sx, m.shy, m.shx, m.sy, m.tx, m.ty);
+	};
+	CSvgDrawer.prototype.reset = function () {
+		this.transform(1, 0, 0, 1, 0, 0);
+	};
+	CSvgDrawer.prototype.GetTransform = function () {
+		return this.m_oTransform;
+	};
+
+	CSvgDrawer.prototype.SetFont = function (font) {
+		if (null == font) return;
+		let style = 0;
+		if (font.Italic == true) style += 2;
+		if (font.Bold == true) style += 1;
+		const fontinfo = g_fontApplication.GetFontInfo(font.FontFamily.Name, style, this.LastFontOriginInfo);
+		style = fontinfo.GetBaseStyle(style);
+		this.m_oFont.Name = fontinfo.Name;
+		this.m_oFont.FontSize = font.FontSize;
+		this.m_oFont.Style = style;
+	};
+	CSvgDrawer.prototype.SetFontInternal = function (name, size, style) {
+		const fontinfo = g_fontApplication.GetFontInfo(name, style);
+		this.m_oFont.Name = fontinfo.Name;
+		this.m_oFont.FontSize = size;
+		this.m_oFont.Style = style;
+	};
+	CSvgDrawer.prototype.SetFontSlot = function (slot, fontSizeKoef) {
+		const rfonts = this.m_oGrFonts;
+		const lastFont = this.m_oFontSlotFont;
+		switch (slot) {
+			case fontslot_CS: {
+				lastFont.Name = rfonts.CS.Name;
+				lastFont.Size = this.m_oTextPr.FontSizeCS;
+				lastFont.Bold = this.m_oTextPr.BoldCS;
+				lastFont.Italic = this.m_oTextPr.ItalicCS;
+				break;
+			}
+			case fontslot_ASCII:
+			case fontslot_EastAsia:
+			case fontslot_HAnsi:
+			default: {
+				lastFont.Name = (slot === fontslot_ASCII ? rfonts.Ascii.Name : (slot === fontslot_EastAsia ? rfonts.EastAsia.Name : rfonts.HAnsi.Name));
+				lastFont.Size = this.m_oTextPr.FontSize;
+				lastFont.Bold = this.m_oTextPr.Bold;
+				lastFont.Italic = this.m_oTextPr.Italic;
+				break;
+			}
+		}
+		if (undefined !== fontSizeKoef) lastFont.Size *= fontSizeKoef;
+		let style = 0;
+		if (lastFont.Italic == true) style += 2;
+		if (lastFont.Bold == true) style += 1;
+		const fontinfo = g_fontApplication.GetFontInfo(lastFont.Name, style, this.LastFontOriginInfo);
+		this.m_oFont.Name = fontinfo.Name;
+		this.m_oFont.FontSize = lastFont.Size;
+		this.m_oFont.Style = style;
+	};
+	CSvgDrawer.prototype.GetFont = function () {
+		return this.m_oFont;
+	};
+
+	CSvgDrawer.prototype.FillText = function (x, y, text) {
+		this.FillTextCode(x, y, text.charCodeAt(0));
+	};
+	CSvgDrawer.prototype.FillText2 = function (x, y, text) {
+		this.FillText(x, y, text);
+	};
+	CSvgDrawer.prototype.FillTextCode = function (x, y, code) {
+		g_oTextMeasurer.SetFontInternal(this.m_oFont.Name, this.m_oFont.FontSize, Math.max(this.m_oFont.Style, 0));
+		if (null != this.LastFontOriginInfo.Replace) {
+			code = g_fontApplication.GetReplaceGlyph(code, this.LastFontOriginInfo.Replace);
+		}
+		if (g_oTextMeasurer.m_oManager) g_oTextMeasurer.m_oManager.LoadStringPathCode(code, false, x, y, this);
+	};
+	CSvgDrawer.prototype.tg = function (gid, x, y, advX, advY) {
+		g_oTextMeasurer.SetFontInternal(this.m_oFont.Name, this.m_oFont.FontSize, Math.max(this.m_oFont.Style, 0));
+		g_oTextMeasurer.m_oManager.LoadStringPathCode(gid, true, x, y, this);
+	};
+
+	CSvgDrawer.prototype.SetTextPr = function (textPr, theme) {
+		if (theme && textPr && textPr.ReplaceThemeFonts) textPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
+		this.m_oTextPr = textPr;
+		this.m_oTheme = theme;
+		if (theme && textPr && textPr.RFonts) this.m_oGrFonts.checkFromTheme(theme.themeElements.fontScheme, textPr.RFonts);
+		else if (textPr && textPr.RFonts) this.m_oGrFonts = textPr.RFonts;
+		if (textPr && textPr.Color) this._curFill = svgColorToHex(textPr.Color.r, textPr.Color.g, textPr.Color.b);
+	};
+	CSvgDrawer.prototype.GetTextPr = function () {
+		return this.m_oTextPr;
+	};
+
+	CSvgDrawer.prototype.GetLineWidth = function () {
+		return 0;
+	};
+	CSvgDrawer.prototype.GetPen = function () {
+		return 0;
+	};
+	CSvgDrawer.prototype.GetBrush = function () {
+		return 0;
+	};
+	CSvgDrawer.prototype.isSupportTextOutline = function () {
+		return false;
+	};
+
+	CSvgDrawer.prototype.save = function () {
+	};
+	CSvgDrawer.prototype.restore = function () {
+	};
+	CSvgDrawer.prototype.clip = function () {
+	};
+	CSvgDrawer.prototype.SetIntegerGrid = function (value) {
+	};
+	CSvgDrawer.prototype.put_GlobalAlpha = function (enable, alpha) {
+	};
+	CSvgDrawer.prototype.Start_Command = function () {
+	};
+	CSvgDrawer.prototype.End_Command = function () {
+	};
+	CSvgDrawer.prototype.CheckAddNewPath = function () {
+	};
+	CSvgDrawer.prototype.CheckSpaceDraw = function () {
+	};
+	CSvgDrawer.prototype.addTextElementId = function () {
+	};
+	CSvgDrawer.prototype.SetShd = function () {
+	};
+	CSvgDrawer.prototype.SetBorder = function () {
+	};
+	CSvgDrawer.prototype.drawHorLine = function () {
+	};
+	CSvgDrawer.prototype.drawHorLine2 = function () {
+	};
+	CSvgDrawer.prototype.drawVerLine = function () {
+	};
+	CSvgDrawer.prototype.drawHorLineExt = function () {
+	};
+	CSvgDrawer.prototype.rect = function () {
+	};
+	CSvgDrawer.prototype.TableRect = function () {
+	};
+	CSvgDrawer.prototype.AddSmartRect = function () {
+	};
+	CSvgDrawer.prototype.StartClipPath = function () {
+	};
+	CSvgDrawer.prototype.EndClipPath = function () {
+	};
+	CSvgDrawer.prototype.SetObjectToDraw = function () {
+	};
+	CSvgDrawer.prototype.SetAdditionalProps = function () {
+	};
+
+	CSvgDrawer.prototype.getSvgString = function () {
+		const w = svgCoord(this.Width);
+		const h = svgCoord(this.Height);
+		return '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + 'mm" height="' + h + 'mm" viewBox="0 0 ' + w + ' ' + h + '">' + this._paths.join("") + '</svg>';
+	};
+	CSvgDrawer.prototype.getSvgDataUrl = function () {
+		return svgToBase64DataUrl(this.getSvgString());
+	};
+	CSvgDrawer.toDataUrl = svgToBase64DataUrl;
+
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscFormat'] = window['AscFormat'] || {};
 	window['AscFormat'].PATH_DIV_EPSILON = PATH_DIV_EPSILON;
@@ -2820,6 +3097,7 @@
 	window['AscFormat'].DRAW_COMMAND_LINE_RANGE = DRAW_COMMAND_LINE_RANGE;
 	window['AscFormat'].CreatePenFromParams = CreatePenFromParams;
 	window['AscFormat'].CTextDrawer = CTextDrawer;
+	window['AscFormat'].CSvgDrawer = CSvgDrawer;
 	window['AscFormat'].PolygonWrapper = PolygonWrapper;
 	window['AscFormat'].GetRectContentWidth = GetRectContentWidth;
 	window['AscFormat'].CIdGenerator = CIdGenerator;
