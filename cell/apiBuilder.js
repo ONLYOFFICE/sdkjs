@@ -11111,18 +11111,18 @@
 
 	/**
 	 * Sets the background color to the current cell range with the previously created color object.
-	 * Sets 'No Fill' when previously created color object is null.
+	 * Sets 'No Fill' when the previously created color object is 'No Fill' or null.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiColor} oColor - The color object which specifies the color to be set to the background in the cell / cell range.
+	 * @param {ApiColor | 'No Fill' | null} color - The color object which specifies the color to be set to the background in the cell / cell range. Pass 'No Fill' or null to clear the background color.
 	 * @returns {boolean} - returns true if the fill color was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFillColor.js
 	 */
-	ApiRange.prototype.SetFillColor = function (oColor) {
+	ApiRange.prototype.SetFillColor = function (color) {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
 			return false;
 		}
-		this.range.setFillColor('No Fill' === oColor ? null : oColor.color);
+		this.range.setFillColor(('No Fill' === color || null === color) ? null : color.color);
 		return true;
 	};
 	/**
@@ -11137,8 +11137,8 @@
 		return oColor ? new ApiColor(oColor) : 'No Fill';
 	};
 	Object.defineProperty(ApiRange.prototype, "FillColor", {
-		set: function (oColor) {
-			return this.SetFillColor(oColor);
+		set: function (color) {
+			return this.SetFillColor(color);
 		},
 		get: function () {
 			return this.GetFillColor();
