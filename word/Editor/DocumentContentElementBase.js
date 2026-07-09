@@ -291,6 +291,13 @@ CDocumentContentElementBase.prototype.IsNeedRecalculateKeepNext = function()
 	return false;
 };
 /**
+ * @returns {boolean}
+ */
+CDocumentContentElementBase.prototype.IsPartiallyKeepNext = function()
+{
+	return false;
+};
+/**
  * @param iPage {number} relative page index
  * @returns {recalcresult}
  */
@@ -309,46 +316,29 @@ CDocumentContentElementBase.prototype.RecalculateKeepNext = function(iPage)
 		// тогда мы должны пересчитать предыдущую страницу, с учетом того, что предыдущий параграф
 		// надо начать с новой страницы.
 		let curr = this.GetPrevDocumentElement();
-
-		// // Предыдущий элемент - таблица, последняя строка которой должна оставаться на одной
-		// // странице со следующим элементом. В этом случае таблица является началом
-		// // последовательности "не отрывать от следующего" и сама перенесет свои последние
-		// // строки на новую страницу.
-		// if (this.private_IsKeepWithNextTable(curr) && this.Parent.RecalcInfo.Can_RecalcObject())
-		// {
-		// 	this.Parent.RecalcInfo.Set_KeepNext(curr, this);
-		// 	return recalcresult_PrevPage | recalcresultflags_Column;
-		// }
-
 		while (curr)
 		{
 			if (curr.IsParagraph() && curr.Get_SectionPr())
 				break;
 			
+			if (!curr.IsNeedRecalculateKeepNext())
+				break;
 			
-			let currKeepNext = curr.Get_CompiledPr2(false).ParaPr.KeepNext;
-			if (!currKeepNext || curr.getPageCount() > 1 || !curr.IsInline() || curr.Check_PageBreak())
-				break;
-
-			let prev = curr.GetPrevDocumentElement();
-			if (!prev || (prev.IsParagraph() && prev.Get_SectionPr()))
-				break;
-
-			// Последовательности параграфов с "не отрывать от следующего" предшествует таблица,
-			// последняя строка которой тоже не должна отрываться от следующего элемента: таблица
-			// является настоящим началом последовательности, поэтому переносим строки таблицы.
-			if (this.private_IsKeepWithNextTable(prev))
+			if (curr.IsPartiallyKeepNext())
 			{
 				if (this.Parent.RecalcInfo.Can_RecalcObject())
 				{
-					this.Parent.RecalcInfo.Set_KeepNext(prev, this);
+					this.Parent.RecalcInfo.Set_KeepNext(curr, this);
 					return recalcresult_PrevPage | recalcresultflags_Column;
 				}
-
 				break;
 			}
-
-			if (!prev.IsParagraph() || !prev.Get_CompiledPr2(false).ParaPr.KeepNext)
+			
+			let prev = curr.GetPrevDocumentElement();
+			if (!prev || (prev.IsParagraph() && prev.Get_SectionPr()))
+				break;
+			
+			if (!prev.IsNeedRecalculateKeepNext())
 			{
 				if (this.Parent.RecalcInfo.Can_RecalcObject())
 				{

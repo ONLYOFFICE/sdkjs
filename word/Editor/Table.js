@@ -3277,27 +3277,22 @@ CTable.prototype.Recalculate = function()
 };
 CTable.prototype.IsNeedRecalculateKeepNext = function()
 {
-	if (!this.IsInline())
+	let rowCount = this.GetRowsCount();	
+	return (!this.IsInline() && rowCount && this.GetPagesCount() <= 1 && this.private_IsRowWithKeepNext(rowCount - 1));
+};
+CTable.prototype.IsPartiallyKeepNext = function()
+{
+	let rowCount = this.GetRowsCount();
+	if (!this.IsInline() || this.GetPagesCount() > 1 || rowCount <= 1 || !this.private_IsRowWithKeepNext(rowCount - 1))
 		return false;
 
-	let nRowsCount = this.GetRowsCount();
-	if (nRowsCount <= 0 || !this.GetRow(nRowsCount - 1).IsContentWithKeepNext())
-		return false;
-
-	// Find the start of the trailing keepNext span
-	let nSpanStart = nRowsCount - 1;
-	while (nSpanStart > 0 && this.GetRow(nSpanStart - 1).IsContentWithKeepNext())
-		nSpanStart--;
-
-	// A row is split across pages when it appears as both the LastRow of page i and FirstRow of page i+1
-	let nPagesCount = this.GetPagesCount();
-	for (let i = 0; i < nPagesCount - 1; ++i)
+	for (let iRow = rowCount - 2; iRow >= 0; --iRow)
 	{
-		if (this.Pages[i].LastRow === this.Pages[i + 1].FirstRow && this.Pages[i].LastRow >= nSpanStart)
-			return false;
+		if (!this.private_IsRowWithKeepNext(iRow))
+			return true;
 	}
-
-	return true;
+	
+	return false;
 };
 CTable.prototype.Reset_RecalculateCache = function()
 {
