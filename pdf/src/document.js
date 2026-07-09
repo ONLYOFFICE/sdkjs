@@ -2889,7 +2889,6 @@ var CPresentation = CPresentation || function(){};
                     this.private_CommitField(oField);
                 }
             }, AscDFH.historydescription_Pdf_ClickCheckbox, this);
-            oField.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
         }
         else {
             oField.onMouseUp();
