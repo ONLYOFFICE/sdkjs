@@ -10104,29 +10104,6 @@
 		if (this.Parent)
 			this.Parent.OnChangeTableStylePr(this);
 	};
-	ApiTableStylePr.prototype.OnChangeTablePr = function(oApiTablePr)
-	{
-		this.TableStylePr = this.TableStylePr.Copy();
-		this.TableStylePr.TablePr = oApiTablePr.TablePr;
-
-		oApiTablePr.TablePr = this.TableStylePr.TablePr.Copy();
-
-		this.private_OnChange();
-	};
-	ApiTableStylePr.prototype.OnChangeTableRowPr = function(oApiTableRowPr)
-	{
-		this.TableStylePr = this.TableStylePr.Copy();
-		this.TableStylePr.TableRowPr = oApiTableRowPr.RowPr;
-
-		oApiTableRowPr.RowPr = this.TableStylePr.TableRowPr.Copy();
-
-		this.private_OnChange();
-	};
-	ApiTableStylePr.prototype.private_OnChange = function()
-	{
-		if (this.Parent)
-			this.Parent.OnChangeTableStylePr(this);
-	};
 	ApiTableStylePr.prototype.OnChangeTextPr = function(oApiTextPr)
 	{
 		this.TableStylePr = this.TableStylePr.Copy();
