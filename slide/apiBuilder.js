@@ -11057,8 +11057,8 @@
 			return null;
 
 		let oHighlight = "none" === sColor
-			? {HighLight : AscCommonWord.highlight_None}
-			: {HighLight : new Asc.asc_CColor({r : color.r, g: color.g, b: color.b, Auto : false})};
+			? {HighlightColor : null}
+			: {HighlightColor : AscFormat.CreateUniColorRGB(color.r, color.g, color.b)};
 
 		return this.private_ApplyTextPr(oHighlight);
 	};
