@@ -4558,9 +4558,9 @@
      * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/FollowMasterBackground.js
 	 */
     ApiSlide.prototype.FollowMasterBackground = function(){
-        if (!this.Slide)
+        if (!this.Slide || !this.Slide.Layout)
             return false;
-        
+
         var oMaster = this.Slide.Layout.Master;
 
         if (oMaster && oMaster.cSld.Bg)
