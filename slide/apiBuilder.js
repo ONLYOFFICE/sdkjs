@@ -3516,7 +3516,11 @@
 	 */
     ApiPlaceholder.prototype.SetType = function(sType)
     {
-        this.Placeholder.setType(private_GetPlaceholderInnerType(sType));
+        let nType = private_GetPlaceholderInnerType(sType);
+        if (private_GetPlaceholderStrType(nType) !== sType)
+            return false;
+        this.Placeholder.setType(nType);
+        return true;
     };
 
     /**
