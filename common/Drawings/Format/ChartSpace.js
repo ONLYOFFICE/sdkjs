@@ -9499,6 +9499,9 @@ function(window, undefined) {
 		this.brush = default_brush;
 
 	};
+	CChartSpace.prototype.recalculateBrush = function () {
+		this.recalculateChartBrush();
+	};
 	CChartSpace.prototype.recalculateAxisTickMark = function () {
 		if (this.chart && this.chart.plotArea) {
 			var oThis = this;

@@ -19884,11 +19884,60 @@
 	 */	
 	ApiDrawing.prototype.Fill = function(oFill)
 	{
+		const classType = this.GetClassType();
+		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
+			return false;
+
 		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
 			return false;
 
-		this.Drawing.spPr.setFill(oFill.UniFill);
-		return true;
+		if (classType === "smartArt")
+		{
+			this.Drawing.changeFill(oFill.UniFill);
+			return true;
+		}
+
+		if (this.Drawing && this.Drawing.spPr)
+		{
+			this.Drawing.spPr.setFill(oFill.UniFill);
+			return true;
+		}
+
+		return false;
+	};
+	/**
+	 * Sets the fill formatting properties to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @param {ApiFill} oFill - The fill type used to fill the graphic object.
+	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetFill.js
+	 */
+	ApiDrawing.prototype.SetFill = ApiDrawing.prototype.Fill;
+	/**
+	 * Gets the fill formatting properties from the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiFill | null}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetFill.js
+	 */
+	ApiDrawing.prototype.GetFill = function()
+	{
+		const classType = this.GetClassType();
+		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
+			return null;
+
+		if (this.Drawing)
+		{
+			if (this.Drawing.recalcInfo && this.Drawing.recalcInfo.recalculateBrush)
+				this.Drawing.recalculateBrush();
+			if (this.Drawing.brush)
+				return new ApiFill(this.Drawing.brush);
+		}
+
+		return null;
 	};
 	/**
 	 * Sets the outline properties to the specified graphic object.
@@ -31533,6 +31582,8 @@
 	ApiDrawing.prototype["ScaleHeight"]              = ApiDrawing.prototype.ScaleHeight;
 	ApiDrawing.prototype["ScaleWidth"]               = ApiDrawing.prototype.ScaleWidth;
 	ApiDrawing.prototype["Fill"]                     = ApiDrawing.prototype.Fill;
+	ApiDrawing.prototype["SetFill"]                  = ApiDrawing.prototype.SetFill;
+	ApiDrawing.prototype["GetFill"]                  = ApiDrawing.prototype.GetFill;
 	ApiDrawing.prototype["SetOutLine"]               = ApiDrawing.prototype.SetOutLine;
 	ApiDrawing.prototype["GetNextDrawing"]           = ApiDrawing.prototype.GetNextDrawing;
 	ApiDrawing.prototype["GetPrevDrawing"]           = ApiDrawing.prototype.GetPrevDrawing;

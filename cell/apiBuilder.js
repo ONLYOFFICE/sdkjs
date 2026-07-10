@@ -13676,12 +13676,17 @@
 	 */
 	ApiDrawing.prototype.SetFill = function (fill) {
 		const classType = this.GetClassType();
-		if (classType !== 'shape' && classType !== 'image' && classType !== 'chart') {
+		if (classType !== 'shape' && classType !== 'image' && classType !== 'chart' && classType !== 'group' && classType !== 'smartArt' && classType !== 'oleObject') {
 			return false;
 		}
 
 		if (!fill || !fill.GetClassType || fill.GetClassType() !== 'fill') {
 			return false;
+		}
+
+		if (classType === 'smartArt') {
+			this.Drawing.changeFill(fill.UniFill);
+			return true;
 		}
 
 		if (this.Drawing && this.Drawing.spPr) {
@@ -13706,12 +13711,17 @@
 	 */
 	ApiDrawing.prototype.Fill = function (fill) {
 		const classType = this.GetClassType();
-		if (classType !== 'shape' && classType !== 'image' && classType !== 'chart') {
+		if (classType !== 'shape' && classType !== 'image' && classType !== 'chart' && classType !== 'group' && classType !== 'smartArt' && classType !== 'oleObject') {
 			return false;
 		}
 
 		if (!fill || !fill.GetClassType || fill.GetClassType() !== 'fill') {
 			return false;
+		}
+
+		if (classType === 'smartArt') {
+			this.Drawing.changeFill(fill.UniFill);
+			return true;
 		}
 
 		if (this.Drawing && this.Drawing.spPr) {
@@ -13735,17 +13745,13 @@
 	 */
 	ApiDrawing.prototype.GetFill = function () {
 		const classType = this.GetClassType();
-		if (classType !== 'shape' && classType !== 'image' && classType !== 'chart') {
+		if (classType !== 'shape' && classType !== 'image' && classType !== 'chart' && classType !== 'group' && classType !== 'smartArt' && classType !== 'oleObject') {
 			return null;
 		}
 
 		if (this.Drawing) {
 			if (this.Drawing.recalcInfo && this.Drawing.recalcInfo.recalculateBrush) {
-				if (classType === 'chart') {
-					this.Drawing.recalculateChartBrush();
-				} else {
-					this.Drawing.recalculateBrush();
-				}
+				this.Drawing.recalculateBrush();
 			}
 
 			if (this.Drawing.brush) {
