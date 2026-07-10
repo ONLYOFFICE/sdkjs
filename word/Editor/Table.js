@@ -3277,19 +3277,45 @@ CTable.prototype.Recalculate = function()
 };
 CTable.prototype.IsNeedRecalculateKeepNext = function()
 {
-	let rowCount = this.GetRowsCount();	
-	return (!this.IsInline() && rowCount && this.GetPagesCount() <= 1 && this.private_IsRowWithKeepNext(rowCount - 1));
+	let rowCount = this.GetRowsCount();
+	if (!this.IsInline() || !rowCount || !this.private_IsRowWithKeepNext(rowCount - 1))
+		return false;
+	
+	return this.IsStartFromNewPage();
 };
 CTable.prototype.IsPartiallyKeepNext = function()
 {
 	let rowCount = this.GetRowsCount();
-	if (!this.IsInline() || this.GetPagesCount() > 1 || rowCount <= 1 || !this.private_IsRowWithKeepNext(rowCount - 1))
+	if (!this.IsInline() || rowCount <= 1 || !this.private_IsRowWithKeepNext(rowCount - 1))
 		return false;
 
+	let firstRow = rowCount - 1;
 	for (let iRow = rowCount - 2; iRow >= 0; --iRow)
 	{
 		if (!this.private_IsRowWithKeepNext(iRow))
-			return true;
+		{
+			firstRow = iRow + 1;
+			break;
+		}
+	}
+
+	return !this.IsRowStartFromNewPage(firstRow);
+};
+/**
+ * @param iRow {number}
+ * @returns {boolean}
+ */
+CTable.prototype.IsRowStartFromNewPage = function(iRow)
+{
+	if (0 === iRow)
+		return this.IsStartFromNewPage();
+	
+	for (let iPage = 1; iPage < this.Pages.length; ++iPage)
+	{
+		if (this.Pages[iPage].FirstRow === iRow)
+			return (this.Pages[iPage - 1].LastRow !== iRow);
+		else if (this.Pages[iPage].FirstRow > iRow)
+			break;
 	}
 	
 	return false;

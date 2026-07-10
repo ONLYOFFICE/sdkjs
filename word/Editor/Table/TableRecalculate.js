@@ -3728,7 +3728,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
  */
 CTable.prototype.private_IsRowWithKeepNext = function(iRow)
 {
-	if (iRow < 0 || iRow >= this.Content.length - 1)
+	if (iRow < 0 || iRow >= this.Content.length)
 		return false;
 	
 	return this.GetRow(iRow).IsContentWithKeepNext();
