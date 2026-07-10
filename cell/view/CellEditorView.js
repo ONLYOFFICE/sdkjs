@@ -2281,7 +2281,7 @@ function (window, undefined) {
 
 	CellEditor.prototype._updateCursorPosition = function (redrawText, isExpand, lineIndex, opt_not_formulas_update) {
 		// ToDo should forward this function
-		let h = this.canvas.height;
+		let h = asc_round(this._getContentHeight() * this.ky);
 		let y = -this.textRender.calcLineOffset(this.topLineIndex);
 		let cur = this.textRender.calcCharOffset(this.cursorPos, lineIndex);
 		let charsCount = this.textRender.getCharsCount();
