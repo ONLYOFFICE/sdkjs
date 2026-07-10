@@ -22482,32 +22482,32 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {NumFormat | String} sFormat - Numeric format (can be custom format).
-	 * @param {AxisPos} - Axis position in the chart.
+	 * @param {AxisPos} sAxisPos - Axis position in the chart.
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetAxieNumFormat.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetAxisNumFormat.js
 	 */
-	ApiChart.prototype.SetAxieNumFormat = function(sFormat, sAxiePos)
+	ApiChart.prototype.SetAxisNumFormat = function(sFormat, sAxisPos)
 	{
-		var nAxiePos = -1;
-		switch (sAxiePos)
+		var nAxisPos = -1;
+		switch (sAxisPos)
 		{
 			case "bottom":
-				nAxiePos = AscFormat.AX_POS_B;
+				nAxisPos = AscFormat.AX_POS_B;
 				break;
 			case "left":
-				nAxiePos = AscFormat.AX_POS_L;
+				nAxisPos = AscFormat.AX_POS_L;
 				break;
 			case "right":
-				nAxiePos = AscFormat.AX_POS_R;
+				nAxisPos = AscFormat.AX_POS_R;
 				break;
 			case "top":
-				nAxiePos = AscFormat.AX_POS_T;
+				nAxisPos = AscFormat.AX_POS_T;
 				break;
 			default:
 				return false;
 		}
 
-		return this.Chart.SetAxieNumFormat(sFormat, nAxiePos);
+		return this.Chart.SetAxisNumFormat(sFormat, nAxisPos);
 	};
  
 	/**
@@ -31850,7 +31850,8 @@
 	ApiChart.prototype["SetTitleOutLine"]              =  ApiChart.prototype.SetTitleOutLine;
 	ApiChart.prototype["SetLegendFill"]                =  ApiChart.prototype.SetLegendFill;
 	ApiChart.prototype["SetLegendOutLine"]             =  ApiChart.prototype.SetLegendOutLine;
-	ApiChart.prototype["SetAxieNumFormat"]             =  ApiChart.prototype.SetAxieNumFormat;
+	ApiChart.prototype["SetAxisNumFormat"]             =  ApiChart.prototype.SetAxisNumFormat;
+	ApiChart.prototype["SetAxieNumFormat"]             =  ApiChart.prototype.SetAxieNumFormat = ApiChart.prototype.SetAxisNumFormat;
 	ApiChart.prototype["SetSeriaNumFormat"]            =  ApiChart.prototype.SetSeriaNumFormat;
 	ApiChart.prototype["SetDataPointNumFormat"]        =  ApiChart.prototype.SetDataPointNumFormat;
 	ApiChart.prototype["GetAllSeries"]                 =  ApiChart.prototype.GetAllSeries;

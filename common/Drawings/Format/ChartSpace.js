@@ -12491,12 +12491,12 @@ function(window, undefined) {
 
 		return false;
 	};
-	CChartSpace.prototype.SetAxieNumFormat = function (sNumFormat, nAxiePos) {
+	CChartSpace.prototype.SetAxisNumFormat = function (sNumFormat, nAxisPos) {
 		if (this.chart.plotArea.axId) {
 			var oAxie;
 			for (var nAxie = 0; nAxie < this.chart.plotArea.axId.length; nAxie++) {
 				oAxie = this.chart.plotArea.axId[nAxie];
-				if (oAxie instanceof AscFormat.CValAx && oAxie.axPos === nAxiePos) {
+				if (oAxie instanceof AscFormat.CValAx && oAxie.axPos === nAxisPos) {
 					oAxie.numFmt.setFormatCode(sNumFormat);
 					if (sNumFormat !== "General")
 						oAxie.numFmt.setSourceLinked(false);
