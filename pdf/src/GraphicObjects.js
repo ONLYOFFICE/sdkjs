@@ -1744,8 +1744,17 @@
 
                         // edit field shape
                         if (object.IsDrawing() && object.IsEditFieldShape() && oAcitveObj == object.GetEditField()) {
-                            oDoc.SetMouseDownObject(oPrev && oPrev.GetEditField() || null, false);
-                            oDoc.activeForm = oPrev && oPrev.GetEditField() || null;
+							if (oPrev) {
+								if (oPrev.IsDrawing()) {
+									let oField = oPrev.GetEditField();
+									oDoc.SetMouseDownObject(oField, false);
+									oDoc.activeForm = oField;
+								}
+								else {
+									oDoc.SetMouseDownObject(oPrev, false);
+									oDoc.activeForm = oPrev;
+								}
+							}
                         }
                         // other objects
                         else if (oAcitveObj == object) {
