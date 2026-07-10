@@ -23496,6 +23496,18 @@
 	{
 		return "bullet";
 	};
+	/**
+	 * Converts the ApiBullet object into the JSON object.
+	 * @memberof ApiBullet
+	 * @typeofeditors ["CSE", "CPE", "PDFE"]
+	 * @returns {JSON}
+	 * @see office-js-api/Examples/{Editor}/ApiBullet/Methods/ToJSON.js
+	 */
+	ApiBullet.prototype.ToJSON = function()
+	{
+		var oWriter = new AscJsonConverter.WriterToJSON();
+		return JSON.stringify(oWriter.SerBullet(this.Bullet));
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//

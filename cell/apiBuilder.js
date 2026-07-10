@@ -16718,7 +16718,7 @@
 		if (count == undefined) count = 0;
 		let wsView = api.wb.getWorksheetById(this.ws.getId());
 		if (typeof count === 'number' && count > 0 && count <= AscCommon.gc_nMaxRow0) {
-			if (api.canEdit && wsView) {
+			if (api.canEdit() && wsView) {
 				wsView.freezePane(null, 0, count);
 			}
 		} else if (wsView && wsView.topLeftFrozenCell && count === 0) {
