@@ -19520,7 +19520,7 @@
 	 * Copies the current graphic object. 
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @return {ApiDrawing}
+	 * @return {ApiDrawing | null}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Copy.js
 	 */
 	ApiDrawing.prototype.Copy = function()
@@ -19530,6 +19530,61 @@
 		let oCopyParaDrawing = oParaDrawing.copy();
 		return new this.constructor(oCopyParaDrawing.GraphicObj);
 	};
+
+	/**
+	 * Creates a copy of the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiShape | null}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/Copy.js
+	 */
+	ApiShape.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiShape.prototype["Copy"] = ApiShape.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current chart.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiChart | null}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/Copy.js
+	 */
+	ApiChart.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiChart.prototype["Copy"] = ApiChart.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current group.
+	 * @memberof ApiGroup
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiGroup | null}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Copy.js
+	 */
+	ApiGroup.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiGroup.prototype["Copy"] = ApiGroup.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current image.
+	 * @memberof ApiImage
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiImage | null}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiImage/Methods/Copy.js
+	 */
+	ApiImage.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiImage.prototype["Copy"] = ApiImage.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current OLE object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiOleObject | null}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/Copy.js
+	 */
+	ApiOleObject.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiOleObject.prototype["Copy"] = ApiOleObject.prototype.Copy;
 	/**
 	 * Wraps the graphic object with a rich text content control.
 	 * @memberof ApiDrawing

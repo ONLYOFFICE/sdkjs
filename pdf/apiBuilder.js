@@ -7035,12 +7035,56 @@
 	 * Creates a copy of the specified drawing object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
-	 * @returns {ApiDrawing} - return null if drawing doesn't exist.
+	 * @returns {ApiDrawing}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Copy.js
 	 */
 	ApiDrawing.prototype.Copy = function() {
 		return new this.constructor(this.Drawing.copy());
 	};
+
+	/**
+	 * Creates a copy of the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiShape}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/Copy.js
+	 */
+	ApiShape.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiShape.prototype["Copy"] = ApiShape.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current chart.
+	 * @memberof ApiChart
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiChart}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/Copy.js
+	 */
+	ApiChart.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiChart.prototype["Copy"] = ApiChart.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current image.
+	 * @memberof ApiImage
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiImage}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiImage/Methods/Copy.js
+	 */
+	ApiImage.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiImage.prototype["Copy"] = ApiImage.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiTable}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/Copy.js
+	 */
+	ApiTable.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiTable.prototype["Copy"] = ApiTable.prototype.Copy;
 
 	/**
 	 * Deletes the specified drawing object from the parent.

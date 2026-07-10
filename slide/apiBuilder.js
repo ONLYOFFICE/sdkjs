@@ -6757,16 +6757,78 @@
      * Creates a copy of the specified drawing object.
      * @memberof ApiDrawing
      * @typeofeditors ["CPE"]
-     * @returns {ApiDrawing} - return null if drawing doesn't exist.
+     * @returns {ApiDrawing}
      * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Copy.js
 	 */
     ApiDrawing.prototype.Copy = function()
     {
-        if (this.Drawing)
-            return new this.constructor(this.Drawing.copy());
-
-        return null;
+        return new this.constructor(this.Drawing.copy());
     };
+
+	/**
+	 * Creates a copy of the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiShape}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/Copy.js
+	 */
+	ApiShape.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiShape.prototype["Copy"] = ApiShape.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current chart.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiChart}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/Copy.js
+	 */
+	ApiChart.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiChart.prototype["Copy"] = ApiChart.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current group.
+	 * @memberof ApiGroup
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiGroup}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Copy.js
+	 */
+	ApiGroup.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiGroup.prototype["Copy"] = ApiGroup.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current image.
+	 * @memberof ApiImage
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiImage}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiImage/Methods/Copy.js
+	 */
+	ApiImage.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiImage.prototype["Copy"] = ApiImage.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current OLE object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiOleObject}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/Copy.js
+	 */
+	ApiOleObject.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiOleObject.prototype["Copy"] = ApiOleObject.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiTable}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/Copy.js
+	 */
+	ApiTable.prototype.Copy = ApiDrawing.prototype.Copy;
 
     /**
      * Deletes the specified drawing object from the parent.
@@ -8448,22 +8510,6 @@
         this.Table.CurCell = oCell.Cell;
         return this.Table.RemoveTableColumn();
     };
-	/**
-	 * Creates a copy of the current table.
-	 * @memberof ApiTable
-	 * @typeofeditors ["CPE"]
-	 * @returns {ApiTable}
-	 * @since 9.5.0
-	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/Copy.js
-	 */
-	ApiTable.prototype.Copy = function()
-	{
-		let oPresentation = private_GetPresentation();
-		let frame = oPresentation.Create_TableGraphicFrame(null, null, null, oPresentation.DefaultTableStyleId);
-		let oTable = this.Table.Copy(this.Drawing, private_GetDrawingDocument());
-		frame.setGraphicObject(oTable)
-		return new ApiTable(frame);
-	};
 	/**
 	 * Selects the current table in the presentation.
 	 * @memberof ApiTable
