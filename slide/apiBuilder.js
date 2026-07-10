@@ -2698,7 +2698,6 @@
     /**
      * Sets the background to the current slide master.
      * @memberof ApiMaster
-     * @memberOf ApiMaster
      * @typeofeditors ["CPE"]
      * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide master background.
      * @returns {boolean}
@@ -3142,7 +3141,6 @@
     /**
      * Sets the background to the current slide layout.
      * @memberof ApiLayout
-     * @memberOf ApiLayout
      * @typeofeditors ["CPE"]
      * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide layout background.
      * @returns {boolean}
@@ -3383,7 +3381,7 @@
 	 * @memberof ApiLayout
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTable[]} An array with all tables from the current slide layout.
-     * @sine 9.1.0
+     * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetAllTables.js
 	 */
 	ApiLayout.prototype.GetAllTables = function () {
@@ -3566,7 +3564,7 @@
     };
 
     /**
-     * Retuns the placeholder index.
+     * Returns the placeholder index.
      * @memberof ApiPlaceholder
      * @typeofeditors ["CPE"]
      * @returns {number | undefined} - Returns the placeholder index.
@@ -4284,7 +4282,6 @@
     /**
      * Sets the background to the current presentation slide.
      * @memberof ApiSlide
-     * @memberOf ApiSlide
      * @typeofeditors ["CPE"]
      * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide background.
      * @returns {boolean}
@@ -4322,7 +4319,6 @@
     /**
      * Returns the visibility of the current presentation slide.
      * @memberof ApiSlide
-     * @memberOf ApiSlide
      * @typeofeditors ["CPE"]
      * @returns {boolean}
      * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetVisible.js
@@ -4337,7 +4333,6 @@
     /**
      * Sets the visibility to the current presentation slide.
      * @memberof ApiSlide
-     * @memberOf ApiSlide
      * @typeofeditors ["CPE"]
      * @param {boolean} value - Slide visibility.
      * @returns {boolean}
