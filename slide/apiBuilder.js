@@ -8215,18 +8215,7 @@
     ApiTable.prototype.GetClassType = function(){
         return "table";
     };
-	/**
-	 * Returns an internal ID of the current table.
-	 * @memberof ApiTable
-	 * @typeofeditors ["CDE"]
-	 * @returns {string}
-	 * @since 9.5.0
-	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetInternalId.js
-	 */
-	ApiTable.prototype.GetInternalId = function()
-	{
-		return this.Table.GetId();
-	};
+
 	/**
      * Returns a row by its index.
      * @memberof ApiTable
@@ -11179,7 +11168,7 @@
 		FontSize = AscBuilder.GetNumberParameter(FontSize, null);
 		if (FontSize === null)
 			return null;
-		return this.private_ApplyTextPr({FontSize: FontSize});
+		return this.private_ApplyTextPr({FontSize: private_GetHps(FontSize)});
 	};
 	
 	/**
@@ -11640,7 +11629,6 @@
 	ApiOleObject.prototype["GetApplicationId"]            = ApiOleObject.prototype.GetApplicationId;
 
 	ApiTable.prototype["GetClassType"]					= ApiTable.prototype.GetClassType;
-	//ApiTable.prototype["GetInternalId"]					= ApiTable.prototype.GetInternalId;
 	ApiTable.prototype["GetRowsCount"]					= ApiTable.prototype.GetRowsCount;
 	ApiTable.prototype["GetRow"]						= ApiTable.prototype.GetRow;
 	ApiTable.prototype["GetCell"]						= ApiTable.prototype.GetCell;
