@@ -9502,6 +9502,9 @@ function(window, undefined) {
 	CChartSpace.prototype.recalculateBrush = function () {
 		this.recalculateChartBrush();
 	};
+	CChartSpace.prototype.recalculatePen = function () {
+		this.recalculatePenBrush();
+	};
 	CChartSpace.prototype.recalculateAxisTickMark = function () {
 		if (this.chart && this.chart.plotArea) {
 			var oThis = this;
