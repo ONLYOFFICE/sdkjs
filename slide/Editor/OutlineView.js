@@ -113,6 +113,9 @@
 		}
 		return this.cache.slideNumbersWidth;
 	};
+	DecoratorDrawer.prototype.getSlideIconSizes = function (paragraph) {
+
+	};
 	DecoratorDrawer.prototype.drawDecorShape = function (graphics, shape, x, y) {
 		var t = new AscCommon.CMatrix();
 		t.tx = this.getX(x);
@@ -1596,9 +1599,45 @@
 	OutlineView.prototype.getDocContent = function () {
 		return this.outlineShape && this.outlineShape.txBody.content;
 	};
+
+	function DecorationSelectManager(outlineView, e, x, y) {
+		this.outlineView = outlineView;
+		this.event = e;
+		this.x = x;
+		this.y = y;
+	}
+	DecorationSelectManager.prototype.handle = function () {
+		const outlineView = this.outlineView;
+		const docContent = outlineView.getDocContent();
+		if (docContent) {
+			const tx = outlineView.getInvertTransformX(this.x);
+			const ty = outlineView.getInvertTransformY(this.y);
+
+			const nearestPos = docContent.Get_NearestPos(0, tx, ty);
+			const paragraph = nearestPos.Paragraph;
+			const isClickToSlideIcon = this.isClickToSlideIcon(paragraph, tx, ty);
+			if (isClickToSlideIcon) {
+
+			} else {
+
+			}
+		}
+
+	};
+
+	DecorationSelectManager.prototype.isExpandSelection = function () {
+		return this.event.CtrlKey;
+	};
+	OutlineView.prototype.handleDecorationSelect = function () {
+
+	};
 	OutlineView.prototype.selectionSetStart = function (e, x, y) {
 		if (this.outlineShape) {
-			this.outlineShape.selectionSetStart(e, x, y, 0);
+			if (this.outlineShape.hit(x, y)) {
+				this.outlineShape.selectionSetStart(e, x, y, 0);
+			} else {
+				this.handleDecorationSelect(e, x, y);
+			}
 		}
 	};
 	OutlineView.prototype.updateOutlineShapeTransform = function (offsetX, offsetY) {
