@@ -1544,6 +1544,60 @@ function (window, undefined) {
 		return {xs: xs, ys: ys, tails: tails};
 	}
 
+	//a uniform row/col accessor over an array or range operand, bounded to its DATA extent:
+	//- cArray: logical dims + getElementRowCol(...,true) (a constant tail is served positionally, in O(1)/cell)
+	//- cArea/cArea3D: getMatrix() is positional and clamped to the sheet's used rows (not the full-column bbox)
+	function pairedView(arg) {
+		if (arg instanceof cArray) {
+			var d = arg.getDimensions(true);
+			return {rows: d.row, cols: d.col, dim: d.row * d.col, at: function (r, c) { return arg.getElementRowCol(r, c, true); }};
+		}
+		var m = null, bbox = null;
+		if (arg instanceof cArea) {
+			m = arg.getMatrix();
+			bbox = arg.getDimensions();   //full bbox (a full column is 1048576), used only for the size-match gate
+		} else if (arg instanceof cArea3D && arg.isSingleSheet && arg.isSingleSheet()) {
+			m = arg.getMatrix();
+			m = m && m[0];
+		}
+		if (m) {
+			var cols = 0;
+			for (var k = 0; k < m.length; k++) {
+				if (m[k] && m[k].length > cols) {
+					cols = m[k].length;
+				}
+			}
+			return {rows: m.length, cols: cols, dim: bbox ? bbox.row * bbox.col : m.length * cols, at: function (r, c) { var row = m[r]; return (row && row[c]) ? row[c] : new cEmpty(); }};
+		}
+		return null;
+	}
+
+	//pair two array/range operands POSITIONALLY (by row/col index), the way Excel does: a pair contributes only
+	//where BOTH cells are numbers. The flat path collected data-only (compacted) values, losing row alignment, so
+	//unequal data counts / gaps gave #N/A. Bounded to min(data extents). Covers the cases pairedConstTailWeighted
+	//does not (mixed array+range, plain ranges, both-array with unequal heads); null for a scalar operand.
+	function pairedPositional(arg0, arg1) {
+		var v0 = pairedView(arg0), v1 = pairedView(arg1);
+		if (!v0 || !v1 || v0.cols < 1 || v1.cols < 1) {
+			return null;
+		}
+		//Excel requires equal total size (cell count); otherwise #N/A. Ranges compare by their full bbox (so
+		//A:A and B:B both count as 1048576), arrays by their grid. Unequal -> fall back to the flat path (#N/A).
+		if (v0.dim !== v1.dim) {
+			return null;
+		}
+		//flatten each operand ROW-MAJOR (by its own cols) and pair by flat index, the way Excel does: this
+		//aligns a column with a row (5x1 vs 1x5) and keeps positional alignment for ranges with gaps. Bounded to
+		//min data extent; a pair contributes only where both are numbers (checked by the caller's helper).
+		var len0 = v0.rows * v0.cols, len1 = v1.rows * v1.cols;
+		var n = Math.min(len0, len1), xs = [], ys = [], k;
+		for (k = 0; k < n; k++) {
+			xs.push(v0.at(Math.floor(k / v0.cols), k % v0.cols));
+			ys.push(v1.at(Math.floor(k / v1.cols), k % v1.cols));
+		}
+		return {xs: xs, ys: ys};
+	}
+
 	//covariance over aligned paired data {xs, ys} + a shared constant tail (tails: [{x, y, n}]); bSample -> /(N-1),
 	//else population /N. Used by COVARIANCE.S/.P for two lazy constant-tail columns (getMatrix would drop the tail).
 	function covariance(x, y, tails, bSample) {
@@ -5367,6 +5421,11 @@ function (window, undefined) {
 		if (weighted) {
 			return correl(weighted.xs, weighted.ys, weighted.tails);
 		}
+		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
+		var positional = pairedPositional(arg0, arg1);
+		if (positional) {
+			return correl(positional.xs, positional.ys, []);
+		}
 
 		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
 			arr0 = arg0.getValue();
@@ -5638,6 +5697,11 @@ function (window, undefined) {
 		if (weighted) {
 			return covar(weighted.xs, weighted.ys, weighted.tails);
 		}
+		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
+		var positional = pairedPositional(arg0, arg1);
+		if (positional) {
+			return covar(positional.xs, positional.ys, []);
+		}
 
 		if (arg0 instanceof cArea) {
 			arr0 = arg0.getValue();
@@ -5685,6 +5749,11 @@ function (window, undefined) {
 		var weighted = pairedConstTailWeighted(arg[0], arg[1]);
 		if (weighted) {
 			return covariance(weighted.xs, weighted.ys, weighted.tails, false);
+		}
+		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
+		var positional = pairedPositional(arg[0], arg[1]);
+		if (positional) {
+			return covariance(positional.xs, positional.ys, [], false);
 		}
 
 		var arg2 = [arg[0], arg[1]];
@@ -5787,6 +5856,11 @@ function (window, undefined) {
 		var weighted = pairedConstTailWeighted(arg[0], arg[1]);
 		if (weighted) {
 			return covariance(weighted.xs, weighted.ys, weighted.tails, true);
+		}
+		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
+		var positional = pairedPositional(arg[0], arg[1]);
+		if (positional) {
+			return covariance(positional.xs, positional.ys, [], true);
 		}
 
 		var arg2 = [arg[0], arg[1]];
@@ -6627,6 +6701,11 @@ function (window, undefined) {
 		var weighted = pairedConstTailWeighted(arg1, arg2);
 		if (weighted) {
 			return forecast(arg0, weighted.xs, weighted.ys, weighted.tails);
+		}
+		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
+		var positional = pairedPositional(arg1, arg2);
+		if (positional) {
+			return forecast(arg0, positional.xs, positional.ys, []);
 		}
 
 		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
@@ -7960,6 +8039,11 @@ function (window, undefined) {
 		let weighted = pairedConstTailWeighted(arg0, arg1);
 		if (weighted) {
 			return intercept(weighted.xs, weighted.ys, weighted.tails);
+		}
+		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
+		let positional = pairedPositional(arg0, arg1);
+		if (positional) {
+			return intercept(positional.xs, positional.ys, []);
 		}
 
 		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
@@ -9840,6 +9924,11 @@ function (window, undefined) {
 		if (weighted) {
 			return pearson(weighted.xs, weighted.ys, weighted.tails);
 		}
+		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
+		var positional = pairedPositional(arg0, arg1);
+		if (positional) {
+			return pearson(positional.xs, positional.ys, []);
+		}
 
 		if (arg0 instanceof cArea) {
 			arr0 = arg0.getValue();
@@ -10777,6 +10866,11 @@ function (window, undefined) {
 		if (weighted) {
 			return rsq(weighted.xs, weighted.ys, weighted.tails);
 		}
+		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
+		var positional = pairedPositional(arg0, arg1);
+		if (positional) {
+			return rsq(positional.xs, positional.ys, []);
+		}
 
 		if (arg0 instanceof cArea) {
 			arr0 = arg0.getValue();
@@ -11044,6 +11138,11 @@ function (window, undefined) {
 		var weighted = pairedConstTailWeighted(arg0, arg1);
 		if (weighted) {
 			return slope(weighted.xs, weighted.ys, weighted.tails);
+		}
+		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
+		var positional = pairedPositional(arg0, arg1);
+		if (positional) {
+			return slope(positional.xs, positional.ys, []);
 		}
 
 		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
@@ -11722,6 +11821,11 @@ function (window, undefined) {
 		var weighted = pairedConstTailWeighted(arg0, arg1);
 		if (weighted) {
 			return steyx(weighted.xs, weighted.ys, weighted.tails);
+		}
+		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
+		var positional = pairedPositional(arg0, arg1);
+		if (positional) {
+			return steyx(positional.xs, positional.ys, []);
 		}
 
 		if (arg0 instanceof cArea) {
