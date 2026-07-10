@@ -3054,7 +3054,10 @@ function (window, undefined) {
 
 	function calcPosition(matrix, nIndex) {
 		var rowSize = matrix[0].length;
-		var col = parseInt(rowSize > 1 ? nIndex / rowSize : nIndex);
+		//Math.floor, not parseInt: parseInt stringifies first, so for a large rowSize (e.g. a full-column
+		//1048576-row matrix) nIndex/rowSize becomes < 1e-6, prints in scientific notation ("9.5e-7") and
+		//parseInt misreads it (->9), yielding a negative row and an out-of-bounds matrix access.
+		var col = Math.floor(rowSize > 1 ? nIndex / rowSize : nIndex);
 		var row = nIndex - col * rowSize;
 		return {row: row, col: col};
 	}
