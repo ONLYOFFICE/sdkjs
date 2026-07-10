@@ -1793,8 +1793,8 @@
 	 * Converts the slides from the current ApiPresentation object into the JSON objects.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
-     * @param {boolean} [nStart=0] - The index to the start slide.
-     * @param {boolean} [nStart=ApiPresentation.GetSlidesCount() - 1] - The index to the end slide.
+     * @param {number} [nStart=0] - The index to the start slide.
+     * @param {number} [nEnd=ApiPresentation.GetSlidesCount() - 1] - The index to the end slide.
      * @param {boolean} [bWriteLayout=false] - Specifies if the slide layout will be written to the JSON object or not.
      * @param {boolean} [bWriteMaster=false] - Specifies if the slide master will be written to the JSON object or not (bWriteMaster is false if bWriteLayout === false).
      * @param {boolean} [bWriteAllMasLayouts=false] - Specifies if all child layouts from the slide master will be written to the JSON object or not.
@@ -4696,7 +4696,7 @@
      * Returns a theme of the current slide.
      * @memberof ApiSlide
      * @typeofeditors ["CPE"]
-     * @returns {ApiTheme} - returns null if slide or layout or master or theme doesn't exist.
+     * @returns {ApiTheme | null} - returns null if slide or layout or master or theme doesn't exist.
      * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetTheme.js
 	 */
     ApiSlide.prototype.GetTheme = function(){
