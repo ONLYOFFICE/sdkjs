@@ -4263,7 +4263,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.FinalizeAction = function(checkEmptyAction) {
 		let oActionsQueue = this.GetActionsQueue();
 		if (this.Action.Description == AscDFH.historydescription_Pdf_ExecActions && oActionsQueue.IsInProgress()) {
-			return;
+			return false;
 		}
 
 		Asc.editor.htmlPasteSepParagraphs = true;
@@ -4281,7 +4281,7 @@ var CPresentation = CPresentation || function(){};
             this.UpdateInterface();
             this.ResetLastAction();
             AscCommon.History = oCurHistory;
-            return false;
+            return true;
         }
 
         this.private_CheckActionLock();
