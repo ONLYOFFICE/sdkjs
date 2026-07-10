@@ -3810,6 +3810,16 @@
 		return AscFormat.CSvgDrawer.toDataUrl(svg);
 	};
 
+	CSignatureFormProps.prototype.getVectorImage = function()
+	{
+		switch (this.Mode)
+		{
+			case 1: return this._getDrawSvgData();
+			case 2: return this._getTypeSvgData();
+		}
+		return null;
+	};
+
 	// ---- Export ----
 
 	window['Asc']['CSignatureFormProps'] = window['Asc'].CSignatureFormProps = CSignatureFormProps;
@@ -3847,6 +3857,7 @@
 	prot['serialize']           = prot.serialize;
 	prot['deserialize']         = prot.deserialize;
 	prot['getResult']           = prot.getResult;
+	prot['getVectorImage']      = prot.getVectorImage;
 
 	window['Asc']['CAscTextToTableProperties']				 = window['Asc'].CAscTextToTableProperties = CAscTextToTableProperties;
 	CAscTextToTableProperties.prototype['get_Size']			 = CAscTextToTableProperties.prototype.get_Size;
