@@ -5105,6 +5105,15 @@
 		return '';
 	};
 
+	/**
+	 * Returns a theme of the current notes page.
+	 *
+	 * @typeofeditors ["CPE"]
+	 * @memberof ApiNotesPage
+	 * @returns {ApiTheme | null} - Returns null if the notes page master or theme doesn't exist.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiNotesPage/Methods/GetTheme.js
+	 */
 	ApiNotesPage.prototype.GetTheme = function () {
 		if (this.NotesPage && this.NotesPage.Master && this.NotesPage.Master.Theme) {
 			const oThemeLoadInfo = new AscCommonSlide.CThemeLoadInfo();
