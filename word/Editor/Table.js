@@ -3280,8 +3280,8 @@ CTable.prototype.IsNeedRecalculateKeepNext = function()
 	let rowCount = this.GetRowsCount();
 	if (!this.IsInline() || !rowCount || !this.private_IsRowWithKeepNext(rowCount - 1))
 		return false;
-	
-	return this.IsStartFromNewPage();
+
+	return this.GetPagesCount() <= 1;
 };
 CTable.prototype.IsPartiallyKeepNext = function()
 {
@@ -3289,15 +3289,16 @@ CTable.prototype.IsPartiallyKeepNext = function()
 	if (!this.IsInline() || rowCount <= 1 || !this.private_IsRowWithKeepNext(rowCount - 1))
 		return false;
 
-	let firstRow = rowCount - 1;
-	for (let iRow = rowCount - 2; iRow >= 0; --iRow)
+	let firstRow = rowCount - 2;
+	for (; firstRow >= 0; --firstRow)
 	{
-		if (!this.private_IsRowWithKeepNext(iRow))
-		{
-			firstRow = iRow + 1;
+		if (!this.private_IsRowWithKeepNext(firstRow))
 			break;
-		}
 	}
+	
+	++firstRow;
+	if (0 === firstRow)
+		return false;
 
 	return !this.IsRowStartFromNewPage(firstRow);
 };

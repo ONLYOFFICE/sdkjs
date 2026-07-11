@@ -316,40 +316,41 @@ CDocumentContentElementBase.prototype.RecalculateKeepNext = function(iPage)
 		// тогда мы должны пересчитать предыдущую страницу, с учетом того, что предыдущий параграф
 		// надо начать с новой страницы.
 		let curr = this.GetPrevDocumentElement();
-		while (curr)
+		if (curr && !(curr.IsParagraph() && curr.Get_SectionPr()) && curr.IsPartiallyKeepNext())
 		{
-			if (curr.IsParagraph() && curr.Get_SectionPr())
-				break;
-			
-			if (!curr.IsNeedRecalculateKeepNext())
-				break;
-			
-			if (curr.IsPartiallyKeepNext())
+			if (this.Parent.RecalcInfo.Can_RecalcObject())
 			{
-				if (this.Parent.RecalcInfo.Can_RecalcObject())
-				{
-					this.Parent.RecalcInfo.Set_KeepNext(curr, this);
-					return recalcresult_PrevPage | recalcresultflags_Column;
-				}
-				break;
+				this.Parent.RecalcInfo.Set_KeepNext(curr, this);
+				return recalcresult_PrevPage | recalcresultflags_Column;
 			}
-			
-			let prev = curr.GetPrevDocumentElement();
-			if (!prev || (prev.IsParagraph() && prev.Get_SectionPr()))
-				break;
-			
-			if (!prev.IsNeedRecalculateKeepNext())
+		}
+		else
+		{
+			while (curr)
 			{
-				if (this.Parent.RecalcInfo.Can_RecalcObject())
+				if (curr.IsParagraph() && curr.Get_SectionPr())
+					break;
+
+				if (!curr.IsNeedRecalculateKeepNext())
+					break;
+
+				let prev = curr.GetPrevDocumentElement();
+				if (!prev || (prev.IsParagraph() && prev.Get_SectionPr()))
+					break;
+
+				if (!prev.IsNeedRecalculateKeepNext())
 				{
-					this.Parent.RecalcInfo.Set_KeepNext(curr, this);
-					return recalcresult_PrevPage | recalcresultflags_Column;
+					if (this.Parent.RecalcInfo.Can_RecalcObject())
+					{
+						this.Parent.RecalcInfo.Set_KeepNext(curr, this);
+						return recalcresult_PrevPage | recalcresultflags_Column;
+					}
+
+					break;
 				}
 
-				break;
+				curr = prev;
 			}
-
-			curr = prev;
 		}
 	}
 	
@@ -361,20 +362,6 @@ CDocumentContentElementBase.prototype.RecalculateKeepNext = function(iPage)
 	}
 	
 	return recalcresult_NextElement;
-};
-/**
- * Проверяем, что элемент является выставленной в строку таблицей, помещающейся на одной странице,
- * последняя строка которой имеет настройку "не отрывать от следующего".
- * @param oElement
- * @returns {boolean}
- */
-CDocumentContentElementBase.prototype.private_IsKeepWithNextTable = function(oElement)
-{
-	return !!(oElement
-		&& oElement.IsTable()
-		&& oElement.IsInline()
-		&& oElement.GetPagesCount() <= 1
-		&& oElement.IsLastRowKeepWithNext());
 };
 CDocumentContentElementBase.prototype.Write_ToBinary2 = function(Writer)
 {
