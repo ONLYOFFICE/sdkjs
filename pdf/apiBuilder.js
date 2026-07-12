@@ -7171,6 +7171,239 @@
 	};
 
 	/**
+	 * Returns the name of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @returns {string}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetName.js
+	 */
+	ApiDrawing.prototype.GetName = function()
+	{
+		return this.Drawing.getObjectName();
+	};
+	/**
+	 * Sets the name of the current drawing.
+	 * If another drawing with the same name already exists, that drawing's name will be reset to a default auto-generated name.
+	 * OLE objects do not support a custom name, so for them this method always returns false.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @param {string} name - The name which will be set to the current drawing.
+	 * @returns {boolean} - Returns true if the name was successfully set, otherwise returns false.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetName.js
+	 */
+	ApiDrawing.prototype.SetName = function(name)
+	{
+		if (name === "" || name === null || name === undefined)
+			return false;
+
+		if (this.Drawing.isOleObject())
+			return false;
+
+		this.Drawing.setName(name);
+		return true;
+	};
+	/**
+	 * Sets the title of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @param {string} title - The title to set for the current drawing.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetTitle.js
+	 */
+	ApiDrawing.prototype.SetTitle = function(title)
+	{
+		if (!title)
+			return false;
+
+		let oDrawing = this.Drawing;
+		if (oDrawing)
+		{
+			oDrawing.setTitle(title);
+			return true;
+		}
+		return false;
+	};
+	/**
+	 * Gets the title of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @returns {string | null} - The title of the current drawing, or null if not set.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetTitle.js
+	 */
+	ApiDrawing.prototype.GetTitle = function()
+	{
+		let oDrawing = this.Drawing;
+		let title = oDrawing.getTitle();
+		if (title)
+			return title;
+
+		return null;
+	};
+	/**
+	 * Sets the description of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @param {string} description - The description to set for the current drawing.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetDescription.js
+	 */
+	ApiDrawing.prototype.SetDescription = function(description)
+	{
+		if (!description)
+			return false;
+
+		let oDrawing = this.Drawing;
+		if (oDrawing)
+		{
+			oDrawing.setDescription(description);
+			return true;
+		}
+		return false;
+	};
+	/**
+	 * Gets the description of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @returns {string | null} - The description of the current drawing, or null if not set.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetDescription.js
+	 */
+	ApiDrawing.prototype.GetDescription = function()
+	{
+		let oDrawing = this.Drawing;
+		let description = oDrawing.getDescription();
+		if (description)
+			return description;
+
+		return null;
+	};
+	/**
+	 * Get horizontal flip of current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @returns {boolean | null} Returns true if the figure is flipped horizontally, false if not, or null if the drawing properties are not available.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetFlipH.js
+	 */
+	ApiDrawing.prototype.GetFlipH = function()
+	{
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+			return this.Drawing.spPr.xfrm.flipH;
+
+		return null;
+	};
+	/**
+	 * Get vertical flip of current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @returns {boolean | null} Returns true if the figure is flipped vertically, false if not, or null if the drawing properties are not available.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetFlipV.js
+	 */
+	ApiDrawing.prototype.GetFlipV = function()
+	{
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+			return this.Drawing.spPr.xfrm.flipV;
+
+		return null;
+	};
+	/**
+	 * Sets the horizontal flip of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @param {boolean} bFlip - Specifies if the figure will be flipped horizontally or not.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetFlipH.js
+	 */
+	ApiDrawing.prototype.SetFlipH = function(bFlip)
+	{
+		if (typeof(bFlip) !== "boolean")
+			return false;
+
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+		{
+			this.Drawing.spPr.xfrm.setFlipH(bFlip);
+			return true;
+		}
+
+		return false;
+	};
+	/**
+	 * Sets the vertical flip of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @param {boolean} bFlip - Specifies if the figure will be flipped vertically or not.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetFlipV.js
+	 */
+	ApiDrawing.prototype.SetFlipV = function(bFlip)
+	{
+		if (typeof(bFlip) !== "boolean")
+			return false;
+
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+		{
+			this.Drawing.spPr.xfrm.setFlipV(bFlip);
+			return true;
+		}
+
+		return false;
+	};
+	/**
+	 * Returns the lock value for the specified lock type of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @param {DrawingLockType} sType - Lock type in the string format.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockValue.js
+	 */
+	ApiDrawing.prototype.GetLockValue = function(sType)
+	{
+		let nLockType = private_GetDrawingLockType(sType);
+
+		if (nLockType === -1)
+			return false;
+
+		if (this.Drawing)
+			return this.Drawing.getLockValue(nLockType);
+
+		return false;
+	};
+	/**
+	 * Sets the lock value to the specified lock type of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @param {DrawingLockType} sType - Lock type in the string format.
+	 * @param {boolean} bValue - Specifies if the specified lock is applied to the current drawing.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLockValue.js
+	 */
+	ApiDrawing.prototype.SetLockValue = function(sType, bValue)
+	{
+		let nLockType = private_GetDrawingLockType(sType);
+
+		if (nLockType === -1)
+			return false;
+
+		if (this.Drawing)
+		{
+			this.Drawing.setLockValue(nLockType, bValue);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
 	 * Sets the fill formatting properties to the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
@@ -8414,6 +8647,61 @@
 		return "smartArt";
 	};
 
+	function private_GetDrawingLockType(sType)
+	{
+		let nLockType = -1;
+		switch (sType)
+		{
+			case "noGrp":
+				nLockType = AscFormat.LOCKS_MASKS.noGrp;
+				break;
+			case "noUngrp":
+				nLockType = AscFormat.LOCKS_MASKS.noUngrp;
+				break;
+			case "noSelect":
+				nLockType = AscFormat.LOCKS_MASKS.noSelect;
+				break;
+			case "noRot":
+				nLockType = AscFormat.LOCKS_MASKS.noRot;
+				break;
+			case "noChangeAspect":
+				nLockType = AscFormat.LOCKS_MASKS.noChangeAspect;
+				break;
+			case "noMove":
+				nLockType = AscFormat.LOCKS_MASKS.noMove;
+				break;
+			case "noResize":
+				nLockType = AscFormat.LOCKS_MASKS.noResize;
+				break;
+			case "noEditPoints":
+				nLockType = AscFormat.LOCKS_MASKS.noEditPoints;
+				break;
+			case "noAdjustHandles":
+				nLockType = AscFormat.LOCKS_MASKS.noAdjustHandles;
+				break;
+			case "noChangeArrowheads":
+				nLockType = AscFormat.LOCKS_MASKS.noChangeArrowheads;
+				break;
+			case "noChangeShapeType":
+				nLockType = AscFormat.LOCKS_MASKS.noChangeShapeType;
+				break;
+			case "noDrilldown":
+				nLockType = AscFormat.LOCKS_MASKS.noDrilldown;
+				break;
+			case "noTextEdit":
+				nLockType = AscFormat.LOCKS_MASKS.noTextEdit;
+				break;
+			case "noCrop":
+				nLockType = AscFormat.LOCKS_MASKS.noCrop;
+				break;
+			case "txBox":
+				nLockType = AscFormat.LOCKS_MASKS.txBox;
+				break;
+		}
+
+		return nLockType;
+	}
+
 	function private_GetLogicDocument() {
 		return Asc.editor.getPDFDoc();
 	}
@@ -9466,10 +9754,22 @@
 	ApiDrawing.prototype["Select"]							= ApiDrawing.prototype.Select;
 	ApiDrawing.prototype["SetRotation"]						= ApiDrawing.prototype.SetRotation;
 	ApiDrawing.prototype["GetRotation"]						= ApiDrawing.prototype.GetRotation;
+	ApiDrawing.prototype["GetName"]							= ApiDrawing.prototype.GetName;
+	ApiDrawing.prototype["SetName"]							= ApiDrawing.prototype.SetName;
+	ApiDrawing.prototype["SetTitle"]						= ApiDrawing.prototype.SetTitle;
+	ApiDrawing.prototype["GetTitle"]						= ApiDrawing.prototype.GetTitle;
+	ApiDrawing.prototype["SetDescription"]					= ApiDrawing.prototype.SetDescription;
+	ApiDrawing.prototype["GetDescription"]					= ApiDrawing.prototype.GetDescription;
 	ApiDrawing.prototype["SetFill"]							= ApiDrawing.prototype.SetFill;
 	ApiDrawing.prototype["GetFill"]							= ApiDrawing.prototype.GetFill;
 	ApiDrawing.prototype["SetLine"]							= ApiDrawing.prototype.SetLine;
 	ApiDrawing.prototype["GetLine"]							= ApiDrawing.prototype.GetLine;
+	ApiDrawing.prototype["GetFlipH"]						= ApiDrawing.prototype.GetFlipH;
+	ApiDrawing.prototype["GetFlipV"]						= ApiDrawing.prototype.GetFlipV;
+	ApiDrawing.prototype["SetFlipH"]						= ApiDrawing.prototype.SetFlipH;
+	ApiDrawing.prototype["SetFlipV"]						= ApiDrawing.prototype.SetFlipV;
+	ApiDrawing.prototype["GetLockValue"]					= ApiDrawing.prototype.GetLockValue;
+	ApiDrawing.prototype["SetLockValue"]					= ApiDrawing.prototype.SetLockValue;
 
 	// ApiShape
 	ApiShape.prototype["GetClassType"]						= ApiShape.prototype.GetClassType;
