@@ -7804,6 +7804,35 @@
 		return null;
 	};
 
+	/**
+	 * Sets the text paddings to the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["PDFE"]
+	 * @param {?EMU} nLeft - Left padding.
+	 * @param {?EMU} nTop - Top padding.
+	 * @param {?EMU} nRight - Right padding.
+	 * @param {?EMU} nBottom - Bottom padding.
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetPaddings.js
+	 */
+	ApiShape.prototype.SetPaddings = function(nLeft, nTop, nRight, nBottom)
+	{
+		if(this.Shape)
+		{
+			this.Shape.setPaddings({
+				Left: AscFormat.isRealNumber(nLeft) ? private_EMU2MM(nLeft) : null,
+				Top: AscFormat.isRealNumber(nTop) ? private_EMU2MM(nTop) : null,
+				Right: AscFormat.isRealNumber(nRight) ? private_EMU2MM(nRight) : null,
+				Bottom: AscFormat.isRealNumber(nBottom) ? private_EMU2MM(nBottom) : null
+			});
+
+			return true;
+		}
+
+		return false;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiImage
@@ -9849,6 +9878,7 @@
 	ApiShape.prototype["GetFill"]							= ApiShape.prototype.GetFill;
 	ApiShape.prototype["SetLine"]							= ApiShape.prototype.SetLine;
 	ApiShape.prototype["GetLine"]							= ApiShape.prototype.GetLine;
+	ApiShape.prototype["SetPaddings"]						= ApiShape.prototype.SetPaddings;
 
 	// ApiImage
 	ApiImage.prototype["GetClassType"]						= ApiImage.prototype.GetClassType;
