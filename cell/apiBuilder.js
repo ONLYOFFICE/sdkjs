@@ -9540,6 +9540,52 @@
 	};
 
 	/**
+	 * Groups an array of drawings in the current sheet.
+	 * <note>This method is not supported in the document builder and works only in the editor.</note>
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiDrawing[]} aDrawings - An array of drawings to group.
+	 * @returns {ApiGroup | null} - Returns null if the drawings cannot be grouped or when called in the document builder.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GroupDrawings.js
+	 */
+	ApiWorksheet.prototype.GroupDrawings = function(aDrawings) {
+		if (AscCommon.isFileBuild())
+			return null;
+
+		if (!Array.isArray(aDrawings) || aDrawings.length === 0)
+			return null;
+
+		let oWorksheet = this.worksheet;
+		if (aDrawings.find(function(drawing) {
+			return !drawing.Drawing || drawing.Drawing.worksheet !== oWorksheet || !drawing.Drawing.IsUseInDocument();
+		}))
+			return null;
+
+		let oController = aDrawings[0].Drawing.getDrawingObjectsController();
+		if (!oController)
+			return null;
+
+		oController.resetSelection();
+		aDrawings.forEach(function(drawing) {
+			oController.selectObject(drawing.Drawing, 0);
+		});
+
+		if (!oController.canGroup())
+			return null;
+
+		aDrawings.forEach(function(drawing) {
+			drawing.Drawing.recalculate();
+		});
+
+		let oGroup = oController.createGroup();
+		if (!oGroup)
+			return null;
+
+		return new ApiGroup(oGroup);
+	};
+
+	/**
 	 * Returns all images from the current sheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -13953,6 +13999,37 @@
 	 */
 	ApiGroup.prototype.GetClassType = function() {
 		return "group";
+	};
+
+	/**
+	 * Ungroups the current group of drawings.
+	 * <note>This method is not supported in the document builder and works only in the editor.</note>
+	 * @memberof ApiGroup
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiDrawing[] | null} - The array of the ungrouped objects, or null if the group is not in the document, cannot be ungrouped, or when called in the document builder.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Ungroup.js
+	 */
+	ApiGroup.prototype.Ungroup = function() {
+		if (AscCommon.isFileBuild())
+			return null;
+
+		if (!this.Drawing || !this.Drawing.IsUseInDocument())
+			return null;
+
+		let oController = this.Drawing.getDrawingObjectsController();
+		if (!oController)
+			return null;
+
+		let aChildren = this.Drawing.spTree.slice();
+		oController.resetSelection();
+		oController.selectObject(this.Drawing, 0);
+		if (!oController.canUnGroup())
+			return null;
+
+		this.Drawing.recalculate();
+		oController.unGroupCallback();
+		return GetApiDrawings(aChildren);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -30216,6 +30293,7 @@
 	ApiWorksheet.prototype["ReplaceCurrentImage"] = ApiWorksheet.prototype.ReplaceCurrentImage;
 	ApiWorksheet.prototype["AddWordArt"] = ApiWorksheet.prototype.AddWordArt;
 	ApiWorksheet.prototype["GetAllDrawings"] = ApiWorksheet.prototype.GetAllDrawings;
+	ApiWorksheet.prototype["GroupDrawings"] = ApiWorksheet.prototype.GroupDrawings;
 	ApiWorksheet.prototype["GetAllImages"] = ApiWorksheet.prototype.GetAllImages;
 	ApiWorksheet.prototype["GetAllShapes"] = ApiWorksheet.prototype.GetAllShapes;
 	ApiWorksheet.prototype["GetAllCharts"] = ApiWorksheet.prototype.GetAllCharts;
@@ -30375,6 +30453,7 @@
 	ApiSmartArt.prototype["GetClassType"]              =  ApiSmartArt.prototype.GetClassType;
 
 	ApiGroup.prototype["GetClassType"]                =  ApiGroup.prototype.GetClassType;
+	ApiGroup.prototype["Ungroup"]                     =  ApiGroup.prototype.Ungroup;
 
 	ApiShape.prototype["GetClassType"]                 =  ApiShape.prototype.GetClassType;
 	ApiShape.prototype["GetDocContent"]                =  ApiShape.prototype.GetDocContent;

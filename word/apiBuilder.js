@@ -4894,7 +4894,7 @@
 		let oDrDoc = private_GetDrawingDocument();
 		let oGraphicObjects = oDoc.getDrawingObjects();
 
-		if (drawings.find(function(drawing) { return drawing.Drawing.IsUseInDocument(); }))
+		if (drawings.find(function(drawing) { return !drawing.Drawing.IsUseInDocument(); }))
 			throwException(new Error("All drawings must be in document"));
 		
 		drawings.forEach(function(drawing) { drawing.Drawing.recalculate(); })
@@ -22678,28 +22678,33 @@
 
 	/**
 	 * Ungroups the current group of drawings.
+	 * <note>This method is not supported in the document builder and works only in the editor.</note>
 	 * @memberof ApiGroup
 	 * @typeofeditors ["CDE"]
-	 * @returns {boolean}
+	 * @returns {ApiDrawing[] | null} - The array of the ungrouped objects, or null if the group is not in the document, cannot be ungrouped, or when called in the document builder.
 	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Ungroup.js
 	 */
 	ApiGroup.prototype.Ungroup = function()
 	{
+		if (AscCommon.isFileBuild())
+			return null;
+
+		if (!this.Drawing || !this.Drawing.IsUseInDocument())
+			return null;
+
 		let oDoc = private_GetLogicDocument();
 		let oGraphicObjects = oDoc.getDrawingObjects();
+		let aChildren = this.Drawing.spTree.slice();
 
 		oGraphicObjects.resetSelection();
 		oGraphicObjects.selectObject(this.Drawing, this.Drawing.GetAbsolutePage())
 		
-		let canUngroup = oGraphicObjects.canUnGroup();
-		if (!canUngroup)
-		{
-			return false;
-		}
+		if (!oGraphicObjects.canUnGroup())
+			return null;
 
 		oGraphicObjects.unGroupSelectedObjects();
-		return true;
+		return GetApiDrawings(aChildren);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------

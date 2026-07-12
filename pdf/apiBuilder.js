@@ -2056,6 +2056,51 @@
 		return AscBuilder.GetApiDrawings(this.Page.drawings);
 	};
 
+	/**
+	 * Groups an array of drawings on the current page.
+	 * <note>This method is not supported in the document builder and works only in the editor.</note>
+	 * @memberof ApiPage
+	 * @typeofeditors ["PDFE"]
+	 * @param {ApiDrawing[]} aDrawings - An array of drawings to group.
+	 * @returns {ApiGroup | null} - Returns null if the drawings cannot be grouped or when called in the document builder.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GroupDrawings.js
+	 */
+	ApiPage.prototype.GroupDrawings = function(aDrawings) {
+		if (AscCommon.isFileBuild())
+			return null;
+
+		if (!Array.isArray(aDrawings) || aDrawings.length === 0)
+			return null;
+
+		let oPage = this.Page;
+		if (aDrawings.find(function(drawing) {
+			return !drawing.Drawing || drawing.Drawing.GetPage() !== oPage || !drawing.Drawing.IsUseInDocument();
+		}))
+			return null;
+
+		let oController = aDrawings[0].Drawing.getDrawingObjectsController();
+		if (!oController)
+			return null;
+
+		oController.resetSelection();
+		aDrawings.forEach(function(drawing) {
+			drawing.Drawing.recalculate();
+		});
+		aDrawings.forEach(function(drawing) {
+			oController.selectObject(drawing.Drawing, drawing.Drawing.GetAbsolutePage());
+		});
+
+		if (!oController.canGroup())
+			return null;
+
+		let oParaDrawing = oController.groupSelectedObjects();
+		if (!oParaDrawing)
+			return null;
+
+		return new ApiGroup(oParaDrawing.GraphicObj);
+	};
+
 	private_WrapClassMethods(ApiPage, function(method, args) {
 		if (this.Page.GetIndex() == -1) {
 			AscBuilder.throwException("You can't change deleted page");
@@ -8386,6 +8431,37 @@
 		return "group";
 	};
 
+	/**
+	 * Ungroups the current group of drawings.
+	 * <note>This method is not supported in the document builder and works only in the editor.</note>
+	 * @memberof ApiGroup
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiDrawing[] | null} - The array of the ungrouped objects, or null if the group is not in the document, cannot be ungrouped, or when called in the document builder.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Ungroup.js
+	 */
+	ApiGroup.prototype.Ungroup = function() {
+		if (AscCommon.isFileBuild())
+			return null;
+
+		if (!this.Drawing || !this.Drawing.IsUseInDocument())
+			return null;
+
+		let oController = this.Drawing.getDrawingObjectsController();
+		if (!oController)
+			return null;
+
+		let aChildren = this.Drawing.spTree.slice();
+		oController.resetSelection();
+		oController.selectObject(this.Drawing, this.Drawing.GetAbsolutePage());
+		if (!oController.canUnGroup())
+			return null;
+
+		this.Drawing.recalculate();
+		oController.unGroupSelectedObjects();
+		return AscBuilder.GetApiDrawings(aChildren);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiSmartArt
@@ -9115,6 +9191,7 @@
 	ApiPage.prototype["GetSelectedText"]					= ApiPage.prototype.GetSelectedText;
 	ApiPage.prototype["RecognizeContent"]					= ApiPage.prototype.RecognizeContent;
 	ApiPage.prototype["GetAllDrawings"]						= ApiPage.prototype.GetAllDrawings;
+	ApiPage.prototype["GroupDrawings"]						= ApiPage.prototype.GroupDrawings;
 
 	// ApiBaseField
 	ApiBaseField.prototype["SetFullName"]					= ApiBaseField.prototype.SetFullName;
@@ -9578,6 +9655,7 @@
 	
 	// ApiGroup
 	ApiGroup.prototype["GetClassType"]						= ApiGroup.prototype.GetClassType;
+	ApiGroup.prototype["Ungroup"]							= ApiGroup.prototype.Ungroup;
 	
 	// ApiSmartArt
 	ApiSmartArt.prototype["GetClassType"]					= ApiSmartArt.prototype.GetClassType;

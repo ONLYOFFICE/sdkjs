@@ -1028,7 +1028,7 @@
         let oSlide = private_GetCurrentSlide();
         if (oSlide) {
             if (drawings.find(function(drawing) {
-                return drawing.Drawing.IsUseInDocument();
+                return !drawing.Drawing.IsUseInDocument();
             }))
                AscBuilder.throwException(new Error("All drawings must be in document"));
 
@@ -7778,12 +7778,15 @@
      * Ungroups the current group of drawings.
      * @memberof ApiGroup
      * @typeofeditors ["CPE"]
-     * @returns {boolean}
+     * @returns {ApiDrawing[] | null} - The array of the ungrouped objects, or null if the group is not in the document or cannot be ungrouped.
      * @since 8.3.0
      * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Ungroup.js
      */
     ApiGroup.prototype.Ungroup = function()
     {
+        if (!this.Drawing || !this.Drawing.IsUseInDocument())
+            return null;
+
         let oPresentation = Asc.editor.getLogicDocument();
         let nSlideIdx = this.Drawing.getSlideIndex();
         let oSlide = oPresentation.GetSlide(nSlideIdx);
@@ -7792,17 +7795,16 @@
         }
 
         let oGraphicObjects = oSlide.graphicObjects;
+        let aChildren = this.Drawing.spTree.slice();
 
         oGraphicObjects.resetSelection();
         oGraphicObjects.selectObject(this.Drawing, this.Drawing.GetAbsolutePage())
         
-        let canUngroup = oGraphicObjects.canUnGroup();
-        if (!canUngroup) {
-            return false;
-        }
+        if (!oGraphicObjects.canUnGroup())
+            return null;
 
         oGraphicObjects.unGroupCallback();
-        return true;
+        return GetApiDrawings(aChildren);
     };
 
 	//------------------------------------------------------------------------------------------------------------------
