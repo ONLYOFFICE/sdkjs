@@ -7520,6 +7520,17 @@
 	};
 
 	/**
+	 * Sets the fill formatting properties to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @param {ApiFill} fill - The fill type used to fill the graphic object.
+	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Fill.js
+	 */
+	ApiDrawing.prototype.Fill = ApiDrawing.prototype.SetFill;
+
+	/**
 	 * Sets the outline properties to the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
@@ -7573,6 +7584,17 @@
 
 		return null;
 	};
+
+	/**
+	 * Sets the outline properties to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @param {ApiStroke} stroke - The stroke used to create the graphic object outline.
+	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetOutLine.js
+	 */
+	ApiDrawing.prototype.SetOutLine = ApiDrawing.prototype.SetLine;
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -9854,8 +9876,10 @@
 	ApiDrawing.prototype["SetDescription"]					= ApiDrawing.prototype.SetDescription;
 	ApiDrawing.prototype["GetDescription"]					= ApiDrawing.prototype.GetDescription;
 	ApiDrawing.prototype["SetFill"]							= ApiDrawing.prototype.SetFill;
+	ApiDrawing.prototype["Fill"]							= ApiDrawing.prototype.Fill;
 	ApiDrawing.prototype["GetFill"]							= ApiDrawing.prototype.GetFill;
 	ApiDrawing.prototype["SetLine"]							= ApiDrawing.prototype.SetLine;
+	ApiDrawing.prototype["SetOutLine"]						= ApiDrawing.prototype.SetOutLine;
 	ApiDrawing.prototype["GetLine"]							= ApiDrawing.prototype.GetLine;
 	ApiDrawing.prototype["GetFlipH"]						= ApiDrawing.prototype.GetFlipH;
 	ApiDrawing.prototype["GetFlipV"]						= ApiDrawing.prototype.GetFlipV;
