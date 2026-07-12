@@ -10008,6 +10008,8 @@
 		if (aDrawings.find(function(drawing) { return !drawing.Drawing.IsUseInDocument(); }))
 			return null;
 
+		this.ForceRecalculate();
+
 		let oDoc = this.Document;
 		let oGraphicObjects = oDoc.getDrawingObjects();
 		oGraphicObjects.resetSelection();
@@ -22694,6 +22696,7 @@
 			return null;
 
 		let oDoc = private_GetLogicDocument();
+		Api.GetDocument().ForceRecalculate();
 		let oGraphicObjects = oDoc.getDrawingObjects();
 		let aChildren = this.Drawing.spTree.slice();
 

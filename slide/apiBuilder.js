@@ -7803,6 +7803,7 @@
         if (!oGraphicObjects.canUnGroup())
             return null;
 
+        this.Drawing.recalculate();
         oGraphicObjects.unGroupCallback();
         return GetApiDrawings(aChildren);
     };
