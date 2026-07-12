@@ -7125,16 +7125,50 @@
 	 * Selects the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
+	 * @param {boolean} [isReplace=false] - Specifies whether the selection should replace the current selection (true) or be added to it (false).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
 	 */
-	ApiDrawing.prototype.Select = function() {
-		this.Drawing.Set_CurrentElement(true, 0, true);
+	ApiDrawing.prototype.Select = function(isReplace) {
+		let oDrawing = this.Drawing;
+		if (!oDrawing)
+			return false;
+		let oController = oDrawing.getDrawingObjectsController();
+		if (!oController)
+			return false;
 
-		let oController = this.Drawing.getDrawingObjectsController();
-        oController.updateSelectionState();
-        oController.updateOverlay();
+		if (isReplace === undefined)
+			isReplace = false;
 
+		if (!!isReplace)
+			oController.resetSelection();
+
+		oController.selectObject(oDrawing, 0);
+		oController.updateSelectionState();
+		oController.updateOverlay();
+		return true;
+	};
+
+	/**
+	 * Removes the current graphic object from the selection.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Unselect.js
+	 */
+	ApiDrawing.prototype.Unselect = function()
+	{
+		let oDrawing = this.Drawing;
+		if (!oDrawing)
+			return false;
+		let oController = oDrawing.getDrawingObjectsController();
+		if (!oController)
+			return false;
+		oController.deselectObject(oDrawing);
+		oController.resetInternalSelection();
+		oController.updateSelectionState();
+		oController.updateOverlay();
 		return true;
 	};
 
@@ -9752,6 +9786,7 @@
 	ApiDrawing.prototype["GetWidth"]						= ApiDrawing.prototype.GetWidth;
 	ApiDrawing.prototype["GetHeight"]						= ApiDrawing.prototype.GetHeight;
 	ApiDrawing.prototype["Select"]							= ApiDrawing.prototype.Select;
+	ApiDrawing.prototype["Unselect"]						= ApiDrawing.prototype.Unselect;
 	ApiDrawing.prototype["SetRotation"]						= ApiDrawing.prototype.SetRotation;
 	ApiDrawing.prototype["GetRotation"]						= ApiDrawing.prototype.GetRotation;
 	ApiDrawing.prototype["GetName"]							= ApiDrawing.prototype.GetName;
