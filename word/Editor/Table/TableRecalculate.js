@@ -2524,10 +2524,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 
     var bNextPage = false;
 
-	// Настройка "не отрывать от следующего" на элементе, следующем за таблицей: если элемент после
-	// таблицы был перенесен на следующую страницу, а последняя строка таблицы имеет данную настройку,
-	// принудительно переносим последние строки таблицы (связанные настройкой) на следующую страницу,
-	// чтобы они остались вместе с этим элементом.
+	// Check keepNext
 	var bKeepNextForced   = false;
 	var nKeepNextForceRow = -1;
 	let topDocument = this.GetTopDocumentContent();
@@ -2586,9 +2583,9 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 
         this.TableRowsBottom[CurRow][CurPage] = Y;
 
-		// Принудительный перенос последних строк таблицы из-за настройки "не отрывать от следующего"
-		// на следующем за таблицей элементе. Оставляем на текущей странице строки до nKeepNextForceRow,
-		// а начиная с нее - переносим на следующую страницу вместе со следующим элементом.
+		// Forced move of the last table rows because of the "keepNext" setting 
+		// Rows up to nKeepNextForceRow stay on the current page, and
+		// starting from that row they are moved to the next page
 		if (nKeepNextForceRow > FirstRow && CurRow === nKeepNextForceRow)
 		{
 			bNextPage       = true;

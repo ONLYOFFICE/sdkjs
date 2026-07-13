@@ -324,19 +324,16 @@ CDocumentContentElementBase.prototype.IsPartiallyKeepNext = function()
 CDocumentContentElementBase.prototype.RecalculateKeepNext = function(iPage)
 {
 	let docContent = this.GetTopDocumentContent();
-	if (!(docContent instanceof CDocument))
+	
+	let parent = this.Parent;
+	while (parent instanceof AscWord.DocumentContent && parent.IsBlockLevelSdtContent())
+		parent = parent.GetParent().GetParent();
+	
+	if (!(parent instanceof AscWord.Document))
 		return recalcresult_NextElement;
-
-	// keepNext с переносом на предыдущую страницу поддерживается только в основном потоке документа
-	// и внутри блочных контент-контролов (CBlockLevelSdt), т.к. только для них проброшен наверх
-	// recalcresult_PrevPage. В ячейках таблиц/колонтитулах/автофигурах он не пробрасывается.
-	let container = this.Parent;
-	while (container && !(container instanceof CDocument) && container.IsBlockLevelSdtContent())
-		container = container.Parent.Parent;
-
-	if (!(container instanceof CDocument))
-		return recalcresult_NextElement;
-
+	
+	// In future we need to rework here to parent.RecalcInfo (and get rid off the check above),
+	// since keepNext should work inside a table cell
 	let recalcInfo = docContent.RecalcInfo;
 	
 	// Такая настройка срабатывает в единственном случае:
