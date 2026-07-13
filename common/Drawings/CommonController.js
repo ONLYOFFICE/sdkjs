@@ -4242,9 +4242,29 @@
 
 					if (typeof props.ImageUrl === "string" && props.ImageUrl.length > 0) {
 						var oImg;
+						let newImgPr = new Asc.asc_CImgProperty();
+						newImgPr.ImageUrl = props.ImageUrl;
+						let newSize = newImgPr.asc_getOriginSize(Asc.editor);
+						let newAspect = newSize.asc_getIsCorrect() && newSize.asc_getImageHeight() > 0 ? newSize.asc_getImageWidth() / newSize.asc_getImageHeight() : 0;
 						for (i = 0; i < objects_by_type.images.length; ++i) {
 							oImg = objects_by_type.images[i];
 							oImg.setBlipFill(CreateBlipFillRasterImageId(props.ImageUrl));
+							if (newAspect > 0) {
+								let scale = oImg.getScaleCoefficient();
+								let extX = oImg.extX / scale;
+								let extY = extX / newAspect;
+								let offX = oImg.getXfrmOffX();
+								let offY = oImg.getXfrmOffY();
+								if (!(oImg.parent instanceof AscCommonWord.ParaDrawing) || oImg.group) {
+									offX += (extX - oImg.extX / scale) / 2;
+									offY += (oImg.extY / scale - extY) / 2;
+								}
+								oImg.setTransformParams(offX, offY, extX, extY, oImg.getXfrmRot(), oImg.getXfrmFlipH(), oImg.getXfrmFlipV());
+								oImg.checkDrawingBaseCoords();
+								if (oImg.parent && oImg.parent.CheckWH) {
+									oImg.parent.CheckWH();
+								}
+							}
 							if (oImg.parent instanceof AscCommonWord.ParaDrawing) {
 								var oRun = oImg.parent.GetRun();
 								if (oRun) {

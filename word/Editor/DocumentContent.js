@@ -3206,8 +3206,9 @@ CDocumentContent.prototype.AddImages = function(aImages){
 				{
 					var __w = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
 					var __h = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
-					W      = Math.max(5, Math.min(W, __w));
-					H      = Math.max(5, Math.min((W * __h / __w)));
+					let koeff = Math.min(1, W / __w, H / __h);
+					W      = Math.max(5, __w * koeff);
+					H      = Math.max(5, __h * koeff);
 					Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
 					var Image = this.DrawingObjects.createImage(_image.src, 0, 0, W, H);
 					Image.setParent(Drawing);

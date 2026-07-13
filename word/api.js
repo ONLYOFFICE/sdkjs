@@ -6161,8 +6161,9 @@ background-repeat: no-repeat;\
 			{
 				let __w = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
 				let __h = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
-				_w      = Math.max(5, Math.min(_w, __w));
-				_h      = Math.max(5, Math.min((_w * __h / __w)));
+				let koeff = Math.min(1, _w / __w, _h / __h);
+				_w      = Math.max(5, __w * koeff);
+				_h      = Math.max(5, __h * koeff);
 			}
 
 			let src = _image.src;
@@ -6218,8 +6219,9 @@ background-repeat: no-repeat;\
 				{
 					let __w = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
 					let __h = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
-					_w      = Math.max(5, Math.min(_w, __w));
-					_h      = Math.max(5, Math.min((_w * __h / __w)));
+					let koeff = Math.min(1, _w / __w, _h / __h);
+					_w      = Math.max(5, __w * koeff);
+					_h      = Math.max(5, __h * koeff);
 				}
 				let src = _image.src;
 
