@@ -7697,6 +7697,48 @@
 
 		return null;
 	};
+	/**
+	 * Sets the shadow to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @param {?ApiShadow} shadow - The shadow to apply, or null to remove the current shadow.
+	 * @returns {boolean} - returns false if the graphic object does not support shadow.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetShadow.js
+	 */
+	ApiDrawing.prototype.SetShadow = function(shadow)
+	{
+		if (!this.Drawing || !this.Drawing.spPr)
+			return false;
+
+		if (shadow === null || shadow === undefined)
+		{
+			this.Drawing.spPr.changeShadow(null);
+			return true;
+		}
+
+		if (!shadow.GetClassType || shadow.GetClassType() !== "shadow")
+			return false;
+
+		this.Drawing.spPr.changeShadow(shadow.Shadow);
+		return true;
+	};
+	/**
+	 * Returns the shadow of the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiShadow | null}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetShadow.js
+	 */
+	ApiDrawing.prototype.GetShadow = function()
+	{
+		let shadow = this.Drawing && this.Drawing.getOuterShdw ? this.Drawing.getOuterShdw() : null;
+		if (shadow)
+			return new AscBuilder.ApiShadow(shadow);
+
+		return null;
+	};
 
 	/**
 	 * Returns an ApiTextRange covering the full text content of the shape, or null if the shape has no text body (use CreateTextRange to create one).
@@ -11577,6 +11619,8 @@
     ApiDrawing.prototype["SetOutLine"]                    = ApiDrawing.prototype.SetOutLine;
     ApiDrawing.prototype["SetLine"]                       = ApiDrawing.prototype.SetLine;
     ApiDrawing.prototype["GetLine"]                       = ApiDrawing.prototype.GetLine;
+    ApiDrawing.prototype["SetShadow"]                     = ApiDrawing.prototype.SetShadow;
+    ApiDrawing.prototype["GetShadow"]                     = ApiDrawing.prototype.GetShadow;
 
 	ApiDrawing.prototype["GetTextRange"]					= ApiDrawing.prototype.GetTextRange;
 	ApiDrawing.prototype["IsTextRange"]						= ApiDrawing.prototype.IsTextRange;

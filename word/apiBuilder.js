@@ -3908,6 +3908,14 @@
 	}
 
 	/**
+	 * Class representing a shadow.
+	 * @constructor
+	 */
+	function ApiShadow(shadow) {
+		this.Shadow = shadow;
+	}
+
+	/**
 	 * Class representing gradient stop.
 	 * @constructor
 	 */
@@ -5340,6 +5348,71 @@
 	{
 		let strDashType = AscFormat.CLn.prototype.GetDashCode(sDash);
 		return new ApiStroke(AscFormat.builder_CreateLine(width, fill, strDashType));
+	};
+
+	/**
+	 * Properties used to create a shadow.
+	 * @typedef {Object} ShadowSettings
+	 * @property {ApiUniColor} [color] - The shadow color (black by default).
+	 * @property {number} [transparency=0] - The shadow transparency from 0.0 (opaque) to 1.0 (clear).
+	 * @property {number} [offsetX=0] - The horizontal offset of the shadow measured in points (a positive value offsets to the right).
+	 * @property {number} [offsetY=0] - The vertical offset of the shadow measured in points (a positive value offsets downwards).
+	 * @property {number} [size=100] - The shadow size as a percentage of the shape size.
+	 * @property {boolean} [rotateWithShape=true] - Specifies whether the shadow rotates together with the shape.
+	 */
+
+	/**
+	 * Creates a shadow which can be applied to a graphic object.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @param {ShadowSettings} settings - The shadow properties.
+	 * @returns {ApiShadow}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateShadow.js
+	 */
+	Api.CreateShadow = function(settings)
+	{
+		settings = settings || {};
+		let shadow = new AscFormat.COuterShdw();
+
+		let uniColor = null;
+		let color = settings["color"];
+		if (color instanceof ApiUniColor)
+			uniColor = color.Unicolor.createDuplicate();
+		else if (color instanceof ApiColor)
+			uniColor = color.private_createUnifill().fill.color.createDuplicate();
+		if (!uniColor)
+			uniColor = AscFormat.CreateUniColorRGB(0, 0, 0);
+
+		let transparency = settings["transparency"];
+		if (typeof transparency === "number")
+		{
+			let alpha = Math.round((1 - Math.min(Math.max(transparency, 0), 1)) * 100000);
+			uniColor.addColorMod(new AscFormat.CColorMod("alpha", alpha));
+		}
+		shadow.color = uniColor;
+
+		let offsetX = typeof settings["offsetX"] === "number" ? settings["offsetX"] : 0;
+		let offsetY = typeof settings["offsetY"] === "number" ? settings["offsetY"] : 0;
+		if (offsetX !== 0 || offsetY !== 0)
+		{
+			shadow.dist = Math.round(Math.sqrt(offsetX * offsetX + offsetY * offsetY) * 12700);
+			let angle = Math.atan2(offsetY, offsetX) * 180 / Math.PI;
+			if (angle < 0)
+				angle += 360;
+			shadow.dir = Math.round(angle * 60000);
+		}
+
+		if (typeof settings["size"] === "number")
+		{
+			shadow.sx = Math.round(settings["size"] * 1000);
+			shadow.sy = Math.round(settings["size"] * 1000);
+		}
+
+		if (typeof settings["rotateWithShape"] === "boolean")
+			shadow.rotWithShape = settings["rotateWithShape"];
+
+		return new ApiShadow(shadow);
 	};
 
 	/**
@@ -20064,6 +20137,48 @@
 		return null;
 	};
 	/**
+	 * Sets the shadow to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @param {?ApiShadow} shadow - The shadow to apply, or null to remove the current shadow.
+	 * @returns {boolean} - returns false if the graphic object does not support shadow.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetShadow.js
+	 */
+	ApiDrawing.prototype.SetShadow = function(shadow)
+	{
+		if (!this.Drawing || !this.Drawing.spPr)
+			return false;
+
+		if (shadow === null || shadow === undefined)
+		{
+			this.Drawing.spPr.changeShadow(null);
+			return true;
+		}
+
+		if (!shadow.GetClassType || shadow.GetClassType() !== "shadow")
+			return false;
+
+		this.Drawing.spPr.changeShadow(shadow.Shadow);
+		return true;
+	};
+	/**
+	 * Returns the shadow of the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiShadow | null}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetShadow.js
+	 */
+	ApiDrawing.prototype.GetShadow = function()
+	{
+		let shadow = this.Drawing && this.Drawing.getOuterShdw ? this.Drawing.getOuterShdw() : null;
+		if (shadow)
+			return new ApiShadow(shadow);
+
+		return null;
+	};
+	/**
 	 * Returns the next inline drawing object if exists. 
 	 *  @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
@@ -22814,6 +22929,59 @@
 	ApiStroke.prototype.GetClassType = function()
 	{
 		return "stroke";
+	};
+	/**
+	 * Returns a type of the ApiShadow class.
+	 * @memberof ApiShadow
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @returns {"shadow"}
+	 * @see office-js-api/Examples/{Editor}/ApiShadow/Methods/GetClassType.js
+	 */
+	ApiShadow.prototype.GetClassType = function()
+	{
+		return "shadow";
+	};
+	/**
+	 * Returns the settings of the current shadow.
+	 * @memberof ApiShadow
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @returns {ShadowSettings}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiShadow/Methods/GetSettings.js
+	 */
+	ApiShadow.prototype.GetSettings = function()
+	{
+		let shadow = this.Shadow;
+		let settings = {};
+
+		let uniColor = shadow.color ? shadow.color.createDuplicate() : AscFormat.CreateUniColorRGB(0, 0, 0);
+		let alpha = null;
+		if (uniColor.Mods && Array.isArray(uniColor.Mods.Mods))
+		{
+			let mods = [];
+			for (let i = 0; i < uniColor.Mods.Mods.length; ++i)
+			{
+				if (uniColor.Mods.Mods[i].name === "alpha")
+					alpha = uniColor.Mods.Mods[i].val;
+				else
+					mods.push(uniColor.Mods.Mods[i]);
+			}
+			uniColor.Mods.Mods = mods;
+		}
+
+		settings["color"] = new ApiUniColor(uniColor);
+		settings["transparency"] = (typeof alpha === "number") ? (1 - alpha / 100000) : 0;
+
+		let dist = (typeof shadow.dist === "number") ? shadow.dist : 0;
+		let dir = (typeof shadow.dir === "number") ? shadow.dir : 0;
+		let rad = (dir / 60000) * Math.PI / 180;
+		settings["offsetX"] = (dist / 12700) * Math.cos(rad);
+		settings["offsetY"] = (dist / 12700) * Math.sin(rad);
+
+		settings["size"] = (typeof shadow.sx === "number") ? shadow.sx / 1000 : 100;
+		settings["rotateWithShape"] = shadow.rotWithShape !== false;
+
+		return settings;
 	};
 	/**
 	 * Converts the ApiStroke object into the JSON object.
@@ -30996,6 +31164,7 @@
 	Api["CreateBlipFill"]                   = Api.CreateBlipFill;
 	Api["CreateNoFill"]                     = Api.CreateNoFill;
 	Api["CreateStroke"]                     = Api.CreateStroke;
+	Api["CreateShadow"]                     = Api.CreateShadow;
 	Api["CreateGradientStop"]               = Api.CreateGradientStop;
 	Api["CreateBullet"]                     = Api.CreateBullet;
 	Api["CreateNumbering"]                  = Api.CreateNumbering;
@@ -31713,6 +31882,8 @@
 	ApiDrawing.prototype["SetOutLine"]               = ApiDrawing.prototype.SetOutLine;
 	ApiDrawing.prototype["SetLine"]                  = ApiDrawing.prototype.SetLine;
 	ApiDrawing.prototype["GetLine"]                  = ApiDrawing.prototype.GetLine;
+	ApiDrawing.prototype["SetShadow"]                = ApiDrawing.prototype.SetShadow;
+	ApiDrawing.prototype["GetShadow"]                = ApiDrawing.prototype.GetShadow;
 	ApiDrawing.prototype["GetNextDrawing"]           = ApiDrawing.prototype.GetNextDrawing;
 	ApiDrawing.prototype["GetPrevDrawing"]           = ApiDrawing.prototype.GetPrevDrawing;
 	ApiDrawing.prototype["GetWidth"]                 = ApiDrawing.prototype.GetWidth;
@@ -31879,6 +32050,8 @@
 	ApiFill.prototype["GetType"]                     = ApiFill.prototype.GetType;
 
 	ApiStroke.prototype["GetClassType"]              = ApiStroke.prototype.GetClassType;
+	ApiShadow.prototype["GetClassType"]              = ApiShadow.prototype.GetClassType;
+	ApiShadow.prototype["GetSettings"]               = ApiShadow.prototype.GetSettings;
 	ApiStroke.prototype["ToJSON"]                    = ApiStroke.prototype.ToJSON;
 	ApiStroke.prototype["GetWidth"]                  = ApiStroke.prototype.GetWidth;
 	ApiStroke.prototype["GetFill"]                   = ApiStroke.prototype.GetFill;
@@ -32366,6 +32539,7 @@
 	window['AscBuilder'].ApiColor            = ApiColor;
 	window['AscBuilder'].ApiFill             = ApiFill;
 	window['AscBuilder'].ApiStroke           = ApiStroke;
+	window['AscBuilder'].ApiShadow           = ApiShadow;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Area for internal usage
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
