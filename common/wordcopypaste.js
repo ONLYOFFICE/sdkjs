@@ -796,14 +796,23 @@ CopyProcessor.prototype =
 				}
 			} else if (para_Hyperlink === item.Type) {
 				if (!bOmitHyperlink) {
-					oHyperlink = new CopyElement("a");
-					var sValue = item.IsAnchor() ? "#" + item.Anchor : item.GetValue();
-					var sToolTip = item.GetToolTip();
-					oHyperlink.oAttributes["href"] = CopyPasteCorrectString(sValue);
-					oHyperlink.oAttributes["title"] = CopyPasteCorrectString(sToolTip);
-					//вложенные ссылки в html запрещены.
-					this.CopyRunContent(item, oHyperlink, true);
-					oTarget.addChild(oHyperlink);
+					var markerId = isIxcMarkerHyperlink(item);
+					if (null !== markerId) {
+						var oMarkerSpan = new CopyElement("span");
+						oMarkerSpan.oAttributes["style"] = IXC_MARKER_STYLE + ":" + CopyPasteCorrectString(markerId);
+						oMarkerSpan.oAttributes["id"]=
+						oMarkerSpan.addChild(new CopyElement("&#8203;", true));
+						oTarget.addChild(oMarkerSpan);
+					} else {
+						oHyperlink = new CopyElement("a");
+						var sValue = item.IsAnchor() ? "#" + item.Anchor : item.GetValue();
+						var sToolTip = item.GetToolTip();
+						oHyperlink.oAttributes["href"] = CopyPasteCorrectString(sValue);
+						oHyperlink.oAttributes["title"] = CopyPasteCorrectString(sToolTip);
+						//вложенные ссылки в html запрещены.
+						this.CopyRunContent(item, oHyperlink, true);
+						oTarget.addChild(oHyperlink);
+					}
 				} else {
 					this.CopyRunContent(item, oTarget, true);
 				}
@@ -2604,6 +2613,91 @@ function CopyPasteCorrectString(str)
     return res;
 }
 
+var IXC_MARKER_STYLE = "oo-marker";
+var IXC_MARKER_TOOLTIP_PREFIX = "oo-marker:";
+
+function getIxcMarkerIdFromHrefTitle(href, title) {
+    if (title) {
+        if (title.indexOf(IXC_MARKER_TOOLTIP_PREFIX) === 0) {
+            return title.substring(IXC_MARKER_TOOLTIP_PREFIX.length);
+        }
+        if (title.indexOf("marker:") === 0) {
+            return title.substring("marker:".length);
+        }
+        if (title.indexOf("sec:") === 0) {
+            return title;
+        }
+    }
+    if (href) {
+        var hashIdx = href.indexOf("#");
+        var fragment = hashIdx >= 0 ? href.substring(hashIdx + 1) : href;
+        if (fragment.indexOf(IXC_MARKER_STYLE + ":") === 0) {
+            return fragment.substring((IXC_MARKER_STYLE + ":").length);
+        }
+        if (fragment.indexOf("marker:") === 0) {
+            return fragment.substring("marker:".length);
+        }
+        if (fragment.indexOf("sec:") === 0) {
+            return fragment;
+        }
+    }
+    return null;
+}
+
+function getIxcMarkerIdFromNode(node, parseCssFn) {
+    if (!node || Node.ELEMENT_NODE !== node.nodeType) {
+        return null;
+    }
+    var tag = node.nodeName.toLowerCase();
+    if (tag === "ixc-marker") {
+        return node.getAttribute("data-id") || node.getAttribute("id") || node.getAttribute("data-marker") || "";
+    }
+    var style = node.getAttribute("style");
+    if (style && parseCssFn) {
+        var pPr = {};
+        parseCssFn(style, pPr);
+        if (pPr[IXC_MARKER_STYLE]) {
+            return pPr[IXC_MARKER_STYLE];
+        }
+    }
+    if (node.className && node.className.indexOf && -1 !== node.className.indexOf(IXC_MARKER_STYLE)) {
+        return node.getAttribute("data-id") || node.getAttribute("id") || node.getAttribute("data-marker") || "";
+    }
+    if (tag === "a" || tag === "span") {
+        return getIxcMarkerIdFromHrefTitle(node.getAttribute("href"), node.getAttribute("title"));
+    }
+    return null;
+}
+
+function isIxcMarkerHyperlink(hyperlink) {
+    if (!hyperlink) {
+        return null;
+    }
+    var tip = hyperlink.GetToolTip && hyperlink.GetToolTip();
+    var val = hyperlink.GetValue && hyperlink.GetValue();
+    return getIxcMarkerIdFromHrefTitle(val, tip);
+}
+
+function isEmptyMarkerContent(node) {
+    if (!node) {
+        return true;
+    }
+    var text = node.textContent || "";
+    text = text.replace(/[\u200B\uFEFF\r\n\t]/g, "");
+    if (text.length > 0) {
+        return false;
+    }
+    if (!node.children || !node.children.length) {
+        return true;
+    }
+    for (var i = 0; i < node.children.length; i++) {
+        if (!isEmptyMarkerContent(node.children[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
 function GetContentFromHtml(api, html, callback) {
 	if (!html) {
 		callback && callback(null);
@@ -2864,7 +2958,7 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
         "mso-border-left-alt": 1, "mso-border-top-alt": 1, "mso-border-right-alt": 1, "mso-border-bottom-alt": 1, "mso-border-between": 1, "mso-list": 1,
 		"mso-comment-reference": 1, "mso-comment-date": 1, "mso-comment-continuation": 1, "mso-data-placement": 1, "mso-table-layout-alt": 1, "mso-table-left": 1,
 		"mso-table-top": 1, "mso-ignore": 1};
-	this.OnlyOfficeStyles = {"oo-latex": 1}
+	this.OnlyOfficeStyles = {"oo-latex": 1, "oo-marker": 1}
     this.oBorderCache = {};
 
 	this.msoListMap = [];
@@ -10171,6 +10265,34 @@ PasteProcessor.prototype =
 			this.oCurParContentPos++;
 		}
 	},
+	// THIS IS USED TO INSERT MARKER
+	_insertIxcMarker: function (markerId, bAppendToLast) {
+		if (null === markerId || undefined === markerId) {
+			return;
+		}
+		if (!this.oCurPar) {
+			if (bAppendToLast && this.aContent.length > 0) {
+				this.oCurPar = this.aContent[this.aContent.length - 1];
+				this.oCurParContentPos = this.oCurPar.Content.length;
+				this.oCurRun = new ParaRun(this.oCurPar);
+				this.oCurRunContentPos = 0;
+			} else {
+				this._Add_NewParagraph();
+			}
+		} else if (bAppendToLast) {
+			this.oCurParContentPos = this.oCurPar.Content.length;
+			this.oCurRun = new ParaRun(this.oCurPar);
+			this.oCurRunContentPos = 0;
+		}
+		var oHyperlink = new ParaHyperlink();
+		oHyperlink.SetParagraph(this.oCurPar);
+		oHyperlink.Set_Value("#" + IXC_MARKER_STYLE + ":" + markerId);
+		oHyperlink.SetToolTip(IXC_MARKER_TOOLTIP_PREFIX + markerId);
+		var oRun = new ParaRun(this.oCurPar);
+		oRun.AddToContent(0, new AscWord.CRunText(0x200B), false);
+		oHyperlink.Add_ToContent(0, oRun, false);
+		this._AddToParagraph(oHyperlink);
+	},
 	_AddToParagraph: function (elem) {
 		if (null != this.oCurRun) {
 			if (para_Hyperlink === elem.Type) {
@@ -12084,6 +12206,21 @@ PasteProcessor.prototype =
 					oThis.oCurRun = new ParaRun(oThis.oCurPar);
 					oThis.oCurRun.Set_Pr(clonePr);
 
+					return;
+				}
+
+				var ixcMarkerId = getIxcMarkerIdFromNode(child, function (style, pPrObj) {
+					oThis._parseCss(style, pPrObj);
+				});
+				if (null !== ixcMarkerId) {
+					var bMarkerOnly = isEmptyMarkerContent(child);
+					var bAppendToLast = bMarkerOnly && bAddParagraph && !bInBlock && oThis.aContent.length > 0;
+					if (bAppendToLast) {
+						bAddParagraph = oThis._Decide_AddParagraph(child, pPr, false);
+					} else {
+						bAddParagraph = oThis._Decide_AddParagraph(child, pPr, bAddParagraph);
+					}
+					oThis._insertIxcMarker(ixcMarkerId, bAppendToLast);
 					return;
 				}
 
