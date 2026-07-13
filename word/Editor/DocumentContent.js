@@ -1315,6 +1315,10 @@ CDocumentContent.prototype.Recalculate_Page = function(PageIndex, bStart)
 
             return this.Recalculate_Page(PageIndex, false);
         }
+        else if ((RecalcResult & recalcresult_PrevPage) && true === this.IsBlockLevelSdtContent())
+        {
+            return recalcresult2_PrevPage;
+        }
         else if (RecalcResult & recalcresult_NextElement)
         {
 			// Do nothing

@@ -2530,7 +2530,8 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 	// чтобы они остались вместе с этим элементом.
 	var bKeepNextForced   = false;
 	var nKeepNextForceRow = -1;
-	if (oLogicDocument && oLogicDocument.RecalcInfo && oLogicDocument.RecalcInfo.Check_KeepNext(this) && this.IsLastRowKeepWithNext())
+	let topDocument = this.GetTopDocumentContent();
+	if ((topDocument instanceof AscWord.Document) && topDocument.RecalcInfo && topDocument.RecalcInfo.Check_KeepNext(this) && this.IsLastRowKeepWithNext())
 	{
 		nKeepNextForceRow = this.Content.length - 1;
 		while (nKeepNextForceRow > 0 && this.private_IsRowWithKeepNext(nKeepNextForceRow - 1))

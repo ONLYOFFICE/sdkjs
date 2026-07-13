@@ -122,21 +122,41 @@ CDocumentContentElementBase.prototype.Get_DocumentPrev = function()
 {
 	return this.Prev;
 };
-CDocumentContentElementBase.prototype.GetNextDocumentElement = function()
+/**
+ * @param isUnwrapBlockLevelSdt {boolean} [isUnwrapBlockLevelSdt=false] if true and the next element is
+ * a block-level content control, its first inner element is returned instead (recursing through nested content controls)
+ * @returns {CDocumentContentElementBase}
+ */
+CDocumentContentElementBase.prototype.GetNextDocumentElement = function(isUnwrapBlockLevelSdt)
 {
-	var oNext = this.Get_DocumentNext();
-	if (!oNext && this.Parent && this.Parent.GetNextDocumentElement)
-		return this.Parent.GetNextDocumentElement();
+	let next = this.Get_DocumentNext();
+	if (!next && this.Parent && this.Parent.GetNextDocumentElement)
+		next = this.Parent.GetNextDocumentElement(false);
 
-	return oNext;
+	if (next && isUnwrapBlockLevelSdt)
+	{
+		while (next && next.IsBlockLevelSdt())
+			next = next.GetFirstElement();
+	}
+	return next;
 };
-CDocumentContentElementBase.prototype.GetPrevDocumentElement = function()
+/**
+ * @param isUnwrapBlockLevelSdt {boolean} [isUnwrapBlockLevelSdt=false] if true and the previous element is
+ * a block-level content control, its last inner element is returned instead (recursing through nested content controls)
+ * @returns {CDocumentContentElementBase}
+ */
+CDocumentContentElementBase.prototype.GetPrevDocumentElement = function(isUnwrapBlockLevelSdt)
 {
-	var oPrev = this.Get_DocumentPrev();
-	if (!oPrev && this.Parent && this.Parent.GetPrevDocumentElement)
-		return this.Parent.GetPrevDocumentElement();
+	let prev = this.Get_DocumentPrev();
+	if (!prev && this.Parent && this.Parent.GetPrevDocumentElement)
+		prev = this.Parent.GetPrevDocumentElement(false);
 
-	return oPrev;
+	if (prev && isUnwrapBlockLevelSdt)
+	{
+		while (prev && prev.IsBlockLevelSdt())
+			prev = prev.GetLastElement();
+	}
+	return prev;
 };
 CDocumentContentElementBase.prototype.GetNextParagraphInDocument = function()
 {
@@ -303,8 +323,21 @@ CDocumentContentElementBase.prototype.IsPartiallyKeepNext = function()
  */
 CDocumentContentElementBase.prototype.RecalculateKeepNext = function(iPage)
 {
-	if (!(this.Parent instanceof CDocument))
+	let docContent = this.GetTopDocumentContent();
+	if (!(docContent instanceof CDocument))
 		return recalcresult_NextElement;
+
+	// keepNext с переносом на предыдущую страницу поддерживается только в основном потоке документа
+	// и внутри блочных контент-контролов (CBlockLevelSdt), т.к. только для них проброшен наверх
+	// recalcresult_PrevPage. В ячейках таблиц/колонтитулах/автофигурах он не пробрасывается.
+	let container = this.Parent;
+	while (container && !(container instanceof CDocument) && container.IsBlockLevelSdtContent())
+		container = container.Parent.Parent;
+
+	if (!(container instanceof CDocument))
+		return recalcresult_NextElement;
+
+	let recalcInfo = docContent.RecalcInfo;
 	
 	// Такая настройка срабатывает в единственном случае:
 	// У предыдущего параграфа выставлена данная настройка, а текущий параграф сразу начинается с новой страницы
@@ -315,12 +348,12 @@ CDocumentContentElementBase.prototype.RecalculateKeepNext = function(iPage)
 		// И сам параграф не разбит на несколько страниц и не начинается с новой страницы,
 		// тогда мы должны пересчитать предыдущую страницу, с учетом того, что предыдущий параграф
 		// надо начать с новой страницы.
-		let curr = this.GetPrevDocumentElement();
+		let curr = this.GetPrevDocumentElement(true);
 		if (curr && !(curr.IsParagraph() && curr.Get_SectionPr()) && curr.IsPartiallyKeepNext())
 		{
-			if (this.Parent.RecalcInfo.Can_RecalcObject())
+			if (recalcInfo.Can_RecalcObject())
 			{
-				this.Parent.RecalcInfo.Set_KeepNext(curr, this);
+				recalcInfo.Set_KeepNext(curr, this);
 				return recalcresult_PrevPage | recalcresultflags_Column;
 			}
 		}
@@ -334,15 +367,15 @@ CDocumentContentElementBase.prototype.RecalculateKeepNext = function(iPage)
 				if (!curr.IsNeedRecalculateKeepNext())
 					break;
 
-				let prev = curr.GetPrevDocumentElement();
+				let prev = curr.GetPrevDocumentElement(true);
 				if (!prev || (prev.IsParagraph() && prev.Get_SectionPr()))
 					break;
 
 				if (!prev.IsNeedRecalculateKeepNext())
 				{
-					if (this.Parent.RecalcInfo.Can_RecalcObject())
+					if (recalcInfo.Can_RecalcObject())
 					{
-						this.Parent.RecalcInfo.Set_KeepNext(curr, this);
+						recalcInfo.Set_KeepNext(curr, this);
 						return recalcresult_PrevPage | recalcresultflags_Column;
 					}
 
@@ -354,11 +387,11 @@ CDocumentContentElementBase.prototype.RecalculateKeepNext = function(iPage)
 		}
 	}
 	
-	if (this.Parent.RecalcInfo.Check_KeepNextEnd(this))
+	if (recalcInfo.Check_KeepNextEnd(this))
 	{
 		// Дошли до сюда, значит уже пересчитали данную ситуацию.
 		// Делаем Reset здесь, потому что Reset надо делать в том же месте, гды мы запросили пересчет заново.
-		this.Parent.RecalcInfo.Reset();
+		recalcInfo.Reset();
 	}
 	
 	return recalcresult_NextElement;
