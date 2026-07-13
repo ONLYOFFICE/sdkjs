@@ -9870,6 +9870,22 @@ CDocument.prototype.executeShortcut = function(type)
 			}
 			break;
 		}
+		case Asc.c_oAscDocumentShortcutType.SmallCaps:
+		{
+			let textPr = this.GetCalculatedTextPr();
+			if (textPr)
+			{
+				if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
+				{
+					this.StartAction(AscDFH.historydescription_Document_SetTextSmallCapsHotKey, null, null, textPr.SmallCaps !== true);
+					this.AddToParagraph(new ParaTextPr({SmallCaps : textPr.SmallCaps !== true}));
+					this.UpdateInterface();
+					this.FinalizeAction();
+				}
+				result = true;
+			}
+			break;
+		}
 		case Asc.c_oAscDocumentShortcutType.ShowAll:
 		{
 			var isShow = this.Api.get_ShowParaMarks();

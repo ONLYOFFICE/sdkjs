@@ -493,6 +493,9 @@
 			case AscDFH.historydescription_Document_SetTextBoldHotKey                  :
 				sString = "Document_SetTextBoldHotKey";
 				break;
+			case AscDFH.historydescription_Document_SetTextSmallCapsHotKey             :
+				sString = "Document_SetTextSmallCapsHotKey";
+				break;
 			case AscDFH.historydescription_Document_SetParagraphAlignHotKey            :
 				sString = "Document_SetParagraphAlignHotKey";
 				break;
@@ -4852,6 +4855,7 @@
 	window['AscDFH'].historydescription_Document_SetParagraphHtml                   = 0x01ff;
 	window['AscDFH'].historydescription_Document_SetHorizontalRuleProps             = 0x0200;
 	window['AscDFH'].historydescription_CommonControllerConvertSvgToShapes          = 0x0201;
+	window['AscDFH'].historydescription_Document_SetTextSmallCapsHotKey             = 0x0202;
 
 	// pdf
 	window['AscDFH'].historydescription_Pdf_AddAnnot			= 0x29a;

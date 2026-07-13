@@ -984,6 +984,7 @@
 		setTextItalic			: function(italic){return "\tdoc.GetRangeBySelect().SetItalic(" + italic + ");\n"},
 		setTextUnderline		: function(underline){return "\tdoc.GetRangeBySelect().SetUnderline(" + underline + ");\n"},
 		setTextStrikeout		: function(strikeout){return "\tdoc.GetRangeBySelect().SetStrikeout(" + strikeout + ");\n"},
+		setTextSmallCaps		: function(smallCaps){return "\tdoc.GetRangeBySelect().SetSmallCaps(" + smallCaps + ");\n"},
 		setTextFontName			: function(name){return "\tdoc.GetRangeBySelect().SetFontFamily(\"" + name + "\");\n"},
 		setTextFontSize			: function(size){return "\tdoc.GetRangeBySelect().SetFontSize(\"" + size + "\");\n"},
 		setTextHighlightColor	: function(highlight){
@@ -2003,6 +2004,7 @@
 	DEActionMap[AscDFH.historydescription_Document_SetTextUnderlineHotKey]		= wordActions.setTextUnderline;
 	DEActionMap[AscDFH.historydescription_Document_SetTextStrikeout]			= wordActions.setTextStrikeout;
 	DEActionMap[AscDFH.historydescription_Document_SetTextStrikeoutHotKey]		= wordActions.setTextStrikeout;
+	DEActionMap[AscDFH.historydescription_Document_SetTextSmallCapsHotKey]		= wordActions.setTextSmallCaps;
 	DEActionMap[AscDFH.historydescription_Document_SetTextFontName]			= wordActions.setTextFontName;
 	DEActionMap[AscDFH.historydescription_Document_SetTextFontNameLong]		= wordActions.setTextFontName;
 	DEActionMap[AscDFH.historydescription_Document_SetTextFontSize]			= wordActions.setTextFontSize;
