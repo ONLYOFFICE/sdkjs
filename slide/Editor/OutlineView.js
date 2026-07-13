@@ -470,14 +470,13 @@
 		const endPos = content.GetContentPosition(true, false);
 
 		const contents = [];
-		let direction = AscWord.Direction.FORWARD;
+		const direction = content.GetSelectDirection();
 		let startPosIndex = startPos[0].Position;
 		let endPosIndex = endPos[0].Position;
-		if (startPosIndex > endPosIndex) {
+		if (direction === AscWord.Direction.BACKWARD) {
 			const temp = startPosIndex;
 			startPosIndex = endPosIndex;
 			endPosIndex = temp;
-			direction = AscWord.Direction.BACKWARD;
 		}
 		for (let i = startPosIndex; i <= endPosIndex; i += 1) {
 			const contentInfo = contents[contents.length - 1];
