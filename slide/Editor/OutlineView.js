@@ -113,9 +113,6 @@
 		}
 		return this.cache.slideNumbersWidth;
 	};
-	DecoratorDrawer.prototype.getSlideIconSizes = function (paragraph) {
-
-	};
 	DecoratorDrawer.prototype.drawDecorShape = function (graphics, shape, x, y) {
 		var t = new AscCommon.CMatrix();
 		t.tx = this.getX(x);
@@ -124,20 +121,20 @@
 	};
 	DecoratorDrawer.prototype.drawTitleDecorations = function (graphics, info) {
 		const slideNumberWidth = this.getSlideNumbersWidth();
-		const slideX = DECORATORDRAWER_OFFSET_LEFT + slideNumberWidth;
 		const decorCacheManager = this.getDecorCacheManager();
 		const measureInfo = decorCacheManager.getMeasureInfo();
-		const height = measureInfo.height;
 		const charWidth = measureInfo.charWidth;
 
 		const paragraph = info.outlineParagraph;
 		const slide = info.slide;
-		const slideTopY = this.getParagraphY(paragraph);
-
+		const slideIconSizes = this.getSlideIconSizes(paragraph);
+		if (!slideIconSizes) {
+			return;
+		}
 		const currentSlideIndex = slide.num;
 		const currentSlideLabel = String(currentSlideIndex + 1);
-		const slideNumberShape = decorCacheManager.getSlideNumberShape(slideNumberWidth, height, currentSlideLabel);
-		this.drawDecorShape(graphics, slideNumberShape, slideX - (currentSlideLabel.length * charWidth + 1), slideTopY);
+		const slideNumberShape = decorCacheManager.getSlideNumberShape(slideNumberWidth, slideIconSizes.height, currentSlideLabel);
+		this.drawDecorShape(graphics, slideNumberShape, slideIconSizes.x - (currentSlideLabel.length * charWidth + 1), slideIconSizes.y);
 
 		let penHex;
 		if (currentSlideIndex === this.selectedSlideIndex) {
@@ -147,8 +144,8 @@
 		} else {
 			penHex = this.normalSlideColor
 		}
-		const barShape = decorCacheManager.getTitleShape(this.backgroundColor, penHex, DECORATORDRAWER_SLIDE_WIDTH, height);
-		this.drawDecorShape(graphics, barShape, slideX, slideTopY);
+		const barShape = decorCacheManager.getTitleShape(this.backgroundColor, penHex, slideIconSizes.width, slideIconSizes.height);
+		this.drawDecorShape(graphics, barShape, slideIconSizes.x, slideIconSizes.y);
 	};
 	DecoratorDrawer.prototype.drawContentDecorations = function (graphics, info) {
 		const slideNumberWidth = this.getSlideNumbersWidth();
@@ -171,6 +168,9 @@
 	};
 	DecoratorDrawer.prototype.getX = function (x) {
 		return this.transform.TransformPointX(x, 0);
+	};
+	DecoratorDrawer.prototype.getSlideIconSizes = function (outlineParagraph) {
+		return this.outlineView.getSlideIconSizes(outlineParagraph);
 	};
 	function OutlineSlide() {
 		this.title = null;
@@ -1304,6 +1304,7 @@
 		this.api = api;
 		this.isInit = false;
 		this.outlineShape = null;
+		this.isDecorationMouseDown = false;
 		this.decorCacheManager = new DecorCacheManager();
 		this.reset();
 	}
@@ -1605,36 +1606,111 @@
 		this.x = x;
 		this.y = y;
 	}
+	DecorationSelectManager.prototype.getDocContent = function () {
+		return this.outlineView.getDocContent();
+	};
 	DecorationSelectManager.prototype.handle = function () {
-		const outlineView = this.outlineView;
-		const docContent = outlineView.getDocContent();
-		if (docContent) {
-			const tx = outlineView.getInvertTransformX(this.x);
-			const ty = outlineView.getInvertTransformY(this.y);
+		const docContent = this.getDocContent();
+		if (!docContent) {
+			return;
+		}
+		const tx = this.outlineView.getInvertTransformX(this.x);
+		const ty = this.outlineView.getInvertTransformY(this.y);
 
-			const nearestPos = docContent.Get_NearestPos(0, tx, ty);
-			const paragraph = nearestPos.Paragraph;
-			const isClickToSlideIcon = this.isClickToSlideIcon(paragraph, tx, ty);
-			if (isClickToSlideIcon) {
-
-			} else {
-
+		const nearestPos = docContent.Get_NearestPos(0, tx, ty);
+		if (!nearestPos || !nearestPos.Paragraph) {
+			return;
+		}
+		const paragraph = nearestPos.Paragraph;
+		const isSlide = this.isClickToSlideIcon(paragraph);
+		const target = this.getTargetContentPositions(paragraph, isSlide);
+		if (!target) {
+			return;
+		}
+		if (this.isExpandSelection()) {
+			this.expandSelection(target);
+		} else {
+			docContent.RemoveSelection();
+			docContent.SetContentPosition(target.startPos, 0, 0);
+			docContent.SetContentSelection(target.startPos, target.endPos, 0, 0, 0);
+		}
+		this.outlineView.updateSelectionState();
+	};
+	DecorationSelectManager.prototype.isClickToSlideIcon = function (outlineParagraph) {
+		const sizes = this.outlineView.getSlideIconSizes(outlineParagraph);
+		if (!sizes) {
+			return false;
+		}
+		return this.x >= sizes.x && this.x <= sizes.x + sizes.width &&
+			this.y >= sizes.y && this.y <= sizes.y + sizes.height;
+	};
+	DecorationSelectManager.prototype.getContentPosition = function (outlineParagraph, isStart) {
+		const docContent = this.getDocContent();
+		const pos = [{Class: docContent, Position: outlineParagraph.Index}];
+		if (isStart) {
+			outlineParagraph.GetStartContentPosition(pos);
+		} else {
+			outlineParagraph.GetEndContentPosition(pos, true);
+		}
+		return pos;
+	};
+	DecorationSelectManager.prototype.getTargetContentPositions = function (outlineParagraph, isSlide) {
+		let firstParagraph = outlineParagraph;
+		let lastParagraph = outlineParagraph;
+		if (isSlide) {
+			const info = this.outlineView.outlineInfo.getSlideInfoByParagraph(outlineParagraph);
+			const slide = info && info.slide;
+			if (slide) {
+				const paragraphs = this.outlineView.getOutlineSlideParagraphs(slide);
+				if (paragraphs.length) {
+					firstParagraph = paragraphs[0];
+					lastParagraph = paragraphs[paragraphs.length - 1];
+				}
 			}
 		}
-
+		return {
+			startPos: this.getContentPosition(firstParagraph, true),
+			endPos: this.getContentPosition(lastParagraph, false)
+		};
 	};
-
+	DecorationSelectManager.prototype.getCurrentContentPositions = function () {
+		const docContent = this.getDocContent();
+		if (docContent.IsSelectionUse()) {
+			const startPos = docContent.GetContentPosition(true, true);
+			const endPos = docContent.GetContentPosition(true, false);
+			if (startPos[0].Position <= endPos[0].Position) {
+				return {startPos: startPos, endPos: endPos};
+			}
+			return {startPos: endPos, endPos: startPos};
+		}
+		const pos = docContent.GetContentPosition(false, false);
+		return {startPos: pos, endPos: pos};
+	};
+	DecorationSelectManager.prototype.expandSelection = function (target) {
+		const docContent = this.getDocContent();
+		const cur = this.getCurrentContentPositions();
+		const targetStartIndex = target.startPos[0].Position;
+		const currentStartIndex = cur.startPos[0].Position;
+		const targetEndIndex = target.endPos[0].Position;
+		const currentEndIndex = cur.endPos[0].Position;
+		const startPos = targetStartIndex <= currentStartIndex ? target.startPos : cur.startPos;
+		const endPos = targetEndIndex >= currentEndIndex ? target.endPos : cur.endPos;
+		docContent.SetContentSelection(startPos, endPos, 0, 0, 0);
+	};
 	DecorationSelectManager.prototype.isExpandSelection = function () {
-		return this.event.CtrlKey;
+		return this.event.CtrlKey || this.event.ShiftKey;
 	};
-	OutlineView.prototype.handleDecorationSelect = function () {
-
+	OutlineView.prototype.handleDecorationSelect = function (e, x, y) {
+		const selectManager = new DecorationSelectManager(this, e, x, y);
+		selectManager.handle();
 	};
 	OutlineView.prototype.selectionSetStart = function (e, x, y) {
 		if (this.outlineShape) {
 			if (this.outlineShape.hit(x, y)) {
+				this.isDecorationMouseDown = false;
 				this.outlineShape.selectionSetStart(e, x, y, 0);
 			} else {
+				this.isDecorationMouseDown = true;
 				this.handleDecorationSelect(e, x, y);
 			}
 		}
@@ -2873,6 +2949,15 @@
 		}
 		return [selectionState];
 	};
+	OutlineView.prototype.getSlideIconSizes = function (outlineParagraph) {
+		if (!this.isTitleOutlineParagraph(outlineParagraph)) {
+			return null;
+		}
+		const slideX = DECORATORDRAWER_OFFSET_LEFT + this.getSlideNumbersWidth();
+		const top = this.getParagraphY(outlineParagraph);
+		const height = this.decorCacheManager.getMeasureInfo().height;
+		return {x: slideX, y: top, width: DECORATORDRAWER_SLIDE_WIDTH, height: height};
+	}
 
 
 	window["AscCommonSlide"] = window["AscCommonSlide"] || {};
