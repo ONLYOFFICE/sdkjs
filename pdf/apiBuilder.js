@@ -1490,7 +1490,8 @@
 	 */
 	ApiDocument.prototype.GetAllFields = function() {
 		let aFields = [];
-		
+		let aResult = [];
+
 		for (let i = 0, nCount = this.Document.GetPagesCount(); i < nCount; i++) {
 			let oPageInfo = this.Document.GetPageInfo(i);
 
@@ -1508,7 +1509,14 @@
 			});
 		}
 
-		return aFields.map(GetFieldApi);
+		aFields.forEach(function(field) {
+			let oFieldApi = GetFieldApi(field);
+			if (oFieldApi) {
+				aResult.push(oFieldApi);
+			}
+		});
+
+		return aResult;
 	};
 
 	/**
@@ -8884,6 +8892,9 @@
 			}
 			case AscPDF.FIELD_TYPES.listbox: {
 				return new ApiListboxField(field);
+			}
+			default: {
+				return null;
 			}
 		}
 	}
