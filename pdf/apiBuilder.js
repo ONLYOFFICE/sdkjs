@@ -249,6 +249,15 @@
 	 * @property {pt} 7 - y4 (right bottom)
 	 */
 
+	/**
+	 * Represents a collection of matched text fragments.
+	 * @typedef {Quad[]} SearchMatch
+	 */
+
+	/**
+	 * Represents a collection of search results.
+	 * @typedef {SearchMatch[]} SearchResults
+	 */
 
 	/**
 	 * The available free text annot intent.
@@ -1861,7 +1870,7 @@
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
 	 * @param {SearchProps} props - The search options.
-	 * @returns {Quads[]}
+	 * @returns {SearchResults} - for each result there is an array with its coordinates
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/Search.js
 	 */
 	ApiPage.prototype.Search = function(props) {
@@ -1892,10 +1901,13 @@
 
 		Object.values(oSearchEngine.Elements).forEach(function(pdfMatch, idx) {
 			if (pdfMatch.GetAbsolutePage() == nPageIdx) {
+				let aMatchQuads = [];
 				let aPageSelQuads = oDoc.GetSearchElementSelectionQuads(idx);
 				aPageSelQuads.forEach(function(pageSelQuads) {
-					aResult = aResult.concat(pageSelQuads.quads);
+					aMatchQuads.push(pageSelQuads.quads[0]);
 				});
+
+				aResult.push(aMatchQuads);
 			}
 		});
 		
