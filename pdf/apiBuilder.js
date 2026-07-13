@@ -1963,8 +1963,7 @@
 	 * Sets page selection.
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
-	 * @param {Point} startPoint - The start point of the selection.
-	 * @param {Point} endPoint - The end point of the selection.
+	 * @param {PageSelection | Rect | Quad} selection - The selection to apply.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/SetSelection.js
 	 */
@@ -1973,8 +1972,26 @@
 			AscBuilder.throwException("The selection must be an object");
 		}
 
-		private_CheckPoint(selection['start']);
-		private_CheckPoint(selection['end']);
+		let startPoint, endPoint;
+		if (Array.isArray(selection)) {
+			if (private_IsValidRect(selection)) {
+				startPoint = {"x": selection[0], "y": selection[1]};
+				endPoint   = {"x": selection[2], "y": selection[3]};
+			}
+			else if (private_IsValidQuad(selection)) {
+				startPoint = {"x": selection[0], "y": selection[1]};
+				endPoint   = {"x": selection[6], "y": selection[7]};
+			}
+			else {
+				AscBuilder.throwException("The selection must be a valid rect or quad");
+			}
+		}
+		else {
+			private_CheckPoint(selection['start']);
+			private_CheckPoint(selection['end']);
+			startPoint = selection['start'];
+			endPoint   = selection['end'];
+		}
 
 		let oDoc = private_GetLogicDocument();
 		let oFile = oDoc.GetFile();
@@ -1983,8 +2000,8 @@
 		oDoc.BlurActiveObject();
 		oDoc.RecalculateAll(true);
 
-		let startNearestPos = oFile.getNearestPos(nPageIdx, selection['start']['x'] * g_dKoef_pt_to_mm, selection['start']['y'] * g_dKoef_pt_to_mm);
-		let endNearestPos   = oFile.getNearestPos(nPageIdx, selection['end']['x'] * g_dKoef_pt_to_mm, selection['end']['y'] * g_dKoef_pt_to_mm);
+		let startNearestPos = oFile.getNearestPos(nPageIdx, startPoint['x'] * g_dKoef_pt_to_mm, startPoint['y'] * g_dKoef_pt_to_mm);
+		let endNearestPos   = oFile.getNearestPos(nPageIdx, endPoint['x'] * g_dKoef_pt_to_mm, endPoint['y'] * g_dKoef_pt_to_mm);
 
 		oFile.Selection.IsSelection = true;
 
