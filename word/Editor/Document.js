@@ -122,6 +122,7 @@ var recalcresult2_NextPage        = 0x01; // Расчет нужно продо�
 var recalcresult2_CurPage         = 0x02; // Нужно заново пересчитать данную страницу
 var recalcresult2_NextSection     = 0x03; // Рассчитали до конца, но в конце был разрыв секции
 var recalcresult2_NextSection_Cur = 0x04; // Рассчитали не до конца, остановились на разрыве секции
+var recalcresult2_PrevPage        = 0x05; // Need to recalculate prev page (for keepNext inside a block-level sdt)
 
 var document_EditingType_Common = 0x00; // Обычный режим редактирования
 var document_EditingType_Review = 0x01; // Режим рецензирования

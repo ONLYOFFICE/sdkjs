@@ -2019,7 +2019,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 	var oFootnotes         = (isTopLogicDocument && !isInnerTable ? oTopDocument.Footnotes : null);
 	var nPageAbs           = this.GetAbsolutePage(CurPage);
 	var nColumnAbs         = this.GetAbsoluteColumn(CurPage);
-
+	
     this.TurnOffRecalc = true;
 
     var FirstRow = 0;
@@ -2524,6 +2524,31 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 
     var bNextPage = false;
 
+	// Check keepNext
+	var bKeepNextForced   = false;
+	var nKeepNextForceRow = -1;
+	let topDocument = this.GetTopDocumentContent();
+	if ((topDocument instanceof AscWord.Document) && topDocument.RecalcInfo && topDocument.RecalcInfo.Check_KeepNext(this) && this.IsLastRowKeepWithNext())
+	{
+		nKeepNextForceRow = this.Content.length - 1;
+		while (nKeepNextForceRow > 0 && this.private_IsRowWithKeepNext(nKeepNextForceRow - 1))
+			--nKeepNextForceRow;
+		
+		if (0 === nKeepNextForceRow)
+		{
+			if (0 === CurPage && this.Get_DocumentPrev())
+			{
+				this.StartFromNewPage();
+				this.TurnOffRecalc = false;
+				return recalcresult_NextPage;
+			}
+			else
+			{
+				nKeepNextForceRow = -1;
+			}
+		}
+	}
+
     // Блок переменных для учета сносок
 	var nFootnotesHeight     = 0;
 	var arrSavedY            = [];
@@ -2557,6 +2582,20 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         }
 
         this.TableRowsBottom[CurRow][CurPage] = Y;
+
+		// Forced move of the last table rows because of the "keepNext" setting 
+		// Rows up to nKeepNextForceRow stay on the current page, and
+		// starting from that row they are moved to the next page
+		if (nKeepNextForceRow > FirstRow && CurRow === nKeepNextForceRow)
+		{
+			bNextPage       = true;
+			bKeepNextForced = true;
+
+			LastRow                          = CurRow - 1;
+			this.Pages[CurPage].LastRow      = CurRow - 1;
+			this.Pages[CurPage].LastRowSplit = false;
+			break;
+		}
 
         var Row         = this.Content[CurRow];
         var CellsCount  = Row.Get_CellsCount();
@@ -3599,7 +3638,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
     this.Pages[CurPage].Bounds.Right  = X_max + this.Pages[CurPage].X;
     this.Pages[CurPage].Height        = TableHeight;
 
-	if (true === bNextPage)
+	if (true === bNextPage && false === bKeepNextForced)
 	{
 		let lastRow = this.Pages[CurPage].LastRow;
 		let canMoveRows = CurPage || this.Get_DocumentPrev() || (this.Parent && !this.Parent.IsFirstElementOnPage(this.GetRelativePage(CurPage), this.GetIndex()));
@@ -3621,7 +3660,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 					this.Pages[CurPage].LastRow = -1;
 					this.Pages[CurPage].LastRowSplit = false;
 				}
-				else if (lastRow !== FirstRow)
+				else if (lastRow !== FirstRow || 0 === CurPage)
 				{
 					this.Pages[CurPage].LastRow = lastRow;
 					this.Pages[CurPage].LastRowSplit = false;
@@ -3687,7 +3726,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
  */
 CTable.prototype.private_IsRowWithKeepNext = function(iRow)
 {
-	if (iRow < 0 || iRow >= this.Content.length - 1)
+	if (iRow < 0 || iRow >= this.Content.length)
 		return false;
 	
 	return this.GetRow(iRow).IsContentWithKeepNext();
