@@ -10565,6 +10565,12 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 
 	if ((this.Api.isStartAddShape || this.Api.isInkDrawerOn()) && (docpostype_HdrFtr !== this.CurPos.Type || null !== this.HdrFtr.CurHdrFtr))
 	{
+		const inlineForm = this.GetSelectedElementsInfo().GetInlineLevelSdt();
+		if (inlineForm && inlineForm.IsForm())
+			inlineForm.MoveCursorOutsideForm(false);
+
+		this.DrawingDocument.TargetEnd();
+
 		if (docpostype_HdrFtr !== this.CurPos.Type)
 		{
 			this.SetDocPosType(docpostype_DrawingObjects);
@@ -10864,11 +10870,13 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 		_t.UpdateSelection();
 	}
 	
-	if (this.IsTextSelectionUse())
+	if (this.Api.isInkDrawerOn())
+		this.DrawingDocument.TargetEnd();
+	else if (this.IsTextSelectionUse())
 		AscCommon.executeNoScroll(_updateSelection, this);
 	else
 		_updateSelection();
-	
+
 	this.UpdateInterface();
 	this.UpdateRulers();
 };

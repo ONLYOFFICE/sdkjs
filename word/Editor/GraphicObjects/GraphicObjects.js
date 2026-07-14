@@ -5067,6 +5067,10 @@ CGraphicObjects.prototype.onInkDrawerChangeState = DrawingObjectsController.prot
 CGraphicObjects.prototype.setDrawingDocPosType = function() {
 	const oDoc = this.document;
 	if(oDoc && false == this.api.isDocumentRenderer()) {
+		const inlineForm = oDoc.GetSelectedElementsInfo().GetInlineLevelSdt();
+		if (inlineForm && inlineForm.IsForm())
+			inlineForm.MoveCursorOutsideForm(false);
+		oDoc.DrawingDocument.TargetEnd();
 		if (AscCommonWord.docpostype_HdrFtr !== oDoc.CurPos.Type) {
 			oDoc.SetDocPosType(AscCommonWord.docpostype_DrawingObjects);
 			oDoc.Selection.Use   = true;
