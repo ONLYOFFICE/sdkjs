@@ -313,6 +313,10 @@
 
     CPresentationField.prototype.private_GetDateTimeFormat = function(sFieldType)
     {
+        if(!oDateTimeFormats[sFieldType] && "datetime" !== sFieldType && "datetimefigureout" !== sFieldType)
+        {
+            return AscCommon.oNumFormatCache.get(this.FieldType.substring("datetime".length), AscCommon.NumFormatType.WordFieldDate);
+        }
         let sResultFiledType = sFieldType;
         let oFormat = null;
         const nLang = this.Get_CompiledPr().Lang.Val;
