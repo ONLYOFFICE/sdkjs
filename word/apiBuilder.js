@@ -3908,6 +3908,14 @@
 	}
 
 	/**
+	 * Class representing a shadow.
+	 * @constructor
+	 */
+	function ApiShadow(shadow) {
+		this.Shadow = shadow;
+	}
+
+	/**
 	 * Class representing gradient stop.
 	 * @constructor
 	 */
@@ -4559,7 +4567,8 @@
 	/**
 	 * Table of contents properties which specify whether to generate the table of contents from the outline levels or the specified styles.
 	 * @typedef {Object} TocBuildFromPr
-	 * @property {number} [OutlineLvls=9] - Maximum number of levels in the table of contents.
+	 * @property {number} [OutlineLvlStart=1] - The highest heading level included in the table of contents (the start of the outline range).
+	 * @property {number} [OutlineLvls=9] - The lowest heading level included in the table of contents (the end of the outline range).
 	 * @property {TocStyleLvl[]} StylesLvls - Style levels (for example, [{Name: "Heading 1", Lvl: 2}, {Name: "Heading 2", Lvl: 3}]).
 	 * <note>If StylesLvls.length > 0, then the OutlineLvls property will be ignored.</note>
 	 * @see office-js-api/Examples/Enumerations/TocBuildFromPr.js
@@ -4844,8 +4853,8 @@
 	 * @param {ShapeType} [shapeType="rect"] - The shape type which specifies the preset shape geometry.
 	 * @param {EMU} [width = 914400] - The shape width in English measure units.
 	 * @param {EMU} [height = 914400] - The shape height in English measure units.
-	 * @param {ApiFill} [fill = Api.CreateNoFill()] - The color or pattern used to fill the shape.
-	 * @param {ApiStroke} [stroke = Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the element shadow.
+	 * @param {ApiFill} [fill] - The color or pattern used to fill the shape. If not specified, the default shape style fill (theme accent) is used.
+	 * @param {ApiStroke} [stroke] - The stroke used to draw the shape outline. If not specified, the default shape style outline (theme accent) is used.
 	 * @returns {?ApiShape}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateShape.js
 	 */
@@ -4857,8 +4866,6 @@
 		if (!AscFormat.isValidShapeType(shapeType)) shapeType = "rect";
 		width     = width || 914400;
 		height    = height || 914400;
-		fill      = fill || Api.CreateNoFill();
-		stroke    = stroke || Api.CreateStroke(0, Api.CreateNoFill());
 		var nW = private_EMU2MM(width);
 		var nH = private_EMU2MM(height);
 		var oDrawing = new ParaDrawing(nW, nH, null, oDrawingDocuemnt, oLogicDocument, null);
@@ -4867,8 +4874,12 @@
 		var oShape = oShapeTrack.getShape(true, oDrawingDocuemnt, null);
 		oShape.setParent(oDrawing);
 		oDrawing.Set_GraphicObject(oShape);
-		oShape.spPr.setFill(fill.UniFill);
-		oShape.spPr.setLn(stroke.Ln);
+		if (fill) {
+			oShape.spPr.setFill(fill.UniFill);
+		}
+		if (stroke) {
+			oShape.spPr.setLn(stroke.Ln);
+		}
 		return new ApiShape(oShape);
 	};
 
@@ -4891,7 +4902,7 @@
 		let oDrDoc = private_GetDrawingDocument();
 		let oGraphicObjects = oDoc.getDrawingObjects();
 
-		if (drawings.find(function(drawing) { return drawing.Drawing.IsUseInDocument(); }))
+		if (drawings.find(function(drawing) { return !drawing.Drawing.IsUseInDocument(); }))
 			throwException(new Error("All drawings must be in document"));
 		
 		drawings.forEach(function(drawing) { drawing.Drawing.recalculate(); })
@@ -5337,6 +5348,71 @@
 	{
 		let strDashType = AscFormat.CLn.prototype.GetDashCode(sDash);
 		return new ApiStroke(AscFormat.builder_CreateLine(width, fill, strDashType));
+	};
+
+	/**
+	 * Properties used to create a shadow.
+	 * @typedef {Object} ShadowSettings
+	 * @property {ApiUniColor} [color] - The shadow color (black by default).
+	 * @property {number} [transparency=0] - The shadow transparency from 0.0 (opaque) to 1.0 (clear).
+	 * @property {number} [offsetX=0] - The horizontal offset of the shadow measured in points (a positive value offsets to the right).
+	 * @property {number} [offsetY=0] - The vertical offset of the shadow measured in points (a positive value offsets downwards).
+	 * @property {number} [size=100] - The shadow size as a percentage of the shape size.
+	 * @property {boolean} [rotateWithShape=true] - Specifies whether the shadow rotates together with the shape.
+	 */
+
+	/**
+	 * Creates a shadow which can be applied to a graphic object.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @param {ShadowSettings} settings - The shadow properties.
+	 * @returns {ApiShadow}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateShadow.js
+	 */
+	Api.CreateShadow = function(settings)
+	{
+		settings = settings || {};
+		let shadow = new AscFormat.COuterShdw();
+
+		let uniColor = null;
+		let color = settings["color"];
+		if (color instanceof ApiUniColor)
+			uniColor = color.Unicolor.createDuplicate();
+		else if (color instanceof ApiColor)
+			uniColor = color.private_createUnifill().fill.color.createDuplicate();
+		if (!uniColor)
+			uniColor = AscFormat.CreateUniColorRGB(0, 0, 0);
+
+		let transparency = settings["transparency"];
+		if (typeof transparency === "number")
+		{
+			let alpha = Math.round((1 - Math.min(Math.max(transparency, 0), 1)) * 100000);
+			uniColor.addColorMod(new AscFormat.CColorMod("alpha", alpha));
+		}
+		shadow.color = uniColor;
+
+		let offsetX = typeof settings["offsetX"] === "number" ? settings["offsetX"] : 0;
+		let offsetY = typeof settings["offsetY"] === "number" ? settings["offsetY"] : 0;
+		if (offsetX !== 0 || offsetY !== 0)
+		{
+			shadow.dist = Math.round(Math.sqrt(offsetX * offsetX + offsetY * offsetY) * 12700);
+			let angle = Math.atan2(offsetY, offsetX) * 180 / Math.PI;
+			if (angle < 0)
+				angle += 360;
+			shadow.dir = Math.round(angle * 60000);
+		}
+
+		if (typeof settings["size"] === "number")
+		{
+			shadow.sx = Math.round(settings["size"] * 1000);
+			shadow.sy = Math.round(settings["size"] * 1000);
+		}
+
+		if (typeof settings["rotateWithShape"] === "boolean")
+			shadow.rotWithShape = settings["rotateWithShape"];
+
+		return new ApiShadow(shadow);
 	};
 
 	/**
@@ -6422,7 +6498,7 @@
 	ApiDocumentContent.prototype.GetAllShapes = function()
 	{
 		let arrAllDrawing = this.Document.GetAllDrawingObjects();
-		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_Shape,
+		return private_GetAllDrawingsWithType(arrAllDrawing, [AscDFH.historyitem_type_Shape, AscDFH.historyitem_type_Cnx],
 			function(oDrawing) {return new ApiShape(oDrawing);});
 	};
 	/**
@@ -6435,7 +6511,7 @@
 	ApiDocumentContent.prototype.GetAllImages = function()
 	{
 		let arrAllDrawing = this.Document.GetAllDrawingObjects();
-		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_ImageShape,
+		return private_GetAllDrawingsWithType(arrAllDrawing, [AscDFH.historyitem_type_ImageShape],
 			function(oDrawing) {return new ApiImage(oDrawing);});
 	};
 	/**
@@ -6448,7 +6524,7 @@
 	ApiDocumentContent.prototype.GetAllCharts = function()
 	{
 		let arrAllDrawing = this.Document.GetAllDrawingObjects();
-		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_ChartSpace,
+		return private_GetAllDrawingsWithType(arrAllDrawing, [AscDFH.historyitem_type_ChartSpace],
 			function(oDrawing) {return new ApiChart(oDrawing);});
 	};
 	/**
@@ -6461,7 +6537,7 @@
 	ApiDocumentContent.prototype.GetAllOleObjects = function()
 	{
 		let arrAllDrawing = this.Document.GetAllDrawingObjects();
-		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_OleObject,
+		return private_GetAllDrawingsWithType(arrAllDrawing, [AscDFH.historyitem_type_OleObject],
 			function(oDrawing) {return new ApiOleObject(oDrawing);});
 	};
 	/**
@@ -9574,226 +9650,59 @@
 		const oColor = this.Document.GetSdtGlobalColor();
 		return Api.RGB(oColor.r, oColor.g, oColor.b);
 	};
-
 	/**
 	 * Adds a table of content to the current document.
-	 * <note>Please note that the new table of contents replaces the existing table of contents.</note>
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.5.0 version.
 	 * @param {TocPr} [oTocPr={}] - Table of contents properties.
-	 * @returns {boolean}
+	 * @returns {ApiTableOfContents}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddTableOfContents.js
 	 */
-	ApiDocument.prototype.AddTableOfContents = function(oTocPr)
+	/**
+	 * Adds a table of content to the current document.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.5.0
+	 * @param {TocPr} [oTocPr={}] - Table of contents properties.
+	 * @param {ApiRange} [oRange] - The range that the table of contents replaces. If omitted, the table of contents is inserted at the current position.
+	 * @returns {?ApiTableOfContents}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddTableOfContents.js
+	 */
+	ApiDocument.prototype.AddTableOfContents = function(oTocPr, oRange)
 	{
-		if (typeof(oTocPr) !== "object")
-			oTocPr = {};
-
-		if (!oTocPr["BuildFrom"])
-			oTocPr["BuildFrom"] = {"OutlineLvls": 9};
-
-		let oTargetPr = new Asc.CTableOfContentsPr();
-		oTargetPr.PageNumbers = typeof(oTocPr["ShowPageNums"]) == "boolean" ? oTocPr["ShowPageNums"] : true;
-		oTargetPr.RightTab = typeof(oTocPr["RightAlgn"]) == "boolean" ? oTocPr["RightAlgn"] : true;
-		oTargetPr.Hyperlink = typeof(oTocPr["FormatAsLinks"]) == "boolean" ? oTocPr["FormatAsLinks"] : true;
-
-		if (oTocPr["LeaderType"] == null)
-			oTocPr["LeaderType"] = "dot";
-		switch (oTocPr["LeaderType"])
-		{
-			case "dot":
-				oTargetPr.TabLeader = 0;
-				break;
-			case "dash":
-				oTargetPr.TabLeader = 2;
-				break;
-			case "underline":
-				oTargetPr.TabLeader = 5;
-				break;
-			case "none":
-				oTargetPr.TabLeader = 4;
-				break;
-		}
-
-		if (Array.isArray(oTocPr["BuildFrom"]["StylesLvls"]) && oTocPr["BuildFrom"]["StylesLvls"].length > 0)
-		{
-			oTargetPr.Styles = oTocPr["BuildFrom"]["StylesLvls"].map(function(styleLvl) {
-				return {
-					Name: styleLvl['Name'],
-					Lvl: styleLvl['Lvl']
-				}
-			});
-			oTargetPr.OutlineEnd = -1;
-			oTargetPr.OutlineStart = -1;
-		}
-		else if (oTocPr["BuildFrom"]["OutlineLvls"] >= 1 && oTocPr["BuildFrom"]["OutlineLvls"] <= 9)
-		{
-			oTargetPr.OutlineEnd = oTocPr["BuildFrom"]["OutlineLvls"];
-		}
-
-		if (oTocPr["TocStyle"] == null)
-			oTocPr["TocStyle"] = "standard";
-		switch (oTocPr["TocStyle"])
-		{
-			case "simple":
-				oTargetPr.StylesType = 1;
-				break;
-			case "online":
-				oTargetPr.StylesType = 5;
-				break;
-			case "standard":
-				oTargetPr.StylesType = 2;
-				break;
-			case "modern":
-				oTargetPr.StylesType = 3;
-				break;
-			case "classic":
-				oTargetPr.StylesType = 4;
-				break;
-		}
-
-		var oTOC = this.Document.GetTableOfContents();
-		if (oTOC instanceof AscCommonWord.CBlockLevelSdt && oTOC.IsBuiltInUnique())
-		{
-			var oInnerTOC = oTOC.GetInnerTableOfContents();
-			oTOC = oInnerTOC;
-			if (!oTOC)
-				return false;
-
-			var oStyles = this.Document.GetStyles();
-			var nStylesType = oTargetPr.get_StylesType();
-			var isNeedChangeStyles = (Asc.c_oAscTOCStylesType.Current !== nStylesType && nStylesType !== oStyles.GetTOCStylesType());
-
-			oTOC.SelectField();
-			if (isNeedChangeStyles)
-				oStyles.SetTOCStylesType(nStylesType);
-
-			oTOC.SetPr(oTargetPr);
-			oTOC.Update();
-			return true;
-		}
-
-		this.Document.AddTableOfContents(null, oTargetPr, undefined);
-		return true;
+		return this.GetTablesOfContents? this.GetTablesOfContents().Add(oTocPr, oRange) : null;
 	};
-
 	/**
 	 * Adds a table of figures to the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.5.0 version.
 	 * @param {TofPr} [oTofPr={}] - Table of figures properties.
 	 * <note>Please note that the table of figures properties will be filled with the default properties if they are undefined.</note>
 	 * @param {boolean} [bReplace=true] - Specifies whether to replace the selected table of figures instead of adding a new one.
-	 * @returns {boolean}
+	 * @returns {ApiTableOfFigures}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddTableOfFigures.js
 	 */
-	ApiDocument.prototype.AddTableOfFigures = function(oTofPr, bReplace)
+	/**
+	 * Adds a table of figures to the current document.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.5.0
+	 * @param {TofPr} [oTofPr={}] - Table of figures properties.
+	 * <note>Please note that the table of figures properties will be filled with the default properties if they are undefined.</note>
+	 * @param {ApiRange} [oRange] - The range that the table of figures replaces. If omitted, the table of figures is inserted at the current position.
+	 * @returns {?ApiTableOfFigures}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddTableOfFigures.js
+	 */
+	ApiDocument.prototype.AddTableOfFigures = function(oTofPr, oRange)
 	{
-		if (typeof(oTofPr) !== "object")
-			oTofPr = {};
-		if (typeof(bReplace) !== "boolean")
-			bReplace = true;
-
-		let oTargetPr = new Asc.CTableOfContentsPr();
-		oTargetPr.PageNumbers = typeof(oTofPr["ShowPageNums"]) == "boolean" ? oTofPr["ShowPageNums"] : true;
-		oTargetPr.RightTab = typeof(oTofPr["RightAlgn"]) == "boolean" ? oTofPr["RightAlgn"] : true;
-		oTargetPr.Hyperlink = typeof(oTofPr["FormatAsLinks"]) == "boolean" ? oTofPr["FormatAsLinks"] : true;
-		oTargetPr.IsIncludeLabelAndNumber = typeof(oTofPr["LabelNumber"]) == "boolean" ? oTofPr["LabelNumber"] : true;
-		oTargetPr.OutlineEnd = -1;
-		oTargetPr.OutlineStart = -1;
-
-
-		if (oTofPr["LeaderType"] == null)
-			oTofPr["LeaderType"] = "dot";
-		switch (oTofPr["LeaderType"])
-		{
-			case "dot":
-				oTargetPr.TabLeader = 0;
-				break;
-			case "dash":
-				oTargetPr.TabLeader = 2;
-				break;
-			case "underline":
-				oTargetPr.TabLeader = 5;
-				break;
-			case "none":
-				oTargetPr.TabLeader = 4;
-				break;
-		}
-
-		if (typeof(oTofPr["BuildFrom"]) !== "string")
-			oTofPr["BuildFrom"] = "Figure";
-
-		let aStyles = this.Document.GetAllUsedParagraphStyles();
-		let isUsedStyle = false;
-		for (var i = 0; i < aStyles.length; i++)
-		{
-			if (aStyles[i].Name == oTofPr["BuildFrom"])
-			{
-				isUsedStyle = true;
-				break;
-			}
-		}
-
-		if (isUsedStyle)
-		{
-			oTargetPr.Styles = [{ Name: oTofPr["BuildFrom"], Lvl: undefined }];
-			oTargetPr.Caption = null;
-		}
-		else
-			oTargetPr.Caption = oTofPr["BuildFrom"];
-
-		if (oTofPr["TofStyle"] == null)
-			oTofPr["TofStyle"] = "distinctive";
-		switch (oTofPr["TofStyle"])
-		{
-			case "simple":
-				oTargetPr.StylesType = 5;
-				break;
-			case "online":
-				oTargetPr.StylesType = 6;
-				break;
-			case "classic":
-				oTargetPr.StylesType = 1;
-				break;
-			case "distinctive":
-				oTargetPr.StylesType = 2;
-				break;
-			case "centered":
-				oTargetPr.StylesType = 3;
-				break;
-			case "formal":
-				oTargetPr.StyleType = 4;
-				break;
-		}
-
-		let aTOF = this.Document.GetAllTablesOfFigures(true);
-		let oTOFToReplace = null;
-		if(aTOF.length > 0)
-		{
-			oTOFToReplace = aTOF[0];
-		}
-
-		if (oTOFToReplace && bReplace)
-		{
-			oTOFToReplace.SelectFieldValue();
-			oTargetPr.ComplexField = oTOFToReplace;
-
-			var oStyles     = this.Document.GetStyles();
-			var nStylesType = oTargetPr.get_StylesType();
-			var isNeedChangeStyles = (Asc.c_oAscTOFStylesType.Current !== nStylesType && nStylesType !== oStyles.GetTOFStyleType());
-			if (isNeedChangeStyles)
-				oStyles.SetTOFStyleType(nStylesType);
-
-			oTOFToReplace.SetPr(oTargetPr);
-			oTOFToReplace.Update();
-		}
-		else
-			this.Document.AddTableOfFigures(oTargetPr);
-
-		return true;
+		return this.GetTablesOfFigures ? this.GetTablesOfFigures().Add(oTofPr, oRange) : null;
 	};
-
 	/**
 	 * Returns the document statistics represented as an object with the following parameters:
 	 * <b>PageCount</b> - number of pages;
@@ -10171,6 +10080,8 @@
 	{
 		if (aDrawings.find(function(drawing) { return !drawing.Drawing.IsUseInDocument(); }))
 			return null;
+
+		this.ForceRecalculate();
 
 		let oDoc = this.Document;
 		let oGraphicObjects = oDoc.getDrawingObjects();
@@ -10719,8 +10630,10 @@
 	 */
 	ApiParagraph.prototype.AddPagesCount = function()
 	{
+		var oLogicDocument = private_GetLogicDocument();
 		var oRun = new ParaRun(this.Paragraph, false);
-		oRun.Add_ToContent(0, new AscWord.CRunPagesCount());
+		var nCount = oLogicDocument ? oLogicDocument.GetPagesCount() : undefined;
+		oRun.Add_ToContent(0, new AscWord.CRunPagesCount(nCount));
 		private_PushElementToParagraph(this.Paragraph, oRun);
 		return new ApiRun(oRun);
 	};
@@ -11660,7 +11573,7 @@
 	ApiParagraph.prototype.GetAllShapes = function()
 	{
 		let arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
-		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_Shape,
+		return private_GetAllDrawingsWithType(arrAllDrawing, [AscDFH.historyitem_type_Shape, AscDFH.historyitem_type_Cnx],
 			function(oDrawing) {return new ApiShape(oDrawing);});
 	};
 	/**
@@ -11673,7 +11586,7 @@
 	ApiParagraph.prototype.GetAllImages = function()
 	{
 		let arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
-		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_ImageShape,
+		return private_GetAllDrawingsWithType(arrAllDrawing, [AscDFH.historyitem_type_ImageShape],
 			function(oDrawing) {return new ApiImage(oDrawing);});
 	};
 	/**
@@ -11686,7 +11599,7 @@
 	ApiParagraph.prototype.GetAllCharts = function()
 	{
 		let arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
-		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_ChartSpace,
+		return private_GetAllDrawingsWithType(arrAllDrawing, [AscDFH.historyitem_type_ChartSpace],
 			function(oDrawing) {return new ApiChart(oDrawing);});
 	};
 	/**
@@ -11699,7 +11612,7 @@
 	ApiParagraph.prototype.GetAllOleObjects = function()
 	{
 		let arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
-		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_OleObject,
+		return private_GetAllDrawingsWithType(arrAllDrawing, [AscDFH.historyitem_type_OleObject],
 			function(oDrawing) {return new ApiOleObject(oDrawing);});
 	};
 	/**
@@ -19682,7 +19595,7 @@
 	 * Copies the current graphic object. 
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @return {ApiDrawing}
+	 * @return {ApiDrawing | null}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Copy.js
 	 */
 	ApiDrawing.prototype.Copy = function()
@@ -19692,6 +19605,61 @@
 		let oCopyParaDrawing = oParaDrawing.copy();
 		return new this.constructor(oCopyParaDrawing.GraphicObj);
 	};
+
+	/**
+	 * Creates a copy of the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiShape | null}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/Copy.js
+	 */
+	ApiShape.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiShape.prototype["Copy"] = ApiShape.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current chart.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiChart | null}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/Copy.js
+	 */
+	ApiChart.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiChart.prototype["Copy"] = ApiChart.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current group.
+	 * @memberof ApiGroup
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiGroup | null}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Copy.js
+	 */
+	ApiGroup.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiGroup.prototype["Copy"] = ApiGroup.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current image.
+	 * @memberof ApiImage
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiImage | null}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiImage/Methods/Copy.js
+	 */
+	ApiImage.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiImage.prototype["Copy"] = ApiImage.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current OLE object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiOleObject | null}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/Copy.js
+	 */
+	ApiOleObject.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiOleObject.prototype["Copy"] = ApiOleObject.prototype.Copy;
 	/**
 	 * Wraps the graphic object with a rich text content control.
 	 * @memberof ApiDrawing
@@ -20046,11 +20014,60 @@
 	 */	
 	ApiDrawing.prototype.Fill = function(oFill)
 	{
+		const classType = this.GetClassType();
+		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
+			return false;
+
 		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
 			return false;
 
-		this.Drawing.spPr.setFill(oFill.UniFill);
-		return true;
+		if (classType === "smartArt")
+		{
+			this.Drawing.changeFill(oFill.UniFill);
+			return true;
+		}
+
+		if (this.Drawing && this.Drawing.spPr)
+		{
+			this.Drawing.spPr.setFill(oFill.UniFill);
+			return true;
+		}
+
+		return false;
+	};
+	/**
+	 * Sets the fill formatting properties to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @param {ApiFill} oFill - The fill type used to fill the graphic object.
+	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetFill.js
+	 */
+	ApiDrawing.prototype.SetFill = ApiDrawing.prototype.Fill;
+	/**
+	 * Gets the fill formatting properties from the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiFill | null}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetFill.js
+	 */
+	ApiDrawing.prototype.GetFill = function()
+	{
+		const classType = this.GetClassType();
+		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
+			return null;
+
+		if (this.Drawing)
+		{
+			if (this.Drawing.recalcInfo && this.Drawing.recalcInfo.recalculateBrush)
+				this.Drawing.recalculateBrush();
+			if (this.Drawing.brush)
+				return new ApiFill(this.Drawing.brush);
+		}
+
+		return null;
 	};
 	/**
 	 * Sets the outline properties to the specified graphic object.
@@ -20062,11 +20079,104 @@
 	 */
 	ApiDrawing.prototype.SetOutLine = function(oStroke)
 	{
+		const classType = this.GetClassType();
+		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
+			return false;
+
 		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
 			return false;
 
-		this.Drawing.spPr.setLn(oStroke.Ln);
+		if (classType === "smartArt")
+		{
+			let whole = this.Drawing.getWhole();
+			if (whole)
+				whole.setLn(oStroke.Ln);
+			return true;
+		}
+
+		if (this.Drawing && this.Drawing.spPr)
+		{
+			this.Drawing.spPr.setLn(oStroke.Ln);
+			return true;
+		}
+
+		return false;
+	};
+	/**
+	 * Sets the outline properties to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @param {ApiStroke} oStroke - The stroke used to create the graphic object outline.
+	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLine.js
+	 */
+	ApiDrawing.prototype.SetLine = ApiDrawing.prototype.SetOutLine;
+	/**
+	 * Gets the outline properties from the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiStroke | null}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLine.js
+	 */
+	ApiDrawing.prototype.GetLine = function()
+	{
+		const classType = this.GetClassType();
+		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
+			return null;
+
+		if (this.Drawing)
+		{
+			if (this.Drawing.recalcInfo && this.Drawing.recalcInfo.recalculatePen)
+				this.Drawing.recalculatePen();
+			if (this.Drawing.pen)
+				return new ApiStroke(this.Drawing.pen, this.Drawing.spPr);
+		}
+
+		return null;
+	};
+	/**
+	 * Sets the shadow to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @param {?ApiShadow} shadow - The shadow to apply, or null to remove the current shadow.
+	 * @returns {boolean} - returns false if the graphic object does not support shadow.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetShadow.js
+	 */
+	ApiDrawing.prototype.SetShadow = function(shadow)
+	{
+		if (!this.Drawing || !this.Drawing.spPr)
+			return false;
+
+		if (shadow === null || shadow === undefined)
+		{
+			this.Drawing.spPr.changeShadow(null);
+			return true;
+		}
+
+		if (!shadow.GetClassType || shadow.GetClassType() !== "shadow")
+			return false;
+
+		this.Drawing.spPr.changeShadow(shadow.Shadow);
 		return true;
+	};
+	/**
+	 * Returns the shadow of the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiShadow | null}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetShadow.js
+	 */
+	ApiDrawing.prototype.GetShadow = function()
+	{
+		let shadow = this.Drawing && this.Drawing.getOuterShdw ? this.Drawing.getOuterShdw() : null;
+		if (shadow)
+			return new ApiShadow(shadow);
+
+		return null;
 	};
 	/**
 	 * Returns the next inline drawing object if exists. 
@@ -20262,6 +20372,7 @@
 	/**
 	 * Sets the name of the current drawing.
 	 * If another drawing with the same name already exists, that drawing's name will be reset to a default auto-generated name.
+	 * OLE objects do not support a custom name, so for them this method always returns false.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @param {string} name - The name which will be set to the current drawing.
@@ -20272,6 +20383,9 @@
 	ApiDrawing.prototype.SetName = function(name)
 	{
 		if (name === "" || name === null || name === undefined)
+			return false
+
+		if (this.Drawing.isOleObject())
 			return false
 
 		this.Drawing.setName(name);
@@ -20591,7 +20705,7 @@
 	{
 		if (typeof(this.OleObject.m_sApplicationId) === "string")
 			return this.OleObject.m_sApplicationId;
-		
+
 		return "";
 	};
 
@@ -22485,32 +22599,32 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {NumFormat | String} sFormat - Numeric format (can be custom format).
-	 * @param {AxisPos} - Axis position in the chart.
+	 * @param {AxisPos} sAxisPos - Axis position in the chart.
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetAxieNumFormat.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetAxisNumFormat.js
 	 */
-	ApiChart.prototype.SetAxieNumFormat = function(sFormat, sAxiePos)
+	ApiChart.prototype.SetAxisNumFormat = function(sFormat, sAxisPos)
 	{
-		var nAxiePos = -1;
-		switch (sAxiePos)
+		var nAxisPos = -1;
+		switch (sAxisPos)
 		{
 			case "bottom":
-				nAxiePos = AscFormat.AX_POS_B;
+				nAxisPos = AscFormat.AX_POS_B;
 				break;
 			case "left":
-				nAxiePos = AscFormat.AX_POS_L;
+				nAxisPos = AscFormat.AX_POS_L;
 				break;
 			case "right":
-				nAxiePos = AscFormat.AX_POS_R;
+				nAxisPos = AscFormat.AX_POS_R;
 				break;
 			case "top":
-				nAxiePos = AscFormat.AX_POS_T;
+				nAxisPos = AscFormat.AX_POS_T;
 				break;
 			default:
 				return false;
 		}
 
-		return this.Chart.SetAxieNumFormat(sFormat, nAxiePos);
+		return this.Chart.SetAxisNumFormat(sFormat, nAxisPos);
 	};
  
 	/**
@@ -22681,28 +22795,34 @@
 
 	/**
 	 * Ungroups the current group of drawings.
+	 * <note>This method is not supported in the document builder and works only in the editor.</note>
 	 * @memberof ApiGroup
 	 * @typeofeditors ["CDE"]
-	 * @returns {boolean}
+	 * @returns {ApiDrawing[] | null} - The array of the ungrouped objects, or null if the group is not in the document, cannot be ungrouped, or when called in the document builder.
 	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Ungroup.js
 	 */
 	ApiGroup.prototype.Ungroup = function()
 	{
+		if (AscCommon.isFileBuild())
+			return null;
+
+		if (!this.Drawing || !this.Drawing.IsUseInDocument())
+			return null;
+
 		let oDoc = private_GetLogicDocument();
+		Api.GetDocument().ForceRecalculate();
 		let oGraphicObjects = oDoc.getDrawingObjects();
+		let aChildren = this.Drawing.spTree.slice();
 
 		oGraphicObjects.resetSelection();
 		oGraphicObjects.selectObject(this.Drawing, this.Drawing.GetAbsolutePage())
 		
-		let canUngroup = oGraphicObjects.canUnGroup();
-		if (!canUngroup)
-		{
-			return false;
-		}
+		if (!oGraphicObjects.canUnGroup())
+			return null;
 
 		oGraphicObjects.unGroupSelectedObjects();
-		return true;
+		return GetApiDrawings(aChildren);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -22811,6 +22931,59 @@
 		return "stroke";
 	};
 	/**
+	 * Returns a type of the ApiShadow class.
+	 * @memberof ApiShadow
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @returns {"shadow"}
+	 * @see office-js-api/Examples/{Editor}/ApiShadow/Methods/GetClassType.js
+	 */
+	ApiShadow.prototype.GetClassType = function()
+	{
+		return "shadow";
+	};
+	/**
+	 * Returns the settings of the current shadow.
+	 * @memberof ApiShadow
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @returns {ShadowSettings}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiShadow/Methods/GetSettings.js
+	 */
+	ApiShadow.prototype.GetSettings = function()
+	{
+		let shadow = this.Shadow;
+		let settings = {};
+
+		let uniColor = shadow.color ? shadow.color.createDuplicate() : AscFormat.CreateUniColorRGB(0, 0, 0);
+		let alpha = null;
+		if (uniColor.Mods && Array.isArray(uniColor.Mods.Mods))
+		{
+			let mods = [];
+			for (let i = 0; i < uniColor.Mods.Mods.length; ++i)
+			{
+				if (uniColor.Mods.Mods[i].name === "alpha")
+					alpha = uniColor.Mods.Mods[i].val;
+				else
+					mods.push(uniColor.Mods.Mods[i]);
+			}
+			uniColor.Mods.Mods = mods;
+		}
+
+		settings["color"] = new ApiUniColor(uniColor);
+		settings["transparency"] = (typeof alpha === "number") ? (1 - alpha / 100000) : 0;
+
+		let dist = (typeof shadow.dist === "number") ? shadow.dist : 0;
+		let dir = (typeof shadow.dir === "number") ? shadow.dir : 0;
+		let rad = (dir / 60000) * Math.PI / 180;
+		settings["offsetX"] = (dist / 12700) * Math.cos(rad);
+		settings["offsetY"] = (dist / 12700) * Math.sin(rad);
+
+		settings["size"] = (typeof shadow.sx === "number") ? shadow.sx / 1000 : 100;
+		settings["rotateWithShape"] = shadow.rotWithShape !== false;
+
+		return settings;
+	};
+	/**
 	 * Converts the ApiStroke object into the JSON object.
 	 * @memberof ApiStroke
 	 * @typeofeditors ["CDE"]
@@ -22887,7 +23060,7 @@
 	 * Sets the beginning arrow of the stroke.
 	 *
 	 * @memberof ApiStroke
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
 	 * @param {LineEndType} type - The type of the beginning arrow.
 	 * @param {LineEndSize} [width="medium"] - The width of the beginning arrow.
@@ -22934,7 +23107,7 @@
 	 * Returns the beginning arrow properties of the stroke.
 	 *
 	 * @memberof ApiStroke
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
 	 * @returns {{Type: LineEndType, Width: LineEndSize, Length: LineEndSize} | null}
 	 *
@@ -22956,7 +23129,7 @@
 	 * Sets the ending arrow of the stroke.
 	 *
 	 * @memberof ApiStroke
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
 	 * @param {LineEndType} type - The type of the ending arrow.
 	 * @param {LineEndSize} [width="medium"] - The width of the ending arrow.
@@ -23003,7 +23176,7 @@
 	 * Returns the ending arrow properties of the stroke.
 	 *
 	 * @memberof ApiStroke
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
 	 * @returns {{Type: LineEndType, Width: LineEndSize, Length: LineEndSize} | null}
 	 *
@@ -23553,6 +23726,18 @@
 	ApiBullet.prototype.GetClassType = function()
 	{
 		return "bullet";
+	};
+	/**
+	 * Converts the ApiBullet object into the JSON object.
+	 * @memberof ApiBullet
+	 * @typeofeditors ["CSE", "CPE", "PDFE"]
+	 * @returns {JSON}
+	 * @see office-js-api/Examples/{Editor}/ApiBullet/Methods/ToJSON.js
+	 */
+	ApiBullet.prototype.ToJSON = function()
+	{
+		var oWriter = new AscJsonConverter.WriterToJSON();
+		return JSON.stringify(oWriter.SerBullet(this.Bullet));
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -30136,14 +30321,16 @@
 	 * Sets the opacity of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @param {number} nOpacity - The watermark opacity. This value must be from 0 to 255.
+	 * @param {number} opacity - The watermark opacity. This value must be from 0 to 255.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiWatermarkSettings/Methods/SetOpacity.js
 	 */
-	ApiWatermarkSettings.prototype.SetOpacity = function (nOpacity)
+	ApiWatermarkSettings.prototype.SetOpacity = function (opacity)
 	{
-		let nOpacityVal = Math.min(255, Math.max(0, nOpacity));
-		this.Settings.put_Opacity(nOpacityVal);
+		opacity = GetNumberParameter(opacity, 255);
+		if (opacity < 0 || opacity > 255)
+			throwException(new Error("The opacity parameter must be between 0 and 255"));
+		this.Settings.put_Opacity(opacity);
 		return true;
 	};
 
@@ -30221,6 +30408,14 @@
 		else if(AscFormat.fApproxEqual(45.0, nAngle))
 		{
 			return "clockwise45";
+		}
+		else if(AscFormat.fApproxEqual(90.0, nAngle))
+		{
+			return "clockwise90";
+		}
+		else if(AscFormat.fApproxEqual(270.0, nAngle))
+		{
+			return "counterclockwise90";
 		}
 		else if(AscFormat.fApproxEqual(315, nAngle))
 		{
@@ -30969,6 +31164,7 @@
 	Api["CreateBlipFill"]                   = Api.CreateBlipFill;
 	Api["CreateNoFill"]                     = Api.CreateNoFill;
 	Api["CreateStroke"]                     = Api.CreateStroke;
+	Api["CreateShadow"]                     = Api.CreateShadow;
 	Api["CreateGradientStop"]               = Api.CreateGradientStop;
 	Api["CreateBullet"]                     = Api.CreateBullet;
 	Api["CreateNumbering"]                  = Api.CreateNumbering;
@@ -31169,6 +31365,7 @@
 	ApiDocument.prototype["GetAllStyles"]                  = ApiDocument.prototype.GetAllStyles;
 	ApiDocument.prototype["GetDocumentInfo"]               = ApiDocument.prototype.GetDocumentInfo;
 	ApiDocument.prototype["GetSelectedDrawings"]           = ApiDocument.prototype.GetSelectedDrawings;
+	ApiDocument.prototype["GetActiveTable"]                = ApiDocument.prototype.GetActiveTable;
 	ApiDocument.prototype["ReplaceCurrentImage"]           = ApiDocument.prototype.ReplaceCurrentImage;
 	ApiDocument.prototype["ReplaceDrawing"]                = ApiDocument.prototype.ReplaceDrawing;
 	ApiDocument.prototype["AcceptAllRevisionChanges"]      = ApiDocument.prototype.AcceptAllRevisionChanges;
@@ -31417,6 +31614,9 @@
 	ApiTable.prototype["AddComment"]                 = ApiTable.prototype.AddComment;
 	ApiTable.prototype["AddCaption"]                 = ApiTable.prototype.AddCaption;
 	ApiTable.prototype["GetAllCells"]                = ApiTable.prototype.GetAllCells;
+	ApiTable.prototype["GetSelectedCells"]           = ApiTable.prototype.GetSelectedCells;
+	ApiTable.prototype["GetSelectedRows"]            = ApiTable.prototype.GetSelectedRows;
+	ApiTable.prototype["GetSelectedColumnsCells"]    = ApiTable.prototype.GetSelectedColumnsCells;
 
 	ApiTableRow.prototype["GetClassType"]            = ApiTableRow.prototype.GetClassType;
 	ApiTableRow.prototype["GetInternalId"]           = ApiTableRow.prototype.GetInternalId;
@@ -31435,6 +31635,7 @@
 	ApiTableRow.prototype["SetTextPr"]          	 = ApiTableRow.prototype.SetTextPr;
 	ApiTableRow.prototype["Search"]          		 = ApiTableRow.prototype.Search;
 	ApiTableRow.prototype["SetBackgroundColor"]      = ApiTableRow.prototype.SetBackgroundColor;
+	ApiTableRow.prototype["SetRowPr"]                = ApiTableRow.prototype.SetRowPr;
 
 	ApiTableCell.prototype["GetClassType"]             = ApiTableCell.prototype.GetClassType;
 	ApiTableCell.prototype["GetInternalId"]            = ApiTableCell.prototype.GetInternalId;
@@ -31676,7 +31877,13 @@
 	ApiDrawing.prototype["ScaleHeight"]              = ApiDrawing.prototype.ScaleHeight;
 	ApiDrawing.prototype["ScaleWidth"]               = ApiDrawing.prototype.ScaleWidth;
 	ApiDrawing.prototype["Fill"]                     = ApiDrawing.prototype.Fill;
+	ApiDrawing.prototype["SetFill"]                  = ApiDrawing.prototype.SetFill;
+	ApiDrawing.prototype["GetFill"]                  = ApiDrawing.prototype.GetFill;
 	ApiDrawing.prototype["SetOutLine"]               = ApiDrawing.prototype.SetOutLine;
+	ApiDrawing.prototype["SetLine"]                  = ApiDrawing.prototype.SetLine;
+	ApiDrawing.prototype["GetLine"]                  = ApiDrawing.prototype.GetLine;
+	ApiDrawing.prototype["SetShadow"]                = ApiDrawing.prototype.SetShadow;
+	ApiDrawing.prototype["GetShadow"]                = ApiDrawing.prototype.GetShadow;
 	ApiDrawing.prototype["GetNextDrawing"]           = ApiDrawing.prototype.GetNextDrawing;
 	ApiDrawing.prototype["GetPrevDrawing"]           = ApiDrawing.prototype.GetPrevDrawing;
 	ApiDrawing.prototype["GetWidth"]                 = ApiDrawing.prototype.GetWidth;
@@ -31822,7 +32029,8 @@
 	ApiChart.prototype["SetTitleOutLine"]              =  ApiChart.prototype.SetTitleOutLine;
 	ApiChart.prototype["SetLegendFill"]                =  ApiChart.prototype.SetLegendFill;
 	ApiChart.prototype["SetLegendOutLine"]             =  ApiChart.prototype.SetLegendOutLine;
-	ApiChart.prototype["SetAxieNumFormat"]             =  ApiChart.prototype.SetAxieNumFormat;
+	ApiChart.prototype["SetAxisNumFormat"]             =  ApiChart.prototype.SetAxisNumFormat;
+	ApiChart.prototype["SetAxieNumFormat"]             =  ApiChart.prototype.SetAxieNumFormat = ApiChart.prototype.SetAxisNumFormat;
 	ApiChart.prototype["SetSeriaNumFormat"]            =  ApiChart.prototype.SetSeriaNumFormat;
 	ApiChart.prototype["SetDataPointNumFormat"]        =  ApiChart.prototype.SetDataPointNumFormat;
 	ApiChart.prototype["GetAllSeries"]                 =  ApiChart.prototype.GetAllSeries;
@@ -31833,7 +32041,7 @@
 	ApiOleObject.prototype["GetData"]               = ApiOleObject.prototype.GetData;
 	ApiOleObject.prototype["SetApplicationId"]         = ApiOleObject.prototype.SetApplicationId;
 	ApiOleObject.prototype["GetApplicationId"]         = ApiOleObject.prototype.GetApplicationId;
-	
+
 	ApiGroup.prototype["GetClassType"]	= ApiGroup.prototype.GetClassType;
 	ApiGroup.prototype["Ungroup"]		= ApiGroup.prototype.Ungroup;
 
@@ -31842,6 +32050,8 @@
 	ApiFill.prototype["GetType"]                     = ApiFill.prototype.GetType;
 
 	ApiStroke.prototype["GetClassType"]              = ApiStroke.prototype.GetClassType;
+	ApiShadow.prototype["GetClassType"]              = ApiShadow.prototype.GetClassType;
+	ApiShadow.prototype["GetSettings"]               = ApiShadow.prototype.GetSettings;
 	ApiStroke.prototype["ToJSON"]                    = ApiStroke.prototype.ToJSON;
 	ApiStroke.prototype["GetWidth"]                  = ApiStroke.prototype.GetWidth;
 	ApiStroke.prototype["GetFill"]                   = ApiStroke.prototype.GetFill;
@@ -32017,8 +32227,8 @@
 	ApiBlockLvlSdt.prototype["GetAppearance"]           = ApiBlockLvlSdt.prototype.GetAppearance;
 	ApiBlockLvlSdt.prototype["SetColor"]                = ApiBlockLvlSdt.prototype.SetColor;
 	ApiBlockLvlSdt.prototype["GetColor"]                = ApiBlockLvlSdt.prototype.GetColor;
-	
-	
+
+
 	ApiFormBase.prototype["GetClassType"]       = ApiFormBase.prototype.GetClassType;
 	ApiFormBase.prototype["GetInternalId"]      = ApiFormBase.prototype.GetInternalId;
 	ApiFormBase.prototype["GetFormType"]        = ApiFormBase.prototype.GetFormType;
@@ -32329,6 +32539,7 @@
 	window['AscBuilder'].ApiColor            = ApiColor;
 	window['AscBuilder'].ApiFill             = ApiFill;
 	window['AscBuilder'].ApiStroke           = ApiStroke;
+	window['AscBuilder'].ApiShadow           = ApiShadow;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Area for internal usage
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32593,6 +32804,7 @@
 	function GetApiDrawing(drawing) {
         switch (drawing.getObjectType()) {
             case AscDFH.historyitem_type_Shape:
+			case AscDFH.historyitem_type_Cnx:
                 return new AscBuilder.ApiShape(drawing);
             case AscDFH.historyitem_type_ImageShape:
                 return new AscBuilder.ApiImage(drawing);
@@ -33171,12 +33383,12 @@
 		return undefined;
 	}
 
-	function private_GetAllDrawingsWithType(aDrawings, nObjectType, fCreateBuilderWrapper) {
+	function private_GetAllDrawingsWithType(aDrawings, aObjectTypes, fCreateBuilderWrapper) {
 		let aWrappers = [];
 		for(let nIdx = 0; nIdx < aDrawings.length; ++nIdx) {
 			let oDrawing = aDrawings[nIdx];
 			let oGrObj = oDrawing.GraphicObj;
-			if(oGrObj && oGrObj.getObjectType() === nObjectType) {
+			if(oGrObj && aObjectTypes.indexOf(oGrObj.getObjectType()) !== -1) {
 				aWrappers.push(fCreateBuilderWrapper(oGrObj));
 			}
 		}

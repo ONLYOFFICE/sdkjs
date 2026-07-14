@@ -915,7 +915,7 @@
     CAnnotationBase.prototype.IsTextMarkup = function() {
         return false;
     };
-    CAnnotationBase.prototype.IsComment = function() {
+    CAnnotationBase.prototype.IsText = function() {
         return false;
     };
     CAnnotationBase.prototype.IsInk = function() {
@@ -1306,7 +1306,7 @@
         }
         AscCommon.History.EndNoHistoryMode();
 
-        if (this.IsComment()) {
+        if (this.IsText()) {
             if (oCommentData.m_bSolved) {
                 this.SetState(AscPDF.TEXT_ANNOT_STATE.Accepted);
             }
@@ -1536,6 +1536,7 @@
         if (this.IsShapeBased()) {
             this.SetNeedUpdateLn(true);
             this.SetNeedUpdateOpacity(true);
+			this.SetNeedRecalc(true);
         }
         else {
             this.AddToRedraw();

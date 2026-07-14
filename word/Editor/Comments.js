@@ -1282,8 +1282,12 @@ ParaComment.prototype.IsAnnotationMark = function()
 };
 ParaComment.prototype.recalculateRangeAlign = function(alignState)
 {
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return;
+
 	// TODO: We should move all this logic to AlignRecalcState
-	
+
 	let Para     = alignState.Paragraph;
 	let CurLine  = alignState.CurLine;
 	let CurRange = alignState.CurRange;
@@ -1375,6 +1379,10 @@ ParaComment.prototype.PrepareRecalculateObject = function()
 };
 ParaComment.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return;
+
 	var DocumentComments = editor.WordControl.m_oLogicDocument.Comments;
 	var Comment          = DocumentComments.Get_ById(this.CommentId);
 	if (null === Comment)
@@ -1388,7 +1396,7 @@ ParaComment.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPa
 };
 ParaComment.prototype.drawLines = function(lineDrawState)
 {
-	lineDrawState.handleAnnotationMark(this);
+	lineDrawState.handleCommentMark(this);
 };
 ParaComment.prototype.drawMark = function(x, y, h, graphics, isRTL, lineDrawState)
 {

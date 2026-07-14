@@ -166,6 +166,7 @@
         AscCommon.History.Add(new CChangesPDFTextAnnotIcon(this, this._noteIcon, nType));
         this._noteIcon = nType;
         this.SetWasChanged(true);
+		this.AddToRedraw();
     };
     CAnnotationText.prototype.GetIconType = function() {
         return this._noteIcon;
@@ -239,6 +240,8 @@
         let oCtx = oGraphics.GetContext();
         oCtx.save();
         oGraphics.EnableTransform();
+		oGraphics.SetGlobalAlpha(this.GetOpacity());
+
         oCtx.iconFill = "rgb(" + oRGB.r + "," + oRGB.g + "," + oRGB.b + ")";
 
         let nScale = 1 / (oGraphics.isThumbnails ? 1 : oDoc.Viewer.zoom);
@@ -267,7 +270,7 @@
 		if (AscCommon.IsShapeToImageConverter) {
 			return;
 		}
-		var bNotes = !!(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES);
+		var bNotes = !!(this.isSlideNoteShape());
 		if (!this.group && !bNotes) {
 			var oLock;
 			if (this.parent instanceof AscCommonWord.ParaDrawing) {
@@ -307,7 +310,7 @@
     CAnnotationText.prototype.IsNeedDrawFromStream = function() {
         return false;
     };
-    CAnnotationText.prototype.IsComment = function() {
+    CAnnotationText.prototype.IsText = function() {
         return true;
     };
     CAnnotationText.prototype.DrawSelected = function(overlay) {

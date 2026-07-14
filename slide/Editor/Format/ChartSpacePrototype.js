@@ -43,6 +43,7 @@ var CreateUnifillSolidFillSchemeColor = AscFormat.CreateUnifillSolidFillSchemeCo
 CChartSpace.prototype.handleUpdateTheme = CShape.prototype.handleUpdateTheme;
 CChartSpace.prototype.getIsSingleBody = CShape.prototype.getIsSingleBody;
 CChartSpace.prototype.getSlideIndex = CShape.prototype.getSlideIndex;
+CChartSpace.prototype.collectRedrawSlides = CShape.prototype.collectRedrawSlides;
 CChartSpace.prototype.getEditorType = function()
 {
     return 0;

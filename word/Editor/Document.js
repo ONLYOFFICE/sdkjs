@@ -122,6 +122,7 @@ var recalcresult2_NextPage        = 0x01; // Расчет нужно продо�
 var recalcresult2_CurPage         = 0x02; // Нужно заново пересчитать данную страницу
 var recalcresult2_NextSection     = 0x03; // Рассчитали до конца, но в конце был разрыв секции
 var recalcresult2_NextSection_Cur = 0x04; // Рассчитали не до конца, остановились на разрыве секции
+var recalcresult2_PrevPage        = 0x05; // Need to recalculate prev page (for keepNext inside a block-level sdt)
 
 var document_EditingType_Common = 0x00; // Обычный режим редактирования
 var document_EditingType_Review = 0x01; // Режим рецензирования
@@ -2230,6 +2231,9 @@ CDocument.prototype.FinalizeAction = function(checkEmptyAction, additional)
 	}
 	
 	this.ResumeRecalculate();
+	
+	if (AscDFH.historydescription_BuilderScript === this.Action.Description)
+		this.History.ResetRecalcIndexToPoint(-this.Action.PointsCount);
 
 	this.private_CheckAdditionalOnFinalize();
 	
@@ -7044,7 +7048,7 @@ CDocument.prototype.SetParagraphOutlineLvl = function(nLvl)
 	for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
 	{
 		arrParagraphs[nIndex].SetOutlineLvl(nLvl);
-		arrParagraphs[nIndex].UpdateDocumentOutline();
+		arrParagraphs[nIndex].UpdateOutline();
 	}
 
 	this.Recalculate();
@@ -8984,12 +8988,13 @@ CDocument.prototype.OnKeyDown = function(e)
 						this.StartAction(AscDFH.historydescription_Document_MathAddLine);
 						if (oMath.Is_InInnerContent())
 						{
+							let currentContent = oMath.GetSelectContent().Content;
+							currentContent.ConvertContentView(0, currentContent.Content.length, this.Api.getMathInputType(), false);
 							oMath.Handle_AddNewLine();
-							oMath.ProcessAutoCorrect();
 						}
 						else
 						{
-							oMath.ProcessAutoCorrect();
+							oMath.ConvertView(false, this.Api.getMathInputType());
 							this.AddNewParagraph();
 						}
 					}
@@ -9858,6 +9863,22 @@ CDocument.prototype.executeShortcut = function(type)
 				{
 					this.StartAction(AscDFH.historydescription_Document_SetTextStrikeoutHotKey, null, null, oTextPr.Strikeout !== true);
 					this.AddToParagraph(new ParaTextPr({Strikeout : oTextPr.Strikeout !== true}));
+					this.UpdateInterface();
+					this.FinalizeAction();
+				}
+				result = true;
+			}
+			break;
+		}
+		case Asc.c_oAscDocumentShortcutType.SmallCaps:
+		{
+			let textPr = this.GetCalculatedTextPr();
+			if (textPr)
+			{
+				if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
+				{
+					this.StartAction(AscDFH.historydescription_Document_SetTextSmallCapsHotKey, null, null, textPr.SmallCaps !== true);
+					this.AddToParagraph(new ParaTextPr({SmallCaps : textPr.SmallCaps !== true}));
 					this.UpdateInterface();
 					this.FinalizeAction();
 				}
@@ -14570,7 +14591,7 @@ CDocument.prototype.UpdateCommentPosition = function(oComment)
 	{
 		var oChangedComments = this.Comments.UpdateCommentPosition(oComment);
 		
-		if (this.Api)
+		if (this.Api && this.Api.sync_ChangeCommentLogicalPosition)
 			this.Api.sync_ChangeCommentLogicalPosition(oChangedComments, this.Comments.GetCommentsPositionsCount());
 
 		return;
@@ -17228,7 +17249,7 @@ CDocument.prototype.AddPageCount = function()
 {
 	if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
 	{
-		this.StartAction(AscDFH.historydescription_Document_AddPageCount);
+		this.StartAction(AscDFH.historydescription_Document_AddPageCount, null, null, true);
 		this.AddToParagraph(new AscWord.CRunPagesCount(this.Pages.length));
 		this.FinalizeAction();
 	}
@@ -19808,8 +19829,9 @@ CDocument.prototype.controller_AddImages = function(aImages)
 			{
 				var __w = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
 				var __h = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
-				W      = Math.max(5, Math.min(W, __w));
-				H      = Math.max(5, Math.min((W * __h / __w)));
+				let koeff = Math.min(1, W / __w, H / __h);
+				W      = Math.max(5, __w * koeff);
+				H      = Math.max(5, __h * koeff);
 				Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
 				var Image = this.DrawingObjects.createImage(_image.src, 0, 0, W, H);
 				Image.setParent(Drawing);
@@ -24781,7 +24803,7 @@ CDocument.prototype.AddTableOfContents = function(sHeading, oPr, oSdt)
 		this.UpdateInterface();
 		this.UpdateSelection();
 		this.UpdateRulers();
-		this.FinalizeAction();
+		this.FinalizeAction(null, {pr: oPr, fieldType: 'toc'});
 	}
 };
 CDocument.prototype.AddTableOfFigures = function(oPr)
@@ -24865,7 +24887,7 @@ CDocument.prototype.AddTableOfFigures = function(oPr)
             this.UpdateInterface();
             this.UpdateSelection();
             this.UpdateRulers();
-            this.FinalizeAction();
+            this.FinalizeAction(null, {pr: oPr, fieldType: 'tof'});
         }
         else
         {
@@ -24951,6 +24973,19 @@ CDocument.prototype.GetAllTablesOfContentsInDoc = function()
 	}
 
 	return aTOC;
+};
+CDocument.prototype.GetIndexOfTOCInDoc = function(oTOC)
+{
+	let allTOC = this.GetAllTablesOfContentsInDoc();
+	for (let i = 0; i < allTOC.length; i++)
+	{
+		var oFieldItem = allTOC[i];
+		if (oFieldItem instanceof AscCommonWord.CBlockLevelSdt)
+			oFieldItem = oFieldItem.GetInnerTableOfContents();
+		if (oFieldItem === oTOC)
+			return i;
+	}
+	return -1;
 };
 /**
  * Данная функция получает все таблицы TOF в документе по схеме Word
@@ -27933,6 +27968,14 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
  * @returns {?AscCommonWord.CComments}
  */
 CDocument.prototype.GetCommentsManager = function()
+{
+	return this.Comments;
+};
+/**
+ * Получаем класс, управляющий комментариями
+ * @returns {?AscCommonWord.CComments}
+ */
+CDocument.prototype.GetComments = function()
 {
 	return this.Comments;
 };

@@ -207,24 +207,25 @@
                     }
                     if(oStylesObject.slide)
                     {
-                        this.Slide = oStylesObject.slide;
-                        if(AscFormat.isRealNumber(this.Slide.num))
-                        {
-                            this.SlideNum = this.Slide.num;
-                            sStr = '' + (this.Slide.num + nFirstSlideNum);
-                        }
-                    }
-                    else if(oStylesObject.notes)
-                    {
-                        if(oStylesObject.notes.slide)
-                        {
-                            this.Slide = oStylesObject.notes.slide;
-                            if(AscFormat.isRealNumber(this.Slide.num))
-                            {
-                                this.SlideNum = this.Slide.num;
-                                sStr = '' + (this.Slide.num + nFirstSlideNum);
-                            }
-                        }
+											if (oStylesObject.slide.isNote()) {
+												if(oStylesObject.slide.slide)
+												{
+													this.Slide = oStylesObject.slide.slide;
+													if(AscFormat.isRealNumber(this.Slide.num))
+													{
+														this.SlideNum = this.Slide.num;
+														sStr = '' + (this.Slide.num + nFirstSlideNum);
+													}
+												}
+											} else {
+												this.Slide = oStylesObject.slide;
+												if(AscFormat.isRealNumber(this.Slide.num))
+												{
+													this.SlideNum = this.Slide.num;
+													sStr = '' + (this.Slide.num + nFirstSlideNum);
+												}
+											}
+
                     }
                     else if(oStylesObject.layout || oStylesObject.master)
                     {
@@ -357,14 +358,6 @@
             oFormat = AscCommon.oNumFormatCache.get(sFormat, AscCommon.NumFormatType.WordFieldDate);
         }
         return oFormat;
-    };
-
-    CPresentationField.prototype.Recalculate_MeasureContent = function()
-    {
-        if (!this.RecalcInfo.IsMeasureNeed())
-            return;
-        this.private_CalculateContent();
-        ParaRun.prototype.Recalculate_MeasureContent.call(this);
     };
 
     CPresentationField.prototype.Recalculate_MeasureContent = function()

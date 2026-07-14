@@ -820,7 +820,7 @@ void main() {\n\
             }, AscDFH.historydescription_Pdf_AddAnnot);
         }
     };
-    CFile.prototype.getNearestPos = function(pageIndex, x, y, bNeedLinePos) {
+    CFile.prototype.getNearestPos = function(pageIndex, x, y, bNeedLinePos, bSnapToBoundary) {
         let stream = this.getPageTextStream(pageIndex);
         if (!stream) return { Line : -1, Glyph : -1 };
 
@@ -853,6 +853,24 @@ void main() {\n\
         let _linePos = 0;
         let _minLinePos = 0;
         let tmp = 0;
+
+        function resolveGlyph(d, nChars) {
+            let g;
+            for (g = 1; g < nChars; ++g) {
+                if (_arrayGlyphOffsets[g] > d)
+                    break;
+            }
+            --g;
+
+            if (bSnapToBoundary !== false && g >= 0 && g < nChars) {
+                let _left  = _arrayGlyphOffsets[g];
+                let _right = (g + 1 < nChars) ? _arrayGlyphOffsets[g + 1] : _lineWidth;
+                if (d > (_left + _right) * 0.5)
+                    g = (g + 1 < nChars) ? g + 1 : -1;
+            }
+
+            return g;
+        }
 
         while (stream.pos < stream.size)
         {
@@ -889,15 +907,11 @@ void main() {\n\
                 let _distX = x - _lineX;
                 if (y >= (_lineY - _lineAscent) && y <= (_lineY + _lineDescent) && _distX >= 0 && _distX <= _lineWidth)
                 { // hit inside the line
-                    for (_glyph = 1; _glyph < nChars; ++_glyph)
-                    { // if characters overlap, the current one is selected at the intersection with the start of the next one
-                        if (_arrayGlyphOffsets[_glyph] > _distX)
-                            break;
-                    }
+                    _glyph = resolveGlyph(_distX, nChars);
 
                     let result = {
                         Line: _numLine,
-                        Glyph: --_glyph
+                        Glyph: _glyph
                     };
                     
                     if (bNeedLinePos) {
@@ -937,14 +951,7 @@ void main() {\n\
                     else if (_distX > _lineWidth)
                         _glyph = -1;
                     else
-                    {
-                        for (_glyph = 1; _glyph < nChars; ++_glyph)
-                        {
-                            if (_arrayGlyphOffsets[_glyph] > _distX)
-                                break;
-                        }
-                        --_glyph;
-                    }
+                        _glyph = resolveGlyph(_distX, nChars);
                 }
                 // Nothing to do, a "closer" line has already been found
             }
@@ -960,15 +967,11 @@ void main() {\n\
 
                 if (w >= 0 && w <= _lineWidth && h >= 0 && h <= (_lineDescent + _lineAscent))
                 { // hit inside the line
-                    for (_glyph = 1; _glyph < nChars; ++_glyph)
-                    {
-                        if (_arrayGlyphOffsets[_glyph] > w)
-                            break;
-                    }
+                    _glyph = resolveGlyph(w, nChars);
 
                     let result = {
                         Line: _numLine,
-                        Glyph: --_glyph
+                        Glyph: _glyph
                     };
                     
                     if (bNeedLinePos) {
@@ -1000,14 +1003,7 @@ void main() {\n\
                     else if (w > _lineWidth)
                         _glyph = -1;
                     else
-                    {
-                        for (_glyph = 1; _glyph < nChars; ++_glyph)
-                        {
-                            if (_arrayGlyphOffsets[_glyph] > w)
-                                break;
-                        }
-                        --_glyph;
-                    }
+                        _glyph = resolveGlyph(w, nChars);
                 }
             }
             _predY = _lineY;
@@ -1026,7 +1022,7 @@ void main() {\n\
         return result;
     };
     CFile.prototype.selectWholeWord = function(pageIndex, x, y) {
-        let ret = this.getNearestPos(pageIndex, x, y, true);
+        let ret = this.getNearestPos(pageIndex, x, y, true, false);
         if (ret.Glyph < 0)
             return;
 

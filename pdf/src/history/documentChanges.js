@@ -45,7 +45,6 @@ AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RotatePage]				= CChangesP
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RecognizePage]			= CChangesPDFDocumentRecognizePage;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_SetDocument]      		= CChangesPDFObjectSetDocument;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_PageLocks]        		= CChangesPDFDocumentPageLocks;
-AscDFH.changesFactory[AscDFH.historyitem_PDF_PropLocker_ObjectId]	    		= CChangesPDFPropLockerObjectId;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Start_Merge_Pages]		= CChangesPDFDocumentStartMergePages;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Part_Merge_Pages] 		= CChangesPDFDocumentPartMergePages;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_End_Merge_Pages]  		= CChangesPDFDocumentEndMergePages;
@@ -980,7 +979,7 @@ CChangesPDFDocumentRotatePage.prototype.private_SetValue = function(Value)
 
         // sticky notes are always non-rotated
         oDoc.Viewer.pagesInfo.pages[nPageIdx].annots.forEach(function(annot) {
-            if (annot.IsComment()) {
+            if (annot.IsText()) {
                 annot.AddToRedraw();
             }
         });
@@ -1068,7 +1067,7 @@ CChangesPDFDocumentRecognizePage.prototype.private_SetValue = function(bRecogniz
     if (-1 !== nPageIdx) {
         oFile.pages[nPageIdx].isRecognized = bRecognize;
 		if (bRecognize) {
-			oFile.nativeFile["scanPageFonts"](oPage.GetOriginIndex());
+			oFile.nativeFile["scanPageFonts"]([oPage.GetOriginIndex()]);
 		}
 
         if (oDoc.Viewer.drawingPages[nPageIdx]) {
@@ -1153,22 +1152,6 @@ CChangesPDFDocumentPageLocks.prototype.Load = function(){
 CChangesPDFDocumentPageLocks.prototype.CreateReverseChange = function()
 {
     return new this.constructor(this.Class, null, null, null, null, null, null);
-};
-
-/**
- * @constructor
- * @extends {AscDFH.CChangesBaseStringProperty}
- */
-function CChangesPDFPropLockerObjectId(Class, Old, New)
-{
-	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New);
-}
-CChangesPDFPropLockerObjectId.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
-CChangesPDFPropLockerObjectId.prototype.constructor = CChangesPDFPropLockerObjectId;
-CChangesPDFPropLockerObjectId.prototype.Type = AscDFH.historyitem_PDF_PropLocker_ObjectId;
-CChangesPDFPropLockerObjectId.prototype.private_SetValue = function(value)
-{
-	this.Class.objectId = value;
 };
 
 function CChangesPDFDocumentStartMergePages(Class, Old, New, Color) {
@@ -1299,6 +1282,7 @@ CChangesPDFDocumentEndMergePages.prototype.Redo = function()
 
     oDoc.Viewer.checkLoadCMap();
 	oDoc.Viewer.isFullText = false;
+	oDoc.pagesFontsScanned = false;
 };
 CChangesPDFDocumentEndMergePages.prototype.WriteToBinary = function(Writer)
 {
@@ -1657,9 +1641,13 @@ CChangesPDFDocumentRedactMeta.prototype.private_SetValue = function(Value) {
 
 	oDoc.redactMetaFlags = Value;
 
-	if ((Value & (1 << 2)) !== 0) {
-		oDoc.Viewer.structure = oDoc.Viewer.file.getStructure();
+	let aHeadings = [];
+	if ((Value & (1 << 2)) === 0) {
+		aHeadings = oDoc.Viewer.file.getStructure();
 	}
+
+	oDoc.Viewer.structure = aHeadings;
+	oDoc.Viewer.sendEvent("onStructure", oDoc.Viewer.structure);
 };
 
 /**
@@ -1742,7 +1730,7 @@ CChangesPDFDocumentRedactedFieldsContent.prototype.Redo = function()
             oItem.parentPage = oPage;
             oItem._page = oPage.GetIndex();
             oItem.selectStartPage = oItem._page;
-            
+
             oItem.AddToRedraw();
         }
     }

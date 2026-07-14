@@ -2377,6 +2377,20 @@ background-repeat: no-repeat;\
 			_data = sBase64;
 			_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Internal, checkData(_data))
 		}
+		//IMAGE
+		if (AscCommon.c_oAscClipboardDataFormat.Image & _formats)
+		{
+			var oDrawingObjects = this.WordControl.m_oLogicDocument.getDrawingObjects();
+			var oImageData = oDrawingObjects && oDrawingObjects.getSelectionImageData();
+			if (oImageData && oImageData.src)
+			{
+				var aImageSrc = oImageData.src.split(",");
+				if (aImageSrc[1])
+				{
+					_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Image, [AscCommon.Base64.decode(aImageSrc[1])]);
+				}
+			}
+		}
 	};
 
 	asc_docs_api.prototype.asc_SelectionCut = function()
@@ -4571,7 +4585,10 @@ background-repeat: no-repeat;\
 	{
 		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Properties))
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetParagraphStyle, null, null, sName);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetParagraphStyle, null, null, {
+				name:sName,
+				use_select: this.WordControl.m_oLogicDocument.IsSelectionUse()
+			});
 			this.WordControl.m_oLogicDocument.SetParagraphStyle(sName, true);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
@@ -5516,7 +5533,7 @@ background-repeat: no-repeat;\
 			if (logicDocument.IsSelectionLocked(AscCommon.changestype_None, {Type : AscCommon.changestype_2_HdrFtr}))
 				return;
 			
-			logicDocument.StartAction(AscDFH.historydescription_Document_AddPageNumToHdrFtr);
+			logicDocument.StartAction(AscDFH.historydescription_Document_AddPageNumToHdrFtr, null, null, {AlignV: where, AlignH: align});
 			logicDocument.Document_AddPageNum(where, align);
 			logicDocument.Recalculate();
 			logicDocument.FinalizeAction();
@@ -5526,7 +5543,7 @@ background-repeat: no-repeat;\
 			if (logicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
 				return;
 			
-			logicDocument.StartAction(AscDFH.historydescription_Document_AddPageNumToCurrentPos);
+			logicDocument.StartAction(AscDFH.historydescription_Document_AddPageNumToCurrentPos, null, null, true);
 			logicDocument.Document_AddPageNum(where, align);
 			logicDocument.Recalculate();
 			logicDocument.FinalizeAction();
@@ -5551,7 +5568,7 @@ background-repeat: no-repeat;\
 	{
 		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_HdrFtr))
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetHdrFtrFirstPage);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetHdrFtrFirstPage, null, null, {isOn: isOn});
 			this.WordControl.m_oLogicDocument.Document_SetHdrFtrFirstPage(isOn);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
@@ -5561,7 +5578,7 @@ background-repeat: no-repeat;\
 	{
 		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_HdrFtr))
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetHdrFtrEvenAndOdd);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetHdrFtrEvenAndOdd, null, null, {isOn: isOn});
 			this.WordControl.m_oLogicDocument.Document_SetHdrFtrEvenAndOddHeaders(isOn);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
@@ -6144,8 +6161,9 @@ background-repeat: no-repeat;\
 			{
 				let __w = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
 				let __h = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
-				_w      = Math.max(5, Math.min(_w, __w));
-				_h      = Math.max(5, Math.min((_w * __h / __w)));
+				let koeff = Math.min(1, _w / __w, _h / __h);
+				_w      = Math.max(5, __w * koeff);
+				_h      = Math.max(5, __h * koeff);
 			}
 
 			let src = _image.src;
@@ -6201,8 +6219,9 @@ background-repeat: no-repeat;\
 				{
 					let __w = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
 					let __h = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
-					_w      = Math.max(5, Math.min(_w, __w));
-					_h      = Math.max(5, Math.min((_w * __h / __w)));
+					let koeff = Math.min(1, _w / __w, _h / __h);
+					_w      = Math.max(5, __w * koeff);
+					_h      = Math.max(5, __h * koeff);
 				}
 				let src = _image.src;
 
@@ -9312,6 +9331,10 @@ background-repeat: no-repeat;\
 				this.WordControl.OnScroll();
 			}
 			this.turnOffSpecialModes();
+			
+			let logicDocument = this.private_GetLogicDocument();
+			if (logicDocument)
+				logicDocument.SetDisplayModeInReview(Asc.c_oAscDisplayModeInReview.Original, true);
 		}
 		else
 		{
@@ -10302,11 +10325,11 @@ background-repeat: no-repeat;\
 		this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_PasteHotKey);
 		return true;
 	};
-	asc_docs_api.prototype.canRunBuilderScript = function()
+	asc_docs_api.prototype.runBuilderScript = function(fRun)
 	{
 		let logicDocument = this.getLogicDocument();
-		if (!logicDocument)
-			return false;
+		if (!logicDocument || !fRun)
+			return;
 		
 		this.executeGroupActionsStart();
 
@@ -10314,7 +10337,7 @@ background-repeat: no-repeat;\
 		// В конце действия по выполненным изменениям проверяем можно ли оставлять данные изменения
 		logicDocument.StartAction(AscDFH.historydescription_BuilderScript);
 		logicDocument.CheckActionLock();
-		return true;
+		return fRun();
 	};
 	asc_docs_api.prototype._onEndBuilderScript = function(callback)
 	{
@@ -12100,7 +12123,11 @@ background-repeat: no-repeat;\
 
 		if (!isLocked)
 		{
-			oLogicDocument.StartAction(AscDFH.historydescription_Document_SetComplexFieldPr);
+			oLogicDocument.StartAction(AscDFH.historydescription_Document_SetComplexFieldPr, null, null, {
+				fieldType: isTOF ? "tof" : "toc",
+				fieldPr: oPr,
+				index: oLogicDocument.GetIndexOfTOCInDoc(oTOC)
+			});
 
 			if (isNeedChangeStyles)
 			{
@@ -12150,7 +12177,10 @@ background-repeat: no-repeat;\
 		{
 			if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content))
 			{
-				oLogicDocument.StartAction(AscDFH.historydescription_Document_UpdateTableOfContents);
+				oLogicDocument.StartAction(AscDFH.historydescription_Document_UpdateTableOfContents, null, null, {
+					isUpdateNum: isUpdatePageNumbers,
+					index: oLogicDocument.GetIndexOfTOCInDoc(oTOC)
+				});
 
 				var arrParagraphs = oLogicDocument.GetCurrentParagraph(false, true);
 
@@ -12174,7 +12204,10 @@ background-repeat: no-repeat;\
 		{
 			if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Document_Content))
 			{
-				oLogicDocument.StartAction(AscDFH.historydescription_Document_UpdateTableOfContents);
+				oLogicDocument.StartAction(AscDFH.historydescription_Document_UpdateTableOfContents, null, null, {
+					isUpdateNum: isUpdatePageNumbers,
+					index: oLogicDocument.GetIndexOfTOCInDoc(oTOC)
+				});
 
 				oTOC.Update();
 
@@ -14544,7 +14577,7 @@ background-repeat: no-repeat;\
 	{
 		if (this.printPreview)
 			return;
-		this.printPreview = new AscCommon.CPrintPreview(this, containerId);
+		this.printPreview = this.isPdfEditor() ? new AscCommon.CPdfPrintPreview(this, containerId) : new AscCommon.CDocumentPrintPreview(this, containerId);
 	};
 	asc_docs_api.prototype.asc_drawPrintPreview = function(index)
 	{

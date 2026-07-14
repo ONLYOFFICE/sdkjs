@@ -1925,7 +1925,7 @@
 
 	ReaderFromJSON.prototype.MasterSlideFromJSON = function(oParsedMaster, oPres)
 	{
-		var oMasterSlide = new AscCommonSlide.MasterSlide(undefined, null);
+		var oMasterSlide = new AscCommonSlide.MasterSlide();
 
 		var oTheme  = oParsedMaster["theme"] ? this.ThemeFromJSON(oParsedMaster["theme"]) : null;
 		var oClrMap = oParsedMaster["clrMapOvr"] ? this.ColorMapOvrFromJSON(oParsedMaster["clrMapOvr"]) : null;
@@ -2447,10 +2447,10 @@
 			m_sOOTime:   oParsedComment["dt"]
 		});
 
-		var oCommentData = new AscCommon.CCommentData();
+		var oCommentData = new AscCommon.CSlideCommentData();
 		oCommentData.Read_FromAscCommentData(oAscCommentData);
 
-		var oComment = new AscCommon.CComment(oParent, oCommentData);
+		var oComment = new AscCommon.CSlideComment(oParent, oCommentData);
 		oComment.setPosition(oParsedComment["pos"]["x"], oParsedComment["pos"]["y"]);
 
 		return oComment;

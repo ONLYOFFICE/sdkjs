@@ -3275,6 +3275,52 @@ CTable.prototype.Recalculate = function()
 	this.private_RecalculateGrid();
 	this.Internal_Recalculate_1();
 };
+CTable.prototype.IsNeedRecalculateKeepNext = function()
+{
+	let rowCount = this.GetRowsCount();
+	if (!this.IsInline() || !rowCount || !this.private_IsRowWithKeepNext(rowCount - 1))
+		return false;
+
+	return this.GetPagesCount() <= 1;
+};
+CTable.prototype.IsPartiallyKeepNext = function()
+{
+	let rowCount = this.GetRowsCount();
+	if (!this.IsInline() || rowCount <= 1 || !this.private_IsRowWithKeepNext(rowCount - 1))
+		return false;
+
+	let firstRow = rowCount - 2;
+	for (; firstRow >= 0; --firstRow)
+	{
+		if (!this.private_IsRowWithKeepNext(firstRow))
+			break;
+	}
+	
+	++firstRow;
+	if (0 === firstRow)
+		return false;
+
+	return !this.IsRowStartFromNewPage(firstRow);
+};
+/**
+ * @param iRow {number}
+ * @returns {boolean}
+ */
+CTable.prototype.IsRowStartFromNewPage = function(iRow)
+{
+	if (0 === iRow)
+		return this.IsStartFromNewPage();
+	
+	for (let iPage = 1; iPage < this.Pages.length; ++iPage)
+	{
+		if (this.Pages[iPage].FirstRow === iRow)
+			return (this.Pages[iPage - 1].LastRow !== iRow);
+		else if (this.Pages[iPage].FirstRow > iRow)
+			break;
+	}
+	
+	return false;
+};
 CTable.prototype.Reset_RecalculateCache = function()
 {
 	this.RecalcInfo.Reset(true);
@@ -3583,6 +3629,20 @@ CTable.prototype.IsContentOnFirstPage = function()
 		return true;
 
 	return false;
+};
+/**
+ * Checks whether the last row of the table has the "keep with next" setting, i.e. it must be
+ * kept on the same page as the element following the table.
+ * @returns {boolean}
+ */
+CTable.prototype.IsLastRowKeepWithNext = function()
+{
+	let nRowsCount = this.GetRowsCount();
+	if (nRowsCount <= 0)
+		return false;
+
+	let oLastRow = this.GetRow(nRowsCount - 1);
+	return !!(oLastRow && oLastRow.IsContentWithKeepNext());
 };
 CTable.prototype.IsTableBorder = function(X, Y, CurPage)
 {

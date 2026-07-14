@@ -252,7 +252,7 @@
 		this.m_bIsIE = AscCommon.AscBrowser.isIE;
 
 		// thumbnails
-		this.Thumbnails = new CThumbnailsManager(this);//todo override CThumbnailsManager
+		this.Thumbnails = new AscCommon.CThumbnailsManager(this);//todo override CThumbnailsManager
 		this.Thumbnails.showContextMenu = function(bPosBySelect) {}
 		this.Thumbnails.onKeyDown = function(e) {return true;}
 
@@ -4601,7 +4601,7 @@
 
 		this.CalculateDocumentSize(false);
 
-		this.Thumbnails.SelectPage(lPageNum);
+		this.Thumbnails.SelectPage(lPageNum, _bIsUpdate);
 
 		this.CreateBackgroundHorRuler();
 		this.CreateBackgroundVerRuler();
@@ -4748,9 +4748,6 @@
 	CEditorPage.prototype.ChangeTimelineScale = function (bZoomOut) {
 		this.m_oAnimPaneApi.timeline.Control.timeline.changeTimelineScale(bZoomOut);
 	};
-	CEditorPage.prototype.IsAnimPaneSupported = function () {
-		return this.IsSupportAnimPane && !this.m_oApi.isMasterMode();
-	};
 
 	// Notes
 	CEditorPage.prototype.GetNotesHeight = function () {
@@ -4783,7 +4780,10 @@
 	CEditorPage.prototype.setAnimPaneEnable = function (bEnabled) {
 	};
 	CEditorPage.prototype.IsNotesSupported = function () {
-		return this.IsSupportNotes && !this.m_oApi.isMasterMode();
+		return this.IsSupportNotes;
+	};
+	CEditorPage.prototype.IsThumbnailsSupported = function () {
+		return true;
 	};
 
 	// Media player
@@ -4959,45 +4959,7 @@
 		let oPlayerData = this.GetMediaPlayerData();
 		console.log(JSON.stringify(oPlayerData))
 	};
-	CEditorPage.prototype.UpdateViewMode = function () {
-		let nMode = Asc.editor.presentationViewMode;
-		switch (nMode) {
-			case Asc.c_oAscPresentationViewMode.normal:
-				{
-					this.GoToPage(0);
-					this.setNotesEnable(true);
-					this.setAnimPaneEnable(true);
-					this.m_oApi.hideMediaControl();
-					this.m_oApi.asc_hideComments();
-					this.m_oLogicDocument.Recalculate({ Drawings: { All: true, Map: {} } });
-					this.m_oLogicDocument.Document_UpdateInterfaceState();
-					break;
-				}
-			case Asc.c_oAscPresentationViewMode.masterSlide:
-				{
-					let oSlide = this.m_oLogicDocument.GetCurrentSlide();
-					let nIdx = 0;
-					if (oSlide) {
-						let nCurIdx = this.m_oLogicDocument.GetSlideIndex(oSlide.Layout);
-						if (nCurIdx !== -1) {
-							nIdx = nCurIdx;
-						}
-					}
-					this.GoToPage(nIdx);
-					this.m_oLogicDocument.Recalculate({ Drawings: { All: true, Map: {} } });
-					this.setNotesEnable(false);
-					this.setAnimPaneEnable(false);
-					this.m_oApi.hideMediaControl();
-					this.m_oApi.asc_hideComments();
-					this.m_oLogicDocument.Document_UpdateInterfaceState();
-					break;
-				}
-			case Asc.c_oAscPresentationViewMode.sorter:
-				{
-					break;
-				}
-		}
-	};
+	CEditorPage.prototype.UpdateViewMode = function () {};
 
 	// EXPORTS
 

@@ -365,9 +365,11 @@
 			this.m_oFactoryClass[AscDFH.historyitem_type_SlideLayout]         = AscCommonSlide.SlideLayout;
 			this.m_oFactoryClass[AscDFH.historyitem_type_SlideMaster]         = AscCommonSlide.MasterSlide;
 			this.m_oFactoryClass[AscDFH.historyitem_type_SlideComments]       = AscCommonSlide.SlideComments;
-			this.m_oFactoryClass[AscDFH.historyitem_type_PropLocker]          = AscCommonSlide.PropLocker;
+			this.m_oFactoryClass[AscDFH.historyitem_type_SlideComment]        = AscCommon.CSlideComment;
+			this.m_oFactoryClass[AscDFH.historyitem_type_PropLocker]          = AscCommon.PropLocker;
 			this.m_oFactoryClass[AscDFH.historyitem_type_NotesMaster]         = AscCommonSlide.CNotesMaster;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Notes]               = AscCommonSlide.CNotes;
+			this.m_oFactoryClass[AscDFH.historyitem_type_HandoutMaster]       = AscCommonSlide.CHandoutMaster;
 			this.m_oFactoryClass[AscDFH.historyitem_type_PresentationSection] = AscCommonSlide.CPrSection;
 			this.m_oFactoryClass[AscDFH.historyitem_type_SldSz]               = AscCommonSlide.CSlideSize;
 
@@ -490,7 +492,6 @@
 
 			// other
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Page]				= AscPDF.CPageInfo;
-			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_PropLocker]        = AscPDF.PropLocker;
 		}
 
 		this.m_oFactoryClass[AscDFH.historyitem_type_DocumentMacros] = AscCommon.CDocumentMacros;

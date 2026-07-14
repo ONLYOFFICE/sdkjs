@@ -139,6 +139,7 @@ function (window, undefined) {
 
 	window['AscCH'].historyitem_Worksheet_TimelineDelete = 65;
 
+	window['AscCH'].historyitem_Worksheet_SetActiveCell = 66;
 
 	window['AscCH'].historyitem_RowCol_Fontname = 1;
 	window['AscCH'].historyitem_RowCol_Fontsize = 2;
@@ -318,6 +319,8 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Layout_FirstPageNumber = 13;
 	window['AscCH'].historyitem_Layout_HorizontalCentered = 14;
 	window['AscCH'].historyitem_Layout_VerticalCentered = 15;
+	window['AscCH'].historyitem_Layout_Header = 16;
+	window['AscCH'].historyitem_Layout_Footer = 17;
 
 	
 	window['AscCH'].historyitem_ArrayFromula_AddFormula = 1;
@@ -1453,6 +1456,7 @@ CHistory.prototype.EndTransaction = function(checkLockLastAction)
 			var wsView = api && api.wb && api.wb.getWorksheet();
 			if (wsView) {
 				wsView.updateTopLeftCell();
+				wsView.model.updateActiveCell();
 			}
 			t.workbook && t.workbook.handlers.trigger("EndTransactionCheckSize");
 		}
@@ -1797,6 +1801,17 @@ CHistory.prototype.GetSerializeArray = function()
 			}
 		}
 		this.workbook.handleDrawingsOnWorkbookChange(aRanges);
+	};
+
+	AscCommon.CContentChangesElement.prototype.Refresh_BinaryData = function()
+	{
+		if (!this.m_pData || !this.m_pData.Data || !this.m_pData.Item)
+			return;
+
+		this.m_pData.Data.UseArray = true;
+		this.m_pData.Data.PosArray = this.m_aPositions;
+
+		AscCommon.History.Refresh_SpreadsheetChanges(this.m_pData.Item);
 	};
 	//------------------------------------------------------------export--------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};

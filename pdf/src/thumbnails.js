@@ -595,8 +595,6 @@
 				if (!this.viewer._checkFontsOnPages(needPage.num, needPage.num))
 					return true;
 				
-				console.log('Thunbnails');
-				
                 isNeedTasks = true;
                 let isLandscape = this.viewer.isLandscapePage(needPage.num);
                 let angle       = this.viewer.getPageRotate(needPage.num);

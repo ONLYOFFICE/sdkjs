@@ -2259,12 +2259,16 @@ function (window, undefined) {
 		);
 	};
 
-	function getFirstDistinctPoint(tipPoint, pathCommands, searchFromEnd) {
+	const ARROW_SEGMENT_COEF = 0.1;
+
+	function getFirstDistinctPoint(tipPoint, pathCommands, searchFromEnd, minDistance) {
 		const epsilon = AscWord.EPSILON;
 
 		const start = searchFromEnd ? pathCommands.length - 1 : 0;
 		const end = searchFromEnd ? -1 : pathCommands.length;
 		const step = searchFromEnd ? -1 : 1;
+
+		let nearestDistinctPoint = null;
 
 		for (let i = start; i !== end; i += step) {
 			const command = pathCommands[i];
@@ -2277,13 +2281,19 @@ function (window, undefined) {
 			}
 
 			if (point) {
-				if (Math.abs(point.x - tipPoint.x) > epsilon || Math.abs(point.y - tipPoint.y) > epsilon) {
-					return point;
+				const distance = getLineLength(point, tipPoint);
+				if (distance > epsilon) {
+					if (!AscFormat.isRealNumber(minDistance) || distance >= minDistance) {
+						return point;
+					}
+					if (!nearestDistinctPoint) {
+						nearestDistinctPoint = point;
+					}
 				}
 			}
 		}
 
-		return null;
+		return nearestDistinctPoint;
 	}
 
 	function getClosestIntersectionWithPath(circleCenter, circleRadius, pathCommands, searchFromEnd) {
@@ -2493,7 +2503,7 @@ function (window, undefined) {
 		const arrowTipPoint = { x: commands[0].X, y: commands[0].Y };
 		let arrowBasePoint = getClosestIntersectionWithPath(arrowTipPoint, arrowLength, commands, false);
 		if (!arrowBasePoint) {
-			arrowBasePoint = getFirstDistinctPoint(arrowTipPoint, commands, false);
+			arrowBasePoint = getFirstDistinctPoint(arrowTipPoint, commands, false, arrowLength * ARROW_SEGMENT_COEF);
 		}
 
 		if (arrowBasePoint) {
@@ -2524,7 +2534,7 @@ function (window, undefined) {
 		const arrowTipPoint = { x: pathEndPoint.x, y: pathEndPoint.y };
 		let arrowBasePoint = getClosestIntersectionWithPath(arrowTipPoint, arrowLength, commands, true);
 		if (!arrowBasePoint) {
-			arrowBasePoint = getFirstDistinctPoint(arrowTipPoint, commands, true);
+			arrowBasePoint = getFirstDistinctPoint(arrowTipPoint, commands, true, arrowLength * ARROW_SEGMENT_COEF);
 		}
 
 		if (arrowBasePoint) {

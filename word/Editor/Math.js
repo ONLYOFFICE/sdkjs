@@ -614,6 +614,13 @@ ParaMath.prototype.Copy = function(Selected, oPr)
 
     return NewMath;
 };
+ParaMath.prototype.Copy2 = function()
+{
+    var NewMath = new ParaMath();
+    NewMath.Root.bRoot = true;
+    this.Root.CopyTo(NewMath.Root);
+    return NewMath;
+};
 ParaMath.prototype.CopyContent = function(Selected)
 {
     return [this.Copy(Selected)];

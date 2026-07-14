@@ -778,11 +778,19 @@
             }
         };
         Object.freeze(oApiConsole);
-    
+		
+		let oApiApp = {
+			"alert": function(message) {
+				window.alert(message);
+			}
+		}
+		Object.freeze(oApiApp);
+
         let oApiObjects = AscPDF.Api.Types;
         let aArgsNamesPdfApi = [
             "event",
             "color",
+			"app",
 
             "AFNumber_Format",
             "AFNumber_Keystroke",
@@ -804,18 +812,15 @@
             "AFMakeNumber"
         ];
     
-        if (!oParentDoc.globalEventStack) {
-            oParentDoc.globalEventStack = [];    
-        }
-
-        oParentDoc.globalEventStack.push(oParentDoc.event);
+        oParentDoc.eventsStack.push(oParentDoc.event);
         oParentDoc.event = oEvent;
 
         let oApiFunc = AscPDF.Api.Functions;
         let aArgsPdfApi = [
             oEvent,
             oApiObjects["color"],
-
+			oApiApp,
+			
             oApiFunc["AFNumber_Format"],
             oApiFunc["AFNumber_Keystroke"],
             oApiFunc["AFPercent_Format"],

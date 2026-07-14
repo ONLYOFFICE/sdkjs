@@ -3162,6 +3162,10 @@
 	{
 		this.m_oBaseTransform = _matrix;
 	};
+	CDocumentRenderer.prototype.ResetBaseTransform = function()
+	{
+		this.m_oBaseTransform = null;
+	};
 	CDocumentRenderer.prototype.BeginPage = function(width, height)
 	{
 		this.m_arrayPages[this.m_arrayPages.length]                    = new CMetafile(width, height);

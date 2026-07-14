@@ -3848,7 +3848,6 @@
         AscFormat.CShape.prototype.draw.apply(this, arguments);
     };
     CDLbl.prototype.checkContentWordArt = CShape.prototype.checkContentWordArt;
-    CDLbl.prototype.drawTxBody = CShape.prototype.drawTxBody;
     CDLbl.prototype.chekBodyPrTransform = function () {return false;};
     CDLbl.prototype.checkNeedRecalcDocContentForTxWarp = function () {return false;};
     CDLbl.prototype.isEmptyPlaceholder = function() {
@@ -11585,7 +11584,6 @@
     InitClass(CLegend, CBaseChartObject, AscDFH.historyitem_type_Legend);
     CLegend.prototype.recalculatePen = CShape.prototype.recalculatePen;
     CLegend.prototype.recalculateBrush = CShape.prototype.recalculateBrush;
-    CLegend.prototype.drawTxBody = CShape.prototype.drawTxBody;
     CLegend.prototype.getCompiledLine = CShape.prototype.getCompiledLine;
     CLegend.prototype.getCompiledFill = CShape.prototype.getCompiledFill;
     CLegend.prototype.getCompiledTransparent = CShape.prototype.getCompiledTransparent;
@@ -11718,7 +11716,7 @@
     CLegend.prototype.isPlaceholder = function() {
         return false;
     };
-    CLegend.prototype.draw = function(g) {
+	CLegend.prototype.draw = function(g) {
         g.IsDrawSmart = true;
         CShape.prototype.draw.call(this, g);
         for(var i = 0; i < this.calcEntryes.length; ++i) {
@@ -15208,7 +15206,6 @@
     CTitle.prototype.recalculateContent = CDLbl.prototype.recalculateContent;
     CTitle.prototype.chekBodyPrTransform = CDLbl.prototype.chekBodyPrTransform;
     CTitle.prototype.checkContentWordArt = CDLbl.prototype.checkContentWordArt;
-    CTitle.prototype.drawTxBody = CDLbl.prototype.drawTxBody;
     CTitle.prototype.checkNeedRecalcDocContentForTxWarp = CDLbl.prototype.checkNeedRecalcDocContentForTxWarp;
     CTitle.prototype.setPosition = CDLbl.prototype.setPosition;
     CTitle.prototype.checkHitToBounds = CDLbl.prototype.checkHitToBounds;
@@ -17590,7 +17587,6 @@
     };
     CalcLegendEntry.prototype.chekBodyPrTransform = CDLbl.prototype.chekBodyPrTransform;
     CalcLegendEntry.prototype.checkContentWordArt = CDLbl.prototype.checkContentWordArt;
-    CalcLegendEntry.prototype.drawTxBody = CDLbl.prototype.drawTxBody;
     CalcLegendEntry.prototype.checkNeedRecalcDocContentForTxWarp = CDLbl.prototype.checkNeedRecalcDocContentForTxWarp;
     CalcLegendEntry.prototype.getParentObjects = CDLbl.prototype.getParentObjects;
     CalcLegendEntry.prototype.getDocContent = CDLbl.prototype.getDocContent;
@@ -17692,8 +17688,7 @@
     }
 
     CompiledMarker.prototype.draw = CShape.prototype.draw;
-
-    CompiledMarker.prototype.chekBodyPrTransform = function () {return false;};
+	CompiledMarker.prototype.chekBodyPrTransform = function () {return false;};
     CompiledMarker.prototype.getGeometry = CShape.prototype.getGeometry;
     CompiledMarker.prototype.check_bounds = CShape.prototype.check_bounds;
     CompiledMarker.prototype.getBounds = function() {
@@ -17708,7 +17703,6 @@
     CompiledMarker.prototype.GetParaDrawing = function() {
         return null;
     };
-	CompiledMarker.prototype.drawTxBody = function() {};
 
     CompiledMarker.prototype.getScaleCoefficient = function() {
         return 1;

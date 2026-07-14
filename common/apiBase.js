@@ -2027,12 +2027,13 @@
 			oResult.setLicenseType(licenseType);
 			t.sendEvent('asc_onLicenseChanged', oResult);
 		};
-		this.CoAuthoringApi.onAiPluginSettings = function(data)
+		this.CoAuthoringApi.onAiPluginSettings = function(data, allowBrowserProxy)
 		{
 			if (data) {
-				data.proxy = AscCommon.getBaseUrl() + "../../../../ai-proxy";
 				t.aiPluginSettings = JSON.stringify(data);
 			}
+			// Expose the proxy URL when the browser may use it: server settings present or browser-proxy allowed.
+			t.aiProxyUrl = (data || allowBrowserProxy) ? AscCommon.getBaseUrl() + "../../../../ai-proxy" : "";
 		};
 		this.CoAuthoringApi.onMiscEvent = function(data)
 		{
@@ -3826,14 +3827,17 @@
 	baseEditorsApi.prototype.asc_Recalculate       = function()
 	{
 	};
-	baseEditorsApi.prototype.canRunBuilderScript = function()
+	baseEditorsApi.prototype.runBuilderScript = function(fRun)
 	{
 		this.executeGroupActionsStart();
 		let res = this.asc_canPaste();
-		if (!res)
+		if (!res || !fRun)
+		{
 			this.executeGroupActionsEnd();
-
-		return res;
+			return;
+		}
+		
+		return fRun();
 	};
 	baseEditorsApi.prototype.onEndBuilderScript = function(callback)
 	{
@@ -4715,13 +4719,13 @@
 		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["isSupportMacroses"] && !window["AscDesktopEditor"]["isSupportMacroses"]())
 			return;
 
-		if (!this.canRunBuilderScript())
-			return;
-
-		this._beforeEvalCommand();
-		this.macros.runAuto();
-		this._afterEvalCommand(undefined);
-		this.onEndBuilderScript();
+		let _t = this;
+		this.runBuilderScript(function(){
+			_t._beforeEvalCommand();
+			_t.macros.runAuto();
+			_t._afterEvalCommand(undefined);
+			_t.onEndBuilderScript();
+		});
     };
 	baseEditorsApi.prototype.asc_runMacros = function(sGuid)
     {
@@ -4734,13 +4738,13 @@
 		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["isSupportMacroses"] && !window["AscDesktopEditor"]["isSupportMacroses"]())
 			return;
 
-		if (!this.canRunBuilderScript())
-			return;
-
-		this._beforeEvalCommand();
-		this.macros.run(sGuid);
-		this._afterEvalCommand(undefined);
-		this.onEndBuilderScript();
+		let _t = this;
+		this.runBuilderScript(function(){
+			_t._beforeEvalCommand();
+			_t.macros.run(sGuid);
+			_t._afterEvalCommand(undefined);
+			_t.onEndBuilderScript();
+		});
     };
 	baseEditorsApi.prototype.asc_getAllMacrosNames = function()
     {
@@ -5669,7 +5673,16 @@
 	baseEditorsApi.prototype.getAnnotations = function() {
 		return null;
 	};
-	baseEditorsApi.prototype.isMasterMode = function(){
+	baseEditorsApi.prototype.IsMasterSlideMode = function(){
+		return false;
+	};
+	baseEditorsApi.prototype.IsNotesPageMode = function() {
+		return false;
+	};
+	baseEditorsApi.prototype.IsNotesMasterMode = function() {
+		return false;
+	};
+	baseEditorsApi.prototype.IsHandoutMasterMode = function() {
 		return false;
 	};
 	baseEditorsApi.prototype.getSelectionState = function() {
@@ -5964,19 +5977,19 @@
 
 	baseEditorsApi.prototype["native_callCommand"] = function(funcText, params)
 	{
-		if (!this.canRunBuilderScript())
-			return;
+		let _t = this;
+		return this.runBuilderScript(function(){
+			let jsonParam = (typeof params === "string") ? params : JSON.stringify(params);
+			_t._beforeEvalCommand();
+			let script = "(function(){let Asc={};Asc.scope=" + jsonParam + ";return (" + funcText + ")(Asc.scope);})();";
+			let commandReturnValue = AscCommon.safePluginEval(script);
+			_t._afterEvalCommand(undefined);
+			_t.onEndBuilderScript();
 
-		let jsonParam = (typeof params === "string") ? params : JSON.stringify(params);
-		this._beforeEvalCommand();
-		let script = "(function(){let Asc={};Asc.scope=" + jsonParam + ";return (" + funcText + ")(Asc.scope);})();";
-		let commandReturnValue = AscCommon.safePluginEval(script);
-		this._afterEvalCommand(undefined);
-		this.onEndBuilderScript();
-
-		if (!Asc.checkReturnCommand(commandReturnValue))
-			commandReturnValue = undefined;
-		return commandReturnValue;
+			if (!Asc.checkReturnCommand(commandReturnValue))
+				commandReturnValue = undefined;
+			return commandReturnValue;
+		});
 	};
 
 	baseEditorsApi.prototype["native_callMethod"] = function(name, params)
@@ -6115,6 +6128,7 @@
 	};
 	baseEditorsApi.prototype.startGroupActions = function(pr)
 	{
+		this.sendEvent("asc_onBeginGroupActions");
 	};
 	baseEditorsApi.prototype.executeGroupActions = function(f)
 	{
@@ -6128,9 +6142,11 @@
 	};
 	baseEditorsApi.prototype.cancelGroupActions = function(pr)
 	{
+		this.sendEvent("asc_onCancelGroupActions");
 	};
 	baseEditorsApi.prototype.endGroupActions = function(pr)
 	{
+		this.sendEvent("asc_onEndGroupActions");
 	};
 	baseEditorsApi.prototype.isGroupActions = function()
 	{

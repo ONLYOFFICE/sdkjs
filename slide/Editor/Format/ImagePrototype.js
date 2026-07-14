@@ -49,6 +49,7 @@ CImageShape.prototype.getRotateAngle = CShape.prototype.getRotateAngle;
 CImageShape.prototype.handleUpdateTheme = CShape.prototype.handleUpdateTheme;
 CImageShape.prototype.getIsSingleBody = CShape.prototype.getIsSingleBody;
 CImageShape.prototype.getSlideIndex = CShape.prototype.getSlideIndex;
+CImageShape.prototype.collectRedrawSlides = CShape.prototype.collectRedrawSlides;
 CImageShape.prototype.getEditorType = function()
 {
     return 0;

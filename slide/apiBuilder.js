@@ -242,6 +242,7 @@
     function GetApiDrawing(drawing) {
         switch (drawing.getObjectType()) {
             case AscDFH.historyitem_type_Shape:
+			case AscDFH.historyitem_type_Cnx:
                 return new ApiShape(drawing);
             case AscDFH.historyitem_type_ImageShape:
                 return new ApiImage(drawing);
@@ -909,7 +910,7 @@
     Api.CreateSlide = function(){
         var oPresentation = private_GetPresentation();
         var oSlide = new AscCommonSlide.Slide(oPresentation, oPresentation.slideMasters[0].sldLayoutLst[0], 0);
-        oSlide.setNotes(AscCommonSlide.CreateNotes());
+        oSlide.setNotes(AscCommonSlide.CreateNotes(oPresentation.notesMasters[0]));
         oSlide.notes.setNotesMaster(oPresentation.notesMasters[0]);
         oSlide.notes.setSlide(oSlide);
         return new ApiSlide(oSlide);
@@ -966,8 +967,8 @@
      * @param {ShapeType} [sType="rect"] - The shape type which specifies the preset shape geometry.
      * @param {EMU} [nWidth = 914400] - The shape width in English measure units.
 	 * @param {EMU} [nHeight = 914400] - The shape height in English measure units.
-	 * @param {ApiFill} [oFill    = Api.CreateNoFill()] - The color or pattern used to fill the shape.
-	 * @param {ApiStroke} [oStroke    = Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the element shadow.
+	 * @param {ApiFill} [oFill] - The color or pattern used to fill the shape. If not specified, the default shape style fill (theme accent) is used.
+	 * @param {ApiStroke} [oStroke] - The stroke used to draw the shape outline. If not specified, the default shape style outline (theme accent) is used.
      * @returns {ApiShape}
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateShape.js
 	 */
@@ -978,10 +979,8 @@
         if (!AscFormat.isValidShapeType(sType)) sType = "rect";
         nWidth  = nWidth  || 914400;
 	    nHeight = nHeight || 914400;
-	    oFill   = oFill   || Api.CreateNoFill();
-	    oStroke = oStroke || Api.CreateStroke(0, Api.CreateNoFill());
         let theme = presentation.Get_Theme();
-        return new ApiShape(AscFormat.builder_CreateShape(sType, nWidth/36000, nHeight/36000, oFill.UniFill, oStroke.Ln, curSlide, theme, private_GetDrawingDocument(), false));
+        return new ApiShape(AscFormat.builder_CreateShape(sType, nWidth/36000, nHeight/36000, oFill ? oFill.UniFill : null, oStroke ? oStroke.Ln : null, curSlide, theme, private_GetDrawingDocument(), false));
     };
 
     
@@ -1029,7 +1028,7 @@
         let oSlide = private_GetCurrentSlide();
         if (oSlide) {
             if (drawings.find(function(drawing) {
-                return drawing.Drawing.IsUseInDocument();
+                return !drawing.Drawing.IsUseInDocument();
             }))
                AscBuilder.throwException(new Error("All drawings must be in document"));
 
@@ -1474,7 +1473,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetCurrentVisibleSlide.js
 	 */
 	ApiPresentation.prototype.GetCurrentVisibleSlide = function () {
-		if (!Asc.editor.isNormalMode()) {
+		if (!Asc.editor.IsSlidePageMode() || Asc.editor.isSlideShow()) {
 			return null;
 		}
 		return this.GetSlideByIndex(this.GetCurSlideIndex());
@@ -1707,7 +1706,7 @@
                 for (var nSlide = 0; nSlide < nCount; nSlide++)
                     this.Presentation.removeSlide(nStart);
 
-				if (!this.Presentation.IsMasterMode())
+				if (!this.Presentation.IsMasterSlideMode())
 				{
 					if (this.GetSlidesCount() === 0)
 					{
@@ -1794,8 +1793,8 @@
 	 * Converts the slides from the current ApiPresentation object into the JSON objects.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
-     * @param {boolean} [nStart=0] - The index to the start slide.
-     * @param {boolean} [nStart=ApiPresentation.GetSlidesCount() - 1] - The index to the end slide.
+     * @param {number} [nStart=0] - The index to the start slide.
+     * @param {number} [nEnd=ApiPresentation.GetSlidesCount() - 1] - The index to the end slide.
      * @param {boolean} [bWriteLayout=false] - Specifies if the slide layout will be written to the JSON object or not.
      * @param {boolean} [bWriteMaster=false] - Specifies if the slide master will be written to the JSON object or not (bWriteMaster is false if bWriteLayout === false).
      * @param {boolean} [bWriteAllMasLayouts=false] - Specifies if all child layouts from the slide master will be written to the JSON object or not.
@@ -2362,6 +2361,156 @@
 		return true;
 	}
 
+	/**
+	 * Searches for the specified text in the presentation and returns all found occurrences as text ranges.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @param {string} text - The text to search for.
+	 * @param {boolean} [isMatchCase=false] - Case sensitive or not.
+	 * @param {boolean} [isWholeWords=false] - Whether to search for whole words only.
+	 * @returns {ApiTextRange[]}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/Search.js
+	 */
+	ApiPresentation.prototype.Search = function(text, isMatchCase, isWholeWords)
+	{
+		return private_SearchInSlideObjects(this.Presentation.Slides, text, isMatchCase, isWholeWords);
+	};
+
+	/**
+	 * Finds and replaces the text in the presentation.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @param {Object} properties - The properties to find and replace.
+	 * @param {string} properties.searchString - Search string.
+	 * @param {string} properties.replaceString - Replacement string.
+	 * @param {boolean} [properties.matchCase=false] - Case sensitive or not.
+	 * @param {boolean} [properties.wholeWords=false] - Whether to search for whole words only.
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/SearchAndReplace.js
+	 */
+	ApiPresentation.prototype.SearchAndReplace = function(properties)
+	{
+		properties = properties || {};
+
+		let searchString  = AscBuilder.GetStringParameter(properties["searchString"], '', true);
+		let replaceString = AscBuilder.GetStringParameter(properties["replaceString"], '');
+		if (searchString.length === 0)
+			return false;
+
+		let searchSettings = new AscCommon.CSearchSettings();
+		searchSettings.SetText(searchString);
+		searchSettings.SetMatchCase(AscBuilder.GetBoolParameter(properties["matchCase"], false));
+		searchSettings.SetWholeWords(AscBuilder.GetBoolParameter(properties["wholeWords"], false));
+
+		let searchEngine = this.Presentation.Search(searchSettings);
+		if (!searchEngine)
+			return false;
+
+		replaceString = replaceString
+			.replaceAll('\t', "^t")
+			.replaceAll('\v', "^l")
+			.replaceAll('\f', "^m")
+			.replaceAll('\x0e', "^n")
+			.replaceAll('\x1e', "^~");
+
+		this.Presentation.ReplaceSearchElement(replaceString, true, null, false);
+		return true;
+	};
+
+	function private_SearchInSlideObjects(aSlideObjects, text, isMatchCase, isWholeWords)
+	{
+		text         = AscBuilder.GetStringParameter(text, '', true);
+		isMatchCase  = AscBuilder.GetBoolParameter(isMatchCase, false);
+		isWholeWords = AscBuilder.GetBoolParameter(isWholeWords, false);
+
+		let results = [];
+		if (text.length === 0)
+			return results;
+
+		let searchSettings = new AscCommon.CSearchSettings();
+		searchSettings.SetText(text);
+		searchSettings.SetMatchCase(isMatchCase);
+		searchSettings.SetWholeWords(isWholeWords);
+
+		let searchEngine = new AscCommonWord.CDocumentSearch(Asc.editor.getLogicDocument());
+		searchEngine.Set(searchSettings);
+		for (let i = 0; i < aSlideObjects.length; ++i)
+			aSlideObjects[i].Search(searchEngine);
+
+		let docContents = [];
+		for (let id in searchEngine.Elements)
+		{
+			let paragraph  = searchEngine.Elements[id];
+			let docContent = paragraph.GetParent ? paragraph.GetParent() : paragraph.Parent;
+			if (docContent && docContents.indexOf(docContent) === -1)
+				docContents.push(docContent);
+		}
+
+		for (let i = 0; i < docContents.length; ++i)
+		{
+			let range  = new ApiTextRange(docContents[i], 0, -1);
+			let nAfter = 1;
+			let found;
+			while ((found = range.Find(text, nAfter, isMatchCase, isWholeWords)) !== null)
+			{
+				results.push(found);
+				nAfter = found.EndPos + 1;
+			}
+		}
+
+		return results;
+	}
+
+	/**
+	 * Searches for the specified text within the current slide and returns all found occurrences as text ranges.
+	 * @memberof ApiSlide
+	 * @typeofeditors ["CPE"]
+	 * @param {string} text - The text to search for.
+	 * @param {boolean} [isMatchCase=false] - Case sensitive or not.
+	 * @param {boolean} [isWholeWords=false] - Whether to search for whole words only.
+	 * @returns {ApiTextRange[]}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/Search.js
+	 */
+	ApiSlide.prototype.Search = function(text, isMatchCase, isWholeWords)
+	{
+		return private_SearchInSlideObjects([this.Slide], text, isMatchCase, isWholeWords);
+	};
+
+	/**
+	 * Searches for the specified text within the current slide master and returns all found occurrences as text ranges.
+	 * @memberof ApiMaster
+	 * @typeofeditors ["CPE"]
+	 * @param {string} text - The text to search for.
+	 * @param {boolean} [isMatchCase=false] - Case sensitive or not.
+	 * @param {boolean} [isWholeWords=false] - Whether to search for whole words only.
+	 * @returns {ApiTextRange[]}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/Search.js
+	 */
+	ApiMaster.prototype.Search = function(text, isMatchCase, isWholeWords)
+	{
+		return private_SearchInSlideObjects([this.Master], text, isMatchCase, isWholeWords);
+	};
+
+	/**
+	 * Searches for the specified text within the current slide layout and returns all found occurrences as text ranges.
+	 * @memberof ApiLayout
+	 * @typeofeditors ["CPE"]
+	 * @param {string} text - The text to search for.
+	 * @param {boolean} [isMatchCase=false] - Case sensitive or not.
+	 * @param {boolean} [isWholeWords=false] - Whether to search for whole words only.
+	 * @returns {ApiTextRange[]}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/Search.js
+	 */
+	ApiLayout.prototype.Search = function(text, isMatchCase, isWholeWords)
+	{
+		return private_SearchInSlideObjects([this.Layout], text, isMatchCase, isWholeWords);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
     //
     // ApiMaster
@@ -2549,7 +2698,6 @@
     /**
      * Sets the background to the current slide master.
      * @memberof ApiMaster
-     * @memberOf ApiMaster
      * @typeofeditors ["CPE"]
      * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide master background.
      * @returns {boolean}
@@ -2737,7 +2885,7 @@
         if(!this.Master) {
 			return [];
 		}
-		return private_GetAllDrawingsWithType(this.Master.cSld.spTree, AscDFH.historyitem_type_Shape,
+		return private_GetAllDrawingsWithType(this.Master.cSld.spTree, [AscDFH.historyitem_type_Shape, AscDFH.historyitem_type_Cnx],
 			function (oDrawing) {return new ApiShape(oDrawing);});
 
     };
@@ -2751,7 +2899,7 @@
 	 */
     ApiMaster.prototype.GetAllImages = function(){
 		if(!this.Master) return [];
-		return private_GetAllDrawingsWithType(this.Master.cSld.spTree, AscDFH.historyitem_type_ImageShape,
+		return private_GetAllDrawingsWithType(this.Master.cSld.spTree, [AscDFH.historyitem_type_ImageShape],
 			function (oDrawing) {return new ApiImage(oDrawing);});
     };
 
@@ -2764,7 +2912,7 @@
 	 */
     ApiMaster.prototype.GetAllCharts = function() {
 		if(!this.Master) return [];
-		return private_GetAllDrawingsWithType(this.Master.cSld.spTree, AscDFH.historyitem_type_ChartSpace,
+		return private_GetAllDrawingsWithType(this.Master.cSld.spTree, [AscDFH.historyitem_type_ChartSpace],
 			function (oDrawing) {return new ApiChart(oDrawing);});
     };
 
@@ -2777,7 +2925,7 @@
 	 */
     ApiMaster.prototype.GetAllOleObjects = function() {
 		if(!this.Master) return [];
-		return private_GetAllDrawingsWithType(this.Master.cSld.spTree, AscDFH.historyitem_type_OleObject,
+		return private_GetAllDrawingsWithType(this.Master.cSld.spTree, [AscDFH.historyitem_type_OleObject],
 			function (oDrawing) {return new ApiOleObject(oDrawing);});
     };
 
@@ -2993,7 +3141,6 @@
     /**
      * Sets the background to the current slide layout.
      * @memberof ApiLayout
-     * @memberOf ApiLayout
      * @typeofeditors ["CPE"]
      * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide layout background.
      * @returns {boolean}
@@ -3181,7 +3328,7 @@
 		if(!this.Layout) {
 			return [];
 		}
-		return private_GetAllDrawingsWithType(this.Layout.cSld.spTree, AscDFH.historyitem_type_Shape,
+		return private_GetAllDrawingsWithType(this.Layout.cSld.spTree, [AscDFH.historyitem_type_Shape, AscDFH.historyitem_type_Cnx],
 			function (oDrawing) {return new ApiShape(oDrawing);});
     };
 
@@ -3196,7 +3343,7 @@
 		if(!this.Layout) {
 			return [];
 		}
-		return private_GetAllDrawingsWithType(this.Layout.cSld.spTree, AscDFH.historyitem_type_ImageShape,
+		return private_GetAllDrawingsWithType(this.Layout.cSld.spTree, [AscDFH.historyitem_type_ImageShape],
 			function (oDrawing) {return new ApiImage(oDrawing);});
     };
 
@@ -3211,7 +3358,7 @@
 		if(!this.Layout) {
 			return [];
 		}
-		return private_GetAllDrawingsWithType(this.Layout.cSld.spTree, AscDFH.historyitem_type_ChartSpace,
+		return private_GetAllDrawingsWithType(this.Layout.cSld.spTree, [AscDFH.historyitem_type_ChartSpace],
 			function (oDrawing) {return new ApiChart(oDrawing);});
     };
 
@@ -3224,7 +3371,7 @@
 	 */
     ApiLayout.prototype.GetAllOleObjects = function(){
 		if(!this.Layout) return [];
-		return private_GetAllDrawingsWithType(this.Layout.cSld.spTree, AscDFH.historyitem_type_OleObject,
+		return private_GetAllDrawingsWithType(this.Layout.cSld.spTree, [AscDFH.historyitem_type_OleObject],
 			function (oDrawing) {return new ApiOleObject(oDrawing);});
     };
 
@@ -3234,7 +3381,7 @@
 	 * @memberof ApiLayout
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTable[]} An array with all tables from the current slide layout.
-     * @sine 9.1.0
+     * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetAllTables.js
 	 */
 	ApiLayout.prototype.GetAllTables = function () {
@@ -3367,7 +3514,11 @@
 	 */
     ApiPlaceholder.prototype.SetType = function(sType)
     {
-        this.Placeholder.setType(private_GetPlaceholderInnerType(sType));
+        let nType = private_GetPlaceholderInnerType(sType);
+        if (private_GetPlaceholderStrType(nType) !== sType)
+            return false;
+        this.Placeholder.setType(nType);
+        return true;
     };
 
     /**
@@ -3413,7 +3564,7 @@
     };
 
     /**
-     * Retuns the placeholder index.
+     * Returns the placeholder index.
      * @memberof ApiPlaceholder
      * @typeofeditors ["CPE"]
      * @returns {number | undefined} - Returns the placeholder index.
@@ -4067,7 +4218,7 @@
 
 		const currentDate = new Date();
 
-		const commentData = new AscCommon.CCommentData();
+		const commentData = new AscCommon.CSlideCommentData();
 		commentData.m_sText = text;
 		commentData.m_sUserName = author || AscCommon.UserInfoParser.getCurrentName();
 		commentData.m_sUserId = userId || Asc.editor.documentUserId;
@@ -4131,7 +4282,6 @@
     /**
      * Sets the background to the current presentation slide.
      * @memberof ApiSlide
-     * @memberOf ApiSlide
      * @typeofeditors ["CPE"]
      * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide background.
      * @returns {boolean}
@@ -4169,7 +4319,6 @@
     /**
      * Returns the visibility of the current presentation slide.
      * @memberof ApiSlide
-     * @memberOf ApiSlide
      * @typeofeditors ["CPE"]
      * @returns {boolean}
      * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetVisible.js
@@ -4184,7 +4333,6 @@
     /**
      * Sets the visibility to the current presentation slide.
      * @memberof ApiSlide
-     * @memberOf ApiSlide
      * @typeofeditors ["CPE"]
      * @param {boolean} value - Slide visibility.
      * @returns {boolean}
@@ -4405,9 +4553,9 @@
      * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/FollowMasterBackground.js
 	 */
     ApiSlide.prototype.FollowMasterBackground = function(){
-        if (!this.Slide)
+        if (!this.Slide || !this.Slide.Layout)
             return false;
-        
+
         var oMaster = this.Slide.Layout.Master;
 
         if (oMaster && oMaster.cSld.Bg)
@@ -4548,7 +4696,7 @@
      * Returns a theme of the current slide.
      * @memberof ApiSlide
      * @typeofeditors ["CPE"]
-     * @returns {ApiTheme} - returns null if slide or layout or master or theme doesn't exist.
+     * @returns {ApiTheme | null} - returns null if slide or layout or master or theme doesn't exist.
      * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetTheme.js
 	 */
     ApiSlide.prototype.GetTheme = function(){
@@ -4593,7 +4741,7 @@
 		if(!this.Slide) {
 			return [];
 		}
-		return private_GetAllDrawingsWithType(this.Slide.cSld.spTree, AscDFH.historyitem_type_Shape,
+		return private_GetAllDrawingsWithType(this.Slide.cSld.spTree, [AscDFH.historyitem_type_Shape, AscDFH.historyitem_type_Cnx],
 			function (oDrawing) {return new ApiShape(oDrawing);});
     };
 
@@ -4608,7 +4756,7 @@
 		if(!this.Slide) {
 			return [];
 		}
-		return private_GetAllDrawingsWithType(this.Slide.cSld.spTree, AscDFH.historyitem_type_ImageShape,
+		return private_GetAllDrawingsWithType(this.Slide.cSld.spTree, [AscDFH.historyitem_type_ImageShape],
 			function (oDrawing) {return new ApiImage(oDrawing);});
     };
 
@@ -4623,7 +4771,7 @@
 		if(!this.Slide) {
 			return [];
 		}
-		return private_GetAllDrawingsWithType(this.Slide.cSld.spTree, AscDFH.historyitem_type_ChartSpace,
+		return private_GetAllDrawingsWithType(this.Slide.cSld.spTree, [AscDFH.historyitem_type_ChartSpace],
 			function (oDrawing) {return new ApiChart(oDrawing);});
     };
 
@@ -4636,7 +4784,7 @@
 	 */
     ApiSlide.prototype.GetAllOleObjects = function() {
 		if(!this.Slide) return [];
-		return private_GetAllDrawingsWithType(this.Slide.cSld.spTree, AscDFH.historyitem_type_OleObject,
+		return private_GetAllDrawingsWithType(this.Slide.cSld.spTree, [AscDFH.historyitem_type_OleObject],
 			function (oDrawing) {return new ApiOleObject(oDrawing);});
     };
 
@@ -4705,7 +4853,7 @@
      * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/Select.js
 	 */
 	ApiSlide.prototype.Select = function() {
-		if(!Asc.editor.isNormalMode())
+		if(!Asc.editor.IsSlidePageMode() || Asc.editor.isSlideShow())
 			return;
 
 		let oThumbnails = Asc.editor.getThumbnailsManager();
@@ -4787,7 +4935,7 @@
 		let oNotesPage = this.GetNotesPage();
 		if (!oNotesPage) {
 			const presentation = private_GetPresentation();
-			const notes = AscCommonSlide.CreateNotes();
+			const notes = AscCommonSlide.CreateNotes(presentation.notesMasters[0]);
 			notes.setNotesMaster(presentation.notesMasters[0]);
 
 			notes.setSlide(this.Slide);
@@ -4957,6 +5105,15 @@
 		return '';
 	};
 
+	/**
+	 * Returns a theme of the current notes page.
+	 *
+	 * @typeofeditors ["CPE"]
+	 * @memberof ApiNotesPage
+	 * @returns {ApiTheme | null} - Returns null if the notes page master or theme doesn't exist.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiNotesPage/Methods/GetTheme.js
+	 */
 	ApiNotesPage.prototype.GetTheme = function () {
 		if (this.NotesPage && this.NotesPage.Master && this.NotesPage.Master.Theme) {
 			const oThemeLoadInfo = new AscCommonSlide.CThemeLoadInfo();
@@ -6331,6 +6488,7 @@
 					const objectType = drawing.getObjectType();
 					switch (objectType) {
 						case AscDFH.historyitem_type_Shape:
+						case AscDFH.historyitem_type_Cnx:
 							return new ApiShape(drawing);
 						case AscDFH.historyitem_type_ImageShape:
 							return new ApiImage(drawing);
@@ -6607,16 +6765,78 @@
      * Creates a copy of the specified drawing object.
      * @memberof ApiDrawing
      * @typeofeditors ["CPE"]
-     * @returns {ApiDrawing} - return null if drawing doesn't exist.
+     * @returns {ApiDrawing}
      * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Copy.js
 	 */
     ApiDrawing.prototype.Copy = function()
     {
-        if (this.Drawing)
-            return new this.constructor(this.Drawing.copy());
-
-        return null;
+        return new this.constructor(this.Drawing.copy());
     };
+
+	/**
+	 * Creates a copy of the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiShape}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/Copy.js
+	 */
+	ApiShape.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiShape.prototype["Copy"] = ApiShape.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current chart.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiChart}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/Copy.js
+	 */
+	ApiChart.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiChart.prototype["Copy"] = ApiChart.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current group.
+	 * @memberof ApiGroup
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiGroup}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Copy.js
+	 */
+	ApiGroup.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiGroup.prototype["Copy"] = ApiGroup.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current image.
+	 * @memberof ApiImage
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiImage}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiImage/Methods/Copy.js
+	 */
+	ApiImage.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiImage.prototype["Copy"] = ApiImage.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current OLE object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiOleObject}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/Copy.js
+	 */
+	ApiOleObject.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiOleObject.prototype["Copy"] = ApiOleObject.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiTable}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/Copy.js
+	 */
+	ApiTable.prototype.Copy = ApiDrawing.prototype.Copy;
 
     /**
      * Deletes the specified drawing object from the parent.
@@ -6781,6 +7001,7 @@
 	/**
 	 * Sets the name of the current drawing.
 	 * If another drawing with the same name already exists, that drawing's name will be reset to a default auto-generated name.
+	 * OLE objects do not support a custom name, so for them this method always returns false.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 * @param {string} name - The name which will be set to the current drawing.
@@ -6791,6 +7012,9 @@
 	ApiDrawing.prototype.SetName = function(name)
 	{
 		if (name === "" || name === null || name === undefined)
+			return false;
+
+		if (this.Drawing.isOleObject())
 			return false;
 
 		this.Drawing.setName(name);
@@ -6982,9 +7206,7 @@
 		if (!oController)
 			return false;
 		oController.deselectObject(oDrawing);
-
-		let presentation = Asc.editor.getLogicDocument();
-		presentation.RemoveSelection();
+		oController.resetInternalSelection();
 		oController.updateSelectionState();
 		oController.updateOverlay();
 		return true;
@@ -7351,11 +7573,60 @@
 	 */
 	ApiDrawing.prototype.Fill = function(oFill)
 	{
+		const classType = this.GetClassType();
+		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
+			return false;
+
 		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
 			return false;
 
-		this.Drawing.spPr.setFill(oFill.UniFill);
-		return true;
+		if (classType === "smartArt")
+		{
+			this.Drawing.changeFill(oFill.UniFill);
+			return true;
+		}
+
+		if (this.Drawing && this.Drawing.spPr)
+		{
+			this.Drawing.spPr.setFill(oFill.UniFill);
+			return true;
+		}
+
+		return false;
+	};
+	/**
+	 * Sets the fill formatting properties to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @param {ApiFill} oFill - The fill type used to fill the graphic object.
+	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetFill.js
+	 */
+	ApiDrawing.prototype.SetFill = ApiDrawing.prototype.Fill;
+	/**
+	 * Gets the fill formatting properties from the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiFill | null}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetFill.js
+	 */
+	ApiDrawing.prototype.GetFill = function()
+	{
+		const classType = this.GetClassType();
+		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
+			return null;
+
+		if (this.Drawing)
+		{
+			if (this.Drawing.recalcInfo && this.Drawing.recalcInfo.recalculateBrush)
+				this.Drawing.recalculateBrush();
+			if (this.Drawing.brush)
+				return new AscBuilder.ApiFill(this.Drawing.brush);
+		}
+
+		return null;
 	};
 
 	/**
@@ -7369,16 +7640,108 @@
 	 */
 	ApiDrawing.prototype.SetOutLine = function(oStroke)
 	{
+		const classType = this.GetClassType();
+		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
+			return false;
+
 		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
 			return false;
 
-		this.Drawing.spPr.setLn(oStroke.Ln);
+		if (classType === "smartArt")
+		{
+			let whole = this.Drawing.getWhole();
+			if (whole)
+				whole.setLn(oStroke.Ln);
+			return true;
+		}
+
+		if (this.Drawing && this.Drawing.spPr)
+		{
+			this.Drawing.spPr.setLn(oStroke.Ln);
+			return true;
+		}
+
+		return false;
+	};
+	/**
+	 * Sets the outline properties to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @param {ApiStroke} oStroke - The stroke used to create the graphic object outline.
+	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLine.js
+	 */
+	ApiDrawing.prototype.SetLine = ApiDrawing.prototype.SetOutLine;
+	/**
+	 * Gets the outline properties from the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiStroke | null}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLine.js
+	 */
+	ApiDrawing.prototype.GetLine = function()
+	{
+		const classType = this.GetClassType();
+		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
+			return null;
+
+		if (this.Drawing)
+		{
+			if (this.Drawing.recalcInfo && this.Drawing.recalcInfo.recalculatePen)
+				this.Drawing.recalculatePen();
+			if (this.Drawing.pen)
+				return new AscBuilder.ApiStroke(this.Drawing.pen, this.Drawing.spPr);
+		}
+
+		return null;
+	};
+	/**
+	 * Sets the shadow to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @param {?ApiShadow} shadow - The shadow to apply, or null to remove the current shadow.
+	 * @returns {boolean} - returns false if the graphic object does not support shadow.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetShadow.js
+	 */
+	ApiDrawing.prototype.SetShadow = function(shadow)
+	{
+		if (!this.Drawing || !this.Drawing.spPr)
+			return false;
+
+		if (shadow === null || shadow === undefined)
+		{
+			this.Drawing.spPr.changeShadow(null);
+			return true;
+		}
+
+		if (!shadow.GetClassType || shadow.GetClassType() !== "shadow")
+			return false;
+
+		this.Drawing.spPr.changeShadow(shadow.Shadow);
 		return true;
+	};
+	/**
+	 * Returns the shadow of the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiShadow | null}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetShadow.js
+	 */
+	ApiDrawing.prototype.GetShadow = function()
+	{
+		let shadow = this.Drawing && this.Drawing.getOuterShdw ? this.Drawing.getOuterShdw() : null;
+		if (shadow)
+			return new AscBuilder.ApiShadow(shadow);
+
+		return null;
 	};
 
 	/**
-	 * Returns an ApiTextRange covering the full text content of the shape.
-	 * Creates a text body if the shape does not yet have one.
+	 * Returns an ApiTextRange covering the full text content of the shape, or null if the shape has no text body (use CreateTextRange to create one).
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTextRange|null}
@@ -7457,12 +7820,15 @@
      * Ungroups the current group of drawings.
      * @memberof ApiGroup
      * @typeofeditors ["CPE"]
-     * @returns {boolean}
+     * @returns {ApiDrawing[] | null} - The array of the ungrouped objects, or null if the group is not in the document or cannot be ungrouped.
      * @since 8.3.0
      * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Ungroup.js
      */
     ApiGroup.prototype.Ungroup = function()
     {
+        if (!this.Drawing || !this.Drawing.IsUseInDocument())
+            return null;
+
         let oPresentation = Asc.editor.getLogicDocument();
         let nSlideIdx = this.Drawing.getSlideIndex();
         let oSlide = oPresentation.GetSlide(nSlideIdx);
@@ -7471,17 +7837,17 @@
         }
 
         let oGraphicObjects = oSlide.graphicObjects;
+        let aChildren = this.Drawing.spTree.slice();
 
         oGraphicObjects.resetSelection();
         oGraphicObjects.selectObject(this.Drawing, this.Drawing.GetAbsolutePage())
         
-        let canUngroup = oGraphicObjects.canUnGroup();
-        if (!canUngroup) {
-            return false;
-        }
+        if (!oGraphicObjects.canUnGroup())
+            return null;
 
+        this.Drawing.recalculate();
         oGraphicObjects.unGroupCallback();
-        return true;
+        return GetApiDrawings(aChildren);
     };
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -7651,6 +8017,27 @@
         return true;
     };
 
+    /**
+     * Returns the text autofit type of the current shape.
+     * @memberof ApiShape
+     * @typeofeditors ["CPE"]
+     * @returns {TextFitType} - The text autofit type.
+     * @since 9.5.0
+     * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetTextFit.js
+     */
+    ApiShape.prototype.GetTextFit = function()
+    {
+        if (!this.Shape)
+            return "noAutoFit";
+
+        switch (this.Shape.getTextFitType())
+        {
+            case AscFormat.text_fit_Auto:     return "autoFit";
+            case AscFormat.text_fit_NormAuto: return "normAutoFit";
+            default:                          return "noAutoFit";
+        }
+    };
+
 	/**
 	 * Gets the vertical alignment from the shape content where a paragraph or text runs can be inserted.
 	 * @memberof ApiShape
@@ -7800,7 +8187,7 @@
 			}
 			if (this.Shape.pen)
 			{
-				return new AscBuilder.ApiStroke(this.Shape.pen);
+				return new AscBuilder.ApiStroke(this.Shape.pen, this.Shape.spPr);
 			}
 		}
 
@@ -7924,7 +8311,7 @@
 	{
 		if (typeof(this.Drawing.m_sApplicationId) === "string")
 			return this.Drawing.m_sApplicationId;
-		
+
 		return "";
 	};
 
@@ -7943,18 +8330,7 @@
     ApiTable.prototype.GetClassType = function(){
         return "table";
     };
-	/**
-	 * Returns an internal ID of the current table.
-	 * @memberof ApiTable
-	 * @typeofeditors ["CDE"]
-	 * @returns {string}
-	 * @since 9.5.0
-	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetInternalId.js
-	 */
-	ApiTable.prototype.GetInternalId = function()
-	{
-		return this.Table.GetId();
-	};
+
 	/**
      * Returns a row by its index.
      * @memberof ApiTable
@@ -8187,22 +8563,6 @@
         this.Table.CurCell = oCell.Cell;
         return this.Table.RemoveTableColumn();
     };
-	/**
-	 * Creates a copy of the current table.
-	 * @memberof ApiTable
-	 * @typeofeditors ["CPE"]
-	 * @returns {ApiTable}
-	 * @since 9.5.0
-	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/Copy.js
-	 */
-	ApiTable.prototype.Copy = function()
-	{
-		let oPresentation = private_GetPresentation();
-		let frame = oPresentation.Create_TableGraphicFrame(null, null, null, oPresentation.DefaultTableStyleId);
-		let oTable = this.Table.Copy(this.Drawing, private_GetDrawingDocument());
-		frame.setGraphicObject(oTable)
-		return new ApiTable(frame);
-	};
 	/**
 	 * Selects the current table in the presentation.
 	 * @memberof ApiTable
@@ -9793,29 +10153,6 @@
 		if (this.Parent)
 			this.Parent.OnChangeTableStylePr(this);
 	};
-	ApiTableStylePr.prototype.OnChangeTablePr = function(oApiTablePr)
-	{
-		this.TableStylePr = this.TableStylePr.Copy();
-		this.TableStylePr.TablePr = oApiTablePr.TablePr;
-
-		oApiTablePr.TablePr = this.TableStylePr.TablePr.Copy();
-
-		this.private_OnChange();
-	};
-	ApiTableStylePr.prototype.OnChangeTableRowPr = function(oApiTableRowPr)
-	{
-		this.TableStylePr = this.TableStylePr.Copy();
-		this.TableStylePr.TableRowPr = oApiTableRowPr.RowPr;
-
-		oApiTableRowPr.RowPr = this.TableStylePr.TableRowPr.Copy();
-
-		this.private_OnChange();
-	};
-	ApiTableStylePr.prototype.private_OnChange = function()
-	{
-		if (this.Parent)
-			this.Parent.OnChangeTableStylePr(this);
-	};
 	ApiTableStylePr.prototype.OnChangeTextPr = function(oApiTextPr)
 	{
 		this.TableStylePr = this.TableStylePr.Copy();
@@ -10553,7 +10890,7 @@
 			return null;
 
 		let nEffStart  = this.private_GetEffectiveStart();
-		let sText      = this.GetText();
+		let sText      = this.private_GetAllText().slice(nEffStart, this.private_GetEffectiveEnd());
 
 		let nFromLocal = nAfter - 1;
 		let sSlice     = sText.slice(nFromLocal);
@@ -10769,8 +11106,8 @@
 			return null;
 
 		let oHighlight = "none" === sColor
-			? {HighLight : AscCommonWord.highlight_None}
-			: {HighLight : new Asc.asc_CColor({r : color.r, g: color.g, b: color.b, Auto : false})};
+			? {HighlightColor : null}
+			: {HighlightColor : AscFormat.CreateUniColorRGB(color.r, color.g, color.b)};
 
 		return this.private_ApplyTextPr(oHighlight);
 	};
@@ -10907,7 +11244,7 @@
 		FontSize = AscBuilder.GetNumberParameter(FontSize, null);
 		if (FontSize === null)
 			return null;
-		return this.private_ApplyTextPr({FontSize: FontSize});
+		return this.private_ApplyTextPr({FontSize: private_GetHps(FontSize)});
 	};
 	
 	/**
@@ -11051,6 +11388,11 @@
 	ApiPresentation.prototype["MoveCursorDown"]           = ApiPresentation.prototype.MoveCursorDown;
 	ApiPresentation.prototype["EnterText"]                = ApiPresentation.prototype.EnterText;
 	ApiPresentation.prototype["InsertParagraphBreak"]     = ApiPresentation.prototype.InsertParagraphBreak;
+	ApiPresentation.prototype["Search"]                   = ApiPresentation.prototype.Search;
+	ApiPresentation.prototype["SearchAndReplace"]         = ApiPresentation.prototype.SearchAndReplace;
+	ApiSlide.prototype["Search"]                          = ApiSlide.prototype.Search;
+	ApiMaster.prototype["Search"]                         = ApiMaster.prototype.Search;
+	ApiLayout.prototype["Search"]                         = ApiLayout.prototype.Search;
 
     ApiMaster.prototype["GetClassType"]                   = ApiMaster.prototype.GetClassType;
     ApiMaster.prototype["GetInternalId"]                  = ApiMaster.prototype.GetInternalId;
@@ -11272,7 +11614,13 @@
 
     ApiDrawing.prototype["ToJSON"]                        = ApiDrawing.prototype.ToJSON;
     ApiDrawing.prototype["Fill"]                          = ApiDrawing.prototype.Fill;
+    ApiDrawing.prototype["SetFill"]                       = ApiDrawing.prototype.SetFill;
+    ApiDrawing.prototype["GetFill"]                       = ApiDrawing.prototype.GetFill;
     ApiDrawing.prototype["SetOutLine"]                    = ApiDrawing.prototype.SetOutLine;
+    ApiDrawing.prototype["SetLine"]                       = ApiDrawing.prototype.SetLine;
+    ApiDrawing.prototype["GetLine"]                       = ApiDrawing.prototype.GetLine;
+    ApiDrawing.prototype["SetShadow"]                     = ApiDrawing.prototype.SetShadow;
+    ApiDrawing.prototype["GetShadow"]                     = ApiDrawing.prototype.GetShadow;
 
 	ApiDrawing.prototype["GetTextRange"]					= ApiDrawing.prototype.GetTextRange;
 	ApiDrawing.prototype["IsTextRange"]						= ApiDrawing.prototype.IsTextRange;
@@ -11326,6 +11674,7 @@
 	ApiChart.prototype["SetLegendFill"] = ApiChart.prototype.SetLegendFill = AscBuilder.ApiChart.prototype.SetLegendFill;
 	ApiChart.prototype["SetLegendOutLine"] = ApiChart.prototype.SetLegendOutLine = AscBuilder.ApiChart.prototype.SetLegendOutLine;
 	ApiChart.prototype["SetAxieNumFormat"] = ApiChart.prototype.SetAxieNumFormat = AscBuilder.ApiChart.prototype.SetAxieNumFormat;
+	ApiChart.prototype["SetAxisNumFormat"] = ApiChart.prototype.SetAxisNumFormat = AscBuilder.ApiChart.prototype.SetAxisNumFormat;
 	ApiChart.prototype["SetSeriaNumFormat"] = ApiChart.prototype.SetSeriaNumFormat = AscBuilder.ApiChart.prototype.SetSeriaNumFormat;
 	ApiChart.prototype["SetDataPointNumFormat"] = ApiChart.prototype.SetDataPointNumFormat = AscBuilder.ApiChart.prototype.SetDataPointNumFormat;
 	ApiChart.prototype["GetAllSeries"] = ApiChart.prototype.GetAllSeries = AscBuilder.ApiChart.prototype.GetAllSeries;
@@ -11342,6 +11691,7 @@
     ApiShape.prototype["GetContent"]                      = ApiShape.prototype.GetContent;
     ApiShape.prototype["SetVerticalTextAlign"]            = ApiShape.prototype.SetVerticalTextAlign;
     ApiShape.prototype["SetTextFit"]                      = ApiShape.prototype.SetTextFit;
+    ApiShape.prototype["GetTextFit"]                      = ApiShape.prototype.GetTextFit;
     ApiShape.prototype["GetVerticalTextAlign"]            = ApiShape.prototype.GetVerticalTextAlign;
 	ApiShape.prototype["GetGeometry"]                     = ApiShape.prototype.GetGeometry;
 	ApiShape.prototype["SetGeometry"]                     = ApiShape.prototype.SetGeometry;
@@ -11358,13 +11708,13 @@
 	ApiOleObject.prototype["GetApplicationId"]            = ApiOleObject.prototype.GetApplicationId;
 
 	ApiTable.prototype["GetClassType"]					= ApiTable.prototype.GetClassType;
-	//ApiTable.prototype["GetInternalId"]					= ApiTable.prototype.GetInternalId;
 	ApiTable.prototype["GetRowsCount"]					= ApiTable.prototype.GetRowsCount;
 	ApiTable.prototype["GetRow"]						= ApiTable.prototype.GetRow;
 	ApiTable.prototype["GetCell"]						= ApiTable.prototype.GetCell;
 	ApiTable.prototype["MergeCells"]					= ApiTable.prototype.MergeCells;
 	ApiTable.prototype["SetStyle"]						= ApiTable.prototype.SetStyle;
 	ApiTable.prototype["SetTableLook"]					= ApiTable.prototype.SetTableLook;
+	ApiTable.prototype["GetTableLook"]					= ApiTable.prototype.GetTableLook;
     ApiTable.prototype["AddRow"]						= ApiTable.prototype.AddRow;
     ApiTable.prototype["AddRows"]						= ApiTable.prototype.AddRows;
     ApiTable.prototype["AddColumn"]						= ApiTable.prototype.AddColumn;
@@ -11447,6 +11797,7 @@
     ApiTableCell.prototype["GetText"]					= ApiTableCell.prototype.GetText;
     ApiTableCell.prototype["SetText"]					= ApiTableCell.prototype.SetText;
 	ApiTableCell.prototype["GetTextRange"]				= ApiTableCell.prototype.GetTextRange;
+	ApiTableCell.prototype["Select"]					= ApiTableCell.prototype.Select;
 
 	ApiTableStylePr.prototype["GetClassType"]			= ApiTableStylePr.prototype.GetClassType;
 	ApiTableStylePr.prototype["GetType"]				= ApiTableStylePr.prototype.GetType;
@@ -11578,7 +11929,7 @@
      * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetSlides.js
 	 */
 	ApiSelection.prototype.GetSlides = function() {
-		if(!Asc.editor.isNormalMode()) {
+		if(!Asc.editor.IsSlidePageMode() || Asc.editor.isSlideShow()) {
 			return [];
 		}
 
@@ -11924,11 +12275,11 @@
         return sType;
     }
 
-	function private_GetAllDrawingsWithType(aDrawings, nObjectType, fCreateBuilderWrapper) {
+	function private_GetAllDrawingsWithType(aDrawings, aObjectTypes, fCreateBuilderWrapper) {
 		let aWrappers = [];
 		for(let nIdx = 0; nIdx < aDrawings.length; ++nIdx) {
 			let oDrawing = aDrawings[nIdx];
-			if(oDrawing.getObjectType() === nObjectType) {
+			if(aObjectTypes.indexOf(oDrawing.getObjectType()) !== -1) {
 				aWrappers.push(fCreateBuilderWrapper(oDrawing));
 			}
 		}

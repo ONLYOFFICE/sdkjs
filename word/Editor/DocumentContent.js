@@ -1315,6 +1315,10 @@ CDocumentContent.prototype.Recalculate_Page = function(PageIndex, bStart)
 
             return this.Recalculate_Page(PageIndex, false);
         }
+        else if ((RecalcResult & recalcresult_PrevPage) && true === this.IsBlockLevelSdtContent())
+        {
+            return recalcresult2_PrevPage;
+        }
         else if (RecalcResult & recalcresult_NextElement)
         {
 			// Do nothing
@@ -3202,8 +3206,9 @@ CDocumentContent.prototype.AddImages = function(aImages){
 				{
 					var __w = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
 					var __h = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
-					W      = Math.max(5, Math.min(W, __w));
-					H      = Math.max(5, Math.min((W * __h / __w)));
+					let koeff = Math.min(1, W / __w, H / __h);
+					W      = Math.max(5, __w * koeff);
+					H      = Math.max(5, __h * koeff);
 					Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
 					var Image = this.DrawingObjects.createImage(_image.src, 0, 0, W, H);
 					Image.setParent(Drawing);
@@ -7019,7 +7024,10 @@ CDocumentContent.prototype.IsSelectionEmpty = function(bCheckHidden)
 		return true;
 	}
 };
-CDocumentContent.prototype.SelectAll = function()
+/**
+ * @param direction {AscWord.Direction}
+ */
+CDocumentContent.prototype.SelectAll = function(direction)
 {
 	if (docpostype_DrawingObjects === this.CurPos.Type && true === this.DrawingObjects.isSelectedText())
 	{
@@ -7027,6 +7035,7 @@ CDocumentContent.prototype.SelectAll = function()
 	}
 	else
 	{
+		direction = typeof direction === "number" ? direction : AscWord.Direction.FORWARD;
 		if (true === this.Selection.Use)
 			this.RemoveSelection();
 
@@ -7035,12 +7044,19 @@ CDocumentContent.prototype.SelectAll = function()
 		this.Selection.Start = false;
 		this.Selection.Flag  = selectionflag_Common;
 
-		this.Selection.StartPos = 0;
-		this.Selection.EndPos   = this.Content.length - 1;
+		if (direction === 1) {
+			this.Selection.StartPos = 0;
+			this.Selection.EndPos   = this.Content.length - 1;
+		}
+		else
+		{
+			this.Selection.StartPos = this.Content.length - 1;
+			this.Selection.EndPos   = 0;
+		}
 
 		for (var Index = 0; Index < this.Content.length; Index++)
 		{
-			this.Content[Index].SelectAll();
+			this.Content[Index].SelectAll(direction);
 		}
 	}
 };
@@ -7546,6 +7562,7 @@ CDocumentContent.prototype.Internal_Content_Add = function(Position, NewObject, 
 	this.OnContentChange();
 	this.UpdateSectionsAfterAdd([NewObject]);
 	NewObject.OnAttach();
+	NewObject.UpdatePresentationOutline();
 	this.Recalculated = false;
 };
 CDocumentContent.prototype.Internal_Content_Remove = function(Position, Count, isCorrectContent)

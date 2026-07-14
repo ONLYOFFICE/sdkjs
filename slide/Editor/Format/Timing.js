@@ -2001,6 +2001,11 @@
         }
         return null;
     };
+		CTiming.prototype.collectRedrawSlides = function (redrawSlides, force) {
+			if (this.parent) {
+				redrawSlides.collectRedrawSlides(this.parent, true);
+			}
+		}
     CTiming.prototype.getChildren = function () {
         return [this.bldLst, this.tnLst];
     };
@@ -12661,7 +12666,7 @@
         CAnimationPlayer.prototype.onFrame.call(this);
 
         if (this.isStarted()) {
-            Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.onPreview(this.getElapsedTicks());
+            Asc.editor.WordControl.m_oAnimPaneApi.OnPreview(this.getElapsedTicks());
         }
     };
 
@@ -12670,7 +12675,7 @@
         this.overlay.CheckRect(this.rect.x, this.rect.y, this.rect.w, this.rect.h);
         this.onRecalculateFrame();
 
-        Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.onPreviewStart();
+        Asc.editor.WordControl.m_oAnimPaneApi.OnPreviewStart();
     };
     CDemoAnimPlayer.prototype.stop = function () {
         CAnimationPlayer.prototype.stop.call(this);
@@ -12678,7 +12683,7 @@
         this.overlay.CheckRect(this.rect.x, this.rect.y, this.rect.w, this.rect.h);
         this.slide.showDrawingObjects();
 
-        Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.onPreviewStop();
+        Asc.editor.WordControl.m_oAnimPaneApi.OnPreviewStop();
     };
     CDemoAnimPlayer.prototype.onRecalculateFrame = function () {
         this.overlay.Clear();

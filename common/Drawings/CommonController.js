@@ -1807,7 +1807,7 @@
 				},
 
 				checkTargetSelection: function (oObject, x, y, invertTransform) {
-					if (this.drawingObjects && this.drawingObjects.cSld) {
+					if (this.drawingObjects && this.drawingObjects.cSld && invertTransform) {
 						var t_x = invertTransform.TransformPointX(x, y);
 						var t_y = invertTransform.TransformPointY(x, y);
 						if (oObject.getDocContent().CheckPosInSelection(t_x, t_y, 0, undefined)) {
@@ -1888,7 +1888,7 @@
 						if (this.isObjectsProtected() && object.getProtectionLockText()) {
 							return this.handleMoveHit(object, e, x, y, group, false, pageIndex, bWord);
 						}
-						var bNotes = (this.drawingObjects && this.drawingObjects.getObjectType && this.drawingObjects.getObjectType() === AscDFH.historyitem_type_Notes);
+						var bNotes = (this.drawingObjects && this.drawingObjects.isNote && this.drawingObjects.isNote());
 						if ((e.CtrlKey || this.isSlideShow()) && !this.document && !bNotes) {
 							check_hyperlink = fCheckObjectHyperlink(object, x, y);
 							var oAnimPlayer = this.getAnimationPlayer();
@@ -3496,7 +3496,7 @@
 						if (this.document && content.Parent && content.Parent instanceof AscFormat.CTextBody)
 							return false;
 
-						if(Asc.editor.isMasterMode()) {
+						if(Asc.editor.presentationViewManager && !Asc.editor.presentationViewManager.isCanAddHyperlinkInContent()) {
 							return false;
 						}
 						return content.CanAddHyperlink(bCheckInHyperlink);
@@ -4242,9 +4242,29 @@
 
 					if (typeof props.ImageUrl === "string" && props.ImageUrl.length > 0) {
 						var oImg;
+						let newImgPr = new Asc.asc_CImgProperty();
+						newImgPr.ImageUrl = props.ImageUrl;
+						let newSize = newImgPr.asc_getOriginSize(Asc.editor);
+						let newAspect = newSize.asc_getIsCorrect() && newSize.asc_getImageHeight() > 0 ? newSize.asc_getImageWidth() / newSize.asc_getImageHeight() : 0;
 						for (i = 0; i < objects_by_type.images.length; ++i) {
 							oImg = objects_by_type.images[i];
 							oImg.setBlipFill(CreateBlipFillRasterImageId(props.ImageUrl));
+							if (newAspect > 0) {
+								let scale = oImg.getScaleCoefficient();
+								let extX = oImg.extX / scale;
+								let extY = extX / newAspect;
+								let offX = oImg.getXfrmOffX();
+								let offY = oImg.getXfrmOffY();
+								if (!(oImg.parent instanceof AscCommonWord.ParaDrawing) || oImg.group) {
+									offX += (extX - oImg.extX / scale) / 2;
+									offY += (oImg.extY / scale - extY) / 2;
+								}
+								oImg.setTransformParams(offX, offY, extX, extY, oImg.getXfrmRot(), oImg.getXfrmFlipH(), oImg.getXfrmFlipV());
+								oImg.checkDrawingBaseCoords();
+								if (oImg.parent && oImg.parent.CheckWH) {
+									oImg.parent.CheckWH();
+								}
+							}
 							if (oImg.parent instanceof AscCommonWord.ParaDrawing) {
 								var oRun = oImg.parent.GetRun();
 								if (oRun) {
@@ -6007,7 +6027,8 @@
 					}
 				},
 
-				selectAll: function () {
+				selectAll: function (direction) {
+					direction = typeof direction === "number" ? direction : AscWord.Direction.FORWARD;
 					var i;
 					var target_text_object = getTargetTextObject(this);
 					if (target_text_object) {
@@ -6016,7 +6037,7 @@
 						} else {
 							var content = this.getTargetDocContent();
 							if (content) {
-								content.SelectAll();
+								content.SelectAll(direction);
 							}
 						}
 					} else if (!this.document) {
@@ -10198,11 +10219,7 @@
 					oAPI.stopInkDrawer();
 				},
 				checkInkState: function () {
-					if (typeof AscCommonSlide !== "undefined" &&
-						AscCommonSlide.CNotes &&
-						this.drawingObjects instanceof AscCommonSlide.CNotes) {
-						return;
-					}
+					//todo
 					const oAPI = this.getEditorApi();
 					if(oAPI.isInkDrawerOn()) {
 						if(oAPI.isDrawInkMode()) {
@@ -12036,12 +12053,7 @@
 
 
 		function isSlideLikeObject(oObject) {
-			if(!oObject) return false;
-			if(!oObject.getObjectType) return false;
-			let nType = oObject.getObjectType();
-			return (nType === AscDFH.historyitem_type_Slide
-				|| nType === AscDFH.historyitem_type_SlideLayout
-				|| nType === AscDFH.historyitem_type_SlideMaster );
+			return oObject && !!oObject.isSlideLikeObject && oObject.isSlideLikeObject();
 		}
 
 		// Shapes merge

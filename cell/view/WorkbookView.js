@@ -491,6 +491,8 @@
 				  self._onChangeVisibleArea.apply(self, arguments);
 			  }, "changeSelection": function () {
 				  self._onChangeSelection.apply(self, arguments);
+			  }, "ctrlDeselect": function () {
+				  return self._onCtrlDeselect.apply(self, arguments);
 			  }, "changeSelectionDone": function () {
 				  self._onChangeSelectionDone.apply(self, arguments);
 			  }, "changeSelectionRightClick": function () {
@@ -1499,6 +1501,13 @@
 
 		asc_applyFunction(callback, d);
 	};
+
+    WorkbookView.prototype._onCtrlDeselect = function (x, y) {
+        if (!this._checkStopCellEditorInFormulas()) {
+            return false;
+        }
+        return this.getWorksheet().ctrlDeselectRange(x, y);
+    };
 
     WorkbookView.prototype._onChangeSelection = function (isStartPoint, dc, dr, isCoord, isCtrl, callback) {
         if (!this._checkStopCellEditorInFormulas()) {

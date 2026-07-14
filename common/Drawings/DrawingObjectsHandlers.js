@@ -59,7 +59,7 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
         return false;
     }
     var selected_objects = group ? group.selectedObjects : drawingObjectsController.getSelectedObjects();
-    if (selected_objects[0] && selected_objects[0].IsComment && selected_objects[0].IsComment()) {
+    if (selected_objects[0] && selected_objects[0].IsComment && selected_objects[0].IsText()) {
         return false;
     }
     var oCropSelection = drawingObjectsController.selection.cropSelection ? drawingObjectsController.selection.cropSelection : null;

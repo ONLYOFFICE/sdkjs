@@ -512,11 +512,11 @@
 			"showZeros":         oView.showZeros != null ? oView.showZeros : undefined,
 			"topLeftCell":       oView.topLeftCell != null ? oView.topLeftCell.getName() : undefined,
 			"zoomScale":         oView.zoomScale != null ? oView.zoomScale : undefined,
-			"pane":              oView.pane != null ? this.SerPane(oView.pane) : undefined, 
+			"pane":              oView.pane != null ? this.SerPane(oView.pane, oView) : undefined,
 			"selection":         oWorksheet.selectionRange != null ? this.SerSelectionRange(oWorksheet.selectionRange) : undefined
 		}
 	};
-	WriterToJSON.prototype.SerPane = function(oPane)
+	WriterToJSON.prototype.SerPane = function(oPane, oView)
 	{
 		if (!oPane)
 			return oPane;
@@ -531,13 +531,17 @@
 		} else if (0 < nCol) {
 			nActivePane = AscCommonExcel.EActivePane.topRight;
 		}
-		
+
+		// xSplit/ySplit = count of frozen cols/rows from the frozen area origin (sheetView.topLeftCell)
+		var nOriginCol = (oView && oView.topLeftCell) ? oView.topLeftCell.c1 : 0;
+		var nOriginRow = (oView && oView.topLeftCell) ? oView.topLeftCell.r1 : 0;
+
 		return {
 			"activePane":  nActivePane != null ? ToXML_EActivePane(nActivePane) : undefined,
 			"state":       "frozen", // Always write Frozen
 			"topLeftCell": oPane.topLeftFrozenCell.getID(),
-			"xSplit":      0 < nCol ? nCol : undefined,
-			"ySplit":      0 < nRow ? nRow : undefined
+			"xSplit":      0 < nCol ? nCol - nOriginCol : undefined,
+			"ySplit":      0 < nRow ? nRow - nOriginRow : undefined
 		}
 	};
 	WriterToJSON.prototype.SerSelectionRange = function(oSelection)

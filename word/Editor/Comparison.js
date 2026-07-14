@@ -1043,7 +1043,7 @@
     CNode.prototype.copyRunWithMockParagraph = function (oRun, mockParagraph, comparison) {
         const oTempParagraph = oRun.Paragraph;
         oRun.Paragraph = mockParagraph;
-        const oNewRun = oRun.Copy2(comparison.copyPr);
+        const oNewRun = oRun.CopyComparison(comparison.copyPr);
         oRun.Paragraph = oTempParagraph;
 
         return oNewRun;

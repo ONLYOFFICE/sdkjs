@@ -1671,7 +1671,8 @@ window.AscCommon.g_cIsBeta = "false";
 	var c_oAscOleObjectTypes = {
 		document:    1,
 		spreadsheet: 2,
-		formula:     4
+		formula:     4,
+		visio:       5
 	}
 
 	// image wrap style
@@ -2252,6 +2253,7 @@ window.AscCommon.g_cIsBeta = "false";
 	var changestype_ViewPr                    = 79;
 	var changestype_DocumentProtection        = 80;
 	var changestype_CustomPr                  = 81;
+	var changestype_NoteSize                  = 82; // Changing note size;
 
 	var changestype_2_InlineObjectMove       = 1; // Moving object to specified position (checking the place we're trying to move to)
 	var changestype_2_HdrFtr                 = 2; // Changes to header/footer
@@ -5748,6 +5750,7 @@ window.AscCommon.g_cIsBeta = "false";
 	window["AscCommon"].changestype_RemoveSlide               = changestype_RemoveSlide;
 	window["AscCommon"].changestype_Theme                     = changestype_Theme;
 	window["AscCommon"].changestype_SlideSize                 = changestype_SlideSize;
+	window["AscCommon"].changestype_NoteSize                  = changestype_NoteSize;
 	window["AscCommon"].changestype_SlideBg                   = changestype_SlideBg;
 	window["AscCommon"].changestype_SlideTransition           = changestype_SlideTransition;
 	window["AscCommon"].changestype_MoveComment               = changestype_MoveComment;

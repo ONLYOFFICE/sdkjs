@@ -839,8 +839,12 @@ var c_oAscPresentationShortcutType = {
 
 const c_oAscPresentationViewMode = {
 	normal: 0,
-	masterSlide: 1,
-	sorter: 2
+	notesPage: 1,
+	masterSlide: 2,
+	handoutMaster: 3,
+	notesMaster: 4,
+	sorter: 5,
+	outline: 6
 };
 
 var TABLE_STYLE_WIDTH_PIX  = 72;
@@ -1222,9 +1226,13 @@ prot = window['Asc']['c_oAscBlendModeType'] = window['Asc'].c_oAscBlendModeType 
 prot = window['Asc']['c_oAscConformanceType'] = window['Asc'].c_oAscConformanceType = c_oAscConformanceType;
 
 prot = window['Asc']['c_oAscPresentationViewMode'] = window['Asc'].c_oAscPresentationViewMode = c_oAscPresentationViewMode;
-prot['normal']      = c_oAscPresentationViewMode.normal;
+prot['normal'] = c_oAscPresentationViewMode.normal;
+prot['notesPage'] = c_oAscPresentationViewMode.notesPage;
 prot['masterSlide'] = c_oAscPresentationViewMode.masterSlide;
-prot['sorter']      = c_oAscPresentationViewMode.sorter;
+prot['handoutMaster'] = c_oAscPresentationViewMode.handoutMaster;
+prot['notesMaster'] = c_oAscPresentationViewMode.notesMaster;
+prot['sorter'] = c_oAscPresentationViewMode.sorter;
+prot['outline'] = c_oAscPresentationViewMode.outline;
 
 
 window['AscCommon']                = window['AscCommon'] || {};

@@ -580,7 +580,7 @@ CGraphicObjects.prototype =
                 {
                     let oBlipFill = oDrawing.blipFill.createDuplicate();
                     let oEffect = new AscFormat.CAlphaModFix();
-                    let nAmt = ((255 - nOpacity) / 255) * 100000 + 0.5 >> 0;
+                    let nAmt = (nOpacity / 255) * 100000 + 0.5 >> 0;
                     oEffect.amt = Math.max(0, Math.min(100000, nAmt));
                     oBlipFill.Effects.push(oEffect);
                     oDrawing.setBlipFill(oBlipFill);
@@ -589,7 +589,6 @@ CGraphicObjects.prototype =
         }
         else
         {
-            var oTextPropMenu = oProps.get_TextPr();
             oDrawing = new AscFormat.CShape();
             oDrawing.setWordShape(true);
             oDrawing.setBDeleted(false);
@@ -616,23 +615,27 @@ CGraphicObjects.prototype =
             var oContent = oDrawing.getDocContent();
             AscFormat.AddToContentFromString(oContent, oProps.get_Text());
             var oTextPr = new CTextPr();
-            oTextPr.FontSize = (oTextPropMenu.get_FontSize() > 0 ? oTextPropMenu.get_FontSize() : 20);
-            oTextPr.RFonts.SetAll(oTextPropMenu.get_FontFamily().get_Name(), -1);
-            oTextPr.Bold = oTextPropMenu.get_Bold();
-            oTextPr.HighLight = oTextPropMenu.get_HighLight();
-            oTextPr.Italic = oTextPropMenu.get_Italic();
-            oTextPr.Underline = oTextPropMenu.get_Underline();
-            oTextPr.Strikeout = oTextPropMenu.get_Strikeout();
-            oTextPr.TextFill = AscFormat.CreateUnifillFromAscColor(oTextPropMenu.get_Color(), 1);
-            let nOpacity = oProps.get_Opacity();
-            if(AscFormat.isRealNumber(nOpacity) && nOpacity < 255)
-            {
-                oTextPr.TextFill.transparent = (nOpacity >> 0);
-            }
-            if(null !== oTextPropMenu.get_Lang())
-            {
-                oTextPr.SetLang(oTextPropMenu.get_Lang());
-            }
+            var oTextPropMenu = oProps.get_TextPr();
+			if (oTextPropMenu)
+			{
+				oTextPr.FontSize = (oTextPropMenu.get_FontSize() > 0 ? oTextPropMenu.get_FontSize() : 20);
+				oTextPr.RFonts.SetAll(oTextPropMenu.get_FontFamily().get_Name(), -1);
+				oTextPr.Bold = oTextPropMenu.get_Bold();
+				oTextPr.HighLight = oTextPropMenu.get_HighLight();
+				oTextPr.Italic = oTextPropMenu.get_Italic();
+				oTextPr.Underline = oTextPropMenu.get_Underline();
+				oTextPr.Strikeout = oTextPropMenu.get_Strikeout();
+				if(null !== oTextPropMenu.get_Lang())
+				{
+					oTextPr.SetLang(oTextPropMenu.get_Lang());
+				}
+			}
+			oTextPr.TextFill = AscFormat.CreateUnifillFromAscColor(oTextPropMenu && oTextPropMenu.get_Color() ? oTextPropMenu.get_Color() : new Asc.asc_CColor(0, 0, 0), 1);
+			let nOpacity = oProps.get_Opacity();
+			if(AscFormat.isRealNumber(nOpacity) && nOpacity < 255)
+			{
+				oTextPr.TextFill.transparent = (nOpacity >> 0);
+			}
             oContent.SetApplyToAll(true);
             oContent.AddToParagraph(new ParaTextPr(oTextPr));
             oContent.SetParagraphAlign(AscCommon.align_Center);
@@ -661,7 +664,7 @@ CGraphicObjects.prototype =
 			oContentSize.w = AscFormat.CTextBody.prototype.getContentWidth.call({ content: oContent }) + 0.1;
             oXfrm.setExtX(oContentSize.w + 1);
             oXfrm.setExtY(oContentSize.h);
-            if(oTextPropMenu.get_FontSize() < 0)
+            if(oTextPropMenu && oTextPropMenu.get_FontSize() < 0)
             {
                 if(!bZeroAngle)
                 {

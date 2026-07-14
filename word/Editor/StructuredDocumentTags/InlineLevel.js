@@ -4117,14 +4117,30 @@ CInlineLevelSdt.prototype.IsFormExceedsBounds = function()
 };
 CInlineLevelSdt.prototype.CheckSpelling = function(oCollector, nDepth)
 {
-	let isForm = this.IsForm();
-	if (isForm)
+	let needFlush = (this.IsPlaceHolder() || this.IsForm());
+	if (needFlush)
 		oCollector.FlushWord();
 
 	CParagraphContentWithParagraphLikeContent.prototype.CheckSpelling.apply(this, arguments);
 
-	if (isForm)
+	if (needFlush)
 		oCollector.FlushWord();
+};
+CInlineLevelSdt.prototype.CanCheckSpelling = function()
+{
+	if (this.IsPlaceHolder())
+		return false;
+
+	let formPr = this.Pr.FormPr;
+	return (!formPr || false !== formPr.GetSpellCheck());
+};
+CInlineLevelSdt.prototype.private_OnChangeFormPrSpellCheck = function()
+{
+	let paragraph = this.GetParagraph();
+	if (paragraph)
+		paragraph.GetSpellChecker().Clear();
+	
+	this.private_UpdateSpellChecking();
 };
 CInlineLevelSdt.prototype.MoveCursorOutsideForm = function(isBefore)
 {

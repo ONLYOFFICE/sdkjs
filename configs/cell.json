@@ -102,6 +102,7 @@
 			"common/Drawings/Format/Format.js",
 			"common/Drawings/Format/CreateGeometry.js",
 			"common/Drawings/Format/Geometry.js",
+			"common/graphic-object-drawer/graphic-object-drawer.js",
 			"common/Drawings/Format/GraphicObjectBase.js",
 			"common/Drawings/Format/Shape.js",
 			"common/Drawings/Format/CnxShape.js",

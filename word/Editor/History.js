@@ -450,7 +450,10 @@ CHistory.prototype =
 			_Class.CheckNeedRecalculate();
 		
 		if (!this.CanAddChanges())
+		{
+			this.UpdateDocumentPositions(_Class, null);
 			return;
+		}
 
 		this._CheckCanNotAddChanges();
 
@@ -487,24 +490,36 @@ CHistory.prototype =
 		if (!this.CollaborativeEditing || !_Class)
 			return;
 		
-		if (_Class.IsContentChange() && this.CollaborativeEditing.IsTrackingPositions())
-		{
-			var bAdd  = _Class.IsAdd();
-			var Count = _Class.GetItemsCount();
-			
-			var ContentChanges = new AscCommon.CContentChangesElement(bAdd == true ? AscCommon.contentchanges_Add : AscCommon.contentchanges_Remove, Data.Pos, Count, Item);
-			Class.Add_ContentChanges(ContentChanges);
-			this.CollaborativeEditing.Add_NewDC(Class);
-			
-			if (true === bAdd)
-				this.CollaborativeEditing.Update_DocumentPositionsOnAdd(Class, Data.Pos);
-			else
-				this.CollaborativeEditing.Update_DocumentPositionsOnRemove(Class, Data.Pos, Count);
-		}
+		this.UpdateDocumentPositions(_Class, Item);
+		
 		if (_Class.IsPosExtChange())
 		{
 			this.CollaborativeEditing.AddPosExtChanges(Item, _Class);
 		}
+	},
+	
+	UpdateDocumentPositions : function(change, binaryData)
+	{
+		if (AscCommon.g_oIdCounter.IsLoad()
+			|| !this.CollaborativeEditing 
+			|| !this.CollaborativeEditing.IsTrackingPositions()
+			|| !change
+			|| !change.GetClass
+			|| !change.IsContentChange())
+			return;
+		
+		var bAdd  = change.IsAdd();
+		var Count = change.GetItemsCount();
+		var obj   = change.GetClass();
+		
+		var ContentChanges = new AscCommon.CContentChangesElement(bAdd == true ? AscCommon.contentchanges_Add : AscCommon.contentchanges_Remove, change.Pos, Count, binaryData);
+		obj.Add_ContentChanges(ContentChanges);
+		this.CollaborativeEditing.Add_NewDC(obj);
+		
+		if (true === bAdd)
+			this.CollaborativeEditing.Update_DocumentPositionsOnAdd(obj, change.Pos);
+		else
+			this.CollaborativeEditing.Update_DocumentPositionsOnRemove(obj, change.Pos, Count);
 	},
 
     RecalcData_Add : function(Data)
@@ -955,6 +970,14 @@ CHistory.prototype =
         this.OnEnd_GetRecalcData();
         return this.RecalculateData;
     },
+	
+	ResetRecalcIndexToPoint : function(pointIndex)
+	{
+		if (pointIndex > 0)
+			this.RecIndex = Math.min(this.RecIndex, pointIndex - 1);
+		else
+			this.RecIndex = Math.min(this.RecIndex, this.Index + pointIndex);
+	},
 
     Reset_RecalcIndex : function()
     {

@@ -1198,9 +1198,12 @@
 				}
 			}
 
-			if (this.api.aiPluginSettings && eventMap["onAIPluginSettings"])
+			if (eventMap["onAIPluginSettings"])
 			{
-				runObject.startData.setAttribute("aiPluginSettings", this.api.aiPluginSettings);
+				if (this.api.aiPluginSettings)
+					runObject.startData.setAttribute("aiPluginSettings", this.api.aiPluginSettings);
+				if (this.api.aiProxyUrl)
+					runObject.startData.setAttribute("aiProxyUrl", this.api.aiProxyUrl);
 			}
 
 			if (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge)
@@ -1554,7 +1557,6 @@
 			task.closed = isClose;
 			task.interface = isInterface;
 			task.recalculate = isRecalculate;
-			task.resize = isResize;
 
 			if (0 === this.queueCommands.length)
 			{
@@ -1612,31 +1614,32 @@
 				{
 					AscCommon.safePluginEval(value);
 				}
-				else if (!this.api.isLongAction() && (task.resize || this.api.canRunBuilderScript()))
+				else if (!this.api.isLongAction())
 				{
-					this.api._beforeEvalCommand();
-					commandReturnValue = AscCommon.safePluginEval(value);
-
-					if (!Asc.checkReturnCommand(commandReturnValue))
-						commandReturnValue = undefined;
-					
 					let _t = this;
-					function onEndScript()
-					{
-						_t.api.onEndBuilderScript(function(result)
+					this.api.runBuilderScript(function() {
+						_t.api._beforeEvalCommand();
+						commandReturnValue = AscCommon.safePluginEval(value);
+
+						if (!Asc.checkReturnCommand(commandReturnValue))
+							commandReturnValue = undefined;
+						
+						function onEndScript()
 						{
-							if (!result)
-								commandReturnValue = undefined;
-							
-							_t.shiftCommand(commandReturnValue);
-						});
-					}
-					
-					if (task.recalculate === true && !AscCommon.History.Is_LastPointEmpty())
-						this.api._afterEvalCommand(onEndScript);
-					else
-						onEndScript();
-					
+							_t.api.onEndBuilderScript(function(result)
+							{
+								if (!result)
+									commandReturnValue = undefined;
+								
+								_t.shiftCommand(commandReturnValue);
+							});
+						}
+						
+						if (task.recalculate === true && !AscCommon.History.Is_LastPointEmpty())
+							_t.api._afterEvalCommand(onEndScript);
+						else
+							onEndScript();
+					});
 					return;
 				}
 			}

@@ -1648,7 +1648,8 @@
 			LAYOUT: 1,
 			MASTER: 2,
 			NOTES: 3,
-			NOTES_MASTER: 4
+			NOTES_MASTER: 4,
+			HANDOUT_MASTER: 5
 		};
 
 
@@ -6731,6 +6732,70 @@
 		CUniFill.prototype.ReplaceImageUrl = function (mapUrl) {
 			return this.fill && this.fill.ReplaceImageUrl ? this.fill.ReplaceImageUrl(mapUrl) : false;
 		};
+		CUniFill.prototype.getLnColor = function () {
+			let RGBA = null;
+			switch (this.fill.type)
+			{
+				case c_oAscFill.FILL_TYPE_BLIP:
+				{
+					RGBA = new AscFormat.CUniColor().RGBA;
+					break;
+				}
+				case c_oAscFill.FILL_TYPE_SOLID:
+				{
+					if(this.fill.color)
+					{
+						RGBA = this.fill.color.RGBA;
+					}
+					else
+					{
+						RGBA = new AscFormat.CUniColor().RGBA;
+					}
+					break;
+				}
+				case c_oAscFill.FILL_TYPE_GRAD:
+				{
+					var _c = this.fill.colors;
+					if (_c == 0)
+						RGBA = new AscFormat.CUniColor().RGBA;
+					else
+					{
+						if(this.fill.colors[0].color)
+						{
+							RGBA = this.fill.colors[0].color.RGBA;
+						}
+						else
+						{
+							RGBA = new AscFormat.CUniColor().RGBA;
+						}
+					}
+
+					break;
+				}
+				case c_oAscFill.FILL_TYPE_PATT:
+				{
+					if(this.fill.fgClr)
+					{
+						RGBA = this.fill.fgClr.RGBA;
+					}
+					else
+					{
+						RGBA = new AscFormat.CUniColor().RGBA;
+					}
+					break;
+				}
+				case c_oAscFill.FILL_TYPE_NOFILL:
+				{
+					break;
+				}
+				default:
+				{
+					break;
+				}
+			}
+			return RGBA;
+		};
+
 		function CBuBlip() {
 			CBaseNoIdObject.call(this);
 			this.blip = null;
@@ -8185,18 +8250,26 @@
 			CBaseNoIdObject.call(this);
 			this.type = null;
 			this.media = null;
+			this.start = null;
+			this.end = null;
 		}
 
 		InitClass(UniMedia, CBaseNoIdObject, 0);
 		UniMedia.prototype.Write_ToBinary = function (w) {
 			var bType = this.type !== null && this.type !== undefined;
 			var bMedia = typeof this.media === 'string';
+			var bStart = typeof this.start === 'number';
+			var bEnd = typeof this.end === 'number';
 			var nFlags = 0;
 			bType && (nFlags |= 1);
 			bMedia && (nFlags |= 2);
+			bStart && (nFlags |= 4);
+			bEnd && (nFlags |= 8);
 			w.WriteLong(nFlags);
 			bType && w.WriteLong(this.type);
 			bMedia && w.WriteString2(this.media);
+			bStart && w.WriteDouble(this.start);
+			bEnd && w.WriteDouble(this.end);
 		};
 		UniMedia.prototype.Read_FromBinary = function (r) {
 			var nFlags = r.GetLong();
@@ -8206,11 +8279,19 @@
 			if (nFlags & 2) {
 				this.media = r.GetString2();
 			}
+			if (nFlags & 4) {
+				this.start = r.GetDouble();
+			}
+			if (nFlags & 8) {
+				this.end = r.GetDouble();
+			}
 		};
 		UniMedia.prototype.createDuplicate = function () {
 			var _ret = new UniMedia();
 			_ret.type = this.type;
 			_ret.media = this.media;
+			_ret.start = this.start;
+			_ret.end = this.end;
 			return _ret;
 		};
 
@@ -10721,15 +10802,12 @@
 						if(oPresentation) {
 							oPresentation.bNeedUpdateThemes = true;
 							let oThemedObjects = oPresentation.GetSlideObjectsWithTheme(this);
-							for(let nIdx = 0; nIdx < oThemedObjects.masters.length; ++nIdx) {
-								oThemedObjects.masters[nIdx].checkSlideColorScheme();
-							}
-							for(let nIdx = 0; nIdx < oThemedObjects.layouts.length; ++nIdx) {
-								oThemedObjects.layouts[nIdx].checkSlideColorScheme();
-							}
-							for(let nIdx = 0; nIdx < oThemedObjects.slides.length; ++nIdx) {
-								oThemedObjects.slides[nIdx].checkSlideColorScheme();
-								oThemedObjects.slides[nIdx].addToRecalculate();
+							for (let sKey in oThemedObjects) {
+								const arrSlides = oThemedObjects[sKey];
+								for(let nIdx = 0; nIdx < arrSlides.length; ++nIdx) {
+									arrSlides[nIdx].checkSlideColorScheme();
+									arrSlides[nIdx].addToRecalculate();
+								}
 							}
 							AscCommon.History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: this});
 						}
@@ -11038,6 +11116,17 @@
 				this.bgRef.Read_FromBinary(r);
 			}
 		};
+		CBg.prototype.recalculate = function(theme, slide, layout, master, RGBA) {
+			const ret = {RGBA: null, backFill: null};
+			if (this.bgPr) {
+				ret.backFill = this.bgPr.Fill;
+			} else if (this.bgRef) {
+				this.bgRef.Color.Calculate(theme, slide, layout, master, RGBA);
+				ret.RGBA = this.bgRef.Color.RGBA;
+				ret.backFill = theme.themeElements.fmtScheme.GetFillStyle(this.bgRef.idx, this.bgRef.Color);
+			}
+			return ret;
+		};
 
 		function CSld(parent) {
 			CBaseFormatObject.call(this);
@@ -11205,8 +11294,11 @@
 		};
 		CSld.prototype.forEachSp = function(fCallback) {
 			for(let nSp = 0; nSp < this.spTree.length; ++nSp) {
-				fCallback(this.spTree[nSp]);
+				if (fCallback(this.spTree[nSp])) {
+					return true;
+				}
 			}
+			return false;
 		};
 		CSld.prototype.handleAllContents = function(fCallback) {
 			this.forEachSp(function(oSp) {
@@ -11224,6 +11316,25 @@
 			if(bNoHistory) {
 				AscCommon.History.RecalculateData.Update = bOldUpdate;
 			}
+		};
+		CSld.prototype.recalculateBackground = function(theme, slide, layout, master, RGBA) {
+			if (this.Bg) {
+				return this.Bg.recalculate(theme, slide, layout, master, RGBA);
+
+			}
+			return {backFill: null, RGBA: null};
+		};
+		CSld.prototype.getContentShape = function () {
+			let matchingShape;
+			function forEachSpCallback(shape) {
+				const placeholderType = shape.getPlaceholderTypeWithDefault();
+				if (placeholderType === AscFormat.phType_subTitle || placeholderType === AscFormat.phType_obj || placeholderType === AscFormat.phType_body) {
+					matchingShape = shape;
+					return true;
+				}
+			}
+			this.forEachSp(forEachSpCallback);
+			return matchingShape;
 		};
 
 		function RefreshContentAllFields(oContent) {
@@ -16097,7 +16208,7 @@
 									for (var i = 0; i < lCount; i++) {
 										s.Skip2(1);
 
-										var _author = new AscCommon.CCommentAuthor();
+										var _author = new AscCommon.CSlideCommentAuthor();
 
 										var _end_rec3 = s.cur + s.GetLong() + 4;
 										s.Skip2(1); // start attributes
@@ -16459,7 +16570,7 @@
 		}
 
 		function GenerateDefaultMasterSlide(theme) {
-			var master = new MasterSlide(theme.presentation, theme);
+			var master = new AscCommonSlide.MasterSlide();
 			master.Theme = theme;
 
 			master.sldLayoutLst[0] = GenerateDefaultSlideLayout(master);
@@ -16468,21 +16579,11 @@
 		}
 
 		function GenerateDefaultSlideLayout(master) {
-			var layout = new SlideLayout();
+			var layout = new AscCommonSlide.SlideLayout();
 			layout.Theme = master.Theme;
 			layout.Master = master;
 			layout.setPreserve(true);
 			return layout;
-		}
-
-		function GenerateDefaultSlide(layout) {
-			var slide = new Slide(layout.Master.presentation, layout, 0);
-			slide.Master = layout.Master;
-			slide.Theme = layout.Master.Theme;
-			slide.setNotes(AscCommonSlide.CreateNotes());
-			slide.notes.setNotesMaster(layout.Master.presentation.notesMasters[0]);
-			slide.notes.setSlide(slide);
-			return slide;
 		}
 
 		function CreateDefaultTextRectStyle() {
@@ -17255,15 +17356,19 @@
 		 * @return {CShape}
 		 */
 		function builder_CreateShape(sType, nWidth, nHeight, oFill, oStroke, oParent, oTheme, oDrawingDocument, bWord, worksheet) {
-			var oShapeTrack = new AscFormat.NewShapeTrack(sType, 0, 0, oTheme, null, null, null, 0);
+			var oShapeTrack = new AscFormat.NewShapeTrack(sType, 0, 0, oTheme, null, null, null, 0, undefined, undefined, undefined, true);
 			oShapeTrack.track({}, nWidth, nHeight, true);
 			var oShape = oShapeTrack.getShape(bWord === true, oDrawingDocument, null);
 			oShape.setParent(oParent);
 			if (worksheet) {
 				oShape.setWorksheet(worksheet);
 			}
-			oShape.spPr.setFill(oFill);
-			oShape.spPr.setLn(oStroke);
+			if (oFill) {
+				oShape.spPr.setFill(oFill);
+			}
+			if (oStroke) {
+				oShape.spPr.setLn(oStroke);
+			}
 			return oShape;
 		}
 
@@ -20926,7 +21031,6 @@
 		window['AscFormat'].GenerateDefaultVisioTheme = GenerateDefaultVisioTheme;
 		window['AscFormat'].GenerateDefaultMasterSlide = GenerateDefaultMasterSlide;
 		window['AscFormat'].GenerateDefaultSlideLayout = GenerateDefaultSlideLayout;
-		window['AscFormat'].GenerateDefaultSlide = GenerateDefaultSlide;
 		window['AscFormat'].CreateDefaultTextRectStyle = CreateDefaultTextRectStyle;
 		window['AscFormat'].GenerateDefaultColorMap = GenerateDefaultColorMap;
 		window['AscFormat'].CreateAscFill = CreateAscFill;

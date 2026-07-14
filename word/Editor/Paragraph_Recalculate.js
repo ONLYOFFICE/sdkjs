@@ -905,7 +905,7 @@ Paragraph.prototype.private_RecalculatePageBreak       = function(CurLine, CurPa
                 return false;
             }
         }
-        else if (isParentDocument && true === this.Parent.RecalcInfo.Check_KeepNext(this) && 0 === CurPage && null != this.Get_DocumentPrev())
+        else if ((isParentDocument || isParentBlockSdt) && true === logicDocument.RecalcInfo.Check_KeepNext(this) && 0 === CurPage && null != this.GetPrevDocumentElement())
         {
             this.Pages[CurPage].Set_EndLine( CurLine - 1 );
             if ( 0 === CurLine )

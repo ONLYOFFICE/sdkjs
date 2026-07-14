@@ -3418,19 +3418,9 @@ function CDemonstrationManager(htmlpage)
 
     this.Start = function(main_div_id, start_slide_num, is_play_mode, is_no_fullscreen)
     {
-        let nStartSlideNum = start_slide_num;
-        if(Asc.editor.isMasterMode())
-        {
-            nStartSlideNum = 0;
-            this.StartSlideNum = nStartSlideNum;
-            this.StartSlideObject = this.HtmlPage.m_oApi.WordControl.m_oLogicDocument.GetCurrentSlide();
-        }
-        else
-        {
-            this.StartSlideNum = nStartSlideNum;
-            if (-1 == nStartSlideNum)
-                nStartSlideNum = 0;
-        }
+        const nStartSlideNum = Asc.editor.presentationViewManager.getAnimationStartSlideNum(start_slide_num);
+	    this.StartSlideNum = nStartSlideNum;
+	    this.StartSlideObject = Asc.editor.presentationViewManager.getSavedAnimationStartObject();
 
         this.DemonstrationDiv = document.getElementById(main_div_id);
         if (this.DemonstrationDiv == null || nStartSlideNum < 0 || nStartSlideNum >= this.GetSlidesCount())
@@ -3972,22 +3962,7 @@ function CDemonstrationManager(htmlpage)
 		}
 
 		this.StartSlideNum = -1;
-        if(this.HtmlPage.m_oApi.isMasterMode())
-        {
-            if(this.StartSlideObject)
-            {
-                let oPresentation = this.HtmlPage.m_oApi.WordControl.m_oLogicDocument;
-                let nIdx = oPresentation.GetSlideIndex(this.StartSlideObject);
-                if(nIdx > -1)
-                {
-                    this.HtmlPage.GoToPage(nIdx);
-                }
-                else
-                {
-                    this.HtmlPage.GoToPage(0);
-                }
-            }
-        }
+	    this.HtmlPage.m_oApi.presentationViewManager.goToSavedAnimationStartObject(this.StartSlideObject);
         this.StartSlideObject = null;
         this.StopAllAnimations();
 

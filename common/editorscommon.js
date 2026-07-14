@@ -4827,6 +4827,9 @@
 
 	CContentChangesElement.prototype.Refresh_BinaryData = function ()
 	{
+		if (!this.m_pData)
+			return;
+		
 		var Binary_Writer = AscCommon.History.BinaryWriter;
 		var Binary_Pos = Binary_Writer.GetCurPosition();
 

@@ -101,6 +101,7 @@
 	 * @property {ApiName[]} Defnames - Returns an array of the ApiName objects.
 	 * @property {ApiComment[]} Comments - Returns all comments from the current worksheet.
 	 * @property {ApiFreezePanes} FreezePanes - Returns the freeze panes for the current worksheet.
+	 * @property {ApiPageSetup} PageSetup - Returns the page setup object for the current worksheet.
 	 * @property {ApiProtectedRange[]} AllProtectedRanges - Returns all protected ranges from the current worksheet.
 	 * @property {ApiPivotTable[]} PivotTables - Returns all pivot tables from the current worksheet.
 	 * @property {ApiHyperlink[]} Hyperlinks - Returns an array of all the hyperlinks on the worksheet.
@@ -261,6 +262,21 @@
 	 * @typedef {("xlLandscape" | "xlPortrait")} PageOrientation
 	 * @see office-js-api/Examples/Enumerations/PageOrientation.js
 	 */
+
+	/**
+	 * The paper size, specified as a value of the Excel <b>xlPaperSize</b> enumeration.
+	 * @typedef {("xlPaperLetter" | "xlPaperLetterSmall" | "xlPaperTabloid" | "xlPaperLedger"
+	 * | "xlPaperLegal" | "xlPaperStatement" | "xlPaperExecutive" | "xlPaperA3" | "xlPaperA4" | "xlPaperA4Small"
+	 * | "xlPaperA5" | "xlPaperB4" | "xlPaperB5" | "xlPaperFolio" | "xlPaperQuarto" | "xlPaper10x14" | "xlPaper11x17"
+	 * | "xlPaperNote" | "xlPaperEnvelope9" | "xlPaperEnvelope10" | "xlPaperEnvelope11" | "xlPaperEnvelope12"
+	 * | "xlPaperEnvelope14" | "xlPaperCsheet" | "xlPaperDsheet" | "xlPaperEsheet" | "xlPaperEnvelopeDL"
+	 * | "xlPaperEnvelopeC5" | "xlPaperEnvelopeC3" | "xlPaperEnvelopeC4" | "xlPaperEnvelopeC6" | "xlPaperEnvelopeC65"
+	 * | "xlPaperEnvelopeB4" | "xlPaperEnvelopeB5" | "xlPaperEnvelopeB6" | "xlPaperEnvelopeItaly"
+	 * | "xlPaperEnvelopeMonarch" | "xlPaperEnvelopePersonal" | "xlPaperFanfoldUS" | "xlPaperFanfoldStdGerman"
+	 * | "xlPaperFanfoldLegalGerman" | "xlPaperUser")} PaperSize
+	 * @see office-js-api/Examples/Enumerations/PaperSize.js
+	 */
+
 
 	/**
 	 * The type of tick mark appearance.
@@ -645,6 +661,73 @@
 	 */
 	function ApiFreezePanes(ws) {
 		this.ws = ws;
+	}
+
+	/**
+	 * Class representing the page setup (print layout) of a worksheet.
+	 * @constructor
+	 * @property {number} LeftMargin - Returns or sets the left margin size measured in millimeters.
+	 * @property {number} RightMargin - Returns or sets the right margin size measured in millimeters.
+	 * @property {number} TopMargin - Returns or sets the top margin size measured in millimeters.
+	 * @property {number} BottomMargin - Returns or sets the bottom margin size measured in millimeters.
+	 * @property {number} HeaderMargin - Returns or sets the distance from the top of the page to the header, in millimeters.
+	 * @property {number} FooterMargin - Returns or sets the distance from the bottom of the page to the footer, in millimeters.
+	 * @property {PageOrientation} Orientation - Returns or sets the page orientation.
+	 * @property {PaperSize} PaperSize - Returns or sets the paper size.
+	 * @property {number} Zoom - Returns or sets the print scaling factor in percent (10-400).
+	 * @property {number} FitToPagesWide - Returns or sets the number of pages wide the worksheet is scaled to when printed (0 means automatic).
+	 * @property {number} FitToPagesTall - Returns or sets the number of pages tall the worksheet is scaled to when printed (0 means automatic).
+	 * @property {boolean} CenterHorizontally - Returns or sets whether the worksheet is centered horizontally on the page when printed.
+	 * @property {boolean} CenterVertically - Returns or sets whether the worksheet is centered vertically on the page when printed.
+	 * @property {boolean} PrintGridlines - Returns or sets whether the cell gridlines are printed.
+	 * @property {boolean} PrintHeadings - Returns or sets whether the row and column headings are printed.
+	 * @property {string} PrintArea - Returns or sets the range to be printed (empty string prints the whole sheet).
+	 * @property {string} PrintTitleRows - Returns or sets the rows repeated at the top of each printed page.
+	 * @property {string} PrintTitleColumns - Returns or sets the columns repeated at the left of each printed page.
+	 * @property {number | null} FirstPageNumber - Returns or sets the first page number (null means automatic).
+	 * @property {boolean} AlignMarginsHeaderFooter - Returns or sets whether the header and footer margins are aligned with the page margins.
+	 * @property {boolean} DifferentFirstPageHeaderFooter - Returns or sets whether a different header and footer is used on the first printed page.
+	 * @property {boolean} OddAndEvenPagesHeaderFooter - Returns or sets whether different headers and footers are used on odd and even printed pages.
+	 * @property {boolean} ScaleWithDocHeaderFooter - Returns or sets whether the header and footer are scaled with the document when printing.
+	 * @property {string} LeftHeader - Returns or sets the left part of the (odd) header.
+	 * @property {string} CenterHeader - Returns or sets the center part of the (odd) header.
+	 * @property {string} RightHeader - Returns or sets the right part of the (odd) header.
+	 * @property {string} LeftFooter - Returns or sets the left part of the (odd) footer.
+	 * @property {string} CenterFooter - Returns or sets the center part of the (odd) footer.
+	 * @property {string} RightFooter - Returns or sets the right part of the (odd) footer.
+	 * @property {ApiPage} EvenPage - Returns the header and footer of the even pages.
+	 * @property {ApiPage} FirstPage - Returns the header and footer of the first page.
+	 * @property {ApiWorksheet} Parent - Returns the parent worksheet of the page setup.
+	 */
+	function ApiPageSetup(ws) {
+		this.ws = ws;
+	}
+
+	/**
+	 * Class representing the header and footer of a specific page type (even or first) of a worksheet.
+	 * @constructor
+	 * @property {ApiHeaderFooter} LeftHeader - Returns the left header section of this page type.
+	 * @property {ApiHeaderFooter} CenterHeader - Returns the center header section of this page type.
+	 * @property {ApiHeaderFooter} RightHeader - Returns the right header section of this page type.
+	 * @property {ApiHeaderFooter} LeftFooter - Returns the left footer section of this page type.
+	 * @property {ApiHeaderFooter} CenterFooter - Returns the center footer section of this page type.
+	 * @property {ApiHeaderFooter} RightFooter - Returns the right footer section of this page type.
+	 */
+	function ApiPage(ws, sType) {
+		this.ws = ws;
+		this.type = sType; // "even" | "first"
+	}
+
+	/**
+	 * Class representing a single header or footer section (left, center or right) of a page.
+	 * @constructor
+	 * @property {string} Text - Returns or sets the text of this header or footer section (may contain formatting codes such as &P, &D).
+	 */
+	function ApiHeaderFooter(ws, sType, bFooter, sKey) {
+		this.ws = ws;
+		this.type = sType;     // "even" | "first"
+		this.bFooter = bFooter; // true -> footer, false -> header
+		this.key = sKey;       // "L" | "C" | "R"
 	}
 
 	/**
@@ -8383,7 +8466,13 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetActive.js
 	 */
 	ApiWorksheet.prototype.SetActive = function () {
-		return this.worksheet.workbook.setActive(this.worksheet.index);
+		var nIndex = this.worksheet.index;
+		var bResult = this.worksheet.workbook.setActive(nIndex);
+		var oApi = Asc.editor;
+		if (bResult && oApi && oApi.wb) {
+			oApi.asc_showWorksheet(nIndex);
+		}
+		return bResult;
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "Active", {
 		set: function () {
@@ -8667,7 +8756,7 @@
 			r1 = Math.min(Range1.bbox.r1, Range2.bbox.r1);
 			c1 = Math.min(Range1.bbox.c1, Range2.bbox.c1);
 			r2 = Math.max(Range1.bbox.r2, Range2.bbox.r2);
-			c2 = Math.max(Range1.bbox.c1, Range2.bbox.c2);
+			c2 = Math.max(Range1.bbox.c2, Range2.bbox.c2);
 		} else {
 			r1 = Range1.bbox.r1;
 			c1 = Range1.bbox.c1;
@@ -9031,6 +9120,24 @@
 	});
 
 	/**
+	 * Returns the page setup object that represents the print layout settings of the current worksheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPageSetup}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetPageSetup.js
+	 */
+	ApiWorksheet.prototype.GetPageSetup = function () {
+		return new ApiPageSetup(this.worksheet);
+	};
+
+	Object.defineProperty(ApiWorksheet.prototype, "PageSetup", {
+		get: function () {
+			return this.GetPageSetup();
+		}
+	});
+
+	/**
 	 * Returns an array of ApiName objects.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -9274,8 +9381,8 @@
 	 * @param {ShapeType} [sType="rect"] - The shape type which specifies the preset shape geometry.
 	 * @param {EMU} nWidth - The shape width in English measure units.
 	 * @param {EMU} nHeight - The shape height in English measure units.
-	 * @param {ApiFill} oFill - The color or pattern used to fill the shape.
-	 * @param {ApiStroke} oStroke - The stroke used to create the element shadow.
+	 * @param {ApiFill} [oFill] - The color or pattern used to fill the shape. If not specified, the default shape style fill (theme accent) is used.
+	 * @param {ApiStroke} [oStroke] - The stroke used to draw the shape outline. If not specified, the default shape style outline (theme accent) is used.
 	 * @param {number} nFromCol - The number of the column where the beginning of the shape will be placed.
 	 * @param {EMU} nColOffset - The offset from the nFromCol column to the left part of the shape measured in English measure units.
 	 * @param {number} nFromRow - The number of the row where the beginning of the shape will be placed.
@@ -9290,7 +9397,7 @@
 		}
 		sType = sType || "rect";
 		if (!AscFormat.isValidShapeType(sType)) sType = "rect";
-		var oShape = AscFormat.builder_CreateShape(sType, nWidth / 36000, nHeight / 36000, oFill.UniFill, oStroke.Ln, null, this.worksheet.workbook.theme, this.worksheet.getDrawingDocument(), false, this.worksheet);
+		var oShape = AscFormat.builder_CreateShape(sType, nWidth / 36000, nHeight / 36000, oFill ? oFill.UniFill : null, oStroke ? oStroke.Ln : null, null, this.worksheet.workbook.theme, this.worksheet.getDrawingDocument(), false, this.worksheet);
 		private_SetCoords(oShape, this.worksheet, nWidth, nHeight, nFromCol, nColOffset, nFromRow, nRowOffset);
 		return new ApiShape(oShape);
 	};
@@ -9430,6 +9537,52 @@
 	 */
 	ApiWorksheet.prototype.GetAllDrawings = function () {
 		return GetApiDrawings(this.worksheet.Drawings.map(function(drawingBase) { return drawingBase.graphicObject }));
+	};
+
+	/**
+	 * Groups an array of drawings in the current sheet.
+	 * <note>This method is not supported in the document builder and works only in the editor.</note>
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiDrawing[]} aDrawings - An array of drawings to group.
+	 * @returns {ApiGroup | null} - Returns null if the drawings cannot be grouped or when called in the document builder.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GroupDrawings.js
+	 */
+	ApiWorksheet.prototype.GroupDrawings = function(aDrawings) {
+		if (AscCommon.isFileBuild())
+			return null;
+
+		if (!Array.isArray(aDrawings) || aDrawings.length === 0)
+			return null;
+
+		let oWorksheet = this.worksheet;
+		if (aDrawings.find(function(drawing) {
+			return !drawing.Drawing || drawing.Drawing.worksheet !== oWorksheet || !drawing.Drawing.IsUseInDocument();
+		}))
+			return null;
+
+		let oController = aDrawings[0].Drawing.getDrawingObjectsController();
+		if (!oController)
+			return null;
+
+		oController.resetSelection();
+		aDrawings.forEach(function(drawing) {
+			oController.selectObject(drawing.Drawing, 0);
+		});
+
+		if (!oController.canGroup())
+			return null;
+
+		aDrawings.forEach(function(drawing) {
+			drawing.Drawing.recalculate();
+		});
+
+		let oGroup = oController.createGroup();
+		if (!oGroup)
+			return null;
+
+		return new ApiGroup(oGroup);
 	};
 
 	/**
@@ -11004,18 +11157,18 @@
 
 	/**
 	 * Sets the background color to the current cell range with the previously created color object.
-	 * Sets 'No Fill' when previously created color object is null.
+	 * Sets 'No Fill' when the previously created color object is 'No Fill' or null.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiColor} oColor - The color object which specifies the color to be set to the background in the cell / cell range.
+	 * @param {ApiColor | 'No Fill' | null} color - The color object which specifies the color to be set to the background in the cell / cell range. Pass 'No Fill' or null to clear the background color.
 	 * @returns {boolean} - returns true if the fill color was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFillColor.js
 	 */
-	ApiRange.prototype.SetFillColor = function (oColor) {
+	ApiRange.prototype.SetFillColor = function (color) {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
 			return false;
 		}
-		this.range.setFillColor('No Fill' === oColor ? null : oColor.color);
+		this.range.setFillColor(('No Fill' === color || null == color) ? null : color.color);
 		return true;
 	};
 	/**
@@ -11030,8 +11183,8 @@
 		return oColor ? new ApiColor(oColor) : 'No Fill';
 	};
 	Object.defineProperty(ApiRange.prototype, "FillColor", {
-		set: function (oColor) {
-			return this.SetFillColor(oColor);
+		set: function (color) {
+			return this.SetFillColor(color);
 		},
 		get: function () {
 			return this.GetFillColor();
@@ -13269,6 +13422,7 @@
 	/**
 	 * Sets the name of the current drawing.
 	 * If another drawing with the same name already exists, that drawing's name will be reset to a default auto-generated name.
+	 * OLE objects do not support a custom name, so for them this method always returns false.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
 	 * @param {string} name - The name which will be set to the current drawing.
@@ -13279,6 +13433,9 @@
 	ApiDrawing.prototype.SetName = function(name)
 	{
 		if (name === "" || name === null || name === undefined)
+			return false
+
+		if (this.Drawing.isOleObject())
 			return false
 
 		this.Drawing.setName(name);
@@ -13565,12 +13722,17 @@
 	 */
 	ApiDrawing.prototype.SetFill = function (fill) {
 		const classType = this.GetClassType();
-		if (classType !== 'shape' && classType !== 'image' && classType !== 'chart') {
+		if (classType !== 'shape' && classType !== 'image' && classType !== 'chart' && classType !== 'group' && classType !== 'smartArt' && classType !== 'oleObject') {
 			return false;
 		}
 
 		if (!fill || !fill.GetClassType || fill.GetClassType() !== 'fill') {
 			return false;
+		}
+
+		if (classType === 'smartArt') {
+			this.Drawing.changeFill(fill.UniFill);
+			return true;
 		}
 
 		if (this.Drawing && this.Drawing.spPr) {
@@ -13595,12 +13757,17 @@
 	 */
 	ApiDrawing.prototype.Fill = function (fill) {
 		const classType = this.GetClassType();
-		if (classType !== 'shape' && classType !== 'image' && classType !== 'chart') {
+		if (classType !== 'shape' && classType !== 'image' && classType !== 'chart' && classType !== 'group' && classType !== 'smartArt' && classType !== 'oleObject') {
 			return false;
 		}
 
 		if (!fill || !fill.GetClassType || fill.GetClassType() !== 'fill') {
 			return false;
+		}
+
+		if (classType === 'smartArt') {
+			this.Drawing.changeFill(fill.UniFill);
+			return true;
 		}
 
 		if (this.Drawing && this.Drawing.spPr) {
@@ -13624,17 +13791,13 @@
 	 */
 	ApiDrawing.prototype.GetFill = function () {
 		const classType = this.GetClassType();
-		if (classType !== 'shape' && classType !== 'image' && classType !== 'chart') {
+		if (classType !== 'shape' && classType !== 'image' && classType !== 'chart' && classType !== 'group' && classType !== 'smartArt' && classType !== 'oleObject') {
 			return null;
 		}
 
 		if (this.Drawing) {
 			if (this.Drawing.recalcInfo && this.Drawing.recalcInfo.recalculateBrush) {
-				if (classType === 'chart') {
-					this.Drawing.recalculateChartBrush();
-				} else {
-					this.Drawing.recalculateBrush();
-				}
+				this.Drawing.recalculateBrush();
 			}
 
 			if (this.Drawing.brush) {
@@ -13657,11 +13820,104 @@
 	 */
 	ApiDrawing.prototype.SetOutLine = function(oStroke)
 	{
+		const classType = this.GetClassType();
+		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
+			return false;
+
 		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
 			return false;
 
-		this.Drawing.spPr.setLn(oStroke.Ln);
+		if (classType === "smartArt")
+		{
+			let whole = this.Drawing.getWhole();
+			if (whole)
+				whole.setLn(oStroke.Ln);
+			return true;
+		}
+
+		if (this.Drawing && this.Drawing.spPr)
+		{
+			this.Drawing.spPr.setLn(oStroke.Ln);
+			return true;
+		}
+
+		return false;
+	};
+	/**
+	 * Sets the outline properties to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiStroke} oStroke - The stroke used to create the graphic object outline.
+	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLine.js
+	 */
+	ApiDrawing.prototype.SetLine = ApiDrawing.prototype.SetOutLine;
+	/**
+	 * Gets the outline properties from the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiStroke | null}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLine.js
+	 */
+	ApiDrawing.prototype.GetLine = function()
+	{
+		const classType = this.GetClassType();
+		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
+			return null;
+
+		if (this.Drawing)
+		{
+			if (this.Drawing.recalcInfo && this.Drawing.recalcInfo.recalculatePen)
+				this.Drawing.recalculatePen();
+			if (this.Drawing.pen)
+				return new AscBuilder.ApiStroke(this.Drawing.pen, this.Drawing.spPr);
+		}
+
+		return null;
+	};
+	/**
+	 * Sets the shadow to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @param {?ApiShadow} shadow - The shadow to apply, or null to remove the current shadow.
+	 * @returns {boolean} - returns false if the graphic object does not support shadow.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetShadow.js
+	 */
+	ApiDrawing.prototype.SetShadow = function(shadow)
+	{
+		if (!this.Drawing || !this.Drawing.spPr)
+			return false;
+
+		if (shadow === null || shadow === undefined)
+		{
+			this.Drawing.spPr.changeShadow(null);
+			return true;
+		}
+
+		if (!shadow.GetClassType || shadow.GetClassType() !== "shadow")
+			return false;
+
+		this.Drawing.spPr.changeShadow(shadow.Shadow);
 		return true;
+	};
+	/**
+	 * Returns the shadow of the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiShadow | null}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetShadow.js
+	 */
+	ApiDrawing.prototype.GetShadow = function()
+	{
+		let shadow = this.Drawing && this.Drawing.getOuterShdw ? this.Drawing.getOuterShdw() : null;
+		if (shadow)
+			return new AscBuilder.ApiShadow(shadow);
+
+		return null;
 	};
 	/**
 	 * Sets the title of the current drawing.
@@ -13785,6 +14041,37 @@
 	 */
 	ApiGroup.prototype.GetClassType = function() {
 		return "group";
+	};
+
+	/**
+	 * Ungroups the current group of drawings.
+	 * <note>This method is not supported in the document builder and works only in the editor.</note>
+	 * @memberof ApiGroup
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiDrawing[] | null} - The array of the ungrouped objects, or null if the group is not in the document, cannot be ungrouped, or when called in the document builder.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Ungroup.js
+	 */
+	ApiGroup.prototype.Ungroup = function() {
+		if (AscCommon.isFileBuild())
+			return null;
+
+		if (!this.Drawing || !this.Drawing.IsUseInDocument())
+			return null;
+
+		let oController = this.Drawing.getDrawingObjectsController();
+		if (!oController)
+			return null;
+
+		let aChildren = this.Drawing.spTree.slice();
+		oController.resetSelection();
+		oController.selectObject(this.Drawing, 0);
+		if (!oController.canUnGroup())
+			return null;
+
+		this.Drawing.recalculate();
+		oController.unGroupCallback();
+		return GetApiDrawings(aChildren);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -16550,7 +16837,7 @@
 		if (count == undefined) count = 0;
 		let wsView = api.wb.getWorksheetById(this.ws.getId());
 		if (typeof count === 'number' && count > 0 && count <= AscCommon.gc_nMaxRow0) {
-			if (api.canEdit && wsView) {
+			if (api.canEdit() && wsView) {
 				wsView.freezePane(null, 0, count);
 			}
 		} else if (wsView && wsView.topLeftFrozenCell && count === 0) {
@@ -16607,6 +16894,1392 @@
 		if (!!this.ws.workbook.oApi.wb.getWorksheet().topLeftFrozenCell)
 			this.ws.workbook.oApi.asc_freezePane(undefined);
 	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiPageSetup
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	ApiPageSetup.prototype.private_GetPageMargins = function () {
+		return this.ws.PagePrintOptions.pageMargins;
+	};
+	ApiPageSetup.prototype.private_RoundMargin = function (nMargin) {
+		if (typeof nMargin !== 'number' || !isFinite(nMargin)) {
+			return nMargin;
+		}
+		return Math.round(nMargin * 1e6) / 1e6;
+	};
+	ApiPageSetup.prototype.private_SetMargin = function (sSide, nMargin) {
+		if (typeof nMargin !== 'number' || !isFinite(nMargin)) {
+			return false;
+		}
+		let oCur = this.private_GetPageMargins();
+		let oProps = new Asc.asc_CPageMargins();
+		oProps.asc_setLeft('left' === sSide ? nMargin : oCur.asc_getLeft());
+		oProps.asc_setRight('right' === sSide ? nMargin : oCur.asc_getRight());
+		oProps.asc_setTop('top' === sSide ? nMargin : oCur.asc_getTop());
+		oProps.asc_setBottom('bottom' === sSide ? nMargin : oCur.asc_getBottom());
+		this.ws.workbook.oApi.asc_changePageMargins(oProps, undefined, undefined, undefined, undefined, this.ws.getIndex());
+		return true;
+	};
+
+	/**
+	 * Returns the size of the left margin.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} - The left margin size measured in millimeters.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetLeftMargin.js
+	 */
+	ApiPageSetup.prototype.GetLeftMargin = function () {
+		return this.private_RoundMargin(this.private_GetPageMargins().asc_getLeft());
+	};
+	/**
+	 * Sets the size of the left margin.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {number} nMargin - The left margin size measured in millimeters.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetLeftMargin.js
+	 */
+	ApiPageSetup.prototype.SetLeftMargin = function (nMargin) {
+		return this.private_SetMargin('left', nMargin);
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "LeftMargin", {
+		get: function () {
+			return this.GetLeftMargin();
+		},
+		set: function (nMargin) {
+			this.SetLeftMargin(nMargin);
+		}
+	});
+
+	/**
+	 * Returns the size of the right margin.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} - The right margin size measured in millimeters.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetRightMargin.js
+	 */
+	ApiPageSetup.prototype.GetRightMargin = function () {
+		return this.private_RoundMargin(this.private_GetPageMargins().asc_getRight());
+	};
+	/**
+	 * Sets the size of the right margin.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {number} nMargin - The right margin size measured in millimeters.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetRightMargin.js
+	 */
+	ApiPageSetup.prototype.SetRightMargin = function (nMargin) {
+		return this.private_SetMargin('right', nMargin);
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "RightMargin", {
+		get: function () {
+			return this.GetRightMargin();
+		},
+		set: function (nMargin) {
+			this.SetRightMargin(nMargin);
+		}
+	});
+
+	/**
+	 * Returns the size of the top margin.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} - The top margin size measured in millimeters.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetTopMargin.js
+	 */
+	ApiPageSetup.prototype.GetTopMargin = function () {
+		return this.private_RoundMargin(this.private_GetPageMargins().asc_getTop());
+	};
+	/**
+	 * Sets the size of the top margin.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {number} nMargin - The top margin size measured in millimeters.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetTopMargin.js
+	 */
+	ApiPageSetup.prototype.SetTopMargin = function (nMargin) {
+		return this.private_SetMargin('top', nMargin);
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "TopMargin", {
+		get: function () {
+			return this.GetTopMargin();
+		},
+		set: function (nMargin) {
+			this.SetTopMargin(nMargin);
+		}
+	});
+
+	/**
+	 * Returns the size of the bottom margin.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} - The bottom margin size measured in millimeters.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetBottomMargin.js
+	 */
+	ApiPageSetup.prototype.GetBottomMargin = function () {
+		return this.private_RoundMargin(this.private_GetPageMargins().asc_getBottom());
+	};
+	/**
+	 * Sets the size of the bottom margin.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {number} nMargin - The bottom margin size measured in millimeters.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetBottomMargin.js
+	 */
+	ApiPageSetup.prototype.SetBottomMargin = function (nMargin) {
+		return this.private_SetMargin('bottom', nMargin);
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "BottomMargin", {
+		get: function () {
+			return this.GetBottomMargin();
+		},
+		set: function (nMargin) {
+			this.SetBottomMargin(nMargin);
+		}
+	});
+
+	/**
+	 * Returns the distance from the top of the page to the header.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} - The header margin size measured in millimeters.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetHeaderMargin.js
+	 */
+	ApiPageSetup.prototype.GetHeaderMargin = function () {
+		return this.private_GetPageMargins().asc_getHeader();
+	};
+	/**
+	 * Sets the distance from the top of the page to the header.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {number} nMargin - The header margin size measured in millimeters.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetHeaderMargin.js
+	 */
+	ApiPageSetup.prototype.SetHeaderMargin = function (nMargin) {
+		if (typeof nMargin !== 'number' || isNaN(nMargin)) {
+			return false;
+		}
+		this.ws.workbook.oApi.asc_changePageMargins(undefined, undefined, undefined, nMargin, undefined, this.ws.getIndex());
+		return true;
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "HeaderMargin", {
+		get: function () {
+			return this.GetHeaderMargin();
+		},
+		set: function (nMargin) {
+			this.SetHeaderMargin(nMargin);
+		}
+	});
+
+	/**
+	 * Returns the distance from the bottom of the page to the footer.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} - The footer margin size measured in millimeters.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetFooterMargin.js
+	 */
+	ApiPageSetup.prototype.GetFooterMargin = function () {
+		return this.private_GetPageMargins().asc_getFooter();
+	};
+	/**
+	 * Sets the distance from the bottom of the page to the footer.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {number} nMargin - The footer margin size measured in millimeters.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetFooterMargin.js
+	 */
+	ApiPageSetup.prototype.SetFooterMargin = function (nMargin) {
+		if (typeof nMargin !== 'number' || isNaN(nMargin)) {
+			return false;
+		}
+		this.ws.workbook.oApi.asc_changePageMargins(undefined, undefined, undefined, undefined, nMargin, this.ws.getIndex());
+		return true;
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "FooterMargin", {
+		get: function () {
+			return this.GetFooterMargin();
+		},
+		set: function (nMargin) {
+			this.SetFooterMargin(nMargin);
+		}
+	});
+
+	ApiPageSetup.prototype.private_GetHeaderFooter = function () {
+		if (!this.ws.headerFooter) {
+			this.ws.headerFooter = new Asc.CHeaderFooter(this.ws);
+		}
+		return this.ws.headerFooter;
+	};
+
+	/**
+	 * Returns whether the header and footer margins are aligned with the page margins.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetAlignMarginsHeaderFooter.js
+	 */
+	ApiPageSetup.prototype.GetAlignMarginsHeaderFooter = function () {
+		return this.private_GetHeaderFooter().getAlignWithMargins();
+	};
+	/**
+	 * Sets whether the header and footer margins are aligned with the page margins.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} bAlign - Specifies whether the header and footer are aligned with the page margins.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetAlignMarginsHeaderFooter.js
+	 */
+	ApiPageSetup.prototype.SetAlignMarginsHeaderFooter = function (bAlign) {
+		let oHeaderFooter = this.private_GetHeaderFooter();
+		let bNewVal = !!bAlign;
+		if (oHeaderFooter.getAlignWithMargins() === bNewVal) {
+			return true;
+		}
+		if (null === oHeaderFooter.alignWithMargins) {
+			oHeaderFooter.alignWithMargins = oHeaderFooter.getAlignWithMargins();
+		}
+		oHeaderFooter.setAlignWithMargins(bNewVal);
+		return true;
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "AlignMarginsHeaderFooter", {
+		get: function () {
+			return this.GetAlignMarginsHeaderFooter();
+		},
+		set: function (bAlign) {
+			this.SetAlignMarginsHeaderFooter(bAlign);
+		}
+	});
+
+	function private_parseHeaderFooterSections(sStr) {
+		let oSections = {"L": "", "C": "", "R": ""};
+		if (typeof sStr !== 'string' || !sStr.length) {
+			return oSections;
+		}
+		let sSection = 'L';
+		for (let i = 0; i < sStr.length; i++) {
+			if (sStr[i] === '&' && i + 1 < sStr.length) {
+				let sNext = sStr[i + 1];
+				if (sNext === '&') {
+					oSections[sSection] += '&&';
+					i++;
+					continue;
+				}
+				if (sNext === 'L' || sNext === 'C' || sNext === 'R') {
+					sSection = sNext;
+					i++;
+					continue;
+				}
+			}
+			oSections[sSection] += sStr[i];
+		}
+		return oSections;
+	}
+	function private_buildHeaderFooterString(oSections) {
+		let sStr = "";
+		if (oSections["L"]) {
+			sStr += "&L" + oSections["L"];
+		}
+		if (oSections["C"]) {
+			sStr += "&C" + oSections["C"];
+		}
+		if (oSections["R"]) {
+			sStr += "&R" + oSections["R"];
+		}
+		return sStr;
+	}
+
+	// Reads one section ("L"/"C"/"R") of the odd (primary) footer (bFooter === true) or header (bFooter === false).
+	ApiPageSetup.prototype.private_GetHFSection = function (bFooter, sKey) {
+		let oHeaderFooter = this.private_GetHeaderFooter();
+		let oData = bFooter ? oHeaderFooter.getOddFooter() : oHeaderFooter.getOddHeader();
+		return private_parseHeaderFooterSections(oData ? oData.getStr() : "")[sKey];
+	};
+	// Writes one section ("L"/"C"/"R") of the odd footer (bFooter === true) or header (bFooter === false),
+	// preserving the other two sections.
+	ApiPageSetup.prototype.private_SetHFSection = function (bFooter, sKey, sText) {
+		let oHeaderFooter = this.private_GetHeaderFooter();
+		let oData = bFooter ? oHeaderFooter.getOddFooter() : oHeaderFooter.getOddHeader();
+		let oSections = private_parseHeaderFooterSections(oData ? oData.getStr() : "");
+		oSections[sKey] = (typeof sText === 'string') ? sText : "";
+		let sStr = private_buildHeaderFooterString(oSections) || null;
+		if (bFooter) {
+			oHeaderFooter.setOddFooter(sStr);
+			oData = oHeaderFooter.getOddFooter();
+		} else {
+			oHeaderFooter.setOddHeader(sStr);
+			oData = oHeaderFooter.getOddHeader();
+		}
+		if (oData) {
+			oData.parse();
+		}
+		let wb = this.ws && this.ws.workbook;
+		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
+		return true;
+	};
+
+	/**
+	 * Returns the center part of the footer used when the worksheet is printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} - The center footer text (may contain formatting codes such as &P, &D).
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetCenterFooter.js
+	 */
+	ApiPageSetup.prototype.GetCenterFooter = function () {
+		return this.private_GetHFSection(true, "C");
+	};
+	/**
+	 * Sets the center part of the footer used when the worksheet is printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sText - The center footer text (may contain formatting codes such as &P, &D).
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetCenterFooter.js
+	 */
+	ApiPageSetup.prototype.SetCenterFooter = function (sText) {
+		return this.private_SetHFSection(true, "C", sText);
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "CenterFooter", {
+		get: function () {
+			return this.GetCenterFooter();
+		},
+		set: function (sText) {
+			this.SetCenterFooter(sText);
+		}
+	});
+
+	/**
+	 * Returns the left part of the footer used when the worksheet is printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} - The left footer text (may contain formatting codes such as &P, &D).
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetLeftFooter.js
+	 */
+	ApiPageSetup.prototype.GetLeftFooter = function () {
+		return this.private_GetHFSection(true, "L");
+	};
+	/**
+	 * Sets the left part of the footer used when the worksheet is printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sText - The left footer text (may contain formatting codes such as &P, &D).
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetLeftFooter.js
+	 */
+	ApiPageSetup.prototype.SetLeftFooter = function (sText) {
+		return this.private_SetHFSection(true, "L", sText);
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "LeftFooter", {
+		get: function () {
+			return this.GetLeftFooter();
+		},
+		set: function (sText) {
+			this.SetLeftFooter(sText);
+		}
+	});
+
+	/**
+	 * Returns the right part of the footer used when the worksheet is printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} - The right footer text (may contain formatting codes such as &P, &D).
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetRightFooter.js
+	 */
+	ApiPageSetup.prototype.GetRightFooter = function () {
+		return this.private_GetHFSection(true, "R");
+	};
+	/**
+	 * Sets the right part of the footer used when the worksheet is printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sText - The right footer text (may contain formatting codes such as &P, &D).
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetRightFooter.js
+	 */
+	ApiPageSetup.prototype.SetRightFooter = function (sText) {
+		return this.private_SetHFSection(true, "R", sText);
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "RightFooter", {
+		get: function () {
+			return this.GetRightFooter();
+		},
+		set: function (sText) {
+			this.SetRightFooter(sText);
+		}
+	});
+
+	/**
+	 * Returns the center part of the header used when the worksheet is printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} - The center header text (may contain formatting codes such as &P, &D).
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetCenterHeader.js
+	 */
+	ApiPageSetup.prototype.GetCenterHeader = function () {
+		return this.private_GetHFSection(false, "C");
+	};
+	/**
+	 * Sets the center part of the header used when the worksheet is printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sText - The center header text (may contain formatting codes such as &P, &D).
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetCenterHeader.js
+	 */
+	ApiPageSetup.prototype.SetCenterHeader = function (sText) {
+		return this.private_SetHFSection(false, "C", sText);
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "CenterHeader", {
+		get: function () {
+			return this.GetCenterHeader();
+		},
+		set: function (sText) {
+			this.SetCenterHeader(sText);
+		}
+	});
+
+	/**
+	 * Returns the left part of the header used when the worksheet is printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} - The left header text (may contain formatting codes such as &P, &D).
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetLeftHeader.js
+	 */
+	ApiPageSetup.prototype.GetLeftHeader = function () {
+		return this.private_GetHFSection(false, "L");
+	};
+	/**
+	 * Sets the left part of the header used when the worksheet is printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sText - The left header text (may contain formatting codes such as &P, &D).
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetLeftHeader.js
+	 */
+	ApiPageSetup.prototype.SetLeftHeader = function (sText) {
+		return this.private_SetHFSection(false, "L", sText);
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "LeftHeader", {
+		get: function () {
+			return this.GetLeftHeader();
+		},
+		set: function (sText) {
+			this.SetLeftHeader(sText);
+		}
+	});
+
+	/**
+	 * Returns the right part of the header used when the worksheet is printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} - The right header text (may contain formatting codes such as &P, &D).
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetRightHeader.js
+	 */
+	ApiPageSetup.prototype.GetRightHeader = function () {
+		return this.private_GetHFSection(false, "R");
+	};
+	/**
+	 * Sets the right part of the header used when the worksheet is printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sText - The right header text (may contain formatting codes such as &P, &D).
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetRightHeader.js
+	 */
+	ApiPageSetup.prototype.SetRightHeader = function (sText) {
+		return this.private_SetHFSection(false, "R", sText);
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "RightHeader", {
+		get: function () {
+			return this.GetRightHeader();
+		},
+		set: function (sText) {
+			this.SetRightHeader(sText);
+		}
+	});
+
+	/**
+	 * Returns whether the worksheet is centered horizontally on the page when printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetCenterHorizontally.js
+	 */
+	ApiPageSetup.prototype.GetCenterHorizontally = function () {
+		return !!this.ws.PagePrintOptions.asc_getHorizontalCentered();
+	};
+	/**
+	 * Sets whether the worksheet is centered horizontally on the page when printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} bCenter - Specifies whether the worksheet is centered horizontally on the page.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetCenterHorizontally.js
+	 */
+	ApiPageSetup.prototype.SetCenterHorizontally = function (bCenter) {
+		this.ws.workbook.oApi.asc_changePageMargins(undefined, !!bCenter, undefined, undefined, undefined, this.ws.getIndex());
+		return true;
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "CenterHorizontally", {
+		get: function () {
+			return this.GetCenterHorizontally();
+		},
+		set: function (bCenter) {
+			this.SetCenterHorizontally(bCenter);
+		}
+	});
+
+	/**
+	 * Returns whether the worksheet is centered vertically on the page when printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetCenterVertically.js
+	 */
+	ApiPageSetup.prototype.GetCenterVertically = function () {
+		return !!this.ws.PagePrintOptions.asc_getVerticalCentered();
+	};
+	/**
+	 * Sets whether the worksheet is centered vertically on the page when printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} bCenter - Specifies whether the worksheet is centered vertically on the page.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetCenterVertically.js
+	 */
+	ApiPageSetup.prototype.SetCenterVertically = function (bCenter) {
+		this.ws.workbook.oApi.asc_changePageMargins(undefined, undefined, !!bCenter, undefined, undefined, this.ws.getIndex());
+		return true;
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "CenterVertically", {
+		get: function () {
+			return this.GetCenterVertically();
+		},
+		set: function (bCenter) {
+			this.SetCenterVertically(bCenter);
+		}
+	});
+
+	/**
+	 * Returns whether a different header and footer is used on the first printed page.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetDifferentFirstPageHeaderFooter.js
+	 */
+	ApiPageSetup.prototype.GetDifferentFirstPageHeaderFooter = function () {
+		return !!this.private_GetHeaderFooter().getDifferentFirst();
+	};
+	/**
+	 * Sets whether a different header and footer is used on the first printed page.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} bDifferent - Specifies whether a different header and footer is used on the first page.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetDifferentFirstPageHeaderFooter.js
+	 */
+	ApiPageSetup.prototype.SetDifferentFirstPageHeaderFooter = function (bDifferent) {
+		this.private_GetHeaderFooter().setDifferentFirst(!!bDifferent);
+		return true;
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "DifferentFirstPageHeaderFooter", {
+		get: function () {
+			return this.GetDifferentFirstPageHeaderFooter();
+		},
+		set: function (bDifferent) {
+			this.SetDifferentFirstPageHeaderFooter(bDifferent);
+		}
+	});
+
+	/**
+	 * Returns whether different headers and footers are used on odd and even printed pages.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetOddAndEvenPagesHeaderFooter.js
+	 */
+	ApiPageSetup.prototype.GetOddAndEvenPagesHeaderFooter = function () {
+		return !!this.private_GetHeaderFooter().getDifferentOddEven();
+	};
+	/**
+	 * Sets whether different headers and footers are used on odd and even printed pages.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} bDifferent - Specifies whether different headers and footers are used on odd and even pages.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetOddAndEvenPagesHeaderFooter.js
+	 */
+	ApiPageSetup.prototype.SetOddAndEvenPagesHeaderFooter = function (bDifferent) {
+		this.private_GetHeaderFooter().setDifferentOddEven(!!bDifferent);
+		return true;
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "OddAndEvenPagesHeaderFooter", {
+		get: function () {
+			return this.GetOddAndEvenPagesHeaderFooter();
+		},
+		set: function (bDifferent) {
+			this.SetOddAndEvenPagesHeaderFooter(bDifferent);
+		}
+	});
+
+	/**
+	 * Returns whether the header and footer are scaled with the document when it is scaled for printing.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetScaleWithDocHeaderFooter.js
+	 */
+	ApiPageSetup.prototype.GetScaleWithDocHeaderFooter = function () {
+		return !!this.private_GetHeaderFooter().getScaleWithDoc();
+	};
+	/**
+	 * Sets whether the header and footer are scaled with the document when it is scaled for printing.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} bScale - Specifies whether the header and footer are scaled with the document.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetScaleWithDocHeaderFooter.js
+	 */
+	ApiPageSetup.prototype.SetScaleWithDocHeaderFooter = function (bScale) {
+		this.private_GetHeaderFooter().setScaleWithDoc(!!bScale);
+		return true;
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "ScaleWithDocHeaderFooter", {
+		get: function () {
+			return this.GetScaleWithDocHeaderFooter();
+		},
+		set: function (bScale) {
+			this.SetScaleWithDocHeaderFooter(bScale);
+		}
+	});
+
+	/**
+	 * Returns the first page number used when the worksheet is printed.
+	 * Returns null when the page numbering is automatic.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | null}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetFirstPageNumber.js
+	 */
+	ApiPageSetup.prototype.GetFirstPageNumber = function () {
+		return this.ws.PagePrintOptions.pageSetup.asc_getFirstPageNumber();
+	};
+	/**
+	 * Sets the first page number used when the worksheet is printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {number} nNumber - The first page number.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetFirstPageNumber.js
+	 */
+	ApiPageSetup.prototype.SetFirstPageNumber = function (nNumber) {
+		this.ws.PagePrintOptions.pageSetup.asc_setFirstPageNumber(nNumber);
+		return true;
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "FirstPageNumber", {
+		get: function () {
+			return this.GetFirstPageNumber();
+		},
+		set: function (nNumber) {
+			this.SetFirstPageNumber(nNumber);
+		}
+	});
+
+	ApiPageSetup.prototype.private_SetPrintScale = function (nWidth, nHeight, nScale) {
+		let oWorksheetView = this.ws.workbook.oApi.wb.getWorksheetById(this.ws.getId());
+		if (oWorksheetView) {
+			oWorksheetView.setPrintScale(nWidth, nHeight, nScale);
+		}
+	};
+
+	/**
+	 * Returns the number of pages wide the worksheet is scaled to when printed (0 means automatic).
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetFitToPagesWide.js
+	 */
+	ApiPageSetup.prototype.GetFitToPagesWide = function () {
+		return this.ws.PagePrintOptions.pageSetup.asc_getFitToWidth();
+	};
+	/**
+	 * Sets the number of pages wide the worksheet is scaled to when printed (0 means automatic).
+	 * Setting this property turns on the "fit to page" mode.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {number} nPages - The number of pages wide (0 for automatic).
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetFitToPagesWide.js
+	 */
+	ApiPageSetup.prototype.SetFitToPagesWide = function (nPages) {
+		if (typeof nPages !== 'number' || !isFinite(nPages) || nPages < 0) {
+			return false;
+		}
+		this.private_SetPrintScale(nPages, this.ws.PagePrintOptions.pageSetup.asc_getFitToHeight(), 100);
+		return true;
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "FitToPagesWide", {
+		get: function () {
+			return this.GetFitToPagesWide();
+		},
+		set: function (nPages) {
+			this.SetFitToPagesWide(nPages);
+		}
+	});
+
+	/**
+	 * Returns the number of pages tall the worksheet is scaled to when printed (0 means automatic).
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetFitToPagesTall.js
+	 */
+	ApiPageSetup.prototype.GetFitToPagesTall = function () {
+		return this.ws.PagePrintOptions.pageSetup.asc_getFitToHeight();
+	};
+	/**
+	 * Sets the number of pages tall the worksheet is scaled to when printed (0 means automatic).
+	 * Setting this property turns on the "fit to page" mode.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {number} nPages - The number of pages tall (0 for automatic).
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetFitToPagesTall.js
+	 */
+	ApiPageSetup.prototype.SetFitToPagesTall = function (nPages) {
+		if (typeof nPages !== 'number' || !isFinite(nPages) || nPages < 0) {
+			return false;
+		}
+		this.private_SetPrintScale(this.ws.PagePrintOptions.pageSetup.asc_getFitToWidth(), nPages, 100);
+		return true;
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "FitToPagesTall", {
+		get: function () {
+			return this.GetFitToPagesTall();
+		},
+		set: function (nPages) {
+			this.SetFitToPagesTall(nPages);
+		}
+	});
+
+	/**
+	 * Returns the page orientation used when the worksheet is printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {PageOrientation}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetOrientation.js
+	 */
+	ApiPageSetup.prototype.GetOrientation = function () {
+		return this.ws.PagePrintOptions.pageSetup.asc_getOrientation() ? 'xlLandscape' : 'xlPortrait';
+	};
+	/**
+	 * Sets the page orientation used when the worksheet is printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {PageOrientation} sOrientation - The page orientation type.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetOrientation.js
+	 */
+	ApiPageSetup.prototype.SetOrientation = function (sOrientation) {
+		this.ws.workbook.oApi.asc_changePageOrient('xlLandscape' !== sOrientation, this.ws.getIndex());
+		return true;
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "Orientation", {
+		get: function () {
+			return this.GetOrientation();
+		},
+		set: function (sOrientation) {
+			this.SetOrientation(sOrientation);
+		}
+	});
+
+	/**
+	 * Returns the worksheet that owns this page setup.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiWorksheet}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetParent.js
+	 */
+	ApiPageSetup.prototype.GetParent = function () {
+		return new ApiWorksheet(this.ws);
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "Parent", {
+		get: function () {
+			return this.GetParent();
+		}
+	});
+
+	/**
+	 * Returns whether cell gridlines are printed with the worksheet.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetPrintGridlines.js
+	 */
+	ApiPageSetup.prototype.GetPrintGridlines = function () {
+		return !!this.ws.PagePrintOptions.asc_getGridLines();
+	};
+	/**
+	 * Sets whether cell gridlines are printed with the worksheet.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} bPrint - Specifies whether the cell gridlines are printed.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetPrintGridlines.js
+	 */
+	ApiPageSetup.prototype.SetPrintGridlines = function (bPrint) {
+		this.ws.workbook.oApi.asc_SetPrintGridlines(!!bPrint, this.ws.getIndex());
+		return true;
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "PrintGridlines", {
+		get: function () {
+			return this.GetPrintGridlines();
+		},
+		set: function (bPrint) {
+			this.SetPrintGridlines(bPrint);
+		}
+	});
+
+	/**
+	 * Returns whether row and column headings are printed with the worksheet.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetPrintHeadings.js
+	 */
+	ApiPageSetup.prototype.GetPrintHeadings = function () {
+		return !!this.ws.PagePrintOptions.asc_getHeadings();
+	};
+	/**
+	 * Sets whether row and column headings are printed with the worksheet.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} bPrint - Specifies whether the row and column headings are printed.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetPrintHeadings.js
+	 */
+	ApiPageSetup.prototype.SetPrintHeadings = function (bPrint) {
+		this.ws.workbook.oApi.asc_SetPrintHeadings(!!bPrint, this.ws.getIndex());
+		return true;
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "PrintHeadings", {
+		get: function () {
+			return this.GetPrintHeadings();
+		},
+		set: function (bPrint) {
+			this.SetPrintHeadings(bPrint);
+		}
+	});
+
+	/**
+	 * Returns the scaling factor (in percent) used when the worksheet is printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} - The scaling factor measured in percent (10-400).
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetZoom.js
+	 */
+	ApiPageSetup.prototype.GetZoom = function () {
+		return this.ws.PagePrintOptions.pageSetup.asc_getScale();
+	};
+	/**
+	 * Sets the scaling factor (in percent) used when the worksheet is printed.
+	 * Setting this property turns off the "fit to page" mode.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {number} nZoom - The scaling factor measured in percent (10-400).
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetZoom.js
+	 */
+	ApiPageSetup.prototype.SetZoom = function (nZoom) {
+		if (typeof nZoom !== 'number' || !isFinite(nZoom) || nZoom < 10 || nZoom > 400) {
+			return false;
+		}
+		this.private_SetPrintScale(0, 0, nZoom);
+		return true;
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "Zoom", {
+		get: function () {
+			return this.GetZoom();
+		},
+		set: function (nZoom) {
+			this.SetZoom(nZoom);
+		}
+	});
+
+	/**
+	 * Returns the range to be printed (the print area) as a string, or an empty string when the whole sheet is printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetPrintArea.js
+	 */
+	ApiPageSetup.prototype.GetPrintArea = function () {
+		let oDefName = this.ws.workbook.getDefinesNames("Print_Area", this.ws.getId());
+		if (!oDefName || oDefName.sheetId !== this.ws.getId() || !oDefName.ref) {
+			return "";
+		}
+		return oDefName.ref.split(",").map(function (sPart) {
+			let nIndex = sPart.lastIndexOf("!");
+			return nIndex >= 0 ? sPart.slice(nIndex + 1) : sPart;
+		}).join(",");
+	};
+	/**
+	 * Sets the range to be printed (the print area). Pass an empty string to clear it and print the whole sheet.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sRange - The range address (e.g. "A1:D20"); comma-separated for several areas. Empty clears the print area.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetPrintArea.js
+	 */
+	ApiPageSetup.prototype.SetPrintArea = function (sRange) {
+		let oWorksheetView = this.ws.workbook.oApi.wb.getWorksheetById(this.ws.getId());
+		if (!oWorksheetView) {
+			return false;
+		}
+		if (typeof sRange !== 'string' || sRange === "") {
+			oWorksheetView.changePrintArea(Asc.c_oAscChangePrintAreaType.clear);
+			return true;
+		}
+		let aParts = sRange.split(",");
+		let aBBoxes = [];
+		for (let i = 0; i < aParts.length; i++) {
+			let oRange = this.ws.getRange2(aParts[i].trim());
+			if (oRange) {
+				aBBoxes.push(oRange.bbox);
+			}
+		}
+		if (!aBBoxes.length) {
+			return false;
+		}
+		oWorksheetView.changePrintArea(Asc.c_oAscChangePrintAreaType.set, aBBoxes);
+		return true;
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "PrintArea", {
+		get: function () {
+			return this.GetPrintArea();
+		},
+		set: function (sRange) {
+			this.SetPrintArea(sRange);
+		}
+	});
+
+	ApiPageSetup.prototype.private_GetWorksheetView = function () {
+		return this.ws.workbook.oApi.wb.getWorksheetById(this.ws.getId());
+	};
+
+	/**
+	 * Returns the rows that are repeated at the top of each printed page, or an empty string if none.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetPrintTitleRows.js
+	 */
+	ApiPageSetup.prototype.GetPrintTitleRows = function () {
+		let oWorksheetView = this.private_GetWorksheetView();
+		return (oWorksheetView && oWorksheetView.getPrintTitlesRange(Asc.c_oAscPrintTitlesRangeType.current, false)) || "";
+	};
+	/**
+	 * Sets the rows that are repeated at the top of each printed page. Pass an empty string to clear them.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sRange - The rows to repeat (e.g. "$1:$1"). Empty string clears the print title rows.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetPrintTitleRows.js
+	 */
+	ApiPageSetup.prototype.SetPrintTitleRows = function (sRange) {
+		let oWorksheetView = this.private_GetWorksheetView();
+		if (!oWorksheetView) {
+			return false;
+		}
+		let sCols = oWorksheetView.getPrintTitlesRange(Asc.c_oAscPrintTitlesRangeType.current, true);
+		oWorksheetView.changePrintTitles(sCols, (typeof sRange === 'string') ? sRange : "");
+		return true;
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "PrintTitleRows", {
+		get: function () {
+			return this.GetPrintTitleRows();
+		},
+		set: function (sRange) {
+			this.SetPrintTitleRows(sRange);
+		}
+	});
+
+	/**
+	 * Returns the columns that are repeated at the left of each printed page, or an empty string if none.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetPrintTitleColumns.js
+	 */
+	ApiPageSetup.prototype.GetPrintTitleColumns = function () {
+		let oWorksheetView = this.private_GetWorksheetView();
+		return (oWorksheetView && oWorksheetView.getPrintTitlesRange(Asc.c_oAscPrintTitlesRangeType.current, true)) || "";
+	};
+	/**
+	 * Sets the columns that are repeated at the left of each printed page. Pass an empty string to clear them.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sRange - The columns to repeat (e.g. "$A:$A"). Empty string clears the print title columns.
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetPrintTitleColumns.js
+	 */
+	ApiPageSetup.prototype.SetPrintTitleColumns = function (sRange) {
+		let oWorksheetView = this.private_GetWorksheetView();
+		if (!oWorksheetView) {
+			return false;
+		}
+		let sRows = oWorksheetView.getPrintTitlesRange(Asc.c_oAscPrintTitlesRangeType.current, false);
+		oWorksheetView.changePrintTitles((typeof sRange === 'string') ? sRange : "", sRows);
+		return true;
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "PrintTitleColumns", {
+		get: function () {
+			return this.GetPrintTitleColumns();
+		},
+		set: function (sRange) {
+			this.SetPrintTitleColumns(sRange);
+		}
+	});
+
+	let g_oPaperSizeNameToId = {
+		"xlPaperLetter": 1, "xlPaperLetterSmall": 2, "xlPaperTabloid": 3, "xlPaperLedger": 4,
+		"xlPaperLegal": 5, "xlPaperStatement": 6, "xlPaperExecutive": 7, "xlPaperA3": 8, "xlPaperA4": 9,
+		"xlPaperA4Small": 10, "xlPaperA5": 11, "xlPaperB4": 12, "xlPaperB5": 13, "xlPaperFolio": 14,
+		"xlPaperQuarto": 15, "xlPaper10x14": 16, "xlPaper11x17": 17, "xlPaperNote": 18, "xlPaperEnvelope9": 19,
+		"xlPaperEnvelope10": 20, "xlPaperEnvelope11": 21, "xlPaperEnvelope12": 22, "xlPaperEnvelope14": 23,
+		"xlPaperCsheet": 24, "xlPaperDsheet": 25, "xlPaperEsheet": 26, "xlPaperEnvelopeDL": 27,
+		"xlPaperEnvelopeC5": 28, "xlPaperEnvelopeC3": 29, "xlPaperEnvelopeC4": 30, "xlPaperEnvelopeC6": 31,
+		"xlPaperEnvelopeC65": 32, "xlPaperEnvelopeB4": 33, "xlPaperEnvelopeB5": 34, "xlPaperEnvelopeB6": 35,
+		"xlPaperEnvelopeItaly": 36, "xlPaperEnvelopeMonarch": 37, "xlPaperEnvelopePersonal": 38,
+		"xlPaperFanfoldUS": 39, "xlPaperFanfoldStdGerman": 40, "xlPaperFanfoldLegalGerman": 41, "xlPaperUser": 256
+	};
+	let g_oPaperSizeIdToName = {};
+	for (let sPaperSizeName in g_oPaperSizeNameToId) {
+		g_oPaperSizeIdToName[g_oPaperSizeNameToId[sPaperSizeName]] = sPaperSizeName;
+	}
+
+	/**
+	 * Returns the paper size used when the worksheet is printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {PaperSize}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetPaperSize.js
+	 */
+	ApiPageSetup.prototype.GetPaperSize = function () {
+		let oPageSetup = this.ws.PagePrintOptions.pageSetup;
+		let nId = AscCommonExcel.DocumentPageSize.getSizeByWH(oPageSetup.asc_getWidth(), oPageSetup.asc_getHeight()).id;
+		return g_oPaperSizeIdToName[nId] || "";
+	};
+	/**
+	 * Sets the paper size used when the worksheet is printed.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @param {PaperSize} sPaperSize - The paper size (an xlPaperSize constant name, e.g. "xlPaperA4").
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetPaperSize.js
+	 */
+	ApiPageSetup.prototype.SetPaperSize = function (sPaperSize) {
+		let nId = g_oPaperSizeNameToId[sPaperSize];
+		if (nId === undefined) {
+			return false;
+		}
+		let oItem = AscCommonExcel.DocumentPageSize.getSizeById(nId);
+		let oPageSetup = this.ws.PagePrintOptions.pageSetup;
+		oPageSetup.asc_setWidth(oItem.w_mm);
+		oPageSetup.asc_setHeight(oItem.h_mm);
+		return true;
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "PaperSize", {
+		get: function () {
+			return this.GetPaperSize();
+		},
+		set: function (nPaperSize) {
+			this.SetPaperSize(nPaperSize);
+		}
+	});
+
+	/**
+	 * Returns the header and footer of the even pages of the worksheet.
+	 * The returned object is meaningful when {@link ApiPageSetup#GetOddAndEvenPagesHeaderFooter} is enabled.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPage}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetEvenPage.js
+	 */
+	ApiPageSetup.prototype.GetEvenPage = function () {
+		return new ApiPage(this.ws, "even");
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "EvenPage", {
+		get: function () {
+			return this.GetEvenPage();
+		}
+	});
+
+	/**
+	 * Returns the header and footer of the first page of the worksheet.
+	 * The returned object is meaningful when {@link ApiPageSetup#GetDifferentFirstPageHeaderFooter} is enabled.
+	 * @memberof ApiPageSetup
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPage}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetFirstPage.js
+	 */
+	ApiPageSetup.prototype.GetFirstPage = function () {
+		return new ApiPage(this.ws, "first");
+	};
+	Object.defineProperty(ApiPageSetup.prototype, "FirstPage", {
+		get: function () {
+			return this.GetFirstPage();
+		}
+	});
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiPage
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns the center header section of this page type.
+	 * @memberof ApiPage
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiHeaderFooter}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GetCenterHeader.js
+	 */
+	ApiPage.prototype.GetCenterHeader = function () {
+		return new ApiHeaderFooter(this.ws, this.type, false, "C");
+	};
+	Object.defineProperty(ApiPage.prototype, "CenterHeader", {
+		get: function () {
+			return this.GetCenterHeader();
+		}
+	});
+
+	/**
+	 * Returns the left header section of this page type.
+	 * @memberof ApiPage
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiHeaderFooter}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GetLeftHeader.js
+	 */
+	ApiPage.prototype.GetLeftHeader = function () {
+		return new ApiHeaderFooter(this.ws, this.type, false, "L");
+	};
+	Object.defineProperty(ApiPage.prototype, "LeftHeader", {
+		get: function () {
+			return this.GetLeftHeader();
+		}
+	});
+
+	/**
+	 * Returns the right header section of this page type.
+	 * @memberof ApiPage
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiHeaderFooter}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GetRightHeader.js
+	 */
+	ApiPage.prototype.GetRightHeader = function () {
+		return new ApiHeaderFooter(this.ws, this.type, false, "R");
+	};
+	Object.defineProperty(ApiPage.prototype, "RightHeader", {
+		get: function () {
+			return this.GetRightHeader();
+		}
+	});
+
+	/**
+	 * Returns the left footer section of this page type.
+	 * @memberof ApiPage
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiHeaderFooter}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GetLeftFooter.js
+	 */
+	ApiPage.prototype.GetLeftFooter = function () {
+		return new ApiHeaderFooter(this.ws, this.type, true, "L");
+	};
+	Object.defineProperty(ApiPage.prototype, "LeftFooter", {
+		get: function () {
+			return this.GetLeftFooter();
+		}
+	});
+
+	/**
+	 * Returns the center footer section of this page type.
+	 * @memberof ApiPage
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiHeaderFooter}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GetCenterFooter.js
+	 */
+	ApiPage.prototype.GetCenterFooter = function () {
+		return new ApiHeaderFooter(this.ws, this.type, true, "C");
+	};
+	Object.defineProperty(ApiPage.prototype, "CenterFooter", {
+		get: function () {
+			return this.GetCenterFooter();
+		}
+	});
+
+	/**
+	 * Returns the right footer section of this page type.
+	 * @memberof ApiPage
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiHeaderFooter}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GetRightFooter.js
+	 */
+	ApiPage.prototype.GetRightFooter = function () {
+		return new ApiHeaderFooter(this.ws, this.type, true, "R");
+	};
+	Object.defineProperty(ApiPage.prototype, "RightFooter", {
+		get: function () {
+			return this.GetRightFooter();
+		}
+	});
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiHeaderFooter
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	ApiHeaderFooter.prototype.private_GetHeaderFooter = function () {
+		if (!this.ws.headerFooter) {
+			this.ws.headerFooter = new Asc.CHeaderFooter(this.ws);
+		}
+		return this.ws.headerFooter;
+	};
+	ApiHeaderFooter.prototype.private_GetData = function () {
+		let oHeaderFooter = this.private_GetHeaderFooter();
+		if ("first" === this.type) {
+			return this.bFooter ? oHeaderFooter.getFirstFooter() : oHeaderFooter.getFirstHeader();
+		}
+		return this.bFooter ? oHeaderFooter.getEvenFooter() : oHeaderFooter.getEvenHeader();
+	};
+	ApiHeaderFooter.prototype.private_SetData = function (sStr) {
+		let oHeaderFooter = this.private_GetHeaderFooter();
+		if ("first" === this.type) {
+			if (this.bFooter) {
+				oHeaderFooter.setFirstFooter(sStr);
+			} else {
+				oHeaderFooter.setFirstHeader(sStr);
+			}
+		} else {
+			if (this.bFooter) {
+				oHeaderFooter.setEvenFooter(sStr);
+			} else {
+				oHeaderFooter.setEvenHeader(sStr);
+			}
+		}
+	};
+
+	/**
+	 * Returns the text of this header or footer section.
+	 * @memberof ApiHeaderFooter
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} - The section text (may contain formatting codes such as &P, &D).
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiHeaderFooter/Methods/GetText.js
+	 */
+	ApiHeaderFooter.prototype.GetText = function () {
+		let oData = this.private_GetData();
+		return private_parseHeaderFooterSections(oData ? oData.getStr() : "")[this.key];
+	};
+	/**
+	 * Sets the text of this header or footer section, preserving the other two sections.
+	 * @memberof ApiHeaderFooter
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sText - The section text (may contain formatting codes such as &P, &D).
+	 * @returns {boolean} - Returns true if the operation is successful.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiHeaderFooter/Methods/SetText.js
+	 */
+	ApiHeaderFooter.prototype.SetText = function (sText) {
+		let oData = this.private_GetData();
+		let oSections = private_parseHeaderFooterSections(oData ? oData.getStr() : "");
+		oSections[this.key] = (typeof sText === 'string') ? sText : "";
+		this.private_SetData(private_buildHeaderFooterString(oSections) || null);
+		return true;
+	};
+	Object.defineProperty(ApiHeaderFooter.prototype, "Text", {
+		get: function () {
+			return this.GetText();
+		},
+		set: function (sText) {
+			this.SetText(sText);
+		}
+	});
 
 	/**
 	 * Class representing a user-protected range.
@@ -28662,6 +30335,7 @@
 	ApiWorksheet.prototype["ReplaceCurrentImage"] = ApiWorksheet.prototype.ReplaceCurrentImage;
 	ApiWorksheet.prototype["AddWordArt"] = ApiWorksheet.prototype.AddWordArt;
 	ApiWorksheet.prototype["GetAllDrawings"] = ApiWorksheet.prototype.GetAllDrawings;
+	ApiWorksheet.prototype["GroupDrawings"] = ApiWorksheet.prototype.GroupDrawings;
 	ApiWorksheet.prototype["GetAllImages"] = ApiWorksheet.prototype.GetAllImages;
 	ApiWorksheet.prototype["GetAllShapes"] = ApiWorksheet.prototype.GetAllShapes;
 	ApiWorksheet.prototype["GetAllCharts"] = ApiWorksheet.prototype.GetAllCharts;
@@ -28670,6 +30344,7 @@
 	ApiWorksheet.prototype["GetSelectedDrawings"] = ApiWorksheet.prototype.GetSelectedDrawings;
 	ApiWorksheet.prototype["Move"] = ApiWorksheet.prototype.Move;
 	ApiWorksheet.prototype["GetFreezePanes"] = ApiWorksheet.prototype.GetFreezePanes;
+	ApiWorksheet.prototype["GetPageSetup"] = ApiWorksheet.prototype.GetPageSetup;
 	ApiWorksheet.prototype["AddProtectedRange"] = ApiWorksheet.prototype.AddProtectedRange;
 	ApiWorksheet.prototype["GetProtectedRange"] = ApiWorksheet.prototype.GetProtectedRange;
 	ApiWorksheet.prototype["GetAllProtectedRanges"] = ApiWorksheet.prototype.GetAllProtectedRanges;
@@ -28811,6 +30486,10 @@
 	ApiDrawing.prototype["Fill"]                       =  ApiDrawing.prototype.Fill;
 	ApiDrawing.prototype["GetFill"]                    =  ApiDrawing.prototype.GetFill;
 	ApiDrawing.prototype["SetOutLine"]                 =  ApiDrawing.prototype.SetOutLine;
+	ApiDrawing.prototype["SetLine"]                    =  ApiDrawing.prototype.SetLine;
+	ApiDrawing.prototype["GetLine"]                    =  ApiDrawing.prototype.GetLine;
+	ApiDrawing.prototype["SetShadow"]                  =  ApiDrawing.prototype.SetShadow;
+	ApiDrawing.prototype["GetShadow"]                  =  ApiDrawing.prototype.GetShadow;
 	ApiDrawing.prototype["Unselect"]                   =  ApiDrawing.prototype.Unselect;
 
 	ApiImage.prototype["GetClassType"]                 =  ApiImage.prototype.GetClassType;
@@ -28818,6 +30497,7 @@
 	ApiSmartArt.prototype["GetClassType"]              =  ApiSmartArt.prototype.GetClassType;
 
 	ApiGroup.prototype["GetClassType"]                =  ApiGroup.prototype.GetClassType;
+	ApiGroup.prototype["Ungroup"]                     =  ApiGroup.prototype.Ungroup;
 
 	ApiShape.prototype["GetClassType"]                 =  ApiShape.prototype.GetClassType;
 	ApiShape.prototype["GetDocContent"]                =  ApiShape.prototype.GetDocContent;
@@ -28875,6 +30555,7 @@
 	ApiChart.prototype["SetLegendFill"] = ApiChart.prototype.SetLegendFill = AscBuilder.ApiChart.prototype.SetLegendFill;
 	ApiChart.prototype["SetLegendOutLine"] = ApiChart.prototype.SetLegendOutLine = AscBuilder.ApiChart.prototype.SetLegendOutLine;
 	ApiChart.prototype["SetAxieNumFormat"] = ApiChart.prototype.SetAxieNumFormat = AscBuilder.ApiChart.prototype.SetAxieNumFormat;
+	ApiChart.prototype["SetAxisNumFormat"] = ApiChart.prototype.SetAxisNumFormat = AscBuilder.ApiChart.prototype.SetAxisNumFormat;
 	ApiChart.prototype["GetAllSeries"] = ApiChart.prototype.GetAllSeries = AscBuilder.ApiChart.prototype.GetAllSeries;
 	ApiChart.prototype["GetSeries"] = ApiChart.prototype.GetSeries = AscBuilder.ApiChart.prototype.GetSeries;
 
@@ -28927,7 +30608,6 @@
 	ApiCommentReply.prototype["GetClassType"]         =  ApiCommentReply.prototype.GetClassType;
 	ApiCommentReply.prototype["GetText"]              =  ApiCommentReply.prototype.GetText;
 	ApiCommentReply.prototype["SetText"]              =  ApiCommentReply.prototype.SetText;
-	ApiCommentReply.prototype["SetTextGetAuthorName"] =  ApiCommentReply.prototype.SetTextGetAuthorName;
 	ApiCommentReply.prototype["GetAuthorName"]        =  ApiCommentReply.prototype.GetAuthorName;
 	ApiCommentReply.prototype["SetAuthorName"]        =  ApiCommentReply.prototype.SetAuthorName;
 	ApiCommentReply.prototype["GetUserId"]            =  ApiCommentReply.prototype.GetUserId;
@@ -28996,6 +30676,78 @@
 	ApiFreezePanes.prototype["FreezeRows"]       = ApiFreezePanes.prototype.FreezeRows;
 	ApiFreezePanes.prototype["GetLocation"]      = ApiFreezePanes.prototype.GetLocation;
 	ApiFreezePanes.prototype["Unfreeze"]         = ApiFreezePanes.prototype.Unfreeze;
+
+	ApiPageSetup.prototype["GetLeftMargin"]        = ApiPageSetup.prototype.GetLeftMargin;
+	ApiPageSetup.prototype["SetLeftMargin"]        = ApiPageSetup.prototype.SetLeftMargin;
+	ApiPageSetup.prototype["GetRightMargin"]       = ApiPageSetup.prototype.GetRightMargin;
+	ApiPageSetup.prototype["SetRightMargin"]       = ApiPageSetup.prototype.SetRightMargin;
+	ApiPageSetup.prototype["GetTopMargin"]         = ApiPageSetup.prototype.GetTopMargin;
+	ApiPageSetup.prototype["SetTopMargin"]         = ApiPageSetup.prototype.SetTopMargin;
+	ApiPageSetup.prototype["GetBottomMargin"]      = ApiPageSetup.prototype.GetBottomMargin;
+	ApiPageSetup.prototype["SetBottomMargin"]      = ApiPageSetup.prototype.SetBottomMargin;
+	ApiPageSetup.prototype["GetHeaderMargin"]      = ApiPageSetup.prototype.GetHeaderMargin;
+	ApiPageSetup.prototype["SetHeaderMargin"]      = ApiPageSetup.prototype.SetHeaderMargin;
+	ApiPageSetup.prototype["GetFooterMargin"]      = ApiPageSetup.prototype.GetFooterMargin;
+	ApiPageSetup.prototype["SetFooterMargin"]      = ApiPageSetup.prototype.SetFooterMargin;
+	ApiPageSetup.prototype["GetAlignMarginsHeaderFooter"] = ApiPageSetup.prototype.GetAlignMarginsHeaderFooter;
+	ApiPageSetup.prototype["SetAlignMarginsHeaderFooter"] = ApiPageSetup.prototype.SetAlignMarginsHeaderFooter;
+	ApiPageSetup.prototype["GetCenterFooter"]      = ApiPageSetup.prototype.GetCenterFooter;
+	ApiPageSetup.prototype["SetCenterFooter"]      = ApiPageSetup.prototype.SetCenterFooter;
+	ApiPageSetup.prototype["GetLeftFooter"]        = ApiPageSetup.prototype.GetLeftFooter;
+	ApiPageSetup.prototype["SetLeftFooter"]        = ApiPageSetup.prototype.SetLeftFooter;
+	ApiPageSetup.prototype["GetRightFooter"]       = ApiPageSetup.prototype.GetRightFooter;
+	ApiPageSetup.prototype["SetRightFooter"]       = ApiPageSetup.prototype.SetRightFooter;
+	ApiPageSetup.prototype["GetCenterHeader"]      = ApiPageSetup.prototype.GetCenterHeader;
+	ApiPageSetup.prototype["SetCenterHeader"]      = ApiPageSetup.prototype.SetCenterHeader;
+	ApiPageSetup.prototype["GetLeftHeader"]        = ApiPageSetup.prototype.GetLeftHeader;
+	ApiPageSetup.prototype["SetLeftHeader"]        = ApiPageSetup.prototype.SetLeftHeader;
+	ApiPageSetup.prototype["GetRightHeader"]       = ApiPageSetup.prototype.GetRightHeader;
+	ApiPageSetup.prototype["SetRightHeader"]       = ApiPageSetup.prototype.SetRightHeader;
+	ApiPageSetup.prototype["GetCenterHorizontally"] = ApiPageSetup.prototype.GetCenterHorizontally;
+	ApiPageSetup.prototype["SetCenterHorizontally"] = ApiPageSetup.prototype.SetCenterHorizontally;
+	ApiPageSetup.prototype["GetCenterVertically"]  = ApiPageSetup.prototype.GetCenterVertically;
+	ApiPageSetup.prototype["SetCenterVertically"]  = ApiPageSetup.prototype.SetCenterVertically;
+	ApiPageSetup.prototype["GetDifferentFirstPageHeaderFooter"] = ApiPageSetup.prototype.GetDifferentFirstPageHeaderFooter;
+	ApiPageSetup.prototype["SetDifferentFirstPageHeaderFooter"] = ApiPageSetup.prototype.SetDifferentFirstPageHeaderFooter;
+	ApiPageSetup.prototype["GetOddAndEvenPagesHeaderFooter"] = ApiPageSetup.prototype.GetOddAndEvenPagesHeaderFooter;
+	ApiPageSetup.prototype["SetOddAndEvenPagesHeaderFooter"] = ApiPageSetup.prototype.SetOddAndEvenPagesHeaderFooter;
+	ApiPageSetup.prototype["GetScaleWithDocHeaderFooter"] = ApiPageSetup.prototype.GetScaleWithDocHeaderFooter;
+	ApiPageSetup.prototype["SetScaleWithDocHeaderFooter"] = ApiPageSetup.prototype.SetScaleWithDocHeaderFooter;
+	ApiPageSetup.prototype["GetFirstPageNumber"]   = ApiPageSetup.prototype.GetFirstPageNumber;
+	ApiPageSetup.prototype["SetFirstPageNumber"]   = ApiPageSetup.prototype.SetFirstPageNumber;
+	ApiPageSetup.prototype["GetFitToPagesWide"]    = ApiPageSetup.prototype.GetFitToPagesWide;
+	ApiPageSetup.prototype["SetFitToPagesWide"]    = ApiPageSetup.prototype.SetFitToPagesWide;
+	ApiPageSetup.prototype["GetFitToPagesTall"]    = ApiPageSetup.prototype.GetFitToPagesTall;
+	ApiPageSetup.prototype["SetFitToPagesTall"]    = ApiPageSetup.prototype.SetFitToPagesTall;
+	ApiPageSetup.prototype["GetOrientation"]       = ApiPageSetup.prototype.GetOrientation;
+	ApiPageSetup.prototype["SetOrientation"]       = ApiPageSetup.prototype.SetOrientation;
+	ApiPageSetup.prototype["GetParent"]            = ApiPageSetup.prototype.GetParent;
+	ApiPageSetup.prototype["GetPrintGridlines"]    = ApiPageSetup.prototype.GetPrintGridlines;
+	ApiPageSetup.prototype["SetPrintGridlines"]    = ApiPageSetup.prototype.SetPrintGridlines;
+	ApiPageSetup.prototype["GetPrintHeadings"]     = ApiPageSetup.prototype.GetPrintHeadings;
+	ApiPageSetup.prototype["SetPrintHeadings"]     = ApiPageSetup.prototype.SetPrintHeadings;
+	ApiPageSetup.prototype["GetZoom"]              = ApiPageSetup.prototype.GetZoom;
+	ApiPageSetup.prototype["SetZoom"]              = ApiPageSetup.prototype.SetZoom;
+	ApiPageSetup.prototype["GetPrintArea"]         = ApiPageSetup.prototype.GetPrintArea;
+	ApiPageSetup.prototype["SetPrintArea"]         = ApiPageSetup.prototype.SetPrintArea;
+	ApiPageSetup.prototype["GetPrintTitleRows"]    = ApiPageSetup.prototype.GetPrintTitleRows;
+	ApiPageSetup.prototype["SetPrintTitleRows"]    = ApiPageSetup.prototype.SetPrintTitleRows;
+	ApiPageSetup.prototype["GetPrintTitleColumns"] = ApiPageSetup.prototype.GetPrintTitleColumns;
+	ApiPageSetup.prototype["SetPrintTitleColumns"] = ApiPageSetup.prototype.SetPrintTitleColumns;
+	ApiPageSetup.prototype["GetPaperSize"]         = ApiPageSetup.prototype.GetPaperSize;
+	ApiPageSetup.prototype["SetPaperSize"]         = ApiPageSetup.prototype.SetPaperSize;
+	ApiPageSetup.prototype["GetEvenPage"]          = ApiPageSetup.prototype.GetEvenPage;
+	ApiPageSetup.prototype["GetFirstPage"]         = ApiPageSetup.prototype.GetFirstPage;
+
+	ApiPage.prototype["GetCenterHeader"]           = ApiPage.prototype.GetCenterHeader;
+	ApiPage.prototype["GetLeftHeader"]             = ApiPage.prototype.GetLeftHeader;
+	ApiPage.prototype["GetRightHeader"]            = ApiPage.prototype.GetRightHeader;
+	ApiPage.prototype["GetLeftFooter"]             = ApiPage.prototype.GetLeftFooter;
+	ApiPage.prototype["GetCenterFooter"]           = ApiPage.prototype.GetCenterFooter;
+	ApiPage.prototype["GetRightFooter"]            = ApiPage.prototype.GetRightFooter;
+
+	ApiHeaderFooter.prototype["GetText"]           = ApiHeaderFooter.prototype.GetText;
+	ApiHeaderFooter.prototype["SetText"]           = ApiHeaderFooter.prototype.SetText;
 
 	ApiProtectedRange.prototype["SetTitle"]      = ApiProtectedRange.prototype.SetTitle;
 	ApiProtectedRange.prototype["SetRange"]      = ApiProtectedRange.prototype.SetRange;
@@ -30075,6 +31827,7 @@
 	function GetApiDrawing(drawing) {
         switch (drawing.getObjectType()) {
             case AscDFH.historyitem_type_Shape:
+            case AscDFH.historyitem_type_Cnx:
                 return new AscBuilder.ApiShape(drawing);
             case AscDFH.historyitem_type_ImageShape:
                 return new AscBuilder.ApiImage(drawing);

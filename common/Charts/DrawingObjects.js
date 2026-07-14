@@ -2539,7 +2539,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
     //-----------------------------------------------------------------------------------
 
 
-    _this.calculateObjectMetrics = function (object, width, height, opt_checkRtl) {
+    _this.calculateObjectMetrics = function (object, width, height, opt_checkRtl, opt_noLimit) {
         // Processing high resolution images
         var bCorrect = false;
         var metricCoeff = 1;
@@ -2549,7 +2549,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         var realLeftOffset = coordsFrom.x;
 
         var areaWidth = worksheet._getColLeft(worksheet.getLastVisibleCol()) - worksheet._getColLeft(worksheet.getFirstVisibleCol(true)); 	// by width
-        if (areaWidth < width) {
+        if (!opt_noLimit && areaWidth < width) {
             metricCoeff = width / areaWidth;
 
             width = areaWidth;
@@ -2558,7 +2558,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         }
 
         var areaHeight = worksheet._getRowTop(worksheet.getLastVisibleRow()) - worksheet._getRowTop(worksheet.getFirstVisibleRow(true)); 	// by height
-        if (areaHeight < height) {
+        if (!opt_noLimit && areaHeight < height) {
             metricCoeff = height / areaHeight;
 
             height = areaHeight;
@@ -2601,7 +2601,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 oSize = new AscCommon.asc_CImageSize(Math.max((options.width * AscCommon.g_dKoef_pix_to_mm), 1),
                     Math.max((options.height * AscCommon.g_dKoef_pix_to_mm), 1), true);
             }
-            var bCorrect = _this.calculateObjectMetrics(drawingObject, mmToPx(oSize.asc_getImageWidth()), mmToPx(oSize.asc_getImageHeight()), true);
+            var bCorrect = _this.calculateObjectMetrics(drawingObject, mmToPx(oSize.asc_getImageWidth()), mmToPx(oSize.asc_getImageHeight()), true, true);
 			const isRtl = worksheet.getRightToLeft();
 
 			const coordsFrom = _this.calculateCoords(drawingObject.from);

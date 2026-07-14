@@ -7149,6 +7149,9 @@
 		for(var i = 0; i < this.Drawings.length; ++i){
 			this.Drawings[i].graphicObject.getAllRasterImages(aImages);
 		}
+		if (this.picture) {
+			aImages.push(this.picture);
+		}
 	};
 	Worksheet.prototype.reassignImageUrls = function(oImages){
 		for(var i = 0; i < this.Drawings.length; ++i){
@@ -13783,26 +13786,19 @@
 			return null;
 		}
 
-		//todo frozen panes
-		var newVal;
-		if (range.c1 === 0 && range.r1 === 0) {
-			newVal = null;
-		} else {
-			var topLeftFrozenCell = this.sheetViews[0] && this.sheetViews[0].pane && this.sheetViews[0].pane.topLeftFrozenCell;
-			if (topLeftFrozenCell && topLeftFrozenCell.col > 1 && topLeftFrozenCell.row > 1) {
-				newVal = null;
-			} else {
-				newVal = new Asc.Range(0, 0, 0, 0);
-				if (!topLeftFrozenCell || topLeftFrozenCell.col <= 1) {
-					newVal.c1 = newVal.c2 = range.c1;
-				}
-				if (!topLeftFrozenCell || topLeftFrozenCell.row <= 1) {
-					newVal.r1 = newVal.r2 = range.r1;
-				}
-			}
-		}
+		var topLeftFrozenCell = this.sheetViews[0] && this.sheetViews[0].pane && this.sheetViews[0].pane.topLeftFrozenCell;
+		var colFrozen = topLeftFrozenCell && topLeftFrozenCell.col > 1;
+		var rowFrozen = topLeftFrozenCell && topLeftFrozenCell.row > 1;
 
-		return newVal;
+		// frozen axis keeps the current (constant) origin; free axis follows the scroll
+		var cur = (colFrozen || rowFrozen) ? this.getTopLeftCell() : null;
+		var c = colFrozen ? (cur ? cur.c1 : 0) : range.c1;
+		var r = rowFrozen ? (cur ? cur.r1 : 0) : range.r1;
+
+		if (c === 0 && r === 0) {
+			return null;
+		}
+		return new Asc.Range(c, r, c, r);
 	};
 	Worksheet.prototype.setTopLeftCell = function(val, addToHistory) {
 		var view = this.sheetViews[0];
@@ -13824,6 +13820,20 @@
 	Worksheet.prototype.getTopLeftCell = function() {
 		var view = this.sheetViews && this.sheetViews[0];
 		return view && view.topLeftCell;
+	};
+
+	Worksheet.prototype.updateActiveCell = function() {
+		if (!this.selectionRange || !this.selectionRange.ranges) {
+			return;
+		}
+		var t = this;
+		var sSelection;
+		AscCommonExcel.executeInR1C1Mode(false, function () {
+			sSelection = AscCommonExcel.getSqRefString(t.selectionRange.ranges);
+		});
+		History.Create_NewPoint();
+		History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_SetActiveCell,
+			this.getId(), null, new UndoRedoData_FromTo(null, sSelection));
 	};
 
 	Worksheet.prototype.setCustomSort = function(props, obj, doNotSortRange, cellCommentator, opt_range) {
@@ -22537,10 +22547,16 @@
 										// if(oCopyCell.isEmptyTextString())
 										// wsTo._getHyperlink().remove({r1: oCopyCell.nRow, c1: oCopyCell.nCol, r2: oCopyCell.nRow, c2: oCopyCell.nCol});
 									} else {
-										var fromFormulaParsed = oFromCell.getFormulaParsed();
-										var formulaArrayRef = fromFormulaParsed.getArrayFormulaRef();
+										let fromFormulaParsed = oFromCell.getFormulaParsed();
+										let formulaArrayRef = fromFormulaParsed.getArrayFormulaRef();
 
-										var _p_,offset, offsetArray, assemb;
+										let dynamicRef = fromFormulaParsed.getDynamicRef(), isDynamicFirstCellSelected;
+										if (AscCommonExcel.bIsSupportDynamicArrays && dynamicRef && dynamicRef.c1 === oFromCell.nCol && dynamicRef.r1 === oFromCell.nRow) {
+											// only the first cell of dynamic array contain a value, other is "empty" to promote 
+											isDynamicFirstCellSelected = true;
+										}
+
+										let _p_,offset, offsetArray, assemb;
 										if(formulaArrayRef) {
 											var intersectionFrom = from.intersection(formulaArrayRef);
 											if(intersectionFrom) {
@@ -22557,13 +22573,47 @@
 														_p_ = oFromCell.getFormulaParsed().clone(null, oFromCell, this);
 														_p_.changeOffset(offset);
 
-														var rangeFormulaArray = oCopyCell.ws.getRange3(intersectionTo.r1, intersectionTo.c1, intersectionTo.r2, intersectionTo.c2);
-														rangeFormulaArray.setValue("=" + _p_.assemble(true), function (r) {}, null, intersectionTo);
+														let rangeFormulaArray;
+														if (!dynamicRef || isDynamicFirstCellSelected) {
+															rangeFormulaArray = oCopyCell.ws.getRange3(intersectionTo.r1, intersectionTo.c1, intersectionTo.r2, intersectionTo.c2);
+															let newRange, cmIndex, beforeSpillRange;
+															if (dynamicRef) {
+																// get new range and set it to the value
+																// dynamic ref can change after setValue, through the loop
+																// so we should use ArrayRef instead because it's immutable when we setting value
+																let dynamicNewR2 = intersectionTo.r2 + (formulaArrayRef.r2 - formulaArrayRef.r1),
+																	dynamicNewC2 = intersectionTo.c2 + (formulaArrayRef.c2 - formulaArrayRef.c1);
+																newRange = new Asc.Range(intersectionTo.c1, intersectionTo.r1, dynamicNewC2, dynamicNewR2);
+																if (!wsTo.dynamicArrayManager.isAutoExpandBBox(newRange)) {
+																	// cmIndex = fromFormulaParsed.cm;
+																	beforeSpillRange = intersectionTo;
+																	newRange = intersectionTo;
+																} else {
+																	rangeFormulaArray.bbox = newRange;
+																}
 
-														AscCommon.History.Add(AscCommonExcel.g_oUndoRedoArrayFormula,
-															AscCH.historyitem_ArrayFromula_AddFormula, oCopyCell.ws.getId(),
-															new Asc.Range(intersectionTo.c1, intersectionTo.r1, intersectionTo.c2, intersectionTo.r2),
-															new AscCommonExcel.UndoRedoData_ArrayFormula(intersectionTo, "=" + oCopyCell.getFormulaParsed().assemble(true)));
+																// TODO .setValue does not take into account the locale and the formula turns from SUM(2;2)->SUM(2,2)->SUM(2.2)->error because it cannot be calculated
+																// temporarily set the isCopyPaste=true flag for correct parsing inside .setValue
+																rangeFormulaArray.setValue(
+																	"=" + _p_.assemble(true), 
+																	function (r) {}, 
+																	true, 
+																	newRange, 
+																	null, 
+																	{range: newRange, beforeSpillRange: beforeSpillRange});
+															} else {
+																rangeFormulaArray.setValue("=" + _p_.assemble(true), function (r) {}, true, intersectionTo);
+															}
+															
+															let copyCellFP = oCopyCell.getFormulaParsed();
+															let copyCellFPAssembled = copyCellFP && copyCellFP.assemble ? copyCellFP.assemble(true) : null;
+															let undoRedoFormulaText = copyCellFPAssembled ? "=" + copyCellFPAssembled : "";
+
+															AscCommon.History.Add(AscCommonExcel.g_oUndoRedoArrayFormula,
+																AscCH.historyitem_ArrayFromula_AddFormula, oCopyCell.ws.getId(),
+																new Asc.Range(intersectionTo.c1, intersectionTo.r1, intersectionTo.c2, intersectionTo.r2),
+																new AscCommonExcel.UndoRedoData_ArrayFormula(intersectionTo, undoRedoFormulaText));
+														}
 													}
 
 												}

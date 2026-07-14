@@ -5932,7 +5932,7 @@
 			if (null !== oSheetView.zoomScale && !oThis.isCopyPaste)
 				this.bs.WriteItem(c_oSer_SheetView.ZoomScale, function(){oThis.memory.WriteLong(oSheetView.zoomScale);});
             if (null !== oSheetView.pane && oSheetView.pane.isInit() && !oThis.isCopyPaste)
-                this.bs.WriteItem(c_oSer_SheetView.Pane, function(){oThis.WriteSheetViewPane(oSheetView.pane);});
+                this.bs.WriteItem(c_oSer_SheetView.Pane, function(){oThis.WriteSheetViewPane(oSheetView.pane, oSheetView);});
 			if (null !== ws.selectionRange)
 				this.bs.WriteItem(c_oSer_SheetView.Selection, function(){oThis.WriteSheetViewSelection(ws.selectionRange);});
             if (null !== oSheetView.showZeros && !oThis.isCopyPaste)
@@ -5946,10 +5946,16 @@
             if (null !== oSheetView.rightToLeft && !oThis.isCopyPaste)
                 this.bs.WriteItem(c_oSer_SheetView.RightToLeft, function(){oThis.memory.WriteBool(oSheetView.rightToLeft);});
         };
-        this.WriteSheetViewPane = function (oPane) {
+        this.WriteSheetViewPane = function (oPane, oSheetView) {
             var oThis = this;
 			var col = oPane.topLeftFrozenCell.getCol0();
 			var row = oPane.topLeftFrozenCell.getRow0();
+
+			// xSplit/ySplit = count of frozen cols/rows from the frozen area origin (sheetView.topLeftCell)
+			var originCol = (oSheetView && oSheetView.topLeftCell) ? oSheetView.topLeftCell.c1 : 0;
+			var originRow = (oSheetView && oSheetView.topLeftCell) ? oSheetView.topLeftCell.r1 : 0;
+			var xSplit = col > 0 ? col - originCol : 0;
+			var ySplit = row > 0 ? row - originRow : 0;
 
 			var activePane = null;
 			if (0 < col && 0 < row) {
@@ -5968,9 +5974,9 @@
             this.bs.WriteItem(c_oSer_Pane.TopLeftCell, function(){oThis.memory.WriteString3(oPane.topLeftFrozenCell.getID());});
 
             if (0 < col)
-                this.bs.WriteItem(c_oSer_Pane.XSplit, function(){oThis.memory.WriteDouble2(col);});
+                this.bs.WriteItem(c_oSer_Pane.XSplit, function(){oThis.memory.WriteDouble2(xSplit);});
             if (0 < row)
-                this.bs.WriteItem(c_oSer_Pane.YSplit, function(){oThis.memory.WriteDouble2(row);});
+                this.bs.WriteItem(c_oSer_Pane.YSplit, function(){oThis.memory.WriteDouble2(ySplit);});
         };
 		this.WriteSheetViewSelection = function (selectionRange) {
 			var oThis = this;
@@ -11312,8 +11318,8 @@
 				res = this.bcr.Read1(length, function (t, l) {
 					return oThis.ReadLegacyDrawingHF(t, l, oWorksheet.legacyDrawingHF);
 				});
-			// } else if (c_oSerWorksheetsTypes.Picture === type) {
-			//     oWorksheet.picture = this.stream.GetString2LE(length);
+			} else if (c_oSerWorksheetsTypes.Picture === type) {
+				oWorksheet.picture = this.stream.GetString2LE(length);
 			} else if (c_oSerWorksheetsTypes.DataValidations === type && typeof AscCommonExcel.CDataValidations != "undefined") {
 				oWorksheet.dataValidations = new AscCommonExcel.CDataValidations();
 				res = this.bcr.Read1(length, function(t, l) {

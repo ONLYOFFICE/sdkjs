@@ -1221,7 +1221,7 @@
 					oSpPr.setGeometry(geometry.createDuplicate());
 				}
 				if ((this.getObjectType() === AscDFH.historyitem_type_Shape || this.getObjectType() === AscDFH.historyitem_type_Control)
-					&& (!this.brush || !this.brush.isVisible())) {
+					&& (!this.brush || !this.brush.isVisible()) && !(this.isSlideImagePlaceholder && this.isSlideImagePlaceholder())) {
 					if (this.pen && this.pen.isVisible()) {
 						oSpPr.Fill = AscFormat.CreateNoFillUniFill();
 						oSpPr.ln = this.pen.createDuplicate();
@@ -1651,6 +1651,13 @@
 		let oNvPr = this.getNvProps();
 		if (oNvPr && oNvPr.ph) {
 			return oNvPr.ph.idx;
+		}
+		return null;
+	};
+	CGraphicObjectBase.prototype.getPlaceholderTypeWithDefault = function () {
+		let oNvPr = this.getNvProps();
+		if (oNvPr && oNvPr.ph) {
+			return oNvPr.ph.type === null ? AscFormat.phType_obj : oNvPr.ph.type;
 		}
 		return null;
 	};
@@ -2505,7 +2512,7 @@
 		return {hit: false};
 	};
 	CGraphicObjectBase.prototype.hitToHandles = function (x, y) {
-		if (this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) {
+		if (this.isSlideNoteShape && this.isSlideNoteShape()) {
 			return -1;
 		}
 		if (!AscFormat.canSelectDrawing(this)) {
@@ -2517,7 +2524,7 @@
 		return AscFormat.hitToHandles(x, y, this);
 	};
 	CGraphicObjectBase.prototype.hitInBoundingRect = function (x, y) {
-		if (this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) {
+		if (this.isSlideNoteShape && this.isSlideNoteShape()) {
 			return false;
 		}
 		if (!AscFormat.canSelectDrawing(this)) {
@@ -2552,7 +2559,7 @@
 		if (AscCommon.IsShapeToImageConverter) {
 			return;
 		}
-		var bNotes = !!(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES);
+		var bNotes = !!(this.isSlideNoteShape && this.isSlideNoteShape());
 		if (!this.group && !bNotes) {
 			var oLock;
 			if (this.parent instanceof AscCommonWord.ParaDrawing) {
@@ -3174,8 +3181,6 @@
 				break;
 			}
 			case AscFormat.phType_sldImg: {
-				aButtons.push(AscCommon.PlaceholderButtonType.Image);
-				aButtons.push(AscCommon.PlaceholderButtonType.ImageUrl);
 				break;
 			}
 			case AscFormat.phType_sldNum: {
@@ -4013,9 +4018,19 @@
 		let scaleY = 1.0;
 		let oldExtX = oXfrm.extX;
 		let oldExtY = oXfrm.extY;
-		if (!props.SizeRelH && AscFormat.isRealNumber(props.Width)) {
-			scaleX = props.Width / oXfrm.extX;
-			oXfrm.setExtX(props.Width);
+		let newWidth = props.Width;
+		let newHeight = props.Height;
+		let keepAspect = AscFormat.isRealBool(props.lockAspect) ? props.lockAspect : this.getNoChangeAspect();
+		if (keepAspect && !props.SizeRelH && !props.SizeRelV && oldExtX > 0 && oldExtY > 0) {
+			if (AscFormat.isRealNumber(newWidth) && !AscFormat.isRealNumber(newHeight)) {
+				newHeight = oldExtY * newWidth / oldExtX;
+			} else if (AscFormat.isRealNumber(newHeight) && !AscFormat.isRealNumber(newWidth)) {
+				newWidth = oldExtX * newHeight / oldExtY;
+			}
+		}
+		if (!props.SizeRelH && AscFormat.isRealNumber(newWidth)) {
+			scaleX = newWidth / oXfrm.extX;
+			oXfrm.setExtX(newWidth);
 			if (oSpParent instanceof AscCommonWord.ParaDrawing) {
 				oSpParent.SetSizeRelH({
 					RelativeFrom: AscCommon.c_oAscSizeRelFromH.sizerelfromhPage,
@@ -4023,9 +4038,9 @@
 				});
 			}
 		}
-		if (!props.SizeRelV && AscFormat.isRealNumber(props.Height)) {
-			scaleY = props.Height / oXfrm.extY;
-			oXfrm.setExtY(props.Height);
+		if (!props.SizeRelV && AscFormat.isRealNumber(newHeight)) {
+			scaleY = newHeight / oXfrm.extY;
+			oXfrm.setExtY(newHeight);
 			if (oSpParent instanceof AscCommonWord.ParaDrawing) {
 				oSpParent.SetSizeRelV({
 					RelativeFrom: AscCommon.c_oAscSizeRelFromV.sizerelfromvPage,
@@ -4131,6 +4146,23 @@
 	CGraphicObjectBase.prototype.isControl = function() {
 		return false;
 	}
+	CGraphicObjectBase.prototype.isSlideNoteShape = function() {
+		return false;
+	};
+	CGraphicObjectBase.prototype.collectRedrawSlides = function (redrawSlides, force) {};
+	CGraphicObjectBase.prototype.isContentPlaceholder = function () {
+		return false;
+	};
+	CGraphicObjectBase.prototype.isTitlePlaceholder = function () {
+		return false;
+	};
+	CGraphicObjectBase.prototype.isOutlinePlaceholder = function () {
+		return false;
+	};
+	CGraphicObjectBase.prototype.isOutlinePlaceholderWithContent = function () {
+		return false;
+	};
+
 	var ANIM_LABEL_WIDTH_PIX = 22;
 	var ANIM_LABEL_HEIGHT_PIX = 17;
 
