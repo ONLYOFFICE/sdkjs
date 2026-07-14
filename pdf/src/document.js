@@ -6405,24 +6405,6 @@ var CPresentation = CPresentation || function(){};
             }
         }
 
-        if (allImages.length > 0) {
-            AscCommon.sendImgUrls(Asc.editor, allImages, function(data) {
-                let oObjectsForDownload = AscCommon.GetObjectsForImageDownload(aResetBuilderImages);
-                AscCommon.ResetNewUrls(data, allImages, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
-
-                for (let nIdx = 0; nIdx < data.length; ++nIdx) {
-                    if(data[nIdx].url) {
-                        oLoadUrls[++imgCount] = data[nIdx].url;
-                    }
-                }
-
-                let _file = _this.Viewer.file;
-                for (let nIdx = 0; nIdx < data.length; ++nIdx) {
-                    _file.nativeFile["changeImageUrl"](allImages[nIdx], AscCommon.g_oDocumentUrls.imagePath2Local(data[nIdx].path));
-                }
-            });
-        }
-
 		AscCommon.History.Add(new CChangesEmbedFontsMap(_this, sOldEmbedFontsMap, JSON.stringify(Asc.editor.embeddedFontsMap)));
 
 		for (let idx = 0; idx < aPageDrawings.length; idx++) {
@@ -6432,7 +6414,7 @@ var CPresentation = CPresentation || function(){};
 			drawing.SetNeedRecalc(true);
 		}
 
-        return {fonts: aFonts, images: oLoadUrls};
+        return {fonts: aFonts, images: oLoadUrls, allImages: allImages, resetImages: aResetBuilderImages, imageMap: oImageMap};
     };
 
 

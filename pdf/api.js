@@ -806,7 +806,30 @@
         };
 
 		let result = oDoc.EditPage(oViewer.currentPage);
-		this.pre_Paste(result.fonts, result.images, fEndCallback);
+
+		if (result.allImages.length > 0) {
+			AscCommon.sendImgUrls(Asc.editor, result.allImages, function(data) {
+				let objectsForDownload = AscCommon.GetObjectsForImageDownload(result.resetImages);
+				AscCommon.ResetNewUrls(data, result.allImages, objectsForDownload.aBuilderImagesByUrl, result.imageMap);
+
+				let count = Object.keys(result.images).length;
+				for (let i = 0; i < data.length; ++i) {
+					if (data[i].url) {
+						result.images[++count] = data[i].url;
+					}
+				}
+
+				let file = oDoc.Viewer.file;
+				for (let i = 0; i < data.length; ++i) {
+					file.nativeFile["changeImageUrl"](result.allImages[i], AscCommon.g_oDocumentUrls.imagePath2Local(data[i].path));
+				}
+
+				Asc.editor.pre_Paste(result.fonts, result.images, fEndCallback);
+			});
+		}
+		else {
+			Asc.editor.pre_Paste(result.fonts, result.images, fEndCallback);
+		}
 	};
 	PDFEditorApi.prototype.asc_AddPage = function(nPos) {
 		let oViewer = this.getDocumentRenderer();
