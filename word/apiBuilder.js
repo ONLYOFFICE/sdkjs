@@ -847,9 +847,16 @@
 							if (sType === 'markdown')
 								sText += oCMarkdownConverter.Config.base64img ? '![](' + Item.GraphicObj.getBase64Img() + ')' : '![](' + Item.GraphicObj.getImageUrl() + ')';
 							else if (sType === 'html')
-								sText += oCMarkdownConverter.Config.base64img ? '<img src="' + Item.GraphicObj.getBase64Img() + '" alt="img">' : '<img src="' + Item.GraphicObj.getImageUrl() + '" alt="img">';
+							{
+								var sAlt = Item.docPr && null != Item.docPr.descr ? Item.docPr.descr : null;
+								if (!sAlt) {
+								sAlt = 'img';
+								}
+								sAlt = AscCommon.escapeHtmlCharacters(sAlt);
+								sText += oCMarkdownConverter.Config.base64img ? '<img src="' + Item.GraphicObj.getBase64Img() + '" alt="' + sAlt + '">' : '<img src="' + Item.GraphicObj.getImageUrl() + '" alt="' + sAlt + '">';
+ 							}
 						}
-						break;
+							break;
 					}
 					case para_PageNum:
 					case para_PageCount:
