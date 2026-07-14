@@ -4725,7 +4725,9 @@
 				// create new appearance
 				if (!field.IsNeedDrawFromStream()) {
 					oMemory.WriteBool(true);
+					oMemory.isRedactField = true;
 					field.WriteToBinary(oMemory);
+					oMemory.isRedactField = false;
 				}
 				// use existing appearance
 				else {

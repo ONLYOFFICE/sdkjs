@@ -2867,7 +2867,7 @@
         memory.WriteLong(annotFlags);
 
         // page
-        memory.WriteLong(this.GetOriginPage());
+        memory.WriteLong(memory.isRedactField ? this.GetPage() : this.GetOriginPage());
 
         // rect
         let aOrigRect = this.GetRect();
