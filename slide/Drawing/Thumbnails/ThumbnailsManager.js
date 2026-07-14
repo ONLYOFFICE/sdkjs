@@ -2965,8 +2965,7 @@
 		const context = AscCommon.AscBrowser.getContext2D(canvas);
 		context.clearRect(0, 0, this.const_offset_x, canvas.height);
 
-		const currentSlideIndex = this.m_oWordControl.m_oDrawingDocument.SlideCurrent;
-		outlineView.drawDecorations(this.getOutlineGraphics(context), currentSlideIndex, this.MouseDownTrack.FocusPage);
+		outlineView.drawDecorations(this.getOutlineGraphics(context), this.GetSelectedSlideIndexesMap(), this.MouseDownTrack.FocusPage);
 		const shape = outlineView.outlineShape;
 		if (shape) {
 			this.m_oWordControl.m_oDrawingDocument.UpdateTargetTransform(outlineView.getTransformText());
@@ -3005,6 +3004,15 @@
 			return outlineView.getSelectedSlideArray();
 		}
 		return [];
+	};
+	COutlineThumbnailsManager.prototype.GetSelectedSlideIndexesMap = function()
+	{
+		const selectedSlideIndexes = this.GetSelectedArray();
+		const map = {};
+		for (let i = 0; i < selectedSlideIndexes.length; i += 1) {
+			map[selectedSlideIndexes[i]] = true;
+		}
+		return map;
 	};
 
 	COutlineThumbnailsManager.prototype.isSelectedPage = function(pageNum)

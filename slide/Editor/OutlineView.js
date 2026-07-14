@@ -77,13 +77,13 @@
 
 	const DECORATORDRAWER_OFFSET_LEFT = 2;
 	const DECORATORDRAWER_SLIDE_WIDTH = 6;
-	function DecoratorDrawer(outlineView, transform, selectedSlideIndex, focusSlideIndex) {
+	function DecoratorDrawer(outlineView, transform, selectedSlideMap, focusSlideIndex) {
 		this.cache = {
 			slideNumbersWidth: null
 		};
 		this.outlineView = outlineView;
 
-		this.selectedSlideIndex = selectedSlideIndex;
+		this.selectedSlideMap = selectedSlideMap || {};
 		this.focusSlideIndex = focusSlideIndex;
 
 		this.backgroundColor = AscCommon.GlobalSkin.BackgroundColorThumbnails;
@@ -137,7 +137,7 @@
 		this.drawDecorShape(graphics, slideNumberShape, slideIconSizes.x - (currentSlideLabel.length * charWidth + 1), slideIconSizes.y);
 
 		let penHex;
-		if (currentSlideIndex === this.selectedSlideIndex) {
+		if (this.selectedSlideMap[currentSlideIndex]) {
 			penHex = this.activeSlideColor;
 		} else if (currentSlideIndex === this.focusSlideIndex) {
 			penHex = this.hoverSlideColor;
@@ -1681,10 +1681,10 @@
 		}
 		return null;
 	};
-	OutlineView.prototype.drawDecorations = function (graphics, selectedSlideIndex, focusSlideIndex) {
+	OutlineView.prototype.drawDecorations = function (graphics, selectedSlideMap, focusSlideIndex) {
 		if (!this.outlineShape || !this.isHaveParagraphs()) return;
 
-		const decoratorDrawer = new DecoratorDrawer(this, new AscCommon.CMatrix(), selectedSlideIndex, focusSlideIndex);
+		const decoratorDrawer = new DecoratorDrawer(this, new AscCommon.CMatrix(), selectedSlideMap, focusSlideIndex);
 
 		const paragraphMap = this.outlineInfo.getOutlineParagraphToInfoMap();
 		for (let outlineId in paragraphMap) {
