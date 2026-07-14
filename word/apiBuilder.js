@@ -3218,6 +3218,15 @@
 	ApiRun.prototype.constructor = ApiRun;
 
 	/**
+	 * Class representing a mathematical equation.
+	 * @constructor
+	 */
+	function ApiMath(paraMath)
+	{
+		this.ParaMath = paraMath;
+	}
+
+	/**
 	 * Class representing a comment.
 	 * @constructor
 	 */
@@ -4801,6 +4810,44 @@
 	Api.CreateRun = function()
 	{
 		return new ApiRun(new ParaRun(null, false));
+	};
+	/**
+	 * Creates a math equation from a linear text string. The resulting object can be inserted into
+	 * a paragraph the same way as a run (e.g. via {@link ApiParagraph#AddElement} or {@link ApiParagraph#Push}).
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {string} text - An equation written as a linear text string.
+	 * @param {"unicode" | "latex" | "mathml"} [format="unicode"] - The format of the specified linear representation.
+	 * @returns {ApiMath}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateMath.js
+	 */
+	Api.CreateMath = function(text, format)
+	{
+		let equation   = GetStringParameter(text, "");
+		let formatType = GetStringParameter(format, "unicode");
+
+		LoadFont("Cambria Math");
+
+		let paraMath = null;
+		if ("mathml" === formatType)
+		{
+			paraMath = AscWord.ParaMath.fromMathML(equation);
+		}
+		else
+		{
+			let nInputType = ("latex" === formatType) ? Asc.c_oAscMathInputType.LaTeX : Asc.c_oAscMathInputType.Unicode;
+
+			paraMath = new AscWord.ParaMath();
+			let run = new AscWord.Run(null, true);
+			run.AddText(equation);
+			paraMath.Root.addElementToContent(run);
+			paraMath.Root.Correct_Content();
+			paraMath.SetParagraph(null);
+			paraMath.ConvertView(false, nInputType);
+		}
+		
+		return new ApiMath(paraMath);
 	};
 	/**
 	 * Creates a new hyperlink text block to be inserted to the current paragraph or table.
@@ -13065,6 +13112,28 @@
 		this.Run.Make_ThisElementCurrent();
 		this.Run.SetCursorPosition(pos);
 		return true;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiMath
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns a type of the ApiMath class.
+	 * @memberof ApiMath
+	 * @typeofeditors ["CDE"]
+	 * @returns {"math"}
+	 * @see office-js-api/Examples/{Editor}/ApiMath/Methods/GetClassType.js
+	 */
+	ApiMath.prototype.GetClassType = function()
+	{
+		return "math";
+	};
+	ApiMath.prototype.private_GetImpl = function()
+	{
+		return this.ParaMath;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -31143,6 +31212,7 @@
 	Api["attachEvent"]                      = Api.attachEvent;
 	Api["detachEvent"]                      = Api.detachEvent;
 	Api["CreateRun"]                        = Api.CreateRun;
+	Api["CreateMath"]                       = Api.CreateMath;
 	Api["CreateHyperlink"]                  = Api.CreateHyperlink;
 	Api["CreateImage"]                      = Api.CreateImage;
 	Api["CreateShape"]                      = Api.CreateShape;
@@ -31494,6 +31564,8 @@
 	ApiParagraph.prototype["GetSection"]             = ApiParagraph.prototype.GetSection;
 	ApiParagraph.prototype["ToJSON"]                 = ApiParagraph.prototype.ToJSON;
 	ApiParagraph.prototype["AddPageBreakBefore"]     = ApiParagraph.prototype.AddPageBreakBefore;
+
+	ApiMath.prototype["GetClassType"]                = ApiMath.prototype.GetClassType;
 
 	ApiRun.prototype["GetClassType"]                 = ApiRun.prototype.GetClassType;
 	ApiRun.prototype["GetTextPr"]                    = ApiRun.prototype.GetTextPr;
@@ -32502,6 +32574,7 @@
 	window['AscBuilder'].ApiDocument         = ApiDocument;
 	window['AscBuilder'].ApiParagraph        = ApiParagraph;
 	window['AscBuilder'].ApiRun              = ApiRun;
+	window['AscBuilder'].ApiMath             = ApiMath;
 	window['AscBuilder'].ApiHyperlink        = ApiHyperlink;
 	window['AscBuilder'].ApiSection          = ApiSection;
 	window['AscBuilder'].ApiTable            = ApiTable;
@@ -32730,7 +32803,8 @@
 		if (oElement instanceof ApiRun
 			|| oElement instanceof ApiInlineLvlSdt
 			|| oElement instanceof ApiHyperlink
-			|| oElement instanceof ApiFormBase)
+			|| oElement instanceof ApiFormBase
+			|| oElement instanceof ApiMath)
 			return true;
 
 		return false;
@@ -32753,6 +32827,8 @@
 			return private_CheckForm(oElement);
 		else if (oElement instanceof ParaHyperlink)
 			return new ApiHyperlink(oElement);
+		else if (oElement instanceof AscWord.ParaMath)
+			return new ApiMath(oElement);
 		else
 			return new ApiUnsupported();
 	}
