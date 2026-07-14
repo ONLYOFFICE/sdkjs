@@ -373,6 +373,9 @@
 				oLine.setFill(oFill);
             }
 
+			const t = this.GetOpacity() * 100 * 2.55;
+			oLine.Fill.transparent = t;
+			
             this.handleUpdateLn();
         }
 
