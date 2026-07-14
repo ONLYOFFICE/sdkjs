@@ -3394,12 +3394,8 @@ function (window, undefined) {
 			return new cError(cErrorType.bad_reference);
 		}
 		let ws = arg1.getWS();
-		r = this.bHor ? bb.r1 : bb.r2;
-		c = this.bHor ? bb.c2 : bb.c1;
-		let oSearchRange = ws.getRange3(bb.r1, bb.c1, r, c);
-
-
-		res = this._get(oSearchRange, arg0Val, arg3, opt_arg4, opt_arg5);
+		res = this._get(arg0Val, arg3, opt_arg4, opt_arg5, ws,
+			this.bHor ? bb.r1 : bb.c1, this.bHor ? bb.c1 : bb.r1, this.bHor ? bb.c2 : bb.r2);
 		if (opt_xlookup) {
 			return res;
 		}
@@ -3421,44 +3417,11 @@ function (window, undefined) {
 		return resVal;
 	};
 
-	VHLOOKUPCache.prototype._get = function (range, valueForSearching, arg3Value, opt_arg4, opt_arg5) {
-		var res, _this = this, wsId = range.getWorksheet().getId();
-		var opt_xlookup = opt_arg4 !== undefined;
-
-		var sRangeName;
-		AscCommonExcel.executeInR1C1Mode(false, function () {
-			sRangeName = wsId + g_cCharDelimiter + range.getName();
-		});
-		const ws = range.getWorksheet();
-		var cacheElem = this.cacheId[sRangeName];
-		if (!cacheElem) {
-			cacheElem = {results: {}};
-		}
-		var sInputKey;
-		if (!opt_xlookup) {
-			sInputKey =
-				valueForSearching.getValue() + g_cCharDelimiter + arg3Value + g_cCharDelimiter + valueForSearching.type;
-		} else {
-			sInputKey = valueForSearching.getValue() + g_cCharDelimiter + opt_arg4 + g_cCharDelimiter + opt_arg5 +
-				g_cCharDelimiter + valueForSearching.type;
-		}
-		res = cacheElem.results[sInputKey];
-		const rowCol = this.bHor ? range.bbox.r1 : range.bbox.c1
-		if (!res) {
-			const startIndex = this.bHor ? range.bbox.c1 : range.bbox.r1;
-			const endIndex = this.bHor ? range.bbox.c2 : range.bbox.r2;
-			cacheElem.results[sInputKey] =
-				res = this._calculate(valueForSearching,
-					arg3Value,
-					opt_arg4,
-					opt_arg5,
-					null,
-					ws,
-					rowCol,
-					startIndex,
-					endIndex);
-		}
-		return res;
+	// TODO hook for a future selective results-cache of the expensive lookup modes only
+	// (approximate / wildcard / XLOOKUP binary), added after those modes are measured.
+	// Exact match stays direct; array-backed XLOOKUP bypasses this seam.
+	VHLOOKUPCache.prototype._get = function (valueForSearching, lookup, opt_arg4, opt_arg5, ws, rowCol, startIndex, endIndex) {
+		return this._calculate(valueForSearching, lookup, opt_arg4, opt_arg5, null, ws, rowCol, startIndex, endIndex);
 	};
 	VHLOOKUPCache.prototype._compareValues = function (val1, val2, op, opt_arg4) {
 		if (opt_arg4 === 2 && val2.type === cElementType.string) {
@@ -4683,13 +4646,11 @@ function (window, undefined) {
 			let bVertical = bbox.r2 - bbox.r1 >= bbox.c2 - bbox.c1;
 			let index;
 			if(index === undefined) {
-				let ws = arg1.getWS(),
-					r = bVertical ? bbox.r2 : bbox.r1,
-					c = bVertical ? bbox.c1 : bbox.c2;
-				let oSearchRange = ws.getRange3(bbox.r1, bbox.c1, r, c);
+				let ws = arg1.getWS();
 				t.bHor = bVertical ? false : true;
 
-				index = this._get(/* searchRange */oSearchRange, arg0, true);
+				index = this._get(arg0, true, undefined, undefined, ws,
+					t.bHor ? bbox.r1 : bbox.c1, t.bHor ? bbox.c1 : bbox.r1, t.bHor ? bbox.c2 : bbox.r2);
 
 				if (index === undefined || index < 0) {
 					return new cError(cErrorType.not_available);
