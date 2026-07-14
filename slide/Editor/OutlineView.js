@@ -1757,9 +1757,7 @@
 	};
 	OutlineView.prototype.getOutlineHeight = function () {
 		if (this.outlineShape) {
-			const top = this.outlineShape.transformText.TransformPointY(0, 0);
-			const bottom = this.outlineShape.transformText.TransformPointY(0, this.outlineShape.contentHeight);
-			return bottom - top;
+			return this.outlineShape.contentHeight;
 		}
 		return 0;
 	}

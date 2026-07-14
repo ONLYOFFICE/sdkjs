@@ -2919,7 +2919,7 @@
 			const scaleFactor = g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
 			const outlineTopMarginMM = this.const_offset_y * scaleFactor;
 			const outlineLeftMarginMM = this.const_offset_x * scaleFactor;
-			const scrollYMm = this.m_dScrollY * g_dKoef_pix_to_mm;
+			const scrollYMm = this.m_dScrollY * scaleFactor;
 			outlineView.updateOutlineShapeTransform(outlineLeftMarginMM, -scrollYMm + outlineTopMarginMM);
 		}
 	};
