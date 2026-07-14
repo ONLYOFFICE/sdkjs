@@ -7630,7 +7630,7 @@ background-repeat: no-repeat;\
 		const slideIndex = Asc.editor.getLogicDocument().Get_CurPage() || 0;
 		return this.StartDemonstration(divId, slideIndex, reporterStartObject);
 	};
-	asc_docs_api.prototype.StartDemonstrationFromBeginning = function (divId, reporterStartObject) {
+	asc_docs_api.prototype.StartDemonstrationFromBeginning = function (divId, reporterStartObject, isNoFullScreen) {
 		const allSlides = Asc.editor.getLogicDocument().GetSlides();
 		const slideCount = allSlides.length;
 
@@ -7642,9 +7642,9 @@ background-repeat: no-repeat;\
 			}
 		}
 
-		return this.StartDemonstration(divId, slideIndex, reporterStartObject);
+		return this.StartDemonstration(divId, slideIndex, reporterStartObject, isNoFullScreen);
 	};
-	asc_docs_api.prototype.StartDemonstration = function (div_id, slidestart_num, reporterStartObject) {
+	asc_docs_api.prototype.StartDemonstration = function (div_id, slidestart_num, reporterStartObject, isNoFullScreen) {
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.stopWorked();
 
@@ -7660,7 +7660,7 @@ background-repeat: no-repeat;\
 		if (bIsReporter && (this.reporterWindow || window["AscDesktopEditor"]))
 			this.WordControl.DemonstrationManager.StartWaitReporter(div_id, slidestart_num, true);
 		else
-			this.WordControl.DemonstrationManager.Start(div_id, slidestart_num, true);
+			this.WordControl.DemonstrationManager.Start(div_id, slidestart_num, true, isNoFullScreen);
 
 		if (undefined !== this.EndShowMessage) {
 			this.WordControl.DemonstrationManager.EndShowMessage = this.EndShowMessage;
