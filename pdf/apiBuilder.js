@@ -1895,10 +1895,14 @@
 
 		let oDoc = private_GetLogicDocument();
 		oDoc.RecalculateAll(true);
-		
-		let oSearchEngine = oDoc.Search(searchSettings);
-		let aResult = [];
 
+		let oSearchEngine		= new AscPDF.CPdfSearch(oDoc);
+		let oOldSearchEngine	= oDoc.SearchEngine;
+		oDoc.SearchEngine		= oSearchEngine;
+		oSearchEngine.Set(searchSettings);
+		oSearchEngine.Search();
+
+		let aResult = [];
 		Object.values(oSearchEngine.Elements).forEach(function(pdfMatch, idx) {
 			if (pdfMatch.GetAbsolutePage() == nPageIdx) {
 				let aMatchQuads = [];
@@ -1910,7 +1914,8 @@
 				aResult.push(aMatchQuads);
 			}
 		});
-		
+
+		oDoc.SearchEngine = oOldSearchEngine;
 		return aResult;
 	};
 
