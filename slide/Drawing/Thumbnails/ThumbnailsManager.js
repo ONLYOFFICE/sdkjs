@@ -3119,8 +3119,6 @@
 		}
 		const outlineView = this.GetOutlineView();
 		if (outlineView) {
-			const newWidth = AscCommon.AscBrowser.convertToRetinaValue(thumbnailsCanvas.width - this.const_offset_x) * AscCommon.g_dKoef_pix_to_mm;
-			outlineView.checkOutlineWidth(newWidth);
 			this.updateOutlineShapeTransform();
 		}
 	};
@@ -3242,6 +3240,8 @@
 	COutlineThumbnailsManager.prototype.calculateTotalThumbnailsLength = function (containerWidth, containerHeight) {
 		const outlineView = this.GetOutlineView();
 		if (outlineView) {
+			const newWidth = containerWidth - AscCommon.AscBrowser.convertToRetinaValue(this.const_offset_x) * AscCommon.g_dKoef_pix_to_mm;
+			outlineView.checkOutlineWidth(newWidth);
 			return outlineView.getOutlineHeight() * AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_mm_to_pix + this.const_offset_y;
 		}
 		return 0;
