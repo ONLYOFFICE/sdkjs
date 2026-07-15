@@ -1531,8 +1531,16 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			oDoc.RedactMeta(props)
-		}, AscDFH.historydescription_Pdf_Apply_Redact);
+			return oDoc.RedactMeta(props);
+		}, AscDFH.historydescription_Pdf_Redact_Meta);
+	};
+	PDFEditorApi.prototype.IsAnyFieldLocked = function() {
+		let oDoc = this.getPDFDoc();
+		return oDoc.IsAnyFieldLocked();
+	};
+	PDFEditorApi.prototype.IsAnyAnnotLocked = function() {
+		let oDoc = this.getPDFDoc();
+		return oDoc.IsAnyAnnotLocked();
 	};
 
 	PDFEditorApi.prototype.SetCanInteract = function(bCan) {
@@ -5569,6 +5577,8 @@
 	PDFEditorApi.prototype['RemoveAllRedact']	= PDFEditorApi.prototype.RemoveAllRedact;
 	PDFEditorApi.prototype['AddRedactBySelect']	= PDFEditorApi.prototype.AddRedactBySelect;
 	PDFEditorApi.prototype['RedactMeta']		= PDFEditorApi.prototype.RedactMeta;
+	PDFEditorApi.prototype['IsAnyFieldLocked']	= PDFEditorApi.prototype.IsAnyFieldLocked;
+	PDFEditorApi.prototype['IsAnyAnnotLocked']	= PDFEditorApi.prototype.IsAnyAnnotLocked;
 
 	PDFEditorApi.prototype['SetCanInteract']				= PDFEditorApi.prototype.SetCanInteract;
 

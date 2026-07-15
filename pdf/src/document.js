@@ -3072,6 +3072,36 @@ var CPresentation = CPresentation || function(){};
 
         return false;
     };
+	CPDFDoc.prototype.IsAnyFieldLocked = function() {
+		let oThis = this;
+
+		let isLocked = false;
+		let aWidgets = this.widgets;
+		
+		for (let i = 0; i < aWidgets.length; i++) {
+			if (aWidgets[i].Lock.Is_Locked()) {
+				isLocked = true;
+				break;
+			}
+		}
+
+		return isLocked;
+	};
+	CPDFDoc.prototype.IsAnyAnnotLocked = function() {
+		let oThis = this;
+
+		let isLocked = false;
+		let aAnnots = this.annots;
+		
+		for (let i = 0; i < aAnnots.length; i++) {
+			if (aAnnots[i].Lock.Is_Locked()) {
+				isLocked = true;
+				break;
+			}
+		}
+
+		return isLocked;
+	};
     CPDFDoc.prototype.IsNeedDoCalculate = function() {
         if (this.calculateInfo.ids.length > 0 && false == AscCommon.History.UndoRedoInProgress)
             return true;
@@ -8058,6 +8088,8 @@ var CPresentation = CPresentation || function(){};
 		this.redactMetaFlags = nFlags;
 
 		AscCommon.History.Add(new CChangesPDFDocumentRedactMeta(this, nOldFlags, nFlags));
+		
+		return true;
 	};
 	CPDFDoc.prototype.GetRedactMetaFlags = function() {
 		return this.redactMetaFlags;
