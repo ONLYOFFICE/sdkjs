@@ -925,7 +925,7 @@ void main() {\n\
                 if (y > _lineY - _lineAscent * 2)
                 {
                     if (_distX >= 0 && _distX <= _lineWidth)
-                        tmp = y - _lineY;
+                        tmp = Math.abs(y - _lineY);
                     else if (_distX < 0)
                         tmp = Math.sqrt((x - _lineX) * (x - _lineX) + (y - _lineY) * (y - _lineY));
                     else if (_distX > _lineWidth)
@@ -2155,9 +2155,9 @@ void main() {\n\
 
                 let off1 = _arrayGlyphOffsets[startPos];
                 let off2 = _arrayGlyphOffsets[endPos];
-				if (startPos == nChars - 1)
+				if (startChar == -1)
                     off1 = _lineWidth;
-                if (endPos == nChars - 1)
+                if (endChar == -1)
                     off2 = _lineWidth;
 
                 if (off2 < off1)

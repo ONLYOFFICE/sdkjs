@@ -1980,7 +1980,7 @@
 	 * Sets page selection.
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
-	 * @param {PageSelection | Rect | Quad} selection - The selection to apply.
+	 * @param {PageSelection | Rect | Quad | Quad[]} selection - The selection to apply.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/SetSelection.js
 	 */
@@ -1995,12 +1995,15 @@
 				startPoint = {"x": selection[0], "y": selection[1]};
 				endPoint   = {"x": selection[2], "y": selection[3]};
 			}
-			else if (private_IsValidQuad(selection)) {
-				startPoint = {"x": selection[0], "y": selection[1]};
-				endPoint   = {"x": selection[6], "y": selection[7]};
+			else if (private_IsValidQuad(selection) || (selection.length > 0 && selection.every(function(quad) { return private_IsValidQuad(quad); }))) {
+				let quads = private_IsValidQuad(selection) ? [selection] : selection;
+				let firstQuad = quads[0];
+				let lastQuad  = quads[quads.length - 1];
+				startPoint = {"x": (firstQuad[0] + firstQuad[4]) / 2, "y": (firstQuad[1] + firstQuad[5]) / 2};
+				endPoint   = {"x": (lastQuad[2] + lastQuad[6]) / 2, "y": (lastQuad[3] + lastQuad[7]) / 2};
 			}
 			else {
-				AscBuilder.throwException("The selection must be a valid rect or quad");
+				AscBuilder.throwException("The selection must be a valid rect, quad or quad array");
 			}
 		}
 		else {
