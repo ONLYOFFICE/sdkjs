@@ -7072,6 +7072,119 @@ function parserFormula( formula, parent, _ws ) {
 		return aNewOutStack;
 	}
 
+	// Functions whose skip could drop a runtime-discovered dependency; an IF over them stays eager for lazy V1.
+	var g_lazyIfUnsafeFuncs = {"INDIRECT": 1, "OFFSET": 1, "CELL": 1};
+
+	// Mirrors cIF.Calculate to decide an IF from its scalar condition: returns 0 eager, 1 take-true (skip false), 2 take-false (skip true), 3 skip-both (error/string cond).
+	function _lazyIfDecide(condResult, bIsSpecialFunction) {
+		if (bIsSpecialFunction || !condResult) {
+			return 0;
+		}
+		var t = condResult.type;
+		if (t !== cElementType.number && t !== cElementType.bool && t !== cElementType.string &&
+			t !== cElementType.error && t !== cElementType.cell && t !== cElementType.cell3D && t !== cElementType.empty) {
+			return 0;
+		}
+		var b = condResult.tocBool();
+		if (!b) {
+			return 0;
+		}
+		if (b.type === cElementType.error || b.type === cElementType.string) {
+			return 3;
+		}
+		if (b.type !== cElementType.bool && b.type !== cElementType.number) {
+			return 0;
+		}
+		return b.value ? 1 : 2;
+	}
+
+	// Scans an outStack index span for a lazy-unsafe function token.
+	function _lazyIfSpanHasUnsafe(aOutStack, a, b) {
+		if (a < 0 || b < 0) {
+			return false;
+		}
+		for (var i = a; i <= b && i < aOutStack.length; i++) {
+			var el = aOutStack[i];
+			if (el && el.type === cElementType.func && g_lazyIfUnsafeFuncs[el.name]) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// Records per 3-arg IF token the outStack index spans of its cond/true/false, using _getNewOutStack's arg-popping convention; null if no eligible IF or the RPN is not unambiguously analysable.
+	function _buildLazyIfPlan(aOutStack) {
+		// cheap allocation-free first pass: the vast majority of formulas have no IF and exit here before any span work
+		var hasIf = false;
+		for (var s = 0, sn = aOutStack.length; s < sn; s++) {
+			var e0 = aOutStack[s];
+			if (e0 && e0.type === cElementType.func && e0.name === "IF") {
+				hasIf = true;
+				break;
+			}
+		}
+		if (!hasIf) {
+			return null;
+		}
+		var spanStack = [];
+		var byCondEnd = null, byBranchStart = null, count = 0;
+		for (var i = 0; i < aOutStack.length; i++) {
+			var el = aOutStack[i];
+			if (el == null) {
+				return null;
+			}
+			if (el.name === "(") {
+				continue;
+			}
+			if (el.type === cElementType.specialFunctionStart || el.type === cElementType.specialFunctionEnd) {
+				continue;
+			}
+			if ("number" === typeof el) {
+				continue;
+			}
+			if (el.type === cElementType.operator || el.type === cElementType.func) {
+				var argCount = ("number" === typeof aOutStack[i - 1]) ? aOutStack[i - 1] : el.argumentsCurrent;
+				// a negative arg-count token is the array-context (bArrayFormula) signal the loop reads at calc time; keep such an IF eager
+				var bArrayCtx = argCount < 0;
+				if (argCount < 0) {
+					argCount = -argCount;
+				}
+				if (spanStack.length < argCount) {
+					return null;
+				}
+				var spans = [];
+				for (var k = 0; k < argCount; k++) {
+					spans.unshift(spanStack.pop());
+				}
+				var start = spans.length ? spans[0].s : i;
+				if (el.type === cElementType.func && el.name === "IF" && argCount === 3 && !bArrayCtx) {
+					var cE = spans[0].e, tS = spans[1].s, tE = spans[1].e, fS = spans[2].s, fE = spans[2].e;
+					if (!_lazyIfSpanHasUnsafe(aOutStack, tS, tE) && !_lazyIfSpanHasUnsafe(aOutStack, fS, fE)) {
+						if (!byCondEnd) {
+							byCondEnd = {};
+							byBranchStart = {};
+						}
+						if (undefined !== byBranchStart[tS] || undefined !== byBranchStart[fS] || undefined !== byCondEnd[cE]) {
+							return null;
+						}
+						var rec = {condEnd: cE, trueStart: tS, trueEnd: tE, falseStart: fS, falseEnd: fE};
+						byCondEnd[cE] = rec;
+						byBranchStart[tS] = {rec: rec, which: 1};
+						byBranchStart[fS] = {rec: rec, which: 2};
+						count++;
+					}
+				}
+				spanStack.push({s: start, e: i});
+			} else {
+				spanStack.push({s: i, e: i});
+			}
+		}
+		if (!count) {
+			return null;
+		}
+		return {byCondEnd: byCondEnd, byBranchStart: byBranchStart};
+	}
+
 	/**
 	 * Gets range from condition functions, who need to calculate.
 	 * @param {[]} aOutStack
@@ -9689,6 +9802,14 @@ function parserFormula( formula, parent, _ws ) {
 			return false;
 		}
 	};
+	// Caches the plan keyed by outStack array identity; valid because outStack is only replaced wholesale (reparse) or mutated element-wise at stable indices (offset), never grown/shrunk in place - an in-place reparse would need to clear _lazyIfPlanStack.
+	parserFormula.prototype._getLazyIfPlan = function () {
+		if (this._lazyIfPlanStack !== this.outStack) {
+			this._lazyIfPlanStack = this.outStack;
+			this._lazyIfPlan = _buildLazyIfPlan(this.outStack);
+		}
+		return this._lazyIfPlan;
+	};
 	parserFormula.prototype.calculate = function (opt_defName, opt_bbox, opt_offset, checkMultiSelect, opt_oCalculateResult, opt_pivotCallback, opt_check_dynamic) {
 		if (AscCommonExcel.g_LockCustomFunctionRecalculate && this.unknownOrCustomFunction) {
 			return;
@@ -9707,8 +9828,57 @@ function parserFormula( formula, parent, _ws ) {
 
 		let promiseCounter = 0;
 		var elemArr = [], _tmp, numFormat = cNumFormatFirstCell, currentElement = null, bIsSpecialFunction, argumentsCount, defNameCalcArr, defNameArgCount = 0;
+		// lazy IF skips the not-taken branch of a scalar-condition IF only on the normal scalar pass, not on dynamic-array/CSE/checkOnError/iterative passes; the static dependency graph and cycle checker still see both branches.
+		var lazyIfActive = false, lazyIfCondEnd = null, lazyIfBranchStart = null, lazyIfDec = null, lazyIfSuppressEnd = -1;
+		if (!opt_check_dynamic && !this.ref && !this.dynamicRange &&
+			!this.unknownOrCustomFunction && !(opt_oCalculateResult && opt_oCalculateResult.checkOnError) &&
+			!g_cCalcRecursion.getIsEnabledRecursion() && !g_cCalcRecursion.needRecheckFormulaAfterCalc()) {
+			var _lazyIfPlan = this._getLazyIfPlan();
+			if (_lazyIfPlan) {
+				lazyIfActive = true;
+				lazyIfCondEnd = _lazyIfPlan.byCondEnd;
+				lazyIfBranchStart = _lazyIfPlan.byBranchStart;
+				lazyIfDec = {};
+			}
+		}
 		for (var i = 0; i < this.outStack.length; i++) {
 			currentElement = this.outStack[i];
+			if (lazyIfActive) {
+				if (lazyIfSuppressEnd >= 0) {
+					if (currentElement.type === cElementType.specialFunctionStart) {
+						bIsSpecialFunction = true;
+					} else if (currentElement.type === cElementType.specialFunctionEnd) {
+						if (!(AscCommonExcel.bIsSupportDynamicArrays && opt_check_dynamic)) {
+							bIsSpecialFunction = false;
+						}
+					}
+					if (i === lazyIfSuppressEnd) {
+						elemArr.push(new cEmpty());
+						lazyIfSuppressEnd = -1;
+					}
+					continue;
+				}
+				var _lazyBs = lazyIfBranchStart[i];
+				if (undefined !== _lazyBs) {
+					var _lazyD = lazyIfDec[_lazyBs.rec.condEnd];
+					var _lazySkip = (1 === _lazyBs.which) ? (2 === _lazyD || 3 === _lazyD) : (1 === _lazyD || 3 === _lazyD);
+					if (_lazySkip) {
+						lazyIfSuppressEnd = (1 === _lazyBs.which) ? _lazyBs.rec.trueEnd : _lazyBs.rec.falseEnd;
+						if (currentElement.type === cElementType.specialFunctionStart) {
+							bIsSpecialFunction = true;
+						} else if (currentElement.type === cElementType.specialFunctionEnd) {
+							if (!(AscCommonExcel.bIsSupportDynamicArrays && opt_check_dynamic)) {
+								bIsSpecialFunction = false;
+							}
+						}
+						if (i === lazyIfSuppressEnd) {
+							elemArr.push(new cEmpty());
+							lazyIfSuppressEnd = -1;
+						}
+						continue;
+					}
+				}
+			}
 			if (currentElement.name === "(") {
 				continue;
 			}
@@ -9893,6 +10063,9 @@ function parserFormula( formula, parent, _ws ) {
 			} else {
 				elemArr.push(currentElement);
 			}
+			if (lazyIfActive && undefined !== lazyIfCondEnd[i]) {
+				lazyIfDec[i] = _lazyIfDecide(elemArr[elemArr.length - 1], bIsSpecialFunction);
+		}
 		}
 
 		if (promiseCounter && /*!this.promiseResult*/ this.wb.asyncFormulasManager.isPromises()) {
