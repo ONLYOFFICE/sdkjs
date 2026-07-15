@@ -731,7 +731,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cNumber(val) {
-		cBaseType.call(this, parseFloat(val));
+		// Avoid parseFloat's string round-trip while preserving its -0 normalization.
+		cBaseType.call(this, typeof val === "number" ? val + 0 : parseFloat(val));
 		var res;
 
 		if (!isNaN(this.value) && Math.abs(this.value) !== Infinity) {
@@ -1403,13 +1404,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return arr;
 	};
 	cArea.prototype.getMatrixNoEmpty = function () {
-		var arr = [], r = this.getRange(), res;
-		r._foreachDataOnly(function (cell, i, j, r1, c1) {
-			if (!arr[i - r1]) {
-				arr[i - r1] = [];
+		var arr = [];
+		this.getRange()._foreachDataOnly(function (cell, i, j, r1, c1) {
+			var rowIndex = i - r1;
+			var row = arr[rowIndex];
+			if (!row) {
+				row = arr[rowIndex] = [];
 			}
-
-			arr[i - r1][j - c1] = checkTypeCell(cell);
+			row[j - c1] = checkTypeCell(cell);
 		});
 		return arr;
 	};
@@ -1828,20 +1830,20 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return arr;
 	};
 	cArea3D.prototype.getMatrixNoEmpty = function () {
-		var arr = [], r = this.getRanges(), res;
+		var arr = [], r = this.getRanges();
 
 		var ws = r[0] ? r[0].worksheet : null;
 		var oldExcludeHiddenRows = ws ? ws.bExcludeHiddenRows : null;
 
 		for (var k = 0; k < r.length; k++) {
-			arr[k] = [];
+			var currentArray = arr[k] = [];
 			r[k]._foreachDataOnly(function (cell, i, j, r1, c1) {
-				if (!arr[k][i - r1]) {
-					arr[k][i - r1] = [];
+				var rowIndex = i - r1;
+				var row = currentArray[rowIndex];
+				if (!row) {
+					row = currentArray[rowIndex] = [];
 				}
-				res = checkTypeCell(cell);
-
-				arr[k][i - r1][j - c1] = res;
+				row[j - c1] = checkTypeCell(cell);
 			});
 		}
 		if (ws) {
@@ -5428,35 +5430,33 @@ _func[cElementType.cell] = [];
 
 
 _func[cElementType.number][cElementType.number] = function ( arg0, arg1, what ) {
-	var compareNumbers = function(){
-		return AscCommon.compareNumbers(arg0.getValue(), arg1.getValue());
-	};
 	let opt_return_bool = arguments[5];
 	let res = null;
+	let value0 = arg0.getValue(), value1 = arg1.getValue();
 	if (what === ">") {
-		res = compareNumbers() > 0;
+		res = AscCommon.compareNumbers(value0, value1) > 0;
 	} else if (what === ">=") {
-		res = !(compareNumbers() < 0);
+		res = !(AscCommon.compareNumbers(value0, value1) < 0);
 	} else if (what === "<") {
-		res = compareNumbers() < 0;
+		res = AscCommon.compareNumbers(value0, value1) < 0;
 	} else if (what === "<=") {
-		res = !(compareNumbers() > 0);
+		res = !(AscCommon.compareNumbers(value0, value1) > 0);
 	} else if (what === "=") {
-		res = (compareNumbers() === 0);
+		res = (AscCommon.compareNumbers(value0, value1) === 0);
 	} else if (what === "<>") {
-		res = (compareNumbers() !== 0);
+		res = (AscCommon.compareNumbers(value0, value1) !== 0);
 	} else if (what === "-") {
-		return new cNumber(arg0.getValue() - arg1.getValue());
+		return new cNumber(value0 - value1);
 	} else if (what === "+") {
-		return new cNumber(arg0.getValue() + arg1.getValue());
+		return new cNumber(value0 + value1);
 	} else if (what === "/") {
-		if (arg1.getValue() !== 0) {
-			return new cNumber(arg0.getValue() / arg1.getValue());
+		if (value1 !== 0) {
+			return new cNumber(value0 / value1);
 		} else {
 			return new cError(cErrorType.division_by_zero);
 		}
 	} else if (what === "*") {
-		return new cNumber(arg0.getValue() * arg1.getValue());
+		return new cNumber(value0 * value1);
 	}
 	if (res !== null) {
 		return opt_return_bool ? res : new cBool(res);
@@ -5585,6 +5585,9 @@ _func[cElementType.string][cElementType.number] = function ( arg0, arg1, what ) 
 };
 
 function _isEqualStrings(str1, str2, caseSensitive) {
+	if (str1 === str2) {
+		return true;
+	}
 	return caseSensitive
 		? AscCommon.stringCompare(str1, str2) === 0
 		: AscCommon.stringCompare(str1.toLowerCase(), str2.toLowerCase()) === 0;
@@ -6999,8 +7002,10 @@ function parserFormula( formula, parent, _ws ) {
 					if (j < 0) { // over reaching minimum edge
 						break;
 					}
-					aArgsOfOperator.unshift(aNewOutStack.pop());
+					// push + reverse once == the old unshift order, but O(k) instead of O(k^2) front-insert.
+					aArgsOfOperator.push(aNewOutStack.pop());
 				}
+				aArgsOfOperator.reverse();
 				if (aArgsOfOperator.length < aOperatorData[ARGUMENT_COUNT_INDEX]) {
 					break;
 				}
@@ -9547,9 +9552,11 @@ function parserFormula( formula, parent, _ws ) {
 							// if operator - check whether each of the arguments is a range or an array
 
 							let isOperator = currentElement.type === cElementType.operator;
-							let arg = [];
+							let _argCount = argumentsCount + defNameArgCount;
+							// defNameArgCount can make _argCount a numeric string, hence the explicit coercion.
+							let arg = new Array(_argCount | 0);
 							let _isPromise = false;
-							for (let i = 0; i < argumentsCount + defNameArgCount; i++) {
+							for (let i = 0; i < _argCount; i++) {
 								if ("number" === typeof(elemArr[elemArr.length - 1])) {
 									elemArr.pop();
 								}
@@ -9562,8 +9569,8 @@ function parserFormula( formula, parent, _ws ) {
 									_isPromise = true;
 									break;
 								}
-								// arg.unshift(elemArr.pop());
-								arg.unshift(tempElem);
+								// fill from the end == the old unshift order, O(1) per element.
+								arg[_argCount - 1 - i] = tempElem;
 							}
 
 							if (_isPromise) {
@@ -9697,14 +9704,16 @@ function parserFormula( formula, parent, _ws ) {
 					this._endCalculate();
 					return this.value;
 				} else {
-					var arg = [];
+					var _argCount = argumentsCount + defNameArgCount;
+					// defNameArgCount can make _argCount a numeric string, hence the explicit coercion.
+					var arg = new Array(_argCount | 0);
 					let _isPromise = false;
-					for (var ind = 0; ind < argumentsCount + defNameArgCount; ind++) {
+					for (var ind = 0; ind < _argCount; ind++) {
 						if("number" === typeof(elemArr[elemArr.length - 1])){
 							elemArr.pop();
 						}
 						let _elem = elemArr.pop();
-						arg.unshift(_elem);
+						arg[_argCount - 1 - ind] = _elem;
 						if (fIsPromise(_elem)) {
 							_isPromise = true;
 							break;
@@ -10707,7 +10716,7 @@ function parserFormula( formula, parent, _ws ) {
 		for (var i = 0, j = 0; i < _count; i++) {
 			currentElement = this.outStack[i];
 
-			if(currentElement.type !== cElementType.cellsRange3D && currentElement.type !== cElementType.cell3D && currentElement.type !== cElementType.name && currentElement.type !== cElementType.name3D) {
+			if(onlyRangesElements && currentElement.type !== cElementType.cellsRange3D && currentElement.type !== cElementType.cell3D && currentElement.type !== cElementType.name && currentElement.type !== cElementType.name3D) {
 				onlyRangesElements = false;
 				rangesStr = null;
 			}
@@ -10877,9 +10886,11 @@ function parserFormula( formula, parent, _ws ) {
 				var args = [];
 				for (var k = 0; k < argCount; k++) {
 					if (stack.length > 0) {
-						args.unshift(stack.pop());
+						// push + reverse once == the old unshift order, but O(k) instead of O(k^2).
+						args.push(stack.pop());
 					}
 				}
+				args.reverse();
 				if (elem.type === cElementType.func) {
 					for (var k = 0; k < args.length; k++) {
 						if (args[k].index === operandIndex ||
