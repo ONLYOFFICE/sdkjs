@@ -4198,6 +4198,12 @@ var CPresentation = CPresentation || function(){};
 				oAcitveObj.selectedObjects = [oAcitveObj.GetTextBoxShape()];
 			}
 		}
+		else if (AscDFH.historydescription_Presentation_ParagraphAdd) {
+			let oAcitveObj = this.GetActiveObject();
+			if (oAcitveObj && oAcitveObj.IsForm()) {
+				return false;
+			}
+		}
 		
 		this.StartAction(nDescription);
 		let result = fAction.call(oThis);
