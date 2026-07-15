@@ -3159,6 +3159,16 @@
 	}
 
 	/**
+	 * Class representing a drop cap. A drop cap is a large initial letter that is split off from a paragraph into a
+	 * separate framed paragraph.
+	 * @constructor
+	 */
+	function ApiDropCap(Paragraph)
+	{
+		this.Paragraph = Paragraph;
+	}
+
+	/**
 	 * Class representing a paragraph.
 	 * @constructor
 	 * @extends {ApiParaPr}
@@ -11604,6 +11614,290 @@
 			'rtl': true
 		};
 		this.Paragraph.SetParagraphBidi(map[readingOrder]);
+		return this;
+	};
+	/**
+	 * Returns the paragraph that holds the drop cap related to the current paragraph (the paragraph itself if it is
+	 * the drop cap, or the previous paragraph if the first letter was split off into a drop cap).
+	 * @returns {?Paragraph}
+	 */
+	ApiParagraph.prototype.private_GetDropCapParagraph = function()
+	{
+		var oFramePr = this.Paragraph.Get_FramePr();
+		if (oFramePr && undefined !== oFramePr.DropCap)
+			return this.Paragraph;
+
+		var oPrev = this.Paragraph.Get_DocumentPrev();
+		if (oPrev && oPrev.Get_FramePr)
+		{
+			var oPrevFramePr = oPrev.Get_FramePr();
+			if (oPrevFramePr && undefined !== oPrevFramePr.DropCap)
+				return oPrev;
+		}
+
+		return null;
+	};
+	/**
+	 * Creates a drop cap from the first letter of the current paragraph. A drop cap is a large initial letter that
+	 * drops down two or more lines. The first letter is split off into a separate framed paragraph and enlarged. Use
+	 * the returned ApiDropCap object to adjust the number of lines, font or distance.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @param {("none" | "drop" | "margin")} sType - The drop cap type: "none" removes the drop cap, "drop" places
+	 * it within the text, "margin" places it in the margin.
+	 * @returns {?ApiDropCap} - The created drop cap, or null if the drop cap could not be created or was removed.
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetDropCap.js
+	 */
+	ApiParagraph.prototype.SetDropCap = function(sType)
+	{
+		var oPara = this.Paragraph;
+		var oDoc  = oPara.GetLogicDocument();
+		if (!oDoc || !(oDoc instanceof AscWord.CDocument))
+			return null;
+
+		// Drop cap metrics rely on the current layout, so make sure the document is calculated
+		oPara.Document_SetThisElementCurrent(false);
+		oDoc.RemoveSelection();
+		new ApiDocument(oDoc).ForceRecalculate();
+
+		if (sType === "none" || sType === undefined || sType === null)
+		{
+			oDoc.RemoveDropCap(true);
+			return null;
+		}
+
+		var bInText;
+		if (sType === "drop")
+			bInText = true;
+		else if (sType === "margin")
+			bInText = false;
+		else
+			return null;
+
+		oDoc.AddDropCap(bInText);
+
+		var oDropCapPara = this.private_GetDropCapParagraph();
+		return oDropCapPara ? new ApiDropCap(oDropCapPara) : null;
+	};
+	/**
+	 * Returns the drop cap related to the current paragraph, if any.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @returns {?ApiDropCap} - The drop cap, or null if the paragraph has no drop cap.
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetDropCap.js
+	 */
+	ApiParagraph.prototype.GetDropCap = function()
+	{
+		var oDropCapPara = this.private_GetDropCapParagraph();
+		return oDropCapPara ? new ApiDropCap(oDropCapPara) : null;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiDropCap
+	//
+	//------------------------------------------------------------------------------------------------------------------
+	/**
+	 * Returns the logic document if the drop cap paragraph is still attached to it.
+	 * @returns {?CDocument}
+	 */
+	ApiDropCap.prototype.private_GetLogicDocument = function()
+	{
+		var oDoc = this.Paragraph.GetLogicDocument();
+		return (oDoc instanceof AscWord.CDocument) ? oDoc : null;
+	};
+	/**
+	 * Checks whether this handle still points to a valid drop cap.
+	 * @returns {boolean}
+	 */
+	ApiDropCap.prototype.private_IsValid = function()
+	{
+		var oFramePr = this.Paragraph.Get_FramePr();
+		return !!(oFramePr && undefined !== oFramePr.DropCap);
+	};
+	/**
+	 * Applies the given frame settings to the drop cap through the same code path as the editor settings dialog, so
+	 * the drop cap letter is resized to fit the frame.
+	 * @param {AscCommon.asc_CParagraphFrame} oFrame - The frame settings to apply.
+	 * @returns {ApiDropCap} this
+	 */
+	ApiDropCap.prototype.private_ApplyFrame = function(oFrame)
+	{
+		var oDoc = this.private_GetLogicDocument();
+		if (!oDoc || !this.private_IsValid())
+			return this;
+
+		this.Paragraph.Document_SetThisElementCurrent(false);
+		oDoc.RemoveSelection();
+		// The drop cap settings path relies on the current layout to resize the letter
+		new ApiDocument(oDoc).ForceRecalculate();
+
+		oFrame.put_FromDropCapMenu(true);
+		oDoc.SetParagraphFramePr(oFrame);
+		return this;
+	};
+	/**
+	 * Returns the type of the ApiDropCap class.
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @returns {"dropCap"}
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/GetClassType.js
+	 */
+	ApiDropCap.prototype.GetClassType = function()
+	{
+		return "dropCap";
+	};
+	/**
+	 * Returns the paragraph that holds the drop cap letter. It can be used to format the drop cap letter itself (its
+	 * color, style, etc.) with the usual paragraph methods.
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiParagraph}
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/GetParagraph.js
+	 */
+	ApiDropCap.prototype.GetParagraph = function()
+	{
+		return new ApiParagraph(this.Paragraph);
+	};
+	/**
+	 * Returns the drop cap type.
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @returns {("none" | "drop" | "margin")}
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/GetType.js
+	 */
+	ApiDropCap.prototype.GetType = function()
+	{
+		var oFramePr = this.Paragraph.Get_FramePr();
+		if (!oFramePr)
+			return "none";
+
+		if (Asc.c_oAscDropCap.Drop === oFramePr.DropCap)
+			return "drop";
+		else if (Asc.c_oAscDropCap.Margin === oFramePr.DropCap)
+			return "margin";
+
+		return "none";
+	};
+	/**
+	 * Sets the drop cap type.
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @param {("none" | "drop" | "margin")} sType - The drop cap type: "none" removes the drop cap, "drop" places
+	 * it within the text, "margin" places it in the margin.
+	 * @returns {ApiDropCap} this
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/SetType.js
+	 */
+	ApiDropCap.prototype.SetType = function(sType)
+	{
+		if (sType === "none")
+			return this.Remove();
+
+		var nDropCap;
+		if (sType === "drop")
+			nDropCap = Asc.c_oAscDropCap.Drop;
+		else if (sType === "margin")
+			nDropCap = Asc.c_oAscDropCap.Margin;
+		else
+			return this;
+
+		var oFrame = new Asc.asc_CParagraphFrame();
+		oFrame.put_DropCap(nDropCap);
+		return this.private_ApplyFrame(oFrame);
+	};
+	/**
+	 * Returns the number of lines that the drop cap occupies.
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/GetLines.js
+	 */
+	ApiDropCap.prototype.GetLines = function()
+	{
+		var oFramePr = this.Paragraph.Get_FramePr();
+		return (oFramePr && undefined !== oFramePr.Lines) ? oFramePr.Lines : 0;
+	};
+	/**
+	 * Sets the number of lines that the drop cap occupies. The drop cap letter is resized accordingly.
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @param {number} nLines - The number of lines that the drop cap occupies.
+	 * @returns {ApiDropCap} this
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/SetLines.js
+	 */
+	ApiDropCap.prototype.SetLines = function(nLines)
+	{
+		nLines = (nLines | 0);
+		if (nLines <= 0)
+			return this;
+
+		var oFrame = new Asc.asc_CParagraphFrame();
+		oFrame.put_Lines(nLines);
+		return this.private_ApplyFrame(oFrame);
+	};
+	/**
+	 * Sets the font family of the drop cap letter.
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @param {string} sFontFamily - The font family name used for the drop cap letter.
+	 * @returns {ApiDropCap} this
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/SetFontFamily.js
+	 */
+	ApiDropCap.prototype.SetFontFamily = function(sFontFamily)
+	{
+		if (typeof sFontFamily !== "string" || !sFontFamily.length)
+			return this;
+
+		var oFrame = new Asc.asc_CParagraphFrame();
+		oFrame.put_FontFamily(new AscCommon.asc_CTextFontFamily({Name : sFontFamily, Index : -1}));
+		return this.private_ApplyFrame(oFrame);
+	};
+	/**
+	 * Returns the distance between the drop cap and the paragraph text measured in twentieths of a point (1/1440 of
+	 * an inch).
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @returns {twips}
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/GetDistance.js
+	 */
+	ApiDropCap.prototype.GetDistance = function()
+	{
+		var oFramePr = this.Paragraph.Get_FramePr();
+		return (oFramePr && undefined !== oFramePr.HSpace) ? private_MM2Twips(oFramePr.HSpace) : 0;
+	};
+	/**
+	 * Sets the distance between the drop cap and the paragraph text measured in twentieths of a point (1/1440 of an
+	 * inch).
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @param {twips} nDistance - The distance between the drop cap and the paragraph text.
+	 * @returns {ApiDropCap} this
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/SetDistance.js
+	 */
+	ApiDropCap.prototype.SetDistance = function(nDistance)
+	{
+		var oFrame = new Asc.asc_CParagraphFrame();
+		oFrame.put_HSpace(private_Twips2MM(nDistance));
+		return this.private_ApplyFrame(oFrame);
+	};
+	/**
+	 * Removes the drop cap, merging the drop cap letter back into the paragraph text.
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiDropCap} this
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/Remove.js
+	 */
+	ApiDropCap.prototype.Remove = function()
+	{
+		var oDoc = this.private_GetLogicDocument();
+		if (!oDoc || !this.private_IsValid())
+			return this;
+
+		this.Paragraph.Document_SetThisElementCurrent(false);
+		oDoc.RemoveSelection();
+		new ApiDocument(oDoc).ForceRecalculate();
+
+		oDoc.RemoveDropCap(true);
 		return this;
 	};
 	/**
@@ -31615,6 +31909,8 @@
 	ApiParagraph.prototype["SetUnderline"]           = ApiParagraph.prototype.SetUnderline;
 	ApiParagraph.prototype["SetVertAlign"]           = ApiParagraph.prototype.SetVertAlign;
 	ApiParagraph.prototype["SetReadingOrder"]        = ApiParagraph.prototype.SetReadingOrder;
+	ApiParagraph.prototype["SetDropCap"]             = ApiParagraph.prototype.SetDropCap;
+	ApiParagraph.prototype["GetDropCap"]             = ApiParagraph.prototype.GetDropCap;
 	ApiParagraph.prototype["Last"]                   = ApiParagraph.prototype.Last;
 	ApiParagraph.prototype["GetAllContentControls"]  = ApiParagraph.prototype.GetAllContentControls;
 	ApiParagraph.prototype["GetAllDrawingObjects"]   = ApiParagraph.prototype.GetAllDrawingObjects;
@@ -32244,6 +32540,17 @@
 
 	ApiBullet.prototype["GetClassType"]              = ApiBullet.prototype.GetClassType;
 	ApiBullet.prototype["ToJSON"]                    = ApiBullet.prototype.ToJSON;
+
+	ApiDropCap.prototype["GetClassType"]             = ApiDropCap.prototype.GetClassType;
+	ApiDropCap.prototype["GetParagraph"]             = ApiDropCap.prototype.GetParagraph;
+	ApiDropCap.prototype["GetType"]                  = ApiDropCap.prototype.GetType;
+	ApiDropCap.prototype["SetType"]                  = ApiDropCap.prototype.SetType;
+	ApiDropCap.prototype["GetLines"]                 = ApiDropCap.prototype.GetLines;
+	ApiDropCap.prototype["SetLines"]                 = ApiDropCap.prototype.SetLines;
+	ApiDropCap.prototype["SetFontFamily"]            = ApiDropCap.prototype.SetFontFamily;
+	ApiDropCap.prototype["GetDistance"]              = ApiDropCap.prototype.GetDistance;
+	ApiDropCap.prototype["SetDistance"]              = ApiDropCap.prototype.SetDistance;
+	ApiDropCap.prototype["Remove"]                   = ApiDropCap.prototype.Remove;
 
 	ApiInlineLvlSdt.prototype["GetClassType"]           = ApiInlineLvlSdt.prototype.GetClassType;
 	ApiInlineLvlSdt.prototype["GetInternalId"]          = ApiInlineLvlSdt.prototype.GetInternalId;
