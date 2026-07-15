@@ -685,12 +685,11 @@
 
 		if (this.DocInfo.get_EncryptedInfo())
 		{
-			if (AscCommon.CryptoProvider)
-			{
-				var obj = this.DocInfo.get_EncryptedInfo();
-				obj["userId"] = this.documentUserId;
-				AscCommon.CryptoProvider.execCommand("portal:cryptoinfo", JSON.stringify(obj));
-			}
+			var obj = this.DocInfo.get_EncryptedInfo();
+			obj["userId"] = this.documentUserId;
+
+			if (AscCommon.createCryptoProvider)
+				AscCommon.createCryptoProvider(obj);
 		}
 
 		if (undefined !== window["AscDesktopEditor"] && !(this.DocInfo && this.DocInfo.get_OfflineApp()))
