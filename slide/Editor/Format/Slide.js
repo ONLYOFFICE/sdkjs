@@ -826,7 +826,21 @@
 			return;
 		}
 		let _bounds, i;
-		this.drawBgMasterAndLayout(graphics, bClipBySlide, bCheckBounds);
+		let backgroundLayer = graphics.transitionBackgroundLayer;
+		if (backgroundLayer === false) {
+			if (bClipBySlide) {
+				graphics.SaveGrState();
+				graphics.AddClipRect(0, 0, this.Width, this.Height);
+			}
+		} else {
+			this.drawBgMasterAndLayout(graphics, bClipBySlide, bCheckBounds);
+			if (backgroundLayer === true) {
+				if (bClipBySlide) {
+					graphics.RestoreGrState();
+				}
+				return;
+			}
+		}
 		if (this.cSld.collaborativeMarks) {
 			this.cSld.collaborativeMarks.Init_Drawing();
 		}
