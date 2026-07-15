@@ -1882,6 +1882,7 @@
 		if (!text) {
 			AscBuilder.throwException("The text property must be a valid string");
 		}
+		text = text.replace(/\r\n|\r|\n|\\n/g, " ");
 
 		let matchCase = AscBuilder.GetBoolParameter(props['matchCase'], false);
 		let wholeWords = AscBuilder.GetBoolParameter(props['wholeWords'], false);
