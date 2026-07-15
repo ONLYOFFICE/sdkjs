@@ -1731,12 +1731,12 @@
 	};
 	OutlineView.prototype.selectionSetStart = function (e, x, y) {
 		if (this.outlineShape) {
-			if (this.outlineShape.hit(x, y)) {
-				this.isDecorationMouseDown = false;
-				this.outlineShape.selectionSetStart(e, x, y, 0);
-			} else {
+			if (x < this.outlineShape.x) {
 				this.isDecorationMouseDown = true;
 				this.handleDecorationSelect(e, x, y);
+			} else {
+				this.isDecorationMouseDown = false;
+				this.outlineShape.selectionSetStart(e, x, y, 0);
 			}
 		}
 	};
