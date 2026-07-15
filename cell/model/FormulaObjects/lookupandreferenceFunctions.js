@@ -1654,6 +1654,12 @@ function (window, undefined) {
 					ret.addRow();
 					ret.addElement(_from.array[i][col - 1])
 				}
+				if (_from.hasLazyTail && _from.hasLazyTail()) {
+					//preserve a constant lazy tail: the extracted column's tail is the source's tail value at
+					//this column (O(1); a generator tail was already materialized by ensureMaterialized above).
+					ret.setRealArraySize(_from.getDimensions(true).row, 1);
+					ret.setMissedValue(_from.getMissedElement(_rowCount, col - 1));
+				}
 			}
 			return ret;
 		};
@@ -3438,7 +3444,10 @@ function (window, undefined) {
 			//forEachLogical so a lazy tail is searched too (foreach saw only the physical head)
 			arg1.forEachLogical(function (elem, r, c) {
 				if (elem && elem.type === cElementType.string) {
-					elem.value = elem.value.toLowerCase();
+					//rebind the LOCAL param to a lowercased copy for the case-insensitive compare; do NOT
+					//mutate elem - forEachLogical yields the head elements and the SHARED constant-tail
+					//object in place, so `elem.value = ...` would scribble on the caller's source array.
+					elem = new cString(elem.value.toLowerCase());
 				}
 				_cacheElem.elements.push({v: elem, i: (t.bHor ? c : r)});
 			});

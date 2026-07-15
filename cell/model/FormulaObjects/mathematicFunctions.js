@@ -2496,6 +2496,13 @@ function (window, undefined) {
 					if (acc && acc.type === cElementType.error) {
 						return acc;
 					}
+					if (arrElem.type === cElementType.empty) {
+						//empty contributes nothing to GCD (gcd(x,0)=x). the range path never reaches
+						//checkElemType for empties (getValue compacts them away); the array/tail path streams
+						//them, so skip here to match - otherwise a constant empty tail (e.g. IFERROR(A:A,0))
+						//would fold to #N/A. LCM handles empty analogously via EMPTY_VAL.
+						return acc;
+					}
 					let arrElemValue = checkElemType(arrElem);
 					if (arrElemValue.type === cElementType.error) {
 						return arrElemValue;

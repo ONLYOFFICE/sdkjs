@@ -1559,6 +1559,9 @@ function (window, undefined) {
 		} else if (arg instanceof cArea3D && arg.isSingleSheet && arg.isSingleSheet()) {
 			m = arg.getMatrix();
 			m = m && m[0];
+			bbox = arg.getDimensions();   //full bbox for the size-match gate, same as cArea. without it the
+			//gate would use the data extent, so a cross-sheet 3D ref false-fails vs a full-bbox operand and two
+			//genuinely-unequal 3D ranges with equal data extents could false-pass.
 		}
 		if (m) {
 			var cols = 0;

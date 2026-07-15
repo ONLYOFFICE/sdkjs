@@ -3084,9 +3084,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArray.prototype.getElement = function (index) {
 		this.ensureMaterialized();
 		for (var i = 0; i < this.rowCount; i++) {
-			//TODO length
-			if (index > this.countElementInRow[i].length) {
-				index -= this.countElementInRow[i].length;
+			//countElementInRow[i] is the element COUNT of row i (a number). walk rows until the flat index
+			//falls inside one; a full row (index >= its count) is skipped. was `> ....length` (undefined),
+			//so it never advanced and always returned array[0][index] for multi-row arrays.
+			if (index >= this.countElementInRow[i]) {
+				index -= this.countElementInRow[i];
 			} else {
 				return this.array[i][index];
 			}
@@ -3398,8 +3400,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	//called lazily before a physical full scan (getMatrix/foreach) so that all consumers
 	//(including in-place mutators and the 200+ direct .array accesses) see correct data.
 	//cost is O(logical size) - matches the inherent cost of such formulas in Excel; only triggered
-	//for bare ROW/COLUMN results (nothing else sets missedValueFn), so neutral-tail arrays and the
-	//filter pattern (IF result carries no generator) are unaffected.
+	//for bare ROW/COLUMN results and for an array-formula result whose tail could not be folded to a
+	//constant (checkFormulaArray installs a per-(row,col) generator); the common filter pattern (IF with
+	//a foldable constant tail) still carries no generator and is unaffected.
 	cArray.prototype._expandGenerator = function () {
 		if (!this.missedValueFn || !this.realSize) {
 			return;
@@ -3963,6 +3966,43 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 
 			if (matrix1 || matrix2) {
+				//only an original cArray operand (an array expression such as A:A+1) carries physical-head dims that
+				//would make the general path below truncate the result to that head. a cArea uses its bbox dims
+				//there (so it materializes rather than truncates) and is handled by convertAreaToArray's own
+				//clamping - do NOT reinterpret its used-extent tail here, or finite refs past the used range break.
+				var m1Lazy = cElementType.array === operand1.type && matrix1 && matrix1.hasLazyTail && matrix1.hasLazyTail();
+				var m2Lazy = cElementType.array === operand2.type && matrix2 && matrix2.hasLazyTail && matrix2.hasLazyTail();
+				if (m1Lazy || m2Lazy) {
+					//a lazy head+tail array operand whose logical size exceeds its physical head (the both-lazy-
+					//same-shape case was handled by the fast path above). broadcast on LOGICAL dims and compose a
+					//per-(row,col) tail generator, instead of truncating the result to the physical head.
+					var ld1 = matrix1 ? matrix1.getDimensions(true) : operand1.getDimensions(true);
+					var ld2 = matrix2 ? matrix2.getDimensions(true) : operand2.getDimensions(true);
+					var lRow = ld1.row === 1 ? ld2.row : (ld2.row === 1 ? ld1.row : Math.min(ld1.row, ld2.row));
+					var lCol = ld1.col === 1 ? ld2.col : (ld2.col === 1 ? ld1.col : Math.min(ld1.col, ld2.col));
+					var lbr1 = ld1.row === 1, lbc1 = ld1.col === 1, lbr2 = ld2.row === 1, lbc2 = ld2.col === 1;
+					var elemAt = function (r, c) {
+						var e1 = matrix1 ? matrix1.getElementRowCol(lbr1 ? 0 : r, lbc1 ? 0 : c, true) : operand1;
+						var e2 = matrix2 ? matrix2.getElementRowCol(lbr2 ? 0 : r, lbc2 ? 0 : c, true) : operand2;
+						return func(e1, e2);
+					};
+					res = new cArray();
+					res.setRealArraySize(lRow, lCol);
+					var hRows = Math.min(lRow, Math.max(matrix1 ? matrix1.rowCount : 1, matrix2 ? matrix2.rowCount : 1));
+					var hCols = Math.min(lCol, Math.max(
+						matrix1 && matrix1.countElementInRow.length ? matrix1.countElementInRow[0] : 1,
+						matrix2 && matrix2.countElementInRow.length ? matrix2.countElementInRow[0] : 1));
+					for (var lr = 0; lr < hRows; lr++) {
+						res.addRow();
+						for (var lc = 0; lc < hCols; lc++) {
+							res.addElement(elemAt(lr, lc));
+						}
+					}
+					res.setMissedValueFn(function (r, c) {
+						return elemAt(r, c);
+					});
+					return res;
+				}
 				res = new cArray();
 				var resArray = new Array(rowCount);
 				var resCounts = new Array(rowCount);
@@ -4634,7 +4674,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 			if (firstArray) {
 				var array = new cArray();
-				array.inheritLazyTailFrom(firstArray);
+				array.copyRealSizeFrom(firstArray);
 
 				//pre-compute: hoist invariant argument properties out of the per-element loop
 				var _argInfo = new Array(argumentsCount);
@@ -4710,6 +4750,52 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					array.addElement(_elem);
 				};
 
+				//lazy-tail generator: recompute this function at logical (row,col) for cells past the physical
+				//head. reads each argument tail-awarely (getElementRowCol(...,true) serves an arg's own head or
+				//its constant/generator tail), so a longer branch head and a per-row-varying tail both resolve
+				//correctly - unlike a single inherited/folded constant. installed only when the tail cannot fold.
+				var _calcTailElem = function (row, col) {
+					var newArgs = new Array(argumentsCount);
+					var newArg;
+					for (var j = 0; j < argumentsCount; j++) {
+						newArg = tempArgs[j];
+						var info = _argInfo[j];
+						if (info.isArray) {
+							var srcRow = 1 === info.rows ? 0 : row;
+							var srcCol = 1 === info.cols ? 0 : col;
+							newArg = newArg.getElementRowCol(srcRow, srcCol, true);
+							if (!newArg) {
+								newArg = new cError(cErrorType.not_available);
+							}
+						} else if (info.isRange) {
+							if (1 === info.dimensions.row && 1 === info.dimensions.col) {
+								newArg = newArg.getValueByRowCol(0, 0);
+							} else if (1 === info.dimensions.row) {
+								newArg = newArg.getValueByRowCol(0, col);
+							} else if (1 === info.dimensions.col) {
+								newArg = newArg.getValueByRowCol(row, 0);
+							} else {
+								newArg = newArg.getValueByRowCol(row, col);
+							}
+							if (!newArg) {
+								newArg = new cNumber(0);
+							}
+						}
+						newArgs[j] = newArg;
+					}
+					var _tbbox = opt_bbox;
+					if (_needBboxPerElem) {
+						_tbbox = new Asc.Range(col + parserFormula.ref.c1, row + parserFormula.ref.r1, col + parserFormula.ref.c1, row + parserFormula.ref.r1);
+					}
+					var _elem = t.Calculate(newArgs, _tbbox, opt_defName, parserFormula.ws, null, row, col);
+					if (_elem.type === cElementType.array) {
+						_elem = _elem.getElementRowCol(0, 0);
+					} else if (_elem.type === cElementType.cellsRange || _elem.type === cElementType.cellsRange3D) {
+						_elem = _elem.getValueByRowCol(0, 0, true);
+					}
+					return _elem;
+				};
+
 				if (firstArray.foreach) {
 					firstArray.foreach(doCalc);
 				} else {
@@ -4735,7 +4821,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 							if ((_tta.getMissedValueFn && _tta.getMissedValueFn()) ||
 								_tta.rowCount > _headRows || _argCols > _headCols) {
 								//generator tail, or this arg's head reaches past the result head (so the result tail
-								//is not a flat constant) - fall back to the inherited tail
+								//is not a flat constant) - cannot fold, fall through to the per-cell generator
 								_composable = false;
 								break;
 							}
@@ -4747,15 +4833,22 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 							_tailArgs[_tj] = _tta;
 						}
 					}
+					var _tailRes = null;
 					if (_composable) {
-						var _tailRes = t.Calculate(_tailArgs, opt_bbox, opt_defName, parserFormula.ws);
+						_tailRes = t.Calculate(_tailArgs, opt_bbox, opt_defName, parserFormula.ws);
 						if (_tailRes && _tailRes.type === cElementType.array) {
 							_tailRes = _tailRes.getElementRowCol(0, 0);
 						}
-						if (_tailRes) {
-							array.setMissedValueFn(null);
-							array.setMissedValue(_tailRes);
-						}
+					}
+					if (_tailRes) {
+						//the tail folds to a single constant - keep the O(1) fast path
+						array.setMissedValueFn(null);
+						array.setMissedValue(_tailRes);
+					} else {
+						//fold refused (range/generator arg, or a branch head past the result head) or produced no
+						//constant: recompute per (row,col) instead of leaving the inherited (e.g. condition) tail
+						array.setMissedValue(null);
+						array.setMissedValueFn(_calcTailElem);
 					}
 				}
 
@@ -13807,8 +13900,8 @@ function parserFormula( formula, parent, _ws ) {
 			// arg0RowCount, arg0ColCount, arg1RowCount, arg1ColCount
 			let usefulCol = Math.min(arg0ColCount, arg1ColCount),
 				usefulRow = Math.min(arg0RowCount, arg1RowCount),
-				arg0Dimensions = arg0.getDimensions(),
-				arg1Dimensions = arg1.getDimensions();
+				arg0Dimensions = arg0.getDimensions(true),
+				arg1Dimensions = arg1.getDimensions(true);
 
 			// if we have one of the element with single row|col, set the value to be obtained from this particular row or column
 			let fromArg0Row, fromArg1Row, fromArg0Col, fromArg1Col;
