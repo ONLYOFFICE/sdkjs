@@ -793,77 +793,7 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.MarkSearchElementForRedact = function(id) {
         this.DoAction(function() {
-            let oPdfMatch = this.SearchEngine.Elements[id];
-            let aSelQuadsParts = [];
-
-            if (oPdfMatch instanceof AscWord.Paragraph) {
-                let oState = this.GetSelectionState();
-                let SearchElement = oPdfMatch.SearchResults[id];
-
-                oPdfMatch.Selection.Use   = true;
-                oPdfMatch.Selection.Start = false;
-
-                oPdfMatch.Set_SelectionContentPos(SearchElement.StartPos, SearchElement.EndPos);
-                oPdfMatch.Set_ParaContentPos(SearchElement.StartPos, false, -1, -1);
-                oPdfMatch.Parent.Selection.Use      = true;
-                oPdfMatch.Parent.Selection.StartPos = oPdfMatch.Index;
-                oPdfMatch.Parent.Selection.EndPos   = oPdfMatch.Index;
-
-                let oTopParent = AscPDF.CPdfDrawingPrototype.prototype.GetTopParentObj.call(oPdfMatch);
-                aSelQuadsParts = oTopParent.GetSelectionQuads();
-
-                this.SetSelectionState(oState);
-            }
-            else {
-                oPdfMatch.forEach(function(pageMatch) {
-                    let x1, y1, x2, y2, x3, y3, x4, y4;
-
-                    if (undefined === pageMatch.Ex) {
-                        x1 = pageMatch.X;
-                        y1 = pageMatch.Y;
-
-                        x2 = pageMatch.X + pageMatch.W;
-                        y2 = pageMatch.Y;
-
-                        x3 = pageMatch.X;
-                        y3 = pageMatch.Y + pageMatch.H;
-
-                        x4 = pageMatch.X + pageMatch.W;
-                        y4 = pageMatch.Y + pageMatch.H;
-                    }
-                    else {
-                        x1 = pageMatch.X;
-                        y1 = pageMatch.Y;
-
-                        x2 = pageMatch.X + pageMatch.W * pageMatch.Ex;
-                        y2 = pageMatch.Y + pageMatch.W * pageMatch.Ey;
-
-                        x3 = pageMatch.X - pageMatch.H * pageMatch.Ey;
-                        y3 = pageMatch.Y + pageMatch.H * pageMatch.Ex;
-
-                        x4 = x2 - pageMatch.H * pageMatch.Ey;
-                        y4 = y2 + pageMatch.H * pageMatch.Ex;
-                    }
-
-                    x1 *= g_dKoef_mm_to_pt;
-                    y1 *= g_dKoef_mm_to_pt;
-                    x2 *= g_dKoef_mm_to_pt;
-                    y2 *= g_dKoef_mm_to_pt;
-                    x3 *= g_dKoef_mm_to_pt;
-                    y3 *= g_dKoef_mm_to_pt;
-                    x4 *= g_dKoef_mm_to_pt;
-                    y4 *= g_dKoef_mm_to_pt;
-
-                    aSelQuadsParts.push({ page: pageMatch.PageNum, quads: [[
-                        x1, y1, // left up
-                        x2, y2, // right up
-                        x3, y3,	// left down
-                        x4, y4 	// right down
-                    ]]});
-                });
-            }
-
-            this.AddRedactAnnot(aSelQuadsParts);
+            this.AddRedactAnnot(this.GetSearchElementSelectionQuads(id));
         }, AscDFH.historydescription_Pdf_AddAnnot, this);
     };
 	CPDFDoc.prototype.GetSearchElementSelectionQuads = function(id) {
