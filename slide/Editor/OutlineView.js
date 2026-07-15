@@ -1330,10 +1330,16 @@
 		if (this.isExpandSelection()) {
 			this.expandSelection(target);
 		} else {
-			docContent.RemoveSelection();
-			docContent.SetContentPosition(target.startPos, 0, 0);
-			docContent.SetContentSelection(target.startPos, target.endPos, 0, 0, 0);
+			this.setSelection(target);
 		}
+	};
+	DecorationSelectManager.prototype.setSelection = function (target) {
+		const docContent = this.getDocContent();
+		if (!docContent) {
+			return;
+		}
+		docContent.SetContentPosition(target.endPos, 0, 0);
+		docContent.SetContentSelection(target.startPos, target.endPos, 0, 0, 0);
 		this.outlineView.updateSelectionState();
 	};
 	DecorationSelectManager.prototype.isClickToSlideIcon = function (outlineParagraph) {
@@ -1387,15 +1393,33 @@
 		return {startPos: pos, endPos: pos};
 	};
 	DecorationSelectManager.prototype.expandSelection = function (target) {
-		const docContent = this.getDocContent();
 		const cur = this.getCurrentContentPositions();
 		const targetStartIndex = target.startPos[0].Position;
 		const currentStartIndex = cur.startPos[0].Position;
 		const targetEndIndex = target.endPos[0].Position;
 		const currentEndIndex = cur.endPos[0].Position;
-		const startPos = targetStartIndex <= currentStartIndex ? target.startPos : cur.startPos;
-		const endPos = targetEndIndex >= currentEndIndex ? target.endPos : cur.endPos;
-		docContent.SetContentSelection(startPos, endPos, 0, 0, 0);
+		let startPos;
+		let endPos;
+		let isNeedSetSelection = false;
+		let isSwitchSelection = false;
+		if (targetStartIndex <= currentStartIndex) {
+			isNeedSetSelection = true;
+			isSwitchSelection = true;
+			startPos = target.startPos;
+		} else {
+			startPos = cur.startPos;
+		}
+		if (targetEndIndex >= currentEndIndex) {
+			isNeedSetSelection = true;
+			isSwitchSelection = false;
+			endPos = target.endPos;
+		} else {
+			endPos = cur.endPos;
+		}
+		if (isNeedSetSelection) {
+			const newSelectionPositions = isSwitchSelection ? {startPos: endPos, endPos: startPos} : {startPos: startPos, endPos: endPos};
+			this.setSelection(newSelectionPositions);
+		}
 	};
 	DecorationSelectManager.prototype.isExpandSelection = function () {
 		return this.event.CtrlKey || this.event.ShiftKey;
