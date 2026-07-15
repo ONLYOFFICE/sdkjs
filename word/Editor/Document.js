@@ -5279,6 +5279,27 @@ CDocument.prototype.CheckViewPosition = function()
 	this.RecalculateCurPos();
 	this.Api.asc_LockScrollToTarget(false);
 };
+/**
+ * Scroll the document so that the current cursor/select position ends up at the top of the screen.
+ * @param [distance=0] {number} Offset of the position from the top of the screen (in mm)
+ */
+CDocument.prototype.AlignViewPositionToTop = function(distance)
+{
+	let anchorPos = this.IsTextSelectionUse() ? this.GetContentPosition(true, true) : this.GetContentPosition(false);
+	if (!anchorPos || !anchorPos.length)
+		return;
+	
+	let viewPortH = this.DrawingDocument.GetVisibleMMHeight();
+	distance = Math.max(0, Math.min(distance, viewPortH - 10));
+
+	this.ViewPosition = {
+		AnchorPos : anchorPos,
+		AlignTop  : true,
+		Distance  : distance ? distance : 0,
+		Type      : AscWord.ViewPositionType.Common
+	};
+	this.NeedUpdateTarget = true;
+};
 CDocument.prototype.RecalculateCurPos = function()
 {
 	if (true === this.TurnOffRecalcCurPos)
