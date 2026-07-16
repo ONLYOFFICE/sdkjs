@@ -811,9 +811,6 @@
                 oGraphicsPDF.DrawImageXY(oCroppedCtx.canvas, origX, origY);
             }
         }
-        
-        this.DrawLocks(oGraphicsPDF);
-        this.DrawEdit(oGraphicsWord);
     };
     CPushButtonField.prototype.SetImageRasterId = function(sRasterId, nAPType) {
 		if (sRasterId == undefined) {
@@ -1331,8 +1328,6 @@
 
         let originView = this.GetOriginView(nImgType, oGraphicsPDF.GetDrawingPageW(), oGraphicsPDF.GetDrawingPageH());
         if (!originView) {
-            this.DrawLocks(oGraphicsPDF);
-            this.DrawEdit(oGraphicsWord);
             return;
         }
 
@@ -1359,8 +1354,6 @@
 
         if (this.IsPressed() == false) {
             oGraphicsPDF.DrawImageXY(originView, origX, origY, undefined, true);
-            this.DrawLocks(oGraphicsPDF);
-            this.DrawEdit(oGraphicsWord);
             return;
         }
 
@@ -1437,9 +1430,6 @@
                 }
             }
         }
-
-        this.DrawLocks(oGraphicsPDF);
-        this.DrawEdit(oGraphicsWord);
     };
     CPushButtonField.prototype.SetPressed = function(bValue) {
         this._pressed = bValue;

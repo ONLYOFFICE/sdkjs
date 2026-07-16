@@ -332,7 +332,7 @@
 
         return nCurrentH / nSourceH;
     };
-    CAnnotationStamp.prototype.DrawFromStream = function(oGraphicsPDF) {
+    CAnnotationStamp.prototype.DrawFromStream = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)
             return;
             

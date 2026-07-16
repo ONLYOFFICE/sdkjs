@@ -66,9 +66,6 @@
 
         if (true == this.IsChecked())
             this.DrawCheckedSymbol(oGraphicsPDF);
-
-        this.DrawLocks(oGraphicsPDF);
-        this.DrawEdit(oGraphicsWord);
     };
     CBaseCheckBoxField.prototype.SetDefaultValue = function(value) {
         let oParent = this.GetParent(true);

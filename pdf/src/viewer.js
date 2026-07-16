@@ -3920,8 +3920,12 @@
 				oContent.RecalculateCurPos();
 		}
 	};
-	CHtmlPage.prototype._drawMarkupAnnotsOnCtx = function(nPage, ctx, oDirtyBoundsMM)
+	CHtmlPage.prototype._drawMarkupAnnotsOnCtx = function(nPage, ctx, oDirtyBoundsMM, contentType)
 	{
+		if (contentType !== AscPDF.PRINT_CONTENT_TYPES.docAndMarkups) {
+			return;
+		}
+		
         let aAnnots = this.pagesInfo.pages[nPage].annots.filter(function(annot) {
 			return annot.IsTextMarkup();
 		});
@@ -3960,16 +3964,12 @@
 		}
 		
 		let oGraphicsPDF = new AscPDF.CPDFGraphics();
+		oGraphicsPDF.isPrint = contentType !== undefined;
 		oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage) , this.file.getPageHeight(nPage));
 		oGraphicsPDF.SetCurPage(nPage);
 
 		aAnnots.forEach(function(annot) {
-			if (false == annot.IsNeedDrawFromStream()) {
-				annot.Draw(oGraphicsPDF);
-			}
-			else {
-				annot.DrawFromStream(oGraphicsPDF);
-			}
+			annot.DrawOnPage(oGraphicsPDF, oGraphicsWord);
 		});
 
 		if (oDirtyBoundsMM) {
@@ -4227,7 +4227,7 @@
 		let ctx = image.getContext('2d');
 
 		contentType !== AscPDF.PRINT_CONTENT_TYPES.formsOnly && this._drawDrawingsOnCtx(nPage, ctx, true);
-		contentType == AscPDF.PRINT_CONTENT_TYPES.docAndMarkups && this._drawMarkupAnnotsOnCtx(nPage, ctx);
+		this._drawMarkupAnnotsOnCtx(nPage, ctx, contentType);
 		this._drawAnnotsOnCtx(nPage, ctx, false, contentType);
 		this._drawFieldsOnCtx(nPage, ctx, false, true, contentType);
 
@@ -4248,6 +4248,7 @@
 
 		let oGraphicsPDF = new AscPDF.CPDFGraphics();
 		oGraphicsPDF.isThumbnails = isThumbnails;
+		oGraphicsPDF.isPrint = contentType !== undefined;
         oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage) , this.file.getPageHeight(nPage));
         oGraphicsPDF.SetCurPage(nPage);
 
@@ -4264,14 +4265,8 @@
 				}
 
 				if (annot.IsTextMarkup() == false) {
-                    if (annot.IsNeedDrawFromStream() == false) {
-                        annot.Draw(oGraphicsPDF, oGraphicsWord);
-                    }
-                    else {
-                        annot.Recalculate();
-                        annot.DrawFromStream(oGraphicsPDF);
-                    }
-                }
+					annot.DrawOnPage(oGraphicsPDF, oGraphicsWord);
+				}
             });
         }
     };
@@ -4297,12 +4292,12 @@
         if (this.pagesInfo.pages[nPage].fields != null) {
 			if (contentType !== AscPDF.PRINT_CONTENT_TYPES.formsOnly) {
 				this.pagesInfo.pages[nPage].redactedFields.forEach(function(field) {
-					field.DrawOnPage(oGraphicsPDF, oGraphicsWord, nPage);
+					field.DrawOnPage(oGraphicsPDF, oGraphicsWord);
 				});
 			}
             
             this.pagesInfo.pages[nPage].fields.forEach(function(field) {
-				field.DrawOnPage(oGraphicsPDF, oGraphicsWord, nPage);
+				field.DrawOnPage(oGraphicsPDF, oGraphicsWord);
             });
         }
     };

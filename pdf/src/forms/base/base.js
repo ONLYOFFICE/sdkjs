@@ -2469,7 +2469,7 @@
         return null;
     };
 	
-	CBaseField.prototype.DrawOnPage = function(pdfGraphics, textBoxGraphics, pageIndex) {
+	CBaseField.prototype.DrawOnPage = function(pdfGraphics, textBoxGraphics) {
 		if (pdfGraphics.isPrint) {
 			if (this.IsNoPrint()) {
 				return;
@@ -2486,8 +2486,11 @@
             if (this.IsNeedDrawFromStream())
                 this.DrawFromStream(pdfGraphics, textBoxGraphics);
             else
-                this.DrawFromTextBox(pdfGraphics, textBoxGraphics, pageIndex);
+                this.DrawFromTextBox(pdfGraphics, textBoxGraphics);
         }
+
+		this.DrawLocks(pdfGraphics);
+        this.DrawEdit(textBoxGraphics);
 	};
 
     CBaseField.prototype.DrawFromStream = function(oGraphicsPDF, oGraphicsWord) {
@@ -2519,9 +2522,6 @@
         // oGraphicsPDF.BeginPath();
         // oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
         // oGraphicsPDF.Stroke();
-
-        this.DrawLocks(oGraphicsPDF);
-        this.DrawEdit(oGraphicsWord);
     };
     CBaseField.prototype.DrawLocks = function(oGraphicsPDF) {
         let aOrigRect   = this.GetRect();
@@ -2539,7 +2539,7 @@
 
         oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aRegions);
     };
-	CBaseField.prototype.DrawFromTextBox = function(pdfGraphics, textBoxGraphics, pageIndex) {
+	CBaseField.prototype.DrawFromTextBox = function(pdfGraphics, textBoxGraphics) {
 		this.Draw(pdfGraphics, textBoxGraphics);
 	};
     CBaseField.prototype.GetTopParent = function() {

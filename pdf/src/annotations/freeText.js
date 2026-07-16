@@ -886,7 +886,6 @@
         for (var i = this.spTree.length - 1; i >= 0; i--)
             this.spTree[i].draw(graphics);
 
-        this.drawLocks(this.transform, graphics);
         if (oClipRect) {
             graphics.RestoreGrState();
         }
