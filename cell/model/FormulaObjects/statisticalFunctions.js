@@ -449,7 +449,8 @@ function (window, undefined) {
 					}
 				}
 
-				return new cNumber(fRes.toString().substr(0, fRes.toString().indexOf(".") + 1 + k) - 0);
+				var sRes = fRes.toString();
+				return new cNumber(sRes.substr(0, sRes.indexOf(".") + 1 + k) - 0);
 			}
 		}
 	}
@@ -14998,8 +14999,8 @@ function parseStringToCElement (val, cultureInfo) {
 					const targetSumRow = sumBbox.r1 + relRow;
 
 					// if we have an error in found indexes and it matched to criteria, return that error
-					if (errIndexes && errIndexes.includes(targetSumRow)) {
-						const errIndex = errIndexes.indexOf(targetSumRow);
+					const errIndex = errIndexes ? errIndexes.indexOf(targetSumRow) : -1;
+					if (errIndex !== -1) {
 						const errData = sumColumn.data[cElementType.error];
 						const firstErrValueType = errData[errIndex];
 

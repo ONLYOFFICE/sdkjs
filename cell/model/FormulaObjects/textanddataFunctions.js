@@ -636,7 +636,8 @@ function (window, undefined) {
 	cCONCATENATE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cCONCATENATE.prototype.argumentsType = [[argType.text]];
 	cCONCATENATE.prototype.Calculate = function (arg) {
-		var arg0 = new cString(""), argI;
+		// Accumulate into a primitive string and wrap once; avoids a cString wrapper + toString per element.
+		var sResult = "", argI, errElem = null;
 		for (var i = 0; i < arg.length; i++) {
 			argI = arg[i];
 			if (argI instanceof cArea || argI instanceof cArea3D) {
@@ -650,21 +651,21 @@ function (window, undefined) {
 			} else if (argI instanceof cArray) {
 				argI.foreach(function (elem) {
 					if (elem instanceof cError) {
-						arg0 = elem;
+						errElem = elem;
 						return true;
 					}
 
-					arg0 = new cString(arg0.toString().concat(elem.toLocaleString()));
+					sResult += elem.toLocaleString();
 
 				});
-				if (arg0 instanceof cError) {
-					return arg0;
+				if (errElem) {
+					return errElem;
 				}
 			} else {
-				arg0 = new cString(arg0.toString().concat(argI.toLocaleString()));
+				sResult += argI.toLocaleString();
 			}
 		}
-		return arg0;
+		return new cString(sResult);
 	};
 
 	/**
