@@ -1048,7 +1048,7 @@
 		}
 		
         let oPage = this.GetParentPage();
-        if (oPage && oPage.fields.includes(this) && oPage.GetIndex() !== -1) {
+        if (oPage && (oPage.fields.includes(this) || oPage.redactedFields.includes(this)) && oPage.GetIndex() !== -1) {
             return true;
         }
 

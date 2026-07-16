@@ -4416,7 +4416,7 @@
 					}
 
 					if (Class.IsForm && Class.IsForm()) {
-						let aWidgets = oDoc.GetAllWidgets(Class.GetFullName());
+						let aWidgets = Class.GetAllWidgets();
 						aWidgets.forEach(function(widget) {
 							updateLock(widget);
 						});
@@ -4490,7 +4490,7 @@
 				}
 				
 				if (Class.IsForm && Class.IsForm()) {
-					let aWidgets = oDoc.GetAllWidgets(Class.GetFullName());
+					let aWidgets = Class.GetAllWidgets();
 					aWidgets.forEach(function(widget) {
 						updateLock(widget);
 					});
