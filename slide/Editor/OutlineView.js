@@ -1068,6 +1068,10 @@
 		const oThis = this;
 		const presentation = outlineView.getPresentation();
 		outlineView.remove(true);
+		if (!presentation.Slides.length) {
+			presentation.addNextSlideAction();
+			outlineView.update();
+		}
 		let inserted = false;
 		outlineView.forEachSelectedContent(function (selectProps) {
 			let content = selectProps.content;
