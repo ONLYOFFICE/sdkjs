@@ -16642,15 +16642,21 @@
 	Cell.prototype.getOffset3=function(col, row){
 		return new AscCommon.CellBase(this.nRow - row + 1, this.nCol - col + 1);
 	};
+	// Public contract is zero-argument; the skip variant is private so an unexpected truthy caller argument cannot drop the formula from the snapshot.
 	Cell.prototype.getValueData = function(){
+		return this._getValueData(false);
+	};
+	// opt_skipFormula skips the unread formula-text assembly; only internal recalc-history callers that do not consume the string pass it.
+	Cell.prototype._getValueData = function(opt_skipFormula){
 		this._checkDirty();
-		var formula = this.isFormula() ? this.getFormula() : null;
+		var bIsFormula = this.isFormula();
+		var formula = (bIsFormula && !opt_skipFormula) ? this.getFormula() : null;
 		var formulaRef;
 		let ca;
 		let cm;
 		let vm;
 		let aca;
-		if(formula) {
+		if(bIsFormula) {
 			var parser = this.getFormulaParsed();
 			if(parser) {
 				formulaRef = parser.getArrayFormulaRef();
@@ -17561,9 +17567,13 @@
 		var parsed = this.getFormulaParsed();
 		var res = parsed.simplifyRefType(parsed.value, this.ws, this.nRow, this.nCol);
 
+		// same predicate as the history gate below, the sole reader of the assembled formula string
+		var needsFormulaDataForRecalcHistory = !!(parsed.unknownOrCustomFunction
+			|| parsed.replaceFormulaAfterCalc === AscCommonExcel.cReplaceFormulaType.formula);
+
 		let DataOld, DataNew;
 		if (AscCommon.History.Is_On()) {
-			DataOld = this.getValueData();
+			DataOld = this._getValueData(!needsFormulaDataForRecalcHistory);
 		}
 
 		if (res) {
@@ -17609,12 +17619,12 @@
 				}, this, []);
 			}
 
-			if (AscCommon.History.Is_On()) {
+			if (AscCommon.History.Is_On() && needsFormulaDataForRecalcHistory) {
 				DataNew = this.getValueData();
 			}
 
 			let _replaceFormulaType = parsed.replaceFormulaAfterCalc;
-			if (AscCommon.History.Is_On() && (parsed.unknownOrCustomFunction || _replaceFormulaType === AscCommonExcel.cReplaceFormulaType.formula)
+			if (AscCommon.History.Is_On() && needsFormulaDataForRecalcHistory
 				&& !(DataNew.value && DataNew.value.type === CellValueType.Error && DataNew.value.text === AscCommon.cErrorOrigin['busy'])) {
 
 				let wb = Asc["editor"] && Asc["editor"].wb;

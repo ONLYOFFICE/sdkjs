@@ -897,7 +897,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cError(val) {
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 
 		this.errorType = -1;
 
@@ -1179,7 +1182,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cArea(val, ws) {/*Area means "A1:E5" for example*/
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 
 		this.ws = ws;
 		this.range = null;
@@ -1507,7 +1513,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cArea3D(val, wsFrom, wsTo, externalLink) {/*Area3D means "Sheat1!A1:E5" for example*/
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 
 		this.bbox = null;
 		if (val) {
@@ -1951,7 +1960,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cRef(val, ws) {/*Ref means A1 for example*/
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 
 		this.ws = ws;
 		this.range = null;
@@ -2057,7 +2069,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cRef3D(val, ws, externalLink) {/*Ref means Sheat1!A1 for example*/
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 
 		this.ws = ws;
 		this.range = null;
@@ -2211,7 +2226,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cName(val, ws) {
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 		this.ws = ws;
 	}
 
@@ -2326,7 +2344,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cStrucTable(val, wb, ws) {
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 		this.wb = wb;
 		this.ws = ws;
 
@@ -2873,7 +2894,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cStrucPivotTable(val) {
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 		if (val) {
 			this.isIndex = false;
 			this.fieldString = val[0];
@@ -3148,14 +3172,29 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		let retArr = new cArray();
 		retArr.realSize = this.getRealArraySize();
 		retArr.missedValue = this.getMissedValue();
-		for (let ir = 0; ir < this.rowCount; ir++, retArr.addRow()) {
-			for (let ic = 0; ic < this.countElementInRow[ir]; ic++) {
-				retArr.addElement(this.array[ir][ic].tocNumber());
+		// Legacy addRow/addElement drops exactly one leading empty row; reproduce it via sourceStart in one pre-sized pass.
+		// Assumes stable cArray storage: element.tocNumber() must not mutate this.array/countElementInRow and the builders are not overridden (unsupported internals).
+		let sourceStart = this.rowCount > 0 && this.countElementInRow[0] === 0 ? 1 : 0;
+		let nRows = this.rowCount - sourceStart;
+		let outArr = new Array(nRows);
+		let outCount = new Array(nRows);
+		let total = 0;
+		for (let ir = 0; ir < nRows; ir++) {
+			let srcIdx = ir + sourceStart;
+			let nCols = this.countElementInRow[srcIdx];
+			let srcRow = this.array[srcIdx];
+			let outRow = new Array(nCols);
+			for (let ic = 0; ic < nCols; ic++) {
+				outRow[ic] = srcRow[ic].tocNumber();
 			}
-			if (ir === this.rowCount - 1) {
-				break;
-			}
+			outArr[ir] = outRow;
+			outCount[ir] = nCols;
+			total += nCols;
 		}
+		retArr.array = outArr;
+		retArr.countElementInRow = outCount;
+		retArr.rowCount = nRows;
+		retArr.countElement = total;
 		return retArr;
 	};
 	cArray.prototype.tocString = function () {

@@ -94,6 +94,13 @@ var gc_nMaxDigCountView = 11;//Maximum number of digits in a cell
 var gc_nMaxMantissa = Math.pow(10, gc_nMaxDigCount);
 var gc_log10of2 = Math.log10(2); // log10(2): converts binary exponent to decimal exponent
 
+// Powers used by getNumberParts for every finite IEEE 754 double exponent.
+// Keep division here: multiplying by a cached reciprocal changes rounding near decimal boundaries.
+const _g_pow10MinExp = -322;
+const _g_pow10 = [];
+for (let exp = _g_pow10MinExp; exp <= 293; ++exp)
+	_g_pow10.push(Math.pow(10, exp));
+
 // Pre-allocated buffers for IEEE 754 bit-level exponent extraction in getNumberParts.
 // Avoids Math.log() floating-point precision issues and is slightly faster.
 const _g_numPartsBuf = new ArrayBuffer(8);
@@ -193,7 +200,7 @@ function getNumberParts(x, opt_out)
 		_g_numPartsF64[0] = x;
 		const binaryExp = ((_g_numPartsI32[1] >>> 20) & 0x7FF) - 1023;
 		exp = Math.floor(binaryExp * gc_log10of2) - gc_nMaxDigCount + 1;
-		man = Math.round(x / Math.pow(10, exp));
+		man = Math.round(x / _g_pow10[exp - _g_pow10MinExp]);
 		if(man >= gc_nMaxMantissa)
 		{
 			exp++;
@@ -210,6 +217,10 @@ function getNumberParts(x, opt_out)
 	var _g_cmpParts1 = new NumberParts();
 	var _g_cmpParts2 = new NumberParts();
 	function compareNumbers(val1, val2) {
+		if (typeof val1 === "number" && typeof val2 === "number" &&
+			(val1 | 0) === val1 && (val2 | 0) === val2)
+			return val1 - val2;
+
 		var res = 0;
 		var parts1 = getNumberParts(val1, _g_cmpParts1);
 		var parts2 = getNumberParts(val2, _g_cmpParts2);
