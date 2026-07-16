@@ -1404,10 +1404,15 @@ function (window, undefined) {
 				arg[2] = arg[2].getValue2(0,0);
 			}
 			let dimension = arg[0].getDimensions();
+			let ctx = {};
+			// One shared args array per loop: calculate() reads arg[0..5] into locals synchronously and
+			// never stores or mutates the array, so only the varying slot needs a write per element.
+			let callArgs = [null, arg[1], arg[2], arg[3]];
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
-					retArr.addElement(g_oHLOOKUPCache.calculate([arg[0].getValue2(r, c), arg[1], arg[2], arg[3]], arguments[1]));
+					callArgs[0] = arg[0].getValue2(r, c);
+					retArr.addElement(g_oHLOOKUPCache.calculate(callArgs, arguments[1], ctx));
 				}
 			}
 
@@ -1416,11 +1421,15 @@ function (window, undefined) {
 
 		if (arg[2] && (arg[2].type === cElementType.array)) {
 			let dimension = arg[2].getDimensions();
+			let ctx = {};
+			// see above: one shared args array, only the varying slot is rewritten per element
+			let callArgs = [arg[0], arg[1], null, arg[3]];
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
 					if (!error) {
-						let res = g_oHLOOKUPCache.calculate([arg[0], arg[1], arg[2].getValue2(r, c), arg[3]], arguments[1]);
+						callArgs[2] = arg[2].getValue2(r, c);
+						let res = g_oHLOOKUPCache.calculate(callArgs, arguments[1], ctx);
 						if (res.type === cElementType.error) {
 							error = true
 						}
@@ -3252,7 +3261,7 @@ function (window, undefined) {
 		this.sortedCache = new TypedMapCache();
 	}
 
-	VHLOOKUPCache.prototype.calculate = function (arg, argument1) {
+	VHLOOKUPCache.prototype.calculate = function (arg, argument1, opt_ctx) {
 		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
 		// Fast paths for the dominant 4th-arg types avoid allocating a cBool per element:
 		// cBool.tocBool() returns `this` (same .value read), cNumber.tocBool() is new cBool(value !== 0)
@@ -3380,10 +3389,30 @@ function (window, undefined) {
 			return arg1.getElementRowCol(r, c);
 		}
 
-		let range;
-		if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type ||
+		// range/bb/ws depend only on arg1 (the lookup table), which is identical for every element
+		// of an array VLOOKUP/HLOOKUP. When the caller loops over an array it may pass a shared
+		// opt_ctx object; we resolve these invariants once into it and reuse them on later
+		// iterations, avoiding a Range rebuild (arg1.getRange()/getBBox0()/getWS()) per element.
+		// The ctx lives only for the duration of that loop, so it can never outlive a reference
+		// adjustment - no staleness risk.
+		let range, bb, ws;
+		if (opt_ctx && opt_ctx.resolved) {
+			range = opt_ctx.range;
+			bb = opt_ctx.bb;
+			ws = opt_ctx.ws;
+		} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type ||
 			cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
 			range = arg1.getRange();
+			if (range) {
+				bb = range.getBBox0();
+				ws = arg1.getWS();
+				if (opt_ctx) {
+					opt_ctx.resolved = true;
+					opt_ctx.range = range;
+					opt_ctx.bb = bb;
+					opt_ctx.ws = ws;
+				}
+			}
 		} else if (cElementType.array === arg1.type && opt_xlookup) {
 			let _cacheElem = {elements: []};
 			arg1.foreach(function (elem, r, c) {
@@ -3400,12 +3429,10 @@ function (window, undefined) {
 			return new cError(cErrorType.bad_reference);
 		}
 
-		let bb = range.getBBox0();
 		count = this.bHor ? (bb.r2 - bb.r1) : (bb.c2 - bb.c1);
 		if (number > count) {
 			return new cError(cErrorType.bad_reference);
 		}
-		let ws = arg1.getWS();
 		res = this._get(arg0Val, arg3, opt_arg4, opt_arg5, ws,
 			this.bHor ? bb.r1 : bb.c1, this.bHor ? bb.c1 : bb.r1, this.bHor ? bb.c2 : bb.r2);
 		if (opt_xlookup) {
@@ -3418,10 +3445,28 @@ function (window, undefined) {
 
 		r = this.bHor ? bb.r1 + number : res;
 		c = this.bHor ? res : bb.c1 + number;
+		// On the array-formula path (opt_ctx present) reuse one loop-scoped callback instead of
+		// allocating a closure per element. _getCellNoEmpty invokes fAction exactly once,
+		// synchronously, on both of its paths and never stores it, so the result slot is always
+		// written before the immediate read. The scalar (no-ctx) path is unchanged.
 		let resVal;
-		arg1.getWS()._getCellNoEmpty(r, c, function (cell) {
-			resVal = checkTypeCell(cell);
-		});
+		if (opt_ctx) {
+			let cb = opt_ctx.cellCb;
+			if (!cb) {
+				cb = opt_ctx.cellCb = function (cell) {
+					opt_ctx.cellCbRes = checkTypeCell(cell);
+				};
+			}
+			// pre-reset only: if fAction were ever skipped, resVal.type below fails loudly instead of
+			// silently reusing the previous element's value. No post-reset - ctx dies with the loop.
+			opt_ctx.cellCbRes = undefined;
+			ws._getCellNoEmpty(r, c, cb);
+			resVal = opt_ctx.cellCbRes;
+		} else {
+			ws._getCellNoEmpty(r, c, function (cell) {
+				resVal = checkTypeCell(cell);
+			});
+		}
 		if (cElementType.empty === resVal.type) {
 			resVal = new cNumber(0);
 		}
@@ -4738,10 +4783,15 @@ function (window, undefined) {
 				arg[2] = arg[2].getValue2(0,0);
 			}
 			let dimension = arg[0].getDimensions();
+			let ctx = {};
+			// One shared args array per loop: calculate() reads arg[0..5] into locals synchronously and
+			// never stores or mutates the array, so only the varying slot needs a write per element.
+			let callArgs = [null, arg[1], arg[2], arg[3]];
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
-					retArr.addElement(g_oVLOOKUPCache.calculate([arg[0].getValue2(r, c), arg[1], arg[2], arg[3]], arguments[1]));
+					callArgs[0] = arg[0].getValue2(r, c);
+					retArr.addElement(g_oVLOOKUPCache.calculate(callArgs, arguments[1], ctx));
 				}
 			}
 
@@ -4750,11 +4800,15 @@ function (window, undefined) {
 
 		if (arg[2] && (arg[2].type === cElementType.array)) {
 			let dimension = arg[2].getDimensions();
+			let ctx = {};
+			// see above: one shared args array, only the varying slot is rewritten per element
+			let callArgs = [arg[0], arg[1], null, arg[3]];
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
 					if (!error) {
-						let res = g_oVLOOKUPCache.calculate([arg[0], arg[1], arg[2].getValue2(r, c), arg[3]], arguments[1]);
+						callArgs[2] = arg[2].getValue2(r, c);
+						let res = g_oVLOOKUPCache.calculate(callArgs, arguments[1], ctx);
 						if (res.type === cElementType.error) {
 							error = true;
 						}
