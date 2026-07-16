@@ -11827,7 +11827,7 @@
 	 */
 	ApiDropCap.prototype.SetLines = function(lines)
 	{
-		lines = this.GetNumberParameter(lines, 0)
+		lines = AscBuilder.GetNumberParameter(lines, 0)
 		if (lines <= 0)
 			return this;
 
