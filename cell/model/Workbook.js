@@ -724,6 +724,34 @@
 				delete this.volatileListeners[listenerId];
 			}
 		},
+		// True if anything depends on the cell. Conservative on volatile/defName listeners (may reference it indirectly).
+		hasAnyDependent: function(sheetId, nRow, nCol) {
+			var k;
+			for (k in this.volatileListeners) {
+				return true;
+			}
+			for (k in this.defNameListeners) {
+				return true;
+			}
+			var sheetContainer = this.sheetListeners[sheetId];
+			if (!sheetContainer) {
+				return false;
+			}
+			for (k in sheetContainer.defName3d) {
+				return true;
+			}
+			var cellIndex = getCellIndex(nRow, nCol);
+			if (sheetContainer.cellMap && sheetContainer.cellMap[cellIndex]) {
+				return true;
+			}
+			for (var vi in sheetContainer.areaMap) {
+				var areaSheetElem = sheetContainer.areaMap[vi];
+				if (areaSheetElem && areaSheetElem.bbox && areaSheetElem.bbox.contains(nCol, nRow)) {
+					return true;
+				}
+			}
+			return false;
+		},
 		forEachSheetListeners: function(sheetId, callback) {
 			var sheetContainer = this.sheetListeners[sheetId];
 			if (sheetContainer) {
@@ -17155,6 +17183,9 @@
 			return false;
 		}
 		if (g_cCalcRecursion.isCellChecked(this.ws.getId() + '_' + this.nRow + '_' + this.nCol)) {
+			// balance the caller's incRecursionCounter() (as every other return path does), else the
+			// counter leaks per cache-hit and spuriously triggers ForceBacktracking
+			g_cCalcRecursion.resetRecursionCounter();
 			return g_cCalcRecursion.getCheckedCell(this.ws.getId() + '_' + this.nRow + '_' + this.nCol);
 		}
 
@@ -17168,6 +17199,14 @@
 		}
 
 		if (!this.isFormula()) {
+			g_cCalcRecursion.resetRecursionCounter();
+			return false;
+		}
+		// no dependents => no cycle possible: skip the precedent-tree walk. Top-level only, and after
+		// compareCellIndex so direct self-references are still caught.
+		if (g_cCalcRecursion.getRecursionCounter() === 0 && oCellWithFormula.ws && this.ws.workbook &&
+			this.ws.workbook.dependencyFormulas &&
+			!this.ws.workbook.dependencyFormulas.hasAnyDependent(oCellWithFormula.ws.getId(), oCellWithFormula.nRow, oCellWithFormula.nCol)) {
 			g_cCalcRecursion.resetRecursionCounter();
 			return false;
 		}

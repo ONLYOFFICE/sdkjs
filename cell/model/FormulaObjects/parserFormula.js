@@ -8458,6 +8458,9 @@ function parserFormula( formula, parent, _ws ) {
 			let bRecursiveCell = parserFormula.ca;
 			let sFunctionName = "";
 
+			if (ignoreErrors) {
+				return bRecursiveCell;
+			}
 
 			if (levelFuncMap.length && levelFuncMap[currentFuncLevel]) {
 				sFunctionName = levelFuncMap[currentFuncLevel].func.name;
