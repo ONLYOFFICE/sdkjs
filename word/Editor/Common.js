@@ -671,6 +671,7 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 	
 	window['AscWord'].EPSILON                  = 0.001;
 	window['AscWord'].MAX_MM_VALUE             = 558.7;
+	window['AscWord'].PRESENTATION_LINE_ASCENT_RATIO = 0.75;
 	window['AscWord'].Direction                = Direction;
 
 })(window);

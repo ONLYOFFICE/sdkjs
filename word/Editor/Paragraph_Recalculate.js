@@ -1347,7 +1347,17 @@ Paragraph.prototype.private_RecalculateLineMetrics     = function(CurLine, CurPa
 	lineMetrics.UpdateLineGap(ParaPr);
 	if (true === PRS.End && true !== PRS.EmptyLine && true !== PRS.TextOnLine && Math.abs(this.Lines[CurLine].Metrics.Descent - this.Lines[CurLine].Metrics.TextDescent) < 0.001)
 		lineMetrics.Descent = 0;
-	
+
+	if (!this.bFromDocument)
+	{
+		let lineHeight    = lineMetrics.Ascent + lineMetrics.Descent + lineMetrics.LineGap;
+		let contentAscent = Asc.linerule_Exact === ParaPr.Spacing.LineRule ? lineMetrics.TextAscent : lineMetrics.Ascent;
+		let ascentRegion  = Math.max(AscWord.PRESENTATION_LINE_ASCENT_RATIO * lineHeight, Math.min(contentAscent, lineHeight - lineMetrics.TextDescent));
+		let shift = ascentRegion - lineMetrics.Ascent;
+		lineMetrics.Ascent  += shift;
+		lineMetrics.LineGap -= shift;
+	}
+
 	let updatedLineHeight = lineMetrics.Ascent + lineMetrics.Descent + lineMetrics.LineGap;
 	
 	if (lineHeight - updatedLineHeight > AscWord.EPSILON)
