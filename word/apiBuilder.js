@@ -11643,12 +11643,12 @@
 	 * the returned ApiDropCap object to adjust the number of lines, font or distance.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {("none" | "drop" | "margin")} sType - The drop cap type: "none" removes the drop cap, "drop" places
+	 * @param {("none" | "drop" | "margin")} type - The drop cap type: "none" removes the drop cap, "drop" places
 	 * it within the text, "margin" places it in the margin.
 	 * @returns {?ApiDropCap} - The created drop cap, or null if the drop cap could not be created or was removed.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetDropCap.js
 	 */
-	ApiParagraph.prototype.SetDropCap = function(sType)
+	ApiParagraph.prototype.SetDropCap = function(type)
 	{
 		var oPara = this.Paragraph;
 		var oDoc  = oPara.GetLogicDocument();
@@ -11660,16 +11660,16 @@
 		oDoc.RemoveSelection();
 		new ApiDocument(oDoc).ForceRecalculate();
 
-		if (sType === "none" || sType === undefined || sType === null)
+		if (type === "none" || type === undefined || type === null)
 		{
 			oDoc.RemoveDropCap(true);
 			return null;
 		}
 
 		var bInText;
-		if (sType === "drop")
+		if (type === "drop")
 			bInText = true;
-		else if (sType === "margin")
+		else if (type === "margin")
 			bInText = false;
 		else
 			return null;
@@ -11719,13 +11719,13 @@
 	 * Applies the given frame settings to the drop cap through the same code path as the editor settings dialog, so
 	 * the drop cap letter is resized to fit the frame.
 	 * @param {AscCommon.asc_CParagraphFrame} oFrame - The frame settings to apply.
-	 * @returns {ApiDropCap} this
+	 * @returns {boolean}
 	 */
 	ApiDropCap.prototype.private_ApplyFrame = function(oFrame)
 	{
 		var oDoc = this.private_GetLogicDocument();
 		if (!oDoc || !this.private_IsValid())
-			return this;
+			return false;
 
 		this.Paragraph.Document_SetThisElementCurrent(false);
 		oDoc.RemoveSelection();
@@ -11734,7 +11734,7 @@
 
 		oFrame.put_FromDropCapMenu(true);
 		oDoc.SetParagraphFramePr(oFrame);
-		return this;
+		return true;
 	};
 	/**
 	 * Returns the type of the ApiDropCap class.
@@ -11783,20 +11783,20 @@
 	 * Sets the drop cap type.
 	 * @memberof ApiDropCap
 	 * @typeofeditors ["CDE"]
-	 * @param {("none" | "drop" | "margin")} sType - The drop cap type: "none" removes the drop cap, "drop" places
+	 * @param {("none" | "drop" | "margin")} type - The drop cap type: "none" removes the drop cap, "drop" places
 	 * it within the text, "margin" places it in the margin.
-	 * @returns {ApiDropCap} this
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/SetType.js
 	 */
-	ApiDropCap.prototype.SetType = function(sType)
+	ApiDropCap.prototype.SetType = function(type)
 	{
-		if (sType === "none")
+		if (type === "none")
 			return this.Remove();
 
 		var nDropCap;
-		if (sType === "drop")
+		if (type === "drop")
 			nDropCap = Asc.c_oAscDropCap.Drop;
-		else if (sType === "margin")
+		else if (type === "margin")
 			nDropCap = Asc.c_oAscDropCap.Margin;
 		else
 			return this;
@@ -11821,35 +11821,35 @@
 	 * Sets the number of lines that the drop cap occupies. The drop cap letter is resized accordingly.
 	 * @memberof ApiDropCap
 	 * @typeofeditors ["CDE"]
-	 * @param {number} nLines - The number of lines that the drop cap occupies.
-	 * @returns {ApiDropCap} this
+	 * @param {number} lines - The number of lines that the drop cap occupies.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/SetLines.js
 	 */
-	ApiDropCap.prototype.SetLines = function(nLines)
+	ApiDropCap.prototype.SetLines = function(lines)
 	{
-		nLines = (nLines | 0);
-		if (nLines <= 0)
+		lines = this.GetNumberParameter(lines, 0)
+		if (lines <= 0)
 			return this;
 
 		var oFrame = new Asc.asc_CParagraphFrame();
-		oFrame.put_Lines(nLines);
+		oFrame.put_Lines(lines);
 		return this.private_ApplyFrame(oFrame);
 	};
 	/**
 	 * Sets the font family of the drop cap letter.
 	 * @memberof ApiDropCap
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sFontFamily - The font family name used for the drop cap letter.
-	 * @returns {ApiDropCap} this
+	 * @param {string} fontFamily - The font family name used for the drop cap letter.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/SetFontFamily.js
 	 */
-	ApiDropCap.prototype.SetFontFamily = function(sFontFamily)
+	ApiDropCap.prototype.SetFontFamily = function(fontFamily)
 	{
-		if (typeof sFontFamily !== "string" || !sFontFamily.length)
+		if (typeof fontFamily !== "string" || !fontFamily.length)
 			return this;
 
 		var oFrame = new Asc.asc_CParagraphFrame();
-		oFrame.put_FontFamily(new AscCommon.asc_CTextFontFamily({Name : sFontFamily, Index : -1}));
+		oFrame.put_FontFamily(new AscCommon.asc_CTextFontFamily({Name : fontFamily, Index : -1}));
 		return this.private_ApplyFrame(oFrame);
 	};
 	/**
@@ -11870,21 +11870,21 @@
 	 * inch).
 	 * @memberof ApiDropCap
 	 * @typeofeditors ["CDE"]
-	 * @param {twips} nDistance - The distance between the drop cap and the paragraph text.
-	 * @returns {ApiDropCap} this
+	 * @param {twips} distance - The distance between the drop cap and the paragraph text.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/SetDistance.js
 	 */
-	ApiDropCap.prototype.SetDistance = function(nDistance)
+	ApiDropCap.prototype.SetDistance = function(distance)
 	{
 		var oFrame = new Asc.asc_CParagraphFrame();
-		oFrame.put_HSpace(private_Twips2MM(nDistance));
+		oFrame.put_HSpace(private_Twips2MM(distance));
 		return this.private_ApplyFrame(oFrame);
 	};
 	/**
 	 * Removes the drop cap, merging the drop cap letter back into the paragraph text.
 	 * @memberof ApiDropCap
 	 * @typeofeditors ["CDE"]
-	 * @returns {ApiDropCap} this
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/Remove.js
 	 */
 	ApiDropCap.prototype.Remove = function()
