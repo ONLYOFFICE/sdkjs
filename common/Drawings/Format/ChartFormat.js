@@ -6572,6 +6572,7 @@
 		}
 
 		chartSpace.setChart(newChart);
+		chartSpace.resetToChartStyle();
 
 		const newRegion = newChart.plotArea && newChart.plotArea.plotAreaRegion;
 		if (newRegion) {
