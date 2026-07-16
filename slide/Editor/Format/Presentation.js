@@ -634,7 +634,6 @@ function CPresentation(DrawingDocument, isMainLogicDocument) {
 
 	this.recalcMap = {};
 	this.bNeedUpdateTh = false;
-	this.needSelectPages = [];
 
 	this.writecomments = [];
 
@@ -2538,9 +2537,6 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 			this.bGoToPage = false;
 		} else if (b_check_layout) {
 			this.DrawingDocument.m_oWordControl.CheckLayouts(bAttack);
-		}
-		if (this.needSelectPages.length > 0) {
-			this.needSelectPages.length = 0;
 		}
 	}
 	if (this.bNeedUpdateTh) {
@@ -7874,10 +7870,8 @@ CPresentation.prototype.InsertContent = function (Content) {
 	if (Content.SlideObjects.length > 0) {
 		if(this.IsSlidePageMode()) {
 			let las_slide_index = selected_slides.length > 0 ? selected_slides[selected_slides.length - 1] : -1;
-			this.needSelectPages.length = 0;
 			for (i = 0; i < Content.SlideObjects.length; ++i) {
 				this.insertSlide(las_slide_index + i + 1, Content.SlideObjects[i]);
-				this.needSelectPages.push(las_slide_index + i + 1);
 			}
 			this.CurPage = las_slide_index + 1;
 			this.bGoToPage = true;
