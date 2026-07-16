@@ -10352,7 +10352,62 @@
 	{
 		this.Document.EnterText(sText);
 		return true;
-	}
+	};
+
+	/**
+	 * Moves the cursor into the header of the specified page and switches the document into the header editing mode. The cursor is positioned at the beginning of the header.
+	 * @memberof ApiDocument
+	 * @param {number} [page] - The page number. If not specified, the current page is used.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorToHeader.js
+	 */
+	ApiDocument.prototype.MoveCursorToHeader = function(page)
+	{
+		if (undefined === page || null === page)
+			page = this.Document.GetCurPage();
+
+		this.ForceRecalculate(page + 1);
+		if (this.Document.GetPagesCount() <= page)
+			return false;
+
+		return this.Document.MoveCursorToHdrFtr(true, page);
+	};
+
+	/**
+	 * Moves the cursor into the footer of the specified page and switches the document into the footer editing mode. The cursor is positioned at the beginning of the footer.
+	 * @memberof ApiDocument
+	 * @param {number} [page] - The page number. If not specified, the current page is used.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorToFooter.js
+	 */
+	ApiDocument.prototype.MoveCursorToFooter = function(page)
+	{
+		if (undefined === page || null === page)
+			page = this.Document.GetCurPage();
+
+		this.ForceRecalculate(page + 1);
+		if (this.Document.GetPagesCount() <= page)
+			return false;
+
+		return this.Document.MoveCursorToHdrFtr(false, page);
+	};
+
+	/**
+	 * Moves the cursor from the header or footer back to the main document content, positioning it at the beginning of the content on the current page.
+	 * @memberof ApiDocument
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorToDocumentContent.js
+	 */
+	ApiDocument.prototype.MoveCursorToDocumentContent = function()
+	{
+		return this.Document.MoveCursorToDocumentContent();
+	};
 
 	/**
 	 * Add paragraph to the document on the cursor position.
@@ -31472,6 +31527,9 @@
 	ApiDocument.prototype["MoveCursorToEnd"]               = ApiDocument.prototype.MoveCursorToEnd;
 	ApiDocument.prototype["GoToPage"]                      = ApiDocument.prototype.GoToPage;
 	ApiDocument.prototype["EnterText"]                     = ApiDocument.prototype.EnterText;
+	ApiDocument.prototype["MoveCursorToHeader"]            = ApiDocument.prototype.MoveCursorToHeader;
+	ApiDocument.prototype["MoveCursorToFooter"]            = ApiDocument.prototype.MoveCursorToFooter;
+	ApiDocument.prototype["MoveCursorToDocumentContent"]   = ApiDocument.prototype.MoveCursorToDocumentContent;
 	ApiDocument.prototype["InsertParagraphBreak"]          = ApiDocument.prototype.InsertParagraphBreak;
 	ApiDocument.prototype["MoveCursorLeft"]                = ApiDocument.prototype.MoveCursorLeft;
 	ApiDocument.prototype["MoveCursorRight"]               = ApiDocument.prototype.MoveCursorRight;

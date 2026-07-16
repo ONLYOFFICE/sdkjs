@@ -7729,6 +7729,11 @@ CDocument.prototype.Selection_SetStart         = function(X, Y, MouseEvent)
         this.DrawingDocument.ClearCachePages();
         this.DrawingDocument.FirePaint();
         this.DrawingDocument.EndTrackTable(null, true);
+
+		if (this.isHeaderEditing())
+			this.Api.getMacroRecorder().addStepData('GoToHeader', true);
+		else if (this.isFooterEditing())
+			this.Api.getMacroRecorder().addStepData('GoToFooter', true);
     }
 	else
 	{
@@ -7817,6 +7822,7 @@ CDocument.prototype.Selection_SetStart         = function(X, Y, MouseEvent)
             this.SetDocPosType(docpostype_Content);
             this.CurPos.ContentPos = ContentPos;
             bOldSelectionIsCommon  = false;
+			this.Api.getMacroRecorder().addStepData('GoToDocContent', true);
         }
 
 		var SelectionUse_old = this.Selection.Use;
@@ -11895,6 +11901,83 @@ CDocument.prototype.SetSectionPageNumFormat = function(format)
 CDocument.prototype.Document_Format_Copy = function()
 {
 	this.Api.checkFormatPainterData();
+};
+/**
+ * Move the cursor into the header/footer of the given (or the current) page and switch the document into
+ * the header/footer editing mode. The required header/footer is created if it does not exist yet.
+ * @param {boolean} isHeader - True to move the cursor into the header, false to move it into the footer.
+ * @param {number} [page] - The absolute page index. The exact header/footer (default/first/even) depends
+ * on this page. If not specified, the current page is used.
+ * @returns {boolean} Whether the cursor was moved into the header/footer.
+ */
+CDocument.prototype.MoveCursorToHdrFtr = function(isHeader, page)
+{
+	if (undefined === page || null === page)
+		page = (docpostype_HdrFtr === this.GetDocPosType() ? this.HdrFtr.Get_CurPage() : this.CurPage);
+
+	if (page < 0)
+		page = 0;
+
+	if (page >= this.Pages.length)
+		return false;
+
+	var oPageInfo      = this.Get_SectionPageNumInfo(page);
+	var oSectionHdrFtr = this.Get_SectionHdrFtr(page, oPageInfo.bFirst, oPageInfo.bEven);
+	var oHdrFtr        = isHeader ? oSectionHdrFtr.Header : oSectionHdrFtr.Footer;
+
+	if (!oHdrFtr)
+	{
+		oHdrFtr = this.Create_SectionHdrFtr(isHeader ? hdrftr_Header : hdrftr_Footer, page);
+		this.Recalculate();
+	}
+
+	this.RemoveSelection();
+	this.SetDocPosType(docpostype_HdrFtr);
+	this.HdrFtr.Set_CurHdrFtr(oHdrFtr);
+	oHdrFtr.SetPage(page);
+	oHdrFtr.Content.MoveCursorToStartPos(false);
+
+	return true;
+};
+/**
+ * Move the cursor from the header/footer (or any other special part) back to the main document content.
+ * @returns {boolean} Whether the cursor was moved into the main document content.
+ */
+CDocument.prototype.MoveCursorToDocumentContent = function()
+{
+	var nDocPosType = this.GetDocPosType();
+	if (docpostype_Content === nDocPosType)
+		return false;
+
+	if (docpostype_HdrFtr === nDocPosType)
+	{
+		var oCurHdrFtr = this.HdrFtr.Get_CurHdrFtr();
+		if (oCurHdrFtr)
+			oCurHdrFtr.RemoveSelection();
+
+		this.SetDocPosType(docpostype_Content);
+		this.MoveCursorToXY(0, 0, false);
+
+		this.DrawingDocument.ClearCachePages();
+		this.DrawingDocument.FirePaint();
+		this.Document_UpdateRulersState();
+		this.Document_UpdateInterfaceState();
+		this.Document_UpdateSelectionState();
+	}
+	else
+	{
+		if (docpostype_DrawingObjects === nDocPosType)
+			this.EndDrawingEditing();
+		else if (docpostype_Footnotes === nDocPosType)
+			this.EndFootnotesEditing();
+		else if (docpostype_Endnotes === nDocPosType)
+			this.EndEndnotesEditing();
+
+		this.RemoveSelection();
+		this.SetDocPosType(docpostype_Content);
+	}
+
+	return true;
 };
 CDocument.prototype.isHeaderEditing = function()
 {

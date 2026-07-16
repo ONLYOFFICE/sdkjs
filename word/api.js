@@ -5688,6 +5688,8 @@ background-repeat: no-repeat;\
 			return;
 		
 		logicDocument.EndHdrFtrEditing(true);
+
+		this.getMacroRecorder().addStepData('GoToDocContent', true);
 	};
 
 	/*структура для передачи настроек колонтитулов
@@ -8756,6 +8758,8 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oDrawingDocument.ClearCachePages();
 			this.WordControl.m_oDrawingDocument.FirePaint();
 		}
+
+		this.getMacroRecorder().addStepData('GoToHeader', true);
 	};
 
 	asc_docs_api.prototype.GoToFooter = function(pageNumber)
@@ -8791,6 +8795,8 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oDrawingDocument.ClearCachePages();
 			this.WordControl.m_oDrawingDocument.FirePaint();
 		}
+
+		this.getMacroRecorder().addStepData('GoToFooter', true);
 	};
 
 	asc_docs_api.prototype.ExitHeader_Footer = function(pageNumber)
