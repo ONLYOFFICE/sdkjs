@@ -9686,28 +9686,6 @@ CDocumentContent.prototype.SelectCharRange = function(nStartChar, nEndChar, bMov
 	if (bMoveCursor)
 		this.CurPos.ContentPos = nEndParaIdx;
 };
-/**
- * Get direction of selection
- * @returns {AscWord.Direction} Returns direction of selection. 1 - forward direction, -1 - backward direction
- */
-CDocumentContent.prototype.GetSelectDirection = function()
-{
-	const oStartPos = this.GetContentPosition(true, true);
-	const oEndPos   = this.GetContentPosition(true, false);
-
-	for (let nPos = 0, nLen = Math.min(oStartPos.length, oEndPos.length); nPos < nLen; ++nPos)
-	{
-		if (!oEndPos[nPos] || !oStartPos[nPos] || oStartPos[nPos].Class !== oEndPos[nPos].Class)
-			return AscWord.Direction.FORWARD;
-
-		if (oStartPos[nPos].Position < oEndPos[nPos].Position)
-			return AscWord.Direction.FORWARD;
-		else if (oStartPos[nPos].Position > oEndPos[nPos].Position)
-			return AscWord.Direction.BACKWARD;
-	}
-
-	return AscWord.Direction.FORWARD;
-};
 function CDocumentContentStartState(DocContent)
 {
     this.Content = [];

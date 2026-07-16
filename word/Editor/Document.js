@@ -8151,28 +8151,6 @@ CDocument.prototype.Selection_SetEnd = function(X, Y, MouseEvent)
         this.Selection.EndPos   = Start;
     }
 };
-/**
- * Получаем направление селекта
- * @returns {AscWord.Direction} Возвращается направление селекта. 1 - нормальное направление, -1 - обратное
- */
-CDocument.prototype.GetSelectDirection = function()
-{
-	var oStartPos = this.GetContentPosition(true, true);
-	var oEndPos   = this.GetContentPosition(true, false);
-
-	for (var nPos = 0, nLen = Math.min(oStartPos.length, oEndPos.length); nPos < nLen; ++nPos)
-	{
-		if (!oEndPos[nPos] || !oStartPos[nPos] || oStartPos[nPos].Class !== oEndPos[nPos].Class)
-			return AscWord.Direction.FORWARD;
-
-		if (oStartPos[nPos].Position < oEndPos[nPos].Position)
-			return AscWord.Direction.FORWARD;
-		else if (oStartPos[nPos].Position > oEndPos[nPos].Position)
-			return AscWord.Direction.BACKWARD;
-	}
-
-	return AscWord.Direction.FORWARD;
-};
 CDocument.prototype.IsMovingTableBorder = function()
 {
 	return this.Controller.IsMovingTableBorder();

@@ -3087,3 +3087,25 @@ CDocumentContentBase.prototype.IsFirstOnDocumentPage = function(curPage)
 {
 	return false;
 };
+/**
+ * Get the selection direction
+ * @returns {AscWord.Direction} The selection direction. 1 - forward direction, -1 - backward direction
+ */
+CDocumentContentBase.prototype.GetSelectDirection = function()
+{
+	let startPos = this.GetContentPosition(true, true);
+	let endPos   = this.GetContentPosition(true, false);
+
+	for (var pos = 0, nLen = Math.min(startPos.length, endPos.length); pos < nLen; ++pos)
+	{
+		if (!endPos[pos] || !startPos[pos] || startPos[pos].Class !== endPos[pos].Class)
+			return AscWord.Direction.FORWARD;
+
+		if (startPos[pos].Position < endPos[pos].Position)
+			return AscWord.Direction.FORWARD;
+		else if (startPos[pos].Position > endPos[pos].Position)
+			return AscWord.Direction.BACKWARD;
+	}
+
+	return AscWord.Direction.FORWARD;
+};
