@@ -17060,29 +17060,32 @@
 		let nLastIndex = aRefElements.length - 1;
 		for (let i = 0, length = aRefElements.length; i < length; i++) {
 			const oRefElement = aRefElements[i];
-			const nRefType = oRefElement.type;
-			const b3D = nRefType === cElementType.cell3D || nRefType === cElementType.cellsRange3D;
-			const bArea = nRefType === cElementType.cellsRange;
-			const bDefName = nRefType === cElementType.name || nRefType === cElementType.name3D;
-			const bTable = nRefType === cElementType.table;
 			let oRange = null;
 
-			if (nRefType !== cElementType.cell && !b3D && !bArea && !bDefName && !bTable) {
-				continue;
-			}
-			if (nRefType === cElementType.name || nRefType === cElementType.name3D) {
-				const oElemValue = oRefElement.getValue();
-				const oElemType = oElemValue.type;
-				if (!aRefTypes.includes(oElemType)) {
-					return;
+			switch (oRefElement.type) {
+				case cElementType.name:
+				case cElementType.name3D: {
+					const oElemValue = oRefElement.getValue();
+					if (!aRefTypes.includes(oElemValue.type)) {
+						return;
+					}
+					oRange = oElemValue.getRange && oElemValue.getRange();
+					break;
 				}
-				oRange = oElemValue.getRange && oElemValue.getRange();
-			} else if (nRefType === cElementType.table) {
-				let oRefElem = oRefElement.toRef();
-				oRange = oRefElem.getRange && oRefElem.getRange();
-			} else {
-				oRange = oRefElement.getRange && oRefElement.getRange();
-			}
+				case cElementType.table: {
+					const oRefElem = oRefElement.toRef();
+					oRange = oRefElem.getRange && oRefElem.getRange();
+					break;
+				}
+				case cElementType.cell:
+				case cElementType.cell3D:
+				case cElementType.cellsRange:
+				case cElementType.cellsRange3D:
+					oRange = oRefElement.getRange && oRefElement.getRange();
+					break;
+				default:
+					continue;
+				}
 			if (!oRange) {
 				continue;
 			}

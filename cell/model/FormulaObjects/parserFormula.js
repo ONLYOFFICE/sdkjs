@@ -731,8 +731,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cNumber(val) {
+		// Intentional: source inline measured faster here despite V8's normal .call inlining; keep in sync with cBaseType.
+		this.numFormat = cNumFormatNull;
 		// Avoid parseFloat's string round-trip while preserving its -0 normalization.
-		cBaseType.call(this, typeof val === "number" ? val + 0 : parseFloat(val));
+		this.value = typeof val === "number" ? val + 0 : parseFloat(val);
+		this.hyperlink = null;
 		var res;
 
 		if (!isNaN(this.value) && Math.abs(this.value) !== Infinity) {
@@ -781,7 +784,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cString(val) {
-		cBaseType.call(this, val);
+		// Intentional: source inline measured faster here despite V8's normal .call inlining; keep in sync with cBaseType.
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 	}
 
 	cString.prototype = Object.create(cBaseType.prototype);
@@ -855,7 +861,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		}
 
-		cBaseType.call(this, v);
+		// Intentional: source inline measured faster here despite V8's normal .call inlining; keep in sync with cBaseType.
+		this.numFormat = cNumFormatNull;
+		this.value = v;
+		this.hyperlink = null;
 	}
 
 	cBool.prototype = Object.create(cBaseType.prototype);
@@ -2175,7 +2184,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cEmpty() {
-		cBaseType.call(this, "");
+		// Intentional: source inline measured faster here despite V8's normal .call inlining; keep in sync with cBaseType.
+		this.numFormat = cNumFormatNull;
+		this.value = "";
+		this.hyperlink = null;
 	}
 
 	cEmpty.prototype = Object.create(cBaseType.prototype);
@@ -2946,7 +2958,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cArray() {
-		cBaseType.call(this, undefined);
+		// Intentional: source inline measured faster here despite V8's normal .call inlining; keep in sync with cBaseType.
+		this.numFormat = cNumFormatNull;
+		this.value = undefined;
+		this.hyperlink = null;
 		this.array = [];
 		this.rowCount = 0;
 		this.countElementInRow = [];
@@ -4224,14 +4239,23 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					var _ta = tempArgs[_j];
 					var _isArrayArg = checkArrayIndex(_j, cElementType.array, tempArgs);
 					var _isRange = cElementType.cellsRange === _ta.type || checkRange3d(_ta);
-					_argInfo[_j] = {
+					var _inf = _argInfo[_j] = {
 						isArrayArg: _isArrayArg,
 						isArray: cElementType.array === _ta.type && !_isArrayArg,
 						isRange: _isRange && !_isArrayArg && !checkArrayIndex(_j, cElementType.cellsRange),
 						rows: (cElementType.array === _ta.type) ? _ta.getRowCount() : 0,
 						cols: (cElementType.array === _ta.type) ? _ta.getCountElementInRow() : 0,
-						dimensions: _isRange ? _ta.getDimensions() : null
+						dimensions: _isRange ? _ta.getDimensions() : null,
+						mode: 0
 					};
+					// 0=scalar; 1..4=array shapes; 5..8=range shapes.
+					if (_inf.isArray) {
+						_inf.mode = 1 === _inf.rows && 1 === _inf.cols ? 1 : 1 === _inf.rows ? 2 : 1 === _inf.cols ? 3 : 4;
+					} else if (_inf.isRange) {
+						var _dimensions = _inf.dimensions;
+						_inf.mode = 1 === _dimensions.row && 1 === _dimensions.col ? 5 :
+							1 === _dimensions.row ? 6 : 1 === _dimensions.col ? 7 : 8;
+					}
 				}
 
 				//bbox_elem -
@@ -4246,35 +4270,21 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					for (var j = 0; j < argumentsCount; j++) {
 						newArg = tempArgs[j];
 						var info = _argInfo[j];
-						if (info.isArray) {
-							if (1 === info.rows && 1 === info.cols) {
-								newArg = newArg.array[0] ? newArg.array[0][0] : null;
-							} else if (1 === info.rows) {
-								newArg = newArg.array[0] ? newArg.array[0][c] : null;
-							} else if (1 === info.cols) {
-								newArg = newArg.array[r] ? newArg.array[r][0] : null;
-							} else {
-								newArg = newArg.array[r] ? newArg.array[r][c] : null;
+						if (info.mode) {
+							switch (info.mode) {
+								case 1: newArg = newArg.array[0] ? newArg.array[0][0] : null; break;
+								case 2: newArg = newArg.array[0] ? newArg.array[0][c] : null; break;
+								case 3: newArg = newArg.array[r] ? newArg.array[r][0] : null; break;
+								case 4: newArg = newArg.array[r] ? newArg.array[r][c] : null; break;
+								case 5: newArg = newArg.getValueByRowCol(0, 0); break;
+								case 6: newArg = newArg.getValueByRowCol(0, c); break;
+								case 7: newArg = newArg.getValueByRowCol(r, 0); break;
+								case 8: newArg = newArg.getValueByRowCol(r, c); break;
 							}
 							if (!newArg) {
 								//TODO check what to set if this array element is unavailable
 								//for now doing this - if not the last argument, then empty element, if last - undefined
-								newArg = /*j === argumentsCount - 1 ? undefined : */new cError(cErrorType.not_available);
-							}
-						} else if (info.isRange) {
-							if (1 === info.dimensions.row && 1 === info.dimensions.col) {
-								newArg = newArg.getValueByRowCol(0, 0);
-							} else if (1 === info.dimensions.row) {
-								newArg = newArg.getValueByRowCol(0, c);
-							} else if (1 === info.dimensions.col) {
-								newArg = newArg.getValueByRowCol(r, 0);
-							} else {
-								newArg = newArg.getValueByRowCol(r, c);
-							}
-							if (!newArg) {
-								//TODO check what to set if this array element is unavailable
-								//for now doing this - if not the last argument, then empty element, if last - undefined
-								newArg = /*j === argumentsCount - 1 ? undefined : */new cNumber(0);
+								newArg = info.mode <= 4 ? new cError(cErrorType.not_available) : new cNumber(0);
 							}
 						}
 
