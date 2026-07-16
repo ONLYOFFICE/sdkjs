@@ -3529,6 +3529,9 @@ function (window, undefined) {
 			const cell = ws.getCell3(t.bHor ? rowCol : index, t.bHor ? index : rowCol);
 			return checkTypeCell(cell, true);
 		}
+		// updateNearest only does work for match modes 1/-1 (exact-or-next); calling it in other
+		// modes (exact, wildcard) was a guaranteed no-op per scanned cell.
+		const trackNearest = opt_arg4 === 1 || opt_arg4 === -1;
 		const updateNearest = function(value, valueIndex) {
 			if (opt_arg4 === 1 && t._compareTypes(value, valueForSearching) >= 0 && t._compareValues(value, valueForSearching, ">")) {
 				if (nearestValue === null) {
@@ -3558,7 +3561,7 @@ function (window, undefined) {
 					resultIndex = opt_array ? opt_array[i].i : i;
 					break;
 				}
-				if (opt_arg4 !== undefined) {
+				if (trackNearest) {
 					updateNearest(val, i);
 				}
 			}
@@ -3569,7 +3572,7 @@ function (window, undefined) {
 					resultIndex = opt_array ? opt_array[i].i : i;
 					break;
 				}
-				if (opt_arg4 !== undefined) {
+				if (trackNearest) {
 					updateNearest(val, i);
 				}
 			}
