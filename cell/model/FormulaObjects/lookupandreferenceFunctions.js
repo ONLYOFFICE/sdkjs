@@ -1398,7 +1398,6 @@ function (window, undefined) {
 	cHLOOKUP.prototype.enabledToSingle = {"1": true};
 	cHLOOKUP.prototype.Calculate = function (arg) {
 		let retArr = new cArray();
-		let error = false;
 		if (arg[0].type === cElementType.array) {
 			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
 				arg[2] = arg[2].getValue2(0,0);
@@ -1427,19 +1426,17 @@ function (window, undefined) {
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
-					if (!error) {
-						callArgs[2] = arg[2].getValue2(r, c);
-						let res = g_oHLOOKUPCache.calculate(callArgs, arguments[1], ctx);
-						if (res.type === cElementType.error) {
-							error = true
-						}
-						retArr.addElement(res);
-					} else {
-						break
+					callArgs[2] = arg[2].getValue2(r, c);
+					let res = g_oHLOOKUPCache.calculate(callArgs, arguments[1], ctx);
+					if (res.type === cElementType.error) {
+						// the whole result collapses to one error anyway - stop calculating and
+						// building rows for the discarded array right here
+						return new cError(cErrorType.bad_reference);
 					}
+					retArr.addElement(res);
 				}
 			}
-			return error ? new cError(cErrorType.bad_reference) : retArr;
+			return retArr;
 		}
 
 		return g_oHLOOKUPCache.calculate(arg, arguments[1]);
@@ -4779,7 +4776,6 @@ function (window, undefined) {
 	cVLOOKUP.prototype.enabledToSingle = {"1": true};
 	cVLOOKUP.prototype.Calculate = function (arg) {
 		let retArr = new cArray();
-		let error = false;
 
 		if (arg[0].type === cElementType.array) {
 			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
@@ -4809,19 +4805,17 @@ function (window, undefined) {
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
-					if (!error) {
-						callArgs[2] = arg[2].getValue2(r, c);
-						let res = g_oVLOOKUPCache.calculate(callArgs, arguments[1], ctx);
-						if (res.type === cElementType.error) {
-							error = true;
-						}
-						retArr.addElement(res);
-					} else {
-						break;
+					callArgs[2] = arg[2].getValue2(r, c);
+					let res = g_oVLOOKUPCache.calculate(callArgs, arguments[1], ctx);
+					if (res.type === cElementType.error) {
+						// the whole result collapses to one error anyway - stop calculating and
+						// building rows for the discarded array right here
+						return new cError(cErrorType.bad_reference);
 					}
+					retArr.addElement(res);
 				}
 			}
-			return error ? new cError(cErrorType.bad_reference) : retArr
+			return retArr;
 		}
 
 		return g_oVLOOKUPCache.calculate(arg, arguments[1]);
