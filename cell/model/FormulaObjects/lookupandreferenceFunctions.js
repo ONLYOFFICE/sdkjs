@@ -3254,7 +3254,19 @@ function (window, undefined) {
 
 	VHLOOKUPCache.prototype.calculate = function (arg, argument1) {
 		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
-		let arg3 = arg[3] ? arg[3].tocBool().value : true;
+		// Fast paths for the dominant 4th-arg types avoid allocating a cBool per element:
+		// cBool.tocBool() returns `this` (same .value read), cNumber.tocBool() is new cBool(value !== 0)
+		// whose .value is exactly (value !== 0). Other types keep the original tocBool() path.
+		let _a3 = arg[3], arg3;
+		if (!_a3) {
+			arg3 = true;
+		} else if (cElementType.bool === _a3.type) {
+			arg3 = _a3.value;
+		} else if (cElementType.number === _a3.type) {
+			arg3 = 0 !== _a3.value;
+		} else {
+			arg3 = _a3.tocBool().value;
+		}
 		let opt_xlookup = arg[4] !== undefined;
 		let opt_arg4, opt_arg5;
 		if (opt_xlookup) {
