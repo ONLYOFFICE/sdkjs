@@ -2000,6 +2000,9 @@
 	CGraphicObjectBase.prototype.isEmptyPlaceholder = function () {
 		return false;
 	};
+	CGraphicObjectBase.prototype.isSlideImagePlaceholder = function () {
+		return this.getPlaceholderType() === AscFormat.phType_sldImg;
+	};
 	CGraphicObjectBase.prototype.RestartSpellCheck = function () {
 	};
 	CGraphicObjectBase.prototype.GetAllFields = function (isUseSelection, arrFields) {
