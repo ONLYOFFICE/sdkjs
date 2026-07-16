@@ -51,6 +51,18 @@ CCacheSlideImage.prototype.Clear = function()
     this.SlideNum  = -1;
 };
 
+function isDynamicContentTransition(type, param)
+{
+    if (type === c_oAscSlideTransitionTypes.Window)
+        return true;
+    if (type === c_oAscSlideTransitionTypes.Prism)
+    {
+        let offset = param - c_oAscSlideTransitionParams.Prism_Left;
+        return offset >= 8 && offset <= 15;
+    }
+    return false;
+}
+
 var __nextFrame = (function() {
     return window.requestAnimationFrame ||
         window.webkitRequestAnimationFrame ||
@@ -183,6 +195,22 @@ function CTransitionAnimation(htmlpage)
         this.HtmlPage.m_oApi.watermarkDraw = null;
         oPlayer.drawFrame(CacheImage.Image, {x: 0, y: 0, w: _w, h: _h});
         this.HtmlPage.m_oApi.watermarkDraw = oldWatermark;
+    };
+
+    this._renderSlideLayer = function(slide_num, isBackgroundLayer)
+    {
+        let oSlide = oThis.GetSlide(slide_num);
+        if (!oSlide)
+            return null;
+        let _w = oThis.Rect.w;
+        let _h = oThis.Rect.h;
+        let canvas = oThis.CreateImage(_w, _h);
+        let oPlayer = oSlide.getAnimationPlayer();
+        let oldWatermark = oThis.HtmlPage.m_oApi.watermarkDraw;
+        oThis.HtmlPage.m_oApi.watermarkDraw = null;
+        oPlayer.drawFrame(canvas, {x: 0, y: 0, w: _w, h: _h}, isBackgroundLayer);
+        oThis.HtmlPage.m_oApi.watermarkDraw = oldWatermark;
+        return canvas;
     };
 
     this.DrawImage1 = function(slide_num, _not_use_prev)
@@ -2785,6 +2813,17 @@ function CTransitionAnimation(htmlpage)
         }
 
         oThis.GLTransition.UploadSlideTextures(_img1, _img2);
+
+        if (isDynamicContentTransition(nType, oThis.Param) &&
+            oThis.CacheImage1.SlideNum >= 0 && oThis.CacheImage2.SlideNum >= 0)
+        {
+            let _bg1 = oThis._renderSlideLayer(oThis.CacheImage1.SlideNum, true);
+            let _content1 = oThis._renderSlideLayer(oThis.CacheImage1.SlideNum, false);
+            let _bg2 = oThis._renderSlideLayer(oThis.CacheImage2.SlideNum, true);
+            let _content2 = oThis._renderSlideLayer(oThis.CacheImage2.SlideNum, false);
+            oThis.GLTransition.UploadContentTextures(_bg1, _content1, _bg2, _content2);
+        }
+
         oThis.GLTransition.PrepareTransition(nType, oThis.Param);
 
         // First-frame: draw CacheImage1 on base canvas

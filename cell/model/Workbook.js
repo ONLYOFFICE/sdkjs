@@ -16642,15 +16642,21 @@
 	Cell.prototype.getOffset3=function(col, row){
 		return new AscCommon.CellBase(this.nRow - row + 1, this.nCol - col + 1);
 	};
+	// Public contract is zero-argument; the skip variant is private so an unexpected truthy caller argument cannot drop the formula from the snapshot.
 	Cell.prototype.getValueData = function(){
+		return this._getValueData(false);
+	};
+	// opt_skipFormula skips the unread formula-text assembly; only internal recalc-history callers that do not consume the string pass it.
+	Cell.prototype._getValueData = function(opt_skipFormula){
 		this._checkDirty();
-		var formula = this.isFormula() ? this.getFormula() : null;
+		var bIsFormula = this.isFormula();
+		var formula = (bIsFormula && !opt_skipFormula) ? this.getFormula() : null;
 		var formulaRef;
 		let ca;
 		let cm;
 		let vm;
 		let aca;
-		if(formula) {
+		if(bIsFormula) {
 			var parser = this.getFormulaParsed();
 			if(parser) {
 				formulaRef = parser.getArrayFormulaRef();
@@ -17060,29 +17066,32 @@
 		let nLastIndex = aRefElements.length - 1;
 		for (let i = 0, length = aRefElements.length; i < length; i++) {
 			const oRefElement = aRefElements[i];
-			const nRefType = oRefElement.type;
-			const b3D = nRefType === cElementType.cell3D || nRefType === cElementType.cellsRange3D;
-			const bArea = nRefType === cElementType.cellsRange;
-			const bDefName = nRefType === cElementType.name || nRefType === cElementType.name3D;
-			const bTable = nRefType === cElementType.table;
 			let oRange = null;
 
-			if (nRefType !== cElementType.cell && !b3D && !bArea && !bDefName && !bTable) {
-				continue;
-			}
-			if (nRefType === cElementType.name || nRefType === cElementType.name3D) {
-				const oElemValue = oRefElement.getValue();
-				const oElemType = oElemValue.type;
-				if (!aRefTypes.includes(oElemType)) {
-					return;
+			switch (oRefElement.type) {
+				case cElementType.name:
+				case cElementType.name3D: {
+					const oElemValue = oRefElement.getValue();
+					if (!aRefTypes.includes(oElemValue.type)) {
+						return;
+					}
+					oRange = oElemValue.getRange && oElemValue.getRange();
+					break;
 				}
-				oRange = oElemValue.getRange && oElemValue.getRange();
-			} else if (nRefType === cElementType.table) {
-				let oRefElem = oRefElement.toRef();
-				oRange = oRefElem.getRange && oRefElem.getRange();
-			} else {
-				oRange = oRefElement.getRange && oRefElement.getRange();
-			}
+				case cElementType.table: {
+					const oRefElem = oRefElement.toRef();
+					oRange = oRefElem.getRange && oRefElem.getRange();
+					break;
+				}
+				case cElementType.cell:
+				case cElementType.cell3D:
+				case cElementType.cellsRange:
+				case cElementType.cellsRange3D:
+					oRange = oRefElement.getRange && oRefElement.getRange();
+					break;
+				default:
+					continue;
+				}
 			if (!oRange) {
 				continue;
 			}
@@ -17558,9 +17567,13 @@
 		var parsed = this.getFormulaParsed();
 		var res = parsed.simplifyRefType(parsed.value, this.ws, this.nRow, this.nCol);
 
+		// same predicate as the history gate below, the sole reader of the assembled formula string
+		var needsFormulaDataForRecalcHistory = !!(parsed.unknownOrCustomFunction
+			|| parsed.replaceFormulaAfterCalc === AscCommonExcel.cReplaceFormulaType.formula);
+
 		let DataOld, DataNew;
 		if (AscCommon.History.Is_On()) {
-			DataOld = this.getValueData();
+			DataOld = this._getValueData(!needsFormulaDataForRecalcHistory);
 		}
 
 		if (res) {
@@ -17606,12 +17619,12 @@
 				}, this, []);
 			}
 
-			if (AscCommon.History.Is_On()) {
+			if (AscCommon.History.Is_On() && needsFormulaDataForRecalcHistory) {
 				DataNew = this.getValueData();
 			}
 
 			let _replaceFormulaType = parsed.replaceFormulaAfterCalc;
-			if (AscCommon.History.Is_On() && (parsed.unknownOrCustomFunction || _replaceFormulaType === AscCommonExcel.cReplaceFormulaType.formula)
+			if (AscCommon.History.Is_On() && needsFormulaDataForRecalcHistory
 				&& !(DataNew.value && DataNew.value.type === CellValueType.Error && DataNew.value.text === AscCommon.cErrorOrigin['busy'])) {
 
 				let wb = Asc["editor"] && Asc["editor"].wb;
