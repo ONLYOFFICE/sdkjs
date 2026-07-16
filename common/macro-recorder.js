@@ -1046,6 +1046,11 @@
 			return "\tdoc.GetCurrentParagraph().SetJc(\"" + align + "\");\n"
 		},
 		setParagraphShd			: function(color){return "\tdoc.GetRangeBySelect().SetShd(\"clear\", "+ color.asc_getR() + " , " + color.asc_getG() +", "+ color.asc_getB() +", false);\n"},
+		addDropCap				: function(data){
+			let type = data.bInText ? "drop" : "margin";
+			return "\tdoc.GetCurrentParagraph().SetDropCap(\"" + type + "\");\n";
+		},
+		removeDropCap			: function(){return "\tdoc.GetCurrentParagraph().SetDropCap(\"none\");\n"},
 		setLineSpacing			: function(lineSpacing){
 			let type = lineSpacing.type;
 			let value = lineSpacing.value;
@@ -2087,7 +2092,8 @@
 	DEActionMap[AscDFH.historydescription_Document_RemoveHdrFtr]				= wordActions.removeHdr;
 	DEActionMap[AscDFH.historydescription_Document_AddComment]					= wordActions.addComment;
 	//DEActionMap[AscDFH.AscDFH.historydescription_Document_AddTextArt]		= wordActions.addTextArt;
-	//DEActionMap[AscDFH.AscDFH.historydescription_Document_AddDropCap]		= wordActions.addDropCap;
+	DEActionMap[AscDFH.historydescription_Document_AddDropCap]					= wordActions.addDropCap;
+	DEActionMap[AscDFH.historydescription_Document_RemoveDropCap]				= wordActions.removeDropCap;
 	//DEActionMap[AscDFH.AscDFH.historydescription_Document_AddDateTimeField]	= wordActions.addDateTimeField;
 	DEActionMap[AscDFH.historydescription_Document_AddMath]					= wordActions.addMath;
 	DEActionMap[AscDFH.historydescription_Document_AddMathHotKey]				= wordActions.addMathHotkey;

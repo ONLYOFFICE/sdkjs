@@ -6309,7 +6309,7 @@ CDocument.prototype.AddDropCap = function(bInText)
 		this.UpdateInterface();
 		this.UpdateRulers();
 		this.UpdateTracks();
-		this.FinalizeAction();
+		this.FinalizeAction(undefined, {bInText : bInText});
 	}
 };
 CDocument.prototype.RemoveDropCap = function(bDropCap)
@@ -6371,7 +6371,7 @@ CDocument.prototype.RemoveDropCap = function(bDropCap)
 			this.Recalculate();
 			this.UpdateInterface();
 			this.UpdateRulers();
-			this.FinalizeAction();
+			this.FinalizeAction(undefined, {bRemove : true});
 		}
 	}
 	else
@@ -6430,7 +6430,7 @@ CDocument.prototype.RemoveDropCap = function(bDropCap)
 				this.Recalculate();
 				this.UpdateInterface();
 				this.UpdateRulers();
-				this.FinalizeAction();
+				this.FinalizeAction(undefined, {bRemove : true});
 			}
 		}
 		else
@@ -6451,7 +6451,7 @@ CDocument.prototype.RemoveDropCap = function(bDropCap)
 				this.Recalculate();
 				this.UpdateInterface();
 				this.UpdateRulers();
-				this.FinalizeAction();
+				this.FinalizeAction(undefined, {bRemove : true});
 			}
 		}
 	}
