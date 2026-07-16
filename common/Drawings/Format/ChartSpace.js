@@ -6090,6 +6090,10 @@ function(window, undefined) {
 					pt.compiledDlb = null;
 					continue;
 				}
+				if (chartType === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN && pt.idx >= cachedData.data.length) {
+					pt.compiledDlb = null;
+					continue;
+				}
 				const compiled_dlb = new AscFormat.CDLbl();
 				compiled_dlb.merge(default_lbl);
 				compiled_dlb.merge(seria.dataLabels);
@@ -6109,6 +6113,11 @@ function(window, undefined) {
 				if (chartType === AscFormat.SERIES_LAYOUT_TREEMAP) {
 					const label = searchLabel(sPts, pt.idx);
 					pt.compiledDlb.replaceTextContentNoHistory(label);
+					pt.compiledDlb.recalculateInternal();
+				}
+				if (chartType === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN) {
+					const sText = oNumFormatCache.get(seria.getValObjectSourceNumFormat(pt.idx)).formatToChart(cachedData.data[pt.idx].val);
+					pt.compiledDlb.replaceTextContentNoHistory(sText);
 					pt.compiledDlb.recalculateInternal();
 				}
 				if (cachedData.funnel && pt.compiledDlb.pt <= 0) {
