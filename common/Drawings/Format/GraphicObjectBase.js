@@ -3864,16 +3864,6 @@
 		if (!sImageFormat && typeof this.cachedImage === "string" && this.cachedImage.length > 0) {
 			return this.cachedImage;
 		}
-		if (this.parent) {
-			let nParentType = null;
-			if (this.parent.getObjectType) {
-				nParentType = this.parent.getObjectType();
-			}
-			if (nParentType === AscDFH.historyitem_type_Notes ||
-				nParentType === AscDFH.historyitem_type_NotesMaster) {
-				return "";
-			}
-		}
 		let oPictureData;
 		if(!bForceAsDraw) {
 			oPictureData = this.getPictureBase64Data();
