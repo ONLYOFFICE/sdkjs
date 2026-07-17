@@ -210,7 +210,9 @@
 		this.startPos = startPos || null;
 		this.endPos = endPos || null;
 	}
-
+	SavedPosition.prototype.isEmpty = function () {
+		return !this.startPos && !this.endPos;
+	};
 	SavedPosition.prototype.apply = function (outlineView) {
 		const docContent = outlineView.getDocContent();
 		if (!docContent) {
@@ -1304,6 +1306,12 @@
 		return this.measureInfo;
 	};
 
+	function getSelectionSetter(outlineView, target, isResetSelection) {
+		if (isResetSelection) {
+			return new SelectionSetter(outlineView, target);
+		}
+		return new ExpandSelectionSetter(outlineView, target);
+	}
 	function DecorationSelectManager(outlineView, e, x, y) {
 		this.outlineView = outlineView;
 		this.event = e;
@@ -1331,20 +1339,8 @@
 		if (!target) {
 			return;
 		}
-		if (this.isExpandSelection()) {
-			this.expandSelection(target);
-		} else {
-			this.setSelection(target);
-		}
-	};
-	DecorationSelectManager.prototype.setSelection = function (target) {
-		const docContent = this.getDocContent();
-		if (!docContent) {
-			return;
-		}
-		docContent.SetContentPosition(target.endPos, 0, 0);
-		docContent.SetContentSelection(target.startPos, target.endPos, 0, 0, 0);
-		this.outlineView.updateSelectionState();
+		const setter = getSelectionSetter(this.outlineView, target, !this.isExpandSelection());
+		setter.select();
 	};
 	DecorationSelectManager.prototype.isClickToSlideIcon = function (outlineParagraph) {
 		const sizes = this.outlineView.getSlideIconSizes(outlineParagraph);
@@ -1354,8 +1350,20 @@
 		return this.x >= sizes.x && this.x <= sizes.x + sizes.width &&
 			this.y >= sizes.y && this.y <= sizes.y + sizes.height;
 	};
-	DecorationSelectManager.prototype.getContentPosition = function (outlineParagraph, isStart) {
-		const docContent = this.getDocContent();
+	DecorationSelectManager.prototype.getTargetContentPositions = function (outlineParagraph, isSlide) {
+		const positionGetter = isSlide ? new SlidePositionGetter(this.outlineView, outlineParagraph) : new ParagraphPositionGetter(this.outlineView, outlineParagraph);
+		return positionGetter.get();
+	};
+	DecorationSelectManager.prototype.isExpandSelection = function () {
+		return this.event.CtrlKey || this.event.ShiftKey;
+	};
+	
+	function OutlinePositionGetter(outlineView, paragraph) {
+		this.outlineView = outlineView;
+		this.paragraph = paragraph;
+	}
+	OutlinePositionGetter.prototype.getContentPosition = function (outlineParagraph, isStart) {
+		const docContent = this.outlineView.getDocContent();
 		const pos = [{Class: docContent, Position: outlineParagraph.Index}];
 		if (isStart) {
 			outlineParagraph.GetStartContentPosition(pos);
@@ -1363,19 +1371,23 @@
 			outlineParagraph.GetEndContentPosition(pos, true);
 		}
 		return pos;
-	};
-	DecorationSelectManager.prototype.getTargetContentPositions = function (outlineParagraph, isSlide) {
-		let firstParagraph = outlineParagraph;
-		let lastParagraph = outlineParagraph;
-		if (isSlide) {
-			const info = this.outlineView.outlineInfo.getSlideInfoByParagraph(outlineParagraph);
-			const slide = info && info.slide;
-			if (slide) {
-				const paragraphs = this.outlineView.getOutlineSlideParagraphs(slide);
-				if (paragraphs.length) {
-					firstParagraph = paragraphs[0];
-					lastParagraph = paragraphs[paragraphs.length - 1];
-				}
+	}
+	OutlinePositionGetter.prototype.get = function () {};
+
+	function SlidePositionGetter(outlineView, paragraph) {
+		OutlinePositionGetter.call(this, outlineView, paragraph);
+	}
+	AscFormat.InitClassWithoutType(SlidePositionGetter, OutlinePositionGetter);
+	SlidePositionGetter.prototype.get = function () {
+		let firstParagraph = this.paragraph;
+		let lastParagraph = this.paragraph;
+		const info = this.outlineView.outlineInfo.getSlideInfoByParagraph(this.paragraph);
+		const slide = info && info.slide;
+		if (slide) {
+			const paragraphs = this.outlineView.getOutlineSlideParagraphs(slide);
+			if (paragraphs.length) {
+				firstParagraph = paragraphs[0];
+				lastParagraph = paragraphs[paragraphs.length - 1];
 			}
 		}
 		return {
@@ -1383,8 +1395,70 @@
 			endPos: this.getContentPosition(lastParagraph, false)
 		};
 	};
-	DecorationSelectManager.prototype.getCurrentContentPositions = function () {
-		const docContent = this.getDocContent();
+
+	function ParagraphPositionGetter(outlineView, paragraph) {
+		OutlinePositionGetter.call(this, outlineView, paragraph);
+	}
+	AscFormat.InitClassWithoutType(ParagraphPositionGetter, OutlinePositionGetter);
+	ParagraphPositionGetter.prototype.get = function () {
+		return {
+			startPos: this.getContentPosition(this.paragraph, true),
+			endPos: this.getContentPosition(this.paragraph, false)
+		};
+	};
+
+	function SelectionSetter(outlineView, target) {
+		this.outlineView = outlineView;
+		this.target = target;
+	}
+	
+	SelectionSetter.prototype.setSelection = function (positions) {
+		const docContent = this.outlineView.getDocContent();
+		if (!docContent) {
+			return;
+		}
+		docContent.SetContentPosition(positions.endPos, 0, 0);
+		docContent.SetContentSelection(positions.startPos, positions.endPos, 0, 0, 0);
+		this.outlineView.updateSelectionState();
+	}
+	SelectionSetter.prototype.select = function () {
+		this.setSelection(this.target);
+	}
+	function ExpandSelectionSetter(outlineView, target) {
+		SelectionSetter.call(this, outlineView, target);
+	}
+	AscFormat.InitClassWithoutType(ExpandSelectionSetter, SelectionSetter);
+	ExpandSelectionSetter.prototype.select = function () {
+		const cur = this.getCurrentContentPositions();
+		const targetStartIndex = this.target.startPos[0].Position;
+		const currentStartIndex = cur.startPos[0].Position;
+		const targetEndIndex = this.target.endPos[0].Position;
+		const currentEndIndex = cur.endPos[0].Position;
+		let startPos;
+		let endPos;
+		let isNeedSetSelection = false;
+		let isSwitchSelection = false;
+		if (targetStartIndex <= currentStartIndex) {
+			isNeedSetSelection = true;
+			isSwitchSelection = true;
+			startPos = this.target.startPos;
+		} else {
+			startPos = cur.startPos;
+		}
+		if (targetEndIndex >= currentEndIndex) {
+			isNeedSetSelection = true;
+			isSwitchSelection = false;
+			endPos = this.target.endPos;
+		} else {
+			endPos = cur.endPos;
+		}
+		if (isNeedSetSelection) {
+			const newSelectionPositions = isSwitchSelection ? {startPos: endPos, endPos: startPos} : {startPos: startPos, endPos: endPos};
+			this.setSelection(newSelectionPositions);
+		}
+	};
+	ExpandSelectionSetter.prototype.getCurrentContentPositions = function () {
+		const docContent = this.outlineView.getDocContent();
 		if (docContent.IsSelectionUse()) {
 			const startPos = docContent.GetContentPosition(true, true);
 			const endPos = docContent.GetContentPosition(true, false);
@@ -1396,39 +1470,63 @@
 		const pos = docContent.GetContentPosition(false, false);
 		return {startPos: pos, endPos: pos};
 	};
-	DecorationSelectManager.prototype.expandSelection = function (target) {
-		const cur = this.getCurrentContentPositions();
-		const targetStartIndex = target.startPos[0].Position;
-		const currentStartIndex = cur.startPos[0].Position;
-		const targetEndIndex = target.endPos[0].Position;
-		const currentEndIndex = cur.endPos[0].Position;
-		let startPos;
-		let endPos;
-		let isNeedSetSelection = false;
-		let isSwitchSelection = false;
-		if (targetStartIndex <= currentStartIndex) {
-			isNeedSetSelection = true;
-			isSwitchSelection = true;
-			startPos = target.startPos;
-		} else {
-			startPos = cur.startPos;
-		}
-		if (targetEndIndex >= currentEndIndex) {
-			isNeedSetSelection = true;
-			isSwitchSelection = false;
-			endPos = target.endPos;
-		} else {
-			endPos = cur.endPos;
-		}
-		if (isNeedSetSelection) {
-			const newSelectionPositions = isSwitchSelection ? {startPos: endPos, endPos: startPos} : {startPos: startPos, endPos: endPos};
-			this.setSelection(newSelectionPositions);
-		}
-	};
-	DecorationSelectManager.prototype.isExpandSelection = function () {
-		return this.event.CtrlKey || this.event.ShiftKey;
-	};
 
+
+	function OutlineSlidesSelectionManager(outlineView, slideIndexes, isResetSelection) {
+		this.outlineView = outlineView;
+		this.indexes = slideIndexes;
+		this.isResetSelection = isResetSelection;
+	}
+	OutlineSlidesSelectionManager.prototype.getSelectRange = function () {
+		if (!this.indexes.length) {
+			return null;
+		}
+		let startSlideIndex = this.indexes[0];
+		let endSlideIndex = this.indexes[0];
+
+		for (let i = 1; i < this.indexes.length; i += 1) {
+			const slideIndex = this.indexes[i];
+			if (slideIndex < startSlideIndex) {
+				startSlideIndex = slideIndex;
+			}
+			if (slideIndex > endSlideIndex) {
+				endSlideIndex = slideIndex;
+			}
+		}
+		return {start: startSlideIndex, end: endSlideIndex};
+	};
+	OutlineSlidesSelectionManager.prototype.getSlidePositions = function (slideIndex) {
+		const presentation = this.outlineView.getPresentation();
+		const slide = presentation.Slides[slideIndex];
+		if (!slide) {
+			return null;
+		}
+		return this.outlineView.getSlidePositions(slide);
+	};
+	OutlineSlidesSelectionManager.prototype.select = function () {
+		const presentation = this.outlineView.getPresentation();
+		if (!presentation) {
+			return;
+		}
+		if (!presentation.IsOutlineMode()) {
+			return;
+		}
+		this.outlineView.update();
+		const selectRange = this.getSelectRange();
+		if (!selectRange) {
+			return;
+		}
+
+		const startSlidePositions = this.getSlidePositions(selectRange.start);
+		const endSlidePositions = this.getSlidePositions(selectRange.end);
+		if (!startSlidePositions || !endSlidePositions) {
+			return;
+		}
+
+		const target = {startPos: startSlidePositions.startPos, endPos: endSlidePositions.endPos};
+		const selectionSetter = getSelectionSetter(this.outlineView, target, this.isResetSelection);
+		selectionSetter.select();
+	};
 	function OutlineView(api) {
 		this.api = api;
 		this.isInit = false;
@@ -1437,6 +1535,13 @@
 		this.decorCacheManager = new DecorCacheManager();
 		this.reset();
 	}
+	OutlineView.prototype.getSlidePositions = function (slide) {
+		const info = this.outlineInfo.getSlideInfoBySlide(slide);
+		if (!info) {
+			return null;
+		}
+		return (new SlidePositionGetter(this, info.outlineParagraph)).get();
+	};
 	OutlineView.prototype.getSlideNumbersWidth = function () {
 			const measureInfo = this.decorCacheManager.getMeasureInfo();
 			const presentation = this.getPresentation();
@@ -1884,8 +1989,28 @@
 		presentation.updateSlideIndexes();
 		presentation.DrawingDocument.UpdateThumbnailsAttack();
 		this.update();
-		presentation.DrawingDocument.m_oWordControl.GoToPage(Math.min(presentation.GetSlidesCount() - 1, minSlideIndex), undefined, undefined, true);
+		const lastSlideIndex = presentation.GetSlidesCount() - 1;
+		const currentPage = Math.min(lastSlideIndex, minSlideIndex + 1);
+		presentation.DrawingDocument.m_oWordControl.GoToPage(currentPage, undefined, undefined, true);
+		const docContent = this.getDocContent();
+		if (docContent && currentPage !== -1 && this.isEmptySavedPosition()) {
+			docContent.RemoveSelection();
+			const slidePositions = this.getSlidePositions(presentation.Slides[currentPage]);
+			if (lastSlideIndex >= minSlideIndex + 1) {
+				docContent.SetContentPosition(slidePositions.startPos, 0, 0);
+			} else {
+				docContent.SetContentPosition(slidePositions.endPos, 0, 0);
+			}
+		}
+
 		presentation.Api.sync_HideComment();
+	};
+	OutlineView.prototype.isEmptySavedPosition = function () {
+		const savedPosition = this.getSavedPosition();
+		if (!savedPosition) {
+			return true;
+		}
+		return savedPosition.isEmpty();
 	};
 	OutlineView.prototype.rebuildSavedPositionPos = function (pos) {
 		const docContent = this.getDocContent();
@@ -2340,8 +2465,8 @@
 		const content = this.getDocContent();
 		if (content) {
 			content.SelectAll();
-			const drawingDocument = this.outlineShape.getDrawingDocument();
-			this.outlineShape.updateSelectionState(drawingDocument);
+			this.updateInterfaceState();
+			this.updateSelectionState();
 		}
 	};
 	OutlineView.prototype.executeShortcut = function (shortcutAction) {
@@ -2365,12 +2490,20 @@
 	OutlineView.prototype.updateInterfaceState = function () {
 
 	};
+	OutlineView.prototype.getThumbnailsManager = function () {
+		const api = this.getApi();
+		return api.WordControl.Thumbnails;
+	};
 	OutlineView.prototype.updateSelectionState = function () {
 		if (this.outlineShape) {
 			if (this.isEmptyPresentation()) {
 				this.outlineShape.resetSelectionState();
 			} else {
 				this.outlineShape.updateSelectionState();
+			}
+			const thumbnails = this.getThumbnailsManager();
+			if (thumbnails) {
+				thumbnails.OnUpdateOverlay();
 			}
 		}
 	};
@@ -2991,4 +3124,5 @@
 	window["AscCommonSlide"].OutlineSlide = OutlineSlide;
 	window["AscCommonSlide"].OutlineView = OutlineView;
 	window["AscCommonSlide"].DecoratorDrawer = DecoratorDrawer;
+	window["AscCommonSlide"].OutlineSlidesSelectionManager = OutlineSlidesSelectionManager;
 })();

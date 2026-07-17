@@ -316,6 +316,11 @@
 	};
 	CThumbnailsManagerBase.prototype.UpdateLimits = function (isNoNeedResize) {
 	};
+	CThumbnailsManagerBase.prototype.SelectSlides = function(aSelectedIdx, bReset) {
+		bReset = bReset === undefined || bReset;
+	};
+	CThumbnailsManagerBase.prototype.GetSlideSelector = function (aSelectedIdx, bReset) {
+	};
 
 	function CThumbnailsManager(editorPage) {
 		CThumbnailsManagerBase.call(this, editorPage);
@@ -1804,9 +1809,10 @@
 	// select
 	CThumbnailsManager.prototype.SelectSlides = function(aSelectedIdx, bReset)
 	{
+		bReset = bReset === undefined || bReset;
 		if (aSelectedIdx.length > 0)
 		{
-			if(bReset === undefined || bReset)
+			if(bReset)
 			{
 				for (let i = 0; i < this.m_arrPages.length; i++)
 				{
@@ -2986,6 +2992,22 @@
 	// select
 	COutlineThumbnailsManager.prototype.SelectSlides = function(aSelectedIdx, bReset)
 	{
+		const selector = this.GetSlideSelector(aSelectedIdx, bReset);
+		if (selector) {
+			selector.select();
+		}
+	};
+	COutlineThumbnailsManager.prototype.GetSlideSelector = function(aSelectedIdx, bReset)
+	{
+		if (!aSelectedIdx.length) {
+			return;
+		}
+		const outlineView = this.GetOutlineView();
+		if (!outlineView) {
+			return;
+		}
+		bReset = bReset === undefined || bReset;
+		return new AscCommonSlide.OutlineSlidesSelectionManager(outlineView, aSelectedIdx, bReset);
 	};
 
 	COutlineThumbnailsManager.prototype.GetSelectedSlidesRange = function()
