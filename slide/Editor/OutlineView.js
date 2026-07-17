@@ -2968,7 +2968,7 @@
 	OutlineView.prototype.getSelectionState = function () {
 		const selectionState = {};
 		const docContent = this.getDocContent();
-		if (docContent) {
+		if (docContent && !this.isEmptyPresentation()) {
 			selectionState.focus = true;
 			selectionState.textObject = this.outlineShape;
 			selectionState.selectStartPage = selectionState.textObject.selectStartPage;
