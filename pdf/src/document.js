@@ -9205,6 +9205,9 @@ var CPresentation = CPresentation || function(){};
 	CPDFDoc.prototype.IsSelectParagraphEndMark = function() {
 		return false;
 	};
+	CPDFDoc.prototype.CanDoAutoCorrect = function() {
+		return true;
+	};
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Extension required for CGraphicObjects

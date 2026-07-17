@@ -179,7 +179,7 @@
 	{
 		// Если автозамены будем включать в формах при каких-либо условиях, тогда нужно проверять, что
 		// выполнение автозамены не выходит за пределы формы
-		if (this.Run.GetParentForm())
+		if (this.Run.GetParentForm() || !this.Document.CanDoAutoCorrect())
 			return AUTOCORRECT_FLAGS_NONE;
 
 		return nFlags;

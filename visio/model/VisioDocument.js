@@ -214,6 +214,9 @@ AscDFH.historyitem_type_VisioWindow = 328;
 	CVisioDocument.prototype.IsPdfEditor = function() {
 		return false;
 	};
+	CVisioDocument.prototype.CanDoAutoCorrect = function() {
+		return false;
+	};
 	/**
 	 * TODO Check thumbnail parse in fromZip and setData in toZip
 	 * @memberOf CVisioDocument

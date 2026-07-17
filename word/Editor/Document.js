@@ -25393,6 +25393,10 @@ CDocument.prototype.GetAutoCorrectSettings = function()
 {
 	return this.AutoCorrectSettings;
 };
+CDocument.prototype.CanDoAutoCorrect = function()
+{
+	return !this.Api.isMacroRecorderActive();
+};
 /**
  * Устанавливаем настройку автосоздания маркированных списков
  * @param isAuto {boolean}
