@@ -3969,7 +3969,7 @@
 		oGraphicsPDF.SetCurPage(nPage);
 
 		aAnnots.forEach(function(annot) {
-			annot.DrawOnPage(oGraphicsPDF, oGraphicsWord);
+			annot.DrawOnPage(oGraphicsPDF);
 		});
 
 		if (oDirtyBoundsMM) {
