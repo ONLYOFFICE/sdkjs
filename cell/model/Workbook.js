@@ -19237,7 +19237,7 @@
 		//didn't want to introduce additional parameter, so if byRef == null
 		//then the value will be a formula that needs to be offset depending on range
 		//when calling this function pay attention to byRef parameter
-		var _formula, t = this, activeCell;
+		var _formula, t = this, activeCell, anchorRow, anchorCol;
 		if (byRef === null) {
 			_formula = new AscCommonExcel.parserFormula(val.substr(1), null, this.worksheet);
 			if (!_formula.parse(true)) {
@@ -19245,6 +19245,10 @@
 			} else {
 				var _selection = this.worksheet.getSelection();
 				activeCell = _selection.activeCell;
+				// offset base = merge top-left, not the raw active cell
+				var anchorMerge = this.worksheet.getMergedByCell(activeCell.row, activeCell.col);
+				anchorRow = anchorMerge ? anchorMerge.r1 : activeCell.row;
+				anchorCol = anchorMerge ? anchorMerge.c1 : activeCell.col;
 			}
 		}
 
@@ -19263,10 +19267,15 @@
 			}
 			var _val = val;
 			if (_formula) {
+				// fill only the top-left of each merged region
+				var cellMerge = t.worksheet.getMergedByCell(cell.nRow, cell.nCol);
+				if (cellMerge && (cellMerge.r1 !== cell.nRow || cellMerge.c1 !== cell.nCol)) {
+					return;
+				}
 				_formula.isParsed = false;
 				_formula.outStack = [];
 				_formula.parse(true);
-				var offset = new AscCommon.CellBase(cell.nRow - activeCell.row, cell.nCol - activeCell.col);
+				var offset = new AscCommon.CellBase(cell.nRow - anchorRow, cell.nCol - anchorCol);
 				_val = "=" + _formula.changeOffset(offset, null, true).assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true, true);
 			}
 			// when creating new array formulas, it is necessary to transfer information about the dynamic array because regular ref is used

@@ -20001,19 +20001,28 @@ function isAllowPasteLink(pastedWb) {
 				if (_formula.parse(true)) {
 					var _selection = t.model.getSelection();
 					var activeCell = _selection.activeCell;
+					// offset base = merge top-left, not the raw active cell
+					var anchorMerge = t.model.getMergedByCell(activeCell.row, activeCell.col);
+					var anchorRow = anchorMerge ? anchorMerge.r1 : activeCell.row;
+					var anchorCol = anchorMerge ? anchorMerge.c1 : activeCell.col;
 					var selectionRange = t.getSelectedRange();
-					
+
 					selectionRange._foreach(function(cell) {
 						if (cell.ws.isUserProtectedRangesIntersectionCell(cell)) {
 							return;
 						}
-						
+						// fill only the top-left of each merged region
+						var cellMerge = t.model.getMergedByCell(cell.nRow, cell.nCol);
+						if (cellMerge && (cellMerge.r1 !== cell.nRow || cellMerge.c1 !== cell.nCol)) {
+							return;
+						}
+
 						_formula.isParsed = false;
 						_formula.outStack = [];
 						_formula.parse(true);
-						var offset = new AscCommon.CellBase(cell.nRow - activeCell.row, cell.nCol - activeCell.col);
+						var offset = new AscCommon.CellBase(cell.nRow - anchorRow, cell.nCol - anchorCol);
 						var _val = "=" + _formula.changeOffset(offset, null, true).assembleLocale(AscCommonExcel.cFormulaLocaleInfo, true, true);
-						
+
 						var cellFormula = new AscCommonExcel.parserFormula(_val.substr(1), new AscCommonExcel.CCellWithFormula(t.model, cell.nRow, cell.nCol), t.model);
 						if (cellFormula.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep)) {
 							var cellCalculateResult = new AscCommonExcel.CalculateResult(true);
