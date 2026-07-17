@@ -5277,6 +5277,9 @@ function (window, undefined) {
 			case AscCH.historyitem_Layout_Height:
 				pageSetup.asc_setHeight(value);
 				break;
+			case AscCH.historyitem_Layout_PaperSize:
+				pageSetup.asc_setPaperSize(value);
+				break;
 			case AscCH.historyitem_Layout_FitToWidth:
 				pageSetup.asc_setFitToWidth(value);
 				break;

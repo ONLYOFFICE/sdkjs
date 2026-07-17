@@ -13480,6 +13480,7 @@ function RangeDataManagerElem(bbox, data)
 		this.orientation = c_oAscPrintDefaultSettings.PageOrientation;
 		this.width = c_oAscPrintDefaultSettings.PageWidth;
 		this.height = c_oAscPrintDefaultSettings.PageHeight;
+		this.paperSize = null;
 
 		this.fitToWidth = 1; //default -> 1, 0 -> automatic
 		this.fitToHeight = 1; //default -> 1, 0 -> automatic
@@ -13514,6 +13515,7 @@ function RangeDataManagerElem(bbox, data)
 		res.orientation = this.orientation;
 		res.width = this.width;
 		res.height = this.height;
+		res.paperSize = this.paperSize;
 
 		res.fitToWidth = this.fitToWidth; //default -> 1, 0 -> automatic
 		res.fitToHeight = this.fitToHeight; //default -> 1, 0 -> automatic
@@ -13567,6 +13569,15 @@ function RangeDataManagerElem(bbox, data)
 		}
 		let wb = this.ws && this.ws.workbook && this.ws.workbook;
 		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
+	};
+	asc_CPageSetup.prototype.asc_getPaperSize = function () { return this.paperSize; };
+	asc_CPageSetup.prototype.asc_setPaperSize = function (newVal) {
+		var oldVal = this.paperSize;
+		this.paperSize = newVal;
+		if (this.ws && AscCommon.History.Is_On() && oldVal !== this.paperSize) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_PaperSize, this.ws.getId(),
+				null, new UndoRedoData_Layout(oldVal, newVal));
+		}
 	};
 	asc_CPageSetup.prototype.asc_getFirstPageNumber = function () {
 		return this.useFirstPageNumber ? this.firstPageNumber : null;
@@ -13654,6 +13665,11 @@ function RangeDataManagerElem(bbox, data)
 		prop = obj.asc_getHeight();
 		if(prop !== this.asc_getHeight()) {
 			this.asc_setHeight(prop);
+		}
+		//keep the paper size id in sync with the merged dimensions (null -> derived from width/height)
+		prop = obj.asc_getPaperSize();
+		if(prop !== this.asc_getPaperSize()) {
+			this.asc_setPaperSize(prop);
 		}
 		prop = obj.asc_getFitToWidth();
 		if(prop !== this.asc_getFitToWidth()) {
@@ -13751,6 +13767,7 @@ function RangeDataManagerElem(bbox, data)
 		res["pageSetup"]["horizontalDpi"] = this.pageSetup.horizontalDpi;
 		res["pageSetup"]["orientation"] = this.pageSetup.orientation;
 		res["pageSetup"]["pageOrder"] = this.pageSetup.pageOrder;
+		res["pageSetup"]["paperSize"] = this.pageSetup.paperSize;
 		res["pageSetup"]["paperUnits"] = this.pageSetup.paperUnits;
 		res["pageSetup"]["printArea"] = this.pageSetup.printArea;
 		res["pageSetup"]["selection"] = this.pageSetup.selection;
@@ -13810,6 +13827,7 @@ function RangeDataManagerElem(bbox, data)
 		this.pageSetup.horizontalDpi = checkOnNull(props["pageSetup"]["horizontalDpi"], this.pageSetup.horizontalDpi);
 		this.pageSetup.orientation = checkOnNull(props["pageSetup"]["orientation"], this.pageSetup.orientation);
 		this.pageSetup.pageOrder = checkOnNull(props["pageSetup"]["pageOrder"], this.pageSetup.pageOrder);
+		this.pageSetup.paperSize = checkOnNull(props["pageSetup"]["paperSize"], this.pageSetup.paperSize);
 		this.pageSetup.paperUnits = checkOnNull(props["pageSetup"]["paperUnits"], this.pageSetup.paperUnits);
 		this.pageSetup.printArea = checkOnNull(props["pageSetup"]["printArea"], this.pageSetup.printArea);
 		this.pageSetup.selection = checkOnNull(props["pageSetup"]["selection"], this.pageSetup.selection);
@@ -22446,6 +22464,8 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_setOrientation"] = prot.asc_setOrientation;
 	prot["asc_setWidth"] = prot.asc_setWidth;
 	prot["asc_setHeight"] = prot.asc_setHeight;
+	prot["asc_getPaperSize"] = prot.asc_getPaperSize;
+	prot["asc_setPaperSize"] = prot.asc_setPaperSize;
 	prot["asc_getFitToWidth"] = prot.asc_getFitToWidth;
 	prot["asc_getFitToHeight"] = prot.asc_getFitToHeight;
 	prot["asc_setFitToWidth"] = prot.asc_setFitToWidth;

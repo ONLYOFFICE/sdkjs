@@ -23603,6 +23603,7 @@ function isAllowPasteLink(pastedWb) {
 
 			pageOptions.pageSetup.asc_setWidth(width);
 			pageOptions.pageSetup.asc_setHeight(height);
+			pageOptions.pageSetup.asc_setPaperSize(null);
 
 			History.EndTransaction();
 
