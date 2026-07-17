@@ -546,6 +546,22 @@
 		AscFonts.load(this, this._onSuccessLoadModule.bind(this), this._onErrorLoadModule.bind(this));
 		//AscCommon.zlib_load(this._onSuccessLoadModule.bind(this), this._onErrorLoadModule.bind(this));
 	};
+	baseEditorsApi.prototype._addLoadModule = function(src, onSuccess, onError)
+	{
+		this.modulesCount += 1;
+
+		let _onSuccess = function() {
+			onSuccess && onSuccess();
+			this._onSuccessLoadModule();
+		};
+
+		let _onError = function() {
+			onError && onError();
+			this._onSuccessLoadModule();
+		};
+
+		AscCommon.loadScript(AscCommon.RELATIVE_SDKJS_PATH + src, _onSuccess.bind(this), _onError.bind(this));
+	};
 	baseEditorsApi.prototype._onSuccessLoadModule = function()
 	{
 		this.modulesLoaded++;
@@ -663,7 +679,7 @@
 		if (AscCommon.chartMode === this.documentUrl)
 		{
 			this.frameManager = new AscCommon.CDiagramCellFrameManager(this);
-        AscCommon.EncryptionWorker.isFrameEditor = true;
+			AscCommon.EncryptionWorker.isFrameEditor = true;
 			this.DocInfo.put_OfflineApp(true);
 		}
 
