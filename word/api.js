@@ -8727,76 +8727,90 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.GoToHeader = function(pageNumber)
 	{
-		if (this.WordControl.m_oDrawingDocument.IsFreezePage(pageNumber))
-			return;
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+		
+		let drawingDocument = logicDocument.GetDrawingDocument();
+		if (drawingDocument && drawingDocument.IsFreezePage(pageNumber))
+			return false;
 
 		var bForceRedraw  = false;
-		var LogicDocument = this.WordControl.m_oLogicDocument;
-		LogicDocument.RemoveSelection();
+		logicDocument.RemoveSelection();
 
-		if (AscCommonWord.docpostype_HdrFtr !== LogicDocument.GetDocPosType())
+		if (AscCommonWord.docpostype_HdrFtr !== logicDocument.GetDocPosType())
 		{
-			LogicDocument.SetDocPosType(AscCommonWord.docpostype_HdrFtr);
+			logicDocument.SetDocPosType(AscCommonWord.docpostype_HdrFtr);
 			bForceRedraw = true;
 		}
+		
+		let mouseEvent = AscCommon.global_mouseEvent;
 
-		var oldClickCount            = global_mouseEvent.ClickCount;
-		global_mouseEvent.Button     = 0;
-		global_mouseEvent.ClickCount = 1;
+		var oldClickCount            = mouseEvent.ClickCount;
+		mouseEvent.Button     = 0;
+		mouseEvent.ClickCount = 1;
 
-		LogicDocument.OnMouseDown(global_mouseEvent, 0, 0, pageNumber);
-		LogicDocument.OnMouseUp(global_mouseEvent, 0, 0, pageNumber);
-		LogicDocument.OnMouseMove(global_mouseEvent, 0, 0, pageNumber);
-		LogicDocument.MoveCursorLeft();
-		LogicDocument.UpdateInterface();
-		LogicDocument.UpdateSelection();
+		logicDocument.OnMouseDown(mouseEvent, 0, 0, pageNumber);
+		logicDocument.OnMouseUp(mouseEvent, 0, 0, pageNumber);
+		logicDocument.OnMouseMove(mouseEvent, 0, 0, pageNumber);
+		logicDocument.MoveCursorLeft();
+		logicDocument.UpdateInterface();
+		logicDocument.UpdateSelection();
 
-		global_mouseEvent.ClickCount = oldClickCount;
+		mouseEvent.ClickCount = oldClickCount;
 
-		if (true === bForceRedraw)
+		if (true === bForceRedraw && drawingDocument)
 		{
-			this.WordControl.m_oDrawingDocument.ClearCachePages();
-			this.WordControl.m_oDrawingDocument.FirePaint();
+			drawingDocument.ClearCachePages();
+			drawingDocument.FirePaint();
 		}
 
 		this.getMacroRecorder().addStepData('GoToHeader', true);
+		return true;
 	};
 
 	asc_docs_api.prototype.GoToFooter = function(pageNumber)
 	{
-		if (this.WordControl.m_oDrawingDocument.IsFreezePage(pageNumber))
-			return;
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+
+		let drawingDocument = logicDocument.GetDrawingDocument();
+		if (drawingDocument && drawingDocument.IsFreezePage(pageNumber))
+			return false;
 
 		var bForceRedraw  = false;
-		var LogicDocument = this.WordControl.m_oLogicDocument;
-		LogicDocument.RemoveSelection();
+		logicDocument.RemoveSelection();
 
-		if (AscCommonWord.docpostype_HdrFtr !== LogicDocument.GetDocPosType())
+		if (AscCommonWord.docpostype_HdrFtr !== logicDocument.GetDocPosType())
 		{
-			LogicDocument.SetDocPosType(AscCommonWord.docpostype_HdrFtr);
+			logicDocument.SetDocPosType(AscCommonWord.docpostype_HdrFtr);
 			bForceRedraw = true;
 		}
+		
+		let mouseEvent    = AscCommon.global_mouseEvent;
+		let oldClickCount = mouseEvent.ClickCount;
+		
+		mouseEvent.Button     = 0;
+		mouseEvent.ClickCount = 1;
 
-		var oldClickCount            = global_mouseEvent.ClickCount;
-		global_mouseEvent.Button     = 0;
-		global_mouseEvent.ClickCount = 1;
+		logicDocument.OnMouseDown(mouseEvent, 0, AscCommon.Page_Height, pageNumber);
+		logicDocument.OnMouseUp(mouseEvent, 0, AscCommon.Page_Height, pageNumber);
+		logicDocument.OnMouseMove(mouseEvent, 0, 0, pageNumber);
+		logicDocument.MoveCursorLeft();
+		logicDocument.UpdateInterface();
+		logicDocument.UpdateSelection();
 
-		LogicDocument.OnMouseDown(global_mouseEvent, 0, AscCommon.Page_Height, pageNumber);
-		LogicDocument.OnMouseUp(global_mouseEvent, 0, AscCommon.Page_Height, pageNumber);
-		LogicDocument.OnMouseMove(global_mouseEvent, 0, 0, pageNumber);
-		LogicDocument.MoveCursorLeft();
-		LogicDocument.UpdateInterface();
-		LogicDocument.UpdateSelection();
+		mouseEvent.ClickCount = oldClickCount;
 
-		global_mouseEvent.ClickCount = oldClickCount;
-
-		if (true === bForceRedraw)
+		if (true === bForceRedraw && drawingDocument)
 		{
-			this.WordControl.m_oDrawingDocument.ClearCachePages();
-			this.WordControl.m_oDrawingDocument.FirePaint();
+			drawingDocument.ClearCachePages();
+			drawingDocument.FirePaint();
 		}
 
 		this.getMacroRecorder().addStepData('GoToFooter', true);
+		return true;
 	};
 
 	asc_docs_api.prototype.ExitHeader_Footer = function(pageNumber)

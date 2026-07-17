@@ -10372,7 +10372,7 @@
 		if (this.Document.GetPagesCount() <= page)
 			return false;
 
-		return this.Document.MoveCursorToHdrFtr(true, page);
+		return Asc.editor.GoToHeader(page);
 	};
 
 	/**
@@ -10393,20 +10393,20 @@
 		if (this.Document.GetPagesCount() <= page)
 			return false;
 
-		return this.Document.MoveCursorToHdrFtr(false, page);
+		return Asc.editor.GoToFooter(page);
 	};
 
 	/**
-	 * Moves the cursor from the header or footer back to the main document content, positioning it at the beginning of the content on the current page.
+	 * Moves the cursor from the header, footer or any other special part of the document back to the main document content on the current page.
 	 * @memberof ApiDocument
 	 * @returns {boolean}
 	 * @typeofeditors ["CDE"]
 	 * @since 9.5.0
-	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorToDocumentContent.js
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorToMainDocument.js
 	 */
-	ApiDocument.prototype.MoveCursorToDocumentContent = function()
+	ApiDocument.prototype.MoveCursorToMainDocument = function()
 	{
-		return this.Document.MoveCursorToDocumentContent();
+		return this.Document.MoveCursorToMainDocument();
 	};
 
 	/**
@@ -31529,7 +31529,7 @@
 	ApiDocument.prototype["EnterText"]                     = ApiDocument.prototype.EnterText;
 	ApiDocument.prototype["MoveCursorToHeader"]            = ApiDocument.prototype.MoveCursorToHeader;
 	ApiDocument.prototype["MoveCursorToFooter"]            = ApiDocument.prototype.MoveCursorToFooter;
-	ApiDocument.prototype["MoveCursorToDocumentContent"]   = ApiDocument.prototype.MoveCursorToDocumentContent;
+	ApiDocument.prototype["MoveCursorToMainDocument"]      = ApiDocument.prototype.MoveCursorToMainDocument;
 	ApiDocument.prototype["InsertParagraphBreak"]          = ApiDocument.prototype.InsertParagraphBreak;
 	ApiDocument.prototype["MoveCursorLeft"]                = ApiDocument.prototype.MoveCursorLeft;
 	ApiDocument.prototype["MoveCursorRight"]               = ApiDocument.prototype.MoveCursorRight;

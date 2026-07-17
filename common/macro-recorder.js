@@ -2001,7 +2001,7 @@
 		},
 		goToDocContent: function()
 		{
-			return "\tdoc.MoveCursorToDocumentContent();\n";
+			return "\tdoc.MoveCursorToMainDocument();\n";
 		}
 	};
 	

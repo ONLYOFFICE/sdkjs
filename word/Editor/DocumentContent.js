@@ -553,18 +553,18 @@ CDocumentContent.prototype.Get_NearestPos = function(CurPage, X, Y, bAnchor, Dra
 		CurPage = this.Pages.length - 1;
 		Y       = 10000;
 	}
-
-	var PageAbs = this.GetAbsolutePage(CurPage);
-
-	if (this.Parent && this.Parent instanceof CHeaderFooter)
+	
+	var PageAbs       = this.GetAbsolutePage(CurPage);
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && (this.Parent && this.Parent instanceof CHeaderFooter))
 	{
 		var bInText    = (null === this.IsInText(X, Y, CurPage) ? false : true);
-		var nInDrawing = this.LogicDocument.DrawingObjects.IsInDrawingObject(X, Y, PageAbs, this);
+		var nInDrawing = logicDocument.DrawingObjects.IsInDrawingObject(X, Y, PageAbs, this);
 
 		if (true != bAnchor)
 		{
 			// Проверяем попадание в графические объекты
-			var NearestPos = this.LogicDocument.DrawingObjects.getNearestPos(X, Y, PageAbs, Drawing);
+			var NearestPos = logicDocument.DrawingObjects.getNearestPos(X, Y, PageAbs, Drawing);
 			if (( nInDrawing === DRAWING_ARRAY_TYPE_BEFORE || nInDrawing === DRAWING_ARRAY_TYPE_INLINE || ( false === bInText && nInDrawing >= 0 ) ) && null != NearestPos)
 				return NearestPos;
 		}
@@ -2825,7 +2825,10 @@ CDocumentContent.prototype.UpdateCursorType = function(X, Y, CurPage)
 	var bTableBorder = (null === this.IsTableBorder(X, Y, CurPage) ? false : true);
 
 	// Ничего не делаем
-	if (this.Parent instanceof CHeaderFooter && true === this.LogicDocument.DrawingObjects.updateCursorType(this.GetAbsolutePage(CurPage), X, Y, {}, ( true === bInText || true === bTableBorder ? true : false )))
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument 
+		&& this.Parent instanceof CHeaderFooter 
+		&& true === logicDocument.DrawingObjects.updateCursorType(this.GetAbsolutePage(CurPage), X, Y, {}, ( true === bInText || true === bTableBorder ? true : false )))
 		return;
 	
 	let point = this.TransformPoint(X, Y);
