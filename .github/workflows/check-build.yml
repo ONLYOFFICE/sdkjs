@@ -218,8 +218,9 @@ jobs:
       actions: read
     steps:
       - name: Send OK to telegram (only once until next failure)
+        continue-on-error: true
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITEA_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT: ${{ secrets.TELEGRAM_TO }}
           COMMIT_MSG: ${{ github.event.head_commit.message }}
@@ -234,13 +235,26 @@ jobs:
           COMMIT_SUBJECT=$(printf '%s' "$COMMIT_MSG" | head -n1 | tr -d '`*_' | tr '[]' '()')
           [ -z "$COMMIT_SUBJECT" ] && COMMIT_SUBJECT="${COMMIT_SHA:0:7}"
 
-          PREV_CONCLUSION=$(gh api -X GET \
-            "/repos/${{ github.repository }}/actions/workflows/check-build.yml/runs" \
-            -f branch="$BRANCH" \
-            -f event="${{ github.event_name }}" \
-            -f status=completed \
-            -f per_page=10 \
-            --jq "first(.workflow_runs[] | select(.id != ${{ github.run_id }}) | .conclusion)")
+          API="${{ github.server_url }}/api/v1"
+          WORKFLOW=".github/workflows/check-build.yml"
+          RUNS_FILE="$(mktemp)"
+          HTTP=$(curl -s -G -o "$RUNS_FILE" -w '%{http_code}' \
+            -H "Authorization: token $GITEA_TOKEN" \
+            -H "Accept: application/json" \
+            --data-urlencode "event=push" \
+            --data-urlencode "branch=$BRANCH" \
+            --data-urlencode "limit=50" \
+            "$API/repos/${{ github.repository }}/actions/runs")
+
+          if [ "$HTTP" != "200" ]; then
+            echo "::warning::Could not query run history (HTTP $HTTP); skipping OK message to avoid spam."
+            head -c 500 "$RUNS_FILE"; echo
+            exit 0
+          fi
+
+          PREV_CONCLUSION=$(jq -r --arg wf "$WORKFLOW" '
+            [ .workflow_runs[]? | select(.path == $wf and (.conclusion // "") != "") ]
+            | (sort_by(.run_number) | last // {}) | (.conclusion // "")' "$RUNS_FILE" 2>/dev/null || true)
 
           echo "Previous run conclusion: ${PREV_CONCLUSION:-none}"
 
