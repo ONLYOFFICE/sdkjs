@@ -8453,7 +8453,7 @@ drawWaterfallChart.prototype = {
 					for (let j in this.paths[i]) {
 						if (this.paths[i].hasOwnProperty(j) && this.paths[i][j]) {
 							let nPtIdx = parseInt(i);
-							let pen = (j === '0' ) ? oSeries.getPtPen(nPtIdx) : this.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines;
+							let pen = (j === '0' ) ? oSeries.getPtPen(nPtIdx) : (oSeries.compiledConnectorPen || this.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines);
 							let brush = oSeries.getPtBrush(nPtIdx);
 							this.cChartDrawer.drawPath(this.paths[i][j], pen, brush);
 						}
@@ -8501,17 +8501,26 @@ drawWaterfallChart.prototype = {
 			}
 			case AscFormat.DATA_LABEL_POS_IN_BASE: {
 				centerX = x + w / 2 - width / 2;
-				centerY = y - height;
+				centerY = y;
+				if (h > 0) {
+					centerY -= height;
+				}
 				break;
 			}
 			case AscFormat.DATA_LABEL_POS_IN_END: {
 				centerX = x + w / 2 - width / 2;
 				centerY = y - h;
+				if (h < 0) {
+					centerY -= height;
+				}
 				break;
 			}
 			case AscFormat.DATA_LABEL_POS_OUT_END: {
 				centerX = x + w / 2 - width / 2;
 				centerY = y - h - height;
+				if (h < 0) {
+					centerY += height;
+				}
 				break;
 			}
 		}
