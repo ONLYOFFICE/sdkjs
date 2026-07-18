@@ -12,7 +12,7 @@ inputs:
       Github job: ${{ github.job }}
       Github job status: '❌' - ${{ job.status }}
       Branch: ${{ github.ref_name }}
-      Commit: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+      Commit: [__COMMIT_SUBJECT__](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
 
       See action run logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_number }}
 runs:
@@ -24,7 +24,15 @@ runs:
         MESSAGE: ${{ inputs.message }}
         TELEGRAM_TOKEN: ${{ inputs.token }}
         TELEGRAM_CHAT: ${{ inputs.chat }}
+        COMMIT_MSG: ${{ github.event.head_commit.message }}
+        COMMIT_SHA: ${{ github.sha }}
       run: |
+        # Replace the commit-subject placeholder with the first line of the commit
+        # message (brackets -> parens, strip Markdown specials so the link can't break).
+        COMMIT_SUBJECT=$(printf '%s' "$COMMIT_MSG" | head -n1 | tr -d '`*_' | tr '[]' '()')
+        [ -z "$COMMIT_SUBJECT" ] && COMMIT_SUBJECT="${COMMIT_SHA:0:7}"
+        MESSAGE="${MESSAGE/__COMMIT_SUBJECT__/$COMMIT_SUBJECT}"
+
         PAYLOAD=$(jq -n \
           --arg chat_id "$TELEGRAM_CHAT" \
           --arg text "$MESSAGE" \
