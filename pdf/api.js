@@ -806,7 +806,30 @@
         };
 
 		let result = oDoc.EditPage(oViewer.currentPage);
-		this.pre_Paste(result.fonts, result.images, fEndCallback);
+
+		if (result.allImages.length > 0) {
+			AscCommon.sendImgUrls(Asc.editor, result.allImages, function(data) {
+				let objectsForDownload = AscCommon.GetObjectsForImageDownload(result.resetImages);
+				AscCommon.ResetNewUrls(data, result.allImages, objectsForDownload.aBuilderImagesByUrl, result.imageMap);
+
+				let count = Object.keys(result.images).length;
+				for (let i = 0; i < data.length; ++i) {
+					if (data[i].url) {
+						result.images[++count] = data[i].url;
+					}
+				}
+
+				let file = oDoc.Viewer.file;
+				for (let i = 0; i < data.length; ++i) {
+					file.nativeFile["changeImageUrl"](result.allImages[i], AscCommon.g_oDocumentUrls.imagePath2Local(data[i].path));
+				}
+
+				Asc.editor.pre_Paste(result.fonts, result.images, fEndCallback);
+			});
+		}
+		else {
+			Asc.editor.pre_Paste(result.fonts, result.images, fEndCallback);
+		}
 	};
 	PDFEditorApi.prototype.asc_AddPage = function(nPos) {
 		let oViewer = this.getDocumentRenderer();
@@ -1508,8 +1531,16 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			oDoc.RedactMeta(props)
-		}, AscDFH.historydescription_Pdf_Apply_Redact);
+			return oDoc.RedactMeta(props);
+		}, AscDFH.historydescription_Pdf_Redact_Meta);
+	};
+	PDFEditorApi.prototype.IsAnyFieldLocked = function() {
+		let oDoc = this.getPDFDoc();
+		return oDoc.IsAnyFieldLocked();
+	};
+	PDFEditorApi.prototype.IsAnyAnnotLocked = function() {
+		let oDoc = this.getPDFDoc();
+		return oDoc.IsAnyAnnotLocked();
 	};
 
 	PDFEditorApi.prototype.SetCanInteract = function(bCan) {
@@ -1631,7 +1662,7 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			let oField = oDoc.CreateTextField();
+			let oField = oDoc.CreateTextField(true);
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
@@ -4385,7 +4416,7 @@
 					}
 
 					if (Class.IsForm && Class.IsForm()) {
-						let aWidgets = oDoc.GetAllWidgets(Class.GetFullName());
+						let aWidgets = Class.GetAllWidgets();
 						aWidgets.forEach(function(widget) {
 							updateLock(widget);
 						});
@@ -4459,7 +4490,7 @@
 				}
 				
 				if (Class.IsForm && Class.IsForm()) {
-					let aWidgets = oDoc.GetAllWidgets(Class.GetFullName());
+					let aWidgets = Class.GetAllWidgets();
 					aWidgets.forEach(function(widget) {
 						updateLock(widget);
 					});
@@ -5546,6 +5577,8 @@
 	PDFEditorApi.prototype['RemoveAllRedact']	= PDFEditorApi.prototype.RemoveAllRedact;
 	PDFEditorApi.prototype['AddRedactBySelect']	= PDFEditorApi.prototype.AddRedactBySelect;
 	PDFEditorApi.prototype['RedactMeta']		= PDFEditorApi.prototype.RedactMeta;
+	PDFEditorApi.prototype['IsAnyFieldLocked']	= PDFEditorApi.prototype.IsAnyFieldLocked;
+	PDFEditorApi.prototype['IsAnyAnnotLocked']	= PDFEditorApi.prototype.IsAnyAnnotLocked;
 
 	PDFEditorApi.prototype['SetCanInteract']				= PDFEditorApi.prototype.SetCanInteract;
 

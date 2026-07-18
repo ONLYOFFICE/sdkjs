@@ -10360,7 +10360,9 @@ CPresentation.prototype.UpdateUndoRedo = function () {
 CPresentation.prototype.UpdateTracks = function () {
 };
 
-
+CPresentation.prototype.CanDoAutoCorrect = function() {
+	return !this.Api.isMacroRecorderActive();
+};
 CPresentation.prototype.GetAutoCorrectSettings = function () {
 	return this.AutoCorrectSettings;
 };

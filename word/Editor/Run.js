@@ -2165,6 +2165,43 @@ ParaRun.prototype.AddPdfOriginText = function(aGids, sString, aWidths, nFontSize
 	return nCharPos;
 };
 /**
+ * Add an array of unicode code points with specified widths (in mm) to the run
+ * @param {number[]} codePoints - array of unicode character codes
+ * @param {number[]} [widths] - array of character widths in mm (same length as codePoints)
+ * @param {number} [fontSize=0] - font size (in points) that the given widths correspond to
+ * @param {number} [pos=-1] if the position is not specified (or is -1), add to the end
+ * @returns {number}
+ */
+ParaRun.prototype.AddCodePointsWithWidths = function(codePoints, widths, fontSize, pos)
+{
+	let charPos = undefined !== pos && null !== pos && -1 !== pos ? pos : this.Content.length;
+
+	let isMathRun = this.IsMathRun();
+	for (let index = 0, count = codePoints.length; index < count; ++index)
+	{
+		let charCode = codePoints[index];
+		let width    = widths ? widths[index] : 0;
+
+		if (isMathRun)
+		{
+			let mathText = new CMathText();
+			mathText.add(charCode);
+			this.AddToContent(charPos++, mathText);
+		}
+		else if (9 === charCode) // \t
+			this.AddToContent(charPos++, new AscWord.CRunTab(), true);
+		else if (10 === charCode) // \n
+			this.AddToContent(charPos++, new AscWord.CRunBreak(AscWord.break_Line), true);
+		else if (13 === charCode) // \r
+			continue;
+		else if (AscCommon.IsSpace(charCode)) // space
+			this.AddToContent(charPos++, new AscWord.CPdfRunSpace(0, charCode, width, fontSize), true);
+		else
+			this.AddToContent(charPos++, new AscWord.CPdfRunText(0, charCode, width, fontSize), true);
+	}
+	return charPos;
+};
+/**
  * Добавляем в конец рана заданную инструкцию для сложного поля
  * @param {string} sString
  * @param {number} [nPos=-1] если позиция не задана (или значение -1), то добавляем в конец

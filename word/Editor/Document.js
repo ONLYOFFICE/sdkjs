@@ -5279,6 +5279,27 @@ CDocument.prototype.CheckViewPosition = function()
 	this.RecalculateCurPos();
 	this.Api.asc_LockScrollToTarget(false);
 };
+/**
+ * Scroll the document so that the current cursor/select position ends up at the top of the screen.
+ * @param [distance=0] {number} Offset of the position from the top of the screen (in mm)
+ */
+CDocument.prototype.AlignViewPositionToTop = function(distance)
+{
+	let anchorPos = this.IsTextSelectionUse() ? this.GetContentPosition(true, true) : this.GetContentPosition(false);
+	if (!anchorPos || !anchorPos.length)
+		return;
+	
+	let viewPortH = this.DrawingDocument.GetVisibleMMHeight();
+	distance = Math.max(0, Math.min(distance, viewPortH - 10));
+
+	this.ViewPosition = {
+		AnchorPos : anchorPos,
+		AlignTop  : true,
+		Distance  : distance ? distance : 0,
+		Type      : AscWord.ViewPositionType.Common
+	};
+	this.NeedUpdateTarget = true;
+};
 CDocument.prototype.RecalculateCurPos = function()
 {
 	if (true === this.TurnOffRecalcCurPos)
@@ -7708,6 +7729,11 @@ CDocument.prototype.Selection_SetStart         = function(X, Y, MouseEvent)
         this.DrawingDocument.ClearCachePages();
         this.DrawingDocument.FirePaint();
         this.DrawingDocument.EndTrackTable(null, true);
+
+		if (this.isHeaderEditing())
+			this.Api.getMacroRecorder().addStepData('GoToHeader', true);
+		else if (this.isFooterEditing())
+			this.Api.getMacroRecorder().addStepData('GoToFooter', true);
     }
 	else
 	{
@@ -7796,6 +7822,7 @@ CDocument.prototype.Selection_SetStart         = function(X, Y, MouseEvent)
             this.SetDocPosType(docpostype_Content);
             this.CurPos.ContentPos = ContentPos;
             bOldSelectionIsCommon  = false;
+			this.Api.getMacroRecorder().addStepData('GoToDocContent', true);
         }
 
 		var SelectionUse_old = this.Selection.Use;
@@ -8129,28 +8156,6 @@ CDocument.prototype.Selection_SetEnd = function(X, Y, MouseEvent)
         this.Selection.StartPos = End;
         this.Selection.EndPos   = Start;
     }
-};
-/**
- * Получаем направление селекта
- * @returns {AscWord.Direction} Возвращается направление селекта. 1 - нормальное направление, -1 - обратное
- */
-CDocument.prototype.GetSelectDirection = function()
-{
-	var oStartPos = this.GetContentPosition(true, true);
-	var oEndPos   = this.GetContentPosition(true, false);
-
-	for (var nPos = 0, nLen = Math.min(oStartPos.length, oEndPos.length); nPos < nLen; ++nPos)
-	{
-		if (!oEndPos[nPos] || !oStartPos[nPos] || oStartPos[nPos].Class !== oEndPos[nPos].Class)
-			return AscWord.Direction.FORWARD;
-
-		if (oStartPos[nPos].Position < oEndPos[nPos].Position)
-			return AscWord.Direction.FORWARD;
-		else if (oStartPos[nPos].Position > oEndPos[nPos].Position)
-			return AscWord.Direction.BACKWARD;
-	}
-
-	return AscWord.Direction.FORWARD;
 };
 CDocument.prototype.IsMovingTableBorder = function()
 {
@@ -10565,6 +10570,12 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 
 	if ((this.Api.isStartAddShape || this.Api.isInkDrawerOn()) && (docpostype_HdrFtr !== this.CurPos.Type || null !== this.HdrFtr.CurHdrFtr))
 	{
+		const inlineForm = this.GetSelectedElementsInfo().GetInlineLevelSdt();
+		if (inlineForm && inlineForm.IsForm())
+			inlineForm.MoveCursorOutsideForm(false);
+
+		this.DrawingDocument.TargetEnd();
+
 		if (docpostype_HdrFtr !== this.CurPos.Type)
 		{
 			this.SetDocPosType(docpostype_DrawingObjects);
@@ -10864,11 +10875,13 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 		_t.UpdateSelection();
 	}
 	
-	if (this.IsTextSelectionUse())
+	if (this.Api.isInkDrawerOn())
+		this.DrawingDocument.TargetEnd();
+	else if (this.IsTextSelectionUse())
 		AscCommon.executeNoScroll(_updateSelection, this);
 	else
 		_updateSelection();
-	
+
 	this.UpdateInterface();
 	this.UpdateRulers();
 };
@@ -11888,6 +11901,30 @@ CDocument.prototype.SetSectionPageNumFormat = function(format)
 CDocument.prototype.Document_Format_Copy = function()
 {
 	this.Api.checkFormatPainterData();
+};
+/**
+ * Move the cursor from the header/footer (or any other special part) back to the main document content.
+ * @returns {boolean} Whether the cursor was moved into the main document content.
+ */
+CDocument.prototype.MoveCursorToMainDocument = function()
+{
+	let nDocPosType = this.GetDocPosType();
+	if (docpostype_Content === nDocPosType)
+		return false;
+
+	if (docpostype_DrawingObjects === nDocPosType)
+		this.EndDrawingEditing();
+	else if (docpostype_Footnotes === nDocPosType)
+		this.EndFootnotesEditing();
+	else if (docpostype_Endnotes === nDocPosType)
+		this.EndEndnotesEditing();
+	else if (docpostype_HdrFtr === nDocPosType)
+		this.EndHdrFtrEditing(true);
+
+	this.RemoveSelection();
+	this.SetDocPosType(docpostype_Content);
+
+	return true;
 };
 CDocument.prototype.isHeaderEditing = function()
 {
@@ -25385,6 +25422,10 @@ CDocument.prototype.RestartNumbering = function(nRestartValue)
 CDocument.prototype.GetAutoCorrectSettings = function()
 {
 	return this.AutoCorrectSettings;
+};
+CDocument.prototype.CanDoAutoCorrect = function()
+{
+	return !this.Api.isMacroRecorderActive();
 };
 /**
  * Устанавливаем настройку автосоздания маркированных списков

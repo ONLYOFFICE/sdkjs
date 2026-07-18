@@ -4122,7 +4122,9 @@ CTable.prototype.PreDelete = function()
 	if (this.isPreventedPreDelete())
 		return;
 	
-	this.DrawingDocument.EndTrackTable(this, false);
+	let drawingDocument = this.getDrawingDocument();
+	if (drawingDocument)
+		drawingDocument.EndTrackTable(this, false);
 
 	var RowsCount = this.Content.length;
 	for (var CurRow = 0; CurRow < RowsCount; CurRow++)
@@ -4138,7 +4140,9 @@ CTable.prototype.OnDetach = function()
 	if (!this.IsUseInDocument())
 		return;
 
-	this.DrawingDocument.EndTrackTable(this, false);
+	let drawingDocument = this.getDrawingDocument();
+	if (drawingDocument)
+		drawingDocument.EndTrackTable(this, false);
 
 	let rowCount = this.GetRowsCount();
 	for (let iRow = rowCount - 1; iRow >= 0; --iRow)
@@ -17531,15 +17535,16 @@ CTable.prototype.private_StartTrackTable = function(CurPage)
     if (CurPage < 0 || CurPage >= this.Pages.length)
         return;
 	
-	let logicDocument = this.GetLogicDocument();
-	if (!logicDocument || !logicDocument.IsShowTableAdjustments || !logicDocument.IsShowTableAdjustments())
+	let logicDocument   = this.GetLogicDocument();
+	let drawingDocument = this.getDrawingDocument();
+	if (!logicDocument || !drawingDocument || !logicDocument.IsShowTableAdjustments || !logicDocument.IsShowTableAdjustments())
 		return;
 
     var Bounds     = this.Get_PageBounds(CurPage);
     var NewOutline = new AscCommon.CTableOutline(this, this.GetAbsolutePage(CurPage), Bounds.Left, Bounds.Top, Bounds.Right - Bounds.Left, Bounds.Bottom - Bounds.Top);
 
     var Transform = this.Get_ParentTextTransform();
-    this.DrawingDocument.StartTrackTable(NewOutline, Transform);
+    drawingDocument.StartTrackTable(NewOutline, Transform);
 };
 CTable.prototype.CorrectBadTable = function()
 {

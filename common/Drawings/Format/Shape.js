@@ -5666,9 +5666,6 @@
 				}
 			}
 		};
-		CShape.prototype.isSlideImagePlaceholder = function() {
-			return this.getPlaceholderType() === AscFormat.phType_sldImg;
-		};
 			/**
 		 * note: sometimes call to recalculate bounds
 		 * @memberOf CShape

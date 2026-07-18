@@ -1990,8 +1990,19 @@
 		setHdrFtrFirstPage: function()
 		{
 			return ""; //no api
+		},
+		goToHeader: function()
+		{
+			return "\tdoc.MoveCursorToHeader();\n";
+		},
+		goToFooter: function()
+		{
+			return "\tdoc.MoveCursorToFooter();\n";
+		},
+		goToDocContent: function()
+		{
+			return "\tdoc.MoveCursorToMainDocument();\n";
 		}
-
 	};
 	
 	const DEActionMap = {};
@@ -2120,6 +2131,9 @@
 	DEActionMap[AscDFH.historydescription_Document_AddPageCount]				= wordActions.addPageCount;
 	DEActionMap[AscDFH.historydescription_Document_SetHdrFtrEvenAndOdd]			= wordActions.setHdrFtrEvenAndOdd;
 	DEActionMap[AscDFH.historydescription_Document_SetHdrFtrFirstPage]			= wordActions.setHdrFtrFirstPage;
+	DEActionMap["GoToHeader"]													= wordActions.goToHeader;
+	DEActionMap["GoToFooter"]													= wordActions.goToFooter;
+	DEActionMap["GoToDocContent"]												= wordActions.goToDocContent;
 
 	const cellActions = {
 		setCellIncreaseFontSize	: function(){return "\tApi.GetSelection().FontIncrease();\n"},

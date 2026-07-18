@@ -249,6 +249,15 @@
 	 * @property {pt} 7 - y4 (right bottom)
 	 */
 
+	/**
+	 * Represents a collection of matched text fragments.
+	 * @typedef {Quad[]} SearchMatch
+	 */
+
+	/**
+	 * Represents a collection of search results.
+	 * @typedef {SearchMatch[]} SearchResults
+	 */
 
 	/**
 	 * The available free text annot intent.
@@ -1490,7 +1499,8 @@
 	 */
 	ApiDocument.prototype.GetAllFields = function() {
 		let aFields = [];
-		
+		let aResult = [];
+
 		for (let i = 0, nCount = this.Document.GetPagesCount(); i < nCount; i++) {
 			let oPageInfo = this.Document.GetPageInfo(i);
 
@@ -1508,7 +1518,14 @@
 			});
 		}
 
-		return aFields.map(GetFieldApi);
+		aFields.forEach(function(field) {
+			let oFieldApi = GetFieldApi(field);
+			if (oFieldApi) {
+				aResult.push(oFieldApi);
+			}
+		});
+
+		return aResult;
 	};
 
 	/**
@@ -1853,7 +1870,7 @@
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
 	 * @param {SearchProps} props - The search options.
-	 * @returns {Quads[]}
+	 * @returns {SearchResults} - for each result there is an array with its coordinates
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/Search.js
 	 */
 	ApiPage.prototype.Search = function(props) {
@@ -1865,6 +1882,7 @@
 		if (!text) {
 			AscBuilder.throwException("The text property must be a valid string");
 		}
+		text = text.replace(/\r\n|\r|\n|\\n/g, " ");
 
 		let matchCase = AscBuilder.GetBoolParameter(props['matchCase'], false);
 		let wholeWords = AscBuilder.GetBoolParameter(props['wholeWords'], false);
@@ -1878,19 +1896,27 @@
 
 		let oDoc = private_GetLogicDocument();
 		oDoc.RecalculateAll(true);
-		
-		let oSearchEngine = oDoc.Search(searchSettings);
-		let aResult = [];
 
+		let oSearchEngine		= new AscPDF.CPdfSearch(oDoc);
+		let oOldSearchEngine	= oDoc.SearchEngine;
+		oDoc.SearchEngine		= oSearchEngine;
+		oSearchEngine.Set(searchSettings);
+		oSearchEngine.Search();
+
+		let aResult = [];
 		Object.values(oSearchEngine.Elements).forEach(function(pdfMatch, idx) {
 			if (pdfMatch.GetAbsolutePage() == nPageIdx) {
+				let aMatchQuads = [];
 				let aPageSelQuads = oDoc.GetSearchElementSelectionQuads(idx);
 				aPageSelQuads.forEach(function(pageSelQuads) {
-					aResult = aResult.concat(pageSelQuads.quads);
+					aMatchQuads.push(pageSelQuads.quads[0]);
 				});
+
+				aResult.push(aMatchQuads);
 			}
 		});
-		
+
+		oDoc.SearchEngine = oOldSearchEngine;
 		return aResult;
 	};
 
@@ -1955,8 +1981,7 @@
 	 * Sets page selection.
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
-	 * @param {Point} startPoint - The start point of the selection.
-	 * @param {Point} endPoint - The end point of the selection.
+	 * @param {PageSelection | Rect | Quad | Quad[]} selection - The selection to apply.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/SetSelection.js
 	 */
@@ -1965,8 +1990,29 @@
 			AscBuilder.throwException("The selection must be an object");
 		}
 
-		private_CheckPoint(selection['start']);
-		private_CheckPoint(selection['end']);
+		let startPoint, endPoint;
+		if (Array.isArray(selection)) {
+			if (private_IsValidRect(selection)) {
+				startPoint = {"x": selection[0], "y": selection[1]};
+				endPoint   = {"x": selection[2], "y": selection[3]};
+			}
+			else if (private_IsValidQuad(selection) || (selection.length > 0 && selection.every(function(quad) { return private_IsValidQuad(quad); }))) {
+				let quads = private_IsValidQuad(selection) ? [selection] : selection;
+				let firstQuad = quads[0];
+				let lastQuad  = quads[quads.length - 1];
+				startPoint = {"x": (firstQuad[0] + firstQuad[4]) / 2, "y": (firstQuad[1] + firstQuad[5]) / 2};
+				endPoint   = {"x": (lastQuad[2] + lastQuad[6]) / 2, "y": (lastQuad[3] + lastQuad[7]) / 2};
+			}
+			else {
+				AscBuilder.throwException("The selection must be a valid rect, quad or quad array");
+			}
+		}
+		else {
+			private_CheckPoint(selection['start']);
+			private_CheckPoint(selection['end']);
+			startPoint = selection['start'];
+			endPoint   = selection['end'];
+		}
 
 		let oDoc = private_GetLogicDocument();
 		let oFile = oDoc.GetFile();
@@ -1975,8 +2021,8 @@
 		oDoc.BlurActiveObject();
 		oDoc.RecalculateAll(true);
 
-		let startNearestPos = oFile.getNearestPos(nPageIdx, selection['start']['x'] * g_dKoef_pt_to_mm, selection['start']['y'] * g_dKoef_pt_to_mm);
-		let endNearestPos   = oFile.getNearestPos(nPageIdx, selection['end']['x'] * g_dKoef_pt_to_mm, selection['end']['y'] * g_dKoef_pt_to_mm);
+		let startNearestPos = oFile.getNearestPos(nPageIdx, startPoint['x'] * g_dKoef_pt_to_mm, startPoint['y'] * g_dKoef_pt_to_mm);
+		let endNearestPos   = oFile.getNearestPos(nPageIdx, endPoint['x'] * g_dKoef_pt_to_mm, endPoint['y'] * g_dKoef_pt_to_mm);
 
 		oFile.Selection.IsSelection = true;
 
@@ -8884,6 +8930,9 @@
 			}
 			case AscPDF.FIELD_TYPES.listbox: {
 				return new ApiListboxField(field);
+			}
+			default: {
+				return null;
 			}
 		}
 	}

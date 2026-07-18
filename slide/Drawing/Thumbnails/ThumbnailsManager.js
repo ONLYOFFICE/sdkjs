@@ -2919,7 +2919,7 @@
 			const scaleFactor = g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
 			const outlineTopMarginMM = this.const_offset_y * scaleFactor;
 			const outlineLeftMarginMM = this.const_offset_x * scaleFactor;
-			const scrollYMm = this.m_dScrollY * g_dKoef_pix_to_mm;
+			const scrollYMm = this.m_dScrollY * scaleFactor;
 			outlineView.updateOutlineShapeTransform(outlineLeftMarginMM, -scrollYMm + outlineTopMarginMM);
 		}
 	};
@@ -2965,12 +2965,11 @@
 		const context = AscCommon.AscBrowser.getContext2D(canvas);
 		context.clearRect(0, 0, this.const_offset_x, canvas.height);
 
-		const currentSlideIndex = this.m_oWordControl.m_oDrawingDocument.SlideCurrent;
-		outlineView.drawDecorations(this.getOutlineGraphics(context), currentSlideIndex, this.MouseDownTrack.FocusPage);
+		outlineView.drawDecorations(this.getOutlineGraphics(context), this.GetSelectedSlideIndexesMap(), this.MouseDownTrack.FocusPage);
 		const shape = outlineView.outlineShape;
 		if (shape) {
 			this.m_oWordControl.m_oDrawingDocument.UpdateTargetTransform(outlineView.getTransformText());
-			if (checkSelectionEnd || this.MouseDownTrack.IsDragged()) {
+			if ((checkSelectionEnd || this.MouseDownTrack.IsDragged()) && !outlineView.isDecorationMouseDown) {
 				const pos = this.ConvertCoords(global_mouseEvent.X, global_mouseEvent.Y);
 				shape.selectionSetEnd(global_mouseEvent, pos.X * g_dKoef_pix_to_mm, pos.Y * g_dKoef_pix_to_mm, 0);
 				shape.updateSelectionState(this.m_oWordControl.m_oDrawingDocument);
@@ -3005,6 +3004,15 @@
 			return outlineView.getSelectedSlideArray();
 		}
 		return [];
+	};
+	COutlineThumbnailsManager.prototype.GetSelectedSlideIndexesMap = function()
+	{
+		const selectedSlideIndexes = this.GetSelectedArray();
+		const map = {};
+		for (let i = 0; i < selectedSlideIndexes.length; i += 1) {
+			map[selectedSlideIndexes[i]] = true;
+		}
+		return map;
 	};
 
 	COutlineThumbnailsManager.prototype.isSelectedPage = function(pageNum)
@@ -3111,8 +3119,6 @@
 		}
 		const outlineView = this.GetOutlineView();
 		if (outlineView) {
-			const newWidth = AscCommon.AscBrowser.convertToRetinaValue(thumbnailsCanvas.width - this.const_offset_x) * AscCommon.g_dKoef_pix_to_mm;
-			outlineView.checkOutlineWidth(newWidth);
 			this.updateOutlineShapeTransform();
 		}
 	};
@@ -3234,6 +3240,8 @@
 	COutlineThumbnailsManager.prototype.calculateTotalThumbnailsLength = function (containerWidth, containerHeight) {
 		const outlineView = this.GetOutlineView();
 		if (outlineView) {
+			const newWidth = containerWidth - AscCommon.AscBrowser.convertToRetinaValue(this.const_offset_x) * AscCommon.g_dKoef_pix_to_mm;
+			outlineView.checkOutlineWidth(newWidth);
 			return outlineView.getOutlineHeight() * AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_mm_to_pix + this.const_offset_y;
 		}
 		return 0;

@@ -91,9 +91,6 @@
         oGraphicsWord.RemoveLastClip();
 
         this.DrawBorders(oGraphicsPDF);
-
-        this.DrawLocks(oGraphicsPDF);
-        this.DrawEdit(oGraphicsWord);
     };
     CListBoxField.prototype._isCenterAlign = function() {
 		return false;

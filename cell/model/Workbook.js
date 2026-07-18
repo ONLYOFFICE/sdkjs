@@ -724,6 +724,34 @@
 				delete this.volatileListeners[listenerId];
 			}
 		},
+		// True if anything depends on the cell. Conservative on volatile/defName listeners (may reference it indirectly).
+		hasAnyDependent: function(sheetId, nRow, nCol) {
+			var k;
+			for (k in this.volatileListeners) {
+				return true;
+			}
+			for (k in this.defNameListeners) {
+				return true;
+			}
+			var sheetContainer = this.sheetListeners[sheetId];
+			if (!sheetContainer) {
+				return false;
+			}
+			for (k in sheetContainer.defName3d) {
+				return true;
+			}
+			var cellIndex = getCellIndex(nRow, nCol);
+			if (sheetContainer.cellMap && sheetContainer.cellMap[cellIndex]) {
+				return true;
+			}
+			for (var vi in sheetContainer.areaMap) {
+				var areaSheetElem = sheetContainer.areaMap[vi];
+				if (areaSheetElem && areaSheetElem.bbox && areaSheetElem.bbox.contains(nCol, nRow)) {
+					return true;
+				}
+			}
+			return false;
+		},
 		forEachSheetListeners: function(sheetId, callback) {
 			var sheetContainer = this.sheetListeners[sheetId];
 			if (sheetContainer) {
@@ -16642,15 +16670,21 @@
 	Cell.prototype.getOffset3=function(col, row){
 		return new AscCommon.CellBase(this.nRow - row + 1, this.nCol - col + 1);
 	};
+	// Public contract is zero-argument; the skip variant is private so an unexpected truthy caller argument cannot drop the formula from the snapshot.
 	Cell.prototype.getValueData = function(){
+		return this._getValueData(false);
+	};
+	// opt_skipFormula skips the unread formula-text assembly; only internal recalc-history callers that do not consume the string pass it.
+	Cell.prototype._getValueData = function(opt_skipFormula){
 		this._checkDirty();
-		var formula = this.isFormula() ? this.getFormula() : null;
+		var bIsFormula = this.isFormula();
+		var formula = (bIsFormula && !opt_skipFormula) ? this.getFormula() : null;
 		var formulaRef;
 		let ca;
 		let cm;
 		let vm;
 		let aca;
-		if(formula) {
+		if(bIsFormula) {
 			var parser = this.getFormulaParsed();
 			if(parser) {
 				formulaRef = parser.getArrayFormulaRef();
@@ -17060,29 +17094,32 @@
 		let nLastIndex = aRefElements.length - 1;
 		for (let i = 0, length = aRefElements.length; i < length; i++) {
 			const oRefElement = aRefElements[i];
-			const nRefType = oRefElement.type;
-			const b3D = nRefType === cElementType.cell3D || nRefType === cElementType.cellsRange3D;
-			const bArea = nRefType === cElementType.cellsRange;
-			const bDefName = nRefType === cElementType.name || nRefType === cElementType.name3D;
-			const bTable = nRefType === cElementType.table;
 			let oRange = null;
 
-			if (nRefType !== cElementType.cell && !b3D && !bArea && !bDefName && !bTable) {
-				continue;
-			}
-			if (nRefType === cElementType.name || nRefType === cElementType.name3D) {
-				const oElemValue = oRefElement.getValue();
-				const oElemType = oElemValue.type;
-				if (!aRefTypes.includes(oElemType)) {
-					return;
+			switch (oRefElement.type) {
+				case cElementType.name:
+				case cElementType.name3D: {
+					const oElemValue = oRefElement.getValue();
+					if (!aRefTypes.includes(oElemValue.type)) {
+						return;
+					}
+					oRange = oElemValue.getRange && oElemValue.getRange();
+					break;
 				}
-				oRange = oElemValue.getRange && oElemValue.getRange();
-			} else if (nRefType === cElementType.table) {
-				let oRefElem = oRefElement.toRef();
-				oRange = oRefElem.getRange && oRefElem.getRange();
-			} else {
-				oRange = oRefElement.getRange && oRefElement.getRange();
-			}
+				case cElementType.table: {
+					const oRefElem = oRefElement.toRef();
+					oRange = oRefElem.getRange && oRefElem.getRange();
+					break;
+				}
+				case cElementType.cell:
+				case cElementType.cell3D:
+				case cElementType.cellsRange:
+				case cElementType.cellsRange3D:
+					oRange = oRefElement.getRange && oRefElement.getRange();
+					break;
+				default:
+					continue;
+				}
 			if (!oRange) {
 				continue;
 			}
@@ -17146,6 +17183,9 @@
 			return false;
 		}
 		if (g_cCalcRecursion.isCellChecked(this.ws.getId() + '_' + this.nRow + '_' + this.nCol)) {
+			// balance the caller's incRecursionCounter() (as every other return path does), else the
+			// counter leaks per cache-hit and spuriously triggers ForceBacktracking
+			g_cCalcRecursion.resetRecursionCounter();
 			return g_cCalcRecursion.getCheckedCell(this.ws.getId() + '_' + this.nRow + '_' + this.nCol);
 		}
 
@@ -17159,6 +17199,14 @@
 		}
 
 		if (!this.isFormula()) {
+			g_cCalcRecursion.resetRecursionCounter();
+			return false;
+		}
+		// no dependents => no cycle possible: skip the precedent-tree walk. Top-level only, and after
+		// compareCellIndex so direct self-references are still caught.
+		if (g_cCalcRecursion.getRecursionCounter() === 0 && oCellWithFormula.ws && this.ws.workbook &&
+			this.ws.workbook.dependencyFormulas &&
+			!this.ws.workbook.dependencyFormulas.hasAnyDependent(oCellWithFormula.ws.getId(), oCellWithFormula.nRow, oCellWithFormula.nCol)) {
 			g_cCalcRecursion.resetRecursionCounter();
 			return false;
 		}
@@ -17558,9 +17606,13 @@
 		var parsed = this.getFormulaParsed();
 		var res = parsed.simplifyRefType(parsed.value, this.ws, this.nRow, this.nCol);
 
+		// same predicate as the history gate below, the sole reader of the assembled formula string
+		var needsFormulaDataForRecalcHistory = !!(parsed.unknownOrCustomFunction
+			|| parsed.replaceFormulaAfterCalc === AscCommonExcel.cReplaceFormulaType.formula);
+
 		let DataOld, DataNew;
 		if (AscCommon.History.Is_On()) {
-			DataOld = this.getValueData();
+			DataOld = this._getValueData(!needsFormulaDataForRecalcHistory);
 		}
 
 		if (res) {
@@ -17606,12 +17658,12 @@
 				}, this, []);
 			}
 
-			if (AscCommon.History.Is_On()) {
+			if (AscCommon.History.Is_On() && needsFormulaDataForRecalcHistory) {
 				DataNew = this.getValueData();
 			}
 
 			let _replaceFormulaType = parsed.replaceFormulaAfterCalc;
-			if (AscCommon.History.Is_On() && (parsed.unknownOrCustomFunction || _replaceFormulaType === AscCommonExcel.cReplaceFormulaType.formula)
+			if (AscCommon.History.Is_On() && needsFormulaDataForRecalcHistory
 				&& !(DataNew.value && DataNew.value.type === CellValueType.Error && DataNew.value.text === AscCommon.cErrorOrigin['busy'])) {
 
 				let wb = Asc["editor"] && Asc["editor"].wb;
@@ -19185,7 +19237,7 @@
 		//didn't want to introduce additional parameter, so if byRef == null
 		//then the value will be a formula that needs to be offset depending on range
 		//when calling this function pay attention to byRef parameter
-		var _formula, t = this, activeCell;
+		var _formula, t = this, activeCell, anchorRow, anchorCol;
 		if (byRef === null) {
 			_formula = new AscCommonExcel.parserFormula(val.substr(1), null, this.worksheet);
 			if (!_formula.parse(true)) {
@@ -19193,6 +19245,10 @@
 			} else {
 				var _selection = this.worksheet.getSelection();
 				activeCell = _selection.activeCell;
+				// offset base = merge top-left, not the raw active cell
+				var anchorMerge = this.worksheet.getMergedByCell(activeCell.row, activeCell.col);
+				anchorRow = anchorMerge ? anchorMerge.r1 : activeCell.row;
+				anchorCol = anchorMerge ? anchorMerge.c1 : activeCell.col;
 			}
 		}
 
@@ -19211,10 +19267,15 @@
 			}
 			var _val = val;
 			if (_formula) {
+				// fill only the top-left of each merged region
+				var cellMerge = t.worksheet.getMergedByCell(cell.nRow, cell.nCol);
+				if (cellMerge && (cellMerge.r1 !== cell.nRow || cellMerge.c1 !== cell.nCol)) {
+					return;
+				}
 				_formula.isParsed = false;
 				_formula.outStack = [];
 				_formula.parse(true);
-				var offset = new AscCommon.CellBase(cell.nRow - activeCell.row, cell.nCol - activeCell.col);
+				var offset = new AscCommon.CellBase(cell.nRow - anchorRow, cell.nCol - anchorCol);
 				_val = "=" + _formula.changeOffset(offset, null, true).assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true, true);
 			}
 			// when creating new array formulas, it is necessary to transfer information about the dynamic array because regular ref is used

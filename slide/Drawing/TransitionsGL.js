@@ -73,7 +73,7 @@
         this.gl = null;
         this.glCanvas = null;
         this.programs = {};
-        this.textures = { slide1: null, slide2: null };
+        this.textures = { slide1: null, slide2: null, bg1: null, content1: null, bg2: null, content2: null };
         this.buffers = {};
         this.isInitialized = false;
         this.currentTransition = null;
@@ -95,7 +95,7 @@
         // New context — old GL objects become invalid
         this.programs = {};
         this.buffers = {};
-        this.textures = { slide1: null, slide2: null };
+        this.textures = { slide1: null, slide2: null, bg1: null, content1: null, bg2: null, content2: null };
 
         this.glCanvas = document.createElement('canvas');
         this.glCanvas.width = w;
@@ -143,6 +143,7 @@
 
         if (this.textures.slide1) { gl.deleteTexture(this.textures.slide1); this.textures.slide1 = null; }
         if (this.textures.slide2) { gl.deleteTexture(this.textures.slide2); this.textures.slide2 = null; }
+        this._deleteContentTextures();
 
         for (let name in this.programs)
         {
@@ -211,6 +212,7 @@
 
         if (this.textures.slide1) { gl.deleteTexture(this.textures.slide1); this.textures.slide1 = null; }
         if (this.textures.slide2) { gl.deleteTexture(this.textures.slide2); this.textures.slide2 = null; }
+        this._deleteContentTextures();
         this.currentTransition = null;
     };
 
@@ -228,6 +230,32 @@
 
         this.textures.slide1 = image1 ? this._createTextureFromCanvas(image1) : null;
         this.textures.slide2 = image2 ? this._createTextureFromCanvas(image2) : null;
+
+        this._deleteContentTextures();
+    };
+
+    CTransitionGL.prototype.UploadContentTextures = function(bg1, content1, bg2, content2)
+    {
+        let gl = this.gl;
+        if (!gl) return;
+
+        this._deleteContentTextures();
+
+        this.textures.bg1      = bg1      ? this._createTextureFromCanvas(bg1)      : null;
+        this.textures.content1 = content1 ? this._createTextureFromCanvas(content1) : null;
+        this.textures.bg2      = bg2      ? this._createTextureFromCanvas(bg2)      : null;
+        this.textures.content2 = content2 ? this._createTextureFromCanvas(content2) : null;
+    };
+
+    CTransitionGL.prototype._deleteContentTextures = function()
+    {
+        let gl = this.gl;
+        if (!gl) return;
+        let t = this.textures;
+        if (t.bg1)      { gl.deleteTexture(t.bg1);      t.bg1 = null; }
+        if (t.content1) { gl.deleteTexture(t.content1); t.content1 = null; }
+        if (t.bg2)      { gl.deleteTexture(t.bg2);      t.bg2 = null; }
+        if (t.content2) { gl.deleteTexture(t.content2); t.content2 = null; }
     };
 
     CTransitionGL.prototype._createTextureFromCanvas = function(canvas)
@@ -906,6 +934,12 @@
         let doorProgress = Math.min(progress / doorEnd, 1.0);
         let angle = doorProgress * Math.PI / 2;
 
+        if (isWindow && this.textures.content1 && this.textures.content2)
+        {
+            this._renderWindowContent(prog, projection, aspect, dist, isHorz, sign, progress);
+            return;
+        }
+
         // Draw new slide behind (full quad) — starts at ~half size and zooms in
         this._initQuadBuffer3D();
         {
@@ -995,6 +1029,65 @@
             // Restore standard blend func
             gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         }
+    };
+
+    CTransitionGL.prototype._renderWindowContent = function(prog, projection, aspect, dist, isHorz, sign, progress)
+    {
+        let gl = this.gl;
+        this._initQuadBuffer3D();
+
+        let doorEnd = 0.9;
+        let doorProgress = Math.min(progress / doorEnd, 1.0);
+        let angle = doorProgress * Math.PI / 2;
+
+        gl.disable(gl.DEPTH_TEST);
+        gl.depthMask(false);
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+        this._drawFullTexturedQuad(prog, projection, dist, this.textures.bg1, 1.0);
+        this._drawFullTexturedQuad(prog, projection, dist, this.textures.bg2, progress);
+        this._drawFullTexturedQuad(prog, projection, dist, this.textures.content2, 1.0);
+
+        if (doorProgress < 1.0)
+        {
+            let halfAlpha = 1.0 - doorProgress;
+            let hw = aspect;
+
+            let mv1 = _Mat4.identity();
+            mv1 = _Mat4.translate(mv1, 0, 0, -dist);
+            if (isHorz)
+            {
+                mv1 = _Mat4.translate(mv1, 0, 1.0, 0);
+                mv1 = _Mat4.rotateX(mv1, sign * angle);
+                mv1 = _Mat4.translate(mv1, 0, -1.0, 0);
+            }
+            else
+            {
+                mv1 = _Mat4.translate(mv1, -hw, 0, 0);
+                mv1 = _Mat4.rotateY(mv1, -sign * angle);
+                mv1 = _Mat4.translate(mv1, hw, 0, 0);
+            }
+            this._drawHalfQuad(prog, projection, mv1, isHorz ? 'halfTop' : 'halfLeft', this.textures.content1, halfAlpha);
+
+            let mv2 = _Mat4.identity();
+            mv2 = _Mat4.translate(mv2, 0, 0, -dist);
+            if (isHorz)
+            {
+                mv2 = _Mat4.translate(mv2, 0, -1.0, 0);
+                mv2 = _Mat4.rotateX(mv2, -sign * angle);
+                mv2 = _Mat4.translate(mv2, 0, 1.0, 0);
+            }
+            else
+            {
+                mv2 = _Mat4.translate(mv2, hw, 0, 0);
+                mv2 = _Mat4.rotateY(mv2, sign * angle);
+                mv2 = _Mat4.translate(mv2, -hw, 0, 0);
+            }
+            this._drawHalfQuad(prog, projection, mv2, isHorz ? 'halfBottom' : 'halfRight', this.textures.content1, halfAlpha);
+        }
+
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        gl.depthMask(true);
     };
 
     // ============================================================
@@ -1369,6 +1462,82 @@
     // Transition: Prism — rectangular prism (cube) rotation, 90°
     // ============================================================
 
+    CTransitionGL.prototype._drawTexturedQuad3D = function(prog, projection, mv, texture, alpha)
+    {
+        let gl = this.gl;
+        gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
+        gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mv);
+        gl.uniform1f(prog.uniforms['uAlpha'], alpha);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.uniform1i(prog.uniforms['uTexture'], 0);
+        this._bindQuad3D(prog);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    };
+
+    CTransitionGL.prototype._drawFullTexturedQuad = function(prog, projection, dist, texture, alpha)
+    {
+        let mv = _Mat4.identity();
+        mv = _Mat4.translate(mv, 0, 0, -dist);
+        this._drawTexturedQuad3D(prog, projection, mv, texture, alpha);
+    };
+
+    CTransitionGL.prototype._drawHalfQuad = function(prog, projection, mv, bufName, texture, alpha)
+    {
+        let gl = this.gl;
+        gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
+        gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mv);
+        gl.uniform1f(prog.uniforms['uAlpha'], alpha);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.uniform1i(prog.uniforms['uTexture'], 0);
+        this._bindBuffer3D(bufName, prog);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    };
+
+    CTransitionGL.prototype._prismFaceMatrix = function(dist, isVertical, dirSign, pivotZ, faceRot)
+    {
+        let mv = _Mat4.identity();
+        mv = _Mat4.translate(mv, 0, 0, -dist);
+        mv = _Mat4.translate(mv, 0, 0, pivotZ);
+        if (isVertical)
+            mv = _Mat4.rotateY(mv, dirSign * faceRot);
+        else
+            mv = _Mat4.rotateX(mv, -dirSign * faceRot);
+        mv = _Mat4.translate(mv, 0, 0, -pivotZ);
+        return mv;
+    };
+
+    CTransitionGL.prototype._renderPrismContent = function(prog, projection, dist, isVertical, dirSign, pivotZ, angle, progress)
+    {
+        let gl = this.gl;
+        let faceAngle = Math.PI / 2;
+
+        gl.disable(gl.DEPTH_TEST);
+        gl.depthMask(false);
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+        this._drawFullTexturedQuad(prog, projection, dist, this.textures.bg1, 1.0);
+        this._drawFullTexturedQuad(prog, projection, dist, this.textures.bg2, progress);
+
+        let mvOld = this._prismFaceMatrix(dist, isVertical, dirSign, pivotZ, angle);
+        let mvNew = this._prismFaceMatrix(dist, isVertical, dirSign, pivotZ, angle - faceAngle);
+
+        if (progress < 0.5)
+        {
+            this._drawTexturedQuad3D(prog, projection, mvNew, this.textures.content2, 1.0);
+            this._drawTexturedQuad3D(prog, projection, mvOld, this.textures.content1, 1.0);
+        }
+        else
+        {
+            this._drawTexturedQuad3D(prog, projection, mvOld, this.textures.content1, 1.0);
+            this._drawTexturedQuad3D(prog, projection, mvNew, this.textures.content2, 1.0);
+        }
+
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        gl.depthMask(true);
+    };
+
     CTransitionGL.prototype._preparePrism = function()
     {
         this.GetProgram('flip3d', _VERT_3D, _FRAG_TEXTURED);
@@ -1407,6 +1576,13 @@
         // isInverted=0 (default): faces on OUTSIDE (convex cube, axis behind faces)
         // isInverted=1: faces on INSIDE (concave, axis in front of faces)
         let pivotZ = isInverted ? prismR : -prismR;
+
+        let isContent = (offset >= 8);
+        if (isContent && this.textures.content1 && this.textures.content2)
+        {
+            this._renderPrismContent(prog, projection, dist, isVertical, dirSign, pivotZ, angle, progress);
+            return;
+        }
 
         // Old slide face
         {

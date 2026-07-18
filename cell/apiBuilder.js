@@ -18032,7 +18032,7 @@
 	 */
 	ApiPageSetup.prototype.GetPaperSize = function () {
 		let oPageSetup = this.ws.PagePrintOptions.pageSetup;
-		let nId = AscCommonExcel.DocumentPageSize.getSizeByWH(oPageSetup.asc_getWidth(), oPageSetup.asc_getHeight()).id;
+		let nId = AscCommonExcel.DocumentPageSize.getIdByWHAndStored(oPageSetup.asc_getWidth(), oPageSetup.asc_getHeight(), oPageSetup.asc_getPaperSize());
 		return g_oPaperSizeIdToName[nId] || "";
 	};
 	/**
@@ -18053,6 +18053,7 @@
 		let oPageSetup = this.ws.PagePrintOptions.pageSetup;
 		oPageSetup.asc_setWidth(oItem.w_mm);
 		oPageSetup.asc_setHeight(oItem.h_mm);
+		oPageSetup.asc_setPaperSize(nId);
 		return true;
 	};
 	Object.defineProperty(ApiPageSetup.prototype, "PaperSize", {

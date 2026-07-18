@@ -134,16 +134,21 @@ jobs:
           node run.js 2>&1 | tee "$GITHUB_WORKSPACE/test-output.txt"
 
       - name: Send message to telegram if failure
-        if: failure()
+        if: failure() && github.event_name == 'push'
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT: ${{ secrets.TELEGRAM_TO }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
         shell: bash
         run: |
           BRANCH="${{ github.ref_name }}"
           AUTHOR="${{ github.actor }}"
           NOW=$(date -u "+%Y-%m-%d %H:%M UTC")
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          COMMIT_SHA="${{ github.sha }}"
+          COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/${COMMIT_SHA}"
+          COMMIT_SUBJECT=$(printf '%s' "$COMMIT_MSG" | head -n1 | tr -d '`*_' | tr '[]' '()')
+          [ -z "$COMMIT_SUBJECT" ] && COMMIT_SUBJECT="${COMMIT_SHA:0:7}"
 
           FAILED_MODULES=$(sed 's/\x1b\[[0-9;]*m//g' "$GITHUB_WORKSPACE/test-output.txt" | \
             awk '/^FAILED$/{f=1; next} f && /\.html$/{print}' | \
@@ -151,7 +156,7 @@ jobs:
 
           [ -z "$FAILED_MODULES" ] && FAILED_MODULES="(see logs for details)"
 
-          MESSAGE=$'❌ Unit tests failed\n\nBranch: '"$BRANCH"$'\nAuthor: ['"$AUTHOR"'](https://github.com/'"$AUTHOR"$')\nTime: '"$NOW"$'\n\nFailed modules:\n```\n'"$FAILED_MODULES"$'\n```\n\nLogs: '"$RUN_URL"
+          MESSAGE=$'❌ Unit tests failed\n\nBranch: '"$BRANCH"$'\nAuthor: ['"$AUTHOR"'](https://github.com/'"$AUTHOR"$')\nCommit: ['"$COMMIT_SUBJECT"']('"$COMMIT_URL"$')\nTime: '"$NOW"$'\n\nFailed modules:\n```\n'"$FAILED_MODULES"$'\n```\n\nLogs: '"$RUN_URL"
 
           PAYLOAD=$(jq -n \
             --arg chat_id "$TELEGRAM_CHAT" \
@@ -199,8 +204,59 @@ jobs:
           python build/build.py --addon ../sdkjs-forms
 
       - name: Send message to telegram if failure
-        if: failure()
+        if: failure() && github.event_name == 'push'
         uses: ./sdkjs/.github/actions/send-message
         with:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           chat: ${{ secrets.TELEGRAM_TO }}
+
+  notify-success:
+    runs-on: ubuntu-latest
+    needs: [code-style, unit-tests, build-test]
+    if: success() && github.event_name == 'push'
+    permissions:
+      actions: read
+    steps:
+      - name: Send OK to telegram (only once until next failure)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT: ${{ secrets.TELEGRAM_TO }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        shell: bash
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          AUTHOR="${{ github.actor }}"
+          NOW=$(date -u "+%Y-%m-%d %H:%M UTC")
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          COMMIT_SHA="${{ github.sha }}"
+          COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/${COMMIT_SHA}"
+          COMMIT_SUBJECT=$(printf '%s' "$COMMIT_MSG" | head -n1 | tr -d '`*_' | tr '[]' '()')
+          [ -z "$COMMIT_SUBJECT" ] && COMMIT_SUBJECT="${COMMIT_SHA:0:7}"
+
+          PREV_CONCLUSION=$(gh api -X GET \
+            "/repos/${{ github.repository }}/actions/workflows/check-build.yml/runs" \
+            -f branch="$BRANCH" \
+            -f event="${{ github.event_name }}" \
+            -f status=completed \
+            -f per_page=10 \
+            --jq "first(.workflow_runs[] | select(.id != ${{ github.run_id }}) | .conclusion)")
+
+          echo "Previous run conclusion: ${PREV_CONCLUSION:-none}"
+
+          # Don't spam with 'success' messages
+          if [ "$PREV_CONCLUSION" = "success" ]; then
+            echo "Previous run already succeeded — skipping OK message."
+            exit 0
+          fi
+
+          MESSAGE=$'✅ All checks passed\n\nBranch: '"$BRANCH"$'\nAuthor: ['"$AUTHOR"'](https://github.com/'"$AUTHOR"$')\nCommit: ['"$COMMIT_SUBJECT"']('"$COMMIT_URL"$')\nTime: '"$NOW"$'\n\nLogs: '"$RUN_URL"
+
+          PAYLOAD=$(jq -n \
+            --arg chat_id "$TELEGRAM_CHAT" \
+            --arg text "$MESSAGE" \
+            '{"chat_id":$chat_id,"text":$text,"parse_mode":"Markdown","disable_notification":true,"disable_web_page_preview":true}')
+
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+            -H 'Content-Type: application/json' \
+            -d "$PAYLOAD"

@@ -524,10 +524,6 @@
         // redraw target cursor if field is selected
         if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsCanEditText())
             oContentToDraw.RecalculateCurPos();
-
-
-        this.DrawLocks(oGraphicsPDF);
-        this.DrawEdit(oGraphicsWord);
     };
     CTextField.prototype.DrawMarker = function(oCtx) {
         if (this.IsHidden()) return;  // don't draw if field is hidden

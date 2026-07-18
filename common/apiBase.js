@@ -6178,6 +6178,10 @@
 	{
 		return this.macroRecorder;
 	};
+	baseEditorsApi.prototype.isMacroRecorderActive = function()
+	{
+		return this.macroRecorder.isInProgress() && !this.macroRecorder.isPaused();
+	};
 	baseEditorsApi.prototype.addMacroStepData = function(type, additional)
 	{
 		return this.macroRecorder.addStepData(type, additional);

@@ -266,16 +266,24 @@ function (window, undefined) {
 
 	CAxis.prototype.getFormatCode = function () {
 		let oNumFmt = this.numFmt;
-		let sFormatCode = null;
-
-		if (oNumFmt) {
-		if (oNumFmt.sourceLinked) {
-				return this.getSourceFormatCode();
-		}
-			sFormatCode = oNumFmt.formatCode;
-		if (typeof sFormatCode === "string" && sFormatCode.length > 0) {
+		if (oNumFmt && !oNumFmt.sourceLinked) {
+			let sFormatCode = oNumFmt.formatCode;
+			if (typeof sFormatCode === "string" && sFormatCode.length > 0) {
 				return sFormatCode;
+			}
 		}
+		return this.getSourceFormatCode();
+	};
+	CAxis.prototype.getSourceFormatCode = function () {
+		if (this.isValuesAxis()) {
+			let oChartSpace = this.getChartSpace();
+			let aSeries = oChartSpace && oChartSpace.getAllSeries();
+			if (aSeries && aSeries[0]) {
+				let sFmt = aSeries[0].getFirstPointFormatCode();
+				if (sFmt) {
+					return sFmt;
+				}
+			}
 		}
 		return "General";
 	};

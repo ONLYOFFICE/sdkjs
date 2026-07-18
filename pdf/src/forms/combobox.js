@@ -83,9 +83,6 @@
         
         oGraphicsWord.RemoveLastClip();
         this.DrawBorders(oGraphicsPDF);
-
-        this.DrawLocks(oGraphicsPDF);
-        this.DrawEdit(oGraphicsWord);
     };
     CComboBoxField.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)

@@ -237,8 +237,6 @@
 
         let originView = AscPDF.CBaseField.prototype.GetOriginView.call(this, nImgType, oGraphicsPDF.GetDrawingPageW(), oGraphicsPDF.GetDrawingPageH());
         if (!originView) {
-            this.DrawLocks(oGraphicsPDF);
-            this.DrawEdit(oGraphicsWord);
             return;
         }
 

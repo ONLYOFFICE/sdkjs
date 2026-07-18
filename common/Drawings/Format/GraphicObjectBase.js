@@ -2000,6 +2000,9 @@
 	CGraphicObjectBase.prototype.isEmptyPlaceholder = function () {
 		return false;
 	};
+	CGraphicObjectBase.prototype.isSlideImagePlaceholder = function () {
+		return this.getPlaceholderType() === AscFormat.phType_sldImg;
+	};
 	CGraphicObjectBase.prototype.RestartSpellCheck = function () {
 	};
 	CGraphicObjectBase.prototype.GetAllFields = function (isUseSelection, arrFields) {
@@ -4189,6 +4192,9 @@
 	CRelSizeAnchor.prototype.getObjectType = function () {
 		return AscDFH.historyitem_type_RelSizeAnchor;
 	};
+	CRelSizeAnchor.prototype.isNote = function () {
+		return false;
+	};
 	CRelSizeAnchor.prototype.setFromTo = function (fromX, fromY, toX, toY) {
 		AscCommon.History.Add(new AscDFH.CChangesDrawingsDouble(this, AscDFH.historyitem_RelSizeAnchorFromX, this.fromX, fromX));
 		AscCommon.History.Add(new AscDFH.CChangesDrawingsDouble(this, AscDFH.historyitem_RelSizeAnchorFromY, this.fromY, fromY));
@@ -4275,6 +4281,9 @@
 	};
 	CAbsSizeAnchor.prototype.getObjectType = function () {
 		return AscDFH.historyitem_type_AbsSizeAnchor;
+	};
+	CAbsSizeAnchor.prototype.isNote = function () {
+		return false;
 	};
 	CAbsSizeAnchor.prototype.setFromTo = function (fromX, fromY, extX, extY) {
 		AscCommon.History.Add(new AscDFH.CChangesDrawingsDouble(this, AscDFH.historyitem_AbsSizeAnchorFromX, this.fromX, fromX));

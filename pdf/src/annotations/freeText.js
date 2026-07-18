@@ -886,7 +886,6 @@
         for (var i = this.spTree.length - 1; i >= 0; i--)
             this.spTree[i].draw(graphics);
 
-        this.drawLocks(this.transform, graphics);
         if (oClipRect) {
             graphics.RestoreGrState();
         }
@@ -957,11 +956,9 @@
         }
 
         if (this.IsNeedDrawFromStream()) {
-            this.SetDrawFromStream(false);
             this.AddToRedraw();
         }
         else if (this.IsChanged() == false && !isIn) {
-            this.SetDrawFromStream(true);
             this.AddToRedraw();
         }
         
@@ -969,6 +966,9 @@
     };
     CAnnotationFreeText.prototype.IsInTextBox = function() {
         return this.isInTextBox;
+    };
+	CAnnotationFreeText.prototype.IsNeedDrawFromStream = function() {
+        return this._bDrawFromStream && !this.IsInTextBox();
     };
     CAnnotationFreeText.prototype.GetDocContent = function() {
         if (this.spTree[0])

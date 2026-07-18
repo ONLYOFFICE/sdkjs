@@ -6188,6 +6188,9 @@ CMathContent.prototype.Process_AutoCorrect = function(oElement)
 		return;
 
 	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && !logicDocument.CanDoAutoCorrect())
+		return;
+
 	let nInputType = logicDocument
 		? logicDocument. Api.getMathInputType()
 		: Asc.c_oAscMathInputType.Unicode;

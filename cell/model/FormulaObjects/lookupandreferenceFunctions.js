@@ -1398,16 +1398,20 @@ function (window, undefined) {
 	cHLOOKUP.prototype.enabledToSingle = {"1": true};
 	cHLOOKUP.prototype.Calculate = function (arg) {
 		let retArr = new cArray();
-		let error = false;
 		if (arg[0].type === cElementType.array) {
 			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
 				arg[2] = arg[2].getValue2(0,0);
 			}
 			let dimension = arg[0].getDimensions();
+			let ctx = {};
+			// One shared args array per loop: calculate() reads arg[0..5] into locals synchronously and
+			// never stores or mutates the array, so only the varying slot needs a write per element.
+			let callArgs = [null, arg[1], arg[2], arg[3]];
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
-					retArr.addElement(g_oHLOOKUPCache.calculate([arg[0].getValue2(r, c), arg[1], arg[2], arg[3]], arguments[1]));
+					callArgs[0] = arg[0].getValue2(r, c);
+					retArr.addElement(g_oHLOOKUPCache.calculate(callArgs, arguments[1], ctx));
 				}
 			}
 
@@ -1416,21 +1420,23 @@ function (window, undefined) {
 
 		if (arg[2] && (arg[2].type === cElementType.array)) {
 			let dimension = arg[2].getDimensions();
+			let ctx = {};
+			// see above: one shared args array, only the varying slot is rewritten per element
+			let callArgs = [arg[0], arg[1], null, arg[3]];
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
-					if (!error) {
-						let res = g_oHLOOKUPCache.calculate([arg[0], arg[1], arg[2].getValue2(r, c), arg[3]], arguments[1]);
-						if (res.type === cElementType.error) {
-							error = true
-						}
-						retArr.addElement(res);
-					} else {
-						break
+					callArgs[2] = arg[2].getValue2(r, c);
+					let res = g_oHLOOKUPCache.calculate(callArgs, arguments[1], ctx);
+					if (res.type === cElementType.error) {
+						// the whole result collapses to one error anyway - stop calculating and
+						// building rows for the discarded array right here
+						return new cError(cErrorType.bad_reference);
 					}
+					retArr.addElement(res);
 				}
 			}
-			return error ? new cError(cErrorType.bad_reference) : retArr;
+			return retArr;
 		}
 
 		return g_oHLOOKUPCache.calculate(arg, arguments[1]);
@@ -3252,9 +3258,21 @@ function (window, undefined) {
 		this.sortedCache = new TypedMapCache();
 	}
 
-	VHLOOKUPCache.prototype.calculate = function (arg, argument1) {
+	VHLOOKUPCache.prototype.calculate = function (arg, argument1, opt_ctx) {
 		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
-		let arg3 = arg[3] ? arg[3].tocBool().value : true;
+		// Fast paths for the dominant 4th-arg types avoid allocating a cBool per element:
+		// cBool.tocBool() returns `this` (same .value read), cNumber.tocBool() is new cBool(value !== 0)
+		// whose .value is exactly (value !== 0). Other types keep the original tocBool() path.
+		let _a3 = arg[3], arg3;
+		if (!_a3) {
+			arg3 = true;
+		} else if (cElementType.bool === _a3.type) {
+			arg3 = _a3.value;
+		} else if (cElementType.number === _a3.type) {
+			arg3 = 0 !== _a3.value;
+		} else {
+			arg3 = _a3.tocBool().value;
+		}
 		let opt_xlookup = arg[4] !== undefined;
 		let opt_arg4, opt_arg5;
 		if (opt_xlookup) {
@@ -3368,10 +3386,30 @@ function (window, undefined) {
 			return arg1.getElementRowCol(r, c);
 		}
 
-		let range;
-		if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type ||
+		// range/bb/ws depend only on arg1 (the lookup table), which is identical for every element
+		// of an array VLOOKUP/HLOOKUP. When the caller loops over an array it may pass a shared
+		// opt_ctx object; we resolve these invariants once into it and reuse them on later
+		// iterations, avoiding a Range rebuild (arg1.getRange()/getBBox0()/getWS()) per element.
+		// The ctx lives only for the duration of that loop, so it can never outlive a reference
+		// adjustment - no staleness risk.
+		let range, bb, ws;
+		if (opt_ctx && opt_ctx.resolved) {
+			range = opt_ctx.range;
+			bb = opt_ctx.bb;
+			ws = opt_ctx.ws;
+		} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type ||
 			cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
 			range = arg1.getRange();
+			if (range) {
+				bb = range.getBBox0();
+				ws = arg1.getWS();
+				if (opt_ctx) {
+					opt_ctx.resolved = true;
+					opt_ctx.range = range;
+					opt_ctx.bb = bb;
+					opt_ctx.ws = ws;
+				}
+			}
 		} else if (cElementType.array === arg1.type && opt_xlookup) {
 			let _cacheElem = {elements: []};
 			arg1.foreach(function (elem, r, c) {
@@ -3388,18 +3426,12 @@ function (window, undefined) {
 			return new cError(cErrorType.bad_reference);
 		}
 
-		let bb = range.getBBox0();
 		count = this.bHor ? (bb.r2 - bb.r1) : (bb.c2 - bb.c1);
 		if (number > count) {
 			return new cError(cErrorType.bad_reference);
 		}
-		let ws = arg1.getWS();
-		r = this.bHor ? bb.r1 : bb.r2;
-		c = this.bHor ? bb.c2 : bb.c1;
-		let oSearchRange = ws.getRange3(bb.r1, bb.c1, r, c);
-
-
-		res = this._get(oSearchRange, arg0Val, arg3, opt_arg4, opt_arg5);
+		res = this._get(arg0Val, arg3, opt_arg4, opt_arg5, ws,
+			this.bHor ? bb.r1 : bb.c1, this.bHor ? bb.c1 : bb.r1, this.bHor ? bb.c2 : bb.r2);
 		if (opt_xlookup) {
 			return res;
 		}
@@ -3410,10 +3442,28 @@ function (window, undefined) {
 
 		r = this.bHor ? bb.r1 + number : res;
 		c = this.bHor ? res : bb.c1 + number;
+		// On the array-formula path (opt_ctx present) reuse one loop-scoped callback instead of
+		// allocating a closure per element. _getCellNoEmpty invokes fAction exactly once,
+		// synchronously, on both of its paths and never stores it, so the result slot is always
+		// written before the immediate read. The scalar (no-ctx) path is unchanged.
 		let resVal;
-		arg1.getWS()._getCellNoEmpty(r, c, function (cell) {
-			resVal = checkTypeCell(cell);
-		});
+		if (opt_ctx) {
+			let cb = opt_ctx.cellCb;
+			if (!cb) {
+				cb = opt_ctx.cellCb = function (cell) {
+					opt_ctx.cellCbRes = checkTypeCell(cell);
+				};
+			}
+			// pre-reset only: if fAction were ever skipped, resVal.type below fails loudly instead of
+			// silently reusing the previous element's value. No post-reset - ctx dies with the loop.
+			opt_ctx.cellCbRes = undefined;
+			ws._getCellNoEmpty(r, c, cb);
+			resVal = opt_ctx.cellCbRes;
+		} else {
+			ws._getCellNoEmpty(r, c, function (cell) {
+				resVal = checkTypeCell(cell);
+			});
+		}
 		if (cElementType.empty === resVal.type) {
 			resVal = new cNumber(0);
 		}
@@ -3421,44 +3471,11 @@ function (window, undefined) {
 		return resVal;
 	};
 
-	VHLOOKUPCache.prototype._get = function (range, valueForSearching, arg3Value, opt_arg4, opt_arg5) {
-		var res, _this = this, wsId = range.getWorksheet().getId();
-		var opt_xlookup = opt_arg4 !== undefined;
-
-		var sRangeName;
-		AscCommonExcel.executeInR1C1Mode(false, function () {
-			sRangeName = wsId + g_cCharDelimiter + range.getName();
-		});
-		const ws = range.getWorksheet();
-		var cacheElem = this.cacheId[sRangeName];
-		if (!cacheElem) {
-			cacheElem = {results: {}};
-		}
-		var sInputKey;
-		if (!opt_xlookup) {
-			sInputKey =
-				valueForSearching.getValue() + g_cCharDelimiter + arg3Value + g_cCharDelimiter + valueForSearching.type;
-		} else {
-			sInputKey = valueForSearching.getValue() + g_cCharDelimiter + opt_arg4 + g_cCharDelimiter + opt_arg5 +
-				g_cCharDelimiter + valueForSearching.type;
-		}
-		res = cacheElem.results[sInputKey];
-		const rowCol = this.bHor ? range.bbox.r1 : range.bbox.c1
-		if (!res) {
-			const startIndex = this.bHor ? range.bbox.c1 : range.bbox.r1;
-			const endIndex = this.bHor ? range.bbox.c2 : range.bbox.r2;
-			cacheElem.results[sInputKey] =
-				res = this._calculate(valueForSearching,
-					arg3Value,
-					opt_arg4,
-					opt_arg5,
-					null,
-					ws,
-					rowCol,
-					startIndex,
-					endIndex);
-		}
-		return res;
+	// TODO hook for a future selective results-cache of the expensive lookup modes only
+	// (approximate / wildcard / XLOOKUP binary), added after those modes are measured.
+	// Exact match stays direct; array-backed XLOOKUP bypasses this seam.
+	VHLOOKUPCache.prototype._get = function (valueForSearching, lookup, opt_arg4, opt_arg5, ws, rowCol, startIndex, endIndex) {
+		return this._calculate(valueForSearching, lookup, opt_arg4, opt_arg5, null, ws, rowCol, startIndex, endIndex);
 	};
 	VHLOOKUPCache.prototype._compareValues = function (val1, val2, op, opt_arg4) {
 		if (opt_arg4 === 2 && val2.type === cElementType.string) {
@@ -3509,6 +3526,9 @@ function (window, undefined) {
 			const cell = ws.getCell3(t.bHor ? rowCol : index, t.bHor ? index : rowCol);
 			return checkTypeCell(cell, true);
 		}
+		// updateNearest only does work for match modes 1/-1 (exact-or-next); calling it in other
+		// modes (exact, wildcard) was a guaranteed no-op per scanned cell.
+		const trackNearest = opt_arg4 === 1 || opt_arg4 === -1;
 		const updateNearest = function(value, valueIndex) {
 			if (opt_arg4 === 1 && t._compareTypes(value, valueForSearching) >= 0 && t._compareValues(value, valueForSearching, ">")) {
 				if (nearestValue === null) {
@@ -3538,7 +3558,7 @@ function (window, undefined) {
 					resultIndex = opt_array ? opt_array[i].i : i;
 					break;
 				}
-				if (opt_arg4 !== undefined) {
+				if (trackNearest) {
 					updateNearest(val, i);
 				}
 			}
@@ -3549,7 +3569,7 @@ function (window, undefined) {
 					resultIndex = opt_array ? opt_array[i].i : i;
 					break;
 				}
-				if (opt_arg4 !== undefined) {
+				if (trackNearest) {
 					updateNearest(val, i);
 				}
 			}
@@ -4683,13 +4703,11 @@ function (window, undefined) {
 			let bVertical = bbox.r2 - bbox.r1 >= bbox.c2 - bbox.c1;
 			let index;
 			if(index === undefined) {
-				let ws = arg1.getWS(),
-					r = bVertical ? bbox.r2 : bbox.r1,
-					c = bVertical ? bbox.c1 : bbox.c2;
-				let oSearchRange = ws.getRange3(bbox.r1, bbox.c1, r, c);
+				let ws = arg1.getWS();
 				t.bHor = bVertical ? false : true;
 
-				index = this._get(/* searchRange */oSearchRange, arg0, true);
+				index = this._get(arg0, true, undefined, undefined, ws,
+					t.bHor ? bbox.r1 : bbox.c1, t.bHor ? bbox.c1 : bbox.r1, t.bHor ? bbox.c2 : bbox.r2);
 
 				if (index === undefined || index < 0) {
 					return new cError(cErrorType.not_available);
@@ -4758,17 +4776,21 @@ function (window, undefined) {
 	cVLOOKUP.prototype.enabledToSingle = {"1": true};
 	cVLOOKUP.prototype.Calculate = function (arg) {
 		let retArr = new cArray();
-		let error = false;
 
 		if (arg[0].type === cElementType.array) {
 			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
 				arg[2] = arg[2].getValue2(0,0);
 			}
 			let dimension = arg[0].getDimensions();
+			let ctx = {};
+			// One shared args array per loop: calculate() reads arg[0..5] into locals synchronously and
+			// never stores or mutates the array, so only the varying slot needs a write per element.
+			let callArgs = [null, arg[1], arg[2], arg[3]];
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
-					retArr.addElement(g_oVLOOKUPCache.calculate([arg[0].getValue2(r, c), arg[1], arg[2], arg[3]], arguments[1]));
+					callArgs[0] = arg[0].getValue2(r, c);
+					retArr.addElement(g_oVLOOKUPCache.calculate(callArgs, arguments[1], ctx));
 				}
 			}
 
@@ -4777,21 +4799,23 @@ function (window, undefined) {
 
 		if (arg[2] && (arg[2].type === cElementType.array)) {
 			let dimension = arg[2].getDimensions();
+			let ctx = {};
+			// see above: one shared args array, only the varying slot is rewritten per element
+			let callArgs = [arg[0], arg[1], null, arg[3]];
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
-					if (!error) {
-						let res = g_oVLOOKUPCache.calculate([arg[0], arg[1], arg[2].getValue2(r, c), arg[3]], arguments[1]);
-						if (res.type === cElementType.error) {
-							error = true;
-						}
-						retArr.addElement(res);
-					} else {
-						break;
+					callArgs[2] = arg[2].getValue2(r, c);
+					let res = g_oVLOOKUPCache.calculate(callArgs, arguments[1], ctx);
+					if (res.type === cElementType.error) {
+						// the whole result collapses to one error anyway - stop calculating and
+						// building rows for the discarded array right here
+						return new cError(cErrorType.bad_reference);
 					}
+					retArr.addElement(res);
 				}
 			}
-			return error ? new cError(cErrorType.bad_reference) : retArr
+			return retArr;
 		}
 
 		return g_oVLOOKUPCache.calculate(arg, arguments[1]);

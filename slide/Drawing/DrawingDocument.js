@@ -1232,7 +1232,7 @@ function CDrawingDocument()
 			if (0 != nValueScrollVer)
 			{
 				this.m_oWordControl.m_bIsUpdateTargetNoAttack = true;
-				this.m_oWordControl.m_oScrollThumbApi.scrollByY(nValueScrollVer);
+				this.m_oWordControl.m_oScrollThumbApi.scrollByY(nValueScrollVer * AscCommon.AscBrowser.retinaPixelRatio);
 				this.m_oWordControl.OnScroll();
 				return;
 			}

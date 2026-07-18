@@ -7239,6 +7239,7 @@ var editor;
            if (_pageSize) {
                _pageSetup.width = _pageSize.width;
                _pageSetup.height = _pageSize.height;
+               _pageSetup.paperSize = null;
            }
            var pageMargins = newPrintOptions.pageMargins;
            if (_margins) {

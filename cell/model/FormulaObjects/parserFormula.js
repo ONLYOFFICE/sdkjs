@@ -731,7 +731,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cNumber(val) {
-		cBaseType.call(this, parseFloat(val));
+		// Intentional: source inline measured faster here despite V8's normal .call inlining; keep in sync with cBaseType.
+		this.numFormat = cNumFormatNull;
+		// Avoid parseFloat's string round-trip while preserving its -0 normalization.
+		this.value = typeof val === "number" ? val + 0 : parseFloat(val);
+		this.hyperlink = null;
 		var res;
 
 		if (!isNaN(this.value) && Math.abs(this.value) !== Infinity) {
@@ -780,7 +784,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cString(val) {
-		cBaseType.call(this, val);
+		// Intentional: source inline measured faster here despite V8's normal .call inlining; keep in sync with cBaseType.
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 	}
 
 	cString.prototype = Object.create(cBaseType.prototype);
@@ -854,7 +861,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		}
 
-		cBaseType.call(this, v);
+		// Intentional: source inline measured faster here despite V8's normal .call inlining; keep in sync with cBaseType.
+		this.numFormat = cNumFormatNull;
+		this.value = v;
+		this.hyperlink = null;
 	}
 
 	cBool.prototype = Object.create(cBaseType.prototype);
@@ -887,7 +897,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cError(val) {
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 
 		this.errorType = -1;
 
@@ -1169,7 +1182,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cArea(val, ws) {/*Area means "A1:E5" for example*/
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 
 		this.ws = ws;
 		this.range = null;
@@ -1403,13 +1419,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return arr;
 	};
 	cArea.prototype.getMatrixNoEmpty = function () {
-		var arr = [], r = this.getRange(), res;
-		r._foreachDataOnly(function (cell, i, j, r1, c1) {
-			if (!arr[i - r1]) {
-				arr[i - r1] = [];
+		var arr = [];
+		this.getRange()._foreachDataOnly(function (cell, i, j, r1, c1) {
+			var rowIndex = i - r1;
+			var row = arr[rowIndex];
+			if (!row) {
+				row = arr[rowIndex] = [];
 			}
-
-			arr[i - r1][j - c1] = checkTypeCell(cell);
+			row[j - c1] = checkTypeCell(cell);
 		});
 		return arr;
 	};
@@ -1496,7 +1513,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cArea3D(val, wsFrom, wsTo, externalLink) {/*Area3D means "Sheat1!A1:E5" for example*/
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 
 		this.bbox = null;
 		if (val) {
@@ -1828,20 +1848,20 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return arr;
 	};
 	cArea3D.prototype.getMatrixNoEmpty = function () {
-		var arr = [], r = this.getRanges(), res;
+		var arr = [], r = this.getRanges();
 
 		var ws = r[0] ? r[0].worksheet : null;
 		var oldExcludeHiddenRows = ws ? ws.bExcludeHiddenRows : null;
 
 		for (var k = 0; k < r.length; k++) {
-			arr[k] = [];
+			var currentArray = arr[k] = [];
 			r[k]._foreachDataOnly(function (cell, i, j, r1, c1) {
-				if (!arr[k][i - r1]) {
-					arr[k][i - r1] = [];
+				var rowIndex = i - r1;
+				var row = currentArray[rowIndex];
+				if (!row) {
+					row = currentArray[rowIndex] = [];
 				}
-				res = checkTypeCell(cell);
-
-				arr[k][i - r1][j - c1] = res;
+				row[j - c1] = checkTypeCell(cell);
 			});
 		}
 		if (ws) {
@@ -1940,7 +1960,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cRef(val, ws) {/*Ref means A1 for example*/
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 
 		this.ws = ws;
 		this.range = null;
@@ -2046,7 +2069,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cRef3D(val, ws, externalLink) {/*Ref means Sheat1!A1 for example*/
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 
 		this.ws = ws;
 		this.range = null;
@@ -2173,7 +2199,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cEmpty() {
-		cBaseType.call(this, "");
+		// Intentional: source inline measured faster here despite V8's normal .call inlining; keep in sync with cBaseType.
+		this.numFormat = cNumFormatNull;
+		this.value = "";
+		this.hyperlink = null;
 	}
 
 	cEmpty.prototype = Object.create(cBaseType.prototype);
@@ -2197,7 +2226,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cName(val, ws) {
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 		this.ws = ws;
 	}
 
@@ -2312,7 +2344,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cStrucTable(val, wb, ws) {
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 		this.wb = wb;
 		this.ws = ws;
 
@@ -2859,7 +2894,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cStrucPivotTable(val) {
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 		if (val) {
 			this.isIndex = false;
 			this.fieldString = val[0];
@@ -2944,7 +2982,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cArray() {
-		cBaseType.call(this, undefined);
+		// Intentional: source inline measured faster here despite V8's normal .call inlining; keep in sync with cBaseType.
+		this.numFormat = cNumFormatNull;
+		this.value = undefined;
+		this.hyperlink = null;
 		this.array = [];
 		this.rowCount = 0;
 		this.countElementInRow = [];
@@ -3131,14 +3172,29 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		let retArr = new cArray();
 		retArr.realSize = this.getRealArraySize();
 		retArr.missedValue = this.getMissedValue();
-		for (let ir = 0; ir < this.rowCount; ir++, retArr.addRow()) {
-			for (let ic = 0; ic < this.countElementInRow[ir]; ic++) {
-				retArr.addElement(this.array[ir][ic].tocNumber());
+		// Legacy addRow/addElement drops exactly one leading empty row; reproduce it via sourceStart in one pre-sized pass.
+		// Assumes stable cArray storage: element.tocNumber() must not mutate this.array/countElementInRow and the builders are not overridden (unsupported internals).
+		let sourceStart = this.rowCount > 0 && this.countElementInRow[0] === 0 ? 1 : 0;
+		let nRows = this.rowCount - sourceStart;
+		let outArr = new Array(nRows);
+		let outCount = new Array(nRows);
+		let total = 0;
+		for (let ir = 0; ir < nRows; ir++) {
+			let srcIdx = ir + sourceStart;
+			let nCols = this.countElementInRow[srcIdx];
+			let srcRow = this.array[srcIdx];
+			let outRow = new Array(nCols);
+			for (let ic = 0; ic < nCols; ic++) {
+				outRow[ic] = srcRow[ic].tocNumber();
 			}
-			if (ir === this.rowCount - 1) {
-				break;
-			}
+			outArr[ir] = outRow;
+			outCount[ir] = nCols;
+			total += nCols;
 		}
+		retArr.array = outArr;
+		retArr.countElementInRow = outCount;
+		retArr.rowCount = nRows;
+		retArr.countElement = total;
 		return retArr;
 	};
 	cArray.prototype.tocString = function () {
@@ -4222,14 +4278,23 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					var _ta = tempArgs[_j];
 					var _isArrayArg = checkArrayIndex(_j, cElementType.array, tempArgs);
 					var _isRange = cElementType.cellsRange === _ta.type || checkRange3d(_ta);
-					_argInfo[_j] = {
+					var _inf = _argInfo[_j] = {
 						isArrayArg: _isArrayArg,
 						isArray: cElementType.array === _ta.type && !_isArrayArg,
 						isRange: _isRange && !_isArrayArg && !checkArrayIndex(_j, cElementType.cellsRange),
 						rows: (cElementType.array === _ta.type) ? _ta.getRowCount() : 0,
 						cols: (cElementType.array === _ta.type) ? _ta.getCountElementInRow() : 0,
-						dimensions: _isRange ? _ta.getDimensions() : null
+						dimensions: _isRange ? _ta.getDimensions() : null,
+						mode: 0
 					};
+					// 0=scalar; 1..4=array shapes; 5..8=range shapes.
+					if (_inf.isArray) {
+						_inf.mode = 1 === _inf.rows && 1 === _inf.cols ? 1 : 1 === _inf.rows ? 2 : 1 === _inf.cols ? 3 : 4;
+					} else if (_inf.isRange) {
+						var _dimensions = _inf.dimensions;
+						_inf.mode = 1 === _dimensions.row && 1 === _dimensions.col ? 5 :
+							1 === _dimensions.row ? 6 : 1 === _dimensions.col ? 7 : 8;
+					}
 				}
 
 				//bbox_elem -
@@ -4244,35 +4309,21 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					for (var j = 0; j < argumentsCount; j++) {
 						newArg = tempArgs[j];
 						var info = _argInfo[j];
-						if (info.isArray) {
-							if (1 === info.rows && 1 === info.cols) {
-								newArg = newArg.array[0] ? newArg.array[0][0] : null;
-							} else if (1 === info.rows) {
-								newArg = newArg.array[0] ? newArg.array[0][c] : null;
-							} else if (1 === info.cols) {
-								newArg = newArg.array[r] ? newArg.array[r][0] : null;
-							} else {
-								newArg = newArg.array[r] ? newArg.array[r][c] : null;
+						if (info.mode) {
+							switch (info.mode) {
+								case 1: newArg = newArg.array[0] ? newArg.array[0][0] : null; break;
+								case 2: newArg = newArg.array[0] ? newArg.array[0][c] : null; break;
+								case 3: newArg = newArg.array[r] ? newArg.array[r][0] : null; break;
+								case 4: newArg = newArg.array[r] ? newArg.array[r][c] : null; break;
+								case 5: newArg = newArg.getValueByRowCol(0, 0); break;
+								case 6: newArg = newArg.getValueByRowCol(0, c); break;
+								case 7: newArg = newArg.getValueByRowCol(r, 0); break;
+								case 8: newArg = newArg.getValueByRowCol(r, c); break;
 							}
 							if (!newArg) {
 								//TODO check what to set if this array element is unavailable
 								//for now doing this - if not the last argument, then empty element, if last - undefined
-								newArg = /*j === argumentsCount - 1 ? undefined : */new cError(cErrorType.not_available);
-							}
-						} else if (info.isRange) {
-							if (1 === info.dimensions.row && 1 === info.dimensions.col) {
-								newArg = newArg.getValueByRowCol(0, 0);
-							} else if (1 === info.dimensions.row) {
-								newArg = newArg.getValueByRowCol(0, c);
-							} else if (1 === info.dimensions.col) {
-								newArg = newArg.getValueByRowCol(r, 0);
-							} else {
-								newArg = newArg.getValueByRowCol(r, c);
-							}
-							if (!newArg) {
-								//TODO check what to set if this array element is unavailable
-								//for now doing this - if not the last argument, then empty element, if last - undefined
-								newArg = /*j === argumentsCount - 1 ? undefined : */new cNumber(0);
+								newArg = info.mode <= 4 ? new cError(cErrorType.not_available) : new cNumber(0);
 							}
 						}
 
@@ -5428,35 +5479,33 @@ _func[cElementType.cell] = [];
 
 
 _func[cElementType.number][cElementType.number] = function ( arg0, arg1, what ) {
-	var compareNumbers = function(){
-		return AscCommon.compareNumbers(arg0.getValue(), arg1.getValue());
-	};
 	let opt_return_bool = arguments[5];
 	let res = null;
+	let value0 = arg0.getValue(), value1 = arg1.getValue();
 	if (what === ">") {
-		res = compareNumbers() > 0;
+		res = AscCommon.compareNumbers(value0, value1) > 0;
 	} else if (what === ">=") {
-		res = !(compareNumbers() < 0);
+		res = !(AscCommon.compareNumbers(value0, value1) < 0);
 	} else if (what === "<") {
-		res = compareNumbers() < 0;
+		res = AscCommon.compareNumbers(value0, value1) < 0;
 	} else if (what === "<=") {
-		res = !(compareNumbers() > 0);
+		res = !(AscCommon.compareNumbers(value0, value1) > 0);
 	} else if (what === "=") {
-		res = (compareNumbers() === 0);
+		res = (AscCommon.compareNumbers(value0, value1) === 0);
 	} else if (what === "<>") {
-		res = (compareNumbers() !== 0);
+		res = (AscCommon.compareNumbers(value0, value1) !== 0);
 	} else if (what === "-") {
-		return new cNumber(arg0.getValue() - arg1.getValue());
+		return new cNumber(value0 - value1);
 	} else if (what === "+") {
-		return new cNumber(arg0.getValue() + arg1.getValue());
+		return new cNumber(value0 + value1);
 	} else if (what === "/") {
-		if (arg1.getValue() !== 0) {
-			return new cNumber(arg0.getValue() / arg1.getValue());
+		if (value1 !== 0) {
+			return new cNumber(value0 / value1);
 		} else {
 			return new cError(cErrorType.division_by_zero);
 		}
 	} else if (what === "*") {
-		return new cNumber(arg0.getValue() * arg1.getValue());
+		return new cNumber(value0 * value1);
 	}
 	if (res !== null) {
 		return opt_return_bool ? res : new cBool(res);
@@ -5585,6 +5634,9 @@ _func[cElementType.string][cElementType.number] = function ( arg0, arg1, what ) 
 };
 
 function _isEqualStrings(str1, str2, caseSensitive) {
+	if (str1 === str2) {
+		return true;
+	}
 	return caseSensitive
 		? AscCommon.stringCompare(str1, str2) === 0
 		: AscCommon.stringCompare(str1.toLowerCase(), str2.toLowerCase()) === 0;
@@ -6999,8 +7051,10 @@ function parserFormula( formula, parent, _ws ) {
 					if (j < 0) { // over reaching minimum edge
 						break;
 					}
-					aArgsOfOperator.unshift(aNewOutStack.pop());
+					// push + reverse once == the old unshift order, but O(k) instead of O(k^2) front-insert.
+					aArgsOfOperator.push(aNewOutStack.pop());
 				}
+				aArgsOfOperator.reverse();
 				if (aArgsOfOperator.length < aOperatorData[ARGUMENT_COUNT_INDEX]) {
 					break;
 				}
@@ -8404,6 +8458,9 @@ function parserFormula( formula, parent, _ws ) {
 			let bRecursiveCell = parserFormula.ca;
 			let sFunctionName = "";
 
+			if (ignoreErrors) {
+				return bRecursiveCell;
+			}
 
 			if (levelFuncMap.length && levelFuncMap[currentFuncLevel]) {
 				sFunctionName = levelFuncMap[currentFuncLevel].func.name;
@@ -9547,9 +9604,11 @@ function parserFormula( formula, parent, _ws ) {
 							// if operator - check whether each of the arguments is a range or an array
 
 							let isOperator = currentElement.type === cElementType.operator;
-							let arg = [];
+							let _argCount = argumentsCount + defNameArgCount;
+							// defNameArgCount can make _argCount a numeric string, hence the explicit coercion.
+							let arg = new Array(_argCount | 0);
 							let _isPromise = false;
-							for (let i = 0; i < argumentsCount + defNameArgCount; i++) {
+							for (let i = 0; i < _argCount; i++) {
 								if ("number" === typeof(elemArr[elemArr.length - 1])) {
 									elemArr.pop();
 								}
@@ -9562,8 +9621,8 @@ function parserFormula( formula, parent, _ws ) {
 									_isPromise = true;
 									break;
 								}
-								// arg.unshift(elemArr.pop());
-								arg.unshift(tempElem);
+								// fill from the end == the old unshift order, O(1) per element.
+								arg[_argCount - 1 - i] = tempElem;
 							}
 
 							if (_isPromise) {
@@ -9697,14 +9756,16 @@ function parserFormula( formula, parent, _ws ) {
 					this._endCalculate();
 					return this.value;
 				} else {
-					var arg = [];
+					var _argCount = argumentsCount + defNameArgCount;
+					// defNameArgCount can make _argCount a numeric string, hence the explicit coercion.
+					var arg = new Array(_argCount | 0);
 					let _isPromise = false;
-					for (var ind = 0; ind < argumentsCount + defNameArgCount; ind++) {
+					for (var ind = 0; ind < _argCount; ind++) {
 						if("number" === typeof(elemArr[elemArr.length - 1])){
 							elemArr.pop();
 						}
 						let _elem = elemArr.pop();
-						arg.unshift(_elem);
+						arg[_argCount - 1 - ind] = _elem;
 						if (fIsPromise(_elem)) {
 							_isPromise = true;
 							break;
@@ -10707,7 +10768,7 @@ function parserFormula( formula, parent, _ws ) {
 		for (var i = 0, j = 0; i < _count; i++) {
 			currentElement = this.outStack[i];
 
-			if(currentElement.type !== cElementType.cellsRange3D && currentElement.type !== cElementType.cell3D && currentElement.type !== cElementType.name && currentElement.type !== cElementType.name3D) {
+			if(onlyRangesElements && currentElement.type !== cElementType.cellsRange3D && currentElement.type !== cElementType.cell3D && currentElement.type !== cElementType.name && currentElement.type !== cElementType.name3D) {
 				onlyRangesElements = false;
 				rangesStr = null;
 			}
@@ -10877,9 +10938,11 @@ function parserFormula( formula, parent, _ws ) {
 				var args = [];
 				for (var k = 0; k < argCount; k++) {
 					if (stack.length > 0) {
-						args.unshift(stack.pop());
+						// push + reverse once == the old unshift order, but O(k) instead of O(k^2).
+						args.push(stack.pop());
 					}
 				}
+				args.reverse();
 				if (elem.type === cElementType.func) {
 					for (var k = 0; k < args.length; k++) {
 						if (args[k].index === operandIndex ||

@@ -1347,7 +1347,17 @@ Paragraph.prototype.private_RecalculateLineMetrics     = function(CurLine, CurPa
 	lineMetrics.UpdateLineGap(ParaPr);
 	if (true === PRS.End && true !== PRS.EmptyLine && true !== PRS.TextOnLine && Math.abs(this.Lines[CurLine].Metrics.Descent - this.Lines[CurLine].Metrics.TextDescent) < 0.001)
 		lineMetrics.Descent = 0;
-	
+
+	if (!this.bFromDocument)
+	{
+		let lineHeight    = lineMetrics.Ascent + lineMetrics.Descent + lineMetrics.LineGap;
+		let contentAscent = Asc.linerule_Exact === ParaPr.Spacing.LineRule ? lineMetrics.TextAscent : lineMetrics.Ascent;
+		let ascentRegion  = Math.max(AscWord.PRESENTATION_LINE_ASCENT_RATIO * lineHeight, Math.min(contentAscent, lineHeight - lineMetrics.TextDescent));
+		let shift = ascentRegion - lineMetrics.Ascent;
+		lineMetrics.Ascent  += shift;
+		lineMetrics.LineGap -= shift;
+	}
+
 	let updatedLineHeight = lineMetrics.Ascent + lineMetrics.Descent + lineMetrics.LineGap;
 	
 	if (lineHeight - updatedLineHeight > AscWord.EPSILON)
@@ -2086,7 +2096,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 							JustifyWord  = 0;
 							JustifySpace = 0;
 						}
-                        else if (1 === PRSC.Words || PRSC.Spaces <= 0)
+                        else if (1 === PRSC.getJustifyWords() || PRSC.getJustifySpaces() <= 0)
                         {
 							// Проверяем по количеству пробелов, т.к., например, в китайском языке пробелов нет, но
 							// каждый иероглиф как отдельное слово идет.
@@ -2094,8 +2104,8 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
                             {
 								X = Range.X;
                                 // Либо слово целиком занимает строку, либо не целиком, но разница очень мала
-								// либо это набор китайских иероглифов (PRSC.Words > 1)
-                                if ((RangeWidth - Range.W <= 0.05 * RangeWidth || PRSC.Words > 1) && PRSC.Letters > 1)
+								// либо это набор китайских иероглифов (PRSC.getJustifyWords() > 1)
+                                if ((RangeWidth - Range.W <= 0.05 * RangeWidth || PRSC.getJustifyWords() > 1) && PRSC.Letters > 1)
                                     JustifyWord = (RangeWidth - Range.W) / (PRSC.Letters - 1);
                             }
                             else if (0 === CurRange || Line.Info & paralineinfo_End)
@@ -2128,14 +2138,14 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 							// TODO: Переделать проверку последнего отрезка в последней строке (нужно выставлять флаг когда пришел PRS.End в отрезке)
 							
 							// Последний промежуток последней строки не надо растягивать по ширине.
-							if (PRSC.Spaces > 0 && (!(Line.Info & paralineinfo_End) || CurRange !== Line.Ranges.length - 1))
+							if (PRSC.getJustifySpaces() > 0 && (!(Line.Info & paralineinfo_End) || CurRange !== Line.Ranges.length - 1))
 							{
 								if (bRtlAlign)
 									X = Range.X - rtlShift;
 								else
 									X = Range.X;
 								
-								JustifySpace = (RangeWidth - Range.W) / PRSC.Spaces;
+								JustifySpace = (RangeWidth - Range.W) / PRSC.getJustifySpaces();
 							}
 							else
 							{

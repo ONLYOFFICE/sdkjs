@@ -6051,9 +6051,8 @@ function(window, undefined) {
 		return fRetLayout;
 	};
 	CChartSpace.prototype.calculateDLblsForChartEx = function () {
-		const size = this.chart.plotArea.plotAreaRegion.series.length;
-		const seria = this.chart.plotArea.plotAreaRegion.series[size - 1];
 		const cachedData = this.chart.plotArea.plotAreaRegion.getCachedData();
+		const seria = cachedData ? this.chart.plotArea.plotAreaRegion.getSeriaById(cachedData.Id) : null;
 
 		// helper to get label for treemap from catPts by idx of valPt
 		function searchLabel(sPts, idx) {
@@ -6090,6 +6089,10 @@ function(window, undefined) {
 					pt.compiledDlb = null;
 					continue;
 				}
+				if (chartType === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN && pt.idx >= cachedData.data.length) {
+					pt.compiledDlb = null;
+					continue;
+				}
 				const compiled_dlb = new AscFormat.CDLbl();
 				compiled_dlb.merge(default_lbl);
 				compiled_dlb.merge(seria.dataLabels);
@@ -6109,6 +6112,11 @@ function(window, undefined) {
 				if (chartType === AscFormat.SERIES_LAYOUT_TREEMAP) {
 					const label = searchLabel(sPts, pt.idx);
 					pt.compiledDlb.replaceTextContentNoHistory(label);
+					pt.compiledDlb.recalculateInternal();
+				}
+				if (chartType === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN) {
+					const sText = oNumFormatCache.get(seria.getValObjectSourceNumFormat(pt.idx)).formatToChart(cachedData.data[pt.idx].val);
+					pt.compiledDlb.replaceTextContentNoHistory(sText);
 					pt.compiledDlb.recalculateInternal();
 				}
 				if (cachedData.funnel && pt.compiledDlb.pt <= 0) {
@@ -9418,6 +9426,10 @@ function(window, undefined) {
 						default_brush.merge(oSpPr.Fill);
 					}
 				}
+				let oPlotAreaRegion = this.chart.plotArea.plotAreaRegion;
+				if (oPlotAreaRegion && oPlotAreaRegion.plotSurface && oPlotAreaRegion.plotSurface.spPr && oPlotAreaRegion.plotSurface.spPr.Fill) {
+					default_brush.merge(oPlotAreaRegion.plotSurface.spPr.Fill);
+				}
 			}
 			if (plot_area.spPr && plot_area.spPr.Fill) {
 				default_brush.merge(plot_area.spPr.Fill);
@@ -9836,6 +9848,14 @@ function(window, undefined) {
 			return;
 		}
 
+		if (this.chartStyle.seriesLine) {
+			const oConnectorSpPr = this.getSpPrFormStyleEntry(this.chartStyle.seriesLine, this.chartColors.generateColors(1), 0);
+			if (oConnectorSpPr && oConnectorSpPr.ln) {
+				ser.compiledConnectorPen = oConnectorSpPr.ln;
+				ser.compiledConnectorPen.calculate(parents.theme, parents.slide, parents.layout, parents.master, RGBA, this.clrMapOvr);
+			}
+		}
+
 		if (ser.spPr && ser.spPr.Fill && ser.spPr.Fill.fill) {
 			return;
 		}
@@ -9962,6 +9982,9 @@ function(window, undefined) {
 							);
 							if (oSpPr && oSpPr.ln) {
 								compiled_line.merge(oSpPr.ln);
+								if (!(compiled_line.w > 0) && oSpPr.ln.Fill && !oSpPr.ln.Fill.isNoFill()) {
+									compiled_line.w = 9525;
+								}
 							}
 						}
 					}
@@ -11650,11 +11673,32 @@ function(window, undefined) {
 		this.chart.checkDlblsPosition();
 	};
 	CChartSpace.prototype.getPossibleDLblsPosition = function () {
+		if (this.isChartEx()) {
+			return this.getChartExPossibleDLblsPosition();
+		}
 		var aPositions = this.chart.getPossibleDLblsPosition();
 		if (aPositions.length === 0) {
 			aPositions.push(Asc.c_oAscChartDataLabelsPos.show);
 		}
 		return aPositions;
+	};
+	CChartSpace.prototype.getChartExPossibleDLblsPosition = function () {
+		const oPos = Asc.c_oAscChartDataLabelsPos;
+		const plotAreaRegion = this.chart && this.chart.plotArea ? this.chart.plotArea.plotAreaRegion : null;
+		const aSeries = plotAreaRegion ? plotAreaRegion.series : null;
+		const layoutId = aSeries && aSeries[0] ? aSeries[0].layoutId : null;
+		switch (layoutId) {
+			case AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN:
+			case AscFormat.SERIES_LAYOUT_PARETO_LINE:
+			case AscFormat.SERIES_LAYOUT_WATERFALL:
+				return [oPos.outEnd, oPos.ctr, oPos.inBase, oPos.inEnd];
+			case AscFormat.SERIES_LAYOUT_FUNNEL:
+			case AscFormat.SERIES_LAYOUT_TREEMAP:
+			case AscFormat.SERIES_LAYOUT_SUNBURST:
+			case AscFormat.SERIES_LAYOUT_BOX_WHISKER:
+				return [oPos.ctr];
+		}
+		return [oPos.show];
 	};
 	CChartSpace.prototype.setDlblsProps = function (oProps) {
 		this.chart.setDlblsProps(oProps);

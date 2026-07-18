@@ -373,6 +373,9 @@
 				oLine.setFill(oFill);
             }
 
+			const t = this.GetOpacity() * 100 * 2.55;
+			oLine.Fill.transparent = t;
+			
             this.handleUpdateLn();
         }
 
@@ -681,7 +684,7 @@
     CAnnotationBase.prototype.IsChanged = function() {
         return this._wasChanged;  
     };
-    CAnnotationBase.prototype.DrawFromStream = function(oGraphicsPDF) {
+    CAnnotationBase.prototype.DrawFromStream = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)
             return;
             
@@ -1077,6 +1080,13 @@
 
         return false;
     };
+	CAnnotationBase.prototype.IsNoPrint = function() {
+		let nType = this.GetDisplay();
+        if (nType == AscPDF.Api.Types.display["noPrint"] || nType == AscPDF.Api.Types.display["hidden"])
+            return true;
+
+        return false;
+	};
     CAnnotationBase.prototype.SetDisplay = function(nType) {
         if (nType == this._display) {
             return;
@@ -1173,6 +1183,56 @@
 
         this.SetNeedRecalcSizes(false);
     };
+	CAnnotationBase.prototype.DrawOnPage = function(oGraphicsPDF, oGraphicsWord) {
+		if (oGraphicsPDF.isPrint) {
+			if (this.IsNoPrint()) {
+				return;
+			}
+		}
+		else if (this.IsHidden() && !Asc.editor.IsEditFieldsMode()) {
+			return;
+		}
+
+		if (this.IsNeedDrawFromStream()) {
+			if (!this.initRecalc) {
+				this.Recalculate(true);
+				this.initRecalc = true;
+			}
+			else {
+				this.Recalculate();
+			}
+			this.DrawFromStream(oGraphicsPDF, oGraphicsWord);
+		}
+		else
+			this.Draw(oGraphicsPDF, oGraphicsWord);
+
+		this.DrawLocks(oGraphicsPDF);
+	};
+	CAnnotationBase.prototype.DrawLocks = function(oGraphicsPDF) {
+		if (this.IsTextMarkup()) {
+			let aUnitedRegion = this.GetUnitedRegion();
+			if (aUnitedRegion) {
+				oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
+			}
+
+			return;
+		}
+
+        let aOrigRect   = this.GetRect();
+        let nX          = aOrigRect[0];
+        let nY          = aOrigRect[1];
+        let nWidth      = (aOrigRect[2] - aOrigRect[0]);
+        let nHeight     = (aOrigRect[3] - aOrigRect[1]);
+
+        let aRegions = [[
+            [nX, nY],
+            [nX + nWidth, nY],
+            [nX + nWidth, nY + nHeight],
+            [nX, nY + nHeight]
+        ]];
+
+        oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aRegions);
+    };
     CAnnotationBase.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)
             return;
@@ -1184,7 +1244,7 @@
 		this.IsChanged() && oGraphicsWord.AddClipRect(aRect[0] * g_dKoef_pt_to_mm, aRect[1] * g_dKoef_pt_to_mm, (aRect[2] - aRect[0]) * g_dKoef_pt_to_mm, (aRect[3] - aRect[1]) * g_dKoef_pt_to_mm);
         this.draw(oGraphicsWord);
         this.IsChanged() && oGraphicsWord.RemoveLastClip();
-
+		
         // draw annot rect
         // if (oGraphicsPDF) {
         //     oGraphicsPDF.SetLineWidth(1);

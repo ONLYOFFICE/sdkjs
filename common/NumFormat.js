@@ -94,6 +94,13 @@ var gc_nMaxDigCountView = 11;//Maximum number of digits in a cell
 var gc_nMaxMantissa = Math.pow(10, gc_nMaxDigCount);
 var gc_log10of2 = Math.log10(2); // log10(2): converts binary exponent to decimal exponent
 
+// Powers used by getNumberParts for every finite IEEE 754 double exponent.
+// Keep division here: multiplying by a cached reciprocal changes rounding near decimal boundaries.
+const _g_pow10MinExp = -322;
+const _g_pow10 = [];
+for (let exp = _g_pow10MinExp; exp <= 293; ++exp)
+	_g_pow10.push(Math.pow(10, exp));
+
 // Pre-allocated buffers for IEEE 754 bit-level exponent extraction in getNumberParts.
 // Avoids Math.log() floating-point precision issues and is slightly faster.
 const _g_numPartsBuf = new ArrayBuffer(8);
@@ -164,8 +171,17 @@ var NumFormatType =
 	PDFFormDate: 4
 };
 
-function getNumberParts(x)
+// Fixed-shape result of getNumberParts; a named type so every result shares one hidden class.
+function NumberParts()
 {
+    this.mantissa = 0;
+    this.exponent = 0;
+    this.sign = SignType.Null;
+}
+// Writes mantissa/exponent/sign for x into opt_out (a reused NumberParts on hot paths) or a fresh one.
+function getNumberParts(x, opt_out)
+{
+    var out = opt_out || new NumberParts();
     var sig = SignType.Null;
     if (!isFinite(x))
         x = 0;
@@ -180,29 +196,34 @@ function getNumberParts(x)
 	var man = 0;
 	if(SignType.Null != sig)
 	{
-		// Extract the base-2 exponent directly from the IEEE 754 representation.
-		// Bits [62:52] of a float64 are the biased exponent; subtract the bias 1023
-		// to get floor(log2(x)).  Multiplying by log10(2) ≈ 0.30103 gives an
-		// approximation of floor(log10(x)) that is always <= the true value.
-		// When it is one too small, man ends up >= gc_nMaxMantissa and the
-		// existing correction below fixes it.
+		// Base-2 exponent from IEEE754 bits (bias 1023); log10(2) estimate is always <= the true value, corrected below when man >= gc_nMaxMantissa.
 		_g_numPartsF64[0] = x;
 		const binaryExp = ((_g_numPartsI32[1] >>> 20) & 0x7FF) - 1023;
 		exp = Math.floor(binaryExp * gc_log10of2) - gc_nMaxDigCount + 1;
-		man = Math.round(x / Math.pow(10, exp));
+		man = Math.round(x / _g_pow10[exp - _g_pow10MinExp]);
 		if(man >= gc_nMaxMantissa)
 		{
 			exp++;
 			man = Math.floor(man / 10);
 		}
 	}
-    return {mantissa: man, exponent: exp, sign: sig};//for 0.123 exponent == - gc_nMaxDigCount
+    out.mantissa = man;//for 0.123 exponent == - gc_nMaxDigCount
+    out.exponent = exp;
+    out.sign = sig;
+    return out;
 }
 
+	// Reused targets so the hot compareNumbers path allocates no result object per comparison.
+	var _g_cmpParts1 = new NumberParts();
+	var _g_cmpParts2 = new NumberParts();
 	function compareNumbers(val1, val2) {
+		if (typeof val1 === "number" && typeof val2 === "number" &&
+			(val1 | 0) === val1 && (val2 | 0) === val2)
+			return val1 - val2;
+
 		var res = 0;
-		var parts1 = getNumberParts(val1);
-		var parts2 = getNumberParts(val2);
+		var parts1 = getNumberParts(val1, _g_cmpParts1);
+		var parts2 = getNumberParts(val2, _g_cmpParts2);
 		if (parts1.sign === parts2.sign) {
 			if (parts1.exponent === parts2.exponent) {
 				res = parts1.mantissa - parts2.mantissa;

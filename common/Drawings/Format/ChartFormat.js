@@ -2364,6 +2364,10 @@
     CBaseChartObject.prototype.isForm = function() {
         return false;
     };
+    CBaseChartObject.prototype.isSlideImagePlaceholder = function() {
+        return false;
+    };
+    CBaseChartObject.prototype.resetSelectionState = CShape.prototype.resetSelectionState;
     CBaseChartObject.prototype.GetParaDrawing = function() {
         let oChartSpace = this.getChartSpace();
         if(oChartSpace) {
@@ -6572,6 +6576,7 @@
 		}
 
 		chartSpace.setChart(newChart);
+		chartSpace.resetToChartStyle();
 
 		const newRegion = newChart.plotArea && newChart.plotArea.plotAreaRegion;
 		if (newRegion) {
@@ -17601,6 +17606,9 @@
     CalcLegendEntry.prototype.isEmptyPlaceholder = function() {
         return false;
     };
+    CalcLegendEntry.prototype.isSlideImagePlaceholder = function() {
+        return false;
+    };
 	CalcLegendEntry.prototype.checkWidthContent =
 	CalcLegendEntry.prototype.checkWidhtContent = function () {
         var par = this.txBody.content.Content[0];
@@ -17695,6 +17703,9 @@
         return new AscFormat.CGraphicBounds(0, 0, this.extX, this.extY);
     };
     CompiledMarker.prototype.isEmptyPlaceholder = function() {
+        return false;
+    };
+    CompiledMarker.prototype.isSlideImagePlaceholder = function() {
         return false;
     };
     CompiledMarker.prototype.isForm = function() {

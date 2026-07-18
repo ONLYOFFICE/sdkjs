@@ -6931,6 +6931,7 @@
 	// Required extensions
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	WorkbookView.prototype.IsDocumentEditor = function() {return false};
+	WorkbookView.prototype.CanDoAutoCorrect = function() {return true;};
 	WorkbookView.prototype.Is_Inline = function() {};
 	WorkbookView.prototype.OnChangeForm = function() {};
 	WorkbookView.prototype.TurnOffCheckChartSelection = function() {};
