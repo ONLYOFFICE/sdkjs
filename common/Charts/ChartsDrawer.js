@@ -3015,6 +3015,9 @@ CChartsDrawer.prototype =
 
 		for (let i = 0; i < plotArea.plotAreaRegion.series.length; i++) {
             const seria = plotArea.plotAreaRegion.series[i];
+            if (seria.hidden) {
+                continue;
+            }
             const type = seria.layoutId;
             const secondType = 1 < plotArea.plotAreaRegion.series.length ? plotArea.plotAreaRegion.series[1].layoutId : null;
             const strLit = seria.getCatLit(type);
