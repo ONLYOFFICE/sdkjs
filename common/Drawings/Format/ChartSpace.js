@@ -9427,6 +9427,10 @@ function(window, undefined) {
 						default_brush.merge(oSpPr.Fill);
 					}
 				}
+				let oPlotAreaRegion = this.chart.plotArea.plotAreaRegion;
+				if (oPlotAreaRegion && oPlotAreaRegion.plotSurface && oPlotAreaRegion.plotSurface.spPr && oPlotAreaRegion.plotSurface.spPr.Fill) {
+					default_brush.merge(oPlotAreaRegion.plotSurface.spPr.Fill);
+				}
 			}
 			if (plot_area.spPr && plot_area.spPr.Fill) {
 				default_brush.merge(plot_area.spPr.Fill);
