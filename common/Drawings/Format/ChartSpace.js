@@ -6051,9 +6051,8 @@ function(window, undefined) {
 		return fRetLayout;
 	};
 	CChartSpace.prototype.calculateDLblsForChartEx = function () {
-		const size = this.chart.plotArea.plotAreaRegion.series.length;
-		const seria = this.chart.plotArea.plotAreaRegion.series[size - 1];
 		const cachedData = this.chart.plotArea.plotAreaRegion.getCachedData();
+		const seria = cachedData ? this.chart.plotArea.plotAreaRegion.getSeriaById(cachedData.Id) : null;
 
 		// helper to get label for treemap from catPts by idx of valPt
 		function searchLabel(sPts, idx) {
