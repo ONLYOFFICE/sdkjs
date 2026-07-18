@@ -236,7 +236,7 @@ jobs:
           [ -z "$COMMIT_SUBJECT" ] && COMMIT_SUBJECT="${COMMIT_SHA:0:7}"
 
           API="${{ github.server_url }}/api/v1"
-          WORKFLOW=".github/workflows/check-build.yml"
+          WORKFLOW="check-build.yml"
           RUNS_FILE="$(mktemp)"
           HTTP=$(curl -s -G -o "$RUNS_FILE" -w '%{http_code}' \
             -H "Authorization: token $GITEA_TOKEN" \
@@ -252,14 +252,22 @@ jobs:
             exit 0
           fi
 
-          PREV_CONCLUSION=$(jq -r --arg wf "$WORKFLOW" '
-            [ .workflow_runs[]? | select(.path == $wf and (.conclusion // "") != "") ]
-            | (sort_by(.run_number) | last // {}) | (.conclusion // "")' "$RUNS_FILE" 2>/dev/null || true)
+          echo "Runs returned (path | run_number | status | conclusion):"
+          jq -r '.workflow_runs[]? | "\(.path) | \(.run_number) | \(.status) | \(.conclusion)"' "$RUNS_FILE" 2>/dev/null | head -15
 
-          echo "Previous run conclusion: ${PREV_CONCLUSION:-none}"
+          PREV_RESULT=$(jq -r --arg wf "$WORKFLOW" '
+            [ .workflow_runs[]?
+              | { rn: .run_number,
+                  res: (if (.conclusion // "") != "" then .conclusion else (.status // "") end),
+                  p: (.path // "") }
+              | select(.p | endswith($wf))
+              | select(([ "running","waiting","queued","in_progress","blocked","unknown","" ] | index(.res)) == null) ]
+            | sort_by(.rn) | last // {} | (.res // "")' "$RUNS_FILE" 2>/dev/null || true)
+
+          echo "Previous run result: ${PREV_RESULT:-none}"
 
           # Don't spam with 'success' messages
-          if [ "$PREV_CONCLUSION" = "success" ]; then
+          if [ "$PREV_RESULT" = "success" ]; then
             echo "Previous run already succeeded — skipping OK message."
             exit 0
           fi
