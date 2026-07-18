@@ -21246,6 +21246,7 @@ function CParagraphLineNumbersInfo(nStartLineNum)
 	this.StartNum = undefined !== nStartLineNum ? nStartLineNum : -1;
 }
 
+
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].UnknownValue = UnknownValue;
