@@ -261,8 +261,8 @@ jobs:
                   res: (if (.conclusion // "") != "" then .conclusion else (.status // "") end),
                   p: (.path // "") }
               | select((.p | split("@") | .[0]) | endswith($wf))
-              | select(([ "running","waiting","queued","in_progress","blocked","unknown","" ] | index(.res)) == null) ]
-            | sort_by(.rn) | last // {} | (.res // "")' "$RUNS_FILE" 2>/dev/null || true)
+              | select(.res as $r | ([ "running","waiting","queued","in_progress","blocked","unknown","" ] | index($r)) == null) ]
+            | (sort_by(.rn) | last) // {} | (.res // "")' "$RUNS_FILE" 2>/dev/null || true)
 
           echo "Previous run result: ${PREV_RESULT:-none}"
 
