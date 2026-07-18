@@ -10645,26 +10645,26 @@
 	 * Adds some text to the current paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {string} text - The text that we want to insert into the current document element.
+	 * @param {string | number[]} text - The text that we want to insert into the current document element. It can be a string or an array of Unicode code points.
+	 * @param {number[]} [widths] - An array of character widths (in millimeters). It should be the same length as the array of code points passed in the "text" parameter. When the widths are specified, the characters are added preserving these exact widths.
 	 * @returns {ApiRun}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/AddText.js
 	 */
-	ApiParagraph.prototype.AddText = function(text)
+	ApiParagraph.prototype.AddText = function(text, widths)
 	{
-		text = GetStringParameter(text, "");
-		let oRun = new ParaRun(this.Paragraph, false);
-		oRun.AddText(text);
+		let run = new AscWord.ParaRun(this.Paragraph, false);
 
 		// copy props from previous non empty run
-		let oPrevRun = this.GetLastRunWithText();
-		if (!oPrevRun)
-			oPrevRun = new ApiRun(this.Paragraph.GetParaEndRun());
-		
-		let oApiRun = new ApiRun(oRun);
-		oApiRun.SetTextPr(oPrevRun.GetTextPr());
+		let prevRun = this.GetLastRunWithText();
+		if (!prevRun)
+			prevRun = new ApiRun(this.Paragraph.GetParaEndRun());
 
-		private_PushElementToParagraph(this.Paragraph, oRun);
-		return oApiRun;
+		let apiRun = new ApiRun(run);
+		apiRun.SetTextPr(prevRun.GetTextPr());
+		apiRun.AddText(text, widths);
+
+		private_PushElementToParagraph(this.Paragraph, run);
+		return apiRun;
 	};
 	/**
 	 * Adds a page break and starts the next element from the next page.
@@ -12681,12 +12681,37 @@
 	 * Adds some text to the current run.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {string} text - The text which will be added to the current run.
+	 * @param {string | number[]} text - The text which will be added to the current run. It can be a string or an array of Unicode code points.
+	 * @param {number[]} [widths] - An array of character widths (in millimeters). It should be the same length as the array of code points passed in the "text" parameter. When the widths are specified, the characters are added preserving these exact widths.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/AddText.js
 	 */
-	ApiRun.prototype.AddText = function(text)
+	ApiRun.prototype.AddText = function(text, widths)
 	{
+		if (Array.isArray(text))
+		{
+			widths = GetArrayParameter(widths, null);
+			if (widths)
+			{
+				let fontSize = this.Run.Get_CompiledPr(false).FontSize || 10;
+				this.Run.AddCodePointsWithWidths(text, widths, fontSize);
+			}
+			else
+			{
+				let sString = "";
+				for (let nIndex = 0, nCount = text.length; nIndex < nCount; ++nIndex)
+				{
+					let nCharCode = text[nIndex] | 0;
+					if (nCharCode > 0)
+						sString += String.fromCodePoint(nCharCode);
+				}
+
+				this.Run.AddText(sString);
+			}
+
+			return true;
+		}
+
 		text = GetStringParameter(text, "");
 		this.Run.AddText(text);
 		return true;
