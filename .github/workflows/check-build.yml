@@ -252,8 +252,8 @@ jobs:
             exit 0
           fi
 
-          echo "Runs returned (path | run_number | status | conclusion):"
-          jq -r '.workflow_runs[]? | "\(.path) | \(.run_number) | \(.status) | \(.conclusion)"' "$RUNS_FILE" 2>/dev/null | head -15
+          #echo "Runs returned (path | run_number | status | conclusion):"
+          #jq -r '.workflow_runs[]? | "\(.path) | \(.run_number) | \(.status) | \(.conclusion)"' "$RUNS_FILE" 2>/dev/null | head -15
 
           PREV_RESULT=$(jq -r --arg wf "$WORKFLOW" '
             [ .workflow_runs[]?
