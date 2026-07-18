@@ -9979,6 +9979,9 @@ function(window, undefined) {
 							);
 							if (oSpPr && oSpPr.ln) {
 								compiled_line.merge(oSpPr.ln);
+								if (!(compiled_line.w > 0) && oSpPr.ln.Fill && !oSpPr.ln.Fill.isNoFill()) {
+									compiled_line.w = 9525;
+								}
 							}
 						}
 					}
