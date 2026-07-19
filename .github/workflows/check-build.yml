@@ -264,7 +264,7 @@ jobs:
         run: |
           cd "$GITHUB_WORKSPACE/onlyoffice/sdkjs/build"
           npm ci
-          python build.py --level=WHITESPACE_ONLY \
+          python build.py --level=WHITESPACE_ONLY --minimize \
             --addon "$GITHUB_WORKSPACE/sdkjs-forms" \
             --addon "$GITHUB_WORKSPACE/sdkjs-ooxml" \
             --addon "$GITHUB_WORKSPACE/sdkjs-ext"
