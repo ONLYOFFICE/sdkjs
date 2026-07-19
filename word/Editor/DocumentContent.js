@@ -6881,13 +6881,6 @@ CDocumentContent.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent
 		Start = this.Selection.EndPos;
 	}
 
-	// Чтобы не было эффекта, когда ничего не поселекчено, а при удалении соединяются параграфы
-	if (Direction > 0 && type_Paragraph === this.Content[Start].GetType() && true === this.Content[Start].IsSelectionEmpty() && this.Content[Start].Selection.StartPos == this.Content[Start].Content.length - 1)
-	{
-		this.Content[Start].Selection.StartPos = this.Content[Start].Internal_GetEndPos();
-		this.Content[Start].Selection.EndPos   = this.Content[Start].Content.length - 1;
-	}
-
 	var ElementPageIndex = this.private_GetElementPageIndexByXY(ContentPos, X, Y, this.CurPage);
 	this.Content[ContentPos].Selection_SetEnd(X, Y, ElementPageIndex, MouseEvent);
 
@@ -6913,6 +6906,29 @@ CDocumentContent.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent
 				Item.SelectAll(Direction);
 				break;
 		}
+	}
+
+	if (true === this.Content[End].IsSelectionEmpty())
+	{
+		this.Content[End].RemoveSelection();
+		End--;
+	}
+
+	if (Start != End && true === this.Content[Start].IsSelectionEmpty())
+	{
+		this.Content[Start].RemoveSelection();
+		Start++;
+	}
+
+	if (Direction > 0)
+	{
+		this.Selection.StartPos = Start;
+		this.Selection.EndPos   = End;
+	}
+	else
+	{
+		this.Selection.StartPos = End;
+		this.Selection.EndPos   = Start;
 	}
 };
 CDocumentContent.prototype.CheckPosInSelection = function(X, Y, CurPage, NearPos)
