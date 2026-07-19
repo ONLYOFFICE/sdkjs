@@ -3983,8 +3983,17 @@ function(window, undefined) {
 			return;
 		}
 
-		const title = bDisplay ? createChartTitle(this.chart, bOverlay) : null;
-		this.chart.setTitle(title);
+		if (!bDisplay) {
+			this.chart.setTitle(null);
+			return;
+		}
+		if (this.chart.title) {
+			if (this.chart.title.overlay !== bOverlay) {
+				this.chart.title.setOverlay(bOverlay);
+			}
+			return;
+		}
+		this.chart.setTitle(createChartTitle(this.chart, bOverlay));
 
 		function createChartTitle(parent, bOverlay) {
 			const title = new AscFormat.CTitle();

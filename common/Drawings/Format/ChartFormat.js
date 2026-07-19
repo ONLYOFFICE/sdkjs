@@ -15145,7 +15145,7 @@
     function CTitle() {
         CBaseChartObject.call(this);
         this.layout = null;
-        this.overlay = false;
+        this.overlay = null;
         this.spPr = null;
         this.tx = null;
         this.txPr = null;
@@ -15602,9 +15602,18 @@
         this.setParentToChild(pr);
     };
     CTitle.prototype.setOverlay = function(pr) {
+        if (this.parent && this.parent.getObjectType() === AscDFH.historyitem_type_Axis) {
+            return;
+        }
         AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_Title_SetOverlay, this.overlay, pr));
         this.overlay = pr;
         this.onUpdate();
+    };
+    CTitle.prototype.getOverlay = function() {
+        if (AscFormat.isRealBool(this.overlay)) {
+            return this.overlay;
+        }
+        return !this.isChartEx();
     };
     CTitle.prototype.setSpPr = function(pr) {
         AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Title_SetSpPr, this.spPr, pr));

@@ -6145,7 +6145,7 @@ BinaryChartWriter.prototype.WriteCT_ChartEx = function (oVal, oCopyPaste) {
     }
     if(oVal.title !== null) {
         this.bs.WriteItem(c_oserct_chartExChartTITLE, function() {
-            oThis.WriteCT_ChartExTitle(oVal.title, oCopyPaste);
+            oThis.WriteCT_ChartExTitle(oVal.title, oCopyPaste, true);
         });
     }
     if(oVal.legend !== null) {
@@ -6585,7 +6585,7 @@ BinaryChartWriter.prototype.WriteCT_SidePos = function (oVal) {
     }
     oThis.memory.WriteByte(nVal);
 };
-BinaryChartWriter.prototype.WriteCT_ChartExTitle = function (oVal, oCopyPaste) {
+BinaryChartWriter.prototype.WriteCT_ChartExTitle = function (oVal, oCopyPaste, bChartTitle) {
     var oThis = this;
     if(oVal.tx !== null) {
         this.bs.WriteItem(c_oserct_chartExTitleTX, function() {
@@ -6612,11 +6612,11 @@ BinaryChartWriter.prototype.WriteCT_ChartExTitle = function (oVal, oCopyPaste) {
             oThis.WriteCT_PosAlign(oVal.align);
         });
     }
-    // if(oVal.overlay !== null) {
-    //     this.bs.WriteItem(c_oserct_chartExTitleOVERLAY, function() {
-    //         oThis.memory.WriteBool(oVal.overlay);
-    //     });
-    // }
+    if(bChartTitle && oVal.overlay !== null) {
+        this.bs.WriteItem(c_oserct_chartExTitleOVERLAY, function() {
+            oThis.memory.WriteBool(oVal.overlay);
+        });
+    }
 };
 BinaryChartWriter.prototype.WriteCT_ChartExLegend = function (oVal) {
     var oThis = this;
