@@ -175,8 +175,8 @@ jobs:
         with:
           path: sdkjs
 
-      - name: check out repository sdkjs-forms current branch
-        id: sdkjs-forms
+      - name: Check out sdkjs-forms (matching branch)
+        id: sdkjs-forms-branch
         uses: actions/checkout@v4
         continue-on-error: true
         with:
@@ -184,8 +184,8 @@ jobs:
           token: ${{ secrets.READ_PAT }}
           path: sdkjs-forms
           ref: ${{ github.base_ref || github.ref_name }}
-      - name: check out repository sdkjs-forms master branch
-        if: steps.sdkjs-forms.outcome != 'success'
+      - name: Check out sdkjs-forms (master fallback)
+        if: steps.sdkjs-forms-branch.outcome != 'success'
         uses: actions/checkout@v4
         with:
           repository: ONLYOFFICE/sdkjs-forms
@@ -193,15 +193,81 @@ jobs:
           path: sdkjs-forms
           ref: master
 
+      - name: Check out sdkjs-ooxml (matching branch)
+        id: sdkjs-ooxml-branch
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: ONLYOFFICE/sdkjs-ooxml
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-ooxml
+          ref: ${{ github.base_ref || github.ref_name }}
+      - name: Check out sdkjs-ooxml (master fallback)
+        if: steps.sdkjs-ooxml-branch.outcome != 'success'
+        uses: actions/checkout@v4
+        with:
+          repository: ONLYOFFICE/sdkjs-ooxml
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-ooxml
+          ref: master
+
+      - name: Check out sdkjs-ext (matching branch)
+        id: sdkjs-ext-branch
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: ONLYOFFICE/sdkjs-ext
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-ext
+          ref: ${{ github.base_ref || github.ref_name }}
+      - name: Check out sdkjs-ext (master fallback)
+        if: steps.sdkjs-ext-branch.outcome != 'success'
+        uses: actions/checkout@v4
+        with:
+          repository: ONLYOFFICE/sdkjs-ext
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-ext
+          ref: master
+
+      - name: Check out onlyoffice build tooling (matching branch)
+        id: onlyoffice-branch
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: ONLYOFFICE/onlyoffice
+          token: ${{ secrets.READ_PAT }}
+          path: onlyoffice
+          ref: ${{ github.base_ref || github.ref_name }}
+          sparse-checkout: sdkjs/build
+      - name: Check out onlyoffice build tooling (master fallback)
+        if: steps.onlyoffice-branch.outcome != 'success'
+        uses: actions/checkout@v4
+        with:
+          repository: ONLYOFFICE/onlyoffice
+          token: ${{ secrets.READ_PAT }}
+          path: onlyoffice
+          ref: master
+          sparse-checkout: sdkjs/build
+
+      - name: setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Run build sdkjs
+      - name: Build sdk-all with WHITESPACE_ONLY minification
+        shell: bash
         run: |
-          cd sdkjs
-          python build/build.py --addon ../sdkjs-forms
+          cd "$GITHUB_WORKSPACE/onlyoffice/sdkjs/build"
+          npm ci
+          python build.py --level=WHITESPACE_ONLY \
+            --addon "$GITHUB_WORKSPACE/sdkjs-forms" \
+            --addon "$GITHUB_WORKSPACE/sdkjs-ooxml" \
+            --addon "$GITHUB_WORKSPACE/sdkjs-ext"
 
       - name: Send message to telegram if failure
         if: failure() && github.event_name == 'push'
