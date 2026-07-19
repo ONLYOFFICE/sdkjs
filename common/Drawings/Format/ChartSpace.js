@@ -11888,6 +11888,10 @@ function(window, undefined) {
 		axesByTypes.serAx.forEach(bShowSerAx ? showAxis : hideAxis);
 
 		function hideAxis(axis) {
+			if (axis.isChartEx()) {
+				axis.setHidden(true);
+				return;
+			}
 			axis.setDelete(true);
 			axis.setMajorTickMark(Asc.c_oAscTickMark.TICK_MARK_NONE);
 			axis.setMinorTickMark(Asc.c_oAscTickMark.TICK_MARK_NONE);
@@ -11898,6 +11902,10 @@ function(window, undefined) {
 		}
 
 		function showAxis(axis) {
+			if (axis.isChartEx()) {
+				axis.setHidden(false);
+				return;
+			}
 			axis.setDelete(false);
 			axis.setMajorTickMark(Asc.c_oAscTickMark.TICK_MARK_OUT);
 			axis.setMinorTickMark(Asc.c_oAscTickMark.TICK_MARK_NONE);
