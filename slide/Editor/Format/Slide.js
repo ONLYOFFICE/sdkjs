@@ -1411,7 +1411,7 @@
 	};
 	Slide.prototype.createContent = function () {
 		let matchingShape;
-		matchingShape = this.cSld.findContentShape();
+		matchingShape = this.cSld.getContentShape();
 		if (matchingShape) {
 			return null;
 		}
@@ -1420,9 +1420,9 @@
 		const master = this.Layout.Master;
 
 		if (layout) {
-			matchingShape = layout.cSld.findContentShape();
+			matchingShape = layout.cSld.getContentShape();
 			if (!matchingShape && master) {
-				matchingShape = master.cSld.findContentShape();
+				matchingShape = master.cSld.getContentShape();
 			}
 		}
 		let copySp;
