@@ -3135,7 +3135,7 @@ function(window, undefined) {
 			} else if (this.selection.axisLbls) {
 				var oLabels = this.selection.axisLbls.labels;
 				const isHorizontal = this.selection.axisLbls ? this.selection.axisLbls.isHorizontal() : false;
-				if (!(this.chart.plotArea.dTable && isHorizontal)) {
+				if (oLabels && !(this.chart.plotArea.dTable && isHorizontal)) {
 					oLabels.drawSelect(drawingDocument, isDrawHandles);
 				}
 			} else if (this.selection.hiLowLines) {
@@ -11732,6 +11732,9 @@ function(window, undefined) {
 	CChartSpace.prototype.showDataTable = function (bShow, bWithKeys) {
 		const plotArea = this.getPlotArea();
 		if (!plotArea) {
+			return;
+		}
+		if (this.isChartEx()) {
 			return;
 		}
 
