@@ -887,7 +887,8 @@
 	Range.prototype._foreachDataOnlyByCol = function(actionCell, excludeHiddenRows) {
 		var oRes, i, j, colData;
 		var wb = this.worksheet.workbook;
-		var oBBox = this.bbox, minR = Math.min(this.worksheet.cellsByColRowsCount - 1, oBBox.r2);
+		// cellsByColRowsCount can be stale; clip per column below.
+		var oBBox = this.bbox, minR = oBBox.r2;
 		var minC = Math.min(this.worksheet.getColDataLength() - 1, oBBox.c2);
 		if (actionCell && oBBox.c1 <= minC && oBBox.r1 <= minR) {
 			var bExcludeHiddenRows = (this.worksheet.bExcludeHiddenRows || excludeHiddenRows);

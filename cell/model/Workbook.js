@@ -18608,9 +18608,10 @@
 		if (undefined !== val) {
 			var oCellAddress = AscCommon.g_oCellAddressUtils.getCellAddress(val);
 			this.setRowCol(oCellAddress.getRow0(), oCellAddress.getCol0());
-			this.ws.nRowsCount = Math.max(this.ws.nRowsCount, this.nRow);
-			this.ws.nColsCount = Math.max(this.ws.nColsCount, this.nCol);
-			this.ws.setCellsByColRowsCount(Math.max(this.ws.cellsByColRowsCount, this.nCol));
+			// Extents are counts; a cell row can differ from its enclosing row element.
+			this.ws.nRowsCount = Math.max(this.ws.nRowsCount, this.nRow + 1);
+			this.ws.nColsCount = Math.max(this.ws.nColsCount, this.nCol + 1);
+			this.ws.setCellsByColRowsCount(Math.max(this.ws.cellsByColRowsCount, this.nRow + 1));
 		}
 		val = vals["t"];
 		if (undefined !== val) {
