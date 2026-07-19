@@ -1001,7 +1001,7 @@ CChartsDrawer.prototype =
 		const axisSettings = [{ isExist: false, opKey: 1}, {isExist: false, opKey: 0}, {isExist: false, opKey : 3}, {isExist: false, opKey: 2}]; //L,R,T,D
 
 		const checkAxis = function (index, ax) {
-			if (ax.bDelete || ax.tickLblPos === Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE) {
+			if (ax.bDelete || ax.hidden || ax.tickLblPos === Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE) {
 				return;
 			}
 
@@ -16869,7 +16869,7 @@ axisChart.prototype = {
 			this._calculateGridLines();
 		}
 
-		if (this.axis.bDelete !== true) {
+		if (this.axis.bDelete !== true && this.axis.hidden !== true) {
 			if (this.axisType === AscDFH.historyitem_type_ValAx) {
 				this._calculateValAxis();
 				this._calculateValTickMark();

@@ -4920,7 +4920,9 @@ function(window, undefined) {
 				entry.setDelete(true);
 			}
 		} else if (this.selection.axisLbls) {
-			if (this.selection.axisLbls && this.selection.axisLbls.setDelete) {
+			if (this.selection.axisLbls.isChartEx()) {
+				this.selection.axisLbls.setHidden(true);
+			} else if (this.selection.axisLbls.setDelete) {
 				this.selection.axisLbls.setDelete(true);
 			}
 		} else if (AscFormat.isRealNumber(this.selection.dataLbls)) {
