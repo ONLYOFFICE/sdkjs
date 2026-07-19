@@ -12712,7 +12712,7 @@
 			return true;
 		}
 
-		text = GetStringParameter(text, sDefault);
+		text = GetStringParameter(text, "");
 		this.Run.AddText(text);
 		return true;
 	};
