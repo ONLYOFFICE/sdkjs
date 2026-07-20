@@ -10763,11 +10763,34 @@
         AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DTable_SetSpPr, this.spPr, pr));
         this.spPr = pr;
         this.setParentToChild(pr);
+        this.onChartInternalUpdate();
     };
     CDTable.prototype.setTxPr = function(pr) {
         AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DTable_SetTxPr, this.txPr, pr));
         this.txPr = pr;
         this.setParentToChild(pr);
+        this.onChartInternalUpdate();
+    };
+    CDTable.prototype.hitInBoundingRect = function(x, y) {
+        var oChartSpace = this.getChartSpace();
+        if (!oChartSpace || !oChartSpace.invertTransform || !(this.extX > 0) || !(this.extY > 0)) {
+            return false;
+        }
+        var localX = oChartSpace.invertTransform.TransformPointX(x, y);
+        var localY = oChartSpace.invertTransform.TransformPointY(x, y);
+        return localX >= this.x && localX <= this.x + this.extX && localY >= this.y && localY <= this.y + this.extY;
+    };
+    CDTable.prototype.Refresh_RecalcData = function() {
+        this.onChartInternalUpdate();
+    };
+    CDTable.prototype.Refresh_RecalcData2 = function() {
+        this.onChartInternalUpdate();
+    };
+    CDTable.prototype.handleUpdateFill = function() {
+        this.onChartInternalUpdate();
+    };
+    CDTable.prototype.handleUpdateLn = function() {
+        this.onChartInternalUpdate();
     };
     CDTable.prototype.applyChartStyle = function(oChartStyle, oColors, oAdditionalData, bReset) {
         if(!this.parent) {
@@ -11048,6 +11071,13 @@
 
         return lbl;
     };
+    CDTable.prototype._applyLabelFill = function (lbl) {
+        if (this.spPr && this.spPr.Fill && this.spPr.Fill.fill) {
+            const oLblSpPr = new AscFormat.CSpPr();
+            oLblSpPr.setFill(this.spPr.Fill.createDuplicate());
+            lbl.setSpPr(oLblSpPr);
+        }
+    };
     CDTable.prototype._buildRowNameLabel = function (cChartSpace, seria) {
         const lbl = this._buildBasicLabel(cChartSpace, seria);
         if (!lbl) {
@@ -11097,6 +11127,7 @@
         if (!lbl) {
             return;
         }
+        this._applyLabelFill(lbl);
 
         lbl.setShowCatName(true);
         lbl.pt = pt;
@@ -11113,6 +11144,7 @@
         if (!lbl) {
             return;
         }
+        this._applyLabelFill(lbl);
 
         lbl.setShowVal(true);
         lbl.pt = pt;

@@ -3138,6 +3138,8 @@ function(window, undefined) {
 				if (oLabels && !(this.chart.plotArea.dTable && isHorizontal)) {
 					oLabels.drawSelect(drawingDocument, isDrawHandles);
 				}
+			} else if (this.selection.dataTable) {
+				drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.transform, this.selection.dataTable.x, this.selection.dataTable.y, this.selection.dataTable.extX, this.selection.dataTable.extY, false, false, false, isDrawHandles);
 			} else if (this.selection.hiLowLines) {
 				if (this.chartObj) {
 					var oDrawChart = this.chartObj.charts[this.selection.chart];
@@ -3442,7 +3444,8 @@ function(window, undefined) {
 			markers: this.selection.markers,
 			hiLowLines: this.selection.hiLowLines,
 			upBars: this.selection.upBars,
-			downBars: this.selection.downBars
+			downBars: this.selection.downBars,
+			dataTable: this.selection.dataTable
 
 		}
 	};
@@ -3457,6 +3460,7 @@ function(window, undefined) {
 		this.selection.rotatePlotArea = state.rotatePlotArea;
 		this.selection.textSelection = state.textSelection;
 		this.selection.plotArea = state.plotArea;
+		this.selection.dataTable = state.dataTable;
 		this.selection.axis = state.axis;
 		this.selection.minorGridlines = state.minorGridlines;
 		this.selection.majorGridlines = state.majorGridlines;
@@ -3489,6 +3493,7 @@ function(window, undefined) {
 		this.selection.dataLbls = null;
 		this.selection.dataLbl = null;
 		this.selection.plotArea = null;
+		this.selection.dataTable = null;
 		this.selection.rotatePlotArea = null;
 		this.selection.gridLine = null;
 		this.selection.series = null;
@@ -3561,6 +3566,7 @@ function(window, undefined) {
 		this.selection.dataLbl = null;
 		this.selection.textSelection = null;
 		this.selection.plotArea = null;
+		this.selection.dataTable = null;
 		this.selection.rotatePlotArea = null;
 		this.selection.series = null;
 		this.selection.chart = null;
@@ -3736,6 +3742,9 @@ function(window, undefined) {
 			}
 		} else if (this.selection.axisLbls) {
 			fCallback(this.selection.axisLbls, value, this.getDrawingDocument(), 10);
+		} else if (this.selection.dataTable) {
+			fCallback(this.selection.dataTable, value, this.getDrawingDocument(), 10);
+			this.handleUpdateInternalChart();
 		} else if (AscFormat.isRealNumber(this.selection.dataLbls)) {
 			var ser = this.getAllSeries()[this.selection.dataLbls];
 			if (ser) {
@@ -3943,6 +3952,7 @@ function(window, undefined) {
 		this.selection.dataLbl = null;
 		this.selection.textSelection = null;
 		this.selection.plotArea = null;
+		this.selection.dataTable = null;
 		this.selection.rotatePlotArea = null;
 		this.selection.axis = null;
 		this.selection.minorGridlines = null;
@@ -4078,6 +4088,12 @@ function(window, undefined) {
 		}
 		return null;
 	};
+	function fetchObjectFill(oObj) {
+		return oObj && oObj.spPr && oObj.spPr.Fill && oObj.spPr.Fill.fill ? oObj.spPr.Fill : null;
+	}
+	function fetchObjectStroke(oObj) {
+		return oObj && oObj.spPr && oObj.spPr.ln && oObj.spPr.ln.Fill ? oObj.spPr.ln : null;
+	}
 	CChartSpace.prototype.getFill = function () {
 		var ret = null;
 
@@ -4106,21 +4122,15 @@ function(window, undefined) {
 				}
 			}
 		} else if (this.selection.axisLbls) {
-			if (this.selection.axisLbls.spPr && this.selection.axisLbls.spPr.Fill && this.selection.axisLbls.spPr.Fill.fill) {
-				ret = this.selection.axisLbls.spPr.Fill;
-			}
+			ret = fetchObjectFill(this.selection.axisLbls);
 		} else if (this.selection.title) {
-			if (this.selection.title.spPr && this.selection.title.spPr.Fill && this.selection.title.spPr.Fill.fill) {
-				ret = this.selection.title.spPr.Fill;
-			}
+			ret = fetchObjectFill(this.selection.title);
 		} else if (this.selection.trendlineLbl) {
-			if (this.selection.trendlineLbl.spPr && this.selection.trendlineLbl.spPr.Fill && this.selection.trendlineLbl.spPr.Fill.fill) {
-				ret = this.selection.trendlineLbl.spPr.Fill;
-			}
+			ret = fetchObjectFill(this.selection.trendlineLbl);
 		} else if (this.selection.legend) {
-			if (this.selection.legend.spPr && this.selection.legend.spPr.Fill && this.selection.legend.spPr.Fill.fill) {
-				ret = this.selection.legend.spPr.Fill;
-			}
+			ret = fetchObjectFill(this.selection.legend);
+		} else if (this.selection.dataTable) {
+			ret = fetchObjectFill(this.selection.dataTable);
 		} else if (AscFormat.isRealNumber(this.selection.series)) {
 			var oSeries = this.getSelectedSeries();
 			if (oSeries) {
@@ -4215,21 +4225,15 @@ function(window, undefined) {
 				}
 			}
 		} else if (this.selection.axisLbls) {
-			if (this.selection.axisLbls.spPr && this.selection.axisLbls.spPr.ln && this.selection.axisLbls.spPr.ln.Fill) {
-				ret = this.selection.axisLbls.spPr.ln;
-			}
+			ret = fetchObjectStroke(this.selection.axisLbls);
 		} else if (this.selection.title) {
-			if (this.selection.title.spPr && this.selection.title.spPr.ln && this.selection.title.spPr.ln.Fill) {
-				ret = this.selection.title.spPr.ln;
-			}
-		}  else if (this.selection.trendlineLbl) {
-			if (this.selection.trendlineLbl.spPr && this.selection.trendlineLbl.spPr.ln && this.selection.trendlineLbl.spPr.ln.Fill) {
-				ret = this.selection.trendlineLbl.spPr.ln;
-			}
+			ret = fetchObjectStroke(this.selection.title);
+		} else if (this.selection.trendlineLbl) {
+			ret = fetchObjectStroke(this.selection.trendlineLbl);
 		} else if (this.selection.legend) {
-			if (this.selection.legend.spPr && this.selection.legend.spPr.ln && this.selection.legend.spPr.ln.Fill) {
-				ret = this.selection.legend.spPr.ln;
-			}
+			ret = fetchObjectStroke(this.selection.legend);
+		} else if (this.selection.dataTable) {
+			ret = fetchObjectStroke(this.selection.dataTable);
 		} else if (AscFormat.isRealNumber(this.selection.series)) {
 			var oSeries = this.getSelectedSeries();
 			if (oSeries) {
@@ -4437,6 +4441,15 @@ function(window, undefined) {
 			unifill2 = AscFormat.CorrectUniFill(unifill, this.chart.legend.brush, this.getEditorType());
 			unifill2.convertToPPTXMods();
 			this.chart.legend.spPr.setFill(unifill2);
+		} else if (this.selection.dataTable) {
+			if (!this.selection.dataTable.spPr) {
+				this.selection.dataTable.setSpPr(new AscFormat.CSpPr());
+				this.selection.dataTable.spPr.setParent(this.selection.dataTable);
+			}
+			unifill2 = AscFormat.CorrectUniFill(unifill, (this.selection.dataTable.spPr && this.selection.dataTable.spPr.Fill) ? this.selection.dataTable.spPr.Fill.createDuplicate() : null, this.getEditorType());
+			unifill2.convertToPPTXMods();
+			this.selection.dataTable.spPr.setFill(unifill2);
+			this.handleUpdateInternalChart();
 		} else if (AscFormat.isRealNumber(this.selection.series)) {
 			var oSeries = this.getSelectedSeries();
 			if (oSeries) {
@@ -4698,6 +4711,16 @@ function(window, undefined) {
 				stroke.Fill.convertToPPTXMods();
 			}
 			this.chart.legend.spPr.setLn(stroke);
+		} else if (this.selection.dataTable) {
+			if (!this.selection.dataTable.spPr) {
+				this.selection.dataTable.setSpPr(new AscFormat.CSpPr());
+				this.selection.dataTable.spPr.setParent(this.selection.dataTable);
+			}
+			stroke = AscFormat.CorrectUniStroke(line, getPenForCorrect(this.selection.dataTable.spPr.ln));
+			if (stroke.Fill) {
+				stroke.Fill.convertToPPTXMods();
+			}
+			this.selection.dataTable.spPr.setLn(stroke);
 		} else if (this.selection.title) {
 			if (!this.selection.title.spPr) {
 				this.selection.title.setSpPr(new AscFormat.CSpPr());
@@ -4980,6 +5003,7 @@ function(window, undefined) {
 		this.selection.dataLbls = null;
 		this.selection.dataLbl = null;
 		this.selection.plotArea = null;
+		this.selection.dataTable = null;
 		this.selection.rotatePlotArea = null;
 		this.selection.gridLine = null;
 		this.selection.series = null;
