@@ -3922,7 +3922,7 @@
 	};
 	CHtmlPage.prototype._drawMarkupAnnotsOnCtx = function(nPage, ctx, oDirtyBoundsMM, contentType)
 	{
-		if (contentType !== AscPDF.PRINT_CONTENT_TYPES.docAndMarkups) {
+		if (contentType && contentType !== AscPDF.PRINT_CONTENT_TYPES.docAndMarkups) {
 			return;
 		}
 		
