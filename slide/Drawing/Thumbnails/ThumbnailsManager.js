@@ -2635,7 +2635,7 @@
 		this.SetFocusElement(FOCUS_OBJECT_THUMBNAILS);
 		const pos = this.ConvertCoords(global_mouseEvent.X, global_mouseEvent.Y);
 		this.MouseDownTrack.Start(pos.Page, global_mouseEvent.X, global_mouseEvent.Y);
-		if (global_mouseEvent.Button == 0 && outlineView) {
+		if ((global_mouseEvent.Button === 0 || global_mouseEvent.Button === 2) && outlineView) {
 			const outlineXMm = pos.X * g_dKoef_pix_to_mm;
 			const outlineYMm = pos.Y * g_dKoef_pix_to_mm;
 			outlineView.selectionSetStart(global_mouseEvent, outlineXMm, outlineYMm, 0);
@@ -2645,26 +2645,12 @@
 				this.m_oWordControl.GoToPage(selectedPage);
 				this.SelectPageEnabled = true;
 			}
-					this.OnUpdateOverlay();
-					checkSelectionEnd();
-					return false;
-		}
-
-		if (pos.Page == -1) {
-			if (global_mouseEvent.Button == 2) {
+			if (global_mouseEvent.Button === 2) {
 				this.showContextMenu(false);
 			}
+			this.OnUpdateOverlay();
 			checkSelectionEnd();
-			return false;
 		}
-
-		if (global_mouseEvent.Button == 2 && !AscCommon.global_keyboardEvent.CtrlKey) {
-			this.showContextMenu(false);
-		}
-		this.SelectPageEnabled = false;
-		this.m_oWordControl.GoToPage(pos.Page);
-		this.SelectPageEnabled = true;
-		checkSelectionEnd();
 		return false;
 	};
 
