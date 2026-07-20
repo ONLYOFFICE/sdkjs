@@ -1346,7 +1346,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArea.prototype.countCells = function () {
 		var r = this.getRange(), bbox = r.bbox, count = (Math.abs(bbox.c1 - bbox.c2) + 1) *
 			(Math.abs(bbox.r1 - bbox.r2) + 1);
-		r._foreachDataOnly(function (cell) {
+		// Cell-based: isEmptyTextString may recalculate.
+		r._foreachDataOnlyByCol(function (cell) {
 			if (!cell || !cell.isEmptyTextString()) {
 				count--;
 			}
@@ -1379,7 +1380,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 
 			var resValue = new cEmpty();
-			if(!(excludeNestedStAg && cell.formulaParsed && cell.formulaParsed.isFoundNestedStAg())){
+			if(!(excludeNestedStAg && cell && cell.formulaParsed && cell.formulaParsed.isFoundNestedStAg())){
 				var checkTypeVal = checkTypeCell(cell);
 				if(!(excludeErrorsVal && CellValueType.Error === checkTypeVal.type)){
 					resValue = checkTypeVal;
@@ -1420,7 +1421,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArea.prototype.getMatrixNoEmpty = function () {
 		var arr = [];
-		this.getRange()._foreachDataOnly(function (cell, i, j, r1, c1) {
+		// Cell-based: checkTypeCell may recalculate.
+		this.getRange()._foreachDataOnlyByCol(function (cell, i, j, r1, c1) {
 			var rowIndex = i - r1;
 			var row = arr[rowIndex];
 			if (!row) {
@@ -1767,7 +1769,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var _r = this.range(_wsA), bbox = _r[0].bbox, count = (Math.abs(bbox.c1 - bbox.c2) + 1) * (Math.abs(bbox.r1 - bbox.r2) + 1);
 		count = _r.length * count;
 		for (i = 0; i < _r.length; i++) {
-			_r[i]._foreachDataOnly(function (cell) {
+			// Cell-based: isEmptyTextString may recalculate.
+			_r[i]._foreachDataOnlyByCol(function (cell) {
 				if (!cell || !cell.isEmptyTextString()) {
 					count--;
 				}
@@ -1791,7 +1794,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				}
 
 				var resValue = new cEmpty();
-				if (!(excludeNestedStAg && cell.formulaParsed && cell.formulaParsed.isFoundNestedStAg())) {
+				if (!(excludeNestedStAg && cell && cell.formulaParsed && cell.formulaParsed.isFoundNestedStAg())) {
 					var checkTypeVal = checkTypeCell(cell);
 					if (!(excludeErrorsVal && CellValueType.Error === checkTypeVal.type)) {
 						resValue = checkTypeVal;
@@ -1855,7 +1858,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		for (var k = 0; k < r.length; k++) {
 			var currentArray = arr[k] = [];
-			r[k]._foreachDataOnly(function (cell, i, j, r1, c1) {
+			// Cell-based: checkTypeCell may recalculate.
+			r[k]._foreachDataOnlyByCol(function (cell, i, j, r1, c1) {
 				var rowIndex = i - r1;
 				var row = currentArray[rowIndex];
 				if (!row) {

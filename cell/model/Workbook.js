@@ -15376,23 +15376,26 @@
 			var formulaSave = this.formulaParsed ? wb.workbookFormulas.add(this.formulaParsed).getIndexNumber() : 0;
 			var flagValue = 0;
 			// xf bits stay 0; direct xf lives in ws.cellStylesByCol.
+			// Resolve the struct offset once (after checkIndex, which may have reallocated the buffer).
+			var structOffset = sheetMemory.getStructOffset(this.nRow);
 			if (null != this.number) {
 				flagValue = 1;
 				const flags = this._toFlags(flagValue);
-				sheetMemory.setInt32(this.nRow, 0, (flags << 24));
-				sheetMemory.setInt32(this.nRow, 4, formulaSave);
-				sheetMemory.setFloat64(this.nRow, 8, this.number);
+				sheetMemory.writeInt32(structOffset, 0, (flags << 24));
+				sheetMemory.writeInt32(structOffset, 4, formulaSave);
+				sheetMemory.writeFloat64(structOffset, 8, this.number);
 			} else if (null != this.text || null != this.multiText) {
 				flagValue = 2;
 				const flags = this._toFlags(flagValue);
-				sheetMemory.setInt32(this.nRow, 0, (flags << 24));
-				sheetMemory.setInt32(this.nRow, 4, formulaSave);
+				sheetMemory.writeInt32(structOffset, 0, (flags << 24));
+				sheetMemory.writeInt32(structOffset, 4, formulaSave);
+				// getTextIndex() can mutate shared strings; keep it after the first two writes as in the legacy order.
 				numberSave = this.getTextIndex();
-				sheetMemory.setInt32(this.nRow, 8, numberSave);
+				sheetMemory.writeInt32(structOffset, 8, numberSave);
 			} else {
 				const flags = this._toFlags(flagValue);
-				sheetMemory.setInt32(this.nRow, 0, (flags << 24));
-				sheetMemory.setInt32(this.nRow, 4, formulaSave);
+				sheetMemory.writeInt32(structOffset, 0, (flags << 24));
+				sheetMemory.writeInt32(structOffset, 4, formulaSave);
 			}
 		}
 	};
@@ -15409,7 +15412,9 @@
 			}
 		}
 		if (sheetMemory.hasIndex(this.nRow)) {
-			const mix = sheetMemory.getInt32(this.nRow, 0);
+			// Resolve the row's struct offset once, then read each field relative to it (no per-accessor offset recompute).
+			var structOffset = sheetMemory.getStructOffset(this.nRow);
+			const mix = sheetMemory.readInt32(structOffset, 0);
 			const flags = (mix >> 24) & 0xff;
 			if (0 !== (g_nCellFlag_init & flags)) {
 				var wb = this.ws.workbook;
@@ -15419,14 +15424,14 @@
 				if (xfIndex > 0) {
 					this.xfs = g_StyleCache.getXf(xfIndex);
 				}
-				const formulaIndex = sheetMemory.getInt32(this.nRow, 4)
+				const formulaIndex = sheetMemory.readInt32(structOffset, 4);
 				if (formulaIndex > 0) {
 					this.formulaParsed = wb.workbookFormulas.get(formulaIndex);
 				}
 				if (1 === flagValue) {
-					this.number = sheetMemory.getFloat64(this.nRow, 8);
+					this.number = sheetMemory.readFloat64(structOffset, 8);
 				} else if (2 === flagValue) {
-					this.textIndex = sheetMemory.getInt32(this.nRow, 8);
+					this.textIndex = sheetMemory.readInt32(structOffset, 8);
 					const text = wb.sharedStrings.get(this.textIndex);
 					typeof text === 'string' ? this.text = text : this.multiText = text;
 				}
@@ -18603,9 +18608,10 @@
 		if (undefined !== val) {
 			var oCellAddress = AscCommon.g_oCellAddressUtils.getCellAddress(val);
 			this.setRowCol(oCellAddress.getRow0(), oCellAddress.getCol0());
-			this.ws.nRowsCount = Math.max(this.ws.nRowsCount, this.nRow);
-			this.ws.nColsCount = Math.max(this.ws.nColsCount, this.nCol);
-			this.ws.setCellsByColRowsCount(Math.max(this.ws.cellsByColRowsCount, this.nCol));
+			// Extents are counts; a cell row can differ from its enclosing row element.
+			this.ws.nRowsCount = Math.max(this.ws.nRowsCount, this.nRow + 1);
+			this.ws.nColsCount = Math.max(this.ws.nColsCount, this.nCol + 1);
+			this.ws.setCellsByColRowsCount(Math.max(this.ws.cellsByColRowsCount, this.nRow + 1));
 		}
 		val = vals["t"];
 		if (undefined !== val) {
@@ -19023,7 +19029,10 @@
 					if (null === targetCell) {
 						if (tempCell.loadContent(i, j)) {
 							oRes = action(tempCell, i, j, oBBox.r1, oBBox.c1);
-							tempCell.saveContent(true);
+							// Avoid a hot no-op saveContent call.
+							if (tempCell._hasChanged) {
+								tempCell.saveContent(true);
+							}
 						} else {
 							oRes = action(null, i, j, oBBox.r1, oBBox.c1);
 						}
