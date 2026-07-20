@@ -1626,6 +1626,15 @@ function (window, undefined) {
 			col = col !== undefined ? Math.ceil(col) : col;
 			if (undefined !== row) {
 				if (_rowCount < row) {
+					//row past the physical head: for a constant lazy tail (ensureMaterialized is a no-op there)
+					//serve the whole row tail-awarely if it is within the LOGICAL size - else it would #REF!.
+					if (_from.hasLazyTail && _from.hasLazyTail() && row <= _from.getRowCount(true)) {
+						ret = new cArray();
+						for (i = 0; i < _colCount; i++) {
+							ret.addElement(_from.getElementRowCol(row - 1, i, true));
+						}
+						return ret;
+					}
 					if (col === undefined && _rowCount === 1 && _from.array[0] && _from.array[0][row - 1]) {
 						ret = new cArray();
 						ret.addElement(_from.array[0][row - 1]);

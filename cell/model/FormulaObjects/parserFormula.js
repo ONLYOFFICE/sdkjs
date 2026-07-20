@@ -4813,15 +4813,18 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				if (lazyCoversTarget && array.getRealArraySize()) {
 					var _headRows = array.rowCount;
 					var _headCols = array.countElementInRow.length ? array.countElementInRow[0] : 0;
+					var _realSz = array.getRealArraySize();
 					var _composable = true, _tailArgs = new Array(argumentsCount);
 					for (var _tj = 0; _tj < argumentsCount; _tj++) {
 						var _tta = tempArgs[_tj], _ttInfo = _argInfo[_tj];
 						if (_ttInfo.isArray) {
 							var _argCols = _tta.countElementInRow.length ? _tta.countElementInRow[0] : 0;
 							if ((_tta.getMissedValueFn && _tta.getMissedValueFn()) ||
-								_tta.rowCount > _headRows || _argCols > _headCols) {
-								//generator tail, or this arg's head reaches past the result head (so the result tail
-								//is not a flat constant) - cannot fold, fall through to the per-cell generator
+								_tta.rowCount > _headRows || _argCols > _headCols ||
+								(_realSz && (_tta.getRowCount(true) < _realSz.row || _tta.getCountElementInRow(true) < _realSz.col))) {
+								//generator tail; an arg head past the result head; OR an arg whose LOGICAL size is
+								//shorter than the result (a finite/broadcast sibling) - its out-of-range tail must be
+								//#N/A, not its folded constant. cannot fold - fall through to the per-cell generator.
 								_composable = false;
 								break;
 							}

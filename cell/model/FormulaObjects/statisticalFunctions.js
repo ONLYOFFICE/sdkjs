@@ -1584,10 +1584,12 @@ function (window, undefined) {
 		if (!v0 || !v1 || v0.cols < 1 || v1.cols < 1) {
 			return null;
 		}
-		//Excel requires equal total size (cell count); otherwise #N/A. Ranges compare by their full bbox (so
-		//A:A and B:B both count as 1048576), arrays by their grid. Unequal -> fall back to the flat path (#N/A).
+		//Excel requires equal total size (cell count); otherwise #N/A - regardless of how many cells are numeric.
+		//Ranges compare by their full bbox (A:A and B:B both count as 1048576), arrays by their grid. On a
+		//mismatch signal {na:true} so callers emit #N/A directly, instead of falling to the data-compacting flat
+		//path (which would silently pair the numeric subsets and return a wrong number).
 		if (v0.dim !== v1.dim) {
-			return null;
+			return {na: true};
 		}
 		//flatten each operand ROW-MAJOR (by its own cols) and pair by flat index, the way Excel does: this
 		//aligns a column with a row (5x1 vs 1x5) and keeps positional alignment for ranges with gaps. Bounded to
@@ -5430,6 +5432,9 @@ function (window, undefined) {
 		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
 		var positional = pairedPositional(arg0, arg1);
 		if (positional) {
+			if (positional.na) {
+				return new cError(cErrorType.not_available);
+			}
 			return correl(positional.xs, positional.ys, []);
 		}
 
@@ -5706,6 +5711,9 @@ function (window, undefined) {
 		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
 		var positional = pairedPositional(arg0, arg1);
 		if (positional) {
+			if (positional.na) {
+				return new cError(cErrorType.not_available);
+			}
 			return covar(positional.xs, positional.ys, []);
 		}
 
@@ -5759,6 +5767,9 @@ function (window, undefined) {
 		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
 		var positional = pairedPositional(arg[0], arg[1]);
 		if (positional) {
+			if (positional.na) {
+				return new cError(cErrorType.not_available);
+			}
 			return covariance(positional.xs, positional.ys, [], false);
 		}
 
@@ -5866,6 +5877,9 @@ function (window, undefined) {
 		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
 		var positional = pairedPositional(arg[0], arg[1]);
 		if (positional) {
+			if (positional.na) {
+				return new cError(cErrorType.not_available);
+			}
 			return covariance(positional.xs, positional.ys, [], true);
 		}
 
@@ -6711,6 +6725,9 @@ function (window, undefined) {
 		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
 		var positional = pairedPositional(arg1, arg2);
 		if (positional) {
+			if (positional.na) {
+				return new cError(cErrorType.not_available);
+			}
 			return forecast(arg0, positional.xs, positional.ys, []);
 		}
 
@@ -8049,6 +8066,9 @@ function (window, undefined) {
 		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
 		let positional = pairedPositional(arg0, arg1);
 		if (positional) {
+			if (positional.na) {
+				return new cError(cErrorType.not_available);
+			}
 			return intercept(positional.xs, positional.ys, []);
 		}
 
@@ -9933,6 +9953,9 @@ function (window, undefined) {
 		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
 		var positional = pairedPositional(arg0, arg1);
 		if (positional) {
+			if (positional.na) {
+				return new cError(cErrorType.not_available);
+			}
 			return pearson(positional.xs, positional.ys, []);
 		}
 
@@ -10875,6 +10898,9 @@ function (window, undefined) {
 		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
 		var positional = pairedPositional(arg0, arg1);
 		if (positional) {
+			if (positional.na) {
+				return new cError(cErrorType.not_available);
+			}
 			return rsq(positional.xs, positional.ys, []);
 		}
 
@@ -11148,6 +11174,9 @@ function (window, undefined) {
 		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
 		var positional = pairedPositional(arg0, arg1);
 		if (positional) {
+			if (positional.na) {
+				return new cError(cErrorType.not_available);
+			}
 			return slope(positional.xs, positional.ys, []);
 		}
 
@@ -11831,6 +11860,9 @@ function (window, undefined) {
 		//mixed array/range, plain ranges, or unequal data counts: pair positionally by row (Excel-compatible)
 		var positional = pairedPositional(arg0, arg1);
 		if (positional) {
+			if (positional.na) {
+				return new cError(cErrorType.not_available);
+			}
 			return steyx(positional.xs, positional.ys, []);
 		}
 
