@@ -42,6 +42,7 @@ AscDFH.changesFactory[AscDFH.historyitem_TableRow_Height]      = CChangesTableRo
 AscDFH.changesFactory[AscDFH.historyitem_TableRow_AddCell]     = CChangesTableRowAddCell;
 AscDFH.changesFactory[AscDFH.historyitem_TableRow_RemoveCell]  = CChangesTableRowRemoveCell;
 AscDFH.changesFactory[AscDFH.historyitem_TableRow_TableHeader] = CChangesTableRowTableHeader;
+AscDFH.changesFactory[AscDFH.historyitem_TableRow_CantSplit]   = CChangesTableRowCantSplit;
 AscDFH.changesFactory[AscDFH.historyitem_TableRow_Pr]          = CChangesTableRowPr;
 AscDFH.changesFactory[AscDFH.historyitem_TableRow_PrChange]    = CChangesTableRowPrChange;
 AscDFH.changesFactory[AscDFH.historyitem_TableRow_ReviewType]  = CChangesTableRowReviewType;
@@ -76,12 +77,17 @@ AscDFH.changesRelationMap[AscDFH.historyitem_TableRow_TableHeader] = [
 	AscDFH.historyitem_TableRow_TableHeader,
 	AscDFH.historyitem_TableRow_Pr
 ];
+AscDFH.changesRelationMap[AscDFH.historyitem_TableRow_CantSplit] = [
+	AscDFH.historyitem_TableRow_CantSplit,
+	AscDFH.historyitem_TableRow_Pr
+];
 AscDFH.changesRelationMap[AscDFH.historyitem_TableRow_Pr]          = [
 	AscDFH.historyitem_TableRow_Before,
 	AscDFH.historyitem_TableRow_After,
 	AscDFH.historyitem_TableRow_CellSpacing,
 	AscDFH.historyitem_TableRow_Height,
 	AscDFH.historyitem_TableRow_TableHeader,
+	AscDFH.historyitem_TableRow_CantSplit,
 	AscDFH.historyitem_TableRow_Pr,
 	AscDFH.historyitem_TableRow_PrChange
 ];
@@ -603,6 +609,26 @@ CChangesTableRowTableHeader.prototype.Merge = private_TableRowChangesOnMergePr;
 CChangesTableRowTableHeader.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesTableRowCantSplit(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesTableRowCantSplit.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesTableRowCantSplit.prototype.constructor = CChangesTableRowCantSplit;
+CChangesTableRowCantSplit.prototype.Type = AscDFH.historyitem_TableRow_CantSplit;
+CChangesTableRowCantSplit.prototype.private_SetValue = function(value)
+{
+	let row = this.Class;
+	row.Pr.CantSplit = value;
+	row.Recalc_CompiledPr();
+	row.RecalcCopiledPrCells();
+};
+CChangesTableRowCantSplit.prototype.Merge = private_TableRowChangesOnMergePr;
+CChangesTableRowCantSplit.prototype.CheckLock = private_TableChangesCheckLock;
+/**
+ * @constructor
  * @extends {AscDFH.CChangesBaseObjectValue}
  */
 function CChangesTableRowPr(Class, Old, New, Color)
@@ -667,6 +693,11 @@ CChangesTableRowPr.prototype.Merge = function(oChange)
 		case AscDFH.historyitem_TableRow_TableHeader:
 		{
 			this.New.TableHeader = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_TableRow_CantSplit:
+		{
+			this.New.CantSplit = oChange.New;
 			break;
 		}
 	}

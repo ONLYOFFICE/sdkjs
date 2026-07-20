@@ -2103,6 +2103,7 @@
 	window['AscDFH'].historyitem_TableRow_Pr          = window['AscDFH'].historyitem_type_TableRow | 8;
 	window['AscDFH'].historyitem_TableRow_PrChange    = window['AscDFH'].historyitem_type_TableRow | 9;
 	window['AscDFH'].historyitem_TableRow_ReviewType  = window['AscDFH'].historyitem_type_TableRow | 10;
+	window['AscDFH'].historyitem_TableRow_CantSplit   = window['AscDFH'].historyitem_type_TableRow | 11;
 	//------------------------------------------------------------------------------------------------------------------
 	// Types of changes in CTable classCell
 	//------------------------------------------------------------------------------------------------------------------
