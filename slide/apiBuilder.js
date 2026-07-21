@@ -309,8 +309,9 @@
 	 * Class representing a slide show transition.
 	 * @constructor
 	 */
-	function ApiSlideShowTransition(transition) {
+	function ApiSlideShowTransition(transition, slide) {
 		this.Transition = transition;
+		this.Slide = slide;
 	}
 
     /**
@@ -4973,7 +4974,7 @@
 	 */
 	ApiSlide.prototype.GetSlideShowTransition = function () {
 		if (this.Slide && this.Slide.transition) {
-			return new ApiSlideShowTransition(this.Slide.transition);
+			return new ApiSlideShowTransition(this.Slide.transition, this.Slide);
 		}
 		return null;
 	};
@@ -5407,6 +5408,15 @@
 		return 'effectNone';
 	};
 
+	ApiSlideShowTransition.prototype.private_ApplyModified = function (modified) {
+		if (this.Slide && this.Slide.applyTransition) {
+			this.Slide.applyTransition(modified);
+		} else {
+			modified.fillObject(this.Transition);
+		}
+		return true;
+	};
+
 	/**
 	 * Sets the entry effect for the slide show transition.
 	 *
@@ -5423,10 +5433,12 @@
 			return false;
 		}
 
+		const copy = this.Transition.createDuplicate();
+
 		if (entryEffectName === 'effectNone') {
-			this.Transition.TransitionType = c_oAscSlideTransitionTypes.None;
-			this.Transition.TransitionOption = -1;
-			return true;
+			copy.TransitionType = c_oAscSlideTransitionTypes.None;
+			copy.TransitionOption = -1;
+			return this.private_ApplyModified(copy);
 		}
 
 		const entryEffect = ApiSlideShowTransition.ENTRY_EFFECT_MAP[entryEffectName];
@@ -5436,15 +5448,13 @@
 
 		const attrNames = entryEffect.attrNames || [];
 		const attrValues = entryEffect.attrValues || [];
-		const copy = this.Transition.createDuplicate();
 		const isMatched = copy.parseXmlParameters(entryEffect.tag, attrNames, attrValues);
 
 		if (!isMatched) {
 			return false;
 		}
 
-		copy.fillObject(this.Transition);
-		return true;
+		return this.private_ApplyModified(copy);
 	};
 
 	/**
@@ -5474,8 +5484,9 @@
 	 */
 	ApiSlideShowTransition.prototype.SetDuration = function (duration) {
 		if (this.Transition && AscFormat.isRealNumber(duration)) {
-			this.Transition.put_TransitionDuration(duration);
-			return true;
+			const copy = this.Transition.createDuplicate();
+			copy.put_TransitionDuration(duration);
+			return this.private_ApplyModified(copy);
 		}
 		return false;
 	};
@@ -5542,8 +5553,9 @@
 		if (this.Transition) {
 			const duration = ApiSlideShowTransition._getSpeedValue(speed);
 			if (duration !== undefined) {
-				this.Transition.put_TransitionDuration(duration);
-				return true;
+				const copy = this.Transition.createDuplicate();
+				copy.put_TransitionDuration(duration);
+				return this.private_ApplyModified(copy);
 			}
 		}
 		return false;
@@ -5576,8 +5588,9 @@
 	 */
 	ApiSlideShowTransition.prototype.SetAdvanceOnClick = function (advanceOnClick) {
 		if (this.Transition) {
-			this.Transition.put_SlideAdvanceOnMouseClick(advanceOnClick);
-			return true;
+			const copy = this.Transition.createDuplicate();
+			copy.put_SlideAdvanceOnMouseClick(advanceOnClick);
+			return this.private_ApplyModified(copy);
 		}
 		return false;
 	};
@@ -5609,8 +5622,9 @@
 	 */
 	ApiSlideShowTransition.prototype.SetAdvanceOnTime = function (advanceOnTime) {
 		if (this.Transition) {
-			this.Transition.put_SlideAdvanceAfter(advanceOnTime);
-			return true;
+			const copy = this.Transition.createDuplicate();
+			copy.put_SlideAdvanceAfter(advanceOnTime);
+			return this.private_ApplyModified(copy);
 		}
 		return false;
 	};
@@ -5645,8 +5659,9 @@
 	 */
 	ApiSlideShowTransition.prototype.SetAdvanceTime = function (advanceTime) {
 		if (this.Transition && AscFormat.isRealNumber(advanceTime)) {
-			this.Transition.put_SlideAdvanceDuration(advanceTime);
-			return true;
+			const copy = this.Transition.createDuplicate();
+			copy.put_SlideAdvanceDuration(advanceTime);
+			return this.private_ApplyModified(copy);
 		}
 		return false;
 	};
