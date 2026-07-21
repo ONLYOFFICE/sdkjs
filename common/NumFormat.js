@@ -3672,8 +3672,7 @@ FormatParser.prototype =
         if (null == cultureInfo)
             cultureInfo = g_oDefaultCultureInfo;
         val = this._normalizeDecimalSep(val, cultureInfo);
-        //parseNum excludes hex number notation.
-        return AscCommonExcel.parseNum(val) && Asc.isNumberInfinity(val);
+        return null !== Asc.tryFiniteNumberString(val);
     },
     parseLocaleNumber: function (val, cultureInfo) {
         if (null == cultureInfo)
@@ -3689,15 +3688,12 @@ FormatParser.prototype =
         var sep = cultureInfo.NumberDecimalSeparator;
         return sep !== "." ? val.replace(".", sep) : val;
     },
-    // Combines isLocaleNumber + parseLocaleNumber in a single pass.
-    // Returns the parsed number, or null if val is not a valid locale number.
+    // Combines validation and value extraction with one numeric coercion; returns the number or null.
     tryParseLocaleNumber: function (val, cultureInfo) {
         if (null == cultureInfo)
             cultureInfo = g_oDefaultCultureInfo;
         val = this._normalizeDecimalSep(val, cultureInfo);
-        if (!AscCommonExcel.parseNum(val) || !Asc.isNumberInfinity(val))
-            return null;
-        return val - 0;
+        return Asc.tryFiniteNumberString(val);
     },
     /**
      * Get cached regex for number parsing

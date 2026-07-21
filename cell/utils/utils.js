@@ -2249,6 +2249,22 @@
 			return valInt == valTrim && valTrim.length > 0 && MIN_EXCEL_INT < valInt && valInt < MAX_EXCEL_INT;//
 		}
 
+		// Parse to a number or null, preserving the legacy parseNum/isNumberInfinity acceptance rules, with one numeric coercion.
+		function tryFiniteNumberString(val) {
+			if (val.indexOf("x") > -1) {
+				return null;
+			}
+			var valTrim = trim(val);
+			if (0 === valTrim.length) {
+				return null;
+			}
+			var number = valTrim - 0;
+			if (number === number && MIN_EXCEL_INT < number && number < MAX_EXCEL_INT) {
+				return number;
+			}
+			return null;
+		}
+
 		function arrayToLowerCase(array) {
 			var result = [];
 			for (var i = 0, length = array.length; i < length; ++i)
@@ -4256,6 +4272,7 @@
 		window["AscCommonExcel"].getFullHyperlinkLength = getFullHyperlinkLength;
 		window["Asc"].outputDebugStr = outputDebugStr;
 		window["Asc"].isNumberInfinity = isNumberInfinity;
+		window["Asc"].tryFiniteNumberString = tryFiniteNumberString;
 		window["Asc"].trim = trim;
 		window["Asc"].arrayToLowerCase = arrayToLowerCase;
 		window["Asc"].isFixedWidthCell = isFixedWidthCell;

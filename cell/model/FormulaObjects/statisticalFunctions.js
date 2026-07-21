@@ -13309,11 +13309,67 @@ function parseStringToCElement (val, cultureInfo) {
 		return new cString(val);
 	}
 
+	// Plain dict disables+frees at its cap (bounds all-unique overhead); fallback dict stop-inserts (bounds memory, keeps serving expensive parses).
+	const PARSE_MEMO_PLAIN_CAP = 512, PARSE_MEMO_FALLBACK_CAP = 32768;
+	// Object.create(null) dicts so a cell string like "__proto__" is a data key, not a prototype member.
+	function NumberStringParseMemo() {
+		this._plain = null;
+		this._plainActive = true;
+		this._plainSize = 0;
+		this._fallback = null;
+		this._fallbackSize = 0;
+	}
+	NumberStringParseMemo.prototype.parse = function(value) {
+		if (this._plainActive && this._plain !== null) {
+			const pc = this._plain[value];
+			if (pc !== undefined) {
+				return pc;
+			}
+		}
+		const n = AscCommon.g_oFormatParser.tryParseLocaleNumber(value);
+		if (n !== null) {
+			if (this._plainActive) {
+				if (this._plain === null) {
+					this._plain = Object.create(null);
+				}
+				this._plain[value] = n;
+				this._plainSize++;
+				if (this._plainSize >= PARSE_MEMO_PLAIN_CAP) {
+					this._plainActive = false;
+					this._plain = null;
+				}
+			}
+			return n;
+		}
+		if (this._fallback === null) {
+			this._fallback = Object.create(null);
+		}
+		const fc = this._fallback[value];
+		if (fc !== undefined) {
+			return fc;
+		}
+		const parseResult = AscCommon.g_oFormatParser.parse(value);
+		const r = parseResult ? parseResult.value : null;
+		if (this._fallbackSize < PARSE_MEMO_FALLBACK_CAP) {
+			this._fallback[value] = r;
+			this._fallbackSize++;
+		}
+		return r;
+	};
+	NumberStringParseMemo.prototype.reset = function() {
+		this._plain = null;
+		this._plainActive = true;
+		this._plainSize = 0;
+		this._fallback = null;
+		this._fallbackSize = 0;
+	};
 	function CountIfTypedCache() {
 		this.data = {};
+		this._numMemo = new NumberStringParseMemo();
 	}
 	CountIfTypedCache.prototype.clean = function() {
 		this.data = {};
+		this._numMemo.reset();
 	};
 	CountIfTypedCache.prototype.unshiftValues = function(column, unshiftDataArrays, unshiftIndexesArrays) {
 		const data = column.data;
@@ -13484,18 +13540,7 @@ function parseStringToCElement (val, cultureInfo) {
 		return i;
 	};
 	CountIfTypedCache.prototype.parseAnyNumber = function(value) {
-		let convertedToNumber = null;
-		if (AscCommon.g_oFormatParser.isLocaleNumber(value)) {
-			convertedToNumber = AscCommon.g_oFormatParser.parseLocaleNumber(value);
-		}
-		if (isNaN(convertedToNumber) || convertedToNumber === null) {
-			const parseResult = AscCommon.g_oFormatParser.parse(value);
-			if (parseResult) {
-				return parseResult.value;
-			}
-			return null;
-		}
-		return convertedToNumber;
+		return this._numMemo.parse(value);
 	};
 	/**
 	 * Apply deferred string data/indexes array changes in one O(N+K) pass.
@@ -14544,9 +14589,9 @@ function parseStringToCElement (val, cultureInfo) {
 	 *
 	 * Stores calculation results keyed by all criteria-range/criteria pairs so that
 	 * repeated calls with the same arguments return immediately without re-scanning
-	 * the sheet.  Shares a CountIfTypedCache instance with CountIfCache for column
-	 * data storage, meaning a single lazy-loaded typed-column pool is reused across
-	 * both COUNTIF and COUNTIFS.
+	 * the sheet.  COUNTIF and COUNTIFS each construct their own CountIfTypedCache
+	 * instance, so the lazy typed-column pool and per-instance parse memo are NOT
+	 * shared between them.
 	 *
 	 * Algorithm: column-major multi-criteria intersection using a single
 	 * Uint32 column-mask.
