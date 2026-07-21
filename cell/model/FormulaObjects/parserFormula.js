@@ -1357,7 +1357,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var r = this.getRange();
 		if (r) {
 			r._foreach2(function (cell, row, col) {
-				action(checkTypeCell(cell), cell, row, col);
+				return action(checkTypeCell(cell), cell, row, col);
 			});
 		}
 	};
@@ -1367,6 +1367,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		this.foreach2(function (elem, cell, row, col) {
 			if (!stopped && action(elem, row, col)) {
 				stopped = true;
+				return true;
 			}
 		});
 		return stopped ? true : undefined;
@@ -1899,7 +1900,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			for (var i = 0; i < _r.length; i++) {
 				if (_r[i]) {
 					_r[i]._foreach2(function (cell, row, col) {
-						action(checkTypeCell(cell), cell, row, col);
+						return action(checkTypeCell(cell), cell, row, col);
 					});
 				}
 			}
@@ -1911,6 +1912,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		this.foreach2(function (elem, cell, row, col) {
 			if (!stopped && action(elem, row, col)) {
 				stopped = true;
+				return true;
 			}
 		});
 		return stopped ? true : undefined;
