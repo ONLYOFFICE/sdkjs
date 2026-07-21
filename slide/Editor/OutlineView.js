@@ -2496,7 +2496,7 @@
 	};
 	OutlineView.prototype.updateSelectionState = function () {
 		if (this.outlineShape) {
-			if (this.isEmptyPresentation()) {
+			if (this.isEmptyPresentation() || !this.isFocusOnOutline()) {
 				this.outlineShape.resetSelectionState();
 			} else {
 				this.outlineShape.updateSelectionState();
