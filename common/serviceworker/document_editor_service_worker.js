@@ -264,7 +264,7 @@ function getStorageInfo() {
 				g_storageInfoCacheTime = Date.now();
 				return g_storageInfoCache;
 			}
-			// Calculate max entry size: cache ≈ 10% of quota, cap entry at 1/8th
+			// Calculate max entry size: cache is ~10% of quota, cap entry at 1/8th
 			const cacheSize = Math.min(estimate.quota * 0.10, 1024 * 1024 * 1024); // 1 GiB max
 			const maxEntrySize = cacheSize / 8; // Per-entry cap is 1/8th of cache size
 			
@@ -388,26 +388,26 @@ function cacheFirst(event) {
 	const url = request.url;
 	const fifoDocId = fifoExtractDocId(url);
 	
-	// Try FIFO cache first for large file prefixes
+	// Try FIFO cache first for large file prefixes; a cache read error is treated as a miss
 	const cachePromise = fifoDocId
 		? fifoGetFromCache(request)
-		: caches.match(request, { cacheName: g_cacheName });
-	
+		: caches.match(request, { cacheName: g_cacheName }).catch(function() { return undefined; });
+
 	return cachePromise
 		.then(function(cached) {
 			return cached || fetch(request).then(function(networkResp) {
 				// Clone immediately to avoid "body already used" errors
 				const responseForCache = networkResp.clone();
-				
+
 				// Fire-and-forget caching **after** responding to the page
 				if (safeToCache(request, networkResp)) {
 					event.waitUntil(
 						getStorageInfo()
 						.then(function(info) {
 							if (!info.isHealthy) return;
-							
+
 							const size = Number(networkResp.headers.get('content-length')) || 0;
-							
+
 							if (fifoDocId) {
 								// Use FIFO cache
 								if (size === 0 || size <= g_fifoConfig.maxEntrySize) {
@@ -424,6 +424,10 @@ function cacheFirst(event) {
 				}
 				return networkResp;
 			});
+		})
+		.catch(function() {
+			// Fall back to a plain fetch so a transient failure is never worse than having no service worker
+			return fetch(request).catch(function() { return Response.error(); });
 		});
 }
 function activateWorker(event) {
