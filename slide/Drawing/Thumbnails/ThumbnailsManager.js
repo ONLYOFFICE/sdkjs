@@ -2836,6 +2836,7 @@
 	{
 		if(this.FocusObjType === type)
 			return;
+		const logicDocument = this.m_oWordControl.m_oLogicDocument;
 		switch (type)
 		{
 			case FOCUS_OBJECT_MAIN:
@@ -2849,9 +2850,9 @@
 					return;
 
 				this.FocusObjType = FOCUS_OBJECT_THUMBNAILS;
-				if (this.m_oWordControl.m_oLogicDocument)
+				if (logicDocument)
 				{
-					this.m_oWordControl.m_oLogicDocument.resetStateCurSlide(true);
+					logicDocument.resetStateCurSlide(true);
 				}
 				break;
 			}
@@ -2866,6 +2867,10 @@
 			}
 			default:
 				break;
+		}
+		const outlineView = this.GetOutlineView();
+		if (outlineView && logicDocument) {
+			outlineView.selectPage(logicDocument.CurPage);
 		}
 	};
 	COutlineThumbnailsManager.prototype.ClearCacheAttack = function()
@@ -3041,13 +3046,8 @@
 			return;
 		}
 
-		if (!this.m_oWordControl.m_oScrollThumbApi) {
-			return;
-		}
-
-		if (this.FocusObjType === FOCUS_OBJECT_THUMBNAILS) {
-			outlineView.selectPage(pageNum);
-		} else {
+		outlineView.selectPage(pageNum);
+		if (this.m_oWordControl.m_oScrollThumbApi) {
 			outlineView.removeSelection();
 			const penW = 1 * g_dKoef_mm_to_pix;
 			const pageY = outlineView.getPageY(pageNum);
