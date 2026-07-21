@@ -7182,6 +7182,8 @@
 							convertAndFinalize(function () {
 								logicDocument.Recalculate();
 								logicDocument.FinalizeAction();
+								logicDocument.UpdateInterface();
+								logicDocument.UpdateSelection();
 							});
 						}
 					} else {
