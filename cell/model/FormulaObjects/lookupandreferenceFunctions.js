@@ -1619,22 +1619,16 @@ function (window, undefined) {
 			//reads _from.array/_from.rowCount raw, so a generator-backed arg must be materialized first
 			_from.ensureMaterialized && _from.ensureMaterialized();
 			let ret = null;
-			let _colCount = _from.getCountElementInRow();
-			let _rowCount = _from.rowCount;
+			//size and read a lazy source by its LOGICAL grid - its head may be both shorter and narrower
+			let _lazy = !!(_from.hasLazyTail && _from.hasLazyTail());
+			let _logical = _lazy ? _from.getDimensions(true) : null;
+			let _colCount = _lazy ? _logical.col : _from.getCountElementInRow();
+			let _rowCount = _lazy ? _logical.row : _from.rowCount;
 			let i;
 			row = row !== undefined ? Math.ceil(row) : row;
 			col = col !== undefined ? Math.ceil(col) : col;
 			if (undefined !== row) {
 				if (_rowCount < row) {
-					//row past the physical head: for a constant lazy tail (ensureMaterialized is a no-op there)
-					//serve the whole row tail-awarely if it is within the LOGICAL size - else it would #REF!.
-					if (_from.hasLazyTail && _from.hasLazyTail() && row <= _from.getRowCount(true)) {
-						ret = new cArray();
-						for (i = 0; i < _colCount; i++) {
-							ret.addElement(_from.getElementRowCol(row - 1, i, true));
-						}
-						return ret;
-					}
 					if (col === undefined && _rowCount === 1 && _from.array[0] && _from.array[0][row - 1]) {
 						ret = new cArray();
 						ret.addElement(_from.array[0][row - 1]);
@@ -1645,7 +1639,7 @@ function (window, undefined) {
 				}
 				ret = new cArray();
 				for (i = 0; i < _colCount; i++) {
-					ret.addElement(_from.array[row - 1][i])
+					ret.addElement(_lazy ? _from.getElementRowCol(row - 1, i, true) : _from.array[row - 1][i])
 				}
 			} else if (undefined !== col) {
 				if (_colCount < col) {
@@ -1659,15 +1653,16 @@ function (window, undefined) {
 				}
 
 				ret = new cArray();
-				for (i = 0; i < _rowCount; i++) {
+				let _physRows = _from.rowCount;
+				for (i = 0; i < _physRows; i++) {
 					ret.addRow();
-					ret.addElement(_from.array[i][col - 1])
+					ret.addElement(_lazy ? _from.getElementRowCol(i, col - 1, true) : _from.array[i][col - 1])
 				}
-				if (_from.hasLazyTail && _from.hasLazyTail()) {
+				if (_lazy) {
 					//preserve a constant lazy tail: the extracted column's tail is the source's tail value at
 					//this column (O(1); a generator tail was already materialized by ensureMaterialized above).
-					ret.setRealArraySize(_from.getDimensions(true).row, 1);
-					ret.setMissedValue(_from.getMissedElement(_rowCount, col - 1));
+					ret.setRealArraySize(_rowCount, 1);
+					ret.setMissedValue(_from.getMissedElement(_physRows, col - 1));
 				}
 			}
 			return ret;

@@ -1361,7 +1361,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			});
 		}
 	};
-	//logical iteration over the live range via foreach2; early-stop is callback-level only (the foreach2 scan completes)
+	//logical iteration over the live range via foreach2; a truthy action result stops the scan
 	cArea.prototype.forEachLogical = function (action) {
 		let stopped = false;
 		this.foreach2(function (elem, cell, row, col) {
@@ -1899,14 +1899,18 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			var _r = this.range(_wsA);
 			for (var i = 0; i < _r.length; i++) {
 				if (_r[i]) {
-					_r[i]._foreach2(function (cell, row, col) {
+					var _res = _r[i]._foreach2(function (cell, row, col) {
 						return action(checkTypeCell(cell), cell, row, col);
 					});
+					//the sheet loop must stop too, otherwise the scan resumes on the next sheet
+					if (null != _res) {
+						return _res;
+					}
 				}
 			}
 		}
 	};
-	//logical iteration over the live range cells via foreach2; early-stop is callback-level only (the scan completes)
+	//logical iteration over the live range cells via foreach2; a truthy action result stops the scan
 	cArea3D.prototype.forEachLogical = function (action) {
 		let stopped = false;
 		this.foreach2(function (elem, cell, row, col) {
@@ -4689,8 +4693,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 						isArrayArg: _isArrayArg,
 						isArray: cElementType.array === _ta.type && !_isArrayArg,
 						isRange: _isRange && !_isArrayArg && !checkArrayIndex(_j, cElementType.cellsRange),
-						rows: (cElementType.array === _ta.type) ? _ta.getRowCount() : 0,
-						cols: (cElementType.array === _ta.type) ? _ta.getCountElementInRow() : 0,
+						//LOGICAL dims: only a genuinely 1-row/1-col arg broadcasts, not one with a 1-row/1-col head
+						rows: (cElementType.array === _ta.type) ? _ta.getRowCount(true) : 0,
+						cols: (cElementType.array === _ta.type) ? _ta.getCountElementInRow(true) : 0,
 						dimensions: _isRange ? _ta.getDimensions() : null
 					};
 				}
