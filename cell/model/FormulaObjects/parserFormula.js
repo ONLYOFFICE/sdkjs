@@ -4636,14 +4636,19 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 							// transfer array to argument without changing
 							tempArg = tempArg;
 						} else {
-							maxArrayRows = Math.max(maxArrayRows, tempArg.getRowCount());
-							maxArrayCols = Math.max(maxArrayCols, tempArg.getCountElementInRow());
+							//use LOGICAL dims (realSize) so a full-column arg drives the result shape even when it has no data
+							var _taR = tempArg.getRowCount(true), _taC = tempArg.getCountElementInRow(true);
+							maxArrayRows = Math.max(maxArrayRows, _taR);
+							maxArrayCols = Math.max(maxArrayCols, _taC);
 							if (!firstArray) {
 								firstArray = tempArg;
-							} else if((1 === firstArray.getRowCount() || 1 === firstArray.getCountElementInRow()) && 1 !== tempArg.getRowCount() && 1 !== tempArg.getCountElementInRow()) {
-								firstArray = tempArg;
-							} else if((1 === firstArray.getRowCount() && 1 === firstArray.getCountElementInRow()) && (1 !== tempArg.getRowCount() || 1 !== tempArg.getCountElementInRow())){
-								firstArray = tempArg;
+							} else {
+								var _faR = firstArray.getRowCount(true), _faC = firstArray.getCountElementInRow(true);
+								if ((1 === _faR || 1 === _faC) && 1 !== _taR && 1 !== _taC) {
+									firstArray = tempArg;
+								} else if ((1 === _faR && 1 === _faC) && (1 !== _taR || 1 !== _taC)) {
+									firstArray = tempArg;
+								}
 							}
 						}
 					}
