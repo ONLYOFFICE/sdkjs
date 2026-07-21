@@ -888,14 +888,13 @@ function CDrawingDocument()
 	};
 	this.TargetEnd            = function()
 	{
-		if (!this.TargetShowFlag)
-			return;
-
-		this.TargetShowFlag     = false;
 		this.TargetShowNeedFlag = false;
 		clearInterval(this.m_lTimerTargetId);
-		this.m_lTimerTargetId                = -1;
-		this.TargetHtmlElement.style.display = "none";
+		this.m_lTimerTargetId = -1;
+		if (this.TargetShowFlag) {
+			this.TargetShowFlag     = false;
+			this.TargetHtmlElement.style.display = "none";
+		}
 	};
 	this.UpdateTargetNoAttack = function()
 	{
