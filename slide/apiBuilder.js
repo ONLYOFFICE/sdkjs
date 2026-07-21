@@ -6668,6 +6668,7 @@
      * @typeofeditors ["CPE"]
      * @param {EMU} nWidth - The object width measured in English measure units.
      * @param {EMU} nHeight - The object height measured in English measure units.
+	 * @returns {boolean}
      * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetSize.js
 	 */
     ApiDrawing.prototype.SetSize = function(nWidth, nHeight)
@@ -6681,7 +6682,10 @@
         {
             xfrm.setExtX(fWidth);
             xfrm.setExtY(fHeight);
+			return true;
         }
+
+		return false;
     };
 
     /**
@@ -8581,22 +8585,6 @@
         this.Table.CurCell = oCell.Cell;
         return this.Table.RemoveTableColumn();
     };
-	/**
-	 * Selects the current table in the presentation.
-	 * @memberof ApiTable
-	 * @typeofeditors ["CPE"]
-	 * @returns {true}
-	 * @since 9.5.0
-	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/Select.js
-	 */
-	ApiTable.prototype.Select = function()
-	{
-		let logicDocument = private_GetPresentation();
-		logicDocument.RemoveSelection();
-		this.Table.SelectAll();
-		this.Table.Document_SetThisElementCurrent();
-		return true;
-	};
 
 	/**
 	 * Returns the selected cells of the current table.
@@ -8735,6 +8723,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {EMU} width - The table width measured in English measure units.
 	 * @param {EMU} height - The table height measured in English measure units.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetSize.js
 	 */
 	ApiTable.prototype.SetSize = function (width, height) {
@@ -8746,7 +8735,11 @@
 				private_EMU2MM(height),
 				true
 			);
+
+			return true;
 		}
+
+		return false;
 	};
 
 	/**
@@ -11744,7 +11737,6 @@
     ApiTable.prototype["RemoveRow"]						= ApiTable.prototype.RemoveRow;
     ApiTable.prototype["RemoveColumn"]					= ApiTable.prototype.RemoveColumn;
 	ApiTable.prototype["Copy"]							= ApiTable.prototype.Copy;
-	ApiTable.prototype["Select"]						= ApiTable.prototype.Select;
 	//ApiTable.prototype["Delete"]						= ApiTable.prototype.Delete;
 	ApiTable.prototype["SetShd"]						= ApiTable.prototype.SetShd;
 	ApiTable.prototype["SetSize"]						= ApiTable.prototype.SetSize;

@@ -9214,7 +9214,19 @@ var CPresentation = CPresentation || function(){};
         return this.globalTableStyles;
     };
     CPDFDoc.prototype.GetAllTableStyles = function() {
-        return this.globalTableStyles.Style;
+        if (!this.globalTableStyles) {
+            return [];
+        }
+        let aStyles = [];
+        for (let key in this.TableStylesIdMap) {
+            if (this.TableStylesIdMap.hasOwnProperty(key)) {
+                let oStyle = this.globalTableStyles.Get(key);
+                if (oStyle) {
+                    aStyles.push(oStyle);
+                }
+            }
+        }
+        return aStyles;
     };
 	CPDFDoc.prototype.IsSelectParagraphEndMark = function() {
 		return false;
