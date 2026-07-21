@@ -4167,7 +4167,7 @@
 
 	/**
 	 * The types of elements that can be added to the paragraph structure.
-	 * @typedef {(ApiUnsupported | ApiRun | ApiInlineLvlSdt | ApiHyperlink | ApiFormBase)} ParagraphContent
+	 * @typedef {(ApiUnsupported | ApiRun | ApiInlineLvlSdt | ApiHyperlink | ApiFormBase | ApiMath)} ParagraphContent
 	 * @see office-js-api/Examples/Enumerations/ParagraphContent.js
 	 */
 
@@ -4825,7 +4825,7 @@
 	 * Creates a math equation from a linear text string. The resulting object can be inserted into
 	 * a paragraph the same way as a run (e.g. via {@link ApiParagraph#AddElement} or {@link ApiParagraph#Push}).
 	 * @memberof Api
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} text - An equation written as a linear text string.
 	 * @param {"unicode" | "latex" | "mathml"} [format="unicode"] - The format of the specified linear representation.
 	 * @returns {ApiMath}
@@ -13537,13 +13537,25 @@
 	/**
 	 * Returns a type of the ApiMath class.
 	 * @memberof ApiMath
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {"math"}
 	 * @see office-js-api/Examples/{Editor}/ApiMath/Methods/GetClassType.js
 	 */
 	ApiMath.prototype.GetClassType = function()
 	{
 		return "math";
+	};
+	/**
+	 * Returns the inner text of the current math element.
+	 * @memberof ApiMath
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @param {boolean} isLaTeX - should the text be returned in LaTeX format (if false then in unicode)
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiMath/Methods/GetText.js
+	 */
+	ApiMath.prototype.GetText = function(isLaTeX)
+	{
+		return this.ParaMath.GetText(!!isLaTeX);
 	};
 	ApiMath.prototype.private_GetImpl = function()
 	{
@@ -15131,14 +15143,6 @@
 		return new ApiComment(comment)
 	};
 
-	/**
-	 * Returns the currently selected cells in the table.
-	 * @memberof ApiTable
-	 * @typeofeditors ["CDE"]
-	 * @returns {ApiTableCell[]} - An array of the currently selected table cells.
-	 * @since 9.5.0
-	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedCells.js
-	 */
 	/**
 	 * Sets the width of the specified column (by index) of the current table.
 	 * @memberof ApiTable
@@ -31981,6 +31985,7 @@
 	ApiParagraph.prototype["AddPageBreakBefore"]     = ApiParagraph.prototype.AddPageBreakBefore;
 
 	ApiMath.prototype["GetClassType"]                = ApiMath.prototype.GetClassType;
+	ApiMath.prototype["GetText"]                     = ApiMath.prototype.GetText;
 
 	ApiRun.prototype["GetClassType"]                 = ApiRun.prototype.GetClassType;
 	ApiRun.prototype["GetTextPr"]                    = ApiRun.prototype.GetTextPr;
