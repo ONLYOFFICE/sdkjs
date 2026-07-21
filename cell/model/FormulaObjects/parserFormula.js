@@ -5166,10 +5166,22 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		} else if (arg0 instanceof cArea3D) {
 			arg0 = arg0.cross(arguments[1], arguments[3]);
 		} else if (arg0 instanceof cArray) {
+			var _neg = function (elem) {
+				elem = elem.tocNumber();
+				return elem instanceof cError ? elem : new cNumber(-elem.getValue());
+			};
 			arg0.foreach(function (arrElem, r, c) {
-				arrElem = arrElem.tocNumber();
-				arg0.array[r][c] = arrElem instanceof cError ? arrElem : new cNumber(-arrElem.getValue());
+				arg0.array[r][c] = _neg(arrElem);
 			});
+			//foreach visits only the physical head; negate the lazy tail too, else e.g. --(A:A+0=0) (a very
+			//common count idiom) leaves the tail a boolean that SUM ignores and the ~1M tail is dropped.
+			var _mv = arg0.getMissedValue && arg0.getMissedValue();
+			if (_mv) {
+				arg0.setMissedValue(_neg(_mv));
+			}
+			if (arg0.getMissedValueFn && arg0.getMissedValueFn()) {
+				arg0.setMissedValueFn(arg0.mapMissedValueFn(_neg));
+			}
 			return arg0;
 		}
 		arg0 = arg0.tocNumber();
