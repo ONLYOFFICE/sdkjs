@@ -8697,11 +8697,14 @@ background-repeat: no-repeat;\
 	{
 		this.asc_Recalculate();
 		let logicDocument = this.getLogicDocument();
+		logicDocument.UpdateSelection();
+		logicDocument.UpdateInterface();
 		logicDocument.FinalizeAction(true, true);
-		
+		logicDocument.UpdateUndoRedo();
+
 		if (callback)
 			callback(true)
-		
+
 		this.executeGroupActionsEnd();
 		return true;
 	};
