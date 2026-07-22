@@ -4363,7 +4363,12 @@
         }
 
         if(cat) {
-            if(cat && cat.strRef && cat.strRef.strCache) {
+            // read via calculatedRef so text categories aren't coerced to 0
+            var oLit = cat.getLit ? cat.getLit() : null;
+            if(oLit && Array.isArray(oLit.pts)) {
+                pts = oLit.pts;
+            }
+            else if(cat.strRef && cat.strRef.strCache) {
                 pts = cat.strRef.strCache.pts;
             }
             else if(cat.numRef && cat.numRef.numCache) {
