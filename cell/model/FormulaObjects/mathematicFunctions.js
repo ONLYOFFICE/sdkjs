@@ -3465,9 +3465,11 @@ function (window, undefined) {
 				colVals[cj] = acc;
 			}
 			headRes.setRealArraySize(m, n);
-			headRes.setMissedValueFn(function (row, col) {
-				return new cNumber(colVals[col]);
-			});
+			if (n === 1) {
+				headRes.setMissedValue(new cNumber(colVals[0]));   // O(1)
+			} else {
+				headRes.setMissedValueFn(function (row, col) { return new cNumber(colVals[col]); });
+			}
 			return headRes;
 		}
 
