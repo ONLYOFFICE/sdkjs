@@ -730,6 +730,7 @@ CTableRow.prototype =
 			case AscDFH.historyitem_TableRow_AddCell:
 			case AscDFH.historyitem_TableRow_RemoveCell:
 			case AscDFH.historyitem_TableRow_TableHeader:
+			case AscDFH.historyitem_TableRow_CantSplit:
 			case AscDFH.historyitem_TableRow_Pr:
 			{
 				isNeedRecalc = true;
@@ -1035,6 +1036,30 @@ CTableRow.prototype.SetHeader = function(isHeader)
 	this.private_AddPrChange();
 	AscCommon.History.Add(new CChangesTableRowTableHeader(this, this.Pr.TableHeader, isHeader));
 	this.Pr.TableHeader = isHeader;
+	this.Recalc_CompiledPr();
+	this.RecalcCopiledPrCells();
+};
+/**
+ * Check whether this row can be split across multiple pages
+ * @returns {boolean}
+ */
+CTableRow.prototype.CanSplit = function()
+{
+	return !this.Get_CompiledPr(false).CantSplit;
+};
+/**
+ * Set whether this row can be split across multiple pages
+ * @param canSplit {boolean}
+ */
+CTableRow.prototype.SetCanSplit = function(canSplit)
+{
+	let cantSplit = undefined === canSplit || null === canSplit ? undefined : !canSplit;
+	if (cantSplit === this.Pr.CantSplit)
+		return;
+
+	this.private_AddPrChange();
+	AscCommon.History.Add(new CChangesTableRowCantSplit(this, this.Pr.CantSplit, cantSplit));
+	this.Pr.CantSplit = cantSplit;
 	this.Recalc_CompiledPr();
 	this.RecalcCopiledPrCells();
 };

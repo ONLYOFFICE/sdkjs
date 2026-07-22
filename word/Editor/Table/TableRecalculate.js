@@ -3641,13 +3641,21 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 	if (true === bNextPage && false === bKeepNextForced)
 	{
 		let lastRow = this.Pages[CurPage].LastRow;
-		let canMoveRows = CurPage || this.Get_DocumentPrev() || (this.Parent && !this.Parent.IsFirstElementOnPage(this.GetRelativePage(CurPage), this.GetIndex()));
+		let docPrev = this.Get_DocumentPrev();
+		let isNotFirstOnPage = (this.Parent && !this.Parent.IsFirstElementOnPage(this.GetRelativePage(CurPage), this.GetIndex()));
+		let canMoveRows = lastRow || CurPage || docPrev || isNotFirstOnPage;
+		
+		if (this.RowsInfo[lastRow].FirstPage
+			&& !this.GetRow(lastRow).CanSplit()
+			&& ((lastRow > FirstRow) || (0 === lastRow && 0 === CurPage && (docPrev || isNotFirstOnPage))))
+		{
+			this.RowsInfo[lastRow].FirstPage = false;
+		}
+
 		if (false === this.RowsInfo[lastRow].FirstPage)
 		{
 			--lastRow;
 			this.Pages[CurPage].LastRow = lastRow;
-			
-			// Check "Keep with next" on paragraphs inside table cells
 			if (canMoveRows)
 			{
 				while (lastRow > FirstRow && this.private_IsRowWithKeepNext(lastRow))
