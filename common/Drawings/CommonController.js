@@ -1564,7 +1564,21 @@
 					}
 				},
 
-
+				handleSlideImagePlaceholderDblClick: function(shape) {
+					const parent = shape.parent;
+					if (!parent) {
+						return;
+					}
+					const api = this.getEditorApi();
+					if (!api) {
+						return;
+					}
+					if (shape.parent.isNote()) {
+						api.asc_changePresentationViewMode(Asc.c_oAscPresentationViewMode.normal);
+					} else if (shape.parent.isNoteMaster()) {
+						api.asc_changePresentationViewMode(Asc.c_oAscPresentationViewMode.masterSlide);
+					}
+				},
 				handleDblClickEmptyShape: function (oShape) {
 					if (this.checkSelectedObjectsProtectionText()) {
 						return;
@@ -1639,7 +1653,12 @@
 								return true;
 							}
 							if (object.getObjectType() === AscDFH.historyitem_type_Shape) {
-								if (null !== object.signatureLine) {
+								if (object.isSlideImagePlaceholder()) {
+									if (this.handleSlideImagePlaceholderDblClick) {
+										this.handleSlideImagePlaceholderDblClick(object);
+										return true;
+									}
+								} else if (null !== object.signatureLine) {
 									if (this.handleSignatureDblClick) {
 										this.handleSignatureDblClick(object.signatureLine.id, object.extX, object.extY);
 										return true;
