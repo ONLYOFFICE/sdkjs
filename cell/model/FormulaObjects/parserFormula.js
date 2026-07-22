@@ -7074,6 +7074,7 @@ function parserFormula( formula, parent, _ws ) {
 
 	// Functions whose skip could drop a runtime-discovered dependency; an IF over them stays eager for lazy V1.
 	var g_lazyIfUnsafeFuncs = {"INDIRECT": 1, "OFFSET": 1, "CELL": 1};
+	var g_lazyIfEmpty = new cEmpty();
 
 	// Mirrors cIF.Calculate to decide an IF from its scalar condition: returns 0 eager, 1 take-true (skip false), 2 take-false (skip true), 3 skip-both (error/string cond).
 	function _lazyIfDecide(condResult, bIsSpecialFunction) {
@@ -9853,7 +9854,7 @@ function parserFormula( formula, parent, _ws ) {
 						}
 					}
 					if (i === lazyIfSuppressEnd) {
-						elemArr.push(new cEmpty());
+						elemArr.push(g_lazyIfEmpty);
 						lazyIfSuppressEnd = -1;
 					}
 					continue;
@@ -9872,7 +9873,7 @@ function parserFormula( formula, parent, _ws ) {
 							}
 						}
 						if (i === lazyIfSuppressEnd) {
-							elemArr.push(new cEmpty());
+							elemArr.push(g_lazyIfEmpty);
 							lazyIfSuppressEnd = -1;
 						}
 						continue;
