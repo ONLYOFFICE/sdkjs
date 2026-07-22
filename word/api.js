@@ -9500,8 +9500,8 @@ background-repeat: no-repeat;\
 						if (window.isCloudCryptoDownloadAs)
 						{
 							var sParamXml = ("<m_nCsvTxtEncoding>" + oAdditionalData["codepage"] + "</m_nCsvTxtEncoding>");
-							window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, fileType, sParamXml);
-							return true;
+							if (AscCommon.CryptoProvider.cryptoDownloadAs(dataContainer.data, fileType, sParamXml))
+								return true;
 						}
 						t._downloadAsUsingServer(actionType, options, oAdditionalData, dataContainer, downloadType);
 						return;
@@ -9572,12 +9572,12 @@ background-repeat: no-repeat;\
 			}
 		}
 
-        if (window.isCloudCryptoDownloadAs)
-        {
-            var sParamXml = ("<m_nCsvTxtEncoding>" + oAdditionalData["codepage"] + "</m_nCsvTxtEncoding>");
-            window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, fileType, sParamXml);
-			return true;
-        }
+		if (window.isCloudCryptoDownloadAs)
+		{
+			var sParamXml = ("<m_nCsvTxtEncoding>" + oAdditionalData["codepage"] + "</m_nCsvTxtEncoding>");
+			if (AscCommon.CryptoProvider.cryptoDownloadAs(dataContainer.data, fileType, sParamXml))
+				return true;
+		}
 	};
 
 	// Вставка диаграмм

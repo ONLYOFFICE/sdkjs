@@ -532,18 +532,18 @@
 		
         this.sync_EndAction((type === "Block") ? Asc.c_oAscAsyncActionType.BlockInteraction : Asc.c_oAscAsyncActionType.Information, description);
 
-        if (window["AscDesktopEditor"] && status != null && status != "")
+        if (AscCommon.CryptoProvider && status != null && status != "")
         {
             // error!!!
-            if (!window["AscDesktopEditor"]["IsLocalFile"]())
+            if (!AscCommon.CryptoProvider.isLocalFile())
             {
                 this.sendEvent("asc_onError", "Encryption error: " + status + ". The file was not compiled.", c_oAscError.Level.Critical);
-                window["AscDesktopEditor"]["CryptoMode"] = 0;
+                AscCommon.CryptoProvider.setCryptoMode(0);
             }
             else
             {
                 this.sendEvent("asc_onError", "Encryption error: " + status + ". End-to-end encryption mode is disabled.", c_oAscError.Level.NoCritical);
-                window["AscDesktopEditor"]["CryptoMode"] = 0;
+                AscCommon.CryptoProvider.setCryptoMode(0);
 
                 if (undefined !== window.LastUserSavedIndex)
                 {
@@ -559,7 +559,7 @@
             window.LastUserSavedIndex = undefined;
             setTimeout(function() {
 
-                window["AscDesktopEditor"]["buildCryptedEnd"](false);
+                AscCommon.CryptoProvider.buildCryptedEnd(false);
 
             }, 500);
 
@@ -607,14 +607,14 @@
                 if ("no_build" === obj["error"])
 				{
 					// problems - but ones where we just don't build the file...
-					window["AscDesktopEditor"]["buildCryptedEnd"](true);
+					AscCommon.CryptoProvider.buildCryptedEnd(true);
 					return;
 				}
 
                 var _ret = _editor.getFileAsFromChanges();
                 AscCommon.EncryptionWorker.isPasswordCryptoPresent = true;
                 _editor.currentDocumentInfoNext = obj["docinfo"];
-                window["AscDesktopEditor"]["buildCryptedStart"](_ret.data, _ret.header, obj["password"], obj["docinfo"] ? obj["docinfo"] : "");
+                AscCommon.CryptoProvider.buildCryptedStart(_ret.data, _ret.header, obj["password"], obj["docinfo"] ? obj["docinfo"] : "");
                 break;
             }
             case "getPasswordByFile":
@@ -630,11 +630,11 @@
 
                     if (window.isNativeOpenPassword)
                     {
-                        window["AscDesktopEditor"]["NativeViewerOpen"](obj["password"]);
+                        AscCommon.CryptoProvider.nativeViewerOpen(obj["password"]);
                     }
                     else
                     {
-                        window["AscDesktopEditor"]["SetAdvancedOptions"](_param);
+                        AscCommon.CryptoProvider.setAdvancedOptions(_param);
                     }
                 }
                 else

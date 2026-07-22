@@ -51,7 +51,7 @@ OTHER_FILES = [
             'spell/spell/*',
             'hash/hash/*',
             'zlib/engine/*',
-            'serviceworker/*',
+            'serviceworker/*'
         ],
         'dest': os.path.join(DEPLOY_DIR, 'common'),
     },
@@ -103,20 +103,41 @@ def merge_into(base, addon):
             base[key] = val
 
 
+def collect_package(raw, base_dir):
+    """Extract a copy-as-is package (sdk.package) from a RAW config — before fix_paths, so
+    `output` stays relative to the deploy tree instead of being rebased onto base_dir.
+    `items` are resolved to absolute source paths under base_dir. Returns None if absent."""
+    if not isinstance(raw, dict):
+        return None
+    pkg = raw.get('sdk', {}).get('package')
+    if not (pkg and pkg.get('items') and pkg.get('output')):
+        return None
+    return {
+        'items':  [os.path.normpath(os.path.join(base_dir, it)) for it in pkg['items']],
+        'output': os.path.normpath(os.path.join(DEPLOY_DIR, pkg['output'])),
+    }
+
+
 def load_configs(dirs):
-    """Load configs from sdkjs root + addon directories. Returns a dict keyed by config name."""
+    """Load configs from sdkjs root + addon directories.
+    Returns (configs, packages): `configs` keyed by config name (paths fixed, addons merged);
+    `packages` a list of copy-as-is packages (scripts deployed verbatim, not concatenated)."""
     configs = {}
+    packages = []
     for d in dirs:
         for name in CONFIG_NAMES:
-            data = load_json(os.path.join(d, 'configs', name + '.json'))
-            if data is None:
+            raw = load_json(os.path.join(d, 'configs', name + '.json'))
+            if raw is None:
                 continue
-            data = fix_paths(data, d)
+            pkg = collect_package(raw, d)
+            if pkg:
+                packages.append(pkg)
+            data = fix_paths(raw, d)
             if name not in configs:
                 configs[name] = data
             else:
                 merge_into(configs[name], data)
-    return configs
+    return configs, packages
 
 
 def get_files(sdk, mobile=False, desktop=False):
@@ -201,6 +222,25 @@ def deploy_assets():
                 shutil.copy2(src_abs, dest)
 
 
+def deploy_packages(packages):
+    """Copy each addon package's items verbatim into its output dir (created if missing).
+    These scripts are deployed as-is (not concatenated / not compiled)."""
+    done = set()
+    for pkg in packages:
+        out_dir = pkg['output']
+        os.makedirs(out_dir, exist_ok=True)
+        for src in pkg['items']:
+            dest = os.path.join(out_dir, os.path.basename(src))
+            if dest in done:
+                continue
+            done.add(dest)
+            if not os.path.isfile(src):
+                print(f'  WARNING: package item not found, skipped: {src}')
+                continue
+            shutil.copy2(src, dest)
+            print(f'  Packaged {os.path.relpath(dest, DEPLOY_DIR)}')
+
+
 def write_scripts_js(sdk, name, compiled=False):
     """Write develop/sdkjs/<name>/scripts.js listing source files for browser debugging."""
     out_dir = os.path.join(DEVELOP_DIR, name)
@@ -265,7 +305,7 @@ def main():
         for a in args.addon
     ]
 
-    configs = load_configs([src_dir] + addon_dirs)
+    configs, packages = load_configs([src_dir] + addon_dirs)
     if not all(configs.get(n) for n in CONFIG_NAMES):
         print('ERROR: Could not load all required configs. '
               'Make sure configs/ directory exists with word/cell/slide/visio/externs JSON files.')
@@ -310,6 +350,8 @@ def main():
 
     print('Copying other files...')
     deploy_assets()
+    print('Copying package (as-is) files...')
+    deploy_packages(packages)
     print('Build complete.')
 
 

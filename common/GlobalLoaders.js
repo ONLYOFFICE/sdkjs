@@ -405,41 +405,39 @@
         this.bIsLoadDocumentFirst = false;
         this.bIsAsyncLoadDocumentImages = false;
 
-        this.isBlockchainSupport = false;
+        this.isBlockchainSupport = AscCommon.CryptoProvider ? AscCommon.CryptoProvider.isBlockchainSupport() : false;
         var oThis = this;
 
-        if (window["AscDesktopEditor"] &&
-            window["AscDesktopEditor"]["IsLocalFile"] &&
-            window["AscDesktopEditor"]["isBlockchainSupport"])
+        // Always install the crypto image hooks. They consult AscCommon.CryptoProvider at
+        // call time and are only invoked from loadImageByUrl when crypto is actually
+        // enabled, so the path activates regardless of the crypto mode (or the provider's
+        // readiness) at loader-construction time — e.g. when the web provider's
+        // enableEncryption() turns crypto on mid-session.
+        if (AscCommon.CryptoProvider)
         {
-            this.isBlockchainSupport = (window["AscDesktopEditor"]["isBlockchainSupport"]() && !window["AscDesktopEditor"]["IsLocalFile"]());
-
-            if (this.isBlockchainSupport)
+            Image.prototype.preload_crypto = function(_url)
             {
-                Image.prototype.preload_crypto = function(_url)
+                window["crypto_images_map"] = window["crypto_images_map"] || {};
+                if (!window["crypto_images_map"][_url])
+                    window["crypto_images_map"][_url] = [];
+                window["crypto_images_map"][_url].push(this);
+
+                AscCommon.CryptoProvider.preloadCryptoImage(_url, AscCommon.g_oDocumentUrls.getLocal(_url));
+
+                oThis.Api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.LoadImage);
+            };
+
+            Image.prototype["onload_crypto"] = function(_src, _crypto_data)
+            {
+                if (_crypto_data && AscCommon.EncryptionWorker && AscCommon.EncryptionWorker.isCryptoImages())
                 {
-                    window["crypto_images_map"] = window["crypto_images_map"] || {};
-                    if (!window["crypto_images_map"][_url])
-                        window["crypto_images_map"][_url] = [];
-                    window["crypto_images_map"][_url].push(this);
-
-                    window["AscDesktopEditor"]["PreloadCryptoImage"](_url, AscCommon.g_oDocumentUrls.getLocal(_url));
-
-                    oThis.Api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.LoadImage);
-                };
-
-                Image.prototype["onload_crypto"] = function(_src, _crypto_data)
-                {
-                    if (_crypto_data && AscCommon.EncryptionWorker && AscCommon.EncryptionWorker.isCryptoImages())
-                    {
-                        AscCommon.EncryptionWorker.decryptImage(_src, this, _crypto_data);
-                        return;
-                    }
-					this.crossOrigin = "";
-                    this.src = _src;
-                    oThis.Api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.LoadImage);
-                };
-            }
+                    AscCommon.EncryptionWorker.decryptImage(_src, this, _crypto_data);
+                    return;
+                }
+				this.crossOrigin = "";
+                this.src = _src;
+                oThis.Api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.LoadImage);
+            };
         }
 
         this.put_Api = function(api)
@@ -459,7 +457,7 @@
 
         this.loadImageByUrl = function(image, url, isDisableCrypto)
         {
-            if (this.isBlockchainSupport && (true !== isDisableCrypto))
+            if (AscCommon.CryptoProvider && (true !== isDisableCrypto) && image.preload_crypto && AscCommon.CryptoProvider.isBlockchainSupport())
                 image.preload_crypto(url);
             else
                 image.src = url;
