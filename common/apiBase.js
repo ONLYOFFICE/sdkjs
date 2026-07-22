@@ -713,11 +713,16 @@
 			window["AscDesktopEditor"]["SetDocumentName"](this.documentTitle);
 		}
 
-		// TEMPORARY
-		try {
-			if ("true" === window.localStorage.getItem("test-crypto-mode"))
-				AscCommon.CryptoProvider.enableEncryption();
-		} catch(e) {}
+		// for test without crypto integrator
+		if (false)
+		{
+			try {
+				if ("true" === window.localStorage.getItem("test-crypto-mode")) {
+					if (AscCommon.createCryptoProvider)
+						AscCommon.createCryptoProvider({});
+				}
+			} catch(e) {}
+		}
 
 		if (!this.frameManager.isFrameEditor() && AscCommon.CryptoProvider)
 		{
