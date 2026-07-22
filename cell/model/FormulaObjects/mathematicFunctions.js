@@ -280,7 +280,7 @@ function (window, undefined) {
 			return arg0;
 		} else if (arg0.type === cElementType.array) {
 			let resArray = new cArray();
-			let dimensions = arg0.getDimensions();
+			let dimensions = arg0.getDimensions(true);
 
 			for (let row = 0; row < dimensions.row; row++) {
 				resArray.addRow();
@@ -343,7 +343,7 @@ function (window, undefined) {
 			return arg0;
 		} else if (arg0.type === cElementType.array) {
 			let resArray = new cArray();
-			let dimensions = arg0.getDimensions();
+			let dimensions = arg0.getDimensions(true);
 
 			for (let row = 0; row < dimensions.row; row++) {
 				resArray.addRow();
@@ -408,7 +408,7 @@ function (window, undefined) {
 			return arg0;
 		} else if (arg0.type === cElementType.array) {
 			let resArray = new cArray();
-			let dimensions = arg0.getDimensions();
+			let dimensions = arg0.getDimensions(true);
 
 			for (let row = 0; row < dimensions.row; row++) {
 				resArray.addRow();
@@ -482,7 +482,7 @@ function (window, undefined) {
 			return arg0;
 		} else if (arg0.type === cElementType.array) {
 			let resArray = new cArray();
-			let dimensions = arg0.getDimensions();
+			let dimensions = arg0.getDimensions(true);
 
 			for (let row = 0; row < dimensions.row; row++) {
 				resArray.addRow();
@@ -754,7 +754,7 @@ function (window, undefined) {
 
 		if (cElementType.array === arg0.type) {
 			let resArr = new cArray();
-			let dimensions = arg0.getDimensions();
+			let dimensions = arg0.getDimensions(true);
 
 			for (let row = 0; row < dimensions.row; row++) {
 				resArr.addRow();
@@ -809,7 +809,7 @@ function (window, undefined) {
 			return arg0;
 		} else if (arg0.type === cElementType.array) {
 			let resArray = new cArray();
-			let dimensions = arg0.getDimensions();
+			let dimensions = arg0.getDimensions(true);
 
 			for (let row = 0; row < dimensions.row; row++) {
 				resArray.addRow();
@@ -872,7 +872,7 @@ function (window, undefined) {
 			return arg0;
 		} else if (arg0.type === cElementType.array) {
 			let resArray = new cArray();
-			let dimensions = arg0.getDimensions();
+			let dimensions = arg0.getDimensions(true);
 
 			for (let row = 0; row < dimensions.row; row++) {
 				resArray.addRow();
@@ -943,7 +943,7 @@ function (window, undefined) {
 			return arg0;
 		} else if (arg0.type === cElementType.array) {
 			let resArray = new cArray();
-			let dimensions = arg0.getDimensions();
+			let dimensions = arg0.getDimensions(true);
 
 			for (let row = 0; row < dimensions.row; row++) {
 				resArray.addRow();
@@ -1018,7 +1018,7 @@ function (window, undefined) {
 			}
 
 			let resArray = new cArray();
-			let dimensions = arg0.type === cElementType.array ? arg0.getDimensions() : arg1.getDimensions();
+			let dimensions = arg0.type === cElementType.array ? arg0.getDimensions(true) : arg1.getDimensions(true);
 
 			for (let row = 0; row < dimensions.row; row++) {
 				resArray.addRow();
@@ -1092,7 +1092,7 @@ function (window, undefined) {
 			return arg0;
 		} else if (arg0.type === cElementType.array) {
 			let resArray = new cArray();
-			let dimensions = arg0.getDimensions();
+			let dimensions = arg0.getDimensions(true);
 
 			for (let row = 0; row < dimensions.row; row++) {
 				resArray.addRow();
@@ -2068,7 +2068,7 @@ function (window, undefined) {
 
 		if (arg0.type === cElementType.array) {
 			let resArr = new cArray();
-			let dimensions = arg0.getDimensions();
+			let dimensions = arg0.getDimensions(true);
 
 			for (let row = 0; row < dimensions.row; row++) {
 				resArr.addRow();
@@ -2181,7 +2181,7 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		} else if (arg0.type === cElementType.array) {
 			let resArr = new cArray();
-			let dimensions = arg0.getDimensions();
+			let dimensions = arg0.getDimensions(true);
 
 			for (let row = 0; row < dimensions.row; row++) {
 				resArr.addRow();
@@ -2804,7 +2804,7 @@ function (window, undefined) {
 			arg0 = arg0.cross(arguments[1]);
 		} else if (arg0.type === cElementType.array) {
 			let resArray = new cArray();
-			let dimensions = arg0.getDimensions();
+			let dimensions = arg0.getDimensions(true);
 
 			for (let row = 0; row < dimensions.row; row++) {
 				resArray.addRow();
@@ -2870,7 +2870,7 @@ function (window, undefined) {
 				return arg.getFirstElement ? arg.getFirstElement() : arg;
 			}	
 
-			const dimensions = arg.getDimensions(true);   // logical dims: a lazy full-column head is not "1 row"
+			const dimensions = arg.getDimensions();   // logical dims: a lazy full-column head is not "1 row"
 			if (dimensions.row === 1) {
 				return _getValueInRange(arg, 0, col);
 			}
@@ -2894,7 +2894,7 @@ function (window, undefined) {
 		} else if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D || arg0.type === cElementType.array) {
 			isArrayMode = true;
 			
-			let dimensions = arg0.getDimensions(true);   // logical size: a lazy full-column arg drives the result
+			let dimensions = arg0.getDimensions();   // logical size: a lazy full-column arg drives the result
 			resArraySize.row = dimensions.row;
 			resArraySize.col = dimensions.col;
 		}
@@ -2904,7 +2904,7 @@ function (window, undefined) {
 		} else if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D || arg1.type === cElementType.array) {
 			isArrayMode = true;
 			
-			let dimensions = arg1.getDimensions(true);
+			let dimensions = arg1.getDimensions();
 			resArraySize.row = Math.max(dimensions.row, resArraySize.row);
 			resArraySize.col = Math.max(dimensions.col, resArraySize.col);
 		}
@@ -3004,7 +3004,7 @@ function (window, undefined) {
 			arg0 = arg0.cross(arguments[1]);
 		} else if (arg0.type === cElementType.array) {
 			let resArray = new cArray();
-			let dimensions = arg0.getDimensions();
+			let dimensions = arg0.getDimensions(true);
 
 			for (let row = 0; row < dimensions.row; row++) {
 				resArray.addRow();
@@ -3120,11 +3120,11 @@ function (window, undefined) {
 			return new cError(cErrorType.not_available);
 		}
 
-		// validate the LOGICAL shape BEFORE materializing: getDimensions(true)/bbox is an O(1) field read, so a
+		// validate the LOGICAL shape BEFORE materializing: getDimensions()/bbox is an O(1) field read, so a
 		// non-square arg (e.g. a full-column reference, which is Nx3) is rejected without ever building the matrix.
 		// Only once we know it is square do we materialize (a square arg can never carry a lazy tail in practice -
 		// bounded ranges materialize whole, full columns are non-square - so getMatrixLogical is a safe fallback).
-		let dim = cElementType.array === arg0.type ? arg0.getDimensions(true) : arg0.getDimensions();
+		let dim = arg0.getDimensions();   // logical size (bbox for a range); O(1), no materialization
 		if (!dim || dim.row !== dim.col) {
 			return new cError(cErrorType.wrong_value_type);
 		}
@@ -3385,11 +3385,8 @@ function (window, undefined) {
 		}
 
 		function mmultDims(a) {
-			if (cElementType.array === a.type) {
-				return a.getDimensions(true);
-			}
-			if (cElementType.cellsRange === a.type || cElementType.cellsRange3D === a.type) {
-				return a.getDimensions();
+			if (cElementType.array === a.type || cElementType.cellsRange === a.type || cElementType.cellsRange3D === a.type) {
+				return a.getDimensions();   // logical size (bbox for a range)
 			}
 			if (cElementType.cell === a.type || cElementType.cell3D === a.type || cElementType.number === a.type) {
 				return {row: 1, col: 1};
@@ -3798,7 +3795,7 @@ function (window, undefined) {
 		if (arg0.type === cElementType.array || arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			// if the argument is an array or range, then we return an array of the size of the received argument
 			// which is filled with numbers(1) or errors depending on the values inside the argument
-			let dimensions = arg0.getDimensions(true);   // logical size so a lazy full-column arg keeps its shape
+			let dimensions = arg0.getDimensions();   // logical size so a lazy full-column arg keeps its shape
 			let res = new cArray();
 
 			for (let row = 0; row < dimensions.row; row++) {
@@ -3998,8 +3995,8 @@ function (window, undefined) {
 
 		if (cElementType.array === arg0.type && cElementType.array === arg1.type) {
 			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
-				let arg0Dimensions = arg0.getDimensions(),
-					arg1Dimensions = arg1.getDimensions();
+				let arg0Dimensions = arg0.getDimensions(true),
+					arg1Dimensions = arg1.getDimensions(true);
 
 				let resArr = new cArray();
 				let resDimensions = {col: Math.max(arg0Dimensions.col, arg1Dimensions.col), row: Math.max(arg0Dimensions.row, arg1Dimensions.row)};
@@ -4346,7 +4343,7 @@ function (window, undefined) {
 		//if any of the arguments is an array - handle it here
 		//if handled above and iterating over the array, this function will always return an array
 		//but we only need the value at index 0,0 of the returned array
-			const dimensions = value.getDimensions();
+			const dimensions = value.getDimensions(true);
 			if (dimensions.row === 1) {
 				return _getValueInRange(value, 0, col);
 			}
@@ -4404,7 +4401,7 @@ function (window, undefined) {
 
 				isInnerRangeMode = true;
 
-				let argSize = argClone[i].getDimensions();
+				let argSize = argClone[i].getDimensions(true);
 				innerArraySize.row = Math.max(argSize.row, innerArraySize.row);
 				innerArraySize.col = Math.max(argSize.col, innerArraySize.col);
 			} else if (i !== 4) {
@@ -4417,7 +4414,7 @@ function (window, undefined) {
 				if ((argClone[4].type === cElementType.array || cElementType.cellsRange === argClone[4].type || cElementType.cellsRange3D === argClone[4].type) /*&&
 					!argClone[4].isOneElement()*/) {
 					isInnerRangeMode = true;
-					let argSize = argClone[4].getDimensions();
+					let argSize = argClone[4].getDimensions(true);
 					innerArraySize.row = Math.max(argSize.row, innerArraySize.row);
 					innerArraySize.col = Math.max(argSize.col, innerArraySize.col);
 				} else {
@@ -5347,7 +5344,7 @@ function (window, undefined) {
 			let sum = 0;
 			//cArray with a constant lazy tail: logical dims + tail-aware access (else the tail coefficients drop)
 			let arrLazy = arr.hasLazyTail && arr.hasLazyTail();
-			let dimensions = arrLazy ? arr.getDimensions(true) : arr.getDimensions();
+			let dimensions = arrLazy ? arr.getDimensions() : arr.getDimensions(true);
 			let index = 0;
 
 			for (let row = 0; row < dimensions.row; row++) {
@@ -5844,7 +5841,7 @@ function (window, undefined) {
 			for (let i = 1; i < arg.length; i++) {
 				// array may come as a result of computing internal functions (for example, offset or if)
 				if (arg[i].type == cElementType.array) {
-					resDimensions = arg[i].getDimensions();
+					resDimensions = arg[i].getDimensions(true);
 					if (!resArr) {
 						resArr = new cArray();
 					}
@@ -6159,7 +6156,7 @@ function (window, undefined) {
 			}
 
 			//cArray: logical dimensions so a constant lazy tail is iterated (physical dims would stop at the head)
-			let matrixSize = cElementType.array === arg[i].type ? arg[i].getDimensions(true) : arg[i].getDimensions();
+			let matrixSize = cElementType.array === arg[i].type ? arg[i].getDimensions() : arg[i].getDimensions();
 
 			row = Math.max(matrixSize.row, row);
 			col = Math.max(matrixSize.col, col);
@@ -6368,7 +6365,7 @@ function (window, undefined) {
 			return arg0;
 		} else if (arg0.type === cElementType.array) {
 			let resArray = new cArray();
-			let dimensions = arg0.getDimensions();
+			let dimensions = arg0.getDimensions(true);
 
 			for (let row = 0; row < dimensions.row; row++) {
 				resArray.addRow();
@@ -6431,7 +6428,7 @@ function (window, undefined) {
 			return arg0;
 		} else if (arg0.type === cElementType.array) {
 			let resArray = new cArray();
-			let dimensions = arg0.getDimensions();
+			let dimensions = arg0.getDimensions(true);
 
 			for (let row = 0; row < dimensions.row; row++) {
 				resArray.addRow();

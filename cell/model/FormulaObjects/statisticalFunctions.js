@@ -1525,7 +1525,7 @@ function (window, undefined) {
 		if (arg0.missedValueFn || arg1.missedValueFn || !arg0.getMissedValue() || !arg1.getMissedValue()) {
 			return null;
 		}
-		var d0 = arg0.getDimensions(true), d1 = arg1.getDimensions(true);
+		var d0 = arg0.getDimensions(), d1 = arg1.getDimensions();
 		if (d0.col !== 1 || d1.col !== 1 || d0.row !== d1.row) {
 			return null;   //equal-length column vectors only
 		}
@@ -1549,7 +1549,7 @@ function (window, undefined) {
 	//- cArea/cArea3D: getMatrix() is positional and clamped to the sheet's used rows (not the full-column bbox)
 	function pairedView(arg) {
 		if (arg instanceof cArray) {
-			var d = arg.getDimensions(true);
+			var d = arg.getDimensions();
 			return {rows: d.row, cols: d.col, dim: d.row * d.col, at: function (r, c) { return arg.getElementRowCol(r, c, true); }};
 		}
 		var m = null, bbox = null;
@@ -1653,7 +1653,7 @@ function (window, undefined) {
 		if (!mv || mv.type !== cElementType.number) {
 			return [];
 		}
-		let d = arr.getDimensions(true), logical = d.row * d.col, headCount = 0;
+		let d = arr.getDimensions(), logical = d.row * d.col, headCount = 0;
 		for (let r = 0; r < mat.length; r++) {
 			headCount += mat[r].length;
 		}
@@ -7186,7 +7186,7 @@ function (window, undefined) {
 			let mv0 = arg0.getMissedValue();
 			if (mv0 && mv0.type === cElementType.number) {
 				_mv0 = mv0.getValue();
-				let ld0 = arg0.getDimensions(true);
+				let ld0 = arg0.getDimensions();
 				_logical0 = ld0.row * ld0.col;
 			}
 		}
@@ -7494,7 +7494,7 @@ function (window, undefined) {
 			arg0 = arg0.getValue();
 		} else if (arg0.type === cElementType.array) {
 			let resArray = new cArray();
-			let dimensions = arg0.getDimensions();
+			let dimensions = arg0.getDimensions(true);
 
 			for (let row = 0; row < dimensions.row; row++) {
 				resArray.addRow();
@@ -14218,7 +14218,7 @@ function parseStringToCElement (val, cultureInfo) {
 			return result;
 		}
 		if (arg1.type === cElementType.array) {
-			const dimensions = arg1.getDimensions();
+			const dimensions = arg1.getDimensions(true);
 			const result = new cArray();
 			for (let row = 0; row < dimensions.row; row += 1) {
 				result.addRow();
@@ -14610,7 +14610,7 @@ function parseStringToCElement (val, cultureInfo) {
 			if (criteriaArg.type === cElementType.cellsRange ||
 				criteriaArg.type === cElementType.cellsRange3D ||
 				criteriaArg.type === cElementType.array) {
-				arrayCriteria.push({pos: k + 1, dims: criteriaArg.getDimensions()});
+				arrayCriteria.push({pos: k + 1, dims: criteriaArg.getDimensions(true)});
 			}
 		}
 

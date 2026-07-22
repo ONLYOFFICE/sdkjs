@@ -656,10 +656,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseType.prototype.getDimensions = function () {
 		return {col: 1, row: 1};
 	};
-	//logical size of any value (realSize for a lazy cArray, bbox/physical otherwise); size without testing hasLazyTail
-	cBaseType.prototype.getDimensionsLogical = function () {
-		return this.getDimensions(true);
-	};
 	//visit every logical element as action(elem, row, col); scalar fallback, overridden by cArray and cArea/cArea3D
 	cBaseType.prototype.forEachLogical = function (action) {
 		if (typeof action === 'function') {
@@ -667,7 +663,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 	};
 	cBaseType.prototype.isOneElement = function () {
-		let dimensions = this.getDimensions(true);
+		let dimensions = this.getDimensions();
 		if (dimensions.col === 1 && dimensions.row === 1) {
 			return true;
 		}
@@ -3035,7 +3031,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		//lazy CONSTANT tail: build the logical row via getElementRowCol so the tail is included (ensureMaterialized
 		//only expands a generator tail). Non-lazy path below is unchanged.
 		if (this.hasLazyTail()) {
-			let cols = this.getDimensions(true).col, row = [];
+			let cols = this.getDimensions().col, row = [];
 			for (let c = 0; c < cols; c++) {
 				row.push(this.getElementRowCol(rowIndex, c, true));
 			}
@@ -3058,7 +3054,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		this.ensureMaterialized();
 		//lazy CONSTANT tail: iterate the LOGICAL row count and read via getElementRowCol so the tail is included
 		let lazy = this.hasLazyTail();
-		let rows = lazy ? this.getDimensions(true).row : this.rowCount;
+		let rows = lazy ? this.getDimensions().row : this.rowCount;
 		let col = [];
 		for (let i = 0; i < rows; i++) {
 			col[i] = [];
@@ -3243,7 +3239,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			return true;
 		}
 		if (this.hasLazyTail()) {
-			let dim = this.getDimensions(true);
+			let dim = this.getDimensions();
 			for (let r = 0; r < dim.row; r++) {
 				for (let c = 0; c < dim.col; c++) {
 					if (action.call(this, this.getElementRowCol(r, c, true), r, c)) {
@@ -3265,7 +3261,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	//logical row slice (tail-aware; non-lazy returns the stored row by reference) - read-only, callers must not mutate it
 	cArray.prototype.getRowLogical = function (row) {
 		if (this.hasLazyTail()) {
-			let cols = this.getDimensions(true).col;
+			let cols = this.getDimensions().col;
 			let res = new Array(cols);
 			for (let c = 0; c < cols; c++) {
 				res[c] = this.getElementRowCol(row, c, true);
@@ -3276,7 +3272,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	//logical column slice (tail-aware via getElementRowCol; non-lazy reads stored rows) - read-only, do not mutate cells
 	cArray.prototype.getColLogical = function (col) {
-		let rows = this.getDimensions(true).row;
+		let rows = this.getDimensions().row;
 		let res = new Array(rows);
 		if (this.hasLazyTail()) {
 			for (let r = 0; r < rows; r++) {
@@ -3636,7 +3632,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (!this.hasLazyTail()) {
 			return this.getMatrix();
 		}
-		var dim = this.getDimensions(true), m = [];
+		var dim = this.getDimensions(), m = [];
 		for (var r = 0; r < dim.row; r++) {
 			m[r] = [];
 			for (var c = 0; c < dim.col; c++) {
@@ -3678,8 +3674,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		}
 	};
-	cArray.prototype.getDimensions = function (getRealSize) {
-		let realSize = getRealSize ? this.getRealArraySize() : false;
+	// default returns the LOGICAL size (realSize for a lazy head+tail array; the physical size when there is no
+	// lazy tail - identical in that case). Pass getPhysicalSize=true only where the caller specifically needs the
+	// physically-stored head size (e.g. iterating .array directly). For cArea/cArea3D the two coincide (bbox).
+	cArray.prototype.getDimensions = function (getPhysicalSize) {
+		let realSize = getPhysicalSize ? false : this.getRealArraySize();
 		let col, row;
 		if (!realSize) {
 			col = this.getCountElementInRow();
@@ -3765,7 +3764,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		//any lazy tail), reading each kept cell via getElementRowCol(...,true). a positive count keeps the first
 		//|n|, a negative count keeps the last |n|, |n| >= size keeps all. used by TAKE/DROP, which may receive a
 		//lazy full-column array (e.g. A:A/B:B) - the old version spliced the physical head and dropped the tail.
-		let dimensions = this.getDimensions(true);
+		let dimensions = this.getDimensions();
 		let r0 = 0, r1 = dimensions.row, c0 = 0, c1 = dimensions.col;
 		if (row && Math.abs(row) < dimensions.row) {
 			if (row < 0) {
@@ -3982,8 +3981,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					//a lazy head+tail array operand whose logical size exceeds its physical head (the both-lazy-
 					//same-shape case was handled by the fast path above). broadcast on LOGICAL dims and compose a
 					//per-(row,col) tail generator, instead of truncating the result to the physical head.
-					var ld1 = matrix1 ? matrix1.getDimensions(true) : operand1.getDimensions(true);
-					var ld2 = matrix2 ? matrix2.getDimensions(true) : operand2.getDimensions(true);
+					var ld1 = matrix1 ? matrix1.getDimensions() : operand1.getDimensions();
+					var ld2 = matrix2 ? matrix2.getDimensions() : operand2.getDimensions();
 					var lRow = ld1.row === 1 ? ld2.row : (ld2.row === 1 ? ld1.row : Math.min(ld1.row, ld2.row));
 					var lCol = ld1.col === 1 ? ld2.col : (ld2.col === 1 ? ld1.col : Math.min(ld1.col, ld2.col));
 					var lbr1 = ld1.row === 1, lbc1 = ld1.col === 1, lbr2 = ld2.row === 1, lbc2 = ld2.col === 1;
@@ -4193,7 +4192,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					//constant lazy tail: getMatrix() materializes the physical head only (the tail is kept
 					//lazy), so array-consuming functions (LINEST/TREND/GROWTH/LOGEST) would drop it. Build the
 					//full LOGICAL matrix instead; a generator tail still goes through getMatrix (it expands it).
-					var lazyDim = arg.getDimensions(true), lazyMat = [];
+					var lazyDim = arg.getDimensions(), lazyMat = [];
 					for (var lr = 0; lr < lazyDim.row; lr++) {
 						lazyMat[lr] = [];
 						for (var lc = 0; lc < lazyDim.col; lc++) {
@@ -4963,7 +4962,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		let width = 1, height = 1;
 		for (let i = 0; i < arg.length; i++) {
 			if (!this.arrayIndexes || !this.getArrayIndex(i, arg[i].type)) {
-				let objSize = arg[i].getDimensions();
+				let objSize = arg[i].getDimensions(true);
 				if (objSize) {
 					height = Math.max(objSize.row, height);
 					width = Math.max(objSize.col, width);
@@ -10550,7 +10549,7 @@ function parserFormula( formula, parent, _ws ) {
 		let t = this;
 		let resultDimensions = null;
 		if (this.value.type === cElementType.array) {
-			resultDimensions = this.value.getDimensions(true);
+			resultDimensions = this.value.getDimensions();
 		} else if (this.value.type === cElementType.cellsRange || this.value.type === cElementType.cellsRange3D) {
 			resultDimensions = this.value.getDimensions();
 		} else if (this.value.type === cElementType.error && this.value.errorType === cErrorType.cannot_be_spilled) {
@@ -11962,7 +11961,7 @@ function parserFormula( formula, parent, _ws ) {
 			return true
 		} else if (this.value && (this.value.type === cElementType.array || this.value.type === cElementType.cellsRange)) {
 			// go through the range and see if the array can fit into it
-			let dimensions = this.value.getDimensions(),
+			let dimensions = this.value.getDimensions(true),
 				mainCell = this.parent, isHaveNonEmptyCell;
 
 			if (this.value.isOneElement()) {
@@ -13416,7 +13415,7 @@ function parserFormula( formula, parent, _ws ) {
 
 		for (let i = 0; i < args.length; i++) {
 			if ((cElementType.cellsRange === args[i].type || cElementType.cellsRange3D === args[i].type || cElementType.array === args[i].type) && (!exceptions || (exceptions && !exceptions.get(i)))) {
-				let argDimensions = args[i].getDimensions();
+				let argDimensions = args[i].getDimensions(true);
 				maxRows = argDimensions.row > maxRows ? argDimensions.row : maxRows;
 				maxColumns = argDimensions.col > maxColumns ? argDimensions.col : maxColumns;
 				isContainsArray = true;
@@ -13438,7 +13437,7 @@ function parserFormula( formula, parent, _ws ) {
 					let value = args[k];
 
 					if ((cElementType.cellsRange === value.type || cElementType.cellsRange3D === value.type || cElementType.array === value.type) && (!exceptions || (exceptions && !exceptions.get(k)))) {
-						let valueDimensions = value.getDimensions();
+						let valueDimensions = value.getDimensions(true);
 						if (value.isOneElement()) {
 							// single row with single element
 							value = value.getFirstElement();
@@ -13465,7 +13464,7 @@ function parserFormula( formula, parent, _ws ) {
 
 	// if went beyond the cellsRange
 	const _getValueInRange = function (array, _row, _col) {
-		let sizes = array.getDimensions();
+		let sizes = array.getDimensions(true);
 		if (_row > sizes.row - 1 || _col > sizes.col - 1) {
 			return new cError(cErrorType.not_available);
 		}
@@ -13927,8 +13926,8 @@ function parserFormula( formula, parent, _ws ) {
 			// arg0RowCount, arg0ColCount, arg1RowCount, arg1ColCount
 			let usefulCol = Math.min(arg0ColCount, arg1ColCount),
 				usefulRow = Math.min(arg0RowCount, arg1RowCount),
-				arg0Dimensions = arg0.getDimensions(true),
-				arg1Dimensions = arg1.getDimensions(true);
+				arg0Dimensions = arg0.getDimensions(),
+				arg1Dimensions = arg1.getDimensions();
 
 			// if we have one of the element with single row|col, set the value to be obtained from this particular row or column
 			let fromArg0Row, fromArg1Row, fromArg0Col, fromArg1Col;

@@ -25682,7 +25682,7 @@
 
 			if (!(formula.aca && formula.ca)) {
 				// array can expand, setValue for each cell except first
-				const dimensions = formulaResult.getDimensions(/*true*/);
+				const dimensions = formulaResult.getDimensions(true);
 				const newRef = new Asc.Range(
 					firstCellRef.c1,
 					firstCellRef.r1,
@@ -25785,7 +25785,7 @@
 			formula.ref = new Asc.Range(formula.parent.nCol, formula.parent.nRow, formula.parent.nCol, formula.parent.nRow);
 
 			const formulaResult = formula.calculate(null, null, null, null, calculateResult);
-			const arraySize = formulaResult.getDimensions(true);
+			const arraySize = formulaResult.getDimensions();
 			const newR2 = (formula.parent.nRow + arraySize.row) > AscCommon.gc_nMaxRow ? AscCommon.gc_nMaxRow - 1 : (formula.parent.nRow + arraySize.row - 1);
 			const newC2 = (formula.parent.nCol + arraySize.col) > AscCommon.gc_nMaxCol ? AscCommon.gc_nMaxCol - 1 : (formula.parent.nCol + arraySize.col - 1);
 
@@ -25946,7 +25946,7 @@
 				this.ws.workbook.dependencyFormulas.addToVolatileArrays(oFormula);
 			}
 		} else {
-			const dimension = formulaRes.getDimensions(true);
+			const dimension = formulaRes.getDimensions();
 			res = new Asc.Range(
 				oFormula.parent.nCol,
 				oFormula.parent.nRow,
@@ -26212,7 +26212,7 @@
 			}
 
 			// go through the range and see if the array can fit into it
-			let dimensions = element.getDimensions(true);
+			let dimensions = element.getDimensions();
 
 			// todo if an element is defname, it has no parent element?
 			const t = this;

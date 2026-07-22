@@ -3336,7 +3336,7 @@ function (window, undefined) {
 		if (rate.type === cElementType.cellsRange || rate.type === cElementType.cellsRange3D || rate.type === cElementType.array) {
 
 			if (!rate.isOneElement()) {
-				let rateDimensions = rate.getDimensions();
+				let rateDimensions = rate.getDimensions(true);
 				maxArray = {row: rateDimensions.row, col: rateDimensions.col}
 				isArrayMethod = true;
 			} else {
@@ -3351,7 +3351,7 @@ function (window, undefined) {
 		if (nper.type === cElementType.cellsRange || nper.type === cElementType.cellsRange3D || nper.type === cElementType.array) {
 
 			if (!nper.isOneElement()) {
-				let nperDimensions = nper.getDimensions();
+				let nperDimensions = nper.getDimensions(true);
 				maxArray = {
 					row: nperDimensions.row > maxArray.row ? nperDimensions.row : maxArray.row, 
 					col: nperDimensions.col > maxArray.col ? nperDimensions.col : maxArray.col
@@ -3368,7 +3368,7 @@ function (window, undefined) {
 
 		if (pmt.type === cElementType.cellsRange || pmt.type === cElementType.cellsRange3D || pmt.type === cElementType.array) {
 			if (!pmt.isOneElement()) {
-				let pmtDimensions = pmt.getDimensions();
+				let pmtDimensions = pmt.getDimensions(true);
 				maxArray = {
 					row: pmtDimensions.row > maxArray.row ? pmtDimensions.row : maxArray.row, 
 					col: pmtDimensions.col > maxArray.col ? pmtDimensions.col : maxArray.col
@@ -3384,7 +3384,7 @@ function (window, undefined) {
 
 		if (pv.type === cElementType.cellsRange || pv.type === cElementType.cellsRange3D || pv.type === cElementType.array) {
 			if (!pv.isOneElement()) { 
-				let pvDimensions = pv.getDimensions();
+				let pvDimensions = pv.getDimensions(true);
 
 				maxArray = {
 					row: pvDimensions.row > maxArray.row ? pvDimensions.row : maxArray.row, 
@@ -3404,7 +3404,7 @@ function (window, undefined) {
 		if (type.type === cElementType.cellsRange || type.type === cElementType.cellsRange3D || type.type === cElementType.array) {
 
 			if (!type.isOneElement()) {
-				let typeDimensions = type.getDimensions();
+				let typeDimensions = type.getDimensions(true);
 
 				maxArray = {
 					row: typeDimensions.row > maxArray.row ? typeDimensions.row : maxArray.row, 

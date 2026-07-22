@@ -310,7 +310,7 @@ function (window, undefined) {
 	//build the full LOGICAL 2D matrix via getElementRowCol(...,true); every other arg falls back to getMatrix().
 	function getMatrixLogical(arg) {
 		if (arg && arg.type === cElementType.array && arg.hasLazyTail && arg.hasLazyTail()) {
-			let dim = arg.getDimensions(true), m = [];
+			let dim = arg.getDimensions(), m = [];
 			for (let r = 0; r < dim.row; r++) {
 				m[r] = [];
 				for (let c = 0; c < dim.col; c++) {
@@ -685,14 +685,14 @@ function (window, undefined) {
 			// TODO refactor
 			// go through the array and return result for each element
 			let resArr = new cArray();
-			let tempArraySize, maxArraySize = arg0.getDimensions();
+			let tempArraySize, maxArraySize = arg0.getDimensions(true);
 			let arg0Rows = maxArraySize.row, arg0Cols = maxArraySize.col;
 
 			// get max array size by first loop
 			arg0.foreach2(function (elem) {
 				let chosenArgument = chooseArgument(elem);
 				if (chosenArgument && chosenArgument.type === cElementType.cellsRange || chosenArgument.type === cElementType.cellsRange3D || chosenArgument.type === cElementType.array) {
-					tempArraySize = chosenArgument.getDimensions();
+					tempArraySize = chosenArgument.getDimensions(true);
 					maxArraySize.row = tempArraySize.row > maxArraySize.row ? tempArraySize.row : maxArraySize.row;
 					maxArraySize.col = tempArraySize.col > maxArraySize.col ? tempArraySize.col : maxArraySize.col;
 				}
@@ -702,7 +702,7 @@ function (window, undefined) {
 				for (let c = 0; c < arg0Cols; c++) {
 					let elem = arg0.getValue2(r, c);
 					let chosenArgument = chooseArgument(elem);
-					let argDimensions = chosenArgument.getDimensions();
+					let argDimensions = chosenArgument.getDimensions(true);
 					let singleRow = arg0Rows === 1;
 					let singleCol = arg0Cols === 1;
 					let tempArr = [];
@@ -816,7 +816,7 @@ function (window, undefined) {
 		}
 
 		// logical size: realSize for a lazy array, bbox for a range, physical dims otherwise (one call, no branch).
-		let dimension = arg1.getDimensionsLogical();
+		let dimension = arg1.getDimensions();
 		let error;
 		let indices = [];   // collected 0-based row (byCol=false) or column (byCol=true) indices, in request order
 
@@ -843,7 +843,7 @@ function (window, undefined) {
 			let _arg = arg[i];
 
 			if (cElementType.cellsRange === _arg.type || cElementType.cellsRange3D === _arg.type || cElementType.array === _arg.type) {
-				let argDimensions = _arg.getDimensions(true);   // logical size so a lazy index list keeps its length
+				let argDimensions = _arg.getDimensions();   // logical size so a lazy index list keeps its length
 				if (argDimensions.col === 1 || argDimensions.row === 1) {
 					let byColInner = argDimensions.row > 1;
 					for (let j = 0; j < Math.max(argDimensions.col, argDimensions.row); j++) {
@@ -1090,7 +1090,7 @@ function (window, undefined) {
 
 		// --------------------- arg1(row) type check ----------------------//
 		let rows = arg[1],
-			arg0Dimensions = array.getDimensions(true);
+			arg0Dimensions = array.getDimensions();
 
 		if (cElementType.empty === rows.type) {
 			rows = new cNumber(arg0Dimensions.row);
@@ -1231,10 +1231,10 @@ function (window, undefined) {
 		}
 
 		if (rangeMode) {
-			const initialArrayDimensions = arg0.getDimensions(true),
+			const initialArrayDimensions = arg0.getDimensions(),
 				initRows = initialArrayDimensions.row,
 				initColumns = initialArrayDimensions.col,
-				lookingArrayDimensions = arg1.getDimensions(true);
+				lookingArrayDimensions = arg1.getDimensions();
 
 			// check for matching array sizes
 			if (lookingArrayDimensions.row === 1 && lookingArrayDimensions.col === initColumns) {
@@ -1455,7 +1455,7 @@ function (window, undefined) {
 			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
 				arg[2] = arg[2].getValue2(0,0);
 			}
-			let dimension = arg[0].getDimensions();
+			let dimension = arg[0].getDimensions(true);
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
@@ -1467,7 +1467,7 @@ function (window, undefined) {
 		}
 
 		if (arg[2] && (arg[2].type === cElementType.array)) {
-			let dimension = arg[2].getDimensions();
+			let dimension = arg[2].getDimensions(true);
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
@@ -1621,7 +1621,7 @@ function (window, undefined) {
 			let ret = null;
 			//size and read a lazy source by its LOGICAL grid - its head may be both shorter and narrower
 			let _lazy = !!(_from.hasLazyTail && _from.hasLazyTail());
-			let _logical = _lazy ? _from.getDimensions(true) : null;
+			let _logical = _lazy ? _from.getDimensions() : null;
 			let _colCount = _lazy ? _logical.col : _from.getCountElementInRow();
 			let _rowCount = _lazy ? _logical.row : _from.rowCount;
 			let i;
@@ -1669,9 +1669,9 @@ function (window, undefined) {
 		};
 
 		AscCommonExcel.executeInR1C1Mode(false, function () {
-			//getDimensions(true): use the LOGICAL size (realSize) of a lazy head+tail array (e.g. A:A/B:B),
+			//getDimensions(): use the LOGICAL size (realSize) of a lazy head+tail array (e.g. A:A/B:B),
 			//not its physical head - otherwise INDEX rejects valid indices into the tail as #REF!.
-			let dimension = arg0.getDimensions(true);
+			let dimension = arg0.getDimensions();
 			let isSingleRowCol = (dimension.row > 1 && dimension.col > 1) ? false : true;
 			let isByColumn = (dimension.row > 1) ? true : false;
 			let isArray = cElementType.array === arg0.type;
@@ -1880,7 +1880,7 @@ function (window, undefined) {
 			arg[0] = arg[0].isOneElement() ? arg[0].getFirstElement() : arg[0].cross(arguments[1]);
 		} else if (arg[0].type === cElementType.array) {
 			let retArr = new cArray();
-			let dimension = arg[0].getDimensions();
+			let dimension = arg[0].getDimensions(true);
 
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
@@ -2143,7 +2143,7 @@ function (window, undefined) {
 	cSORT.prototype.Calculate = function (arg) {
 
 		function arrayHelper (byColArray) {
-			let dimensions = byColArray.getDimensions(),
+			let dimensions = byColArray.getDimensions(true),
 				resArr = new cArray(),
 				errVal = new cError(cErrorType.wrong_value_type),
 				byColVal, isFirstValRecieved = false, isSecondValRecieved = false;
@@ -2182,7 +2182,7 @@ function (window, undefined) {
 		}
 
 		function isValidArray (array, maxRowCol) {
-			let dimensions = array.getDimensions();
+			let dimensions = array.getDimensions(true);
 			for (let i = 0; i < dimensions.row; i++) {
 				for (let j = 0; j < dimensions.col; j++) {
 					let elem = array.getValueByRowCol ? array.getValueByRowCol(i, j) : array.getElementRowCol(i, j);
@@ -2263,8 +2263,8 @@ function (window, undefined) {
 			array = arg0;
 		}
 
-		maxRows = array.getDimensions(true).row;   // logical size: a sort_index into a lazy full column must not #VALUE
-		maxCols = array.getDimensions(true).col;
+		maxRows = array.getDimensions().row;   // logical size: a sort_index into a lazy full column must not #VALUE
+		maxCols = array.getDimensions().col;
 
 		// arg1(sort_index) check
 		if (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type) {
@@ -2391,7 +2391,7 @@ function (window, undefined) {
 				by_array1 = i === 1 ? by_array : by_array1;
 				if (sortOrder.type === cElementType.array || sortOrder.type === cElementType.cellsRange || sortOrder.type === cElementType.cellsRange3D) {
 					// if single element in array, fill array with it element
-					let resDimensoins = sortOrder.getDimensions();
+					let resDimensoins = sortOrder.getDimensions(true);
 					if (resRow < resDimensoins.row) {
 						resRow = resDimensoins.row;
 					}
@@ -2401,9 +2401,9 @@ function (window, undefined) {
 				} else {
 					// create array with single element and fill it
 					let resArr = new cArray();
-					for (let i = 0; i < by_array1.getDimensions().row; i++) {
+					for (let i = 0; i < by_array1.getDimensions(true).row; i++) {
 						resArr.addRow();
-						for (let k = 0; k < by_array1.getDimensions().col; k++) {
+						for (let k = 0; k < by_array1.getDimensions(true).col; k++) {
 							resArr.addElement(sortOrder);
 						}
 					}
@@ -2503,7 +2503,7 @@ function (window, undefined) {
 		} else {
 			array = args[0];
 		}
-		arrayDimensions = array.getDimensions(true);   // logical size: two lazy full columns must match by realSize
+		arrayDimensions = array.getDimensions();   // logical size: two lazy full columns must match by realSize
 		maxRows = arrayDimensions.row;
 		maxCols = arrayDimensions.col;
 
@@ -2590,13 +2590,13 @@ function (window, undefined) {
 				created a new argument to check the sizes of the byArray arguments - they should always be the same when compared with each other
 				But they may differ from the original array
 			*/
-			const firstByArrayDimensions = args[1].getDimensions(true);
+			const firstByArrayDimensions = args[1].getDimensions();
 
 			// byArray sizes check: 
 			for (let i = 1; i < args.length; i += 2) {
 
 				let byArrayI = args[i];
-				let byArrIDimensions = byArrayI.getDimensions(true);
+				let byArrIDimensions = byArrayI.getDimensions();
 
 				if (byArrIDimensions.row !== firstByArrayDimensions.row || byArrIDimensions.col !== firstByArrayDimensions.col) {
 					return new cError(cErrorType.wrong_value_type);
@@ -2783,7 +2783,7 @@ function (window, undefined) {
 		}
 
 		if (isDrop) {
-			let dimensions = array.getDimensions(true);
+			let dimensions = array.getDimensions();
 
 			if (arg2 && dimensions.row <= Math.abs(arg2)) {
 				return new cError(cErrorType.array_not_calc);
@@ -3428,7 +3428,7 @@ function (window, undefined) {
 				return new cError(cErrorType.not_available);
 			}
 
-			let _ldim = arg1.getDimensions(true);
+			let _ldim = arg1.getDimensions();
 			count = this.bHor ? _ldim.row : _ldim.col;
 			if (number > count - 1) {
 				return new cError(cErrorType.bad_reference);
@@ -4159,7 +4159,7 @@ function (window, undefined) {
 		
 		if (cElementType.array === arg1.type) {
 			//LOGICAL dims + tail-aware row/col slice so a lazy tail is searched too (getMatrix saw only the physical head)
-			let dim = arg1.getDimensions(true);
+			let dim = arg1.getDimensions();
 			let a1RowCount = dim.row, a1ColumnCount = dim.col, arr;
 
 			if (a1RowCount > 1 && a1ColumnCount > 1) {
@@ -4556,8 +4556,8 @@ function (window, undefined) {
 
 			//a constant lazy tail: search the LOGICAL row/col (getCol/getRow/getRowCount see the physical head only)
 			let lazy = arr.hasLazyTail && arr.hasLazyTail();
-			let rows = lazy ? arr.getDimensions(true).row : arr.getRowCount();
-			let cols = lazy ? arr.getDimensions(true).col : arr.getCountElementInRow();
+			let rows = lazy ? arr.getDimensions().row : arr.getRowCount();
+			let cols = lazy ? arr.getDimensions().col : arr.getCountElementInRow();
 
 			if (rows >= cols) {
 				// searching in the first column and return elem with same position (index) from last column
@@ -4663,10 +4663,10 @@ function (window, undefined) {
 			let lookingIndex = -1;
 			//constant lazy tail: use LOGICAL dimensions and tail-aware element access (else head only)
 			let arg1Lazy = arg1.hasLazyTail && arg1.hasLazyTail(), arg2Lazy = arg2.hasLazyTail && arg2.hasLazyTail();
-			let arg1Rows = arg1Lazy ? arg1.getDimensions(true).row : arg1.getRowCount(),
-				arg2Rows = arg2Lazy ? arg2.getDimensions(true).row : arg2.getRowCount(),
-				arg1Cols = arg1Lazy ? arg1.getDimensions(true).col : arg1.getCountElementInRow(),
-				arg2Cols = arg2Lazy ? arg2.getDimensions(true).col : arg2.getCountElementInRow();
+			let arg1Rows = arg1Lazy ? arg1.getDimensions().row : arg1.getRowCount(),
+				arg2Rows = arg2Lazy ? arg2.getDimensions().row : arg2.getRowCount(),
+				arg1Cols = arg1Lazy ? arg1.getDimensions().col : arg1.getCountElementInRow(),
+				arg2Cols = arg2Lazy ? arg2.getDimensions().col : arg2.getCountElementInRow();
 
 			/* check two dimensional array but only in vector form */
 			if (!arrayMode && (((arg1Rows < arg2Rows) && arg2Cols > 1) || (arg1Rows > 1 && arg1Cols > 1 && arg2Rows > 1 && arg2Cols > 1))) {
@@ -4722,7 +4722,7 @@ function (window, undefined) {
 			let byRow, byCol;
 			//constant lazy tail: logical dimensions + tail-aware element access
 			let arg2Lazy = arg2.hasLazyTail && arg2.hasLazyTail();
-			let dimension = arg2.getDimensions ? (arg2Lazy ? arg2.getDimensions(true) : arg2.getDimensions()) : null;
+			let dimension = arg2.getDimensions ? (arg2Lazy ? arg2.getDimensions() : arg2.getDimensions()) : null;
 			if (dimension) {
 				if (dimension.row >= dimension.col) {
 					byCol = true
@@ -4845,7 +4845,7 @@ function (window, undefined) {
 			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
 				arg[2] = arg[2].getValue2(0,0);
 			}
-			let dimension = arg[0].getDimensions();
+			let dimension = arg[0].getDimensions(true);
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
@@ -4857,7 +4857,7 @@ function (window, undefined) {
 		}
 
 		if (arg[2] && (arg[2].type === cElementType.array)) {
-			let dimension = arg[2].getDimensions();
+			let dimension = arg[2].getDimensions(true);
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
@@ -4979,9 +4979,9 @@ function (window, undefined) {
 			}
 		}
 
-		//array arg1 must contain 1 row or 1 column; getDimensions(true) = LOGICAL size so a lazy tail is counted
-		let dimensions1 = arg1.getDimensions(true);
-		let dimensions2 = arg2.getDimensions(true);
+		//array arg1 must contain 1 row or 1 column; getDimensions() = LOGICAL size so a lazy tail is counted
+		let dimensions1 = arg1.getDimensions();
+		let dimensions2 = arg2.getDimensions();
 		let bVertical = null;
 		if (dimensions1 && dimensions2) {
 			if (dimensions1.col === 1 && dimensions2.row === dimensions1.row) {
@@ -5347,7 +5347,7 @@ function (window, undefined) {
 			return res;
 		}
 		// logical size (realSize for a lazy array, physical otherwise); iteration below uses forEachLogical
-		let arg1Dimensions = arg1.getDimensionsLogical();
+		let arg1Dimensions = arg1.getDimensions();
 		if (arg1Dimensions.col > 1 && arg1Dimensions.row > 1) {
 			res.addElement(valueError);
 			return res;

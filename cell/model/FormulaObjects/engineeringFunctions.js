@@ -7016,7 +7016,7 @@ function (window, undefined) {
 				}
 				continue;
 			} else if (argI.type === cElementType.array) {
-				let dimensions = argI.getDimensions();
+				let dimensions = argI.getDimensions(true);
 
 				for (let row = 0; row < dimensions.row; row++) {
 					for (let col = 0; col < dimensions.col; col++) {
