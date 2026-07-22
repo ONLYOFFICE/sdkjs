@@ -1445,7 +1445,7 @@ function (window, undefined) {
 	cHLOOKUP.prototype.name = 'HLOOKUP';
 	cHLOOKUP.prototype.argumentsMin = 3;
 	cHLOOKUP.prototype.argumentsMax = 4;
-	cHLOOKUP.prototype.arrayIndexes = {/*0: 1,*/ 1: 1, /*2: 1*/};
+	cHLOOKUP.prototype.arrayIndexes = {1: 1};
 	cHLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
 	cHLOOKUP.prototype.enabledToSingle = {"1": true};
 	cHLOOKUP.prototype.Calculate = function (arg) {
@@ -4832,7 +4832,7 @@ function (window, undefined) {
 	cVLOOKUP.prototype.name = 'VLOOKUP';
 	cVLOOKUP.prototype.argumentsMin = 3;
 	cVLOOKUP.prototype.argumentsMax = 4;
-	cVLOOKUP.prototype.arrayIndexes = {/*0: 1,*/ 1: 1, /*2: 1*/};
+	cVLOOKUP.prototype.arrayIndexes = {1: 1};
 	cVLOOKUP.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	// cVLOOKUP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cVLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];

@@ -3116,20 +3116,23 @@ function (window, undefined) {
 		}
 
 		let arg0 = arg[0];
-		if (cElementType.array === arg0.type || cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-			if (cElementType.array === arg0.type) {
-				// getMatrixCopy()/getMatrix() drop a constant lazy tail; getMatrixLogical() materializes the
-				// full logical matrix (fresh rows, safe to mutate). Fall back to the copy when not lazy.
-				arg0 = arg0.hasLazyTail() ? arg0.getMatrixLogical() : arg0.getMatrixCopy();
-			} else {
-				arg0 = cElementType.cellsRange3D === arg0.type ? arg0.getMatrix()[0] : arg0.getMatrix();
-			}
-		} else {
+		if (cElementType.array !== arg0.type && cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
 			return new cError(cErrorType.not_available);
 		}
 
-		if (arg0[0].length != arg0.length) {
+		// validate the LOGICAL shape BEFORE materializing: getDimensions(true)/bbox is an O(1) field read, so a
+		// non-square arg (e.g. a full-column reference, which is Nx3) is rejected without ever building the matrix.
+		// Only once we know it is square do we materialize (a square arg can never carry a lazy tail in practice -
+		// bounded ranges materialize whole, full columns are non-square - so getMatrixLogical is a safe fallback).
+		let dim = cElementType.array === arg0.type ? arg0.getDimensions(true) : arg0.getDimensions();
+		if (!dim || dim.row !== dim.col) {
 			return new cError(cErrorType.wrong_value_type);
+		}
+
+		if (cElementType.array === arg0.type) {
+			arg0 = arg0.hasLazyTail() ? arg0.getMatrixLogical() : arg0.getMatrixCopy();
+		} else {
+			arg0 = cElementType.cellsRange3D === arg0.type ? arg0.getMatrix()[0] : arg0.getMatrix();
 		}
 
 		arg0 = determ(arg0);
@@ -3381,31 +3384,99 @@ function (window, undefined) {
 			return res;
 		}
 
+		function mmultDims(a) {
+			if (cElementType.array === a.type) {
+				return a.getDimensions(true);
+			}
+			if (cElementType.cellsRange === a.type || cElementType.cellsRange3D === a.type) {
+				return a.getDimensions();
+			}
+			if (cElementType.cell === a.type || cElementType.cell3D === a.type || cElementType.number === a.type) {
+				return {row: 1, col: 1};
+			}
+			return null;
+		}
+
+		function mmultMaterialize(a) {
+			if (cElementType.array === a.type) {
+				return a.getMatrixLogical();
+			}
+			if (cElementType.cellsRange === a.type || cElementType.cell === a.type || cElementType.cell3D === a.type) {
+				return a.getMatrix();
+			}
+			if (cElementType.cellsRange3D === a.type) {
+				return a.getMatrix()[0];
+			}
+			if (cElementType.number === a.type) {
+				return a.toArray();
+			}
+			return null;
+		}
+
 		let arg0 = arg[0], arg1 = arg[1];
-		if (arg0.type === cElementType.array) {
-			arg0 = arg0.getMatrixLogical();
-		} else if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.array || arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
-			arg0 = arg0.getMatrix();
-		} else if (arg0.type === cElementType.cellsRange3D) {
-			arg0 = arg0.getMatrix()[0];
-		} else if (arg0.type === cElementType.number) {
-			arg0 = arg0.toArray();
-		} else {
+		let d0 = mmultDims(arg0), d1 = mmultDims(arg1);
+		if (!d0 || !d1) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-		if (arg1.type === cElementType.array) {
-			arg1 = arg1.getMatrixLogical();
-		} else if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
-			arg1 = arg1.getMatrix();
-		} else if (arg1.type === cElementType.cellsRange3D) {
-			arg1 = arg1.getMatrix()[0];
-		} else if (arg1.type === cElementType.number) {
-			arg1 = arg1.toArray();
-		} else {
+		if (d0.col !== d1.row) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		return mult(arg0, arg1);
+		// arg1 is always materialized (bounded: its rows === cols(A), so never a full column).
+		let matrix1 = mmultMaterialize(arg1);
+		if (!matrix1) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		if (cElementType.array === arg0.type && arg0.hasLazyTail() && arg0.getMissedValue() && !arg0.getMissedValueFn() &&
+			arg0.getRowCount() >= 1 && d0.row > arg0.getRowCount()) {
+			let k = d0.col, m = d0.row, n = matrix1[0] ? matrix1[0].length : 0;
+			let headRows = arg0.getRowCount();
+			let headMat = new Array(headRows);
+			for (let hr = 0; hr < headRows; hr++) {
+				let hrow = new Array(k);
+				for (let hc = 0; hc < k; hc++) {
+					hrow[hc] = arg0.getElementRowCol(hr, hc, true);
+				}
+				headMat[hr] = hrow;
+			}
+			let headRes = mult(headMat, matrix1);
+			if (headRes.type === cElementType.error) {
+				return headRes;
+			}
+			let tA = arg0.getMissedValue();
+			if (cElementType.empty === tA.type || cElementType.string === tA.type) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+			let tAval = tA.getValue();
+			if (tAval === false) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+			let colVals = new Array(n);
+			for (let cj = 0; cj < n; cj++) {
+				let acc = 0;
+				for (let ck = 0; ck < k; ck++) {
+					let bv = matrix1[ck] && matrix1[ck][cj] ? matrix1[ck][cj].getValue() : false;
+					if (bv === false) {
+						return new cError(cErrorType.wrong_value_type);
+					}
+					acc += tAval * bv;
+				}
+				colVals[cj] = acc;
+			}
+			headRes.setRealArraySize(m, n);
+			headRes.setMissedValueFn(function (row, col) {
+				return new cNumber(colVals[col]);
+			});
+			return headRes;
+		}
+
+		let matrix0 = mmultMaterialize(arg0);
+		if (!matrix0) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		return mult(matrix0, matrix1);
 
 	};
 
