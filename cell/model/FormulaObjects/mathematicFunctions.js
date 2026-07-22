@@ -3337,9 +3337,9 @@ function (window, undefined) {
 	cMMULT.prototype.Calculate = function (arg) {
 
 		function mult(A, B) {
-			if ( !((B[0] && A.length === B[0].length) || (A[0] && B.length === A[0].length)) || 
-				(A[0].length === 1 && (B[0].length !== 1 && A.length !== B[0].length)) ||
-				(A.length === 1 && (B.length !== 1 && A[0].length !== B.length)) ) {
+			// standard matrix-multiply conformability: cols(A) must equal rows(B), full stop - verified against
+			// Excel for row/column vectors and scalars alike (e.g. {1,2,3,4}x{1} -> #VALUE!, {1;2;3;4}x{1} -> valid)
+			if (!A[0] || !B[0] || A[0].length !== B.length) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 
