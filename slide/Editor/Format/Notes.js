@@ -160,11 +160,14 @@
 		return oSp;
 	};
 
+	CNotes.prototype.recalcBackground = function () {
+		this.recalcInfo.recalculateBackground = true;
+	};
 	CNotes.prototype.handleCSldRecalc = function (data) {
 		if (data) {
 			switch (data.Type) {
 				case AscDFH.historyitem_CSld_SetBg:
-					this.recalcInfo.recalculateBackground = true;
+					this.recalcBackground();
 					break;
 			}
 			this.addToRecalculate();
@@ -324,7 +327,7 @@
 	};
 	CNotes.prototype.checkSlideColorScheme = function () {
 		this.recalcInfo.recalculateSpTree = true;
-		this.recalcInfo.recalculateBackground = true;
+		this.recalcBackground();
 		this.cSld.forEachSp(function (oSp) {
 			oSp.handleUpdateFill();
 			oSp.handleUpdateLn();
