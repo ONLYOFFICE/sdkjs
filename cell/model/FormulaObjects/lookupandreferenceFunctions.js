@@ -843,12 +843,12 @@ function (window, undefined) {
 			let _arg = arg[i];
 
 			if (cElementType.cellsRange === _arg.type || cElementType.cellsRange3D === _arg.type || cElementType.array === _arg.type) {
-				let argDimensions = _arg.getDimensions();
+				let argDimensions = _arg.getDimensions(true);   // logical size so a lazy index list keeps its length
 				if (argDimensions.col === 1 || argDimensions.row === 1) {
 					let byColInner = argDimensions.row > 1;
 					for (let j = 0; j < Math.max(argDimensions.col, argDimensions.row); j++) {
 						if (cElementType.array === _arg.type) {
-							if (!pushData(_arg.getElementRowCol(!byColInner ? 0 : j, !byColInner ? j : 0))) {
+							if (!pushData(_arg.getElementRowCol(!byColInner ? 0 : j, !byColInner ? j : 0, true))) {
 								return error;
 							}
 						} else {
@@ -1445,7 +1445,7 @@ function (window, undefined) {
 	cHLOOKUP.prototype.name = 'HLOOKUP';
 	cHLOOKUP.prototype.argumentsMin = 3;
 	cHLOOKUP.prototype.argumentsMax = 4;
-	cHLOOKUP.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
+	cHLOOKUP.prototype.arrayIndexes = {/*0: 1,*/ 1: 1, /*2: 1*/};
 	cHLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
 	cHLOOKUP.prototype.enabledToSingle = {"1": true};
 	cHLOOKUP.prototype.Calculate = function (arg) {
@@ -1478,7 +1478,7 @@ function (window, undefined) {
 						}
 						retArr.addElement(res);
 					} else {
-						break
+						break;
 					}
 				}
 			}
@@ -2263,8 +2263,8 @@ function (window, undefined) {
 			array = arg0;
 		}
 
-		maxRows = array.getDimensions().row;
-		maxCols = array.getDimensions().col;
+		maxRows = array.getDimensions(true).row;   // logical size: a sort_index into a lazy full column must not #VALUE
+		maxCols = array.getDimensions(true).col;
 
 		// arg1(sort_index) check
 		if (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type) {
@@ -2503,7 +2503,7 @@ function (window, undefined) {
 		} else {
 			array = args[0];
 		}
-		arrayDimensions = array.getDimensions();
+		arrayDimensions = array.getDimensions(true);   // logical size: two lazy full columns must match by realSize
 		maxRows = arrayDimensions.row;
 		maxCols = arrayDimensions.col;
 
@@ -2590,13 +2590,13 @@ function (window, undefined) {
 				created a new argument to check the sizes of the byArray arguments - they should always be the same when compared with each other
 				But they may differ from the original array
 			*/
-			const firstByArrayDimensions = args[1].getDimensions();
+			const firstByArrayDimensions = args[1].getDimensions(true);
 
 			// byArray sizes check: 
 			for (let i = 1; i < args.length; i += 2) {
 
 				let byArrayI = args[i];
-				let byArrIDimensions = byArrayI.getDimensions();
+				let byArrIDimensions = byArrayI.getDimensions(true);
 
 				if (byArrIDimensions.row !== firstByArrayDimensions.row || byArrIDimensions.col !== firstByArrayDimensions.col) {
 					return new cError(cErrorType.wrong_value_type);

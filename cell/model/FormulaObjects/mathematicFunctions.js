@@ -2870,7 +2870,7 @@ function (window, undefined) {
 				return arg.getFirstElement ? arg.getFirstElement() : arg;
 			}	
 
-			const dimensions = arg.getDimensions();
+			const dimensions = arg.getDimensions(true);   // logical dims: a lazy full-column head is not "1 row"
 			if (dimensions.row === 1) {
 				return _getValueInRange(arg, 0, col);
 			}
@@ -2883,7 +2883,7 @@ function (window, undefined) {
 		};
 
 		const _getValueInRange = function (array, _row, _col) {
-			return array.getValueByRowCol ? array.getValueByRowCol(_row, _col, true) : array.getElementRowCol(_row, _col);
+			return array.getValueByRowCol ? array.getValueByRowCol(_row, _col, true) : array.getElementRowCol(_row, _col, true);
 		};
 
 		let arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cNumber(10);
@@ -2894,7 +2894,7 @@ function (window, undefined) {
 		} else if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D || arg0.type === cElementType.array) {
 			isArrayMode = true;
 			
-			let dimensions = arg0.getDimensions();
+			let dimensions = arg0.getDimensions(true);   // logical size: a lazy full-column arg drives the result
 			resArraySize.row = dimensions.row;
 			resArraySize.col = dimensions.col;
 		}
@@ -2904,7 +2904,7 @@ function (window, undefined) {
 		} else if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D || arg1.type === cElementType.array) {
 			isArrayMode = true;
 			
-			let dimensions = arg1.getDimensions();
+			let dimensions = arg1.getDimensions(true);
 			resArraySize.row = Math.max(dimensions.row, resArraySize.row);
 			resArraySize.col = Math.max(dimensions.col, resArraySize.col);
 		}
@@ -3118,7 +3118,9 @@ function (window, undefined) {
 		let arg0 = arg[0];
 		if (cElementType.array === arg0.type || cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			if (cElementType.array === arg0.type) {
-				arg0 = arg0.getMatrixCopy();
+				// getMatrixCopy()/getMatrix() drop a constant lazy tail; getMatrixLogical() materializes the
+				// full logical matrix (fresh rows, safe to mutate). Fall back to the copy when not lazy.
+				arg0 = arg0.hasLazyTail() ? arg0.getMatrixLogical() : arg0.getMatrixCopy();
 			} else {
 				arg0 = cElementType.cellsRange3D === arg0.type ? arg0.getMatrix()[0] : arg0.getMatrix();
 			}
@@ -3293,7 +3295,9 @@ function (window, undefined) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 			
-			arg0 = _getArrayCopy(is3D ? arg0.getMatrix()[0] : arg0.getMatrix());
+			// getMatrix() drops a constant lazy tail; for a lazy cArray take the full logical matrix
+			// (_getArrayCopy below still makes fresh rows for the in-place inversion).
+			arg0 = _getArrayCopy(is3D ? arg0.getMatrix()[0] : (cElementType.array === arg0.type ? arg0.getMatrixLogical() : arg0.getMatrix()));
 		} else if (cElementType.number === arg0.type) {
 			return new cNumber(1 / arg0.getValue());
 		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
@@ -3378,7 +3382,9 @@ function (window, undefined) {
 		}
 
 		let arg0 = arg[0], arg1 = arg[1];
-		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.array || arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+		if (arg0.type === cElementType.array) {
+			arg0 = arg0.getMatrixLogical();
+		} else if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.array || arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
 			arg0 = arg0.getMatrix();
 		} else if (arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.getMatrix()[0];
@@ -3387,8 +3393,9 @@ function (window, undefined) {
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
-
-		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.array || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+		if (arg1.type === cElementType.array) {
+			arg1 = arg1.getMatrixLogical();
+		} else if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
 			arg1 = arg1.getMatrix();
 		} else if (arg1.type === cElementType.cellsRange3D) {
 			arg1 = arg1.getMatrix()[0];
@@ -3718,13 +3725,13 @@ function (window, undefined) {
 		if (arg0.type === cElementType.array || arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			// if the argument is an array or range, then we return an array of the size of the received argument
 			// which is filled with numbers(1) or errors depending on the values inside the argument
-			let dimensions = arg0.getDimensions();
+			let dimensions = arg0.getDimensions(true);   // logical size so a lazy full-column arg keeps its shape
 			let res = new cArray();
 
 			for (let row = 0; row < dimensions.row; row++) {
 				res.addRow();
 				for (let col = 0; col < dimensions.col; col++) {
-					let arg0Elem = arg0.getElementRowCol ? arg0.getElementRowCol(row, col) : arg0.getValueByRowCol(row, col, true);
+					let arg0Elem = arg0.getElementRowCol ? arg0.getElementRowCol(row, col, true) : arg0.getValueByRowCol(row, col, true);
 					let elemToAdd = new cError(cErrorType.wrong_value_type);
 
 					arg0Elem = arg0Elem.tocNumber();

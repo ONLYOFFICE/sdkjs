@@ -2260,7 +2260,7 @@ function (window, undefined) {
 		if (text.type === cElementType.cellsRange || text.type === cElementType.cellsRange3D || text.type === cElementType.array) {
 
 			if (!text.isOneElement()) {
-				let textDimensions = text.getDimensions();
+				let textDimensions = text.getDimensions(true);
 
 				maxArray = {
 					row: textDimensions.row > maxArray.row ? textDimensions.row : maxArray.row, 
@@ -2276,7 +2276,7 @@ function (window, undefined) {
 		if (pattern.type === cElementType.cellsRange || pattern.type === cElementType.cellsRange3D || pattern.type === cElementType.array) {
 			
 			if (!pattern.isOneElement()) {
-				let patternDimensions = pattern.getDimensions();
+				let patternDimensions = pattern.getDimensions(true);
 
 				maxArray = {
 					row: patternDimensions.row > maxArray.row ? patternDimensions.row : maxArray.row, 
@@ -2292,7 +2292,7 @@ function (window, undefined) {
 		if (caseSensitivity.type === cElementType.cellsRange || caseSensitivity.type === cElementType.cellsRange3D || caseSensitivity.type === cElementType.array) {
 			
 			if (!caseSensitivity.isOneElement()) {
-				let caseSensitivityDimensions = caseSensitivity.getDimensions();
+				let caseSensitivityDimensions = caseSensitivity.getDimensions(true);
 
 				maxArray = {
 					row: caseSensitivityDimensions.row > maxArray.row ? caseSensitivityDimensions.row : maxArray.row, 
@@ -2511,7 +2511,7 @@ function (window, undefined) {
 		if (text.type === cElementType.cellsRange || text.type === cElementType.cellsRange3D || text.type === cElementType.array) {
 
 			if (!text.isOneElement()) {
-				let textDimensions = text.getDimensions();
+				let textDimensions = text.getDimensions(true);
 
 				maxArray = {
 					row: textDimensions.row > maxArray.row ? textDimensions.row : maxArray.row, 
@@ -2527,7 +2527,7 @@ function (window, undefined) {
 		if (pattern.type === cElementType.cellsRange || pattern.type === cElementType.cellsRange3D || pattern.type === cElementType.array) {
 			
 			if (!pattern.isOneElement()) {
-				let patternDimensions = pattern.getDimensions();
+				let patternDimensions = pattern.getDimensions(true);
 
 				maxArray = {
 					row: patternDimensions.row > maxArray.row ? patternDimensions.row : maxArray.row, 
@@ -2543,7 +2543,7 @@ function (window, undefined) {
 		if (returnMode.type === cElementType.cellsRange || returnMode.type === cElementType.cellsRange3D || returnMode.type === cElementType.array) {
 			
 			if (!returnMode.isOneElement()) {
-				let returnModeDimensions = returnMode.getDimensions();
+				let returnModeDimensions = returnMode.getDimensions(true);
 
 				maxArray = {
 					row: returnModeDimensions.row > maxArray.row ? returnModeDimensions.row : maxArray.row, 
@@ -2559,7 +2559,7 @@ function (window, undefined) {
 		if (caseSensitivity.type === cElementType.cellsRange || caseSensitivity.type === cElementType.cellsRange3D || caseSensitivity.type === cElementType.array) {
 			
 			if (!caseSensitivity.isOneElement()) {
-				let caseSensitivityDimensions = caseSensitivity.getDimensions();
+				let caseSensitivityDimensions = caseSensitivity.getDimensions(true);
 
 				maxArray = {
 					row: caseSensitivityDimensions.row > maxArray.row ? caseSensitivityDimensions.row : maxArray.row, 
@@ -2766,7 +2766,7 @@ function (window, undefined) {
 		if (text.type === cElementType.cellsRange || text.type === cElementType.cellsRange3D || text.type === cElementType.array) {
 
 			if (!text.isOneElement()) {
-				let textDimensions = text.getDimensions();
+				let textDimensions = text.getDimensions(true);
 
 				maxArray = {
 					row: textDimensions.row > maxArray.row ? textDimensions.row : maxArray.row, 
@@ -2782,7 +2782,7 @@ function (window, undefined) {
 		if (pattern.type === cElementType.cellsRange || pattern.type === cElementType.cellsRange3D || pattern.type === cElementType.array) {
 			
 			if (!pattern.isOneElement()) {
-				let patternDimensions = pattern.getDimensions();
+				let patternDimensions = pattern.getDimensions(true);
 
 				maxArray = {
 					row: patternDimensions.row > maxArray.row ? patternDimensions.row : maxArray.row, 
@@ -2798,7 +2798,7 @@ function (window, undefined) {
 		if (replacement.type === cElementType.cellsRange || replacement.type === cElementType.cellsRange3D || replacement.type === cElementType.array) {
 			
 			if (!replacement.isOneElement()) {
-				let replacementDimensions = replacement.getDimensions();
+				let replacementDimensions = replacement.getDimensions(true);
 
 				maxArray = {
 					row: replacementDimensions.row > maxArray.row ? replacementDimensions.row : maxArray.row, 
@@ -2814,7 +2814,7 @@ function (window, undefined) {
 		if (occurence.type === cElementType.cellsRange || occurence.type === cElementType.cellsRange3D || occurence.type === cElementType.array) {
 			
 			if (!occurence.isOneElement()) {
-				let occurenceDimensions = occurence.getDimensions();
+				let occurenceDimensions = occurence.getDimensions(true);
 
 				maxArray = {
 					row: occurenceDimensions.row > maxArray.row ? occurenceDimensions.row : maxArray.row, 
@@ -2830,7 +2830,7 @@ function (window, undefined) {
 		if (caseSensitivity.type === cElementType.cellsRange || caseSensitivity.type === cElementType.cellsRange3D || caseSensitivity.type === cElementType.array) {
 			
 			if (!caseSensitivity.isOneElement()) {
-				let caseSensitivityDimensions = caseSensitivity.getDimensions();
+				let caseSensitivityDimensions = caseSensitivity.getDimensions(true);
 
 				maxArray = {
 					row: caseSensitivityDimensions.row > maxArray.row ? caseSensitivityDimensions.row : maxArray.row, 
