@@ -94,10 +94,16 @@ CChangesCommentChange.prototype.ReadFromBinary = function(Reader)
 	this.New.Read_FromBinary2(Reader);
 	this.Old.Read_FromBinary2(Reader);
 };
-CChangesCommentChange.prototype.private_SetValue = function(Value)
+CChangesCommentChange.prototype.private_SetValue = function(commentData)
 {
-	this.Class.Data = Value;
-	editor.sync_ChangeCommentData(this.Class.Id, Value);
+	let comment = this.Class;
+	let isSolvedChange = (comment.IsSolved() !== commentData.IsSolved());
+
+	comment.Data = commentData;
+	editor.sync_ChangeCommentData(comment.Id, commentData);
+	
+	if (isSolvedChange)
+		comment.UpdateParentShapeTextCache();
 };
 /**
  * @constructor

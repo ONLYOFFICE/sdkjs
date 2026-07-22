@@ -14399,12 +14399,15 @@ CDocument.prototype.AddComment = function(CommentData, isForceGlobal)
 
 	return Comment;
 };
-CDocument.prototype.EditComment = function(Id, CommentData)
+CDocument.prototype.EditComment = function(commentId, commentData)
 {
-	if (!this.Comments.IsUseSolved() && this.Comments.Get_CurrentId() === Id)
+	let comment = this.Comments.Get_ById(commentId);
+	if (!comment)
+		return;
+	
+	if (!this.Comments.IsUseSolved() && this.Comments.Get_CurrentId() === commentId)
 	{
-		var oComment = this.Comments.Get_ById(Id);
-		if (oComment && !oComment.IsSolved() && CommentData.IsSolved())
+		if (comment && !comment.IsSolved() && commentData.IsSolved())
 		{
 			this.Comments.Set_Current(null);
 			this.Api.sync_HideComment();
@@ -14412,8 +14415,8 @@ CDocument.prototype.EditComment = function(Id, CommentData)
 			this.DrawingDocument.FirePaint();
 		}
 	}
-
-	this.Comments.Set_CommentData(Id, CommentData);
+	
+	comment.SetData(commentData);
 	this.Document_UpdateInterfaceState();
 };
 CDocument.prototype.RemoveComment = function(Id, bSendEvent, bRecalculate)
