@@ -15515,8 +15515,8 @@ function parseStringToCElement (val, cultureInfo) {
 
 				if (convertToNumber) {
 					for (let j = firstIndex; j < lastIndex; j += 1) {
-						const value = AscCommon.g_oFormatParser.parseLocaleNumber(searchTypedData[j]);
-						if (isNaN(value) || !matchingFunction(value, searchValue)) continue;
+						const value = this.parseAnyNumber(searchTypedData[j]);
+						if (value === null || !matchingFunction(value, searchValue)) continue;
 						// Early exit only on matches (runs K_match times, not K_search times)
 						if ((!sumIndexes || currentSumIndex >= sumLen) && (!errorIndexes || currentErrorIndex >= errLen)) break;
 						const targetRow = searchTypedIndexes[j] + rowSumOffset;
