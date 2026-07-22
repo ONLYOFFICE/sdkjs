@@ -753,32 +753,49 @@
         memory.WriteString(this.script);
     };
 	
-    function EvalScript(str, oParentDoc, oEvent) {
-        let aArgsNamesToDelete = [
-            "window",
-            "setTimeout",
-            "setInterval",
-            "XMLHttpRequest",
-            "Promise",
-            "console"
-        ];
-    
-        let oApiConsole = {
-            "println": function(value) {
-                console.log(value);
-            },
-            "clear": function() {
-                console.clear();
-            },
-            "hide": function() {
-                return false;
-            },
-            "show": function() {
-                return false;
-            }
-        };
-        Object.freeze(oApiConsole);
-		
+	function EvalScript(str, oParentDoc, oEvent) {
+		if (/\bimport\s*\(/.test(str)) {
+			throw new Error("Security: dynamic import() is not allowed in scripts");
+		}
+		if (/\bimport\s+/.test(str)) {
+			throw new Error("Security: static import is not allowed in scripts");
+		}
+
+		let oShadowedGlobals = {
+			"Function":         undefined,
+			"eval":             undefined,
+			"window":           undefined,
+			"globalThis":       undefined,
+			"self":             undefined,
+			"document":         undefined,
+			"AscDesktopEditor": undefined,
+			"setTimeout":       undefined,
+			"setInterval":      undefined,
+			"XMLHttpRequest":   undefined,
+			"Promise":          undefined,
+			"console":          undefined
+		};
+		let aArgsNamesToDelete = Object.keys(oShadowedGlobals);
+
+		let oApiConsole = {
+			"println": function(value) {
+				console.log(value);
+			},
+			"clear": function() {
+				console.clear();
+			},
+			"hide": function() {
+				return false;
+			},
+			"show": function() {
+				return false;
+			}
+		};
+		Object.freeze(oApiConsole);
+		oShadowedGlobals["console"] = oApiConsole;
+
+		let aArgsValuesToDelete = Object.values(oShadowedGlobals);
+
 		let oApiApp = {
 			"alert": function(message) {
 				window.alert(message);
@@ -786,63 +803,63 @@
 		}
 		Object.freeze(oApiApp);
 
-        let oApiObjects = AscPDF.Api.Types;
-        let aArgsNamesPdfApi = [
-            "event",
-            "color",
+		let oApiObjects = AscPDF.Api.Types;
+		let aArgsNamesPdfApi = [
+			"event",
+			"color",
 			"app",
 
-            "AFNumber_Format",
-            "AFNumber_Keystroke",
-            "AFPercent_Format",
-            "AFPercent_Keystroke",
-            "AFDate_Format",
-            "AFDate_Keystroke",
-            "AFDate_FormatEx",
-            "AFDate_KeystrokeEx",
-            "AFTime_Format",
-            "AFTime_Keystroke",
-            "AFTime_FormatEx",
-            "AFTime_KeystrokeEx",
-            "AFSpecial_Format",
-            "AFSpecial_Keystroke",
-            "AFSpecial_KeystrokeEx",
-            "AFSimple_Calculate",
-            "AFRange_Validate",
-            "AFMakeNumber"
-        ];
-    
-        oParentDoc.eventsStack.push(oParentDoc.event);
-        oParentDoc.event = oEvent;
+			"AFNumber_Format",
+			"AFNumber_Keystroke",
+			"AFPercent_Format",
+			"AFPercent_Keystroke",
+			"AFDate_Format",
+			"AFDate_Keystroke",
+			"AFDate_FormatEx",
+			"AFDate_KeystrokeEx",
+			"AFTime_Format",
+			"AFTime_Keystroke",
+			"AFTime_FormatEx",
+			"AFTime_KeystrokeEx",
+			"AFSpecial_Format",
+			"AFSpecial_Keystroke",
+			"AFSpecial_KeystrokeEx",
+			"AFSimple_Calculate",
+			"AFRange_Validate",
+			"AFMakeNumber"
+		];
 
-        let oApiFunc = AscPDF.Api.Functions;
-        let aArgsPdfApi = [
-            oEvent,
-            oApiObjects["color"],
+		oParentDoc.eventsStack.push(oParentDoc.event);
+		oParentDoc.event = oEvent;
+
+		let oApiFunc = AscPDF.Api.Functions;
+		let aArgsPdfApi = [
+			oEvent,
+			oApiObjects["color"],
 			oApiApp,
 			
-            oApiFunc["AFNumber_Format"],
-            oApiFunc["AFNumber_Keystroke"],
-            oApiFunc["AFPercent_Format"],
-            oApiFunc["AFPercent_Keystroke"],
-            oApiFunc["AFDate_Format"],
-            oApiFunc["AFDate_Keystroke"],
-            oApiFunc["AFDate_FormatEx"],
-            oApiFunc["AFDate_KeystrokeEx"],
-            oApiFunc["AFTime_Format"],
-            oApiFunc["AFTime_Keystroke"],
-            oApiFunc["AFTime_FormatEx"],
-            oApiFunc["AFTime_KeystrokeEx"],
-            oApiFunc["AFSpecial_Format"],
-            oApiFunc["AFSpecial_Keystroke"],
-            oApiFunc["AFSpecial_KeystrokeEx"],
-            oApiFunc["AFSimple_Calculate"],
-            oApiFunc["AFRange_Validate"],
-            oApiFunc["AFMakeNumber"]
-        ];
-    
-        let funcArgs = aArgsNamesToDelete.concat(aArgsNamesPdfApi);
-        
+			oApiFunc["AFNumber_Format"],
+			oApiFunc["AFNumber_Keystroke"],
+			oApiFunc["AFPercent_Format"],
+			oApiFunc["AFPercent_Keystroke"],
+			oApiFunc["AFDate_Format"],
+			oApiFunc["AFDate_Keystroke"],
+			oApiFunc["AFDate_FormatEx"],
+			oApiFunc["AFDate_KeystrokeEx"],
+			oApiFunc["AFTime_Format"],
+			oApiFunc["AFTime_Keystroke"],
+			oApiFunc["AFTime_FormatEx"],
+			oApiFunc["AFTime_KeystrokeEx"],
+			oApiFunc["AFSpecial_Format"],
+			oApiFunc["AFSpecial_Keystroke"],
+			oApiFunc["AFSpecial_KeystrokeEx"],
+			oApiFunc["AFSimple_Calculate"],
+			oApiFunc["AFRange_Validate"],
+			oApiFunc["AFMakeNumber"]
+		];
+
+		let funcArgs = aArgsNamesToDelete.concat(aArgsNamesPdfApi);
+		
 		// make document methods global
 		let oApiDoc = oParentDoc.GetDocumentApi();
 		const aOwnMethods = Object.getOwnPropertyNames(AscPDF.ApiDocument.prototype).filter(function(key) {
@@ -857,9 +874,29 @@
 
 		funcArgs.push(str);
 
-        let func = Function.apply(null, funcArgs);
-        func.bind(oApiDoc).apply(null, new Array(aArgsNamesToDelete.length - 1).concat(oApiConsole, aArgsPdfApi));
-    }
+		let protoFunc = Object.getPrototypeOf(function(){});
+		let protoFuncGen = null;
+		try {
+			protoFuncGen = eval("Object.getPrototypeOf(function*(){})");
+		} catch (err) {
+			protoFuncGen = null;
+		}
+		const normalConstructor = protoFunc.constructor;
+		const generatorNext = protoFuncGen ? protoFuncGen.prototype.next : null;
+		protoFunc.constructor = function(){};
+		if (protoFuncGen) {
+			protoFuncGen.prototype.next = function(){};
+		}
+
+		try {
+			let func = Function.apply(null, funcArgs);
+			func.bind(oApiDoc).apply(null, aArgsValuesToDelete.concat(aArgsPdfApi));
+		} finally {
+			protoFunc.constructor = normalConstructor;
+			if (protoFuncGen)
+				protoFuncGen.prototype.next = generatorNext;
+		}
+	}
     
 
     if (!window["AscPDF"])
