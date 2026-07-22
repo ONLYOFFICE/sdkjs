@@ -510,7 +510,8 @@
                     let oGroup = arr[i].getMainGroup && arr[i].getMainGroup();
                     if (arr[i].IsAnnot && arr[i].IsAnnot()
                         || (oGroup && oGroup.IsAnnot && oGroup.IsAnnot())
-                        || arr[i].IsDrawing() && arr[i].IsShape() && arr[i].GetEditField()) {
+                        || arr[i].IsDrawing() && arr[i].IsShape() && arr[i].GetEditField()
+						|| arr[i].IsForm()) {
                         return null;
                     }
 
