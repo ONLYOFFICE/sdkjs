@@ -647,6 +647,9 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 			this.FormPr.SetAscBorder(subFormPr.GetAscBorder());
 			this.FormPr.SetShd(subFormPr.GetShd());
 		}
+		
+		// We have to do this since the default behavior for Signature and all other forms is different
+		this.FormPr.SetRequired(mainForm.IsFormRequired());
 	}
 	
 	if (oContentControl.getShdColor())
