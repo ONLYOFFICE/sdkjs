@@ -1757,24 +1757,23 @@
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Select.js
 	 */	
-	ApiRange.prototype.Select = function(bUpdate)
+	ApiRange.prototype.Select = function(update)
 	{
 		private_RefreshRangesPosition();
 
-		var Document = private_GetLogicDocument();
+		let logicDocument = private_GetLogicDocument();
 		
-		if (bUpdate === undefined)
-			bUpdate = true;
-		
-		if (bUpdate)
+		update = GetBoolParameter(update, true);
+		if (update)
 		{
+			logicDocument.RemoveSelection();
 			for (let i = this.StartPos.length - 1; i >= 0; --i)
 			{
 				let obj = this.StartPos[i].Class;
 				if ((obj instanceof AscWord.CDocument) || (obj instanceof AscWord.CDocumentContent))
 				{
 					obj.SetThisElementCurrent(true);
-					bUpdate = false;
+					update = false;
 					break;
 				}
 			}
@@ -1783,7 +1782,8 @@
 		this.StartPos[0].Class.SetContentPosition(this.StartPos, 0, 0);
 		this.StartPos[0].Class.SetSelectionByContentPositions(this.StartPos, this.EndPos);
 		
-		if (bUpdate)
+		// TODO: Rework this
+		if (update)
 		{
 			var controllerType;
 			
@@ -1803,8 +1803,8 @@
 			{
 				controllerType = docpostype_Content;
 			}
-			Document.SetDocPosType(controllerType);
-			Document.UpdateSelection();
+			logicDocument.SetDocPosType(controllerType);
+			logicDocument.UpdateSelection();
 		}
 
 		return true;
