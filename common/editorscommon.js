@@ -16012,7 +16012,7 @@ window["UpdateSystemPlugins"] = function()
 		{
 			_pluginsCur["pluginsData"][i]["baseUrl"] = _pluginsCur["url"] + _pluginsCur["pluginsData"][i]["guid"].substring(4) + "/";
 
-			if (!AscCommon.CryptoProvider.isLocalFile())
+			if (!window["AscDesktopEditor"]["IsLocalFile"]())
 			{
                 _pluginsCur["pluginsData"][i]["baseUrl"] = "ascdesktop://plugin_content/" + _pluginsCur["pluginsData"][i]["baseUrl"];
             }
