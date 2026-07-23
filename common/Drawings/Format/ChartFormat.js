@@ -19623,7 +19623,7 @@
                 }
                 nTopHeader = nRow - oBBox.r1;
                 if(nRow === oBBox.r2) {
-                    if(aGridRow.length === 1) {
+                    if(aGridRow.length === 1 && aGrid.length === 1) {
                         nTopHeader -= 1;
                     }
                 }
@@ -19648,7 +19648,7 @@
                 }
                 nLeftHeader = nCol - oBBox.c1;
                 if(nCol === oBBox.c2) {
-                    if(aGrid.length === 1) {
+                    if(aGrid.length === 1 && aGridRow.length === 1) {
                         nLeftHeader -= 1;
                     }
                 }
