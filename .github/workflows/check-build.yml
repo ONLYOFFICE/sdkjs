@@ -118,25 +118,6 @@ jobs:
           path: sdkjs-forms
           ref: master
 
-      - name: Check out sdkjs-ooxml (matching branch)
-        id: sdkjs-ooxml-branch
-        uses: actions/checkout@v4
-        continue-on-error: true
-        with:
-          repository: ONLYOFFICE/sdkjs-ooxml
-          token: ${{ secrets.READ_PAT }}
-          path: sdkjs-ooxml
-          ref: ${{ github.base_ref || github.ref_name }}
-
-      - name: Check out sdkjs-ooxml (master fallback)
-        if: steps.sdkjs-ooxml-branch.outcome != 'success'
-        uses: actions/checkout@v4
-        with:
-          repository: ONLYOFFICE/sdkjs-ooxml
-          token: ${{ secrets.READ_PAT }}
-          path: sdkjs-ooxml
-          ref: master
-
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
@@ -147,7 +128,7 @@ jobs:
         run: |
           set -o pipefail
           cd sdkjs
-          python build/build.py --develop --addon ../sdkjs-ext --addon ../sdkjs-forms --addon ../sdkjs-ooxml
+          python build/build.py --develop --addon ../sdkjs-ext --addon ../sdkjs-forms
           cd ../sdkjs-tests
           npm install node-qunit-puppeteer
           node run.js 2>&1 | tee "$GITHUB_WORKSPACE/test-output.txt"
