@@ -860,6 +860,22 @@ CTable.prototype.Get_Props = function()
 	else
 		Pr.RowsInHeader = false;
 
+	let canSplitRow = undefined;
+	for (let curRow = Math.max(0, oSelectionRowsRange.Start); curRow <= oSelectionRowsRange.End; ++curRow)
+	{
+		let _canSplit = this.Content[curRow].CanSplit();
+		if (undefined === canSplitRow)
+		{
+			canSplitRow = _canSplit;
+		}
+		else if (canSplitRow !== _canSplit)
+		{
+			canSplitRow = null;
+			break;
+		}
+	}
+	Pr.CanSplitRow = canSplitRow;
+
 	if (true === this.Is_Inline())
 	{
 		Pr.TableAlignment     = ( align_Left === TablePr.Jc ? 0 : ( AscCommon.align_Center === TablePr.Jc ? 1 : 2 ) );
@@ -997,6 +1013,16 @@ CTable.prototype.Set_Props = function(Props)
 				else
 					this.Content[nCurRow].SetHeader(false);
 			}
+		}
+	}
+
+	// CanSplitRow
+	if (undefined !== Props.CanSplitRow && null !== Props.CanSplitRow)
+	{
+		let rowRange = this.GetSelectedRowsRange();
+		for (let curRow = rowRange.Start; curRow <= rowRange.End; ++curRow)
+		{
+			this.Content[curRow].SetCanSplit(Props.CanSplitRow ? true : false);
 		}
 	}
 

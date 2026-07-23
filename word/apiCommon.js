@@ -422,6 +422,7 @@
 			this.TableStyle = (undefined != tblProp.TableStyle) ? tblProp.TableStyle : null;
 			this.TableLook = (undefined != tblProp.TableLook) ? tblProp.TableLook.Copy() : null;
 			this.RowsInHeader = (undefined !== tblProp.RowsInHeader) ? tblProp.RowsInHeader : false;
+			this.CanSplitRow = (undefined !== tblProp.CanSplitRow) ? tblProp.CanSplitRow : true;
 			this.CellsVAlign = (undefined != tblProp.CellsVAlign) ? tblProp.CellsVAlign : c_oAscVertAlignJc.Top;
 			this.AllowOverlap = (undefined != tblProp.AllowOverlap) ? tblProp.AllowOverlap : undefined;
 			this.TableLayout = tblProp.TableLayout;
@@ -670,6 +671,14 @@
 	{
 		this.RowsInHeader = v;
 	};
+	CTableProp.prototype.get_CanSplitRow = function ()
+	{
+		return this.CanSplitRow;
+	};
+	CTableProp.prototype.put_CanSplitRow = function (v)
+	{
+		this.CanSplitRow = v;
+	};
 	CTableProp.prototype.get_Locked = function ()
 	{
 		return this.Locked;
@@ -827,6 +836,8 @@
 	CTableProp.prototype['get_CanBeFlow'] = CTableProp.prototype.get_CanBeFlow;
 	CTableProp.prototype['get_RowsInHeader'] = CTableProp.prototype.get_RowsInHeader;
 	CTableProp.prototype['put_RowsInHeader'] = CTableProp.prototype.put_RowsInHeader;
+	CTableProp.prototype['get_CanSplitRow'] = CTableProp.prototype.get_CanSplitRow;
+	CTableProp.prototype['put_CanSplitRow'] = CTableProp.prototype.put_CanSplitRow;
 	CTableProp.prototype['get_Locked'] = CTableProp.prototype.get_Locked;
 	CTableProp.prototype['get_CellsVAlign'] = CTableProp.prototype.get_CellsVAlign;
 	CTableProp.prototype['put_CellsVAlign'] = CTableProp.prototype.put_CellsVAlign;
