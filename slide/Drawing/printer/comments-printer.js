@@ -117,31 +117,36 @@
 	}
 
 	function addParagraphToContent(content, runs, paraPr) {
-		const paragraph = new AscWord.Paragraph(content, true);
-		content.AddToContent(content.Content.length, paragraph);
-		if (paraPr) {
-			paragraph.Set_Pr(getParaPr(paraPr));
-		}
-		for (let i = 0; i < runs.length; i += 1) {
-			const runInfo = runs[i];
-			const run = new AscWord.Run(paragraph, false);
-			run.AddText(runInfo.text || "");
-			paragraph.AddToContent(paragraph.Content.length - 1, run);
-			if (runInfo.textPr) {
-				run.Set_Pr(getTextPr(runInfo.textPr));
+		AscFormat.ExecuteNoHistory(function () {
+			const paragraph = new AscWord.Paragraph(content, true);
+			content.AddToContent(content.Content.length, paragraph);
+			if (paraPr) {
+				paragraph.Set_Pr(getParaPr(paraPr));
 			}
-		}
+			for (let i = 0; i < runs.length; i += 1) {
+				const runInfo = runs[i];
+				const run = new AscWord.Run(paragraph, false);
+				run.AddText(runInfo.text || "");
+				paragraph.AddToContent(paragraph.Content.length - 1, run);
+				if (runInfo.textPr) {
+					run.Set_Pr(getTextPr(runInfo.textPr));
+				}
+			}
+		}, this, []);
 	}
 
 	function createEmptyBlockShape(width) {
-		const shape = new AscFormat.CShape();
-		shape.setBDeleted(false);
-		shape.extX = width;
-		shape.extY = 100;
-		shape.createTextBody();
-		shape.txBody.bodyPr.setInsets(0, 0, 0, 0);
-		shape.txBody.content.ClearContent(false);
-		return shape;
+		return AscFormat.ExecuteNoHistory(function () {
+			const shape = new AscFormat.CShape();
+			shape.setBDeleted(false);
+			shape.extX = width;
+			shape.extY = 100;
+			shape.createTextBody();
+			shape.txBody.bodyPr.setInsets(0, 0, 0, 0);
+			shape.txBody.content.ClearContent(false);
+			return shape;
+		}, this, []);
+
 	}
 
 	function getRecalcPageBottom(content, pageIndex) {
