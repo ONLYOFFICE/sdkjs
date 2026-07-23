@@ -1526,7 +1526,7 @@ BinaryChartWriter.prototype.WriteCT_ChartSpace = function (oVal, oCopyPaste, bSk
         });
     }
     var oCurVal = oVal.m_externalData;
-    if (null != oCurVal) {
+    if (null != oCurVal && null != oCurVal.m_id) {
        this.bs.WriteItem(c_oserct_chartspaceEXTERNALDATA, function () {
            oThis.WriteCT_ExternalData(oCurVal);
        });
@@ -7503,7 +7503,9 @@ BinaryChartReader.prototype.ReadCT_ChartSpace = function (type, length, val, cur
        res = this.bcr.Read1(length, function (t, l) {
            return oThis.ReadCT_ExternalData(t, l, oNewVal);
        });
-       val.m_externalData = oNewVal;
+       if (null != oNewVal.m_id) {
+           val.m_externalData = oNewVal;
+       }
     }
 		else if (c_oserct_chartspaceXLSXEXTERNAL === type) {
 			const sExternalPath = this.bcr.stream.GetString2LE(length);
