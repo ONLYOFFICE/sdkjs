@@ -5326,6 +5326,7 @@ function(window, undefined) {
 			case AscDFH.historyitem_PlotAreaRegion_AddSeries:
 			case AscDFH.historyitem_PlotAreaRegion_RemoveSeries:
 			case AscDFH.historyitem_ChartData_AddData:
+			case AscDFH.historyitem_PlotArea_SetDTable:
 			case AscDFH.historyitem_ChartData_RemoveData:
 			case AscDFH.historyitem_ChartSpace_SetChart: {
 				this.handleUpdateType();
