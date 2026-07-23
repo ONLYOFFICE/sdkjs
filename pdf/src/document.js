@@ -6754,8 +6754,6 @@ var CPresentation = CPresentation || function(){};
         let oTextArt = this.GetController().createTextArt(nStyle, false);
         oTextArt.SetDocument(this);
         oTextArt.setParent(oPagesInfo);
-        oTextArt.Recalculate();
-        oTextArt.checkExtentsByDocContent();
         
         let oXfrm       = oTextArt.getXfrm();
         let nRotAngle    = this.Viewer.getPageRotate(nPage);
@@ -6770,6 +6768,9 @@ var CPresentation = CPresentation || function(){};
 
         oXfrm.setOffX(oPos.x);
         oXfrm.setOffY(oPos.y);
+
+		oTextArt.Recalculate();
+    	oTextArt.checkExtentsByDocContent();
 
         oPagesInfo.AddDrawing(oTextArt);
         oTextArt.SetNeedRecalc(true);
