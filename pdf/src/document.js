@@ -7137,7 +7137,7 @@ var CPresentation = CPresentation || function(){};
         let nCurTime = new Date().getTime();
         let sAuthor = AscCommon.UserInfoParser.getCurrentName();
 
-        if (sType == AscPDF.STAMP_TYPES.Image) {
+        if (sType == AscPDF.STAMP_TYPES.Signature) {
             if (oImage) {
                 nExtX   = Math.max(1, oImage.Image.width * g_dKoef_pix_to_mm);
                 nExtY   = Math.max(1, oImage.Image.height * g_dKoef_pix_to_mm);
@@ -7181,7 +7181,7 @@ var CPresentation = CPresentation || function(){};
                 break;
         }
 
-        let nLineW = oStampRender.m_oPen.Size * g_dKoef_mm_to_pt;
+        let nLineW = oStampRender ? oStampRender.m_oPen.Size * g_dKoef_mm_to_pt : 0;
         
         let oProps = {
             rect:           [X1, Y1, X2, Y2],
@@ -7198,14 +7198,14 @@ var CPresentation = CPresentation || function(){};
         let oXfrm = oStamp.getXfrm();
         oStamp.SetIconType(sType);
         oStamp.SetBorderWidth(nLineW);
+		oStamp.SetInRect([X1, Y2, X1, Y1, X2, Y1, X2, Y2]);
         oXfrm.setRot(-nRotAngle * (Math.PI / 180));
         
         if (oStampRender) {
             oStamp.SetRenderStructure(oStampRender.m_aStack[0]);
-            oStamp.SetInRect([X1, Y2, X1, Y1, X2, Y1, X2, Y2]);
         }
 
-        if (sType == AscPDF.STAMP_TYPES.Image) {
+        if (sType == AscPDF.STAMP_TYPES.Signature) {
             if (oImage) {
                 let oUniFill = new AscFormat.CUniFill();
                 let oBlipFill = new AscFormat.CBlipFill();
@@ -7215,7 +7215,7 @@ var CPresentation = CPresentation || function(){};
                 oStamp.setFill(oUniFill);
             }
         }
-        
+		
         this.SetMouseDownObject(oStamp);
         oStamp.selectStartPage = nPage;
         oController.selectObject(oStamp, nPage);
@@ -9805,8 +9805,13 @@ var CPresentation = CPresentation || function(){};
 
         if (oMeta && oMeta["isOO"]) {
             if (oAnnot.IsStamp() && !oAnnot.IsNeedDrawFromStream()) {
-                let oStampRender = oDoc.CreateStampRender(oAnnot.GetIconType(), oAnnot.GetAuthor(), oAnnot.GetCreationDate());
-                oAnnot.SetRenderStructure(oStampRender.m_aStack[0]);
+				if (oAnnot.GetIconType() !== AscPDF.STAMP_TYPES.Signature) {
+					let oStampRender = oDoc.CreateStampRender(oAnnot.GetIconType(), oAnnot.GetAuthor(), oAnnot.GetCreationDate());
+                	oAnnot.SetRenderStructure(oStampRender.m_aStack[0]);
+				}
+				else if (oMeta["img"]) {
+					oAnnot.img = oMeta["img"];
+				}
             }
         }
         

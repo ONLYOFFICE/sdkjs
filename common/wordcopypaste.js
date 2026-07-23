@@ -6034,6 +6034,7 @@ PasteProcessor.prototype =
 			}
 
 			oPDFSelContent.Annots = objects.arrAnnots;
+			arr_Images = arr_Images.concat(objects.arrImages);
 
 			for (let i = 0; i < objects.arrAnnots.length; ++i) {
 				if (objects.arrAnnots[i].Annot.getAllFonts) {
@@ -6159,6 +6160,8 @@ PasteProcessor.prototype =
 
 		let oAnnotsMap = {};
 		let aAnnots = [];
+		let aImages = [];
+
 		for (let i = 0; i < oAnnotsInfo["annots"].length; i++) {
 			let oAnnotInfo = oAnnotsInfo["annots"][i];
 
@@ -6169,6 +6172,18 @@ PasteProcessor.prototype =
 					oAnnotsMap[oAnnotInfo["AP"]["i"]] = oAnnot;
 
 				aAnnots.push(new AscPDF.AnnotCopyObject(oAnnot));
+
+				if (oAnnot.img) {
+					let oUniFill = new AscFormat.CUniFill();
+					let oBlipFill = new AscFormat.CBlipFill();
+					oUniFill.setFill(oBlipFill);
+					oBlipFill.setStretch(new AscFormat.CBlipFillStretch());
+					oBlipFill.setRasterImageId(oAnnot.img["id"]);
+					oAnnot.setFill(oUniFill);
+
+					aImages.push(new AscCommon.CBuilderImages(oBlipFill, oAnnot.img["url"]));
+					delete oAnnot.img;
+				}
 			}
 			else {
 				if (oAnnotInfo["StateModel"] != AscPDF.TEXT_ANNOT_STATE_MODEL.Review && oAnnotsMap[oAnnotInfo["RefTo"]])
@@ -6176,7 +6191,7 @@ PasteProcessor.prototype =
 			}
 		}
 
-		return {arrAnnots: aAnnots};
+		return {arrAnnots: aAnnots, arrImages: aImages};
 	},
 
 	ReadPDFFields: function (stream) {

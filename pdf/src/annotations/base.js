@@ -1756,6 +1756,16 @@
                     if (this.GetRenderStructure()) {
                         oMeta["InRect"] = this.GetInRect();
                     }
+					if (this.GetIconType() == AscPDF.STAMP_TYPES.Signature) {
+						let aImages = [];
+						this.getAllRasterImages(aImages);
+
+						let sPathToImg = AscCommon.getFullImageSrc2(aImages[0]);
+						oMeta["img"] = {
+							"id": aImages[0],
+							"url": sPathToImg
+						};
+					}
                 }
                 if (this.IsFromOO()) {
                     if (this.IsRedact()) {
