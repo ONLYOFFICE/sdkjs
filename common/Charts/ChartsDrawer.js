@@ -20194,7 +20194,7 @@ CErrBarsDraw.prototype = {
 		// if subType is true then aggregation else binning
 		this.subTypeAggr = seria && seria.layoutPr && seria.layoutPr.aggregation;
 		this.binning = null;
-		CCachedChartExData.call(this, seria.Id, type, []);
+		CCachedChartExData.call(this, seria && seria.Id, type, []);
 		this._calculate(seria, numLit, strLit, axisProperties);
 		if (secondType === AscFormat.SERIES_LAYOUT_PARETO_LINE) {
 			this.data.sort(function (a, b) {

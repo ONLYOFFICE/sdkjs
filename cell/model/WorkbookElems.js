@@ -9836,7 +9836,7 @@ function RangeDataManagerElem(bbox, data)
 		if (null !== this.Ref) {
 			writer.WriteXmlAttributeStringEncode("ref", this.Ref.getName());
 		}
-		writer.WriteXmlAttributesEnd();
+		writer.WriteXmlAttributesEndSavePos();
 		if (this.FilterColumns) {
 			for (var i = 0; i < this.FilterColumns.length; ++i) {
 				var elem = this.FilterColumns[i];
@@ -9847,7 +9847,7 @@ function RangeDataManagerElem(bbox, data)
 			this.SortState.toXml(writer, "sortState");
 		}
 
-		writer.WriteXmlNodeEnd(ns + name);
+		writer.WriteXmlNodeEndCheckEmpty(ns + name);
 	};
 	AutoFilter.prototype.deleteFilterColumn = function(index) {
 		if (this.FilterColumns && this.FilterColumns[index]) {
