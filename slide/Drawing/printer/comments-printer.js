@@ -79,20 +79,6 @@
 		return paraPr;
 	}
 
-	function getInitials(userName) {
-		if (typeof userName !== "string") {
-			return "?";
-		}
-		const parts = userName.split(new RegExp("\\s+"));
-		let initials = "";
-		for (let i = 0; i < parts.length; i += 1) {
-			if (parts[i].length > 0) {
-				initials += parts[i].charAt(0).toUpperCase();
-			}
-		}
-		return initials.length > 0 ? initials : "?";
-	}
-
 	function formatCommentDate(timeValue) {
 		const ms = parseInt(timeValue, 10);
 		if (isNaN(ms) || ms <= 0) {
@@ -497,6 +483,7 @@
 		this.presentation = presentation;
 		this.printOptions = printOptions;
 		this.pageSizesProvider = pageSizesProvider || null;
+		this.commentsCache = {};
 	}
 
 	CommentsPrinter.prototype.getPageSizes = function () {
@@ -552,34 +539,51 @@
 	CommentsPrinter.prototype.appendSlideBlocks = function (segment, slideIdx, comments, contentSize) {
 		segment.addBlock(new HeaderBlock(slideIdx, contentSize.width));
 		for (let i = 0; i < comments.length; i += 1) {
-			const data = comments[i].Data;
-			if (!data) continue;
-			this.appendCommentBlocks(segment, slideIdx, data, i + 1, contentSize);
+			this.appendCommentBlocks(segment, slideIdx, comments[i], i + 1, contentSize);
 		}
 	};
 
-	CommentsPrinter.prototype.appendCommentBlocks = function (segment, slideIdx, data, commentNumber, contentSize) {
-		const initials = getInitials(data.m_sUserName);
+	CommentsPrinter.prototype.getInitials = function (userName) {
+		const presentation = this.presentation;
+		const author = presentation.CommentAuthors[userName];
+		return author ? author.Initials : AscCommon.translateManager.getValue("Unknown User");
+	};
+	CommentsPrinter.prototype.getColorIndex = function (userName) {
+		const presentation = this.presentation;
+		const author = presentation.CommentAuthors[userName];
+		return author ? author.GetColorIndex() : 0;
+	};
+	CommentsPrinter.prototype.appendCommentBlocks = function (segment, slideIdx, comment, commentNumber, contentSize) {
+		const data = comment.Data;
+		if (!data) {
+			return;
+		}
+		const label = this.getInitials(data.m_sUserName) + commentNumber;
+		const colorIndex = this.getColorIndex(data.m_sUserName);
 		segment.addBlock(new CommentBlock({
-			slideIdx: slideIdx,
-			indent  : 0,
-			label   : initials + commentNumber,
-			text: data.m_sText,
+			slideIdx  : slideIdx,
+			indent    : 0,
+			label     : label,
+			text      : data.m_sText,
 			authorName: data.m_sUserName,
-			time: data.m_sTime
-	}, contentSize.width - COMMENTSPRINTER_INITIALS_WIDTH));
+			time      : data.m_sTime
+		}, contentSize.width - COMMENTSPRINTER_INITIALS_WIDTH));
+		this.commentsCache[comment.GetId()] = {
+			label: label,
+			colorIndex: colorIndex
+		};
 
 		const replies = data.m_aReplies || [];
 		const replyWidth = contentSize.width - COMMENTSPRINTER_INITIALS_WIDTH - COMMENTSPRINTER_REPLY_INDENT;
 		for (let i = 0; i < replies.length; i += 1) {
 			const reply = replies[i];
 			segment.addBlock(new CommentBlock({
-				slideIdx: slideIdx,
-				indent  : COMMENTSPRINTER_REPLY_INDENT,
-				label   : getInitials(reply.m_sUserName) + commentNumber + " - " + (i + 1),
-				text: reply.m_sText,
+				slideIdx  : slideIdx,
+				indent    : COMMENTSPRINTER_REPLY_INDENT,
+				label     : this.getInitials(reply.m_sUserName) + commentNumber + " - " + (i + 1),
+				text      : reply.m_sText,
 				authorName: reply.m_sUserName,
-				time: reply.m_sTime
+				time      : reply.m_sTime
 			}, replyWidth));
 		}
 	};

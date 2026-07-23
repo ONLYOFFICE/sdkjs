@@ -711,6 +711,10 @@ function CPresentation(DrawingDocument, isMainLogicDocument) {
 	this.cachedAnimationLabelText = {};
 	this.ConcatParagraphsOnRemove  = true;
 	this.SlideSelector = null;
+
+	this.recalcInfo = {
+		recalculateComments: true
+	};
 }
 
 AscFormat.InitClass(CPresentation, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_Presentation);
@@ -10275,13 +10279,16 @@ CPresentation.prototype.internalCalculateData = function (aSlideComments, aWrite
 };
 
 CPresentation.prototype.CalculateComments = function () {
-	this.CommentAuthors = {};
-	var oData = {_AuthorId: 0};
-	this.internalCalculateData(this.comments.comments, this.writecomments, oData);
-	var _slidesCount = this.Slides.length;
-	for (var _sldIdx = 0; _sldIdx < _slidesCount; _sldIdx++) {
-		this.Slides[_sldIdx].writecomments = [];
-		this.internalCalculateData(this.Slides[_sldIdx].slideComments.comments, this.Slides[_sldIdx].writecomments, oData);
+	if (this.recalcInfo.recalculateComments) {
+		this.recalcInfo.recalculateComments = false;
+		this.CommentAuthors = {};
+		var oData = {_AuthorId: 0};
+		this.internalCalculateData(this.comments.comments, this.writecomments, oData);
+		var _slidesCount = this.Slides.length;
+		for (var _sldIdx = 0; _sldIdx < _slidesCount; _sldIdx++) {
+			this.Slides[_sldIdx].writecomments = [];
+			this.internalCalculateData(this.Slides[_sldIdx].slideComments.comments, this.Slides[_sldIdx].writecomments, oData);
+		}
 	}
 };
 
@@ -10815,6 +10822,9 @@ CPresentation.prototype.GetUsedSlidesMap = function () {
 		usedSlidesMap[slide.GetId()] = slide;
 	}
 	return usedSlidesMap;
+};
+CPresentation.prototype.recalcComments = function () {
+	this.recalcInfo.recalculateComments = true;
 };
 
 function IdList(name) {

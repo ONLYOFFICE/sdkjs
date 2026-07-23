@@ -1246,7 +1246,7 @@ function CBinaryFileWriter()
 
                     this._WriteInt1(0, _author.Id);
                     this._WriteInt1(1, _author.LastId);
-                    this._WriteInt1(2, _author.Id - 1);
+                    this._WriteInt1(2, _author.GetColorIndex());
                     this._WriteString1(3, _author.Name);
                     this._WriteString1(4, _author.Initials);
 

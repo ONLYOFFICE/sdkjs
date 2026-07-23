@@ -44,6 +44,17 @@ function (window, undefined) {
 	var g_oTableId = AscCommon.g_oTableId;
 	var History = AscCommon.History;
 
+	const AUTHOR_TAG_COLORS = [
+		{pen: {R: 164, G: 160, B: 0}, background: {R: 255, G: 255, B: 215}},
+		{pen: {R: 0, G: 131, B: 128}, background: {R: 215, G: 255, B: 255}},
+		{pen: {R: 128, G: 0, B: 128}, background: {R: 255, G: 215, B: 255}},
+		{pen: {R: 255, G: 0, B: 0}, background: {R: 255, G: 215, B: 215}},
+		{pen: {R: 0, G: 128, B: 0}, background: {R: 215, G: 255, B: 215}},
+		{pen: {R: 0, G: 0, B: 255}, background: {R: 215, G: 215, B: 255}},
+		{pen: {R: 200, G: 81, B: 0}, background: {R: 255, G: 231, B: 215}},
+		{pen: {R: 128, G: 128, B: 128}, background: {R: 235, G: 235, B: 235}}
+	];
+
 	AscDFH.changesFactory[AscDFH.historyitem_Comment_Position] = AscDFH.CChangesDrawingsObjectNoId;
 	AscDFH.changesFactory[AscDFH.historyitem_Comment_Change] = AscDFH.CChangesDrawingsObjectNoId;
 	AscDFH.changesFactory[AscDFH.historyitem_Comment_TypeInfo] = AscDFH.CChangesDrawingsLong;
@@ -200,6 +211,13 @@ function (window, undefined) {
 		for (var i = 0; i < arr.length; i++) {
 			if (arr[i].length > 0) this.Initials += (arr[i].substring(0, 1));
 		}
+	};
+	CCommentAuthor.prototype.GetColorIndex = function () {
+		return (this.Id - 1) % AUTHOR_TAG_COLORS.length;
+	};
+	CCommentAuthor.prototype.GetColorTag = function () {
+		const colorIndex = this.GetColorIndex();
+		return AUTHOR_TAG_COLORS[colorIndex];
 	};
 
 
@@ -518,6 +536,7 @@ function (window, undefined) {
 	var comment_type_Common = 1; // Comment to regular text
 	var comment_type_HdrFtr = 2; // Comment to header/footer
 
+	const CCOMMENT_TAG_MARGIN = 0.5;
 	function CComment(Parent, Data) {
 		this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
@@ -639,7 +658,57 @@ function (window, undefined) {
 	CComment.prototype.getPosition = function () {
 		return { x: this.x, y: this.y };
 	};
-
+	CComment.prototype.getTagTextPr = function () {
+		const textPr = new AscCommonWord.CTextPr();
+		textPr.Set_FromObject({
+			FontSize  : 15,
+			FontFamily: {Name: "Arial", Index: -1},
+			Color     : AscWord.BLACK_COLOR
+		});
+		return textPr;
+	};
+	CComment.prototype.drawPrintComments = function (graphics, x, y) {
+		AscFormat.ExecuteNoHistory(function () {
+			const commentsCache = graphics.PrintComments.commentsCache;
+			const commentCache = commentsCache[this.GetId()];
+			if (!commentCache) {
+				return;
+			}
+			const tagTextPr = this.getTagTextPr();
+			const initials = commentCache.label;
+			const colors = AUTHOR_TAG_COLORS[commentCache.colorIndex];
+			const shape = new AscFormat.CShape();
+			shape.setBDeleted(false);
+			shape.createTextBody();
+			const bodyPr = new AscFormat.CBodyPr();
+			bodyPr.setInsets(0, 0, 0, 0);
+			shape.txBody.setBodyPr(bodyPr);
+			shape.brush = AscFormat.CreateSolidFillRGBA(colors.background.R, colors.background.G, colors.background.B, 255);
+			shape.pen = new AscFormat.CLn();
+			shape.pen.setFill(AscFormat.CreateSolidFillRGBA(colors.pen.R, colors.pen.G, colors.pen.B, 255));
+			shape.pen.setW(12700);
+			const content = shape.txBody.content;
+			AscFormat.AddToContentFromString(content, initials);
+			content.ApplyToAll = true;
+			content.AddToParagraph(new AscCommonWord.ParaTextPr(tagTextPr), false);
+			content.ApplyToAll = false;
+			const textWidth = content.RecalculateMinMaxContentWidth().Max;
+			AscCommon.g_oTextMeasurer.SetTextPr(tagTextPr, null);
+			AscCommon.g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
+			const textHeight = AscCommon.g_oTextMeasurer.GetHeight();
+			const shapeWidth = textWidth + CCOMMENT_TAG_MARGIN * 2;
+			shape.extX = shapeWidth;
+			shape.extY = textHeight;
+			shape.calcGeometry = AscFormat.CreateGeometry('rect');
+			shape.calcGeometry.Recalculate(shapeWidth, textHeight);
+			shape.recalculateContent();
+			const transform = new AscCommon.CMatrix();
+			transform.Translate(x, y);
+			const textTransform = new AscCommon.CMatrix();
+			textTransform.Translate(x + CCOMMENT_TAG_MARGIN, y);
+			shape.draw(graphics, transform, textTransform);
+		}, this, []);
+	};
 	CComment.prototype.draw = function (graphics) {
 		var Flags = 0;
 		if (this.selected) {
@@ -651,18 +720,23 @@ function (window, undefined) {
 		var dd = editor.WordControl.m_oDrawingDocument;
 		var w = dd.GetCommentWidth();
 		var h = dd.GetCommentHeight();
-		graphics.DrawPresentationComment(Flags, this.x, this.y, w, h);
 
-		var oLock = this.Lock;
-		if (oLock && AscCommon.c_oAscLockTypes.kLockTypeNone !== oLock.Get_Type()) {
-			var bCoMarksDraw = true;
-			var oApi = editor || Asc['editor'];
-			if (oApi) {
-				bCoMarksDraw = (!AscCommon.CollaborativeEditing.Is_Fast() || AscCommon.c_oAscLockTypes.kLockTypeMine !== oLock.Get_Type());
-			}
-			if (bCoMarksDraw) {
-				graphics.DrawLockObjectRect(oLock.Get_Type(), this.x, this.y, w, h);
-				return true;
+		if (graphics.PrintComments) {
+			this.drawPrintComments(graphics, this.x, this.y);
+		} else {
+			graphics.DrawPresentationComment(Flags, this.x, this.y, w, h);
+
+			var oLock = this.Lock;
+			if (oLock && AscCommon.c_oAscLockTypes.kLockTypeNone !== oLock.Get_Type()) {
+				var bCoMarksDraw = true;
+				var oApi = editor || Asc['editor'];
+				if (oApi) {
+					bCoMarksDraw = (!AscCommon.CollaborativeEditing.Is_Fast() || AscCommon.c_oAscLockTypes.kLockTypeMine !== oLock.Get_Type());
+				}
+				if (bCoMarksDraw) {
+					graphics.DrawLockObjectRect(oLock.Get_Type(), this.x, this.y, w, h);
+					return true;
+				}
 			}
 		}
 	};
