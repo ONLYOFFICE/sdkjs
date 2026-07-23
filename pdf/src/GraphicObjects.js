@@ -2282,6 +2282,10 @@
                 this.resetConnectors(this.selectedObjects);
                 for (let i = 0; i < this.selectedObjects.length; ++i) {
                     let oSp = this.selectedObjects[i];
+					if (oSp.IsForm && oSp.IsForm()) {
+						return;
+					}
+					
                     oSp.deleteDrawingBase();
                     oSp.setBDeleted(true);
                 }
