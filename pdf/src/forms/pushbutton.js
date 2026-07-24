@@ -2181,16 +2181,6 @@
         function WriteImage(memory, nImgType) {
             let sPathToImg = AscCommon.getFullImageSrc2(this.GetImageRasterId(nImgType));
             let nExistIdx = memory.images.indexOf(sPathToImg);
-            if ((memory.isForSplit || memory.isCopyPaste) && sPathToImg) {
-                let mapItem = Asc.editor.ImageLoader.map_image_index[sPathToImg];
-                if (mapItem) {
-                    let oImageElm = mapItem.Image;
-                    sPathToImg = getBase64FromImage(oImageElm);
-                }
-				else {
-					sPathToImg = "";
-				}
-            }
             
             if (nExistIdx === -1) {
                 memory.WriteLong(memory.images.length);
