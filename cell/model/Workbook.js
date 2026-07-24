@@ -7241,6 +7241,13 @@
 		wsFrom._forEachColData(function(sheetMemory, index){
 			t.cellsByCol[index] = sheetMemory.clone();
 		});
+
+		for (var ci = 0; ci < wsFrom.cellStylesByCol.length; ++ci) {
+			var styleStore = wsFrom.cellStylesByCol[ci];
+			if (styleStore) {
+				this.cellStylesByCol[ci] = styleStore.clone();
+			}
+		}
 		this.setCellsByColRowsCount(wsFrom.cellsByColRowsCount);
 
 		var aMerged = wsFrom.mergeManager.getAll();
