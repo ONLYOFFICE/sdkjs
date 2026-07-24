@@ -1461,8 +1461,8 @@
 		}
 
 		let sImageUrl = null, fReplaceCallback = null, sImageToDownLoad = "";
-		if (!AscCommon.g_oDocumentUrls.getImageLocal(signatureResult.imageData)) {
-			sImageUrl        = signatureResult.imageData;
+		if (!AscCommon.g_oDocumentUrls.getImageLocal(signatureResult["imageData"])) {
+			sImageUrl        = signatureResult["imageData"];
 			fReplaceCallback = function(url) {
 				sImageToDownLoad  = url;
 			}
@@ -1471,7 +1471,7 @@
 			fApplyCallback();
 		}
 
-		sImageToDownLoad = signatureResult.imageData;
+		sImageToDownLoad = signatureResult["imageData"];
 
 		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
 			var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sImageToDownLoad);
@@ -1481,7 +1481,7 @@
 			return;
 		}
 
-		AscCommon.sendImgUrls(this, [signatureResult.imageData], function(data) {
+		AscCommon.sendImgUrls(this, [sImageToDownLoad], function(data) {
 			if (data && data[0] && data[0].url !== "error") {
 				fReplaceCallback(data[0].url);
 				fApplyCallback();
