@@ -1912,6 +1912,19 @@
             var ret = false, ret2;
             for (var i = 0; i < arr.length; ++i) {
                 let drawing = arr[i];
+				let mainGroup = drawing.getMainGroup();
+				
+				if (mainGroup && mainGroup.IsAnnot && mainGroup.IsAnnot()) {
+					if (mainGroup.IsFreeText() && !mainGroup.IsInTextBox()) {
+						return;
+					}
+				}
+
+				if (drawing.IsForm() || (drawing.IsAnnot && drawing.IsAnnot() && !(drawing.GetDocContent() && drawing.IsInTextBox()))) {
+					return;
+				}
+				
+
                 const newShape = arr[i].checkDrawingPartWithHistory && arr[i].checkDrawingPartWithHistory();
                 if (newShape) {
                     drawing = newShape;
