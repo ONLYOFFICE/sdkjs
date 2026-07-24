@@ -806,6 +806,10 @@
         };
 
 		let result = oDoc.EditPage(oViewer.currentPage);
+		if (!result) {
+			fEndCallback();
+			return;
+		} 
 
 		if (result.allImages.length > 0) {
 			AscCommon.sendImgUrls(Asc.editor, result.allImages, function(data) {

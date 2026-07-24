@@ -5139,7 +5139,6 @@ var CPresentation = CPresentation || function(){};
         
         this.Api.sync_pagePropCallback(oCurPage);
         this.Api.sync_EndCatchSelectedElements();
-        this.Api.sendEvent('asc_onCanEditPage', oCurPage.IsEditPageLock() || oCurPage.IsRecognized());
     };
     CPDFDoc.prototype.UpdateInterfaceTracks = function() {
         this.DrawingObjects.updateSelectionState();
@@ -6192,18 +6191,18 @@ var CPresentation = CPresentation || function(){};
 
     CPDFDoc.prototype.EditPage = function(nPage, aSpsXmls) {
         if (null == this.Viewer.pagesInfo.pages[nPage] || this.Viewer.file.pages[nPage].isRecognized) {
-            return false;
+            return null;
         }
 
         const oFile = this.Viewer.file;
         const nOriginIndex = oFile.pages[nPage].originIndex;
         if (nOriginIndex === undefined) {
-            return false;
+            return null;
         }
 
         const isOOXML = Asc.editor.getShapeSerializeType() === "xml";
         if (aSpsXmls && !isOOXML)
-            return false;
+            return null;
 
         this.BlurActiveObject();
 
@@ -10435,7 +10434,7 @@ var CPresentation = CPresentation || function(){};
 
         oProps.asc_putDeleteLock(pageInfo.IsDeleteLock());
         oProps.asc_putRotateLock(pageInfo.IsRotateLock());
-        oProps.asc_putEditLock(pageInfo.IsEditPageLock() || pageInfo.IsRecognized());
+        oProps.asc_putEditLock(pageInfo.IsEditPageLock() || pageInfo.IsRecognized() || pageInfo.GetOriginIndex() === undefined);
         return oProps;
     }
 
