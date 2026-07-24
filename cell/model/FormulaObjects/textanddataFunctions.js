@@ -326,7 +326,7 @@ function (window, undefined) {
 
 			for (let i = 0; i < arg0Dimensions.row; i++) {
 				for (let j = 0; j < arg0Dimensions.col; j++) {
-					let val = array.getValueByRowCol ? array.getValueByRowCol(i, j, true) : array.getElementRowCol(i, j, true);
+					let val = array.getValueByRowCol ? array.getValueByRowCol(i, j, true) : array.getElementRowCol(i, j);
 					if (!val) {
 						resStr += format === 1 ? "," : ", ";
 						continue;

@@ -1536,8 +1536,8 @@ function (window, undefined) {
 		var xs = [], ys = [], i;
 		for (i = 0; i < H; i++) {
 			//a shorter head returns its own tail value here via getElementRowCol(...,true)
-			xs.push(arg0.getElementRowCol(i, 0, true));
-			ys.push(arg1.getElementRowCol(i, 0, true));
+			xs.push(arg0.getElementRowCol(i, 0));
+			ys.push(arg1.getElementRowCol(i, 0));
 		}
 		//shared constant tail [H, N): one weighted paired entry
 		var tails = [{x: arg0.getMissedValue(), y: arg1.getMissedValue(), n: N - H}];
@@ -1550,7 +1550,7 @@ function (window, undefined) {
 	function pairedView(arg) {
 		if (arg instanceof cArray) {
 			var d = arg.getDimensions();
-			return {rows: d.row, cols: d.col, dim: d.row * d.col, at: function (r, c) { return arg.getElementRowCol(r, c, true); }};
+			return {rows: d.row, cols: d.col, dim: d.row * d.col, at: function (r, c) { return arg.getElementRowCol(r, c); }};
 		}
 		var m = null, bbox = null;
 		if (arg instanceof cArea) {

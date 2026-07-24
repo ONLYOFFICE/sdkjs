@@ -314,7 +314,7 @@ function (window, undefined) {
 			for (let r = 0; r < dim.row; r++) {
 				m[r] = [];
 				for (let c = 0; c < dim.col; c++) {
-					m[r].push(arg.getElementRowCol(r, c, true));
+					m[r].push(arg.getElementRowCol(r, c));
 				}
 			}
 			return m;
@@ -848,7 +848,7 @@ function (window, undefined) {
 					let byColInner = argDimensions.row > 1;
 					for (let j = 0; j < Math.max(argDimensions.col, argDimensions.row); j++) {
 						if (cElementType.array === _arg.type) {
-							if (!pushData(_arg.getElementRowCol(!byColInner ? 0 : j, !byColInner ? j : 0, true))) {
+							if (!pushData(_arg.getElementRowCol(!byColInner ? 0 : j, !byColInner ? j : 0))) {
 								return error;
 							}
 						} else {
@@ -1062,7 +1062,7 @@ function (window, undefined) {
 						res.addElement(pad_with);
 						continue
 					}
-					let elem = arr.getElementRowCol ? arr.getElementRowCol(i,j,true) : arr.getValueByRowCol(i,j);
+					let elem = arr.getElementRowCol ? arr.getElementRowCol(i,j) : arr.getValueByRowCol(i,j);
 					elem ? res.addElement(elem) : res.addElement(new cEmpty());
 				}
 			}
@@ -1166,7 +1166,7 @@ function (window, undefined) {
 
 			for (let i = 0; i < rows; i++) {
 				for (let j = 0; j < columns; j++) {
-					let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j, true);
+					let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j);
 
 					val = val.tocBool();
 					val = val.toBool ? val.toBool() : new cError(cErrorType.wrong_value_type);
@@ -1639,7 +1639,7 @@ function (window, undefined) {
 				}
 				ret = new cArray();
 				for (i = 0; i < _colCount; i++) {
-					ret.addElement(_lazy ? _from.getElementRowCol(row - 1, i, true) : _from.array[row - 1][i])
+					ret.addElement(_lazy ? _from.getElementRowCol(row - 1, i) : _from.array[row - 1][i])
 				}
 			} else if (undefined !== col) {
 				if (_colCount < col) {
@@ -1656,7 +1656,7 @@ function (window, undefined) {
 				let _physRows = _from.rowCount;
 				for (i = 0; i < _physRows; i++) {
 					ret.addRow();
-					ret.addElement(_lazy ? _from.getElementRowCol(i, col - 1, true) : _from.array[i][col - 1])
+					ret.addElement(_lazy ? _from.getElementRowCol(i, col - 1) : _from.array[i][col - 1])
 				}
 				if (_lazy) {
 					//preserve a constant lazy tail: the extracted column's tail is the source's tail value at
@@ -3436,7 +3436,7 @@ function (window, undefined) {
 
 			r = this.bHor ? number : res;
 			c = this.bHor ? res : number;
-			return arg1.getElementRowCol(r, c, true);
+			return arg1.getElementRowCol(r, c);
 		}
 
 		let range;
@@ -4692,15 +4692,15 @@ function (window, undefined) {
 				if (lookingIndex >= arg2Cols) {
 					return new cError(cErrorType.not_available)
 				}
-				return arg2.getElementRowCol(0, lookingIndex, arg2Lazy);
+				return arg2.getElementRowCol(0, lookingIndex);
 			} else if (arg2Cols === 1) {
 				if (lookingIndex >= arg2Rows) {
 					return new cError(cErrorType.not_available)
 				}
-				return arg2.getElementRowCol(lookingIndex, 0, arg2Lazy);
+				return arg2.getElementRowCol(lookingIndex, 0);
 			} else {
 				// return from last row/col
-				return arg2.getElementRowCol(byCol ? lookingIndex : arg2Rows - 1, byCol ? arg2Cols - 1 : lookingIndex, arg2Lazy);
+				return arg2.getElementRowCol(byCol ? lookingIndex : arg2Rows - 1, byCol ? arg2Cols - 1 : lookingIndex);
 			}
 
 		} else if (cElementType.array === arg1.type || cElementType.array === arg2.type) {	/* arg1 || arg2 is array */
@@ -4731,9 +4731,9 @@ function (window, undefined) {
 				}
 
 				if (dimension.row === 1) {
-					return arg2.getValueByRowCol ? arg2.getValueByRowCol(0, lookingIndex, true) : arg2.getElementRowCol(0, lookingIndex, arg2Lazy);
+					return arg2.getValueByRowCol ? arg2.getValueByRowCol(0, lookingIndex, true) : arg2.getElementRowCol(0, lookingIndex);
 				} else if (dimension.col === 1) {
-					return arg2.getValueByRowCol ? arg2.getValueByRowCol(lookingIndex, 0, true) : arg2.getElementRowCol(lookingIndex, 0, arg2Lazy);
+					return arg2.getValueByRowCol ? arg2.getValueByRowCol(lookingIndex, 0, true) : arg2.getElementRowCol(lookingIndex, 0);
 				} else {
 					return new cError(cErrorType.not_available);
 				}
@@ -5047,7 +5047,7 @@ function (window, undefined) {
 					for (let i = 0; i < _length; i++) {
 						let _row = !bVertical ? i : res - _startRange;
 						let _col = bVertical ? i : res - _startRange;
-						let _elem = arg2.getElementRowCol ? arg2.getElementRowCol(_row, _col, true) : arg2.getValueByRowCol(_row, _col, true);
+						let _elem = arg2.getElementRowCol ? arg2.getElementRowCol(_row, _col) : arg2.getValueByRowCol(_row, _col, true);
 						if (!bVertical) {
 							_array.addRow();
 							_array.addElement(_elem);

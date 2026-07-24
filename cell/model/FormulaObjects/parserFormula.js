@@ -3033,7 +3033,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (this.hasLazyTail()) {
 			let cols = this.getDimensions().col, row = [];
 			for (let c = 0; c < cols; c++) {
-				row.push(this.getElementRowCol(rowIndex, c, true));
+				row.push(this.getElementRowCol(rowIndex, c));
 			}
 			return [row];
 		}
@@ -3058,11 +3058,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		let col = [];
 		for (let i = 0; i < rows; i++) {
 			col[i] = [];
-			col[i].push(lazy ? this.getElementRowCol(i, colIndex, true) : this.array[i][colIndex]);
+			col[i].push(lazy ? this.getElementRowCol(i, colIndex) : this.array[i][colIndex]);
 		}
 		return col;
 	};
-	cArray.prototype.getElementRowCol = function (row, col, checkRealSize) {
+	// by default this is TAIL-AWARE: a position inside realSize but beyond the physical head is served from the
+	// lazy tail (constant or generator). Pass skipTail=true for a PHYSICAL-only read (a missing cell yields
+	// cEmpty/#N/A instead of the tail) - needed only where a caller deliberately probes the physical head extent.
+	cArray.prototype.getElementRowCol = function (row, col, skipTail) {
 		var srcRow = this.array[row];
 		var physElem = srcRow && srcRow[col];
 		if (physElem) {
@@ -3071,8 +3074,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		//0-based indices: a missing physical cell inside realSize is a tail value, so check the tail
 		//with 0-based bounds before #N/A - else the seam cell at row===rowCount (or col===len) is lost.
 		//a fully-lazy array (rowCount===0) has no physical cells at all - the generator IS its data, so
-		//serve from it regardless of checkRealSize; head+tail arrays (rowCount>0) keep the checkRealSize gate.
-		if ((checkRealSize || this.rowCount === 0) && this.realSize &&
+		//serve from it regardless of skipTail; head+tail arrays (rowCount>0) honour the skipTail gate.
+		if ((!skipTail || this.rowCount === 0) && this.realSize &&
 			row >= 0 && col >= 0 && row < this.realSize.row && col < this.realSize.col) {
 			return this.getMissedElement(row, col);
 		}
@@ -3182,7 +3185,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (this.missedValueFn && this.realSize) {
 			for (var r = 0; r < this.realSize.row; r++) {
 				for (var c = 0; c < this.realSize.col; c++) {
-					if (action.call(this, this.getElementRowCol(r, c, true), r, c)) {
+					if (action.call(this, this.getElementRowCol(r, c), r, c)) {
 						return true;
 					}
 				}
@@ -3212,7 +3215,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			//generator tail: every logical position differs, so stream them all (head + generated tail), count=1
 			for (let r = 0; r < this.realSize.row; r++) {
 				for (let c = 0; c < this.realSize.col; c++) {
-					acc = reducer.call(this, acc, this.getElementRowCol(r, c, true), 1);
+					acc = reducer.call(this, acc, this.getElementRowCol(r, c), 1);
 				}
 			}
 			return acc;
@@ -3242,7 +3245,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			let dim = this.getDimensions();
 			for (let r = 0; r < dim.row; r++) {
 				for (let c = 0; c < dim.col; c++) {
-					if (action.call(this, this.getElementRowCol(r, c, true), r, c)) {
+					if (action.call(this, this.getElementRowCol(r, c), r, c)) {
 						return true;
 					}
 				}
@@ -3264,7 +3267,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			let cols = this.getDimensions().col;
 			let res = new Array(cols);
 			for (let c = 0; c < cols; c++) {
-				res[c] = this.getElementRowCol(row, c, true);
+				res[c] = this.getElementRowCol(row, c);
 			}
 			return res;
 		}
@@ -3276,7 +3279,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		let res = new Array(rows);
 		if (this.hasLazyTail()) {
 			for (let r = 0; r < rows; r++) {
-				res[r] = this.getElementRowCol(r, col, true);
+				res[r] = this.getElementRowCol(r, col);
 			}
 			return res;
 		}
@@ -3557,7 +3560,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		//out of realSize: stay undefined (old out-of-bounds contract, keeps broadcast #N/A guards working).
 		if (this.missedValueFn) {
 			if (this.realSize && i >= 0 && j >= 0 && i < this.realSize.row && j < this.realSize.col) {
-				return this.getElementRowCol(i, j, true);
+				return this.getElementRowCol(i, j);
 			}
 			return undefined;
 		}
@@ -3636,7 +3639,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		for (var r = 0; r < dim.row; r++) {
 			m[r] = [];
 			for (var c = 0; c < dim.col; c++) {
-				m[r][c] = this.getElementRowCol(r, c, true);
+				m[r][c] = this.getElementRowCol(r, c);
 			}
 		}
 		return m;
@@ -3784,7 +3787,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		for (let r = r0; r < r1; r++) {
 			res.addRow();
 			for (let c = c0; c < c1; c++) {
-				res.addElement(this.getElementRowCol(r, c, true));
+				res.addElement(this.getElementRowCol(r, c));
 			}
 		}
 		return res;
@@ -3957,7 +3960,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				for (var hr = 0; hr < hRows; hr++) {
 					res.addRow();
 					for (var hc = 0; hc < hCols; hc++) {
-						res.addElement(func(matrix1.getElementRowCol(hr, hc, true), matrix2.getElementRowCol(hr, hc, true)));
+						res.addElement(func(matrix1.getElementRowCol(hr, hc), matrix2.getElementRowCol(hr, hc)));
 					}
 				}
 				if ((matrix1.getMissedValueFn && matrix1.getMissedValueFn()) || (matrix2.getMissedValueFn && matrix2.getMissedValueFn())) {
@@ -3987,8 +3990,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					var lCol = ld1.col === 1 ? ld2.col : (ld2.col === 1 ? ld1.col : Math.min(ld1.col, ld2.col));
 					var lbr1 = ld1.row === 1, lbc1 = ld1.col === 1, lbr2 = ld2.row === 1, lbc2 = ld2.col === 1;
 					var elemAt = function (r, c) {
-						var e1 = matrix1 ? matrix1.getElementRowCol(lbr1 ? 0 : r, lbc1 ? 0 : c, true) : operand1;
-						var e2 = matrix2 ? matrix2.getElementRowCol(lbr2 ? 0 : r, lbc2 ? 0 : c, true) : operand2;
+						var e1 = matrix1 ? matrix1.getElementRowCol(lbr1 ? 0 : r, lbc1 ? 0 : c) : operand1;
+						var e2 = matrix2 ? matrix2.getElementRowCol(lbr2 ? 0 : r, lbc2 ? 0 : c) : operand2;
 						return func(e1, e2);
 					};
 					res = new cArray();
@@ -4017,8 +4020,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					var rowArr = new Array(colCount);
 					var r1 = br1 ? 0 : iRow, r2 = br2 ? 0 : iRow;
 					for (var iCol = 0; iCol < colCount; iCol++) {
-						var elem1 = matrix1 ? matrix1.getElementRowCol(r1, bc1 ? 0 : iCol, true) : operand1;
-						var elem2 = matrix2 ? matrix2.getElementRowCol(r2, bc2 ? 0 : iCol, true) : operand2;
+						var elem1 = matrix1 ? matrix1.getElementRowCol(r1, bc1 ? 0 : iCol) : operand1;
+						var elem2 = matrix2 ? matrix2.getElementRowCol(r2, bc2 ? 0 : iCol) : operand2;
 						rowArr[iCol] = func(elem1, elem2);
 					}
 					resArray[iRow] = rowArr;
@@ -4196,7 +4199,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					for (var lr = 0; lr < lazyDim.row; lr++) {
 						lazyMat[lr] = [];
 						for (var lc = 0; lc < lazyDim.col; lc++) {
-							var lazyEl = arg.getElementRowCol(lr, lc, true);
+							var lazyEl = arg.getElementRowCol(lr, lc);
 							if (excludeErrorsVal && lazyEl && cElementType.error === lazyEl.type) {
 								lazyEl = new cEmpty();
 							}
@@ -4774,7 +4777,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 						if (info.isArray) {
 							var srcRow = 1 === info.rows ? 0 : row;
 							var srcCol = 1 === info.cols ? 0 : col;
-							newArg = newArg.getElementRowCol(srcRow, srcCol, true);
+							newArg = newArg.getElementRowCol(srcRow, srcCol);
 							if (!newArg) {
 								newArg = new cError(cErrorType.not_available);
 							}
@@ -11857,7 +11860,7 @@ function parserFormula( formula, parent, _ws ) {
 					val = val.getElementRowCol(row, col);
 				} else if (val.hasLazyTail && val.hasLazyTail() && row >= 0 && col >= 0 &&
 					val.realSize && row < val.realSize.row && col < val.realSize.col) {
-					val = val.getElementRowCol(row, col, true);
+					val = val.getElementRowCol(row, col);
 				} else {
 					val = new window['AscCommonExcel'].cError(window['AscCommonExcel'].cErrorType.not_available);
 				}
@@ -13829,8 +13832,8 @@ function parserFormula( formula, parent, _ws ) {
 			for (iRow = 0; iRow < headRows; iRow++) {
 				res.addRow();
 				for (iCol = 0; iCol < headCols; iCol++) {
-					_arg0 = arg0.getElementRowCol(iRow, iCol, true);
-					_arg1 = arg1.getElementRowCol(iRow, iCol, true);
+					_arg0 = arg0.getElementRowCol(iRow, iCol);
+					_arg1 = arg1.getElementRowCol(iRow, iCol);
 					res.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
@@ -13852,8 +13855,8 @@ function parserFormula( formula, parent, _ws ) {
 			retArr = new cArray();
 			for (iRow = 0; iRow < arg1RowCount; iRow++, iRow < arg1RowCount ? retArr.addRow() : true) {
 				for (iCol = 0; iCol < arg1ColCount; iCol++) {
-					_arg0 = arg0.getElementRowCol(iRow, 0, true);
-					_arg1 = arg1.getElementRowCol(iRow, iCol, true);
+					_arg0 = arg0.getElementRowCol(iRow, 0);
+					_arg1 = arg1.getElementRowCol(iRow, iCol);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
@@ -13861,8 +13864,8 @@ function parserFormula( formula, parent, _ws ) {
 			retArr = new cArray();
 			for (iRow = 0; iRow < arg0RowCount; iRow++, iRow < arg0RowCount ? retArr.addRow() : true) {
 				for (iCol = 0; iCol < arg0ColCount; iCol++) {
-					_arg0 = arg0.getElementRowCol(iRow, iCol, true);
-					_arg1 = arg1.getElementRowCol(iRow, 0, true);
+					_arg0 = arg0.getElementRowCol(iRow, iCol);
+					_arg1 = arg1.getElementRowCol(iRow, 0);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
@@ -13870,8 +13873,8 @@ function parserFormula( formula, parent, _ws ) {
 			retArr = new cArray();
 			for (iRow = 0; iRow < arg1RowCount; iRow++, iRow < arg1RowCount ? retArr.addRow() : true) {
 				for (iCol = 0; iCol < arg1ColCount; iCol++) {
-					_arg0 = arg0.getElementRowCol(0, iCol, true);
-					_arg1 = arg1.getElementRowCol(iRow, iCol, true);
+					_arg0 = arg0.getElementRowCol(0, iCol);
+					_arg1 = arg1.getElementRowCol(iRow, iCol);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
@@ -13879,8 +13882,8 @@ function parserFormula( formula, parent, _ws ) {
 			retArr = new cArray();
 			for (iRow = 0; iRow < arg0RowCount; iRow++, iRow < arg0RowCount ? retArr.addRow() : true) {
 				for (iCol = 0; iCol < arg0ColCount; iCol++) {
-					_arg0 = arg0.getElementRowCol(iRow, iCol, true);
-					_arg1 = arg1.getElementRowCol(0, iCol, true);
+					_arg0 = arg0.getElementRowCol(iRow, iCol);
+					_arg1 = arg1.getElementRowCol(0, iCol);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
@@ -13888,8 +13891,8 @@ function parserFormula( formula, parent, _ws ) {
 			retArr = new cArray();
 			for (iRow = 0; iRow < arg0RowCount; iRow++, iRow < arg0RowCount ? retArr.addRow() : true) {
 				for (iCol = 0; iCol < arg1ColCount; iCol++) {
-					_arg0 = arg0.getElementRowCol(iRow, 0, true);
-					_arg1 = arg1.getElementRowCol(0, iCol, true);
+					_arg0 = arg0.getElementRowCol(iRow, 0);
+					_arg1 = arg1.getElementRowCol(0, iCol);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
@@ -13897,8 +13900,8 @@ function parserFormula( formula, parent, _ws ) {
 			retArr = new cArray();
 			for (iRow = 0; iRow < arg1RowCount; iRow++, iRow < arg1RowCount ? retArr.addRow() : true) {
 				for (iCol = 0; iCol < arg0ColCount; iCol++) {
-					_arg0 = arg0.getElementRowCol(0, iCol, true);
-					_arg1 = arg1.getElementRowCol(iRow, 0, true);
+					_arg0 = arg0.getElementRowCol(0, iCol);
+					_arg1 = arg1.getElementRowCol(iRow, 0);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
@@ -13968,8 +13971,8 @@ function parserFormula( formula, parent, _ws ) {
 						continue
 					}
 
-					_arg0 = arg0.getElementRowCol(fromArg0Row !== undefined ? fromArg0Row : iRow, fromArg0Col !== undefined ? fromArg0Col : iCol, true);
-					_arg1 = arg1.getElementRowCol(fromArg1Row !== undefined ? fromArg1Row : iRow, fromArg1Col !== undefined ? fromArg1Col : iCol, true);
+					_arg0 = arg0.getElementRowCol(fromArg0Row !== undefined ? fromArg0Row : iRow, fromArg0Col !== undefined ? fromArg0Col : iCol);
+					_arg1 = arg1.getElementRowCol(fromArg1Row !== undefined ? fromArg1Row : iRow, fromArg1Col !== undefined ? fromArg1Col : iCol);
 
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}

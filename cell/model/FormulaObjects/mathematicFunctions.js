@@ -2883,7 +2883,7 @@ function (window, undefined) {
 		};
 
 		const _getValueInRange = function (array, _row, _col) {
-			return array.getValueByRowCol ? array.getValueByRowCol(_row, _col, true) : array.getElementRowCol(_row, _col, true);
+			return array.getValueByRowCol ? array.getValueByRowCol(_row, _col, true) : array.getElementRowCol(_row, _col);
 		};
 
 		let arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cNumber(10);
@@ -3433,7 +3433,7 @@ function (window, undefined) {
 			for (let hr = 0; hr < headRows; hr++) {
 				let hrow = new Array(k);
 				for (let hc = 0; hc < k; hc++) {
-					hrow[hc] = arg0.getElementRowCol(hr, hc, true);
+					hrow[hc] = arg0.getElementRowCol(hr, hc);
 				}
 				headMat[hr] = hrow;
 			}
@@ -3801,7 +3801,7 @@ function (window, undefined) {
 			for (let row = 0; row < dimensions.row; row++) {
 				res.addRow();
 				for (let col = 0; col < dimensions.col; col++) {
-					let arg0Elem = arg0.getElementRowCol ? arg0.getElementRowCol(row, col, true) : arg0.getValueByRowCol(row, col, true);
+					let arg0Elem = arg0.getElementRowCol ? arg0.getElementRowCol(row, col) : arg0.getValueByRowCol(row, col, true);
 					let elemToAdd = new cError(cErrorType.wrong_value_type);
 
 					arg0Elem = arg0Elem.tocNumber();
@@ -5349,7 +5349,7 @@ function (window, undefined) {
 
 			for (let row = 0; row < dimensions.row; row++) {
 				for (let col = 0; col < dimensions.col; col++) {
-					let elem = arrLazy ? arr.getElementRowCol(row, col, true) : (arr.getValueByRowCol ? arr.getValueByRowCol(row, col) : arr.getElementRowCol(row, col));
+					let elem = arrLazy ? arr.getElementRowCol(row, col) : (arr.getValueByRowCol ? arr.getValueByRowCol(row, col) : arr.getElementRowCol(row, col));
 					if (elem) {
 						if (elem.type === cElementType.error) {
 							return elem;
