@@ -770,11 +770,11 @@ function (window, undefined) {
 				}
 			}
 
-			if (resArr.getRowCount() < maxArraySize.row) {
+			if (resArr.getRowCount(true) < maxArraySize.row) {
 				// fill the rest of array with #N/A error
-				for (let i = resArr.getRowCount(); i < maxArraySize.row; i++) {
+				for (let i = resArr.getRowCount(true); i < maxArraySize.row; i++) {
 					resArr.addRow();
-					for (let j = 0; j < resArr.getCountElementInRow(); j++) {
+					for (let j = 0; j < resArr.getCountElementInRow(true); j++) {
 						resArr.addElement(new cError(cErrorType.not_available));
 					}
 				}
@@ -1018,7 +1018,7 @@ function (window, undefined) {
 		var arg0 = arg[0];
 		var range;
 		if (cElementType.array === arg0.type) {
-			return new cNumber(arg0.getCountElementInRow(true));
+			return new cNumber(arg0.getCountElementInRow());
 		} else if (cElementType.cellsRange === arg0.type || cElementType.cell === arg0.type ||
 			cElementType.cell3D === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			range = arg0.getRange();
@@ -1622,7 +1622,7 @@ function (window, undefined) {
 			//size and read a lazy source by its LOGICAL grid - its head may be both shorter and narrower
 			let _lazy = !!(_from.hasLazyTail && _from.hasLazyTail());
 			let _logical = _lazy ? _from.getDimensions() : null;
-			let _colCount = _lazy ? _logical.col : _from.getCountElementInRow();
+			let _colCount = _lazy ? _logical.col : _from.getCountElementInRow(true);
 			let _rowCount = _lazy ? _logical.row : _from.rowCount;
 			let i;
 			row = row !== undefined ? Math.ceil(row) : row;
@@ -2102,7 +2102,7 @@ function (window, undefined) {
 		if (cElementType.array === arg0.type) {
 			//getRealSize=true: honor the logical size of clamped/realSize arrays (e.g. ROW over a full column);
 			//falls back to the physical row count when realSize is not set
-			return new cNumber(arg0.getRowCount(true));
+			return new cNumber(arg0.getRowCount());
 		} else if (cElementType.cellsRange === arg0.type || cElementType.cell === arg0.type ||
 			cElementType.cell3D === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			range = arg0.getRange();
@@ -4538,14 +4538,14 @@ function (window, undefined) {
 		}
 
 		function arrFinder(arr) {
-			if (arr.getRowCount() > arr.getCountElementInRow()) {
+			if (arr.getRowCount(true) > arr.getCountElementInRow(true)) {
 				// searching in the first column
-				resC = arr.getCountElementInRow() > 1 ? 1 : 0;
+				resC = arr.getCountElementInRow(true) > 1 ? 1 : 0;
 				let arrCol = arr.getCol(0);
 				resR = _func.lookupBinarySearch(arg0, arrCol, false);
 			} else {
 				// searching in the first row
-				resR = arr.getRowCount() > 1 ? 1 : 0;
+				resR = arr.getRowCount(true) > 1 ? 1 : 0;
 				let arrRow = arr.getRow(0);
 				resC = _func.lookupBinarySearch(arg0, arrRow, false);
 			}
@@ -4556,8 +4556,8 @@ function (window, undefined) {
 
 			//a constant lazy tail: search the LOGICAL row/col (getCol/getRow/getRowCount see the physical head only)
 			let lazy = arr.hasLazyTail && arr.hasLazyTail();
-			let rows = lazy ? arr.getDimensions().row : arr.getRowCount();
-			let cols = lazy ? arr.getDimensions().col : arr.getCountElementInRow();
+			let rows = lazy ? arr.getDimensions().row : arr.getRowCount(true);
+			let cols = lazy ? arr.getDimensions().col : arr.getCountElementInRow(true);
 
 			if (rows >= cols) {
 				// searching in the first column and return elem with same position (index) from last column
@@ -4637,7 +4637,7 @@ function (window, undefined) {
 			}
 
 			if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type || cElementType.array === arg2.type) {
-				if (cElementType.array === arg2.type && (arg2.getRowCount() > 1 && arg2.getCountElementInRow() > 1)) {
+				if (cElementType.array === arg2.type && (arg2.getRowCount(true) > 1 && arg2.getCountElementInRow(true) > 1)) {
 					return new cError(cErrorType.not_available);
 				}
 
@@ -4663,10 +4663,10 @@ function (window, undefined) {
 			let lookingIndex = -1;
 			//constant lazy tail: use LOGICAL dimensions and tail-aware element access (else head only)
 			let arg1Lazy = arg1.hasLazyTail && arg1.hasLazyTail(), arg2Lazy = arg2.hasLazyTail && arg2.hasLazyTail();
-			let arg1Rows = arg1Lazy ? arg1.getDimensions().row : arg1.getRowCount(),
-				arg2Rows = arg2Lazy ? arg2.getDimensions().row : arg2.getRowCount(),
-				arg1Cols = arg1Lazy ? arg1.getDimensions().col : arg1.getCountElementInRow(),
-				arg2Cols = arg2Lazy ? arg2.getDimensions().col : arg2.getCountElementInRow();
+			let arg1Rows = arg1Lazy ? arg1.getDimensions().row : arg1.getRowCount(true),
+				arg2Rows = arg2Lazy ? arg2.getDimensions().row : arg2.getRowCount(true),
+				arg1Cols = arg1Lazy ? arg1.getDimensions().col : arg1.getCountElementInRow(true),
+				arg2Cols = arg2Lazy ? arg2.getDimensions().col : arg2.getCountElementInRow(true);
 
 			/* check two dimensional array but only in vector form */
 			if (!arrayMode && (((arg1Rows < arg2Rows) && arg2Cols > 1) || (arg1Rows > 1 && arg1Cols > 1 && arg2Rows > 1 && arg2Cols > 1))) {

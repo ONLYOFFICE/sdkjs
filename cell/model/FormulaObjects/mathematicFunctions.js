@@ -1013,7 +1013,7 @@ function (window, undefined) {
 
 		if (arg0.type === cElementType.array || arg1.type === cElementType.array) {
 			if (arg0.type === cElementType.array && arg1.type === cElementType.array &&
-				(arg0.getCountElement() !== arg1.getCountElement() || arg0.getRowCount() !== arg1.getRowCount())) {
+				(arg0.getCountElement() !== arg1.getCountElement() || arg0.getRowCount(true) !== arg1.getRowCount(true))) {
 				return new cError(cErrorType.not_available);
 			}
 
@@ -1235,7 +1235,7 @@ function (window, undefined) {
 		}
 
 		if (arg0 instanceof cArray && arg1 instanceof cArray) {
-			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
+			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount(true) != arg1.getRowCount(true)) {
 				return new cError(cErrorType.not_available);
 			} else {
 				arg0.foreach(function (elem, r, c) {
@@ -1403,7 +1403,7 @@ function (window, undefined) {
 		}
 
 		if (cElementType.array === arg0.type && cElementType.array === arg1.type) {
-			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
+			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount(true) != arg1.getRowCount(true)) {
 				return new cError(cErrorType.not_available);
 			} else {
 				arg0.foreach(function (elem, r, c) {
@@ -2281,7 +2281,7 @@ function (window, undefined) {
 		}
 
 		if (arg0 instanceof cArray && arg1 instanceof cArray) {
-			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
+			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount(true) != arg1.getRowCount(true)) {
 				return new cError(cErrorType.not_available);
 			} else {
 				arg0.foreach(function (elem, r, c) {
@@ -3426,9 +3426,9 @@ function (window, undefined) {
 		}
 
 		if (cElementType.array === arg0.type && arg0.hasLazyTail() && arg0.getMissedValue() && !arg0.getMissedValueFn() &&
-			arg0.getRowCount() >= 1 && d0.row > arg0.getRowCount()) {
+			arg0.getRowCount(true) >= 1 && d0.row > arg0.getRowCount(true)) {
 			let k = d0.col, m = d0.row, n = matrix1[0] ? matrix1[0].length : 0;
-			let headRows = arg0.getRowCount();
+			let headRows = arg0.getRowCount(true);
 			let headMat = new Array(headRows);
 			for (let hr = 0; hr < headRows; hr++) {
 				let hrow = new Array(k);
@@ -3518,7 +3518,7 @@ function (window, undefined) {
 		};
 
 		if (arg0 instanceof cArray && arg1 instanceof cArray) {
-			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
+			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount(true) != arg1.getRowCount(true)) {
 				return new cError(cErrorType.not_available);
 			} else {
 				arg0.foreach(function (elem, r, c) {
@@ -3639,7 +3639,7 @@ function (window, undefined) {
 		}
 
 		if (arg0 instanceof cArray && arg1 instanceof cArray) {
-			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
+			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount(true) != arg1.getRowCount(true)) {
 				return new cError(cErrorType.not_available);
 			} else {
 				arg0.foreach(function (elem, r, c) {
@@ -3994,7 +3994,7 @@ function (window, undefined) {
 		}
 
 		if (cElementType.array === arg0.type && cElementType.array === arg1.type) {
-			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
+			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount(true) != arg1.getRowCount(true)) {
 				let arg0Dimensions = arg0.getDimensions(true),
 					arg1Dimensions = arg1.getDimensions(true);
 
@@ -4221,7 +4221,7 @@ function (window, undefined) {
 		}
 
 		if (arg0 instanceof cArray && arg1 instanceof cArray) {
-			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
+			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount(true) != arg1.getRowCount(true)) {
 				return new cError(cErrorType.not_available);
 			} else {
 				arg0.foreach(function (elem, r, c) {
@@ -4659,7 +4659,7 @@ function (window, undefined) {
 		}
 
 		if (cElementType.array === arg0.type && cElementType.array === arg1.type) {
-			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
+			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount(true) != arg1.getRowCount(true)) {
 				return new cError(cErrorType.not_available);
 			} else {
 				arg0.foreach(function (elem, r, c) {
@@ -4758,7 +4758,7 @@ function (window, undefined) {
 		}
 
 		if (arg0 instanceof cArray && arg1 instanceof cArray) {
-			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
+			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount(true) != arg1.getRowCount(true)) {
 				return new cError(cErrorType.not_available);
 			} else {
 				arg0.foreach(function (elem, r, c) {
@@ -4928,7 +4928,7 @@ function (window, undefined) {
 		}
 
 		if (arg0 instanceof cArray && arg1 instanceof cArray) {
-			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
+			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount(true) != arg1.getRowCount(true)) {
 				return new cError(cErrorType.not_available);
 			} else {
 				arg0.foreach(function (elem, r, c) {
@@ -5053,7 +5053,7 @@ function (window, undefined) {
 		}
 
 		if (arg0 instanceof cArray && arg1 instanceof cArray) {
-			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
+			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount(true) != arg1.getRowCount(true)) {
 				return new cError(cErrorType.not_available);
 			} else {
 				arg0.foreach(function (elem, r, c) {
@@ -5168,7 +5168,7 @@ function (window, undefined) {
 		}
 
 		if (cElementType.array === arg0.type && cElementType.array === arg1.type) {
-			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
+			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount(true) != arg1.getRowCount(true)) {
 				return new cError(cErrorType.not_available);
 			} else {
 				arg0.foreach(function (elem, r, c) {
@@ -6536,7 +6536,7 @@ function (window, undefined) {
 		}
 
 		if (cElementType.array === arg0.type && cElementType.array === arg1.type) {
-			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
+			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount(true) != arg1.getRowCount(true)) {
 				return new cError(cErrorType.not_available);
 			} else {
 				arg0.foreach(function (elem, r, c) {

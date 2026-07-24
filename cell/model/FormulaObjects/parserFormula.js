@@ -3081,7 +3081,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		//use the logical counts (realSize for fully-lazy arrays) so the seam/out-of-bounds verdict
 		//matches a materialized array: index===count stays in-bounds (cEmpty), only index>count is #N/A.
-		if (row > this.getRowCount() || col > this.getCountElementInRow()) {
+		if (row > this.getRowCount(true) || col > this.getCountElementInRow(true)) {
 			return new cError(cErrorType.not_available);
 		}
 		return new cEmpty();
@@ -3302,14 +3302,20 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return this.countElement;
 	};
-	cArray.prototype.getCountElementInRow = function (getRealSize) {
-		if (this.realSize && (getRealSize || this.rowCount === 0)) {
+	// default returns the LOGICAL column count (realSize for a lazy tail; physical otherwise - identical when
+	// not lazy). Pass getPhysicalSize=true for the physically-stored head width. A fully-lazy array (rowCount===0)
+	// has no physical store, so it always reports the logical size regardless of the flag.
+	cArray.prototype.getCountElementInRow = function (getPhysicalSize) {
+		if (this.realSize && (!getPhysicalSize || this.rowCount === 0)) {
 			return this.realSize.col;
 		}
 		return this.countElementInRow[0];
 	};
-	cArray.prototype.getRowCount = function (getRealSize) {
-		if (this.realSize && (getRealSize || this.rowCount === 0)) {
+	// default returns the LOGICAL row count (realSize for a lazy tail; physical otherwise - identical when not
+	// lazy). Pass getPhysicalSize=true for the physically-stored head height. A fully-lazy array (rowCount===0)
+	// has no physical store, so it always reports the logical size regardless of the flag.
+	cArray.prototype.getRowCount = function (getPhysicalSize) {
+		if (this.realSize && (!getPhysicalSize || this.rowCount === 0)) {
 			return this.realSize.row;
 		}
 		return this.rowCount;
@@ -3684,12 +3690,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		let realSize = getPhysicalSize ? false : this.getRealArraySize();
 		let col, row;
 		if (!realSize) {
-			col = this.getCountElementInRow();
+			col = this.getCountElementInRow(true);
 			if (!col) {
 				col = 1;
 			}
 
-			row = this.getRowCount();
+			row = this.getRowCount(true);
 			if (!row) {
 				row = 1;
 			}
@@ -3951,9 +3957,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			//tail and the same logical shape -> compose the head over the union of the PHYSICAL heads + a
 			//composed tail, instead of materializing the whole logical size.
 			if (matrix1 && matrix2 && matrix1.hasLazyTail && matrix1.hasLazyTail() && matrix2.hasLazyTail && matrix2.hasLazyTail() &&
-				matrix1.getRowCount(true) === matrix2.getRowCount(true) && matrix1.getCountElementInRow(true) === matrix2.getCountElementInRow(true)) {
+				matrix1.getRowCount() === matrix2.getRowCount() && matrix1.getCountElementInRow() === matrix2.getCountElementInRow()) {
 				res = new cArray();
-				res.setRealArraySize(matrix1.getRowCount(true), matrix1.getCountElementInRow(true));
+				res.setRealArraySize(matrix1.getRowCount(), matrix1.getCountElementInRow());
 				var hRows = Math.max(matrix1.rowCount, matrix2.rowCount);
 				var hCols = Math.max(matrix1.countElementInRow.length ? matrix1.countElementInRow[0] : 0,
 					matrix2.countElementInRow.length ? matrix2.countElementInRow[0] : 0);
@@ -4413,15 +4419,15 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			//TODO review and simplify handling
 			array = new cArray();
 			//in case the first argument consists of one row/column - then iterate over the second argument
-			if(1 === arg0.getRowCount() || 1 === arg0.getCountElementInRow()) {
+			if(1 === arg0.getRowCount(true) || 1 === arg0.getCountElementInRow(true)) {
 				arg1.foreach(function (elem, r, c) {
 					var b = elem, res;
 					//if argument is a row/column
 					var rowArg1 = r, colArg1 = c;
-					if(1 === arg0.getRowCount()) {
+					if(1 === arg0.getRowCount(true)) {
 						rowArg1 = 0;
 					}
-					if(1 === arg0.getCountElementInRow()) {
+					if(1 === arg0.getCountElementInRow(true)) {
 						colArg1 = 0;
 					}
 					if ( !array.array[r] ) {
@@ -4442,10 +4448,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				arg0.foreach(function (elem, r, c) {
 					var a = elem, res;
 					var rowArg1 = r, colArg1 = c;
-					if(1 === arg1.getRowCount()) {
+					if(1 === arg1.getRowCount(true)) {
 						rowArg1 = 0;
 					}
-					if(1 === arg1.getCountElementInRow()) {
+					if(1 === arg1.getCountElementInRow(true)) {
 						colArg1 = 0;
 					}
 					if ( !array.array[r] ) {
@@ -4577,7 +4583,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			let res = false;
 			for (let j = 0; j < argumentsCount; j++) {
 				if(cElementType.array === arg[j].type) {
-					if(1 === arg[j].getRowCount() || 1 === arg[j].getCountElementInRow()) {
+					if(1 === arg[j].getRowCount(true) || 1 === arg[j].getCountElementInRow(true)) {
 						res = true;
 					}
 				} else {
@@ -4639,13 +4645,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 							tempArg = tempArg;
 						} else {
 							//use LOGICAL dims (realSize) so a full-column arg drives the result shape even when it has no data
-							var _taR = tempArg.getRowCount(true), _taC = tempArg.getCountElementInRow(true);
+							var _taR = tempArg.getRowCount(), _taC = tempArg.getCountElementInRow();
 							maxArrayRows = Math.max(maxArrayRows, _taR);
 							maxArrayCols = Math.max(maxArrayCols, _taC);
 							if (!firstArray) {
 								firstArray = tempArg;
 							} else {
-								var _faR = firstArray.getRowCount(true), _faC = firstArray.getCountElementInRow(true);
+								var _faR = firstArray.getRowCount(), _faC = firstArray.getCountElementInRow();
 								if ((1 === _faR || 1 === _faC) && 1 !== _taR && 1 !== _taC) {
 									firstArray = tempArg;
 								} else if ((1 === _faR && 1 === _faC) && (1 !== _taR || 1 !== _taC)) {
@@ -4672,10 +4678,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			let targetCols = needRefExpand ? Math.max(maxArrayCols, refSize.col) : maxArrayCols;
 
 			let lazyCoversTarget = firstArray && firstArray.hasLazyTail && firstArray.hasLazyTail() &&
-				targetRows <= firstArray.getRowCount(true) && targetCols <= firstArray.getCountElementInRow(true);
+				targetRows <= firstArray.getRowCount() && targetCols <= firstArray.getCountElementInRow();
 
 			if (!lazyCoversTarget && (needRefExpand || (firstArray && firstArray.foreach &&
-				(firstArray.getRowCount() < targetRows || firstArray.getCountElementInRow() < targetCols)))) {
+				(firstArray.getRowCount(true) < targetRows || firstArray.getCountElementInRow(true) < targetCols)))) {
 				firstArray = new cArray();
 				for (var _ri = 0; _ri < targetRows; _ri++) {
 					firstArray.addRow();
@@ -4701,8 +4707,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 						isArray: cElementType.array === _ta.type && !_isArrayArg,
 						isRange: _isRange && !_isArrayArg && !checkArrayIndex(_j, cElementType.cellsRange),
 						//LOGICAL dims: only a genuinely 1-row/1-col arg broadcasts, not one with a 1-row/1-col head
-						rows: (cElementType.array === _ta.type) ? _ta.getRowCount(true) : 0,
-						cols: (cElementType.array === _ta.type) ? _ta.getCountElementInRow(true) : 0,
+						rows: (cElementType.array === _ta.type) ? _ta.getRowCount() : 0,
+						cols: (cElementType.array === _ta.type) ? _ta.getCountElementInRow() : 0,
 						dimensions: _isRange ? _ta.getDimensions() : null
 					};
 				}
@@ -4835,7 +4841,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 							var _argCols = _tta.countElementInRow.length ? _tta.countElementInRow[0] : 0;
 							if ((_tta.getMissedValueFn && _tta.getMissedValueFn()) ||
 								_tta.rowCount > _headRows || _argCols > _headCols ||
-								(_realSz && (_tta.getRowCount(true) < _realSz.row || _tta.getCountElementInRow(true) < _realSz.col))) {
+								(_realSz && (_tta.getRowCount() < _realSz.row || _tta.getCountElementInRow() < _realSz.col))) {
 								//generator tail; an arg head past the result head; OR an arg whose LOGICAL size is
 								//shorter than the result (a finite/broadcast sibling) - its out-of-range tail must be
 								//#N/A, not its folded constant. cannot fold - fall through to the per-cell generator.
@@ -6632,12 +6638,12 @@ _func[cElementType.array][cElementType.array] = function ( arg0, arg1, what, bbo
 			return specialArray;
 		}
 	}
-	if ( arg0.getRowCount() !== arg1.getRowCount() || arg0.getCountElementInRow() !== arg1.getCountElementInRow() ) {
+	if ( arg0.getRowCount(true) !== arg1.getRowCount(true) || arg0.getCountElementInRow(true) !== arg1.getCountElementInRow(true) ) {
         return new cError( cErrorType.wrong_value_type );
     }
     var retArr = new cArray(), _arg0, _arg1;
-    for ( var iRow = 0; iRow < arg0.getRowCount(); iRow++, iRow < arg0.getRowCount() ? retArr.addRow() : true ) {
-        for ( var iCol = 0; iCol < arg0.getCountElementInRow(); iCol++ ) {
+    for ( var iRow = 0; iRow < arg0.getRowCount(true); iRow++, iRow < arg0.getRowCount(true) ? retArr.addRow() : true ) {
+        for ( var iCol = 0; iCol < arg0.getCountElementInRow(true); iCol++ ) {
             _arg0 = arg0.getElementRowCol( iRow, iCol );
             _arg1 = arg1.getElementRowCol( iRow, iCol );
             retArr.addElement( _func[_arg0.type][_arg1.type]( _arg0, _arg1, what ) );
@@ -13812,10 +13818,10 @@ function parserFormula( formula, parent, _ws ) {
 		let retArr = null, _arg0, _arg1;
 		let iRow, iCol;
 
-		let arg0RowCount = arg0.getRowCount(true),
-			arg0ColCount = arg0.getCountElementInRow(true),
-			arg1RowCount = arg1.getRowCount(true),
-			arg1ColCount = arg1.getCountElementInRow(true);
+		let arg0RowCount = arg0.getRowCount(),
+			arg0ColCount = arg0.getCountElementInRow(),
+			arg1RowCount = arg1.getRowCount(),
+			arg1ColCount = arg1.getCountElementInRow();
 
 		//fast path: both operands carry a lazy tail (full-column/row arrays) AND have the same logical shape.
 		//compose the head over the union of the PHYSICAL heads + a composed tail, instead of materializing the

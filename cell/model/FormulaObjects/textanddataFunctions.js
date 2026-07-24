@@ -1208,7 +1208,7 @@ function (window, undefined) {
 		}
 
 		if (arg0 instanceof cArray && arg1 instanceof cArray) {
-			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
+			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount(true) != arg1.getRowCount(true)) {
 				return new cError(cErrorType.not_available);
 			} else {
 				arg0.foreach(function (elem, r, c) {
