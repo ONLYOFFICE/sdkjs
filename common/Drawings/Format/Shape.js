@@ -5655,12 +5655,15 @@
 					graphics.SetBaseTransform(existingBase);
 					graphics.reset();
 					graphics.RestoreGrState();
-					if (this.pen || this.brush) {
+					if (this.pen) {
+						const oldBrush = this.brush;
+						this.brush = null;
 						graphics.transform3(_transform);
 						const shapeDrawer = new AscCommon.CShapeDrawer();
 						shapeDrawer.fromShape2(this, graphics, this.calcGeometry);
 						shapeDrawer.draw(this.calcGeometry);
 						shapeDrawer.Clear();
+						this.brush = oldBrush;
 					}
 					graphics.RestoreGrState();
 				}
