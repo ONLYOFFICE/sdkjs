@@ -289,6 +289,14 @@ var CPresentation = CPresentation || function(){};
 			if (fontName)
 				fontMap[fontName] = true;
 		});
+		this.redactedFields.forEach(function(field) {
+			if (field.IsNeedDrawFromStream())
+				return;
+			
+			let fontName = field.GetTextFontActual();
+			if (fontName)
+				fontMap[fontName] = true;
+		});
 		
 		this.drawings.forEach(function(drawing) {
 			drawing.GetAllFonts(fontMap);
@@ -304,6 +312,12 @@ var CPresentation = CPresentation || function(){};
 	};
 	CPDFDoc.prototype._RecalculateAll = function() {
 		this.widgets.forEach(function(field) {
+			if (field.IsNeedDrawFromStream())
+				return;
+			
+			field.Recalculate();
+		});
+		this.redactedFields.forEach(function(field) {
 			if (field.IsNeedDrawFromStream())
 				return;
 			
