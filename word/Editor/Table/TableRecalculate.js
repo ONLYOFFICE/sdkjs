@@ -2247,6 +2247,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
                 // Обсчет такик ячеек произошел ранее
 
                 Cell.Temp.Y = Y_content_start;
+				Cell.Temp.Y_content_end = {};
 
                 if ( VMergeCount > 1 )
                 {
@@ -2819,6 +2820,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 			}
 			
 			Cell.Temp.Y = Y_content_start;
+			Cell.Temp.Y_content_end = {};
 			Cell.Temp.ClipTop    = Y;
 			Cell.Temp.ClipBottom = Y + RowHValue;
 			Cell.Temp.ClipPage   = CurPage;
@@ -3762,7 +3764,7 @@ CTable.prototype.private_RecalculateLastRowVMergedCells = function(curPage)
 		cellSpacing /= 2;
 
 	let bottomMargin = this.MaxBotMargin[lastRowIndex];
-	let rowBottom    = this.TableRowsBottom[lastRowIndex][curPage] + 0.001;
+	let rowBottom    = this.TableRowsBottom[lastRowIndex][curPage] + AscCommon.TwipsToMM(1);
 
 	let vertAlignCells = [];
 	for (let cellIndex = 0, cellCount = lastRow.GetCellsCount(); cellIndex < cellCount; ++cellIndex)
@@ -3808,6 +3810,10 @@ CTable.prototype.private_RecalculateLastRowVMergedCells = function(curPage)
 			cellContent.Set_StartPage(curPage);
 			cellContent.Reset(X_content_start, Y_content_start, X_content_end, Y_content_end);
 			cellPageIndex = curPage - cellContent.GetRelativeStartPage();
+		}
+		else
+		{
+			startCell.Temp.Y_content_end[cellPageIndex] = Y_content_end;
 		}
 		
 		if (recalcresult2_NextPage === cellContent.Recalculate_Page(cellPageIndex, true))
