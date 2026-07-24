@@ -1429,16 +1429,16 @@
 		let oDoc = this.getPDFDoc();
 		oDoc.BlurActiveObject();
 
+		function addStamp() {
+			oDoc.DoAction(function() {
+				oDoc.AddStampAnnot(sType, oDoc.Viewer.currentPage, oImage);
+			}, AscDFH.historydescription_Pdf_AddAnnot, this);
+		}
+		
 		if (sType == AscPDF.STAMP_TYPES.Signature) {
-			oDoc.AddStampAnnot(AscPDF.STAMP_TYPES.Signature, oDoc.Viewer.currentPage, oImage);
+			addStamp();
 		}
 		else {
-			function addStamp() {
-				oDoc.DoAction(function() {
-					oDoc.AddStampAnnot(sType, oDoc.Viewer.currentPage, oImage);
-				}, AscDFH.historydescription_Pdf_AddAnnot, this);
-			}
-	
 			if (oDoc.checkFonts(["Arial"], addStamp)) {
 				addStamp();
 			}
