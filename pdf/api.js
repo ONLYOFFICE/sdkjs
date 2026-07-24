@@ -4074,6 +4074,8 @@
 				if (oOptionObject) {
 					const oImage = oApi.ImageLoader.LoadImage(arrUrls[0], 1);
 					if (!oImage || !oImage.Image) {
+						let oActionsQueue = oDoc.GetActionsQueue();
+						oActionsQueue.Continue();
 						return;
 					}
 

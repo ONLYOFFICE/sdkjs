@@ -132,8 +132,7 @@
         if (!oImgData) {
             return;
         }
-        const oHTMLImg = oImgData.Image;
-        if (!oHTMLImg || oHTMLImg.width === 0 || oHTMLImg.height === 0) {
+        if (oImgData.Status !== AscFonts.ImageLoadStatus.Complete) {
             return;
         }
 
@@ -150,41 +149,39 @@
             return;
         }
 
-        oDoc.DoAction(function() {
-            aFields.forEach(function(field) {
-                if (field.GetLayout() == position["textOnly"])
-                    return;
-    
-                field.SetWasChanged(true);
-                field.DoInitialRecalc();
-                field.SetNeedRecalc(true);
-                field.SetImageRasterId(AscFormat.checkRasterImageId(oImgData.src), nAPType);
-    
-                let sTargetSrc;
-                if (nAPType != AscPDF.APPEARANCE_TYPES.rollover && nAPType != AscPDF.APPEARANCE_TYPES.mouseDown) {
-                    sTargetSrc = oImgData.src;
-                    field.SetImage(sTargetSrc);
-                }
-                
-                if (undefined == nAPType) {
-                    field.SetImageRasterId('', AscPDF.APPEARANCE_TYPES.rollover);
-                    field.SetImageRasterId('', AscPDF.APPEARANCE_TYPES.mouseDown);
-                }            
-            });
-            
-            if (oViewer.IsOpenFormsInProgress == false) {
-                aFields.forEach(function(field) {
-                    if (field.GetLayout() == position["textOnly"])
-                        return;
-    
-                    field.SetNeedRecalc(true);
-                });
-                
-                let oDoc            = this.GetDocument();
-                let oActionsQueue   = oDoc.GetActionsQueue();
-                oActionsQueue.Continue();   
-            }
-        }, AscDFH.historydescription_Pdf_FieldImportImage, this);
+		aFields.forEach(function(field) {
+			if (field.GetLayout() == position["textOnly"])
+				return;
+
+			field.SetWasChanged(true);
+			field.DoInitialRecalc();
+			field.SetNeedRecalc(true);
+			field.SetImageRasterId(AscFormat.checkRasterImageId(oImgData.src), nAPType);
+
+			let sTargetSrc;
+			if (nAPType != AscPDF.APPEARANCE_TYPES.rollover && nAPType != AscPDF.APPEARANCE_TYPES.mouseDown) {
+				sTargetSrc = oImgData.src;
+				field.SetImage(sTargetSrc);
+			}
+			
+			if (undefined == nAPType) {
+				field.SetImageRasterId('', AscPDF.APPEARANCE_TYPES.rollover);
+				field.SetImageRasterId('', AscPDF.APPEARANCE_TYPES.mouseDown);
+			}            
+		});
+		
+		if (oViewer.IsOpenFormsInProgress == false) {
+			aFields.forEach(function(field) {
+				if (field.GetLayout() == position["textOnly"])
+					return;
+
+				field.SetNeedRecalc(true);
+			});
+			
+			let oDoc            = this.GetDocument();
+			let oActionsQueue   = oDoc.GetActionsQueue();
+			oActionsQueue.Continue();
+		}
     };
     CPushButtonField.prototype.IsImageChanged = function(nAPType) {
         switch (nAPType) {
