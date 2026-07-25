@@ -3770,7 +3770,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.crop = function (row, col) {
 		//realSize-aware + non-mutating: keep the requested rows/cols of the LOGICAL array (physical head plus
-		//any lazy tail), reading each kept cell via getElementRowCol(...,true). a positive count keeps the first
+		//any lazy tail), reading each kept cell via getElementRowCol (tail-aware, no flag). a positive count keeps the first
 		//|n|, a negative count keeps the last |n|, |n| >= size keeps all. used by TAKE/DROP, which may receive a
 		//lazy full-column array (e.g. A:A/B:B) - the old version spliced the physical head and dropped the tail.
 		let dimensions = this.getDimensions();

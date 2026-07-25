@@ -1535,7 +1535,7 @@ function (window, undefined) {
 		}
 		var xs = [], ys = [], i;
 		for (i = 0; i < H; i++) {
-			//a shorter head returns its own tail value here via getElementRowCol(...,true)
+			//a shorter head returns its own tail value here via getElementRowCol (tail-aware, no flag)
 			xs.push(arg0.getElementRowCol(i, 0));
 			ys.push(arg1.getElementRowCol(i, 0));
 		}
@@ -1545,7 +1545,7 @@ function (window, undefined) {
 	}
 
 	//a uniform row/col accessor over an array or range operand, bounded to its DATA extent:
-	//- cArray: logical dims + getElementRowCol(...,true) (a constant tail is served positionally, in O(1)/cell)
+	//- cArray: logical dims + getElementRowCol (tail-aware, no flag) (a constant tail is served positionally, in O(1)/cell)
 	//- cArea/cArea3D: getMatrix() is positional and clamped to the sheet's used rows (not the full-column bbox)
 	function pairedView(arg) {
 		if (arg instanceof cArray) {
@@ -4269,8 +4269,7 @@ function (window, undefined) {
 			let _arg = arg[i];
 
 			if (_arg.type === cElementType.array) {
-				//head cells -> arrX (like a range); constant lazy tail -> one weighted {v, n} (getDimensions/
-				//getElementRowCol without the logical flag would iterate the physical head only and drop the tail)
+				//head cells -> arrX (like a range); a constant lazy tail folds to one weighted {v, n} via reduceLogical, not iterated
 				let errElem = _arg.reduceLogical(function (acc, elem, n) {
 					if (acc) {
 						return acc;

@@ -307,7 +307,7 @@ function (window, undefined) {
 
 	//like getMatrix() but includes a lazy CONSTANT tail: getMatrix() iterates the physical head only, so reshape/
 	//dedup/stack functions (UNIQUE/TRANSPOSE/VSTACK/HSTACK/TOROW/TOCOL) would drop the tail. For a lazy-tail cArray
-	//build the full LOGICAL 2D matrix via getElementRowCol(...,true); every other arg falls back to getMatrix().
+	//build the full LOGICAL 2D matrix via getElementRowCol (tail-aware, no flag); every other arg falls back to getMatrix().
 	function getMatrixLogical(arg) {
 		if (arg && arg.type === cElementType.array && arg.hasLazyTail && arg.hasLazyTail()) {
 			let dim = arg.getDimensions(), m = [];
@@ -4554,7 +4554,7 @@ function (window, undefined) {
 		function findIndexInArray(lookingValue, arr) {
 			let resIndex = -1;
 
-			//a constant lazy tail: search the LOGICAL row/col (getCol/getRow/getRowCount see the physical head only)
+			//a constant lazy tail: size by the LOGICAL dims via getDimensions(); getCol/getRow walk only the physical head
 			let lazy = arr.hasLazyTail && arr.hasLazyTail();
 			let rows = lazy ? arr.getDimensions().row : arr.getRowCount(true);
 			let cols = lazy ? arr.getDimensions().col : arr.getCountElementInRow(true);
