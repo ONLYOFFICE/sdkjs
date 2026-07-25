@@ -1754,8 +1754,13 @@ Paragraph.prototype.private_RecalculateLineCheckRanges = function(CurLine, CurPa
         PRS.RangesCount  = Ranges2.length;
         PRS.RecalcResult = recalcresult_CurLine;
 
-        if (this.Lines[CurLine].Info & paralineinfo_RangeY)
-            PRS.RangeY = true;
+		if (this.Lines[CurLine].Info & paralineinfo_RangeY) 
+		{
+			if (CurLine === this.Pages[CurPage].StartLine)
+				this.Pages[CurPage].FirstLineTightWrap = this.private_CheckTightWrapRanges(Ranges2);
+
+			PRS.RangeY = true;
+		}
 
         return false;
     }
@@ -2579,6 +2584,24 @@ Paragraph.prototype.private_RecalculateMoveLineToNextPage = function(CurLine, Cu
 	}
 };
 
+/**
+ * @param {Array} wrapRanges
+ * @returns {boolean}
+ */
+Paragraph.prototype.private_CheckTightWrapRanges = function(wrapRanges)
+{
+	for (let i = 0; i < wrapRanges.length; ++i)
+	{
+		if (WRAPPING_TYPE_TIGHT === wrapRanges[i].typeLeft
+			|| WRAPPING_TYPE_THROUGH === wrapRanges[i].typeLeft
+			|| WRAPPING_TYPE_TIGHT === wrapRanges[i].typeRight
+			|| WRAPPING_TYPE_THROUGH === wrapRanges[i].typeRight)
+			return true;
+	}
+
+	return false;
+};
+
 Paragraph.prototype.private_CheckNeedBeforeSpacing = function(CurPage, Parent, PageAbs, ParaPr)
 {
 	if (CurPage <= 0)
@@ -3186,6 +3209,8 @@ function CParaPage(X, Y, XLimit, YLimit, FirstLine)
     this.EndLine   = FirstLine; // Номер последней строки на данной странице
     this.TextPr    = null;      // Расситанные текстовые настройки для начала страницы
 
+    this.FirstLineTightWrap = false; // Первая строка страницы обтекается объектом с типом tight/through (баг #50253)
+
     this.Drawings  = [];
     this.EndInfo   = new CParagraphPageEndInfo();
 }
@@ -3201,6 +3226,7 @@ CParaPage.prototype =
         this.FirstLine = FirstLine;
         this.Bounds    = new CDocumentBounds( X, Y, XLimit, Y );
         this.StartLine = FirstLine;
+        this.FirstLineTightWrap = false;
         this.Drawings  = [];
     },
 
