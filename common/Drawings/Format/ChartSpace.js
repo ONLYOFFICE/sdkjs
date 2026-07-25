@@ -6848,12 +6848,21 @@ function(window, undefined) {
 			let bCrossAt = false;
 
 			let oCrossGrid = getCrossGrid(oCrossAxis.grid, oCurAxis);
-			if(AscFormat.isRealNumber(oCurAxis.crossesAt) && oCrossAxis.scale[0] <= oCurAxis.crossesAt && oCrossAxis.scale[oCrossAxis.scale.length - 1] >= oCurAxis.crossesAt) {
-				fCrossValue = oCurAxis.crossesAt;
-				bCrossAt = true;
+			let crosses = oCurAxis.crosses;
+			if(AscFormat.isRealNumber(oCurAxis.crossesAt)) {
+				if(oCurAxis.crossesAt < oCrossAxis.scale[0]) {
+					crosses = AscFormat.CROSSES_MIN;
+				}
+				else if(oCurAxis.crossesAt > oCrossAxis.scale[oCrossAxis.scale.length - 1]) {
+					crosses = AscFormat.CROSSES_MAX;
+				}
+				else {
+					fCrossValue = oCurAxis.crossesAt;
+					bCrossAt = true;
+				}
 			}
-			else {
-				switch(oCurAxis.crosses) {
+			if(!bCrossAt) {
+				switch(crosses) {
 					case AscFormat.CROSSES_MAX:
 					{
 						fCrossValue = oCrossAxis.scale[oCrossAxis.scale.length - 1];
