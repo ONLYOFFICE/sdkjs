@@ -767,6 +767,12 @@
 			return true;
 		return false;
 	};
+	baseEditorsApi.prototype.getSaveFormats = baseEditorsApi.prototype["getSaveFormats"] = function()
+	{
+		if (AscCommon.CryptoProvider)
+			return AscCommon.CryptoProvider.getSaveFormats();
+		return undefined;
+	};
 	baseEditorsApi.prototype.asc_enableKeyEvents             = function(isEnabled, isFromInput)
 	{
 	};
@@ -1623,6 +1629,10 @@
 	baseEditorsApi.prototype.forceSave = function()
 	{
 		if (!this.getViewMode()) {
+			if (AscCommon.CryptoProvider && AscCommon.EncryptionWorker && AscCommon.EncryptionWorker.isNeedCrypt()) {
+				AscCommon.CryptoProvider.saveFile();
+				return true;
+			}
 			return this.CoAuthoringApi.forceSave();
 		}
 		return false;
