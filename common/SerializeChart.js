@@ -7169,6 +7169,7 @@ BinaryChartReader.prototype.ExternalReadCT_ChartSpace = function (length, val, c
     });
     if(val){
 		val.correctAxes();
+		val.applyLegacyTitleOverlay();
         }
     /*if(this.curWorksheet) {
         var aStyles = null;

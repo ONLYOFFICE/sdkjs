@@ -5270,6 +5270,16 @@ function(window, undefined) {
 			}
 		}
 	};
+	CChartSpace.prototype.applyLegacyTitleOverlay = function () {
+		let app = Asc.editor.asc_getAppProps();
+		if (!app || !app.isLegacyMS()) {
+			return;
+		}
+		let title = this.chart && this.chart.title;
+		if (title && !title.isChartEx() && !AscFormat.isRealBool(title.overlay)) {
+			title.setOverlay(false);
+		}
+	};
 	CChartSpace.prototype.refreshRecalcData2 = function (pageIndex, object) {
 		var nObjectType = null;
 		if (object && object.getObjectType) {

@@ -1574,15 +1574,16 @@ background-repeat: no-repeat;\
 		}
 
 
-		var documentPart = doc.getPartByRelationshipType(openXml.Types.presentation.relationType);
-		var contentDocument = documentPart.getDocumentContent();
-		reader = new StaxParser(contentDocument, documentPart, xmlParserContext);
-		this.WordControl.m_oLogicDocument.fromXml(reader, true);
 		let oAppPart = doc.getPartByRelationshipType(openXml.Types.extendedFileProperties.relationType);
 		let oContentApp = oAppPart.getDocumentContent();
 		let oAppReader = new StaxParser(oContentApp, oAppPart, xmlParserContext);
 		this.WordControl.m_oLogicDocument.App = new AscCommon.CApp();
 		this.WordControl.m_oLogicDocument.App.fromXml(oAppReader, true);
+
+		var documentPart = doc.getPartByRelationshipType(openXml.Types.presentation.relationType);
+		var contentDocument = documentPart.getDocumentContent();
+		reader = new StaxParser(contentDocument, documentPart, xmlParserContext);
+		this.WordControl.m_oLogicDocument.fromXml(reader, true);
 
 		let oPresentationPrPart = doc.getPartByRelationshipType(openXml.Types.presentationProperties.relationType);
 		if(oPresentationPrPart) {
