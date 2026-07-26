@@ -3298,6 +3298,12 @@ function (window, undefined) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 			
+			// reject a non-square logical shape before materializing the matrix
+			let dim = arg0.getDimensions();
+			if (!dim || dim.row !== dim.col) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
 			// getMatrix() drops a constant lazy tail; for a lazy cArray take the full logical matrix
 			// (_getArrayCopy below still makes fresh rows for the in-place inversion).
 			arg0 = _getArrayCopy(is3D ? arg0.getMatrix()[0] : (cElementType.array === arg0.type ? arg0.getMatrixLogical() : arg0.getMatrix()));

@@ -5206,13 +5206,18 @@ function (window, undefined) {
 		if (arg1.type === cElementType.cellsRange3D) {
 			arg1 = arg1.toArray()[0];
 		} else {
+			//reject an oversized arg on its LOGICAL size (O(1)) instead of building the matrix just to count it
+			let logicalSize = arg1.type === cElementType.array && arg1.getDimensions();
+			if (logicalSize && logicalSize.row * logicalSize.col > 1048578) {
+				return new cError(cErrorType.not_numeric);
+			}
 			arg1 = getMatrixLogical(arg1);
 		}
 
 		//Excel returns a #NUM when array is too large.
 		let elemCount = arg1.length * arg1[0].length;
 		if (elemCount > 1048578) {
-			return new cError(cErrorType.not_available);
+			return new cError(cErrorType.not_numeric);
 		}
 
 		//0    Keep all values (default)

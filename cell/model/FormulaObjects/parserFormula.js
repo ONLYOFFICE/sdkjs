@@ -4608,6 +4608,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 			//first iterate over all arguments and convert from cellsRange to array or value depending on how the function should work
 			var tempArgs = [], tempArg, firstArray, _checkArrayIndex, maxArrayRows = 1, maxArrayCols = 1;
+			//stored extent of the same arguments - the head that has to be computed cell by cell
+			var headRows = 0, headCols = 0;
 			for (var j = 0; j < argumentsCount; j++) {
 				tempArg = arg[j];
 
@@ -4648,6 +4650,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 							var _taR = tempArg.getRowCount(), _taC = tempArg.getCountElementInRow();
 							maxArrayRows = Math.max(maxArrayRows, _taR);
 							maxArrayCols = Math.max(maxArrayCols, _taC);
+							headRows = Math.max(headRows, tempArg.rowCount);
+							headCols = Math.max(headCols, tempArg.countElementInRow.length ? tempArg.countElementInRow[0] : 0);
 							if (!firstArray) {
 								firstArray = tempArg;
 							} else {
@@ -4680,12 +4684,29 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			let lazyCoversTarget = firstArray && firstArray.hasLazyTail && firstArray.hasLazyTail() &&
 				targetRows <= firstArray.getRowCount() && targetCols <= firstArray.getCountElementInRow();
 
-			if (!lazyCoversTarget && (needRefExpand || (firstArray && firstArray.foreach &&
-				(firstArray.getRowCount(true) < targetRows || firstArray.getCountElementInRow(true) < targetCols)))) {
+			let needDenseTarget = !lazyCoversTarget && (needRefExpand || (firstArray && firstArray.foreach &&
+				(firstArray.getRowCount(true) < targetRows || firstArray.getCountElementInRow(true) < targetCols)));
+
+			//no single argument's realSize covers the target: store only the head and let the result carry the target
+			headRows = Math.min(headRows, targetRows);
+			headCols = Math.min(headCols, targetCols);
+			let lazyHeadTarget = needDenseTarget && !needRefExpand && argumentsCount > 0 &&
+				(headRows < targetRows || headCols < targetCols);
+
+			if (!lazyHeadTarget) {
+				headRows = targetRows;
+				headCols = targetCols;
+			}
+			//engine size policy: Excel abandons a whole-sheet array instead of valuing it, so refuse it up front
+			if (lazyHeadTarget && targetRows === AscCommon.gc_nMaxRow && targetCols === AscCommon.gc_nMaxCol) {
+				return new cError(cErrorType.not_numeric);
+			}
+
+			if (needDenseTarget) {
 				firstArray = new cArray();
-				for (var _ri = 0; _ri < targetRows; _ri++) {
+				for (var _ri = 0; _ri < headRows; _ri++) {
 					firstArray.addRow();
-					for (var _ci = 0; _ci < targetCols; _ci++) {
+					for (var _ci = 0; _ci < headCols; _ci++) {
 						firstArray.addElement(null);
 					}
 				}
@@ -4694,6 +4715,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			if (firstArray) {
 				var array = new cArray();
 				array.copyRealSizeFrom(firstArray);
+				if (lazyHeadTarget) {
+					array.setRealArraySize(targetRows, targetCols);
+				}
 
 				//pre-compute: hoist invariant argument properties out of the per-element loop
 				var _argInfo = new Array(argumentsCount);
@@ -4783,7 +4807,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 						if (info.isArray) {
 							var srcRow = 1 === info.rows ? 0 : row;
 							var srcCol = 1 === info.cols ? 0 : col;
-							newArg = newArg.getElementRowCol(srcRow, srcCol);
+							//read exactly as doCalc does: Excel answers #N/A past a finite argument, not its seam cell
+							newArg = newArg.getValue2(srcRow, srcCol);
 							if (!newArg) {
 								newArg = new cError(cErrorType.not_available);
 							}
@@ -4830,7 +4855,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					}
 				}
 
-				if (lazyCoversTarget && array.getRealArraySize()) {
+				if ((lazyCoversTarget || lazyHeadTarget) && array.getRealArraySize()) {
 					var _headRows = array.rowCount;
 					var _headCols = array.countElementInRow.length ? array.countElementInRow[0] : 0;
 					var _realSz = array.getRealArraySize();
