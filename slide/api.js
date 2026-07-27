@@ -1023,6 +1023,10 @@
 
 	asc_docs_api.prototype.SetDocumentModified = function(bValue)
 	{
+		const logicDocument = this.private_GetLogicDocument();
+		if (logicDocument && logicDocument.isCompositeInputInProgress())
+			return;
+
 		this.isDocumentModify = bValue;
 		this.sendEvent("asc_onDocumentModifiedChanged");
 

@@ -634,6 +634,8 @@ function CPresentation(DrawingDocument, isMainLogicDocument) {
 
 	this.recalcMap = {};
 	this.bNeedUpdateTh = false;
+	this.needCheckLayouts = false;
+	this.needCheckLayoutsAttack = false;
 
 	this.writecomments = [];
 
@@ -1933,6 +1935,7 @@ CPresentation.prototype.End_CompositeInput = function () {
 		}
 	}
 	this.Document_UpdateInterfaceState();
+	this.flushDeferredInterfaceUpdates();
 
 	this.DrawingDocument.ClearCachePages();
 	this.DrawingDocument.FirePaint();
@@ -1942,6 +1945,9 @@ CPresentation.prototype.Get_MaxCursorPosInCompositeText = function () {
 		return 0;
 
 	return this.CompositeInput.Length;
+};
+CPresentation.prototype.isCompositeInputInProgress = function () {
+	return null !== this.CompositeInput;
 };
 
 
@@ -2445,6 +2451,11 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 								}
 							}
 						}
+						if (parent instanceof AscCommonSlide.MasterSlide) {
+							isUpdateThemes = true;
+							b_check_layout = true;
+							bAttack = true;
+						}
 					}
 					if(oDrawingObject.isDrawing ) {
 						if(oDrawingObject.isPlaceholder()) {
@@ -2525,26 +2536,19 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 	}
 
 	if (isUpdateThemes || this.bNeedUpdateThemes) {
-		this.SendThemesThumbnails();
-		this.bNeedUpdateThemes = false;
-		let oMaster = this.GetCurrentMaster();
-		if(oMaster)
-		{
-			this.Api.sendEvent("asc_onUpdateThemeIndex", oMaster.getThemeIndex());
-			this.Api.sendColorThemes(oMaster.Theme);
-		}
+		this.updateThemesThumbnails();
 	}
 	if (!oCurSlide) {
 		this.DrawingDocument.m_oWordControl.GoToPage(-1);
 		if (b_check_layout) {
-			this.DrawingDocument.m_oWordControl.CheckLayouts(bAttack);
+			this.checkLayouts(bAttack);
 		}
 	} else {
 		if (this.bGoToPage) {
 			this.DrawingDocument.m_oWordControl.GoToPage(this.CurPage);
 			this.bGoToPage = false;
 		} else if (b_check_layout) {
-			this.DrawingDocument.m_oWordControl.CheckLayouts(bAttack);
+			this.checkLayouts(bAttack);
 		}
 	}
 	if (this.SlideSelector) {
@@ -2552,8 +2556,7 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 		this.SlideSelector = null;
 	}
 	if (this.bNeedUpdateTh) {
-		this.DrawingDocument.UpdateThumbnailsAttack();
-		this.bNeedUpdateTh = false;
+		this.updateThumbnailsAttack();
 	}
 	this.Document_UpdateSelectionState();
 
@@ -2562,6 +2565,48 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 			this.DrawingDocument.placeholders.update(oCurSlide.getPlaceholdersControls());
 	}
 	this.MathTrackHandler.Update();
+};
+CPresentation.prototype.updateThemesThumbnails = function () {
+	if (this.isCompositeInputInProgress()) {
+		this.bNeedUpdateThemes = true;
+		return;
+	}
+	this.bNeedUpdateThemes = false;
+	this.SendThemesThumbnails();
+	const master = this.GetCurrentMaster();
+	if (master) {
+		this.Api.sendEvent("asc_onUpdateThemeIndex", master.getThemeIndex());
+		this.Api.sendColorThemes(master.Theme);
+	}
+};
+CPresentation.prototype.checkLayouts = function (isAttack) {
+	if (this.isCompositeInputInProgress()) {
+		this.needCheckLayouts = true;
+		this.needCheckLayoutsAttack = this.needCheckLayoutsAttack || !!isAttack;
+		return;
+	}
+	this.needCheckLayouts = false;
+	this.needCheckLayoutsAttack = false;
+	this.DrawingDocument.m_oWordControl.CheckLayouts(isAttack);
+};
+CPresentation.prototype.updateThumbnailsAttack = function () {
+	if (this.isCompositeInputInProgress()) {
+		this.bNeedUpdateTh = true;
+		return;
+	}
+	this.bNeedUpdateTh = false;
+	this.DrawingDocument.UpdateThumbnailsAttack();
+};
+CPresentation.prototype.flushDeferredInterfaceUpdates = function () {
+	if (this.bNeedUpdateThemes) {
+		this.updateThemesThumbnails();
+	}
+	if (this.needCheckLayouts) {
+		this.checkLayouts(this.needCheckLayoutsAttack);
+	}
+	if (this.bNeedUpdateTh) {
+		this.updateThumbnailsAttack();
+	}
 };
 CPresentation.prototype.private_RecalculateFastRunRange = function (arrChanges, nStartIndex, nEndIndex) {
 
