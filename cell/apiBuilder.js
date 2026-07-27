@@ -9540,6 +9540,52 @@
 	};
 
 	/**
+	 * Groups an array of drawings in the current sheet.
+	 * <note>This method is not supported in the document builder and works only in the editor.</note>
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiDrawing[]} aDrawings - An array of drawings to group.
+	 * @returns {ApiGroup | null} - Returns null if the drawings cannot be grouped or when called in the document builder.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GroupDrawings.js
+	 */
+	ApiWorksheet.prototype.GroupDrawings = function(aDrawings) {
+		if (AscCommon.isFileBuild())
+			return null;
+
+		if (!Array.isArray(aDrawings) || aDrawings.length === 0)
+			return null;
+
+		let oWorksheet = this.worksheet;
+		if (aDrawings.find(function(drawing) {
+			return !drawing.Drawing || drawing.Drawing.worksheet !== oWorksheet || !drawing.Drawing.IsUseInDocument();
+		}))
+			return null;
+
+		let oController = aDrawings[0].Drawing.getDrawingObjectsController();
+		if (!oController)
+			return null;
+
+		oController.resetSelection();
+		aDrawings.forEach(function(drawing) {
+			oController.selectObject(drawing.Drawing, 0);
+		});
+
+		if (!oController.canGroup())
+			return null;
+
+		aDrawings.forEach(function(drawing) {
+			drawing.Drawing.recalculate();
+		});
+
+		let oGroup = oController.createGroup();
+		if (!oGroup)
+			return null;
+
+		return new ApiGroup(oGroup);
+	};
+
+	/**
 	 * Returns all images from the current sheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -10857,15 +10903,15 @@
 	 * Sets the vertical alignment of the text in the current cell range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {'center' | 'bottom' | 'top' | 'distributed' | 'justify'} sAligment - The vertical alignment that will be applied to the cell contents.
-	 * @returns {boolean} - return false if sAligment doesn't exist.
+	 * @param {'center' | 'bottom' | 'top' | 'distributed' | 'justify'} sAlignment - The vertical alignment that will be applied to the cell contents.
+	 * @returns {boolean} - return false if sAlignment doesn't exist.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetAlignVertical.js
 	 */
-	ApiRange.prototype.SetAlignVertical = function (sAligment) {
+	ApiRange.prototype.SetAlignVertical = function (sAlignment) {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
 			return null;
 		}
-		switch (sAligment) {
+		switch (sAlignment) {
 			case "center": {
 				this.range.setAlignVertical(Asc.c_oAscVAlign.Center);
 				break;
@@ -10893,8 +10939,8 @@
 		return true;
 	};
 	Object.defineProperty(ApiRange.prototype, "AlignVertical", {
-		set: function (sAligment) {
-			return this.SetAlignVertical(sAligment);
+		set: function (sAlignment) {
+			return this.SetAlignVertical(sAlignment);
 		}
 	});
 
@@ -10903,7 +10949,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {'left' | 'right' | 'center' | 'justify'} sAlignment - The horizontal alignment that will be applied to the cell contents.
-	 * @returns {boolean} - return false if sAligment doesn't exist.
+	 * @returns {boolean} - return false if sAlignment doesn't exist.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetAlignHorizontal.js
 	 */
 	ApiRange.prototype.SetAlignHorizontal = function (sAlignment) {
@@ -13832,6 +13878,48 @@
 		return null;
 	};
 	/**
+	 * Sets the shadow to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @param {?ApiShadow} shadow - The shadow to apply, or null to remove the current shadow.
+	 * @returns {boolean} - returns false if the graphic object does not support shadow.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetShadow.js
+	 */
+	ApiDrawing.prototype.SetShadow = function(shadow)
+	{
+		if (!this.Drawing || !this.Drawing.spPr)
+			return false;
+
+		if (shadow === null || shadow === undefined)
+		{
+			this.Drawing.spPr.changeShadow(null);
+			return true;
+		}
+
+		if (!shadow.GetClassType || shadow.GetClassType() !== "shadow")
+			return false;
+
+		this.Drawing.spPr.changeShadow(shadow.Shadow);
+		return true;
+	};
+	/**
+	 * Returns the shadow of the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiShadow | null}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetShadow.js
+	 */
+	ApiDrawing.prototype.GetShadow = function()
+	{
+		let shadow = this.Drawing && this.Drawing.getOuterShdw ? this.Drawing.getOuterShdw() : null;
+		if (shadow)
+			return new AscBuilder.ApiShadow(shadow);
+
+		return null;
+	};
+	/**
 	 * Sets the title of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
@@ -13953,6 +14041,37 @@
 	 */
 	ApiGroup.prototype.GetClassType = function() {
 		return "group";
+	};
+
+	/**
+	 * Ungroups the current group of drawings.
+	 * <note>This method is not supported in the document builder and works only in the editor.</note>
+	 * @memberof ApiGroup
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiDrawing[] | null} - The array of the ungrouped objects, or null if the group is not in the document, cannot be ungrouped, or when called in the document builder.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Ungroup.js
+	 */
+	ApiGroup.prototype.Ungroup = function() {
+		if (AscCommon.isFileBuild())
+			return null;
+
+		if (!this.Drawing || !this.Drawing.IsUseInDocument())
+			return null;
+
+		let oController = this.Drawing.getDrawingObjectsController();
+		if (!oController)
+			return null;
+
+		let aChildren = this.Drawing.spTree.slice();
+		oController.resetSelection();
+		oController.selectObject(this.Drawing, 0);
+		if (!oController.canUnGroup())
+			return null;
+
+		this.Drawing.recalculate();
+		oController.unGroupCallback();
+		return GetApiDrawings(aChildren);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -16718,7 +16837,7 @@
 		if (count == undefined) count = 0;
 		let wsView = api.wb.getWorksheetById(this.ws.getId());
 		if (typeof count === 'number' && count > 0 && count <= AscCommon.gc_nMaxRow0) {
-			if (api.canEdit && wsView) {
+			if (api.canEdit() && wsView) {
 				wsView.freezePane(null, 0, count);
 			}
 		} else if (wsView && wsView.topLeftFrozenCell && count === 0) {
@@ -17913,7 +18032,7 @@
 	 */
 	ApiPageSetup.prototype.GetPaperSize = function () {
 		let oPageSetup = this.ws.PagePrintOptions.pageSetup;
-		let nId = AscCommonExcel.DocumentPageSize.getSizeByWH(oPageSetup.asc_getWidth(), oPageSetup.asc_getHeight()).id;
+		let nId = AscCommonExcel.DocumentPageSize.getIdByWHAndStored(oPageSetup.asc_getWidth(), oPageSetup.asc_getHeight(), oPageSetup.asc_getPaperSize());
 		return g_oPaperSizeIdToName[nId] || "";
 	};
 	/**
@@ -17934,6 +18053,7 @@
 		let oPageSetup = this.ws.PagePrintOptions.pageSetup;
 		oPageSetup.asc_setWidth(oItem.w_mm);
 		oPageSetup.asc_setHeight(oItem.h_mm);
+		oPageSetup.asc_setPaperSize(nId);
 		return true;
 	};
 	Object.defineProperty(ApiPageSetup.prototype, "PaperSize", {
@@ -29844,10 +29964,11 @@
     });
 
     /**
-     * Returns the parent ApiWorksheet object for the AutoFilter.
+     * Returns the parent object for the AutoFilter — either the ApiWorksheet the filter is applied to,
+     * or the ApiListObject if the filter belongs to a table.
      * @memberof ApiAutoFilter
      * @typeofeditors ["CSE"]
-     * @returns {ApiWorksheet}
+     * @returns {ApiWorksheet | ApiListObject} The parent worksheet or table object.
      * @see office-js-api/Examples/{Editor}/ApiAutoFilter/Methods/GetParent.js
      */
     ApiAutoFilter.prototype.GetParent = function () {
@@ -30216,6 +30337,7 @@
 	ApiWorksheet.prototype["ReplaceCurrentImage"] = ApiWorksheet.prototype.ReplaceCurrentImage;
 	ApiWorksheet.prototype["AddWordArt"] = ApiWorksheet.prototype.AddWordArt;
 	ApiWorksheet.prototype["GetAllDrawings"] = ApiWorksheet.prototype.GetAllDrawings;
+	ApiWorksheet.prototype["GroupDrawings"] = ApiWorksheet.prototype.GroupDrawings;
 	ApiWorksheet.prototype["GetAllImages"] = ApiWorksheet.prototype.GetAllImages;
 	ApiWorksheet.prototype["GetAllShapes"] = ApiWorksheet.prototype.GetAllShapes;
 	ApiWorksheet.prototype["GetAllCharts"] = ApiWorksheet.prototype.GetAllCharts;
@@ -30368,6 +30490,8 @@
 	ApiDrawing.prototype["SetOutLine"]                 =  ApiDrawing.prototype.SetOutLine;
 	ApiDrawing.prototype["SetLine"]                    =  ApiDrawing.prototype.SetLine;
 	ApiDrawing.prototype["GetLine"]                    =  ApiDrawing.prototype.GetLine;
+	ApiDrawing.prototype["SetShadow"]                  =  ApiDrawing.prototype.SetShadow;
+	ApiDrawing.prototype["GetShadow"]                  =  ApiDrawing.prototype.GetShadow;
 	ApiDrawing.prototype["Unselect"]                   =  ApiDrawing.prototype.Unselect;
 
 	ApiImage.prototype["GetClassType"]                 =  ApiImage.prototype.GetClassType;
@@ -30375,6 +30499,7 @@
 	ApiSmartArt.prototype["GetClassType"]              =  ApiSmartArt.prototype.GetClassType;
 
 	ApiGroup.prototype["GetClassType"]                =  ApiGroup.prototype.GetClassType;
+	ApiGroup.prototype["Ungroup"]                     =  ApiGroup.prototype.Ungroup;
 
 	ApiShape.prototype["GetClassType"]                 =  ApiShape.prototype.GetClassType;
 	ApiShape.prototype["GetDocContent"]                =  ApiShape.prototype.GetDocContent;
@@ -30432,6 +30557,7 @@
 	ApiChart.prototype["SetLegendFill"] = ApiChart.prototype.SetLegendFill = AscBuilder.ApiChart.prototype.SetLegendFill;
 	ApiChart.prototype["SetLegendOutLine"] = ApiChart.prototype.SetLegendOutLine = AscBuilder.ApiChart.prototype.SetLegendOutLine;
 	ApiChart.prototype["SetAxieNumFormat"] = ApiChart.prototype.SetAxieNumFormat = AscBuilder.ApiChart.prototype.SetAxieNumFormat;
+	ApiChart.prototype["SetAxisNumFormat"] = ApiChart.prototype.SetAxisNumFormat = AscBuilder.ApiChart.prototype.SetAxisNumFormat;
 	ApiChart.prototype["GetAllSeries"] = ApiChart.prototype.GetAllSeries = AscBuilder.ApiChart.prototype.GetAllSeries;
 	ApiChart.prototype["GetSeries"] = ApiChart.prototype.GetSeries = AscBuilder.ApiChart.prototype.GetSeries;
 
@@ -30484,7 +30610,6 @@
 	ApiCommentReply.prototype["GetClassType"]         =  ApiCommentReply.prototype.GetClassType;
 	ApiCommentReply.prototype["GetText"]              =  ApiCommentReply.prototype.GetText;
 	ApiCommentReply.prototype["SetText"]              =  ApiCommentReply.prototype.SetText;
-	ApiCommentReply.prototype["SetTextGetAuthorName"] =  ApiCommentReply.prototype.SetTextGetAuthorName;
 	ApiCommentReply.prototype["GetAuthorName"]        =  ApiCommentReply.prototype.GetAuthorName;
 	ApiCommentReply.prototype["SetAuthorName"]        =  ApiCommentReply.prototype.SetAuthorName;
 	ApiCommentReply.prototype["GetUserId"]            =  ApiCommentReply.prototype.GetUserId;

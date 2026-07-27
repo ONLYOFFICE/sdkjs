@@ -100,7 +100,8 @@
 	 * @param {boolean} [oParams.annotations=false] - Specifies whether the annotations will be rendered.
 	 * @param {boolean} [oParams.fields=false] - Specifies whether the fields will be rendered.
 	 * @param {boolean} [oParams.drawings=false] - Specifies whether the drawings will be rendered.
-	 * @returns {canvas}
+	 * @param {boolean} [oParams.withInfo=false] - Return an object with the image plus the page size instead of a bare data URL.
+	 * @returns {string | {image: string, width: number, height: number, widthMM: number, heightMM: number}}
 	 * @see office-js-api/Examples/Plugins/PDF/Api/Methods/GetPageImage.js
 	 */
 	Api.prototype["pluginMethod_GetPageImage"] = function(nPage, oParams) {
@@ -110,7 +111,10 @@
 
 		let oViewer		= this.DocumentRenderer;
 		let oFile		= oViewer.file;
-		let nPt2Px		= AscCommonWord.g_dKoef_pt_to_mm * AscCommonWord.g_dKoef_mm_to_pix;
+		let nPt2Px		= AscCommonWord.g_dKoef_pt_to_mm * AscCommon.g_dKoef_mm_to_pix;
+
+		let nWidthMM	= oFile.pages[nPage].W * AscCommonWord.g_dKoef_pt_to_mm;
+		let nHeightMM	= oFile.pages[nPage].H * AscCommonWord.g_dKoef_pt_to_mm;
 
 		let nWidthPx	= oFile.pages[nPage].W * nPt2Px;
 		let nHeightPx	= oFile.pages[nPage].H * nPt2Px;
@@ -162,7 +166,19 @@
 			oViewer._drawFieldsOnCtx(nPage, ctx, false, true);
 		}
 
-		return ctx.canvas.toDataURL("image/png");
+		let sDataUrl = ctx.canvas.toDataURL("image/png");
+
+		if (oParams['withInfo']) {
+			return {
+				"image"    : sDataUrl,
+				"width"    : nWidthPx,
+				"height"   : nHeightPx,
+				"widthMM"  : nWidthMM,
+				"heightMM" : nHeightMM
+			};
+		}
+
+		return sDataUrl;
 	};
 
     /**

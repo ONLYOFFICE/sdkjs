@@ -134,16 +134,21 @@ jobs:
           node run.js 2>&1 | tee "$GITHUB_WORKSPACE/test-output.txt"
 
       - name: Send message to telegram if failure
-        if: failure()
+        if: failure() && github.event_name == 'push'
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT: ${{ secrets.TELEGRAM_TO }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
         shell: bash
         run: |
           BRANCH="${{ github.ref_name }}"
           AUTHOR="${{ github.actor }}"
           NOW=$(date -u "+%Y-%m-%d %H:%M UTC")
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          COMMIT_SHA="${{ github.sha }}"
+          COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/${COMMIT_SHA}"
+          COMMIT_SUBJECT=$(printf '%s' "$COMMIT_MSG" | head -n1 | tr -d '`*_' | tr '[]' '()')
+          [ -z "$COMMIT_SUBJECT" ] && COMMIT_SUBJECT="${COMMIT_SHA:0:7}"
 
           FAILED_MODULES=$(sed 's/\x1b\[[0-9;]*m//g' "$GITHUB_WORKSPACE/test-output.txt" | \
             awk '/^FAILED$/{f=1; next} f && /\.html$/{print}' | \
@@ -151,7 +156,7 @@ jobs:
 
           [ -z "$FAILED_MODULES" ] && FAILED_MODULES="(see logs for details)"
 
-          MESSAGE=$'❌ Unit tests failed\n\nBranch: '"$BRANCH"$'\nAuthor: ['"$AUTHOR"'](https://github.com/'"$AUTHOR"$')\nTime: '"$NOW"$'\n\nFailed modules:\n```\n'"$FAILED_MODULES"$'\n```\n\nLogs: '"$RUN_URL"
+          MESSAGE=$'❌ Unit tests failed\n\nBranch: '"$BRANCH"$'\nAuthor: ['"$AUTHOR"'](https://github.com/'"$AUTHOR"$')\nCommit: ['"$COMMIT_SUBJECT"']('"$COMMIT_URL"$')\nTime: '"$NOW"$'\n\nFailed modules:\n```\n'"$FAILED_MODULES"$'\n```\n\nLogs: '"$RUN_URL"
 
           PAYLOAD=$(jq -n \
             --arg chat_id "$TELEGRAM_CHAT" \
@@ -170,8 +175,8 @@ jobs:
         with:
           path: sdkjs
 
-      - name: check out repository sdkjs-forms current branch
-        id: sdkjs-forms
+      - name: Check out sdkjs-forms (matching branch)
+        id: sdkjs-forms-branch
         uses: actions/checkout@v4
         continue-on-error: true
         with:
@@ -179,8 +184,8 @@ jobs:
           token: ${{ secrets.READ_PAT }}
           path: sdkjs-forms
           ref: ${{ github.base_ref || github.ref_name }}
-      - name: check out repository sdkjs-forms master branch
-        if: steps.sdkjs-forms.outcome != 'success'
+      - name: Check out sdkjs-forms (master fallback)
+        if: steps.sdkjs-forms-branch.outcome != 'success'
         uses: actions/checkout@v4
         with:
           repository: ONLYOFFICE/sdkjs-forms
@@ -188,19 +193,188 @@ jobs:
           path: sdkjs-forms
           ref: master
 
+      - name: Check out sdkjs-ooxml (matching branch)
+        id: sdkjs-ooxml-branch
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: ONLYOFFICE/sdkjs-ooxml
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-ooxml
+          ref: ${{ github.base_ref || github.ref_name }}
+      - name: Check out sdkjs-ooxml (master fallback)
+        if: steps.sdkjs-ooxml-branch.outcome != 'success'
+        uses: actions/checkout@v4
+        with:
+          repository: ONLYOFFICE/sdkjs-ooxml
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-ooxml
+          ref: master
+
+      - name: Check out sdkjs-ext (matching branch)
+        id: sdkjs-ext-branch
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: ONLYOFFICE/sdkjs-ext
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-ext
+          ref: ${{ github.base_ref || github.ref_name }}
+      - name: Check out sdkjs-ext (master fallback)
+        if: steps.sdkjs-ext-branch.outcome != 'success'
+        uses: actions/checkout@v4
+        with:
+          repository: ONLYOFFICE/sdkjs-ext
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-ext
+          ref: master
+
+      - name: Check out onlyoffice build tooling (matching branch)
+        id: onlyoffice-branch
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: ONLYOFFICE/onlyoffice
+          token: ${{ secrets.READ_PAT }}
+          path: onlyoffice
+          ref: ${{ github.base_ref || github.ref_name }}
+          sparse-checkout: sdkjs/build
+      - name: Check out onlyoffice build tooling (master fallback)
+        if: steps.onlyoffice-branch.outcome != 'success'
+        uses: actions/checkout@v4
+        with:
+          repository: ONLYOFFICE/onlyoffice
+          token: ${{ secrets.READ_PAT }}
+          path: onlyoffice
+          ref: master
+          sparse-checkout: sdkjs/build
+
+      - name: setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Run build sdkjs
+      - name: Build sdk-all with WHITESPACE_ONLY minification
+        shell: bash
         run: |
-          cd sdkjs
-          python build/build.py --addon ../sdkjs-forms
+          set -o pipefail
+          cd "$GITHUB_WORKSPACE/onlyoffice/sdkjs/build"
+          npm ci
+          python build.py --level=WHITESPACE_ONLY --minimize \
+            --addon "$GITHUB_WORKSPACE/sdkjs-forms" \
+            --addon "$GITHUB_WORKSPACE/sdkjs-ooxml" \
+            --addon "$GITHUB_WORKSPACE/sdkjs-ext" 2>&1 | tee "$GITHUB_WORKSPACE/build-output.txt"
 
       - name: Send message to telegram if failure
-        if: failure()
-        uses: ./sdkjs/.github/actions/send-message
-        with:
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          chat: ${{ secrets.TELEGRAM_TO }}
+        if: failure() && github.event_name == 'push'
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT: ${{ secrets.TELEGRAM_TO }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        shell: bash
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          AUTHOR="${{ github.actor }}"
+          NOW=$(date -u "+%Y-%m-%d %H:%M UTC")
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          COMMIT_SHA="${{ github.sha }}"
+          COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/${COMMIT_SHA}"
+          COMMIT_SUBJECT=$(printf '%s' "$COMMIT_MSG" | head -n1 | tr -d '`*_' | tr '[]' '()')
+          [ -z "$COMMIT_SUBJECT" ] && COMMIT_SUBJECT="${COMMIT_SHA:0:7}"
+
+          BUILD_ERRORS=$(sed 's/\x1b\[[0-9;]*m//g' "$GITHUB_WORKSPACE/build-output.txt" 2>/dev/null \
+            | grep -A1 -E ': ERROR - ' \
+            | grep -vx -- '--' \
+            | sed 's#.*/sdkjs/#sdkjs/#' \
+            | tr -d '\140' \
+            | head -40 || true)
+          [ -z "$BUILD_ERRORS" ] && BUILD_ERRORS="(see logs for details)"
+
+          MESSAGE=$'❌ Build failed\n\nBranch: '"$BRANCH"$'\nAuthor: ['"$AUTHOR"'](https://github.com/'"$AUTHOR"$')\nCommit: ['"$COMMIT_SUBJECT"']('"$COMMIT_URL"$')\nTime: '"$NOW"$'\n\nBuild errors:\n```\n'"$BUILD_ERRORS"$'\n```\n\nLogs: '"$RUN_URL"
+
+          PAYLOAD=$(jq -n \
+            --arg chat_id "$TELEGRAM_CHAT" \
+            --arg text "$MESSAGE" \
+            '{"chat_id":$chat_id,"text":$text,"parse_mode":"Markdown","disable_notification":true,"disable_web_page_preview":true}')
+
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+            -H 'Content-Type: application/json' \
+            -d "$PAYLOAD"
+
+  notify-success:
+    runs-on: ubuntu-latest
+    needs: [code-style, unit-tests, build-test]
+    if: success() && github.event_name == 'push'
+    permissions:
+      actions: read
+    steps:
+      - name: Send OK to telegram (only once until next failure)
+        continue-on-error: true
+        env:
+          GITEA_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT: ${{ secrets.TELEGRAM_TO }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        shell: bash
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          AUTHOR="${{ github.actor }}"
+          NOW=$(date -u "+%Y-%m-%d %H:%M UTC")
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          COMMIT_SHA="${{ github.sha }}"
+          COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/${COMMIT_SHA}"
+          COMMIT_SUBJECT=$(printf '%s' "$COMMIT_MSG" | head -n1 | tr -d '`*_' | tr '[]' '()')
+          [ -z "$COMMIT_SUBJECT" ] && COMMIT_SUBJECT="${COMMIT_SHA:0:7}"
+
+          API="${{ github.server_url }}/api/v1"
+          WORKFLOW="check-build.yml"
+          RUNS_FILE="$(mktemp)"
+          HTTP=$(curl -s -G -o "$RUNS_FILE" -w '%{http_code}' \
+            -H "Authorization: token $GITEA_TOKEN" \
+            -H "Accept: application/json" \
+            --data-urlencode "event=push" \
+            --data-urlencode "branch=$BRANCH" \
+            --data-urlencode "limit=50" \
+            "$API/repos/${{ github.repository }}/actions/runs")
+
+          if [ "$HTTP" != "200" ]; then
+            echo "::warning::Could not query run history (HTTP $HTTP); skipping OK message to avoid spam."
+            head -c 500 "$RUNS_FILE"; echo
+            exit 0
+          fi
+
+          #echo "Runs returned (path | run_number | status | conclusion):"
+          #jq -r '.workflow_runs[]? | "\(.path) | \(.run_number) | \(.status) | \(.conclusion)"' "$RUNS_FILE" 2>/dev/null | head -15
+
+          PREV_RESULT=$(jq -r --arg wf "$WORKFLOW" '
+            [ .workflow_runs[]?
+              | { rn: .run_number,
+                  res: (if (.conclusion // "") != "" then .conclusion else (.status // "") end),
+                  p: (.path // "") }
+              | select((.p | split("@") | .[0]) | endswith($wf))
+              | select(.res as $r | ([ "running","waiting","queued","in_progress","blocked","unknown","" ] | index($r)) == null) ]
+            | (sort_by(.rn) | last) // {} | (.res // "")' "$RUNS_FILE" 2>/dev/null || true)
+
+          echo "Previous run result: ${PREV_RESULT:-none}"
+
+          # Don't spam with 'success' messages
+          if [ "$PREV_RESULT" = "success" ]; then
+            echo "Previous run already succeeded — skipping OK message."
+            exit 0
+          fi
+
+          MESSAGE=$'✅ All checks passed\n\nBranch: '"$BRANCH"$'\nAuthor: ['"$AUTHOR"'](https://github.com/'"$AUTHOR"$')\nCommit: ['"$COMMIT_SUBJECT"']('"$COMMIT_URL"$')\nTime: '"$NOW"$'\n\nLogs: '"$RUN_URL"
+
+          PAYLOAD=$(jq -n \
+            --arg chat_id "$TELEGRAM_CHAT" \
+            --arg text "$MESSAGE" \
+            '{"chat_id":$chat_id,"text":$text,"parse_mode":"Markdown","disable_notification":true,"disable_web_page_preview":true}')
+
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+            -H 'Content-Type: application/json' \
+            -d "$PAYLOAD"

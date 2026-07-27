@@ -399,6 +399,7 @@
 	SpecificPrinter.prototype.getCommentsPrinter = function () {
 		if (!this.cache.commentsPrinter) {
 			const oThis = this;
+			this.presentation.CalculateComments();
 			this.cache.commentsPrinter = new AscCommonSlide.CommentsPrinter(this.presentation, this.printOptions, function () {
 				return oThis.getPageSizes();
 			});
@@ -437,7 +438,15 @@
 		if (!page) {
 			return;
 		}
+		graphics.PrintComments = {
+			isPrintComments: this.isPrintComments()
+		};
+		if (graphics.PrintComments.isPrintComments) {
+			const commentsPrinter = this.getCommentsPrinter();
+			graphics.PrintComments.commentsCache = commentsPrinter.commentsCache;
+		}
 		page.draw(graphics);
+		delete graphics.PrintComments;
 	};
 	SpecificPrinter.prototype.isDrawFrame = function () {
 		return this.printOptions.slidesOnPageOptions.asc_getIsFrameSlides();

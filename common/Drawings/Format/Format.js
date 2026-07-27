@@ -14974,6 +14974,15 @@
 		CApp.prototype.asc_getAppVersion = function () {
 			return this.AppVersion;
 		};
+		CApp.prototype.isLegacyMS = function () {
+			let msApps = ["Microsoft Office Word", "Microsoft Excel", "Microsoft Office PowerPoint",
+				"Microsoft Macintosh Word", "Microsoft Macintosh Excel", "Microsoft Macintosh PowerPoint"];
+			if (msApps.indexOf(this.Application) === -1) {
+				return false;
+			}
+			let version = parseInt(this.AppVersion, 10);
+			return AscFormat.isRealNumber(version) && version < 14;
+		};
 		CApp.prototype.asc_getCharacters = function () {
 			return this.Characters;
 		};

@@ -493,6 +493,9 @@
 			case AscDFH.historydescription_Document_SetTextBoldHotKey                  :
 				sString = "Document_SetTextBoldHotKey";
 				break;
+			case AscDFH.historydescription_Document_SetTextSmallCapsHotKey             :
+				sString = "Document_SetTextSmallCapsHotKey";
+				break;
 			case AscDFH.historydescription_Document_SetParagraphAlignHotKey            :
 				sString = "Document_SetParagraphAlignHotKey";
 				break;
@@ -2100,6 +2103,7 @@
 	window['AscDFH'].historyitem_TableRow_Pr          = window['AscDFH'].historyitem_type_TableRow | 8;
 	window['AscDFH'].historyitem_TableRow_PrChange    = window['AscDFH'].historyitem_type_TableRow | 9;
 	window['AscDFH'].historyitem_TableRow_ReviewType  = window['AscDFH'].historyitem_type_TableRow | 10;
+	window['AscDFH'].historyitem_TableRow_CantSplit   = window['AscDFH'].historyitem_type_TableRow | 11;
 	//------------------------------------------------------------------------------------------------------------------
 	// Types of changes in CTable classCell
 	//------------------------------------------------------------------------------------------------------------------
@@ -4852,6 +4856,7 @@
 	window['AscDFH'].historydescription_Document_SetParagraphHtml                   = 0x01ff;
 	window['AscDFH'].historydescription_Document_SetHorizontalRuleProps             = 0x0200;
 	window['AscDFH'].historydescription_CommonControllerConvertSvgToShapes          = 0x0201;
+	window['AscDFH'].historydescription_Document_SetTextSmallCapsHotKey             = 0x0202;
 
 	// pdf
 	window['AscDFH'].historydescription_Pdf_AddAnnot			= 0x29a;
@@ -4879,6 +4884,7 @@
 	window['AscDFH'].historydescription_Pdf_ChangeField			= 0x2b6;
 	window['AscDFH'].historydescription_Pdf_ChangeAnnot			= 0x2b7;
 	window['AscDFH'].historydescription_Pdf_Apply_Redact		= 0x2b8;
+	window['AscDFH'].historydescription_Pdf_Redact_Meta			= 0x2b9;
 	// reserved
 	window['AscDFH'].historydescription_GroupPoints     = 0xFF01;
 	window['AscDFH'].historydescription_GroupPointsOpen = 0xFF02;

@@ -35,6 +35,8 @@
 
 "use strict";
 
+const BOOKMARK_SCROLL_TOP_OFFSET = 25; // mm
+
 /**
  *
  * @constructor
@@ -525,9 +527,12 @@ CBookmarksManager.prototype.GoToBookmark = function(sName)
 {
 	this.Update();
 
-	var oBookmark = this.GetBookmarkByName(sName);
-	if (oBookmark)
-		oBookmark[0].GoToBookmark();
+	let bookmark = this.GetBookmarkByName(sName);
+	if (!bookmark)
+		return;
+
+	bookmark[0].GoToBookmark();
+	this.LogicDocument.AlignViewPositionToTop(BOOKMARK_SCROLL_TOP_OFFSET);
 };
 CBookmarksManager.prototype.IsHiddenBookmark = function(sName)
 {
@@ -578,44 +583,45 @@ CBookmarksManager.prototype.GetNameForHeadingBookmark = function(oParagraph)
 };
 /**
  * Выделяем содержимое закладки
- * @param sName
+ * @param name
  * @returns {boolean}
  */
-CBookmarksManager.prototype.SelectBookmark = function(sName)
+CBookmarksManager.prototype.SelectBookmark = function(name)
 {
 	this.Update();
-
-	var oBookmark = this.GetBookmarkByName(sName);
-	if (oBookmark)
+	
+	let logicDocument = this.LogicDocument;
+	let bookmark = this.GetBookmarkByName(name);
+	if (!bookmark || !logicDocument)
+		return false;
+	
+	if (!bookmark[0].GetParagraph()
+		|| !bookmark[1].GetParagraph()
+		|| !bookmark[0].GetParagraph().Parent
+		|| !bookmark[1].GetParagraph().Parent
+		|| bookmark[0].GetParagraph().Parent.GetTopDocumentContent() !== bookmark[1].GetParagraph().Parent.GetTopDocumentContent())
 	{
-		if (!oBookmark[0].GetParagraph()
-			|| !oBookmark[1].GetParagraph()
-			|| !oBookmark[0].GetParagraph().Parent
-			|| !oBookmark[1].GetParagraph().Parent
-			|| oBookmark[0].GetParagraph().Parent.GetTopDocumentContent() !== oBookmark[1].GetParagraph().Parent.GetTopDocumentContent())
-		{
-			oBookmark[0].GoToBookmark();
-			return false;
-		}
-		var oTopDocument = oBookmark[0].GetParagraph().Parent.GetTopDocumentContent();
-
-		var oLogicDocument = this.LogicDocument;
-		oLogicDocument.RemoveSelection();
-
-		oBookmark[0].GoToBookmark();
-		var oStartPos = oTopDocument.GetContentPosition(false);
-
-		oBookmark[1].GoToBookmark();
-		var oEndPos = oTopDocument.GetContentPosition(false);
-
-		oTopDocument.SetSelectionByContentPositions(oStartPos, oEndPos);
-
-		oLogicDocument.UpdateSelection();
-		oLogicDocument.UpdateInterface();
-		return true;
+		bookmark[0].GoToBookmark();
+		logicDocument.AlignViewPositionToTop(BOOKMARK_SCROLL_TOP_OFFSET);
+		return false;
 	}
+	
+	let topDocument = bookmark[0].GetParagraph().Parent.GetTopDocumentContent();
 
-	return false;
+	logicDocument.RemoveSelection();
+
+	bookmark[0].GoToBookmark();
+	let startPos = topDocument.GetContentPosition(false);
+
+	bookmark[1].GoToBookmark();
+	let endPos = topDocument.GetContentPosition(false);
+
+	topDocument.SetSelectionByContentPositions(startPos, endPos);
+	
+	logicDocument.AlignViewPositionToTop(BOOKMARK_SCROLL_TOP_OFFSET);
+	logicDocument.UpdateSelection();
+	logicDocument.UpdateInterface();
+	return true;
 };
 /**
  * Возвращаем список связанных с данной закладкой параграфов (где лежит начало и конец)

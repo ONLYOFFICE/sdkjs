@@ -510,7 +510,8 @@
                     let oGroup = arr[i].getMainGroup && arr[i].getMainGroup();
                     if (arr[i].IsAnnot && arr[i].IsAnnot()
                         || (oGroup && oGroup.IsAnnot && oGroup.IsAnnot())
-                        || arr[i].IsDrawing() && arr[i].IsShape() && arr[i].GetEditField()) {
+                        || arr[i].IsDrawing() && arr[i].IsShape() && arr[i].GetEditField()
+						|| arr[i].IsForm()) {
                         return null;
                     }
 
@@ -1911,6 +1912,19 @@
             var ret = false, ret2;
             for (var i = 0; i < arr.length; ++i) {
                 let drawing = arr[i];
+				let mainGroup = drawing.getMainGroup();
+				
+				if (mainGroup && mainGroup.IsAnnot && mainGroup.IsAnnot()) {
+					if (mainGroup.IsFreeText() && !mainGroup.IsInTextBox()) {
+						return;
+					}
+				}
+
+				if (drawing.IsForm() || (drawing.IsAnnot && drawing.IsAnnot() && !(drawing.GetDocContent() && drawing.IsInTextBox()))) {
+					return;
+				}
+				
+
                 const newShape = arr[i].checkDrawingPartWithHistory && arr[i].checkDrawingPartWithHistory();
                 if (newShape) {
                     drawing = newShape;
@@ -2281,6 +2295,10 @@
                 this.resetConnectors(this.selectedObjects);
                 for (let i = 0; i < this.selectedObjects.length; ++i) {
                     let oSp = this.selectedObjects[i];
+					if (oSp.IsForm && oSp.IsForm()) {
+						return;
+					}
+					
                     oSp.deleteDrawingBase();
                     oSp.setBDeleted(true);
                 }

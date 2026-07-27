@@ -2133,6 +2133,11 @@ Paragraph.prototype.Reset_RecalculateCache = function()
 {
 
 };
+Paragraph.prototype.IsNeedRecalculateKeepNext = function()
+{
+	let keepNext = this.Get_CompiledPr2(false).ParaPr.KeepNext;
+	return !!(keepNext && this.getPageCount() <= 1 && this.IsInline() && !this.Check_PageBreak());
+};
 Paragraph.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, isUpdateTarget, isReturnTarget)
 {
 	if (undefined === isUpdateTarget)
@@ -21240,6 +21245,7 @@ function CParagraphLineNumbersInfo(nStartLineNum)
 {
 	this.StartNum = undefined !== nStartLineNum ? nStartLineNum : -1;
 }
+
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

@@ -12037,7 +12037,7 @@
         }
         return false;
     };
-    CAnimationDrawer.prototype.drawFrame = function (oCanvas, oRect) {
+    CAnimationDrawer.prototype.drawFrame = function (oCanvas, oRect, isBackgroundLayer) {
         if (!oCanvas) {
             return;
         }
@@ -12046,6 +12046,7 @@
             return;
         }
         var oGraphics = this.createGraphics(oCanvas, oRect);
+        oGraphics.transitionBackgroundLayer = isBackgroundLayer;
         oGraphics.m_oContext.clearRect(oRect.x, oRect.y, oRect.w, oRect.h);
 
         oGraphics.SaveGrState();
@@ -12057,10 +12058,12 @@
         oSlide.draw(oGraphics);
         oGraphics.RestoreGrState();
 
-				const oDemonstrationManager = oSlide.getDrawingDocument().m_oWordControl.DemonstrationManager;
-				if (oDemonstrationManager) {
-					oDemonstrationManager.CheckWatermarkInternal(oGraphics.m_oContext, oRect);
-					oDemonstrationManager.CheckAnnotationsInternal(oGraphics, oSlide);
+				if (isBackgroundLayer === undefined) {
+					const oDemonstrationManager = oSlide.getDrawingDocument().m_oWordControl.DemonstrationManager;
+					if (oDemonstrationManager) {
+						oDemonstrationManager.CheckWatermarkInternal(oGraphics.m_oContext, oRect);
+						oDemonstrationManager.CheckAnnotationsInternal(oGraphics, oSlide);
+					}
 				}
     };
     CAnimationDrawer.prototype.isDrawingVisible = function(sDrawingId, oSandwich) {
@@ -12562,8 +12565,8 @@
     CAnimationPlayer.prototype.addAnimationToDraw = function (sDrawingId, oAnimation, arrDrawings) {
         this.animationDrawer.addAnimationToDraw(sDrawingId, oAnimation, arrDrawings);
     };
-    CAnimationPlayer.prototype.drawFrame = function (oCanvas, oRect) {
-        this.animationDrawer.drawFrame(oCanvas, oRect);
+    CAnimationPlayer.prototype.drawFrame = function (oCanvas, oRect, isBackgroundLayer) {
+        this.animationDrawer.drawFrame(oCanvas, oRect, isBackgroundLayer);
     };
     CAnimationPlayer.prototype.onRecalculateFrame = function () {
         if (this.drawer) {

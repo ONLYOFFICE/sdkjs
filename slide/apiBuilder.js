@@ -309,8 +309,9 @@
 	 * Class representing a slide show transition.
 	 * @constructor
 	 */
-	function ApiSlideShowTransition(transition) {
+	function ApiSlideShowTransition(transition, slide) {
 		this.Transition = transition;
+		this.Slide = slide;
 	}
 
     /**
@@ -1013,6 +1014,9 @@
 
     /**
      * Creates a group of drawings.
+     * :::note
+     * The drawings must not be added to the presentation. To group the drawings which are already in the presentation, use the {@link ApiSlide#GroupDrawings} method.
+     * :::
      * @memberof Api
      * @typeofeditors ["CPE"]
      * @param {DrawingForGroup[]} drawings - An array of drawings to group.
@@ -1030,7 +1034,7 @@
             if (drawings.find(function(drawing) {
                 return drawing.Drawing.IsUseInDocument();
             }))
-               AscBuilder.throwException(new Error("All drawings must be in document"));
+               AscBuilder.throwException(new Error("All drawings must not be in document"));
 
             drawings.forEach(function(drawing) { drawing.Drawing.recalculate(); })
 
@@ -1793,8 +1797,8 @@
 	 * Converts the slides from the current ApiPresentation object into the JSON objects.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
-     * @param {boolean} [nStart=0] - The index to the start slide.
-     * @param {boolean} [nStart=ApiPresentation.GetSlidesCount() - 1] - The index to the end slide.
+     * @param {number} [nStart=0] - The index to the start slide.
+     * @param {number} [nEnd=ApiPresentation.GetSlidesCount() - 1] - The index to the end slide.
      * @param {boolean} [bWriteLayout=false] - Specifies if the slide layout will be written to the JSON object or not.
      * @param {boolean} [bWriteMaster=false] - Specifies if the slide master will be written to the JSON object or not (bWriteMaster is false if bWriteLayout === false).
      * @param {boolean} [bWriteAllMasLayouts=false] - Specifies if all child layouts from the slide master will be written to the JSON object or not.
@@ -2698,7 +2702,6 @@
     /**
      * Sets the background to the current slide master.
      * @memberof ApiMaster
-     * @memberOf ApiMaster
      * @typeofeditors ["CPE"]
      * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide master background.
      * @returns {boolean}
@@ -3142,7 +3145,6 @@
     /**
      * Sets the background to the current slide layout.
      * @memberof ApiLayout
-     * @memberOf ApiLayout
      * @typeofeditors ["CPE"]
      * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide layout background.
      * @returns {boolean}
@@ -3383,7 +3385,7 @@
 	 * @memberof ApiLayout
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTable[]} An array with all tables from the current slide layout.
-     * @sine 9.1.0
+     * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetAllTables.js
 	 */
 	ApiLayout.prototype.GetAllTables = function () {
@@ -3516,7 +3518,11 @@
 	 */
     ApiPlaceholder.prototype.SetType = function(sType)
     {
-        this.Placeholder.setType(private_GetPlaceholderInnerType(sType));
+        let nType = private_GetPlaceholderInnerType(sType);
+        if (private_GetPlaceholderStrType(nType) !== sType)
+            return false;
+        this.Placeholder.setType(nType);
+        return true;
     };
 
     /**
@@ -3562,7 +3568,7 @@
     };
 
     /**
-     * Retuns the placeholder index.
+     * Returns the placeholder index.
      * @memberof ApiPlaceholder
      * @typeofeditors ["CPE"]
      * @returns {number | undefined} - Returns the placeholder index.
@@ -4280,7 +4286,6 @@
     /**
      * Sets the background to the current presentation slide.
      * @memberof ApiSlide
-     * @memberOf ApiSlide
      * @typeofeditors ["CPE"]
      * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide background.
      * @returns {boolean}
@@ -4318,7 +4323,6 @@
     /**
      * Returns the visibility of the current presentation slide.
      * @memberof ApiSlide
-     * @memberOf ApiSlide
      * @typeofeditors ["CPE"]
      * @returns {boolean}
      * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetVisible.js
@@ -4333,7 +4337,6 @@
     /**
      * Sets the visibility to the current presentation slide.
      * @memberof ApiSlide
-     * @memberOf ApiSlide
      * @typeofeditors ["CPE"]
      * @param {boolean} value - Slide visibility.
      * @returns {boolean}
@@ -4554,9 +4557,9 @@
      * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/FollowMasterBackground.js
 	 */
     ApiSlide.prototype.FollowMasterBackground = function(){
-        if (!this.Slide)
+        if (!this.Slide || !this.Slide.Layout)
             return false;
-        
+
         var oMaster = this.Slide.Layout.Master;
 
         if (oMaster && oMaster.cSld.Bg)
@@ -4697,7 +4700,7 @@
      * Returns a theme of the current slide.
      * @memberof ApiSlide
      * @typeofeditors ["CPE"]
-     * @returns {ApiTheme} - returns null if slide or layout or master or theme doesn't exist.
+     * @returns {ApiTheme | null} - returns null if slide or layout or master or theme doesn't exist.
      * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetTheme.js
 	 */
     ApiSlide.prototype.GetTheme = function(){
@@ -4974,7 +4977,7 @@
 	 */
 	ApiSlide.prototype.GetSlideShowTransition = function () {
 		if (this.Slide && this.Slide.transition) {
-			return new ApiSlideShowTransition(this.Slide.transition);
+			return new ApiSlideShowTransition(this.Slide.transition, this.Slide);
 		}
 		return null;
 	};
@@ -5106,6 +5109,15 @@
 		return '';
 	};
 
+	/**
+	 * Returns a theme of the current notes page.
+	 *
+	 * @typeofeditors ["CPE"]
+	 * @memberof ApiNotesPage
+	 * @returns {ApiTheme | null} - Returns null if the notes page master or theme doesn't exist.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiNotesPage/Methods/GetTheme.js
+	 */
 	ApiNotesPage.prototype.GetTheme = function () {
 		if (this.NotesPage && this.NotesPage.Master && this.NotesPage.Master.Theme) {
 			const oThemeLoadInfo = new AscCommonSlide.CThemeLoadInfo();
@@ -5399,6 +5411,15 @@
 		return 'effectNone';
 	};
 
+	ApiSlideShowTransition.prototype.private_ApplyModified = function (modified) {
+		if (this.Slide && this.Slide.applyTransition) {
+			this.Slide.applyTransition(modified);
+		} else {
+			modified.fillObject(this.Transition);
+		}
+		return true;
+	};
+
 	/**
 	 * Sets the entry effect for the slide show transition.
 	 *
@@ -5415,10 +5436,12 @@
 			return false;
 		}
 
+		const copy = this.Transition.createDuplicate();
+
 		if (entryEffectName === 'effectNone') {
-			this.Transition.TransitionType = c_oAscSlideTransitionTypes.None;
-			this.Transition.TransitionOption = -1;
-			return true;
+			copy.TransitionType = c_oAscSlideTransitionTypes.None;
+			copy.TransitionOption = -1;
+			return this.private_ApplyModified(copy);
 		}
 
 		const entryEffect = ApiSlideShowTransition.ENTRY_EFFECT_MAP[entryEffectName];
@@ -5428,15 +5451,13 @@
 
 		const attrNames = entryEffect.attrNames || [];
 		const attrValues = entryEffect.attrValues || [];
-		const copy = this.Transition.createDuplicate();
 		const isMatched = copy.parseXmlParameters(entryEffect.tag, attrNames, attrValues);
 
 		if (!isMatched) {
 			return false;
 		}
 
-		copy.fillObject(this.Transition);
-		return true;
+		return this.private_ApplyModified(copy);
 	};
 
 	/**
@@ -5466,8 +5487,9 @@
 	 */
 	ApiSlideShowTransition.prototype.SetDuration = function (duration) {
 		if (this.Transition && AscFormat.isRealNumber(duration)) {
-			this.Transition.put_TransitionDuration(duration);
-			return true;
+			const copy = this.Transition.createDuplicate();
+			copy.put_TransitionDuration(duration);
+			return this.private_ApplyModified(copy);
 		}
 		return false;
 	};
@@ -5534,8 +5556,9 @@
 		if (this.Transition) {
 			const duration = ApiSlideShowTransition._getSpeedValue(speed);
 			if (duration !== undefined) {
-				this.Transition.put_TransitionDuration(duration);
-				return true;
+				const copy = this.Transition.createDuplicate();
+				copy.put_TransitionDuration(duration);
+				return this.private_ApplyModified(copy);
 			}
 		}
 		return false;
@@ -5568,8 +5591,9 @@
 	 */
 	ApiSlideShowTransition.prototype.SetAdvanceOnClick = function (advanceOnClick) {
 		if (this.Transition) {
-			this.Transition.put_SlideAdvanceOnMouseClick(advanceOnClick);
-			return true;
+			const copy = this.Transition.createDuplicate();
+			copy.put_SlideAdvanceOnMouseClick(advanceOnClick);
+			return this.private_ApplyModified(copy);
 		}
 		return false;
 	};
@@ -5601,8 +5625,9 @@
 	 */
 	ApiSlideShowTransition.prototype.SetAdvanceOnTime = function (advanceOnTime) {
 		if (this.Transition) {
-			this.Transition.put_SlideAdvanceAfter(advanceOnTime);
-			return true;
+			const copy = this.Transition.createDuplicate();
+			copy.put_SlideAdvanceAfter(advanceOnTime);
+			return this.private_ApplyModified(copy);
 		}
 		return false;
 	};
@@ -5637,8 +5662,9 @@
 	 */
 	ApiSlideShowTransition.prototype.SetAdvanceTime = function (advanceTime) {
 		if (this.Transition && AscFormat.isRealNumber(advanceTime)) {
-			this.Transition.put_SlideAdvanceDuration(advanceTime);
-			return true;
+			const copy = this.Transition.createDuplicate();
+			copy.put_SlideAdvanceDuration(advanceTime);
+			return this.private_ApplyModified(copy);
 		}
 		return false;
 	};
@@ -6757,16 +6783,78 @@
      * Creates a copy of the specified drawing object.
      * @memberof ApiDrawing
      * @typeofeditors ["CPE"]
-     * @returns {ApiDrawing} - return null if drawing doesn't exist.
+     * @returns {ApiDrawing}
      * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Copy.js
 	 */
     ApiDrawing.prototype.Copy = function()
     {
-        if (this.Drawing)
-            return new this.constructor(this.Drawing.copy());
-
-        return null;
+        return new this.constructor(this.Drawing.copy());
     };
+
+	/**
+	 * Creates a copy of the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiShape}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/Copy.js
+	 */
+	ApiShape.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiShape.prototype["Copy"] = ApiShape.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current chart.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiChart}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/Copy.js
+	 */
+	ApiChart.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiChart.prototype["Copy"] = ApiChart.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current group.
+	 * @memberof ApiGroup
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiGroup}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Copy.js
+	 */
+	ApiGroup.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiGroup.prototype["Copy"] = ApiGroup.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current image.
+	 * @memberof ApiImage
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiImage}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiImage/Methods/Copy.js
+	 */
+	ApiImage.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiImage.prototype["Copy"] = ApiImage.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current OLE object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiOleObject}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/Copy.js
+	 */
+	ApiOleObject.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiOleObject.prototype["Copy"] = ApiOleObject.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiTable}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/Copy.js
+	 */
+	ApiTable.prototype.Copy = ApiDrawing.prototype.Copy;
 
     /**
      * Deletes the specified drawing object from the parent.
@@ -7627,6 +7715,48 @@
 
 		return null;
 	};
+	/**
+	 * Sets the shadow to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @param {?ApiShadow} shadow - The shadow to apply, or null to remove the current shadow.
+	 * @returns {boolean} - returns false if the graphic object does not support shadow.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetShadow.js
+	 */
+	ApiDrawing.prototype.SetShadow = function(shadow)
+	{
+		if (!this.Drawing || !this.Drawing.spPr)
+			return false;
+
+		if (shadow === null || shadow === undefined)
+		{
+			this.Drawing.spPr.changeShadow(null);
+			return true;
+		}
+
+		if (!shadow.GetClassType || shadow.GetClassType() !== "shadow")
+			return false;
+
+		this.Drawing.spPr.changeShadow(shadow.Shadow);
+		return true;
+	};
+	/**
+	 * Returns the shadow of the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiShadow | null}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetShadow.js
+	 */
+	ApiDrawing.prototype.GetShadow = function()
+	{
+		let shadow = this.Drawing && this.Drawing.getOuterShdw ? this.Drawing.getOuterShdw() : null;
+		if (shadow)
+			return new AscBuilder.ApiShadow(shadow);
+
+		return null;
+	};
 
 	/**
 	 * Returns an ApiTextRange covering the full text content of the shape, or null if the shape has no text body (use CreateTextRange to create one).
@@ -7708,12 +7838,15 @@
      * Ungroups the current group of drawings.
      * @memberof ApiGroup
      * @typeofeditors ["CPE"]
-     * @returns {boolean}
+     * @returns {ApiDrawing[] | null} - The array of the ungrouped objects, or null if the group is not in the document or cannot be ungrouped.
      * @since 8.3.0
      * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Ungroup.js
      */
     ApiGroup.prototype.Ungroup = function()
     {
+        if (!this.Drawing || !this.Drawing.IsUseInDocument())
+            return null;
+
         let oPresentation = Asc.editor.getLogicDocument();
         let nSlideIdx = this.Drawing.getSlideIndex();
         let oSlide = oPresentation.GetSlide(nSlideIdx);
@@ -7722,17 +7855,17 @@
         }
 
         let oGraphicObjects = oSlide.graphicObjects;
+        let aChildren = this.Drawing.spTree.slice();
 
         oGraphicObjects.resetSelection();
         oGraphicObjects.selectObject(this.Drawing, this.Drawing.GetAbsolutePage())
         
-        let canUngroup = oGraphicObjects.canUnGroup();
-        if (!canUngroup) {
-            return false;
-        }
+        if (!oGraphicObjects.canUnGroup())
+            return null;
 
+        this.Drawing.recalculate();
         oGraphicObjects.unGroupCallback();
-        return true;
+        return GetApiDrawings(aChildren);
     };
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -8215,18 +8348,7 @@
     ApiTable.prototype.GetClassType = function(){
         return "table";
     };
-	/**
-	 * Returns an internal ID of the current table.
-	 * @memberof ApiTable
-	 * @typeofeditors ["CDE"]
-	 * @returns {string}
-	 * @since 9.5.0
-	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetInternalId.js
-	 */
-	ApiTable.prototype.GetInternalId = function()
-	{
-		return this.Table.GetId();
-	};
+
 	/**
      * Returns a row by its index.
      * @memberof ApiTable
@@ -8459,22 +8581,6 @@
         this.Table.CurCell = oCell.Cell;
         return this.Table.RemoveTableColumn();
     };
-	/**
-	 * Creates a copy of the current table.
-	 * @memberof ApiTable
-	 * @typeofeditors ["CPE"]
-	 * @returns {ApiTable}
-	 * @since 9.5.0
-	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/Copy.js
-	 */
-	ApiTable.prototype.Copy = function()
-	{
-		let oPresentation = private_GetPresentation();
-		let frame = oPresentation.Create_TableGraphicFrame(null, null, null, oPresentation.DefaultTableStyleId);
-		let oTable = this.Table.Copy(this.Drawing, private_GetDrawingDocument());
-		frame.setGraphicObject(oTable)
-		return new ApiTable(frame);
-	};
 	/**
 	 * Selects the current table in the presentation.
 	 * @memberof ApiTable
@@ -10065,29 +10171,6 @@
 		if (this.Parent)
 			this.Parent.OnChangeTableStylePr(this);
 	};
-	ApiTableStylePr.prototype.OnChangeTablePr = function(oApiTablePr)
-	{
-		this.TableStylePr = this.TableStylePr.Copy();
-		this.TableStylePr.TablePr = oApiTablePr.TablePr;
-
-		oApiTablePr.TablePr = this.TableStylePr.TablePr.Copy();
-
-		this.private_OnChange();
-	};
-	ApiTableStylePr.prototype.OnChangeTableRowPr = function(oApiTableRowPr)
-	{
-		this.TableStylePr = this.TableStylePr.Copy();
-		this.TableStylePr.TableRowPr = oApiTableRowPr.RowPr;
-
-		oApiTableRowPr.RowPr = this.TableStylePr.TableRowPr.Copy();
-
-		this.private_OnChange();
-	};
-	ApiTableStylePr.prototype.private_OnChange = function()
-	{
-		if (this.Parent)
-			this.Parent.OnChangeTableStylePr(this);
-	};
 	ApiTableStylePr.prototype.OnChangeTextPr = function(oApiTextPr)
 	{
 		this.TableStylePr = this.TableStylePr.Copy();
@@ -11041,8 +11124,8 @@
 			return null;
 
 		let oHighlight = "none" === sColor
-			? {HighLight : AscCommonWord.highlight_None}
-			: {HighLight : new Asc.asc_CColor({r : color.r, g: color.g, b: color.b, Auto : false})};
+			? {HighlightColor : null}
+			: {HighlightColor : AscFormat.CreateUniColorRGB(color.r, color.g, color.b)};
 
 		return this.private_ApplyTextPr(oHighlight);
 	};
@@ -11179,7 +11262,7 @@
 		FontSize = AscBuilder.GetNumberParameter(FontSize, null);
 		if (FontSize === null)
 			return null;
-		return this.private_ApplyTextPr({FontSize: FontSize});
+		return this.private_ApplyTextPr({FontSize: private_GetHps(FontSize)});
 	};
 	
 	/**
@@ -11554,6 +11637,8 @@
     ApiDrawing.prototype["SetOutLine"]                    = ApiDrawing.prototype.SetOutLine;
     ApiDrawing.prototype["SetLine"]                       = ApiDrawing.prototype.SetLine;
     ApiDrawing.prototype["GetLine"]                       = ApiDrawing.prototype.GetLine;
+    ApiDrawing.prototype["SetShadow"]                     = ApiDrawing.prototype.SetShadow;
+    ApiDrawing.prototype["GetShadow"]                     = ApiDrawing.prototype.GetShadow;
 
 	ApiDrawing.prototype["GetTextRange"]					= ApiDrawing.prototype.GetTextRange;
 	ApiDrawing.prototype["IsTextRange"]						= ApiDrawing.prototype.IsTextRange;
@@ -11607,6 +11692,7 @@
 	ApiChart.prototype["SetLegendFill"] = ApiChart.prototype.SetLegendFill = AscBuilder.ApiChart.prototype.SetLegendFill;
 	ApiChart.prototype["SetLegendOutLine"] = ApiChart.prototype.SetLegendOutLine = AscBuilder.ApiChart.prototype.SetLegendOutLine;
 	ApiChart.prototype["SetAxieNumFormat"] = ApiChart.prototype.SetAxieNumFormat = AscBuilder.ApiChart.prototype.SetAxieNumFormat;
+	ApiChart.prototype["SetAxisNumFormat"] = ApiChart.prototype.SetAxisNumFormat = AscBuilder.ApiChart.prototype.SetAxisNumFormat;
 	ApiChart.prototype["SetSeriaNumFormat"] = ApiChart.prototype.SetSeriaNumFormat = AscBuilder.ApiChart.prototype.SetSeriaNumFormat;
 	ApiChart.prototype["SetDataPointNumFormat"] = ApiChart.prototype.SetDataPointNumFormat = AscBuilder.ApiChart.prototype.SetDataPointNumFormat;
 	ApiChart.prototype["GetAllSeries"] = ApiChart.prototype.GetAllSeries = AscBuilder.ApiChart.prototype.GetAllSeries;
@@ -11640,7 +11726,6 @@
 	ApiOleObject.prototype["GetApplicationId"]            = ApiOleObject.prototype.GetApplicationId;
 
 	ApiTable.prototype["GetClassType"]					= ApiTable.prototype.GetClassType;
-	//ApiTable.prototype["GetInternalId"]					= ApiTable.prototype.GetInternalId;
 	ApiTable.prototype["GetRowsCount"]					= ApiTable.prototype.GetRowsCount;
 	ApiTable.prototype["GetRow"]						= ApiTable.prototype.GetRow;
 	ApiTable.prototype["GetCell"]						= ApiTable.prototype.GetCell;

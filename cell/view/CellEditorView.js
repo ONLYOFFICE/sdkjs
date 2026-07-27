@@ -155,6 +155,7 @@ function (window, undefined) {
 		this.loadFonts = false;
 		this.isOpened = false;
 		this._programmaticInput = false;
+		this._isComposing = false;
 		this.callTopLineMouseup = false;
 		this.m_nEditorState = c_oAscCellEditorState.editEnd; // Editor's status
 
@@ -284,6 +285,18 @@ function (window, undefined) {
 
 			eventInfo = new AscCommon.CEventListenerInfo(t.input, "input", function () {
 				return t._onInputTextArea.apply(t, arguments);
+			}, false);
+			t.eventListeners.push(eventInfo);
+
+			// IME composition: don't rebuild the contenteditable DOM while composing
+			eventInfo = new AscCommon.CEventListenerInfo(t.input, "compositionstart", function () {
+				t._isComposing = true;
+				return true;
+			}, false);
+			t.eventListeners.push(eventInfo);
+
+			eventInfo = new AscCommon.CEventListenerInfo(t.input, "compositionend", function () {
+				return t._onCompositionEnd.apply(t, arguments);
 			}, false);
 			t.eventListeners.push(eventInfo);
 
@@ -3794,15 +3807,30 @@ function (window, undefined) {
 		}
 		this.loadFonts = true;
 
+		// While composing on the div, sync the model but leave the DOM to the browser
+		// (rebuilding it would break the IME); the full sync runs on compositionend
+		var isComposing = this._isContentEditable() && (this._isComposing || (event && event.isComposing));
+
 		let checkedText = t._getInputValue().replace(/[\r\n]+/g, '');
 		AscFonts.FontPickerByCharacter.checkText(checkedText, this, function () {
 			t.loadFonts = false;
 			t.skipTLUpdate = true;
 			t.replaceText(0, t.textRender.getEndOfText(), t._getInputValue());
 			t._updateCursorByTopLine();
-			t._setInputFragments(t._getRenderFragments());
-			t._updateTopLineCurPos();
+			if (!isComposing) {
+				t._setInputFragments(t._getRenderFragments());
+				t._updateTopLineCurPos();
+			}
 		});
+		return true;
+	};
+
+	CellEditor.prototype._onCompositionEnd = function (event) {
+		this._isComposing = false;
+		// composition finished: run the full sync skipped during composition
+		if (this._isContentEditable() && this.isOpened) {
+			this._onInputTextArea(event);
+		}
 		return true;
 	};
 

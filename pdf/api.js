@@ -806,7 +806,34 @@
         };
 
 		let result = oDoc.EditPage(oViewer.currentPage);
-		this.pre_Paste(result.fonts, result.images, fEndCallback);
+		if (!result) {
+			fEndCallback();
+			return;
+		} 
+
+		if (result.allImages.length > 0) {
+			AscCommon.sendImgUrls(Asc.editor, result.allImages, function(data) {
+				let objectsForDownload = AscCommon.GetObjectsForImageDownload(result.resetImages);
+				AscCommon.ResetNewUrls(data, result.allImages, objectsForDownload.aBuilderImagesByUrl, result.imageMap);
+
+				let count = Object.keys(result.images).length;
+				for (let i = 0; i < data.length; ++i) {
+					if (data[i].url) {
+						result.images[++count] = data[i].url;
+					}
+				}
+
+				let file = oDoc.Viewer.file;
+				for (let i = 0; i < data.length; ++i) {
+					file.nativeFile["changeImageUrl"](result.allImages[i], AscCommon.g_oDocumentUrls.imagePath2Local(data[i].path));
+				}
+
+				Asc.editor.pre_Paste(result.fonts, result.images, fEndCallback);
+			});
+		}
+		else {
+			Asc.editor.pre_Paste(result.fonts, result.images, fEndCallback);
+		}
 	};
 	PDFEditorApi.prototype.asc_AddPage = function(nPos) {
 		let oViewer = this.getDocumentRenderer();
@@ -1398,42 +1425,71 @@
 		}
 	};
 
-	PDFEditorApi.prototype.AddStampAnnot = function(sType) {
+	PDFEditorApi.prototype.AddStampAnnot = function(sType, oImage) {
 		let oDoc = this.getPDFDoc();
-
 		oDoc.BlurActiveObject();
 
-		if (sType == AscPDF.STAMP_TYPES.Image) {
-			let t = this;
-			AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, this.documentWopiSrc, this.documentUserSessionId, function(error, files) {
-				// error can be an object in case of canceling image addition to form
-				if (typeof(error) == "object")
-					return;
-
-				t._uploadCallback(error, files, {
-					isStamp: true
-				});
-			},
-			function(error) {
-				if (Asc.c_oAscError.ID.No !== error) {
-					t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
-				}
+		function addStamp() {
+			oDoc.DoAction(function() {
+				oDoc.AddStampAnnot(sType, oDoc.Viewer.currentPage, oImage);
+			}, AscDFH.historydescription_Pdf_AddAnnot, this);
+		}
 		
-				t.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-			});
+		if (sType == AscPDF.STAMP_TYPES.Signature) {
+			addStamp();
 		}
 		else {
-			function addStamp() {
-				oDoc.DoAction(function() {
-					oDoc.AddStampAnnot(sType, oDoc.Viewer.currentPage);
-				}, AscDFH.historydescription_Pdf_AddAnnot, this);
-			}
-	
 			if (oDoc.checkFonts(["Arial"], addStamp)) {
 				addStamp();
 			}
 		}
 		
+	};
+	PDFEditorApi.prototype.AddSignatureImage = function(signatureResult) {
+		let oApi = this;
+
+		let fApplyCallback = function() {
+			let _img = oApi.ImageLoader.LoadImage(sImageToDownLoad, 1);
+			if (null != _img) {
+				oApi.AddStampAnnot(AscPDF.STAMP_TYPES.Signature, _img);
+			}
+			else {
+				oApi.asyncImageEndLoaded2 = function(_img) {
+					oApi.AddStampAnnot(AscPDF.STAMP_TYPES.Signature, _img);
+				};
+			}
+		}
+
+		let sImageUrl = null, fReplaceCallback = null, sImageToDownLoad = "";
+		if (!AscCommon.g_oDocumentUrls.getImageLocal(signatureResult["imageData"])) {
+			sImageUrl        = signatureResult["imageData"];
+			fReplaceCallback = function(url) {
+				sImageToDownLoad  = url;
+			}
+		}
+		else {
+			fApplyCallback();
+		}
+
+		sImageToDownLoad = signatureResult["imageData"];
+
+		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
+			var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sImageToDownLoad);
+			_url     = AscCommon.g_oDocumentUrls.getImageUrl(_url);
+			fReplaceCallback(_url);
+			fApplyCallback();
+			return;
+		}
+
+		AscCommon.sendImgUrls(this, [sImageToDownLoad], function(data) {
+			if (data && data[0] && data[0].url !== "error") {
+				fReplaceCallback(data[0].url);
+				fApplyCallback();
+			}
+		});
+	};
+	PDFEditorApi.prototype.GetSignatureImageProps = function() {
+		return new Asc.CSignatureFormProps(this);
 	};
 
 	PDFEditorApi.prototype.SetRedactTool = function(bUse) {
@@ -1508,8 +1564,16 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			oDoc.RedactMeta(props)
-		}, AscDFH.historydescription_Pdf_Apply_Redact);
+			return oDoc.RedactMeta(props);
+		}, AscDFH.historydescription_Pdf_Redact_Meta);
+	};
+	PDFEditorApi.prototype.IsAnyFieldLocked = function() {
+		let oDoc = this.getPDFDoc();
+		return oDoc.IsAnyFieldLocked();
+	};
+	PDFEditorApi.prototype.IsAnyAnnotLocked = function() {
+		let oDoc = this.getPDFDoc();
+		return oDoc.IsAnyAnnotLocked();
 	};
 
 	PDFEditorApi.prototype.SetCanInteract = function(bCan) {
@@ -1631,7 +1695,7 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			let oField = oDoc.CreateTextField();
+			let oField = oDoc.CreateTextField(true);
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
@@ -4010,6 +4074,8 @@
 				if (oOptionObject) {
 					const oImage = oApi.ImageLoader.LoadImage(arrUrls[0], 1);
 					if (!oImage || !oImage.Image) {
+						let oActionsQueue = oDoc.GetActionsQueue();
+						oActionsQueue.Continue();
 						return;
 					}
 
@@ -4021,10 +4087,6 @@
 					}
 					else if (oOptionObject.GetType && oOptionObject.GetType() === AscPDF.FIELD_TYPES.button) {
 						oOptionObject.AddImage(oImage, oOptionObject.asc_curImageState);
-						return;
-					}
-					else if (oOptionObject.isStamp) {
-						oDoc.AddStampAnnot(AscPDF.STAMP_TYPES.Image, oDoc.Viewer.currentPage, oImage);
 						return;
 					}
 				}
@@ -4385,7 +4447,7 @@
 					}
 
 					if (Class.IsForm && Class.IsForm()) {
-						let aWidgets = oDoc.GetAllWidgets(Class.GetFullName());
+						let aWidgets = Class.GetAllWidgets();
 						aWidgets.forEach(function(widget) {
 							updateLock(widget);
 						});
@@ -4459,7 +4521,7 @@
 				}
 				
 				if (Class.IsForm && Class.IsForm()) {
-					let aWidgets = oDoc.GetAllWidgets(Class.GetFullName());
+					let aWidgets = Class.GetAllWidgets();
 					aWidgets.forEach(function(widget) {
 						updateLock(widget);
 					});
@@ -5532,6 +5594,8 @@
 	
 	// stamp
 	PDFEditorApi.prototype['AddStampAnnot']					= PDFEditorApi.prototype.AddStampAnnot;
+	PDFEditorApi.prototype['AddSignatureImage']				= PDFEditorApi.prototype.AddSignatureImage;
+	PDFEditorApi.prototype['GetSignatureImageProps']		= PDFEditorApi.prototype.GetSignatureImageProps;
 	PDFEditorApi.prototype['asc_getPropertyEditorStamps']	= PDFEditorApi.prototype.asc_getPropertyEditorStamps;
 
 	// freetext
@@ -5546,6 +5610,8 @@
 	PDFEditorApi.prototype['RemoveAllRedact']	= PDFEditorApi.prototype.RemoveAllRedact;
 	PDFEditorApi.prototype['AddRedactBySelect']	= PDFEditorApi.prototype.AddRedactBySelect;
 	PDFEditorApi.prototype['RedactMeta']		= PDFEditorApi.prototype.RedactMeta;
+	PDFEditorApi.prototype['IsAnyFieldLocked']	= PDFEditorApi.prototype.IsAnyFieldLocked;
+	PDFEditorApi.prototype['IsAnyAnnotLocked']	= PDFEditorApi.prototype.IsAnyAnnotLocked;
 
 	PDFEditorApi.prototype['SetCanInteract']				= PDFEditorApi.prototype.SetCanInteract;
 

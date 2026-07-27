@@ -648,8 +648,8 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 			this.FormPr.SetShd(subFormPr.GetShd());
 		}
 		
-		if (oContentControl.IsSignatureForm())
-			this.FormPr.SetRequired(true);
+		// We have to do this since the default behavior for Signature and all other forms is different
+		this.FormPr.SetRequired(mainForm.IsFormRequired());
 	}
 	
 	if (oContentControl.getShdColor())

@@ -634,7 +634,6 @@ function CPresentation(DrawingDocument, isMainLogicDocument) {
 
 	this.recalcMap = {};
 	this.bNeedUpdateTh = false;
-	this.needSelectPages = [];
 
 	this.writecomments = [];
 
@@ -711,6 +710,11 @@ function CPresentation(DrawingDocument, isMainLogicDocument) {
 
 	this.cachedAnimationLabelText = {};
 	this.ConcatParagraphsOnRemove  = true;
+	this.SlideSelector = null;
+
+	this.recalcInfo = {
+		recalculateComments: true
+	};
 }
 
 AscFormat.InitClass(CPresentation, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_Presentation);
@@ -2237,6 +2241,9 @@ CPresentation.prototype.IsNotesMasterMode = function () {
 CPresentation.prototype.IsHandoutMasterMode = function () {
 	return Asc.editor.IsHandoutMasterMode();
 };
+CPresentation.prototype.IsOutlineMode = function () {
+	return Asc.editor.IsOutlineMode();
+};
 CPresentation.prototype.GetSlideObjectsWithTheme = function (oTheme) {
 	let result = {
 		masters: [],
@@ -2539,9 +2546,10 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 		} else if (b_check_layout) {
 			this.DrawingDocument.m_oWordControl.CheckLayouts(bAttack);
 		}
-		if (this.needSelectPages.length > 0) {
-			this.needSelectPages.length = 0;
-		}
+	}
+	if (this.SlideSelector) {
+		this.SlideSelector.select();
+		this.SlideSelector = null;
 	}
 	if (this.bNeedUpdateTh) {
 		this.DrawingDocument.UpdateThumbnailsAttack();
@@ -7867,23 +7875,27 @@ CPresentation.prototype.InsertContent = function (Content) {
 		nNeedFocusType = oThumbnails.FocusObjType;
 	}
 	let oCurSlide = this.GetCurrentSlide();
-	if (this.IsFocusOnOutline() && Content.SlideObjects.length === 0
+	const isFocusOnOutline = this.IsFocusOnOutline();
+	if (isFocusOnOutline && Content.SlideObjects.length === 0
 		&& Content.DocContent && Content.DocContent.Elements.length > 0) {
 		return this.insertContentToOutline(Content);
 	}
 	if (Content.SlideObjects.length > 0) {
 		if(this.IsSlidePageMode()) {
+			const selectIndexes = [];
 			let las_slide_index = selected_slides.length > 0 ? selected_slides[selected_slides.length - 1] : -1;
-			this.needSelectPages.length = 0;
 			for (i = 0; i < Content.SlideObjects.length; ++i) {
 				this.insertSlide(las_slide_index + i + 1, Content.SlideObjects[i]);
-				this.needSelectPages.push(las_slide_index + i + 1);
+				selectIndexes.push(las_slide_index + i + 1);
 			}
 			this.CurPage = las_slide_index + 1;
 			this.bGoToPage = true;
 			this.bNeedUpdateTh = true;
 			this.FocusOnNotes = false;
 			this.CheckEmptyPlaceholderNotes();
+			if (isFocusOnOutline) {
+				this.SlideSelector = oThumbnails.GetSlideSelector(selectIndexes, true);
+			}
 		}
 		oResult.insert = true;
 		nNeedFocusType = FOCUS_OBJECT_THUMBNAILS;
@@ -10267,13 +10279,16 @@ CPresentation.prototype.internalCalculateData = function (aSlideComments, aWrite
 };
 
 CPresentation.prototype.CalculateComments = function () {
-	this.CommentAuthors = {};
-	var oData = {_AuthorId: 0};
-	this.internalCalculateData(this.comments.comments, this.writecomments, oData);
-	var _slidesCount = this.Slides.length;
-	for (var _sldIdx = 0; _sldIdx < _slidesCount; _sldIdx++) {
-		this.Slides[_sldIdx].writecomments = [];
-		this.internalCalculateData(this.Slides[_sldIdx].slideComments.comments, this.Slides[_sldIdx].writecomments, oData);
+	if (this.recalcInfo.recalculateComments) {
+		this.recalcInfo.recalculateComments = false;
+		this.CommentAuthors = {};
+		var oData = {_AuthorId: 0};
+		this.internalCalculateData(this.comments.comments, this.writecomments, oData);
+		var _slidesCount = this.Slides.length;
+		for (var _sldIdx = 0; _sldIdx < _slidesCount; _sldIdx++) {
+			this.Slides[_sldIdx].writecomments = [];
+			this.internalCalculateData(this.Slides[_sldIdx].slideComments.comments, this.Slides[_sldIdx].writecomments, oData);
+		}
 	}
 };
 
@@ -10360,7 +10375,9 @@ CPresentation.prototype.UpdateUndoRedo = function () {
 CPresentation.prototype.UpdateTracks = function () {
 };
 
-
+CPresentation.prototype.CanDoAutoCorrect = function() {
+	return !this.Api.isMacroRecorderActive();
+};
 CPresentation.prototype.GetAutoCorrectSettings = function () {
 	return this.AutoCorrectSettings;
 };
@@ -10805,6 +10822,9 @@ CPresentation.prototype.GetUsedSlidesMap = function () {
 		usedSlidesMap[slide.GetId()] = slide;
 	}
 	return usedSlidesMap;
+};
+CPresentation.prototype.recalcComments = function () {
+	this.recalcInfo.recalculateComments = true;
 };
 
 function IdList(name) {

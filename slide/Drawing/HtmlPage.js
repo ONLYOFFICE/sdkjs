@@ -4803,7 +4803,10 @@
 		if (this.m_oApi.isEyedropperStarted() && drDoc.SlideCurrent !== lPageNum) {
 			this.m_oApi.cancelEyedropper();
 		}
-
+		const outlineView = this.m_oApi.presentationViewManager && this.m_oApi.presentationViewManager.outlineView;
+		if (outlineView) {
+			outlineView.update();
+		}
 		var _old_empty = this.m_oDrawingDocument.IsEmptyPresentation;
 
 		this.m_oDrawingDocument.IsEmptyPresentation = false;

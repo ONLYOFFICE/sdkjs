@@ -240,15 +240,30 @@
 	}
 
 	AscFormat.InitClassWithoutType(SlideModeManager, SlideModeManagerBase);
+	SlideModeManager.prototype.getChangeModePage = function (oldViewManager) {
+		const presentation = this.getPresentation();
+		let slide = oldViewManager.getCurrentSlide();
+		if (slide) {
+			if (slide.isSlide()) {
+				return slide.num;
+			}
+			if (slide.isNote()) {
+				const noteIndex = presentation.notes.indexOf(slide);
+				return noteIndex !== -1 ? noteIndex : 0;
+			}
+		}
+		return 0;
+	};
 	SlideModeManager.prototype.updateViewMode = function(oldViewManager) {
 		const wordControl = this.getWordControl();
 		const presentation = this.getPresentation();
+		const slideIdx = this.getChangeModePage(oldViewManager);
 		const api = this.getApi();
-		wordControl.GoToPage(0);
 		wordControl.setNotesEnable(true);
 		wordControl.setAnimPaneEnable(true);
 		wordControl.setThumbnailsEnable(true);
 		wordControl.SetThumbnails(false);
+		wordControl.GoToPage(slideIdx);
 		api.hideMediaControl();
 		api.asc_hideComments();
 		presentation.Recalculate({Drawings: {All: true, Map: {}}});
@@ -1471,10 +1486,10 @@
 			note.recalcBody();
 			note.graphicObjects.resetSelection();
 		}
-		wordControl.GoToPage(nIdx);
 		wordControl.setNotesEnable(false);
 		wordControl.setAnimPaneEnable(false);
 		wordControl.setThumbnailsEnable(false);
+		wordControl.GoToPage(nIdx);
 		api.hideMediaControl();
 		api.asc_hideComments();
 		presentation.Recalculate({Drawings: {All: true, Map: {}}});
@@ -1851,12 +1866,13 @@
 	OutlineModeManager.prototype.updateViewMode = function (oldViewManager) {
 		const wordControl = this.getWordControl();
 		const presentation = this.getPresentation();
+		const slideIdx = this.getChangeModePage(oldViewManager);
 		const api = this.getApi();
 		wordControl.setNotesEnable(true);
 		wordControl.setAnimPaneEnable(true);
 		wordControl.setThumbnailsEnable(true);
 		wordControl.SetThumbnails(true);
-		wordControl.GoToPage(0);
+		wordControl.GoToPage(slideIdx);
 		api.hideMediaControl();
 		api.asc_hideComments();
 		presentation.Recalculate({Drawings: {All: true, Map: {}}});

@@ -1295,16 +1295,29 @@ StaxParser.prototype.MoveToNextAttribute = function() {
             } else if (quoteChar === 39) { // "'"
                 i = xml.indexOf("'", textStart);
             } else {
-                // Fallback for other quotes
-                i = xml.indexOf(xml.charAt(i + 1), textStart);
+                var quoteIndex = i + 1;
+                while (quoteIndex < len && (quoteChar === 32 || (quoteChar >= 9 && quoteChar <= 13))) {
+                    quoteChar = xml.charCodeAt(++quoteIndex);
+                }
+                if (quoteChar !== 34 && quoteChar !== 39) {
+                    break;
+                }
+                textStart = quoteIndex + 1;
+                i = xml.indexOf(quoteChar === 34 ? '"' : "'", textStart);
             }
             
             if (i !== -1) {
-                // Only trim if name has leading/trailing spaces
-                if (rawName.charCodeAt(0) === 32 || rawName.charCodeAt(nameEnd - nameStart - 1) === 32) {
+                // Only trim if name has leading/trailing XML whitespace
+                var firstNameChar = rawName.charCodeAt(0);
+                if (firstNameChar === 32 || (firstNameChar >= 9 && firstNameChar <= 13)) {
                     this.name = rawName.trim();
                 } else {
-                    this.name = rawName;
+                    var lastNameChar = rawName.charCodeAt(nameEnd - nameStart - 1);
+                    if (lastNameChar === 32 || (lastNameChar >= 9 && lastNameChar <= 13)) {
+                        this.name = rawName.trim();
+                    } else {
+                        this.name = rawName;
+                    }
                 }
                 this.text = xml.substring(textStart, i);
                 this.index = i + 1;

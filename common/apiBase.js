@@ -546,6 +546,22 @@
 		AscFonts.load(this, this._onSuccessLoadModule.bind(this), this._onErrorLoadModule.bind(this));
 		//AscCommon.zlib_load(this._onSuccessLoadModule.bind(this), this._onErrorLoadModule.bind(this));
 	};
+	baseEditorsApi.prototype._addLoadModule = function(src, onSuccess, onError)
+	{
+		this.modulesCount += 1;
+
+		let _onSuccess = function() {
+			onSuccess && onSuccess();
+			this._onSuccessLoadModule();
+		};
+
+		let _onError = function() {
+			onError && onError();
+			this._onSuccessLoadModule();
+		};
+
+		AscCommon.loadScript(AscCommon.RELATIVE_SDKJS_PATH + src, _onSuccess.bind(this), _onError.bind(this));
+	};
 	baseEditorsApi.prototype._onSuccessLoadModule = function()
 	{
 		this.modulesLoaded++;
@@ -663,7 +679,7 @@
 		if (AscCommon.chartMode === this.documentUrl)
 		{
 			this.frameManager = new AscCommon.CDiagramCellFrameManager(this);
-        AscCommon.EncryptionWorker.isFrameEditor = true;
+			AscCommon.EncryptionWorker.isFrameEditor = true;
 			this.DocInfo.put_OfflineApp(true);
 		}
 
@@ -685,12 +701,11 @@
 
 		if (this.DocInfo.get_EncryptedInfo())
 		{
-			if (undefined !== window["AscDesktopEditor"])
-			{
-				var obj = this.DocInfo.get_EncryptedInfo();
-				obj["userId"] = this.documentUserId;
-				window["AscDesktopEditor"]["execCommand"]("portal:cryptoinfo", JSON.stringify(obj));
-			}
+			var obj = this.DocInfo.get_EncryptedInfo();
+			obj["userId"] = this.documentUserId;
+
+			if (AscCommon.createCryptoProvider)
+				AscCommon.createCryptoProvider(obj);
 		}
 
 		if (undefined !== window["AscDesktopEditor"] && !(this.DocInfo && this.DocInfo.get_OfflineApp()))
@@ -698,9 +713,20 @@
 			window["AscDesktopEditor"]["SetDocumentName"](this.documentTitle);
 		}
 
-		if (!this.frameManager.isFrameEditor() && undefined !== window["AscDesktopEditor"] && undefined !== window["AscDesktopEditor"]["CryptoMode"])
+		// for test without crypto integrator
+		if (false)
 		{
-			this.DocInfo.put_Encrypted(0 < window["AscDesktopEditor"]["CryptoMode"]);
+			try {
+				if ("true" === window.localStorage.getItem("test-crypto-mode")) {
+					if (AscCommon.createCryptoProvider)
+						AscCommon.createCryptoProvider({});
+				}
+			} catch(e) {}
+		}
+
+		if (!this.frameManager.isFrameEditor() && AscCommon.CryptoProvider)
+		{
+			this.DocInfo.put_Encrypted(0 < AscCommon.CryptoProvider.getCryptoMode());
 		}
 
 		if (!oldInfo)
@@ -740,6 +766,12 @@
 		if (this.DocInfo && this.DocInfo.get_Encrypted() === true)
 			return true;
 		return false;
+	};
+	baseEditorsApi.prototype.getSaveFormats = baseEditorsApi.prototype["getSaveFormats"] = function()
+	{
+		if (AscCommon.CryptoProvider)
+			return AscCommon.CryptoProvider.getSaveFormats();
+		return undefined;
 	};
 	baseEditorsApi.prototype.asc_enableKeyEvents             = function(isEnabled, isFromInput)
 	{
@@ -1428,10 +1460,10 @@
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.Open);
 		}
 
-        if (this.DocInfo.get_Encrypted() && window["AscDesktopEditor"] && !window["AscDesktopEditor"]["IsLocalFile"](true))
+        if (this.DocInfo.get_Encrypted() && AscCommon.CryptoProvider && !AscCommon.CryptoProvider.isLocalFile(true))
         {
         	var t = this;
-            window["AscDesktopEditor"]["OpenFileCrypt"](this.DocInfo.get_Title(), this.DocInfo.get_Url(), function () {t.openFileCryptCallback.apply(t, arguments);});
+            AscCommon.CryptoProvider.openFileCrypt(this.DocInfo.get_Title(), this.DocInfo.get_Url(), function () {t.openFileCryptCallback.apply(t, arguments);});
         }
 	};
 	baseEditorsApi.prototype._openChartOrLocalDocument           = function()
@@ -1597,6 +1629,10 @@
 	baseEditorsApi.prototype.forceSave = function()
 	{
 		if (!this.getViewMode()) {
+			if (AscCommon.CryptoProvider && AscCommon.EncryptionWorker && AscCommon.EncryptionWorker.isNeedCrypt()) {
+				AscCommon.CryptoProvider.saveFile();
+				return true;
+			}
 			return this.CoAuthoringApi.forceSave();
 		}
 		return false;
@@ -2501,7 +2537,7 @@
 	};
 	baseEditorsApi.prototype.downloadAs                         = function (actionType, options)
 	{
-		var isCloudCrypto = !!(window["AscDesktopEditor"] && (0 < window["AscDesktopEditor"]["CryptoMode"]));
+		var isCloudCrypto = !!(AscCommon.CryptoProvider && (0 < AscCommon.CryptoProvider.getCryptoMode()));
 		if (isCloudCrypto)
 		{
 			window.isCloudCryptoDownloadAs = true;
@@ -6156,6 +6192,10 @@
 	baseEditorsApi.prototype.getMacroRecorder = function()
 	{
 		return this.macroRecorder;
+	};
+	baseEditorsApi.prototype.isMacroRecorderActive = function()
+	{
+		return this.macroRecorder.isInProgress() && !this.macroRecorder.isPaused();
 	};
 	baseEditorsApi.prototype.addMacroStepData = function(type, additional)
 	{

@@ -316,6 +316,11 @@
 	};
 	CThumbnailsManagerBase.prototype.UpdateLimits = function (isNoNeedResize) {
 	};
+	CThumbnailsManagerBase.prototype.SelectSlides = function(aSelectedIdx, bReset) {
+		bReset = bReset === undefined || bReset;
+	};
+	CThumbnailsManagerBase.prototype.GetSlideSelector = function (aSelectedIdx, bReset) {
+	};
 
 	function CThumbnailsManager(editorPage) {
 		CThumbnailsManagerBase.call(this, editorPage);
@@ -1804,9 +1809,10 @@
 	// select
 	CThumbnailsManager.prototype.SelectSlides = function(aSelectedIdx, bReset)
 	{
+		bReset = bReset === undefined || bReset;
 		if (aSelectedIdx.length > 0)
 		{
-			if(bReset === undefined || bReset)
+			if(bReset)
 			{
 				for (let i = 0; i < this.m_arrPages.length; i++)
 				{
@@ -2629,7 +2635,7 @@
 		this.SetFocusElement(FOCUS_OBJECT_THUMBNAILS);
 		const pos = this.ConvertCoords(global_mouseEvent.X, global_mouseEvent.Y);
 		this.MouseDownTrack.Start(pos.Page, global_mouseEvent.X, global_mouseEvent.Y);
-		if (global_mouseEvent.Button == 0 && outlineView) {
+		if ((global_mouseEvent.Button === 0 || global_mouseEvent.Button === 2) && outlineView) {
 			const outlineXMm = pos.X * g_dKoef_pix_to_mm;
 			const outlineYMm = pos.Y * g_dKoef_pix_to_mm;
 			outlineView.selectionSetStart(global_mouseEvent, outlineXMm, outlineYMm, 0);
@@ -2639,26 +2645,12 @@
 				this.m_oWordControl.GoToPage(selectedPage);
 				this.SelectPageEnabled = true;
 			}
-					this.OnUpdateOverlay();
-					checkSelectionEnd();
-					return false;
-		}
-
-		if (pos.Page == -1) {
-			if (global_mouseEvent.Button == 2) {
+			if (global_mouseEvent.Button === 2) {
 				this.showContextMenu(false);
 			}
+			this.OnUpdateOverlay();
 			checkSelectionEnd();
-			return false;
 		}
-
-		if (global_mouseEvent.Button == 2 && !AscCommon.global_keyboardEvent.CtrlKey) {
-			this.showContextMenu(false);
-		}
-		this.SelectPageEnabled = false;
-		this.m_oWordControl.GoToPage(pos.Page);
-		this.SelectPageEnabled = true;
-		checkSelectionEnd();
 		return false;
 	};
 
@@ -2844,6 +2836,7 @@
 	{
 		if(this.FocusObjType === type)
 			return;
+		const logicDocument = this.m_oWordControl.m_oLogicDocument;
 		switch (type)
 		{
 			case FOCUS_OBJECT_MAIN:
@@ -2857,9 +2850,9 @@
 					return;
 
 				this.FocusObjType = FOCUS_OBJECT_THUMBNAILS;
-				if (this.m_oWordControl.m_oLogicDocument)
+				if (logicDocument)
 				{
-					this.m_oWordControl.m_oLogicDocument.resetStateCurSlide(true);
+					logicDocument.resetStateCurSlide(true);
 				}
 				break;
 			}
@@ -2874,6 +2867,10 @@
 			}
 			default:
 				break;
+		}
+		const outlineView = this.GetOutlineView();
+		if (outlineView && logicDocument) {
+			outlineView.selectPage(logicDocument.CurPage);
 		}
 	};
 	COutlineThumbnailsManager.prototype.ClearCacheAttack = function()
@@ -2919,7 +2916,7 @@
 			const scaleFactor = g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
 			const outlineTopMarginMM = this.const_offset_y * scaleFactor;
 			const outlineLeftMarginMM = this.const_offset_x * scaleFactor;
-			const scrollYMm = this.m_dScrollY * g_dKoef_pix_to_mm;
+			const scrollYMm = this.m_dScrollY * scaleFactor;
 			outlineView.updateOutlineShapeTransform(outlineLeftMarginMM, -scrollYMm + outlineTopMarginMM);
 		}
 	};
@@ -2965,12 +2962,11 @@
 		const context = AscCommon.AscBrowser.getContext2D(canvas);
 		context.clearRect(0, 0, this.const_offset_x, canvas.height);
 
-		const currentSlideIndex = this.m_oWordControl.m_oDrawingDocument.SlideCurrent;
-		outlineView.drawDecorations(this.getOutlineGraphics(context), currentSlideIndex, this.MouseDownTrack.FocusPage);
+		outlineView.drawDecorations(this.getOutlineGraphics(context), this.GetSelectedSlideIndexesMap(), this.MouseDownTrack.FocusPage);
 		const shape = outlineView.outlineShape;
 		if (shape) {
 			this.m_oWordControl.m_oDrawingDocument.UpdateTargetTransform(outlineView.getTransformText());
-			if (checkSelectionEnd || this.MouseDownTrack.IsDragged()) {
+			if ((checkSelectionEnd || this.MouseDownTrack.IsDragged()) && !outlineView.isDecorationMouseDown) {
 				const pos = this.ConvertCoords(global_mouseEvent.X, global_mouseEvent.Y);
 				shape.selectionSetEnd(global_mouseEvent, pos.X * g_dKoef_pix_to_mm, pos.Y * g_dKoef_pix_to_mm, 0);
 				shape.updateSelectionState(this.m_oWordControl.m_oDrawingDocument);
@@ -2987,6 +2983,22 @@
 	// select
 	COutlineThumbnailsManager.prototype.SelectSlides = function(aSelectedIdx, bReset)
 	{
+		const selector = this.GetSlideSelector(aSelectedIdx, bReset);
+		if (selector) {
+			selector.select();
+		}
+	};
+	COutlineThumbnailsManager.prototype.GetSlideSelector = function(aSelectedIdx, bReset)
+	{
+		if (!aSelectedIdx.length) {
+			return;
+		}
+		const outlineView = this.GetOutlineView();
+		if (!outlineView) {
+			return;
+		}
+		bReset = bReset === undefined || bReset;
+		return new AscCommonSlide.OutlineSlidesSelectionManager(outlineView, aSelectedIdx, bReset);
 	};
 
 	COutlineThumbnailsManager.prototype.GetSelectedSlidesRange = function()
@@ -3005,6 +3017,15 @@
 			return outlineView.getSelectedSlideArray();
 		}
 		return [];
+	};
+	COutlineThumbnailsManager.prototype.GetSelectedSlideIndexesMap = function()
+	{
+		const selectedSlideIndexes = this.GetSelectedArray();
+		const map = {};
+		for (let i = 0; i < selectedSlideIndexes.length; i += 1) {
+			map[selectedSlideIndexes[i]] = true;
+		}
+		return map;
 	};
 
 	COutlineThumbnailsManager.prototype.isSelectedPage = function(pageNum)
@@ -3025,13 +3046,8 @@
 			return;
 		}
 
-		if (!this.m_oWordControl.m_oScrollThumbApi) {
-			return;
-		}
-
-		if (this.FocusObjType === FOCUS_OBJECT_THUMBNAILS) {
-			outlineView.selectPage(pageNum);
-		} else {
+		outlineView.selectPage(pageNum);
+		if (this.m_oWordControl.m_oScrollThumbApi) {
 			outlineView.removeSelection();
 			const penW = 1 * g_dKoef_mm_to_pix;
 			const pageY = outlineView.getPageY(pageNum);
@@ -3050,7 +3066,7 @@
 
 			if (0 != nValueScrollVer) {
 				this.m_oWordControl.m_bIsUpdateTargetNoAttack = true;
-				this.m_oWordControl.m_oScrollThumbApi.scrollByY(nValueScrollVer);
+				this.m_oWordControl.m_oScrollThumbApi.scrollByY(nValueScrollVer * AscCommon.AscBrowser.retinaPixelRatio);
 				this.m_oWordControl.OnScroll();
 			}
 		}
@@ -3111,8 +3127,6 @@
 		}
 		const outlineView = this.GetOutlineView();
 		if (outlineView) {
-			const newWidth = AscCommon.AscBrowser.convertToRetinaValue(thumbnailsCanvas.width - this.const_offset_x) * AscCommon.g_dKoef_pix_to_mm;
-			outlineView.checkOutlineWidth(newWidth);
 			this.updateOutlineShapeTransform();
 		}
 	};
@@ -3234,6 +3248,8 @@
 	COutlineThumbnailsManager.prototype.calculateTotalThumbnailsLength = function (containerWidth, containerHeight) {
 		const outlineView = this.GetOutlineView();
 		if (outlineView) {
+			const newWidth = containerWidth - AscCommon.AscBrowser.convertToRetinaValue(this.const_offset_x) * AscCommon.g_dKoef_pix_to_mm;
+			outlineView.checkOutlineWidth(newWidth);
 			return outlineView.getOutlineHeight() * AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_mm_to_pix + this.const_offset_y;
 		}
 		return 0;

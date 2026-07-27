@@ -3094,10 +3094,8 @@ CGraphicObjects.prototype =
 
     private_InsertShapesFromSvg: function(image, shapes)
     {
-        if (!image.parent || !image.parent.Get_ParentParagraph)
-            return;
-        let anchorPara = image.parent.Get_ParentParagraph();
-        if (!anchorPara)
+        let paraDrawing = image.parent;
+        if (!paraDrawing || !paraDrawing.Get_ParentParagraph())
             return;
 
         let trackRevisions = false;
@@ -3107,18 +3105,8 @@ CGraphicObjects.prototype =
             this.document.SetLocalTrackRevisions(false);
         }
 
-        let i, xfrm;
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        for (i = 0; i < shapes.length; ++i)
-        {
-            xfrm = shapes[i].spPr.xfrm;
-            minX = Math.min(minX, xfrm.offX);
-            minY = Math.min(minY, xfrm.offY);
-            maxX = Math.max(maxX, xfrm.offX + xfrm.extX);
-            maxY = Math.max(maxY, xfrm.offY + xfrm.extY);
-        }
-        let extX = maxX - minX;
-        let extY = maxY - minY;
+        let baseX = image.x, baseY = image.y;
+        let extX = image.extX, extY = image.extY;
 
         let group = new AscFormat.CGroupShape();
         group.setBDeleted(false);
@@ -3136,46 +3124,21 @@ CGraphicObjects.prototype =
         groupXfrm.setChExtX(extX);
         groupXfrm.setChExtY(extY);
 
-        for (i = 0; i < shapes.length; ++i)
+        for (let i = 0; i < shapes.length; ++i)
         {
             let shape = shapes[i];
-            shape.spPr.xfrm.setOffX(shape.spPr.xfrm.offX - minX);
-            shape.spPr.xfrm.setOffY(shape.spPr.xfrm.offY - minY);
+            shape.spPr.xfrm.setOffX(shape.spPr.xfrm.offX - baseX);
+            shape.spPr.xfrm.setOffY(shape.spPr.xfrm.offY - baseY);
             shape.setGroup(group);
             group.addToSpTree(group.spTree.length, shape);
         }
 
-        let paraDrawing = new ParaDrawing(extX, extY, null, this.drawingDocument, null, null);
-        paraDrawing.Set_WrappingType(WRAPPING_TYPE_NONE);
-        paraDrawing.Set_DrawingType(drawing_Anchor);
         group.setParent(paraDrawing);
         paraDrawing.Set_GraphicObject(group);
-        paraDrawing.setExtent(extX, extY);
+        image.setBDeleted(true);
 
-        let pageIndex = image.parent.pageIndex;
-        let anchorPos = this.document.Get_NearestPos(pageIndex, minX, minY, true, paraDrawing);
-
-        image.parent.bNotPreDelete = true;
-        image.parent.Remove_FromDocument(false);
-        image.parent.bNotPreDelete = undefined;
-
-        paraDrawing.Set_Props(new asc_CImgProperty(
-            {
-                PositionH: { RelativeFrom: Asc.c_oAscRelativeFromH.Page, UseAlign: false, Align: undefined, Value: minX },
-                PositionV: { RelativeFrom: Asc.c_oAscRelativeFromV.Page, UseAlign: false, Align: undefined, Value: minY }
-            }));
-
-        if (anchorPos && anchorPos.Paragraph)
-        {
-            anchorPos.Paragraph.Check_NearestPos(anchorPos);
-            paraDrawing.Set_XYForAdd(minX, minY, anchorPos, pageIndex);
-        }
-
-        paraDrawing.AddToParagraph(anchorPara);
-        paraDrawing.Parent = anchorPara;
-        this.addGraphicObject(paraDrawing);
         this.resetSelection();
-        this.selectObject(group, pageIndex);
+        this.selectObject(group, paraDrawing.pageIndex);
 
         if (false !== trackRevisions)
             this.document.SetLocalTrackRevisions(trackRevisions);
@@ -5067,6 +5030,10 @@ CGraphicObjects.prototype.onInkDrawerChangeState = DrawingObjectsController.prot
 CGraphicObjects.prototype.setDrawingDocPosType = function() {
 	const oDoc = this.document;
 	if(oDoc && false == this.api.isDocumentRenderer()) {
+		const inlineForm = oDoc.GetSelectedElementsInfo().GetInlineLevelSdt();
+		if (inlineForm && inlineForm.IsForm())
+			inlineForm.MoveCursorOutsideForm(false);
+		oDoc.DrawingDocument.TargetEnd();
 		if (AscCommonWord.docpostype_HdrFtr !== oDoc.CurPos.Type) {
 			oDoc.SetDocPosType(AscCommonWord.docpostype_DrawingObjects);
 			oDoc.Selection.Use   = true;

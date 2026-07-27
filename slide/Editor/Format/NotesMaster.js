@@ -126,6 +126,13 @@
 			switch (data.Type) {
 				case AscDFH.historyitem_CSld_SetBg:
 					this.recalcInfo.recalculateBackground = true;
+					for (let i = 0; i < this.presentation.notes.length; i += 1) {
+						const note = this.presentation.notes[i];
+						if (note.Master === this) {
+							note.recalcBackground();
+							note.addToRecalculate();
+						}
+					}
 					break;
 				case AscDFH.historyitem_CSld_AddToSpTree:
 				case AscDFH.historyitem_CSld_RemoveFromSpTree:
@@ -239,6 +246,7 @@
 		}
 		if (this.recalcInfo.recalculateBackground) {
 			this.recalcInfo.recalculateBackground = false;
+			this.recalculateBackground();
 		}
 	};
 	//todo

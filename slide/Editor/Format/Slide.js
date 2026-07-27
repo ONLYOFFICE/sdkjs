@@ -307,6 +307,10 @@
 					}
 					break;
 				}
+				case AscDFH.historyitem_SlideSetComments: {
+					this.recalcComments();
+					break;
+				}
 			}
 			this.addToRecalculate();
 		}
@@ -826,7 +830,21 @@
 			return;
 		}
 		let _bounds, i;
-		this.drawBgMasterAndLayout(graphics, bClipBySlide, bCheckBounds);
+		let backgroundLayer = graphics.transitionBackgroundLayer;
+		if (backgroundLayer === false) {
+			if (bClipBySlide) {
+				graphics.SaveGrState();
+				graphics.AddClipRect(0, 0, this.Width, this.Height);
+			}
+		} else {
+			this.drawBgMasterAndLayout(graphics, bClipBySlide, bCheckBounds);
+			if (backgroundLayer === true) {
+				if (bClipBySlide) {
+					graphics.RestoreGrState();
+				}
+				return;
+			}
+		}
 		if (this.cSld.collaborativeMarks) {
 			this.cSld.collaborativeMarks.Init_Drawing();
 		}
@@ -868,7 +886,7 @@
 			}
 			this.timing.drawEffectsLabels(graphics);
 		}
-		if (this.slideComments) {
+		if (this.slideComments && (!graphics.PrintComments || graphics.PrintComments.isPrintComments)) {
 			let aComments = this.slideComments.comments;
 			for (i = 0; i < aComments.length; ++i) {
 				var oComment = aComments[i];
@@ -1397,7 +1415,7 @@
 	};
 	Slide.prototype.createContent = function () {
 		let matchingShape;
-		matchingShape = this.cSld.findContentShape();
+		matchingShape = this.cSld.getContentShape();
 		if (matchingShape) {
 			return null;
 		}
@@ -1406,9 +1424,9 @@
 		const master = this.Layout.Master;
 
 		if (layout) {
-			matchingShape = layout.cSld.findContentShape();
+			matchingShape = layout.cSld.getContentShape();
 			if (!matchingShape && master) {
-				matchingShape = master.cSld.findContentShape();
+				matchingShape = master.cSld.getContentShape();
 			}
 		}
 		let copySp;
@@ -1422,6 +1440,9 @@
 	};
 	Slide.prototype.checkOutlineView = function () {
 		this.presentation && this.presentation.checkSlideOutlineView(this);
+	};
+	Slide.prototype.recalcComments = function () {
+		this.presentation && this.presentation.recalcComments();
 	};
 
 	function fLoadComments(oObject, authors) {
@@ -1563,7 +1584,9 @@
 			Refresh_ContentChanges: function () {
 				this.m_oContentChanges.Refresh();
 			},
-
+			recalcComments: function () {
+				this.slide && this.slide.recalcComments();
+			},
 			addComment: function (comment) {
 				History.Add(new AscDFH.CChangesDrawingsContentComments(this, AscDFH.historyitem_SlideCommentsAddComment, this.comments.length, [comment], true));
 				this.comments.splice(this.comments.length, 0, comment);
@@ -1720,6 +1743,7 @@
 
 			Refresh_RecalcData: function () {
 				History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: this});
+				this.recalcComments();
 			},
 
 			collectRedrawSlides: function (redrawSlides, force) {

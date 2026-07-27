@@ -1013,6 +1013,9 @@
 				if (pages[i] >= this.startVisiblePage && pages[i] <= this.endVisiblePage)
 				{
 					delete this.drawingPages[pages[i]].Image;
+					if (oThumbnails.pages[pages[i]]) {
+						delete oThumbnails.pages[pages[i]].pageImage;
+					}
 				}
 			}
 
@@ -3920,8 +3923,12 @@
 				oContent.RecalculateCurPos();
 		}
 	};
-	CHtmlPage.prototype._drawMarkupAnnotsOnCtx = function(nPage, ctx, oDirtyBoundsMM)
+	CHtmlPage.prototype._drawMarkupAnnotsOnCtx = function(nPage, ctx, oDirtyBoundsMM, contentType)
 	{
+		if (contentType && contentType !== AscPDF.PRINT_CONTENT_TYPES.docAndMarkups) {
+			return;
+		}
+		
         let aAnnots = this.pagesInfo.pages[nPage].annots.filter(function(annot) {
 			return annot.IsTextMarkup();
 		});
@@ -3960,16 +3967,12 @@
 		}
 		
 		let oGraphicsPDF = new AscPDF.CPDFGraphics();
+		oGraphicsPDF.isPrint = contentType !== undefined;
 		oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage) , this.file.getPageHeight(nPage));
 		oGraphicsPDF.SetCurPage(nPage);
 
 		aAnnots.forEach(function(annot) {
-			if (false == annot.IsNeedDrawFromStream()) {
-				annot.Draw(oGraphicsPDF);
-			}
-			else {
-				annot.DrawFromStream(oGraphicsPDF);
-			}
+			annot.DrawOnPage(oGraphicsPDF);
 		});
 
 		if (oDirtyBoundsMM) {
@@ -4227,9 +4230,9 @@
 		let ctx = image.getContext('2d');
 
 		contentType !== AscPDF.PRINT_CONTENT_TYPES.formsOnly && this._drawDrawingsOnCtx(nPage, ctx, true);
-		contentType == AscPDF.PRINT_CONTENT_TYPES.docAndMarkups && this._drawMarkupAnnotsOnCtx(nPage, ctx);
+		this._drawMarkupAnnotsOnCtx(nPage, ctx, contentType);
 		this._drawAnnotsOnCtx(nPage, ctx, false, contentType);
-		this._drawFieldsOnCtx(nPage, ctx, false, true, true);
+		this._drawFieldsOnCtx(nPage, ctx, false, true, contentType);
 
 		return ctx.canvas;
 	};
@@ -4248,6 +4251,7 @@
 
 		let oGraphicsPDF = new AscPDF.CPDFGraphics();
 		oGraphicsPDF.isThumbnails = isThumbnails;
+		oGraphicsPDF.isPrint = contentType !== undefined;
         oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage) , this.file.getPageHeight(nPage));
         oGraphicsPDF.SetCurPage(nPage);
 
@@ -4264,18 +4268,12 @@
 				}
 
 				if (annot.IsTextMarkup() == false) {
-                    if (annot.IsNeedDrawFromStream() == false) {
-                        annot.Draw(oGraphicsPDF, oGraphicsWord);
-                    }
-                    else {
-                        annot.Recalculate();
-                        annot.DrawFromStream(oGraphicsPDF);
-                    }
-                }
+					annot.DrawOnPage(oGraphicsPDF, oGraphicsWord);
+				}
             });
         }
     };
-    CHtmlPage.prototype._drawFieldsOnCtx = function(nPage, ctx, isThumbnails, isSkipEditShapes, isPrint) {
+    CHtmlPage.prototype._drawFieldsOnCtx = function(nPage, ctx, isThumbnails, isSkipEditShapes, contentType) {
 		let oDoc		= this.getPDFDoc();
         let widthPx		= ctx.canvas.width;
         let heightPx    = ctx.canvas.height;
@@ -4283,7 +4281,7 @@
 
         let oGraphicsPDF = new AscPDF.CPDFGraphics();
 		oGraphicsPDF.isThumbnails = isThumbnails;
-		oGraphicsPDF.isPrint = isPrint;
+		oGraphicsPDF.isPrint = contentType !== undefined;
 		oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage) , this.file.getPageHeight(nPage));
         oGraphicsPDF.SetCurPage(nPage);
 
@@ -4295,11 +4293,14 @@
 		oGraphicsWord.isSkipEditShapes = isSkipEditShapes;
         
         if (this.pagesInfo.pages[nPage].fields != null) {
-            this.pagesInfo.pages[nPage].redactedFields.forEach(function(field) {
-				field.DrawOnPage(oGraphicsPDF, oGraphicsWord, nPage);
-            });
+			if (contentType !== AscPDF.PRINT_CONTENT_TYPES.formsOnly) {
+				this.pagesInfo.pages[nPage].redactedFields.forEach(function(field) {
+					field.DrawOnPage(oGraphicsPDF, oGraphicsWord);
+				});
+			}
+            
             this.pagesInfo.pages[nPage].fields.forEach(function(field) {
-				field.DrawOnPage(oGraphicsPDF, oGraphicsWord, nPage);
+				field.DrawOnPage(oGraphicsPDF, oGraphicsWord);
             });
         }
     };
@@ -4708,7 +4709,7 @@
 			oMemory.WriteLong(nRedactMetaFlags);
 			
 			let aRedactedFields = oDoc.redactedFields;
-			if (nRedactMetaFlags & (1 << 6)) {
+			if (nRedactMetaFlags & (1 << 5)) {
 				oMemory.WriteLong(aRedactedFields.length);
 			}
 
@@ -4722,7 +4723,9 @@
 				// create new appearance
 				if (!field.IsNeedDrawFromStream()) {
 					oMemory.WriteBool(true);
+					oMemory.isRedactField = true;
 					field.WriteToBinary(oMemory);
+					oMemory.isRedactField = false;
 				}
 				// use existing appearance
 				else {

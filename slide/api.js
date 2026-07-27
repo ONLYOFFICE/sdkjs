@@ -1574,15 +1574,16 @@ background-repeat: no-repeat;\
 		}
 
 
-		var documentPart = doc.getPartByRelationshipType(openXml.Types.presentation.relationType);
-		var contentDocument = documentPart.getDocumentContent();
-		reader = new StaxParser(contentDocument, documentPart, xmlParserContext);
-		this.WordControl.m_oLogicDocument.fromXml(reader, true);
 		let oAppPart = doc.getPartByRelationshipType(openXml.Types.extendedFileProperties.relationType);
 		let oContentApp = oAppPart.getDocumentContent();
 		let oAppReader = new StaxParser(oContentApp, oAppPart, xmlParserContext);
 		this.WordControl.m_oLogicDocument.App = new AscCommon.CApp();
 		this.WordControl.m_oLogicDocument.App.fromXml(oAppReader, true);
+
+		var documentPart = doc.getPartByRelationshipType(openXml.Types.presentation.relationType);
+		var contentDocument = documentPart.getDocumentContent();
+		reader = new StaxParser(contentDocument, documentPart, xmlParserContext);
+		this.WordControl.m_oLogicDocument.fromXml(reader, true);
 
 		let oPresentationPrPart = doc.getPartByRelationshipType(openXml.Types.presentationProperties.relationType);
 		if(oPresentationPrPart) {
@@ -7630,7 +7631,7 @@ background-repeat: no-repeat;\
 		const slideIndex = Asc.editor.getLogicDocument().Get_CurPage() || 0;
 		return this.StartDemonstration(divId, slideIndex, reporterStartObject);
 	};
-	asc_docs_api.prototype.StartDemonstrationFromBeginning = function (divId, reporterStartObject) {
+	asc_docs_api.prototype.StartDemonstrationFromBeginning = function (divId, reporterStartObject, isNoFullScreen) {
 		const allSlides = Asc.editor.getLogicDocument().GetSlides();
 		const slideCount = allSlides.length;
 
@@ -7642,9 +7643,9 @@ background-repeat: no-repeat;\
 			}
 		}
 
-		return this.StartDemonstration(divId, slideIndex, reporterStartObject);
+		return this.StartDemonstration(divId, slideIndex, reporterStartObject, isNoFullScreen);
 	};
-	asc_docs_api.prototype.StartDemonstration = function (div_id, slidestart_num, reporterStartObject) {
+	asc_docs_api.prototype.StartDemonstration = function (div_id, slidestart_num, reporterStartObject, isNoFullScreen) {
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.stopWorked();
 
@@ -7660,7 +7661,7 @@ background-repeat: no-repeat;\
 		if (bIsReporter && (this.reporterWindow || window["AscDesktopEditor"]))
 			this.WordControl.DemonstrationManager.StartWaitReporter(div_id, slidestart_num, true);
 		else
-			this.WordControl.DemonstrationManager.Start(div_id, slidestart_num, true);
+			this.WordControl.DemonstrationManager.Start(div_id, slidestart_num, true, isNoFullScreen);
 
 		if (undefined !== this.EndShowMessage) {
 			this.WordControl.DemonstrationManager.EndShowMessage = this.EndShowMessage;
@@ -8601,8 +8602,8 @@ background-repeat: no-repeat;\
 							dataContainer.data = data;
 							if (window.isCloudCryptoDownloadAs)
 							{
-								window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, fileType);
-								return true;
+								if (AscCommon.CryptoProvider.cryptoDownloadAs(dataContainer.data, fileType))
+									return true;
 							}
 							t._downloadAsUsingServer(actionType, options, oAdditionalData, dataContainer, downloadType);
 							return;
@@ -8622,11 +8623,11 @@ background-repeat: no-repeat;\
 			dataContainer.data = this.WordControl.SaveDocument(oAdditionalData["nobase64"]);
 		}
 
-        if (window.isCloudCryptoDownloadAs)
-        {
-        	window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, fileType);
-			return true;
-        }
+		if (window.isCloudCryptoDownloadAs)
+		{
+			if (AscCommon.CryptoProvider.cryptoDownloadAs(dataContainer.data, fileType))
+				return true;
+		}
 	};
 
     asc_docs_api.prototype.SetFontRenderingMode         = function(mode)
@@ -8697,11 +8698,14 @@ background-repeat: no-repeat;\
 	{
 		this.asc_Recalculate();
 		let logicDocument = this.getLogicDocument();
+		logicDocument.UpdateSelection();
+		logicDocument.UpdateInterface();
 		logicDocument.FinalizeAction(true, true);
-		
+		logicDocument.UpdateUndoRedo();
+
 		if (callback)
 			callback(true)
-		
+
 		this.executeGroupActionsEnd();
 		return true;
 	};

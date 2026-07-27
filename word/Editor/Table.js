@@ -860,6 +860,22 @@ CTable.prototype.Get_Props = function()
 	else
 		Pr.RowsInHeader = false;
 
+	let canSplitRow = undefined;
+	for (let curRow = Math.max(0, oSelectionRowsRange.Start); curRow <= oSelectionRowsRange.End; ++curRow)
+	{
+		let _canSplit = this.Content[curRow].CanSplit();
+		if (undefined === canSplitRow)
+		{
+			canSplitRow = _canSplit;
+		}
+		else if (canSplitRow !== _canSplit)
+		{
+			canSplitRow = null;
+			break;
+		}
+	}
+	Pr.CanSplitRow = canSplitRow;
+
 	if (true === this.Is_Inline())
 	{
 		Pr.TableAlignment     = ( align_Left === TablePr.Jc ? 0 : ( AscCommon.align_Center === TablePr.Jc ? 1 : 2 ) );
@@ -997,6 +1013,16 @@ CTable.prototype.Set_Props = function(Props)
 				else
 					this.Content[nCurRow].SetHeader(false);
 			}
+		}
+	}
+
+	// CanSplitRow
+	if (undefined !== Props.CanSplitRow && null !== Props.CanSplitRow)
+	{
+		let rowRange = this.GetSelectedRowsRange();
+		for (let curRow = rowRange.Start; curRow <= rowRange.End; ++curRow)
+		{
+			this.Content[curRow].SetCanSplit(Props.CanSplitRow ? true : false);
 		}
 	}
 
@@ -3275,6 +3301,52 @@ CTable.prototype.Recalculate = function()
 	this.private_RecalculateGrid();
 	this.Internal_Recalculate_1();
 };
+CTable.prototype.IsNeedRecalculateKeepNext = function()
+{
+	let rowCount = this.GetRowsCount();
+	if (!this.IsInline() || !rowCount || !this.private_IsRowWithKeepNext(rowCount - 1))
+		return false;
+
+	return this.GetPagesCount() <= 1;
+};
+CTable.prototype.IsPartiallyKeepNext = function()
+{
+	let rowCount = this.GetRowsCount();
+	if (!this.IsInline() || rowCount <= 1 || !this.private_IsRowWithKeepNext(rowCount - 1))
+		return false;
+
+	let firstRow = rowCount - 2;
+	for (; firstRow >= 0; --firstRow)
+	{
+		if (!this.private_IsRowWithKeepNext(firstRow))
+			break;
+	}
+	
+	++firstRow;
+	if (0 === firstRow)
+		return false;
+
+	return !this.IsRowStartFromNewPage(firstRow);
+};
+/**
+ * @param iRow {number}
+ * @returns {boolean}
+ */
+CTable.prototype.IsRowStartFromNewPage = function(iRow)
+{
+	if (0 === iRow)
+		return this.IsStartFromNewPage();
+	
+	for (let iPage = 1; iPage < this.Pages.length; ++iPage)
+	{
+		if (this.Pages[iPage].FirstRow === iRow)
+			return (this.Pages[iPage - 1].LastRow !== iRow);
+		else if (this.Pages[iPage].FirstRow > iRow)
+			break;
+	}
+	
+	return false;
+};
 CTable.prototype.Reset_RecalculateCache = function()
 {
 	this.RecalcInfo.Reset(true);
@@ -3583,6 +3655,20 @@ CTable.prototype.IsContentOnFirstPage = function()
 		return true;
 
 	return false;
+};
+/**
+ * Checks whether the last row of the table has the "keep with next" setting, i.e. it must be
+ * kept on the same page as the element following the table.
+ * @returns {boolean}
+ */
+CTable.prototype.IsLastRowKeepWithNext = function()
+{
+	let nRowsCount = this.GetRowsCount();
+	if (nRowsCount <= 0)
+		return false;
+
+	let oLastRow = this.GetRow(nRowsCount - 1);
+	return !!(oLastRow && oLastRow.IsContentWithKeepNext());
 };
 CTable.prototype.IsTableBorder = function(X, Y, CurPage)
 {
@@ -4062,7 +4148,9 @@ CTable.prototype.PreDelete = function()
 	if (this.isPreventedPreDelete())
 		return;
 	
-	this.DrawingDocument.EndTrackTable(this, false);
+	let drawingDocument = this.getDrawingDocument();
+	if (drawingDocument)
+		drawingDocument.EndTrackTable(this, false);
 
 	var RowsCount = this.Content.length;
 	for (var CurRow = 0; CurRow < RowsCount; CurRow++)
@@ -4078,7 +4166,9 @@ CTable.prototype.OnDetach = function()
 	if (!this.IsUseInDocument())
 		return;
 
-	this.DrawingDocument.EndTrackTable(this, false);
+	let drawingDocument = this.getDrawingDocument();
+	if (drawingDocument)
+		drawingDocument.EndTrackTable(this, false);
 
 	let rowCount = this.GetRowsCount();
 	for (let iRow = rowCount - 1; iRow >= 0; --iRow)
@@ -17471,15 +17561,16 @@ CTable.prototype.private_StartTrackTable = function(CurPage)
     if (CurPage < 0 || CurPage >= this.Pages.length)
         return;
 	
-	let logicDocument = this.GetLogicDocument();
-	if (!logicDocument || !logicDocument.IsShowTableAdjustments || !logicDocument.IsShowTableAdjustments())
+	let logicDocument   = this.GetLogicDocument();
+	let drawingDocument = this.getDrawingDocument();
+	if (!logicDocument || !drawingDocument || !logicDocument.IsShowTableAdjustments || !logicDocument.IsShowTableAdjustments())
 		return;
 
     var Bounds     = this.Get_PageBounds(CurPage);
     var NewOutline = new AscCommon.CTableOutline(this, this.GetAbsolutePage(CurPage), Bounds.Left, Bounds.Top, Bounds.Right - Bounds.Left, Bounds.Bottom - Bounds.Top);
 
     var Transform = this.Get_ParentTextTransform();
-    this.DrawingDocument.StartTrackTable(NewOutline, Transform);
+    drawingDocument.StartTrackTable(NewOutline, Transform);
 };
 CTable.prototype.CorrectBadTable = function()
 {

@@ -68,7 +68,7 @@
         Expired:                  'Expired',
 
         // onlyoffice
-        Image:                    'Image'
+        Signature:                 'Signature'
     }
 
     /**
@@ -99,6 +99,8 @@
         oCopy.SetInRect(aInRect.slice());
         oCopy.SetIconType(this.GetIconType());
         oCopy.SetRotate(this.GetRotate());
+		oCopy.setSpPr(this.spPr.createDuplicate());
+		oCopy.spPr.setParent(oCopy);
 
         return oCopy;
     };
@@ -211,20 +213,39 @@
 
         this.SetNeedRecalcSizes(false);
     };
-    CAnnotationStamp.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
-        let sType = this.GetIconType();
-        if (sType == undefined) {
-            return;
-        }
+	CAnnotationStamp.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
+		let sType = this.GetIconType();
+		if (sType == undefined) {
+			return;
+		}
 
-        this.Recalculate();
-        if (AscPDF.STAMP_TYPES.Image == sType) {
-            this.draw(oGraphicsWord, oGraphicsPDF);
-        }
-        else {
-            this._draw(oGraphicsWord, oGraphicsPDF);
-        }
-    };
+		this.Recalculate();
+		if (AscPDF.STAMP_TYPES.Signature == sType) {
+			let oTr;
+
+			// draw without rotate and scale for saving
+			if (oGraphicsWord.isPdf()) {
+				oTr = new AscCommon.CMatrix();
+
+				let hc = this.extX * 0.5;
+				let vc = this.extY * 0.5;
+				AscCommon.global_MatrixTransformer.TranslateAppend(oTr, -hc, -vc);
+				AscCommon.global_MatrixTransformer.TranslateAppend(oTr, this.x + hc, this.y + vc);
+
+				let aInRect = this.GetInRect();
+				let nSourceX = aInRect[0] * g_dKoef_pt_to_mm;
+				let nSourceY = aInRect[3] * g_dKoef_pt_to_mm;
+				
+				oTr.tx = nSourceX;
+				oTr.ty = nSourceY;
+			}
+			
+			this.draw(oGraphicsWord, oTr);
+		}
+		else {
+			this._draw(oGraphicsWord, oGraphicsPDF);
+		}
+	};
     CAnnotationStamp.prototype._draw = function(oGraphicsWord, oGraphicsPDF) {
         let oStructure = this.GetRenderStructure();
         if (!oStructure) {
@@ -332,7 +353,7 @@
 
         return nCurrentH / nSourceH;
     };
-    CAnnotationStamp.prototype.DrawFromStream = function(oGraphicsPDF) {
+    CAnnotationStamp.prototype.DrawFromStream = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)
             return;
             
@@ -448,7 +469,7 @@
         let boundsChecker = new AscFormat.CSlideBoundsChecker();
         
         boundsChecker.DO_NOT_DRAW_ANIM_LABEL = true;
-        if (AscPDF.STAMP_TYPES.Image == sType || !this.GetRenderStructure()) {
+        if (AscPDF.STAMP_TYPES.Signature == sType || !this.GetRenderStructure()) {
             this.draw(boundsChecker);
         } else {
             this._draw(boundsChecker);

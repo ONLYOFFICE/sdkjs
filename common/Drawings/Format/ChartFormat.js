@@ -2364,6 +2364,10 @@
     CBaseChartObject.prototype.isForm = function() {
         return false;
     };
+    CBaseChartObject.prototype.isSlideImagePlaceholder = function() {
+        return false;
+    };
+    CBaseChartObject.prototype.resetSelectionState = CShape.prototype.resetSelectionState;
     CBaseChartObject.prototype.GetParaDrawing = function() {
         let oChartSpace = this.getChartSpace();
         if(oChartSpace) {
@@ -4359,7 +4363,12 @@
         }
 
         if(cat) {
-            if(cat && cat.strRef && cat.strRef.strCache) {
+            // read via calculatedRef so text categories aren't coerced to 0
+            var oLit = cat.getLit ? cat.getLit() : null;
+            if(oLit && Array.isArray(oLit.pts)) {
+                pts = oLit.pts;
+            }
+            else if(cat.strRef && cat.strRef.strCache) {
                 pts = cat.strRef.strCache.pts;
             }
             else if(cat.numRef && cat.numRef.numCache) {
@@ -5492,6 +5501,7 @@
             }
             case AscDFH.historyitem_PlotArea_SetDTable:
             {
+                this.Refresh_RecalcData2(data);
                 break;
             }
             case AscDFH.historyitem_PlotArea_SetLayout:
@@ -6572,6 +6582,7 @@
 		}
 
 		chartSpace.setChart(newChart);
+		chartSpace.resetToChartStyle();
 
 		const newRegion = newChart.plotArea && newChart.plotArea.plotAreaRegion;
 		if (newRegion) {
@@ -10758,11 +10769,34 @@
         AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DTable_SetSpPr, this.spPr, pr));
         this.spPr = pr;
         this.setParentToChild(pr);
+        this.onChartInternalUpdate();
     };
     CDTable.prototype.setTxPr = function(pr) {
         AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DTable_SetTxPr, this.txPr, pr));
         this.txPr = pr;
         this.setParentToChild(pr);
+        this.onChartInternalUpdate();
+    };
+    CDTable.prototype.hitInBoundingRect = function(x, y) {
+        var oChartSpace = this.getChartSpace();
+        if (!oChartSpace || !oChartSpace.invertTransform || !(this.extX > 0) || !(this.extY > 0)) {
+            return false;
+        }
+        var localX = oChartSpace.invertTransform.TransformPointX(x, y);
+        var localY = oChartSpace.invertTransform.TransformPointY(x, y);
+        return localX >= this.x && localX <= this.x + this.extX && localY >= this.y && localY <= this.y + this.extY;
+    };
+    CDTable.prototype.Refresh_RecalcData = function() {
+        this.onChartInternalUpdate();
+    };
+    CDTable.prototype.Refresh_RecalcData2 = function() {
+        this.onChartInternalUpdate();
+    };
+    CDTable.prototype.handleUpdateFill = function() {
+        this.onChartInternalUpdate();
+    };
+    CDTable.prototype.handleUpdateLn = function() {
+        this.onChartInternalUpdate();
     };
     CDTable.prototype.applyChartStyle = function(oChartStyle, oColors, oAdditionalData, bReset) {
         if(!this.parent) {
@@ -11043,6 +11077,13 @@
 
         return lbl;
     };
+    CDTable.prototype._applyLabelFill = function (lbl) {
+        if (this.spPr && this.spPr.Fill && this.spPr.Fill.fill) {
+            const oLblSpPr = new AscFormat.CSpPr();
+            oLblSpPr.setFill(this.spPr.Fill.createDuplicate());
+            lbl.setSpPr(oLblSpPr);
+        }
+    };
     CDTable.prototype._buildRowNameLabel = function (cChartSpace, seria) {
         const lbl = this._buildBasicLabel(cChartSpace, seria);
         if (!lbl) {
@@ -11092,6 +11133,7 @@
         if (!lbl) {
             return;
         }
+        this._applyLabelFill(lbl);
 
         lbl.setShowCatName(true);
         lbl.pt = pt;
@@ -11108,6 +11150,7 @@
         if (!lbl) {
             return;
         }
+        this._applyLabelFill(lbl);
 
         lbl.setShowVal(true);
         lbl.pt = pt;
@@ -15140,7 +15183,7 @@
     function CTitle() {
         CBaseChartObject.call(this);
         this.layout = null;
-        this.overlay = false;
+        this.overlay = null;
         this.spPr = null;
         this.tx = null;
         this.txPr = null;
@@ -15597,9 +15640,18 @@
         this.setParentToChild(pr);
     };
     CTitle.prototype.setOverlay = function(pr) {
+        if (this.parent && this.parent.getObjectType() === AscDFH.historyitem_type_Axis) {
+            return;
+        }
         AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_Title_SetOverlay, this.overlay, pr));
         this.overlay = pr;
         this.onUpdate();
+    };
+    CTitle.prototype.getOverlay = function() {
+        if (AscFormat.isRealBool(this.overlay)) {
+            return this.overlay;
+        }
+        return !this.isChartEx();
     };
     CTitle.prototype.setSpPr = function(pr) {
         AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Title_SetSpPr, this.spPr, pr));
@@ -17601,6 +17653,9 @@
     CalcLegendEntry.prototype.isEmptyPlaceholder = function() {
         return false;
     };
+    CalcLegendEntry.prototype.isSlideImagePlaceholder = function() {
+        return false;
+    };
 	CalcLegendEntry.prototype.checkWidthContent =
 	CalcLegendEntry.prototype.checkWidhtContent = function () {
         var par = this.txBody.content.Content[0];
@@ -17695,6 +17750,9 @@
         return new AscFormat.CGraphicBounds(0, 0, this.extX, this.extY);
     };
     CompiledMarker.prototype.isEmptyPlaceholder = function() {
+        return false;
+    };
+    CompiledMarker.prototype.isSlideImagePlaceholder = function() {
         return false;
     };
     CompiledMarker.prototype.isForm = function() {
@@ -19565,7 +19623,7 @@
                 }
                 nTopHeader = nRow - oBBox.r1;
                 if(nRow === oBBox.r2) {
-                    if(aGridRow.length === 1) {
+                    if(aGridRow.length === 1 && aGrid.length === 1) {
                         nTopHeader -= 1;
                     }
                 }
@@ -19590,7 +19648,7 @@
                 }
                 nLeftHeader = nCol - oBBox.c1;
                 if(nCol === oBBox.c2) {
-                    if(aGrid.length === 1) {
+                    if(aGrid.length === 1 && aGridRow.length === 1) {
                         nLeftHeader -= 1;
                     }
                 }

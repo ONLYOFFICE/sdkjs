@@ -553,18 +553,18 @@ CDocumentContent.prototype.Get_NearestPos = function(CurPage, X, Y, bAnchor, Dra
 		CurPage = this.Pages.length - 1;
 		Y       = 10000;
 	}
-
-	var PageAbs = this.GetAbsolutePage(CurPage);
-
-	if (this.Parent && this.Parent instanceof CHeaderFooter)
+	
+	var PageAbs       = this.GetAbsolutePage(CurPage);
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && (this.Parent && this.Parent instanceof CHeaderFooter))
 	{
 		var bInText    = (null === this.IsInText(X, Y, CurPage) ? false : true);
-		var nInDrawing = this.LogicDocument.DrawingObjects.IsInDrawingObject(X, Y, PageAbs, this);
+		var nInDrawing = logicDocument.DrawingObjects.IsInDrawingObject(X, Y, PageAbs, this);
 
 		if (true != bAnchor)
 		{
 			// Проверяем попадание в графические объекты
-			var NearestPos = this.LogicDocument.DrawingObjects.getNearestPos(X, Y, PageAbs, Drawing);
+			var NearestPos = logicDocument.DrawingObjects.getNearestPos(X, Y, PageAbs, Drawing);
 			if (( nInDrawing === DRAWING_ARRAY_TYPE_BEFORE || nInDrawing === DRAWING_ARRAY_TYPE_INLINE || ( false === bInText && nInDrawing >= 0 ) ) && null != NearestPos)
 				return NearestPos;
 		}
@@ -1314,6 +1314,10 @@ CDocumentContent.prototype.Recalculate_Page = function(PageIndex, bStart)
 				return recalcresult2_CurPage | recalcresultflags_Column | recalcresultflags_Footnotes;
 
             return this.Recalculate_Page(PageIndex, false);
+        }
+        else if ((RecalcResult & recalcresult_PrevPage) && true === this.IsBlockLevelSdtContent())
+        {
+            return recalcresult2_PrevPage;
         }
         else if (RecalcResult & recalcresult_NextElement)
         {
@@ -2821,7 +2825,10 @@ CDocumentContent.prototype.UpdateCursorType = function(X, Y, CurPage)
 	var bTableBorder = (null === this.IsTableBorder(X, Y, CurPage) ? false : true);
 
 	// Ничего не делаем
-	if (this.Parent instanceof CHeaderFooter && true === this.LogicDocument.DrawingObjects.updateCursorType(this.GetAbsolutePage(CurPage), X, Y, {}, ( true === bInText || true === bTableBorder ? true : false )))
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument 
+		&& this.Parent instanceof CHeaderFooter 
+		&& true === logicDocument.DrawingObjects.updateCursorType(this.GetAbsolutePage(CurPage), X, Y, {}, ( true === bInText || true === bTableBorder ? true : false )))
 		return;
 	
 	let point = this.TransformPoint(X, Y);
@@ -3202,8 +3209,9 @@ CDocumentContent.prototype.AddImages = function(aImages){
 				{
 					var __w = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
 					var __h = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
-					W      = Math.max(5, Math.min(W, __w));
-					H      = Math.max(5, Math.min((W * __h / __w)));
+					let koeff = Math.min(1, W / __w, H / __h);
+					W      = Math.max(5, __w * koeff);
+					H      = Math.max(5, __h * koeff);
 					Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
 					var Image = this.DrawingObjects.createImage(_image.src, 0, 0, W, H);
 					Image.setParent(Drawing);
@@ -6873,13 +6881,6 @@ CDocumentContent.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent
 		Start = this.Selection.EndPos;
 	}
 
-	// Чтобы не было эффекта, когда ничего не поселекчено, а при удалении соединяются параграфы
-	if (Direction > 0 && type_Paragraph === this.Content[Start].GetType() && true === this.Content[Start].IsSelectionEmpty() && this.Content[Start].Selection.StartPos == this.Content[Start].Content.length - 1)
-	{
-		this.Content[Start].Selection.StartPos = this.Content[Start].Internal_GetEndPos();
-		this.Content[Start].Selection.EndPos   = this.Content[Start].Content.length - 1;
-	}
-
 	var ElementPageIndex = this.private_GetElementPageIndexByXY(ContentPos, X, Y, this.CurPage);
 	this.Content[ContentPos].Selection_SetEnd(X, Y, ElementPageIndex, MouseEvent);
 
@@ -6905,6 +6906,29 @@ CDocumentContent.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent
 				Item.SelectAll(Direction);
 				break;
 		}
+	}
+
+	if (true === this.Content[End].IsSelectionEmpty())
+	{
+		this.Content[End].RemoveSelection();
+		End--;
+	}
+
+	if (Start != End && true === this.Content[Start].IsSelectionEmpty())
+	{
+		this.Content[Start].RemoveSelection();
+		Start++;
+	}
+
+	if (Direction > 0)
+	{
+		this.Selection.StartPos = Start;
+		this.Selection.EndPos   = End;
+	}
+	else
+	{
+		this.Selection.StartPos = End;
+		this.Selection.EndPos   = Start;
 	}
 };
 CDocumentContent.prototype.CheckPosInSelection = function(X, Y, CurPage, NearPos)
@@ -9681,7 +9705,6 @@ CDocumentContent.prototype.SelectCharRange = function(nStartChar, nEndChar, bMov
 	if (bMoveCursor)
 		this.CurPos.ContentPos = nEndParaIdx;
 };
-
 function CDocumentContentStartState(DocContent)
 {
     this.Content = [];

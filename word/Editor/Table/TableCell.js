@@ -110,6 +110,7 @@ function CTableCell(Row, ColW)
 		ClipTop : 0,
 		ClipBottom : 0,
 
+		Y_content_end : {}, // Map for YLimit by pages
         Y_VAlign_offset : [] // Сдвиг, который нужно сделать из-за VAlign (массив по страницам)
     };
 
@@ -594,7 +595,11 @@ CTableCell.prototype =
 	
 	GetPageContentFrame : function(page)
 	{
-		return this.Row.Table.GetCellPageContentFrame(page + this.Content.StartPage, this.Row.Index, this.Index);
+		let result = this.Row.Table.GetCellPageContentFrame(page + this.Content.StartPage, this.Row.Index, this.Index);
+		if (this.Temp && undefined !== this.Temp.Y_content_end[page])
+			result.YLimit = this.Temp.Y_content_end[page];
+
+		return result;
 	},
 
     Set_CurrentElement : function(bUpdateStates)

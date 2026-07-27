@@ -1246,7 +1246,7 @@ function CBinaryFileWriter()
 
                     this._WriteInt1(0, _author.Id);
                     this._WriteInt1(1, _author.LastId);
-                    this._WriteInt1(2, _author.Id - 1);
+                    this._WriteInt1(2, _author.GetColorIndex());
                     this._WriteString1(3, _author.Name);
                     this._WriteString1(4, _author.Initials);
 
@@ -2925,8 +2925,8 @@ function CBinaryFileWriter()
             }
             else if (0 != _src.indexOf("http:") && 0 != _src.indexOf("data:") && 0 != _src.indexOf("https:") && 0 != _src.indexOf("ftp:") && 0 != _src.indexOf("file:")){
                 if (AscCommon.EncryptionWorker && AscCommon.EncryptionWorker.isCryptoImages() &&
-                  window["AscDesktopEditor"] && window["AscDesktopEditor"]["Crypto_GetLocalImageBase64"]) {
-                    _src = window["AscDesktopEditor"]["Crypto_GetLocalImageBase64"](_src);
+                  AscCommon.CryptoProvider) {
+                    _src = AscCommon.CryptoProvider.getCryptoImageBase64(_src) || _src;
                 } else {
                     var imageUrl = AscCommon.g_oDocumentUrls.getImageUrl(_src);
                     if (imageUrl)

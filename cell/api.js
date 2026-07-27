@@ -1580,8 +1580,8 @@ var editor;
 						{
 							var sParamXml = ("<m_nCsvTxtEncoding>" + oAdditionalData["codepage"] + "</m_nCsvTxtEncoding>");
 							sParamXml += ("<m_nCsvDelimiter>" + oAdditionalData["delimiter"] + "</m_nCsvDelimiter>");
-							window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, fileType, sParamXml);
-							return true;
+							if (AscCommon.CryptoProvider.cryptoDownloadAs(dataContainer.data, fileType, sParamXml))
+								return true;
 						}
 						t._downloadAsUsingServer(actionType, options, oAdditionalData, dataContainer, downloadType);
 						return;
@@ -1615,8 +1615,8 @@ var editor;
     if (window.isCloudCryptoDownloadAs) {
       var sParamXml = ("<m_nCsvTxtEncoding>" + oAdditionalData["codepage"] + "</m_nCsvTxtEncoding>");
       sParamXml += ("<m_nCsvDelimiter>" + oAdditionalData["delimiter"] + "</m_nCsvDelimiter>");
-      window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, fileType, sParamXml);
-      return true;
+      if (AscCommon.CryptoProvider.cryptoDownloadAs(dataContainer.data, fileType, sParamXml))
+        return true;
     }
   };
 
@@ -7239,6 +7239,7 @@ var editor;
            if (_pageSize) {
                _pageSetup.width = _pageSize.width;
                _pageSetup.height = _pageSize.height;
+               _pageSetup.paperSize = null;
            }
            var pageMargins = newPrintOptions.pageMargins;
            if (_margins) {

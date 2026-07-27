@@ -984,6 +984,7 @@
 		setTextItalic			: function(italic){return "\tdoc.GetRangeBySelect().SetItalic(" + italic + ");\n"},
 		setTextUnderline		: function(underline){return "\tdoc.GetRangeBySelect().SetUnderline(" + underline + ");\n"},
 		setTextStrikeout		: function(strikeout){return "\tdoc.GetRangeBySelect().SetStrikeout(" + strikeout + ");\n"},
+		setTextSmallCaps		: function(smallCaps){return "\tdoc.GetRangeBySelect().SetSmallCaps(" + smallCaps + ");\n"},
 		setTextFontName			: function(name){return "\tdoc.GetRangeBySelect().SetFontFamily(\"" + name + "\");\n"},
 		setTextFontSize			: function(size){return "\tdoc.GetRangeBySelect().SetFontSize(\"" + size + "\");\n"},
 		setTextHighlightColor	: function(highlight){
@@ -1045,6 +1046,11 @@
 			return "\tdoc.GetCurrentParagraph().SetJc(\"" + align + "\");\n"
 		},
 		setParagraphShd			: function(color){return "\tdoc.GetRangeBySelect().SetShd(\"clear\", "+ color.asc_getR() + " , " + color.asc_getG() +", "+ color.asc_getB() +", false);\n"},
+		addDropCap				: function(data){
+			let type = data.bInText ? "drop" : "margin";
+			return "\tdoc.GetCurrentParagraph().SetDropCap(\"" + type + "\");\n";
+		},
+		removeDropCap			: function(){return "\tdoc.GetCurrentParagraph().SetDropCap(\"none\");\n"},
 		setLineSpacing			: function(lineSpacing){
 			let type = lineSpacing.type;
 			let value = lineSpacing.value;
@@ -1989,8 +1995,19 @@
 		setHdrFtrFirstPage: function()
 		{
 			return ""; //no api
+		},
+		goToHeader: function()
+		{
+			return "\tdoc.MoveCursorToHeader();\n";
+		},
+		goToFooter: function()
+		{
+			return "\tdoc.MoveCursorToFooter();\n";
+		},
+		goToDocContent: function()
+		{
+			return "\tdoc.MoveCursorToMainDocument();\n";
 		}
-
 	};
 	
 	const DEActionMap = {};
@@ -2003,6 +2020,7 @@
 	DEActionMap[AscDFH.historydescription_Document_SetTextUnderlineHotKey]		= wordActions.setTextUnderline;
 	DEActionMap[AscDFH.historydescription_Document_SetTextStrikeout]			= wordActions.setTextStrikeout;
 	DEActionMap[AscDFH.historydescription_Document_SetTextStrikeoutHotKey]		= wordActions.setTextStrikeout;
+	DEActionMap[AscDFH.historydescription_Document_SetTextSmallCapsHotKey]		= wordActions.setTextSmallCaps;
 	DEActionMap[AscDFH.historydescription_Document_SetTextFontName]			= wordActions.setTextFontName;
 	DEActionMap[AscDFH.historydescription_Document_SetTextFontNameLong]		= wordActions.setTextFontName;
 	DEActionMap[AscDFH.historydescription_Document_SetTextFontSize]			= wordActions.setTextFontSize;
@@ -2074,7 +2092,8 @@
 	DEActionMap[AscDFH.historydescription_Document_RemoveHdrFtr]				= wordActions.removeHdr;
 	DEActionMap[AscDFH.historydescription_Document_AddComment]					= wordActions.addComment;
 	//DEActionMap[AscDFH.AscDFH.historydescription_Document_AddTextArt]		= wordActions.addTextArt;
-	//DEActionMap[AscDFH.AscDFH.historydescription_Document_AddDropCap]		= wordActions.addDropCap;
+	DEActionMap[AscDFH.historydescription_Document_AddDropCap]					= wordActions.addDropCap;
+	DEActionMap[AscDFH.historydescription_Document_RemoveDropCap]				= wordActions.removeDropCap;
 	//DEActionMap[AscDFH.AscDFH.historydescription_Document_AddDateTimeField]	= wordActions.addDateTimeField;
 	DEActionMap[AscDFH.historydescription_Document_AddMath]					= wordActions.addMath;
 	DEActionMap[AscDFH.historydescription_Document_AddMathHotKey]				= wordActions.addMathHotkey;
@@ -2118,6 +2137,9 @@
 	DEActionMap[AscDFH.historydescription_Document_AddPageCount]				= wordActions.addPageCount;
 	DEActionMap[AscDFH.historydescription_Document_SetHdrFtrEvenAndOdd]			= wordActions.setHdrFtrEvenAndOdd;
 	DEActionMap[AscDFH.historydescription_Document_SetHdrFtrFirstPage]			= wordActions.setHdrFtrFirstPage;
+	DEActionMap["GoToHeader"]													= wordActions.goToHeader;
+	DEActionMap["GoToFooter"]													= wordActions.goToFooter;
+	DEActionMap["GoToDocContent"]												= wordActions.goToDocContent;
 
 	const cellActions = {
 		setCellIncreaseFontSize	: function(){return "\tApi.GetSelection().FontIncrease();\n"},

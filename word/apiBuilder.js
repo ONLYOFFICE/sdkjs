@@ -1757,24 +1757,23 @@
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Select.js
 	 */	
-	ApiRange.prototype.Select = function(bUpdate)
+	ApiRange.prototype.Select = function(update)
 	{
 		private_RefreshRangesPosition();
 
-		var Document = private_GetLogicDocument();
+		let logicDocument = private_GetLogicDocument();
 		
-		if (bUpdate === undefined)
-			bUpdate = true;
-		
-		if (bUpdate)
+		update = GetBoolParameter(update, true);
+		if (update)
 		{
+			logicDocument.RemoveSelection();
 			for (let i = this.StartPos.length - 1; i >= 0; --i)
 			{
 				let obj = this.StartPos[i].Class;
 				if ((obj instanceof AscWord.CDocument) || (obj instanceof AscWord.CDocumentContent))
 				{
 					obj.SetThisElementCurrent(true);
-					bUpdate = false;
+					update = false;
 					break;
 				}
 			}
@@ -1783,7 +1782,8 @@
 		this.StartPos[0].Class.SetContentPosition(this.StartPos, 0, 0);
 		this.StartPos[0].Class.SetSelectionByContentPositions(this.StartPos, this.EndPos);
 		
-		if (bUpdate)
+		// TODO: Rework this
+		if (update)
 		{
 			var controllerType;
 			
@@ -1803,8 +1803,8 @@
 			{
 				controllerType = docpostype_Content;
 			}
-			Document.SetDocPosType(controllerType);
-			Document.UpdateSelection();
+			logicDocument.SetDocPosType(controllerType);
+			logicDocument.UpdateSelection();
 		}
 
 		return true;
@@ -3159,6 +3159,16 @@
 	}
 
 	/**
+	 * Class representing a drop cap. A drop cap is a large initial letter that is split off from a paragraph into a
+	 * separate framed paragraph.
+	 * @constructor
+	 */
+	function ApiDropCap(Paragraph)
+	{
+		this.Paragraph = Paragraph;
+	}
+
+	/**
 	 * Class representing a paragraph.
 	 * @constructor
 	 * @extends {ApiParaPr}
@@ -3216,6 +3226,15 @@
 	}
 	ApiRun.prototype = Object.create(ApiTextPr.prototype);
 	ApiRun.prototype.constructor = ApiRun;
+
+	/**
+	 * Class representing a mathematical equation.
+	 * @constructor
+	 */
+	function ApiMath(paraMath)
+	{
+		this.ParaMath = paraMath;
+	}
 
 	/**
 	 * Class representing a comment.
@@ -3905,6 +3924,14 @@
 	function ApiStroke(oLn, parentSpPr) {
 		this.Ln = oLn;
 		this.parent = parentSpPr || null;
+	}
+
+	/**
+	 * Class representing a shadow.
+	 * @constructor
+	 */
+	function ApiShadow(shadow) {
+		this.Shadow = shadow;
 	}
 
 	/**
@@ -4795,6 +4822,44 @@
 		return new ApiRun(new ParaRun(null, false));
 	};
 	/**
+	 * Creates a math equation from a linear text string. The resulting object can be inserted into
+	 * a paragraph the same way as a run (e.g. via {@link ApiParagraph#AddElement} or {@link ApiParagraph#Push}).
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {string} text - An equation written as a linear text string.
+	 * @param {"unicode" | "latex" | "mathml"} [format="unicode"] - The format of the specified linear representation.
+	 * @returns {ApiMath}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateMath.js
+	 */
+	Api.CreateMath = function(text, format)
+	{
+		let equation   = GetStringParameter(text, "");
+		let formatType = GetStringParameter(format, "unicode");
+
+		LoadFont("Cambria Math");
+
+		let paraMath = null;
+		if ("mathml" === formatType)
+		{
+			paraMath = AscWord.ParaMath.fromMathML(equation);
+		}
+		else
+		{
+			let nInputType = ("latex" === formatType) ? Asc.c_oAscMathInputType.LaTeX : Asc.c_oAscMathInputType.Unicode;
+
+			paraMath = new AscWord.ParaMath();
+			let run = new AscWord.Run(null, true);
+			run.AddText(equation);
+			paraMath.Root.addElementToContent(run);
+			paraMath.Root.Correct_Content();
+			paraMath.SetParagraph(null);
+			paraMath.ConvertView(false, nInputType);
+		}
+		
+		return new ApiMath(paraMath);
+	};
+	/**
 	 * Creates a new hyperlink text block to be inserted to the current paragraph or table.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
@@ -4877,6 +4942,9 @@
 
 	/**
 	 * Groups an array of drawings.
+	 * :::note
+	 * The drawings must not be added to the document. To group the drawings which are already in the document, use the {@link ApiDocument#GroupDrawings} method.
+	 * :::
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {DrawingForGroup[]} drawings - An array of drawings to group.
@@ -4895,14 +4963,29 @@
 		let oGraphicObjects = oDoc.getDrawingObjects();
 
 		if (drawings.find(function(drawing) { return drawing.Drawing.IsUseInDocument(); }))
-			throwException(new Error("All drawings must be in document"));
+			throwException(new Error("All drawings must not be in document"));
 		
-		drawings.forEach(function(drawing) { drawing.Drawing.recalculate(); })
+		drawings.forEach(function(drawing) {
+			let paraDrawing = drawing.getParaDrawing();
+			drawing.Drawing.recalculate();
+			drawing.Drawing.updatePosition(
+				paraDrawing.PositionH.Align || paraDrawing.PositionH.Percent ? 0 : paraDrawing.PositionH.Value,
+				paraDrawing.PositionV.Align || paraDrawing.PositionV.Percent ? 0 : paraDrawing.PositionV.Value
+			);
+		});
 
 		let oGroup = AscFormat.builder_CreateGroup(drawings, oGraphicObjects);
+		let anchorDrawing = drawings[0].getParaDrawing();
+		let offsetX = oGroup.spPr.xfrm.offX;
+		let offsetY = oGroup.spPr.xfrm.offY;
+		oGroup.spPr.xfrm.setOffX(0);
+		oGroup.spPr.xfrm.setOffY(0);
+
 		let oParaDrawing = new ParaDrawing(oGroup.getXfrmExtX(), oGroup.getXfrmExtY(), null, oDrDoc, oDoc, null);
 		oParaDrawing.Set_WrappingType(WRAPPING_TYPE_NONE);
         oParaDrawing.Set_DrawingType(drawing_Anchor);
+		oParaDrawing.Set_PositionH(anchorDrawing.PositionH.RelativeFrom, false, offsetX, false);
+		oParaDrawing.Set_PositionV(anchorDrawing.PositionV.RelativeFrom, false, offsetY, false);
 		oGroup.setParent(oParaDrawing);
 		oParaDrawing.Set_GraphicObject(oGroup);
 
@@ -5340,6 +5423,71 @@
 	{
 		let strDashType = AscFormat.CLn.prototype.GetDashCode(sDash);
 		return new ApiStroke(AscFormat.builder_CreateLine(width, fill, strDashType));
+	};
+
+	/**
+	 * Properties used to create a shadow.
+	 * @typedef {Object} ShadowSettings
+	 * @property {ApiUniColor} [color] - The shadow color (black by default).
+	 * @property {number} [transparency=0] - The shadow transparency from 0.0 (opaque) to 1.0 (clear).
+	 * @property {number} [offsetX=0] - The horizontal offset of the shadow measured in points (a positive value offsets to the right).
+	 * @property {number} [offsetY=0] - The vertical offset of the shadow measured in points (a positive value offsets downwards).
+	 * @property {number} [size=100] - The shadow size as a percentage of the shape size.
+	 * @property {boolean} [rotateWithShape=true] - Specifies whether the shadow rotates together with the shape.
+	 */
+
+	/**
+	 * Creates a shadow which can be applied to a graphic object.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @param {ShadowSettings} settings - The shadow properties.
+	 * @returns {ApiShadow}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateShadow.js
+	 */
+	Api.CreateShadow = function(settings)
+	{
+		settings = settings || {};
+		let shadow = new AscFormat.COuterShdw();
+
+		let uniColor = null;
+		let color = settings["color"];
+		if (color instanceof ApiUniColor)
+			uniColor = color.Unicolor.createDuplicate();
+		else if (color instanceof ApiColor)
+			uniColor = color.private_createUnifill().fill.color.createDuplicate();
+		if (!uniColor)
+			uniColor = AscFormat.CreateUniColorRGB(0, 0, 0);
+
+		let transparency = settings["transparency"];
+		if (typeof transparency === "number")
+		{
+			let alpha = Math.round((1 - Math.min(Math.max(transparency, 0), 1)) * 100000);
+			uniColor.addColorMod(new AscFormat.CColorMod("alpha", alpha));
+		}
+		shadow.color = uniColor;
+
+		let offsetX = typeof settings["offsetX"] === "number" ? settings["offsetX"] : 0;
+		let offsetY = typeof settings["offsetY"] === "number" ? settings["offsetY"] : 0;
+		if (offsetX !== 0 || offsetY !== 0)
+		{
+			shadow.dist = Math.round(Math.sqrt(offsetX * offsetX + offsetY * offsetY) * 12700);
+			let angle = Math.atan2(offsetY, offsetX) * 180 / Math.PI;
+			if (angle < 0)
+				angle += 360;
+			shadow.dir = Math.round(angle * 60000);
+		}
+
+		if (typeof settings["size"] === "number")
+		{
+			shadow.sx = Math.round(settings["size"] * 1000);
+			shadow.sy = Math.round(settings["size"] * 1000);
+		}
+
+		if (typeof settings["rotateWithShape"] === "boolean")
+			shadow.rotWithShape = settings["rotateWithShape"];
+
+		return new ApiShadow(shadow);
 	};
 
 	/**
@@ -10008,6 +10156,8 @@
 		if (aDrawings.find(function(drawing) { return !drawing.Drawing.IsUseInDocument(); }))
 			return null;
 
+		this.ForceRecalculate();
+
 		let oDoc = this.Document;
 		let oGraphicObjects = oDoc.getDrawingObjects();
 		oGraphicObjects.resetSelection();
@@ -10230,7 +10380,62 @@
 	{
 		this.Document.EnterText(sText);
 		return true;
-	}
+	};
+
+	/**
+	 * Moves the cursor into the header of the specified page and switches the document into the header editing mode. The cursor is positioned at the beginning of the header.
+	 * @memberof ApiDocument
+	 * @param {number} [page] - The page number. If not specified, the current page is used.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorToHeader.js
+	 */
+	ApiDocument.prototype.MoveCursorToHeader = function(page)
+	{
+		if (undefined === page || null === page)
+			page = this.Document.GetCurPage();
+
+		this.ForceRecalculate(page + 1);
+		if (this.Document.GetPagesCount() <= page)
+			return false;
+
+		return Asc.editor.GoToHeader(page);
+	};
+
+	/**
+	 * Moves the cursor into the footer of the specified page and switches the document into the footer editing mode. The cursor is positioned at the beginning of the footer.
+	 * @memberof ApiDocument
+	 * @param {number} [page] - The page number. If not specified, the current page is used.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorToFooter.js
+	 */
+	ApiDocument.prototype.MoveCursorToFooter = function(page)
+	{
+		if (undefined === page || null === page)
+			page = this.Document.GetCurPage();
+
+		this.ForceRecalculate(page + 1);
+		if (this.Document.GetPagesCount() <= page)
+			return false;
+
+		return Asc.editor.GoToFooter(page);
+	};
+
+	/**
+	 * Moves the cursor from the header, footer or any other special part of the document back to the main document content on the current page.
+	 * @memberof ApiDocument
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorToMainDocument.js
+	 */
+	ApiDocument.prototype.MoveCursorToMainDocument = function()
+	{
+		return this.Document.MoveCursorToMainDocument();
+	};
 
 	/**
 	 * Add paragraph to the document on the cursor position.
@@ -10468,26 +10673,26 @@
 	 * Adds some text to the current paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {string} text - The text that we want to insert into the current document element.
+	 * @param {string | number[]} text - The text that we want to insert into the current document element. It can be a string or an array of Unicode code points.
+	 * @param {number[]} [widths] - An array of character widths (in millimeters). It should be the same length as the array of code points passed in the "text" parameter. When the widths are specified, the characters are added preserving these exact widths.
 	 * @returns {ApiRun}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/AddText.js
 	 */
-	ApiParagraph.prototype.AddText = function(text)
+	ApiParagraph.prototype.AddText = function(text, widths)
 	{
-		text = GetStringParameter(text, "");
-		let oRun = new ParaRun(this.Paragraph, false);
-		oRun.AddText(text);
+		let run = new AscWord.ParaRun(this.Paragraph, false);
 
 		// copy props from previous non empty run
-		let oPrevRun = this.GetLastRunWithText();
-		if (!oPrevRun)
-			oPrevRun = new ApiRun(this.Paragraph.GetParaEndRun());
-		
-		let oApiRun = new ApiRun(oRun);
-		oApiRun.SetTextPr(oPrevRun.GetTextPr());
+		let prevRun = this.GetLastRunWithText();
+		if (!prevRun)
+			prevRun = new ApiRun(this.Paragraph.GetParaEndRun());
 
-		private_PushElementToParagraph(this.Paragraph, oRun);
-		return oApiRun;
+		let apiRun = new ApiRun(run);
+		apiRun.SetTextPr(prevRun.GetTextPr());
+		apiRun.AddText(text, widths);
+
+		private_PushElementToParagraph(this.Paragraph, run);
+		return apiRun;
 	};
 	/**
 	 * Adds a page break and starts the next element from the next page.
@@ -11428,6 +11633,312 @@
 		};
 		this.Paragraph.SetParagraphBidi(map[readingOrder]);
 		return this;
+	};
+	/**
+	 * Returns the paragraph that holds the drop cap related to the current paragraph.
+	 * @returns {?Paragraph}
+	 */
+	ApiParagraph.prototype.private_GetDropCapParagraph = function()
+	{
+		let framePr = this.Paragraph.Get_FramePr();
+		if (framePr)
+			return framePr.DropCap ? this.Paragraph : null;
+
+		let prev = this.Paragraph.Get_DocumentPrev();
+		if (prev && prev.IsParagraph())
+		{
+			let prevFramePr = prev.Get_FramePr();
+			return prevFramePr && prevFramePr.DropCap ? prev : null;
+		}
+
+		return null;
+	};
+	/**
+	 * Creates a drop cap from the first letter of the current paragraph. A drop cap is a large initial letter that
+	 * drops down two or more lines.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @param {("none" | "drop" | "margin")} position - The drop cap type: "none" removes the drop cap, "drop" places
+	 * it within the text, "margin" places it in the margin.
+	 * @returns {?ApiDropCap} - The created drop cap, or null if the drop cap could not be created or was removed.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetDropCap.js
+	 */
+	ApiParagraph.prototype.SetDropCap = function(position)
+	{
+		if (position !== undefined && position !== null
+			&& position !== "none" && position !== "drop" && position !== "margin")
+			throwException(new Error('The position parameter must be one of "none", "drop" or "margin"'));
+
+		let paragraph = this.Paragraph;
+		let logicDocument = paragraph.GetLogicDocument();
+		if (!logicDocument)
+			return null;
+
+		logicDocument.RemoveSelection();
+		paragraph.Document_SetThisElementCurrent(false);
+		Api.GetDocument().ForceRecalculate();
+
+		if (position === "none" || position === undefined || position === null)
+		{
+			logicDocument.RemoveDropCap(true);
+			return null;
+		}
+		
+		let apiDropCap = this.GetDropCap();
+		if (apiDropCap)
+		{
+			apiDropCap.SetPosition(position);
+			return apiDropCap;
+		}
+		
+		position = GetStringParameter(position, "drop");
+		logicDocument.AddDropCap(position === "drop");
+
+		let dropCapPara = this.private_GetDropCapParagraph();
+		return dropCapPara ? new ApiDropCap(dropCapPara) : null;
+	};
+	/**
+	 * Returns the drop cap related to the current paragraph, if any.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @returns {?ApiDropCap} - The drop cap, or null if the paragraph has no drop cap.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetDropCap.js
+	 */
+	ApiParagraph.prototype.GetDropCap = function()
+	{
+		let dropCapPara = this.private_GetDropCapParagraph();
+		return dropCapPara ? new ApiDropCap(dropCapPara) : null;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiDropCap
+	//
+	//------------------------------------------------------------------------------------------------------------------
+	/**
+	 * Returns the logic document if the drop cap paragraph is still attached to it.
+	 * @returns {?CDocument}
+	 */
+	ApiDropCap.prototype.private_GetLogicDocument = function()
+	{
+		let logicDocument = this.Paragraph.GetLogicDocument();
+		return (logicDocument instanceof AscWord.CDocument) ? logicDocument : null;
+	};
+	/**
+	 * Checks whether this handle still points to a valid drop cap.
+	 * @returns {boolean}
+	 */
+	ApiDropCap.prototype.private_IsValid = function()
+	{
+		let framePr = this.Paragraph.Get_FramePr();
+		return !!(framePr && undefined !== framePr.DropCap);
+	};
+	/**
+	 * Applies the given frame settings to the drop cap through the same code path as the editor settings dialog, so
+	 * the drop cap letter is resized to fit the frame.
+	 * @param {AscCommon.asc_CParagraphFrame} framePr - The frame settings to apply.
+	 * @returns {boolean}
+	 */
+	ApiDropCap.prototype.private_ApplyFrame = function(framePr)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || !this.private_IsValid())
+			return false;
+
+		logicDocument.RemoveSelection();
+		this.Paragraph.Document_SetThisElementCurrent(false);
+		Api.GetDocument().ForceRecalculate();
+
+		framePr.put_FromDropCapMenu(true);
+		this.Paragraph.Set_FramePr(framePr);
+		return true;
+	};
+	/**
+	 * Returns the type of the ApiDropCap class.
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @returns {"dropCap"}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/GetClassType.js
+	 */
+	ApiDropCap.prototype.GetClassType = function()
+	{
+		return "dropCap";
+	};
+	/**
+	 * Returns the parent paragraph that holds the drop cap letter.
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiParagraph}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/GetParent.js
+	 */
+	ApiDropCap.prototype.GetParent = function()
+	{
+		return new ApiParagraph(this.Paragraph);
+	};
+	/**
+	 * Returns the drop cap type.
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @returns {("none" | "drop" | "margin")}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/GetPosition.js
+	 */
+	ApiDropCap.prototype.GetPosition = function()
+	{
+		let framePr = this.Paragraph.Get_FramePr();
+		if (!framePr)
+			return "none";
+
+		if (Asc.c_oAscDropCap.Drop === framePr.DropCap)
+			return "drop";
+		else if (Asc.c_oAscDropCap.Margin === framePr.DropCap)
+			return "margin";
+
+		return "none";
+	};
+	/**
+	 * Sets the drop cap type.
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @param {("none" | "drop" | "margin")} position - The drop cap type: "none" removes the drop cap, "drop" places
+	 * it within the text, "margin" places it in the margin.
+	 * @returns {?ApiDropCap} - Returns null if the drop cap was removed with "none".
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/SetPosition.js
+	 */
+	ApiDropCap.prototype.SetPosition = function(position)
+	{
+		if (position === "none")
+		{
+			this.Clear();
+			return null;
+		}
+
+		let dropCap;
+		if (position === "drop")
+			dropCap = Asc.c_oAscDropCap.Drop;
+		else if (position === "margin")
+			dropCap = Asc.c_oAscDropCap.Margin;
+		else
+			throwException(new Error('The position parameter must be one of "none", "drop" or "margin"'));
+
+		let framePr = new Asc.asc_CParagraphFrame();
+		framePr.put_DropCap(dropCap);
+		this.private_ApplyFrame(framePr);
+		return this;
+	};
+	/**
+	 * Returns the number of lines that the drop cap occupies.
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @returns {number}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/GetLinesToDrop.js
+	 */
+	ApiDropCap.prototype.GetLinesToDrop = function()
+	{
+		let framePr = this.Paragraph.Get_FramePr();
+		return (framePr && undefined !== framePr.Lines) ? framePr.Lines : 0;
+	};
+	/**
+	 * Sets the number of lines that the drop cap occupies. The drop cap letter is resized accordingly.
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @param {number} lines - The number of lines that the drop cap occupies. Must be a number greater than 0.
+	 * @returns {ApiDropCap}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/SetLinesToDrop.js
+	 */
+	ApiDropCap.prototype.SetLinesToDrop = function(lines)
+	{
+		lines = AscBuilder.GetNumberParameter(lines, 0)
+		if (lines <= 0)
+			throwException(new Error("The lines parameter must be a number greater than 0"));
+
+		let framePr = new Asc.asc_CParagraphFrame();
+		framePr.put_Lines(lines);
+		this.private_ApplyFrame(framePr);
+		return this;
+	};
+	/**
+	 * Sets the font family of the drop cap letter.
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @param {string} fontFamily - The font family name used for the drop cap letter.
+	 * @returns {ApiDropCap}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/SetFontFamily.js
+	 */
+	ApiDropCap.prototype.SetFontFamily = function(fontFamily)
+	{
+		fontFamily = GetStringParameter(fontFamily, null);
+		if (null === fontFamily)
+			throwException(new Error("The fontFamily parameter must be a string"));
+
+		let framePr = new Asc.asc_CParagraphFrame();
+		framePr.put_FontFamily(new AscCommon.asc_CTextFontFamily({Name : fontFamily, Index : -1}));
+		this.private_ApplyFrame(framePr);
+		return this;
+	};
+	/**
+	 * Returns the distance between the drop cap and the paragraph text measured in twentieths of a point (1/1440 of
+	 * an inch).
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @returns {twips}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/GetDistanceFromText.js
+	 */
+	ApiDropCap.prototype.GetDistanceFromText = function()
+	{
+		let framePr = this.Paragraph.Get_FramePr();
+		return (framePr && undefined !== framePr.HSpace) ? private_MM2Twips(framePr.HSpace) : 0;
+	};
+	/**
+	 * Sets the distance between the drop cap and the paragraph text measured in twentieths of a point (1/1440 of an
+	 * inch).
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @param {twips} distance - The distance between the drop cap and the paragraph text. Must be a non-negative number.
+	 * @returns {ApiDropCap}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/SetDistanceFromText.js
+	 */
+	ApiDropCap.prototype.SetDistanceFromText = function(distance)
+	{
+		distance = AscBuilder.GetNumberParameter(distance, null);
+		if (null === distance || distance < 0)
+			throwException(new Error("The distance parameter must be a non-negative number"));
+
+		let framePr = new Asc.asc_CParagraphFrame();
+		framePr.put_HSpace(private_Twips2MM(distance));
+		this.private_ApplyFrame(framePr);
+		return this;
+	};
+	/**
+	 * Removes the drop cap, merging the drop cap letter back into the paragraph text.
+	 * @memberof ApiDropCap
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/Clear.js
+	 */
+	ApiDropCap.prototype.Clear = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || !this.private_IsValid())
+			return false;
+
+		logicDocument.RemoveSelection();
+		this.Paragraph.Document_SetThisElementCurrent(false);
+		Api.GetDocument().ForceRecalculate();
+
+		logicDocument.RemoveDropCap(true);
+		return true;
 	};
 	/**
 	 * Returns the last element of the paragraph.
@@ -12504,12 +13015,37 @@
 	 * Adds some text to the current run.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {string} text - The text which will be added to the current run.
+	 * @param {string | number[]} text - The text which will be added to the current run. It can be a string or an array of Unicode code points.
+	 * @param {number[]} [widths] - An array of character widths (in millimeters). It should be the same length as the array of code points passed in the "text" parameter. When the widths are specified, the characters are added preserving these exact widths.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/AddText.js
 	 */
-	ApiRun.prototype.AddText = function(text)
+	ApiRun.prototype.AddText = function(text, widths)
 	{
+		if (Array.isArray(text))
+		{
+			widths = GetArrayParameter(widths, null);
+			if (widths)
+			{
+				let fontSize = this.Run.Get_CompiledPr(false).FontSize || 10;
+				this.Run.AddCodePointsWithWidths(text, widths, fontSize);
+			}
+			else
+			{
+				let sString = "";
+				for (let nIndex = 0, nCount = text.length; nIndex < nCount; ++nIndex)
+				{
+					let nCharCode = text[nIndex] | 0;
+					if (nCharCode > 0)
+						sString += String.fromCodePoint(nCharCode);
+				}
+
+				this.Run.AddText(sString);
+			}
+
+			return true;
+		}
+
 		text = GetStringParameter(text, "");
 		this.Run.AddText(text);
 		return true;
@@ -12990,6 +13526,28 @@
 		this.Run.Make_ThisElementCurrent();
 		this.Run.SetCursorPosition(pos);
 		return true;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiMath
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns a type of the ApiMath class.
+	 * @memberof ApiMath
+	 * @typeofeditors ["CDE"]
+	 * @returns {"math"}
+	 * @see office-js-api/Examples/{Editor}/ApiMath/Methods/GetClassType.js
+	 */
+	ApiMath.prototype.GetClassType = function()
+	{
+		return "math";
+	};
+	ApiMath.prototype.private_GetImpl = function()
+	{
+		return this.ParaMath;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -19520,7 +20078,7 @@
 	 * Copies the current graphic object. 
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @return {ApiDrawing}
+	 * @return {ApiDrawing | null}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Copy.js
 	 */
 	ApiDrawing.prototype.Copy = function()
@@ -19530,6 +20088,61 @@
 		let oCopyParaDrawing = oParaDrawing.copy();
 		return new this.constructor(oCopyParaDrawing.GraphicObj);
 	};
+
+	/**
+	 * Creates a copy of the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiShape | null}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/Copy.js
+	 */
+	ApiShape.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiShape.prototype["Copy"] = ApiShape.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current chart.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiChart | null}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/Copy.js
+	 */
+	ApiChart.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiChart.prototype["Copy"] = ApiChart.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current group.
+	 * @memberof ApiGroup
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiGroup | null}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Copy.js
+	 */
+	ApiGroup.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiGroup.prototype["Copy"] = ApiGroup.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current image.
+	 * @memberof ApiImage
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiImage | null}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiImage/Methods/Copy.js
+	 */
+	ApiImage.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiImage.prototype["Copy"] = ApiImage.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current OLE object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiOleObject | null}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/Copy.js
+	 */
+	ApiOleObject.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiOleObject.prototype["Copy"] = ApiOleObject.prototype.Copy;
 	/**
 	 * Wraps the graphic object with a rich text content control.
 	 * @memberof ApiDrawing
@@ -20003,6 +20616,48 @@
 			if (this.Drawing.pen)
 				return new ApiStroke(this.Drawing.pen, this.Drawing.spPr);
 		}
+
+		return null;
+	};
+	/**
+	 * Sets the shadow to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @param {?ApiShadow} shadow - The shadow to apply, or null to remove the current shadow.
+	 * @returns {boolean} - returns false if the graphic object does not support shadow.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetShadow.js
+	 */
+	ApiDrawing.prototype.SetShadow = function(shadow)
+	{
+		if (!this.Drawing || !this.Drawing.spPr)
+			return false;
+
+		if (shadow === null || shadow === undefined)
+		{
+			this.Drawing.spPr.changeShadow(null);
+			return true;
+		}
+
+		if (!shadow.GetClassType || shadow.GetClassType() !== "shadow")
+			return false;
+
+		this.Drawing.spPr.changeShadow(shadow.Shadow);
+		return true;
+	};
+	/**
+	 * Returns the shadow of the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiShadow | null}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetShadow.js
+	 */
+	ApiDrawing.prototype.GetShadow = function()
+	{
+		let shadow = this.Drawing && this.Drawing.getOuterShdw ? this.Drawing.getOuterShdw() : null;
+		if (shadow)
+			return new ApiShadow(shadow);
 
 		return null;
 	};
@@ -22427,32 +23082,32 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {NumFormat | String} sFormat - Numeric format (can be custom format).
-	 * @param {AxisPos} - Axis position in the chart.
+	 * @param {AxisPos} sAxisPos - Axis position in the chart.
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetAxieNumFormat.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetAxisNumFormat.js
 	 */
-	ApiChart.prototype.SetAxieNumFormat = function(sFormat, sAxiePos)
+	ApiChart.prototype.SetAxisNumFormat = function(sFormat, sAxisPos)
 	{
-		var nAxiePos = -1;
-		switch (sAxiePos)
+		var nAxisPos = -1;
+		switch (sAxisPos)
 		{
 			case "bottom":
-				nAxiePos = AscFormat.AX_POS_B;
+				nAxisPos = AscFormat.AX_POS_B;
 				break;
 			case "left":
-				nAxiePos = AscFormat.AX_POS_L;
+				nAxisPos = AscFormat.AX_POS_L;
 				break;
 			case "right":
-				nAxiePos = AscFormat.AX_POS_R;
+				nAxisPos = AscFormat.AX_POS_R;
 				break;
 			case "top":
-				nAxiePos = AscFormat.AX_POS_T;
+				nAxisPos = AscFormat.AX_POS_T;
 				break;
 			default:
 				return false;
 		}
 
-		return this.Chart.SetAxieNumFormat(sFormat, nAxiePos);
+		return this.Chart.SetAxisNumFormat(sFormat, nAxisPos);
 	};
  
 	/**
@@ -22625,26 +23280,28 @@
 	 * Ungroups the current group of drawings.
 	 * @memberof ApiGroup
 	 * @typeofeditors ["CDE"]
-	 * @returns {boolean}
+	 * @returns {ApiDrawing[] | null} - The array of the ungrouped objects, or null if the group is not in the document or cannot be ungrouped.
 	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Ungroup.js
 	 */
 	ApiGroup.prototype.Ungroup = function()
 	{
+		if (!this.Drawing || !this.Drawing.IsUseInDocument())
+			return null;
+
 		let oDoc = private_GetLogicDocument();
+		Api.GetDocument().ForceRecalculate();
 		let oGraphicObjects = oDoc.getDrawingObjects();
+		let aChildren = this.Drawing.spTree.slice();
 
 		oGraphicObjects.resetSelection();
 		oGraphicObjects.selectObject(this.Drawing, this.Drawing.GetAbsolutePage())
 		
-		let canUngroup = oGraphicObjects.canUnGroup();
-		if (!canUngroup)
-		{
-			return false;
-		}
+		if (!oGraphicObjects.canUnGroup())
+			return null;
 
 		oGraphicObjects.unGroupSelectedObjects();
-		return true;
+		return GetApiDrawings(aChildren);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -22751,6 +23408,59 @@
 	ApiStroke.prototype.GetClassType = function()
 	{
 		return "stroke";
+	};
+	/**
+	 * Returns a type of the ApiShadow class.
+	 * @memberof ApiShadow
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @returns {"shadow"}
+	 * @see office-js-api/Examples/{Editor}/ApiShadow/Methods/GetClassType.js
+	 */
+	ApiShadow.prototype.GetClassType = function()
+	{
+		return "shadow";
+	};
+	/**
+	 * Returns the settings of the current shadow.
+	 * @memberof ApiShadow
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @returns {ShadowSettings}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiShadow/Methods/GetSettings.js
+	 */
+	ApiShadow.prototype.GetSettings = function()
+	{
+		let shadow = this.Shadow;
+		let settings = {};
+
+		let uniColor = shadow.color ? shadow.color.createDuplicate() : AscFormat.CreateUniColorRGB(0, 0, 0);
+		let alpha = null;
+		if (uniColor.Mods && Array.isArray(uniColor.Mods.Mods))
+		{
+			let mods = [];
+			for (let i = 0; i < uniColor.Mods.Mods.length; ++i)
+			{
+				if (uniColor.Mods.Mods[i].name === "alpha")
+					alpha = uniColor.Mods.Mods[i].val;
+				else
+					mods.push(uniColor.Mods.Mods[i]);
+			}
+			uniColor.Mods.Mods = mods;
+		}
+
+		settings["color"] = new ApiUniColor(uniColor);
+		settings["transparency"] = (typeof alpha === "number") ? (1 - alpha / 100000) : 0;
+
+		let dist = (typeof shadow.dist === "number") ? shadow.dist : 0;
+		let dir = (typeof shadow.dir === "number") ? shadow.dir : 0;
+		let rad = (dir / 60000) * Math.PI / 180;
+		settings["offsetX"] = (dist / 12700) * Math.cos(rad);
+		settings["offsetY"] = (dist / 12700) * Math.sin(rad);
+
+		settings["size"] = (typeof shadow.sx === "number") ? shadow.sx / 1000 : 100;
+		settings["rotateWithShape"] = shadow.rotWithShape !== false;
+
+		return settings;
 	};
 	/**
 	 * Converts the ApiStroke object into the JSON object.
@@ -23495,6 +24205,18 @@
 	ApiBullet.prototype.GetClassType = function()
 	{
 		return "bullet";
+	};
+	/**
+	 * Converts the ApiBullet object into the JSON object.
+	 * @memberof ApiBullet
+	 * @typeofeditors ["CSE", "CPE", "PDFE"]
+	 * @returns {JSON}
+	 * @see office-js-api/Examples/{Editor}/ApiBullet/Methods/ToJSON.js
+	 */
+	ApiBullet.prototype.ToJSON = function()
+	{
+		var oWriter = new AscJsonConverter.WriterToJSON();
+		return JSON.stringify(oWriter.SerBullet(this.Bullet));
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -30900,6 +31622,7 @@
 	Api["attachEvent"]                      = Api.attachEvent;
 	Api["detachEvent"]                      = Api.detachEvent;
 	Api["CreateRun"]                        = Api.CreateRun;
+	Api["CreateMath"]                       = Api.CreateMath;
 	Api["CreateHyperlink"]                  = Api.CreateHyperlink;
 	Api["CreateImage"]                      = Api.CreateImage;
 	Api["CreateShape"]                      = Api.CreateShape;
@@ -30921,6 +31644,7 @@
 	Api["CreateBlipFill"]                   = Api.CreateBlipFill;
 	Api["CreateNoFill"]                     = Api.CreateNoFill;
 	Api["CreateStroke"]                     = Api.CreateStroke;
+	Api["CreateShadow"]                     = Api.CreateShadow;
 	Api["CreateGradientStop"]               = Api.CreateGradientStop;
 	Api["CreateBullet"]                     = Api.CreateBullet;
 	Api["CreateNumbering"]                  = Api.CreateNumbering;
@@ -31158,6 +31882,9 @@
 	ApiDocument.prototype["MoveCursorToEnd"]               = ApiDocument.prototype.MoveCursorToEnd;
 	ApiDocument.prototype["GoToPage"]                      = ApiDocument.prototype.GoToPage;
 	ApiDocument.prototype["EnterText"]                     = ApiDocument.prototype.EnterText;
+	ApiDocument.prototype["MoveCursorToHeader"]            = ApiDocument.prototype.MoveCursorToHeader;
+	ApiDocument.prototype["MoveCursorToFooter"]            = ApiDocument.prototype.MoveCursorToFooter;
+	ApiDocument.prototype["MoveCursorToMainDocument"]      = ApiDocument.prototype.MoveCursorToMainDocument;
 	ApiDocument.prototype["InsertParagraphBreak"]          = ApiDocument.prototype.InsertParagraphBreak;
 	ApiDocument.prototype["MoveCursorLeft"]                = ApiDocument.prototype.MoveCursorLeft;
 	ApiDocument.prototype["MoveCursorRight"]               = ApiDocument.prototype.MoveCursorRight;
@@ -31218,6 +31945,8 @@
 	ApiParagraph.prototype["SetUnderline"]           = ApiParagraph.prototype.SetUnderline;
 	ApiParagraph.prototype["SetVertAlign"]           = ApiParagraph.prototype.SetVertAlign;
 	ApiParagraph.prototype["SetReadingOrder"]        = ApiParagraph.prototype.SetReadingOrder;
+	ApiParagraph.prototype["SetDropCap"]             = ApiParagraph.prototype.SetDropCap;
+	ApiParagraph.prototype["GetDropCap"]             = ApiParagraph.prototype.GetDropCap;
 	ApiParagraph.prototype["Last"]                   = ApiParagraph.prototype.Last;
 	ApiParagraph.prototype["GetAllContentControls"]  = ApiParagraph.prototype.GetAllContentControls;
 	ApiParagraph.prototype["GetAllDrawingObjects"]   = ApiParagraph.prototype.GetAllDrawingObjects;
@@ -31250,6 +31979,8 @@
 	ApiParagraph.prototype["GetSection"]             = ApiParagraph.prototype.GetSection;
 	ApiParagraph.prototype["ToJSON"]                 = ApiParagraph.prototype.ToJSON;
 	ApiParagraph.prototype["AddPageBreakBefore"]     = ApiParagraph.prototype.AddPageBreakBefore;
+
+	ApiMath.prototype["GetClassType"]                = ApiMath.prototype.GetClassType;
 
 	ApiRun.prototype["GetClassType"]                 = ApiRun.prototype.GetClassType;
 	ApiRun.prototype["GetTextPr"]                    = ApiRun.prototype.GetTextPr;
@@ -31638,6 +32369,8 @@
 	ApiDrawing.prototype["SetOutLine"]               = ApiDrawing.prototype.SetOutLine;
 	ApiDrawing.prototype["SetLine"]                  = ApiDrawing.prototype.SetLine;
 	ApiDrawing.prototype["GetLine"]                  = ApiDrawing.prototype.GetLine;
+	ApiDrawing.prototype["SetShadow"]                = ApiDrawing.prototype.SetShadow;
+	ApiDrawing.prototype["GetShadow"]                = ApiDrawing.prototype.GetShadow;
 	ApiDrawing.prototype["GetNextDrawing"]           = ApiDrawing.prototype.GetNextDrawing;
 	ApiDrawing.prototype["GetPrevDrawing"]           = ApiDrawing.prototype.GetPrevDrawing;
 	ApiDrawing.prototype["GetWidth"]                 = ApiDrawing.prototype.GetWidth;
@@ -31783,7 +32516,8 @@
 	ApiChart.prototype["SetTitleOutLine"]              =  ApiChart.prototype.SetTitleOutLine;
 	ApiChart.prototype["SetLegendFill"]                =  ApiChart.prototype.SetLegendFill;
 	ApiChart.prototype["SetLegendOutLine"]             =  ApiChart.prototype.SetLegendOutLine;
-	ApiChart.prototype["SetAxieNumFormat"]             =  ApiChart.prototype.SetAxieNumFormat;
+	ApiChart.prototype["SetAxisNumFormat"]             =  ApiChart.prototype.SetAxisNumFormat;
+	ApiChart.prototype["SetAxieNumFormat"]             =  ApiChart.prototype.SetAxieNumFormat = ApiChart.prototype.SetAxisNumFormat;
 	ApiChart.prototype["SetSeriaNumFormat"]            =  ApiChart.prototype.SetSeriaNumFormat;
 	ApiChart.prototype["SetDataPointNumFormat"]        =  ApiChart.prototype.SetDataPointNumFormat;
 	ApiChart.prototype["GetAllSeries"]                 =  ApiChart.prototype.GetAllSeries;
@@ -31803,6 +32537,8 @@
 	ApiFill.prototype["GetType"]                     = ApiFill.prototype.GetType;
 
 	ApiStroke.prototype["GetClassType"]              = ApiStroke.prototype.GetClassType;
+	ApiShadow.prototype["GetClassType"]              = ApiShadow.prototype.GetClassType;
+	ApiShadow.prototype["GetSettings"]               = ApiShadow.prototype.GetSettings;
 	ApiStroke.prototype["ToJSON"]                    = ApiStroke.prototype.ToJSON;
 	ApiStroke.prototype["GetWidth"]                  = ApiStroke.prototype.GetWidth;
 	ApiStroke.prototype["GetFill"]                   = ApiStroke.prototype.GetFill;
@@ -31840,6 +32576,17 @@
 
 	ApiBullet.prototype["GetClassType"]              = ApiBullet.prototype.GetClassType;
 	ApiBullet.prototype["ToJSON"]                    = ApiBullet.prototype.ToJSON;
+
+	ApiDropCap.prototype["GetClassType"]             = ApiDropCap.prototype.GetClassType;
+	ApiDropCap.prototype["GetParent"]                = ApiDropCap.prototype.GetParent;
+	ApiDropCap.prototype["GetPosition"]              = ApiDropCap.prototype.GetPosition;
+	ApiDropCap.prototype["SetPosition"]              = ApiDropCap.prototype.SetPosition;
+	ApiDropCap.prototype["GetLinesToDrop"]           = ApiDropCap.prototype.GetLinesToDrop;
+	ApiDropCap.prototype["SetLinesToDrop"]           = ApiDropCap.prototype.SetLinesToDrop;
+	ApiDropCap.prototype["SetFontFamily"]            = ApiDropCap.prototype.SetFontFamily;
+	ApiDropCap.prototype["GetDistanceFromText"]      = ApiDropCap.prototype.GetDistanceFromText;
+	ApiDropCap.prototype["SetDistanceFromText"]      = ApiDropCap.prototype.SetDistanceFromText;
+	ApiDropCap.prototype["Clear"]                    = ApiDropCap.prototype.Clear;
 
 	ApiInlineLvlSdt.prototype["GetClassType"]           = ApiInlineLvlSdt.prototype.GetClassType;
 	ApiInlineLvlSdt.prototype["GetInternalId"]          = ApiInlineLvlSdt.prototype.GetInternalId;
@@ -32253,6 +33000,7 @@
 	window['AscBuilder'].ApiDocument         = ApiDocument;
 	window['AscBuilder'].ApiParagraph        = ApiParagraph;
 	window['AscBuilder'].ApiRun              = ApiRun;
+	window['AscBuilder'].ApiMath             = ApiMath;
 	window['AscBuilder'].ApiHyperlink        = ApiHyperlink;
 	window['AscBuilder'].ApiSection          = ApiSection;
 	window['AscBuilder'].ApiTable            = ApiTable;
@@ -32290,6 +33038,8 @@
 	window['AscBuilder'].ApiColor            = ApiColor;
 	window['AscBuilder'].ApiFill             = ApiFill;
 	window['AscBuilder'].ApiStroke           = ApiStroke;
+	window['AscBuilder'].ApiShadow           = ApiShadow;
+	window['AscBuilder'].ApiDropCap          = ApiDropCap;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Area for internal usage
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32480,7 +33230,8 @@
 		if (oElement instanceof ApiRun
 			|| oElement instanceof ApiInlineLvlSdt
 			|| oElement instanceof ApiHyperlink
-			|| oElement instanceof ApiFormBase)
+			|| oElement instanceof ApiFormBase
+			|| oElement instanceof ApiMath)
 			return true;
 
 		return false;
@@ -32503,6 +33254,8 @@
 			return private_CheckForm(oElement);
 		else if (oElement instanceof ParaHyperlink)
 			return new ApiHyperlink(oElement);
+		else if (oElement instanceof AscWord.ParaMath)
+			return new ApiMath(oElement);
 		else
 			return new ApiUnsupported();
 	}

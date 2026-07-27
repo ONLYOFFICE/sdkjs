@@ -2019,7 +2019,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 	var oFootnotes         = (isTopLogicDocument && !isInnerTable ? oTopDocument.Footnotes : null);
 	var nPageAbs           = this.GetAbsolutePage(CurPage);
 	var nColumnAbs         = this.GetAbsoluteColumn(CurPage);
-
+	
     this.TurnOffRecalc = true;
 
     var FirstRow = 0;
@@ -2247,6 +2247,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
                 // Обсчет такик ячеек произошел ранее
 
                 Cell.Temp.Y = Y_content_start;
+				Cell.Temp.Y_content_end = {};
 
                 if ( VMergeCount > 1 )
                 {
@@ -2524,6 +2525,31 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 
     var bNextPage = false;
 
+	// Check keepNext
+	var bKeepNextForced   = false;
+	var nKeepNextForceRow = -1;
+	let topDocument = this.GetTopDocumentContent();
+	if ((topDocument instanceof AscWord.Document) && topDocument.RecalcInfo && topDocument.RecalcInfo.Check_KeepNext(this) && this.IsLastRowKeepWithNext())
+	{
+		nKeepNextForceRow = this.Content.length - 1;
+		while (nKeepNextForceRow > 0 && this.private_IsRowWithKeepNext(nKeepNextForceRow - 1))
+			--nKeepNextForceRow;
+		
+		if (0 === nKeepNextForceRow)
+		{
+			if (0 === CurPage && this.Get_DocumentPrev())
+			{
+				this.StartFromNewPage();
+				this.TurnOffRecalc = false;
+				return recalcresult_NextPage;
+			}
+			else
+			{
+				nKeepNextForceRow = -1;
+			}
+		}
+	}
+
     // Блок переменных для учета сносок
 	var nFootnotesHeight     = 0;
 	var arrSavedY            = [];
@@ -2557,6 +2583,20 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         }
 
         this.TableRowsBottom[CurRow][CurPage] = Y;
+
+		// Forced move of the last table rows because of the "keepNext" setting 
+		// Rows up to nKeepNextForceRow stay on the current page, and
+		// starting from that row they are moved to the next page
+		if (nKeepNextForceRow > FirstRow && CurRow === nKeepNextForceRow)
+		{
+			bNextPage       = true;
+			bKeepNextForced = true;
+
+			LastRow                          = CurRow - 1;
+			this.Pages[CurPage].LastRow      = CurRow - 1;
+			this.Pages[CurPage].LastRowSplit = false;
+			break;
+		}
 
         var Row         = this.Content[CurRow];
         var CellsCount  = Row.Get_CellsCount();
@@ -2780,6 +2820,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 			}
 			
 			Cell.Temp.Y = Y_content_start;
+			Cell.Temp.Y_content_end = {};
 			Cell.Temp.ClipTop    = Y;
 			Cell.Temp.ClipBottom = Y + RowHValue;
 			Cell.Temp.ClipPage   = CurPage;
@@ -3599,16 +3640,25 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
     this.Pages[CurPage].Bounds.Right  = X_max + this.Pages[CurPage].X;
     this.Pages[CurPage].Height        = TableHeight;
 
-	if (true === bNextPage)
+	if (true === bNextPage && false === bKeepNextForced)
 	{
-		let lastRow = this.Pages[CurPage].LastRow;
-		let canMoveRows = CurPage || this.Get_DocumentPrev() || (this.Parent && !this.Parent.IsFirstElementOnPage(this.GetRelativePage(CurPage), this.GetIndex()));
+		let lastRow  = this.Pages[CurPage].LastRow;
+		let originlastRow = lastRow;
+		let docPrev  = this.Get_DocumentPrev();
+		let isNotFirstOnPage = (this.Parent && !this.Parent.IsFirstElementOnPage(this.GetRelativePage(CurPage), this.GetIndex()));
+		let canMoveRows = lastRow || CurPage || docPrev || isNotFirstOnPage;
+		
+		if (this.RowsInfo[lastRow].FirstPage
+			&& !this.GetRow(lastRow).CanSplit()
+			&& ((lastRow > FirstRow) || (0 === lastRow && 0 === CurPage && (docPrev || isNotFirstOnPage))))
+		{
+			this.RowsInfo[lastRow].FirstPage = false;
+		}
+
 		if (false === this.RowsInfo[lastRow].FirstPage)
 		{
 			--lastRow;
 			this.Pages[CurPage].LastRow = lastRow;
-			
-			// Check "Keep with next" on paragraphs inside table cells
 			if (canMoveRows)
 			{
 				while (lastRow > FirstRow && this.private_IsRowWithKeepNext(lastRow))
@@ -3621,7 +3671,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 					this.Pages[CurPage].LastRow = -1;
 					this.Pages[CurPage].LastRowSplit = false;
 				}
-				else if (lastRow !== FirstRow)
+				else if (lastRow !== FirstRow || 0 === CurPage)
 				{
 					this.Pages[CurPage].LastRow = lastRow;
 					this.Pages[CurPage].LastRowSplit = false;
@@ -3670,7 +3720,11 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 				}
 			}
 		}
-    }
+		
+		// Recalculate vertically merged cells
+		if (this.Pages[CurPage].LastRow < originlastRow)
+			this.private_RecalculateLastRowVMergedCells(CurPage);
+	}
 
     this.TurnOffRecalc = false;
 
@@ -3687,10 +3741,114 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
  */
 CTable.prototype.private_IsRowWithKeepNext = function(iRow)
 {
-	if (iRow < 0 || iRow >= this.Content.length - 1)
+	if (iRow < 0 || iRow >= this.Content.length)
 		return false;
-	
+
 	return this.GetRow(iRow).IsContentWithKeepNext();
+};
+
+CTable.prototype.private_RecalculateLastRowVMergedCells = function(curPage)
+{
+	let lastRowIndex  = this.Pages[curPage].LastRow;
+	let firstRowIndex = this.Pages[curPage].FirstRow; 
+	if (lastRowIndex < firstRowIndex || !this.TableRowsBottom[lastRowIndex])
+		return;
+
+	let pageX       = this.Pages[curPage].X;
+	let lastRow     = this.GetRow(lastRowIndex);
+	let cellSpacing = lastRow.GetCellSpacing();
+	
+	if (null === cellSpacing)
+		cellSpacing = 0;
+	else if (lastRowIndex !== this.GetRowsCount() - 1)
+		cellSpacing /= 2;
+
+	let bottomMargin = this.MaxBotMargin[lastRowIndex];
+	let rowBottom    = this.TableRowsBottom[lastRowIndex][curPage] + AscCommon.TwipsToMM(1);
+
+	let vertAlignCells = [];
+	for (let cellIndex = 0, cellCount = lastRow.GetCellsCount(); cellIndex < cellCount; ++cellIndex)
+	{
+		let cell     = lastRow.GetCell(cellIndex);
+		let gridSpan = cell.GetGridSpan();
+		let gridCol  = cell.Metrics.StartGridCol;
+
+		if (this.Internal_GetVertMergeCount(lastRowIndex, gridCol, gridSpan) <= 1)
+			continue;
+
+		let startCell = this.Internal_Get_StartMergedCell(lastRowIndex, gridCol, gridSpan);
+		if (!startCell || startCell.IsVerticalText())
+			continue;
+
+		let cellContent   = startCell.GetContent();
+		let cellPageIndex = curPage - cellContent.GetRelativeStartPage();
+		
+		startCell.Temp.Y_VAlign_offset[cellPageIndex] = 0;
+		if (0 === cellPageIndex && vertalignjc_Top !== startCell.Get_VAlign())
+			vertAlignCells.push(startCell);
+		
+		if (cellPageIndex < 0 || cellPageIndex >= startCell.PagesCount)
+			continue;
+
+		let startRow      = startCell.GetRow();
+		let startRowIndex = startRow.GetIndex();
+		let cellMetrics   = startRow.GetCellInfo(startCell.GetIndex());
+
+		let X_content_start = pageX + cellMetrics.X_content_start;
+		let X_content_end   = pageX + cellMetrics.X_content_end;
+		let Y_content_start = startCell.Temp.Y;
+		let Y_content_end   = rowBottom - bottomMargin - cellSpacing;
+
+		// Check if don't need to calculate anything
+		let cellPageBounds = cellContent.Get_PageBounds(cellPageIndex, undefined, true);
+		if (cellPageBounds.Bottom <= Y_content_end + 0.001)
+			continue;
+
+		if ((0 === startRowIndex && 0 === curPage) || startRowIndex > firstRowIndex)
+		{
+			startCell.PagesCount = 1;
+			cellContent.Set_StartPage(curPage);
+			cellContent.Reset(X_content_start, Y_content_start, X_content_end, Y_content_end);
+			cellPageIndex = curPage - cellContent.GetRelativeStartPage();
+		}
+		else
+		{
+			startCell.Temp.Y_content_end[cellPageIndex] = Y_content_end;
+		}
+		
+		if (recalcresult2_NextPage === cellContent.Recalculate_Page(cellPageIndex, true))
+			startCell.PagesCount = cellContent.Pages.length + 1;
+	}
+	
+	for (let pos = 0; pos < vertAlignCells.length; ++pos)
+	{
+		let cell = vertAlignCells[pos];
+		let vAlign = cell.Get_VAlign();
+		let cellPageIndex = 0;
+		
+		let cellMargins = cell.GetMargins();
+		let row         = cell.GetRow();
+		let rowIndex    = row.GetIndex();
+		
+		let Y_0 = this.RowsInfo[rowIndex].Y[curPage] + cellMargins.Top.W;
+		if (!this.bPresentation && null === row.GetCellSpacing())
+			Y_0 += this.MaxTopBorder[rowIndex];
+
+		let Y_1        = rowBottom - cellMargins.Bottom.W;
+		let cellHeight = Y_1 - Y_0;
+
+		let cellContent       = cell.GetContent();
+		let cellContentBounds = cellContent.Get_PageBounds(cellPageIndex, cellHeight, true);
+		let contentHeight     = cellContentBounds.Bottom - cellContentBounds.Top;
+
+		let extraSpace = cellHeight - contentHeight;
+		if (extraSpace > AscWord.EPSILON)
+		{
+			let shiftY = vertalignjc_Bottom === vAlign ? extraSpace : extraSpace / 2;
+			cell.ShiftCellContent(cellPageIndex, 0, shiftY, true);
+			cell.Temp.Y_VAlign_offset[cellPageIndex] = shiftY;
+		}
+	}
 };
 CTable.prototype.private_RecalculatePrepareHeaderPageRows = function(headerPage)
 {

@@ -640,8 +640,12 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	};
 	CComment.prototype.SetData = function(oData)
 	{
+		let isSolvedChange = (this.IsSolved() !== oData.IsSolved());		
 		AscCommon.History.Add(new CChangesCommentChange(this, this.Data, oData));
 		this.Data = oData;
+		
+		if (isSolvedChange)
+			this.UpdateParentShapeTextCache();
 	};
 	CComment.prototype.GetUserName = function()
 	{
@@ -743,6 +747,15 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 			return this.Parent.LogicDocument;
 
 		return null;
+	};
+	CComment.prototype.UpdateParentShapeTextCache = function()
+	{
+		let mark      = AscCommon.g_oTableId.Get_ById(this.GetRangeStart());
+		let paragraph = mark ? mark.GetParagraph() : null;
+		let shape     = paragraph && paragraph.GetParent() ? paragraph.GetParent().Is_DrawingShape(true) : null;
+		
+		if (shape)
+			shape.updateDrawingTextCache();
 	};
 	/**
 	 * Выделяем текст в границах комментария
@@ -1020,7 +1033,17 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	};
 	CComments.prototype.SetUseSolved                = function(isUse)
 	{
+		if (isUse === this.m_bUseSolved)
+			return;
+		
 		this.m_bUseSolved = isUse;
+		
+		for (let commentId in this.m_arrCommentsById)
+		{
+			let comment = this.m_arrCommentsById[commentId];
+			if (comment.IsSolved())
+				comment.UpdateParentShapeTextCache();
+		}
 	};
 	CComments.prototype.IsUseSolved                 = function()
 	{

@@ -249,6 +249,15 @@
 	 * @property {pt} 7 - y4 (right bottom)
 	 */
 
+	/**
+	 * Represents a collection of matched text fragments.
+	 * @typedef {Quad[]} SearchMatch
+	 */
+
+	/**
+	 * Represents a collection of search results.
+	 * @typedef {SearchMatch[]} SearchResults
+	 */
 
 	/**
 	 * The available free text annot intent.
@@ -1490,7 +1499,8 @@
 	 */
 	ApiDocument.prototype.GetAllFields = function() {
 		let aFields = [];
-		
+		let aResult = [];
+
 		for (let i = 0, nCount = this.Document.GetPagesCount(); i < nCount; i++) {
 			let oPageInfo = this.Document.GetPageInfo(i);
 
@@ -1508,7 +1518,14 @@
 			});
 		}
 
-		return aFields.map(GetFieldApi);
+		aFields.forEach(function(field) {
+			let oFieldApi = GetFieldApi(field);
+			if (oFieldApi) {
+				aResult.push(oFieldApi);
+			}
+		});
+
+		return aResult;
 	};
 
 	/**
@@ -1853,7 +1870,7 @@
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
 	 * @param {SearchProps} props - The search options.
-	 * @returns {Quads[]}
+	 * @returns {SearchResults} - for each result there is an array with its coordinates
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/Search.js
 	 */
 	ApiPage.prototype.Search = function(props) {
@@ -1865,6 +1882,7 @@
 		if (!text) {
 			AscBuilder.throwException("The text property must be a valid string");
 		}
+		text = text.replace(/\r\n|\r|\n|\\n/g, " ");
 
 		let matchCase = AscBuilder.GetBoolParameter(props['matchCase'], false);
 		let wholeWords = AscBuilder.GetBoolParameter(props['wholeWords'], false);
@@ -1878,19 +1896,27 @@
 
 		let oDoc = private_GetLogicDocument();
 		oDoc.RecalculateAll(true);
-		
-		let oSearchEngine = oDoc.Search(searchSettings);
-		let aResult = [];
 
+		let oSearchEngine		= new AscPDF.CPdfSearch(oDoc);
+		let oOldSearchEngine	= oDoc.SearchEngine;
+		oDoc.SearchEngine		= oSearchEngine;
+		oSearchEngine.Set(searchSettings);
+		oSearchEngine.Search();
+
+		let aResult = [];
 		Object.values(oSearchEngine.Elements).forEach(function(pdfMatch, idx) {
 			if (pdfMatch.GetAbsolutePage() == nPageIdx) {
+				let aMatchQuads = [];
 				let aPageSelQuads = oDoc.GetSearchElementSelectionQuads(idx);
 				aPageSelQuads.forEach(function(pageSelQuads) {
-					aResult = aResult.concat(pageSelQuads.quads);
+					aMatchQuads.push(pageSelQuads.quads[0]);
 				});
+
+				aResult.push(aMatchQuads);
 			}
 		});
-		
+
+		oDoc.SearchEngine = oOldSearchEngine;
 		return aResult;
 	};
 
@@ -1955,8 +1981,7 @@
 	 * Sets page selection.
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
-	 * @param {Point} startPoint - The start point of the selection.
-	 * @param {Point} endPoint - The end point of the selection.
+	 * @param {PageSelection | Rect | Quad | Quad[]} selection - The selection to apply.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/SetSelection.js
 	 */
@@ -1965,8 +1990,29 @@
 			AscBuilder.throwException("The selection must be an object");
 		}
 
-		private_CheckPoint(selection['start']);
-		private_CheckPoint(selection['end']);
+		let startPoint, endPoint;
+		if (Array.isArray(selection)) {
+			if (private_IsValidRect(selection)) {
+				startPoint = {"x": selection[0], "y": selection[1]};
+				endPoint   = {"x": selection[2], "y": selection[3]};
+			}
+			else if (private_IsValidQuad(selection) || (selection.length > 0 && selection.every(function(quad) { return private_IsValidQuad(quad); }))) {
+				let quads = private_IsValidQuad(selection) ? [selection] : selection;
+				let firstQuad = quads[0];
+				let lastQuad  = quads[quads.length - 1];
+				startPoint = {"x": (firstQuad[0] + firstQuad[4]) / 2, "y": (firstQuad[1] + firstQuad[5]) / 2};
+				endPoint   = {"x": (lastQuad[2] + lastQuad[6]) / 2, "y": (lastQuad[3] + lastQuad[7]) / 2};
+			}
+			else {
+				AscBuilder.throwException("The selection must be a valid rect, quad or quad array");
+			}
+		}
+		else {
+			private_CheckPoint(selection['start']);
+			private_CheckPoint(selection['end']);
+			startPoint = selection['start'];
+			endPoint   = selection['end'];
+		}
 
 		let oDoc = private_GetLogicDocument();
 		let oFile = oDoc.GetFile();
@@ -1975,8 +2021,8 @@
 		oDoc.BlurActiveObject();
 		oDoc.RecalculateAll(true);
 
-		let startNearestPos = oFile.getNearestPos(nPageIdx, selection['start']['x'] * g_dKoef_pt_to_mm, selection['start']['y'] * g_dKoef_pt_to_mm);
-		let endNearestPos   = oFile.getNearestPos(nPageIdx, selection['end']['x'] * g_dKoef_pt_to_mm, selection['end']['y'] * g_dKoef_pt_to_mm);
+		let startNearestPos = oFile.getNearestPos(nPageIdx, startPoint['x'] * g_dKoef_pt_to_mm, startPoint['y'] * g_dKoef_pt_to_mm);
+		let endNearestPos   = oFile.getNearestPos(nPageIdx, endPoint['x'] * g_dKoef_pt_to_mm, endPoint['y'] * g_dKoef_pt_to_mm);
 
 		oFile.Selection.IsSelection = true;
 
@@ -7035,12 +7081,56 @@
 	 * Creates a copy of the specified drawing object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
-	 * @returns {ApiDrawing} - return null if drawing doesn't exist.
+	 * @returns {ApiDrawing}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Copy.js
 	 */
 	ApiDrawing.prototype.Copy = function() {
 		return new this.constructor(this.Drawing.copy());
 	};
+
+	/**
+	 * Creates a copy of the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiShape}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/Copy.js
+	 */
+	ApiShape.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiShape.prototype["Copy"] = ApiShape.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current chart.
+	 * @memberof ApiChart
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiChart}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/Copy.js
+	 */
+	ApiChart.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiChart.prototype["Copy"] = ApiChart.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current image.
+	 * @memberof ApiImage
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiImage}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiImage/Methods/Copy.js
+	 */
+	ApiImage.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiImage.prototype["Copy"] = ApiImage.prototype.Copy;
+
+	/**
+	 * Creates a copy of the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiTable}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/Copy.js
+	 */
+	ApiTable.prototype.Copy = ApiDrawing.prototype.Copy;
+	ApiTable.prototype["Copy"] = ApiTable.prototype.Copy;
 
 	/**
 	 * Deletes the specified drawing object from the parent.
@@ -7081,16 +7171,50 @@
 	 * Selects the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
+	 * @param {boolean} [isReplace=false] - Specifies whether the selection should replace the current selection (true) or be added to it (false).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
 	 */
-	ApiDrawing.prototype.Select = function() {
-		this.Drawing.Set_CurrentElement(true, 0, true);
+	ApiDrawing.prototype.Select = function(isReplace) {
+		let oDrawing = this.Drawing;
+		if (!oDrawing)
+			return false;
+		let oController = oDrawing.getDrawingObjectsController();
+		if (!oController)
+			return false;
 
-		let oController = this.Drawing.getDrawingObjectsController();
-        oController.updateSelectionState();
-        oController.updateOverlay();
+		if (isReplace === undefined)
+			isReplace = false;
 
+		if (!!isReplace)
+			oController.resetSelection();
+
+		oController.selectObject(oDrawing, 0);
+		oController.updateSelectionState();
+		oController.updateOverlay();
+		return true;
+	};
+
+	/**
+	 * Removes the current graphic object from the selection.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Unselect.js
+	 */
+	ApiDrawing.prototype.Unselect = function()
+	{
+		let oDrawing = this.Drawing;
+		if (!oDrawing)
+			return false;
+		let oController = oDrawing.getDrawingObjectsController();
+		if (!oController)
+			return false;
+		oController.deselectObject(oDrawing);
+		oController.resetInternalSelection();
+		oController.updateSelectionState();
+		oController.updateOverlay();
 		return true;
 	};
 
@@ -7124,6 +7248,268 @@
 	ApiDrawing.prototype.GetRotation = function() {
 		this.Drawing.checkRecalculateTransform();
 		return this.Drawing.rot * 180 / Math.PI
+	};
+
+	/**
+	 * Returns the name of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @returns {string}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetName.js
+	 */
+	ApiDrawing.prototype.GetName = function()
+	{
+		return this.Drawing.getObjectName();
+	};
+	/**
+	 * Sets the name of the current drawing.
+	 * If another drawing with the same name already exists, that drawing's name will be reset to a default auto-generated name.
+	 * OLE objects do not support a custom name, so for them this method always returns false.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @param {string} name - The name which will be set to the current drawing.
+	 * @returns {boolean} - Returns true if the name was successfully set, otherwise returns false.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetName.js
+	 */
+	ApiDrawing.prototype.SetName = function(name)
+	{
+		if (name === "" || name === null || name === undefined)
+			return false;
+
+		if (this.Drawing.isOleObject())
+			return false;
+
+		this.Drawing.setName(name);
+		return true;
+	};
+	/**
+	 * Sets the title of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @param {string} title - The title to set for the current drawing.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetTitle.js
+	 */
+	ApiDrawing.prototype.SetTitle = function(title)
+	{
+		if (!title)
+			return false;
+
+		let oDrawing = this.Drawing;
+		if (oDrawing)
+		{
+			oDrawing.setTitle(title);
+			return true;
+		}
+		return false;
+	};
+	/**
+	 * Gets the title of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @returns {string | null} - The title of the current drawing, or null if not set.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetTitle.js
+	 */
+	ApiDrawing.prototype.GetTitle = function()
+	{
+		let oDrawing = this.Drawing;
+		let title = oDrawing.getTitle();
+		if (title)
+			return title;
+
+		return null;
+	};
+	/**
+	 * Sets the description of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @param {string} description - The description to set for the current drawing.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetDescription.js
+	 */
+	ApiDrawing.prototype.SetDescription = function(description)
+	{
+		if (!description)
+			return false;
+
+		let oDrawing = this.Drawing;
+		if (oDrawing)
+		{
+			oDrawing.setDescription(description);
+			return true;
+		}
+		return false;
+	};
+	/**
+	 * Gets the description of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @returns {string | null} - The description of the current drawing, or null if not set.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetDescription.js
+	 */
+	ApiDrawing.prototype.GetDescription = function()
+	{
+		let oDrawing = this.Drawing;
+		let description = oDrawing.getDescription();
+		if (description)
+			return description;
+
+		return null;
+	};
+	/**
+	 * Get horizontal flip of current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @returns {boolean | null} Returns true if the figure is flipped horizontally, false if not, or null if the drawing properties are not available.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetFlipH.js
+	 */
+	ApiDrawing.prototype.GetFlipH = function()
+	{
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+			return this.Drawing.spPr.xfrm.flipH;
+
+		return null;
+	};
+	/**
+	 * Get vertical flip of current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @returns {boolean | null} Returns true if the figure is flipped vertically, false if not, or null if the drawing properties are not available.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetFlipV.js
+	 */
+	ApiDrawing.prototype.GetFlipV = function()
+	{
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+			return this.Drawing.spPr.xfrm.flipV;
+
+		return null;
+	};
+	/**
+	 * Sets the horizontal flip of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @param {boolean} bFlip - Specifies if the figure will be flipped horizontally or not.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetFlipH.js
+	 */
+	ApiDrawing.prototype.SetFlipH = function(bFlip)
+	{
+		if (typeof(bFlip) !== "boolean")
+			return false;
+
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+		{
+			this.Drawing.spPr.xfrm.setFlipH(bFlip);
+			return true;
+		}
+
+		return false;
+	};
+	/**
+	 * Sets the vertical flip of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @param {boolean} bFlip - Specifies if the figure will be flipped vertically or not.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetFlipV.js
+	 */
+	ApiDrawing.prototype.SetFlipV = function(bFlip)
+	{
+		if (typeof(bFlip) !== "boolean")
+			return false;
+
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+		{
+			this.Drawing.spPr.xfrm.setFlipV(bFlip);
+			return true;
+		}
+
+		return false;
+	};
+	/**
+	 * Returns the lock value for the specified lock type of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @param {DrawingLockType} sType - Lock type in the string format.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockValue.js
+	 */
+	ApiDrawing.prototype.GetLockValue = function(sType)
+	{
+		let nLockType = private_GetDrawingLockType(sType);
+
+		if (nLockType === -1)
+			return false;
+
+		if (this.Drawing)
+			return this.Drawing.getLockValue(nLockType);
+
+		return false;
+	};
+	/**
+	 * Sets the lock value to the specified lock type of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @since 9.5.0
+	 * @param {DrawingLockType} sType - Lock type in the string format.
+	 * @param {boolean} bValue - Specifies if the specified lock is applied to the current drawing.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLockValue.js
+	 */
+	ApiDrawing.prototype.SetLockValue = function(sType, bValue)
+	{
+		let nLockType = private_GetDrawingLockType(sType);
+
+		if (nLockType === -1)
+			return false;
+
+		if (this.Drawing)
+		{
+			this.Drawing.setLockValue(nLockType, bValue);
+			return true;
+		}
+
+		return false;
+	};
+	/**
+	 * Sets whether the aspect ratio of the drawing is locked.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @param {boolean} bAspect - Specifies whether the aspect ratio of this drawing is locked.
+	 * @returns {boolean} Returns `true` if the lock aspect was successfully set, otherwise returns `false`.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLockAspect.js
+	 */
+	ApiDrawing.prototype.SetLockAspect = function(bAspect)
+	{
+		if (bAspect !== false && bAspect !== true)
+			return false;
+
+		this.Drawing.setNoChangeAspect(bAspect);
+		return true;
+	};
+	/**
+	 * Returns whether the aspect ratio of the drawing is locked.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockAspect.js
+	 */
+	ApiDrawing.prototype.GetLockAspect = function()
+	{
+		return this.Drawing.getNoChangeAspect();
 	};
 
 	/**
@@ -7180,6 +7566,17 @@
 	};
 
 	/**
+	 * Sets the fill formatting properties to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @param {ApiFill} fill - The fill type used to fill the graphic object.
+	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Fill.js
+	 */
+	ApiDrawing.prototype.Fill = ApiDrawing.prototype.SetFill;
+
+	/**
 	 * Sets the outline properties to the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
@@ -7233,6 +7630,58 @@
 
 		return null;
 	};
+
+	/**
+	 * Sets the shadow to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @param {?ApiShadow} shadow - The shadow to apply, or null to remove the current shadow.
+	 * @returns {boolean} - returns false if the graphic object does not support shadow.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetShadow.js
+	 */
+	ApiDrawing.prototype.SetShadow = function(shadow) {
+		if (!this.Drawing || !this.Drawing.spPr)
+			return false;
+
+		if (shadow === null || shadow === undefined) {
+			this.Drawing.spPr.changeShadow(null);
+			return true;
+		}
+
+		if (!shadow.GetClassType || shadow.GetClassType() !== "shadow")
+			return false;
+
+		this.Drawing.spPr.changeShadow(shadow.Shadow);
+		return true;
+	};
+
+	/**
+	 * Returns the shadow of the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiShadow | null}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetShadow.js
+	 */
+	ApiDrawing.prototype.GetShadow = function() {
+		let shadow = this.Drawing && this.Drawing.getOuterShdw ? this.Drawing.getOuterShdw() : null;
+		if (shadow)
+			return new AscBuilder.ApiShadow(shadow);
+
+		return null;
+	};
+
+	/**
+	 * Sets the outline properties to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @param {ApiStroke} stroke - The stroke used to create the graphic object outline.
+	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetOutLine.js
+	 */
+	ApiDrawing.prototype.SetOutLine = ApiDrawing.prototype.SetLine;
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -7462,6 +7911,35 @@
 		}
 
 		return null;
+	};
+
+	/**
+	 * Sets the text paddings to the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["PDFE"]
+	 * @param {?EMU} nLeft - Left padding.
+	 * @param {?EMU} nTop - Top padding.
+	 * @param {?EMU} nRight - Right padding.
+	 * @param {?EMU} nBottom - Bottom padding.
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetPaddings.js
+	 */
+	ApiShape.prototype.SetPaddings = function(nLeft, nTop, nRight, nBottom)
+	{
+		if(this.Shape)
+		{
+			this.Shape.setPaddings({
+				Left: AscFormat.isRealNumber(nLeft) ? private_EMU2MM(nLeft) : null,
+				Top: AscFormat.isRealNumber(nTop) ? private_EMU2MM(nTop) : null,
+				Right: AscFormat.isRealNumber(nRight) ? private_EMU2MM(nRight) : null,
+				Bottom: AscFormat.isRealNumber(nBottom) ? private_EMU2MM(nBottom) : null
+			});
+
+			return true;
+		}
+
+		return false;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -8370,6 +8848,61 @@
 		return "smartArt";
 	};
 
+	function private_GetDrawingLockType(sType)
+	{
+		let nLockType = -1;
+		switch (sType)
+		{
+			case "noGrp":
+				nLockType = AscFormat.LOCKS_MASKS.noGrp;
+				break;
+			case "noUngrp":
+				nLockType = AscFormat.LOCKS_MASKS.noUngrp;
+				break;
+			case "noSelect":
+				nLockType = AscFormat.LOCKS_MASKS.noSelect;
+				break;
+			case "noRot":
+				nLockType = AscFormat.LOCKS_MASKS.noRot;
+				break;
+			case "noChangeAspect":
+				nLockType = AscFormat.LOCKS_MASKS.noChangeAspect;
+				break;
+			case "noMove":
+				nLockType = AscFormat.LOCKS_MASKS.noMove;
+				break;
+			case "noResize":
+				nLockType = AscFormat.LOCKS_MASKS.noResize;
+				break;
+			case "noEditPoints":
+				nLockType = AscFormat.LOCKS_MASKS.noEditPoints;
+				break;
+			case "noAdjustHandles":
+				nLockType = AscFormat.LOCKS_MASKS.noAdjustHandles;
+				break;
+			case "noChangeArrowheads":
+				nLockType = AscFormat.LOCKS_MASKS.noChangeArrowheads;
+				break;
+			case "noChangeShapeType":
+				nLockType = AscFormat.LOCKS_MASKS.noChangeShapeType;
+				break;
+			case "noDrilldown":
+				nLockType = AscFormat.LOCKS_MASKS.noDrilldown;
+				break;
+			case "noTextEdit":
+				nLockType = AscFormat.LOCKS_MASKS.noTextEdit;
+				break;
+			case "noCrop":
+				nLockType = AscFormat.LOCKS_MASKS.noCrop;
+				break;
+			case "txBox":
+				nLockType = AscFormat.LOCKS_MASKS.txBox;
+				break;
+		}
+
+		return nLockType;
+	}
+
 	function private_GetLogicDocument() {
 		return Asc.editor.getPDFDoc();
 	}
@@ -8397,6 +8930,9 @@
 			}
 			case AscPDF.FIELD_TYPES.listbox: {
 				return new ApiListboxField(field);
+			}
+			default: {
+				return null;
 			}
 		}
 	}
@@ -9420,12 +9956,31 @@
 	ApiDrawing.prototype["GetWidth"]						= ApiDrawing.prototype.GetWidth;
 	ApiDrawing.prototype["GetHeight"]						= ApiDrawing.prototype.GetHeight;
 	ApiDrawing.prototype["Select"]							= ApiDrawing.prototype.Select;
+	ApiDrawing.prototype["Unselect"]						= ApiDrawing.prototype.Unselect;
 	ApiDrawing.prototype["SetRotation"]						= ApiDrawing.prototype.SetRotation;
 	ApiDrawing.prototype["GetRotation"]						= ApiDrawing.prototype.GetRotation;
+	ApiDrawing.prototype["GetName"]							= ApiDrawing.prototype.GetName;
+	ApiDrawing.prototype["SetName"]							= ApiDrawing.prototype.SetName;
+	ApiDrawing.prototype["SetTitle"]						= ApiDrawing.prototype.SetTitle;
+	ApiDrawing.prototype["GetTitle"]						= ApiDrawing.prototype.GetTitle;
+	ApiDrawing.prototype["SetDescription"]					= ApiDrawing.prototype.SetDescription;
+	ApiDrawing.prototype["GetDescription"]					= ApiDrawing.prototype.GetDescription;
 	ApiDrawing.prototype["SetFill"]							= ApiDrawing.prototype.SetFill;
+	ApiDrawing.prototype["Fill"]							= ApiDrawing.prototype.Fill;
 	ApiDrawing.prototype["GetFill"]							= ApiDrawing.prototype.GetFill;
 	ApiDrawing.prototype["SetLine"]							= ApiDrawing.prototype.SetLine;
+	ApiDrawing.prototype["SetOutLine"]						= ApiDrawing.prototype.SetOutLine;
 	ApiDrawing.prototype["GetLine"]							= ApiDrawing.prototype.GetLine;
+	ApiDrawing.prototype["SetShadow"]						= ApiDrawing.prototype.SetShadow;
+	ApiDrawing.prototype["GetShadow"]						= ApiDrawing.prototype.GetShadow;
+	ApiDrawing.prototype["GetFlipH"]						= ApiDrawing.prototype.GetFlipH;
+	ApiDrawing.prototype["GetFlipV"]						= ApiDrawing.prototype.GetFlipV;
+	ApiDrawing.prototype["SetFlipH"]						= ApiDrawing.prototype.SetFlipH;
+	ApiDrawing.prototype["SetFlipV"]						= ApiDrawing.prototype.SetFlipV;
+	ApiDrawing.prototype["GetLockValue"]					= ApiDrawing.prototype.GetLockValue;
+	ApiDrawing.prototype["SetLockValue"]					= ApiDrawing.prototype.SetLockValue;
+	ApiDrawing.prototype["SetLockAspect"]					= ApiDrawing.prototype.SetLockAspect;
+	ApiDrawing.prototype["GetLockAspect"]					= ApiDrawing.prototype.GetLockAspect;
 
 	// ApiShape
 	ApiShape.prototype["GetClassType"]						= ApiShape.prototype.GetClassType;
@@ -9439,6 +9994,7 @@
 	ApiShape.prototype["GetFill"]							= ApiShape.prototype.GetFill;
 	ApiShape.prototype["SetLine"]							= ApiShape.prototype.SetLine;
 	ApiShape.prototype["GetLine"]							= ApiShape.prototype.GetLine;
+	ApiShape.prototype["SetPaddings"]						= ApiShape.prototype.SetPaddings;
 
 	// ApiImage
 	ApiImage.prototype["GetClassType"]						= ApiImage.prototype.GetClassType;
@@ -9526,6 +10082,7 @@
 	ApiChart.prototype["SetLegendFill"]						= ApiChart.prototype.SetLegendFill = AscBuilder.ApiChart.prototype.SetLegendFill;
 	ApiChart.prototype["SetLegendOutLine"]					= ApiChart.prototype.SetLegendOutLine = AscBuilder.ApiChart.prototype.SetLegendOutLine;
 	ApiChart.prototype["SetAxieNumFormat"]					= ApiChart.prototype.SetAxieNumFormat = AscBuilder.ApiChart.prototype.SetAxieNumFormat;
+	ApiChart.prototype["SetAxisNumFormat"]					= ApiChart.prototype.SetAxisNumFormat = AscBuilder.ApiChart.prototype.SetAxisNumFormat;
 	ApiChart.prototype["SetSeriaNumFormat"]					= ApiChart.prototype.SetSeriaNumFormat = AscBuilder.ApiChart.prototype.SetSeriaNumFormat;
 	ApiChart.prototype["SetDataPointNumFormat"]				= ApiChart.prototype.SetDataPointNumFormat = AscBuilder.ApiChart.prototype.SetDataPointNumFormat;
 	ApiChart.prototype["GetAllSeries"]						= ApiChart.prototype.GetAllSeries = AscBuilder.ApiChart.prototype.GetAllSeries;

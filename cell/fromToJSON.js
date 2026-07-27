@@ -140,6 +140,17 @@
             }
             return this.oSizes[8];//A4
         };
+        //see AscCommonExcel.DocumentPageSize.getIdByWHAndStored
+        this.getIdByWHAndStored = function(widthMm, heightMm, storedId)
+        {
+            if(null != storedId)
+            {
+                var stored = this.getSizeById(storedId);
+                if(stored.w_mm == widthMm && stored.h_mm == heightMm)
+                    return storedId;
+            }
+            return this.getSizeByWH(widthMm, heightMm).id;
+        };
     };
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -354,8 +365,11 @@
 		var dWidth = oPageSetup.asc_getWidth();
 		var dHeight = oPageSetup.asc_getHeight();
 		var nSizeId = undefined;
-		if(null != dWidth && null != dHeight)
-			nSizeId = DocumentPageSize.getSizeByWH(dWidth, dHeight).id;
+		if(null != dWidth && null != dHeight) {
+			//keep sizes sharing the same dimensions (e.g. Letter/LetterSmall) via the stored id while
+			//it is still consistent with the dimensions, otherwise derive it from them
+			nSizeId = DocumentPageSize.getIdByWHAndStored(dWidth, dHeight, oPageSetup.asc_getPaperSize());
+		}
 
 		return {
 			"blackAndWhite":      oPageSetup.blackAndWhite != null ? oPageSetup.blackAndWhite : undefined,
@@ -4060,6 +4074,7 @@
 			var item = DocumentPageSize.getSizeById(oParsedSetup["paperSize"]);
 			oPageSetup.asc_setWidth(item.w_mm);
 			oPageSetup.asc_setHeight(item.h_mm);
+			oPageSetup.asc_setPaperSize(oParsedSetup["paperSize"]);
 		}
 		if (oParsedSetup["scale"] != undefined)
 			oPageSetup.scale = oParsedSetup["scale"];

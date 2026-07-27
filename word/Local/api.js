@@ -218,9 +218,9 @@ Asc['asc_docs_api'].prototype["getAdditionalSaveParams"] = function()
 window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isForce, docinfo, options)
 {
 	window.doadssIsSaveAs = isSaveAs;
-	if (true !== isForce && window.g_asc_plugins && AscCommon.EncryptionWorker.isNeedCrypt())
+	if (true !== isForce && AscCommon.CryptoProvider && AscCommon.EncryptionWorker.isNeedCrypt())
 	{
-		window.g_asc_plugins.sendToEncryption({ "type" : "generatePassword" });
+		AscCommon.CryptoProvider.sendToEncryption({ "type" : "generatePassword" });
 		return;
 	}
 
@@ -294,15 +294,15 @@ window["DesktopOfflineAppDocumentEndSave"] = function(error, hash, password)
 
 	if (hash !== null && hash !== undefined && hash != "")
 	{
-		if (window.g_asc_plugins && window.g_asc_plugins.isRunnedEncryption())
+		if (AscCommon.CryptoProvider && AscCommon.CryptoProvider.isEncryptionRunning())
 		{
             editor._callbackPluginEndAction = function()
             {
             	this._callbackPluginEndAction = null;
-                window["AscDesktopEditor"]["buildCryptedEnd"](true);
+                AscCommon.CryptoProvider.buildCryptedEnd(true);
             };
             window.LastUserSavedIndex = _lastUserSavedError;
-			window.g_asc_plugins.sendToEncryption({"type": "setPasswordByFile", "hash": hash, "password": password});
+			AscCommon.CryptoProvider.sendToEncryption({"type": "setPasswordByFile", "hash": hash, "password": password});
 		}
 	}
 

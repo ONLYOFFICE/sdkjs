@@ -752,7 +752,7 @@
 			"\\omega" : "ω",
 			"\\partial" : "∂",
 			"\\Phi" : "Φ",
-			"\\phi" : "π",
+			"\\phi" : "φ",
 			"\\Psi" : "Ψ",
 			"\\psi" : "ψ",
 			"\\Re" : "ℜ",
@@ -4576,10 +4576,9 @@
 	};
 	function CorrectWordOnCursor(oCMathContent, IsLaTeX, isSkipFirstLetter)
 	{
-		let isConvert 		= false;
 		let isSkipFirst 	= isSkipFirstLetter === true;
 		let strLast			= oCMathContent.GetLastTextElement();
-		let isLastOperator	= oCMathContent.IsLastElement(AscMath.MathLiterals.operator) || strLast === "(" || strLast === ")";
+		let isLastOperator	= oCMathContent.IsLastElement(AscMath.MathLiterals.operator) || strLast === "(" || strLast === ")" || strLast === "{" || strLast === "}";
 		let oContent		= new CMathContentIterator(oCMathContent);
 		let oLastOperator;
 
@@ -4631,30 +4630,31 @@
 		}
 
 		let strCorrection = ConvertWord(str, IsLaTeX);
-		if (strCorrection)
+		if (!strCorrection)
 		{
-			RemoveCountFormMathContent(oCMathContent, str.length + 1);
+			oCMathContent.MoveCursorToEndPos();
+			return false;
+		}
 
-			if (MathLiterals.accent.SearchU(strCorrection))
-				strCorrection = String.fromCharCode(160) + strCorrection; //add nbsp before accent, like word
+		RemoveCountFormMathContent(oCMathContent, str.length + 1);
 
-			for (let oIter = strCorrection.getUnicodeIterator(); oIter.check(); oIter.next())
-			{
-				let oAddMath = new MathTextAdditionalData(oCurrentEl.Parent);
-				oCMathContent.Add_Text(String.fromCodePoint(oIter.value()), undefined, undefined, oAddMath);
-			}
+		if (MathLiterals.accent.SearchU(strCorrection) && !isLastOperator)
+			strCorrection = String.fromCharCode(160) + strCorrection; //add nbsp before accent, like word
 
-			if (oLastOperator)
-			{
-				let oAddMath = new MathTextAdditionalData(oCurrentEl.Parent);
-				oCMathContent.Add_Text(oLastOperator, undefined, undefined, oAddMath);
-			}
+		for (let oIter = strCorrection.getUnicodeIterator(); oIter.check(); oIter.next())
+		{
+			let oAddMath = new MathTextAdditionalData(oCurrentEl.Parent);
+			oCMathContent.Add_Text(String.fromCodePoint(oIter.value()), undefined, undefined, oAddMath);
+		}
 
-			isConvert = true;
+		if (oLastOperator)
+		{
+			let oAddMath = new MathTextAdditionalData(oCurrentEl.Parent);
+			oCMathContent.Add_Text(oLastOperator, undefined, undefined, oAddMath);
 		}
 
 		oCMathContent.MoveCursorToEndPos();
-		return isConvert;
+		return { isReCorrect: !!oLastOperator };
 	}
 	function RemoveCountFormMathContent (oContent, nCount, isSkipFirst)
 	{
@@ -6171,7 +6171,14 @@
 		this.Init();
 
 		if (this.CorrectWord())
+		{
+			if (this.isReCorrectAfterWord && !isNotCorrect)
+			{
+				this.Init();
+				this.StartAutoCorrection();
+			}
 			return;
+		}
 
 		if (!isNotCorrect)
 			this.StartAutoCorrection();
@@ -6179,6 +6186,7 @@
 	ProceedTokens.prototype.Reset = function ()
 	{
 		this.oAbsoluteLastId = undefined;
+		this.isReCorrectAfterWord = false;
 		this.Tokens 	= {
 			all: [],
 		};
@@ -6201,19 +6209,12 @@
 		}
 		else if (IsConvertWord(oAbsoluteLastId))
 		{
-			if (oAbsoluteLastId === MathLiterals.space.id)
+			let isSkipFirst	= oAbsoluteLastId !== MathLiterals.space.id;
+			let oResult		= CorrectWordOnCursor(this.oCMathContent, nInputType === 1, isSkipFirst);
+			if (oResult)
 			{
-				if (CorrectWordOnCursor(this.oCMathContent, nInputType === 1))
-				{
-					return true;
-				}
-			}
-			else
-			{
-				if (CorrectWordOnCursor(this.oCMathContent, nInputType === 1, true))
-				{
-					return true;
-				}
+				this.isReCorrectAfterWord = oResult.isReCorrect;
+				return true;
 			}
 		}
 	};
@@ -6756,7 +6757,7 @@
 			this.PCFunctionProcessing(oRuleLast);
 			return true;
 		}
-		else if (this.IsPRFunction(oRuleLast) && this.IsTrigger(this.oAbsoluteLastId))
+		else if (this.IsPRFunction(oRuleLast) && (this.IsTrigger(this.oAbsoluteLastId) || this.oAbsoluteLastId === MathLiterals.lBrackets.id )) //for accent and 
 		{
 			this.PRFunctionProcessing(oRuleLast);
 			return true;

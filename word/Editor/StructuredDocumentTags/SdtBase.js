@@ -349,7 +349,7 @@ CSdtBase.prototype.IsFixedForm = function()
 CSdtBase.prototype.IsFormRequired = function()
 {
 	if (this.IsSignatureForm())
-		return (this.Pr.FormPr ? true === this.Pr.FormPr.GetRequired() : true);
+		return (this.Pr.FormPr ? false !== this.Pr.FormPr.GetRequired() : true);
 	
 	return (this.Pr.FormPr ? this.Pr.FormPr.GetRequired() : false);
 };

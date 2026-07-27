@@ -636,7 +636,8 @@ function (window, undefined) {
 	cCONCATENATE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cCONCATENATE.prototype.argumentsType = [[argType.text]];
 	cCONCATENATE.prototype.Calculate = function (arg) {
-		var arg0 = new cString(""), argI;
+		// Accumulate into a primitive string and wrap once; avoids a cString wrapper + toString per element.
+		var sResult = "", argI, errElem = null;
 		for (var i = 0; i < arg.length; i++) {
 			argI = arg[i];
 			if (argI instanceof cArea || argI instanceof cArea3D) {
@@ -648,29 +649,31 @@ function (window, undefined) {
 			if (argI instanceof cError) {
 				return argI;
 			} else if (argI instanceof cArray) {
-				//reduceLogical folds head + constant tail; the tail string is repeated n times. A finite lazy range
-				//stays small; a full column trips the 32767 cap -> #VALUE (checked before building).
-				arg0 = argI.reduceLogical(function (acc, elem, n) {
-					if (acc instanceof cError) {
+				//reduceLogical folds head + constant tail; the tail string is repeated n times. A finite lazy
+				//range stays small; a full column trips the 32767 cap -> #VALUE (checked before building).
+				sResult = argI.reduceLogical(function (acc, elem, n) {
+					if (errElem) {
 						return acc;
 					}
 					if (elem instanceof cError) {
-						return elem;
+						errElem = elem;
+						return acc;
 					}
-					let s = elem.toLocaleString();
-					if (s.length > 0 && acc.toString().length + s.length * n > 32767) {
-						return new cError(cErrorType.wrong_value_type);
+					var s = elem.toLocaleString();
+					if (s.length > 0 && acc.length + s.length * n > 32767) {
+						errElem = new cError(cErrorType.wrong_value_type);
+						return acc;
 					}
-					return new cString(acc.toString().concat(n === 1 ? s : s.repeat(n)));
-				}, arg0);
-				if (arg0 instanceof cError) {
-					return arg0;
+					return acc + (n === 1 ? s : s.repeat(n));
+				}, sResult);
+				if (errElem) {
+					return errElem;
 				}
 			} else {
-				arg0 = new cString(arg0.toString().concat(argI.toLocaleString()));
+				sResult += argI.toLocaleString();
 			}
 		}
-		return arg0;
+		return new cString(sResult);
 	};
 
 	/**
@@ -691,17 +694,8 @@ function (window, undefined) {
 	cCONCAT.prototype.isXLFN = true;
 	cCONCAT.prototype.enabledToSingle = {"*": true};
 	cCONCAT.prototype.Calculate = function (arg) {
-		let arg0 = new cString(""), argI;
-
-
-		let _checkMaxStringLength = function () {
-			let maxStringLength = 32767;
-			let _str = arg0 && arg0.toString && arg0.toString();
-			if (_str && _str.length > maxStringLength) {
-				return false;
-			}
-			return true;
-		};
+		// Accumulate into a primitive string and box once, removing the per-element cString creation.
+		let maxStringLength = 32767, sResult = "", argI, errRes = null;
 
 		for (let i = 0; i < arg.length; i++) {
 			argI = arg[i];
@@ -709,13 +703,8 @@ function (window, undefined) {
 			if (cElementType.cellsRange === argI.type || cElementType.cellsRange3D === argI.type) {
 				let _arrVal = argI.getValue(this.checkExclude, this.excludeHiddenRows);
 				for (let j = 0; j < _arrVal.length; j++) {
-					let _arrElem = _arrVal[j].toLocaleString();
-					if (cElementType.error === _arrElem.type) {
-						return _arrVal[j];
-					} else {
-						arg0 = new cString(arg0.toString().concat(_arrElem));
-					}
-					if (!_checkMaxStringLength()) {
+					sResult += _arrVal[j].toLocaleString();
+					if (sResult.length > maxStringLength) {
 						return new cError(cErrorType.wrong_value_type)
 					}
 				}
@@ -724,40 +713,42 @@ function (window, undefined) {
 				if (cElementType.error === argI.type) {
 					return argI;
 				}
-				arg0 = new cString(arg0.toString().concat(argI.toLocaleString()));
+				sResult += argI.toLocaleString();
 			} else {
 				if (cElementType.error === argI.type) {
 					return argI;
 				} else if (cElementType.array === argI.type) {
 					//reduceLogical folds head + constant tail; the tail string is repeated n times. A finite lazy
 					//range stays small; a full column trips the 32767 cap -> #VALUE (checked before building).
-					arg0 = argI.reduceLogical(function (acc, elem, n) {
-						if (cElementType.error === acc.type) {
+					sResult = argI.reduceLogical(function (acc, elem, n) {
+						if (errRes) {
 							return acc;
 						}
 						if (cElementType.error === elem.type) {
-							return elem;
+							errRes = elem;
+							return acc;
 						}
 						let s = elem.toLocaleString();
-						if (s.length > 0 && acc.toString().length + s.length * n > 32767) {
-							return new cError(cErrorType.wrong_value_type);
+						if (s.length > 0 && acc.length + s.length * n > maxStringLength) {
+							errRes = new cError(cErrorType.wrong_value_type);
+							return acc;
 						}
-						return new cString(acc.toString().concat(n === 1 ? s : s.repeat(n)));
-					}, arg0);
-					if (cElementType.error === arg0.type) {
-						return arg0;
+						return acc + (n === 1 ? s : s.repeat(n));
+					}, sResult);
+					if (errRes) {
+						return errRes;
 					}
 				} else {
-					arg0 = new cString(arg0.toString().concat(argI.toLocaleString()));
+					sResult += argI.toLocaleString();
 				}
 			}
 		}
 
-		if (!_checkMaxStringLength()) {
+		if (sResult.length > maxStringLength) {
 			return new cError(cErrorType.wrong_value_type)
 		}
 
-		return arg0;
+		return new cString(sResult);
 	};
 
 	/**
@@ -3415,7 +3406,8 @@ function (window, undefined) {
 			return res;
 		};
 
-		let arg0 = new cString(""), argI;
+		// Accumulate into a primitive string (concatString already uses primitives) and box once, avoiding a cString per element.
+		let acc = "", argI;
 		for (let i = 2; i < arg.length; i++) {
 			argI = arg[i];
 
@@ -3423,29 +3415,31 @@ function (window, undefined) {
 			if (cElementType.array === type) {
 				//reduceLogical folds head + constant tail; concatString is applied n times for the tail (the
 				//delimiter cycles naturally). A finite lazy range stays small; a full column trips the 32767 cap.
-				let res = argI.reduceLogical(function (a, elem, cnt) {
-					if (a instanceof cError) {
+				let errRes = null;
+				acc = argI.reduceLogical(function (a, elem, cnt) {
+					if (errRes) {
 						return a;
 					}
 					if (elem.type === cElementType.error) {
-						return elem;
+						errRes = elem;
+						return a;
 					}
 					let s = elem.toLocaleString();
 					if (cnt === 1) {
-						return new cString(concatString(a.toString(), s));
+						return concatString(a, s);
 					}
-					for (let k = 0; k < cnt; k++) {
-						a = new cString(concatString(a.toString(), s));
-						if (a.toString().length > 32767) {
-							return new cError(cErrorType.wrong_value_type);
+					for (let n = 0; n < cnt; n++) {
+						a = concatString(a, s);
+						if (a.length > 32767) {
+							errRes = new cError(cErrorType.wrong_value_type);
+							return a;
 						}
 					}
 					return a;
-				}, arg0);
-				if (res instanceof cError) {
-					return res;
+				}, acc);
+				if (errRes) {
+					return errRes;
 				}
-				arg0 = res;
 			} else if (cElementType.cellsRange === type || cElementType.cellsRange3D === type) {
 				// get a one-dimensional array
 				argI = this._getOneDimensionalArray(argI);
@@ -3456,7 +3450,7 @@ function (window, undefined) {
 				}
 
 				for (let n = 0; n < argI.length; n++) {
-					arg0 = new cString(concatString(arg0.toString(), argI[n].toLocaleString()));
+					acc = concatString(acc, argI[n].toLocaleString());
 				}
 
 			} else if (cElementType.cell === type || cElementType.cell3D === type) {
@@ -3466,18 +3460,18 @@ function (window, undefined) {
 					return argI;
 				}
 
-				arg0 = new cString(concatString(arg0.toString(), argI.toLocaleString()));
+				acc = concatString(acc, argI.toLocaleString());
 			} else {
 
 				if (argI && argI.type === cElementType.error) {
 					return argI;
 				}
 
-				arg0 = new cString(concatString(arg0.toString(), argI.toLocaleString()));
+				acc = concatString(acc, argI.toLocaleString());
 			}
 		}
 
-		return arg0;
+		return new cString(acc);
 	};
 
 	/**

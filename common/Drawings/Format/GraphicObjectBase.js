@@ -2000,6 +2000,9 @@
 	CGraphicObjectBase.prototype.isEmptyPlaceholder = function () {
 		return false;
 	};
+	CGraphicObjectBase.prototype.isSlideImagePlaceholder = function () {
+		return this.getPlaceholderType() === AscFormat.phType_sldImg;
+	};
 	CGraphicObjectBase.prototype.RestartSpellCheck = function () {
 	};
 	CGraphicObjectBase.prototype.GetAllFields = function (isUseSelection, arrFields) {
@@ -3861,16 +3864,6 @@
 		if (!sImageFormat && typeof this.cachedImage === "string" && this.cachedImage.length > 0) {
 			return this.cachedImage;
 		}
-		if (this.parent) {
-			let nParentType = null;
-			if (this.parent.getObjectType) {
-				nParentType = this.parent.getObjectType();
-			}
-			if (nParentType === AscDFH.historyitem_type_Notes ||
-				nParentType === AscDFH.historyitem_type_NotesMaster) {
-				return "";
-			}
-		}
 		let oPictureData;
 		if(!bForceAsDraw) {
 			oPictureData = this.getPictureBase64Data();
@@ -4189,6 +4182,9 @@
 	CRelSizeAnchor.prototype.getObjectType = function () {
 		return AscDFH.historyitem_type_RelSizeAnchor;
 	};
+	CRelSizeAnchor.prototype.isNote = function () {
+		return false;
+	};
 	CRelSizeAnchor.prototype.setFromTo = function (fromX, fromY, toX, toY) {
 		AscCommon.History.Add(new AscDFH.CChangesDrawingsDouble(this, AscDFH.historyitem_RelSizeAnchorFromX, this.fromX, fromX));
 		AscCommon.History.Add(new AscDFH.CChangesDrawingsDouble(this, AscDFH.historyitem_RelSizeAnchorFromY, this.fromY, fromY));
@@ -4275,6 +4271,9 @@
 	};
 	CAbsSizeAnchor.prototype.getObjectType = function () {
 		return AscDFH.historyitem_type_AbsSizeAnchor;
+	};
+	CAbsSizeAnchor.prototype.isNote = function () {
+		return false;
 	};
 	CAbsSizeAnchor.prototype.setFromTo = function (fromX, fromY, extX, extY) {
 		AscCommon.History.Add(new AscDFH.CChangesDrawingsDouble(this, AscDFH.historyitem_AbsSizeAnchorFromX, this.fromX, fromX));

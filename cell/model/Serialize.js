@@ -2052,6 +2052,16 @@
             }
             return this.oSizes[8];//A4
         };
+        this.getIdByWHAndStored = function(widthMm, heightMm, storedId)
+        {
+            if(null != storedId)
+            {
+                var stored = this.getSizeById(storedId);
+                if(stored.w_mm == widthMm && stored.h_mm == heightMm)
+                    return storedId;
+            }
+            return this.getSizeByWH(widthMm, heightMm).id;
+        };
     };
 
     function OpenColor() {
@@ -6147,10 +6157,15 @@
             var dHeight = oPageSetup.asc_getHeight();
             if(null != dWidth && null != dHeight)
             {
-                var item = DocumentPageSize.getSizeByWH(dWidth, dHeight);
+                //keep sizes that share the same dimensions (e.g. Letter/LetterSmall) by using the stored
+                //id while it is still consistent with the dimensions, otherwise derive it from them.
+                var nId = DocumentPageSize.getIdByWHAndStored(dWidth, dHeight, oPageSetup.asc_getPaperSize());
+                //the id is written as a byte, so ids that don't fit (e.g. xlPaperUser = 256) fall back to the derived one.
+                if(nId < 0 || nId > 255)
+                    nId = DocumentPageSize.getSizeByWH(dWidth, dHeight).id;
                 this.memory.WriteByte(c_oSer_PageSetup.PaperSize);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
-                this.memory.WriteByte(item.id);
+                this.memory.WriteByte(nId);
             }
             if (null != oPageSetup.blackAndWhite) {
                 this.memory.WriteByte(c_oSer_PageSetup.BlackAndWhite);
@@ -12229,6 +12244,7 @@
                 var item = DocumentPageSize.getSizeById(bytePaperSize);
                 oPageSetup.asc_setWidth(item.w_mm);
                 oPageSetup.asc_setHeight(item.h_mm);
+                oPageSetup.asc_setPaperSize(bytePaperSize);
             // } else if ( c_oSer_PageSetup.PaperWidth == type ) {
             //     oPageSetup.width = this.stream.GetDoubleLE();
             // } else if ( c_oSer_PageSetup.PaperUnits == type ) {
