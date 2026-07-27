@@ -4332,7 +4332,11 @@ function (window, undefined) {
 			sum = _func[sum.type][arrX[i].type](sum, arrX[i], "+");
 		}
 
-		//fold the constant lazy tail(s) into the mean: value v repeated n times
+		//fold the constant lazy tail(s) into the mean: value v repeated n times, scaled as v*n. Deliberately ONE
+		//rounding instead of n accumulated ones - it is both more accurate and O(1). Adding v n times would drift
+		//(995 copies of 0.03 sum to 29.850000000000037 while 0.03*995 is 29.849999999999998), so a lazy result can
+		//differ from the same data with every cell physically present by ~1e-13. That is accepted here: the scaled
+		//value is the more accurate of the two.
 		let total = count, totalSum = sum.getValue();
 		for (i = 0; i < tails.length; i++) {
 			totalSum += tails[i].v * tails[i].n;
@@ -4344,7 +4348,7 @@ function (window, undefined) {
 		for (i = 0; i < arrX.length; i++) {
 			a += Math.abs(_func[sum.type][arrX[i].type](sum, arrX[i], "-").getValue());
 		}
-		//tail absolute deviations: |v - mean| repeated n times
+		//tail absolute deviations: |v - mean| repeated n times, scaled for the same reason as the mean above
 		for (i = 0; i < tails.length; i++) {
 			a += tails[i].n * Math.abs(tails[i].v - sum.getValue());
 		}

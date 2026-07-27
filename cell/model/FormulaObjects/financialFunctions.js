@@ -3767,10 +3767,30 @@ function (window, undefined) {
 	cIRR.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cNumber(0.1);
 
+		//cash flows: the physically stored ones as plain numbers (cf) + an optional CONSTANT lazy tail of
+		//cfTailCount equal payments that follow them (a full-column reference contributes ~1M such periods).
+		//The tail is NOT summed in closed form: a geometric-series shortcut rounds differently than adding the
+		//periods one by one, and IRR results must stay bit-identical. The tail terms are generated with the same
+		//value, period and order the walked ones had, so the sum is exact; the only shortcut is stopping once a
+		//term can no longer change the accumulator (it and every later one are then no-ops).
+		var cfTailVal = 0, cfTailCount = 0;
+
 		function npv(r, cf) {
-			var res = 0;
-			for (var i = 1; i <= cf.length; i++) {
-				res += cf[i - 1].getValue() / Math.pow(1 + r, i);
+			var res = 0, p = 1 + r, i, term;
+			for (i = 1; i <= cf.length; i++) {
+				res += cf[i - 1] / Math.pow(p, i);
+			}
+			if (cfTailCount > 0) {
+				//|p| > 1 makes the terms shrink monotonically, so once one is too small to move res, so is
+				//every later one - breaking there is exact. Otherwise every period is walked, as before.
+				var shrinking = Math.abs(p) > 1, end = cf.length + cfTailCount;
+				for (i = cf.length + 1; i <= end; i++) {
+					term = cfTailVal / Math.pow(p, i);
+					if (shrinking && res + term === res) {
+						break;
+					}
+					res += term;
+				}
 			}
 			return res;
 		}
@@ -3839,18 +3859,67 @@ function (window, undefined) {
 
 		}
 
-		var arr = [];
-		if (arg0 instanceof cArray) {
+		//a lazy head+tail cArray whose physical cells form a row-major PREFIX of the logical grid: then the tail is
+		//one contiguous run of equal values at the END, so npv can generate those periods instead of materializing
+		//~1M cash flows up front (see cfTailCount above). Returns null when the tail is not such a run - a
+		//generator tail (every period differs) or a head that would interleave with tail cells (a partially filled
+		//row before the last head row) - and IRR then collects and walks every period as before.
+		function constTailRun(a) {
+			if (!(a instanceof cArray) || !a.hasLazyTail() || a.getMissedValueFn() || !a.getMissedValue()) {
+				return null;
+			}
+			var size = a.getRealArraySize();
+			if (!size || size.row < 1 || size.col < 1) {
+				return null;
+			}
+			var rows = a.getRowCount(true), counts = a.countElementInRow;   //physical head
+			if (rows > size.row) {
+				return null;
+			}
+			for (var r = 0; r + 1 < rows; r++) {
+				if (counts[r] !== size.col) {
+					return null;   //a short row in the middle -> tail cells sit between head cells
+				}
+			}
+			var lastLen = rows > 0 ? counts[rows - 1] : 0;
+			if (lastLen > size.col) {
+				return null;
+			}
+			var prefix = rows > 0 ? (rows - 1) * size.col + lastLen : 0;
+			var total = size.row * size.col;
+			if (prefix >= total) {
+				return null;   //nothing lazy left to fold
+			}
+			return {rows: rows, cols: size.col, lastLen: lastLen, tail: a.getMissedValue(), tailCount: total - prefix};
+		}
+
+		var arr = [], tailRun = constTailRun(arg0);
+		if (tailRun) {
+			//store the head only (physical reads); npv generates the identical tail periods on the fly
+			for (var hr = 0; hr < tailRun.rows; hr++) {
+				var hw = (hr + 1 < tailRun.rows) ? tailRun.cols : tailRun.lastLen;
+				for (var hc = 0; hc < hw; hc++) {
+					var hv = arg0.getElementRowCol(hr, hc, true);
+					if (hv instanceof cNumber) {
+						arr.push(hv.getValue());
+					}
+				}
+			}
+			if (tailRun.tail instanceof cNumber) {
+				cfTailVal = tailRun.tail.getValue();
+				cfTailCount = tailRun.tailCount;
+			}
+		} else if (arg0 instanceof cArray) {
 			//forEachLogical includes the lazy tail (each cash flow is a distinct period); foreach saw only the head
 			arg0.forEachLogical(function (v) {
 				if (v instanceof cNumber) {
-					arr.push(v);
+					arr.push(v.getValue());
 				}
 			});
 		} else if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0.foreach2(function (v) {
 				if (v instanceof cNumber) {
-					arr.push(v);
+					arr.push(v.getValue());
 				}
 			});
 		}
@@ -3863,10 +3932,19 @@ function (window, undefined) {
 
 		var wasNeg = false, wasPos = false;
 		for (var i = 0; i < arr.length; i++) {
-			if (arr[i].getValue() > 0) {
+			if (arr[i] > 0) {
 				wasNeg = true;
 			}
-			if (arr[i].getValue() < 0) {
+			if (arr[i] < 0) {
+				wasPos = true;
+			}
+		}
+		//the folded tail carries real cash flows too, so it decides the sign requirement as well
+		if (cfTailCount > 0) {
+			if (cfTailVal > 0) {
+				wasNeg = true;
+			}
+			if (cfTailVal < 0) {
 				wasPos = true;
 			}
 		}
