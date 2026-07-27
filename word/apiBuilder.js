@@ -4942,6 +4942,9 @@
 
 	/**
 	 * Groups an array of drawings.
+	 * :::note
+	 * The drawings must not be added to the document. To group the drawings which are already in the document, use the {@link ApiDocument#GroupDrawings} method.
+	 * :::
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {DrawingForGroup[]} drawings - An array of drawings to group.
@@ -4959,15 +4962,30 @@
 		let oDrDoc = private_GetDrawingDocument();
 		let oGraphicObjects = oDoc.getDrawingObjects();
 
-		if (drawings.find(function(drawing) { return !drawing.Drawing.IsUseInDocument(); }))
-			throwException(new Error("All drawings must be in document"));
+		if (drawings.find(function(drawing) { return drawing.Drawing.IsUseInDocument(); }))
+			throwException(new Error("All drawings must not be in document"));
 		
-		drawings.forEach(function(drawing) { drawing.Drawing.recalculate(); })
+		drawings.forEach(function(drawing) {
+			let paraDrawing = drawing.getParaDrawing();
+			drawing.Drawing.recalculate();
+			drawing.Drawing.updatePosition(
+				paraDrawing.PositionH.Align || paraDrawing.PositionH.Percent ? 0 : paraDrawing.PositionH.Value,
+				paraDrawing.PositionV.Align || paraDrawing.PositionV.Percent ? 0 : paraDrawing.PositionV.Value
+			);
+		});
 
 		let oGroup = AscFormat.builder_CreateGroup(drawings, oGraphicObjects);
+		let anchorDrawing = drawings[0].getParaDrawing();
+		let offsetX = oGroup.spPr.xfrm.offX;
+		let offsetY = oGroup.spPr.xfrm.offY;
+		oGroup.spPr.xfrm.setOffX(0);
+		oGroup.spPr.xfrm.setOffY(0);
+
 		let oParaDrawing = new ParaDrawing(oGroup.getXfrmExtX(), oGroup.getXfrmExtY(), null, oDrDoc, oDoc, null);
 		oParaDrawing.Set_WrappingType(WRAPPING_TYPE_NONE);
         oParaDrawing.Set_DrawingType(drawing_Anchor);
+		oParaDrawing.Set_PositionH(anchorDrawing.PositionH.RelativeFrom, false, offsetX, false);
+		oParaDrawing.Set_PositionV(anchorDrawing.PositionV.RelativeFrom, false, offsetY, false);
 		oGroup.setParent(oParaDrawing);
 		oParaDrawing.Set_GraphicObject(oGroup);
 
@@ -23260,18 +23278,14 @@
 
 	/**
 	 * Ungroups the current group of drawings.
-	 * <note>This method is not supported in the document builder and works only in the editor.</note>
 	 * @memberof ApiGroup
 	 * @typeofeditors ["CDE"]
-	 * @returns {ApiDrawing[] | null} - The array of the ungrouped objects, or null if the group is not in the document, cannot be ungrouped, or when called in the document builder.
+	 * @returns {ApiDrawing[] | null} - The array of the ungrouped objects, or null if the group is not in the document or cannot be ungrouped.
 	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Ungroup.js
 	 */
 	ApiGroup.prototype.Ungroup = function()
 	{
-		if (AscCommon.isFileBuild())
-			return null;
-
 		if (!this.Drawing || !this.Drawing.IsUseInDocument())
 			return null;
 

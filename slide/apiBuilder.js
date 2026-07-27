@@ -1014,6 +1014,9 @@
 
     /**
      * Creates a group of drawings.
+     * :::note
+     * The drawings must not be added to the presentation. To group the drawings which are already in the presentation, use the {@link ApiSlide#GroupDrawings} method.
+     * :::
      * @memberof Api
      * @typeofeditors ["CPE"]
      * @param {DrawingForGroup[]} drawings - An array of drawings to group.
@@ -1029,9 +1032,9 @@
         let oSlide = private_GetCurrentSlide();
         if (oSlide) {
             if (drawings.find(function(drawing) {
-                return !drawing.Drawing.IsUseInDocument();
+                return drawing.Drawing.IsUseInDocument();
             }))
-               AscBuilder.throwException(new Error("All drawings must be in document"));
+               AscBuilder.throwException(new Error("All drawings must not be in document"));
 
             drawings.forEach(function(drawing) { drawing.Drawing.recalculate(); })
 
