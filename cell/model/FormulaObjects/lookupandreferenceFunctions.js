@@ -305,6 +305,24 @@ function (window, undefined) {
 		return indexedArray;
 	}
 
+	//like getMatrix() but includes a lazy CONSTANT tail: getMatrix() iterates the physical head only, so reshape/
+	//dedup/stack functions (UNIQUE/TRANSPOSE/VSTACK/HSTACK/TOROW/TOCOL) would drop the tail. For a lazy-tail cArray
+	//build the full LOGICAL 2D matrix via getElementRowCol (tail-aware, no flag); every other arg falls back to getMatrix().
+	function getMatrixLogical(arg) {
+		if (arg && arg.type === cElementType.array && arg.hasLazyTail && arg.hasLazyTail()) {
+			let dim = arg.getDimensions(), m = [];
+			for (let r = 0; r < dim.row; r++) {
+				m[r] = [];
+				for (let c = 0; c < dim.col; c++) {
+					m[r].push(arg.getElementRowCol(r, c));
+				}
+			}
+			return m;
+		}
+		//guard like cBaseType.toArray: a scalar/cell without getMatrix falls back to toArray (never crash)
+		return arg.getMatrix ? arg.getMatrix() : arg.toArray();
+	}
+
 	// these functions are made and used specifically for SORT & SORTBY functions
 	function sortArray (array, by_array1, sortOrder, isByCol, sortIndex) {
 		let resultArr = new cArray(),
@@ -667,14 +685,14 @@ function (window, undefined) {
 			// TODO refactor
 			// go through the array and return result for each element
 			let resArr = new cArray();
-			let tempArraySize, maxArraySize = arg0.getDimensions();
+			let tempArraySize, maxArraySize = arg0.getDimensions(true);
 			let arg0Rows = maxArraySize.row, arg0Cols = maxArraySize.col;
 
 			// get max array size by first loop
 			arg0.foreach2(function (elem) {
 				let chosenArgument = chooseArgument(elem);
 				if (chosenArgument && chosenArgument.type === cElementType.cellsRange || chosenArgument.type === cElementType.cellsRange3D || chosenArgument.type === cElementType.array) {
-					tempArraySize = chosenArgument.getDimensions();
+					tempArraySize = chosenArgument.getDimensions(true);
 					maxArraySize.row = tempArraySize.row > maxArraySize.row ? tempArraySize.row : maxArraySize.row;
 					maxArraySize.col = tempArraySize.col > maxArraySize.col ? tempArraySize.col : maxArraySize.col;
 				}
@@ -684,7 +702,7 @@ function (window, undefined) {
 				for (let c = 0; c < arg0Cols; c++) {
 					let elem = arg0.getValue2(r, c);
 					let chosenArgument = chooseArgument(elem);
-					let argDimensions = chosenArgument.getDimensions();
+					let argDimensions = chosenArgument.getDimensions(true);
 					let singleRow = arg0Rows === 1;
 					let singleCol = arg0Cols === 1;
 					let tempArr = [];
@@ -752,11 +770,11 @@ function (window, undefined) {
 				}
 			}
 
-			if (resArr.getRowCount() < maxArraySize.row) {
+			if (resArr.getRowCount(true) < maxArraySize.row) {
 				// fill the rest of array with #N/A error
-				for (let i = resArr.getRowCount(); i < maxArraySize.row; i++) {
+				for (let i = resArr.getRowCount(true); i < maxArraySize.row; i++) {
 					resArr.addRow();
-					for (let j = 0; j < resArr.getCountElementInRow(); j++) {
+					for (let j = 0; j < resArr.getCountElementInRow(true); j++) {
 						resArr.addElement(new cError(cErrorType.not_available));
 					}
 				}
@@ -776,22 +794,31 @@ function (window, undefined) {
 		}
 
 		let arg1 = arg[0];
+		// split on type, not hasLazyTail: arrays read via getRowLogical/getColLogical (tail-safe); ranges keep matrix
+		let isArr = arg1.type === cElementType.array;
 		let matrix;
-		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.array || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
-			matrix = arg1.getMatrix();
-		} else if (arg1.type === cElementType.cellsRange3D) {
-			if (arg1.isSingleSheet()) {
-				matrix = arg1.getMatrix()[0];
+		if (!isArr) {
+			if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+				matrix = arg1.getMatrix();
+			} else if (arg1.type === cElementType.cellsRange3D) {
+				if (arg1.isSingleSheet()) {
+					matrix = arg1.getMatrix()[0];
+				} else {
+					return new cError(cErrorType.bad_reference);
+				}
+			} else if (arg1.type === cElementType.error) {
+				return arg1;
+			} else if (arg1.type === cElementType.empty) {
+				return new cError(cErrorType.wrong_value_type);
 			} else {
-				return new cError(cErrorType.bad_reference);
+				matrix = [[arg1]];
 			}
-		} else if (arg1.type === cElementType.error) {
-			return arg1;
-		} else if (arg1.type === cElementType.empty) {
-			return new cError(cErrorType.wrong_value_type);
-		} else {
-			matrix = [[arg1]];
 		}
+
+		// logical size: realSize for a lazy array, bbox for a range, physical dims otherwise (one call, no branch).
+		let dimension = arg1.getDimensions();
+		let error;
+		let indices = [];   // collected 0-based row (byCol=false) or column (byCol=true) indices, in request order
 
 		let pushData = function (_argInside) {
 			_argInside = _argInside.tocNumber();
@@ -807,37 +834,25 @@ function (window, undefined) {
 				error = new cError(cErrorType.wrong_value_type);
 				return false;
 			}
-
-			if (!res) {
-				res = new cArray();
-			}
-
-			if (byCol) {
-				res.pushCol(matrix, reverse ? dimension.col - (_argInside - 1) - 1 : _argInside - 1);
-			} else {
-				res.pushRow(matrix, reverse ? dimension.row - (_argInside - 1) - 1 : _argInside - 1);
-			}
-
+			let size = byCol ? dimension.col : dimension.row;
+			indices.push(reverse ? size - _argInside : _argInside - 1);
 			return true;
 		};
 
-		let dimension = arg1.getDimensions();
-		let res;
-		let error;
 		for (let i = 1; i < arg.length; i++) {
 			let _arg = arg[i];
 
 			if (cElementType.cellsRange === _arg.type || cElementType.cellsRange3D === _arg.type || cElementType.array === _arg.type) {
-				let argDimensions = _arg.getDimensions();
+				let argDimensions = _arg.getDimensions();   // logical size so a lazy index list keeps its length
 				if (argDimensions.col === 1 || argDimensions.row === 1) {
-					let byCol = argDimensions.row > 1;
+					let byColInner = argDimensions.row > 1;
 					for (let j = 0; j < Math.max(argDimensions.col, argDimensions.row); j++) {
 						if (cElementType.array === _arg.type) {
-							if (!pushData(_arg.getElementRowCol(!byCol ? 0 : j, !byCol ? j : 0))) {
+							if (!pushData(_arg.getElementRowCol(!byColInner ? 0 : j, !byColInner ? j : 0))) {
 								return error;
 							}
 						} else {
-							if (!pushData(_arg.getValue2(!byCol ? 0 : j, !byCol ? j : 0))) {
+							if (!pushData(_arg.getValue2(!byColInner ? 0 : j, !byColInner ? j : 0))) {
 								return error;
 							}
 						}
@@ -854,7 +869,44 @@ function (window, undefined) {
 			}
 		}
 
-		return res ? res : new cError(cErrorType.wrong_value_type);
+		if (!indices.length) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		let res = new cArray();
+		if (isArr) {
+			// array source: pick each row/col via the tail-aware logical slice, assemble with existing addRow/addElement
+			if (byCol) {
+				// build column-by-column (getColLogical + addElementInRow) so only one logical column is held at a time
+				for (let k = 0; k < indices.length; k++) {
+					let colArr = arg1.getColLogical(indices[k]);
+					for (let r = 0; r < colArr.length; r++) {
+						if (k === 0) {
+							res.addRow();
+						}
+						res.addElementInRow(colArr[r], r);
+					}
+				}
+			} else {
+				for (let k = 0; k < indices.length; k++) {
+					let rowArr = arg1.getRowLogical(indices[k]);
+					res.addRow();
+					for (let c = 0; c < dimension.col; c++) {
+						res.addElement(rowArr[c]);
+					}
+				}
+			}
+		} else {
+			// live range/scalar (never lazy): push the picked row/col straight from the materialized matrix.
+			for (let k = 0; k < indices.length; k++) {
+				if (byCol) {
+					res.pushCol(matrix, indices[k]);
+				} else {
+					res.pushRow(matrix, indices[k]);
+				}
+			}
+		}
+		return res;
 	}
 
 	/**
@@ -926,18 +978,18 @@ function (window, undefined) {
 		} else {
 			var arg0 = arg[0];
 			if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
-				bbox = arg0.getRange();
-				bbox = bbox && bbox.bbox;
+				bbox = arg0.getBBox0();
 				res = bbox ? new cNumber(bbox.c1 + 1) : null;
 			} else if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-				bbox = arg0.getRange();
-				bbox = bbox && bbox.bbox;
+				bbox = arg0.getBBox0();
 
 				if (bbox && bbox.c2 > bbox.c1) {
 					res = new cArray();
-					for (var i = bbox.c1; i <= bbox.c2; i++) {
-						res.addElement(new cNumber(i + 1))
-					}
+					res.setRealArraySize(1, bbox.c2 - bbox.c1 + 1);
+					var colBase = bbox.c1 + 1;
+					res.setMissedValueFn(function (row, col) {
+						return new cNumber(colBase + col);
+					});
 				} else {
 					res = bbox ? new cNumber(bbox.c1 + 1) : null;
 				}
@@ -1114,7 +1166,7 @@ function (window, undefined) {
 
 			for (let i = 0; i < rows; i++) {
 				for (let j = 0; j < columns; j++) {
-					let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j, true);
+					let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j);
 
 					val = val.tocBool();
 					val = val.toBool ? val.toBool() : new cError(cErrorType.wrong_value_type);
@@ -1179,10 +1231,10 @@ function (window, undefined) {
 		}
 
 		if (rangeMode) {
-			const initialArrayDimensions = arg0.getDimensions(true),
+			const initialArrayDimensions = arg0.getDimensions(),
 				initRows = initialArrayDimensions.row,
 				initColumns = initialArrayDimensions.col,
-				lookingArrayDimensions = arg1.getDimensions(true);
+				lookingArrayDimensions = arg1.getDimensions();
 
 			// check for matching array sizes
 			if (lookingArrayDimensions.row === 1 && lookingArrayDimensions.col === initColumns) {
@@ -1393,7 +1445,7 @@ function (window, undefined) {
 	cHLOOKUP.prototype.name = 'HLOOKUP';
 	cHLOOKUP.prototype.argumentsMin = 3;
 	cHLOOKUP.prototype.argumentsMax = 4;
-	cHLOOKUP.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
+	cHLOOKUP.prototype.arrayIndexes = {1: 1};
 	cHLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
 	cHLOOKUP.prototype.enabledToSingle = {"1": true};
 	cHLOOKUP.prototype.Calculate = function (arg) {
@@ -1402,7 +1454,7 @@ function (window, undefined) {
 			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
 				arg[2] = arg[2].getValue2(0,0);
 			}
-			let dimension = arg[0].getDimensions();
+			let dimension = arg[0].getDimensions(true);
 			let ctx = {};
 			// One shared args array per loop: calculate() reads arg[0..5] into locals synchronously and
 			// never stores or mutates the array, so only the varying slot needs a write per element.
@@ -1419,7 +1471,7 @@ function (window, undefined) {
 		}
 
 		if (arg[2] && (arg[2].type === cElementType.array)) {
-			let dimension = arg[2].getDimensions();
+			let dimension = arg[2].getDimensions(true);
 			let ctx = {};
 			// see above: one shared args array, only the varying slot is rewritten per element
 			let callArgs = [arg[0], arg[1], null, arg[3]];
@@ -1570,9 +1622,14 @@ function (window, undefined) {
 		}
 
 		const generateArray = function (_from, row, col) {
+			//reads _from.array/_from.rowCount raw, so a generator-backed arg must be materialized first
+			_from.ensureMaterialized && _from.ensureMaterialized();
 			let ret = null;
-			let _colCount = _from.getCountElementInRow();
-			let _rowCount = _from.rowCount;
+			//size and read a lazy source by its LOGICAL grid - its head may be both shorter and narrower
+			let _lazy = !!(_from.hasLazyTail && _from.hasLazyTail());
+			let _logical = _lazy ? _from.getDimensions() : null;
+			let _colCount = _lazy ? _logical.col : _from.getCountElementInRow(true);
+			let _rowCount = _lazy ? _logical.row : _from.rowCount;
 			let i;
 			row = row !== undefined ? Math.ceil(row) : row;
 			col = col !== undefined ? Math.ceil(col) : col;
@@ -1588,7 +1645,7 @@ function (window, undefined) {
 				}
 				ret = new cArray();
 				for (i = 0; i < _colCount; i++) {
-					ret.addElement(_from.array[row - 1][i])
+					ret.addElement(_lazy ? _from.getElementRowCol(row - 1, i) : _from.array[row - 1][i])
 				}
 			} else if (undefined !== col) {
 				if (_colCount < col) {
@@ -1602,15 +1659,24 @@ function (window, undefined) {
 				}
 
 				ret = new cArray();
-				for (i = 0; i < _rowCount; i++) {
+				let _physRows = _from.rowCount;
+				for (i = 0; i < _physRows; i++) {
 					ret.addRow();
-					ret.addElement(_from.array[i][col - 1])
+					ret.addElement(_lazy ? _from.getElementRowCol(i, col - 1) : _from.array[i][col - 1])
+				}
+				if (_lazy) {
+					//preserve a constant lazy tail: the extracted column's tail is the source's tail value at
+					//this column (O(1); a generator tail was already materialized by ensureMaterialized above).
+					ret.setRealArraySize(_rowCount, 1);
+					ret.setMissedValue(_from.getMissedElement(_physRows, col - 1));
 				}
 			}
 			return ret;
 		};
 
 		AscCommonExcel.executeInR1C1Mode(false, function () {
+			//getDimensions(): use the LOGICAL size (realSize) of a lazy head+tail array (e.g. A:A/B:B),
+			//not its physical head - otherwise INDEX rejects valid indices into the tail as #REF!.
 			let dimension = arg0.getDimensions();
 			let isSingleRowCol = (dimension.row > 1 && dimension.col > 1) ? false : true;
 			let isByColumn = (dimension.row > 1) ? true : false;
@@ -1820,7 +1886,7 @@ function (window, undefined) {
 			arg[0] = arg[0].isOneElement() ? arg[0].getFirstElement() : arg[0].cross(arguments[1]);
 		} else if (arg[0].type === cElementType.array) {
 			let retArr = new cArray();
-			let dimension = arg[0].getDimensions();
+			let dimension = arg[0].getDimensions(true);
 
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
@@ -1999,19 +2065,18 @@ function (window, undefined) {
 		} else {
 			var arg0 = arg[0];
 			if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
-				bbox = arg0.getRange();
-				bbox = bbox && bbox.bbox;
+				bbox = arg0.getBBox0();
 				res = bbox ? new cNumber(bbox.r1 + 1) : null;
 			} else if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-				bbox = arg0.getRange();
-				bbox = bbox && bbox.bbox;
+				bbox = arg0.getBBox0();
 
 				if (bbox && bbox.r2 > bbox.r1) {
 					res = new cArray();
-					for (var i = bbox.r1; i <= bbox.r2; i++) {
-						res.addRow();
-						res.addElement(new cNumber(i + 1))
-					}
+					res.setRealArraySize(bbox.r2 - bbox.r1 + 1, 1);
+					var rowBase = bbox.r1 + 1;
+					res.setMissedValueFn(function (row) {
+						return new cNumber(rowBase + row);
+					});
 				} else {
 					res = bbox ? new cNumber(bbox.r1 + 1) : null;
 				}
@@ -2041,6 +2106,8 @@ function (window, undefined) {
 		var arg0 = arg[0];
 		var range;
 		if (cElementType.array === arg0.type) {
+			//getRealSize=true: honor the logical size of clamped/realSize arrays (e.g. ROW over a full column);
+			//falls back to the physical row count when realSize is not set
 			return new cNumber(arg0.getRowCount());
 		} else if (cElementType.cellsRange === arg0.type || cElementType.cell === arg0.type ||
 			cElementType.cell3D === arg0.type || cElementType.cellsRange3D === arg0.type) {
@@ -2082,7 +2149,7 @@ function (window, undefined) {
 	cSORT.prototype.Calculate = function (arg) {
 
 		function arrayHelper (byColArray) {
-			let dimensions = byColArray.getDimensions(),
+			let dimensions = byColArray.getDimensions(true),
 				resArr = new cArray(),
 				errVal = new cError(cErrorType.wrong_value_type),
 				byColVal, isFirstValRecieved = false, isSecondValRecieved = false;
@@ -2121,7 +2188,7 @@ function (window, undefined) {
 		}
 
 		function isValidArray (array, maxRowCol) {
-			let dimensions = array.getDimensions();
+			let dimensions = array.getDimensions(true);
 			for (let i = 0; i < dimensions.row; i++) {
 				for (let j = 0; j < dimensions.col; j++) {
 					let elem = array.getValueByRowCol ? array.getValueByRowCol(i, j) : array.getElementRowCol(i, j);
@@ -2202,7 +2269,7 @@ function (window, undefined) {
 			array = arg0;
 		}
 
-		maxRows = array.getDimensions().row;
+		maxRows = array.getDimensions().row;   // logical size: a sort_index into a lazy full column must not #VALUE
 		maxCols = array.getDimensions().col;
 
 		// arg1(sort_index) check
@@ -2330,7 +2397,7 @@ function (window, undefined) {
 				by_array1 = i === 1 ? by_array : by_array1;
 				if (sortOrder.type === cElementType.array || sortOrder.type === cElementType.cellsRange || sortOrder.type === cElementType.cellsRange3D) {
 					// if single element in array, fill array with it element
-					let resDimensoins = sortOrder.getDimensions();
+					let resDimensoins = sortOrder.getDimensions(true);
 					if (resRow < resDimensoins.row) {
 						resRow = resDimensoins.row;
 					}
@@ -2340,9 +2407,9 @@ function (window, undefined) {
 				} else {
 					// create array with single element and fill it
 					let resArr = new cArray();
-					for (let i = 0; i < by_array1.getDimensions().row; i++) {
+					for (let i = 0; i < by_array1.getDimensions(true).row; i++) {
 						resArr.addRow();
-						for (let k = 0; k < by_array1.getDimensions().col; k++) {
+						for (let k = 0; k < by_array1.getDimensions(true).col; k++) {
 							resArr.addElement(sortOrder);
 						}
 					}
@@ -2442,7 +2509,7 @@ function (window, undefined) {
 		} else {
 			array = args[0];
 		}
-		arrayDimensions = array.getDimensions();
+		arrayDimensions = array.getDimensions();   // logical size: two lazy full columns must match by realSize
 		maxRows = arrayDimensions.row;
 		maxCols = arrayDimensions.col;
 
@@ -2614,7 +2681,7 @@ function (window, undefined) {
 			//TODO perhaps when used as array formula, the converted range should be passed as array directly to function input
 			arg0 = arg0.getMatrix()[0];
 		} else if(cElementType.array === arg0.type) {
-			arg0 = arg0.getMatrix();
+			arg0 = getMatrixLogical(arg0);
 		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
 			return arg0.getValue();
 		} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
@@ -2641,28 +2708,31 @@ function (window, undefined) {
 		}
 
 		let arg1 = arg[0];
-		let matrix;
+		let array;
 		if (arg1.type === cElementType.array) {
-			// array.getMatrix() doesn't make an independent copy and leaves a link to the original array
-			matrix = arg1.getMatrixCopy();
-		} else if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {		
-			matrix = arg1.getMatrix();
-		} else if (arg1.type === cElementType.cellsRange3D) {
-			if (arg1.isSingleSheet()) {
-				matrix = arg1.getMatrix()[0];
-			} else {
-				return new cError(cErrorType.bad_reference);
-			}
-		} else if (arg1.type === cElementType.error) {
-			return arg1;
-		} else if (arg1.type === cElementType.empty) {
-			return new cError(cErrorType.wrong_value_type);
+			// use the array directly: it may be a lazy head+tail array (e.g. A:A/B:B). crop below is
+			// realSize-aware and non-mutating, so neither a copy nor materialization of the tail is needed.
+			array = arg1;
 		} else {
-			matrix = [[arg1]];
+			let matrix;
+			if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+				matrix = arg1.getMatrix();
+			} else if (arg1.type === cElementType.cellsRange3D) {
+				if (arg1.isSingleSheet()) {
+					matrix = arg1.getMatrix()[0];
+				} else {
+					return new cError(cErrorType.bad_reference);
+				}
+			} else if (arg1.type === cElementType.error) {
+				return arg1;
+			} else if (arg1.type === cElementType.empty) {
+				return new cError(cErrorType.wrong_value_type);
+			} else {
+				matrix = [[arg1]];
+			}
+			array = new cArray();
+			array.fillFromArray(matrix);
 		}
-
-		let array = new cArray();
-		array.fillFromArray(matrix);
 
 		let arg2 = arg[1];
 		if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
@@ -2915,7 +2985,7 @@ function (window, undefined) {
 		} else if(cElementType.cellsRange3D === arg0.type) {
 			arg0 = arg0.getMatrix()[0];
 		} else if(cElementType.array === arg0.type) {
-			arg0 = arg0.getMatrix();
+			arg0 = getMatrixLogical(arg0);
 		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
 			return arg0.getValue();
 		} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
@@ -3337,9 +3407,9 @@ function (window, undefined) {
 		if (cElementType.array === arg1.type && !opt_xlookup) {
 			let arrayToSearch;
 			if (this.bHor) {
-				arrayToSearch = arg1.getRow(0);
+				arrayToSearch = arg1.getRowLogical(0);
 			} else {
-				arrayToSearch = arg1.getCol(0);
+				arrayToSearch = arg1.getColLogical(0);
 			}
 
 			if (arrayToSearch) {
@@ -3376,7 +3446,8 @@ function (window, undefined) {
 				return new cError(cErrorType.not_available);
 			}
 
-			count = this.bHor ? arg1.getRowCount() : arg1.getCountElementInRow();
+			let _ldim = arg1.getDimensions();
+			count = this.bHor ? _ldim.row : _ldim.col;
 			if (number > count - 1) {
 				return new cError(cErrorType.bad_reference);
 			}
@@ -3412,9 +3483,13 @@ function (window, undefined) {
 			}
 		} else if (cElementType.array === arg1.type && opt_xlookup) {
 			let _cacheElem = {elements: []};
-			arg1.foreach(function (elem, r, c) {
+			//forEachLogical so a lazy tail is searched too (foreach saw only the physical head)
+			arg1.forEachLogical(function (elem, r, c) {
 				if (elem && elem.type === cElementType.string) {
-					elem.value = elem.value.toLowerCase();
+					//rebind the LOCAL param to a lowercased copy for the case-insensitive compare; do NOT
+					//mutate elem - forEachLogical yields the head elements and the SHARED constant-tail
+					//object in place, so `elem.value = ...` would scribble on the caller's source array.
+					elem = new cString(elem.value.toLowerCase());
 				}
 				_cacheElem.elements.push({v: elem, i: (t.bHor ? c : r)});
 			});
@@ -4103,19 +4178,16 @@ function (window, undefined) {
 		}  
 		
 		if (cElementType.array === arg1.type) {
-			arg1 = arg1.getMatrix();
-
-			let i, a1RowCount = arg1.length, a1ColumnCount = arg1[0].length, arr;
+			//LOGICAL dims + tail-aware row/col slice so a lazy tail is searched too (getMatrix saw only the physical head)
+			let dim = arg1.getDimensions();
+			let a1RowCount = dim.row, a1ColumnCount = dim.col, arr;
 
 			if (a1RowCount > 1 && a1ColumnCount > 1) {
 				return new cError(cErrorType.not_available);
 			} else if (a1RowCount === 1 && a1ColumnCount >= 1) {
-				arr = arg1[0];
+				arr = arg1.getRowLogical(0);
 			} else {
-				arr = [];
-				for (i = 0; i < a1RowCount; i++) {
-					arr[i] = arg1[i][0];
-				}
+				arr = arg1.getColLogical(0);
 			}
 			return isXMatch ? this._xMatchCalculate(arr, arg0, a2Value, a3Value, true) : this._calculate(arr, arg0, a2Value);
 		} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type ||
@@ -4486,14 +4558,14 @@ function (window, undefined) {
 		}
 
 		function arrFinder(arr) {
-			if (arr.getRowCount() > arr.getCountElementInRow()) {
+			if (arr.getRowCount(true) > arr.getCountElementInRow(true)) {
 				// searching in the first column
-				resC = arr.getCountElementInRow() > 1 ? 1 : 0;
+				resC = arr.getCountElementInRow(true) > 1 ? 1 : 0;
 				let arrCol = arr.getCol(0);
 				resR = _func.lookupBinarySearch(arg0, arrCol, false);
 			} else {
 				// searching in the first row
-				resR = arr.getRowCount() > 1 ? 1 : 0;
+				resR = arr.getRowCount(true) > 1 ? 1 : 0;
 				let arrRow = arr.getRow(0);
 				resC = _func.lookupBinarySearch(arg0, arrRow, false);
 			}
@@ -4502,13 +4574,18 @@ function (window, undefined) {
 		function findIndexInArray(lookingValue, arr) {
 			let resIndex = -1;
 
-			if (arr.getRowCount() >= arr.getCountElementInRow()) {
+			//a constant lazy tail: size by the LOGICAL dims via getDimensions(); getCol/getRow walk only the physical head
+			let lazy = arr.hasLazyTail && arr.hasLazyTail();
+			let rows = lazy ? arr.getDimensions().row : arr.getRowCount(true);
+			let cols = lazy ? arr.getDimensions().col : arr.getCountElementInRow(true);
+
+			if (rows >= cols) {
 				// searching in the first column and return elem with same position (index) from last column
-				let arrCol = arr.getCol(0);
+				let arrCol = lazy ? arr.getColLogical(0) : arr.getCol(0);
 				resIndex = _func.lookupBinarySearch(lookingValue, arrCol, false);
 			} else {
 				// searching in the first row and return elem with same position (index) from last row
-				let arrRow = arr.getRow(0);
+				let arrRow = lazy ? arr.getRowLogical(0) : arr.getRow(0);
 				resIndex = _func.lookupBinarySearch(lookingValue, arrRow, false);
 			}
 
@@ -4580,7 +4657,7 @@ function (window, undefined) {
 			}
 
 			if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type || cElementType.array === arg2.type) {
-				if (cElementType.array === arg2.type && (arg2.getRowCount() > 1 && arg2.getCountElementInRow() > 1)) {
+				if (cElementType.array === arg2.type && (arg2.getRowCount(true) > 1 && arg2.getCountElementInRow(true) > 1)) {
 					return new cError(cErrorType.not_available);
 				}
 
@@ -4604,10 +4681,12 @@ function (window, undefined) {
 		
 		if (cElementType.array === arg1.type && cElementType.array === arg2.type) {		/* arg1 & arg2 is arrays */
 			let lookingIndex = -1;
-			let arg1Rows = arg1.getRowCount(),
-				arg2Rows = arg2.getRowCount(),
-				arg1Cols = arg1.getCountElementInRow(),
-				arg2Cols = arg2.getCountElementInRow();
+			//constant lazy tail: use LOGICAL dimensions and tail-aware element access (else head only)
+			let arg1Lazy = arg1.hasLazyTail && arg1.hasLazyTail(), arg2Lazy = arg2.hasLazyTail && arg2.hasLazyTail();
+			let arg1Rows = arg1Lazy ? arg1.getDimensions().row : arg1.getRowCount(true),
+				arg2Rows = arg2Lazy ? arg2.getDimensions().row : arg2.getRowCount(true),
+				arg1Cols = arg1Lazy ? arg1.getDimensions().col : arg1.getCountElementInRow(true),
+				arg2Cols = arg2Lazy ? arg2.getDimensions().col : arg2.getCountElementInRow(true);
 
 			/* check two dimensional array but only in vector form */
 			if (!arrayMode && (((arg1Rows < arg2Rows) && arg2Cols > 1) || (arg1Rows > 1 && arg1Cols > 1 && arg2Rows > 1 && arg2Cols > 1))) {
@@ -4630,12 +4709,12 @@ function (window, undefined) {
 			}
 
 			if (arg2Rows === 1) {
-				if (lookingIndex >= arg2.getCountElementInRow()) {
+				if (lookingIndex >= arg2Cols) {
 					return new cError(cErrorType.not_available)
 				}
 				return arg2.getElementRowCol(0, lookingIndex);
 			} else if (arg2Cols === 1) {
-				if (lookingIndex >= arg2.rowCount) {
+				if (lookingIndex >= arg2Rows) {
 					return new cError(cErrorType.not_available)
 				}
 				return arg2.getElementRowCol(lookingIndex, 0);
@@ -4661,7 +4740,9 @@ function (window, undefined) {
 			}
 
 			let byRow, byCol;
-			let dimension = arg2.getDimensions ? arg2.getDimensions() : null;
+			//constant lazy tail: logical dimensions + tail-aware element access
+			let arg2Lazy = arg2.hasLazyTail && arg2.hasLazyTail();
+			let dimension = arg2.getDimensions ? (arg2Lazy ? arg2.getDimensions() : arg2.getDimensions()) : null;
 			if (dimension) {
 				if (dimension.row >= dimension.col) {
 					byCol = true
@@ -4769,7 +4850,7 @@ function (window, undefined) {
 	cVLOOKUP.prototype.name = 'VLOOKUP';
 	cVLOOKUP.prototype.argumentsMin = 3;
 	cVLOOKUP.prototype.argumentsMax = 4;
-	cVLOOKUP.prototype.arrayIndexes = {/*0: 1,*/ 1: 1, /*2: 1*/};
+	cVLOOKUP.prototype.arrayIndexes = {1: 1};
 	cVLOOKUP.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	// cVLOOKUP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cVLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
@@ -4781,7 +4862,7 @@ function (window, undefined) {
 			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
 				arg[2] = arg[2].getValue2(0,0);
 			}
-			let dimension = arg[0].getDimensions();
+			let dimension = arg[0].getDimensions(true);
 			let ctx = {};
 			// One shared args array per loop: calculate() reads arg[0..5] into locals synchronously and
 			// never stores or mutates the array, so only the varying slot needs a write per element.
@@ -4798,7 +4879,7 @@ function (window, undefined) {
 		}
 
 		if (arg[2] && (arg[2].type === cElementType.array)) {
-			let dimension = arg[2].getDimensions();
+			let dimension = arg[2].getDimensions(true);
 			let ctx = {};
 			// see above: one shared args array, only the varying slot is rewritten per element
 			let callArgs = [arg[0], arg[1], null, arg[3]];
@@ -4922,7 +5003,7 @@ function (window, undefined) {
 			}
 		}
 
-		//array arg1 must contain 1 row or 1 column
+		//array arg1 must contain 1 row or 1 column; getDimensions() = LOGICAL size so a lazy tail is counted
 		let dimensions1 = arg1.getDimensions();
 		let dimensions2 = arg2.getDimensions();
 		let bVertical = null;
@@ -5027,7 +5108,7 @@ function (window, undefined) {
 		for (let i = 0; i < arg.length; i++) {
 			let matrix;
 			if (arg[i].type === cElementType.cellsRange || arg[i].type === cElementType.array || arg[i].type === cElementType.cell || arg[i].type === cElementType.cell3D) {
-				matrix = arg[i].getMatrix();
+				matrix = getMatrixLogical(arg[i]);
 			} else if (arg[i].type === cElementType.cellsRange3D) {
 				if (arg[i].isSingleSheet()) {
 					matrix = arg[i].getMatrix()[0];
@@ -5086,7 +5167,7 @@ function (window, undefined) {
 		for (let i = 0; i < arg.length; i++) {
 			let matrix;
 			if (arg[i].type === cElementType.cellsRange || arg[i].type === cElementType.array || arg[i].type === cElementType.cell || arg[i].type === cElementType.cell3D) {
-				matrix = arg[i].getMatrix();
+				matrix = getMatrixLogical(arg[i]);
 			} else if (arg[i].type === cElementType.cellsRange3D) {
 				if (arg[i].isSingleSheet()) {
 					matrix = arg[i].getMatrix()[0];
@@ -5149,13 +5230,18 @@ function (window, undefined) {
 		if (arg1.type === cElementType.cellsRange3D) {
 			arg1 = arg1.toArray()[0];
 		} else {
-			arg1 = arg1.toArray();
+			//reject an oversized arg on its LOGICAL size (O(1)) instead of building the matrix just to count it
+			let logicalSize = arg1.type === cElementType.array && arg1.getDimensions();
+			if (logicalSize && logicalSize.row * logicalSize.col > 1048578) {
+				return new cError(cErrorType.not_numeric);
+			}
+			arg1 = getMatrixLogical(arg1);
 		}
 
 		//Excel returns a #NUM when array is too large.
 		let elemCount = arg1.length * arg1[0].length;
 		if (elemCount > 1048578) {
-			return new cError(cErrorType.not_available);
+			return new cError(cErrorType.not_numeric);
 		}
 
 		//0    Keep all values (default)
@@ -5289,6 +5375,7 @@ function (window, undefined) {
 			res.addElement(valueError);
 			return res;
 		}
+		// logical size (realSize for a lazy array, physical otherwise); iteration below uses forEachLogical
 		let arg1Dimensions = arg1.getDimensions();
 		if (arg1Dimensions.col > 1 && arg1Dimensions.row > 1) {
 			res.addElement(valueError);
@@ -5340,11 +5427,8 @@ function (window, undefined) {
 
 			let rowCounter = 0, colCounter = 0;
 
-			arg1.foreach2(function (val) {
+			let processVal = function (val) {
 				if (toCol) {
-					/*if (res.array.l && res.array[res.array.length - 1].length === arg2) {
-						res.addRow();
-					}*/
 					if (rowCounter === arg2) {
 						colCounter++;
 						rowCounter = 0;
@@ -5360,7 +5444,10 @@ function (window, undefined) {
 					}
 					res.addElement(val);
 				}
-			});
+			};
+
+			// single logical iteration: forEachLogical serves a lazy tail and walks a range/non-lazy array, no branch
+			arg1.forEachLogical(processVal);
 			if (toCol) {
 				res.recalculate();
 			}

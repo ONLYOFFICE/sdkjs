@@ -656,8 +656,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseType.prototype.getDimensions = function () {
 		return {col: 1, row: 1};
 	};
+	//visit every logical element as action(elem, row, col); scalar fallback, overridden by cArray and cArea/cArea3D
+	cBaseType.prototype.forEachLogical = function (action) {
+		if (typeof action === 'function') {
+			action.call(this, this, 0, 0);
+		}
+	};
 	cBaseType.prototype.isOneElement = function () {
-		let dimensions = this.getDimensions(true);
+		let dimensions = this.getDimensions();
 		if (dimensions.col === 1 && dimensions.row === 1) {
 			return true;
 		}
@@ -1364,9 +1370,20 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var r = this.getRange();
 		if (r) {
 			r._foreach2(function (cell, row, col) {
-				action(checkTypeCell(cell), cell, row, col);
+				return action(checkTypeCell(cell), cell, row, col);
 			});
 		}
+	};
+	//logical iteration over the live range via foreach2; a truthy action result stops the scan
+	cArea.prototype.forEachLogical = function (action) {
+		let stopped = false;
+		this.foreach2(function (elem, cell, row, col) {
+			if (!stopped && action(elem, row, col)) {
+				stopped = true;
+				return true;
+			}
+		});
+		return stopped ? true : undefined;
 	};
 	cArea.prototype.getMatrix = function (excludeHiddenRows, excludeErrorsVal, excludeNestedStAg) {
 		var arr = [], r = this.getRange();
@@ -1902,12 +1919,27 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			var _r = this.range(_wsA);
 			for (var i = 0; i < _r.length; i++) {
 				if (_r[i]) {
-					_r[i]._foreach2(function (cell, row, col) {
-						action(checkTypeCell(cell), cell, row, col);
+					var _res = _r[i]._foreach2(function (cell, row, col) {
+						return action(checkTypeCell(cell), cell, row, col);
 					});
+					//the sheet loop must stop too, otherwise the scan resumes on the next sheet
+					if (null != _res) {
+						return _res;
+					}
 				}
 			}
 		}
+	};
+	//logical iteration over the live range cells via foreach2; a truthy action result stops the scan
+	cArea3D.prototype.forEachLogical = function (action) {
+		let stopped = false;
+		this.foreach2(function (elem, cell, row, col) {
+			if (!stopped && action(elem, row, col)) {
+				stopped = true;
+				return true;
+			}
+		});
+		return stopped ? true : undefined;
 	};
 	cArea3D.prototype.isSingleSheet = function () {
 		return this.wsFrom === this.wsTo;
@@ -2997,6 +3029,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		this.realSize = null;
 		this.missedValue = null;
+		//optional generator for "missed" tail values (within realSize but beyond physically stored rows/cols).
+		//used when the tail is not a constant (e.g. ROW()/COLUMN() over a clamped full-column/row reference).
+		//takes priority over missedValue. signature: (row, col) -> cElement
+		this.missedValueFn = null;
 	}
 
 	cArray.prototype = Object.create(cBaseType.prototype);
@@ -3029,18 +3065,30 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		this.countElement++;
 	};
 	cArray.prototype.getRow = function (rowIndex) {
+		this.ensureMaterialized();
 		if (rowIndex < 0 || rowIndex > this.array.length - 1) {
 			return null;
 		}
 		return this.array[rowIndex];
 	};
 	cArray.prototype._getRow = function (rowIndex) {
+		this.ensureMaterialized();
+		//lazy CONSTANT tail: build the logical row via getElementRowCol so the tail is included (ensureMaterialized
+		//only expands a generator tail). Non-lazy path below is unchanged.
+		if (this.hasLazyTail()) {
+			let cols = this.getDimensions().col, row = [];
+			for (let c = 0; c < cols; c++) {
+				row.push(this.getElementRowCol(rowIndex, c));
+			}
+			return [row];
+		}
 		if (rowIndex < 0 || rowIndex > this.array.length - 1) {
 			return null;
 		}
 		return [this.array[rowIndex]];
 	};
 	cArray.prototype.getCol = function (colIndex) {
+		this.ensureMaterialized();
 		var col = [];
 		for (var i = 0; i < this.rowCount; i++) {
 			col.push(this.array[i][colIndex]);
@@ -3048,30 +3096,49 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return col;
 	};
 	cArray.prototype._getCol = function (colIndex) {
+		this.ensureMaterialized();
+		//lazy CONSTANT tail: iterate the LOGICAL row count and read via getElementRowCol so the tail is included
+		let lazy = this.hasLazyTail();
+		let rows = lazy ? this.getDimensions().row : this.rowCount;
 		let col = [];
-		for (let i = 0; i < this.rowCount; i++) {
+		for (let i = 0; i < rows; i++) {
 			col[i] = [];
-			col[i].push(this.array[i][colIndex]);
+			col[i].push(lazy ? this.getElementRowCol(i, colIndex) : this.array[i][colIndex]);
 		}
 		return col;
 	};
-	cArray.prototype.getElementRowCol = function (row, col, checkRealSize) {
-		if (row > this.rowCount || col > this.getCountElementInRow()) {
-			if (checkRealSize && this.realSize && row <= this.realSize.row && col <= this.realSize.col) {
-				if (this.missedValue) {
-					return this.missedValue
-				}
-				return new cEmpty();
-			}
+	// by default this is TAIL-AWARE: a position inside realSize but beyond the physical head is served from the
+	// lazy tail (constant or generator). Pass skipTail=true for a PHYSICAL-only read (a missing cell yields
+	// cEmpty/#N/A instead of the tail) - needed only where a caller deliberately probes the physical head extent.
+	cArray.prototype.getElementRowCol = function (row, col, skipTail) {
+		var srcRow = this.array[row];
+		var physElem = srcRow && srcRow[col];
+		if (physElem) {
+			return physElem;
+		}
+		//0-based indices: a missing physical cell inside realSize is a tail value, so check the tail
+		//with 0-based bounds before #N/A - else the seam cell at row===rowCount (or col===len) is lost.
+		//a fully-lazy array (rowCount===0) has no physical cells at all - the generator IS its data, so
+		//serve from it regardless of skipTail; head+tail arrays (rowCount>0) honour the skipTail gate.
+		if ((!skipTail || this.rowCount === 0) && this.realSize &&
+			row >= 0 && col >= 0 && row < this.realSize.row && col < this.realSize.col) {
+			return this.getMissedElement(row, col);
+		}
+		//use the logical counts (realSize for fully-lazy arrays) so the seam/out-of-bounds verdict
+		//matches a materialized array: index===count stays in-bounds (cEmpty), only index>count is #N/A.
+		if (row > this.getRowCount(true) || col > this.getCountElementInRow(true)) {
 			return new cError(cErrorType.not_available);
 		}
-		return this.array[row] && this.array[row][col] ? this.array[row][col] : new cEmpty();
+		return new cEmpty();
 	};
 	cArray.prototype.getElement = function (index) {
+		this.ensureMaterialized();
 		for (var i = 0; i < this.rowCount; i++) {
-			//TODO length
-			if (index > this.countElementInRow[i].length) {
-				index -= this.countElementInRow[i].length;
+			//countElementInRow[i] is the element COUNT of row i (a number). walk rows until the flat index
+			//falls inside one; a full row (index >= its count) is skipped. was `> ....length` (undefined),
+			//so it never advanced and always returned array[0][index] for multi-row arrays.
+			if (index >= this.countElementInRow[i]) {
+				index -= this.countElementInRow[i];
 			} else {
 				return this.array[i][index];
 			}
@@ -3106,6 +3173,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (typeof (action) !== 'function') {
 			return true;
 		}
+		//a full physical scan must see the whole logical array: materialize a generator-backed tail first
+		this.ensureMaterialized();
 		for (var ir = 0; ir < this.rowCount; ir++) {
 			for (var ic = 0; ic < this.countElementInRow[ir]; ic++) {
 				if (action.call(this, this.array[ir][ic], ir, ic)) {
@@ -3119,6 +3188,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (typeof (action) !== 'function') {
 			return true;
 		}
+		//full iteration over the whole logical array: materialize a generator-backed tail first so that
+		//consumers (financial/statistical/text/lookup aggregators) see every element, not just the head.
+		this.ensureMaterialized();
 
 		let ir, ic;
 		if (byCol) {
@@ -3135,16 +3207,166 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		}
 	};
+	//physical-only iteration (row-major) that deliberately does NOT materialize a generator tail:
+	//used to build the stored "head" of a result while the tail stays lazy (see _func[array][scalar]).
+	cArray.prototype.foreachPhysical = function (action) {
+		if (typeof (action) !== 'function') {
+			return true;
+		}
+		for (var ir = 0; ir < this.rowCount; ir++) {
+			for (var ic = 0; ic < this.countElementInRow[ir]; ic++) {
+				action.call(this, this.array[ir][ic], ir, ic);
+			}
+		}
+	};
+	//read-only iteration over every LOGICAL element WITHOUT materializing: for a generator-backed array
+	//it streams each value from the generator (single pass, no N-element allocation), so reducers like
+	//SUM stay O(1) memory. For non-generator arrays it behaves exactly like the physical foreach (which,
+	//lacking a generator, also never expands a constant/empty tail). action(elem, ir, ic); truthy = stop.
+	cArray.prototype.foreachValue = function (action) {
+		if (typeof (action) !== 'function') {
+			return true;
+		}
+		if (this.missedValueFn && this.realSize) {
+			for (var r = 0; r < this.realSize.row; r++) {
+				for (var c = 0; c < this.realSize.col; c++) {
+					if (action.call(this, this.getElementRowCol(r, c), r, c)) {
+						return true;
+					}
+				}
+			}
+			return undefined;
+		}
+		for (var ir = 0; ir < this.rowCount; ir++) {
+			for (var ic = 0; ic < this.countElementInRow[ir]; ic++) {
+				if (action.call(this, this.array[ir][ic], ir, ic)) {
+					return true;
+				}
+			}
+		}
+		return undefined;
+	};
+	//fold every LOGICAL element into an accumulator: reducer(acc, value, count) -> acc, where `count` is how many
+	//times `value` occurs. The physical head is folded one element at a time (count=1); a CONSTANT tail
+	//(missedValue) is folded in a SINGLE O(1) call with count = logicalSize - headCount (so SUM(A:A+1) correctly
+	//adds the tail value times its count instead of skipping it); a GENERATOR tail is streamed element by element.
+	//This is the aggregator-side counterpart of forEachLogical - use it for SUM/COUNT/MAX/... so a non-neutral
+	//constant tail is accounted for without iterating realSize.
+	cArray.prototype.reduceLogical = function (reducer, acc) {
+		if (typeof reducer !== 'function') {
+			return acc;
+		}
+		if (this.missedValueFn && this.realSize) {
+			//generator tail: every logical position differs, so stream them all (head + generated tail), count=1
+			for (let r = 0; r < this.realSize.row; r++) {
+				for (let c = 0; c < this.realSize.col; c++) {
+					acc = reducer.call(this, acc, this.getElementRowCol(r, c), 1);
+				}
+			}
+			return acc;
+		}
+		let headCount = 0;
+		for (let ir = 0; ir < this.rowCount; ir++) {
+			for (let ic = 0; ic < this.countElementInRow[ir]; ic++) {
+				acc = reducer.call(this, acc, this.array[ir][ic], 1);
+				headCount++;
+			}
+		}
+		let missedValue = this.getMissedValue();
+		if (missedValue && this.realSize) {
+			let tailCount = this.realSize.row * this.realSize.col - headCount;
+			if (tailCount > 0) {
+				acc = reducer.call(this, acc, missedValue, tailCount);
+			}
+		}
+		return acc;
+	};
+	//visit every logical element row-major (lazy tail via getElementRowCol, non-lazy walks .array); truthy return stops
+	cArray.prototype.forEachLogical = function (action) {
+		if (typeof action !== 'function') {
+			return true;
+		}
+		if (this.hasLazyTail()) {
+			let dim = this.getDimensions();
+			for (let r = 0; r < dim.row; r++) {
+				for (let c = 0; c < dim.col; c++) {
+					if (action.call(this, this.getElementRowCol(r, c), r, c)) {
+						return true;
+					}
+				}
+			}
+			return undefined;
+		}
+		for (let ir = 0; ir < this.rowCount; ir++) {
+			for (let ic = 0; ic < this.countElementInRow[ir]; ic++) {
+				if (action.call(this, this.array[ir][ic], ir, ic)) {
+					return true;
+				}
+			}
+		}
+		return undefined;
+	};
+	//logical row slice (tail-aware; non-lazy returns the stored row by reference) - read-only, callers must not mutate it
+	cArray.prototype.getRowLogical = function (row) {
+		if (this.hasLazyTail()) {
+			let cols = this.getDimensions().col;
+			let res = new Array(cols);
+			for (let c = 0; c < cols; c++) {
+				res[c] = this.getElementRowCol(row, c);
+			}
+			return res;
+		}
+		return this.array[row];
+	};
+	//logical column slice (tail-aware via getElementRowCol; non-lazy reads stored rows) - read-only, do not mutate cells
+	cArray.prototype.getColLogical = function (col) {
+		let rows = this.getDimensions().row;
+		let res = new Array(rows);
+		if (this.hasLazyTail()) {
+			for (let r = 0; r < rows; r++) {
+				res[r] = this.getElementRowCol(r, col);
+			}
+			return res;
+		}
+		for (let r = 0; r < rows; r++) {
+			//guard the row like getElementRowCol does, so a short/absent physical row never throws
+			let srcRow = this.array[r];
+			res[r] = srcRow && srcRow[col];
+		}
+		return res;
+	};
+	//a "fully-lazy" array stores no physical rows (rowCount===0) but carries realSize + a generator
+	//(e.g. SEQUENCE). For it the physical counts are 0, so dimension queries must fall back to realSize -
+	//otherwise consumers see a 0x0 / 1x1 array. Head+tail arrays (ROW/COLUMN, rowCount>0) are unaffected.
+	cArray.prototype.isFullyLazy = function () {
+		return !!(this.realSize && this.rowCount === 0);
+	};
 	cArray.prototype.getCountElement = function () {
+		if (this.isFullyLazy()) {
+			return this.realSize.row * this.realSize.col;
+		}
 		return this.countElement;
 	};
-	cArray.prototype.getCountElementInRow = function (getRealSize) {
-		return getRealSize && this.realSize ? this.realSize.col : this.countElementInRow[0];
+	// default returns the LOGICAL column count (realSize for a lazy tail; physical otherwise - identical when
+	// not lazy). Pass getPhysicalSize=true for the physically-stored head width. A fully-lazy array (rowCount===0)
+	// has no physical store, so it always reports the logical size regardless of the flag.
+	cArray.prototype.getCountElementInRow = function (getPhysicalSize) {
+		if (this.realSize && (!getPhysicalSize || this.rowCount === 0)) {
+			return this.realSize.col;
+		}
+		return this.countElementInRow[0];
 	};
-	cArray.prototype.getRowCount = function (getRealSize) {
-		return getRealSize && this.realSize ? this.realSize.row : this.rowCount;
+	// default returns the LOGICAL row count (realSize for a lazy tail; physical otherwise - identical when not
+	// lazy). Pass getPhysicalSize=true for the physically-stored head height. A fully-lazy array (rowCount===0)
+	// has no physical store, so it always reports the logical size regardless of the flag.
+	cArray.prototype.getRowCount = function (getPhysicalSize) {
+		if (this.realSize && (!getPhysicalSize || this.rowCount === 0)) {
+			return this.realSize.row;
+		}
+		return this.rowCount;
 	};
 	cArray.prototype.geMaxElementInRow = function () {
+		this.ensureMaterialized();
 		var max = 0;
 		for (var i = 0, len = this.countElementInRow.length; i < len; i++) {
 			if (this.countElementInRow[i] > max) {
@@ -3167,6 +3389,101 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		return this.missedValue;
 	};
+	cArray.prototype.getMissedValueFn = function () {
+		if (!this.missedValueFn) {
+			return;
+		}
+
+		return this.missedValueFn;
+	};
+	cArray.prototype.setMissedValue = function (value) {
+		this.missedValue = value;
+	};
+	cArray.prototype.setMissedValueFn = function (fn) {
+		this.missedValueFn = fn;
+	};
+	//resolve a position that lies inside realSize but beyond the physically stored data:
+	//generator first, then a constant tail, then empty
+	cArray.prototype.getMissedElement = function (row, col) {
+		if (this.missedValueFn) {
+			return this.missedValueFn(row, col);
+		}
+		if (this.missedValue) {
+			return this.missedValue;
+		}
+		return new cEmpty();
+	};
+	//true when the array carries a logical tail (realSize) backed by a constant value or a generator
+	cArray.prototype.hasLazyTail = function () {
+		return !!(this.realSize && (this.missedValue || this.missedValueFn));
+	};
+	//true when (row, col) falls into a generator-backed tail (inside realSize, beyond stored data)
+	cArray.prototype.isInLazyTail = function (row, col) {
+		return !!(this.missedValueFn && this.realSize && row >= 0 && col >= 0 &&
+			row < this.realSize.row && col < this.realSize.col);
+	};
+	//build a new tail generator that maps this array's generator output through mapElem; null if no generator
+	cArray.prototype.mapMissedValueFn = function (mapElem) {
+		var fn = this.missedValueFn;
+		if (!fn) {
+			return null;
+		}
+		return function (row, col) {
+			return mapElem(fn(row, col));
+		};
+	};
+	//materialize a generator-backed tail before a full physical scan (no-op when there is no generator)
+	cArray.prototype.ensureMaterialized = function () {
+		if (this.missedValueFn) {
+			this._expandGenerator();
+		}
+	};
+	//copy realSize from another array (no-op when the source has none)
+	cArray.prototype.copyRealSizeFrom = function (other) {
+		var size = other.getRealArraySize();
+		if (size) {
+			this.realSize = size;
+		}
+	};
+	//inherit the whole lazy tail (realSize + constant value + generator) from another array as-is
+	cArray.prototype.inheritLazyTailFrom = function (other) {
+		this.realSize = other.getRealArraySize();
+		this.setMissedValue(other.getMissedValue());
+		this.setMissedValueFn(other.getMissedValueFn());
+	};
+	//materialize a generator-backed array (e.g. ROW/COLUMN over a clamped full-column/row reference)
+	//into a regular fully-physical array: expands realSize using the generator for the tail and drops it.
+	//called lazily before a physical full scan (getMatrix/foreach) so that all consumers
+	//(including in-place mutators and the 200+ direct .array accesses) see correct data.
+	//cost is O(logical size) - matches the inherent cost of such formulas in Excel; only triggered
+	//for bare ROW/COLUMN results and for an array-formula result whose tail could not be folded to a
+	//constant (checkFormulaArray installs a per-(row,col) generator); the common filter pattern (IF with
+	//a foldable constant tail) still carries no generator and is unaffected.
+	cArray.prototype._expandGenerator = function () {
+		if (!this.missedValueFn || !this.realSize) {
+			return;
+		}
+		var fn = this.missedValueFn;
+		var rows = this.realSize.row, cols = this.realSize.col;
+		var newArray = new Array(rows), counts = new Array(rows);
+		for (var r = 0; r < rows; r++) {
+			var srcRow = r < this.rowCount ? this.array[r] : null;
+			var physCols = srcRow ? srcRow.length : 0;
+			var rowArr = new Array(cols);
+			for (var c = 0; c < cols; c++) {
+				rowArr[c] = (c < physCols && srcRow[c]) ? srcRow[c] : fn(r, c);
+			}
+			newArray[r] = rowArr;
+			counts[r] = cols;
+		}
+		this.array = newArray;
+		this.countElementInRow = counts;
+		this.rowCount = rows;
+		this.countElement = rows * cols;
+		this.realSize = null;
+		this.missedValue = null;
+		this.missedValueFn = null;
+	};
 	cArray.prototype.setRealArraySize = function (row, col) {
 		if (row > 0 && col > 0) {
 			this.realSize = {row: row, col: col}
@@ -3174,8 +3491,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.tocNumber = function () {
 		let retArr = new cArray();
-		retArr.realSize = this.getRealArraySize();
-		retArr.missedValue = this.getMissedValue();
+		retArr.copyRealSizeFrom(this);
+		const missedValue = this.getMissedValue();
+		retArr.setMissedValue(missedValue ? missedValue.tocNumber() : null);
+		retArr.setMissedValueFn(this.mapMissedValueFn(function (elem) {
+			return elem.tocNumber();
+		}));
 		// Legacy addRow/addElement drops exactly one leading empty row; reproduce it via sourceStart in one pre-sized pass.
 		// Assumes stable cArray storage: element.tocNumber() must not mutate this.array/countElementInRow and the builders are not overridden (unsupported internals).
 		let sourceStart = this.rowCount > 0 && this.countElementInRow[0] === 0 ? 1 : 0;
@@ -3203,6 +3524,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.tocString = function () {
 		var retArr = new cArray();
+		if (this.getMissedValueFn()) {
+			retArr.copyRealSizeFrom(this);
+			const missedValue = this.getMissedValue();
+			retArr.setMissedValue(missedValue ? missedValue.tocString() : null);
+			retArr.setMissedValueFn(this.mapMissedValueFn(function (elem) {
+				return elem.tocString();
+			}));
+		}
 		for (var ir = 0; ir < this.rowCount; ir++, retArr.addRow()) {
 			for (var ic = 0; ic < this.countElementInRow[ir]; ic++) {
 				retArr.addElement(this.array[ir][ic].tocString());
@@ -3215,6 +3544,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.tocBool = function () {
 		var retArr = new cArray();
+		if (this.getMissedValueFn()) {
+			retArr.copyRealSizeFrom(this);
+			const missedValue = this.getMissedValue();
+			retArr.setMissedValue(missedValue ? missedValue.tocBool() : null);
+			retArr.setMissedValueFn(this.mapMissedValueFn(function (elem) {
+				return elem.tocBool();
+			}));
+		}
 		for (var ir = 0; ir < this.rowCount; ir++, retArr.addRow()) {
 			for (var ic = 0; ic < this.countElementInRow[ir]; ic++) {
 				retArr.addElement(this.array[ir][ic].tocBool());
@@ -3226,6 +3563,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return retArr;
 	};
 	cArray.prototype.toString = function () {
+		this.ensureMaterialized();
 		var ret = "";
 		for (var ir = 0; ir < this.rowCount; ir++, ret += FormulaSeparators.arrayRowSeparatorDef) {
 			for (var ic = 0; ic < this.countElementInRow[ir]; ic++, ret += FormulaSeparators.arrayColSeparatorDef) {
@@ -3245,6 +3583,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return "{" + ret + "}";
 	};
 	cArray.prototype.toLocaleString = function (digitDelim) {
+		this.ensureMaterialized();
 		var ret = "";
 		for (var ir = 0; ir < this.rowCount;
 			 ir++, ret += digitDelim ? FormulaSeparators.arrayRowSeparator : FormulaSeparators.arrayRowSeparatorDef) {
@@ -3270,6 +3609,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return "{" + ret + "}";
 	};
 	cArray.prototype.isValidArray = function () {
+		this.ensureMaterialized();
 		if (this.countElement < 1) {
 			return false;
 		}
@@ -3281,14 +3621,41 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return true;
 	};
 	cArray.prototype.getValue2 = function (i, j) {
+		//generator-backed array: serve the single element lazily instead of materializing the whole array
+		//(keeps INDEX/point access over a huge SEQUENCE O(1)). Non-generator arrays keep the raw fast path.
+		//out of realSize: stay undefined (old out-of-bounds contract, keeps broadcast #N/A guards working).
+		if (this.missedValueFn) {
+			if (this.realSize && i >= 0 && j >= 0 && i < this.realSize.row && j < this.realSize.col) {
+				return this.getElementRowCol(i, j);
+			}
+			return undefined;
+		}
 		var result = this.array[i];
-		return result ? result[j] : result;
+		var elem = result ? result[j] : result;
+		if (elem) {
+			return elem;
+		}
+		const missedValue = this.getMissedValue();
+		if (missedValue && this.realSize && i >= 0 && j >= 0 && i < this.realSize.row && j < this.realSize.col) {
+			return missedValue;
+		}
+		return elem;
 	};
 	cArray.prototype.getValue = function () {
 		var result = this.array[0];
-		return result && result[0] ? result[0].getValue() : result;
+		if (result && result[0]) {
+			return result[0].getValue();
+		}
+		//fully-lazy array: the (0,0) value comes from the generator, no need to materialize the whole thing
+		if (this.isFullyLazy()) {
+			return this.getMissedElement(0, 0).getValue();
+		}
+		return result;
 	};
 	cArray.prototype.getMatrix = function () {
+
+		//a full physical scan must see the whole logical array: materialize a generator-backed tail first
+		this.ensureMaterialized();
 
 		//excludeErrorsVal - arguments[1]
 		if(arguments[1]) {
@@ -3311,6 +3678,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return this.array;
 	};
 	cArray.prototype.getMatrixCopy = function () {
+		this.ensureMaterialized();
 		let retArrCopy = [];
 		for (let ir = 0; ir < this.array.length; ir++) {
 			retArrCopy[ir] = [];
@@ -3325,6 +3693,22 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		return retArrCopy;
 
+	};
+	//like getMatrix() but materializes a CONSTANT lazy tail too. getMatrix()/ensureMaterialized only expand a
+	//GENERATOR tail, so a constant missedValue tail is otherwise dropped by matrix-consuming functions
+	//(SUMPRODUCT/SUMXMY2/...). A non-lazy array falls through to getMatrix() unchanged.
+	cArray.prototype.getMatrixLogical = function () {
+		if (!this.hasLazyTail()) {
+			return this.getMatrix();
+		}
+		var dim = this.getDimensions(), m = [];
+		for (var r = 0; r < dim.row; r++) {
+			m[r] = [];
+			for (var c = 0; c < dim.col; c++) {
+				m[r][c] = this.getElementRowCol(r, c);
+			}
+		}
+		return m;
 	};
 	cArray.prototype.fillFromArray = function (arr, fChangeElems) {
 		if (arr && arr.length !== undefined) {
@@ -3359,16 +3743,19 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		}
 	};
-	cArray.prototype.getDimensions = function (getRealSize) {
-		let realSize = getRealSize ? this.getRealArraySize() : false;
+	// default returns the LOGICAL size (realSize for a lazy head+tail array; the physical size when there is no
+	// lazy tail - identical in that case). Pass getPhysicalSize=true only where the caller specifically needs the
+	// physically-stored head size (e.g. iterating .array directly). For cArea/cArea3D the two coincide (bbox).
+	cArray.prototype.getDimensions = function (getPhysicalSize) {
+		let realSize = getPhysicalSize ? false : this.getRealArraySize();
 		let col, row;
 		if (!realSize) {
-			col = this.getCountElementInRow();
+			col = this.getCountElementInRow(true);
 			if (!col) {
 				col = 1;
 			}
 
-			row = this.getRowCount();
+			row = this.getRowCount(true);
 			if (!row) {
 				row = 1;
 			}
@@ -3442,26 +3829,33 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 	};
 	cArray.prototype.crop = function (row, col) {
-		let newArray = this.array;
+		//realSize-aware + non-mutating: keep the requested rows/cols of the LOGICAL array (physical head plus
+		//any lazy tail), reading each kept cell via getElementRowCol (tail-aware, no flag). a positive count keeps the first
+		//|n|, a negative count keeps the last |n|, |n| >= size keeps all. used by TAKE/DROP, which may receive a
+		//lazy full-column array (e.g. A:A/B:B) - the old version spliced the physical head and dropped the tail.
 		let dimensions = this.getDimensions();
+		let r0 = 0, r1 = dimensions.row, c0 = 0, c1 = dimensions.col;
 		if (row && Math.abs(row) < dimensions.row) {
 			if (row < 0) {
-				newArray = newArray.splice(this.array.length - Math.abs(row));
+				r0 = dimensions.row - Math.abs(row);
 			} else {
-				newArray = newArray.splice(0, row);
+				r1 = row;
 			}
 		}
 		if (col && Math.abs(col) < dimensions.col) {
-			for (let i = 0; i < newArray.length; i++) {
-				if (col < 0) {
-					newArray[i] = newArray[i].splice(newArray[i].length - Math.abs(col));
-				} else {
-					newArray[i] = newArray[i].splice(0, col);
-				}
+			if (col < 0) {
+				c0 = dimensions.col - Math.abs(col);
+			} else {
+				c1 = col;
 			}
 		}
 		let res = new cArray();
-		res.fillFromArray(newArray);
+		for (let r = r0; r < r1; r++) {
+			res.addRow();
+			for (let c = c0; c < c1; c++) {
+				res.addElement(this.getElementRowCol(r, c));
+			}
+		}
 		return res;
 	};
 	cArray.prototype.getFirstElement = function () {
@@ -3619,7 +4013,70 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				matrix2 = convertAreaToArray(operand2);
 			}
 
+			//fast path: both operands are full-column/row arrays with a lazy
+			//tail and the same logical shape -> compose the head over the union of the PHYSICAL heads + a
+			//composed tail, instead of materializing the whole logical size.
+			if (matrix1 && matrix2 && matrix1.hasLazyTail && matrix1.hasLazyTail() && matrix2.hasLazyTail && matrix2.hasLazyTail() &&
+				matrix1.getRowCount() === matrix2.getRowCount() && matrix1.getCountElementInRow() === matrix2.getCountElementInRow()) {
+				res = new cArray();
+				res.setRealArraySize(matrix1.getRowCount(), matrix1.getCountElementInRow());
+				var hRows = Math.max(matrix1.rowCount, matrix2.rowCount);
+				var hCols = Math.max(matrix1.countElementInRow.length ? matrix1.countElementInRow[0] : 0,
+					matrix2.countElementInRow.length ? matrix2.countElementInRow[0] : 0);
+				for (var hr = 0; hr < hRows; hr++) {
+					res.addRow();
+					for (var hc = 0; hc < hCols; hc++) {
+						res.addElement(func(matrix1.getElementRowCol(hr, hc), matrix2.getElementRowCol(hr, hc)));
+					}
+				}
+				if ((matrix1.getMissedValueFn && matrix1.getMissedValueFn()) || (matrix2.getMissedValueFn && matrix2.getMissedValueFn())) {
+					res.setMissedValueFn(function (r, c) {
+						return func(matrix1.getMissedElement(r, c), matrix2.getMissedElement(r, c));
+					});
+				} else {
+					res.setMissedValue(func(matrix1.getMissedValue() || new cEmpty(), matrix2.getMissedValue() || new cEmpty()));
+				}
+				return res;
+			}
+
 			if (matrix1 || matrix2) {
+				//only an original cArray operand (an array expression such as A:A+1) carries physical-head dims that
+				//would make the general path below truncate the result to that head. a cArea uses its bbox dims
+				//there (so it materializes rather than truncates) and is handled by convertAreaToArray's own
+				//clamping - do NOT reinterpret its used-extent tail here, or finite refs past the used range break.
+				var m1Lazy = cElementType.array === operand1.type && matrix1 && matrix1.hasLazyTail && matrix1.hasLazyTail();
+				var m2Lazy = cElementType.array === operand2.type && matrix2 && matrix2.hasLazyTail && matrix2.hasLazyTail();
+				if (m1Lazy || m2Lazy) {
+					//a lazy head+tail array operand whose logical size exceeds its physical head (the both-lazy-
+					//same-shape case was handled by the fast path above). broadcast on LOGICAL dims and compose a
+					//per-(row,col) tail generator, instead of truncating the result to the physical head.
+					var ld1 = matrix1 ? matrix1.getDimensions() : operand1.getDimensions();
+					var ld2 = matrix2 ? matrix2.getDimensions() : operand2.getDimensions();
+					var lRow = ld1.row === 1 ? ld2.row : (ld2.row === 1 ? ld1.row : Math.min(ld1.row, ld2.row));
+					var lCol = ld1.col === 1 ? ld2.col : (ld2.col === 1 ? ld1.col : Math.min(ld1.col, ld2.col));
+					var lbr1 = ld1.row === 1, lbc1 = ld1.col === 1, lbr2 = ld2.row === 1, lbc2 = ld2.col === 1;
+					var elemAt = function (r, c) {
+						var e1 = matrix1 ? matrix1.getElementRowCol(lbr1 ? 0 : r, lbc1 ? 0 : c) : operand1;
+						var e2 = matrix2 ? matrix2.getElementRowCol(lbr2 ? 0 : r, lbc2 ? 0 : c) : operand2;
+						return func(e1, e2);
+					};
+					res = new cArray();
+					res.setRealArraySize(lRow, lCol);
+					var hRows = Math.min(lRow, Math.max(matrix1 ? matrix1.rowCount : 1, matrix2 ? matrix2.rowCount : 1));
+					var hCols = Math.min(lCol, Math.max(
+						matrix1 && matrix1.countElementInRow.length ? matrix1.countElementInRow[0] : 1,
+						matrix2 && matrix2.countElementInRow.length ? matrix2.countElementInRow[0] : 1));
+					for (var lr = 0; lr < hRows; lr++) {
+						res.addRow();
+						for (var lc = 0; lc < hCols; lc++) {
+							res.addElement(elemAt(lr, lc));
+						}
+					}
+					res.setMissedValueFn(function (r, c) {
+						return elemAt(r, c);
+					});
+					return res;
+				}
 				res = new cArray();
 				var resArray = new Array(rowCount);
 				var resCounts = new Array(rowCount);
@@ -3629,8 +4086,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					var rowArr = new Array(colCount);
 					var r1 = br1 ? 0 : iRow, r2 = br2 ? 0 : iRow;
 					for (var iCol = 0; iCol < colCount; iCol++) {
-						var elem1 = matrix1 ? matrix1.getElementRowCol(r1, bc1 ? 0 : iCol, true) : operand1;
-						var elem2 = matrix2 ? matrix2.getElementRowCol(r2, bc2 ? 0 : iCol, true) : operand2;
+						var elem1 = matrix1 ? matrix1.getElementRowCol(r1, bc1 ? 0 : iCol) : operand1;
+						var elem2 = matrix2 ? matrix2.getElementRowCol(r2, bc2 ? 0 : iCol) : operand2;
 						rowArr[iCol] = func(elem1, elem2);
 					}
 					resArray[iRow] = rowArr;
@@ -3800,7 +4257,23 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 			//separate branch for arrays
 			if (typeArray && cElementType.array === typeArray[i]) {
-				if (cElementType.cellsRange === arg.type || cElementType.array === arg.type) {
+				if (cElementType.array === arg.type && arg.hasLazyTail() && !arg.getMissedValueFn()) {
+					//constant lazy tail: getMatrix() materializes the physical head only (the tail is kept
+					//lazy), so array-consuming functions (LINEST/TREND/GROWTH/LOGEST) would drop it. Build the
+					//full LOGICAL matrix instead; a generator tail still goes through getMatrix (it expands it).
+					var lazyDim = arg.getDimensions(), lazyMat = [];
+					for (var lr = 0; lr < lazyDim.row; lr++) {
+						lazyMat[lr] = [];
+						for (var lc = 0; lc < lazyDim.col; lc++) {
+							var lazyEl = arg.getElementRowCol(lr, lc);
+							if (excludeErrorsVal && lazyEl && cElementType.error === lazyEl.type) {
+								lazyEl = new cEmpty();
+							}
+							lazyMat[lr][lc] = lazyEl;
+						}
+					}
+					newArgs[i] = lazyMat;
+				} else if (cElementType.cellsRange === arg.type || cElementType.array === arg.type) {
 					newArgs[i] = arg.getMatrix(excludeHiddenRows, excludeErrorsVal, excludeNestedStAg);
 				} else if (cElementType.cellsRange3D === arg.type) {
 					if (!arg.isSingleSheet()) {
@@ -4006,15 +4479,15 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			//TODO review and simplify handling
 			array = new cArray();
 			//in case the first argument consists of one row/column - then iterate over the second argument
-			if(1 === arg0.getRowCount() || 1 === arg0.getCountElementInRow()) {
+			if(1 === arg0.getRowCount(true) || 1 === arg0.getCountElementInRow(true)) {
 				arg1.foreach(function (elem, r, c) {
 					var b = elem, res;
 					//if argument is a row/column
 					var rowArg1 = r, colArg1 = c;
-					if(1 === arg0.getRowCount()) {
+					if(1 === arg0.getRowCount(true)) {
 						rowArg1 = 0;
 					}
-					if(1 === arg0.getCountElementInRow()) {
+					if(1 === arg0.getCountElementInRow(true)) {
 						colArg1 = 0;
 					}
 					if ( !array.array[r] ) {
@@ -4035,10 +4508,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				arg0.foreach(function (elem, r, c) {
 					var a = elem, res;
 					var rowArg1 = r, colArg1 = c;
-					if(1 === arg1.getRowCount()) {
+					if(1 === arg1.getRowCount(true)) {
 						rowArg1 = 0;
 					}
-					if(1 === arg1.getCountElementInRow()) {
+					if(1 === arg1.getCountElementInRow(true)) {
 						colArg1 = 0;
 					}
 					if ( !array.array[r] ) {
@@ -4170,7 +4643,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			let res = false;
 			for (let j = 0; j < argumentsCount; j++) {
 				if(cElementType.array === arg[j].type) {
-					if(1 === arg[j].getRowCount() || 1 === arg[j].getCountElementInRow()) {
+					if(1 === arg[j].getRowCount(true) || 1 === arg[j].getCountElementInRow(true)) {
 						res = true;
 					}
 				} else {
@@ -4195,6 +4668,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 			//first iterate over all arguments and convert from cellsRange to array or value depending on how the function should work
 			var tempArgs = [], tempArg, firstArray, _checkArrayIndex, maxArrayRows = 1, maxArrayCols = 1;
+			//stored extent of the same arguments - the head that has to be computed cell by cell
+			var headRows = 0, headCols = 0;
 			for (var j = 0; j < argumentsCount; j++) {
 				tempArg = arg[j];
 
@@ -4231,14 +4706,21 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 							// transfer array to argument without changing
 							tempArg = tempArg;
 						} else {
-							maxArrayRows = Math.max(maxArrayRows, tempArg.getRowCount());
-							maxArrayCols = Math.max(maxArrayCols, tempArg.getCountElementInRow());
+							//use LOGICAL dims (realSize) so a full-column arg drives the result shape even when it has no data
+							var _taR = tempArg.getRowCount(), _taC = tempArg.getCountElementInRow();
+							maxArrayRows = Math.max(maxArrayRows, _taR);
+							maxArrayCols = Math.max(maxArrayCols, _taC);
+							headRows = Math.max(headRows, tempArg.rowCount);
+							headCols = Math.max(headCols, tempArg.countElementInRow.length ? tempArg.countElementInRow[0] : 0);
 							if (!firstArray) {
 								firstArray = tempArg;
-							} else if((1 === firstArray.getRowCount() || 1 === firstArray.getCountElementInRow()) && 1 !== tempArg.getRowCount() && 1 !== tempArg.getCountElementInRow()) {
-								firstArray = tempArg;
-							} else if((1 === firstArray.getRowCount() && 1 === firstArray.getCountElementInRow()) && (1 !== tempArg.getRowCount() || 1 !== tempArg.getCountElementInRow())){
-								firstArray = tempArg;
+							} else {
+								var _faR = firstArray.getRowCount(), _faC = firstArray.getCountElementInRow();
+								if ((1 === _faR || 1 === _faC) && 1 !== _taR && 1 !== _taC) {
+									firstArray = tempArg;
+								} else if ((1 === _faR && 1 === _faC) && (1 !== _taR || 1 !== _taC)) {
+									firstArray = tempArg;
+								}
 							}
 						}
 					}
@@ -4259,12 +4741,32 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			let targetRows = needRefExpand ? Math.max(maxArrayRows, refSize.row) : maxArrayRows;
 			let targetCols = needRefExpand ? Math.max(maxArrayCols, refSize.col) : maxArrayCols;
 
-			if (needRefExpand || (firstArray && firstArray.foreach &&
-				(firstArray.getRowCount() < targetRows || firstArray.getCountElementInRow() < targetCols))) {
+			let lazyCoversTarget = firstArray && firstArray.hasLazyTail && firstArray.hasLazyTail() &&
+				targetRows <= firstArray.getRowCount() && targetCols <= firstArray.getCountElementInRow();
+
+			let needDenseTarget = !lazyCoversTarget && (needRefExpand || (firstArray && firstArray.foreach &&
+				(firstArray.getRowCount(true) < targetRows || firstArray.getCountElementInRow(true) < targetCols)));
+
+			//no single argument's realSize covers the target: store only the head and let the result carry the target
+			headRows = Math.min(headRows, targetRows);
+			headCols = Math.min(headCols, targetCols);
+			let lazyHeadTarget = needDenseTarget && !needRefExpand && argumentsCount > 0 &&
+				(headRows < targetRows || headCols < targetCols);
+
+			if (!lazyHeadTarget) {
+				headRows = targetRows;
+				headCols = targetCols;
+			}
+			//engine size policy: Excel abandons a whole-sheet array instead of valuing it, so refuse it up front
+			if (lazyHeadTarget && targetRows === AscCommon.gc_nMaxRow && targetCols === AscCommon.gc_nMaxCol) {
+				return new cError(cErrorType.not_numeric);
+			}
+
+			if (needDenseTarget) {
 				firstArray = new cArray();
-				for (var _ri = 0; _ri < targetRows; _ri++) {
+				for (var _ri = 0; _ri < headRows; _ri++) {
 					firstArray.addRow();
-					for (var _ci = 0; _ci < targetCols; _ci++) {
+					for (var _ci = 0; _ci < headCols; _ci++) {
 						firstArray.addElement(null);
 					}
 				}
@@ -4272,8 +4774,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 			if (firstArray) {
 				var array = new cArray();
-				array.realSize = firstArray.realSize;
-				array.missedValue = firstArray.missedValue;
+				array.copyRealSizeFrom(firstArray);
+				if (lazyHeadTarget) {
+					array.setRealArraySize(targetRows, targetCols);
+				}
 
 				//pre-compute: hoist invariant argument properties out of the per-element loop
 				var _argInfo = new Array(argumentsCount);
@@ -4286,6 +4790,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 						isArrayArg: _isArrayArg,
 						isArray: cElementType.array === _ta.type && !_isArrayArg,
 						isRange: _isRange && !_isArrayArg && !checkArrayIndex(_j, cElementType.cellsRange),
+						//LOGICAL dims: only a genuinely 1-row/1-col arg broadcasts, not one with a 1-row/1-col head
 						rows: (cElementType.array === _ta.type) ? _ta.getRowCount() : 0,
 						cols: (cElementType.array === _ta.type) ? _ta.getCountElementInRow() : 0,
 						dimensions: _isRange ? _ta.getDimensions() : null,
@@ -4315,10 +4820,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 						var info = _argInfo[j];
 						if (info.mode) {
 							switch (info.mode) {
-								case 1: newArg = newArg.array[0] ? newArg.array[0][0] : null; break;
-								case 2: newArg = newArg.array[0] ? newArg.array[0][c] : null; break;
-								case 3: newArg = newArg.array[r] ? newArg.array[r][0] : null; break;
-								case 4: newArg = newArg.array[r] ? newArg.array[r][c] : null; break;
+								//getValue2 is lazy-aware: a fully-lazy arg has an empty .array, so read via its generator.
+								case 1: newArg = newArg.getValue2(0, 0); break;
+								case 2: newArg = newArg.getValue2(0, c); break;
+								case 3: newArg = newArg.getValue2(r, 0); break;
+								case 4: newArg = newArg.getValue2(r, c); break;
 								case 5: newArg = newArg.getValueByRowCol(0, 0); break;
 								case 6: newArg = newArg.getValueByRowCol(0, c); break;
 								case 7: newArg = newArg.getValueByRowCol(r, 0); break;
@@ -4349,6 +4855,53 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					array.addElement(_elem);
 				};
 
+				//lazy-tail generator: recompute this function at logical (row,col) for cells past the physical
+				//head. reads each argument tail-awarely (getElementRowCol(...,true) serves an arg's own head or
+				//its constant/generator tail), so a longer branch head and a per-row-varying tail both resolve
+				//correctly - unlike a single inherited/folded constant. installed only when the tail cannot fold.
+				var _calcTailElem = function (row, col) {
+					var newArgs = new Array(argumentsCount);
+					var newArg;
+					for (var j = 0; j < argumentsCount; j++) {
+						newArg = tempArgs[j];
+						var info = _argInfo[j];
+						if (info.isArray) {
+							var srcRow = 1 === info.rows ? 0 : row;
+							var srcCol = 1 === info.cols ? 0 : col;
+							//read exactly as doCalc does: Excel answers #N/A past a finite argument, not its seam cell
+							newArg = newArg.getValue2(srcRow, srcCol);
+							if (!newArg) {
+								newArg = new cError(cErrorType.not_available);
+							}
+						} else if (info.isRange) {
+							if (1 === info.dimensions.row && 1 === info.dimensions.col) {
+								newArg = newArg.getValueByRowCol(0, 0);
+							} else if (1 === info.dimensions.row) {
+								newArg = newArg.getValueByRowCol(0, col);
+							} else if (1 === info.dimensions.col) {
+								newArg = newArg.getValueByRowCol(row, 0);
+							} else {
+								newArg = newArg.getValueByRowCol(row, col);
+							}
+							if (!newArg) {
+								newArg = new cNumber(0);
+							}
+						}
+						newArgs[j] = newArg;
+					}
+					var _tbbox = opt_bbox;
+					if (_needBboxPerElem) {
+						_tbbox = new Asc.Range(col + parserFormula.ref.c1, row + parserFormula.ref.r1, col + parserFormula.ref.c1, row + parserFormula.ref.r1);
+					}
+					var _elem = t.Calculate(newArgs, _tbbox, opt_defName, parserFormula.ws, null, row, col);
+					if (_elem.type === cElementType.array) {
+						_elem = _elem.getElementRowCol(0, 0);
+					} else if (_elem.type === cElementType.cellsRange || _elem.type === cElementType.cellsRange3D) {
+						_elem = _elem.getValueByRowCol(0, 0, true);
+					}
+					return _elem;
+				};
+
 				if (firstArray.foreach) {
 					firstArray.foreach(doCalc);
 				} else {
@@ -4363,6 +4916,50 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					}
 				}
 
+				if ((lazyCoversTarget || lazyHeadTarget) && array.getRealArraySize()) {
+					var _headRows = array.rowCount;
+					var _headCols = array.countElementInRow.length ? array.countElementInRow[0] : 0;
+					var _realSz = array.getRealArraySize();
+					var _composable = true, _tailArgs = new Array(argumentsCount);
+					for (var _tj = 0; _tj < argumentsCount; _tj++) {
+						var _tta = tempArgs[_tj], _ttInfo = _argInfo[_tj];
+						if (_ttInfo.isArray) {
+							var _argCols = _tta.countElementInRow.length ? _tta.countElementInRow[0] : 0;
+							if ((_tta.getMissedValueFn && _tta.getMissedValueFn()) ||
+								_tta.rowCount > _headRows || _argCols > _headCols ||
+								(_realSz && (_tta.getRowCount() < _realSz.row || _tta.getCountElementInRow() < _realSz.col))) {
+								//generator tail; an arg head past the result head; OR an arg whose LOGICAL size is
+								//shorter than the result (a finite/broadcast sibling) - its out-of-range tail must be
+								//#N/A, not its folded constant. cannot fold - fall through to the per-cell generator.
+								_composable = false;
+								break;
+							}
+							_tailArgs[_tj] = (_tta.getMissedValue && _tta.getMissedValue()) || new cEmpty();
+						} else if (_ttInfo.isRange) {
+							_composable = false;
+							break;
+						} else {
+							_tailArgs[_tj] = _tta;
+						}
+					}
+					var _tailRes = null;
+					if (_composable) {
+						_tailRes = t.Calculate(_tailArgs, opt_bbox, opt_defName, parserFormula.ws);
+						if (_tailRes && _tailRes.type === cElementType.array) {
+							_tailRes = _tailRes.getElementRowCol(0, 0);
+						}
+					}
+					if (_tailRes) {
+						//the tail folds to a single constant - keep the O(1) fast path
+						array.setMissedValueFn(null);
+						array.setMissedValue(_tailRes);
+					} else {
+						//fold refused (range/generator arg, or a branch head past the result head) or produced no
+						//constant: recompute per (row,col) instead of leaving the inherited (e.g. condition) tail
+						array.setMissedValue(null);
+						array.setMissedValueFn(_calcTailElem);
+					}
+				}
 
 				res = array;
 
@@ -4460,7 +5057,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		let width = 1, height = 1;
 		for (let i = 0; i < arg.length; i++) {
 			if (!this.arrayIndexes || !this.getArrayIndex(i, arg[i].type)) {
-				let objSize = arg[i].getDimensions();
+				let objSize = arg[i].getDimensions(true);
 				if (objSize) {
 					height = Math.max(objSize.row, height);
 					width = Math.max(objSize.col, width);
@@ -4675,10 +5272,22 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		} else if (arg0 instanceof cArea3D) {
 			arg0 = arg0.cross(arguments[1], arguments[3]);
 		} else if (arg0 instanceof cArray) {
+			var _neg = function (elem) {
+				elem = elem.tocNumber();
+				return elem instanceof cError ? elem : new cNumber(-elem.getValue());
+			};
 			arg0.foreach(function (arrElem, r, c) {
-				arrElem = arrElem.tocNumber();
-				arg0.array[r][c] = arrElem instanceof cError ? arrElem : new cNumber(-arrElem.getValue());
+				arg0.array[r][c] = _neg(arrElem);
 			});
+			//foreach visits only the physical head; negate the lazy tail too, else e.g. --(A:A+0=0) (a very
+			//common count idiom) leaves the tail a boolean that SUM ignores and the ~1M tail is dropped.
+			var _mv = arg0.getMissedValue && arg0.getMissedValue();
+			if (_mv) {
+				arg0.setMissedValue(_neg(_mv));
+			}
+			if (arg0.getMissedValueFn && arg0.getMissedValueFn()) {
+				arg0.setMissedValueFn(arg0.mapMissedValueFn(_neg));
+			}
 			return arg0;
 		}
 		arg0 = arg0.tocNumber();
@@ -6116,12 +6725,12 @@ _func[cElementType.array][cElementType.array] = function ( arg0, arg1, what, bbo
 			return specialArray;
 		}
 	}
-	if ( arg0.getRowCount() !== arg1.getRowCount() || arg0.getCountElementInRow() !== arg1.getCountElementInRow() ) {
+	if ( arg0.getRowCount(true) !== arg1.getRowCount(true) || arg0.getCountElementInRow(true) !== arg1.getCountElementInRow(true) ) {
         return new cError( cErrorType.wrong_value_type );
     }
     var retArr = new cArray(), _arg0, _arg1;
-    for ( var iRow = 0; iRow < arg0.getRowCount(); iRow++, iRow < arg0.getRowCount() ? retArr.addRow() : true ) {
-        for ( var iCol = 0; iCol < arg0.getCountElementInRow(); iCol++ ) {
+    for ( var iRow = 0; iRow < arg0.getRowCount(true); iRow++, iRow < arg0.getRowCount(true) ? retArr.addRow() : true ) {
+        for ( var iCol = 0; iCol < arg0.getCountElementInRow(true); iCol++ ) {
             _arg0 = arg0.getElementRowCol( iRow, iCol );
             _arg1 = arg1.getElementRowCol( iRow, iCol );
             retArr.addElement( _func[_arg0.type][_arg1.type]( _arg0, _arg1, what ) );
@@ -6133,20 +6742,27 @@ _func[cElementType.array][cElementType.array] = function ( arg0, arg1, what, bbo
 _func[cElementType.array][cElementType.number] = _func[cElementType.array][cElementType.string] =
     _func[cElementType.array][cElementType.bool] = _func[cElementType.array][cElementType.error] =
         _func[cElementType.array][cElementType.empty] = function ( arg0, arg1, what ) {
-            let res = new cArray(), realArraySize, rowDiff, colDiff, funcResult, arrayDimensions = arg0.getDimensions();
+            let res = new cArray(), realArraySize;
 
-			if (arg0.realSize && arg0.missedValue) {
+			if (arg0.hasLazyTail()) {
 				realArraySize = arg0.getRealArraySize();
-				rowDiff = realArraySize.row - arg0.getRowCount();
-				colDiff = realArraySize.col - arg0.getCountElementInRow();
-				funcResult = _func[arg0.missedValue.type][arg1.type](arg0.missedValue, arg1, what);
 
 				// set realSize to res
 				res.setRealArraySize(realArraySize.row, realArraySize.col);
-				res.missedValue = funcResult;
+				if (arg0.getMissedValueFn()) {
+					//tail is not a constant: compose a generator instead of collapsing to a single value
+					res.setMissedValueFn(arg0.mapMissedValueFn(function (tail) {
+						return _func[tail.type][arg1.type](tail, arg1, what);
+					}));
+				} else {
+					let missed = arg0.getMissedValue();
+					res.setMissedValue(_func[missed.type][arg1.type](missed, arg1, what));
+				}
 			}
 
-			arg0.foreach( function ( elem, r ) {
+			//foreachPhysical = physical-only iteration: build the stored part here while the tail stays lazy
+			//in res.missedValueFn (composed above). using foreach/foreach2 would materialize the generator.
+			arg0.foreachPhysical( function ( elem, r ) {
                 if ( !res.array[r] ) {
                     res.addRow();
                 }
@@ -6159,20 +6775,27 @@ _func[cElementType.array][cElementType.number] = _func[cElementType.array][cElem
 _func[cElementType.number][cElementType.array] = _func[cElementType.string][cElementType.array] =
     _func[cElementType.bool][cElementType.array] = _func[cElementType.error][cElementType.array] =
         _func[cElementType.empty][cElementType.array] = function ( arg0, arg1, what ) {
-			let res = new cArray(), realArraySize, rowDiff, colDiff, funcResult, arrayDimensions = arg1.getDimensions();
+			let res = new cArray(), realArraySize;
 
-			if (arg1.realSize && arg1.missedValue) {
+			if (arg1.hasLazyTail()) {
 				realArraySize = arg1.getRealArraySize();
-				rowDiff = realArraySize.row - arg1.getRowCount();
-				colDiff = realArraySize.col - arg1.getCountElementInRow();
-				funcResult = _func[arg0.type][arg1.missedValue.type](arg0, arg1.missedValue, what);
 
 				// set realSize to res
 				res.setRealArraySize(realArraySize.row, realArraySize.col);
-				res.missedValue = funcResult;
+				if (arg1.getMissedValueFn()) {
+					//tail is not a constant: compose a generator instead of collapsing to a single value
+					res.setMissedValueFn(arg1.mapMissedValueFn(function (tail) {
+						return _func[arg0.type][tail.type](arg0, tail, what);
+					}));
+				} else {
+					let missed = arg1.getMissedValue();
+					res.setMissedValue(_func[arg0.type][missed.type](arg0, missed, what));
+				}
 			}
 
-			arg1.foreach( function ( elem, r ) {
+			//foreachPhysical = physical-only iteration: build the stored part here while the tail stays lazy
+			//in res.missedValueFn (composed above). using foreach/foreach2 would materialize the generator.
+			arg1.foreachPhysical( function ( elem, r ) {
                 if ( !res.array[r] ) {
                     res.addRow();
                 }
@@ -10205,7 +10828,7 @@ function parserFormula( formula, parent, _ws ) {
 		let t = this;
 		let resultDimensions = null;
 		if (this.value.type === cElementType.array) {
-			resultDimensions = this.value.getDimensions(true);
+			resultDimensions = this.value.getDimensions();
 		} else if (this.value.type === cElementType.cellsRange || this.value.type === cElementType.cellsRange3D) {
 			resultDimensions = this.value.getDimensions();
 		} else if (this.value.type === cElementType.error && this.value.errorType === cErrorType.cannot_be_spilled) {
@@ -11513,6 +12136,9 @@ function parserFormula( formula, parent, _ws ) {
 				col = (val.array[0] && 1 === val.array[0].length) ? 0 : opt_col - ref.c1;
 				if (val.array[row] && val.array[row][col]) {
 					val = val.getElementRowCol(row, col);
+				} else if (val.hasLazyTail && val.hasLazyTail() && row >= 0 && col >= 0 &&
+					val.realSize && row < val.realSize.row && col < val.realSize.col) {
+					val = val.getElementRowCol(row, col);
 				} else {
 					val = new window['AscCommonExcel'].cError(window['AscCommonExcel'].cErrorType.not_available);
 				}
@@ -11616,7 +12242,7 @@ function parserFormula( formula, parent, _ws ) {
 			return true
 		} else if (this.value && (this.value.type === cElementType.array || this.value.type === cElementType.cellsRange)) {
 			// go through the range and see if the array can fit into it
-			let dimensions = this.value.getDimensions(),
+			let dimensions = this.value.getDimensions(true),
 				mainCell = this.parent, isHaveNonEmptyCell;
 
 			if (this.value.isOneElement()) {
@@ -13070,7 +13696,7 @@ function parserFormula( formula, parent, _ws ) {
 
 		for (let i = 0; i < args.length; i++) {
 			if ((cElementType.cellsRange === args[i].type || cElementType.cellsRange3D === args[i].type || cElementType.array === args[i].type) && (!exceptions || (exceptions && !exceptions.get(i)))) {
-				let argDimensions = args[i].getDimensions();
+				let argDimensions = args[i].getDimensions(true);
 				maxRows = argDimensions.row > maxRows ? argDimensions.row : maxRows;
 				maxColumns = argDimensions.col > maxColumns ? argDimensions.col : maxColumns;
 				isContainsArray = true;
@@ -13092,7 +13718,7 @@ function parserFormula( formula, parent, _ws ) {
 					let value = args[k];
 
 					if ((cElementType.cellsRange === value.type || cElementType.cellsRange3D === value.type || cElementType.array === value.type) && (!exceptions || (exceptions && !exceptions.get(k)))) {
-						let valueDimensions = value.getDimensions();
+						let valueDimensions = value.getDimensions(true);
 						if (value.isOneElement()) {
 							// single row with single element
 							value = value.getFirstElement();
@@ -13119,7 +13745,7 @@ function parserFormula( formula, parent, _ws ) {
 
 	// if went beyond the cellsRange
 	const _getValueInRange = function (array, _row, _col) {
-		let sizes = array.getDimensions();
+		let sizes = array.getDimensions(true);
 		if (_row > sizes.row - 1 || _col > sizes.col - 1) {
 			return new cError(cErrorType.not_available);
 		}
@@ -13331,19 +13957,13 @@ function parserFormula( formula, parent, _ws ) {
 	}
 
 	function convertAreaToArray(area){
-		let retArr = new cArray(), _arg0;
+		let retArr = new cArray();
 		let dimension = area.getDimensions();
 
 		retArr.realSize = {row: dimension.row, col: dimension.col}
 
-		let ws;
-		if(cElementType.cellsRange3D === area.type) {
-			ws = area.wsFrom;
-			area = area.getMatrixNoEmpty()[0];
-		} else {
-			ws = area.ws;
-			area = area.getMatrixNoEmpty();
-		}
+		const ws = area.getWS();
+		let src = (cElementType.cellsRange3D === area.type) ? area.getMatrixNoEmpty()[0] : area.getMatrixNoEmpty();
 
 		if (dimension) {
 			let oBBox = dimension.bbox,
@@ -13352,40 +13972,72 @@ function parserFormula( formula, parent, _ws ) {
 				rowCount = (minR - oBBox.r1) >= 0 ? minR - oBBox.r1 + 1 : 0,
 				colCount = (minC - oBBox.c1) >= 0 ? minC - oBBox.c1 + 1 : 0;
 
+			let emptyElem = new cEmpty();
+
 			if (rowCount < dimension.row || colCount < dimension.col) {
-				retArr.missedValue = new cEmpty();
+				retArr.missedValue = emptyElem;
 			} else {
 				retArr.realSize = null;
 			}
 
-			if (area && area.length < 1) {
-				// let emptyElem = new cEmpty();
-				// if array is empty - add info about range size and set missedValue
+			if (!src || src.length < 1) {
+				// if range is empty - keep only size info + missedValue, plus a single seed element
 				retArr.setRealArraySize(dimension.row, dimension.col);
-				retArr.missedValue = new cEmpty();
+				retArr.missedValue = emptyElem;
 
 				/* we add one element to the array so as not to return a completely empty array to the formula */
 				if (!retArr.countElement) {
 					retArr.addRow();
-					retArr.addElement(retArr.missedValue);
+					retArr.addElement(emptyElem);
 				}
 
 			} else {
-				let resArray = new Array(rowCount);
-				let resCounts = new Array(rowCount);
-				for ( let iRow = 0; iRow < rowCount; iRow++ ) {
-					let srcRow = area[iRow];
-					let rowArr = new Array(colCount);
-					for ( let iCol = 0; iCol < colCount; iCol++ ) {
-						rowArr[iCol] = srcRow && srcRow[iCol] ? srcRow[iCol] : new cEmpty();
+				//head size: when a dimension extends beyond the used data (clamp < logical dimension, i.e. a
+				//full-column/row reference), build the head ONLY over the ACTUAL data extent of THIS range (src),
+				//not the sheet-wide clamp. A sparse column in a tall sheet then materializes just its own data
+				//rows; the realSize tail (missedValue) covers everything beyond. Finite ranges (no tail) keep the
+				//full clamp, so they stay fully physical and unchanged.
+				let headRows = (rowCount < dimension.row) ? src.length : rowCount;
+				let headCols = colCount;
+				if (colCount < dimension.col) {
+					headCols = 0;
+					for (let i = 0; i < src.length; i++) {
+						let w = src[i] ? src[i].length : 0;
+						if (w > headCols) {
+							headCols = w;
+						}
 					}
-					resArray[iRow] = rowArr;
-					resCounts[iRow] = colCount;
 				}
-				retArr.array = resArray;
+
+				//densify the sparse matrix IN PLACE up to headRows x headCols: reuse existing row arrays, only
+				//allocate the missing ones, and fill every gap with the shared empty - no second array, no
+				//per-empty-cell allocation.
+				src.length = headRows;
+				let resCounts = new Array(headRows);
+				for ( let iRow = 0; iRow < headRows; iRow++ ) {
+					let rowArr = src[iRow];
+					if (!rowArr) {
+						rowArr = new Array(headCols);
+						for ( let iCol = 0; iCol < headCols; iCol++ ) {
+							rowArr[iCol] = emptyElem;
+						}
+						src[iRow] = rowArr;
+					} else {
+						if (rowArr.length < headCols) {
+							rowArr.length = headCols;
+						}
+						for ( let iCol = 0; iCol < headCols; iCol++ ) {
+							if (!rowArr[iCol]) {
+								rowArr[iCol] = emptyElem;
+							}
+						}
+					}
+					resCounts[iRow] = headCols;
+				}
+				retArr.array = src;
 				retArr.countElementInRow = resCounts;
-				retArr.rowCount = rowCount;
-				retArr.countElement = rowCount * colCount;
+				retArr.rowCount = headRows;
+				retArr.countElement = headRows * headCols;
 			}
 		}
 
@@ -13438,17 +14090,51 @@ function parserFormula( formula, parent, _ws ) {
 		let retArr = null, _arg0, _arg1;
 		let iRow, iCol;
 
-		let arg0RowCount = arg0.getRowCount(true),
-			arg0ColCount = arg0.getCountElementInRow(true),
-			arg1RowCount = arg1.getRowCount(true),
-			arg1ColCount = arg1.getCountElementInRow(true);
+		let arg0RowCount = arg0.getRowCount(),
+			arg0ColCount = arg0.getCountElementInRow(),
+			arg1RowCount = arg1.getRowCount(),
+			arg1ColCount = arg1.getCountElementInRow();
+
+		//fast path: both operands carry a lazy tail (full-column/row arrays) AND have the same logical shape.
+		//compose the head over the union of the PHYSICAL heads + a composed tail, instead of materializing the
+		//whole logical size. keeps e.g. multi-criteria SUMPRODUCT((A:A=x)*(B:B=y)) from building 1048576 cells.
+		//mismatched shapes and literal arrays (no lazy tail) fall through to the broadcast branches below.
+		if (arg0RowCount === arg1RowCount && arg0ColCount === arg1ColCount &&
+			arg0.hasLazyTail && arg0.hasLazyTail() && arg1.hasLazyTail && arg1.hasLazyTail()) {
+			let res = new cArray();
+			res.setRealArraySize(arg0RowCount, arg0ColCount);
+			let headRows = Math.max(arg0.rowCount, arg1.rowCount);
+			let headCols = Math.max(
+				arg0.countElementInRow.length ? arg0.countElementInRow[0] : 0,
+				arg1.countElementInRow.length ? arg1.countElementInRow[0] : 0);
+			for (iRow = 0; iRow < headRows; iRow++) {
+				res.addRow();
+				for (iCol = 0; iCol < headCols; iCol++) {
+					_arg0 = arg0.getElementRowCol(iRow, iCol);
+					_arg1 = arg1.getElementRowCol(iRow, iCol);
+					res.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
+				}
+			}
+			//tail (positions beyond both heads): a single composed constant when neither operand has a
+			//generator tail, otherwise a composed generator.
+			if ((arg0.getMissedValueFn && arg0.getMissedValueFn()) || (arg1.getMissedValueFn && arg1.getMissedValueFn())) {
+				res.setMissedValueFn(function (r, c) {
+					let e0 = arg0.getMissedElement(r, c), e1 = arg1.getMissedElement(r, c);
+					return _func[e0.type][e1.type](e0, e1, what);
+				});
+			} else {
+				let t0 = arg0.getMissedValue() || new cEmpty(), t1 = arg1.getMissedValue() || new cEmpty();
+				res.setMissedValue(_func[t0.type][t1.type](t0, t1, what));
+			}
+			return res;
+		}
 
 		if (arg0RowCount === arg1RowCount && 1 === arg0ColCount) {
 			retArr = new cArray();
 			for (iRow = 0; iRow < arg1RowCount; iRow++, iRow < arg1RowCount ? retArr.addRow() : true) {
 				for (iCol = 0; iCol < arg1ColCount; iCol++) {
-					_arg0 = arg0.getElementRowCol(iRow, 0, true);
-					_arg1 = arg1.getElementRowCol(iRow, iCol, true);
+					_arg0 = arg0.getElementRowCol(iRow, 0);
+					_arg1 = arg1.getElementRowCol(iRow, iCol);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
@@ -13456,8 +14142,8 @@ function parserFormula( formula, parent, _ws ) {
 			retArr = new cArray();
 			for (iRow = 0; iRow < arg0RowCount; iRow++, iRow < arg0RowCount ? retArr.addRow() : true) {
 				for (iCol = 0; iCol < arg0ColCount; iCol++) {
-					_arg0 = arg0.getElementRowCol(iRow, iCol, true);
-					_arg1 = arg1.getElementRowCol(iRow, 0, true);
+					_arg0 = arg0.getElementRowCol(iRow, iCol);
+					_arg1 = arg1.getElementRowCol(iRow, 0);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
@@ -13465,8 +14151,8 @@ function parserFormula( formula, parent, _ws ) {
 			retArr = new cArray();
 			for (iRow = 0; iRow < arg1RowCount; iRow++, iRow < arg1RowCount ? retArr.addRow() : true) {
 				for (iCol = 0; iCol < arg1ColCount; iCol++) {
-					_arg0 = arg0.getElementRowCol(0, iCol, true);
-					_arg1 = arg1.getElementRowCol(iRow, iCol, true);
+					_arg0 = arg0.getElementRowCol(0, iCol);
+					_arg1 = arg1.getElementRowCol(iRow, iCol);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
@@ -13474,8 +14160,8 @@ function parserFormula( formula, parent, _ws ) {
 			retArr = new cArray();
 			for (iRow = 0; iRow < arg0RowCount; iRow++, iRow < arg0RowCount ? retArr.addRow() : true) {
 				for (iCol = 0; iCol < arg0ColCount; iCol++) {
-					_arg0 = arg0.getElementRowCol(iRow, iCol, true);
-					_arg1 = arg1.getElementRowCol(0, iCol, true);
+					_arg0 = arg0.getElementRowCol(iRow, iCol);
+					_arg1 = arg1.getElementRowCol(0, iCol);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
@@ -13483,8 +14169,8 @@ function parserFormula( formula, parent, _ws ) {
 			retArr = new cArray();
 			for (iRow = 0; iRow < arg0RowCount; iRow++, iRow < arg0RowCount ? retArr.addRow() : true) {
 				for (iCol = 0; iCol < arg1ColCount; iCol++) {
-					_arg0 = arg0.getElementRowCol(iRow, 0, true);
-					_arg1 = arg1.getElementRowCol(0, iCol, true);
+					_arg0 = arg0.getElementRowCol(iRow, 0);
+					_arg1 = arg1.getElementRowCol(0, iCol);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
@@ -13492,8 +14178,8 @@ function parserFormula( formula, parent, _ws ) {
 			retArr = new cArray();
 			for (iRow = 0; iRow < arg1RowCount; iRow++, iRow < arg1RowCount ? retArr.addRow() : true) {
 				for (iCol = 0; iCol < arg0ColCount; iCol++) {
-					_arg0 = arg0.getElementRowCol(0, iCol, true);
-					_arg1 = arg1.getElementRowCol(iRow, 0, true);
+					_arg0 = arg0.getElementRowCol(0, iCol);
+					_arg1 = arg1.getElementRowCol(iRow, 0);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
@@ -13563,8 +14249,8 @@ function parserFormula( formula, parent, _ws ) {
 						continue
 					}
 
-					_arg0 = arg0.getElementRowCol(fromArg0Row !== undefined ? fromArg0Row : iRow, fromArg0Col !== undefined ? fromArg0Col : iCol, true);
-					_arg1 = arg1.getElementRowCol(fromArg1Row !== undefined ? fromArg1Row : iRow, fromArg1Col !== undefined ? fromArg1Col : iCol, true);
+					_arg0 = arg0.getElementRowCol(fromArg0Row !== undefined ? fromArg0Row : iRow, fromArg0Col !== undefined ? fromArg0Col : iCol);
+					_arg1 = arg1.getElementRowCol(fromArg1Row !== undefined ? fromArg1Row : iRow, fromArg1Col !== undefined ? fromArg1Col : iCol);
 
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}

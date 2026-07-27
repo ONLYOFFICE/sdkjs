@@ -326,7 +326,7 @@ function (window, undefined) {
 
 			for (let i = 0; i < arg0Dimensions.row; i++) {
 				for (let j = 0; j < arg0Dimensions.col; j++) {
-					let val = array.getValueByRowCol ? array.getValueByRowCol(i, j) : array.getElementRowCol(i, j);
+					let val = array.getValueByRowCol ? array.getValueByRowCol(i, j, true) : array.getElementRowCol(i, j);
 					if (!val) {
 						resStr += format === 1 ? "," : ", ";
 						continue;
@@ -649,15 +649,23 @@ function (window, undefined) {
 			if (argI instanceof cError) {
 				return argI;
 			} else if (argI instanceof cArray) {
-				argI.foreach(function (elem) {
+				//reduceLogical folds head + constant tail; the tail string is repeated n times. A finite lazy
+				//range stays small; a full column trips the 32767 cap -> #VALUE (checked before building).
+				sResult = argI.reduceLogical(function (acc, elem, n) {
+					if (errElem) {
+						return acc;
+					}
 					if (elem instanceof cError) {
 						errElem = elem;
-						return true;
+						return acc;
 					}
-
-					sResult += elem.toLocaleString();
-
-				});
+					var s = elem.toLocaleString();
+					if (s.length > 0 && acc.length + s.length * n > 32767) {
+						errElem = new cError(cErrorType.wrong_value_type);
+						return acc;
+					}
+					return acc + (n === 1 ? s : s.repeat(n));
+				}, sResult);
 				if (errElem) {
 					return errElem;
 				}
@@ -710,19 +718,23 @@ function (window, undefined) {
 				if (cElementType.error === argI.type) {
 					return argI;
 				} else if (cElementType.array === argI.type) {
-					argI.foreach(function (elem) {
+					//reduceLogical folds head + constant tail; the tail string is repeated n times. A finite lazy
+					//range stays small; a full column trips the 32767 cap -> #VALUE (checked before building).
+					sResult = argI.reduceLogical(function (acc, elem, n) {
+						if (errRes) {
+							return acc;
+						}
 						if (cElementType.error === elem.type) {
 							errRes = elem;
-							return true;
+							return acc;
 						}
-
-						sResult += elem.toLocaleString();
-
-						if (sResult.length > maxStringLength) {
+						let s = elem.toLocaleString();
+						if (s.length > 0 && acc.length + s.length * n > maxStringLength) {
 							errRes = new cError(cErrorType.wrong_value_type);
-							return true;
+							return acc;
 						}
-					});
+						return acc + (n === 1 ? s : s.repeat(n));
+					}, sResult);
 					if (errRes) {
 						return errRes;
 					}
@@ -1187,7 +1199,7 @@ function (window, undefined) {
 		}
 
 		if (arg0 instanceof cArray && arg1 instanceof cArray) {
-			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
+			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount(true) != arg1.getRowCount(true)) {
 				return new cError(cErrorType.not_available);
 			} else {
 				arg0.foreach(function (elem, r, c) {
@@ -2973,9 +2985,9 @@ function (window, undefined) {
 
 		let resArr = new cArray();
 		if ((arg0.type === cElementType.array && arg1.type === cElementType.array) || (arg0.type === cElementType.array && arg2.type === cElementType.array) || (arg1.type === cElementType.array && arg2.type === cElementType.array)) {
-			let findTextArrDimensions = arg0.getDimensions(),
-				withinTextArrDimensions = arg1.getDimensions(),
-				startNumDimensions = arg2.getDimensions(),
+			let findTextArrDimensions = arg0.getDimensions(true),
+				withinTextArrDimensions = arg1.getDimensions(true),
+				startNumDimensions = arg2.getDimensions(true),
 				resCols = Math.max(findTextArrDimensions.col, withinTextArrDimensions.col, startNumDimensions.col),
 				resRows = Math.max(findTextArrDimensions.row, withinTextArrDimensions.row, startNumDimensions.row);
 
@@ -3400,7 +3412,35 @@ function (window, undefined) {
 			argI = arg[i];
 
 			let type = argI.type;
-			if (cElementType.cellsRange === type || cElementType.cellsRange3D === type || cElementType.array === type) {
+			if (cElementType.array === type) {
+				//reduceLogical folds head + constant tail; concatString is applied n times for the tail (the
+				//delimiter cycles naturally). A finite lazy range stays small; a full column trips the 32767 cap.
+				let errRes = null;
+				acc = argI.reduceLogical(function (a, elem, cnt) {
+					if (errRes) {
+						return a;
+					}
+					if (elem.type === cElementType.error) {
+						errRes = elem;
+						return a;
+					}
+					let s = elem.toLocaleString();
+					if (cnt === 1) {
+						return concatString(a, s);
+					}
+					for (let n = 0; n < cnt; n++) {
+						a = concatString(a, s);
+						if (a.length > 32767) {
+							errRes = new cError(cErrorType.wrong_value_type);
+							return a;
+						}
+					}
+					return a;
+				}, acc);
+				if (errRes) {
+					return errRes;
+				}
+			} else if (cElementType.cellsRange === type || cElementType.cellsRange3D === type) {
 				// get a one-dimensional array
 				argI = this._getOneDimensionalArray(argI);
 
