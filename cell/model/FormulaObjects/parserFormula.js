@@ -11763,7 +11763,7 @@ function parserFormula( formula, parent, _ws ) {
 				}
 				oTableArrayArg = oTableArrayArg.clone();
 				const oNumber = oIndexNumValue.tocNumber();
-				if (oNumber.type === cElementType.error) {
+				if (cElementType.number !== oNumber.type) {
 					continue;
 				}
 				const nIndexNumValue = oNumber.toNumber() - 1;
