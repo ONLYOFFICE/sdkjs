@@ -78,6 +78,7 @@
 	c_oAscUnlockedShortcutActionTypes[Asc.c_oAscDocumentShortcutType.ApplyHeading2] = true;
 	c_oAscUnlockedShortcutActionTypes[Asc.c_oAscDocumentShortcutType.ApplyHeading3] = true;
 	c_oAscUnlockedShortcutActionTypes[Asc.c_oAscDocumentShortcutType.Strikeout] = true;
+	c_oAscUnlockedShortcutActionTypes[Asc.c_oAscDocumentShortcutType.SmallCaps] = true;
 	c_oAscUnlockedShortcutActionTypes[Asc.c_oAscDocumentShortcutType.InsertFootnoteNow] = true;
 	c_oAscUnlockedShortcutActionTypes[Asc.c_oAscDocumentShortcutType.InsertEquation] = true;
 	c_oAscUnlockedShortcutActionTypes[Asc.c_oAscDocumentShortcutType.HorizontalEllipsis] = true;
@@ -150,6 +151,7 @@
 	c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.Bold] = [new AscShortcut(Asc.c_oAscDocumentShortcutType.Bold, keyCodes.KeyB, true, false, false, false)];
 	c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.Italic] = [new AscShortcut(Asc.c_oAscDocumentShortcutType.Italic, keyCodes.KeyI, true, false, false, false)];
 	c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.Underline] = [new AscShortcut(Asc.c_oAscDocumentShortcutType.Underline, keyCodes.KeyU, true, false, false, false)];
+	c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.SmallCaps] = [new AscShortcut(Asc.c_oAscDocumentShortcutType.SmallCaps, keyCodes.KeyK, true, true, false, false)];
 	c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.Subscript] = [new AscShortcut(Asc.c_oAscDocumentShortcutType.Subscript, keyCodes.Period, true, false, false, false)];
 	c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.Superscript] = [new AscShortcut(Asc.c_oAscDocumentShortcutType.Superscript, keyCodes.Comma, true, false, false, false)];
 	c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.ApplyListBullet] = [new AscShortcut(Asc.c_oAscDocumentShortcutType.ApplyListBullet, keyCodes.KeyL, true, true, false, false)];
@@ -254,6 +256,7 @@
 		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.Bold].push(new AscShortcut(Asc.c_oAscDocumentShortcutType.Bold, keyCodes.KeyB, false, false, false, true));
 		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.Italic].push(new AscShortcut(Asc.c_oAscDocumentShortcutType.Italic, keyCodes.KeyI, false, false, false, true));
 		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.Underline].push(new AscShortcut(Asc.c_oAscDocumentShortcutType.Underline, keyCodes.KeyU, false, false, false, true));
+		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.SmallCaps].push(new AscShortcut(Asc.c_oAscDocumentShortcutType.SmallCaps, keyCodes.KeyK, false, true, false, true));
 		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.Subscript].push(new AscShortcut(Asc.c_oAscDocumentShortcutType.Subscript, keyCodes.Period, false, false, false, true));
 		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.Superscript].push(new AscShortcut(Asc.c_oAscDocumentShortcutType.Superscript, keyCodes.Comma, false, false, false, true));
 		c_oAscDefaultShortcuts[Asc.c_oAscDocumentShortcutType.ApplyListBullet].push(new AscShortcut(Asc.c_oAscDocumentShortcutType.ApplyListBullet, keyCodes.KeyL, false, true, false, true));
@@ -498,6 +501,8 @@
 				return "Underline";
 			case Asc.c_oAscDocumentShortcutType.Strikeout:
 				return "Strikeout";
+			case Asc.c_oAscDocumentShortcutType.SmallCaps:
+				return "SmallCaps";
 			case Asc.c_oAscDocumentShortcutType.Subscript:
 				return "Subscript";
 			case Asc.c_oAscDocumentShortcutType.Superscript:
@@ -797,6 +802,8 @@
 				return Asc.c_oAscDocumentShortcutType.Underline;
 			case "Strikeout":
 				return Asc.c_oAscDocumentShortcutType.Strikeout;
+			case "SmallCaps":
+				return Asc.c_oAscDocumentShortcutType.SmallCaps;
 			case "Subscript":
 				return Asc.c_oAscDocumentShortcutType.Subscript;
 			case "Superscript":

@@ -2558,6 +2558,11 @@ CHeaderFooterController.prototype =
             }
         }
 
+		if (this.LogicDocument.isHeaderEditing())
+			this.LogicDocument.Api.getMacroRecorder().addStepData('GoToHeader', true);
+		else if (this.LogicDocument.isFooterEditing())
+			this.LogicDocument.Api.getMacroRecorder().addStepData('GoToFooter', true);
+
 		this.WaitMouseDown = false;
         return true;
     },

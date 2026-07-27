@@ -258,7 +258,7 @@ Paragraph.prototype.SetDirectParaPr = function(oParaPr)
 
 	this.Recalc_CompiledPr();
 	this.private_UpdateTrackRevisionOnChangeParaPr(true);
-	this.UpdateDocumentOutline();
+	this.UpdateOutline();
 
 	if (!oNumPr || !this.Pr.NumPr || oNumPr.NumId !== this.Pr.NumPr.NumId || oNumPr.Lvl !== this.Pr.NumPr.Lvl)
 	{
@@ -1004,7 +1004,7 @@ Paragraph.prototype.Internal_Content_Add = function(Pos, Item)
 	this.Content.splice(Pos, 0, Item);
 	this.updateTrackRevisions();
 	this.private_CheckUpdateBookmarks([Item]);
-	this.UpdateDocumentOutline();
+	this.UpdateOutline();
 	this.private_UpdateSelectionPosOnAdd(Pos, 1);
 
 	// Обновляем позиции в NearestPos
@@ -1037,7 +1037,7 @@ Paragraph.prototype.Internal_Content_Add = function(Pos, Item)
 
 	if (Item.SetParagraph)
 		Item.SetParagraph(this);
-	
+
 	Item.OnAttach();
 	this.OnContentChange();
 };
@@ -1091,7 +1091,7 @@ Paragraph.prototype.ConcatContent = function(arrItems)
 	AscCommon.History.Add(new CChangesParagraphAddItem(this, nInsertPos, arrNewItems));
 	this.updateTrackRevisions();
 	this.private_CheckUpdateBookmarks(arrNewItems);
-	this.UpdateDocumentOutline();
+	this.UpdateOutline();
 
 	this.OnContentChange();
 
@@ -1117,7 +1117,7 @@ Paragraph.prototype.Internal_Content_Remove = function(Pos)
 	this.Content.splice(Pos, 1);
 	this.updateTrackRevisions();
 	this.private_CheckUpdateBookmarks([Item]);
-	this.UpdateDocumentOutline();
+	this.UpdateOutline();
 	this.private_UpdateSelectionPosOnRemove(Pos, 1);
 
 	// Обновляем позиции в NearestPos
@@ -1191,7 +1191,7 @@ Paragraph.prototype.Internal_Content_Remove2 = function(Pos, Count)
 	{
 		if (this.Content[nIndex].PreDelete)
 			this.Content[nIndex].PreDelete();
-		
+
 		this.Content[nIndex].OnDetach();
 	}
 
@@ -1199,7 +1199,7 @@ Paragraph.prototype.Internal_Content_Remove2 = function(Pos, Count)
 	AscCommon.History.Add(new CChangesParagraphRemoveItem(this, Pos, DeletedItems));
 	this.updateTrackRevisions();
 	this.private_CheckUpdateBookmarks(DeletedItems);
-	this.UpdateDocumentOutline();
+	this.UpdateOutline();
 
 	if (this.Selection.StartPos > Pos + Count)
 		this.Selection.StartPos -= Count;
@@ -1306,7 +1306,7 @@ Paragraph.prototype.ClearContent = function()
 
 	this.updateTrackRevisions();
 	this.private_CheckUpdateBookmarks(this.Content);
-	this.UpdateDocumentOutline();
+	this.UpdateOutline();
 
 	this.Selection.StartPos = 0;
 	this.Selection.EndPos   = 0;
@@ -1435,10 +1435,10 @@ Paragraph.prototype.GetFlatPos = function(contentPos)
 	{
 		if (0 !== pos && this.Content[pos] instanceof ParaRun)
 			rangePos++;
-		
+
 		rangePos += this.Content[pos].GetFlatPos(pos === endPos && contentPos ? contentPos : null, 1);
 	}
-	
+
 	return rangePos;
 };
 Paragraph.prototype.Check_Range_OnlyMath = function(CurRange, CurLine)
@@ -2132,6 +2132,11 @@ Paragraph.prototype.getTextInLineRange = function(line, range)
 Paragraph.prototype.Reset_RecalculateCache = function()
 {
 
+};
+Paragraph.prototype.IsNeedRecalculateKeepNext = function()
+{
+	let keepNext = this.Get_CompiledPr2(false).ParaPr.KeepNext;
+	return !!(keepNext && this.getPageCount() <= 1 && this.IsInline() && !this.Check_PageBreak());
 };
 Paragraph.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, isUpdateTarget, isReturnTarget)
 {
@@ -7695,6 +7700,7 @@ Paragraph.prototype.Apply_TextPr = function(TextPr, IncFontSize)
 				LastElement.Set_Pr(this.TextPr.Value.Copy());
 		}
 	}
+	this.UpdatePresentationOutline();
 };
 /**
  * Применяем текстовые настройки к выделенной части параграфа
@@ -10314,7 +10320,7 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl, checkIndents)
 	// Надо пересчитать конечный стиль
 	this.CompiledPr.NeedRecalc = true;
 	this.private_UpdateTrackRevisionOnChangeParaPr(true);
-	this.UpdateDocumentOutline();
+	this.UpdateOutline();
 };
 /**
  * Добавляем нумерацию к данному параграфу, не делая никаких дополнительных действий
@@ -10336,7 +10342,7 @@ Paragraph.prototype.SetNumPr = function(sNumId, nLvl)
 
 			this.CompiledPr.NeedRecalc = true;
 			this.private_UpdateTrackRevisionOnChangeParaPr(true);
-			this.UpdateDocumentOutline();
+			this.UpdateOutline();
 		}
 	}
 	else
@@ -10360,7 +10366,7 @@ Paragraph.prototype.SetNumPr = function(sNumId, nLvl)
 
 		this.CompiledPr.NeedRecalc = true;
 		this.private_UpdateTrackRevisionOnChangeParaPr(true);
-		this.UpdateDocumentOutline();
+		this.UpdateOutline();
 	}
 };
 /**
@@ -10492,7 +10498,7 @@ Paragraph.prototype.RemoveNumPr = function()
 	// Надо пересчитать конечный стиль
 	this.CompiledPr.NeedRecalc = true;
 	this.private_UpdateTrackRevisionOnChangeParaPr(true);
-	this.UpdateDocumentOutline();
+	this.UpdateOutline();
 };
 /**
  * Проверяем есть ли у данного параграфа нумерация
@@ -10664,6 +10670,7 @@ Paragraph.prototype.Add_PresentationNumbering = function(Bullet)
 			}
 		}
 	}
+	this.UpdatePresentationOutline();
 };
 Paragraph.prototype.Get_PresentationNumbering = function()
 {
@@ -10687,6 +10694,7 @@ Paragraph.prototype.Set_PresentationLevel = function(Level)
 		this.CompiledPr.NeedRecalc = true;
 		this.Recalc_RunsCompiledPr();
 		this.private_UpdateTrackRevisionOnChangeParaPr(true);
+		this.UpdatePresentationOutline();
 	}
 };
 Paragraph.prototype.GetBulletNum = function()
@@ -10730,16 +10738,13 @@ Paragraph.prototype.IsEmptyWithBullet = function()
 {
 	if(this.IsEmpty())
 	{
-		var oBullet =  this.PresentationPr && this.PresentationPr.Bullet;
-		if(oBullet)
-		{
-			if(!oBullet.IsNone())
-			{
-				return true;
-			}
-		}
+		return this.IsPresentationBulleted();
 	}
 	return false;
+};
+Paragraph.prototype.IsPresentationBulleted = function()
+{
+	return this.PresentationPr && this.PresentationPr.Bullet && !this.PresentationPr.Bullet.IsNone();
 };
 //----------------------------------------------------------------------------------------------------------------------
 /**
@@ -11110,7 +11115,7 @@ Paragraph.prototype.GetCompiledInheritedPr = function()
 			TextPr : new AscWord.CTextPr()
 		};
 	}
-	
+
 	var Styles     = this.Parent.Get_Styles();
 	var Numbering  = this.Parent.GetNumbering();
 	var TableStyle = this.Parent.Get_TableStyleForPara();
@@ -11338,7 +11343,7 @@ Paragraph.prototype.GetParaPrForWrite = function(paraPr)
 	paraPr = paraPr.Copy();
 	if (!this.Parent)
 		return paraPr;
-	
+
 	let inheritedPr = this.GetCompiledInheritedPr().ParaPr;
 	
 	// TODO: Check other properties
@@ -11602,7 +11607,7 @@ Paragraph.prototype.SetPStyle = function(styleId)
 	this.RecalcCompiledPr();
 	this.private_UpdateTrackRevisionOnChangeParaPr(true);
 	this.private_RefreshNumbering();
-	this.UpdateDocumentOutline();
+	this.UpdateOutline();
 };
 Paragraph.prototype.Style_Remove = function()
 {
@@ -11611,7 +11616,7 @@ Paragraph.prototype.Style_Remove = function()
 		this.private_AddPrChange();
 		AscCommon.History.Add(new CChangesParagraphPStyle(this, this.Pr.PStyle, undefined));
 		this.Pr.PStyle = undefined;
-		this.UpdateDocumentOutline();
+		this.UpdateOutline();
 		this.private_RefreshNumbering();
 	}
 
@@ -13059,9 +13064,24 @@ Paragraph.prototype.CollectSelectedReviewChanges = function(oTrackManager)
  */
 Paragraph.prototype.PreDelete = function()
 {
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument)
+	{
+		if (logicDocument.IsDocumentEditor())
+		{
+			this.DocumentPreDelete();
+		}
+		else
+		{
+			this.PresentationPreDelete();
+		}
+	}
+};
+Paragraph.prototype.DocumentPreDelete = function ()
+{
 	if (this.isPreventedPreDelete())
 		return;
-	
+
 	// Поскольку данный элемент удаляется, поэтому надо удалить все записи о
 	// inline объектах в родительском классе, используемых в данном параграфе.
 	// Кроме этого, если тут начинались или заканчивались комметарии, то их тоже
@@ -13074,7 +13094,7 @@ Paragraph.prototype.PreDelete = function()
 
 		if (Item.PreDelete)
 			Item.PreDelete(true);
-		
+
 		if (logicDocument && logicDocument.IsDocumentEditor())
 		{
 			if (para_Comment === Item.Type && true === logicDocument.RemoveCommentsOnPreDelete)
@@ -13096,15 +13116,19 @@ Paragraph.prototype.PreDelete = function()
 		this.Set_SectionPr(undefined);
 	}
 };
+Paragraph.prototype.PresentationPreDelete = function ()
+{
+	this.UpdatePresentationOutline();
+};
 Paragraph.prototype.OnDetach = function()
 {
 	if (!this.IsUseInDocument())
 		return;
-	
+
 	let logicDocument = this.GetLogicDocument();
 	if (logicDocument && logicDocument.IsDocumentEditor())
 		logicDocument.OnDetachParagraph(this);
-	
+
 	for (let i = this.Content.length - 1; i >= 0; --i)
 	{
 		this.Content[i].OnDetach();
@@ -13114,11 +13138,11 @@ Paragraph.prototype.OnAttach = function()
 {
 	if (!this.IsUseInDocument())
 		return;
-	
+
 	let logicDocument = this.GetLogicDocument();
 	if (logicDocument && logicDocument.IsDocumentEditor())
 		logicDocument.OnAttachParagraph(this);
-	
+
 	for (let i = 0; i < this.Content.length; ++i)
 	{
 		this.Content[i].OnAttach();
@@ -15115,12 +15139,12 @@ Paragraph.prototype.RequestSpellCheck = function()
 Paragraph.prototype.ContinueSpellCheck = function(isForceFullCheck)
 {
 	var oLogicDocument = this.GetLogicDocument();
-	if (!this.RecalcInfo.SpellCheck || !oLogicDocument)
+	if (!this.RecalcInfo.SpellCheck || !oLogicDocument || this.IsInPlaceholder())
 	{
 		this.RecalcInfo.SpellCheck = false;
 		return true;
 	}
-
+	
 	this.SpellChecker.UpdateSettings(oLogicDocument.GetSpellCheckManager().GetSettings());
 
 	if (!this.private_CollectSpellCheckerElements(isForceFullCheck))
@@ -16144,12 +16168,17 @@ Paragraph.prototype.private_UpdateTrackRevisionOnChangeParaPr = function(bUpdate
         }
     }
 };
-Paragraph.prototype.UpdateDocumentOutline = function()
+Paragraph.prototype.UpdateOutline = function()
+{
+	this.UpdateDocumentOutline();
+	this.UpdatePresentationOutline();
+};
+Paragraph.prototype.UpdateDocumentOutline = function ()
 {
 	if (!this.bFromDocument || !this.LogicDocument || !this.Parent)
+	{
 		return;
-
-
+	}
 	var isCheck = true;
 	var oParent = this.Parent;
 	while (oParent)
@@ -16174,6 +16203,17 @@ Paragraph.prototype.UpdateDocumentOutline = function()
 		var oDocumentOutline = this.LogicDocument.GetDocumentOutline();
 		if (oDocumentOutline && oDocumentOutline.IsUse())
 			oDocumentOutline.CheckParagraph(this);
+	}
+};
+Paragraph.prototype.UpdatePresentationOutline = function () {
+	if (this.bFromDocument || !this.LogicDocument || !this.Parent)
+	{
+		return;
+	}
+	const outlineView = this.LogicDocument.GetOutlineView && this.LogicDocument.GetOutlineView();
+	if (outlineView)
+	{
+		outlineView.checkParagraph(this);
 	}
 };
 Paragraph.prototype.AcceptRevisionChanges = function(Type, bAll)
@@ -16362,26 +16402,37 @@ Paragraph.prototype.IsSelectedAll = function()
 };
 Paragraph.prototype.GetContentPosition = function(bSelection, bStart, PosArray)
 {
-    if (!PosArray)
-        PosArray = [];
-
-    var Index = PosArray.length;
-
     var ParaContentPos = this.Get_ParaContentPos(bSelection, bStart);
+    return this.UpdatePosArrayByContentPos(PosArray, ParaContentPos);
+};
+Paragraph.prototype.GetEndContentPosition = function(PosArray, BehindPos)
+{
+	var ParaContentPos = this.Get_EndPos(BehindPos);
+	return this.UpdatePosArrayByContentPos(PosArray, ParaContentPos);
+};
+Paragraph.prototype.GetStartContentPosition = function(PosArray)
+{
+	var ParaContentPos = this.Get_StartPos();
+	return this.UpdatePosArrayByContentPos(PosArray, ParaContentPos);
+};
+Paragraph.prototype.UpdatePosArrayByContentPos = function (PosArray, ParaContentPos) {
+	if (!PosArray)
+		PosArray = [];
 
-    var Depth = ParaContentPos.GetDepth();
-    while (Depth > 0)
-    {
-        var Pos = ParaContentPos.Get(Depth);
-        ParaContentPos.DecreaseDepth(1);
-        var Class = this.Get_ElementByPos(ParaContentPos);
-        Depth--;
+	var Index = PosArray.length;
+	var Depth = ParaContentPos.GetDepth();
+	while (Depth > 0)
+	{
+		var Pos = ParaContentPos.Get(Depth);
+		ParaContentPos.DecreaseDepth(1);
+		var Class = this.Get_ElementByPos(ParaContentPos);
+		Depth--;
 
-        PosArray.splice(Index, 0, {Class : Class, Position : Pos});
-    }
+		PosArray.splice(Index, 0, {Class : Class, Position : Pos});
+	}
 
-    PosArray.splice(Index, 0, {Class : this, Position : ParaContentPos.Get(0)});
-    return PosArray;
+	PosArray.splice(Index, 0, {Class : this, Position : ParaContentPos.Get(0)});
+	return PosArray;
 };
 Paragraph.prototype.SetContentSelection = function(StartDocPos, EndDocPos, Depth, StartFlag, EndFlag)
 {
@@ -16834,7 +16885,15 @@ Paragraph.prototype.GetText = function(oPr)
 	{
 		var oNumPr = this.GetNumPr();
 		if (oNumPr && oNumPr.IsValid())
+		{
 			oText.Text += this.GetNumberingTextWithSuffix(oPr);
+		}
+		else
+		{
+			var oBullet = this.Get_CompiledPr2(false).ParaPr.Bullet;
+			if (oBullet)
+				oText.Text += oBullet.getChar();
+		}
 	}
 
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
@@ -21186,6 +21245,7 @@ function CParagraphLineNumbersInfo(nStartLineNum)
 {
 	this.StartNum = undefined !== nStartLineNum ? nStartLineNum : -1;
 }
+
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

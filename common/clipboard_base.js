@@ -121,6 +121,8 @@
 		this.canUseNewCopy = null;
 
 		this.bPutImage = true;
+
+		this.customCopyData = null;
 	}
 
 	CClipboardBase.prototype =
@@ -152,10 +154,39 @@
                 return;
 			}
 
-			let res = this.Api.asc_CheckCopy(this, formats);
+			let res;
+			if (this.customCopyData)
+			{
+				this.pushCustomData(this, this.customCopyData, formats);
+				res = true;
+			}
+			else
+			{
+				res = this.Api.asc_CheckCopy(this, formats);
+			}
 			this.SendCopyEvent();
 
 			return res;
+		},
+
+		pushCustomData : function(collector, oData, formats)
+		{
+			if ((formats & AscCommon.c_oAscClipboardDataFormat.Text) && oData.text != null)
+			{
+				collector.pushData(AscCommon.c_oAscClipboardDataFormat.Text, oData.text);
+			}
+			if ((formats & AscCommon.c_oAscClipboardDataFormat.Html) && oData.html != null)
+			{
+				collector.pushData(AscCommon.c_oAscClipboardDataFormat.Html, oData.html);
+			}
+			if ((formats & AscCommon.c_oAscClipboardDataFormat.Internal) && oData.internal != null)
+			{
+				collector.pushData(AscCommon.c_oAscClipboardDataFormat.Internal, oData.internal);
+			}
+			if ((formats & AscCommon.c_oAscClipboardDataFormat.Image) && oData.image)
+			{
+				collector.pushData(AscCommon.c_oAscClipboardDataFormat.Image, Array.isArray(oData.image) ? oData.image : [oData.image]);
+			}
 		},
 
 		_private_oncopy : function(e)
@@ -1080,7 +1111,15 @@
 					this.bCut = isCut;
 
 					let nImageFormat = this.bPutImage ? c_oAscClipboardDataFormat.Image : 0;
-					this.Api.asc_CheckCopy(copy_data, c_oAscClipboardDataFormat.Text | c_oAscClipboardDataFormat.Html | c_oAscClipboardDataFormat.Internal | nImageFormat);
+					let nFormats = c_oAscClipboardDataFormat.Text | c_oAscClipboardDataFormat.Html | c_oAscClipboardDataFormat.Internal | nImageFormat;
+					if (this.customCopyData)
+					{
+						this.pushCustomData(copy_data, this.customCopyData, nFormats);
+					}
+					else
+					{
+						this.Api.asc_CheckCopy(copy_data, nFormats);
+					}
 
 					let clipboardData = {};
 					if (copy_data.data[c_oAscClipboardDataFormat.Text]) {
@@ -1115,6 +1154,20 @@
 				}
 			}
 			return false;
+		},
+
+		CopyData : function(oData)
+		{
+			if (!oData)
+			{
+				return false;
+			}
+
+			this.customCopyData = oData;
+			let _ret = this.Button_Copy();
+			this.customCopyData = null;
+
+			return _ret;
 		},
 
 		Check_Paste_New : function(callback)
@@ -1376,7 +1429,7 @@
 				this.SendCopyDisabledEvent();
 				return;
 			}
-			if (window["AscDesktopEditor"])
+			if (window["AscDesktopEditor"] && !this.customCopyData)
 			{
 				window["asc_desktop_copypaste"](this.Api, "Copy");
 				return true;

@@ -211,7 +211,7 @@ CChangesDocumentAddItem.prototype.Load = function(Color)
 			if (Element.IsParagraph())
 			{
 				Element.RecalcCompiledPr(true);
-				Element.UpdateDocumentOutline();
+				Element.UpdateOutline();
 			}
 			oDocument.UpdateSectionsAfterAdd([Element]);
 			Element.OnAttach();
@@ -340,7 +340,7 @@ CChangesDocumentRemoveItem.prototype.Load = function(Color)
 			if (Elements[nElementIndex].IsParagraph())
 			{
 				Elements[nElementIndex].RecalcCompiledPr(true);
-				Elements[nElementIndex].UpdateDocumentOutline();
+				Elements[nElementIndex].UpdateOutline();
 			}
 		}
 

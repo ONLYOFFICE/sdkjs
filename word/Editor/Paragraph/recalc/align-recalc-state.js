@@ -119,9 +119,9 @@
 		this.JustifyWord   = justifyWord;
 		this.JustifySpace  = justifySpace;
 		
-		this.SpacesCounter = range.Spaces;
-		this.SpacesSkip    = range.SpacesLeft;
-		this.LettersSkip   = counterState.LettersSkip;
+		this.SpacesCounter = counterState.getJustifySpaces();
+		this.SpacesSkip    = counterState.getJustifySpacesSkip();
+		this.LettersSkip   = counterState.getJustifyLettersSkip();
 
 		this.RecalcResult  = recalcresult_NextElement;
 		
@@ -581,9 +581,9 @@
 				let nParaTop = Para.Pages[_CurPage].Y;
 				let nLineTop = Para.Pages[CurPage].Y + Para.Lines[CurLine].Y - Para.Lines[CurLine].Metrics.Ascent;
 
-				// ColumnStartX и ParaTop считаются по тексту, смотри баг #50253
+				// ColumnStartX и ParaTop считаются по тексту, смотри баг #50253 #82261
 				let compatibilityMode = LogicDocument && LogicDocument.IsDocumentEditor() ? LogicDocument.GetCompatibilityMode() : AscCommon.document_compatibility_mode_Current;
-				if (compatibilityMode <= AscCommon.document_compatibility_mode_Word14)
+				if (compatibilityMode <= AscCommon.document_compatibility_mode_Word14 && Para.Pages[_CurPage].FirstLineTightWrap)
 				{
 					let nPageStartLine = Para.Pages[_CurPage].StartLine;
 					nParaTop = Para.Pages[_CurPage].Y + Para.Lines[nPageStartLine].Top;
@@ -640,6 +640,16 @@
 	AlignRecalcState.prototype.isParagraphStartFromNewPage = function()
 	{
 		return this.Paragraph.IsStartFromNewPage();
+	};
+	AlignRecalcState.prototype.canContinue = function()
+	{
+		if (!(this.RecalcResult & recalcresult_NextElement))
+		{
+			this.wrapState.RecalcResult = this.RecalcResult;
+			this.bidiFlow.reset();
+			return false;
+		}
+		return true;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.Paragraph.AlignRecalcState = AlignRecalcState;

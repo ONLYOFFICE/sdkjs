@@ -798,6 +798,22 @@ function (window, undefined) {
 		this.maxVal = numericValue;
 		return true;
 	};
+	asc_ValAxisSettings.prototype.putMinValDate = function (date) {
+		const serial = this._serialFromDate(date);
+		if (serial === null) {
+			return false;
+		}
+		this.minVal = serial;
+		return true;
+	};
+	asc_ValAxisSettings.prototype.putMaxValDate = function (date) {
+		const serial = this._serialFromDate(date);
+		if (serial === null) {
+			return false;
+		}
+		this.maxVal = serial;
+		return true;
+	};
 	asc_ValAxisSettings.prototype.putInvertValOrder = function (v) {
 		this.invertValOrder = v;
 	};
@@ -828,6 +844,32 @@ function (window, undefined) {
 	asc_ValAxisSettings.prototype.putCrosses = function (v) {
 		this.crosses = v;
 	};
+	asc_ValAxisSettings.prototype.putCrossesVal = function (input) {
+		if (typeof input === 'number') {
+			this.crosses = input;
+			return true;
+		}
+
+		if (typeof input !== 'string' || input.length === 0) {
+			return false;
+		}
+
+		const numericValue = this._parseStringValue(input);
+		if (numericValue === null) {
+			return false;
+		}
+
+		this.crosses = numericValue;
+		return true;
+	};
+	asc_ValAxisSettings.prototype.putCrossesDate = function (date) {
+		const serial = this._serialFromDate(date);
+		if (serial === null) {
+			return false;
+		}
+		this.crosses = serial;
+		return true;
+	};
 	asc_ValAxisSettings.prototype.putDispUnitsRule = function (v) {
 		this.dispUnitsRule = v;
 	};
@@ -852,6 +894,34 @@ function (window, undefined) {
 		return numFormat.formatToChart(value);
 	};
 
+	asc_ValAxisSettings.prototype._dateFromSerial = function (serial) {
+		if (serial == null) {
+			return null;
+		}
+
+		const type = this.getFormatType();
+		if (type !== Asc.c_oAscNumFormatType.Date && type !== Asc.c_oAscNumFormatType.Time) {
+			return null;
+		}
+
+		const date = new Asc.cDate().getDateFromExcelWithTime2(serial);
+		return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(),
+			date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds());
+	};
+
+	asc_ValAxisSettings.prototype._serialFromDate = function (date) {
+		if (!(date instanceof Date)) {
+			return null;
+		}
+
+		const utc = new Asc.cDate(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(),
+			date.getHours(), date.getMinutes(), date.getSeconds()));
+		const serial = utc.getExcelDateWithTime2();
+		return this.getFormatType() === Asc.c_oAscNumFormatType.Time
+			? serial - Math.floor(serial)
+			: serial;
+	};
+
 	asc_ValAxisSettings.prototype.getMinValRule = function () {
 		return this.minValRule;
 	};
@@ -863,6 +933,12 @@ function (window, undefined) {
 	};
 	asc_ValAxisSettings.prototype.getMaxVal = function () {
 		return this._formatNumericValue(this.maxVal);
+	};
+	asc_ValAxisSettings.prototype.getMinValDate = function () {
+		return this._dateFromSerial(this.minVal);
+	};
+	asc_ValAxisSettings.prototype.getMaxValDate = function () {
+		return this._dateFromSerial(this.maxVal);
 	};
 	asc_ValAxisSettings.prototype.getInvertValOrder = function () {
 		return this.invertValOrder;
@@ -893,6 +969,15 @@ function (window, undefined) {
 	};
 	asc_ValAxisSettings.prototype.getCrosses = function () {
 		return this.crosses;
+	};
+	asc_ValAxisSettings.prototype.getCrossesVal = function () {
+		return this._formatNumericValue(this.crosses);
+	};
+	asc_ValAxisSettings.prototype.getCrossesVal = function () {
+		return this._formatNumericValue(this.crosses);
+	};
+	asc_ValAxisSettings.prototype.getCrossesDate = function () {
+		return this._dateFromSerial(this.crosses);
 	};
 	asc_ValAxisSettings.prototype.setDefault = function () {
 		this.putMinValRule(Asc.c_oAscValAxisRule.auto);
@@ -1918,6 +2003,15 @@ function (window, undefined) {
 			}
 		}
 	};
+	asc_ChartSettings.prototype.getDataTable = function () {
+		if (this.chartSpace) {
+			let oDataTable = this.chartSpace.getDataTable();
+			if (oDataTable) {
+				return !!oDataTable.showKeys;
+			}
+		}
+		return null;
+	};
 	asc_ChartSettings.prototype.setDisplayErrorBars = function (bShowErrorBars, nErrorValueType) {
 		if (!this.chartSpace) {
 			return;
@@ -1965,8 +2059,13 @@ function (window, undefined) {
 			}
 		}
 
-		const categoryAxis = plotArea.catAx;
-		const valueAxis = plotArea.valAx;
+		let categoryAxis = plotArea.catAx;
+		let valueAxis = plotArea.valAx;
+		if (!categoryAxis && !valueAxis) {
+			const axes = plotArea.getAxisByTypes();
+			categoryAxis = axes.catAx[0] || axes.dateAx[0] || null;
+			valueAxis = axes.valAx[0] || null;
+		}
 
 		if (categoryAxis || valueAxis) {
 			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
@@ -3809,6 +3908,18 @@ function (window, undefined) {
 		else {
 			this.annotProps = null;
 		}
+	};
+
+	// text annot
+	function asc_CTextAnnotProperty() {
+		this.iconType = undefined;
+	}
+
+	asc_CTextAnnotProperty.prototype.asc_getIconType = function () {
+		return this.iconType;
+	};
+	asc_CTextAnnotProperty.prototype.asc_putIconType = function (v) {
+		this.iconType = v;
 	};
 
 	// free text
@@ -7375,6 +7486,7 @@ function (window, undefined) {
 		this.isModal = true;     // used only if this.type === PluginType.Window
 
 		this.isCanDocked = false;
+		this.hiddenHeaderButtons = [];
 
 		this.initDataType = EPluginDataType.none;
 		this.initData = "";
@@ -7435,6 +7547,10 @@ function (window, undefined) {
 		return this.isCanDocked;
 	};
 
+	CPluginVariation.prototype["get_HiddenHeaderButtons"] = function () {
+		return this.hiddenHeaderButtons;
+	};
+
 	CPluginVariation.prototype["get_Buttons"] = function () {
 		return this.buttons;
 	};
@@ -7474,6 +7590,7 @@ function (window, undefined) {
 		_object["isModal"] = this.isModal;
 
 		_object["isCanDocked"] = this.isCanDocked;
+		_object["hiddenHeaderButtons"] = this.hiddenHeaderButtons;
 
 		_object["initDataType"] = this.initDataType;
 		_object["initData"] = this.initData;
@@ -7526,6 +7643,7 @@ function (window, undefined) {
 		this.isModal = (_object["isModal"] != null) ? _object["isModal"] : this.isModal;
 
 		this.isCanDocked = (_object["isCanDocked"] != null) ? _object["isCanDocked"] : this.isCanDocked;
+		this.hiddenHeaderButtons = (_object["hiddenHeaderButtons"] != null) ? _object["hiddenHeaderButtons"] : this.hiddenHeaderButtons;
 
 		this.initDataType = (_object["initDataType"] != null) ? _object["initDataType"] : this.initDataType;
 		this.initData = (_object["initData"] != null) ? _object["initData"] : this.initData;
@@ -8399,6 +8517,8 @@ function (window, undefined) {
 	prot["putMinVal"] = prot.putMinVal;
 	prot["putMaxValRule"] = prot.putMaxValRule;
 	prot["putMaxVal"] = prot.putMaxVal;
+	prot["putMinValDate"] = prot.putMinValDate;
+	prot["putMaxValDate"] = prot.putMaxValDate;
 	prot["putInvertValOrder"] = prot.putInvertValOrder;
 	prot["putLogScale"] = prot.putLogScale;
 	prot["putLogBase"] = prot.putLogBase;
@@ -8409,6 +8529,8 @@ function (window, undefined) {
 	prot["putTickLabelsPos"] = prot.putTickLabelsPos;
 	prot["putCrossesRule"] = prot.putCrossesRule;
 	prot["putCrosses"] = prot.putCrosses;
+	prot["putCrossesVal"] = prot.putCrossesVal;
+	prot["putCrossesDate"] = prot.putCrossesDate;
 	prot["putDispUnitsRule"] = prot.putDispUnitsRule;
 	prot["getDispUnitsRule"] = prot.getDispUnitsRule;
 	prot["putAxisType"] = prot.putAxisType;
@@ -8417,6 +8539,8 @@ function (window, undefined) {
 	prot["getMinVal"] = prot.getMinVal;
 	prot["getMaxValRule"] = prot.getMaxValRule;
 	prot["getMaxVal"] = prot.getMaxVal;
+	prot["getMinValDate"] = prot.getMinValDate;
+	prot["getMaxValDate"] = prot.getMaxValDate;
 	prot["getInvertValOrder"] = prot.getInvertValOrder;
 	prot["getLogScale"] = prot.getLogScale;
 	prot["getLogBase"] = prot.getLogBase;
@@ -8427,6 +8551,9 @@ function (window, undefined) {
 	prot["getTickLabelsPos"] = prot.getTickLabelsPos;
 	prot["getCrossesRule"] = prot.getCrossesRule;
 	prot["getCrosses"] = prot.getCrosses;
+
+	prot["getCrossesVal"] = prot.getCrossesVal;
+	prot["getCrossesDate"] = prot.getCrossesDate;
 	prot["setDefault"] = prot.setDefault;
 	prot["getShow"] = prot.getShow;
 	prot["putShow"] = prot.putShow;
@@ -8577,6 +8704,7 @@ function (window, undefined) {
 	prot["setDisplayChartTitle"] = prot.setDisplayChartTitle;
 	prot["setDisplayDataLabels"] = prot.setDisplayDataLabels;
 	prot["setDisplayDataTable"] = prot.setDisplayDataTable;
+	prot["getDataTable"] = prot.getDataTable;
 	prot["setDisplayErrorBars"] = prot.setDisplayErrorBars;
 	prot["setDisplayGridlines"] = prot.setDisplayGridlines;
 	prot["setDisplayLegend"] = prot.setDisplayLegend;
@@ -8962,6 +9090,11 @@ function (window, undefined) {
 	prot["asc_getAnnotProps"]		= prot.asc_getAnnotProps;
 	prot["asc_putAnnotProps"]		= prot.asc_putAnnotProps;
 	
+	window["Asc"]["asc_CTextAnnotProperty"] = window["Asc"].asc_CTextAnnotProperty = asc_CTextAnnotProperty;
+	prot = asc_CTextAnnotProperty.prototype;
+	prot["asc_getIconType"]	= prot.asc_getIconType;
+	prot["asc_putIconType"]	= prot.asc_putIconType;
+
 	window["Asc"]["asc_CFreeTextAnnotProperty"] = window["Asc"].asc_CFreeTextAnnotProperty = asc_CFreeTextAnnotProperty;
 	prot = asc_CFreeTextAnnotProperty.prototype;
 	prot["asc_getBorderWidth"]	= prot.asc_getBorderWidth;

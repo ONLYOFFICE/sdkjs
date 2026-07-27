@@ -368,6 +368,8 @@
 		else {
 			this.SetLogicValue(sValue);
 		}
+
+		return true;
 	};
     CTextField.prototype.private_SetValue = function(sValue) {
         if (this.IsWidget()) {
@@ -498,15 +500,12 @@
 	};
         
     CTextField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
-            return;
-
         let oDoc = this.GetDocument();
 
         this.Recalculate();
         this.DrawBackground(oGraphicsPDF);
                 
-        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) && this.IsNeedDrawHighlight() ? this.contentFormat : this.content;
+        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) && !this.IsInForm() ? this.contentFormat : this.content;
         this.curContent = oContentToDraw; // remember current content
 
         if (this.IsMultiline() == true) {
@@ -525,10 +524,6 @@
         // redraw target cursor if field is selected
         if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsCanEditText())
             oContentToDraw.RecalculateCurPos();
-
-
-        this.DrawLocks(oGraphicsPDF);
-        this.DrawEdit(oGraphicsWord);
     };
     CTextField.prototype.DrawMarker = function(oCtx) {
         if (this.IsHidden()) return;  // don't draw if field is hidden
@@ -722,13 +717,15 @@
         this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, []);
         this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Validate, []);
 
-        const oCurMeta = this.GetMeta();
-        if (oCurMeta['regular']) {
-            oCurMeta['regular'] = undefined
-            this.SetMeta(oCurMeta);
-        }
-        
-        this.SetFormatValue(undefined);
+		this.GetAllWidgets().forEach(function(widget) {
+			const oCurMeta = widget.GetMeta();
+			if (oCurMeta['regular']) {
+				oCurMeta['regular'] = undefined
+				widget.SetMeta(oCurMeta);
+			}
+
+			widget.SetFormatValue(undefined);
+		});
     };
     CTextField.prototype.GetFormatType = function() {
         let oFormatTrigger      = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format);
@@ -1113,8 +1110,10 @@
                 nNewFontSize = AscCommon.CorrectFontSize(nFontSize, true);
                 while (nNewFontSize > 1)
                 {
-                    oRun.SetFontSize(nNewFontSize);
-                    oPara.Recalculate_Page(0);
+					oPara.SetApplyToAll(true);
+					oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+					oPara.SetApplyToAll(false);
+					oPara.Recalculate_Page(0);
 
                     oContentBounds = oContent.GetContentBounds(0);
                     if (oContentBounds.Bottom - oContentBounds.Top < oBounds.H)
@@ -1129,16 +1128,19 @@
 
                 while (nNewFontSize <= nMaxFontSize)
                 {
-                    oRun.SetFontSize(nNewFontSize);
-                    
-                    oPara.Recalculate_Page(0);
+					oPara.SetApplyToAll(true);
+					oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+					oPara.SetApplyToAll(false);
+					oPara.Recalculate_Page(0);
 
                     let oContentBounds = oContent.GetContentBounds(0);
                     if (oContentBounds.Bottom - oContentBounds.Top > oBounds.H)
                     {
                         nNewFontSize -= nFontStep;
-                        oRun.SetFontSize(nNewFontSize);
-                        oPara.Recalculate_Page(0);
+						oPara.SetApplyToAll(true);
+						oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+						oPara.SetApplyToAll(false);
+						oPara.Recalculate_Page(0);
                         break;
                     }
 
@@ -1151,8 +1153,10 @@
         }
         else {
             nNewFontSize = (Math.min(nFontSize * oBounds.H / nTextHeight * 0.9, 100, nFontSize * oBounds.W / nMaxWidth) * 100 >> 0) / 100;
-            oRun.SetFontSize(nNewFontSize);
-            oPara.Recalculate_Page(0);
+			oPara.SetApplyToAll(true);
+			oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+			oPara.SetApplyToAll(false);
+			oPara.Recalculate_Page(0);
         }
 
         if (this.IsPassword()) {

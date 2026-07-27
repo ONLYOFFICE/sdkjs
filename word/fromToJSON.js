@@ -5004,7 +5004,7 @@
 			if (!oPageCount)
 				return [];
 
-			return ToComplexField(oPageCount);
+			return PageCountToComplexField(oPageCount);
 		}
 		function SerCompFieldContent(aContent)
 		{
@@ -5053,39 +5053,25 @@
 
 			return aResult;
 		}
-		function ToComplexField(oElement)
+		function PageCountToComplexField(pageCount) 
 		{
-			var arrComplexFieldRuns = [];
-			var oFldCharBegin = {
-				"type":        "fldChar",
+			return [{
+				"type": "fldChar",
 				"fldCharType": "begin"
-			}
-			var oFldCharSep   = {
-				"type":        "fldChar",
-				"fldCharType": "separate"
-			}
-			var oFldCharEnd   = {
-				"type":        "fldChar",
-				"fldCharType": "end"
-			}
-			var oInstrText    = {
-				"type": "instrText"
-			}
-
-			var sResultOfField = "";
-			arrComplexFieldRuns.push(oFldCharBegin);
-			switch (oElement.Type)
+			},
 			{
-				case para_PageCount:
-					oInstrText.instr = "PAGE";
-					sResultOfField      = oElement.String;
-			}
-			arrComplexFieldRuns.push(oInstrText);
-			arrComplexFieldRuns.push(oFldCharSep);
-			arrComplexFieldRuns.push(sResultOfField);
-			arrComplexFieldRuns.push(oFldCharEnd);
-
-			return arrComplexFieldRuns;
+				"type": "instrText",
+				"instr": "NUMPAGES"
+			},
+			{
+				"type": "fldChar",
+				"fldCharType": "separate"
+			},
+			pageCount.ToString(),
+			{
+				"type": "fldChar",
+				"fldCharType": "end"
+			}];
 		}
 		function SerParaNewLine(oParaNewLine)
 		{

@@ -449,7 +449,8 @@ function (window, undefined) {
 					}
 				}
 
-				return new cNumber(fRes.toString().substr(0, fRes.toString().indexOf(".") + 1 + k) - 0);
+				var sRes = fRes.toString();
+				return new cNumber(sRes.substr(0, sRes.indexOf(".") + 1 + k) - 0);
 			}
 		}
 	}
@@ -3045,97 +3046,134 @@ function (window, undefined) {
 				}
 			}
 
-			for (let i = 1; i < this.mnCount; i++) {
-
-				let fStep = maRange[i].X - maRange[i - 1].X;
-				if (fStep === 0.0) {
-					if (nAggregation === 0) {
-						return new cError(cErrorType.wrong_value_type);
+			// One linear pass compacting equal-X runs (legacy spliced per duplicate = O(n^2)); nLive mirrors old this.mnCount so the i < mnCount - 1 step-skip quirk is preserved.
+			let nRangeCount = this.mnCount;
+			let nWrite = 0;
+			let nRead = 1;
+			let nLive = nRangeCount;
+			while (nRead < nRangeCount) {
+				let xWrite = maRange[nWrite].X;
+				let xRead = maRange[nRead].X;
+				// legacy detects a duplicate via (X2 - X1) === 0 (numeric coercion), not strict ===; keep it so 0/FALSE, 1/TRUE, ""/0 and text-number/number match legacy; the inner run loops stay strict === as in legacy
+				let fStep = xRead - xWrite;
+				if (fStep !== 0.0) {
+					if (fStep > 0 && fStep < this.mfStepSize) {
+						this.mfStepSize = fStep;
 					}
-
-					let fTmp = maRange[i - 1].Y;
-					let nCounter = 1;
-					switch (nAggregation) {
-						case 1 : // AVERAGE (default)
-							while (i < this.mnCount && maRange[i].X === maRange[i - 1].X) {
-								maRange.splice(i, 1);
-								--this.mnCount;
-							}
-							break;
-						case 7 : // SUM
-							while (i < this.mnCount && maRange[i].X === maRange[i - 1].X) {
-								fTmp += maRange[i].Y;
-								maRange.splice(i, 1);
-								--this.mnCount;
-							}
-							maRange[i - 1].Y = fTmp;
-							break;
-
-						case 2 : // COUNT
-						case 3 : // COUNTA (same as COUNT as there are no non-numeric Y-values)
-							while (i < this.mnCount && maRange[i].X === maRange[i - 1].X) {
-								nCounter++;
-								maRange.splice(i, 1);
-								--this.mnCount;
-							}
-							maRange[i - 1].Y = nCounter;
-							break;
-
-						case 4 : // MAX
-							while (i < this.mnCount && maRange[i].X === maRange[i - 1].X) {
-								if (maRange[i].Y > fTmp) {
-									fTmp = maRange[i].Y;
-								}
-								maRange.splice(i, 1);
-								--this.mnCount;
-							}
-							maRange[i - 1].Y = fTmp;
-							break;
-
-						case 5 : // MEDIAN
-
-							let aTmp = [];
-							aTmp.push(maRange[i - 1].Y);
-							while (i < this.mnCount && maRange[i].X === maRange[i - 1].X) {
-								aTmp.push(maRange[i].Y);
-								nCounter++;
-								maRange.splice(i, 1);
-								--this.mnCount;
-							}
-
-							//sort( aTmp.begin(), aTmp.end() );
-
-							if (nCounter % 2) {
-								maRange[i - 1].Y = aTmp[nCounter / 2];
-							} else {
-								maRange[i - 1].Y = (aTmp[nCounter / 2] + aTmp[nCounter / 2 - 1]) / 2.0;
-							}
-
-							break;
-
-						case 6 : // MIN
-							while (i < this.mnCount && maRange[i].X === maRange[i - 1].X) {
-								if (maRange[i].Y < fTmp) {
-									fTmp = maRange[i].Y;
-								}
-								maRange.splice(i, 1);
-								--this.mnCount;
-							}
-							maRange[i - 1].Y = fTmp;
-							break;
+					nWrite++;
+					if (nWrite !== nRead) {
+						maRange[nWrite] = maRange[nRead];
 					}
-
-					if (i < this.mnCount - 1) {
-						fStep = maRange[i].X - maRange[i - 1].X;
-					} else {
-						fStep = this.mfStepSize;
-					}
+					nRead++;
+					continue;
+				}
+				if (nAggregation === 0) {
+					return new cError(cErrorType.wrong_value_type);
 				}
 
+				let fTmp = maRange[nWrite].Y;
+				let nCounter = 1;
+				let bAggregated = true;
+				switch (nAggregation) {
+					case 1 : // AVERAGE (default) - legacy drops duplicates without averaging
+						while (nRead < nRangeCount && maRange[nRead].X === maRange[nWrite].X) {
+							nRead++;
+							nLive--;
+						}
+						break;
+					case 7 : // SUM
+						while (nRead < nRangeCount && maRange[nRead].X === maRange[nWrite].X) {
+							fTmp += maRange[nRead].Y;
+							nRead++;
+							nLive--;
+						}
+						maRange[nWrite].Y = fTmp;
+						break;
+
+					case 2 : // COUNT
+					case 3 : // COUNTA (same as COUNT as there are no non-numeric Y-values)
+						while (nRead < nRangeCount && maRange[nRead].X === maRange[nWrite].X) {
+							nCounter++;
+							nRead++;
+							nLive--;
+						}
+						maRange[nWrite].Y = nCounter;
+						break;
+
+					case 4 : // MAX
+						while (nRead < nRangeCount && maRange[nRead].X === maRange[nWrite].X) {
+							if (maRange[nRead].Y > fTmp) {
+								fTmp = maRange[nRead].Y;
+							}
+							nRead++;
+							nLive--;
+						}
+						maRange[nWrite].Y = fTmp;
+						break;
+
+					case 5 : // MEDIAN
+
+						let aTmp = [];
+						aTmp.push(maRange[nWrite].Y);
+						while (nRead < nRangeCount && maRange[nRead].X === maRange[nWrite].X) {
+							aTmp.push(maRange[nRead].Y);
+							nCounter++;
+							nRead++;
+							nLive--;
+						}
+
+						//sort( aTmp.begin(), aTmp.end() );
+
+						if (nCounter % 2) {
+							maRange[nWrite].Y = aTmp[nCounter / 2];
+						} else {
+							maRange[nWrite].Y = (aTmp[nCounter / 2] + aTmp[nCounter / 2 - 1]) / 2.0;
+						}
+
+						break;
+
+					case 6 : // MIN
+						while (nRead < nRangeCount && maRange[nRead].X === maRange[nWrite].X) {
+							if (maRange[nRead].Y < fTmp) {
+								fTmp = maRange[nRead].Y;
+							}
+							nRead++;
+							nLive--;
+						}
+						maRange[nWrite].Y = fTmp;
+						break;
+
+					default : // unknown aggregation - legacy leaves the duplicate in place
+						bAggregated = false;
+						break;
+				}
+
+				if (!bAggregated) {
+					nWrite++;
+					if (nWrite !== nRead) {
+						maRange[nWrite] = maRange[nRead];
+					}
+					nRead++;
+					continue;
+				}
+
+				// after a run the legacy index i equals nWrite + 1 and this.mnCount equals nLive
+				if ((nWrite + 1) < nLive - 1) {
+					fStep = maRange[nRead].X - maRange[nWrite].X;
+				} else {
+					fStep = this.mfStepSize;
+				}
 				if (fStep > 0 && fStep < this.mfStepSize) {
 					this.mfStepSize = fStep;
 				}
+				if (nRead < nRangeCount) {
+					nWrite++;
+					maRange[nWrite] = maRange[nRead];
+					nRead++;
+				}
 			}
+			this.mnCount = nWrite + 1;
+			maRange.length = this.mnCount;
 
 			// step must be constant (or gap multiple of step)
 			let bHasGap = false;
@@ -14978,6 +15016,7 @@ function parseStringToCElement (val, cultureInfo) {
 			const sumColumn = this.sumRangeCache.data[sumWsId][sumColIdx];
 			const sumData = sumColumn.data[cElementType.number];
 			const sumIndexes = sumColumn.indexes[cElementType.number];
+			const errIndexes = sumColumn.indexes[cElementType.error];
 			if (!sumData || !sumIndexes) {
 				continue;
 			}
@@ -14995,6 +15034,16 @@ function parseStringToCElement (val, cultureInfo) {
 					word = (word & (word - 1)) | 0;
 
 					const targetSumRow = sumBbox.r1 + relRow;
+
+					// if we have an error in found indexes and it matched to criteria, return that error
+					const errIndex = errIndexes ? errIndexes.indexOf(targetSumRow) : -1;
+					if (errIndex !== -1) {
+						const errData = sumColumn.data[cElementType.error];
+						const firstErrValueType = errData[errIndex];
+
+						return new cError(firstErrValueType);
+					}
+
 					while (sumPtr < sumLen && sumIndexes[sumPtr] < targetSumRow) {
 						sumPtr += 1;
 					}

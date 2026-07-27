@@ -164,10 +164,11 @@
             return oParent.SetRadiosInUnison(bValue);
 
         if (this._radiosInUnison === bValue) {
+			this.UpdateAll();
             return true;
         }
         
-        AscCommon.History.Add(new CChangesPDFRadiobuttonIsUnison(this, this._radiosInUnison, bValue));
+		AscCommon.History.Add(new CChangesPDFRadiobuttonIsUnison(this, this._radiosInUnison, bValue));
 
         this._radiosInUnison = bValue;
         this.SetWasChanged(true);

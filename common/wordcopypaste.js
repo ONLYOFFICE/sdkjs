@@ -1848,15 +1848,13 @@ CopyProcessor.prototype =
 			oThis.oPresentationWriter.WriteString2("SlideObjects");
 			oThis.oPresentationWriter.WriteULong(selected_slides.length);
 
-			var layouts_map = {};
-			var layout_count = 0;
 			editor.WordControl.m_oLogicDocument.CalculateComments();
 
-			//write slide
+			const isWriteHTMLSlideImage = !elementsContent.DocContent;
 			var slide;
 			for (var i = 0; i < selected_slides.length; ++i) {
 				slide = selected_slides[i];
-				if(i === 0){
+				if(i === 0 && isWriteHTMLSlideImage){
 					oThis.CopySlide(oDomTarget, slide);
 				} else{
 					oThis.CopySlide(null, slide);
@@ -1896,12 +1894,18 @@ CopyProcessor.prototype =
 
 		var copyNotes = function(){
 			var selected_notes = elementsContent.Notes;
+			const realNotes = [];
+			for (let i = 0; i < selected_notes.length; ++i) {
+				if (selected_notes[i]) {
+					realNotes.push(selected_notes[i]);
+				}
+			}
 
 			oThis.oPresentationWriter.WriteString2("Notes");
-			oThis.oPresentationWriter.WriteULong(selected_notes.length);
+			oThis.oPresentationWriter.WriteULong(realNotes.length);
 
-			for (var i = 0; i < selected_notes.length; ++i) {
-				oThis.oPresentationWriter.WriteSlideNote(selected_notes[i]);
+			for (let i = 0; i < realNotes.length; ++i) {
+				oThis.oPresentationWriter.WriteSlideNote(realNotes[i]);
 			}
 		};
 
@@ -1992,10 +1996,7 @@ CopyProcessor.prototype =
 		}
 		//Notes
 		if (elementsContent.Notes && elementsContent.Notes.length) {
-			//TODO if there's no Notes, then Notes should be null. instead have to check 1st array element
-			if(!(elementsContent.Notes.length === 1 && null === elementsContent.Notes[0])){
-				copyNotes();
-			}
+			copyNotes();
 		}
 		//NotesMasters
 		if (elementsContent.NotesMasters && elementsContent.NotesMasters.length) {
@@ -2938,6 +2939,7 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
 	//for now introducing these parameters for special paste. may need to review and remove them later
 	this.pasteTypeContent = undefined;
 	this.pasteList = undefined;
+	this.pasteListCanUnite = false;
 	this.pasteIntoElem = undefined;//reference to content element that was selected before paste
 
 	this.apiEditor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window["editor"];
@@ -3140,6 +3142,38 @@ PasteProcessor.prototype =
 		var bIsSpecialPaste = specialPasteHelper.specialPasteStart;
 		var paragraph = oDoc.GetCurrentParagraph();
 		var oTable = oDoc.IsInTable() ? oDoc.GetParent().GetTable() : null;
+
+		var _self = this;
+		var _spHelper = window['AscCommon'].g_specialPasteHelper;
+		var _bRestartList = !!(_spHelper && _spHelper.specialPasteStart && _spHelper.specialPasteProps === Asc.c_oSpecialPasteProps.doNotUniteList);
+		if (paragraph && paragraph.GetNumPr && this.oLogicDocument && this.oLogicDocument.GetNumbering) {
+			var _destNumPr = paragraph.GetNumPr();
+			var _destNumId = _destNumPr ? _destNumPr.NumId : null;
+			var _numbering = this.oLogicDocument.GetNumbering();
+			var _destNum = (null != _destNumId && _numbering) ? _numbering.GetNum(_destNumId) : null;
+			if (_destNum) {
+				var _equalCache = {};
+				var _uniteListNum = function (elem) {
+					if (!elem || !elem.IsParagraph || !elem.IsParagraph())
+						return;
+					var _np = elem.Pr ? elem.Pr.NumPr : null;
+					if (!_np || null == _np.NumId || _np.NumId === _destNumId)
+						return;
+					var _key = "" + _np.NumId;
+					if (undefined === _equalCache[_key]) {
+						var _pastedNum = _numbering.GetNum(_np.NumId);
+						_equalCache[_key] = !!(_pastedNum && _destNum.IsEqual(_pastedNum));
+					}
+					if (_equalCache[_key]) {
+						_self.pasteListCanUnite = true;
+						if (!_bRestartList)
+							elem.SetNumPr(_destNumId, _np.Lvl);
+					}
+				};
+				for (var _ci = 0; _ci < aNewContent.length; ++_ci)
+					_uniteListNum(aNewContent[_ci]);
+			}
+		}
 
 		//pasteTypeContent - if all content is of one type
 		//TODO review pasteTypeContent
@@ -3575,6 +3609,9 @@ PasteProcessor.prototype =
 				this.pasteIntoElem.Parent && this.pasteIntoElem.Parent.IsInTable())
 			{
 				props = [sProps.overwriteCells, sProps.insertAsNestedTable, sProps.keepTextOnly];
+			} else if (this.pasteListCanUnite)
+			{
+				props = [sProps.uniteList, sProps.doNotUniteList, sProps.keepTextOnly];
 			} else if (this.specificPasteProps)
 			{
 					props = [].concat(this.specificPasteProps[sProps.sourceformatting]);
@@ -4021,56 +4058,8 @@ PasteProcessor.prototype =
 	},
 
 	_setSpecialPasteShowOptionsPresentation: function(props){
-		let presentation = editor.WordControl.m_oLogicDocument;
-		if(presentation.IsMasterMode()) return;
-		let stateSelection = presentation.GetSelectionState();
-		let curPage = stateSelection.CurPage;
-		let pos = presentation.GetTargetPosition();
-		props = !props ? [Asc.c_oSpecialPasteProps.sourceformatting, Asc.c_oSpecialPasteProps.keepTextOnly] : props;
-		let x, y, w, h;
-		if (null === pos) {
-			pos = presentation.GetSelectedBounds();
-			w = pos.w;
-			h = pos.h;
-			x = pos.x + w;
-			y = pos.y + h;
-		} else {
-			x = pos.X;
-			y = pos.Y;
-		}
-		let screenPos;
-		let bThumbnals = presentation.IsFocusOnThumbnails();
-		let sSlideId = null;
-
-		let aSelectedSlides = presentation.GetSelectedSlides();
-		if(bThumbnals && aSelectedSlides.length > 0) {
-			let nSlideIndex = aSelectedSlides[aSelectedSlides.length - 1];
-			let oSlide = presentation.GetSlide(nSlideIndex);
-			sSlideId = oSlide.Get_Id();
-		}
-		if(sSlideId) {
-			screenPos = editor.WordControl.Thumbnails.getSpecialPasteButtonCoords(sSlideId);
-			w = 1;
-			h = 1;
-		}
-		else {
-			screenPos = presentation.DrawingDocument.ConvertCoordsToCursorWR(x, y, curPage);
-		}
-
-		let specialPasteShowOptions = window['AscCommon'].g_specialPasteHelper.buttonInfo;
-		specialPasteShowOptions.asc_setOptions(props);
-		specialPasteShowOptions.asc_setLastSelectedPasteProperty(window['AscCommon'].g_specialPasteHelper.isPasteOptions ? window['AscCommon'].g_specialPasteHelper.specialPasteProps : null);
-
-		let targetDocContent = presentation.Get_TargetDocContent();
-		if(targetDocContent && targetDocContent.Id) {
-			specialPasteShowOptions.setShapeId(targetDocContent.Id);
-		} else {
-			specialPasteShowOptions.setShapeId(null);
-		}
-
-		let curCoord = new AscCommon.asc_CRect( screenPos.X, screenPos.Y, 0, 0 );
-		specialPasteShowOptions.asc_setCellCoord(curCoord);
-		specialPasteShowOptions.setFixPosition({x: x, y: y, pageNum: curPage, w: w, h: h, slideId: sSlideId});
+		const presentationViewManager = editor.presentationViewManager;
+		presentationViewManager.setSpecialPasteShowOptions(props);
 	},
 
     insertInPlace2: function(oDoc, aNewContent)
@@ -4207,7 +4196,7 @@ PasteProcessor.prototype =
     ReadFromBinary : function(sBase64, oDocument)
 	{
         var oDocumentParams = PasteElementsId.g_bIsDocumentCopyPaste ? this.oDocument : null;
-		var openParams = { checkFileSize: false, charCount: 0, parCount: 0, bCopyPaste: true, oDocument: oDocumentParams };
+		var openParams = { checkFileSize: false, charCount: 0, parCount: 0, bCopyPaste: true, oDocument: oDocumentParams, noSendComments: !!(this.api && this.api.isPresentationEditor) };
 		var doc = oDocument ? oDocument : this.oLogicDocument;
         var oBinaryFileReader = new AscCommonWord.BinaryFileReader(doc, openParams);
         var oRes = oBinaryFileReader.ReadFromString(sBase64, {wordCopyPaste: true});
@@ -6045,6 +6034,7 @@ PasteProcessor.prototype =
 			}
 
 			oPDFSelContent.Annots = objects.arrAnnots;
+			arr_Images = arr_Images.concat(objects.arrImages);
 
 			for (let i = 0; i < objects.arrAnnots.length; ++i) {
 				if (objects.arrAnnots[i].Annot.getAllFonts) {
@@ -6170,6 +6160,8 @@ PasteProcessor.prototype =
 
 		let oAnnotsMap = {};
 		let aAnnots = [];
+		let aImages = [];
+
 		for (let i = 0; i < oAnnotsInfo["annots"].length; i++) {
 			let oAnnotInfo = oAnnotsInfo["annots"][i];
 
@@ -6180,6 +6172,18 @@ PasteProcessor.prototype =
 					oAnnotsMap[oAnnotInfo["AP"]["i"]] = oAnnot;
 
 				aAnnots.push(new AscPDF.AnnotCopyObject(oAnnot));
+
+				if (oAnnot.img) {
+					let oUniFill = new AscFormat.CUniFill();
+					let oBlipFill = new AscFormat.CBlipFill();
+					oUniFill.setFill(oBlipFill);
+					oBlipFill.setStretch(new AscFormat.CBlipFillStretch());
+					oBlipFill.setRasterImageId(oAnnot.img["id"]);
+					oAnnot.setFill(oUniFill);
+
+					aImages.push(new AscCommon.CBuilderImages(oBlipFill, oAnnot.img["url"]));
+					delete oAnnot.img;
+				}
 			}
 			else {
 				if (oAnnotInfo["StateModel"] != AscPDF.TEXT_ANNOT_STATE_MODEL.Review && oAnnotsMap[oAnnotInfo["RefTo"]])
@@ -6187,7 +6191,7 @@ PasteProcessor.prototype =
 			}
 		}
 
-		return {arrAnnots: aAnnots};
+		return {arrAnnots: aAnnots, arrImages: aImages};
 	},
 
 	ReadPDFFields: function (stream) {
@@ -6694,6 +6698,18 @@ PasteProcessor.prototype =
 						}
 						case "NotesMastersIndexes": {
 							presentationSelectedContent.NotesMastersIndexes = readIndexes();
+							const compactNotes = presentationSelectedContent.Notes || [];
+							const notesMasters = presentationSelectedContent.NotesMasters || [];
+							const perSlideNotes = [];
+							let noteCursor = 0;
+							for (let i = 0; i < presentationSelectedContent.NotesMastersIndexes.length; ++i) {
+								if (presentationSelectedContent.NotesMastersIndexes[i] < notesMasters.length) {
+									perSlideNotes.push(compactNotes[noteCursor++] || null);
+								} else {
+									perSlideNotes.push(null);
+								}
+							}
+							presentationSelectedContent.Notes = perSlideNotes;
 							break;
 						}
 						case "NotesThemes": {
@@ -9827,9 +9843,16 @@ PasteProcessor.prototype =
 						background_color = null;
 				}
 				if (null == vertical_align || "baseline" === vertical_align) {
-					vertical_align = this._getStyle(node, tempComputedStyle, "vertical-align");
-					if (!vertical_align)
-						vertical_align = null;
+					var sVertAlignTag = oTempNode.nodeName ? oTempNode.nodeName.toLowerCase() : "";
+					if ("sub" === sVertAlignTag) {
+						vertical_align = "sub";
+					} else if ("sup" === sVertAlignTag) {
+						vertical_align = "super";
+					} else {
+						vertical_align = this._getStyle(node, tempComputedStyle, "vertical-align");
+						if (!vertical_align)
+							vertical_align = null;
+					}
 				}
 				if (vertical_align && background_color && Strikeout && underline)
 					break;
@@ -10230,20 +10253,20 @@ PasteProcessor.prototype =
 				if (nType === Asc.c_oAscNumberingFormat.Bullet) {
 					var LvlText = String.fromCharCode(0x00B7);
 					var NumTextPr = new CTextPr();
-
-					var fontFamily = curNumbering["font-family"];
+					let sBulletText = sTextFormatString ? correctText(sTextFormatString) : null;
+					let fontFamily = curNumbering["font-family"] || curNumbering["mso-ascii-font-family"] || curNumbering["mso-hansi-font-family"];
 					if (fontFamily && -1 !== fontFamily.indexOf("Symbol")) {
 						NumTextPr.RFonts.SetAll("Symbol", -1);
-						LvlText = sTextFormatString ? sTextFormatString : String.fromCharCode(0x00B7);
+						LvlText = sBulletText ? sBulletText : String.fromCharCode(0x00B7);
 					} else if (fontFamily && -1 !== fontFamily.indexOf("Courier New")) {
 						NumTextPr.RFonts.SetAll("Courier New", -1);
-						LvlText = sTextFormatString ? sTextFormatString : "o";
+						LvlText = sBulletText ? sBulletText : "o";
 					} else if (fontFamily && -1 !== fontFamily.indexOf("Wingdings")) {
 						NumTextPr.RFonts.SetAll("Wingdings", -1);
-						LvlText = sTextFormatString ? sTextFormatString : String.fromCharCode(0x00A7);
+						LvlText = sBulletText ? sBulletText : String.fromCharCode(0x00A7);
 					} else {
 						NumTextPr.RFonts.SetAll("Symbol", -1);
-						LvlText = sTextFormatString ? sTextFormatString : String.fromCharCode(0x00B7);
+						LvlText = sBulletText ? sBulletText : String.fromCharCode(0x00B7);
 					}
 
 					res.SetLvlByType(i-1, c_oAscNumberingLevel.Bullet, LvlText, NumTextPr);
@@ -11475,7 +11498,7 @@ PasteProcessor.prototype =
 				break;
 			}
 		}
-		
+
 		let textFormPr = new AscWord.CSdtTextFormPr();
 		if (!textFormNode) {
 			return textFormPr;
@@ -12294,7 +12317,7 @@ PasteProcessor.prototype =
 		//var presentation = editor.WordControl.m_oLogicDocument;
 
 		//for release bug fix adding handling only for paste from ms excel, later make this class main for getting data from ms styles
-		if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel) {
+		if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel || this.pasteInExcel) {
 			if (!this.oMsoStylesParser) {
 				this.oMsoStylesParser = new MsoStylesParser(node);
 			}
@@ -12877,7 +12900,16 @@ PasteProcessor.prototype =
 						if (breakLine.Flags && oThis.pasteInExcel) {
 							//save mso flag for unite cell text with line breaks
 							//use only in excel
-							breakLine.Flags.sameCell = pPr["mso-data-placement"] === "same-cell";
+							let bSameCell = pPr["mso-data-placement"] === "same-cell";
+							if (!bSameCell && oThis.oMsoStylesParser) {
+								//WPS sets it in head style for br tag, not inline
+								let msoBrClass = oThis.oMsoStylesParser.getMsoClassByName(sNodeName);
+								if (msoBrClass) {
+									let msoDataPlacement = msoBrClass.getAttributeByName("mso-data-placement");
+									bSameCell = msoDataPlacement != null && trimString(msoDataPlacement) === "same-cell";
+								}
+							}
+							breakLine.Flags.sameCell = bSameCell;
 						}
 						oThis._AddToParagraph(breakLine);
 					} /*else {

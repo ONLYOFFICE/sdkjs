@@ -3569,7 +3569,7 @@ function (window, undefined) {
 			AscCH.historyitem_Worksheet_SetSummaryBelow === Type || AscCH.historyitem_Worksheet_GroupRow === Type ||
 			AscCH.historyitem_Worksheet_GroupCol === Type || AscCH.historyitem_Worksheet_CollapsedRow === Type ||
 			AscCH.historyitem_Worksheet_CollapsedCol === Type || AscCH.historyitem_Worksheet_SetFitToPage === Type ||
-			AscCH.historyitem_Worksheet_SetTopLeftCell === Type) {
+			AscCH.historyitem_Worksheet_SetTopLeftCell === Type || AscCH.historyitem_Worksheet_SetActiveCell === Type) {
 			Data = Data.CreateReverseChangeSpreadsheet();
 		} else {
 			return;
@@ -4175,7 +4175,9 @@ function (window, undefined) {
 			}
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			if (worksheetView) {
-				worksheetView._updateFreezePane(_c1, _r1, /*lockDraw*/true);
+				// frozen area origin travels in c2/r2 of the bbox
+				var frozenOrigin = (updateData.c2 > 0 || updateData.r2 > 0) ? {c: updateData.c2, r: updateData.r2} : null;
+				worksheetView._updateFreezePane(_c1, _r1, /*lockDraw*/true, frozenOrigin);
 			}
 		} else if (AscCH.historyitem_Worksheet_SetTabColor === Type) {
 			ws.setTabColor(bUndo ? Data.from : Data.to);
@@ -4396,6 +4398,24 @@ function (window, undefined) {
 			}
 		} else if (AscCH.historyitem_Worksheet_SetTopLeftCell === Type) {
 			ws.setTopLeftCell(Data.to ? new Asc.Range(Data.to.c1, Data.to.r1, Data.to.c2, Data.to.r2) : null);
+		} else if (AscCH.historyitem_Worksheet_SetActiveCell === Type) {
+			if (!bUndo && (window["NATIVE_EDITOR_ENJINE"] || !wb.oApi.isDocumentLoadComplete || !wb.bCollaborativeChanges)) {
+				if (Data && Data.to && ws.selectionRange) {
+					var aSelectionRanges;
+					//the ranges are stored in A1 notation - parse them regardless of the current R1C1 display mode
+					AscCommonExcel.executeInR1C1Mode(false, function () {
+						aSelectionRanges = AscCommonExcel.g_oRangeCache.getRangesFromSqRef(Data.to);
+					});
+					if (aSelectionRanges && aSelectionRanges.length > 0) {
+						ws.selectionRange.ranges = aSelectionRanges;
+						ws.selectionRange.activeCellId = 0;
+						//the active cell is always the first cell of the first range
+						ws.selectionRange.activeCell.row = aSelectionRanges[0].r1;
+						ws.selectionRange.activeCell.col = aSelectionRanges[0].c1;
+						ws.selectionRange.update();
+					}
+				}
+			}
 		} else if (AscCH.historyitem_Worksheet_AddProtectedRange === Type) {
 			if (bUndo) {
 				ws.deleteProtectedRange(Data.id);
@@ -5245,11 +5265,20 @@ function (window, undefined) {
 			case AscCH.historyitem_Layout_Bottom:
 				pageMargins.asc_setBottom(value);
 				break;
+			case AscCH.historyitem_Layout_Header:
+				pageMargins.asc_setHeader(value);
+				break;
+			case AscCH.historyitem_Layout_Footer:
+				pageMargins.asc_setFooter(value);
+				break;
 			case AscCH.historyitem_Layout_Width:
 				pageSetup.asc_setWidth(value);
 				break;
 			case AscCH.historyitem_Layout_Height:
 				pageSetup.asc_setHeight(value);
+				break;
+			case AscCH.historyitem_Layout_PaperSize:
+				pageSetup.asc_setPaperSize(value);
 				break;
 			case AscCH.historyitem_Layout_FitToWidth:
 				pageSetup.asc_setFitToWidth(value);

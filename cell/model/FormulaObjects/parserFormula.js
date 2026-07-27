@@ -731,7 +731,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cNumber(val) {
-		cBaseType.call(this, parseFloat(val));
+		// Intentional: source inline measured faster here despite V8's normal .call inlining; keep in sync with cBaseType.
+		this.numFormat = cNumFormatNull;
+		// Avoid parseFloat's string round-trip while preserving its -0 normalization.
+		this.value = typeof val === "number" ? val + 0 : parseFloat(val);
+		this.hyperlink = null;
 		var res;
 
 		if (!isNaN(this.value) && Math.abs(this.value) !== Infinity) {
@@ -780,7 +784,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cString(val) {
-		cBaseType.call(this, val);
+		// Intentional: source inline measured faster here despite V8's normal .call inlining; keep in sync with cBaseType.
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 	}
 
 	cString.prototype = Object.create(cBaseType.prototype);
@@ -854,7 +861,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		}
 
-		cBaseType.call(this, v);
+		// Intentional: source inline measured faster here despite V8's normal .call inlining; keep in sync with cBaseType.
+		this.numFormat = cNumFormatNull;
+		this.value = v;
+		this.hyperlink = null;
 	}
 
 	cBool.prototype = Object.create(cBaseType.prototype);
@@ -887,7 +897,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cError(val) {
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 
 		this.errorType = -1;
 
@@ -1169,7 +1182,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cArea(val, ws) {/*Area means "A1:E5" for example*/
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 
 		this.ws = ws;
 		this.range = null;
@@ -1330,7 +1346,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArea.prototype.countCells = function () {
 		var r = this.getRange(), bbox = r.bbox, count = (Math.abs(bbox.c1 - bbox.c2) + 1) *
 			(Math.abs(bbox.r1 - bbox.r2) + 1);
-		r._foreachDataOnly(function (cell) {
+		// Cell-based: isEmptyTextString may recalculate.
+		r._foreachDataOnlyByCol(function (cell) {
 			if (!cell || !cell.isEmptyTextString()) {
 				count--;
 			}
@@ -1363,7 +1380,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 
 			var resValue = new cEmpty();
-			if(!(excludeNestedStAg && cell.formulaParsed && cell.formulaParsed.isFoundNestedStAg())){
+			if(!(excludeNestedStAg && cell && cell.formulaParsed && cell.formulaParsed.isFoundNestedStAg())){
 				var checkTypeVal = checkTypeCell(cell);
 				if(!(excludeErrorsVal && CellValueType.Error === checkTypeVal.type)){
 					resValue = checkTypeVal;
@@ -1403,13 +1420,15 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return arr;
 	};
 	cArea.prototype.getMatrixNoEmpty = function () {
-		var arr = [], r = this.getRange(), res;
-		r._foreachDataOnly(function (cell, i, j, r1, c1) {
-			if (!arr[i - r1]) {
-				arr[i - r1] = [];
+		var arr = [];
+		// Cell-based: checkTypeCell may recalculate.
+		this.getRange()._foreachDataOnlyByCol(function (cell, i, j, r1, c1) {
+			var rowIndex = i - r1;
+			var row = arr[rowIndex];
+			if (!row) {
+				row = arr[rowIndex] = [];
 			}
-
-			arr[i - r1][j - c1] = checkTypeCell(cell);
+			row[j - c1] = checkTypeCell(cell);
 		});
 		return arr;
 	};
@@ -1496,7 +1515,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cArea3D(val, wsFrom, wsTo, externalLink) {/*Area3D means "Sheat1!A1:E5" for example*/
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 
 		this.bbox = null;
 		if (val) {
@@ -1747,7 +1769,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var _r = this.range(_wsA), bbox = _r[0].bbox, count = (Math.abs(bbox.c1 - bbox.c2) + 1) * (Math.abs(bbox.r1 - bbox.r2) + 1);
 		count = _r.length * count;
 		for (i = 0; i < _r.length; i++) {
-			_r[i]._foreachDataOnly(function (cell) {
+			// Cell-based: isEmptyTextString may recalculate.
+			_r[i]._foreachDataOnlyByCol(function (cell) {
 				if (!cell || !cell.isEmptyTextString()) {
 					count--;
 				}
@@ -1771,7 +1794,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				}
 
 				var resValue = new cEmpty();
-				if (!(excludeNestedStAg && cell.formulaParsed && cell.formulaParsed.isFoundNestedStAg())) {
+				if (!(excludeNestedStAg && cell && cell.formulaParsed && cell.formulaParsed.isFoundNestedStAg())) {
 					var checkTypeVal = checkTypeCell(cell);
 					if (!(excludeErrorsVal && CellValueType.Error === checkTypeVal.type)) {
 						resValue = checkTypeVal;
@@ -1828,20 +1851,21 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return arr;
 	};
 	cArea3D.prototype.getMatrixNoEmpty = function () {
-		var arr = [], r = this.getRanges(), res;
+		var arr = [], r = this.getRanges();
 
 		var ws = r[0] ? r[0].worksheet : null;
 		var oldExcludeHiddenRows = ws ? ws.bExcludeHiddenRows : null;
 
 		for (var k = 0; k < r.length; k++) {
-			arr[k] = [];
-			r[k]._foreachDataOnly(function (cell, i, j, r1, c1) {
-				if (!arr[k][i - r1]) {
-					arr[k][i - r1] = [];
+			var currentArray = arr[k] = [];
+			// Cell-based: checkTypeCell may recalculate.
+			r[k]._foreachDataOnlyByCol(function (cell, i, j, r1, c1) {
+				var rowIndex = i - r1;
+				var row = currentArray[rowIndex];
+				if (!row) {
+					row = currentArray[rowIndex] = [];
 				}
-				res = checkTypeCell(cell);
-
-				arr[k][i - r1][j - c1] = res;
+				row[j - c1] = checkTypeCell(cell);
 			});
 		}
 		if (ws) {
@@ -1940,7 +1964,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cRef(val, ws) {/*Ref means A1 for example*/
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 
 		this.ws = ws;
 		this.range = null;
@@ -2046,7 +2073,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cRef3D(val, ws, externalLink) {/*Ref means Sheat1!A1 for example*/
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 
 		this.ws = ws;
 		this.range = null;
@@ -2173,7 +2203,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cEmpty() {
-		cBaseType.call(this, "");
+		// Intentional: source inline measured faster here despite V8's normal .call inlining; keep in sync with cBaseType.
+		this.numFormat = cNumFormatNull;
+		this.value = "";
+		this.hyperlink = null;
 	}
 
 	cEmpty.prototype = Object.create(cBaseType.prototype);
@@ -2197,7 +2230,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cName(val, ws) {
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 		this.ws = ws;
 	}
 
@@ -2312,7 +2348,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cStrucTable(val, wb, ws) {
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 		this.wb = wb;
 		this.ws = ws;
 
@@ -2859,7 +2898,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cStrucPivotTable(val) {
-		cBaseType.call(this, val);
+		// fields mirror cBaseType (keep in sync)
+		this.numFormat = cNumFormatNull;
+		this.value = val;
+		this.hyperlink = null;
 		if (val) {
 			this.isIndex = false;
 			this.fieldString = val[0];
@@ -2944,7 +2986,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @extends {cBaseType}
 	 */
 	function cArray() {
-		cBaseType.call(this, undefined);
+		// Intentional: source inline measured faster here despite V8's normal .call inlining; keep in sync with cBaseType.
+		this.numFormat = cNumFormatNull;
+		this.value = undefined;
+		this.hyperlink = null;
 		this.array = [];
 		this.rowCount = 0;
 		this.countElementInRow = [];
@@ -3131,14 +3176,29 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		let retArr = new cArray();
 		retArr.realSize = this.getRealArraySize();
 		retArr.missedValue = this.getMissedValue();
-		for (let ir = 0; ir < this.rowCount; ir++, retArr.addRow()) {
-			for (let ic = 0; ic < this.countElementInRow[ir]; ic++) {
-				retArr.addElement(this.array[ir][ic].tocNumber());
+		// Legacy addRow/addElement drops exactly one leading empty row; reproduce it via sourceStart in one pre-sized pass.
+		// Assumes stable cArray storage: element.tocNumber() must not mutate this.array/countElementInRow and the builders are not overridden (unsupported internals).
+		let sourceStart = this.rowCount > 0 && this.countElementInRow[0] === 0 ? 1 : 0;
+		let nRows = this.rowCount - sourceStart;
+		let outArr = new Array(nRows);
+		let outCount = new Array(nRows);
+		let total = 0;
+		for (let ir = 0; ir < nRows; ir++) {
+			let srcIdx = ir + sourceStart;
+			let nCols = this.countElementInRow[srcIdx];
+			let srcRow = this.array[srcIdx];
+			let outRow = new Array(nCols);
+			for (let ic = 0; ic < nCols; ic++) {
+				outRow[ic] = srcRow[ic].tocNumber();
 			}
-			if (ir === this.rowCount - 1) {
-				break;
-			}
+			outArr[ir] = outRow;
+			outCount[ir] = nCols;
+			total += nCols;
 		}
+		retArr.array = outArr;
+		retArr.countElementInRow = outCount;
+		retArr.rowCount = nRows;
+		retArr.countElement = total;
 		return retArr;
 	};
 	cArray.prototype.tocString = function () {
@@ -4222,14 +4282,23 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					var _ta = tempArgs[_j];
 					var _isArrayArg = checkArrayIndex(_j, cElementType.array, tempArgs);
 					var _isRange = cElementType.cellsRange === _ta.type || checkRange3d(_ta);
-					_argInfo[_j] = {
+					var _inf = _argInfo[_j] = {
 						isArrayArg: _isArrayArg,
 						isArray: cElementType.array === _ta.type && !_isArrayArg,
 						isRange: _isRange && !_isArrayArg && !checkArrayIndex(_j, cElementType.cellsRange),
 						rows: (cElementType.array === _ta.type) ? _ta.getRowCount() : 0,
 						cols: (cElementType.array === _ta.type) ? _ta.getCountElementInRow() : 0,
-						dimensions: _isRange ? _ta.getDimensions() : null
+						dimensions: _isRange ? _ta.getDimensions() : null,
+						mode: 0
 					};
+					// 0=scalar; 1..4=array shapes; 5..8=range shapes.
+					if (_inf.isArray) {
+						_inf.mode = 1 === _inf.rows && 1 === _inf.cols ? 1 : 1 === _inf.rows ? 2 : 1 === _inf.cols ? 3 : 4;
+					} else if (_inf.isRange) {
+						var _dimensions = _inf.dimensions;
+						_inf.mode = 1 === _dimensions.row && 1 === _dimensions.col ? 5 :
+							1 === _dimensions.row ? 6 : 1 === _dimensions.col ? 7 : 8;
+					}
 				}
 
 				//bbox_elem -
@@ -4244,35 +4313,21 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					for (var j = 0; j < argumentsCount; j++) {
 						newArg = tempArgs[j];
 						var info = _argInfo[j];
-						if (info.isArray) {
-							if (1 === info.rows && 1 === info.cols) {
-								newArg = newArg.array[0] ? newArg.array[0][0] : null;
-							} else if (1 === info.rows) {
-								newArg = newArg.array[0] ? newArg.array[0][c] : null;
-							} else if (1 === info.cols) {
-								newArg = newArg.array[r] ? newArg.array[r][0] : null;
-							} else {
-								newArg = newArg.array[r] ? newArg.array[r][c] : null;
+						if (info.mode) {
+							switch (info.mode) {
+								case 1: newArg = newArg.array[0] ? newArg.array[0][0] : null; break;
+								case 2: newArg = newArg.array[0] ? newArg.array[0][c] : null; break;
+								case 3: newArg = newArg.array[r] ? newArg.array[r][0] : null; break;
+								case 4: newArg = newArg.array[r] ? newArg.array[r][c] : null; break;
+								case 5: newArg = newArg.getValueByRowCol(0, 0); break;
+								case 6: newArg = newArg.getValueByRowCol(0, c); break;
+								case 7: newArg = newArg.getValueByRowCol(r, 0); break;
+								case 8: newArg = newArg.getValueByRowCol(r, c); break;
 							}
 							if (!newArg) {
 								//TODO check what to set if this array element is unavailable
 								//for now doing this - if not the last argument, then empty element, if last - undefined
-								newArg = /*j === argumentsCount - 1 ? undefined : */new cError(cErrorType.not_available);
-							}
-						} else if (info.isRange) {
-							if (1 === info.dimensions.row && 1 === info.dimensions.col) {
-								newArg = newArg.getValueByRowCol(0, 0);
-							} else if (1 === info.dimensions.row) {
-								newArg = newArg.getValueByRowCol(0, c);
-							} else if (1 === info.dimensions.col) {
-								newArg = newArg.getValueByRowCol(r, 0);
-							} else {
-								newArg = newArg.getValueByRowCol(r, c);
-							}
-							if (!newArg) {
-								//TODO check what to set if this array element is unavailable
-								//for now doing this - if not the last argument, then empty element, if last - undefined
-								newArg = /*j === argumentsCount - 1 ? undefined : */new cNumber(0);
+								newArg = info.mode <= 4 ? new cError(cErrorType.not_available) : new cNumber(0);
 							}
 						}
 
@@ -5428,35 +5483,33 @@ _func[cElementType.cell] = [];
 
 
 _func[cElementType.number][cElementType.number] = function ( arg0, arg1, what ) {
-	var compareNumbers = function(){
-		return AscCommon.compareNumbers(arg0.getValue(), arg1.getValue());
-	};
 	let opt_return_bool = arguments[5];
 	let res = null;
+	let value0 = arg0.getValue(), value1 = arg1.getValue();
 	if (what === ">") {
-		res = compareNumbers() > 0;
+		res = AscCommon.compareNumbers(value0, value1) > 0;
 	} else if (what === ">=") {
-		res = !(compareNumbers() < 0);
+		res = !(AscCommon.compareNumbers(value0, value1) < 0);
 	} else if (what === "<") {
-		res = compareNumbers() < 0;
+		res = AscCommon.compareNumbers(value0, value1) < 0;
 	} else if (what === "<=") {
-		res = !(compareNumbers() > 0);
+		res = !(AscCommon.compareNumbers(value0, value1) > 0);
 	} else if (what === "=") {
-		res = (compareNumbers() === 0);
+		res = (AscCommon.compareNumbers(value0, value1) === 0);
 	} else if (what === "<>") {
-		res = (compareNumbers() !== 0);
+		res = (AscCommon.compareNumbers(value0, value1) !== 0);
 	} else if (what === "-") {
-		return new cNumber(arg0.getValue() - arg1.getValue());
+		return new cNumber(value0 - value1);
 	} else if (what === "+") {
-		return new cNumber(arg0.getValue() + arg1.getValue());
+		return new cNumber(value0 + value1);
 	} else if (what === "/") {
-		if (arg1.getValue() !== 0) {
-			return new cNumber(arg0.getValue() / arg1.getValue());
+		if (value1 !== 0) {
+			return new cNumber(value0 / value1);
 		} else {
 			return new cError(cErrorType.division_by_zero);
 		}
 	} else if (what === "*") {
-		return new cNumber(arg0.getValue() * arg1.getValue());
+		return new cNumber(value0 * value1);
 	}
 	if (res !== null) {
 		return opt_return_bool ? res : new cBool(res);
@@ -5585,6 +5638,9 @@ _func[cElementType.string][cElementType.number] = function ( arg0, arg1, what ) 
 };
 
 function _isEqualStrings(str1, str2, caseSensitive) {
+	if (str1 === str2) {
+		return true;
+	}
 	return caseSensitive
 		? AscCommon.stringCompare(str1, str2) === 0
 		: AscCommon.stringCompare(str1.toLowerCase(), str2.toLowerCase()) === 0;
@@ -6999,8 +7055,10 @@ function parserFormula( formula, parent, _ws ) {
 					if (j < 0) { // over reaching minimum edge
 						break;
 					}
-					aArgsOfOperator.unshift(aNewOutStack.pop());
+					// push + reverse once == the old unshift order, but O(k) instead of O(k^2) front-insert.
+					aArgsOfOperator.push(aNewOutStack.pop());
 				}
+				aArgsOfOperator.reverse();
 				if (aArgsOfOperator.length < aOperatorData[ARGUMENT_COUNT_INDEX]) {
 					break;
 				}
@@ -7012,6 +7070,120 @@ function parserFormula( formula, parent, _ws ) {
 		}
 
 		return aNewOutStack;
+	}
+
+	// Functions whose skip could drop a runtime-discovered dependency; an IF over them stays eager for lazy V1.
+	var g_lazyIfUnsafeFuncs = {"INDIRECT": 1, "OFFSET": 1, "CELL": 1};
+	var g_lazyIfEmpty = new cEmpty();
+
+	// Mirrors cIF.Calculate to decide an IF from its scalar condition: returns 0 eager, 1 take-true (skip false), 2 take-false (skip true), 3 skip-both (error/string cond).
+	function _lazyIfDecide(condResult, bIsSpecialFunction) {
+		if (bIsSpecialFunction || !condResult) {
+			return 0;
+		}
+		var t = condResult.type;
+		if (t !== cElementType.number && t !== cElementType.bool && t !== cElementType.string &&
+			t !== cElementType.error && t !== cElementType.cell && t !== cElementType.cell3D && t !== cElementType.empty) {
+			return 0;
+		}
+		var b = condResult.tocBool();
+		if (!b) {
+			return 0;
+		}
+		if (b.type === cElementType.error || b.type === cElementType.string) {
+			return 3;
+		}
+		if (b.type !== cElementType.bool && b.type !== cElementType.number) {
+			return 0;
+		}
+		return b.value ? 1 : 2;
+	}
+
+	// Scans an outStack index span for a lazy-unsafe function token.
+	function _lazyIfSpanHasUnsafe(aOutStack, a, b) {
+		if (a < 0 || b < 0) {
+			return false;
+		}
+		for (var i = a; i <= b && i < aOutStack.length; i++) {
+			var el = aOutStack[i];
+			if (el && el.type === cElementType.func && g_lazyIfUnsafeFuncs[el.name]) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// Records per 3-arg IF token the outStack index spans of its cond/true/false, using _getNewOutStack's arg-popping convention; null if no eligible IF or the RPN is not unambiguously analysable.
+	function _buildLazyIfPlan(aOutStack) {
+		// cheap allocation-free first pass: the vast majority of formulas have no IF and exit here before any span work
+		var hasIf = false;
+		for (var s = 0, sn = aOutStack.length; s < sn; s++) {
+			var e0 = aOutStack[s];
+			if (e0 && e0.type === cElementType.func && e0.name === "IF") {
+				hasIf = true;
+				break;
+			}
+		}
+		if (!hasIf) {
+			return null;
+		}
+		var spanStack = [];
+		var byCondEnd = null, byBranchStart = null, count = 0;
+		for (var i = 0; i < aOutStack.length; i++) {
+			var el = aOutStack[i];
+			if (el == null) {
+				return null;
+			}
+			if (el.name === "(") {
+				continue;
+			}
+			if (el.type === cElementType.specialFunctionStart || el.type === cElementType.specialFunctionEnd) {
+				continue;
+			}
+			if ("number" === typeof el) {
+				continue;
+			}
+			if (el.type === cElementType.operator || el.type === cElementType.func) {
+				var argCount = ("number" === typeof aOutStack[i - 1]) ? aOutStack[i - 1] : el.argumentsCurrent;
+				// a negative arg-count token is the array-context (bArrayFormula) signal the loop reads at calc time; keep such an IF eager
+				var bArrayCtx = argCount < 0;
+				if (argCount < 0) {
+					argCount = -argCount;
+				}
+				if (spanStack.length < argCount) {
+					return null;
+				}
+				var spans = [];
+				for (var k = 0; k < argCount; k++) {
+					spans.unshift(spanStack.pop());
+				}
+				var start = spans.length ? spans[0].s : i;
+				if (el.type === cElementType.func && el.name === "IF" && argCount === 3 && !bArrayCtx) {
+					var cE = spans[0].e, tS = spans[1].s, tE = spans[1].e, fS = spans[2].s, fE = spans[2].e;
+					if (!_lazyIfSpanHasUnsafe(aOutStack, tS, tE) && !_lazyIfSpanHasUnsafe(aOutStack, fS, fE)) {
+						if (!byCondEnd) {
+							byCondEnd = {};
+							byBranchStart = {};
+						}
+						if (undefined !== byBranchStart[tS] || undefined !== byBranchStart[fS] || undefined !== byCondEnd[cE]) {
+							return null;
+						}
+						var rec = {condEnd: cE, trueStart: tS, trueEnd: tE, falseStart: fS, falseEnd: fE};
+						byCondEnd[cE] = rec;
+						byBranchStart[tS] = {rec: rec, which: 1};
+						byBranchStart[fS] = {rec: rec, which: 2};
+						count++;
+					}
+				}
+				spanStack.push({s: start, e: i});
+			} else {
+				spanStack.push({s: i, e: i});
+			}
+		}
+		if (!count) {
+			return null;
+		}
+		return {byCondEnd: byCondEnd, byBranchStart: byBranchStart};
 	}
 
 	/**
@@ -7466,6 +7638,9 @@ function parserFormula( formula, parent, _ws ) {
 		let nLen = sFunctionName === "SWITCH" ? Math.floor((nCountArgs - 1) / 2) : Math.floor(nCountArgs / 2);
 		for (let i = 0; i < nLen; i++) {
 			let logicalTest = aLogicalTest[i];
+			if (logicalTest == null) {
+				continue;
+			}
 			if (Array.isArray(logicalTest)) {
 				logicalTest = this._calculateLogicalTest(logicalTest);
 				if (logicalTest == null) {
@@ -8401,6 +8576,9 @@ function parserFormula( formula, parent, _ws ) {
 			let bRecursiveCell = parserFormula.ca;
 			let sFunctionName = "";
 
+			if (ignoreErrors) {
+				return bRecursiveCell;
+			}
 
 			if (levelFuncMap.length && levelFuncMap[currentFuncLevel]) {
 				sFunctionName = levelFuncMap[currentFuncLevel].func.name;
@@ -9544,9 +9722,11 @@ function parserFormula( formula, parent, _ws ) {
 							// if operator - check whether each of the arguments is a range or an array
 
 							let isOperator = currentElement.type === cElementType.operator;
-							let arg = [];
+							let _argCount = argumentsCount + defNameArgCount;
+							// defNameArgCount can make _argCount a numeric string, hence the explicit coercion.
+							let arg = new Array(_argCount | 0);
 							let _isPromise = false;
-							for (let i = 0; i < argumentsCount + defNameArgCount; i++) {
+							for (let i = 0; i < _argCount; i++) {
 								if ("number" === typeof(elemArr[elemArr.length - 1])) {
 									elemArr.pop();
 								}
@@ -9559,8 +9739,8 @@ function parserFormula( formula, parent, _ws ) {
 									_isPromise = true;
 									break;
 								}
-								// arg.unshift(elemArr.pop());
-								arg.unshift(tempElem);
+								// fill from the end == the old unshift order, O(1) per element.
+								arg[_argCount - 1 - i] = tempElem;
 							}
 
 							if (_isPromise) {
@@ -9623,6 +9803,14 @@ function parserFormula( formula, parent, _ws ) {
 			return false;
 		}
 	};
+	// Caches the plan keyed by outStack array identity; valid because outStack is only replaced wholesale (reparse) or mutated element-wise at stable indices (offset), never grown/shrunk in place - an in-place reparse would need to clear _lazyIfPlanStack.
+	parserFormula.prototype._getLazyIfPlan = function () {
+		if (this._lazyIfPlanStack !== this.outStack) {
+			this._lazyIfPlanStack = this.outStack;
+			this._lazyIfPlan = _buildLazyIfPlan(this.outStack);
+		}
+		return this._lazyIfPlan;
+	};
 	parserFormula.prototype.calculate = function (opt_defName, opt_bbox, opt_offset, checkMultiSelect, opt_oCalculateResult, opt_pivotCallback, opt_check_dynamic) {
 		if (AscCommonExcel.g_LockCustomFunctionRecalculate && this.unknownOrCustomFunction) {
 			return;
@@ -9641,8 +9829,57 @@ function parserFormula( formula, parent, _ws ) {
 
 		let promiseCounter = 0;
 		var elemArr = [], _tmp, numFormat = cNumFormatFirstCell, currentElement = null, bIsSpecialFunction, argumentsCount, defNameCalcArr, defNameArgCount = 0;
+		// lazy IF skips the not-taken branch of a scalar-condition IF only on the normal scalar pass, not on dynamic-array/CSE/checkOnError/iterative passes; the static dependency graph and cycle checker still see both branches.
+		var lazyIfActive = false, lazyIfCondEnd = null, lazyIfBranchStart = null, lazyIfDec = null, lazyIfSuppressEnd = -1;
+		if (!opt_check_dynamic && !this.ref && !this.dynamicRange &&
+			!this.unknownOrCustomFunction && !(opt_oCalculateResult && opt_oCalculateResult.checkOnError) &&
+			!g_cCalcRecursion.getIsEnabledRecursion() && !g_cCalcRecursion.needRecheckFormulaAfterCalc()) {
+			var _lazyIfPlan = this._getLazyIfPlan();
+			if (_lazyIfPlan) {
+				lazyIfActive = true;
+				lazyIfCondEnd = _lazyIfPlan.byCondEnd;
+				lazyIfBranchStart = _lazyIfPlan.byBranchStart;
+				lazyIfDec = {};
+			}
+		}
 		for (var i = 0; i < this.outStack.length; i++) {
 			currentElement = this.outStack[i];
+			if (lazyIfActive) {
+				if (lazyIfSuppressEnd >= 0) {
+					if (currentElement.type === cElementType.specialFunctionStart) {
+						bIsSpecialFunction = true;
+					} else if (currentElement.type === cElementType.specialFunctionEnd) {
+						if (!(AscCommonExcel.bIsSupportDynamicArrays && opt_check_dynamic)) {
+							bIsSpecialFunction = false;
+						}
+					}
+					if (i === lazyIfSuppressEnd) {
+						elemArr.push(g_lazyIfEmpty);
+						lazyIfSuppressEnd = -1;
+					}
+					continue;
+				}
+				var _lazyBs = lazyIfBranchStart[i];
+				if (undefined !== _lazyBs) {
+					var _lazyD = lazyIfDec[_lazyBs.rec.condEnd];
+					var _lazySkip = (1 === _lazyBs.which) ? (2 === _lazyD || 3 === _lazyD) : (1 === _lazyD || 3 === _lazyD);
+					if (_lazySkip) {
+						lazyIfSuppressEnd = (1 === _lazyBs.which) ? _lazyBs.rec.trueEnd : _lazyBs.rec.falseEnd;
+						if (currentElement.type === cElementType.specialFunctionStart) {
+							bIsSpecialFunction = true;
+						} else if (currentElement.type === cElementType.specialFunctionEnd) {
+							if (!(AscCommonExcel.bIsSupportDynamicArrays && opt_check_dynamic)) {
+								bIsSpecialFunction = false;
+							}
+						}
+						if (i === lazyIfSuppressEnd) {
+							elemArr.push(g_lazyIfEmpty);
+							lazyIfSuppressEnd = -1;
+						}
+						continue;
+					}
+				}
+			}
 			if (currentElement.name === "(") {
 				continue;
 			}
@@ -9694,14 +9931,16 @@ function parserFormula( formula, parent, _ws ) {
 					this._endCalculate();
 					return this.value;
 				} else {
-					var arg = [];
+					var _argCount = argumentsCount + defNameArgCount;
+					// defNameArgCount can make _argCount a numeric string, hence the explicit coercion.
+					var arg = new Array(_argCount | 0);
 					let _isPromise = false;
-					for (var ind = 0; ind < argumentsCount + defNameArgCount; ind++) {
+					for (var ind = 0; ind < _argCount; ind++) {
 						if("number" === typeof(elemArr[elemArr.length - 1])){
 							elemArr.pop();
 						}
 						let _elem = elemArr.pop();
-						arg.unshift(_elem);
+						arg[_argCount - 1 - ind] = _elem;
 						if (fIsPromise(_elem)) {
 							_isPromise = true;
 							break;
@@ -9825,6 +10064,9 @@ function parserFormula( formula, parent, _ws ) {
 			} else {
 				elemArr.push(currentElement);
 			}
+			if (lazyIfActive && undefined !== lazyIfCondEnd[i]) {
+				lazyIfDec[i] = _lazyIfDecide(elemArr[elemArr.length - 1], bIsSpecialFunction);
+		}
 		}
 
 		if (promiseCounter && /*!this.promiseResult*/ this.wb.asyncFormulasManager.isPromises()) {
@@ -10704,7 +10946,7 @@ function parserFormula( formula, parent, _ws ) {
 		for (var i = 0, j = 0; i < _count; i++) {
 			currentElement = this.outStack[i];
 
-			if(currentElement.type !== cElementType.cellsRange3D && currentElement.type !== cElementType.cell3D && currentElement.type !== cElementType.name && currentElement.type !== cElementType.name3D) {
+			if(onlyRangesElements && currentElement.type !== cElementType.cellsRange3D && currentElement.type !== cElementType.cell3D && currentElement.type !== cElementType.name && currentElement.type !== cElementType.name3D) {
 				onlyRangesElements = false;
 				rangesStr = null;
 			}
@@ -10874,9 +11116,11 @@ function parserFormula( formula, parent, _ws ) {
 				var args = [];
 				for (var k = 0; k < argCount; k++) {
 					if (stack.length > 0) {
-						args.unshift(stack.pop());
+						// push + reverse once == the old unshift order, but O(k) instead of O(k^2).
+						args.push(stack.pop());
 					}
 				}
+				args.reverse();
 				if (elem.type === cElementType.func) {
 					for (var k = 0; k < args.length; k++) {
 						if (args[k].index === operandIndex ||

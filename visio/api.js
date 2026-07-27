@@ -969,7 +969,7 @@
 
 		if (this.isCloudSaveAsLocalToDrawingFormat(actionType, fileType))
 		{
-			this.localSaveToDrawingFormat(this.WordControl.m_oDrawingDocument.ToRendererPart(false, options.isPdfPrint), fileType);
+			this.localSaveToDrawingFormat(this.WordControl.m_oDrawingDocument.ToRendererPart(false, {isSelection: options.isPdfPrint}), fileType);
 			return true;
 		}
 
@@ -980,7 +980,7 @@
 				isSelection = true;
 
 			var dd             = this.WordControl.m_oDrawingDocument;
-			dataContainer.data = dd.ToRendererPart(oAdditionalData["nobase64"], isSelection);
+			dataContainer.data = dd.ToRendererPart(oAdditionalData["nobase64"], {isSelection: isSelection});
 		}
 		else if(this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml"))
 		{
@@ -997,8 +997,8 @@
 							dataContainer.data = data;
 							if (window.isCloudCryptoDownloadAs)
 							{
-								window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, fileType);
-								return true;
+								if (AscCommon.CryptoProvider.cryptoDownloadAs(dataContainer.data, fileType))
+									return true;
 							}
 							t._downloadAsUsingServer(actionType, options, oAdditionalData, dataContainer, downloadType);
 							return;
@@ -1020,8 +1020,8 @@
 
 		if (window.isCloudCryptoDownloadAs)
 		{
-			window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, fileType);
-			return true;
+			if (AscCommon.CryptoProvider.cryptoDownloadAs(dataContainer.data, fileType))
+				return true;
 		}
 	};
 	VisioEditorApi.prototype.asc_getPageName = function(index)
@@ -1036,7 +1036,7 @@
 	{
 		if (this.printPreview)
 			return;
-		this.printPreview = new AscCommon.CPrintPreview(this, containerId);
+		this.printPreview = new AscCommon.CPresentationPrintPreview(this, containerId);
 	};
 	VisioEditorApi.prototype.asc_drawPrintPreview = function(index, paperSize)
 	{
@@ -1075,6 +1075,9 @@
 	VisioEditorApi.prototype.sync_countPagesCallback  = function(count)
 	{
 		this.sendEvent("asc_onCountPages", count);
+	};
+	VisioEditorApi.prototype.sync_updatePrintPreview = function()
+	{
 	};
 	VisioEditorApi.prototype.sync_currentPageCallback = function(number)
 	{

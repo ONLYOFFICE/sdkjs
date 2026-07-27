@@ -169,6 +169,7 @@ CBlockLevelSdt.prototype.Recalculate_Page = function(CurPage)
 		case recalcresult2_End: return recalcresult_NextElement;
 		case recalcresult2_NextPage: return recalcresult_NextPage;
 		case recalcresult2_CurPage: return recalcresult_CurPage;
+		case recalcresult2_PrevPage: return recalcresult_PrevPage | recalcresultflags_Column;
 		case recalcresult2_NextSection: return recalcresult_NextSection;
 		case recalcresult2_NextSection_Cur: return recalcresult_NextSection_Cur;
 	}
@@ -1787,16 +1788,24 @@ CBlockLevelSdt.prototype.GotoFootnoteRef = function(isNext, isCurrent, isStepFoo
 	return this.Content.GotoFootnoteRef(isNext, isCurrent, isStepFootnote, isStepEndnote);
 };
 /**
- * Получаем последний элемент содержимого
+ * Get the first element of the content
+ * @returns {?CDocumentContentElementBase}
+ */
+CBlockLevelSdt.prototype.GetFirstElement = function()
+{
+	if (this.Content.GetElementsCount() <= 0)
+		return null;
+
+	return this.Content.GetElement(0);
+};
+/**
+ * Get the last element of the content
  * @returns {?CDocumentContentElementBase}
  */
 CBlockLevelSdt.prototype.GetLastElement = function()
 {
-	var nCount = this.Content.GetElementsCount();
-	if (nCount <= 0)
-		return null;
-
-	return this.Content.GetElement(nCount - 1);
+	let count = this.Content.GetElementsCount();
+	return count <= 0 ? null : this.Content.GetElement(count - 1);
 };
 CBlockLevelSdt.prototype.GetElement = function(nIndex)
 {

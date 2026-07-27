@@ -1122,7 +1122,7 @@ function getFlatPenColor() {
 		graphics.transform3(transform);
 		const endRoundControl = startRoundControl(graphics, 0, 0, oControl.extX, oControl.extY, 4, getFlatPenColor());
 		this.button.draw(graphics);
-		oControl.drawTxBody(graphics, transform, transformText, pageIndex);
+		AscCommon.drawTxBodyWithGraphicObjectDrawer(oControl, graphics, transform, transformText, pageIndex);
 		endRoundControl();
 		graphics.RestoreGrState();
 	};

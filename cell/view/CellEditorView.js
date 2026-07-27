@@ -126,6 +126,7 @@ function (window, undefined) {
 		this.cursorPos = 0;
 		this.beginCompositePos = -1;
 		this.compositeLength = 0;
+		this.lastCompositeCodes = null;
 		this.topLineIndex = 0;
 		this.m_oFont = oFont;
 		this.fmgrGraphics = fmgrGraphics;
@@ -154,6 +155,7 @@ function (window, undefined) {
 		this.loadFonts = false;
 		this.isOpened = false;
 		this._programmaticInput = false;
+		this._isComposing = false;
 		this.callTopLineMouseup = false;
 		this.m_nEditorState = c_oAscCellEditorState.editEnd; // Editor's status
 
@@ -286,6 +288,18 @@ function (window, undefined) {
 			}, false);
 			t.eventListeners.push(eventInfo);
 
+			// IME composition: don't rebuild the contenteditable DOM while composing
+			eventInfo = new AscCommon.CEventListenerInfo(t.input, "compositionstart", function () {
+				t._isComposing = true;
+				return true;
+			}, false);
+			t.eventListeners.push(eventInfo);
+
+			eventInfo = new AscCommon.CEventListenerInfo(t.input, "compositionend", function () {
+				return t._onCompositionEnd.apply(t, arguments);
+			}, false);
+			t.eventListeners.push(eventInfo);
+
 			// We do not support drop to the top line
 			eventInfo = new AscCommon.CEventListenerInfo(t.input, "drop", function (e) {
 				e.preventDefault();
@@ -319,7 +333,7 @@ function (window, undefined) {
 	};
 
 	CellEditor.prototype._isContentEditable = function () {
-		return !!(this.input && this.input.getAttribute && this.input.getAttribute('contenteditable') === 'true');
+		return !!(this.input && this.input.getAttribute && this.input.getAttribute('contenteditable') !== null);
 	};
 
 	CellEditor.prototype._getInputValue = function () {
@@ -1234,9 +1248,13 @@ function (window, undefined) {
 			AscCommon.align_Left : this.options.flags.textAlign;
 	};
 
-	CellEditor.prototype.replaceText = function (pos, len, newText) {
+	CellEditor.prototype.replaceText = function (pos, len, newText, format) {
 		this._moveCursor(kPosition, pos);
 		this._selectChars(kPosition, pos + len);
+		// set after _moveCursor() (it resets newTextFormat) so _addChars() applies it to the inserted text
+		if (format) {
+			this.newTextFormat = format;
+		}
 		return this._addChars(newText);
 	};
 
@@ -2276,7 +2294,7 @@ function (window, undefined) {
 
 	CellEditor.prototype._updateCursorPosition = function (redrawText, isExpand, lineIndex, opt_not_formulas_update) {
 		// ToDo should forward this function
-		let h = this.canvas.height;
+		let h = asc_round(this._getContentHeight() * this.ky);
 		let y = -this.textRender.calcLineOffset(this.topLineIndex);
 		let cur = this.textRender.calcCharOffset(this.cursorPos, lineIndex);
 		let charsCount = this.textRender.getCharsCount();
@@ -3789,15 +3807,30 @@ function (window, undefined) {
 		}
 		this.loadFonts = true;
 
+		// While composing on the div, sync the model but leave the DOM to the browser
+		// (rebuilding it would break the IME); the full sync runs on compositionend
+		var isComposing = this._isContentEditable() && (this._isComposing || (event && event.isComposing));
+
 		let checkedText = t._getInputValue().replace(/[\r\n]+/g, '');
 		AscFonts.FontPickerByCharacter.checkText(checkedText, this, function () {
 			t.loadFonts = false;
 			t.skipTLUpdate = true;
 			t.replaceText(0, t.textRender.getEndOfText(), t._getInputValue());
 			t._updateCursorByTopLine();
-			t._setInputFragments(t._getRenderFragments());
-			t._updateTopLineCurPos();
+			if (!isComposing) {
+				t._setInputFragments(t._getRenderFragments());
+				t._updateTopLineCurPos();
+			}
 		});
+		return true;
+	};
+
+	CellEditor.prototype._onCompositionEnd = function (event) {
+		this._isComposing = false;
+		// composition finished: run the full sync skipped during composition
+		if (this._isContentEditable() && this.isOpened) {
+			this._onInputTextArea(event);
+		}
 		return true;
 	};
 
@@ -3839,28 +3872,62 @@ function (window, undefined) {
 			this.beginCompositePos = Math.min(this.selectionBegin, this.selectionEnd);
 			this.compositeLength = Math.max(this.selectionBegin, this.selectionEnd) - this.beginCompositePos;
 		}
-		this.setTextStyle('u', Asc.EUnderline.underlineSingle);
+		this.lastCompositeCodes = null;
+		if (this.compositeLength !== 0) {
+			this.setTextStyle('u', Asc.EUnderline.underlineSingle);
+		}
 	};
 	CellEditor.prototype.Replace_CompositeText = function (arrCharCodes) {
 		if (!this.isOpened) {
 			return;
 		}
 
+		// The browser fires compositionstart/compositionupdate/input for a single keystroke,
+		// each re-applying the same composition text. Skip the redundant full re-measure.
+		if (this._isSameCompositeCodes(arrCharCodes)) {
+			return;
+		}
+
 		var newText = this.getTextFromCharCodes(arrCharCodes);
-		this.compositeLength = this.replaceText(this.beginCompositePos, this.compositeLength, newText);
 
-		var tmpBegin = this.selectionBegin, tmpEnd = this.selectionEnd;
+		// Insert composite text already underlined so the whole replace needs a single re-measure,
+		// instead of a separate setTextStyle('u') pass that re-measured the cell a second time.
+		var compositeFormat = this._getCompositeTextFormat(this.beginCompositePos);
+		this.compositeLength = this.replaceText(this.beginCompositePos, this.compositeLength, newText, compositeFormat);
 
-		this.selectionBegin = this.beginCompositePos;
-		this.selectionEnd = this.beginCompositePos + this.compositeLength;
-		this.setTextStyle('u', Asc.EUnderline.underlineSingle);
-
-		this.selectionBegin = tmpBegin;
-		this.selectionEnd = tmpEnd;
+		// remember codes only after they are actually applied
+		this.lastCompositeCodes = arrCharCodes.slice();
 
 		// Refreshing the selection
 		this._cleanSelection();
 		this._drawSelection();
+	};
+
+	CellEditor.prototype._isSameCompositeCodes = function (arrCharCodes) {
+		var prev = this.lastCompositeCodes;
+		if (!prev || prev.length !== arrCharCodes.length) {
+			return false;
+		}
+		for (var i = 0; i < arrCharCodes.length; ++i) {
+			if (prev[i] !== arrCharCodes[i]) {
+				return false;
+			}
+		}
+		return true;
+	};
+	
+	CellEditor.prototype._getCompositeTextFormat = function (pos) {
+		var opt = this.options;
+		if (this.isFormula() || !opt || !opt.fragments) {
+			return null;
+		}
+		var f = this._findFragmentToInsertInto(pos);
+		if (!f) {
+			return null;
+		}
+		var format = opt.fragments[f.index].format.clone();
+		this._setFormatProperty(format, 'u', Asc.EUnderline.underlineSingle, false);
+		return format;
 	};
 	CellEditor.prototype.End_CompositeInput = function () {
 		var tmpBegin = this.selectionBegin, tmpEnd = this.selectionEnd;
@@ -3875,6 +3942,7 @@ function (window, undefined) {
 
 		this.beginCompositePos = -1;
 		this.compositeLength = 0;
+		this.lastCompositeCodes = null;
 		this.selectionBegin = tmpBegin;
 		this.selectionEnd = tmpEnd;
 

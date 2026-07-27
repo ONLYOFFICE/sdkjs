@@ -137,9 +137,19 @@
 		{
 			this.ulTrailSpace     = this.logicDocument.IsUnderlineTrailSpace();
 			this.activePermRanges = this.logicDocument.IsEditCommentsMode() || this.logicDocument.IsViewModeInEditor();
-			
-			this.customMarks = this.logicDocument.GetCustomMarks();
+
+			let commentManager        = this.logicDocument.GetCommentsManager();
+			this.isDrawComments       = commentManager && commentManager.isUse();
+			this.isDrawSolvedComments = commentManager && commentManager.isUseSolved();
 		}
+		else
+		{
+			this.isDrawComments       = false;
+			this.isDrawSolvedComments = false;
+		}
+
+		if (this.logicDocument && this.logicDocument.GetCustomMarks)
+			this.customMarks = this.logicDocument.GetCustomMarks();
 	};
 	ParagraphLineDrawState.prototype.resetPage = function(page)
 	{
@@ -470,6 +480,21 @@
 	ParagraphLineDrawState.prototype.handleAnnotationMark = function(mark)
 	{
 		this.annotationMarks.push(mark);
+	};
+	ParagraphLineDrawState.prototype.handleCommentMark = function(paraComment)
+	{
+		if (!this.isDrawComments)
+			return;
+		
+		let commentId = paraComment.GetCommentId();
+		let docComments = this.logicDocument.GetComments();
+		let comment = docComments.Get_ById(commentId);
+		if (!comment
+			|| (!this.isDrawSolvedComments && comment.IsSolved())
+			|| !AscCommon.UserInfoParser.canViewComment(comment.GetUserName()))
+			return;
+		
+		this.handleAnnotationMark(paraComment);
 	};
 	/**
 	 * Получаем количество орфографических ошибок в данном месте

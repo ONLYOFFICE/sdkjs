@@ -2052,6 +2052,16 @@
             }
             return this.oSizes[8];//A4
         };
+        this.getIdByWHAndStored = function(widthMm, heightMm, storedId)
+        {
+            if(null != storedId)
+            {
+                var stored = this.getSizeById(storedId);
+                if(stored.w_mm == widthMm && stored.h_mm == heightMm)
+                    return storedId;
+            }
+            return this.getSizeByWH(widthMm, heightMm).id;
+        };
     };
 
     function OpenColor() {
@@ -5932,7 +5942,7 @@
 			if (null !== oSheetView.zoomScale && !oThis.isCopyPaste)
 				this.bs.WriteItem(c_oSer_SheetView.ZoomScale, function(){oThis.memory.WriteLong(oSheetView.zoomScale);});
             if (null !== oSheetView.pane && oSheetView.pane.isInit() && !oThis.isCopyPaste)
-                this.bs.WriteItem(c_oSer_SheetView.Pane, function(){oThis.WriteSheetViewPane(oSheetView.pane);});
+                this.bs.WriteItem(c_oSer_SheetView.Pane, function(){oThis.WriteSheetViewPane(oSheetView.pane, oSheetView);});
 			if (null !== ws.selectionRange)
 				this.bs.WriteItem(c_oSer_SheetView.Selection, function(){oThis.WriteSheetViewSelection(ws.selectionRange);});
             if (null !== oSheetView.showZeros && !oThis.isCopyPaste)
@@ -5946,10 +5956,16 @@
             if (null !== oSheetView.rightToLeft && !oThis.isCopyPaste)
                 this.bs.WriteItem(c_oSer_SheetView.RightToLeft, function(){oThis.memory.WriteBool(oSheetView.rightToLeft);});
         };
-        this.WriteSheetViewPane = function (oPane) {
+        this.WriteSheetViewPane = function (oPane, oSheetView) {
             var oThis = this;
 			var col = oPane.topLeftFrozenCell.getCol0();
 			var row = oPane.topLeftFrozenCell.getRow0();
+
+			// xSplit/ySplit = count of frozen cols/rows from the frozen area origin (sheetView.topLeftCell)
+			var originCol = (oSheetView && oSheetView.topLeftCell) ? oSheetView.topLeftCell.c1 : 0;
+			var originRow = (oSheetView && oSheetView.topLeftCell) ? oSheetView.topLeftCell.r1 : 0;
+			var xSplit = col > 0 ? col - originCol : 0;
+			var ySplit = row > 0 ? row - originRow : 0;
 
 			var activePane = null;
 			if (0 < col && 0 < row) {
@@ -5968,9 +5984,9 @@
             this.bs.WriteItem(c_oSer_Pane.TopLeftCell, function(){oThis.memory.WriteString3(oPane.topLeftFrozenCell.getID());});
 
             if (0 < col)
-                this.bs.WriteItem(c_oSer_Pane.XSplit, function(){oThis.memory.WriteDouble2(col);});
+                this.bs.WriteItem(c_oSer_Pane.XSplit, function(){oThis.memory.WriteDouble2(xSplit);});
             if (0 < row)
-                this.bs.WriteItem(c_oSer_Pane.YSplit, function(){oThis.memory.WriteDouble2(row);});
+                this.bs.WriteItem(c_oSer_Pane.YSplit, function(){oThis.memory.WriteDouble2(ySplit);});
         };
 		this.WriteSheetViewSelection = function (selectionRange) {
 			var oThis = this;
@@ -6141,10 +6157,15 @@
             var dHeight = oPageSetup.asc_getHeight();
             if(null != dWidth && null != dHeight)
             {
-                var item = DocumentPageSize.getSizeByWH(dWidth, dHeight);
+                //keep sizes that share the same dimensions (e.g. Letter/LetterSmall) by using the stored
+                //id while it is still consistent with the dimensions, otherwise derive it from them.
+                var nId = DocumentPageSize.getIdByWHAndStored(dWidth, dHeight, oPageSetup.asc_getPaperSize());
+                //the id is written as a byte, so ids that don't fit (e.g. xlPaperUser = 256) fall back to the derived one.
+                if(nId < 0 || nId > 255)
+                    nId = DocumentPageSize.getSizeByWH(dWidth, dHeight).id;
                 this.memory.WriteByte(c_oSer_PageSetup.PaperSize);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
-                this.memory.WriteByte(item.id);
+                this.memory.WriteByte(nId);
             }
             if (null != oPageSetup.blackAndWhite) {
                 this.memory.WriteByte(c_oSer_PageSetup.BlackAndWhite);
@@ -11312,8 +11333,8 @@
 				res = this.bcr.Read1(length, function (t, l) {
 					return oThis.ReadLegacyDrawingHF(t, l, oWorksheet.legacyDrawingHF);
 				});
-			// } else if (c_oSerWorksheetsTypes.Picture === type) {
-			//     oWorksheet.picture = this.stream.GetString2LE(length);
+			} else if (c_oSerWorksheetsTypes.Picture === type) {
+				oWorksheet.picture = this.stream.GetString2LE(length);
 			} else if (c_oSerWorksheetsTypes.DataValidations === type && typeof AscCommonExcel.CDataValidations != "undefined") {
 				oWorksheet.dataValidations = new AscCommonExcel.CDataValidations();
 				res = this.bcr.Read1(length, function(t, l) {
@@ -12223,6 +12244,7 @@
                 var item = DocumentPageSize.getSizeById(bytePaperSize);
                 oPageSetup.asc_setWidth(item.w_mm);
                 oPageSetup.asc_setHeight(item.h_mm);
+                oPageSetup.asc_setPaperSize(bytePaperSize);
             // } else if ( c_oSer_PageSetup.PaperWidth == type ) {
             //     oPageSetup.width = this.stream.GetDoubleLE();
             // } else if ( c_oSer_PageSetup.PaperUnits == type ) {
@@ -12330,7 +12352,7 @@
 					tmp.row.index = tmp.prevRow + 1;
 				}
 				tmp.row.saveContent();
-				tmp.ws.cellsByColRowsCount = Math.max(tmp.ws.cellsByColRowsCount, tmp.row.index + 1);
+				tmp.ws.setCellsByColRowsCount(Math.max(tmp.ws.cellsByColRowsCount, tmp.row.index + 1));
 				tmp.ws.nRowsCount = Math.max(tmp.ws.nRowsCount, tmp.ws.cellsByColRowsCount);
 				tmp.prevRow = tmp.row.index;
 				tmp.prevCol = -1;
@@ -15583,7 +15605,8 @@
     };
     InitOpenManager.prototype.prepareConditionalFormatting = function (oWorksheet, oConditionalFormatting) {
         if (oConditionalFormatting && oConditionalFormatting.isValid()) {
-            oConditionalFormatting.initRules(oWorksheet);
+            //skip formula parsing here - not all sheets are read yet (parsed later in Workbook.init)
+            oConditionalFormatting.initRules(oWorksheet, true);
             for (let i = 0; i < oConditionalFormatting.aRules.length; i++) {
                 oWorksheet.addConditionalFormattingRule(oConditionalFormatting.aRules[i]);
             }

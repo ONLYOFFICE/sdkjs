@@ -73,6 +73,27 @@
 			dateTimeGrouping : 10
 		};
 
+		//sort dates: newest year first, then chronological. undefined if neither is a date
+		function compareDateFilterValues(a, b) {
+			var aDate = a.asc_getIsDateFormat();
+			var bDate = b.asc_getIsDateFormat();
+			if (aDate && bDate) {
+				if (a.asc_getYear() !== b.asc_getYear()) {
+					return a.asc_getYear() > b.asc_getYear() ? -1 : 1;
+				}
+				return (a.asc_getMonth() - b.asc_getMonth())
+					|| (a.asc_getDay() - b.asc_getDay())
+					|| (a.asc_getHour() - b.asc_getHour())
+					|| (a.asc_getMinute() - b.asc_getMinute())
+					|| (a.asc_getSecond() - b.asc_getSecond());
+			} else if (aDate) {
+				return -1;
+			} else if (bDate) {
+				return 1;
+			}
+			return undefined;
+		}
+
 		function AutoFiltersOptionsElements() {
 			if (!(this instanceof AutoFiltersOptionsElements)) {
 				return new AutoFiltersOptionsElements();
@@ -1291,7 +1312,7 @@
 						let cellFormat = cell.getNumFormat();
 						let isDateTimeFormat = cellFormat && cellFormat.isDateTimeFormat() &&
 							cell.getType() === window["AscCommon"].CellValueType.Number &&
-							cellFormat.getType() !== Asc.c_oAscNumFormatType.Time;
+							cellFormat.getType() !== Asc.c_oAscNumFormatType.Time && val !== "";
 
 						let dataValue = isDateTimeFormat ? AscCommon.NumFormat.prototype.parseDate(val) : null;
 
@@ -5144,7 +5165,7 @@
 					let cellFormat = cell.getNumFormat();
 					isDateTimeFormat = cellFormat && cellFormat.isDateTimeFormat() &&
 						cell.getType() === window["AscCommon"].CellValueType.Number &&
-						cellFormat.getType() !== Asc.c_oAscNumFormatType.Time;
+						cellFormat.getType() !== Asc.c_oAscNumFormatType.Time && val !== "";
 
 					if (isDateTimeFormat) {
 						dataValue = AscCommon.NumFormat.prototype.parseDate(val);
@@ -5344,20 +5365,11 @@
 					let val2 = b.val;
 					let isNumericA = isNumeric(val1);
 					let isNumericB = isNumeric(val2);
-					let isDateTimeA = a.isDateFormat;
-					let isDateTimeB = b.isDateFormat;
 
-					if (isDateTimeA && !isDateTimeB) {
-						//date have max priority
-						return -1;
-					} else if (!isDateTimeA && isDateTimeB) {
-						return 1;
-					} else if (isDateTimeA && isDateTimeB) {
-						if (a.year === b.year) {
-							return parseFloat(val1) > parseFloat(val2) ? 1 : -1;
-						} else {
-							return a.year > b.year ? -1 : 1;
-						}
+					//dates first, with their own ordering
+					let dateCmp = compareDateFilterValues(a, b);
+					if (undefined !== dateCmp) {
+						return dateCmp;
 					}
 
 					if (a.val === "") {
@@ -5434,7 +5446,7 @@
 				}
 			},
 
-			_openHiddenRowsAfterDeleteColumn: function (filter, colId) {
+			_openHiddenRowsAfterDeleteColumn: function (filter, colId, updateDynamic) {
 				var autoFilter = filter.getAutoFilter();
 				var ref = autoFilter.Ref;
 				var filterColumns = autoFilter.FilterColumns;
@@ -5456,13 +5468,20 @@
 
 				worksheet.workbook.dependencyFormulas.lockRecal();
 				this.useViewLocalChange = true;
+				if (updateDynamic) {
+					autoFilter.reinitDynamicFilters(worksheet, opt_columnsFilter);
+				}
 				for (var i = ref.r1 + 1; i <= ref.r2; i++) {
-					if (worksheet.getRowHidden(i) === false) {
+					if (!updateDynamic && worksheet.getRowHidden(i) === false) {
 						continue;
 					}
 
-					if (!autoFilter.hiddenByAnotherFilter(worksheet, colId, i, ref.c1, opt_columnsFilter))//filter another button
-					{
+					var hide = autoFilter.hiddenByAnotherFilter(worksheet, colId, i, ref.c1, opt_columnsFilter);//filter another button
+					if (updateDynamic) {
+						if (worksheet.getRowHidden(i) !== hide) {
+							worksheet.setRowHidden(hide, i, i);
+						}
+					} else if (!hide) {
 						worksheet.setRowHidden(false, i, i);
 					}
 				}
@@ -6019,7 +6038,7 @@
 				if (colId !== null) {
 					var index = autoFilterObj.getIndexByColId(colId);
 					if (!viewId || viewId === this.worksheet.getActiveNamedSheetViewId()) {
-						this._openHiddenRowsAfterDeleteColumn(filter, colId);
+						this._openHiddenRowsAfterDeleteColumn(filter, colId, true);
 					}
 
 					var filterColumn = autoFilterObj.getFilterColumnByIndex(index);
@@ -6912,6 +6931,7 @@
 		prot["asc_setDescription"] = prot.asc_setDescription;
 
 		window["AscCommonExcel"].AutoFiltersOptionsElements = AutoFiltersOptionsElements;
+		window["AscCommonExcel"].compareDateFilterValues = compareDateFilterValues;
 		prot = AutoFiltersOptionsElements.prototype;
 		prot["asc_getText"] = prot.asc_getText;
 		prot["asc_getVisible"] = prot.asc_getVisible;

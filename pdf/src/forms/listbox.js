@@ -71,9 +71,6 @@
     AscFormat.InitClass(CListBoxField, AscPDF.CBaseListField, AscDFH.historyitem_type_Pdf_Listbox_Field);
 
     CListBoxField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
-            return;
-
         // when alignment is center or right, then after
         // paragraph width becomes larger than form size, alignment becomes left, until text is smaller than form size again
         this.CheckAlignInternal();
@@ -94,9 +91,6 @@
         oGraphicsWord.RemoveLastClip();
 
         this.DrawBorders(oGraphicsPDF);
-
-        this.DrawLocks(oGraphicsPDF);
-        this.DrawEdit(oGraphicsWord);
     };
     CListBoxField.prototype._isCenterAlign = function() {
 		return false;
@@ -474,6 +468,7 @@
         let aInnerColor = this.GetTextColor();
         let oRGB = this.GetRGBColor(aInnerColor);
         let oDocColor = new AscCommonWord.CDocumentColor(oRGB.r, oRGB.g, oRGB.b, false);
+		let _t = this;
 
         if (typeof option === "string" && option !== "") {
             formattedOption = option;
@@ -503,7 +498,7 @@
                     AscCommon.History.StartNoHistoryMode();
 
                     AscFonts.FontPickerByCharacter.getFontsByString(sCaption);
-                    let oPara = new AscWord.Paragraph(this.content, false);
+                    let oPara = new AscWord.Paragraph(_t.content, false);
                     let oRun = new AscWord.ParaRun(oPara, false);
                     field.content.Internal_Content_Add(nPos, oPara);
                     oPara.Add(oRun);
@@ -597,6 +592,10 @@
                 }
             }
 
+			if (aIndexes.length == 0) {
+				return false;
+			}
+
 			let oShd = private_GetShd('nil');
             this.content.Content.forEach(function(para) {
 				para.Pr.Shd = oShd;
@@ -621,6 +620,8 @@
             this.SetLogicValue(value);
             this.SetLogicCurIdxs(aIndexes);
         }
+
+		return true;
     };
     CListBoxField.prototype.private_SetValue = CListBoxField.prototype.SetValue;
     

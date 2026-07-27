@@ -51,7 +51,6 @@
         this._chStyle       = AscPDF.CHECKBOX_STYLES.check;
         this._checked       = false;
         this._options       = undefined; // used to store export values of child fields
-        this._textSize      = 0;
         
         // states
         this._pressed = false;
@@ -62,17 +61,11 @@
     CBaseCheckBoxField.prototype.constructor = CBaseCheckBoxField;
 
     CBaseCheckBoxField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
-            return;
-
         this.DrawBackground(oGraphicsPDF);
         this.DrawBorders(oGraphicsPDF);
 
         if (true == this.IsChecked())
             this.DrawCheckedSymbol(oGraphicsPDF);
-
-        this.DrawLocks(oGraphicsPDF);
-        this.DrawEdit(oGraphicsWord);
     };
     CBaseCheckBoxField.prototype.SetDefaultValue = function(value) {
         let oParent = this.GetParent(true);
@@ -237,7 +230,7 @@
                 let nInsideH = nHeight - 2 * oMargins.bottom;
 
                 let oTr     = oGraphicsPDF.GetTransform();
-                let nScale  = Math.min((nInsideW - nInsideW * 0.2) / imgW, (nInsideH - nInsideW * 0.2) / imgH);
+                let nScale  = Math.min((nInsideW - nInsideW * 0.2) / imgW, (nInsideH - nInsideH * 0.2) / imgH);
 
                 let wScaled = Math.max(imgW * nScale, 1);
                 let hScaled = Math.max(imgH * nScale, 1);
@@ -527,17 +520,29 @@
         });
 
         let sDefValue = this.GetDefaultValue();
-        let sCurExpValue;
-
+        let sExpValue;
         if (sDefValue) {
             if (!hasOptions) {
-                sCurExpValue = this.GetDefaultValue();
+                sExpValue = this.GetDefaultValue();
             }
             else {
-                sCurExpValue = aOpt[sDefValue];
+                sExpValue = aOpt[sDefValue];
             }
 
-            this.SetDefaultValue(String(aOpt.indexOf(sCurExpValue)));
+            this.SetDefaultValue(String(aOpt.indexOf(sExpValue)));
+        }
+
+        let sLogicValue = this.GetLogicValue();
+        sExpValue;
+        if (sLogicValue) {
+            if (!hasOptions) {
+                sExpValue = this.GetLogicValue();
+            }
+            else {
+                sExpValue = aOpt[sLogicValue];
+            }
+
+            this.SetLogicValue(String(aOpt.indexOf(sExpValue)));
         }
 
         return true;
@@ -645,6 +650,7 @@
     
             if (aExpValues.includes(sValue) || aCurOptions) {
                 oParent.SetOptions(newValues);
+				this.SyncValue();
                 return true;
             }
         }
@@ -656,6 +662,7 @@
         AscCommon.History.Add(new CChangesPDFCheckboxExpValue(this, this._exportValue, sValue));
         this._exportValue = sValue;
         this.SetWasChanged(true);
+		this.SyncValue();
     };
     CBaseCheckBoxField.prototype.GetExportValue = function(bInherit) {
         if (bInherit !== false) {
@@ -708,6 +715,8 @@
 		else {
 			this.SetChecked(false);
 		}
+
+		return true;
     };
     CBaseCheckBoxField.prototype.private_SetValue = CBaseCheckBoxField.prototype.SetValue;
     CBaseCheckBoxField.prototype.GetValue = function() {

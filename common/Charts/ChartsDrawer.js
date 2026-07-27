@@ -220,6 +220,9 @@ CChartsDrawer.prototype =
 
 	createChartEx: function (seria) {
 		this.charts = {};
+		if (!seria) {
+			return;
+		}
 		switch (seria.layoutId) {
 			case AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN :
 				this.charts.chartEx = new drawClusteredColumn(seria, this);
@@ -652,8 +655,9 @@ CChartsDrawer.prototype =
 	//****positions text labels****
 	recalculatePositionText: function (obj, idx) {
 		var pos;
+		const bChartTitle = this.cChartSpace.isChartEx() && obj.getObjectType() === AscDFH.historyitem_type_Title && obj.parent && obj.parent.getObjectType() === AscDFH.historyitem_type_Chart;
 
-		if (!this.cChartSpace.bEmptySeries) {
+		if (!this.cChartSpace.bEmptySeries || bChartTitle) {
 			var type = obj.getObjectType();
 
 			switch (type) {
@@ -779,7 +783,7 @@ CChartsDrawer.prototype =
 						if(legend && legend.legendPos === c_oAscChartLegendShowSettings.top) {
 							y += legend.extY + (standartMarginForCharts / 2) / pxToMM;
 						}
-						if (title !== null && !title.overlay) {
+						if (title !== null && !title.getOverlay()) {
 							y += title.extY + (standartMarginForCharts / 2) / pxToMM;
 						}
 						break;
@@ -821,7 +825,7 @@ CChartsDrawer.prototype =
 						if(legend && legend.legendPos === c_oAscChartLegendShowSettings.top) {
 							y += legend.extY + (standartMarginForCharts / 2) / pxToMM;
 						}
-						if (title !== null && !title.overlay) {
+						if (title !== null && !title.getOverlay()) {
 							y += title.extY + (standartMarginForCharts / 2) / pxToMM;
 						}
 						break;
@@ -903,7 +907,7 @@ CChartsDrawer.prototype =
 				x = this.calcProp.widthCanvas / 2 / this.calcProp.pxToMM - widthLegend / 2;
 				y = standartMarginForCharts / 2 / this.calcProp.pxToMM;
 
-				if (legend.parent.title !== null && !legend.parent.title.overlay) {
+				if (legend.parent.title !== null && !legend.parent.title.getOverlay()) {
 					y += legend.parent.title.extY + standartMarginForCharts / 2 / this.calcProp.pxToMM;
 				}
 				break;
@@ -923,7 +927,7 @@ CChartsDrawer.prototype =
 				x = (this.calcProp.widthCanvas - standartMarginForCharts / 2) / this.calcProp.pxToMM - widthLegend;
 				y = standartMarginForCharts / 2 / this.calcProp.pxToMM;
 
-				if (legend.parent.title !== null && !legend.parent.title.overlay) {
+				if (legend.parent.title !== null && !legend.parent.title.getOverlay()) {
 					y += legend.parent.title.extY + standartMarginForCharts / 2 / this.calcProp.pxToMM;
 				}
 				break;
@@ -997,7 +1001,7 @@ CChartsDrawer.prototype =
 		const axisSettings = [{ isExist: false, opKey: 1}, {isExist: false, opKey: 0}, {isExist: false, opKey : 3}, {isExist: false, opKey: 2}]; //L,R,T,D
 
 		const checkAxis = function (index, ax) {
-			if (ax.bDelete || ax.tickLblPos === Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE) {
+			if (ax.bDelete || ax.hidden || ax.tickLblPos === Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE) {
 				return;
 			}
 
@@ -1051,7 +1055,7 @@ CChartsDrawer.prototype =
 
 		//TITLE
 		var topMainTitle = 0;
-		if (chartSpace.chart.title !== null && !chartSpace.chart.title.overlay) {
+		if (chartSpace.chart.title !== null && !chartSpace.chart.title.getOverlay()) {
 			topMainTitle += chartSpace.chart.title.extY;
 		}
 
@@ -3002,6 +3006,7 @@ CChartsDrawer.prototype =
 		}
 
 		const plotArea = chartSpace.chart.plotArea;
+		plotArea.plotAreaRegion.clearCachedData();
         const axisProperties = {
 			isValid: false,
             cat : {max: null, min:null, scale : []},
@@ -3010,6 +3015,9 @@ CChartsDrawer.prototype =
 
 		for (let i = 0; i < plotArea.plotAreaRegion.series.length; i++) {
             const seria = plotArea.plotAreaRegion.series[i];
+            if (seria.hidden) {
+                continue;
+            }
             const type = seria.layoutId;
             const secondType = 1 < plotArea.plotAreaRegion.series.length ? plotArea.plotAreaRegion.series[1].layoutId : null;
             const strLit = seria.getCatLit(type);
@@ -8448,7 +8456,7 @@ drawWaterfallChart.prototype = {
 					for (let j in this.paths[i]) {
 						if (this.paths[i].hasOwnProperty(j) && this.paths[i][j]) {
 							let nPtIdx = parseInt(i);
-							let pen = (j === '0' ) ? oSeries.getPtPen(nPtIdx) : this.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines;
+							let pen = (j === '0' ) ? oSeries.getPtPen(nPtIdx) : (oSeries.compiledConnectorPen || this.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines);
 							let brush = oSeries.getPtBrush(nPtIdx);
 							this.cChartDrawer.drawPath(this.paths[i][j], pen, brush);
 						}
@@ -8496,17 +8504,26 @@ drawWaterfallChart.prototype = {
 			}
 			case AscFormat.DATA_LABEL_POS_IN_BASE: {
 				centerX = x + w / 2 - width / 2;
-				centerY = y - height;
+				centerY = y;
+				if (h > 0) {
+					centerY -= height;
+				}
 				break;
 			}
 			case AscFormat.DATA_LABEL_POS_IN_END: {
 				centerX = x + w / 2 - width / 2;
 				centerY = y - h;
+				if (h < 0) {
+					centerY -= height;
+				}
 				break;
 			}
 			case AscFormat.DATA_LABEL_POS_OUT_END: {
 				centerX = x + w / 2 - width / 2;
 				centerY = y - h - height;
+				if (h < 0) {
+					centerY += height;
+				}
 				break;
 			}
 		}
@@ -8548,46 +8565,80 @@ drawFunnelChart.prototype = {
 	constructor: drawFunnelChart,
 
 	recalculate: function () {
-		const cachedData = this.cChartSpace ? this.cChartSpace.getCachedData() : null;
-		if (!cachedData || !this.cChartSpace.chart.plotArea.axId) {
+		this.paths = {};
+		this.linePath = null;
+
+		const cachedData = this.cChartSpace && this.cChartSpace.getCachedData && this.cChartSpace.getCachedData();
+		if (!cachedData || !cachedData.data.length) {
 			return;
 		}
-		if (cachedData.data.length > 0 && this.chartProp && this.chartProp.chartGutter) {
-			const valAxis = this.cChartSpace.chart.plotArea.axId[0];
 
-			const catMiddle = (this.chartProp.trueWidth / 2 + this.chartProp.chartGutter._left);
-			let valStart = this.chartProp.chartGutter._top;
-			let chartHeight = this.chartProp.trueHeight;
+		if (!this.chartProp || !this.chartProp.chartGutter) {
+			return;
+		}
 
-			if (AscFormat.isRealNumber(valStart) && AscFormat.isRealNumber(catMiddle)) {
-				const coeff = valAxis.scaling.gapWidth;
-				// 1 px gap for each section length
-				const gapWidth = 0.5 / this.chartProp.pxToMM;
-				const gapNumber = cachedData.data.length;
-				//Each bar will have 2 gapWidth and 2 margins , on top and bottom sides
-				const initialBarHeight = (chartHeight - (2 * gapWidth * gapNumber))/ cachedData.data.length;
-				const barHeight = (initialBarHeight / (1 + coeff));
-				const margin = (initialBarHeight - barHeight) / 2;
+		const axes = this.cChartSpace.chart.plotArea.axId;
+		if (!axes) {
+			return;
+		}
 
-				// because calculate rect accepts bottom left point as starting y, we add barHeight to the calculation of starting point 
-				let startVertical = (valStart + margin + gapWidth + barHeight);
-
-				const cChartDrawer = this.cChartDrawer;
-				const chartProp = this.chartProp;
-				const paths = this.paths;
-
-				const recalculateBar = function (fVal, i) {
-					const barWidth = valAxis.max && fVal > 0 ? (fVal / valAxis.max) * chartProp.trueWidth: 0;
-					paths[i] = cChartDrawer._calculateRect(catMiddle - (barWidth / 2), startVertical, barWidth, barHeight);
-					startVertical += margin + gapWidth + gapWidth + margin + barHeight;
-				}
-
-				cachedData.forEach(recalculateBar);
-
-				// vertical line with 1 px from left 
-				this.linePath = this.cChartDrawer._calculateLine(startVertical, (startVertical - valStart), this.chartProp.chartGutter._left + 1, true);
+		let catAxis = null;
+		for (let i = 0; i < axes.length; i++) {
+			const axis = axes[i];
+			if (!catAxis && axis && axis.isChartExCat && axis.isChartExCat()) {
+				catAxis = axis;
 			}
 		}
+		if (!catAxis) {
+			catAxis = axes[1] || axes[0];
+		}
+
+		const barsCount = cachedData.data.length;
+		const minMargin = 0.5 * AscCommon.g_dKoef_pix_to_mm;
+		const minTotalHeight = 2 * minMargin * barsCount;
+		if (this.chartProp.trueHeight <= minTotalHeight) {
+			return;
+		}
+
+		const gapWidth = catAxis && catAxis.scaling && AscFormat.isRealNumber(catAxis.scaling.gapWidth)
+			? catAxis.scaling.gapWidth
+			: 0;
+
+		const minCoeff = (minTotalHeight) / (this.chartProp.trueHeight - minTotalHeight);
+		const coeff = Math.max(minCoeff, Math.abs(gapWidth));
+
+		const barHeight = this.chartProp.trueHeight / (barsCount * (1 + coeff));
+		const gapHeight = barHeight * coeff;
+
+		const catRowStart = this.chartProp.chartGutter._top;
+		const valCenterX = this.chartProp.chartGutter._left + this.chartProp.trueWidth / 2;
+		if (!AscFormat.isRealNumber(catRowStart) || !AscFormat.isRealNumber(valCenterX)) {
+			return;
+		}
+
+		let maxValue = 0;
+		cachedData.data.forEach(function (value) {
+			if (AscFormat.isRealNumber(value) && value > maxValue) {
+				maxValue = value;
+			}
+		});
+
+		let currentCatTop = catRowStart;
+		cachedData.data.forEach(function recalculateBar(value, i) {
+			currentCatTop += gapHeight / 2;
+
+			const barWidth = maxValue > 0 && value > 0
+				? (value / maxValue) * this.chartProp.trueWidth
+				: 0;
+
+			// Because calculate rect accepts bottom left point as starting y, we add barHeight to the calculation of starting point
+			this.paths[i] = this.cChartDrawer._calculateRect(valCenterX - (barWidth / 2), currentCatTop + barHeight, barWidth, barHeight);
+
+			currentCatTop += barHeight + gapHeight / 2;
+		}, this);
+
+		// Vertical line with 1 px from left
+		this.linePath = this.cChartDrawer._calculateLine(currentCatTop, (currentCatTop - catRowStart), this.chartProp.chartGutter._left + 1, true);
 	},
 
 	draw: function () {
@@ -9165,10 +9216,11 @@ drawBoxWhiskerChart.prototype = {
 				let pen = oSeria.compiledSeriesPen;
 				let brush = oSeria.compiledSeriesBrush;
 
-				if (pen) {
-					pen.Fill.fill.color.RGBA.R = pen.Fill.fill.color.RGBA.R * 0.8;
-					pen.Fill.fill.color.RGBA.B = pen.Fill.fill.color.RGBA.B * 0.8;
-					pen.Fill.fill.color.RGBA.G = pen.Fill.fill.color.RGBA.G * 0.8;
+				const penColor = pen && pen.Fill && pen.Fill.fill && pen.Fill.fill.color;
+				if (penColor && penColor.RGBA) {
+					penColor.RGBA.R = penColor.RGBA.R * 0.8;
+					penColor.RGBA.B = penColor.RGBA.B * 0.8;
+					penColor.RGBA.G = penColor.RGBA.G * 0.8;
 				}
 
 				if (this.paths.hasOwnProperty(key) && this.paths[key]) {
@@ -15097,6 +15149,10 @@ drawScatterChart.prototype = {
 			compiledMarkerSize = seria && seria.compiledSeriesMarker ? seria.compiledSeriesMarker.size : null;
 			compiledMarkerSymbol = seria && seria.compiledSeriesMarker ? seria.compiledSeriesMarker.symbol : null;
 
+			// skip per-point marker/position work unless something needs it
+			var hasErrBars = !!(seria.errBars && seria.errBars[0]);
+			var mayHaveLabels = !!seria.dLbls;
+
 			//idx does not always start from zero
 			for (let n = 0; n < yNumCache.ptCount; n++) {
 				idx = yNumCache.pts && undefined !== yNumCache.pts[n] ? yNumCache.pts[n].idx : null;
@@ -15133,10 +15189,16 @@ drawScatterChart.prototype = {
 						const isPassedValMin = !valMin || yVal >= valMin;
 						const isPassedCatMax = !catMax || xVal <= catMax;
 						const isPassedCatMin = !catMin || xVal >= catMin;
-						let x = this.cChartDrawer.getYPosition(xVal, this.catAx, true);
-						let y = this.cChartDrawer.getYPosition(yVal, this.valAx, true);
-						if (isPassedCatMax && isPassedCatMin && isPassedValMax && isPassedValMin) {
-							this.paths.points[i].push(this.cChartDrawer.calculatePoint(x, y, compiledMarkerSize, compiledMarkerSymbol));
+						var isDrawnPt = isPassedCatMax && isPassedCatMin && isPassedValMax && isPassedValMin;
+						var pointMarkerVisible = compiledMarkerSymbol != null;
+						var buildMarker = pointMarkerVisible || mayHaveLabels;
+						let x, y;
+						if (buildMarker || hasErrBars) {
+							x = this.cChartDrawer.getYPosition(xVal, this.catAx, true);
+							y = this.cChartDrawer.getYPosition(yVal, this.valAx, true);
+						}
+						if (isDrawnPt) {
+							this.paths.points[i].push(buildMarker ? this.cChartDrawer.calculatePoint(x, y, compiledMarkerSize, compiledMarkerSymbol) : null);
 						}
 						let errBars = this.chart.series[i].errBars[0];
 						if (errBars) {
@@ -15282,12 +15344,9 @@ drawScatterChart.prototype = {
 	},
 
 	_calculateAllLines: function (points) {
-		var xPoints = this.catAx.xPoints;
-		var yPoints = this.valAx.yPoints;
-
 		//until I set smooth for logarithmic scale - draws incorrectly
 		var allAxisLog = this.catAx.scaling && this.catAx.scaling.logBase && this.valAx.scaling && this.valAx.scaling.logBase;
-		var x, y, x1, y1, x2, y2, x3, y3, isSplineLine;
+		var isSplineLine;
 
 		if(!points) {
 			return;
@@ -15300,44 +15359,208 @@ drawScatterChart.prototype = {
 				continue;
 			}
 
-			for (var n = 0; n < points[i].length; n++) {
-				if (!this.paths.series) {
-					this.paths.series = [];
-				}
-				if (!this.paths.series[i]) {
-					this.paths.series[i] = [];
-				}
+			if (!this.paths.series) {
+				this.paths.series = [];
+			}
 
-				if (points[i][n] != null && points[i][n + 1] != null) {
-					if (isSplineLine) {
+			// per-point line -> path per segment (keeps colors); else one decimated run path
+			var perceptible = this._seriesHasPerPointLine(this.chart.series[i]) && this._perPointLineVisible(this.chart.series[i], points[i]);
+			if (perceptible) {
+				this.paths.series[i] = this._calculateSeriesLineByPoint(points[i], isSplineLine);
+			} else {
+				var sp = this._decimatePointsByScreen(points[i]);
+				this.paths.series[i] = this._calculateSeriesLine(sp, isSplineLine);
+			}
+		}
+	},
 
-						x = points[i][n - 1] ? points[i][n - 1].x : points[i][n].x;
-						y = points[i][n - 1] ? points[i][n - 1].y : points[i][n].y;
+	// any data point with its own line (c:dPt/spPr/ln)
+	_seriesHasPerPointLine: function (seria) {
+		var dPt = seria && seria.dPt;
+		if (!Array.isArray(dPt)) {
+			return false;
+		}
+		for (var k = 0; k < dPt.length; k++) {
+			if (dPt[k] && dPt[k].spPr && dPt[k].spPr.ln) {
+				return true;
+			}
+		}
+		return false;
+	},
 
-						x1 = points[i][n].x;
-						y1 = points[i][n].y;
+	// min on-screen segment length (px) at which a per-point line color is still distinguishable
+	_getPerceptibleSegPx: function () {
+		return 0.5;
+	},
 
-						x2 = points[i][n + 1] ? points[i][n + 1].x : points[i][n].x;
-						y2 = points[i][n + 1] ? points[i][n + 1].y : points[i][n].y;
+	// any dPt/ln override whose entering segment (k-1 -> k) is long enough to see
+	_perPointLineVisible: function (seria, points_i) {
+		var pxToMM = this.cChartDrawer && this.cChartDrawer.calcProp ? this.cChartDrawer.calcProp.pxToMM : null;
+		var dPt = seria && seria.dPt;
+		if (!pxToMM || !points_i || !Array.isArray(dPt)) {
+			return true;
+		}
+		var t = this.cChartDrawer;
+		var minPx = this._getPerceptibleSegPx();
+		for (var k = 0; k < dPt.length; k++) {
+			if (!(dPt[k] && dPt[k].spPr && dPt[k].spPr.ln)) {
+				continue;
+			}
+			var idx = dPt[k].idx;
+			var a = points_i[idx - 1], b = points_i[idx];
+			if (a == null || b == null) {
+				continue;
+			}
+			var ax = t.getYPosition(a.x, this.catAx, true), ay = t.getYPosition(a.y, this.valAx, true);
+			var bx = t.getYPosition(b.x, this.catAx, true), by = t.getYPosition(b.y, this.valAx, true);
+			var segPx = Math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay)) * pxToMM;
+			if (segPx >= minPx) {
+				return true;
+			}
+		}
+		return false;
+	},
 
-						x3 = points[i][n + 2] ? points[i][n + 2].x : points[i][n + 1] ? points[i][n + 1].x : points[i][n].x;
-						y3 = points[i][n + 2] ? points[i][n + 2].y : points[i][n + 1] ? points[i][n + 1].y : points[i][n].y;
+	// one path per segment (n -> n+1), indexed by n so drawPaths picks pen from numCache.pts[n+1]
+	_calculateSeriesLineByPoint: function (points_i, isSplineLine) {
+		var res = [];
+		if (!points_i) {
+			return res;
+		}
+		var t = this.cChartDrawer;
+		var x, y, x1, y1, x2, y2, x3, y3;
+		for (var n = 0; n < points_i.length; n++) {
+			if (points_i[n] != null && points_i[n + 1] != null) {
+				if (isSplineLine) {
+					x = points_i[n - 1] ? points_i[n - 1].x : points_i[n].x;
+					y = points_i[n - 1] ? points_i[n - 1].y : points_i[n].y;
 
-						//this.paths.series[i][n] = {path: this.cChartDrawer.calculateSplineLine(x, y, x1, y1, x2, y2, x3, y3, this.catAx, this.valAx), idx: points[i][n].idx};
-						this.paths.series[i][n] = this.cChartDrawer.calculateSplineLine(x, y, x1, y1, x2, y2, x3, y3, this.catAx, this.valAx);
-					} else {
-						x = this.cChartDrawer.getYPosition(points[i][n].x, this.catAx, true);
-						y = this.cChartDrawer.getYPosition(points[i][n].y, this.valAx, true);
+					x1 = points_i[n].x;
+					y1 = points_i[n].y;
 
-						x1 = this.cChartDrawer.getYPosition(points[i][n + 1].x, this.catAx, true);
-						y1 = this.cChartDrawer.getYPosition(points[i][n + 1].y, this.valAx, true);
+					x2 = points_i[n + 1] ? points_i[n + 1].x : points_i[n].x;
+					y2 = points_i[n + 1] ? points_i[n + 1].y : points_i[n].y;
 
-						//this.paths.series[i][n] = {path: this._calculateLine(x, y, x1, y1), idx: points[i][n].idx};
-						this.paths.series[i][n] = this._calculateLine(x, y, x1, y1);
-					}
+					x3 = points_i[n + 2] ? points_i[n + 2].x : points_i[n + 1] ? points_i[n + 1].x : points_i[n].x;
+					y3 = points_i[n + 2] ? points_i[n + 2].y : points_i[n + 1] ? points_i[n + 1].y : points_i[n].y;
+
+					res[n] = t.calculateSplineLine(x, y, x1, y1, x2, y2, x3, y3, this.catAx, this.valAx);
+				} else {
+					x = t.getYPosition(points_i[n].x, this.catAx, true);
+					y = t.getYPosition(points_i[n].y, this.valAx, true);
+
+					x1 = t.getYPosition(points_i[n + 1].x, this.catAx, true);
+					y1 = t.getYPosition(points_i[n + 1].y, this.valAx, true);
+
+					res[n] = this._calculateLine(x, y, x1, y1);
 				}
 			}
 		}
+		return res;
+	},
+
+	// one continuous path per non-null run (null = gap); smooth runs sampled via calculate_Bezier
+	_calculateSeriesLine: function (sp, isSplineLine) {
+		var res = [];
+		if (!sp) {
+			return res;
+		}
+		var t = this.cChartDrawer;
+		var catAx = this.catAx, valAx = this.valAx;
+		var pathW = this.chartProp.pathW, pathH = this.chartProp.pathH;
+		var count = sp.length;
+		var n = 0;
+		while (n < count) {
+			if (sp[n] == null) {
+				n++;
+				continue;
+			}
+			var runStart = n;
+			while (n < count && sp[n] != null) {
+				n++;
+			}
+			var runEnd = n;
+			if (runEnd - runStart < 2) {
+				continue;
+			}
+
+			var pathId = this.cChartSpace.AllocPath();
+			var path = this.cChartSpace.GetPath(pathId);
+			var started = false;
+			var emit = function (dataX, dataY) {
+				var px = t.getYPosition(dataX, catAx, true) * pathW;
+				var py = t.getYPosition(dataY, valAx, true) * pathH;
+				if (!started) {
+					path.moveTo(px, py);
+					started = true;
+				} else {
+					path.lnTo(px, py);
+				}
+			};
+
+			for (var k = runStart; k < runEnd - 1; k++) {
+				if (isSplineLine) {
+					var p0 = (k > runStart) ? sp[k - 1] : sp[k];
+					var p1 = sp[k];
+					var p2 = sp[k + 1];
+					var p3 = (k + 2 < runEnd) ? sp[k + 2] : sp[k + 1];
+					for (var s = 0; s <= 1.0000001; s += 0.1) {
+						var c = t.calculate_Bezier(p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, s);
+						emit(c[0], c[1]);
+					}
+				} else {
+					if (k === runStart) {
+						emit(sp[k].x, sp[k].y);
+					}
+					emit(sp[k + 1].x, sp[k + 1].y);
+				}
+			}
+			res.push(pathId);
+		}
+		return res;
+	},
+
+	// drop points closer than 1px to the last kept point; nulls (gaps) and endpoints preserved
+	_decimatePointsByScreen: function (seriaPoints) {
+		var MIN_SCREEN_DIST_PX = 1.0;
+		var pxToMM = this.cChartDrawer && this.cChartDrawer.calcProp ? this.cChartDrawer.calcProp.pxToMM : null;
+		if (!pxToMM || !seriaPoints || seriaPoints.length < 3) {
+			return seriaPoints;
+		}
+
+		var minDistMM = MIN_SCREEN_DIST_PX / pxToMM;
+		var minDistMMSq = minDistMM * minDistMM;
+		var res = [];
+		var lastX = null, lastY = null;
+		var count = seriaPoints.length;
+		for (var n = 0; n < count; n++) {
+			var p = seriaPoints[n];
+			if (p == null) {
+				res.push(null);
+				lastX = null;
+				lastY = null;
+				continue;
+			}
+
+			var sx = this.cChartDrawer.getYPosition(p.x, this.catAx, true);
+			var sy = this.cChartDrawer.getYPosition(p.y, this.valAx, true);
+
+			var keep;
+			if (lastX === null || n === count - 1 || seriaPoints[n + 1] == null) {
+				keep = true;
+			} else {
+				var dx = sx - lastX;
+				var dy = sy - lastY;
+				keep = (dx * dx + dy * dy) >= minDistMMSq;
+			}
+
+			if (keep) {
+				res.push(p);
+				lastX = sx;
+				lastY = sy;
+			}
+		}
+		return res;
 	},
 
 	_getYVal: function (n, i) {
@@ -16646,7 +16869,7 @@ axisChart.prototype = {
 			this._calculateGridLines();
 		}
 
-		if (this.axis.bDelete !== true) {
+		if (this.axis.bDelete !== true && this.axis.hidden !== true) {
 			if (this.axisType === AscDFH.historyitem_type_ValAx) {
 				this._calculateValAxis();
 				this._calculateValTickMark();
@@ -16656,6 +16879,8 @@ axisChart.prototype = {
 			} else if (this.axisType === AscDFH.historyitem_type_SerAx) {
 				this._calculateSerAxis();
 				this._calculateSerTickMark();
+			} else if (this.axisType === AscDFH.historyitem_type_Axis) {
+				this._calculateChartExAxis();
 			}
 		}
 	},
@@ -16740,6 +16965,20 @@ axisChart.prototype = {
 		} else {
 			axisPos = this.axis.posY;
 			this.paths.axisLine = this._calculateLine(left, axisPos, right, axisPos);
+		}
+	},
+
+	_calculateChartExAxis: function () {
+		const left = this.chartProp.chartGutter._left / this.chartProp.pxToMM;
+		const right = (this.chartProp.widthCanvas - this.chartProp.chartGutter._right) / this.chartProp.pxToMM;
+		const top = this.chartProp.chartGutter._top / this.chartProp.pxToMM;
+		const bottom = (this.chartProp.heightCanvas - this.chartProp.chartGutter._bottom) / this.chartProp.pxToMM;
+		if (this.axis.isVertical()) {
+			const x = this.axis.axPos === window['AscFormat'].AX_POS_R ? right : left;
+			this.paths.axisLine = this._calculateLine(x, top, x, bottom);
+		} else {
+			const y = this.axis.axPos === window['AscFormat'].AX_POS_T ? top : bottom;
+			this.paths.axisLine = this._calculateLine(left, y, right, y);
 		}
 	},
 
@@ -19955,7 +20194,7 @@ CErrBarsDraw.prototype = {
 		// if subType is true then aggregation else binning
 		this.subTypeAggr = seria && seria.layoutPr && seria.layoutPr.aggregation;
 		this.binning = null;
-		CCachedChartExData.call(this, seria.Id, type, []);
+		CCachedChartExData.call(this, seria && seria.Id, type, []);
 		this._calculate(seria, numLit, strLit, axisProperties);
 		if (secondType === AscFormat.SERIES_LAYOUT_PARETO_LINE) {
 			this.data.sort(function (a, b) {

@@ -3332,9 +3332,9 @@ function (window, undefined) {
 	cMMULT.prototype.Calculate = function (arg) {
 
 		function mult(A, B) {
-			if ( !((B[0] && A.length === B[0].length) || (A[0] && B.length === A[0].length)) || 
-				(A[0].length === 1 && (B[0].length !== 1 && A.length !== B[0].length)) ||
-				(A.length === 1 && (B.length !== 1 && A[0].length !== B.length)) ) {
+			// standard matrix-multiply conformability: cols(A) must equal rows(B), full stop - verified against
+			// Excel for row/column vectors and scalars alike (e.g. {1,2,3,4}x{1} -> #VALUE!, {1;2;3;4}x{1} -> valid)
+			if (!A[0] || !B[0] || A[0].length !== B.length) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 
@@ -5935,7 +5935,6 @@ function (window, undefined) {
 	function cSUMIFS() {
 	}
 
-	//TODO there is a discrepancy with MS - see file + arrayIndexes - need to form when all odd arguments are arrays (starting from 3rd argument)
 	//***array-formula***
 	cSUMIFS.prototype = Object.create(cBaseFunction.prototype);
 	cSUMIFS.prototype.constructor = cSUMIFS;
@@ -5948,7 +5947,7 @@ function (window, undefined) {
 		}
 		return index % 2 !== 0 ? 1 : undefined;
 	};
-	cSUMIFS.prototype.exactTypes = {0: 1, 1: 1};	// in this function every odd argument is should be checked for type reference
+	cSUMIFS.prototype.exactTypes = {0: 1, 1: 1};
 	cSUMIFS.prototype.argumentsType = [argType.reference, [argType.reference, argType.any]];
 	cSUMIFS.prototype.enabledToSingle = {"arg0orOdd": true};
 	cSUMIFS.prototype.Calculate = function (arg) {
@@ -5960,7 +5959,7 @@ function (window, undefined) {
 	cSUMIFS.prototype.checkArgumentsTypes = function (args) {
 		// check first element, then all odd ones
 		if (!cBaseFunction.prototype.checkArgumentsTypes.call(this, [args[0]])) {
-			return false
+			return false;
 		}
 
 		for (let i = 1; i < args.length; i += 2) {
@@ -5969,7 +5968,7 @@ function (window, undefined) {
 			if (oddArgument && this.exactTypes[1]) {
 				if (oddArgument.type !== cElementType.cellsRange && oddArgument.type !== cElementType.cellsRange3D 
 					&& oddArgument.type !== cElementType.cell && oddArgument.type !== cElementType.cell3D) {
-						return false
+						return false;
 				}
 			}
 		}

@@ -132,8 +132,7 @@
         if (!oImgData) {
             return;
         }
-        const oHTMLImg = oImgData.Image;
-        if (!oHTMLImg || oHTMLImg.width === 0 || oHTMLImg.height === 0) {
+        if (oImgData.Status !== AscFonts.ImageLoadStatus.Complete) {
             return;
         }
 
@@ -150,41 +149,39 @@
             return;
         }
 
-        oDoc.DoAction(function() {
-            aFields.forEach(function(field) {
-                if (field.GetLayout() == position["textOnly"])
-                    return;
-    
-                field.SetWasChanged(true);
-                field.DoInitialRecalc();
-                field.SetNeedRecalc(true);
-                field.SetImageRasterId(AscFormat.checkRasterImageId(oImgData.src), nAPType);
-    
-                let sTargetSrc;
-                if (nAPType != AscPDF.APPEARANCE_TYPES.rollover && nAPType != AscPDF.APPEARANCE_TYPES.mouseDown) {
-                    sTargetSrc = oImgData.src;
-                    field.SetImage(sTargetSrc);
-                }
-                
-                if (undefined == nAPType) {
-                    field.SetImageRasterId('', AscPDF.APPEARANCE_TYPES.rollover);
-                    field.SetImageRasterId('', AscPDF.APPEARANCE_TYPES.mouseDown);
-                }            
-            });
-            
-            if (oViewer.IsOpenFormsInProgress == false) {
-                aFields.forEach(function(field) {
-                    if (field.GetLayout() == position["textOnly"])
-                        return;
-    
-                    field.SetNeedRecalc(true);
-                });
-                
-                let oDoc            = this.GetDocument();
-                let oActionsQueue   = oDoc.GetActionsQueue();
-                oActionsQueue.Continue();   
-            }
-        }, AscDFH.historydescription_Pdf_FieldImportImage, this);
+		aFields.forEach(function(field) {
+			if (field.GetLayout() == position["textOnly"])
+				return;
+
+			field.SetWasChanged(true);
+			field.DoInitialRecalc();
+			field.SetNeedRecalc(true);
+			field.SetImageRasterId(AscFormat.checkRasterImageId(oImgData.src), nAPType);
+
+			let sTargetSrc;
+			if (nAPType != AscPDF.APPEARANCE_TYPES.rollover && nAPType != AscPDF.APPEARANCE_TYPES.mouseDown) {
+				sTargetSrc = oImgData.src;
+				field.SetImage(sTargetSrc);
+			}
+			
+			if (undefined == nAPType) {
+				field.SetImageRasterId('', AscPDF.APPEARANCE_TYPES.rollover);
+				field.SetImageRasterId('', AscPDF.APPEARANCE_TYPES.mouseDown);
+			}            
+		});
+		
+		if (oViewer.IsOpenFormsInProgress == false) {
+			aFields.forEach(function(field) {
+				if (field.GetLayout() == position["textOnly"])
+					return;
+
+				field.SetNeedRecalc(true);
+			});
+			
+			let oDoc            = this.GetDocument();
+			let oActionsQueue   = oDoc.GetActionsQueue();
+			oActionsQueue.Continue();
+		}
     };
     CPushButtonField.prototype.IsImageChanged = function(nAPType) {
         switch (nAPType) {
@@ -708,13 +705,10 @@
         this.SetNeedRecalc(true);
     };
     CPushButtonField.prototype.SetValue = function() {
-        return;
+        return true;
     };
     CPushButtonField.prototype.private_SetValue = CPushButtonField.prototype.SetValue;
     CPushButtonField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
-            return;
-		
 		this._UpdateImage();
 
         this.CheckImageOnce();
@@ -814,9 +808,6 @@
                 oGraphicsPDF.DrawImageXY(oCroppedCtx.canvas, origX, origY);
             }
         }
-        
-        this.DrawLocks(oGraphicsPDF);
-        this.DrawEdit(oGraphicsWord);
     };
     CPushButtonField.prototype.SetImageRasterId = function(sRasterId, nAPType) {
 		if (sRasterId == undefined) {
@@ -1334,8 +1325,6 @@
 
         let originView = this.GetOriginView(nImgType, oGraphicsPDF.GetDrawingPageW(), oGraphicsPDF.GetDrawingPageH());
         if (!originView) {
-            this.DrawLocks(oGraphicsPDF);
-            this.DrawEdit(oGraphicsWord);
             return;
         }
 
@@ -1362,8 +1351,6 @@
 
         if (this.IsPressed() == false) {
             oGraphicsPDF.DrawImageXY(originView, origX, origY, undefined, true);
-            this.DrawLocks(oGraphicsPDF);
-            this.DrawEdit(oGraphicsWord);
             return;
         }
 
@@ -1440,9 +1427,6 @@
                 }
             }
         }
-
-        this.DrawLocks(oGraphicsPDF);
-        this.DrawEdit(oGraphicsWord);
     };
     CPushButtonField.prototype.SetPressed = function(bValue) {
         this._pressed = bValue;
@@ -2197,16 +2181,6 @@
         function WriteImage(memory, nImgType) {
             let sPathToImg = AscCommon.getFullImageSrc2(this.GetImageRasterId(nImgType));
             let nExistIdx = memory.images.indexOf(sPathToImg);
-            if ((memory.isForSplit || memory.isCopyPaste) && sPathToImg) {
-                let mapItem = Asc.editor.ImageLoader.map_image_index[sPathToImg];
-                if (mapItem) {
-                    let oImageElm = mapItem.Image;
-                    sPathToImg = getBase64FromImage(oImageElm);
-                }
-				else {
-					sPathToImg = "";
-				}
-            }
             
             if (nExistIdx === -1) {
                 memory.WriteLong(memory.images.length);

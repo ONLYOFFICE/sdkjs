@@ -730,6 +730,7 @@ CTableRow.prototype =
 			case AscDFH.historyitem_TableRow_AddCell:
 			case AscDFH.historyitem_TableRow_RemoveCell:
 			case AscDFH.historyitem_TableRow_TableHeader:
+			case AscDFH.historyitem_TableRow_CantSplit:
 			case AscDFH.historyitem_TableRow_Pr:
 			{
 				isNeedRecalc = true;
@@ -1039,6 +1040,30 @@ CTableRow.prototype.SetHeader = function(isHeader)
 	this.RecalcCopiledPrCells();
 };
 /**
+ * Check whether this row can be split across multiple pages
+ * @returns {boolean}
+ */
+CTableRow.prototype.CanSplit = function()
+{
+	return !this.Get_CompiledPr(false).CantSplit;
+};
+/**
+ * Set whether this row can be split across multiple pages
+ * @param canSplit {boolean}
+ */
+CTableRow.prototype.SetCanSplit = function(canSplit)
+{
+	let cantSplit = undefined === canSplit || null === canSplit ? undefined : !canSplit;
+	if (cantSplit === this.Pr.CantSplit)
+		return;
+
+	this.private_AddPrChange();
+	AscCommon.History.Add(new CChangesTableRowCantSplit(this, this.Pr.CantSplit, cantSplit));
+	this.Pr.CantSplit = cantSplit;
+	this.Recalc_CompiledPr();
+	this.RecalcCopiledPrCells();
+};
+/**
  * Пересчитываем рассчитанные настройки для ячеек
  */
 CTableRow.prototype.RecalcCopiledPrCells = function()
@@ -1293,6 +1318,15 @@ CTableRow.prototype.FindParaWithOutlineLvl = function (nOutlineLvl, bBackward, n
 		return oParagraph.GetOutlineLvl() === nOutlineLvl;
 	};
 	return this.FindParagraph(fCondition, bBackward, nStartIdx);
+};
+/**
+ * @returns {boolean}
+ */
+CTableRow.prototype.IsContentWithKeepNext = function()
+{
+	let cell = this.GetCell(0); 
+	let para = cell ? cell.GetContent().GetFirstParagraph() : null;
+	return para && para.IsKeepNext();
 };
 
 function CTableRowRecalculateObject()

@@ -905,7 +905,7 @@ Paragraph.prototype.private_RecalculatePageBreak       = function(CurLine, CurPa
                 return false;
             }
         }
-        else if (isParentDocument && true === this.Parent.RecalcInfo.Check_KeepNext(this) && 0 === CurPage && null != this.Get_DocumentPrev())
+        else if ((isParentDocument || isParentBlockSdt) && true === logicDocument.RecalcInfo.Check_KeepNext(this) && 0 === CurPage && null != this.GetPrevDocumentElement())
         {
             this.Pages[CurPage].Set_EndLine( CurLine - 1 );
             if ( 0 === CurLine )
@@ -1347,7 +1347,17 @@ Paragraph.prototype.private_RecalculateLineMetrics     = function(CurLine, CurPa
 	lineMetrics.UpdateLineGap(ParaPr);
 	if (true === PRS.End && true !== PRS.EmptyLine && true !== PRS.TextOnLine && Math.abs(this.Lines[CurLine].Metrics.Descent - this.Lines[CurLine].Metrics.TextDescent) < 0.001)
 		lineMetrics.Descent = 0;
-	
+
+	if (!this.bFromDocument)
+	{
+		let lineHeight    = lineMetrics.Ascent + lineMetrics.Descent + lineMetrics.LineGap;
+		let contentAscent = Asc.linerule_Exact === ParaPr.Spacing.LineRule ? lineMetrics.TextAscent : lineMetrics.Ascent;
+		let ascentRegion  = Math.max(AscWord.PRESENTATION_LINE_ASCENT_RATIO * lineHeight, Math.min(contentAscent, lineHeight - lineMetrics.TextDescent));
+		let shift = ascentRegion - lineMetrics.Ascent;
+		lineMetrics.Ascent  += shift;
+		lineMetrics.LineGap -= shift;
+	}
+
 	let updatedLineHeight = lineMetrics.Ascent + lineMetrics.Descent + lineMetrics.LineGap;
 	
 	if (lineHeight - updatedLineHeight > AscWord.EPSILON)
@@ -1744,8 +1754,13 @@ Paragraph.prototype.private_RecalculateLineCheckRanges = function(CurLine, CurPa
         PRS.RangesCount  = Ranges2.length;
         PRS.RecalcResult = recalcresult_CurLine;
 
-        if (this.Lines[CurLine].Info & paralineinfo_RangeY)
-            PRS.RangeY = true;
+		if (this.Lines[CurLine].Info & paralineinfo_RangeY) 
+		{
+			if (CurLine === this.Pages[CurPage].StartLine)
+				this.Pages[CurPage].FirstLineTightWrap = this.private_CheckTightWrapRanges(Ranges2);
+
+			PRS.RangeY = true;
+		}
 
         return false;
     }
@@ -2086,7 +2101,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 							JustifyWord  = 0;
 							JustifySpace = 0;
 						}
-                        else if (1 === PRSC.Words || PRSC.Spaces <= 0)
+                        else if (1 === PRSC.getJustifyWords() || PRSC.getJustifySpaces() <= 0)
                         {
 							// Проверяем по количеству пробелов, т.к., например, в китайском языке пробелов нет, но
 							// каждый иероглиф как отдельное слово идет.
@@ -2094,8 +2109,8 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
                             {
 								X = Range.X;
                                 // Либо слово целиком занимает строку, либо не целиком, но разница очень мала
-								// либо это набор китайских иероглифов (PRSC.Words > 1)
-                                if ((RangeWidth - Range.W <= 0.05 * RangeWidth || PRSC.Words > 1) && PRSC.Letters > 1)
+								// либо это набор китайских иероглифов (PRSC.getJustifyWords() > 1)
+                                if ((RangeWidth - Range.W <= 0.05 * RangeWidth || PRSC.getJustifyWords() > 1) && PRSC.Letters > 1)
                                     JustifyWord = (RangeWidth - Range.W) / (PRSC.Letters - 1);
                             }
                             else if (0 === CurRange || Line.Info & paralineinfo_End)
@@ -2128,14 +2143,14 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 							// TODO: Переделать проверку последнего отрезка в последней строке (нужно выставлять флаг когда пришел PRS.End в отрезке)
 							
 							// Последний промежуток последней строки не надо растягивать по ширине.
-							if (PRSC.Spaces > 0 && (!(Line.Info & paralineinfo_End) || CurRange !== Line.Ranges.length - 1))
+							if (PRSC.getJustifySpaces() > 0 && (!(Line.Info & paralineinfo_End) || CurRange !== Line.Ranges.length - 1))
 							{
 								if (bRtlAlign)
 									X = Range.X - rtlShift;
 								else
 									X = Range.X;
 								
-								JustifySpace = (RangeWidth - Range.W) / PRSC.Spaces;
+								JustifySpace = (RangeWidth - Range.W) / PRSC.getJustifySpaces();
 							}
 							else
 							{
@@ -2169,17 +2184,16 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 		{
 			var Item = this.Content[Pos];
 			Item.recalculateRangeAlign(PRSA);
-			if (!(PRSA.RecalcResult & recalcresult_NextElement))
-			{
-				PRSW.RecalcResult = PRSA.RecalcResult;
+			if (!PRSA.canContinue())
 				return PRSA.RecalcResult;
-			}
 		}
 
 		PRSA.endRange();
-    }
-
-    return PRSA.RecalcResult;
+		if (!PRSA.canContinue())
+			return PRSA.RecalcResult;
+	}
+	
+	return PRSA.RecalcResult;
 };
 
 Paragraph.prototype.private_RecalculateLineCheckFootnotes = function(CurLine, CurPage, PRS, ParaPr)
@@ -2568,6 +2582,24 @@ Paragraph.prototype.private_RecalculateMoveLineToNextPage = function(CurLine, Cu
 		PRS.RecalcResult = recalcresult_NextPage;
 		return false;
 	}
+};
+
+/**
+ * @param {Array} wrapRanges
+ * @returns {boolean}
+ */
+Paragraph.prototype.private_CheckTightWrapRanges = function(wrapRanges)
+{
+	for (let i = 0; i < wrapRanges.length; ++i)
+	{
+		if (WRAPPING_TYPE_TIGHT === wrapRanges[i].typeLeft
+			|| WRAPPING_TYPE_THROUGH === wrapRanges[i].typeLeft
+			|| WRAPPING_TYPE_TIGHT === wrapRanges[i].typeRight
+			|| WRAPPING_TYPE_THROUGH === wrapRanges[i].typeRight)
+			return true;
+	}
+
+	return false;
 };
 
 Paragraph.prototype.private_CheckNeedBeforeSpacing = function(CurPage, Parent, PageAbs, ParaPr)
@@ -3177,6 +3209,8 @@ function CParaPage(X, Y, XLimit, YLimit, FirstLine)
     this.EndLine   = FirstLine; // Номер последней строки на данной странице
     this.TextPr    = null;      // Расситанные текстовые настройки для начала страницы
 
+    this.FirstLineTightWrap = false; // Первая строка страницы обтекается объектом с типом tight/through (баг #50253)
+
     this.Drawings  = [];
     this.EndInfo   = new CParagraphPageEndInfo();
 }
@@ -3192,6 +3226,7 @@ CParaPage.prototype =
         this.FirstLine = FirstLine;
         this.Bounds    = new CDocumentBounds( X, Y, XLimit, Y );
         this.StartLine = FirstLine;
+        this.FirstLineTightWrap = false;
         this.Drawings  = [];
     },
 

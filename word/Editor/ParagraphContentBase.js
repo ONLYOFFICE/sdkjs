@@ -1325,10 +1325,15 @@ CParagraphContentWithContentBase.prototype.OnDetach = function()
 CParagraphContentWithContentBase.prototype.OnAttach = function()
 {
 };
-CParagraphContentWithContentBase.prototype.private_UpdateDocumentOutline = function()
+CParagraphContentWithContentBase.prototype.private_UpdateOutline = function()
 {
 	if (this.Paragraph)
-		this.Paragraph.UpdateDocumentOutline();
+		this.Paragraph.UpdateOutline();
+};
+CParagraphContentWithContentBase.prototype.private_UpdatePresentationOutline = function()
+{
+	if (this.Paragraph)
+		this.Paragraph.UpdatePresentationOutline();
 };
 CParagraphContentWithContentBase.prototype.IsSolid = function()
 {
@@ -1741,7 +1746,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Add_ToContent = function(Pos
 {
     this.Content.splice(Pos, 0, Item);
     this.updateTrackRevisions();
-	this.private_UpdateDocumentOutline();
+	this.private_UpdateOutline();
     this.private_CheckUpdateBookmarks([Item]);
 	this.private_UpdateSelectionPosOnAdd(Pos, 1);
 
@@ -1826,7 +1831,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove_FromContent = functio
 	var DeletedItems = this.Content.slice(Pos, Pos + Count);
 	this.Content.splice(Pos, Count);
     this.updateTrackRevisions();
-	this.private_UpdateDocumentOutline();
+	this.private_UpdateOutline();
 	this.private_CheckUpdateBookmarks(DeletedItems);
 	this.private_UpdateSelectionPosOnRemove(Pos, Count);
 
@@ -3885,7 +3890,7 @@ CParagraphContentWithParagraphLikeContent.prototype.SetContentPosition = functio
     this.State.ContentPos = Math.max(0, Math.min(this.Content.length - 1, Pos));
 
     // TODO: Как только в CMathContent CurPos перейдет на стандартное this.State.ContentPos убрать эту проверку
-    if (this.CurPos)
+    if (typeof this.CurPos === 'number')
         this.CurPos = this.State.ContentPos;
 
     if (this.Content[Pos] && this.Content[Pos].SetContentPosition)
@@ -4092,6 +4097,10 @@ CParagraphContentWithParagraphLikeContent.prototype.RestartSpellCheck = function
         this.Content[nIndex].RestartSpellCheck();
     }
 };
+CParagraphContentWithParagraphLikeContent.prototype.CanCheckSpelling = function()
+{
+	return true;
+};
 /**
  * @param oSpellCheckerEngine {AscWord.CParagraphSpellCheckerCollector}
  * @param nDepth {number}
@@ -4100,7 +4109,10 @@ CParagraphContentWithParagraphLikeContent.prototype.CheckSpelling = function(oSp
 {
 	if (oSpellCheckerEngine.IsExceedLimit())
 		return;
-
+	
+	if (!this.CanCheckSpelling())
+		return;
+	
 	var nStartPos = 0;
 	if (oSpellCheckerEngine.IsFindStart())
 		nStartPos = oSpellCheckerEngine.GetPos(nDepth);

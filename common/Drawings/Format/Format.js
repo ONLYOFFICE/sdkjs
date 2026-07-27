@@ -1648,7 +1648,8 @@
 			LAYOUT: 1,
 			MASTER: 2,
 			NOTES: 3,
-			NOTES_MASTER: 4
+			NOTES_MASTER: 4,
+			HANDOUT_MASTER: 5
 		};
 
 
@@ -6731,6 +6732,70 @@
 		CUniFill.prototype.ReplaceImageUrl = function (mapUrl) {
 			return this.fill && this.fill.ReplaceImageUrl ? this.fill.ReplaceImageUrl(mapUrl) : false;
 		};
+		CUniFill.prototype.getLnColor = function () {
+			let RGBA = null;
+			switch (this.fill.type)
+			{
+				case c_oAscFill.FILL_TYPE_BLIP:
+				{
+					RGBA = new AscFormat.CUniColor().RGBA;
+					break;
+				}
+				case c_oAscFill.FILL_TYPE_SOLID:
+				{
+					if(this.fill.color)
+					{
+						RGBA = this.fill.color.RGBA;
+					}
+					else
+					{
+						RGBA = new AscFormat.CUniColor().RGBA;
+					}
+					break;
+				}
+				case c_oAscFill.FILL_TYPE_GRAD:
+				{
+					var _c = this.fill.colors;
+					if (_c == 0)
+						RGBA = new AscFormat.CUniColor().RGBA;
+					else
+					{
+						if(this.fill.colors[0].color)
+						{
+							RGBA = this.fill.colors[0].color.RGBA;
+						}
+						else
+						{
+							RGBA = new AscFormat.CUniColor().RGBA;
+						}
+					}
+
+					break;
+				}
+				case c_oAscFill.FILL_TYPE_PATT:
+				{
+					if(this.fill.fgClr)
+					{
+						RGBA = this.fill.fgClr.RGBA;
+					}
+					else
+					{
+						RGBA = new AscFormat.CUniColor().RGBA;
+					}
+					break;
+				}
+				case c_oAscFill.FILL_TYPE_NOFILL:
+				{
+					break;
+				}
+				default:
+				{
+					break;
+				}
+			}
+			return RGBA;
+		};
+
 		function CBuBlip() {
 			CBaseNoIdObject.call(this);
 			this.blip = null;
@@ -8185,18 +8250,26 @@
 			CBaseNoIdObject.call(this);
 			this.type = null;
 			this.media = null;
+			this.start = null;
+			this.end = null;
 		}
 
 		InitClass(UniMedia, CBaseNoIdObject, 0);
 		UniMedia.prototype.Write_ToBinary = function (w) {
 			var bType = this.type !== null && this.type !== undefined;
 			var bMedia = typeof this.media === 'string';
+			var bStart = typeof this.start === 'number';
+			var bEnd = typeof this.end === 'number';
 			var nFlags = 0;
 			bType && (nFlags |= 1);
 			bMedia && (nFlags |= 2);
+			bStart && (nFlags |= 4);
+			bEnd && (nFlags |= 8);
 			w.WriteLong(nFlags);
 			bType && w.WriteLong(this.type);
 			bMedia && w.WriteString2(this.media);
+			bStart && w.WriteDouble(this.start);
+			bEnd && w.WriteDouble(this.end);
 		};
 		UniMedia.prototype.Read_FromBinary = function (r) {
 			var nFlags = r.GetLong();
@@ -8206,11 +8279,19 @@
 			if (nFlags & 2) {
 				this.media = r.GetString2();
 			}
+			if (nFlags & 4) {
+				this.start = r.GetDouble();
+			}
+			if (nFlags & 8) {
+				this.end = r.GetDouble();
+			}
 		};
 		UniMedia.prototype.createDuplicate = function () {
 			var _ret = new UniMedia();
 			_ret.type = this.type;
 			_ret.media = this.media;
+			_ret.start = this.start;
+			_ret.end = this.end;
 			return _ret;
 		};
 
@@ -10721,15 +10802,12 @@
 						if(oPresentation) {
 							oPresentation.bNeedUpdateThemes = true;
 							let oThemedObjects = oPresentation.GetSlideObjectsWithTheme(this);
-							for(let nIdx = 0; nIdx < oThemedObjects.masters.length; ++nIdx) {
-								oThemedObjects.masters[nIdx].checkSlideColorScheme();
-							}
-							for(let nIdx = 0; nIdx < oThemedObjects.layouts.length; ++nIdx) {
-								oThemedObjects.layouts[nIdx].checkSlideColorScheme();
-							}
-							for(let nIdx = 0; nIdx < oThemedObjects.slides.length; ++nIdx) {
-								oThemedObjects.slides[nIdx].checkSlideColorScheme();
-								oThemedObjects.slides[nIdx].addToRecalculate();
+							for (let sKey in oThemedObjects) {
+								const arrSlides = oThemedObjects[sKey];
+								for(let nIdx = 0; nIdx < arrSlides.length; ++nIdx) {
+									arrSlides[nIdx].checkSlideColorScheme();
+									arrSlides[nIdx].addToRecalculate();
+								}
 							}
 							AscCommon.History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: this});
 						}
@@ -11038,6 +11116,17 @@
 				this.bgRef.Read_FromBinary(r);
 			}
 		};
+		CBg.prototype.recalculate = function(theme, slide, layout, master, RGBA) {
+			const ret = {RGBA: null, backFill: null};
+			if (this.bgPr) {
+				ret.backFill = this.bgPr.Fill;
+			} else if (this.bgRef) {
+				this.bgRef.Color.Calculate(theme, slide, layout, master, RGBA);
+				ret.RGBA = this.bgRef.Color.RGBA;
+				ret.backFill = theme.themeElements.fmtScheme.GetFillStyle(this.bgRef.idx, this.bgRef.Color);
+			}
+			return ret;
+		};
 
 		function CSld(parent) {
 			CBaseFormatObject.call(this);
@@ -11054,6 +11143,9 @@
 		CSld.prototype.setBg = function (bg) {
 			AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_CSld_SetBg, this.Bg, bg));
 			this.Bg = bg;
+		};
+		CSld.prototype.getBgFill = function () {
+			return this.Bg && this.Bg.bgPr ? this.Bg.bgPr.Fill : null;
 		};
 		CSld.prototype.setName = function (name) {
 			AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_CSld_SetName, this.name, name));
@@ -11202,8 +11294,11 @@
 		};
 		CSld.prototype.forEachSp = function(fCallback) {
 			for(let nSp = 0; nSp < this.spTree.length; ++nSp) {
-				fCallback(this.spTree[nSp]);
+				if (fCallback(this.spTree[nSp])) {
+					return true;
+				}
 			}
+			return false;
 		};
 		CSld.prototype.handleAllContents = function(fCallback) {
 			this.forEachSp(function(oSp) {
@@ -11221,6 +11316,25 @@
 			if(bNoHistory) {
 				AscCommon.History.RecalculateData.Update = bOldUpdate;
 			}
+		};
+		CSld.prototype.recalculateBackground = function(theme, slide, layout, master, RGBA) {
+			if (this.Bg) {
+				return this.Bg.recalculate(theme, slide, layout, master, RGBA);
+
+			}
+			return {backFill: null, RGBA: null};
+		};
+		CSld.prototype.getContentShape = function () {
+			let matchingShape;
+			function forEachSpCallback(shape) {
+				const placeholderType = shape.getPlaceholderTypeWithDefault();
+				if (placeholderType === AscFormat.phType_subTitle || placeholderType === AscFormat.phType_obj || placeholderType === AscFormat.phType_body) {
+					matchingShape = shape;
+					return true;
+				}
+			}
+			this.forEachSp(forEachSpCallback);
+			return matchingShape;
 		};
 
 		function RefreshContentAllFields(oContent) {
@@ -12583,8 +12697,13 @@
 		CBullet.prototype.isNone = function() {
 			if (!this.bulletType)
 				return true;
-			
+
 			return this.bulletType.type === AscFormat.BULLET_TYPE_TYPEFACE_NONE;
+		};
+		CBullet.prototype.getChar = function() {
+			if (this.bulletType && AscFormat.BULLET_TYPE_BULLET_CHAR === this.bulletType.type && typeof this.bulletType.Char === "string")
+				return this.bulletType.Char;
+			return "";
 		};
 		CBullet.prototype.getPresentationBullet = function (theme, color) {
 			var para_pr = new CParaPr();
@@ -14855,6 +14974,15 @@
 		CApp.prototype.asc_getAppVersion = function () {
 			return this.AppVersion;
 		};
+		CApp.prototype.isLegacyMS = function () {
+			let msApps = ["Microsoft Office Word", "Microsoft Excel", "Microsoft Office PowerPoint",
+				"Microsoft Macintosh Word", "Microsoft Macintosh Excel", "Microsoft Macintosh PowerPoint"];
+			if (msApps.indexOf(this.Application) === -1) {
+				return false;
+			}
+			let version = parseInt(this.AppVersion, 10);
+			return AscFormat.isRealNumber(version) && version < 14;
+		};
 		CApp.prototype.asc_getCharacters = function () {
 			return this.Characters;
 		};
@@ -16089,7 +16217,7 @@
 									for (var i = 0; i < lCount; i++) {
 										s.Skip2(1);
 
-										var _author = new AscCommon.CCommentAuthor();
+										var _author = new AscCommon.CSlideCommentAuthor();
 
 										var _end_rec3 = s.cur + s.GetLong() + 4;
 										s.Skip2(1); // start attributes
@@ -16451,7 +16579,7 @@
 		}
 
 		function GenerateDefaultMasterSlide(theme) {
-			var master = new MasterSlide(theme.presentation, theme);
+			var master = new AscCommonSlide.MasterSlide();
 			master.Theme = theme;
 
 			master.sldLayoutLst[0] = GenerateDefaultSlideLayout(master);
@@ -16460,21 +16588,11 @@
 		}
 
 		function GenerateDefaultSlideLayout(master) {
-			var layout = new SlideLayout();
+			var layout = new AscCommonSlide.SlideLayout();
 			layout.Theme = master.Theme;
 			layout.Master = master;
 			layout.setPreserve(true);
 			return layout;
-		}
-
-		function GenerateDefaultSlide(layout) {
-			var slide = new Slide(layout.Master.presentation, layout, 0);
-			slide.Master = layout.Master;
-			slide.Theme = layout.Master.Theme;
-			slide.setNotes(AscCommonSlide.CreateNotes());
-			slide.notes.setNotesMaster(layout.Master.presentation.notesMasters[0]);
-			slide.notes.setSlide(slide);
-			return slide;
 		}
 
 		function CreateDefaultTextRectStyle() {
@@ -17247,157 +17365,244 @@
 		 * @return {CShape}
 		 */
 		function builder_CreateShape(sType, nWidth, nHeight, oFill, oStroke, oParent, oTheme, oDrawingDocument, bWord, worksheet) {
-			var oShapeTrack = new AscFormat.NewShapeTrack(sType, 0, 0, oTheme, null, null, null, 0);
+			var oShapeTrack = new AscFormat.NewShapeTrack(sType, 0, 0, oTheme, null, null, null, 0, undefined, undefined, undefined, true);
 			oShapeTrack.track({}, nWidth, nHeight, true);
 			var oShape = oShapeTrack.getShape(bWord === true, oDrawingDocument, null);
 			oShape.setParent(oParent);
 			if (worksheet) {
 				oShape.setWorksheet(worksheet);
 			}
-			oShape.spPr.setFill(oFill);
-			oShape.spPr.setLn(oStroke);
+			if (oFill) {
+				oShape.spPr.setFill(oFill);
+			}
+			if (oStroke) {
+				oShape.spPr.setLn(oStroke);
+			}
 			return oShape;
 		}
 
 		function ChartBuilderTypeToInternal(sType) {
 			switch (sType) {
+				case "ColumnClustered":
 				case "bar": {
 					return Asc.c_oAscChartTypeSettings.barNormal;
 				}
+				case "ColumnStacked":
 				case "barStacked": {
 					return Asc.c_oAscChartTypeSettings.barStacked;
 				}
+				case "ColumnStacked100":
 				case "barStackedPercent": {
 					return Asc.c_oAscChartTypeSettings.barStackedPer;
 				}
+				case "3DColumnClustered":
 				case "bar3D": {
 					return Asc.c_oAscChartTypeSettings.barNormal3d;
 				}
+				case "3DColumnStacked":
 				case "barStacked3D": {
 					return Asc.c_oAscChartTypeSettings.barStacked3d;
 				}
+				case "3DColumnStacked100":
 				case "barStackedPercent3D": {
 					return Asc.c_oAscChartTypeSettings.barStackedPer3d;
 				}
+				case "3DColumn":
 				case "barStackedPercent3DPerspective": {
 					return Asc.c_oAscChartTypeSettings.barNormal3dPerspective;
 				}
+				case "BarClustered":
 				case "horizontalBar": {
 					return Asc.c_oAscChartTypeSettings.hBarNormal;
 				}
+				case "BarStacked":
 				case "horizontalBarStacked": {
 					return Asc.c_oAscChartTypeSettings.hBarStacked;
 				}
+				case "BarStacked100":
 				case "horizontalBarStackedPercent": {
 					return Asc.c_oAscChartTypeSettings.hBarStackedPer;
 				}
+				case "3DBarClustered":
 				case "horizontalBar3D": {
 					return Asc.c_oAscChartTypeSettings.hBarNormal3d;
 				}
+				case "3DBarStacked":
 				case "horizontalBarStacked3D": {
 					return Asc.c_oAscChartTypeSettings.hBarStacked3d;
 				}
+				case "3DBarStacked100":
 				case "horizontalBarStackedPercent3D": {
 					return Asc.c_oAscChartTypeSettings.hBarStackedPer3d;
 				}
+				case "Line":
 				case "lineNormal": {
 					return Asc.c_oAscChartTypeSettings.lineNormal;
 				}
+				case "LineStacked":
 				case "lineStacked": {
 					return Asc.c_oAscChartTypeSettings.lineStacked;
 				}
+				case "LineStacked100":
 				case "lineStackedPercent": {
 					return Asc.c_oAscChartTypeSettings.lineStackedPer;
 				}
+				case "LineMarkers":
 				case "lineNormalMarker": {
 					return Asc.c_oAscChartTypeSettings.lineNormalMarker;
 				}
+				case "LineMarkersStacked":
 				case "lineStackedMarker": {
 					return Asc.c_oAscChartTypeSettings.lineStackedMarker;
 				}
+				case "LineMarkersStacked100":
 				case "lineStackedPerMarker": {
 					return Asc.c_oAscChartTypeSettings.lineStackedPerMarker;
 				}
+				case "3DLine":
 				case "line3D": {
 					return Asc.c_oAscChartTypeSettings.line3d;
 				}
+				case "Pie":
 				case "pie": {
 					return Asc.c_oAscChartTypeSettings.pie;
 				}
+				case "3DPie":
 				case "pie3D": {
 					return Asc.c_oAscChartTypeSettings.pie3d;
 				}
+				case "Doughnut":
 				case "doughnut": {
 					return Asc.c_oAscChartTypeSettings.doughnut;
 				}
+				case "XYScatter":
 				case "scatter": {
 					return Asc.c_oAscChartTypeSettings.scatter;
 				}
+				case "XYScatterLinesNoMarkers":
 				case "scatterLine": {
 					return Asc.c_oAscChartTypeSettings.scatterLine;
 				}
+				case "XYScatterLines":
 				case "scatterLineMarker": {
 					return Asc.c_oAscChartTypeSettings.scatterLineMarker;
 				}
+				case "XYScatterSmoothNoMarkers":
 				case "scatterSmooth": {
 					return Asc.c_oAscChartTypeSettings.scatterSmooth;
 				}
+				case "XYScatterSmooth":
 				case "scatterSmoothMarker": {
 					return Asc.c_oAscChartTypeSettings.scatterSmoothMarker;
 				}
+				case "StockHLC":
+				case "StockOHLC":
+				case "StockVHLC":
+				case "StockVOHLC":
 				case "stock": {
 					return Asc.c_oAscChartTypeSettings.stock;
 				}
+				case "Area":
 				case "area": {
 					return Asc.c_oAscChartTypeSettings.areaNormal;
 				}
+				case "AreaStacked":
 				case "areaStacked": {
 					return Asc.c_oAscChartTypeSettings.areaStacked;
 				}
+				case "AreaStacked100":
 				case "areaStackedPercent": {
 					return Asc.c_oAscChartTypeSettings.areaStackedPer;
 				}
+				case "Combo":
 				case "comboCustom": {
 					return Asc.c_oAscChartTypeSettings.comboCustom;
 				}
+				case "ComboColumnClusteredLine":
 				case "comboBarLine": {
 					return Asc.c_oAscChartTypeSettings.comboBarLine;
 				}
+				case "ComboColumnClusteredLineSecondaryAxis":
 				case "comboBarLineSecondary": {
 					return Asc.c_oAscChartTypeSettings.comboBarLineSecondary;
 				}
+				case "Radar":
 				case "radar": {
 					return Asc.c_oAscChartTypeSettings.radar;
 				}
+				case "RadarMarkers":
 				case "radarMarker": {
 					return Asc.c_oAscChartTypeSettings.radarMarker;
 				}
+				case "RadarFilled":
 				case "radarFilled": {
 					return Asc.c_oAscChartTypeSettings.radarFilled;
 				}
 
-				// Unhandled cases from Asc.c_oAscChartTypeSettings (v9.0.0)
-				// case "scatterMarker": {
-				// 	return Asc.c_oAscChartTypeSettings.scatterMarker;
-				// }
-				// case "scatterNone": {
-				// 	return Asc.c_oAscChartTypeSettings.scatterNone;
-				// }
-				// case "comboAreaBar": {
-				// 	return Asc.c_oAscChartTypeSettings.comboAreaBar;
-				// }
-				// case "contour": {
-				// 	return Asc.c_oAscChartTypeSettings.contourNormal;
-				// }
-				// case "contourWireframe": {
-				// 	return Asc.c_oAscChartTypeSettings.contourWireframe;
-				// }
-				// case "surfaceNormal": {
-				// 	return Asc.c_oAscChartTypeSettings.surfaceNormal;
-				// }
-				// case "surfaceWireframe": {
-				// 	return Asc.c_oAscChartTypeSettings.surfaceWireframe;
-				// }
+				case "3DArea":
+				case "3DAreaStacked":
+				case "3DAreaStacked100":
+				case "AreaEx":
+				case "AreaStackedEx":
+				case "AreaStacked100Ex":
+				case "ColumnClusteredEx":
+				case "ColumnStackedEx":
+				case "ColumnStacked100Ex":
+				case "BarClusteredEx":
+				case "BarStackedEx":
+				case "BarStacked100Ex":
+				case "LineEx":
+				case "LineStackedEx":
+				case "LineStacked100Ex":
+				case "PieEx":
+				case "PieExploded":
+				case "3DPieExploded":
+				case "PieOfPie":
+				case "BarOfPie":
+				case "DoughnutEx":
+				case "DoughnutExploded":
+				case "XYScatterEx":
+				case "Bubble":
+				case "Bubble3DEffect":
+				case "BubbleEx":
+				case "Boxwhisker":
+				case "Funnel":
+				case "Histogram":
+				case "Pareto":
+				case "RegionMap":
+				case "Sunburst":
+				case "Treemap":
+				case "Waterfall":
+				case "SuggestedChart":
+				case "OtherCombinations":
+				case "ComboAreaStackedColumnClustered":
+				case "ConeBarClustered":
+				case "ConeBarStacked":
+				case "ConeBarStacked100":
+				case "ConeCol":
+				case "ConeColClustered":
+				case "ConeColStacked":
+				case "ConeColStacked100":
+				case "CylinderBarClustered":
+				case "CylinderBarStacked":
+				case "CylinderBarStacked100":
+				case "CylinderCol":
+				case "CylinderColClustered":
+				case "CylinderColStacked":
+				case "CylinderColStacked100":
+				case "PyramidBarClustered":
+				case "PyramidBarStacked":
+				case "PyramidBarStacked100":
+				case "PyramidCol":
+				case "PyramidColClustered":
+				case "PyramidColStacked":
+				case "PyramidColStacked100":
+				case "Surface":
+				case "SurfaceWireframe":
+				case "SurfaceTopView":
+				case "SurfaceTopViewWireframe": {
+					return null;
+				}
 
 				default: return null;
 			}
@@ -20835,7 +21040,6 @@
 		window['AscFormat'].GenerateDefaultVisioTheme = GenerateDefaultVisioTheme;
 		window['AscFormat'].GenerateDefaultMasterSlide = GenerateDefaultMasterSlide;
 		window['AscFormat'].GenerateDefaultSlideLayout = GenerateDefaultSlideLayout;
-		window['AscFormat'].GenerateDefaultSlide = GenerateDefaultSlide;
 		window['AscFormat'].CreateDefaultTextRectStyle = CreateDefaultTextRectStyle;
 		window['AscFormat'].GenerateDefaultColorMap = GenerateDefaultColorMap;
 		window['AscFormat'].CreateAscFill = CreateAscFill;

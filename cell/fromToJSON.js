@@ -140,6 +140,17 @@
             }
             return this.oSizes[8];//A4
         };
+        //see AscCommonExcel.DocumentPageSize.getIdByWHAndStored
+        this.getIdByWHAndStored = function(widthMm, heightMm, storedId)
+        {
+            if(null != storedId)
+            {
+                var stored = this.getSizeById(storedId);
+                if(stored.w_mm == widthMm && stored.h_mm == heightMm)
+                    return storedId;
+            }
+            return this.getSizeByWH(widthMm, heightMm).id;
+        };
     };
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -354,8 +365,11 @@
 		var dWidth = oPageSetup.asc_getWidth();
 		var dHeight = oPageSetup.asc_getHeight();
 		var nSizeId = undefined;
-		if(null != dWidth && null != dHeight)
-			nSizeId = DocumentPageSize.getSizeByWH(dWidth, dHeight).id;
+		if(null != dWidth && null != dHeight) {
+			//keep sizes sharing the same dimensions (e.g. Letter/LetterSmall) via the stored id while
+			//it is still consistent with the dimensions, otherwise derive it from them
+			nSizeId = DocumentPageSize.getIdByWHAndStored(dWidth, dHeight, oPageSetup.asc_getPaperSize());
+		}
 
 		return {
 			"blackAndWhite":      oPageSetup.blackAndWhite != null ? oPageSetup.blackAndWhite : undefined,
@@ -512,11 +526,11 @@
 			"showZeros":         oView.showZeros != null ? oView.showZeros : undefined,
 			"topLeftCell":       oView.topLeftCell != null ? oView.topLeftCell.getName() : undefined,
 			"zoomScale":         oView.zoomScale != null ? oView.zoomScale : undefined,
-			"pane":              oView.pane != null ? this.SerPane(oView.pane) : undefined, 
+			"pane":              oView.pane != null ? this.SerPane(oView.pane, oView) : undefined,
 			"selection":         oWorksheet.selectionRange != null ? this.SerSelectionRange(oWorksheet.selectionRange) : undefined
 		}
 	};
-	WriterToJSON.prototype.SerPane = function(oPane)
+	WriterToJSON.prototype.SerPane = function(oPane, oView)
 	{
 		if (!oPane)
 			return oPane;
@@ -531,13 +545,17 @@
 		} else if (0 < nCol) {
 			nActivePane = AscCommonExcel.EActivePane.topRight;
 		}
-		
+
+		// xSplit/ySplit = count of frozen cols/rows from the frozen area origin (sheetView.topLeftCell)
+		var nOriginCol = (oView && oView.topLeftCell) ? oView.topLeftCell.c1 : 0;
+		var nOriginRow = (oView && oView.topLeftCell) ? oView.topLeftCell.r1 : 0;
+
 		return {
 			"activePane":  nActivePane != null ? ToXML_EActivePane(nActivePane) : undefined,
 			"state":       "frozen", // Always write Frozen
 			"topLeftCell": oPane.topLeftFrozenCell.getID(),
-			"xSplit":      0 < nCol ? nCol : undefined,
-			"ySplit":      0 < nRow ? nRow : undefined
+			"xSplit":      0 < nCol ? nCol - nOriginCol : undefined,
+			"ySplit":      0 < nRow ? nRow - nOriginRow : undefined
 		}
 	};
 	WriterToJSON.prototype.SerSelectionRange = function(oSelection)
@@ -4056,6 +4074,7 @@
 			var item = DocumentPageSize.getSizeById(oParsedSetup["paperSize"]);
 			oPageSetup.asc_setWidth(item.w_mm);
 			oPageSetup.asc_setHeight(item.h_mm);
+			oPageSetup.asc_setPaperSize(oParsedSetup["paperSize"]);
 		}
 		if (oParsedSetup["scale"] != undefined)
 			oPageSetup.scale = oParsedSetup["scale"];

@@ -9635,7 +9635,24 @@ function RangeDataManagerElem(bbox, data)
 		return result;
 	};
 
+	AutoFilter.prototype.reinitDynamicFilters = function(worksheet, opt_columnsFilter) {
+		if (worksheet.workbook.bUndoChanges || worksheet.workbook.bRedoChanges) {
+			return;
+		}
+		var columns = opt_columnsFilter ? opt_columnsFilter : this.FilterColumns;
+		if (columns) {
+			for (var i = 0; i < columns.length; i++) {
+				var filterColumn = opt_columnsFilter ? columns[i].filter : columns[i];
+				if (filterColumn.DynamicFilter) {
+					filterColumn.DynamicFilter.init(worksheet.getRange3(this.Ref.r1 + 1, filterColumn.ColId + this.Ref.c1, this.Ref.r2, filterColumn.ColId + this.Ref.c1));
+				}
+			}
+		}
+	};
+
 	AutoFilter.prototype.setRowHidden = function(worksheet, newFilterColumn, opt_columnsFilter) {
+		this.reinitDynamicFilters(worksheet, opt_columnsFilter);
+
 		var startRow = this.Ref.r1 + 1;
 		var endRow = this.Ref.r2;
 
@@ -9819,7 +9836,7 @@ function RangeDataManagerElem(bbox, data)
 		if (null !== this.Ref) {
 			writer.WriteXmlAttributeStringEncode("ref", this.Ref.getName());
 		}
-		writer.WriteXmlAttributesEnd();
+		writer.WriteXmlAttributesEndSavePos();
 		if (this.FilterColumns) {
 			for (var i = 0; i < this.FilterColumns.length; ++i) {
 				var elem = this.FilterColumns[i];
@@ -9830,7 +9847,7 @@ function RangeDataManagerElem(bbox, data)
 			this.SortState.toXml(writer, "sortState");
 		}
 
-		writer.WriteXmlNodeEnd(ns + name);
+		writer.WriteXmlNodeEndCheckEmpty(ns + name);
 	};
 	AutoFilter.prototype.deleteFilterColumn = function(index) {
 		if (this.FilterColumns && this.FilterColumns[index]) {
@@ -10223,6 +10240,7 @@ function RangeDataManagerElem(bbox, data)
 					break;
 				}
 				case Asc.ETotalsRowFunction.totalrowfunctionCountNums: {
+					res = generateFunction(102);
 					break;
 				}
 				case Asc.ETotalsRowFunction.totalrowfunctionCustom: {
@@ -13420,18 +13438,22 @@ function RangeDataManagerElem(bbox, data)
 	asc_CPageMargins.prototype.asc_setHeader = function (newVal) {
 		var oldVal = this.header;
 		this.header = newVal;
-		/*if (this.ws && AscCommon.History.Is_On() && oldVal !== this.top) {
-			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Top, this.ws.getId(),
+		if (this.ws && AscCommon.History.Is_On() && oldVal !== this.header) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Header, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
-		}*/
+		}
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageMargins.prototype.asc_setFooter = function (newVal) {
 		var oldVal = this.footer;
 		this.footer = newVal;
-		/*if (this.ws && AscCommon.History.Is_On() && oldVal !== this.bottom) {
-			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Bottom, this.ws.getId(),
+		if (this.ws && AscCommon.History.Is_On() && oldVal !== this.footer) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Footer, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
-		}*/
+		}
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageMargins.prototype.asc_setOptions = function (obj) {
 		var prop;
@@ -13458,6 +13480,7 @@ function RangeDataManagerElem(bbox, data)
 		this.orientation = c_oAscPrintDefaultSettings.PageOrientation;
 		this.width = c_oAscPrintDefaultSettings.PageWidth;
 		this.height = c_oAscPrintDefaultSettings.PageHeight;
+		this.paperSize = null;
 
 		this.fitToWidth = 1; //default -> 1, 0 -> automatic
 		this.fitToHeight = 1; //default -> 1, 0 -> automatic
@@ -13492,6 +13515,7 @@ function RangeDataManagerElem(bbox, data)
 		res.orientation = this.orientation;
 		res.width = this.width;
 		res.height = this.height;
+		res.paperSize = this.paperSize;
 
 		res.fitToWidth = this.fitToWidth; //default -> 1, 0 -> automatic
 		res.fitToHeight = this.fitToHeight; //default -> 1, 0 -> automatic
@@ -13545,6 +13569,15 @@ function RangeDataManagerElem(bbox, data)
 		}
 		let wb = this.ws && this.ws.workbook && this.ws.workbook;
 		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
+	};
+	asc_CPageSetup.prototype.asc_getPaperSize = function () { return this.paperSize; };
+	asc_CPageSetup.prototype.asc_setPaperSize = function (newVal) {
+		var oldVal = this.paperSize;
+		this.paperSize = newVal;
+		if (this.ws && AscCommon.History.Is_On() && oldVal !== this.paperSize) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_PaperSize, this.ws.getId(),
+				null, new UndoRedoData_Layout(oldVal, newVal));
+		}
 	};
 	asc_CPageSetup.prototype.asc_getFirstPageNumber = function () {
 		return this.useFirstPageNumber ? this.firstPageNumber : null;
@@ -13632,6 +13665,11 @@ function RangeDataManagerElem(bbox, data)
 		prop = obj.asc_getHeight();
 		if(prop !== this.asc_getHeight()) {
 			this.asc_setHeight(prop);
+		}
+		//keep the paper size id in sync with the merged dimensions (null -> derived from width/height)
+		prop = obj.asc_getPaperSize();
+		if(prop !== this.asc_getPaperSize()) {
+			this.asc_setPaperSize(prop);
 		}
 		prop = obj.asc_getFitToWidth();
 		if(prop !== this.asc_getFitToWidth()) {
@@ -13729,6 +13767,7 @@ function RangeDataManagerElem(bbox, data)
 		res["pageSetup"]["horizontalDpi"] = this.pageSetup.horizontalDpi;
 		res["pageSetup"]["orientation"] = this.pageSetup.orientation;
 		res["pageSetup"]["pageOrder"] = this.pageSetup.pageOrder;
+		res["pageSetup"]["paperSize"] = this.pageSetup.paperSize;
 		res["pageSetup"]["paperUnits"] = this.pageSetup.paperUnits;
 		res["pageSetup"]["printArea"] = this.pageSetup.printArea;
 		res["pageSetup"]["selection"] = this.pageSetup.selection;
@@ -13788,6 +13827,7 @@ function RangeDataManagerElem(bbox, data)
 		this.pageSetup.horizontalDpi = checkOnNull(props["pageSetup"]["horizontalDpi"], this.pageSetup.horizontalDpi);
 		this.pageSetup.orientation = checkOnNull(props["pageSetup"]["orientation"], this.pageSetup.orientation);
 		this.pageSetup.pageOrder = checkOnNull(props["pageSetup"]["pageOrder"], this.pageSetup.pageOrder);
+		this.pageSetup.paperSize = checkOnNull(props["pageSetup"]["paperSize"], this.pageSetup.paperSize);
 		this.pageSetup.paperUnits = checkOnNull(props["pageSetup"]["paperUnits"], this.pageSetup.paperUnits);
 		this.pageSetup.printArea = checkOnNull(props["pageSetup"]["printArea"], this.pageSetup.printArea);
 		this.pageSetup.selection = checkOnNull(props["pageSetup"]["selection"], this.pageSetup.selection);
@@ -14004,10 +14044,6 @@ function RangeDataManagerElem(bbox, data)
 	CHeaderFooter.prototype.getOddFooter = function () { return this.oddFooter; };
 	CHeaderFooter.prototype.getOddHeader = function () { return this.oddHeader; };
 
-	CHeaderFooter.prototype.setAlignWithMargins = function (val) { this.alignWithMargins = val; };
-	CHeaderFooter.prototype.setDifferentFirst = function (val) { this.differentFirst = val; };
-	CHeaderFooter.prototype.setDifferentOddEven = function (val) { this.differentOddEven = val; };
-	CHeaderFooter.prototype.setScaleWithDoc = function (val) { this.scaleWithDoc = val; };
 	CHeaderFooter.prototype.setEvenFooter = function (newVal) {
 		var oldVal = this.evenFooter ? this.evenFooter.str : null;
 
@@ -17159,32 +17195,34 @@ function RangeDataManagerElem(bbox, data)
 	 */
 	function _getFilledRange(oRange, bVertical) {
 		let oFilledRange = oRange.clone();
-		let nRow = oFilledRange.bbox.r1;
-		let nCol = oFilledRange.bbox.c1;
-		let sFirstValue = null;
+		let oBBox = oRange.bbox;
+		let nMinRow = null, nMaxRow = null, nMinCol = null, nMaxCol = null;
 
-		oRange._foreach(function (oCell, nCurRow, nCurCol) {
-			if (oCell && oCell.getValueWithoutFormat()) {
-				nRow = nCurRow;
-				nCol = nCurCol;
-				if (nCurRow === oRange.bbox.r1 && nCurCol === oRange.bbox.c1) {
-					sFirstValue = oCell.getValueWithoutFormat();
-				}
-			} else {
-				let sNextValue = _getNextValueFromRange(oRange, oCell, bVertical);
-				if (!sFirstValue && sNextValue) {
-					if (bVertical) {
-						oFilledRange.bbox.r1 = nCurRow + 1;
-						oFilledRange.bbox.c1 = nCurCol;
-					} else {
-						oFilledRange.bbox.c1 = nCurCol + 1;
-						oFilledRange.bbox.r1 = nCurRow;
-					}
-				}
+		oRange.forEachDataValue(function (nCurRow, nCurCol) {
+			if (nMinRow === null || nCurRow < nMinRow) {
+				nMinRow = nCurRow;
+			}
+			if (nMaxRow === null || nCurRow > nMaxRow) {
+				nMaxRow = nCurRow;
+			}
+			if (nMinCol === null || nCurCol < nMinCol) {
+				nMinCol = nCurCol;
+			}
+			if (nMaxCol === null || nCurCol > nMaxCol) {
+				nMaxCol = nCurCol;
 			}
 		});
-		oFilledRange.bbox.r2 = nRow;
-		oFilledRange.bbox.c2 = nCol;
+
+		if (nMinRow === null) {
+			oFilledRange.bbox.r2 = oBBox.r1;
+			oFilledRange.bbox.c2 = oBBox.c1;
+			return oFilledRange;
+		}
+
+		oFilledRange.bbox.r1 = nMinRow;
+		oFilledRange.bbox.c1 = nMinCol;
+		oFilledRange.bbox.r2 = nMaxRow;
+		oFilledRange.bbox.c2 = nMaxCol;
 
 		return oFilledRange;
 	}
@@ -22426,6 +22464,8 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_setOrientation"] = prot.asc_setOrientation;
 	prot["asc_setWidth"] = prot.asc_setWidth;
 	prot["asc_setHeight"] = prot.asc_setHeight;
+	prot["asc_getPaperSize"] = prot.asc_getPaperSize;
+	prot["asc_setPaperSize"] = prot.asc_setPaperSize;
 	prot["asc_getFitToWidth"] = prot.asc_getFitToWidth;
 	prot["asc_getFitToHeight"] = prot.asc_getFitToHeight;
 	prot["asc_setFitToWidth"] = prot.asc_setFitToWidth;

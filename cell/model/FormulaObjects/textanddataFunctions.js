@@ -636,7 +636,8 @@ function (window, undefined) {
 	cCONCATENATE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cCONCATENATE.prototype.argumentsType = [[argType.text]];
 	cCONCATENATE.prototype.Calculate = function (arg) {
-		var arg0 = new cString(""), argI;
+		// Accumulate into a primitive string and wrap once; avoids a cString wrapper + toString per element.
+		var sResult = "", argI, errElem = null;
 		for (var i = 0; i < arg.length; i++) {
 			argI = arg[i];
 			if (argI instanceof cArea || argI instanceof cArea3D) {
@@ -650,21 +651,21 @@ function (window, undefined) {
 			} else if (argI instanceof cArray) {
 				argI.foreach(function (elem) {
 					if (elem instanceof cError) {
-						arg0 = elem;
+						errElem = elem;
 						return true;
 					}
 
-					arg0 = new cString(arg0.toString().concat(elem.toLocaleString()));
+					sResult += elem.toLocaleString();
 
 				});
-				if (arg0 instanceof cError) {
-					return arg0;
+				if (errElem) {
+					return errElem;
 				}
 			} else {
-				arg0 = new cString(arg0.toString().concat(argI.toLocaleString()));
+				sResult += argI.toLocaleString();
 			}
 		}
-		return arg0;
+		return new cString(sResult);
 	};
 
 	/**
@@ -685,17 +686,8 @@ function (window, undefined) {
 	cCONCAT.prototype.isXLFN = true;
 	cCONCAT.prototype.enabledToSingle = {"*": true};
 	cCONCAT.prototype.Calculate = function (arg) {
-		let arg0 = new cString(""), argI;
-
-
-		let _checkMaxStringLength = function () {
-			let maxStringLength = 32767;
-			let _str = arg0 && arg0.toString && arg0.toString();
-			if (_str && _str.length > maxStringLength) {
-				return false;
-			}
-			return true;
-		};
+		// Accumulate into a primitive string and box once, removing the per-element cString creation.
+		let maxStringLength = 32767, sResult = "", argI, errRes = null;
 
 		for (let i = 0; i < arg.length; i++) {
 			argI = arg[i];
@@ -703,13 +695,8 @@ function (window, undefined) {
 			if (cElementType.cellsRange === argI.type || cElementType.cellsRange3D === argI.type) {
 				let _arrVal = argI.getValue(this.checkExclude, this.excludeHiddenRows);
 				for (let j = 0; j < _arrVal.length; j++) {
-					let _arrElem = _arrVal[j].toLocaleString();
-					if (cElementType.error === _arrElem.type) {
-						return _arrVal[j];
-					} else {
-						arg0 = new cString(arg0.toString().concat(_arrElem));
-					}
-					if (!_checkMaxStringLength()) {
+					sResult += _arrVal[j].toLocaleString();
+					if (sResult.length > maxStringLength) {
 						return new cError(cErrorType.wrong_value_type)
 					}
 				}
@@ -718,38 +705,38 @@ function (window, undefined) {
 				if (cElementType.error === argI.type) {
 					return argI;
 				}
-				arg0 = new cString(arg0.toString().concat(argI.toLocaleString()));
+				sResult += argI.toLocaleString();
 			} else {
 				if (cElementType.error === argI.type) {
 					return argI;
 				} else if (cElementType.array === argI.type) {
 					argI.foreach(function (elem) {
 						if (cElementType.error === elem.type) {
-							arg0 = elem;
+							errRes = elem;
 							return true;
 						}
 
-						arg0 = new cString(arg0.toString().concat(elem.toLocaleString()));
+						sResult += elem.toLocaleString();
 
-						if (!_checkMaxStringLength()) {
-							arg0 = new cError(cErrorType.wrong_value_type);
+						if (sResult.length > maxStringLength) {
+							errRes = new cError(cErrorType.wrong_value_type);
 							return true;
 						}
 					});
-					if (cElementType.error === arg0.type) {
-						return arg0;
+					if (errRes) {
+						return errRes;
 					}
 				} else {
-					arg0 = new cString(arg0.toString().concat(argI.toLocaleString()));
+					sResult += argI.toLocaleString();
 				}
 			}
 		}
 
-		if (!_checkMaxStringLength()) {
+		if (sResult.length > maxStringLength) {
 			return new cError(cErrorType.wrong_value_type)
 		}
 
-		return arg0;
+		return new cString(sResult);
 	};
 
 	/**
@@ -3407,7 +3394,8 @@ function (window, undefined) {
 			return res;
 		};
 
-		let arg0 = new cString(""), argI;
+		// Accumulate into a primitive string (concatString already uses primitives) and box once, avoiding a cString per element.
+		let acc = "", argI;
 		for (let i = 2; i < arg.length; i++) {
 			argI = arg[i];
 
@@ -3422,7 +3410,7 @@ function (window, undefined) {
 				}
 
 				for (let n = 0; n < argI.length; n++) {
-					arg0 = new cString(concatString(arg0.toString(), argI[n].toLocaleString()));
+					acc = concatString(acc, argI[n].toLocaleString());
 				}
 
 			} else if (cElementType.cell === type || cElementType.cell3D === type) {
@@ -3432,18 +3420,18 @@ function (window, undefined) {
 					return argI;
 				}
 
-				arg0 = new cString(concatString(arg0.toString(), argI.toLocaleString()));
+				acc = concatString(acc, argI.toLocaleString());
 			} else {
 
 				if (argI && argI.type === cElementType.error) {
 					return argI;
 				}
 
-				arg0 = new cString(concatString(arg0.toString(), argI.toLocaleString()));
+				acc = concatString(acc, argI.toLocaleString());
 			}
 		}
 
-		return arg0;
+		return new cString(acc);
 	};
 
 	/**

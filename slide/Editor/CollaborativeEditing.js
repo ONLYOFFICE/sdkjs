@@ -158,7 +158,7 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
 						"guid": Class.Get_Id()
 					};
 				}
-				else if(Class instanceof AscCommon.CComment){
+				else if(Class instanceof AscCommon.CSlideComment){
 					if(Class.Parent && Class.Parent.slide){
 						if(Class.Parent.slide === presentation){
 							check_obj =
@@ -263,7 +263,7 @@ CCollaborativeEditing.prototype.Release_Locks = function()
         if  ( AscCommon.c_oAscLockTypes.kLockTypeOther3 != CurLockType && AscCommon.c_oAscLockTypes.kLockTypeOther != CurLockType )
         {
 			Class.Lock.Set_Type( AscCommon.c_oAscLockTypes.kLockTypeNone, false);
-            if ( Class instanceof AscCommonSlide.PropLocker )
+            if ( Class instanceof AscCommon.PropLocker )
             {
 				let object = AscCommon.g_oTableId.Get_ById(Class.objectId);
                 if(object instanceof AscCommonSlide.CPresentation)
@@ -280,6 +280,10 @@ CCollaborativeEditing.prototype.Release_Locks = function()
                     {
 						Asc.editor.sendEvent("asc_onUnLockDocumentProps");
                     }
+                    else if(Class === presentation.noteSizeLock)
+                    {
+	                    Asc.editor.sendEvent("asc_onUnLockDocumentNoteProps");
+                    }
                     else if(Class === presentation.viewPrLock)
                     {
 						Asc.editor.sendEvent("asc_onUnLockViewProps");
@@ -290,7 +294,7 @@ CCollaborativeEditing.prototype.Release_Locks = function()
                     }
                 }
             }
-            if(Class instanceof AscCommon.CComment)
+            if(Class instanceof AscCommon.CSlideComment)
             {
 				Asc.editor.sync_UnLockComment(Class.Get_Id());
                 if(Class.Parent && Class.Parent.slide && presentation !== Class.Parent.slide)

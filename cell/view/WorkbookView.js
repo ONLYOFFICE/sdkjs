@@ -341,6 +341,7 @@
 	this.customFunctionEngine = null;
 
 	this.smoothScroll = true;
+	this.autoCompleteEnabled = true;
 
 	this.externalReferenceUpdateTimer = null;
 
@@ -350,7 +351,7 @@
   }
 
   WorkbookView.prototype._isInputContentEditable = function () {
-    return !!(this.input && this.input.getAttribute && this.input.getAttribute('contenteditable') === 'true');
+    return !!(this.input && this.input.getAttribute && this.input.getAttribute('contenteditable') !== null);
   };
 
   WorkbookView.prototype._setInputDisabled = function (disabled) {
@@ -366,6 +367,9 @@
     if (!this.input) {
       return;
     }
+
+    var isDynamicArrayNotMainCell = this._isActiveCellDynamicArrayNotMain();
+
     if (this._isInputContentEditable()) {
       if (this.cellEditor) {
         this.cellEditor._updateContentEditableLayout();
@@ -386,6 +390,21 @@
     } else {
       this.input.value = text;
     }
+
+    this.input.style.color = isDynamicArrayNotMainCell ? 'rgb(150, 150, 150)' : '';
+  };
+
+  WorkbookView.prototype._isActiveCellDynamicArrayNotMain = function () {
+    if (!AscCommonExcel.bIsSupportDynamicArrays) {
+      return false;
+    }
+    var ws = this.getWorksheet();
+    var selection = ws && ws.model.getSelection();
+    var activeCell = selection && selection.activeCell;
+    if (!activeCell) {
+      return false;
+    }
+    return ws.model.dynamicArrayManager.isSpilledNotFirstCell(activeCell.col, activeCell.row);
   };
 
   WorkbookView.prototype._init = function(fontRenderingMode) {
@@ -472,6 +491,8 @@
 				  self._onChangeVisibleArea.apply(self, arguments);
 			  }, "changeSelection": function () {
 				  self._onChangeSelection.apply(self, arguments);
+			  }, "ctrlDeselect": function () {
+				  return self._onCtrlDeselect.apply(self, arguments);
 			  }, "changeSelectionDone": function () {
 				  self._onChangeSelectionDone.apply(self, arguments);
 			  }, "changeSelectionRightClick": function () {
@@ -1480,6 +1501,13 @@
 
 		asc_applyFunction(callback, d);
 	};
+
+    WorkbookView.prototype._onCtrlDeselect = function (x, y) {
+        if (!this._checkStopCellEditorInFormulas()) {
+            return false;
+        }
+        return this.getWorksheet().ctrlDeselectRange(x, y);
+    };
 
     WorkbookView.prototype._onChangeSelection = function (isStartPoint, dc, dr, isCoord, isCtrl, callback) {
         if (!this._checkStopCellEditorInFormulas()) {
@@ -6787,6 +6815,14 @@
 		}
 	};
 
+	WorkbookView.prototype.setAutoCompleteEnabled = function(val) {
+		this.autoCompleteEnabled = val;
+	};
+
+	WorkbookView.prototype.getAutoCompleteEnabled = function() {
+		return this.autoCompleteEnabled;
+	};
+
 	WorkbookView.prototype.setSmoothScrolling = function(val) {
 		if (this.smoothScroll !== val) {
 			this.smoothScroll = val;
@@ -6895,6 +6931,7 @@
 	// Required extensions
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	WorkbookView.prototype.IsDocumentEditor = function() {return false};
+	WorkbookView.prototype.CanDoAutoCorrect = function() {return true;};
 	WorkbookView.prototype.Is_Inline = function() {};
 	WorkbookView.prototype.OnChangeForm = function() {};
 	WorkbookView.prototype.TurnOffCheckChartSelection = function() {};

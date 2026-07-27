@@ -1919,6 +1919,12 @@
 			&& this.formInfo
 			&& (Asc.c_oAscContentControlSpecificType.Picture === this.type || Asc.c_oAscContentControlSpecificType.Signature === this.type));
 	};
+	CContentControlTrack.prototype.isDrawPictureSignInTheMiddle = function()
+	{
+		return (this.formInfo 
+			&& Asc.c_oAscContentControlSpecificType.Picture === this.type
+			&& this.base.IsPlaceHolder());
+	};
 	CContentControlTrack.prototype.isHitInMoveRect = function(xPos, yPos, koefX, koefY)
 	{
 		let rectMove = this.CalculateMoveRect(koefX, koefY, true);
@@ -3627,6 +3633,7 @@
 		this.isUseMoveRect = true;
 		this.isCombobox = false;
 		this.isImage = false;
+		this.isDrawImageSign = false;
 
 		this.wideOutlineX = 0;
 		this.wideOutlineY = 0;
@@ -3685,6 +3692,7 @@
 			case Asc.c_oAscContentControlSpecificType.Picture:
 			{
 				this.isImage = true;
+				this.isDrawImageSign = object.isDrawPictureSignInTheMiddle();
 				break;
 			}
 			default:
@@ -4280,7 +4288,7 @@
 					}
 					
 					// Hover and normal states are rendering in the main context
-					if (this.isImage && 0 === object.ActiveButtonIndex)
+					if (this.isImage && 0 === object.ActiveButtonIndex && this.isDrawImageSign)
 					{
 						_x1 = (drPage.left + koefX * (this.bounds.x + object.OffsetX)) * rPR;
 						_y1 = (drPage.top + koefY * (this.bounds.y + object.OffsetY)) * rPR;
@@ -4543,7 +4551,7 @@
 					}
 
 					// Hover and normal states now are rendering in the main context
-					if (this.isImage && 0 === object.ActiveButtonIndex)
+					if (this.isImage && 0 === object.ActiveButtonIndex && this.isDrawImageSign)
 					{
 						var imageW = CONTENT_CONTROL_TRACK_H / koefX; // 1x scale!
 						var imageH = CONTENT_CONTROL_TRACK_H / koefY;

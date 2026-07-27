@@ -315,35 +315,37 @@ ParaRun.prototype.Copy = function(Selected, oPr)
 
     return NewRun;
 };
-
+ParaRun.prototype.CopyComparison = function (oComparisonPr)
+{
+	var NewRun = new ParaRun(this.Paragraph);
+	NewRun.Set_Pr( this.Pr.Copy(undefined, oComparisonPr) );
+	oComparisonPr.Comparison.checkCopyParaRun(NewRun, this);
+	var StartPos = 0;
+	var EndPos   = this.Content.length;
+	var CurPos;
+	var aContentToInsert = [];
+	for (CurPos = StartPos; CurPos < EndPos; CurPos++ )
+	{
+		aContentToInsert.push(this.Content[CurPos].Copy(oComparisonPr));
+	}
+	NewRun.ConcatToContent(aContentToInsert);
+	return NewRun;
+};
 ParaRun.prototype.Copy2 = function(oPr)
 {
-    var NewRun = new ParaRun(this.Paragraph);
-
+	const isMathRun = this.IsMathRun();
+    const NewRun = new ParaRun(undefined, isMathRun);
     NewRun.Set_Pr( this.Pr.Copy(undefined, oPr) );
-	if(oPr && oPr.Comparison)
+
+	if (isMathRun)
+		NewRun.Set_MathPr(this.MathPrp.Copy());
+
+    const StartPos = 0;
+    const EndPos   = this.Content.length;
+	for (let CurPos = StartPos; CurPos < EndPos; CurPos++ )
 	{
-		oPr.Comparison.checkCopyParaRun(NewRun, this);
-	}
-    var StartPos = 0;
-    var EndPos   = this.Content.length;
-	var CurPos;
-	if(oPr && oPr.Comparison)
-	{
-		var aContentToInsert = [];
-		for (CurPos = StartPos; CurPos < EndPos; CurPos++ )
-		{
-			aContentToInsert.push(this.Content[CurPos].Copy(oPr));
-		}
-		NewRun.ConcatToContent(aContentToInsert);
-	}
-	else
-	{
-		for (CurPos = StartPos; CurPos < EndPos; CurPos++ )
-		{
-			var Item = this.Content[CurPos];
-			NewRun.Add_ToContent( CurPos - StartPos, Item.Copy(oPr), false );
-		}
+		const Item = this.Content[CurPos];
+		NewRun.Add_ToContent( CurPos - StartPos, Item.Copy(oPr), false );
 	}
     return NewRun;
 };
@@ -1962,7 +1964,7 @@ ParaRun.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 	
 	this.private_UpdateMarksOnAdd(Pos, 1);
 	
-	this.private_UpdateDocumentOutline();
+	this.private_UpdateOutline();
     this.private_UpdateTrackRevisionOnChangeContent(true);
 
     // Обновляем позиции меток совместного редактирования
@@ -2015,7 +2017,7 @@ ParaRun.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition)
 
 	this.private_UpdateMarksOnRemove(Pos, Count);
 
-	this.private_UpdateDocumentOutline();
+	this.private_UpdateOutline();
 	this.private_UpdateTrackRevisionOnChangeContent(true);
 
     // Обновляем позиции меток совместного редактирования
@@ -2161,6 +2163,43 @@ ParaRun.prototype.AddPdfOriginText = function(aGids, sString, aWidths, nFontSize
 		}
 	}
 	return nCharPos;
+};
+/**
+ * Add an array of unicode code points with specified widths (in mm) to the run
+ * @param {number[]} codePoints - array of unicode character codes
+ * @param {number[]} [widths] - array of character widths in mm (same length as codePoints)
+ * @param {number} [fontSize=0] - font size (in points) that the given widths correspond to
+ * @param {number} [pos=-1] if the position is not specified (or is -1), add to the end
+ * @returns {number}
+ */
+ParaRun.prototype.AddCodePointsWithWidths = function(codePoints, widths, fontSize, pos)
+{
+	let charPos = undefined !== pos && null !== pos && -1 !== pos ? pos : this.Content.length;
+
+	let isMathRun = this.IsMathRun();
+	for (let index = 0, count = codePoints.length; index < count; ++index)
+	{
+		let charCode = codePoints[index];
+		let width    = widths ? widths[index] : 0;
+
+		if (isMathRun)
+		{
+			let mathText = new CMathText();
+			mathText.add(charCode);
+			this.AddToContent(charPos++, mathText);
+		}
+		else if (9 === charCode) // \t
+			this.AddToContent(charPos++, new AscWord.CRunTab(), true);
+		else if (10 === charCode) // \n
+			this.AddToContent(charPos++, new AscWord.CRunBreak(AscWord.break_Line), true);
+		else if (13 === charCode) // \r
+			continue;
+		else if (AscCommon.IsSpace(charCode)) // space
+			this.AddToContent(charPos++, new AscWord.CPdfRunSpace(0, charCode, width, fontSize), true);
+		else
+			this.AddToContent(charPos++, new AscWord.CPdfRunText(0, charCode, width, fontSize), true);
+	}
+	return charPos;
 };
 /**
  * Добавляем в конец рана заданную инструкцию для сложного поля
@@ -12385,28 +12424,28 @@ ParaRun.prototype.private_UpdateMarksOnConcat = function(pos, run)
 ParaRun.prototype.private_UpdateCustomMarksOnAdd = function(pos, count)
 {
 	let logicDocument = this.GetLogicDocument();
-	let customMarks   = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetCustomMarks() : null;
+	let customMarks   = logicDocument && logicDocument.GetCustomMarks ? logicDocument.GetCustomMarks() : null;
 	if (customMarks)
 		customMarks.onAddToRun(this.GetId(), pos, count);
 };
 ParaRun.prototype.private_UpdateCustomMarksOnRemove = function(pos, count)
 {
 	let logicDocument = this.GetLogicDocument();
-	let customMarks   = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetCustomMarks() : null;
+	let customMarks   = logicDocument && logicDocument.GetCustomMarks ? logicDocument.GetCustomMarks() : null;
 	if (customMarks)
 		customMarks.onRemoveFromRun(this.GetId(), pos, count);
 };
 ParaRun.prototype.private_UpdateCustomMarksOnSplit = function(pos, nextRun)
 {
 	let logicDocument = this.GetLogicDocument();
-	let customMarks   = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetCustomMarks() : null;
+	let customMarks   = logicDocument && logicDocument.GetCustomMarks ? logicDocument.GetCustomMarks() : null;
 	if (customMarks)
 		customMarks.onSplitRun(this.GetId(), pos, nextRun.GetId());
 };
 ParaRun.prototype.private_UpdateCustomMarksOnConcat = function(pos, run)
 {
 	let logicDocument = this.GetLogicDocument();
-	let customMarks   = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetCustomMarks() : null;
+	let customMarks   = logicDocument && logicDocument.GetCustomMarks ? logicDocument.GetCustomMarks() : null;
 	if (customMarks)
 		customMarks.onConcatRun(this.GetId(), pos, run.GetId());
 };

@@ -203,7 +203,7 @@ window["DesktopOfflineAppDocumentEndLoad"] = function(_url, _data, _len)
 	var binaryArray = undefined;
 	if (0 === _data.indexOf("binary_content://"))
 	{
-		var bufferArray = window["AscDesktopEditor"]["GetOpenedFile"](_data);
+		var bufferArray = AscCommon.CryptoProvider ? AscCommon.CryptoProvider.getOpenedFile(_data) : (window["AscDesktopEditor"] ? window["AscDesktopEditor"]["GetOpenedFile"](_data) : null);
 		if (bufferArray)
 			binaryArray = new Uint8Array(bufferArray);
 		else
@@ -433,11 +433,17 @@ window["NativeCorrectImageUrlOnPaste"] = function(url)
 window["UpdateInstallPlugins"] = function()
 {
 	var _pluginsTmp = JSON.parse(window["AscDesktopEditor"]["GetInstallPlugins"]());
+	let lenTypes = 2;
 	_pluginsTmp[0]["url"] = _pluginsTmp[0]["url"].split(" ").join("%20");
 	_pluginsTmp[1]["url"] = _pluginsTmp[1]["url"].split(" ").join("%20");
+	if (_pluginsTmp.length > 2)
+	{
+		lenTypes = 3;
+		_pluginsTmp[2]["url"] = _pluginsTmp[2]["url"].split(" ").join("%20");
+	}
 
 	var _plugins = { "url" : _pluginsTmp[0]["url"], "pluginsData" : [] };
-	for (var k = 0; k < 2; k++)
+	for (var k = 0; k < lenTypes; k++)
 	{
 		var _pluginsCur = _pluginsTmp[k];
 
@@ -747,15 +753,15 @@ _proto.prototype["pluginMethod_OnEncryption"] = function(obj)
 				_editor.LastUserSavedIndex = undefined;
 
 				_editor.sendEvent("asc_onError", "There is no connection with the blockchain! End-to-end encryption mode is disabled.", c_oAscError.Level.NoCritical);
-				if (window["AscDesktopEditor"])
-					window["AscDesktopEditor"]["CryptoMode"] = 0;
+				if (AscCommon.CryptoProvider)
+					AscCommon.CryptoProvider.setCryptoMode(0);
 				return;
 			}
 
 			_editor.currentDocumentInfoNext = obj["docinfo"];
 
 			window["DesktopOfflineAppDocumentStartSave"](window.doadssIsSaveAs, obj["password"], true, obj["docinfo"] ? obj["docinfo"] : "");
-            window["AscDesktopEditor"]["buildCryptedStart"]();
+            AscCommon.CryptoProvider.buildCryptedStart();
 			break;
 		}
 		case "getPasswordByFile":
@@ -766,12 +772,12 @@ _proto.prototype["pluginMethod_OnEncryption"] = function(obj)
 
                 if (window.isNativeOpenPassword)
                 {
-                    window["AscDesktopEditor"]["NativeViewerOpen"](obj["password"]);
+                    AscCommon.CryptoProvider.nativeViewerOpen(obj["password"]);
                 }
                 else
                 {
                     var _param = ("<m_sPassword>" + AscCommon.CopyPasteCorrectString(obj["password"]) + "</m_sPassword>");
-                    window["AscDesktopEditor"]["SetAdvancedOptions"](_param);
+                    AscCommon.CryptoProvider.setAdvancedOptions(_param);
                 }
 			}
 			else

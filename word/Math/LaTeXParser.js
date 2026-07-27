@@ -1083,7 +1083,8 @@
 		this.isOneSymbol = true;
 		let oWrapperContent = this.GetElementLiteral();
 
-		if (this.oLookahead.class === Literals.accent.id)
+		if (this.oLookahead.class === Literals.accent.id
+			&& (this.oLookahead.data === "'" || this.oLookahead.data === "''"))
 		{
 			return this.GetAccentLiteral(oWrapperContent);
 		}
@@ -1742,7 +1743,7 @@
 	{
 		if (undefined === str || null === str)
 			return;
-
+		
 		const oConverter = new CLaTeXParser(true);
 		const oTokens = oConverter.Parse(str);
 

@@ -546,6 +546,22 @@
 		AscFonts.load(this, this._onSuccessLoadModule.bind(this), this._onErrorLoadModule.bind(this));
 		//AscCommon.zlib_load(this._onSuccessLoadModule.bind(this), this._onErrorLoadModule.bind(this));
 	};
+	baseEditorsApi.prototype._addLoadModule = function(src, onSuccess, onError)
+	{
+		this.modulesCount += 1;
+
+		let _onSuccess = function() {
+			onSuccess && onSuccess();
+			this._onSuccessLoadModule();
+		};
+
+		let _onError = function() {
+			onError && onError();
+			this._onSuccessLoadModule();
+		};
+
+		AscCommon.loadScript(AscCommon.RELATIVE_SDKJS_PATH + src, _onSuccess.bind(this), _onError.bind(this));
+	};
 	baseEditorsApi.prototype._onSuccessLoadModule = function()
 	{
 		this.modulesLoaded++;
@@ -663,7 +679,7 @@
 		if (AscCommon.chartMode === this.documentUrl)
 		{
 			this.frameManager = new AscCommon.CDiagramCellFrameManager(this);
-        AscCommon.EncryptionWorker.isFrameEditor = true;
+			AscCommon.EncryptionWorker.isFrameEditor = true;
 			this.DocInfo.put_OfflineApp(true);
 		}
 
@@ -685,12 +701,11 @@
 
 		if (this.DocInfo.get_EncryptedInfo())
 		{
-			if (undefined !== window["AscDesktopEditor"])
-			{
-				var obj = this.DocInfo.get_EncryptedInfo();
-				obj["userId"] = this.documentUserId;
-				window["AscDesktopEditor"]["execCommand"]("portal:cryptoinfo", JSON.stringify(obj));
-			}
+			var obj = this.DocInfo.get_EncryptedInfo();
+			obj["userId"] = this.documentUserId;
+
+			if (AscCommon.createCryptoProvider)
+				AscCommon.createCryptoProvider(obj);
 		}
 
 		if (undefined !== window["AscDesktopEditor"] && !(this.DocInfo && this.DocInfo.get_OfflineApp()))
@@ -698,9 +713,20 @@
 			window["AscDesktopEditor"]["SetDocumentName"](this.documentTitle);
 		}
 
-		if (!this.frameManager.isFrameEditor() && undefined !== window["AscDesktopEditor"] && undefined !== window["AscDesktopEditor"]["CryptoMode"])
+		// for test without crypto integrator
+		if (false)
 		{
-			this.DocInfo.put_Encrypted(0 < window["AscDesktopEditor"]["CryptoMode"]);
+			try {
+				if ("true" === window.localStorage.getItem("test-crypto-mode")) {
+					if (AscCommon.createCryptoProvider)
+						AscCommon.createCryptoProvider({});
+				}
+			} catch(e) {}
+		}
+
+		if (!this.frameManager.isFrameEditor() && AscCommon.CryptoProvider)
+		{
+			this.DocInfo.put_Encrypted(0 < AscCommon.CryptoProvider.getCryptoMode());
 		}
 
 		if (!oldInfo)
@@ -741,6 +767,12 @@
 			return true;
 		return false;
 	};
+	baseEditorsApi.prototype.getSaveFormats = baseEditorsApi.prototype["getSaveFormats"] = function()
+	{
+		if (AscCommon.CryptoProvider)
+			return AscCommon.CryptoProvider.getSaveFormats();
+		return undefined;
+	};
 	baseEditorsApi.prototype.asc_enableKeyEvents             = function(isEnabled, isFromInput)
 	{
 	};
@@ -767,6 +799,17 @@
 		if (AscCommon.g_clipboardBase) {
 			AscCommon.g_clipboardBase.bPutImage = !!bPutImage;
 		}
+	};
+	baseEditorsApi.prototype.asc_CopyData = function(sText, sHtml, sInternal, oImage)
+	{
+		if (AscCommon.g_clipboardBase)
+			return AscCommon.g_clipboardBase.CopyData({
+				text     : sText,
+				html     : sHtml,
+				internal : sInternal,
+				image    : oImage
+			});
+		return false;
 	};
 	baseEditorsApi.prototype.sync_CanCopyCutCallback = function (bCanCopyCut, bCanCut)
 	{
@@ -1417,10 +1460,10 @@
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.Open);
 		}
 
-        if (this.DocInfo.get_Encrypted() && window["AscDesktopEditor"] && !window["AscDesktopEditor"]["IsLocalFile"](true))
+        if (this.DocInfo.get_Encrypted() && AscCommon.CryptoProvider && !AscCommon.CryptoProvider.isLocalFile(true))
         {
         	var t = this;
-            window["AscDesktopEditor"]["OpenFileCrypt"](this.DocInfo.get_Title(), this.DocInfo.get_Url(), function () {t.openFileCryptCallback.apply(t, arguments);});
+            AscCommon.CryptoProvider.openFileCrypt(this.DocInfo.get_Title(), this.DocInfo.get_Url(), function () {t.openFileCryptCallback.apply(t, arguments);});
         }
 	};
 	baseEditorsApi.prototype._openChartOrLocalDocument           = function()
@@ -1586,6 +1629,10 @@
 	baseEditorsApi.prototype.forceSave = function()
 	{
 		if (!this.getViewMode()) {
+			if (AscCommon.CryptoProvider && AscCommon.EncryptionWorker && AscCommon.EncryptionWorker.isNeedCrypt()) {
+				AscCommon.CryptoProvider.saveFile();
+				return true;
+			}
 			return this.CoAuthoringApi.forceSave();
 		}
 		return false;
@@ -2010,12 +2057,13 @@
 			oResult.setLicenseType(licenseType);
 			t.sendEvent('asc_onLicenseChanged', oResult);
 		};
-		this.CoAuthoringApi.onAiPluginSettings = function(data)
+		this.CoAuthoringApi.onAiPluginSettings = function(data, allowBrowserProxy)
 		{
 			if (data) {
-				data.proxy = AscCommon.getBaseUrl() + "../../../../ai-proxy";
 				t.aiPluginSettings = JSON.stringify(data);
 			}
+			// Expose the proxy URL when the browser may use it: server settings present or browser-proxy allowed.
+			t.aiProxyUrl = (data || allowBrowserProxy) ? AscCommon.getBaseUrl() + "../../../../ai-proxy" : "";
 		};
 		this.CoAuthoringApi.onMiscEvent = function(data)
 		{
@@ -2347,7 +2395,7 @@
 	// SpellCheck
 	baseEditorsApi.prototype.asc_SpellCheckDisconnect            = function()
 	{
-		if (!this.SpellCheckApi)
+		if (!this.SpellCheckApi || !this.SpellCheckApi.disconnect)
 			return; // Error
 		this.SpellCheckApi.disconnect();
 		this.isSpellCheckEnable = false;
@@ -2380,7 +2428,8 @@
 					}
 					if (_editor.SpellCheckApi.isRestart === true)
 						return;
-					_editor.SpellCheckApi.onSpellCheck(response);
+
+					_editor.SpellCheck_CallBack(response);
 				}
             };
 
@@ -2392,6 +2441,10 @@
 			this.SpellCheckApi.restart = function() {
 				this.isRestart = true;
 				window["AscDesktopEditor"]["SpellCheck"]("clear");
+			};
+
+			this.SpellCheckApi.checkDictionary = function () {
+				return true;
 			};
 
 			if (window["AscDesktopEditor"]["IsLocalFile"] && !window["AscDesktopEditor"]["IsLocalFile"]())
@@ -2484,7 +2537,7 @@
 	};
 	baseEditorsApi.prototype.downloadAs                         = function (actionType, options)
 	{
-		var isCloudCrypto = !!(window["AscDesktopEditor"] && (0 < window["AscDesktopEditor"]["CryptoMode"]));
+		var isCloudCrypto = !!(AscCommon.CryptoProvider && (0 < AscCommon.CryptoProvider.getCryptoMode()));
 		if (isCloudCrypto)
 		{
 			window.isCloudCryptoDownloadAs = true;
@@ -3804,14 +3857,17 @@
 	baseEditorsApi.prototype.asc_Recalculate       = function()
 	{
 	};
-	baseEditorsApi.prototype.canRunBuilderScript = function()
+	baseEditorsApi.prototype.runBuilderScript = function(fRun)
 	{
 		this.executeGroupActionsStart();
 		let res = this.asc_canPaste();
-		if (!res)
+		if (!res || !fRun)
+		{
 			this.executeGroupActionsEnd();
-
-		return res;
+			return;
+		}
+		
+		return fRun();
 	};
 	baseEditorsApi.prototype.onEndBuilderScript = function(callback)
 	{
@@ -4693,13 +4749,13 @@
 		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["isSupportMacroses"] && !window["AscDesktopEditor"]["isSupportMacroses"]())
 			return;
 
-		if (!this.canRunBuilderScript())
-			return;
-
-		this._beforeEvalCommand();
-		this.macros.runAuto();
-		this._afterEvalCommand(undefined);
-		this.onEndBuilderScript();
+		let _t = this;
+		this.runBuilderScript(function(){
+			_t._beforeEvalCommand();
+			_t.macros.runAuto();
+			_t._afterEvalCommand(undefined);
+			_t.onEndBuilderScript();
+		});
     };
 	baseEditorsApi.prototype.asc_runMacros = function(sGuid)
     {
@@ -4712,13 +4768,13 @@
 		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["isSupportMacroses"] && !window["AscDesktopEditor"]["isSupportMacroses"]())
 			return;
 
-		if (!this.canRunBuilderScript())
-			return;
-
-		this._beforeEvalCommand();
-		this.macros.run(sGuid);
-		this._afterEvalCommand(undefined);
-		this.onEndBuilderScript();
+		let _t = this;
+		this.runBuilderScript(function(){
+			_t._beforeEvalCommand();
+			_t.macros.run(sGuid);
+			_t._afterEvalCommand(undefined);
+			_t.onEndBuilderScript();
+		});
     };
 	baseEditorsApi.prototype.asc_getAllMacrosNames = function()
     {
@@ -5647,7 +5703,16 @@
 	baseEditorsApi.prototype.getAnnotations = function() {
 		return null;
 	};
-	baseEditorsApi.prototype.isMasterMode = function(){
+	baseEditorsApi.prototype.IsMasterSlideMode = function(){
+		return false;
+	};
+	baseEditorsApi.prototype.IsNotesPageMode = function() {
+		return false;
+	};
+	baseEditorsApi.prototype.IsNotesMasterMode = function() {
+		return false;
+	};
+	baseEditorsApi.prototype.IsHandoutMasterMode = function() {
 		return false;
 	};
 	baseEditorsApi.prototype.getSelectionState = function() {
@@ -5942,19 +6007,19 @@
 
 	baseEditorsApi.prototype["native_callCommand"] = function(funcText, params)
 	{
-		if (!this.canRunBuilderScript())
-			return;
+		let _t = this;
+		return this.runBuilderScript(function(){
+			let jsonParam = (typeof params === "string") ? params : JSON.stringify(params);
+			_t._beforeEvalCommand();
+			let script = "(function(){let Asc={};Asc.scope=" + jsonParam + ";return (" + funcText + ")(Asc.scope);})();";
+			let commandReturnValue = AscCommon.safePluginEval(script);
+			_t._afterEvalCommand(undefined);
+			_t.onEndBuilderScript();
 
-		let jsonParam = (typeof params === "string") ? params : JSON.stringify(params);
-		this._beforeEvalCommand();
-		let script = "(function(){let Asc={};Asc.scope=" + jsonParam + ";return (" + funcText + ")(Asc.scope);})();";
-		let commandReturnValue = AscCommon.safePluginEval(script);
-		this._afterEvalCommand(undefined);
-		this.onEndBuilderScript();
-
-		if (!Asc.checkReturnCommand(commandReturnValue))
-			commandReturnValue = undefined;
-		return commandReturnValue;
+			if (!Asc.checkReturnCommand(commandReturnValue))
+				commandReturnValue = undefined;
+			return commandReturnValue;
+		});
 	};
 
 	baseEditorsApi.prototype["native_callMethod"] = function(name, params)
@@ -6093,6 +6158,7 @@
 	};
 	baseEditorsApi.prototype.startGroupActions = function(pr)
 	{
+		this.sendEvent("asc_onBeginGroupActions");
 	};
 	baseEditorsApi.prototype.executeGroupActions = function(f)
 	{
@@ -6106,9 +6172,11 @@
 	};
 	baseEditorsApi.prototype.cancelGroupActions = function(pr)
 	{
+		this.sendEvent("asc_onCancelGroupActions");
 	};
 	baseEditorsApi.prototype.endGroupActions = function(pr)
 	{
+		this.sendEvent("asc_onEndGroupActions");
 	};
 	baseEditorsApi.prototype.isGroupActions = function()
 	{
@@ -6124,6 +6192,10 @@
 	baseEditorsApi.prototype.getMacroRecorder = function()
 	{
 		return this.macroRecorder;
+	};
+	baseEditorsApi.prototype.isMacroRecorderActive = function()
+	{
+		return this.macroRecorder.isInProgress() && !this.macroRecorder.isPaused();
 	};
 	baseEditorsApi.prototype.addMacroStepData = function(type, additional)
 	{
@@ -6263,6 +6335,7 @@
 	prot["asc_setPdfViewer"] = prot.asc_setPdfViewer;
 
 	prot["asc_setPutImageToClipboard"] = prot.asc_setPutImageToClipboard;
+	prot["asc_CopyData"] = prot.asc_CopyData;
 
 	prot["asc_mergeSelectedShapes"] = prot.asc_mergeSelectedShapes;
 

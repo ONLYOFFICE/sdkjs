@@ -67,7 +67,7 @@
 	CAnnotationLink.prototype.private_UpdateRect = function(rect) {
 		let aQuads = this.GetQuads();	
 		let aCurRect = this.GetRect().slice();
-		let aCurRD = this.GetRectangleDiff().slice();
+		let aCurRD = this.GetRectangleDiff();
 		let nLineW = this.GetBorderWidth() * g_dKoef_pt_to_mm;
 
 		if (aQuads.length == 0 || aQuads.length > 1) {
@@ -237,8 +237,6 @@
 
         let originView = AscPDF.CBaseField.prototype.GetOriginView.call(this, nImgType, oGraphicsPDF.GetDrawingPageW(), oGraphicsPDF.GetDrawingPageH());
         if (!originView) {
-            this.DrawLocks(oGraphicsPDF);
-            this.DrawEdit(oGraphicsWord);
             return;
         }
 

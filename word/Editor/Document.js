@@ -122,6 +122,7 @@ var recalcresult2_NextPage        = 0x01; // Расчет нужно продо�
 var recalcresult2_CurPage         = 0x02; // Нужно заново пересчитать данную страницу
 var recalcresult2_NextSection     = 0x03; // Рассчитали до конца, но в конце был разрыв секции
 var recalcresult2_NextSection_Cur = 0x04; // Рассчитали не до конца, остановились на разрыве секции
+var recalcresult2_PrevPage        = 0x05; // Need to recalculate prev page (for keepNext inside a block-level sdt)
 
 var document_EditingType_Common = 0x00; // Обычный режим редактирования
 var document_EditingType_Review = 0x01; // Режим рецензирования
@@ -2230,6 +2231,9 @@ CDocument.prototype.FinalizeAction = function(checkEmptyAction, additional)
 	}
 	
 	this.ResumeRecalculate();
+	
+	if (AscDFH.historydescription_BuilderScript === this.Action.Description)
+		this.History.ResetRecalcIndexToPoint(-this.Action.PointsCount);
 
 	this.private_CheckAdditionalOnFinalize();
 	
@@ -4075,24 +4079,27 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 					_SectionIndex = 0;
 				else
 					_SectionIndex = this.Pages[_PageIndex].Sections.length - 1;
-            }
+			}
 
-            _StartIndex = this.Pages[_PageIndex].Sections[_SectionIndex].Columns[_ColumnIndex].Pos;
+			_StartIndex = this.Pages[_PageIndex].Sections[_SectionIndex].Columns[_ColumnIndex].Pos;
 			_sectPr     = this.Pages[_PageIndex].Sections[_SectionIndex].GetSectPr();
-            _bStart     = false;
+			_bStart     = false;
 
-			let currPageSection = this.Pages[_PageIndex].Sections[_SectionIndex];
-			currPageSection.Init(_PageIndex, _sectPr, this.Layout.GetSectionIndex(_sectPr));
-			if (_SectionIndex > 0)
+			if (0 === _ColumnIndex)
 			{
-				let prevPageSection = this.Pages[_PageIndex].Sections[_SectionIndex - 1];
-				currPageSection.Y       = prevPageSection.GetBottomLimit() + 0.001;
-				currPageSection.YLimit  = this.Pages[_PageIndex].YLimit;
-				currPageSection.YLimit2 = this.Pages[_PageIndex].YLimit;
+				let currPageSection = this.Pages[_PageIndex].Sections[_SectionIndex];
+				currPageSection.Init(_PageIndex, _sectPr, this.Layout.GetSectionIndex(_sectPr));
+				if (_SectionIndex > 0)
+				{
+					let prevPageSection = this.Pages[_PageIndex].Sections[_SectionIndex - 1];
+					currPageSection.Y       = prevPageSection.GetBottomLimit() + 0.001;
+					currPageSection.YLimit  = this.Pages[_PageIndex].YLimit;
+					currPageSection.YLimit2 = this.Pages[_PageIndex].YLimit;
+				}
 			}
 			
-            break;
-        }
+			break;
+		}
 		else if ((RecalcResult & recalcresult_NextSection) || (RecalcResult & recalcresult_NextSection_Cur))
 		{
 			let nextIndex = RecalcResult & recalcresult_NextSection ? Index + 1 : Index;
@@ -5272,6 +5279,27 @@ CDocument.prototype.CheckViewPosition = function()
 	this.RecalculateCurPos();
 	this.Api.asc_LockScrollToTarget(false);
 };
+/**
+ * Scroll the document so that the current cursor/select position ends up at the top of the screen.
+ * @param [distance=0] {number} Offset of the position from the top of the screen (in mm)
+ */
+CDocument.prototype.AlignViewPositionToTop = function(distance)
+{
+	let anchorPos = this.IsTextSelectionUse() ? this.GetContentPosition(true, true) : this.GetContentPosition(false);
+	if (!anchorPos || !anchorPos.length)
+		return;
+	
+	let viewPortH = this.DrawingDocument.GetVisibleMMHeight();
+	distance = Math.max(0, Math.min(distance, viewPortH - 10));
+
+	this.ViewPosition = {
+		AnchorPos : anchorPos,
+		AlignTop  : true,
+		Distance  : distance ? distance : 0,
+		Type      : AscWord.ViewPositionType.Common
+	};
+	this.NeedUpdateTarget = true;
+};
 CDocument.prototype.RecalculateCurPos = function()
 {
 	if (true === this.TurnOffRecalcCurPos)
@@ -6281,7 +6309,7 @@ CDocument.prototype.AddDropCap = function(bInText)
 		this.UpdateInterface();
 		this.UpdateRulers();
 		this.UpdateTracks();
-		this.FinalizeAction();
+		this.FinalizeAction(undefined, {bInText : bInText});
 	}
 };
 CDocument.prototype.RemoveDropCap = function(bDropCap)
@@ -6343,7 +6371,7 @@ CDocument.prototype.RemoveDropCap = function(bDropCap)
 			this.Recalculate();
 			this.UpdateInterface();
 			this.UpdateRulers();
-			this.FinalizeAction();
+			this.FinalizeAction(undefined, {bRemove : true});
 		}
 	}
 	else
@@ -6402,7 +6430,7 @@ CDocument.prototype.RemoveDropCap = function(bDropCap)
 				this.Recalculate();
 				this.UpdateInterface();
 				this.UpdateRulers();
-				this.FinalizeAction();
+				this.FinalizeAction(undefined, {bRemove : true});
 			}
 		}
 		else
@@ -6423,7 +6451,7 @@ CDocument.prototype.RemoveDropCap = function(bDropCap)
 				this.Recalculate();
 				this.UpdateInterface();
 				this.UpdateRulers();
-				this.FinalizeAction();
+				this.FinalizeAction(undefined, {bRemove : true});
 			}
 		}
 	}
@@ -7041,7 +7069,7 @@ CDocument.prototype.SetParagraphOutlineLvl = function(nLvl)
 	for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
 	{
 		arrParagraphs[nIndex].SetOutlineLvl(nLvl);
-		arrParagraphs[nIndex].UpdateDocumentOutline();
+		arrParagraphs[nIndex].UpdateOutline();
 	}
 
 	this.Recalculate();
@@ -7701,6 +7729,11 @@ CDocument.prototype.Selection_SetStart         = function(X, Y, MouseEvent)
         this.DrawingDocument.ClearCachePages();
         this.DrawingDocument.FirePaint();
         this.DrawingDocument.EndTrackTable(null, true);
+
+		if (this.isHeaderEditing())
+			this.Api.getMacroRecorder().addStepData('GoToHeader', true);
+		else if (this.isFooterEditing())
+			this.Api.getMacroRecorder().addStepData('GoToFooter', true);
     }
 	else
 	{
@@ -7789,6 +7822,7 @@ CDocument.prototype.Selection_SetStart         = function(X, Y, MouseEvent)
             this.SetDocPosType(docpostype_Content);
             this.CurPos.ContentPos = ContentPos;
             bOldSelectionIsCommon  = false;
+			this.Api.getMacroRecorder().addStepData('GoToDocContent', true);
         }
 
 		var SelectionUse_old = this.Selection.Use;
@@ -8122,28 +8156,6 @@ CDocument.prototype.Selection_SetEnd = function(X, Y, MouseEvent)
         this.Selection.StartPos = End;
         this.Selection.EndPos   = Start;
     }
-};
-/**
- * Получаем направление селекта
- * @returns {AscWord.Direction} Возвращается направление селекта. 1 - нормальное направление, -1 - обратное
- */
-CDocument.prototype.GetSelectDirection = function()
-{
-	var oStartPos = this.GetContentPosition(true, true);
-	var oEndPos   = this.GetContentPosition(true, false);
-
-	for (var nPos = 0, nLen = Math.min(oStartPos.length, oEndPos.length); nPos < nLen; ++nPos)
-	{
-		if (!oEndPos[nPos] || !oStartPos[nPos] || oStartPos[nPos].Class !== oEndPos[nPos].Class)
-			return AscWord.Direction.FORWARD;
-
-		if (oStartPos[nPos].Position < oEndPos[nPos].Position)
-			return AscWord.Direction.FORWARD;
-		else if (oStartPos[nPos].Position > oEndPos[nPos].Position)
-			return AscWord.Direction.BACKWARD;
-	}
-
-	return AscWord.Direction.FORWARD;
 };
 CDocument.prototype.IsMovingTableBorder = function()
 {
@@ -8981,12 +8993,13 @@ CDocument.prototype.OnKeyDown = function(e)
 						this.StartAction(AscDFH.historydescription_Document_MathAddLine);
 						if (oMath.Is_InInnerContent())
 						{
+							let currentContent = oMath.GetSelectContent().Content;
+							currentContent.ConvertContentView(0, currentContent.Content.length, this.Api.getMathInputType(), false);
 							oMath.Handle_AddNewLine();
-							oMath.ProcessAutoCorrect();
 						}
 						else
 						{
-							oMath.ProcessAutoCorrect();
+							oMath.ConvertView(false, this.Api.getMathInputType());
 							this.AddNewParagraph();
 						}
 					}
@@ -9862,6 +9875,22 @@ CDocument.prototype.executeShortcut = function(type)
 			}
 			break;
 		}
+		case Asc.c_oAscDocumentShortcutType.SmallCaps:
+		{
+			let textPr = this.GetCalculatedTextPr();
+			if (textPr)
+			{
+				if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
+				{
+					this.StartAction(AscDFH.historydescription_Document_SetTextSmallCapsHotKey, null, null, textPr.SmallCaps !== true);
+					this.AddToParagraph(new ParaTextPr({SmallCaps : textPr.SmallCaps !== true}));
+					this.UpdateInterface();
+					this.FinalizeAction();
+				}
+				result = true;
+			}
+			break;
+		}
 		case Asc.c_oAscDocumentShortcutType.ShowAll:
 		{
 			var isShow = this.Api.get_ShowParaMarks();
@@ -10541,6 +10570,12 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 
 	if ((this.Api.isStartAddShape || this.Api.isInkDrawerOn()) && (docpostype_HdrFtr !== this.CurPos.Type || null !== this.HdrFtr.CurHdrFtr))
 	{
+		const inlineForm = this.GetSelectedElementsInfo().GetInlineLevelSdt();
+		if (inlineForm && inlineForm.IsForm())
+			inlineForm.MoveCursorOutsideForm(false);
+
+		this.DrawingDocument.TargetEnd();
+
 		if (docpostype_HdrFtr !== this.CurPos.Type)
 		{
 			this.SetDocPosType(docpostype_DrawingObjects);
@@ -10840,11 +10875,13 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 		_t.UpdateSelection();
 	}
 	
-	if (this.IsTextSelectionUse())
+	if (this.Api.isInkDrawerOn())
+		this.DrawingDocument.TargetEnd();
+	else if (this.IsTextSelectionUse())
 		AscCommon.executeNoScroll(_updateSelection, this);
 	else
 		_updateSelection();
-	
+
 	this.UpdateInterface();
 	this.UpdateRulers();
 };
@@ -11864,6 +11901,30 @@ CDocument.prototype.SetSectionPageNumFormat = function(format)
 CDocument.prototype.Document_Format_Copy = function()
 {
 	this.Api.checkFormatPainterData();
+};
+/**
+ * Move the cursor from the header/footer (or any other special part) back to the main document content.
+ * @returns {boolean} Whether the cursor was moved into the main document content.
+ */
+CDocument.prototype.MoveCursorToMainDocument = function()
+{
+	let nDocPosType = this.GetDocPosType();
+	if (docpostype_Content === nDocPosType)
+		return false;
+
+	if (docpostype_DrawingObjects === nDocPosType)
+		this.EndDrawingEditing();
+	else if (docpostype_Footnotes === nDocPosType)
+		this.EndFootnotesEditing();
+	else if (docpostype_Endnotes === nDocPosType)
+		this.EndEndnotesEditing();
+	else if (docpostype_HdrFtr === nDocPosType)
+		this.EndHdrFtrEditing(true);
+
+	this.RemoveSelection();
+	this.SetDocPosType(docpostype_Content);
+
+	return true;
 };
 CDocument.prototype.isHeaderEditing = function()
 {
@@ -14338,12 +14399,15 @@ CDocument.prototype.AddComment = function(CommentData, isForceGlobal)
 
 	return Comment;
 };
-CDocument.prototype.EditComment = function(Id, CommentData)
+CDocument.prototype.EditComment = function(commentId, commentData)
 {
-	if (!this.Comments.IsUseSolved() && this.Comments.Get_CurrentId() === Id)
+	let comment = this.Comments.Get_ById(commentId);
+	if (!comment)
+		return;
+	
+	if (!this.Comments.IsUseSolved() && this.Comments.Get_CurrentId() === commentId)
 	{
-		var oComment = this.Comments.Get_ById(Id);
-		if (oComment && !oComment.IsSolved() && CommentData.IsSolved())
+		if (comment && !comment.IsSolved() && commentData.IsSolved())
 		{
 			this.Comments.Set_Current(null);
 			this.Api.sync_HideComment();
@@ -14351,8 +14415,8 @@ CDocument.prototype.EditComment = function(Id, CommentData)
 			this.DrawingDocument.FirePaint();
 		}
 	}
-
-	this.Comments.Set_CommentData(Id, CommentData);
+	
+	comment.SetData(commentData);
 	this.Document_UpdateInterfaceState();
 };
 CDocument.prototype.RemoveComment = function(Id, bSendEvent, bRecalculate)
@@ -14567,7 +14631,7 @@ CDocument.prototype.UpdateCommentPosition = function(oComment)
 	{
 		var oChangedComments = this.Comments.UpdateCommentPosition(oComment);
 		
-		if (this.Api)
+		if (this.Api && this.Api.sync_ChangeCommentLogicalPosition)
 			this.Api.sync_ChangeCommentLogicalPosition(oChangedComments, this.Comments.GetCommentsPositionsCount());
 
 		return;
@@ -17225,7 +17289,7 @@ CDocument.prototype.AddPageCount = function()
 {
 	if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
 	{
-		this.StartAction(AscDFH.historydescription_Document_AddPageCount);
+		this.StartAction(AscDFH.historydescription_Document_AddPageCount, null, null, true);
 		this.AddToParagraph(new AscWord.CRunPagesCount(this.Pages.length));
 		this.FinalizeAction();
 	}
@@ -19805,8 +19869,9 @@ CDocument.prototype.controller_AddImages = function(aImages)
 			{
 				var __w = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
 				var __h = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
-				W      = Math.max(5, Math.min(W, __w));
-				H      = Math.max(5, Math.min((W * __h / __w)));
+				let koeff = Math.min(1, W / __w, H / __h);
+				W      = Math.max(5, __w * koeff);
+				H      = Math.max(5, __h * koeff);
 				Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
 				var Image = this.DrawingObjects.createImage(_image.src, 0, 0, W, H);
 				Image.setParent(Drawing);
@@ -24778,7 +24843,7 @@ CDocument.prototype.AddTableOfContents = function(sHeading, oPr, oSdt)
 		this.UpdateInterface();
 		this.UpdateSelection();
 		this.UpdateRulers();
-		this.FinalizeAction();
+		this.FinalizeAction(null, {pr: oPr, fieldType: 'toc'});
 	}
 };
 CDocument.prototype.AddTableOfFigures = function(oPr)
@@ -24862,7 +24927,7 @@ CDocument.prototype.AddTableOfFigures = function(oPr)
             this.UpdateInterface();
             this.UpdateSelection();
             this.UpdateRulers();
-            this.FinalizeAction();
+            this.FinalizeAction(null, {pr: oPr, fieldType: 'tof'});
         }
         else
         {
@@ -24948,6 +25013,19 @@ CDocument.prototype.GetAllTablesOfContentsInDoc = function()
 	}
 
 	return aTOC;
+};
+CDocument.prototype.GetIndexOfTOCInDoc = function(oTOC)
+{
+	let allTOC = this.GetAllTablesOfContentsInDoc();
+	for (let i = 0; i < allTOC.length; i++)
+	{
+		var oFieldItem = allTOC[i];
+		if (oFieldItem instanceof AscCommonWord.CBlockLevelSdt)
+			oFieldItem = oFieldItem.GetInnerTableOfContents();
+		if (oFieldItem === oTOC)
+			return i;
+	}
+	return -1;
 };
 /**
  * Данная функция получает все таблицы TOF в документе по схеме Word
@@ -25347,6 +25425,10 @@ CDocument.prototype.RestartNumbering = function(nRestartValue)
 CDocument.prototype.GetAutoCorrectSettings = function()
 {
 	return this.AutoCorrectSettings;
+};
+CDocument.prototype.CanDoAutoCorrect = function()
+{
+	return !this.Api.isMacroRecorderActive();
 };
 /**
  * Устанавливаем настройку автосоздания маркированных списков
@@ -27930,6 +28012,14 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
  * @returns {?AscCommonWord.CComments}
  */
 CDocument.prototype.GetCommentsManager = function()
+{
+	return this.Comments;
+};
+/**
+ * Получаем класс, управляющий комментариями
+ * @returns {?AscCommonWord.CComments}
+ */
+CDocument.prototype.GetComments = function()
 {
 	return this.Comments;
 };

@@ -236,7 +236,7 @@
 			diffL = tmp;
 		}
 		
-		if (this.checkPosition(diffL))
+		if (this.checkPosition(diffL) && (!item.IsParaEnd() || this.stepEnd))
 		{
 			this.setDiff(diffL);
 			this.posInfo.run = run;

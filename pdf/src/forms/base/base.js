@@ -1040,8 +1040,15 @@
         }
     };
     CBaseField.prototype.IsUseInDocument = function() {
+		if (this.IsLogicalRoot() && !this.IsWidget()) {
+			let aWidgets = this.GetAllWidgets();
+			return !!aWidgets.find(function(widget) {
+				return widget.IsUseInDocument();
+			});
+		}
+		
         let oPage = this.GetParentPage();
-        if (oPage && oPage.fields.includes(this) && oPage.GetIndex() !== -1) {
+        if (oPage && (oPage.fields.includes(this) || oPage.redactedFields.includes(this)) && oPage.GetIndex() !== -1) {
             return true;
         }
 
@@ -1757,12 +1764,16 @@
         this._needDrawHighlight = bDraw;
     };
     CBaseField.prototype.IsNeedDrawHighlight = function() {
-        return false == this.IsReadOnly() && this._needDrawHighlight && (this.GetType() === AscPDF.FIELD_TYPES.button || !this.IsInForm());
+        return false == this.IsReadOnly() && this._needDrawHighlight && (this.GetType() === AscPDF.FIELD_TYPES.button || !this.IsInForm()) && !this.IsRedacted();
     };
 
     CBaseField.prototype.DrawEdit = function(oGraphicsWord) {
         let oDoc = this.GetDocument();
 
+		if (this.IsRedacted()) {
+			return;
+		}
+		
         if (this.IsNeedUpdateEditShape()) {
             this.UpdateEditShape();
         }
@@ -1840,6 +1851,30 @@
             return oParent.IsReadOnly();
 
         return this._readOnly;
+    };
+
+	CBaseField.prototype.SetRedacted = function(isRedacted) {
+        if (this._isRedacted === isRedacted) {
+            return true;
+        }
+
+        AscCommon.History.Add(new CChangesPDFFormRedacted(this, this._isRedacted, isRedacted));
+
+        this._isRedacted = isRedacted;
+
+        let oCurPage = this.GetParentPage();
+
+		let sId = this.GetId();
+		oCurPage.RemoveField(sId);
+		oCurPage.AddRedactedField(this);
+		
+		this.SetWasChanged(true, false);
+        this.AddToRedraw();
+
+        return true;
+    };
+    CBaseField.prototype.IsRedacted = function() {
+        return this._isRedacted;
     };
 
     CBaseField.prototype.SetNoExport = function(bNoExport) {
@@ -1980,11 +2015,18 @@
     };
     CBaseField.prototype.IsHidden = function() {
         let nType = this.GetDisplay();
-        if (nType == window["AscPDF"].Api.Types.display["hidden"] || nType == window["AscPDF"].Api.Types.display["noView"])
+        if (nType == AscPDF.Api.Types.display["hidden"] || nType == AscPDF.Api.Types.display["noView"])
             return true;
 
         return false;
     };
+	CBaseField.prototype.IsNoPrint = function() {
+		let nType = this.GetDisplay();
+        if (nType == AscPDF.Api.Types.display["noPrint"] || nType == AscPDF.Api.Types.display["hidden"])
+            return true;
+
+        return false;
+	};
     CBaseField.prototype.SetDisplay = function(nType) {
         AscCommon.History.Add(new CChangesPDFFormDisplay(this, this._display, nType));
 
@@ -2427,10 +2469,16 @@
         return null;
     };
 	
-	CBaseField.prototype.DrawOnPage = function(pdfGraphics, textBoxGraphics, pageIndex) {
-		if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
+	CBaseField.prototype.DrawOnPage = function(pdfGraphics, textBoxGraphics) {
+		if (pdfGraphics.isPrint) {
+			if (this.IsNoPrint()) {
+				return;
+			}
+		}
+		else if (this.IsHidden() && !Asc.editor.IsEditFieldsMode()) {
 			return;
-		
+		}
+
         if (pdfGraphics.isThumbnails) {
             this.DrawBorders(pdfGraphics);
         }
@@ -2438,8 +2486,11 @@
             if (this.IsNeedDrawFromStream())
                 this.DrawFromStream(pdfGraphics, textBoxGraphics);
             else
-                this.DrawFromTextBox(pdfGraphics, textBoxGraphics, pageIndex);
+                this.DrawFromTextBox(pdfGraphics, textBoxGraphics);
         }
+
+		this.DrawLocks(pdfGraphics);
+        this.DrawEdit(textBoxGraphics);
 	};
 
     CBaseField.prototype.DrawFromStream = function(oGraphicsPDF, oGraphicsWord) {
@@ -2471,9 +2522,6 @@
         // oGraphicsPDF.BeginPath();
         // oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
         // oGraphicsPDF.Stroke();
-
-        this.DrawLocks(oGraphicsPDF);
-        this.DrawEdit(oGraphicsWord);
     };
     CBaseField.prototype.DrawLocks = function(oGraphicsPDF) {
         let aOrigRect   = this.GetRect();
@@ -2491,7 +2539,7 @@
 
         oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aRegions);
     };
-	CBaseField.prototype.DrawFromTextBox = function(pdfGraphics, textBoxGraphics, pageIndex) {
+	CBaseField.prototype.DrawFromTextBox = function(pdfGraphics, textBoxGraphics) {
 		this.Draw(pdfGraphics, textBoxGraphics);
 	};
     CBaseField.prototype.GetTopParent = function() {
@@ -2819,7 +2867,7 @@
         memory.WriteLong(annotFlags);
 
         // page
-        memory.WriteLong(this.GetOriginPage());
+        memory.WriteLong(memory.isRedactField ? this.GetPage() : this.GetOriginPage());
 
         // rect
         let aOrigRect = this.GetRect();
@@ -2866,8 +2914,14 @@
                     "color": this.GetTextColor()
                 }
 
-				if (memory.isForSplit && this.contentFormat) {
-					oMeta["formatValue"] = this.GetFormatValue();
+				if (memory.isForSplit) {
+					if (this.contentFormat) {
+						oMeta["formatValue"] = this.GetFormatValue();
+					}
+					if (this.IsRedacted()) {
+						oMeta["isRedacted"] = true;
+						oMeta["isChanged"] = !this.IsNeedDrawFromStream();
+					}
 				}
             }
             memory.WriteString(JSON.stringify(oMeta));

@@ -340,8 +340,7 @@
 	 * @returns {number} Unsigned 8-bit integer
 	 */
 	SheetMemory.prototype.getUint8 = function(index, offset) {
-		offset += (index - this.indexA) * this.structSize;
-		return this.dataUint8[offset];
+		return this.dataUint8[this.getStructOffset(index) + offset];
 	};
 
 	/**
@@ -351,8 +350,7 @@
 	 * @param {number} val - Value to set
 	 */
 	SheetMemory.prototype.setUint8 = function(index, offset, val) {
-		offset += (index - this.indexA) * this.structSize;
-		this.dataUint8[offset] = val;
+		this.dataUint8[this.getStructOffset(index) + offset] = val;
 	};
 
 	/**
@@ -362,12 +360,9 @@
 	 * @returns {number} Signed 32-bit integer
 	 */
 	SheetMemory.prototype.getInt32 = function(index, offset) {
-		// Calculate byte offset and convert to Int32 index
-		// We need to ensure the offset is aligned to 4-byte boundary
-		const byteOffset = (index - this.indexA) * this.structSize + offset;
-		return this.dataInt32[byteOffset >> 2]; // Division by 4 to get Int32 index
+		return this.readInt32(this.getStructOffset(index), offset);
 	};
-	
+
 
 	/**
 	 * Sets a signed 32-bit integer
@@ -376,10 +371,7 @@
 	 * @param {number} val - Value to set
 	 */
 	SheetMemory.prototype.setInt32 = function(index, offset, val) {
-		// Calculate byte offset and convert to Int32 index
-		// We need to ensure the offset is aligned to 4-byte boundary
-		const byteOffset = (index - this.indexA) * this.structSize + offset;
-		this.dataInt32[byteOffset >> 2] = val; // Division by 4 to get Int32 index
+		this.writeInt32(this.getStructOffset(index), offset, val);
 	};
 
 	// Presence/flag primitives. Direct reads from dataInt32; safe on
@@ -407,10 +399,7 @@
 	 * @returns {number} 64-bit floating point number
 	 */
 	SheetMemory.prototype.getFloat64 = function(index, offset) {
-		// Calculate byte offset and convert to Float64 index
-		// We need to ensure the offset is aligned to 8-byte boundary
-		const byteOffset = (index - this.indexA) * this.structSize + offset;
-		return this.dataFloat[byteOffset >> 3]; // Division by 8 to get Float64 index
+		return this.readFloat64(this.getStructOffset(index), offset);
 	};
 
 	/**
@@ -420,10 +409,28 @@
 	 * @param {number} val - Value to set
 	 */
 	SheetMemory.prototype.setFloat64 = function(index, offset, val) {
-		// Calculate byte offset and convert to Float64 index
-		// We need to ensure the offset is aligned to 8-byte boundary
-		const byteOffset = (index - this.indexA) * this.structSize + offset;
-		this.dataFloat[byteOffset >> 3] = val; // Division by 8 to get Float64 index
+		this.writeFloat64(this.getStructOffset(index), offset, val);
+	};
+
+	// Byte offset of index's struct; resolve once, then read/write several fields of the same struct without recomputing (index - indexA) * structSize.
+	SheetMemory.prototype.getStructOffset = function(index) {
+		return (index - this.indexA) * this.structSize;
+	};
+	// Reads an int32 field at fieldOffset within a struct whose byte offset came from getStructOffset.
+	SheetMemory.prototype.readInt32 = function(structOffset, fieldOffset) {
+		return this.dataInt32[(structOffset + fieldOffset) >> 2];
+	};
+	// Reads a float64 field at fieldOffset within a struct whose byte offset came from getStructOffset.
+	SheetMemory.prototype.readFloat64 = function(structOffset, fieldOffset) {
+		return this.dataFloat[(structOffset + fieldOffset) >> 3];
+	};
+	// Writes an int32 field at fieldOffset within a struct whose byte offset came from getStructOffset.
+	SheetMemory.prototype.writeInt32 = function(structOffset, fieldOffset, val) {
+		this.dataInt32[(structOffset + fieldOffset) >> 2] = val;
+	};
+	// Writes a float64 field at fieldOffset within a struct whose byte offset came from getStructOffset.
+	SheetMemory.prototype.writeFloat64 = function(structOffset, fieldOffset, val) {
+		this.dataFloat[(structOffset + fieldOffset) >> 3] = val;
 	};
 
 	// Export

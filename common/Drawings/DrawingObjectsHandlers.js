@@ -59,7 +59,7 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
         return false;
     }
     var selected_objects = group ? group.selectedObjects : drawingObjectsController.getSelectedObjects();
-    if (selected_objects[0] && selected_objects[0].IsComment && selected_objects[0].IsComment()) {
+    if (selected_objects[0] && selected_objects[0].IsComment && selected_objects[0].IsText()) {
         return false;
     }
     var oCropSelection = drawingObjectsController.selection.cropSelection ? drawingObjectsController.selection.cropSelection : null;
@@ -1907,6 +1907,26 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
 
         //plotArea
         if(bClickFlag){
+
+            var oDataTable = drawing.getDataTable();
+            if(oDataTable && oDataTable.hitInBoundingRect(x, y))
+            {
+                if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
+                {
+                    drawingObjectsController.checkChartTextSelection();
+                    selector.resetSelection();
+                    selector.selectObject(drawing, pageIndex);
+                    selector.selection.chartSelection = drawing;
+                    drawing.selection.dataTable = oDataTable;
+                    drawingObjectsController.updateSelectionState();
+                    drawingObjectsController.updateOverlay();
+                    return true;
+                }
+                else
+                {
+                    return {objectId: drawing.Get_Id(), cursorType: "default", title: null};
+                }
+            }
 
             var oPlotArea = drawing.chart.plotArea;
             if(oPlotArea.hitInBoundingRect(x, y))

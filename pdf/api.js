@@ -620,7 +620,7 @@
 		let drDoc  = doc.GetDrawingDocument();
 		let drController = doc.GetController();
 		
-		let textController = doc.getTextController();
+		let textController = doc.getTextController(true);
 		if (!textController)
 			return false;
 		if (textController.IsDrawing() && Asc.editor.isRestrictionView()) {
@@ -806,7 +806,34 @@
         };
 
 		let result = oDoc.EditPage(oViewer.currentPage);
-		this.pre_Paste(result.fonts, result.images, fEndCallback);
+		if (!result) {
+			fEndCallback();
+			return;
+		} 
+
+		if (result.allImages.length > 0) {
+			AscCommon.sendImgUrls(Asc.editor, result.allImages, function(data) {
+				let objectsForDownload = AscCommon.GetObjectsForImageDownload(result.resetImages);
+				AscCommon.ResetNewUrls(data, result.allImages, objectsForDownload.aBuilderImagesByUrl, result.imageMap);
+
+				let count = Object.keys(result.images).length;
+				for (let i = 0; i < data.length; ++i) {
+					if (data[i].url) {
+						result.images[++count] = data[i].url;
+					}
+				}
+
+				let file = oDoc.Viewer.file;
+				for (let i = 0; i < data.length; ++i) {
+					file.nativeFile["changeImageUrl"](result.allImages[i], AscCommon.g_oDocumentUrls.imagePath2Local(data[i].path));
+				}
+
+				Asc.editor.pre_Paste(result.fonts, result.images, fEndCallback);
+			});
+		}
+		else {
+			Asc.editor.pre_Paste(result.fonts, result.images, fEndCallback);
+		}
 	};
 	PDFEditorApi.prototype.asc_AddPage = function(nPos) {
 		let oViewer = this.getDocumentRenderer();
@@ -1398,34 +1425,17 @@
 		}
 	};
 
-	PDFEditorApi.prototype.AddStampAnnot = function(sType) {
+	PDFEditorApi.prototype.AddStampAnnot = function(sType, oImage) {
 		let oDoc = this.getPDFDoc();
-
 		oDoc.BlurActiveObject();
 
-		if (sType == AscPDF.STAMP_TYPES.Image) {
-			let t = this;
-			AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, this.documentWopiSrc, this.documentUserSessionId, function(error, files) {
-				// error can be an object in case of canceling image addition to form
-				if (typeof(error) == "object")
-					return;
-
-				t._uploadCallback(error, files, {
-					isStamp: true
-				});
-			},
-			function(error) {
-				if (Asc.c_oAscError.ID.No !== error) {
-					t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
-				}
-		
-				t.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-			});
+		if (sType == AscPDF.STAMP_TYPES.Signature) {
+			oDoc.AddStampAnnot(AscPDF.STAMP_TYPES.Signature, oDoc.Viewer.currentPage, oImage);
 		}
 		else {
 			function addStamp() {
 				oDoc.DoAction(function() {
-					oDoc.AddStampAnnot(sType, oDoc.Viewer.currentPage);
+					oDoc.AddStampAnnot(sType, oDoc.Viewer.currentPage, oImage);
 				}, AscDFH.historydescription_Pdf_AddAnnot, this);
 			}
 	
@@ -1434,6 +1444,52 @@
 			}
 		}
 		
+	};
+	PDFEditorApi.prototype.AddSignatureImage = function(signatureResult) {
+		let oApi = this;
+
+		let fApplyCallback = function() {
+			let _img = oApi.ImageLoader.LoadImage(sImageToDownLoad, 1);
+			if (null != _img) {
+				oApi.AddStampAnnot(AscPDF.STAMP_TYPES.Signature, _img);
+			}
+			else {
+				oApi.asyncImageEndLoaded2 = function(_img) {
+					oApi.AddStampAnnot(AscPDF.STAMP_TYPES.Signature, _img);
+				};
+			}
+		}
+
+		let sImageUrl = null, fReplaceCallback = null, sImageToDownLoad = "";
+		if (!AscCommon.g_oDocumentUrls.getImageLocal(signatureResult["imageData"])) {
+			sImageUrl        = signatureResult["imageData"];
+			fReplaceCallback = function(url) {
+				sImageToDownLoad  = url;
+			}
+		}
+		else {
+			fApplyCallback();
+		}
+
+		sImageToDownLoad = signatureResult["imageData"];
+
+		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
+			var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sImageToDownLoad);
+			_url     = AscCommon.g_oDocumentUrls.getImageUrl(_url);
+			fReplaceCallback(_url);
+			fApplyCallback();
+			return;
+		}
+
+		AscCommon.sendImgUrls(this, [sImageToDownLoad], function(data) {
+			if (data && data[0] && data[0].url !== "error") {
+				fReplaceCallback(data[0].url);
+				fApplyCallback();
+			}
+		});
+	};
+	PDFEditorApi.prototype.GetSignatureImageProps = function() {
+		return new Asc.CSignatureFormProps(this);
 	};
 
 	PDFEditorApi.prototype.SetRedactTool = function(bUse) {
@@ -1447,18 +1503,6 @@
 	};
 	PDFEditorApi.prototype.IsRedactTool = function() {
 		return !!this.isRedactTool;
-	};
-	PDFEditorApi.prototype.SetRedactDelForm = function(bDel) {
-		this.bRedactDelForms = bDel;
-	};
-	PDFEditorApi.prototype.IsRedactDelForms = function() {
-		return !!this.bRedactDelForms;
-	};
-	PDFEditorApi.prototype.SetRedactDelAnnots = function(bDel) {
-		this.bRedactDelAnnots = bDel;
-	};
-	PDFEditorApi.prototype.IsRedactDelAnnots = function() {
-		return !!this.bRedactDelAnnots;
 	};
 	PDFEditorApi.prototype.RedactPages = function(aIdxs) {
 		let oDoc = this.getPDFDoc();
@@ -1486,10 +1530,12 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			oDoc.ApplyRedact()
+			oDoc.ApplyRedact();
 		}, AscDFH.historydescription_Pdf_Apply_Redact);
 	};
-
+	PDFEditorApi.prototype.sync_UpdateRedactState = function() {
+		this.sendEvent("asc_onCanRedact", this.HasRedact());
+	};
 	PDFEditorApi.prototype.HasRedact = function() {
 		let oDoc = this.getPDFDoc();
 
@@ -1511,7 +1557,24 @@
 	PDFEditorApi.prototype.AddRedactBySelect = function() {
 		let oDoc = this.getPDFDoc();
 		oDoc.AddRedactAnnotBySelect();
-	}
+	};
+
+	// redact meta
+	PDFEditorApi.prototype.RedactMeta = function(props) {
+		let oDoc = this.getPDFDoc();
+		
+		return oDoc.DoAction(function() {
+			return oDoc.RedactMeta(props);
+		}, AscDFH.historydescription_Pdf_Redact_Meta);
+	};
+	PDFEditorApi.prototype.IsAnyFieldLocked = function() {
+		let oDoc = this.getPDFDoc();
+		return oDoc.IsAnyFieldLocked();
+	};
+	PDFEditorApi.prototype.IsAnyAnnotLocked = function() {
+		let oDoc = this.getPDFDoc();
+		return oDoc.IsAnyAnnotLocked();
+	};
 
 	PDFEditorApi.prototype.SetCanInteract = function(bCan) {
 		this.canInteract = bCan;
@@ -1668,7 +1731,7 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			let oField = oDoc.CreateComboboxField(true);
+			let oField = oDoc.CreateComboboxField();
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
@@ -1677,7 +1740,7 @@
 		let oDoc = this.getPDFDoc();
 		
 		return oDoc.DoAction(function() {
-			let oField = oDoc.CreateListboxField(true);
+			let oField = oDoc.CreateListboxField();
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
@@ -2463,6 +2526,24 @@
 			return true;
         }, AscDFH.historydescription_Pdf_ChangeField);
 	};
+	PDFEditorApi.prototype.SetFieldDisplayType = function(nType) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oForm = oDoc.activeForm;
+
+		if (!oForm) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(shape) {
+				let field = shape.GetEditField();
+				field.SetDisplay(nType);
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeField);
+	};
 	// text field
 	PDFEditorApi.prototype.SetTextFieldMultiline = function(bValue) {
 		let oDoc = this.getPDFDoc();
@@ -2836,7 +2917,6 @@
 				let field = shape.GetEditField();
 				if (AscPDF.FIELD_TYPES.radiobutton == field.GetType()) {
 					field.SetRadiosInUnison(bValue);
-					field.GetKid(0).UpdateAll();
 				}
 			});
 
@@ -3301,6 +3381,13 @@
 			oController.selectedObjects.forEach(function(annot) {
 				if (annot.IsAnnot()) {
 					if (annot.IsRedact()) {
+						oDoc.RedactColor = {
+							r: r,
+							g: g,
+							b: b,
+							a: 255
+						};
+
 						annot.SetFillColor(aColor);
 					}
 					else {
@@ -3375,6 +3462,7 @@
 			oController.selectedObjects.forEach(function(annot) {
 				if (annot.IsAnnot()) {
 					annot.SetBorderWidth(nValue);
+					annot.private_UpdateRect();
 				}
 			});
 
@@ -3519,6 +3607,25 @@
 			oController.selectedObjects.forEach(function(annot) {
 				if (annot.IsAnnot()) {
 					annot.SetLineEnd && annot.SetLineEnd(nType);
+				}
+			});
+
+			return true;
+        }, AscDFH.historydescription_Pdf_ChangeAnnot);
+	};
+	PDFEditorApi.prototype.SetTextAnnotIconType = function(nType) {
+		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
+		let oMouseDownAnnot = oDoc.mouseDownAnnot;
+
+		if (!oMouseDownAnnot) {
+			return false;
+		}
+
+		return oDoc.DoAction(function() {
+			oController.selectedObjects.forEach(function(annot) {
+				if (annot.IsText()) {
+					annot.SetIconType(nType);
 				}
 			});
 
@@ -3967,6 +4074,8 @@
 				if (oOptionObject) {
 					const oImage = oApi.ImageLoader.LoadImage(arrUrls[0], 1);
 					if (!oImage || !oImage.Image) {
+						let oActionsQueue = oDoc.GetActionsQueue();
+						oActionsQueue.Continue();
 						return;
 					}
 
@@ -3978,10 +4087,6 @@
 					}
 					else if (oOptionObject.GetType && oOptionObject.GetType() === AscPDF.FIELD_TYPES.button) {
 						oOptionObject.AddImage(oImage, oOptionObject.asc_curImageState);
-						return;
-					}
-					else if (oOptionObject.isStamp) {
-						oDoc.AddStampAnnot(AscPDF.STAMP_TYPES.Image, oDoc.Viewer.currentPage, oImage);
 						return;
 					}
 				}
@@ -4159,9 +4264,65 @@
 		this.stampAnnotPreviewManager = new AscPDF.StampAnnotPreviewManager();
 		AscBuilder.Pdf.init();
 	};
-	PDFEditorApi.prototype.getJsApi = function()
-	{
+	PDFEditorApi.prototype.runBuilderScript = function(fRun) {	
+		if (!fRun)
+			return;
+		
+		let oDoc = this.getPDFDoc();
+		let oFile = oDoc.GetFile();
+		let _t = this;
+		
+		function _onLoad() {
+			_t.executeGroupActionsStart();
+
+			// Check action lock after performin the script
+			oDoc.StartAction(AscDFH.historydescription_BuilderScript);
+			oDoc.CheckActionLock();
+			return fRun();
+		}
+
+		if (!oDoc.pagesFontsScanned) {
+			let aFontsNames = oFile.nativeFile["scanPageFonts"]();
+			let prefix = AscFonts.getEmbeddedFontPrefix();
+			oDoc.pagesFontsScanned = true;
+
+			let aFontsToLoad = [];
+			aFontsNames.forEach(function(name) {
+				let match = name.match(/ [0-9a-fA-F]+$/);
+				if (match) {
+					aFontsToLoad.push(prefix + name);
+				}
+				else {
+					aFontsToLoad.push(name);
+				}
+			});
+
+			if (true === oDoc.checkFonts(aFontsToLoad, _onLoad))
+				return _onLoad();
+		}
+		else {
+			return _onLoad();
+		}
+	};
+	PDFEditorApi.prototype.getJsApi = function() {
 		return AscBuilder.Pdf.Api;
+	};
+	PDFEditorApi.prototype._onEndBuilderScript = function(callback) {
+		let doc = this.getPDFDoc();
+		doc.CollaborativeEditing.Clear_DocumentPositions();
+		doc.Recalculate();
+
+		if (doc.Viewer.canInteract()) {
+			doc.Viewer.onUpdateOverlay();
+			doc.UpdateInterface();
+		}
+		
+		let result = doc.FinalizeAction();
+		if (callback)
+			callback(result);
+		
+		this.executeGroupActionsEnd();
+		return result;
 	};
 	PDFEditorApi.prototype.asc_getPropertyEditorStamps = function() {
 		if (this.loadStampsJSON()) {
@@ -4286,7 +4447,7 @@
 					}
 
 					if (Class.IsForm && Class.IsForm()) {
-						let aWidgets = oDoc.GetAllWidgets(Class.GetFullName());
+						let aWidgets = Class.GetAllWidgets();
 						aWidgets.forEach(function(widget) {
 							updateLock(widget);
 						});
@@ -4296,12 +4457,12 @@
 					}
 
 					if (Class && e["blockValue"]["type"] == AscPDF.AscLockTypeElemPDF.Page) {
-						let oPage = (Class instanceof AscPDF.PropLocker) ? AscCommon.g_oTableId.Get_ById(Class.objectId) : Class;
+						let oPage = (Class instanceof AscCommon.PropLocker) ? AscCommon.g_oTableId.Get_ById(Class.objectId) : Class;
 						oThumbnails && oThumbnails._repaintPage(oPage.GetIndex());
 					}
                     if (Class.IsAnnot && Class.IsAnnot()) {
 						// if annotation is a comment or annotation with a comment, then lock the comment too
-						if (Class.IsComment() || (Class.IsUseContentAsComment() && Class.GetContents() != undefined) || Class.GetReply(0) != null) {
+						if (Class.IsText() || (Class.IsUseContentAsComment() && Class.GetContents() != undefined) || Class.GetReply(0) != null) {
 							t.sync_LockComment(Class.Get_Id(), e["user"]);
 						}
 					}
@@ -4352,7 +4513,7 @@
 						Class.AddToRedraw && Class.AddToRedraw();
 						if (Class.IsAnnot && Class.IsAnnot()) {
 							// if annot is comment or annot with comment then release locks for it too
-							if (Class.IsComment() || (Class.IsUseContentAsComment() && Class.GetContents() != undefined) || Class.GetReply(0) != null) {
+							if (Class.IsText() || (Class.IsUseContentAsComment() && Class.GetContents() != undefined) || Class.GetReply(0) != null) {
 								Asc.editor.sync_UnLockComment(Class.Get_Id());
 							}
 						}
@@ -4360,7 +4521,7 @@
 				}
 				
 				if (Class.IsForm && Class.IsForm()) {
-					let aWidgets = oDoc.GetAllWidgets(Class.GetFullName());
+					let aWidgets = Class.GetAllWidgets();
 					aWidgets.forEach(function(widget) {
 						updateLock(widget);
 					});
@@ -4369,7 +4530,7 @@
 					updateLock(Class);
 				}
 				if (Class && e["block"]["type"] == AscPDF.AscLockTypeElemPDF.Page) {
-					let oPage = (Class instanceof AscPDF.PropLocker) ? AscCommon.g_oTableId.Get_ById(Class.objectId) : Class;
+					let oPage = (Class instanceof AscCommon.PropLocker) ? AscCommon.g_oTableId.Get_ById(Class.objectId) : Class;
 					oThumbnails && oThumbnails._repaintPage(oPage.GetIndex());
 				}
 
@@ -4783,45 +4944,9 @@
 		if (!oDoc)
 			return;
 
-		let arrCommentsId = arrIds;
-		if (arrCommentsId == undefined) {
-			let oController = oDoc.GetController();
-
-			if (isCurrent) {
-				let oActiveObj = oDoc.GetActiveObject();
-				if (oActiveObj && oActiveObj.IsAnnot()) {
-					arrCommentsId = oController.selectedObjects.map(function(annot) {
-						return annot.GetId();
-					});
-				}
-			}
-			else if (isMine) {
-				let sUserId = Asc.editor.DocInfo.get_UserId();
-				let annots = oDoc.annots;
-
-				arrCommentsId = [];
-				for (let i = 0, count = annots.length; i < count; i++) {
-					let annot = annots[i];
-
-					if (annot.GetUserId() === sUserId) {
-						arrCommentsId.push(annot.GetId());
-					}
-				}
-			}
-			else {
-				arrCommentsId = oDoc.annots.map(function(annot) {
-					return annot.GetId();
-				});
-			}
-		}
-
-		if (arrCommentsId != undefined && arrCommentsId.length !== 0) {
-			oDoc.DoAction(function() {
-				arrCommentsId.forEach(function(id) {
-					oDoc.RemoveAnnot(id);
-				});
-			}, AscDFH.historydescription_Pdf_RemoveComment, null, arrCommentsId);
-		}
+		oDoc.DoAction(function() {
+			oDoc.RemoveAllComments(isMine, isCurrent, arrIds)
+		}, AscDFH.historydescription_Pdf_RemoveComment, null, arrIds);
 	};
 	PDFEditorApi.prototype.asc_remove = function() {
 		let oDoc = this.getPDFDoc();
@@ -4857,26 +4982,8 @@
 
 	PDFEditorApi.prototype.asc_EditSelectAll = function()
 	{
-		let oViewer			= this.getDocumentRenderer();
-		let oDoc			= oViewer.getPDFDoc();
-		let oActiveForm		= oDoc.activeForm;
-        let oActiveAnnot	= oDoc.mouseDownAnnot;
-		let oThumbnails		= oDoc.GetThumbnails();
-
-		if (oActiveForm && oActiveForm.IsCanEditText()) {
-			oActiveForm.SelectAllText();
-		}
-		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
-            oActiveAnnot.SelectAllText();
-		}
-		else if (oThumbnails && oThumbnails.isInFocus) {
-			oThumbnails.selectAll();
-		}
-		else {
-			oViewer.file.selectAll();
-		}
-		
-		oDoc.UpdateCopyCutState();
+		let oDoc = this.getPDFDoc();
+		oDoc.SelectAll();
 	};
 	PDFEditorApi.prototype.asc_showComment = function(Id)
 	{
@@ -5295,6 +5402,9 @@
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.onPluginEvent("onSelectionCancel");
 	};
+	PDFEditorApi.prototype.asc_SetSilentMode = function(bEnabled, bAddition) {
+		return;
+	};
 	
 	function CPdfContextMenuData(obj) {
 		if (obj) {
@@ -5480,9 +5590,12 @@
 	PDFEditorApi.prototype['SetAnnotStrokeStyle']			= PDFEditorApi.prototype.SetAnnotStrokeStyle;
 	PDFEditorApi.prototype['SetAnnotLineStart']				= PDFEditorApi.prototype.SetAnnotLineStart;
 	PDFEditorApi.prototype['SetAnnotLineEnd']				= PDFEditorApi.prototype.SetAnnotLineEnd;
+	PDFEditorApi.prototype['SetTextAnnotIconType']			= PDFEditorApi.prototype.SetTextAnnotIconType;
 	
 	// stamp
 	PDFEditorApi.prototype['AddStampAnnot']					= PDFEditorApi.prototype.AddStampAnnot;
+	PDFEditorApi.prototype['AddSignatureImage']				= PDFEditorApi.prototype.AddSignatureImage;
+	PDFEditorApi.prototype['GetSignatureImageProps']		= PDFEditorApi.prototype.GetSignatureImageProps;
 	PDFEditorApi.prototype['asc_getPropertyEditorStamps']	= PDFEditorApi.prototype.asc_getPropertyEditorStamps;
 
 	// freetext
@@ -5491,13 +5604,14 @@
 	// redact
 	PDFEditorApi.prototype['SetRedactTool']		= PDFEditorApi.prototype.SetRedactTool;
 	PDFEditorApi.prototype['IsRedactTool']		= PDFEditorApi.prototype.IsRedactTool;
-	PDFEditorApi.prototype['SetRedactDelForm']	= PDFEditorApi.prototype.SetRedactDelForm;
-	PDFEditorApi.prototype['SetRedactDelAnnots']= PDFEditorApi.prototype.SetRedactDelAnnots;
 	PDFEditorApi.prototype['RedactPages']		= PDFEditorApi.prototype.RedactPages;
 	PDFEditorApi.prototype['ApplyRedact']		= PDFEditorApi.prototype.ApplyRedact;
 	PDFEditorApi.prototype['HasRedact']			= PDFEditorApi.prototype.HasRedact;
 	PDFEditorApi.prototype['RemoveAllRedact']	= PDFEditorApi.prototype.RemoveAllRedact;
 	PDFEditorApi.prototype['AddRedactBySelect']	= PDFEditorApi.prototype.AddRedactBySelect;
+	PDFEditorApi.prototype['RedactMeta']		= PDFEditorApi.prototype.RedactMeta;
+	PDFEditorApi.prototype['IsAnyFieldLocked']	= PDFEditorApi.prototype.IsAnyFieldLocked;
+	PDFEditorApi.prototype['IsAnyAnnotLocked']	= PDFEditorApi.prototype.IsAnyAnnotLocked;
 
 	PDFEditorApi.prototype['SetCanInteract']				= PDFEditorApi.prototype.SetCanInteract;
 
@@ -5549,6 +5663,7 @@
 	PDFEditorApi.prototype['SetFieldTooltip']			= PDFEditorApi.prototype.SetFieldTooltip;
 	PDFEditorApi.prototype['SetFieldRotate']			= PDFEditorApi.prototype.SetFieldRotate;
 	PDFEditorApi.prototype['SetFieldDigitsType']		= PDFEditorApi.prototype.SetFieldDigitsType;
+	PDFEditorApi.prototype['SetFieldDisplayType']		= PDFEditorApi.prototype.SetFieldDisplayType;
 	// text field
 	PDFEditorApi.prototype['SetTextFieldMultiline']		= PDFEditorApi.prototype.SetTextFieldMultiline;
 	PDFEditorApi.prototype['SetTextFieldCharLimit']		= PDFEditorApi.prototype.SetTextFieldCharLimit;
@@ -5625,6 +5740,8 @@
 	
 	PDFEditorApi.prototype['asc_CheckEditPassword']			= PDFEditorApi.prototype.asc_CheckEditPassword;
 	PDFEditorApi.prototype['asc_CheckPrintPassword']		= PDFEditorApi.prototype.asc_CheckPrintPassword;
+	
+	PDFEditorApi.prototype['asc_SetSilentMode']				= PDFEditorApi.prototype.asc_SetSilentMode;
 	
 	PDFEditorApi.prototype['getJsApi'] = PDFEditorApi.prototype.getJsApi;
 	

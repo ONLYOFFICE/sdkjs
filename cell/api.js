@@ -1580,8 +1580,8 @@ var editor;
 						{
 							var sParamXml = ("<m_nCsvTxtEncoding>" + oAdditionalData["codepage"] + "</m_nCsvTxtEncoding>");
 							sParamXml += ("<m_nCsvDelimiter>" + oAdditionalData["delimiter"] + "</m_nCsvDelimiter>");
-							window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, fileType, sParamXml);
-							return true;
+							if (AscCommon.CryptoProvider.cryptoDownloadAs(dataContainer.data, fileType, sParamXml))
+								return true;
 						}
 						t._downloadAsUsingServer(actionType, options, oAdditionalData, dataContainer, downloadType);
 						return;
@@ -1615,8 +1615,8 @@ var editor;
     if (window.isCloudCryptoDownloadAs) {
       var sParamXml = ("<m_nCsvTxtEncoding>" + oAdditionalData["codepage"] + "</m_nCsvTxtEncoding>");
       sParamXml += ("<m_nCsvDelimiter>" + oAdditionalData["delimiter"] + "</m_nCsvDelimiter>");
-      window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, fileType, sParamXml);
-      return true;
+      if (AscCommon.CryptoProvider.cryptoDownloadAs(dataContainer.data, fileType, sParamXml))
+        return true;
     }
   };
 
@@ -7239,6 +7239,7 @@ var editor;
            if (_pageSize) {
                _pageSetup.width = _pageSize.width;
                _pageSetup.height = _pageSize.height;
+               _pageSetup.paperSize = null;
            }
            var pageMargins = newPrintOptions.pageMargins;
            if (_margins) {
@@ -7363,13 +7364,16 @@ var editor;
 	  }
       this._onUpdateAfterApplyChanges();
   };
-	spreadsheet_api.prototype.canRunBuilderScript = function() {
+	spreadsheet_api.prototype.runBuilderScript = function(fRun) {
 		this.executeGroupActionsStart();
 		let res = this.asc_canPaste();
-		if (!res)
+		if (!res || !fRun)
+		{
 			this.executeGroupActionsEnd();
+			return;
+		}
 		
-		return res;
+		return fRun();
 	};
 	spreadsheet_api.prototype._onEndBuilderScript = function(callback) {
 		let needDraw = null;
@@ -9869,6 +9873,22 @@ var editor;
 		}
 	};
 
+	spreadsheet_api.prototype.asc_setAutoCompleteEnabled = function(val) {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		wb.setAutoCompleteEnabled(val);
+	};
+
+	spreadsheet_api.prototype.asc_getAutoCompleteEnabled = function() {
+		let wb = this.wb;
+		if (!wb) {
+			return true;
+		}
+		return wb.getAutoCompleteEnabled();
+	};
+
 	spreadsheet_api.prototype.asc_SetSmoothScrolling  = function(val) {
 		let wb = this.wb;
 		if (!wb) {
@@ -10709,6 +10729,9 @@ var editor;
   prot["asc_cancelMoveCopyWorksheet"]= prot.asc_cancelMoveCopyWorksheet;
   prot["asc_getOpeningDocumentsList"]= prot.asc_getOpeningDocumentsList;
   prot["asc_isSupportCopySheetsBetweenBooks"]= prot.asc_isSupportCopySheetsBetweenBooks;
+
+  prot["asc_setAutoCompleteEnabled"]= prot.asc_setAutoCompleteEnabled;
+  prot["asc_getAutoCompleteEnabled"]= prot.asc_getAutoCompleteEnabled;
 
   prot["asc_SetSmoothScrolling"]= prot.asc_SetSmoothScrolling;
   prot["asc_GetSmoothScrolling"]= prot.asc_GetSmoothScrolling;

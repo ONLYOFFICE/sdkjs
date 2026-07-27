@@ -1526,7 +1526,7 @@ BinaryChartWriter.prototype.WriteCT_ChartSpace = function (oVal, oCopyPaste, bSk
         });
     }
     var oCurVal = oVal.m_externalData;
-    if (null != oCurVal) {
+    if (null != oCurVal && null != oCurVal.m_id) {
        this.bs.WriteItem(c_oserct_chartspaceEXTERNALDATA, function () {
            oThis.WriteCT_ExternalData(oCurVal);
        });
@@ -6145,7 +6145,7 @@ BinaryChartWriter.prototype.WriteCT_ChartEx = function (oVal, oCopyPaste) {
     }
     if(oVal.title !== null) {
         this.bs.WriteItem(c_oserct_chartExChartTITLE, function() {
-            oThis.WriteCT_ChartExTitle(oVal.title, oCopyPaste);
+            oThis.WriteCT_ChartExTitle(oVal.title, oCopyPaste, true);
         });
     }
     if(oVal.legend !== null) {
@@ -6585,7 +6585,7 @@ BinaryChartWriter.prototype.WriteCT_SidePos = function (oVal) {
     }
     oThis.memory.WriteByte(nVal);
 };
-BinaryChartWriter.prototype.WriteCT_ChartExTitle = function (oVal, oCopyPaste) {
+BinaryChartWriter.prototype.WriteCT_ChartExTitle = function (oVal, oCopyPaste, bChartTitle) {
     var oThis = this;
     if(oVal.tx !== null) {
         this.bs.WriteItem(c_oserct_chartExTitleTX, function() {
@@ -6612,11 +6612,11 @@ BinaryChartWriter.prototype.WriteCT_ChartExTitle = function (oVal, oCopyPaste) {
             oThis.WriteCT_PosAlign(oVal.align);
         });
     }
-    // if(oVal.overlay !== null) {
-    //     this.bs.WriteItem(c_oserct_chartExTitleOVERLAY, function() {
-    //         oThis.memory.WriteBool(oVal.overlay);
-    //     });
-    // }
+    if(bChartTitle && oVal.overlay !== null) {
+        this.bs.WriteItem(c_oserct_chartExTitleOVERLAY, function() {
+            oThis.memory.WriteBool(oVal.overlay);
+        });
+    }
 };
 BinaryChartWriter.prototype.WriteCT_ChartExLegend = function (oVal) {
     var oThis = this;
@@ -7169,6 +7169,7 @@ BinaryChartReader.prototype.ExternalReadCT_ChartSpace = function (length, val, c
     });
     if(val){
 		val.correctAxes();
+		val.applyLegacyTitleOverlay();
         }
     /*if(this.curWorksheet) {
         var aStyles = null;
@@ -7503,7 +7504,9 @@ BinaryChartReader.prototype.ReadCT_ChartSpace = function (type, length, val, cur
        res = this.bcr.Read1(length, function (t, l) {
            return oThis.ReadCT_ExternalData(t, l, oNewVal);
        });
-       val.m_externalData = oNewVal;
+       if (null != oNewVal.m_id) {
+           val.m_externalData = oNewVal;
+       }
     }
 		else if (c_oserct_chartspaceXLSXEXTERNAL === type) {
 			const sExternalPath = this.bcr.stream.GetString2LE(length);
