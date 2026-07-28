@@ -13549,13 +13549,14 @@
 	 * Returns the inner text of the current math element.
 	 * @memberof ApiMath
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {boolean} isLaTeX - should the text be returned in LaTeX format (if false then in unicode)
+	 * @param {"unicode" | "latex"} [format="unicode"] - The format the text should be returned in.
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiMath/Methods/GetText.js
 	 */
-	ApiMath.prototype.GetText = function(isLaTeX)
+	ApiMath.prototype.GetText = function(format)
 	{
-		return this.ParaMath.GetText(!!isLaTeX);
+		let formatType = GetStringParameter(format, "unicode");
+		return this.ParaMath.GetText("latex" === formatType);
 	};
 	ApiMath.prototype.private_GetImpl = function()
 	{
