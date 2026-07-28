@@ -3514,6 +3514,8 @@ function CDrawingDocument()
 				oDemonstrationManager.Resize(true);
 			}
 		}
+		oPresentation.invalidatePreviewByImage(sCheckImage);
+
 		let oCurSlide = oPresentation.GetCurrentSlide();
 		if(!oCurSlide)
 			return;
@@ -3557,7 +3559,7 @@ function CDrawingDocument()
 
 		if(this.LoadingImages.length === 0)
 		{
-			oWordControl.CheckLayouts(true);
+			oWordControl.CheckLayouts();
 			oPresentation.SendThemesThumbnails();
 			this.DrawImageTextureFillShape(this.LastDrawingUrl);
 			this.DrawImageTextureFillSlide(this.LastDrawingUrlSlide);

@@ -328,6 +328,9 @@
 		if (bRecalculateBackground) {
 			this.recalculateBackground()
 		}
+		if (bRecalculateBackground || bRecalculateSpTree || bRecalculateSlideLayouts) {
+			this.previewDirty = true;
+		}
 		if (bRecalculateSlideLayouts || bRecalculateBackground || bRecalculateSpTree) {
 			for (_slideLayout_index = 0; _slideLayout_index < this.sldLayoutLst.length; _slideLayout_index++) {
 				let oLt = this.sldLayoutLst[_slideLayout_index];
@@ -335,6 +338,7 @@
 					oLt.recalcInfo.recalculateBackground = true;
 					oLt.recalcInfo.recalculateSpTree = true;
 					oLt.ImageBase64 = "";
+					oLt.previewDirty = true;
 					oLt.recalculate();
 				}
 			}

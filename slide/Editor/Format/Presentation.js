@@ -2368,6 +2368,7 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 								}
 							}
 							oSlideLayout.ImageBase64 = "";
+							oSlideLayout.previewDirty = true;
 							oSlideLayout.recalculate();
 						}
 					}
@@ -2411,6 +2412,7 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 							bRedrawNotes = true;
 						}
 						if (oDrawingObject instanceof AscCommonSlide.MasterSlide) {
+							oDrawingObject.previewDirty = true;
 							b_check_layout = true;
 							bAttack = true;
 							isUpdateThemes = true;
@@ -2441,6 +2443,7 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 								isUpdateThemes = true;
 							}
 							oLayoutObject.ImageBase64 = "";
+							oLayoutObject.previewDirty = true;
 							b_check_layout = true;
 							bAttack = true;
 							for (let nIdx = 0; nIdx < this.Slides.length; ++nIdx) {
@@ -2452,6 +2455,7 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 							}
 						}
 						if (parent instanceof AscCommonSlide.MasterSlide) {
+							this.invalidateMasterPreview(parent);
 							isUpdateThemes = true;
 							b_check_layout = true;
 							bAttack = true;
@@ -2781,21 +2785,34 @@ CPresentation.prototype.private_CollectHyperlinkSlideJump = function (element, o
 	}
 };
 
-CPresentation.prototype.GenerateThumbnails = function (_drawerThemes, _drawerLayouts) {
-	var _masters = this.slideMasters;
-	var _len = _masters.length;
-	var aLayouts, i, j;
-	for (i = 0; i < _len; i++) {
-		_masters[i].ImageBase64 = _drawerThemes.GetThumbnail(_masters[i]);
-		aLayouts = _masters[i].sldLayoutLst;
-		for (j = 0; j < aLayouts.length; ++j) {
-			aLayouts[j].ImageBase64 = _drawerLayouts.GetThumbnail(aLayouts[j]);
-			aLayouts[j].Width64 = _drawerLayouts.WidthPx;
-			aLayouts[j].Height64 = _drawerLayouts.HeightPx;
+CPresentation.prototype.invalidateMasterPreview = function (master) {
+	master.previewDirty = true;
+	const layouts = master.sldLayoutLst;
+	for (let i = 0; i < layouts.length; ++i) {
+		if (layouts[i].showMasterSp) {
+			layouts[i].previewDirty = true;
 		}
 	}
 };
-
+CPresentation.prototype.invalidateMastersPreview = function () {
+	for (let i = 0; i < this.slideMasters.length; ++i) {
+		this.invalidateMasterPreview(this.slideMasters[i]);
+	}
+};
+CPresentation.prototype.invalidatePreviewByImage = function (imageSrc) {
+	for (let i = 0; i < this.slideMasters.length; ++i) {
+		const master = this.slideMasters[i];
+		if (master.checkImageDraw(imageSrc)) {
+			this.invalidateMasterPreview(master);
+		}
+		const layouts = master.sldLayoutLst;
+		for (let j = 0; j < layouts.length; ++j) {
+			if (layouts[j].checkImageDraw(imageSrc)) {
+				layouts[j].previewDirty = true;
+			}
+		}
+	}
+};
 
 /**
  * Get the identifier of the current recalculation
@@ -8224,8 +8241,13 @@ CPresentation.prototype.SendThemesThumbnails = function () {
 	}
 
 	if (!window['native']) {
-		this.GenerateThumbnails(this.Api.WordControl.m_oMasterDrawer, this.Api.WordControl.m_oLayoutDrawer);
+		this.DrawingDocument.m_oWordControl.UpdatePreviews(true);
+		return;
 	}
+	this.sendThemesInfo();
+};
+
+CPresentation.prototype.sendThemesInfo = function () {
 	var _masters = this.slideMasters;
 	var aDocumentThemes = this.Api.ThemeLoader.Themes.DocumentThemes;
 	var aThemeInfo = this.Api.ThemeLoader.themes_info_document;
@@ -8406,11 +8428,13 @@ CPresentation.prototype.Refresh_RecalcData2 = function (Data) {
 		}
 		case AscDFH.historyitem_ThemeSetColorScheme: {
 			this.bNeedUpdateThemes = true;
+			this.invalidateMastersPreview();
 			History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Theme: true, ThemeObj: Data.Theme});
 			break;
 		}
 		case AscDFH.historyitem_ThemeSetName: {
 			this.bNeedUpdateThemes = true;
+			this.invalidateMastersPreview();
 			break;
 		}
 	}

@@ -46,6 +46,7 @@
 		this.ImageBase64 = "";
 		this.Width64 = 0;
 		this.Height64 = 0;
+		this.previewDirty = true;
 
 		this.Width = 254;
 		this.Height = 190.5;

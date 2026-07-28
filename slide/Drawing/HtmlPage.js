@@ -232,6 +232,8 @@
 		this.m_oMasterDrawer = new AscCommonSlide.CMasterThumbnailDrawer();
 		this.m_oMasterDrawer.DrawingDocument = this.m_oDrawingDocument;
 
+		this.m_oPreviews = new CPreviewsGenerator(this);
+
 		this.AllLayouts = [];
 		this.LastMaster = null;
 
@@ -4666,18 +4668,174 @@
 		this.FullRulersUpdate();
 	};
 
+	function CPreviewsGenerator(editorPage) {
+		AscCommon.CActionOnTimerBase.call(this);
+		this.SetDoFirstActionOnTimer(true);
+		this.editorPage = editorPage;
+		this.queue = [];
+		this.needSendLayouts = false;
+		this.needSendThemes = false;
+		this.isMastersStage = false;
+		this.completed = true;
+	}
+	CPreviewsGenerator.prototype = Object.create(AscCommon.CActionOnTimerBase.prototype);
+	CPreviewsGenerator.prototype.constructor = CPreviewsGenerator;
+	CPreviewsGenerator.prototype.getMasters = function () {
+		const logicDocument = this.editorPage.m_oLogicDocument;
+		return logicDocument ? logicDocument.slideMasters : [];
+	};
+	CPreviewsGenerator.prototype.getLayouts = function () {
+		const logicDocument = this.editorPage.m_oLogicDocument;
+		return logicDocument ? logicDocument.GetAllLayouts() : [];
+	};
+	CPreviewsGenerator.prototype.invalidateAll = function () {
+		const layouts = this.getLayouts();
+		for (let i = 0; i < layouts.length; ++i) {
+			layouts[i].previewDirty = true;
+		}
+	};
+	CPreviewsGenerator.prototype.hasPendingLayouts = function () {
+		if (this.needSendLayouts) {
+			return true;
+		}
+		const layouts = this.getLayouts();
+		for (let i = 0; i < layouts.length; ++i) {
+			if (layouts[i].previewDirty) {
+				return true;
+			}
+		}
+		return false;
+	};
+	CPreviewsGenerator.prototype.setDrawerSizes = function (drawer) {
+		const sizes = this.editorPage.m_oLogicDocument.GetSizesMM();
+		drawer.WidthMM = sizes.width;
+		drawer.HeightMM = sizes.height;
+	};
+	CPreviewsGenerator.prototype.generate = function (item) {
+		item.previewDirty = false;
+		if (item instanceof AscCommonSlide.MasterSlide) {
+			const masterDrawer = this.editorPage.m_oMasterDrawer;
+			this.setDrawerSizes(masterDrawer);
+			item.ImageBase64 = masterDrawer.GetThumbnail(item);
+			return;
+		}
+		const drawer = this.editorPage.m_oLayoutDrawer;
+		this.setDrawerSizes(drawer);
+		item.ImageBase64 = drawer.GetThumbnail(item);
+		item.Width64 = drawer.WidthPx;
+		item.Height64 = drawer.HeightPx;
+	};
+	CPreviewsGenerator.prototype.sendThemes = function () {
+		this.editorPage.m_oLogicDocument.sendThemesInfo();
+	};
+	CPreviewsGenerator.prototype.sendLayouts = function () {
+		const layouts = this.getLayouts();
+		const result = new Array(layouts.length);
+		for (let i = 0; i < layouts.length; ++i) {
+			const layout = layouts[i];
+			result[i] = new CLayoutThumbnail();
+			result[i].Index = i;
+			result[i].Type = layout.getType();
+			result[i].Name = layout.getName();
+			result[i].Image = layout.ImageBase64;
+			result[i].Width = AscCommon.AscBrowser.convertToRetinaValue(layout.Width64);
+			result[i].Height = AscCommon.AscBrowser.convertToRetinaValue(layout.Height64);
+		}
+		this.editorPage.m_oApi.sendEvent("asc_onUpdateLayout", result);
+	};
+	CPreviewsGenerator.prototype.update = function (isForceSendLayouts, isForceSendThemes) {
+		this.Begin(isForceSendLayouts, isForceSendThemes);
+	};
+	CPreviewsGenerator.prototype.OnBegin = function (isForceSendLayouts, isForceSendThemes) {
+		this.needSendLayouts = this.needSendLayouts || !!isForceSendLayouts;
+		this.needSendThemes = this.needSendThemes || !!isForceSendThemes;
+
+		this.queue = [];
+		const masters = this.getMasters();
+		for (let i = 0; i < masters.length; ++i) {
+			if (masters[i].previewDirty) {
+				this.queue.push(masters[i]);
+				this.needSendThemes = true;
+			}
+		}
+		this.isMastersStage = this.queue.length > 0;
+		if (!this.isMastersStage) {
+			const layouts = this.getLayouts();
+			for (let i = 0; i < layouts.length; ++i) {
+				if (layouts[i].previewDirty) {
+					this.queue.push(layouts[i]);
+					this.needSendLayouts = true;
+				}
+			}
+		}
+		this.Index = 0;
+		this.completed = 0 === this.queue.length;
+	};
+	CPreviewsGenerator.prototype.IsContinue = function () {
+		return this.Index < this.queue.length;
+	};
+	CPreviewsGenerator.prototype.DoAction = function () {
+		this.generate(this.queue[this.Index]);
+		++this.Index;
+		if (this.Index >= this.queue.length) {
+			this.completed = true;
+		}
+	};
+	CPreviewsGenerator.prototype.flushSends = function (isMastersStage) {
+		if (this.needSendThemes) {
+			this.needSendThemes = false;
+			this.sendThemes();
+		}
+		if (isMastersStage) {
+			return;
+		}
+		if (this.needSendLayouts) {
+			this.needSendLayouts = false;
+			this.sendLayouts();
+		}
+	};
+	CPreviewsGenerator.prototype.OnEnd = function () {
+		const isCompleted = this.completed;
+		const isMastersStage = this.isMastersStage;
+		this.queue = [];
+		this.isMastersStage = false;
+
+		if (!isCompleted) {
+			return;
+		}
+		this.flushSends(isMastersStage);
+		if (isMastersStage && this.hasPendingLayouts()) {
+			this.Begin(false, false);
+		}
+	};
+	CPreviewsGenerator.prototype.ensureSync = function () {
+		this.Stop();
+		for (let stage = 0; stage < 2; ++stage) {
+			this.OnBegin(false, false);
+			const isMastersStage = this.isMastersStage;
+			while (this.IsContinue()) {
+				this.DoAction();
+			}
+			this.queue = [];
+			this.isMastersStage = false;
+			this.flushSends(isMastersStage);
+			if (!isMastersStage) {
+				break;
+			}
+		}
+	};
+
 	// Interface
 	CEditorPage.prototype.ThemeGenerateThumbnails = function (_master) {
-		var _layouts = _master.sldLayoutLst;
-		var _len = _layouts.length;
-
-		for (var i = 0; i < _len; i++) {
-			_layouts[i].recalculate();
-
-			_layouts[i].ImageBase64 = this.m_oLayoutDrawer.GetThumbnail(_layouts[i]);
-			_layouts[i].Width64 = this.m_oLayoutDrawer.WidthPx;
-			_layouts[i].Height64 = this.m_oLayoutDrawer.HeightPx;
+		_master.previewDirty = true;
+		const layouts = _master.sldLayoutLst;
+		for (let i = 0; i < layouts.length; ++i) {
+			layouts[i].recalculate();
+			layouts[i].previewDirty = true;
 		}
+	};
+	CEditorPage.prototype.UpdatePreviews = function (isForceSendThemes) {
+		this.m_oPreviews.update(false, isForceSendThemes);
 	};
 	CEditorPage.prototype.CheckLayouts = function (bIsAttack) {
 		if (window["NATIVE_EDITOR_ENJINE"] === true) {
@@ -4688,59 +4846,27 @@
 		if (this.m_oApi.FontLoader.isFontLoadInProgress())
 			return;
 
-		let aAllLayouts = this.m_oLogicDocument.GetAllLayouts();
-		let oLtDrawer = this.m_oLayoutDrawer;
+		const allLayouts = this.m_oLogicDocument.GetAllLayouts();
+		const drawer = this.m_oLayoutDrawer;
 		const sizes = this.m_oLogicDocument.GetSizesMM();
-		let dWMM = sizes.width;
-		let dHMM = sizes.height;
-		let bUpdate = false;
-		if (bIsAttack) {
-			bUpdate = true;
-		}
-		else {
-			if (this.AllLayouts.length !== aAllLayouts.length) {
-				bUpdate = true;
-			}
-			else if (Math.abs(oLtDrawer.WidthMM - dWMM) > AscFormat.MOVE_DELTA || Math.abs(oLtDrawer.HeightMM - dHMM) > AscFormat.MOVE_DELTA) {
-				bUpdate = true;
-			}
-			else {
-				for (let nIdx = 0; nIdx < aAllLayouts.length; ++nIdx) {
-					if (this.AllLayouts[nIdx] !== aAllLayouts[nIdx]) {
-						bUpdate = true;
-						break;
-					}
+		const isSizeChanged = Math.abs(drawer.WidthMM - sizes.width) > AscFormat.MOVE_DELTA
+			|| Math.abs(drawer.HeightMM - sizes.height) > AscFormat.MOVE_DELTA;
+
+		let isSetChanged = this.AllLayouts.length !== allLayouts.length;
+		if (!isSetChanged) {
+			for (let i = 0; i < allLayouts.length; ++i) {
+				if (this.AllLayouts[i] !== allLayouts[i]) {
+					isSetChanged = true;
+					break;
 				}
 			}
 		}
+		this.AllLayouts = allLayouts;
 
-		if (bUpdate) {
-			this.AllLayouts = aAllLayouts;
-
-			let _len = this.AllLayouts.length;
-			let arr = new Array(_len);
-			for (let i = 0; i < _len; i++) {
-				arr[i] = new CLayoutThumbnail();
-				arr[i].Index = i;
-
-				let oLt = this.AllLayouts[i];
-				arr[i].Type = oLt.getType();
-				arr[i].Name = oLt.getName();
-
-				const sizes = this.m_oLogicDocument.GetSizesMM();
-				oLtDrawer.WidthMM = sizes.width;
-				oLtDrawer.HeightMM = sizes.height;
-				oLt.ImageBase64 = oLtDrawer.GetThumbnail(oLt);
-				oLt.Width64 = oLtDrawer.WidthPx;
-				oLt.Height64 = oLtDrawer.HeightPx;
-
-				arr[i].Image = oLt.ImageBase64;
-				arr[i].Width = AscCommon.AscBrowser.convertToRetinaValue(oLt.Width64);
-				arr[i].Height = AscCommon.AscBrowser.convertToRetinaValue(oLt.Height64);
-			}
-
-			this.m_oApi.sendEvent("asc_onUpdateLayout", arr);
+		if (bIsAttack || isSizeChanged) {
+			this.m_oPreviews.invalidateAll();
 		}
+		this.m_oPreviews.update(isSetChanged, false);
 
 		let oMaster = this.m_oLogicDocument.GetCurrentMaster();
 		if (this.LastMaster !== oMaster) {
@@ -5301,5 +5427,6 @@
 
 	window['AscCommonSlide'] = window['AscCommonSlide'] || {};
 	window['AscCommonSlide'].CEditorPage = CEditorPage;
+	window['AscCommonSlide'].CPreviewsGenerator = CPreviewsGenerator;
 
 })(window);
