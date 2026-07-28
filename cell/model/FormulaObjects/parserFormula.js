@@ -5974,7 +5974,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 							break;
 						case cElementType.array:
 							if (!onlyRanges) {
-								ranges = curRef.getMatrix();
+								ranges = curRef.getMatrixCopy();
 							}
 							break;
 					}
