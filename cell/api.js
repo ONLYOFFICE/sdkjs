@@ -2101,6 +2101,17 @@ var editor;
 					wb.App.fromXml(reader, true);
 				}
 			}
+
+			//custom properties
+			let customPropsPart = doc.getPartByRelationshipType(openXml.Types.customFileProperties.relationType);
+			if (customPropsPart) {
+				let contentCustomProps = customPropsPart.getDocumentContent();
+				if (contentCustomProps) {
+					reader = new StaxParser(contentCustomProps, customPropsPart, xmlParserContext);
+					wb.CustomProperties.fromXml(reader, true);
+				}
+			}
+
 			//metadata
 			if (AscCommonExcel.bIsSupportDynamicArrays) {
 				let metaData = wbPart.getPartByRelationshipType(openXml.Types.metadata.relationType);
