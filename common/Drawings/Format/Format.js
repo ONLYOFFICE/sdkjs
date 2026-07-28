@@ -15645,6 +15645,10 @@
 		};
 		CVariant.prototype.typeStrToEnum = function (name) {
 			switch (name) {
+				case "variant": {
+					return c_oVariantTypes.vtVariant;
+					break;
+				}
 				case "vector": {
 					return c_oVariantTypes.vtVector;
 					break;
