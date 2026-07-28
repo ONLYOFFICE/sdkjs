@@ -14279,7 +14279,7 @@ function parseStringToCElement (val, cultureInfo) {
 	 * searchRegExp2 semantics: * = any sequence, ? = any one char, ~ = literal escape.
 	 * Compiled once per formula call instead of re-parsing on every cell.
 	 * @param {string} mask - already lowercased wildcard pattern
-	 * @returns {RegExp}
+	 * @returns {?RegExp} null when the engine refuses the pattern
 	 */
 	function _buildWildcardRegex(mask) {
 		var s = '^';
@@ -14291,10 +14291,20 @@ function parseStringToCElement (val, cultureInfo) {
 				s += mask[++i].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 				endsWithWildstar = false;
 			} else if (c === '*') {
+				// consecutive '*' mean the same as one
+				while (mask[i + 1] === '*') {
+					i++;
+				}
 				s += '.*';
 				endsWithWildstar = true;
 			} else if (c === '?') {
-				s += '.';
+				// k consecutive '?' are exactly k characters
+				var wildOne = 1;
+				while (mask[i + 1] === '?') {
+					i++;
+					wildOne++;
+				}
+				s += (1 === wildOne) ? '.' : ('.{' + wildOne + '}');
 				endsWithWildstar = false;
 			} else {
 				s += c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -14305,7 +14315,25 @@ function parseStringToCElement (val, cultureInfo) {
 		// but cell values retain their original case).
 		// If mask ends with an unescaped '*', omit '$': "^prefix.*" already matches the full string
 		// from the anchor - dropping the end-anchor lets V8 use a faster prefix-check path.
-		return new RegExp(endsWithWildstar ? s : s + '$', 'i');
+		try {
+			var re = new RegExp(endsWithWildstar ? s : s + '$', 'i');
+			// compilation is lazy, so an oversized pattern only throws on first use - probe it while a fallback is possible
+			re.test('');
+			return re;
+		} catch (e) {
+			return null;
+		}
+	}
+
+	// the compiled mask is only an optimization over getMatchingFunction, so fall back to it if it was refused
+	function _wildcardMatchingFunction(type, op, isWildcard, searchValue) {
+		var re = _buildWildcardRegex(searchValue);
+		if (!re) {
+			return getMatchingFunction(type, op, isWildcard);
+		}
+		return function (a) {
+			return re.test(a);
+		};
 	}
 
 	/**
@@ -14472,7 +14500,7 @@ function parseStringToCElement (val, cultureInfo) {
 			const cellsCount = (bbox.c2 - bbox.c1 + 1) * (bbox.r2 - bbox.r1 + 1);
 			// For wildcards, pre-compile the pattern once instead of re-parsing on every cell
 			const matchingFunction = (type === cElementType.string && isWildcard)
-				? (function() { var re = _buildWildcardRegex(searchValue); return function(a) { return re.test(a); }; }())
+				? _wildcardMatchingFunction(type, '=', isWildcard, searchValue)
 				: getMatchingFunction(type, '=', isWildcard);
 			// '<>X' = cellsCount - equalCount.  Rank-equality applies only to the non-wildcard
 			// string-equality call; wildcard matchFn is a regex and must stay linear.
@@ -14485,7 +14513,7 @@ function parseStringToCElement (val, cultureInfo) {
 			// * and ? as literal characters (Excel behavior), so they must use stringCompare, not regex.
 			const isWildcardEq = type === cElementType.string && isWildcard && (matchingInfo.op === '=' || matchingInfo.op === null);
 			const matchingFunction = isWildcardEq
-				? (function() { var re = _buildWildcardRegex(searchValue); return function(a) { return re.test(a); }; }())
+				? _wildcardMatchingFunction(type, matchingInfo.op, isWildcard, searchValue)
 				: getMatchingFunction(type, matchingInfo.op, isWildcard);
 			// Pass opt_op for the rank fast path. Wildcard equality must stay linear:
 			// matchingFunction is a regex and the rank '=' path would bypass it.
@@ -14780,8 +14808,7 @@ function parseStringToCElement (val, cultureInfo) {
 			(searchValue.indexOf('*') !== -1 || searchValue.indexOf('?') !== -1);
 
 		if (!isEmptyStr && isWildcard && (op === '=' || op === null)) {
-			const re = _buildWildcardRegex(searchValue);
-			matchingFn = function (v) { return re.test(v); };
+			matchingFn = _wildcardMatchingFunction(type, op || '=', isWildcard, searchValue);
 		} else if (isEmptyStr) {
 			// handled specially in _applyCriterionToColumn (modes 1 & 2)
 			matchingFn = null;
@@ -15735,7 +15762,7 @@ function parseStringToCElement (val, cultureInfo) {
 				// Complement: sum(<>) = totalSum - sum(=)
 				// For wildcards, pre-compile the pattern once instead of re-parsing on every cell
 				const equalFn = (type === cElementType.string && isWildcard)
-					? (function() { var re = _buildWildcardRegex(searchValue); return function(a) { return re.test(a); }; }())
+					? _wildcardMatchingFunction(type, '=', isWildcard, searchValue)
 					: getMatchingFunction(type, '=', isWildcard);
 				const errorResult = this.typedCache.checkErrorsForNotEqual(range, sumRange, this.sumRangeCache, type, equalFn, searchValue);
 				if (errorResult) {
@@ -15756,7 +15783,7 @@ function parseStringToCElement (val, cultureInfo) {
 				// * and ? as literal characters (Excel behavior), so they must use stringCompare, not regex.
 				const isWildcardEq = type === cElementType.string && isWildcard && (matchingInfo.op === '=' || matchingInfo.op === null);
 				const matchingFunction = isWildcardEq
-					? (function() { var re = _buildWildcardRegex(searchValue); return function(a) { return re.test(a); }; }())
+					? _wildcardMatchingFunction(type, matchingInfo.op, isWildcard, searchValue)
 					: getMatchingFunction(type, matchingInfo.op, isWildcard);
 				// Pass opt_op for the rank fast path. Wildcard equality must stay linear:
 				// matchingFunction is a regex and the rank '=' path would bypass it.

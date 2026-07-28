@@ -78,29 +78,6 @@ function (window, undefined) {
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
 	cFormulaFunctionGroup['NotRealised'].push(cRTD, cANCHORARRAY);
 
-	function searchRegExp(str, flags) {
-		var vFS = str
-			.replace(/(\\)/g, "\\")
-			.replace(/(\^)/g, "\\^")
-			.replace(/(\()/g, "\\(")
-			.replace(/(\))/g, "\\)")
-			.replace(/(\+)/g, "\\+")
-			.replace(/(\[)/g, "\\[")
-			.replace(/(\])/g, "\\]")
-			.replace(/(\{)/g, "\\{")
-			.replace(/(\})/g, "\\}")
-			.replace(/(\$)/g, "\\$")
-			.replace(/(~)?\*/g, function ($0, $1) {
-				return $1 ? $0 : '(.*)';
-			})
-			.replace(/(~)?\?/g, function ($0, $1) {
-				return $1 ? $0 : '.{1}';
-			})
-			.replace(/(~\*)/g, "\\*").replace(/(~\?)/g, "\\?");
-
-		return new RegExp(vFS + "$", flags ? flags : "i");
-	}
-
 	// TODO rework search: achieve the same result as in MS
 	function XBinarySearch (target, array, match_mode, isReverse) {
 		let mid, item;

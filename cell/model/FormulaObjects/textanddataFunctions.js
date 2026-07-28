@@ -2918,14 +2918,13 @@ function (window, undefined) {
 					return $1 ? $0 : '.';
 				})
 				.replace(/(~\*)/g, "\\*").replace(/(~\?)/g, "\\?");
-			valueForSearching = new RegExp(valueForSearching, "ig");
 			if ('' === find_text) {
 				return new cNumber(start_num);
 			}
 
 			let res;
 			try {
-				res = within_text.substring(start_num - 1).search(valueForSearching);
+				res = within_text.substring(start_num - 1).search(new RegExp(valueForSearching, "ig"));
 			} catch (e) {
 				return new cError(cErrorType.wrong_value_type);
 			}
