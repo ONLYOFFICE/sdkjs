@@ -1758,6 +1758,7 @@
 	};
 	OutlineView.prototype.draw = function (graphics) {
 		if (this.outlineShape) {
+			this.getPresentation().ensureRecalculateOnOpen();
 			if (this.isEmptyPresentation()) {
 				this.drawEmpty(graphics);
 			} else {

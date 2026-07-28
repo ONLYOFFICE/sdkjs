@@ -642,6 +642,9 @@ function CPresentation(DrawingDocument, isMainLogicDocument) {
 	this.forwardChangeThemeTimeOutId = null;
 	this.backChangeThemeTimeOutId = null;
 	this.startChangeThemeTimeOutId = null;
+	this.recalculateOnOpenQueue = null;
+	this.recalculateOnOpenTimerId = null;
+	this.recalculateOnOpenStarted = false;
 	this.TablesForInterface = null;
 	this.LastTheme = null;
 	this.LastColorScheme = null;
@@ -2570,6 +2573,135 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 	}
 	this.MathTrackHandler.Update();
 };
+const RECALCULATE_ON_OPEN_DELAY = 20;
+const RECALCULATE_ON_OPEN_SLICE = 20;
+CPresentation.prototype.recalculateOnOpen = function () {
+	if (this.recalculateOnOpenStarted) {
+		return;
+	}
+	this.recalculateOnOpenStarted = true;
+
+	if (window['NATIVE_EDITOR_ENJINE']) {
+		this.recalculateOnOpenFull();
+		History.private_ClearRecalcData();
+		return;
+	}
+
+	this.updateSlideIndexes();
+	this.bNeedUpdateChartPreview = true;
+
+	const slides = this.GetAllSlides();
+	const firstSlide = slides[0];
+	const firstMaster = firstSlide && firstSlide.getMaster();
+
+	this.recalculateOnOpenQueue = [];
+	for (let i = 0; i < this.slideMasters.length; ++i) {
+		if (this.slideMasters[i] !== firstMaster) {
+			this.recalculateOnOpenQueue.push(this.slideMasters[i]);
+		}
+	}
+	for (let i = 1; i < slides.length; ++i) {
+		this.recalculateOnOpenQueue.push(slides[i]);
+	}
+
+	this.recalculateFirstSlideOnOpen();
+	History.private_ClearRecalcData();
+	this.scheduleRecalculateOnOpen();
+};
+CPresentation.prototype.recalculateFirstSlideOnOpen = function () {
+	const slide = this.GetAllSlides()[0];
+	if (slide) {
+		const master = slide.getMaster();
+		if (master) {
+			master.recalculate();
+		}
+		this.recalculateSlideOnOpen(slide);
+		this.DrawingDocument.OnRecalculateSlide(0);
+	}
+
+	this.DrawingDocument.OnEndRecalculate();
+};
+CPresentation.prototype.recalculateSlideOnOpen = function (slide) {
+	slide.checkSlideTheme();
+	slide.recalcText();
+	slide.recalculate();
+};
+CPresentation.prototype.scheduleRecalculateOnOpen = function () {
+	const presentation = this;
+	this.recalculateOnOpenTimerId = setTimeout(function () {
+		presentation.recalculateOnOpenNext();
+	}, RECALCULATE_ON_OPEN_DELAY);
+};
+CPresentation.prototype.recalculateOnOpenNext = function () {
+	this.recalculateOnOpenTimerId = null;
+
+	const queue = this.recalculateOnOpenQueue;
+	if (!queue) {
+		return;
+	}
+
+	const sliceStart = performance.now();
+	while (queue.length && performance.now() - sliceStart < RECALCULATE_ON_OPEN_SLICE) {
+		this.recalculateOnOpenItem(queue.shift());
+	}
+
+	if (queue.length) {
+		this.scheduleRecalculateOnOpen();
+		return;
+	}
+
+	this.recalculateOnOpenQueue = null;
+};
+CPresentation.prototype.recalculateOnOpenItem = function (item) {
+	if (item instanceof AscCommonSlide.MasterSlide) {
+		if (-1 !== this.slideMasters.indexOf(item)) {
+			item.recalculate();
+		}
+		return;
+	}
+
+	if (-1 === this.Slides.indexOf(item)) {
+		return;
+	}
+
+	this.recalculateSlideOnOpen(item);
+	const index = this.GetSlideIndex(item);
+	if (-1 !== index) {
+		this.DrawingDocument.OnRecalculateSlide(index);
+	}
+};
+CPresentation.prototype.checkSlideRecalculateOnOpen = function (slide) {
+	const queue = this.recalculateOnOpenQueue;
+	if (!queue) {
+		return;
+	}
+
+	const index = queue.indexOf(slide);
+	if (-1 === index) {
+		return;
+	}
+
+	queue.splice(index, 1);
+	this.recalculateSlideOnOpen(slide);
+};
+CPresentation.prototype.ensureRecalculateOnOpen = function () {
+	const queue = this.recalculateOnOpenQueue;
+	if (!queue) {
+		return;
+	}
+
+	clearTimeout(this.recalculateOnOpenTimerId);
+	this.recalculateOnOpenTimerId = null;
+	this.recalculateOnOpenQueue = null;
+
+	while (queue.length) {
+		this.recalculateOnOpenItem(queue.shift());
+	}
+};
+CPresentation.prototype.recalculateOnOpenFull = function () {
+	this.Recalculate({Drawings: {All: true, Map: {}}});
+	this.DrawingDocument.OnEndRecalculate();
+};
 CPresentation.prototype.updateThemesThumbnails = function () {
 	if (this.isCompositeInputInProgress()) {
 		this.bNeedUpdateThemes = true;
@@ -3112,6 +3244,7 @@ CPresentation.prototype.AddNewParagraph = function (bRecalculate) {
 CPresentation.prototype.Search = function (oProps) {
 	if (true === this.SearchEngine.Compare(oProps))
 		return this.SearchEngine;
+	this.ensureRecalculateOnOpen();
 	this.SearchEngine.Clear();
 	this.SearchEngine.Set(oProps);
 
@@ -3184,6 +3317,7 @@ CPresentation.prototype.GetActiveTable = function() {
 	return null;
 };
 CPresentation.prototype.GetSearchElementId = function (isNext) {
+	this.ensureRecalculateOnOpen();
 	if (this.Slides.length > 0) {
 		var i, Id, content, start_index;
 		var target_text_object;
@@ -4025,6 +4159,7 @@ CPresentation.prototype.ConvertMathView = function (isToLinear, isAll) {
 };
 
 CPresentation.prototype.GetAllParaMaths = function () {
+	this.ensureRecalculateOnOpen();
 	let arrParaMaths = [];
 	
 	let fCollect = function (oDrawing) {
@@ -10348,6 +10483,7 @@ CPresentation.prototype.internalCalculateData = function (aSlideComments, aWrite
 };
 
 CPresentation.prototype.CalculateComments = function () {
+	this.ensureRecalculateOnOpen();
 	if (this.recalcInfo.recalculateComments) {
 		this.recalcInfo.recalculateComments = false;
 		this.CommentAuthors = {};

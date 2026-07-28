@@ -271,7 +271,9 @@ function CTransitionAnimation(htmlpage)
         let oPresentation = this.GetPresentation();
         if(oPresentation)
         {
-            return oPresentation.Slides[nIdx];
+            let slide = oPresentation.Slides[nIdx];
+            oPresentation.checkSlideRecalculateOnOpen(slide);
+            return slide;
         }
         return null;
     };

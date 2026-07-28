@@ -334,11 +334,18 @@ CCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
     // Start full document recalculation
     let LogicDocument = this.GetPresentation();
 
-		const arrChanges = this.CoHistory.GetAllChanges();
-		const oRecalcData = LogicDocument.History.Get_RecalcData(null, arrChanges, this.m_nRecalcIndexStart, this.m_nRecalcIndexEnd);
-    LogicDocument.Recalculate(oRecalcData);
-    LogicDocument.Document_UpdateSelectionState();
-    LogicDocument.Document_UpdateInterfaceState();
+    if (Asc.editor.isApplyChangesOnOpen)
+    {
+        LogicDocument.recalculateOnOpen();
+    }
+    else
+    {
+        const arrChanges = this.CoHistory.GetAllChanges();
+        const oRecalcData = LogicDocument.History.Get_RecalcData(null, arrChanges, this.m_nRecalcIndexStart, this.m_nRecalcIndexEnd);
+        LogicDocument.Recalculate(oRecalcData);
+        LogicDocument.Document_UpdateSelectionState();
+        LogicDocument.Document_UpdateInterfaceState();
+    }
 
 	Asc.editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ApplyChanges);
 };

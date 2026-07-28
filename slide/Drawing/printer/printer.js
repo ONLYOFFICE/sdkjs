@@ -233,6 +233,7 @@
 		this.init();
 	}
 	PrintManager.prototype.init = function () {
+		this.presentation.ensureRecalculateOnOpen();
 		switch (this.getPrintType()) {
 			case Asc.c_oAscSlidesOnPagePrintType.FullPageSlides: {
 				this.specificPrinter = new SlidePrinter(this.presentation, this.printOptions);

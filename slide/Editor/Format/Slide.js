@@ -822,6 +822,9 @@
 		}
 	};
 	Slide.prototype.draw = function (graphics) {
+		if (this.presentation) {
+			this.presentation.checkSlideRecalculateOnOpen(this);
+		}
 		let bCheckBounds = graphics.isBoundsChecker();
 		let bSlideShow = this.graphicObjects.isSlideShow();
 		let bClipBySlide = !this.graphicObjects.canEdit();
@@ -1079,6 +1082,9 @@
 		oGraphics.RestoreGrState();
 	};
 	Slide.prototype.drawNotes = function (g) {
+		if (this.presentation) {
+			this.presentation.checkSlideRecalculateOnOpen(this);
+		}
 		if (this.notesShape) {
 			this.notesShape.draw(g);
 			var oLock = this.notesShape.Lock;

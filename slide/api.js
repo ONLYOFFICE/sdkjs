@@ -5975,11 +5975,9 @@ background-repeat: no-repeat;\
 						}
 					}
 				}
-				this.WordControl.m_oLogicDocument.Recalculate({Drawings : {All : true, Map : {}}});
-				AscCommon.History.private_ClearRecalcData();
 				var presentation = this.WordControl.m_oLogicDocument;
 
-				presentation.DrawingDocument.OnEndRecalculate();
+				presentation.recalculateOnOpen();
 
 				if(!window['IS_NATIVE_EDITOR']) {
 					this.asc_registerCallback('asc_doubleClickOnChart', function(){
