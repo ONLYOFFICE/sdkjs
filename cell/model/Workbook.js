@@ -22658,8 +22658,10 @@
 																// get new range and set it to the value
 																// dynamic ref can change after setValue, through the loop
 																// so we should use ArrayRef instead because it's immutable when we setting value
-																let dynamicNewR2 = intersectionTo.r2 + (formulaArrayRef.r2 - formulaArrayRef.r1),
-																	dynamicNewC2 = intersectionTo.c2 + (formulaArrayRef.c2 - formulaArrayRef.c1);
+																let dynamicNewR2 = intersectionTo.r1 + (formulaArrayRef.r2 - formulaArrayRef.r1),
+																	dynamicNewC2 = intersectionTo.c1 + (formulaArrayRef.c2 - formulaArrayRef.c1);
+
+																// newRange - expected dynamic ref with shift according to promote range
 																newRange = new Asc.Range(intersectionTo.c1, intersectionTo.r1, dynamicNewC2, dynamicNewR2);
 																if (!wsTo.dynamicArrayManager.isAutoExpandBBox(newRange)) {
 																	// cmIndex = fromFormulaParsed.cm;
@@ -22677,7 +22679,8 @@
 																	true, 
 																	newRange, 
 																	null, 
-																	{range: newRange, beforeSpillRange: beforeSpillRange});
+																	{range: newRange, beforeSpillRange: beforeSpillRange}
+																);
 															} else {
 																rangeFormulaArray.setValue("=" + _p_.assemble(true), function (r) {}, true, intersectionTo);
 															}
