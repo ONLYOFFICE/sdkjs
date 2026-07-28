@@ -2644,8 +2644,10 @@
 					crypto.getRandomValues(array);
 					const hex = Array.from(array)
 						.map((b) => b.toString(16).padStart(2, "0"))
-						.join("");
+            .join("");
 
+            AscCommon.g_oDocumentUrls.addImageUrl(hex, value);
+            
 					t._addImageUrl([value], obj);
 
 					window.parent.postMessage(
