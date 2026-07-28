@@ -1413,6 +1413,61 @@
 		return new ApiChart(oChartSpace);
 	};
 
+	/**
+	 * Returns the object by it's internal ID.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {string} id - the object internal ID.
+	 * @returns {FloatObject | ApiDocumentContent | ApiParagraph | ApiTableRow | ApiTableCell}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetByInternalId.js
+	 */
+	Api.GetByInternalId = function(id) {
+		id = AscBuilder.GetStringParameter(id, null);
+		if (!id) {
+			AscBuilder.throwException("The id parameter must be a non emptry string");
+		}
+
+		let isFieldWidget = id.endsWith("_widget");
+		if (isFieldWidget) {
+			id = id.replace(/_widget$/, '');
+		}
+
+		let obj = AscCommon.g_oTableId.Get_ById(id);
+		if (!obj) {
+			return null;
+		}
+		
+		if (obj.IsDrawing && obj.IsDrawing()) {
+			return AscBuilder.GetApiDrawing(obj);
+		}
+		else if (obj.IsForm && obj.IsForm()) {
+			if (isFieldWidget && obj.IsWidget()) {
+				return AscBuilder.Pdf.GetWidgetApi(obj);
+			}
+			else {
+				return AscBuilder.Pdf.GetFieldApi(obj);
+			}
+		}
+		else if (obj.IsAnnot && obj.IsAnnot()) {
+			return AscBuilder.Pdf.GetAnnotApi(obj);
+		}
+		else if (obj instanceof AscWord.CDocumentContent) {
+			return new AscBuilder.ApiDocumentContent(obj);
+		}
+		else if (obj instanceof AscWord.Paragraph) {
+			return new AscBuilder.ApiParagraph(obj);
+		}
+		else if (obj instanceof CTableRow) {
+			return new AscBuilder.ApiTableRow(obj);
+		}
+		else if (obj instanceof CTableCell) {
+			return new AscBuilder.ApiTableCell(obj);
+		}
+
+		return null;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDocument
@@ -3943,6 +3998,23 @@
 	 */
 	ApiButtonField.prototype.GetClassType = function() {
 		return "buttonField";
+	};
+
+	/**
+	 * Sets image for all button field widgets
+	 * @memberof ApiButtonField
+	 * @typeofeditors ["PDFE"]
+	 * @param {string} imageUrl - The URL of the image to set for the button.
+	 * @returns {boolean}
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/{Editor}/ApiButtonField/Methods/SetValue.js
+	 */
+	ApiButtonField.prototype.SetValue = function(imageUrl) {
+		this.GetAllWidgets().forEach(function(apiWidget) {
+			apiWidget.SetImage(imageUrl);
+		});
+
+		return true;
 	};
 
 	/**
@@ -10712,6 +10784,7 @@
 	Api["CreateTable"]				= Api.CreateTable;
 	Api["CreateTableRowPr"]			= Api.CreateTableRowPr;
 	Api["CreateChart"]				= Api.CreateChart;
+	Api["GetByInternalId"]			= Api.GetByInternalId;
 
 	// ApiDocument
 	ApiDocument.prototype["GetClassType"]					= ApiDocument.prototype.GetClassType;
@@ -10864,6 +10937,7 @@
 
 	// ApiButtonField
 	ApiButtonField.prototype["GetClassType"]				= ApiButtonField.prototype.GetClassType;
+	ApiButtonField.prototype["SetValue"]					= ApiButtonField.prototype.SetValue;
 
 	// ApiButtonWidget
 	ApiButtonWidget.prototype["GetClassType"]				= ApiButtonWidget.prototype.GetClassType;
