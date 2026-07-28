@@ -1011,6 +1011,7 @@
 			this.tmpFontScale = undefined;
 			this.tmpLnSpcReduction = undefined;
 			this.shapeSmartArtInfo = null;
+			this.slideImagePlaceholderTransform = null;
 		}
 
 		AscFormat.InitClass(CShape, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_Shape);
@@ -5617,61 +5618,59 @@
 			}
 		};
 		CShape.prototype.drawSlideImagePlaceholder = function(graphicObjectDrawer) {
-			const graphics = graphicObjectDrawer.getGraphics();
-			const transform = graphicObjectDrawer.getTransform();
-			graphics.SaveGrState();
-			const _transform  = transform || this.transform;
 			const parent = this.parent;
 			const presentation = Asc.editor.WordControl.m_oLogicDocument;
-			if (parent && presentation) {
-				let slideObject;
-				if (parent instanceof AscCommonSlide.CNotesMaster) {
-					slideObject = presentation.slideMasters[0];
-				} else if (parent instanceof AscCommonSlide.CNotes) {
-					slideObject = parent.slide;
-				}
-				if (slideObject) {
-					const oldBrush = this.brush;
-					this.brush = null;
-					const widthScale = this.bounds.w / presentation.GetWidthMM();
-					const heightScale = this.bounds.h / presentation.GetHeightMM();
-					const localTransform = new AscCommon.CMatrix();
-					localTransform.Scale(widthScale, heightScale);
-					localTransform.Translate(this.bounds.x, this.bounds.y);
-
-					const existingBase = graphics.GetBaseTransform();
-					const composedTransform = existingBase ? existingBase.CreateDublicate() : new AscCommon.CMatrix();
-					composedTransform.Multiply(localTransform, AscCommon.MATRIX_ORDER_PREPEND);
-
-					const drawSlideContent = function () {
-						graphics.SetBaseTransform(composedTransform);
-						graphics.reset();
-						graphics.SetIntegerGrid(false);
-						graphics.AddClipRect(0, 0, presentation.GetWidthMM(), presentation.GetHeightMM());
-						const oldIsShapeToImageConverter = AscCommon.IsShapeToImageConverter;
-						AscCommon.IsShapeToImageConverter = true;
-						graphics.isSlidePaceholder = true;
-						slideObject.draw(graphics, 0);
-						graphics.isSlidePaceholder = false;
-						AscCommon.IsShapeToImageConverter = oldIsShapeToImageConverter;
-						graphics.SetBaseTransform(existingBase);
-						graphics.reset();
-					};
-
-					const clipper = new AscCommon.CShapeClipper(drawSlideContent);
-					clipper.fromShape2(this, graphics, this.calcGeometry, _transform);
-					clipper.draw(this.calcGeometry);
-					graphics.RestoreGrState();
-					if (this.pen && this.calcGeometry) {
-						const shapeDrawer = new AscCommon.CShapeDrawer();
-						shapeDrawer.fromShape2(this, graphics, this.calcGeometry);
-						graphics.transform3(_transform);
-						shapeDrawer.draw(this.calcGeometry);
-					}
-					graphics.RestoreGrState();
-					this.brush = oldBrush;
-				}
+			if (!parent || !presentation || !this.slideImagePlaceholderTransform) {
+				return;
 			}
+			let slideObject;
+			if (parent instanceof AscCommonSlide.CNotesMaster) {
+				slideObject = presentation.slideMasters[0];
+			} else if (parent instanceof AscCommonSlide.CNotes) {
+				slideObject = parent.slide;
+			}
+			if (!slideObject) {
+				return;
+			}
+			const graphics = graphicObjectDrawer.getGraphics();
+			const transform = graphicObjectDrawer.getTransform();
+			const _transform  = transform || this.transform;
+			const oldBrush = this.brush;
+			this.brush = null;
+			graphics.SaveGrState();
+
+			const existingBase = graphics.GetBaseTransform();
+			const composedTransform = existingBase ? existingBase.CreateDublicate() : new AscCommon.CMatrix();
+			composedTransform.Multiply(this.slideImagePlaceholderTransform, AscCommon.MATRIX_ORDER_PREPEND);
+
+			const drawSlideContent = function () {
+				graphics.SetBaseTransform(composedTransform);
+				graphics.reset();
+				graphics.SetIntegerGrid(false);
+				graphics.AddClipRect(0, 0, presentation.GetWidthMM(), presentation.GetHeightMM());
+				const oldIsShapeToImageConverter = AscCommon.IsShapeToImageConverter;
+				AscCommon.IsShapeToImageConverter = true;
+				graphics.isSlidePaceholder = true;
+				slideObject.draw(graphics, 0);
+				graphics.isSlidePaceholder = false;
+				AscCommon.IsShapeToImageConverter = oldIsShapeToImageConverter;
+				graphics.SetBaseTransform(existingBase);
+				graphics.reset();
+			};
+
+			const clipper = new AscCommon.CShapeClipper(drawSlideContent);
+			clipper.fromShape2(this, graphics, this.calcGeometry, _transform);
+			clipper.draw(this.calcGeometry);
+
+			if (this.pen && this.calcGeometry) {
+				graphics.SetIntegerGrid(false);
+				graphics.transform3(_transform, false);
+				const shapeDrawer = new AscCommon.CShapeDrawer();
+				shapeDrawer.fromShape2(this, graphics, this.calcGeometry);
+				shapeDrawer.draw(this.calcGeometry);
+			}
+			graphics.RestoreGrState();
+			this.brush = oldBrush;
 		};
 			/**
 		 * note: sometimes call to recalculate bounds

@@ -471,6 +471,10 @@ CShape.prototype.recalculate = function ()
             this.recalcInfo.recalculateTransform ||
             this.recalcInfo.recalculateGeometry ||
             this.recalcInfo.recalculateBounds;
+        const bRecalcSlideImagePlaceholderTransform = this.isSlideImagePlaceholder() && (this.recalcInfo.recalculateTransform ||
+            this.recalcInfo.recalculateGeometry ||
+            this.recalcInfo.recalculateBounds);
+
         if (this.recalcInfo.recalculateBrush) {
             this.recalculateBrush();
             this.recalcInfo.recalculateBrush = false;
@@ -513,10 +517,40 @@ CShape.prototype.recalculate = function ()
         {
             this.recalculateShdw();
         }
+        if (bRecalcSlideImagePlaceholderTransform) {
+            this.recalculateSlideImagePlaceholderTransform();
+        }
 
         this.clearCropObject();
     }, this, []);
 };
+CShape.prototype.recalculateSlideImagePlaceholderTransform = function () {
+    AscFormat.ExecuteNoHistory(function () {
+        const presentation = Asc.editor.WordControl.m_oLogicDocument;
+        const localTransform = new AscCommon.CMatrix();
+        this.slideImagePlaceholderTransform = localTransform;
+        if (!presentation || !this.transform) {
+            return;
+        }
+        const slideWidth = presentation.GetWidthMM();
+        const slideHeight = presentation.GetHeightMM();
+        if (slideWidth <= 0 || slideHeight <= 0) {
+            return;
+        }
+        const oShapeDrawer = new AscCommon.CShapeDrawer();
+        oShapeDrawer.bIsCheckBounds = true;
+        oShapeDrawer.Graphics = new AscFormat.CSlideBoundsChecker();
+        this.check_bounds(oShapeDrawer);
+        const w = oShapeDrawer.max_x - oShapeDrawer.min_x;
+        const h = oShapeDrawer.max_y - oShapeDrawer.min_y;
+        if (w <= 0 || h <= 0) {
+            return;
+        }
+        localTransform.Scale(w / slideWidth, h / slideHeight);
+        localTransform.Translate(oShapeDrawer.min_x, oShapeDrawer.min_y);
+        localTransform.Multiply(this.transform, AscCommon.MATRIX_ORDER_APPEND);
+    }, this, []);
+}
 CShape.prototype.recalculateBounds = function()
 {
     var boundsChecker = new  AscFormat.CSlideBoundsChecker();
