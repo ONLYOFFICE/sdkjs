@@ -1836,9 +1836,9 @@
     AscDFH.changesFactory[AscDFH.historyitem_NumRef_SetNumCache] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_OfPieChart_SetDLbls] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_OfPieChart_SetSerLines] = window['AscDFH'].CChangesDrawingsObject;
-    AscDFH.changesFactory[AscDFH.historyitem_PictureOptions_SetApplyToEnd] = window['AscDFH'].CChangesDrawingsObject;
-    AscDFH.changesFactory[AscDFH.historyitem_PictureOptions_SetApplyToFront] = window['AscDFH'].CChangesDrawingsObject;
-    AscDFH.changesFactory[AscDFH.historyitem_PictureOptions_SetApplyToSides] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_PictureOptions_SetApplyToEnd] = window['AscDFH'].CChangesDrawingsBool;
+    AscDFH.changesFactory[AscDFH.historyitem_PictureOptions_SetApplyToFront] = window['AscDFH'].CChangesDrawingsBool;
+    AscDFH.changesFactory[AscDFH.historyitem_PictureOptions_SetApplyToSides] = window['AscDFH'].CChangesDrawingsBool;
     AscDFH.changesFactory[AscDFH.historyitem_PieChart_SetDLbls] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_PieSeries_SetCat] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_PieSeries_SetDLbls] = window['AscDFH'].CChangesDrawingsObject;
@@ -1921,7 +1921,7 @@
     AscDFH.changesFactory[AscDFH.historyitem_MultiLvlStrCache_SetLvl] = window['AscDFH'].CChangesDrawingsContent;
     AscDFH.changesFactory[AscDFH.historyitem_CommonLit_RemoveDPt] = window['AscDFH'].CChangesDrawingsContent;
     AscDFH.changesFactory[AscDFH.historyitem_NumLit_AddPt] = window['AscDFH'].CChangesDrawingsContent;
-    AscDFH.changesFactory[AscDFH.historyitem_OfPieChart_AddCustSplit] = window['AscDFH'].CChangesDrawingsContent;
+    AscDFH.changesFactory[AscDFH.historyitem_OfPieChart_AddCustSplit] = window['AscDFH'].CChangesDrawingsContentLong;
     AscDFH.changesFactory[AscDFH.historyitem_PieSeries_SetDPt] = window['AscDFH'].CChangesDrawingsContent;
     AscDFH.changesFactory[AscDFH.historyitem_RadarChart_AddAxId] = window['AscDFH'].CChangesDrawingsContent;
     AscDFH.changesFactory[AscDFH.historyitem_RadarSeries_SetDPt] = window['AscDFH'].CChangesDrawingsContent;
@@ -13542,7 +13542,7 @@
         var i;
         if(oCopy.addCustSplit) {
             for(i = 0; i < this.custSplit.length; ++i) {
-                oCopy.addCustSplit(this.custSplit[i].createDuplicate());
+                oCopy.addCustSplit(this.custSplit[i]);
             }
         }
         if(this.gapWidth !== null && oCopy.setGapWidth) {
@@ -13577,7 +13577,7 @@
         }
     };
     COfPieChart.prototype.addCustSplit = function(pr) {
-        AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_OfPieChart_AddCustSplit, this.custSplit.length, [pr], true));
+        AscCommon.History.CanAddChanges() && AscCommon.History.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_OfPieChart_AddCustSplit, this.custSplit.length, [pr], true));
         this.custSplit.push(pr);
         this.setParentToChild(pr);
     };
@@ -14860,7 +14860,7 @@
         this.ptCount = pr;
     };
 	CStrCache.prototype.setName = function(pr) {
-		AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_StrCache_SetName, this.name, pr));
+		AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_StrCache_SetName, this.name, pr));
 		this.name = pr;
 	};
 	CStrCache.prototype.update = function (sFormula) {

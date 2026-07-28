@@ -6551,9 +6551,9 @@ BinaryChartWriter.prototype.WriteCT_Binning = function (oVal) {
         }
     }
     if(oVal.overflow !== null) {
-        if (typeof oVal.underflow === "undefined") {
+        if (typeof oVal.overflow === "undefined") {
             this.bs.WriteItem(c_oserct_chartExBinningOVERAUTO, function() {
-                oThis.memory.WriteByte(oVal.overflow);
+                oThis.memory.WriteByte(0);
             });
         } else {
             this.bs.WriteItem(c_oserct_chartExBinningOVERVAL, function() {
@@ -6767,7 +6767,7 @@ BinaryChartWriter.prototype.WriteCT_ValueAxisScaling = function (oVal) {
     if(oVal.max !== null) {
         if (typeof oVal.max === "undefined") {
             this.bs.WriteItem(c_oserct_chartExValScalingMAXAUTO, function() {
-                oThis.memory.WriteByte(oVal.max);
+                oThis.memory.WriteByte(0);
             });
         } else {
             this.bs.WriteItem(c_oserct_chartExValScalingMAXVAL, function() {
@@ -6778,7 +6778,7 @@ BinaryChartWriter.prototype.WriteCT_ValueAxisScaling = function (oVal) {
     if(oVal.min !== null) {
         if (typeof oVal.min === "undefined") {
             this.bs.WriteItem(c_oserct_chartExValScalingMINAUTO, function() {
-                oThis.memory.WriteByte(oVal.min);
+                oThis.memory.WriteByte(0);
             });
         } else {
             this.bs.WriteItem(c_oserct_chartExValScalingMINVAL, function() {
@@ -6789,7 +6789,7 @@ BinaryChartWriter.prototype.WriteCT_ValueAxisScaling = function (oVal) {
     if(oVal.majorUnit !== null) {
         if (typeof oVal.majorUnit === "undefined") {
             this.bs.WriteItem(c_oserct_chartExValScalingMAJUNITAUTO, function() {
-                oThis.memory.WriteByte(oVal.majorUnit);
+                oThis.memory.WriteByte(0);
             });
         } else {
             this.bs.WriteItem(c_oserct_chartExValScalingMAJUNITVAL, function() {
@@ -6800,7 +6800,7 @@ BinaryChartWriter.prototype.WriteCT_ValueAxisScaling = function (oVal) {
     if(oVal.minorUnit !== null) {
         if (typeof oVal.minorUnit === "undefined") {
             this.bs.WriteItem(c_oserct_chartExValScalingMINUNITAUTO, function() {
-                oThis.memory.WriteByte(oVal.minorUnit);
+                oThis.memory.WriteByte(0);
             });
         } else {
             this.bs.WriteItem(c_oserct_chartExValScalingMINUNITVAL, function() {
@@ -14200,7 +14200,8 @@ BinaryChartReader.prototype.ReadCT_Binning = function (type, length, val) {
     }
     else if (c_oserct_chartExBinningOVERAUTO === type)
     {
-        val.setOverflow(this.stream.GetUChar());
+        this.stream.GetUChar();
+        val.setOverflow(undefined);
     }
     else
     {
@@ -14456,7 +14457,8 @@ BinaryChartReader.prototype.ReadCT_ValueAxisScaling = function (type, length, va
     var oNewVal;
     if (c_oserct_chartExValScalingMAXAUTO === type)
     {
-        val.setMax(this.stream.GetUChar());
+        this.stream.GetUChar();
+        val.setMax(undefined);
     }
     else if (c_oserct_chartExValScalingMAXVAL === type)
     {
@@ -14464,7 +14466,8 @@ BinaryChartReader.prototype.ReadCT_ValueAxisScaling = function (type, length, va
     }
     else if (c_oserct_chartExValScalingMINAUTO === type)
     {
-        val.setMin(this.stream.GetUChar());
+        this.stream.GetUChar();
+        val.setMin(undefined);
     }
     else if (c_oserct_chartExValScalingMINVAL === type)
     {
@@ -14472,7 +14475,8 @@ BinaryChartReader.prototype.ReadCT_ValueAxisScaling = function (type, length, va
     }
     else if (c_oserct_chartExValScalingMAJUNITAUTO === type)
     {
-        val.setMajorUnit(this.stream.GetUChar());
+        this.stream.GetUChar();
+        val.setMajorUnit(undefined);
     }
     else if (c_oserct_chartExValScalingMAJUNITVAL === type)
     {
@@ -14480,7 +14484,8 @@ BinaryChartReader.prototype.ReadCT_ValueAxisScaling = function (type, length, va
     }
     else if (c_oserct_chartExValScalingMINUNITAUTO === type)
     {
-        val.setMinorUnit(this.stream.GetUChar());
+        this.stream.GetUChar();
+        val.setMinorUnit(undefined);
     }
     else if (c_oserct_chartExValScalingMINUNITVAL === type)
     {

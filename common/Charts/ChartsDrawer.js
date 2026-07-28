@@ -2406,8 +2406,8 @@ CChartsDrawer.prototype =
 		let yMax = axis.max;
 		let logBase = axis.scaling && axis.scaling.logBase;
 
-		let manualMin = axis.scaling && axis.scaling.min !== null ? axis.scaling.min : null;
-		let manualMax = axis.scaling && axis.scaling.max !== null ? axis.scaling.max : null;
+		let manualMin = axis.scaling && AscFormat.isRealNumber(axis.scaling.min) ? axis.scaling.min : null;
+		let manualMax = axis.scaling && AscFormat.isRealNumber(axis.scaling.max) ? axis.scaling.max : null;
 
 		if (logBase) {
 			yMax = yMax <= 0 ? 10 : yMax;
@@ -2684,8 +2684,8 @@ CChartsDrawer.prototype =
 		 * axis contains min and max values and logBase
 		 * if they are null just use yMin lowerBound and yMax upperBound
 		*/
-		let trueMin = (axis && axis.scaling && axis.scaling.min) !== null ? _roundValue(axis.scaling.min) : null;
-		let trueMax = (axis && axis.scaling && axis.scaling.max) !== null ? _roundValue(axis.scaling.max) : null;
+		let trueMin = axis && axis.scaling && AscFormat.isRealNumber(axis.scaling.min) ? _roundValue(axis.scaling.min) : null;
+		let trueMax = axis && axis.scaling && AscFormat.isRealNumber(axis.scaling.max) ? _roundValue(axis.scaling.max) : null;
 		yMin = (yMin <= 0 || yMin >= 1) ? 1 : yMin;
 		yMax = (yMax <= 0) ? logBase : yMax;
 		trueMin = (!trueMin || trueMin <= 0) ? yMin : trueMin;
