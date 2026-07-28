@@ -4175,18 +4175,20 @@
 		if (this.m_oLogicDocument != null && drDoc.SlideCurrent >= 0)
 		{
 			let oSlide = this.m_oLogicDocument.GetCurrentSlide();
-			oSlide.drawSelect(2);
+			if (oSlide) {
+				oSlide.drawSelect(2);
 
-			var elements = oSlide.graphicObjects;
-			if (!elements.canReceiveKeyPress() && -1 != drDoc.SlideCurrent)
-			{
-				var drawPage = drDoc.SlideCurrectRect;
-				drDoc.AutoShapesTrack.init(overlay, drawPage.left, drawPage.top, drawPage.right, drawPage.bottom, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
+				var elements = oSlide.graphicObjects;
+				if (!elements.canReceiveKeyPress() && -1 != drDoc.SlideCurrent)
+				{
+					var drawPage = drDoc.SlideCurrectRect;
+					drDoc.AutoShapesTrack.init(overlay, drawPage.left, drawPage.top, drawPage.right, drawPage.bottom, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
 
-				elements.DrawOnOverlay(drDoc.AutoShapesTrack);
-				drDoc.AutoShapesTrack.CorrectOverlayBounds();
+					elements.DrawOnOverlay(drDoc.AutoShapesTrack);
+					drDoc.AutoShapesTrack.CorrectOverlayBounds();
 
-				overlay.SetBaseTransform();
+					overlay.SetBaseTransform();
+				}
 			}
 		}
 

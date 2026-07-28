@@ -4439,20 +4439,22 @@
 		if (this.m_oLogicDocument != null && drDoc.SlideCurrent >= 0)
 		{
 			let oSlide = this.m_oLogicDocument.GetCurrentSlide();
-			oSlide.drawSelect(2);
-			const sizes = this.m_oLogicDocument.GetSizesMM();
-			var elements = oSlide.graphicObjects;
-			if (!elements.canReceiveKeyPress() && -1 != drDoc.SlideCurrent)
-			{
+			if (oSlide) {
+				oSlide.drawSelect(2);
+				const sizes = this.m_oLogicDocument.GetSizesMM();
+				var elements = oSlide.graphicObjects;
+				if (!elements.canReceiveKeyPress() && -1 != drDoc.SlideCurrent)
+				{
+					var drawPage = drDoc.SlideCurrectRect;
+					drDoc.AutoShapesTrack.init(overlay, drawPage.left, drawPage.top, drawPage.right, drawPage.bottom, sizes.width, sizes.height);
 
-				var drawPage = drDoc.SlideCurrectRect;
-				drDoc.AutoShapesTrack.init(overlay, drawPage.left, drawPage.top, drawPage.right, drawPage.bottom, sizes.width, sizes.height);
+					elements.DrawOnOverlay(drDoc.AutoShapesTrack);
+					drDoc.AutoShapesTrack.CorrectOverlayBounds();
 
-				elements.DrawOnOverlay(drDoc.AutoShapesTrack);
-				drDoc.AutoShapesTrack.CorrectOverlayBounds();
-
-				overlay.SetBaseTransform();
+					overlay.SetBaseTransform();
+				}
 			}
+
 		}
 
 		if (drDoc.InlineTextTrackEnabled && null != drDoc.InlineTextTrack)
