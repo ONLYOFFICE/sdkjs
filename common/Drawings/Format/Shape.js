@@ -5631,41 +5631,45 @@
 					slideObject = parent.slide;
 				}
 				if (slideObject) {
-					const widthScale = this.extX / presentation.GetWidthMM();
-					const heightScale = this.extY / presentation.GetHeightMM();
+					const oldBrush = this.brush;
+					this.brush = null;
+					const widthScale = this.bounds.w / presentation.GetWidthMM();
+					const heightScale = this.bounds.h / presentation.GetHeightMM();
 					const localTransform = new AscCommon.CMatrix();
 					localTransform.Scale(widthScale, heightScale);
-					localTransform.Translate(_transform.tx, _transform.ty);
+					localTransform.Translate(this.bounds.x, this.bounds.y);
 
 					const existingBase = graphics.GetBaseTransform();
 					const composedTransform = existingBase ? existingBase.CreateDublicate() : new AscCommon.CMatrix();
 					composedTransform.Multiply(localTransform, AscCommon.MATRIX_ORDER_PREPEND);
 
-					graphics.SaveGrState();
-					graphics.SetBaseTransform(composedTransform);
-					graphics.reset();
-					graphics.SetIntegerGrid(false);
-					graphics.AddClipRect(0, 0, presentation.GetWidthMM(), presentation.GetHeightMM());
-					const oldIsShapeToImageConverter = AscCommon.IsShapeToImageConverter;
-					AscCommon.IsShapeToImageConverter = true;
-					graphics.isSlidePaceholder = true;
-					slideObject.draw(graphics, 0);
-					graphics.isSlidePaceholder = false;
-					AscCommon.IsShapeToImageConverter = oldIsShapeToImageConverter;
-					graphics.SetBaseTransform(existingBase);
-					graphics.reset();
+					const drawSlideContent = function () {
+						graphics.SetBaseTransform(composedTransform);
+						graphics.reset();
+						graphics.SetIntegerGrid(false);
+						graphics.AddClipRect(0, 0, presentation.GetWidthMM(), presentation.GetHeightMM());
+						const oldIsShapeToImageConverter = AscCommon.IsShapeToImageConverter;
+						AscCommon.IsShapeToImageConverter = true;
+						graphics.isSlidePaceholder = true;
+						slideObject.draw(graphics, 0);
+						graphics.isSlidePaceholder = false;
+						AscCommon.IsShapeToImageConverter = oldIsShapeToImageConverter;
+						graphics.SetBaseTransform(existingBase);
+						graphics.reset();
+					};
+
+					const clipper = new AscCommon.CShapeClipper(drawSlideContent);
+					clipper.fromShape2(this, graphics, this.calcGeometry, _transform);
+					clipper.draw(this.calcGeometry);
 					graphics.RestoreGrState();
-					if (this.pen) {
-						const oldBrush = this.brush;
-						this.brush = null;
-						graphics.transform3(_transform);
+					if (this.pen && this.calcGeometry) {
 						const shapeDrawer = new AscCommon.CShapeDrawer();
 						shapeDrawer.fromShape2(this, graphics, this.calcGeometry);
+						graphics.transform3(_transform);
 						shapeDrawer.draw(this.calcGeometry);
-						shapeDrawer.Clear();
-						this.brush = oldBrush;
 					}
 					graphics.RestoreGrState();
+					this.brush = oldBrush;
 				}
 			}
 		};

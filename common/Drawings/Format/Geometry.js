@@ -1361,6 +1361,16 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
         return false;
     };
 
+    Geometry.prototype.drawClip = function (shapeDrawer) {
+        if(!this.isValid()) return;
+        
+        for (let i = 0; i < this.pathLst.length; i += 1) {
+            const path = this.pathLst[i];
+            if (path.fill !== "none") {
+                path.draw(shapeDrawer);
+            }
+        }
+    }
     Geometry.prototype.draw = function(shape_drawer)
     {
 		if(!this.isValid()) return;
