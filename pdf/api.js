@@ -1709,6 +1709,67 @@
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
+	PDFEditorApi.prototype.AddSignatureField = function() {
+		let oDoc = this.getPDFDoc();
+		
+		return oDoc.DoAction(function() {
+			let oField = oDoc.CreateSignatureField();
+			oDoc.AddField(oField, oDoc.GetCurPage(), true);
+			return true;
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+	PDFEditorApi.prototype.SetSignatureToField = function(signatureResult, fieldId) {
+		let oApi = this;
+		let oDoc = this.getPDFDoc();
+
+		function setImage(field, img) {
+			return oDoc.DoAction(function() {
+				field.AddImage(img);
+			}, AscDFH.historydescription_Pdf_ChangeField);
+		}
+
+		let fApplyCallback = function() {
+			let oField = AscCommon.g_oTableId.Get_ById(fieldId);
+
+			let _img = oApi.ImageLoader.LoadImage(sImageToDownLoad, 1);
+			if (null != _img) {
+				setImage(oField, _img);
+			}
+			else {
+				oApi.asyncImageEndLoaded2 = function(_img) {
+					setImage(oField, _img);
+				};
+			}
+		}
+
+		let sImageUrl = null, fReplaceCallback = null, sImageToDownLoad = "";
+		if (!AscCommon.g_oDocumentUrls.getImageLocal(signatureResult["imageData"])) {
+			sImageUrl        = signatureResult["imageData"];
+			fReplaceCallback = function(url) {
+				sImageToDownLoad  = url;
+			}
+		}
+		else {
+			fApplyCallback();
+		}
+
+		sImageToDownLoad = signatureResult["imageData"];
+
+		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
+			var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sImageToDownLoad);
+			_url     = AscCommon.g_oDocumentUrls.getImageUrl(_url);
+			fReplaceCallback(_url);
+			fApplyCallback();
+			return;
+		}
+
+		AscCommon.sendImgUrls(this, [sImageToDownLoad], function(data) {
+			if (data && data[0] && data[0].url !== "error") {
+				fReplaceCallback(data[0].url);
+				fApplyCallback();
+			}
+		});
+	};
 	PDFEditorApi.prototype.AddCheckboxField = function() {
 		let oDoc = this.getPDFDoc();
 		
@@ -5626,6 +5687,8 @@
 	PDFEditorApi.prototype['AddTextField']				= PDFEditorApi.prototype.AddTextField;
 	PDFEditorApi.prototype['AddDateField']				= PDFEditorApi.prototype.AddDateField;
 	PDFEditorApi.prototype['AddImageField']				= PDFEditorApi.prototype.AddImageField;
+	PDFEditorApi.prototype['AddSignatureField']			= PDFEditorApi.prototype.AddSignatureField;
+	PDFEditorApi.prototype['SetSignatureToField']		= PDFEditorApi.prototype.SetSignatureToField;
 	PDFEditorApi.prototype['AddCheckboxField']			= PDFEditorApi.prototype.AddCheckboxField;
 	PDFEditorApi.prototype['AddRadiobuttonField']		= PDFEditorApi.prototype.AddRadiobuttonField;
 	PDFEditorApi.prototype['AddComboboxField']			= PDFEditorApi.prototype.AddComboboxField;

@@ -495,6 +495,22 @@
 	};
 
 	/**
+	 * Creates a signature field.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect} rect - widget rect
+	 * @returns {ApiSignatureField}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateSignatureField.js
+	 */
+	Api.CreateSignatureField = function(rect) {
+		let oDoc = private_GetLogicDocument();
+		let oField = oDoc.CreateSignatureField();
+		oField.SetRect(rect);
+
+		return new ApiSignatureField(oField);
+	};
+
+	/**
 	 * Creates a checkbox field.
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
@@ -4242,6 +4258,38 @@
 		this.Field.SetNeedUpdateImage(true);
 
 		return true;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiSignatureField
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a signature field.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 * @extends {ApiButtonField}
+	 * @since 9.5.0
+	 */
+	function ApiSignatureField(oField) {
+		ApiButtonField.call(this, oField);
+	}
+
+	ApiSignatureField.prototype = Object.create(ApiButtonField.prototype);
+	ApiSignatureField.prototype.constructor = ApiSignatureField;
+
+	/**
+	 * Returns a type of the ApiSignatureField class.
+	 * @memberof ApiSignatureField
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"signatureField"}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiSignatureField/Methods/GetClassType.js
+	 */
+	ApiSignatureField.prototype.GetClassType = function() {
+		return "signatureField";
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -10635,6 +10683,7 @@
 	Api["CreateTextField"]			= Api.CreateTextField;
 	Api["CreateDateField"]			= Api.CreateDateField;
 	Api["CreateImageField"]			= Api.CreateImageField;
+	Api["CreateSignatureField"]		= Api.CreateSignatureField;
 	Api["CreateCheckboxField"]		= Api.CreateCheckboxField;
 	Api["CreateRadiobuttonField"]	= Api.CreateRadiobuttonField;
 	Api["CreateComboboxField"]		= Api.CreateComboboxField;
@@ -10835,6 +10884,9 @@
 	ApiButtonWidget.prototype["SetLabel"]					= ApiButtonWidget.prototype.SetLabel;
 	ApiButtonWidget.prototype["GetLabel"]					= ApiButtonWidget.prototype.GetLabel;
 	ApiButtonWidget.prototype["SetImage"]					= ApiButtonWidget.prototype.SetImage;
+
+	// ApiSignatureField
+	ApiSignatureField.prototype["GetClassType"]				= ApiSignatureField.prototype.GetClassType;
 
 	// ApiBaseAnnotation
 	ApiBaseAnnotation.prototype["SetRect"]					= ApiBaseAnnotation.prototype.SetRect;

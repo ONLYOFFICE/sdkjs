@@ -727,6 +727,8 @@
         }
 
         this.content.Draw(this.content.GetAbsolutePage(), oGraphicsWord);
+		this.DrawSignatureSign(oGraphicsWord);
+
         oGraphicsWord.RemoveLastClip();
 
         if (this.IsPressed()) {
@@ -1323,6 +1325,8 @@
         else
             nImgType = undefined;
 
+		this.DrawSignatureSign(oGraphicsWord);
+		
         let originView = this.GetOriginView(nImgType, oGraphicsPDF.GetDrawingPageW(), oGraphicsPDF.GetDrawingPageH());
         if (!originView) {
             return;
@@ -1480,7 +1484,12 @@
             this.DrawUnpressed();
         }
 
-        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
+		if (this.IsOOSignature()) {
+			this.asc_OnShowSignature();
+		}
+		else {
+	        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
+		}
     };
     CPushButtonField.prototype.onMouseEnter = function() {
         this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseEnter);
@@ -2084,6 +2093,184 @@
     };
 	CPushButtonField.prototype._isCenterAlign = function() {
 		return false;
+	};
+	CPushButtonField.prototype.IsOOSignature = function() {
+		let oMeta = this.GetMeta();
+		if (oMeta["isOOSignature"]) {
+			return true;
+		}
+
+		return false;
+	};
+	CPushButtonField.prototype.asc_OnShowSignature = function() {
+		if (!this.IsOOSignature() || !this.IsInForm()) {
+			return;
+		}
+
+		let oDoc	= this.GetDocument();
+		let oTr		= oDoc.pagesTransform[this.GetPage()].invert;
+		let aRect	= this.GetRect();
+		let oPoint1 = oTr.TransformPoint(aRect[0], aRect[1]); // top left
+		let oPoint2 = oTr.TransformPoint(aRect[2], aRect[1]); // top right
+		let oPoint3 = oTr.TransformPoint(aRect[2], aRect[3]); // bottom right
+		let oPoint4 = oTr.TransformPoint(aRect[0], aRect[3]); // bottom left
+
+		let xMin = Math.min(oPoint1.x, oPoint2.x, oPoint3.x, oPoint4.x);
+		let yMin = Math.min(oPoint1.y, oPoint2.y, oPoint3.y, oPoint4.y);
+		let xMax = Math.max(oPoint1.x, oPoint2.x, oPoint3.x, oPoint4.x);
+		let yMax = Math.max(oPoint1.y, oPoint2.y, oPoint3.y, oPoint4.y);
+
+		Asc.editor.sendEvent("asc_onShowFieldSignature", [xMin, yMin, xMax, yMax], this.GetId());
+	};
+	CPushButtonField.prototype.asc_OnUpdateSignature = function() {
+		if (!this.IsOOSignature() || !this.IsInForm()) {
+			return;
+		}
+
+		let oDoc	= this.GetDocument();
+		let oTr		= oDoc.pagesTransform[this.GetPage()].invert;
+		let aRect	= this.GetRect();
+		let oPoint1 = oTr.TransformPoint(aRect[0], aRect[1]); // top left
+		let oPoint2 = oTr.TransformPoint(aRect[2], aRect[1]); // top right
+		let oPoint3 = oTr.TransformPoint(aRect[2], aRect[3]); // bottom right
+		let oPoint4 = oTr.TransformPoint(aRect[0], aRect[3]); // bottom left
+
+		let xMin = Math.min(oPoint1.x, oPoint2.x, oPoint3.x, oPoint4.x);
+		let yMin = Math.min(oPoint1.y, oPoint2.y, oPoint3.y, oPoint4.y);
+		let xMax = Math.max(oPoint1.x, oPoint2.x, oPoint3.x, oPoint4.x);
+		let yMax = Math.max(oPoint1.y, oPoint2.y, oPoint3.y, oPoint4.y);
+
+		Asc.editor.sendEvent("asc_onUpdateFieldSignature", [xMin, yMin, xMax, yMax], this.GetId());
+	};
+	CPushButtonField.prototype.IsNeedDrawHighlight = function() {
+		let isNeed = AscPDF.CBaseField.prototype.IsNeedDrawHighlight.call(this);
+
+		if (isNeed && this.IsOOSignature() && !this.GetImageRasterId()) {
+			return true;
+		}
+
+		return false;
+	};
+	CPushButtonField.prototype.DrawSignatureSign = function(graphics) {
+		let oDoc = this.GetDocument();
+		if (!this.IsOOSignature() || this.GetImageRasterId())
+			return;
+		
+		let _t = this;
+		let isReadMode = false;
+		
+		let contentRect = this.getFormRelRect();
+		if (!contentRect) {
+			this.RecalculateContentRect();
+			contentRect = this.getFormRelRect();
+		}
+		
+		let boundsW = contentRect.W;
+		let boundsH = contentRect.H;
+		
+		let drawingDocument = oDoc.GetDrawingDocument();
+		let icons = drawingDocument.contentControls.icons;
+		
+		AscCommon.ExecuteNoHistory(function() {
+			let intGrid = graphics.GetIntegerGrid();
+			graphics.SetIntegerGrid(false);
+
+			let zoomCoeff = drawingDocument.m_oWordControl.m_nZoomValue * 1.0 / 100;
+
+			const imageH_px = 20;
+			const imageW_px = 20;
+
+			const rPR = AscCommon.AscBrowser.retinaPixelRatio;
+			const offset_px = 10 * Math.round(rPR);
+			const offset_mm = offset_px * AscCommon.g_dKoef_pix_to_mm / zoomCoeff;
+			const gap = offset_mm / 2;
+			const clip_offset = Math.round(rPR) * AscCommon.g_dKoef_pix_to_mm / zoomCoeff;
+
+			let imageH_mm = imageH_px * AscCommon.g_dKoef_pix_to_mm / zoomCoeff;
+			let imageW_mm = imageW_px * AscCommon.g_dKoef_pix_to_mm / zoomCoeff;
+			
+			let docContent	= new AscWord.CDocumentContent();
+			let aRect		= this.GetRect();
+			let X       	= aRect[0];
+			let Y       	= aRect[1];
+			let nWidth  	= (aRect[2] - aRect[0]);
+			let nHeight 	= (aRect[3] - aRect[1]);
+			let oMargins	= this.GetMarginsFromBorders();
+			
+			let contentX;
+			let contentY;
+			let contentXLimit;
+			let contentYLimit;
+			
+			if (this.IsButtonFitBounds() == false) {
+				contentX = (X + 2 * oMargins.left) * g_dKoef_pt_to_mm;
+				contentY = (Y + 2 * oMargins.top) * g_dKoef_pt_to_mm;
+				contentXLimit = (X + nWidth - 2 * oMargins.left) * g_dKoef_pt_to_mm;
+				contentYLimit = (Y + nHeight - 2 * oMargins.bottom) * g_dKoef_pt_to_mm;
+			}
+			else {
+				contentX = (X) * g_dKoef_pt_to_mm;
+				contentY = (Y) * g_dKoef_pt_to_mm;
+				contentXLimit = (X + nWidth) * g_dKoef_pt_to_mm;
+				contentYLimit = (Y + nHeight) * g_dKoef_pt_to_mm;
+			}
+
+			let p = docContent.GetElement(0);
+			let run = new AscWord.Run();
+			
+			let fontSize = (12) / zoomCoeff;
+			run.SetFontSize(fontSize);
+			run.SetRFontsAscii("Arial");
+			run.AddText(_t.GetPlaceholderText());
+			p.AddToContent(0, run);
+			p.SetParagraphAlign(AscCommon.align_Center);
+			p.SetParagraphSpacing({
+				Before   : 0,
+				After    : 0,
+				LineRule : linerule_Auto,
+				Line     : 1
+			});
+			p.SetParagraphIndent({
+				Left      : 0,
+				Right     : 0,
+				FirstLine : 0
+			});
+
+			let docContentW = boundsW - 2 * offset_mm - imageW_mm - gap;
+			docContent.Reset(contentX, contentY, contentX + docContentW, AscWord.MAX_MM_VALUE);
+			docContent.Recalculate_Page(0, true);
+
+			if (p.getLineCount() > 1) {
+				let contentBounds = docContent.GetPageBounds(0);
+				let contentH = contentBounds.Bottom - contentBounds.Top;
+				docContent.Shift(0, offset_mm + imageW_mm + gap, (boundsH - contentH) / 2);
+				docContent.Draw(0, graphics);
+
+				let image = icons.getImage(AscCommon.CCButtonType.Signature);
+				if (image)
+					graphics.drawImage2(image, contentX + offset_mm, contentY + boundsH / 2 - imageH_mm / 2, imageW_mm, imageH_mm);
+			}
+			else {
+				let contentW = p.getRange(0, 0).W;
+				let lineMetrics = p.getLineMetrics(0);
+				let contentH = lineMetrics.Ascent + lineMetrics.Descent + lineMetrics.LineGap;
+				
+				let imageX = contentX + boundsW / 2 - (contentW + offset_mm + imageW_mm) / 2;
+				let imageY = contentY + boundsH / 2 - imageH_mm / 2;
+
+				docContent.Shift(0, boundsW / 2 - (contentW + offset_mm + imageW_mm) / 2 + imageW_mm + gap - (docContentW - contentW) / 2, (boundsH - contentH) / 2);
+				docContent.Draw(0, graphics);
+				
+				let image = icons.getImage(AscCommon.CCButtonType.Signature);
+				if (image)
+					graphics.drawImage2(image, imageX, imageY, imageW_mm, imageH_mm);
+			}
+			
+			graphics.SetIntegerGrid(intGrid);
+		}, oDoc, this);
+	};
+	CPushButtonField.prototype.GetPlaceholderText = function() {
+		return AscCommon.translateManager.getValue("Signature");
 	};
 
     /**

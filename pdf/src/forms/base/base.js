@@ -1107,7 +1107,7 @@
             oCtx.fill();
             oCtx.closePath();
         }
-        else if (this.GetType() != AscPDF.FIELD_TYPES.button){
+        else {
             oCtx.beginPath();
             if (this.IsRequired())
                 oCtx.fillStyle = 'rgb(' + FIELDS_HIGHLIGHT_REQ.r + ', ' + FIELDS_HIGHLIGHT_REQ.g + ', ' + FIELDS_HIGHLIGHT_REQ.b + ')';
@@ -1764,7 +1764,7 @@
         this._needDrawHighlight = bDraw;
     };
     CBaseField.prototype.IsNeedDrawHighlight = function() {
-        return false == this.IsReadOnly() && this._needDrawHighlight && (this.GetType() === AscPDF.FIELD_TYPES.button || !this.IsInForm()) && !this.IsRedacted();
+        return false == this.IsReadOnly() && this._needDrawHighlight && !this.IsInForm() && !this.IsRedacted();
     };
 
     CBaseField.prototype.DrawEdit = function(oGraphicsWord) {

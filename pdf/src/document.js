@@ -689,6 +689,28 @@ var CPresentation = CPresentation || function(){};
     
         return oButtonField;
     };
+    CPDFDoc.prototype.CreateSignatureField = function(bLastUsedName) {
+        let x1 = 10, y1 = 10;
+        let width = 150;
+        let height = 32;
+        let rect = [x1, y1, x1 + width, y1 + height];
+    
+        let sName = this.CreateNewFieldName(AscPDF.FIELD_TYPES.signature, bLastUsedName);
+        let oButtonField = this.CreateField(sName, AscPDF.FIELD_TYPES.button, rect);
+        if (Asc.editor.isRtlInterface) {
+            oButtonField.SetMEOptions(1);
+        }
+
+        oButtonField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.MouseUp, [{
+			"S": AscPDF.ACTIONS_TYPES.JavaScript,
+			"JS": "event.target.buttonImportIcon();"
+		}]);
+		oButtonField.SetLayout(AscPDF.Api.Types.position['iconOnly']);
+		oButtonField.SetRequired(true);
+		oButtonField.SetMeta({"isOOSignature": true});
+    
+        return oButtonField;
+    };
     CPDFDoc.prototype.CreateCheckboxField = function(bLastUsedName) {
         let x1 = 10, y1 = 10;
         let width = 18, height = 18;
@@ -1742,6 +1764,8 @@ var CPresentation = CPresentation || function(){};
         let oActiveObj = this.GetActiveObject();
         
 		this.RemoveSelection();
+
+		Asc.editor.sendEvent("asc_onHideFieldSignature");
 
         if (!oActiveObj) {
             return;
@@ -5155,10 +5179,15 @@ var CPresentation = CPresentation || function(){};
             else if (oCurObject.IsAnnot()) {
                 this.Api.sync_annotPropCallback(oController.getSelectedObjects());
             }
-            else if (oCurObject.IsForm() && this.IsEditFieldsMode()) {
-                this.Api.sync_fieldPropCallback(oController.getSelectedObjects().map(function(editShape) {
-                    return editShape.GetEditField();
-                }));
+            else if (oCurObject.IsForm()) {
+				if (this.IsEditFieldsMode()) {
+					this.Api.sync_fieldPropCallback(oController.getSelectedObjects().map(function(editShape) {
+						return editShape.GetEditField();
+					}));
+				}
+				else if (oCurObject.GetType () == AscPDF.FIELD_TYPES.button) {
+					oCurObject.asc_OnUpdateSignature();
+				}
             }
         }
         
