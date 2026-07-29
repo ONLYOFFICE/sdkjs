@@ -273,7 +273,7 @@
 	 * | "xlPaperEnvelopeC5" | "xlPaperEnvelopeC3" | "xlPaperEnvelopeC4" | "xlPaperEnvelopeC6" | "xlPaperEnvelopeC65"
 	 * | "xlPaperEnvelopeB4" | "xlPaperEnvelopeB5" | "xlPaperEnvelopeB6" | "xlPaperEnvelopeItaly"
 	 * | "xlPaperEnvelopeMonarch" | "xlPaperEnvelopePersonal" | "xlPaperFanfoldUS" | "xlPaperFanfoldStdGerman"
-	 * | "xlPaperFanfoldLegalGerman" | "xlPaperUser")} PaperSize
+	 * | "xlPaperFanfoldLegalGerman")} PaperSize
 	 * @see office-js-api/Examples/Enumerations/PaperSize.js
 	 */
 
@@ -18057,7 +18057,7 @@
 		"xlPaperEnvelopeC5": 28, "xlPaperEnvelopeC3": 29, "xlPaperEnvelopeC4": 30, "xlPaperEnvelopeC6": 31,
 		"xlPaperEnvelopeC65": 32, "xlPaperEnvelopeB4": 33, "xlPaperEnvelopeB5": 34, "xlPaperEnvelopeB6": 35,
 		"xlPaperEnvelopeItaly": 36, "xlPaperEnvelopeMonarch": 37, "xlPaperEnvelopePersonal": 38,
-		"xlPaperFanfoldUS": 39, "xlPaperFanfoldStdGerman": 40, "xlPaperFanfoldLegalGerman": 41, "xlPaperUser": 256
+		"xlPaperFanfoldUS": 39, "xlPaperFanfoldStdGerman": 40, "xlPaperFanfoldLegalGerman": 41
 	};
 	let g_oPaperSizeIdToName = {};
 	for (let sPaperSizeName in g_oPaperSizeNameToId) {
