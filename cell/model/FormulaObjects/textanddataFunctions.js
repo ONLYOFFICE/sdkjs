@@ -2899,6 +2899,11 @@ function (window, undefined) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 
+			// Excel limits: find_text <= 255, within_text <= 32767 chars, else #VALUE!
+			if (find_text.length > 255 || within_text.length > 32767) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
 			let valueForSearching = find_text
 				.replace(/(\\)/g, "\\\\")
 				.replace(/(\^)/g, "\\^")
