@@ -1034,8 +1034,8 @@
 		return oSp;
 	}
 
-	const PLACEHOLDERSLIDESHAPE_WIDTH_COEFFICIENT = 5486400 / 6858000;
-	const PLACEHOLDERSLIDESHAPE_HEIGHT_COEFFICIENT = 3086100 / 9144000;
+	const PLACEHOLDERSLIDESHAPE_WIDTH = 5486400 / 36000;
+	const PLACEHOLDERSLIDESHAPE_HEIGHT = 3086100 / 36000;
 	const PLACEHOLDERSLIDESHAPE_YOFFSET_COEFFICIENT = 0.4625;
 
 	function addSlideImage(slideObject) {
@@ -1048,11 +1048,15 @@
 		oPh.setIdx(2 + "");
 		oPh.setSz(2);
 		oNvSpPr.nvPr.setPh(oPh);
-		const notesHeight = slideObject.Height;
-		const notesWidth = slideObject.Width;
-		const placeholderWidth = notesWidth * PLACEHOLDERSLIDESHAPE_WIDTH_COEFFICIENT;
-		const placeholderHeight = notesHeight * PLACEHOLDERSLIDESHAPE_HEIGHT_COEFFICIENT;
-		const oSp = createPlaceholderShape(oNvSpPr, (notesWidth - placeholderWidth) / 2, notesHeight * PLACEHOLDERSLIDESHAPE_YOFFSET_COEFFICIENT - placeholderHeight, placeholderWidth, placeholderHeight, undefined, AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
+		const defNotesHeight = AscCommonSlide.CSlideSize.prototype.DEFAULT_CX / 36000;
+		const defNotesWidth = AscCommonSlide.CSlideSize.prototype.DEFAULT_CY / 36000;
+		const kw = slideObject.Width / defNotesWidth;
+		const kh = slideObject.Height / defNotesHeight;
+
+		const placeholderWidth = PLACEHOLDERSLIDESHAPE_WIDTH;
+		const placeholderHeight = PLACEHOLDERSLIDESHAPE_HEIGHT;
+		const oSp = createPlaceholderShape(oNvSpPr, (defNotesWidth - placeholderWidth) / 2, defNotesHeight * PLACEHOLDERSLIDESHAPE_YOFFSET_COEFFICIENT - placeholderHeight, placeholderWidth, placeholderHeight, undefined, AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
+		oSp.changeSlideImagePlaceholderSize(kw, kh);
 		oSp.setParent(slideObject);
 		const spPr = oSp.spPr;
 		const ln = new AscFormat.CLn();
