@@ -1438,8 +1438,8 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 
     // Класс для работы с поиском и заменой в документе
     this.SearchEngine = null;
-    if (typeof AscCommonWord.CDocumentSearch !== "undefined")
-        this.SearchEngine = new AscCommonWord.CDocumentSearch(this);
+    if (typeof AscWord.DocumentSearch !== "undefined")
+        this.SearchEngine = new AscWord.DocumentSearch(this);
 
     // Параграфы, в которых есть ошибки в орфографии (объект с ключом - Id параграфа)
     this.Spelling = new AscWord.CDocumentSpellChecker();

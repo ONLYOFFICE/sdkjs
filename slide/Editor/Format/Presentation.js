@@ -587,7 +587,7 @@ function CPresentation(DrawingDocument, isMainLogicDocument) {
 
 	this.DrawingDocument = DrawingDocument;
 
-	this.SearchEngine = new AscCommonWord.CDocumentSearch(this);
+	this.SearchEngine = new AscWord.DocumentSearch(this);
 
 	this.NeedUpdateTarget = false;
 

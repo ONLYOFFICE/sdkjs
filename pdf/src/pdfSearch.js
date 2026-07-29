@@ -42,7 +42,7 @@
 	 * @constructor
 	 */
 	function CPdfSearch(oPdfDoc) {
-		AscCommonWord.CDocumentSearch.call(this, oPdfDoc);
+		AscWord.DocumentSearch.call(this, oPdfDoc);
 
 		this.Show			= false;	// flag indicating to highlight PdfPageMatch results on the page
 		this.PagesMatches	= [];		// search results by pages
@@ -50,7 +50,7 @@
 	}
 
 	CPdfSearch.prototype.constructor = CPdfSearch;
-    CPdfSearch.prototype = Object.create(AscCommonWord.CDocumentSearch.prototype);
+    CPdfSearch.prototype = Object.create(AscWord.DocumentSearch.prototype);
 
 	CPdfSearch.prototype.GetPdfPageMatches = function(nPage) {
 		if (!this.PagesMatches[nPage]) {

@@ -2438,7 +2438,7 @@
 		searchSettings.SetMatchCase(isMatchCase);
 		searchSettings.SetWholeWords(isWholeWords);
 
-		let searchEngine = new AscCommonWord.CDocumentSearch(Asc.editor.getLogicDocument());
+		let searchEngine = new AscWord.DocumentSearch(Asc.editor.getLogicDocument());
 		searchEngine.Set(searchSettings);
 		for (let i = 0; i < aSlideObjects.length; ++i)
 			aSlideObjects[i].Search(searchEngine);

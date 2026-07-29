@@ -15307,7 +15307,11 @@ Paragraph.prototype.CanAddSectionPr = function()
 //----------------------------------------------------------------------------------------------------------------------
 // Search
 //----------------------------------------------------------------------------------------------------------------------
-Paragraph.prototype.Search = function(oSearchEngine, nType)
+Paragraph.prototype.Search = function(searchEngine, type)
+{
+	this.SearchText(searchEngine, type);
+};
+Paragraph.prototype.SearchText = function(oSearchEngine, nType)
 {
 	var oParaSearch = new AscCommonWord.CParagraphSearch(this, oSearchEngine, nType);
 	for (var nPos = 0, nContentLen = this.Content.length; nPos < nContentLen; ++nPos)
