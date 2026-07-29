@@ -3237,7 +3237,6 @@
 		const scaleFactor = AscCommon.AscBrowser.retinaPixelRatio * mmToPX;
 		this.const_offset_x = this.getSlideXOffset();
 		this.const_offset_y = 3 * scaleFactor;
-		this.const_offset_r = 4;
 		this.const_offset_b = 0;
 		this.const_border_w = 4;
 		const outlineView = this.GetOutlineView();
@@ -3248,7 +3247,9 @@
 	COutlineThumbnailsManager.prototype.calculateTotalThumbnailsLength = function (containerWidth, containerHeight) {
 		const outlineView = this.GetOutlineView();
 		if (outlineView) {
-			const newWidth = containerWidth - AscCommon.AscBrowser.convertToRetinaValue(this.const_offset_x) * AscCommon.g_dKoef_pix_to_mm;
+			const wordControl = this.m_oWordControl;
+			const thumbnailsWidth = wordControl.m_oThumbnails.AbsolutePosition.R - wordControl.m_oThumbnails.AbsolutePosition.L;
+			const newWidth = thumbnailsWidth - AscCommon.AscBrowser.convertToRetinaValue(this.const_offset_x + this.const_offset_r) * AscCommon.g_dKoef_pix_to_mm;
 			outlineView.checkOutlineWidth(newWidth);
 			return outlineView.getOutlineHeight() * AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_mm_to_pix + this.const_offset_y;
 		}
