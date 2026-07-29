@@ -257,6 +257,7 @@ ParaHyperlink.prototype.GetVisited = function()
 ParaHyperlink.prototype.SetVisited = function(isVisited)
 {
 	this.Visited = isVisited;
+	this.private_UpdatePresentationOutline();
 };
 ParaHyperlink.prototype.SetToolTip = function(ToolTip)
 {

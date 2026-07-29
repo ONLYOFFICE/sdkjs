@@ -2902,7 +2902,9 @@
 		};
 
 		CShape.prototype.Get_Styles = function (level) {
-
+			if (this.stylesOverride) {
+				return this.stylesOverride;
+			}
 			var _level = AscFormat.isRealNumber(level) ? level : 0;
 			if (this.recalcInfo.recalculateTextStyles[_level]) {
 				this.recalculateTextStyles(_level);

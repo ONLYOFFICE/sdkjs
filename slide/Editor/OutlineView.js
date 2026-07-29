@@ -60,6 +60,7 @@
 
 	function getOutlineTextPr(isTitle, isMathRun) {
 		const textPr = new CTextPr();
+		textPr.InitDefault();
 		textPr.SetFontSize(10);
 		if (isTitle) {
 			textPr.SetBold(true);
@@ -1259,6 +1260,7 @@
 			}
 			const rgb = getRGBFromHex(AscCommon.GlobalSkin.ThumbnailsPageNumberText);
 			textPr.SetColor(rgb.R, rgb.G, rgb.B);
+			textPr.SetUnifill(AscFormat.CreateUnifillFromRGB(rgb.R, rgb.G, rgb.B));
 			run.Set_Pr(textPr);
 			run.AddText(label);
 			para.Content[0] = run;
@@ -1284,6 +1286,7 @@
 
 			var para = txBody.content.Content[0];
 			var paraPr = new CParaPr();
+			paraPr.InitDefault();
 			paraPr.Jc = paraAlign;
 			para.SetPr(paraPr);
 			return shape;
@@ -1696,6 +1699,7 @@
 	};
 	OutlineView.prototype.getParaPr = function (compiledParaPr) {
 		const copyParaPr = new CParaPr();
+		copyParaPr.InitDefault();
 		if (compiledParaPr.ParaPr.Bullet) {
 			copyParaPr.Bullet = compiledParaPr.ParaPr.Bullet.createDuplicate();
 			copyParaPr.Bullet.bulletColor = new AscFormat.CBulletColor();
@@ -1715,10 +1719,25 @@
 	OutlineView.prototype.applyParagraphProps = function (outlineParagraph, slideParagraph, isTitle) {
 		const compiledPr = slideParagraph ? slideParagraph.getCompiledPr() : {ParaPr: g_oDocumentDefaultParaPr};
 		const copyParaPr = this.getParaPr(compiledPr);
-		const oThis = this;
 		outlineParagraph.SetPr(copyParaPr);
 		outlineParagraph.CheckRunContent(function (run) {
 			const textPr = getOutlineTextPr(isTitle, run.IsMathRun());
+			const runPr = run.GetDirectTextPr();
+			if (runPr) {
+				if (runPr.Italic) {
+					textPr.SetItalic(true);
+				}
+				if (runPr.Underline) {
+					textPr.SetUnderline(true);
+				}
+				if (runPr.Strikeout) {
+					textPr.SetStrikeout(true);
+				}
+				if (runPr.DStrikeout) {
+					textPr.SetDStrikeout(true);
+				}
+			}
+			textPr.SetUnifill(AscFormat.CreateUnifillFromRGB(0, 0, 0));
 			run.SetPr(textPr);
 		});
 		const parTextPr = getOutlineTextPr();
@@ -1734,6 +1753,8 @@
 			outlineShape.createTextBody();
 			outlineShape.txBody.bodyPr.setInsets(0, 0, 0, 0);
 			outlineShape.themeOverride = AscFormat.GenerateDefaultTheme();
+			const styles = AscWord.DEFAULT_STYLES;
+			outlineShape.stylesOverride = {styles: styles, lastId: styles.Get_Default_Paragraph()};
 			const outlineContent = outlineShape.txBody.content;
 			outlineContent.ClearContent(false);
 			this.fillOutlineShape(outlineShape, outlineSlides);
