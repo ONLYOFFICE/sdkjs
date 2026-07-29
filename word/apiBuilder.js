@@ -14198,7 +14198,7 @@
 	/**
 	 * Returns an internal ID of the current table.
 	 * @memberof ApiTable
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CPE"]
 	 * @returns {string}
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetInternalId.js
@@ -15424,6 +15424,32 @@
 				cells.push(row.GetCell(c));
 		}
 		return cells;
+	};
+
+	/**
+	 * Selects a range of cells in the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CDE", "CPE"]
+	 * @param {number} startCellIndex - The start cell index within the start row.
+	 * @param {number} startRowIndex - The start row index.
+	 * @param {number} endCellIndex - The end cell index within the end row.
+	 * @param {number} endRowIndex - The end row index.
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SelectRange.js
+	 */
+	ApiTable.prototype.SelectRange = function(startCellIndex, startRowIndex, endCellIndex, endRowIndex) {
+		startCellIndex	= Math.max(0, GetIntParameter(startCellIndex, 0));
+		startRowIndex	= Math.max(0, GetIntParameter(startRowIndex, 0));
+		endCellIndex	= Math.max(0, GetIntParameter(endCellIndex, 0));
+		endRowIndex		= Math.max(0, GetIntParameter(endRowIndex, 0));
+		
+		let oLogicDocument = private_GetLogicDocument();
+		oLogicDocument.RemoveSelection();
+		this.Table.SelectRange(startCellIndex, startRowIndex, endCellIndex, endRowIndex);
+		this.Table.Document_SetThisElementCurrent(true);
+		this.Table.private_UpdateSelectedCellsArray();
+		return true;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -32121,6 +32147,7 @@
 	ApiTable.prototype["GetSelectedCells"]           = ApiTable.prototype.GetSelectedCells;
 	ApiTable.prototype["GetSelectedRows"]            = ApiTable.prototype.GetSelectedRows;
 	ApiTable.prototype["GetSelectedColumnsCells"]    = ApiTable.prototype.GetSelectedColumnsCells;
+	ApiTable.prototype["SelectRange"]                = ApiTable.prototype.SelectRange;
 
 	ApiTableRow.prototype["GetClassType"]            = ApiTableRow.prototype.GetClassType;
 	ApiTableRow.prototype["GetInternalId"]           = ApiTableRow.prototype.GetInternalId;
