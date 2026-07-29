@@ -296,12 +296,12 @@
 	 * @constructor
 	 * @param {CDrawingDocContent} oDocContent - Internal document content of the shape's text body.
 	 * @param {number} [nStart=0] - Start character position (0-based, inclusive).
-	 * @param {number} [nEnd]     - End character position (0-based, exclusive). If omitted, defaults to the full content length.
+	 * @param {number} [nEnd=-1]     - End character position (0-based, exclusive). If omitted or -1, the range always ends at the end of the content.
 	 */
 	function ApiTextRange(oDocContent, nStart, nEnd) {
 		this.DocContent = oDocContent;
 		this.StartPos   = typeof nStart === 'number' ? nStart : 0;
-		this.EndPos     = typeof nEnd   === 'number' && nEnd !== -1 ? nEnd : this.private_GetTotalLength();
+		this.EndPos     = typeof nEnd   === 'number' ? nEnd : -1;
 	}
 	ApiTextRange.prototype.constructor = ApiTextRange;
 
@@ -10383,7 +10383,7 @@
 	};
 
 	ApiTextRange.prototype.private_GetEffectiveEnd = function() {
-		return this.EndPos;
+		return this.EndPos === -1 ? this.private_GetTotalLength() : this.EndPos;
 	};
 
 	/**
@@ -10477,7 +10477,7 @@
 	};
 
 	/**
-	 * Adds a text to the specified position.
+	 * Adds a text to the specified position. The current range is expanded to include the added text.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE"]
 	 * @param {String} text - The text that will be added.
@@ -10488,19 +10488,33 @@
 	 */
 	ApiTextRange.prototype.AddText = function(text, position)
 	{
-		text     = AscBuilder.GetStringParameter(text, "");
-		position = AscBuilder.GetStringParameter(position, "after");
+		if (typeof text !== 'string') {
+			AscBuilder.throwException(new Error('Invalid type of parameter "text".'));
+			return false;
+		}
 
-		let nLen = text.length;
-		if (nLen === 0)
+		if (position === undefined)
+			position = "after";
+
+		if (typeof position !== 'string') {
+			AscBuilder.throwException(new Error('Invalid type of parameter "position".'));
+			return false;
+		}
+
+		if ("after" !== position && "before" !== position) {
+			AscBuilder.throwException(new Error('Invalid value of parameter "position".'));
+			return false;
+		}
+
+		if (text.length === 0)
 			return true;
 
 		let nInsertPos = "after" === position
 			? this.private_GetEffectiveEnd()
 			: this.private_GetEffectiveStart();
 
-		let map   = this.private_BuildCharMap();
-		let entry = null;
+		let map		= this.private_BuildCharMap();
+		let entry	= null;
 		for (let i = 0; i < map.length; i++)
 		{
 			if (nInsertPos >= map[i].charStart && nInsertPos <= map[i].charEnd)
@@ -10515,62 +10529,42 @@
 		if (!entry)
 			return false;
 
-		let oPara			= entry.para;
-		let nLocalOffset	= nInsertPos - entry.charStart;
-		let nRunIdx			= undefined;
-		let nCharAcc		= 0;
+		let oPara		= entry.para;
+		let oContentPos	= this.private_GetParaContentPosForChar(oPara, nInsertPos - entry.charStart);
+		let oRun		= oPara.GetClassByPos(oContentPos);
+		let nInRunPos	= oContentPos.Get(oContentPos.GetDepth());
 
-		for (let ri = 0; ri < oPara.Content.length; ri++)
-		{
-			let oRun = oPara.Content[ri];
-			if (!oRun || !oRun.Content)
-				continue;
-
-			if (nLocalOffset <= nCharAcc)
-			{
-				nRunIdx = ri;
-				break;
-			}
-
-			let nRunLen = 0;
-			for (let ci = 0; ci < oRun.Content.length; ci++)
-			{
-				let t = oRun.Content[ci].Type;
-				if (t === 0x0004)
-					break;
-				if (t === 0x0001 || t === 0x0002 || t === 0x0015)
-					nRunLen++;
-			}
-			nCharAcc += nRunLen;
-
-			if (nLocalOffset <= nCharAcc)
-			{
-				nRunIdx = ri + 1;
-				break;
-			}
-		}
-
-		let oApiPara = Api.private_CreateApiParagraph(oPara);
-		let oApiRun  = Api.CreateRun();
-		oApiRun.AddText(text);
-
-		// nRunIdx may be undefined (offset past all runs) or point at the trailing paragraph-end run;
-		// clamp it to the last insertable position (just before the paragraph-end mark).
-		let nMaxIdx = oPara.Content.length - 1;
-		if (nRunIdx === undefined || nRunIdx > nMaxIdx)
-			nRunIdx = nMaxIdx;
-		if (nRunIdx < 0)
-			nRunIdx = 0;
-
-		if (!oApiPara.AddElement(oApiRun, nRunIdx))
+		if (!(oRun instanceof AscWord.Run) || nInRunPos < 0)
 			return false;
 
-		if ("before" === position)
+		for (let i = 0; i < oRun.Content.length; i++)
 		{
-			this.StartPos += nLen;
-			if (this.EndPos !== -1)
-				this.EndPos += nLen;
+			if (oRun.Content[i].Type === 0x0004)
+			{
+				nInRunPos = Math.min(nInRunPos, i);
+				break;
+			}
 		}
+
+		let nTotalBefore = this.private_GetTotalLength();
+		// TODO: the restored state does not follow the inserted text, position tracking is needed here
+		let oState = this.DocContent.Get_SelectionState2();
+
+		oRun.SetCursorPosition(nInRunPos);
+		let oNewRun = oRun.CheckRunBeforeAdd();
+		if (oNewRun)
+		{
+			oRun      = oNewRun;
+			nInRunPos = 0;
+		}
+
+		oRun.SetCursorPosition(oRun.AddText(text, nInRunPos));
+
+		this.DocContent.Set_SelectionState2(oState);
+
+		let nDelta = this.private_GetTotalLength() - nTotalBefore;
+		if (nDelta > 0 && this.EndPos !== -1)
+			this.EndPos += nDelta;
 
 		return true;
 	};
