@@ -10707,12 +10707,17 @@
 	 * Selects the text range in the editor.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE"]
+	 * @param {boolean} [update=true] - Specifies whether the previous selection is removed, the range becomes the current
+	 * editor position and the selection state is updated (true) or the selection is set without changing the editor state (false).
 	 * @returns {boolean}
 	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/Select.js
 	 */
-	ApiTextRange.prototype.Select = function(bUpdate) {
-		bUpdate = AscBuilder.GetBoolParameter(bUpdate, true);
+	ApiTextRange.prototype.Select = function(update) {
+		if (typeof update !== 'boolean') {
+			AscBuilder.throwException(new Error('Invalid type of parameter "update".'));
+			return false;
+		}
 
 		let oDocContent    = this.DocContent;
 		let oDrawingShape  = oDocContent && oDocContent.Is_DrawingShape && oDocContent.Is_DrawingShape(true);
@@ -10723,7 +10728,14 @@
 		if (!oController)
 			return false;
 
-		oDrawingShape.Set_CurrentElement(true, 0, true, false);
+		if (update) {
+			let oPresentation = private_GetPresentation();
+			if (oPresentation)
+				oPresentation.RemoveSelection();
+			oController.resetSelection();
+		}
+
+		oDrawingShape.Set_CurrentElement(update, 0, true, update);
 		oController.resetInternalSelection();
 		oController.selection.textSelection = oDrawingShape;
 
@@ -10736,7 +10748,7 @@
 		else
 			oDocContent.SelectCharRange(nStart, nEnd);
 
-		if (bUpdate) {
+		if (update) {
 			oController.updateSelectionState();
 			oController.updateOverlay();
 		}
