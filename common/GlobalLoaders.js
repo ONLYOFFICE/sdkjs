@@ -457,7 +457,19 @@
             if (this.isBlockchainSupport && (true !== isDisableCrypto))
                 image.preload_crypto(url);
             else
+            {
+                
+                if (!image.corsFailed && 0 === url.indexOf('http') && -1 === url.indexOf(window.location.origin))
+                {
+                    image.crossOrigin = 'anonymous';
+                    image.addEventListener('error', function()
+                    {
+                        image.corsFailed = true;
+                        image.removeAttribute('crossorigin');
+                    }, {once: true});
+                }
                 image.src = url;
+            }
         };
 
 	    this.LoadDocumentImages = function (images, isCheckExists, syncImages) {
