@@ -8690,10 +8690,35 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SelectRange.js
 	 */
 	ApiTable.prototype.SelectRange = function(startCellIndex, startRowIndex, endCellIndex, endRowIndex) {
-		startCellIndex	= Math.max(0, GetIntParameter(startCellIndex, 0));
-		startRowIndex	= Math.max(0, GetIntParameter(startRowIndex, 0));
-		endCellIndex	= Math.max(0, GetIntParameter(endCellIndex, 0));
-		endRowIndex		= Math.max(0, GetIntParameter(endRowIndex, 0));
+		startCellIndex = AscBuilderGetIntParameter(startCellIndex, null);
+		if (null === startCellIndex)
+			AscBuilder.throwException(new Error("Start cell index must be a number"));
+
+		startRowIndex = GetIntParameter(startRowIndex, null);
+		if (null === startRowIndex)
+			AscBuilder.throwException(new Error("Start row index must be a number"));
+
+		endCellIndex = GetIntParameter(endCellIndex, null);
+		if (null === endCellIndex)
+			AscBuilder.throwException(new Error("End cell index must be a number"));
+
+		endRowIndex = GetIntParameter(endRowIndex, null);
+		if (null === endRowIndex)
+			AscBuilder.throwException(new Error("End row index must be a number"));
+
+		let startRow = this.Table.GetRow(startRowIndex);
+		if (!startRow || startRowIndex < 0 || startRowIndex >= this.Table.Content.length)
+			AscBuilder.throwException(new Error("Start row index " + startRowIndex + " is out of bounds [0, " + (this.Table.GetRowsCount() - 1) + "]"));
+
+		if (startCellIndex < 0 || startCellIndex >= startRow.Content.length)
+			AscBuilder.throwException(new Error("Start cell index " + startCellIndex + " is out of bounds [0, " + (startRow.Content.length - 1) + "]"));
+
+		let endRow = this.Table.GetRow(endRowIndex);
+		if (!endRow || endRowIndex < 0 || endRowIndex >= this.Table.Content.length)
+			AscBuilder.throwException(new Error("End row index " + endRowIndex + " is out of bounds [0, " + (this.Table.GetRowsCount() - 1) + "]"));
+
+		if (endCellIndex < 0 || endCellIndex >= endRow.Content.length)
+			AscBuilder.throwException(new Error("End cell index " + endCellIndex + " is out of bounds [0, " + (endRow.Content.length - 1) + "]"));
 
 		let oPresentation = private_GetPresentation();
 		oPresentation.RemoveSelection();
