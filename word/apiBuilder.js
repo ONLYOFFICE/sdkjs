@@ -15233,6 +15233,14 @@
 
 		return private_MM2EMU(heightMM);
 	};
+	/**
+	 * Returns the selected cells of the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiTableCell[]} - An array of the currently selected cells (empty if there is no cell selection).
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedCells.js
+	 */
 	ApiTable.prototype.GetSelectedCells = function(){
 		let cells = [];
 
