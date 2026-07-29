@@ -13813,31 +13813,40 @@
 	 * Sets the outline properties to the specified graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiStroke} oStroke - The stroke used to create the graphic object outline.
+	 * @param {ApiStroke} stroke - The stroke used to create the graphic object outline.
 	 * @returns {boolean} - returns false if param is invalid.
 	 * @since 9.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetOutLine.js
 	 */
-	ApiDrawing.prototype.SetOutLine = function(oStroke)
+	ApiDrawing.prototype.SetOutLine = function(stroke)
 	{
 		const classType = this.GetClassType();
 		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
 			return false;
 
-		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
+		if (!stroke || !stroke.GetClassType || stroke.GetClassType() !== "stroke")
 			return false;
 
 		if (classType === "smartArt")
 		{
 			let whole = this.Drawing.getWhole();
 			if (whole)
-				whole.setLn(oStroke.Ln);
+				whole.setLn(stroke.Ln);
+			return true;
+		}
+
+		if (classType === "group")
+		{
+			const drawings = GetApiDrawings(this.Drawing.spTree);
+			for (let i = 0; i < drawings.length; ++i)
+				drawings[i].SetOutLine(new AscBuilder.ApiStroke(stroke.Ln.createDuplicate()));
+
 			return true;
 		}
 
 		if (this.Drawing && this.Drawing.spPr)
 		{
-			this.Drawing.spPr.setLn(oStroke.Ln);
+			this.Drawing.spPr.setLn(stroke.Ln);
 			return true;
 		}
 
@@ -13847,7 +13856,7 @@
 	 * Sets the outline properties to the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiStroke} oStroke - The stroke used to create the graphic object outline.
+	 * @param {ApiStroke} stroke - The stroke used to create the graphic object outline.
 	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
 	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLine.js

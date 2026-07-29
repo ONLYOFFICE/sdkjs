@@ -7614,6 +7614,16 @@
 			return true;
 		}
 
+		if (classType === "group") {
+			const drawings = AscBuilder.GetApiDrawings(this.Drawing.spTree.filter(function(sp) {
+				return sp.getObjectType() !== AscDFH.historyitem_type_GraphicFrame;
+			}));
+			for (let i = 0; i < drawings.length; ++i)
+				drawings[i].SetLine(new AscBuilder.ApiStroke(stroke.Ln.createDuplicate()));
+
+			return true;
+		}
+
 		if (this.Drawing && this.Drawing.spPr) {
 			this.Drawing.spPr.setLn(stroke.Ln);
 			return true;
