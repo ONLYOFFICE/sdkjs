@@ -14957,7 +14957,7 @@
 	 * Searches for a scope of a table object. The search results are a collection of ApiRange objects.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - Search string.
+	 * @param {string | RegExp} sText - Search string, or a regular expression to match. When a RegExp is passed, the isMatchCase parameter is ignored (control case sensitivity with the "i" flag instead).
 	 * @param {boolean} isMatchCase - Case sensitive or not.
 	 * @return {ApiRange[]}  
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/Search.js
@@ -15790,7 +15790,7 @@
 	 * Searches for a scope of a table row object. The search results are a collection of ApiRange objects.
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - Search string.
+	 * @param {string | RegExp} sText - Search string, or a regular expression to match. When a RegExp is passed, the isMatchCase parameter is ignored (control case sensitivity with the "i" flag instead).
 	 * @param {boolean} isMatchCase - Case sensitive or not.
 	 * @return {ApiRange[]}
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/Search.js
@@ -16056,7 +16056,7 @@
 	 * Searches for a scope of a table cell object. The search results are a collection of ApiRange objects.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - Search string.
+	 * @param {string | RegExp} sText - Search string, or a regular expression to match. When a RegExp is passed, the isMatchCase parameter is ignored (control case sensitivity with the "i" flag instead).
 	 * @param {boolean} isMatchCase - Case sensitive or not.
 	 * @return {ApiRange[]}  
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/Search.js
@@ -26636,7 +26636,7 @@
 	 * Searches for a scope of a content control object. The search results are a collection of ApiRange objects.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {string} text - Search string.
+	 * @param {string | RegExp} text - Search string, or a regular expression to match. When a RegExp is passed, the isMatchCase parameter is ignored (control case sensitivity with the "i" flag instead).
 	 * @param {boolean} isMatchCase - Case sensitive or not.
 	 * @return {ApiRange[]}  
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/Search.js

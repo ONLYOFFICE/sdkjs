@@ -8690,7 +8690,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SelectRange.js
 	 */
 	ApiTable.prototype.SelectRange = function(startCellIndex, startRowIndex, endCellIndex, endRowIndex) {
-		startCellIndex = AscBuilderGetIntParameter(startCellIndex, null);
+		startCellIndex = GetIntParameter(startCellIndex, null);
 		if (null === startCellIndex)
 			AscBuilder.throwException(new Error("Start cell index must be a number"));
 
