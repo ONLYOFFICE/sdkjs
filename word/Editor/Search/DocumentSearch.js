@@ -349,6 +349,13 @@
 		this.Pattern.Set("");
 		this.private_CalculatePrefix();
 	};
+	DocumentSearch.prototype.IsEmpty = function()
+	{
+		if (this.RegExp)
+			return false;
+
+		return !this.Pattern.GetLength();
+	};
 	DocumentSearch.prototype.IsWholeWords = function()
 	{
 		return this.Word;

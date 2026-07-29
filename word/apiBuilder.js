@@ -8763,9 +8763,9 @@
 	 * Searches for a scope of a document object. The search results are a collection of ApiRange objects.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - Search string.
+	 * @param {string | RegExp} sText - Search string, or a regular expression to match. When a RegExp is passed, the isMatchCase parameter is ignored (control case sensitivity with the "i" flag instead).
 	 * @param {boolean} isMatchCase - Case sensitive or not.
-	 * @return {ApiRange[]}  
+	 * @return {ApiRange[]}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/Search.js
 	 */
 	ApiDocument.prototype.Search = function(sText, isMatchCase)
@@ -12288,9 +12288,9 @@
 	 * Searches for a scope of a paragraph object. The search results are a collection of ApiRange objects.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - Search string.
+	 * @param {string | RegExp} sText - Search string, or a regular expression to match. When a RegExp is passed, the isMatchCase parameter is ignored (control case sensitivity with the "i" flag instead).
 	 * @param {boolean} isMatchCase - Case sensitive or not.
-	 * @return {ApiRange[]}  
+	 * @return {ApiRange[]}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/Search.js
 	 */
 	ApiParagraph.prototype.Search = function(sText, isMatchCase)

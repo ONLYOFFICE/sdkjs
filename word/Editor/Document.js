@@ -28146,6 +28146,9 @@ CDocument.prototype.Search = function(oProps, bDraw)
 
 	this.SearchEngine.Clear();
 	this.SearchEngine.Set(oProps);
+	
+	if (this.SearchEngine.IsEmpty())
+		return this.SearchEngine;
 
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 	{
