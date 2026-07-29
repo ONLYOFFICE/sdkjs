@@ -7799,6 +7799,23 @@
 	};
 
 	/**
+	 * Recalculates the cells that need recalculation (changed, added or volatile) across the active workbook, similar to Application.Calculate in VBA. Forces the recalc that is otherwise deferred until a macro finishes, so up-to-date formula results can be read within the same macro.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/Calculate.js
+	 */
+	Api.Calculate = function () {
+		let wbModel = Asc.editor && Asc.editor.wbModel;
+		if (!wbModel || !wbModel.dependencyFormulas) {
+			return false;
+		}
+		wbModel.dependencyFormulas.forceCalculate();
+		return true;
+	};
+
+	/**
 	 * Inserts the specified pivot table into an existing worksheet.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
@@ -8370,6 +8387,22 @@
 	 */
 	ApiWorkbook.prototype.GetActiveSheet = function () {
 		return Api.GetActiveSheet();
+	};
+
+	/**
+	 * Recalculates the cells that need recalculation (changed, added or volatile) across the workbook. Forces the recalc that is otherwise deferred until a macro finishes, so up-to-date formula results can be read within the same macro.
+	 * @memberof ApiWorkbook
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/Calculate.js
+	 */
+	ApiWorkbook.prototype.Calculate = function () {
+		if (!this.Workbook || !this.Workbook.dependencyFormulas) {
+			return false;
+		}
+		this.Workbook.dependencyFormulas.forceCalculate();
+		return true;
 	};
 
 	/**
@@ -30260,6 +30293,7 @@
 	Api["GetRange"] = Api.GetRange;
 
 	Api["RecalculateAllFormulas"] = Api.RecalculateAllFormulas;
+	Api["Calculate"] = Api.Calculate;
 	Api["AddComment"]  = Api.AddComment;
 	Api["GetComments"] = Api.GetComments;
 	Api["GetAllComments"] = Api.GetAllComments;
@@ -30295,6 +30329,7 @@
 	ApiWorkbook.prototype["GetTheme"] = ApiWorkbook.prototype.GetTheme;
 	ApiWorkbook.prototype["GetName"] = ApiWorkbook.prototype.GetName;
 	ApiWorkbook.prototype["GetActiveSheet"] = ApiWorkbook.prototype.GetActiveSheet;
+	ApiWorkbook.prototype["Calculate"] = ApiWorkbook.prototype.Calculate;
 	ApiWorkbook.prototype["GetActiveChart"] = ApiWorkbook.prototype.GetActiveChart;
 	ApiWorkbook.prototype["GetDrawingsByName"] = ApiWorkbook.prototype.GetDrawingsByName;
 

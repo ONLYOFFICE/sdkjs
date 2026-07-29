@@ -959,6 +959,16 @@
 			callback();
 			this.unlockRecal();
 		},
+		//Forces a dirty-only recalc even while recalc is locked, preserving the lock depth.
+		forceCalculate: function() {
+			let savedLockCounter = this.lockCounter;
+			this.lockCounter = 0;
+			try {
+				this.calcTree();
+			} finally {
+				this.lockCounter = savedLockCounter;
+			}
+		},
 		//defined name
 		getDefNameByName: function(name, sheetId, opt_exact) {
 			var res = null;
