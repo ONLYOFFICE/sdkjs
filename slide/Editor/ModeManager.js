@@ -233,6 +233,9 @@
 	SlideModeManagerBase.prototype.isLockBackgroundSlides = function () {
 		return true;
 	};
+	SlideModeManagerBase.prototype.isCanAddHyperlink = function () {
+		return false;
+	};
 
 	function SlideModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -783,6 +786,9 @@
 				master.changeBackground(null);
 			}
 		}
+	};
+	SlideModeManager.prototype.isCanAddHyperlink = function () {
+		return true;
 	};
 
 	function MasterSlideModeManager(api) {

@@ -8603,6 +8603,10 @@ CPresentation.prototype.RemoveHyperlink = function () {
 };
 
 CPresentation.prototype.CanAddHyperlink = function (bCheckInHyperlink) {
+	const view = this.getViewManager();
+	if (view && !view.isCanAddHyperlink()) {
+		return false;
+	}
 	var oController = this.GetCurrentController();
 	if (oController)
 		return oController.hyperlinkCanAdd(bCheckInHyperlink);
