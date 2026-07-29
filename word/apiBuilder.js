@@ -9434,7 +9434,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiTable|null}
 	 * @since 9.5.0
-	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetEndNotesFirstParagraphs.js
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetActiveTable.js
 	 */
 	ApiDocument.prototype.GetActiveTable = function()
 	{
