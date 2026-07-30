@@ -161,6 +161,84 @@ var PasteElementsId = {
   g_bIsDocumentCopyPaste : true,
   g_bIsPDFCopyPaste : false
 };
+
+var g_arrBulletListStyleByLvl = ["disc", "circle", "square"];
+function GetBulletListStyleTypeBySymbol(sChar, sFont, nLvl)
+{
+	let nCharCode = -1;
+	if (typeof sChar === "string" && sChar.length > 0)
+	{
+		nCharCode = sChar.charCodeAt(0);
+		//Symbol, Wingdings keep their symbols in the private use area
+		if (nCharCode >= 0xF000 && nCharCode <= 0xF0FF)
+		{
+			nCharCode -= 0xF000;
+		}
+	}
+
+	let sLowerFont = (typeof sFont === "string") ? sFont.toLowerCase() : "";
+
+	switch (nCharCode)
+	{
+		case 0x2022://•
+		case 0x00B7://· - Symbol
+		case 0x25CF://●
+			return "disc";
+		case 0x25CB://○
+		case 0x25E6://◦
+			return "circle";
+		case 0x25AA://▪
+		case 0x25A0://■
+		case 0x25FC://◼
+			return "square";
+		case 0x006F://o - Courier New
+			if (-1 !== sLowerFont.indexOf("courier"))
+			{
+				return "circle";
+			}
+			break;
+		case 0x00A7://§ - Wingdings(▪)
+		case 0x006E://n - Wingdings(■)
+			if (-1 !== sLowerFont.indexOf("wingdings"))
+			{
+				return "square";
+			}
+			break;
+	}
+
+	return g_arrBulletListStyleByLvl[(nLvl || 0) % g_arrBulletListStyleByLvl.length];
+}
+function GetBulletListStyleTypeByNumberingLvl(oNumberingLvl, nLvl)
+{
+	let sChar = "", sFont = "";
+
+	let arrLvlText = (oNumberingLvl && oNumberingLvl.GetLvlText) ? oNumberingLvl.GetLvlText() : null;
+	if (arrLvlText)
+	{
+		for (let i = 0; i < arrLvlText.length; ++i)
+		{
+			if (arrLvlText[i].IsText && arrLvlText[i].IsText())
+			{
+				let sValue = arrLvlText[i].GetValue();
+				if (sValue && sValue.length > 0)
+				{
+					sChar = sValue;
+					break;
+				}
+			}
+		}
+	}
+
+	let oTextPr = (oNumberingLvl && oNumberingLvl.GetTextPr) ? oNumberingLvl.GetTextPr() : null;
+	let oAsciiFont = (oTextPr && oTextPr.RFonts) ? oTextPr.RFonts.Ascii : null;
+	if (oAsciiFont)
+	{
+		sFont = (typeof oAsciiFont === "string") ? oAsciiFont : (oAsciiFont.Name || "");
+	}
+
+	return GetBulletListStyleTypeBySymbol(sChar, sFont, nLvl);
+}
+
 function CopyElement(sName, bText){
 	this.sName = sName;
 	this.oAttributes = {};
@@ -831,7 +909,7 @@ CopyProcessor.prototype =
 								sListStyle = "upper-alpha";
 								break;
 							default:
-								sListStyle = "disc";
+								sListStyle = GetBulletListStyleTypeByNumberingLvl(oNumberingLvl, oNumPr.Lvl);
 								bBullet    = true;
 								break;
 						}
@@ -881,7 +959,7 @@ CopyProcessor.prototype =
                         break;
                     }
                     default:
-                        sListStyle = "disc";
+                        sListStyle = GetBulletListStyleTypeBySymbol(_presentation_bullet.m_sChar, _presentation_bullet.m_sFont, 0);
                         bBullet = true;
                         break;
                 }
