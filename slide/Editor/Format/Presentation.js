@@ -9210,6 +9210,7 @@ CPresentation.prototype.moveSelectedSlidesToEnd = function () {
 		return;
 	History.Create_NewPoint(AscDFH.historydescription_Presentation_MoveSlidesToEnd);
 	var aSelectedIdx = this.GetSelectedSlides();
+	const insertPos = this.Slides.length - aSelectedIdx.length;
 	this.moveSlides(aSelectedIdx, this.Slides.length - aSelectedIdx.length);
 	this.Recalculate();
 	let oThumbnails = this.Api.WordControl.Thumbnails;
@@ -9218,8 +9219,8 @@ CPresentation.prototype.moveSelectedSlidesToEnd = function () {
 	if (oThumbnails) {
 		let nCount = aSelectedIdx.length;
 		let aNewSelected = [];
-		for (let nIdx = 0; nIdx < nCount; nIdx++) {
-			aNewSelected.push(oThumbnails.m_arrPages.length - 1 - nIdx);
+		for (let i = insertPos; i < this.Slides.length; i  += 1) {
+			aNewSelected.push(i);
 		}
 		oThumbnails.SelectSlides(aNewSelected);
 	}
