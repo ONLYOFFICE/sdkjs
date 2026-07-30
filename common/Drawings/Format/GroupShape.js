@@ -608,7 +608,8 @@
 						cy = dExtY / this.spPr.xfrm.chExtY;
 				}
 				if (isRealObject(this.group)) {
-					var group_scale_coefficients = this.group.getResultScaleCoefficients(true);
+					let ownRot = this.spPr && this.spPr.xfrm ? this.spPr.xfrm.rot : null;
+					let group_scale_coefficients = AscFormat.getScaleCoefficientsForRotate(this.group.getResultScaleCoefficients(true), ownRot);
 					cx *= group_scale_coefficients.cx;
 					cy *= group_scale_coefficients.cy;
 				}
@@ -1259,11 +1260,14 @@
 				this.spTree[i].normalize();
 			}
 			AscFormat.CGraphicObjectBase.prototype.normalize.call(this);
-			var xfrm = this.spPr.xfrm;
-			xfrm.setChExtX(xfrm.extX);
-			xfrm.setChExtY(xfrm.extY);
-			xfrm.setChOffX(0);
-			xfrm.setChOffY(0);
+			let xfrm = this.spPr && this.spPr.xfrm;
+			if (!xfrm) {
+				return;
+			}
+			xfrm.chExtX !== xfrm.extX && xfrm.setChExtX(xfrm.extX);
+			xfrm.chExtY !== xfrm.extY && xfrm.setChExtY(xfrm.extY);
+			xfrm.chOffX !== 0 && xfrm.setChOffX(0);
+			xfrm.chOffY !== 0 && xfrm.setChOffY(0);
 		};
 
 		CGroupShape.prototype.updateCoordinatesAfterInternalResize = function () {

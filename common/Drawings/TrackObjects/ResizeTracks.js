@@ -1368,6 +1368,10 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                     }
             }
             }
+            if(this.originalObject.group)
+            {
+                this.originalObject.getMainGroup().normalize();
+            }
             if(this.chartSpace)
             {
                 var oObjectToSet = this.originalObject;
@@ -2317,10 +2321,7 @@ function ResizeTrackGroup(originalObject, cardDirection, parentTrack)
             if(!this.bIsTracked){
                 return;
             }
-            if(!AscCommon.isRealObject(this.original.group))
-            {
-                this.original.normalize();
-            }
+            this.original.getMainGroup().normalize();
 
             if(!this.original.spPr)
             {

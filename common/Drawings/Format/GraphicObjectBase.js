@@ -187,6 +187,13 @@
 		return (_rot >= 0 && _rot < Math.PI * 0.25) || (_rot >= 3 * Math.PI * 0.25 && _rot < 5 * Math.PI * 0.25) || (_rot >= 7 * Math.PI * 0.25 && _rot < 2 * Math.PI);
 	}
 
+	function getScaleCoefficientsForRotate(scaleCoefficients, rot) {
+		if (AscFormat.isRealNumber(rot) && !checkNormalRotate(rot)) {
+			return {cx: scaleCoefficients.cy, cy: scaleCoefficients.cx};
+		}
+		return scaleCoefficients;
+	}
+
 	function normalizeRotate(rot) {
 		var new_rot = rot;
 		if (AscFormat.isRealNumber(new_rot)) {
@@ -628,7 +635,10 @@
 	 */
 	CGraphicObjectBase.prototype.normalize = function () {
 		var new_off_x, new_off_y, new_ext_x, new_ext_y;
-		var xfrm = this.spPr.xfrm;
+		var xfrm = this.spPr && this.spPr.xfrm;
+		if (!xfrm) {
+			return;
+		}
 		if (!AscCommon.isRealObject(this.group)) {
 			new_off_x = xfrm.offX;
 			new_off_y = xfrm.offY;
@@ -636,17 +646,26 @@
 			new_ext_y = xfrm.extY;
 		} else {
 			var scale_scale_coefficients = this.group.getResultScaleCoefficients(true);
-			new_off_x = scale_scale_coefficients.cx * (xfrm.offX - this.group.spPr.xfrm.chOffX);
-			new_off_y = scale_scale_coefficients.cy * (xfrm.offY - this.group.spPr.xfrm.chOffY);
-			new_ext_x = scale_scale_coefficients.cx * xfrm.extX;
-			new_ext_y = scale_scale_coefficients.cy * xfrm.extY;
+			let chOffX = 0;
+			let chOffY = 0;
+			let groupXfrm = this.group.spPr && this.group.spPr.xfrm;
+			if (groupXfrm) {
+				chOffX = groupXfrm.chOffX;
+				chOffY = groupXfrm.chOffY;
+			}
+			let rotScaleCoefficients = AscFormat.getScaleCoefficientsForRotate(scale_scale_coefficients, xfrm.rot);
+			new_ext_x = rotScaleCoefficients.cx * xfrm.extX;
+			new_ext_y = rotScaleCoefficients.cy * xfrm.extY;
+			new_off_x = scale_scale_coefficients.cx * (xfrm.offX - chOffX + xfrm.extX * 0.5) - new_ext_x * 0.5;
+			new_off_y = scale_scale_coefficients.cy * (xfrm.offY - chOffY + xfrm.extY * 0.5) - new_ext_y * 0.5;
 			var txXfrm = this.txXfrm;
 			if (txXfrm) {
 
-				var new_tx_off_x = scale_scale_coefficients.cx * txXfrm.offX;
-				var new_tx_off_y = scale_scale_coefficients.cy * txXfrm.offY;
-				var new_tx_ext_x = scale_scale_coefficients.cx * txXfrm.extX;
-				var new_tx_ext_y = scale_scale_coefficients.cy * txXfrm.extY;
+				let txRotScaleCoefficients = AscFormat.getScaleCoefficientsForRotate(scale_scale_coefficients, txXfrm.rot);
+				var new_tx_ext_x = txRotScaleCoefficients.cx * txXfrm.extX;
+				var new_tx_ext_y = txRotScaleCoefficients.cy * txXfrm.extY;
+				var new_tx_off_x = scale_scale_coefficients.cx * (txXfrm.offX - chOffX + txXfrm.extX * 0.5) - new_tx_ext_x * 0.5;
+				var new_tx_off_y = scale_scale_coefficients.cy * (txXfrm.offY - chOffY + txXfrm.extY * 0.5) - new_tx_ext_y * 0.5;
 
 				Math.abs(new_tx_off_x - txXfrm.offX) > AscFormat.MOVE_DELTA && txXfrm.setOffX(new_tx_off_x);
 				Math.abs(new_tx_off_y - txXfrm.offY) > AscFormat.MOVE_DELTA && txXfrm.setOffY(new_tx_off_y);
@@ -4005,6 +4024,9 @@
 
 	CGraphicObjectBase.prototype.applyDrawingSize = function(props) {
 		let oSpParent = this.parent;
+		if (this.group) {
+			this.getMainGroup().normalize();
+		}
 		AscFormat.CheckSpPrXfrm3(this);
 		let oXfrm = this.spPr.xfrm;
 		let scaleX = 1.0;
@@ -4385,6 +4407,7 @@
 	window['AscFormat'].CGraphicObjectBase = CGraphicObjectBase;
 	window['AscFormat'].CGraphicBounds = CGraphicBounds;
 	window['AscFormat'].checkNormalRotate = checkNormalRotate;
+	window['AscFormat'].getScaleCoefficientsForRotate = getScaleCoefficientsForRotate;
 	window['AscFormat'].normalizeRotate = normalizeRotate;
 	window['AscFormat'].CRelSizeAnchor = CRelSizeAnchor;
 	window['AscFormat'].CAbsSizeAnchor = CAbsSizeAnchor;

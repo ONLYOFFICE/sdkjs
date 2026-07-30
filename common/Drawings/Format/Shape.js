@@ -3632,11 +3632,12 @@
 							offY -= oGrXfrm.chOffY;
 						}
 					}
-					this.x = scale_scale_coefficients.cx * offX;
-					this.y = scale_scale_coefficients.cy * offY;
-					this.extX = scale_scale_coefficients.cx * xfrm.extX;
-					this.extY = scale_scale_coefficients.cy * xfrm.extY;
 					this.rot = AscFormat.isRealNumber(xfrm.rot) ? xfrm.rot : 0;
+					let rotScaleCoefficients = AscFormat.getScaleCoefficientsForRotate(scale_scale_coefficients, this.rot);
+					this.extX = rotScaleCoefficients.cx * xfrm.extX;
+					this.extY = rotScaleCoefficients.cy * xfrm.extY;
+					this.x = scale_scale_coefficients.cx * (offX + xfrm.extX * 0.5) - this.extX * 0.5;
+					this.y = scale_scale_coefficients.cy * (offY + xfrm.extY * 0.5) - this.extY * 0.5;
 					this.flipH = xfrm.flipH === true;
 					this.flipV = xfrm.flipV === true;
 				}

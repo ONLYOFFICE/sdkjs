@@ -528,6 +528,10 @@
 	EditShapeGeometryTrack.prototype.trackEnd = function (bWord) {
 		this.addCommandsInPathInfo();
 
+		if (this.originalObject.group) {
+			this.originalObject.getMainGroup().normalize();
+		}
+
 		const oSpPr = this.originalObject.spPr;
 		const oXfrm = oSpPr.xfrm;
 
