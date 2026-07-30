@@ -2627,55 +2627,56 @@ function (window, undefined) {
 	cTRANSPOSE.prototype.argumentsType = [argType.any];
 	cTRANSPOSE.prototype.Calculate = function (arg) {
 
-		function TransposeMatrix(A) {
+		function TransposeMatrix(arg) {
 
-			var tMatrix = [], res = new cArray();
+			let res = new cArray();
+			let isArray = arg.type === cElementType.array;
+			let rcSize = arg.getDimensions(true);
+			let realArraySize;
 
-			for (var i = 0; i < A.length; i++) {
-				for (var j = 0; j < A[i].length; j++) {
-					if (!tMatrix[j]) {
-						tMatrix[j] = [];
-					}
-					tMatrix[j][i] = A[i][j];
+			if (isArray && arg.hasLazyTail()) {
+				realArraySize = arg.getRealArraySize();
+				// since this is TRANSPOSE func we use rows as columns and columns as rows
+				if (realArraySize) {
+					res.setRealArraySize(realArraySize.col, realArraySize.row);
+					res.setMissedValue(arg.getMissedValue());
 				}
 			}
 
-			res.fillFromArray(tMatrix);
+			for (let col = 0; col < rcSize.col; col++) {
+				if (!res.array[col]) {
+					res.addRow();
+				}
+
+				for (let row = 0; row < rcSize.row; row++) {
+					let elem = arg.getValueByRowCol ? arg.getValueByRowCol(row, col, true) : arg.getElementRowCol(row, col, false);
+
+					if (!elem) {
+						elem = new cEmpty();
+					}
+
+					res.addElement(elem);
+				}
+			}
 
 			return res;
 		}
 
-		var arg0 = arg[0];
-		if (cElementType.cellsRange === arg0.type) {
-			//TODO perhaps when used as array formula, the converted range should be passed as array directly to Calculate function input
-			if(!this.bArrayFormula) {
-				arg0 = arg0.cross(arguments[1]);
-				return arg0;
-			} else {
-				arg0 = arg0.getMatrix();
-			}
-		} else if(cElementType.cellsRange3D === arg0.type) {
-			//TODO perhaps when used as array formula, the converted range should be passed as array directly to function input
-			arg0 = arg0.getMatrix()[0];
-		} else if(cElementType.array === arg0.type) {
-			arg0 = getMatrixLogical(arg0);
+		let arg0 = arg[0];
+		let resArr = new cArray();
+
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type || cElementType.array === arg0.type) {
+			return TransposeMatrix(arg0);
 		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
-			return arg0.getValue();
+			resArr.addElement(arg0.getValue());
+			return resArr;
 		} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
 			cElementType.bool === arg0.type || cElementType.error === arg0.type) {
-			return arg0;
-		} else {
-			return new cError(cErrorType.not_available);
-		}
+			resArr.addElement(arg0);
+			return resArr;
+		} 
 
-		if (cElementType.error === arg0.type) {
-			return arg0;
-		}
-		if(0 === arg0.length){
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		return TransposeMatrix(arg0);
+		return new cError(cErrorType.not_available);
 	};
 
 	function takeDrop(arg, argument1, isDrop) {
