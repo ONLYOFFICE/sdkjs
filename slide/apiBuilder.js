@@ -7596,7 +7596,7 @@
 	ApiDrawing.prototype.Fill = function(oFill)
 	{
 		const classType = this.GetClassType();
-		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
+		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt")
 			return false;
 
 		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
@@ -7663,7 +7663,7 @@
 	ApiDrawing.prototype.SetOutLine = function(stroke)
 	{
 		const classType = this.GetClassType();
-		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
+		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt")
 			return false;
 
 		if (!stroke || !stroke.GetClassType || stroke.GetClassType() !== "stroke")
