@@ -3493,6 +3493,7 @@ var CPresentation = CPresentation || function(){};
         
         this.Viewer.IsOpenAnnotsInProgress = true;
 
+		let aImages = [];
         let oAnnotsMap = {};
 
         for (let i = 0; i < aAnnotsInfo.length; i++) {
@@ -3506,12 +3507,24 @@ var CPresentation = CPresentation || function(){};
                 let oAnnot = AscPDF.ReadAnnotFromJSON(oAnnotInfo, this);
                 let oMeta = oAnnot.GetMeta();
                 if (oMeta && oMeta["isOO"] && !oAnnot.IsNeedDrawFromStream()) {
+					if (oAnnot.img) {
+						let oUniFill = new AscFormat.CUniFill();
+						let oBlipFill = new AscFormat.CBlipFill();
+						oUniFill.setFill(oBlipFill);
+						oBlipFill.setStretch(new AscFormat.CBlipFillStretch());
+						oBlipFill.setRasterImageId(oAnnot.img["id"]);
+						oAnnot.setFill(oUniFill);
+
+						aImages.push(new AscCommon.CBuilderImages(oBlipFill, oAnnot.img["url"]));
+						delete oAnnot.img;
+					}
+
                     this.Viewer.IsOpenAnnotsInProgress = false;
                     oAnnot.SetWasChanged(true);
                     this.Viewer.IsOpenAnnotsInProgress = true;
                 }
 
-                this.AddAnnot(oAnnot, pageOffset + oAnnotInfo["page"]);
+				this.AddAnnot(oAnnot, pageOffset + oAnnotInfo["page"]);
 
                 if (oAnnotInfo["RefTo"] == null)
                     oAnnotsMap[oAnnotInfo["AP"]["i"]] = oAnnot;
@@ -3528,6 +3541,12 @@ var CPresentation = CPresentation || function(){};
         Object.values(oAnnotsMap).forEach(function(annot) {
             _t.CheckComment(annot);
         });
+
+		let oObjectsForDownload = AscCommon.GetObjectsForImageDownload(aImages);
+		AscCommon.sendImgUrls(Asc.editor, oObjectsForDownload.aUrls, function (data) {
+			let oImageMap = {};
+			AscCommon.ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
+		}, true);
 
         return Object.values(oAnnotsMap);
     };

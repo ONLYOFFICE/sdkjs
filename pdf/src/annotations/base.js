@@ -1759,12 +1759,15 @@
 					if (this.GetIconType() == AscPDF.STAMP_TYPES.Signature) {
 						let aImages = [];
 						this.getAllRasterImages(aImages);
-
-						let sPathToImg = AscCommon.getFullImageSrc2(aImages[0]);
-						oMeta["img"] = {
-							"id": aImages[0],
-							"url": sPathToImg
-						};
+						
+						if (aImages[0]) {
+							let sPathToImg = AscCommon.getFullImageSrc2(aImages[0]);
+							oMeta["img"] = {
+								"id": aImages[0],
+								"url": sPathToImg
+							};
+							oMeta["InRect"] = this.GetInRect();
+						}
 					}
                 }
                 if (this.IsFromOO()) {
