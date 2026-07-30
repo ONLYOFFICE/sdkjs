@@ -9640,13 +9640,8 @@ PasteProcessor.prototype =
 						NumTextPr.RFonts.SetAll("Symbol", -1);
 
 						if (type == null) {
-							if (curLvl % 3 === 0) {
-								type = "disc";
-							} else if (curLvl % 2 === 0) {
-								type = "square";
-							} else {
-								type = "circle";
-							}
+							//MS Word cycles bullet markers every 3 levels: disc -> circle -> square
+							type = g_arrBulletListStyleByLvl[curLvl % g_arrBulletListStyleByLvl.length];
 						}
 
 						switch (type) {
