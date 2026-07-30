@@ -2136,6 +2136,15 @@ var editor;
 				}
 			}
 
+			//feature property bags (checkbox / cell control marker)
+			let featurePropertyBagPart = wbPart.getPartByRelationshipType(openXml.Types.featurePropertyBag.relationType);
+			if (featurePropertyBagPart) {
+				let fpbContent = featurePropertyBagPart.getDocumentContent();
+				wb.featurePropertyBags = new AscCommonExcel.CFeaturePropertyBags();
+				reader = new StaxParser(fpbContent, featurePropertyBagPart, xmlParserContext);
+				wb.featurePropertyBags.fromXml(reader);
+			}
+
 			//theme
 			var workbookThemePart = wbPart.getPartByRelationshipType(openXml.Types.theme.relationType);
 			if (workbookThemePart) {
@@ -6305,6 +6314,9 @@ var editor;
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
     }
+    // TEMP: test checkbox insertion via the Bold button
+    this.wb.getWorksheet().addCheckboxToSelection();
+    return;
     let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);

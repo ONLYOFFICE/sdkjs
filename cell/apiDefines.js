@@ -249,7 +249,8 @@ var c_oTargetType = {
   TableSelectionChange: 18,
   Placeholder: 19,
   ColumnRowHeaderMove: 20,
-  TraceDependents: 21
+  TraceDependents: 21,
+  Checkbox: 22
 };
 
 var c_oAscAutoFilterTypes = {

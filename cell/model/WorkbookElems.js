@@ -4520,7 +4520,8 @@ var g_oFontProperties = {
         PivotButton: 7,
 		applyProtection: 8,
 		hidden: 9,
-		locked: 10
+		locked: 10,
+		complement: 11
     };
 
     /** @constructor */
@@ -4537,6 +4538,7 @@ var g_oFontProperties = {
         this.applyProtection = null;
         this.locked = null;
         this.hidden = null;
+        this.complement = null;
 
         //inner
         this._hash;
@@ -4558,6 +4560,7 @@ var g_oFontProperties = {
             this._hash += this.applyProtection + '|';
             this._hash += this.locked + '|';
             this._hash += this.hidden + '|';
+            this._hash += this.complement + '|';
         }
         return this._hash;
     };
@@ -4641,6 +4644,7 @@ var g_oFontProperties = {
             cache.applyProtection = this._mergeProperty(null, xfs.applyProtection, this.applyProtection);
             cache.locked = this._mergeProperty(null, xfs.locked, this.locked);
             cache.hidden = this._mergeProperty(null, xfs.hidden, this.hidden);
+            cache.complement = this._mergeProperty(null, xfs.complement, this.complement);
             cache = g_StyleCache.addXf(cache);
             this.setOperationCache("merge", xfIndexNumber, cache);
         }
@@ -4665,6 +4669,7 @@ var g_oFontProperties = {
         res.applyProtection = this.applyProtection;
         res.locked = this.locked;
         res.hidden = this.hidden;
+        res.complement = this.complement;
 
         return res;
     };
@@ -4672,7 +4677,7 @@ var g_oFontProperties = {
 		return this.font === xfs.font && this.fill === xfs.fill && this.border === xfs.border && this.num === xfs.num &&
 			this.align === xfs.align && this.QuotePrefix === xfs.QuotePrefix && this.PivotButton === xfs.PivotButton &&
 			this.XfId === xfs.XfId && this.applyProtection === xfs.applyProtection && this.locked === xfs.locked &&
-			this.hidden === xfs.hidden;
+			this.hidden === xfs.hidden && this.complement === xfs.complement;
     };
     CellXfs.prototype.getType = function () {
         return UndoRedoDataTypes.StyleXfs;
@@ -4704,6 +4709,8 @@ var g_oFontProperties = {
                 return this.locked;
             case this.Properties.hidden:
                 return this.hidden;
+            case this.Properties.complement:
+                return this.complement;
         }
     };
     CellXfs.prototype.setProperty = function (nType, value) {
@@ -4740,6 +4747,9 @@ var g_oFontProperties = {
                 break;
             case this.Properties.hidden:
                 this.hidden = value;
+                break;
+            case this.Properties.complement:
+                this.complement = value;
                 break;
         }
     };
@@ -22126,6 +22136,120 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 
+	// Feature property bags (checkbox / cell control marker). Stored and saved as-is.
+	var c_oFeaturePropertyType = {
+		Array: 0,
+		Bag: 1,
+		Int: 2,
+		String: 3,
+		Bool: 4,
+		Double: 5
+	};
+
+	function CFeaturePropertyBags() {
+		this.bags = [];
+	}
+	CFeaturePropertyBags.prototype.clone = function () {
+		var res = new CFeaturePropertyBags();
+		for (var i = 0; i < this.bags.length; ++i) {
+			res.bags.push(this.bags[i].clone());
+		}
+		return res;
+	};
+
+	function CFeaturePropertyBag() {
+		this.type = null;
+		this.extRef = null;
+		this.bagExtId = null;
+		this.att = null;
+		this.items = [];
+	}
+	CFeaturePropertyBag.prototype.clone = function () {
+		var res = new CFeaturePropertyBag();
+		res.type = this.type;
+		res.extRef = this.extRef;
+		res.bagExtId = this.bagExtId;
+		res.att = this.att;
+		for (var i = 0; i < this.items.length; ++i) {
+			res.items.push(this.items[i].clone());
+		}
+		return res;
+	};
+
+	function CArrayFeatureProperty() {
+		this.elementType = c_oFeaturePropertyType.Array;
+		this.k = null;
+		this.items = [];
+	}
+	CArrayFeatureProperty.prototype.clone = function () {
+		var res = new CArrayFeatureProperty();
+		res.k = this.k;
+		for (var i = 0; i < this.items.length; ++i) {
+			res.items.push(this.items[i].clone());
+		}
+		return res;
+	};
+
+	function CBagFeatureProperty() {
+		this.elementType = c_oFeaturePropertyType.Bag;
+		this.k = null;
+		this.content = null;
+	}
+	CBagFeatureProperty.prototype.clone = function () {
+		var res = new CBagFeatureProperty();
+		res.k = this.k;
+		res.content = this.content;
+		return res;
+	};
+
+	function CIntFeatureProperty() {
+		this.elementType = c_oFeaturePropertyType.Int;
+		this.k = null;
+		this.content = null;
+	}
+	CIntFeatureProperty.prototype.clone = function () {
+		var res = new CIntFeatureProperty();
+		res.k = this.k;
+		res.content = this.content;
+		return res;
+	};
+
+	function CStringFeatureProperty() {
+		this.elementType = c_oFeaturePropertyType.String;
+		this.k = null;
+		this.content = null;
+	}
+	CStringFeatureProperty.prototype.clone = function () {
+		var res = new CStringFeatureProperty();
+		res.k = this.k;
+		res.content = this.content;
+		return res;
+	};
+
+	function CBoolFeatureProperty() {
+		this.elementType = c_oFeaturePropertyType.Bool;
+		this.k = null;
+		this.content = null;
+	}
+	CBoolFeatureProperty.prototype.clone = function () {
+		var res = new CBoolFeatureProperty();
+		res.k = this.k;
+		res.content = this.content;
+		return res;
+	};
+
+	function CDoubleFeatureProperty() {
+		this.elementType = c_oFeaturePropertyType.Double;
+		this.k = null;
+		this.content = null;
+	}
+	CDoubleFeatureProperty.prototype.clone = function () {
+		var res = new CDoubleFeatureProperty();
+		res.k = this.k;
+		res.content = this.content;
+		return res;
+	};
+
 	function CRichValueData() {
 		this.pData = []; //CRichValue
 	}
@@ -22787,5 +22911,15 @@ function RangeDataManagerElem(bbox, data)
 	window["AscCommonExcel"].CRichValueFallback = CRichValueFallback;
 	window["AscCommonExcel"].CRichValue = CRichValue;
 	window["AscCommonExcel"].CRichValueData = CRichValueData;
+
+	window["AscCommonExcel"].c_oFeaturePropertyType = c_oFeaturePropertyType;
+	window["AscCommonExcel"].CFeaturePropertyBags = CFeaturePropertyBags;
+	window["AscCommonExcel"].CFeaturePropertyBag = CFeaturePropertyBag;
+	window["AscCommonExcel"].CArrayFeatureProperty = CArrayFeatureProperty;
+	window["AscCommonExcel"].CBagFeatureProperty = CBagFeatureProperty;
+	window["AscCommonExcel"].CIntFeatureProperty = CIntFeatureProperty;
+	window["AscCommonExcel"].CStringFeatureProperty = CStringFeatureProperty;
+	window["AscCommonExcel"].CBoolFeatureProperty = CBoolFeatureProperty;
+	window["AscCommonExcel"].CDoubleFeatureProperty = CDoubleFeatureProperty;
 
 })(window);

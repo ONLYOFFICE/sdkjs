@@ -3309,7 +3309,209 @@
 		this.richValueData = null;
 		this.richValueStructures = null;
 		this.richValueTypesInfo = null;
+
+		this.featurePropertyBags = null;
+		this._checkboxComplementCache = undefined;
 	}
+	// Reset the checkbox lookup (call after editing the bags).
+	Workbook.prototype.clearFeatureBagCache = function () {
+		this._checkboxComplementCache = undefined;
+	};
+	// Set the feature property bags with undo/redo support.
+	Workbook.prototype.setFeaturePropertyBags = function (val) {
+		var old = this.featurePropertyBags;
+		if (old === val) {
+			return;
+		}
+		this.featurePropertyBags = val;
+		this.clearFeatureBagCache();
+		if (AscCommon.History.Is_On()) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_FeaturePropertyBags,
+				null, null, new UndoRedoData_FromTo(old ? old.clone() : null, val ? val.clone() : null));
+		}
+	};
+	// Is the xf with this complement index a checkbox?
+	Workbook.prototype.isCheckboxComplement = function (index) {
+		var set = this._getCheckboxComplementSet();
+		return !!(set && set[index]);
+	};
+	// Is any cell actually using a checkbox marker? (used to skip writing an unused structure)
+	Workbook.prototype.hasCheckboxInUse = function () {
+		if (!this.featurePropertyBags) {
+			return false;
+		}
+		var t = this;
+		var found = false;
+		for (var i = 0; i < this.aWorksheets.length; ++i) {
+			this.aWorksheets[i]._forEachCell(function (cell) {
+				var xf = cell.xfs;
+				if (xf && xf.complement != null && cell.type === CellValueType.Bool && t.isCheckboxComplement(xf.complement)) {
+					found = true;
+					return true; // stop iteration
+				}
+			});
+			if (found) {
+				break;
+			}
+		}
+		return found;
+	};
+	Workbook.prototype._getCheckboxComplementSet = function () {
+		if (this._checkboxComplementCache !== undefined) {
+			return this._checkboxComplementCache;
+		}
+		this._checkboxComplementCache = this._buildCheckboxComplementSet();
+		return this._checkboxComplementCache;
+	};
+	// Which xf complement indexes are checkboxes.
+	// The "XFComplements" bag has an array; item i (= the xf complement) points to a chain
+	// of bags that ends in a bag with type "Checkbox".
+	Workbook.prototype._buildCheckboxComplementSet = function () {
+		var fpb = this.featurePropertyBags;
+		if (!fpb || !fpb.bags || !fpb.bags.length) {
+			return null;
+		}
+		var bags = fpb.bags;
+		var FT = AscCommonExcel.c_oFeaturePropertyType;
+		var entryArray = null;
+		for (var i = 0; i < bags.length && !entryArray; ++i) {
+			if (bags[i] && bags[i].type === "XFComplements") {
+				for (var j = 0; j < bags[i].items.length; ++j) {
+					if (bags[i].items[j].elementType === FT.Array) {
+						entryArray = bags[i].items[j];
+						break;
+					}
+				}
+			}
+		}
+		if (!entryArray) {
+			return null;
+		}
+		var res = null;
+		for (var k = 0; k < entryArray.items.length; ++k) {
+			var ref = entryArray.items[k];
+			if (ref && ref.elementType === FT.Bag && ref.content != null &&
+				this._featureBagReachesCheckbox(ref.content, bags, {})) {
+				if (!res) {
+					res = {};
+				}
+				res[k] = true;
+			}
+		}
+		return res;
+	};
+	// Follow bagId links from this bag; true if we reach a bag with type "Checkbox".
+	Workbook.prototype._featureBagReachesCheckbox = function (bagIndex, bags, visited) {
+		if (bagIndex == null || bagIndex < 0 || bagIndex >= bags.length || visited[bagIndex]) {
+			return false;
+		}
+		visited[bagIndex] = true;
+		var bag = bags[bagIndex];
+		if (!bag) {
+			return false;
+		}
+		if (typeof bag.type === "string" && bag.type.toLowerCase() === "checkbox") {
+			return true;
+		}
+		return this._featurePropsReachCheckbox(bag.items, bags, visited);
+	};
+	Workbook.prototype._featurePropsReachCheckbox = function (items, bags, visited) {
+		var FT = AscCommonExcel.c_oFeaturePropertyType;
+		for (var i = 0; i < items.length; ++i) {
+			var it = items[i];
+			if (it.elementType === FT.String) {
+				if (typeof it.content === "string" && it.content.toLowerCase() === "checkbox") {
+					return true;
+				}
+			} else if (it.elementType === FT.Bag) {
+				if (it.content != null && this._featureBagReachesCheckbox(it.content, bags, visited)) {
+					return true;
+				}
+			} else if (it.elementType === FT.Array) {
+				if (this._featurePropsReachCheckbox(it.items, bags, visited)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	};
+	// Returns a complement index that means "checkbox", building the bag chain if needed.
+	Workbook.prototype.getOrCreateCheckboxComplement = function () {
+		var existing = this._getCheckboxComplementSet();
+		if (existing) {
+			for (var key in existing) {
+				if (existing.hasOwnProperty(key)) {
+					return parseInt(key, 10);
+				}
+			}
+		}
+		var FT = AscCommonExcel.c_oFeaturePropertyType;
+		if (!this.featurePropertyBags) {
+			this.featurePropertyBags = new AscCommonExcel.CFeaturePropertyBags();
+		}
+		var bags = this.featurePropertyBags.bags;
+
+		var checkboxBag = new AscCommonExcel.CFeaturePropertyBag();
+		checkboxBag.type = "Checkbox";
+		var checkboxIdx = bags.length;
+		bags.push(checkboxBag);
+
+		var controlsBag = new AscCommonExcel.CFeaturePropertyBag();
+		controlsBag.type = "XFControls";
+		var cellControlRef = new AscCommonExcel.CBagFeatureProperty();
+		cellControlRef.k = "CellControl";
+		cellControlRef.content = checkboxIdx;
+		controlsBag.items.push(cellControlRef);
+		var controlsIdx = bags.length;
+		bags.push(controlsBag);
+
+		var complementBag = new AscCommonExcel.CFeaturePropertyBag();
+		complementBag.type = "XFComplement";
+		var xfControlsRef = new AscCommonExcel.CBagFeatureProperty();
+		xfControlsRef.k = "XFControls";
+		xfControlsRef.content = controlsIdx;
+		complementBag.items.push(xfControlsRef);
+		var complementIdx = bags.length;
+		bags.push(complementBag);
+
+		// find (or create) the XFComplements bag and its array
+		var xfComplementsBag = null;
+		for (var i = 0; i < bags.length; ++i) {
+			if (bags[i].type === "XFComplements") {
+				xfComplementsBag = bags[i];
+				break;
+			}
+		}
+		var arr = null;
+		if (!xfComplementsBag) {
+			xfComplementsBag = new AscCommonExcel.CFeaturePropertyBag();
+			xfComplementsBag.type = "XFComplements";
+			xfComplementsBag.extRef = "XFComplementsMapperExtRef";
+			arr = new AscCommonExcel.CArrayFeatureProperty();
+			arr.k = "MappedFeaturePropertyBags";
+			xfComplementsBag.items.push(arr);
+			bags.push(xfComplementsBag);
+		} else {
+			for (var j = 0; j < xfComplementsBag.items.length; ++j) {
+				if (xfComplementsBag.items[j].elementType === FT.Array) {
+					arr = xfComplementsBag.items[j];
+					break;
+				}
+			}
+			if (!arr) {
+				arr = new AscCommonExcel.CArrayFeatureProperty();
+				arr.k = "MappedFeaturePropertyBags";
+				xfComplementsBag.items.push(arr);
+			}
+		}
+		var newComplementIndex = arr.items.length;
+		var ref = new AscCommonExcel.CBagFeatureProperty();
+		ref.content = complementIdx;
+		arr.items.push(ref);
+
+		this.clearFeatureBagCache();
+		return newComplementIndex;
+	};
 	Workbook.prototype.init=function(oReadResult, bNoBuildDep, bSnapshot){
 		let tableCustomFunc = oReadResult.tableCustomFunc || {};
 		let tableIds = oReadResult.tableIds || {};
@@ -15502,6 +15704,14 @@
 	Cell.prototype.getStyle=function(){
 		return this.xfs;
 	};
+	// Is this cell a checkbox (by its style's complement marker)?
+	Cell.prototype.isCheckbox = function () {
+		var xfs = this.getCompiledStyle();
+		if (!xfs || xfs.complement == null) {
+			return false;
+		}
+		return this.ws.workbook.isCheckboxComplement(xfs.complement);
+	};
 	Cell.prototype.getCompiledStyle = function (opt_styleComponents, opt_AffectingText) {
 		// Cache the no-args case; opt_* paths are rare and skip the cache.
 		if (opt_styleComponents === undefined && opt_AffectingText === undefined) {
@@ -20105,6 +20315,37 @@
 		return xfs || g_oDefaultFormat.xfs;
 	};
 	Range.prototype.getStyle = Range.prototype.getXfs;
+	// Is the top-left cell a checkbox (by its style's complement marker)?
+	Range.prototype.isCheckbox = function () {
+		var xfs = this.getXfs(true);
+		if (!xfs || xfs.complement == null) {
+			return false;
+		}
+		return this.worksheet.workbook.isCheckboxComplement(xfs.complement);
+	};
+	// Turn the cells into checkboxes: bool FALSE (if not bool yet) + checkbox style marker.
+	Range.prototype.addCheckbox = function () {
+		var wb = this.worksheet.workbook;
+		var complementIndex = wb.getOrCreateCheckboxComplement();
+		AscCommon.History.Create_NewPoint();
+		AscCommon.History.StartTransaction();
+		this.createCellOnRowColCross();
+		this._setProperty(null, null, function (cell) {
+			if (cell.getType() !== CellValueType.Bool) {
+				var boolVal = new AscCommonExcel.CCellValue();
+				boolVal.type = CellValueType.Bool;
+				boolVal.number = 0;
+				cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, boolVal));
+			}
+			var xf = cell.getStyle();
+			var newXf = xf ? xf.clone() : new AscCommonExcel.CellXfs();
+			if (newXf.complement !== complementIndex) {
+				newXf.complement = complementIndex;
+				cell.setStyle(newXf);
+			}
+		});
+		AscCommon.History.EndTransaction();
+	};
 	Range.prototype.getXfId = function () {
 		var t = this;
 		var nRow = this.bbox.r1;
@@ -21177,6 +21418,13 @@
 			}
 		});
 		AscCommonExcel.CellStyleStorage.cleanStyleOnlyDirectStyles(this.worksheet, this.bbox, !!this.worksheet.bExcludeHiddenRows);
+
+		// clearing formats drops the checkbox structure once nothing uses it (matches MS Excel)
+		var wbFormat = this.worksheet.workbook;
+		if (wbFormat.featurePropertyBags && !wbFormat.hasCheckboxInUse()) {
+			wbFormat.setFeaturePropertyBags(null);
+		}
+
 		AscCommon.History.EndTransaction();
 	};
 	Range.prototype.cleanText = function () {
@@ -21191,6 +21439,23 @@
 				if (cell._isTransient) { return; }
 				if(false == t.worksheet.workbook.bUndoChanges && false == t.worksheet.workbook.bRedoChanges) {
 					t.worksheet.dynamicArrayManager.changeCell(cell);
+				}
+				// MS checkbox Del: first Del on a checked box only unchecks it (keeps
+				// the marker); Del on an already-unchecked box removes the marker.
+				if (t.worksheet.workbook.featurePropertyBags && cell.isCheckbox()) {
+					if (cell.getType() === CellValueType.Bool && cell.getNumberValue() === 1) {
+						var v = new AscCommonExcel.CCellValue();
+						v.type = CellValueType.Bool;
+						v.number = 0;
+						cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, v));
+						return;
+					}
+					var xf = cell.getStyle();
+					if (xf && xf.complement != null) {
+						var nxf = xf.clone();
+						nxf.complement = null;
+						cell.setStyle(nxf);
+					}
 				}
 				cell.setValue("");
 				// if(cell.isEmpty())
@@ -21236,6 +21501,12 @@
 			}
 		});
 		AscCommonExcel.CellStyleStorage.cleanStyleOnlyDirectStyles(this.worksheet, this.bbox, !!this.worksheet.bExcludeHiddenRows);
+
+		// Clear All drops the checkbox structure once nothing uses it (matches MS Excel)
+		var wb = this.worksheet.workbook;
+		if (wb.featurePropertyBags && !wb.hasCheckboxInUse()) {
+			wb.setFeaturePropertyBags(null);
+		}
 
 		this.worksheet.workbook.dependencyFormulas.calcTree();
 		AscCommon.History.EndTransaction();

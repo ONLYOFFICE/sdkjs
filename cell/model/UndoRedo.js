@@ -3319,6 +3319,9 @@ function (window, undefined) {
 			wb.richValueTypesInfo = bUndo ? (Data.from ? Data.from.clone(): null) : (Data.to ? Data.to.clone(): null);
 		} else if (AscCH.historyitem_Workbook_RichValueData === Type) {
 			wb.richValueData = bUndo ? (Data.from ? Data.from.clone(): null) : (Data.to ? Data.to.clone(): null);
+		} else if (AscCH.historyitem_Workbook_FeaturePropertyBags === Type) {
+			wb.featurePropertyBags = bUndo ? (Data.from ? Data.from.clone(): null) : (Data.to ? Data.to.clone(): null);
+			wb.clearFeatureBagCache();
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {

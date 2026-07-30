@@ -368,6 +368,7 @@
 			if (this.targetInfo && (this.targetInfo.target === c_oTargetType.MoveResizeRange ||
 				this.targetInfo.target === c_oTargetType.MoveRange ||
 				this.targetInfo.target === c_oTargetType.FilterObject ||
+				this.targetInfo.target === c_oTargetType.Checkbox ||
 				this.targetInfo.target === c_oTargetType.TableSelectionChange))
 				return true;
 
@@ -1798,6 +1799,18 @@
 								this.handlers.trigger("tableTotalClick", t.targetInfo.idTableTotal);
 							} else {
 								this.handlers.trigger("autoFiltersClick", t.targetInfo.idFilter);
+							}
+						}
+						event.preventDefault && event.preventDefault();
+						event.stopPropagation && event.stopPropagation();
+						return;
+					} else if (t.targetInfo.target === c_oTargetType.Checkbox) {
+						if (0 === button && this.canEdit()) {
+							// select the cell, then flip the checkbox
+							this.handlers.trigger("changeSelection", /*isStartPoint*/true, coord.x, coord.y, /*isCoord*/true, ctrlKey);
+							var oWs = window["Asc"]["editor"].wb.getWorksheet();
+							if (oWs) {
+								oWs.toggleCheckbox(t.targetInfo.col, t.targetInfo.row);
 							}
 						}
 						event.preventDefault && event.preventDefault();

@@ -6817,6 +6817,12 @@ function isAllowPasteLink(pastedWb) {
 		var h = this._getRowTop(rowB + 1) - offsetY - y1;
 		var x2 = x1 + w - (isTrimmedR ? 0 : gridlineSize);
 		var y2 = y1 + h;
+
+		if (CellValueType.Bool === ct.cellType && this.model.workbook.featurePropertyBags && c.isCheckbox()) {
+			this._drawCellCheckbox(ctx, col, row, offsetX, offsetY, c, color);
+			return;
+		}
+
 		var bl = y2 - Asc.round(
 				(isMerged ? (ct.metrics.height - ct.metrics.baseline) : this._getRowDescender(rowB)) * this.getZoom());
 		/*if (this.getRightToLeft()) {
@@ -13112,7 +13118,15 @@ function isAllowPasteLink(pastedWb) {
 					if (_vr.contains(c.col, r.row)) {
 						_offsetX += x;
 						_offsetY += y;
-						if (isDataValidation) {
+						var _isCheckbox = false;
+						if (this.model.workbook.featurePropertyBags) {
+							var _cbCell = this._getVisibleCell(c.col, r.row);
+							_isCheckbox = _cbCell && _cbCell.getType() === CellValueType.Bool && _cbCell.isCheckbox() &&
+								this._hitCursorCheckbox(_offsetX, _offsetY, c.col, r.row);
+						}
+						if (_isCheckbox) {
+							// checkbox handled below
+						} else if (isDataValidation) {
 							var merged = this.model.getMergedByCell(row, col);
 							if (merged) {
 								row = merged.r1;
@@ -13125,7 +13139,9 @@ function isAllowPasteLink(pastedWb) {
 							_isTableTotal = this._hitCursorFilterButton(_offsetX, _offsetY, col, row, true);
 						}
 
-						if (_isDataValidation) {
+						if (_isCheckbox) {
+							res = {cursor: kCurHyperlink, target: c_oTargetType.Checkbox, col: c.col, row: r.row};
+						} else if (_isDataValidation) {
 							res = {cursor: kCurAutoFilter, target: c_oTargetType.FilterObject, col: c.col, row: r.row, isDataValidation: _isDataValidation};
 						} else if (_isPivot && pivotButton) {
 							if(pivotButton.idPivotCollapse) {
@@ -21760,6 +21776,151 @@ function isAllowPasteLink(pastedWb) {
 		return {w: width, h: height};
 	};
 
+	// Checkbox square inside a cell (handles merged cells and alignment).
+	WorksheetView.prototype._getCellCheckboxRect = function (col, row) {
+		var c1 = col, r1 = row, c2 = col, r2 = row;
+		var ct = this._getCellTextCache(col, row);
+		if (ct && ct.flags && ct.flags.isMerged()) {
+			var range = ct.flags.merged;
+			c1 = range.c1;
+			r1 = range.r1;
+			c2 = Math.min(range.c2, this.nColsCount - 1);
+			r2 = Math.min(range.r2, this.nRowsCount - 1);
+		}
+		var left = this._getColLeft(c1);
+		var top = this._getRowTop(r1);
+		var cellW = this._getColLeft(c2 + 1) - left;
+		var cellH = this._getRowTop(r2 + 1) - top;
+		// Size = font size (a bit bigger, like Excel), but not bigger than the cell.
+		var cell = this._getVisibleCell(col, row);
+		var align = (cell && cell.getAlign) ? cell.getAlign() : null;
+		var font = cell && cell.getFont && cell.getFont();
+		var pt = (font && font.getSize) ? font.getSize() : null;
+		var size = pt ? Math.round(AscCommonExcel.convertPtToPx(pt) * this.getZoom() * 1.1) : (Math.min(cellW, cellH) * 0.8);
+		var maxSize = Math.min(cellW, cellH) * 0.95;
+		if (size > maxSize) {
+			size = maxSize;
+		}
+		if (size < 1) {
+			size = Math.min(cellW, cellH);
+		}
+		// Place by cell alignment.
+		var pad = (this.settings && this.settings.cells && this.settings.cells.padding) || 0;
+		var ha = cell && cell.getAlignHorizontalByValue ?
+			cell.getAlignHorizontalByValue(align ? align.getAlignHorizontal() : null) : null;
+		var x;
+		if (ha === AscCommon.align_Left) {
+			x = left + pad;
+		} else if (ha === AscCommon.align_Right) {
+			x = left + cellW - size - pad;
+		} else {
+			x = left + (cellW - size) / 2;
+		}
+		var va = align ? align.getAlignVertical() : null;
+		var y;
+		if (va === Asc.c_oAscVAlign.Top) {
+			y = top + pad;
+		} else if (va === Asc.c_oAscVAlign.Bottom) {
+			y = top + cellH - size - pad;
+		} else {
+			// default / center (Excel centers the checkbox)
+			y = top + (cellH - size) / 2;
+		}
+		// keep inside the cell
+		if (x < left) { x = left; }
+		if (x + size > left + cellW) { x = left + cellW - size; }
+		if (y < top) { y = top; }
+		if (y + size > top + cellH) { y = top + cellH - size; }
+		return {
+			x: x,
+			y: y,
+			size: size
+		};
+	};
+	// Rounded rectangle path (RTL-aware). Left open for fill()/stroke().
+	WorksheetView.prototype._roundRectPath = function (ctx, x, y, w, h, r) {
+		var rtl = this.getRightToLeft();
+		var ctxW = rtl ? this.getCtxWidth(ctx) : 0;
+		var fx = function (vx) { return rtl ? (ctxW - vx) : vx; };
+		var k = r * 0.45; // corner roundness
+		ctx.beginPath();
+		ctx.moveTo(fx(x + r), y);
+		ctx.lineTo(fx(x + w - r), y);
+		ctx.bezierCurveTo(fx(x + w - k), y, fx(x + w), y + k, fx(x + w), y + r);
+		ctx.lineTo(fx(x + w), y + h - r);
+		ctx.bezierCurveTo(fx(x + w), y + h - k, fx(x + w - k), y + h, fx(x + w - r), y + h);
+		ctx.lineTo(fx(x + r), y + h);
+		ctx.bezierCurveTo(fx(x + k), y + h, fx(x), y + h - k, fx(x), y + h - r);
+		ctx.lineTo(fx(x), y + r);
+		ctx.bezierCurveTo(fx(x), y + k, fx(x + k), y, fx(x + r), y);
+		ctx.closePath();
+	};
+	WorksheetView.prototype._drawCellCheckbox = function (ctx, col, row, offsetX, offsetY, cell, color) {
+		var rect = this._getCellCheckboxRect(col, row);
+		var size = rect.size;
+		if (size <= 0) {
+			return;
+		}
+		var x = rect.x - offsetX;
+		var y = rect.y - offsetY;
+		var drawColor = color || new CColor(0, 0, 0);
+		// check is drawn in the cell fill color (like Excel)
+		var checkColor = (cell && cell.getFillColor && cell.getFillColor()) || new CColor(255, 255, 255);
+		var checked = !!(cell && 1 === cell.getNumberValue());
+		var radius = Math.max(1, size * 0.14);
+		var boxLineWidth = Math.max(1, size / 12);
+		var checkLineWidth = Math.max(1, size * 0.13);
+
+		ctx.setLineDash([]);
+		ctx.setLineJoin("round").setLineCap("round");
+
+		if (checked) {
+			ctx.setFillStyle(drawColor).setLineWidth(boxLineWidth);
+			this._roundRectPath(ctx, x, y, size, size, radius);
+			ctx.fill();
+			ctx.setStrokeStyle(checkColor).setLineWidth(checkLineWidth).beginPath();
+			this._moveTo(ctx, x + size * 0.22, y + size * 0.50);
+			this._lineTo(ctx, x + size * 0.42, y + size * 0.69);
+			this._lineTo(ctx, x + size * 0.78, y + size * 0.29);
+			ctx.stroke();
+		} else {
+			var inset = boxLineWidth / 2;
+			ctx.setStrokeStyle(drawColor).setLineWidth(boxLineWidth);
+			this._roundRectPath(ctx, x + inset, y + inset, size - 2 * inset, size - 2 * inset, radius);
+			ctx.stroke();
+		}
+		// restore defaults
+		ctx.setLineJoin("miter").setLineCap("butt");
+	};
+	// Is (x,y) inside the checkbox?
+	WorksheetView.prototype._hitCursorCheckbox = function (x, y, col, row) {
+		var rect = this._getCellCheckboxRect(col, row);
+		return (x >= rect.x && x <= rect.x + rect.size && y >= rect.y && y <= rect.y + rect.size);
+	};
+	// Flip the checkbox value (undo/redo aware).
+	WorksheetView.prototype.toggleCheckbox = function (col, row) {
+		var cell = this._getVisibleCell(col, row);
+		if (!cell || !cell.isCheckbox()) {
+			return;
+		}
+		var checked = 1 === cell.getNumberValue();
+		var v = new AscCommonExcel.CCellValue();
+		v.type = CellValueType.Bool;
+		v.number = checked ? 0 : 1;
+		this.setSelectionInfo("value", v, true);
+	};
+	// Add checkboxes to the current selection (undo/redo aware).
+	WorksheetView.prototype.addCheckboxToSelection = function () {
+		var arn = this.model.selectionRange.getLast();
+		var range = this.model.getRange3(arn.r1, arn.c1, arn.r2, arn.c2);
+		range.addCheckbox();
+		this._cleanCache(new asc_Range(arn.c1, arn.r1, arn.c2, arn.r2));
+		if (this.workbook && this.workbook.FinalizeAction) {
+			this.workbook.FinalizeAction();
+		}
+		this.draw();
+	};
+
 	WorksheetView.prototype.af_drawButtons = function (updatedRange, offsetX, offsetY) {
 		var i, ws = this.model;
 		var t = this;
@@ -30336,6 +30497,32 @@ function isAllowPasteLink(pastedWb) {
 				formulaArrayFirstCell: findFormulaArrayFirstCell(pastedFormulaArray, fromCell)
 			};
 			t._setPastedDataByCurrentRange(range, pastedRangeProps, formulaProps, specialPasteProps);
+
+			// checkbox: if the source cell is a checkbox and formatting is pasted,
+			// re-set the marker on the target (remaps the complement to this workbook)
+			if (specialPasteProps.format && newVal && newVal.getXfs) {
+				var srcXfs = newVal.getXfs(true);
+				var srcComplement = srcXfs ? srcXfs.complement : null;
+				var isSrcCheckbox = false;
+				if (srcComplement != null) {
+					var srcWb = newVal.worksheet.workbook;
+					// source bags (other document) if present, else this document's bags
+					isSrcCheckbox = srcWb.featurePropertyBags ?
+						srcWb.isCheckboxComplement(srcComplement) :
+						ws.model.workbook.isCheckboxComplement(srcComplement);
+				}
+				if (isSrcCheckbox) {
+					var targetComplement = ws.model.workbook.getOrCreateCheckboxComplement();
+					range._foreach(function (cell) {
+						var xf = cell.getStyle();
+						var nxf = xf ? xf.clone() : new AscCommonExcel.CellXfs();
+						if (nxf.complement !== targetComplement) {
+							nxf.complement = targetComplement;
+							cell.setStyle(nxf);
+						}
+					});
+				}
+			}
 		};
 
 		//case when entire column/row was selected during copy

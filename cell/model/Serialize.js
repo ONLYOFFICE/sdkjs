@@ -225,7 +225,8 @@
         QuotePrefix: 11,
         XfId: 12,
         Aligment: 13,
-        Protection: 14
+        Protection: 14,
+        Complement: 15
     };
 	var c_oSerProtectionTypes =
     {
@@ -314,7 +315,25 @@
         XmlMap: 30,
         RdRichValue: 31,
         RdRichValueStructure: 32,
-        RdRichValueTypes: 33
+        RdRichValueTypes: 33,
+        RichValueRels: 34,
+        FeaturePropertyBags: 35
+    };
+    /** @enum */
+    var c_oSer_FeaturePropertyBags = {
+        Bag: 0,
+        BagId: 1,
+        Int: 2,
+        String: 3,
+        Bool: 4,
+        Double: 5,
+        Array: 6,
+        Key: 7,
+        Value: 8,
+        Att: 9,
+        Type: 10,
+        BagExtId: 11,
+        ExtRef: 12
     };
     /** @enum */
     var c_oSerWorkbookPrTypes =
@@ -2133,6 +2152,7 @@
 		this.applyProtection = null;
 		this.locked = null;
 		this.hidden = null;
+		this.complement = null;
 	}
 
 	function ReadColorSpreadsheet2(bcr, length) {
@@ -2994,6 +3014,7 @@
 		this.ApplyFill = null;
 		this.ApplyFont = null;
 		this.ApplyNumberFormat = null
+		this.complement = null;
 	}
 
 	function StylesForWrite() {
@@ -3046,6 +3067,9 @@
 		elem.fillid = this.oFillMap.add(xf.fill);
 		elem.borderid = this.oBorderMap.add(xf.border);
 		elem.numid = xf.num ? this.getNumIdByFormat(xf.num) : 0;
+		if(null != xf.complement) {
+			elem.complement = xf.complement;
+		}
 		if(null != xf.align) {
 			elem.alignMinimized = xf.align.getDif(g_oDefaultFormat.AlignAbs);
 		}
@@ -3478,6 +3502,12 @@
 					this.bs.WriteItemWithLength(function(){oThis.WriteProtection(xf);});
                 }
             }
+			if (null != xfForWrite.complement)
+			{
+				this.memory.WriteByte(c_oSerXfsTypes.Complement);
+				this.memory.WriteByte(c_oSerPropLenType.Long);
+				this.memory.WriteLong(xfForWrite.complement);
+			}
         };
 		this.WriteProtection = function(xf)
 		{
@@ -3942,6 +3972,9 @@
 			}
 			if (this.wb.richValueTypesInfo && AscCommonExcel.bIsSupportDynamicArrays) {
 				this.bs.WriteItem(c_oSerWorkbookTypes.RdRichValueTypes, function () {oThis.WriteRichValueTypes(oThis.wb.richValueTypesInfo);});
+			}
+			if (this.wb.featurePropertyBags && this.wb.featurePropertyBags.bags.length > 0) {
+				this.bs.WriteItem(c_oSerWorkbookTypes.FeaturePropertyBags, function () {oThis.WriteFeaturePropertyBags(oThis.wb.featurePropertyBags);});
 			}
         };
         this.WriteWorkbookPr = function()
@@ -5235,6 +5268,111 @@
             }
         };
 
+		this.WriteFeaturePropertyBags = function(pFeaturePropertyBags) {
+			if (!pFeaturePropertyBags) return;
+			let oThis = this;
+			for (let i = 0; i < pFeaturePropertyBags.bags.length; ++i) {
+				this.bs.WriteItem(c_oSer_FeaturePropertyBags.Bag, function() {
+					oThis.WriteFeaturePropertyBag(pFeaturePropertyBags.bags[i]);
+				});
+			}
+		};
+		this.WriteFeaturePropertyBag = function(pBag) {
+			if (!pBag) return;
+			let oThis = this;
+			if (pBag.att != null) {
+				this.bs.WriteItem(c_oSer_FeaturePropertyBags.Att, function() {oThis.memory.WriteString3(pBag.att);});
+			}
+			if (pBag.bagExtId != null) {
+				this.bs.WriteItem(c_oSer_FeaturePropertyBags.BagExtId, function() {oThis.memory.WriteULong(pBag.bagExtId);});
+			}
+			if (pBag.extRef != null) {
+				this.bs.WriteItem(c_oSer_FeaturePropertyBags.ExtRef, function() {oThis.memory.WriteString3(pBag.extRef);});
+			}
+			if (pBag.type != null) {
+				this.bs.WriteItem(c_oSer_FeaturePropertyBags.Type, function() {oThis.memory.WriteString3(pBag.type);});
+			}
+			for (let i = 0; i < pBag.items.length; ++i) {
+				this.WriteFeatureProperty(pBag.items[i]);
+			}
+		};
+		this.WriteFeatureProperty = function(pItem) {
+			if (!pItem) return;
+			switch (pItem.elementType) {
+				case AscCommonExcel.c_oFeaturePropertyType.Array:  this.WriteFeaturePropertyArray(pItem); break;
+				case AscCommonExcel.c_oFeaturePropertyType.Bag:    this.WriteFeaturePropertyBagId(pItem); break;
+				case AscCommonExcel.c_oFeaturePropertyType.Int:    this.WriteFeaturePropertyInt(pItem); break;
+				case AscCommonExcel.c_oFeaturePropertyType.String: this.WriteFeaturePropertyString(pItem); break;
+				case AscCommonExcel.c_oFeaturePropertyType.Bool:   this.WriteFeaturePropertyBool(pItem); break;
+				case AscCommonExcel.c_oFeaturePropertyType.Double: this.WriteFeaturePropertyDouble(pItem); break;
+			}
+		};
+		this.WriteFeaturePropertyKey = function(pItem) {
+			let oThis = this;
+			if (pItem.k != null) {
+				this.bs.WriteItem(c_oSer_FeaturePropertyBags.Key, function() {oThis.memory.WriteString3(pItem.k);});
+			}
+		};
+		this.WriteFeaturePropertyArray = function(pArray) {
+			if (!pArray) return;
+			let oThis = this;
+			this.bs.WriteItem(c_oSer_FeaturePropertyBags.Array, function() {
+				oThis.WriteFeaturePropertyKey(pArray);
+				for (let i = 0; i < pArray.items.length; ++i) {
+					oThis.WriteFeatureProperty(pArray.items[i]);
+				}
+			});
+		};
+		this.WriteFeaturePropertyBagId = function(pBagId) {
+			if (!pBagId) return;
+			let oThis = this;
+			this.bs.WriteItem(c_oSer_FeaturePropertyBags.BagId, function() {
+				oThis.WriteFeaturePropertyKey(pBagId);
+				if (pBagId.content != null) {
+					oThis.bs.WriteItem(c_oSer_FeaturePropertyBags.Value, function() {oThis.memory.WriteULong(pBagId.content);});
+				}
+			});
+		};
+		this.WriteFeaturePropertyInt = function(pInt) {
+			if (!pInt) return;
+			let oThis = this;
+			this.bs.WriteItem(c_oSer_FeaturePropertyBags.Int, function() {
+				oThis.WriteFeaturePropertyKey(pInt);
+				if (pInt.content != null) {
+					oThis.bs.WriteItem(c_oSer_FeaturePropertyBags.Value, function() {oThis.memory.WriteLong(pInt.content);});
+				}
+			});
+		};
+		this.WriteFeaturePropertyString = function(pString) {
+			if (!pString) return;
+			let oThis = this;
+			this.bs.WriteItem(c_oSer_FeaturePropertyBags.String, function() {
+				oThis.WriteFeaturePropertyKey(pString);
+				if (pString.content != null) {
+					oThis.bs.WriteItem(c_oSer_FeaturePropertyBags.Value, function() {oThis.memory.WriteString3(pString.content);});
+				}
+			});
+		};
+		this.WriteFeaturePropertyBool = function(pBool) {
+			if (!pBool) return;
+			let oThis = this;
+			this.bs.WriteItem(c_oSer_FeaturePropertyBags.Bool, function() {
+				oThis.WriteFeaturePropertyKey(pBool);
+				if (pBool.content != null) {
+					oThis.bs.WriteItem(c_oSer_FeaturePropertyBags.Value, function() {oThis.memory.WriteBool(pBool.content);});
+				}
+			});
+		};
+		this.WriteFeaturePropertyDouble = function(pDouble) {
+			if (!pDouble) return;
+			let oThis = this;
+			this.bs.WriteItem(c_oSer_FeaturePropertyBags.Double, function() {
+				oThis.WriteFeaturePropertyKey(pDouble);
+				if (pDouble.content != null) {
+					oThis.bs.WriteItem(c_oSer_FeaturePropertyBags.Value, function() {oThis.memory.WriteDouble2(pDouble.content);});
+				}
+			});
+		};
 		this.WriteFileSharing = function(fileSharing)
 		{
 			if (null != fileSharing.algorithmName) {
@@ -9187,6 +9325,8 @@
             else if (c_oSerXfsTypes.ApplyProtection == type) {
 				oXfs.applyProtection = this.stream.GetBool();
             }
+            else if (c_oSerXfsTypes.Complement == type)
+                oXfs.complement = this.stream.GetULongLE();
             else if ( c_oSerXfsTypes.Protection == type )
 			{
 				res = this.bcr.Read2Spreadsheet(length, function(t,l){
@@ -9859,6 +9999,11 @@
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadRichValueTypesInfo(t, l, oThis.oWorkbook.richValueTypesInfo);
                 });
+            } else if (c_oSerWorkbookTypes.FeaturePropertyBags === type) {
+                this.oWorkbook.featurePropertyBags = new AscCommonExcel.CFeaturePropertyBags();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadFeaturePropertyBags(t, l, oThis.oWorkbook.featurePropertyBags);
+                });
             }
             else
                 res = c_oSerConstants.ReadUnknown;
@@ -10307,6 +10452,159 @@
             }
             else if (c_oSer_RichValueTypesInfo.FlagValue === type) {
                 pFlag.value = this.stream.GetBool();
+            }
+            else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+
+        //****feature property bags****
+        this.ReadFeaturePropertyBags = function (type, length, pFeaturePropertyBags) {
+            let res = c_oSerConstants.ReadOk;
+            let oThis = this;
+            if (c_oSer_FeaturePropertyBags.Bag === type) {
+                let pBag = new AscCommonExcel.CFeaturePropertyBag();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadFeaturePropertyBag(t, l, pBag);
+                });
+                pFeaturePropertyBags.bags.push(pBag);
+            }
+            else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadFeaturePropertyBag = function (type, length, pBag) {
+            let res = c_oSerConstants.ReadOk;
+            let oThis = this;
+            if (c_oSer_FeaturePropertyBags.Att === type) {
+                pBag.att = this.stream.GetString2LE(length);
+            }
+            else if (c_oSer_FeaturePropertyBags.ExtRef === type) {
+                pBag.extRef = this.stream.GetString2LE(length);
+            }
+            else if (c_oSer_FeaturePropertyBags.Type === type) {
+                pBag.type = this.stream.GetString2LE(length);
+            }
+            else if (c_oSer_FeaturePropertyBags.BagExtId === type) {
+                pBag.bagExtId = this.stream.GetULong();
+            }
+            else if (c_oSer_FeaturePropertyBags.Array === type) {
+                let pArray = new AscCommonExcel.CArrayFeatureProperty();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadFeaturePropertyArray(t, l, pArray);
+                });
+                pBag.items.push(pArray);
+            }
+            else if (c_oSer_FeaturePropertyBags.BagId === type) {
+                let pBagId = new AscCommonExcel.CBagFeatureProperty();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadFeaturePropertyScalar(t, l, pBagId);
+                });
+                pBag.items.push(pBagId);
+            }
+            else if (c_oSer_FeaturePropertyBags.Int === type) {
+                let pInt = new AscCommonExcel.CIntFeatureProperty();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadFeaturePropertyScalar(t, l, pInt);
+                });
+                pBag.items.push(pInt);
+            }
+            else if (c_oSer_FeaturePropertyBags.String === type) {
+                let pString = new AscCommonExcel.CStringFeatureProperty();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadFeaturePropertyScalar(t, l, pString);
+                });
+                pBag.items.push(pString);
+            }
+            else if (c_oSer_FeaturePropertyBags.Bool === type) {
+                let pBool = new AscCommonExcel.CBoolFeatureProperty();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadFeaturePropertyScalar(t, l, pBool);
+                });
+                pBag.items.push(pBool);
+            }
+            else if (c_oSer_FeaturePropertyBags.Double === type) {
+                let pDouble = new AscCommonExcel.CDoubleFeatureProperty();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadFeaturePropertyScalar(t, l, pDouble);
+                });
+                pBag.items.push(pDouble);
+            }
+            else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadFeaturePropertyArray = function (type, length, pArray) {
+            let res = c_oSerConstants.ReadOk;
+            let oThis = this;
+            if (c_oSer_FeaturePropertyBags.Key === type) {
+                pArray.k = this.stream.GetString2LE(length);
+            }
+            else if (c_oSer_FeaturePropertyBags.Array === type) {
+                let pNested = new AscCommonExcel.CArrayFeatureProperty();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadFeaturePropertyArray(t, l, pNested);
+                });
+                pArray.items.push(pNested);
+            }
+            else if (c_oSer_FeaturePropertyBags.BagId === type) {
+                let pBagId = new AscCommonExcel.CBagFeatureProperty();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadFeaturePropertyScalar(t, l, pBagId);
+                });
+                pArray.items.push(pBagId);
+            }
+            else if (c_oSer_FeaturePropertyBags.Int === type) {
+                let pInt = new AscCommonExcel.CIntFeatureProperty();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadFeaturePropertyScalar(t, l, pInt);
+                });
+                pArray.items.push(pInt);
+            }
+            else if (c_oSer_FeaturePropertyBags.String === type) {
+                let pString = new AscCommonExcel.CStringFeatureProperty();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadFeaturePropertyScalar(t, l, pString);
+                });
+                pArray.items.push(pString);
+            }
+            else if (c_oSer_FeaturePropertyBags.Bool === type) {
+                let pBool = new AscCommonExcel.CBoolFeatureProperty();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadFeaturePropertyScalar(t, l, pBool);
+                });
+                pArray.items.push(pBool);
+            }
+            else if (c_oSer_FeaturePropertyBags.Double === type) {
+                let pDouble = new AscCommonExcel.CDoubleFeatureProperty();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadFeaturePropertyScalar(t, l, pDouble);
+                });
+                pArray.items.push(pDouble);
+            }
+            else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        // reads key + value for bagId/int/string/bool/double
+        this.ReadFeaturePropertyScalar = function (type, length, pItem) {
+            let res = c_oSerConstants.ReadOk;
+            if (c_oSer_FeaturePropertyBags.Key === type) {
+                pItem.k = this.stream.GetString2LE(length);
+            }
+            else if (c_oSer_FeaturePropertyBags.Value === type) {
+                switch (pItem.elementType) {
+                    case AscCommonExcel.c_oFeaturePropertyType.Bag:    pItem.content = this.stream.GetULong(); break;
+                    case AscCommonExcel.c_oFeaturePropertyType.Int:    pItem.content = this.stream.GetLong(); break;
+                    case AscCommonExcel.c_oFeaturePropertyType.String: pItem.content = this.stream.GetString2LE(length); break;
+                    case AscCommonExcel.c_oFeaturePropertyType.Bool:   pItem.content = this.stream.GetBool(); break;
+                    case AscCommonExcel.c_oFeaturePropertyType.Double: pItem.content = this.stream.GetDoubleLE(); break;
+                    default: res = c_oSerConstants.ReadUnknown; break;
+                }
             }
             else {
                 res = c_oSerConstants.ReadUnknown;
@@ -15349,6 +15647,8 @@
                 newXf.locked = oCellStyleXfs.locked;
             if(null != oCellStyleXfs.applyProtection)
                 newXf.applyProtection = oCellStyleXfs.applyProtection;
+            if(null != oCellStyleXfs.complement)
+                newXf.complement = oCellStyleXfs.complement;
             // align
             if(null != oCellStyleXfs.align)
                 newXf.align = oCellStyleXfs.align;
@@ -15429,6 +15729,8 @@
                 newXf.locked = xfs.locked;
             if(null != xfs.applyProtection)
                 newXf.applyProtection = xfs.applyProtection;
+            if(null != xfs.complement)
+                newXf.complement = xfs.complement;
             if(null != xfs.align)
                 newXf.align = xfs.align;
             if (null !== xfs.XfId) {
