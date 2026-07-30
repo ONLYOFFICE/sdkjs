@@ -4040,12 +4040,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 
 			if (matrix1 || matrix2) {
-				//only an original cArray operand (an array expression such as A:A+1) carries physical-head dims that
-				//would make the general path below truncate the result to that head. a cArea uses its bbox dims
-				//there (so it materializes rather than truncates) and is handled by convertAreaToArray's own
-				//clamping - do NOT reinterpret its used-extent tail here, or finite refs past the used range break.
-				var m1Lazy = cElementType.array === operand1.type && matrix1 && matrix1.hasLazyTail && matrix1.hasLazyTail();
-				var m2Lazy = cElementType.array === operand2.type && matrix2 && matrix2.hasLazyTail && matrix2.hasLazyTail();
+				//a converted range may go lazy only while its logical size equals its bbox - the result is then the
+				//same as below, just with the tail kept folded instead of materialized
+				var m1Lazy = matrix1 && matrix1.hasLazyTail && matrix1.hasLazyTail() &&
+					(cElementType.array === operand1.type ||
+					(matrix1.getRowCount() === dimension1.row && matrix1.getCountElementInRow() === dimension1.col));
+				var m2Lazy = matrix2 && matrix2.hasLazyTail && matrix2.hasLazyTail() &&
+					(cElementType.array === operand2.type ||
+					(matrix2.getRowCount() === dimension2.row && matrix2.getCountElementInRow() === dimension2.col));
 				if (m1Lazy || m2Lazy) {
 					//a lazy head+tail array operand whose logical size exceeds its physical head (the both-lazy-
 					//same-shape case was handled by the fast path above). broadcast on LOGICAL dims and compose a
@@ -4072,9 +4074,27 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 							res.addElement(elemAt(lr, lc));
 						}
 					}
-					res.setMissedValueFn(function (r, c) {
-						return elemAt(r, c);
-					});
+					//the tail is one value only if neither side reads real data there: a scalar, a 1x1, or no generator and
+					//no index pinned to 0 along a dimension the result repeats. a generator tail gets walked element by element
+					var gen1 = !!(matrix1 && matrix1.getMissedValueFn && matrix1.getMissedValueFn());
+					var gen2 = !!(matrix2 && matrix2.getMissedValueFn && matrix2.getMissedValueFn());
+					var tailFixed1 = !matrix1 || (lbr1 && lbc1) || (!(lbr1 && lRow > 1) && !(lbc1 && lCol > 1) && !gen1);
+					var tailFixed2 = !matrix2 || (lbr2 && lbc2) || (!(lbr2 && lRow > 1) && !(lbc2 && lCol > 1) && !gen2);
+					var tailConst = null;
+					if (tailFixed1 && tailFixed2) {
+						var tail1 = !matrix1 ? operand1 :
+							(lbr1 && lbc1 ? matrix1.getElementRowCol(0, 0) : (matrix1.getMissedValue() || new cEmpty()));
+						var tail2 = !matrix2 ? operand2 :
+							(lbr2 && lbc2 ? matrix2.getElementRowCol(0, 0) : (matrix2.getMissedValue() || new cEmpty()));
+						tailConst = func(tail1, tail2);
+					}
+					if (tailConst) {
+						res.setMissedValue(tailConst);
+					} else {
+						res.setMissedValueFn(function (r, c) {
+							return elemAt(r, c);
+						});
+					}
 					return res;
 				}
 				res = new cArray();
