@@ -1208,7 +1208,6 @@
 	function ApiRange(oElement, Start, End)
 	{
 		this.Element		= oElement;
-		this.Controller		= null;
 		this.isEmpty 		= false;
 		this.Paragraphs 	= [];
 		this.Text 			= undefined;
@@ -1230,8 +1229,6 @@
 			this.isEmpty = true;
 			return;
 		}
-		
-		this.private_CheckController();
 		
 		private_RefreshRangesPosition();
 		arrApiRanges.push(this);
@@ -1355,25 +1352,6 @@
 		this.StartPos	= aStartDocPos;
 		this.EndPos		= aEndDocPos;
 	};
-	ApiRange.prototype.private_CheckController = function()
-	{
-		if (this.StartPos[0].Class.IsHdrFtr())
-		{
-			this.Controller = this.oDocument.Document.GetHdrFtr();
-		}
-		else if (this.StartPos[0].Class.IsFootnote())
-		{
-			this.Controller = this.oDocument.Document.GetFootnotesController();
-		}
-		else if (this.StartPos[0].Class.Is_DrawingShape())
-		{
-			this.Controller = this.oDocument.Document.DrawingsController;
-		}
-		else 
-		{
-			this.Controller = this.oDocument.Document.LogicDocumentController;
-		}
-	};
 	ApiRange.prototype.private_RemoveEqual = function()
 	{
 		function ckeck_equal(firstDocPos, secondDocPos)
@@ -1408,7 +1386,7 @@
 		let logicDocument = private_GetLogicDocument();
 		let docState = logicDocument.SaveDocumentState();
 		
-		this.Select(false);
+		this.Select();
 		
 		let textPr = logicDocument.GetCalculatedTextPr();
 		logicDocument.LoadDocumentState(docState);
@@ -1417,6 +1395,26 @@
 	ApiRange.prototype.private_GetLogicDocument = function()
 	{
 		return private_GetLogicDocument();
+	};
+	ApiRange.prototype.private_GetTopDocContent = function()
+	{
+		return this.StartPos[0].Class;
+	};
+	ApiRange.prototype.private_GetStartRun = function()
+	{
+		return this.StartPos[this.StartPos.length - 1].Class;
+	};
+	ApiRange.prototype.private_GetStartRunPos = function()
+	{
+		return this.StartPos[this.StartPos.length - 1].Pos;
+	};
+	ApiRange.prototype.private_GetEndRun = function()
+	{
+		return this.EndPos[this.EndPos.length - 1].Class;
+	};
+	ApiRange.prototype.private_GetEndRunPos = function()
+	{
+		return this.EndPos[this.EndPos.length - 1].Pos;
 	};
 	ApiRange.prototype._trackPositions = function()
 	{
@@ -1542,8 +1540,8 @@
 		
 		if ("after" === position)
 		{
-			let run      = this.EndPos[this.EndPos.length - 1].Class;
-			let inRunPos = this.EndPos[this.EndPos.length - 1].Position;
+			let run      = this.private_GetEndRun();
+			let inRunPos = this.private_GetEndRunPos();
 			
 			if (!run || !(run instanceof AscWord.Run) || -1 === inRunPos)
 				return false;
@@ -1565,8 +1563,8 @@
 		}
 		else
 		{
-			let run      = this.StartPos[this.StartPos.length - 1].Class;
-			let inRunPos = this.StartPos[this.StartPos.length - 1].Position;
+			let run      = this.private_GetStartRun();
+			let inRunPos = this.private_GetStartRunPos();
 			
 			if (!run || !(run instanceof AscWord.Run) || -1 === inRunPos)
 				return false;
@@ -1609,7 +1607,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		if (typeof(sName) !== "string")
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -1664,7 +1662,7 @@
 		hyperlinkPr.put_ToolTip(sScreenTipText);
 		hyperlinkPr.put_Bookmark(sBookmarkName);
 
-		this.Select(false);
+		this.Select();
 		var oHyperlink = new ApiHyperlink(this.Paragraphs[0].Paragraph.AddHyperlink(hyperlinkPr));
 		Document.RemoveSelection();
 
@@ -1705,12 +1703,11 @@
 		var Document = private_GetLogicDocument();
 		var oldSelectionInfo = Document.SaveDocumentState();
 		
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 		
-		var Text = this.Controller.GetSelectedText(false, _options);
+		var Text = this.private_GetTopDocContent().GetSelectedText(false, _options);
 		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
 		
 		return Text;
 	};
@@ -1757,56 +1754,15 @@
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Select.js
 	 */	
-	ApiRange.prototype.Select = function(update)
+	ApiRange.prototype.Select = function()
 	{
 		private_RefreshRangesPosition();
 
-		let logicDocument = private_GetLogicDocument();
-		
-		update = GetBoolParameter(update, true);
-		if (update)
-		{
-			logicDocument.RemoveSelection();
-			for (let i = this.StartPos.length - 1; i >= 0; --i)
-			{
-				let obj = this.StartPos[i].Class;
-				if ((obj instanceof AscWord.CDocument) || (obj instanceof AscWord.CDocumentContent))
-				{
-					obj.SetThisElementCurrent(true);
-					update = false;
-					break;
-				}
-			}
-		}
+		let oDocContent = this.private_GetTopDocContent();
 
-		this.StartPos[0].Class.SetContentPosition(this.StartPos, 0, 0);
-		this.StartPos[0].Class.SetSelectionByContentPositions(this.StartPos, this.EndPos);
+		this.private_GetStartRun().SetThisElementCurrent();
+		oDocContent.SetSelectionByContentPositions(this.StartPos, this.EndPos);
 		
-		// TODO: Rework this
-		if (update)
-		{
-			var controllerType;
-			
-			if (this.StartPos[0].Class.IsHdrFtr())
-			{
-				controllerType = docpostype_HdrFtr;
-			}
-			else if (this.StartPos[0].Class.IsFootnote())
-			{
-				controllerType = docpostype_Footnotes;
-			}
-			else if (this.StartPos[0].Class.Is_DrawingShape())
-			{
-				controllerType = docpostype_DrawingObjects;
-			}
-			else
-			{
-				controllerType = docpostype_Content;
-			}
-			logicDocument.SetDocPosType(controllerType);
-			logicDocument.UpdateSelection();
-		}
-
 		return true;
 	};
 
@@ -1825,11 +1781,14 @@
 		if (!(oRange instanceof ApiRange))
 			return null;
 
-		if (this.StartPos[0].Class !== oRange.StartPos[0].Class) {
+		let oDocContentCur = this.private_GetTopDocContent();
+		let oDocContentNext = oRange.private_GetTopDocContent();
+
+		if (oDocContentCur !== oDocContentNext) {
 			return null;
 		}
 
-		let oNewRange = new ApiRange(this.StartPos[0].Class, Math.min(this.GetStartPos(), oRange.GetStartPos()), Math.max(this.GetEndPos(), oRange.GetEndPos()));
+		let oNewRange = new ApiRange(oDocContentCur, Math.min(this.GetStartPos(), oRange.GetStartPos()), Math.max(this.GetEndPos(), oRange.GetEndPos()));
 		if (oNewRange.isEmpty) {
 			return null;
 		}
@@ -1852,7 +1811,10 @@
 		if (!(oRange instanceof ApiRange))
 			return null;
 
-		if (this.StartPos[0].Class !== oRange.StartPos[0].Class)
+		let oDocContentCur = this.private_GetTopDocContent();
+		let oDocContentNext = oRange.private_GetTopDocContent();
+
+		if (oDocContentCur !== oDocContentNext)
 			return null;
 
 		let oDocument			= private_GetLogicDocument();
@@ -1923,10 +1885,10 @@
 
 			// should be different paragraphs
 			if (new Set(aStartEndParas).size !== 1) {
-				this.Select(false);
+				this.Select();
 				let aThisSelectedCells = oThisStartParentTable.GetSelectionArray(); 
 				
-				oRange.Select(false);
+				oRange.Select();
 				let aRangeSelectedCells = oRangeStartParentTable.GetSelectionArray();
 
 				let aCommon = findCommonCells(aThisSelectedCells, aRangeSelectedCells);
@@ -1963,7 +1925,7 @@
 
 		restoreDocState();
 
-		let oNewRange = new ApiRange(this.StartPos[0].Class, nIntersectStartPos, nIntersectEndPos);
+		let oNewRange = new ApiRange(oDocContentCur, nIntersectStartPos, nIntersectEndPos);
 		if (oNewRange.isEmpty) {
 			return null;
 		}
@@ -1986,7 +1948,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -1999,7 +1961,7 @@
 		}
 
 		var ParaTextPr = new AscCommonWord.ParaTextPr({Bold : isBold});
-		this.Controller.AddToParagraph(ParaTextPr);
+		Document.AddToParagraph(ParaTextPr);
 
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
@@ -2022,7 +1984,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2094,7 +2056,7 @@
 		const logicDocument = private_GetLogicDocument();
 		const oldSelectionInfo = logicDocument.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		const selectedContent = logicDocument.GetSelectedElementsInfo({ CheckAllSelection: true });
@@ -2142,7 +2104,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 		
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2182,7 +2144,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2266,7 +2228,7 @@
 		const logicDocument = private_GetLogicDocument();
 		const oldSelectionInfo = logicDocument.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		const selectedContent = logicDocument.GetSelectedElementsInfo({ CheckAllSelection: true });
@@ -2309,7 +2271,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2345,7 +2307,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 		
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2385,7 +2347,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2424,7 +2386,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2461,7 +2423,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2501,7 +2463,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var value = undefined;
@@ -2550,7 +2512,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		if (typeof nPosition !== "number")
@@ -2589,7 +2551,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2630,7 +2592,7 @@
 		var Document			= private_GetLogicDocument();
 		let oldSelectionInfo = Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var FontFamily = {
@@ -2670,7 +2632,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		if (!(oStyle instanceof ApiStyle))
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -2711,7 +2673,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		if (!(oTextPr instanceof ApiTextPr))
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -2767,10 +2729,10 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
-		this.Controller.Remove(1, true, false, false, false);
+		Document.Remove(1, true, false, false, false);
 
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
@@ -2798,7 +2760,7 @@
 		private_RefreshRangesPosition();
 
 		var oldSelectionInfo = oDocument.SaveDocumentState();
-		this.Select(false);
+		this.Select();
 
 		var oSelectedContent = oDocument.GetSelectedContent();
 		private_TrackRangesPositions();
@@ -2855,7 +2817,7 @@
 
 		let oldDocumentState = oDocument.SaveDocumentState();
 		
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		let SelectedContent = oDocument.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2900,7 +2862,9 @@
 		let nNewStartPos = this.GetStartPos() + nStart;
 		let nNewEndPos = nEnd < 0 ? this.GetEndPos() : nNewStartPos + (nEnd - nStart);
 
-		let oRange = new ApiRange(this.StartPos[0].Class, nNewStartPos, nNewEndPos);
+		let oDocContent = this.private_GetTopDocContent();
+		
+		let oRange = new ApiRange(oDocContent, nNewStartPos, nNewEndPos);
 		if (oRange.isEmpty)
 			return null;
 		
@@ -2953,7 +2917,7 @@
 	ApiRange.prototype.SetStartPos = function(nPos)
 	{
 		let nEndPos = this.GetEndPos();
-		this.private_UpdateDocPos(nPos, nEndPos, this.StartPos[0].Class);
+		this.private_UpdateDocPos(nPos, nEndPos, this.private_GetTopDocContent());
 		return true;
 	};
 
@@ -2969,7 +2933,7 @@
 	ApiRange.prototype.SetEndPos = function(nPos)
 	{
 		let nStartPos = this.GetStartPos();
-		this.private_UpdateDocPos(nStartPos, nPos, this.EndPos[0].Class);
+		this.private_UpdateDocPos(nStartPos, nPos, this.private_GetTopDocContent());
 		return true;
 	};
 
@@ -2985,8 +2949,8 @@
 		private_RefreshRangesPosition();
 
 		let isFirstRun		= true;
-		let oRunStart		= this.StartPos[this.StartPos.length - 1].Class;
-		let oRunStartPos	= this.StartPos[this.StartPos.length - 1].Position;
+		let oRunStart		= this.private_GetStartRun();
+		let oRunStartPos	= this.private_GetStartRunPos();
 
 		let isStartPosFounded = false;
 		let nStartCharPos = 0;
@@ -3015,7 +2979,7 @@
 				nStartCharPos++;
 		}
 
-		this.StartPos[0].Class.CheckRunContent(calcStartPos);
+		this.private_GetTopDocContent().CheckRunContent(calcStartPos);
 		return nStartCharPos;
 	};
 
@@ -3040,8 +3004,8 @@
 		private_RefreshRangesPosition();
 		
 		let isFirstRun	= true;
-		let oRunEnd		= this.EndPos[this.EndPos.length - 1].Class;
-		let oRunEndPos	= this.EndPos[this.EndPos.length - 1].Position;
+		let oRunEnd		= this.private_GetEndRun();
+		let oRunEndPos	= this.private_GetEndRunPos();
 
 		let isEndPosFounded = false;
 		let nEndCharPos = 0;
@@ -3070,7 +3034,7 @@
 				nEndCharPos++;
 		}
 
-		this.EndPos[0].Class.CheckRunContent(calcEndPos);
+		this.private_GetTopDocContent().CheckRunContent(calcEndPos);
 		return nEndCharPos;
 	};
 	
@@ -3118,7 +3082,7 @@
 		private_RefreshRangesPosition();
 		
 		let oDoc = private_GetLogicDocument();
-		this.Select(false);
+		this.Select();
 
 		oDoc.Remove(1, false, false, true);
 		return !!oDoc.AddComplexField(sCode);
