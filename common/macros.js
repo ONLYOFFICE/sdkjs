@@ -482,7 +482,6 @@ function (window, undefined)
 			"top":            {},
 			"parent":         {},
 			"frames":         {},
-			"fetch":          function(){},
 			"WebSocket":      function(){},
 			"importScripts":  function(){},
 			"XMLHttpRequest": function(){},
