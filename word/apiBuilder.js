@@ -13090,45 +13090,10 @@
 	 */
 	ApiRun.prototype.Select = function()
 	{
-		var Document = private_GetLogicDocument();
-
-		var StartPos		= this.Run.GetDocumentPositionFromObject();
-		var EndPos			= this.Run.GetDocumentPositionFromObject();
-		var parentParagraph	= this.Run.GetParagraph();
-
-		if (!parentParagraph)
+		if (!this.Run.IsUseInDocument())
 			return false;
 
-		StartPos.push({Class: this.Run, Position: 0});
-		EndPos.push({Class: this.Run, Position: this.Run.Content.length});
-
-		if (StartPos[0].Position === - 1)
-			return false;
-
-		StartPos[0].Class.SetSelectionByContentPositions(StartPos, EndPos);
-
-		var controllerType;
-
-		if (StartPos[0].Class.IsHdrFtr())
-		{
-			controllerType = docpostype_HdrFtr;
-		}
-		else if (StartPos[0].Class.IsFootnote())
-		{
-			controllerType = docpostype_Footnotes;
-		}
-		else if (StartPos[0].Class.Is_DrawingShape())
-		{
-			controllerType = docpostype_DrawingObjects;
-		}
-		else 
-		{
-			controllerType = docpostype_Content;
-		}
-
-		Document.SetDocPosType(controllerType);
-		Document.UpdateSelection();
-
+		this.Run.SelectThisElement();
 		return true;	
 	};
 	/**
