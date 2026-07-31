@@ -1866,9 +1866,6 @@
 		const api = this.getApi();
 		return api.WordControl.Thumbnails.isOutline();
 	};
-	OutlineModeManager.prototype.isThumbnailsSupported = function() {
-		return true;
-	};
 	OutlineModeManager.prototype.updateViewMode = function (oldViewManager) {
 		const wordControl = this.getWordControl();
 		const presentation = this.getPresentation();

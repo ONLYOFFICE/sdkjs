@@ -75,6 +75,104 @@
 		return textPr;
 	}
 
+	function SlideUpdateDataCollector(outlineView, checkSlideMap, usedSlideMap) {
+		this.outlineView = outlineView;
+		this.checkSlideMap = checkSlideMap;
+		this.usedSlideMap = usedSlideMap;
+	}
+	SlideUpdateDataCollector.prototype.collect = function () {
+		const updateData = new SlideUpdateData();
+		const outlineView = this.outlineView;
+		for (let id in this.checkSlideMap) {
+			const slide = this.checkSlideMap[id];
+			if (!slide.isHaveTitleShape()) {
+				const slideInfo = outlineView.outlineInfo.getSlideInfoBySlide(slide);
+				if (this.usedSlideMap[slide.GetId()]) {
+					if (!slideInfo) {
+						updateData.addedSlides.push(slide);
+					}
+				} else {
+					if (slideInfo) {
+						updateData.removedSlides.push(slide);
+					}
+				}
+			}
+		}
+		return updateData;
+	};
+	SlideUpdateDataCollector.prototype.addSlidesToCheck = function (slideMap) {
+		this.checkSlideMap = Object.assign({}, this.checkSlideMap, slideMap);
+	};
+	function ParagraphUpdateDataCollector(outlineView, paragraphMap) {
+		this.outlineView = outlineView;
+		this.paragraphMap = paragraphMap;
+		this.additionalCheckSlideMap = {};
+	}
+	ParagraphUpdateDataCollector.prototype.checkExistingParagraphInOutline = function (paragraph, updateData) {
+		const id = paragraph.Get_Id();
+		const outlineView = this.outlineView;
+		if (outlineView.sourceToOutlineMap[id]) {
+			updateData.addExistingParagraph(outlineView.sourceToOutlineMap[id]);
+			return;
+		}
+		const shape = paragraph.GetParentShape();
+		if (shape && (shape === outlineView.outlineShape)) {
+			updateData.addExistingParagraph(paragraph);
+		}
+	}
+	ParagraphUpdateDataCollector.prototype.isUseInDocument = function (paragraph) {
+		return paragraph.IsUseInDocument();
+	};
+	ParagraphUpdateDataCollector.prototype.checkExistingParagraphInPresentation = function (paragraph, updateData) {
+		const shape = paragraph.GetParentShape();
+		const isCorrectShape = shape && AscFormat.isSlideLikeObject(shape.parent) && shape.parent.isSlide() && shape.isOutlinePlaceholder();
+		if (!isCorrectShape) {
+			return;
+		}
+		const content = shape.getDocContent();
+		const isCorrectContent = content && (shape.isTitlePlaceholder() || !content.Is_Empty());
+		if (!isCorrectContent) {
+			return;
+		}
+		const slide = shape.parent;
+		const slideId = slide.GetId();
+		if (this.isUseInDocument(paragraph)) {
+			updateData.addNewParagraph(paragraph);
+		} else {
+			this.additionalCheckSlideMap[slideId] = slide;
+		}
+	};
+	ParagraphUpdateDataCollector.prototype.collect = function () {
+		const updateData = new ParagraphUpdateData();
+		for (let id in this.paragraphMap) {
+			const paragraph = this.paragraphMap[id];
+			this.checkExistingParagraphInOutline(paragraph, updateData);
+			this.checkExistingParagraphInPresentation(paragraph, updateData);
+		}
+		return updateData;
+	};
+
+	function ParagraphUpdateData() {
+		this.existingParagraphs = [];
+		this.newParagraphs = [];
+	}
+	ParagraphUpdateData.prototype.isNeedRecalculate = function () {
+		return !!this.existingParagraphs.length || !!this.newParagraphs.length;
+	};
+	ParagraphUpdateData.prototype.addExistingParagraph = function (paragraph) {
+		this.existingParagraphs.push(paragraph);
+	};
+	ParagraphUpdateData.prototype.addNewParagraph = function (paragraph) {
+		this.newParagraphs.push(paragraph);
+	};
+
+	function SlideUpdateData() {
+		this.removedSlides = [];
+		this.addedSlides = [];
+	}
+	SlideUpdateData.prototype.isNeedRecalculate = function () {
+		return !!this.removedSlides.length || !!this.addedSlides.length;
+	};
 
 	const DECORATORDRAWER_OFFSET_LEFT = 2;
 	const DECORATORDRAWER_SLIDE_WIDTH = 6;
@@ -408,15 +506,18 @@
 			}
 			if (!isReplaceMockParagraph) {
 				outlineView.addUpdatedParagraph(sourceParagraph, insertIndex);
-				const shape = this.getParagraphShape(sourceParagraph);
-				const slide = shape.parent;
-				const slideInfo = outlineView.outlineInfo.getSlideInfoBySlide(slide);
-				if (slideInfo) {
-					slideInfo.resetContentShapeInfoMapByShape(shape);
-				}
+				this.resetContentShapeByShape(this.getParagraphShape(sourceParagraph));
 			}
 		}
 	};
+	UpdateNewParagraphsManager.prototype.resetContentShapeByShape = function (shape) {
+		const outlineView = this.outlineView;
+		const slide = shape.parent;
+		const slideInfo = outlineView.outlineInfo.getSlideInfoBySlide(slide);
+		if (slideInfo) {
+			slideInfo.resetContentShapeInfoMapByShape(shape);
+		}
+	}
 	UpdateNewParagraphsManager.prototype.getInsertIndex = function (sourceParagraph, outlineParagraphs) {
 		const outlineView = this.outlineView;
 		for (let i = outlineParagraphs.length - 1; i >= 0; i -= 1) {
@@ -2170,80 +2271,7 @@
 		return false;
 	};
 
-	function ParagraphUpdateData() {
-		this.existingParagraphs = [];
-		this.newParagraphs = [];
-	}
-	ParagraphUpdateData.prototype.isNeedRecalculate = function () {
-		return !!this.existingParagraphs.length || !!this.newParagraphs.length;
-	};
-
-	function SlideUpdateData() {
-		this.removedSlides = [];
-		this.addedSlides = [];
-	}
-	SlideUpdateData.prototype.isNeedRecalculate = function () {
-		return !!this.removedSlides.length || !!this.addedSlides.length;
-	};
-	OutlineView.prototype.getParagraphUpdateData = function () {
-		const updateData = new ParagraphUpdateData();
-		for (let id in this.mapToCheckParagraphs) {
-			const paragraph = this.mapToCheckParagraphs[id];
-			const shape = paragraph.GetParentShape();
-			if (!shape || shape.getObjectType() !== AscDFH.historyitem_type_Shape) {
-				continue;
-			}
-			if (shape === this.outlineShape) {
-				const sourceParagraph = this.getSourceParagraph(paragraph);
-				if (!sourceParagraph) {
-					updateData.existingParagraphs.push(paragraph)
-				}
-			} else if (shape.isOutlinePlaceholder()) {
-				const content = shape.getDocContent();
-				if (shape.parent && shape.parent.getObjectType() === AscDFH.historyitem_type_Slide) {
-					const outlineParagraph = this.sourceToOutlineMap[paragraph.Get_Id()];
-					if (outlineParagraph) {
-						updateData.existingParagraphs.push(outlineParagraph);
-					} else if (paragraph.IsUseInDocument()) {
-						const isEmptyContent = content.IsEmpty();
-						if (isEmptyContent && shape.isGeneralTitle() || !isEmptyContent) {
-							updateData.newParagraphs.push(paragraph);
-						}
-					}
-				}
-			}
-		}
-		this.resetMapToCheckParagraphs();
-		return updateData;
-	};
-	OutlineView.prototype.getSlideUpdateData = function () {
-		const updateData = new SlideUpdateData();
-		if (AscCommon.isEmptyObject(this.mapToCheckSlides)) {
-			return updateData;
-		}
-
-		const presentation = this.getPresentation();
-		const usedSlidesMap = presentation.GetUsedSlidesMap();
-		for (let id in this.mapToCheckSlides) {
-			const slide = this.mapToCheckSlides[id];
-			if (!slide.isHaveTitleShape()) {
-				const slideInfo = this.outlineInfo.getSlideInfoBySlide(slide);
-				if (usedSlidesMap[slide.GetId()]) {
-					if (!slideInfo) {
-						updateData.addedSlides.push(slide);
-					}
-				} else {
-					if (slideInfo) {
-						updateData.removedSlides.push(slide);
-					}
-				}
-			}
-		}
-		this.resetMapToCheckSlides();
-		return updateData;
-	};
-	OutlineView.prototype.updateParagraphData = function () {
-		const updateData = this.getParagraphUpdateData();
+	OutlineView.prototype.updateParagraphData = function (updateData) {
 		if (updateData.isNeedRecalculate()) {
 			const presentation = this.getPresentation();
 			presentation.updateSlideIndexes();
@@ -2253,8 +2281,7 @@
 		}
 		return false;
 	};
-	OutlineView.prototype.updateSlideData = function () {
-		const updateData = this.getSlideUpdateData();
+	OutlineView.prototype.updateSlideData = function (updateData) {
 		if (updateData.isNeedRecalculate()) {
 			const presentation = this.getPresentation();
 			presentation.updateSlideIndexes();
@@ -2269,8 +2296,19 @@
 			return;
 		}
 		let isRecalculate = false;
-		isRecalculate |= this.updateParagraphData();
-		isRecalculate |= this.updateSlideData();
+
+		const presentation = this.getPresentation();
+		const paragraphUpdateDataCollector = new ParagraphUpdateDataCollector(this, this.mapToCheckParagraphs);
+		const paragraphUpdateData = paragraphUpdateDataCollector.collect();
+		isRecalculate |= this.updateParagraphData(paragraphUpdateData);
+		this.resetMapToCheckParagraphs();
+
+		const slideUpdateDataCollector = new SlideUpdateDataCollector(this, this.mapToCheckSlides, presentation.GetUsedSlidesMap());
+		slideUpdateDataCollector.addSlidesToCheck(paragraphUpdateDataCollector.additionalCheckSlideMap);
+		const updateData = slideUpdateDataCollector.collect();
+		isRecalculate |= this.updateSlideData(updateData);
+		this.resetMapToCheckSlides();
+
 		if (isRecalculate) {
 			this.outlineShape && this.outlineShape.recalculateContent();
 		}
@@ -2341,55 +2379,27 @@
 		this.outlineView = outlineView;
 		this.useInDocumentManager = useInDocumentManager;
 	}
-	UpdateExistingParagraphManager.prototype.isNeedAddMockParagraph = function (sourceParagraph) {
-		if (!sourceParagraph || sourceParagraph.Index !== 0) {
-			return false;
-		}
-		const shape = sourceParagraph.GetParentShape();
-		if (!shape.isGeneralTitle() || this.useInDocumentManager.isUseInDocumentShape(shape)) {
-			return false;
-		}
-
-		const slide = shape.parent;
-		if (!this.useInDocumentManager.isUseInDocumentSlide(slide)) {
-			return false;
-		}
-
-		return true;
-	};
 	UpdateExistingParagraphManager.prototype.update = function (existingOutlineParagraphs) {
 		existingOutlineParagraphs.sort(function (aParagraph, bParagraph) {
 			return bParagraph.Index - aParagraph.Index;
 		});
-		const outlineView = this.outlineView;
 		for (let i = 0; i < existingOutlineParagraphs.length; i += 1) {
 			const outlineParagraph = existingOutlineParagraphs[i];
-			const sourceParagraph = outlineView.getSourceParagraph(outlineParagraph);
-			let content;
-			let shape;
-			let isEmptyContent = false;
-			if (sourceParagraph) {
-				content = sourceParagraph.GetParent();
-				isEmptyContent = content.IsEmpty();
-				shape = content.Is_DrawingShape(true);
-			}
+			this.checkRecalculateContentShapeIndexes(outlineParagraph);
+			this.unlinkOutlineParagraph(outlineParagraph);
 
-			if (this.useInDocumentManager.isUseInDocumentParagraph(sourceParagraph) && (!isEmptyContent || isEmptyContent && shape.isGeneralTitle())) {
-				outlineView.updateFromSourceParagraph(sourceParagraph);
-			} else {
-				this.unlinkOutlineParagraph(outlineParagraph, sourceParagraph);
-			}
 		}
 	}
-	UpdateExistingParagraphManager.prototype.unlinkOutlineParagraph = function (outlineParagraph, sourceParagraph) {
+	UpdateExistingParagraphManager.prototype.checkRecalculateContentShapeIndexes = function (outlineParagraph) {
 		const outlineView = this.outlineView;
-		const info = outlineView.outlineInfo.getSlideInfoByParagraph(outlineParagraph);
-		outlineView.unlinkOutlineParagraph(outlineParagraph);
-		if (this.isNeedAddMockParagraph(sourceParagraph)) {
-			outlineView.addMockTitle(outlineParagraph.Index, info);
-		} else if (sourceParagraph) {
+		const sourceParagraph = outlineView.getSourceParagraph(outlineParagraph);
+		if (sourceParagraph) {
 			this.setRecalculateContentShapeIndexes(sourceParagraph);
 		}
+	};
+	UpdateExistingParagraphManager.prototype.unlinkOutlineParagraph = function (outlineParagraph) {
+		const outlineView = this.outlineView;
+		outlineView.unlinkOutlineParagraph(outlineParagraph);
 	}
 	UpdateExistingParagraphManager.prototype.setRecalculateContentShapeIndexes = function (sourceParagraph) {
 		const outlineView = this.outlineView;
@@ -2402,7 +2412,7 @@
 				info.resetContentShapeInfoMap();
 			}
 		}
-	}
+	};
 	OutlineView.prototype.updateExistingParagraphs = function (existingOutlineParagraphs) {
 		if (!existingOutlineParagraphs.length) {
 			return;
