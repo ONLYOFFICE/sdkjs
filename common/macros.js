@@ -440,7 +440,25 @@ function (window, undefined)
 	window["AscCommon"].CDocumentMacros = CDocumentMacros;
 	window['AscCommon'].VbaProject = VbaProject;
 
-	function _safePluginEval(value) {
+	function _sanitizeCode(value) {
+		if (/\bimport\s*\(/.test(value)) {
+			throw new Error("Security: dynamic import() is not allowed");
+		}
+		if (/\bimport\s+/.test(value)) {
+			throw new Error("Security: static import is not allowed");
+		}
+		return value;
+	}
+	
+	/**
+	 * @param {*} value code to run
+	 * @param {*} params { name: value } map injected as locals
+	 * @param {*} _this value of `this` inside the top-level user code (for PDF)
+	 * @returns 
+	 */
+	function _secureEval(value, params, _this) {
+		value = _sanitizeCode(value);
+
 		let protoFunc = Object.getPrototypeOf(function(){});
 		// for minimization we use eval!!!
 		let protoFuncGen = null;
@@ -455,6 +473,73 @@ function (window, undefined)
 		if (protoFuncGen)
 			protoFuncGen.prototype.next = function(){};
 
+		const baseParams = {
+			"Function":       {},
+			"window":         {},
+			"document":       {},
+			"self":           {},
+			"globalThis":     {},
+			"top":            {},
+			"parent":         {},
+			"frames":         {},
+			"fetch":          function(){},
+			"WebSocket":      function(){},
+			"importScripts":  function(){},
+			"XMLHttpRequest": function(){},
+			"alert":          function(){},
+			"setTimeout":     function(){},
+			"setInterval":    function(){}
+		};
+		const allParams = Object.assign({}, baseParams, params || {});
+
+		const names  = Object.keys(allParams).concat("value");
+		const values = Object.values(allParams).concat(value);
+
+		// Replace window.eval via property getter so the code can use direct eval once,
+		// then turn it into a stub. Direct eval requires the identifier `eval` to resolve
+		// to %eval% itself; returning the real eval from the getter on first read keeps
+		// direct-eval semantics for our own wrapper call (user code runs in the wrapper's
+		// scope with this === _this). All later reads return a stub, so `var e = eval; e(...)`
+		// can't escape to global scope.
+		const prevEvalDesc = Object.getOwnPropertyDescriptor(window, 'eval');
+		const realEval = window.eval;
+		let evalCallsLeft = 1;
+		const evalStub = function(){};
+		Object.defineProperty(window, 'eval', {
+			configurable: true,
+			get: function() {
+				if (evalCallsLeft > 0) {
+					evalCallsLeft--;
+					return realEval;
+				}
+				return evalStub;
+			},
+			set: function(){} // for IE
+		});
+
+		let result;
+		try {
+			const _safe_eval_closure = Function.apply(
+				null,
+				names.concat("\"use strict\"; return eval(\"\\\"use strict\\\";\\r\\n\" + value)")
+			);
+			result = _safe_eval_closure.apply(_this || null, values);
+		} finally {
+			if (prevEvalDesc) {
+				Object.defineProperty(window, 'eval', prevEvalDesc);
+			} else {
+				delete window.eval;
+				window.eval = realEval;
+			}
+			protoFunc.constructor = normalConstructor;
+			if (protoFuncGen)
+				protoFuncGen.prototype.next = generatorNext;
+		}
+
+		return result;
+	}
+
+	function _safePluginEval(value) {
 		const timeout = function(cb, delay) {
 			var args = Array.prototype.slice.call(arguments, 2);
 			return setTimeout(function() {
@@ -481,26 +566,9 @@ function (window, undefined)
 				Api.parsedJSDoc.length = countOfAdding;
 		}
 
-		function _sanitizeCode(value) {
-			if (/\bimport\s*\(/.test(value)) {
-				throw new Error("Security: dynamic import() is not allowed in macros");
-			}
-			if (/\bimport\s+/.test(value)) {
-				throw new Error("Security: static import is not allowed in macros");
-			}
-			return value;
-		}
-		value = _sanitizeCode(value);
-
-		const allParams = {
-			"Function":         {},
-			"window":           {},
+		const pluginParams = {
 			"AscDesktopEditor": {},
-			"alert":            function(){},
-			"document":         {},
 			"XMLHttpRequest":   customXMLHttpRequest,
-			"self":             {},
-			"globalThis":       {},
 			"setTimeout":       timeout,
 			"setInterval":      interval,
 
@@ -513,68 +581,24 @@ function (window, undefined)
 		{
 			case AscCommon.c_oEditorId.Word:
 			{
-				allParams["ThisDocument"] = Api.GetDocument();
+				pluginParams["ThisDocument"] = Api.GetDocument();
 				break;
 			}
 			case AscCommon.c_oEditorId.Presentation:
 			{
-				allParams["ThisPresentation"] = Api.GetPresentation();
+				pluginParams["ThisPresentation"] = Api.GetPresentation();
 				break;
 			}
 			case AscCommon.c_oEditorId.Spreadsheet:
 			{
-				allParams["ThisWorkbook"] = Api;
+				pluginParams["ThisWorkbook"] = Api;
 				break;
 			}
 			default:
 				break;
 		}
 
-		const names  = Object.keys(allParams).concat("value");
-		const values = Object.values(allParams).concat(value);
-
-		// Replace window.eval via property getter so the macro can use direct eval once,
-		// then turn it into a stub. Direct eval requires the identifier `eval` to resolve
-		// to %eval% itself; returning the real eval from the getter on first read keeps
-		// direct-eval semantics for our own wrapper call (user code runs in the wrapper's
-		// scope with this===null). All later reads return a stub, so `var e = eval; e(...)`
-		// can't escape to global scope.
-		const prevEvalDesc = Object.getOwnPropertyDescriptor(window, 'eval');
-		const realEval = window.eval;
-		let evalCallsLeft = 1;
-		const evalStub = function(){};
-		Object.defineProperty(window, 'eval', {
-			configurable: true,
-			get: function() {
-				if (evalCallsLeft > 0) {
-					evalCallsLeft--;
-					return realEval;
-				}
-				return evalStub;
-			},
-			set: function(){} // for IE
-		});
-
-		let result;
-		try {
-			const _safe_eval_closure = Function.apply(
-				null,
-				names.concat("\"use strict\"; return eval(\"\\\"use strict\\\";\\r\\n\" + value)")
-			);
-			result = _safe_eval_closure.apply(null, values);
-		} finally {
-			if (prevEvalDesc) {
-				Object.defineProperty(window, 'eval', prevEvalDesc);
-			} else {
-				delete window.eval;
-				window.eval = realEval;
-			}
-			protoFunc.constructor = normalConstructor;
-			if (protoFuncGen)
-				protoFuncGen.prototype.next = generatorNext;
-		}
-
-		return result;
+		return _secureEval(value, pluginParams, null);
 	};
 	window['AscCommon'].safePluginEval = function(value){
 		let result;
@@ -583,6 +607,22 @@ function (window, undefined)
 		try
 		{
 			result = _safePluginEval(value);
+		}
+		catch (err)
+		{
+			result = undefined;
+			console.error(err);
+		}
+		AscFonts.IsCheckSymbols = isCheckSymbols;
+		return result;
+	};
+	window['AscCommon'].secureEval = function(value, params, _this){
+		let result;
+		let isCheckSymbols = AscFonts.IsCheckSymbols;
+		AscFonts.IsCheckSymbols = true;
+		try
+		{
+			result = _secureEval(value, params, _this);
 		}
 		catch (err)
 		{
