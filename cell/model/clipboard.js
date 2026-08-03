@@ -56,6 +56,8 @@
 		var c_oSpecialPasteProps = Asc.c_oSpecialPasteProps;
 
 		var c_MaxStringLength = 536870888;
+		var c_MaxClipboardCells = 1000000;
+
 		var notSupportExternalReferenceFileFormat = {"csv": 1};
 
 		function number2color(n) {
@@ -375,8 +377,27 @@
 				}
 
 
+				let bTooLarge = false;
+				let oBinaryRange = null;
+				if (!window["AscDesktopEditor"]) {
+					let nMaxRow = selectionRange.r2;
+					let nMaxCol = selectionRange.c2;
+					let oMaxRowCol = this.copyProcessor._getRangeMaxRowCol(ws.model, selectionRange);
+					if (null !== oMaxRowCol) {
+						nMaxRow = Math.max(oMaxRowCol.row, selectionRange.r1);
+						nMaxCol = Math.max(oMaxRowCol.col, selectionRange.c1);
+					}
+					let nMaxRows = Math.max(1, Math.floor(c_MaxClipboardCells / (nMaxCol - selectionRange.c1 + 1)));
+					bTooLarge = (nMaxRow - selectionRange.r1 + 1) > nMaxRows;
+					if (bTooLarge) {
+						oBinaryRange = new Asc.Range(selectionRange.c1, selectionRange.r1, nMaxCol,
+							selectionRange.r1 + nMaxRows - 1);
+						activeRange = ws.model.getRange3(oBinaryRange.r1, oBinaryRange.c1, oBinaryRange.r2, oBinaryRange.c2);
+					}
+				}
+
 				// IMAGE
-				if (_formats & AscCommon.c_oAscClipboardDataFormat.Image) {
+				if ((_formats & AscCommon.c_oAscClipboardDataFormat.Image) && !bTooLarge) {
 					let imageData = this.drawSelectedArea(ws, true);
 					if (imageData) {
 						_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Image, imageData);
@@ -393,7 +414,7 @@
 				}
 				//HTML
 				if (AscCommon.c_oAscClipboardDataFormat.Html & _formats) {
-					_data = this.copyProcessor.getHtml(activeRange, ws, aMultiRanges);
+					_data = this.copyProcessor.getHtml(activeRange, ws, aMultiRanges, oBinaryRange);
 
 					if (null !== _data && "" !== _data.html) {
 						_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, _data.html)
@@ -413,7 +434,7 @@
 						if (_data && _data.base64) {
 							_data = _data.base64;
 						} else {
-							_data = this.copyProcessor.getBinaryForCopy(ws.model, ws.objectRender);
+							_data = this.copyProcessor.getBinaryForCopy(ws.model, ws.objectRender, oBinaryRange);
 						}
 					}
 
@@ -429,6 +450,11 @@
 				ws.model.excludeHiddenRows(false);
 				ws.model.ignoreWriteFormulas(false);
 				wb.model.checkProtectedValue = false;
+
+				if (bTooLarge) {
+					ws.handlers.trigger("onErrorEvent", Asc.c_oAscError.ID.CopyRangeTooLarge,
+						Asc.c_oAscError.Level.NoCritical);
+				}
 			}
 
 			if (ws && ws.workbook && !ws.workbook.getCellEditMode()) {
@@ -771,7 +797,7 @@
 
 			constructor: CopyProcessorExcel,
 
-			getHtml: function (range, worksheet, aMultiRanges) {
+			getHtml: function (range, worksheet, aMultiRanges, oBinaryRange) {
 				var t = this;
 				var sBase64 = null;
 
@@ -787,7 +813,7 @@
 						worksheet.model.excludeHiddenRows(false);
 						worksheet.model.ignoreWriteFormulas(false);
 					}
-					sBase64 = this.getBinaryForCopy(worksheet.model, worksheet.objectRender);
+					sBase64 = this.getBinaryForCopy(worksheet.model, worksheet.objectRender, oBinaryRange);
 					if (aMultiRanges) {
 						worksheet.model.selectionRange.ranges = origSelectionRanges;
 						worksheet.model.excludeHiddenRows(true);
@@ -1443,18 +1469,12 @@
 
 				//an array joined once: str += ... allocated a rope node per append, about ten per cell
 				var aParts = [];
-				var nLength = 0;
-				var bOverflow = false;
-				var addByStr = function (_str) {
-					nLength += _str.length;
-					aParts.push(_str);
-				};
 
-				addByStr('<table cellpadding="0" cellSpacing="0"');
+				aParts.push('<table cellpadding="0" cellSpacing="0"');
 				if (sBase64) {
-					addByStr(' class=' + '"' + sBase64 + '"');
+					aParts.push(' class=' + '"' + sBase64 + '"');
 				}
-				addByStr(' style="border-collapse: collapse;font-family:' + fn + ';font-size:' + fs + 'pt' + ';color:#000;background-color:transparent;' + '">');
+				aParts.push(' style="border-collapse: collapse;font-family:' + fn + ';font-size:' + fs + 'pt' + ';color:#000;background-color:transparent;' + '">');
 
 				var maxRow = bbox.r2;
 				var maxCol = bbox.c2;
@@ -1591,23 +1611,11 @@
 							aRow.push('</td>');
 						}
 						aRow.push("</tr>");
-
-						//research on maximum string length:
-						//Edge/chrome 96.0.4664 -> 536870888 characters (1073741776 bytes)
-						//FF 95.0.2 -> 1073741822 characters (2147483644 bytes)
-						var sRow = aRow.join("");
-						if (nLength + sRow.length > c_MaxStringLength) {
-							bOverflow = true;
-							break;
-						}
-						addByStr(sRow);
+						aParts.push(aRow.join(""));
 					}
 				});
 
-				if (bOverflow) {
-					return false;
-				}
-				addByStr("</table>");
+				aParts.push("</table>");
 
 				return aParts.join("");
 			},
@@ -1842,8 +1850,6 @@
 				}
 
 				var aParts = [];
-				var nLength = 0;
-				var bOverflow = false;
 
 				wsModel.getDataRowIterator(bbox.r1, bbox.c1, maxRow, maxCol, function (itRow) {
 					for (var row = bbox.r1; row <= maxRow; ++row) {
@@ -1879,17 +1885,11 @@
 							}
 						}
 
-						var sRow = aRow.join("");
-						if (nLength + sRow.length > c_MaxStringLength) {
-							bOverflow = true;
-							break;
-						}
-						nLength += sRow.length;
-						aParts.push(sRow);
+						aParts.push(aRow.join(""));
 					}
 				});
 
-				return bOverflow ? null : aParts.join("");
+				return aParts.join("");
 			}
 		};
 

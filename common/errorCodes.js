@@ -136,6 +136,7 @@
 			ConvertationOpenFormat     : -85,
 
 			CannotSaveWatermark     : -86,
+			CopyRangeTooLarge       : -87,
 
 			UserDrop : -100,
 			Warning  : -101,
@@ -345,6 +346,7 @@
 	prot['PasteSlicerError']                 = prot.PasteSlicerError;
 	prot['MoveSlicerError']                  = prot.MoveSlicerError;
 	prot['PasteMultiSelectError']            = prot.PasteMultiSelectError;
+	prot['CopyRangeTooLarge']                = prot.CopyRangeTooLarge;
 	prot['CopyDisabled']                     = prot.CopyDisabled;
 	prot['CanNotPasteImage']                 = prot.CanNotPasteImage;
 	prot['DataRangeError']                   = prot.DataRangeError;
