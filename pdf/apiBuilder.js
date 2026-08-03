@@ -282,7 +282,7 @@
 	/**
 	 * Search options used when performing text search operations.
 	 * @typedef {Object} SearchProps
-	 * @property {string} text - The text to search for.
+	 * @property {string | RegExp} text - The text to search for.
 	 * @property {boolean} matchCase - Whether the search is case-sensitive.
 	 * @property {boolean} wholeWords - Whether to match whole words only.
 	 */
