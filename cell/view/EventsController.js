@@ -74,6 +74,11 @@
 			this.hsbApi = undefined;
 			this.hsbMax = undefined;
 
+			// Sub-row wheel movement carried from one event to the next; see
+			// _onMouseWheel. Only used on the macOS smooth-scroll path.
+			this.macWheelRestX = 0;
+			this.macWheelRestY = 0;
+
 			this.resizeTimerId = undefined;
 			this.scrollTimerId = undefined;
 			this.moveRangeTimerId = undefined;
@@ -2135,6 +2140,21 @@
 			if (wb.smoothScroll && AscCommon.AscBrowser.isMacOs) {
 				deltaX = (values.x / wb.getWorksheet().getHScrollStep()) * AscCommon.AscBrowser.retinaPixelRatio;
 				deltaY = (values.y / wb.getWorksheet().getVScrollStep()) * AscCommon.AscBrowser.retinaPixelRatio;
+
+				// Dividing by the row height turns a per-pixel device into a fraction
+				// of a row per event: an Apple trackpad or Magic Mouse reports deltas
+				// small enough that the result never reaches one row, so the sheet
+				// stands still however hard the user flicks. Carry the remainder over
+				// so those events add up instead of being dropped one at a time.
+				// A change of direction starts from zero, so a reversal is immediate.
+				if (deltaX * this.macWheelRestX < 0) { this.macWheelRestX = 0; }
+				if (deltaY * this.macWheelRestY < 0) { this.macWheelRestY = 0; }
+				deltaX += this.macWheelRestX;
+				deltaY += this.macWheelRestY;
+				this.macWheelRestX = deltaX - Math.trunc(deltaX);
+				this.macWheelRestY = deltaY - Math.trunc(deltaY);
+				deltaX = Math.trunc(deltaX);
+				deltaY = Math.trunc(deltaY);
 			} else {
 				if (undefined !== event.wheelDelta && 0 !== event.wheelDelta) {
 					deltaY = -1 * event.wheelDelta / 40;
