@@ -13756,6 +13756,7 @@
 					if (copyRange) {
 						_newRule = _rule.clone();
 						_newRule.ranges = _moveRanges;
+						_newRule.changeFormulaOffset(offset, wsTo);
 						wsTo.addCFRule(_newRule, true);
 					} else {
 						if (t !== wsTo) {

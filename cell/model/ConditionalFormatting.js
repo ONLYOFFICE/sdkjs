@@ -652,6 +652,30 @@
 		}
 	};
 
+	CConditionalFormattingRule.prototype.changeFormulaOffset = function (offset, ws) {
+		//shift every formula the rule owns by the copy/paste offset:
+		//aRuleElements (expression/cellIs) and the aCFVOs formulas of colorScale/dataBar/iconSet.
+		if (!offset || (0 === offset.row && 0 === offset.col) || !this.aRuleElements) {
+			return;
+		}
+		for (var i = 0; i < this.aRuleElements.length; ++i) {
+			var elem = this.aRuleElements[i];
+			if (!elem) {
+				continue;
+			}
+			if (elem instanceof CFormulaCF) {
+				elem.setOffset(offset, ws);
+			} else if (elem.aCFVOs) {
+				for (var j = 0; j < elem.aCFVOs.length; ++j) {
+					var cfvo = elem.aCFVOs[j];
+					if (cfvo && cfvo.formula) {
+						cfvo.formula.setOffset(offset, ws);
+					}
+				}
+			}
+		}
+	};
+
 	CConditionalFormattingRule.prototype.getUnionRange = function (opt_ranges) {
 		var res = null;
 
@@ -2226,6 +2250,20 @@
 		//TODO in x2t this is a condition that we cannot use in our case, we do not store this flag
 		//m_arrFormula[i]->isExtended() -> return (m_sNodeName == L"xm:f");
 		return true;
+	};
+	CFormulaCF.prototype.setOffset = function (offset, ws) {
+		//shift relative references in the formula by the copy/paste offset (mirrors CDataFormula.setOffset).
+		//changeOffset -> Range.setOffsetWithAbs respects $-absolute refs and turns out-of-bounds into #REF!,
+		//so this reproduces MS behaviour (relative refs move, $-anchored refs and constants stay).
+		if (!offset || (0 === offset.row && 0 === offset.col) || null == this.Text) {
+			return;
+		}
+		var f = this.getFormula(ws);
+		if (f) {
+			this.Text = f.changeOffset(offset, null, true).assemble(true);
+			//drop the parsed formula so it is re-parsed (against the rule bbox anchor) on the next init
+			this._f = null;
+		}
 	};
 	CFormulaCF.prototype.getFormulaStr = function (needBuild) {
 		var res = null;
