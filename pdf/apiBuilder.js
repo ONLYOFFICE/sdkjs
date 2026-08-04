@@ -4782,9 +4782,9 @@
 	};
 
 	/**
-	 * Sets MouseUp actions.
+	 * Sets the MouseUp action.
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiBaseAction}
+	 * @param {?ApiBaseAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetMouseUp.js
 	 */
@@ -4808,9 +4808,9 @@
 	};
 
 	/**
-	 * Sets MouseDown actions.
+	 * Sets the MouseDown action.
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiBaseAction}
+	 * @param {?ApiBaseAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetMouseDown.js
 	 */
@@ -4834,9 +4834,9 @@
 	};
 
 	/**
-	 * Sets MouseEnter actions.
+	 * Sets the MouseEnter action.
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiBaseAction}
+	 * @param {?ApiBaseAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetMouseEnter.js
 	 */
@@ -4860,9 +4860,9 @@
 	};
 
 	/**
-	 * Sets MouseExit actions.
+	 * Sets the MouseExit action.
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiBaseAction}
+	 * @param {?ApiBaseAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetMouseExit.js
 	 */
@@ -4886,9 +4886,9 @@
 	};
 
 	/**
-	 * Sets OnFocus actions.
+	 * Sets the OnFocus action.
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiBaseAction}
+	 * @param {?ApiBaseAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetOnFocus.js
 	 */
@@ -4912,9 +4912,9 @@
 	};
 
 	/**
-	 * Sets OnBlur actions.
+	 * Sets the OnBlur action.
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiBaseAction}
+	 * @param {?ApiBaseAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetOnBlur.js
 	 */
@@ -4938,9 +4938,9 @@
 	};
 
 	/**
-	 * Sets Format actions.
+	 * Sets the Format action.
 	 * @typeofeditors ["PDFE"]
-	 * @param {?ApiJsAction} action
+	 * @param {?ApiJsAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetFormat.js
 	 */
@@ -4968,9 +4968,9 @@
 	};
 
 	/**
-	 * Sets Keystroke actions.
+	 * Sets the Keystroke action.
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiJsAction} action
+	 * @param {?ApiJsAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetKeystroke.js
 	 */
@@ -4994,9 +4994,9 @@
 	};
 
 	/**
-	 * Sets Validate actions.
+	 * Sets the Validate action.
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiJsAction} action
+	 * @param {?ApiJsAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetValidate.js
 	 */
@@ -5020,9 +5020,9 @@
 	};
 
 	/**
-	 * Sets Calculate actions.
+	 * Sets the Calculate action.
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiJsAction} action
+	 * @param {?ApiJsAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetCalculate.js
 	 */
@@ -5166,14 +5166,15 @@
 	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/SetType.js
 	 */
 	ApiGoToAction.prototype.SetType = function(type) {
-		if (!Object.values(AscPDF.GOTO_TYPES).includes(type)) {
+		let nInnerType = private_GetInnerGoToType(type);
+		if (nInnerType == undefined) {
 			AscBuilder.throwException("The type parameter must be one of available");
 		}
 
 		let oDoc = private_GetLogicDocument();
 		let nPage = this.GetPage();
 
-		this.Action.SetKind(private_GetInnerGoToType(type));
+		this.Action.SetKind(nInnerType);
 		this.Action.SetRect({
 			left: 0,
 			top: 0,
@@ -12260,6 +12261,7 @@
 	ApiGoToAction.prototype["SetType"]						= ApiGoToAction.prototype.SetType;
 	ApiGoToAction.prototype["GetRect"]						= ApiGoToAction.prototype.GetRect;
 	ApiGoToAction.prototype["SetRect"]						= ApiGoToAction.prototype.SetRect;
+	ApiGoToAction.prototype["GetZoom"]						= ApiGoToAction.prototype.GetZoom;
 
 	// ApiUriAction
 	ApiUriAction.prototype["GetClassType"]					= ApiUriAction.prototype.GetClassType;

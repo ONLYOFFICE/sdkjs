@@ -1024,7 +1024,7 @@
 				actionInfo["page"] = action.GetPageIdx();
 				actionInfo["pageId"] = action.GetPageId();
 				actionInfo["kind"] = action.GetKind();
-				actionInfo["zoom"] = action.GetZoom();
+				actionInfo["zoom"] = action.GetZoom(true);
 				let aRect = action.GetRect();
 				actionInfo["top"] = aRect[1];
 				actionInfo["right"] = aRect[2];
