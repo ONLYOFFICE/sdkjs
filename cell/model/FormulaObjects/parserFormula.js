@@ -611,6 +611,23 @@ Math.fmod = function ( a, b ) {
 	return Number( (a - (this.floor( a / b ) * b)).toPrecision( cExcelSignificantDigits ) );
 };
 
+/**
+ * Converts a number to text the way Excel does, keeping at most cExcelSignificantDigits
+ * significant digits. The default JavaScript Number -> String conversion produces the
+ * shortest round-trip representation, which can reach 17 significant digits, so 8.5/24
+ * stringifies as "0.3541666666666667" where Excel produces "0.354166666666667".
+ * The difference is visible whenever a number is concatenated into text (=A1&B1) and
+ * breaks exact lookups whose key was built by Excel.
+ * @param {number} val
+ * @returns {string}
+ */
+function convertNumberToExcelString( val ) {
+	if ( !isFinite( val ) ) {
+		return "" + val;
+	}
+	return "" + parseFloat( val.toPrecision( cExcelSignificantDigits ) );
+}
+
 
 
 parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator);
@@ -750,7 +767,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cNumber.prototype.constructor = cNumber;
 	cNumber.prototype.type = cElementType.number;
 	cNumber.prototype.tocString = function () {
-		return new cString(("" + this.value).replace(FormulaSeparators.digitSeparatorDef,
+		return new cString(convertNumberToExcelString(this.value).replace(FormulaSeparators.digitSeparatorDef,
 			FormulaSeparators.digitSeparator));
 	};
 	cNumber.prototype.tocNumber = function () {
