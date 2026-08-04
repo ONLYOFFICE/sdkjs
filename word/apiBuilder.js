@@ -1406,7 +1406,7 @@
 	};
 	ApiRange.prototype.private_GetStartRunPos = function()
 	{
-		return this.StartPos[this.StartPos.length - 1].Pos;
+		return this.StartPos[this.StartPos.length - 1].Position;
 	};
 	ApiRange.prototype.private_GetEndRun = function()
 	{
@@ -1414,7 +1414,7 @@
 	};
 	ApiRange.prototype.private_GetEndRunPos = function()
 	{
-		return this.EndPos[this.EndPos.length - 1].Pos;
+		return this.EndPos[this.EndPos.length - 1].Position;
 	};
 	ApiRange.prototype._trackPositions = function()
 	{
