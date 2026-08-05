@@ -10802,7 +10802,7 @@
         if(!this.parent) {
             return;
         }
-        this.applyStyleEntry(oChartStyle.chartArea, oColors.generateColors(1), 0, bReset);
+        this.applyStyleEntry(oChartStyle.dataTable, oColors.generateColors(1), 0, bReset);
     };
     CDTable.prototype.draw = function (cChartSpace, graphics) {
         this._drawRect(cChartSpace, graphics);
