@@ -1057,6 +1057,10 @@
 		const placeholderHeight = PLACEHOLDERSLIDESHAPE_HEIGHT;
 		const oSp = createPlaceholderShape(oNvSpPr, (defNotesWidth - placeholderWidth) / 2, defNotesHeight * PLACEHOLDERSLIDESHAPE_YOFFSET_COEFFICIENT - placeholderHeight, placeholderWidth, placeholderHeight, undefined, AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
 		oSp.changeSlideImagePlaceholderSize(kw, kh);
+		if (slideObject.presentation) {
+			oSp.onChangeSlideSize(slideObject.presentation.GetWidthMM(), slideObject.presentation.GetHeightMM());
+		}
+
 		oSp.setParent(slideObject);
 		const spPr = oSp.spPr;
 		const ln = new AscFormat.CLn();
