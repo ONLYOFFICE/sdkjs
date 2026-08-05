@@ -17199,9 +17199,6 @@
 		if (oHeaderFooter.getAlignWithMargins() === bNewVal) {
 			return true;
 		}
-		if (null === oHeaderFooter.alignWithMargins) {
-			oHeaderFooter.alignWithMargins = oHeaderFooter.getAlignWithMargins();
-		}
 		oHeaderFooter.setAlignWithMargins(bNewVal);
 		return true;
 	};

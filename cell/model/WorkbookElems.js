@@ -14161,14 +14161,18 @@ function RangeDataManagerElem(bbox, data)
 
 	CHeaderFooter.prototype.setAlignWithMargins = function (newVal) {
 		var oldVal = this.alignWithMargins;
-		var defaultVal = null === oldVal && (newVal === 1 || newVal === true);
+		//null means the default value - true(see getAlignWithMargins), so compareValues is not suitable here:
+		//it treats null and false as equal and false can never be applied over null
+		var newBoolVal = null == newVal ? null : (1 === newVal || true === newVal);
+		var oldBoolVal = null == oldVal ? null : (1 === oldVal || true === oldVal);
+		var defaultVal = null === oldBoolVal && true === newBoolVal;
 
-		if(!compareValues(oldVal, newVal) && !defaultVal) {
-			this.alignWithMargins = newVal;
+		if(oldBoolVal !== newBoolVal && !defaultVal) {
+			this.alignWithMargins = newBoolVal;
 
 			if (this.ws && AscCommon.History.Is_On()) {
 				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoHeaderFooter, AscCH.historyitem_Align_With_Margins, this.ws.getId(),
-					null, new UndoRedoData_Layout(oldVal, newVal));
+					null, new UndoRedoData_Layout(oldVal, newBoolVal));
 			}
 		}
 	};
