@@ -17115,7 +17115,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetHeaderMargin.js
 	 */
 	ApiPageSetup.prototype.SetHeaderMargin = function (nMargin) {
-		if (typeof nMargin !== 'number' || isNaN(nMargin)) {
+		if (typeof nMargin !== 'number' || !isFinite(nMargin)) {
 			return false;
 		}
 		this.ws.workbook.oApi.asc_changePageMargins(undefined, undefined, undefined, nMargin, undefined, this.ws.getIndex());
@@ -17151,7 +17151,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetFooterMargin.js
 	 */
 	ApiPageSetup.prototype.SetFooterMargin = function (nMargin) {
-		if (typeof nMargin !== 'number' || isNaN(nMargin)) {
+		if (typeof nMargin !== 'number' || !isFinite(nMargin)) {
 			return false;
 		}
 		this.ws.workbook.oApi.asc_changePageMargins(undefined, undefined, undefined, undefined, nMargin, this.ws.getIndex());
