@@ -13763,7 +13763,7 @@
 			return false;
 		}
 
-		if (classType === 'smartArt') {
+		if (classType === 'smartArt' || classType === 'group') {
 			this.Drawing.changeFill(fill.UniFill);
 			return true;
 		}
@@ -13788,28 +13788,7 @@
 	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Fill.js
 	 */
-	ApiDrawing.prototype.Fill = function (fill) {
-		const classType = this.GetClassType();
-		if (classType !== 'shape' && classType !== 'image' && classType !== 'chart' && classType !== 'group' && classType !== 'smartArt') {
-			return false;
-		}
-
-		if (!fill || !fill.GetClassType || fill.GetClassType() !== 'fill') {
-			return false;
-		}
-
-		if (classType === 'smartArt') {
-			this.Drawing.changeFill(fill.UniFill);
-			return true;
-		}
-
-		if (this.Drawing && this.Drawing.spPr) {
-			this.Drawing.spPr.setFill(fill.UniFill);
-			return true;
-		}
-
-		return false;
-	};
+	ApiDrawing.prototype.Fill = ApiDrawing.prototype.SetFill;
 
 	/**
 	 * Gets the fill formatting properties from the current graphic object.

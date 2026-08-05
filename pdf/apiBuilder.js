@@ -8883,7 +8883,7 @@
 		if (!fill || !fill.GetClassType || fill.GetClassType() !== "fill")
 			return false;
 
-		if (classType === "smartArt") {
+		if (classType === "smartArt" || classType === "group") {
 			this.Drawing.changeFill(fill.UniFill);
 			return true;
 		}
