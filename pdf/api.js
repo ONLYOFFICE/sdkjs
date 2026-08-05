@@ -1902,38 +1902,18 @@
 				}
 				
 				// widget actions
-				if (oActions.mouseUp) {
-					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.mouseUp, oActions.mouseUp.getJsonActionInfo());
-				}
-				if (oActions.mouseDown) {
-					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.mouseDown, oActions.mouseDown.getJsonActionInfo());
-				}
-				if (oActions.mouseEnter) {
-					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.mouseEnter, oActions.mouseEnter.getJsonActionInfo());
-				}
-				if (oActions.mouseExit) {
-					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.mouseExit, oActions.mouseExit.getJsonActionInfo());
-				}
-				if (oActions.onFocus) {
-					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.onFocus, oActions.onFocus.getJsonActionInfo());
-				}
-				if (oActions.onBlur) {
-					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.onBlur, oActions.onBlur.getJsonActionInfo());
-				}
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.mouseUp, oActions.mouseUp ? oActions.mouseUp.getJsonActionInfo() : []);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.mouseDown, oActions.mouseDown ? oActions.mouseDown.getJsonActionInfo() : []);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.mouseEnter, oActions.mouseEnter ? oActions.mouseEnter.getJsonActionInfo() : []);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.mouseExit, oActions.mouseExit ? oActions.mouseExit.getJsonActionInfo() : []);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.onFocus, oActions.onFocus ? oActions.onFocus.getJsonActionInfo() : []);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.onBlur, oActions.onBlur ? oActions.onBlur.getJsonActionInfo() : []);
 
 				// logic actions
-				if (oActions.format) {
-					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.format, oActions.format.getJsonActionInfo());
-				}
-				if (oActions.keystroke) {
-					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.keystroke, oActions.keystroke.getJsonActionInfo(true));
-				}
-				if (oActions.validate) {
-					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.validate, oActions.validate.getJsonActionInfo());
-				}
-				if (oActions.calculate) {
-					oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.calculate, oActions.calculate.getJsonActionInfo());
-				}
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.format, oActions.format ? oActions.format.getJsonActionInfo() : []);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.keystroke, oActions.keystroke ? oActions.keystroke.getJsonActionInfo(true) : []);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.validate, oActions.validate ? oActions.validate.getJsonActionInfo() : []);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.calculate, oActions.calculate ? oActions.calculate.getJsonActionInfo() : []);
 
 				oDoc.private_CommitField(oField);
 				
