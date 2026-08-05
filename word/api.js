@@ -11852,10 +11852,10 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asc_SetSignatureProps = function(signatureResult)
 	{
-		if (!signatureResult || !signatureResult.imageData || !signatureResult.internalId)
+		if (!signatureResult || !signatureResult["imageData"] || !signatureResult["internalId"])
 			return;
 
-		this.asc_SetContentControlPictureUrl(signatureResult.imageData, signatureResult.internalId, null);
+		this.asc_SetContentControlPictureUrl(signatureResult["imageData"], signatureResult["internalId"], null);
 	};
 
 	asc_docs_api.prototype.asc_BeginViewModeInReview = function(isFinal)
