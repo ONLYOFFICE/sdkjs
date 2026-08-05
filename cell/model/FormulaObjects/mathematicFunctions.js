@@ -3116,6 +3116,26 @@ function (window, undefined) {
 		}
 
 		let arg0 = arg[0];
+		//an error propagates unchanged, and a single value is a 1x1 matrix whose determinant is itself -
+		//a lone number, or one cell holding a number. Anything else that is not a matrix is #VALUE!.
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (cElementType.number === arg0.type) {
+			return new cNumber(arg0.getValue());
+		}
+		if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+			let cellVal = arg0.getValue();
+			if (cElementType.error === cellVal.type) {
+				return cellVal;
+			}
+			return cElementType.number === cellVal.type ?
+				new cNumber(cellVal.getValue()) : new cError(cErrorType.wrong_value_type);
+		}
+		if (cElementType.string === arg0.type || cElementType.bool === arg0.type ||
+			cElementType.empty === arg0.type) {
+			return new cError(cErrorType.wrong_value_type);
+		}
 		if (cElementType.array !== arg0.type && cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
 			return new cError(cErrorType.not_available);
 		}
@@ -3284,6 +3304,10 @@ function (window, undefined) {
 		}
 
 		let arg0 = arg[0];
+		//an error propagates unchanged instead of collapsing into #VALUE!
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
 		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type || cElementType.array === arg0.type) {
 			let is3D = cElementType.cellsRange3D === arg0.type;
 			if (is3D && !arg0.isSingleSheet()) {
@@ -3417,6 +3441,13 @@ function (window, undefined) {
 		}
 
 		let arg0 = arg[0], arg1 = arg[1];
+		//an error in either matrix propagates unchanged instead of collapsing into #VALUE!
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (cElementType.error === arg1.type) {
+			return arg1;
+		}
 		let d0 = mmultDims(arg0), d1 = mmultDims(arg1);
 		if (!d0 || !d1) {
 			return new cError(cErrorType.wrong_value_type);
