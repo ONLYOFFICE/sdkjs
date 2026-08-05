@@ -2041,7 +2041,7 @@ NumFormat.prototype =
 		}
 		return forceNull;
 	},
-    format: function (number, nValType, dDigitsCount, cultureInfo, bChart, opt_forceNull)
+    format: function (number, nValType, dDigitsCount, cultureInfo, bChart, opt_forceNull, opt_noWidthLimit)
     {
         if (null == cultureInfo)
             cultureInfo = g_oDefaultCultureInfo;
@@ -2475,7 +2475,7 @@ NumFormat.prototype =
 				nLen += elem.text.length;
 			}
 		}
-		if(nLen > Asc.c_oAscMaxColumnWidth){
+		if(!opt_noWidthLimit && nLen > Asc.c_oAscMaxColumnWidth){
 			var oNewFont = new AscCommonExcel.Font();
 			oNewFont.repeat = true;
 			res = [{text: "#", format: oNewFont}];
@@ -3096,7 +3096,7 @@ CellFormat.prototype =
 		}
 		return oRes;
 	},
-    format : function(number, nValType, dDigitsCount, bChart, cultureInfo, opt_withoutCache, opt_forceNull)
+    format : function(number, nValType, dDigitsCount, bChart, cultureInfo, opt_withoutCache, opt_forceNull, opt_noWidthLimit)
     {
         var res = null;
         if (null == bChart)
@@ -3123,7 +3123,7 @@ CellFormat.prototype =
 		{
 			oFormat = this.getFormatByValue(dNumber);
 			if(null != oFormat)
-			    res = oFormat.format(number, nValType, dDigitsCount, cultureInfo, bChart, opt_forceNull);
+			    res = oFormat.format(number, nValType, dDigitsCount, cultureInfo, bChart, opt_forceNull, opt_noWidthLimit);
 			else if(null != this.aComporationFormats)
 			{
 			    var oNewFont = new AscCommonExcel.Font();
@@ -3136,7 +3136,7 @@ CellFormat.prototype =
 			//text
 		    if (null != this.oTextFormat) {
 		        oFormat = this.oTextFormat;
-		        res = oFormat.format(number, nValType, dDigitsCount, cultureInfo, bChart, opt_forceNull);
+		        res = oFormat.format(number, nValType, dDigitsCount, cultureInfo, bChart, opt_forceNull, opt_noWidthLimit);
 		    }
 		}
         if (!opt_withoutCache) {

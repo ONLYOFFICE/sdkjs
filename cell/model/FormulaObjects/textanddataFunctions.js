@@ -47,6 +47,10 @@ function (window, undefined) {
 	var oNumFormatCache = AscCommon.oNumFormatCache;
 	var CellFormat = AscCommon.CellFormat;
 	var cErrorType = AscCommonExcel.cErrorType;
+	//TEXT is limited to this many characters of RESULT. This is neither the cell limit
+	//(Asc.c_oAscMaxCellOrCommentLength) nor the widest column (Asc.c_oAscMaxColumnWidth, which happens
+	//to be 255 too) - TEXT must not follow either of them if they ever change, so the number lives here.
+	var MAX_FORMAT_TEXT = 255;
 	var cNumber = AscCommonExcel.cNumber;
 	var cString = AscCommonExcel.cString;
 	var cBool = AscCommonExcel.cBool;
@@ -3323,7 +3327,9 @@ function (window, undefined) {
 		let a = g_oFormatParser.parse(arg0.toLocaleString(true) + ""), aText;
 		aText = oFormat.format(a ? a.value : arg0.toLocaleString(),
 			(arg0.type === cElementType.number || a) ? CellValueType.Number : CellValueType.String,
-			AscCommon.gc_nMaxDigCountView);
+			//opt_noWidthLimit: the column-width cap belongs to display, not to a formula result -
+			//without it a long result comes back as a single "#"
+			AscCommon.gc_nMaxDigCountView, undefined, undefined, undefined, undefined, true);
 		let text = "";
 
 		for (let i = 0, length = aText.length; i < length; ++i) {
@@ -3337,6 +3343,10 @@ function (window, undefined) {
 			}
 
 			text += aText[i].text;
+		}
+
+		if (text.length > MAX_FORMAT_TEXT) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		let res = new cString(text);
