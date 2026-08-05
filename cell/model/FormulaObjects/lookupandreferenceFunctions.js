@@ -311,11 +311,11 @@ function (window, undefined) {
 	}
 
 	//a bare value: the result of a lookup that found a single cell, a literal, a computed scalar.
-	//ROWS/COLUMNS/INDEX treat it as a 1x1 array, the way Excel does.
+	//ROWS/COLUMNS/INDEX treat it as a 1x1 array, the way Excel does. An omitted argument is not a
+	//value and is deliberately left out - it keeps #VALUE! there.
 	function isScalarElement(elem) {
 		let t = elem && elem.type;
-		return cElementType.number === t || cElementType.string === t ||
-			cElementType.bool === t || cElementType.empty === t;
+		return cElementType.number === t || cElementType.string === t || cElementType.bool === t;
 	}
 
 	// these functions are made and used specifically for SORT & SORTBY functions
@@ -1074,11 +1074,21 @@ function (window, undefined) {
 	cCOLUMNS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		var range;
+		//an error propagates unchanged, and a scalar counts as a 1x1 array (Excel)
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
 		if (cElementType.array === arg0.type) {
+			//see cROWS: an argument-check failure poisons the result instead of being measured
+			if (arg0.argumentError) {
+				return arg0.argumentError;
+			}
 			return new cNumber(arg0.getCountElementInRow());
 		} else if (cElementType.cellsRange === arg0.type || cElementType.cell === arg0.type ||
 			cElementType.cell3D === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			range = arg0.getRange();
+		} else if (isScalarElement(arg0)) {
+			return new cNumber(1);
 		}
 		return (range ? new cNumber(Math.abs(range.getBBox0().c1 - range.getBBox0().c2) + 1) :
 			new cError(cErrorType.wrong_value_type));
@@ -1639,6 +1649,12 @@ function (window, undefined) {
 			return arg0;
 		}
 
+		if (cElementType.array === arg0.type && arg0.argumentError) {
+			//see cROWS: an element that failed an argument check poisons the whole result, so there
+			//is nothing left to index into
+			return arg0.argumentError;
+		}
+
 		let argError;
 		if (argError = this._checkErrorArg([arg0, arg1, arg2, arg3])) {
 			return argError;
@@ -1809,8 +1825,8 @@ function (window, undefined) {
 				if ((0 === arg1 || 1 === arg1) && (0 === arg2 || 1 === arg2)) {
 					res = arg0.getValue();
 				}
-			} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
-				cElementType.bool === arg0.type) {
+			} else if (isScalarElement(arg0)) {
+				//a scalar is a 1x1 array: INDEX(x,1,1) is x; anything past it stays #REF! (res left null)
 				if ((0 === arg1 || 1 === arg1) && (0 === arg2 || 1 === arg2)) {
 					res = arg0;
 				}
@@ -2167,13 +2183,24 @@ function (window, undefined) {
 	cROWS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		var range;
+		//an error propagates unchanged, and a scalar counts as a 1x1 array (Excel)
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
 		if (cElementType.array === arg0.type) {
+			//an element that failed an argument check makes the whole result that error - the shape is
+			//not measured at all (Excel); an error that came from the data leaves the shape alone
+			if (arg0.argumentError) {
+				return arg0.argumentError;
+			}
 			//getRealSize=true: honor the logical size of clamped/realSize arrays (e.g. ROW over a full column);
 			//falls back to the physical row count when realSize is not set
 			return new cNumber(arg0.getRowCount());
 		} else if (cElementType.cellsRange === arg0.type || cElementType.cell === arg0.type ||
 			cElementType.cell3D === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			range = arg0.getRange();
+		} else if (isScalarElement(arg0)) {
+			return new cNumber(1);
 		}
 		return (range ? new cNumber(Math.abs(range.getBBox0().r1 - range.getBBox0().r2) + 1) :
 			new cError(cErrorType.wrong_value_type));
@@ -3590,6 +3617,12 @@ function (window, undefined) {
 		if (-1 === res) {
 			return new cError(cErrorType.not_available);
 		}
+		if (number < 0) {
+			return argumentError(cErrorType.wrong_value_type);
+		}
+		if (number > count) {
+			return argumentError(cErrorType.bad_reference);
+		}
 
 		r = this.bHor ? bb.r1 + number : res;
 		c = this.bHor ? res : bb.c1 + number;
@@ -3617,12 +3650,6 @@ function (window, undefined) {
 		}
 		if (cElementType.empty === resVal.type) {
 			resVal = new cNumber(0);
-		}
-		if (number < 0) {
-			return argumentError(cErrorType.wrong_value_type);
-		}
-		if (number > count) {
-			return argumentError(cErrorType.bad_reference);
 		}
 
 		return resVal;
