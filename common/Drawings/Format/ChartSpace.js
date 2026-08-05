@@ -3534,6 +3534,20 @@ function(window, undefined) {
 								}
 							}
 						}
+					} else if (chartSelection.legend && this.chart.legend === chartSelection.legend) {
+						this.selection.legend = chartSelection.legend;
+						this.selection.legendEntry = chartSelection.legendEntry;
+						bRet = true;
+					} else if (chartSelection.axisLbls && this.chart.plotArea.axId.indexOf(chartSelection.axisLbls) !== -1) {
+						this.selection.axisLbls = chartSelection.axisLbls;
+						bRet = true;
+					} else if (chartSelection.dataTable && this.chart.plotArea.dTable === chartSelection.dataTable) {
+						this.selection.dataTable = chartSelection.dataTable;
+						bRet = true;
+					} else if (AscFormat.isRealNumber(chartSelection.dataLbls) && this.getAllSeries()[chartSelection.dataLbls]) {
+						this.selection.dataLbls = chartSelection.dataLbls;
+						this.selection.dataLbl = chartSelection.dataLbl;
+						bRet = true;
 					}
 				}
 			}
@@ -3669,6 +3683,11 @@ function(window, undefined) {
 			return this.selection.textSelection.txBody.content.GetCalculatedTextPr();
 		} else if (this.selection.axisLbls && this.selection.axisLbls.labels) {
 			return GetTextPrFormArrObjects(this.selection.axisLbls.labels.aLabels, true);
+		} else if (this.selection.dataTable) {
+			const dataTableTextPr = GetTextPrFormArrObjects(this.selection.dataTable.rowNameLabels, true);
+			if (dataTableTextPr) {
+				return dataTableTextPr;
+			}
 		} else if (AscFormat.isRealNumber(this.selection.dataLbls)) {
 			var ser = this.getAllSeries()[this.selection.dataLbls];
 			if (ser) {
