@@ -300,6 +300,24 @@ function (window, undefined) {
 		return arg.getMatrix ? arg.getMatrix() : arg.toArray();
 	}
 
+	//An index_num that does not address the table is a failed ARGUMENT check, not a value: when the index
+	//is an array, Excel keeps the per-element results but answers this error for anything that asks about
+	//the shape or a position (ROWS/COLUMNS/INDEX). An error read from the table itself carries no mark and
+	//stays in its own element. The mark is copied onto the assembled array by the array-broadcast loop.
+	function argumentError(type) {
+		let err = new cError(type);
+		err.isArgumentError = true;
+		return err;
+	}
+
+	//a bare value: the result of a lookup that found a single cell, a literal, a computed scalar.
+	//ROWS/COLUMNS/INDEX treat it as a 1x1 array, the way Excel does.
+	function isScalarElement(elem) {
+		let t = elem && elem.type;
+		return cElementType.number === t || cElementType.string === t ||
+			cElementType.bool === t || cElementType.empty === t;
+	}
+
 	// these functions are made and used specifically for SORT & SORTBY functions
 	function sortArray (array, by_array1, sortOrder, isByCol, sortIndex) {
 		let resultArr = new cArray(),
@@ -3407,14 +3425,25 @@ function (window, undefined) {
 				return arg2;
 			}
 
-			number = arg2.getValue() - 1;
+			// index_num converts in kind: a logical reads as 1 / 0 and a numeric string as its number,
+			// while text that is not a number makes the whole call #VALUE! before the lookup even runs.
+			let indexNum = arg2.tocNumber();
+			if (cElementType.number !== indexNum.type) {
+				return argumentError(cErrorType.wrong_value_type);
+			}
+			let indexVal = indexNum.getValue();
+			// Excel truncates a fractional index_num toward zero - 2.7 and 2.999 both address row 2,
+			// 3.99 addresses row 3 - but a value that sits within about 1e-9 of an integer counts as that
+			// integer: 2.999999 still reads row 2 while 2.9999999999 reads row 3 (all measured).
+			number = (Math.abs(indexVal - Math.round(indexVal)) < 1e-9 ?
+				Math.round(indexVal) : Math.trunc(indexVal)) - 1;
 
 			if (isNaN(number)) {
 				return new cError(cErrorType.bad_reference);
 			}
-			if (number < 0) {
-				return new cError(cErrorType.wrong_value_type);
-			}
+			// an index_num of 0 or less is invalid, but the check waits until after the lookup: a miss
+			// outranks it just as it outranks an index past the table (measured in Excel - a miss with
+			// index_num 0 answers #N/A, not #VALUE!)
 		}
 
 		if (cElementType.cell3D === arg0.type || cElementType.cell === arg0.type) {
@@ -3489,10 +3518,13 @@ function (window, undefined) {
 				return new cError(cErrorType.not_available);
 			}
 
+			if (number < 0) {
+				return argumentError(cErrorType.wrong_value_type);
+			}
 			let _ldim = arg1.getDimensions();
 			count = this.bHor ? _ldim.row : _ldim.col;
 			if (number > count - 1) {
-				return new cError(cErrorType.bad_reference);
+				return argumentError(cErrorType.bad_reference);
 			}
 
 			r = this.bHor ? number : res;
@@ -3545,15 +3577,16 @@ function (window, undefined) {
 		}
 
 		count = this.bHor ? (bb.r2 - bb.r1) : (bb.c2 - bb.c1);
-		if (number > count) {
-			return new cError(cErrorType.bad_reference);
-		}
 		res = this._get(arg0Val, arg3, opt_arg4, opt_arg5, ws,
 			this.bHor ? bb.r1 : bb.c1, this.bHor ? bb.c1 : bb.r1, this.bHor ? bb.c2 : bb.r2);
 		if (opt_xlookup) {
 			return res;
 		}
 
+		// A miss outranks an out-of-range index_num: #REF! is right only when the key was actually
+		// found, otherwise the miss wins (also for an approximate match below the first key). The
+		// array-table branch above already validates the index after the lookup - keep both in step,
+		// so the index check must stay BELOW the -1 test.
 		if (-1 === res) {
 			return new cError(cErrorType.not_available);
 		}
@@ -3584,6 +3617,12 @@ function (window, undefined) {
 		}
 		if (cElementType.empty === resVal.type) {
 			resVal = new cNumber(0);
+		}
+		if (number < 0) {
+			return argumentError(cErrorType.wrong_value_type);
+		}
+		if (number > count) {
+			return argumentError(cErrorType.bad_reference);
 		}
 
 		return resVal;
