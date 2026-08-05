@@ -11092,7 +11092,7 @@
 
         lbl.setShowSerName(true);
         lbl.setIdx(seria.idx);
-        lbl.recalculate();
+        lbl.recalculateInternal();
         this.rowNameLabels.push(lbl);
     };
     CDTable.prototype._buildRowNameMarker = function (cChartSpace, seria) {
@@ -11138,7 +11138,7 @@
         lbl.setShowCatName(true);
         lbl.pt = pt;
         lbl.setIdx(pt.idx);
-        lbl.recalculate();
+        lbl.recalculateInternal();
         this.colNameLabels.push(lbl);
     };
     CDTable.prototype._buildPtLabel = function (arr, cChartSpace, seria, pt) {
@@ -11155,7 +11155,7 @@
         lbl.setShowVal(true);
         lbl.pt = pt;
         lbl.setIdx(pt.idx);
-        lbl.recalculate();
+        lbl.recalculateInternal();
         arr.push(lbl);
     };
     CDTable.prototype._recalculateRect = function (cChartSpace, oRect) {
