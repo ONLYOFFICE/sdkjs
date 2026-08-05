@@ -5668,8 +5668,21 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var doOperation = function (_arg0, _arg1) {
 			_arg0 = _arg0.tocString();
 			_arg1 = _arg1.tocString();
-			return _arg0 instanceof cError ? _arg0 :
-				_arg1 instanceof cError ? _arg1 : new cString(_arg0.toString().concat(_arg1.toString()))
+			if (_arg0 instanceof cError) {
+				return _arg0;
+			}
+			if (_arg1 instanceof cError) {
+				return _arg1;
+			}
+			var res = _arg0.toString().concat(_arg1.toString());
+			// A string is capped at the cell limit and the beginning is what survives: "&" of two
+			// 32767-character strings is 32767 characters long and nothing is readable past the limit
+			// (measured in Excel). The cap belongs here, at the point the string is produced, so every
+			// function that reads the result already sees the capped string.
+			if (res.length > Asc.c_oAscMaxCellOrCommentLength) {
+				res = res.substring(0, Asc.c_oAscMaxCellOrCommentLength);
+			}
+			return new cString(res);
 		};
 
 		if(bIsSpecialFunction){

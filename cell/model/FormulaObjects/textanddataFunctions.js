@@ -660,9 +660,9 @@ function (window, undefined) {
 						return acc;
 					}
 					var s = elem.toLocaleString();
-					if (s.length > 0 && acc.length + s.length * n > 32767) {
-						errElem = new cError(cErrorType.wrong_value_type);
-						return acc;
+					//stop at the cap instead of failing: a full column must not expand into a huge string
+					if (s.length > 0 && n > 1 && acc.length + s.length * n > Asc.c_oAscMaxCellOrCommentLength) {
+						n = Math.max(1, Math.ceil((Asc.c_oAscMaxCellOrCommentLength - acc.length) / s.length));
 					}
 					return acc + (n === 1 ? s : s.repeat(n));
 				}, sResult);
@@ -672,6 +672,10 @@ function (window, undefined) {
 			} else {
 				sResult += argI.toLocaleString();
 			}
+		}
+		//CONCATENATE truncates at the cell limit like the "&" operator, it does not fail (measured)
+		if (sResult.length > Asc.c_oAscMaxCellOrCommentLength) {
+			sResult = sResult.substring(0, Asc.c_oAscMaxCellOrCommentLength);
 		}
 		return new cString(sResult);
 	};
@@ -695,7 +699,9 @@ function (window, undefined) {
 	cCONCAT.prototype.enabledToSingle = {"*": true};
 	cCONCAT.prototype.Calculate = function (arg) {
 		// Accumulate into a primitive string and box once, removing the per-element cString creation.
-		let maxStringLength = 32767, sResult = "", argI, errRes = null;
+		//Excel answers #CALC! when CONCAT would pass the cell limit, unlike "&" and CONCATENATE,
+		//which truncate at it (measured)
+		let maxStringLength = Asc.c_oAscMaxCellOrCommentLength, sResult = "", argI, errRes = null;
 
 		for (let i = 0; i < arg.length; i++) {
 			argI = arg[i];
@@ -705,7 +711,7 @@ function (window, undefined) {
 				for (let j = 0; j < _arrVal.length; j++) {
 					sResult += _arrVal[j].toLocaleString();
 					if (sResult.length > maxStringLength) {
-						return new cError(cErrorType.wrong_value_type)
+						return new cError(cErrorType.array_not_calc)
 					}
 				}
 			} else if (cElementType.cell === argI.type || cElementType.cell3D === argI.type) {
@@ -730,7 +736,7 @@ function (window, undefined) {
 						}
 						let s = elem.toLocaleString();
 						if (s.length > 0 && acc.length + s.length * n > maxStringLength) {
-							errRes = new cError(cErrorType.wrong_value_type);
+							errRes = new cError(cErrorType.array_not_calc);
 							return acc;
 						}
 						return acc + (n === 1 ? s : s.repeat(n));
@@ -745,7 +751,7 @@ function (window, undefined) {
 		}
 
 		if (sResult.length > maxStringLength) {
-			return new cError(cErrorType.wrong_value_type)
+			return new cError(cErrorType.array_not_calc)
 		}
 
 		return new cString(sResult);
@@ -3437,8 +3443,8 @@ function (window, undefined) {
 					}
 					for (let n = 0; n < cnt; n++) {
 						a = concatString(a, s);
-						if (a.length > 32767) {
-							errRes = new cError(cErrorType.wrong_value_type);
+						if (a.length > Asc.c_oAscMaxCellOrCommentLength) {
+							errRes = new cError(cErrorType.array_not_calc);
 							return a;
 						}
 					}
@@ -3478,6 +3484,9 @@ function (window, undefined) {
 			}
 		}
 
+		if (acc.length > Asc.c_oAscMaxCellOrCommentLength) {
+			return new cError(cErrorType.array_not_calc);
+		}
 		return new cString(acc);
 	};
 
