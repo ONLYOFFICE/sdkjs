@@ -14425,7 +14425,8 @@ function parseStringToCElement (val, cultureInfo) {
 		}
 	}
 
-	// the compiled mask is only an optimization over getMatchingFunction, so fall back to it if it was refused
+	// The compiled mask is only an optimization over getMatchingFunction, so fall back to it if it was
+	// refused. Since a criterion is capped at 255 characters (checkCriteriaLength).
 	function _wildcardMatchingFunction(type, op, isWildcard, searchValue) {
 		var re = _buildWildcardRegex(searchValue);
 		if (!re) {
@@ -14434,6 +14435,20 @@ function parseStringToCElement (val, cultureInfo) {
 		return function (a) {
 			return re.test(a);
 		};
+	}
+
+	/**
+	 * Excel rejects a criterion longer than 255 characters with #VALUE!.
+	 *
+	 * @param {cElement} criteria - the raw criterion
+	 * @returns {cError|null} #VALUE! when the criterion is too long, null otherwise
+	 */
+	const MAX_CRITERIA_LENGTH = 255;
+	function checkCriteriaLength(criteria) {
+		if (criteria && cElementType.string === criteria.type && criteria.getValue().length > MAX_CRITERIA_LENGTH) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+		return null;
 	}
 
 	/**
@@ -14530,6 +14545,10 @@ function parseStringToCElement (val, cultureInfo) {
 		return calculateOne(arg0, arg1);
 	};
 	CountIfCache.prototype._get = function (range, arg1, sumRange) {
+		const lengthError = checkCriteriaLength(arg1);
+		if (lengthError) {
+			return lengthError;
+		}
 		const ws = range.getWS();
 		const wsId = ws.getId();
 		const sRangeName = wsId + g_cCharDelimiter + range.getBBox0().getName();
@@ -14700,6 +14719,11 @@ function parseStringToCElement (val, cultureInfo) {
 				if (criteriaArg.type === cElementType.empty) {
 					criteriaArg = new cNumber(0);
 				}
+			}
+
+			const lengthError = checkCriteriaLength(criteriaArg);
+			if (lengthError) {
+				return lengthError;
 			}
 
 			const ws = rangeArg.getWS();
@@ -16022,6 +16046,11 @@ function parseStringToCElement (val, cultureInfo) {
 				if (cCriteriaArg.type === cElementType.empty) {
 					cCriteriaArg = new cNumber(0);
 				}
+			}
+
+			const lengthError = checkCriteriaLength(cCriteriaArg);
+			if (lengthError) {
+				return lengthError;
 			}
 
 			const cWs = cRangeArg.getWS();
