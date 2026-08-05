@@ -5438,6 +5438,7 @@ function(window, undefined) {
 			}
 			var plot_area = chart.plotArea;
 			if (plot_area) {
+				plot_area.dTable && checkTxBodyDefFonts(allFonts, plot_area.dTable.txPr);
 				for (i = 0; i < plot_area.charts.length; ++i) {
 					plot_area.charts[i] && plot_area.charts[i].documentCreateFontMap(allFonts);
 					/*TODO this method should be renamed so the name is not misleading*/
@@ -5486,6 +5487,17 @@ function(window, undefined) {
 							cur_axis.labels.aLabels[j] && cur_axis.labels.aLabels[j].txBody && cur_axis.labels.aLabels[j].txBody.content.Document_CreateFontMap(allFonts);
 						}
 					}
+				}
+			}
+
+			const dataTable = this.chart.plotArea.dTable;
+			if (dataTable) {
+				let dataTableLabels = dataTable.rowNameLabels.concat(dataTable.colNameLabels);
+				for (i = 0; i < dataTable.ptLabels.length; ++i) {
+					dataTableLabels = dataTableLabels.concat(dataTable.ptLabels[i]);
+				}
+				for (i = 0; i < dataTableLabels.length; ++i) {
+					dataTableLabels[i].txBody && dataTableLabels[i].txBody.content.Document_CreateFontMap(allFonts);
 				}
 			}
 
