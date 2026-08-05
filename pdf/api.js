@@ -4199,13 +4199,19 @@
 					}
 
 					if (Array.isArray(oOptionObject)) {
-						oOptionObject.forEach(function(buttonField) {
-							buttonField.AddImage(oImage, buttonField.asc_curImageState);
-						});
+						oDoc.DoAction(function() {
+							oOptionObject.forEach(function(buttonField) {
+								buttonField.AddImage(oImage, buttonField.asc_curImageState);
+							});
+						}, AscDFH.historydescription_Pdf_ChangeField);
+						
 						return;
 					}
 					else if (oOptionObject.GetType && oOptionObject.GetType() === AscPDF.FIELD_TYPES.button) {
-						oOptionObject.AddImage(oImage, oOptionObject.asc_curImageState);
+						oDoc.DoAction(function() {
+							oOptionObject.AddImage(oImage, oOptionObject.asc_curImageState);
+						}, AscDFH.historydescription_Pdf_ChangeField);
+						
 						return;
 					}
 				}
