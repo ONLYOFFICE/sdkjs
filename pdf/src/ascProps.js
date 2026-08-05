@@ -1668,7 +1668,7 @@ function (window, undefined) {
 		if (mask !== undefined) {
 			return [{
 				"S": 14,
-				"JS": 'AFSpecial_KeystrokeEx(' + mask + ');'
+				"JS": 'AFSpecial_KeystrokeEx("' + mask + '");'
 			}];
 		}
 
