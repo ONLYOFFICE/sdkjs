@@ -6162,7 +6162,7 @@
 			AscBuilder.throwException("The textAnnot parameter must be an ApiTextAnnotation class object");
 		}
 
-		if (this.Annot.IsUseContentAsComment() && this.Annot.GetContents() == null) {
+		if (this.Annot.GetContents() == null) {
 			AscBuilder.throwException("Before add reply you need to set the contents property");
 		}
 

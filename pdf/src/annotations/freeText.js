@@ -632,9 +632,6 @@
     CAnnotationFreeText.prototype.recalcGeometry = function () {
         this.recalcInfo.recalculateGeometry = true;
 	};
-    CAnnotationFreeText.prototype.RemoveComment = function() {
-        this.EditCommentData(undefined);
-    };
     CAnnotationFreeText.prototype.SetContents = function(contents) {
         if (this._contents == contents)
             return;
@@ -830,32 +827,6 @@
         }
 
         return false;
-    };
-    CAnnotationFreeText.prototype.GetAscCommentData = function() {
-        let oAscCommData = new Asc.asc_CCommentDataWord(null);
-        if (this._replies.length == 0)
-            return undefined;
-
-        let oMainComm = this._replies[0];
-        oAscCommData.asc_putText(oMainComm.GetContents());
-        oAscCommData.asc_putOnlyOfficeTime(oMainComm.GetModDate().toString());
-        oAscCommData.asc_putUserId(this.GetUserId());
-        oAscCommData.asc_putUserName(oMainComm.GetAuthor());
-        oAscCommData.asc_putSolved(false);
-        oAscCommData.asc_putQuoteText("");
-        oAscCommData.m_sUserData = oMainComm.GetId();
-
-        this._replies.forEach(function(reply, index) {
-            if (index == 0)
-                return;
-            
-            let oReplyAscCommData = reply.GetAscCommentData();
-            if (oReplyAscCommData) {
-                oAscCommData.m_aReplies.push(oReplyAscCommData);
-            }
-        });
-
-        return oAscCommData;
     };
     CAnnotationFreeText.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)

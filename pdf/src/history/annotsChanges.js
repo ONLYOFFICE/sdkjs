@@ -1101,22 +1101,17 @@ CChangesPDFAnnotContents.prototype.private_SetValue = function(Value)
 	let oAnnot = this.Class;
 	let oDoc = Asc.editor.getPDFDoc();
 
-	if (oAnnot.IsFreeText() || oAnnot.IsLine() && !oAnnot.IsUseContentAsComment()) {
-		this._contents = Value;
-	}
-	else {
-		let bSendAddCommentEvent = false;
-        if (oAnnot._contents == null && Value != null)
-            bSendAddCommentEvent = true;
-        
-        oAnnot._contents  = Value;
-         
-        if (bSendAddCommentEvent)
-            oDoc.CheckComment(oAnnot);
-        
-        if (oAnnot._contents == null && oAnnot.IsUseInDocument())
-            Asc.editor.sync_RemoveComment(oAnnot.GetId());
-	}
+	let bSendAddCommentEvent = false;
+	if (oAnnot._contents == null && Value != null)
+		bSendAddCommentEvent = true;
+	
+	oAnnot._contents  = Value;
+		
+	if (bSendAddCommentEvent)
+		oDoc.CheckComment(oAnnot);
+	
+	if (oAnnot._contents == null && oAnnot.IsUseInDocument())
+		Asc.editor.sync_RemoveComment(oAnnot.GetId());
 };
 
 /**

@@ -758,31 +758,6 @@
         return this._lineEnd;
     };
 
-    // for work with comments
-    CAnnotationLine.prototype.RemoveComment = function() {
-        if (!this.IsUseContentAsComment()) {
-            AscPDF.CAnnotationFreeText.prototype.RemoveComment.call(this);
-        }
-        else {
-            AscPDF.CAnnotationBase.prototype.RemoveComment.call(this);
-        }
-    };
-    CAnnotationLine.prototype.SetContents = function(contents) {
-        if (!this.IsUseContentAsComment()) {
-            AscPDF.CAnnotationFreeText.prototype.SetContents.call(this, contents);
-        }
-        else {
-            AscPDF.CAnnotationBase.prototype.SetContents.call(this, contents);
-        }
-    };
-    CAnnotationLine.prototype.GetAscCommentData = function() {
-        if (!this.IsUseContentAsComment()) {
-            return AscPDF.CAnnotationFreeText.prototype.GetAscCommentData.call(this);
-        }
-        else {
-            return AscPDF.CAnnotationBase.prototype.GetAscCommentData.call(this);
-        }
-    };
     //////////////////////////////////////
 
     CAnnotationLine.prototype.WriteToBinary = function(memory) {

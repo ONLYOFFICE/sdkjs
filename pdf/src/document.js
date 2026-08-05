@@ -3887,7 +3887,7 @@ var CPresentation = CPresentation || function(){};
 
             let oStickyComm;
             if (this.mouseDownAnnot) {
-                if (this.mouseDownAnnot.IsUseContentAsComment() && !this.mouseDownAnnot.GetContents()) {
+                if (!this.mouseDownAnnot.GetContents()) {
                     // If the annotation uses content as comment and there's no content, set the content
                     this.mouseDownAnnot.SetModDate(AscCommentData.m_sOOTime);
                     this.mouseDownAnnot.SetAuthor(AscCommentData.m_sUserName);
@@ -3901,16 +3901,10 @@ var CPresentation = CPresentation || function(){};
                     let newCommentData = new AscCommon.CCommentData();
                     newCommentData.Read_FromAscCommentData(AscCommentData);
                 
-                    // if freetext or line with cap
-                    if (!this.mouseDownAnnot.IsUseContentAsComment() && this.mouseDownAnnot.GetReply(0) == null) {
-                        oDataForEdit = newCommentData;
-                    }
-                    else {
-                        let curCommentData = new AscCommon.CCommentData();
-                        curCommentData.Read_FromAscCommentData(this.mouseDownAnnot.GetAscCommentData());
-                        curCommentData.Add_Reply(newCommentData);
-                        oDataForEdit = curCommentData;
-                    }
+                    let curCommentData = new AscCommon.CCommentData();
+					curCommentData.Read_FromAscCommentData(this.mouseDownAnnot.GetAscCommentData());
+					curCommentData.Add_Reply(newCommentData);
+					oDataForEdit = curCommentData;
                 
                     this.EditComment(this.mouseDownAnnot.GetId(), oDataForEdit);
                 }
@@ -4034,7 +4028,7 @@ var CPresentation = CPresentation || function(){};
                 }
 
                 oStickyComm = this.AddAnnotByProps(oProps);
-                AscCommentData.m_sUserData = oStickyComm.GetId();
+                AscCommentData.asc_putUserData(oStickyComm.GetId());
                 AscCommentData.m_sQuoteText = "";
             }
             
@@ -4446,12 +4440,8 @@ var CPresentation = CPresentation || function(){};
 			return;
 		}
 
-        let bUseContentsAsComment = oAnnot.IsUseContentAsComment();
-        
         if (oAnnot.IsUseInDocument()) {
-            if ((bUseContentsAsComment && oAnnot.GetContents()) || (bUseContentsAsComment == false && oAnnot.GetReply(0) instanceof AscPDF.CAnnotationText)) {
-                editor.sendEvent("asc_onAddComment", oAnnot.GetId(), oAnnot.GetAscCommentData());
-            }
+            editor.sendEvent("asc_onAddComment", oAnnot.GetId(), oAnnot.GetAscCommentData());
         }
         else {
             Asc.editor.sync_RemoveComment(oAnnot.GetId());
@@ -4482,6 +4472,10 @@ var CPresentation = CPresentation || function(){};
             }
         }
 
+		if (oAnnot.GetContents() == false) {
+			return;
+		}
+		
         if (this.Viewer.file.isSelectionUse()) {
             return;
         }

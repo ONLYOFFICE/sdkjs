@@ -127,36 +127,6 @@
     CAnnotationText.prototype.ClearReplies = function() {
         this._replies = [];
     };
-    CAnnotationText.prototype.GetAscCommentData = function() {
-        let oAscCommData = new Asc.asc_CCommentDataWord(null);
-        if (null == this.GetContents()) {
-            return undefined;
-        }
-
-        oAscCommData.asc_putText(this.GetContents());
-        let sModDate = this.GetModDate();
-        if (sModDate)
-            oAscCommData.asc_putOnlyOfficeTime(sModDate.toString());
-        oAscCommData.asc_putUserId(this.GetUserId());
-        oAscCommData.asc_putUserName(this.GetAuthor());
-        
-        let nState = this.GetState();
-        let bSolved;
-        if (nState == TEXT_ANNOT_STATE.Accepted || nState == TEXT_ANNOT_STATE.Completed)
-            bSolved = true;
-        oAscCommData.asc_putSolved(bSolved);
-        oAscCommData.asc_putQuoteText("");
-        oAscCommData.m_sUserData = this.GetId();
-
-        this._replies.forEach(function(reply) {
-            let oReplyAscCommData = reply.GetAscCommentData();
-            if (oReplyAscCommData) {
-                oAscCommData.m_aReplies.push(oReplyAscCommData);
-            }
-        });
-
-        return oAscCommData;
-    };
 
     CAnnotationText.prototype.SetIconType = function(nType) {
         if (nType == this._noteIcon) {

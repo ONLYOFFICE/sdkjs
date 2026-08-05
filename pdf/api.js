@@ -4580,10 +4580,7 @@
 						oThumbnails && oThumbnails._repaintPage(oPage.GetIndex());
 					}
                     if (Class.IsAnnot && Class.IsAnnot()) {
-						// if annotation is a comment or annotation with a comment, then lock the comment too
-						if (Class.IsText() || (Class.IsUseContentAsComment() && Class.GetContents() != undefined) || Class.GetReply(0) != null) {
-							t.sync_LockComment(Class.Get_Id(), e["user"]);
-						}
+						t.sync_LockComment(Class.Get_Id(), e["user"]);
 					}
 					
                     oDoc.UpdateInterface();
@@ -4631,10 +4628,7 @@
 					if (NewType == AscCommon.c_oAscLockTypes.kLockTypeNone) {
 						Class.AddToRedraw && Class.AddToRedraw();
 						if (Class.IsAnnot && Class.IsAnnot()) {
-							// if annot is comment or annot with comment then release locks for it too
-							if (Class.IsText() || (Class.IsUseContentAsComment() && Class.GetContents() != undefined) || Class.GetReply(0) != null) {
-								Asc.editor.sync_UnLockComment(Class.Get_Id());
-							}
+							Asc.editor.sync_UnLockComment(Class.Get_Id());
 						}
 					}
 				}
@@ -5561,6 +5555,24 @@
 		Thumbnails		: 1		// thumbnails context menu
 	};
 
+	function asc_CCommentDataPDF(obj) {
+		Asc.asc_CCommentDataWord.call(this, obj);
+		
+		this.m_nAnnotType = undefined;
+	};
+
+	asc_CCommentDataPDF.prototype = Object.create(Asc.asc_CCommentDataWord.prototype);
+	asc_CCommentDataPDF.prototype.constructor = asc_CCommentDataPDF;
+
+	asc_CCommentDataPDF.prototype.asc_getAnnotType = function() {
+		return this.m_nAnnotType;
+	};
+	asc_CCommentDataPDF.prototype.asc_putAnnotType = function(v) {
+		this.m_nAnnotType = v;
+	};
+	
+	window["Asc"]["asc_CCommentDataPDF"] = window["Asc"].asc_CCommentDataPDF = asc_CCommentDataPDF;
+	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
