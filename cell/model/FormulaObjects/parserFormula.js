@@ -3044,6 +3044,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		//used when the tail is not a constant (e.g. ROW()/COLUMN() over a clamped full-column/row reference).
 		//takes priority over missedValue. signature: (row, col) -> cElement
 		this.missedValueFn = null;
+		//the error of the first element that failed an ARGUMENT check rather than carrying a value error.
+		//Excel keeps the elements but makes the whole result that error for anything that asks about the
+		//shape or a position (ROWS/COLUMNS/INDEX), while an error that came from the data stays in its own
+		//element. Set while the array is assembled from per-element results; nothing else copies it, so a
+		//rebuilt array (crop, matrix rebuild) legitimately loses it.
+		this.argumentError = null;
 	}
 
 	cArray.prototype = Object.create(cBaseType.prototype);
@@ -4914,6 +4920,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 						_elem = _elem.getElementRowCol(0, 0);
 					} else if (_elem.type === cElementType.cellsRange || _elem.type === cElementType.cellsRange3D) {
 						_elem = _elem.getValueByRowCol(0, 0, true);
+					}
+					//carry the first argument-check failure to the array: the element keeps its own error and
+					//shape/positional wrappers report this one instead of measuring the result
+					if (!array.argumentError && _elem.type === cElementType.error && _elem.isArgumentError) {
+						array.argumentError = _elem;
 					}
 					array.addElement(_elem);
 				};
