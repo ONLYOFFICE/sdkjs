@@ -3651,6 +3651,39 @@ function (window, undefined) {
 		}
 		return null;
 	};
+	CSeries.prototype.getCatLevels = function () {
+		const oDim = this.getCatDimension();
+		return oDim && oDim.levelData ? oDim.levelData : [];
+	};
+	// Category levels ordered root-to-leaf. The model's own order depends on the source: cached-file
+	// levels run leaf-to-root, while levels built from a sheet range (CDimension.updateReferences) run
+	// root-to-leaf (by column). So the direction is inferred from group count: root has the fewest, leaf the most.
+	CSeries.prototype.getCatLevelsRootFirst = function () {
+		const aAll = this.getCatLevels();
+		const aLevels = [];
+		for (let i = 0; i < aAll.length; ++i) {
+			if (aAll[i] && aAll[i].pts && aAll[i].pts.length > 0) {
+				aLevels.push(aAll[i]);
+			}
+		}
+
+		const countGroups = function (oLvl) {
+			let nGroups = 0;
+			let sPrev = null;
+			for (let i = 0; i < oLvl.pts.length; ++i) {
+				if (oLvl.pts[i].val !== sPrev) {
+					sPrev = oLvl.pts[i].val;
+					++nGroups;
+				}
+			}
+			return nGroups;
+		};
+
+		if (aLevels.length > 1 && countGroups(aLevels[0]) > countGroups(aLevels[aLevels.length - 1])) {
+			aLevels.reverse();
+		}
+		return aLevels;
+	};
 	CSeries.prototype.getBrush = function () {
 		return this.compiledSeriesBrush;
 	};

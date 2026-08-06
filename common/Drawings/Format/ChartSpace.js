@@ -6154,6 +6154,16 @@ function(window, undefined) {
 			let sPts = seria.getCatPts();
 			let sPtsIndex = 0;
 
+			// treemap tiles take the category label from the leaf level, not level 0
+			let sLeafPts = sPts;
+			if (chartType === AscFormat.SERIES_LAYOUT_TREEMAP) {
+				const aLevels = seria.getCatLevelsRootFirst ? seria.getCatLevelsRootFirst() : [];
+				const oLeafLevel = aLevels[aLevels.length - 1];
+				if (oLeafLevel && oLeafLevel.pts && oLeafLevel.pts.length > 0) {
+					sLeafPts = oLeafLevel.pts;
+				}
+			}
+
 			for(let nPt = 0; nPt < aPts.length; ++nPt) {
 				let pt = null;
 				// if (chartType === AscFormat.SERIES_LAYOUT_TREEMAP) {
@@ -6185,9 +6195,19 @@ function(window, undefined) {
 				pt.compiledDlb.setShowChartExVal(true);
 				pt.compiledDlb.recalculate();
 
-				// treemap show labels rather than numbers
+				// treemap tile label is assembled from the visibility flags: category name and/or value
 				if (chartType === AscFormat.SERIES_LAYOUT_TREEMAP) {
-					const label = searchLabel(sPts, pt.idx);
+					const aParts = [];
+					if (visibility && visibility.seriesName === true) {
+						aParts.push(seria.getSeriesName());
+					}
+					if (visibility && visibility.categoryName === true) {
+						aParts.push(searchLabel(sLeafPts, pt.idx));
+					}
+					if (!visibility || visibility.value === true) {
+						aParts.push(pt.compiledDlb.getValueString());
+					}
+					const label = aParts.join(', ');
 					pt.compiledDlb.replaceTextContentNoHistory(label);
 					pt.compiledDlb.recalculateInternal();
 				}
@@ -8322,6 +8342,51 @@ function(window, undefined) {
 		return { calcEntries: calcEntries, hasLineSeries: false };
 	};
 
+	// MS lists root categories in the treemap legend (not the series name), including ones
+	// whose points aren't drawn (empty or negative values)
+	CChartSpace.prototype._buildTreemapLegendEntries = function (series) {
+		const legend = this.chart.legend;
+		const parents = this.getParentObjects();
+		const RGBA = {R: 0, G: 0, B: 0, A: 255};
+
+		const calcEntries = [];
+		this.legendLength = 0;
+
+		const ser = series[0];
+		if (!ser) {
+			return {calcEntries: calcEntries, hasLineSeries: false};
+		}
+
+		const aGroups = this._getTreemapRootGroups(ser);
+		const aFills = this._getTreemapGroupFills(aGroups.length, parents, RGBA);
+		this.legendLength = aGroups.length;
+
+		for (let i = 0; i < aGroups.length; i++) {
+			const entry = legend.findLegendEntryByIndex(i);
+			if (entry && entry.bDelete) {
+				continue;
+			}
+
+			const calcEntry = new AscFormat.CalcLegendEntry(legend, this, i);
+			calcEntry.series = ser;
+			calcEntry.txBody = AscFormat.CreateTextBodyFromString(
+				aGroups[i].name,
+				this.getDrawingDocument(),
+				calcEntry
+			);
+			calcEntries.push(calcEntry);
+
+			const unionMarker = new AscFormat.CUnionMarker();
+			unionMarker.marker = AscFormat.CreateMarkerGeometryByType(AscFormat.SYMBOL_SQUARE);
+			unionMarker.marker.pen = ser.compiledSeriesPen;
+			unionMarker.marker.brush = (aFills && aFills[i]) ? aFills[i] : ser.compiledSeriesBrush;
+			unionMarker.marker.pen && unionMarker.marker.pen.calculate(parents.theme, parents.slide, parents.layout, parents.master, RGBA, this.clrMapOvr);
+			unionMarker.marker.brush && unionMarker.marker.brush.calculate(parents.theme, parents.slide, parents.layout, parents.master, RGBA, this.clrMapOvr);
+			calcEntry.calcMarkerUnion = unionMarker;
+		}
+
+		return {calcEntries: calcEntries, hasLineSeries: false};
+	};
 	CChartSpace.prototype.recalculateLegend = function () {
 		const legend = this.chart && this.chart.legend;
 		if (!legend) {
@@ -8396,9 +8461,13 @@ function(window, undefined) {
 			isSeriesLegend = !hasCustomDPt && !firstChart.varyColors;
 		}
 
+		const isTreemapChartEx = isChartEx && series.length > 0 && series[0].layoutId === AscFormat.SERIES_LAYOUT_TREEMAP;
+
 		let entriesInfo;
 		if (isWaterfallChartEx) {
 			entriesInfo = this._buildWaterfallLegendEntries(series);
+		} else if (isTreemapChartEx) {
+			entriesInfo = this._buildTreemapLegendEntries(series);
 		} else if (isSeriesLegend) {
 			entriesInfo = this._buildSeriesLegendEntries(series, isSurfaceChart);
 		} else {
@@ -9929,6 +9998,108 @@ function(window, undefined) {
 			}
 		}
 	};
+	// Treemap root categories in data order: a group is a run of consecutive points sharing the
+	// top level's name. With no categories, every point is its own category, numbered instead of named.
+	// Both tile colors and legend entries use this same list.
+	CChartSpace.prototype._getTreemapRootGroups = function (ser) {
+		const aGroups = [];
+		const aLevels = ser.getCatLevelsRootFirst ? ser.getCatLevelsRootFirst() : [];
+
+		if (aLevels.length > 0) {
+			const aTopPts = aLevels[0] && aLevels[0].pts ? aLevels[0].pts : [];
+			let sPrevName = null;
+			for (let i = 0; i < aTopPts.length; i++) {
+				const sName = aTopPts[i].val;
+				if (sName !== undefined && sName !== null && sName !== '' && sName !== sPrevName) {
+					sPrevName = sName;
+					aGroups.push({name: sName, idx: aTopPts[i].idx});
+				}
+			}
+		}
+
+		if (!aGroups.length) {
+			// no categories: every point that gets a tile is its own branch. The number in the name
+			// follows the point index, so point 5 reads Branch 6 like its data label, but points
+			// without a tile (zero, negative, text) take no color: MS sizes the palette to the
+			// tiles it actually draws and hands out colors in tile order.
+			const pts = ser.getNumPts ? ser.getNumPts() : [];
+			const sBranch = AscCommon.translateManager.getValue('Branch');
+			for (let i = 0; i < pts.length; i++) {
+				if (pts[i].val > 0) {
+					aGroups.push({name: sBranch + (pts[i].idx + 1), idx: pts[i].idx});
+				}
+			}
+		}
+
+		return aGroups;
+	};
+	CChartSpace.prototype._getTreemapGroupFills = function (nGroupCount, parents, RGBA) {
+		if (!this.chartStyle || !this.chartColors || !(nGroupCount > 0)) {
+			return null;
+		}
+		const aColors = this.chartColors.generateColors(nGroupCount);
+		const aFills = [];
+		for (let i = 0; i < nGroupCount; i++) {
+			const oSpPr = this.getSpPrFormStyleEntry(this.chartStyle.dataPoint, aColors, i);
+			if (oSpPr && oSpPr.Fill) {
+				const oFill = oSpPr.Fill.createDuplicate();
+				oFill.calculate(parents.theme, parents.slide, parents.layout, parents.master, RGBA, this.clrMapOvr);
+				aFills.push(oFill);
+			} else {
+				aFills.push(null);
+			}
+		}
+		return aFills;
+	};
+	// MS colors treemap tiles by top-level hierarchy group: one group gets one color from the chartColors palette
+	CChartSpace.prototype._applyTreemapPointColors = function (ser, parents, RGBA) {
+		if (!this.chartStyle || !this.chartColors) {
+			return;
+		}
+
+		// a manual series fill overrides the style
+		if (ser.spPr && ser.spPr.Fill && ser.spPr.Fill.fill) {
+			return;
+		}
+
+		const pts = ser.getNumPts ? ser.getNumPts() : [];
+		const aGroups = this._getTreemapRootGroups(ser);
+		if (!aGroups.length || !pts.length) {
+			return;
+		}
+
+		const aFills = this._getTreemapGroupFills(aGroups.length, parents, RGBA);
+		if (!aFills) {
+			return;
+		}
+
+		const hasExplicitDPt = function (ser, idx) {
+			if (Array.isArray(ser.dPt)) {
+				for (let i = 0; i < ser.dPt.length; i++) {
+					if (ser.dPt[i].idx === idx && ser.dPt[i].spPr) {
+						return true;
+					}
+				}
+			}
+			return false;
+		};
+
+		// a point belongs to the last group that starts at or before it
+		let nGroup = 0;
+		for (let i = 0; i < pts.length; i++) {
+			const pt = pts[i];
+			while (nGroup + 1 < aGroups.length && aGroups[nGroup + 1].idx <= pt.idx) {
+				++nGroup;
+			}
+			if (hasExplicitDPt(ser, pt.idx)) {
+				continue;
+			}
+			const oFill = aFills[nGroup];
+			if (oFill) {
+				pt.brush = oFill.createDuplicate();
+			}
+		}
+	};
 	CChartSpace.prototype._applyWaterfallPointColors = function (ser, parents, RGBA) {
 		if (!this.chartStyle || !this.chartColors) {
 			return;
@@ -10139,6 +10310,8 @@ function(window, undefined) {
 					for (let nSer = 0; nSer < oPlotAreaRegion.series.length; ++nSer) {
 						if (oPlotAreaRegion.series[nSer].layoutId === AscFormat.SERIES_LAYOUT_WATERFALL) {
 							this._applyWaterfallPointColors(oPlotAreaRegion.series[nSer], parents, RGBA);
+						} else if (oPlotAreaRegion.series[nSer].layoutId === AscFormat.SERIES_LAYOUT_TREEMAP && !oPlotAreaRegion.series[nSer].hidden) {
+							this._applyTreemapPointColors(oPlotAreaRegion.series[nSer], parents, RGBA);
 						}
 					}
 				}
