@@ -7340,7 +7340,7 @@ function(window, undefined) {
 				aCharts[0].getObjectType() === AscDFH.historyitem_type_RadarChart;
 			if (oPlotArea.dTable && !bRadarChart) {
 				oPlotArea.dTable._clean();
-				oPlotArea.dTable._fillInfo(this);
+				oPlotArea.dTable._fillInfo(this, oRect);
 				if (bInnerLayout) {
 					const outerSize = this.chartObj.calculateSizePlotArea(this, false);
 					this.outerPlotAreaRect = new CRect(outerSize.startX, outerSize.startY, outerSize.w, outerSize.h);

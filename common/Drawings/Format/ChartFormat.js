@@ -2456,6 +2456,7 @@
         this.spPr = null;
         this.tx = null;
         this.txPr = null;
+        this.cellWidth = null;
 
         this.recalcInfo =
         {
@@ -3452,6 +3453,11 @@
     };
     CDLbl.prototype.getMaxWidth = function(bodyPr) {
         var oChartSpace = this.getChartSpace();
+
+        // a data table cell wraps at its own border
+        if (AscFormat.isRealNumber(this.cellWidth) && this.cellWidth > 0) {
+            return this.cellWidth;
+        }
 
 		if (oChartSpace && this.layout) {
 			const verticalTypes = [
@@ -10729,7 +10735,8 @@
         this.ptLabels = [];
         this.firstColumnWidth = 0;
         this.colWidth = 0;
-        this.rowHeight = 0;
+        this._cellWidth = 0;
+        this.rowHeights = [];
     }
 
     InitClass(CDTable, CBaseChartObject, AscDFH.historyitem_type_DTable);
@@ -10880,32 +10887,35 @@
         const bDrawKeys = this.showKeys && this._markerSize > 0;
         for (let i = 0; i < this.rowNameLabels.length; ++i) {
             const rowNameLabel = this.rowNameLabels[i];
-            const y = offsetY + this.y + (i + 1) * this.rowHeight;
+            const rowHeight = this.rowHeights[i + 1] || 0;
+            const y = offsetY + this.y + this._getRowOffset(i + 1);
             let labelX = offsetX + this.x;
             if (bDrawKeys && this.rowNameMarkers[i]) {
                 const markerX = labelX + this._markerLeftPad;
-                const markerY = y + (this.rowHeight - this._markerSize) / 2;
+                const markerY = y + (rowHeight - this._markerSize) / 2;
                 this._drawMarkerUnion(this.rowNameMarkers[i], markerX, markerY, this._markerSize, this._markerAreaWidth, graphics);
                 labelX += this._markerLeftPad + this._markerAreaWidth + this._markerGap;
             }
-            rowNameLabel.setPosition(labelX, y);
+            rowNameLabel.setPosition(labelX, y + (rowHeight - rowNameLabel.extY) / 2);
             rowNameLabel.draw(graphics);
         }
         for (let i = 0; i < this.colNameLabels.length; ++i) {
             const colNameLabel = this.colNameLabels[i];
             const centerOffset = (this.colWidth - colNameLabel.extX) / 2;
             const x = offsetX + this.x + i * this.colWidth + this.firstColumnWidth + centerOffset;
-            const y = offsetY + this.y;
+            const y = offsetY + this.y + (this.rowHeights[0] - colNameLabel.extY) / 2;
             colNameLabel.setPosition(x, y);
             colNameLabel.draw(graphics);
         }
         for (let i = 0; i < this.ptLabels.length; ++i) {
+            const rowHeight = this.rowHeights[i + 1] || 0;
+            const rowY = this._getRowOffset(i + 1);
             for (let j = 0; j < this.ptLabels[i].length; ++j) {
                 const ptLabel = this.ptLabels[i][j];
                 const centerOffsetX = (this.colWidth - ptLabel.extX) / 2;
-                const centerOffsetY = (this.rowHeight - ptLabel.extY) / 2;
+                const centerOffsetY = (rowHeight - ptLabel.extY) / 2;
                 const x = offsetX + this.x + ptLabel.idx * this.colWidth + this.firstColumnWidth + centerOffsetX;
-                const y = offsetY + this.y + (i + 1) * this.rowHeight + centerOffsetY;
+                const y = offsetY + this.y + rowY + centerOffsetY;
                 ptLabel.setPosition(x, y);
                 ptLabel.draw(graphics);
             }
@@ -10927,7 +10937,8 @@
         this.ptLabels = [];
         this.firstColumnWidth = 0;
         this.colWidth = 0;
-        this.rowHeight = 0;
+        this._cellWidth = 0;
+        this.rowHeights = [];
         this._valAxWidth = 0;
         this._markerSize = 0;
         this._markerAreaWidth = 0;
@@ -10940,17 +10951,19 @@
         //     return;
         // }
         this._clean();
-        this._fillInfo(cChartSpace);
+        this._fillInfo(cChartSpace, oRect);
         this._correctParentRect(oRect, cChartSpace);
         this._recalculateRect(cChartSpace, oRect);
     }
-    CDTable.prototype._fillInfo = function (cChartSpace) {
+    CDTable.prototype._fillInfo = function (cChartSpace, oRect) {
         const charts = cChartSpace.chart.plotArea.charts
         if (!charts){
             return;
         }
         let firstSeria = null;
         let seriesCount = 0, ptsCount = 0;
+        // row names go first: they set the first column width, which the cell width depends on
+        const aValueCaches = [];
         if (charts) {
             for (let id in charts) {
                 if (!charts.hasOwnProperty(id)) continue;
@@ -10975,21 +10988,10 @@
                         let numCache = cChartSpace.chartObj ? cChartSpace.chartObj.getNumCache(seria.val) : null;
                         if (numCache && Array.isArray(numCache.pts)) {
                             ptsCount = Math.max(ptsCount, numCache.ptCount, numCache.pts.length);
-                            const row = [];
-                            for (let j = 0; j < numCache.pts.length; j++) {
-                                this._buildPtLabel(row, cChartSpace, seria, numCache.pts[j]);
-                            }
-                            this.ptLabels.push(row);
+                            aValueCaches.push({seria: seria, numCache: numCache});
                         }
                     }
                 }
-            }
-        }
-
-        if (firstSeria && this.colNameLabels.length === 0){
-            // fill column names only for the first series, because they should be the same for all series in one chart
-            for (let j = 0; j < ptsCount; j++) {
-                this._buildColNameLabel(cChartSpace, firstSeria, {idx : j});
             }
         }
 
@@ -11006,10 +11008,9 @@
                 maxRowNameHeight = lbl.extY;
             }
         }
-        this.rowHeight = this.rowNameLabels.length ? maxRowNameHeight : this.colNameLabels.length ? this.colNameLabels[0].extY : 0;
         this.firstColumnWidth = maxRowNameWidth;
 
-        if (this.showKeys && this.rowNameMarkers.length > 0 && this.rowHeight > 0) {
+        if (this.showKeys && this.rowNameMarkers.length > 0 && maxRowNameHeight > 0) {
             let markerSize, distanceToText;
             if (this._bLineSeries) {
                 // recalculateLegend: marker_size = 2.5, distance_to_text = 0.5
@@ -11025,21 +11026,88 @@
                     }
                 }
                 // recalculateLegend: marker_size = 0.2 * max_font_size, distance_to_text = marker_size * 0.7
-                markerSize = maxFontSize > 0 ? 0.2 * maxFontSize : this.rowHeight * 0.43;
+                markerSize = maxFontSize > 0 ? 0.2 * maxFontSize : maxRowNameHeight * 0.43;
                 distanceToText = markerSize * 0.7;
             }
             this._markerSize = markerSize;
             this._markerGap = distanceToText;
-            if (this.rowHeight < markerSize * 1.4) {
-                this.rowHeight = markerSize * 1.4;
-            }
             // recalculateLegend: line_marker_width = 7.7, marker_size = 2.5 → ratio 3.08
             this._markerAreaWidth = this._bLineSeries ? markerSize * 3.08 : markerSize;
             this._markerLeftPad = distanceToText;
             this.firstColumnWidth += distanceToText + this._markerAreaWidth + distanceToText;
         }
-        this.extY = this.rowHeight * this.rows;
+
+        // the width does not depend on how tall the table turns out, so cells can wrap already here
+        this._cellWidth = this._calculateCellWidth(cChartSpace, oRect);
+
+        for (let k = 0; k < aValueCaches.length; k++) {
+            const oCache = aValueCaches[k];
+            const aRow = [];
+            for (let j = 0; j < oCache.numCache.pts.length; j++) {
+                this._buildPtLabel(aRow, cChartSpace, oCache.seria, oCache.numCache.pts[j]);
+            }
+            this.ptLabels.push(aRow);
+        }
+        if (firstSeria && this.colNameLabels.length === 0) {
+            // fill column names only for the first series, because they should be the same for all series in one chart
+            for (let j = 0; j < ptsCount; j++) {
+                this._buildColNameLabel(cChartSpace, firstSeria, {idx: j});
+            }
+        }
+
+        // each row is as tall as the tallest label in it
+        let headerHeight = 0;
+        for (let k = 0; k < this.colNameLabels.length; k++) {
+            if (this.colNameLabels[k].extY > headerHeight) {
+                headerHeight = this.colNameLabels[k].extY;
+            }
+        }
+        this.rowHeights = [headerHeight];
+        for (let k = 0; k < this.rowNameLabels.length; k++) {
+            let h = this.rowNameLabels[k].extY;
+            const aRow = this.ptLabels[k];
+            for (let j = 0; aRow && j < aRow.length; j++) {
+                if (aRow[j].extY > h) {
+                    h = aRow[j].extY;
+                }
+            }
+            // leave room for the key
+            if (this._markerSize && h < this._markerSize * 1.4) {
+                h = this._markerSize * 1.4;
+            }
+            this.rowHeights.push(h);
+        }
+
+        // with no categories the header row is still drawn
+        if (!this.rowHeights[0]) {
+            this.rowHeights[0] = maxRowNameHeight;
+        }
+        while (this.rowHeights.length < this.rows) {
+            this.rowHeights.push(this.rowHeights[0]);
+        }
+
+        this.extY = 0;
+        for (let k = 0; k < this.rowHeights.length; k++) {
+            this.extY += this.rowHeights[k];
+        }
     }
+    // width of one value column, same formula _recalculateRect lays out with later
+    CDTable.prototype._calculateCellWidth = function (cChartSpace, oRect) {
+        const chartObj = cChartSpace.chartObj;
+        const bIs3D = chartObj && chartObj.nDimensionCount === 3;
+        const fLeft = (!bIs3D && chartObj && chartObj.getStandartMargin) ? chartObj.getStandartMargin() * 1.5 : 0;
+        const fRight = oRect ? (oRect.x + oRect.w) : cChartSpace.extX;
+        const fAvailable = Math.max(0, fRight - fLeft - this.firstColumnWidth);
+        return this.cols > 1 ? fAvailable / (this.cols - 1) : fAvailable;
+    };
+    // offset from the table top to the top of row nRow, row 0 being the header
+    CDTable.prototype._getRowOffset = function (nRow) {
+        let fOffset = 0;
+        for (let i = 0; i < nRow && i < this.rowHeights.length; i++) {
+            fOffset += this.rowHeights[i];
+        }
+        return fOffset;
+    };
     CDTable.prototype._correctParentRect = function (oRect, cChartSpace) {
         oRect.h = oRect.h - this.extY;
         let valAxWidth = 0;
@@ -11138,6 +11206,7 @@
         lbl.setShowCatName(true);
         lbl.pt = pt;
         lbl.setIdx(pt.idx);
+        lbl.cellWidth = this._cellWidth;
         lbl.recalculateInternal();
         this.colNameLabels.push(lbl);
     };
@@ -11155,6 +11224,7 @@
         lbl.setShowVal(true);
         lbl.pt = pt;
         lbl.setIdx(pt.idx);
+        lbl.cellWidth = this._cellWidth;
         lbl.recalculateInternal();
         arr.push(lbl);
     };
@@ -11185,8 +11255,7 @@
 
         const availableWidth = Math.max(0, chartWidth - effectiveFirstColWidth);
         const colWidth = this.cols > 1 ? (availableWidth / (this.cols - 1)) : availableWidth;
-        const rowHeight = this.rowHeight;
-        const dTableHeight = rowHeight * this.rows;
+        const dTableHeight = this.extY;
 
         let step = 0;
         let offsetX = 0;
@@ -11200,12 +11269,13 @@
             } else {
                 this.horzBorderPaths.push(line);
             }
-            step += rowHeight;
+            // lines go bottom-up, so the header row comes last
+            step += this.rowHeights[this.rows - 1 - r] || 0;
         }
 
         step = 0;
         for (let c = 0; c <= this.cols; c++) {
-            const line = this._calculateLine(cChartSpace, chartBottom, c === 0 ? dTableHeight - rowHeight : dTableHeight, chartLeft + step, true);
+            const line = this._calculateLine(cChartSpace, chartBottom, c === 0 ? dTableHeight - this.rowHeights[0] : dTableHeight, chartLeft + step, true);
             if (c === 0 || c === 1 || c === this.cols) {
                 this.outlinePaths.push(line);
             } else {
