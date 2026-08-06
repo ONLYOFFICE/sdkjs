@@ -286,10 +286,11 @@
 		}
 		oCheckedMap[this.Get_Id()] = this;
 	};
-	CNotes.prototype.recalculate = function () {
+	CNotes.prototype.recalculate = function (props) {
 		if (!this.Master) {
 			return;
 		}
+		props = props || {};
 		if (this.recalcInfo.recalculateSlide) {
 			this.recalcInfo.recalculateSlide = false;
 			this.recalculateSlide();
@@ -305,8 +306,18 @@
 			this.recalcInfo.recalculateBackground = false;
 		}
 		if (this.recalcInfo.recalculateSpTree) {
-			for (let i = 0; i < this.cSld.spTree.length; ++i)
-				this.cSld.spTree[i].recalculate();
+			const isSkipNoteShape = !!props.isSkipNoteShape;
+			if (isSkipNoteShape) {
+				for (let i = 0; i < this.cSld.spTree.length; ++i) {
+					const shape = this.cSld.spTree[i];
+					if (shape.getPlaceholderType() !== AscFormat.phType_body) {
+						shape.recalculate();
+					}
+				}
+			} else {
+				for (let i = 0; i < this.cSld.spTree.length; ++i)
+					this.cSld.spTree[i].recalculate();
+			}
 
 			this.recalcInfo.recalculateSpTree = false;
 		}
@@ -356,7 +367,7 @@
 		}
 		return false;
 	};
-	CNotes.prototype.draw = function (graphics, slide) {
+	CNotes.prototype.draw = function (graphics, slide, replacedNoteShape) {
 		let i;
 		this.drawBgMaster(graphics);
 		for (i = 0; i < this.cSld.spTree.length; ++i) {
@@ -364,7 +375,11 @@
 			if (AscCommon.IsHiddenObj(oSp)) {
 				continue;
 			}
-			oSp.draw(graphics);
+			if (replacedNoteShape && oSp.getPlaceholderType() === AscFormat.phType_body) {
+				replacedNoteShape.draw(graphics);
+			} else {
+				oSp.draw(graphics);
+			}
 		}
 
 		if (slide) {
