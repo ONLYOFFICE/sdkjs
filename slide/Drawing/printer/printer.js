@@ -549,7 +549,8 @@
 								RecalcResult = oDocContent.Recalculate_Page(CurPage++, true);
 							};
 							if (CurPage === 0) {
-								executeWithContentLimits(callback, oDocContent, 0, 0, shape.extX, shape.extY);
+								const textRect = shape.getTextRectContentHW();
+								executeWithContentLimits(callback, oDocContent, 0, 0, textRect.width, textRect.height);
 							} else {
 								executeWithContentLimits(callback, oDocContent, 0, 0, notesPageWidth, notesPageHeight);
 							}
