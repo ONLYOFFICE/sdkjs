@@ -3241,7 +3241,35 @@
 	{
 		return "hyperlink";
 	};
-	
+	/**
+	 * Returns the parent element (a paragraph or an inline content control) that directly contains the current hyperlink.
+	 * @memberof ApiHyperlink
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {?ParagraphLikeContainer} - returns null if the hyperlink has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetParent.js
+	 */
+	ApiHyperlink.prototype.GetParent = function()
+	{
+		let parent = this.ParaHyperlink.GetParent();
+		return private_GetParagraphLikeContainer(parent);
+	};
+	/**
+	 * Returns the position (index) of the current hyperlink within its parent element.
+	 * @memberof ApiHyperlink
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {Number} - returns -1 if the hyperlink has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetPosInParent.js
+	 */
+	ApiHyperlink.prototype.GetPosInParent = function()
+	{
+		if (!this.GetParent())
+			return -1;
+		
+		return this.ParaHyperlink.GetPosInParent();
+	};
+
 	/**
 	 * Class representing a document form base.
 	 * @constructor
@@ -4133,6 +4161,12 @@
 	 * The types of elements that can be added to the paragraph structure.
 	 * @typedef {(ApiUnsupported | ApiRun | ApiInlineLvlSdt | ApiHyperlink | ApiFormBase | ApiMath)} ParagraphContent
 	 * @see office-js-api/Examples/Enumerations/ParagraphContent.js
+	 */
+
+	/**
+	 * A paragraph-like container that can directly hold inline-level content (Hyperlink, InlineLvlSdt, etc.).
+	 * @typedef {(ApiParagraph | ApiInlineLvlSdt | ApiHyperlink | ApiFormBase)} ParagraphLikeContainer
+	 * @see office-js-api/Examples/Enumerations/ParagraphLikeContainer.js
 	 */
 
 	/**
@@ -6369,6 +6403,26 @@
 			return new ApiBlockLvlSdt(this.Document.Content[nPos]);
 
 		return null;
+	};
+	/**
+	 * Returns the position (index) of the specified element within the current document content.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @param {DocumentElement} element - The document element (paragraph, table or block content control) whose index will be returned.
+	 * @returns {Number} - returns -1 if the element is not a direct child of the current document content.
+	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetElementIndex.js
+	 */
+	ApiDocumentContent.prototype.GetElementIndex = function(element)
+	{
+		if (!private_IsDocumentElement(element))
+			return -1;
+
+		let parent = element.GetParent();
+		if (!parent || (!(parent instanceof ApiDocument) && !(parent instanceof ApiDocumentContent)) || parent.Document !== this.Document)
+			return -1;
+
+		return element.GetPosInParent();
 	};
 	/**
 	 * Adds a paragraph or a table or a blockLvl content control using its position in the document content.
@@ -12076,6 +12130,45 @@
 		return null;
 	};
 	/**
+	 * Returns the document content that contains the current paragraph.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {ApiDocument | ApiDocumentContent | null} - returns the main document, a document part (table cell, header/footer, footnote, etc.), or null if the paragraph has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetParent.js
+	 */
+	ApiParagraph.prototype.GetParent = function()
+	{
+		let parent = this.Paragraph.GetParent();
+		
+		if (parent instanceof AscWord.Document)
+			return new ApiDocument(parent);
+		else if (parent instanceof AscWord.DocumentContent)
+			return new ApiDocumentContent(parent);
+		
+		return null;
+	};
+	/**
+	 * Returns the position (index) of the specified element within the current paragraph.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @param {ParagraphContent} element - The inline element (run, inline content control, form, etc.) whose index will be returned.
+	 * @returns {Number} - returns -1 if the element is not a direct child of the current paragraph.
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetElementIndex.js
+	 */
+	ApiParagraph.prototype.GetElementIndex = function(element)
+	{
+		if (!private_IsSupportedParaElement(element))
+			return -1;
+		
+		let parent = element.GetParent();
+		if (!parent || !(parent instanceof ApiParagraph) || parent.Paragraph !== this.Paragraph)
+			return -1;
+
+		return element.GetPosInParent();
+	};
+	/**
 	 * Returns the paragraph text.
 	 * @memberof ApiParagraph
 	 * @param {object} [options] - Options for formatting the returned text.
@@ -13276,8 +13369,37 @@
 		if (!oPara)
 			return null;
 
-        return new ApiParagraph(oPara); 
+        return new ApiParagraph(oPara);
     };
+	/**
+	 * Returns the parent element (a paragraph or an inline content control) that directly contains the current run.
+	 * @memberof ApiRun
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {?ParagraphLikeContainer} - returns null if the run has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetParent.js
+	 */
+	ApiRun.prototype.GetParent = function()
+	{
+		let parent = this.Run.GetParent();
+		return private_GetParagraphLikeContainer(parent);
+	};
+	/**
+	 * Returns the position (index) of the current run within its parent element.
+	 * @memberof ApiRun
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {Number} - returns -1 if the run has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetPosInParent.js
+	 */
+	ApiRun.prototype.GetPosInParent = function()
+	{
+		let parent = this.GetParent();
+		if (!parent)
+			return -1;
+		
+		return this.Run.GetPosInParent();
+	};
 	/**
 	 * Sets the text properties to the current run.
 	 * @memberof ApiRun
@@ -13486,6 +13608,35 @@
 	{
 		let formatType = GetStringParameter(format, "unicode");
 		return this.ParaMath.GetText("latex" === formatType);
+	};
+	/**
+	 * Returns the parent element (a paragraph or an inline content control) that directly contains the current math element.
+	 * @memberof ApiMath
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {?ParagraphLikeContainer} - returns null if the math element has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiMath/Methods/GetParent.js
+	 */
+	ApiMath.prototype.GetParent = function()
+	{
+		let parent = this.ParaMath.GetParent();
+		return private_GetParagraphLikeContainer(parent);
+	};
+	/**
+	 * Returns the position (index) of the current math element within its parent element.
+	 * @memberof ApiMath
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {Number} - returns -1 if the math element has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiMath/Methods/GetPosInParent.js
+	 */
+	ApiMath.prototype.GetPosInParent = function()
+	{
+		let parent = this.GetParent();
+		if (!parent)
+			return -1;
+		
+		return this.ParaMath.GetPosInParent();
 	};
 	ApiMath.prototype.private_GetImpl = function()
 	{
@@ -14993,19 +15144,39 @@
 		
 		return JSON.stringify(oJSON);
 	};
-
 	/**
-     * Returns the table position within its parent element.
-     * @memberof ApiTable
-     * @typeofeditors ["CDE"]
-     * @returns {Number} - returns -1 if the table parent doesn't exist. 
-     * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetPosInParent.js
+	 * Returns the document content that contains the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {ApiDocument | ApiDocumentContent | null} - returns the main document, a document part (table cell, header/footer, footnote, etc.), or null if the table has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetParent.js
+	 */
+	ApiTable.prototype.GetParent = function()
+	{
+		let parent = this.Table.GetParent();
+		
+		if (parent instanceof AscWord.Document)
+			return new ApiDocument(parent);
+		else if (parent instanceof AscWord.DocumentContent)
+			return new ApiDocumentContent(parent);
+		
+		return null;
+	};
+	/**
+	 * Returns the table position within its parent element.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CDE"]
+	 * @returns {Number} - returns -1 if the table parent doesn't exist. 
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetPosInParent.js
 	 */
 	ApiTable.prototype.GetPosInParent = function()
 	{
+		if (!this.GetParent())
+			return -1;
+		
 		return this.Table.GetIndex();
 	};
- 
 	/**
 	 * Replaces the current table with a new element.
 	 * @memberof ApiTable
@@ -24666,14 +24837,57 @@
 	 */
 	ApiInlineLvlSdt.prototype.GetParentParagraph = function()
 	{
-		var oPara = this.Sdt.GetParagraph();
-
-		if (oPara)
-			return new ApiParagraph(oPara);
-
-		return null; 
+		let paragraph = this.Sdt.GetParagraph();
+		return paragraph ? new ApiParagraph(paragraph) : null;
 	};
+	/**
+	 * Returns the parent element (a paragraph or an inline content control) that directly contains the current inline content control.
+	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {?ParagraphLikeContainer} - returns null if the content control has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetParent.js
+	 */
+	ApiInlineLvlSdt.prototype.GetParent = function()
+	{
+		let parent = this.Sdt.GetParent();
+		return private_GetParagraphLikeContainer(parent);
+	};
+	/**
+	 * Returns the position (index) of the current inline content control within its parent element.
+	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {Number} - returns -1 if the content control has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetPosInParent.js
+	 */
+	ApiInlineLvlSdt.prototype.GetPosInParent = function()
+	{
+		if (!this.GetParent())
+			return -1;
+		
+		return this.Sdt.GetPosInParent();
+	};
+	/**
+	 * Returns the position (index) of the specified element within the current inline content control.
+	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @param {ParagraphContent} element - The inline element (run, inline content control, form, etc.) whose index will be returned.
+	 * @returns {Number} - returns -1 if the element is not a direct child of the current inline content control.
+	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetElementIndex.js
+	 */
+	ApiInlineLvlSdt.prototype.GetElementIndex = function(element)
+	{
+		if (!private_IsSupportedParaElement(element))
+			return -1;
 
+		let parent = element.GetParent();
+		if (!parent || !(parent instanceof ApiInlineLvlSdt) || parent.Sdt !== this.Sdt)
+			return -1;
+		
+		return element.GetPosInParent();
+	};
 	/**
 	 * Returns a content control that contains the current content control.
 	 * @memberof ApiInlineLvlSdt
@@ -26646,19 +26860,39 @@
 
 		return true;
 	};
-
 	/**
-     * Returns the content control position within its parent element.
-     * @memberof ApiBlockLvlSdt
-     * @typeofeditors ["CDE"]
-     * @returns {Number} - returns -1 if the content control parent doesn't exist. 
-     * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetPosInParent.js
+	 * Returns the document content that contains the current content control.
+	 * @memberof ApiBlockLvlSdt
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {ApiDocument | ApiDocumentContent | null} - returns the main document, a document part (table cell, header/footer, footnote, etc.), or null if the content control has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetParent.js
+	 */
+	ApiBlockLvlSdt.prototype.GetParent = function()
+	{
+		let parent = this.Sdt.GetParent();
+		
+		if (parent instanceof AscWord.Document)
+			return new ApiDocument(parent);
+		else if (parent instanceof AscWord.DocumentContent)
+			return new ApiDocumentContent(parent);
+		
+		return null;
+	};
+	/**
+	 * Returns the content control position within its parent element.
+	 * @memberof ApiBlockLvlSdt
+	 * @typeofeditors ["CDE"]
+	 * @returns {Number} - returns -1 if the content control parent doesn't exist. 
+	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetPosInParent.js
 	 */
 	ApiBlockLvlSdt.prototype.GetPosInParent = function()
 	{
+		if (!this.GetParent())
+			return -1;
+		
 		return this.Sdt.GetIndex();
 	};
-
 	/**
 	 * Replaces the current content control with a new element.
 	 * @memberof ApiBlockLvlSdt
@@ -26980,6 +27214,34 @@
 	ApiFormBase.prototype.GetClassType = function()
 	{
 		return "form";
+	};
+	/**
+	 * Returns the parent element (a paragraph or an inline content control) that directly contains the current form.
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @since 9.5.0
+	 * @returns {?ParagraphLikeContainer} - returns null if the form has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/GetParent.js
+	 */
+	ApiFormBase.prototype.GetParent = function()
+	{
+		let parent = this.Sdt.GetParent();
+		return private_GetParagraphLikeContainer(parent);
+	};
+	/**
+	 * Returns the position (index) of the current form within its parent element.
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @since 9.5.0
+	 * @returns {Number} - returns -1 if the form has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/GetPosInParent.js
+	 */
+	ApiFormBase.prototype.GetPosInParent = function()
+	{
+		if (!this.Parent())
+			return -1;
+		
+		return this.Sdt.GetPosInParent();
 	};
 	/**
 	 * Returns an internal id of the current form.
@@ -31714,6 +31976,7 @@
 	ApiDocumentContent.prototype["GetInternalId"]             = ApiDocumentContent.prototype.GetInternalId;
 	ApiDocumentContent.prototype["GetElementsCount"]          = ApiDocumentContent.prototype.GetElementsCount;
 	ApiDocumentContent.prototype["GetElement"]                = ApiDocumentContent.prototype.GetElement;
+	ApiDocumentContent.prototype["GetElementIndex"]           = ApiDocumentContent.prototype.GetElementIndex;
 	ApiDocumentContent.prototype["AddElement"]                = ApiDocumentContent.prototype.AddElement;
 	ApiDocumentContent.prototype["Push"]                      = ApiDocumentContent.prototype.Push;
 	ApiDocumentContent.prototype["RemoveAllElements"]         = ApiDocumentContent.prototype.RemoveAllElements;
@@ -31977,6 +32240,8 @@
 	ApiParagraph.prototype["AddEndnoteCrossRef"]     = ApiParagraph.prototype.AddEndnoteCrossRef;
 	ApiParagraph.prototype["AddCaptionCrossRef"]     = ApiParagraph.prototype.AddCaptionCrossRef;
 	ApiParagraph.prototype["GetPosInParent"]         = ApiParagraph.prototype.GetPosInParent;
+	ApiParagraph.prototype["GetParent"]              = ApiParagraph.prototype.GetParent;
+	ApiParagraph.prototype["GetElementIndex"]        = ApiParagraph.prototype.GetElementIndex;
 	ApiParagraph.prototype["ReplaceByElement"]       = ApiParagraph.prototype.ReplaceByElement;
 	ApiParagraph.prototype["AddCaption"]             = ApiParagraph.prototype.AddCaption;
 	ApiParagraph.prototype["SetSection"]             = ApiParagraph.prototype.SetSection;
@@ -31986,6 +32251,8 @@
 
 	ApiMath.prototype["GetClassType"]                = ApiMath.prototype.GetClassType;
 	ApiMath.prototype["GetText"]                     = ApiMath.prototype.GetText;
+	ApiMath.prototype["GetParent"]                   = ApiMath.prototype.GetParent;
+	ApiMath.prototype["GetPosInParent"]              = ApiMath.prototype.GetPosInParent;
 
 	ApiRun.prototype["GetClassType"]                 = ApiRun.prototype.GetClassType;
 	ApiRun.prototype["GetTextPr"]                    = ApiRun.prototype.GetTextPr;
@@ -32006,6 +32273,8 @@
 	ApiRun.prototype["GetParentTable"]               = ApiRun.prototype.GetParentTable;
 	ApiRun.prototype["GetParentTableCell"]           = ApiRun.prototype.GetParentTableCell;
 	ApiRun.prototype["GetParentParagraph"]           = ApiRun.prototype.GetParentParagraph;
+	ApiRun.prototype["GetParent"]                    = ApiRun.prototype.GetParent;
+	ApiRun.prototype["GetPosInParent"]               = ApiRun.prototype.GetPosInParent;
 	ApiRun.prototype["SetTextPr"]                    = ApiRun.prototype.SetTextPr;
 	ApiRun.prototype["GetFontNames"]                 = ApiRun.prototype.GetFontNames;
 	ApiRun.prototype["WrapInMailMergeField"]         = ApiRun.prototype.WrapInMailMergeField;
@@ -32016,6 +32285,8 @@
 
 
 	ApiHyperlink.prototype["GetClassType"]           = ApiHyperlink.prototype.GetClassType;
+	ApiHyperlink.prototype["GetParent"]              = ApiHyperlink.prototype.GetParent;
+	ApiHyperlink.prototype["GetPosInParent"]         = ApiHyperlink.prototype.GetPosInParent;
 	ApiHyperlink.prototype["SetLink"]                = ApiHyperlink.prototype.SetLink;
 	ApiHyperlink.prototype["SetDisplayedText"]       = ApiHyperlink.prototype.SetDisplayedText;
 	ApiHyperlink.prototype["SetScreenTipText"]       = ApiHyperlink.prototype.SetScreenTipText;
@@ -32102,6 +32373,7 @@
 	ApiTable.prototype["SetBackgroundColor"]         = ApiTable.prototype.SetBackgroundColor;
 	ApiTable.prototype["ToJSON"]                     = ApiTable.prototype.ToJSON;
 	ApiTable.prototype["GetPosInParent"]             = ApiTable.prototype.GetPosInParent;
+	ApiTable.prototype["GetParent"]                  = ApiTable.prototype.GetParent;
 	ApiTable.prototype["ReplaceByElement"]           = ApiTable.prototype.ReplaceByElement;
 	ApiTable.prototype["AddComment"]                 = ApiTable.prototype.AddComment;
 	ApiTable.prototype["AddCaption"]                 = ApiTable.prototype.AddCaption;
@@ -32616,6 +32888,9 @@
 	ApiInlineLvlSdt.prototype["Delete"]                 = ApiInlineLvlSdt.prototype.Delete;
 	ApiInlineLvlSdt.prototype["SetTextPr"]              = ApiInlineLvlSdt.prototype.SetTextPr;
 	ApiInlineLvlSdt.prototype["GetParentParagraph"]     = ApiInlineLvlSdt.prototype.GetParentParagraph;
+	ApiInlineLvlSdt.prototype["GetParent"]              = ApiInlineLvlSdt.prototype.GetParent;
+	ApiInlineLvlSdt.prototype["GetPosInParent"]         = ApiInlineLvlSdt.prototype.GetPosInParent;
+	ApiInlineLvlSdt.prototype["GetElementIndex"]        = ApiInlineLvlSdt.prototype.GetElementIndex;
 	ApiInlineLvlSdt.prototype["GetParentContentControl"]= ApiInlineLvlSdt.prototype.GetParentContentControl;
 	ApiInlineLvlSdt.prototype["GetParentTable"]         = ApiInlineLvlSdt.prototype.GetParentTable;
 	ApiInlineLvlSdt.prototype["GetParentTableCell"]     = ApiInlineLvlSdt.prototype.GetParentTableCell;
@@ -32712,6 +32987,7 @@
 	ApiBlockLvlSdt.prototype["GetPlaceholderText"]      = ApiBlockLvlSdt.prototype.GetPlaceholderText;
 	ApiBlockLvlSdt.prototype["SetPlaceholderText"]      = ApiBlockLvlSdt.prototype.SetPlaceholderText;
 	ApiBlockLvlSdt.prototype["GetPosInParent"]          = ApiBlockLvlSdt.prototype.GetPosInParent;
+	ApiBlockLvlSdt.prototype["GetParent"]               = ApiBlockLvlSdt.prototype.GetParent;
 	ApiBlockLvlSdt.prototype["ReplaceByElement"]        = ApiBlockLvlSdt.prototype.ReplaceByElement;
 	ApiBlockLvlSdt.prototype["AddComment"]              = ApiBlockLvlSdt.prototype.AddComment;
 	ApiBlockLvlSdt.prototype["AddCaption"]              = ApiBlockLvlSdt.prototype.AddCaption;
@@ -32734,6 +33010,8 @@
 
 
 	ApiFormBase.prototype["GetClassType"]       = ApiFormBase.prototype.GetClassType;
+	ApiFormBase.prototype["GetParent"]          = ApiFormBase.prototype.GetParent;
+	ApiFormBase.prototype["GetPosInParent"]     = ApiFormBase.prototype.GetPosInParent;
 	ApiFormBase.prototype["GetInternalId"]      = ApiFormBase.prototype.GetInternalId;
 	ApiFormBase.prototype["GetFormType"]        = ApiFormBase.prototype.GetFormType;
 	ApiFormBase.prototype["GetFormKey"]         = ApiFormBase.prototype.GetFormKey;
@@ -33230,6 +33508,14 @@
 		oPara.Add_ToContent(oPara.Content.length - 1, oElement);
 		oPara.CorrectContent(undefined, undefined, true);
 	}
+	
+	function private_IsDocumentElement(element)
+	{
+		return (element instanceof ApiParagraph
+			|| element instanceof ApiTable
+			|| element instanceof ApiBlockLvlSdt
+		);
+	}
 
 	function private_IsSupportedParaElement(oElement)
 	{
@@ -33265,6 +33551,21 @@
 		else
 			return new ApiUnsupported();
 	}
+	
+	function private_GetParagraphLikeContainer(element)
+	{
+		if (element instanceof AscWord.Paragraph)
+			return new ApiParagraph(element);
+		else if (element instanceof AscWord.InlineLevelSdt)
+			return new ApiInlineLvlSdt(element);
+		else if (element instanceof AscWord.ParaHyperlink)
+			return new ApiHyperlink(element);
+		else if (element instanceof AscWord.ParaMath)
+			return new ApiMath(element);
+		
+		return null;
+	}
+	
 	function private_GetSupportedDocContentElement(oElement)
 	{
 		if (oElement instanceof AscWord.Paragraph)
@@ -34817,7 +35118,7 @@
 		return new ApiRun(oRun);
 	};
 	Api.private_CreateApiHyperlink = function(oHyperlink){
-		return new ApiRun(oHyperlink);
+		return new ApiHyperlink(oHyperlink);
 	};
 	Api.private_CreateApiTextPr = function(oTextPr){
 		return new ApiTextPr(null, oTextPr);
