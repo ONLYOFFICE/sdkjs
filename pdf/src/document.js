@@ -10179,7 +10179,8 @@ var CPresentation = CPresentation || function(){};
 			case AscPDF.ANNOTATIONS_TYPES.Square:
 			case AscPDF.ANNOTATIONS_TYPES.Circle:
 			case AscPDF.ANNOTATIONS_TYPES.Polygon:
-			case AscPDF.ANNOTATIONS_TYPES.Redact: {
+			case AscPDF.ANNOTATIONS_TYPES.Redact:
+			case AscPDF.ANNOTATIONS_TYPES.Link: {
 				let oFillColor  = annot.GetFillColor();
 				let oFillRGB    = oFillColor ? annot.GetRGBColor(oFillColor) : undefined;
 				if (oFillColor) {

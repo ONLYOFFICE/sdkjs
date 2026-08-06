@@ -1643,13 +1643,14 @@
 						return;
                     }
 
-                    let nType = oDrawing.IsAnnot() && oDrawing.IsStamp() ? AscFormat.TYPE_TRACK.ANNOT_STAMP : AscFormat.TYPE_TRACK.SHAPE;
+					let isAnnot = oDrawing.IsAnnot();
+                    let nType = isAnnot && oDrawing.IsStamp() ? AscFormat.TYPE_TRACK.ANNOT_STAMP : AscFormat.TYPE_TRACK.SHAPE;
 
-                    if (oDrawing.IsAnnot() && (oDrawing.IsTextMarkup() || oDrawing.IsText())) {
+                    if (isAnnot && (oDrawing.IsTextMarkup() || oDrawing.IsText())) {
                         oDrawing.DrawSelected(this.document.Viewer.overlay);
                     }
                     else {
-                        if (oDrawing.IsAnnot() && oDrawing.IsFreeText()) {
+                        if (isAnnot && oDrawing.IsFreeText()) {
                             drawingDocument.DrawTrack(
                                 nType,
                                 oDrawing.getTransformMatrix(),
@@ -1664,18 +1665,22 @@
                             );
                         }
                         else {
-                            drawingDocument.DrawTrack(
-                                nType,
-                                oDrawing.getTransformMatrix(),
-                                0,
-                                0,
-                                oDrawing.extX,
-                                oDrawing.extY,
-                                AscFormat.CheckObjectLine(oDrawing),
-                                oDrawing.canRotate(),
-                                undefined,
-                                (isDrawHandles || this.document.IsViewerObject(oDrawing)) && oDrawing.canEdit()
-                            );
+							if (isAnnot && oDrawing.IsLink() && !Asc.editor.canEdit()) {
+								return;
+							}
+
+							drawingDocument.DrawTrack(
+								nType,
+								oDrawing.getTransformMatrix(),
+								0,
+								0,
+								oDrawing.extX,
+								oDrawing.extY,
+								AscFormat.CheckObjectLine(oDrawing),
+								oDrawing.canRotate(),
+								undefined,
+								(isDrawHandles || this.document.IsViewerObject(oDrawing)) && oDrawing.canEdit()
+							);
                         }
                     }
                 }
