@@ -462,14 +462,17 @@ function (window, undefined) {
 		if (this.strokeStyle !== pr.strokeStyle) {
 			this.strokeStyle = null;
 		}
+		if (this.locked !== pr.locked) {
+			this.locked = null;
+		}
 		if (this.tooltip !== pr.tooltip) {
 			this.tooltip = null;
 		}
-		if (this.hindiDigits !== pr.hindiDigits) {
-			this.hindiDigits = null;
+		if (this.digitsType !== pr.digitsType) {
+			this.digitsType = null;
 		}
-		if (this.locked !== pr.locked) {
-			this.locked = null;
+		if (this.coEditLocked || pr.coEditLocked) {
+			this.coEditLocked = true;
 		}
 
 		if (this.type != undefined && this.fieldProps && pr.fieldProps) {
