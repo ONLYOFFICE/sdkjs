@@ -529,7 +529,7 @@
     };
     CBaseField.prototype.SetPartialName = function(sName) {
         if (this._partialName == sName) {
-            return;
+            return true;
         }
 
         AscCommon.History.Add(new CChangesPDFFormPartialName(this, this._partialName, sName));
@@ -538,6 +538,8 @@
 
         this.SetWasChanged(true);
         this.SetNeedUpdateEditShape(true);
+
+		return true;
     };
     CBaseField.prototype.SetNeedUpdateEditShape = function(bUpdate) {
         this._needUpdateEditShape = bUpdate;
