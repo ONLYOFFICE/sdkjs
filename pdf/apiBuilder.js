@@ -4754,10 +4754,22 @@
 		this.OnFocus	= collection.OnFocus;
 		this.OnBlur		= collection.OnBlur;
 
+		this.MouseUp && this.MouseUp.private_SetParentCollection(this, "mouseUp")
+		this.MouseDown && this.MouseDown.private_SetParentCollection(this, "mouseDown")
+		this.MouseEnter && this.MouseEnter.private_SetParentCollection(this, "mouseEnter")
+		this.MouseExit && this.MouseExit.private_SetParentCollection(this, "mouseExit")
+		this.OnFocus && this.OnFocus.private_SetParentCollection(this, "onFocus")
+		this.OnBlur && this.OnBlur.private_SetParentCollection(this, "onBlur")
+
 		this.Format		= collection.Format;
 		this.Keystroke	= collection.Keystroke;
 		this.Validate	= collection.Validate;
 		this.Calculate	= collection.Calculate;
+
+		this.Format && this.Format.private_SetParentCollection(this, "format")
+		this.Keystroke && this.Keystroke.private_SetParentCollection(this, "keystroke")
+		this.Validate && this.Validate.private_SetParentCollection(this, "validate")
+		this.Calculate && this.Calculate.private_SetParentCollection(this, "calculate")
 	};
 
 	/**
@@ -5161,7 +5173,7 @@
 	 * Sets goto type
 	 * @typeofeditors ["PDFE"]
 	 * @param {GoToType} type
-	 * @returns {number}
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/SetType.js
 	 */
 	ApiGoToAction.prototype.SetType = function(type) {
@@ -5170,16 +5182,18 @@
 			AscBuilder.throwException("The type parameter must be one of available");
 		}
 
-		let oDoc = private_GetLogicDocument();
-		let nPage = this.GetPage();
+		if (this.Action.GetKind() == nInnerType) {
+			return true;
+		}
 
 		this.Action.SetKind(nInnerType);
-		this.Action.SetRect({
-			left: 0,
-			top: 0,
-			right: oDoc.GetPageWidth(nPage),
-			bottom: oDoc.GetPageHeight(nPage)
-		});
+
+		if (nInnerType !== AscPDF.GOTO_TYPES.xyz) {
+			this.Action.SetZoom(null);
+		}
+		else {
+			this.Action.SetZoom(1);
+		}
 
 		this.private_OnChange();
 		return true;

@@ -366,6 +366,10 @@
 
         return this.calcedZoom;
     };
+	CActionGoTo.prototype.SetZoom = function(value) {
+		this.zoom = value;
+		this.calcedZoom = null;
+	};
 
     CActionGoTo.prototype.GetPageId = function() {
         return this.pageId;
