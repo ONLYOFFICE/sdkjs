@@ -155,6 +155,22 @@ function getNumberParts(x)
 
 	function compareNumbers(val1, val2) {
 		var res = 0;
+		//Two numbers that differ by less than half a unit in the 15th significant digit
+		//compare as equal, which is the behaviour observed in Excel. Rounding each operand
+		//to that many digits on its own - what the mantissa comparison below does - is not
+		//the same test: a pair can straddle a rounding boundary and still come out one
+		//digit apart, which is what happens to a column total compared against the same
+		//total reached by multiplying.
+		//The threshold is taken from the operand of *smaller* magnitude. That matters only
+		//when the two sit on opposite sides of a power of ten, where the smaller one is the
+		//one carrying the finer last digit; taking the larger there would accept
+		//differences Excel rejects. Sign plays no part.
+		if (val1 !== val2 && isFinite(val1) && isFinite(val2)) {
+			var dMin = Math.min(Math.abs(val1), Math.abs(val2));
+			if (0 !== dMin && Math.abs(val1 - val2) < 0.5 * Math.pow(10, getNumberParts(dMin).exponent)) {
+				return 0;
+			}
+		}
 		var parts1 = getNumberParts(val1);
 		var parts2 = getNumberParts(val2);
 		if (parts1.sign === parts2.sign) {

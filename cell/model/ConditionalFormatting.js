@@ -841,7 +841,9 @@
 					if (!cell || cell.isNullTextString()) {
 						res = 0 === v1.getValue();
 					} else if (cell.type === CellValueType.Number) {
-						res = cell.getNumberValue() === v1.getValue();
+						//Through compareNumbers so a rule agrees with the same comparison written
+						//as a formula: a total reached by two different routes is one value.
+						res = 0 === AscCommon.compareNumbers(cell.getNumberValue(), v1.getValue());
 					} else {
 						res = false;
 					}
@@ -870,7 +872,7 @@
 					if (!cell || cell.isNullTextString()) {
 						res = 0 > v1.getValue();
 					} else if (cell.type === CellValueType.Number) {
-						res = cell.getNumberValue() > v1.getValue();
+						res = AscCommon.compareNumbers(cell.getNumberValue(), v1.getValue()) > 0;
 					} else {
 						res = true;
 					}
