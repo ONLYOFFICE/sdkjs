@@ -5915,6 +5915,11 @@ StyleManager.prototype =
 		this.stylesConditionalIterator = null;
 		this.stylesConditional[rule.Get_Id()] = {ranges: ranges, formula: formula, rule: rule};
 	};
+	//formula returns true/false for the ordinary rules and a calculated xf for colorScale
+	SheetMergedStyles.prototype.isConditionalRuleTrue = function(rule, row, col) {
+		var elem = rule && this.stylesConditional[rule.Get_Id()];
+		return !!(elem && elem.formula(row, col));
+	};
 	SheetMergedStyles.prototype.clearConditionalStyle = function(multiplyRange) {
 		this.stylesConditionalIterator = null;
 		for (var i in this.stylesConditional) {
@@ -5949,17 +5954,29 @@ StyleManager.prototype =
 		rules.sort(function(v1, v2) {
 			return v2.rule.priority - v1.rule.priority;
 		});
-		for (var i = 0; i < rules.length; ++i) {
-			if (opt_AffectingText) {
-				let rule = rules[i].rule;
-				if (!(rule && rule.dxf && rule.dxf.isAffectingText())) {
-					continue;
-				}
+		//rules are sorted from the lowest priority to the highest(the highest wins on merge),
+		//but stopIfTrue requires the evaluation in the reverse order
+		var conditional = [];
+		for (var i = rules.length - 1; i >= 0; --i) {
+			var elem = rules[i];
+			var rule = elem.rule;
+			var stopIfTrue = !!(rule && rule.stopIfTrue);
+			var affectingText = !!(rule && rule.dxf && rule.dxf.isAffectingText());
+			if (opt_AffectingText && !affectingText && !stopIfTrue) {
+				continue;
 			}
-			var xf = rules[i].formula(row, col);
-			if (xf) {
-				res.conditional.push(xf);
+			var val = elem.formula(row, col);
+			var xf = ("boolean" === typeof val) ? (val ? rule.dxf : null) : val;
+			if (xf && (!opt_AffectingText || affectingText)) {
+				conditional.push(xf);
 			}
+			//a rule without dxf stops the lower priority rules as well
+			if (val && stopIfTrue) {
+				break;
+			}
+		}
+		for (var i = conditional.length - 1; i >= 0; --i) {
+			res.conditional.push(conditional[i]);
 		}
 		for (var i = 0; i < this.stylesTablePivot.length; ++i) {
 			var style = this.stylesTablePivot[i];

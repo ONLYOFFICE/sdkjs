@@ -6542,8 +6542,18 @@ function isAllowPasteLink(pastedWb) {
 			return v2.priority - v1.priority;
 		});
 
+		//stopIfTrue check below uses the calculated conditional styles
+		this.model._updateConditionalFormatting();
+
+		var bStopped = false;
 		for (var i = aRules.length - 1; i >= 0; --i) {
 			oRule = aRules[i];
+			if (bStopped) {
+				return null;
+			}
+			if (oRule.stopIfTrue && this.model.sheetMergedStyles.isConditionalRuleTrue(oRule, row, col)) {
+				bStopped = true;
+			}
 			ranges = oRule.ranges;
 			oRuleElement = oRule.asc_getColorScaleOrDataBarOrIconSetRule();
 			if (!oRuleElement || Asc.ECfType.colorScale === oRuleElement.type) {

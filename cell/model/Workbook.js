@@ -7748,7 +7748,8 @@
 					} else if (Asc.ECfType.dataBar === oRule.type) {
 						continue;
 					} else if (Asc.ECfType.top10 === oRule.type) {
-						if (oRule.rank > 0 && oRule.dxf) {
+						//a rule without dxf is still needed when it stops the lower priority rules
+						if (oRule.rank > 0 && (oRule.dxf || oRule.stopIfTrue)) {
 							nc = 0;
 							values = this._getValuesForConditionalFormatting(ranges, false);
 							o = oRule.bottom ? Number.MAX_VALUE : -Number.MAX_VALUE;
@@ -7775,12 +7776,12 @@
 									t._getCellNoEmpty(row, col, function(cell) {
 										val = cell ? cell.getNumberValue() : null;
 									});
-									return (null !== val && (rule.bottom ? val <= threshold : val >= threshold)) ? rule.dxf : null;
+									return (null !== val && (rule.bottom ? val <= threshold : val >= threshold));
 								};
 							})(oRule, threshold);
 						}
 					} else if (Asc.ECfType.aboveAverage === oRule.type) {
-						if (!oRule.dxf) {
+						if (!oRule.dxf && !oRule.stopIfTrue) {
 							continue;
 						}
 						values = this._getValuesForConditionalFormatting(ranges, false);
@@ -7817,16 +7818,16 @@
 								t._getCellNoEmpty(row, col, function(cell) {
 									val = cell ? cell.getNumberValue() : null;
 								});
-								return (null !== val && rule.getAverage(val, average, stdDev)) ? rule.dxf : null;
+								return !!(null !== val && rule.getAverage(val, average, stdDev));
 							};
 						})(oRule, tmp, stdDev);
 					} else {
-						if (!oRule.dxf) {
+						if (!oRule.dxf && !oRule.stopIfTrue) {
 							continue;
 						}
 						let doExpression = function () {
 							bboxCf = oRule.getBBox();
-							compareFunction = getCacheFunction(oRule, (function(rule, formulaCF, formulaParent, rowLT, colLT) {
+							compareFunction = getCacheFunction(null, (function(rule, formulaCF, formulaParent, rowLT, colLT) {
 								return function(row, col) {
 									var offset = new AscCommon.CellBase(row - rowLT, col - colLT);
 									var bboxCell = new Asc.Range(col, row, col, row);
@@ -7854,7 +7855,7 @@
 										t._getCellNoEmpty(row, col, function(cell) {
 											val = cell ? cell.getValueWithoutFormat() : "";
 										});
-										return (val.length > 0 ? condition === obj[val] : false) ? rule.dxf : null;
+										return (val.length > 0 ? condition === obj[val] : false);
 									};
 								})(oRule, o, oRule.type === Asc.ECfType.duplicateValues);
 								break;
@@ -7889,14 +7890,14 @@
 								parsed1 = oRuleElement && oRuleElement.getFormula && oRuleElement.getFormula(this, formulaParent);
 								if (parsed1 && parsed1.hasRelativeRefs()) {
 									bboxCf = oRule.getBBox();
-									compareFunction = getCacheFunction(oRule, (function(rule, operator, formulaParent, rowLT, colLT) {
+									compareFunction = getCacheFunction(null, (function(rule, operator, formulaParent, rowLT, colLT) {
 										return function(row, col) {
 											var offset = new AscCommon.CellBase(row - rowLT, col - colLT);
 											var bboxCell = new Asc.Range(col, row, col, row);
 											var v1 = rule.getValueCellIs(t, formulaParent, bboxCell, offset, false);
 											var res;
 											t._getCellNoEmpty(row, col, function(cell) {
-												res = rule.cellIs(operator, cell, v1) ? rule.dxf : null;
+												res = !!rule.cellIs(operator, cell, v1);
 											});
 											return res;
 										};
@@ -7911,7 +7912,7 @@
 										return function(row, col) {
 											var res;
 											t._getCellNoEmpty(row, col, function(cell) {
-												res = rule.cellIs(operator, cell, v1) ? rule.dxf : null;
+												res = !!rule.cellIs(operator, cell, v1);
 											});
 											return res;
 										};
@@ -7925,7 +7926,7 @@
 										t._getCellNoEmpty(row, col, function(cell) {
 											val = (cell ? CellValueType.Error === cell.getType() : false);
 										});
-										return val ? rule.dxf : null;
+										return !!val;
 									};
 								})(oRule);
 								break;
@@ -7936,7 +7937,7 @@
 										t._getCellNoEmpty(row, col, function(cell) {
 											val = (cell ? CellValueType.Error !== cell.getType() : true);
 										});
-										return val ? rule.dxf : null;
+										return !!val;
 									};
 								})(oRule);
 								break;
@@ -7952,7 +7953,7 @@
 												val = true;
 											}
 										});
-										return val ? rule.dxf : null;
+										return !!val;
 									};
 								})(oRule);
 								break;
@@ -7968,7 +7969,7 @@
 												val = false;
 											}
 										});
-										return val ? rule.dxf : null;
+										return !!val;
 									};
 								})(oRule);
 								break;
@@ -7981,7 +7982,7 @@
 												val = cell ? cell.getValueWithoutFormat() : "";
 											});
 											var n = parseFloat(val);
-											return (period.start <= n && n < period.end) ? rule.dxf : null;
+											return (period.start <= n && n < period.end);
 										};
 									})(oRule, oRule.getTimePeriod());
 								} else {
@@ -7996,7 +7997,7 @@
 								parsed2 = oRuleElement && oRuleElement.getFormula && oRuleElement.getFormula(this, formulaParent);
 								if ((parsed1 && parsed1.hasRelativeRefs()) || (parsed2 && parsed2.hasRelativeRefs())) {
 									bboxCf = oRule.getBBox();
-									compareFunction = getCacheFunction(oRule, (function(rule, ruleElem1, ruleElem2, formulaParent, rowLT, colLT) {
+									compareFunction = getCacheFunction(null, (function(rule, ruleElem1, ruleElem2, formulaParent, rowLT, colLT) {
 										return function(row, col) {
 											var offset = new AscCommon.CellBase(row - rowLT, col - colLT);
 											var bboxCell = new Asc.Range(col, row, col, row);
@@ -8004,7 +8005,7 @@
 											var v2 = ruleElem2 && ruleElem2.getValue(t, formulaParent, bboxCell, offset, false);
 											var res;
 											t._getCellNoEmpty(row, col, function(cell) {
-												res = rule.cellIs(rule.operator, cell, v1, v2) ? rule.dxf : null;
+												res = !!rule.cellIs(rule.operator, cell, v1, v2);
 											});
 											return res;
 										};
@@ -8016,7 +8017,7 @@
 										return function(row, col) {
 											var res;
 											t._getCellNoEmpty(row, col, function(cell) {
-												res = rule.cellIs(rule.operator, cell, v1, v2) ? rule.dxf : null;
+												res = !!rule.cellIs(rule.operator, cell, v1, v2);
 											});
 											return res;
 										};

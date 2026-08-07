@@ -24981,45 +24981,51 @@
 		}
 	});
 
-	// /**
-	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiFormatCondition
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {boolean}
-	//  * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetStopIfTrue.js
-	//  */
-	// ApiFormatCondition.prototype.GetStopIfTrue = function() {
-	// 	if (!this.rule) {
-	// 		return false;
-	// 	}
-	// 	return this.rule.stopIfTrue;
-	// };
+	/**
+	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetStopIfTrue.js
+	 */
+	ApiFormatCondition.prototype.GetStopIfTrue = function() {
+		if (!this.rule) {
+			return false;
+		}
+		return !!this.rule.stopIfTrue;
+	};
 
-	// /**
-	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiFormatCondition
-	//  * @typeofeditors ["CSE"]
-	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
-	//  * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetStopIfTrue.js
-	//  */
-	// ApiFormatCondition.prototype.SetStopIfTrue = function(StopIfTrue) {
-	// 	if (!this.rule || typeof StopIfTrue !== "boolean") {
-	// 		return;
-	// 	}
-	//
-	// 	this.private_changeStyle(function (newRule) {
-	// 		newRule.stopIfTrue = StopIfTrue;
-	// 	}, true);
-	// };
-	//
-	// Object.defineProperty(ApiFormatCondition.prototype, "StopIfTrue", {
-	// 	get: function() {
-	// 		return this.GetStopIfTrue();
-	// 	},
-	// 	set: function(value) {
-	// 		this.SetStopIfTrue(value);
-	// 	}
-	// });
+	/**
+	 * Sets whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetStopIfTrue.js
+	 */
+	ApiFormatCondition.prototype.SetStopIfTrue = function(StopIfTrue) {
+		if (!this.rule || typeof StopIfTrue !== "boolean") {
+			return;
+		}
+
+		if (!!this.rule.stopIfTrue === StopIfTrue) {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			newRule.stopIfTrue = StopIfTrue;
+		}, true);
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "StopIfTrue", {
+		get: function() {
+			return this.GetStopIfTrue();
+		},
+		set: function(value) {
+			this.SetStopIfTrue(value);
+		}
+	});
 
 	/**
 	 * Returns the text value used in text-based conditional formatting rules.
@@ -25766,25 +25772,25 @@
 	 */
 	ApiAboveAverage.prototype.SetScopeType = ApiFormatCondition.prototype.SetScopeType;
 
-	// /**
-	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiAboveAverage
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {boolean}
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetStopIfTrue.js
-	//  */
-	// ApiAboveAverage.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
+	/**
+	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetStopIfTrue.js
+	 */
+	ApiAboveAverage.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
 
-	// /**
-	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiAboveAverage
-	//  * @typeofeditors ["CSE"]
-	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetStopIfTrue.js
-	//  */
-	// ApiAboveAverage.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
+	/**
+	 * Sets whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetStopIfTrue.js
+	 */
+	ApiAboveAverage.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
 
 	// Block inherited methods that should not be available for ApiAboveAverage
 	ApiAboveAverage.prototype.Modify = null;
@@ -26020,27 +26026,19 @@
 	 */
 	ApiColorScale.prototype.SetScopeType = ApiFormatCondition.prototype.SetScopeType;
 
-	// /**
-	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiColorScale
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {boolean}
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/GetStopIfTrue.js
-	//  */
-	// ApiColorScale.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
-
-	// /**
-	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiColorScale
-	//  * @typeofeditors ["CSE"]
-	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/SetStopIfTrue.js
-	//  */
-	// ApiColorScale.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
+	/**
+	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * This rule type cannot stop the evaluation, so the value can be changed only by opening a file where it is set.
+	 * @memberof ApiColorScale
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/GetStopIfTrue.js
+	 */
+	ApiColorScale.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
 
 	// Block inherited methods that should not be available for ApiColorScale
+	ApiColorScale.prototype.SetStopIfTrue = null;
 	ApiColorScale.prototype.Modify = null;
 	ApiColorScale.prototype.GetOperator = null;
 	ApiColorScale.prototype.SetOperator = null;
@@ -27422,27 +27420,19 @@
 	 */
 	ApiDatabar.prototype.SetScopeType = ApiFormatCondition.prototype.SetScopeType;
 
-	// /**
-	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiDatabar
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {boolean}
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetStopIfTrue.js
-	//  */
-	// ApiDatabar.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
-
-	// /**
-	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiDatabar
-	//  * @typeofeditors ["CSE"]
-	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetStopIfTrue.js
-	//  */
-	// ApiDatabar.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
+	/**
+	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * This rule type cannot stop the evaluation, so the value can be changed only by opening a file where it is set.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetStopIfTrue.js
+	 */
+	ApiDatabar.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
 
 	// Block inherited methods that should not be available for ApiDatabar
+	ApiDatabar.prototype.SetStopIfTrue = null;
 	ApiDatabar.prototype.Modify = null;
 	ApiDatabar.prototype.GetOperator = null;
 	ApiDatabar.prototype.SetOperator = null;
@@ -28226,27 +28216,19 @@
 	 */
 	ApiIconSetCondition.prototype.SetScopeType = ApiFormatCondition.prototype.SetScopeType;
 
-	// /**
-	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiIconSetCondition
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {boolean}
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetStopIfTrue.js
-	//  */
-	// ApiIconSetCondition.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
-
-	// /**
-	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiIconSetCondition
-	//  * @typeofeditors ["CSE"]
-	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/SetStopIfTrue.js
-	//  */
-	// ApiIconSetCondition.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
+	/**
+	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * This rule type cannot stop the evaluation, so the value can be changed only by opening a file where it is set.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetStopIfTrue.js
+	 */
+	ApiIconSetCondition.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
 
 	// Block inherited methods that should not be available for ApiIconSetCondition
+	ApiIconSetCondition.prototype.SetStopIfTrue = null;
 	ApiIconSetCondition.prototype.Modify = null;
 	ApiIconSetCondition.prototype.GetOperator = null;
 	ApiIconSetCondition.prototype.SetOperator = null;
@@ -29461,25 +29443,25 @@
 	 */
 	ApiTop10.prototype.SetScopeType = ApiFormatCondition.prototype.SetScopeType;
 
-	// /**
-	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiTop10
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {boolean}
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetStopIfTrue.js
-	//  */
-	// ApiTop10.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
+	/**
+	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetStopIfTrue.js
+	 */
+	ApiTop10.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
 
-	// /**
-	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiTop10
-	//  * @typeofeditors ["CSE"]
-	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetStopIfTrue.js
-	//  */
-	// ApiTop10.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
+	/**
+	 * Sets whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetStopIfTrue.js
+	 */
+	ApiTop10.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
 
 	/**
 	 * Returns the font formatting for the top 10 conditional formatting rule.
@@ -29770,25 +29752,25 @@
 	 */
 	ApiUniqueValues.prototype.SetScopeType = ApiFormatCondition.prototype.SetScopeType;
 
-	// /**
-	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiUniqueValues
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {boolean}
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetStopIfTrue.js
-	//  */
-	// ApiUniqueValues.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
+	/**
+	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetStopIfTrue.js
+	 */
+	ApiUniqueValues.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
 
-	// /**
-	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiUniqueValues
-	//  * @typeofeditors ["CSE"]
-	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/SetStopIfTrue.js
-	//  */
-	// ApiUniqueValues.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
+	/**
+	 * Sets whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/SetStopIfTrue.js
+	 */
+	ApiUniqueValues.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
 
 	/**
 	 * Returns the font formatting for the unique values conditional formatting rule.
@@ -31406,8 +31388,8 @@
 	ApiFormatCondition.prototype["SetStdDev"] = ApiFormatCondition.prototype.SetStdDev;
 	ApiFormatCondition.prototype["GetPriority"] = ApiFormatCondition.prototype.GetPriority;
 	ApiFormatCondition.prototype["SetPriority"] = ApiFormatCondition.prototype.SetPriority;
-	//ApiFormatCondition.prototype["GetStopIfTrue"] = ApiFormatCondition.prototype.GetStopIfTrue;
-	//ApiFormatCondition.prototype["SetStopIfTrue"] = ApiFormatCondition.prototype.SetStopIfTrue;
+	ApiFormatCondition.prototype["GetStopIfTrue"] = ApiFormatCondition.prototype.GetStopIfTrue;
+	ApiFormatCondition.prototype["SetStopIfTrue"] = ApiFormatCondition.prototype.SetStopIfTrue;
 	ApiFormatCondition.prototype["GetAppliesTo"] = ApiFormatCondition.prototype.GetAppliesTo;
 	ApiFormatCondition.prototype["SetBorders"] = ApiFormatCondition.prototype.SetBorders;
 	ApiFormatCondition.prototype["SetFillColor"] = ApiFormatCondition.prototype.SetFillColor;
@@ -31446,8 +31428,8 @@
 	ApiAboveAverage.prototype["GetPTCondition"] = ApiAboveAverage.prototype.GetPTCondition;
 	ApiAboveAverage.prototype["GetScopeType"] = ApiAboveAverage.prototype.GetScopeType;
 	ApiAboveAverage.prototype["SetScopeType"] = ApiAboveAverage.prototype.SetScopeType;
-	//ApiAboveAverage.prototype["GetStopIfTrue"] = ApiAboveAverage.prototype.GetStopIfTrue;
-	//ApiAboveAverage.prototype["SetStopIfTrue"] = ApiAboveAverage.prototype.SetStopIfTrue;
+	ApiAboveAverage.prototype["GetStopIfTrue"] = ApiAboveAverage.prototype.GetStopIfTrue;
+	ApiAboveAverage.prototype["SetStopIfTrue"] = ApiAboveAverage.prototype.SetStopIfTrue;
 
 	ApiUniqueValues.prototype["GetDupeUnique"] = ApiUniqueValues.prototype.GetDupeUnique;
 	ApiUniqueValues.prototype["SetDupeUnique"] = ApiUniqueValues.prototype.SetDupeUnique;
@@ -31463,8 +31445,8 @@
 	ApiUniqueValues.prototype["GetPTCondition"] = ApiUniqueValues.prototype.GetPTCondition;
 	ApiUniqueValues.prototype["GetScopeType"] = ApiUniqueValues.prototype.GetScopeType;
 	ApiUniqueValues.prototype["SetScopeType"] = ApiUniqueValues.prototype.SetScopeType;
-	//ApiUniqueValues.prototype["GetStopIfTrue"] = ApiUniqueValues.prototype.GetStopIfTrue;
-	//ApiUniqueValues.prototype["SetStopIfTrue"] = ApiUniqueValues.prototype.SetStopIfTrue;
+	ApiUniqueValues.prototype["GetStopIfTrue"] = ApiUniqueValues.prototype.GetStopIfTrue;
+	ApiUniqueValues.prototype["SetStopIfTrue"] = ApiUniqueValues.prototype.SetStopIfTrue;
 	ApiUniqueValues.prototype["GetFont"] = ApiUniqueValues.prototype.GetFont;
 	//ApiUniqueValues.prototype["GetBorders"] = ApiUniqueValues.prototype.GetBorders;
 	ApiUniqueValues.prototype["GetNumberFormat"] = ApiUniqueValues.prototype.GetNumberFormat;
@@ -31492,8 +31474,8 @@
 	ApiTop10.prototype["GetPTCondition"] = ApiTop10.prototype.GetPTCondition;
 	ApiTop10.prototype["GetScopeType"] = ApiTop10.prototype.GetScopeType;
 	ApiTop10.prototype["SetScopeType"] = ApiTop10.prototype.SetScopeType;
-	//ApiTop10.prototype["GetStopIfTrue"] = ApiTop10.prototype.GetStopIfTrue;
-	//ApiTop10.prototype["SetStopIfTrue"] = ApiTop10.prototype.SetStopIfTrue;
+	ApiTop10.prototype["GetStopIfTrue"] = ApiTop10.prototype.GetStopIfTrue;
+	ApiTop10.prototype["SetStopIfTrue"] = ApiTop10.prototype.SetStopIfTrue;
 	ApiTop10.prototype["GetFont"] = ApiTop10.prototype.GetFont;
 	//ApiTop10.prototype["GetBorders"] = ApiTop10.prototype.GetBorders;
 	ApiTop10.prototype["GetNumberFormat"] = ApiTop10.prototype.GetNumberFormat;
@@ -31514,8 +31496,7 @@
 	ApiColorScale.prototype["GetPTCondition"] = ApiColorScale.prototype.GetPTCondition;
 	ApiColorScale.prototype["GetScopeType"] = ApiColorScale.prototype.GetScopeType;
 	ApiColorScale.prototype["SetScopeType"] = ApiColorScale.prototype.SetScopeType;
-	//ApiColorScale.prototype["GetStopIfTrue"] = ApiColorScale.prototype.GetStopIfTrue;
-	//ApiColorScale.prototype["SetStopIfTrue"] = ApiColorScale.prototype.SetStopIfTrue;
+	ApiColorScale.prototype["GetStopIfTrue"] = ApiColorScale.prototype.GetStopIfTrue;
 
 	ApiColorScaleCriterion.prototype["GetType"] = ApiColorScaleCriterion.prototype.GetType;
 	ApiColorScaleCriterion.prototype["SetType"] = ApiColorScaleCriterion.prototype.SetType;
@@ -31568,8 +31549,7 @@
 	ApiDatabar.prototype["GetPTCondition"] = ApiDatabar.prototype.GetPTCondition;
 	ApiDatabar.prototype["GetScopeType"] = ApiDatabar.prototype.GetScopeType;
 	ApiDatabar.prototype["SetScopeType"] = ApiDatabar.prototype.SetScopeType;
-	//ApiDatabar.prototype["GetStopIfTrue"] = ApiDatabar.prototype.GetStopIfTrue;
-	//ApiDatabar.prototype["SetStopIfTrue"] = ApiDatabar.prototype.SetStopIfTrue;
+	ApiDatabar.prototype["GetStopIfTrue"] = ApiDatabar.prototype.GetStopIfTrue;
 
 	ApiIconSetCondition.prototype["GetIconSet"] = ApiIconSetCondition.prototype.GetIconSet;
 	ApiIconSetCondition.prototype["SetIconSet"] = ApiIconSetCondition.prototype.SetIconSet;
@@ -31593,8 +31573,7 @@
 	ApiIconSetCondition.prototype["GetPTCondition"] = ApiIconSetCondition.prototype.GetPTCondition;
 	ApiIconSetCondition.prototype["GetScopeType"] = ApiIconSetCondition.prototype.GetScopeType;
 	ApiIconSetCondition.prototype["SetScopeType"] = ApiIconSetCondition.prototype.SetScopeType;
-	//ApiIconSetCondition.prototype["GetStopIfTrue"] = ApiIconSetCondition.prototype.GetStopIfTrue;
-	//ApiIconSetCondition.prototype["SetStopIfTrue"] = ApiIconSetCondition.prototype.SetStopIfTrue;
+	ApiIconSetCondition.prototype["GetStopIfTrue"] = ApiIconSetCondition.prototype.GetStopIfTrue;
 
 	ApiIconCriterion.prototype["GetType"] = ApiIconCriterion.prototype.GetType;
 	ApiIconCriterion.prototype["SetType"] = ApiIconCriterion.prototype.SetType;
