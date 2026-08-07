@@ -4735,7 +4735,7 @@
 	 */
 	Api.CreateParagraph = function()
 	{
-		return new ApiParagraph(new AscWord.Paragraph(private_GetLogicDocument()));
+		return new ApiParagraph(new AscWord.Paragraph());
 	};
 	/**
 	 * Creates an element range.
@@ -4778,21 +4778,26 @@
 	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {number} rows - Number of rows.
-	 * @param {number} cols - Number of columns.
+	 * @param {number} rows - Number of rows. Must be a positive integer.
+	 * @param {number} cols - Number of columns. Must be a positive integer.
 	 * @returns {ApiTable}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateTable.js
 	 */
 	Api.CreateTable = function(rows, cols)
 	{
-		if (!rows || rows <= 0 || !cols || cols <= 0)
-			return null;
+		let _rows = GetIntParameter(rows, null);
+		if (null === _rows || _rows <= 0)
+			throwException(new Error("rows must be a positive integer, got " + rows));
 
-		var oTable = new CTable(private_GetDrawingDocument(), private_GetLogicDocument(), true, rows, cols, [], false);
-		oTable.CorrectBadGrid();
-		oTable.Set_TableW(undefined);
-		oTable.Set_TableStyle2(undefined);
-		return new ApiTable(oTable);
+		let _cols = GetIntParameter(cols, null);
+		if (null === _cols || _cols <= 0)
+			throwException(new Error("cols must be a positive integer, got " + cols));
+
+		let table = new AscWord.Table(private_GetDrawingDocument(), null, true, _rows, _cols, [], false);
+		table.CorrectBadGrid();
+		table.Set_TableW(undefined);
+		table.Set_TableStyle2(undefined);
+		return new ApiTable(table);
 	};
 	/**
 	 * Creates an abstract multilevel numbering with a specified type.
@@ -5766,7 +5771,7 @@
 	 */
 	Api.CreateBlockLvlSdt = function()
 	{
-		return new ApiBlockLvlSdt(new CBlockLevelSdt(editor.private_GetLogicDocument(), private_GetLogicDocument()));
+		return new ApiBlockLvlSdt(new CBlockLevelSdt(editor.private_GetLogicDocument()));
 	};
 
 	/**
@@ -12269,7 +12274,7 @@
 		}
 		else 
 		{
-			ContentControl = new ApiBlockLvlSdt(new CBlockLevelSdt(Document, Document));
+			ContentControl = new ApiBlockLvlSdt(new CBlockLevelSdt(Document, null));
 			ContentControl.Sdt.SetDefaultTextPr(Document.GetDirectTextPr());
 			ContentControl.Sdt.Content.RemoveFromContent(0, ContentControl.Sdt.Content.GetElementsCount(), false);
 			ContentControl.Sdt.Content.AddToContent(0, this.Paragraph);
@@ -14923,7 +14928,7 @@
 		}
 		else 
 		{
-			ContentControl = new ApiBlockLvlSdt(new CBlockLevelSdt(Document, Document))
+			ContentControl = new ApiBlockLvlSdt(new CBlockLevelSdt(Document, null))
 			ContentControl.Sdt.SetDefaultTextPr(Document.GetDirectTextPr());
 			ContentControl.Sdt.Content.RemoveFromContent(0, ContentControl.Sdt.Content.GetElementsCount(), false);
 			ContentControl.Sdt.Content.AddToContent(0, this.Table);
@@ -20334,7 +20339,7 @@
 		}
 		else 
 		{
-			ContentControl		= new ApiBlockLvlSdt(new CBlockLevelSdt(Document, Document))
+			ContentControl		= new ApiBlockLvlSdt(new CBlockLevelSdt(Document, null))
 			ContentControl.Sdt.SetDefaultTextPr(Document.GetDirectTextPr());
 			paragraphInControl	= ContentControl.Sdt.GetFirstParagraph();
 			if (paragraphInControl.Content.length > 1)
@@ -27238,7 +27243,7 @@
 	 */
 	ApiFormBase.prototype.GetPosInParent = function()
 	{
-		if (!this.Parent())
+		if (!this.GetParent())
 			return -1;
 		
 		return this.Sdt.GetPosInParent();

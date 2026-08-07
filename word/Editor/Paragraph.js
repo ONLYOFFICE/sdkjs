@@ -1108,11 +1108,10 @@ Paragraph.prototype.Internal_Content_Remove = function(Pos)
 	var Item = this.Content[Pos];
 	AscCommon.History.Add(new CChangesParagraphRemoveItem(this, Pos, [Item]));
 
-	if (Item.PreDelete)
-		Item.PreDelete();
-
-	if (Item.OnDetach)
-		Item.OnDetach();
+	Item.PreDelete();
+	Item.SetParent(null);
+	Item.SetParagraph(null);
+	Item.OnDetach();
 
 	this.Content.splice(Pos, 1);
 	this.updateTrackRevisions();
@@ -1189,10 +1188,11 @@ Paragraph.prototype.Internal_Content_Remove2 = function(Pos, Count)
 
 	for (var nIndex = Pos; nIndex < Pos + Count; ++nIndex)
 	{
-		if (this.Content[nIndex].PreDelete)
-			this.Content[nIndex].PreDelete();
-
-		this.Content[nIndex].OnDetach();
+		let item = this.Content[nIndex];
+		item.PreDelete();
+		item.SetParent(null);
+		item.SetParagraph(null);
+		item.OnDetach();
 	}
 
 	var DeletedItems = this.Content.slice(Pos, Pos + Count);
@@ -1298,8 +1298,10 @@ Paragraph.prototype.ClearContent = function()
 			arrCommentsToDelete.push(sCommentId);
 		}
 
-		if (oItem.PreDelete)
-			oItem.PreDelete();
+		oItem.PreDelete();
+		oItem.SetParent(null);
+		oItem.SetParagraph(null);
+		oItem.OnDetach();
 	}
 
 	AscCommon.History.Add(new CChangesParagraphRemoveItem(this, 0, this.Content));
@@ -11093,16 +11095,19 @@ Paragraph.prototype.private_CompileParaPr = function(isForce)
 	}
 	else
 	{
-		if (undefined === this.CompiledPr.Pr || null === this.CompiledPr.Pr)
-		{
-			this.CompiledPr.Pr = {
-				ParaPr : g_oDocumentDefaultParaPr,
-				TextPr : g_oDocumentDefaultTextPr
-			};
+		this.CompiledPr.Pr = {
+			ParaPr : g_oDocumentDefaultParaPr,
+			TextPr : g_oDocumentDefaultTextPr
+		};
 
-			this.CompiledPr.Pr.ParaPr.StyleTabs  = new CParaTabs();
-			this.CompiledPr.Pr.ParaPr.StyleNumPr = undefined;
-		}
+		this.CompiledPr.Pr.ParaPr.NumPr = undefined;
+		
+		this.CompiledPr.Pr.ParaPr.Merge(this.Pr);
+		this.CompiledPr.Pr.ParaPr.CheckBorderSpaces();
+		
+		this.CompiledPr.Pr.ParaPr.StyleTabs  = new CParaTabs();
+		this.CompiledPr.Pr.ParaPr.StyleNumPr = undefined;
+		
 		this.CompiledPr.NeedRecalc = true;
 	}
 };
