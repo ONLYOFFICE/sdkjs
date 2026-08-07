@@ -2060,6 +2060,9 @@ XmlWriterContext.prototype.addSlideMasterRel = function(sRel) {
 XmlWriterContext.prototype.addNotesMasterRel = function(sRel) {
     this.notesMasterIdLst.push(sRel);
 };
+XmlWriterContext.prototype.addHandoutMasterRel = function(sRel) {
+    this.handoutMasterIdLst.push(sRel);
+};
 XmlWriterContext.prototype.addFieldMasterPart = function(oFieldMaster, oPart) {
     this.fieldMastersPartMap[oFieldMaster.Id] = oPart;
 };
