@@ -3810,6 +3810,32 @@ function isAllowPasteLink(pastedWb) {
 		return new AscCommon.CellBase(maxRow, maxCol);
 	};
 
+	WorksheetView.prototype._calcPrintSideR = function (ct, col, row) {
+		if (!ct.metrics || 0 !== ct.sideL) {
+			//the text also overflows to the left(center/right align) - keep the calculated value
+			return ct.sideR;
+		}
+
+		let t = this;
+		let retinaPixelRatio = AscCommon.AscBrowser.isCustomScaling() ? this.getRetinaPixelRatio() : 1;
+		let getWidth = function (i) {
+			let res = t._getWidthForPrint(i);
+			return res ? res * retinaPixelRatio : t._getColumnWidth(i);
+		};
+
+		//the columns up to ct.sideR are already known to be empty, check the model only beyond them
+		let lastEmpty = col + ct.sideR;
+		let textWidth = ct.metrics.width + this.settings.cells.padding * 2 + gridlineSize;
+		let size = getWidth(col);
+		let i = col + 1;
+		while (textWidth > size && i < gc_nMaxCol && (i <= lastEmpty || this._isCellEmptyOrMerged(i, row))) {
+			size += getWidth(i);
+			++i;
+		}
+
+		return Math.max(i - col - 1, 0);
+	};
+
 	WorksheetView.prototype._calculateMaxPrintRange = function(range) {
 		let self = this;
 		let maxCol = -1;
@@ -3821,6 +3847,9 @@ function isAllowPasteLink(pastedWb) {
 			let rightSide = 0;
 			if (_ct && _ct.flags && !_ct.flags.isMerged() && !_ct.flags.wrapText) {
 				rightSide = _ct.sideR;
+				if (_col + rightSide + 1 >= maxCol) {
+					rightSide = self._calcPrintSideR(_ct, _col, _row);
+				}
 			}
 
 			maxCol = Math.max(maxCol, _col + rightSide);
