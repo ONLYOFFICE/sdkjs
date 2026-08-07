@@ -5276,8 +5276,18 @@ function BinaryPPTYLoader()
                 }
                 case 3:
                 {
-                    var _len = s.GetULong();
-                    s.Skip2(_len);
+                    var _start_supplemental = s.cur;
+                    var _end_supplemental = _start_supplemental + s.GetULong() + 4;
+                    var _count = s.GetULong();
+                    // The count comes out of the file, so it is also bounded by the end of
+                    // the record: a corrupt one must not send the reader off past it.
+                    for (var i = 0; i < _count && s.cur < _end_supplemental; ++i)
+                    {
+                        s.Skip2(1); // type
+                        var _font = this.ReadSupplementalFont();
+                        fontcolls.addSupplementalFont(_font.script, _font.typeface);
+                    }
+                    s.Seek2(_end_supplemental);
                     break;
                 }
                 default:
@@ -5289,6 +5299,57 @@ function BinaryPPTYLoader()
         }
 
         s.Seek2(_end_rec);
+    };
+
+    this.ReadSupplementalFont = function()
+    {
+        var s = this.stream;
+
+        var _rec_start = s.cur;
+        var _end_rec = _rec_start + s.GetULong() + 4;
+
+        var script = "";
+        var typeface = "";
+
+        s.Skip2(1); // start attributes
+
+        var _unknown = false;
+        while (!_unknown)
+        {
+            var _at = s.GetUChar();
+            if (_at == g_nodeAttributeEnd)
+                break;
+
+            switch (_at)
+            {
+                case 0:
+                {
+                    script = s.GetString2();
+                    break;
+                }
+                case 1:
+                {
+                    typeface = s.GetString2();
+                    break;
+                }
+                default:
+                {
+                    // An attribute this build does not know: there is no length in front
+                    // of it, so its value cannot be stepped over and everything read from
+                    // here on would be out of step. Stop, and let the seek below put the
+                    // stream back on the record boundary. Anything after the unknown
+                    // attribute is dropped, which is preferable to reading on until a byte
+                    // happens to look like the end marker - past the end of the stream
+                    // GetUChar keeps returning 0, so that search need never finish.
+                    _unknown = true;
+                    break;
+                }
+            }
+        }
+
+        s.Seek2(_end_rec);
+
+        return { script: script, typeface: typeface };
     };
 
     this.ReadTextFontTypeface = function()

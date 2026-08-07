@@ -9975,11 +9975,24 @@
 		drawingConstructorsMap[AscDFH.historyitem_ExtraClrScheme_SetClrScheme] = ClrScheme;
 		drawingConstructorsMap[AscDFH.historyitem_NvPr_AddExt] = CExtP;
 
+		function SupplementalFont(script, typeface) {
+			this.script = script;
+			this.typeface = typeface;
+		}
+
+		SupplementalFont.prototype.createDuplicate = function () {
+			return new SupplementalFont(this.script, this.typeface);
+		};
+
 		function FontCollection(fontScheme) {
 			CBaseNoIdObject.call(this);
 			this.latin = null;
 			this.ea = null;
 			this.cs = null;
+			// <a:font script="..."/> entries: the per-script fonts of the collection.
+			// Never edited in the editors, but they must survive the file round trip:
+			// without them applications fall back to latin for East Asian text.
+			this.supplementalFont = [];
 			if (fontScheme) {
 				this.setFontScheme(fontScheme);
 			}
@@ -10006,6 +10019,19 @@
 			if (this.fontScheme)
 				this.fontScheme.checkFromFontCollection(pr, this, FONT_REGION_CS);
 		};
+		FontCollection.prototype.addSupplementalFont = function (script, typeface) {
+			this.supplementalFont.push(new SupplementalFont(script, typeface));
+		};
+		FontCollection.prototype.setSupplementalFont = function (arr) {
+			this.supplementalFont = [];
+			for (var i = 0; i < arr.length; ++i) {
+				this.supplementalFont.push(arr[i].createDuplicate());
+			}
+		};
+		/* supplementalFont is deliberately left out of Write_ToBinary / Read_FromBinary:
+		   that is the history format, a bare concatenation with no length framing, so
+		   adding a field here would desynchronise every reader that does not have it.
+		   The cost is that undoing a font scheme replacement does not restore them. */
 		FontCollection.prototype.Write_ToBinary = function (w) {
 			writeString(w, this.latin);
 			writeString(w, this.ea);
@@ -10065,6 +10091,9 @@
 			oCopy.minorFont.setLatin(this.minorFont.latin);
 			oCopy.minorFont.setEA(this.minorFont.ea);
 			oCopy.minorFont.setCS(this.minorFont.cs);
+
+			oCopy.majorFont.setSupplementalFont(this.majorFont.supplementalFont);
+			oCopy.minorFont.setSupplementalFont(this.minorFont.supplementalFont);
 			return oCopy;
 		};
 		FontScheme.prototype.Refresh_RecalcData = function () {
@@ -20593,6 +20622,7 @@
 		window['AscFormat'].ClrMap = ClrMap;
 		window['AscFormat'].ExtraClrScheme = ExtraClrScheme;
 		window['AscFormat'].FontCollection = FontCollection;
+		window['AscFormat'].SupplementalFont = SupplementalFont;
 		window['AscFormat'].FontScheme = FontScheme;
 		window['AscFormat'].FmtScheme = FmtScheme;
 		window['AscFormat'].ThemeElements = ThemeElements;
