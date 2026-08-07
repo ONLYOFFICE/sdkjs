@@ -2479,8 +2479,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiBaseField/Methods/SetRequired.js
 	 */
 	ApiBaseField.prototype.SetRequired = function(required) {
-		this.Field.SetRequired(required);
-		return true;
+		return this.Field.SetRequired(required);
 	};
 
 	/**
