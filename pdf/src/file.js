@@ -471,7 +471,7 @@ void main() {\n\
 		});
 		
 		metafile.endLine();
-		return metafile.getData();
+		return new Uint8Array(metafile.getData());
 	};
     CFile.prototype.removeSelection = function() {
         this.Selection = {
