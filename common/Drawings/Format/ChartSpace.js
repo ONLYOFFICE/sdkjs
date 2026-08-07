@@ -1715,6 +1715,7 @@ function(window, undefined) {
 		let bOnTickMark_ = bOnTickMark && nLabelsCount > 1;
 		let nIntervalCount = bOnTickMark_ ? nLabelsCount - 1 : nLabelsCount;
 		let fInterval = fAxisLength / nIntervalCount;
+		fAxisLength = Math.abs(fAxisLength);
 		let fForceContentWidth_ = fForceContentWidth;
 
 		if (!bForceVertical || true) {//TODO: implement for vertical labels
