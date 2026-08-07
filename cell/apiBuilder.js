@@ -7816,6 +7816,34 @@
 	};
 
 	/**
+	 * Redraws the editor screen, making the changes already made by a macro visible without waiting for it to finish. Observable from asynchronous code only. Repaints without recalculating: call {@link Api#Calculate} first if formula results must be up to date.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/Redraw.js
+	 */
+	Api.Redraw = function () {
+		return private_Redraw(Asc.editor && Asc.editor.wb);
+	};
+
+	/**
+	 * Repaints the active worksheet view.
+	 * @param {AscCommonExcel.WorkbookView} wb
+	 * @returns {boolean} false if there is no view to draw
+	 */
+	function private_Redraw(wb) {
+		if (!wb || !wb.getWorksheet()) {
+			return false;
+		}
+		// drawing may register history entries, same guard as in _onUpdateAfterApplyChanges
+		History.TurnOff();
+		wb.drawWorksheet();
+		History.TurnOn();
+		return true;
+	}
+
+	/**
 	 * Inserts the specified pivot table into an existing worksheet.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
@@ -8403,6 +8431,18 @@
 		}
 		this.Workbook.dependencyFormulas.forceCalculate();
 		return true;
+	};
+
+	/**
+	 * Redraws the editor screen, making the changes already made by a macro visible without waiting for it to finish. Observable from asynchronous code only. Repaints without recalculating: call {@link ApiWorkbook#Calculate} first if formula results must be up to date.
+	 * @memberof ApiWorkbook
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/Redraw.js
+	 */
+	ApiWorkbook.prototype.Redraw = function () {
+		return private_Redraw(this.Workbook && this.Workbook.oApi && this.Workbook.oApi.wb);
 	};
 
 	/**
@@ -30252,6 +30292,7 @@
 
 	Api["RecalculateAllFormulas"] = Api.RecalculateAllFormulas;
 	Api["Calculate"] = Api.Calculate;
+	Api["Redraw"] = Api.Redraw;
 	Api["AddComment"]  = Api.AddComment;
 	Api["GetComments"] = Api.GetComments;
 	Api["GetAllComments"] = Api.GetAllComments;
@@ -30288,6 +30329,7 @@
 	ApiWorkbook.prototype["GetName"] = ApiWorkbook.prototype.GetName;
 	ApiWorkbook.prototype["GetActiveSheet"] = ApiWorkbook.prototype.GetActiveSheet;
 	ApiWorkbook.prototype["Calculate"] = ApiWorkbook.prototype.Calculate;
+	ApiWorkbook.prototype["Redraw"] = ApiWorkbook.prototype.Redraw;
 	ApiWorkbook.prototype["GetActiveChart"] = ApiWorkbook.prototype.GetActiveChart;
 	ApiWorkbook.prototype["GetDrawingsByName"] = ApiWorkbook.prototype.GetDrawingsByName;
 
