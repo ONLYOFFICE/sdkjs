@@ -11339,7 +11339,12 @@
 
 		switch (field.GetType()) {
 			case AscPDF.FIELD_TYPES.button: {
-				return new ApiButtonField(field);
+				if (field.IsOOSignature()) {
+					return new ApiSignatureField(field);
+				}
+				else {
+					return new ApiButtonField(field);
+				}
 			}
 			case AscPDF.FIELD_TYPES.radiobutton: {
 				return new ApiRadiobuttonField(field);
