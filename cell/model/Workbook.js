@@ -10527,7 +10527,51 @@
 	};
 	Worksheet.prototype.getHyperlinkByCell = function(row, col){
 		var oHyperlink = this.hyperlinkManager.getByCell(row, col);
+		if (oHyperlink) {
+			//the document structure can contain several hyperlinks applied to the same cell(part of them can be broken)
+			//ms uses the first hyperlink which can be opened, do the same
+			var aHyperlinks = this.hyperlinkManager.get(oHyperlink.bbox);
+			if (aHyperlinks.all.length > 1 && !this.isValidHyperlink(oHyperlink.data)) {
+				var oCandidate = null;
+				for (var i = 0; i < aHyperlinks.all.length; ++i) {
+					var elem = aHyperlinks.all[i];
+					if (elem === oHyperlink || !this.isValidHyperlink(elem.data)) {
+						continue;
+					}
+					//prefer the hyperlink which is really applied to the cell
+					if (elem.bbox.contains(col, row)) {
+						oCandidate = elem;
+						break;
+					} else if (!oCandidate) {
+						oCandidate = elem;
+					}
+				}
+				if (oCandidate) {
+					oHyperlink = oCandidate;
+				}
+			}
+		}
 		return oHyperlink ? oHyperlink.data : null;
+	};
+	//checks that the hyperlink can be opened(the location refers to the existing sheet/range/defined name)
+	Worksheet.prototype.isValidHyperlink = function(oHyperlink){
+		if (!oHyperlink) {
+			return false;
+		}
+		if (null != oHyperlink.Hyperlink) {
+			//external link
+			return true;
+		}
+		var sLocation = oHyperlink.getLocation();
+		if (!sLocation) {
+			return false;
+		}
+		if (null != oHyperlink.LocationSheet) {
+			//sheet name case is ignored on navigating -> Sheet1===SHEEt1
+			return !!this.workbook.getWorksheetByName(oHyperlink.LocationSheet, true);
+		}
+		var aRanges = AscCommonExcel.getRangeByRef(sLocation, this, true);
+		return !!(aRanges && aRanges.length);
 	};
 	Worksheet.prototype.getMergedByCell = function(row, col){
 		var oMergeInfo = this.mergeManager.getByCell(row, col);
