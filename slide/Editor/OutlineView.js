@@ -1744,6 +1744,14 @@
 		outlineParagraph.TextPr.Value = parTextPr;
 		outlineParagraph.TextPr.CalcValue = parTextPr;
 	};
+	OutlineView.prototype.getStyles = function () {
+		return AscFormat.ExecuteNoHistory(function () {
+			const styles = new CStyles(false);
+			const default_style = new CStyle("defaultStyle", null, null, null, true);
+			styles.Add(default_style);
+			return {styles: styles, lastId: default_style.Id};
+		}, this, []);
+	};
 	OutlineView.prototype.createOutlineShape = function (outlineSlides, width, height) {
 		this.reset();
 		return AscFormat.ExecuteNoHistory(function () {
@@ -1753,8 +1761,7 @@
 			outlineShape.createTextBody();
 			outlineShape.txBody.bodyPr.setInsets(0, 0, 0, 0);
 			outlineShape.themeOverride = AscFormat.GenerateDefaultTheme();
-			const styles = AscWord.DEFAULT_STYLES;
-			outlineShape.stylesOverride = {styles: styles, lastId: styles.Get_Default_Paragraph()};
+			outlineShape.stylesOverride = this.getStyles();
 			const outlineContent = outlineShape.txBody.content;
 			outlineContent.ClearContent(false);
 			this.fillOutlineShape(outlineShape, outlineSlides);
@@ -1766,7 +1773,9 @@
 		if (this.outlineShape) {
 			this.outlineShape.extX = width;
 			this.outlineShape.extY = typeof height === "number" ? height : 2000;
-			this.outlineShape.recalculateContent();
+			if (this.outlineShape.extX && this.outlineShape.extY) {
+				this.outlineShape.recalculateContent();
+			}
 			this.outlineShape.contentWidth = width;
 		}
 	}
