@@ -9404,9 +9404,9 @@ background-repeat: no-repeat;\
 	// print-preview
 	asc_docs_api.prototype.asc_initPrintPreview = function(containerId, options)
 	{
-		if (this.printPreview)
-			return null;
-		this.printPreview = new AscCommon.CPresentationPrintPreview(this, containerId);
+		if (!this.printPreview) {
+			this.printPreview = new AscCommon.CPresentationPrintPreview(this, containerId);
+		}
 		this.printPreview.initPrinter(options.advancedOptions);
 		const logicDocument = this.private_GetLogicDocument();
 		logicDocument && logicDocument.Document_UpdateInterfaceState();
