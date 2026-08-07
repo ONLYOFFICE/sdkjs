@@ -5557,6 +5557,8 @@
 		this.m_nAnnotType = v;
 	};
 	
+	asc_CCommentDataPDF.prototype["asc_getAnnotType"] = asc_CCommentDataPDF.prototype.asc_getAnnotType;
+	asc_CCommentDataPDF.prototype["asc_putAnnotType"] = asc_CCommentDataPDF.prototype.asc_putAnnotType;
 	window["Asc"]["asc_CCommentDataPDF"] = window["Asc"].asc_CCommentDataPDF = asc_CCommentDataPDF;
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
