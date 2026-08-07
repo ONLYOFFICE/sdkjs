@@ -2986,13 +2986,13 @@
 						case AscPDF.ACTIONS_TYPES.JavaScript:
 							oApiAction = new ApiJsAction(action);
 							break;
-						case AscPDF.ACTIONS_TYPES.ResetForms:
+						case AscPDF.ACTIONS_TYPES.ResetForm:
 							oApiAction = new ApiResetFormsAction(action);
 							break;
 						case AscPDF.ACTIONS_TYPES.URI:
 							oApiAction = new ApiUriAction(action);
 							break;
-						case AscPDF.ACTIONS_TYPES.HideShowForms:
+						case AscPDF.ACTIONS_TYPES.HideShow:
 							oApiAction = new ApiHideShowFormsAction(action);
 							break;
 						case AscPDF.ACTIONS_TYPES.GoTo:
