@@ -11656,6 +11656,13 @@ function isAllowPasteLink(pastedWb) {
             if (isSmoothScroll && r2 < r1) {
                 r2 = r1;
             }
+			//cleared area can start above the top of row r1, rows above it are visible there too
+			if (isSmoothScroll) {
+				let clearTopPos = clearTop - clearOffset;
+				while (r1 > vr.r1 && this.getCellTopRelative(r1, undefined, true) > clearTopPos) {
+					r1--;
+				}
+			}
 
             let startClip = function () {
                 if (isSmoothScroll) {
@@ -12054,6 +12061,13 @@ function isAllowPasteLink(pastedWb) {
 			}
 			if (this.workbook.getSmoothScrolling() && c2 < c1) {
 				c2 = c1;
+			}
+			//cleared area can start to the left of column c1, columns before it are visible there too
+			if (this.workbook.getSmoothScrolling()) {
+				let clearLeftPos = clearLeft - clearOffset;
+				while (c1 > vr.c1 && this.getCellLeftRelative(c1, undefined, true) > clearLeftPos) {
+					c1--;
+				}
 			}
 
             var range = new asc_Range(c1, vr.r1, c2, vr.r2);
@@ -20683,6 +20697,33 @@ function isAllowPasteLink(pastedWb) {
 			},
 			checkVisible: function () {
 				return null !== t.getCellVisibleRange(c.bbox.c1, c.bbox.r1);
+			},
+			//bounds of the area the editor belongs to, it must not be drawn outside of them
+			getBounds: function () {
+				let ctxWidth = t.getCtxWidth();
+				//in rtl mode headers are placed on the right side
+				let isRtl = t.getRightToLeft();
+				let bounds = {
+					left: isRtl ? 0 : t.cellsLeft,
+					top: t.cellsTop,
+					right: isRtl ? ctxWidth - t.cellsLeft : ctxWidth
+				};
+
+				if (t.topLeftFrozenCell) {
+					let frozenOffset = t.getFrozenPaneOffset();
+					if (col >= t.topLeftFrozenCell.getCol0()) {
+						if (isRtl) {
+							bounds.right -= frozenOffset.offsetX;
+						} else {
+							bounds.left += frozenOffset.offsetX;
+						}
+					}
+					if (row >= t.topLeftFrozenCell.getRow0()) {
+						bounds.top += frozenOffset.offsetY;
+					}
+				}
+
+				return bounds;
 			}
 		});
 	};

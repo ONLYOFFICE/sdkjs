@@ -123,6 +123,8 @@ function (window, undefined) {
 		this.cursor = undefined;
 		this.cursorStyle = undefined;
 		this.cursorTID = undefined;
+		this.canvasOffsetLeft = 0;
+		this.canvasOffsetTop = 0;
 		this.cursorPos = 0;
 		this.beginCompositePos = -1;
 		this.compositeLength = 0;
@@ -2081,21 +2083,42 @@ function (window, undefined) {
 			}
 		}
 
-		// Calculate canvas offset inside container
-		let ws = this.handlers.trigger("getActiveWSView");
+		// editor can be partially scrolled out of its area(under the headers, the group bar or the frozen pane).
+		// clip the container by that area(it has overflow: hidden) and shift the canvases inside it
+		let bounds = this.options.getBounds && this.options.getBounds();
+		let canvasLeft = 0;
 		let canvasTop = 0;
-		let cellsTop = ws && AscCommon.AscBrowser.convertToRetinaValue(ws.cellsTop);
-		if (ws && top < cellsTop) {
-			// If editor position is above data area
-			canvasTop = top < 0 ? -(cellsTop + Math.abs(top)) : top - cellsTop;
-			// Fix container at headers level
-			top = cellsTop;
+		let outerWidth = widthStyle;
+		let outerHeight = heightStyle;
+		if (bounds) {
+			let leftBound = AscCommon.AscBrowser.convertToRetinaValue(bounds.left);
+			let topBound = AscCommon.AscBrowser.convertToRetinaValue(bounds.top);
+			let rightBound = AscCommon.AscBrowser.convertToRetinaValue(bounds.right);
+
+			if (top < topBound) {
+				canvasTop = top - topBound;
+				outerHeight += canvasTop;
+				top = topBound;
+			}
+			if (left < leftBound) {
+				canvasLeft = left - leftBound;
+				outerWidth += canvasLeft;
+				left = leftBound;
+			}
+			if (left + outerWidth > rightBound) {
+				outerWidth = rightBound - left;
+			}
+
+			outerWidth = Math.max(outerWidth, 0);
+			outerHeight = Math.max(outerHeight, 0);
 		}
+		this.canvasOffsetLeft = canvasLeft;
+		this.canvasOffsetTop = canvasTop;
 
 		this.canvasOuterStyle.left = left + 'px';
 		this.canvasOuterStyle.top = top + 'px';
-		this.canvasOuterStyle.width = widthStyle + 'px';
-		this.canvasOuterStyle.height = heightStyle + 'px';
+		this.canvasOuterStyle.width = outerWidth + 'px';
+		this.canvasOuterStyle.height = outerHeight + 'px';
 		if (!this.getMenuEditorMode()) {
 			this.canvasOuterStyle.zIndex = /*this.top < 0 ? -1 :*/ z;
 		}
@@ -2103,6 +2126,7 @@ function (window, undefined) {
 		this.canvas.style.width = this.canvasOverlay.style.width = widthStyle + 'px';
 		this.canvas.style.height = this.canvasOverlay.style.height = heightStyle + 'px';
 		this.canvas.style.top = this.canvasOverlay.style.top = canvasTop + 'px';
+		this.canvas.style.left = this.canvasOverlay.style.left = canvasLeft + 'px';
 	};
 
 	CellEditor.prototype._calculateCanvasSize = function () {
@@ -2365,11 +2389,9 @@ function (window, undefined) {
 
 		if (!window['IS_NATIVE_EDITOR']) {
 
-			// update cursor position
-			let scrollDiff = parseFloat(this.canvas.style.top);
-
-			this.cursorStyle.left = curLeft + "px";
-			this.cursorStyle.top = curTop + scrollDiff + "px";
+			// take into account the shift of the canvases inside the container
+			this.cursorStyle.left = curLeft + this.canvasOffsetLeft + "px";
+			this.cursorStyle.top = curTop + this.canvasOffsetTop + "px";
 
 			this.cursorStyle.width = (((2 * AscCommon.AscBrowser.retinaPixelRatio) >> 0) / AscCommon.AscBrowser.retinaPixelRatio) + "px";
 			this.cursorStyle.height = curHeight + "px";
