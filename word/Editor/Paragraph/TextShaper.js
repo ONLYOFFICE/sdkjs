@@ -107,6 +107,41 @@
 		if (!oTextPr)
 			return AscWord.fontslot_None;
 
+		// DrawingML text properties (<a:rPr>) have no counterpart to <w:cs/> and <w:rtl/>,
+		// so complex script text can never reach fontslot_CS through the explicit flags
+		// and always falls back to the Latin font. Select the slot from the character for
+		// that content only. WordprocessingML keeps its flag driven behaviour, which
+		// matches how MS Word resolves the slots.
+		//
+		// Restricted to the scripts measured against PowerPoint. Hebrew, Arabic and
+		// Syriac are drawn with <a:cs> there; Thaana is not, even though it is also
+		// right-to-left, so a plain right-to-left test would be too wide.
+		if (this.Paragraph
+			&& false === this.Paragraph.bFromDocument
+			&& !oTextPr.CS
+			&& !oTextPr.RTL)
+		{
+			// The same classification the shaper uses to split segments, so the slot
+			// cannot change in the middle of one. It also folds U+060C..U+074A into
+			// Arabic, which is why most Syriac arrives here as Arabic and the Syriac
+			// branch below covers the Syriac Supplement block.
+			let nScript = this.GetTextScript(nUnicode);
+
+			// Combining marks carry no script of their own. Deciding per code point
+			// would put an Arabic base in the CS slot and its vowel marks in the ASCII
+			// slot, and a font change flushes the shaping buffer - the marks would be
+			// shaped apart from the letter they belong to. Continue the script of the
+			// segment being shaped instead, the same way this.Script is carried forward
+			// in private_CheckNewSegment.
+			if (AscFonts.HB_SCRIPT.HB_SCRIPT_INHERITED === nScript)
+				nScript = this.Script;
+
+			if (AscFonts.HB_SCRIPT.HB_SCRIPT_HEBREW === nScript
+				|| AscFonts.HB_SCRIPT.HB_SCRIPT_ARABIC === nScript
+				|| AscFonts.HB_SCRIPT.HB_SCRIPT_SYRIAC === nScript)
+				return AscWord.fontslot_CS;
+		}
+
 		return AscWord.GetFontSlotByTextPr(nUnicode, oTextPr);
 	};
 	CParagraphTextShaper.prototype.GetLigaturesType = function(textScript)
