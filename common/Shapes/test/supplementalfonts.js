@@ -101,6 +101,9 @@
 	TestCollection.prototype.setLatin = function (v) { this.latin = v; };
 	TestCollection.prototype.setEA = function (v) { this.ea = v; };
 	TestCollection.prototype.setCS = function (v) { this.cs = v; };
+	TestCollection.prototype.clearSupplementalFont = function () {
+		this.supplementalFont.length = 0;
+	};
 	TestCollection.prototype.addSupplementalFont = function (script, typeface) {
 		this.supplementalFont.push({ script: script, typeface: typeface });
 	};
@@ -160,9 +163,11 @@
 		return writer.GetData();
 	}
 
-	/* The same again, but with the attribute block left unterminated. Past the end of the
-	   data FileStream.GetUChar keeps returning 0, so a parser that reads on until it sees
-	   an end marker never finishes on input like this. */
+	/* The same again, but with the attribute block left unterminated after an attribute the
+	   reader does know. Past the end of the data FileStream.GetUChar returns 0, which is a
+	   valid attribute id, so a parser that reads until it sees the end marker spins there
+	   for ever. Pass a marker record type to put a record after the collection, or nothing
+	   to cut the data off inside the entry. */
 	function writeWithoutEndMarker(markerType) {
 		var writer = new root.AscCommon.CBinaryFileWriter();
 		writer.StartRecord(0);
@@ -171,14 +176,19 @@
 		writer.WriteULong(1);
 		writer.StartRecord(0);
 		writer.WriteUChar(root.AscCommon.g_nodeAttributeStart);
-		writer._WriteString1(9, "aaaaaaaaaaaaaaaa");
+		writer._WriteString1(0, "Jpan");
 		writer.EndRecord();
 		writer.EndRecord();
 		writer.EndRecord();
-		writer.StartRecord(markerType);
-		writer.WriteULong(0);
-		writer.EndRecord();
-		return writer.GetData();
+		if (undefined !== markerType) {
+			writer.StartRecord(markerType);
+			writer.WriteULong(0);
+			writer.EndRecord();
+			return writer.GetData();
+		}
+		/* No marker: hand back a short stream, so the parse runs into the end of the data. */
+		var bytes = writer.GetData();
+		return bytes.subarray(0, bytes.length - 4);
 	}
 
 	/* Reads the collection back. Returns the reader so the caller can look at what
@@ -251,18 +261,36 @@
 		check("unknown attribute: latin untouched", oddColl.latin, "Cambria");
 		check("unknown attribute: next record still found", oddLoader.stream.GetUChar(), 7);
 
-		/* And the reader has to give up on an attribute block that never ends, rather than
-		   look for an end marker that is not there. */
-		var truncColl = new TestCollection();
-		var truncLoader = null;
+		/* An attribute block that never ends has to stop at the end of its entry, rather
+		   than look for an end marker that is not there. */
+		var openColl = new TestCollection();
+		var openLoader = null;
 		try {
-			truncLoader = read(writeWithoutEndMarker(7), truncColl);
+			openLoader = read(writeWithoutEndMarker(7), openColl);
 		} catch (e) {
 			log("  (" + e.message + ")");
 		}
-		check("unterminated block: the parse stops", null !== truncLoader, true);
+		check("unterminated block: the parse stops", null !== openLoader, true);
 		check("unterminated block: next record still found",
-			truncLoader ? truncLoader.stream.GetUChar() : -1, 7);
+			openLoader ? openLoader.stream.GetUChar() : -1, 7);
+
+		/* And the same with the data cut off inside the entry, so there is no marker to
+		   find and nothing after the record either. */
+		var cutColl = new TestCollection();
+		var cutStopped = true;
+		try {
+			read(writeWithoutEndMarker(), cutColl);
+		} catch (e) {
+			cutStopped = false;
+			log("  (" + e.message + ")");
+		}
+		check("unterminated block at end of data: the parse stops", cutStopped, true);
+
+		/* Reading a second time replaces the entries rather than appending to them. */
+		var reloaded = new TestCollection();
+		read(write(src), reloaded);
+		read(write(src), reloaded);
+		check("reading twice does not accumulate", reloaded.supplementalFont.length, fonts.length);
 
 		/* The record layout itself, as the C++ writer produces it: type 3, then the
 		   record length, then the number of entries. */

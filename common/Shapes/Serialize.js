@@ -5252,7 +5252,10 @@ function BinaryPPTYLoader()
         var s = this.stream;
 
         var _rec_start = s.cur;
-        var _end_rec = _rec_start + s.GetULong() + 4;
+        // The record length is read from the file, so it is held to the end of the data as
+        // well: past that GetUChar returns 0 without moving, and this loop would keep
+        // handing that to a reader that has no end of its own to stop at.
+        var _end_rec = Math.min(_rec_start + s.GetULong() + 4, s.size);
 
         while (s.cur < _end_rec)
         {
@@ -5279,15 +5282,17 @@ function BinaryPPTYLoader()
                     var _start_supplemental = s.cur;
                     var _end_supplemental = _start_supplemental + s.GetULong() + 4;
                     var _count = s.GetULong();
-                    // The count comes out of the file, so it is also bounded by the end of
-                    // the record: a corrupt one must not send the reader off past it.
+                    fontcolls.clearSupplementalFont();
+                    // Everything here comes out of the file, so nothing is trusted on its
+                    // own: the count is bounded by the end of the record as well, and each
+                    // entry is told where it has to stop.
                     for (var i = 0; i < _count && s.cur < _end_supplemental; ++i)
                     {
                         s.Skip2(1); // type
-                        var _font = this.ReadSupplementalFont();
+                        var _font = this.ReadSupplementalFont(_end_supplemental);
                         fontcolls.addSupplementalFont(_font.script, _font.typeface);
                     }
-                    s.Seek2(_end_supplemental);
+                    s.Seek2(Math.min(_end_supplemental, s.size));
                     break;
                 }
                 default:
@@ -5301,12 +5306,15 @@ function BinaryPPTYLoader()
         s.Seek2(_end_rec);
     };
 
-    this.ReadSupplementalFont = function()
+    this.ReadSupplementalFont = function(nEndLimit)
     {
         var s = this.stream;
 
         var _rec_start = s.cur;
-        var _end_rec = _rec_start + s.GetULong() + 4;
+        // The length is read from the file, so it is held to the end of the record this
+        // entry belongs to and to the end of the data: a corrupt one must not let an entry
+        // eat what follows it, or point beyond the stream.
+        var _end_rec = Math.min(_rec_start + s.GetULong() + 4, nEndLimit, s.size);
 
         var script = "";
         var typeface = "";
@@ -5314,8 +5322,9 @@ function BinaryPPTYLoader()
         s.Skip2(1); // start attributes
 
         var _unknown = false;
-        while (!_unknown)
+        while (!_unknown && s.cur < _end_rec)
         {
+            var _prev_pos = s.cur;
             var _at = s.GetUChar();
             if (_at == g_nodeAttributeEnd)
                 break;
@@ -5334,19 +5343,27 @@ function BinaryPPTYLoader()
                 }
                 default:
                 {
-                    // An attribute this build does not know: there is no length in front
-                    // of it, so its value cannot be stepped over and everything read from
-                    // here on would be out of step. Stop, and let the seek below put the
-                    // stream back on the record boundary. Anything after the unknown
-                    // attribute is dropped, which is preferable to reading on until a byte
-                    // happens to look like the end marker - past the end of the stream
-                    // GetUChar keeps returning 0, so that search need never finish.
+                    // An attribute this build does not know: there is no length in front of
+                    // it, so its value cannot be stepped over and everything read from here
+                    // on would be out of step. Stop, and let the seek below put the stream
+                    // back on the record boundary. Anything after the unknown attribute is
+                    // dropped, which is preferable to reading on out of step.
                     _unknown = true;
                     break;
                 }
             }
+
+            // Reading short of the end of the data leaves the position where it was -
+            // GetULong stops without moving when fewer than four bytes are left - so the
+            // record boundary on its own is not enough to get out of this loop.
+            if (s.cur <= _prev_pos)
+                break;
         }
 
+        // Between the boundary and the check above, an attribute block that was never
+        // terminated cannot run past this entry. Past the end of the data GetUChar returns
+        // 0, which is a valid attribute id, so a search for the end marker would otherwise
+        // never finish.
         s.Seek2(_end_rec);
 
         return { script: script, typeface: typeface };

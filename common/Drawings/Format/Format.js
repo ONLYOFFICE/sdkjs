@@ -10019,6 +10019,9 @@
 			if (this.fontScheme)
 				this.fontScheme.checkFromFontCollection(pr, this, FONT_REGION_CS);
 		};
+		FontCollection.prototype.clearSupplementalFont = function () {
+			this.supplementalFont.length = 0;
+		};
 		FontCollection.prototype.addSupplementalFont = function (script, typeface) {
 			this.supplementalFont.push(new SupplementalFont(script, typeface));
 		};
