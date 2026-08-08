@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Font slot selection</title>
+
+    <script type="text/javascript" src="./../../../../common/libfont/common.js"></script>
+
+    <script type="text/javascript">
+        // The lookup table in FontClassification.js is allocated through
+        // AscFonts.allocate, which the font engine normally provides. This page
+        // loads no fonts and measures nothing, so the one line body from
+        // common/libfont/loader.js is enough and the engine is left out.
+        window['AscFonts'] = window['AscFonts'] || {};
+        window['AscFonts'].allocate = function(size) { return new Uint8Array(size); };
+    </script>
+
+    <script type="text/javascript" src="./../../../../common/commonDefines.js"></script>
+    <script type="text/javascript" src="./../Run/FontClassification.js"></script>
+    <script type="text/javascript" src="./../../../../common/libfont/textshaper.js"></script>
+    <script type="text/javascript" src="./../../../../common/libfont/stringshaper.js"></script>
+    <script type="text/javascript" src="./../TextShaper.js"></script>
+</head>
+
+<body style="font-family: monospace; font-size: 13px; padding: 16px;">
+    <h3 style="margin-top: 0;">CParagraphTextShaper.GetFontSlot</h3>
+    <script type="text/javascript" src="./fontslot.js"></script>
+</body>
+
+</html>
