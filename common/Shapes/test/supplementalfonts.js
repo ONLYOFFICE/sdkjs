@@ -286,11 +286,15 @@
 		}
 		check("unterminated block at end of data: the parse stops", cutStopped, true);
 
-		/* Reading a second time replaces the entries rather than appending to them. */
+		/* Reading a second time replaces the entries rather than adding to them, and a
+		   collection that carries no record 3 at all leaves none behind either. */
 		var reloaded = new TestCollection();
 		read(write(src), reloaded);
 		read(write(src), reloaded);
 		check("reading twice does not accumulate", reloaded.supplementalFont.length, fonts.length);
+		read(write(makeCollection([])), reloaded);
+		check("reading one without script fonts clears the previous ones",
+			reloaded.supplementalFont.length, 0);
 
 		/* The record layout itself, as the C++ writer produces it: type 3, then the
 		   record length, then the number of entries. */

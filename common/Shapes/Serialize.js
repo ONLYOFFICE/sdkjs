@@ -5251,6 +5251,11 @@ function BinaryPPTYLoader()
     {
         var s = this.stream;
 
+        // Cleared here rather than where record 3 is read, so that reading a collection
+        // that has no record 3 into a FontCollection that was used before leaves it with
+        // no entries instead of the previous ones.
+        fontcolls.clearSupplementalFont();
+
         var _rec_start = s.cur;
         // The record length is read from the file, so it is held to the end of the data as
         // well: past that GetUChar returns 0 without moving, and this loop would keep
@@ -5280,19 +5285,20 @@ function BinaryPPTYLoader()
                 case 3:
                 {
                     var _start_supplemental = s.cur;
-                    var _end_supplemental = _start_supplemental + s.GetULong() + 4;
-                    var _count = s.GetULong();
-                    fontcolls.clearSupplementalFont();
                     // Everything here comes out of the file, so nothing is trusted on its
-                    // own: the count is bounded by the end of the record as well, and each
-                    // entry is told where it has to stop.
+                    // own: this record is held inside the font collection it belongs to,
+                    // the count is bounded by the end of it, and each entry is told where
+                    // it has to stop.
+                    var _end_supplemental = Math.min(_start_supplemental + s.GetULong() + 4,
+                        _end_rec, s.size);
+                    var _count = s.GetULong();
                     for (var i = 0; i < _count && s.cur < _end_supplemental; ++i)
                     {
                         s.Skip2(1); // type
                         var _font = this.ReadSupplementalFont(_end_supplemental);
                         fontcolls.addSupplementalFont(_font.script, _font.typeface);
                     }
-                    s.Seek2(Math.min(_end_supplemental, s.size));
+                    s.Seek2(_end_supplemental);
                     break;
                 }
                 default:
