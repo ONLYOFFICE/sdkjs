@@ -11919,6 +11919,9 @@ function(window, undefined) {
 		if (this.chart) {
 			this.chart.changeChartType(nType);
 			this.checkDlblsPosition();
+			if (this.getDataTable() && !this.isDataTableSupported()) {
+				this.showDataTable(false);
+			}
 			this.resetToChartStyleSoft();
 		}
 		return this.getChartType() === nType;
@@ -11978,17 +11981,24 @@ function(window, undefined) {
 	CChartSpace.prototype.getTheme = function () {
 		return this.getParentObjects().theme;
 	};
+	CChartSpace.prototype.isDataTableSupported = function () {
+		if (this.isChartEx()) {
+			return false;
+		}
+		const chartType = this.getChartType();
+		return !(AscFormat.isPieChartType(chartType) || AscFormat.isDoughnutChartType(chartType) ||
+			AscFormat.isScatterChartType(chartType) || AscFormat.isRadarChartType(chartType));
+	};
 	CChartSpace.prototype.showDataTable = function (bShow, bWithKeys) {
 		const plotArea = this.getPlotArea();
 		if (!plotArea) {
 			return;
 		}
-		if (this.isChartEx()) {
-			return;
-		}
-
 		if (!bShow) {
 			plotArea.setDTable(null);
+			return;
+		}
+		if (!this.isDataTableSupported()) {
 			return;
 		}
 
