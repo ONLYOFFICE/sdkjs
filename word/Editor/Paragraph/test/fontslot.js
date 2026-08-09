@@ -154,6 +154,8 @@
 	check("DrawingML Arabic alef U+0627", slotOf(0x0627, DRAWING), AscWord.fontslot_CS);
 	check("DrawingML Syriac alaph U+0710", slotOf(0x0710, DRAWING), AscWord.fontslot_CS);
 	check("DrawingML Syriac Supplement U+0860", slotOf(0x0860, DRAWING), AscWord.fontslot_CS);
+	check("DrawingML Thaana U+0780", slotOf(0x0780, DRAWING), AscWord.fontslot_CS);
+	check("DrawingML Thaana U+07A6", slotOf(0x07A6, DRAWING), AscWord.fontslot_CS);
 
 	// ---- DrawingML: everything else keeps the slot it had -------------------
 	check("DrawingML Latin A U+0041", slotOf(0x0041, DRAWING), AscWord.fontslot_ASCII);
@@ -161,10 +163,6 @@
 	// Greek and Cyrillic land in fontslot_HAnsi, which the drawer resolves to
 	// _rfonts.HAnsi - filled from <a:latin> just as Ascii is. Asserted against
 	// the unpatched lookup rather than a hard coded slot.
-	// Thaana is right-to-left and sits in the same lookup range as Hebrew and
-	// Arabic, but PowerPoint keeps it on <a:latin>. This is what stops the
-	// condition from being a plain right-to-left test.
-	checkSame("DrawingML Thaana U+0780 unchanged", 0x0780, DRAWING);
 	checkSame("DrawingML Greek U+03B1 unchanged", 0x03B1, DRAWING);
 	checkSame("DrawingML Cyrillic U+0410 unchanged", 0x0410, DRAWING);
 
@@ -172,6 +170,8 @@
 	// Word draws a flagless Hebrew run with the ascii/hAnsi font, not the cs one.
 	check("Document Hebrew, no flags", slotOf(0x05D0, DOCUMENT), AscWord.fontslot_ASCII);
 	check("Document Arabic, no flags", slotOf(0x0627, DOCUMENT), AscWord.fontslot_ASCII);
+	// Thaana is one of the four scripts that move in DrawingML, so this is the
+	// case that shows the split is by content origin and not by script alone.
 	checkSame("Document Thaana unchanged", 0x0780, DOCUMENT);
 	checkSame("Document Japanese unchanged", 0x3042, DOCUMENT);
 	check("Document Hebrew, <w:cs/>", slotOf(0x05D0, DOCUMENT, textPr(true, false)), AscWord.fontslot_CS);

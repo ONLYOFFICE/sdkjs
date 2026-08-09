@@ -113,9 +113,10 @@
 		// that content only. WordprocessingML keeps its flag driven behaviour, which
 		// matches how MS Word resolves the slots.
 		//
-		// Restricted to the scripts measured against PowerPoint. Hebrew, Arabic and
-		// Syriac are drawn with <a:cs> there; Thaana is not, even though it is also
-		// right-to-left, so a plain right-to-left test would be too wide.
+		// Restricted to the four scripts measured against PowerPoint: Hebrew, Arabic,
+		// Syriac and Thaana are drawn with <a:cs> there. That is as far as the
+		// measurements go, so no rule is generalised from them - adding a fifth script
+		// should mean measuring it first.
 		if (this.Paragraph
 			&& false === this.Paragraph.bFromDocument
 			&& !oTextPr.CS
@@ -138,7 +139,8 @@
 
 			if (AscFonts.HB_SCRIPT.HB_SCRIPT_HEBREW === nScript
 				|| AscFonts.HB_SCRIPT.HB_SCRIPT_ARABIC === nScript
-				|| AscFonts.HB_SCRIPT.HB_SCRIPT_SYRIAC === nScript)
+				|| AscFonts.HB_SCRIPT.HB_SCRIPT_SYRIAC === nScript
+				|| AscFonts.HB_SCRIPT.HB_SCRIPT_THAANA === nScript)
 				return AscWord.fontslot_CS;
 		}
 
