@@ -5297,6 +5297,15 @@ function BinaryPPTYLoader()
                     }
                     var _end_supplemental = Math.min(_start_supplemental + s.GetULong() + 4,
                         _end_rec, s.size);
+                    // A length that leaves no room for the count is not a record this can
+                    // read. Reading the count anyway would take four bytes from outside it
+                    // and then seek back over them, so what follows would be picked up a
+                    // second time as records of the font collection.
+                    if (s.cur + 4 > _end_supplemental)
+                    {
+                        s.Seek2(_end_rec);
+                        break;
+                    }
                     var _count = s.GetULong();
                     for (var i = 0; i < _count && s.cur + 1 < _end_supplemental; ++i)
                     {

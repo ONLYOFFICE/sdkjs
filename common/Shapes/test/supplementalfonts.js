@@ -225,6 +225,36 @@
 		return bytes;
 	}
 
+	/* A record 3 whose declared length is too short to hold even its own count. Reading the
+	   count anyway takes four bytes from outside the record and then seeks back over them,
+	   so the bytes after it get picked up a second time as records of the font collection -
+	   which is how a crafted file reaches the readers for those records. */
+	function writeWithShortSupplementalRecord(declaredLength, markerType) {
+		var writer = new root.AscCommon.CBinaryFileWriter();
+		writer.StartRecord(0);
+		var typeAt = writer.GetCurPosition(); /* the record 3 type byte */
+		writer.StartRecord(3);
+		writer.WriteULong(1);
+		writer.StartRecord(0);
+		writer.WriteUChar(root.AscCommon.g_nodeAttributeStart);
+		writer._WriteString1(0, "Jpan");
+		writer._WriteString1(1, "MS PGothic");
+		writer.WriteUChar(root.AscCommon.g_nodeAttributeEnd);
+		writer.EndRecord();
+		writer.EndRecord();
+		writer.EndRecord();
+		writer.StartRecord(markerType);
+		writer.WriteULong(0);
+		writer.EndRecord();
+
+		var bytes = writer.GetData();
+		bytes[typeAt + 1] = declaredLength; /* the four length bytes follow the type */
+		bytes[typeAt + 2] = 0;
+		bytes[typeAt + 3] = 0;
+		bytes[typeAt + 4] = 0;
+		return bytes;
+	}
+
 	/* Reads the collection back. Returns the reader so the caller can look at what
 	   follows the record. The byte reads are capped, so a parse that does not terminate
 	   fails a test rather than hanging the run. */
@@ -292,6 +322,29 @@
 		check("unknown attribute: entry still counted", oddColl.supplementalFont.length, 1);
 		check("unknown attribute: latin untouched", oddColl.latin, "Cambria");
 		check("unknown attribute: next record still found", oddLoader.stream.GetUChar(), 7);
+
+		/* A record too short for its own count is skipped whole, so nothing inside it is
+		   handed to the readers for the other records of the collection. `latin` staying
+		   untouched is what shows that: without this, the leftover bytes were read as a
+		   record 0 and went through ReadTextFontTypeface. */
+		for (var shortLen = 0; shortLen < 4; ++shortLen) {
+			var shortColl = new TestCollection();
+			var shortLoader = null;
+			try {
+				shortLoader = read(writeWithShortSupplementalRecord(shortLen, 7), shortColl);
+			} catch (e) {
+				/* Without the check, this reaches ReadTextFontTypeface, which reads until it
+				   sees an end marker and never finds one. */
+				log("  (" + e.message + ")");
+			}
+			check("record 3 of length " + shortLen + ": the parse stops", null !== shortLoader, true);
+			check("record 3 of length " + shortLen + ": no entries",
+				shortColl.supplementalFont.length, 0);
+			check("record 3 of length " + shortLen + ": nothing re-read as another record",
+				shortColl.latin, null);
+			check("record 3 of length " + shortLen + ": next record still found",
+				shortLoader ? shortLoader.stream.GetUChar() : -1, 7);
+		}
 
 		/* A string longer than the entry holding it must not take in what follows. */
 		var longColl = new TestCollection();
