@@ -5251,8 +5251,16 @@ function BinaryPPTYLoader()
     {
         var s = this.stream;
 
+        // Cleared here rather than where record 3 is read, so that reading a collection
+        // that has no record 3 into a FontCollection that was used before leaves it with
+        // no entries instead of the previous ones.
+        fontcolls.clearSupplementalFont();
+
         var _rec_start = s.cur;
-        var _end_rec = _rec_start + s.GetULong() + 4;
+        // The record length is read from the file, so it is held to the end of the data as
+        // well: past that GetUChar returns 0 without moving, and this loop would keep
+        // handing that to a reader that has no end of its own to stop at.
+        var _end_rec = Math.min(_rec_start + s.GetULong() + 4, s.size);
 
         while (s.cur < _end_rec)
         {
@@ -5276,8 +5284,39 @@ function BinaryPPTYLoader()
                 }
                 case 3:
                 {
-                    var _len = s.GetULong();
-                    s.Skip2(_len);
+                    var _start_supplemental = s.cur;
+                    // Everything here comes out of the file, so nothing is trusted on its
+                    // own: this record is held inside the font collection it belongs to,
+                    // the count is bounded by the end of it, and each entry is told where
+                    // it has to stop. The length and the count are four bytes each and are
+                    // read from the file as well, so there has to be room for them first.
+                    if (_start_supplemental + 8 > _end_rec)
+                    {
+                        s.Seek2(_end_rec);
+                        break;
+                    }
+                    var _end_supplemental = Math.min(_start_supplemental + s.GetULong() + 4,
+                        _end_rec, s.size);
+                    // A length that leaves no room for the count is not a record this can
+                    // read. Reading the count anyway would take four bytes from outside it
+                    // and then seek back over them, so what follows would be picked up a
+                    // second time as records of the font collection.
+                    if (s.cur + 4 > _end_supplemental)
+                    {
+                        s.Seek2(_end_rec);
+                        break;
+                    }
+                    var _count = s.GetULong();
+                    // An entry is a type byte and a four byte length before anything else,
+                    // so stop when what is left cannot hold one rather than add an empty
+                    // font for the remainder.
+                    for (var i = 0; i < _count && s.cur + 5 <= _end_supplemental; ++i)
+                    {
+                        s.Skip2(1); // type
+                        var _font = this.ReadSupplementalFont(_end_supplemental);
+                        fontcolls.addSupplementalFont(_font.script, _font.typeface);
+                    }
+                    s.Seek2(_end_supplemental);
                     break;
                 }
                 default:
@@ -5289,6 +5328,109 @@ function BinaryPPTYLoader()
         }
 
         s.Seek2(_end_rec);
+    };
+
+    this.ReadStringInRecord = function(nEnd)
+    {
+        var s = this.stream;
+
+        // GetString2 holds the length it reads against the end of the data, not against
+        // the end of the record being read, so a corrupt one would pull in bytes that
+        // belong to whatever follows. Give up on the record instead: seeking to its end
+        // also ends the loop this is called from. The four bytes of the length can
+        // straddle the boundary themselves, so they are checked before being read.
+        if (s.cur + 4 > nEnd)
+        {
+            s.Seek2(nEnd);
+            return "";
+        }
+
+        var nLen = s.GetULong();
+        if (nLen < 0 || s.cur + 2 * nLen > nEnd)
+        {
+            s.Seek2(nEnd);
+            return "";
+        }
+
+        return s.GetString(nLen);
+    };
+
+    this.ReadSupplementalFont = function(nEndLimit)
+    {
+        var s = this.stream;
+
+        var _rec_start = s.cur;
+
+        // The four bytes of the length are read from the file too, so there has to be room
+        // for them inside the record this entry belongs to.
+        if (_rec_start + 4 > nEndLimit)
+        {
+            s.Seek2(Math.min(nEndLimit, s.size));
+            return { script: "", typeface: "" };
+        }
+
+        // The length itself is held to the end of that record and to the end of the data:
+        // a corrupt one must not let an entry eat what follows it, or point beyond the
+        // stream.
+        var _end_rec = Math.min(_rec_start + s.GetULong() + 4, nEndLimit, s.size);
+
+        var script = "";
+        var typeface = "";
+
+        if (s.cur >= _end_rec)
+        {
+            s.Seek2(_end_rec);
+            return { script: script, typeface: typeface };
+        }
+
+        s.Skip2(1); // start attributes
+
+        var _unknown = false;
+        while (!_unknown && s.cur < _end_rec)
+        {
+            var _prev_pos = s.cur;
+            var _at = s.GetUChar();
+            if (_at == g_nodeAttributeEnd)
+                break;
+
+            switch (_at)
+            {
+                case 0:
+                {
+                    script = this.ReadStringInRecord(_end_rec);
+                    break;
+                }
+                case 1:
+                {
+                    typeface = this.ReadStringInRecord(_end_rec);
+                    break;
+                }
+                default:
+                {
+                    // An attribute this build does not know: there is no length in front of
+                    // it, so its value cannot be stepped over and everything read from here
+                    // on would be out of step. Stop, and let the seek below put the stream
+                    // back on the record boundary. Anything after the unknown attribute is
+                    // dropped, which is preferable to reading on out of step.
+                    _unknown = true;
+                    break;
+                }
+            }
+
+            // Reading short of the end of the data leaves the position where it was -
+            // GetULong stops without moving when fewer than four bytes are left - so the
+            // record boundary on its own is not enough to get out of this loop.
+            if (s.cur <= _prev_pos)
+                break;
+        }
+
+        // Between the boundary and the check above, an attribute block that was never
+        // terminated cannot run past this entry. Past the end of the data GetUChar returns
+        // 0, which is a valid attribute id, so a search for the end marker would otherwise
+        // never finish.
+        s.Seek2(_end_rec);
+
+        return { script: script, typeface: typeface };
     };
 
     this.ReadTextFontTypeface = function()

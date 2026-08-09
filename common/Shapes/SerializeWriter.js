@@ -1628,6 +1628,18 @@ function CBinaryFileWriter()
         oThis.WriteRecord1(0, { Name: coll.latin, Index : -1 }, oThis.WriteTextFontTypeface);
         oThis.WriteRecord1(1, { Name: coll.ea, Index : -1 }, oThis.WriteTextFontTypeface);
         oThis.WriteRecord1(2, { Name: coll.cs, Index : -1 }, oThis.WriteTextFontTypeface);
+
+        if (coll.supplementalFont && coll.supplementalFont.length > 0)
+            oThis.WriteRecordArray(3, 0, coll.supplementalFont, oThis.WriteSupplementalFont);
+    };
+    this.WriteSupplementalFont = function(font)
+    {
+        oThis.WriteUChar(g_nodeAttributeStart);
+
+        oThis._WriteString1(0, font.script);
+        oThis._WriteString1(1, font.typeface);
+
+        oThis.WriteUChar(g_nodeAttributeEnd);
     };
     this.WriteFmtScheme = function(fmt)
     {
