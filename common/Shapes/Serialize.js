@@ -5307,7 +5307,10 @@ function BinaryPPTYLoader()
                         break;
                     }
                     var _count = s.GetULong();
-                    for (var i = 0; i < _count && s.cur + 1 < _end_supplemental; ++i)
+                    // An entry is a type byte and a four byte length before anything else,
+                    // so stop when what is left cannot hold one rather than add an empty
+                    // font for the remainder.
+                    for (var i = 0; i < _count && s.cur + 5 <= _end_supplemental; ++i)
                     {
                         s.Skip2(1); // type
                         var _font = this.ReadSupplementalFont(_end_supplemental);
@@ -5373,6 +5376,12 @@ function BinaryPPTYLoader()
 
         var script = "";
         var typeface = "";
+
+        if (s.cur >= _end_rec)
+        {
+            s.Seek2(_end_rec);
+            return { script: script, typeface: typeface };
+        }
 
         s.Skip2(1); // start attributes
 

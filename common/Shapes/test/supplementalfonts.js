@@ -255,6 +255,30 @@
 		return bytes;
 	}
 
+	/* One entry, a count claiming two, and three bytes of rubbish where the second entry
+	   should be - too few to hold even a type byte and a length. */
+	function writeWithStrayTail(markerType) {
+		var writer = new root.AscCommon.CBinaryFileWriter();
+		writer.StartRecord(0);
+		writer.StartRecord(3);
+		writer.WriteULong(2);
+		writer.StartRecord(0);
+		writer.WriteUChar(root.AscCommon.g_nodeAttributeStart);
+		writer._WriteString1(0, "Jpan");
+		writer._WriteString1(1, "MS PGothic");
+		writer.WriteUChar(root.AscCommon.g_nodeAttributeEnd);
+		writer.EndRecord();
+		writer.WriteUChar(0);
+		writer.WriteUChar(0);
+		writer.WriteUChar(0);
+		writer.EndRecord();
+		writer.EndRecord();
+		writer.StartRecord(markerType);
+		writer.WriteULong(0);
+		writer.EndRecord();
+		return writer.GetData();
+	}
+
 	/* Reads the collection back. Returns the reader so the caller can look at what
 	   follows the record. The byte reads are capped, so a parse that does not terminate
 	   fails a test rather than hanging the run. */
@@ -345,6 +369,14 @@
 			check("record 3 of length " + shortLen + ": next record still found",
 				shortLoader ? shortLoader.stream.GetUChar() : -1, 7);
 		}
+
+		/* A tail too short to be an entry is left alone rather than turned into an empty
+		   font, even though the count says another entry is there. */
+		var tailColl = new TestCollection();
+		var tailLoader = read(writeWithStrayTail(7), tailColl);
+		check("stray tail: only the real entry is kept", tailColl.supplementalFont.length, 1);
+		check("stray tail: that entry is intact", describe(tailColl), "Jpan=MS PGothic");
+		check("stray tail: next record still found", tailLoader.stream.GetUChar(), 7);
 
 		/* A string longer than the entry holding it must not take in what follows. */
 		var longColl = new TestCollection();
