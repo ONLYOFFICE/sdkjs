@@ -191,6 +191,40 @@
 		return bytes.subarray(0, bytes.length - 4);
 	}
 
+	/* Two entries, where the length in front of the first one's script has been made too
+	   long for the entry it sits in. The reader has to give up on that string rather than
+	   take in what comes after it. */
+	function writeWithOverlongString(markerType) {
+		var writer = new root.AscCommon.CBinaryFileWriter();
+		writer.StartRecord(0);
+		writer.StartRecord(3);
+		writer.WriteULong(2);
+		writer.StartRecord(0);
+		writer.WriteUChar(root.AscCommon.g_nodeAttributeStart);
+		var lengthAt = writer.GetCurPosition() + 1; /* after the attribute id */
+		writer._WriteString1(0, "AB");
+		writer.WriteUChar(root.AscCommon.g_nodeAttributeEnd);
+		writer.EndRecord();
+		writer.StartRecord(0);
+		writer.WriteUChar(root.AscCommon.g_nodeAttributeStart);
+		writer._WriteString1(0, "Hang");
+		writer._WriteString1(1, "Malgun Gothic");
+		writer.WriteUChar(root.AscCommon.g_nodeAttributeEnd);
+		writer.EndRecord();
+		writer.EndRecord();
+		writer.EndRecord();
+		writer.StartRecord(markerType);
+		writer.WriteULong(0);
+		writer.EndRecord();
+
+		var bytes = writer.GetData();
+		bytes[lengthAt] = 12; /* twelve characters do not fit in that entry */
+		bytes[lengthAt + 1] = 0;
+		bytes[lengthAt + 2] = 0;
+		bytes[lengthAt + 3] = 0;
+		return bytes;
+	}
+
 	/* Reads the collection back. Returns the reader so the caller can look at what
 	   follows the record. The byte reads are capped, so a parse that does not terminate
 	   fails a test rather than hanging the run. */
@@ -249,17 +283,26 @@
 		var marked = read(write(src, 7), new TestCollection());
 		check("stream is positioned after the record", marked.stream.GetUChar(), 7);
 
-		/* An attribute this build does not know leaves the rest of that entry misread -
-		   the two typefaces after it may or may not survive, so nothing is asserted about
-		   them - but the damage is contained: the entry is still counted, the named fonts
-		   are untouched, and the record that follows the font collection is still found.
-		   Reaching the end of the entry does depend on the parse landing on the end
-		   marker, which is how every attribute block in these files is read. */
+		/* The reader stops at an attribute it does not know, so the two typefaces written
+		   after it in this entry are always dropped. What has to hold is that the damage
+		   stops there: the entry is still counted, the named fonts are untouched, and the
+		   record after the font collection is still found. */
 		var oddColl = new TestCollection();
 		var oddLoader = read(writeWithUnknownAttribute(7), oddColl);
 		check("unknown attribute: entry still counted", oddColl.supplementalFont.length, 1);
 		check("unknown attribute: latin untouched", oddColl.latin, "Cambria");
 		check("unknown attribute: next record still found", oddLoader.stream.GetUChar(), 7);
+
+		/* A string longer than the entry holding it must not take in what follows. */
+		var longColl = new TestCollection();
+		var longLoader = read(writeWithOverlongString(7), longColl);
+		var longFirst = longColl.supplementalFont[0] || { script: "(no entry)" };
+		check("overlong string: entry count", longColl.supplementalFont.length, 2);
+		check("overlong string: nothing taken in from after the entry",
+			longFirst.script, "");
+		check("overlong string: the entry after it is untouched",
+			String(describe(longColl).split(",")[1]), "Hang=Malgun Gothic");
+		check("overlong string: next record still found", longLoader.stream.GetUChar(), 7);
 
 		/* An attribute block that never ends has to stop at the end of its entry, rather
 		   than look for an end marker that is not there. */

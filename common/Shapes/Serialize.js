@@ -5312,6 +5312,24 @@ function BinaryPPTYLoader()
         s.Seek2(_end_rec);
     };
 
+    this.ReadStringInRecord = function(nEnd)
+    {
+        var s = this.stream;
+
+        // GetString2 holds the length it reads against the end of the data, not against
+        // the end of the record being read, so a corrupt one would pull in bytes that
+        // belong to whatever follows. Give up on the record instead: seeking to its end
+        // also ends the loop this is called from.
+        var nLen = s.GetULong();
+        if (nLen < 0 || s.cur + 2 * nLen > nEnd)
+        {
+            s.Seek2(nEnd);
+            return "";
+        }
+
+        return s.GetString(nLen);
+    };
+
     this.ReadSupplementalFont = function(nEndLimit)
     {
         var s = this.stream;
@@ -5339,12 +5357,12 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
-                    script = s.GetString2();
+                    script = this.ReadStringInRecord(_end_rec);
                     break;
                 }
                 case 1:
                 {
-                    typeface = s.GetString2();
+                    typeface = this.ReadStringInRecord(_end_rec);
                     break;
                 }
                 default:

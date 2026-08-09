@@ -10034,7 +10034,9 @@
 		/* supplementalFont is deliberately left out of Write_ToBinary / Read_FromBinary:
 		   that is the history format, a bare concatenation with no length framing, so
 		   adding a field here would desynchronise every reader that does not have it.
-		   The cost is that undoing a font scheme replacement does not restore them. */
+		   Undo and redo in this process keep the entries, because they restore the object
+		   itself; what is lost is a font scheme replacement that has gone through the
+		   serialised history - collaborative editing and replay. */
 		FontCollection.prototype.Write_ToBinary = function (w) {
 			writeString(w, this.latin);
 			writeString(w, this.ea);
