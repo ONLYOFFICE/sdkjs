@@ -5288,11 +5288,17 @@ function BinaryPPTYLoader()
                     // Everything here comes out of the file, so nothing is trusted on its
                     // own: this record is held inside the font collection it belongs to,
                     // the count is bounded by the end of it, and each entry is told where
-                    // it has to stop.
+                    // it has to stop. The length and the count are four bytes each and are
+                    // read from the file as well, so there has to be room for them first.
+                    if (_start_supplemental + 8 > _end_rec)
+                    {
+                        s.Seek2(_end_rec);
+                        break;
+                    }
                     var _end_supplemental = Math.min(_start_supplemental + s.GetULong() + 4,
                         _end_rec, s.size);
                     var _count = s.GetULong();
-                    for (var i = 0; i < _count && s.cur < _end_supplemental; ++i)
+                    for (var i = 0; i < _count && s.cur + 1 < _end_supplemental; ++i)
                     {
                         s.Skip2(1); // type
                         var _font = this.ReadSupplementalFont(_end_supplemental);
@@ -5319,7 +5325,14 @@ function BinaryPPTYLoader()
         // GetString2 holds the length it reads against the end of the data, not against
         // the end of the record being read, so a corrupt one would pull in bytes that
         // belong to whatever follows. Give up on the record instead: seeking to its end
-        // also ends the loop this is called from.
+        // also ends the loop this is called from. The four bytes of the length can
+        // straddle the boundary themselves, so they are checked before being read.
+        if (s.cur + 4 > nEnd)
+        {
+            s.Seek2(nEnd);
+            return "";
+        }
+
         var nLen = s.GetULong();
         if (nLen < 0 || s.cur + 2 * nLen > nEnd)
         {
@@ -5335,9 +5348,18 @@ function BinaryPPTYLoader()
         var s = this.stream;
 
         var _rec_start = s.cur;
-        // The length is read from the file, so it is held to the end of the record this
-        // entry belongs to and to the end of the data: a corrupt one must not let an entry
-        // eat what follows it, or point beyond the stream.
+
+        // The four bytes of the length are read from the file too, so there has to be room
+        // for them inside the record this entry belongs to.
+        if (_rec_start + 4 > nEndLimit)
+        {
+            s.Seek2(Math.min(nEndLimit, s.size));
+            return { script: "", typeface: "" };
+        }
+
+        // The length itself is held to the end of that record and to the end of the data:
+        // a corrupt one must not let an entry eat what follows it, or point beyond the
+        // stream.
         var _end_rec = Math.min(_rec_start + s.GetULong() + 4, nEndLimit, s.size);
 
         var script = "";
