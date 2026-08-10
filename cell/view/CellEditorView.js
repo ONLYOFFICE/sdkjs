@@ -2551,6 +2551,17 @@ function (window, undefined) {
 		}
 	};
 
+	// The top line is no longer the keyboard target. There is no blur event on the input, so reset the state here
+	CellEditor.prototype._topLineLostFocus = function () {
+		if (!this.isTopLineActive) {
+			return;
+		}
+		this._updateTopLineActive(false);
+		this.input.isFocused = false;
+		this.callTopLineMouseup = false;
+		this._updateCursor();
+	};
+
 	CellEditor.prototype._topLineMouseUp = function () {
 		this.callTopLineMouseup = false;
 		// with this combination ctrl+a, click, ctrl+a, click selectionStart is not updated

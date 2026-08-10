@@ -477,6 +477,10 @@
 				  self.resize.apply(self, arguments);
 			  }, "gotFocus": function (hasFocus) {
 				  if (self.isCellEditMode) {
+					  if (hasFocus) {
+						  // the mouse went to the worksheet, the top line gives the keyboard back
+						  self.cellEditor._topLineLostFocus();
+					  }
 					  self.cellEditor.setFocus(!hasFocus);
 				  }
 			  }, "initRowsCount": function () {
