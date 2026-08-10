@@ -86,6 +86,36 @@ function CDocumentReaderMode()
     };
 }
 
+function GetImageAltText(oGraphicObj, oParaDrawing)
+{
+	var sAlt = null;
+	if (oParaDrawing && oParaDrawing.docPr && null != oParaDrawing.docPr.descr) {
+		sAlt = oParaDrawing.docPr.descr;
+	} else if (oGraphicObj && oGraphicObj.getDescription) {
+		sAlt = oGraphicObj.getDescription();
+	}
+	return (null != sAlt && sAlt !== "") ? sAlt : null;
+}
+
+function ApplyImageAltFromNode(oDrawing, imgNode)
+{
+	if (!oDrawing || !imgNode) {
+		return;
+	}
+	var sAlt = imgNode.getAttribute("alt");
+	if (null == sAlt || sAlt === "") {
+		return;
+	}
+	if (oDrawing.docPr && oDrawing.docPr.setDescr) {
+		oDrawing.docPr.setDescr(sAlt);
+	}
+	if (oDrawing.setDescription) {
+		oDrawing.setDescription(sAlt);
+	} else if (oDrawing.GraphicObj && oDrawing.GraphicObj.setDescription) {
+		oDrawing.GraphicObj.setDescription(sAlt);
+	}
+}
+
 function GetObjectsForImageDownload(aBuilderImages, bSameDoc)
 {
     var oMapImages = {}, aBuilderImagesByUrl = [], aUrls =[];
@@ -642,6 +672,10 @@ CopyProcessor.prototype =
 					oImg.oAttributes["width"] = Math.round(_w);
 					oImg.oAttributes["height"] = Math.round(_h);
 					oImg.oAttributes["src"] = sSrc;
+					var sAlt = GetImageAltText(oGraphicObj, ParaItem);
+					if (sAlt) {
+						oImg.oAttributes["alt"] = sAlt;
+					}
 					oTarget.addChild(oImg);
                     break;
                 }
@@ -2420,6 +2454,10 @@ CopyProcessor.prototype =
 			oImg.oAttributes["width"] = width;
 			oImg.oAttributes["height"] = height;
 			oImg.oAttributes["src"] = sSrc;
+			var sAlt = GetImageAltText(oGraphicObj);
+			if (sAlt) {
+				oImg.oAttributes["alt"] = sAlt;
+			}
 			if (this.api.DocumentReaderMode)
 				oImg.oAttributes["style"] = "max-width:100%;";
 			oDomTarget.addChild(oImg);
@@ -2447,6 +2485,10 @@ CopyProcessor.prototype =
 			oImg.oAttributes["width"] = width;
 			oImg.oAttributes["height"] = height;
 			oImg.oAttributes["src"] = sSrc;
+			var sAlt = GetImageAltText(oGraphicObj);
+			if (sAlt) {
+				oImg.oAttributes["alt"] = sAlt;
+			}
 			if (this.api.DocumentReaderMode)
 				oImg.oAttributes["style"] = "max-width:100%;";
 			oDomTarget.addChild(oImg);
@@ -6958,6 +7000,7 @@ PasteProcessor.prototype =
 								var drawing = oThis.aNeedRecalcImgSize[i].drawing;
 								var img = oThis.aNeedRecalcImgSize[i].img;
 								if (drawing && img) {
+									ApplyImageAltFromNode(drawing, img);
 									var imgSize = oThis._getImgSize(img);
 									let fitPagePictureSize = oThis.fitPictureSizeToPage(imgSize.width, imgSize.height);
 									let nWidth = fitPagePictureSize.nWidth;
@@ -11800,6 +11843,7 @@ PasteProcessor.prototype =
 					if (sSrc) {
 						var image = AscFormat.DrawingObjectsController.prototype.createImage(sSrc, 0, 0, nWidth,
 							nHeight);
+						ApplyImageAltFromNode(image, node);
 						arrImages.push(image);
 						oThis.arrDrawingsPasteOrder.push(image);
 					}
@@ -11841,6 +11885,7 @@ PasteProcessor.prototype =
 								nHeight = fitPagePictureSize.nHeight;
 
 								var Drawing = CreateImageFromBinary(sSrc, nWidth, nHeight);
+								ApplyImageAltFromNode(Drawing, node);
 								if(!oThis.aNeedRecalcImgSize) {
 									oThis.aNeedRecalcImgSize = [];
 								}
