@@ -11899,7 +11899,7 @@
 	
 	function isEastAsianPunctuation(value)
 	{
-		return (0x3000 <= value && value <= 0x4DB5);
+		return (0x3000 <= value && value <= 0x303F);
 	}
 
 	function IsHangul(nCharCode)
