@@ -515,6 +515,10 @@
 
         this.SetNeedCommit(false);
     };
+	CComboBoxField.prototype.SetPlaceholder = function(sText) {
+		this.SetEditable(true);
+		return AscPDF.CTextField.prototype.SetPlaceholder.call(this, sText);
+	};
 	CComboBoxField.prototype.InsertChars = function(aChars) {
 		this.content.EnterText(aChars);
 	};
@@ -861,7 +865,6 @@
     CComboBoxField.prototype.GetFormatArgs          = AscPDF.CTextField.prototype.GetFormatArgs;
 	CComboBoxField.prototype.GetKeystrokeType       = AscPDF.CTextField.prototype.GetKeystrokeType;
     CComboBoxField.prototype.GetKeystrokeArgs       = AscPDF.CTextField.prototype.GetKeystrokeArgs;
-    CComboBoxField.prototype.SetPlaceholder         = AscPDF.CTextField.prototype.SetPlaceholder;
     CComboBoxField.prototype.GetPlaceholder         = AscPDF.CTextField.prototype.GetPlaceholder;
     CComboBoxField.prototype.SetRegularExp          = AscPDF.CTextField.prototype.SetRegularExp;
     CComboBoxField.prototype.GetRegularExp          = AscPDF.CTextField.prototype.GetRegularExp;

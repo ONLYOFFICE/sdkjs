@@ -439,6 +439,7 @@ function (window, undefined)
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].CDocumentMacros = CDocumentMacros;
 	window['AscCommon'].VbaProject = VbaProject;
+	const realEval = window.eval;
 
 	function _sanitizeCode(value) {
 		if (/\bimport\s*\(/.test(value)) {
@@ -454,16 +455,17 @@ function (window, undefined)
 	 * @param {*} value code to run
 	 * @param {*} params { name: value } map injected as locals
 	 * @param {*} _this value of `this` inside the top-level user code (for PDF)
+	 * @param {*} isNoStrict run script in no strict mode
 	 * @returns 
 	 */
-	function _secureEval(value, params, _this) {
+	function _secureEval(value, params, _this, isNoStrict) {
 		value = _sanitizeCode(value);
 
 		let protoFunc = Object.getPrototypeOf(function(){});
 		// for minimization we use eval!!!
 		let protoFuncGen = null;
 		try {
-			protoFuncGen = eval("Object.getPrototypeOf(function*(){})");
+			protoFuncGen = realEval("Object.getPrototypeOf(function*(){})");
 		} catch (err) {
 			protoFuncGen = null;
 		}
@@ -501,7 +503,6 @@ function (window, undefined)
 		// scope with this === _this). All later reads return a stub, so `var e = eval; e(...)`
 		// can't escape to global scope.
 		const prevEvalDesc = Object.getOwnPropertyDescriptor(window, 'eval');
-		const realEval = window.eval;
 		let evalCallsLeft = 1;
 		const evalStub = function(){};
 		Object.defineProperty(window, 'eval', {
@@ -518,9 +519,14 @@ function (window, undefined)
 
 		let result;
 		try {
+			let expression = "\"use strict\"; return eval(\"\\\"use strict\\\";\\r\\n\" + value)";
+			if (isNoStrict) {
+				expression = "return eval(value)";
+			}
+
 			const _safe_eval_closure = Function.apply(
 				null,
-				names.concat("\"use strict\"; return eval(\"\\\"use strict\\\";\\r\\n\" + value)")
+				names.concat(expression)
 			);
 			result = _safe_eval_closure.apply(_this || null, values);
 		} finally {
@@ -615,13 +621,13 @@ function (window, undefined)
 		AscFonts.IsCheckSymbols = isCheckSymbols;
 		return result;
 	};
-	window['AscCommon'].secureEval = function(value, params, _this){
+	window['AscCommon'].secureEval = function(value, params, _this, isNoStrict){
 		let result;
 		let isCheckSymbols = AscFonts.IsCheckSymbols;
 		AscFonts.IsCheckSymbols = true;
 		try
 		{
-			result = _secureEval(value, params, _this);
+			result = _secureEval(value, params, _this, isNoStrict);
 		}
 		catch (err)
 		{

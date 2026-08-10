@@ -876,7 +876,7 @@
 		});
 
 		// thisArg = oApiDoc preserves Acrobat's `this === Doc` for the top-level script
-		AscCommon.secureEval(str, oParams, oApiDoc);
+		AscCommon.secureEval(str, oParams, oApiDoc, true);
 	}
     
 	function extractArguments(str) {
