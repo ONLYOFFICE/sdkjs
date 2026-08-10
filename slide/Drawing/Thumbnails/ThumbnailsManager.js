@@ -76,6 +76,9 @@
 		if (!this.m_oWordControl.IsThumbnailsSupported()) {
 			return false;
 		}
+		if (Asc.editor.isSlideShow()) {
+			return false;
+		}
 
 		const absolutePosition = thumbnailsContainer.AbsolutePosition;
 		const width = absolutePosition.R - absolutePosition.L;
