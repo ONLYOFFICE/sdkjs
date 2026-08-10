@@ -876,9 +876,7 @@
 		});
 
 		// thisArg = oApiDoc preserves Acrobat's `this === Doc` for the top-level script
-		Asc.editor.nativePdfScriptEval = true;
-		AscCommon.secureEval(str, oParams, oApiDoc);
-		Asc.editor.nativePdfScriptEval = false;
+		AscCommon.secureEval(str, oParams, oApiDoc, true);
 	}
     
 	function extractArguments(str) {
