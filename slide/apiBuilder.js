@@ -10244,6 +10244,16 @@
 	 */
 	ApiTableCell.prototype.Clear = AscBuilder.ApiTableCell.prototype.Clear;
 
+	/**
+	 * Sets the text properties to the content of the current cell.
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CPE"]
+	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current cell.
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetTextPr.js
+	 */
+	ApiTableCell.prototype.SetTextPr = AscBuilder.ApiTableCell.prototype.SetTextPr;
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiTablePr
@@ -12176,7 +12186,7 @@
     ApiTableCell.prototype["RemoveRow"]					= ApiTableCell.prototype.RemoveRow;
     ApiTableCell.prototype["GetNext"]					= ApiTableCell.prototype.GetNext;
     ApiTableCell.prototype["GetPrevious"]				= ApiTableCell.prototype.GetPrevious;
-    //ApiTableCell.prototype["SetTextPr"]				= ApiTableCell.prototype.SetTextPr;
+    ApiTableCell.prototype["SetTextPr"]					= ApiTableCell.prototype.SetTextPr;
     ApiTableCell.prototype["Clear"]						= ApiTableCell.prototype.Clear;
     ApiTableCell.prototype["GetBackgroundColor"]		= ApiTableCell.prototype.GetBackgroundColor;
     ApiTableCell.prototype["GetContent"]				= ApiTableCell.prototype.GetContent;
