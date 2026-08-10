@@ -3793,6 +3793,7 @@
 
 	/**
 	 * Sets text field placeholder.
+	 * <note>Makes combobox editable</note>
 	 * @memberof ApiComboboxField
 	 * @typeofeditors ["PDFE"]
 	 * @param {string} sPlaceholder - field placeholder 
