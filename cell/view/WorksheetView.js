@@ -1236,7 +1236,7 @@ function isAllowPasteLink(pastedWb) {
 		var offsetFrozen = this.getFrozenPaneOffset(true, false);
 		var ctxH = this.drawingCtx.getHeight() - offsetFrozen.offsetY - this.cellsTop;
 		let hOffset = 0;
-		for (var h = 0, i = this.getCurrentRowsCount() - 1; i >= 0; --i) {
+		for (var h = 0, i = this.getRowsCountForScroll() - 1; i >= 0; --i) {
 			h += this._getRowHeight(i);
 			if (h >= ctxH) {
 				if (bCheckEqual && h > ctxH) {
@@ -1257,13 +1257,10 @@ function isAllowPasteLink(pastedWb) {
 		/*if (gc_nMaxRow === this.nRowsCount || this.model.isDefaultHeightHidden()) {
 			tmp -= 1;
 		}*/
-		let isMobileVersion = this.workbook && this.workbook.Api && this.workbook.Api.isMobileVersion;
 		let row = Math.max(0, i); // Scroll range should be less than the number of rows to prevent adding rows when dragging the scrollbar
 		let defaultScrollPxStep = Asc.round(this.getVScrollStep());
+		//scroll correct must not be added here, it makes the range jump on every row border
 		let beforeVisibleRangeHeight = this._getRowTop(row) - this.cellsTop + hOffset;
-		if (isMobileVersion || AscCommonExcel.c_oAscScrollType.ScrollInitRowsColsCount & this.scrollType) {
-			beforeVisibleRangeHeight += this.getScrollCorrect();
-		}
 		return defaultScrollPxStep === 0 ? 0 : ((beforeVisibleRangeHeight - frozenVisibleRangeHeight)/defaultScrollPxStep);
 	};
 
@@ -1287,7 +1284,7 @@ function isAllowPasteLink(pastedWb) {
 		var offsetFrozen = this.getFrozenPaneOffset(false, true);
 		var ctxW = this.drawingCtx.getWidth() - offsetFrozen.offsetX - this.cellsLeft;
 		let wOffset = 0;
-		for (var h = 0, i = this.nColsCount - 1; i >= 0; --i) {
+		for (var h = 0, i = this.getColsCountForScroll() - 1; i >= 0; --i) {
 			h += this._getColumnWidth(i);
 			if (h >= ctxW) {
 				wOffset = (h - ctxW) > 0 ? ((h - ctxW) - 1) : 0;
@@ -1307,14 +1304,9 @@ function isAllowPasteLink(pastedWb) {
 		/*if (gc_nMaxRow === this.nRowsCount || this.model.isDefaultHeightHidden()) {
 			tmp -= 1;
 		}*/
-		let isMobileVersion = this.workbook && this.workbook.Api && this.workbook.Api.isMobileVersion;
 		let col = Math.max(0, i); // Scroll range should be less than the number of columns to prevent adding columns when dragging the scrollbar
 		let defaultScrollPxStep = Asc.round(this.getHScrollStep());
 		let beforeVisibleRangeWidth = this._getColLeft(col) - this.cellsLeft + wOffset;
-		if (isMobileVersion || AscCommonExcel.c_oAscScrollType.ScrollInitRowsColsCount & this.scrollType) {
-			//beforeVisibleRangeWidth += this.getHorizontalScrollCorrect();
-		}
-
 		return defaultScrollPxStep === 0 ? 0 : ((beforeVisibleRangeWidth - frozenVisibleRangeWidth)/defaultScrollPxStep);
 	};
 
@@ -1328,7 +1320,7 @@ function isAllowPasteLink(pastedWb) {
 		}
 		var offsetFrozen = this.getFrozenPaneOffset(false, true);
         var ctxW = this.drawingCtx.getWidth() - offsetFrozen.offsetX - this.cellsLeft;
-        for (var w = 0, i = this.nColsCount - 1; i >= 0; --i) {
+        for (var w = 0, i = this.getColsCountForScroll() - 1; i >= 0; --i) {
             w += this._getColumnWidth(i);
             if (w >= ctxW) {
                 break;
@@ -1350,7 +1342,7 @@ function isAllowPasteLink(pastedWb) {
 		}
         var offsetFrozen = this.getFrozenPaneOffset(true, false);
         var ctxH = this.drawingCtx.getHeight() - offsetFrozen.offsetY - this.cellsTop;
-        for (var h = 0, i = this.getCurrentRowsCount() - 1; i >= 0; --i) {
+        for (var h = 0, i = this.getRowsCountForScroll() - 1; i >= 0; --i) {
             h += this._getRowHeight(i);
             if (h >= ctxH) {
                 if (bCheckEqual && h > ctxH) {
@@ -1387,6 +1379,36 @@ function isAllowPasteLink(pastedWb) {
 
 	WorksheetView.prototype.getCurrentRowsCount = function () {
 		return this.workbook.getIsPartialReading() ? this.model.getCurrentRowsCount() : this.nRowsCount;
+	};
+
+	//drawings are not counted in nRowsCount/nColsCount, but the document extends to the lowest one
+	WorksheetView.prototype._getDrawingsScrollBounds = function () {
+		let maxRow = -1;
+		let maxCol = -1;
+		let drawings = this.model.Drawings;
+		for (let i = 0; drawings && i < drawings.length; ++i) {
+			//boundsFromTo is kept for every anchor type, unlike the "to" anchor
+			let bounds = drawings[i] && drawings[i].getBoundsFromTo && drawings[i].getBoundsFromTo();
+			let to = bounds && bounds.to;
+			if (!to) {
+				continue;
+			}
+			if (to.row > maxRow) {
+				maxRow = to.row;
+			}
+			if (to.col > maxCol) {
+				maxCol = to.col;
+			}
+		}
+		return {row: maxRow, col: maxCol};
+	};
+
+	WorksheetView.prototype.getRowsCountForScroll = function () {
+		return Math.min(Math.max(this.getCurrentRowsCount(), this._getDrawingsScrollBounds().row + 1), gc_nMaxRow);
+	};
+
+	WorksheetView.prototype.getColsCountForScroll = function () {
+		return Math.min(Math.max(this.nColsCount, this._getDrawingsScrollBounds().col + 1), gc_nMaxCol);
 	};
 
     WorksheetView.prototype.getCellsOffset = function (units) {
