@@ -507,6 +507,10 @@ function (window, undefined)
 		Object.defineProperty(window, 'eval', {
 			configurable: true,
 			get: function() {
+				if (Asc.editor.nativePdfScriptEval) {
+					return realEval;
+				}
+				
 				if (evalCallsLeft > 0) {
 					evalCallsLeft--;
 					return realEval;
@@ -518,9 +522,14 @@ function (window, undefined)
 
 		let result;
 		try {
+			let expression = "\"use strict\"; return eval(\"\\\"use strict\\\";\\r\\n\" + value)";
+			if (Asc.editor.nativePdfScriptEval) {
+				expression = "return eval(value)";
+			}
+
 			const _safe_eval_closure = Function.apply(
 				null,
-				names.concat("\"use strict\"; return eval(\"\\\"use strict\\\";\\r\\n\" + value)")
+				names.concat(expression)
 			);
 			result = _safe_eval_closure.apply(_this || null, values);
 		} finally {
