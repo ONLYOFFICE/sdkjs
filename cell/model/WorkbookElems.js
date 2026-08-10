@@ -13182,6 +13182,17 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 
+	var reCheckFontsNewLine = /[\r\n]/g;
+	function checkFontsByText(text) {
+		if (!AscFonts.IsCheckSymbols) {
+			return;
+		}
+		if (-1 !== text.indexOf("\n") || -1 !== text.indexOf("\r")) {
+			text = text.replace(reCheckFontsNewLine, "");
+		}
+		AscFonts.FontPickerByCharacter.getFontsByString(text);
+	}
+
 	/**
 	 * @constructor
 	 * @memberOf AscCommonExcel
@@ -13202,9 +13213,7 @@ function RangeDataManagerElem(bbox, data)
 			allArray.push(text);
 			index = allArray.length;
 			textMap[text] = index;
-			if (AscFonts.IsCheckSymbols) {
-				AscFonts.FontPickerByCharacter.getFontsByString(text);
-			}
+			checkFontsByText(text);
 		}
 		return index;
 	};
@@ -13228,9 +13237,7 @@ function RangeDataManagerElem(bbox, data)
 			this.all.push(multiText);
 			index = this.all.length;
 			mapElem.push(index);
-			if (AscFonts.IsCheckSymbols) {
-				AscFonts.FontPickerByCharacter.getFontsByString(text);
-			}
+			checkFontsByText(text);
 		}
 		return index;
 	};
@@ -13279,17 +13286,13 @@ function RangeDataManagerElem(bbox, data)
 	CSharedStrings.prototype._addSharedStringCacheByIndex = function(text, index) {
 		if (typeof text === 'string') {
 			this.text[text] = index;
-			if (AscFonts.IsCheckSymbols) {
-				AscFonts.FontPickerByCharacter.getFontsByString(text);
-			}
+			checkFontsByText(text);
 		} else {
 			let key = "";
 			for (let j = 0; j < text.length; ++j) {
 				key += text[j].text;
 			}
-			if (AscFonts.IsCheckSymbols) {
-				AscFonts.FontPickerByCharacter.getFontsByString(key);
-			}
+			checkFontsByText(key);
 			var mapElem = this.multiTextMap[key];
 			if (!mapElem) {
 				mapElem = [];
