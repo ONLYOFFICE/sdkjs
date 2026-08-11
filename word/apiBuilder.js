@@ -11797,7 +11797,7 @@
 		return "dropCap";
 	};
 	/**
-	 * Returns the parent paragraph that holds the drop cap letter.
+	 * Returns the paragraph currently associated with the drop cap.
 	 * @memberof ApiDropCap
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiParagraph}
@@ -11806,7 +11806,9 @@
 	 */
 	ApiDropCap.prototype.GetParent = function()
 	{
-		return new ApiParagraph(this.Paragraph);
+		let currentPara = this.Paragraph;
+		let nextPara = currentPara.Next;
+		return new ApiParagraph(nextPara);
 	};
 	/**
 	 * Returns the drop cap type.
@@ -11884,7 +11886,7 @@
 	 */
 	ApiDropCap.prototype.SetLinesToDrop = function(lines)
 	{
-		if (AscFormat.isRealNumber(lines)) {
+		if (!AscFormat.isRealNumber(lines)) {
 			throwException(new Error('Invalid type of parameter "lines".'));
 			return this;
 		}
