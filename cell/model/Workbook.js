@@ -22054,14 +22054,12 @@
 		if (to.isOneCell())
 			to.setOffsetLast(new AscCommon.CellBase((from.r2 - from.r1) - (to.r2 - to.r1), (from.c2 - from.c1) - (to.c2 - to.c1)));
 
-		if(!from.isIntersect(to)) {
-			var bFromWholeCol = (0 == from.c1 && gc_nMaxCol0 == from.c2);
-			var bFromWholeRow = (0 == from.r1 && gc_nMaxRow0 == from.r2);
-			var bToWholeCol = (0 == to.c1 && gc_nMaxCol0 == to.c2);
-			var bToWholeRow = (0 == to.r1 && gc_nMaxRow0 == to.r2);
-			bSuccess = (bFromWholeCol === bToWholeCol && bFromWholeRow === bToWholeRow);
-		} else
-			bSuccess = false;
+		//'from' is allowed to intersect 'to'(copy style from A1 to A1:B2), like in ms
+		var bFromWholeCol = (0 == from.c1 && gc_nMaxCol0 == from.c2);
+		var bFromWholeRow = (0 == from.r1 && gc_nMaxRow0 == from.r2);
+		var bToWholeCol = (0 == to.c1 && gc_nMaxCol0 == to.c2);
+		var bToWholeRow = (0 == to.r1 && gc_nMaxRow0 == to.r2);
+		bSuccess = (bFromWholeCol === bToWholeCol && bFromWholeRow === bToWholeRow);
 		return bSuccess;
 	}
 // Before promoteFromTo, the preparePromoteFromTo function must be called
@@ -22454,7 +22452,15 @@
 			//delete everything in the fill area
 			if(bIsPromote)
 				toRange.cleanAll();
-			else
+			else if(from.isIntersect(to)) {
+				//copy style: 'from' is a part of 'to'(copy style from A1 to A1:B2) and is read below,
+				//so everything is cleared except the source itself, which keeps its own format anyway
+				var aCleanRanges = from.difference(to);
+				for (var nCleanRange = 0; nCleanRange < aCleanRanges.length; ++nCleanRange) {
+					var oCleanRange = aCleanRanges[nCleanRange];
+					wsTo.getRange3(oCleanRange.r1, oCleanRange.c1, oCleanRange.r2, oCleanRange.c2).cleanFormat();
+				}
+			} else
 				toRange.cleanFormat();
 			//collect all data
 			var bReverse = false;
