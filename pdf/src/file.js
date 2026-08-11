@@ -2172,13 +2172,13 @@ void main() {\n\
 
         function GetMatches(rects, stream, oMatch, curLine, curChar, curStreamPos)
         {
-            _numLine = oMatch.Line;
+            let numLine = oMatch.Line;
             stream.pos = oMatch.StreamPos;
             let _text = "";
             while (stream.pos < curStreamPos)
             {
-                let startChar = _numLine == oMatch.Line ? oMatch.Char : -2;
-                let endChar   = _numLine == curLine     ? curChar     : -1;
+                let startChar = numLine == oMatch.Line ? oMatch.Char : -2;
+                let endChar   = numLine == curLine     ? curChar     : -1;
 
                 _text = "";
                 _lineEx = 1;
@@ -2235,7 +2235,7 @@ void main() {\n\
 
                 rects.push({
                     PageNum : pageIndex,
-                    LineNum: _numLine,
+                    LineNum: numLine,
                     Char1: startChar,
                     Char2: endChar,
                     X : _lineX + _lineAscent * _lineEy + off1 * _lineEx,
@@ -2247,7 +2247,7 @@ void main() {\n\
                     Text: _text
                 });
 
-                _numLine++;
+                numLine++;
             }
         }
 
