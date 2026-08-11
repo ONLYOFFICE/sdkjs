@@ -11160,6 +11160,10 @@
 
         lbl.setShowSerName(true);
         lbl.setIdx(seria.idx);
+        // MS wraps series names at a third of the chart width, not at the label default (1/5)
+        if (AscFormat.isRealNumber(cChartSpace.extX) && cChartSpace.extX > 0) {
+            //lbl.cellWidth = cChartSpace.extX / 3;
+        }
         lbl.recalculateInternal();
         this.rowNameLabels.push(lbl);
     };
@@ -11244,7 +11248,7 @@
         const chartWidth = (plotRect && outerRect)
             ? (plotRect.x + plotRect.w - chartLeft)
             : (outerRect ? outerRect.w : oRect.w);
-        const chartBottom = (bInnerLayout && plotRect)
+        const chartBottom = plotRect
             ? (plotRect.y + plotRect.h + this.extY)
             : (outerRect ? (outerRect.y + outerRect.h) : (oRect.y + oRect.h + this.extY));
 
