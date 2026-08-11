@@ -11884,6 +11884,11 @@
 	 */
 	ApiDropCap.prototype.SetLinesToDrop = function(lines)
 	{
+		if (AscFormat.isRealNumber(lines)) {
+			throwException(new Error('Invalid type of parameter "lines".'));
+			return this;
+		}
+
 		lines = AscBuilder.GetNumberParameter(lines, 0)
 		if (lines <= 0)
 			throwException(new Error("The lines parameter must be a number greater than 0"));
@@ -11904,9 +11909,15 @@
 	 */
 	ApiDropCap.prototype.SetFontFamily = function(fontFamily)
 	{
-		fontFamily = GetStringParameter(fontFamily, null);
-		if (null === fontFamily)
-			throwException(new Error("The fontFamily parameter must be a string"));
+		if (typeof fontFamily !== "string") {
+			throwException(new Error('Invalid type of parameter "fontFamily".'));
+			return this;
+		}
+
+		if (fontFamily.trim().length === 0) {
+			throwException(new Error('Parameter "fontFamily" cannot be empty.'));
+			return this;
+		}
 
 		let framePr = new Asc.asc_CParagraphFrame();
 		framePr.put_FontFamily(new AscCommon.asc_CTextFontFamily({Name : fontFamily, Index : -1}));
