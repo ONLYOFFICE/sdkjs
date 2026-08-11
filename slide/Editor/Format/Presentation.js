@@ -2702,6 +2702,12 @@ CPresentation.prototype.recalculateOnOpenFull = function () {
 	this.Recalculate({Drawings: {All: true, Map: {}}});
 	this.DrawingDocument.OnEndRecalculate();
 };
+CPresentation.prototype.GetCurrentThemeThumbnailsMaster = function () {
+	const viewManager = this.getViewManager();
+	if (viewManager) {
+		return viewManager.getCurrentThemeThumbnailsMaster();
+	}
+};
 CPresentation.prototype.updateThemesThumbnails = function () {
 	if (this.isCompositeInputInProgress()) {
 		this.bNeedUpdateThemes = true;
@@ -2709,10 +2715,13 @@ CPresentation.prototype.updateThemesThumbnails = function () {
 	}
 	this.bNeedUpdateThemes = false;
 	this.SendThemesThumbnails();
+	const thMaster = this.GetCurrentThemeThumbnailsMaster();
+	if (thMaster) {
+		this.Api.sendEvent("asc_onUpdateThemeIndex", thMaster.getThemeIndex());
+	}
 	const master = this.GetCurrentMaster();
 	if (master) {
-		this.Api.sendEvent("asc_onUpdateThemeIndex", master.getThemeIndex());
-		this.Api.sendColorThemes(master.Theme);
+		this.Api.sendColorThemes(master.getTheme());
 	}
 };
 CPresentation.prototype.checkLayouts = function (isAttack) {
@@ -8407,7 +8416,7 @@ CPresentation.prototype.sendThemesInfo = function () {
 		aThemeInfo[aDocumentThemes.length - 1] = theme_load_info;
 	}
 	this.Api.sync_InitEditorThemes(this.Api.ThemeLoader.Themes.EditorThemes, aDocumentThemes);
-	const currentMaster = this.GetCurrentMaster();
+	const currentMaster = this.GetCurrentThemeThumbnailsMaster();
 	const currentThemeIndex = currentMaster && currentMaster.getThemeIndex && currentMaster.getThemeIndex() || 0;
 	this.Api.sendEvent("asc_onUpdateThemeIndex", currentThemeIndex);
 };

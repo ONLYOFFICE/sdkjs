@@ -104,6 +104,19 @@
 		const allSlides = this.getAllSlides();
 		return allSlides[idx] || null;
 	};
+	SlideModeManagerBase.prototype.getSelectedSlideObjects = function () {
+		const selectedSlides = this.getSelectedSlides();
+		if (!selectedSlides.length) {
+			return [];
+		}
+		const objects = [];
+		const allSlides = this.getAllSlides();
+		for (let i = 0; i < selectedSlides.length; i += 1) {
+			const index = selectedSlides[i];
+			objects.push(allSlides[index]);
+		}
+		return objects;
+	}
 	SlideModeManagerBase.prototype.isMasterSlideMode = function() {
 		return false;
 	};
@@ -235,6 +248,10 @@
 	};
 	SlideModeManagerBase.prototype.isCanAddHyperlink = function () {
 		return false;
+	};
+	SlideModeManagerBase.prototype.getCurrentThemeThumbnailsMaster = function () {
+		const presentation = this.getPresentation();
+		return presentation.lastMaster;
 	};
 
 	function SlideModeManager(api) {
@@ -790,6 +807,12 @@
 	SlideModeManager.prototype.isCanAddHyperlink = function () {
 		return true;
 	};
+	SlideModeManager.prototype.getCurrentThemeThumbnailsMaster = function () {
+		const presentation = this.getPresentation();
+		let slide = this.getCurrentSlide();
+		if(!slide) return presentation.lastMaster;
+		return slide && slide.Layout && slide.Layout.Master;
+	};
 
 	function MasterSlideModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -1036,7 +1059,7 @@
 		}
 	};
 	MasterSlideModeManager.prototype.getSlidesForChangeColorScheme = function() {
-		return this.getSelectedSlides();
+		return this.getSelectedSlideObjects();
 	};
 	MasterSlideModeManager.prototype.changeTheme = function(themeInfo, arrInd) {
 		let oCurSlide = this.getCurrentSlide();
@@ -1416,6 +1439,15 @@
 			slide.setShowMasterSp(isShowMasterShapes);
 		}
 	};
+	MasterSlideModeManager.prototype.getCurrentThemeThumbnailsMaster = function () {
+		const presentation = this.getPresentation();
+		let slide = this.getCurrentSlide();
+		if(!slide) return presentation.lastMaster;
+		if (slide.isLayout()) {
+			return slide.Master;
+		}
+		return slide;
+	};
 
 
 	function NoteModeManager(api) {
@@ -1550,6 +1582,10 @@
 				master.changeBackground(null);
 			}
 		}
+	};
+	NoteModeManager.prototype.getCurrentTheme = function() {
+		const note = this.getCurrentSlide();
+		return note && note.getTheme() || null;
 	};
 
 
@@ -1743,6 +1779,10 @@
 			note.setShowMasterSp(true);
 		}
 	};
+	MasterNoteModeManager.prototype.getCurrentTheme = function() {
+		const noteMaster = this.getCurrentSlide();
+		return noteMaster && noteMaster.getTheme() || null;
+	};
 
 	function MasterHandoutModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -1837,6 +1877,10 @@
 				master.changeBackground(null);
 			}
 		}
+	};
+	MasterHandoutModeManager.prototype.getCurrentTheme = function() {
+		const noteMaster = this.getCurrentSlide();
+		return noteMaster && noteMaster.getTheme() || null;
 	};
 
 	function SorterModeManager(api) {
