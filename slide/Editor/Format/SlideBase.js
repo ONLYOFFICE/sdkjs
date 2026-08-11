@@ -531,12 +531,12 @@
 	SlideBase.prototype.removeFromSpTreeByPos = function (pos) {
 		if (pos > -1 && pos < this.cSld.spTree.length) {
 			var oSp = this.cSld.spTree[pos];
-			if (oSp.isPlaceholder() || this.isMaster() || this.isLayout()) {
+			if (oSp.isPlaceholder() || this.isSlideMaster() || this.isLayout()) {
 				let oMap = {};
 				oMap[oSp.Id] = oSp;
 				let oPres = Asc.editor.private_GetLogicDocument();
 				let aSlides = oPres.Slides;
-				if (this.isMaster()) {
+				if (this.isSlideMaster()) {
 					for (let nLt = 0; nLt < this.sldLayoutLst.length; ++nLt) {
 						let oLt = this.sldLayoutLst[nLt];
 						oLt.cSld.forEachSp(function (oSp) {
@@ -773,7 +773,7 @@
 	SlideBase.prototype.isLayout = function () {
 		return false;
 	};
-	SlideBase.prototype.isMaster = function () {
+	SlideBase.prototype.isSlideMaster = function () {
 		return false;
 	};
 	SlideBase.prototype.isNote = function () {

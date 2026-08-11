@@ -2098,7 +2098,7 @@ CPresentation.prototype.AddNewLayout = function () {
 CPresentation.prototype.AddForceNewLayout = function () {
 	this.StartAction(0);
 	let oMaster = this.GetCurrentMaster();
-	if(oMaster) {
+	if(oMaster && oMaster.isSlideMaster()) {
 		let oLayout = oMaster.addNewLayout();
 		this.Recalculate();
 		this.DrawingDocument.m_oWordControl.GoToPage(this.GetSlideIndex(oLayout));
@@ -8866,7 +8866,7 @@ CPresentation.prototype.DublicateMaster = function () {
 	let oLastMaster;
 	for(let nIdx = 0; nIdx < aSelectedSlides.length; ++nIdx) {
 		let oSlide = aSelectedSlides[nIdx];
-		if(oSlide.isMaster()) {
+		if(oSlide.isSlideMaster()) {
 			let oMaster = oSlide.createDuplicate();
 			aCopyMasters.push(oMaster);
 			oLastMaster = oSlide;
@@ -10783,7 +10783,7 @@ CPresentation.prototype.resetSlideBackground = function(arrSlides) {
 		this.StartAction(AscDFH.historydescription_Presentation_ResetSlideBackground);
 		for(let nIdx = 0; nIdx < arrSlides.length; ++nIdx) {
 			let oSlide = arrSlides[nIdx];
-			if(!oSlide.isMaster()) {
+			if(!oSlide.isSlideMaster()) {
 				oSlide.changeBackground(null);
 			}
 		}

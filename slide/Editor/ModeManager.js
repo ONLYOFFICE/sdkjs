@@ -910,11 +910,11 @@
 	MasterSlideModeManager.prototype.insertSlideObjectToPos = function(pos, slide) {
 		const presentation = this.getPresentation();
 		const masters = this.getMasters();
-		if (slide.isMaster()) {
+		if (slide.isSlideMaster()) {
 			let curSlide = this.getSlide(pos - 1);
 			let prevMaster = null;
 			if (curSlide) {
-				if (curSlide.isMaster()) {
+				if (curSlide.isSlideMaster()) {
 					prevMaster = curSlide;
 				} else {
 					prevMaster = curSlide.Master;
@@ -935,7 +935,7 @@
 			let prevMaster = null;
 			let prevLayout = null;
 			if (curSlide) {
-				if (curSlide.isMaster()) {
+				if (curSlide.isSlideMaster()) {
 					prevMaster = curSlide;
 				} else {
 					prevLayout = curSlide;
@@ -1220,7 +1220,7 @@
 		} else {
 			if (oCurMaster) {
 				let nPos = oCurMaster.sldLayoutLst.length;
-				if (oCurSlide.isMaster()) {
+				if (oCurSlide.isSlideMaster()) {
 					nPos = 0;
 				} else {
 					for (let nLt = 0; nLt < oCurMaster.sldLayoutLst.length; ++nLt) {
@@ -1281,7 +1281,7 @@
 				let nIndexInSlides = array[nIdx];
 				oSlideLikeObject = this.getSlide(nIndexInSlides);
 				aToInsert.splice(0, 0, oSlideLikeObject);
-				if (oSlideLikeObject.isMaster()) {
+				if (oSlideLikeObject.isSlideMaster()) {
 					presentation.removeSlideMasterObject(oSlideLikeObject);
 				} else {
 					oSlideLikeObject.Master.removeLayout(oSlideLikeObject);
@@ -1294,13 +1294,13 @@
 		let oPrevSlideLikeObj = this.getSlide(pos - 1);
 		let oPrevMaster;
 		if (oPrevSlideLikeObj) {
-			if (oPrevSlideLikeObj.isMaster()) {
+			if (oPrevSlideLikeObj.isSlideMaster()) {
 				oPrevMaster = oPrevSlideLikeObj;
 			} else {
 				oPrevMaster = oPrevSlideLikeObj.Master;
 			}
 		}
-		if (oSlideLikeObject.isMaster()) {
+		if (oSlideLikeObject.isSlideMaster()) {
 			let nInsertPos = null;
 			if (!oPrevSlideLikeObj) {
 				nInsertPos = 0;
@@ -1324,7 +1324,7 @@
 			if (oPrevMaster) {
 				let nInsertPos = null;
 				let oMaster = null;
-				if (oPrevSlideLikeObj.isMaster()) {
+				if (oPrevSlideLikeObj.isSlideMaster()) {
 					nInsertPos = 0;
 					oMaster = oPrevSlideLikeObj;
 				} else {
@@ -1370,7 +1370,7 @@
 		return true;
 	};
 	MasterSlideModeManager.prototype.isDrawingSlide = function (slideObject) {
-		return slideObject.isMaster() || slideObject.isLayout();
+		return slideObject.isSlideMaster() || slideObject.isLayout();
 	};
 	MasterSlideModeManager.prototype.isLockBackgroundSlides = function () {
 		const slides = [];
