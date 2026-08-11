@@ -3487,6 +3487,9 @@ PasteProcessor.prototype =
 					oSelectedElement.SelectedAll = false;
 				else
 					oSelectedElement.SelectedAll = true;
+				//a flow drawing needs no paragraph of its own
+				if (oSelectedElement.SelectedAll && 1 === aNewContent.length && this._isFlowDrawingsOnlyParagraph(oSelectedElement.Element))
+					oSelectedElement.SelectedAll = false;
 				oSelectedContent.Add(oSelectedElement);
 			}
 
@@ -3507,6 +3510,14 @@ PasteProcessor.prototype =
 				this.pasteCallback && this.pasteCallback(false);
 				return;
 			}
+
+			var aPasteDrawings = [];
+			for (var nElem = 0; nElem < aNewContent.length; ++nElem)
+			{
+				if (aNewContent[nElem].GetAllDrawingObjects)
+					aNewContent[nElem].GetAllDrawingObjects(aPasteDrawings);
+			}
+			this._positionFlowDrawingsForPaste(aPasteDrawings, NearPos);
 
 			oSelectedContent.Insert(NearPos, false);
 			paragraph.Clear_NearestPosArray(aNewContent);
@@ -3553,6 +3564,110 @@ PasteProcessor.prototype =
 		this._selectShapesBeforeInsert(aNewContent, oDoc);
 
     },
+
+	//paragraph holds nothing but flow drawings
+	_isFlowDrawingsOnlyParagraph: function (oParagraph)
+	{
+		if (!oParagraph.CheckRunContent)
+			return false;
+
+		var nDrawings = 0;
+		var bOtherContent = oParagraph.CheckRunContent(function (oRun) {
+			for (var nPos = 0, nCount = oRun.GetElementsCount(); nPos < nCount; ++nPos)
+			{
+				var oItem = oRun.GetElement(nPos);
+				if (!oItem || oItem.IsParaEnd())
+					continue;
+
+				if (!oItem.IsDrawing() || oItem.IsInline())
+					return true;
+
+				nDrawings++;
+			}
+			return false;
+		});
+
+		return (!bOtherContent && nDrawings > 0);
+	},
+
+	//MS puts a pasted flow drawing on the cursor line at the line start, or, when a drawing was selected
+	//instead of a text cursor, shifted from that drawing. A group of drawings is moved as a whole
+	_positionFlowDrawingsForPaste: function (aDrawings, oNearPos)
+	{
+		var aFlowDrawings = [];
+		for (var nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing)
+		{
+			if (!aDrawings[nDrawing].IsInline())
+				aFlowDrawings.push(aDrawings[nDrawing]);
+		}
+
+		var oController = this.oLogicDocument ? this.oLogicDocument.DrawingObjects : null;
+		if (!aFlowDrawings.length || !oController || !oController.getZIndex)
+			return;
+
+		//pasted drawings go above the existing ones, keeping their own order
+		aFlowDrawings.sort(function (oDrawing1, oDrawing2) {
+			return (oDrawing1.RelativeHeight || 0) - (oDrawing2.RelativeHeight || 0);
+		});
+		for (var nFlow = 0; nFlow < aFlowDrawings.length; ++nFlow)
+		{
+			aFlowDrawings[nFlow].Set_RelativeHeight(oController.getZIndex());
+		}
+
+		var oParagraph = oNearPos.Paragraph;
+		if (!oParagraph.IsRecalculated())
+			return;
+
+		var oParaPos = oParagraph.Get_ParaPosByContentPos(oNearPos.ContentPos);
+		var oLine    = oParagraph.Lines[oParaPos.Line];
+		var oPage    = oParagraph.Pages[oParaPos.Page];
+		if (!oLine || !oPage || !oLine.Ranges[oParaPos.Range])
+			return;
+
+		var dX, dY;
+		if (this.oSelectedDrawing && !this.oSelectedDrawing.IsInline())
+		{
+			var dStep = 152400 * AscCommonWord.g_dKoef_emu_to_mm; //OBJECT_PASTE_SHIFT, as in cell/slide
+			dX = this.oSelectedDrawing.X + dStep;
+			dY = this.oSelectedDrawing.Y + dStep;
+		}
+		else
+		{
+			dX = oLine.Ranges[oParaPos.Range].XVisible;
+			dY = oPage.Y + oLine.Y - oLine.Metrics.Ascent;
+		}
+
+		var nPageNum = oParagraph.GetAbsolutePage(oParaPos.Page);
+		if (1 === aFlowDrawings.length)
+			return aFlowDrawings[0].Set_XYForAdd(dX, dY, oNearPos, nPageNum);
+
+		var aOldPos = [];
+		var dMinH   = aFlowDrawings[0].PositionH.Value;
+		var dMinV   = aFlowDrawings[0].PositionV.Value;
+		for (nFlow = 0; nFlow < aFlowDrawings.length; ++nFlow)
+		{
+			var oPos = aFlowDrawings[nFlow].PositionH;
+			var oPosV = aFlowDrawings[nFlow].PositionV;
+			if (true === oPos.Align || true === oPosV.Align || true === oPos.Percent || true === oPosV.Percent)
+				return;
+
+			aOldPos.push({H : oPos.Value, V : oPosV.Value});
+			dMinH = Math.min(dMinH, oPos.Value);
+			dMinV = Math.min(dMinV, oPosV.Value);
+		}
+
+		//the target point is where the top left corner of the group goes
+		aFlowDrawings[0].Set_XYForAdd(dX, dY, oNearPos, nPageNum);
+		var dDeltaH = aFlowDrawings[0].PositionH.Value - dMinH;
+		var dDeltaV = aFlowDrawings[0].PositionV.Value - dMinV;
+
+		for (nFlow = 0; nFlow < aFlowDrawings.length; ++nFlow)
+		{
+			var oDrawing = aFlowDrawings[nFlow];
+			oDrawing.Set_PositionH(oDrawing.PositionH.RelativeFrom, false, aOldPos[nFlow].H + dDeltaH, false);
+			oDrawing.Set_PositionV(oDrawing.PositionV.RelativeFrom, false, aOldPos[nFlow].V + dDeltaV, false);
+		}
+	},
 
 	checkWordGraphicSpecialPasteProps: function (oNewContent, bCheckGettingPasteProps)
 	{
@@ -4454,6 +4569,10 @@ PasteProcessor.prototype =
 				if (this.oDocument instanceof CDocument && this.oDocument.IsTableCellSelection())
 					oDocState = this.oDocument.SaveDocumentState(false);
 
+				//RemoveBeforePaste drops the drawing selection, and a pasted drawing is placed relative to it
+				var oPasteController  = this.oLogicDocument.DrawingObjects;
+				this.oSelectedDrawing = oPasteController.selectedObjects.length > 0 && !oPasteController.getTargetDocContent()
+					? oPasteController.selectedObjects[0].parent : null;
 				this.oLogicDocument.RemoveBeforePaste();
 
 				if (oDocState)
