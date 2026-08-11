@@ -11560,11 +11560,11 @@
 	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetSpacing.js
 	 */
-	ApiTextRange.prototype.SetSpacing = function(nSpacing) {
-		nSpacing = AscBuilder.GetNumberParameter(nSpacing, null);
-		if (nSpacing === null)
+	ApiTextRange.prototype.SetSpacing = function(spacing) {
+		spacing = AscBuilder.GetNumberParameter(spacing, null);
+		if (spacing === null)
 			return null;
-		return this.private_ApplyTextPr({Spacing : private_Twips2MM(nSpacing)});
+		return this.private_ApplyTextPr({Spacing : private_Twips2MM(spacing)});
 	};
 
 	/**
@@ -11589,19 +11589,19 @@
 	 * <b>"superscript"</b> - the characters in the current text Range will be aligned above the default text baseline.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE"]
-	 * @param {("baseline" | "subscript" | "superscript")} sType - The vertical alignment type applied to the text contents.
+	 * @param {("baseline" | "subscript" | "superscript")} type - The vertical alignment type applied to the text contents.
 	 * @returns {ApiTextRange | null}
 	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetVertAlign.js
 	 */
-	ApiTextRange.prototype.SetVertAlign = function(sType) {
+	ApiTextRange.prototype.SetVertAlign = function(type) {
 		let value = undefined;
 
-		if (sType === "baseline")
+		if (type === "baseline")
 			value = AscCommon.vertalign_Baseline;
-		else if (sType === "subscript")
+		else if (type === "subscript")
 			value = AscCommon.vertalign_SubScript;
-		else if (sType === "superscript")
+		else if (type === "superscript")
 			value = AscCommon.vertalign_SuperScript;
 		else 
 			return null;
@@ -11644,19 +11644,27 @@
 	};
 	
 	/**
-	 * Sets all 4 font slots with the specified font family.
+	 * Sets the font family for the current TextRange.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE"]
-	 * @param {string} sFontFamily - The font family or families used for the current text Range.
+	 * @param {string} fontFamily - The font family or families used for the current text Range.
 	 * @returns {ApiTextRange | null}
 	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetFontFamily.js
 	 */
-	ApiTextRange.prototype.SetFontFamily = function(sFontFamily) {
-		if (typeof sFontFamily !== "string")
+	ApiTextRange.prototype.SetFontFamily = function(fontFamily) {
+		if (typeof fontFamily !== "string") {
+			AscBuilder.throwException(new Error('Invalid type of parameter "fontFamily".'));
 			return null;
-		LoadFont(sFontFamily);
-		return this.private_ApplyTextPr({FontFamily: {Name: sFontFamily, Index: -1}});
+		}
+
+		if (fontFamily.trim().length === 0) {
+			AscBuilder.throwException(new Error('Parameter "fontFamily" cannot be empty.'));
+			return null;
+		}
+
+		LoadFont(fontFamily);
+		return this.private_ApplyTextPr({FontFamily: {Name: fontFamily, Index: -1}});
 	};
 
 	// /**
