@@ -11609,23 +11609,23 @@
 		return this.private_ApplyTextPr({VertAlign : value});
 	};
 
-	/**
-	 * Specifies the amount by which text is raised or lowered for the current Range in relation to the default
-	 * baseline of the surrounding non-positioned text.
-	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
-	 * @param {hps} nPosition - Specifies a positive (raised text) or negative (lowered text)
-	 * measurement in half-points (1/144 of an inch).
-	 * @returns {ApiTextRange | null}
-	 * @since 9.5.0
-	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetPosition.js
-	 */
-	ApiTextRange.prototype.SetPosition = function(nPosition) {
-		if (typeof nPosition !== "number")
-			return null;
-
-		return this.private_ApplyTextPr({Position : private_PtToMM(private_GetHps(nPosition))});
-	};
+	// Temporarily disabled. Arbitrary PPTX baseline offsets are not yet supported by the core model.
+	// /**
+	//  * Specifies the amount by which text is raised or lowered for the current Range in relation to the default
+	//  * baseline of the surrounding non-positioned text.
+	//  * @memberof ApiTextRange
+	//  * @typeofeditors ["CPE"]
+	//  * @param {hps} nPosition - Specifies a positive (raised text) or negative (lowered text)
+	//  * measurement in half-points (1/144 of an inch).
+	//  * @returns {ApiTextRange | null}
+	//  * @since 9.5.0
+	//  * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetPosition.js
+	//  */
+	// ApiTextRange.prototype.SetPosition = function(nPosition) {
+	// 	if (typeof nPosition !== "number")
+	// 		return null;
+	// 	return this.private_ApplyTextPr({Position : private_PtToMM(private_GetHps(nPosition))});
+	// };
 
 	/**
 	 * Sets the font size to the characters of the current text Range.
@@ -12247,7 +12247,7 @@
 	ApiTextRange.prototype["SetFontSize"]        = ApiTextRange.prototype.SetFontSize;
 	ApiTextRange.prototype["SetFontFamily"]      = ApiTextRange.prototype.SetFontFamily;
 	ApiTextRange.prototype["SetSpacing"]         = ApiTextRange.prototype.SetSpacing;
-	ApiTextRange.prototype["SetPosition"]        = ApiTextRange.prototype.SetPosition;
+	//ApiTextRange.prototype["SetPosition"]        = ApiTextRange.prototype.SetPosition;
 	ApiTextRange.prototype["SetVertAlign"]       = ApiTextRange.prototype.SetVertAlign;
 	ApiTextRange.prototype["SetTextPr"]          = ApiTextRange.prototype.SetTextPr;
 	ApiTextRange.prototype["GetTextPr"]          = ApiTextRange.prototype.GetTextPr;
