@@ -8981,7 +8981,7 @@
 		if (rowsCount === null)
 			return false;
 
-		let perRowMM = height / rowsCount;
+		let perRowMM = private_EMU2MM(height) / rowsCount;
 		for (let nRow = 0; nRow < rowsCount; ++nRow)
 		{
 			let row = table.GetRow(nRow);
