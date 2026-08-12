@@ -38,6 +38,8 @@
 (function (window, undefined) {
 
 	const SVG_EMU_PER_MM = 36000;
+	const SVG_TEXT_LINE_RATIO = 1.2;
+	const SVG_TEXT_DESCENT_RATIO = 0.22;
 	let svgCssRules = [];
 
 	function parseSvgCss(cssText, rules) {
@@ -841,47 +843,180 @@
 		return AscFonts.g_fontApplication.GetFontNameDictionary("" + (value || ""), true);
 	}
 
-	function pushSvgTextElement(node, matrix, style) {
-		const text = (node.textContent || "").replace(/\s+/g, " ").trim();
-		if (!text) {
-			return null;
-		}
+	function svgTextPropGetter(node) {
 		const inlineObj = parseSvgInlineStyle(node);
 		const cssObj = svgCssProps(node);
-		function prop(name) {
+		return function (name) {
 			if (inlineObj[name] !== undefined) {
 				return inlineObj[name];
 			}
 			if (cssObj[name] !== undefined) {
 				return cssObj[name];
 			}
-			const a = node.getAttribute(name);
-			return (a !== null && a !== undefined && a !== "") ? a : undefined;
-		}
-		let fontSize = parseFloat(prop("font-size"));
-		if (!(fontSize > 0)) {
-			fontSize = 16;
-		}
-		const x = parseFloat(prop("x")) || 0;
-		const y = parseFloat(prop("y")) || 0;
-		const pt = matrix[0] * x + matrix[2] * y + matrix[4];
-		const py = matrix[1] * x + matrix[3] * y + matrix[5];
-		const weight = ("" + (prop("font-weight") || "")).toLowerCase();
-		const fontStyle = ("" + (prop("font-style") || "")).toLowerCase();
-		const fillCol = resolveSvgPaint(prop("fill") !== undefined ? prop("fill") : style.fill, {}, style.color);
-		return {
-			isText: true,
-			text: text,
-			x: pt,
-			y: py,
-			fontSize: fontSize * matScaleSvg(matrix),
-			fontFamily: resolveSvgFontFamily(prop("font-family")),
-			bold: (weight === "bold" || weight === "bolder" || parseInt(weight, 10) >= 600),
-			italic: (fontStyle === "italic" || fontStyle === "oblique"),
-			color: (fillCol && fillCol.length === 3) ? fillCol : [0, 0, 0],
-			anchor: ("" + (prop("text-anchor") || "start")).toLowerCase(),
-			rot: Math.atan2(matrix[1], matrix[0])
+			const attr = node.getAttribute(name);
+			return (attr !== null && attr !== undefined && attr !== "") ? attr : undefined;
 		};
+	}
+
+	function svgTextLength(raw, fontSize) {
+		if (raw === null || raw === undefined || ("" + raw).trim() === "") {
+			return undefined;
+		}
+		const text = ("" + raw).trim();
+		const value = parseFloat(text);
+		if (isNaN(value)) {
+			return undefined;
+		}
+		if (text.indexOf("em") !== -1) {
+			return value * fontSize;
+		}
+		if (text.indexOf("ex") !== -1) {
+			return value * fontSize / 2;
+		}
+		return value;
+	}
+
+	function inheritSvgTextFormat(node, parent) {
+		const prop = svgTextPropGetter(node);
+		const format = {
+			fontSize: parent.fontSize, fontFamily: parent.fontFamily, weight: parent.weight,
+			fontStyle: parent.fontStyle, fill: parent.fill, color: parent.color, anchor: parent.anchor
+		};
+		const fontSize = svgTextLength(prop("font-size"), parent.fontSize);
+		if (fontSize > 0) {
+			format.fontSize = fontSize;
+		}
+		let v;
+		if ((v = prop("font-family")) !== undefined) { format.fontFamily = v; }
+		if ((v = prop("font-weight")) !== undefined) { format.weight = ("" + v).toLowerCase(); }
+		if ((v = prop("font-style")) !== undefined) { format.fontStyle = ("" + v).toLowerCase(); }
+		if ((v = prop("fill")) !== undefined) { format.fill = v; }
+		if ((v = prop("color")) !== undefined) { format.color = v; }
+		if ((v = prop("text-anchor")) !== undefined) { format.anchor = ("" + v).toLowerCase(); }
+		return format;
+	}
+
+	function buildSvgTextRun(text, format, matrix) {
+		const fillCol = resolveSvgPaint(format.fill, {}, format.color);
+		return {
+			text: text,
+			fontSize: format.fontSize * matScaleSvg(matrix),
+			fontFamily: resolveSvgFontFamily(format.fontFamily),
+			bold: (format.weight === "bold" || format.weight === "bolder" || parseInt(format.weight, 10) >= 600),
+			italic: (format.fontStyle === "italic" || format.fontStyle === "oblique"),
+			color: (fillCol && fillCol.length === 3) ? fillCol : [0, 0, 0]
+		};
+	}
+
+	function isSameSvgTextRun(first, second) {
+		return first.fontSize === second.fontSize && first.fontFamily === second.fontFamily &&
+			first.bold === second.bold && first.italic === second.italic &&
+			first.color[0] === second.color[0] && first.color[1] === second.color[1] && first.color[2] === second.color[2];
+	}
+
+	function addSvgTextRun(state, format, rawText) {
+		const text = ("" + rawText).replace(/\s+/g, " ");
+		if (text.length === 0) {
+			return;
+		}
+		const matrix = state.matrix;
+		if (!state.current) {
+			state.current = {
+				isText: true,
+				runs: [],
+				x: matrix[0] * state.x + matrix[2] * state.y + matrix[4],
+				y: matrix[1] * state.x + matrix[3] * state.y + matrix[5],
+				anchor: format.anchor,
+				rot: Math.atan2(matrix[1], matrix[0])
+			};
+		}
+		const runs = state.current.runs;
+		const run = buildSvgTextRun(text, format, matrix);
+		const last = runs[runs.length - 1];
+		if (last && isSameSvgTextRun(last, run)) {
+			last.text += run.text;
+			return;
+		}
+		runs.push(run);
+	}
+
+	function flushSvgTextElement(state) {
+		const element = state.current;
+		state.current = null;
+		if (!element) {
+			return;
+		}
+		const runs = element.runs;
+		runs[0].text = runs[0].text.replace(/^\s+/, "");
+		runs[runs.length - 1].text = runs[runs.length - 1].text.replace(/\s+$/, "");
+		const kept = [];
+		let fontSize = 0;
+		for (let i = 0; i < runs.length; ++i) {
+			if (runs[i].text.length > 0) {
+				kept.push(runs[i]);
+				fontSize = Math.max(fontSize, runs[i].fontSize);
+			}
+		}
+		if (kept.length === 0) {
+			return;
+		}
+		element.runs = kept;
+		element.fontSize = fontSize;
+		state.elements.push(element);
+	}
+
+	function moveSvgTextPos(state, node, fontSize) {
+		const x = svgTextLength(node.getAttribute("x"), fontSize);
+		const y = svgTextLength(node.getAttribute("y"), fontSize);
+		const dy = svgTextLength(node.getAttribute("dy"), fontSize);
+		const newX = (x !== undefined) ? x : state.x;
+		const newY = (y !== undefined) ? y : ((dy !== undefined) ? state.y + dy : state.y);
+		if (newX === state.x && newY === state.y) {
+			return;
+		}
+		flushSvgTextElement(state);
+		state.x = newX;
+		state.y = newY;
+	}
+
+	function walkSvgTextNode(node, format, state) {
+		const kids = node.childNodes;
+		if (!kids) {
+			return;
+		}
+		for (let i = 0; i < kids.length; ++i) {
+			const kid = kids[i];
+			if (kid.nodeType === 3) {
+				addSvgTextRun(state, format, kid.nodeValue);
+				continue;
+			}
+			if (kid.nodeType !== 1) {
+				continue;
+			}
+			const tag = kid.tagName ? kid.tagName.toLowerCase() : "";
+			if (tag !== "tspan" && tag !== "textpath" && tag !== "a") {
+				continue;
+			}
+			const childFormat = inheritSvgTextFormat(kid, format);
+			moveSvgTextPos(state, kid, childFormat.fontSize);
+			walkSvgTextNode(kid, childFormat, state);
+		}
+	}
+
+	function pushSvgTextElements(node, matrix, style, elements) {
+		const format = inheritSvgTextFormat(node, {
+			fontSize: 16, fontFamily: undefined, weight: "", fontStyle: "",
+			fill: style.fill, color: style.color, anchor: "start"
+		});
+		const state = {
+			matrix: matrix,
+			elements: elements,
+			current: null,
+			x: svgTextLength(node.getAttribute("x"), format.fontSize) || 0,
+			y: svgTextLength(node.getAttribute("y"), format.fontSize) || 0
+		};
+		walkSvgTextNode(node, format, state);
+		flushSvgTextElement(state);
 	}
 
 	function svgResolveClip(value, idMap, matrix) {
@@ -971,10 +1106,7 @@
 			return;
 		}
 		if (tag === "text") {
-			const textEl = pushSvgTextElement(node, matrix, style);
-			if (textEl) {
-				elements.push(textEl);
-			}
+			pushSvgTextElements(node, matrix, style, elements);
 			return;
 		}
 		let d = null;
@@ -1309,6 +1441,26 @@
 		return shape;
 	}
 
+	function createSvgTextRunPr(run, mmPerSvgY) {
+		let ptSize = Math.round(run.fontSize * mmPerSvgY * 72 / 25.4 * 2) / 2;
+		if (ptSize < 1) {
+			ptSize = 1;
+		} else if (ptSize > 300) {
+			ptSize = 300;
+		}
+		const textPr = new CTextPr();
+		textPr.FontSize = ptSize;
+		textPr.FontSizeCS = ptSize;
+		textPr.RFonts.Ascii = {Name: run.fontFamily, Index: -1};
+		textPr.RFonts.HAnsi = {Name: run.fontFamily, Index: -1};
+		textPr.RFonts.CS = {Name: run.fontFamily, Index: -1};
+		textPr.RFonts.EastAsia = {Name: run.fontFamily, Index: -1};
+		textPr.Bold = !!run.bold;
+		textPr.Italic = !!run.italic;
+		textPr.Unifill = AscFormat.CreateSolidFillRGB(run.color[0], run.color[1], run.color[2]);
+		return textPr;
+	}
+
 	function createSvgTextShape(el, opts, mmPerSvgX, mmPerSvgY) {
 		const shape = createSvgShape(opts.isPdf, opts.isWord, opts.worksheet);
 		if (opts.isWord) {
@@ -1317,14 +1469,13 @@
 			shape.createTextBodyOnEdit();
 		}
 
-		let ptSize = Math.round(el.fontSize * mmPerSvgY * 72 / 25.4 * 2) / 2;
-		if (ptSize < 1) {
-			ptSize = 1;
-		} else if (ptSize > 300) {
-			ptSize = 300;
+		const runs = el.runs;
+		const ascent = el.fontSize * (SVG_TEXT_LINE_RATIO - SVG_TEXT_DESCENT_RATIO);
+		let estWidthSvg = 0;
+		for (let i = 0; i < runs.length; ++i) {
+			estWidthSvg += runs[i].text.length * runs[i].fontSize * 0.6;
 		}
-		const ascent = el.fontSize * 0.8;
-		const estWidthSvg = Math.max(1, el.text.length * el.fontSize * 0.6);
+		estWidthSvg = Math.max(1, estWidthSvg);
 		let leftSvg = el.x;
 		if (el.anchor === "middle") {
 			leftSvg = el.x - estWidthSvg / 2;
@@ -1337,7 +1488,7 @@
 		xfrm.setOffX(opts.x + leftSvg * mmPerSvgX);
 		xfrm.setOffY(opts.y + (el.y - ascent) * mmPerSvgY);
 		xfrm.setExtX(estWidthSvg * mmPerSvgX);
-		xfrm.setExtY(el.fontSize * 1.2 * mmPerSvgY);
+		xfrm.setExtY(el.fontSize * SVG_TEXT_LINE_RATIO * mmPerSvgY);
 		if (el.rot) {
 			xfrm.setRot(el.rot);
 		}
@@ -1350,21 +1501,19 @@
 		spPr.setParent(shape);
 
 		const content = shape.getDocContent();
-		AscFormat.AddToContentFromString(content, el.text);
-		const oTextPr = new CTextPr();
-		oTextPr.FontSize = ptSize;
-		oTextPr.FontSizeCS = ptSize;
-		oTextPr.RFonts.Ascii = {Name: el.fontFamily, Index: -1};
-		oTextPr.RFonts.HAnsi = {Name: el.fontFamily, Index: -1};
-		oTextPr.RFonts.CS = {Name: el.fontFamily, Index: -1};
-		oTextPr.RFonts.EastAsia = {Name: el.fontFamily, Index: -1};
-		oTextPr.Bold = !!el.bold;
-		oTextPr.Italic = !!el.italic;
-		oTextPr.Unifill = AscFormat.CreateSolidFillRGB(el.color[0], el.color[1], el.color[2]);
+		AscFormat.AddToContentFromString(content, runs[0].text);
 		content.SetApplyToAll(true);
-		content.AddToParagraph(new ParaTextPr(oTextPr));
+		content.AddToParagraph(new ParaTextPr(createSvgTextRunPr(runs[0], mmPerSvgY)));
 		content.SetParagraphAlign(el.anchor === "middle" ? AscCommon.align_Center : (el.anchor === "end" ? AscCommon.align_Right : AscCommon.align_Left));
+		content.SetParagraphSpacing({Line: 1, LineRule: Asc.linerule_Auto, Before: 0, After: 0});
 		content.SetApplyToAll(false);
+		const paragraph = content.Content[0];
+		for (let i = 1; i < runs.length; ++i) {
+			const paraRun = new ParaRun(paragraph, false);
+			paraRun.SetPr(createSvgTextRunPr(runs[i], mmPerSvgY));
+			paraRun.AddText(runs[i].text);
+			paragraph.AddToContent(paragraph.Content.length - 1, paraRun);
+		}
 
 		const bodyPr = shape.getBodyPr().createDuplicate();
 		bodyPr.rot = 0;

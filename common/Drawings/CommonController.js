@@ -7169,7 +7169,7 @@
 						AscFonts.IsCheckSymbols = prevCheckSymbols;
 						const fontMap = {};
 						for (let i = 0; i < shapes.length; ++i) {
-							shapes[i].getAllFonts(fontMap);
+							shapes[i].documentGetAllFontNames(fontMap);
 						}
 						const fonts = [];
 						for (let fontName in fontMap) {
