@@ -11629,22 +11629,21 @@
 		return this.private_ApplyTextPr({VertAlign : value});
 	};
 
-	// Temporarily disabled. Arbitrary PPTX baseline offsets are not yet supported by the core model.
+	// Temporarily disabled: it requires reworking how sub/superscript itself is modelled for CPE.
 	// /**
 	//  * Specifies the amount by which text is raised or lowered for the current Range in relation to the default
-	//  * baseline of the surrounding non-positioned text.
+	//  * baseline.
 	//  * @memberof ApiTextRange
 	//  * @typeofeditors ["CPE"]
-	//  * @param {hps} nPosition - Specifies a positive (raised text) or negative (lowered text)
-	//  * measurement in half-points (1/144 of an inch).
+	//  * @param {number} offset
 	//  * @returns {ApiTextRange | null}
 	//  * @since 9.5.0
-	//  * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetPosition.js
+	//  * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetBaselineOffset.js
 	//  */
-	// ApiTextRange.prototype.SetPosition = function(nPosition) {
-	// 	if (typeof nPosition !== "number")
+	// ApiTextRange.prototype.SetBaselineOffset = function(offset) {
+	// 	if (typeof offset !== "number")
 	// 		return null;
-	// 	return this.private_ApplyTextPr({Position : private_PtToMM(private_GetHps(nPosition))});
+	// 	return this.private_ApplyTextPr();
 	// };
 
 	/**
