@@ -11628,19 +11628,28 @@
 	// };
 
 	/**
-	 * Sets the font size to the characters of the current text Range.
+	 * Sets the font size of the characters in the current text Range.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE"]
-	 * @param {hps} FontSize - The text size value measured in half-points (1/144 of an inch).
+	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 * @returns {ApiTextRange | null}
 	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetFontSize.js
 	 */
-	ApiTextRange.prototype.SetFontSize = function(FontSize) {
-		FontSize = AscBuilder.GetNumberParameter(FontSize, null);
-		if (FontSize === null)
+	ApiTextRange.prototype.SetFontSize = function(fontSize) {
+		fontSize = AscBuilder.GetNumberParameter(fontSize, null);
+
+		if (!AscFormat.isRealNumber(fontSize) || fontSize === null) {
+			AscBuilder.throwException(new Error('Invalid type of parameter "fontSize".'));
 			return null;
-		return this.private_ApplyTextPr({FontSize: private_GetHps(FontSize)});
+		}
+
+		if (fontSize < 0) {
+			AscBuilder.throwException(new Error('Parameter "fontSize" cannot be negative.'));
+			return null;
+		}
+
+		return this.private_ApplyTextPr({FontSize: private_GetHps(fontSize)});
 	};
 	
 	/**
