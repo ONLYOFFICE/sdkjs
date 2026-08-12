@@ -3882,7 +3882,10 @@
             const oTempDocument = new CDocument(Asc.editor.WordControl.m_oDrawingDocument, false);
             const oBinaryFileReader = new AscCommonWord.BinaryFileReader(oTempDocument, openParams);
             AscCommon.pptx_content_loader.Start_UseFullUrl(Asc.editor.insertDocumentUrlsData);
-            if (!oBinaryFileReader.Read(sBinary2))
+			AscCommon.g_oIdCounter.m_bRead = true;
+			const res = oBinaryFileReader.Read(sBinary2);
+			AscCommon.g_oIdCounter.m_bRead = false;
+            if (!res)
             {
                 return null;
             }
