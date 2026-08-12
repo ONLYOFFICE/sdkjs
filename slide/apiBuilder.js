@@ -2226,7 +2226,7 @@
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @since 9.5.0
-	 * @returns {ApiTable | null} The active table object, or null if no table is currently active.
+	 * @returns {ApiTable | null} The active table object if exactly one table is selected or being edited; otherwise, null.
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetActiveTable.js
 	 */
 	ApiPresentation.prototype.GetActiveTable = function() {
@@ -2241,7 +2241,7 @@
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @since 9.5.0
-	 * @returns {ApiShape | null} The active shape object, or null if no shape is currently active.
+	 * @returns {ApiShape | null} The active shape object if exactly one shape is selected or being edited; otherwise, null.
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetActiveShape.js
 	 */
 	ApiPresentation.prototype.GetActiveShape = function() {
@@ -8955,30 +8955,44 @@
 	 * The value is applied as a minimum height for each row, so a row can be taller if its content requires more space.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
-	 * @param {EMU} nValue - The table height in English measure units.
-	 * @returns {EMU | null} - Returns the requested height (in EMU), or null if the table has no rows.
+	 * @param {EMU} height - The table height in English measure units.
+	 * @returns {boolean}
 	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetHeight.js
 	 */
-	ApiTable.prototype.SetHeight = function (nValue) {
-		const table = this.Table;
-		const rowsCount = table ? table.GetRowsCount() : 0;
-		if (!table || rowsCount <= 0)
-			return null;
+	ApiTable.prototype.SetHeight = function (height) {
+		if (typeof height !== 'number' || !AscFormat.isRealNumber(height)) {
+			AscBuilder.throwException(new Error('Invalid type of parameter "height".'));
+			return false;
+		}
 
-		const heightMM = Math.max(0, nValue / 36000);
-		const perRowMM = heightMM / rowsCount;
-		for (let nRow = 0; nRow < rowsCount; nRow++)
+		if (height < 0) {
+			AscBuilder.throwException(new Error('Parameter "height" cannot be negative.'));
+			return false;
+		}
+
+		let table = this.Table;
+		if (!table)
+			return false;
+
+		let rowsCount = table
+			? table.GetRowsCount()
+			: null;
+		if (rowsCount === null)
+			return false;
+
+		let perRowMM = height / rowsCount;
+		for (let nRow = 0; nRow < rowsCount; ++nRow)
 		{
-			const oRow = table.GetRow(nRow);
-			if (oRow)
-				oRow.Set_Height(perRowMM, Asc.linerule_AtLeast);
+			let row = table.GetRow(nRow);
+			if (row)
+				row.Set_Height(perRowMM, Asc.linerule_AtLeast);
 		}
 
 		if (table.Parent && table.Parent.Refresh_RecalcData2)
 			table.Parent.Refresh_RecalcData2();
 
-		return private_MM2EMU(heightMM);
+		return true;
 	};
 
 	/**
@@ -9176,7 +9190,7 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
-	 * @return {boolean}
+	 * @returns {boolean}
 	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetBackgroundColor.js
 	 */
@@ -9205,14 +9219,17 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @since 9.5.0
-	 * @param {string} sTitle - The table title to be set.
-	 * @return {boolean}
+	 * @param {string} title - The table title to be set.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetTableTitle.js
 	 */
-	ApiTable.prototype.SetTableTitle = function(sTitle) {
-		if (typeof sTitle !== "string" || sTitle === "")
+	ApiTable.prototype.SetTableTitle = function(title) {
+		if (typeof title !== 'string') {
+			AscBuilder.throwException(new Error('Invalid type of parameter "title".'));
 			return false;
-		this.Drawing.setTitle(sTitle);
+		}
+
+		this.Drawing.setTitle(title);
 		return true;
 	};
 	/**
@@ -9231,14 +9248,17 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @since 9.5.0
-	 * @param {string} sDescr - The table description to be set.
-	 * @return {boolean}
+	 * @param {string} descr - The table description.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetTableDescription.js
 	 */
-	ApiTable.prototype.SetTableDescription = function(sDescr) {
-		if (typeof sDescr !== "string" || sDescr === "")
+	ApiTable.prototype.SetTableDescription = function(descr) {
+		if (typeof title !== 'descr') {
+			AscBuilder.throwException(new Error('Invalid type of parameter "descr".'));
 			return false;
-		this.Drawing.setDescription(sDescr);
+		}
+
+		this.Drawing.setDescription(descr);
 		return true;
 	};
 	/**
@@ -9246,7 +9266,7 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @since 9.5.0
-	 * @return {string}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetTableDescription.js
 	 */
 	ApiTable.prototype.GetTableDescription = function() {
@@ -9256,7 +9276,7 @@
 	 * Clears the content from the table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
-	 * @return {boolean}
+	 * @returns {boolean}
 	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/Clear.js
 	 */
