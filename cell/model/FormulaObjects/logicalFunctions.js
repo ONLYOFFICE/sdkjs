@@ -246,7 +246,7 @@ function (window, undefined) {
 		return cElementType.error === value.type ? null : [1];
 	};
 	cIFERROR.prototype.Calculate = function (arg) {
-		let arg0 = arg[0];
+		let arg0 = arg[0], res = arg[0];
 		if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElement(0);
 		}
@@ -255,13 +255,13 @@ function (window, undefined) {
 		}
 		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
+			res = arg0;
 		}
 
 		if (arg0.type === cElementType.error) {
 			return arg[1].type === cElementType.array ? arg[1].getElement(0) : arg[1];
-		} else {
-			return arg[0];
 		}
+		return res;
 	};
 
 	/**
