@@ -2339,17 +2339,61 @@
 	/**
 	 * Add text to the document on the cursor position.
 	 * @memberof ApiPresentation
-	 * @param {string} sText - The text to add to document.
+	 * @param {string} text - The text to add to document. The "\n" characters are added as line breaks, the "\t"
+	 * characters are added as tabs, the "\r" characters are skipped.
 	 * @returns {boolean}
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/EnterText.js
 	 */
-	ApiPresentation.prototype.EnterText = function(sText)
+	ApiPresentation.prototype.EnterText = function(text)
 	{
-		this.Presentation.EnterText(sText);
+		text = AscBuilder.GetStringParameter(text, null);
+		if (null === text)
+			AscBuilder.throwException(new Error("The 'text' parameter must be a string"));
+
+		let buffer = "";
+		for (let iterator = text.getUnicodeIterator(); iterator.check(); iterator.next())
+		{
+			let charcode = iterator.value();
+			if (13 === charcode)
+				continue;
+
+			if (9 !== charcode && 10 !== charcode)
+			{
+				buffer += AscCommon.encodeSurrogateChar(charcode);
+				continue;
+			}
+
+			if ("" !== buffer)
+			{
+				this.Presentation.EnterText(buffer);
+				buffer = "";
+			}
+
+			if (9 === charcode) // \t
+				this.private_AddItemOnCursorPos(new AscWord.CRunTab());
+			else if (10 === charcode) // \n
+				this.private_AddItemOnCursorPos(new AscWord.CRunBreak(AscWord.break_Line));
+		}
+
+		if ("" !== buffer)
+			this.Presentation.EnterText(buffer);
+
 		return true;
-	}
+	};
+
+	ApiPresentation.prototype.private_AddItemOnCursorPos = function(item)
+	{
+		let presentation = this.Presentation;
+		if (!presentation.CollaborativeEditing.Is_Fast() && presentation.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props))
+			return;
+
+		presentation.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd);
+		presentation.AddToParagraph(item, false, true);
+		presentation.FinalizeAction();
+		presentation.Document_UpdateSelectionState();
+	};
 
 	/**
 	 * Add paragraph to the document on the cursor position.

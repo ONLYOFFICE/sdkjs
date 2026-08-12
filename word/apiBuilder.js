@@ -10393,16 +10393,60 @@
 	/**
 	 * Add text to the document on the cursor position.
 	 * @memberof ApiDocument
-	 * @param {string} sText - The text to add to document.
+	 * @param {string} text - The text to add to document. The "\n" characters are added as line breaks, the "\t"
+	 * characters are added as tabs, the "\r" characters are skipped.
 	 * @returns {boolean}
 	 * @typeofeditors ["CDE"]
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/EnterText.js
 	 */
-	ApiDocument.prototype.EnterText = function(sText)
+	ApiDocument.prototype.EnterText = function(text)
 	{
-		this.Document.EnterText(sText);
+		text = GetStringParameter(text, null);
+		if (null === text)
+			throwException(new Error("The 'text' parameter must be a string"));
+
+		let buffer = "";
+		for (let iterator = text.getUnicodeIterator(); iterator.check(); iterator.next())
+		{
+			let charCode = iterator.value();
+			if (13 === charCode)
+				continue;
+
+			if (9 !== charCode && 10 !== charCode)
+			{
+				buffer += AscCommon.encodeSurrogateChar(charCode);
+				continue;
+			}
+
+			if ("" !== buffer)
+			{
+				this.Document.EnterText(buffer);
+				buffer = "";
+			}
+
+			if (9 === charCode) // \t
+				this.private_AddItemOnCursorPos(new AscWord.CRunTab());
+			else if (10 === charCode) // \n
+				this.private_AddItemOnCursorPos(new AscWord.CRunBreak(AscWord.break_Line));
+		}
+
+		if ("" !== buffer)
+			this.Document.EnterText(buffer);
+
 		return true;
+	};
+
+	ApiDocument.prototype.private_AddItemOnCursorPos = function(item)
+	{
+		let doc = this.Document;
+		if (doc.IsSelectionLocked(AscCommon.changestype_Paragraph_AddText, null, true, doc.IsFormFieldEditing()))
+			return;
+
+		doc.StartAction(AscDFH.historydescription_Document_AddLetter);
+		doc.AddToParagraph(item);
+		doc.UpdateSelection();
+		doc.FinalizeAction();
 	};
 
 	/**
