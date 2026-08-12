@@ -662,14 +662,23 @@ function (window, undefined) {
 			// TODO refactor
 			// go through the array and return result for each element
 			let resArr = new cArray();
-			let tempArraySize, maxArraySize = arg0.getDimensions(true);
-			let arg0Rows = maxArraySize.row, arg0Cols = maxArraySize.col;
+			//sizes are LOGICAL: a full-column index (or a fully generator-backed chosen argument) has a
+			//physical head shorter than the array it stands for, and reading the physical one both truncates
+			//the result and makes the out-of-range guards below fire on cells that are in range.
+			let logicalSize = arg0.getDimensions();
+			let headSize = arg0.getDimensions(true);
+			let tempArraySize, maxArraySize = {row: logicalSize.row, col: logicalSize.col};
+			//the lazy tail is carried over to the result instead of being walked cell by cell
+			let lazyIndex = cElementType.array === arg0.type && arg0.hasLazyTail && arg0.hasLazyTail();
+			//iterate the stored part only; everything past it is served by the tail composed after the loop
+			let arg0Rows = lazyIndex ? headSize.row : logicalSize.row;
+			let arg0Cols = lazyIndex ? headSize.col : logicalSize.col;
 
 			// get max array size by first loop
 			arg0.foreach2(function (elem) {
 				let chosenArgument = chooseArgument(elem);
 				if (chosenArgument && chosenArgument.type === cElementType.cellsRange || chosenArgument.type === cElementType.cellsRange3D || chosenArgument.type === cElementType.array) {
-					tempArraySize = chosenArgument.getDimensions(true);
+					tempArraySize = chosenArgument.getDimensions();
 					maxArraySize.row = tempArraySize.row > maxArraySize.row ? tempArraySize.row : maxArraySize.row;
 					maxArraySize.col = tempArraySize.col > maxArraySize.col ? tempArraySize.col : maxArraySize.col;
 				}
@@ -679,9 +688,9 @@ function (window, undefined) {
 				for (let c = 0; c < arg0Cols; c++) {
 					let elem = arg0.getValue2(r, c);
 					let chosenArgument = chooseArgument(elem);
-					let argDimensions = chosenArgument.getDimensions(true);
-					let singleRow = arg0Rows === 1;
-					let singleCol = arg0Cols === 1;
+					let argDimensions = chosenArgument.getDimensions();
+					let singleRow = logicalSize.row === 1;
+					let singleCol = logicalSize.col === 1;
 					let tempArr = [];
 
 					if (singleRow || singleCol) {
@@ -747,7 +756,38 @@ function (window, undefined) {
 				}
 			}
 
-			if (resArr.getRowCount(true) < maxArraySize.row) {
+			if (lazyIndex) {
+				//the index array keeps going past its stored part, so the result does too: compose the tail
+				//from the index tail instead of materializing it. a chosen argument that is itself an array
+				//is read per (row,col); a plain value repeats.
+				const pickFromChosen = function (chosen, r, c) {
+					if (chosen.type !== cElementType.array && chosen.type !== cElementType.cellsRange &&
+						chosen.type !== cElementType.cellsRange3D) {
+						return chosen;
+					}
+					let d = chosen.getDimensions();
+					let pr = 1 === d.row ? 0 : r, pc = 1 === d.col ? 0 : c;
+					let e = chosen.getElementRowCol ? chosen.getElementRowCol(pr, pc) : chosen.getValueByRowCol(pr, pc);
+					return undefined === e ? new cEmpty() : e;
+				};
+				resArr.setRealArraySize(maxArraySize.row, maxArraySize.col);
+				let indexTailFn = arg0.getMissedValueFn();
+				if (indexTailFn) {
+					resArr.setMissedValueFn(function (r, c) {
+						return pickFromChosen(chooseArgument(indexTailFn(r, c)), r, c);
+					});
+				} else {
+					let chosenTail = chooseArgument(arg0.getMissedValue());
+					if (chosenTail.type === cElementType.array || chosenTail.type === cElementType.cellsRange ||
+						chosenTail.type === cElementType.cellsRange3D) {
+						resArr.setMissedValueFn(function (r, c) {
+							return pickFromChosen(chosenTail, r, c);
+						});
+					} else {
+						resArr.setMissedValue(chosenTail);
+					}
+				}
+			} else if (resArr.getRowCount(true) < maxArraySize.row) {
 				// fill the rest of array with #N/A error
 				for (let i = resArr.getRowCount(true); i < maxArraySize.row; i++) {
 					resArr.addRow();

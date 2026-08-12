@@ -238,6 +238,13 @@ function (window, undefined) {
 	cIFERROR.prototype.argumentsMax = 2;
 	cIFERROR.prototype.argumentsType = [argType.any, argType.any];
 	cIFERROR.prototype.enabledToSingle = {"1": true};
+	cIFERROR.prototype.getUnusedTailArgs = function (tailArgs) {
+		let value = tailArgs && tailArgs[0];
+		if (!value) {
+			return null;
+		}
+		return cElementType.error === value.type ? null : [1];
+	};
 	cIFERROR.prototype.Calculate = function (arg) {
 		let arg0 = arg[0];
 		if (arg0.type === cElementType.array) {
@@ -273,6 +280,14 @@ function (window, undefined) {
 	cIFNA.prototype.isXLFN = true;
 	cIFNA.prototype.argumentsType = [argType.any, argType.any];
 	cIFNA.prototype.enabledToSingle = {"1": true};
+	cIFNA.prototype.getUnusedTailArgs = function (tailArgs) {
+		let value = tailArgs && tailArgs[0];
+		if (!value) {
+			return null;
+		}
+		let isNA = cElementType.error === value.type && cErrorType.not_available === value.errorType;
+		return isNA ? null : [1];
+	};
 	cIFNA.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0];
@@ -308,6 +323,35 @@ function (window, undefined) {
 	cIFS.prototype.isXLFN = true;
 	cIFS.prototype.argumentsType = [[argType.logical, argType.any]];
 	cIFS.prototype.enabledToSingle = {"odd": true};
+	cIFS.prototype.getUnusedTailArgs = function (tailArgs) {
+		let count = tailArgs ? tailArgs.length : 0, read = {}, unused = [];
+		for (let i = 0; i < count; i += 2) {
+			let cond = tailArgs[i];
+			if (!cond) {
+				return null;
+			}
+			read[i] = true;
+			if (cElementType.error === cond.type || cElementType.string === cond.type) {
+				break;
+			}
+			if (cElementType.number !== cond.type && cElementType.bool !== cond.type) {
+				continue;
+			}
+			if (i + 1 >= count) {
+				break;
+			}
+			if (cond.tocBool().value) {
+				read[i + 1] = true;
+				break;
+			}
+		}
+		for (let j = 0; j < count; j++) {
+			if (!read[j]) {
+				unused.push(j);
+			}
+		}
+		return unused.length ? unused : null;
+	};
 	cIFS.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1], true);
 		var argClone = oArguments.args;
@@ -486,6 +530,9 @@ function (window, undefined) {
 		return argResult;
 	};
 
+	function asComparable(_arg) {
+		return cElementType.empty === _arg.type ? new cNumber(0) : _arg;
+	}
 	/**
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
@@ -502,6 +549,38 @@ function (window, undefined) {
 	cSWITCH.prototype.isXLFN = true;
 	cSWITCH.prototype.argumentsType = [argType.any, argType.any, argType.any, [argType.any, argType.any]];
 	cSWITCH.prototype.enabledToSingle = {"evenFrom2": true};
+	cSWITCH.prototype.getUnusedTailArgs = function (tailArgs) {
+		let count = tailArgs ? tailArgs.length : 0, read = {}, unused = [];
+		let expression = count ? tailArgs[0] : null;
+		if (!expression) {
+			return null;
+		}
+		read[0] = true;
+		expression = asComparable(expression);
+		for (let i = 1; i < count; i++) {
+			if (i === count - 1) {
+				read[i] = true;
+				break;
+			}
+			let caseValue = tailArgs[i];
+			if (!caseValue) {
+				return null;
+			}
+			read[i] = true;
+			caseValue = asComparable(caseValue);
+			if (expression.type === caseValue.type && expression.getValue() === caseValue.getValue()) {
+				read[i + 1] = true;
+				break;
+			}
+			i++;
+		}
+		for (let j = 0; j < count; j++) {
+			if (!read[j]) {
+				unused.push(j);
+			}
+		}
+		return unused.length ? unused : null;
+	};
 	cSWITCH.prototype.Calculate = function (arg) {
 		let oArguments = this._prepareArguments(arg, arguments[1], true);
 		let argClone = oArguments.args;
@@ -520,26 +599,25 @@ function (window, undefined) {
 		if (cElementType.cell === argClone[0].type || cElementType.cell3D === argClone[0].type) {
 			arg0 = arg0.getValue()
 		}
+		arg0 = asComparable(arg0);
 		let arg0Type = arg0.type;
 
 		let res = null;
 		for (let i = 1; i < argClone.length; i++) {
+			if (i === argClone.length - 1) {
+				res = argClone[i];
+				break;
+			}
+
 			let argN = argClone[i];
 			if (cElementType.cell === argN.type || cElementType.cell3D === argN.type) {
 				argN = argN.getValue();
 			}
-			let argNType = argN.type;
+			argN = asComparable(argN);
 
-			if (arg0Type === argNType && arg0.getValue() === argN.getValue()) {
-				if (!argClone[i + 1]) {
-					return new cError(cErrorType.not_available);
-				} else {
-					res = argClone[i + 1];
-					break;
-				}
-			}
-			if (i === argClone.length - 1) {
-				res = argClone[i];
+			if (arg0Type === argN.type && arg0.getValue() === argN.getValue()) {
+				res = argClone[i + 1];
+				break;
 			}
 			i++;
 		}
