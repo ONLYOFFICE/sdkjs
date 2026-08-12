@@ -9253,7 +9253,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetTableDescription.js
 	 */
 	ApiTable.prototype.SetTableDescription = function(descr) {
-		if (typeof title !== 'descr') {
+		if (typeof descr !== 'string') {
 			AscBuilder.throwException(new Error('Invalid type of parameter "descr".'));
 			return false;
 		}
