@@ -2066,12 +2066,16 @@ ParaMath.prototype.recalculateCursorPosition = function(positionCalculator, isCu
 };
 ParaMath.prototype.Refresh_RecalcData = function(Data)
 {
-    this.Paragraph.Refresh_RecalcData2(0);
+    let paragraph = this.GetParagraph();
+    if (paragraph)
+        paragraph.Refresh_RecalcData2(0);
 };
 
 ParaMath.prototype.Refresh_RecalcData2 = function(Data)
 {
-    this.Paragraph.Refresh_RecalcData2(0);
+    let paragraph = this.GetParagraph();
+    if (paragraph)
+        paragraph.Refresh_RecalcData2(0);
 };
 
 ParaMath.prototype.RecalculateMinMaxContentWidth = function(MinMax)
