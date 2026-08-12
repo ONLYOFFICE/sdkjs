@@ -69,6 +69,26 @@
 	 * @property {pt} 3 - y2 (bottom)
 	 */
 
+	/**
+	 * Comment object.
+	 * @typedef {Object} comment
+	 * @property {string} Id - The comment ID.
+	 * @property {CommentData} Data - An object which contains the comment data.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/comment.js
+	 */
+
+	/**
+	 * The comment data.
+	 * @typedef {Object} CommentData
+	 * @property {string} AnnotType - The annotation comment type.
+	 * @property {string} UserName - The comment author.
+	 * @property {string} Text - The comment text.
+	 * @property {string} Time - The time when the comment was posted (in milliseconds).
+	 * @property {string} UserId - The user ID of the comment author.
+	 * @property {CommentData[]} Replies - An array containing the comment replies represented as the *CommentData* object.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/CommentData.js
+	 */
+
     /**
      * Base class.
      * @global
@@ -235,6 +255,9 @@
 		let aAnnots = oDoc.annots;
 		for (let i = 0; i < aAnnots.length; i++) {
 			let annot = aAnnots[i];
+			if (annot.IsLink() || (annot.IsRedact() && annot.GetRedactId())) {
+				continue;
+			}
 
 			let oAscCommData = annot.GetAscCommentData();
 			let oCommData = oAscCommData ? new AscCommon.CCommentData() : undefined;

@@ -1125,9 +1125,6 @@
         this.SetWasChanged(true, false);
         if (bSendAddCommentEvent)
             oDoc.CheckComment(this);
-        
-        if (this._contents == null && this.IsUseInDocument())
-            Asc.editor.sync_RemoveComment(this.GetId());
     };
     CAnnotationBase.prototype.Recalculate = function(bForce) {
         if (!this.IsShapeBased()) {
@@ -1299,12 +1296,6 @@
         AscCommon.History.Add(new CChangesPDFAnnotCommentData(this, oCurData, oCommentData));
         this.SetWasChanged(true, false);
         
-        if (oCommentData == null) {
-            this._replies.length = 0;
-            Asc.editor.sync_RemoveComment(this.GetId());
-            return;
-        }
-
         let oFirstCommToEdit;
         if (this.GetId() == oCommentData.m_sUserData)
             oFirstCommToEdit = this;
@@ -1391,9 +1382,9 @@
         let oAscCommData = new Asc.asc_CCommentDataPDF(null);
         oAscCommData.asc_putText(this.GetContents());
 
-        let sModDate = this.GetModDate();
-        if (sModDate)
-            oAscCommData.asc_putOnlyOfficeTime(sModDate.toString());
+        let sCreationDate = this.GetCreationDate();
+        if (sCreationDate)
+            oAscCommData.asc_putOnlyOfficeTime(sCreationDate.toString());
         oAscCommData.asc_putUserId(this.GetUserId());
         oAscCommData.asc_putUserName(this.GetAuthor());
 

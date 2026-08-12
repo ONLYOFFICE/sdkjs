@@ -157,6 +157,10 @@ function CCommentData()
 		this.m_nDurableId = AscCommentData.asc_getDurableId();
 		this.m_sUserData  = AscCommentData.asc_getUserData();
 
+		if (Asc.editor.isPdfEditor() && AscCommentData.asc_getAnnotType) {
+			this.m_nAnnotType = AscCommentData.asc_getAnnotType();
+		}
+
         var RepliesCount  = AscCommentData.asc_getRepliesCount();
         for ( var Index = 0; Index < RepliesCount; Index++ )
         {
@@ -335,17 +339,25 @@ CCommentData.prototype.SetUserData = function(sData)
 };
 CCommentData.prototype.ConvertToSimpleObject = function()
 {
-	var obj = {};
+	let obj = {};
 
-	obj["Text"]      = this.m_sText;
-	obj["Time"]      = this.m_sTime;
-	obj["UserName"]  = this.m_sUserName;
-	obj["QuoteText"] = this.m_sQuoteText;
-	obj["Solved"]    = this.m_bSolved;
-	obj["UserData"]  = this.m_sUserData;
-	obj["Replies"]   = [];
+	if (Asc.editor.isPdfEditor()) {
+		obj["AnnotType"] = AscPDF.GetAnnotTypeStr(this.m_nAnnotType);
+		obj["Time"]      = this.m_sOOTime;
+	}
+	else {
+		obj["QuoteText"] = this.m_sQuoteText;
+		obj["Solved"]    = this.m_bSolved;
+		obj["UserData"]  = this.m_sUserData;	
+		obj["Time"]      = this.m_sTime;
+	}
 
-	for (var nIndex = 0, nCount = this.m_aReplies.length; nIndex < nCount; ++nIndex)
+	obj["Text"]		= this.m_sText;
+	obj["UserName"]	= this.m_sUserName;
+	obj["UserId"]	= this.m_sUserId;
+	obj["Replies"]	= [];
+
+	for (let nIndex = 0, nCount = this.m_aReplies.length; nIndex < nCount; ++nIndex)
 	{
 		obj["Replies"].push(this.m_aReplies[nIndex].ConvertToSimpleObject());
 	}

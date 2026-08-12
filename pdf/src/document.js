@@ -4581,12 +4581,7 @@ var CPresentation = CPresentation || function(){};
             return;
 
         Asc.editor.sync_HideComment();
-		if (oAnnot.IsText()) {
-			this.RemoveAnnot(oAnnot.GetId(), false, false);
-		}
-		else {
-			oAnnot.RemoveComment();
-		}
+		this.RemoveAnnot(oAnnot.GetId(), false, false);
     };
     CPDFDoc.prototype.RemoveAnnot = function(Id, bIsOnMove, canRemoveLink) {
 		let oAnnot = this.annots.find(function(annot) {
