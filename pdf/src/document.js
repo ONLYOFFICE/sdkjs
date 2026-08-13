@@ -8030,7 +8030,7 @@ var CPresentation = CPresentation || function(){};
                     let aRect = field.GetRect();
 
                     for (let i = 0, count = aQuadsFlat.length / 8; i < count; i++) {
-                        if (isIntersectingRects(aQuadsFlat.slice(i, i + 8), aRect)) {
+                        if (isIntersectingRects(aQuadsFlat.slice(i * 8, i * 8 + 8), aRect)) {
                             _t.RemoveField(field.GetId());
                             return;
                         }
@@ -8045,7 +8045,7 @@ var CPresentation = CPresentation || function(){};
 
                     let aRect = annot.GetRect();
                     for (let i = 0, count = aQuadsFlat.length / 8; i < count; i++) {
-                        if (isIntersectingRects(aQuadsFlat.slice(i, i + 8), aRect)) {
+                        if (isIntersectingRects(aQuadsFlat.slice(i * 8, i * 8 + 8), aRect)) {
                             _t.RemoveAnnot(annot.GetId());
                             return;
                         }
