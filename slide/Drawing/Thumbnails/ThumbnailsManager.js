@@ -76,7 +76,7 @@
 		if (!this.m_oWordControl.IsThumbnailsSupported()) {
 			return false;
 		}
-		if (Asc.editor.isSlideShow()) {
+		if (Asc.editor.isSlideShow() && !Asc.editor.isReporterMode) {
 			return false;
 		}
 
