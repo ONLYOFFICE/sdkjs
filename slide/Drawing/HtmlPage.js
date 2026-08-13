@@ -3457,7 +3457,7 @@
 			var _test_width1 = 10 + _label1_width + 6 + 20 + 6 + _buttonReset_width + 10 + 20 + 20 + 15 + _main_width + 15 + 20 + 20 + 10 + _buttonEnd_width + 10;
 			var _is1 = ((10 + _label1_width + 6 + 20 + 6 + _buttonReset_width + 10) <= _posCenter) ? true : false;
 			var _is2 = ((_posCenter + _widthCenter) <= (_width - 20 - _buttonEnd_width)) ? true : false;
-			if (_is2 && (_test_width1 <= _width)) {
+			if (_test_width1 <= _width) {
 				_label1.style.display = "block";
 				_buttonPlay.style.display = "block";
 				_buttonReset.style.display = "block";
@@ -3467,8 +3467,34 @@
 				setHorizontalPosition(_buttonPlay, (10 + _label1_width + 6) + 'px');
 				setHorizontalPosition(_buttonReset, (10 + _label1_width + 6 + 20 + 6) + 'px');
 
-				if (!_is1) {
+				if (!_is1 || !_is2) {
 					_posCenter = 10 + _label1_width + 6 + 20 + 6 + _buttonReset_width + 10 + ((_width - _test_width1) >> 1);
+				}
+
+				setHorizontalPosition(_buttonPrev, _posCenter + 'px');
+				setHorizontalPosition(_buttonNext, (_posCenter + 20) + 'px');
+				setHorizontalPosition(_buttonSeparator, (_posCenter + 48 - 10) + 'px');
+				setHorizontalPosition(_labelMain, (_posCenter + 55) + 'px');
+				setHorizontalPosition(_buttonSeparator2, (_posCenter + 55 + _main_width + 7 - 10) + 'px');
+				setHorizontalPosition(_buttonPointer, (_posCenter + 70 + _main_width) + 'px');
+				setHorizontalPosition(_buttonDrawMenuTrigger, (_posCenter + 90 + _main_width) + 'px');
+				redrawMenu();
+
+				return;
+			}
+
+			// test first mode without reset
+			// [10][time][6][play/pause(20)]----[10]----[prev(20)][next(20)][15][slide x of x][15][pointer(20)][drawmenu(20)]----[10]----[end][10]
+			const leftGroupEnd = 10 + _label1_width + 6 + 20 + 10;
+			const testWidthNoReset = leftGroupEnd + _widthCenter + 10 + _buttonEnd_width + 10;
+			if (testWidthNoReset <= _width) {
+				_buttonReset.style.display = "none";
+
+				setHorizontalPosition(_label1, '10px');
+				setHorizontalPosition(_buttonPlay, (10 + _label1_width + 6) + 'px');
+
+				if (leftGroupEnd > _posCenter || !_is2) {
+					_posCenter = leftGroupEnd + ((_width - testWidthNoReset) >> 1);
 				}
 
 				setHorizontalPosition(_buttonPrev, _posCenter + 'px');
