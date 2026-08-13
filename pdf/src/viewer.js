@@ -1346,6 +1346,12 @@
 			let nMaxIdx = this.file.nativeFile["getStartID"]();
 			this.openForms();
 			this.openAnnots();
+
+			let macrosData = this.file.nativeFile["getMacros"]();
+			if (macrosData) {
+				Asc.editor.macros.SetData(macrosData);
+			}
+			
 			oDoc.UpdateCurMaxApIdx(nMaxIdx);
 
 			AscCommon.g_oIdCounter.Set_Load(isLoad);
@@ -5136,10 +5142,21 @@
 			let nStartPos = oMemory.GetCurPosition();
 			oMemory.Skip(4);
 
-			// parents and CO (calculaction order)
 			oMemory.WriteByte(AscPDF.CommandType.widgetInfo);
+
+			// marcos
+			oMemory.WriteByte(AscCommon.CommandType.ctMacros);
+			let nPosForMacrosLength = oMemory.GetCurPosition();
+			oMemory.Skip(4);
+			oMemory.WriteString(Asc.editor.macros.GetData());
+			let nEndPos = oMemory.GetCurPosition();
+			oMemory.Seek(nPosForMacrosLength);
+			oMemory.WriteLong(nEndPos - nPosForMacrosLength);
+			oMemory.Seek(nEndPos);
+
+			// parents and CO (calculaction order)
 			oMemory.WriteByte(AscCommon.CommandType.ctWidgetsInfo);
-			let nPosForLenght = oMemory.GetCurPosition();
+			let nPosForLength = oMemory.GetCurPosition();
 			oMemory.Skip(4);
 
 			let aCO = oDoc.GetCalculateInfo().ids;
@@ -5148,7 +5165,7 @@
 				oMemory.WriteLong(aCO[i]);
 			}
 
-			let nPosForParentLenght = oMemory.GetCurPosition();
+			let nPosForParentLength = oMemory.GetCurPosition();
 			oMemory.Skip(4);
 			let nParents = 0;
 
@@ -5166,10 +5183,10 @@
 				}
 			});
 
-			let nEndPos = oMemory.GetCurPosition();
+			nEndPos = oMemory.GetCurPosition();
 			
 			// number of changed parents
-			oMemory.Seek(nPosForParentLenght);
+			oMemory.Seek(nPosForParentLength);
 			oMemory.WriteLong(nParents);
 			oMemory.Seek(nEndPos);
 
@@ -5182,8 +5199,8 @@
 			nEndPos = oMemory.GetCurPosition();
 
 			// command length with parent info, CO and images
-			oMemory.Seek(nPosForLenght);
-			oMemory.WriteLong(nEndPos - nPosForLenght);
+			oMemory.Seek(nPosForLength);
+			oMemory.WriteLong(nEndPos - nPosForLength);
 			oMemory.Seek(nEndPos);
 
 			// Total command length

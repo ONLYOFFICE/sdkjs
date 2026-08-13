@@ -1746,7 +1746,8 @@
 
 		this.ctHeadings         = 169;
 		this.ctRedact			= 170;
-
+		this.ctMacros			= 172;
+		
 		this.ctPageWidth  = 200;
 		this.ctPageHeight = 201;
 
