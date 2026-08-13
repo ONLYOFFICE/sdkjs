@@ -782,29 +782,15 @@
 						}
 
 						const isWord = editorId === AscCommon.c_oEditorId.Word;
-						let isInSelectedGroup = false;
-						if (isWord && drawing.group) {
-							if (this.selection.groupSelection === drawing.group) {
-								isInSelectedGroup = true;
-							} else {
-								for (let i = 0; i < this.selectedObjects.length; i++) {
-									if (this.selectedObjects[i] === drawing.group) {
-										isInSelectedGroup = true;
-										break;
-									}
-								}
-							}
-						}
-
-						const bCheckTextHyperlink = isWord ? (isSelected || isInSelectedGroup) : true;
-						const bCheckShapeHyperlink = isWord ? (!isSelected && !isInSelectedGroup) : !isSelected;
+						const checkTextHyperlink = isWord ? (isSelected || !!drawing.group) : true;
+						const checkShapeHyperlink = !isSelected;
 
 						var sHyperlink = null;
 						var sTooltip = "";
 						var oTextHyperlink;
 						var bRedrawFrame = false;
 						let isNoCtrl = false;
-						if (bCheckTextHyperlink) {
+						if (checkTextHyperlink) {
 							if (hit_in_text_rect) {
 								oTextHyperlink = fCheckObjectHyperlink(drawing, x, y);
 								if (oTextHyperlink &&
@@ -834,7 +820,7 @@
 								}
 							}
 						}
-						if (sHyperlink === null && bCheckShapeHyperlink) {
+						if (sHyperlink === null && checkShapeHyperlink) {
 							const nvProps = this.hyperlinkCollectNonVisualProperties(drawing);
 							oNvPr = nvProps[0];
 							if (oNvPr
