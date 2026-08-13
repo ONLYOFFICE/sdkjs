@@ -177,7 +177,7 @@
         }
 
         let oCultureInfo = {};
-        Object.assign(oCultureInfo, AscCommon.g_aCultureInfos[9]);
+        Object.assign(oCultureInfo, AscCommon.g_oDefaultCultureInfo);
         if (null == oNumFormat.oTextFormat.ShortDatePattern) {
             oNumFormat.oTextFormat.ShortDatePattern = getShortPattern(oNumFormat.oTextFormat.aRawFormat);
             oNumFormat.oTextFormat._prepareFormatDatePDF();
@@ -489,7 +489,7 @@
         }
 
         let oCultureInfo = {};
-        Object.assign(oCultureInfo, AscCommon.g_aCultureInfos[9]);
+        Object.assign(oCultureInfo, AscCommon.g_oDefaultCultureInfo);
         if (null == oDateFormat.oTextFormat.ShortDatePattern) {
             oDateFormat.oTextFormat.ShortDatePattern = getShortPattern(oDateFormat.oTextFormat.aRawFormat);
             oDateFormat.oTextFormat._prepareFormatDatePDF();
@@ -596,7 +596,7 @@
         }
 
         let oCultureInfo = {};
-        Object.assign(oCultureInfo, AscCommon.g_aCultureInfos[9]);
+        Object.assign(oCultureInfo, AscCommon.g_oDefaultCultureInfo);
         if (null == oDateFormat.oTextFormat.ShortDatePattern) {
             oDateFormat.oTextFormat.ShortDatePattern = getShortPattern(oDateFormat.oTextFormat.aRawFormat);
             oDateFormat.oTextFormat._prepareFormatDatePDF();
@@ -696,7 +696,7 @@
         }
         
         let oFormatParser = AscCommon.g_oFormatParser;
-        let oResParsed = oFormatParser.parseDatePDF(sCurValue, AscCommon.g_aCultureInfos[9]);
+        let oResParsed = oFormatParser.parseDatePDF(sCurValue, AscCommon.g_oDefaultCultureInfo);
 
         if (!oResParsed) {
             oTargetRun.ClearContent();
@@ -727,7 +727,7 @@
 
         // TODO implement ms handling
         let oCultureInfo = {};
-        Object.assign(oCultureInfo, AscCommon.g_aCultureInfos[9]);
+        Object.assign(oCultureInfo, AscCommon.g_oDefaultCultureInfo);
 
         let sFormat;
         let fIsValidTime = null;
@@ -789,7 +789,7 @@
         }
         
         let oFormatParser = AscCommon.g_oFormatParser;
-        let oResParsed = oFormatParser.parseDatePDF(sCurValue, AscCommon.g_aCultureInfos[9]);
+        let oResParsed = oFormatParser.parseDatePDF(sCurValue, AscCommon.g_oDefaultCultureInfo);
 
         if (!oResParsed) {
             oDoc.event["rc"] = false;

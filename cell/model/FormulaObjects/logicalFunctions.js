@@ -183,6 +183,22 @@ function (window, undefined) {
 		return res;
 	};
 	cIF.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
+	//only the branch the condition selects is ever read, so the other one may vary from cell to cell without
+	//affecting the answer. an unusable condition (error/non-boolean text) reads neither branch.
+	cIF.prototype.getUnusedTailArgs = function (tailArgs) {
+		let cond = tailArgs && tailArgs[0];
+		if (!cond || cElementType.array === cond.type) {
+			return null;
+		}
+		cond = cond.tocBool();
+		if (cElementType.error === cond.type || cElementType.string === cond.type) {
+			return [1, 2];
+		}
+		if (cElementType.bool !== cond.type) {
+			return null;
+		}
+		return cond.value ? [2] : [1];
+	};
 	cIF.prototype.Calculate = function (arg) {
 		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
 		if (arg0.type === cElementType.array) {

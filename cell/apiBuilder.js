@@ -25833,25 +25833,25 @@
 	ApiAboveAverage.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
 
 	// Block inherited methods that should not be available for ApiAboveAverage
-	ApiAboveAverage.prototype.Modify = null;
-	ApiAboveAverage.prototype.GetOperator = null;
-	ApiAboveAverage.prototype.SetOperator = null;
-	ApiAboveAverage.prototype.GetFormula1 = null;
-	ApiAboveAverage.prototype.SetFormula1 = null;
-	ApiAboveAverage.prototype.GetFormula2 = null;
-	ApiAboveAverage.prototype.SetFormula2 = null;
-	ApiAboveAverage.prototype.GetDateOperator = null;
-	ApiAboveAverage.prototype.SetDateOperator = null;
-	ApiAboveAverage.prototype.GetText = null;
-	ApiAboveAverage.prototype.SetText = null;
-	ApiAboveAverage.prototype.GetTextOperator = null;
-	ApiAboveAverage.prototype.SetTextOperator = null;
-	ApiAboveAverage.prototype.GetRank = null;
-	ApiAboveAverage.prototype.SetRank = null;
-	ApiAboveAverage.prototype.GetPercentRank = null;
-	ApiAboveAverage.prototype.SetPercentRank = null;
-	ApiAboveAverage.prototype.GetStdDev = null;
-	ApiAboveAverage.prototype.SetStdDev = null;
+	ApiAboveAverage.prototype.Modify = ApiAboveAverage.prototype["Modify"] = null;
+	ApiAboveAverage.prototype.GetOperator = ApiAboveAverage.prototype["GetOperator"] = null;
+	ApiAboveAverage.prototype.SetOperator = ApiAboveAverage.prototype["SetOperator"] = null;
+	ApiAboveAverage.prototype.GetFormula1 = ApiAboveAverage.prototype["GetFormula1"] = null;
+	ApiAboveAverage.prototype.SetFormula1 = ApiAboveAverage.prototype["SetFormula1"] = null;
+	ApiAboveAverage.prototype.GetFormula2 = ApiAboveAverage.prototype["GetFormula2"] = null;
+	ApiAboveAverage.prototype.SetFormula2 = ApiAboveAverage.prototype["SetFormula2"] = null;
+	ApiAboveAverage.prototype.GetDateOperator = ApiAboveAverage.prototype["GetDateOperator"] = null;
+	ApiAboveAverage.prototype.SetDateOperator = ApiAboveAverage.prototype["SetDateOperator"] = null;
+	ApiAboveAverage.prototype.GetText = ApiAboveAverage.prototype["GetText"] = null;
+	ApiAboveAverage.prototype.SetText = ApiAboveAverage.prototype["SetText"] = null;
+	ApiAboveAverage.prototype.GetTextOperator = ApiAboveAverage.prototype["GetTextOperator"] = null;
+	ApiAboveAverage.prototype.SetTextOperator = ApiAboveAverage.prototype["SetTextOperator"] = null;
+	ApiAboveAverage.prototype.GetRank = ApiAboveAverage.prototype["GetRank"] = null;
+	ApiAboveAverage.prototype.SetRank = ApiAboveAverage.prototype["SetRank"] = null;
+	ApiAboveAverage.prototype.GetPercentRank = ApiAboveAverage.prototype["GetPercentRank"] = null;
+	ApiAboveAverage.prototype.SetPercentRank = ApiAboveAverage.prototype["SetPercentRank"] = null;
+	ApiAboveAverage.prototype.GetStdDev = ApiAboveAverage.prototype["GetStdDev"] = null;
+	ApiAboveAverage.prototype.SetStdDev = ApiAboveAverage.prototype["SetStdDev"] = null;
 
 	/**
 	 * Class representing a color scale conditional formatting rule.
@@ -26078,39 +26078,39 @@
 	ApiColorScale.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
 
 	// Block inherited methods that should not be available for ApiColorScale
-	ApiColorScale.prototype.SetStopIfTrue = null;
-	ApiColorScale.prototype.Modify = null;
-	ApiColorScale.prototype.GetOperator = null;
-	ApiColorScale.prototype.SetOperator = null;
-	ApiColorScale.prototype.GetFormula1 = null;
-	ApiColorScale.prototype.SetFormula1 = null;
-	ApiColorScale.prototype.GetFormula2 = null;
-	ApiColorScale.prototype.SetFormula2 = null;
-	ApiColorScale.prototype.GetDateOperator = null;
-	ApiColorScale.prototype.SetDateOperator = null;
-	ApiColorScale.prototype.GetText = null;
-	ApiColorScale.prototype.SetText = null;
-	ApiColorScale.prototype.GetTextOperator = null;
-	ApiColorScale.prototype.SetTextOperator = null;
-	ApiColorScale.prototype.GetRank = null;
-	ApiColorScale.prototype.SetRank = null;
-	ApiColorScale.prototype.GetPercentRank = null;
-	ApiColorScale.prototype.SetPercentRank = null;
-	ApiColorScale.prototype.GetStdDev = null;
-	ApiColorScale.prototype.SetStdDev = null;
-	ApiColorScale.prototype.GetAboveBelow = null;
-	ApiColorScale.prototype.SetAboveBelow = null;
+	ApiColorScale.prototype.SetStopIfTrue = ApiColorScale.prototype["SetStopIfTrue"] = null;
+	ApiColorScale.prototype.Modify = ApiColorScale.prototype["Modify"] = null;
+	ApiColorScale.prototype.GetOperator = ApiColorScale.prototype["GetOperator"] = null;
+	ApiColorScale.prototype.SetOperator = ApiColorScale.prototype["SetOperator"] = null;
+	ApiColorScale.prototype.GetFormula1 = ApiColorScale.prototype["GetFormula1"] = null;
+	ApiColorScale.prototype.SetFormula1 = ApiColorScale.prototype["SetFormula1"] = null;
+	ApiColorScale.prototype.GetFormula2 = ApiColorScale.prototype["GetFormula2"] = null;
+	ApiColorScale.prototype.SetFormula2 = ApiColorScale.prototype["SetFormula2"] = null;
+	ApiColorScale.prototype.GetDateOperator = ApiColorScale.prototype["GetDateOperator"] = null;
+	ApiColorScale.prototype.SetDateOperator = ApiColorScale.prototype["SetDateOperator"] = null;
+	ApiColorScale.prototype.GetText = ApiColorScale.prototype["GetText"] = null;
+	ApiColorScale.prototype.SetText = ApiColorScale.prototype["SetText"] = null;
+	ApiColorScale.prototype.GetTextOperator = ApiColorScale.prototype["GetTextOperator"] = null;
+	ApiColorScale.prototype.SetTextOperator = ApiColorScale.prototype["SetTextOperator"] = null;
+	ApiColorScale.prototype.GetRank = ApiColorScale.prototype["GetRank"] = null;
+	ApiColorScale.prototype.SetRank = ApiColorScale.prototype["SetRank"] = null;
+	ApiColorScale.prototype.GetPercentRank = ApiColorScale.prototype["GetPercentRank"] = null;
+	ApiColorScale.prototype.SetPercentRank = ApiColorScale.prototype["SetPercentRank"] = null;
+	ApiColorScale.prototype.GetStdDev = ApiColorScale.prototype["GetStdDev"] = null;
+	ApiColorScale.prototype.SetStdDev = ApiColorScale.prototype["SetStdDev"] = null;
+	ApiColorScale.prototype.GetAboveBelow = ApiColorScale.prototype["GetAboveBelow"] = null;
+	ApiColorScale.prototype.SetAboveBelow = ApiColorScale.prototype["SetAboveBelow"] = null;
 	//ApiColorScale.prototype.GetCalcFor = null;
 	//ApiColorScale.prototype.SetCalcFor = null;
-	ApiColorScale.prototype.GetNumStdDev = null;
-	ApiColorScale.prototype.SetNumStdDev = null;
+	ApiColorScale.prototype.GetNumStdDev = ApiColorScale.prototype["GetNumStdDev"] = null;
+	ApiColorScale.prototype.SetNumStdDev = ApiColorScale.prototype["SetNumStdDev"] = null;
 	//ApiColorScale.prototype.GetBorders = null;
-	ApiColorScale.prototype.GetFont = null;
-	ApiColorScale.prototype.GetNumberFormat = null;
-	ApiColorScale.prototype.SetNumberFormat = null;
-	ApiColorScale.prototype.GetFillColor = null;
-	ApiColorScale.prototype.SetFillColor = null;
-	ApiColorScale.prototype.SetBorders = null;
+	ApiColorScale.prototype.GetFont = ApiColorScale.prototype["GetFont"] = null;
+	ApiColorScale.prototype.GetNumberFormat = ApiColorScale.prototype["GetNumberFormat"] = null;
+	ApiColorScale.prototype.SetNumberFormat = ApiColorScale.prototype["SetNumberFormat"] = null;
+	ApiColorScale.prototype.GetFillColor = ApiColorScale.prototype["GetFillColor"] = null;
+	ApiColorScale.prototype.SetFillColor = ApiColorScale.prototype["SetFillColor"] = null;
+	ApiColorScale.prototype.SetBorders = ApiColorScale.prototype["SetBorders"] = null;
 
 	/**
 	 * Class representing single criterion in a color scale conditional formatting rule.
@@ -27472,20 +27472,20 @@
 	ApiDatabar.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
 
 	// Block inherited methods that should not be available for ApiDatabar
-	ApiDatabar.prototype.SetStopIfTrue = null;
-	ApiDatabar.prototype.Modify = null;
-	ApiDatabar.prototype.GetOperator = null;
-	ApiDatabar.prototype.SetOperator = null;
-	ApiDatabar.prototype.GetFormula1 = null;
-	ApiDatabar.prototype.SetFormula1 = null;
-	ApiDatabar.prototype.GetFormula2 = null;
-	ApiDatabar.prototype.SetFormula2 = null;
-	ApiDatabar.prototype.GetDateOperator = null;
-	ApiDatabar.prototype.SetDateOperator = null;
-	ApiDatabar.prototype.GetText = null;
-	ApiDatabar.prototype.SetText = null;
-	ApiDatabar.prototype.GetTextOperator = null;
-	ApiDatabar.prototype.SetTextOperator = null;
+	ApiDatabar.prototype.SetStopIfTrue = ApiDatabar.prototype["SetStopIfTrue"] = null;
+	ApiDatabar.prototype.Modify = ApiDatabar.prototype["Modify"] = null;
+	ApiDatabar.prototype.GetOperator = ApiDatabar.prototype["GetOperator"] = null;
+	ApiDatabar.prototype.SetOperator = ApiDatabar.prototype["SetOperator"] = null;
+	ApiDatabar.prototype.GetFormula1 = ApiDatabar.prototype["GetFormula1"] = null;
+	ApiDatabar.prototype.SetFormula1 = ApiDatabar.prototype["SetFormula1"] = null;
+	ApiDatabar.prototype.GetFormula2 = ApiDatabar.prototype["GetFormula2"] = null;
+	ApiDatabar.prototype.SetFormula2 = ApiDatabar.prototype["SetFormula2"] = null;
+	ApiDatabar.prototype.GetDateOperator = ApiDatabar.prototype["GetDateOperator"] = null;
+	ApiDatabar.prototype.SetDateOperator = ApiDatabar.prototype["SetDateOperator"] = null;
+	ApiDatabar.prototype.GetText = ApiDatabar.prototype["GetText"] = null;
+	ApiDatabar.prototype.SetText = ApiDatabar.prototype["SetText"] = null;
+	ApiDatabar.prototype.GetTextOperator = ApiDatabar.prototype["GetTextOperator"] = null;
+	ApiDatabar.prototype.SetTextOperator = ApiDatabar.prototype["SetTextOperator"] = null;
 
 	/**
 	 * Class representing an icon set conditional formatting rule.
@@ -28268,20 +28268,20 @@
 	ApiIconSetCondition.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
 
 	// Block inherited methods that should not be available for ApiIconSetCondition
-	ApiIconSetCondition.prototype.SetStopIfTrue = null;
-	ApiIconSetCondition.prototype.Modify = null;
-	ApiIconSetCondition.prototype.GetOperator = null;
-	ApiIconSetCondition.prototype.SetOperator = null;
-	ApiIconSetCondition.prototype.GetFormula1 = null;
-	ApiIconSetCondition.prototype.SetFormula1 = null;
-	ApiIconSetCondition.prototype.GetFormula2 = null;
-	ApiIconSetCondition.prototype.SetFormula2 = null;
-	ApiIconSetCondition.prototype.GetDateOperator = null;
-	ApiIconSetCondition.prototype.SetDateOperator = null;
-	ApiIconSetCondition.prototype.GetText = null;
-	ApiIconSetCondition.prototype.SetText = null;
-	ApiIconSetCondition.prototype.GetTextOperator = null;
-	ApiIconSetCondition.prototype.SetTextOperator = null;
+	ApiIconSetCondition.prototype.SetStopIfTrue = ApiIconSetCondition.prototype["SetStopIfTrue"] = null;
+	ApiIconSetCondition.prototype.Modify = ApiIconSetCondition.prototype["Modify"] = null;
+	ApiIconSetCondition.prototype.GetOperator = ApiIconSetCondition.prototype["GetOperator"] = null;
+	ApiIconSetCondition.prototype.SetOperator = ApiIconSetCondition.prototype["SetOperator"] = null;
+	ApiIconSetCondition.prototype.GetFormula1 = ApiIconSetCondition.prototype["GetFormula1"] = null;
+	ApiIconSetCondition.prototype.SetFormula1 = ApiIconSetCondition.prototype["SetFormula1"] = null;
+	ApiIconSetCondition.prototype.GetFormula2 = ApiIconSetCondition.prototype["GetFormula2"] = null;
+	ApiIconSetCondition.prototype.SetFormula2 = ApiIconSetCondition.prototype["SetFormula2"] = null;
+	ApiIconSetCondition.prototype.GetDateOperator = ApiIconSetCondition.prototype["GetDateOperator"] = null;
+	ApiIconSetCondition.prototype.SetDateOperator = ApiIconSetCondition.prototype["SetDateOperator"] = null;
+	ApiIconSetCondition.prototype.GetText = ApiIconSetCondition.prototype["GetText"] = null;
+	ApiIconSetCondition.prototype.SetText = ApiIconSetCondition.prototype["SetText"] = null;
+	ApiIconSetCondition.prototype.GetTextOperator = ApiIconSetCondition.prototype["GetTextOperator"] = null;
+	ApiIconSetCondition.prototype.SetTextOperator = ApiIconSetCondition.prototype["SetTextOperator"] = null;
 
 	// /**
 	//  * Class representing a collection of icon criteria.
@@ -29565,19 +29565,19 @@
 
 
 	// Block inherited methods that should not be available for ApiTop10
-	ApiTop10.prototype.Modify = null;
-	ApiTop10.prototype.GetOperator = null;
-	ApiTop10.prototype.SetOperator = null;
-	ApiTop10.prototype.GetFormula1 = null;
-	ApiTop10.prototype.SetFormula1 = null;
-	ApiTop10.prototype.GetFormula2 = null;
-	ApiTop10.prototype.SetFormula2 = null;
-	ApiTop10.prototype.GetDateOperator = null;
-	ApiTop10.prototype.SetDateOperator = null;
-	ApiTop10.prototype.GetText = null;
-	ApiTop10.prototype.SetText = null;
-	ApiTop10.prototype.GetTextOperator = null;
-	ApiTop10.prototype.SetTextOperator = null;
+	ApiTop10.prototype.Modify = ApiTop10.prototype["Modify"] = null;
+	ApiTop10.prototype.GetOperator = ApiTop10.prototype["GetOperator"] = null;
+	ApiTop10.prototype.SetOperator = ApiTop10.prototype["SetOperator"] = null;
+	ApiTop10.prototype.GetFormula1 = ApiTop10.prototype["GetFormula1"] = null;
+	ApiTop10.prototype.SetFormula1 = ApiTop10.prototype["SetFormula1"] = null;
+	ApiTop10.prototype.GetFormula2 = ApiTop10.prototype["GetFormula2"] = null;
+	ApiTop10.prototype.SetFormula2 = ApiTop10.prototype["SetFormula2"] = null;
+	ApiTop10.prototype.GetDateOperator = ApiTop10.prototype["GetDateOperator"] = null;
+	ApiTop10.prototype.SetDateOperator = ApiTop10.prototype["SetDateOperator"] = null;
+	ApiTop10.prototype.GetText = ApiTop10.prototype["GetText"] = null;
+	ApiTop10.prototype.SetText = ApiTop10.prototype["SetText"] = null;
+	ApiTop10.prototype.GetTextOperator = ApiTop10.prototype["GetTextOperator"] = null;
+	ApiTop10.prototype.SetTextOperator = ApiTop10.prototype["SetTextOperator"] = null;
 
 	/**
 	 * Class representing a unique values conditional formatting rule.
@@ -29873,25 +29873,25 @@
 	ApiUniqueValues.prototype.SetFillColor = ApiFormatCondition.prototype.SetFillColor;
 
 	// Block inherited methods that should not be available for ApiUniqueValues
-	ApiUniqueValues.prototype.Modify = null;
-	ApiUniqueValues.prototype.GetOperator = null;
-	ApiUniqueValues.prototype.SetOperator = null;
-	ApiUniqueValues.prototype.GetFormula1 = null;
-	ApiUniqueValues.prototype.SetFormula1 = null;
-	ApiUniqueValues.prototype.GetFormula2 = null;
-	ApiUniqueValues.prototype.SetFormula2 = null;
-	ApiUniqueValues.prototype.GetDateOperator = null;
-	ApiUniqueValues.prototype.SetDateOperator = null;
-	ApiUniqueValues.prototype.GetText = null;
-	ApiUniqueValues.prototype.SetText = null;
-	ApiUniqueValues.prototype.GetTextOperator = null;
-	ApiUniqueValues.prototype.SetTextOperator = null;
-	ApiUniqueValues.prototype.GetTopBottom = null;
-	ApiUniqueValues.prototype.SetTopBottom = null;
-	ApiUniqueValues.prototype.GetPercent = null;
-	ApiUniqueValues.prototype.SetPercent = null;
-	ApiUniqueValues.prototype.GetRank = null;
-	ApiUniqueValues.prototype.SetRank = null;
+	ApiUniqueValues.prototype.Modify = ApiUniqueValues.prototype["Modify"] = null;
+	ApiUniqueValues.prototype.GetOperator = ApiUniqueValues.prototype["GetOperator"] = null;
+	ApiUniqueValues.prototype.SetOperator = ApiUniqueValues.prototype["SetOperator"] = null;
+	ApiUniqueValues.prototype.GetFormula1 = ApiUniqueValues.prototype["GetFormula1"] = null;
+	ApiUniqueValues.prototype.SetFormula1 = ApiUniqueValues.prototype["SetFormula1"] = null;
+	ApiUniqueValues.prototype.GetFormula2 = ApiUniqueValues.prototype["GetFormula2"] = null;
+	ApiUniqueValues.prototype.SetFormula2 = ApiUniqueValues.prototype["SetFormula2"] = null;
+	ApiUniqueValues.prototype.GetDateOperator = ApiUniqueValues.prototype["GetDateOperator"] = null;
+	ApiUniqueValues.prototype.SetDateOperator = ApiUniqueValues.prototype["SetDateOperator"] = null;
+	ApiUniqueValues.prototype.GetText = ApiUniqueValues.prototype["GetText"] = null;
+	ApiUniqueValues.prototype.SetText = ApiUniqueValues.prototype["SetText"] = null;
+	ApiUniqueValues.prototype.GetTextOperator = ApiUniqueValues.prototype["GetTextOperator"] = null;
+	ApiUniqueValues.prototype.SetTextOperator = ApiUniqueValues.prototype["SetTextOperator"] = null;
+	ApiUniqueValues.prototype.GetTopBottom = ApiUniqueValues.prototype["GetTopBottom"] = null;
+	ApiUniqueValues.prototype.SetTopBottom = ApiUniqueValues.prototype["SetTopBottom"] = null;
+	ApiUniqueValues.prototype.GetPercent = ApiUniqueValues.prototype["GetPercent"] = null;
+	ApiUniqueValues.prototype.SetPercent = ApiUniqueValues.prototype["SetPercent"] = null;
+	ApiUniqueValues.prototype.GetRank = ApiUniqueValues.prototype["GetRank"] = null;
+	ApiUniqueValues.prototype.SetRank = ApiUniqueValues.prototype["SetRank"] = null;
 	//ApiUniqueValues.prototype.GetCalcFor = null;
 	//ApiUniqueValues.prototype.SetCalcFor = null;
 

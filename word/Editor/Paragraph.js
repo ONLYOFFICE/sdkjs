@@ -11096,8 +11096,8 @@ Paragraph.prototype.private_CompileParaPr = function(isForce)
 	else
 	{
 		this.CompiledPr.Pr = {
-			ParaPr : g_oDocumentDefaultParaPr,
-			TextPr : g_oDocumentDefaultTextPr
+			ParaPr : g_oDocumentDefaultParaPr.Copy(),
+			TextPr : g_oDocumentDefaultTextPr.Copy()
 		};
 
 		this.CompiledPr.Pr.ParaPr.NumPr = undefined;
@@ -11259,7 +11259,7 @@ Paragraph.prototype.Internal_CompiledParaPrPresentation = function(Lvl, bNoMerge
 	let styleObject = this.Parent.Get_Styles(_Lvl);
 	if(!styleObject || !styleObject.styles)
 	{
-		return {ParaPr : g_oDocumentDefaultParaPr, TextPr : g_oDocumentDefaultTextPr};
+		return {ParaPr : g_oDocumentDefaultParaPr.Copy(), TextPr : g_oDocumentDefaultTextPr.Copy()};
 	}
 	let Styles      = styleObject.styles;
 

@@ -28470,7 +28470,8 @@ function isAllowPasteLink(pastedWb) {
 				} else {
 					selectionRange.assign(selectionRange.c1, selectionRange.r1 - 1*oneRow, selectionRange.c2, selectionRange.r1 - 1*oneRow);
 				}
-				_applyFillHandleSettings(cloneSelection, 1, 3);
+				//the fill handle range must contain the source line, otherwise a one cell selection is treated as "nothing changed"
+				_applyFillHandleSettings(new asc_Range(cloneSelection.c1, Math.min(selectionRange.r1, cloneSelection.r1), cloneSelection.c2, cloneSelection.r2), 1, 3);
 			} else if (type === c_oAscFillType.fillUp) {
 				if (oneRow && selectionRange.r2 === gc_nMaxRow0) {
 					return false;
@@ -28481,7 +28482,7 @@ function isAllowPasteLink(pastedWb) {
 				} else {
 					selectionRange.assign(selectionRange.c1, selectionRange.r2 + 1 * oneRow, selectionRange.c2, selectionRange.r2 + 1 * oneRow);
 				}
-				_applyFillHandleSettings(new asc_Range(cloneSelection.c2, cloneSelection.r2, cloneSelection.c1, cloneSelection.r1), 1, 1);
+				_applyFillHandleSettings(new asc_Range(cloneSelection.c2, Math.max(selectionRange.r2, cloneSelection.r2), cloneSelection.c1, cloneSelection.r1), 1, 1);
 			} else if (type === c_oAscFillType.fillRight) {
 				if (oneCol && selectionRange.c1 === 0) {
 					return false;
@@ -28492,7 +28493,7 @@ function isAllowPasteLink(pastedWb) {
 				} else {
 					selectionRange.assign(selectionRange.c1 - 1*oneCol, selectionRange.r1, selectionRange.c1 - 1*oneCol, selectionRange.r2);
 				}
-				_applyFillHandleSettings(cloneSelection, 0, 3);
+				_applyFillHandleSettings(new asc_Range(Math.min(selectionRange.c1, cloneSelection.c1), cloneSelection.r1, cloneSelection.c2, cloneSelection.r2), 0, 3);
 			} else if (type === c_oAscFillType.fillLeft) {
 				if (oneCol && selectionRange.c2 === gc_nMaxCol0) {
 					return false;
@@ -28503,7 +28504,7 @@ function isAllowPasteLink(pastedWb) {
 				} else {
 					selectionRange.assign(selectionRange.c2 + 1 * oneCol, selectionRange.r1, selectionRange.c2 + 1 * oneCol, selectionRange.r2);
 				}
-				_applyFillHandleSettings(new asc_Range(cloneSelection.c2, cloneSelection.r2, cloneSelection.c1, cloneSelection.r1), 0, 1);
+				_applyFillHandleSettings(new asc_Range(Math.max(selectionRange.c2, cloneSelection.c2), cloneSelection.r2, cloneSelection.c1, cloneSelection.r1), 0, 1);
 			}
 
 			return true;

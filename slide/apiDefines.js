@@ -844,7 +844,8 @@ const c_oAscPresentationViewMode = {
 	handoutMaster: 3,
 	notesMaster: 4,
 	sorter: 5,
-	outline: 6
+	outline: 6,
+	slideShow: 7
 };
 
 var TABLE_STYLE_WIDTH_PIX  = 72;
@@ -1233,6 +1234,7 @@ prot['handoutMaster'] = c_oAscPresentationViewMode.handoutMaster;
 prot['notesMaster'] = c_oAscPresentationViewMode.notesMaster;
 prot['sorter'] = c_oAscPresentationViewMode.sorter;
 prot['outline'] = c_oAscPresentationViewMode.outline;
+prot['slideShow'] = c_oAscPresentationViewMode.slideShow;
 
 
 window['AscCommon']                = window['AscCommon'] || {};

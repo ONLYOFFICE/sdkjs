@@ -9476,7 +9476,9 @@ background-repeat: no-repeat;\
 		const oldViewManager = this.presentationViewManager;
 		this.presentationViewManager = AscCommon.getViewModeByType(mode, this);
 		this.updateViewMode(oldViewManager);
-		this.sendEvent("asc_onChangeViewMode", mode);
+		if (this.presentationViewManager.isInterfaceType()) {
+			this.sendEvent("asc_onChangeViewMode", mode);
+		}
 	};
 	asc_docs_api.prototype.updateViewMode = function(oldViewManager) {
 		if(!this.WordControl) {

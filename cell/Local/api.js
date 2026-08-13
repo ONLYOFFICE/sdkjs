@@ -131,7 +131,10 @@ var c_oAscError = Asc.c_oAscError;
 			return;
 
 		//is cell editor active - try to close
-		this.asc_closeCellEditor();
+		//on autosave in single user mode we keep the editor open (see _autoSaveInner)
+		if (!this.bAutoSaveCellEditMode) {
+			this.asc_closeCellEditor();
+		}
 
 		var t = this;
 		if (true !== isNoUserSave)

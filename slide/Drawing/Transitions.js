@@ -3486,6 +3486,7 @@ function CDemonstrationManager(htmlpage)
         this.Canvas.width = AscCommon.AscBrowser.convertToRetinaValue(_width, true);
         this.Canvas.height = AscCommon.AscBrowser.convertToRetinaValue(_height, true);
 
+	    this.HtmlPage.m_oApi.asc_changePresentationViewMode(Asc.c_oAscPresentationViewMode.slideShow);
         this.SlideNum = nStartSlideNum;
 
 		this.HtmlPage.m_oApi.sync_startDemonstration();
@@ -3983,7 +3984,10 @@ function CDemonstrationManager(htmlpage)
         this.SlideNum = -1;
         this.DemonstrationDiv = null;
         this.Mode = false;
-
+				const viewManager = this.HtmlPage.m_oApi.presentationViewManager;
+				if (viewManager) {
+					this.HtmlPage.m_oApi.asc_changePresentationViewMode(viewManager.oldType);
+				}
         var ctx1 = this.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
         ctx1.setTransform(1, 0, 0, 1, 0, 0);
 

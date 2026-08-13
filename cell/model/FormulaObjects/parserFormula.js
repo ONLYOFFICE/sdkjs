@@ -4157,6 +4157,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return res;
 	};
+	//lets a function report which of its arguments it does not read while a lazy tail is being folded to a
+	//single value. tailArgs holds the tail value of every argument whose tail IS a single value, and a hole
+	//where the argument varies from cell to cell. an index in the returned list means the answer does not
+	//depend on that argument, so a per-cell argument there does not stop the fold.
+	//default: nothing is known, every argument counts.
+	cBaseFunction.prototype.getUnusedTailArgs = function (tailArgs) {
+		return null;
+	};
 	cBaseFunction.prototype.Assemble2 = function (arg, start, count) {
 
 		var str = "", c = start + count - 1;
@@ -4940,26 +4948,44 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					var _headRows = array.rowCount;
 					var _headCols = array.countElementInRow.length ? array.countElementInRow[0] : 0;
 					var _realSz = array.getRealArraySize();
-					var _composable = true, _tailArgs = new Array(argumentsCount);
+					var _composable = true, _tailArgs = new Array(argumentsCount), _perCellArgs = null;
 					for (var _tj = 0; _tj < argumentsCount; _tj++) {
 						var _tta = tempArgs[_tj], _ttInfo = _argInfo[_tj];
 						if (_ttInfo.isArray) {
 							var _argCols = _tta.countElementInRow.length ? _tta.countElementInRow[0] : 0;
-							if ((_tta.getMissedValueFn && _tta.getMissedValueFn()) ||
-								_tta.rowCount > _headRows || _argCols > _headCols ||
+							if (_tta.rowCount > _headRows || _argCols > _headCols ||
 								(_realSz && (_tta.getRowCount() < _realSz.row || _tta.getCountElementInRow() < _realSz.col))) {
-								//generator tail; an arg head past the result head; OR an arg whose LOGICAL size is
-								//shorter than the result (a finite/broadcast sibling) - its out-of-range tail must be
-								//#N/A, not its folded constant. cannot fold - fall through to the per-cell generator.
+								//an arg head past the result head; OR an arg whose LOGICAL size is shorter than the
+								//result (a finite/broadcast sibling) - its out-of-range tail must be #N/A, not its
+								//folded constant. cannot fold - fall through to the per-cell generator.
 								_composable = false;
 								break;
 							}
-							_tailArgs[_tj] = (_tta.getMissedValue && _tta.getMissedValue()) || new cEmpty();
+							if (_tta.getMissedValueFn && _tta.getMissedValueFn()) {
+								//a generator tail has no single value: leave the slot empty for now and ask the
+								//function below whether it reads this argument at all
+								(_perCellArgs || (_perCellArgs = [])).push(_tj);
+							} else {
+								_tailArgs[_tj] = (_tta.getMissedValue && _tta.getMissedValue()) || new cEmpty();
+							}
 						} else if (_ttInfo.isRange) {
 							_composable = false;
 							break;
 						} else {
 							_tailArgs[_tj] = _tta;
+						}
+					}
+					if (_composable && _perCellArgs) {
+						//an argument that varies from cell to cell blocks the fold unless the function states it
+						//never reads it - IF, for one, only ever reaches the branch its condition selects
+						var _unusedArgs = t.getUnusedTailArgs(_tailArgs);
+						for (var _pj = 0; _pj < _perCellArgs.length; _pj++) {
+							if (!_unusedArgs || -1 === _unusedArgs.indexOf(_perCellArgs[_pj])) {
+								_composable = false;
+								break;
+							}
+							//never read, so any placeholder gives the same answer for the whole tail
+							_tailArgs[_perCellArgs[_pj]] = new cEmpty();
 						}
 					}
 					var _tailRes = null;

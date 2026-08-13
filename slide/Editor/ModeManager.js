@@ -38,6 +38,9 @@
 		this.api = api;
 		this.type = null;
 	}
+	SlideModeManagerBase.prototype.isSlideShow = function () {
+		return false;
+	};
 	SlideModeManagerBase.prototype.updatePlaceholderCheckboxState = function (placeholderEvent, slide, placeholderTypes) {
 		let isMatching = true;
 		if (slide) {
@@ -248,6 +251,9 @@
 	};
 	SlideModeManagerBase.prototype.isCanAddHyperlink = function () {
 		return false;
+	};
+	SlideModeManagerBase.prototype.isInterfaceType = function () {
+		return true;
 	};
 	SlideModeManagerBase.prototype.getCurrentThemeThumbnailsMaster = function () {
 		const presentation = this.getPresentation();
@@ -1929,6 +1935,22 @@
 		presentation.Document_UpdateInterfaceState();
 	};
 
+	function SlideShowModeManager(api) {
+		SlideModeManager.call(this, api);
+		this.type = Asc.c_oAscPresentationViewMode.slideShow;
+		this.oldType = null;
+	}
+	AscFormat.InitClassWithoutType(SlideShowModeManager, SlideModeManager);
+	SlideShowModeManager.prototype.updateViewMode = function (oldViewManager) {
+		this.oldType = oldViewManager.type;
+	};
+	SlideShowModeManager.prototype.isSlideShow = function () {
+		return true;
+	};
+	SlideShowModeManager.prototype.isInterfaceType = function () {
+		return false;
+	};
+
 	function getViewModeByType(type, api) {
 		switch (type) {
 			case Asc.c_oAscPresentationViewMode.normal: {
@@ -1951,6 +1973,9 @@
 			}
 			case Asc.c_oAscPresentationViewMode.outline: {
 				return new OutlineModeManager(api);
+			}
+			case Asc.c_oAscPresentationViewMode.slideShow: {
+				return new SlideShowModeManager(api);
 			}
 		}
 	}
