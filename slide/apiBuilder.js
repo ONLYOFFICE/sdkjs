@@ -9281,24 +9281,6 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/Clear.js
 	 */
 	ApiTable.prototype.Clear = AscBuilder.ApiTable.prototype.Clear;
-	/**
-	 * Returns all rows that contain the currently selected cells.
-	 * @memberof ApiTable
-	 * @typeofeditors ["CPE"]
-	 * @returns {ApiTableRow[]} - An array of table row objects that contain at least one selected cell.
-	 * @since 9.5.0
-	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedRows.js
-	 */
-	ApiTable.prototype.GetSelectedRows = AscBuilder.ApiTable.prototype.GetSelectedRows;
-	/**
-	 * Returns all cells from the columns that contain the currently selected cells.
-	 * @memberof ApiTable
-	 * @typeofeditors ["CPE"]
-	 * @returns {ApiTableCell[]} - An array of all cells from the columns that contain selected cells.
-	 * @since 9.5.0
-	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedColumnsCells.js
-	 */
-	ApiTable.prototype.GetSelectedColumnsCells = AscBuilder.ApiTable.prototype.GetSelectedColumnsCells;
 
 	//------------------------------------------------------------------------------------------------------------------
     //
