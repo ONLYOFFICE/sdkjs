@@ -18066,6 +18066,24 @@
 			return true;
 		}
 
+		function builder_InitDLblsShowFlags(chart, dLbls) {
+			const objectType = chart.getObjectType();
+			const isCircleChart = (
+				objectType === AscDFH.historyitem_type_PieChart ||
+				objectType === AscDFH.historyitem_type_DoughnutChart
+			);
+
+			dLbls.setSeparator(',');
+			dLbls.setShowSerName(false);
+			dLbls.setShowCatName(false);
+			dLbls.setShowVal(false);
+			dLbls.setShowLegendKey(false);
+			if (isCircleChart) {
+				dLbls.setShowPercent(false);
+			}
+			dLbls.setShowBubbleSize(false);
+		}
+
 		function builder_SetDataLabelsTextPr(chartSpace, textPr) {
 			const chart = (
 				chartSpace &&
@@ -18080,13 +18098,14 @@
 
 			if (!chart.dLbls) {
 				chart.setDLbls(new AscFormat.CDLbls());
+				builder_InitDLblsShowFlags(chart, chart.dLbls);
 			}
 
 			const drawingDocument = chartSpace.getDrawingDocument();
 			for (let i = 0; i < chart.series.length; ++i) {
 				const ser = chart.series[i];
 				if (!ser.dLbls) {
-					ser.setDLbls(new AscFormat.CDLbls());
+					ser.setDLbls(chart.dLbls.createDuplicate());
 				}
 				builder_MergeObjectDefaultTextPr(ser.dLbls, textPr, drawingDocument);
 
@@ -18122,18 +18141,20 @@
 				return false;
 			}
 
+			if (!chart.dLbls) {
+				chart.setDLbls(new AscFormat.CDLbls());
+				builder_InitDLblsShowFlags(chart, chart.dLbls);
+			}
+
 			if (!ser.dLbls) {
-				const newDLbls = chart.dLbls ? chart.dLbls.createDuplicate() : new AscFormat.CDLbls();
-				ser.setDLbls(newDLbls);
+				ser.setDLbls(chart.dLbls.createDuplicate());
 			}
 
 			let dLbl = ser.dLbls.findDLblByIdx(pointIndex);
 			if (!dLbl) {
 				dLbl = new AscFormat.CDLbl();
 				dLbl.setIdx(pointIndex);
-				if (ser.dLbls.txPr) {
-					dLbl.merge(ser.dLbls);
-				}
+				dLbl.merge(ser.dLbls);
 				ser.dLbls.addDLbl(dLbl);
 			}
 
