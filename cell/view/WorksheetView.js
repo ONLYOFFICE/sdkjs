@@ -5926,7 +5926,9 @@ function isAllowPasteLink(pastedWb) {
 		}
 
 		// Maybe grid doesn't need to be drawn (printing has its own checks)
-		if (!drawingCtx && false === this.model.getSheetView().asc_getShowGridLines()) {
+		//the background picture does not depend on the grid lines, so with them turned off we still go on to draw it
+		let showGridLines = drawingCtx || false !== this.model.getSheetView().asc_getShowGridLines();
+		if (!showGridLines && !this._backgroundImage) {
 			return;
 		}
 
@@ -5973,6 +5975,13 @@ function isAllowPasteLink(pastedWb) {
 
 		if (this._backgroundImage && !drawingCtx) {
 			this._drawSheetBackgroundPicture(ctx, this._backgroundImage, x1, y1, x2, y2, offsetX, offsetY);
+		}
+
+		if (!showGridLines) {
+			if (!drawingCtx && !window['IS_NATIVE_EDITOR'] && isClip) {
+				this._RemoveClipRect(ctx);
+			}
+			return;
 		}
 
 		//draw text for print preview

@@ -7294,6 +7294,9 @@
 		if (wsFrom.sheetPr)
 			this.sheetPr = wsFrom.sheetPr.clone();
 
+		//sheet background picture
+		this.picture = wsFrom.picture;
+
 		this.selectionRange = wsFrom.selectionRange.clone(this);
 
 		if(wsFrom.PagePrintOptions) {
