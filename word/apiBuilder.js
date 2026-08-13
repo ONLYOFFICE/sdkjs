@@ -16013,6 +16013,9 @@
 	 */
 	ApiTableRow.prototype.SetBackgroundColor = function (color)
 	{
+		if (!(color instanceof ApiColor))
+			throwException(new Error('Parameter "color" must be an ApiColor instance.'));
+
 		let allCellsUpdated = true;
 
 		for (let nCell = 0, nCount = this.GetCellsCount(); nCell < nCount; nCell++) {
