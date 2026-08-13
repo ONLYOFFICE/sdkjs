@@ -11877,6 +11877,9 @@
 	};
 	/**
 	 * Sets the number of lines that the drop cap occupies. The drop cap letter is resized accordingly.
+	 *
+	 * Throws: Error if the lines parameter is not a number or is not greater than 0.
+	 *
 	 * @memberof ApiDropCap
 	 * @typeofeditors ["CDE"]
 	 * @param {number} lines - The number of lines that the drop cap occupies. Must be a number greater than 0.
@@ -11902,6 +11905,9 @@
 	};
 	/**
 	 * Sets the font family of the drop cap letter.
+	 *
+	 * Throws: Error if the fontFamily parameter is not a string or is empty.
+	 *
 	 * @memberof ApiDropCap
 	 * @typeofeditors ["CDE"]
 	 * @param {string} fontFamily - The font family name used for the drop cap letter.
@@ -15580,6 +15586,9 @@
 
 	/**
 	 * Selects a range of cells in the current table.
+	 *
+	 * Throws: Error if any of the specified indexes is not a number or is out of the table bounds.
+	 *
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {number} startCellIndex - The start cell index within the start row.

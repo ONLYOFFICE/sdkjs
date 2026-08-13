@@ -8751,6 +8751,9 @@
 
 	/**
 	 * Selects a range of cells in the current table.
+	 *
+	 * Throws: Error if any of the specified indexes is not a number or is out of the table bounds.
+	 *
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @param {number} startCellIndex - The start cell index within the start row.
@@ -8953,6 +8956,9 @@
 	/**
 	 * Sets the total height of the current table, distributing it evenly among the table rows.
 	 * The value is applied as a minimum height for each row, so a row can be taller if its content requires more space.
+	 *
+	 * Throws: Error if the height parameter is not a number or is negative.
+	 *
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @param {EMU} height - The table height in English measure units.
@@ -9216,6 +9222,9 @@
 
 	/**
 	 * Sets the table title.
+	 *
+	 * Throws: Error if the title parameter is not a string.
+	 *
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @since 9.5.0
@@ -9245,6 +9254,9 @@
 	};
 	/**
 	 * Sets the table description.
+	 *
+	 * Throws: Error if the descr parameter is not a string.
+	 *
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @since 9.5.0
@@ -10816,6 +10828,9 @@
 
 	/**
 	 * Adds a text to the specified position. The current range is expanded to include the added text.
+	 *
+	 * Throws: Error if the text parameter is not a string or the position parameter is not "before" or "after".
+	 *
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE"]
 	 * @param {String} text - The text that will be added.
@@ -11621,6 +11636,9 @@
 
 	/**
 	 * Sets the font size of the characters in the current text Range.
+	 *
+	 * Throws: Error if the fontSize parameter is not a number or is negative.
+	 *
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE"]
 	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
@@ -11646,6 +11664,9 @@
 	
 	/**
 	 * Sets the font family for the current TextRange.
+	 *
+	 * Throws: Error if the fontFamily parameter is not a string or is empty.
+	 *
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE"]
 	 * @param {string} fontFamily - The font family or families used for the current text Range.
