@@ -5079,7 +5079,7 @@
 
 		oDoc.DoAction(function() {
 			oDoc.EditComment(Id, CommentData);
-		}, AscDFH.historydescription_Document_ChangeComment, null, Id);
+		}, AscDFH.historydescription_Document_ChangeComment, null, [Id]);
 	};
 	PDFEditorApi.prototype.asc_selectComment = function(Id)
 	{
