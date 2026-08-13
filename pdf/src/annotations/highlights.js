@@ -757,6 +757,14 @@
     CAnnotationRedact.prototype.IsRedact = function() {
         return true;
     };
+	CAnnotationRedact.prototype.IsUseInDocument = function() {
+		let isUsed = AscPDF.CAnnotationBase.prototype.IsUseInDocument.call(this);
+        if (isUsed && !this.GetRedactId()) {
+			return true;
+		}
+
+        return false;
+    };
     CAnnotationRedact.prototype.SetHovered = function(isHovered) {
         if (this._hovered != isHovered) {
             this.AddToRedraw();
@@ -771,6 +779,9 @@
         AscCommon.History.Add(new CChangesPDFRedactAnnotRedactId(this, this._redactId, sRedactId));
         this._redactId = sRedactId;
 
+		let oDoc = Asc.editor.getPDFDoc();
+		oDoc.CheckComment(this);
+		
         this.AddToRedraw();
     };
     CAnnotationRedact.prototype.GetRedactId = function() {

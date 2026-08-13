@@ -5029,6 +5029,13 @@
 
 		return new AscCommon.asc_CRect(oPos["X"], oPos["Y"], 0, 0);
 	};
+	PDFEditorApi.prototype.sync_ChangeCommentData = function(Id, CommentData) {
+		let oAscCommentData = new asc_CCommentDataPDF(CommentData);
+		this.sendEvent("asc_onChangeCommentData", Id, oAscCommentData);
+
+		if (window.g_asc_plugins)
+			window.g_asc_plugins.onPluginEvent("onChangeCommentData", {"Id" : Id, "Data" : CommentData.ConvertToSimpleObject()});
+	};
 	PDFEditorApi.prototype.asc_removeComment = function(Id) {
 		let oDoc = this.getPDFDoc();
 		if (!oDoc)
@@ -5072,7 +5079,7 @@
 
 		oDoc.DoAction(function() {
 			oDoc.EditComment(Id, CommentData);
-		}, AscDFH.historydescription_Document_ChangeComment, null, Id);
+		}, AscDFH.historydescription_Document_ChangeComment, null, [Id]);
 	};
 	PDFEditorApi.prototype.asc_selectComment = function(Id)
 	{
@@ -5544,7 +5551,7 @@
 	function asc_CCommentDataPDF(obj) {
 		Asc.asc_CCommentDataWord.call(this, obj);
 		
-		this.m_nAnnotType = undefined;
+		this.m_nAnnotType = obj && obj.m_nAnnotType;
 	};
 
 	asc_CCommentDataPDF.prototype = Object.create(Asc.asc_CCommentDataWord.prototype);
@@ -5642,6 +5649,7 @@
 
 	PDFEditorApi.prototype['asc_setSkin']                  = PDFEditorApi.prototype.asc_setSkin;
 	PDFEditorApi.prototype['asc_getAnchorPosition']        = PDFEditorApi.prototype.asc_getAnchorPosition;
+	PDFEditorApi.prototype['sync_ChangeCommentData']       = PDFEditorApi.prototype.sync_ChangeCommentData;
 	PDFEditorApi.prototype['asc_GetPageRotate']			   = PDFEditorApi.prototype.asc_GetPageRotate;
 	PDFEditorApi.prototype['asc_RotatePage']          	   = PDFEditorApi.prototype.asc_RotatePage;
 	PDFEditorApi.prototype['SetMarkerFormat']              = PDFEditorApi.prototype.SetMarkerFormat;

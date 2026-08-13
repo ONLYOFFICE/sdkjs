@@ -70,6 +70,89 @@
         Redact:         25
     };
 
+	function GetAnnotTypeStr(innerType) {
+		switch (innerType) {
+			case ANNOTATIONS_TYPES.Text: {
+				return "Text";
+			}
+			case ANNOTATIONS_TYPES.Link: {
+				return "Link";
+			}
+			case ANNOTATIONS_TYPES.FreeText: {
+				return "FreeText";
+			}
+			case ANNOTATIONS_TYPES.Line: {
+				return "Line";
+			}
+			case ANNOTATIONS_TYPES.Square: {
+				return "Square";
+			}
+			case ANNOTATIONS_TYPES.Circle: {
+				return "Circle";
+			}
+			case ANNOTATIONS_TYPES.Polygon: {
+				return "Polygon";
+			}
+			case ANNOTATIONS_TYPES.PolyLine: {
+				return "PolyLine";
+			}
+			case ANNOTATIONS_TYPES.Highlight: {
+				return "Highlight";
+			}
+			case ANNOTATIONS_TYPES.Underline: {
+				return "Underline";
+			}
+			case ANNOTATIONS_TYPES.Squiggly: {
+				return "Squiggly";
+			}
+			case ANNOTATIONS_TYPES.Strikeout: {
+				return "Strikeout";
+			}
+			case ANNOTATIONS_TYPES.Stamp: {
+				return "Stamp";
+			}
+			case ANNOTATIONS_TYPES.Caret: {
+				return "Caret";
+			}
+			case ANNOTATIONS_TYPES.Ink: {
+				return "Ink";
+			}
+			case ANNOTATIONS_TYPES.Popup: {
+				return "Popup";
+			}
+			case ANNOTATIONS_TYPES.FileAttachment: {
+				return "FileAttachment";
+			}
+			case ANNOTATIONS_TYPES.Sound: {
+				return "Sound";
+			}
+			case ANNOTATIONS_TYPES.Movie: {
+				return "Movie";
+			}
+			case ANNOTATIONS_TYPES.Widget: {
+				return "Widget";
+			}
+			case ANNOTATIONS_TYPES.Screen: {
+				return "Screen";
+			}
+			case ANNOTATIONS_TYPES.PrinterMark: {
+				return "PrinterMark";
+			}
+			case ANNOTATIONS_TYPES.TrapNet: {
+				return "TrapNet";
+			}
+			case ANNOTATIONS_TYPES.Watermark: {
+				return "Watermark";
+			}
+			case ANNOTATIONS_TYPES.Type3D: {
+				return "Type3D";
+			}
+			case ANNOTATIONS_TYPES.Redact: {
+				return "Redact";
+			}
+		}
+	}
+
     const BORDER_EFFECT_STYLES = {
         none:   0,
         cloud:  1
@@ -463,5 +546,6 @@
     asc["TEXT_ICONS_TYPES"]             = asc.TEXT_ICONS_TYPES           = TEXT_ICONS_TYPES;
     asc["LINE_END_TYPE"]                = asc.LINE_END_TYPE              = LINE_END_TYPE;
     asc["ACTION_NAMED_TYPES"]           = asc.ACTION_NAMED_TYPES         = ACTION_NAMED_TYPES;
+    asc["GetAnnotTypeStr"]              = asc.GetAnnotTypeStr            = GetAnnotTypeStr;
     asc.CommandType                     = CommandType;
 })();
