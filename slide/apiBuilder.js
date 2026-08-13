@@ -9282,15 +9282,6 @@
 	 */
 	ApiTable.prototype.Clear = AscBuilder.ApiTable.prototype.Clear;
 	/**
-	 * Returns the currently selected cells in the table.
-	 * @memberof ApiTable
-	 * @typeofeditors ["CPE"]
-	 * @returns {ApiTableCell[]} - An array of the currently selected table cells.
-	 * @since 9.5.0
-	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedCells.js
-	 */
-	ApiTable.prototype.GetSelectedCells = AscBuilder.ApiTable.prototype.GetSelectedCells;
-	/**
 	 * Returns all rows that contain the currently selected cells.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
