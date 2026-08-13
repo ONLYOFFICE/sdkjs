@@ -7181,7 +7181,7 @@ background-repeat: no-repeat;\
 
 		if(aSlides.length === 1) {
 			let oSlideLikeObject = aSlides[0];
-			if(oSlideLikeObject.isMaster()) {
+			if(oSlideLikeObject.isSlideMaster()) {
 				obj.put_MasterName(oSlideLikeObject.getName())
 			}
 			else if(oSlideLikeObject.isLayout()) {

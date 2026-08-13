@@ -4296,6 +4296,24 @@
 	};
 
 	/**
+	 * Gets image of the button field
+	 * @memberof ApiButtonField
+	 * @typeofeditors ["PDFE"]
+	 * @returns {string} - The image URL, or an empty string if the field has no image.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiButtonField/Methods/GetValue.js
+	 */
+	ApiButtonField.prototype.GetValue = function() {
+		let widget = this.Field.GetAllWidgets()[0];
+		if (!widget) {
+			return "";
+		}
+
+		let rasterId = widget.GetImageRasterId();
+		return rasterId ? AscCommon.getFullImageSrc2(rasterId) : "";
+	};
+
+	/**
 	 * Class representing a button widget.
 	 * @constructor
 	 * @typeofeditors ["PDFE"]
@@ -12221,6 +12239,7 @@
 	// ApiButtonField
 	ApiButtonField.prototype["GetClassType"]				= ApiButtonField.prototype.GetClassType;
 	ApiButtonField.prototype["SetValue"]					= ApiButtonField.prototype.SetValue;
+	ApiButtonField.prototype["GetValue"]					= ApiButtonField.prototype.GetValue;
 
 	// ApiButtonWidget
 	ApiButtonWidget.prototype["GetClassType"]				= ApiButtonWidget.prototype.GetClassType;

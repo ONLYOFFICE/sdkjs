@@ -178,7 +178,7 @@
 		const presentation = this.presentation;
 		for (let i = 0; i < selectedSlides.length; ++i) {
 			const slide = selectedSlides[i];
-			if (slide.isMaster()) {
+			if (slide.isSlideMaster()) {
 				this.addMaster(slide);
 			}
 			if (i === 0) {
@@ -205,7 +205,7 @@
 	MasterSlideCollector.prototype.collect = function (selectedSlides) {
 		if (selectedSlides.length > 0) {
 			const firstSlide = selectedSlides[0];
-			if (firstSlide.isMaster()) {
+			if (firstSlide.isSlideMaster()) {
 				this.collectMasters(selectedSlides);
 			} else {
 				this.collectLayouts(selectedSlides);

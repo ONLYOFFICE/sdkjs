@@ -107,6 +107,19 @@
 		const allSlides = this.getAllSlides();
 		return allSlides[idx] || null;
 	};
+	SlideModeManagerBase.prototype.getSelectedSlideObjects = function () {
+		const selectedSlides = this.getSelectedSlides();
+		if (!selectedSlides.length) {
+			return [];
+		}
+		const objects = [];
+		const allSlides = this.getAllSlides();
+		for (let i = 0; i < selectedSlides.length; i += 1) {
+			const index = selectedSlides[i];
+			objects.push(allSlides[index]);
+		}
+		return objects;
+	}
 	SlideModeManagerBase.prototype.isMasterSlideMode = function() {
 		return false;
 	};
@@ -241,6 +254,10 @@
 	};
 	SlideModeManagerBase.prototype.isInterfaceType = function () {
 		return true;
+	};
+	SlideModeManagerBase.prototype.getCurrentThemeThumbnailsMaster = function () {
+		const presentation = this.getPresentation();
+		return presentation.lastMaster;
 	};
 
 	function SlideModeManager(api) {
@@ -796,6 +813,12 @@
 	SlideModeManager.prototype.isCanAddHyperlink = function () {
 		return true;
 	};
+	SlideModeManager.prototype.getCurrentThemeThumbnailsMaster = function () {
+		const presentation = this.getPresentation();
+		let slide = this.getCurrentSlide();
+		if(!slide) return presentation.lastMaster;
+		return slide && slide.Layout && slide.Layout.Master;
+	};
 
 	function MasterSlideModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -916,11 +939,11 @@
 	MasterSlideModeManager.prototype.insertSlideObjectToPos = function(pos, slide) {
 		const presentation = this.getPresentation();
 		const masters = this.getMasters();
-		if (slide.isMaster()) {
+		if (slide.isSlideMaster()) {
 			let curSlide = this.getSlide(pos - 1);
 			let prevMaster = null;
 			if (curSlide) {
-				if (curSlide.isMaster()) {
+				if (curSlide.isSlideMaster()) {
 					prevMaster = curSlide;
 				} else {
 					prevMaster = curSlide.Master;
@@ -941,7 +964,7 @@
 			let prevMaster = null;
 			let prevLayout = null;
 			if (curSlide) {
-				if (curSlide.isMaster()) {
+				if (curSlide.isSlideMaster()) {
 					prevMaster = curSlide;
 				} else {
 					prevLayout = curSlide;
@@ -1042,7 +1065,7 @@
 		}
 	};
 	MasterSlideModeManager.prototype.getSlidesForChangeColorScheme = function() {
-		return this.getSelectedSlides();
+		return this.getSelectedSlideObjects();
 	};
 	MasterSlideModeManager.prototype.changeTheme = function(themeInfo, arrInd) {
 		let oCurSlide = this.getCurrentSlide();
@@ -1226,7 +1249,7 @@
 		} else {
 			if (oCurMaster) {
 				let nPos = oCurMaster.sldLayoutLst.length;
-				if (oCurSlide.isMaster()) {
+				if (oCurSlide.isSlideMaster()) {
 					nPos = 0;
 				} else {
 					for (let nLt = 0; nLt < oCurMaster.sldLayoutLst.length; ++nLt) {
@@ -1287,7 +1310,7 @@
 				let nIndexInSlides = array[nIdx];
 				oSlideLikeObject = this.getSlide(nIndexInSlides);
 				aToInsert.splice(0, 0, oSlideLikeObject);
-				if (oSlideLikeObject.isMaster()) {
+				if (oSlideLikeObject.isSlideMaster()) {
 					presentation.removeSlideMasterObject(oSlideLikeObject);
 				} else {
 					oSlideLikeObject.Master.removeLayout(oSlideLikeObject);
@@ -1300,13 +1323,13 @@
 		let oPrevSlideLikeObj = this.getSlide(pos - 1);
 		let oPrevMaster;
 		if (oPrevSlideLikeObj) {
-			if (oPrevSlideLikeObj.isMaster()) {
+			if (oPrevSlideLikeObj.isSlideMaster()) {
 				oPrevMaster = oPrevSlideLikeObj;
 			} else {
 				oPrevMaster = oPrevSlideLikeObj.Master;
 			}
 		}
-		if (oSlideLikeObject.isMaster()) {
+		if (oSlideLikeObject.isSlideMaster()) {
 			let nInsertPos = null;
 			if (!oPrevSlideLikeObj) {
 				nInsertPos = 0;
@@ -1330,7 +1353,7 @@
 			if (oPrevMaster) {
 				let nInsertPos = null;
 				let oMaster = null;
-				if (oPrevSlideLikeObj.isMaster()) {
+				if (oPrevSlideLikeObj.isSlideMaster()) {
 					nInsertPos = 0;
 					oMaster = oPrevSlideLikeObj;
 				} else {
@@ -1376,7 +1399,7 @@
 		return true;
 	};
 	MasterSlideModeManager.prototype.isDrawingSlide = function (slideObject) {
-		return slideObject.isMaster() || slideObject.isLayout();
+		return slideObject.isSlideMaster() || slideObject.isLayout();
 	};
 	MasterSlideModeManager.prototype.isLockBackgroundSlides = function () {
 		const slides = [];
@@ -1421,6 +1444,15 @@
 			slide.changeBackground(null);
 			slide.setShowMasterSp(isShowMasterShapes);
 		}
+	};
+	MasterSlideModeManager.prototype.getCurrentThemeThumbnailsMaster = function () {
+		const presentation = this.getPresentation();
+		let slide = this.getCurrentSlide();
+		if(!slide) return presentation.lastMaster;
+		if (slide.isLayout()) {
+			return slide.Master;
+		}
+		return slide;
 	};
 
 
@@ -1556,6 +1588,10 @@
 				master.changeBackground(null);
 			}
 		}
+	};
+	NoteModeManager.prototype.getCurrentTheme = function() {
+		const note = this.getCurrentSlide();
+		return note && note.getTheme() || null;
 	};
 
 
@@ -1749,6 +1785,10 @@
 			note.setShowMasterSp(true);
 		}
 	};
+	MasterNoteModeManager.prototype.getCurrentTheme = function() {
+		const noteMaster = this.getCurrentSlide();
+		return noteMaster && noteMaster.getTheme() || null;
+	};
 
 	function MasterHandoutModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -1843,6 +1883,10 @@
 				master.changeBackground(null);
 			}
 		}
+	};
+	MasterHandoutModeManager.prototype.getCurrentTheme = function() {
+		const noteMaster = this.getCurrentSlide();
+		return noteMaster && noteMaster.getTheme() || null;
 	};
 
 	function SorterModeManager(api) {

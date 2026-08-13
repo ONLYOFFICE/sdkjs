@@ -616,7 +616,7 @@
 		}
 		return 0;
 	};
-	MasterSlide.prototype.isMaster = function () {
+	MasterSlide.prototype.isSlideMaster = function () {
 		return true;
 	};
 	MasterSlide.prototype.Get_ColorMap = function () {

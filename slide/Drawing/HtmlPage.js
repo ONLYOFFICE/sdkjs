@@ -236,6 +236,7 @@
 
 		this.AllLayouts = [];
 		this.LastMaster = null;
+		this.LastThemeThumbnailsMaster = null;
 
 		this.m_oDrawingDocument.m_oWordControl = this;
 		this.m_oDrawingDocument.TransitionSlide.HtmlPage = this;
@@ -4870,14 +4871,21 @@
 		}
 		this.m_oPreviews.update(isSetChanged, false);
 
-		let oMaster = this.m_oLogicDocument.GetCurrentMaster();
-		if (this.LastMaster !== oMaster) {
-			if (oMaster) {
-				this.m_oApi.sendEvent("asc_onUpdateThemeIndex", oMaster.getThemeIndex());
-				this.m_oApi.sendColorThemes(oMaster.Theme);
+		let master = this.m_oLogicDocument.GetCurrentMaster();
+		if (this.LastMaster !== master) {
+			if (master) {
+				this.m_oApi.sendColorThemes(master.getTheme());
 			}
-			this.LastMaster = oMaster;
+			this.LastMaster = master;
 		}
+		const themeThMaster = this.m_oLogicDocument.GetCurrentThemeThumbnailsMaster();
+		if (this.LastThemeThumbnailsMaster !== themeThMaster) {
+			if (themeThMaster) {
+				this.m_oApi.sendEvent("asc_onUpdateThemeIndex", themeThMaster.getThemeIndex());
+			}
+			this.LastThemeThumbnailsMaster = themeThMaster;
+		}
+
 		this.m_oDrawingDocument.CheckGuiControlColors(bIsAttack);
 	};
 
