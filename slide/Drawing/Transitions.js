@@ -3243,6 +3243,9 @@ function CDemonstrationManager(htmlpage)
     this.TmpSlideVisible = -1;
     this.LastMoveTime = null;
 
+    this.WheelAccumulator = 0;
+    this.WheelSlideChangeTime = -1;
+
 	this.GoToSlideShortcutStack = [];
 
     this.SlideAnnotations = new AscCommonSlide.CSlideShowAnnotations();
@@ -4847,6 +4850,38 @@ function CDemonstrationManager(htmlpage)
 		}
     };
 
+    this.checkWheelDelta = function(e)
+    {
+        const wheelClickDelta = 45;
+        const wheelDelta = AscCommon.checkMouseWhell(e).y;
+
+        if (Math.abs(wheelDelta) >= wheelClickDelta)
+        {
+            oThis.WheelAccumulator = 0;
+            return (wheelDelta > 0) ? 1 : -1;
+        }
+
+        if (oThis.WheelAccumulator * wheelDelta < 0)
+            oThis.WheelAccumulator = 0;
+
+        oThis.WheelAccumulator += wheelDelta;
+        if (Math.abs(oThis.WheelAccumulator) < wheelClickDelta)
+            return 0;
+
+        const time = new Date().getTime();
+        const interval = oThis.HtmlPage.m_nVerticalSlideChangeOnScrollInterval;
+        if (time >= oThis.WheelSlideChangeTime && time - oThis.WheelSlideChangeTime < interval)
+        {
+            oThis.WheelAccumulator = 0;
+            return 0;
+        }
+
+        const delta = (oThis.WheelAccumulator > 0) ? 1 : -1;
+        oThis.WheelAccumulator = 0;
+        oThis.WheelSlideChangeTime = time;
+        return delta;
+    };
+
     this.onMouseWhell = function(e)
     {
         if (undefined !== window["AscDesktopEditor"])
@@ -4855,11 +4890,12 @@ function CDemonstrationManager(htmlpage)
                 return;
         }
 
-        var delta = 0;
-        if (undefined != e.wheelDelta)
-            delta = (e.wheelDelta > 0) ? -1 : 1;
-        else
-            delta = (e.detail > 0) ? 1 : -1;
+        const delta = oThis.checkWheelDelta(e);
+        if (0 === delta)
+        {
+            AscCommon.stopEvent(e);
+            return false;
+        }
 
 		if (oThis.HtmlPage.m_oApi.reporterWindow)
 		{
