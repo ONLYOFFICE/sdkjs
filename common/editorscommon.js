@@ -12484,32 +12484,36 @@
             });
 		};
 
-        this.addCryproImagesFromUrls = function(urls, callback)
-        {
-            var _editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
-            _editor.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.LoadImage);
+		this.addCryproImagesFromUrls = function(urls, callback)
+		{
+			var _editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
+			_editor.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.LoadImage);
 
-            var _this = this;
-            AscCommon.CryptoProvider.downloadFiles(urls, [], function(files) {
+			var _this = this;
+			AscCommon.CryptoProvider.downloadFiles(urls, [], function(files)
+			{
 
-            	_editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.LoadImage);
+				_editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.LoadImage);
 
-                _editor.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+				if (AscCommon.EncryptionWorker.isChangesHandled)
+				{
+					_editor.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
 
-            	var _files = [];
+					var _files = [];
 
-                var _options = { isImageCrypt: true, isUrls: true, callback: callback, ext : [], api: _editor };
+					var _options = {isImageCrypt: true, isUrls: true, callback: callback, ext: [], api: _editor};
 
-                for (var elem in files)
-                {
-                    _files.push(AscCommon.CryptoProvider.getImageBase64(files[elem], true));
-                    _options.ext.push(AscCommon.CryptoProvider.getImageFormat(files[elem]));
-                    AscCommon.CryptoProvider.removeFile(files[elem]);
-                }
+					for (var elem in files)
+					{
+						_files.push(AscCommon.CryptoProvider.getImageBase64(files[elem], true));
+						_options.ext.push(AscCommon.CryptoProvider.getImageFormat(files[elem]));
+						AscCommon.CryptoProvider.removeFile(files[elem]);
+					}
 
-                _this.sendChanges(this, _files, AscCommon.EncryptionMessageType.Encrypt, _options);
-            });
-        };
+					_this.sendChanges(this, _files, AscCommon.EncryptionMessageType.Encrypt, _options);
+				}
+			});
+		};
 
         this.onDecodeError = function()
 		{

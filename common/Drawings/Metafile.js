@@ -1968,6 +1968,27 @@
 		return url;
 	}
 
+	function getCryptoPdfProvider()
+	{
+		let provider = AscCommon.CryptoProvider;
+		if (!provider)
+			return null;
+		if (!provider.registerPdfImage || !provider.registerPdfFont)
+			return null;
+		return provider.isEncryptionRunning() ? provider : null;
+	}
+
+	function registerCryptoPdfImage(src)
+	{
+		let provider = getCryptoPdfProvider();
+		return provider ? provider.registerPdfImage(src) : false;
+	}
+	function registerCryptoPdfFont(fontInfo, style)
+	{
+		let provider = getCryptoPdfProvider();
+		return provider ? (provider.registerPdfFont(fontInfo, style | 0) || fontInfo.Name) : fontInfo.Name;
+	}
+
 	function CMetafile(width, height)
 	{
 		this.Width  = width;
@@ -2136,7 +2157,7 @@
 			this.Memory.WriteByte(CommandType.ctBrushTexturePath);
 
 			var _src = src;
-			if (src.startsWith("blob:"))
+			if (src.startsWith("blob:") && !registerCryptoPdfImage(src))
 			{
 				_src = AscCommon.g_oDocumentBlobUrls.getImageBase64(src);
 			}
@@ -2149,6 +2170,7 @@
 				var srcLocal = AscCommon.g_oDocumentUrls.getLocal(_src);
 				if (srcLocal)
 					_src = srcLocal;
+				registerCryptoPdfImage(_src);
 			}
 
 			this.Memory.WriteString2(_src);
@@ -2456,8 +2478,10 @@
 		// images
 		drawImage : function(img, x, y, w, h, isUseOriginUrl)
 		{
-			if (img.startsWith("blob:"))
+			// web crypto pdf build: the binary goes to the wasm module, the url itself is the key
+			if (img.startsWith("blob:") && !registerCryptoPdfImage(img))
 			{
+				this.Memory.WriteByte(CommandType.ctDrawImageFromFile);
 				this.Memory.WriteString2(AscCommon.g_oDocumentBlobUrls.getImageBase64(img));
 				this.Memory.WriteDouble(x);
 				this.Memory.WriteDouble(y);
@@ -2487,6 +2511,7 @@
 					}
 				}
 
+				registerCryptoPdfImage(_img);
 				this.Memory.WriteString2(_img);
 				this.Memory.WriteDouble(x);
 				this.Memory.WriteDouble(y);
@@ -2520,6 +2545,7 @@
 					_src = srcLocal;
 			}
 
+			registerCryptoPdfImage(_src);
 			this.Memory.WriteByte(CommandType.ctDrawImageFromFile);
 			this.Memory.WriteString2(_src);
 			this.Memory.WriteDouble(x);
@@ -2530,13 +2556,16 @@
 
 		SetFontName : function(name)
 		{
-            var fontinfo = g_fontApplication.GetFontInfo(name, 0, this.LastFontOriginInfo);
-            if (this.m_oFont.Name != fontinfo.Name)
-            {
-                this.m_oFont.Name = fontinfo.Name;
-                this.Memory.WriteByte(CommandType.ctFontName);
-                this.Memory.WriteString(this.m_oFont.Name);
-            }
+			var fontinfo = g_fontApplication.GetFontInfo(name, 0, this.LastFontOriginInfo);
+
+			var writeName = registerCryptoPdfFont(fontinfo, this.m_oFont.Style);
+
+			if (this.m_oFont.Name != writeName)
+			{
+				this.m_oFont.Name = writeName;
+				this.Memory.WriteByte(CommandType.ctFontName);
+				this.Memory.WriteString(this.m_oFont.Name);
+			}
 		},
 
 		SetFont      : function(font, isFromPicker)
@@ -2556,9 +2585,10 @@
 			var fontinfo = g_fontApplication.GetFontInfo(font.FontFamily.Name, style, this.LastFontOriginInfo);
 			//style        = fontinfo.GetBaseStyle(style);
 
-			if (this.m_oFont.Name != fontinfo.Name)
+			var writeName = registerCryptoPdfFont(fontinfo, style);
+			if (this.m_oFont.Name != writeName)
 			{
-				this.m_oFont.Name = fontinfo.Name;
+				this.m_oFont.Name = writeName;
 				this.Memory.WriteByte(CommandType.ctFontName);
 				this.Memory.WriteString(this.m_oFont.Name);
 			}
