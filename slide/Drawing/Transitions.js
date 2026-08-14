@@ -3244,7 +3244,9 @@ function CDemonstrationManager(htmlpage)
     this.LastMoveTime = null;
 
     this.WheelAccumulator = 0;
+    this.WheelTime = -1;
     this.WheelSlideChangeTime = -1;
+    this.WheelSlideChangeInterval = 150;
 
 	this.GoToSlideShortcutStack = [];
 
@@ -4853,7 +4855,11 @@ function CDemonstrationManager(htmlpage)
     this.checkWheelDelta = function(e)
     {
         const wheelClickDelta = 45;
-        const wheelDelta = AscCommon.checkMouseWhell(e).y;
+        const values = AscCommon.checkMouseWhell(e, {
+            isAllowHorizontal : true,
+            isUseMaximumDelta : true
+        });
+        const wheelDelta = values.y || values.x;
 
         if (Math.abs(wheelDelta) >= wheelClickDelta)
         {
@@ -4861,18 +4867,20 @@ function CDemonstrationManager(htmlpage)
             return (wheelDelta > 0) ? 1 : -1;
         }
 
-        if (oThis.WheelAccumulator * wheelDelta < 0)
+        const time = new Date().getTime();
+        const interval = oThis.WheelSlideChangeInterval;
+
+        if (oThis.WheelAccumulator * wheelDelta < 0 || time - oThis.WheelTime > interval)
             oThis.WheelAccumulator = 0;
 
+        oThis.WheelTime = time;
         oThis.WheelAccumulator += wheelDelta;
         if (Math.abs(oThis.WheelAccumulator) < wheelClickDelta)
             return 0;
 
-        const time = new Date().getTime();
-        const interval = oThis.HtmlPage.m_nVerticalSlideChangeOnScrollInterval;
         if (time >= oThis.WheelSlideChangeTime && time - oThis.WheelSlideChangeTime < interval)
         {
-            oThis.WheelAccumulator = 0;
+            oThis.WheelAccumulator = (oThis.WheelAccumulator > 0) ? wheelClickDelta : -wheelClickDelta;
             return 0;
         }
 
