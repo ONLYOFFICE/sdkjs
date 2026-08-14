@@ -15201,6 +15201,10 @@ CTable.prototype.Internal_ReIndexing = function(StartIndex)
 	if ("undefined" === typeof(StartIndex))
 		StartIndex = 0;
 
+	// Start from the previous row, because after adding/removing a row at StartIndex,
+	// the Next reference of the row at StartIndex - 1 still points to the old row.
+	StartIndex = Math.max(0, StartIndex - 1);
+
 	for (var Ind = StartIndex; Ind < this.Content.length; Ind++)
 	{
 		this.Content[Ind].SetIndex(Ind);

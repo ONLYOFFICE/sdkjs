@@ -697,6 +697,8 @@ CTableRow.prototype =
         if ( "undefined" === typeof(StartIndex) )
             StartIndex = 0;
 
+        StartIndex = Math.max(0, StartIndex - 1);
+
         for ( var Ind = StartIndex; Ind < this.Content.length; Ind++ )
         {
             this.Content[Ind].SetIndex( Ind );
