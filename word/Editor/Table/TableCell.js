@@ -47,8 +47,10 @@ function CTableCell(Row, ColW)
 
     this.Row = Row;
 
-    this.Prev = null;
-    this.Next = null;
+    this.Index = -1;
+    this.Prev  = null;
+    this.Next  = null;
+    
     this.Content = new CDocumentContent(this, (undefined !== this.Row ? this.Row.Table.DrawingDocument : undefined), 0, 0, 0, 0, false, false, undefined !== this.Row ? this.Row.Table.bPresentation : undefined);
     this.Content.Set_StartPage( ( Row ? this.Row.Table.PageNum : 0 ) );
 
@@ -118,9 +120,7 @@ function CTableCell(Row, ColW)
     	RecalcId : -1,
 		MinMax   : null
 	};
-
-    this.Index = 0;
-
+    
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
     AscCommon.g_oTableId.Add( this, this.Id );
 }
@@ -2140,6 +2140,46 @@ CTableCell.prototype.SetIndex = function(nIndex)
 		this.Index = nIndex;
 		this.Recalc_CompiledPr();
 	}
+};
+/**
+ * Set parent table row
+ * @param {?CTableRow} row 
+ */
+CTableCell.prototype.SetRow = function(row)
+{
+	this.Row = row;
+};
+/**
+ * Get the previous cell of the parent row
+ * @returns {?CTableCell}
+ */
+CTableCell.prototype.GetPrev = function()
+{
+	return this.Prev;
+};
+/**
+ * Set the previous cell of the parent row
+ * @param {?CTableCell} cell
+ */
+CTableCell.prototype.SetPrev = function(cell)
+{
+	this.Prev = cell;
+};
+/**
+ * Get the next cell of the parent row
+ * @returns {?CTableCell}
+ */
+CTableCell.prototype.GetNext = function()
+{
+	return this.Next;
+};
+/**
+ * Set the next cell of the parent row
+ * @param {?CTableCell} cell
+ */
+CTableCell.prototype.SetNext = function(cell)
+{
+	this.Next = cell;
 };
 CTableCell.prototype.private_TransformXY = function(X, Y)
 {

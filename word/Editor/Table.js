@@ -158,6 +158,7 @@ function CTable(DrawingDocument, Parent, Inline, Rows, Cols, TableGrid, bPresent
         this.Content[Index] = new CTableRow( this, Cols, TableGrid );
     }
 
+    this.private_LinkAllRows();
     this.Internal_ReIndexing(0);
 
     // Информация о строках (расположение, высота и остальные метрики)
@@ -2897,6 +2898,7 @@ CTable.prototype.Copy = function(Parent, DrawingDocument, oPr)
 		Table.Content[Index].Recalc_CompiledPr();
 		AscCommon.History.Add(new CChangesTableAddRow(Table, Index, [Table.Content[Index]]));
 	}
+	Table.private_LinkAllRows();
 	Table.Internal_ReIndexing(0);
 	Table.private_UpdateTableGrid();
 	Table.Recalc_CompiledPr();
@@ -4708,6 +4710,7 @@ CTable.prototype.Read_FromBinary2 = function(Reader)
 	}
 	this.bPresentation = Reader.GetBool();
 
+	this.private_LinkAllRows();
 	this.Internal_ReIndexing();
 
 	var DrawingDocument = editor.WordControl.m_oDrawingDocument;
@@ -7933,6 +7936,7 @@ CTable.prototype.GetSelectedContent = function(SelectedContent)
 			Row.Set_Before(BeforeGrid);
 			Row.Set_After(AfterGrid);
 
+			Row.private_LinkAllCells();
 			Row.Internal_ReIndexing();
 
 			// Добавляем строку в новую таблицу
@@ -7941,6 +7945,7 @@ CTable.prototype.GetSelectedContent = function(SelectedContent)
 			CurRow2++;
 		}
 
+		Table.private_LinkAllRows();
 		Table.Internal_ReIndexing(0);
 		Table.private_UpdateTableGrid();
 
@@ -9491,8 +9496,9 @@ CTable.prototype.Split = function()
 	var Len = this.Content.length;
 	for (var RowIndex = CurRow; RowIndex < Len; RowIndex++)
 	{
-		NewTable.private_AddRow(RowIndex - CurRow, 0, false, this.Content[CurRow]);
+		let row = this.Content[CurRow];
 		this.private_RemoveRow(CurRow);
+		NewTable.private_AddRow(RowIndex - CurRow, 0, false, row);
 	}
 
 	NewTable.ReIndexing(0);
@@ -15115,11 +15121,14 @@ CTable.prototype.private_RemoveRow = function(nIndex)
 {
 	if (nIndex >= this.Content.length || nIndex < 0)
 		return;
+	
+	let row = this.Content[nIndex];
 
-	this.Content[nIndex].PreDelete();
-	this.Content[nIndex].OnDetach();
+	row.PreDelete();
+	row.OnDetach();
+	this.private_UnlinkRow(row);
 
-	AscCommon.History.Add(new CChangesTableRemoveRow(this, nIndex, [this.Content[nIndex]]));
+	AscCommon.History.Add(new CChangesTableRemoveRow(this, nIndex, [row]));
 
 	this.Rows--;
 	this.Content.splice(nIndex, 1);
@@ -15151,30 +15160,10 @@ CTable.prototype.private_AddRow = function(Index, CellsCount, bReIndexing, _NewR
 	this.TableRowsBottom.splice(Index, 0, {});
 	this.RowsInfo.splice(Index, 0, new CTableRowsInfo());
 
+	this.private_LinkRow(Index);
+
 	if (true === bReIndexing)
-	{
 		this.Internal_ReIndexing(Index);
-	}
-	else
-	{
-		if (Index > 0)
-		{
-			this.Content[Index - 1].Next = NewRow;
-			NewRow.Prev                  = this.Content[Index - 1];
-		}
-		else
-			NewRow.Prev = null;
-
-		if (Index < this.Content.length - 1)
-		{
-			this.Content[Index + 1].Prev = NewRow;
-			NewRow.Next                  = this.Content[Index + 1];
-		}
-		else
-			NewRow.Next = null;
-	}
-
-	NewRow.Table = this;
 
 	this.private_CheckCurCell();
 	this.private_UpdateTableGrid();
@@ -15196,31 +15185,87 @@ CTable.prototype.Refresh_ContentChanges = function()
 {
 	this.m_oContentChanges.Refresh();
 };
+/**
+ * Link the row standing at the given position with its neighbours and with the parent table.
+ * Called after the row has been put into this.Content
+ * @param {number} index
+ */
+CTable.prototype.private_LinkRow = function(index)
+{
+	let row = this.Content[index];
+	if (!row)
+		return;
+
+	let prev = index > 0 ? this.Content[index - 1] : null;
+	let next = index < this.Content.length - 1 ? this.Content[index + 1] : null;
+
+	row.SetPrev(prev);
+	row.SetNext(next);
+
+	if (prev)
+		prev.SetNext(row);
+
+	if (next)
+		next.SetPrev(row);
+
+	row.SetTable(this);
+};
+/**
+ * Unlink the row from its neighbours and from the parent table.
+ * Called before the row is removed from this.Content
+ * @param {CTableRow} row
+ */
+CTable.prototype.private_UnlinkRow = function(row)
+{
+	if (!row)
+		return;
+
+	let prev = row.GetPrev();
+	let next = row.GetNext();
+
+	if (prev)
+		prev.SetNext(next);
+
+	if (next)
+		next.SetPrev(prev);
+
+	row.SetPrev(null);
+	row.SetNext(null);
+
+	row.SetIndex(-1);
+	row.SetTable(null);
+};
+/**
+ * Link every row of the table with its neighbours and with the table itself.
+ * Called when the whole content is filled at once, bypassing private_AddRow
+ */
+CTable.prototype.private_LinkAllRows = function()
+{
+	for (let index = 0, count = this.Content.length; index < count; ++index)
+	{
+		this.private_LinkRow(index);
+	}
+};
 CTable.prototype.Internal_ReIndexing = function(StartIndex)
 {
-	if ("undefined" === typeof(StartIndex))
+	if (!StartIndex)
 		StartIndex = 0;
-
-	// Start from the previous row, because after adding/removing a row at StartIndex,
-	// the Next reference of the row at StartIndex - 1 still points to the old row.
-	StartIndex = Math.max(0, StartIndex - 1);
-
+	
 	for (var Ind = StartIndex; Ind < this.Content.length; Ind++)
 	{
 		this.Content[Ind].SetIndex(Ind);
-		this.Content[Ind].Prev  = ( Ind > 0 ? this.Content[Ind - 1] : null );
-		this.Content[Ind].Next  = ( Ind < this.Content.length - 1 ? this.Content[Ind + 1] : null );
-		this.Content[Ind].Table = this;
 	}
 };
 CTable.prototype.ReIndexing = function(StartIndex)
 {
 	this.Internal_ReIndexing(0);
+	this.private_LinkAllRows();
 
 	var Count = this.Content.length;
 	for (var Ind = StartIndex; Ind < Count; Ind++)
 	{
 		this.Content[Ind].Internal_ReIndexing(0);
+		this.Content[Ind].private_LinkAllCells();
 	}
 };
 /**
