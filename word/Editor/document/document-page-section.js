@@ -78,16 +78,23 @@
 		var oFrame  = oSectPr.GetContentFrame(nPageAbs);
 		var nX      = oFrame.Left;
 		var nXLimit = oFrame.Right;
-		
+
 		for (var nCurColumn = 0, nColumnsCount = oSectPr.GetColumnCount(); nCurColumn < nColumnsCount; ++nCurColumn)
 		{
-			this.Columns[nCurColumn] = new AscWord.DocumentPageColumn();
-			
+			// Preserve already-computed layout (Pos/EndPos/Empty/Bounds) for columns that
+			// already exist here — Init() can be called to restart recalculation of a later
+			// column without invalidating an earlier column in the same section that was
+			// already correctly laid out (e.g. widow-control restarts). Only build a fresh
+			// column object when one doesn't exist yet at this index.
+			if (!this.Columns[nCurColumn])
+				this.Columns[nCurColumn] = new AscWord.DocumentPageColumn();
+
 			this.Columns[nCurColumn].X      = nX;
 			this.Columns[nCurColumn].XLimit = nColumnsCount - 1 === nCurColumn ? nXLimit : nX + oSectPr.GetColumnWidth(nCurColumn);
-			
+
 			nX += oSectPr.GetColumnWidth(nCurColumn) + oSectPr.GetColumnSpace(nCurColumn);
 		}
+		this.Columns.length = nColumnsCount;
 		this.ColumnsSep = oSectPr.GetColumnSep();
 		
 		this.Y       = oFrame.Top;
