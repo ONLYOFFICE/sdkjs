@@ -2995,10 +2995,19 @@ background-repeat: no-repeat;\
 		var graphicObjects = _presentation.GetCurrentController();
 		if (graphicObjects)
 		{
+			const view = _presentation.GetOutlineView();
 			var sLoadFont = null, sLoadText = null;
 			var fCallback = function()
 			{
-				graphicObjects.paraApplyCallback(Props);
+				if (_presentation.IsFocusOnOutline()) {
+					view.checkSelectedObjectsAndCallback(function () {
+						view.paraApplyCallback(Props);
+					}, AscDFH.historydescription_Presentation_ParaApply);
+				} else {
+					graphicObjects.checkSelectedObjectsAndCallback(function () {
+						graphicObjects.paraApplyCallback(Props);
+					}, [], false, AscDFH.historydescription_Presentation_ParaApply);
+				}
 				_presentation.Document_UpdateInterfaceState();
 			};
 			var oBullet = Props.asc_getBullet();
@@ -3016,23 +3025,19 @@ background-repeat: no-repeat;\
 				var isasync  = loader.LoadFont(fontinfo);
 				if (false === isasync)
 				{
-					AscFonts.FontPickerByCharacter.checkText(sLoadText, this, function () {
-						graphicObjects.checkSelectedObjectsAndCallback(fCallback, [], false, AscDFH.historydescription_Presentation_ParaApply);
-					});
+					AscFonts.FontPickerByCharacter.checkText(sLoadText, this, fCallback);
 				}
 				else
 				{
 					this.asyncMethodCallback = function()
 					{
-						AscFonts.FontPickerByCharacter.checkText(sLoadText, this, function () {
-							graphicObjects.checkSelectedObjectsAndCallback(fCallback, [], false, AscDFH.historydescription_Presentation_ParaApply);
-						});
+						AscFonts.FontPickerByCharacter.checkText(sLoadText, this, fCallback);
 					}
 				}
 			}
 			else
 			{
-				graphicObjects.checkSelectedObjectsAndCallback(fCallback, [], false, AscDFH.historydescription_Presentation_ParaApply);
+				fCallback();
 			}
 		}
 	};

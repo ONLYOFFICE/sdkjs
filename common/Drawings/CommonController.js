@@ -6665,46 +6665,12 @@
 						return;
 					}
 					this.checkSelectedObjectsAndCallback(function () {
-
-						if (!oSettings)
-							oSettings = new AscCommon.CAddTextSettings();
-
-						let fContentFunction = function() {
-							let oTargetDocContent = this;
-							oTargetDocContent.Remove(-1, true, true, true, undefined);
-							let oCurrentTextPr = oTargetDocContent.GetDirectTextPr();
-							let oParagraph = oTargetDocContent.GetCurrentParagraph();
-							if (oParagraph && oParagraph.GetParent()) {
-								let oTempPara = new AscWord.Paragraph(oParagraph.GetParent());
-								let oRun = new ParaRun(oTempPara, false);
-								oRun.AddText(sText);
-								oTempPara.AddToContent(0, oRun);
-
-								oRun.SetPr(oCurrentTextPr.Copy());
-
-								let oTextPr = oSettings.GetTextPr();
-								if (oTextPr)
-									oRun.ApplyPr(oTextPr);
-
-								let oAnchorPos = oParagraph.GetCurrentAnchorPosition();
-
-								let oSelectedContent = new AscCommonWord.CSelectedContent();
-								let oSelectedElement = new AscCommonWord.CSelectedElement();
-
-								oSelectedElement.Element = oTempPara;
-								oSelectedElement.SelectedAll = false;
-								oSelectedContent.Add(oSelectedElement);
-								oSelectedContent.EndCollect(oTargetDocContent);
-								oSelectedContent.ForceInlineInsert();
-								oSelectedContent.PlaceCursorInLastInsertedRun(!oSettings.IsMoveCursorOutside());
-								oSelectedContent.Insert(oAnchorPos);
-							}
-						};
-						let fTableFunction = function () {
+						let fContentFunction = AscFormat.CDrawingDocContent.prototype.addTextWithPr;
+						let fTableFunction = function (oArgText, oArgSettings) {
 							let oContent = this.CurCell.Content;
-							fContentFunction.call(oContent);
+							fContentFunction.call(oContent, oArgText, oArgSettings);
 						};
-						this.applyTextFunction(fContentFunction, fTableFunction, []);
+						this.applyTextFunction(fContentFunction, fTableFunction, [sText, oSettings]);
 					}, [], false, AscDFH.historydescription_Document_AddTextWithProperties);
 				},
 
@@ -9395,71 +9361,7 @@
 				},
 
 				paraApplyCallback: function (Props) {
-					if ("undefined" != typeof (Props.Ind) && null != Props.Ind)
-						this.setParagraphIndent(Props.Ind);
-
-					if ("undefined" != typeof (Props.Jc) && null != Props.Jc)
-						this.setParagraphAlign(Props.Jc);
-
-					if ("undefined" != typeof (Props.Spacing) && null != Props.Spacing)
-						this.setParagraphSpacing(Props.Spacing);
-
-					if (undefined !== Props.Bidi)
-						this.setParagraphBidi(Props.Bidi);
-
-					if (undefined != Props.Tabs) {
-						var Tabs = new CParaTabs();
-						Tabs.Set_FromObject(Props.Tabs.Tabs);
-						this.setParagraphTabs(Tabs);
-					}
-
-					if (undefined != Props.DefaultTab) {
-						//AscCommonWord.Default_Tab_Stop = Props.DefaultTab;
-						this.setDefaultTabSize(Props.DefaultTab);
-					}
-
-					if (undefined != Props.Bullet) {
-						//  if()
-						this.setParagraphNumbering(Props.Bullet)
-					}
-
-					// TODO: refactor here once paragraph and text settings are separated
-					var TextPr = new CTextPr();
-
-					if (true === Props.Subscript)
-						TextPr.VertAlign = AscCommon.vertalign_SubScript;
-					else if (true === Props.Superscript)
-						TextPr.VertAlign = AscCommon.vertalign_SuperScript;
-					else if (false === Props.Superscript || false === Props.Subscript)
-						TextPr.VertAlign = AscCommon.vertalign_Baseline;
-
-					if (undefined != Props.Strikeout) {
-						TextPr.Strikeout = Props.Strikeout;
-						TextPr.DStrikeout = false;
-					}
-
-					if (undefined != Props.DStrikeout) {
-						TextPr.DStrikeout = Props.DStrikeout;
-						if (true === TextPr.DStrikeout)
-							TextPr.Strikeout = false;
-					}
-
-					if (undefined != Props.SmallCaps) {
-						TextPr.SmallCaps = Props.SmallCaps;
-						TextPr.AllCaps = false;
-					}
-
-					if (undefined != Props.AllCaps) {
-						TextPr.Caps = Props.AllCaps;
-						if (true === TextPr.AllCaps)
-							TextPr.SmallCaps = false;
-					}
-
-					if (undefined != Props.TextSpacing)
-						TextPr.Spacing = Props.TextSpacing;
-
-					this.paragraphAdd(new ParaTextPr(TextPr));
-					this.startRecalculate();
+					paraApplyCallback(Props, this);
 				},
 
 				getCurrentDrawingMacrosName: function () {
@@ -12509,6 +12411,73 @@
 		}
 		// -- Shapes merge
 
+		function paraApplyCallback(props, controller) {
+			if ("undefined" != typeof (props.Ind) && null != props.Ind)
+				controller.setParagraphIndent(props.Ind);
+
+			if ("undefined" != typeof (props.Jc) && null != props.Jc)
+				controller.setParagraphAlign(props.Jc);
+
+			if ("undefined" != typeof (props.Spacing) && null != props.Spacing)
+				controller.setParagraphSpacing(props.Spacing);
+
+			if (undefined !== props.Bidi)
+				controller.setParagraphBidi(props.Bidi);
+
+			if (undefined != props.Tabs) {
+				var Tabs = new CParaTabs();
+				Tabs.Set_FromObject(props.Tabs.Tabs);
+				controller.setParagraphTabs(Tabs);
+			}
+
+			if (undefined != props.DefaultTab) {
+				//AscCommonWord.Default_Tab_Stop = props.DefaultTab;
+				controller.setDefaultTabSize(props.DefaultTab);
+			}
+
+			if (undefined != props.Bullet) {
+				//  if()
+				controller.setParagraphNumbering(props.Bullet)
+			}
+
+			// TODO: refactor here once paragraph and text settings are separated
+			var TextPr = new CTextPr();
+
+			if (true === props.Subscript)
+				TextPr.VertAlign = AscCommon.vertalign_SubScript;
+			else if (true === props.Superscript)
+				TextPr.VertAlign = AscCommon.vertalign_SuperScript;
+			else if (false === props.Superscript || false === props.Subscript)
+				TextPr.VertAlign = AscCommon.vertalign_Baseline;
+
+			if (undefined != props.Strikeout) {
+				TextPr.Strikeout = props.Strikeout;
+				TextPr.DStrikeout = false;
+			}
+
+			if (undefined != props.DStrikeout) {
+				TextPr.DStrikeout = props.DStrikeout;
+				if (true === TextPr.DStrikeout)
+					TextPr.Strikeout = false;
+			}
+
+			if (undefined != props.SmallCaps) {
+				TextPr.SmallCaps = props.SmallCaps;
+				TextPr.AllCaps = false;
+			}
+
+			if (undefined != props.AllCaps) {
+				TextPr.Caps = props.AllCaps;
+				if (true === TextPr.AllCaps)
+					TextPr.SmallCaps = false;
+			}
+
+			if (undefined != props.TextSpacing)
+				TextPr.Spacing = props.TextSpacing;
+
+			controller.paragraphAdd(new ParaTextPr(TextPr));
+			controller.startRecalculate();
+		}
 		//--------------------------------------------------------export----------------------------------------------------
 		window['AscFormat'] = window['AscFormat'] || {};
 		window['AscFormat'].HANDLE_EVENT_MODE_HANDLE = HANDLE_EVENT_MODE_HANDLE;
@@ -12606,4 +12575,6 @@
 
 		window['AscFormat'].canMergeSelectedShapes = canMergeSelectedShapes;
 		window['AscFormat'].mergeSelectedShapes = mergeSelectedShapes;
+
+		window['AscFormat'].paraApplyCallback = paraApplyCallback;
 	})(window);

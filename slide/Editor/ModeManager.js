@@ -1919,6 +1919,9 @@
 	OutlineModeManager.prototype.isThumbnailsSupported = function() {
 		return true;
 	};
+	OutlineModeManager.prototype.isCanAddHyperlink = function () {
+		return false;
+	};
 	OutlineModeManager.prototype.updateViewMode = function (oldViewManager) {
 		const wordControl = this.getWordControl();
 		const presentation = this.getPresentation();

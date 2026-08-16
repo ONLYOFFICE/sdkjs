@@ -162,14 +162,6 @@
 		this.commentX = 0;
 		this.commentY = 0;
 
-
-		this.deleteLock = null;
-		this.backgroundLock = null;
-		this.timingLock = null;
-		this.transitionLock = null;
-		this.layoutLock = null;
-		this.showLock = null;
-
 		this.Lock = new AscCommon.CLock();
 
 
@@ -186,7 +178,6 @@
 		if (presentation) {
 			this.setSlideSize(presentation.GetWidthMM(), presentation.GetHeightMM());
 			this.setSlideComments(new SlideComments(this));
-			this.setLocks(new AscCommon.PropLocker(this.Id), new AscCommon.PropLocker(this.Id), new AscCommon.PropLocker(this.Id), new AscCommon.PropLocker(this.Id), new AscCommon.PropLocker(this.Id), new AscCommon.PropLocker(this.Id), new AscCommon.PropLocker(this.Id));
 		}
 
 		if (slideLayout) {
@@ -468,15 +459,7 @@
 		this.Width = w;
 		this.Height = h;
 	};
-	Slide.prototype.setLocks = function (deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock) {
-		this.deleteLock = deleteLock;
-		this.backgroundLock = backgroundLock;
-		this.timingLock = timingLock;
-		this.transitionLock = transitionLock;
-		this.layoutLock = layoutLock;
-		this.showLock = showLock;
-		History.Add(new AscDFH.CChangesDrawingSlideLocks(this, deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock));
-	};
+
 	Slide.prototype.shapeAdd = function (pos, item) {
 		this.checkDrawingUniNvPr(item);
 		var _pos = (AscFormat.isRealNumber(pos) && pos > -1 && pos <= this.cSld.spTree.length) ? pos : this.cSld.spTree.length;

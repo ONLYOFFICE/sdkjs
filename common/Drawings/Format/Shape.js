@@ -7390,6 +7390,24 @@
 			}
 			return false;
 		};
+		CShape.prototype.isCanIncreaseParagraphLevel = function (isIncrease) {
+			if (this.getObjectType() !== AscDFH.historyitem_type_Shape) {
+				return false;
+			}
+			const docContent = this.getDocContent();
+			if (docContent) {
+				if(this.isPlaceholder())
+				{
+					let nPhType = this.getPlaceholderType();
+					if(nPhType === AscFormat.phType_title || nPhType === AscFormat.phType_ctrTitle)
+					{
+						return false;
+					}
+				}
+				return docContent.Can_IncreaseParagraphLevel(isIncrease);
+			}
+			return false;
+		};
 
 		function CreateBinaryReader(szSrc, offset, srcLen) {
 			var memoryData = AscCommon.Base64.decode(szSrc, true, srcLen, offset);

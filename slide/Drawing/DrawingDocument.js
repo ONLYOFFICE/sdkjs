@@ -1204,7 +1204,7 @@ function CDrawingDocument()
 				this.m_oWordControl.OnScroll();
 				return;
 			}
-		} else if (focusType === FOCUS_OBJECT_THUMBNAILS && this.m_oWordControl.Thumbnails) {
+		} else if (focusType === FOCUS_OBJECT_THUMBNAILS && this.m_oWordControl.Thumbnails && this.m_oWordControl.m_oScrollThumbApi) {
 			var yPos = _y * g_dKoef_mm_to_pix;
 			var _hh = this.m_oWordControl.m_oThumbnails.HtmlElement.height;
 			_hh /= AscCommon.AscBrowser.retinaPixelRatio;

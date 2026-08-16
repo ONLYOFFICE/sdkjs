@@ -58,17 +58,27 @@
 			recalculateSpTree    : true
 		};
 		this.m_oContentChanges = new AscCommon.CContentChanges();
-		this.deleteLock = new AscCommon.PropLocker(this.Id);
-		this.backgroundLock = new AscCommon.PropLocker(this.Id);
-		this.timingLock = new AscCommon.PropLocker(this.Id);
-		this.transitionLock = new AscCommon.PropLocker(this.Id);
-		this.layoutLock = new AscCommon.PropLocker(this.Id);
-		this.showLock = new AscCommon.PropLocker(this.Id);
+		this.deleteLock = null;
+		this.backgroundLock = null;
+		this.timingLock = null;
+		this.transitionLock = null;
+		this.layoutLock = null;
+		this.showLock = null;
+		this.setLocks(new AscCommon.PropLocker(this.Id), new AscCommon.PropLocker(this.Id), new AscCommon.PropLocker(this.Id), new AscCommon.PropLocker(this.Id), new AscCommon.PropLocker(this.Id), new AscCommon.PropLocker(this.Id));
 	}
 
 	AscFormat.InitClass(SlideBase, AscFormat.CBaseFormatObject, 0);
 	SlideBase.prototype.isSlideLikeObject = function () {
 		return true;
+	};
+	SlideBase.prototype.setLocks = function (deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock) {
+		this.deleteLock = deleteLock;
+		this.backgroundLock = backgroundLock;
+		this.timingLock = timingLock;
+		this.transitionLock = transitionLock;
+		this.layoutLock = layoutLock;
+		this.showLock = showLock;
+		AscCommon.History.Add(new AscDFH.CChangesDrawingSlideLocks(this, deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock));
 	};
 	SlideBase.prototype.getDrawingDocument = function () {
 		return editor.WordControl.m_oLogicDocument.DrawingDocument;
