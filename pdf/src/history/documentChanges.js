@@ -1501,7 +1501,9 @@ CChangesPDFDocumentEndRedact.prototype.Redo = function()
     let nIndex = oPageInfo.GetIndex();
     let nOriginIndex = oPageInfo.GetOriginIndex();
 
-    oFile.nativeFile["RedactPage"](nOriginIndex, this.QuadsFlat, oDoc.unitedBinary);
+	if (nOriginIndex !== undefined) {
+		oFile.nativeFile["RedactPage"](nOriginIndex, this.QuadsFlat, oDoc.unitedBinary);
+	}
 
     oDoc.appliedRedactsData.push({
         pageId: this.PageId,
@@ -1517,7 +1519,10 @@ CChangesPDFDocumentEndRedact.prototype.Redo = function()
         AscCommon.g_oIdCounter.m_nPdfRedactCounter = nRedactIdx;
     }
 
-    oFile.pages[nIndex].text = oFile.getText(nOriginIndex);
+	if (nOriginIndex !== undefined) {
+		oFile.pages[nIndex].text = oFile.getText(nOriginIndex);
+	}
+    
     oDoc.Viewer.onUpdatePages([nIndex]);
 };
 CChangesPDFDocumentEndRedact.prototype.WriteToBinary = function(Writer)

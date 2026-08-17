@@ -3766,7 +3766,7 @@ var CPresentation = CPresentation || function(){};
                         width: oPageIconsInfo["View"][nIcon]["w"],
                         height: oPageIconsInfo["View"][nIcon]["h"],
                     },
-                    src: "data:image/png;base64," + sBase64
+                    src: sBase64.startsWith('http') ? sBase64 : "data:image/png;base64," + sBase64
                 });
 
                 for (let nField = 0; nField < oPageIconsInfo["MK"].length; nField++) {
@@ -4218,7 +4218,7 @@ var CPresentation = CPresentation || function(){};
 		}
 		else if (nDescription === AscDFH.historydescription_Presentation_ParagraphAdd) {
 			let oAcitveObj = this.GetActiveObject();
-			if (oAcitveObj && oAcitveObj.IsForm()) {
+			if (oAcitveObj && oAcitveObj.IsForm() && !this.IsEditFieldsMode()) {
 				return false;
 			}
 		}
@@ -8065,7 +8065,10 @@ var CPresentation = CPresentation || function(){};
 
 		let forUpdateIdxs = [];
 		pagesIdxMap.forEach(function(origIdx, curIdx) {
-			oFile.pages[curIdx].text = oFile.getText(origIdx);
+			if (origIdx !== undefined) {
+				oFile.pages[curIdx].text = oFile.getText(origIdx);
+			}
+			
 			forUpdateIdxs.push(curIdx);
 		});
 
