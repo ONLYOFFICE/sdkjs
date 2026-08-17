@@ -5042,6 +5042,7 @@
 			return;
 
 		oDoc.DoAction(function() {
+			oDoc.BlurActiveObject();
             oDoc.RemoveComment(Id);
         }, AscDFH.historydescription_Pdf_RemoveComment, null, [Id]);
 	};
@@ -5051,6 +5052,7 @@
 			return;
 
 		oDoc.DoAction(function() {
+			oDoc.BlurActiveObject();
 			oDoc.RemoveAllComments(isMine, isCurrent, arrIds)
 		}, AscDFH.historydescription_Pdf_RemoveComment, null, arrIds);
 	};
