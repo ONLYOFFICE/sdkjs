@@ -2352,47 +2352,21 @@
 		if (null === text)
 			AscBuilder.throwException(new Error("The 'text' parameter must be a string"));
 
-		let buffer = "";
-		for (let iterator = text.getUnicodeIterator(); iterator.check(); iterator.next())
+		let parts = text.replace(/\r/g, "").split(/([\t\n])/);
+		for (let index = 0; index < parts.length; ++index)
 		{
-			let charcode = iterator.value();
-			if (13 === charcode)
+			let part = parts[index];
+			if ("" === part)
 				continue;
 
-			if (9 !== charcode && 10 !== charcode)
-			{
-				buffer += AscCommon.encodeSurrogateChar(charcode);
-				continue;
-			}
-
-			if ("" !== buffer)
-			{
-				this.Presentation.EnterText(buffer);
-				buffer = "";
-			}
-
-			if (9 === charcode) // \t
-				this.private_AddItemOnCursorPos(new AscWord.CRunTab());
-			else if (10 === charcode) // \n
-				this.private_AddItemOnCursorPos(new AscWord.CRunBreak(AscWord.break_Line));
+			if ("\t" === part)
+				this.Presentation.AddToParagraph(new AscWord.CRunTab(), false, true);
+			else if ("\n" === part)
+				this.Presentation.AddNewParagraph();
+			else
+				this.Presentation.EnterText(part);
 		}
-
-		if ("" !== buffer)
-			this.Presentation.EnterText(buffer);
-
 		return true;
-	};
-
-	ApiPresentation.prototype.private_AddItemOnCursorPos = function(item)
-	{
-		let presentation = this.Presentation;
-		if (!presentation.CollaborativeEditing.Is_Fast() && presentation.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props))
-			return;
-
-		presentation.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd);
-		presentation.AddToParagraph(item, false, true);
-		presentation.FinalizeAction();
-		presentation.Document_UpdateSelectionState();
 	};
 
 	/**

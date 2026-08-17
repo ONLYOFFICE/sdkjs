@@ -10406,49 +10406,23 @@
 		if (null === text)
 			throwException(new Error("The 'text' parameter must be a string"));
 
-		let buffer = "";
-		for (let iterator = text.getUnicodeIterator(); iterator.check(); iterator.next())
+		let parts = text.replace(/\r/g, "").split(/([\t\n])/);
+		for (let index = 0; index < parts.length; ++index)
 		{
-			let charCode = iterator.value();
-			if (13 === charCode)
+			let part = parts[index];
+			if ("" === part)
 				continue;
 
-			if (9 !== charCode && 10 !== charCode)
-			{
-				buffer += AscCommon.encodeSurrogateChar(charCode);
-				continue;
-			}
-
-			if ("" !== buffer)
-			{
-				this.Document.EnterText(buffer);
-				buffer = "";
-			}
-
-			if (9 === charCode) // \t
-				this.private_AddItemOnCursorPos(new AscWord.CRunTab());
-			else if (10 === charCode) // \n
-				this.private_AddItemOnCursorPos(new AscWord.CRunBreak(AscWord.break_Line));
+			if ("\t" === part)
+				this.Document.AddToParagraph(new AscWord.CRunTab());
+			else if ("\n" === part)
+				this.Document.AddNewParagraph();
+			else
+				this.Document.EnterText(part);
 		}
-
-		if ("" !== buffer)
-			this.Document.EnterText(buffer);
-
 		return true;
 	};
-
-	ApiDocument.prototype.private_AddItemOnCursorPos = function(item)
-	{
-		let doc = this.Document;
-		if (doc.IsSelectionLocked(AscCommon.changestype_Paragraph_AddText, null, true, doc.IsFormFieldEditing()))
-			return;
-
-		doc.StartAction(AscDFH.historydescription_Document_AddLetter);
-		doc.AddToParagraph(item);
-		doc.UpdateSelection();
-		doc.FinalizeAction();
-	};
-
+	
 	/**
 	 * Moves the cursor into the header of the specified page and switches the document into the header editing mode. The cursor is positioned at the beginning of the header.
 	 * @memberof ApiDocument
