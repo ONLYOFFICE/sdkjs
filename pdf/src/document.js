@@ -3766,7 +3766,7 @@ var CPresentation = CPresentation || function(){};
                         width: oPageIconsInfo["View"][nIcon]["w"],
                         height: oPageIconsInfo["View"][nIcon]["h"],
                     },
-                    src: "data:image/png;base64," + sBase64
+                    src: sBase64.startsWith('http') ? sBase64 : "data:image/png;base64," + sBase64
                 });
 
                 for (let nField = 0; nField < oPageIconsInfo["MK"].length; nField++) {
