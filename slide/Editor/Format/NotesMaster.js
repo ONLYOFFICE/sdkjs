@@ -249,7 +249,7 @@
 			this.recalculateBackground();
 		}
 	};
-	//todo
+
 	CNotesMaster.prototype.getParentObjects = function () {
 		return {
 			presentation: Asc.editor.private_GetLogicDocument(),

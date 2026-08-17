@@ -468,9 +468,13 @@
 	CHandoutMaster.prototype.isMaster = function () {
 		return false;
 	};
-	//todo
 	CHandoutMaster.prototype.getParentObjects = function () {
-		return {};
+		return {
+			presentation: Asc.editor.private_GetLogicDocument(),
+			master      : this,
+			layout      : null,
+			slide       : null
+		};
 	};
 	CHandoutMaster.prototype.getWorksheet = function () {
 		return null;
