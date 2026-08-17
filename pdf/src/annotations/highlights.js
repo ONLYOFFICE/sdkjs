@@ -787,9 +787,6 @@
     CAnnotationRedact.prototype.GetRedactId = function() {
         return this._redactId;
     };
-    CAnnotationRedact.prototype.IsHidden = function() {
-        return AscPDF.CAnnotationBase.prototype.IsHidden.call(this) || !!this.GetRedactId();
-    };
     CAnnotationRedact.prototype.Draw = function(oGraphicsPDF) {
         let oDoc = Asc.editor.getPDFDoc();
         let oPageInfo = oDoc.GetPageInfo(this.GetPage());

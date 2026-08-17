@@ -652,7 +652,13 @@
         let oViewer     = Asc.editor.getDocumentRenderer();
         let oPageInfo   = oViewer.pagesInfo.pages[nPage];
         
-        return oPageInfo ? oPageInfo.annots : [];
+        return oPageInfo ? oPageInfo.annots.filter(function(annot) {
+			if (annot.IsLink() || (annot.IsRedact() && annot.GetRedactId())) {
+				return false;
+			}
+
+			return true;
+		}) : [];
     };
     CGraphicObjects.prototype.getFieldEditShapeObjects = function(nPage) {
         let oViewer     = Asc.editor.getDocumentRenderer();

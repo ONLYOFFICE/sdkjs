@@ -1501,7 +1501,9 @@ CChangesPDFDocumentEndRedact.prototype.Redo = function()
     let nIndex = oPageInfo.GetIndex();
     let nOriginIndex = oPageInfo.GetOriginIndex();
 
-    oFile.nativeFile["RedactPage"](nOriginIndex, this.QuadsFlat, oDoc.unitedBinary);
+	if (nOriginIndex !== undefined) {
+		oFile.nativeFile["RedactPage"](nOriginIndex, this.QuadsFlat, oDoc.unitedBinary);
+	}
 
     oDoc.appliedRedactsData.push({
         pageId: this.PageId,
