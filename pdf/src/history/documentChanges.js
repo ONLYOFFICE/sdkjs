@@ -1519,7 +1519,10 @@ CChangesPDFDocumentEndRedact.prototype.Redo = function()
         AscCommon.g_oIdCounter.m_nPdfRedactCounter = nRedactIdx;
     }
 
-    oFile.pages[nIndex].text = oFile.getText(nOriginIndex);
+	if (nOriginIndex !== undefined) {
+		oFile.pages[nIndex].text = oFile.getText(nOriginIndex);
+	}
+    
     oDoc.Viewer.onUpdatePages([nIndex]);
 };
 CChangesPDFDocumentEndRedact.prototype.WriteToBinary = function(Writer)

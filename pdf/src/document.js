@@ -8065,7 +8065,10 @@ var CPresentation = CPresentation || function(){};
 
 		let forUpdateIdxs = [];
 		pagesIdxMap.forEach(function(origIdx, curIdx) {
-			oFile.pages[curIdx].text = oFile.getText(origIdx);
+			if (origIdx !== undefined) {
+				oFile.pages[curIdx].text = oFile.getText(origIdx);
+			}
+			
 			forUpdateIdxs.push(curIdx);
 		});
 
