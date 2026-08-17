@@ -38,13 +38,37 @@
 (function (window, undefined) {
 
 	const MAX_CLICK_STEPS = 100;
-	const SIGNATURE_STEP = 256;
 
 	function createCanvas(width, height) {
 		const canvas = document.createElement('canvas');
 		canvas.width = width;
 		canvas.height = height;
 		return canvas;
+	}
+
+	function isEndlessTimeNode(node, depth) {
+		if (!node || depth > 8) {
+			return false;
+		}
+		if (node.getRepeatCount) {
+			const repeatCount = node.getRepeatCount();
+			if (repeatCount && repeatCount.isIndefinite()) {
+				return true;
+			}
+		}
+		if (node.getRepeatDur) {
+			const repeatDur = node.getRepeatDur();
+			if (repeatDur && repeatDur.isIndefinite()) {
+				return true;
+			}
+		}
+		const children = node.getChildrenTimeNodes ? node.getChildrenTimeNodes() : [];
+		for (let index = 0; index < children.length; ++index) {
+			if (isEndlessTimeNode(children[index], depth + 1)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	function CAnimExportFrameSource(api, plan) {
@@ -62,7 +86,8 @@
 		this.slideSnapshot = createCanvas(this.width, this.height);
 		this.transitionTarget = createCanvas(this.width, this.height);
 
-		this.hostCanvas.style.backgroundColor = "#000000";
+		this.isTransparent = AscCommonSlide.isAnimatedExportTransparent(plan.settings);
+		this.hostCanvas.style.backgroundColor = this.isTransparent ? "transparent" : "#000000";
 
 		this.transition = null;
 		this.player = null;
@@ -122,14 +147,6 @@
 	CAnimExportFrameSource.prototype.getCanvas = function () {
 		return this.captureCanvas;
 	};
-	CAnimExportFrameSource.prototype.getFrameSignature = function () {
-		const data = this.captureContext.getImageData(0, 0, this.width, this.height).data;
-		let signature = 0;
-		for (let offset = 0; offset < data.length; offset += SIGNATURE_STEP) {
-			signature = (signature * 31 + data[offset] + data[offset + 1] * 3 + data[offset + 2] * 7) | 0;
-		}
-		return signature;
-	};
 	CAnimExportFrameSource.prototype.beginSlide = function (item) {
 		this.endSlide();
 
@@ -168,13 +185,19 @@
 	CAnimExportFrameSource.prototype.drawSlideFrame = function () {
 		this.captureContext.setTransform(1, 0, 0, 1, 0, 0);
 		this.captureContext.clearRect(0, 0, this.width, this.height);
-		this.player.drawFrame(this.captureCanvas, this.rect);
+		this.player.drawFrame(this.captureCanvas, this.rect, this.isTransparent ? false : undefined);
 	};
 	CAnimExportFrameSource.prototype.drawSlideToCache = function (canvas, isBackgroundOnly) {
 		const savedWatermark = this.api.watermarkDraw;
 		this.api.watermarkDraw = null;
 		this.clearCanvas(canvas);
-		this.player.drawFrame(canvas, this.rect, isBackgroundOnly ? true : undefined);
+		let layer = isBackgroundOnly ? true : undefined;
+		if (this.isTransparent) {
+			layer = isBackgroundOnly ? null : false;
+		}
+		if (null !== layer) {
+			this.player.drawFrame(canvas, this.rect, layer);
+		}
 		this.api.watermarkDraw = savedWatermark;
 	};
 	CAnimExportFrameSource.prototype.renderSlideFrame = function (timeMs) {
@@ -208,6 +231,15 @@
 		}
 		return false;
 	};
+	CAnimExportFrameSource.prototype.hasEndlessAnimation = function () {
+		for (let index = 0; index < this.player.timings.length; ++index) {
+			const root = this.player.timings[index].getTimingRootNode();
+			if (isEndlessTimeNode(root, 0)) {
+				return true;
+			}
+		}
+		return false;
+	};
 	CAnimExportFrameSource.prototype.getMaxClickSteps = function () {
 		return MAX_CLICK_STEPS;
 	};
@@ -225,29 +257,6 @@
 	CAnimExportFrameSource.prototype.renderBackgroundSnapshot = function () {
 		this.drawSlideToCache(this.slideSnapshot, true);
 	};
-	CAnimExportFrameSource.prototype.renderSlideSnapshotAtEnd = function (item) {
-		const slide = item.slide;
-		const self = this;
-		let player = null;
-		this.presentation.checkSlideRecalculateOnOpen(slide);
-		AscFormat.ExecuteNoHistory(function () {
-			const timing = slide.timing;
-			if (timing) {
-				slide.timing = timing.createDuplicate();
-			}
-			player = new AscFormat.CAnimationPlayer(slide, self.host);
-			player.setVirtualTime(0);
-			player.goToEnd();
-			slide.timing = timing;
-		}, this, []);
-
-		const savedWatermark = this.api.watermarkDraw;
-		this.api.watermarkDraw = null;
-		this.clearCanvas(this.slideSnapshot);
-		player.drawFrame(this.slideSnapshot, this.rect);
-		this.api.watermarkDraw = savedWatermark;
-		player.pause();
-	};
 	CAnimExportFrameSource.prototype.beginTransition = function (transitionInfo, prevSlideIndex, slideIndex) {
 		if (!this.transition) {
 			this.transition = new CTransitionAnimation(this.api.WordControl);
@@ -258,6 +267,7 @@
 		transition.Param = transitionInfo.param;
 		transition.Duration = transitionInfo.duration;
 		transition.IsBackward = false;
+		transition.IsTransparent = this.isTransparent;
 		transition.Rect.x = 0;
 		transition.Rect.y = 0;
 		transition.Rect.w = this.width;

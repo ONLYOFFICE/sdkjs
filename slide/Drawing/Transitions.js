@@ -107,6 +107,7 @@ function CTransitionAnimation(htmlpage)
 
     this.TimerId = null;
     this.VirtualTime = null;
+    this.IsTransparent = false;
     this.FrameFunction = null;
 
     this.GLTransition = null;

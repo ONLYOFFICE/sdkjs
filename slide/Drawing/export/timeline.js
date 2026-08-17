@@ -100,7 +100,7 @@
 				index: slideIndex,
 				slide: slide,
 				transition: this.getTransition(slide),
-				minDuration: this.getMinDuration(slide)
+				slideDuration: this.getSlideDuration(slide)
 			});
 		}
 	};
@@ -116,7 +116,7 @@
 		const typeAndOption = transition.getTypeAndOption();
 		return {type: typeAndOption.Type, param: typeAndOption.Option, duration: duration};
 	};
-	CAnimExportPlan.prototype.getMinDuration = function (slide) {
+	CAnimExportPlan.prototype.getSlideDuration = function (slide) {
 		if (slide.isAdvanceAfterTransition()) {
 			const duration = slide.getAdvanceDuration();
 			if (duration > 0) {

@@ -43,6 +43,8 @@
 	const MAX_COLORS = 256;
 	const HISTOGRAM_SIZE = 32768;
 	const DISPOSAL_LEAVE = 1;
+	const DISPOSAL_RESTORE_BACKGROUND = 2;
+	const OPAQUE_ALPHA = 128;
 	const LZW_MAX_CODES = 4096;
 	const HASH_SIZE = 5003;
 
@@ -399,10 +401,11 @@
 		this.blockSize = 0;
 	};
 
-	function CGIFEncoder(width, height, loopCount) {
+	function CGIFEncoder(width, height, loopCount, isTransparent) {
 		this.width = width;
 		this.height = height;
 		this.loopCount = undefined === loopCount ? 0 : loopCount;
+		this.isTransparent = !!isTransparent;
 
 		this.stream = new CGIFStream();
 		this.quantizer = new CGIFQuantizer();
@@ -457,7 +460,8 @@
 				const offset = (rowStart + x) * 4;
 				if (rgba[offset] !== previous[offset] ||
 					rgba[offset + 1] !== previous[offset + 1] ||
-					rgba[offset + 2] !== previous[offset + 2]) {
+					rgba[offset + 2] !== previous[offset + 2] ||
+					rgba[offset + 3] !== previous[offset + 3]) {
 					if (x < left) { left = x; }
 					if (x > right) { right = x; }
 					if (y < top) { top = y; }
@@ -477,12 +481,15 @@
 		let rect = {x: 0, y: 0, w: this.width, h: this.height};
 		let isDelta = false;
 		if (this.previous) {
-			rect = this.getChangedRect(rgba);
-			if (!rect) {
+			const changed = this.getChangedRect(rgba);
+			if (!changed) {
 				this.addDelay(delayCs);
 				return false;
 			}
-			isDelta = true;
+			if (!this.isTransparent) {
+				rect = changed;
+				isDelta = true;
+			}
 		}
 
 		const transparentIndex = this.buildFrameIndices(rgba, rect, isDelta);
@@ -499,12 +506,17 @@
 		const quantizer = this.quantizer;
 		const palette = this.palette;
 		const previous = this.previous;
+		let hasTransparent = false;
 		quantizer.reset();
 
 		for (let y = 0; y < rect.h; ++y) {
 			const rowStart = (rect.y + y) * this.width + rect.x;
 			for (let x = 0; x < rect.w; ++x) {
 				const offset = (rowStart + x) * 4;
+				if (rgba[offset + 3] < OPAQUE_ALPHA) {
+					hasTransparent = true;
+					continue;
+				}
 				if (isDelta &&
 					rgba[offset] === previous[offset] &&
 					rgba[offset + 1] === previous[offset + 1] &&
@@ -515,10 +527,11 @@
 			}
 		}
 
-		const maxColors = isDelta ? MAX_COLORS - 1 : MAX_COLORS;
+		const needsTransparent = isDelta || hasTransparent;
+		const maxColors = needsTransparent ? MAX_COLORS - 1 : MAX_COLORS;
 		quantizer.buildPalette(palette, maxColors);
-		const transparentIndex = isDelta ? palette.count : -1;
-		if (isDelta) {
+		const transparentIndex = needsTransparent ? palette.count : -1;
+		if (needsTransparent) {
 			palette.colors[palette.count * 3] = 0;
 			palette.colors[palette.count * 3 + 1] = 0;
 			palette.colors[palette.count * 3 + 2] = 0;
@@ -531,6 +544,10 @@
 			const rowStart = (rect.y + y) * this.width + rect.x;
 			for (let x = 0; x < rect.w; ++x) {
 				const offset = (rowStart + x) * 4;
+				if (rgba[offset + 3] < OPAQUE_ALPHA) {
+					indices[position++] = transparentIndex;
+					continue;
+				}
 				if (isDelta &&
 					rgba[offset] === previous[offset] &&
 					rgba[offset + 1] === previous[offset + 1] &&
@@ -551,7 +568,8 @@
 		stream.writeByte(0x21);
 		stream.writeByte(0xF9);
 		stream.writeByte(0x04);
-		stream.writeByte((DISPOSAL_LEAVE << 2) | (transparentIndex >= 0 ? 1 : 0));
+		const disposal = this.isTransparent ? DISPOSAL_RESTORE_BACKGROUND : DISPOSAL_LEAVE;
+		stream.writeByte((disposal << 2) | (transparentIndex >= 0 ? 1 : 0));
 		this.lastDelayPos = stream.pos;
 		stream.writeShort(Math.min(MAX_DELAY_CS, delayCs));
 		stream.writeByte(transparentIndex >= 0 ? transparentIndex : 0);

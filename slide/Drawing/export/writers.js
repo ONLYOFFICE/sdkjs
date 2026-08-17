@@ -61,7 +61,8 @@
 	const DEFAULT_MP4_CODEC = "avc1.42001f";
 
 	function CAnimExportGifWriter(width, height, settings) {
-		this.encoder = new AscCommonSlide.CGIFEncoder(width, height, 0);
+		this.encoder = new AscCommonSlide.CGIFEncoder(width, height, 0,
+			AscCommonSlide.isAnimatedExportTransparent(settings));
 		this.planner = new AscCommonSlide.CAnimExportDelayPlanner();
 	}
 	CAnimExportGifWriter.prototype.addFrame = function (frameSource, durationMs) {

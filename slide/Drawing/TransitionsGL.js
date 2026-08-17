@@ -168,6 +168,10 @@
         this.isInitialized = false;
     };
 
+    CTransitionGL.prototype._getClearAlpha = function()
+    {
+        return (this.TransitionAnimation && this.TransitionAnimation.IsTransparent) ? 0 : 1;
+    };
     CTransitionGL.prototype._resetGLState = function()
     {
         let gl = this.gl;
@@ -558,7 +562,7 @@
         this._resetGLState();
 
         gl.viewport(0, 0, this.glCanvas.width, this.glCanvas.height);
-        gl.clearColor(0, 0, 0, 1);
+        gl.clearColor(0, 0, 0, this._getClearAlpha());
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         switch (type)
@@ -1879,7 +1883,7 @@
 		else if (param === c_oAscSlideTransitionParams.Vortex_Up) dir = 3;
 		else if (param === c_oAscSlideTransitionParams.Vortex_Down) dir = 2;
 
-        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clearColor(0, 0, 0, this._getClearAlpha());
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.enable(gl.DEPTH_TEST);
         gl.enable(gl.BLEND);

@@ -1987,6 +1987,10 @@ function isAnimatedExportVideoFormat(format) {
 	return c_oAscAnimatedExportFormat.WebM === format || c_oAscAnimatedExportFormat.Mp4 === format;
 }
 
+function isAnimatedExportTransparent(settings) {
+	return !!settings.transparentBackground && !isAnimatedExportVideoFormat(settings.format);
+}
+
 function getAnimatedExportPresetList(format) {
 	if (isAnimatedExportVideoFormat(format)) {
 		return [c_oAscAnimatedExportPreset.P480, c_oAscAnimatedExportPreset.P720,
@@ -2218,6 +2222,7 @@ window["AscCommonSlide"].getAnimatedExportPresetList = getAnimatedExportPresetLi
 window["AscCommonSlide"].getAnimatedExportPresetHeight = getAnimatedExportPresetHeight;
 window["AscCommonSlide"].getAnimatedExportPresetFps = getAnimatedExportPresetFps;
 window["AscCommonSlide"].isAnimatedExportVideoFormat = isAnimatedExportVideoFormat;
+window["AscCommonSlide"].isAnimatedExportTransparent = isAnimatedExportTransparent;
 window["Asc"]["CAscAnimatedExportPresetInfo"] = window["Asc"].CAscAnimatedExportPresetInfo = CAscAnimatedExportPresetInfo;
 CAscAnimatedExportPresetInfo.prototype["asc_getPreset"] = CAscAnimatedExportPresetInfo.prototype.asc_getPreset;
 CAscAnimatedExportPresetInfo.prototype["asc_getWidth"] = CAscAnimatedExportPresetInfo.prototype.asc_getWidth;

@@ -43,8 +43,7 @@
 	const STAGE_SLIDE_END = 4;
 	const STAGE_DONE = 5;
 
-	const SLIDE_OVERTIME_LIMIT = 20000;
-	const MAX_SKIPPED_TRANSITION_PART = 0.6;
+	const ENDLESS_GUARD_MS = 20000;
 
 	function CAnimatedExporter(api, settings) {
 		AscCommon.CActionOnTimerBase.call(this);
@@ -64,8 +63,7 @@
 		this.noMoreClickSteps = false;
 		this.transitionFrame = 0;
 		this.transitionFrameCount = 0;
-		this.transitionEmitted = 0;
-		this.transitionSignature = null;
+		this.isEndlessSlide = false;
 		this.frameCount = 0;
 		this.isTruncated = false;
 		this.isCanceled = false;
@@ -237,6 +235,7 @@
 		this.slideIdleTime = 0;
 		this.clickStep = 0;
 		this.noMoreClickSteps = false;
+		this.isEndlessSlide = this.frameSource.hasEndlessAnimation();
 
 		if (item.transition) {
 			if (isFirst) {
@@ -247,28 +246,13 @@
 			if (this.frameSource.beginTransition(item.transition, prevIndex, item.index)) {
 				this.transitionFrame = 0;
 				this.transitionFrameCount = this.plan.getSegmentFrameCount(item.transition.duration);
-				this.transitionEmitted = 0;
-				this.transitionSignature = null;
 				this.stage = STAGE_TRANSITION;
 				return;
 			}
 		}
 		this.stage = STAGE_SLIDE;
 	};
-	CAnimatedExporter.prototype.isLoopedExport = function () {
-		const format = this.settings.format;
-		if (Asc.c_oAscAnimatedExportFormat.Gif !== format && Asc.c_oAscAnimatedExportFormat.WebP !== format) {
-			return false;
-		}
-		return true;
-	};
 	CAnimatedExporter.prototype.prepareFirstTransitionSource = function () {
-		const slides = this.plan.slides;
-		const isLooped = this.isLoopedExport() || this.plan.presentation.isLoopShowMode();
-		if (isLooped && slides.length > 1) {
-			this.frameSource.renderSlideSnapshotAtEnd(slides[slides.length - 1]);
-			return;
-		}
 		this.frameSource.clearSlideSnapshot();
 	};
 	CAnimatedExporter.prototype.doTransitionFrame = function () {
@@ -278,32 +262,12 @@
 		const isPlaying = this.frameSource.renderTransitionFrame(part);
 		++this.transitionFrame;
 
-		if (!this.isRepeatedTransitionStart()) {
-			this.emitFrame(duration / this.transitionFrameCount, true);
-			++this.transitionEmitted;
-		}
+		this.emitFrame(duration / this.transitionFrameCount, true);
 
 		if (!isPlaying || this.transitionFrame >= this.transitionFrameCount) {
 			this.frameSource.endTransition();
 			this.stage = STAGE_SLIDE;
 		}
-	};
-	CAnimatedExporter.prototype.isRepeatedTransitionStart = function () {
-		if (this.isVideoFormat()) {
-			return false;
-		}
-		if (this.transitionEmitted > 1) {
-			return false;
-		}
-		if (this.transitionFrame > this.transitionFrameCount * MAX_SKIPPED_TRANSITION_PART) {
-			return false;
-		}
-		const signature = this.frameSource.getFrameSignature();
-		if (null === this.transitionSignature) {
-			this.transitionSignature = signature;
-			return false;
-		}
-		return signature === this.transitionSignature;
 	};
 	CAnimatedExporter.prototype.doSlideFrame = function () {
 		const item = this.plan.slides[this.slidePosition];
@@ -319,23 +283,26 @@
 			this.slideIdleTime += step;
 		}
 
-		if (this.slideTime > item.minDuration + SLIDE_OVERTIME_LIMIT) {
+		const isActive = this.frameSource.isAnimationActive();
+		if (this.slideTime >= item.slideDuration &&
+			(this.isEndlessSlide || !isActive || this.slideTime >= item.slideDuration + ENDLESS_GUARD_MS)) {
 			this.stage = STAGE_SLIDE_END;
 			return;
 		}
-		if (this.clickStep > 0 && this.slideIdleTime < this.plan.getClickDelayMs()) {
+		if (isActive) {
+			return;
+		}
+		if (this.slideIdleTime < this.plan.getClickDelayMs()) {
 			return;
 		}
 		if (!this.noMoreClickSteps && this.clickStep < this.frameSource.getMaxClickSteps()) {
 			if (this.frameSource.nextClickStep()) {
 				++this.clickStep;
 				this.slideIdleTime = 0;
-				return;
 			}
-			this.noMoreClickSteps = true;
-		}
-		if (this.slideTime >= item.minDuration) {
-			this.stage = STAGE_SLIDE_END;
+			else {
+				this.noMoreClickSteps = true;
+			}
 		}
 	};
 	CAnimatedExporter.prototype.doSlideEnd = function () {
