@@ -790,16 +790,17 @@
     CAnnotationRedact.prototype.Draw = function(oGraphicsPDF) {
         let oDoc = Asc.editor.getPDFDoc();
         let oPageInfo = oDoc.GetPageInfo(this.GetPage());
-        
-        let isNeedDrawApplied = false;
-        if (this.GetRedactId() && (oPageInfo.IsRecognized() || undefined == oPageInfo.GetOriginIndex())) {
-            isNeedDrawApplied = true;
+        let isApplied = this.GetRedactId();
+
+        let isNeedDraw = false;
+        if (!isApplied || (isApplied && (oPageInfo.IsRecognized() || undefined == oPageInfo.GetOriginIndex()))) {
+            isNeedDraw = true;
         }
         
-        if (this.IsHidden() == true && !isNeedDrawApplied)
+        if (this.IsHidden() == true || !isNeedDraw)
             return;
 
-        if (this.IsHovered() || isNeedDrawApplied) {
+        if (this.IsHovered() || isApplied) {
             this._DrawHovered(oGraphicsPDF);
         }
         else {

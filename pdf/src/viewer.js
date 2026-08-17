@@ -1894,6 +1894,10 @@
 				for (let i = page.annots.length -1; i >= 0; i--)
 				{
 					let oAnnot = page.annots[i];
+					if (oAnnot.IsRedact() && oAnnot.GetRedactId()) {
+						continue;
+					}
+					
 					let nAnnotWidth		= (oAnnot._rect[2] - oAnnot._rect[0]);
 					let nAnnotHeight	= (oAnnot._rect[3] - oAnnot._rect[1]);
 					
@@ -3929,9 +3933,9 @@
 				oContent.RecalculateCurPos();
 		}
 	};
-	CHtmlPage.prototype._drawMarkupAnnotsOnCtx = function(nPage, ctx, oDirtyBoundsMM, contentType)
+	CHtmlPage.prototype._drawMarkupAnnotsOnCtx = function(nPage, ctx, oDirtyBoundsMM)
 	{
-		if (contentType && contentType !== AscPDF.PRINT_CONTENT_TYPES.docAndMarkups) {
+		if (ctx.contentType && ctx.contentType !== AscPDF.PRINT_CONTENT_TYPES.docAndMarkups) {
 			return;
 		}
 		
@@ -3973,11 +3977,15 @@
 		}
 		
 		let oGraphicsPDF = new AscPDF.CPDFGraphics();
-		oGraphicsPDF.isPrint = contentType !== undefined;
+		oGraphicsPDF.isPrint = ctx.contentType !== undefined;
 		oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage) , this.file.getPageHeight(nPage));
 		oGraphicsPDF.SetCurPage(nPage);
 
 		aAnnots.forEach(function(annot) {
+			if (annot.IsRedact() && annot.GetRedactId()) {
+				return;
+			}
+
 			annot.DrawOnPage(oGraphicsPDF);
 		});
 
@@ -4234,17 +4242,18 @@
 		image.requestHeight = nHeightPx;
 
 		let ctx = image.getContext('2d');
+		ctx.contentType = contentType;
 
-		contentType !== AscPDF.PRINT_CONTENT_TYPES.formsOnly && this._drawDrawingsOnCtx(nPage, ctx, true);
-		this._drawMarkupAnnotsOnCtx(nPage, ctx, contentType);
-		this._drawAnnotsOnCtx(nPage, ctx, false, contentType);
-		this._drawFieldsOnCtx(nPage, ctx, false, true, contentType);
+		this._drawDrawingsOnCtx(nPage, ctx, true);
+		this._drawMarkupAnnotsOnCtx(nPage, ctx);
+		this._drawAnnotsOnCtx(nPage, ctx, false);
+		this._drawFieldsOnCtx(nPage, ctx, false, true);
 
 		return ctx.canvas;
 	};
-    CHtmlPage.prototype._drawAnnotsOnCtx = function(nPage, ctx, isThumbnails, contentType) {
-		let isDrawAnnots = contentType == undefined || contentType == AscPDF.PRINT_CONTENT_TYPES.docAndMarkups;
-		let isOnlyStamps = contentType == AscPDF.PRINT_CONTENT_TYPES.docAndStamps;
+    CHtmlPage.prototype._drawAnnotsOnCtx = function(nPage, ctx, isThumbnails) {
+		let isDrawAnnots = ctx.contentType == undefined || ctx.contentType == AscPDF.PRINT_CONTENT_TYPES.docAndMarkups;
+		let isOnlyStamps = ctx.contentType == AscPDF.PRINT_CONTENT_TYPES.docAndStamps;
 
 		if (!isDrawAnnots && !isOnlyStamps) {
 			return;
@@ -4257,7 +4266,7 @@
 
 		let oGraphicsPDF = new AscPDF.CPDFGraphics();
 		oGraphicsPDF.isThumbnails = isThumbnails;
-		oGraphicsPDF.isPrint = contentType !== undefined;
+		oGraphicsPDF.isPrint = ctx.contentType !== undefined;
         oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage) , this.file.getPageHeight(nPage));
         oGraphicsPDF.SetCurPage(nPage);
 
@@ -4279,7 +4288,7 @@
             });
         }
     };
-    CHtmlPage.prototype._drawFieldsOnCtx = function(nPage, ctx, isThumbnails, isSkipEditShapes, contentType) {
+    CHtmlPage.prototype._drawFieldsOnCtx = function(nPage, ctx, isThumbnails, isSkipEditShapes) {
 		let oDoc		= this.getPDFDoc();
         let widthPx		= ctx.canvas.width;
         let heightPx    = ctx.canvas.height;
@@ -4287,7 +4296,7 @@
 
         let oGraphicsPDF = new AscPDF.CPDFGraphics();
 		oGraphicsPDF.isThumbnails = isThumbnails;
-		oGraphicsPDF.isPrint = contentType !== undefined;
+		oGraphicsPDF.isPrint = ctx.contentType !== undefined;
 		oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage) , this.file.getPageHeight(nPage));
         oGraphicsPDF.SetCurPage(nPage);
 
@@ -4299,7 +4308,7 @@
 		oGraphicsWord.isSkipEditShapes = isSkipEditShapes;
         
         if (this.pagesInfo.pages[nPage].fields != null) {
-			if (contentType !== AscPDF.PRINT_CONTENT_TYPES.formsOnly) {
+			if (ctx.contentType !== AscPDF.PRINT_CONTENT_TYPES.formsOnly) {
 				this.pagesInfo.pages[nPage].redactedFields.forEach(function(field) {
 					field.DrawOnPage(oGraphicsPDF, oGraphicsWord);
 				});
@@ -4311,8 +4320,16 @@
         }
     };
 	CHtmlPage.prototype._drawDrawingsOnCtx = function(nPage, ctx, isThumbnails, oDirtyBoundsMM, pageImage) {
+		if (ctx.contentType === AscPDF.PRINT_CONTENT_TYPES.formsOnly) {
+			return;
+		}
+
 		let aDrawings = this.pagesInfo.pages[nPage].drawings;
-		if (aDrawings.length == 0 && !oDirtyBoundsMM) {
+		let aAppliedRedacts = this.pagesInfo.pages[nPage].annots.filter(function(annot) {
+			return annot.IsRedact() && annot.GetRedactId();
+		});
+
+		if (aDrawings.length == 0 && aAppliedRedacts.length == 0 && !oDirtyBoundsMM) {
 			return;
 		}
 
@@ -4367,6 +4384,15 @@
 		oGraphicsWord.m_oFontManager = AscCommon.g_fontManager;
 		oGraphicsWord.setEndGlobalAlphaColor(255, 255, 255);
 		oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
+
+		let oGraphicsPDF = new AscPDF.CPDFGraphics();
+		oGraphicsPDF.isPrint = ctx.contentType !== undefined;
+		oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage) , this.file.getPageHeight(nPage));
+		oGraphicsPDF.SetCurPage(nPage);
+
+		aAppliedRedacts.forEach(function(annot) {
+			annot.DrawOnPage(oGraphicsPDF);
+		});
 
 		drawingsToRender.forEach(function(drawing) {
 			drawing.Draw(oGraphicsWord);
