@@ -4218,7 +4218,7 @@ var CPresentation = CPresentation || function(){};
 		}
 		else if (nDescription === AscDFH.historydescription_Presentation_ParagraphAdd) {
 			let oAcitveObj = this.GetActiveObject();
-			if (oAcitveObj && oAcitveObj.IsForm()) {
+			if (oAcitveObj && oAcitveObj.IsForm() && !this.IsEditFieldsMode()) {
 				return false;
 			}
 		}
