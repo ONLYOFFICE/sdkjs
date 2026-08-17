@@ -341,11 +341,11 @@ CAscSlideTransition.prototype.getTypeAndOption = function()
             Asc.c_oAscSlideTransitionTypes.Honeycomb,
             Asc.c_oAscSlideTransitionTypes.Doors,
             Asc.c_oAscSlideTransitionTypes.Window,
-            Asc.c_oAscSlideTransitionTypes.Pan,
-            Asc.c_oAscSlideTransitionTypes.Glitter,
-            Asc.c_oAscSlideTransitionTypes.Flash,
-            Asc.c_oAscSlideTransitionTypes.Shred,
-            Asc.c_oAscSlideTransitionTypes.Reveal
+            Asc.c_oAscSlideTransitionTypes.Switch,
+            Asc.c_oAscSlideTransitionTypes.Flip,
+            Asc.c_oAscSlideTransitionTypes.Prism,
+            Asc.c_oAscSlideTransitionTypes.Ferris,
+            Asc.c_oAscSlideTransitionTypes.Gallery
         ];
         let nType = AscCommon.getArrayRandomElement(aTypes);
         let nOption = null;
@@ -462,6 +462,39 @@ CAscSlideTransition.prototype.getTypeAndOption = function()
             case Asc.c_oAscSlideTransitionTypes.Window: {
                 nOption = AscCommon.getArrayRandomElement([
                     c_oAscSlideTransitionParams.Window_Horizontal, c_oAscSlideTransitionParams.Window_Vertical
+                ]);
+                break;
+            }
+            case Asc.c_oAscSlideTransitionTypes.Switch: {
+                nOption = AscCommon.getArrayRandomElement([
+                    c_oAscSlideTransitionParams.Switch_Left, c_oAscSlideTransitionParams.Switch_Right
+                ]);
+                break;
+            }
+            case Asc.c_oAscSlideTransitionTypes.Flip: {
+                nOption = AscCommon.getArrayRandomElement([
+                    c_oAscSlideTransitionParams.Flip_Left, c_oAscSlideTransitionParams.Flip_Right
+                ]);
+                break;
+            }
+            case Asc.c_oAscSlideTransitionTypes.Prism: {
+                nOption = AscCommon.getArrayRandomElement([
+                    c_oAscSlideTransitionParams.Prism_Left, c_oAscSlideTransitionParams.Prism_Right,
+                    c_oAscSlideTransitionParams.Prism_Up, c_oAscSlideTransitionParams.Prism_Down,
+                    c_oAscSlideTransitionParams.Prism_Left_Inverted, c_oAscSlideTransitionParams.Prism_Right_Inverted,
+                    c_oAscSlideTransitionParams.Prism_Up_Inverted, c_oAscSlideTransitionParams.Prism_Down_Inverted
+                ]);
+                break;
+            }
+            case Asc.c_oAscSlideTransitionTypes.Ferris: {
+                nOption = AscCommon.getArrayRandomElement([
+                    c_oAscSlideTransitionParams.Ferris_Left, c_oAscSlideTransitionParams.Ferris_Right
+                ]);
+                break;
+            }
+            case Asc.c_oAscSlideTransitionTypes.Gallery: {
+                nOption = AscCommon.getArrayRandomElement([
+                    c_oAscSlideTransitionParams.Gallery_Left, c_oAscSlideTransitionParams.Gallery_Right
                 ]);
                 break;
             }
@@ -1901,6 +1934,211 @@ CAscHF.prototype['get_Slide'] = CAscHF.prototype.get_Slide = function(){return t
 CAscHF.prototype['put_Notes'] = CAscHF.prototype.put_Notes = function(v){this.Notes = v;};
 CAscHF.prototype['get_Notes'] = CAscHF.prototype.get_Notes = function(){return this.Notes;};
 
+const c_oAscAnimatedExportFormat = {
+	Gif:  1,
+	WebP: 2,
+	WebM: 3,
+	Mp4:  4
+};
+
+function animatedExportFormatToString(value) {
+	switch (value) {
+		case c_oAscAnimatedExportFormat.Gif:  return "Gif";
+		case c_oAscAnimatedExportFormat.WebP: return "WebP";
+		case c_oAscAnimatedExportFormat.WebM: return "WebM";
+		case c_oAscAnimatedExportFormat.Mp4:  return "Mp4";
+		default:                              return null;
+	}
+}
+function animatedExportFormatFromString(str) {
+	switch (str) {
+		case "Gif":  return c_oAscAnimatedExportFormat.Gif;
+		case "WebP": return c_oAscAnimatedExportFormat.WebP;
+		case "WebM": return c_oAscAnimatedExportFormat.WebM;
+		case "Mp4":  return c_oAscAnimatedExportFormat.Mp4;
+		default:     return null;
+	}
+}
+
+const c_oAscAnimatedExportPreset = {
+	P240:  1,
+	P480:  2,
+	P720:  3,
+	P1080: 4,
+	P2160: 5
+};
+
+const animatedExportPresetHeights = {};
+animatedExportPresetHeights[c_oAscAnimatedExportPreset.P240]  = 240;
+animatedExportPresetHeights[c_oAscAnimatedExportPreset.P480]  = 480;
+animatedExportPresetHeights[c_oAscAnimatedExportPreset.P720]  = 720;
+animatedExportPresetHeights[c_oAscAnimatedExportPreset.P1080] = 1080;
+animatedExportPresetHeights[c_oAscAnimatedExportPreset.P2160] = 2160;
+
+const animatedExportAnimationFps = {};
+animatedExportAnimationFps[c_oAscAnimatedExportPreset.P240]  = 15;
+animatedExportAnimationFps[c_oAscAnimatedExportPreset.P480]  = 15;
+animatedExportAnimationFps[c_oAscAnimatedExportPreset.P720]  = 24;
+animatedExportAnimationFps[c_oAscAnimatedExportPreset.P1080] = 24;
+
+const ANIMATED_EXPORT_VIDEO_FPS = 30;
+
+function isAnimatedExportVideoFormat(format) {
+	return c_oAscAnimatedExportFormat.WebM === format || c_oAscAnimatedExportFormat.Mp4 === format;
+}
+
+function getAnimatedExportPresetList(format) {
+	if (isAnimatedExportVideoFormat(format)) {
+		return [c_oAscAnimatedExportPreset.P480, c_oAscAnimatedExportPreset.P720,
+			c_oAscAnimatedExportPreset.P1080, c_oAscAnimatedExportPreset.P2160];
+	}
+	return [c_oAscAnimatedExportPreset.P240, c_oAscAnimatedExportPreset.P480,
+		c_oAscAnimatedExportPreset.P720, c_oAscAnimatedExportPreset.P1080];
+}
+
+function getAnimatedExportDefaultPreset(format) {
+	return isAnimatedExportVideoFormat(format) ? c_oAscAnimatedExportPreset.P1080
+		: c_oAscAnimatedExportPreset.P480;
+}
+
+function getAnimatedExportPresetHeight(format, preset) {
+	const list = getAnimatedExportPresetList(format);
+	const height = animatedExportPresetHeights[preset];
+	if (!height || list.indexOf(preset) < 0) {
+		return animatedExportPresetHeights[getAnimatedExportDefaultPreset(format)];
+	}
+	return height;
+}
+
+function getAnimatedExportPresetFps(format, preset) {
+	if (isAnimatedExportVideoFormat(format)) {
+		return ANIMATED_EXPORT_VIDEO_FPS;
+	}
+	return animatedExportAnimationFps[preset] || animatedExportAnimationFps[c_oAscAnimatedExportPreset.P480];
+}
+
+function CAscAnimatedExportPresetInfo(preset, width, height, fps) {
+	this.preset = preset;
+	this.width = width;
+	this.height = height;
+	this.fps = fps;
+}
+CAscAnimatedExportPresetInfo.prototype.asc_getPreset = function() {
+	return this.preset;
+};
+CAscAnimatedExportPresetInfo.prototype.asc_getWidth = function() {
+	return this.width;
+};
+CAscAnimatedExportPresetInfo.prototype.asc_getHeight = function() {
+	return this.height;
+};
+CAscAnimatedExportPresetInfo.prototype.asc_getFps = function() {
+	return this.fps;
+};
+
+function CAscAnimatedExportSettings(format) {
+	this.format = format || c_oAscAnimatedExportFormat.Gif;
+	this.preset = getAnimatedExportDefaultPreset(this.format);
+	this.slideDuration = 5000;
+	this.transparentBackground = false;
+	this.autoDownload = true;
+	this.rangeOptions = new window["Asc"].CAscPageRange();
+}
+CAscAnimatedExportSettings.fromJSON = function (jsonObj) {
+	if (!jsonObj) {
+		return null;
+	}
+	const res = new CAscAnimatedExportSettings();
+	res.format = animatedExportFormatFromString(jsonObj["format"]);
+	res.preset = jsonObj["preset"];
+	res.slideDuration = jsonObj["slideDuration"];
+	res.transparentBackground = jsonObj["transparentBackground"];
+	res.autoDownload = jsonObj["autoDownload"];
+	res.rangeOptions = window["Asc"].CAscPageRange.fromJSON(jsonObj["rangeOptions"]);
+	return res;
+};
+CAscAnimatedExportSettings.prototype.toJSON = function () {
+	const res = {};
+	res["format"] = animatedExportFormatToString(this.format);
+	res["preset"] = this.preset;
+	res["slideDuration"] = this.slideDuration;
+	res["transparentBackground"] = this.transparentBackground;
+	res["autoDownload"] = this.autoDownload;
+	res["rangeOptions"] = this.rangeOptions ? this.rangeOptions.toJSON() : null;
+	return res;
+};
+CAscAnimatedExportSettings.prototype.asc_setFormat = function(format) {
+	const wasDefaultPreset = this.preset === getAnimatedExportDefaultPreset(this.format);
+	this.format = format;
+	if (wasDefaultPreset) {
+		this.preset = getAnimatedExportDefaultPreset(format);
+	}
+};
+CAscAnimatedExportSettings.prototype.asc_getFormat = function() {
+	return this.format;
+};
+CAscAnimatedExportSettings.prototype.asc_setPreset = function(preset) {
+	this.preset = preset;
+};
+CAscAnimatedExportSettings.prototype.asc_getPreset = function() {
+	return this.preset;
+};
+CAscAnimatedExportSettings.prototype.asc_setSlideDuration = function(duration) {
+	this.slideDuration = duration;
+};
+CAscAnimatedExportSettings.prototype.asc_getSlideDuration = function() {
+	return this.slideDuration;
+};
+CAscAnimatedExportSettings.prototype.asc_setTransparentBackground = function(isTransparent) {
+	this.transparentBackground = isTransparent;
+};
+CAscAnimatedExportSettings.prototype.asc_getTransparentBackground = function() {
+	return this.transparentBackground;
+};
+CAscAnimatedExportSettings.prototype.asc_setAutoDownload = function(autoDownload) {
+	this.autoDownload = autoDownload;
+};
+CAscAnimatedExportSettings.prototype.asc_getAutoDownload = function() {
+	return this.autoDownload;
+};
+CAscAnimatedExportSettings.prototype.asc_setRangeOptions = function(rangeOptions) {
+	this.rangeOptions = rangeOptions;
+};
+CAscAnimatedExportSettings.prototype.asc_getRangeOptions = function() {
+	return this.rangeOptions;
+};
+
+function CAscAnimatedExportResult() {
+	this.format = c_oAscAnimatedExportFormat.Gif;
+	this.data = null;
+	this.width = 0;
+	this.height = 0;
+	this.frameCount = 0;
+	this.durationMs = 0;
+	this.isTruncated = false;
+}
+CAscAnimatedExportResult.prototype.asc_getFormat = function() {
+	return this.format;
+};
+CAscAnimatedExportResult.prototype.asc_getData = function() {
+	return this.data;
+};
+CAscAnimatedExportResult.prototype.asc_getWidth = function() {
+	return this.width;
+};
+CAscAnimatedExportResult.prototype.asc_getHeight = function() {
+	return this.height;
+};
+CAscAnimatedExportResult.prototype.asc_getFrameCount = function() {
+	return this.frameCount;
+};
+CAscAnimatedExportResult.prototype.asc_getDurationMs = function() {
+	return this.durationMs;
+};
+CAscAnimatedExportResult.prototype.asc_getIsTruncated = function() {
+	return this.isTruncated;
+};
+
 //------------------------------------------------------------export----------------------------------------------------
 window['Asc'] = window['Asc'] || {};
 window['AscCommonSlide'] = window['AscCommonSlide'] || {};
@@ -1947,3 +2185,50 @@ CLayoutThumbnail.prototype['get_Image'] = CLayoutThumbnail.prototype.get_Image;
 CLayoutThumbnail.prototype['get_Name'] = CLayoutThumbnail.prototype.get_Name;
 CLayoutThumbnail.prototype['get_Width'] = CLayoutThumbnail.prototype.get_Width;
 CLayoutThumbnail.prototype['get_Height'] = CLayoutThumbnail.prototype.get_Height;
+
+window["Asc"]["c_oAscAnimatedExportFormat"] = window["Asc"].c_oAscAnimatedExportFormat = c_oAscAnimatedExportFormat;
+c_oAscAnimatedExportFormat["Gif"] = c_oAscAnimatedExportFormat.Gif;
+c_oAscAnimatedExportFormat["WebP"] = c_oAscAnimatedExportFormat.WebP;
+c_oAscAnimatedExportFormat["WebM"] = c_oAscAnimatedExportFormat.WebM;
+c_oAscAnimatedExportFormat["Mp4"] = c_oAscAnimatedExportFormat.Mp4;
+
+window["Asc"]["getAnimatedExportPresetList"] = window["Asc"].getAnimatedExportPresetList = getAnimatedExportPresetList;
+window["Asc"]["CAscAnimatedExportSettings"] = window["Asc"].CAscAnimatedExportSettings = CAscAnimatedExportSettings;
+CAscAnimatedExportSettings.prototype["asc_setFormat"] = CAscAnimatedExportSettings.prototype.asc_setFormat;
+CAscAnimatedExportSettings.prototype["asc_getFormat"] = CAscAnimatedExportSettings.prototype.asc_getFormat;
+CAscAnimatedExportSettings.prototype["asc_setPreset"] = CAscAnimatedExportSettings.prototype.asc_setPreset;
+CAscAnimatedExportSettings.prototype["asc_getPreset"] = CAscAnimatedExportSettings.prototype.asc_getPreset;
+CAscAnimatedExportSettings.prototype["asc_setSlideDuration"] = CAscAnimatedExportSettings.prototype.asc_setSlideDuration;
+CAscAnimatedExportSettings.prototype["asc_getSlideDuration"] = CAscAnimatedExportSettings.prototype.asc_getSlideDuration;
+CAscAnimatedExportSettings.prototype["asc_setTransparentBackground"] = CAscAnimatedExportSettings.prototype.asc_setTransparentBackground;
+CAscAnimatedExportSettings.prototype["asc_getTransparentBackground"] = CAscAnimatedExportSettings.prototype.asc_getTransparentBackground;
+CAscAnimatedExportSettings.prototype["asc_setAutoDownload"] = CAscAnimatedExportSettings.prototype.asc_setAutoDownload;
+CAscAnimatedExportSettings.prototype["asc_getAutoDownload"] = CAscAnimatedExportSettings.prototype.asc_getAutoDownload;
+CAscAnimatedExportSettings.prototype["asc_setRangeOptions"] = CAscAnimatedExportSettings.prototype.asc_setRangeOptions;
+CAscAnimatedExportSettings.prototype["asc_getRangeOptions"] = CAscAnimatedExportSettings.prototype.asc_getRangeOptions;
+
+window["Asc"]["c_oAscAnimatedExportPreset"] = window["Asc"].c_oAscAnimatedExportPreset = c_oAscAnimatedExportPreset;
+c_oAscAnimatedExportPreset["P240"] = c_oAscAnimatedExportPreset.P240;
+c_oAscAnimatedExportPreset["P480"] = c_oAscAnimatedExportPreset.P480;
+c_oAscAnimatedExportPreset["P720"] = c_oAscAnimatedExportPreset.P720;
+c_oAscAnimatedExportPreset["P1080"] = c_oAscAnimatedExportPreset.P1080;
+c_oAscAnimatedExportPreset["P2160"] = c_oAscAnimatedExportPreset.P2160;
+
+window["AscCommonSlide"].getAnimatedExportPresetList = getAnimatedExportPresetList;
+window["AscCommonSlide"].getAnimatedExportPresetHeight = getAnimatedExportPresetHeight;
+window["AscCommonSlide"].getAnimatedExportPresetFps = getAnimatedExportPresetFps;
+window["AscCommonSlide"].isAnimatedExportVideoFormat = isAnimatedExportVideoFormat;
+window["Asc"]["CAscAnimatedExportPresetInfo"] = window["Asc"].CAscAnimatedExportPresetInfo = CAscAnimatedExportPresetInfo;
+CAscAnimatedExportPresetInfo.prototype["asc_getPreset"] = CAscAnimatedExportPresetInfo.prototype.asc_getPreset;
+CAscAnimatedExportPresetInfo.prototype["asc_getWidth"] = CAscAnimatedExportPresetInfo.prototype.asc_getWidth;
+CAscAnimatedExportPresetInfo.prototype["asc_getHeight"] = CAscAnimatedExportPresetInfo.prototype.asc_getHeight;
+CAscAnimatedExportPresetInfo.prototype["asc_getFps"] = CAscAnimatedExportPresetInfo.prototype.asc_getFps;
+
+window["Asc"]["CAscAnimatedExportResult"] = window["Asc"].CAscAnimatedExportResult = CAscAnimatedExportResult;
+CAscAnimatedExportResult.prototype["asc_getFormat"] = CAscAnimatedExportResult.prototype.asc_getFormat;
+CAscAnimatedExportResult.prototype["asc_getData"] = CAscAnimatedExportResult.prototype.asc_getData;
+CAscAnimatedExportResult.prototype["asc_getWidth"] = CAscAnimatedExportResult.prototype.asc_getWidth;
+CAscAnimatedExportResult.prototype["asc_getHeight"] = CAscAnimatedExportResult.prototype.asc_getHeight;
+CAscAnimatedExportResult.prototype["asc_getFrameCount"] = CAscAnimatedExportResult.prototype.asc_getFrameCount;
+CAscAnimatedExportResult.prototype["asc_getDurationMs"] = CAscAnimatedExportResult.prototype.asc_getDurationMs;
+CAscAnimatedExportResult.prototype["asc_getIsTruncated"] = CAscAnimatedExportResult.prototype.asc_getIsTruncated;

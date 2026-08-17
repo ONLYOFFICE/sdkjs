@@ -10467,8 +10467,12 @@
         //this.lastFire = null;
 
         this.frameId = null;
+        this.virtualTime = null;
     }
 
+    CAnimationTimer.prototype._now = function () {
+        return null !== this.virtualTime ? this.virtualTime : (new Date()).getTime();
+    };
     CAnimationTimer.prototype.start = function () {
         if (this.isStarted()) {
             return;
@@ -10476,7 +10480,7 @@
         if (this.isStopped()) {
             this.elapsed = 0;
         }
-        this.lastTime = (new Date()).getTime();
+        this.lastTime = this._now();
         this.startFrames();
     };
     CAnimationTimer.prototype.stop = function () {
@@ -10527,7 +10531,7 @@
     };
     CAnimationTimer.prototype.onFrame = function () {
         if (this.isStarted()) {
-            var nCurTime = (new Date()).getTime();
+            var nCurTime = this._now();
             var nDiff = nCurTime - this.lastTime;
             this.elapsed += nDiff;
             this.lastTime = nCurTime;
@@ -10551,6 +10555,10 @@
         }
     };
     CAnimationTimer.prototype.nextFrame = function () {
+        if (null !== this.virtualTime) {
+            this.frameId = null;
+            return;
+        }
         var oThis = this;
         this.frameId = __nextFrame(function () {
             oThis.player.onFrame();
@@ -12450,6 +12458,9 @@
     };
     CAnimationPlayer.prototype.getElapsedTicks = function () {
         return this.timer.getElapsedTicks();
+    };
+    CAnimationPlayer.prototype.setVirtualTime = function (time) {
+        this.timer.virtualTime = time;
     };
     CAnimationPlayer.prototype.getElapsedTime = function () {
         return this.timer.getElapsedTime();

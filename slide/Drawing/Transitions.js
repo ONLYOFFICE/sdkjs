@@ -106,6 +106,8 @@ function CTransitionAnimation(htmlpage)
     this.DemonstrationObject = null;
 
     this.TimerId = null;
+    this.VirtualTime = null;
+    this.FrameFunction = null;
 
     this.GLTransition = null;
     this.IsWebGLAvailable = null;
@@ -341,7 +343,7 @@ function CTransitionAnimation(htmlpage)
             this.DrawImage2(_currentSlide);
         }
 
-        this.StartTime = new Date().getTime();
+        this.StartTime = this._now();
         this.EndTime = this.StartTime + this.Duration;
 
 		let nType = this.Type;
@@ -364,44 +366,46 @@ function CTransitionAnimation(htmlpage)
         switch (nType)
         {
             case c_oAscSlideTransitionTypes.Fade:
-                this._startFade();
+                this.FrameFunction = this._startFade;
                 break;
             case c_oAscSlideTransitionTypes.Push:
-                this._startPush();
+                this.FrameFunction = this._startPush;
                 break;
             case c_oAscSlideTransitionTypes.Wipe:
-                this._startWipe();
+                this.FrameFunction = this._startWipe;
                 break;
             case c_oAscSlideTransitionTypes.Split:
-                this._startSplit();
+                this.FrameFunction = this._startSplit;
                 break;
             case c_oAscSlideTransitionTypes.UnCover:
-                this._startUnCover();
+                this.FrameFunction = this._startUnCover;
                 break;
             case c_oAscSlideTransitionTypes.Cover:
-                this._startCover();
+                this.FrameFunction = this._startCover;
                 break;
             case c_oAscSlideTransitionTypes.Clock:
-                this._startClock();
+                this.FrameFunction = this._startClock;
                 break;
             case c_oAscSlideTransitionTypes.Zoom:
-                this._startZoom();
+                this.FrameFunction = this._startZoom;
                 break;
             case c_oAscSlideTransitionTypes.Morph:
-                this._startMorph();
+                this.FrameFunction = this._startMorph;
                 break;
             case c_oAscSlideTransitionTypes.Cut:
-                this._startCut();
+                this.FrameFunction = this._startCut;
                 break;
             case c_oAscSlideTransitionTypes.Comb:
-                this._startComb();
+                this.FrameFunction = this._startComb;
                 break;
 			// Other transitions (like Glitter and Conveyor)
 			// are now handled by WebGL (routed before this switch)
             default:
                 this.End(true);
-                break;
+                return;
         }
+
+        this.FrameFunction();
     };
 
     this.End = function(bIsAttack)
@@ -447,6 +451,11 @@ function CTransitionAnimation(htmlpage)
         return (null != this.TimerId) ? true : false;
     };
 
+    this._now = function()
+    {
+        return null !== oThis.VirtualTime ? oThis.VirtualTime : new Date().getTime();
+    };
+
     this.CreateImage = function(w, h)
     {
         var _im = document.createElement('canvas');
@@ -463,7 +472,7 @@ function CTransitionAnimation(htmlpage)
     // animations
     this._startFade = function()
     {
-        oThis.CurrentTime = new Date().getTime();
+        oThis.CurrentTime = oThis._now();
 
         if (oThis.CurrentTime >= oThis.EndTime)
         {
@@ -658,7 +667,7 @@ function CTransitionAnimation(htmlpage)
 
     this._startPush = function()
     {
-        oThis.CurrentTime = new Date().getTime();
+        oThis.CurrentTime = oThis._now();
 
         if (oThis.CurrentTime >= oThis.EndTime)
         {
@@ -800,7 +809,7 @@ function CTransitionAnimation(htmlpage)
 
     this._startWipe = function()
     {
-        oThis.CurrentTime = new Date().getTime();
+        oThis.CurrentTime = oThis._now();
 
         if (oThis.CurrentTime >= oThis.EndTime)
         {
@@ -1353,7 +1362,7 @@ function CTransitionAnimation(htmlpage)
 
     this._startSplit = function()
     {
-        oThis.CurrentTime = new Date().getTime();
+        oThis.CurrentTime = oThis._now();
 
         if (oThis.CurrentTime >= oThis.EndTime)
         {
@@ -1707,7 +1716,7 @@ function CTransitionAnimation(htmlpage)
 
     this._startUnCover = function()
     {
-        oThis.CurrentTime = new Date().getTime();
+        oThis.CurrentTime = oThis._now();
 
         if (oThis.CurrentTime >= oThis.EndTime)
         {
@@ -1858,7 +1867,7 @@ function CTransitionAnimation(htmlpage)
 
     this._startCover = function()
     {
-        oThis.CurrentTime = new Date().getTime();
+        oThis.CurrentTime = oThis._now();
 
         if (oThis.CurrentTime >= oThis.EndTime)
         {
@@ -2009,7 +2018,7 @@ function CTransitionAnimation(htmlpage)
 
     this._startClock = function()
     {
-        oThis.CurrentTime = new Date().getTime();
+        oThis.CurrentTime = oThis._now();
 
         if (oThis.CurrentTime >= oThis.EndTime)
         {
@@ -2471,7 +2480,7 @@ function CTransitionAnimation(htmlpage)
 
     this._startZoom = function()
     {
-        oThis.CurrentTime = new Date().getTime();
+        oThis.CurrentTime = oThis._now();
 
         if (oThis.CurrentTime >= oThis.EndTime)
         {
@@ -2710,10 +2719,11 @@ function CTransitionAnimation(htmlpage)
         {
             oThis.Type = c_oAscSlideTransitionTypes.Fade;
             oThis.Param = c_oAscSlideTransitionParams.Fade_Smoothly;
+            oThis.FrameFunction = oThis._startFade;
             oThis._startFade();
             return;
         }
-        oThis.CurrentTime = new Date().getTime();
+        oThis.CurrentTime = oThis._now();
 
 
         oThis.SetBaseTransform();
@@ -2752,10 +2762,11 @@ function CTransitionAnimation(htmlpage)
 
 
 
-        oThis.HtmlPage.m_oOverlayApi.Clear();
-        oThis.HtmlPage.m_oOverlayApi.CheckRect(oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
-
-
+        if (null == oThis.DemonstrationObject)
+        {
+            oThis.HtmlPage.m_oOverlayApi.Clear();
+            oThis.HtmlPage.m_oOverlayApi.CheckRect(oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
+        }
 
         oThis.Morph.morph(_part);
 	    oThis.Morph.draw(oCanvas, oThis.Rect, _part)
@@ -2783,6 +2794,7 @@ function CTransitionAnimation(htmlpage)
                 oThis.IsWebGLAvailable = false;
                 oThis.Type = c_oAscSlideTransitionTypes.Fade;
                 oThis.Param = c_oAscSlideTransitionParams.Fade_Smoothly;
+                oThis.FrameFunction = oThis._startFade;
                 oThis._startFade();
                 return;
             }
@@ -2859,7 +2871,7 @@ function CTransitionAnimation(htmlpage)
 
         oThis._glFrame = function()
         {
-            oThis.CurrentTime = new Date().getTime();
+            oThis.CurrentTime = oThis._now();
             if (oThis.CurrentTime >= oThis.EndTime)
             {
                 oThis.End(false);
@@ -2889,6 +2901,7 @@ function CTransitionAnimation(htmlpage)
             oThis.TimerId = __nextFrame(oThis._glFrame);
             oThis.OnAfterAnimationDraw();
         };
+        oThis.FrameFunction = oThis._glFrame;
         oThis._glFrame();
     };
 
@@ -2943,7 +2956,7 @@ function CTransitionAnimation(htmlpage)
     // ============================================================
     this._startCut = function()
     {
-        oThis.CurrentTime = new Date().getTime();
+        oThis.CurrentTime = oThis._now();
         if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
         oThis.SetBaseTransform();
 
@@ -3002,7 +3015,7 @@ function CTransitionAnimation(htmlpage)
     // ============================================================
     this._startComb = function()
     {
-        oThis.CurrentTime = new Date().getTime();
+        oThis.CurrentTime = oThis._now();
         if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
         oThis.SetBaseTransform();
 

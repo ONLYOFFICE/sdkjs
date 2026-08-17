@@ -289,10 +289,7 @@
 	SpecificPrinter.prototype.getPresentation = function () {
 		return this.presentation;
 	}
-	SpecificPrinter.prototype.getForcePrintIndexes = function () {
-		const range = this.printOptions.rangeOptions;
-		const presentation = this.getPresentation();
-		const isDrawHiddenSlides = this.printOptions.slidePrintOptions.asc_getIsPrintHiddenSlides();
+	function getRangeSlideIndexes(presentation, range, isDrawHiddenSlides) {
 		const slides = presentation.Slides;
 		let result;
 		switch (range.rangeType) {
@@ -368,6 +365,10 @@
 			const slide = slides[slideIndex];
 			return slide.isVisible();
 		});
+	}
+	SpecificPrinter.prototype.getForcePrintIndexes = function () {
+		return getRangeSlideIndexes(this.getPresentation(), this.printOptions.rangeOptions,
+			this.printOptions.slidePrintOptions.asc_getIsPrintHiddenSlides());
 	};
 	SpecificPrinter.prototype.getPrintSlides = function () {
 		if (this.cache.printSlides === null) {
@@ -798,4 +799,5 @@
 
 	window["AscCommonSlide"] = window["AscCommonSlide"] || {};
 	window["AscCommonSlide"].PrintManager = PrintManager;
+	window["AscCommonSlide"].getRangeSlideIndexes = getRangeSlideIndexes;
 })();
