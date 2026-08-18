@@ -143,10 +143,14 @@
         this.recalcInfo.recalculateTransform = true;
         this.recalcInfo.recalculateSizes = true;
         
-		this.recalcBounds();
         this.recalculate();
+        this.recalculateBounds();
         this.updateTransformMatrix();
         this.SetNeedRecalc(false);
+    };
+    CPdfGraphicFrame.prototype.recalculateBounds = function() {
+        this.bounds.reset(0, 0, this.extX, this.extY);
+        this.bounds.transform(this.localTransform);
     };
     CPdfGraphicFrame.prototype.MoveCursorToCell = function(bNext) {
         this.graphicObject.MoveCursorToCell(bNext);

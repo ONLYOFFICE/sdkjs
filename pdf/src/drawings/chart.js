@@ -65,6 +65,7 @@
 
         this.recalculateTransform();
         this.recalcGeometry();
+        this.recalcBounds();
         this.recalculate();
         this.updateTransformMatrixPDF();
         this.SetNeedRecalc(false);
