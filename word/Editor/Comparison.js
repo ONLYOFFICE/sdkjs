@@ -2111,6 +2111,7 @@
 			this.formatting = true;
 			this.whiteSpace = true;
 	    this.comments = true;
+	    this.authorName = "";
 			
 	    this.insertionsAndDeletions = true;
 	    // this.moves = true;
@@ -2128,6 +2129,7 @@
     ComparisonOptions.prototype["getTextBoxes"] = ComparisonOptions.prototype.getTextBoxes = function(){return this.textBoxes;};
     // ComparisonOptions.prototype["getFields"] = ComparisonOptions.prototype.getFields = function(){return this.fields;};
     ComparisonOptions.prototype["getWords"] = ComparisonOptions.prototype.getWords = function(){return this.words;};
+    ComparisonOptions.prototype["getAuthorName"] = ComparisonOptions.prototype.getAuthorName = function(){return this.authorName;};
 
 
     ComparisonOptions.prototype["putInsertionsAndDeletions"] = ComparisonOptions.prototype.putInsertionsAndDeletions = function(v){this.insertionsAndDeletions = v;};
@@ -2142,6 +2144,7 @@
     ComparisonOptions.prototype["putTextBoxes"] = ComparisonOptions.prototype.putTextBoxes = function(v){this.textBoxes = v;};
     // ComparisonOptions.prototype["putFields"] = ComparisonOptions.prototype.putFields = function(v){this.fields = v;};
     ComparisonOptions.prototype["putWords"] = ComparisonOptions.prototype.putWords = function(v){this.words = v;};
+    ComparisonOptions.prototype["putAuthorName"] = ComparisonOptions.prototype.putAuthorName = function(v){this.authorName = v;};
 
 
     function CDocumentComparison(oOriginalDocument, oRevisedDocument, oOptions, bIsWordsByOneSymbol)
@@ -2272,6 +2275,10 @@
     };
     CDocumentComparison.prototype.getUserName = function()
     {
+        if (typeof this.options.authorName === "string" && this.options.authorName.length > 0)
+        {
+            return this.options.authorName;
+        }
         const oCore = this.revisedDocument.Core;
         if(oCore && typeof oCore.lastModifiedBy === "string" && oCore.lastModifiedBy.length > 0)
         {
@@ -2727,6 +2734,10 @@
     };
 	CDocumentComparison.prototype.getNewParaPrWithDiff = function (oElementPr, oPartnerPr)
 	{
+		if (!this.options.formatting)
+		{
+			return null;
+		}
 		const oOldParaPr = oElementPr.Copy(undefined, undefined);
 
 		this.firstCheckNumId = oOldParaPr.NumPr && oOldParaPr.NumPr.NumId;
@@ -3028,6 +3039,9 @@
         }
     };
 	CDocumentComparison.prototype.applyChangesToTablePr = function (oNode) {
+		if (!this.options.formatting) {
+			return;
+		}
 		if (oNode.partner) {
 			const oMainTable = oNode.element;
 			const oRevisedTable = oNode.partner.element;
@@ -3114,6 +3128,9 @@
 			}
 		};
 	CDocumentComparison.prototype.setTableElementChange = function (oMainElement, oRevisedElement) {
+		if (!this.options.formatting) {
+			return;
+		}
 		const oMainPr = oMainElement.Pr;
 		const oRevisedPr = oRevisedElement.Pr;
 
@@ -3938,11 +3955,12 @@
 
 
     // TODO: Remove backward compatibility with old signature CompareDocuments(oApi, oTmpDocument) after a few versions
-    function CompareDocuments(oTmpDocument)
+    function CompareDocuments(oTmpDocument, oOptions)
     {
         if (oTmpDocument && typeof oTmpDocument["GetBinary"] !== "function")
         {
             oTmpDocument = arguments[1];
+            oOptions = arguments[2];
         }
 
         Asc.editor.insertDocumentUrlsData = {
@@ -3950,7 +3968,7 @@
             }, endCallback: function (_api) {
             }
         };
-        CompareBinary(oTmpDocument["GetBinary"](), null, true);
+        CompareBinary(oTmpDocument["GetBinary"](), oOptions, true);
         Asc.editor.insertDocumentUrlsData = null;
     }
 

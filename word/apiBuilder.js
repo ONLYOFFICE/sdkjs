@@ -30483,14 +30483,62 @@
 
 
 	/**
+	 * Document comparison and merge properties.
+	 * @typedef {Object} ComparisonPr
+	 * @property {boolean} [words=true] - Specifies whether changes are tracked by word (true) or by character (false).
+	 * @property {boolean} [formatting=true] - Specifies whether to mark differences in formatting.
+	 * @property {boolean} [caseChanges=true] - Specifies whether to mark differences in case.
+	 * @property {boolean} [whiteSpace=true] - Specifies whether to mark differences in white space.
+	 * @property {boolean} [tables=true] - Specifies whether to compare differences in tables.
+	 * @property {boolean} [headersAndFooters=true] - Specifies whether to compare differences in headers and footers.
+	 * @property {boolean} [footnotes=true] - Specifies whether to compare differences in footnotes and endnotes.
+	 * @property {boolean} [textBoxes=true] - Specifies whether to compare differences in text boxes.
+	 * @property {boolean} [comments=true] - Specifies whether to compare differences in comments.
+	 * @property {string} [authorName] - The name to which the tracked changes are attributed. If not specified, the author of the second document is used.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/Enumerations/ComparisonPr.js
+	 */
+
+	function private_CreateComparisonOptions(comparisonPr)
+	{
+		const options = new AscCommonWord.ComparisonOptions();
+		if (!comparisonPr || typeof comparisonPr !== "object")
+			return options;
+
+		if (typeof comparisonPr["words"] === "boolean")
+			options.putWords(comparisonPr["words"]);
+		if (typeof comparisonPr["formatting"] === "boolean")
+			options.putFormatting(comparisonPr["formatting"]);
+		if (typeof comparisonPr["caseChanges"] === "boolean")
+			options.putCaseChanges(comparisonPr["caseChanges"]);
+		if (typeof comparisonPr["whiteSpace"] === "boolean")
+			options.putWhiteSpace(comparisonPr["whiteSpace"]);
+		if (typeof comparisonPr["tables"] === "boolean")
+			options.putTables(comparisonPr["tables"]);
+		if (typeof comparisonPr["headersAndFooters"] === "boolean")
+			options.putHeadersAndFooters(comparisonPr["headersAndFooters"]);
+		if (typeof comparisonPr["footnotes"] === "boolean")
+			options.putFootNotes(comparisonPr["footnotes"]);
+		if (typeof comparisonPr["textBoxes"] === "boolean")
+			options.putTextBoxes(comparisonPr["textBoxes"]);
+		if (typeof comparisonPr["comments"] === "boolean")
+			options.putComments(comparisonPr["comments"]);
+		if (typeof comparisonPr["authorName"] === "string")
+			options.putAuthorName(comparisonPr["authorName"]);
+
+		return options;
+	}
+
+	/**
 	 * Compares the current document with another document opened via builderJS.OpenTmpFile. Tracked changes between the two documents are produced in the current document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {object} file - The second document, returned by builderJS.OpenTmpFile.
+	 * @param {ComparisonPr} [comparisonPr={}] - The document comparison properties.
 	 */
-	Api.CompareDocuments = function(file)
+	Api.CompareDocuments = function(file, comparisonPr)
 	{
-		AscCommonWord.CompareDocuments(file);
+		AscCommonWord.CompareDocuments(file, private_CreateComparisonOptions(comparisonPr));
 	};
 
 	/**
@@ -30498,10 +30546,11 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {object} file - The second document, returned by builderJS.OpenTmpFile.
+	 * @param {ComparisonPr} [comparisonPr={}] - The document merge properties.
 	 */
-	Api.MergeDocuments = function(file)
+	Api.MergeDocuments = function(file, comparisonPr)
 	{
-		AscCommonWord.mergeDocuments(file);
+		AscCommonWord.mergeDocuments(file, private_CreateComparisonOptions(comparisonPr));
 	};
 
 	//------------------------------------------------------------------------------------------------------------------

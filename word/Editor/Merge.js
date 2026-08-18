@@ -858,13 +858,13 @@
 
     }
     
-    function mergeDocuments(oTmpDocument) {
+    function mergeDocuments(oTmpDocument, oOptions) {
         Asc.editor.insertDocumentUrlsData = {
             imageMap: oTmpDocument["GetImageMap"](), documents: [], convertCallback: function (_api, url) {
             }, endCallback: function (_api) {
             }
         };
-        mergeBinary(oTmpDocument["GetBinary"](), null, true);
+        mergeBinary(oTmpDocument["GetBinary"](), oOptions);
         Asc.editor.insertDocumentUrlsData = null;
     }
 
