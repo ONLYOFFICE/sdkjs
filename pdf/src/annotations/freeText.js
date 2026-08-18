@@ -1478,6 +1478,7 @@
             this.selectedObjects.length = 0;
 		}
 	}
+	CAnnotationFreeText.prototype.normalize = function() {};
     function fillShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {
         let xMin = aShapeRect[0];
         let yMin = aShapeRect[1];
