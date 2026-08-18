@@ -14696,21 +14696,26 @@
 	 * Removes a table row with a specified cell.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiTableCell} oCell - The cell which is placed in the row that will be removed.
+	 * @param {ApiTableCell} cell - The cell which is placed in the row that will be removed.
 	 * @returns {boolean} - result of deletion
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveRow.js
 	 */
-	ApiTable.prototype.RemoveRow = function(oCell)
+	ApiTable.prototype.RemoveRow = function(cell)
 	{
-		if (!(oCell instanceof ApiTableCell) || this.Table !== oCell.Cell.Row.Table)
-			return false;
+		if (!(cell instanceof ApiTableCell))
+			throwException('The "cell" parameter must be an instance of ApiTableCell');
+
+		if (this.Table !== cell.Cell.Row.Table)
+			throwException('The "cell" parameter must belong to the current table');
 
 		private_StartSilentMode();
 		this.private_PrepareTableForActions();
-
 		this.Table.RemoveSelection();
-		this.Table.CurCell = oCell.Cell;
+		this.Table.CurCell = cell.Cell;
 		let result = this.Table.RemoveTableRow();
+
+		if (result === false)
+			return this.Delete();
 
 		private_EndSilentMode();
 		return result;
@@ -14719,21 +14724,28 @@
 	 * Removes a table column with a specified cell.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiTableCell} oCell - The cell which is placed in the column that will be removed.
+	 * @param {ApiTableCell} cell - The cell which is placed in the column that will be removed.
 	 * @returns {boolean} - result of deletion
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveColumn.js
 	 */
-	ApiTable.prototype.RemoveColumn = function(oCell)
+	ApiTable.prototype.RemoveColumn = function(cell)
 	{
-		if (!(oCell instanceof ApiTableCell) || this.Table !== oCell.Cell.Row.Table)
-			return false;
+		if (!(cell instanceof ApiTableCell))
+			throwException('The "cell" parameter must be an instance of ApiTableCell');
+
+		if (this.Table !== cell.Cell.Row.Table)
+			throwException('The "cell" parameter must belong to the current table');
 
 		private_StartSilentMode();
 		this.private_PrepareTableForActions();
 
 		this.Table.RemoveSelection();
-		this.Table.CurCell = oCell.Cell;
-		let result = this.Table.RemoveTableColumn();
+		this.Table.CurCell = cell.Cell;
+		this.Table.SelectTable(c_oAscTableSelectionType.Column);
+		let result = this.Table.RemoveTableCells();
+
+		if (result === false)
+			return this.Delete();
 
 		private_EndSilentMode();
 		return result;

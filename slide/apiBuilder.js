@@ -8600,38 +8600,57 @@
         this.Table.AddTableColumn(_isBefore);
     };
     /**
-     * Removes a table row with the specified cell.
+	 * Removes a table row with the specified cell. When the last row is removed, the whole table is deleted from the slide
      * @memberof ApiTable
      * @typeofeditors ["CPE"]
-     * @param {ApiTableCell} oCell - The table cell from the row which will be removed.
+	 * @param {ApiTableCell} cell - The table cell from the row which will be removed.
      * @returns {boolean} - result of deletion
      * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveRow.js
 	 */
-    ApiTable.prototype.RemoveRow = function(oCell)
+	ApiTable.prototype.RemoveRow = function(cell)
     {
-        if (!(oCell instanceof ApiTableCell) || this.Table !== oCell.Cell.Row.Table)
-            return false;
+		if (!(cell instanceof ApiTableCell))
+			AscBuilder.throwException('The "cell" parameter must be an instance of ApiTableCell');
+
+		if (this.Table !== cell.Cell.Row.Table)
+			AscBuilder.throwException('The "cell" parameter must belong to the current table');
+
         this.private_PrepareTableForActions();
         this.Table.RemoveSelection();
-        this.Table.CurCell = oCell.Cell;
-        return this.Table.RemoveTableRow();
+		this.Table.CurCell = cell.Cell;
+		let result = this.Table.RemoveTableRow();
+
+		if (result === false)
+			return this.Delete();
+
+		return true;
     };
     /**
      * Removes a table column with the specified cell.
      * @memberof ApiTable
      * @typeofeditors ["CPE"]
-     * @param {ApiTableCell} oCell - The table cell from the column which will be removed.
-     * @returns {boolean} - result of deletion
+	 * @param {ApiTableCell} cell - The table cell from the column which will be removed.
+	 * @returns {boolean} - result of deletion. When the last column is removed, the whole table is deleted from the slide.
      * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveColumn.js
 	 */
-    ApiTable.prototype.RemoveColumn = function(oCell)
+	ApiTable.prototype.RemoveColumn = function(cell)
     {
-        if (!(oCell instanceof ApiTableCell) || this.Table !== oCell.Cell.Row.Table)
-            return false;
+		if (!(cell instanceof ApiTableCell))
+			AscBuilder.throwException('The "cell" parameter must be an instance of ApiTableCell');
+
+		if (this.Table !== cell.Cell.Row.Table)
+			AscBuilder.throwException('The "cell" parameter must belong to the current table');
+
         this.private_PrepareTableForActions();
         this.Table.RemoveSelection();
-        this.Table.CurCell = oCell.Cell;
-        return this.Table.RemoveTableColumn();
+		this.Table.CurCell = cell.Cell;
+		this.Table.SelectTable(c_oAscTableSelectionType.Column);
+		let result = this.Table.RemoveTableCells();
+
+		if (result === false)
+			return this.Delete();
+
+		return result;
     };
 
 	/**
