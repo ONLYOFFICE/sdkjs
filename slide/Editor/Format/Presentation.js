@@ -2559,7 +2559,7 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 		if (bRedrawNotes && oCurSlide && oCurSlide.notesShape) {
 			const viewManager = this.getViewManager();
 			if (viewManager) {
-				viewManager.recalculateNotesShape(oCurSlide);
+				viewManager.recalculateNotesShapeOnSlide(oCurSlide);
 			}
 			this.DrawingDocument.Notes_OnRecalculate(this.CurPage, oCurSlide.NotesWidth, oCurSlide.getNotesHeight());
 		}

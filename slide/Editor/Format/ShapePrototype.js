@@ -575,6 +575,34 @@ CShape.prototype.recalculateBounds = function()
         return 0;
     };
 
+    CShape.prototype.recalculateNotesShape = function () {
+        AscFormat.ExecuteNoHistory(function () {
+            var oDocContent = this.getDocContent();
+            if (oDocContent) {
+                oDocContent.CalculateAllFields();
+                this.transformText.tx = 3;
+                this.transformText.ty = 3;
+                this.invertTransformText = AscCommon.global_MatrixTransformer.Invert(this.transformText);
+                var Width = AscCommonSlide.GetNotesWidth();
+                oDocContent.Reset(0, 0, Width, 2000);
+                var CurPage = 0;
+                var RecalcResult = recalcresult2_NextPage;
+                while (recalcresult2_End !== RecalcResult)
+                    RecalcResult = oDocContent.Recalculate_Page(CurPage++, true);
+                this.contentWidth = Width;
+                this.contentHeight = 2000;
+            }
+            this.transformText2 = this.transformText;
+            this.invertTransformText2 = this.invertTransformText;
+            var oOldGeometry = this.spPr.geometry;
+            this.spPr.geometry = null;
+            this.extX = Width;
+            this.extY = 2000;
+            this.recalculateContent2();
+            this.spPr.geometry = oOldGeometry;
+            this.pen = AscFormat.CreateNoFillLine();
+        }, this, []);
+    };
 CShape.prototype.recalculateContent = function()
 {
     var content = this.getDocContent();
