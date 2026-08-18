@@ -192,7 +192,7 @@ function fifoCacheFile(request, docid, response) {
 			});
 		});
 	}).catch(function(err) {
-		console.error('fifoCacheFile failed:', err);
+		return logCacheWriteFailure('fifoCacheFile', g_fifoCacheName, request, response, err);
 	});
 }
 
@@ -334,8 +334,91 @@ function getStorageEstimateSnapshot() {
 		});
 }
 
+// Cache write failures that another attempt with the same response can never fix
+const g_nonRetryableCacheErrors = [
+	'NetworkError',        // the response body stream died and a fresh clone replays nothing
+	'QuotaExceededError',  // space has to be freed first, quota does not change between two adjacent attempts
+	'TypeError',           // request or response rejected by validation: method, scheme, 206, Vary, used body
+	'AbortError',          // the request was cancelled
+	'InvalidStateError',   // the worker execution context is gone, or the operation is a duplicate
+	'InvalidAccessError',
+	'NotSupportedError',
+	'SecurityError'
+];
+const CACHE_WRITE_RETRY_DELAY = 1000;
+
 /**
- * Put response in cache with retry logic for transient errors
+ * Check whether another cache write attempt with the same response can possibly succeed
+ * @param {Object} err - error from caches.open() or cache.put()
+ * @returns {boolean} true if the write is worth repeating
+ */
+function isRetryableCacheError(err) {
+	const name = err && err.name;
+	// an unnamed failure is treated like UnknownError, a backend glitch that may pass on a second call
+	return !name || g_nonRetryableCacheErrors.indexOf(name) === -1;
+}
+
+/**
+ * Pick the console level for a failed cache write
+ * @param {Object} err - error from caches.open() or cache.put()
+ * @param {boolean} isQuota - true when the failure is storage quota related
+ * @returns {string} 'error', 'warn' or 'debug'
+ */
+function getCacheErrorLevel(err, isQuota) {
+	if (isQuota) {
+		return 'warn';
+	}
+	const name = err && err.name;
+	// caching is opportunistic and the page already holds its response, so a lost body is background noise
+	if (name === 'NetworkError' || name === 'AbortError' || name === 'InvalidStateError') {
+		return 'debug';
+	}
+	// validation and policy failures mean we are trying to cache something that can never be cached
+	if (name === 'TypeError' || name === 'SecurityError' || name === 'NotSupportedError' || name === 'InvalidAccessError') {
+		return 'error';
+	}
+	return 'warn';
+}
+
+/**
+ * Log a failed cache write at a level that matches how much it actually matters
+ * @param {string} operation - name of the failed operation, used as the log prefix
+ * @param {string} cacheName - cache the write was addressed to
+ * @param {Request} request
+ * @param {Response} response
+ * @param {Object} err - error from caches.open() or cache.put()
+ * @returns {Promise} Promise that resolves once the failure is logged
+ */
+function logCacheWriteFailure(operation, cacheName, request, response, err) {
+	const sizeHeader = response && response.headers ? response.headers.get('content-length') : null;
+	const size = Number(sizeHeader) || 0;
+	const details = {
+		url: request.url,
+		method: request.method,
+		responseSize: sizeHeader || 'unknown',
+		responseType: response && response.type,
+		cacheName: cacheName,
+		errorName: err && err.name,
+		error: err && (err.message || err)
+	};
+	// snapshot live storage estimate so the log shows whether this was a quota/disk failure
+	return getStorageEstimateSnapshot().then(function(storage) {
+		details.storage = storage;
+		const isQuota = isQuotaRelatedCacheError(err, storage, size);
+		const message = operation + (isQuota ? ' failed due to low storage quota:' : ' failed:');
+		const level = getCacheErrorLevel(err, isQuota);
+		if (level === 'error') {
+			console.error(message, details);
+		} else if (level === 'warn') {
+			console.warn(message, details);
+		} else {
+			console.debug(message, details);
+		}
+	});
+}
+
+/**
+ * Put response in cache, retrying once when the failure looks like a transient backend glitch
  * @param {Request} request
  * @param {Response} response - Response to cache; this function clones per attempt to preserve the original for retries
  * @param {number} attempt - Current attempt number (for retry logic)
@@ -349,37 +432,16 @@ function putInCache(request, response, attempt) {
 			return cache.put(request, response.clone());
 		})
 		.catch(function(err) {
-			// Transient quota/disk hiccup? Retry up to 2x with exponential back-off
-			if (attempt < 2) {
+			if (attempt < 1 && isRetryableCacheError(err)) {
 				return new Promise(function(resolve) {
-					setTimeout(resolve, 250 * Math.pow(2, attempt)); // 250ms, 500ms
+					setTimeout(resolve, CACHE_WRITE_RETRY_DELAY);
 				})
 				.then(function() {
 					// Reuse the original unconsumed response; a fresh clone will be created inside cache.put
 					return putInCache(request, response, attempt + 1);
 				});
-			} else {
-				const sizeHeader = response.headers ? response.headers.get('content-length') : null;
-				const size = Number(sizeHeader) || 0;
-				const details = {
-					url: request.url,
-					method: request.method,
-					responseSize: sizeHeader || 'unknown',
-					responseType: response.type,
-					cacheName: g_cacheName,
-					errorName: err && err.name,
-					error: err && (err.message || err)
-				};
-				// Snapshot live storage estimate so the log shows whether this was a quota/disk failure
-				return getStorageEstimateSnapshot().then(function(storage) {
-					details.storage = storage;
-					if (isQuotaRelatedCacheError(err, storage, size)) {
-						console.warn('putInCache failed after max retries due to low storage quota:', details);
-					} else {
-						console.error('putInCache failed after max retries:', details);
-					}
-				});
 			}
+			return logCacheWriteFailure('putInCache', g_cacheName, request, response, err);
 		});
 }
 
@@ -396,11 +458,10 @@ function cacheFirst(event) {
 	return cachePromise
 		.then(function(cached) {
 			return cached || fetch(request).then(function(networkResp) {
-				// Clone immediately to avoid "body already used" errors
-				const responseForCache = networkResp.clone();
-
-				// Fire-and-forget caching **after** responding to the page
+				// Fire-and-forget caching after responding to the page
 				if (safeToCache(request, networkResp)) {
+					// Cloning is only possible before the body is handed to the page, so it happens here and only when the clone is used
+					const responseForCache = networkResp.clone();
 					event.waitUntil(
 						getStorageInfo()
 						.then(function(info) {
