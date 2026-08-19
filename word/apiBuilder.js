@@ -18883,7 +18883,7 @@
 	/**
 	 * Returns a type of the ApiTablePr class.
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @returns {"tablePr"}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/GetClassType.js
 	 */
@@ -18894,7 +18894,7 @@
 	/**
 	 * Specifies a number of columns which will comprise each table column band for this table style.
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {number} nCount - The number of columns measured in positive integers.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetStyleColBandSize.js
@@ -18908,7 +18908,7 @@
 	/**
 	 * Specifies a number of rows which will comprise each table row band for this table style.
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {number} nCount - The number of rows measured in positive integers.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetStyleRowBandSize.js
@@ -18922,7 +18922,7 @@
 	/**
 	 * Specifies the alignment of the current table with respect to the text margins in the current section.
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {("left" | "right" | "center")} sJcType - The alignment type used for the current table placement.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetJc.js
@@ -18941,7 +18941,7 @@
 	/**
 	 * Specifies the shading which is applied to the extents of the current table.
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {ShdType} sType - The shading type applied to the extents of the current table.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
@@ -18959,7 +18959,7 @@
 	/**
 	 * Sets the border which will be displayed at the top of the current table.
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {BorderType} sType - The top border style.
 	 * @param {pt_8} nSize - The width of the current top border measured in eighths of a point.
 	 * @param {pt} nSpace - The spacing offset in the top part of the table measured in points used to place this border.
@@ -18978,7 +18978,7 @@
 	/**
 	 * Sets the border which will be displayed at the bottom of the current table.
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {BorderType} sType - The bottom border style.
 	 * @param {pt_8} nSize - The width of the current bottom border measured in eighths of a point.
 	 * @param {pt} nSpace - The spacing offset in the bottom part of the table measured in points used to place this border.
@@ -18997,7 +18997,7 @@
 	/**
 	 * Sets the border which will be displayed on the left of the current table.
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {BorderType} sType - The left border style.
 	 * @param {pt_8} nSize - The width of the current left border measured in eighths of a point.
 	 * @param {pt} nSpace - The spacing offset in the left part of the table measured in points used to place this border.
@@ -19016,7 +19016,7 @@
 	/**
 	 * Sets the border which will be displayed on the right of the current table.
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {BorderType} sType - The right border style.
 	 * @param {pt_8} nSize - The width of the current right border measured in eighths of a point.
 	 * @param {pt} nSpace - The spacing offset in the right part of the table measured in points used to place this border.
@@ -19036,7 +19036,7 @@
 	 * Specifies the border which will be displayed on all horizontal table cell borders which are not on the outmost edge
 	 * of the parent table (all horizontal borders which are not the topmost or bottommost borders).
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {BorderType} sType - The horizontal table cell border style.
 	 * @param {pt_8} nSize - The width of the current border measured in eighths of a point.
 	 * @param {pt} nSpace - The spacing offset in the horizontal table cells of the table measured in points used to place this border.
@@ -19056,7 +19056,7 @@
 	 * Specifies the border which will be displayed on all vertical table cell borders which are not on the outmost edge
 	 * of the parent table (all vertical borders which are not the leftmost or rightmost borders).
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {BorderType} sType - The vertical table cell border style.
 	 * @param {pt_8} nSize - The width of the current border measured in eighths of a point.
 	 * @param {pt} nSpace - The spacing offset in the vertical table cells of the table measured in points used to place this border.
@@ -19075,7 +19075,7 @@
 	/**
 	 * Specifies a border which will be displayed on all table cell borders.
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {BorderType} sType - The border style.
 	 * @param {pt_8} nSize - The width of the current border measured in eighths of a point.
 	 * @param {pt} nSpace - The spacing offset in the table cells measured in points used to place this border.
@@ -19102,7 +19102,7 @@
 	 * Specifies an amount of space which will be left between the bottom extent of the cell contents and the border
 	 * of all table cells within the parent table (or table row).
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {twips} nValue - The value for the amount of space below the bottom extent of the cell measured in
 	 * twentieths of a point (1/1440 of an inch).
 	 * @returns {boolean}
@@ -19118,7 +19118,7 @@
 	 * Specifies an amount of space which will be left between the left extent of the cell contents and the left
 	 * border of all table cells within the parent table (or table row).
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {twips} nValue - The value for the amount of space to the left extent of the cell measured in twentieths of a point (1/1440 of an inch).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableCellMarginLeft.js
@@ -19133,7 +19133,7 @@
 	 * Specifies an amount of space which will be left between the right extent of the cell contents and the right
 	 * border of all table cells within the parent table (or table row).
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {twips} nValue - The value for the amount of space to the right extent of the cell measured in twentieths of a point (1/1440 of an inch).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableCellMarginRight.js
@@ -19148,7 +19148,7 @@
 	 * Specifies an amount of space which will be left between the top extent of the cell contents and the top border
 	 * of all table cells within the parent table (or table row).
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {twips} nValue - The value for the amount of space above the top extent of the cell measured in twentieths of a point (1/1440 of an inch).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableCellMarginTop.js
@@ -19162,7 +19162,7 @@
 	/**
 	 * Specifies the default table cell spacing (the spacing between adjacent cells and the edges of the table).
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {?twips} nValue - Spacing value measured in twentieths of a point (1/1440 of an inch). <code>"Null"</code> means that no spacing will be applied.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetCellSpacing.js
@@ -19180,7 +19180,7 @@
 	 * Specifies the indentation which will be added before the leading edge of the current table in the document
 	 * (the left edge in the left-to-right table, and the right edge in the right-to-left table).
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {twips} nValue - The indentation value measured in twentieths of a point (1/1440 of an inch).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableInd.js
@@ -19195,7 +19195,7 @@
 	 * Sets the preferred width to the current table.
 	 * <note>Tables are created with the {@link ApiTable#SetWidth} method properties set by default, which always override the {@link ApiTablePr#SetWidth} method properties. That is why there is no use to try and apply {@link ApiTablePr#SetWidth}. We recommend you to use the  {@link ApiTablePr#SetWidth} method instead.</note>
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {TableWidth} sType - Type of the width value from one of the available width values types.
 	 * @param {number} [nValue] - The table width value measured in positive integers.
 	 * @returns {boolean}
@@ -19210,7 +19210,7 @@
 	/**
 	 * Specifies the algorithm which will be used to lay out the contents of the current table within the document.
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {("autofit" | "fixed")} sType - The type of the table layout in the document.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableLayout.js
@@ -19228,7 +19228,7 @@
 	/**
 	 * Sets the table title (caption).
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {string} sTitle - The table title to be set.
 	 * @return {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableTitle.js
@@ -19245,7 +19245,7 @@
 	/**
 	 * Returns the table title (caption).
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @return {string}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/GetTableTitle.js
 	 */
@@ -19259,7 +19259,7 @@
 	/**
 	 * Sets the table description.
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {string} sDescr - The table description to be set.
 	 * @return {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableDescription.js
@@ -19276,7 +19276,7 @@
 	/**
 	 * Returns the table description.
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @return {string}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/GetTableDescription.js
 	 */
@@ -19290,7 +19290,7 @@
 	/**
 	 * Converts the ApiTablePr object into the JSON object.
 	 * @memberof ApiTablePr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @returns {JSON}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/ToJSON.js
 	 */
@@ -19782,13 +19782,15 @@
 	 * Sets the table properties to the current table style properties.
 	 * @memberof ApiTableStylePr
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiTablePr} oTablePr - The table properties that will be set.
+	 * @param {ApiTablePr} tablePr - The table properties that will be set.
 	 * @returns {ApiTableStylePr} - this
 	 * @see office-js-api/Examples/{Editor}/ApiTableStylePr/Methods/SetTablePr.js
 	 */
-	ApiTableStylePr.prototype.SetTablePr = function(oTablePr)
+	ApiTableStylePr.prototype.SetTablePr = function(tablePr)
 	{
-		this.OnChangeTablePr(oTablePr);
+		if (!tablePr || !(tablePr instanceof ApiTablePr))
+			throwException("The tablePr parameter must be an instance of ApiTablePr");
+		this.OnChangeTablePr(tablePr);
 		return this;
 	};
 	/**
