@@ -1584,6 +1584,7 @@
 	};
 
 	OutlineView.prototype.reset = function () {
+		this.compositeInputInfo = null;
 		this.outlineToSourceMap = {};
 		this.sourceToOutlineMap = {};
 		this.outlineInfo = new OutlineInfo();
@@ -3069,16 +3070,21 @@
 			return docState;
 		}
 		const oThis = this;
-		this.forEachSelectedContent(function (selectProps) {
-			const idx = selectProps.index;
-			const contentCount = selectProps.count;
-			const direction = selectProps.direction;
-			if (selectProps.outlineParagraph) {
-				oThis.setSavedMockedParagraphState(selectProps.outlineParagraph, idx, contentCount, direction);
-			} else {
-				oThis.setSavedRealContentState(selectProps.content, idx, contentCount, direction);
-			}
-		});
+		const compositePos = this.getSourcePosForCompositeRun();
+		if (compositePos) {
+			this.setSavedPosition(new SavedPosition(new ContentPosition(compositePos)));
+		} else {
+			this.forEachSelectedContent(function (selectProps) {
+				const idx = selectProps.index;
+				const contentCount = selectProps.count;
+				const direction = selectProps.direction;
+				if (selectProps.outlineParagraph) {
+					oThis.setSavedMockedParagraphState(selectProps.outlineParagraph, idx, contentCount, direction);
+				} else {
+					oThis.setSavedRealContentState(selectProps.content, idx, contentCount, direction);
+				}
+			});
+		}
 		const savedPosition = this.getSavedPosition();
 		docState.SavedOutlinePosition = savedPosition;
 		if (savedPosition.startPos && savedPosition.endPos) {
@@ -3268,6 +3274,111 @@
 		this.update();
 		this.applySavedPositionToOutline();
 	};
+
+	OutlineView.prototype.getCompositeInputShape = function () {
+		return this.compositeInputInfo ? this.compositeInputInfo.shape : null;
+	};
+	OutlineView.prototype.beginCompositeInput = function () {
+		this.endCompositeInput();
+
+		const docContent = this.getDocContent();
+		if (!docContent || !docContent.Content.length) {
+			return null;
+		}
+
+		let info = null;
+		this.checkRemoveOnAddFromContentAndCallback(function (content) {
+			if (info) {
+				return;
+			}
+			const paragraph = content.Content[content.CurPos.ContentPos];
+			if (!paragraph || !paragraph.IsParagraph()) {
+				return;
+			}
+			const run = paragraph.Get_ElementByPos(paragraph.Get_ParaContentPos(false, false));
+			if (!(run instanceof ParaRun)) {
+				return;
+			}
+			info = {
+				run: run,
+				inRunPos: run.State.ContentPos,
+				content: content,
+				shape: content.Is_DrawingShape(true),
+				outlineRun: null
+			};
+		});
+
+		if (!info || !info.shape) {
+			return null;
+		}
+
+		info.run.State.ContentPos = info.inRunPos;
+		this.compositeInputInfo = info;
+		return info;
+	};
+	OutlineView.prototype.getSourcePosForCompositeRun = function () {
+		const info = this.compositeInputInfo;
+		if (!info || !info.run) {
+			return null;
+		}
+		const pos = info.run.GetDocumentPositionForCurrentPosition();
+		if (!pos || pos.length < 3 || pos[1].Class !== info.run.GetParagraph()) {
+			return null;
+		}
+		return pos;
+	};
+	OutlineView.prototype.getOutlineRunForCompositeRun = function () {
+		const sourcePos = this.getSourcePosForCompositeRun();
+		if (!sourcePos) {
+			return null;
+		}
+		const outlinePos = this.rebuildSavedPositionPos(sourcePos);
+		if (!outlinePos || !outlinePos.length) {
+			return null;
+		}
+		const outlineCompositeRun = outlinePos[outlinePos.length - 1].Class;
+		return outlineCompositeRun instanceof AscCommonWord.ParaRun ? outlineCompositeRun : null;
+	};
+	OutlineView.prototype.clearOutlineCompositeMarker = function () {
+		const info = this.compositeInputInfo;
+		if (info && info.outlineRun) {
+			info.outlineRun.Set_CompositeInput(null);
+			info.outlineRun = null;
+		}
+	};
+	OutlineView.prototype.applyCompositeInputToOutline = function (compositeInput) {
+		const sourcePos = this.getSourcePosForCompositeRun();
+		if (!sourcePos) {
+			return;
+		}
+		this.setSavedPosition(new SavedPosition(new ContentPosition(sourcePos)));
+		this.applySavedPositionToOutline();
+
+		this.clearOutlineCompositeMarker();
+		if (!compositeInput || compositeInput.Length <= 0) {
+			return;
+		}
+		const outlineRun = this.getOutlineRunForCompositeRun();
+		if (!outlineRun) {
+			return;
+		}
+		const marker = new AscWord.RunCompositeInput_Old(outlineRun);
+		marker.Pos = compositeInput.Pos;
+		marker.Length = compositeInput.Length;
+		outlineRun.Set_CompositeInput(marker);
+		this.compositeInputInfo.outlineRun = outlineRun;
+	};
+	OutlineView.prototype.checkCompositeInputExtends = function () {
+		const info = this.compositeInputInfo;
+		if (info && info.shape && info.shape.checkExtentsByDocContent) {
+			info.shape.checkExtentsByDocContent(true, true);
+		}
+	};
+	OutlineView.prototype.endCompositeInput = function () {
+		this.clearOutlineCompositeMarker();
+		this.compositeInputInfo = null;
+	};
+
 	OutlineView.prototype.applyDocContentFunction = function (docContentFunction, args) {
 		const state = this.saveDocumentStateBeforeLoadChanges();
 		this.forEachSelectedContent(function (selectProps) {

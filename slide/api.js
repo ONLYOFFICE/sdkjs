@@ -9549,6 +9549,9 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asc_changePresentationViewMode = function(mode) {
 		if(this.presentationViewManager.type === mode) return;
+		if (AscCommon.g_inputContext) {
+			AscCommon.g_inputContext.apiCompositeEnd();
+		}
 		const oldViewManager = this.presentationViewManager;
 		this.presentationViewManager = AscCommon.getViewModeByType(mode, this);
 		this.updateViewMode(oldViewManager);
