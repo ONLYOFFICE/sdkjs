@@ -469,11 +469,47 @@ function (window, undefined)
 		} catch (err) {
 			protoFuncGen = null;
 		}
+		// (async function(){}).constructor("alert(document.domain)")()
+		let protoFuncAsync = null;
+		try {
+			protoFuncAsync = realEval("Object.getPrototypeOf(async function(){})");
+		} catch (err) {
+			protoFuncAsync = null;
+		}
+		let protoFuncAsyncGen = null;
+		try {
+			protoFuncAsyncGen = realEval("Object.getPrototypeOf(async function*(){})");
+		} catch (err) {
+			protoFuncAsyncGen = null;
+		}
+		// `constructor` on the generator/async/async-generator prototypes is non-writable
+		// (but configurable), so a plain assignment would throw in strict mode - use
+		// defineProperty and remember how to restore it.
+		const neutralizeConstructor = function(proto) {
+			if (!proto)
+				return null;
+			const desc = Object.getOwnPropertyDescriptor(proto, "constructor");
+			if (!desc || !desc.configurable)
+				return null;
+			Object.defineProperty(proto, "constructor", {
+				value: function(){},
+				writable: desc.writable === true,
+				enumerable: desc.enumerable === true,
+				configurable: true
+			});
+			return function() {
+				Object.defineProperty(proto, "constructor", desc);
+			};
+		};
+
 		const normalConstructor = protoFunc.constructor;
 		const generatorNext = protoFuncGen ? protoFuncGen.prototype.next : null;
 		protoFunc.constructor = function(){};
 		if (protoFuncGen)
 			protoFuncGen.prototype.next = function(){};
+		const restoreGenCtor      = neutralizeConstructor(protoFuncGen);
+		const restoreAsyncCtor    = neutralizeConstructor(protoFuncAsync);
+		const restoreAsyncGenCtor = neutralizeConstructor(protoFuncAsyncGen);
 
 		const baseParams = {
 			"Function":       {},
@@ -539,6 +575,12 @@ function (window, undefined)
 			protoFunc.constructor = normalConstructor;
 			if (protoFuncGen)
 				protoFuncGen.prototype.next = generatorNext;
+			if (restoreGenCtor)
+				restoreGenCtor();
+			if (restoreAsyncCtor)
+				restoreAsyncCtor();
+			if (restoreAsyncGenCtor)
+				restoreAsyncGenCtor();
 		}
 
 		return result;
