@@ -16301,23 +16301,15 @@
 		return true;
 	};
 	/**
-	 * Clears the content from the current cell.
+	 * Clears the content of the current cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CDE"]
-	 * @return {boolean} - returns false if parent row is invalid.
+	 * @return {boolean} - Returns true when the content has been cleared.
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/Clear.js
 	 */
 	ApiTableCell.prototype.Clear = function()
 	{
-		var oRow = this.GetParentRow();
-		if (!oRow)
-			return false;
-
-		for (var curCell = 0, cellsCount = oRow.GetCellsCount(); curCell < cellsCount; curCell++)
-		{
-			oRow.Row.GetCell(curCell).GetContent().Clear_Content();
-		}
-
+		this.Cell.GetContent().Clear_Content();
 		return true;
 	};
 	/**
