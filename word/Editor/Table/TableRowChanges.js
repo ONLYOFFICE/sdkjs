@@ -447,8 +447,11 @@ CChangesTableRowAddCell.prototype.Undo = function()
 		return;
 
 	var oRow = this.Class;
-	oRow.Content[this.Pos].OnDetach();
-	oRow.Content[this.Pos].SetIndex(-1);
+	
+	let cell = oRow.Content[this.Pos];
+	cell.OnDetach();
+	oRow.private_UnlinkCell(cell);
+
 	oRow.Content.splice(this.Pos, 1);
 	oRow.CellsInfo.splice(this.Pos, 1);
 	oRow.Internal_ReIndexing(this.Pos);
@@ -463,6 +466,7 @@ CChangesTableRowAddCell.prototype.Redo = function()
 	var oRow = this.Class;
 	oRow.Content.splice(this.Pos, 0, this.Items[0]);
 	oRow.CellsInfo.splice(this.Pos, 0, {});
+	oRow.private_LinkCell(this.Pos);
 	oRow.Internal_ReIndexing(this.Pos);
 	oRow.private_CheckCurCell();
 	oRow.private_UpdateTableGrid();
@@ -490,6 +494,7 @@ CChangesTableRowAddCell.prototype.Load = function(Color)
 	{
 		oRow.Content.splice(Pos, 0, Element);
 		AscCommon.CollaborativeEditing.Update_DocumentPositionsOnAdd(oRow, Pos);
+		oRow.private_LinkCell(Pos);
 		Element.OnAttach();
 	}
 
@@ -528,6 +533,7 @@ CChangesTableRowRemoveCell.prototype.Undo = function()
 	var oRow = this.Class;
 	oRow.Content.splice(this.Pos, 0, this.Items[0]);
 	oRow.CellsInfo.splice(this.Pos, 0, {});
+	oRow.private_LinkCell(this.Pos);
 	oRow.Internal_ReIndexing(this.Pos);
 	oRow.private_CheckCurCell();
 	oRow.private_UpdateTableGrid();
@@ -539,8 +545,11 @@ CChangesTableRowRemoveCell.prototype.Redo = function()
 		return;
 
 	var oRow = this.Class;
-	oRow.Content[this.Pos].OnDetach();
-	oRow.Content[this.Pos].SetIndex(-1);
+
+	let cell = oRow.Content[this.Pos];
+	cell.OnDetach();
+	oRow.private_UnlinkCell(cell);
+
 	oRow.Content.splice(this.Pos, 1);
 	oRow.CellsInfo.splice(this.Pos, 1);
 	oRow.Internal_ReIndexing(this.Pos);
@@ -566,8 +575,10 @@ CChangesTableRowRemoveCell.prototype.Load = function(Color)
 	if (false === Pos)
 		return;
 
-	oRow.Content[Pos].OnDetach();
-	oRow.Content[Pos].SetIndex(-1);
+	let cell = oRow.Content[Pos];
+	cell.OnDetach();
+	oRow.private_UnlinkCell(cell);
+
 	oRow.Content.splice(Pos, 1);
 	AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(oRow, Pos, 1);
 

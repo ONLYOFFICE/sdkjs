@@ -471,7 +471,7 @@ void main() {\n\
 		});
 		
 		metafile.endLine();
-		return metafile.getData();
+		return new Uint8Array(metafile.getData());
 	};
     CFile.prototype.removeSelection = function() {
         this.Selection = {
@@ -1907,15 +1907,17 @@ void main() {\n\
             pageLines:  []
         };
 
-        let searchText = oSearchEngine.Text;
+        // Text may be a RegExp (see DocumentSearch.prototype.Set)
+        let oRegExp    = oSearchEngine.Text instanceof RegExp ? oSearchEngine.Text : null;
+        let searchText = oRegExp ? oRegExp.source : oSearchEngine.Text;
         if (0 == searchText.length)
             return oResult;
 
         let stream = this.getPageTextStream(pageIndex, Asc.editor.canEdit());
         if (!stream)
             return oResult;
-        
-        if (!oSearchEngine.MatchCase)
+
+        if (!oRegExp && !oSearchEngine.MatchCase)
             searchText = searchText.toLowerCase();
 
         // textline parameters
@@ -1925,12 +1927,14 @@ void main() {\n\
         let _lineDescent = 0;
         
         let curLine = "";
+        let aLinesPos = []; // stream position of every line start
 
         while (stream.pos < stream.size)
         {
             _lineEx = 1;
             _lineEy = 0;
             curLine = "";
+            aLinesPos[oResult.pageLines.length] = stream.pos;
 
             //curLine.X = stream.GetDouble();
             //curLine.Y = stream.GetDouble();
@@ -1977,6 +1981,59 @@ void main() {\n\
         let _ignoreFirstSpace = true;
         let _arrayGlyphOffsets = [];
         let _skip = false;
+
+        if (oRegExp)
+        {
+            let sFlags = oRegExp.flags.replace(/[gy]/g, "") + "g";
+            if (!oSearchEngine.MatchCase && -1 == sFlags.indexOf("i"))
+                sFlags += "i";
+
+            // a line break is a space for the search, so the whole page is searched as a single string
+            // (lines are already collected, their positions in that string are kept in aLineStart)
+            let aLineStart = [];
+            for (let i = 0, nPos = 0; i < oResult.pageLines.length; ++i)
+            {
+                aLineStart[i] = nPos;
+                nPos += oResult.pageLines[i].length + 1;
+            }
+            let sPageText = oResult.pageLines.join(" ");
+
+            let oRe = new RegExp(oRegExp.source, sFlags);
+            let oExec;
+            while (null != (oExec = oRe.exec(sPageText)))
+            {
+                if (0 == oExec[0].length)
+                { // empty match, otherwise exec loops forever
+                    oRe.lastIndex++;
+                    continue;
+                }
+
+                let nMatchEnd  = oExec.index + oExec[0].length;
+                let nFirstLine = GetLineByPos(aLineStart, oExec.index);
+                let nLastLine  = GetLineByPos(aLineStart, nMatchEnd - 1);
+
+                let nStartChar = oExec.index - aLineStart[nFirstLine];
+                if (nStartChar >= oResult.pageLines[nFirstLine].length)
+                { // the match starts at a line break, i.e. on the next line
+                    nFirstLine++;
+                    nStartChar = 0;
+                }
+
+                let nEndChar = nMatchEnd - aLineStart[nLastLine];
+                if (nEndChar >= oResult.pageLines[nLastLine].length)
+                    nEndChar = -1; // till the end of the line
+
+                let rects = new PdfPageMatch();
+                // + 1: GetMatches stops right after the last line of the match
+                GetMatches(rects, stream, {Line: nFirstLine, Char: nStartChar, StreamPos: aLinesPos[nFirstLine]},
+                    nLastLine, nEndChar, aLinesPos[nLastLine] + 1);
+
+                if (rects.length)
+                    oResult.matches.push(rects);
+            }
+
+            return oResult;
+        }
 
         let posInText = 0;
         if (searchText[posInText] == ' ')
@@ -2082,6 +2139,8 @@ void main() {\n\
                         _endChar = -1;
                     GetMatches(rects, stream, oMatch, _numLine, _endChar, stream.pos);
                     oResult.matches.push(rects);
+                    // continue right after the found text: with the match start + 1
+                    oMatch = {Line: _numLine, Char: i, StreamPos: _linePos};
                     _skip = true;
                     break;
                 }
@@ -2100,15 +2159,26 @@ void main() {\n\
             }
         }
 
+        // position in the page text (lines joined by a space) -> line index
+        function GetLineByPos(aLineStart, nPos)
+        {
+            for (let i = aLineStart.length - 1; i > 0; --i)
+            {
+                if (nPos >= aLineStart[i])
+                    return i;
+            }
+            return 0;
+        }
+
         function GetMatches(rects, stream, oMatch, curLine, curChar, curStreamPos)
         {
-            _numLine = oMatch.Line;
+            let numLine = oMatch.Line;
             stream.pos = oMatch.StreamPos;
             let _text = "";
             while (stream.pos < curStreamPos)
             {
-                let startChar = _numLine == oMatch.Line ? oMatch.Char : -2;
-                let endChar   = _numLine == curLine     ? curChar     : -1;
+                let startChar = numLine == oMatch.Line ? oMatch.Char : -2;
+                let endChar   = numLine == curLine     ? curChar     : -1;
 
                 _text = "";
                 _lineEx = 1;
@@ -2165,7 +2235,7 @@ void main() {\n\
 
                 rects.push({
                     PageNum : pageIndex,
-                    LineNum: _numLine,
+                    LineNum: numLine,
                     Char1: startChar,
                     Char2: endChar,
                     X : _lineX + _lineAscent * _lineEy + off1 * _lineEx,
@@ -2177,7 +2247,7 @@ void main() {\n\
                     Text: _text
                 });
 
-                _numLine++;
+                numLine++;
             }
         }
 

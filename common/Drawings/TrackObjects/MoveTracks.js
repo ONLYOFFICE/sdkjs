@@ -287,6 +287,10 @@ function MoveShapeImageTrack(originalObject)
             if(this.originalObject.selectStartPage !== this.pageIndex)
                 this.originalObject.selectStartPage = this.pageIndex;
         }
+        if(this.originalObject.group)
+        {
+            this.originalObject.getMainGroup().normalize();
+        }
         var scale_coefficients, ch_off_x, ch_off_y;
         if(this.originalObject.isCrop)
         {

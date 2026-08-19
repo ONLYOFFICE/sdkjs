@@ -541,13 +541,16 @@ CShape.prototype.recalculateSlideImagePlaceholderTransform = function () {
         oShapeDrawer.bIsCheckBounds = true;
         oShapeDrawer.Graphics = new AscFormat.CSlideBoundsChecker();
         this.check_bounds(oShapeDrawer);
-        const w = oShapeDrawer.max_x - oShapeDrawer.min_x;
-        const h = oShapeDrawer.max_y - oShapeDrawer.min_y;
-        if (w <= 0 || h <= 0) {
+        const geometryWidth = oShapeDrawer.max_x - oShapeDrawer.min_x;
+        const geometryHeight = oShapeDrawer.max_y - oShapeDrawer.min_y;
+        if (geometryWidth <= 0 || geometryHeight <= 0) {
             return;
         }
-        localTransform.Scale(w / slideWidth, h / slideHeight);
-        localTransform.Translate(oShapeDrawer.min_x, oShapeDrawer.min_y);
+        const scaleFactor = Math.min(geometryWidth / slideWidth, geometryHeight / slideHeight);
+        const scaledSlideWidth = slideWidth * scaleFactor;
+        const scaledSlideHeight = slideHeight * scaleFactor;
+        localTransform.Scale(scaleFactor, scaleFactor);
+        localTransform.Translate(oShapeDrawer.min_x + (geometryWidth - scaledSlideWidth) / 2, oShapeDrawer.min_y + (geometryHeight - scaledSlideHeight) / 2);
         localTransform.Multiply(this.transform, AscCommon.MATRIX_ORDER_APPEND);
     }, this, []);
 }

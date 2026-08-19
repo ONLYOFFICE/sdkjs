@@ -3638,8 +3638,8 @@
 
 		const oControl = this.FormObj ? (this.FormObj.get_Obj ? this.FormObj.get_Obj() : this.FormObj["obj"]) : null;
 		return {
-			imageData: imageData,
-			internalId: oControl ? oControl.Get_Id() : null
+			'imageData': imageData,
+			'internalId': oControl ? oControl.Get_Id() : null
 		};
 	};
 

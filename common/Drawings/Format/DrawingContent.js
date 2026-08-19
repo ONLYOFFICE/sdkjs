@@ -917,6 +917,40 @@
 			});
 			return nContentLength;
 		};
+    CDrawingDocContent.prototype.addTextWithPr = function (text, settings) {
+        let oTargetDocContent = this;
+        oTargetDocContent.Remove(-1, true, true, true);
+        let oCurrentTextPr = oTargetDocContent.GetDirectTextPr();
+        let oParagraph = oTargetDocContent.GetCurrentParagraph();
+        if (oParagraph && oParagraph.GetParent()) {
+            let oTempPara = new AscWord.Paragraph(oParagraph.GetParent());
+            let oRun = new ParaRun(oTempPara, false);
+            oRun.AddText(text);
+            oTempPara.AddToContent(0, oRun);
+
+            oRun.SetPr(oCurrentTextPr.Copy());
+
+            if (!settings)
+                settings = new AscCommon.CAddTextSettings();
+
+            let oTextPr = settings.GetTextPr();
+            if (oTextPr)
+                oRun.ApplyPr(oTextPr);
+
+            let oAnchorPos = oParagraph.GetCurrentAnchorPosition();
+
+            let oSelectedContent = new AscCommonWord.CSelectedContent();
+            let oSelectedElement = new AscCommonWord.CSelectedElement();
+
+            oSelectedElement.Element = oTempPara;
+            oSelectedElement.SelectedAll = false;
+            oSelectedContent.Add(oSelectedElement);
+            oSelectedContent.EndCollect(oTargetDocContent);
+            oSelectedContent.ForceInlineInsert();
+            oSelectedContent.PlaceCursorInLastInsertedRun(!settings.IsMoveCursorOutside());
+            oSelectedContent.Insert(oAnchorPos);
+        }
+    };
     // TODO: do this properly!!!
     function CDocument_prototype_private_GetElementPageIndexByXY(ElementPos, X, Y, PageIndex)
     {

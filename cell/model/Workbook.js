@@ -7294,6 +7294,9 @@
 		if (wsFrom.sheetPr)
 			this.sheetPr = wsFrom.sheetPr.clone();
 
+		//sheet background picture
+		this.picture = wsFrom.picture;
+
 		this.selectionRange = wsFrom.selectionRange.clone(this);
 
 		if(wsFrom.PagePrintOptions) {
@@ -7748,7 +7751,8 @@
 					} else if (Asc.ECfType.dataBar === oRule.type) {
 						continue;
 					} else if (Asc.ECfType.top10 === oRule.type) {
-						if (oRule.rank > 0 && oRule.dxf) {
+						//a rule without dxf is still needed when it stops the lower priority rules
+						if (oRule.rank > 0 && (oRule.dxf || oRule.stopIfTrue)) {
 							nc = 0;
 							values = this._getValuesForConditionalFormatting(ranges, false);
 							o = oRule.bottom ? Number.MAX_VALUE : -Number.MAX_VALUE;
@@ -7775,12 +7779,12 @@
 									t._getCellNoEmpty(row, col, function(cell) {
 										val = cell ? cell.getNumberValue() : null;
 									});
-									return (null !== val && (rule.bottom ? val <= threshold : val >= threshold)) ? rule.dxf : null;
+									return (null !== val && (rule.bottom ? val <= threshold : val >= threshold));
 								};
 							})(oRule, threshold);
 						}
 					} else if (Asc.ECfType.aboveAverage === oRule.type) {
-						if (!oRule.dxf) {
+						if (!oRule.dxf && !oRule.stopIfTrue) {
 							continue;
 						}
 						values = this._getValuesForConditionalFormatting(ranges, false);
@@ -7817,16 +7821,16 @@
 								t._getCellNoEmpty(row, col, function(cell) {
 									val = cell ? cell.getNumberValue() : null;
 								});
-								return (null !== val && rule.getAverage(val, average, stdDev)) ? rule.dxf : null;
+								return !!(null !== val && rule.getAverage(val, average, stdDev));
 							};
 						})(oRule, tmp, stdDev);
 					} else {
-						if (!oRule.dxf) {
+						if (!oRule.dxf && !oRule.stopIfTrue) {
 							continue;
 						}
 						let doExpression = function () {
 							bboxCf = oRule.getBBox();
-							compareFunction = getCacheFunction(oRule, (function(rule, formulaCF, formulaParent, rowLT, colLT) {
+							compareFunction = getCacheFunction(null, (function(rule, formulaCF, formulaParent, rowLT, colLT) {
 								return function(row, col) {
 									var offset = new AscCommon.CellBase(row - rowLT, col - colLT);
 									var bboxCell = new Asc.Range(col, row, col, row);
@@ -7854,7 +7858,7 @@
 										t._getCellNoEmpty(row, col, function(cell) {
 											val = cell ? cell.getValueWithoutFormat() : "";
 										});
-										return (val.length > 0 ? condition === obj[val] : false) ? rule.dxf : null;
+										return (val.length > 0 ? condition === obj[val] : false);
 									};
 								})(oRule, o, oRule.type === Asc.ECfType.duplicateValues);
 								break;
@@ -7889,14 +7893,14 @@
 								parsed1 = oRuleElement && oRuleElement.getFormula && oRuleElement.getFormula(this, formulaParent);
 								if (parsed1 && parsed1.hasRelativeRefs()) {
 									bboxCf = oRule.getBBox();
-									compareFunction = getCacheFunction(oRule, (function(rule, operator, formulaParent, rowLT, colLT) {
+									compareFunction = getCacheFunction(null, (function(rule, operator, formulaParent, rowLT, colLT) {
 										return function(row, col) {
 											var offset = new AscCommon.CellBase(row - rowLT, col - colLT);
 											var bboxCell = new Asc.Range(col, row, col, row);
 											var v1 = rule.getValueCellIs(t, formulaParent, bboxCell, offset, false);
 											var res;
 											t._getCellNoEmpty(row, col, function(cell) {
-												res = rule.cellIs(operator, cell, v1) ? rule.dxf : null;
+												res = !!rule.cellIs(operator, cell, v1);
 											});
 											return res;
 										};
@@ -7911,7 +7915,7 @@
 										return function(row, col) {
 											var res;
 											t._getCellNoEmpty(row, col, function(cell) {
-												res = rule.cellIs(operator, cell, v1) ? rule.dxf : null;
+												res = !!rule.cellIs(operator, cell, v1);
 											});
 											return res;
 										};
@@ -7925,7 +7929,7 @@
 										t._getCellNoEmpty(row, col, function(cell) {
 											val = (cell ? CellValueType.Error === cell.getType() : false);
 										});
-										return val ? rule.dxf : null;
+										return !!val;
 									};
 								})(oRule);
 								break;
@@ -7936,7 +7940,7 @@
 										t._getCellNoEmpty(row, col, function(cell) {
 											val = (cell ? CellValueType.Error !== cell.getType() : true);
 										});
-										return val ? rule.dxf : null;
+										return !!val;
 									};
 								})(oRule);
 								break;
@@ -7952,7 +7956,7 @@
 												val = true;
 											}
 										});
-										return val ? rule.dxf : null;
+										return !!val;
 									};
 								})(oRule);
 								break;
@@ -7968,7 +7972,7 @@
 												val = false;
 											}
 										});
-										return val ? rule.dxf : null;
+										return !!val;
 									};
 								})(oRule);
 								break;
@@ -7981,7 +7985,7 @@
 												val = cell ? cell.getValueWithoutFormat() : "";
 											});
 											var n = parseFloat(val);
-											return (period.start <= n && n < period.end) ? rule.dxf : null;
+											return (period.start <= n && n < period.end);
 										};
 									})(oRule, oRule.getTimePeriod());
 								} else {
@@ -7996,7 +8000,7 @@
 								parsed2 = oRuleElement && oRuleElement.getFormula && oRuleElement.getFormula(this, formulaParent);
 								if ((parsed1 && parsed1.hasRelativeRefs()) || (parsed2 && parsed2.hasRelativeRefs())) {
 									bboxCf = oRule.getBBox();
-									compareFunction = getCacheFunction(oRule, (function(rule, ruleElem1, ruleElem2, formulaParent, rowLT, colLT) {
+									compareFunction = getCacheFunction(null, (function(rule, ruleElem1, ruleElem2, formulaParent, rowLT, colLT) {
 										return function(row, col) {
 											var offset = new AscCommon.CellBase(row - rowLT, col - colLT);
 											var bboxCell = new Asc.Range(col, row, col, row);
@@ -8004,7 +8008,7 @@
 											var v2 = ruleElem2 && ruleElem2.getValue(t, formulaParent, bboxCell, offset, false);
 											var res;
 											t._getCellNoEmpty(row, col, function(cell) {
-												res = rule.cellIs(rule.operator, cell, v1, v2) ? rule.dxf : null;
+												res = !!rule.cellIs(rule.operator, cell, v1, v2);
 											});
 											return res;
 										};
@@ -8016,7 +8020,7 @@
 										return function(row, col) {
 											var res;
 											t._getCellNoEmpty(row, col, function(cell) {
-												res = rule.cellIs(rule.operator, cell, v1, v2) ? rule.dxf : null;
+												res = !!rule.cellIs(rule.operator, cell, v1, v2);
 											});
 											return res;
 										};
@@ -10527,7 +10531,51 @@
 	};
 	Worksheet.prototype.getHyperlinkByCell = function(row, col){
 		var oHyperlink = this.hyperlinkManager.getByCell(row, col);
+		if (oHyperlink) {
+			//the document structure can contain several hyperlinks applied to the same cell(part of them can be broken)
+			//ms uses the first hyperlink which can be opened, do the same
+			var aHyperlinks = this.hyperlinkManager.get(oHyperlink.bbox);
+			if (aHyperlinks.all.length > 1 && !this.isValidHyperlink(oHyperlink.data)) {
+				var oCandidate = null;
+				for (var i = 0; i < aHyperlinks.all.length; ++i) {
+					var elem = aHyperlinks.all[i];
+					if (elem === oHyperlink || !this.isValidHyperlink(elem.data)) {
+						continue;
+					}
+					//prefer the hyperlink which is really applied to the cell
+					if (elem.bbox.contains(col, row)) {
+						oCandidate = elem;
+						break;
+					} else if (!oCandidate) {
+						oCandidate = elem;
+					}
+				}
+				if (oCandidate) {
+					oHyperlink = oCandidate;
+				}
+			}
+		}
 		return oHyperlink ? oHyperlink.data : null;
+	};
+	//checks that the hyperlink can be opened(the location refers to the existing sheet/range/defined name)
+	Worksheet.prototype.isValidHyperlink = function(oHyperlink){
+		if (!oHyperlink) {
+			return false;
+		}
+		if (null != oHyperlink.Hyperlink) {
+			//external link
+			return true;
+		}
+		var sLocation = oHyperlink.getLocation();
+		if (!sLocation) {
+			return false;
+		}
+		if (null != oHyperlink.LocationSheet) {
+			//sheet name case is ignored on navigating -> Sheet1===SHEEt1
+			return !!this.workbook.getWorksheetByName(oHyperlink.LocationSheet, true);
+		}
+		var aRanges = AscCommonExcel.getRangeByRef(sLocation, this, true);
+		return !!(aRanges && aRanges.length);
 	};
 	Worksheet.prototype.getMergedByCell = function(row, col){
 		var oMergeInfo = this.mergeManager.getByCell(row, col);
@@ -13756,6 +13804,7 @@
 					if (copyRange) {
 						_newRule = _rule.clone();
 						_newRule.ranges = _moveRanges;
+						_newRule.changeFormulaOffset(offset, wsTo);
 						wsTo.addCFRule(_newRule, true);
 					} else {
 						if (t !== wsTo) {
@@ -22008,14 +22057,12 @@
 		if (to.isOneCell())
 			to.setOffsetLast(new AscCommon.CellBase((from.r2 - from.r1) - (to.r2 - to.r1), (from.c2 - from.c1) - (to.c2 - to.c1)));
 
-		if(!from.isIntersect(to)) {
-			var bFromWholeCol = (0 == from.c1 && gc_nMaxCol0 == from.c2);
-			var bFromWholeRow = (0 == from.r1 && gc_nMaxRow0 == from.r2);
-			var bToWholeCol = (0 == to.c1 && gc_nMaxCol0 == to.c2);
-			var bToWholeRow = (0 == to.r1 && gc_nMaxRow0 == to.r2);
-			bSuccess = (bFromWholeCol === bToWholeCol && bFromWholeRow === bToWholeRow);
-		} else
-			bSuccess = false;
+		//'from' is allowed to intersect 'to'(copy style from A1 to A1:B2), like in ms
+		var bFromWholeCol = (0 == from.c1 && gc_nMaxCol0 == from.c2);
+		var bFromWholeRow = (0 == from.r1 && gc_nMaxRow0 == from.r2);
+		var bToWholeCol = (0 == to.c1 && gc_nMaxCol0 == to.c2);
+		var bToWholeRow = (0 == to.r1 && gc_nMaxRow0 == to.r2);
+		bSuccess = (bFromWholeCol === bToWholeCol && bFromWholeRow === bToWholeRow);
 		return bSuccess;
 	}
 // Before promoteFromTo, the preparePromoteFromTo function must be called
@@ -22408,7 +22455,15 @@
 			//delete everything in the fill area
 			if(bIsPromote)
 				toRange.cleanAll();
-			else
+			else if(from.isIntersect(to)) {
+				//copy style: 'from' is a part of 'to'(copy style from A1 to A1:B2) and is read below,
+				//so everything is cleared except the source itself, which keeps its own format anyway
+				var aCleanRanges = from.difference(to);
+				for (var nCleanRange = 0; nCleanRange < aCleanRanges.length; ++nCleanRange) {
+					var oCleanRange = aCleanRanges[nCleanRange];
+					wsTo.getRange3(oCleanRange.r1, oCleanRange.c1, oCleanRange.r2, oCleanRange.c2).cleanFormat();
+				}
+			} else
 				toRange.cleanFormat();
 			//collect all data
 			var bReverse = false;

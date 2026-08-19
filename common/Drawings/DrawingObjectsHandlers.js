@@ -693,12 +693,10 @@ function handleShapeImageInGroup(drawingObjectsController, drawing, shape, e, x,
 		const editorId = Asc.editor.getEditorId();
 		let bCheckGroupFallback;
 		switch (editorId) {
-			case AscCommon.c_oEditorId.Word:
-				bCheckGroupFallback = !drawing.selected && drawingObjectsController.selection.groupSelection !== drawing;
-				break;
 			case AscCommon.c_oEditorId.Presentation:
 				bCheckGroupFallback = !drawing.selected;
 				break;
+			case AscCommon.c_oEditorId.Word:
 			case AscCommon.c_oEditorId.Spreadsheet:
 				bCheckGroupFallback = true;
 				break;

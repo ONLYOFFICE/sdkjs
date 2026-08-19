@@ -702,16 +702,16 @@
 				nInternalType = AscPDF.PDF_TRIGGERS_TYPES.OnBlur;
 				break;
 			case "Keystroke":
-				nInternalType = AscPDF.PDF_TRIGGERS_TYPES.Keystroke;
+				nInternalType = AscPDF.PDF_TRIGGERS_TYPES.keystroke;
 				break;
 			case "Validate":
-				nInternalType = AscPDF.PDF_TRIGGERS_TYPES.Validate;
+				nInternalType = AscPDF.PDF_TRIGGERS_TYPES.validate;
 				break;
 			case "Calculate":
 				nInternalType = AscPDF.PDF_TRIGGERS_TYPES.Calculate;
 				break;
 			case "Format":
-				nInternalType = AscPDF.PDF_TRIGGERS_TYPES.Format;
+				nInternalType = AscPDF.PDF_TRIGGERS_TYPES.format;
 				break;
 		}
 

@@ -1730,6 +1730,9 @@ CChangesPDFPushbuttonImage.prototype.ReadFromBinary = function(Reader)
 	else
 		this.Old = Reader.GetString2();
 };
+CChangesPDFPushbuttonImage.prototype.ReplaceImageUrl = function(mapUrl) {
+	this.Class.Reassign_ImageUrls(mapUrl);
+};
 
 /**
  * @constructor

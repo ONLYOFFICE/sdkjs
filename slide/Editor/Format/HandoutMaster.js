@@ -57,7 +57,7 @@
 
 	const OUTLINE_LAYOUT_COUNT = -1;
 	function HandoutSettings() {
-		this.slideCount = OUTLINE_LAYOUT_COUNT;
+		this.slideCount = 6;
 		this.align = HANDOUT_ALIGNMENT_HORIZONTAL;
 	}
 	HandoutSettings.fromPrinterSettings = function (slidesOnPagePrintOptions) {

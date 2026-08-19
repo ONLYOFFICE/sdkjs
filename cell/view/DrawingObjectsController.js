@@ -562,17 +562,9 @@ DrawingObjectsController.prototype.canIncreaseParagraphLevel = function(bIncreas
     if(oDocContent)
     {
         let oTextObject = AscFormat.getTargetTextObject(this);
-        if(oTextObject && oTextObject.getObjectType() === AscDFH.historyitem_type_Shape)
+        if(oTextObject && oTextObject.isCanIncreaseParagraphLevel && oTextObject.isCanIncreaseParagraphLevel(bIncrease))
         {
-            if(oTextObject.isPlaceholder())
-            {
-                let nPhType = oTextObject.getPlaceholderType();
-                if(nPhType === AscFormat.phType_title || nPhType === AscFormat.phType_ctrTitle)
-                {
-                    return false;
-                }
-            }
-            return oDocContent.Can_IncreaseParagraphLevel(bIncrease);
+            return true;
         }
     }
     return false;

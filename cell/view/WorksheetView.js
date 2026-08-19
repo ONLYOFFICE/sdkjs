@@ -1236,7 +1236,7 @@ function isAllowPasteLink(pastedWb) {
 		var offsetFrozen = this.getFrozenPaneOffset(true, false);
 		var ctxH = this.drawingCtx.getHeight() - offsetFrozen.offsetY - this.cellsTop;
 		let hOffset = 0;
-		for (var h = 0, i = this.getCurrentRowsCount() - 1; i >= 0; --i) {
+		for (var h = 0, i = this.getRowsCountForScroll() - 1; i >= 0; --i) {
 			h += this._getRowHeight(i);
 			if (h >= ctxH) {
 				if (bCheckEqual && h > ctxH) {
@@ -1257,13 +1257,10 @@ function isAllowPasteLink(pastedWb) {
 		/*if (gc_nMaxRow === this.nRowsCount || this.model.isDefaultHeightHidden()) {
 			tmp -= 1;
 		}*/
-		let isMobileVersion = this.workbook && this.workbook.Api && this.workbook.Api.isMobileVersion;
 		let row = Math.max(0, i); // Scroll range should be less than the number of rows to prevent adding rows when dragging the scrollbar
 		let defaultScrollPxStep = Asc.round(this.getVScrollStep());
+		//scroll correct must not be added here, it makes the range jump on every row border
 		let beforeVisibleRangeHeight = this._getRowTop(row) - this.cellsTop + hOffset;
-		if (isMobileVersion || AscCommonExcel.c_oAscScrollType.ScrollInitRowsColsCount & this.scrollType) {
-			beforeVisibleRangeHeight += this.getScrollCorrect();
-		}
 		return defaultScrollPxStep === 0 ? 0 : ((beforeVisibleRangeHeight - frozenVisibleRangeHeight)/defaultScrollPxStep);
 	};
 
@@ -1287,7 +1284,7 @@ function isAllowPasteLink(pastedWb) {
 		var offsetFrozen = this.getFrozenPaneOffset(false, true);
 		var ctxW = this.drawingCtx.getWidth() - offsetFrozen.offsetX - this.cellsLeft;
 		let wOffset = 0;
-		for (var h = 0, i = this.nColsCount - 1; i >= 0; --i) {
+		for (var h = 0, i = this.getColsCountForScroll() - 1; i >= 0; --i) {
 			h += this._getColumnWidth(i);
 			if (h >= ctxW) {
 				wOffset = (h - ctxW) > 0 ? ((h - ctxW) - 1) : 0;
@@ -1307,14 +1304,9 @@ function isAllowPasteLink(pastedWb) {
 		/*if (gc_nMaxRow === this.nRowsCount || this.model.isDefaultHeightHidden()) {
 			tmp -= 1;
 		}*/
-		let isMobileVersion = this.workbook && this.workbook.Api && this.workbook.Api.isMobileVersion;
 		let col = Math.max(0, i); // Scroll range should be less than the number of columns to prevent adding columns when dragging the scrollbar
 		let defaultScrollPxStep = Asc.round(this.getHScrollStep());
 		let beforeVisibleRangeWidth = this._getColLeft(col) - this.cellsLeft + wOffset;
-		if (isMobileVersion || AscCommonExcel.c_oAscScrollType.ScrollInitRowsColsCount & this.scrollType) {
-			//beforeVisibleRangeWidth += this.getHorizontalScrollCorrect();
-		}
-
 		return defaultScrollPxStep === 0 ? 0 : ((beforeVisibleRangeWidth - frozenVisibleRangeWidth)/defaultScrollPxStep);
 	};
 
@@ -1328,7 +1320,7 @@ function isAllowPasteLink(pastedWb) {
 		}
 		var offsetFrozen = this.getFrozenPaneOffset(false, true);
         var ctxW = this.drawingCtx.getWidth() - offsetFrozen.offsetX - this.cellsLeft;
-        for (var w = 0, i = this.nColsCount - 1; i >= 0; --i) {
+        for (var w = 0, i = this.getColsCountForScroll() - 1; i >= 0; --i) {
             w += this._getColumnWidth(i);
             if (w >= ctxW) {
                 break;
@@ -1350,7 +1342,7 @@ function isAllowPasteLink(pastedWb) {
 		}
         var offsetFrozen = this.getFrozenPaneOffset(true, false);
         var ctxH = this.drawingCtx.getHeight() - offsetFrozen.offsetY - this.cellsTop;
-        for (var h = 0, i = this.getCurrentRowsCount() - 1; i >= 0; --i) {
+        for (var h = 0, i = this.getRowsCountForScroll() - 1; i >= 0; --i) {
             h += this._getRowHeight(i);
             if (h >= ctxH) {
                 if (bCheckEqual && h > ctxH) {
@@ -1387,6 +1379,36 @@ function isAllowPasteLink(pastedWb) {
 
 	WorksheetView.prototype.getCurrentRowsCount = function () {
 		return this.workbook.getIsPartialReading() ? this.model.getCurrentRowsCount() : this.nRowsCount;
+	};
+
+	//drawings are not counted in nRowsCount/nColsCount, but the document extends to the lowest one
+	WorksheetView.prototype._getDrawingsScrollBounds = function () {
+		let maxRow = -1;
+		let maxCol = -1;
+		let drawings = this.model.Drawings;
+		for (let i = 0; drawings && i < drawings.length; ++i) {
+			//boundsFromTo is kept for every anchor type, unlike the "to" anchor
+			let bounds = drawings[i] && drawings[i].getBoundsFromTo && drawings[i].getBoundsFromTo();
+			let to = bounds && bounds.to;
+			if (!to) {
+				continue;
+			}
+			if (to.row > maxRow) {
+				maxRow = to.row;
+			}
+			if (to.col > maxCol) {
+				maxCol = to.col;
+			}
+		}
+		return {row: maxRow, col: maxCol};
+	};
+
+	WorksheetView.prototype.getRowsCountForScroll = function () {
+		return Math.min(Math.max(this.getCurrentRowsCount(), this._getDrawingsScrollBounds().row + 1), gc_nMaxRow);
+	};
+
+	WorksheetView.prototype.getColsCountForScroll = function () {
+		return Math.min(Math.max(this.nColsCount, this._getDrawingsScrollBounds().col + 1), gc_nMaxCol);
 	};
 
     WorksheetView.prototype.getCellsOffset = function (units) {
@@ -3810,6 +3832,32 @@ function isAllowPasteLink(pastedWb) {
 		return new AscCommon.CellBase(maxRow, maxCol);
 	};
 
+	WorksheetView.prototype._calcPrintSideR = function (ct, col, row) {
+		if (!ct.metrics || 0 !== ct.sideL) {
+			//the text also overflows to the left(center/right align) - keep the calculated value
+			return ct.sideR;
+		}
+
+		let t = this;
+		let retinaPixelRatio = AscCommon.AscBrowser.isCustomScaling() ? this.getRetinaPixelRatio() : 1;
+		let getWidth = function (i) {
+			let res = t._getWidthForPrint(i);
+			return res ? res * retinaPixelRatio : t._getColumnWidth(i);
+		};
+
+		//the columns up to ct.sideR are already known to be empty, check the model only beyond them
+		let lastEmpty = col + ct.sideR;
+		let textWidth = ct.metrics.width + this.settings.cells.padding * 2 + gridlineSize;
+		let size = getWidth(col);
+		let i = col + 1;
+		while (textWidth > size && i < gc_nMaxCol && (i <= lastEmpty || this._isCellEmptyOrMerged(i, row))) {
+			size += getWidth(i);
+			++i;
+		}
+
+		return Math.max(i - col - 1, 0);
+	};
+
 	WorksheetView.prototype._calculateMaxPrintRange = function(range) {
 		let self = this;
 		let maxCol = -1;
@@ -3821,6 +3869,9 @@ function isAllowPasteLink(pastedWb) {
 			let rightSide = 0;
 			if (_ct && _ct.flags && !_ct.flags.isMerged() && !_ct.flags.wrapText) {
 				rightSide = _ct.sideR;
+				if (_col + rightSide + 1 >= maxCol) {
+					rightSide = self._calcPrintSideR(_ct, _col, _row);
+				}
 			}
 
 			maxCol = Math.max(maxCol, _col + rightSide);
@@ -5875,7 +5926,9 @@ function isAllowPasteLink(pastedWb) {
 		}
 
 		// Maybe grid doesn't need to be drawn (printing has its own checks)
-		if (!drawingCtx && false === this.model.getSheetView().asc_getShowGridLines()) {
+		//the background picture does not depend on the grid lines, so with them turned off we still go on to draw it
+		let showGridLines = drawingCtx || false !== this.model.getSheetView().asc_getShowGridLines();
+		if (!showGridLines && !this._backgroundImage) {
 			return;
 		}
 
@@ -5922,6 +5975,13 @@ function isAllowPasteLink(pastedWb) {
 
 		if (this._backgroundImage && !drawingCtx) {
 			this._drawSheetBackgroundPicture(ctx, this._backgroundImage, x1, y1, x2, y2, offsetX, offsetY);
+		}
+
+		if (!showGridLines) {
+			if (!drawingCtx && !window['IS_NATIVE_EDITOR'] && isClip) {
+				this._RemoveClipRect(ctx);
+			}
+			return;
 		}
 
 		//draw text for print preview
@@ -6542,8 +6602,18 @@ function isAllowPasteLink(pastedWb) {
 			return v2.priority - v1.priority;
 		});
 
+		//stopIfTrue check below uses the calculated conditional styles
+		this.model._updateConditionalFormatting();
+
+		var bStopped = false;
 		for (var i = aRules.length - 1; i >= 0; --i) {
 			oRule = aRules[i];
+			if (bStopped) {
+				return null;
+			}
+			if (oRule.stopIfTrue && this.model.sheetMergedStyles.isConditionalRuleTrue(oRule, row, col)) {
+				bStopped = true;
+			}
 			ranges = oRule.ranges;
 			oRuleElement = oRule.asc_getColorScaleOrDataBarOrIconSetRule();
 			if (!oRuleElement || Asc.ECfType.colorScale === oRuleElement.type) {
@@ -11646,6 +11716,13 @@ function isAllowPasteLink(pastedWb) {
             if (isSmoothScroll && r2 < r1) {
                 r2 = r1;
             }
+			//cleared area can start above the top of row r1, rows above it are visible there too
+			if (isSmoothScroll) {
+				let clearTopPos = clearTop - clearOffset;
+				while (r1 > vr.r1 && this.getCellTopRelative(r1, undefined, true) > clearTopPos) {
+					r1--;
+				}
+			}
 
             let startClip = function () {
                 if (isSmoothScroll) {
@@ -12044,6 +12121,13 @@ function isAllowPasteLink(pastedWb) {
 			}
 			if (this.workbook.getSmoothScrolling() && c2 < c1) {
 				c2 = c1;
+			}
+			//cleared area can start to the left of column c1, columns before it are visible there too
+			if (this.workbook.getSmoothScrolling()) {
+				let clearLeftPos = clearLeft - clearOffset;
+				while (c1 > vr.c1 && this.getCellLeftRelative(c1, undefined, true) > clearLeftPos) {
+					c1--;
+				}
 			}
 
             var range = new asc_Range(c1, vr.r1, c2, vr.r2);
@@ -20673,6 +20757,33 @@ function isAllowPasteLink(pastedWb) {
 			},
 			checkVisible: function () {
 				return null !== t.getCellVisibleRange(c.bbox.c1, c.bbox.r1);
+			},
+			//bounds of the area the editor belongs to, it must not be drawn outside of them
+			getBounds: function () {
+				let ctxWidth = t.getCtxWidth();
+				//in rtl mode headers are placed on the right side
+				let isRtl = t.getRightToLeft();
+				let bounds = {
+					left: isRtl ? 0 : t.cellsLeft,
+					top: t.cellsTop,
+					right: isRtl ? ctxWidth - t.cellsLeft : ctxWidth
+				};
+
+				if (t.topLeftFrozenCell) {
+					let frozenOffset = t.getFrozenPaneOffset();
+					if (col >= t.topLeftFrozenCell.getCol0()) {
+						if (isRtl) {
+							bounds.right -= frozenOffset.offsetX;
+						} else {
+							bounds.left += frozenOffset.offsetX;
+						}
+					}
+					if (row >= t.topLeftFrozenCell.getRow0()) {
+						bounds.top += frozenOffset.offsetY;
+					}
+				}
+
+				return bounds;
 			}
 		});
 	};
@@ -28368,7 +28479,8 @@ function isAllowPasteLink(pastedWb) {
 				} else {
 					selectionRange.assign(selectionRange.c1, selectionRange.r1 - 1*oneRow, selectionRange.c2, selectionRange.r1 - 1*oneRow);
 				}
-				_applyFillHandleSettings(cloneSelection, 1, 3);
+				//the fill handle range must contain the source line, otherwise a one cell selection is treated as "nothing changed"
+				_applyFillHandleSettings(new asc_Range(cloneSelection.c1, Math.min(selectionRange.r1, cloneSelection.r1), cloneSelection.c2, cloneSelection.r2), 1, 3);
 			} else if (type === c_oAscFillType.fillUp) {
 				if (oneRow && selectionRange.r2 === gc_nMaxRow0) {
 					return false;
@@ -28379,7 +28491,7 @@ function isAllowPasteLink(pastedWb) {
 				} else {
 					selectionRange.assign(selectionRange.c1, selectionRange.r2 + 1 * oneRow, selectionRange.c2, selectionRange.r2 + 1 * oneRow);
 				}
-				_applyFillHandleSettings(new asc_Range(cloneSelection.c2, cloneSelection.r2, cloneSelection.c1, cloneSelection.r1), 1, 1);
+				_applyFillHandleSettings(new asc_Range(cloneSelection.c2, Math.max(selectionRange.r2, cloneSelection.r2), cloneSelection.c1, cloneSelection.r1), 1, 1);
 			} else if (type === c_oAscFillType.fillRight) {
 				if (oneCol && selectionRange.c1 === 0) {
 					return false;
@@ -28390,7 +28502,7 @@ function isAllowPasteLink(pastedWb) {
 				} else {
 					selectionRange.assign(selectionRange.c1 - 1*oneCol, selectionRange.r1, selectionRange.c1 - 1*oneCol, selectionRange.r2);
 				}
-				_applyFillHandleSettings(cloneSelection, 0, 3);
+				_applyFillHandleSettings(new asc_Range(Math.min(selectionRange.c1, cloneSelection.c1), cloneSelection.r1, cloneSelection.c2, cloneSelection.r2), 0, 3);
 			} else if (type === c_oAscFillType.fillLeft) {
 				if (oneCol && selectionRange.c2 === gc_nMaxCol0) {
 					return false;
@@ -28401,7 +28513,7 @@ function isAllowPasteLink(pastedWb) {
 				} else {
 					selectionRange.assign(selectionRange.c2 + 1 * oneCol, selectionRange.r1, selectionRange.c2 + 1 * oneCol, selectionRange.r2);
 				}
-				_applyFillHandleSettings(new asc_Range(cloneSelection.c2, cloneSelection.r2, cloneSelection.c1, cloneSelection.r1), 0, 1);
+				_applyFillHandleSettings(new asc_Range(Math.max(selectionRange.c2, cloneSelection.c2), cloneSelection.r2, cloneSelection.c1, cloneSelection.r1), 0, 1);
 			}
 
 			return true;

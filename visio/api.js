@@ -1169,6 +1169,9 @@
 		if (isFromInput !== true && AscCommon.g_inputContext)
 			AscCommon.g_inputContext.setInterfaceEnableKeyEvents(value);
 	};
+	VisioEditorApi.prototype.isSlideShow = function () {
+		return false;
+	};
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};
 	window['Asc']['VisioEditorApi']                                       = VisioEditorApi;

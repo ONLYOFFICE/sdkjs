@@ -43,9 +43,10 @@ function CTableRow(Table, Cols, TableGrid)
     this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
     this.Table = Table; // Родительский класс таблицы
-
-    this.Next = null;
-    this.Prev = null;
+	
+	this.Index = -1;
+    this.Next  = null;
+    this.Prev  = null;
 
     this.Content = [];
     for ( var Index = 0; Index < Cols; Index++ )
@@ -54,6 +55,7 @@ function CTableRow(Table, Cols, TableGrid)
         this.Content[Index] = new CTableCell( this, ColW );
     }
 
+    this.private_LinkAllCells();
     this.Internal_ReIndexing();
 
     // Информация о рассчитанных метриках ячеек
@@ -86,9 +88,7 @@ function CTableRow(Table, Cols, TableGrid)
     if (typeof AscCommon.CollaborativeEditing !== "undefined")
         AscCommon.CollaborativeEditing.Add_NewDC(this);
     this.m_oContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
-
-    this.Index = 0;
-
+	
 	this.ReviewType = reviewtype_Common;
 	this.ReviewInfo = new AscWord.ReviewInfo();
 
@@ -136,6 +136,7 @@ CTableRow.prototype =
 			AscCommon.History.Add(new CChangesTableRowAddCell(Row, Index, [Row.Content[Index]]));
 		}
 
+		Row.private_LinkAllCells();
 		Row.Internal_ReIndexing();
 		Row.private_UpdateTableGrid();
         if(oPr && oPr.Comparison)
@@ -619,10 +620,12 @@ CTableRow.prototype =
 
 	Remove_Cell : function(Index)
 	{
-		this.Content[Index].PreDelete();
-		this.Content[Index].OnDetach();
-		
-		AscCommon.History.Add(new CChangesTableRowRemoveCell(this, Index, [this.Content[Index]]));
+		let cell = this.Content[Index];
+		cell.PreDelete();
+		cell.OnDetach();
+		this.private_UnlinkCell(cell);
+
+		AscCommon.History.Add(new CChangesTableRowRemoveCell(this, Index, [cell]));
 
 		this.Content.splice(Index, 1);
 		this.CellsInfo.splice(Index, 1);
@@ -644,28 +647,10 @@ CTableRow.prototype =
 		this.Content.splice(Index, 0, Cell);
 		this.CellsInfo.splice(Index, 0, {});
 
-		if (true === bReIndexing)
-		{
-			this.Internal_ReIndexing(Index);
-		}
-		else
-		{
-			if (Index > 0)
-			{
-				this.Content[Index - 1].Next = Cell;
-				Cell.Prev                    = this.Content[Index - 1];
-			}
-			else
-				Cell.Prev = null;
+		this.private_LinkCell(Index);
 
-			if (Index < this.Content.length - 1)
-			{
-				this.Content[Index + 1].Prev = Cell;
-				Cell.Next                    = this.Content[Index + 1];
-			}
-			else
-				Cell.Next = null;
-		}
+		if (true === bReIndexing)
+			this.Internal_ReIndexing(Index);
 
 		this.private_CheckCurCell();
 		this.private_UpdateTableGrid();
@@ -694,15 +679,12 @@ CTableRow.prototype =
     //-----------------------------------------------------------------------------------
     Internal_ReIndexing : function(StartIndex)
     {
-        if ( "undefined" === typeof(StartIndex) )
+        if (!StartIndex)
             StartIndex = 0;
 
         for ( var Ind = StartIndex; Ind < this.Content.length; Ind++ )
         {
             this.Content[Ind].SetIndex( Ind );
-            this.Content[Ind].Prev = ( Ind > 0 ? this.Content[Ind - 1] : null );
-            this.Content[Ind].Next = ( Ind < this.Content.length - 1 ? this.Content[Ind + 1] : null );
-            this.Content[Ind].Row  = this;
         }
     },
 
@@ -808,6 +790,7 @@ CTableRow.prototype =
 		this.ReviewInfo = new AscWord.ReviewInfo();
 		this.ReviewInfo.ReadFromBinary(Reader);
 
+		this.private_LinkAllCells();
 		this.Internal_ReIndexing();
 	}
 };
@@ -819,6 +802,14 @@ CTableRow.prototype.constructor = CTableRow;
 CTableRow.prototype.GetTable = function()
 {
 	return this.Table;
+};
+/**
+ * Set parent table
+ * @param {AscWord.Table | null} table
+ */
+CTableRow.prototype.SetTable = function(table)
+{
+	this.Table = table;
 };
 /**
  * Доступ к главному классу документа
@@ -850,6 +841,99 @@ CTableRow.prototype.SetIndex = function(nIndex)
 	{
 		this.Index = nIndex;
 		this.Recalc_CompiledPr();
+	}
+};
+/**
+ * Get the previous row of the parent table
+ * @returns {?CTableRow}
+ */
+CTableRow.prototype.GetPrev = function()
+{
+	return this.Prev;
+};
+/**
+ * Set the previous row of the parent table
+ * @param {?CTableRow} row
+ */
+CTableRow.prototype.SetPrev = function(row)
+{
+	this.Prev = row;
+};
+/**
+ * Get the next row of the parent table
+ * @returns {?CTableRow}
+ */
+CTableRow.prototype.GetNext = function()
+{
+	return this.Next;
+};
+/**
+ * Set the next row of the parent table
+ * @param {?CTableRow} row
+ */
+CTableRow.prototype.SetNext = function(row)
+{
+	this.Next = row;
+};
+/**
+ * Link the cell standing at the given position with its neighbours and with the parent row.
+ * Called after the cell has been put into this.Content
+ * @param {number} index
+ */
+CTableRow.prototype.private_LinkCell = function(index)
+{
+	let cell = this.Content[index];
+	if (!cell)
+		return;
+
+	let prev = index > 0 ? this.Content[index - 1] : null;
+	let next = index < this.Content.length - 1 ? this.Content[index + 1] : null;
+
+	cell.SetPrev(prev);
+	cell.SetNext(next);
+
+	if (prev)
+		prev.SetNext(cell);
+
+	if (next)
+		next.SetPrev(cell);
+
+	cell.SetRow(this);
+};
+/**
+ * Unlink the cell from its neighbours and from the parent row.
+ * Called before the cell is removed from this.Content
+ * @param {CTableCell} cell
+ */
+CTableRow.prototype.private_UnlinkCell = function(cell)
+{
+	if (!cell)
+		return;
+
+	let prev = cell.GetPrev();
+	let next = cell.GetNext();
+
+	if (prev)
+		prev.SetNext(next);
+
+	if (next)
+		next.SetPrev(prev);
+
+	cell.SetPrev(null);
+	cell.SetNext(null);
+
+	cell.SetIndex(-1);
+	cell.SetRow(null);
+};
+/**
+ * Link every cell of the row with its neighbours and with the row itself.
+ * Called when the whole content is filled at once, bypassing Add_Cell
+ */
+CTableRow.prototype.private_LinkAllCells = function()
+{
+	for (let index = 0, count = this.Content.length; index < count; ++index)
+	{
+		this.private_LinkCell(index);
 	}
 };
 CTableRow.prototype.GetDocumentPositionFromObject = function(arrPos)

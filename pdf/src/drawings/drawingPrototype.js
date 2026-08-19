@@ -746,6 +746,8 @@
         } else {
             // Write base64 binaryData
             let writer = new AscCommon.CBinaryFileWriter();
+			writer.tableStylesGuides = memory.context.tableStylesIdToGuid;
+			
             writer.WriteSpTreeElem(this);
             memory.WriteXmlString(writer.GetBase64Memory());
         }

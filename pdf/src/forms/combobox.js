@@ -69,7 +69,7 @@
         this.Recalculate();
         this.DrawBackground(oGraphicsPDF);
         
-        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) && !this.IsInForm() ? this.contentFormat : this.content;
+        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.format) && !this.IsInForm() ? this.contentFormat : this.content;
         this.curContent = oContentToDraw; // remember current content
 
         if (oDoc.activeForm == this)
@@ -234,7 +234,7 @@
             }
         }
 
-        let oOnFocus = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
+        let oOnFocus = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.onFocus);
         // call cursor positioning after onFocus. If already in focus, then immediately.
         if (false == isInFocus && oOnFocus && oOnFocus.Actions.length > 0)
             oActionsQueue.callbackAfterFocus = callbackAfterFocus.bind(this, x, y, e);
@@ -242,10 +242,10 @@
             callbackAfterFocus.bind(this, x, y, e)();
 
         if (isInFocus) {
-            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseDown);
+            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.mouseDown);
         }
         else {
-            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseDown, AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
+            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.mouseDown, AscPDF.PDF_TRIGGERS_TYPES.onFocus);
         }
     };
     
@@ -421,7 +421,7 @@
 		if (!oKeystrokeEvent["rc"])
 			return false;
 		
-		let oKeystrokeTrigger = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Keystroke);
+		let oKeystrokeTrigger = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.keystroke);
         if (oKeystrokeTrigger) {
             aChars = AscWord.CTextFormFormat.prototype.GetBuffer(oKeystrokeEvent["change"]);
         }
@@ -515,6 +515,10 @@
 
         this.SetNeedCommit(false);
     };
+	CComboBoxField.prototype.SetPlaceholder = function(sText) {
+		this.SetEditable(true);
+		return AscPDF.CTextField.prototype.SetPlaceholder.call(this, sText);
+	};
 	CComboBoxField.prototype.InsertChars = function(aChars) {
 		this.content.EnterText(aChars);
 	};
@@ -859,9 +863,8 @@
     CComboBoxField.prototype.GetDateFormat          = AscPDF.CTextField.prototype.GetDateFormat;
     CComboBoxField.prototype.GetFormatType          = AscPDF.CTextField.prototype.GetFormatType;
     CComboBoxField.prototype.GetFormatArgs          = AscPDF.CTextField.prototype.GetFormatArgs;
-    CComboBoxField.prototype.GetValidateType        = AscPDF.CTextField.prototype.GetValidateType;
-    CComboBoxField.prototype.GetValidateArgs        = AscPDF.CTextField.prototype.GetValidateArgs;
-    CComboBoxField.prototype.SetPlaceholder         = AscPDF.CTextField.prototype.SetPlaceholder;
+	CComboBoxField.prototype.GetKeystrokeType       = AscPDF.CTextField.prototype.GetKeystrokeType;
+    CComboBoxField.prototype.GetKeystrokeArgs       = AscPDF.CTextField.prototype.GetKeystrokeArgs;
     CComboBoxField.prototype.GetPlaceholder         = AscPDF.CTextField.prototype.GetPlaceholder;
     CComboBoxField.prototype.SetRegularExp          = AscPDF.CTextField.prototype.SetRegularExp;
     CComboBoxField.prototype.GetRegularExp          = AscPDF.CTextField.prototype.GetRegularExp;

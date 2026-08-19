@@ -5915,6 +5915,11 @@ StyleManager.prototype =
 		this.stylesConditionalIterator = null;
 		this.stylesConditional[rule.Get_Id()] = {ranges: ranges, formula: formula, rule: rule};
 	};
+	//formula returns true/false for the ordinary rules and a calculated xf for colorScale
+	SheetMergedStyles.prototype.isConditionalRuleTrue = function(rule, row, col) {
+		var elem = rule && this.stylesConditional[rule.Get_Id()];
+		return !!(elem && elem.formula(row, col));
+	};
 	SheetMergedStyles.prototype.clearConditionalStyle = function(multiplyRange) {
 		this.stylesConditionalIterator = null;
 		for (var i in this.stylesConditional) {
@@ -5949,17 +5954,29 @@ StyleManager.prototype =
 		rules.sort(function(v1, v2) {
 			return v2.rule.priority - v1.rule.priority;
 		});
-		for (var i = 0; i < rules.length; ++i) {
-			if (opt_AffectingText) {
-				let rule = rules[i].rule;
-				if (!(rule && rule.dxf && rule.dxf.isAffectingText())) {
-					continue;
-				}
+		//rules are sorted from the lowest priority to the highest(the highest wins on merge),
+		//but stopIfTrue requires the evaluation in the reverse order
+		var conditional = [];
+		for (var i = rules.length - 1; i >= 0; --i) {
+			var elem = rules[i];
+			var rule = elem.rule;
+			var stopIfTrue = !!(rule && rule.stopIfTrue);
+			var affectingText = !!(rule && rule.dxf && rule.dxf.isAffectingText());
+			if (opt_AffectingText && !affectingText && !stopIfTrue) {
+				continue;
 			}
-			var xf = rules[i].formula(row, col);
-			if (xf) {
-				res.conditional.push(xf);
+			var val = elem.formula(row, col);
+			var xf = ("boolean" === typeof val) ? (val ? rule.dxf : null) : val;
+			if (xf && (!opt_AffectingText || affectingText)) {
+				conditional.push(xf);
 			}
+			//a rule without dxf stops the lower priority rules as well
+			if (val && stopIfTrue) {
+				break;
+			}
+		}
+		for (var i = conditional.length - 1; i >= 0; --i) {
+			res.conditional.push(conditional[i]);
 		}
 		for (var i = 0; i < this.stylesTablePivot.length; ++i) {
 			var style = this.stylesTablePivot[i];
@@ -13165,6 +13182,17 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 
+	var reCheckFontsNewLine = /[\r\n]/g;
+	function checkFontsByText(text) {
+		if (!AscFonts.IsCheckSymbols) {
+			return;
+		}
+		if (-1 !== text.indexOf("\n") || -1 !== text.indexOf("\r")) {
+			text = text.replace(reCheckFontsNewLine, "");
+		}
+		AscFonts.FontPickerByCharacter.getFontsByString(text);
+	}
+
 	/**
 	 * @constructor
 	 * @memberOf AscCommonExcel
@@ -13185,9 +13213,7 @@ function RangeDataManagerElem(bbox, data)
 			allArray.push(text);
 			index = allArray.length;
 			textMap[text] = index;
-			if (AscFonts.IsCheckSymbols) {
-				AscFonts.FontPickerByCharacter.getFontsByString(text);
-			}
+			checkFontsByText(text);
 		}
 		return index;
 	};
@@ -13211,9 +13237,7 @@ function RangeDataManagerElem(bbox, data)
 			this.all.push(multiText);
 			index = this.all.length;
 			mapElem.push(index);
-			if (AscFonts.IsCheckSymbols) {
-				AscFonts.FontPickerByCharacter.getFontsByString(text);
-			}
+			checkFontsByText(text);
 		}
 		return index;
 	};
@@ -13262,17 +13286,13 @@ function RangeDataManagerElem(bbox, data)
 	CSharedStrings.prototype._addSharedStringCacheByIndex = function(text, index) {
 		if (typeof text === 'string') {
 			this.text[text] = index;
-			if (AscFonts.IsCheckSymbols) {
-				AscFonts.FontPickerByCharacter.getFontsByString(text);
-			}
+			checkFontsByText(text);
 		} else {
 			let key = "";
 			for (let j = 0; j < text.length; ++j) {
 				key += text[j].text;
 			}
-			if (AscFonts.IsCheckSymbols) {
-				AscFonts.FontPickerByCharacter.getFontsByString(key);
-			}
+			checkFontsByText(key);
 			var mapElem = this.multiTextMap[key];
 			if (!mapElem) {
 				mapElem = [];
@@ -14161,14 +14181,18 @@ function RangeDataManagerElem(bbox, data)
 
 	CHeaderFooter.prototype.setAlignWithMargins = function (newVal) {
 		var oldVal = this.alignWithMargins;
-		var defaultVal = null === oldVal && (newVal === 1 || newVal === true);
+		//null means the default value - true(see getAlignWithMargins), so compareValues is not suitable here:
+		//it treats null and false as equal and false can never be applied over null
+		var newBoolVal = null == newVal ? null : (1 === newVal || true === newVal);
+		var oldBoolVal = null == oldVal ? null : (1 === oldVal || true === oldVal);
+		var defaultVal = null === oldBoolVal && true === newBoolVal;
 
-		if(!compareValues(oldVal, newVal) && !defaultVal) {
-			this.alignWithMargins = newVal;
+		if(oldBoolVal !== newBoolVal && !defaultVal) {
+			this.alignWithMargins = newBoolVal;
 
 			if (this.ws && AscCommon.History.Is_On()) {
 				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoHeaderFooter, AscCH.historyitem_Align_With_Margins, this.ws.getId(),
-					null, new UndoRedoData_Layout(oldVal, newVal));
+					null, new UndoRedoData_Layout(oldVal, newBoolVal));
 			}
 		}
 	};

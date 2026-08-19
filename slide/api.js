@@ -2995,10 +2995,19 @@ background-repeat: no-repeat;\
 		var graphicObjects = _presentation.GetCurrentController();
 		if (graphicObjects)
 		{
+			const view = _presentation.GetOutlineView();
 			var sLoadFont = null, sLoadText = null;
 			var fCallback = function()
 			{
-				graphicObjects.paraApplyCallback(Props);
+				if (_presentation.IsFocusOnOutline()) {
+					view.checkSelectedObjectsAndCallback(function () {
+						view.paraApplyCallback(Props);
+					}, AscDFH.historydescription_Presentation_ParaApply);
+				} else {
+					graphicObjects.checkSelectedObjectsAndCallback(function () {
+						graphicObjects.paraApplyCallback(Props);
+					}, [], false, AscDFH.historydescription_Presentation_ParaApply);
+				}
 				_presentation.Document_UpdateInterfaceState();
 			};
 			var oBullet = Props.asc_getBullet();
@@ -3016,23 +3025,19 @@ background-repeat: no-repeat;\
 				var isasync  = loader.LoadFont(fontinfo);
 				if (false === isasync)
 				{
-					AscFonts.FontPickerByCharacter.checkText(sLoadText, this, function () {
-						graphicObjects.checkSelectedObjectsAndCallback(fCallback, [], false, AscDFH.historydescription_Presentation_ParaApply);
-					});
+					AscFonts.FontPickerByCharacter.checkText(sLoadText, this, fCallback);
 				}
 				else
 				{
 					this.asyncMethodCallback = function()
 					{
-						AscFonts.FontPickerByCharacter.checkText(sLoadText, this, function () {
-							graphicObjects.checkSelectedObjectsAndCallback(fCallback, [], false, AscDFH.historydescription_Presentation_ParaApply);
-						});
+						AscFonts.FontPickerByCharacter.checkText(sLoadText, this, fCallback);
 					}
 				}
 			}
 			else
 			{
-				graphicObjects.checkSelectedObjectsAndCallback(fCallback, [], false, AscDFH.historydescription_Presentation_ParaApply);
+				fCallback();
 			}
 		}
 	};
@@ -7181,7 +7186,7 @@ background-repeat: no-repeat;\
 
 		if(aSlides.length === 1) {
 			let oSlideLikeObject = aSlides[0];
-			if(oSlideLikeObject.isMaster()) {
+			if(oSlideLikeObject.isSlideMaster()) {
 				obj.put_MasterName(oSlideLikeObject.getName())
 			}
 			else if(oSlideLikeObject.isLayout()) {
@@ -8192,6 +8197,66 @@ background-repeat: no-repeat;\
 
 		_tr.Start(true, endCallback);
 		return _tr;
+	};
+
+	asc_docs_api.prototype.asc_isExportToAnimationSupported = function(format)
+	{
+		return AscCommonSlide.isAnimExportFormatSupported(format);
+	};
+
+	asc_docs_api.prototype.asc_getSupportedAnimatedExportFormats = function(callback)
+	{
+		AscCommonSlide.getSupportedAnimExportFormats(callback);
+	};
+
+	asc_docs_api.prototype.asc_getAnimatedExportPresets = function(format)
+	{
+		const presentation = this.private_GetLogicDocument();
+		if (!presentation)
+			return [];
+
+		const widthMM = presentation.GetWidthMM();
+		const heightMM = presentation.GetHeightMM();
+		const presets = AscCommonSlide.getAnimatedExportPresetList(format);
+		const result = [];
+		for (let index = 0; index < presets.length; ++index)
+		{
+			const preset = presets[index];
+			const height = AscCommonSlide.getAnimatedExportPresetHeight(format, preset) & ~1;
+			const width = Math.round(height * widthMM / heightMM) & ~1;
+			result.push(new Asc.CAscAnimatedExportPresetInfo(preset, width, height,
+				AscCommonSlide.getAnimatedExportPresetFps(format, preset)));
+		}
+		return result;
+	};
+
+	asc_docs_api.prototype.asc_ExportToAnimation = function(settings)
+	{
+		if (this.isLongAction())
+			return false;
+		if (!this.private_GetLogicDocument())
+			return false;
+		if (this.animatedExporter && this.animatedExporter.IsInProgress())
+			return false;
+
+		const demonstrationManager = this.WordControl.DemonstrationManager;
+		if (demonstrationManager && demonstrationManager.Mode)
+			return false;
+
+		const exportSettings = settings || new Asc.CAscAnimatedExportSettings();
+		if (!this.asc_isExportToAnimationSupported(exportSettings.asc_getFormat()))
+			return false;
+
+		this.animatedExporter = new AscCommonSlide.CAnimatedExporter(this, exportSettings);
+		this.animatedExporter.start();
+		return true;
+	};
+
+	asc_docs_api.prototype.asc_stopExportToAnimation = function()
+	{
+		if (!this.animatedExporter)
+			return false;
+		return this.animatedExporter.cancel();
 	};
 
 	asc_docs_api.prototype.asc_HideSlides   = function(isHide)
@@ -9404,9 +9469,9 @@ background-repeat: no-repeat;\
 	// print-preview
 	asc_docs_api.prototype.asc_initPrintPreview = function(containerId, options)
 	{
-		if (this.printPreview)
-			return null;
-		this.printPreview = new AscCommon.CPresentationPrintPreview(this, containerId);
+		if (!this.printPreview) {
+			this.printPreview = new AscCommon.CPresentationPrintPreview(this, containerId);
+		}
 		this.printPreview.initPrinter(options.advancedOptions);
 		const logicDocument = this.private_GetLogicDocument();
 		logicDocument && logicDocument.Document_UpdateInterfaceState();
@@ -9476,7 +9541,9 @@ background-repeat: no-repeat;\
 		const oldViewManager = this.presentationViewManager;
 		this.presentationViewManager = AscCommon.getViewModeByType(mode, this);
 		this.updateViewMode(oldViewManager);
-		this.sendEvent("asc_onChangeViewMode", mode);
+		if (this.presentationViewManager.isInterfaceType()) {
+			this.sendEvent("asc_onChangeViewMode", mode);
+		}
 	};
 	asc_docs_api.prototype.updateViewMode = function(oldViewManager) {
 		if(!this.WordControl) {
@@ -10101,6 +10168,11 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['ApplySlideTransition']                = asc_docs_api.prototype.ApplySlideTransition;
 	asc_docs_api.prototype['SlideTransitionApplyToAll']           = asc_docs_api.prototype.SlideTransitionApplyToAll;
 	asc_docs_api.prototype['SlideTransitionPlay']                 = asc_docs_api.prototype.SlideTransitionPlay;
+	asc_docs_api.prototype['asc_ExportToAnimation']               = asc_docs_api.prototype.asc_ExportToAnimation;
+	asc_docs_api.prototype['asc_stopExportToAnimation']           = asc_docs_api.prototype.asc_stopExportToAnimation;
+	asc_docs_api.prototype['asc_isExportToAnimationSupported']    = asc_docs_api.prototype.asc_isExportToAnimationSupported;
+	asc_docs_api.prototype['asc_getSupportedAnimatedExportFormats'] = asc_docs_api.prototype.asc_getSupportedAnimatedExportFormats;
+	asc_docs_api.prototype['asc_getAnimatedExportPresets']        = asc_docs_api.prototype.asc_getAnimatedExportPresets;
 	asc_docs_api.prototype['asc_HideSlides']                      = asc_docs_api.prototype.asc_HideSlides;
 	asc_docs_api.prototype['SetTextBoxInputMode']                 = asc_docs_api.prototype.SetTextBoxInputMode;
 	asc_docs_api.prototype['GetTextBoxInputMode']                 = asc_docs_api.prototype.GetTextBoxInputMode;

@@ -535,6 +535,7 @@ CHyperlinkAnchor.prototype.GetHeadingParagraph = function()
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].ParaHyperlink = ParaHyperlink;
+window["AscWord"].ParaHyperlink = ParaHyperlink;
 
 CHyperlinkAnchor.prototype['asc_GetType']             = CHyperlinkAnchor.prototype.GetType;
 CHyperlinkAnchor.prototype['asc_GetBookmarkName']     = CHyperlinkAnchor.prototype.GetBookmarkName;

@@ -3502,6 +3502,10 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 		x = anchorPosition.Calculate_X_Value(Asc.c_oAscRelativeFromH.Page);
 		y = anchorPosition.Calculate_Y_Value(Asc.c_oAscRelativeFromV.Page);
 	}
+	
+	AscCommon.executeNoPreDelete(function(){
+		oParent.RemoveFromContent(nPosInParent, 1, true);
+	}, oLogicDocument);
 
 	let drawing = this.private_ConvertFormToFixed(nW, nH);
 	drawing.Set_PositionH(Asc.c_oAscRelativeFromH.Page, false, x, false);
@@ -3512,7 +3516,7 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 	drawing.Set_BehindDoc(false);
 	drawing.Set_LayoutInCell(false);
 	
-	var oRun = new ParaRun(oParagraph, false);
+	var oRun = new AscWord.Run();
 	oRun.AddToContent(0, drawing);
 
 	// Этот код выравнивает позицию рана по вертикали, чтобы после конвертации типа формы текст внутри автофигуры
@@ -3532,10 +3536,7 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 	// 	oInnerRun.Recalc_CompiledPr(true);
 	// }
 	
-	AscCommon.executeNoPreDelete(function(){
-		oParent.RemoveFromContent(nPosInParent, 1, true);
-		oParent.AddToContent(nPosInParent, oRun, true);
-	}, oLogicDocument);
+	oParent.AddToContent(nPosInParent, oRun, true);
 	
 	if (this.IsAutoFitContent())
 		oLogicDocument.CheckFormAutoFit(this);

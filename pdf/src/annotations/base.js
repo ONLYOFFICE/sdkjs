@@ -699,7 +699,7 @@
             if (this.IsHighlight())
                 AscPDF.startMultiplyMode(oGraphicsPDF.GetContext());
             
-            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
+            oGraphicsPDF.SetGlobalAlpha(1);
             oGraphicsPDF.DrawImageXY(originView, X, Y, undefined, true);
             AscPDF.endMultiplyMode(oGraphicsPDF.GetContext());
         }
@@ -1125,12 +1125,6 @@
         this.SetWasChanged(true, false);
         if (bSendAddCommentEvent)
             oDoc.CheckComment(this);
-        
-        if (this._contents == null && this.IsUseInDocument())
-            Asc.editor.sync_RemoveComment(this.GetId());
-    };
-    CAnnotationBase.prototype.IsUseContentAsComment = function() {
-        return !(this.IsFreeText() || this.IsLine() && this.IsDoCaption());
     };
     CAnnotationBase.prototype.Recalculate = function(bForce) {
         if (!this.IsShapeBased()) {
@@ -1302,18 +1296,12 @@
         AscCommon.History.Add(new CChangesPDFAnnotCommentData(this, oCurData, oCommentData));
         this.SetWasChanged(true, false);
         
-        if (oCommentData == null) {
-            this._replies.length = 0;
-            Asc.editor.sync_RemoveComment(this.GetId());
-            return;
-        }
-
         let oFirstCommToEdit;
         if (this.GetId() == oCommentData.m_sUserData)
             oFirstCommToEdit = this;
         else {
             oFirstCommToEdit = this._replies.find(function(oReply) {
-                return oCommentData.m_sUserData == oReply.GetId(); 
+                return oCommentData.SetUserData(oReply.GetId()); 
             });
         }
         
@@ -1340,7 +1328,7 @@
                 continue;
 
             oReplyCommentData = oCommentData.m_aReplies.find(function(item) {
-                return item.m_sUserData == oReply.GetId(); 
+                return item.SetUserData(oReply.GetId()); 
             });
 
             if (oReplyCommentData) {
@@ -1359,7 +1347,7 @@
         for (let i = 0; i < oCommentData.m_aReplies.length; i++) {
             oReplyCommentData = oCommentData.m_aReplies[i];
             if (!this._replies.find(function(reply) {
-                return oReplyCommentData.m_sUserData == reply.GetId();
+                return oReplyCommentData.SetUserData(reply.GetId());
             })) {
                this.AddReplyByCommentData(oReplyCommentData, i);
             }
@@ -1391,20 +1379,19 @@
         Asc.editor.sync_ChangeCommentData(this.GetId(), oCommentData);
     };
     CAnnotationBase.prototype.GetAscCommentData = function() {
-        let oAscCommData = new Asc.asc_CCommentDataWord(null);
-        if (null == this.GetContents()) {
-            return undefined;
-        }
-
+        let oAscCommData = new Asc.asc_CCommentDataPDF(null);
         oAscCommData.asc_putText(this.GetContents());
-        let sModDate = this.GetModDate();
-        if (sModDate)
-            oAscCommData.asc_putOnlyOfficeTime(sModDate.toString());
+
+        let sCreationDate = this.GetCreationDate();
+        if (sCreationDate)
+            oAscCommData.asc_putOnlyOfficeTime(sCreationDate.toString());
         oAscCommData.asc_putUserId(this.GetUserId());
         oAscCommData.asc_putUserName(this.GetAuthor());
+
         oAscCommData.asc_putSolved(false);
         oAscCommData.asc_putQuoteText("");
         oAscCommData.asc_putUserData(this.GetId());
+		oAscCommData.asc_putAnnotType(this.GetType());
 
         this._replies.forEach(function(reply) {
             let oReplyAscCommData = reply.GetAscCommentData();
@@ -1759,12 +1746,15 @@
 					if (this.GetIconType() == AscPDF.STAMP_TYPES.Signature) {
 						let aImages = [];
 						this.getAllRasterImages(aImages);
-
-						let sPathToImg = AscCommon.getFullImageSrc2(aImages[0]);
-						oMeta["img"] = {
-							"id": aImages[0],
-							"url": sPathToImg
-						};
+						
+						if (aImages[0]) {
+							let sPathToImg = AscCommon.getFullImageSrc2(aImages[0]);
+							oMeta["img"] = {
+								"id": aImages[0],
+								"url": sPathToImg
+							};
+							oMeta["InRect"] = this.GetInRect();
+						}
 					}
                 }
                 if (this.IsFromOO()) {

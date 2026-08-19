@@ -477,6 +477,10 @@
 				  self.resize.apply(self, arguments);
 			  }, "gotFocus": function (hasFocus) {
 				  if (self.isCellEditMode) {
+					  if (hasFocus) {
+						  // the mouse went to the worksheet, the top line gives the keyboard back
+						  self.cellEditor._topLineLostFocus();
+					  }
 					  self.cellEditor.setFocus(!hasFocus);
 				  }
 			  }, "initRowsCount": function () {
@@ -1035,6 +1039,7 @@
         }
         ws.updateRanges(oRanges, skipHeight);
       }
+      self._handleDrawingsOnInactiveSheetChange(wsId, oRanges);
     });
     this.model.handlers.add("changeWorksheetUpdate", function(wsId, val) {
       var ws = self.getWorksheetById(wsId);
@@ -4387,6 +4392,28 @@
 					this.onShowDrawingObjects();
 				}
     };
+	WorkbookView.prototype._handleDrawingsOnInactiveSheetChange = function (wsId, oRanges) {
+		if (!oRanges || !oRanges.length) {
+			return;
+		}
+		if (!this.Api.isDocumentLoadComplete || this.model.bCollaborativeChanges) {
+			return;
+		}
+		const wsModel = this.model.getWorksheetById(wsId);
+		if (!wsModel) {
+			return;
+		}
+		const oActiveWS = this.getActiveWS();
+		if (oActiveWS && oActiveWS.getId() === wsId) {
+			return;
+		}
+		const aRanges = [];
+		for (let i = 0; i < oRanges.length; ++i) {
+			const oBBox = oRanges[i];
+			aRanges.push(new AscCommonExcel.Range(wsModel, oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2));
+		}
+		this.handleDrawingsOnWorkbookChange(aRanges);
+	};
 	WorkbookView.prototype.handleDrawingsOnWorkbookOpening = function (aRanges) {
 		if(!Array.isArray(aRanges) || aRanges.length === 0) {
 			return;

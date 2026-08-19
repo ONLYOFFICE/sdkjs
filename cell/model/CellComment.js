@@ -442,7 +442,24 @@ function (window, undefined) {
 	asc_CCommentData.prototype.setSolved = function (isSolved) {
 		this.bSolved = isSolved;
 	};
+	var oPlaceholderUserNamePattern = /^tc=\{[\dA-Fa-f]{8}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{12}\}$/;
+	function isPlaceholderUserName(sUserName) {
+		return !!sUserName && oPlaceholderUserNamePattern.test(sUserName);
+	}
 	asc_CCommentData.prototype.convertToThreadedComment = function () {
+		//persons/threadedComments may be lost(WPS), then the "tc={guid}" placeholder becomes the author name
+		while (isPlaceholderUserName(this.sUserName)) {
+			var nSeparator = this.sText ? this.sText.indexOf(":\n") : -1;
+			if (-1 === nSeparator) {
+				this.sUserName = "";
+				break;
+			}
+			this.sUserName = this.sText.slice(0, nSeparator);
+			this.sText = this.sText.slice(nSeparator + 2);
+			if (this.sText.endsWith("\n")) {
+				this.sText = this.sText.slice(0, -1);
+			}
+		}
 		var prefix = this.sUserName + ":\n";
 		if (this.sText && this.sText.startsWith(prefix)) {
 			this.sText = this.sText.slice(prefix.length);

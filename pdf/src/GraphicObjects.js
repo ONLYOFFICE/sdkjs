@@ -577,7 +577,7 @@
                         if (arr[i].getDocContent) {
                             if (arr[i].IsDrawing() && arr[i].IsEditFieldShape()) {
                                 let oField = arr[i].GetEditField();
-                                let oContent = oField.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) ? oField.contentFormat : oField.content;
+                                let oContent = oField.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.format) ? oField.contentFormat : oField.content;
                                 let oCalcedTextPr = oContent ? oContent.GetCalculatedTextPr() : null;
 
                                 cur_pr = new AscWord.CTextPr();
@@ -652,7 +652,13 @@
         let oViewer     = Asc.editor.getDocumentRenderer();
         let oPageInfo   = oViewer.pagesInfo.pages[nPage];
         
-        return oPageInfo ? oPageInfo.annots : [];
+        return oPageInfo ? oPageInfo.annots.filter(function(annot) {
+			if (annot.IsLink() || (annot.IsRedact() && annot.GetRedactId())) {
+				return false;
+			}
+
+			return true;
+		}) : [];
     };
     CGraphicObjects.prototype.getFieldEditShapeObjects = function(nPage) {
         let oViewer     = Asc.editor.getDocumentRenderer();
@@ -1643,13 +1649,14 @@
 						return;
                     }
 
-                    let nType = oDrawing.IsAnnot() && oDrawing.IsStamp() ? AscFormat.TYPE_TRACK.ANNOT_STAMP : AscFormat.TYPE_TRACK.SHAPE;
+					let isAnnot = oDrawing.IsAnnot();
+                    let nType = isAnnot && oDrawing.IsStamp() ? AscFormat.TYPE_TRACK.ANNOT_STAMP : AscFormat.TYPE_TRACK.SHAPE;
 
-                    if (oDrawing.IsAnnot() && (oDrawing.IsTextMarkup() || oDrawing.IsText())) {
+                    if (isAnnot && (oDrawing.IsTextMarkup() || oDrawing.IsText())) {
                         oDrawing.DrawSelected(this.document.Viewer.overlay);
                     }
                     else {
-                        if (oDrawing.IsAnnot() && oDrawing.IsFreeText()) {
+                        if (isAnnot && oDrawing.IsFreeText()) {
                             drawingDocument.DrawTrack(
                                 nType,
                                 oDrawing.getTransformMatrix(),
@@ -1664,18 +1671,22 @@
                             );
                         }
                         else {
-                            drawingDocument.DrawTrack(
-                                nType,
-                                oDrawing.getTransformMatrix(),
-                                0,
-                                0,
-                                oDrawing.extX,
-                                oDrawing.extY,
-                                AscFormat.CheckObjectLine(oDrawing),
-                                oDrawing.canRotate(),
-                                undefined,
-                                (isDrawHandles || this.document.IsViewerObject(oDrawing)) && oDrawing.canEdit()
-                            );
+							if (isAnnot && oDrawing.IsLink() && !Asc.editor.canEdit()) {
+								return;
+							}
+
+							drawingDocument.DrawTrack(
+								nType,
+								oDrawing.getTransformMatrix(),
+								0,
+								0,
+								oDrawing.extX,
+								oDrawing.extY,
+								AscFormat.CheckObjectLine(oDrawing),
+								oDrawing.canRotate(),
+								undefined,
+								(isDrawHandles || this.document.IsViewerObject(oDrawing)) && oDrawing.canEdit()
+							);
                         }
                     }
                 }
@@ -1974,7 +1985,7 @@
                                 oField.SetAlign(AscPDF.getPdfTypeAlignByInternal(args[0]));
                             }
                             else if (f == CDocumentContent.prototype.IncreaseDecreaseFontSize) {
-                                let oContent = oField.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) ? oField.contentFormat : oField.content;
+                                let oContent = oField.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.format) ? oField.contentFormat : oField.content;
                                 let oCalcedTextPr = oContent.GetCalculatedTextPr();
                                 
                                 let nCurFontSize = oCalcedTextPr.GetFontSize();

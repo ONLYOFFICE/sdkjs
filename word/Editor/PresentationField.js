@@ -117,7 +117,7 @@
 
     CPresentationField.prototype.Copy2 = function()
     {
-        this.Copy();
+        return this.Copy();
     };
 
     CPresentationField.prototype.SetGuid = function(sGuid)

@@ -2066,12 +2066,16 @@ ParaMath.prototype.recalculateCursorPosition = function(positionCalculator, isCu
 };
 ParaMath.prototype.Refresh_RecalcData = function(Data)
 {
-    this.Paragraph.Refresh_RecalcData2(0);
+    let paragraph = this.GetParagraph();
+    if (paragraph)
+        paragraph.Refresh_RecalcData2(0);
 };
 
 ParaMath.prototype.Refresh_RecalcData2 = function(Data)
 {
-    this.Paragraph.Refresh_RecalcData2(0);
+    let paragraph = this.GetParagraph();
+    if (paragraph)
+        paragraph.Refresh_RecalcData2(0);
 };
 
 ParaMath.prototype.RecalculateMinMaxContentWidth = function(MinMax)
@@ -2396,6 +2400,16 @@ ParaMath.prototype.MathToImageConverter = function(bCopy, _canvasInput, _widthPx
 
     var w_mm = W;
     var h_mm = H;
+
+    // The formula border is drawn exactly along its bounds, so the right and bottom lines require
+    // a one-pixel margin; otherwise, they fall outside the canvas. The margin is specified in
+    // millimeters to avoid changing the mm-to-px scale, which is calculated as w_px / w_mm.
+    if (this.private_HaveBorderOnBounds())
+    {
+        w_mm += 1 / dKoef;
+        h_mm += 1 / dKoef;
+    }
+
     var w_px = (w_mm * dKoef) >> 0;
     var h_px = (h_mm * dKoef) >> 0;
 
@@ -2983,6 +2997,24 @@ ParaMath.prototype.Get_JointSize = function()
     }
 
     return {W: W, H: H};
+};
+ParaMath.prototype.private_HaveBorderOnBounds = function()
+{
+    let Content = this.Root.Content;
+
+    for (let pos = 0; pos < Content.length; ++pos)
+    {
+        var element = Content[pos];
+
+        if (MATH_BORDER_BOX !== element.kind)
+            continue;
+
+        var oPr = element.Pr;
+        if (!oPr.hideBot || !oPr.hideRight || oPr.strikeTLBR || oPr.strikeBLTR)
+            return true;
+    }
+
+    return false;
 };
 ParaMath.prototype.private_GetBounds = function(Content)
 {

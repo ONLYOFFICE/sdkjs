@@ -116,6 +116,7 @@ var editor;
 
     // AutoSave
     this.autoSaveGapRealTime = 30;	  // Fast autosave interval (when realtime flag is set) - 30 ms.
+    this.bAutoSaveCellEditMode = false;
 
     // Shapes
     this.isStartAddShape = false;
@@ -415,7 +416,7 @@ var editor;
 
       /* Need to close the editor (before setting the canSave flag, because we must send
        asc_onDocumentModifiedChanged for assembly subscription in time) Bug http://bugzilla.onlyoffice.com/show_bug.cgi?id=28331 */
-		if (!this.asc_closeCellEditor()) {
+		if (!this.bAutoSaveCellEditMode && !this.asc_closeCellEditor()) {
 			if (isIdle) {
 				this.asc_closeCellEditor(true);
 			} else {
@@ -6874,7 +6875,8 @@ var editor;
   ////////////////////////////AutoSave api/////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 	spreadsheet_api.prototype._autoSaveInner = function () {
-		if (this.asc_getCellEditMode() || this.asc_getIsTrackShape()) {
+		var bKeepCellEditor = this.asc_getCellEditMode() && this.collaborativeEditing.Is_SingleUser();
+		if ((this.asc_getCellEditMode() && !bKeepCellEditor) || this.asc_getIsTrackShape()) {
 		  return;
         }
 
@@ -6919,7 +6921,9 @@ var editor;
                 (this.collaborativeEditing.getCollaborativeEditing() ? this.autoSaveGapSlow : this.autoSaveGapFast);
             var gap = _curTime - this.lastSaveTime - saveGap;
             if (0 <= gap) {
+                this.bAutoSaveCellEditMode = bKeepCellEditor;
                 this.asc_Save(true);
+                this.bAutoSaveCellEditMode = false;
             }
             if (AscCommon.CollaborativeEditing.Is_Fast() /*&& !AscCommon.CollaborativeEditing.Is_SingleUser()*/) {
                 this.wb.sendCursor();

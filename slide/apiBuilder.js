@@ -2339,17 +2339,35 @@
 	/**
 	 * Add text to the document on the cursor position.
 	 * @memberof ApiPresentation
-	 * @param {string} sText - The text to add to document.
+	 * @param {string} text - The text to add to document. The "\n" characters are added as line breaks, the "\t"
+	 * characters are added as tabs, the "\r" characters are skipped.
 	 * @returns {boolean}
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/EnterText.js
 	 */
-	ApiPresentation.prototype.EnterText = function(sText)
+	ApiPresentation.prototype.EnterText = function(text)
 	{
-		this.Presentation.EnterText(sText);
+		text = AscBuilder.GetStringParameter(text, null);
+		if (null === text)
+			AscBuilder.throwException(new Error("The 'text' parameter must be a string"));
+
+		let parts = text.replace(/\r/g, "").split(/([\t\n])/);
+		for (let index = 0; index < parts.length; ++index)
+		{
+			let part = parts[index];
+			if ("" === part)
+				continue;
+
+			if ("\t" === part)
+				this.Presentation.AddToParagraph(new AscWord.CRunTab(), false, true);
+			else if ("\n" === part)
+				this.Presentation.AddNewParagraph();
+			else
+				this.Presentation.EnterText(part);
+		}
 		return true;
-	}
+	};
 
 	/**
 	 * Add paragraph to the document on the cursor position.
@@ -7596,13 +7614,13 @@
 	ApiDrawing.prototype.Fill = function(oFill)
 	{
 		const classType = this.GetClassType();
-		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
+		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt")
 			return false;
 
 		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
 			return false;
 
-		if (classType === "smartArt")
+		if (classType === "smartArt" || classType === "group")
 		{
 			this.Drawing.changeFill(oFill.UniFill);
 			return true;
@@ -7663,7 +7681,7 @@
 	ApiDrawing.prototype.SetOutLine = function(stroke)
 	{
 		const classType = this.GetClassType();
-		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
+		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt")
 			return false;
 
 		if (!stroke || !stroke.GetClassType || stroke.GetClassType() !== "stroke")
@@ -10548,7 +10566,7 @@
 
 		let nTotalBefore = this.private_GetTotalLength();
 		// TODO: the restored state does not follow the inserted text, position tracking is needed here
-		let oState = this.DocContent.Get_SelectionState2();
+		let oState = this.DocContent.GetSelectionState();
 
 		oRun.SetCursorPosition(nInRunPos);
 		let oNewRun = oRun.CheckRunBeforeAdd();
@@ -10560,7 +10578,7 @@
 
 		oRun.SetCursorPosition(oRun.AddText(text, nInRunPos));
 
-		this.DocContent.Set_SelectionState2(oState);
+		this.DocContent.SetSelectionState(oState);
 
 		let nDelta = this.private_GetTotalLength() - nTotalBefore;
 		if (nDelta > 0 && this.EndPos !== -1)
@@ -10610,11 +10628,10 @@
 		let nStart = this.private_GetEffectiveStart();
 		let nEnd   = this.private_GetEffectiveEnd();
 
-		let oState = oDocContent.Get_SelectionState2();
+		let oState = oDocContent.GetSelectionState();
 		oDocContent.SelectCharRange(nStart, nEnd, false);
 		let sText = oDocContent.GetSelectedText(false, _options);
-		oDocContent.RemoveSelection();
-		oDocContent.Set_SelectionState2(oState);
+		oDocContent.SetSelectionState(oState);
 
 		return sText || '';
 	};
@@ -10701,18 +10718,11 @@
 	 * Selects the text range in the editor.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE"]
-	 * @param {boolean} [update=true] - Specifies whether the previous selection is removed, the range becomes the current
-	 * editor position and the selection state is updated (true) or the selection is set without changing the editor state (false).
 	 * @returns {boolean}
 	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/Select.js
 	 */
-	ApiTextRange.prototype.Select = function(update) {
-		if (typeof update !== 'boolean') {
-			AscBuilder.throwException(new Error('Invalid type of parameter "update".'));
-			return false;
-		}
-
+	ApiTextRange.prototype.Select = function() {
 		let oDocContent    = this.DocContent;
 		let oDrawingShape  = oDocContent && oDocContent.Is_DrawingShape && oDocContent.Is_DrawingShape(true);
 		if (!oDrawingShape)
@@ -10722,14 +10732,12 @@
 		if (!oController)
 			return false;
 
-		if (update) {
-			let oPresentation = private_GetPresentation();
-			if (oPresentation)
-				oPresentation.RemoveSelection();
-			oController.resetSelection();
-		}
+		let oPresentation = private_GetPresentation();
+		if (oPresentation)
+			oPresentation.RemoveSelection();
 
-		oDrawingShape.Set_CurrentElement(update, 0, true, update);
+		oController.resetSelection();
+		oDrawingShape.Set_CurrentElement(true, 0, true, true);
 		oController.resetInternalSelection();
 		oController.selection.textSelection = oDrawingShape;
 
@@ -10742,10 +10750,6 @@
 		else
 			oDocContent.SelectCharRange(nStart, nEnd);
 
-		if (update) {
-			oController.updateSelectionState();
-			oController.updateOverlay();
-		}
 		return true;
 	};
 
@@ -11035,31 +11039,19 @@
 		return this.SetText(result);
 	};
 
-
-	ApiTextRange.prototype.private_ApplyTextPr = function(oProps) {
+	ApiTextRange.prototype.private_ApplyTextPr = function(props) {
 		let oDocContent = this.DocContent;
 		if (!oDocContent)
 			return this;
 
-		let nStart = this.private_GetEffectiveStart();
-		let nEnd   = this.private_GetEffectiveEnd();
-		oDocContent.SelectCharRange(nStart, nEnd, false);
+		let start	= this.private_GetEffectiveStart();
+		let end		= this.private_GetEffectiveEnd();
+		let state	= oDocContent.GetSelectionState();
 
-		oDocContent.AddToParagraph(new AscCommonWord.ParaTextPr(oProps), false);
-
-		let oState = oDocContent.Get_SelectionState2();
-		oDocContent.RemoveSelection();
-		oDocContent.Set_SelectionState2(oState);
-
+		oDocContent.SelectCharRange(start, end, false);
+		oDocContent.AddToParagraph(new AscCommonWord.ParaTextPr(props), false);
+		oDocContent.SetSelectionState(state);
 		oDocContent.Recalculate();
-
-		let oDrawingShape = oDocContent.Is_DrawingShape && oDocContent.Is_DrawingShape(true);
-		let oController   = oDrawingShape && oDrawingShape.getDrawingObjectsController && oDrawingShape.getDrawingObjectsController();
-		if (oController) {
-			oController.updateSelectionState();
-			oController.updateOverlay();
-		}
-
 		return this;
 	};
 
@@ -11067,15 +11059,13 @@
 		let oDocContent = this.DocContent;
 		if (!oDocContent) return null;
 
-		let nStart = this.private_GetEffectiveStart();
-		let nEnd   = this.private_GetEffectiveEnd();
-		let oState = oDocContent.Get_SelectionState2();
+		let start = this.private_GetEffectiveStart();
+		let end   = this.private_GetEffectiveEnd();
+		let oState = oDocContent.GetSelectionState();
 
-		oDocContent.SelectCharRange(nStart, nEnd, false);
+		oDocContent.SelectCharRange(start, end, false);
 		let textPr = oDocContent.GetCalculatedTextPr();
-
-		oDocContent.RemoveSelection();
-		oDocContent.Set_SelectionState2(oState);
+		oDocContent.SetSelectionState(oState);
 
 		return textPr;
 	};

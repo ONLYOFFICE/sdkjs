@@ -265,6 +265,14 @@
 			"slide/Drawing/printer/common-printer.js",
 			"slide/Drawing/printer/comments-printer.js",
 			"slide/Drawing/printer/printer.js",
+
+			"slide/Drawing/export/gif-encoder.js",
+			"slide/Drawing/export/muxers.js",
+			"slide/Drawing/export/timeline.js",
+			"slide/Drawing/export/writers.js",
+			"slide/Drawing/export/frame-source.js",
+			"slide/Drawing/export/exporter.js",
+
 			"word/Drawing/printpreview.js",
 			"word/Editor/StylesChanges.js",
 			"word/Editor/RevisionsChange.js",

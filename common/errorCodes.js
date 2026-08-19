@@ -136,6 +136,7 @@
 			ConvertationOpenFormat     : -85,
 
 			CannotSaveWatermark     : -86,
+			CopyRangeTooLarge       : -87,
 
 			UserDrop : -100,
 			Warning  : -101,
@@ -239,6 +240,9 @@
 			ComplexFieldNoTOC    : -1102,
 
 			TextFormWrongFormat : -1201,
+
+			AnimatedExport       : -1300,
+			AnimatedExportMemory : -1301,
 
 			SecondaryAxis: 1001,
 			ComboSeriesError: 1002,
@@ -345,6 +349,7 @@
 	prot['PasteSlicerError']                 = prot.PasteSlicerError;
 	prot['MoveSlicerError']                  = prot.MoveSlicerError;
 	prot['PasteMultiSelectError']            = prot.PasteMultiSelectError;
+	prot['CopyRangeTooLarge']                = prot.CopyRangeTooLarge;
 	prot['CopyDisabled']                     = prot.CopyDisabled;
 	prot['CanNotPasteImage']                 = prot.CanNotPasteImage;
 	prot['DataRangeError']                   = prot.DataRangeError;
@@ -431,6 +436,8 @@
 	prot['ComplexFieldEmptyTOC']             = prot.ComplexFieldEmptyTOC;
 	prot['ComplexFieldNoTOC']                = prot.ComplexFieldNoTOC;
 	prot['TextFormWrongFormat']              = prot.TextFormWrongFormat;
+	prot['AnimatedExport']                   = prot.AnimatedExport;
+	prot['AnimatedExportMemory']             = prot.AnimatedExportMemory;
 	prot['SecondaryAxis']                    = prot.SecondaryAxis;
 	prot['ComboSeriesError']                 = prot.ComboSeriesError;
 

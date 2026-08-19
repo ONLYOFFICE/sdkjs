@@ -369,7 +369,10 @@ CChangesParagraphAddItem.prototype.Undo = function()
 	var oParagraph = this.Class;
 	for (let idx = this.Items.length - 1; idx >= 0; --idx)
 	{
-		this.Items[idx].OnDetach();
+		let item = this.Items[idx];
+		item.SetParent(null);
+		item.SetParagraph(null);
+		item.OnDetach();
 	}
 	oParagraph.Content.splice(this.Pos, this.Items.length);
 	oParagraph.updateTrackRevisions();
@@ -392,19 +395,15 @@ CChangesParagraphAddItem.prototype.Redo = function()
 
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 	{
-		var oItem = this.Items[nIndex];
-		oItem.Parent = this.Class;
+		let item = this.Items[nIndex];
+		item.Parent = this.Class;
+		item.SetParent(this.Class);
+		item.SetParagraph(this.Class);
 
-		if (oItem.SetParent)
-			oItem.SetParent(this.Class);
-
-		if (oItem.SetParagraph)
-			oItem.SetParagraph(this.Class);
-
-		if (oItem.Recalc_RunsCompiledPr)
-			oItem.Recalc_RunsCompiledPr();
+		if (item.Recalc_RunsCompiledPr)
+			item.Recalc_RunsCompiledPr();
 		
-		oItem.OnAttach();
+		item.OnAttach();
 	}
 	oParagraph.UpdatePresentationOutline();
 };
@@ -433,11 +432,8 @@ CChangesParagraphAddItem.prototype.Load = function(Color)
 					oComment.UpdatePosition();
 			}
 
-			if (Element.SetParagraph)
-				Element.SetParagraph(oParagraph);
-
-			if (Element.SetParent)
-				Element.SetParent(oParagraph);
+			Element.SetParagraph(oParagraph);
+			Element.SetParent(oParagraph);
 
 			oParagraph.Content.splice(Pos, 0, Element);
 			oParagraph.private_UpdateSelectionPosOnAdd(Pos, 1);
@@ -512,13 +508,8 @@ CChangesParagraphRemoveItem.prototype.Undo = function()
 	{
 		var oItem = this.Items[nIndex];
 
-		oItem.Parent = this.Class;
-
-		if (oItem.SetParent)
-			oItem.SetParent(this.Class);
-
-		if (oItem.SetParagraph)
-			oItem.SetParagraph(this.Class);
+		oItem.SetParent(this.Class);
+		oItem.SetParagraph(this.Class);
 
 		if (oItem.Recalc_RunsCompiledPr)
 			oItem.Recalc_RunsCompiledPr();
@@ -532,7 +523,10 @@ CChangesParagraphRemoveItem.prototype.Redo = function()
 	var oParagraph  = this.Class;
 	for (let idx = this.Items.length - 1; idx >= 0; --idx)
 	{
-		this.Items[idx].OnDetach();
+		let item = this.Items[idx];
+		item.SetParent(null);
+		item.SetParagraph(null);
+		item.OnDetach();
 	}
 	oParagraph.Content.splice(this.Pos, this.Items.length);
 	oParagraph.updateTrackRevisions();
@@ -558,8 +552,12 @@ CChangesParagraphRemoveItem.prototype.Load = function(Color)
 
 		if (false === ChangesPos)
 			continue;
-
-		oParagraph.Content[ChangesPos].OnDetach();
+		
+		let item = oParagraph.Content[ChangesPos];
+		item.SetParent(null);
+		item.SetParagraph(null);
+		item.OnDetach();
+		
 		oParagraph.Content.splice(ChangesPos, 1);
 		oParagraph.private_UpdateSelectionPosOnRemove(ChangesPos, 1);
 		AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(oParagraph, ChangesPos, 1);

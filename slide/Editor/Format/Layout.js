@@ -105,12 +105,6 @@
 
 
 		this.graphicObjects = new AscFormat.DrawingObjectsController(this);
-		this.deleteLock = new AscCommon.PropLocker(this.Id);
-		this.backgroundLock = new AscCommon.PropLocker(this.Id);
-		this.timingLock = new AscCommon.PropLocker(this.Id);
-		this.transitionLock = new AscCommon.PropLocker(this.Id);
-		this.layoutLock = new AscCommon.PropLocker(this.Id);
-		this.showLock = new AscCommon.PropLocker(this.Id);
 	}
 
 	AscFormat.InitClass(SlideLayout, AscCommonSlide.SlideBase, AscDFH.historyitem_type_SlideLayout);

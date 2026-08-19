@@ -161,6 +161,84 @@ var PasteElementsId = {
   g_bIsDocumentCopyPaste : true,
   g_bIsPDFCopyPaste : false
 };
+
+var g_arrBulletListStyleByLvl = ["disc", "circle", "square"];
+function GetBulletListStyleTypeBySymbol(sChar, sFont, nLvl)
+{
+	let nCharCode = -1;
+	if (typeof sChar === "string" && sChar.length > 0)
+	{
+		nCharCode = sChar.charCodeAt(0);
+		//Symbol, Wingdings keep their symbols in the private use area
+		if (nCharCode >= 0xF000 && nCharCode <= 0xF0FF)
+		{
+			nCharCode -= 0xF000;
+		}
+	}
+
+	let sLowerFont = (typeof sFont === "string") ? sFont.toLowerCase() : "";
+
+	switch (nCharCode)
+	{
+		case 0x2022://•
+		case 0x00B7://· - Symbol
+		case 0x25CF://●
+			return "disc";
+		case 0x25CB://○
+		case 0x25E6://◦
+			return "circle";
+		case 0x25AA://▪
+		case 0x25A0://■
+		case 0x25FC://◼
+			return "square";
+		case 0x006F://o - Courier New
+			if (-1 !== sLowerFont.indexOf("courier"))
+			{
+				return "circle";
+			}
+			break;
+		case 0x00A7://§ - Wingdings(▪)
+		case 0x006E://n - Wingdings(■)
+			if (-1 !== sLowerFont.indexOf("wingdings"))
+			{
+				return "square";
+			}
+			break;
+	}
+
+	return g_arrBulletListStyleByLvl[(nLvl || 0) % g_arrBulletListStyleByLvl.length];
+}
+function GetBulletListStyleTypeByNumberingLvl(oNumberingLvl, nLvl)
+{
+	let sChar = "", sFont = "";
+
+	let arrLvlText = (oNumberingLvl && oNumberingLvl.GetLvlText) ? oNumberingLvl.GetLvlText() : null;
+	if (arrLvlText)
+	{
+		for (let i = 0; i < arrLvlText.length; ++i)
+		{
+			if (arrLvlText[i].IsText && arrLvlText[i].IsText())
+			{
+				let sValue = arrLvlText[i].GetValue();
+				if (sValue && sValue.length > 0)
+				{
+					sChar = sValue;
+					break;
+				}
+			}
+		}
+	}
+
+	let oTextPr = (oNumberingLvl && oNumberingLvl.GetTextPr) ? oNumberingLvl.GetTextPr() : null;
+	let oAsciiFont = (oTextPr && oTextPr.RFonts) ? oTextPr.RFonts.Ascii : null;
+	if (oAsciiFont)
+	{
+		sFont = (typeof oAsciiFont === "string") ? oAsciiFont : (oAsciiFont.Name || "");
+	}
+
+	return GetBulletListStyleTypeBySymbol(sChar, sFont, nLvl);
+}
+
 function CopyElement(sName, bText){
 	this.sName = sName;
 	this.oAttributes = {};
@@ -831,7 +909,7 @@ CopyProcessor.prototype =
 								sListStyle = "upper-alpha";
 								break;
 							default:
-								sListStyle = "disc";
+								sListStyle = GetBulletListStyleTypeByNumberingLvl(oNumberingLvl, oNumPr.Lvl);
 								bBullet    = true;
 								break;
 						}
@@ -881,7 +959,7 @@ CopyProcessor.prototype =
                         break;
                     }
                     default:
-                        sListStyle = "disc";
+                        sListStyle = GetBulletListStyleTypeBySymbol(_presentation_bullet.m_sChar, _presentation_bullet.m_sFont, 0);
                         bBullet = true;
                         break;
                 }
@@ -3409,6 +3487,9 @@ PasteProcessor.prototype =
 					oSelectedElement.SelectedAll = false;
 				else
 					oSelectedElement.SelectedAll = true;
+				//a flow drawing needs no paragraph of its own
+				if (oSelectedElement.SelectedAll && 1 === aNewContent.length && this._isFlowDrawingsOnlyParagraph(oSelectedElement.Element))
+					oSelectedElement.SelectedAll = false;
 				oSelectedContent.Add(oSelectedElement);
 			}
 
@@ -3429,6 +3510,14 @@ PasteProcessor.prototype =
 				this.pasteCallback && this.pasteCallback(false);
 				return;
 			}
+
+			var aPasteDrawings = [];
+			for (var nElem = 0; nElem < aNewContent.length; ++nElem)
+			{
+				if (aNewContent[nElem].GetAllDrawingObjects)
+					aNewContent[nElem].GetAllDrawingObjects(aPasteDrawings);
+			}
+			this._positionFlowDrawingsForPaste(aPasteDrawings, NearPos);
 
 			oSelectedContent.Insert(NearPos, false);
 			paragraph.Clear_NearestPosArray(aNewContent);
@@ -3475,6 +3564,110 @@ PasteProcessor.prototype =
 		this._selectShapesBeforeInsert(aNewContent, oDoc);
 
     },
+
+	//paragraph holds nothing but flow drawings
+	_isFlowDrawingsOnlyParagraph: function (oParagraph)
+	{
+		if (!oParagraph.CheckRunContent)
+			return false;
+
+		var nDrawings = 0;
+		var bOtherContent = oParagraph.CheckRunContent(function (oRun) {
+			for (var nPos = 0, nCount = oRun.GetElementsCount(); nPos < nCount; ++nPos)
+			{
+				var oItem = oRun.GetElement(nPos);
+				if (!oItem || oItem.IsParaEnd())
+					continue;
+
+				if (!oItem.IsDrawing() || oItem.IsInline())
+					return true;
+
+				nDrawings++;
+			}
+			return false;
+		});
+
+		return (!bOtherContent && nDrawings > 0);
+	},
+
+	//MS puts a pasted flow drawing on the cursor line at the line start, or, when a drawing was selected
+	//instead of a text cursor, shifted from that drawing. A group of drawings is moved as a whole
+	_positionFlowDrawingsForPaste: function (aDrawings, oNearPos)
+	{
+		var aFlowDrawings = [];
+		for (var nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing)
+		{
+			if (!aDrawings[nDrawing].IsInline())
+				aFlowDrawings.push(aDrawings[nDrawing]);
+		}
+
+		var oController = this.oLogicDocument ? this.oLogicDocument.DrawingObjects : null;
+		if (!aFlowDrawings.length || !oController || !oController.getZIndex)
+			return;
+
+		//pasted drawings go above the existing ones, keeping their own order
+		aFlowDrawings.sort(function (oDrawing1, oDrawing2) {
+			return (oDrawing1.RelativeHeight || 0) - (oDrawing2.RelativeHeight || 0);
+		});
+		for (var nFlow = 0; nFlow < aFlowDrawings.length; ++nFlow)
+		{
+			aFlowDrawings[nFlow].Set_RelativeHeight(oController.getZIndex());
+		}
+
+		var oParagraph = oNearPos.Paragraph;
+		if (!oParagraph.IsRecalculated())
+			return;
+
+		var oParaPos = oParagraph.Get_ParaPosByContentPos(oNearPos.ContentPos);
+		var oLine    = oParagraph.Lines[oParaPos.Line];
+		var oPage    = oParagraph.Pages[oParaPos.Page];
+		if (!oLine || !oPage || !oLine.Ranges[oParaPos.Range])
+			return;
+
+		var dX, dY;
+		if (this.oSelectedDrawing && !this.oSelectedDrawing.IsInline())
+		{
+			var dStep = 152400 * AscCommonWord.g_dKoef_emu_to_mm; //OBJECT_PASTE_SHIFT, as in cell/slide
+			dX = this.oSelectedDrawing.X + dStep;
+			dY = this.oSelectedDrawing.Y + dStep;
+		}
+		else
+		{
+			dX = oLine.Ranges[oParaPos.Range].XVisible;
+			dY = oPage.Y + oLine.Y - oLine.Metrics.Ascent;
+		}
+
+		var nPageNum = oParagraph.GetAbsolutePage(oParaPos.Page);
+		if (1 === aFlowDrawings.length)
+			return aFlowDrawings[0].Set_XYForAdd(dX, dY, oNearPos, nPageNum);
+
+		var aOldPos = [];
+		var dMinH   = aFlowDrawings[0].PositionH.Value;
+		var dMinV   = aFlowDrawings[0].PositionV.Value;
+		for (nFlow = 0; nFlow < aFlowDrawings.length; ++nFlow)
+		{
+			var oPos = aFlowDrawings[nFlow].PositionH;
+			var oPosV = aFlowDrawings[nFlow].PositionV;
+			if (true === oPos.Align || true === oPosV.Align || true === oPos.Percent || true === oPosV.Percent)
+				return;
+
+			aOldPos.push({H : oPos.Value, V : oPosV.Value});
+			dMinH = Math.min(dMinH, oPos.Value);
+			dMinV = Math.min(dMinV, oPosV.Value);
+		}
+
+		//the target point is where the top left corner of the group goes
+		aFlowDrawings[0].Set_XYForAdd(dX, dY, oNearPos, nPageNum);
+		var dDeltaH = aFlowDrawings[0].PositionH.Value - dMinH;
+		var dDeltaV = aFlowDrawings[0].PositionV.Value - dMinV;
+
+		for (nFlow = 0; nFlow < aFlowDrawings.length; ++nFlow)
+		{
+			var oDrawing = aFlowDrawings[nFlow];
+			oDrawing.Set_PositionH(oDrawing.PositionH.RelativeFrom, false, aOldPos[nFlow].H + dDeltaH, false);
+			oDrawing.Set_PositionV(oDrawing.PositionV.RelativeFrom, false, aOldPos[nFlow].V + dDeltaV, false);
+		}
+	},
 
 	checkWordGraphicSpecialPasteProps: function (oNewContent, bCheckGettingPasteProps)
 	{
@@ -4376,6 +4569,10 @@ PasteProcessor.prototype =
 				if (this.oDocument instanceof CDocument && this.oDocument.IsTableCellSelection())
 					oDocState = this.oDocument.SaveDocumentState(false);
 
+				//RemoveBeforePaste drops the drawing selection, and a pasted drawing is placed relative to it
+				var oPasteController  = this.oLogicDocument.DrawingObjects;
+				this.oSelectedDrawing = oPasteController.selectedObjects.length > 0 && !oPasteController.getTargetDocContent()
+					? oPasteController.selectedObjects[0].parent : null;
 				this.oLogicDocument.RemoveBeforePaste();
 
 				if (oDocState)
@@ -9562,13 +9759,8 @@ PasteProcessor.prototype =
 						NumTextPr.RFonts.SetAll("Symbol", -1);
 
 						if (type == null) {
-							if (curLvl % 3 === 0) {
-								type = "disc";
-							} else if (curLvl % 2 === 0) {
-								type = "square";
-							} else {
-								type = "circle";
-							}
+							//MS Word cycles bullet markers every 3 levels: disc -> circle -> square
+							type = g_arrBulletListStyleByLvl[curLvl % g_arrBulletListStyleByLvl.length];
 						}
 
 						switch (type) {

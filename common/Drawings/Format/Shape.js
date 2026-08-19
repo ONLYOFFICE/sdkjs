@@ -3632,11 +3632,12 @@
 							offY -= oGrXfrm.chOffY;
 						}
 					}
-					this.x = scale_scale_coefficients.cx * offX;
-					this.y = scale_scale_coefficients.cy * offY;
-					this.extX = scale_scale_coefficients.cx * xfrm.extX;
-					this.extY = scale_scale_coefficients.cy * xfrm.extY;
 					this.rot = AscFormat.isRealNumber(xfrm.rot) ? xfrm.rot : 0;
+					let rotScaleCoefficients = AscFormat.getScaleCoefficientsForRotate(scale_scale_coefficients, this.rot);
+					this.extX = rotScaleCoefficients.cx * xfrm.extX;
+					this.extY = rotScaleCoefficients.cy * xfrm.extY;
+					this.x = scale_scale_coefficients.cx * (offX + xfrm.extX * 0.5) - this.extX * 0.5;
+					this.y = scale_scale_coefficients.cy * (offY + xfrm.extY * 0.5) - this.extY * 0.5;
 					this.flipH = xfrm.flipH === true;
 					this.flipV = xfrm.flipV === true;
 				}
@@ -7340,6 +7341,10 @@
 					const oTextDrawer = new AscFormat.CTextDrawer(oDocContent.XLimit, oDocContent.YLimit, false, oDocContent.Get_Theme(), true, oParagraphSplitOptions, oIdGenerator);
 					oDocContent.Draw(oDocContent.StartPage, oTextDrawer);
 					const oDocStructure = oTextDrawer.m_oDocContentStructure;
+					if (!oDocStructure) {
+						oTextDrawer.clearTextElements();
+						return null;
+					}
 					for (let i = 0; i < oDocStructure.m_aContent.length; i += 1) {
 						const oParagraph = oDocStructure.m_aContent[i];
 						oParagraph.generateWrappersBySplit(oParagraphSplitOptions[i], oTransform, oTheme, oColorMap, this);
@@ -7386,6 +7391,24 @@
 			if (this.isOutlinePlaceholder()) {
 				const docContent = this.getDocContent();
 				return !!(docContent && !docContent.Is_Empty());
+			}
+			return false;
+		};
+		CShape.prototype.isCanIncreaseParagraphLevel = function (isIncrease) {
+			if (this.getObjectType() !== AscDFH.historyitem_type_Shape) {
+				return false;
+			}
+			const docContent = this.getDocContent();
+			if (docContent) {
+				if(this.isPlaceholder())
+				{
+					let nPhType = this.getPlaceholderType();
+					if(nPhType === AscFormat.phType_title || nPhType === AscFormat.phType_ctrTitle)
+					{
+						return false;
+					}
+				}
+				return docContent.Can_IncreaseParagraphLevel(isIncrease);
 			}
 			return false;
 		};

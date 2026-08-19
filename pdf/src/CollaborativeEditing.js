@@ -353,10 +353,7 @@ CPDFCollaborativeEditing.prototype.Release_Locks = function() {
             Class.AddToRedraw && Class.AddToRedraw();
 
             if (Class.IsAnnot && Class.IsAnnot()) {
-                // if annot is comment or annot with comment then release locks for it too
-                if (Class.IsText() || (Class.IsUseContentAsComment() && Class.GetContents() != undefined) || Class.GetReply(0) != null) {
-                    Asc.editor.sync_UnLockComment(Class.Get_Id());
-                }
+                Asc.editor.sync_UnLockComment(Class.Get_Id());
             }
         }
         else if (AscCommon.c_oAscLockTypes.kLockTypeOther3 === CurLockType)

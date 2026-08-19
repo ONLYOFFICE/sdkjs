@@ -123,10 +123,15 @@ function (window, undefined) {
 		this.cursor = undefined;
 		this.cursorStyle = undefined;
 		this.cursorTID = undefined;
+		this.canvasOffsetLeft = 0;
+		this.canvasOffsetTop = 0;
 		this.cursorPos = 0;
 		this.beginCompositePos = -1;
 		this.compositeLength = 0;
 		this.lastCompositeCodes = null;
+		this.compositeUndoBase = null;
+		this.compositeUndoFragments = null;
+		this.compositeUndoPos = -1;
 		this.topLineIndex = 0;
 		this.m_oFont = oFont;
 		this.fmgrGraphics = fmgrGraphics;
@@ -944,6 +949,7 @@ function (window, undefined) {
 		if (api && !api.canUndoRedoByRestrictions()) {
 			return;
 		}
+		this._endCompositeInputOnUndoRedo();
 		api.sendEvent("asc_onBeforeUndoRedo");
 		this._performAction(this.undoList, this.redoList);
 		api.sendEvent("asc_onUndoRedo");
@@ -954,9 +960,22 @@ function (window, undefined) {
 		if (api && !api.canUndoRedoByRestrictions()) {
 			return;
 		}
+		this._endCompositeInputOnUndoRedo();
 		api.sendEvent("asc_onBeforeUndoRedo");
 		this._performAction(this.redoList, this.undoList);
 		api.sendEvent("asc_onUndoRedo");
+	};
+
+	CellEditor.prototype._endCompositeInputOnUndoRedo = function () {
+		if (-1 === this.beginCompositePos) {
+			return;
+		}
+		if (AscCommon.g_inputContext) {
+			AscCommon.g_inputContext.externalEndCompositeInput();
+		}
+		if (-1 !== this.beginCompositePos) {
+			this.End_CompositeInput();
+		}
 	};
 
 	CellEditor.prototype.getZoom = function () {
@@ -2064,21 +2083,42 @@ function (window, undefined) {
 			}
 		}
 
-		// Calculate canvas offset inside container
-		let ws = this.handlers.trigger("getActiveWSView");
+		// editor can be partially scrolled out of its area(under the headers, the group bar or the frozen pane).
+		// clip the container by that area(it has overflow: hidden) and shift the canvases inside it
+		let bounds = this.options.getBounds && this.options.getBounds();
+		let canvasLeft = 0;
 		let canvasTop = 0;
-		let cellsTop = ws && AscCommon.AscBrowser.convertToRetinaValue(ws.cellsTop);
-		if (ws && top < cellsTop) {
-			// If editor position is above data area
-			canvasTop = top < 0 ? -(cellsTop + Math.abs(top)) : top - cellsTop;
-			// Fix container at headers level
-			top = cellsTop;
+		let outerWidth = widthStyle;
+		let outerHeight = heightStyle;
+		if (bounds) {
+			let leftBound = AscCommon.AscBrowser.convertToRetinaValue(bounds.left);
+			let topBound = AscCommon.AscBrowser.convertToRetinaValue(bounds.top);
+			let rightBound = AscCommon.AscBrowser.convertToRetinaValue(bounds.right);
+
+			if (top < topBound) {
+				canvasTop = top - topBound;
+				outerHeight += canvasTop;
+				top = topBound;
+			}
+			if (left < leftBound) {
+				canvasLeft = left - leftBound;
+				outerWidth += canvasLeft;
+				left = leftBound;
+			}
+			if (left + outerWidth > rightBound) {
+				outerWidth = rightBound - left;
+			}
+
+			outerWidth = Math.max(outerWidth, 0);
+			outerHeight = Math.max(outerHeight, 0);
 		}
+		this.canvasOffsetLeft = canvasLeft;
+		this.canvasOffsetTop = canvasTop;
 
 		this.canvasOuterStyle.left = left + 'px';
 		this.canvasOuterStyle.top = top + 'px';
-		this.canvasOuterStyle.width = widthStyle + 'px';
-		this.canvasOuterStyle.height = heightStyle + 'px';
+		this.canvasOuterStyle.width = outerWidth + 'px';
+		this.canvasOuterStyle.height = outerHeight + 'px';
 		if (!this.getMenuEditorMode()) {
 			this.canvasOuterStyle.zIndex = /*this.top < 0 ? -1 :*/ z;
 		}
@@ -2086,6 +2126,7 @@ function (window, undefined) {
 		this.canvas.style.width = this.canvasOverlay.style.width = widthStyle + 'px';
 		this.canvas.style.height = this.canvasOverlay.style.height = heightStyle + 'px';
 		this.canvas.style.top = this.canvasOverlay.style.top = canvasTop + 'px';
+		this.canvas.style.left = this.canvasOverlay.style.left = canvasLeft + 'px';
 	};
 
 	CellEditor.prototype._calculateCanvasSize = function () {
@@ -2348,11 +2389,9 @@ function (window, undefined) {
 
 		if (!window['IS_NATIVE_EDITOR']) {
 
-			// update cursor position
-			let scrollDiff = parseFloat(this.canvas.style.top);
-
-			this.cursorStyle.left = curLeft + "px";
-			this.cursorStyle.top = curTop + scrollDiff + "px";
+			// take into account the shift of the canvases inside the container
+			this.cursorStyle.left = curLeft + this.canvasOffsetLeft + "px";
+			this.cursorStyle.top = curTop + this.canvasOffsetTop + "px";
 
 			this.cursorStyle.width = (((2 * AscCommon.AscBrowser.retinaPixelRatio) >> 0) / AscCommon.AscBrowser.retinaPixelRatio) + "px";
 			this.cursorStyle.height = curHeight + "px";
@@ -2510,6 +2549,17 @@ function (window, undefined) {
 			this._updateTopLineCurPos();
 			this.skipTLUpdate = tmp;
 		}
+	};
+
+	// The top line is no longer the keyboard target. There is no blur event on the input, so reset the state here
+	CellEditor.prototype._topLineLostFocus = function () {
+		if (!this.isTopLineActive) {
+			return;
+		}
+		this._updateTopLineActive(false);
+		this.input.isFocused = false;
+		this.callTopLineMouseup = false;
+		this._updateCursor();
 	};
 
 	CellEditor.prototype._topLineMouseUp = function () {
@@ -3128,7 +3178,8 @@ function (window, undefined) {
 		} else if (action.fn === t._replaceFragments) {
 			pos = action.args[1];
 			len = action.args[2];
-			list2.push({fn: t._replaceFragments, args: [t._getFragments(pos, len), pos, len]});
+			let newLen = AscCommonExcel.getFragmentsLength(action.args[0]);
+			list2.push({fn: t._replaceFragments, args: [t._getFragments(pos, len), pos, newLen]});
 		} else {
 			return;
 		}
@@ -3873,8 +3924,16 @@ function (window, undefined) {
 			this.compositeLength = Math.max(this.selectionBegin, this.selectionEnd) - this.beginCompositePos;
 		}
 		this.lastCompositeCodes = null;
+		this.compositeUndoBase = null;
+		this.compositeUndoFragments = null;
+		this.compositeUndoPos = this.beginCompositePos;
 		if (this.compositeLength !== 0) {
+			if (this.options.fragments) {
+				this.compositeUndoFragments = this._getFragments(this.beginCompositePos, this.compositeLength);
+			}
+			var undoLength = this.undoList.length;
 			this.setTextStyle('u', Asc.EUnderline.underlineSingle);
+			this.undoList.length = undoLength;
 		}
 	};
 	CellEditor.prototype.Replace_CompositeText = function (arrCharCodes) {
@@ -3893,7 +3952,10 @@ function (window, undefined) {
 		// Insert composite text already underlined so the whole replace needs a single re-measure,
 		// instead of a separate setTextStyle('u') pass that re-measured the cell a second time.
 		var compositeFormat = this._getCompositeTextFormat(this.beginCompositePos);
+		var undoLength = this.undoList.length;
 		this.compositeLength = this.replaceText(this.beginCompositePos, this.compositeLength, newText, compositeFormat);
+		this.undoList.length = undoLength;
+		this._updateCompositeUndo();
 
 		// remember codes only after they are actually applied
 		this.lastCompositeCodes = arrCharCodes.slice();
@@ -3901,6 +3963,35 @@ function (window, undefined) {
 		// Refreshing the selection
 		this._cleanSelection();
 		this._drawSelection();
+	};
+
+	CellEditor.prototype._createCompositeUndo = function (fragments, pos, length) {
+		if (!fragments) {
+			return 0 !== length ? {fn: this._removeChars, args: [pos, length]} : null;
+		}
+		return 0 !== length ?
+			{fn: this._replaceFragments, args: [fragments, pos, length]} :
+			{fn: this._addFragments, args: [fragments, pos]};
+	};
+
+	CellEditor.prototype._removeCompositeUndo = function () {
+		if (this.compositeUndoBase) {
+			var index = this.undoList.lastIndexOf(this.compositeUndoBase);
+			if (-1 !== index) {
+				this.undoList.splice(index, 1);
+			}
+			this.compositeUndoBase = null;
+		}
+	};
+
+	CellEditor.prototype._updateCompositeUndo = function () {
+		this._removeCompositeUndo();
+
+		this.compositeUndoBase = this._createCompositeUndo(this.compositeUndoFragments, this.compositeUndoPos, this.compositeLength);
+		if (this.compositeUndoBase) {
+			this.undoList.push(this.compositeUndoBase);
+			this.redoList = [];
+		}
 	};
 
 	CellEditor.prototype._isSameCompositeCodes = function (arrCharCodes) {
@@ -3938,7 +4029,13 @@ function (window, undefined) {
 			this.selectionBegin = this.beginCompositePos;
 			this.selectionEnd = this.beginCompositePos + this.compositeLength;
 		}
+		var undoLength = this.undoList.length;
 		this.setTextStyle('u', Asc.EUnderline.underlineNone);
+		this.undoList.length = undoLength;
+
+		if (0 === this.compositeLength && !this.compositeUndoFragments) {
+			this._removeCompositeUndo();
+		}
 
 		this.beginCompositePos = -1;
 		this.compositeLength = 0;

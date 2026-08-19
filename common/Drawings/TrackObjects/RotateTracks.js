@@ -572,6 +572,10 @@
 				this.originalObject.extX, this.originalObject.extY, this.angle);
 			return;
 		}
+		if(this.originalObject.group)
+		{
+			this.originalObject.getMainGroup().normalize();
+		}
 		AscFormat.CheckSpPrXfrm(this.originalObject);
 		this.originalObject.changeRot(this.angle, bWord);
 	};
@@ -761,6 +765,10 @@
 	{
 		if(!this.bIsTracked){
 			return;
+		}
+		if(this.originalObject.group)
+		{
+			this.originalObject.getMainGroup().normalize();
 		}
 		var x = this.originalObject.x;
 		var y = this.originalObject.y;

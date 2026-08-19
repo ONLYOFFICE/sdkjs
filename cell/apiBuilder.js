@@ -7816,6 +7816,34 @@
 	};
 
 	/**
+	 * Redraws the editor screen, making the changes already made by a macro visible without waiting for it to finish. Observable from asynchronous code only. Repaints without recalculating: call {@link Api#Calculate} first if formula results must be up to date.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/Redraw.js
+	 */
+	Api.Redraw = function () {
+		return private_Redraw(Asc.editor && Asc.editor.wb);
+	};
+
+	/**
+	 * Repaints the active worksheet view.
+	 * @param {AscCommonExcel.WorkbookView} wb
+	 * @returns {boolean} false if there is no view to draw
+	 */
+	function private_Redraw(wb) {
+		if (!wb || !wb.getWorksheet()) {
+			return false;
+		}
+		// drawing may register history entries, same guard as in _onUpdateAfterApplyChanges
+		History.TurnOff();
+		wb.drawWorksheet();
+		History.TurnOn();
+		return true;
+	}
+
+	/**
 	 * Inserts the specified pivot table into an existing worksheet.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
@@ -8403,6 +8431,18 @@
 		}
 		this.Workbook.dependencyFormulas.forceCalculate();
 		return true;
+	};
+
+	/**
+	 * Redraws the editor screen, making the changes already made by a macro visible without waiting for it to finish. Observable from asynchronous code only. Repaints without recalculating: call {@link ApiWorkbook#Calculate} first if formula results must be up to date.
+	 * @memberof ApiWorkbook
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/Redraw.js
+	 */
+	ApiWorkbook.prototype.Redraw = function () {
+		return private_Redraw(this.Workbook && this.Workbook.oApi && this.Workbook.oApi.wb);
 	};
 
 	/**
@@ -13755,7 +13795,7 @@
 	 */
 	ApiDrawing.prototype.SetFill = function (fill) {
 		const classType = this.GetClassType();
-		if (classType !== 'shape' && classType !== 'image' && classType !== 'chart' && classType !== 'group' && classType !== 'smartArt' && classType !== 'oleObject') {
+		if (classType !== 'shape' && classType !== 'image' && classType !== 'chart' && classType !== 'group' && classType !== 'smartArt') {
 			return false;
 		}
 
@@ -13763,7 +13803,7 @@
 			return false;
 		}
 
-		if (classType === 'smartArt') {
+		if (classType === 'smartArt' || classType === 'group') {
 			this.Drawing.changeFill(fill.UniFill);
 			return true;
 		}
@@ -13788,28 +13828,7 @@
 	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Fill.js
 	 */
-	ApiDrawing.prototype.Fill = function (fill) {
-		const classType = this.GetClassType();
-		if (classType !== 'shape' && classType !== 'image' && classType !== 'chart' && classType !== 'group' && classType !== 'smartArt' && classType !== 'oleObject') {
-			return false;
-		}
-
-		if (!fill || !fill.GetClassType || fill.GetClassType() !== 'fill') {
-			return false;
-		}
-
-		if (classType === 'smartArt') {
-			this.Drawing.changeFill(fill.UniFill);
-			return true;
-		}
-
-		if (this.Drawing && this.Drawing.spPr) {
-			this.Drawing.spPr.setFill(fill.UniFill);
-			return true;
-		}
-
-		return false;
-	};
+	ApiDrawing.prototype.Fill = ApiDrawing.prototype.SetFill;
 
 	/**
 	 * Gets the fill formatting properties from the current graphic object.
@@ -13854,7 +13873,7 @@
 	ApiDrawing.prototype.SetOutLine = function(stroke)
 	{
 		const classType = this.GetClassType();
-		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
+		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt")
 			return false;
 
 		if (!stroke || !stroke.GetClassType || stroke.GetClassType() !== "stroke")
@@ -17115,7 +17134,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetHeaderMargin.js
 	 */
 	ApiPageSetup.prototype.SetHeaderMargin = function (nMargin) {
-		if (typeof nMargin !== 'number' || isNaN(nMargin)) {
+		if (typeof nMargin !== 'number' || !isFinite(nMargin)) {
 			return false;
 		}
 		this.ws.workbook.oApi.asc_changePageMargins(undefined, undefined, undefined, nMargin, undefined, this.ws.getIndex());
@@ -17151,7 +17170,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetFooterMargin.js
 	 */
 	ApiPageSetup.prototype.SetFooterMargin = function (nMargin) {
-		if (typeof nMargin !== 'number' || isNaN(nMargin)) {
+		if (typeof nMargin !== 'number' || !isFinite(nMargin)) {
 			return false;
 		}
 		this.ws.workbook.oApi.asc_changePageMargins(undefined, undefined, undefined, undefined, nMargin, this.ws.getIndex());
@@ -17198,9 +17217,6 @@
 		let bNewVal = !!bAlign;
 		if (oHeaderFooter.getAlignWithMargins() === bNewVal) {
 			return true;
-		}
-		if (null === oHeaderFooter.alignWithMargins) {
-			oHeaderFooter.alignWithMargins = oHeaderFooter.getAlignWithMargins();
 		}
 		oHeaderFooter.setAlignWithMargins(bNewVal);
 		return true;
@@ -25005,45 +25021,51 @@
 		}
 	});
 
-	// /**
-	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiFormatCondition
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {boolean}
-	//  * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetStopIfTrue.js
-	//  */
-	// ApiFormatCondition.prototype.GetStopIfTrue = function() {
-	// 	if (!this.rule) {
-	// 		return false;
-	// 	}
-	// 	return this.rule.stopIfTrue;
-	// };
+	/**
+	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetStopIfTrue.js
+	 */
+	ApiFormatCondition.prototype.GetStopIfTrue = function() {
+		if (!this.rule) {
+			return false;
+		}
+		return !!this.rule.stopIfTrue;
+	};
 
-	// /**
-	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiFormatCondition
-	//  * @typeofeditors ["CSE"]
-	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
-	//  * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetStopIfTrue.js
-	//  */
-	// ApiFormatCondition.prototype.SetStopIfTrue = function(StopIfTrue) {
-	// 	if (!this.rule || typeof StopIfTrue !== "boolean") {
-	// 		return;
-	// 	}
-	//
-	// 	this.private_changeStyle(function (newRule) {
-	// 		newRule.stopIfTrue = StopIfTrue;
-	// 	}, true);
-	// };
-	//
-	// Object.defineProperty(ApiFormatCondition.prototype, "StopIfTrue", {
-	// 	get: function() {
-	// 		return this.GetStopIfTrue();
-	// 	},
-	// 	set: function(value) {
-	// 		this.SetStopIfTrue(value);
-	// 	}
-	// });
+	/**
+	 * Sets whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetStopIfTrue.js
+	 */
+	ApiFormatCondition.prototype.SetStopIfTrue = function(StopIfTrue) {
+		if (!this.rule || typeof StopIfTrue !== "boolean") {
+			return;
+		}
+
+		if (!!this.rule.stopIfTrue === StopIfTrue) {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			newRule.stopIfTrue = StopIfTrue;
+		}, true);
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "StopIfTrue", {
+		get: function() {
+			return this.GetStopIfTrue();
+		},
+		set: function(value) {
+			this.SetStopIfTrue(value);
+		}
+	});
 
 	/**
 	 * Returns the text value used in text-based conditional formatting rules.
@@ -25790,46 +25812,46 @@
 	 */
 	ApiAboveAverage.prototype.SetScopeType = ApiFormatCondition.prototype.SetScopeType;
 
-	// /**
-	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiAboveAverage
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {boolean}
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetStopIfTrue.js
-	//  */
-	// ApiAboveAverage.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
+	/**
+	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetStopIfTrue.js
+	 */
+	ApiAboveAverage.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
 
-	// /**
-	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiAboveAverage
-	//  * @typeofeditors ["CSE"]
-	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetStopIfTrue.js
-	//  */
-	// ApiAboveAverage.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
+	/**
+	 * Sets whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetStopIfTrue.js
+	 */
+	ApiAboveAverage.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
 
 	// Block inherited methods that should not be available for ApiAboveAverage
-	ApiAboveAverage.prototype.Modify = null;
-	ApiAboveAverage.prototype.GetOperator = null;
-	ApiAboveAverage.prototype.SetOperator = null;
-	ApiAboveAverage.prototype.GetFormula1 = null;
-	ApiAboveAverage.prototype.SetFormula1 = null;
-	ApiAboveAverage.prototype.GetFormula2 = null;
-	ApiAboveAverage.prototype.SetFormula2 = null;
-	ApiAboveAverage.prototype.GetDateOperator = null;
-	ApiAboveAverage.prototype.SetDateOperator = null;
-	ApiAboveAverage.prototype.GetText = null;
-	ApiAboveAverage.prototype.SetText = null;
-	ApiAboveAverage.prototype.GetTextOperator = null;
-	ApiAboveAverage.prototype.SetTextOperator = null;
-	ApiAboveAverage.prototype.GetRank = null;
-	ApiAboveAverage.prototype.SetRank = null;
-	ApiAboveAverage.prototype.GetPercentRank = null;
-	ApiAboveAverage.prototype.SetPercentRank = null;
-	ApiAboveAverage.prototype.GetStdDev = null;
-	ApiAboveAverage.prototype.SetStdDev = null;
+	ApiAboveAverage.prototype.Modify = ApiAboveAverage.prototype["Modify"] = null;
+	ApiAboveAverage.prototype.GetOperator = ApiAboveAverage.prototype["GetOperator"] = null;
+	ApiAboveAverage.prototype.SetOperator = ApiAboveAverage.prototype["SetOperator"] = null;
+	ApiAboveAverage.prototype.GetFormula1 = ApiAboveAverage.prototype["GetFormula1"] = null;
+	ApiAboveAverage.prototype.SetFormula1 = ApiAboveAverage.prototype["SetFormula1"] = null;
+	ApiAboveAverage.prototype.GetFormula2 = ApiAboveAverage.prototype["GetFormula2"] = null;
+	ApiAboveAverage.prototype.SetFormula2 = ApiAboveAverage.prototype["SetFormula2"] = null;
+	ApiAboveAverage.prototype.GetDateOperator = ApiAboveAverage.prototype["GetDateOperator"] = null;
+	ApiAboveAverage.prototype.SetDateOperator = ApiAboveAverage.prototype["SetDateOperator"] = null;
+	ApiAboveAverage.prototype.GetText = ApiAboveAverage.prototype["GetText"] = null;
+	ApiAboveAverage.prototype.SetText = ApiAboveAverage.prototype["SetText"] = null;
+	ApiAboveAverage.prototype.GetTextOperator = ApiAboveAverage.prototype["GetTextOperator"] = null;
+	ApiAboveAverage.prototype.SetTextOperator = ApiAboveAverage.prototype["SetTextOperator"] = null;
+	ApiAboveAverage.prototype.GetRank = ApiAboveAverage.prototype["GetRank"] = null;
+	ApiAboveAverage.prototype.SetRank = ApiAboveAverage.prototype["SetRank"] = null;
+	ApiAboveAverage.prototype.GetPercentRank = ApiAboveAverage.prototype["GetPercentRank"] = null;
+	ApiAboveAverage.prototype.SetPercentRank = ApiAboveAverage.prototype["SetPercentRank"] = null;
+	ApiAboveAverage.prototype.GetStdDev = ApiAboveAverage.prototype["GetStdDev"] = null;
+	ApiAboveAverage.prototype.SetStdDev = ApiAboveAverage.prototype["SetStdDev"] = null;
 
 	/**
 	 * Class representing a color scale conditional formatting rule.
@@ -26044,59 +26066,51 @@
 	 */
 	ApiColorScale.prototype.SetScopeType = ApiFormatCondition.prototype.SetScopeType;
 
-	// /**
-	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiColorScale
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {boolean}
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/GetStopIfTrue.js
-	//  */
-	// ApiColorScale.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
-
-	// /**
-	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiColorScale
-	//  * @typeofeditors ["CSE"]
-	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/SetStopIfTrue.js
-	//  */
-	// ApiColorScale.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
+	/**
+	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * This rule type cannot stop the evaluation, so the value can be changed only by opening a file where it is set.
+	 * @memberof ApiColorScale
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/GetStopIfTrue.js
+	 */
+	ApiColorScale.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
 
 	// Block inherited methods that should not be available for ApiColorScale
-	ApiColorScale.prototype.Modify = null;
-	ApiColorScale.prototype.GetOperator = null;
-	ApiColorScale.prototype.SetOperator = null;
-	ApiColorScale.prototype.GetFormula1 = null;
-	ApiColorScale.prototype.SetFormula1 = null;
-	ApiColorScale.prototype.GetFormula2 = null;
-	ApiColorScale.prototype.SetFormula2 = null;
-	ApiColorScale.prototype.GetDateOperator = null;
-	ApiColorScale.prototype.SetDateOperator = null;
-	ApiColorScale.prototype.GetText = null;
-	ApiColorScale.prototype.SetText = null;
-	ApiColorScale.prototype.GetTextOperator = null;
-	ApiColorScale.prototype.SetTextOperator = null;
-	ApiColorScale.prototype.GetRank = null;
-	ApiColorScale.prototype.SetRank = null;
-	ApiColorScale.prototype.GetPercentRank = null;
-	ApiColorScale.prototype.SetPercentRank = null;
-	ApiColorScale.prototype.GetStdDev = null;
-	ApiColorScale.prototype.SetStdDev = null;
-	ApiColorScale.prototype.GetAboveBelow = null;
-	ApiColorScale.prototype.SetAboveBelow = null;
+	ApiColorScale.prototype.SetStopIfTrue = ApiColorScale.prototype["SetStopIfTrue"] = null;
+	ApiColorScale.prototype.Modify = ApiColorScale.prototype["Modify"] = null;
+	ApiColorScale.prototype.GetOperator = ApiColorScale.prototype["GetOperator"] = null;
+	ApiColorScale.prototype.SetOperator = ApiColorScale.prototype["SetOperator"] = null;
+	ApiColorScale.prototype.GetFormula1 = ApiColorScale.prototype["GetFormula1"] = null;
+	ApiColorScale.prototype.SetFormula1 = ApiColorScale.prototype["SetFormula1"] = null;
+	ApiColorScale.prototype.GetFormula2 = ApiColorScale.prototype["GetFormula2"] = null;
+	ApiColorScale.prototype.SetFormula2 = ApiColorScale.prototype["SetFormula2"] = null;
+	ApiColorScale.prototype.GetDateOperator = ApiColorScale.prototype["GetDateOperator"] = null;
+	ApiColorScale.prototype.SetDateOperator = ApiColorScale.prototype["SetDateOperator"] = null;
+	ApiColorScale.prototype.GetText = ApiColorScale.prototype["GetText"] = null;
+	ApiColorScale.prototype.SetText = ApiColorScale.prototype["SetText"] = null;
+	ApiColorScale.prototype.GetTextOperator = ApiColorScale.prototype["GetTextOperator"] = null;
+	ApiColorScale.prototype.SetTextOperator = ApiColorScale.prototype["SetTextOperator"] = null;
+	ApiColorScale.prototype.GetRank = ApiColorScale.prototype["GetRank"] = null;
+	ApiColorScale.prototype.SetRank = ApiColorScale.prototype["SetRank"] = null;
+	ApiColorScale.prototype.GetPercentRank = ApiColorScale.prototype["GetPercentRank"] = null;
+	ApiColorScale.prototype.SetPercentRank = ApiColorScale.prototype["SetPercentRank"] = null;
+	ApiColorScale.prototype.GetStdDev = ApiColorScale.prototype["GetStdDev"] = null;
+	ApiColorScale.prototype.SetStdDev = ApiColorScale.prototype["SetStdDev"] = null;
+	ApiColorScale.prototype.GetAboveBelow = ApiColorScale.prototype["GetAboveBelow"] = null;
+	ApiColorScale.prototype.SetAboveBelow = ApiColorScale.prototype["SetAboveBelow"] = null;
 	//ApiColorScale.prototype.GetCalcFor = null;
 	//ApiColorScale.prototype.SetCalcFor = null;
-	ApiColorScale.prototype.GetNumStdDev = null;
-	ApiColorScale.prototype.SetNumStdDev = null;
+	ApiColorScale.prototype.GetNumStdDev = ApiColorScale.prototype["GetNumStdDev"] = null;
+	ApiColorScale.prototype.SetNumStdDev = ApiColorScale.prototype["SetNumStdDev"] = null;
 	//ApiColorScale.prototype.GetBorders = null;
-	ApiColorScale.prototype.GetFont = null;
-	ApiColorScale.prototype.GetNumberFormat = null;
-	ApiColorScale.prototype.SetNumberFormat = null;
-	ApiColorScale.prototype.GetFillColor = null;
-	ApiColorScale.prototype.SetFillColor = null;
-	ApiColorScale.prototype.SetBorders = null;
+	ApiColorScale.prototype.GetFont = ApiColorScale.prototype["GetFont"] = null;
+	ApiColorScale.prototype.GetNumberFormat = ApiColorScale.prototype["GetNumberFormat"] = null;
+	ApiColorScale.prototype.SetNumberFormat = ApiColorScale.prototype["SetNumberFormat"] = null;
+	ApiColorScale.prototype.GetFillColor = ApiColorScale.prototype["GetFillColor"] = null;
+	ApiColorScale.prototype.SetFillColor = ApiColorScale.prototype["SetFillColor"] = null;
+	ApiColorScale.prototype.SetBorders = ApiColorScale.prototype["SetBorders"] = null;
 
 	/**
 	 * Class representing single criterion in a color scale conditional formatting rule.
@@ -27446,40 +27460,32 @@
 	 */
 	ApiDatabar.prototype.SetScopeType = ApiFormatCondition.prototype.SetScopeType;
 
-	// /**
-	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiDatabar
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {boolean}
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetStopIfTrue.js
-	//  */
-	// ApiDatabar.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
-
-	// /**
-	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiDatabar
-	//  * @typeofeditors ["CSE"]
-	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetStopIfTrue.js
-	//  */
-	// ApiDatabar.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
+	/**
+	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * This rule type cannot stop the evaluation, so the value can be changed only by opening a file where it is set.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetStopIfTrue.js
+	 */
+	ApiDatabar.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
 
 	// Block inherited methods that should not be available for ApiDatabar
-	ApiDatabar.prototype.Modify = null;
-	ApiDatabar.prototype.GetOperator = null;
-	ApiDatabar.prototype.SetOperator = null;
-	ApiDatabar.prototype.GetFormula1 = null;
-	ApiDatabar.prototype.SetFormula1 = null;
-	ApiDatabar.prototype.GetFormula2 = null;
-	ApiDatabar.prototype.SetFormula2 = null;
-	ApiDatabar.prototype.GetDateOperator = null;
-	ApiDatabar.prototype.SetDateOperator = null;
-	ApiDatabar.prototype.GetText = null;
-	ApiDatabar.prototype.SetText = null;
-	ApiDatabar.prototype.GetTextOperator = null;
-	ApiDatabar.prototype.SetTextOperator = null;
+	ApiDatabar.prototype.SetStopIfTrue = ApiDatabar.prototype["SetStopIfTrue"] = null;
+	ApiDatabar.prototype.Modify = ApiDatabar.prototype["Modify"] = null;
+	ApiDatabar.prototype.GetOperator = ApiDatabar.prototype["GetOperator"] = null;
+	ApiDatabar.prototype.SetOperator = ApiDatabar.prototype["SetOperator"] = null;
+	ApiDatabar.prototype.GetFormula1 = ApiDatabar.prototype["GetFormula1"] = null;
+	ApiDatabar.prototype.SetFormula1 = ApiDatabar.prototype["SetFormula1"] = null;
+	ApiDatabar.prototype.GetFormula2 = ApiDatabar.prototype["GetFormula2"] = null;
+	ApiDatabar.prototype.SetFormula2 = ApiDatabar.prototype["SetFormula2"] = null;
+	ApiDatabar.prototype.GetDateOperator = ApiDatabar.prototype["GetDateOperator"] = null;
+	ApiDatabar.prototype.SetDateOperator = ApiDatabar.prototype["SetDateOperator"] = null;
+	ApiDatabar.prototype.GetText = ApiDatabar.prototype["GetText"] = null;
+	ApiDatabar.prototype.SetText = ApiDatabar.prototype["SetText"] = null;
+	ApiDatabar.prototype.GetTextOperator = ApiDatabar.prototype["GetTextOperator"] = null;
+	ApiDatabar.prototype.SetTextOperator = ApiDatabar.prototype["SetTextOperator"] = null;
 
 	/**
 	 * Class representing an icon set conditional formatting rule.
@@ -28250,40 +28256,32 @@
 	 */
 	ApiIconSetCondition.prototype.SetScopeType = ApiFormatCondition.prototype.SetScopeType;
 
-	// /**
-	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiIconSetCondition
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {boolean}
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetStopIfTrue.js
-	//  */
-	// ApiIconSetCondition.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
-
-	// /**
-	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiIconSetCondition
-	//  * @typeofeditors ["CSE"]
-	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/SetStopIfTrue.js
-	//  */
-	// ApiIconSetCondition.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
+	/**
+	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * This rule type cannot stop the evaluation, so the value can be changed only by opening a file where it is set.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetStopIfTrue.js
+	 */
+	ApiIconSetCondition.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
 
 	// Block inherited methods that should not be available for ApiIconSetCondition
-	ApiIconSetCondition.prototype.Modify = null;
-	ApiIconSetCondition.prototype.GetOperator = null;
-	ApiIconSetCondition.prototype.SetOperator = null;
-	ApiIconSetCondition.prototype.GetFormula1 = null;
-	ApiIconSetCondition.prototype.SetFormula1 = null;
-	ApiIconSetCondition.prototype.GetFormula2 = null;
-	ApiIconSetCondition.prototype.SetFormula2 = null;
-	ApiIconSetCondition.prototype.GetDateOperator = null;
-	ApiIconSetCondition.prototype.SetDateOperator = null;
-	ApiIconSetCondition.prototype.GetText = null;
-	ApiIconSetCondition.prototype.SetText = null;
-	ApiIconSetCondition.prototype.GetTextOperator = null;
-	ApiIconSetCondition.prototype.SetTextOperator = null;
+	ApiIconSetCondition.prototype.SetStopIfTrue = ApiIconSetCondition.prototype["SetStopIfTrue"] = null;
+	ApiIconSetCondition.prototype.Modify = ApiIconSetCondition.prototype["Modify"] = null;
+	ApiIconSetCondition.prototype.GetOperator = ApiIconSetCondition.prototype["GetOperator"] = null;
+	ApiIconSetCondition.prototype.SetOperator = ApiIconSetCondition.prototype["SetOperator"] = null;
+	ApiIconSetCondition.prototype.GetFormula1 = ApiIconSetCondition.prototype["GetFormula1"] = null;
+	ApiIconSetCondition.prototype.SetFormula1 = ApiIconSetCondition.prototype["SetFormula1"] = null;
+	ApiIconSetCondition.prototype.GetFormula2 = ApiIconSetCondition.prototype["GetFormula2"] = null;
+	ApiIconSetCondition.prototype.SetFormula2 = ApiIconSetCondition.prototype["SetFormula2"] = null;
+	ApiIconSetCondition.prototype.GetDateOperator = ApiIconSetCondition.prototype["GetDateOperator"] = null;
+	ApiIconSetCondition.prototype.SetDateOperator = ApiIconSetCondition.prototype["SetDateOperator"] = null;
+	ApiIconSetCondition.prototype.GetText = ApiIconSetCondition.prototype["GetText"] = null;
+	ApiIconSetCondition.prototype.SetText = ApiIconSetCondition.prototype["SetText"] = null;
+	ApiIconSetCondition.prototype.GetTextOperator = ApiIconSetCondition.prototype["GetTextOperator"] = null;
+	ApiIconSetCondition.prototype.SetTextOperator = ApiIconSetCondition.prototype["SetTextOperator"] = null;
 
 	// /**
 	//  * Class representing a collection of icon criteria.
@@ -29485,25 +29483,25 @@
 	 */
 	ApiTop10.prototype.SetScopeType = ApiFormatCondition.prototype.SetScopeType;
 
-	// /**
-	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiTop10
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {boolean}
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetStopIfTrue.js
-	//  */
-	// ApiTop10.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
+	/**
+	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetStopIfTrue.js
+	 */
+	ApiTop10.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
 
-	// /**
-	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiTop10
-	//  * @typeofeditors ["CSE"]
-	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetStopIfTrue.js
-	//  */
-	// ApiTop10.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
+	/**
+	 * Sets whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetStopIfTrue.js
+	 */
+	ApiTop10.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
 
 	/**
 	 * Returns the font formatting for the top 10 conditional formatting rule.
@@ -29567,19 +29565,19 @@
 
 
 	// Block inherited methods that should not be available for ApiTop10
-	ApiTop10.prototype.Modify = null;
-	ApiTop10.prototype.GetOperator = null;
-	ApiTop10.prototype.SetOperator = null;
-	ApiTop10.prototype.GetFormula1 = null;
-	ApiTop10.prototype.SetFormula1 = null;
-	ApiTop10.prototype.GetFormula2 = null;
-	ApiTop10.prototype.SetFormula2 = null;
-	ApiTop10.prototype.GetDateOperator = null;
-	ApiTop10.prototype.SetDateOperator = null;
-	ApiTop10.prototype.GetText = null;
-	ApiTop10.prototype.SetText = null;
-	ApiTop10.prototype.GetTextOperator = null;
-	ApiTop10.prototype.SetTextOperator = null;
+	ApiTop10.prototype.Modify = ApiTop10.prototype["Modify"] = null;
+	ApiTop10.prototype.GetOperator = ApiTop10.prototype["GetOperator"] = null;
+	ApiTop10.prototype.SetOperator = ApiTop10.prototype["SetOperator"] = null;
+	ApiTop10.prototype.GetFormula1 = ApiTop10.prototype["GetFormula1"] = null;
+	ApiTop10.prototype.SetFormula1 = ApiTop10.prototype["SetFormula1"] = null;
+	ApiTop10.prototype.GetFormula2 = ApiTop10.prototype["GetFormula2"] = null;
+	ApiTop10.prototype.SetFormula2 = ApiTop10.prototype["SetFormula2"] = null;
+	ApiTop10.prototype.GetDateOperator = ApiTop10.prototype["GetDateOperator"] = null;
+	ApiTop10.prototype.SetDateOperator = ApiTop10.prototype["SetDateOperator"] = null;
+	ApiTop10.prototype.GetText = ApiTop10.prototype["GetText"] = null;
+	ApiTop10.prototype.SetText = ApiTop10.prototype["SetText"] = null;
+	ApiTop10.prototype.GetTextOperator = ApiTop10.prototype["GetTextOperator"] = null;
+	ApiTop10.prototype.SetTextOperator = ApiTop10.prototype["SetTextOperator"] = null;
 
 	/**
 	 * Class representing a unique values conditional formatting rule.
@@ -29794,25 +29792,25 @@
 	 */
 	ApiUniqueValues.prototype.SetScopeType = ApiFormatCondition.prototype.SetScopeType;
 
-	// /**
-	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiUniqueValues
-	//  * @typeofeditors ["CSE"]
-	//  * @returns {boolean}
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetStopIfTrue.js
-	//  */
-	// ApiUniqueValues.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
+	/**
+	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetStopIfTrue.js
+	 */
+	ApiUniqueValues.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
 
-	// /**
-	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
-	//  * @memberof ApiUniqueValues
-	//  * @typeofeditors ["CSE"]
-	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
-	//  * @since 9.1.0
-	//  * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/SetStopIfTrue.js
-	//  */
-	// ApiUniqueValues.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
+	/**
+	 * Sets whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/SetStopIfTrue.js
+	 */
+	ApiUniqueValues.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
 
 	/**
 	 * Returns the font formatting for the unique values conditional formatting rule.
@@ -29875,25 +29873,25 @@
 	ApiUniqueValues.prototype.SetFillColor = ApiFormatCondition.prototype.SetFillColor;
 
 	// Block inherited methods that should not be available for ApiUniqueValues
-	ApiUniqueValues.prototype.Modify = null;
-	ApiUniqueValues.prototype.GetOperator = null;
-	ApiUniqueValues.prototype.SetOperator = null;
-	ApiUniqueValues.prototype.GetFormula1 = null;
-	ApiUniqueValues.prototype.SetFormula1 = null;
-	ApiUniqueValues.prototype.GetFormula2 = null;
-	ApiUniqueValues.prototype.SetFormula2 = null;
-	ApiUniqueValues.prototype.GetDateOperator = null;
-	ApiUniqueValues.prototype.SetDateOperator = null;
-	ApiUniqueValues.prototype.GetText = null;
-	ApiUniqueValues.prototype.SetText = null;
-	ApiUniqueValues.prototype.GetTextOperator = null;
-	ApiUniqueValues.prototype.SetTextOperator = null;
-	ApiUniqueValues.prototype.GetTopBottom = null;
-	ApiUniqueValues.prototype.SetTopBottom = null;
-	ApiUniqueValues.prototype.GetPercent = null;
-	ApiUniqueValues.prototype.SetPercent = null;
-	ApiUniqueValues.prototype.GetRank = null;
-	ApiUniqueValues.prototype.SetRank = null;
+	ApiUniqueValues.prototype.Modify = ApiUniqueValues.prototype["Modify"] = null;
+	ApiUniqueValues.prototype.GetOperator = ApiUniqueValues.prototype["GetOperator"] = null;
+	ApiUniqueValues.prototype.SetOperator = ApiUniqueValues.prototype["SetOperator"] = null;
+	ApiUniqueValues.prototype.GetFormula1 = ApiUniqueValues.prototype["GetFormula1"] = null;
+	ApiUniqueValues.prototype.SetFormula1 = ApiUniqueValues.prototype["SetFormula1"] = null;
+	ApiUniqueValues.prototype.GetFormula2 = ApiUniqueValues.prototype["GetFormula2"] = null;
+	ApiUniqueValues.prototype.SetFormula2 = ApiUniqueValues.prototype["SetFormula2"] = null;
+	ApiUniqueValues.prototype.GetDateOperator = ApiUniqueValues.prototype["GetDateOperator"] = null;
+	ApiUniqueValues.prototype.SetDateOperator = ApiUniqueValues.prototype["SetDateOperator"] = null;
+	ApiUniqueValues.prototype.GetText = ApiUniqueValues.prototype["GetText"] = null;
+	ApiUniqueValues.prototype.SetText = ApiUniqueValues.prototype["SetText"] = null;
+	ApiUniqueValues.prototype.GetTextOperator = ApiUniqueValues.prototype["GetTextOperator"] = null;
+	ApiUniqueValues.prototype.SetTextOperator = ApiUniqueValues.prototype["SetTextOperator"] = null;
+	ApiUniqueValues.prototype.GetTopBottom = ApiUniqueValues.prototype["GetTopBottom"] = null;
+	ApiUniqueValues.prototype.SetTopBottom = ApiUniqueValues.prototype["SetTopBottom"] = null;
+	ApiUniqueValues.prototype.GetPercent = ApiUniqueValues.prototype["GetPercent"] = null;
+	ApiUniqueValues.prototype.SetPercent = ApiUniqueValues.prototype["SetPercent"] = null;
+	ApiUniqueValues.prototype.GetRank = ApiUniqueValues.prototype["GetRank"] = null;
+	ApiUniqueValues.prototype.SetRank = ApiUniqueValues.prototype["SetRank"] = null;
 	//ApiUniqueValues.prototype.GetCalcFor = null;
 	//ApiUniqueValues.prototype.SetCalcFor = null;
 
@@ -30294,6 +30292,7 @@
 
 	Api["RecalculateAllFormulas"] = Api.RecalculateAllFormulas;
 	Api["Calculate"] = Api.Calculate;
+	Api["Redraw"] = Api.Redraw;
 	Api["AddComment"]  = Api.AddComment;
 	Api["GetComments"] = Api.GetComments;
 	Api["GetAllComments"] = Api.GetAllComments;
@@ -30330,6 +30329,7 @@
 	ApiWorkbook.prototype["GetName"] = ApiWorkbook.prototype.GetName;
 	ApiWorkbook.prototype["GetActiveSheet"] = ApiWorkbook.prototype.GetActiveSheet;
 	ApiWorkbook.prototype["Calculate"] = ApiWorkbook.prototype.Calculate;
+	ApiWorkbook.prototype["Redraw"] = ApiWorkbook.prototype.Redraw;
 	ApiWorkbook.prototype["GetActiveChart"] = ApiWorkbook.prototype.GetActiveChart;
 	ApiWorkbook.prototype["GetDrawingsByName"] = ApiWorkbook.prototype.GetDrawingsByName;
 
@@ -31430,8 +31430,8 @@
 	ApiFormatCondition.prototype["SetStdDev"] = ApiFormatCondition.prototype.SetStdDev;
 	ApiFormatCondition.prototype["GetPriority"] = ApiFormatCondition.prototype.GetPriority;
 	ApiFormatCondition.prototype["SetPriority"] = ApiFormatCondition.prototype.SetPriority;
-	//ApiFormatCondition.prototype["GetStopIfTrue"] = ApiFormatCondition.prototype.GetStopIfTrue;
-	//ApiFormatCondition.prototype["SetStopIfTrue"] = ApiFormatCondition.prototype.SetStopIfTrue;
+	ApiFormatCondition.prototype["GetStopIfTrue"] = ApiFormatCondition.prototype.GetStopIfTrue;
+	ApiFormatCondition.prototype["SetStopIfTrue"] = ApiFormatCondition.prototype.SetStopIfTrue;
 	ApiFormatCondition.prototype["GetAppliesTo"] = ApiFormatCondition.prototype.GetAppliesTo;
 	ApiFormatCondition.prototype["SetBorders"] = ApiFormatCondition.prototype.SetBorders;
 	ApiFormatCondition.prototype["SetFillColor"] = ApiFormatCondition.prototype.SetFillColor;
@@ -31470,8 +31470,8 @@
 	ApiAboveAverage.prototype["GetPTCondition"] = ApiAboveAverage.prototype.GetPTCondition;
 	ApiAboveAverage.prototype["GetScopeType"] = ApiAboveAverage.prototype.GetScopeType;
 	ApiAboveAverage.prototype["SetScopeType"] = ApiAboveAverage.prototype.SetScopeType;
-	//ApiAboveAverage.prototype["GetStopIfTrue"] = ApiAboveAverage.prototype.GetStopIfTrue;
-	//ApiAboveAverage.prototype["SetStopIfTrue"] = ApiAboveAverage.prototype.SetStopIfTrue;
+	ApiAboveAverage.prototype["GetStopIfTrue"] = ApiAboveAverage.prototype.GetStopIfTrue;
+	ApiAboveAverage.prototype["SetStopIfTrue"] = ApiAboveAverage.prototype.SetStopIfTrue;
 
 	ApiUniqueValues.prototype["GetDupeUnique"] = ApiUniqueValues.prototype.GetDupeUnique;
 	ApiUniqueValues.prototype["SetDupeUnique"] = ApiUniqueValues.prototype.SetDupeUnique;
@@ -31487,8 +31487,8 @@
 	ApiUniqueValues.prototype["GetPTCondition"] = ApiUniqueValues.prototype.GetPTCondition;
 	ApiUniqueValues.prototype["GetScopeType"] = ApiUniqueValues.prototype.GetScopeType;
 	ApiUniqueValues.prototype["SetScopeType"] = ApiUniqueValues.prototype.SetScopeType;
-	//ApiUniqueValues.prototype["GetStopIfTrue"] = ApiUniqueValues.prototype.GetStopIfTrue;
-	//ApiUniqueValues.prototype["SetStopIfTrue"] = ApiUniqueValues.prototype.SetStopIfTrue;
+	ApiUniqueValues.prototype["GetStopIfTrue"] = ApiUniqueValues.prototype.GetStopIfTrue;
+	ApiUniqueValues.prototype["SetStopIfTrue"] = ApiUniqueValues.prototype.SetStopIfTrue;
 	ApiUniqueValues.prototype["GetFont"] = ApiUniqueValues.prototype.GetFont;
 	//ApiUniqueValues.prototype["GetBorders"] = ApiUniqueValues.prototype.GetBorders;
 	ApiUniqueValues.prototype["GetNumberFormat"] = ApiUniqueValues.prototype.GetNumberFormat;
@@ -31516,8 +31516,8 @@
 	ApiTop10.prototype["GetPTCondition"] = ApiTop10.prototype.GetPTCondition;
 	ApiTop10.prototype["GetScopeType"] = ApiTop10.prototype.GetScopeType;
 	ApiTop10.prototype["SetScopeType"] = ApiTop10.prototype.SetScopeType;
-	//ApiTop10.prototype["GetStopIfTrue"] = ApiTop10.prototype.GetStopIfTrue;
-	//ApiTop10.prototype["SetStopIfTrue"] = ApiTop10.prototype.SetStopIfTrue;
+	ApiTop10.prototype["GetStopIfTrue"] = ApiTop10.prototype.GetStopIfTrue;
+	ApiTop10.prototype["SetStopIfTrue"] = ApiTop10.prototype.SetStopIfTrue;
 	ApiTop10.prototype["GetFont"] = ApiTop10.prototype.GetFont;
 	//ApiTop10.prototype["GetBorders"] = ApiTop10.prototype.GetBorders;
 	ApiTop10.prototype["GetNumberFormat"] = ApiTop10.prototype.GetNumberFormat;
@@ -31538,8 +31538,7 @@
 	ApiColorScale.prototype["GetPTCondition"] = ApiColorScale.prototype.GetPTCondition;
 	ApiColorScale.prototype["GetScopeType"] = ApiColorScale.prototype.GetScopeType;
 	ApiColorScale.prototype["SetScopeType"] = ApiColorScale.prototype.SetScopeType;
-	//ApiColorScale.prototype["GetStopIfTrue"] = ApiColorScale.prototype.GetStopIfTrue;
-	//ApiColorScale.prototype["SetStopIfTrue"] = ApiColorScale.prototype.SetStopIfTrue;
+	ApiColorScale.prototype["GetStopIfTrue"] = ApiColorScale.prototype.GetStopIfTrue;
 
 	ApiColorScaleCriterion.prototype["GetType"] = ApiColorScaleCriterion.prototype.GetType;
 	ApiColorScaleCriterion.prototype["SetType"] = ApiColorScaleCriterion.prototype.SetType;
@@ -31592,8 +31591,7 @@
 	ApiDatabar.prototype["GetPTCondition"] = ApiDatabar.prototype.GetPTCondition;
 	ApiDatabar.prototype["GetScopeType"] = ApiDatabar.prototype.GetScopeType;
 	ApiDatabar.prototype["SetScopeType"] = ApiDatabar.prototype.SetScopeType;
-	//ApiDatabar.prototype["GetStopIfTrue"] = ApiDatabar.prototype.GetStopIfTrue;
-	//ApiDatabar.prototype["SetStopIfTrue"] = ApiDatabar.prototype.SetStopIfTrue;
+	ApiDatabar.prototype["GetStopIfTrue"] = ApiDatabar.prototype.GetStopIfTrue;
 
 	ApiIconSetCondition.prototype["GetIconSet"] = ApiIconSetCondition.prototype.GetIconSet;
 	ApiIconSetCondition.prototype["SetIconSet"] = ApiIconSetCondition.prototype.SetIconSet;
@@ -31617,8 +31615,7 @@
 	ApiIconSetCondition.prototype["GetPTCondition"] = ApiIconSetCondition.prototype.GetPTCondition;
 	ApiIconSetCondition.prototype["GetScopeType"] = ApiIconSetCondition.prototype.GetScopeType;
 	ApiIconSetCondition.prototype["SetScopeType"] = ApiIconSetCondition.prototype.SetScopeType;
-	//ApiIconSetCondition.prototype["GetStopIfTrue"] = ApiIconSetCondition.prototype.GetStopIfTrue;
-	//ApiIconSetCondition.prototype["SetStopIfTrue"] = ApiIconSetCondition.prototype.SetStopIfTrue;
+	ApiIconSetCondition.prototype["GetStopIfTrue"] = ApiIconSetCondition.prototype.GetStopIfTrue;
 
 	ApiIconCriterion.prototype["GetType"] = ApiIconCriterion.prototype.GetType;
 	ApiIconCriterion.prototype["SetType"] = ApiIconCriterion.prototype.SetType;

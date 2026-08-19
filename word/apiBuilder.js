@@ -1208,7 +1208,6 @@
 	function ApiRange(oElement, Start, End)
 	{
 		this.Element		= oElement;
-		this.Controller		= null;
 		this.isEmpty 		= false;
 		this.Paragraphs 	= [];
 		this.Text 			= undefined;
@@ -1230,8 +1229,6 @@
 			this.isEmpty = true;
 			return;
 		}
-		
-		this.private_CheckController();
 		
 		private_RefreshRangesPosition();
 		arrApiRanges.push(this);
@@ -1355,25 +1352,6 @@
 		this.StartPos	= aStartDocPos;
 		this.EndPos		= aEndDocPos;
 	};
-	ApiRange.prototype.private_CheckController = function()
-	{
-		if (this.StartPos[0].Class.IsHdrFtr())
-		{
-			this.Controller = this.oDocument.Document.GetHdrFtr();
-		}
-		else if (this.StartPos[0].Class.IsFootnote())
-		{
-			this.Controller = this.oDocument.Document.GetFootnotesController();
-		}
-		else if (this.StartPos[0].Class.Is_DrawingShape())
-		{
-			this.Controller = this.oDocument.Document.DrawingsController;
-		}
-		else 
-		{
-			this.Controller = this.oDocument.Document.LogicDocumentController;
-		}
-	};
 	ApiRange.prototype.private_RemoveEqual = function()
 	{
 		function ckeck_equal(firstDocPos, secondDocPos)
@@ -1408,7 +1386,7 @@
 		let logicDocument = private_GetLogicDocument();
 		let docState = logicDocument.SaveDocumentState();
 		
-		this.Select(false);
+		this.Select();
 		
 		let textPr = logicDocument.GetCalculatedTextPr();
 		logicDocument.LoadDocumentState(docState);
@@ -1417,6 +1395,26 @@
 	ApiRange.prototype.private_GetLogicDocument = function()
 	{
 		return private_GetLogicDocument();
+	};
+	ApiRange.prototype.private_GetTopDocContent = function()
+	{
+		return this.StartPos[0].Class;
+	};
+	ApiRange.prototype.private_GetStartRun = function()
+	{
+		return this.StartPos[this.StartPos.length - 1].Class;
+	};
+	ApiRange.prototype.private_GetStartRunPos = function()
+	{
+		return this.StartPos[this.StartPos.length - 1].Position;
+	};
+	ApiRange.prototype.private_GetEndRun = function()
+	{
+		return this.EndPos[this.EndPos.length - 1].Class;
+	};
+	ApiRange.prototype.private_GetEndRunPos = function()
+	{
+		return this.EndPos[this.EndPos.length - 1].Position;
 	};
 	ApiRange.prototype._trackPositions = function()
 	{
@@ -1542,8 +1540,8 @@
 		
 		if ("after" === position)
 		{
-			let run      = this.EndPos[this.EndPos.length - 1].Class;
-			let inRunPos = this.EndPos[this.EndPos.length - 1].Position;
+			let run      = this.private_GetEndRun();
+			let inRunPos = this.private_GetEndRunPos();
 			
 			if (!run || !(run instanceof AscWord.Run) || -1 === inRunPos)
 				return false;
@@ -1565,8 +1563,8 @@
 		}
 		else
 		{
-			let run      = this.StartPos[this.StartPos.length - 1].Class;
-			let inRunPos = this.StartPos[this.StartPos.length - 1].Position;
+			let run      = this.private_GetStartRun();
+			let inRunPos = this.private_GetStartRunPos();
 			
 			if (!run || !(run instanceof AscWord.Run) || -1 === inRunPos)
 				return false;
@@ -1609,7 +1607,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		if (typeof(sName) !== "string")
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -1664,7 +1662,7 @@
 		hyperlinkPr.put_ToolTip(sScreenTipText);
 		hyperlinkPr.put_Bookmark(sBookmarkName);
 
-		this.Select(false);
+		this.Select();
 		var oHyperlink = new ApiHyperlink(this.Paragraphs[0].Paragraph.AddHyperlink(hyperlinkPr));
 		Document.RemoveSelection();
 
@@ -1705,12 +1703,11 @@
 		var Document = private_GetLogicDocument();
 		var oldSelectionInfo = Document.SaveDocumentState();
 		
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 		
-		var Text = this.Controller.GetSelectedText(false, _options);
+		var Text = this.private_GetTopDocContent().GetSelectedText(false, _options);
 		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
 		
 		return Text;
 	};
@@ -1757,56 +1754,15 @@
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Select.js
 	 */	
-	ApiRange.prototype.Select = function(update)
+	ApiRange.prototype.Select = function()
 	{
 		private_RefreshRangesPosition();
 
-		let logicDocument = private_GetLogicDocument();
-		
-		update = GetBoolParameter(update, true);
-		if (update)
-		{
-			logicDocument.RemoveSelection();
-			for (let i = this.StartPos.length - 1; i >= 0; --i)
-			{
-				let obj = this.StartPos[i].Class;
-				if ((obj instanceof AscWord.CDocument) || (obj instanceof AscWord.CDocumentContent))
-				{
-					obj.SetThisElementCurrent(true);
-					update = false;
-					break;
-				}
-			}
-		}
+		let oDocContent = this.private_GetTopDocContent();
 
-		this.StartPos[0].Class.SetContentPosition(this.StartPos, 0, 0);
-		this.StartPos[0].Class.SetSelectionByContentPositions(this.StartPos, this.EndPos);
+		this.private_GetStartRun().SetThisElementCurrent();
+		oDocContent.SetSelectionByContentPositions(this.StartPos, this.EndPos);
 		
-		// TODO: Rework this
-		if (update)
-		{
-			var controllerType;
-			
-			if (this.StartPos[0].Class.IsHdrFtr())
-			{
-				controllerType = docpostype_HdrFtr;
-			}
-			else if (this.StartPos[0].Class.IsFootnote())
-			{
-				controllerType = docpostype_Footnotes;
-			}
-			else if (this.StartPos[0].Class.Is_DrawingShape())
-			{
-				controllerType = docpostype_DrawingObjects;
-			}
-			else
-			{
-				controllerType = docpostype_Content;
-			}
-			logicDocument.SetDocPosType(controllerType);
-			logicDocument.UpdateSelection();
-		}
-
 		return true;
 	};
 
@@ -1825,11 +1781,14 @@
 		if (!(oRange instanceof ApiRange))
 			return null;
 
-		if (this.StartPos[0].Class !== oRange.StartPos[0].Class) {
+		let oDocContentCur = this.private_GetTopDocContent();
+		let oDocContentNext = oRange.private_GetTopDocContent();
+
+		if (oDocContentCur !== oDocContentNext) {
 			return null;
 		}
 
-		let oNewRange = new ApiRange(this.StartPos[0].Class, Math.min(this.GetStartPos(), oRange.GetStartPos()), Math.max(this.GetEndPos(), oRange.GetEndPos()));
+		let oNewRange = new ApiRange(oDocContentCur, Math.min(this.GetStartPos(), oRange.GetStartPos()), Math.max(this.GetEndPos(), oRange.GetEndPos()));
 		if (oNewRange.isEmpty) {
 			return null;
 		}
@@ -1852,7 +1811,10 @@
 		if (!(oRange instanceof ApiRange))
 			return null;
 
-		if (this.StartPos[0].Class !== oRange.StartPos[0].Class)
+		let oDocContentCur = this.private_GetTopDocContent();
+		let oDocContentNext = oRange.private_GetTopDocContent();
+
+		if (oDocContentCur !== oDocContentNext)
 			return null;
 
 		let oDocument			= private_GetLogicDocument();
@@ -1923,10 +1885,10 @@
 
 			// should be different paragraphs
 			if (new Set(aStartEndParas).size !== 1) {
-				this.Select(false);
+				this.Select();
 				let aThisSelectedCells = oThisStartParentTable.GetSelectionArray(); 
 				
-				oRange.Select(false);
+				oRange.Select();
 				let aRangeSelectedCells = oRangeStartParentTable.GetSelectionArray();
 
 				let aCommon = findCommonCells(aThisSelectedCells, aRangeSelectedCells);
@@ -1963,7 +1925,7 @@
 
 		restoreDocState();
 
-		let oNewRange = new ApiRange(this.StartPos[0].Class, nIntersectStartPos, nIntersectEndPos);
+		let oNewRange = new ApiRange(oDocContentCur, nIntersectStartPos, nIntersectEndPos);
 		if (oNewRange.isEmpty) {
 			return null;
 		}
@@ -1986,7 +1948,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -1999,7 +1961,7 @@
 		}
 
 		var ParaTextPr = new AscCommonWord.ParaTextPr({Bold : isBold});
-		this.Controller.AddToParagraph(ParaTextPr);
+		Document.AddToParagraph(ParaTextPr);
 
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
@@ -2022,7 +1984,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2094,7 +2056,7 @@
 		const logicDocument = private_GetLogicDocument();
 		const oldSelectionInfo = logicDocument.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		const selectedContent = logicDocument.GetSelectedElementsInfo({ CheckAllSelection: true });
@@ -2142,7 +2104,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 		
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2182,7 +2144,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2266,7 +2228,7 @@
 		const logicDocument = private_GetLogicDocument();
 		const oldSelectionInfo = logicDocument.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		const selectedContent = logicDocument.GetSelectedElementsInfo({ CheckAllSelection: true });
@@ -2309,7 +2271,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2345,7 +2307,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 		
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2385,7 +2347,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2424,7 +2386,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2461,7 +2423,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2501,7 +2463,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var value = undefined;
@@ -2550,7 +2512,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		if (typeof nPosition !== "number")
@@ -2589,7 +2551,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2630,7 +2592,7 @@
 		var Document			= private_GetLogicDocument();
 		let oldSelectionInfo = Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		var FontFamily = {
@@ -2670,7 +2632,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		if (!(oStyle instanceof ApiStyle))
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -2711,7 +2673,7 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		if (!(oTextPr instanceof ApiTextPr))
 		{
 			Document.LoadDocumentState(oldSelectionInfo);
@@ -2767,10 +2729,10 @@
 		var Document			= private_GetLogicDocument();
 		var oldSelectionInfo	= Document.SaveDocumentState();
 
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
-		this.Controller.Remove(1, true, false, false, false);
+		Document.Remove(1, true, false, false, false);
 
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
@@ -2798,7 +2760,7 @@
 		private_RefreshRangesPosition();
 
 		var oldSelectionInfo = oDocument.SaveDocumentState();
-		this.Select(false);
+		this.Select();
 
 		var oSelectedContent = oDocument.GetSelectedContent();
 		private_TrackRangesPositions();
@@ -2855,7 +2817,7 @@
 
 		let oldDocumentState = oDocument.SaveDocumentState();
 		
-		this.Select(false);
+		this.Select();
 		private_TrackRangesPositions();
 
 		let SelectedContent = oDocument.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2900,7 +2862,9 @@
 		let nNewStartPos = this.GetStartPos() + nStart;
 		let nNewEndPos = nEnd < 0 ? this.GetEndPos() : nNewStartPos + (nEnd - nStart);
 
-		let oRange = new ApiRange(this.StartPos[0].Class, nNewStartPos, nNewEndPos);
+		let oDocContent = this.private_GetTopDocContent();
+		
+		let oRange = new ApiRange(oDocContent, nNewStartPos, nNewEndPos);
 		if (oRange.isEmpty)
 			return null;
 		
@@ -2953,7 +2917,7 @@
 	ApiRange.prototype.SetStartPos = function(nPos)
 	{
 		let nEndPos = this.GetEndPos();
-		this.private_UpdateDocPos(nPos, nEndPos, this.StartPos[0].Class);
+		this.private_UpdateDocPos(nPos, nEndPos, this.private_GetTopDocContent());
 		return true;
 	};
 
@@ -2969,7 +2933,7 @@
 	ApiRange.prototype.SetEndPos = function(nPos)
 	{
 		let nStartPos = this.GetStartPos();
-		this.private_UpdateDocPos(nStartPos, nPos, this.EndPos[0].Class);
+		this.private_UpdateDocPos(nStartPos, nPos, this.private_GetTopDocContent());
 		return true;
 	};
 
@@ -2985,8 +2949,8 @@
 		private_RefreshRangesPosition();
 
 		let isFirstRun		= true;
-		let oRunStart		= this.StartPos[this.StartPos.length - 1].Class;
-		let oRunStartPos	= this.StartPos[this.StartPos.length - 1].Position;
+		let oRunStart		= this.private_GetStartRun();
+		let oRunStartPos	= this.private_GetStartRunPos();
 
 		let isStartPosFounded = false;
 		let nStartCharPos = 0;
@@ -3015,7 +2979,7 @@
 				nStartCharPos++;
 		}
 
-		this.StartPos[0].Class.CheckRunContent(calcStartPos);
+		this.private_GetTopDocContent().CheckRunContent(calcStartPos);
 		return nStartCharPos;
 	};
 
@@ -3040,8 +3004,8 @@
 		private_RefreshRangesPosition();
 		
 		let isFirstRun	= true;
-		let oRunEnd		= this.EndPos[this.EndPos.length - 1].Class;
-		let oRunEndPos	= this.EndPos[this.EndPos.length - 1].Position;
+		let oRunEnd		= this.private_GetEndRun();
+		let oRunEndPos	= this.private_GetEndRunPos();
 
 		let isEndPosFounded = false;
 		let nEndCharPos = 0;
@@ -3070,7 +3034,7 @@
 				nEndCharPos++;
 		}
 
-		this.EndPos[0].Class.CheckRunContent(calcEndPos);
+		this.private_GetTopDocContent().CheckRunContent(calcEndPos);
 		return nEndCharPos;
 	};
 	
@@ -3118,7 +3082,7 @@
 		private_RefreshRangesPosition();
 		
 		let oDoc = private_GetLogicDocument();
-		this.Select(false);
+		this.Select();
 
 		oDoc.Remove(1, false, false, true);
 		return !!oDoc.AddComplexField(sCode);
@@ -3277,7 +3241,35 @@
 	{
 		return "hyperlink";
 	};
-	
+	/**
+	 * Returns the parent element (a paragraph or an inline content control) that directly contains the current hyperlink.
+	 * @memberof ApiHyperlink
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {?ParagraphLikeContainer} - returns null if the hyperlink has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetParent.js
+	 */
+	ApiHyperlink.prototype.GetParent = function()
+	{
+		let parent = this.ParaHyperlink.GetParent();
+		return private_GetParagraphLikeContainer(parent);
+	};
+	/**
+	 * Returns the position (index) of the current hyperlink within its parent element.
+	 * @memberof ApiHyperlink
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {Number} - returns -1 if the hyperlink has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetPosInParent.js
+	 */
+	ApiHyperlink.prototype.GetPosInParent = function()
+	{
+		if (!this.GetParent())
+			return -1;
+		
+		return this.ParaHyperlink.GetPosInParent();
+	};
+
 	/**
 	 * Class representing a document form base.
 	 * @constructor
@@ -4172,6 +4164,12 @@
 	 */
 
 	/**
+	 * A paragraph-like container that can directly hold inline-level content (Hyperlink, InlineLvlSdt, etc.).
+	 * @typedef {(ApiParagraph | ApiInlineLvlSdt | ApiHyperlink | ApiFormBase)} ParagraphLikeContainer
+	 * @see office-js-api/Examples/Enumerations/ParagraphLikeContainer.js
+	 */
+
+	/**
 	 * The reading order (left-to-right or right-to-left).
 	 * @typedef {("ltr" | "rtl")} ReadingOrder
 	 * @see office-js-api/Examples/Enumerations/ReadingOrder.js
@@ -4737,7 +4735,7 @@
 	 */
 	Api.CreateParagraph = function()
 	{
-		return new ApiParagraph(new AscWord.Paragraph(private_GetLogicDocument()));
+		return new ApiParagraph(new AscWord.Paragraph());
 	};
 	/**
 	 * Creates an element range.
@@ -4780,21 +4778,26 @@
 	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {number} rows - Number of rows.
-	 * @param {number} cols - Number of columns.
+	 * @param {number} rows - Number of rows. Must be a positive integer.
+	 * @param {number} cols - Number of columns. Must be a positive integer.
 	 * @returns {ApiTable}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateTable.js
 	 */
 	Api.CreateTable = function(rows, cols)
 	{
-		if (!rows || rows <= 0 || !cols || cols <= 0)
-			return null;
+		let _rows = GetIntParameter(rows, null);
+		if (null === _rows || _rows <= 0)
+			throwException(new Error("rows must be a positive integer, got " + rows));
 
-		var oTable = new CTable(private_GetDrawingDocument(), private_GetLogicDocument(), true, rows, cols, [], false);
-		oTable.CorrectBadGrid();
-		oTable.Set_TableW(undefined);
-		oTable.Set_TableStyle2(undefined);
-		return new ApiTable(oTable);
+		let _cols = GetIntParameter(cols, null);
+		if (null === _cols || _cols <= 0)
+			throwException(new Error("cols must be a positive integer, got " + cols));
+
+		let table = new AscWord.Table(private_GetDrawingDocument(), null, true, _rows, _cols, [], false);
+		table.CorrectBadGrid();
+		table.Set_TableW(undefined);
+		table.Set_TableStyle2(undefined);
+		return new ApiTable(table);
 	};
 	/**
 	 * Creates an abstract multilevel numbering with a specified type.
@@ -5768,7 +5771,7 @@
 	 */
 	Api.CreateBlockLvlSdt = function()
 	{
-		return new ApiBlockLvlSdt(new CBlockLevelSdt(editor.private_GetLogicDocument(), private_GetLogicDocument()));
+		return new ApiBlockLvlSdt(new CBlockLevelSdt(editor.private_GetLogicDocument()));
 	};
 
 	/**
@@ -6405,6 +6408,26 @@
 			return new ApiBlockLvlSdt(this.Document.Content[nPos]);
 
 		return null;
+	};
+	/**
+	 * Returns the position (index) of the specified element within the current document content.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @param {DocumentElement} element - The document element (paragraph, table or block content control) whose index will be returned.
+	 * @returns {Number} - returns -1 if the element is not a direct child of the current document content.
+	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetElementIndex.js
+	 */
+	ApiDocumentContent.prototype.GetElementIndex = function(element)
+	{
+		if (!private_IsDocumentElement(element))
+			return -1;
+
+		let parent = element.GetParent();
+		if (!parent || (!(parent instanceof ApiDocument) && !(parent instanceof ApiDocumentContent)) || parent.Document !== this.Document)
+			return -1;
+
+		return element.GetPosInParent();
 	};
 	/**
 	 * Adds a paragraph or a table or a blockLvl content control using its position in the document content.
@@ -10370,18 +10393,36 @@
 	/**
 	 * Add text to the document on the cursor position.
 	 * @memberof ApiDocument
-	 * @param {string} sText - The text to add to document.
+	 * @param {string} text - The text to add to document. The "\n" characters are added as line breaks, the "\t"
+	 * characters are added as tabs, the "\r" characters are skipped.
 	 * @returns {boolean}
 	 * @typeofeditors ["CDE"]
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/EnterText.js
 	 */
-	ApiDocument.prototype.EnterText = function(sText)
+	ApiDocument.prototype.EnterText = function(text)
 	{
-		this.Document.EnterText(sText);
+		text = GetStringParameter(text, null);
+		if (null === text)
+			throwException(new Error("The 'text' parameter must be a string"));
+
+		let parts = text.replace(/\r/g, "").split(/([\t\n])/);
+		for (let index = 0; index < parts.length; ++index)
+		{
+			let part = parts[index];
+			if ("" === part)
+				continue;
+
+			if ("\t" === part)
+				this.Document.AddToParagraph(new AscWord.CRunTab());
+			else if ("\n" === part)
+				this.Document.AddNewParagraph();
+			else
+				this.Document.EnterText(part);
+		}
 		return true;
 	};
-
+	
 	/**
 	 * Moves the cursor into the header of the specified page and switches the document into the header editing mode. The cursor is positioned at the beginning of the header.
 	 * @memberof ApiDocument
@@ -12112,6 +12153,45 @@
 		return null;
 	};
 	/**
+	 * Returns the document content that contains the current paragraph.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {ApiDocument | ApiDocumentContent | null} - returns the main document, a document part (table cell, header/footer, footnote, etc.), or null if the paragraph has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetParent.js
+	 */
+	ApiParagraph.prototype.GetParent = function()
+	{
+		let parent = this.Paragraph.GetParent();
+		
+		if (parent instanceof AscWord.Document)
+			return new ApiDocument(parent);
+		else if (parent instanceof AscWord.DocumentContent)
+			return new ApiDocumentContent(parent);
+		
+		return null;
+	};
+	/**
+	 * Returns the position (index) of the specified element within the current paragraph.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @param {ParagraphContent} element - The inline element (run, inline content control, form, etc.) whose index will be returned.
+	 * @returns {Number} - returns -1 if the element is not a direct child of the current paragraph.
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetElementIndex.js
+	 */
+	ApiParagraph.prototype.GetElementIndex = function(element)
+	{
+		if (!private_IsSupportedParaElement(element))
+			return -1;
+		
+		let parent = element.GetParent();
+		if (!parent || !(parent instanceof ApiParagraph) || parent.Paragraph !== this.Paragraph)
+			return -1;
+
+		return element.GetPosInParent();
+	};
+	/**
 	 * Returns the paragraph text.
 	 * @memberof ApiParagraph
 	 * @param {object} [options] - Options for formatting the returned text.
@@ -12212,7 +12292,7 @@
 		}
 		else 
 		{
-			ContentControl = new ApiBlockLvlSdt(new CBlockLevelSdt(Document, Document));
+			ContentControl = new ApiBlockLvlSdt(new CBlockLevelSdt(Document, null));
 			ContentControl.Sdt.SetDefaultTextPr(Document.GetDirectTextPr());
 			ContentControl.Sdt.Content.RemoveFromContent(0, ContentControl.Sdt.Content.GetElementsCount(), false);
 			ContentControl.Sdt.Content.AddToContent(0, this.Paragraph);
@@ -13126,45 +13206,10 @@
 	 */
 	ApiRun.prototype.Select = function()
 	{
-		var Document = private_GetLogicDocument();
-
-		var StartPos		= this.Run.GetDocumentPositionFromObject();
-		var EndPos			= this.Run.GetDocumentPositionFromObject();
-		var parentParagraph	= this.Run.GetParagraph();
-
-		if (!parentParagraph)
+		if (!this.Run.IsUseInDocument())
 			return false;
 
-		StartPos.push({Class: this.Run, Position: 0});
-		EndPos.push({Class: this.Run, Position: this.Run.Content.length});
-
-		if (StartPos[0].Position === - 1)
-			return false;
-
-		StartPos[0].Class.SetSelectionByContentPositions(StartPos, EndPos);
-
-		var controllerType;
-
-		if (StartPos[0].Class.IsHdrFtr())
-		{
-			controllerType = docpostype_HdrFtr;
-		}
-		else if (StartPos[0].Class.IsFootnote())
-		{
-			controllerType = docpostype_Footnotes;
-		}
-		else if (StartPos[0].Class.Is_DrawingShape())
-		{
-			controllerType = docpostype_DrawingObjects;
-		}
-		else 
-		{
-			controllerType = docpostype_Content;
-		}
-
-		Document.SetDocPosType(controllerType);
-		Document.UpdateSelection();
-
+		this.Run.SelectThisElement();
 		return true;	
 	};
 	/**
@@ -13347,8 +13392,37 @@
 		if (!oPara)
 			return null;
 
-        return new ApiParagraph(oPara); 
+        return new ApiParagraph(oPara);
     };
+	/**
+	 * Returns the parent element (a paragraph or an inline content control) that directly contains the current run.
+	 * @memberof ApiRun
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {?ParagraphLikeContainer} - returns null if the run has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetParent.js
+	 */
+	ApiRun.prototype.GetParent = function()
+	{
+		let parent = this.Run.GetParent();
+		return private_GetParagraphLikeContainer(parent);
+	};
+	/**
+	 * Returns the position (index) of the current run within its parent element.
+	 * @memberof ApiRun
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {Number} - returns -1 if the run has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetPosInParent.js
+	 */
+	ApiRun.prototype.GetPosInParent = function()
+	{
+		let parent = this.GetParent();
+		if (!parent)
+			return -1;
+		
+		return this.Run.GetPosInParent();
+	};
 	/**
 	 * Sets the text properties to the current run.
 	 * @memberof ApiRun
@@ -13557,6 +13631,35 @@
 	{
 		let formatType = GetStringParameter(format, "unicode");
 		return this.ParaMath.GetText("latex" === formatType);
+	};
+	/**
+	 * Returns the parent element (a paragraph or an inline content control) that directly contains the current math element.
+	 * @memberof ApiMath
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {?ParagraphLikeContainer} - returns null if the math element has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiMath/Methods/GetParent.js
+	 */
+	ApiMath.prototype.GetParent = function()
+	{
+		let parent = this.ParaMath.GetParent();
+		return private_GetParagraphLikeContainer(parent);
+	};
+	/**
+	 * Returns the position (index) of the current math element within its parent element.
+	 * @memberof ApiMath
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {Number} - returns -1 if the math element has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiMath/Methods/GetPosInParent.js
+	 */
+	ApiMath.prototype.GetPosInParent = function()
+	{
+		let parent = this.GetParent();
+		if (!parent)
+			return -1;
+		
+		return this.ParaMath.GetPosInParent();
 	};
 	ApiMath.prototype.private_GetImpl = function()
 	{
@@ -14843,7 +14946,7 @@
 		}
 		else 
 		{
-			ContentControl = new ApiBlockLvlSdt(new CBlockLevelSdt(Document, Document))
+			ContentControl = new ApiBlockLvlSdt(new CBlockLevelSdt(Document, null))
 			ContentControl.Sdt.SetDefaultTextPr(Document.GetDirectTextPr());
 			ContentControl.Sdt.Content.RemoveFromContent(0, ContentControl.Sdt.Content.GetElementsCount(), false);
 			ContentControl.Sdt.Content.AddToContent(0, this.Table);
@@ -15064,19 +15167,39 @@
 		
 		return JSON.stringify(oJSON);
 	};
-
 	/**
-     * Returns the table position within its parent element.
-     * @memberof ApiTable
-     * @typeofeditors ["CDE"]
-     * @returns {Number} - returns -1 if the table parent doesn't exist. 
-     * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetPosInParent.js
+	 * Returns the document content that contains the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {ApiDocument | ApiDocumentContent | null} - returns the main document, a document part (table cell, header/footer, footnote, etc.), or null if the table has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetParent.js
+	 */
+	ApiTable.prototype.GetParent = function()
+	{
+		let parent = this.Table.GetParent();
+		
+		if (parent instanceof AscWord.Document)
+			return new ApiDocument(parent);
+		else if (parent instanceof AscWord.DocumentContent)
+			return new ApiDocumentContent(parent);
+		
+		return null;
+	};
+	/**
+	 * Returns the table position within its parent element.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CDE"]
+	 * @returns {Number} - returns -1 if the table parent doesn't exist. 
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetPosInParent.js
 	 */
 	ApiTable.prototype.GetPosInParent = function()
 	{
+		if (!this.GetParent())
+			return -1;
+		
 		return this.Table.GetIndex();
 	};
- 
 	/**
 	 * Replaces the current table with a new element.
 	 * @memberof ApiTable
@@ -18444,7 +18567,7 @@
 	 * Sets the outline level for the specified properties.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {Number | null | undefined} [lvl=undefined] - The outline level. Possible values: 1-9. The 1The desired functionality is as follows: When inserting document A into document B using the merge document API during editing, the source of document A should be visible within document B. By clicking or hovering over the inserted content of document A in document B, information about the insertion of document A should be displayed in a pop-up/floating window, preserving the boundaries of document A. Document A should be able to be inserted between any two characters in document B.
+	 * @param {Number | null | undefined} [lvl=undefined] - The outline level. Possible values: 1-9. The 1 value means the basic outline level.
 	 * To set no outline level, use this method without a parameter.
 	 * @returns {boolean}
 	 * @since 8.2.0
@@ -20234,7 +20357,7 @@
 		}
 		else 
 		{
-			ContentControl		= new ApiBlockLvlSdt(new CBlockLevelSdt(Document, Document))
+			ContentControl		= new ApiBlockLvlSdt(new CBlockLevelSdt(Document, null))
 			ContentControl.Sdt.SetDefaultTextPr(Document.GetDirectTextPr());
 			paragraphInControl	= ContentControl.Sdt.GetFirstParagraph();
 			if (paragraphInControl.Content.length > 1)
@@ -20562,13 +20685,13 @@
 	ApiDrawing.prototype.Fill = function(oFill)
 	{
 		const classType = this.GetClassType();
-		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
+		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt")
 			return false;
 
 		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
 			return false;
 
-		if (classType === "smartArt")
+		if (classType === "smartArt" || classType === "group")
 		{
 			this.Drawing.changeFill(oFill.UniFill);
 			return true;
@@ -20627,7 +20750,7 @@
 	ApiDrawing.prototype.SetOutLine = function(stroke)
 	{
 		const classType = this.GetClassType();
-		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt" && classType !== "oleObject")
+		if (classType !== "shape" && classType !== "image" && classType !== "chart" && classType !== "group" && classType !== "smartArt")
 			return false;
 
 		if (!stroke || !stroke.GetClassType || stroke.GetClassType() !== "stroke")
@@ -24737,14 +24860,57 @@
 	 */
 	ApiInlineLvlSdt.prototype.GetParentParagraph = function()
 	{
-		var oPara = this.Sdt.GetParagraph();
-
-		if (oPara)
-			return new ApiParagraph(oPara);
-
-		return null; 
+		let paragraph = this.Sdt.GetParagraph();
+		return paragraph ? new ApiParagraph(paragraph) : null;
 	};
+	/**
+	 * Returns the parent element (a paragraph or an inline content control) that directly contains the current inline content control.
+	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {?ParagraphLikeContainer} - returns null if the content control has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetParent.js
+	 */
+	ApiInlineLvlSdt.prototype.GetParent = function()
+	{
+		let parent = this.Sdt.GetParent();
+		return private_GetParagraphLikeContainer(parent);
+	};
+	/**
+	 * Returns the position (index) of the current inline content control within its parent element.
+	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {Number} - returns -1 if the content control has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetPosInParent.js
+	 */
+	ApiInlineLvlSdt.prototype.GetPosInParent = function()
+	{
+		if (!this.GetParent())
+			return -1;
+		
+		return this.Sdt.GetPosInParent();
+	};
+	/**
+	 * Returns the position (index) of the specified element within the current inline content control.
+	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @param {ParagraphContent} element - The inline element (run, inline content control, form, etc.) whose index will be returned.
+	 * @returns {Number} - returns -1 if the element is not a direct child of the current inline content control.
+	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetElementIndex.js
+	 */
+	ApiInlineLvlSdt.prototype.GetElementIndex = function(element)
+	{
+		if (!private_IsSupportedParaElement(element))
+			return -1;
 
+		let parent = element.GetParent();
+		if (!parent || !(parent instanceof ApiInlineLvlSdt) || parent.Sdt !== this.Sdt)
+			return -1;
+		
+		return element.GetPosInParent();
+	};
 	/**
 	 * Returns a content control that contains the current content control.
 	 * @memberof ApiInlineLvlSdt
@@ -26717,19 +26883,39 @@
 
 		return true;
 	};
-
 	/**
-     * Returns the content control position within its parent element.
-     * @memberof ApiBlockLvlSdt
-     * @typeofeditors ["CDE"]
-     * @returns {Number} - returns -1 if the content control parent doesn't exist. 
-     * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetPosInParent.js
+	 * Returns the document content that contains the current content control.
+	 * @memberof ApiBlockLvlSdt
+	 * @typeofeditors ["CDE"]
+	 * @since 9.5.0
+	 * @returns {ApiDocument | ApiDocumentContent | null} - returns the main document, a document part (table cell, header/footer, footnote, etc.), or null if the content control has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetParent.js
+	 */
+	ApiBlockLvlSdt.prototype.GetParent = function()
+	{
+		let parent = this.Sdt.GetParent();
+		
+		if (parent instanceof AscWord.Document)
+			return new ApiDocument(parent);
+		else if (parent instanceof AscWord.DocumentContent)
+			return new ApiDocumentContent(parent);
+		
+		return null;
+	};
+	/**
+	 * Returns the content control position within its parent element.
+	 * @memberof ApiBlockLvlSdt
+	 * @typeofeditors ["CDE"]
+	 * @returns {Number} - returns -1 if the content control parent doesn't exist. 
+	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetPosInParent.js
 	 */
 	ApiBlockLvlSdt.prototype.GetPosInParent = function()
 	{
+		if (!this.GetParent())
+			return -1;
+		
 		return this.Sdt.GetIndex();
 	};
-
 	/**
 	 * Replaces the current content control with a new element.
 	 * @memberof ApiBlockLvlSdt
@@ -27051,6 +27237,34 @@
 	ApiFormBase.prototype.GetClassType = function()
 	{
 		return "form";
+	};
+	/**
+	 * Returns the parent element (a paragraph or an inline content control) that directly contains the current form.
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @since 9.5.0
+	 * @returns {?ParagraphLikeContainer} - returns null if the form has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/GetParent.js
+	 */
+	ApiFormBase.prototype.GetParent = function()
+	{
+		let parent = this.Sdt.GetParent();
+		return private_GetParagraphLikeContainer(parent);
+	};
+	/**
+	 * Returns the position (index) of the current form within its parent element.
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @since 9.5.0
+	 * @returns {Number} - returns -1 if the form has no parent.
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/GetPosInParent.js
+	 */
+	ApiFormBase.prototype.GetPosInParent = function()
+	{
+		if (!this.GetParent())
+			return -1;
+		
+		return this.Sdt.GetPosInParent();
 	};
 	/**
 	 * Returns an internal id of the current form.
@@ -30269,14 +30483,62 @@
 
 
 	/**
+	 * Document comparison and merge properties.
+	 * @typedef {Object} ComparisonPr
+	 * @property {boolean} [words=true] - Specifies whether changes are tracked by word (true) or by character (false).
+	 * @property {boolean} [formatting=true] - Specifies whether to mark differences in formatting.
+	 * @property {boolean} [caseChanges=true] - Specifies whether to mark differences in case.
+	 * @property {boolean} [whiteSpace=true] - Specifies whether to mark differences in white space.
+	 * @property {boolean} [tables=true] - Specifies whether to compare differences in tables.
+	 * @property {boolean} [headersAndFooters=true] - Specifies whether to compare differences in headers and footers.
+	 * @property {boolean} [footnotes=true] - Specifies whether to compare differences in footnotes and endnotes.
+	 * @property {boolean} [textBoxes=true] - Specifies whether to compare differences in text boxes.
+	 * @property {boolean} [comments=true] - Specifies whether to compare differences in comments.
+	 * @property {string} [authorName] - The name to which the tracked changes are attributed. If not specified, the author of the second document is used.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/Enumerations/ComparisonPr.js
+	 */
+
+	function private_CreateComparisonOptions(comparisonPr)
+	{
+		const options = new AscCommonWord.ComparisonOptions();
+		if (!comparisonPr || typeof comparisonPr !== "object")
+			return options;
+
+		if (typeof comparisonPr["words"] === "boolean")
+			options.putWords(comparisonPr["words"]);
+		if (typeof comparisonPr["formatting"] === "boolean")
+			options.putFormatting(comparisonPr["formatting"]);
+		if (typeof comparisonPr["caseChanges"] === "boolean")
+			options.putCaseChanges(comparisonPr["caseChanges"]);
+		if (typeof comparisonPr["whiteSpace"] === "boolean")
+			options.putWhiteSpace(comparisonPr["whiteSpace"]);
+		if (typeof comparisonPr["tables"] === "boolean")
+			options.putTables(comparisonPr["tables"]);
+		if (typeof comparisonPr["headersAndFooters"] === "boolean")
+			options.putHeadersAndFooters(comparisonPr["headersAndFooters"]);
+		if (typeof comparisonPr["footnotes"] === "boolean")
+			options.putFootNotes(comparisonPr["footnotes"]);
+		if (typeof comparisonPr["textBoxes"] === "boolean")
+			options.putTextBoxes(comparisonPr["textBoxes"]);
+		if (typeof comparisonPr["comments"] === "boolean")
+			options.putComments(comparisonPr["comments"]);
+		if (typeof comparisonPr["authorName"] === "string")
+			options.putAuthorName(comparisonPr["authorName"]);
+
+		return options;
+	}
+
+	/**
 	 * Compares the current document with another document opened via builderJS.OpenTmpFile. Tracked changes between the two documents are produced in the current document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {object} file - The second document, returned by builderJS.OpenTmpFile.
+	 * @param {ComparisonPr} [comparisonPr={}] - The document comparison properties.
 	 */
-	Api.CompareDocuments = function(file)
+	Api.CompareDocuments = function(file, comparisonPr)
 	{
-		AscCommonWord.CompareDocuments(file);
+		AscCommonWord.CompareDocuments(file, private_CreateComparisonOptions(comparisonPr));
 	};
 
 	/**
@@ -30284,10 +30546,11 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {object} file - The second document, returned by builderJS.OpenTmpFile.
+	 * @param {ComparisonPr} [comparisonPr={}] - The document merge properties.
 	 */
-	Api.MergeDocuments = function(file)
+	Api.MergeDocuments = function(file, comparisonPr)
 	{
-		AscCommonWord.mergeDocuments(file);
+		AscCommonWord.mergeDocuments(file, private_CreateComparisonOptions(comparisonPr));
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -31785,6 +32048,7 @@
 	ApiDocumentContent.prototype["GetInternalId"]             = ApiDocumentContent.prototype.GetInternalId;
 	ApiDocumentContent.prototype["GetElementsCount"]          = ApiDocumentContent.prototype.GetElementsCount;
 	ApiDocumentContent.prototype["GetElement"]                = ApiDocumentContent.prototype.GetElement;
+	ApiDocumentContent.prototype["GetElementIndex"]           = ApiDocumentContent.prototype.GetElementIndex;
 	ApiDocumentContent.prototype["AddElement"]                = ApiDocumentContent.prototype.AddElement;
 	ApiDocumentContent.prototype["Push"]                      = ApiDocumentContent.prototype.Push;
 	ApiDocumentContent.prototype["RemoveAllElements"]         = ApiDocumentContent.prototype.RemoveAllElements;
@@ -32048,6 +32312,8 @@
 	ApiParagraph.prototype["AddEndnoteCrossRef"]     = ApiParagraph.prototype.AddEndnoteCrossRef;
 	ApiParagraph.prototype["AddCaptionCrossRef"]     = ApiParagraph.prototype.AddCaptionCrossRef;
 	ApiParagraph.prototype["GetPosInParent"]         = ApiParagraph.prototype.GetPosInParent;
+	ApiParagraph.prototype["GetParent"]              = ApiParagraph.prototype.GetParent;
+	ApiParagraph.prototype["GetElementIndex"]        = ApiParagraph.prototype.GetElementIndex;
 	ApiParagraph.prototype["ReplaceByElement"]       = ApiParagraph.prototype.ReplaceByElement;
 	ApiParagraph.prototype["AddCaption"]             = ApiParagraph.prototype.AddCaption;
 	ApiParagraph.prototype["SetSection"]             = ApiParagraph.prototype.SetSection;
@@ -32057,6 +32323,8 @@
 
 	ApiMath.prototype["GetClassType"]                = ApiMath.prototype.GetClassType;
 	ApiMath.prototype["GetText"]                     = ApiMath.prototype.GetText;
+	ApiMath.prototype["GetParent"]                   = ApiMath.prototype.GetParent;
+	ApiMath.prototype["GetPosInParent"]              = ApiMath.prototype.GetPosInParent;
 
 	ApiRun.prototype["GetClassType"]                 = ApiRun.prototype.GetClassType;
 	ApiRun.prototype["GetTextPr"]                    = ApiRun.prototype.GetTextPr;
@@ -32077,6 +32345,8 @@
 	ApiRun.prototype["GetParentTable"]               = ApiRun.prototype.GetParentTable;
 	ApiRun.prototype["GetParentTableCell"]           = ApiRun.prototype.GetParentTableCell;
 	ApiRun.prototype["GetParentParagraph"]           = ApiRun.prototype.GetParentParagraph;
+	ApiRun.prototype["GetParent"]                    = ApiRun.prototype.GetParent;
+	ApiRun.prototype["GetPosInParent"]               = ApiRun.prototype.GetPosInParent;
 	ApiRun.prototype["SetTextPr"]                    = ApiRun.prototype.SetTextPr;
 	ApiRun.prototype["GetFontNames"]                 = ApiRun.prototype.GetFontNames;
 	ApiRun.prototype["WrapInMailMergeField"]         = ApiRun.prototype.WrapInMailMergeField;
@@ -32087,6 +32357,8 @@
 
 
 	ApiHyperlink.prototype["GetClassType"]           = ApiHyperlink.prototype.GetClassType;
+	ApiHyperlink.prototype["GetParent"]              = ApiHyperlink.prototype.GetParent;
+	ApiHyperlink.prototype["GetPosInParent"]         = ApiHyperlink.prototype.GetPosInParent;
 	ApiHyperlink.prototype["SetLink"]                = ApiHyperlink.prototype.SetLink;
 	ApiHyperlink.prototype["SetDisplayedText"]       = ApiHyperlink.prototype.SetDisplayedText;
 	ApiHyperlink.prototype["SetScreenTipText"]       = ApiHyperlink.prototype.SetScreenTipText;
@@ -32173,6 +32445,7 @@
 	ApiTable.prototype["SetBackgroundColor"]         = ApiTable.prototype.SetBackgroundColor;
 	ApiTable.prototype["ToJSON"]                     = ApiTable.prototype.ToJSON;
 	ApiTable.prototype["GetPosInParent"]             = ApiTable.prototype.GetPosInParent;
+	ApiTable.prototype["GetParent"]                  = ApiTable.prototype.GetParent;
 	ApiTable.prototype["ReplaceByElement"]           = ApiTable.prototype.ReplaceByElement;
 	ApiTable.prototype["AddComment"]                 = ApiTable.prototype.AddComment;
 	ApiTable.prototype["AddCaption"]                 = ApiTable.prototype.AddCaption;
@@ -32687,6 +32960,9 @@
 	ApiInlineLvlSdt.prototype["Delete"]                 = ApiInlineLvlSdt.prototype.Delete;
 	ApiInlineLvlSdt.prototype["SetTextPr"]              = ApiInlineLvlSdt.prototype.SetTextPr;
 	ApiInlineLvlSdt.prototype["GetParentParagraph"]     = ApiInlineLvlSdt.prototype.GetParentParagraph;
+	ApiInlineLvlSdt.prototype["GetParent"]              = ApiInlineLvlSdt.prototype.GetParent;
+	ApiInlineLvlSdt.prototype["GetPosInParent"]         = ApiInlineLvlSdt.prototype.GetPosInParent;
+	ApiInlineLvlSdt.prototype["GetElementIndex"]        = ApiInlineLvlSdt.prototype.GetElementIndex;
 	ApiInlineLvlSdt.prototype["GetParentContentControl"]= ApiInlineLvlSdt.prototype.GetParentContentControl;
 	ApiInlineLvlSdt.prototype["GetParentTable"]         = ApiInlineLvlSdt.prototype.GetParentTable;
 	ApiInlineLvlSdt.prototype["GetParentTableCell"]     = ApiInlineLvlSdt.prototype.GetParentTableCell;
@@ -32783,6 +33059,7 @@
 	ApiBlockLvlSdt.prototype["GetPlaceholderText"]      = ApiBlockLvlSdt.prototype.GetPlaceholderText;
 	ApiBlockLvlSdt.prototype["SetPlaceholderText"]      = ApiBlockLvlSdt.prototype.SetPlaceholderText;
 	ApiBlockLvlSdt.prototype["GetPosInParent"]          = ApiBlockLvlSdt.prototype.GetPosInParent;
+	ApiBlockLvlSdt.prototype["GetParent"]               = ApiBlockLvlSdt.prototype.GetParent;
 	ApiBlockLvlSdt.prototype["ReplaceByElement"]        = ApiBlockLvlSdt.prototype.ReplaceByElement;
 	ApiBlockLvlSdt.prototype["AddComment"]              = ApiBlockLvlSdt.prototype.AddComment;
 	ApiBlockLvlSdt.prototype["AddCaption"]              = ApiBlockLvlSdt.prototype.AddCaption;
@@ -32805,6 +33082,8 @@
 
 
 	ApiFormBase.prototype["GetClassType"]       = ApiFormBase.prototype.GetClassType;
+	ApiFormBase.prototype["GetParent"]          = ApiFormBase.prototype.GetParent;
+	ApiFormBase.prototype["GetPosInParent"]     = ApiFormBase.prototype.GetPosInParent;
 	ApiFormBase.prototype["GetInternalId"]      = ApiFormBase.prototype.GetInternalId;
 	ApiFormBase.prototype["GetFormType"]        = ApiFormBase.prototype.GetFormType;
 	ApiFormBase.prototype["GetFormKey"]         = ApiFormBase.prototype.GetFormKey;
@@ -33301,6 +33580,14 @@
 		oPara.Add_ToContent(oPara.Content.length - 1, oElement);
 		oPara.CorrectContent(undefined, undefined, true);
 	}
+	
+	function private_IsDocumentElement(element)
+	{
+		return (element instanceof ApiParagraph
+			|| element instanceof ApiTable
+			|| element instanceof ApiBlockLvlSdt
+		);
+	}
 
 	function private_IsSupportedParaElement(oElement)
 	{
@@ -33336,6 +33623,21 @@
 		else
 			return new ApiUnsupported();
 	}
+	
+	function private_GetParagraphLikeContainer(element)
+	{
+		if (element instanceof AscWord.Paragraph)
+			return new ApiParagraph(element);
+		else if (element instanceof AscWord.InlineLevelSdt)
+			return new ApiInlineLvlSdt(element);
+		else if (element instanceof AscWord.ParaHyperlink)
+			return new ApiHyperlink(element);
+		else if (element instanceof AscWord.ParaMath)
+			return new ApiMath(element);
+		
+		return null;
+	}
+	
 	function private_GetSupportedDocContentElement(oElement)
 	{
 		if (oElement instanceof AscWord.Paragraph)
@@ -34888,7 +35190,7 @@
 		return new ApiRun(oRun);
 	};
 	Api.private_CreateApiHyperlink = function(oHyperlink){
-		return new ApiRun(oHyperlink);
+		return new ApiHyperlink(oHyperlink);
 	};
 	Api.private_CreateApiTextPr = function(oTextPr){
 		return new ApiTextPr(null, oTextPr);

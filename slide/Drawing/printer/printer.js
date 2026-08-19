@@ -119,10 +119,11 @@
 		graphics.RestoreGrState();
 	};
 
-	function CNotePage(printer, note, pageIndex) {
+	function CNotePage(printer, note, pageIndex, noteShape) {
 		CPrinterPage.call(this, printer);
 		this.note = note;
 		this.pageIndex = pageIndex;
+		this.noteShape = noteShape;
 	}
 	AscFormat.InitClassWithoutType(CNotePage, CPrinterPage);
 	CNotePage.prototype.drawContent = function (graphics) {
@@ -133,7 +134,7 @@
 		graphics.AddClipRect(0, 0, contentSizes.width, contentSizes.height);
 		if (this.pageIndex === 0) {
 			graphics.m_bNoPrintSlideBackground = printer.isSkipSlideBackground();
-			note.draw(graphics);
+			note.draw(graphics, undefined, this.noteShape);
 			graphics.m_bNoPrintSlideBackground = false;
 		} else {
 			graphics.SaveGrState();
@@ -142,7 +143,7 @@
 			transform.tx = CHANDOUTMASTER_HORIZONTAL_FIELD;
 			transform.ty = CHANDOUTMASTER_VERTICAL_FIELD;
 			graphics.transform3(transform);
-			const notesShape = note.getBodyShape();
+			const notesShape = this.noteShape;
 			const docContent = notesShape.getDocContent();
 			docContent.Set_StartPage(0);
 			docContent.Draw(this.pageIndex, graphics);
@@ -288,10 +289,7 @@
 	SpecificPrinter.prototype.getPresentation = function () {
 		return this.presentation;
 	}
-	SpecificPrinter.prototype.getForcePrintIndexes = function () {
-		const range = this.printOptions.rangeOptions;
-		const presentation = this.getPresentation();
-		const isDrawHiddenSlides = this.printOptions.slidePrintOptions.asc_getIsPrintHiddenSlides();
+	function getRangeSlideIndexes(presentation, range, isDrawHiddenSlides) {
 		const slides = presentation.Slides;
 		let result;
 		switch (range.rangeType) {
@@ -367,6 +365,10 @@
 			const slide = slides[slideIndex];
 			return slide.isVisible();
 		});
+	}
+	SpecificPrinter.prototype.getForcePrintIndexes = function () {
+		return getRangeSlideIndexes(this.getPresentation(), this.printOptions.rangeOptions,
+			this.printOptions.slidePrintOptions.asc_getIsPrintHiddenSlides());
 	};
 	SpecificPrinter.prototype.getPrintSlides = function () {
 		if (this.cache.printSlides === null) {
@@ -517,6 +519,14 @@
 		}
 		return map;
 	};
+	NotesPrinter.prototype.getCopyNotesShape = function (shape, note) {
+		return AscFormat.ExecuteNoHistory(function () {
+			const copyShape = shape.copy();
+			copyShape.setParent(note);
+			copyShape.recalculate();
+			return copyShape;
+		}, this, []);
+	}
 	NotesPrinter.prototype.getNotesPages = function () {
 		if (this.cache.notePages === null) {
 			const pages = [];
@@ -525,37 +535,34 @@
 			const notesPageHeight = presentation.GetNotesHeightMM() - CHANDOUTMASTER_VERTICAL_FIELD * 2;
 			const notesPageWidth = presentation.GetNotesWidthMM() - CHANDOUTMASTER_HORIZONTAL_FIELD * 2;
 			const printSlides = this.getPrintSlides();
+			const recalculateNoteProps = {isSkipNoteShape: true};
 			for (let i = 0; i < printSlides.length; i += 1) {
 				const slide = printSlides[i];
 				const note = slide.notes;
 				const shape = note.getBodyShape();
-				note.recalculate();
 				if (shape) {
-					note.cSld.forEachSp(function (shape) {
-						shape.setRecalculateInfo();
-						shape.recalculate()
-					});
-					shape.setRecalculateInfo();
-					shape.recalculate();
-					var oDocContent = shape.getDocContent();
-					if(oDocContent) {
-						oDocContent.CalculateAllFields();
-						oDocContent.Reset(0, 0, shape.extX, 20000);
-						var CurPage = 0;
-						var RecalcResult = recalcresult2_NextPage;
-						while (recalcresult2_End !== RecalcResult) {
+					note.recalculate(recalculateNoteProps);
+					const copyShape = this.getCopyNotesShape(shape, note);
+					const docContent = copyShape.getDocContent();
+					if(docContent) {
+						docContent.CalculateAllFields();
+						docContent.Reset(0, 0, copyShape.extX, 20000);
+						let curPage = 0;
+						let recalcResult = recalcresult2_NextPage;
+						while (recalcresult2_End !== recalcResult) {
 							const callback = function () {
-								pages.push(new CNotePage(printer, note, CurPage));
-								RecalcResult = oDocContent.Recalculate_Page(CurPage++, true);
+								pages.push(new CNotePage(printer, note, curPage, copyShape));
+								recalcResult = docContent.Recalculate_Page(curPage++, true);
 							};
-							if (CurPage === 0) {
-								executeWithContentLimits(callback, oDocContent, 0, 0, shape.extX, shape.extY);
+							if (curPage === 0) {
+								const textRect = copyShape.getTextRectContentHW();
+								executeWithContentLimits(callback, docContent, 0, 0, textRect.width, textRect.height);
 							} else {
-								executeWithContentLimits(callback, oDocContent, 0, 0, notesPageWidth, notesPageHeight);
+								executeWithContentLimits(callback, docContent, 0, 0, notesPageWidth, notesPageHeight);
 							}
 						}
-						shape.contentWidth = shape.extX;
-						shape.contentHeight = 20000;
+						copyShape.contentWidth = copyShape.extX;
+						copyShape.contentHeight = 20000;
 					}
 				}
 			}
@@ -792,4 +799,5 @@
 
 	window["AscCommonSlide"] = window["AscCommonSlide"] || {};
 	window["AscCommonSlide"].PrintManager = PrintManager;
+	window["AscCommonSlide"].getRangeSlideIndexes = getRangeSlideIndexes;
 })();

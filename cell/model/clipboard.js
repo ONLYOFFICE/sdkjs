@@ -56,6 +56,8 @@
 		var c_oSpecialPasteProps = Asc.c_oSpecialPasteProps;
 
 		var c_MaxStringLength = 536870888;
+		var c_MaxClipboardCells = 1000000;
+
 		var notSupportExternalReferenceFileFormat = {"csv": 1};
 
 		function number2color(n) {
@@ -375,8 +377,27 @@
 				}
 
 
+				let bTooLarge = false;
+				let oBinaryRange = null;
+				if (!window["AscDesktopEditor"]) {
+					let nMaxRow = selectionRange.r2;
+					let nMaxCol = selectionRange.c2;
+					let oMaxRowCol = this.copyProcessor._getRangeMaxRowCol(ws.model, selectionRange);
+					if (null !== oMaxRowCol) {
+						nMaxRow = Math.max(oMaxRowCol.row, selectionRange.r1);
+						nMaxCol = Math.max(oMaxRowCol.col, selectionRange.c1);
+					}
+					let nMaxRows = Math.max(1, Math.floor(c_MaxClipboardCells / (nMaxCol - selectionRange.c1 + 1)));
+					bTooLarge = (nMaxRow - selectionRange.r1 + 1) > nMaxRows;
+					if (bTooLarge) {
+						oBinaryRange = new Asc.Range(selectionRange.c1, selectionRange.r1, nMaxCol,
+							selectionRange.r1 + nMaxRows - 1);
+						activeRange = ws.model.getRange3(oBinaryRange.r1, oBinaryRange.c1, oBinaryRange.r2, oBinaryRange.c2);
+					}
+				}
+
 				// IMAGE
-				if (_formats & AscCommon.c_oAscClipboardDataFormat.Image) {
+				if ((_formats & AscCommon.c_oAscClipboardDataFormat.Image) && !bTooLarge) {
 					let imageData = this.drawSelectedArea(ws, true);
 					if (imageData) {
 						_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Image, imageData);
@@ -393,7 +414,7 @@
 				}
 				//HTML
 				if (AscCommon.c_oAscClipboardDataFormat.Html & _formats) {
-					_data = this.copyProcessor.getHtml(activeRange, ws, aMultiRanges);
+					_data = this.copyProcessor.getHtml(activeRange, ws, aMultiRanges, oBinaryRange);
 
 					if (null !== _data && "" !== _data.html) {
 						_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, _data.html)
@@ -413,7 +434,7 @@
 						if (_data && _data.base64) {
 							_data = _data.base64;
 						} else {
-							_data = this.copyProcessor.getBinaryForCopy(ws.model, ws.objectRender);
+							_data = this.copyProcessor.getBinaryForCopy(ws.model, ws.objectRender, oBinaryRange);
 						}
 					}
 
@@ -429,6 +450,11 @@
 				ws.model.excludeHiddenRows(false);
 				ws.model.ignoreWriteFormulas(false);
 				wb.model.checkProtectedValue = false;
+
+				if (bTooLarge) {
+					ws.handlers.trigger("onErrorEvent", Asc.c_oAscError.ID.CopyRangeTooLarge,
+						Asc.c_oAscError.Level.NoCritical);
+				}
 			}
 
 			if (ws && ws.workbook && !ws.workbook.getCellEditMode()) {
@@ -771,7 +797,7 @@
 
 			constructor: CopyProcessorExcel,
 
-			getHtml: function (range, worksheet, aMultiRanges) {
+			getHtml: function (range, worksheet, aMultiRanges, oBinaryRange) {
 				var t = this;
 				var sBase64 = null;
 
@@ -787,7 +813,7 @@
 						worksheet.model.excludeHiddenRows(false);
 						worksheet.model.ignoreWriteFormulas(false);
 					}
-					sBase64 = this.getBinaryForCopy(worksheet.model, worksheet.objectRender);
+					sBase64 = this.getBinaryForCopy(worksheet.model, worksheet.objectRender, oBinaryRange);
 					if (aMultiRanges) {
 						worksheet.model.selectionRange.ranges = origSelectionRanges;
 						worksheet.model.excludeHiddenRows(true);
@@ -1384,6 +1410,17 @@
 					return false;
 				}
 
+				//without this the linear search above is O(cells * merges of the range)
+				function pruneMerged() {
+					var nWrite = 0;
+					for (var i = 0; i < merged.length; i++) {
+						if (merged[i].r2 >= row) {
+							merged[nWrite++] = merged[i];
+						}
+					}
+					merged.length = nWrite;
+				}
+
 				function makeBorder(border) {
 					if (!border || border.s === c_oAscBorderStyles.None) {
 						return "";
@@ -1422,38 +1459,22 @@
 					return border.w + "px " + _style + " " + number2color(border.getRgbOrNull());
 				}
 
-				var fn = worksheet.model.workbook.getDefaultFont();
-				var fs = worksheet.model.workbook.getDefaultSize();
+				var wsModel = worksheet.model;
+				var fn = wsModel.workbook.getDefaultFont();
+				var fs = wsModel.workbook.getDefaultSize();
 				var bbox = range.getBBox0();
 				var merged = [];
 				var t = this;
-				var table, tr, td, cell, j, row, col, mbbox, h, w, b;
+				var cell, j, row, col, mbbox, h, w, b;
 
-				var str = "";
+				//an array joined once: str += ... allocated a rope node per append, about ten per cell
+				var aParts = [];
 
-				var addByStr = function (_str) {
-					//research on maximum string length:
-					//Edge/chrome 96.0.4664 -> 536870888 characters (1073741776 bytes)
-					//FF 95.0.2 -> 1073741822 characters (2147483644 bytes)
-					if (str.length + _str.length > c_MaxStringLength) {
-						return false;
-					}
-					str += _str;
-					return true;
-				};
-
-				if (!addByStr('<table cellpadding="0" cellSpacing="0"')) {
-					return false;
-				}
-
+				aParts.push('<table cellpadding="0" cellSpacing="0"');
 				if (sBase64) {
-					if (!addByStr(' class=' + '"' + sBase64 + '"')) {
-						return false;
-					}
+					aParts.push(' class=' + '"' + sBase64 + '"');
 				}
-				if (!addByStr(' style="border-collapse: collapse;font-family:' + fn + ';font-size:' + fs + 'pt' + ';color:#000;background-color:transparent;' + '">')) {
-					return false;
-				}
+				aParts.push(' style="border-collapse: collapse;font-family:' + fn + ';font-size:' + fs + 'pt' + ';color:#000;background-color:transparent;' + '">');
 
 				var maxRow = bbox.r2;
 				var maxCol = bbox.c2;
@@ -1463,135 +1484,140 @@
 					maxCol = maxRowCol.col;
 				}
 
-				for (row = bbox.r1; row <= maxRow; ++row) {
-					if (worksheet.model.bExcludeHiddenRows && worksheet.model.getRowHidden(row)) {
-						continue;
-					}
-					if (!addByStr('<tr style="height:')) {
-						return false;
-					}
+				var bHasMerges = wsModel.hasMergedCells();
+				//one reusable range instead of getCell3 per cell: only the accessors without a Cell
+				//counterpart(borders, hyperlink) still go through it
+				var oTempRange = wsModel.getRange4(bbox.r1, bbox.c1);
+				var oTempBBox = oTempRange.bbox;
+				var setTempCell = function (_row, _col) {
+					oTempBBox.r1 = oTempBBox.r2 = _row;
+					oTempBBox.c1 = oTempBBox.c2 = _col;
+				};
 
-					h = worksheet.model.getRowHeight(row);
-
-					if (!addByStr(h + "pt" + '"' + ">")) {
-						return false;
-					}
-
-					for (col = bbox.c1; col <= maxCol; ++col) {
-						if (skipMerged()) {
+				wsModel.getDataRowIterator(bbox.r1, bbox.c1, maxRow, maxCol, function (itRow) {
+					for (row = bbox.r1; row <= maxRow; ++row) {
+						if (wsModel.bExcludeHiddenRows && wsModel.getRowHidden(row)) {
 							continue;
 						}
-
-						if (!addByStr('<td')) {
-							return false;
+						if (bHasMerges) {
+							pruneMerged();
 						}
+						itRow.setRow(row);
+						var oDataCell = itRow.next();
 
-						var style = "";
-						cell = worksheet.model.getCell3(row, col);
-						mbbox = cell.hasMerged();
-						if (mbbox) {
-							merged.push(mbbox);
-							if (!addByStr(" colspan=" + (mbbox.c2 - mbbox.c1 + 1))) {
-								return false;
-							}
-							if (!addByStr(" rowSpan=" + (mbbox.r2 - mbbox.r1 + 1))) {
-								return false;
-							}
-							for (w = 0, j = mbbox.c1; j <= mbbox.c2; ++j) {
-								w += worksheet.getColumnWidth(j, 1/*pt*/);
-							}
-							style += "width:" + w + "pt" + ";";
-						} else {
-							style += "width:" + worksheet.getColumnWidth(col, 1/*pt*/) + "pt" + ";";
-						}
+						h = wsModel.getRowHeight(row);
+						var aRow = ['<tr style="height:', h + "pt" + '"' + ">"];
 
-						if (cell.getType() !== null) {
-							var align = cell.getAlign();
-							if (!align.getWrap()) {
-								style += "white-space:" + "nowrap" + ";";
-							} else {
-								style += "white-space:" + "normal" + ";";
+						for (col = bbox.c1; col <= maxCol; ++col) {
+							if (bHasMerges && skipMerged()) {
+								continue;
 							}
 
-							switch (align.getAlignHorizontal()) {
-								case AscCommon.align_Left:
-									style += "text-align:" + "left" + ";";
-									break;
-								case AscCommon.align_Right:
-									style += "text-align:" + "right" + ";";
-									break;
-								case AscCommon.align_Center:
-									style += "text-align:" + "center" + ";";
-									break;
-								case AscCommon.align_Justify:
-									style += "text-align:" + "justify" + ";";
-									break;
+							while (oDataCell && oDataCell.nCol < col) {
+								oDataCell = itRow.next();
 							}
-							switch (align.getAlignVertical()) {
-								case Asc.c_oAscVAlign.Bottom:
-									style += "vertical-align:" + "bottom" + ";";
-									break;
-								case Asc.c_oAscVAlign.Center:
-								case Asc.c_oAscVAlign.Dist:
-								case Asc.c_oAscVAlign.Just:
-									style += "vertical-align:" + "middle" + ";";
-									break;
-								case Asc.c_oAscVAlign.Top:
-									style += "vertical-align:" + "top" + ";";
-									break;
-							}
+							cell = (oDataCell && oDataCell.nCol === col) ? oDataCell : null;
 
-							//borders
-							b = cell.getBorderFull();
-							var _border;
+							aRow.push('<td');
+
+							var style = "";
+							mbbox = null;
+							if (bHasMerges) {
+								setTempCell(row, col);
+								mbbox = oTempRange.hasMerged();
+							}
 							if (mbbox) {
-								var cellMergeFinish = worksheet.model.getCell3(mbbox.r2, mbbox.c2);
-								var borderMergeCell = cellMergeFinish.getBorderFull();
-								_border = makeBorder(borderMergeCell.r);
-								style += _border ? "border-right:" + _border + ";" : "";
-								_border = makeBorder(borderMergeCell.b);
-								style += _border ? "border-bottom:" + makeBorder(borderMergeCell.b) + ";" : "";
+								merged.push(mbbox);
+								aRow.push(" colspan=" + (mbbox.c2 - mbbox.c1 + 1));
+								aRow.push(" rowSpan=" + (mbbox.r2 - mbbox.r1 + 1));
+								for (w = 0, j = mbbox.c1; j <= mbbox.c2; ++j) {
+									w += worksheet.getColumnWidth(j, 1/*pt*/);
+								}
+								style += "width:" + w + "pt" + ";";
 							} else {
-								_border = makeBorder(b.r);
-								style += _border ? "border-right:" + makeBorder(b.r) + ";" : "";
-								_border = makeBorder(b.b);
-								style += _border ? "border-bottom:" + makeBorder(b.b) + ";" : "";
-							}
-							_border = makeBorder(b.l);
-							style += _border ? "border-left:" + makeBorder(b.l) + ";" : "";
-							_border = makeBorder(b.t);
-							style += _border ? "border-top:" + makeBorder(b.t) + ";" : "";
-
-							b = cell.getFillColor();
-							// if b==0 we won't enter the if, although b==0 is nothing other than black fill color.
-							if (b != null) {
-								style += "background-color:" + number2color(b.getRgb()) + ";";
+								style += "width:" + worksheet.getColumnWidth(col, 1/*pt*/) + "pt" + ";";
 							}
 
-							if (!addByStr(' style=' + '"' + style + '">')) {
-								return false;
+							if (cell && cell.getType() !== null) {
+								var align = cell.getAlign();
+								if (!align.getWrap()) {
+									style += "white-space:" + "nowrap" + ";";
+								} else {
+									style += "white-space:" + "normal" + ";";
+								}
+
+								switch (align.getAlignHorizontal()) {
+									case AscCommon.align_Left:
+										style += "text-align:" + "left" + ";";
+										break;
+									case AscCommon.align_Right:
+										style += "text-align:" + "right" + ";";
+										break;
+									case AscCommon.align_Center:
+										style += "text-align:" + "center" + ";";
+										break;
+									case AscCommon.align_Justify:
+										style += "text-align:" + "justify" + ";";
+										break;
+								}
+								switch (align.getAlignVertical()) {
+									case Asc.c_oAscVAlign.Bottom:
+										style += "vertical-align:" + "bottom" + ";";
+										break;
+									case Asc.c_oAscVAlign.Center:
+									case Asc.c_oAscVAlign.Dist:
+									case Asc.c_oAscVAlign.Just:
+										style += "vertical-align:" + "middle" + ";";
+										break;
+									case Asc.c_oAscVAlign.Top:
+										style += "vertical-align:" + "top" + ";";
+										break;
+								}
+
+								//borders
+								setTempCell(row, col);
+								b = oTempRange.getBorderFull();
+								var _border;
+								if (mbbox) {
+									setTempCell(mbbox.r2, mbbox.c2);
+									var borderMergeCell = oTempRange.getBorderFull();
+									_border = makeBorder(borderMergeCell.r);
+									style += _border ? "border-right:" + _border + ";" : "";
+									_border = makeBorder(borderMergeCell.b);
+									style += _border ? "border-bottom:" + _border + ";" : "";
+								} else {
+									_border = makeBorder(b.r);
+									style += _border ? "border-right:" + _border + ";" : "";
+									_border = makeBorder(b.b);
+									style += _border ? "border-bottom:" + _border + ";" : "";
+								}
+								_border = makeBorder(b.l);
+								style += _border ? "border-left:" + _border + ";" : "";
+								_border = makeBorder(b.t);
+								style += _border ? "border-top:" + _border + ";" : "";
+
+								b = cell.getFillColor();
+								// if b==0 we won't enter the if, although b==0 is nothing other than black fill color.
+								if (b != null) {
+									style += "background-color:" + number2color(b.getRgb()) + ";";
+								}
+
+								aRow.push(' style=' + '"' + style + '">');
+								setTempCell(row, col);
+								aRow.push(t._makeNodesFromCellValueStr(cell.getValue2(), fn, fs, oTempRange));
+							} else {
+								aRow.push('>');
 							}
-							if (!addByStr(this._makeNodesFromCellValueStr(cell.getValue2(), fn, fs, cell))) {
-								return false;
-							}
-						} else {
-							if (!addByStr('>')) {
-								return false;
-							}
+							aRow.push('</td>');
 						}
-						if (!addByStr('</td>')) {
-							return false;
-						}
+						aRow.push("</tr>");
+						aParts.push(aRow.join(""));
 					}
-					if (!addByStr("</tr>")) {
-						return false;
-					}
-				}
-				if (!addByStr("</table>")) {
-					return false;
-				}
+				});
 
-				return str;
+				aParts.push("</table>");
+
+				return aParts.join("");
 			},
 
 			_getSelectedDrawingIndex: function (worksheet) {
@@ -1808,64 +1834,62 @@
 			},
 
 			_getTextFromSheet: function (range, worksheet) {
-				var res = null;
+				if (!range) {
+					return null;
+				}
 
-				var addByStr = function (_str) {
-					if (res && res.length + _str.length > c_MaxStringLength) {
-						return false;
-					}
-					if (!res) {
-						res = "";
-					}
-					res += _str;
-					return true;
-				};
+				var wsModel = worksheet.model;
+				var bbox = range.bbox;
 
-				if (range) {
-					var bbox = range.bbox;
+				var maxRow = bbox.r2;
+				var maxCol = bbox.c2;
+				var maxRowCol = this._getRangeMaxRowCol(wsModel, bbox, range);
+				if (null !== maxRowCol) {
+					maxRow = maxRowCol.row;
+					maxCol = maxRowCol.col;
+				}
 
-					var maxRow = bbox.r2;
-					var maxCol = bbox.c2;
-					var maxRowCol = this._getRangeMaxRowCol(worksheet.model, bbox, range);
-					if (null !== maxRowCol) {
-						maxRow = maxRowCol.row;
-						maxCol = maxRowCol.col;
-					}
+				var aParts = [];
 
-					res = '';
+				wsModel.getDataRowIterator(bbox.r1, bbox.c1, maxRow, maxCol, function (itRow) {
 					for (var row = bbox.r1; row <= maxRow; ++row) {
-						if (worksheet.model.bExcludeHiddenRows && worksheet.model.getRowHidden(row)) {
+						if (wsModel.bExcludeHiddenRows && wsModel.getRowHidden(row)) {
 							continue;
 						}
+						itRow.setRow(row);
+						var oDataCell = itRow.next();
 
+						var aRow = [];
 						if (row !== bbox.r1) {
-							if (!addByStr('\r\n')) {
-								return null;
-							}
+							aRow.push('\r\n');
 						}
 
 						for (var col = bbox.c1; col <= maxCol; ++col) {
 							if (col !== bbox.c1) {
-								if (!addByStr('\t')) {
-									return null;
-								}
+								aRow.push('\t');
 							}
 
-							var currentRange = worksheet.model.getCell3(row, col);
-							var textRange = currentRange.getValueWithFormat();
+							while (oDataCell && oDataCell.nCol < col) {
+								oDataCell = itRow.next();
+							}
+							if (!oDataCell || oDataCell.nCol !== col) {
+								continue;
+							}
+
+							var textRange = oDataCell.getValue();
 							if (textRange !== '' && textRange !== undefined) {
 								if (textRange.indexOf('\n') !== -1) {
 									textRange = '"' + textRange.replace(/"/g, '""') + '"';
 								}
-								if (!addByStr(textRange)) {
-									return null;
-								}
+								aRow.push(textRange);
 							}
 						}
-					}
-				}
 
-				return res;
+						aParts.push(aRow.join(""));
+					}
+				});
+
+				return aParts.join("");
 			}
 		};
 

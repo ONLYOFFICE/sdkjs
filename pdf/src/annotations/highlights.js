@@ -757,6 +757,14 @@
     CAnnotationRedact.prototype.IsRedact = function() {
         return true;
     };
+	CAnnotationRedact.prototype.IsUseInDocument = function() {
+		let isUsed = AscPDF.CAnnotationBase.prototype.IsUseInDocument.call(this);
+        if (isUsed && !this.GetRedactId()) {
+			return true;
+		}
+
+        return false;
+    };
     CAnnotationRedact.prototype.SetHovered = function(isHovered) {
         if (this._hovered != isHovered) {
             this.AddToRedraw();
@@ -771,27 +779,28 @@
         AscCommon.History.Add(new CChangesPDFRedactAnnotRedactId(this, this._redactId, sRedactId));
         this._redactId = sRedactId;
 
+		let oDoc = Asc.editor.getPDFDoc();
+		oDoc.CheckComment(this);
+		
         this.AddToRedraw();
     };
     CAnnotationRedact.prototype.GetRedactId = function() {
         return this._redactId;
     };
-    CAnnotationRedact.prototype.IsHidden = function() {
-        return AscPDF.CAnnotationBase.prototype.IsHidden.call(this) || !!this.GetRedactId();
-    };
     CAnnotationRedact.prototype.Draw = function(oGraphicsPDF) {
         let oDoc = Asc.editor.getPDFDoc();
         let oPageInfo = oDoc.GetPageInfo(this.GetPage());
-        
-        let isNeedDrawApplied = false;
-        if (this.GetRedactId() && (oPageInfo.IsRecognized() || undefined == oPageInfo.GetOriginIndex())) {
-            isNeedDrawApplied = true;
+        let isApplied = this.GetRedactId();
+
+        let isNeedDraw = false;
+        if (!isApplied || (isApplied && (oPageInfo.IsRecognized() || undefined == oPageInfo.GetOriginIndex()))) {
+            isNeedDraw = true;
         }
         
-        if (this.IsHidden() == true && !isNeedDrawApplied)
+        if (this.IsHidden() == true || !isNeedDraw)
             return;
 
-        if (this.IsHovered() || isNeedDrawApplied) {
+        if (this.IsHovered() || isApplied) {
             this._DrawHovered(oGraphicsPDF);
         }
         else {

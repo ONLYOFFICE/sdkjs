@@ -116,13 +116,6 @@
 
 		this.presentation = editor && editor.WordControl && editor.WordControl.m_oLogicDocument;
 		this.graphicObjects = new AscFormat.DrawingObjectsController(this);
-
-		this.deleteLock = new AscCommon.PropLocker(this.Id);
-		this.backgroundLock = new AscCommon.PropLocker(this.Id);
-		this.timingLock = new AscCommon.PropLocker(this.Id);
-		this.transitionLock = new AscCommon.PropLocker(this.Id);
-		this.layoutLock = new AscCommon.PropLocker(this.Id);
-		this.showLock = new AscCommon.PropLocker(this.Id);
 	}
 
 	AscFormat.InitClass(MasterSlide, AscCommonSlide.SlideBase, AscDFH.historyitem_type_SlideMaster)
@@ -616,7 +609,7 @@
 		}
 		return 0;
 	};
-	MasterSlide.prototype.isMaster = function () {
+	MasterSlide.prototype.isSlideMaster = function () {
 		return true;
 	};
 	MasterSlide.prototype.Get_ColorMap = function () {

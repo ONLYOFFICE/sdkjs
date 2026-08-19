@@ -976,6 +976,8 @@ CChartsDrawer.prototype =
 		var plotArea = chartSpace.chart.plotArea;
 		var charts = plotArea.charts;
 		const isChartEx = chartSpace ? chartSpace.isChartEx() : false;
+		const isTreemap = isChartEx && plotArea.plotAreaRegion && plotArea.plotAreaRegion.series[0] &&
+			plotArea.plotAreaRegion.series[0].layoutId === AscFormat.SERIES_LAYOUT_TREEMAP;
 		let dataTableExtY = 0;
 
 		//if points are calculated - set margin based on them
@@ -1176,6 +1178,7 @@ CChartsDrawer.prototype =
 				{left: axisSettings[0].isExist, right: axisSettings[1].isExist, top: axisSettings[2].isExist, bottom: axisSettings[3].isExist},
 				{left: leftTextLabels, right: rightTextLabels, top: topTextLabels, bottom: bottomTextLabels},
 				{left: leftKey, right: rightKey, top: topKey, bottom: bottomKey},
+				isTreemap
 			)
 			left = info.left;
 			right = info.right;
@@ -1230,9 +1233,9 @@ CChartsDrawer.prototype =
 	// margin is combination of outward things + inward things
 	// outward things are: title and legend labels
 	// inward things are: axis titles, axes themselves and standard margin.
-	_calculateMarginsChartOrdinaryDiagrams: function (chartTitle, dataTableExtY, axes, axesTitles, legendTexts) {
+	_calculateMarginsChartOrdinaryDiagrams: function (chartTitle, dataTableExtY, axes, axesTitles, legendTexts, bTreemap) {
 		if (true) {
-			return this._calculateMarginsChartOrdinaryDiagramsOld(chartTitle, axes, axesTitles, legendTexts);
+			return this._calculateMarginsChartOrdinaryDiagramsOld(chartTitle, axes, axesTitles, legendTexts, bTreemap);
 		}
 
 		const normalizedMargin = standartMarginForCharts / this.calcProp.pxToMM;
@@ -1263,7 +1266,7 @@ CChartsDrawer.prototype =
 		return {left: left, right: right, top: top, bottom: bottom};
 	},
 
-	_calculateMarginsChartOrdinaryDiagramsOld: function (chartTitle, axes, axesTitles, legendTexts) {
+	_calculateMarginsChartOrdinaryDiagramsOld: function (chartTitle, axes, axesTitles, legendTexts, bTreemap) {
 		const normalizedMargin = standartMarginForCharts / this.calcProp.pxToMM;
 		const marginWithOffsetApplied1 = normalizedMargin * 1 / 2;
 		const marginWithOffsetApplied2 = normalizedMargin * 2 / 3;
@@ -1271,6 +1274,12 @@ CChartsDrawer.prototype =
 
 		// title can stay only in top
 		const titleBasedMargin = chartTitle ? chartTitle + marginWithOffsetApplied1 : 0;
+
+		// the default margin holds room for the axis area, which a treemap has none of, so its tiles sit
+		// closer to the frame - and right under the chart title when there is one
+		const sideDefaultMargin = bTreemap ? marginWithOffsetApplied1 : normalizedMargin;
+		const vertDefaultMargin = bTreemap ? normalizedMargin * 0.7 : normalizedMargin;
+		const topDefaultMargin = (bTreemap && titleBasedMargin) ? 0 : vertDefaultMargin;
 
 		const labelBasedMarginTop = legendTexts && legendTexts.top ? legendTexts.top + marginWithOffsetApplied2 : 0;
 		const labelBasedMarginLeft = legendTexts && legendTexts.left ? legendTexts.left + marginWithOffsetApplied2 : 0;
@@ -1284,10 +1293,10 @@ CChartsDrawer.prototype =
 			return axisTitle || axis || defaultMargin;
 		}
 
-		const left = labelBasedMarginLeft + decider(axesTitles.left, normalizedMargin, axes.left, marginWithOffsetApplied1, normalizedMargin);
-		const right = labelBasedMarginRight + decider(axesTitles.right, normalizedMargin, axes.right, marginWithOffsetApplied2, normalizedMargin);
-		const top = titleBasedMargin + labelBasedMarginTop + decider(axesTitles.top, normalizedMargin, axes.top || axes.left || axes.right, (titleBasedMargin || axes.top) ? marginWithOffsetApplied1 : marginWithOffsetApplied3, (labelBasedMarginTop && labelBasedMarginRight) ? marginWithOffsetApplied1 : normalizedMargin);
-		const bottom = labelBasedMarginBottom + decider(axesTitles.bottom, normalizedMargin, axes.bottom || axes.left || axes.right, marginWithOffsetApplied2, normalizedMargin);
+		const left = labelBasedMarginLeft + decider(axesTitles.left, normalizedMargin, axes.left, marginWithOffsetApplied1, sideDefaultMargin);
+		const right = labelBasedMarginRight + decider(axesTitles.right, normalizedMargin, axes.right, marginWithOffsetApplied2, sideDefaultMargin);
+		const top = titleBasedMargin + labelBasedMarginTop + decider(axesTitles.top, normalizedMargin, axes.top || axes.left || axes.right, (titleBasedMargin || axes.top) ? marginWithOffsetApplied1 : marginWithOffsetApplied3, (labelBasedMarginTop && labelBasedMarginRight) ? marginWithOffsetApplied1 : topDefaultMargin);
+		const bottom = labelBasedMarginBottom + decider(axesTitles.bottom, normalizedMargin, axes.bottom || axes.left || axes.right, marginWithOffsetApplied2, vertDefaultMargin);
 
 		return {left : left, right: right, top: top, bottom: bottom};
 	},
@@ -3064,7 +3073,8 @@ CChartsDrawer.prototype =
 			case AscFormat.SERIES_LAYOUT_FUNNEL:
 				return new CCachedFunnel(type, seria, numLit, axisProperties);
 			case AscFormat.SERIES_LAYOUT_TREEMAP:
-				return new CCachedTreemap(type, seria, numLit, strLit, width, height);
+				// treemap is laid out over the whole category hierarchy (root to leaf), not a single level
+				return new CCachedTreemap(type, seria, numLit, seria.getCatLevelsRootFirst(), width, height);
 			case AscFormat.SERIES_LAYOUT_BOX_WHISKER:
 				return new CCachedBoxWhisker(type, seria, numLit, strLit, axisProperties);
 			case AscFormat.SERIES_LAYOUT_SUNBURST:
@@ -8776,41 +8786,17 @@ drawTreemapChart.prototype = {
 	constructor: drawTreemapChart,
 
 	recalculate: function () {
+		this.paths = {};
 		const cachedData = this.cChartSpace ? this.cChartSpace.getCachedData() : null;
 		if (!cachedData) {
 			return;
 		}
 		const plotArea = this.cChartSpace && this.cChartSpace.chart && this.cChartSpace.chart.plotArea;
 		if (cachedData.data.length > 0 && this.chartProp && this.chartProp.chartGutter && plotArea) {
-			let x = plotArea.x;
-			let y = plotArea.y;
-			let pos = 0;
 			for (let i = 0; i < cachedData.data.length; i++) {
-				let direction = cachedData.data[i].position;
-				let startX = x;
-				let startY = y;
-				const rect = cachedData.data[i]
-				// predefinedSize tells about the height of the whole array, however if array contains multiple elements, then to find the width of one element, we can divide totalArea by height
-				const weekSide = rect.totalSum/ rect.predefinedSize;
-				for( let j = 0; j < rect.array.length; j++) {
-					const item = rect.array[j];
-					const area = item.area;
-					// vertical arrays weekSide is width and horizontal arrays weekSide is height;
-					const w = direction? weekSide : area / weekSide;
-					const h = direction ? area / weekSide : weekSide;
-					this.paths[item.idx] = this.cChartDrawer._calculateRect(startX, startY + h, w, h , true);
-					if (direction) {
-						startY += h;
-					} else {
-						startX += w;
-					}
-					pos += 1;
-				}
-				if (direction) {
-					x += weekSide;
-				} else {
-					y += weekSide;
-				}
+				const oRect = cachedData.data[i];
+				// _calculateRect expects the rect's bottom-edge y coordinate
+				this.paths[oRect.idx] = this.cChartDrawer._calculateRect(plotArea.x + oRect.x, plotArea.y + oRect.y + oRect.h, oRect.w, oRect.h, true);
 			}
 		}
 	},
@@ -8835,22 +8821,29 @@ drawTreemapChart.prototype = {
 
 		let series = this.cChartSpace.chart.plotArea.plotAreaRegion.series;
 
-		let oSeries = series[0];
+		let oSeries = null;
+		for (let nSer = 0; nSer < series.length; ++nSer) {
+			if (series[nSer] && !series[nSer].hidden) {
+				oSeries = series[nSer];
+				break;
+			}
+		}
 		if(oSeries) {
 			for (let i in this.paths) {
 				if (this.paths.hasOwnProperty(i) && this.paths[i]) {
 					let nPtIdx = parseInt(i);
 					let pen = oSeries.getPtPen(nPtIdx);
 					let brush = oSeries.getPtBrush(nPtIdx);
-					
-					if (!brush || !brush.Fill) {
+
+					// CUniFill's field is named fill (lowercase) - Fill (capitalized) only exists on CLn
+					if (!brush || !brush.fill) {
 						brush = this._getDefaultTreemapBrush(nPtIdx);
 					}
-					
+
 					if (!pen) {
 						pen = this._getDefaultTreemapPen();
 					}
-					
+
 					this.cChartDrawer.drawPath(this.paths[i], pen, brush);
 				}
 			}
@@ -20489,142 +20482,266 @@ CErrBarsDraw.prototype = {
 		return isNegative ? -num : num;
 	}
 
-	function CCachedTreemap(type, seria, numLit, strLit, width, height) {
+	function CCachedTreemap(type, seria, numLit, aLevels, width, height) {
 		CCachedChartExData.call(this, seria.Id, type, []);
-		this._calculate(numLit, strLit, width, height);
+		this._calculate(numLit, aLevels, width, height);
 	}
 
 	AscFormat.InitClassWithoutType(CCachedTreemap, CCachedChartExData);
 
-	CCachedTreemap.prototype._calculate = function (numLit, strLit, width, height) {
-		if (!numLit || !numLit.pts) {
+	// MS lays out category groups by recursive halving: items sorted descending, split at the
+	// prefix whose sum is closest to half the total, cut along the long side proportional to the sums.
+	function treemapLayoutBisect(aItems, x, y, w, h) {
+		const aRects = [];
+		if (!aItems.length || !(w > 0) || !(h > 0)) {
+			return aRects;
+		}
+
+		const aSorted = aItems.slice().sort(function (a, b) {
+			return b.val - a.val;
+		});
+		let fTotal = 0;
+		for (let i = 0; i < aSorted.length; i++) {
+			fTotal += aSorted[i].val;
+		}
+		if (!(fTotal > 0)) {
+			return aRects;
+		}
+
+		const splitPart = function (aPart, fPartSum, fX, fY, fW, fH) {
+			if (aPart.length === 1) {
+				aRects.push({key: aPart[0].key, x: fX, y: fY, w: fW, h: fH});
+				return;
+			}
+
+			const fHalf = fPartSum / 2;
+			let fCumSum = 0;
+			let nSplit = 1;
+			let fBestDiff = Infinity;
+			for (let i = 0; i < aPart.length - 1; i++) {
+				fCumSum += aPart[i].val;
+				const fDiff = Math.abs(fCumSum - fHalf);
+				if (fDiff < fBestDiff) {
+					fBestDiff = fDiff;
+					nSplit = i + 1;
+				}
+			}
+
+			const aFirst = aPart.slice(0, nSplit);
+			const aSecond = aPart.slice(nSplit);
+			let fFirstSum = 0;
+			for (let i = 0; i < aFirst.length; i++) {
+				fFirstSum += aFirst[i].val;
+			}
+			const fSecondSum = fPartSum - fFirstSum;
+
+			if (fW >= fH) {
+				const fW1 = fW * fFirstSum / fPartSum;
+				splitPart(aFirst, fFirstSum, fX, fY, fW1, fH);
+				splitPart(aSecond, fSecondSum, fX + fW1, fY, fW - fW1, fH);
+			} else {
+				const fH1 = fH * fFirstSum / fPartSum;
+				splitPart(aFirst, fFirstSum, fX, fY, fW, fH1);
+				splitPart(aSecond, fSecondSum, fX, fY + fH1, fW, fH - fH1);
+			}
+		};
+
+		splitPart(aSorted, fTotal, x, y, w, h);
+		return aRects;
+	}
+
+	// Squarify (Bruls-Huizing-van Wijk): cut one column or row off the rect, lay the rest out in what is left
+	function treemapLayoutSquarify(aItems, x, y, w, h) {
+		const aRects = [];
+		if (!aItems.length || !(w > 0) || !(h > 0)) {
+			return aRects;
+		}
+
+		let fSum = 0;
+		for (let i = 0; i < aItems.length; i++) {
+			fSum += aItems[i].val;
+		}
+		if (!(fSum > 0)) {
+			return aRects;
+		}
+
+		const fTotalArea = w * h;
+		const aAreas = [];
+		for (let i = 0; i < aItems.length; i++) {
+			aAreas.push({key: aItems[i].key, area: (aItems[i].val / fSum) * fTotalArea});
+		}
+		aAreas.sort(function (a, b) {
+			return b.area - a.area;
+		});
+
+		// a wide rect is cut into columns, a tall one into rows
+		const bVerticalSlice = w >= h;
+
+		// worst side ratio among the items of a row of total area fRowSum laid along fSide
+		const getWorstRatio = function (fMax, fMin, fRowSum, fSide) {
+			if (!(fRowSum > 0) || !(fSide > 0) || !(fMin > 0)) {
+				return Number.MAX_VALUE;
+			}
+			const fSide2 = fSide * fSide;
+			const fRowSum2 = fRowSum * fRowSum;
+			return Math.max(fSide2 * fMax / fRowSum2, fRowSum2 / (fSide2 * fMin));
+		};
+
+		// a column always holds one item; a row keeps taking items while the side ratio gets no more
+		// than this much worse, so it stops only when the next item would come out a sliver
+		const RATIO_TOLERANCE = 2;
+		let fRowSum = aAreas[0].area;
+		let fRowMax = fRowSum;
+		let fRowMin = fRowSum;
+		let nRowEnd = 1;
+
+		if (!bVerticalSlice) {
+			while (nRowEnd < aAreas.length) {
+				const fArea = aAreas[nRowEnd].area;
+				const fCurRatio = getWorstRatio(fRowMax, fRowMin, fRowSum, w);
+				const fNextRatio = getWorstRatio(Math.max(fRowMax, fArea), Math.min(fRowMin, fArea), fRowSum + fArea, w);
+				if (fNextRatio > fCurRatio * RATIO_TOLERANCE) {
+					break;
+				}
+				fRowSum += fArea;
+				fRowMax = Math.max(fRowMax, fArea);
+				fRowMin = Math.min(fRowMin, fArea);
+				nRowEnd++;
+			}
+		}
+
+		if (bVerticalSlice) {
+			const fRowW = fRowSum / h;
+			let fCurY = y;
+			for (let i = 0; i < nRowEnd; i++) {
+				const fItemH = aAreas[i].area / fRowW;
+				aRects.push({key: aAreas[i].key, x: x, y: fCurY, w: fRowW, h: fItemH});
+				fCurY += fItemH;
+			}
+			if (nRowEnd < aAreas.length) {
+				const aRemaining = aAreas.slice(nRowEnd).map(function (o) {
+					return {key: o.key, val: o.area};
+				});
+				const aRecursive = treemapLayoutSquarify(aRemaining, x + fRowW, y, w - fRowW, h);
+				for (let i = 0; i < aRecursive.length; i++) {
+					aRects.push(aRecursive[i]);
+				}
+			}
+		} else {
+			const fRowH = fRowSum / w;
+			let fCurX = x;
+			for (let i = 0; i < nRowEnd; i++) {
+				const fItemW = aAreas[i].area / fRowH;
+				aRects.push({key: aAreas[i].key, x: fCurX, y: y, w: fItemW, h: fRowH});
+				fCurX += fItemW;
+			}
+			if (nRowEnd < aAreas.length) {
+				const aRemaining = aAreas.slice(nRowEnd).map(function (o) {
+					return {key: o.key, val: o.area};
+				});
+				const aRecursive = treemapLayoutSquarify(aRemaining, x, y + fRowH, w, h - fRowH);
+				for (let i = 0; i < aRecursive.length; i++) {
+					aRects.push(aRecursive[i]);
+				}
+			}
+		}
+
+		return aRects;
+	}
+
+	// Layout matches MS: split by root category first, then by the next level within each group, down to the leaves
+	CCachedTreemap.prototype._calculate = function (numLit, aLevels, width, height) {
+		if (!numLit || !numLit.pts || !(width > 0) || !(height > 0)) {
 			return;
 		}
-		const getLastLayer = function (strLit) {
-			if (!strLit || strLit.length <= 1) {
-				return null;
-			}
 
-			for (let i = strLit.length - 1; i >= 0; i--) {
-				if (strLit[i].pts.length > 0) {
-					return i;
+		aLevels = Array.isArray(aLevels) ? aLevels : [];
+
+		// a level's category name may be set on every point, or only on the first point of the group
+		const getLevelName = function (nLevel, nIdx) {
+			const oLevel = aLevels[nLevel];
+			const aPts = oLevel && oLevel.pts ? oLevel.pts : [];
+			let sName = null;
+			for (let i = 0; i < aPts.length; i++) {
+				if (aPts[i].idx > nIdx) {
+					break;
+				}
+				if (aPts[i].val !== undefined && aPts[i].val !== null && aPts[i].val !== '') {
+					sName = aPts[i].val;
 				}
 			}
-			return null
+			return sName;
 		}
 
-		// Normalize all elements that either negative or have no corresponding label to zero
-		const normalizeNumArr = function (numArr, strLit, lastLayer, area) {
-			// turn all elements that have no corresponding label into zero
-			const verifiedIdxs = {};
-
-			// Populate `verifiedIdxs` if there are labels in `strLit`
-			if (lastLayer !== null) {
-				for (let i = 0; i < strLit.length; i++) {
-					for (let j = 0; j < strLit[i].pts.length; j++) {
-						verifiedIdxs[strLit[i].pts[j].idx] = true;
-					}
-				}
-			}
-
-			// Normalize `numArr` values
-			const arr = [];
-			let sum = 0;
-			for (let k = 0; k < numArr.length; k++) {
-				if (numArr[k].val < 0 || (lastLayer !== null && !verifiedIdxs[numArr[k].idx])) {
-					continue;
-				}
-				sum += numArr[k].val;
-				arr.push({idx: numArr[k].idx, val: numArr[k].val});
-			}
-
-			for (let k = 0; k < arr.length; k++) {
-				arr[k].val = (arr[k].val / sum) * area;
-			}
-
-			arr.sort(function(a, b) {
-				return b.val - a.val;
-			});
-
-			return arr;
-		}
-
-		const createTreemap = function (numArr, strLit, lastLayer, width, height) {
-
-			const getAspectRatio = function(currentAreasSum, lastElementArea, predefinedSide, isVert){
-				if (predefinedSide === 0) {
-					return null;
-				}
-				const totalArea = currentAreasSum + lastElementArea;
-				let newWidth = null;
-				let newHeight = null;
-				if (isVert){
-					newWidth = totalArea / predefinedSide;
-					newHeight = lastElementArea / newWidth;
-				} else{
-					newHeight = totalArea / predefinedSide;
-					newWidth = lastElementArea / newHeight;
-				}
-				return Math.max(newWidth, newHeight) / Math.min(newWidth, newHeight);
-			}
-
-			const squarify = function(areas, newWidth, newHeight){
-				const resArr = [];
-				let oldHeight, oldWidth;
-
-				for (let i = 0; i < areas.length; i++){
-					const item = areas[i];
-					const area = item.val;
-					const lastElem = resArr.length !== 0 ? resArr[resArr.length - 1] : null;
-
-					const oldAspectRatio = lastElem && getAspectRatio(lastElem.totalSum, area, lastElem.predefinedSize, lastElem.position);
-					const newVerticalAspectRatio = getAspectRatio(0, area, newHeight, true);
-					const newHorizontalAspectRatio = getAspectRatio(0, area, newWidth, false);
-
-					if (oldAspectRatio && oldAspectRatio < newHorizontalAspectRatio && oldAspectRatio < newVerticalAspectRatio){
-						lastElem.array.push({ idx: item.idx, area: item.val});
-						lastElem.totalSum += area;
-						if (lastElem.position) {
-							newWidth = newWidth - (area / oldHeight);
-						} else {
-							newHeight = newHeight - (area / oldWidth);
-						}
-					}else {
-						oldHeight = newHeight;
-						oldWidth = newWidth;
-
-						if (newVerticalAspectRatio < newHorizontalAspectRatio){
-							resArr.push({position: true, array: [{ idx: item.idx, area: area }], totalSum: area, predefinedSize: oldHeight});
-							newWidth = oldWidth - (area / oldHeight);
-						} else {
-							resArr.push({position: false, array: [{ idx: item.idx, area: area }], totalSum: area, predefinedSize: oldWidth});
-							newHeight = oldHeight - (area / oldWidth);
-						}
-					}
-				}
-				return resArr;
-			}
-
-
-			if (lastLayer != null) {
-				return [];
-			} else {
-				// const isStrLit = strLit;
-				// let labelCounter = 0;
-				// for (let i = 0; i < numArr.length; i++) {
-				// 	// search label in strLit if found get name, and increase labelCounter
-				// 	let name = isStrLit && numArr[i].idx === strLit[0].pts[labelCounter].idx ? strLit[0].pts[0].val : null;
-				// 	labelCounter = name !== null ? labelCounter + 1 : labelCounter;
-				// 	treeHead.push({name: name, pVal: numArr[i].val / totalValue, start: i, end: i + 1, pos: i, idx: i});
-				// }
-				return squarify(numArr, width, height);
+		// points that have a label on at least one level
+		const oLabeledIdx = {};
+		let bHasLabels = false;
+		for (let i = 0; i < aLevels.length; i++) {
+			const aPts = aLevels[i] && aLevels[i].pts ? aLevels[i].pts : [];
+			for (let j = 0; j < aPts.length; j++) {
+				oLabeledIdx[aPts[j].idx] = true;
+				bHasLabels = true;
 			}
 		}
 
-		const numArr = numLit.pts;
-		const lastLayer = getLastLayer(strLit)
-		const newNumArr = normalizeNumArr(numArr, strLit, lastLayer, width * height);
-		this.data = createTreemap(newNumArr, strLit, lastLayer, width, height);
+		// negative and zero values don't get a tile
+		const aLeaves = [];
+		for (let i = 0; i < numLit.pts.length; i++) {
+			const oPt = numLit.pts[i];
+			if (!(oPt.val > 0) || (bHasLabels && !oLabeledIdx[oPt.idx])) {
+				continue;
+			}
+			aLeaves.push({idx: oPt.idx, val: oPt.val});
+		}
+		if (!aLeaves.length) {
+			return;
+		}
+
+		const aResult = [];
+		// nLevel is the level index the rect is currently split by; the last level only supplies leaf labels
+		const nLastGroupLevel = aLevels.length - 2;
+		const layoutLevel = function (aItems, nLevel, x, y, w, h) {
+			// category groups are split by halving, the leaves themselves by squarify;
+			// with no categories at all every point is a leaf
+			if (nLevel > nLastGroupLevel) {
+				const aRects = treemapLayoutSquarify(aItems.map(function (oItem) {
+					return {key: oItem.idx, val: oItem.val};
+				}), x, y, w, h);
+				for (let i = 0; i < aRects.length; i++) {
+					aResult.push({idx: aRects[i].key, x: aRects[i].x, y: aRects[i].y, w: aRects[i].w, h: aRects[i].h});
+				}
+				return;
+			}
+
+			// a group is a run of consecutive points sharing this level's category name
+			const aGroups = [];
+			let oCurGroup = null;
+			for (let i = 0; i < aItems.length; i++) {
+				const sName = getLevelName(nLevel, aItems[i].idx);
+				if (!oCurGroup || oCurGroup.name !== sName) {
+					oCurGroup = {name: sName, items: [], val: 0};
+					aGroups.push(oCurGroup);
+				}
+				oCurGroup.items.push(aItems[i]);
+				oCurGroup.val += aItems[i].val;
+			}
+
+			if (aGroups.length < 2) {
+				layoutLevel(aItems, nLevel + 1, x, y, w, h);
+				return;
+			}
+
+			const aRects = treemapLayoutBisect(aGroups.map(function (oGroup, i) {
+				return {key: i, val: oGroup.val};
+			}), x, y, w, h);
+			for (let i = 0; i < aRects.length; i++) {
+				const oGroup = aGroups[aRects[i].key];
+				layoutLevel(oGroup.items, nLevel + 1, aRects[i].x, aRects[i].y, aRects[i].w, aRects[i].h);
+			}
+		}
+
+		layoutLevel(aLeaves, 0, 0, 0, width, height);
+		this.data = aResult;
 	}
 
 	function CCachedBoxWhisker(type, seria, numLit, strLit, axisProperties) {

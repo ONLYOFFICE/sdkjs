@@ -4040,12 +4040,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 
 			if (matrix1 || matrix2) {
-				//only an original cArray operand (an array expression such as A:A+1) carries physical-head dims that
-				//would make the general path below truncate the result to that head. a cArea uses its bbox dims
-				//there (so it materializes rather than truncates) and is handled by convertAreaToArray's own
-				//clamping - do NOT reinterpret its used-extent tail here, or finite refs past the used range break.
-				var m1Lazy = cElementType.array === operand1.type && matrix1 && matrix1.hasLazyTail && matrix1.hasLazyTail();
-				var m2Lazy = cElementType.array === operand2.type && matrix2 && matrix2.hasLazyTail && matrix2.hasLazyTail();
+				//a converted range may go lazy only while its logical size equals its bbox - the result is then the
+				//same as below, just with the tail kept folded instead of materialized
+				var m1Lazy = matrix1 && matrix1.hasLazyTail && matrix1.hasLazyTail() &&
+					(cElementType.array === operand1.type ||
+					(matrix1.getRowCount() === dimension1.row && matrix1.getCountElementInRow() === dimension1.col));
+				var m2Lazy = matrix2 && matrix2.hasLazyTail && matrix2.hasLazyTail() &&
+					(cElementType.array === operand2.type ||
+					(matrix2.getRowCount() === dimension2.row && matrix2.getCountElementInRow() === dimension2.col));
 				if (m1Lazy || m2Lazy) {
 					//a lazy head+tail array operand whose logical size exceeds its physical head (the both-lazy-
 					//same-shape case was handled by the fast path above). broadcast on LOGICAL dims and compose a
@@ -4072,9 +4074,27 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 							res.addElement(elemAt(lr, lc));
 						}
 					}
-					res.setMissedValueFn(function (r, c) {
-						return elemAt(r, c);
-					});
+					//the tail is one value only if neither side reads real data there: a scalar, a 1x1, or no generator and
+					//no index pinned to 0 along a dimension the result repeats. a generator tail gets walked element by element
+					var gen1 = !!(matrix1 && matrix1.getMissedValueFn && matrix1.getMissedValueFn());
+					var gen2 = !!(matrix2 && matrix2.getMissedValueFn && matrix2.getMissedValueFn());
+					var tailFixed1 = !matrix1 || (lbr1 && lbc1) || (!(lbr1 && lRow > 1) && !(lbc1 && lCol > 1) && !gen1);
+					var tailFixed2 = !matrix2 || (lbr2 && lbc2) || (!(lbr2 && lRow > 1) && !(lbc2 && lCol > 1) && !gen2);
+					var tailConst = null;
+					if (tailFixed1 && tailFixed2) {
+						var tail1 = !matrix1 ? operand1 :
+							(lbr1 && lbc1 ? matrix1.getElementRowCol(0, 0) : (matrix1.getMissedValue() || new cEmpty()));
+						var tail2 = !matrix2 ? operand2 :
+							(lbr2 && lbc2 ? matrix2.getElementRowCol(0, 0) : (matrix2.getMissedValue() || new cEmpty()));
+						tailConst = func(tail1, tail2);
+					}
+					if (tailConst) {
+						res.setMissedValue(tailConst);
+					} else {
+						res.setMissedValueFn(function (r, c) {
+							return elemAt(r, c);
+						});
+					}
 					return res;
 				}
 				res = new cArray();
@@ -4136,6 +4156,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			res = this.arrayIndexes[index];
 		}
 		return res;
+	};
+	//lets a function report which of its arguments it does not read while a lazy tail is being folded to a
+	//single value. tailArgs holds the tail value of every argument whose tail IS a single value, and a hole
+	//where the argument varies from cell to cell. an index in the returned list means the answer does not
+	//depend on that argument, so a per-cell argument there does not stop the fold.
+	//default: nothing is known, every argument counts.
+	cBaseFunction.prototype.getUnusedTailArgs = function (tailArgs) {
+		return null;
 	};
 	cBaseFunction.prototype.Assemble2 = function (arg, start, count) {
 
@@ -4920,26 +4948,44 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					var _headRows = array.rowCount;
 					var _headCols = array.countElementInRow.length ? array.countElementInRow[0] : 0;
 					var _realSz = array.getRealArraySize();
-					var _composable = true, _tailArgs = new Array(argumentsCount);
+					var _composable = true, _tailArgs = new Array(argumentsCount), _perCellArgs = null;
 					for (var _tj = 0; _tj < argumentsCount; _tj++) {
 						var _tta = tempArgs[_tj], _ttInfo = _argInfo[_tj];
 						if (_ttInfo.isArray) {
 							var _argCols = _tta.countElementInRow.length ? _tta.countElementInRow[0] : 0;
-							if ((_tta.getMissedValueFn && _tta.getMissedValueFn()) ||
-								_tta.rowCount > _headRows || _argCols > _headCols ||
+							if (_tta.rowCount > _headRows || _argCols > _headCols ||
 								(_realSz && (_tta.getRowCount() < _realSz.row || _tta.getCountElementInRow() < _realSz.col))) {
-								//generator tail; an arg head past the result head; OR an arg whose LOGICAL size is
-								//shorter than the result (a finite/broadcast sibling) - its out-of-range tail must be
-								//#N/A, not its folded constant. cannot fold - fall through to the per-cell generator.
+								//an arg head past the result head; OR an arg whose LOGICAL size is shorter than the
+								//result (a finite/broadcast sibling) - its out-of-range tail must be #N/A, not its
+								//folded constant. cannot fold - fall through to the per-cell generator.
 								_composable = false;
 								break;
 							}
-							_tailArgs[_tj] = (_tta.getMissedValue && _tta.getMissedValue()) || new cEmpty();
+							if (_tta.getMissedValueFn && _tta.getMissedValueFn()) {
+								//a generator tail has no single value: leave the slot empty for now and ask the
+								//function below whether it reads this argument at all
+								(_perCellArgs || (_perCellArgs = [])).push(_tj);
+							} else {
+								_tailArgs[_tj] = (_tta.getMissedValue && _tta.getMissedValue()) || new cEmpty();
+							}
 						} else if (_ttInfo.isRange) {
 							_composable = false;
 							break;
 						} else {
 							_tailArgs[_tj] = _tta;
+						}
+					}
+					if (_composable && _perCellArgs) {
+						//an argument that varies from cell to cell blocks the fold unless the function states it
+						//never reads it - IF, for one, only ever reaches the branch its condition selects
+						var _unusedArgs = t.getUnusedTailArgs(_tailArgs);
+						for (var _pj = 0; _pj < _perCellArgs.length; _pj++) {
+							if (!_unusedArgs || -1 === _unusedArgs.indexOf(_perCellArgs[_pj])) {
+								_composable = false;
+								break;
+							}
+							//never read, so any placeholder gives the same answer for the whole tail
+							_tailArgs[_perCellArgs[_pj]] = new cEmpty();
 						}
 					}
 					var _tailRes = null;
