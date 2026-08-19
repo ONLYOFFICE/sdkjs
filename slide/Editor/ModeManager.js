@@ -240,8 +240,11 @@
 	SlideModeManagerBase.prototype.addNewLayout = function () {};
 	SlideModeManagerBase.prototype.deleteMaster = function () {};
 	SlideModeManagerBase.prototype.setPreserve = function (bPr) {};
-	SlideModeManagerBase.prototype.recalculateNotesShape = function (slide) {
+	SlideModeManagerBase.prototype.recalculateNotesShapeOnSlide = function (slide) {
 
+	};
+	SlideModeManagerBase.prototype.isCurrentSlideNotesShape = function (shape) {
+		return false;
 	};
 	SlideModeManagerBase.prototype.applySlideBackgroundToAll = function () {
 
@@ -752,8 +755,15 @@
 	SlideModeManager.prototype.isDrawingSlide = function (slideObject) {
 		return slideObject.isSlide();
 	};
-	SlideModeManager.prototype.recalculateNotesShape = function (slide) {
+	SlideModeManager.prototype.recalculateNotesShapeOnSlide = function (slide) {
 		slide.recalculateNotesShape();
+	};
+	SlideModeManager.prototype.isCurrentSlideNotesShape = function (shape) {
+		if (this.isSlideNoteShape(shape)) {
+			const currentSlide = this.getCurrentSlide();
+			return shape.parent === currentSlide.notes;
+		}
+		return false;
 	};
 	SlideModeManager.prototype.isLockBackgroundSlides = function () {
 		const slides = [];

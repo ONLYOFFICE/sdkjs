@@ -2837,9 +2837,12 @@
 
 	COutlineThumbnailsManager.prototype.SetFocusElement = function(type)
 	{
+		const logicDocument = this.m_oWordControl.m_oLogicDocument;
+		if (FOCUS_OBJECT_THUMBNAILS === type && !this.LockMainObjType && logicDocument) {
+			logicDocument.ResetFocusOnNotes();
+		}
 		if(this.FocusObjType === type)
 			return;
-		const logicDocument = this.m_oWordControl.m_oLogicDocument;
 		switch (type)
 		{
 			case FOCUS_OBJECT_MAIN:

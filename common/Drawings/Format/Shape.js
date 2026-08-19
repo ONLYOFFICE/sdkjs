@@ -5072,6 +5072,10 @@
 		};
 
 		CShape.prototype.checkExtentsByDocContent = function (bForce, bNeedRecalc) {
+			const viewManager = Asc.editor && Asc.editor.presentationViewManager;
+			if (viewManager && viewManager.isCurrentSlideNotesShape(this)) {
+				return;
+			}
 			if ((!this.bWordShape || this.group || bForce) && this.checkAutofit(true)) {
 				var oMainGroup = this.getMainGroup();
 				if (oMainGroup && !(bNeedRecalc === false)) {

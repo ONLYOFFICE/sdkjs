@@ -1771,9 +1771,27 @@ CPresentation.prototype.Get_TargetDocContent = function () {
 	return null;
 };
 
+CPresentation.prototype.getFocusedOutlineView = function () {
+	return this.IsFocusOnOutline() ? this.GetOutlineView() : null;
+};
+CPresentation.prototype.UpdateOnCompositeChange = function () {
+	const view = this.getFocusedOutlineView();
+	if (view) {
+		view.checkCompositeInputExtends();
+		this.Recalculate();
+		view.applyCompositeInputToOutline(this.CompositeInput);
+	} else {
+		this.checkCurrentTextObjectExtends();
+		this.Recalculate();
+	}
+	this.RecalculateCurPos(true, true);
+	this.Document_UpdateSelectionState();
+};
+
 CPresentation.prototype.Begin_CompositeInput = function () {
 	let oCurSlide = this.GetCurrentSlide();
-	if (!this.IsFocusOnNotes() && oCurSlide && oCurSlide.graphicObjects.selectedObjects.length === 0) {
+	const isFocusOnOutline = this.IsFocusOnOutline();
+	if (!isFocusOnOutline && !this.IsFocusOnNotes() && oCurSlide && oCurSlide.graphicObjects.selectedObjects.length === 0) {
 		var oTitle = oCurSlide.getMatchingShape(AscFormat.phType_title, null);
 		if (oTitle) {
 			var oDocContent = oTitle.getDocContent();
@@ -1786,8 +1804,14 @@ CPresentation.prototype.Begin_CompositeInput = function () {
 			return;
 		}
 	}
-	if (false === this.Document_Is_SelectionLocked(changestype_Drawing_Props, null, undefined, undefined, true)) {
+	const lockType = isFocusOnOutline ? AscCommon.changestype_OutlineSlideDrawingProps : changestype_Drawing_Props;
+	if (false === this.Document_Is_SelectionLocked(lockType, null, undefined, undefined, true)) {
 		this.Create_NewHistoryPoint(AscDFH.historydescription_Document_CompositeInput);
+
+		if (isFocusOnOutline) {
+			return this.BeginOutlineCompositeInput();
+		}
+
 		var oController = this.GetCurrentController();
 		if (oController) {
 			oController.CreateDocContent();
@@ -1821,6 +1845,23 @@ CPresentation.prototype.Begin_CompositeInput = function () {
 	}
 
 	return false;
+};
+
+CPresentation.prototype.BeginOutlineCompositeInput = function () {
+	const view = this.GetOutlineView();
+	const info = view && view.beginCompositeInput();
+	if (!info) {
+		this.History.Remove_LastPoint();
+		return false;
+	}
+
+	this.CompositeInput = new AscWord.RunCompositeInput_Old(info.run);
+	info.run.Set_CompositeInput(this.CompositeInput);
+
+	this.DrawingDocument.TargetStart();
+	this.DrawingDocument.TargetShow();
+	this.UpdateOnCompositeChange();
+	return true;
 };
 
 CPresentation.prototype.IsFillingFormMode = function () {
@@ -1881,10 +1922,7 @@ CPresentation.prototype.Add_CompositeText = function (nCharCode) {
 		return;
 	this.Create_NewHistoryPoint(AscDFH.historydescription_Document_CompositeInputReplace);
 	this.addCompositeText(nCharCode);
-	this.checkCurrentTextObjectExtends();
-	this.Recalculate();
-	this.RecalculateCurPos(true, true);
-	this.Document_UpdateSelectionState();
+	this.UpdateOnCompositeChange();
 };
 
 CPresentation.prototype.removeCompositeText = function (nCount) {
@@ -1901,10 +1939,7 @@ CPresentation.prototype.removeCompositeText = function (nCount) {
 
 CPresentation.prototype.Remove_CompositeText = function (nCount) {
 	this.removeCompositeText(nCount);
-	this.checkCurrentTextObjectExtends();
-	this.Recalculate();
-	this.RecalculateCurPos(true, true);
-	this.Document_UpdateSelectionState();
+	this.UpdateOnCompositeChange();
 };
 CPresentation.prototype.Replace_CompositeText = function (arrCharCodes) {
 	if (null === this.CompositeInput)
@@ -1914,10 +1949,7 @@ CPresentation.prototype.Replace_CompositeText = function (arrCharCodes) {
 	for (var nIndex = 0, nCount = arrCharCodes.length; nIndex < nCount; ++nIndex) {
 		this.addCompositeText(arrCharCodes[nIndex]);
 	}
-	this.checkCurrentTextObjectExtends();
-	this.Recalculate();
-	this.RecalculateCurPos(true, true);
-	this.Document_UpdateSelectionState();
+	this.UpdateOnCompositeChange();
 	if (!this.History.CheckUnionLastPoints())
 		this.CompositeInput.CanUndo = false;
 };
@@ -1929,6 +1961,10 @@ CPresentation.prototype.Set_CursorPosInCompositeText = function (nPos) {
 
 	var nInRunPos = Math.max(Math.min(this.CompositeInput.Pos + nPos, this.CompositeInput.Pos + this.CompositeInput.Length, oRun.Content.length), this.CompositeInput.Pos);
 	oRun.State.ContentPos = nInRunPos;
+	const view = this.getFocusedOutlineView();
+	if (view) {
+		view.applyCompositeInputToOutline(this.CompositeInput);
+	}
 	this.RecalculateCurPos(true, true);
 	this.Document_UpdateSelectionState();
 };
@@ -1950,6 +1986,18 @@ CPresentation.prototype.End_CompositeInput = function () {
 	var oRun = this.CompositeInput.Run;
 	oRun.Set_CompositeInput(null);
 
+	const view = this.getFocusedOutlineView();
+	let txWarpShape;
+	if (view) {
+		txWarpShape = view.getCompositeInputShape();
+		view.endCompositeInput();
+	} else {
+		const controller = this.GetCurrentController();
+		if (controller) {
+			txWarpShape = AscFormat.getTargetTextObject(controller);
+		}
+	}
+
 	if (0 === nLen && true === this.History.CanRemoveLastPoint() && true === this.CompositeInput.CanUndo) {
 		this.Document_Undo();
 		this.History.Clear_Redo();
@@ -1957,12 +2005,9 @@ CPresentation.prototype.End_CompositeInput = function () {
 
 	this.CompositeInput = null;
 
-	var oController = this.GetCurrentController();
-	if (oController) {
-		var oTargetTextObject = AscFormat.getTargetTextObject(oController);
-		if (oTargetTextObject && oTargetTextObject.txWarpStructNoTransform) {
-			oTargetTextObject.recalculateContent();
-		}
+
+	if (txWarpShape && txWarpShape.txWarpStructNoTransform) {
+		txWarpShape.recalculateContent();
 	}
 	this.Document_UpdateInterfaceState();
 	this.flushDeferredInterfaceUpdates();
@@ -2559,7 +2604,7 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 		if (bRedrawNotes && oCurSlide && oCurSlide.notesShape) {
 			const viewManager = this.getViewManager();
 			if (viewManager) {
-				viewManager.recalculateNotesShape(oCurSlide);
+				viewManager.recalculateNotesShapeOnSlide(oCurSlide);
 			}
 			this.DrawingDocument.Notes_OnRecalculate(this.CurPage, oCurSlide.NotesWidth, oCurSlide.getNotesHeight());
 		}
@@ -3082,7 +3127,7 @@ CPresentation.prototype.RecalculateOutlineCurPos = function (bUpdateX, bUpdateY)
 	return false;
 };
 CPresentation.prototype.RecalculateCurPos = function (bUpdateX, bUpdateY) {
-	if (!this.RecalculateOutlineCurPos()) {
+	if (!this.RecalculateOutlineCurPos(bUpdateX, bUpdateY)) {
 		var oController = this.GetCurrentController();
 		if (oController) {
 			oController.recalculateCurPos(bUpdateX, bUpdateY);
@@ -6494,6 +6539,10 @@ CPresentation.prototype.IsFocusOnOutline = function () {
 
 CPresentation.prototype.IsFocusOnThumbnails = function () {
 	return this.GetFocusObjType() === FOCUS_OBJECT_THUMBNAILS;
+};
+
+CPresentation.prototype.ResetFocusOnNotes = function () {
+	this.FocusOnNotes = false;
 };
 
 CPresentation.prototype.Notes_OnMouseDown = function (e, X, Y) {

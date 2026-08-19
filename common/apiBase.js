@@ -4261,21 +4261,32 @@
             }
             case c_oEditorId.Presentation:
             {
+				const logicDocument = this.WordControl.m_oLogicDocument;
+				const isFocusOnOutline = logicDocument.IsFocusOnOutline();
+				const isFocusOnNotes = logicDocument.IsFocusOnNotes();
+
 				ret.editorX += this.WordControl.X;
-				ret.editorX += (this.WordControl.m_oMainParent.AbsolutePosition.L * AscCommon.g_dKoef_mm_to_pix);
+				ret.editorY += this.WordControl.Y;
+
+				if (isFocusOnOutline)
+				{
+					ret.editorX += (this.WordControl.m_oThumbnailsContainer.AbsolutePosition.L * AscCommon.g_dKoef_mm_to_pix);
+					ret.editorY += (this.WordControl.m_oThumbnailsContainer.AbsolutePosition.T * AscCommon.g_dKoef_mm_to_pix);
+				}
+				else
+				{
+					ret.editorX += (this.WordControl.m_oMainParent.AbsolutePosition.L * AscCommon.g_dKoef_mm_to_pix);
+					if (isFocusOnNotes)
+					{
+						ret.editorY += ((this.WordControl.m_oBottomPanesContainer.AbsolutePosition.T + this.WordControl.m_oNotesContainer.AbsolutePosition.T) * AscCommon.g_dKoef_mm_to_pix);
+					}
+					else
+					{
+						ret.editorY += (this.WordControl.m_oMainView.AbsolutePosition.T * AscCommon.g_dKoef_mm_to_pix);
+					}
+				}
 
 				ret.X += ret.editorX;
-
-				ret.editorY += this.WordControl.Y;
-                if (!this.WordControl.m_oLogicDocument.IsFocusOnNotes())
-                {
-					ret.editorY += (this.WordControl.m_oMainView.AbsolutePosition.T * AscCommon.g_dKoef_mm_to_pix);
-                }
-                else
-                {
-					ret.editorY += (this.WordControl.m_oNotesContainer.AbsolutePosition.T * AscCommon.g_dKoef_mm_to_pix);
-                }
-
 				ret.Y += ret.editorY;
 
                 ret.X += (this.WordControl.m_oDrawingDocument.TargetHtmlElementLeft);
@@ -4284,7 +4295,8 @@
                 ret.X >>= 0;
                 ret.Y >>= 0;
 
-                ret.TargetH = (this.WordControl.m_oDrawingDocument.m_dTargetSize * this.WordControl.m_nZoomValue * AscCommon.g_dKoef_mm_to_pix / 100) >> 0;
+				const targetZoom = (isFocusOnOutline || isFocusOnNotes) ? 100 : this.WordControl.m_nZoomValue;
+                ret.TargetH = (this.WordControl.m_oDrawingDocument.m_dTargetSize * targetZoom * AscCommon.g_dKoef_mm_to_pix / 100) >> 0;
                 break;
             }
             case c_oEditorId.Spreadsheet:
