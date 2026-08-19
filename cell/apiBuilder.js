@@ -13423,7 +13423,7 @@
 			this.Drawing.spPr.xfrm.setExtX(fWidth);
 			this.Drawing.spPr.xfrm.setExtY(fHeight);
 			this.Drawing.setDrawingBaseExt(fWidth, fHeight);
-
+			private_SetDrawingBaseTo(this.Drawing);
 		}
 	};
 
@@ -13459,6 +13459,7 @@
 		}
 		this.Drawing.setDrawingBaseType(AscCommon.c_oAscCellAnchorType.cellanchorOneCell);
 		this.Drawing.setDrawingBaseCoords(nFromCol, nColOffset / 36000.0, nFromRow, nRowOffset / 36000.0, 0, 0, 0, 0, 0, 0, extX, extY);
+		private_SetDrawingBaseTo(this.Drawing);
 	};
 
 	/**
@@ -31654,6 +31655,28 @@
 		oDrawing.setDrawingBaseType(AscCommon.c_oAscCellAnchorType.cellanchorOneCell);
 		oDrawing.setDrawingBaseCoords(nFromCol, nColOffset / 36000.0, nFromRow, nRowOffset / 36000.0, 0, 0, 0, 0, 0, 0, 0, 0);
 		oDrawing.setDrawingBaseExt(nExtX / 36000.0, nExtY / 36000.0);
+		private_SetDrawingBaseTo(oDrawing);
+	}
+
+	function private_SetDrawingBaseTo(drawing) {
+		const drawingBase = drawing.drawingBase;
+		if (!drawingBase) {
+			return;
+		}
+		const from = drawingBase.from;
+		const ext = drawingBase.ext;
+		const drawingObjects = drawingBase.getDrawingObjects();
+		let to;
+		if (drawingObjects) {
+			const base = drawingObjects.cloneDrawingObject(drawingBase);
+			drawingObjects.calculateObjectMetrics(base, drawingObjects.mmToPx(ext.cx), drawingObjects.mmToPx(ext.cy), true, true);
+			to = base.to;
+		} else {
+			to = {col: from.col, colOff: from.colOff + ext.cx, row: from.row, rowOff: from.rowOff + ext.cy};
+		}
+		drawing.setDrawingBaseCoords(from.col, from.colOff, from.row, from.rowOff,
+			to.col, to.colOff, to.row, to.rowOff,
+			drawingBase.Pos.X, drawingBase.Pos.Y, ext.cx, ext.cy);
 	}
 
 	function private_MakeBorder(lineStyle, color) {
