@@ -10393,8 +10393,7 @@
 	/**
 	 * Add text to the document on the cursor position.
 	 * @memberof ApiDocument
-	 * @param {string} text - The text to add to document. The "\n" characters are added as line breaks, the "\t"
-	 * characters are added as tabs, the "\r" characters are skipped.
+	 * @param {string} text - The text to add to document.
 	 * @returns {boolean}
 	 * @typeofeditors ["CDE"]
 	 * @since 9.2.0
@@ -10402,7 +10401,7 @@
 	 */
 	ApiDocument.prototype.EnterText = function(text)
 	{
-		text = GetStringParameter(text, null);
+		text = GetStringParameter(text, null, false);
 		if (null === text)
 			throwException(new Error("The 'text' parameter must be a string"));
 

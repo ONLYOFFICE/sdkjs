@@ -2339,8 +2339,7 @@
 	/**
 	 * Add text to the document on the cursor position.
 	 * @memberof ApiPresentation
-	 * @param {string} text - The text to add to document. The "\n" characters are added as line breaks, the "\t"
-	 * characters are added as tabs, the "\r" characters are skipped.
+	 * @param {string} text - The text to add to document.
 	 * @returns {boolean}
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -2348,7 +2347,7 @@
 	 */
 	ApiPresentation.prototype.EnterText = function(text)
 	{
-		text = AscBuilder.GetStringParameter(text, null);
+		text = AscBuilder.GetStringParameter(text, null, false);
 		if (null === text)
 			AscBuilder.throwException(new Error("The 'text' parameter must be a string"));
 
