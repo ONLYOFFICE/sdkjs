@@ -6541,6 +6541,10 @@ CPresentation.prototype.IsFocusOnThumbnails = function () {
 	return this.GetFocusObjType() === FOCUS_OBJECT_THUMBNAILS;
 };
 
+CPresentation.prototype.ResetFocusOnNotes = function () {
+	this.FocusOnNotes = false;
+};
+
 CPresentation.prototype.Notes_OnMouseDown = function (e, X, Y) {
 	// Reset the current element in search
 	this.CancelEyedropper();
