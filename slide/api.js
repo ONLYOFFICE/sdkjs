@@ -6654,8 +6654,8 @@ background-repeat: no-repeat;\
 				{
 					Data.Hyperlink.Value = AscCommon.translateManager.getValue("Previous Slide");
 				}
-				else if (Url.indexOf("ppaction://hlinkfile") === 0) {
-					Data.Hyperlink.Value = Url.substring("ppaction://hlinkfile?file=".length);
+				else if (AscCommon.IsLinkPPActionFile(Url)) {
+					Data.Hyperlink.Value = AscCommon.GetPPActionFilePath(Url);
 				}
 				else if (Url == "ppaction://noaction")
 				{
@@ -7367,10 +7367,9 @@ background-repeat: no-repeat;\
 			{
 				this.WordControl.onPrevPage();
 			}
-			else if (Url.indexOf('ppaction://hlinkfile') == 0)
+			else if (AscCommon.IsLinkPPActionFile(Url))
 			{
-				const fileHyperlink = normalizeFileHyperlink(Url)
-				this.sendEvent("asc_onHyperlinkClick", fileHyperlink);
+				this.sendEvent("asc_onHyperlinkClick", AscCommon.GetPPActionFileUrl(Url));
 			}
 			else
 			{
@@ -7388,26 +7387,6 @@ background-repeat: no-repeat;\
 
 		this.sendEvent("asc_onHyperlinkClick", Url);
 	};
-
-	function normalizeFileHyperlink(url) {
-		if (!url) {
-			return url;
-		}
-
-		let result = url;
-		const actionPrefix = 'ppaction://hlinkfile?file=';
-		const filePrefix = 'file://';
-
-		if (result.indexOf(actionPrefix) === 0) {
-			result = result.substring(actionPrefix.length);
-		}
-
-		if (result.indexOf(filePrefix) !== 0) {
-			result = filePrefix + result;
-		}
-
-		return result;
-	}
 
 	asc_docs_api.prototype.asc_GoToInternalHyperlink = function(url)
 	{
