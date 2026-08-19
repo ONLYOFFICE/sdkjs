@@ -413,12 +413,13 @@
 			styleContent += "@media all and (-webkit-min-device-pixel-ratio : 2),all and (-o-min-device-pixel-ratio: 2),all and (min--moz-device-pixel-ratio: 2),all and (min-device-pixel-ratio: 2) {\n\
 				.back_image_buttons { position:absolute; left: 0px; top: 0px; background-image: url('" + _images_url + "buttons@2x.png');background-size: 40px 200px; }\
 			}";
-			styleContent += ".menu-item-icon { position: relative;display:inline-block;float:left;width:20px;height:20px;margin:-2px 4px 0 -16px; }";
+			const isRtl = Asc.editor.isRtlInterface;
+			styleContent += ".menu-item-icon { position: relative;display:inline-block;float:" + (isRtl ? "right" : "left") + ";width:20px;height:20px;margin:" + (isRtl ? "-2px -16px 0 4px" : "-2px 4px 0 -16px") + "; }";
 			styleContent += ".dem_menu {list-style: none;display: none; position: fixed; right: auto; min-height: fit-content; height: auto; min-width: 120px; padding: 5px 0; border-radius: 4px; background-color: " + GlobalSkin.DemBackgroundColor + "; border: 1px solid " + GlobalSkin.DemSplitterColor + ";}";
-			styleContent += "#dem_id_draw_menu li>a{color:" + GlobalSkin.DemButtonTextColor + "; white-space: nowrap; font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif;;display:block; padding:5px 20px;line-height:16px;cursor:pointer;font-size:11px;text-align:left;}";
+			styleContent += "#dem_id_draw_menu li>a{color:" + GlobalSkin.DemButtonTextColor + "; white-space: nowrap; font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif;;display:block; padding:5px 20px;line-height:16px;cursor:pointer;font-size:11px;text-align:" + (isRtl ? "right" : "left") + ";}";
 			styleContent += "#dem_id_draw_menu li>a:hover{background-color:" + GlobalSkin.DemButtonBackgroundColorHover + ";}";
 			styleContent += "#dem_id_draw_menu li>a[data-checked=\"true\"]{color:" + GlobalSkin.DemButtonTextColorActive + ";background-color:" + GlobalSkin.DemButtonBackgroundColorActive + ";}";
-			styleContent += "#dem_id_draw_menu >li.submenu>a:after{display:block;content:\" \";float:right;width:0;height:0;border-color:#fff0;border-style:solid;border-width:3px 0 3px 3px;border-left-color:" + GlobalSkin.DemButtonTextColor + ";margin-top:5px;margin-right:-7px;margin-left:0}";
+			styleContent += "#dem_id_draw_menu >li.submenu>a:after{display:block;content:\" \";float:" + (isRtl ? "left" : "right") + ";width:0;height:0;border-color:#fff0;border-style:solid;border-width:" + (isRtl ? "3px 3px 3px 0" : "3px 0 3px 3px") + ";border-" + (isRtl ? "right" : "left") + "-color:" + GlobalSkin.DemButtonTextColor + ";margin-top:5px;margin-right:" + (isRtl ? "0" : "-7px") + ";margin-left:" + (isRtl ? "-7px" : "0") + "}";
 			styleContent += ".menu-color-cell { display: inline-block; cursor: pointer; border: 1px solid transparent; }";
 			styleContent += ".menu-color-cell span { display: block; width:14px; height:14px; border:1px solid rgb(0 0 0 / .2); pointer-events: none; }";
 			styleContent += ".menu-color-cell em { display: block; border: none; pointer-events: none; }";
@@ -503,8 +504,8 @@
 				"<li><a data-ratio data-tool=\"pen\"><span class=\"menu-item-icon btn-pen back_image_buttons\"></span>" + this.reporterTranslates[4] + "</a></li>",
 				"<li><a data-ratio data-tool=\"highlighter\"><span class=\"menu-item-icon btn-highlighter back_image_buttons\"></span>" + this.reporterTranslates[5] + "</a></li>",
 				"<li class=\"dem_draw_menu_divider\"></li>",
-				"<li id=\"dem_id_draw_color_menu_trigger\" class=\"submenu\"><a style=\"padding-left:28px;\">" + this.reporterTranslates[6] + "</a>",
-				"<ul id=\"dem_id_draw_color_menu\" class=\"dem_menu\" style=\"width: 162px;\">",
+				"<li id=\"dem_id_draw_color_menu_trigger\" class=\"submenu\"><a style=\"padding-" + (isRtl ? "right" : "left") + ":28px;\">" + this.reporterTranslates[6] + "</a>",
+				"<ul id=\"dem_id_draw_color_menu\" class=\"dem_menu\" style=\"width: 162px;" + (isRtl ? "direction: rtl;" : "") + "\">",
 				colorList,
 				"</ul>",
 				"</li>",
@@ -752,9 +753,9 @@
 				if (!isMenuHovered) {
 					const offset = AscCommon.UI.getBoundingClientRect(e.target);
 					const menuWidth = 174;
-					let leftPosition = offset.left + offset.width;
-					if (leftPosition + menuWidth > window.innerWidth) {
-						leftPosition = offset.left - menuWidth;
+					let leftPosition = isRtl ? offset.left - menuWidth : offset.left + offset.width;
+					if (isRtl ? leftPosition < 0 : leftPosition + menuWidth > window.innerWidth) {
+						leftPosition = isRtl ? offset.left + offset.width : offset.left - menuWidth;
 					}
 
 					this.elementReporterDrawColorsMenu.css({

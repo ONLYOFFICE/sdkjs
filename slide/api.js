@@ -1451,7 +1451,7 @@ background-repeat: no-repeat;\
 				styleContent += "#dem_id_draw_menu li>a{color:" + GlobalSkin.DemButtonTextColor +";}";
 				styleContent += "#dem_id_draw_menu li>a:hover{background-color:" + GlobalSkin.DemButtonBackgroundColorHover + ";}";
 				styleContent += "#dem_id_draw_menu li>a[data-checked=\"true\"]{color:" + GlobalSkin.DemButtonTextColorActive + ";background-color:" + GlobalSkin.DemButtonBackgroundColorActive + ";}";
-				styleContent += "#dem_id_draw_menu >li.submenu>a:after{border-left-color:" + GlobalSkin.DemButtonTextColor + ";}";
+				styleContent += "#dem_id_draw_menu >li.submenu>a:after{border-" + (this.isRtlInterface ? "right" : "left") + "-color:" + GlobalSkin.DemButtonTextColor + ";}";
 				styleContent += ".dem_draw_menu_divider { background-color:" + GlobalSkin.DemSplitterColor + ";}";
 				if (GlobalSkin.Name === "theme-classic-light") {
 					styleContent += ("a[data-checked] > .menu-item-icon { background-position-x: -20px; }");
