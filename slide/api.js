@@ -6752,14 +6752,25 @@ background-repeat: no-repeat;\
 			Y : 0
 		};
 		let wordControl = this.WordControl;
-		if (wordControl && wordControl.Thumbnails)
+		if (!wordControl || !wordControl.Thumbnails)
+			return ret;
+
+		const focusType = wordControl.Thumbnails.FocusObjType;
+		if (focusType === AscCommon.FOCUS_OBJECT_MAIN)
 		{
-			if (wordControl.m_bIsRuler &&
-				wordControl.Thumbnails.FocusObjType === AscCommon.FOCUS_OBJECT_MAIN)
+			if (wordControl.m_bIsRuler)
 			{
 				ret.X += ((5 * AscCommon.g_dKoef_mm_to_pix) >> 0);
 				ret.Y += ((7 * AscCommon.g_dKoef_mm_to_pix) >> 0);
 			}
+		}
+		else if (focusType === AscCommon.FOCUS_OBJECT_THUMBNAILS &&
+			wordControl.m_oThumbnailsContainer && wordControl.m_oMainParent)
+		{
+			const thumbnails = wordControl.m_oThumbnailsContainer.AbsolutePosition;
+			const mainParent = wordControl.m_oMainParent.AbsolutePosition;
+			ret.X += (((thumbnails.L - mainParent.L) * AscCommon.g_dKoef_mm_to_pix) >> 0);
+			ret.Y += (((thumbnails.T - mainParent.T) * AscCommon.g_dKoef_mm_to_pix) >> 0);
 		}
 		return ret;
 	};
