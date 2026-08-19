@@ -1863,11 +1863,6 @@ background-repeat: no-repeat;\
 		ParaPr.Position    = TextPr.Position;
 		ParaPr.ListType = AscFormat.fGetListTypeFromBullet(ParaPr.Bullet);
 		this.sync_ParaSpacingLine(ParaPr.Spacing);
-		this.Update_ParaInd(ParaPr.Ind, ParaPr.Bidi);
-		this.sync_PrAlignCallBack(ParaPr.Jc);
-		this.sync_ParaStyleName(ParaPr.StyleName);
-		this.sync_ListType(ParaPr.ListType);
-		this.sync_PrPropCallback(ParaPr);
 
 		let bidi = ParaPr.Bidi;
 		if (undefined === bidi)
@@ -1875,6 +1870,12 @@ background-repeat: no-repeat;\
 			let paragraph = presentation.GetCurrentParagraph(false, false, {FirstInSelection : true});
 			bidi = paragraph ? paragraph.GetParagraphBidi() : undefined;
 		}
+
+		this.Update_ParaInd(ParaPr.Ind, bidi);
+		this.sync_PrAlignCallBack(ParaPr.Jc);
+		this.sync_ParaStyleName(ParaPr.StyleName);
+		this.sync_ListType(ParaPr.ListType);
+		this.sync_PrPropCallback(ParaPr);
 		this.sendEvent("asc_onTextDirection", bidi);
 	};
 	/*----------------------------------------------------------------*/
@@ -3867,30 +3868,13 @@ background-repeat: no-repeat;\
 	/*----------------------------------------------------------------*/
 
 
-	asc_docs_api.prototype.Update_ParaInd                = function(Ind)
+	asc_docs_api.prototype.Update_ParaInd                = function(paraInd, isRtl)
 	{
-		var FirstLine = 0;
-		var Left      = 0;
-		var Right     = 0;
-		if ("undefined" != typeof(Ind))
-		{
-			if ("undefined" != typeof(Ind.FirstLine))
-			{
-				FirstLine = Ind.FirstLine;
-			}
-			if ("undefined" != typeof(Ind.Left))
-			{
-				Left = Ind.Left;
-			}
-			if ("undefined" != typeof(Ind.Right))
-			{
-				Right = Ind.Right;
-			}
-		}
-
-		this.Internal_Update_Ind_Left(Left);
-		this.Internal_Update_Ind_FirstLine(FirstLine, Left);
-		this.Internal_Update_Ind_Right(Right);
+		let updateFlag = this.WordControl.m_oHorRuler.UpdateParaInd(paraInd, isRtl);
+		if (updateFlag & 2)
+			this.WordControl.UpdateHorRulerBack(true);
+		if (updateFlag & 1)
+			this.WordControl.UpdateHorRuler();
 	};
 	asc_docs_api.prototype.Internal_Update_Ind_FirstLine = function(FirstLine, Left)
 	{
@@ -6758,9 +6742,14 @@ background-repeat: no-repeat;\
 		const focusType = wordControl.Thumbnails.FocusObjType;
 		if (focusType === AscCommon.FOCUS_OBJECT_MAIN)
 		{
+			if (this.isRtlInterface)
+				ret.X += wordControl.ScrollWidthPx;
+
 			if (wordControl.m_bIsRuler)
 			{
-				ret.X += ((5 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+				if (!this.isRtlInterface)
+					ret.X += ((5 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+
 				ret.Y += ((7 * AscCommon.g_dKoef_mm_to_pix) >> 0);
 			}
 		}

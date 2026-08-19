@@ -1279,8 +1279,13 @@
 		this.m_oMainContent.Bounds.SetParams(0, 0, g_dKoef_pix_to_mm, this.splitters[1].position + GlobalSkin.SplitterWidthMM, true, false, true, true, -1, -1);
 		this.m_oMainContent.Anchor = (g_anchor_left | g_anchor_top | g_anchor_right | g_anchor_bottom);
 
+		const isRtl = this.m_oApi.isRtlInterface;
+		const useScrollW = (this.m_oApi.isMobileVersion || this.m_oApi.isReporterMode) ? 0 : this.ScrollWidthMm;
+
 		this.m_oPanelRight.Bounds.SetParams(0, 0, 1000, this.ScrollWidthMm, false, false, false, true, this.ScrollWidthMm, -1);
-		this.m_oPanelRight.Anchor = (g_anchor_top | g_anchor_right | g_anchor_bottom);
+		this.m_oPanelRight.Anchor = isRtl
+			? (g_anchor_top | g_anchor_left | g_anchor_bottom)
+			: (g_anchor_top | g_anchor_right | g_anchor_bottom);
 
 		this.m_oPanelRight_buttonRulers.Bounds.SetParams(0, 0, 1000, 1000, false, false, false, false, -1, this.ScrollWidthMm);
 		this.m_oPanelRight_buttonRulers.Anchor = (g_anchor_left | g_anchor_top | g_anchor_right);
@@ -1297,7 +1302,9 @@
 		this.m_oPanelRight_vertScroll.Anchor = (g_anchor_left | g_anchor_top | g_anchor_right | g_anchor_bottom);
 
 		this.m_oLeftRuler.Bounds.SetParams(0, 0, 1000, 1000, false, false, false, false, 5, -1);
-		this.m_oLeftRuler.Anchor = (g_anchor_left | g_anchor_top | g_anchor_bottom);
+		this.m_oLeftRuler.Anchor = isRtl
+			? (g_anchor_right | g_anchor_top | g_anchor_bottom)
+			: (g_anchor_left | g_anchor_top | g_anchor_bottom);
 
 		this.m_oLeftRuler_buttonsTabs.Bounds.SetParams(0, 0.8, 1000, 1000, false, true, false, false, -1, 5);
 		this.m_oLeftRuler_buttonsTabs.Anchor = (g_anchor_left | g_anchor_top | g_anchor_right);
@@ -1305,17 +1312,28 @@
 		this.m_oLeftRuler_vertRuler.Bounds.SetParams(0, 7, 1000, 1000, false, true, false, false, -1, -1);
 		this.m_oLeftRuler_vertRuler.Anchor = (g_anchor_left | g_anchor_right | g_anchor_top | g_anchor_bottom);
 
-		this.m_oTopRuler.Bounds.SetParams(5, 0, 1000, 1000, true, false, false, false, -1, 7);
+		if (isRtl) {
+			this.m_oTopRuler.Bounds.SetParams(useScrollW, 0, 5, 1000, true, false, true, false, -1, 7);
+		} else {
+			this.m_oTopRuler.Bounds.SetParams(5, 0, 1000, 1000, true, false, false, false, -1, 7);
+		}
 		this.m_oTopRuler.Anchor = (g_anchor_left | g_anchor_top | g_anchor_right);
 
 		this.m_oTopRuler_horRuler.Bounds.SetParams(0, 0, 1000, 1000, false, false, false, false, -1, -1);
 		this.m_oTopRuler_horRuler.Anchor = (g_anchor_left | g_anchor_right | g_anchor_top | g_anchor_bottom);
 
-		this.m_oScrollHor.Bounds.SetParams(0, 0, this.ScrollWidthMm, 1000, false, false, true, false, -1, this.ScrollWidthMm);
+		if (isRtl) {
+			this.m_oScrollHor.Bounds.SetParams(this.ScrollWidthMm, 0, 1000, 1000, true, false, false, false, -1, this.ScrollWidthMm);
+		} else {
+			this.m_oScrollHor.Bounds.SetParams(0, 0, this.ScrollWidthMm, 1000, false, false, true, false, -1, this.ScrollWidthMm);
+		}
 		this.m_oScrollHor.Anchor = (g_anchor_left | g_anchor_right | g_anchor_bottom);
 
-		const useScrollW = (this.m_oApi.isMobileVersion || this.m_oApi.isReporterMode) ? 0 : this.ScrollWidthMm;
-		this.m_oMainView.Bounds.SetParams(5, 7, useScrollW, useScrollW, true, true, true, true, -1, -1);
+		if (isRtl) {
+			this.m_oMainView.Bounds.SetParams(useScrollW, 7, 5, useScrollW, true, true, true, true, -1, -1);
+		} else {
+			this.m_oMainView.Bounds.SetParams(5, 7, useScrollW, useScrollW, true, true, true, true, -1, -1);
+		}
 		this.m_oMainView.Anchor = (g_anchor_left | g_anchor_right | g_anchor_top | g_anchor_bottom);
 
 		this.m_oEditor.Bounds.SetParams(0, 0, 1000, 1000, false, false, false, false, -1, -1);
@@ -1423,7 +1441,7 @@
 	};
 	CEditorPage.prototype.GetVertRulerLeft = function()
 	{
-		return 0;
+		return this.m_oLeftRuler.AbsolutePosition.L;
 	};
 	// Splitter elements
 	CEditorPage.prototype.createSplitterElement = function (splitterIndex) {
@@ -2160,6 +2178,14 @@
 		}
 	};
 
+	CEditorPage.prototype.getHorRulerSlideLeft = function () {
+		const slideLeft = this.m_oDrawingDocument.SlideCurrectRect.left;
+		if (!this.m_oApi.isRtlInterface)
+			return slideLeft;
+
+		return slideLeft + this.m_oMainView.AbsolutePosition.L * g_dKoef_mm_to_pix;
+	};
+
 	CEditorPage.prototype.horRulerMouseDown = function (e) {
 		if (false === oThis.m_oApi.bInit_word_control)
 			return;
@@ -2172,7 +2198,7 @@
 		var oWordControl = oThis;
 
 		if (-1 != oWordControl.m_oDrawingDocument.SlideCurrent)
-			oWordControl.m_oHorRuler.OnMouseDown(oWordControl.m_oDrawingDocument.SlideCurrectRect.left, 0, e);
+			oWordControl.m_oHorRuler.OnMouseDown(oWordControl.getHorRulerSlideLeft(), 0, e);
 	};
 	CEditorPage.prototype.horRulerMouseUp = function (e) {
 		if (false === oThis.m_oApi.bInit_word_control)
@@ -2186,7 +2212,7 @@
 		var oWordControl = oThis;
 
 		if (-1 != oWordControl.m_oDrawingDocument.SlideCurrent)
-			oWordControl.m_oHorRuler.OnMouseUp(oWordControl.m_oDrawingDocument.SlideCurrectRect.left, 0, e);
+			oWordControl.m_oHorRuler.OnMouseUp(oWordControl.getHorRulerSlideLeft(), 0, e);
 	};
 	CEditorPage.prototype.horRulerMouseMove = function (e) {
 		if (false === oThis.m_oApi.bInit_word_control)
@@ -2200,7 +2226,7 @@
 		var oWordControl = oThis;
 
 		if (-1 != oWordControl.m_oDrawingDocument.SlideCurrent)
-			oWordControl.m_oHorRuler.OnMouseMove(oWordControl.m_oDrawingDocument.SlideCurrectRect.left, 0, e);
+			oWordControl.m_oHorRuler.OnMouseMove(oWordControl.getHorRulerSlideLeft(), 0, e);
 	};
 
 	CEditorPage.prototype.verRulerMouseDown = function (e) {
@@ -2328,18 +2354,27 @@
 	};
 
 	CEditorPage.prototype.checkNeedRules = function () {
+		const isRtl = this.m_oApi.isRtlInterface;
 		if (this.m_bIsRuler) {
 			this.m_oLeftRuler.HtmlElement.style.display = 'block';
 			this.m_oTopRuler.HtmlElement.style.display = 'block';
 
-			this.m_oMainView.Bounds.L = 5;
+			if (isRtl) {
+				this.m_oMainView.Bounds.R = 5;
+			} else {
+				this.m_oMainView.Bounds.L = 5;
+			}
 			this.m_oMainView.Bounds.T = 7;
 		}
 		else {
 			this.m_oLeftRuler.HtmlElement.style.display = 'none';
 			this.m_oTopRuler.HtmlElement.style.display = 'none';
 
-			this.m_oMainView.Bounds.L = 0;
+			if (isRtl) {
+				this.m_oMainView.Bounds.R = 0;
+			} else {
+				this.m_oMainView.Bounds.L = 0;
+			}
 			this.m_oMainView.Bounds.T = 0;
 		}
 	};
@@ -2936,7 +2971,11 @@
 		return 5 + dKoef * x;
 	};
 	CEditorPage.prototype.DeleteVerticalScroll = function () {
-		this.m_oMainView.Bounds.R = 0;
+		if (this.m_oApi.isRtlInterface) {
+			this.m_oMainView.Bounds.L = 0;
+		} else {
+			this.m_oMainView.Bounds.R = 0;
+		}
 		this.m_oPanelRight.HtmlElement.style.display = "none";
 		this.OnResize();
 	};
@@ -4264,11 +4303,8 @@
 
 		var scrollXVal = 0;
 		if (oWordControl.m_bIsHorScrollVisible) {
-			var positionMinX = oWordControl.m_oMainParent.AbsolutePosition.L * g_dKoef_mm_to_pix + oWordControl.X;
-			if (oWordControl.m_bIsRuler)
-				positionMinX += oWordControl.m_oLeftRuler.AbsolutePosition.R * g_dKoef_mm_to_pix;
-
-			var positionMaxX = oWordControl.m_oMainParent.AbsolutePosition.R * g_dKoef_mm_to_pix + oWordControl.X - oWordControl.ScrollWidthPx;
+			var positionMinX = (oWordControl.m_oMainParent.AbsolutePosition.L + oWordControl.m_oMainView.AbsolutePosition.L) * g_dKoef_mm_to_pix + oWordControl.X;
+			var positionMaxX = (oWordControl.m_oMainParent.AbsolutePosition.L + oWordControl.m_oMainView.AbsolutePosition.R) * g_dKoef_mm_to_pix + oWordControl.X;
 
 			if (global_mouseEvent.X < positionMinX) {
 				var delta = 30;
