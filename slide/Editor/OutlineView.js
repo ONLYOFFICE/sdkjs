@@ -2135,6 +2135,7 @@
 		this.update();
 		const lastSlideIndex = presentation.GetSlidesCount() - 1;
 		const currentPage = Math.min(lastSlideIndex, minSlideIndex + 1);
+		presentation.Recalculate();
 		presentation.DrawingDocument.m_oWordControl.GoToPage(currentPage, undefined, undefined, true);
 		const docContent = this.getDocContent();
 		if (docContent && currentPage !== -1 && this.isEmptySavedPosition()) {
