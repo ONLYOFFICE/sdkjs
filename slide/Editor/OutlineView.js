@@ -527,8 +527,10 @@
 				const slideInfo = outlineView.outlineInfo.getSlideInfoByParagraph(outlineParagraph);
 				const slideIndex = slideInfo.slide.num;
 				const sourceSlideIndex = this.getSlideIndex(sourceParagraph);
-				if (slideIndex <= sourceSlideIndex) {
+				if (slideIndex === sourceSlideIndex) {
 					return i;
+				} else if (slideIndex < sourceSlideIndex) {
+					return i + 1;
 				}
 			} else if (this.compareParagraphs(sourceOutlineParagraph, sourceParagraph) < 0) {
 				return i + 1;
