@@ -570,6 +570,11 @@
         return -1;
     };
     CBaseCheckBoxField.prototype.AddKid = function(oField) {
+		if (oField.GetPartialName()) {
+			AscPDF.CBaseField.prototype.AddKid.call(this, oField);
+			return;
+		}
+
         let aOptions = this.GetOptions();
         let aNewOptions = aOptions ? aOptions.slice() : null;
         if (aNewOptions) {

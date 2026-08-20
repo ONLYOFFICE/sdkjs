@@ -436,7 +436,7 @@
 		oField.SetNeedUpdateEditShape(true);
 
         if (false == Asc.editor.getDocumentRenderer().IsOpenFormsInProgress) {
-            if (oField.IsWidget()) {
+            if (oField.IsWidget() && !oField.GetPartialName()) {
                 oField.SyncValue();
             }
         }

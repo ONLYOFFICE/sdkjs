@@ -59,6 +59,11 @@
 	CBaseListField.prototype.constructor = CBaseListField;
 
     CBaseListField.prototype.AddKid = function(oField) {
+		if (oField.GetPartialName()) {
+			AscPDF.CBaseField.prototype.AddKid.call(this, oField);
+			return;
+		}
+		
         oField.SetOptions([]);
         AscPDF.CBaseField.prototype.AddKid.call(this, oField);
     };
