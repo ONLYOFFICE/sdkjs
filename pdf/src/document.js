@@ -4649,7 +4649,27 @@ var CPresentation = CPresentation || function(){};
 		}
 	};
 	CPDFDoc.prototype.SetAllFieldsRedacted = function() {
-		this.widgets.forEach(function(widget) {
+		let aDrawings = this.drawings;
+		let aFields = this.widgets;
+		let nLayer = 1;
+		if (aFields.length == 0) {
+			return;
+		}
+
+		aDrawings.concat(this.redactedFields).forEach(function(object) {
+			let nObjectLayer = object.GetLayer();
+			if (typeof(nObjectLayer) === "number") {
+				nLayer = Math.max(nLayer, nObjectLayer + 1);
+			}
+		});
+
+		aDrawings.forEach(function(drawing) {
+			if (drawing.GetLayer() == null) {
+				drawing.SetLayer(nLayer);
+			}
+		});
+		aFields.forEach(function(widget) {
+			widget.SetLayer(nLayer);
 			widget.SetRedacted(true);
 		});
 	};
@@ -7406,6 +7426,18 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.GetController = function() {
         return this.DrawingObjects;
     };
+	function getDrawingPositionsInLayer(aDrawings, oDrawing) {
+		let nLayer = oDrawing.GetLayer();
+		let aPositions = [];
+
+		for (let i = 0; i < aDrawings.length; i++) {
+			if (aDrawings[i].GetLayer() === nLayer) {
+				aPositions.push(i);
+			}
+		}
+
+		return aPositions;
+	}
     CPDFDoc.prototype.BringToFront = function() {
         this.DoAction(function() {
             let oController = this.GetController();
@@ -7415,7 +7447,8 @@ var CPresentation = CPresentation || function(){};
                 for (let i = aSelectedObjects.length - 1; i > -1; --i) {
                     let oShape = aSelectedObjects[i];
                     let oDrawings = oController.getDrawingObjects(oShape.GetPage());
-                    this.ChangeDrawingPosInPageTree(oShape, oDrawings.length - 1);
+					let aPositions = getDrawingPositionsInLayer(oDrawings, oShape);
+					this.ChangeDrawingPosInPageTree(oShape, aPositions[aPositions.length - 1]);
                 }
             }
             else {
@@ -7433,8 +7466,12 @@ var CPresentation = CPresentation || function(){};
                     let oShape = aSelectedObjects[i];
                     let oDrawings = oController.getDrawingObjects(oShape.GetPage());
                     let nCurPos = oDrawings.indexOf(oShape);
+					let aPositions = getDrawingPositionsInLayer(oDrawings, oShape);
+					let nPosInLayer = aPositions.indexOf(nCurPos);
 
-                    this.ChangeDrawingPosInPageTree(oShape, nCurPos + 1);
+					if (nPosInLayer < aPositions.length - 1) {
+						this.ChangeDrawingPosInPageTree(oShape, aPositions[nPosInLayer + 1]);
+					}
                 }
             }
             else {
@@ -7450,7 +7487,9 @@ var CPresentation = CPresentation || function(){};
             if (!(oController.selection.groupSelection)) {
                 for (let i = aSelectedObjects.length - 1; i > -1; --i) {
                     let oShape = aSelectedObjects[i];
-                    this.ChangeDrawingPosInPageTree(oShape, 0);
+					let oDrawings = oController.getDrawingObjects(oShape.GetPage());
+					let aPositions = getDrawingPositionsInLayer(oDrawings, oShape);
+					this.ChangeDrawingPosInPageTree(oShape, aPositions[0]);
                 }
             }
             else {
@@ -7468,8 +7507,12 @@ var CPresentation = CPresentation || function(){};
                     let oShape = aSelectedObjects[i];
                     let oDrawings = oController.getDrawingObjects(oShape.GetPage());
                     let nCurPos = oDrawings.indexOf(oShape);
+					let aPositions = getDrawingPositionsInLayer(oDrawings, oShape);
+					let nPosInLayer = aPositions.indexOf(nCurPos);
 
-                    this.ChangeDrawingPosInPageTree(oShape, nCurPos - 1);
+					if (nPosInLayer > 0) {
+						this.ChangeDrawingPosInPageTree(oShape, aPositions[nPosInLayer - 1]);
+					}
                 }
             }
             else {
@@ -7502,6 +7545,7 @@ var CPresentation = CPresentation || function(){};
         let nPage       = oOldDrawing.GetPage();
         let nPos     = aDrawings.indexOf(oOldDrawing);
 
+		oNewDrawing.SetLayer(oOldDrawing.GetLayer());
         this.RemoveDrawing(oOldDrawing.GetId());
         this.AddDrawing(oNewDrawing, nPage, nPos);
         oNewDrawing.select(oController, nPage);
@@ -8008,7 +8052,9 @@ var CPresentation = CPresentation || function(){};
 			if (!isOnMerge) {
 				oPageInfo.drawings.forEach(function(drawing) {
 					drawing.AddRedactId(sRedactId);
-					return;
+				});
+				oPageInfo.redactedFields.forEach(function(field) {
+					field.AddRedactId(sRedactId);
 				});
 			}
 			

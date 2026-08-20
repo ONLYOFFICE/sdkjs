@@ -561,7 +561,9 @@
 	CGraphics.prototype.ClearCacheProps = function()
 	{
 		this.ClearLastFont();
+		this.m_oPen = new AscCommon.CPen();
 		this.m_bPenColorInit = false;
+		this.m_oBrush = new AscCommon.CBrush();
 		this.m_bBrushColorInit = false;
 	};
 
