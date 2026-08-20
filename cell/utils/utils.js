@@ -315,7 +315,7 @@
 					.replace(/(\+)/g, "\\+").replace(/(\[)/g, "\\[")
 					.replace(/(\])/g, "\\]").replace(/(\{)/g, "\\{")
 					.replace(/(\})/g, "\\}").replace(/(\$)/g, "\\$")
-					.replace(/(\.)/g, "\\.")
+					.replace(/(\.)/g, "\\.").replace(/(\|)/g, "\\|")
 					.replace(/(~)?\*/g, function ($0, $1) {
 						return $1 ? $0 : '(.*)';
 					})
@@ -3721,7 +3721,9 @@
 		asc_CFindOptions.prototype.isEqual2 = function (obj) {
 			return obj && this.findWhat === obj.findWhat && this.scanByRows === obj.scanByRows && this.isMatchCase === obj.isMatchCase && this.isWholeCell === obj.isWholeCell &&
 				this.lookIn === obj.lookIn && this.specificRange == obj.specificRange && this.isNotSearchEmptyCells == obj.isNotSearchEmptyCells &&
-				this.wsIndex === obj.wsIndex && this.isWildcard === obj.isWildcard;
+				this.wsIndex === obj.wsIndex && this.isWildcard === obj.isWildcard &&
+				// the string form keeps source and flags, so /cat/ vs /cat/i and wildcard-built vs raw RegExp differ
+				String(this.findRegExp || "") === String(obj.findRegExp || "");
 		};
 		asc_CFindOptions.prototype.clearFindAll = function () {
 			this.countFindAll = 0;
