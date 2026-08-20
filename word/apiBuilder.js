@@ -30498,36 +30498,6 @@
 	 * @see office-js-api/Examples/Enumerations/ComparisonPr.js
 	 */
 
-	function private_CreateComparisonOptions(comparisonPr)
-	{
-		const options = new AscCommonWord.ComparisonOptions();
-		if (!comparisonPr || typeof comparisonPr !== "object")
-			return options;
-
-		if (typeof comparisonPr["words"] === "boolean")
-			options.putWords(comparisonPr["words"]);
-		if (typeof comparisonPr["formatting"] === "boolean")
-			options.putFormatting(comparisonPr["formatting"]);
-		if (typeof comparisonPr["caseChanges"] === "boolean")
-			options.putCaseChanges(comparisonPr["caseChanges"]);
-		if (typeof comparisonPr["whiteSpace"] === "boolean")
-			options.putWhiteSpace(comparisonPr["whiteSpace"]);
-		if (typeof comparisonPr["tables"] === "boolean")
-			options.putTables(comparisonPr["tables"]);
-		if (typeof comparisonPr["headersAndFooters"] === "boolean")
-			options.putHeadersAndFooters(comparisonPr["headersAndFooters"]);
-		if (typeof comparisonPr["footnotes"] === "boolean")
-			options.putFootNotes(comparisonPr["footnotes"]);
-		if (typeof comparisonPr["textBoxes"] === "boolean")
-			options.putTextBoxes(comparisonPr["textBoxes"]);
-		if (typeof comparisonPr["comments"] === "boolean")
-			options.putComments(comparisonPr["comments"]);
-		if (typeof comparisonPr["authorName"] === "string")
-			options.putAuthorName(comparisonPr["authorName"]);
-
-		return options;
-	}
-
 	/**
 	 * Compares the current document with another document opened via builderJS.OpenTmpFile. Tracked changes between the two documents are produced in the current document.
 	 * @memberof Api
@@ -30537,7 +30507,7 @@
 	 */
 	Api.CompareDocuments = function(file, comparisonPr)
 	{
-		AscCommonWord.CompareDocuments(file, private_CreateComparisonOptions(comparisonPr));
+		AscCommonWord.CompareDocuments(file, AscCommonWord.readComparisonOptions(comparisonPr));
 	};
 
 	/**
@@ -30549,7 +30519,7 @@
 	 */
 	Api.MergeDocuments = function(file, comparisonPr)
 	{
-		AscCommonWord.mergeDocuments(file, private_CreateComparisonOptions(comparisonPr));
+		AscCommonWord.mergeDocuments(file, AscCommonWord.readComparisonOptions(comparisonPr));
 	};
 
 	//------------------------------------------------------------------------------------------------------------------

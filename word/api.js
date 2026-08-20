@@ -13075,6 +13075,16 @@ background-repeat: no-repeat;\
 	};
 
 	//comparison
+	function private_SerializeComparisonOptions(options)
+	{
+		return JSON.stringify(options ? options.toObject() : {});
+	}
+	function private_ParseComparisonOptions(data)
+	{
+		if (!data)
+			return undefined;
+		return AscCommonWord.readComparisonOptions(typeof data === "string" ? JSON.parse(data) : data);
+	}
 	asc_docs_api.prototype.asc_CompareDocumentUrl = function (sUrl, oOptions, token) {
 		if (this.isLocalMode())
 			return this.asc_CompareDocumentUrl_local(sUrl, oOptions, token);
@@ -13114,11 +13124,11 @@ background-repeat: no-repeat;\
 				if (t.isCloudModeCrypt())
 				{
 					var fileContent = t.getFileAsFromChanges();
-					window["AscDesktopEditor"]["CompareDocumentUrl"](_files[0], oOptions, fileContent.data, fileContent.header);
+					window["AscDesktopEditor"]["CompareDocumentUrl"](_files[0], private_SerializeComparisonOptions(oOptions), fileContent.data, fileContent.header);
 				}
 				else
 				{
-					window["AscDesktopEditor"]["CompareDocumentUrl"](_files[0], oOptions);
+					window["AscDesktopEditor"]["CompareDocumentUrl"](_files[0], private_SerializeComparisonOptions(oOptions));
 				}
 			}
 		});
@@ -13176,11 +13186,11 @@ background-repeat: no-repeat;\
 				if (t.isCloudModeCrypt())
 				{
 					var fileContent = t.getFileAsFromChanges();
-					window["AscDesktopEditor"]["CompareDocumentFile"](file, oOptions, fileContent.data, fileContent.header);
+					window["AscDesktopEditor"]["CompareDocumentFile"](file, private_SerializeComparisonOptions(oOptions), fileContent.data, fileContent.header);
 				}
 				else
 				{
-					window["AscDesktopEditor"]["CompareDocumentFile"](file, oOptions);
+					window["AscDesktopEditor"]["CompareDocumentFile"](file, private_SerializeComparisonOptions(oOptions));
 				}
 			}
 		});
@@ -13226,11 +13236,11 @@ background-repeat: no-repeat;\
 				if (t.isCloudModeCrypt())
 				{
 					var fileContent = t.getFileAsFromChanges();
-					window["AscDesktopEditor"]["MergeDocumentUrl"](_files[0], oOptions, fileContent.data, fileContent.header);
+					window["AscDesktopEditor"]["MergeDocumentUrl"](_files[0], private_SerializeComparisonOptions(oOptions), fileContent.data, fileContent.header);
 				}
 				else
 				{
-					window["AscDesktopEditor"]["MergeDocumentUrl"](_files[0], oOptions);
+					window["AscDesktopEditor"]["MergeDocumentUrl"](_files[0], private_SerializeComparisonOptions(oOptions));
 				}
 			}
 		});
@@ -13247,11 +13257,11 @@ background-repeat: no-repeat;\
 				if (t.isCloudModeCrypt())
 				{
 					var fileContent = t.getFileAsFromChanges();
-					window["AscDesktopEditor"]["MergeDocumentFile"](file, oOptions, fileContent.data, fileContent.header);
+					window["AscDesktopEditor"]["MergeDocumentFile"](file, private_SerializeComparisonOptions(oOptions), fileContent.data, fileContent.header);
 				}
 				else
 				{
-					window["AscDesktopEditor"]["MergeDocumentFile"](file, oOptions);
+					window["AscDesktopEditor"]["MergeDocumentFile"](file, private_SerializeComparisonOptions(oOptions));
 				}
 			}
 		});
@@ -13330,7 +13340,7 @@ background-repeat: no-repeat;\
 		file["GetBinary"] = function() { return AscCommon.getBinaryArray(file_content, file_content_len); };
 		file["GetImageMap"] = function() { return image_map; };
 
-		AscCommonWord["CompareDocuments"](file);
+		AscCommonWord["CompareDocuments"](file, private_ParseComparisonOptions(options));
 	};
 
 	window["onDocumentMerge"] = function(folder, file_content, file_content_len, image_map, options) {
@@ -13346,7 +13356,7 @@ background-repeat: no-repeat;\
 		file["GetBinary"] = function() { return AscCommon.getBinaryArray(file_content, file_content_len); };
 		file["GetImageMap"] = function() { return image_map; };
 
-		AscCommonWord["mergeDocuments"](file);
+		AscCommonWord["mergeDocuments"](file, private_ParseComparisonOptions(options));
 	};
 
 	window["asc_docs_api"]                                      = asc_docs_api;

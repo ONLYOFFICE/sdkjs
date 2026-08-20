@@ -2146,6 +2146,52 @@
     ComparisonOptions.prototype["putWords"] = ComparisonOptions.prototype.putWords = function(v){this.words = v;};
     ComparisonOptions.prototype["putAuthorName"] = ComparisonOptions.prototype.putAuthorName = function(v){this.authorName = v;};
 
+    ComparisonOptions.prototype["toObject"] = ComparisonOptions.prototype.toObject = function()
+    {
+        return {
+            "words"             : this.words,
+            "formatting"        : this.formatting,
+            "caseChanges"       : this.caseChanges,
+            "whiteSpace"        : this.whiteSpace,
+            "tables"            : this.tables,
+            "headersAndFooters" : this.headersAndFooters,
+            "footnotes"         : this.footNotes,
+            "textBoxes"         : this.textBoxes,
+            "comments"          : this.comments,
+            "authorName"        : this.authorName
+        };
+    };
+
+    function readComparisonOptions(pr)
+    {
+        const options = new ComparisonOptions();
+        if (!pr || typeof pr !== "object")
+        {
+            return options;
+        }
+        if (typeof pr["words"] === "boolean")
+            options.words = pr["words"];
+        if (typeof pr["formatting"] === "boolean")
+            options.formatting = pr["formatting"];
+        if (typeof pr["caseChanges"] === "boolean")
+            options.caseChanges = pr["caseChanges"];
+        if (typeof pr["whiteSpace"] === "boolean")
+            options.whiteSpace = pr["whiteSpace"];
+        if (typeof pr["tables"] === "boolean")
+            options.tables = pr["tables"];
+        if (typeof pr["headersAndFooters"] === "boolean")
+            options.headersAndFooters = pr["headersAndFooters"];
+        if (typeof pr["footnotes"] === "boolean")
+            options.footNotes = pr["footnotes"];
+        if (typeof pr["textBoxes"] === "boolean")
+            options.textBoxes = pr["textBoxes"];
+        if (typeof pr["comments"] === "boolean")
+            options.comments = pr["comments"];
+        if (typeof pr["authorName"] === "string")
+            options.authorName = pr["authorName"];
+        return options;
+    }
+
 
     function CDocumentComparison(oOriginalDocument, oRevisedDocument, oOptions, bIsWordsByOneSymbol)
     {
@@ -4549,6 +4595,7 @@
 
     window['AscCommonWord']['CompareBinary'] =  window['AscCommonWord'].CompareBinary = CompareBinary;
     window['AscCommonWord']['ComparisonOptions'] = window['AscCommonWord'].ComparisonOptions = ComparisonOptions;
+    window['AscCommonWord']['readComparisonOptions'] = window['AscCommonWord'].readComparisonOptions = readComparisonOptions;
     window['AscCommonWord']['CompareDocuments'] = window['AscCommonWord'].CompareDocuments = CompareDocuments;
     window['AscCommonWord'].CDocumentComparison = CDocumentComparison;
     window['AscCommonWord'].CNode = CNode;
