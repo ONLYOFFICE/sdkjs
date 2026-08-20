@@ -928,6 +928,7 @@ var CPresentation = CPresentation || function(){};
                         pdfMatch.Selection.Use   = true;
                         pdfMatch.Selection.Start = false;
 
+						pdfMatch.SetThisElementCurrent();
                         pdfMatch.Set_SelectionContentPos(searchElement.StartPos, searchElement.EndPos);
                         pdfMatch.Set_ParaContentPos(searchElement.StartPos, false, -1, -1);
                         pdfMatch.Parent.Selection.Use      = true;
@@ -989,6 +990,7 @@ var CPresentation = CPresentation || function(){};
                     pdfMatch.Selection.Use   = true;
                     pdfMatch.Selection.Start = false;
 
+					pdfMatch.SetThisElementCurrent();
                     pdfMatch.Set_SelectionContentPos(searchElement.StartPos, searchElement.EndPos);
                     pdfMatch.Set_ParaContentPos(searchElement.StartPos, false, -1, -1);
                     pdfMatch.Parent.Selection.Use      = true;

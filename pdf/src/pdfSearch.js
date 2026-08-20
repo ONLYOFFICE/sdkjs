@@ -95,13 +95,10 @@
             // first search on the page itself, if there was no conversion to shapes
             let nStartIdx = this.Id;
             let oPdfPageResult;
-            if (true != oFile.pages[i].isRecognized) {
-                oPdfPageResult = oFile.searchPage(i);
-
-                for (let nMatch = 0; nMatch < oPdfPageResult.matches.length; nMatch++) {
-                    this.Add(oPdfPageResult.matches[nMatch]);
-                }
-            }
+            oPdfPageResult = oFile.searchPage(i);
+			for (let nMatch = 0; nMatch < oPdfPageResult.matches.length; nMatch++) {
+				this.Add(oPdfPageResult.matches[nMatch]);
+			}
             
             // search in drawings in edit mode
 			if (Asc.editor.canEdit()) {
