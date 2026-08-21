@@ -41,6 +41,7 @@
 	const KEYFRAME_INTERVAL = 100;
 	const MAX_ENCODE_QUEUE = 8;
 	const DEFAULT_VIDEO_CODEC = "vp09.00.10.08";
+	const FALLBACK_VIDEO_CODEC = "vp8";
 	const WEBP_QUALITY = 0.85;
 	const PROBE_WIDTH = 1920;
 	const PROBE_HEIGHT = 1080;
@@ -242,8 +243,10 @@
 		return "V_VP8";
 	}
 
+	let webmCodec = DEFAULT_VIDEO_CODEC;
+
 	function CAnimExportWebmWriter(width, height, settings) {
-		this.codec = DEFAULT_VIDEO_CODEC;
+		this.codec = webmCodec;
 		this.muxer = new AscCommonSlide.CWebMMuxer(width, height, getWebmCodecId(this.codec));
 		this.timeUs = 0;
 		this.frameIndex = 0;
@@ -314,6 +317,15 @@
 			});
 		});
 	}
+	function pickCodec(preferred, supported) {
+		for (let index = 0; index < preferred.length; ++index) {
+			if (supported.indexOf(preferred[index]) >= 0) {
+				return preferred[index];
+			}
+		}
+		return null;
+	}
+
 	CAnimExportWebmWriter.isSupported = function () {
 		return typeof VideoEncoder !== "undefined" && typeof VideoFrame !== "undefined" && !!window.isSecureContext;
 	};
@@ -587,10 +599,12 @@
 		}
 		const candidates = [];
 		if (CAnimExportWebmWriter.isSupported()) {
-			candidates.push({format: Asc.c_oAscAnimatedExportFormat.WebM, codec: DEFAULT_VIDEO_CODEC});
+			candidates.push({format: Asc.c_oAscAnimatedExportFormat.WebM,
+				codecs: [DEFAULT_VIDEO_CODEC, FALLBACK_VIDEO_CODEC]});
 		}
 		if (CAnimExportMp4Writer.isSupported()) {
-			candidates.push({format: Asc.c_oAscAnimatedExportFormat.Mp4, codec: DEFAULT_MP4_CODEC});
+			candidates.push({format: Asc.c_oAscAnimatedExportFormat.Mp4,
+				codecs: [getMp4Codec(DEFAULT_MP4_CODEC, PROBE_WIDTH, PROBE_HEIGHT)]});
 		}
 		if (0 === candidates.length) {
 			callback(formats);
@@ -607,9 +621,13 @@
 		};
 		for (let index = 0; index < candidates.length; ++index) {
 			const candidate = candidates[index];
-			probeCodecs([candidate.codec], PROBE_WIDTH, PROBE_HEIGHT, function (supported) {
-				if (supported.length) {
+			probeCodecs(candidate.codecs, PROBE_WIDTH, PROBE_HEIGHT, function (supported) {
+				const codec = pickCodec(candidate.codecs, supported);
+				if (codec) {
 					formats.push(candidate.format);
+					if (Asc.c_oAscAnimatedExportFormat.WebM === candidate.format) {
+						webmCodec = codec;
+					}
 				}
 				onAnswer();
 			});
