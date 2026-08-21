@@ -15370,29 +15370,42 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedColumnsCells.js
 	 */
 	ApiTable.prototype.GetSelectedColumnsCells = function () {
-		let colsNum = [];
-		let cols = [];
-		
+		let cells = [];
+
 		if (!this.Table.IsTextSelectionUse())
-			return cols;
+			return cells;
 
-		let cells = this.Table.GetSelectionArray();
-		for (let index = 0; index < cells.length; index++) {
-			let element = cells[index];
-			if (!colsNum.includes(element.Cell))
-				colsNum.push(element.Cell);
-		}
+		let selection = this.Table.GetSelectionArray();
+		let uniqueCells = [];
 
-		for (let i = 0; i < colsNum.length; i++)
+		for (let i = 0; i < selection.length; ++i)
 		{
-			let num = colsNum[i];
-			let cells = this.Table.GetColumn(num,0);
-			cells.forEach(function(cell) {
-				cols.push( new ApiTableCell(cell) )
-			})
+			let pos = selection[i];
+			let column = this.Table.GetColumn(pos.Cell, pos.Row);
 
+			column.forEach(function (cell){
+				if (!uniqueCells.includes(cell))
+					uniqueCells.push(cell);
+			});
 		}
-		return cols
+
+		uniqueCells.sort(function (a, b){
+			let firstRowIndex	= a.GetRow().GetIndex();
+			let secondRowIndex	= b.GetRow().GetIndex();
+			let rowDiff			= firstRowIndex - secondRowIndex;
+
+			if (rowDiff !== 0)
+				return rowDiff;
+
+			return a.GetIndex() - b.GetIndex();
+		});
+
+		for (let i = 0; i < uniqueCells.length; ++i)
+		{
+			cells.push(new ApiTableCell(uniqueCells[i]));
+		}
+
+		return cells;
 	};
 	/**
 	 * Returns all rows that contain the currently selected cells.
