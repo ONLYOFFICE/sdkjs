@@ -195,9 +195,7 @@
         if (oAscCommData) {
             let oCommentData = new AscCommon.CCommentData();
             oCommentData.Read_FromAscCommentData(oAscCommData);
-            if (false == this.IsFreeText()) {
-                oCommentData.SetUserData(oCopy.GetId());
-            }
+            oCommentData.SetUserData(oCopy.GetId());
             oCopy.EditCommentData(oCommentData)
         }
 
@@ -1106,25 +1104,14 @@
         }
     };
     CAnnotationBase.prototype.SetContents = function(contents) {
-        if (this.GetContents() == contents)
+        if (this._contents == contents)
             return;
 
-        let oDoc            = Asc.editor.getPDFDoc();
-        let sCurContents    = this.GetContents();
-
-        let bSendAddCommentEvent = false;
-        if (this._contents == null && contents != null)
-            bSendAddCommentEvent = true;
+        this._contents = contents;
         
-        this._contents  = contents;
-        
-        if (AscCommon.History.UndoRedoInProgress == false) {
-            AscCommon.History.Add(new CChangesPDFAnnotContents(this, sCurContents, contents));
-        }
+        AscCommon.History.Add(new CChangesPDFAnnotContents(this, this._contents, contents));
         
         this.SetWasChanged(true, false);
-        if (bSendAddCommentEvent)
-            oDoc.CheckComment(this);
     };
     CAnnotationBase.prototype.Recalculate = function(bForce) {
         if (!this.IsShapeBased()) {
@@ -1293,9 +1280,6 @@
         let oCurData = oCurAscCommData ? new AscCommon.CCommentData() : undefined;
 		oCurData && oCurData.Read_FromAscCommentData(oCurAscCommData);
 
-        AscCommon.History.Add(new CChangesPDFAnnotCommentData(this, oCurData, oCommentData));
-        this.SetWasChanged(true, false);
-        
         let oFirstCommToEdit;
         if (this.GetId() == oCommentData.m_sUserData)
             oFirstCommToEdit = this;
@@ -1305,6 +1289,12 @@
             });
         }
         
+		if (oFirstCommToEdit.IsFreeText()) {
+			oFirstCommToEdit.SetContents(oCommentData.m_sText);
+		}
+
+		AscCommon.History.Add(new CChangesPDFAnnotCommentData(this, oCurData, oCommentData));
+
         AscCommon.History.StartNoHistoryMode();
         if (null == oFirstCommToEdit) {
             this.AddReplyByCommentData(oCommentData);
@@ -1316,7 +1306,10 @@
             oFirstCommToEdit.SetModDate(oCommentData.m_sOOTime);
             oFirstCommToEdit.SetAuthor(oCommentData.m_sUserName);
             oFirstCommToEdit.SetUserId(oCommentData.m_sUserId);
-            oFirstCommToEdit.SetContents(oCommentData.m_sText);
+
+			if (!oFirstCommToEdit.IsFreeText()) {
+				oFirstCommToEdit.SetContents(oCommentData.m_sText);
+			}
         }
 
         let aRepliesToBeChanged = [];
@@ -1375,6 +1368,8 @@
         aRepliesToBeChanged.forEach(function(reply) {
             reply.SetWasChanged(true, false);
         });
+
+		this.SetWasChanged(true, false);
         
         Asc.editor.sync_ChangeCommentData(this.GetId(), oCommentData);
     };
