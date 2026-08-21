@@ -121,6 +121,8 @@
 			image.spPr.xfrm.setOffY(y);
 			image.spPr.xfrm.setExtX(extX);
 			image.spPr.xfrm.setExtY(extY);
+			image.spPr.xfrm.setFlipH(false);
+			image.spPr.xfrm.setFlipV(false);
 
 			var blip_fill = new AscFormat.CBlipFill();
 			blip_fill.setRasterImageId(rasterImageId);
@@ -487,6 +489,8 @@
 				}
 				object.spPr.xfrm.setExtX(object.extX);
 				object.spPr.xfrm.setExtY(object.extY);
+				object.spPr.xfrm.setFlipH(false);
+				object.spPr.xfrm.setFlipV(false);
 				if (bNoResetAutofit !== true) {
 					object.ResetParametersWithResize();
 				}
