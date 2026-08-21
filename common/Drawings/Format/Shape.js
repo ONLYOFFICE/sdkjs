@@ -3051,11 +3051,15 @@
 					}
 				}
 				var Styles = new CStyles(false);
+				var isPlaceholder = this.isPlaceholder();
+				if (!isPlaceholder && isRealObject(parent_objects.presentation)) {
+					Styles.Default.TextPr.FontSize = 18;
+					Styles.Default.TextPr.FontSizeCS = 18;
+				}
 
 
 				var last_style_id;
 				var b_checked = false;
-				var isPlaceholder = this.isPlaceholder();
 				if (isPlaceholder || this.graphicObject instanceof CTable) {
 					if (default_style) {
 						//checkTextPr(default_style.TextPr);
