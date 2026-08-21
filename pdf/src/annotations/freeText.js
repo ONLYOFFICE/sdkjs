@@ -655,7 +655,7 @@
         this.SetWasChanged(true);
     };
 	CAnnotationFreeText.prototype.GetContents = function() {
-		let sText = this.GetDocContent().GetText({ParaSeparator: "\r"});
+		let sText = this.GetDocContent().GetText({ParaSeparator: ""});
 		if (sText.length > 1) {
 			return sText;
 		}

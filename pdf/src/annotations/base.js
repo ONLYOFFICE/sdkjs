@@ -195,9 +195,7 @@
         if (oAscCommData) {
             let oCommentData = new AscCommon.CCommentData();
             oCommentData.Read_FromAscCommentData(oAscCommData);
-            if (false == this.IsFreeText()) {
-                oCommentData.SetUserData(oCopy.GetId());
-            }
+            oCommentData.SetUserData(oCopy.GetId());
             oCopy.EditCommentData(oCommentData)
         }
 
@@ -1282,9 +1280,6 @@
         let oCurData = oCurAscCommData ? new AscCommon.CCommentData() : undefined;
 		oCurData && oCurData.Read_FromAscCommentData(oCurAscCommData);
 
-        AscCommon.History.Add(new CChangesPDFAnnotCommentData(this, oCurData, oCommentData));
-        this.SetWasChanged(true, false);
-        
         let oFirstCommToEdit;
         if (this.GetId() == oCommentData.m_sUserData)
             oFirstCommToEdit = this;
@@ -1294,6 +1289,12 @@
             });
         }
         
+		if (oFirstCommToEdit.IsFreeText()) {
+			oFirstCommToEdit.SetContents(oCommentData.m_sText);
+		}
+
+		AscCommon.History.Add(new CChangesPDFAnnotCommentData(this, oCurData, oCommentData));
+
         AscCommon.History.StartNoHistoryMode();
         if (null == oFirstCommToEdit) {
             this.AddReplyByCommentData(oCommentData);
@@ -1305,7 +1306,10 @@
             oFirstCommToEdit.SetModDate(oCommentData.m_sOOTime);
             oFirstCommToEdit.SetAuthor(oCommentData.m_sUserName);
             oFirstCommToEdit.SetUserId(oCommentData.m_sUserId);
-            oFirstCommToEdit.SetContents(oCommentData.m_sText);
+
+			if (!oFirstCommToEdit.IsFreeText()) {
+				oFirstCommToEdit.SetContents(oCommentData.m_sText);
+			}
         }
 
         let aRepliesToBeChanged = [];
@@ -1364,6 +1368,8 @@
         aRepliesToBeChanged.forEach(function(reply) {
             reply.SetWasChanged(true, false);
         });
+
+		this.SetWasChanged(true, false);
         
         Asc.editor.sync_ChangeCommentData(this.GetId(), oCommentData);
     };
