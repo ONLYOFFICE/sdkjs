@@ -56,7 +56,7 @@
 		return bitrate > MAX_VIDEO_BITRATE ? MAX_VIDEO_BITRATE : bitrate;
 	}
 	function getFrameRate(settings) {
-		return AscCommonSlide.getAnimatedExportPresetFps(settings.format, settings.preset);
+		return AscCommonSlide.getAnimatedExportFps(settings);
 	}
 	const DEFAULT_MP4_CODEC = "avc1.42001f";
 

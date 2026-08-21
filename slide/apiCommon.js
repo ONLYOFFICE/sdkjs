@@ -1982,9 +1982,25 @@ animatedExportAnimationFps[c_oAscAnimatedExportPreset.P720]  = 24;
 animatedExportAnimationFps[c_oAscAnimatedExportPreset.P1080] = 24;
 
 const ANIMATED_EXPORT_VIDEO_FPS = 30;
+const ANIMATED_EXPORT_MIN_FPS = 1;
+const ANIMATED_EXPORT_MAX_FPS = 30;
+
+function normalizeAnimatedExportFps(fps) {
+	if (!fps || fps < ANIMATED_EXPORT_MIN_FPS) {
+		return ANIMATED_EXPORT_MIN_FPS;
+	}
+	return fps > ANIMATED_EXPORT_MAX_FPS ? ANIMATED_EXPORT_MAX_FPS : Math.round(fps);
+}
 
 function isAnimatedExportVideoFormat(format) {
 	return c_oAscAnimatedExportFormat.WebM === format || c_oAscAnimatedExportFormat.Mp4 === format;
+}
+
+function getAnimatedExportFps(settings) {
+	if (isAnimatedExportVideoFormat(settings.format)) {
+		return getAnimatedExportPresetFps(settings.format, settings.preset);
+	}
+	return normalizeAnimatedExportFps(settings.fps);
 }
 
 function isAnimatedExportTransparent(settings) {
@@ -2043,6 +2059,7 @@ CAscAnimatedExportPresetInfo.prototype.asc_getFps = function() {
 function CAscAnimatedExportSettings(format) {
 	this.format = format || c_oAscAnimatedExportFormat.Gif;
 	this.preset = getAnimatedExportDefaultPreset(this.format);
+	this.fps = getAnimatedExportPresetFps(this.format, this.preset);
 	this.slideDuration = 5000;
 	this.transparentBackground = false;
 	this.autoDownload = true;
@@ -2055,6 +2072,7 @@ CAscAnimatedExportSettings.fromJSON = function (jsonObj) {
 	const res = new CAscAnimatedExportSettings();
 	res.format = animatedExportFormatFromString(jsonObj["format"]);
 	res.preset = jsonObj["preset"];
+	res.fps = jsonObj["fps"];
 	res.slideDuration = jsonObj["slideDuration"];
 	res.transparentBackground = jsonObj["transparentBackground"];
 	res.autoDownload = jsonObj["autoDownload"];
@@ -2065,6 +2083,7 @@ CAscAnimatedExportSettings.prototype.toJSON = function () {
 	const res = {};
 	res["format"] = animatedExportFormatToString(this.format);
 	res["preset"] = this.preset;
+	res["fps"] = this.fps;
 	res["slideDuration"] = this.slideDuration;
 	res["transparentBackground"] = this.transparentBackground;
 	res["autoDownload"] = this.autoDownload;
@@ -2073,16 +2092,30 @@ CAscAnimatedExportSettings.prototype.toJSON = function () {
 };
 CAscAnimatedExportSettings.prototype.asc_setFormat = function(format) {
 	const wasDefaultPreset = this.preset === getAnimatedExportDefaultPreset(this.format);
+	const wasDefaultFps = this.fps === getAnimatedExportPresetFps(this.format, this.preset);
 	this.format = format;
 	if (wasDefaultPreset) {
 		this.preset = getAnimatedExportDefaultPreset(format);
+	}
+	if (wasDefaultFps) {
+		this.fps = getAnimatedExportPresetFps(this.format, this.preset);
 	}
 };
 CAscAnimatedExportSettings.prototype.asc_getFormat = function() {
 	return this.format;
 };
 CAscAnimatedExportSettings.prototype.asc_setPreset = function(preset) {
+	const wasDefaultFps = this.fps === getAnimatedExportPresetFps(this.format, this.preset);
 	this.preset = preset;
+	if (wasDefaultFps) {
+		this.fps = getAnimatedExportPresetFps(this.format, preset);
+	}
+};
+CAscAnimatedExportSettings.prototype.asc_setFps = function(fps) {
+	this.fps = normalizeAnimatedExportFps(fps);
+};
+CAscAnimatedExportSettings.prototype.asc_getFps = function() {
+	return this.fps;
 };
 CAscAnimatedExportSettings.prototype.asc_getPreset = function() {
 	return this.preset;
@@ -2201,6 +2234,8 @@ window["Asc"]["CAscAnimatedExportSettings"] = window["Asc"].CAscAnimatedExportSe
 CAscAnimatedExportSettings.prototype["asc_setFormat"] = CAscAnimatedExportSettings.prototype.asc_setFormat;
 CAscAnimatedExportSettings.prototype["asc_getFormat"] = CAscAnimatedExportSettings.prototype.asc_getFormat;
 CAscAnimatedExportSettings.prototype["asc_setPreset"] = CAscAnimatedExportSettings.prototype.asc_setPreset;
+CAscAnimatedExportSettings.prototype["asc_setFps"] = CAscAnimatedExportSettings.prototype.asc_setFps;
+CAscAnimatedExportSettings.prototype["asc_getFps"] = CAscAnimatedExportSettings.prototype.asc_getFps;
 CAscAnimatedExportSettings.prototype["asc_getPreset"] = CAscAnimatedExportSettings.prototype.asc_getPreset;
 CAscAnimatedExportSettings.prototype["asc_setSlideDuration"] = CAscAnimatedExportSettings.prototype.asc_setSlideDuration;
 CAscAnimatedExportSettings.prototype["asc_getSlideDuration"] = CAscAnimatedExportSettings.prototype.asc_getSlideDuration;
@@ -2223,6 +2258,7 @@ window["AscCommonSlide"].getAnimatedExportPresetHeight = getAnimatedExportPreset
 window["AscCommonSlide"].getAnimatedExportPresetFps = getAnimatedExportPresetFps;
 window["AscCommonSlide"].isAnimatedExportVideoFormat = isAnimatedExportVideoFormat;
 window["AscCommonSlide"].isAnimatedExportTransparent = isAnimatedExportTransparent;
+window["AscCommonSlide"].getAnimatedExportFps = getAnimatedExportFps;
 window["Asc"]["CAscAnimatedExportPresetInfo"] = window["Asc"].CAscAnimatedExportPresetInfo = CAscAnimatedExportPresetInfo;
 CAscAnimatedExportPresetInfo.prototype["asc_getPreset"] = CAscAnimatedExportPresetInfo.prototype.asc_getPreset;
 CAscAnimatedExportPresetInfo.prototype["asc_getWidth"] = CAscAnimatedExportPresetInfo.prototype.asc_getWidth;
