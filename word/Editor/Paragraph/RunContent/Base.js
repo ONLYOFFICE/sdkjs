@@ -58,6 +58,23 @@
 	{
 		return this.Type;
 	};
+	/**
+	 * Code point of the element, 0 for elements which are not characters
+	 * @returns {number}
+	 */
+	CRunElementBase.prototype.GetCodePoint = function()
+	{
+		return 0;
+	};
+	/**
+	 * String representation of the element
+	 * @returns {string}
+	 */
+	CRunElementBase.prototype.ToString = function()
+	{
+		let codePoint = this.GetCodePoint();
+		return 0 === codePoint ? "" : AscCommon.encodeSurrogateChar(codePoint);
+	};
 	CRunElementBase.prototype.Draw = function(nX, nY, oGraphics, PDSE)
 	{
 	};
@@ -574,6 +591,7 @@
 		if (this.RGapFont)
 			oGraphics.SetTextPr(oTextPr, PDSE.Theme);
 	};
+	
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CRunElementBase   = CRunElementBase;

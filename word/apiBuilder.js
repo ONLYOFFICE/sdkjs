@@ -863,7 +863,7 @@
 					}
 					case para_Text :
 					{
-						sText += String.fromCharCode(Item.Value);
+						sText += Item.ToString();
 						break;
 					}
 					case para_NewLine:
@@ -909,7 +909,7 @@
 						break;
 					case para_Text :
 					{
-						sText += String.fromCharCode(Item.Value);
+						sText += Item.ToString();
 						break;
 					}
 					case para_NewLine:

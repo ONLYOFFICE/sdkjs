@@ -800,7 +800,7 @@
 			if (para_Text !== arrElements[nIndex].Type)
 				return false;
 
-			var sTemp = String.fromCharCode(arrElements[nIndex].Value);
+			var sTemp = arrElements[nIndex].ToString();
 			if (sTemp.toUpperCase() === sTemp && !arrElements[nIndex].IsNBSP())
 				return false;
 		}
@@ -858,7 +858,7 @@
 					if (!oElement.IsLetter())
 						break;
 
-					sCheckException = String.fromCharCode(oElement.Value) + sCheckException;
+					sCheckException = oElement.ToString() + sCheckException;
 				}
 
 				if (autoCorrectSettings.CheckFirstLetterException(sCheckException, nLang))

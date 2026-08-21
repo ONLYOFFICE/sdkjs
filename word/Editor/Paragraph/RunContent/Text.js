@@ -193,7 +193,7 @@
 			{
 				this.Flags |= FLAGS_CAPITALS;
 
-				if (!oTextPr.Caps && this.Value !== (String.fromCharCode(this.Value).toUpperCase()).charCodeAt(0))
+				if (!oTextPr.Caps && this.Value !== this.ToString().toUpperCase().codePointAt(0))
 					this.Flags |= FLAGS_FONTKOEF_SMALLCAPS;
 				else
 					this.Flags &= FLAGS_NON_FONTKOEF_SMALLCAPS;
@@ -528,9 +528,9 @@
 		else
 		{
 			if (true === bCaps)
-				return (String.fromCharCode(this.Value)).toUpperCase();
+				return this.ToString().toUpperCase();
 			else
-				return String.fromCharCode(this.Value);
+				return this.ToString();
 		}
 	};
 	CRunText.prototype.SetSpaceAfter = function(bSpaceAfter)
@@ -845,7 +845,7 @@
 		if (!textPr.Caps
 			&& textPr.SmallCaps
 			&& this.Value
-			&& this.Value !== (String.fromCharCode(this.Value).toUpperCase()).charCodeAt(0))
+			&& this.Value !== this.ToString().toUpperCase().codePointAt(0))
 		{
 			fontCoeff *= smallcaps_Koef;
 		}
