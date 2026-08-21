@@ -1782,6 +1782,7 @@ var CPresentation = CPresentation || function(){};
         
         if (false == oActiveObj.IsUseInDocument()) {
             this.activeForm = null;
+			this.mouseDownField = null;
             this.mouseDownAnnot = null;
             this.activeDrawing = null;
             return;
@@ -1801,6 +1802,7 @@ var CPresentation = CPresentation || function(){};
 			
             if (this.IsEditFieldsMode() && false == oActiveObj.IsInForm()) {
                 this.activeForm = null;
+				this.mouseDownField = null;
                 oActiveObj.asc_curImageState = undefined;
                 return;
             }
