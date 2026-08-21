@@ -10152,7 +10152,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['SlideTransitionPlay']                 = asc_docs_api.prototype.SlideTransitionPlay;
 	asc_docs_api.prototype['asc_ExportToAnimation']               = asc_docs_api.prototype.asc_ExportToAnimation;
 	asc_docs_api.prototype['asc_stopExportToAnimation']           = asc_docs_api.prototype.asc_stopExportToAnimation;
-	asc_docs_api.prototype['asc_isExportToAnimationSupported']    = asc_docs_api.prototype.asc_isExportToAnimationSupported;
 	asc_docs_api.prototype['asc_getSupportedAnimatedExportFormats'] = asc_docs_api.prototype.asc_getSupportedAnimatedExportFormats;
 	asc_docs_api.prototype['asc_getAnimatedExportPresets']        = asc_docs_api.prototype.asc_getAnimatedExportPresets;
 	asc_docs_api.prototype['asc_HideSlides']                      = asc_docs_api.prototype.asc_HideSlides;

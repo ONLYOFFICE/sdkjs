@@ -592,7 +592,28 @@
 		return "video/mp4";
 	};
 
+	let supportedFormats = null;
+	let pendingFormatCallbacks = null;
+
 	function getSupportedAnimExportFormats(callback) {
+		if (supportedFormats) {
+			callback(supportedFormats.slice());
+			return;
+		}
+		if (pendingFormatCallbacks) {
+			pendingFormatCallbacks.push(callback);
+			return;
+		}
+		pendingFormatCallbacks = [callback];
+		const finish = function (result) {
+			supportedFormats = result;
+			const callbacks = pendingFormatCallbacks;
+			pendingFormatCallbacks = null;
+			for (let index = 0; index < callbacks.length; ++index) {
+				callbacks[index](result.slice());
+			}
+		};
+
 		const formats = [Asc.c_oAscAnimatedExportFormat.Gif];
 		if (CAnimExportWebpWriter.isSupported()) {
 			formats.push(Asc.c_oAscAnimatedExportFormat.WebP);
@@ -607,7 +628,7 @@
 				codecs: [getMp4Codec(DEFAULT_MP4_CODEC, PROBE_WIDTH, PROBE_HEIGHT)]});
 		}
 		if (0 === candidates.length) {
-			callback(formats);
+			finish(formats);
 			return;
 		}
 
@@ -617,7 +638,7 @@
 				return;
 			}
 			formats.sort(function (a, b) { return a - b; });
-			callback(formats);
+			finish(formats);
 		};
 		for (let index = 0; index < candidates.length; ++index) {
 			const candidate = candidates[index];
@@ -635,6 +656,9 @@
 	}
 
 	function isAnimExportFormatSupported(format) {
+		if (supportedFormats) {
+			return supportedFormats.indexOf(format) >= 0;
+		}
 		if (Asc.c_oAscAnimatedExportFormat.Gif === format) {
 			return true;
 		}
