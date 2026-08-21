@@ -3143,12 +3143,10 @@
 		ClearCacheProps : function()
 		{
 			this.ClearLastFont();
-			this.m_oPen   = new CPen();
-			this.m_oBrush = new CBrush();
-
 			this.m_oPen.Color.R    = -1;
 			this.m_oBrush.Color1.R = -1;
 			this.m_oBrush.Color2.R = -1;
+			this.m_oPen.LineWidth  = -1;
 		},
 		
 		Start_Command : function(commandId)
