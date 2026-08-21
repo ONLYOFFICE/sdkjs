@@ -1932,7 +1932,8 @@
 	};
 
 	/**
-	 * Returns an array with all the drawing objects from the current presentation.
+	 * Returns all drawing objects from the presentation slides,
+	 * excluding slide layouts and master slides.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @returns {Drawing[]}
@@ -1940,7 +1941,14 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllDrawings.js
 	 */
 	ApiPresentation.prototype.GetAllDrawings = function () {
-		return this._collectAllObjects('GetAllDrawings');
+		let slides	= this.GetAllSlides();
+		let list	= [];
+
+		for (let i = 0; i < slides.length; i++) {
+			list = list.concat(slides[i].GetAllDrawings());
+		}
+
+		return list
 	};
 
 	/**

@@ -3351,9 +3351,9 @@
 		}
 		return true;
 	};
-	CGraphicObjectBase.prototype.Set_CurrentElement = function (bUpdate, pageIndex, bNoTextSelection) {
+	CGraphicObjectBase.prototype.Set_CurrentElement = function (bUpdate, pageIndex, bNoTextSelection, bReplace) {
 		if (AscFormat.CShape.prototype.Set_CurrentElement) {
-			AscFormat.CShape.prototype.Set_CurrentElement.call(this, bUpdate, pageIndex, bNoTextSelection);
+			AscFormat.CShape.prototype.Set_CurrentElement.call(this, bUpdate, pageIndex, bNoTextSelection, bReplace);
 		}
 	};
 	CGraphicObjectBase.prototype.getParentObjects = function () {
