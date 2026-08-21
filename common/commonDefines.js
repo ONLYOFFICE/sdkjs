@@ -590,7 +590,8 @@ window.AscCommon.g_cIsBeta = "false";
 		Disconnect :20,
 		RefreshFile: 21,
 		SolverLookingSolution: 22,
-		BackgroundOpen: 23
+		BackgroundOpen: 23,
+		ExportVideo: 24
 	};
 
 	var c_oAscAdvancedOptionsID = {
@@ -5074,6 +5075,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['RefreshFile']                      = prot.RefreshFile;
 	prot['SolverLookingSolution']            = prot.SolverLookingSolution;
 	prot['BackgroundOpen']                   = prot.BackgroundOpen;
+	prot['ExportVideo']                      = prot.ExportVideo;
 	window['Asc']['c_oAscAdvancedOptionsID'] = window['Asc'].c_oAscAdvancedOptionsID = c_oAscAdvancedOptionsID;
 	prot                                         = c_oAscAdvancedOptionsID;
 	prot['CSV']                                  = prot.CSV;

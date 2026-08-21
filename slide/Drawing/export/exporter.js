@@ -86,12 +86,12 @@
 			this.writer.abort();
 		}
 		this.release();
-		this.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+		this.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ExportVideo);
 		this.api.sendEvent("asc_onAnimatedExportEnd", null);
 		return true;
 	};
 	CAnimatedExporter.prototype.OnBegin = function () {
-		this.api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+		this.api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ExportVideo);
 
 		const presentation = this.api.private_GetLogicDocument();
 		this.plan = new AscCommonSlide.CAnimExportPlan(presentation, this.settings);
@@ -189,7 +189,7 @@
 			result.isTruncated = self.isTruncated;
 
 			self.release();
-			self.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+			self.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ExportVideo);
 
 			if (self.settings.autoDownload) {
 				self.downloadResult(result, extension, mimeType);
@@ -202,7 +202,7 @@
 			this.writer.abort();
 		}
 		this.release();
-		this.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+		this.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ExportVideo);
 		this.api.sendEvent("asc_onError", errorId, Asc.c_oAscError.Level.NoCritical);
 		this.api.sendEvent("asc_onAnimatedExportError", errorId);
 	};
