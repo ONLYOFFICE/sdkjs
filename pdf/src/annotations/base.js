@@ -1106,25 +1106,14 @@
         }
     };
     CAnnotationBase.prototype.SetContents = function(contents) {
-        if (this.GetContents() == contents)
+        if (this._contents == contents)
             return;
 
-        let oDoc            = Asc.editor.getPDFDoc();
-        let sCurContents    = this.GetContents();
-
-        let bSendAddCommentEvent = false;
-        if (this._contents == null && contents != null)
-            bSendAddCommentEvent = true;
+        this._contents = contents;
         
-        this._contents  = contents;
-        
-        if (AscCommon.History.UndoRedoInProgress == false) {
-            AscCommon.History.Add(new CChangesPDFAnnotContents(this, sCurContents, contents));
-        }
+        AscCommon.History.Add(new CChangesPDFAnnotContents(this, this._contents, contents));
         
         this.SetWasChanged(true, false);
-        if (bSendAddCommentEvent)
-            oDoc.CheckComment(this);
     };
     CAnnotationBase.prototype.Recalculate = function(bForce) {
         if (!this.IsShapeBased()) {

@@ -633,14 +633,35 @@
         this.recalcInfo.recalculateGeometry = true;
 	};
     CAnnotationFreeText.prototype.SetContents = function(contents) {
-        if (this._contents == contents)
+        if (this.GetContents() == contents)
             return;
 
-        AscCommon.History.Add(new CChangesPDFAnnotContents(this, this._contents, contents));
-        this._contents = contents;
+        this.SetRichContents([{
+			"alignment": 0,
+			"bold": false,
+			"italic": false,
+			"strikethrough": false,
+			"underlined": false,
+			"size": 10,
+			"color": [
+				0,
+				0,
+				0
+			],
+			"text": (contents || "") + "\r",
+			"actual": "Arial"
+		}]);
 
         this.SetWasChanged(true);
     };
+	CAnnotationFreeText.prototype.GetContents = function() {
+		let sText = this.GetDocContent().GetText({ParaSeparator: "\r"});
+		if (sText.length > 1) {
+			return sText;
+		}
+
+		return null;
+	};
     CAnnotationFreeText.prototype.IsNeedUpdateRC = function() {
         let aCurRC = this.GetRichContents();
         let aCalcedRC = this.GetRichContents(true);
@@ -1021,6 +1042,10 @@
                     oDoc.History.Add(new CChangesPDFAnnotRect(this, this._prevRect, this.GetRect()));
 					oDoc.History.Add(new CChangesPDFAnnotRC(this, aCurRc, aNewRc));
                     oDoc.private_UpdateTargetForCollaboration(true);
+
+					let oCommentData = new AscCommon.CCommentData();
+					oCommentData.Read_FromAscCommentData(this.GetAscCommentData());
+					Asc.editor.sync_ChangeCommentData(this.GetId(), oCommentData);
                 }
             }, AscDFH.historydescription_Pdf_UpdateAnnotRC, this);
         }
