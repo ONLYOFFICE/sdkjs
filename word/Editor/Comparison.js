@@ -147,9 +147,8 @@
 		return other.count + this.count - 2 * shared;
 	};
 
-	function changeFirstTextElement(oTextIterator, oRun)
+	function changeFirstTextElement(oElement, oRun)
 	{
-		const oElement = oTextIterator.getCurrentElement();
 		oElement.elements[0] = oRun.Content[0];
 		oElement.firstRun = oRun;
 	}
@@ -185,7 +184,7 @@
 		oTextIterator.addToCollectBack(oRun);
 		if (this.elementIndex === 0 && this.innerElementIndex === 0)
 		{
-			changeFirstTextElement(oTextIterator, oRun);
+			oTextIterator.changeFirstTextElement(oRun);
 		}
 
 
@@ -318,7 +317,7 @@
 			}
 			else
 			{
-				changeFirstTextElement(oTextIterator, oRun);
+				oTextIterator.changeFirstTextElement(oRun);
 			}
 		}
 	};
@@ -621,7 +620,7 @@
 		oTextIterator.addToCollectBack(oSplitRun);
 		if (this.elementIndex === 0 && this.innerElementIndex === 0)
 		{
-			changeFirstTextElement(oTextIterator, oSplitRun);
+			oTextIterator.changeFirstTextElement(oSplitRun);
 		}
 		oTextIterator.setCollectTextPrRuns(null);
 		const arrRuns = oPartner.collectRuns;
@@ -1258,6 +1257,7 @@
                             if(k <= oCurRun.Content.length && bFind)
                             {
                                 const oNewRun = oCurRun.Split2(k, applyingParagraph, j);
+								changeFirstTextElement(oFirstText, oNewRun);
                                 comparison.checkOriginalAndSplitRun(oCurRun, oNewRun)
                                 //TODO: think about it
                                 this.applyInsert(aContentToInsert, [], j + 1, comparison);
@@ -1353,6 +1353,7 @@
                     if(t > 0)
                     {
                         const oNewRun = oChildElement.Split2(t, oApplyParagraph, k);
+						changeFirstTextElement(oFirstText, oNewRun);
                         comparison.checkOriginalAndSplitRun(oChildElement, oNewRun);
                         arrSetRemoveReviewType.push(oNewRun);
                         nInsertPosition++;
@@ -4573,6 +4574,10 @@
 	{
 		this.addToCollect(this.getRun());
 	};
+	CRunCollector.prototype.changeFirstTextElement = function (oRun) {
+		const oElement = this.getCurrentElement();
+		changeFirstTextElement(oElement, oRun);
+	}
 	CRunCollector.prototype.nextRun = function () {
 		do {
 			this.runIndex -= 1;
