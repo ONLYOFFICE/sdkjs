@@ -7367,7 +7367,7 @@ function isAllowPasteLink(pastedWb) {
 				t._cutRangeClearTimer = null;
 				t.copyCutRange = null;
 				t.stopCopyRangeAnimation();
-				if (t.overlayCtx) {
+				if (t.overlayCtx && t.isActiveSheetView()) {
 					t.overlayCtx.clear();
 					t._drawSelection();
 				}
@@ -7379,8 +7379,12 @@ function isAllowPasteLink(pastedWb) {
 		return this.copyCutRange;
 	};
 
+	WorksheetView.prototype.isActiveSheetView = function () {
+		return !!(this.workbook && this.workbook.wsViews[this.workbook.wsActive] === this);
+	};
+
 	WorksheetView.prototype.startCopyRangeAnimation = function () {
-		if (this._copyRangeAnimationId) {
+		if (this._copyRangeAnimationId || !c_oAscCutRangeAnimation || !this.getCutRange() || !this.isActiveSheetView()) {
 			return;
 		}
 		let t = this;
@@ -7390,7 +7394,7 @@ function isAllowPasteLink(pastedWb) {
 		this._copyRangeAnimationIsRetina = isRetina;
 		this.copyRangeAnimationOffset = 0;
 		this._copyRangeAnimationId = setInterval(function () {
-			if (!t.getCutRange() || !t.overlayCtx) {
+			if (!t.getCutRange() || !t.overlayCtx || !t.isActiveSheetView()) {
 				t.stopCopyRangeAnimation();
 				return;
 			}
