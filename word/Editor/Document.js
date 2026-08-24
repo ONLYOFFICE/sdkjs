@@ -13029,7 +13029,7 @@ CDocument.prototype.SetWatermarkPropsAction = function(oProps)
 			resultWatermark = watermark;
 		
 		const oContent = hdrFtr.GetContent();
-		let oWatermarkCC = null;
+		let watermarkCC = null;
 		const aAllContentControls = oContent.GetAllContentControls();
 		const nCount = aAllContentControls.length;
 		for (let nContentControl = 0; nContentControl < nCount; ++nContentControl)
@@ -13038,21 +13038,28 @@ CDocument.prototype.SetWatermarkPropsAction = function(oProps)
 			let oDocPart = oContentControl.Pr.DocPartObj;
 			if (oDocPart.Gallery === "Watermarks" && oDocPart.Unique)
 			{
-				oWatermarkCC = oContentControl;
+				watermarkCC = oContentControl;
 				break;
 			}
 		}
 		
-		if (!oWatermarkCC)
+		if (!watermarkCC)
 		{
-			oWatermarkCC = oContent.AddContentControl(c_oAscSdtLevelType.Inline);
-			oWatermarkCC.SetDocPartObj(undefined, "Watermarks", true);
+			watermarkCC = oContent.AddContentControl(c_oAscSdtLevelType.Inline);
+			watermarkCC.SetDocPartObj(undefined, "Watermarks", true);
+		}
+		else
+		{
+			if (watermarkCC.IsBlockLevel())
+				watermarkCC.GetContent().MakeSingleParagraphContent().MakeSingleRunParagraph(true);
+			else if (watermarkCC.IsInlineLevel())
+				watermarkCC.MakeSingleRunElement(true);
 		}
 		
-		if (oWatermarkCC.IsBlockLevel())
-			oWatermarkCC.AddToParagraph(watermark);
+		if (watermarkCC.IsBlockLevel())
+			watermarkCC.AddToParagraph(watermark);
 		else
-			oWatermarkCC.Add(watermark);
+			watermarkCC.Add(watermark);
 	});
 	
 	this.Set_SelectionState2(docState);
@@ -17848,7 +17855,7 @@ CDocument.prototype.SetContentControlText = function(sText, oCC)
 
 		var oRun;
 		if (oCC.IsBlockLevel())
-			oRun = this.Content.MakeSingleParagraphContent().MakeSingleRunParagraph(true);
+			oRun = oCC.GetContent().MakeSingleParagraphContent().MakeSingleRunParagraph(true);
 		else if (oCC.IsInlineLevel())
 			oRun = oCC.MakeSingleRunElement(true);
 
