@@ -2828,6 +2828,7 @@
         
         if (oDoc.activeForm == this) {
             oDoc.activeForm = null;
+			oDoc.mouseDownField = null;
             this.onBlur();
         }
     };
