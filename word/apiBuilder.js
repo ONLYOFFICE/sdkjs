@@ -11797,7 +11797,7 @@
 		return "dropCap";
 	};
 	/**
-	 * Returns the paragraph currently associated with the drop cap.
+	 * Returns the parent paragraph that holds the drop cap letter.
 	 * @memberof ApiDropCap
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiParagraph}
@@ -11807,8 +11807,7 @@
 	ApiDropCap.prototype.GetParent = function()
 	{
 		let currentPara = this.Paragraph;
-		let nextPara = currentPara.Next;
-		return new ApiParagraph(nextPara);
+		return new ApiParagraph(currentPara);
 	};
 	/**
 	 * Returns the drop cap type.
