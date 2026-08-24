@@ -118,6 +118,11 @@
 		const shape = paragraph.GetParentShape();
 		if (shape && (shape === outlineView.outlineShape)) {
 			updateData.addExistingParagraph(paragraph);
+			const info = outlineView.outlineInfo.getSlideInfoByParagraph(paragraph);
+			const slide = info && info.slide;
+			if (slide) {
+				this.additionalCheckSlideMap[slide.GetId()] = slide;
+			}
 		}
 	}
 	ParagraphUpdateDataCollector.prototype.isUseInDocument = function (paragraph) {
@@ -376,11 +381,19 @@
 		const nextSlide = slides[slideNum + 1];
 		const nextInfo = outlineView.outlineInfo.getSlideInfoBySlide(nextSlide);
 		const docContent = outlineView.getDocContent();
-		if (!nextInfo) {
-			return docContent.Content.length;
+		let returnIndex;
+		let startIndex;
+		if (nextInfo) {
+			const outlineParagraph = nextInfo.outlineParagraph;
+			startIndex = outlineParagraph.Index - 1;
+			returnIndex = outlineParagraph.Index;
+		} else if (docContent.Content.length === 0) {
+			return 0;
+		} else {
+			startIndex = docContent.Content.length - 1;
+			returnIndex = startIndex;
 		}
-		const outlineParagraph = nextInfo.outlineParagraph;
-		for (let i = outlineParagraph.Index - 1; i >= 0; i -= 1) {
+		for (let i = startIndex; i >= 0; i -= 1) {
 			const paragraph = docContent.Content[i];
 			const sourceParagraph = outlineView.getSourceParagraph(paragraph);
 			if (sourceParagraph) {
@@ -391,10 +404,10 @@
 					return i;
 				}
 			} else {
-				break;
+				return i + 1;
 			}
 		}
-		return outlineParagraph.Index;
+		return returnIndex;
 	};
 	UpdateAddedSlidesManager.prototype.sortSlides = function () {
 		this.slides.sort(function (a, b) {
