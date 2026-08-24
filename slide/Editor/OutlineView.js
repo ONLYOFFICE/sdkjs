@@ -1030,10 +1030,10 @@
 
 
 		if (firstSlide !== lastSlide) {
-			this.processEdgeSlides(firstShape, lastShape, isNeedUseNextShapeForInsert, !isSkipConcatParagraph);
+			this.processEdgeSlides(firstShape, lastShape, isNeedUseNextShapeForInsert);
 		}
 	};
-	ConcatShapesManager.prototype.processEdgeSlides = function (firstShape, lastShape, isNeedUseNextShapeForInsert, isConcatenatedFirstParagraph) {
+	ConcatShapesManager.prototype.processEdgeSlides = function (firstShape, lastShape, isNeedUseNextShapeForInsert) {
 		const firstSlide = firstShape.parent;
 		const lastSlide = lastShape.parent;
 		const firstOutlineSlide = firstSlide.getOutlineSlide();
@@ -1056,24 +1056,25 @@
 				if (lastShapeIndex === lastOutlineShapes.length) {
 					return;
 				}
-				const isSkipFirstParagraph = isConcatenatedFirstParagraph && lastShape === lastOutlineShapes[lastShapeIndex];
-				this.concatShapeContent(firstOutlineShapes[i], lastOutlineShapes[lastShapeIndex], isSkipFirstParagraph);
+				this.concatShapeContent(firstOutlineShapes[i], lastOutlineShapes[lastShapeIndex]);
 				lastShapeIndex += 1;
 			}
 		}
 		const edgeFirstShape = firstOutlineShapes[firstOutlineShapes.length - 1];
 		for (let i = lastShapeIndex; i < lastOutlineShapes.length; i += 1) {
-			const isSkipFirstParagraph = isConcatenatedFirstParagraph && lastShape === lastOutlineShapes[i];
-			this.concatShapeContent(edgeFirstShape, lastOutlineShapes[i], isSkipFirstParagraph);
+			this.concatShapeContent(edgeFirstShape, lastOutlineShapes[i]);
 		}
 	};
-	ConcatShapesManager.prototype.concatShapeContent = function (firstShape, lastShape, skipFirstParagraph) {
+	ConcatShapesManager.prototype.concatShapeContent = function (firstShape, lastShape) {
 		const lastContent = lastShape.getDocContent();
-		if (lastContent.IsEmpty()) {
+		if (!lastContent || lastContent.IsEmpty()) {
 			return;
 		}
+		if (!firstShape.txBody || !firstShape.txBody.content) {
+			firstShape.createTextBody();
+		}
 		const firstContent = firstShape.getDocContent();
-		let i = skipFirstParagraph ? 1 : 0;
+		let i = 0;
 		if (lastContent.Content[i] && firstContent.IsEmpty()) {
 			const firstContentParagraph = firstContent.Content[firstContent.Content.length - 1];
 			firstContentParagraph.Concat(lastContent.Content[i]);
@@ -1753,7 +1754,10 @@
 			return;
 		}
 		const outlineContent = outlineShape.txBody.content;
-		const slideContent = slideShape.txBody.content;
+		const slideContent = slideShape.txBody && slideShape.txBody.content;
+		if (!slideContent) {
+			return;
+		}
 		const paragraphs = slideContent.Content;
 		for (let i = 0; i < paragraphs.length; i += 1) {
 			const paragraph = paragraphs[i];
@@ -1795,7 +1799,7 @@
 			let shapeCount = 0;
 			for (let j = 0; j < slide.content.length; j += 1) {
 				const contentShape = slide.content[j];
-				if (!contentShape.txBody.content.IsEmpty()) {
+				if (contentShape.txBody && contentShape.txBody.content && !contentShape.txBody.content.IsEmpty()) {
 					this.addContentToOutlineShape(outlineShape, slide.content[j], null);
 					shapeCount += 1;
 				}
@@ -2507,6 +2511,9 @@
 		}
 		if (shape.isOutlinePlaceholder()) {
 			const content = shape.getDocContent();
+			if (!content) {
+				return;
+			}
 			for (let i = 0; i < content.Content.length; i += 1) {
 				const paragraph = content.Content[i];
 				this.checkParagraph(paragraph);
@@ -3134,7 +3141,7 @@
 		const sourceParagraph = this.getSourceParagraph(outlineParagraph);
 		const outlineSlide = slideInfo.slide.getOutlineSlide();
 		const shapesWithContent = outlineSlide.content.filter(function (element) {
-			return element.isOutlinePlaceholderWithContent();
+			return element.isContentPlaceholder();
 		});
 
 		const presentation = this.getPresentation();
@@ -3164,7 +3171,11 @@
 			const contentDocContent = contentShape.getDocContent();
 			contentDocContent.Clear_Content();
 
-			const firstShapeContent = shapesWithContent[0].getDocContent();
+			const firstShape = shapesWithContent[0];
+			if (!firstShape.txBody || !firstShape.txBody.content) {
+				firstShape.createTextBody();
+			}
+			let firstShapeContent = firstShape.getDocContent();
 			const concatShapesManager = new ConcatShapesManager(this);
 			concatShapesManager.concatContents(contentDocContent, firstShapeContent);
 		}
