@@ -3305,6 +3305,7 @@
 			this.ignorePrintArea = null;
 
 			this.isOnlyFirstPage = null;
+			this.savePage = -1;//global (across all sheets) 0-based index of the only page that needs to be generated, -1 - generate all pages
 			this.nativeOptions = undefined;
 			this.activeSheetsArray = null;//array with sheet indices that need to be printed
 

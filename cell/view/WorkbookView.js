@@ -4329,6 +4329,9 @@
 				if(adjustPrint.isOnlyFirstPage && i !== 0) {
 					break;
 				}
+				if (adjustPrint.savePage > -1 && printPagesData.arrPages.length > adjustPrint.savePage) {
+					break;
+				}
 				this._calcPagesPrintSheet(activeSheetsArray[i], printPagesData, false, adjustPrint);
 			}
 		} else {
@@ -4340,6 +4343,9 @@
       for (i = 0; i < countWorksheets; ++i) {
       	if(adjustPrint.isOnlyFirstPage && i !== 0) {
       		break;
+		}
+		if (adjustPrint.savePage > -1 && printPagesData.arrPages.length > adjustPrint.savePage) {
+			break;
 		}
       	this._calcPagesPrintSheet(i, printPagesData, false, adjustPrint);
       }

@@ -3522,8 +3522,12 @@ function isAllowPasteLink(pastedWb) {
 			_bPrintAreaC2 = bPrintArea ? range.c2 : false;
 		}
 
+		let savePage = adjustPrint ? adjustPrint.savePage : -1;
 		while (AscCommonExcel.c_kMaxPrintPages > arrPages.length) {
 			if(isOnlyFirstPage && nCountPages > 0) {
+				break;
+			}
+			if (savePage > -1 && arrPages.length > savePage) {
 				break;
 			}
 
