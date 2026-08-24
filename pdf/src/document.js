@@ -5015,8 +5015,6 @@ var CPresentation = CPresentation || function(){};
 	 * @returns {AscPDF.CAnnotationBase}
 	 */
     CPDFDoc.prototype.HideShowAnnots = function(bHidden) {
-        let oController = this.GetController();
-
         this.annots.forEach(function(annot) {
             annot.SetDisplay(bHidden ? window["AscPDF"].Api.Types.display["hidden"] : window["AscPDF"].Api.Types.display["visible"]);
             annot.AddToRedraw();
@@ -8164,6 +8162,8 @@ var CPresentation = CPresentation || function(){};
 
 	// redact meta
 	CPDFDoc.prototype.RedactMeta = function(props) {
+		this.BlurActiveObject();
+		
 		let _t = this;
 		let nOldFlags = this.redactMetaFlags || 0;
 		let nFlags = nOldFlags;
