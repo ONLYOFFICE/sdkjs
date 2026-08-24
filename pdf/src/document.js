@@ -1328,26 +1328,26 @@ var CPresentation = CPresentation || function(){};
 
         let oViewer         = editor.getDocumentRenderer();
         let oDrDoc          = this.GetDrawingDocument();
-        let aWidgetForms    = this.widgets;
+        let aWidgets    	= this.widgets;
         let oActionsQueue   = this.GetActionsQueue();
 		
-		if (this.IsEditFieldsMode() || aWidgetForms.length == 0)
+		if (this.IsEditFieldsMode() || aWidgets.length == 0)
             return;
 
-        let nCurIdx = this.widgets.indexOf(this.activeForm);
-        let oCurForm = this.widgets[nCurIdx];
+		let nCurIdx = aWidgets.indexOf(this.activeForm);
+        let oCurForm = aWidgets[nCurIdx];
         let oNextForm;
 
-        for (let i = nCurIdx + 1; i <= this.widgets.length; i++) {
-            if (this.widgets[i]) {
-                if (this.widgets[i].IsHidden() == false) {
-                    oNextForm = this.widgets[i];
+        for (let i = nCurIdx + 1; i <= aWidgets.length; i++) {
+            if (aWidgets[i]) {
+                if (aWidgets[i].IsHidden() == false) {
+                    oNextForm = aWidgets[i];
                     break;
                 }
             }
             else {
-                if (this.widgets[0] != oCurForm)
-                    oNextForm = this.widgets[0];
+                if (aWidgets[0] != oCurForm)
+                    oNextForm = aWidgets[0];
                 else
                     return;
             }
@@ -1360,7 +1360,19 @@ var CPresentation = CPresentation || function(){};
 		if (!this.checkFieldFont(oNextForm, function(){_t.SelectNextForm();}))
 			return;
 
-        this.BlurActiveObject();
+		switch (oNextForm.GetType()) {
+			case AscPDF.FIELD_TYPES.text:
+			case AscPDF.FIELD_TYPES.combobox: {
+				let oController = this.GetController();
+				oController.selectObject(oNextForm, oNextForm.GetPage());
+				oController.selection.textSelection = oNextForm;
+				break;
+			}
+			default: {
+				this.BlurActiveObject();
+			}
+		}
+		
         this.activeForm = oNextForm;
         oNextForm.Recalculate();
         
@@ -1416,26 +1428,26 @@ var CPresentation = CPresentation || function(){};
 		
         let oViewer         = editor.getDocumentRenderer();
         let oDrDoc          = this.GetDrawingDocument();
-        let aWidgetForms    = this.widgets;
+        let aWidgets    	= this.widgets;
         let oActionsQueue   = this.GetActionsQueue();
 		
-		if (this.IsEditFieldsMode() || aWidgetForms.length == 0)
+		if (this.IsEditFieldsMode() || aWidgets.length == 0)
             return;
 
-        let nCurIdx = this.widgets.indexOf(this.activeForm);
-        let oCurForm = this.widgets[nCurIdx];
+        let nCurIdx = aWidgets.indexOf(this.activeForm);
+		let oCurForm = aWidgets[nCurIdx];
         let oNextForm;
 
-        for (let i = nCurIdx - 1; i >= -1; i--) {
-            if (this.widgets[i]) {
-                if (this.widgets[i].IsHidden() == false) {
-                    oNextForm = this.widgets[i];
+        for (let i = nCurIdx - 1; i >= -2; i--) {
+            if (aWidgets[i]) {
+                if (aWidgets[i].IsHidden() == false) {
+                    oNextForm = aWidgets[i];
                     break;
                 }
             }
             else {
-                if (this.widgets[this.widgets.length - 1] != oCurForm)
-                    oNextForm = this.widgets[this.widgets.length - 1];
+                if (aWidgets[aWidgets.length - 1] != oCurForm)
+                    oNextForm = aWidgets[aWidgets.length - 1];
                 else
                     return;
             }
@@ -1448,10 +1460,21 @@ var CPresentation = CPresentation || function(){};
 		if (!this.checkFieldFont(oNextForm, function(){_t.SelectNextForm();}))
 			return;
 
-        this.BlurActiveObject();
+        switch (oNextForm.GetType()) {
+			case AscPDF.FIELD_TYPES.text:
+			case AscPDF.FIELD_TYPES.combobox: {
+				let oController = this.GetController();
+				oController.selectObject(oNextForm, oNextForm.GetPage());
+				oController.selection.textSelection = oNextForm;
+				break;
+			}
+			default: {
+				this.BlurActiveObject();
+			}
+		}
         this.activeForm = oNextForm;
         oNextForm.Recalculate();
-        
+		
         let nFieldType = oNextForm.GetType();
         
         oNextForm.onFocus();
