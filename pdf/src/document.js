@@ -4499,7 +4499,7 @@ var CPresentation = CPresentation || function(){};
             }
         }
 
-		if (oAnnot.GetContents() == false) {
+		if (!oAnnot.GetContents()) {
 			return;
 		}
 		

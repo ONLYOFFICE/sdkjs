@@ -1375,7 +1375,7 @@
     };
     CAnnotationBase.prototype.GetAscCommentData = function() {
         let oAscCommData = new Asc.asc_CCommentDataPDF(null);
-        oAscCommData.asc_putText(this.GetContents());
+        oAscCommData.asc_putText(this.GetContents() || "");
 
         let sCreationDate = this.GetCreationDate();
         if (sCreationDate)
