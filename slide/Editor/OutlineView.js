@@ -2465,7 +2465,7 @@
 		const outlineView = this.outlineView;
 		const shape = sourceParagraph.GetParentShape();
 		const content = sourceParagraph.GetParent();
-		const slide = shape.parent;
+		const slide = shape && shape.parent;
 		if ((!this.useInDocumentManager.isUseInDocumentShape(shape) || content.IsEmpty()) && this.useInDocumentManager.isUseInDocumentSlide(slide)) {
 			const info = outlineView.outlineInfo.getSlideInfoBySlide(slide);
 			if (info) {
