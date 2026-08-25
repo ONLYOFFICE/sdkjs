@@ -2009,6 +2009,9 @@ CDocument.prototype.StartAction = function(nDescription, oSelectionState, flags,
 {
 	this.sendEvent("asc_onUserActionStart");
 	
+	if (!this.Action.Start)
+		this.History.SaveRedoPoints();
+	
 	let isNewPoint = false;
 	if (!this.Action.Start || this.IsMultiplePointAction())
 		isNewPoint = this.History.Create_NewPoint(nDescription, oSelectionState);
@@ -2239,8 +2242,14 @@ CDocument.prototype.FinalizeAction = function(checkEmptyAction, additional)
 	
 	if (!this.private_CheckEmptyPointsInAction(checkEmptyAction))
 	{
+		this.History.DiscardRedoPoints();
+		
 		if (!window['AscCommon'].g_specialPasteHelper.pasteStart)
 			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
+	}
+	else
+	{
+		this.History.RestoreRedoPoints();
 	}
 	
 	this.private_CheckActionLock();
@@ -23635,7 +23644,7 @@ CDocument.prototype.EndViewModeInReview = function(nMode)
 
 	this.Document_Undo();
 	this.History.Clear_Redo();
-	this.History.PopRedoPoints();
+	this.History.RestoreRedoPoints();
 
 	if (this.ViewModeInReview.isFastCollaboration)
 		this.CollaborativeEditing.Set_Fast(true);
