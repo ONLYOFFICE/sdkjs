@@ -7330,8 +7330,8 @@ var CPresentation = CPresentation || function(){};
         let oXfrm = oStamp.getXfrm();
         oStamp.SetIconType(sType);
         oStamp.SetBorderWidth(nLineW);
-		oStamp.SetInRect([X1, Y2, X1, Y1, X2, Y1, X2, Y2]);
         oXfrm.setRot(-nRotAngle * (Math.PI / 180));
+		oStamp.SetInRect([X1, Y2, X1, Y1, X2, Y1, X2, Y2]);
         
         if (oStampRender) {
             oStamp.SetRenderStructure(oStampRender.m_aStack[0]);
