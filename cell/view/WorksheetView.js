@@ -730,19 +730,19 @@ function isAllowPasteLink(pastedWb) {
 			if(aResultCheckRange.length > 2) {
 				let oFirstRange = aResultCheckRange[0];
 				let oSecondRange = aResultCheckRange[1];
-				if(!oFirstRange.isEqualCols(oSecondRange) && !oFirstRange.isEqualRows(oSecondRange)) {
+				if(!oFirstRange.bbox.isEqualCols(oSecondRange.bbox) && !oFirstRange.bbox.isEqualRows(oSecondRange.bbox)) {
 					return null;
 				}
-				let bRows = oFirstRange.isEqualRows(oSecondRange);
+				let bRows = oFirstRange.bbox.isEqualRows(oSecondRange.bbox);
 				for(let nRange = 2; nRange < aResultCheckRange.length; ++nRange) {
 					let oCurRange = aResultCheckRange[nRange];
 					if(bRows) {
-						if(!oFirstRange.isEqualRows(oCurRange)) {
+						if(!oFirstRange.bbox.isEqualRows(oCurRange.bbox)) {
 							return null;
 						}
 					}
 					else {
-						if(!oFirstRange.isEqualCols(oCurRange)) {
+						if(!oFirstRange.bbox.isEqualCols(oCurRange.bbox)) {
 							return null;
 						}
 					}
