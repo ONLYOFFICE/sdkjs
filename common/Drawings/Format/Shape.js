@@ -7141,11 +7141,12 @@
 			if(!oFormatData)
 				return;
 			let oDrawing = oFormatData.Drawing;
+			let textData = oDrawing ? oDrawing.getTextFormattingPasteData() : oFormatData;
 			if(oDrawing) {
 				this.pasteDrawingFormatting(oFormatData.Drawing);
 			}
 			let oContent = this.getDocContent();
-			if(oContent) {
+			if(oContent && textData && (textData.ParaPr || textData.TextPr)) {
 				let bApplyToAll = true;
 				let oController = this.getDrawingObjectsController && this.getDrawingObjectsController();
 				if(oController) {
@@ -7158,12 +7159,10 @@
 				}
 				let fDocContentMethod = AscCommonWord.CDocumentContent.prototype.ClearParagraphFormatting;
 				let fTableMethod = AscCommonWord.CTable.prototype.ClearParagraphFormatting;
-				this.applyTextFunction(fDocContentMethod, fTableMethod, [oFormatData]);
-				if(oFormatData.ParaPr || oFormatData.TextPr) {
-					let fDocContentMethod = AscCommonWord.CDocumentContent.prototype.PasteFormatting;
-					let fTableMethod = AscCommonWord.CTable.prototype.PasteFormatting;
-					this.applyTextFunction(fDocContentMethod, fTableMethod, [oFormatData]);
-				}
+				this.applyTextFunction(fDocContentMethod, fTableMethod, [textData]);
+				fDocContentMethod = AscCommonWord.CDocumentContent.prototype.PasteFormatting;
+				fTableMethod = AscCommonWord.CTable.prototype.PasteFormatting;
+				this.applyTextFunction(fDocContentMethod, fTableMethod, [textData]);
 				if(bApplyToAll) {
 					oContent.SetApplyToAll(false);
 				}
