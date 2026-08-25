@@ -1664,6 +1664,8 @@
 		const selectionSetter = getSelectionSetter(this.outlineView, target, this.isResetSelection);
 		selectionSetter.select();
 	};
+
+	const OUTLINEVIEW_INDENT_SCALE = 0.3;
 	function OutlineView(api) {
 		this.api = api;
 		this.isInit = false;
@@ -1835,7 +1837,7 @@
 			}
 		}
 	};
-	OutlineView.prototype.getParaPr = function (compiledParaPr) {
+	OutlineView.prototype.getParaPr = function (compiledParaPr, isTitle) {
 		const copyParaPr = new CParaPr();
 		copyParaPr.InitDefault();
 		if (compiledParaPr.ParaPr.Bullet) {
@@ -1846,9 +1848,15 @@
 			copyParaPr.Lvl = compiledParaPr.ParaPr.Lvl;
 		}
 		copyParaPr.Ind = compiledParaPr.ParaPr.Ind.Copy();
-		copyParaPr.Ind.FirstLine *= 0.5;
-		copyParaPr.Ind.Left *= 0.5;
-		copyParaPr.Ind.Right *= 0.5;
+		copyParaPr.Ind.FirstLine *= OUTLINEVIEW_INDENT_SCALE;
+		if (isTitle) {
+			copyParaPr.Ind.Left = copyParaPr.Ind.FirstLine < 0 ? -copyParaPr.Ind.FirstLine : 0;
+			copyParaPr.Ind.Right = 0;
+		} else {
+			copyParaPr.Ind.Left *= OUTLINEVIEW_INDENT_SCALE;
+			copyParaPr.Ind.Right *= OUTLINEVIEW_INDENT_SCALE;
+		}
+
 		copyParaPr.Spacing.Before = 1;
 		copyParaPr.Spacing.After = 1;
 		copyParaPr.Spacing.Line = 1;
@@ -1856,24 +1864,20 @@
 	};
 	OutlineView.prototype.applyParagraphProps = function (outlineParagraph, slideParagraph, isTitle) {
 		const compiledPr = slideParagraph ? slideParagraph.getCompiledPr() : {ParaPr: g_oDocumentDefaultParaPr};
-		const copyParaPr = this.getParaPr(compiledPr);
+		const copyParaPr = this.getParaPr(compiledPr, isTitle);
 		outlineParagraph.SetPr(copyParaPr);
 		outlineParagraph.CheckRunContent(function (run) {
 			const textPr = getOutlineTextPr(isTitle, run.IsMathRun());
 			const runPr = run.GetDirectTextPr();
 			if (runPr) {
-				if (runPr.Italic) {
-					textPr.SetItalic(true);
-				}
-				if (runPr.Underline) {
-					textPr.SetUnderline(true);
-				}
-				if (runPr.Strikeout) {
-					textPr.SetStrikeout(true);
-				}
-				if (runPr.DStrikeout) {
-					textPr.SetDStrikeout(true);
-				}
+				textPr.SetItalic(runPr.Italic);
+				textPr.SetUnderline(runPr.Underline);
+				textPr.SetStrikeout(runPr.Strikeout);
+				textPr.SetDStrikeout(runPr.DStrikeout);
+				textPr.SetCaps(runPr.Caps);
+				textPr.SetSmallCaps(runPr.SmallCaps);
+				textPr.SetVertAlign(runPr.VertAlign);
+				textPr.SetSpacing(AscFormat.isRealNumber(runPr.Spacing) ? runPr.Spacing * OUTLINEVIEW_INDENT_SCALE : runPr.Spacing);
 			}
 			textPr.SetUnifill(AscFormat.CreateUnifillFromRGB(0, 0, 0));
 			run.SetPr(textPr);
