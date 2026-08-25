@@ -1199,6 +1199,11 @@
 			return;
 		}
 
+		// draws using the basic drawings draw method.
+		if (this.IsStamp() && !this.IsNeedDrawFromStream() && AscPDF.STAMP_TYPES.Signature == this.GetIconType()) {
+			return;
+		}
+
         let aOrigRect   = this.GetRect();
         let nX          = aOrigRect[0];
         let nY          = aOrigRect[1];
