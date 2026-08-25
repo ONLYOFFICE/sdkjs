@@ -4063,7 +4063,7 @@ var CPresentation = CPresentation || function(){};
                 this.UpdateUndoRedo();
             
             return oStickyComm;
-        }, AscDFH.historydescription_Pdf_AddComment, this, oActiveAnnot && oActiveAnnot.GetId());
+        }, AscDFH.historydescription_Pdf_AddComment, this, oActiveAnnot ? [oActiveAnnot.GetId()] : undefined);
 
         AscCommon.History = oCurHistory;
         return res;
