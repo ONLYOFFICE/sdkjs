@@ -8260,6 +8260,7 @@ ParaRun.prototype.SetItalic = function(isItalic)
 		this.Pr.Italic = isItalic;
 		this.Recalc_CompiledPr(true);
 		this.private_UpdateTrackRevisionOnChangeTextPr(true);
+		this.private_UpdatePresentationOutline();
 	}
 };
 ParaRun.prototype.Get_Italic = function()
@@ -8291,6 +8292,7 @@ ParaRun.prototype.SetStrikeout = function(Value)
 
         this.Recalc_CompiledPr(false);
         this.private_UpdateTrackRevisionOnChangeTextPr(true);
+		this.private_UpdatePresentationOutline();
     }
 };
 ParaRun.prototype.Get_Strikeout = function()
@@ -8308,6 +8310,7 @@ ParaRun.prototype.SetUnderline = function(Value)
 
         this.Recalc_CompiledPr(false);
         this.private_UpdateTrackRevisionOnChangeTextPr(true);
+		this.private_UpdatePresentationOutline();
     }
 };
 ParaRun.prototype.Get_Underline = function()
@@ -8418,6 +8421,7 @@ ParaRun.prototype.Set_VertAlign = function(Value)
 
         this.Recalc_CompiledPr(true);
         this.private_UpdateTrackRevisionOnChangeTextPr(true);
+		this.private_UpdatePresentationOutline();
     }
 };
 
@@ -8503,6 +8507,7 @@ ParaRun.prototype.Set_Spacing = function(Value)
 
         this.Recalc_CompiledPr(true);
         this.private_UpdateTrackRevisionOnChangeTextPr(true);
+		this.private_UpdatePresentationOutline();
     }
 };
 
@@ -8522,6 +8527,7 @@ ParaRun.prototype.Set_DStrikeout = function(Value)
 
         this.Recalc_CompiledPr(false);
         this.private_UpdateTrackRevisionOnChangeTextPr(true);
+		this.private_UpdatePresentationOutline();
     }
 };
 
@@ -8540,6 +8546,7 @@ ParaRun.prototype.Set_Caps = function(Value)
        AscCommon.History.Add(new CChangesRunCaps(this, OldValue, Value, this.private_IsCollPrChangeMine()));
         this.Recalc_CompiledPr(true);
         this.private_UpdateTrackRevisionOnChangeTextPr(true);
+		this.private_UpdatePresentationOutline();
     }
 };
 
@@ -8558,6 +8565,7 @@ ParaRun.prototype.Set_SmallCaps = function(Value)
        AscCommon.History.Add(new CChangesRunSmallCaps(this, OldValue, Value, this.private_IsCollPrChangeMine()));
         this.Recalc_CompiledPr(true);
         this.private_UpdateTrackRevisionOnChangeTextPr(true);
+		this.private_UpdatePresentationOutline();
     }
 };
 
