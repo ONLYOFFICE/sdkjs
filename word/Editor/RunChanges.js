@@ -1617,6 +1617,7 @@ CChangesRunTextPr.prototype.private_SetValue = function(Value)
 
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
+	oRun.private_UpdatePresentationOutline();
 };
 CChangesRunTextPr.prototype.Load = function(Color)
 {

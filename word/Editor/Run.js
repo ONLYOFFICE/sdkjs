@@ -7506,6 +7506,7 @@ ParaRun.prototype.SetPr = function(oTextPr)
 
 	this.private_UpdateSpellChecking();
 	this.private_UpdateTrackRevisionOnChangeTextPr(true);
+	this.private_UpdatePresentationOutline();
 };
 ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 {

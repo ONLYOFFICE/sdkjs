@@ -7702,7 +7702,6 @@ Paragraph.prototype.Apply_TextPr = function(TextPr, IncFontSize)
 				LastElement.Set_Pr(this.TextPr.Value.Copy());
 		}
 	}
-	this.UpdatePresentationOutline();
 };
 /**
  * Применяем текстовые настройки к выделенной части параграфа
@@ -10672,7 +10671,6 @@ Paragraph.prototype.Add_PresentationNumbering = function(Bullet)
 			}
 		}
 	}
-	this.UpdatePresentationOutline();
 };
 Paragraph.prototype.Get_PresentationNumbering = function()
 {
@@ -11792,6 +11790,7 @@ Paragraph.prototype.Set_Ind = function(Ind, bDeleteUndefined)
 	// Надо пересчитать конечный стиль
 	this.CompiledPr.NeedRecalc = true;
 	this.private_UpdateTrackRevisionOnChangeParaPr(true);
+	this.UpdatePresentationOutline();
 };
 Paragraph.prototype.Set_Spacing = function(Spacing, bDeleteUndefined)
 {
@@ -12192,6 +12191,7 @@ Paragraph.prototype.Set_Bullet = function(Bullet)
 	this.Pr.Bullet             = Bullet;
 	this.CompiledPr.NeedRecalc = true;
 	this.private_UpdateTrackRevisionOnChangeParaPr(true);
+	this.UpdatePresentationOutline();
 };
 Paragraph.prototype.SetOutlineLvl = function(nLvl)
 {
