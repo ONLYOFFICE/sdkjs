@@ -9233,9 +9233,9 @@ CPresentation.prototype.removeSlide = function (pos, bNoCheck) {
 	let oSlide = this.GetSlide(pos);
 	return this.removeSlideByObject(oSlide, bNoCheck, pos);
 };
-CPresentation.prototype.checkSlideOutlineView = function (slide) {
+CPresentation.prototype.checkSlideOutlineView = function (slide, isAdd) {
 	const outlineView = this.GetOutlineView();
-	outlineView && outlineView.checkSourceSlide(slide);
+	outlineView && outlineView.checkSourceSlide(slide, isAdd);
 };
 CPresentation.prototype.checkShapeOutlineView = function (shape) {
 	const outlineView = this.GetOutlineView();
@@ -9312,7 +9312,7 @@ CPresentation.prototype.insertSlide = function (pos, slide) {
 	if (slide.notes) {
 		this.addNote(pos, slide.notes);
 	}
-	this.checkSlideOutlineView(slide);
+	this.checkSlideOutlineView(slide, true);
 };
 
 CPresentation.prototype.insertSlideObjectToPos = function (pos, slide) {
