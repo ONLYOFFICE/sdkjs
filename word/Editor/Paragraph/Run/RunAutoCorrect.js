@@ -475,7 +475,6 @@
 					this.Run.AddToContent(this.Pos, new AscWord.CRunText(isOpenQuote ? 0x201E : 0x201D));
 					break;
 				}
-				case 1030:
 				case 1035:
 				case 1053:
 				{
@@ -489,6 +488,7 @@
 					this.Run.AddToContent(this.Pos, new AscWord.CRunText(isOpenQuote ? 0x00AB : 0x00BB));
 					break;
 				}
+				case 1030:
 				case 1060:
 				{
 					// »text«
