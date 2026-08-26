@@ -5308,9 +5308,11 @@
 				oMemory.WriteStringA(oMemory.images[i]);
 			}
 
+			// roles info (forms by roles)
+			oMemory.WriteString(JSON.stringify(oDoc.GetFormRoles().Serialize()));
 			nEndPos = oMemory.GetCurPosition();
 
-			// command length with parent info, CO and images
+			// command length with parent info, CO, images and roles info
 			oMemory.Seek(nPosForLength);
 			oMemory.WriteLong(nEndPos - nPosForLength);
 			oMemory.Seek(nEndPos);

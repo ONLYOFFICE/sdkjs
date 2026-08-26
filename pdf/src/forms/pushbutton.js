@@ -2272,6 +2272,47 @@
 	CPushButtonField.prototype.GetPlaceholderText = function() {
 		return AscCommon.translateManager.getValue("Signature");
 	};
+	CPushButtonField.prototype.GetValue = function(nIconType) {
+		if (nIconType == undefined) {
+			nIconType = AscPDF.APPEARANCE_TYPES.normal;
+		}
+
+		function imageUrlToBase64(url) {
+			let xhr = new XMLHttpRequest();
+
+			xhr.open('GET', url, false);
+			xhr.overrideMimeType('text/plain; charset=x-user-defined');
+			xhr.send(null);
+
+			if (xhr.status < 200 || xhr.status >= 300) {
+				return "";
+			}
+
+			const binary = xhr.responseText;
+
+			let bytes = '';
+			for (let i = 0; i < binary.length; i++) {
+				bytes += String.fromCharCode(binary.charCodeAt(i) & 0xff);
+			}
+
+			const base64 = btoa(bytes);
+
+			const contentType =
+				xhr.getResponseHeader('Content-Type') ||
+				'application/octet-stream';
+
+			return `data:${contentType};base64,${base64}`;
+		}
+
+		let sPathToImg = AscCommon.getFullImageSrc2(this.GetImageRasterId(nIconType));
+		let mapItem = Asc.editor.ImageLoader.map_image_index[sPathToImg];
+		if (mapItem) {
+			let oImageElm = mapItem.Image;
+			return imageUrlToBase64(oImageElm.src);
+		}
+		
+		return "";
+	}
 
     /**
      * Applies value of this field to all field with the same name.
@@ -2352,17 +2393,6 @@
         let isButtonFB = this.IsButtonFitBounds();
         if (isButtonFB) {
             nButtonFlags |= (1 << 4);
-        }
-
-        function getBase64FromImage(imgElement) {
-            let canvas = document.createElement('canvas');
-            canvas.width = imgElement.naturalWidth;
-            canvas.height = imgElement.naturalHeight;
-
-            let ctx = canvas.getContext('2d');
-            ctx.drawImage(imgElement, 0, 0);
-
-            return canvas.toDataURL('image/png');
         }
 
         function WriteImage(memory, nImgType) {

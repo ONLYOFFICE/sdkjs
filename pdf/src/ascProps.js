@@ -332,6 +332,7 @@ function (window, undefined) {
 		this.digitsType			= undefined;
 		this.locked				= false;
 
+		this.role		= null;
 		this.actions	= null;
 		this.fieldProps	= null;
 	}
@@ -425,12 +426,19 @@ function (window, undefined) {
 	asc_CBaseFieldProperty.prototype.asc_putActionsProps = function (v) {
 		this.actions = v;
 	};
+	asc_CBaseFieldProperty.prototype.asc_getRole = function () {
+		return this.role;
+	};
+	asc_CBaseFieldProperty.prototype.asc_putRole = function (v) {
+		this.role = v;
+	};
 	asc_CBaseFieldProperty.prototype.asc_getFieldProps = function () {
 		return this.fieldProps;
 	};
 	asc_CBaseFieldProperty.prototype.asc_putFieldProps = function (v) {
 		this.fieldProps = v;
 	};
+	
 	asc_CBaseFieldProperty.prototype.compare = function (pr) {
 		if (this.type !== pr.type) {
 			this.type = null;
@@ -1983,6 +1991,8 @@ function (window, undefined) {
 	prot["put_Locked"]			= prot.put_Locked;
 	prot["asc_getActionsProps"]	= prot.asc_getActionsProps;
 	prot["asc_putActionsProps"]	= prot.asc_putActionsProps;
+	prot["asc_getRole"]			= prot.asc_getRole;
+	prot["asc_putRole"]			= prot.asc_putRole;
 	prot["asc_getFieldProps"]	= prot.asc_getFieldProps;
 	prot["asc_putFieldProps"]	= prot.asc_putFieldProps;
 

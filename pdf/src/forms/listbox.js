@@ -592,10 +592,6 @@
                 }
             }
 
-			if (aIndexes.length == 0) {
-				return false;
-			}
-
 			let oShd = private_GetShd('nil');
             this.content.Content.forEach(function(para) {
 				para.Pr.Shd = oShd;

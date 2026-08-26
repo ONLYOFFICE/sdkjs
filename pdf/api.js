@@ -349,13 +349,37 @@
 			}
 		}
 	};
-	PDFEditorApi.prototype.onUpdateRestrictions = function() {
+	PDFEditorApi.prototype.onUpdateRestrictions = function(restrictionSettings) {
 		let oDoc = this.getPDFDoc();
 		if (!oDoc) {
 			return;
 		}
 
+		let oRoles = oDoc.GetFormRoles ? oDoc.GetFormRoles() : null;
+		if (oRoles) {
+			let sRole = (restrictionSettings && restrictionSettings.GetOFormRole) ? restrictionSettings.GetOFormRole() : null;
+			let bNoRole = !!(restrictionSettings && restrictionSettings.IsOFormNoRole
+				&& restrictionSettings.IsOFormNoRole());
+			if (oDoc.IsFillingFormMode() && bNoRole)
+				oRoles.SetCurrentNoRole();
+			else if (oDoc.IsFillingFormMode() && sRole)
+				oRoles.SetCurrentRole(sRole);
+			else
+				oRoles.ClearCurrentRole();
+		}
+
 		oDoc.onUpdateRestrictions();
+	};
+	PDFEditorApi.prototype.getRestrictionSettings = function() {
+		let settings = new AscCommon.CRestrictionSettings();
+		let oDoc     = this.getPDFDoc();
+		let oRoles   = oDoc && oDoc.GetFormRoles ? oDoc.GetFormRoles() : null;
+		let oRole    = oRoles ? oRoles.GetCurrentRole() : null;
+		if (oRoles && oRoles.IsCurrentNoRole())
+			settings.SetOFormNoRole(true);
+		else if (oRole)
+			settings.SetOFormRole(oRole.GetName());
+		return settings;
 	};
 	PDFEditorApi.prototype.sync_CanUndoCallback = function(canUndo) {
 		this.sendEvent("asc_onCanUndo", canUndo);
@@ -1673,11 +1697,16 @@
 	///////// For filed
 	////////////////////////////////////////////////////////////
 	PDFEditorApi.prototype.IsEditFieldsMode = function() {
+		// a finalized form forbids editing its structure — filling only
+		let oDoc = this.getPDFDoc();
+		if (oDoc && oDoc.GetFormRoles().IsFinal())
+			return false;
 		return Asc.editor.canEdit();
 	};
 	PDFEditorApi.prototype.AddTextField = function(oParams) {
 		let oDoc = this.getPDFDoc();
-		
+		if (!oDoc || !oDoc.IsEditFieldsMode()) return false;
+
 		return oDoc.DoAction(function() {
 			let oField = oDoc.CreateTextField();
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
@@ -1693,34 +1722,85 @@
 					oField.SetArbitaryMask(oParams['mask']);
 				}
 			}
-			
+			private_AssignFieldRole(oDoc, oField, oParams);
+
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
-	PDFEditorApi.prototype.AddDateField = function() {
+	PDFEditorApi.prototype.AddDateField = function(oParams) {
 		let oDoc = this.getPDFDoc();
-		
+		if (!oDoc || !oDoc.IsEditFieldsMode()) return false;
+
 		return oDoc.DoAction(function() {
 			let oField = oDoc.CreateTextField(true);
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
+			private_AssignFieldRole(oDoc, oField, oParams);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
-	PDFEditorApi.prototype.AddImageField = function() {
+	PDFEditorApi.prototype.AddImageField = function(oParams) {
 		let oDoc = this.getPDFDoc();
-		
+		if (!oDoc || !oDoc.IsEditFieldsMode()) return false;
+
 		return oDoc.DoAction(function() {
 			let oField = oDoc.CreateButtonField(true);
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
+			private_AssignFieldRole(oDoc, oField, oParams);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
-	PDFEditorApi.prototype.AddSignatureField = function() {
+	PDFEditorApi.prototype.AddCheckboxField = function(oParams) {
 		let oDoc = this.getPDFDoc();
+		if (!oDoc || !oDoc.IsEditFieldsMode()) return false;
+
+		return oDoc.DoAction(function() {
+			let oField = oDoc.CreateCheckboxField();
+			oDoc.AddField(oField, oDoc.GetCurPage(), true);
+			private_AssignFieldRole(oDoc, oField, oParams);
+			return true;
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+	PDFEditorApi.prototype.AddRadiobuttonField = function(oParams) {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc || !oDoc.IsEditFieldsMode()) return false;
+
+		return oDoc.DoAction(function() {
+			let oField = oDoc.CreateRadiobuttonField(true);
+			oDoc.AddField(oField, oDoc.GetCurPage(), true);
+			private_AssignFieldRole(oDoc, oField, oParams);
+			return true;
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+	PDFEditorApi.prototype.AddComboboxField = function(oParams) {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc || !oDoc.IsEditFieldsMode()) return false;
+
+		return oDoc.DoAction(function() {
+			let oField = oDoc.CreateComboboxField();
+			oDoc.AddField(oField, oDoc.GetCurPage(), true);
+			private_AssignFieldRole(oDoc, oField, oParams);
+			return true;
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+	PDFEditorApi.prototype.AddListboxField = function(oParams) {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc || !oDoc.IsEditFieldsMode()) return false;
+
+		return oDoc.DoAction(function() {
+			let oField = oDoc.CreateListboxField();
+			oDoc.AddField(oField, oDoc.GetCurPage(), true);
+			private_AssignFieldRole(oDoc, oField, oParams);
+			return true;
+		}, AscDFH.historydescription_Pdf_AddField, this);
+	};
+	PDFEditorApi.prototype.AddSignatureField = function(oParams) {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc || !oDoc.IsEditFieldsMode()) return false;
 		
 		return oDoc.DoAction(function() {
 			let oField = oDoc.CreateSignatureField();
 			oDoc.AddField(oField, oDoc.GetCurPage(), true);
+			private_AssignFieldRole(oDoc, oField, oParams);
 			return true;
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
@@ -1775,42 +1855,6 @@
 				fApplyCallback();
 			}
 		});
-	};
-	PDFEditorApi.prototype.AddCheckboxField = function() {
-		let oDoc = this.getPDFDoc();
-		
-		return oDoc.DoAction(function() {
-			let oField = oDoc.CreateCheckboxField();
-			oDoc.AddField(oField, oDoc.GetCurPage(), true);
-			return true;
-		}, AscDFH.historydescription_Pdf_AddField, this);
-	};
-	PDFEditorApi.prototype.AddRadiobuttonField = function() {
-		let oDoc = this.getPDFDoc();
-		
-		return oDoc.DoAction(function() {
-			let oField = oDoc.CreateRadiobuttonField(true);
-			oDoc.AddField(oField, oDoc.GetCurPage(), true);
-			return true;
-		}, AscDFH.historydescription_Pdf_AddField, this);
-	};
-	PDFEditorApi.prototype.AddComboboxField = function() {
-		let oDoc = this.getPDFDoc();
-		
-		return oDoc.DoAction(function() {
-			let oField = oDoc.CreateComboboxField();
-			oDoc.AddField(oField, oDoc.GetCurPage(), true);
-			return true;
-		}, AscDFH.historydescription_Pdf_AddField, this);
-	};
-	PDFEditorApi.prototype.AddListboxField = function() {
-		let oDoc = this.getPDFDoc();
-		
-		return oDoc.DoAction(function() {
-			let oField = oDoc.CreateListboxField();
-			oDoc.AddField(oField, oDoc.GetCurPage(), true);
-			return true;
-		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
 	// fields formats
 	PDFEditorApi.prototype.asc_getNumberFormatCurrencySymbols = function () {
@@ -5333,8 +5377,53 @@
 			}
 		}
 	};
+	PDFEditorApi.prototype.private_UpdateFormSignature = function() {
+		let oDoc   = this.getPDFDoc();
+		let oRoles = oDoc && oDoc.GetFormRoles ? oDoc.GetFormRoles() : null;
+		let bAllRolesFilled = !!(oRoles && oRoles.IsAllRolesFilled());
+		let oSign = null;
+		let bChanged = false;
+		for (let i = this.signatures.length - 1; i >= 0; --i) {
+			if (!this.signatures[i].isForm)
+				continue;
+
+			if (!bAllRolesFilled || oSign) {
+				this.signatures.splice(i, 1);
+				bChanged = true;
+			}
+			else {
+				oSign = this.signatures[i];
+			}
+		}
+
+		if (bAllRolesFilled) {
+			let aRoles = oRoles.GetAllRoles();
+			let oRole  = aRoles.length ? aRoles[aRoles.length - 1] : null;
+			if (!oSign) {
+				oSign        = new AscCommon.asc_CSignatureLine();
+				oSign.guid   = AscCommon.CreateGUID();
+				oSign.isForm = true;
+				this.signatures.push(oSign);
+				bChanged = true;
+			}
+
+			if (oRole) {
+				let sDate = new Date(oRole.GetDate()).toString();
+				let sUser = oRole.GetUserName();
+				if (oSign.date !== sDate || oSign.signer1 !== sUser) {
+					oSign.date    = sDate;
+					oSign.signer1 = sUser;
+					bChanged = true;
+				}
+			}
+		}
+
+		if (bChanged)
+			this.sendEvent("asc_onUpdateSignatures", this.asc_getSignatures(), this.asc_getRequestSignatures());
+	};
 	PDFEditorApi.prototype.onDocumentContentReady = function() {
 		AscCommon.DocumentEditorApi.prototype.onDocumentContentReady.call(this);
+		this.private_UpdateFormSignature();
 
 		let _t = this;
 		let thumbnailsDivId = "thumbnails-list";
@@ -5351,6 +5440,26 @@
 				_t.sendEvent("asc_onViewerThumbnailsZoomUpdate", value);
 			});
 		}
+	};
+	PDFEditorApi.prototype.asc_RemoveSignature = function(guid) {
+		let oDoc = this.getPDFDoc();
+		if (oDoc) {
+			for (let i = 0; i < this.signatures.length; ++i) {
+				let oSign = this.signatures[i];
+				if (oSign.isEqualGuid(guid) && oSign.isForm) {
+					if (!oDoc.IsSelectionLocked(AscCommon.changestype_Document_Settings)) {
+						oDoc.StartAction(AscDFH.historydescription_OForm_CancelFilling);
+						oDoc.GetFormRoles().SetAllRolesFilled(false);
+						oDoc.FinalizeAction();
+						this.signatures.splice(i, 1);
+						this.sendEvent("asc_onUpdateSignatures", this.asc_getSignatures(), this.asc_getRequestSignatures());
+						return true;
+					}
+				}
+			}
+		}
+
+		return AscCommon.baseEditorsApi.prototype.asc_RemoveSignature.apply(this, arguments);
 	};
 	PDFEditorApi.prototype.Input_UpdatePos = function() {
 		if (this.DocumentRenderer)
@@ -5519,7 +5628,358 @@
 	PDFEditorApi.prototype.asc_SetSilentMode = function(bEnabled, bAddition) {
 		return;
 	};
-	
+
+	// form roles
+	PDFEditorApi.prototype.asc_GetOForm = function() {
+		let oDoc = this.getPDFDoc();
+		return oDoc ? oDoc.GetFormRoles() : null;
+	};
+	PDFEditorApi.prototype.asc_assignFieldToRole = function(sRoleName) {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc || !oDoc.IsEditFieldsMode()) return false;
+
+		return oDoc.DoAction(function() {
+			let oController = oDoc.GetController();
+			let oFormRoles = oDoc.GetFormRoles();
+			oController.selectedObjects.forEach(function(shape) {
+				let oField = shape.GetEditField();
+				oFormRoles.AssignFieldToRole(oField, sRoleName);
+			});
+			
+			return true;
+		}, AscDFH.historydescription_Pdf_ChangeRoles, this);
+	};
+	PDFEditorApi.prototype.sync_OnAllRequiredFormsFilled = function(isFilled) {
+		this.sendEvent("sync_onAllRequiredFormsFilled", isFilled);
+	};
+	PDFEditorApi.prototype.asc_isFinalizedVersion = function() {
+		let oDoc   = this.getPDFDoc();
+		let oRoles = oDoc && oDoc.GetFormRoles ? oDoc.GetFormRoles() : null;
+		return !!(oRoles && oRoles.IsAllRolesFilled());
+	};
+	PDFEditorApi.prototype.asc_ClearAllSpecialForms = function() {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc)
+			return false;
+
+		let oRoles = oDoc.GetFormRoles();
+		let aFields = oDoc.GetAllWidgets();
+		if (oRoles.GetCurrentRole() || oRoles.IsCurrentNoRole()) {
+			aFields = aFields.filter(function(oField) {
+				return oRoles.CanFillField(oField);
+			});
+		}
+
+		if (aFields.length === 0)
+			return false;
+
+		let aFieldNames = [];
+		let oFieldNames = Object.create(null);
+		for (let i = 0; i < aFields.length; ++i) {
+			let sFieldName = aFields[i].GetFullName();
+			if (sFieldName == null || oFieldNames[sFieldName])
+				continue;
+
+			oFieldNames[sFieldName] = true;
+			aFieldNames.push(sFieldName);
+		}
+		if (aFieldNames.length === 0)
+			return false;
+
+		return oDoc.DoAction(function() {
+			oDoc.ResetForms(aFieldNames, false);
+			return true;
+		}, AscDFH.historydescription_Pdf_ClearAllSpecialForms, this, aFields);
+	};
+	PDFEditorApi.prototype.asc_MoveToFillingForm = function(isNext, isRequired, isNotFilled) {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc)
+			return;
+
+		let oRoles = oDoc.GetFormRoles();
+		let bFilterByRole = !!oRoles.GetCurrentRole() || oRoles.IsCurrentNoRole();
+		let checkFunc = null;
+
+		function isFieldFilled(oField) {
+			if (oField.GetType() === AscPDF.FIELD_TYPES.signature)
+				return !!(oField.IsFilled && oField.IsFilled());
+
+			let value = oField.GetValue ? oField.GetValue() : undefined;
+			return Array.isArray(value)
+				? value.length > 0
+				: value !== undefined && value !== null && value !== "";
+		}
+
+		if (true === isRequired) {
+			checkFunc = function(oField) {
+				let nType = oField.GetType();
+				return oField.IsRequired()
+					&& nType !== AscPDF.FIELD_TYPES.checkbox
+					&& nType !== AscPDF.FIELD_TYPES.radiobutton
+					&& (true !== isNotFilled || !isFieldFilled(oField))
+					&& oRoles.CanFillField(oField);
+			};
+		}
+		else if (bFilterByRole) {
+			checkFunc = function(oField) {
+				return oRoles.CanFillField(oField);
+			};
+		}
+
+		if (false === isNext)
+			oDoc.SelectPrevForm(checkFunc);
+		else
+			oDoc.SelectNextForm(checkFunc);
+
+		oDoc.UpdateSelection();
+		oDoc.UpdateInterface();
+	};
+	PDFEditorApi.prototype.asc_IsAllRequiredFormsFilled = function(checkAll) {
+		let oDoc = this.getPDFDoc();
+		return oDoc ? oDoc.GetFormRoles().IsRequiredFilled(checkAll) : true;
+	};
+	PDFEditorApi.prototype.asc_GetAllFormsData = function() {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc)
+			return [];
+
+		let oRoles   = oDoc.GetFormRoles();
+		let aWidgets = oDoc.GetAllWidgets();
+		let oPassed  = Object.create(null);
+		let aData    = [];
+
+		function getOptions(oField) {
+			let aOptions = oField.GetOptions ? oField.GetOptions() : null;
+			if (!aOptions)
+				return undefined;
+
+			return aOptions.map(function(option) {
+				return Array.isArray(option)
+					? {"value": option[1], "label": option[0]}
+					: {"value": option, "label": option};
+			});
+		}
+
+		for (let i = 0; i < aWidgets.length; ++i) {
+			let oWidget = aWidgets[i];
+			let sKey = oWidget.GetFullName();
+			if (!sKey || oPassed[sKey])
+				continue;
+
+			oPassed[sKey] = true;
+			let oField = oDoc.GetField(sKey);
+			let nType = oWidget.GetType();
+			if (nType === AscPDF.FIELD_TYPES.button && oWidget.GetLayout() == AscPDF.Api.Types.position["textOnly"])
+				continue;
+
+			let sType;
+			let value;
+			let options;
+			let valueIndexes;
+
+			switch (nType) {
+				case AscPDF.FIELD_TYPES.text:
+					sType = oWidget.IsDateFormat && oWidget.IsDateFormat() ? "dateTime" : "text";
+					value = oWidget.GetLogicValue();
+					break;
+				case AscPDF.FIELD_TYPES.combobox:
+					sType = "comboBox";
+					options = getOptions(oWidget);
+					value = oWidget.GetLogicValue();
+					valueIndexes = oWidget.GetLogicCurIdxs();
+					break;
+				case AscPDF.FIELD_TYPES.listbox:
+					sType = "listBox";
+					options = getOptions(oWidget);
+					value = oWidget.GetLogicValue();
+					valueIndexes = oWidget.GetLogicCurIdxs();
+					break;
+				case AscPDF.FIELD_TYPES.checkbox:
+					sType = "checkBox";
+					options = oField.GetOptions();
+					let sLogicValue = oField.GetLogicValue();
+					if (options) {
+						valueIndexes = [parseInt(sLogicValue)];
+						value = options[sLogicValue];
+					}
+					else {
+						options = oField.GetAllWidgets().map(function(widget) {
+							return widget.GetExportValue();
+						});
+						value = sLogicValue;
+						valueIndexes = [options.indexOf(sLogicValue)];
+					}
+					break;
+				case AscPDF.FIELD_TYPES.radiobutton: {
+					sType = "radio";
+					options = oField.GetOptions();
+					let sLogicValue = oField.GetLogicValue();
+					if (options) {
+						value = options[sLogicValue];
+
+						if (oField.IsRadiosInUnison()) {
+							valueIndexes = [];
+							
+							options.forEach(function(option, idx) {
+								if (option == value) {
+									valueIndexes.push(idx);
+								}
+							});
+						}
+						else {
+							valueIndexes = [parseInt(sLogicValue)];
+						}
+					}
+					else {
+						options = oField.GetAllWidgets().map(function(widget) {
+							return widget.GetExportValue();
+						});
+						value = sLogicValue;
+						valueIndexes = [options.indexOf(sLogicValue)];
+					}
+					break;
+				}
+				case AscPDF.FIELD_TYPES.button:
+					if (oWidget.IsOOSignature()) {
+						sType = "signature";
+					}
+					else {
+						sType = "picture";
+					}
+					
+					value = oWidget.GetValue();
+					break;
+				default:
+					continue;
+			}
+
+			if (value === undefined)
+				value = "";
+
+			let oRole = oRoles.GetRoleByField(oWidget);
+			let sRoleColor = oRole && oRole.GetColor ? oRole.GetColor() : undefined;
+			if (typeof sRoleColor === "string")
+				sRoleColor = sRoleColor.replace(/^#/, "").toUpperCase();
+
+			let oFormData = {
+				"key":       sKey,
+				"tooltip":   oField.GetTooltip ? (oField.GetTooltip() || "") : "",
+				"value":     value,
+				"type":      sType,
+				"role":      oRole ? oRole.GetName() : "",
+				"roleColor": sRoleColor
+			};
+			if (valueIndexes)
+				oFormData["valueIndexes"] = valueIndexes;
+			if (options)
+				oFormData["options"] = options;
+			if (sType === "dateTime")
+				oFormData["format"] = oWidget.GetDateFormat();
+
+			aData.push(oFormData);
+		}
+
+		return aData;
+	};
+	PDFEditorApi.prototype.asc_CompletePreparingOForm = function(disconnect) {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc || this.isRestrictionSignatures()) return false;
+
+		if (oDoc.IsSelectionLocked(AscCommon.changestype_Document_Settings, null, false, true))
+			return false;
+
+		oDoc.StartAction(AscDFH.historydescription_Pdf_CompletePreparingForms);
+		oDoc.GetFormRoles().CompletePreparation();
+		if (disconnect)
+			oDoc.GetHistory().Add(new AscDFH.CChangesPDFDocumentDisconnectEveryone(oDoc));
+		oDoc.FinalizeAction();
+
+		if (disconnect)
+			this.forceSaveDisconnectRequest = true;
+
+		this.forceSaveOformRequest = true;
+		AscCommon.CollaborativeEditing.Set_GlobalLock(true);
+		this.asc_Save(false);
+		return true;
+	};
+	PDFEditorApi.prototype.asc_DisconnectEveryone = function() {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc) return false;
+
+		if (oDoc.IsSelectionLocked(AscCommon.changestype_Document_Settings))
+			return false;
+
+		oDoc.StartAction(AscDFH.historydescription_DisconnectEveryone);
+		oDoc.GetHistory().Add(new AscDFH.CChangesPDFDocumentDisconnectEveryone(oDoc));
+		oDoc.FinalizeAction();
+
+		this.forceSaveDisconnectRequest = true;
+		AscCommon.CollaborativeEditing.Set_GlobalLock(true);
+		this.asc_Save(false);
+		return true;
+	};
+	PDFEditorApi.prototype.asc_SendForm = function() {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc || !oDoc.IsFillingFormMode()) return false;
+		let oRoles = oDoc.GetFormRoles();
+		if (oRoles.IsCurrentNoRole()) return false;
+		let oCur   = oRoles.GetCurrentRole();
+		let sName  = oCur ? oCur.GetName() : null;
+
+		if (sName && !oRoles.CanFillRole(sName))
+			return false;
+
+		this.forceSaveSendFormRequest = true;
+		this.asc_Save();
+		return true;
+	};
+	PDFEditorApi.prototype.setCurrentRoleFilled = function() {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc || !oDoc.IsFillingFormMode())
+			return false;
+
+		let oRoles = oDoc.GetFormRoles();
+		let oRole  = oRoles.GetCurrentRole();
+		let oUser  = {
+			"name": this.DocInfo && AscCommon.UserInfoParser
+				? AscCommon.UserInfoParser.getParsedName(this.DocInfo.get_UserName())
+				: undefined,
+			"id": this.DocInfo ? this.DocInfo.get_UserId() : undefined
+		};
+
+		oDoc.StartAction(AscDFH.historydescription_Pdf_ChangeRoles);
+		if (oRole)
+			oRoles.SetRoleFilled(oRole.GetName(), true, oUser);
+		else
+			oRoles.SetAllRolesFilled(true, oUser);
+		oDoc.FinalizeAction();
+		return true;
+	};
+	PDFEditorApi.prototype._sendForm = function() {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc || !oDoc.IsFillingFormMode())
+			return false;
+
+		let oThis = this;
+		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Submit);
+		let oData = {
+			"type": "sendForm",
+			"userconnectionid": this.CoAuthoringApi.getUserConnectionId(),
+			"formdata": {"formsdata": this.asc_GetAllFormsData(true)}
+		};
+		this.saveFromChanges(oData, Asc.c_nMaxConversionTime, function(isTimeout, response) {
+			if (!(response && AscCommon.c_oAscServerCommandErrors.NoError === response.code))
+				oThis.sendEvent("asc_onError", Asc.c_oAscError.ID.Submit, Asc.c_oAscError.Level.NoCritical);
+			oThis.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Submit);
+		});
+
+		this.sendEvent("onSubmitForm");
+		if (window.g_asc_plugins)
+			window.g_asc_plugins.onPluginEvent("onSubmitForm");
+
+		return true;
+	};
+
 	function CPdfContextMenuData(obj) {
 		if (obj) {
 			this.Type  		= ( undefined != obj.Type ) ? obj.Type : Asc.c_oAscPdfContextMenuTypes.Common;
@@ -5556,6 +6016,11 @@
 		Thumbnails		: 1		// thumbnails context menu
 	};
 
+
+	function private_AssignFieldRole(oDoc, oField, oParams) {
+		if (oParams && oParams['role'])
+			oDoc.GetFormRoles().AssignFieldToRole(oField, oParams['role']);
+	}
 	function asc_CCommentDataPDF(obj) {
 		Asc.asc_CCommentDataWord.call(this, obj);
 		
@@ -5575,8 +6040,7 @@
 	asc_CCommentDataPDF.prototype["asc_getAnnotType"] = asc_CCommentDataPDF.prototype.asc_getAnnotType;
 	asc_CCommentDataPDF.prototype["asc_putAnnotType"] = asc_CCommentDataPDF.prototype.asc_putAnnotType;
 	window["Asc"]["asc_CCommentDataPDF"] = window["Asc"].asc_CCommentDataPDF = asc_CCommentDataPDF;
-	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	window['Asc']['PDFEditorApi'] = PDFEditorApi;
@@ -5821,6 +6285,21 @@
 	PDFEditorApi.prototype['SetComboboxFieldEditable']	= PDFEditorApi.prototype.SetComboboxFieldEditable;
 	// listbox field
 	PDFEditorApi.prototype['SetListboxFieldMultiSelect']= PDFEditorApi.prototype.SetListboxFieldMultiSelect;
+
+	// form roles
+	// Rebind the public alias to the PDF override (base binds it to the oform-based one).
+	PDFEditorApi.prototype['asc_getRestrictionSettings']	= PDFEditorApi.prototype.asc_getRestrictionSettings = PDFEditorApi.prototype.getRestrictionSettings;
+	PDFEditorApi.prototype['asc_GetOForm']					= PDFEditorApi.prototype.asc_GetOForm;
+	PDFEditorApi.prototype['asc_assignFieldToRole']			= PDFEditorApi.prototype.asc_assignFieldToRole;
+	PDFEditorApi.prototype['asc_ClearAllSpecialForms']		= PDFEditorApi.prototype.asc_ClearAllSpecialForms;
+	PDFEditorApi.prototype['asc_MoveToFillingForm']			= PDFEditorApi.prototype.asc_MoveToFillingForm;
+	PDFEditorApi.prototype['asc_IsAllRequiredFormsFilled']	= PDFEditorApi.prototype.asc_IsAllRequiredFormsFilled;
+	PDFEditorApi.prototype['asc_isFinalizedVersion']		= PDFEditorApi.prototype.asc_isFinalizedVersion;
+	PDFEditorApi.prototype['asc_RemoveSignature']			= PDFEditorApi.prototype.asc_RemoveSignature;
+	PDFEditorApi.prototype['asc_GetAllFormsData']			= PDFEditorApi.prototype.asc_GetAllFormsData;
+	PDFEditorApi.prototype['asc_CompletePreparingOForm']	= PDFEditorApi.prototype.asc_CompletePreparingOForm;
+	PDFEditorApi.prototype['asc_SendForm']					= PDFEditorApi.prototype.asc_SendForm;
+	PDFEditorApi.prototype['asc_DisconnectEveryone']		= PDFEditorApi.prototype.asc_DisconnectEveryone;
 
 	// checkbox field
 	PDFEditorApi.prototype['SetCheckboxFieldStyle']			= PDFEditorApi.prototype.SetCheckboxFieldStyle;
