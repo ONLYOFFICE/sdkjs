@@ -3989,11 +3989,12 @@
 		if(!content) {
 			return null;
 		}
-		content.SetApplyToAll(true);
-		let textPr = content.GetCalculatedTextPr();
-		let paraPr = content.GetCalculatedParaPr();
-		content.SetApplyToAll(false);
-		return new AscCommon.CTextFormattingPasteData(textPr, paraPr);
+		let paragraph = content.GetFirstParagraph();
+		if(!paragraph) {
+			return null;
+		}
+		let textPr = paragraph.Get_FirstTextPr2() || paragraph.Get_FirstTextPr();
+		return new AscCommon.CTextFormattingPasteData(textPr.Copy(), paragraph.GetCalculatedParaPr().Copy());
 	};
 	CGraphicObjectBase.prototype.getText = function () {
 		return "";
