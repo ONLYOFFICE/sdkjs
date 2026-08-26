@@ -1404,8 +1404,8 @@
 		this.shapeAdd(this.cSld.spTree.length, copySp);
 		return copySp;
 	};
-	Slide.prototype.checkOutlineView = function () {
-		this.presentation && this.presentation.checkSlideOutlineView(this);
+	Slide.prototype.checkOutlineView = function (isAdd) {
+		this.presentation && this.presentation.checkSlideOutlineView(this, isAdd);
 	};
 	Slide.prototype.recalcComments = function () {
 		this.presentation && this.presentation.recalcComments();

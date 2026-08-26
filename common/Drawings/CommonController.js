@@ -12463,13 +12463,10 @@
 
 			if (undefined != props.SmallCaps) {
 				TextPr.SmallCaps = props.SmallCaps;
-				TextPr.AllCaps = false;
-			}
-
-			if (undefined != props.AllCaps) {
+				TextPr.Caps = false;
+			} else if (undefined != props.AllCaps) {
 				TextPr.Caps = props.AllCaps;
-				if (true === TextPr.AllCaps)
-					TextPr.SmallCaps = false;
+				TextPr.SmallCaps = false;
 			}
 
 			if (undefined != props.TextSpacing)

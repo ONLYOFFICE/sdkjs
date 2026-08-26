@@ -671,6 +671,7 @@ CChangesParagraphIndFirst.prototype.private_SetValue = function(Value)
 
 	oParagraph.CompiledPr.NeedRecalc = true;
 	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);
+	oParagraph.UpdatePresentationOutline();
 };
 CChangesParagraphIndFirst.prototype.Merge = private_ParagraphChangesOnMergePr;
 CChangesParagraphIndFirst.prototype.Load = private_ParagraphChangesOnLoadPr;
@@ -721,6 +722,7 @@ CChangesParagraphIndLeft.prototype.private_SetValue = function(Value)
 
 	oParagraph.CompiledPr.NeedRecalc = true;
 	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);
+	oParagraph.UpdatePresentationOutline();
 };
 CChangesParagraphIndLeft.prototype.Merge = private_ParagraphChangesOnMergePr;
 CChangesParagraphIndLeft.prototype.Load = private_ParagraphChangesOnLoadPr;
@@ -747,6 +749,7 @@ CChangesParagraphIndRight.prototype.private_SetValue = function(Value)
 
 	oParagraph.CompiledPr.NeedRecalc = true;
 	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);
+	oParagraph.UpdatePresentationOutline();
 };
 CChangesParagraphIndRight.prototype.Merge = private_ParagraphChangesOnMergePr;
 CChangesParagraphIndRight.prototype.Load = private_ParagraphChangesOnLoadPr;
@@ -1690,6 +1693,7 @@ CChangesParagraphPresentationPrBullet.prototype.private_SetValue = function(Valu
 	oParagraph.CompiledPr.NeedRecalc = true;
 	oParagraph.Recalc_RunsCompiledPr();
 	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);
+	oParagraph.UpdatePresentationOutline();
 };
 CChangesParagraphPresentationPrBullet.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
@@ -1711,6 +1715,7 @@ CChangesParagraphPresentationPrLevel.prototype.private_SetValue = function(Value
 	oParagraph.CompiledPr.NeedRecalc = true;
 	oParagraph.Recalc_RunsCompiledPr();
 	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);
+	oParagraph.UpdatePresentationOutline();
 };
 CChangesParagraphPresentationPrLevel.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**

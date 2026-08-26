@@ -624,7 +624,7 @@
             }
         }
         this.private_ProcessSlideJumpLinks(this.IsAdd());
-	    this.CheckOutlineView();
+	    this.CheckOutlineView(this.IsAdd());
     };
 
     CChangesDrawingsContentPresentation.prototype.CheckCorrect = function(){
@@ -637,19 +637,19 @@
         }
         return true;
     };
-    CChangesDrawingsContentPresentation.prototype.CheckOutlineView = function () {
+    CChangesDrawingsContentPresentation.prototype.CheckOutlineView = function (isAdd) {
         for (let i = 0; i < this.Items.length; i += 1) {
             const item = this.Items[i];
-            item.checkOutlineView && item.checkOutlineView();
+            item.checkOutlineView && item.checkOutlineView(isAdd);
         }
     };
     CChangesDrawingsContentPresentation.prototype.Undo = function () {
         CChangesDrawingsContent.prototype.Undo.call(this);
-        this.CheckOutlineView();
+        this.CheckOutlineView(!this.IsAdd());
     };
     CChangesDrawingsContentPresentation.prototype.Redo = function () {
         CChangesDrawingsContent.prototype.Redo.call(this);
-        this.CheckOutlineView();
+        this.CheckOutlineView(this.IsAdd());
     };
     window['AscDFH'].CChangesDrawingsContentPresentation = CChangesDrawingsContentPresentation;
 
