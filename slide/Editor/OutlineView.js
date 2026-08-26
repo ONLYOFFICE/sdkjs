@@ -2146,7 +2146,23 @@
 	};
 	OutlineView.prototype.removeSlides = function (slideForRemoveMap, isOnAddText, savedContentsOnUpdate) {
 		const slides = [];
-		const slideNumbers = Object.keys(slideForRemoveMap);
+		let slideNumbers = Object.keys(slideForRemoveMap).map(function (num) {
+			return parseInt(num, 10);
+		});
+		if (!slideNumbers.length) {
+			return;
+		}
+		if (isOnAddText) {
+			let minSlideNumber = slideNumbers[0];
+			for (let i = 1; i < slideNumbers.length; i += 1) {
+				if (minSlideNumber > slideNumbers[i]) {
+					minSlideNumber = slideNumbers[i];
+				}
+			}
+			slideNumbers = slideNumbers.filter(function (num) {
+				return num !== minSlideNumber;
+			});
+		}
 		for (let i = 0 ; i < slideNumbers.length; i += 1) {
 			const num = slideNumbers[i];
 			const slide = slideForRemoveMap[num];
