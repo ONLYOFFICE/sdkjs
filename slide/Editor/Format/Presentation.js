@@ -716,6 +716,7 @@ function CPresentation(DrawingDocument, isMainLogicDocument) {
 	this.cachedAnimationLabelText = {};
 	this.ConcatParagraphsOnRemove  = true;
 	this.SlideSelector = null;
+	this.OutlineSelectionState = null;
 
 	this.recalcInfo = {
 		recalculateComments: true
@@ -2630,6 +2631,11 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 			this.checkLayouts(bAttack);
 		}
 	}
+	if (this.OutlineSelectionState) {
+		this.SetOutlineSelectionState(this.OutlineSelectionState);
+		this.OutlineSelectionState = null;
+	}
+
 	if (this.SlideSelector) {
 		this.SlideSelector.select();
 		this.SlideSelector = null;
@@ -7655,6 +7661,7 @@ CPresentation.prototype.GetSelectionState = function () {
 
 
 CPresentation.prototype.SetSelectionState = function (State) {
+	const bSetGoToPage = State.CurPage !== this.CurPage;
 	if (State.CurPage > -1) {
 		if(State.mode !== null && State.mode !== undefined && State.mode !== Asc.editor.presentationViewManager.type) {
 			Asc.editor.asc_changePresentationViewMode(State.mode);
@@ -7667,7 +7674,11 @@ CPresentation.prototype.SetSelectionState = function (State) {
 				oSlide.graphicObjects.clearTrackObjects();
 				oSlide.graphicObjects.changeCurrentState(new AscFormat.NullState(oSlide.graphicObjects));
 				if (State.IsFocusOnOutline) {
-					this.SetOutlineSelectionState(State);
+					if (bSetGoToPage) {
+						this.OutlineSelectionState = State;
+					} else {
+						this.SetOutlineSelectionState(State);
+					}
 				} else if (State.FocusOnNotes) {
 					if (oSlide.notes) {
 						this.FocusOnNotes = true;
@@ -7685,7 +7696,7 @@ CPresentation.prototype.SetSelectionState = function (State) {
 			}
 		}
 	}
-	if (State.CurPage !== this.CurPage)
+	if (bSetGoToPage)
 		this.bGoToPage = true;
 	this.CurPage = State.CurPage;
 };
