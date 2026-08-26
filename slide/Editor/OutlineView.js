@@ -119,10 +119,11 @@
 	SlideUpdateDataCollector.prototype.addSlidesToCheck = function (slideMap) {
 		this.checkSlideMap = Object.assign({}, this.checkSlideMap, slideMap);
 	};
-	function ParagraphUpdateDataCollector(outlineView, paragraphMap) {
+	function ParagraphUpdateDataCollector(outlineView, paragraphMap, additionalCorrectedContents) {
 		this.outlineView = outlineView;
 		this.paragraphMap = paragraphMap;
 		this.additionalCheckSlideMap = {};
+		this.additionalCorrectedContents = additionalCorrectedContents || {};
 	}
 	ParagraphUpdateDataCollector.prototype.checkExistingParagraphInOutline = function (paragraph, updateData) {
 		const id = paragraph.Get_Id();
@@ -151,7 +152,7 @@
 			return;
 		}
 		const content = shape.getDocContent();
-		const isCorrectContent = content && (shape.isTitlePlaceholder() || !content.Is_Empty());
+		const isCorrectContent = content && (shape.isTitlePlaceholder() || !content.Is_Empty() || this.additionalCorrectedContents[content.GetId()]);
 		if (!isCorrectContent) {
 			return;
 		}
@@ -869,19 +870,19 @@
 		return paragraph.IsCursorAtBegin();
 	};
 	RemoveOutlineParagraphsManager.prototype.processSourceSelectedContent = function (content, idx, count, isOnAddText, edgeContents) {
+		const shape = content.Is_DrawingShape(true);
+		const slide = shape.parent;
+		const slideNum = slide.num;
+		this.checkSlidesForRemove[slideNum] = slide;
 		if (content.IsSelectedAll() || content.IsEmpty()) {
-			const shape = content.Is_DrawingShape(true);
-			const slide = shape.parent;
-			const slideNum = slide.num;
-			this.checkSlidesForRemove[slideNum] = slide;
 			content.Remove(1, true, false, false);
 		} else {
 			content.Remove(1, true, false, count === 1 && isOnAddText);
-			if (idx === 0) {
-				edgeContents.firstContent = content;
-			} else if (idx === count - 1) {
-				edgeContents.lastContent = content;
-			}
+		}
+		if (idx === 0) {
+			edgeContents.firstContent = content;
+		} else if (idx === count - 1) {
+			edgeContents.lastContent = content;
 		}
 	};
 	RemoveOutlineParagraphsManager.prototype.saveFirstOutlineParagraph = function (edgeContents, selectProps) {
@@ -902,6 +903,7 @@
 		}
 	}
 	RemoveOutlineParagraphsManager.prototype.processSelectedContent = function (isOnAddText) {
+		const savedContentsOnUpdate = {};
 		const outlineView = this.outlineView;
 		const edgeContents = {firstContent: null, lastContent: null, firstOutlineParagraph: null};
 		const oThis = this;
@@ -923,8 +925,11 @@
 			}
 		});
 
+		if (isOnAddText && edgeContents.firstContent) {
+			savedContentsOnUpdate[edgeContents.firstContent.GetId()] = edgeContents.firstContent;
+		}
 		if (isSingleContent) {
-			return;
+			return savedContentsOnUpdate;
 		}
 
 		if (edgeContents.firstContent && edgeContents.lastContent) {
@@ -935,6 +940,7 @@
 		} else if (edgeContents.lastContent && edgeContents.firstOutlineParagraph) {
 			this.processLastContent(edgeContents.lastContent, edgeContents.firstOutlineParagraph);
 		}
+		return savedContentsOnUpdate;
 	};
 	RemoveOutlineParagraphsManager.prototype.processLastContent = function (lastContent, firstOutlineParagraph) {
 		const content = lastContent.Content;
@@ -957,12 +963,14 @@
 			}
 		}
 		const outlineView = this.outlineView;
+		let savedContentsOnUpdate;
 		if (docContent.IsSelectionUse()) {
-			this.processSelectedContent(isOnAddText);
+			savedContentsOnUpdate = this.processSelectedContent(isOnAddText);
 		} else {
 			this.processNotSelectedContent();
 		}
-		outlineView.removeSlides(this.checkSlidesForRemove);
+		outlineView.removeSlides(this.checkSlidesForRemove, isOnAddText, savedContentsOnUpdate);
+		return savedContentsOnUpdate;
 	};
 	function SavePosManager(outlineView) {
 		this.outlineView = outlineView;
@@ -1163,7 +1171,7 @@
 		});
 	};
 	ParagraphAddManager.prototype.processRemoveContentTypes = function () {
-		this.outlineView.remove(true, true);
+		this.outlineView.remove(true);
 	};
 	ParagraphAddManager.prototype.paragraphAdd = function (paraItem) {
 		switch (paraItem.Type) {
@@ -1208,7 +1216,7 @@
 		const outlineView = this.outlineView;
 		const oThis = this;
 		const presentation = outlineView.getPresentation();
-		outlineView.remove(true, true);
+		outlineView.remove(true);
 		let inserted = false;
 		outlineView.forEachSelectedContent(function (selectProps) {
 			let content = selectProps.content;
@@ -1249,7 +1257,7 @@
 		return this.outlineParagraphToInfoMap[outlineParagraph.GetId()];
 	};
 	OutlineInfo.prototype.getSlideInfoBySlide = function (slide) {
-		return this.slideToInfoMap[slide.GetId()];
+		return this.slideToInfoMap[slide && slide.GetId()] || null;
 	};
 	OutlineInfo.prototype.getOutlineParagraphToInfoMap = function () {
 		return this.outlineParagraphToInfoMap;
@@ -2125,21 +2133,18 @@
 		}];
 	};
 
-	OutlineView.prototype.remove = function (bOnAddText, isCheckNonEmptyPresentation) {
+	OutlineView.prototype.remove = function (bOnAddText) {
 		const docContent = this.getDocContent();
 		const isSelectionUse = docContent && docContent.IsSelectionUse();
 		const manager = new RemoveOutlineParagraphsManager(this);
-		manager.remove(bOnAddText);
-		this.update();
+		 const removeInfo = manager.remove(bOnAddText);
+		this.update(removeInfo);
 		this.applySavedPositionToOutline();
 		if (bOnAddText && isSelectionUse) {
 			this.checkCurrentTextObjectExtends();
 		}
-		if (isCheckNonEmptyPresentation) {
-			this.checkNonEmptyPresentation();
-		}
 	};
-	OutlineView.prototype.removeSlides = function (slideForRemoveMap) {
+	OutlineView.prototype.removeSlides = function (slideForRemoveMap, isOnAddText, savedContentsOnUpdate) {
 		const slides = [];
 		const slideNumbers = Object.keys(slideForRemoveMap);
 		for (let i = 0 ; i < slideNumbers.length; i += 1) {
@@ -2169,7 +2174,7 @@
 		}
 		presentation.updateSlideIndexes();
 		presentation.DrawingDocument.UpdateThumbnailsAttack();
-		this.update();
+		this.update(savedContentsOnUpdate);
 		const lastSlideIndex = presentation.GetSlidesCount() - 1;
 		const currentPage = Math.min(lastSlideIndex, minSlideIndex + 1);
 		presentation.Recalculate();
@@ -2351,14 +2356,14 @@
 		}
 		return false;
 	};
-	OutlineView.prototype.update = function () {
+	OutlineView.prototype.update = function (savedContentsOnUpdate) {
 		if (!this.isInit) {
 			return;
 		}
 		let isRecalculate = false;
 
 		const presentation = this.getPresentation();
-		const paragraphUpdateDataCollector = new ParagraphUpdateDataCollector(this, this.mapToCheckParagraphs);
+		const paragraphUpdateDataCollector = new ParagraphUpdateDataCollector(this, this.mapToCheckParagraphs, savedContentsOnUpdate);
 		const paragraphUpdateData = paragraphUpdateDataCollector.collect();
 		isRecalculate |= this.updateParagraphData(paragraphUpdateData);
 		this.resetMapToCheckParagraphs();
@@ -3333,7 +3338,7 @@
 		return selectProps.content;
 	};
 	OutlineView.prototype.checkRemoveOnAddFromContentAndCallback = function (callback) {
-		this.remove(true, true);
+		this.remove(true);
 		const oThis = this;
 		this.forEachSelectedContent(function (selectProps) {
 			const content = oThis.checkExistingContentSelectProps(selectProps);
@@ -3579,7 +3584,7 @@
 	OutlineView.prototype.addTextWithPr = function (text, settings) {
 		const oThis = this;
 		this.checkSelectedObjectsAndCallback(function () {
-			oThis.remove(true, true);
+			oThis.remove(true);
 			oThis.applyTextFunction(AscFormat.CDrawingDocContent.prototype.addTextWithPr, [text, settings], true);
 		}, AscDFH.historydescription_Document_AddTextWithProperties, true, true);
 
