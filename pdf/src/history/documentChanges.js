@@ -49,6 +49,9 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Start_Merge_Pages]		= CCha
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Part_Merge_Pages] 		= CChangesPDFDocumentPartMergePages;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_End_Merge_Pages]  		= CChangesPDFDocumentEndMergePages;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Calc_Order]       		= CChangesPDFCalcOrder;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_RolesInfo]        		= CChangesPDFDocumentRolesInfo;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_DisconnectEveryone]		= CChangesPDFDocumentDisconnectEveryone;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Final]					= CChangesPDFDocumentFinal;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_Locks]            		= CChangesPDFDocumentLocks;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Start_Redact]     		= CChangesPDFDocumentStartRedact;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Part_Redact]      		= CChangesPDFDocumentPartRedact;
@@ -1361,6 +1364,87 @@ CChangesPDFCalcOrder.prototype.private_SetValue = function(Value)
 	let oCalcInfo = this.Class;
 	oCalcInfo.ids = Value;
 };
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesPDFDocumentRolesInfo(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFDocumentRolesInfo.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFDocumentRolesInfo.prototype.constructor = CChangesPDFDocumentRolesInfo;
+CChangesPDFDocumentRolesInfo.prototype.Type = AscDFH.historyitem_Pdf_Document_RolesInfo;
+CChangesPDFDocumentRolesInfo.prototype.private_SetValue = function(Value)
+{
+	let oDoc = this.Class;
+	if (oDoc && oDoc.GetFormRoles)
+		oDoc.GetFormRoles().ApplySnapshot(Value);
+};
+CChangesPDFDocumentRolesInfo.prototype.WriteToBinary = function(Writer)
+{
+	let nFlags = 0;
+	if (false !== this.Color)  nFlags |= 1;
+	if (undefined === this.New) nFlags |= 2;
+	if (undefined === this.Old) nFlags |= 4;
+	Writer.WriteLong(nFlags);
+	if (undefined !== this.New) Writer.WriteString2(JSON.stringify(this.New));
+	if (undefined !== this.Old) Writer.WriteString2(JSON.stringify(this.Old));
+};
+CChangesPDFDocumentRolesInfo.prototype.ReadFromBinary = function(Reader)
+{
+	let nFlags = Reader.GetLong();
+	this.Color = !!(nFlags & 1);
+	this.New = (nFlags & 2) ? undefined : JSON.parse(Reader.GetString2());
+	this.Old = (nFlags & 4) ? undefined : JSON.parse(Reader.GetString2());
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFDocumentFinal(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFDocumentFinal.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFDocumentFinal.prototype.constructor = CChangesPDFDocumentFinal;
+CChangesPDFDocumentFinal.prototype.Type = AscDFH.historyitem_Pdf_Document_Final;
+CChangesPDFDocumentFinal.prototype.private_SetValue = function(Value)
+{
+	let oDoc = this.Class;
+	let oRoles = oDoc.GetFormRoles();
+	oRoles.Final = !!Value;
+	oRoles.OnChangeFinal();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBase}
+ */
+function CChangesPDFDocumentDisconnectEveryone(Class)
+{
+	AscDFH.CChangesBase.call(this, Class);
+}
+CChangesPDFDocumentDisconnectEveryone.prototype = Object.create(AscDFH.CChangesBase.prototype);
+CChangesPDFDocumentDisconnectEveryone.prototype.constructor = CChangesPDFDocumentDisconnectEveryone;
+CChangesPDFDocumentDisconnectEveryone.prototype.Type = AscDFH.historyitem_Pdf_Document_DisconnectEveryone;
+CChangesPDFDocumentDisconnectEveryone.prototype.Undo = function()
+{
+};
+CChangesPDFDocumentDisconnectEveryone.prototype.Redo = function()
+{
+	let oDoc = this.Class;
+	let editorApi = oDoc.GetApi();
+	if (!editorApi)
+		return;
+
+	editorApi.sendEvent("asc_onDisconnectEveryone");
+	editorApi.setViewModeDisconnect(true);
+	editorApi.asc_coAuthoringDisconnect();
+};
+AscDFH.CChangesPDFDocumentDisconnectEveryone = CChangesPDFDocumentDisconnectEveryone;
 
 /**
  * @constructor

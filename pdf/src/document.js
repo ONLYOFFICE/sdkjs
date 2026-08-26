@@ -163,6 +163,7 @@ var CPresentation = CPresentation || function(){};
         this.pagesTransform = [];
 
         this._fieldsChildsMap = {}; // map when opening forms
+        this.FormRoles = new AscPDF.CPdfFormRoles(this);
         this.api = this.GetDocumentApi();
 		
 
@@ -612,7 +613,7 @@ var CPresentation = CPresentation || function(){};
                 break;
             }
             case AscPDF.FIELD_TYPES.combobox: {
-                sFormType += AscCommon.translateManager.getValue("Dropdown");
+                sFormType += AscCommon.translateManager.getValue("Combobox");
                 break;
             }
             case AscPDF.FIELD_TYPES.listbox: {
@@ -1320,7 +1321,11 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.ClearFieldsToCommit = function() {
         this.fieldsToCommit = [];
     };
-    CPDFDoc.prototype.SelectNextForm = function() {
+	/**
+	 * Selects the next visible form which satisfies the optional filter.
+	 * @param {function(CBaseField): boolean} [checkFunc]
+	 */
+    CPDFDoc.prototype.SelectNextForm = function(checkFunc) {
 		if (!this.Viewer.file.nativeFile['CheckPerm'](AscPDF.USER_PERMISSIONS.fillForms)) {
 			Asc.editor.sendEvent("asc_onAskEditPassword");
 			return;
@@ -1334,30 +1339,27 @@ var CPresentation = CPresentation || function(){};
 		if (this.IsEditFieldsMode() || aWidgets.length == 0)
             return;
 
-		let nCurIdx = aWidgets.indexOf(this.activeForm);
-        let oCurForm = aWidgets[nCurIdx];
+		let nFormsCount = this.widgets.length;
+        let nCurIdx = this.widgets.indexOf(this.activeForm);
         let oNextForm;
 
-        for (let i = nCurIdx + 1; i <= aWidgets.length; i++) {
-            if (aWidgets[i]) {
-                if (aWidgets[i].IsHidden() == false) {
-                    oNextForm = aWidgets[i];
-                    break;
-                }
-            }
-            else {
-                if (aWidgets[0] != oCurForm)
-                    oNextForm = aWidgets[0];
-                else
-                    return;
-            }
+		for (let nOffset = 1; nOffset <= nFormsCount; ++nOffset) {
+			let nIdx = (nCurIdx + nOffset) % nFormsCount;
+			if (nIdx === nCurIdx)
+				continue;
+
+			let oForm = this.widgets[nIdx];
+			if (!oForm.IsHidden() && (!checkFunc || checkFunc(oForm))) {
+				oNextForm = oForm;
+				break;
+			}
         }
 
         if (!oNextForm)
             return;
 
         let _t = this;
-		if (!this.checkFieldFont(oNextForm, function(){_t.SelectNextForm();}))
+		if (!this.checkFieldFont(oNextForm, function(){_t.SelectNextForm(checkFunc);}))
 			return;
 
 		switch (oNextForm.GetType()) {
@@ -1420,7 +1422,11 @@ var CPresentation = CPresentation || function(){};
         else
             callbackAfterFocus.bind(this)();
     };
-    CPDFDoc.prototype.SelectPrevForm = function() {
+	/**
+	 * Selects the previous visible form which satisfies the optional filter.
+	 * @param {function(CBaseField): boolean} [checkFunc]
+	 */
+    CPDFDoc.prototype.SelectPrevForm = function(checkFunc) {
 		if (!this.Viewer.file.nativeFile['CheckPerm'](AscPDF.USER_PERMISSIONS.fillForms)) {
 			Asc.editor.sendEvent("asc_onAskEditPassword");
 			return;
@@ -1434,30 +1440,28 @@ var CPresentation = CPresentation || function(){};
 		if (this.IsEditFieldsMode() || aWidgets.length == 0)
             return;
 
-        let nCurIdx = aWidgets.indexOf(this.activeForm);
-		let oCurForm = aWidgets[nCurIdx];
+		let nFormsCount = this.widgets.length;
+        let nCurIdx = this.widgets.indexOf(this.activeForm);
+		let nStartIdx = nCurIdx === -1 ? 0 : nCurIdx;
         let oNextForm;
 
-        for (let i = nCurIdx - 1; i >= -2; i--) {
-            if (aWidgets[i]) {
-                if (aWidgets[i].IsHidden() == false) {
-                    oNextForm = aWidgets[i];
-                    break;
-                }
-            }
-            else {
-                if (aWidgets[aWidgets.length - 1] != oCurForm)
-                    oNextForm = aWidgets[aWidgets.length - 1];
-                else
-                    return;
-            }
+		for (let nOffset = 1; nOffset <= nFormsCount; ++nOffset) {
+			let nIdx = (nStartIdx - nOffset + nFormsCount) % nFormsCount;
+			if (nIdx === nCurIdx)
+				continue;
+
+			let oForm = this.widgets[nIdx];
+			if (!oForm.IsHidden() && (!checkFunc || checkFunc(oForm))) {
+				oNextForm = oForm;
+				break;
+			}
         }
 
         if (!oNextForm)
             return;
 
         let _t = this;
-		if (!this.checkFieldFont(oNextForm, function(){_t.SelectNextForm();}))
+		if (!this.checkFieldFont(oNextForm, function(){_t.SelectPrevForm(checkFunc);}))
 			return;
 
         switch (oNextForm.GetType()) {
@@ -2957,6 +2961,9 @@ var CPresentation = CPresentation || function(){};
             AscCommon.History.UndoRedoInProgress = false;
             this.UpdateInterface();
         }
+
+		if (this.IsFillingFormMode())
+            this.Api.sync_OnAllRequiredFormsFilled(this.GetFormRoles().IsRequiredFilled());
     };
     CPDFDoc.prototype.DoRedo = function() {
         let oDrDoc = this.GetDrawingDocument();
@@ -3012,6 +3019,9 @@ var CPresentation = CPresentation || function(){};
             AscCommon.History.UndoRedoInProgress = false;
             this.UpdateInterface();
         }
+
+		if (this.IsFillingFormMode())
+            this.Api.sync_OnAllRequiredFormsFilled(this.GetFormRoles().IsRequiredFilled());
     };
     CPDFDoc.prototype.SetNeedUpdateTarget = function(bUpdate) {
         this.NeedUpdateTarget = bUpdate;
@@ -3684,6 +3694,11 @@ var CPresentation = CPresentation || function(){};
             this.GetCalculateInfo().SetCalculateOrder(oFormsInfo["CO"]);
         
         this.private_FillButtonsIconsOnOpen();
+
+        // form roles: document-level table, present only on a full open (not on page-insert)
+        if (oFormsInfo["rolesInfo"])
+            this.FormRoles.Load(JSON.parse(oFormsInfo["rolesInfo"]));
+        this.FormRoles.OnEndLoad();
     };
     CPDFDoc.prototype.private_FillFormsParents = function(aParentsInfo) {
         let oChildsMap = this.GetFieldsChildsMap();
@@ -4323,7 +4338,7 @@ var CPresentation = CPresentation || function(){};
 
 		let oCurHistory = AscCommon.History;
         
-        if (this.GetActionDescription() == AscDFH.historydescription_Pdf_ExecActions) {
+		if (this.GetActionDescription() == AscDFH.historydescription_Pdf_ExecActions) {
             AscCommon.History = this.History;
         }
 
@@ -4371,6 +4386,9 @@ var CPresentation = CPresentation || function(){};
 				this.Viewer.onUpdateOverlay();
 			}
 		}
+
+		if (this.IsFillingFormMode())
+            this.Api.sync_OnAllRequiredFormsFilled(this.GetFormRoles().IsRequiredFilled());
 
         return actionCompleted;
     };
@@ -4723,8 +4741,14 @@ var CPresentation = CPresentation || function(){};
         if (!oForm || !oForm.IsWidget())
             return false;
 
+        let sFullName = oForm.GetFullName();
+
         let oPage = oForm.GetParentPage();
         oPage.RemoveField(oForm.GetId());
+
+        // drop role membership only if no field with this name remains
+        if (!this.GetField(sFullName))
+            this.FormRoles.RemoveFieldFromRoles(sFullName);
 
         this.SetNeedUpdateSearch(true);
         return true;
@@ -4967,9 +4991,10 @@ var CPresentation = CPresentation || function(){};
                     let sFieldName = oField.GetFullName();
 
                     if (aNames.includes(sFieldName) == true && false == aReseted.includes(sFieldName)) {
-                        oField.Reset();
+						let aWidgets = oField.GetAllWidgets();
+                        aWidgets[0].Reset();
                         aReseted.push(sFieldName);
-                        oThis.AddFieldToCommit(oField);
+                        oThis.AddFieldToCommit(aWidgets[0]);
                     }
                 });
             }
@@ -5182,8 +5207,8 @@ var CPresentation = CPresentation || function(){};
 
 		Asc.editor.sync_UpdateRedactState();
 		Asc.editor.CheckChangedDocument();
-        
-        this.Api.sync_BeginCatchSelectedElements();
+
+       	this.Api.sync_BeginCatchSelectedElements();
 
         let oDrDoc      = this.GetDrawingDocument();
         let oController = this.GetController();
@@ -8317,6 +8342,9 @@ var CPresentation = CPresentation || function(){};
         this.History.Get_RecalcData(null, arrChanges, nStartIndex, nEndIndex);
     };
     CPDFDoc.prototype.UpdateTracks = function() {};
+    CPDFDoc.prototype.GetFormRoles = function() {
+        return this.FormRoles;
+    };
     CPDFDoc.prototype.GetOFormDocument = function() {};
     CPDFDoc.prototype.Continue_FastCollaborativeEditing = function() {
         let oController = this.GetController();
@@ -8821,6 +8849,20 @@ var CPresentation = CPresentation || function(){};
             return true;
         }
 
+		if (this.Api.isRestrictionSignatures()) {
+			return true;
+		}
+
+		// form roles: in filling mode an active field may be changed only by its role
+		if (nCheckType !== AscCommon.changestype_Document_Settings && nCheckType !== AscDFH.historydescription_Pdf_ClearAllSpecialForms) {
+			if (this.IsFillingFormMode() && this.activeForm && false === this.GetFormRoles().CanFillField(this.activeForm)) {
+				return true;
+			}
+			else if (!this.IsEditFieldsMode() && !this.IsFillingFormMode() && this.activeForm) {
+				return true;
+			}
+		}
+
         AscCommon.CollaborativeEditing.OnStart_CheckLock();
 
         if (nCheckType === AscCommon.changestype_None && AscCommon.isRealObject(AdditionalData) && AdditionalData.CheckType === AscCommon.changestype_Table_Properties) {
@@ -8897,6 +8939,23 @@ var CPresentation = CPresentation || function(){};
 
                 break;
             }
+			case AscDFH.historydescription_Pdf_ClearAllSpecialForms: {
+				let aFields = AdditionalData || [];
+				for (let i = 0; i < aFields.length; ++i) {
+					let oField = aFields[i];
+					let oPageInfo = this.GetPageInfo(oField.GetPage());
+					if (!oPageInfo)
+						continue;
+
+					oField.Lock.Check({
+						"type":   AscLockTypeElemPDF.Object,
+						"pageId": oPageInfo.GetId(),
+						"objId":  oField.GetId(),
+						"guid":   oField.GetId()
+					});
+				}
+				break;
+			}
             case AscDFH.historydescription_Pdf_RemovePage: {
                 let aSelectedPagesIdx = AdditionalData;
                 
@@ -9477,7 +9536,7 @@ var CPresentation = CPresentation || function(){};
         return !!(oObject && oObject.IsAnnot && (oObject.IsAnnot() || oObject.IsForm() || oObject.IsEditFieldShape() || oGroup && oGroup.IsAnnot()));
     };
     CPDFDoc.prototype.IsFillingFormMode = function() {
-		return false;
+		return this.Api && this.Api.isRestrictionForms() && !this.Api.isRestrictionSignatures();
 	};
 	CPDFDoc.prototype.IsEditSignaturesMode = function() {
 		return false;
@@ -10405,6 +10464,13 @@ var CPresentation = CPresentation || function(){};
         oCommonProps.asc_putTooltip(field.GetTooltip());
         oCommonProps.asc_putDigitsType(field.GetDigitsType());
         oCommonProps.put_Locked(field.IsCoEditLocked());
+
+        // form role assigned to the field (if any)
+        let oFieldDoc = field.GetDocument();
+        let oFieldRoles = oFieldDoc && oFieldDoc.GetFormRoles ? oFieldDoc.GetFormRoles() : null;
+        let oFieldRole = oFieldRoles ? oFieldRoles.GetRoleByField(field) : null;
+        if (oFieldRole)
+            oCommonProps.asc_putRole(oFieldRole.GetName());
 
         // bg
         let aFillColor  = field.GetBackgroundColor();

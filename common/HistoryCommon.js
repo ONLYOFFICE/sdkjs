@@ -4334,7 +4334,9 @@
 	window['AscDFH'].historyitem_Pdf_Document_Redact_Meta			= window['AscDFH'].historyitem_type_PDF_Document | 19;
 	window['AscDFH'].historyitem_PDF_Document_RedactedFieldsContent	= window['AscDFH'].historyitem_type_PDF_Document | 20;
 	window['AscDFH'].historyitem_PDF_Document_ObjectLayer			= window['AscDFH'].historyitem_type_PDF_Document | 21;
-
+	window['AscDFH'].historyitem_Pdf_Document_RolesInfo				= window['AscDFH'].historyitem_type_PDF_Document | 22;
+	window['AscDFH'].historyitem_Pdf_Document_DisconnectEveryone	= window['AscDFH'].historyitem_type_PDF_Document | 23;
+	window['AscDFH'].historyitem_Pdf_Document_Final					= window['AscDFH'].historyitem_type_PDF_Document | 24;
 
 	AscDFH.historyitem_CustomPropertiesAddProperty = AscDFH.historyitem_type_CustomProperties | 0;
 	AscDFH.historyitem_CustomPropertiesRemoveProperty = AscDFH.historyitem_type_CustomProperties | 1;
@@ -4888,6 +4890,11 @@
 	window['AscDFH'].historydescription_Pdf_ChangeAnnot			= 0x2b7;
 	window['AscDFH'].historydescription_Pdf_Apply_Redact		= 0x2b8;
 	window['AscDFH'].historydescription_Pdf_Redact_Meta			= 0x2b9;
+	window['AscDFH'].historydescription_Pdf_ChangeRoles			= 0x2ba;
+	window['AscDFH'].historydescription_Pdf_CompletePreparingForms	= 0x2bb;
+	window['AscDFH'].historydescription_Pdf_ClearAllSpecialForms	= 0x2bc;
+	window['AscDFH'].historydescription_Pdf_MarkAsFinal			= 0x2bd;
+
 	// reserved
 	window['AscDFH'].historydescription_GroupPoints     = 0xFF01;
 	window['AscDFH'].historydescription_GroupPointsOpen = 0xFF02;

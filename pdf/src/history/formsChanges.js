@@ -127,6 +127,70 @@ CChangesPDFFormValue.prototype.private_SetValue = function(Value)
 	let oField = this.Class;
 	oField.private_SetValue(Value);
 };
+CChangesPDFFormValue.prototype.WriteToBinary = function(Writer)
+{
+	// Long  : Flag
+	// 1-bit : Whether to highlight these changes
+	// 2-bit : IsUndefined New
+	// 3-bit : IsUndefined Old
+	// string : New
+	// string : Old
+
+	var nFlags = 0;
+
+	if (false !== this.Color)
+		nFlags |= 1;
+
+	if (undefined === this.New)
+		nFlags |= 2;
+
+	if (undefined === this.Old)
+		nFlags |= 4;
+
+	if (Array.isArray(this.New) || Array.isArray(this.Old))
+		nFlags |= 8;
+
+	Writer.WriteLong(nFlags);
+
+	if (undefined !== this.New) {
+		Writer.WriteString2(Array.isArray(this.New) ? JSON.stringify(this.New) : this.New);
+	}
+		
+	if (undefined !== this.Old) {
+		Writer.WriteString2(Array.isArray(this.Old) ? JSON.stringify(this.Old) : this.Old);
+	}
+};
+CChangesPDFFormValue.prototype.ReadFromBinary = function(Reader)
+{
+	// Long  : Flag
+	// 1-bit : Whether to highlight these changes
+	// 2-bit : IsUndefined New
+	// 3-bit : IsUndefined Old
+	// string : New
+	// string : Old
+
+
+	var nFlags = Reader.GetLong();
+
+	let isArrayValue = false;
+	if (nFlags & 8)
+		isArrayValue = true;
+
+	if (nFlags & 1)
+		this.Color = true;
+	else
+		this.Color = false;
+
+	if (nFlags & 2)
+		this.New = undefined;
+	else
+		this.New = isArrayValue ? JSON.parse(Reader.GetString2()) : Reader.GetString2();
+
+	if (nFlags & 4)
+		this.Old = undefined;
+	else
+		this.Old = isArrayValue ? JSON.parse(Reader.GetString2()) : Reader.GetString2();
+};
 
 /**
  * @constructor
@@ -162,7 +226,7 @@ CChangesPDFFormParentValue.prototype.private_SetValue = function(Value)
 	oField._value = Value;
 };
 
-CChangesPDFFormValue.prototype.WriteToBinary = function(Writer)
+CChangesPDFFormParentValue.prototype.WriteToBinary = function(Writer)
 {
 	// Long  : Flag
 	// 1-bit : Whether to highlight these changes
@@ -195,7 +259,7 @@ CChangesPDFFormValue.prototype.WriteToBinary = function(Writer)
 		Writer.WriteString2(Array.isArray(this.Old) ? JSON.stringify(this.Old) : this.Old);
 	}
 };
-CChangesPDFFormValue.prototype.ReadFromBinary = function(Reader)
+CChangesPDFFormParentValue.prototype.ReadFromBinary = function(Reader)
 {
 	// Long  : Flag
 	// 1-bit : Whether to highlight these changes

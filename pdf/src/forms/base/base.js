@@ -946,10 +946,6 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseField.prototype.SetLogicValue = function(value) {
-        if (value && !Array.isArray(value) && typeof(value) !== "string" && value.toString) {
-            value = value.toString();
-        }
-
         let oParent = this.GetParent(true);
         if (oParent && this.IsWidget())
             oParent.SetLogicValue(value);
@@ -1001,6 +997,12 @@
     CBaseField.prototype.AddActionsToQueue = function() {
         let oThis           = this;
         let oDoc            = this.GetDocument();
+
+		// form roles: in filling mode field actions may be run only by its role
+		if (oDoc.IsFillingFormMode() && false === oDoc.GetFormRoles().CanFillField(this)) {
+			return;
+		}
+
         let oActionsQueue   = oDoc.GetActionsQueue();
 
         Object.values(arguments).forEach(function(type) {
@@ -1029,6 +1031,20 @@
         }
 
         return false;
+    };
+    CBaseField.prototype.GetHighlightColor = function() {
+        let oDoc   = this.GetDocument();
+        let oRoles = oDoc.GetFormRoles();
+        if (oRoles) {
+            let oRole = oRoles.GetRoleByField(this);
+            if (oRole) {
+                let rgb = oRole.GetColor() ? private_hexToRgb(oRole.GetColor()) : null;
+                if (rgb) {
+                    return rgb;
+				}
+            }
+        }
+        return this.IsRequired() ? FIELDS_HIGHLIGHT_REQ : FIELDS_HIGHLIGHT;
     };
     CBaseField.prototype.DrawHighlight = function(oCtx) {
         if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
@@ -1071,10 +1087,8 @@
         
         if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
             oCtx.beginPath();
-            if (this.IsRequired())
-                oCtx.fillStyle = 'rgb(' + FIELDS_HIGHLIGHT_REQ.r + ', ' + FIELDS_HIGHLIGHT_REQ.g + ', ' + FIELDS_HIGHLIGHT_REQ.b + ')';
-            else 
-                oCtx.fillStyle = 'rgb(' + FIELDS_HIGHLIGHT.r + ', ' + FIELDS_HIGHLIGHT.g + ', ' + FIELDS_HIGHLIGHT.b + ')';
+            let oClr = this.GetHighlightColor();
+            oCtx.fillStyle = 'rgb(' + oClr.r + ', ' + oClr.g + ', ' + oClr.b + ')';
             // position at the center of the circle
             let centerX = X + W / 2;
             let centerY = Y + H / 2;
@@ -1085,10 +1099,8 @@
         }
         else {
             oCtx.beginPath();
-            if (this.IsRequired())
-                oCtx.fillStyle = 'rgb(' + FIELDS_HIGHLIGHT_REQ.r + ', ' + FIELDS_HIGHLIGHT_REQ.g + ', ' + FIELDS_HIGHLIGHT_REQ.b + ')';
-            else 
-                oCtx.fillStyle = 'rgb(' + FIELDS_HIGHLIGHT.r + ', ' + FIELDS_HIGHLIGHT.g + ', ' + FIELDS_HIGHLIGHT.b + ')';
+            let oClr = this.GetHighlightColor();
+            oCtx.fillStyle = 'rgb(' + oClr.r + ', ' + oClr.g + ', ' + oClr.b + ')';
             oCtx.fillRect(X, Y, W, H);
             oCtx.closePath();
         }
@@ -1575,7 +1587,9 @@
 
     CBaseField.prototype.SetName = function(sName) {
         let oDoc        = this.GetDocument();
+		let oRoles	 	= oDoc.GetFormRoles();
         let nFieldType  = this.GetType();
+        let sRolesOldFullName = this.GetFullName();
 
         while (sName.indexOf('..') != -1)
             sName = sName.replace(new RegExp("\.\.", "g"), ".");
@@ -1651,6 +1665,7 @@
                     }
                     
                     this.SetPartialName(sName);
+                    oRoles.RenameField(sRolesOldFullName, this.GetFullName());
                     return true;
                 }
             }
@@ -1669,7 +1684,9 @@
         }
 
         this.Commit();
-        
+
+        oRoles.RenameField(sRolesOldFullName, this.GetFullName());
+
         return true;
     };
     CBaseField.prototype.IsNeedRecalc = function() {
@@ -2114,7 +2131,7 @@
     CBaseField.prototype.Reset = function() {
         let defValue = this.GetDefaultValue() || "";
         if (this.GetValue() != defValue) {
-            this.SetValue(defValue);
+            this.private_SetValue(defValue);
             this.SetWasChanged(true);
             this.SetNeedRecalc(true);
         }
@@ -3574,6 +3591,22 @@
     // for format
 
     // private methods
+
+    function private_hexToRgb(sHex)
+	{
+		if (typeof sHex !== "string")
+			return null;
+
+		let s = "#" === sHex.charAt(0) ? sHex.slice(1) : sHex;
+		if (6 !== s.length)
+			return null;
+
+		let n = parseInt(s, 16);
+		if (isNaN(n))
+			return null;
+
+		return { r: (n >> 16) & 0xFF, g: (n >> 8) & 0xFF, b: n & 0xFF };
+	}
 
     function private_GetFieldAlign(sJc)
 	{
