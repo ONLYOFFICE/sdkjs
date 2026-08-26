@@ -6306,6 +6306,7 @@ _func[cElementType.string][cElementType.string] = function ( arg0, arg1, what ) 
 	let opt_return_bool = arguments[5];
 	let res = null;
 
+	// TODO should compare with the escaped double quotes?
 	let _arg0, _arg1;
 	if (what === ">") {
 		res = AscCommon.stringCompare(arg0.getValue(true), arg1.getValue(true)) > 0;

@@ -918,35 +918,36 @@ function (window, undefined) {
 	cEXACT.prototype.argumentsMax = 2;
 	cEXACT.prototype.argumentsType = [argType.text, argType.text];
 	cEXACT.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1];
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		let arg0 = arg[0], arg1 = arg[1];
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cRef || arg0 instanceof cRef3D) {
+		} else if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
 			arg0 = arg0.getValue();
 		}
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
 			arg1 = arg1.cross(arguments[1]);
-		} else if (arg1 instanceof cRef || arg1 instanceof cRef3D) {
+		} else if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
 			arg1 = arg1.getValue();
 		}
 
-		if (arg0 instanceof cArray && arg1 instanceof cArray) {
+		if (arg0.type === cElementType.array && arg1.type === cElementType.array) {
 			arg0 = arg0.getElementRowCol(0, 0);
 			arg1 = arg1.getElementRowCol(0, 0);
-		} else if (arg0 instanceof cArray) {
+		} else if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElementRowCol(0, 0);
-		} else if (arg1 instanceof cArray) {
+		} else if (arg1.type === cElementType.array) {
 			arg1 = arg1.getElementRowCol(0, 0);
 		}
 
-		if (arg0 instanceof cError) {
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		}
-		if (arg1 instanceof cError) {
+		if (arg1.type === cElementType.error) {
 			return arg1;
 		}
 
-		var arg0val = arg0.toLocaleString(), arg1val = arg1.toLocaleString();
+		let arg0val = arg0.type === cElementType.string ? arg0.getValue() : arg0.toLocaleString();
+		let arg1val = arg1.type === cElementType.string ? arg1.getValue() : arg1.toLocaleString();
 		return new cBool(arg0val === arg1val);
 	};
 
@@ -1017,11 +1018,13 @@ function (window, undefined) {
 			return arg1;
 		}
 
-		str = arg1.toLocaleString();
+		// str = arg1.toLocaleString();
 		// searchStr = RegExp.escape(arg0.toLocaleString()); // doesn't work with strings like """ String""" , it's return ""\ String"" instead "" String""
-		
-		searchStr = arg0.toLocaleString().replace(/\"\"/g, "\"");
+		// searchStr = arg0.toLocaleString().replace(/\"\"/g, "\"");
 		// searchStr = RegExp.escape(searchStr);
+
+		searchStr = arg0.type === cElementType.string ? arg0.getValue() : arg0.toLocaleString();
+		str = arg1.type === cElementType.string ? arg1.getValue() : arg1.toLocaleString();
 
 		if (arg2) {
 
@@ -1543,7 +1546,8 @@ function (window, undefined) {
 			return arg0;
 		}
 
-		return new cNumber(arg0.toLocaleString().length)
+		let strVal = arg0.type === cElementType.string ? arg0.getValue() : arg0.toLocaleString();
+		return new cNumber(strVal.length);
 	};
 
 	/**
@@ -1629,7 +1633,6 @@ function (window, undefined) {
 			return arg0;
 		}
 
-
 		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
 			arg1 = arg1.cross(arguments[1]);
 		} else if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
@@ -1641,7 +1644,6 @@ function (window, undefined) {
 		if (arg1.type === cElementType.error) {
 			return arg1;
 		}
-
 
 		if (arg2.type === cElementType.cellsRange || arg2.type === cElementType.cellsRange3D) {
 			arg2 = arg2.cross(arguments[1]);
@@ -1655,8 +1657,8 @@ function (window, undefined) {
 			return arg2;
 		}
 
-
-		arg0 = arg0.toLocaleString();
+		// arg0 = arg0.toLocaleString();
+		arg0 = arg0.type === cElementType.string ? arg0.getValue() : arg0.toLocaleString();
 		arg1 = arg1.tocNumber();
 		arg2 = arg2.tocNumber();
 
@@ -1670,17 +1672,17 @@ function (window, undefined) {
 			return arg2;
 		}
 
-		let arg1Val = Math.floor(arg1.getValue()), arg2Val = Math.floor(arg2.getValue());
-
+		let arg1Val = Math.floor(arg1.getValue());
 		if (arg1Val <= 0) {
 			return new cError(cErrorType.wrong_value_type);
 		}
+
+		let arg2Val = Math.floor(arg2.getValue());
 		if (arg2Val < 0) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
 		let l = arg0.length;
-
 		if (arg1.getValue() > l) {
 			return new cString("");
 		}
@@ -3277,47 +3279,50 @@ function (window, undefined) {
 	cTEXT.prototype.argumentsMax = 2;
 	cTEXT.prototype.argumentsType = [argType.any, argType.text];
 	cTEXT.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1];
-		if (arg0 instanceof cRef || arg0 instanceof cRef3D) {
+		let arg0 = arg[0], arg1 = arg[1];
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
 			arg0 = arg0.getValue();
-		} else if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		} else if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArray) {
+		} else if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElementRowCol(0, 0);
 		}
 
-		if (arg1 instanceof cRef || arg1 instanceof cRef3D) {
+		if (arg0.type === cElementType.error) {
+			return arg0;
+		}
+
+		if (!(arg0.type === cElementType.bool)) {
+			let _tmp = arg0.tocNumber();
+			if (_tmp.type === cElementType.number) {
+				arg0 = _tmp;
+			}
+		}
+
+		if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
 			arg1 = arg1.getValue();
-		} else if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
+		} else if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
 			arg1 = arg1.cross(arguments[1]);
-		} else if (arg1 instanceof cArray) {
+		} else if (arg1.type === cElementType.array) {
 			arg1 = arg1.getElementRowCol(0, 0);
 		}
 
 		arg1 = arg1.tocString();
 
-		if (arg0 instanceof cError) {
-			return arg0;
-		}
-		if (arg1 instanceof cError) {
+		if (arg1.type === cElementType.error) {
 			return arg1;
 		}
 
-		if (!(arg0 instanceof cBool)) {
-			var _tmp = arg0.tocNumber();
-			if (_tmp instanceof cNumber) {
-				arg0 = _tmp;
-			}
-		}
+		// var oFormat = new CellFormat(arg1.toString(), undefined, true);
+		let oFormat = new CellFormat(arg1.getValue(), undefined, true);
 
-		var oFormat = new CellFormat(arg1.toString(), undefined, true);
-		var a = g_oFormatParser.parse(arg0.toLocaleString(true) + ""), aText;
+		let a = g_oFormatParser.parse(arg0.toLocaleString(true) + ""), aText;
 		aText = oFormat.format(a ? a.value : arg0.toLocaleString(),
-			(arg0 instanceof cNumber || a) ? CellValueType.Number : CellValueType.String,
+			(arg0.type === cElementType.number || a) ? CellValueType.Number : CellValueType.String,
 			AscCommon.gc_nMaxDigCountView);
-		var text = "";
+		let text = "";
 
-		for (var i = 0, length = aText.length; i < length; ++i) {
+		for (let i = 0, length = aText.length; i < length; ++i) {
 
 			if (aText[i].format && aText[i].format.getSkip()) {
 				text += " ";
@@ -3330,7 +3335,7 @@ function (window, undefined) {
 			text += aText[i].text;
 		}
 
-		var res = new cString(text);
+		let res = new cString(text);
 		res.numFormat = AscCommonExcel.cNumFormatNone;
 		return res;
 	};
