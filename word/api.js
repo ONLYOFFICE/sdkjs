@@ -10174,6 +10174,7 @@ background-repeat: no-repeat;\
 		g_oIdCounter.Clear();
 		g_oTableId.Clear();
 		AscCommon.CollaborativeEditing.Clear();
+		AscWord.TextHyphenator.reset();
 		this.isApplyChangesOnOpenEnabled = true;
 		this.isDocumentLoadComplete = false;
 		this.ServerImagesWaitComplete = false;

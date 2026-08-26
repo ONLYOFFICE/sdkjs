@@ -78,6 +78,13 @@
 		let hyphenator = getInstance();
 		hyphenator.hyphenateParagraph(paragraph);
 	};
+	TextHyphenator.reset = function()
+	{
+		if (!hyphenator)
+			return;
+		
+		hyphenator.reset();
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -95,6 +102,19 @@
 			self.hyphenateRun(run, startPos, endPos);
 		});
 		this.flushWord();
+	};
+	TextHyphenator.prototype.reset = function()
+	{
+		this.word     = false;
+		this.fontSlot = fontslot_Unknown;
+		this.lang     = DEFAULT_LANG;
+		this.resetBuffer();
+
+		this.hyphenateCaps = true;
+		
+		this.document     = null;
+		this.paragraph    = null;
+		this.waitingLangs = {};
 	};
 	TextHyphenator.prototype.hyphenateRun = function(run, startPos, endPos)
 	{
