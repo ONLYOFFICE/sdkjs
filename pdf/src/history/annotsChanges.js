@@ -547,7 +547,12 @@ CChangesPDFAnnotRC.prototype.private_SetValue = function(Value)
 
 	oAnnot._richContents = Value;
 	oAnnot.SetNeedRecalc(true);
+
 	oAnnot.private_UpdateRichContent && oAnnot.private_UpdateRichContent();
+
+	let oCommentData = new AscCommon.CCommentData();
+	oCommentData.Read_FromAscCommentData(oAnnot.GetAscCommentData());
+	Asc.editor.sync_ChangeCommentData(oAnnot.GetId(), oCommentData);
 };
 
 CChangesPDFAnnotRC.prototype.WriteToBinary = function(Writer)
@@ -1099,16 +1104,7 @@ CChangesPDFAnnotContents.prototype.Type = AscDFH.historyitem_Pdf_Annot_Contents;
 CChangesPDFAnnotContents.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
-	let oDoc = Asc.editor.getPDFDoc();
-
-	let bSendAddCommentEvent = false;
-	if (oAnnot._contents == null && Value != null)
-		bSendAddCommentEvent = true;
-	
-	oAnnot._contents  = Value;
-		
-	if (bSendAddCommentEvent)
-		oDoc.CheckComment(oAnnot);
+	oAnnot._contents = Value;
 };
 
 /**

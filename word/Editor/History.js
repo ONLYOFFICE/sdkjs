@@ -1353,26 +1353,43 @@ CHistory.prototype.SetRecalculateIndex = function(nIndex)
 };
 CHistory.prototype.SaveRedoPoints = function()
 {
-	var arrData = [];
-	this.StoredData.push(arrData);
-	for (var nIndex = this.Index + 1, nCount = this.Points.length; nIndex < nCount; ++nIndex)
+	if (this.Index >= this.Points.length - 1)
 	{
-		arrData.push(this.Points[nIndex]);
+		this.StoredData.push(null);
+	}
+	else
+	{
+		let data = [];
+		for (let pointIndex = this.Index + 1, pointCount = this.Points.length; pointIndex < pointCount; ++pointIndex)
+		{
+			data.push(this.Points[pointIndex]);
+		}
+		this.StoredData.push(data);
 	}
 };
-CHistory.prototype.PopRedoPoints = function()
+CHistory.prototype.RestoreRedoPoints = function()
 {
 	if (this.StoredData.length <= 0)
 		return;
 
-	var arrPoints = this.StoredData[this.StoredData.length - 1];
-	this.Points.length = this.Index + 1;
-	for (var nIndex = 0, nCount = arrPoints.length; nIndex < nCount; ++nIndex)
+	let redoPoints = this.StoredData[this.StoredData.length - 1];
+	if (redoPoints)
 	{
-		this.Points[this.Index + nIndex + 1] = arrPoints[nIndex];
+		this.Points.length = this.Index + 1;
+		for (let pointIndex = 0, pointCount = redoPoints.length; pointIndex < pointCount; ++pointIndex)
+		{
+			this.Points.push(redoPoints[pointIndex]);
+		}
 	}
-
-	this.StoredData.length = this.StoredData.length - 1;
+	
+	--this.StoredData.length;
+};
+CHistory.prototype.DiscardRedoPoints = function()
+{
+	if (this.StoredData.length <= 0)
+		return;
+	
+	--this.StoredData.length;
 };
 CHistory.prototype.RemoveLastPoint = function()
 {

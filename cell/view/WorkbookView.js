@@ -2709,6 +2709,7 @@
 		ws.objectRender.controller.updateSelectionState();
 		ws.objectRender.controller.updateOverlay();
 	}
+	this.updateCopyRangeAnimation();
 
     if (!window["NATIVE_EDITOR_ENJINE"] || window["IS_NATIVE_EDITOR"]) {
       this._onSelectionNameChanged(ws.getSelectionName(/*bRangeText*/false));
@@ -2728,6 +2729,19 @@
     window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
   	ws.objectRender.controller.updatePlaceholders();
     return this;
+  };
+
+  WorkbookView.prototype.updateCopyRangeAnimation = function() {
+    var activeWs = this.wsViews[this.wsActive];
+    for (var i in this.wsViews) {
+      var item = this.wsViews[i];
+      if (item && item !== activeWs) {
+        item.stopCopyRangeAnimation();
+      }
+    }
+    if (activeWs) {
+      activeWs.startCopyRangeAnimation();
+    }
   };
 
   WorkbookView.prototype.stopTarget = function(ws) {
@@ -4315,6 +4329,9 @@
 				if(adjustPrint.isOnlyFirstPage && i !== 0) {
 					break;
 				}
+				if (adjustPrint.savePage > -1 && printPagesData.arrPages.length > adjustPrint.savePage) {
+					break;
+				}
 				this._calcPagesPrintSheet(activeSheetsArray[i], printPagesData, false, adjustPrint);
 			}
 		} else {
@@ -4326,6 +4343,9 @@
       for (i = 0; i < countWorksheets; ++i) {
       	if(adjustPrint.isOnlyFirstPage && i !== 0) {
       		break;
+		}
+		if (adjustPrint.savePage > -1 && printPagesData.arrPages.length > adjustPrint.savePage) {
+			break;
 		}
       	this._calcPagesPrintSheet(i, printPagesData, false, adjustPrint);
       }

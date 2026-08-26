@@ -155,6 +155,8 @@
         this._wasChanged            = false; // whether the form was changed
         this._bDrawFromStream       = false; // whether to draw from stream
         this._hasOriginView         = false; // whether it has appearance from file
+		this._layer                 = undefined;
+		this._redactIds             = [];
         this._originView = {
             normal:     null,
             mouseDown:  null,
@@ -171,6 +173,7 @@
         oDoc && this.SetDocument(oDoc);
 
         this.kidsContentChanges = new AscCommon.CContentChanges();
+		this.redactsArrayChanges = new AscCommon.CContentChanges();
         this.textMatrix = new AscCommon.CMatrix();
     }
 
@@ -433,7 +436,7 @@
 		oField.SetNeedUpdateEditShape(true);
 
         if (false == Asc.editor.getDocumentRenderer().IsOpenFormsInProgress) {
-            if (oField.IsWidget()) {
+            if (oField.IsWidget() && !oField.GetPartialName()) {
                 oField.SyncValue();
             }
         }
@@ -1673,6 +1676,8 @@
         return this._needRecalc;
     };
     CBaseField.prototype.Refresh_RecalcData = function(){};
+    CBaseField.prototype.Refresh_ContentChanges = function(){};
+    CBaseField.prototype.Clear_ContentChanges = function(){};
     CBaseField.prototype.SetWasChanged = function(isChanged, viewSync) {
         let oViewer   = Asc.editor.getDocumentRenderer();
         let canChange = !oViewer.IsOpenFormsInProgress && AscCommon.History.CanAddChanges() && !AscCommon.g_oIdCounter.IsLoad();
@@ -1758,6 +1763,7 @@
     CBaseField.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
         let nPage   = this.GetPage();
+		let isRedacted = this.IsRedacted();
         
         if (false == this.IsUseInDocument()) {
             return;
@@ -1765,7 +1771,14 @@
         
         function setRedrawPageOnRepaint() {
             if (oViewer.pagesInfo.pages[nPage]) {
-                oViewer.pagesInfo.pages[nPage].needRedrawForms = true;
+				let oPageInfo = oViewer.pagesInfo.pages[nPage];
+				if (isRedacted) {
+					oPageInfo.needRedrawDrawings = true;
+					oPageInfo.dirtyDrawingsBounds = null;
+				}
+				else {
+					oPageInfo.needRedrawForms = true;
+				}
                 oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
             }
         }
@@ -1776,6 +1789,37 @@
     CBaseField.prototype.GetType = function() {
         return this.type;
     };
+	CBaseField.prototype.SetLayer = function(nLayer) {
+		if (this._layer === nLayer) {
+			return;
+		}
+
+		AscCommon.History.Add(new CChangesPDFObjectLayer(this, this._layer, nLayer));
+		this._layer = nLayer;
+		this.AddToRedraw();
+	};
+	CBaseField.prototype.GetLayer = function() {
+		return this._layer;
+	};
+	CBaseField.prototype.AddRedactId = function(id) {
+		AscCommon.History.Add(new CChangesPDFDrawingRedacts(this, this._redactIds.length, [id], true));
+		this._redactIds.push(id);
+	};
+	CBaseField.prototype.GetRedactIds = function() {
+		return this._redactIds;
+	};
+	CBaseField.prototype.RemoveRedactId = function(nPos) {
+		let ids = this._redactIds.splice(nPos, 1);
+		AscCommon.History.Add(new CChangesPDFDrawingRedacts(this, nPos, ids, false));
+		return ids[0];
+	};
+	CBaseField.prototype.ClearRedacts = function() {
+		let nCount = this._redactIds.length;
+		for (let i = 0; i < nCount; i++) {
+			this.RemoveRedactId(0);
+		}
+	};
+	CBaseField.prototype.Add_ContentChanges = function() {};
     CBaseField.prototype.GetStrType = function() {
         switch (this.GetType()) {
             case AscPDF.FIELD_TYPES.button:
@@ -2452,6 +2496,11 @@
 			return;
 		}
 
+		let isRedactClipApplied = false;
+		if (textBoxGraphics && this.GetRedactIds().length != 0) {
+			isRedactClipApplied = AscPDF.CPdfDrawingPrototype.prototype.StartRedactClip.call(this, textBoxGraphics);
+		}
+
         if (pdfGraphics.isThumbnails) {
             this.DrawBorders(pdfGraphics);
         }
@@ -2464,6 +2513,8 @@
 
 		this.DrawLocks(pdfGraphics);
         this.DrawEdit(textBoxGraphics);
+
+		AscPDF.CPdfDrawingPrototype.prototype.EndRedactClip.call(this, textBoxGraphics, isRedactClipApplied);
 	};
 
     CBaseField.prototype.DrawFromStream = function(oGraphicsPDF, oGraphicsWord) {
@@ -2779,6 +2830,7 @@
         
         if (oDoc.activeForm == this) {
             oDoc.activeForm = null;
+			oDoc.mouseDownField = null;
             this.onBlur();
         }
     };

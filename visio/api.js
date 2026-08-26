@@ -687,8 +687,9 @@
 		}
 
 		var pagescount = this["asc_nativePrintPagesCount"]();
-		if (options && options["printOptions"] && options["printOptions"]["onlyFirstPage"])
-			pagescount = 1;
+		var pageNum = -1;
+		if (options && options["printOptions"] && options["printOptions"]["savePage"] !== undefined && options["printOptions"]["savePage"] !== -1)
+			pageNum = options["printOptions"]["savePage"];
 
 		var _renderer                         = new AscCommon.CDocumentRenderer();
 		_renderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
@@ -701,7 +702,13 @@
 		let nativeOptions = options ? options["nativeOptions"] : undefined;
 		let pages = nativeOptions ? AscCommon.getNativePrintRanges(nativeOptions["pages"], nativeOptions["currentPage"], pagescount) : undefined;
 
-		for (var i = 0; i < pagescount; i++)
+		var i = 0;
+		if (pageNum != -1)
+		{
+			i = pageNum;
+			pagescount = i + 1;
+		}
+		for (; i < pagescount; i++)
 		{
 			if (pages !== undefined && !pages[i])
 				continue;

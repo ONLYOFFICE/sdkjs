@@ -290,6 +290,28 @@
                     }
                 }
             }
+            else if("cellrange" === sFieldType)
+            {
+                if(this.Paragraph && this.Paragraph.Parent)
+                {
+                    oStylesObject = this.Paragraph.Parent.Get_Styles();
+                    if(oStylesObject.shape && oStylesObject.shape.getDataLabelsRangeString)
+                    {
+                        sStr = oStylesObject.shape.getDataLabelsRangeString();
+                    }
+                }
+            }
+            else if("seriesname" === sFieldType)
+            {
+                if(this.Paragraph && this.Paragraph.Parent)
+                {
+                    oStylesObject = this.Paragraph.Parent.Get_Styles();
+                    if(oStylesObject.shape && oStylesObject.shape.getSeriesName)
+                    {
+                        sStr = oStylesObject.shape.getSeriesName();
+                    }
+                }
+            }
             else if(sFieldType.indexOf("datetime") === 0)
             {
                 oFormat = this.private_GetDateTimeFormat(sFieldType);

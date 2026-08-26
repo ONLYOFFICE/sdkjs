@@ -60,7 +60,7 @@
 	function CAnimExportPlan(presentation, settings) {
 		this.presentation = presentation;
 		this.settings = settings;
-		this.fps = AscCommonSlide.getAnimatedExportPresetFps(settings.format, settings.preset);
+		this.fps = AscCommonSlide.getAnimatedExportFps(settings);
 		this.frameWidth = 0;
 		this.frameHeight = 0;
 		this.slides = [];

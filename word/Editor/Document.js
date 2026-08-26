@@ -2009,6 +2009,9 @@ CDocument.prototype.StartAction = function(nDescription, oSelectionState, flags,
 {
 	this.sendEvent("asc_onUserActionStart");
 	
+	if (!this.Action.Start)
+		this.History.SaveRedoPoints();
+	
 	let isNewPoint = false;
 	if (!this.Action.Start || this.IsMultiplePointAction())
 		isNewPoint = this.History.Create_NewPoint(nDescription, oSelectionState);
@@ -2239,8 +2242,14 @@ CDocument.prototype.FinalizeAction = function(checkEmptyAction, additional)
 	
 	if (!this.private_CheckEmptyPointsInAction(checkEmptyAction))
 	{
+		this.History.DiscardRedoPoints();
+		
 		if (!window['AscCommon'].g_specialPasteHelper.pasteStart)
 			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
+	}
+	else
+	{
+		this.History.RestoreRedoPoints();
 	}
 	
 	this.private_CheckActionLock();
@@ -13029,7 +13038,7 @@ CDocument.prototype.SetWatermarkPropsAction = function(oProps)
 			resultWatermark = watermark;
 		
 		const oContent = hdrFtr.GetContent();
-		let oWatermarkCC = null;
+		let watermarkCC = null;
 		const aAllContentControls = oContent.GetAllContentControls();
 		const nCount = aAllContentControls.length;
 		for (let nContentControl = 0; nContentControl < nCount; ++nContentControl)
@@ -13038,21 +13047,28 @@ CDocument.prototype.SetWatermarkPropsAction = function(oProps)
 			let oDocPart = oContentControl.Pr.DocPartObj;
 			if (oDocPart.Gallery === "Watermarks" && oDocPart.Unique)
 			{
-				oWatermarkCC = oContentControl;
+				watermarkCC = oContentControl;
 				break;
 			}
 		}
 		
-		if (!oWatermarkCC)
+		if (!watermarkCC)
 		{
-			oWatermarkCC = oContent.AddContentControl(c_oAscSdtLevelType.Inline);
-			oWatermarkCC.SetDocPartObj(undefined, "Watermarks", true);
+			watermarkCC = oContent.AddContentControl(c_oAscSdtLevelType.Inline);
+			watermarkCC.SetDocPartObj(undefined, "Watermarks", true);
+		}
+		else
+		{
+			if (watermarkCC.IsBlockLevel())
+				watermarkCC.GetContent().MakeSingleParagraphContent().MakeSingleRunParagraph(true);
+			else if (watermarkCC.IsInlineLevel())
+				watermarkCC.MakeSingleRunElement(true);
 		}
 		
-		if (oWatermarkCC.IsBlockLevel())
-			oWatermarkCC.AddToParagraph(watermark);
+		if (watermarkCC.IsBlockLevel())
+			watermarkCC.AddToParagraph(watermark);
 		else
-			oWatermarkCC.Add(watermark);
+			watermarkCC.Add(watermark);
 	});
 	
 	this.Set_SelectionState2(docState);
@@ -17848,7 +17864,7 @@ CDocument.prototype.SetContentControlText = function(sText, oCC)
 
 		var oRun;
 		if (oCC.IsBlockLevel())
-			oRun = this.Content.MakeSingleParagraphContent().MakeSingleRunParagraph(true);
+			oRun = oCC.GetContent().MakeSingleParagraphContent().MakeSingleRunParagraph(true);
 		else if (oCC.IsInlineLevel())
 			oRun = oCC.MakeSingleRunElement(true);
 
@@ -23628,7 +23644,7 @@ CDocument.prototype.EndViewModeInReview = function(nMode)
 
 	this.Document_Undo();
 	this.History.Clear_Redo();
-	this.History.PopRedoPoints();
+	this.History.RestoreRedoPoints();
 
 	if (this.ViewModeInReview.isFastCollaboration)
 		this.CollaborativeEditing.Set_Fast(true);

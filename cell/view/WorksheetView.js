@@ -730,19 +730,19 @@ function isAllowPasteLink(pastedWb) {
 			if(aResultCheckRange.length > 2) {
 				let oFirstRange = aResultCheckRange[0];
 				let oSecondRange = aResultCheckRange[1];
-				if(!oFirstRange.isEqualCols(oSecondRange) && !oFirstRange.isEqualRows(oSecondRange)) {
+				if(!oFirstRange.bbox.isEqualCols(oSecondRange.bbox) && !oFirstRange.bbox.isEqualRows(oSecondRange.bbox)) {
 					return null;
 				}
-				let bRows = oFirstRange.isEqualRows(oSecondRange);
+				let bRows = oFirstRange.bbox.isEqualRows(oSecondRange.bbox);
 				for(let nRange = 2; nRange < aResultCheckRange.length; ++nRange) {
 					let oCurRange = aResultCheckRange[nRange];
 					if(bRows) {
-						if(!oFirstRange.isEqualRows(oCurRange)) {
+						if(!oFirstRange.bbox.isEqualRows(oCurRange.bbox)) {
 							return null;
 						}
 					}
 					else {
-						if(!oFirstRange.isEqualCols(oCurRange)) {
+						if(!oFirstRange.bbox.isEqualCols(oCurRange.bbox)) {
 							return null;
 						}
 					}
@@ -3522,8 +3522,12 @@ function isAllowPasteLink(pastedWb) {
 			_bPrintAreaC2 = bPrintArea ? range.c2 : false;
 		}
 
+		let savePage = adjustPrint ? adjustPrint.savePage : -1;
 		while (AscCommonExcel.c_kMaxPrintPages > arrPages.length) {
 			if(isOnlyFirstPage && nCountPages > 0) {
+				break;
+			}
+			if (savePage > -1 && arrPages.length > savePage) {
 				break;
 			}
 
@@ -7367,7 +7371,7 @@ function isAllowPasteLink(pastedWb) {
 				t._cutRangeClearTimer = null;
 				t.copyCutRange = null;
 				t.stopCopyRangeAnimation();
-				if (t.overlayCtx) {
+				if (t.overlayCtx && t.isActiveSheetView()) {
 					t.overlayCtx.clear();
 					t._drawSelection();
 				}
@@ -7379,8 +7383,12 @@ function isAllowPasteLink(pastedWb) {
 		return this.copyCutRange;
 	};
 
+	WorksheetView.prototype.isActiveSheetView = function () {
+		return !!(this.workbook && this.workbook.wsViews[this.workbook.wsActive] === this);
+	};
+
 	WorksheetView.prototype.startCopyRangeAnimation = function () {
-		if (this._copyRangeAnimationId) {
+		if (this._copyRangeAnimationId || !c_oAscCutRangeAnimation || !this.getCutRange() || !this.isActiveSheetView()) {
 			return;
 		}
 		let t = this;
@@ -7390,7 +7398,7 @@ function isAllowPasteLink(pastedWb) {
 		this._copyRangeAnimationIsRetina = isRetina;
 		this.copyRangeAnimationOffset = 0;
 		this._copyRangeAnimationId = setInterval(function () {
-			if (!t.getCutRange() || !t.overlayCtx) {
+			if (!t.getCutRange() || !t.overlayCtx || !t.isActiveSheetView()) {
 				t.stopCopyRangeAnimation();
 				return;
 			}

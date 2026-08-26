@@ -41,6 +41,7 @@
 	const KEYFRAME_INTERVAL = 100;
 	const MAX_ENCODE_QUEUE = 8;
 	const DEFAULT_VIDEO_CODEC = "vp09.00.10.08";
+	const FALLBACK_VIDEO_CODEC = "vp8";
 	const WEBP_QUALITY = 0.85;
 	const PROBE_WIDTH = 1920;
 	const PROBE_HEIGHT = 1080;
@@ -56,7 +57,7 @@
 		return bitrate > MAX_VIDEO_BITRATE ? MAX_VIDEO_BITRATE : bitrate;
 	}
 	function getFrameRate(settings) {
-		return AscCommonSlide.getAnimatedExportPresetFps(settings.format, settings.preset);
+		return AscCommonSlide.getAnimatedExportFps(settings);
 	}
 	const DEFAULT_MP4_CODEC = "avc1.42001f";
 
@@ -242,8 +243,10 @@
 		return "V_VP8";
 	}
 
+	let webmCodec = DEFAULT_VIDEO_CODEC;
+
 	function CAnimExportWebmWriter(width, height, settings) {
-		this.codec = DEFAULT_VIDEO_CODEC;
+		this.codec = webmCodec;
 		this.muxer = new AscCommonSlide.CWebMMuxer(width, height, getWebmCodecId(this.codec));
 		this.timeUs = 0;
 		this.frameIndex = 0;
@@ -314,6 +317,15 @@
 			});
 		});
 	}
+	function pickCodec(preferred, supported) {
+		for (let index = 0; index < preferred.length; ++index) {
+			if (supported.indexOf(preferred[index]) >= 0) {
+				return preferred[index];
+			}
+		}
+		return null;
+	}
+
 	CAnimExportWebmWriter.isSupported = function () {
 		return typeof VideoEncoder !== "undefined" && typeof VideoFrame !== "undefined" && !!window.isSecureContext;
 	};
@@ -580,20 +592,43 @@
 		return "video/mp4";
 	};
 
+	let supportedFormats = null;
+	let pendingFormatCallbacks = null;
+
 	function getSupportedAnimExportFormats(callback) {
+		if (supportedFormats) {
+			callback(supportedFormats.slice());
+			return;
+		}
+		if (pendingFormatCallbacks) {
+			pendingFormatCallbacks.push(callback);
+			return;
+		}
+		pendingFormatCallbacks = [callback];
+		const finish = function (result) {
+			supportedFormats = result;
+			const callbacks = pendingFormatCallbacks;
+			pendingFormatCallbacks = null;
+			for (let index = 0; index < callbacks.length; ++index) {
+				callbacks[index](result.slice());
+			}
+		};
+
 		const formats = [Asc.c_oAscAnimatedExportFormat.Gif];
 		if (CAnimExportWebpWriter.isSupported()) {
 			formats.push(Asc.c_oAscAnimatedExportFormat.WebP);
 		}
 		const candidates = [];
 		if (CAnimExportWebmWriter.isSupported()) {
-			candidates.push({format: Asc.c_oAscAnimatedExportFormat.WebM, codec: DEFAULT_VIDEO_CODEC});
+			candidates.push({format: Asc.c_oAscAnimatedExportFormat.WebM,
+				codecs: [DEFAULT_VIDEO_CODEC, FALLBACK_VIDEO_CODEC]});
 		}
 		if (CAnimExportMp4Writer.isSupported()) {
-			candidates.push({format: Asc.c_oAscAnimatedExportFormat.Mp4, codec: DEFAULT_MP4_CODEC});
+			candidates.push({format: Asc.c_oAscAnimatedExportFormat.Mp4,
+				codecs: [getMp4Codec(DEFAULT_MP4_CODEC, PROBE_WIDTH, PROBE_HEIGHT)]});
 		}
 		if (0 === candidates.length) {
-			callback(formats);
+			finish(formats);
 			return;
 		}
 
@@ -603,13 +638,17 @@
 				return;
 			}
 			formats.sort(function (a, b) { return a - b; });
-			callback(formats);
+			finish(formats);
 		};
 		for (let index = 0; index < candidates.length; ++index) {
 			const candidate = candidates[index];
-			probeCodecs([candidate.codec], PROBE_WIDTH, PROBE_HEIGHT, function (supported) {
-				if (supported.length) {
+			probeCodecs(candidate.codecs, PROBE_WIDTH, PROBE_HEIGHT, function (supported) {
+				const codec = pickCodec(candidate.codecs, supported);
+				if (codec) {
 					formats.push(candidate.format);
+					if (Asc.c_oAscAnimatedExportFormat.WebM === candidate.format) {
+						webmCodec = codec;
+					}
 				}
 				onAnswer();
 			});
@@ -617,6 +656,9 @@
 	}
 
 	function isAnimExportFormatSupported(format) {
+		if (supportedFormats) {
+			return supportedFormats.indexOf(format) >= 0;
+		}
 		if (Asc.c_oAscAnimatedExportFormat.Gif === format) {
 			return true;
 		}

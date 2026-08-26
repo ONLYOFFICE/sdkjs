@@ -928,6 +928,7 @@ var CPresentation = CPresentation || function(){};
                         pdfMatch.Selection.Use   = true;
                         pdfMatch.Selection.Start = false;
 
+						pdfMatch.SetThisElementCurrent();
                         pdfMatch.Set_SelectionContentPos(searchElement.StartPos, searchElement.EndPos);
                         pdfMatch.Set_ParaContentPos(searchElement.StartPos, false, -1, -1);
                         pdfMatch.Parent.Selection.Use      = true;
@@ -989,6 +990,7 @@ var CPresentation = CPresentation || function(){};
                     pdfMatch.Selection.Use   = true;
                     pdfMatch.Selection.Start = false;
 
+					pdfMatch.SetThisElementCurrent();
                     pdfMatch.Set_SelectionContentPos(searchElement.StartPos, searchElement.EndPos);
                     pdfMatch.Set_ParaContentPos(searchElement.StartPos, false, -1, -1);
                     pdfMatch.Parent.Selection.Use      = true;
@@ -1326,26 +1328,26 @@ var CPresentation = CPresentation || function(){};
 
         let oViewer         = editor.getDocumentRenderer();
         let oDrDoc          = this.GetDrawingDocument();
-        let aWidgetForms    = this.widgets;
+        let aWidgets    	= this.widgets;
         let oActionsQueue   = this.GetActionsQueue();
 		
-		if (this.IsEditFieldsMode() || aWidgetForms.length == 0)
+		if (this.IsEditFieldsMode() || aWidgets.length == 0)
             return;
 
-        let nCurIdx = this.widgets.indexOf(this.activeForm);
-        let oCurForm = this.widgets[nCurIdx];
+		let nCurIdx = aWidgets.indexOf(this.activeForm);
+        let oCurForm = aWidgets[nCurIdx];
         let oNextForm;
 
-        for (let i = nCurIdx + 1; i <= this.widgets.length; i++) {
-            if (this.widgets[i]) {
-                if (this.widgets[i].IsHidden() == false) {
-                    oNextForm = this.widgets[i];
+        for (let i = nCurIdx + 1; i <= aWidgets.length; i++) {
+            if (aWidgets[i]) {
+                if (aWidgets[i].IsHidden() == false) {
+                    oNextForm = aWidgets[i];
                     break;
                 }
             }
             else {
-                if (this.widgets[0] != oCurForm)
-                    oNextForm = this.widgets[0];
+                if (aWidgets[0] != oCurForm)
+                    oNextForm = aWidgets[0];
                 else
                     return;
             }
@@ -1358,7 +1360,19 @@ var CPresentation = CPresentation || function(){};
 		if (!this.checkFieldFont(oNextForm, function(){_t.SelectNextForm();}))
 			return;
 
-        this.BlurActiveObject();
+		switch (oNextForm.GetType()) {
+			case AscPDF.FIELD_TYPES.text:
+			case AscPDF.FIELD_TYPES.combobox: {
+				let oController = this.GetController();
+				oController.selectObject(oNextForm, oNextForm.GetPage());
+				oController.selection.textSelection = oNextForm;
+				break;
+			}
+			default: {
+				this.BlurActiveObject();
+			}
+		}
+		
         this.activeForm = oNextForm;
         oNextForm.Recalculate();
         
@@ -1414,26 +1428,26 @@ var CPresentation = CPresentation || function(){};
 		
         let oViewer         = editor.getDocumentRenderer();
         let oDrDoc          = this.GetDrawingDocument();
-        let aWidgetForms    = this.widgets;
+        let aWidgets    	= this.widgets;
         let oActionsQueue   = this.GetActionsQueue();
 		
-		if (this.IsEditFieldsMode() || aWidgetForms.length == 0)
+		if (this.IsEditFieldsMode() || aWidgets.length == 0)
             return;
 
-        let nCurIdx = this.widgets.indexOf(this.activeForm);
-        let oCurForm = this.widgets[nCurIdx];
+        let nCurIdx = aWidgets.indexOf(this.activeForm);
+		let oCurForm = aWidgets[nCurIdx];
         let oNextForm;
 
-        for (let i = nCurIdx - 1; i >= -1; i--) {
-            if (this.widgets[i]) {
-                if (this.widgets[i].IsHidden() == false) {
-                    oNextForm = this.widgets[i];
+        for (let i = nCurIdx - 1; i >= -2; i--) {
+            if (aWidgets[i]) {
+                if (aWidgets[i].IsHidden() == false) {
+                    oNextForm = aWidgets[i];
                     break;
                 }
             }
             else {
-                if (this.widgets[this.widgets.length - 1] != oCurForm)
-                    oNextForm = this.widgets[this.widgets.length - 1];
+                if (aWidgets[aWidgets.length - 1] != oCurForm)
+                    oNextForm = aWidgets[aWidgets.length - 1];
                 else
                     return;
             }
@@ -1446,10 +1460,21 @@ var CPresentation = CPresentation || function(){};
 		if (!this.checkFieldFont(oNextForm, function(){_t.SelectNextForm();}))
 			return;
 
-        this.BlurActiveObject();
+        switch (oNextForm.GetType()) {
+			case AscPDF.FIELD_TYPES.text:
+			case AscPDF.FIELD_TYPES.combobox: {
+				let oController = this.GetController();
+				oController.selectObject(oNextForm, oNextForm.GetPage());
+				oController.selection.textSelection = oNextForm;
+				break;
+			}
+			default: {
+				this.BlurActiveObject();
+			}
+		}
         this.activeForm = oNextForm;
         oNextForm.Recalculate();
-        
+		
         let nFieldType = oNextForm.GetType();
         
         oNextForm.onFocus();
@@ -1780,6 +1805,7 @@ var CPresentation = CPresentation || function(){};
         
         if (false == oActiveObj.IsUseInDocument()) {
             this.activeForm = null;
+			this.mouseDownField = null;
             this.mouseDownAnnot = null;
             this.activeDrawing = null;
             return;
@@ -1799,6 +1825,7 @@ var CPresentation = CPresentation || function(){};
 			
             if (this.IsEditFieldsMode() && false == oActiveObj.IsInForm()) {
                 this.activeForm = null;
+				this.mouseDownField = null;
                 oActiveObj.asc_curImageState = undefined;
                 return;
             }
@@ -4036,7 +4063,7 @@ var CPresentation = CPresentation || function(){};
                 this.UpdateUndoRedo();
             
             return oStickyComm;
-        }, AscDFH.historydescription_Pdf_AddComment, this, oActiveAnnot && oActiveAnnot.GetId());
+        }, AscDFH.historydescription_Pdf_AddComment, this, oActiveAnnot ? [oActiveAnnot.GetId()] : undefined);
 
         AscCommon.History = oCurHistory;
         return res;
@@ -4472,7 +4499,7 @@ var CPresentation = CPresentation || function(){};
             }
         }
 
-		if (oAnnot.GetContents() == false) {
+		if (!oAnnot.GetContents()) {
 			return;
 		}
 		
@@ -4647,7 +4674,27 @@ var CPresentation = CPresentation || function(){};
 		}
 	};
 	CPDFDoc.prototype.SetAllFieldsRedacted = function() {
-		this.widgets.forEach(function(widget) {
+		let aDrawings = this.drawings;
+		let aFields = this.widgets;
+		let nLayer = 1;
+		if (aFields.length == 0) {
+			return;
+		}
+
+		aDrawings.concat(this.redactedFields).forEach(function(object) {
+			let nObjectLayer = object.GetLayer();
+			if (typeof(nObjectLayer) === "number") {
+				nLayer = Math.max(nLayer, nObjectLayer + 1);
+			}
+		});
+
+		aDrawings.forEach(function(drawing) {
+			if (drawing.GetLayer() == null) {
+				drawing.SetLayer(nLayer);
+			}
+		});
+		aFields.forEach(function(widget) {
+			widget.SetLayer(nLayer);
 			widget.SetRedacted(true);
 		});
 	};
@@ -4991,8 +5038,6 @@ var CPresentation = CPresentation || function(){};
 	 * @returns {AscPDF.CAnnotationBase}
 	 */
     CPDFDoc.prototype.HideShowAnnots = function(bHidden) {
-        let oController = this.GetController();
-
         this.annots.forEach(function(annot) {
             annot.SetDisplay(bHidden ? window["AscPDF"].Api.Types.display["hidden"] : window["AscPDF"].Api.Types.display["visible"]);
             annot.AddToRedraw();
@@ -7285,8 +7330,8 @@ var CPresentation = CPresentation || function(){};
         let oXfrm = oStamp.getXfrm();
         oStamp.SetIconType(sType);
         oStamp.SetBorderWidth(nLineW);
-		oStamp.SetInRect([X1, Y2, X1, Y1, X2, Y1, X2, Y2]);
         oXfrm.setRot(-nRotAngle * (Math.PI / 180));
+		oStamp.SetInRect([X1, Y2, X1, Y1, X2, Y1, X2, Y2]);
         
         if (oStampRender) {
             oStamp.SetRenderStructure(oStampRender.m_aStack[0]);
@@ -7404,6 +7449,18 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.GetController = function() {
         return this.DrawingObjects;
     };
+	function getDrawingPositionsInLayer(aDrawings, oDrawing) {
+		let nLayer = oDrawing.GetLayer();
+		let aPositions = [];
+
+		for (let i = 0; i < aDrawings.length; i++) {
+			if (aDrawings[i].GetLayer() === nLayer) {
+				aPositions.push(i);
+			}
+		}
+
+		return aPositions;
+	}
     CPDFDoc.prototype.BringToFront = function() {
         this.DoAction(function() {
             let oController = this.GetController();
@@ -7413,7 +7470,8 @@ var CPresentation = CPresentation || function(){};
                 for (let i = aSelectedObjects.length - 1; i > -1; --i) {
                     let oShape = aSelectedObjects[i];
                     let oDrawings = oController.getDrawingObjects(oShape.GetPage());
-                    this.ChangeDrawingPosInPageTree(oShape, oDrawings.length - 1);
+					let aPositions = getDrawingPositionsInLayer(oDrawings, oShape);
+					this.ChangeDrawingPosInPageTree(oShape, aPositions[aPositions.length - 1]);
                 }
             }
             else {
@@ -7431,8 +7489,12 @@ var CPresentation = CPresentation || function(){};
                     let oShape = aSelectedObjects[i];
                     let oDrawings = oController.getDrawingObjects(oShape.GetPage());
                     let nCurPos = oDrawings.indexOf(oShape);
+					let aPositions = getDrawingPositionsInLayer(oDrawings, oShape);
+					let nPosInLayer = aPositions.indexOf(nCurPos);
 
-                    this.ChangeDrawingPosInPageTree(oShape, nCurPos + 1);
+					if (nPosInLayer < aPositions.length - 1) {
+						this.ChangeDrawingPosInPageTree(oShape, aPositions[nPosInLayer + 1]);
+					}
                 }
             }
             else {
@@ -7448,7 +7510,9 @@ var CPresentation = CPresentation || function(){};
             if (!(oController.selection.groupSelection)) {
                 for (let i = aSelectedObjects.length - 1; i > -1; --i) {
                     let oShape = aSelectedObjects[i];
-                    this.ChangeDrawingPosInPageTree(oShape, 0);
+					let oDrawings = oController.getDrawingObjects(oShape.GetPage());
+					let aPositions = getDrawingPositionsInLayer(oDrawings, oShape);
+					this.ChangeDrawingPosInPageTree(oShape, aPositions[0]);
                 }
             }
             else {
@@ -7466,8 +7530,12 @@ var CPresentation = CPresentation || function(){};
                     let oShape = aSelectedObjects[i];
                     let oDrawings = oController.getDrawingObjects(oShape.GetPage());
                     let nCurPos = oDrawings.indexOf(oShape);
+					let aPositions = getDrawingPositionsInLayer(oDrawings, oShape);
+					let nPosInLayer = aPositions.indexOf(nCurPos);
 
-                    this.ChangeDrawingPosInPageTree(oShape, nCurPos - 1);
+					if (nPosInLayer > 0) {
+						this.ChangeDrawingPosInPageTree(oShape, aPositions[nPosInLayer - 1]);
+					}
                 }
             }
             else {
@@ -7500,6 +7568,7 @@ var CPresentation = CPresentation || function(){};
         let nPage       = oOldDrawing.GetPage();
         let nPos     = aDrawings.indexOf(oOldDrawing);
 
+		oNewDrawing.SetLayer(oOldDrawing.GetLayer());
         this.RemoveDrawing(oOldDrawing.GetId());
         this.AddDrawing(oNewDrawing, nPage, nPos);
         oNewDrawing.select(oController, nPage);
@@ -8006,7 +8075,9 @@ var CPresentation = CPresentation || function(){};
 			if (!isOnMerge) {
 				oPageInfo.drawings.forEach(function(drawing) {
 					drawing.AddRedactId(sRedactId);
-					return;
+				});
+				oPageInfo.redactedFields.forEach(function(field) {
+					field.AddRedactId(sRedactId);
 				});
 			}
 			
@@ -8114,6 +8185,8 @@ var CPresentation = CPresentation || function(){};
 
 	// redact meta
 	CPDFDoc.prototype.RedactMeta = function(props) {
+		this.BlurActiveObject();
+		
 		let _t = this;
 		let nOldFlags = this.redactMetaFlags || 0;
 		let nFlags = nOldFlags;

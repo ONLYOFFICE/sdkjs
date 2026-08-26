@@ -324,6 +324,7 @@ function (window, undefined) {
 	};
 	CAxis.prototype.getMenuProps = function() {
 		const ret = this.isVertical() ? new AscCommon.asc_ValAxisSettings() : new AscCommon.asc_CatAxisSettings();
+		ret.setDefault();
 		ret.putShow(!this.bDelete);
 		ret.putLabel(this.getLabelSetting());
 		ret.putGridlines(this.getGridlinesSetting());

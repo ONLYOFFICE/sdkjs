@@ -14955,6 +14955,35 @@
 		return sAction.indexOf("ppaction://hlink") === 0;
 	}
 
+	const ppactionFileAction = "ppaction://hlinkfile";
+	const ppactionFilePrefix = ppactionFileAction + "?file=";
+
+	function IsLinkPPActionFile(link) {
+		return typeof link === "string" && 0 === link.indexOf(ppactionFileAction);
+	}
+
+	function GetPPActionFilePath(link) {
+		const path = link.substring(ppactionFilePrefix.length).replace(/%20/g, " ");
+		const windowsPath = /^(?:file:\/\/\/)?([a-zA-Z]:.*)$/.exec(path);
+		return windowsPath ? windowsPath[1].replace(/\//g, "\\") : path;
+	}
+
+	function GetPPActionFileUrl(link) {
+		let path = link.substring(ppactionFilePrefix.length);
+		if (!path) {
+			return "";
+		}
+		if (0 === path.indexOf("file:")) {
+			return path;
+		}
+
+		path = path.replace(/\\/g, "/");
+		if (!/^([a-zA-Z]:|\/)/.test(path)) {
+			path = AscCommonExcel.completePathForLocalLinks(path).replace(/\\/g, "/");
+		}
+		return "file:///" + path.replace(/^\/+/, "");
+	}
+
 	function generateHashParams() {
 		return {spinCount: 100000, saltValue: AscCommon.randomBytes(16).base64()};
 	}
@@ -15869,6 +15898,9 @@
 	window['AscCommon'].g_oCRC32  = g_oCRC32;
 	window["AscCommon"].RangeTopBottomIterator = RangeTopBottomIterator;
 	window["AscCommon"].IsLinkPPAction = IsLinkPPAction;
+	window["AscCommon"].IsLinkPPActionFile = IsLinkPPActionFile;
+	window["AscCommon"].GetPPActionFilePath = GetPPActionFilePath;
+	window["AscCommon"].GetPPActionFileUrl = GetPPActionFileUrl;
 	window["AscCommon"].generateHashParams = generateHashParams;
 	window["AscCommon"].fromModelAlgorithmName = fromModelAlgorithmName;
 	window["AscCommon"].fromModelCryptAlgorithmSid = fromModelCryptAlgorithmSid;

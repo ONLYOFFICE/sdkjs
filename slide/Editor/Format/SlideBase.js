@@ -917,7 +917,6 @@
 	function addHeaderShape(slideObject) {
 		var oNvSpPr = new AscFormat.UniNvPr();
 		var oCNvPr = oNvSpPr.cNvPr;
-		oCNvPr.setId(2);
 		oCNvPr.setName("Header Placeholder 1");
 		var oPh = new AscFormat.Ph();
 		oPh.setType(AscFormat.phType_hdr);
@@ -936,7 +935,6 @@
 	function addDateShape(slideObject) {
 		const oNvSpPr = new AscFormat.UniNvPr();
 		const oCNvPr = oNvSpPr.cNvPr;
-		oCNvPr.setId(3);
 		oCNvPr.setName("Date Placeholder 2");
 		const oPh = new AscFormat.Ph();
 		oPh.setType(AscFormat.phType_dt);
@@ -956,7 +954,6 @@
 	function addFooterShape(slideObject) {
 		const oNvSpPr = new AscFormat.UniNvPr();
 		const oCNvPr = oNvSpPr.cNvPr;
-		oCNvPr.setId(4);
 		oCNvPr.setName("Footer Placeholder 3");
 		const oPh = new AscFormat.Ph();
 		oPh.setType(AscFormat.phType_ftr);
@@ -976,7 +973,6 @@
 	function addNumberShape(slideObject) {
 		const oNvSpPr = new AscFormat.UniNvPr();
 		const oCNvPr = oNvSpPr.cNvPr;
-		oCNvPr.setId(5);
 		oCNvPr.setName("Slide Number Placeholder 4");
 		const oPh = new AscFormat.Ph();
 		oPh.setType(AscFormat.phType_sldNum);
@@ -1020,7 +1016,6 @@
 	function addBodyShape(slideObject) {
 		const oNvSpPr = new AscFormat.UniNvPr();
 		const oCNvPr = oNvSpPr.cNvPr;
-		oCNvPr.setId(5);
 		oCNvPr.setName("Notes Placeholder 4");
 		const oPh = new AscFormat.Ph();
 		oPh.setType(AscFormat.phType_body);
@@ -1051,7 +1046,6 @@
 	function addSlideImage(slideObject) {
 		const oNvSpPr = new AscFormat.UniNvPr();
 		const oCNvPr = oNvSpPr.cNvPr;
-		oCNvPr.setId(4);
 		oCNvPr.setName("Slide Image Placeholder 3");
 		const oPh = new AscFormat.Ph();
 		oPh.setType(AscFormat.phType_sldImg);

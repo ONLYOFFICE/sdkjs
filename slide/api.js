@@ -1863,11 +1863,6 @@ background-repeat: no-repeat;\
 		ParaPr.Position    = TextPr.Position;
 		ParaPr.ListType = AscFormat.fGetListTypeFromBullet(ParaPr.Bullet);
 		this.sync_ParaSpacingLine(ParaPr.Spacing);
-		this.Update_ParaInd(ParaPr.Ind, ParaPr.Bidi);
-		this.sync_PrAlignCallBack(ParaPr.Jc);
-		this.sync_ParaStyleName(ParaPr.StyleName);
-		this.sync_ListType(ParaPr.ListType);
-		this.sync_PrPropCallback(ParaPr);
 
 		let bidi = ParaPr.Bidi;
 		if (undefined === bidi)
@@ -1875,6 +1870,12 @@ background-repeat: no-repeat;\
 			let paragraph = presentation.GetCurrentParagraph(false, false, {FirstInSelection : true});
 			bidi = paragraph ? paragraph.GetParagraphBidi() : undefined;
 		}
+
+		this.Update_ParaInd(ParaPr.Ind, bidi);
+		this.sync_PrAlignCallBack(ParaPr.Jc);
+		this.sync_ParaStyleName(ParaPr.StyleName);
+		this.sync_ListType(ParaPr.ListType);
+		this.sync_PrPropCallback(ParaPr);
 		this.sendEvent("asc_onTextDirection", bidi);
 	};
 	/*----------------------------------------------------------------*/
@@ -3867,30 +3868,13 @@ background-repeat: no-repeat;\
 	/*----------------------------------------------------------------*/
 
 
-	asc_docs_api.prototype.Update_ParaInd                = function(Ind)
+	asc_docs_api.prototype.Update_ParaInd                = function(paraInd, isRtl)
 	{
-		var FirstLine = 0;
-		var Left      = 0;
-		var Right     = 0;
-		if ("undefined" != typeof(Ind))
-		{
-			if ("undefined" != typeof(Ind.FirstLine))
-			{
-				FirstLine = Ind.FirstLine;
-			}
-			if ("undefined" != typeof(Ind.Left))
-			{
-				Left = Ind.Left;
-			}
-			if ("undefined" != typeof(Ind.Right))
-			{
-				Right = Ind.Right;
-			}
-		}
-
-		this.Internal_Update_Ind_Left(Left);
-		this.Internal_Update_Ind_FirstLine(FirstLine, Left);
-		this.Internal_Update_Ind_Right(Right);
+		let updateFlag = this.WordControl.m_oHorRuler.UpdateParaInd(paraInd, isRtl);
+		if (updateFlag & 2)
+			this.WordControl.UpdateHorRulerBack(true);
+		if (updateFlag & 1)
+			this.WordControl.UpdateHorRuler();
 	};
 	asc_docs_api.prototype.Internal_Update_Ind_FirstLine = function(FirstLine, Left)
 	{
@@ -6654,8 +6638,8 @@ background-repeat: no-repeat;\
 				{
 					Data.Hyperlink.Value = AscCommon.translateManager.getValue("Previous Slide");
 				}
-				else if (Url.indexOf("ppaction://hlinkfile") === 0) {
-					Data.Hyperlink.Value = Url.substring("ppaction://hlinkfile?file=".length);
+				else if (AscCommon.IsLinkPPActionFile(Url)) {
+					Data.Hyperlink.Value = AscCommon.GetPPActionFilePath(Url);
 				}
 				else if (Url == "ppaction://noaction")
 				{
@@ -6758,9 +6742,14 @@ background-repeat: no-repeat;\
 		const focusType = wordControl.Thumbnails.FocusObjType;
 		if (focusType === AscCommon.FOCUS_OBJECT_MAIN)
 		{
+			if (this.isRtlInterface)
+				ret.X += wordControl.ScrollWidthPx;
+
 			if (wordControl.m_bIsRuler)
 			{
-				ret.X += ((5 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+				if (!this.isRtlInterface)
+					ret.X += ((5 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+
 				ret.Y += ((7 * AscCommon.g_dKoef_mm_to_pix) >> 0);
 			}
 		}
@@ -7367,10 +7356,9 @@ background-repeat: no-repeat;\
 			{
 				this.WordControl.onPrevPage();
 			}
-			else if (Url.indexOf('ppaction://hlinkfile') == 0)
+			else if (AscCommon.IsLinkPPActionFile(Url))
 			{
-				const fileHyperlink = normalizeFileHyperlink(Url)
-				this.sendEvent("asc_onHyperlinkClick", fileHyperlink);
+				this.sendEvent("asc_onHyperlinkClick", AscCommon.GetPPActionFileUrl(Url));
 			}
 			else
 			{
@@ -7388,26 +7376,6 @@ background-repeat: no-repeat;\
 
 		this.sendEvent("asc_onHyperlinkClick", Url);
 	};
-
-	function normalizeFileHyperlink(url) {
-		if (!url) {
-			return url;
-		}
-
-		let result = url;
-		const actionPrefix = 'ppaction://hlinkfile?file=';
-		const filePrefix = 'file://';
-
-		if (result.indexOf(actionPrefix) === 0) {
-			result = result.substring(actionPrefix.length);
-		}
-
-		if (result.indexOf(filePrefix) !== 0) {
-			result = filePrefix + result;
-		}
-
-		return result;
-	}
 
 	asc_docs_api.prototype.asc_GoToInternalHyperlink = function(url)
 	{
@@ -9270,8 +9238,9 @@ background-repeat: no-repeat;\
 		}
 
 		var pagescount = this["asc_nativePrintPagesCount"]();
-        if (options && options["printOptions"] && options["printOptions"]["onlyFirstPage"])
-            pagescount = 1;
+		var pageNum = -1;
+        if (options && options["printOptions"] && options["printOptions"]["savePage"] !== undefined && options["printOptions"]["savePage"] !== -1)
+            pageNum = options["printOptions"]["savePage"];
 
 		var _renderer                         = new AscCommon.CDocumentRenderer();
         _renderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
@@ -9284,7 +9253,13 @@ background-repeat: no-repeat;\
 		let nativeOptions = options ? options["nativeOptions"] : undefined;
 		let pages = nativeOptions ? AscCommon.getNativePrintRanges(nativeOptions["pages"], nativeOptions["currentPage"], pagescount) : undefined;
 
-		for (var i = 0; i < pagescount; i++)
+		var i = 0;
+		if (pageNum != -1)
+		{
+			i = pageNum;
+			pagescount = i + 1;
+		}
+		for (; i < pagescount; i++)
 		{
 			if (pages !== undefined && !pages[i])
 				continue;
@@ -10184,7 +10159,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['SlideTransitionPlay']                 = asc_docs_api.prototype.SlideTransitionPlay;
 	asc_docs_api.prototype['asc_ExportToAnimation']               = asc_docs_api.prototype.asc_ExportToAnimation;
 	asc_docs_api.prototype['asc_stopExportToAnimation']           = asc_docs_api.prototype.asc_stopExportToAnimation;
-	asc_docs_api.prototype['asc_isExportToAnimationSupported']    = asc_docs_api.prototype.asc_isExportToAnimationSupported;
 	asc_docs_api.prototype['asc_getSupportedAnimatedExportFormats'] = asc_docs_api.prototype.asc_getSupportedAnimatedExportFormats;
 	asc_docs_api.prototype['asc_getAnimatedExportPresets']        = asc_docs_api.prototype.asc_getAnimatedExportPresets;
 	asc_docs_api.prototype['asc_HideSlides']                      = asc_docs_api.prototype.asc_HideSlides;

@@ -12099,13 +12099,14 @@
 	/**
 	 * Properties to make search.
 	 * @typedef {Object} SearchData
-	 * @property {string | undefined} What - The data to search for.
+	 * @property {string | RegExp | undefined} What - The data to search for, or a regular expression to match the cell text. When a RegExp is passed, the MatchCase and Wildcards parameters are ignored (control case sensitivity with the "i" flag instead).
 	 * @property {ApiRange} After - The cell after which you want the search to begin. If this argument is not specified, the search starts after the cell in the upper-left corner of the range.
 	 * @property {XlFindLookIn} LookIn - Search data type (formulas or values).
 	 * @property {XlLookAt} LookAt - Specifies whether the whole search text or any part of the search text is matched.
 	 * @property {XlSearchOrder} SearchOrder - Range search order - by rows or by columns.
 	 * @property {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
 	 * @property {boolean} MatchCase - Case sensitive or not. The default value is "false".
+	 * @property {boolean} Wildcards - Specifies whether to interpret the search text as a wildcard pattern: "*" matches any character sequence, "?" matches any single character, use "~*" / "~?" to find the literal "*" / "?" characters. The default value is "false".
 	 * @see office-js-api/Examples/Enumerations/SearchData.js
 	 */
 
@@ -12156,12 +12157,18 @@
 			MatchCase = arguments[6];
 		}
 
-		if (typeof What === 'string' || What === undefined) {
+		let isRegExp = (What instanceof RegExp);
+		if (typeof What === 'string' || What === undefined || isRegExp) {
 			let res = null;
 			let options = new Asc.asc_CFindOptions();
-			options.asc_setFindWhat(What);
+			options.asc_setFindWhat(isRegExp ? What.source : What);
 			options.asc_setScanForward(SearchDirection != 'xlPrevious');
-			MatchCase && options.asc_setIsMatchCase(MatchCase);
+			if (isRegExp) {
+				// keep the cell text unlowered for a RegExp - case sensitivity is governed by its "i" flag
+				options.asc_setIsMatchCase(true);
+			} else {
+				MatchCase && options.asc_setIsMatchCase(MatchCase);
+			}
 			options.asc_setIsWholeCell(LookAt === 'xlWhole');
 			options.asc_setScanOnOnlySheet(Asc.c_oAscSearchBy.Range);
 			options.asc_setSpecificRange(this["Address"]);
@@ -12175,7 +12182,10 @@
 
 			options.asc_setLookIn((LookIn === 'xlValues' ? 2 : 1));
 			options.asc_setNotSearchEmptyCells(!(What === "" && !options.isWholeCell));
-			if (Wildcards) {
+			if (isRegExp) {
+				options.isWildcard = true;
+				options.findRegExp = What;
+			} else if (Wildcards) {
 				options.isWildcard = true;
 				options.findRegExp = AscCommonExcel.getFindRegExp(What, options);
 			}
@@ -13423,7 +13433,7 @@
 			this.Drawing.spPr.xfrm.setExtX(fWidth);
 			this.Drawing.spPr.xfrm.setExtY(fHeight);
 			this.Drawing.setDrawingBaseExt(fWidth, fHeight);
-
+			private_SetDrawingBaseTo(this.Drawing);
 		}
 	};
 
@@ -13459,6 +13469,7 @@
 		}
 		this.Drawing.setDrawingBaseType(AscCommon.c_oAscCellAnchorType.cellanchorOneCell);
 		this.Drawing.setDrawingBaseCoords(nFromCol, nColOffset / 36000.0, nFromRow, nRowOffset / 36000.0, 0, 0, 0, 0, 0, 0, extX, extY);
+		private_SetDrawingBaseTo(this.Drawing);
 	};
 
 	/**
@@ -31654,6 +31665,28 @@
 		oDrawing.setDrawingBaseType(AscCommon.c_oAscCellAnchorType.cellanchorOneCell);
 		oDrawing.setDrawingBaseCoords(nFromCol, nColOffset / 36000.0, nFromRow, nRowOffset / 36000.0, 0, 0, 0, 0, 0, 0, 0, 0);
 		oDrawing.setDrawingBaseExt(nExtX / 36000.0, nExtY / 36000.0);
+		private_SetDrawingBaseTo(oDrawing);
+	}
+
+	function private_SetDrawingBaseTo(drawing) {
+		const drawingBase = drawing.drawingBase;
+		if (!drawingBase) {
+			return;
+		}
+		const from = drawingBase.from;
+		const ext = drawingBase.ext;
+		const drawingObjects = drawingBase.getDrawingObjects();
+		let to;
+		if (drawingObjects) {
+			const base = drawingObjects.cloneDrawingObject(drawingBase);
+			drawingObjects.calculateObjectMetrics(base, drawingObjects.mmToPx(ext.cx), drawingObjects.mmToPx(ext.cy), true, true);
+			to = base.to;
+		} else {
+			to = {col: from.col, colOff: from.colOff + ext.cx, row: from.row, rowOff: from.rowOff + ext.cy};
+		}
+		drawing.setDrawingBaseCoords(from.col, from.colOff, from.row, from.rowOff,
+			to.col, to.colOff, to.row, to.rowOff,
+			drawingBase.Pos.X, drawingBase.Pos.Y, ext.cx, ext.cy);
 	}
 
 	function private_MakeBorder(lineStyle, color) {

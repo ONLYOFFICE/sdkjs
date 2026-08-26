@@ -1746,6 +1746,7 @@
 
 		this.ctHeadings         = 169;
 		this.ctRedact			= 170;
+		this.ctRedactMeta		= 171;
 		this.ctMacros			= 172;
 		
 		this.ctPageWidth  = 200;
@@ -3145,6 +3146,7 @@
 			this.m_oPen.Color.R    = -1;
 			this.m_oBrush.Color1.R = -1;
 			this.m_oBrush.Color2.R = -1;
+			this.m_oPen.Size  = -1;
 		},
 		
 		Start_Command : function(commandId)

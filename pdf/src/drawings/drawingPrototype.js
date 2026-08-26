@@ -47,6 +47,7 @@
         this._doc           = undefined;
         this._needRecalc    = true;
         this._redactIds     = [];
+		this._layer         = undefined;
 
         this.redactsArrayChanges = new AscCommon.CContentChanges(); // related redacts list
     }
@@ -283,6 +284,18 @@
     CPdfDrawingPrototype.prototype.GetRedactIds = function() {
         return this._redactIds;
     };
+	CPdfDrawingPrototype.prototype.SetLayer = function(nLayer) {
+		if (this._layer === nLayer) {
+			return;
+		}
+
+		AscCommon.History.Add(new CChangesPDFObjectLayer(this, this._layer, nLayer));
+		this._layer = nLayer;
+		this.AddToRedraw();
+	};
+	CPdfDrawingPrototype.prototype.GetLayer = function() {
+		return this._layer;
+	};
     CPdfDrawingPrototype.prototype.RemoveRedactId = function(nPos) {
         let ids = this._redactIds.splice(nPos, 1);
         AscCommon.History.Add(new CChangesPDFDrawingRedacts(this, nPos, ids, false));
@@ -462,7 +475,7 @@
         return fontMap;
     };
     CPdfDrawingPrototype.prototype.CheckTextOnOpen = function() {};
-    CPdfDrawingPrototype.prototype.Draw = function(oGraphicsWord) {
+    CPdfDrawingPrototype.prototype.StartRedactClip = function(oGraphicsWord) {
         function normRect(r) {
 			const x1 = Math.min(r[0], r[2]);
 			const y1 = Math.min(r[1], r[3]);
@@ -470,12 +483,6 @@
 			const y2 = Math.max(r[1], r[3]);
 			return [x1, y1, x2, y2];
 		}
-
-        this.Recalculate();
-        if (this.IsEditFieldShape()) {
-            this.draw(oGraphicsWord);
-            return;
-        }
 
         let _t = this;
         let oDoc = Asc.editor.getPDFDoc();
@@ -575,12 +582,27 @@
             ctx.save();
         }
 
-        this.draw(oGraphicsWord);
+		return !!unredactedPolygon;
+	};
+	CPdfDrawingPrototype.prototype.EndRedactClip = function(oGraphicsWord, isRedactClipApplied) {
+		if (!isRedactClipApplied) {
+			return;
+		}
 
-        if (unredactedPolygon) {
-            oGraphicsWord.restore();
-            oGraphicsWord.restore();
+		oGraphicsWord.restore();
+		oGraphicsWord.restore();
+	};
+    CPdfDrawingPrototype.prototype.Draw = function(oGraphicsWord) {
+        this.Recalculate();
+        if (this.IsEditFieldShape()) {
+            this.draw(oGraphicsWord);
+            return;
         }
+
+		let isRedactClipApplied = this.StartRedactClip(oGraphicsWord);
+
+        this.draw(oGraphicsWord);
+		this.EndRedactClip(oGraphicsWord, isRedactClipApplied);
     };
     CPdfDrawingPrototype.prototype.onMouseDown = function(x, y, e) {};
     CPdfDrawingPrototype.prototype.onMouseUp = function(x, y, e) {};

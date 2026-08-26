@@ -1207,7 +1207,13 @@
 		let oViewer		= this.getDocumentRenderer();
 		let oDoc		= this.getPDFDoc();
 
-		if (AscCommon.IsLinkPPAction(Url)) {
+		if (AscCommon.IsLinkPPActionFile(Url)) {
+			Url = AscCommon.GetPPActionFileUrl(Url);
+			if (!Url) {
+				return;
+			}
+		}
+		else if (AscCommon.IsLinkPPAction(Url)) {
 			let nCurPage	= oDoc.GetCurPage();
 			let nPagesCount	= oDoc.GetPagesCount();
 			

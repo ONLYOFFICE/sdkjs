@@ -500,7 +500,7 @@ ParaRun.prototype.Get_Text = function(Text)
 			case para_Math_Text:
 			case para_Math_BreakOperator:
 			{
-				Text.Text += String.fromCharCode(Item.GetCodePoint());
+				Text.Text += Item.ToString();
 				break;
 			}
 			case para_NewLine:
@@ -3662,7 +3662,7 @@ ParaRun.prototype.Recalculate_Measure2 = function(Metrics)
 
         if ( para_Text === ItemType )
         {
-            var Temp = g_oTextMeasurer.Measure2(String.fromCharCode(Item.Value));
+            var Temp = g_oTextMeasurer.Measure2(Item.ToString());
 
             if ( null === TAscent || TAscent < Temp.Ascent )
                 TAscent = Temp.Ascent;
@@ -10524,12 +10524,12 @@ ParaRun.prototype.CheckRevisionsChanges = function(Checker, ContentPos, Depth)
                     }
                     case para_Text :
                     {
-                        Text += String.fromCharCode(Item.Value);
+                        Text += Item.ToString();
                         break;
                     }
                     case para_Math_Text:
                     {
-                        Text += String.fromCharCode(Item.getCodeChr());
+                        Text += Item.ToString();
                         break;
                     }
                     case para_Space:

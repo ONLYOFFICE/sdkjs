@@ -1249,6 +1249,11 @@ CMathAmp.prototype.getCodeChr = function()
 
     return code;
 };
+CMathAmp.prototype.GetCodePoint = function()
+{
+    var code = this.getCodeChr();
+    return null === code ? 0 : code;
+};
 CMathAmp.prototype.IsMathText = function()
 {
     return !this.bAlignPoint;

@@ -147,9 +147,8 @@
 		return other.count + this.count - 2 * shared;
 	};
 
-	function changeFirstTextElement(oTextIterator, oRun)
+	function changeFirstTextElement(oElement, oRun)
 	{
-		const oElement = oTextIterator.getCurrentElement();
 		oElement.elements[0] = oRun.Content[0];
 		oElement.firstRun = oRun;
 	}
@@ -185,7 +184,7 @@
 		oTextIterator.addToCollectBack(oRun);
 		if (this.elementIndex === 0 && this.innerElementIndex === 0)
 		{
-			changeFirstTextElement(oTextIterator, oRun);
+			oTextIterator.changeFirstTextElement(oRun);
 		}
 
 
@@ -318,7 +317,7 @@
 			}
 			else
 			{
-				changeFirstTextElement(oTextIterator, oRun);
+				oTextIterator.changeFirstTextElement(oRun);
 			}
 		}
 	};
@@ -621,7 +620,7 @@
 		oTextIterator.addToCollectBack(oSplitRun);
 		if (this.elementIndex === 0 && this.innerElementIndex === 0)
 		{
-			changeFirstTextElement(oTextIterator, oSplitRun);
+			oTextIterator.changeFirstTextElement(oSplitRun);
 		}
 		oTextIterator.setCollectTextPrRuns(null);
 		const arrRuns = oPartner.collectRuns;
@@ -1258,6 +1257,7 @@
                             if(k <= oCurRun.Content.length && bFind)
                             {
                                 const oNewRun = oCurRun.Split2(k, applyingParagraph, j);
+								changeFirstTextElement(oFirstText, oNewRun);
                                 comparison.checkOriginalAndSplitRun(oCurRun, oNewRun)
                                 //TODO: think about it
                                 this.applyInsert(aContentToInsert, [], j + 1, comparison);
@@ -1353,6 +1353,7 @@
                     if(t > 0)
                     {
                         const oNewRun = oChildElement.Split2(t, oApplyParagraph, k);
+						changeFirstTextElement(oFirstText, oNewRun);
                         comparison.checkOriginalAndSplitRun(oChildElement, oNewRun);
                         arrSetRemoveReviewType.push(oNewRun);
                         nInsertPosition++;
@@ -1981,7 +1982,7 @@
         {
             if(this.elements[i] instanceof AscWord.CRunText)
             {
-                sResultString += String.fromCharCode(this.elements[i].GetCodePoint());
+                sResultString += this.elements[i].ToString();
             }
             else if(this.elements[i] instanceof AscWord.CRunSpace)
             {
@@ -2145,6 +2146,52 @@
     // ComparisonOptions.prototype["putFields"] = ComparisonOptions.prototype.putFields = function(v){this.fields = v;};
     ComparisonOptions.prototype["putWords"] = ComparisonOptions.prototype.putWords = function(v){this.words = v;};
     ComparisonOptions.prototype["putAuthorName"] = ComparisonOptions.prototype.putAuthorName = function(v){this.authorName = v;};
+
+    ComparisonOptions.prototype["toObject"] = ComparisonOptions.prototype.toObject = function()
+    {
+        return {
+            "words"             : this.words,
+            "formatting"        : this.formatting,
+            "caseChanges"       : this.caseChanges,
+            "whiteSpace"        : this.whiteSpace,
+            "tables"            : this.tables,
+            "headersAndFooters" : this.headersAndFooters,
+            "footnotes"         : this.footNotes,
+            "textBoxes"         : this.textBoxes,
+            "comments"          : this.comments,
+            "authorName"        : this.authorName
+        };
+    };
+
+    function readComparisonOptions(pr)
+    {
+        const options = new ComparisonOptions();
+        if (!pr || typeof pr !== "object")
+        {
+            return options;
+        }
+        if (typeof pr["words"] === "boolean")
+            options.words = pr["words"];
+        if (typeof pr["formatting"] === "boolean")
+            options.formatting = pr["formatting"];
+        if (typeof pr["caseChanges"] === "boolean")
+            options.caseChanges = pr["caseChanges"];
+        if (typeof pr["whiteSpace"] === "boolean")
+            options.whiteSpace = pr["whiteSpace"];
+        if (typeof pr["tables"] === "boolean")
+            options.tables = pr["tables"];
+        if (typeof pr["headersAndFooters"] === "boolean")
+            options.headersAndFooters = pr["headersAndFooters"];
+        if (typeof pr["footnotes"] === "boolean")
+            options.footNotes = pr["footnotes"];
+        if (typeof pr["textBoxes"] === "boolean")
+            options.textBoxes = pr["textBoxes"];
+        if (typeof pr["comments"] === "boolean")
+            options.comments = pr["comments"];
+        if (typeof pr["authorName"] === "string")
+            options.authorName = pr["authorName"];
+        return options;
+    }
 
 
     function CDocumentComparison(oOriginalDocument, oRevisedDocument, oOptions, bIsWordsByOneSymbol)
@@ -4527,6 +4574,10 @@
 	{
 		this.addToCollect(this.getRun());
 	};
+	CRunCollector.prototype.changeFirstTextElement = function (oRun) {
+		const oElement = this.getCurrentElement();
+		changeFirstTextElement(oElement, oRun);
+	}
 	CRunCollector.prototype.nextRun = function () {
 		do {
 			this.runIndex -= 1;
@@ -4549,6 +4600,7 @@
 
     window['AscCommonWord']['CompareBinary'] =  window['AscCommonWord'].CompareBinary = CompareBinary;
     window['AscCommonWord']['ComparisonOptions'] = window['AscCommonWord'].ComparisonOptions = ComparisonOptions;
+    window['AscCommonWord']['readComparisonOptions'] = window['AscCommonWord'].readComparisonOptions = readComparisonOptions;
     window['AscCommonWord']['CompareDocuments'] = window['AscCommonWord'].CompareDocuments = CompareDocuments;
     window['AscCommonWord'].CDocumentComparison = CDocumentComparison;
     window['AscCommonWord'].CNode = CNode;

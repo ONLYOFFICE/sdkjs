@@ -56,6 +56,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_End_Redact]       		= CCha
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Embed_Fonts_Map]       			= CChangesEmbedFontsMap;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Redact_Meta]				= CChangesPDFDocumentRedactMeta;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RedactedFieldsContent]	= CChangesPDFDocumentRedactedFieldsContent;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_ObjectLayer]				= CChangesPDFObjectLayer;
 
 
 function CChangesPDFArrayOfDoubleProperty(Class, Old, New) {
@@ -1104,6 +1105,23 @@ CChangesPDFObjectSetDocument.prototype.private_SetValue = function(value)
 {
 	let doc = AscCommon.g_oTableId.Get_ById(value);
 	this.Class.SetDocument(doc);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFObjectLayer(Class, Old, New)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New);
+}
+CChangesPDFObjectLayer.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFObjectLayer.prototype.constructor = CChangesPDFObjectLayer;
+CChangesPDFObjectLayer.prototype.Type = AscDFH.historyitem_PDF_Document_ObjectLayer;
+CChangesPDFObjectLayer.prototype.private_SetValue = function(value)
+{
+	this.Class._layer = value;
+	this.Class.AddToRedraw();
 };
 /**
  * @constructor

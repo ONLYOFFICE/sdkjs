@@ -16410,6 +16410,7 @@
 
     window['AscCommonExcel'].decodeXmlPath = decodeXmlPath;
     window['AscCommonExcel'].encodeXmlPath = encodeXmlPath;
+    window['AscCommonExcel'].completePathForLocalLinks = completePathForLocalLinks;
 
     window['Asc']['c_oAscESheetViewType'] = window['Asc'].c_oAscESheetViewType = window['AscCommonExcel'].ESheetViewType = ESheetViewType;
     prot = ESheetViewType;

@@ -296,9 +296,9 @@ ParaHyperlink.prototype.GetToolTip = function()
 				return AscCommon.translateManager.getValue(str);
 			}
 
-			if (this.Value.indexOf("ppaction://hlinkfile") === 0)
+			if (AscCommon.IsLinkPPActionFile(this.Value))
 			{
-				return this.Value.substring("ppaction://hlinkfile?file=".length);
+				return AscCommon.GetPPActionFilePath(this.Value);
 			}
 
 			const mask = "ppaction://hlinksldjumpslide";
