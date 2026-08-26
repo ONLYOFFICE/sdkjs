@@ -3271,6 +3271,7 @@
 		const oThis = this;
 		let isMathHandle = false;
 		let newSlide;
+		let isNeedRecalculate = false;
 		this.forEachSelectedContent(function (selectProps) {
 			if (selectProps.count !== 1) {
 				return true;
@@ -3288,7 +3289,7 @@
 					isMathHandle = true;
 					if (oMath.Handle_AddNewLine()) {
 						oShape.checkExtentsByDocContent();
-						this.Recalculate();
+						isNeedRecalculate = true;
 					}
 				} else if (!e.ShiftKey) {
 					if (oShape.isGeneralTitle()) {
@@ -3305,6 +3306,9 @@
 				newSlide = oThis.handleTitleEnter(selectProps.outlineParagraph);
 			}
 		});
+		if (isNeedRecalculate) {
+			presentation.Recalculate();
+		}
 		if (e.ShiftKey && !isMathHandle) {
 			presentation.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Line), false, true);
 		}
