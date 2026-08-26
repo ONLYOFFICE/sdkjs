@@ -6306,63 +6306,73 @@ _func[cElementType.string][cElementType.string] = function ( arg0, arg1, what ) 
 	let opt_return_bool = arguments[5];
 	let res = null;
 
-	// TODO should compare with the escaped double quotes?
 	let _arg0, _arg1;
-	if (what === ">") {
-		res = AscCommon.stringCompare(arg0.getValue(true), arg1.getValue(true)) > 0;
-	} else if (what === ">=") {
-		res = AscCommon.stringCompare(arg0.getValue(true), arg1.getValue(true)) >= 0;
-	} else if (what === "<") {
-		res = AscCommon.stringCompare(arg0.getValue(true), arg1.getValue(true)) < 0;
-	} else if (what === "<=") {
-		res = AscCommon.stringCompare(arg0.getValue(true), arg1.getValue(true)) <= 0;
-	} else if (what === "=") {
-		res = _isEqualStrings(arg0.getValue(true), arg1.getValue(true), opt_return_bool);
-	} else if (what === "<>") {
-		res = !_isEqualStrings(arg0.getValue(true), arg1.getValue(true), opt_return_bool);
-	} else if (what === "-") {
-		_arg0 = arg0.tocNumber();
-		_arg1 = arg1.tocNumber();
-		if (_arg0 instanceof cError) {
-			return _arg0;
-		}
-		if (_arg1 instanceof cError) {
-			return _arg1;
-		}
-		return new cNumber(_arg0.getValue(true) - _arg1.getValue(true));
-	} else if (what === "+") {
-		_arg0 = arg0.tocNumber();
-		_arg1 = arg1.tocNumber();
-		if (_arg0 instanceof cError) {
-			return _arg0;
-		}
-		if (_arg1 instanceof cError) {
-			return _arg1;
-		}
-		return new cNumber(_arg0.getValue(true) + _arg1.getValue(true));
-	} else if (what === "/") {
-		_arg0 = arg0.tocNumber();
-		_arg1 = arg1.tocNumber();
-		if (_arg0 instanceof cError) {
-			return _arg0;
-		}
-		if (_arg1 instanceof cError) {
-			return _arg1;
-		}
-		if (_arg1.getValue(true) !== 0) {
-			return new cNumber(_arg0.getValue(true) / _arg1.getValue(true));
-		}
-		return new cError(cErrorType.division_by_zero);
-	} else if (what === "*") {
-		_arg0 = arg0.tocNumber();
-		_arg1 = arg1.tocNumber();
-		if (_arg0 instanceof cError) {
-			return _arg0;
-		}
-		if (_arg1 instanceof cError) {
-			return _arg1;
-		}
-		return new cNumber(_arg0.getValue(true) * _arg1.getValue(true));
+
+	// Implementation via switch-case - comparison operators uses getValue() (without doNotReplace),
+	// so escaped double quotes ("") are unescaped to (") before comparing. 
+	// Arithmetic branches are unchanged (they operate on numbers tocNumber(), where getValue(true) is a no-op).
+	switch (what) {
+		case ">":
+			res = AscCommon.stringCompare(arg0.getValue(), arg1.getValue()) > 0;
+			break;
+		case ">=":
+			res = AscCommon.stringCompare(arg0.getValue(), arg1.getValue()) >= 0;
+			break;
+		case "<":
+			res = AscCommon.stringCompare(arg0.getValue(), arg1.getValue()) < 0;
+			break;
+		case "<=":
+			res = AscCommon.stringCompare(arg0.getValue(), arg1.getValue()) <= 0;
+			break;
+		case "=":
+			res = _isEqualStrings(arg0.getValue(), arg1.getValue(), opt_return_bool);
+			break;
+		case "<>":
+			res = !_isEqualStrings(arg0.getValue(), arg1.getValue(), opt_return_bool);
+			break;
+		case "-":
+			_arg0 = arg0.tocNumber();
+			_arg1 = arg1.tocNumber();
+			if (_arg0 instanceof cError) {
+				return _arg0;
+			}
+			if (_arg1 instanceof cError) {
+				return _arg1;
+			}
+			return new cNumber(_arg0.getValue(true) - _arg1.getValue(true));
+		case "+":
+			_arg0 = arg0.tocNumber();
+			_arg1 = arg1.tocNumber();
+			if (_arg0 instanceof cError) {
+				return _arg0;
+			}
+			if (_arg1 instanceof cError) {
+				return _arg1;
+			}
+			return new cNumber(_arg0.getValue(true) + _arg1.getValue(true));
+		case "/":
+			_arg0 = arg0.tocNumber();
+			_arg1 = arg1.tocNumber();
+			if (_arg0 instanceof cError) {
+				return _arg0;
+			}
+			if (_arg1 instanceof cError) {
+				return _arg1;
+			}
+			if (_arg1.getValue(true) !== 0) {
+				return new cNumber(_arg0.getValue(true) / _arg1.getValue(true));
+			}
+			return new cError(cErrorType.division_by_zero);
+		case "*":
+			_arg0 = arg0.tocNumber();
+			_arg1 = arg1.tocNumber();
+			if (_arg0 instanceof cError) {
+				return _arg0;
+			}
+			if (_arg1 instanceof cError) {
+				return _arg1;
+			}
+			return new cNumber(_arg0.getValue(true) * _arg1.getValue(true));
 	}
 	if (res !== null) {
 		return opt_return_bool ? res : new cBool(res);
