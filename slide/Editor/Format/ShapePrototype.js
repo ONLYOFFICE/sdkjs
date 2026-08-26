@@ -835,7 +835,7 @@ CShape.prototype.OnContentReDraw = function(){
 			}
 			return false;
 		};
-    CShape.prototype.checkOutlineView = function() {
+    CShape.prototype.checkOutlineView = function(isAdd) {
         const oPresentation = this.getLogicDocument();
         if (oPresentation) {
             oPresentation.checkShapeOutlineView(this);

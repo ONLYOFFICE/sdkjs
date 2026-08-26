@@ -8214,7 +8214,7 @@
             || !this.isHBar() && !this.parent.isBarType(nType)) {
             return false;
         }
-        if(this.hasSerAx() && !is3DChartType(nType)) {
+        if(this.hasSerAx() && !isSerAxChartType(nType)) {
             return false;
         }
         var nNewBarDir = this.parent.getBarDirByType(nType);
@@ -18055,6 +18055,16 @@
             oCT.hBarNormal3d === nType ||
             oCT.hBarStacked3d === nType ||
             oCT.hBarStackedPer3d === nType)
+    }
+
+    function isSerAxChartType(chartType) {
+        const chartTypes = Asc.c_oAscChartTypeSettings;
+        return (chartTypes.barNormal3dPerspective === chartType ||
+            chartTypes.line3d === chartType ||
+            chartTypes.surfaceNormal === chartType ||
+            chartTypes.surfaceWireframe === chartType ||
+            chartTypes.contourNormal === chartType ||
+            chartTypes.contourWireframe === chartType);
     }
 
     function CParseResult() {

@@ -1333,10 +1333,10 @@ var CPresentation = CPresentation || function(){};
 
         let oViewer         = editor.getDocumentRenderer();
         let oDrDoc          = this.GetDrawingDocument();
-        let aWidgetForms    = this.widgets;
+        let aWidgets    	= this.widgets;
         let oActionsQueue   = this.GetActionsQueue();
 		
-		if (this.IsEditFieldsMode() || aWidgetForms.length == 0)
+		if (this.IsEditFieldsMode() || aWidgets.length == 0)
             return;
 
 		let nFormsCount = this.widgets.length;
@@ -1362,7 +1362,19 @@ var CPresentation = CPresentation || function(){};
 		if (!this.checkFieldFont(oNextForm, function(){_t.SelectNextForm(checkFunc);}))
 			return;
 
-        this.BlurActiveObject();
+		switch (oNextForm.GetType()) {
+			case AscPDF.FIELD_TYPES.text:
+			case AscPDF.FIELD_TYPES.combobox: {
+				let oController = this.GetController();
+				oController.selectObject(oNextForm, oNextForm.GetPage());
+				oController.selection.textSelection = oNextForm;
+				break;
+			}
+			default: {
+				this.BlurActiveObject();
+			}
+		}
+		
         this.activeForm = oNextForm;
         oNextForm.Recalculate();
         
@@ -1422,10 +1434,10 @@ var CPresentation = CPresentation || function(){};
 		
         let oViewer         = editor.getDocumentRenderer();
         let oDrDoc          = this.GetDrawingDocument();
-        let aWidgetForms    = this.widgets;
+        let aWidgets    	= this.widgets;
         let oActionsQueue   = this.GetActionsQueue();
 		
-		if (this.IsEditFieldsMode() || aWidgetForms.length == 0)
+		if (this.IsEditFieldsMode() || aWidgets.length == 0)
             return;
 
 		let nFormsCount = this.widgets.length;
@@ -1452,10 +1464,21 @@ var CPresentation = CPresentation || function(){};
 		if (!this.checkFieldFont(oNextForm, function(){_t.SelectPrevForm(checkFunc);}))
 			return;
 
-        this.BlurActiveObject();
+        switch (oNextForm.GetType()) {
+			case AscPDF.FIELD_TYPES.text:
+			case AscPDF.FIELD_TYPES.combobox: {
+				let oController = this.GetController();
+				oController.selectObject(oNextForm, oNextForm.GetPage());
+				oController.selection.textSelection = oNextForm;
+				break;
+			}
+			default: {
+				this.BlurActiveObject();
+			}
+		}
         this.activeForm = oNextForm;
         oNextForm.Recalculate();
-        
+		
         let nFieldType = oNextForm.GetType();
         
         oNextForm.onFocus();
@@ -4055,7 +4078,7 @@ var CPresentation = CPresentation || function(){};
                 this.UpdateUndoRedo();
             
             return oStickyComm;
-        }, AscDFH.historydescription_Pdf_AddComment, this, oActiveAnnot && oActiveAnnot.GetId());
+        }, AscDFH.historydescription_Pdf_AddComment, this, oActiveAnnot ? [oActiveAnnot.GetId()] : undefined);
 
         AscCommon.History = oCurHistory;
         return res;
@@ -4494,7 +4517,7 @@ var CPresentation = CPresentation || function(){};
             }
         }
 
-		if (oAnnot.GetContents() == false) {
+		if (!oAnnot.GetContents()) {
 			return;
 		}
 		
@@ -5040,8 +5063,6 @@ var CPresentation = CPresentation || function(){};
 	 * @returns {AscPDF.CAnnotationBase}
 	 */
     CPDFDoc.prototype.HideShowAnnots = function(bHidden) {
-        let oController = this.GetController();
-
         this.annots.forEach(function(annot) {
             annot.SetDisplay(bHidden ? window["AscPDF"].Api.Types.display["hidden"] : window["AscPDF"].Api.Types.display["visible"]);
             annot.AddToRedraw();
@@ -7334,8 +7355,8 @@ var CPresentation = CPresentation || function(){};
         let oXfrm = oStamp.getXfrm();
         oStamp.SetIconType(sType);
         oStamp.SetBorderWidth(nLineW);
-		oStamp.SetInRect([X1, Y2, X1, Y1, X2, Y1, X2, Y2]);
         oXfrm.setRot(-nRotAngle * (Math.PI / 180));
+		oStamp.SetInRect([X1, Y2, X1, Y1, X2, Y1, X2, Y2]);
         
         if (oStampRender) {
             oStamp.SetRenderStructure(oStampRender.m_aStack[0]);
@@ -8189,6 +8210,8 @@ var CPresentation = CPresentation || function(){};
 
 	// redact meta
 	CPDFDoc.prototype.RedactMeta = function(props) {
+		this.BlurActiveObject();
+		
 		let _t = this;
 		let nOldFlags = this.redactMetaFlags || 0;
 		let nFlags = nOldFlags;

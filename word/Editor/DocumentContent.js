@@ -1984,13 +1984,13 @@ CDocumentContent.prototype.GetAllTables = function(oProps, arrTables)
 CDocumentContent.prototype.SetHdrFtrPageNum = function(nAlignType, sStyleId)
 {
 	var arrDrawings = this.GetAllDrawingObjects();
-	var oWatermark  = null;
+	let watermark   = null;
 
 	for (var nIndex = 0, nCount = arrDrawings.length; nIndex < nCount; ++nIndex)
 	{
 		if (arrDrawings[nIndex].IsWatermark())
 		{
-			oWatermark = arrDrawings[nIndex];
+			watermark = arrDrawings[nIndex].Copy();
 			break;
 		}
 	}
@@ -2006,16 +2006,18 @@ CDocumentContent.prototype.SetHdrFtrPageNum = function(nAlignType, sStyleId)
 	oPara1.SetParagraphStyleById(sStyleId);
 	oPara2.SetParagraphStyleById(sStyleId);
 
-	if (oWatermark)
+	if (watermark)
 	{
-		var oSdt = new CInlineLevelSdt();
-		oSdt.ReplacePlaceHolderWithContent();
-		oSdt.SetDocPartObj(undefined, "Watermarks", true);
-		oPara1.AddToContent(0, oSdt);
+		let textPr = oPara1.GetFirstRunPr();
+		
+		let sdt = new AscWord.CInlineLevelSdt();
+		
+		sdt.SetDocPartObj(undefined, "Watermarks", true);
+		oPara1.AddToContent(0, sdt);
 
-		var oRun = oSdt.GetFirstRun();
-		if (oRun)
-			oRun.AddToContent(0, oWatermark);
+		let run = sdt.MakeSingleRunElement();
+		run.AddToContent(0, watermark);
+		run.SetPr(textPr);
 	}
 
 	oPara1.SetParagraphAlign(nAlignType);

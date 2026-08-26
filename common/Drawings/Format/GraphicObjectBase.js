@@ -3984,6 +3984,18 @@
 			this.setStyle(null);
 		}
 	};
+	CGraphicObjectBase.prototype.getTextFormattingPasteData = function () {
+		let content = this.getDocContent();
+		if(!content) {
+			return null;
+		}
+		let paragraph = content.GetFirstParagraph();
+		if(!paragraph) {
+			return null;
+		}
+		let textPr = paragraph.Get_FirstTextPr2() || paragraph.Get_FirstTextPr();
+		return new AscCommon.CTextFormattingPasteData(textPr.Copy(), paragraph.GetCalculatedParaPr().Copy());
+	};
 	CGraphicObjectBase.prototype.getText = function () {
 		return "";
 	};

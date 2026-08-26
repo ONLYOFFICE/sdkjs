@@ -139,12 +139,18 @@ CTableCell.prototype =
 
     Get_Theme : function()
     {
+		if (!this.Row || !this.Row.Table)
+			return AscFormat.GetDefaultTheme();
+		
         return this.Row.Table.Get_Theme();
     },
 
     Get_ColorMap: function()
     {
-        return this.Row.Table.Get_ColorMap();
+		if (!this.Row || !this.Row.Table)
+			return AscFormat.GetDefaultColorMap();
+		
+		return this.Row.Table.Get_ColorMap();
     },
 
 
@@ -197,7 +203,10 @@ CTableCell.prototype =
 
 	GetPrevElementEndInfo : function(CurElement)
     {
-        return this.Row.GetPrevElementEndInfo( this.Index );
+		if (!this.Row)
+			return null;
+		
+		return this.Row.GetPrevElementEndInfo(this.Index);
     },
 
 	SaveRecalculateObject : function()
@@ -275,7 +284,7 @@ CTableCell.prototype =
 		
         if ( true === this.CompiledPr.NeedRecalc )
         {
-            if (!forceCompile && (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead))
+            if (!this.GetTable() || (!forceCompile && (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)))
             {
                 this.CompiledPr.Pr     = g_oDocumentDefaultTableCellPr;
                 this.CompiledPr.ParaPr = g_oDocumentDefaultParaPr;
@@ -460,12 +469,15 @@ CTableCell.prototype =
     //-----------------------------------------------------------------------------------
     OnContentReDraw : function(StartPage, EndPage)
     {
-        this.Row.Table.Parent.OnContentReDraw( StartPage, EndPage );
+		let table = this.GetTable();
+		if (table && table.Parent)
+			table.Parent.OnContentReDraw( StartPage, EndPage );
     },
 
-    Get_Styles : function(Lvl)
+    Get_Styles : function(lvl)
     {
-        return this.Row.Table.Get_Styles(Lvl);
+		let table = this.GetTable();
+		return table ? table.Get_Styles(lvl) : AscWord.DEFAULT_STYLES;
     },
 
     Get_TableStyleForPara : function()
@@ -604,59 +616,65 @@ CTableCell.prototype =
 
     Set_CurrentElement : function(bUpdateStates)
     {
-        var Table = this.Row.Table;
+		let table = this.GetTable();
+		if (!table)
+			return;
 
         // Делаем данную ячейку текущей в таблице
-        Table.Selection.Start = false;
-        Table.Selection.Type  = table_Selection_Text;
-        Table.Selection.Use   = this.Content.IsSelectionUse();
+        table.Selection.Start = false;
+        table.Selection.Type  = table_Selection_Text;
+        table.Selection.Use   = this.Content.IsSelectionUse();
 
-        Table.Selection.StartPos.Pos = { Row : this.Row.Index, Cell : this.Index };
-        Table.Selection.EndPos.Pos   = { Row : this.Row.Index, Cell : this.Index };
+        table.Selection.StartPos.Pos = { Row : this.Row.Index, Cell : this.Index };
+        table.Selection.EndPos.Pos   = { Row : this.Row.Index, Cell : this.Index };
 
-        Table.Markup.Internal.RowIndex  = 0;
-        Table.Markup.Internal.CellIndex = 0;
-        Table.Markup.Internal.PageNum   = 0;
+        table.Markup.Internal.RowIndex  = 0;
+        table.Markup.Internal.CellIndex = 0;
+        table.Markup.Internal.PageNum   = 0;
 
-        Table.CurCell = this;
+        table.CurCell = this;
 
         // Делаем таблицу текущим элементом в документе
-        Table.Document_SetThisElementCurrent(bUpdateStates);
+        table.Document_SetThisElementCurrent(bUpdateStates);
     },
 
 	IsThisElementCurrent : function()
     {
-        var Table = this.Row.Table;
-        if ( false === Table.Selection.Use && this === Table.CurCell )
+        let table = this.GetTable();
+        if (table && false === table.Selection.Use && this === table.CurCell )
         {
-            var Parent = Table.Parent;
+            var Parent = table.Parent;
             if ((Parent instanceof AscFormat.CGraphicFrame) || docpostype_Content === Parent.GetDocPosType() && false === Parent.Selection.Use && this.Index === Parent.CurPos.ContentPos )
-                return Table.Parent.IsThisElementCurrent();
+                return table.Parent.IsThisElementCurrent();
         }
 
         return false;
     },
 
-	CheckTableCoincidence : function(Table)
+	CheckTableCoincidence : function(table)
 	{
-		var CurTable = this.Row.Table;
-		if (Table === CurTable)
+		let _table = this.GetTable();
+		if (table === _table)
 			return true;
+		else if (_table && _table.Parent)
+			return _table.Parent.CheckTableCoincidence(table);
 		else
-			return CurTable.Parent.CheckTableCoincidence(Table);
+			return false;
 	},
     //-----------------------------------------------------------------------------------
     // Функции для работы с номерами страниц
     //-----------------------------------------------------------------------------------
 	GetAbsoluteStartPage : function()
-    {
-        return this.Row.Table.GetAbsoluteStartPage();
-    },
-	
+	{
+		let table = this.GetTable();
+		return table ? table.GetAbsoluteStartPage() : 0;
+	},
+
 	GetRelativeStartPage : function()
-    {
-        return this.Row.Table.GetRelativeStartPage();
-    },
+	{
+		let table = this.GetTable();
+		return table ? table.GetRelativeStartPage() : 0;
+	},
 
 	/**
 	 * Получаем абсолютный номер страницы по относительному номеру страницы (относительно таблицы, а не ячейки!)
@@ -664,9 +682,10 @@ CTableCell.prototype =
 	 * @returns {number}
 	 */
 	GetAbsolutePage : function(CurPage)
-    {
-		return this.Row.Table.GetAbsolutePage(CurPage);
-    },
+	{
+		let table = this.GetTable();
+		return table ? table.GetAbsolutePage(CurPage) : 0;
+	},
 	/**
 	 * Получаем абсолютный номер колонки по относительному номеру страницы (относительно таблицы, а не ячейки!)
 	 * @param CurPage
@@ -674,11 +693,13 @@ CTableCell.prototype =
 	 */
 	GetAbsoluteColumn : function(CurPage)
     {
-        return this.Row.Table.GetAbsoluteColumn(CurPage);
+		let table = this.GetTable();
+        return table ? table.GetAbsoluteColumn(CurPage) : 0;
     },
 	GetAbsoluteSection : function(curPage)
 	{
-		return this.Row.Table.GetAbsoluteSection(curPage);
+		let table = this.GetTable();
+		return table ? table.GetAbsoluteSection(curPage) : 0;
 	},
     //-----------------------------------------------------------------------------------
     // Работаем с содержимым ячейки
@@ -686,7 +707,8 @@ CTableCell.prototype =
 
     Get_ParentTextTransform: function()
     {
-        var oParentTransform = this.Row.Table.Get_ParentTextTransform();
+		let table = this.GetTable();
+        var oParentTransform = table ? table.Get_ParentTextTransform() : null;
         var oOwnTransform = this.private_GetTextDirectionTransform();
         if(oOwnTransform && oParentTransform)
         {
@@ -2275,14 +2297,15 @@ CTableCell.prototype.InsertTableContent = function(oTable)
  */
 CTableCell.prototype.GetCalculatedW = function()
 {
-	var oRow   = this.Row,
-		oTable = oRow.Table;
+	var table = this.GetTable();
+	if (!table)
+		return 3.8;
 
-	var nCurGridStart = oRow.GetCellInfo(this.Index).StartGridCol;
+	var nCurGridStart = this.Row.GetCellInfo(this.Index).StartGridCol;
 	var nCurGridEnd   = nCurGridStart + this.Get_GridSpan() - 1;
 
-	if (oTable.TableSumGrid.length > nCurGridEnd)
-		return oTable.TableSumGrid[nCurGridEnd] - oTable.TableSumGrid[nCurGridStart - 1];
+	if (table.TableSumGrid.length > nCurGridEnd)
+		return table.TableSumGrid[nCurGridEnd] - table.TableSumGrid[nCurGridStart - 1];
 
 	return 3.8; // 1.9 + 1.9 стандартные отступы справа и слева
 };
@@ -2474,12 +2497,16 @@ CTableCell.prototype.SetVMerge = function(nType)
  */
 CTableCell.prototype.IsInHeader = function(isDeep)
 {
-	var isInHeader = this.Row.Table.IsInHeader(this.Row.GetIndex());
+	let table = this.GetTable();
+	if (!table)
+		return false;
+
+	var isInHeader = table.IsInHeader(this.Row.GetIndex());
 	if (isInHeader)
 		return true;
 
-	if (true === isDeep && this.Row.Table.Parent && this.Row.Table.Parent.IsTableHeader)
-		return this.Row.Table.Parent.IsTableHeader();
+	if (true === isDeep && table.Parent && table.Parent.IsTableHeader)
+		return table.Parent.IsTableHeader();
 
 	return false;
 };

@@ -7164,10 +7164,12 @@ var editor;
     var t = this;
 
     if(_options) {
-      //print only 1 page of the first workbook
-      var isOnlyFirstPage = _options["printOptions"] && _options["printOptions"]["onlyFirstPage"];
-       if(isOnlyFirstPage) {
-		   _adjustPrint.isOnlyFirstPage = true;
+      //print only 1 specific page (global index across all sheets)
+      var savePage = _options["printOptions"] ? _options["printOptions"]["savePage"] : undefined;
+       if(savePage !== undefined && savePage !== -1 && savePage !== null) {
+		   _adjustPrint.savePage = savePage;
+		   _adjustPrint.asc_setStartPageIndex(savePage);
+		   _adjustPrint.asc_setEndPageIndex(savePage);
        }
 	   var spreadsheetLayout = _options["spreadsheetLayout"];
 	   var _ignorePrintArea = spreadsheetLayout && (true === spreadsheetLayout["ignorePrintArea"] || false === spreadsheetLayout["ignorePrintArea"])? spreadsheetLayout["ignorePrintArea"] : null;

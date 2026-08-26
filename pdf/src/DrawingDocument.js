@@ -426,6 +426,7 @@
             {
                 viewer.onUpdatePages(redrawPages);
                 viewer.onRepaintForms(redrawPages);
+                viewer.onRepaintAnnots(redrawPages);
             }
         };
         // mouse events
