@@ -2614,6 +2614,7 @@
 			}
 			default: {
 				res = null;
+				break;
 			}
 		}
 		return res;
@@ -2720,6 +2721,7 @@
 	OutlineView.prototype.executeHotKey = function (e) {
 		const isMacOs = AscCommon.AscBrowser.isMacOs;
 		const presentation = this.getPresentation();
+		let returnValue = keydownresult_PreventNothing;
 		switch (e.KeyCode) {
 			case Asc.c_oAscKeyCodes.ArrowLeft: {
 				if (isMacOs && e.CtrlKey) {
@@ -2728,6 +2730,7 @@
 					const bIsWord = isMacOs ? e.AltKey : e.CtrlKey;
 					this.moveCursorLeft(e.ShiftKey, bIsWord);
 				}
+				returnValue = keydownresult_PreventAll;
 				break;
 			}
 			case Asc.c_oAscKeyCodes.ArrowRight: {
@@ -2737,14 +2740,17 @@
 					const bIsWord = isMacOs ? e.AltKey : e.CtrlKey;
 					this.moveCursorRight(e.ShiftKey, bIsWord);
 				}
+				returnValue = keydownresult_PreventAll;
 				break;
 			}
 			case Asc.c_oAscKeyCodes.ArrowUp: {
 				this.moveCursorUp(e.ShiftKey);
+				returnValue = keydownresult_PreventAll;
 				break;
 			}
 			case Asc.c_oAscKeyCodes.ArrowDown: {
 				this.moveCursorDown(e.ShiftKey);
+				returnValue = keydownresult_PreventAll;
 				break;
 			}
 			case Asc.c_oAscKeyCodes.Home: {
@@ -2753,6 +2759,7 @@
 				} else {
 					this.moveCursorToStartOfLine(e.ShiftKey);
 				}
+				returnValue = keydownresult_PreventAll;
 				break;
 			}
 			case Asc.c_oAscKeyCodes.End: {
@@ -2761,6 +2768,7 @@
 				} else {
 					this.moveCursorToEndOfLine(e.ShiftKey);
 				}
+				returnValue = keydownresult_PreventAll;
 				break;
 			}
 			case Asc.c_oAscKeyCodes.Backspace: {
@@ -2770,6 +2778,7 @@
 				}, AscDFH.historydescription_Spreadsheet_Remove, true, true, true);
 				this.updateInterfaceState()
 				this.updateSelectionState();
+				returnValue = keydownresult_PreventAll;
 				break;
 			}
 			case Asc.c_oAscKeyCodes.Enter: {
@@ -2778,9 +2787,15 @@
 				presentation.FinalizeAction();
 				this.updateInterfaceState()
 				this.updateSelectionState();
+				returnValue = keydownresult_PreventAll;
+				break;
+			}
+			default: {
+				returnValue = null;
 				break;
 			}
 		}
+		return returnValue;
 	};
 	OutlineView.prototype.getDrawingDocument = function () {
 		const presentation = this.getPresentation();
