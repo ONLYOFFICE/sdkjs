@@ -70,9 +70,10 @@
     CBaseCheckBoxField.prototype.SetDefaultValue = function(value) {
         let oParent = this.GetParent(true);
         if (oParent || this.IsWidget()) {
+			const oViewer = Asc.editor.getDocumentRenderer();
             const shouldUpdate = value && !this.GetLogicValue() || this.GetLogicValue() !== value;
 
-            if (shouldUpdate) {
+            if (shouldUpdate && !oViewer.IsOpenFormsInProgress) {
                 this.SetValue(value);
                 this.Commit();
             }
