@@ -328,6 +328,7 @@ function (window, undefined) {
 		ret.putShow(!this.bDelete);
 		ret.putLabel(this.getLabelSetting());
 		ret.putGridlines(this.getGridlinesSetting());
+		ret.putNumFmt(new AscCommon.asc_CAxNumFmt(this));
 		return ret;
 	};
 
