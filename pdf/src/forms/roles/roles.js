@@ -192,6 +192,19 @@
 			this.OnChangeFinal();
         return true;
     };
+    CPdfFormRoles.prototype._IsRequiredFieldAvailable = function (field) {
+		if (!field.IsRequired()) {
+			return false;
+		}
+
+        if (field.IsReadOnly && field.IsReadOnly())
+            return false;
+
+        let widgets = field.GetAllWidgets();
+        return widgets.some(function (widget) {
+            return widget && (!widget.IsHidden || !widget.IsHidden());
+        });
+    };
     CPdfFormRoles.prototype.GetRoleUnfilledRequiredFields = function (name) {
         let role = this.GetRole(name);
         let oDoc = this.document;
@@ -200,7 +213,7 @@
         let names = this.GetEffectiveFieldNames(role);
         for (let i = 0; i < names.length; ++i) {
             let f = oDoc.GetField(names[i]);
-            if (f && f.IsRequired && f.IsRequired()) {
+            if (this._IsRequiredFieldAvailable(f)) {
                 let v = f.GetValue ? f.GetValue() : undefined;
                 if (v == undefined || v === "")
                     res.push(names[i]);
