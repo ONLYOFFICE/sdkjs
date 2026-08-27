@@ -4988,6 +4988,10 @@ var CPresentation = CPresentation || function(){};
             else {
                 aNames.forEach(function(name) {
                     let oField = oThis.GetField(name);
+					if (!oField) {
+						return;
+					}
+
                     let sFieldName = oField.GetFullName();
 
                     if (aNames.includes(sFieldName) == true && false == aReseted.includes(sFieldName)) {
@@ -5030,25 +5034,30 @@ var CPresentation = CPresentation || function(){};
 
         if (aNames.length > 0) {
             aNames.forEach(function(name) {
-                let aFields = oThis.GetAllWidgets(name);
-                aFields.forEach(function(field) {
+                let oField = oThis.GetField(name);
+				if (!oField) {
+					return;
+				}
+
+				let aWidgets = oField.GetAllWidgets();
+                aWidgets.forEach(function(widget) {
                     if (bHidden)
-                        field.SetDisplay(window["AscPDF"].Api.Types.display["hidden"]);
+                        widget.SetDisplay(window["AscPDF"].Api.Types.display["hidden"]);
                     else
-                        field.SetDisplay(window["AscPDF"].Api.Types.display["visible"]);
+                        widget.SetDisplay(window["AscPDF"].Api.Types.display["visible"]);
                     
-                    field.AddToRedraw();
+                    widget.AddToRedraw();
                 });
             });
         }
         else {
-            this.widgets.forEach(function(field) {
+            this.widgets.forEach(function(widget) {
                 if (bHidden)
-                    field.SetDisplay(window["AscPDF"].Api.Types.display["hidden"]);
+                    widget.SetDisplay(window["AscPDF"].Api.Types.display["hidden"]);
                 else
-                    field.SetDisplay(window["AscPDF"].Api.Types.display["visible"]);
+                    widget.SetDisplay(window["AscPDF"].Api.Types.display["visible"]);
 
-                field.AddToRedraw();
+                widget.AddToRedraw();
             });
         }
 
