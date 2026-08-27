@@ -8510,7 +8510,6 @@ background-repeat: no-repeat;\
 			callback();
 			return;
 		}
-		this.pasteCallback = callback;
 		this.pasteImageMap = _images;
 
 		var _count = 0;
@@ -8522,12 +8521,13 @@ background-repeat: no-repeat;\
 		{
 			// никаких евентов. ничего грузить не нужно. сделано для сафари под макОс.
 			// там при LongActions теряется фокус и вставляются пробелы
-			this.pasteCallback();
-			this.pasteCallback            = null;
-
+			if (callback)
+				callback();
+			
 			return;
 		}
-
+		
+		this.pasteCallback = callback;
 		this.incrementCounterLongAction();
 		this.isPasteFonts_Images = true;
 		this.FontLoader.LoadDocumentFonts2(_fonts);
