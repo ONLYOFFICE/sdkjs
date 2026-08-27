@@ -5740,9 +5740,9 @@
 		var res = null;
 		if (this.printOptionsJson) {
 			let sheetsProps = this.printOptionsJson["spreadsheetLayout"] && this.printOptionsJson["spreadsheetLayout"]["sheetsProps"];
-			var ws = this.model.getWorksheet(index);
-			res = new Asc.CHeaderFooter(ws);
 			if (sheetsProps && sheetsProps[index] && sheetsProps[index]["pageSetup"] && sheetsProps[index]["pageSetup"]["headerFooter"]) {
+				var ws = this.model.getWorksheet(index);
+				res = new Asc.CHeaderFooter(ws);
 				res.initFromJson(sheetsProps[index]["pageSetup"]["headerFooter"]);
 			}
 		}
