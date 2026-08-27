@@ -30600,16 +30600,16 @@
 	 * Sets the comment author's name.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE", "CPE"]
-	 * @param {string} sAuthorName - The comment author's name.
-	 * @returns {?ApiComment} - this
+	 * @param {string} authorName - The comment author's name.
+	 * @returns {ApiComment} - this
 	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/SetAuthorName.js
 	 */
-	ApiComment.prototype.SetAuthorName = function (sAuthorName) {
-		sAuthorName = GetStringParameter(sAuthorName, null);
-		if (!sAuthorName)
-			return null;
+	ApiComment.prototype.SetAuthorName = function (authorName) {
+		authorName = GetStringParameter(authorName, null);
+		if (!authorName)
+			throwException(new Error("The authorName parameter must be valid string"));
 
-		this.Comment.GetData().Set_Name(sAuthorName);
+		this.Comment.GetData().Set_Name(authorName);
 		this.private_OnChange();
 		return this;
 	};
@@ -30629,12 +30629,16 @@
 	 * Sets the user ID to the comment author.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE", "CPE"]
-	 * @param {string} sUserId - The user ID of the comment author.
+	 * @param {string} userId - The user ID of the comment author.
 	 * @returns {ApiComment} - this
 	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/SetUserId.js
 	 */
-	ApiComment.prototype.SetUserId = function (sUserId) {
-		this.Comment.GetData().m_sUserId = sUserId;
+	ApiComment.prototype.SetUserId = function (userId) {
+		userId = GetStringParameter(userId, null);
+		if (!userId)
+			throwException(new Error("The userId parameter must be valid string"));
+
+		this.Comment.GetData().m_sUserId = userId;
 		this.private_OnChange();
 		return this;
 	};
@@ -30654,12 +30658,16 @@
 	 * Marks a comment as solved.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE", "CPE"]
-	 * @param {boolean} bSolved - Specifies if a comment is solved or not.
+	 * @param {boolean} solved - Specifies if a comment is solved or not.
 	 * @returns {ApiComment} - this
 	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/SetSolved.js
 	 */
-	ApiComment.prototype.SetSolved = function (bSolved) {
-		this.Comment.GetData().SetSolved(bSolved);
+	ApiComment.prototype.SetSolved = function (solved) {
+		solved = GetBoolParameter(solved, null);
+		if (null == solved)
+			throwException(new Error("The solved parameter must be valid boolean"));
+
+		this.Comment.GetData().SetSolved(solved);
 		this.private_OnChange();
 		return this;
 	};
@@ -30933,16 +30941,16 @@
 	 * Sets the comment reply author's name.
 	 * @memberof ApiCommentReply
 	 * @typeofeditors ["CDE", "CPE"]
-	 * @param {string} sAuthorName - The comment reply author's name.
-	 * @returns {?ApiCommentReply} - this
+	 * @param {string} authorName - The comment reply author's name.
+	 * @returns {ApiCommentReply} - this
 	 * @see office-js-api/Examples/{Editor}/ApiCommentReply/Methods/SetAuthorName.js
 	 */
-	ApiCommentReply.prototype.SetAuthorName = function (sAuthorName) {
-		sAuthorName = GetStringParameter(sAuthorName, null);
-		if (!sAuthorName)
-			return null;
+	ApiCommentReply.prototype.SetAuthorName = function (authorName) {
+		authorName = GetStringParameter(authorName, null);
+		if (!authorName)
+			throwException(new Error("The authorName parameter must be valid string"));
 
-		this.Data.Set_Name(sAuthorName);
+		this.Data.Set_Name(authorName);
 		this.private_OnChange();
 		return this;
 	};
@@ -30962,12 +30970,16 @@
 	 * Sets the user ID to the comment reply author.
 	 * @memberof ApiCommentReply
 	 * @typeofeditors ["CDE", "CPE"]
-	 * @param {string} sUserId - The user ID of the comment reply author.
+	 * @param {string} userId - The user ID of the comment reply author.
 	 * @returns {ApiCommentReply} - this
 	 * @see office-js-api/Examples/{Editor}/ApiCommentReply/Methods/SetUserId.js
 	 */
-	ApiCommentReply.prototype.SetUserId = function (sUserId) {
-		this.Data.m_sUserId = sUserId;
+	ApiCommentReply.prototype.SetUserId = function (userId) {
+		userId = GetStringParameter(userId, null);
+		if (!userId)
+			throwException(new Error("The userId parameter must be valid string"));
+
+		this.Data.m_sUserId = userId;
 		this.private_OnChange();
 		return this;
 	};
