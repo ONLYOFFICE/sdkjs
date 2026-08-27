@@ -1365,6 +1365,8 @@ var CPresentation = CPresentation || function(){};
 		switch (oNextForm.GetType()) {
 			case AscPDF.FIELD_TYPES.text:
 			case AscPDF.FIELD_TYPES.combobox: {
+				this.BlurActiveObject();
+
 				let oController = this.GetController();
 				oController.selectObject(oNextForm, oNextForm.GetPage());
 				oController.selection.textSelection = oNextForm;
@@ -1467,6 +1469,8 @@ var CPresentation = CPresentation || function(){};
         switch (oNextForm.GetType()) {
 			case AscPDF.FIELD_TYPES.text:
 			case AscPDF.FIELD_TYPES.combobox: {
+				this.BlurActiveObject();
+				
 				let oController = this.GetController();
 				oController.selectObject(oNextForm, oNextForm.GetPage());
 				oController.selection.textSelection = oNextForm;
