@@ -4521,10 +4521,6 @@ var CPresentation = CPresentation || function(){};
             }
         }
 
-		if (!oAnnot.GetContents()) {
-			return;
-		}
-		
         if (this.Viewer.file.isSelectionUse()) {
             return;
         }
