@@ -6333,30 +6333,30 @@ _func[cElementType.string][cElementType.string] = function ( arg0, arg1, what ) 
 		case "-":
 			_arg0 = arg0.tocNumber();
 			_arg1 = arg1.tocNumber();
-			if (_arg0 instanceof cError) {
+			if (_arg0.type === cElementType.error) {
 				return _arg0;
 			}
-			if (_arg1 instanceof cError) {
+			if (_arg1.type === cElementType.error) {
 				return _arg1;
 			}
 			return new cNumber(_arg0.getValue(true) - _arg1.getValue(true));
 		case "+":
 			_arg0 = arg0.tocNumber();
 			_arg1 = arg1.tocNumber();
-			if (_arg0 instanceof cError) {
+			if (_arg0.type === cElementType.error) {
 				return _arg0;
 			}
-			if (_arg1 instanceof cError) {
+			if (_arg1.type === cElementType.error) {
 				return _arg1;
 			}
 			return new cNumber(_arg0.getValue(true) + _arg1.getValue(true));
 		case "/":
 			_arg0 = arg0.tocNumber();
 			_arg1 = arg1.tocNumber();
-			if (_arg0 instanceof cError) {
+			if (_arg0.type === cElementType.error) {
 				return _arg0;
 			}
-			if (_arg1 instanceof cError) {
+			if (_arg1.type === cElementType.error) {
 				return _arg1;
 			}
 			if (_arg1.getValue(true) !== 0) {
@@ -6366,10 +6366,10 @@ _func[cElementType.string][cElementType.string] = function ( arg0, arg1, what ) 
 		case "*":
 			_arg0 = arg0.tocNumber();
 			_arg1 = arg1.tocNumber();
-			if (_arg0 instanceof cError) {
+			if (_arg0.type === cElementType.error) {
 				return _arg0;
 			}
-			if (_arg1 instanceof cError) {
+			if (_arg1.type === cElementType.error) {
 				return _arg1;
 			}
 			return new cNumber(_arg0.getValue(true) * _arg1.getValue(true));
