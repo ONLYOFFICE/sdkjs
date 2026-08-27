@@ -11859,6 +11859,16 @@ function isAllowPasteLink(pastedWb) {
 		}
 	};
 
+	WorksheetView.prototype._fixScrollCorrect = function () {
+		if (!this.scrollCorrect) {
+			return;
+		}
+		var rowHeight = this._getRowHeight(this.visibleRange.r1);
+		if (rowHeight > 0 && this.scrollCorrect >= rowHeight) {
+			this.setScrollCorrect(0);
+		}
+	};
+
 	WorksheetView.prototype.getScrollCorrect = function (units) {
 		var u = units >= 0 && units <= 3 ? units : 0;
 		return this.scrollCorrect ? (this.scrollCorrect * asc_getcvt(0/*px*/, u, this._getPPIX())) : 0;
@@ -19353,6 +19363,7 @@ function isAllowPasteLink(pastedWb) {
 		}
     	var viewMode = this.handlers.trigger('getViewMode');
         var t = this;
+		var scrollToSelection = (null === r1);
 		if (null === r1) {
 			var lastSelection = this.model.selectionRange.getLast();
 			r1 = lastSelection.r1;
@@ -19373,6 +19384,9 @@ function isAllowPasteLink(pastedWb) {
             if (r2 < r) {
                 t._updateRange(new Asc.Range(0, r1, gc_nMaxCol0, r2));
                 t.draw();
+				if (scrollToSelection) {
+					t._scrollToRange(new Asc.Range(t.visibleRange.c1, r1, t.visibleRange.c2, r2));
+				}
             	return;
 			}
 
@@ -19392,6 +19406,9 @@ function isAllowPasteLink(pastedWb) {
 			t.model.setRowBestFit(true, AscCommonExcel.oDefaultMetrics.RowHeight, r1, r2);
 			t._updateRange(new Asc.Range(0, r1, gc_nMaxCol0, r2));
 			t.draw();
+			if (scrollToSelection) {
+				t._scrollToRange(new Asc.Range(t.visibleRange.c1, r1, t.visibleRange.c2, r2));
+			}
             History.EndTransaction();
 			if (viewMode) {
 				History.TurnOn();
@@ -20837,7 +20854,16 @@ function isAllowPasteLink(pastedWb) {
 
 			this._updateColsWidth();
 			this._updateVisibleColsCount(/*skipScrolReinit*/true);
+			var rowsHeightBefore = this._getRowTop(this.nRowsCount);
 			var minRow = this._updateRowsHeight();
+			if (null !== minRow) {
+				if (minRow <= this.visibleRange.r1) {
+					this._fixScrollCorrect();
+				}
+				if (rowsHeightBefore !== this._getRowTop(this.nRowsCount)) {
+					this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
+				}
+			}
 			this._updateVisibleRowsCount(/*skipScrolReinit*/true);
 			this._updateSelectionNameAndInfo();
 
