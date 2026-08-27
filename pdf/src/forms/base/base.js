@@ -1005,7 +1005,7 @@
         let oDoc            = this.GetDocument();
 
 		// form roles: in filling mode field actions may be run only by its role
-		if (oDoc.IsFillingFormMode() && false === oDoc.GetFormRoles().CanFillField(this)) {
+		if (!oDoc.IsFillingFormMode() || false === oDoc.GetFormRoles().CanFillField(this)) {
 			return;
 		}
 
