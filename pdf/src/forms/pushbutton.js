@@ -858,8 +858,8 @@
 
         AscCommon.History.Add(new CChangesPDFPushbuttonImage(this, sPrevRasterId, sRasterId, nAPType));
 
-        this.SetNeedUpdateImage(true);
         this.SetWasChanged(true);
+		this.SetNeedUpdateImage(true);
     };
     CPushButtonField.prototype.Reassign_ImageUrls = function(oImages) {
         let _t = this;
@@ -1564,9 +1564,9 @@
             AscCommon.History.Add(new CChangesPDFPushbuttonFitBounds(this, this._buttonFitBounds, bValue));
 
             this._buttonFitBounds = bValue;
-            this.SetNeedUpdateImage(true);
             this.SetNeedRecalc(true);
             this.SetWasChanged(true);
+            this.SetNeedUpdateImage(true);
         }
     };
     CPushButtonField.prototype.IsButtonFitBounds = function() {
@@ -1576,9 +1576,9 @@
         AscCommon.History.Add(new CChangesPDFPushbuttonScaleWhenType(this, this._buttonScaleWhen, nType));
 
         this._buttonScaleWhen = nType;
-        this.SetNeedUpdateImage(true);
+        this.SetNeedRecalc(true);
         this.SetWasChanged(true);
-        this._UpdateImage();
+        this.SetNeedUpdateImage(true);
     };
     CPushButtonField.prototype.GetScaleWhen = function() {
         return this._buttonScaleWhen;
@@ -1587,9 +1587,9 @@
         AscCommon.History.Add(new CChangesPDFPushbuttonScaleHowType(this, this._buttonScaleHow, nType));
 
         this._buttonScaleHow = nType;
-        this.SetNeedUpdateImage(true);
+        this.SetNeedRecalc(true);
         this.SetWasChanged(true);
-        this._UpdateImage();
+        this.SetNeedUpdateImage(true);
     };
     CPushButtonField.prototype.GetScaleHow = function() {
         return this._buttonScaleHow;
