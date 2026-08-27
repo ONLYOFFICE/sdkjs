@@ -53,6 +53,11 @@
         g: 176,
         b: 255
     };
+    let FIELDS_HIGHLIGHT_OTHER_ROLE = {
+        r: 242,
+        g: 242,
+        b: 242
+    };
 
     //------------------------------------------------------------------------------------------------------------------
 	//
@@ -85,6 +90,7 @@
 	
 	// freeze objects
     Object.freeze(FIELDS_HIGHLIGHT);
+    Object.freeze(FIELDS_HIGHLIGHT_OTHER_ROLE);
     Object.freeze(ALIGN_TYPE);
     Object.freeze(FONT_STRETCH);
     Object.freeze(FONT_STYLE);
@@ -1036,6 +1042,10 @@
         let oDoc   = this.GetDocument();
         let oRoles = oDoc.GetFormRoles();
         if (oRoles) {
+            if (!oRoles.CanFillField(this) || (!oDoc.IsFillingFormMode() && !oDoc.IsEditFieldsMode() && oDoc.GetFormRoles().IsFinal())) {
+                return FIELDS_HIGHLIGHT_OTHER_ROLE;
+            }
+
             let oRole = oRoles.GetRoleByField(this);
             if (oRole) {
                 let rgb = oRole.GetColor() ? private_hexToRgb(oRole.GetColor()) : null;
