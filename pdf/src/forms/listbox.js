@@ -193,7 +193,9 @@
 
         this.SetMultipleSelection(oFieldToInherit.IsMultipleSelection());
         this.SetCommitOnSelChange(oFieldToInherit.IsCommitOnSelChange());
-        this.SetOptions(oFieldToInherit.GetOptions());
+
+        this.private_SetOptionsToContent([]);
+        this.SetOptions(oFieldToInherit.GetOptions().slice());
         this.SetLogicCurIdxs(oFieldToInherit.GetLogicCurIdxs());
 
         if (bClearFrom !== false) {
