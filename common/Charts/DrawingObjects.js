@@ -1634,9 +1634,11 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             var bounds = _t.graphicObject.bounds;
 
 
-            var fromX =  this.mmToPx(bounds.x > 0 ? bounds.x : 0), fromY =  this.mmToPx(bounds.y > 0 ? bounds.y : 0),
+            var isRtl = this.worksheet.getRightToLeft();
+
+            var fromX =  this.mmToPx(isRtl ? bounds.x : (bounds.x > 0 ? bounds.x : 0)), fromY =  this.mmToPx(bounds.y > 0 ? bounds.y : 0),
                 toX = this.mmToPx(bounds.x + bounds.w), toY = this.mmToPx(bounds.y + bounds.h);
-            if(toX < 0)
+            if(!isRtl && toX < 0)
             {
                 toX = 0;
             }
@@ -1645,7 +1647,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 toY = 0;
             }
 
-            if (this.worksheet.getRightToLeft()) {
+            if (isRtl) {
                 let temp = fromX;
                 fromX = toX;
                 toX = temp;
