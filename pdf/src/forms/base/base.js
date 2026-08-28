@@ -1489,6 +1489,40 @@
             }
         }
     };
+	CBaseField.prototype.DrawRequiredBorder = function(oGraphicsPDF) {
+        if (this.IsRequired() != true) {
+            return;
+        }
+
+        let nBorderWidth = this.GetBorderWidth();
+        let nLineWidth = nBorderWidth || 1;
+        if (nLineWidth == 0) {
+            return;
+        }
+
+        let aOrigRect = this.GetRect();
+        let X         = aOrigRect[0] + nLineWidth / 2;
+        let Y         = aOrigRect[1] + nLineWidth / 2;
+        let nWidth    = aOrigRect[2] - aOrigRect[0] - nLineWidth;
+        let nHeight   = aOrigRect[3] - aOrigRect[1] - nLineWidth;
+
+        oGraphicsPDF.SetLineWidth(nLineWidth);
+        oGraphicsPDF.SetLineDash([]);
+        oGraphicsPDF.SetStrokeStyle(255, 0, 0);
+        oGraphicsPDF.BeginPath();
+
+        if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
+            let centerX = X + nWidth / 2;
+            let centerY = Y + nHeight / 2;
+            let nRadius = Math.min(nWidth / 2, nHeight / 2);
+            oGraphicsPDF.Arc(centerX, centerY, nRadius, 0, 2 * Math.PI, false);
+        }
+        else {
+            oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
+        }
+
+        oGraphicsPDF.Stroke();
+    };
     /**
 	 * Gets rgb color object from internal color array.
 	 * @memberof CBaseField
@@ -2535,6 +2569,7 @@
                 this.DrawFromTextBox(pdfGraphics, textBoxGraphics);
         }
 
+		this.DrawRequiredBorder(pdfGraphics);
 		this.DrawLocks(pdfGraphics);
         this.DrawEdit(textBoxGraphics);
 
