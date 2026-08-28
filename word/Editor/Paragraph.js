@@ -12817,23 +12817,36 @@ Paragraph.prototype.Document_CreateFontCharMap = function(FontCharMap)
 {
 	// TODO: Данная функция устарела и не используется
 };
-Paragraph.prototype.Document_Get_AllFontNames = function(AllFonts)
+Paragraph.prototype.Document_Get_AllFontNames = function(AllFonts, isDirect)
 {
-	// Смотрим на знак конца параграфа
-	this.TextPr.Value.Document_Get_AllFontNames(AllFonts);
-	if(this.Pr.Bullet)
+	if (false === isDirect)
 	{
-		this.Pr.Bullet.Get_AllFontNames(AllFonts);
-	}
-	if(this.Pr.DefaultRunPr)
-	{
-        this.Pr.DefaultRunPr.Document_Get_AllFontNames(AllFonts);
-	}
+		let compiledPr = this.Get_CompiledPr2(false);
+		compiledPr.TextPr.Document_Get_AllFontNames(AllFonts);
 
-	var Count = this.Content.length;
-	for (var Index = 0; Index < Count; Index++)
+		if (compiledPr.ParaPr.Bullet)
+			compiledPr.ParaPr.Bullet.Get_AllFontNames(AllFonts);
+
+		let count = this.Content.length;
+		for (let index = 0; index < count; index++)
+		{
+			this.Content[index].Get_AllFontNames(AllFonts, false);
+		}
+	}
+	else
 	{
-		this.Content[Index].Get_AllFontNames(AllFonts);
+		this.TextPr.Value.Document_Get_AllFontNames(AllFonts);
+		
+		if (this.Pr.Bullet)
+			this.Pr.Bullet.Get_AllFontNames(AllFonts);
+		if (this.Pr.DefaultRunPr)
+			this.Pr.DefaultRunPr.Document_Get_AllFontNames(AllFonts);
+
+		let count = this.Content.length;
+		for (let index = 0; index < count; ++index)
+		{
+			this.Content[index].Get_AllFontNames(AllFonts, true);
+		}
 	}
 };
 /**

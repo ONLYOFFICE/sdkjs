@@ -11449,19 +11449,8 @@
 	ApiParagraph.prototype.GetFontNames = function()
 	{
 		let fontMap = {};
-		let arrFonts = [];
-		// this.Paragraph.Document_Get_AllFontNames(fontMap);
-		this.Paragraph.Get_CompiledPr().TextPr.Document_Get_AllFontNames(fontMap);
-		for (let i = 0; i < this.Paragraph.Content.length; i++)
-		{
-			let element = this.Paragraph.Content[i];
-			element.Get_CompiledTextPr().Document_Get_AllFontNames(fontMap);
-		}
-		for (let key in fontMap)
-		{
-			arrFonts.push(key);
-		}
-		return arrFonts;
+		this.Paragraph.Document_Get_AllFontNames(fontMap, false);
+		return Object.keys(fontMap);
 	};
 	/**
 	 * Sets the font size to the characters of the current paragraph.
@@ -13449,14 +13438,8 @@
 	ApiRun.prototype.GetFontNames = function()
 	{
 		let fontMap = {};
-		let arrFonts = [];
-		// this.Run.Get_AllFontNames(fontMap);
-		this.Run.Get_CompiledTextPr().Document_Get_AllFontNames(fontMap);
-		for (let key in fontMap)
-		{
-			arrFonts.push(key);
-		}
-		return arrFonts;
+		this.Run.Get_AllFontNames(fontMap, false);
+		return Object.keys(fontMap);
 	};
 	
 	/**

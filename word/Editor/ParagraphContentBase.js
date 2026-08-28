@@ -193,7 +193,7 @@ CParagraphContentBase.prototype.CollectDocumentStatistics = function(ParaStats)
 CParagraphContentBase.prototype.Create_FontMap = function(Map)
 {
 };
-CParagraphContentBase.prototype.Get_AllFontNames = function(AllFonts)
+CParagraphContentBase.prototype.Get_AllFontNames = function(fontMap, isDirect)
 {
 };
 CParagraphContentBase.prototype.GetSelectedText = function(bAll, bClearText, oPr)
@@ -2328,11 +2328,12 @@ CParagraphContentWithParagraphLikeContent.prototype.Create_FontMap = function(Ma
     for (var Index = 0; Index < Count; Index++)
         this.Content[Index].Create_FontMap( Map );
 };
-CParagraphContentWithParagraphLikeContent.prototype.Get_AllFontNames = function(AllFonts)
+CParagraphContentWithParagraphLikeContent.prototype.Get_AllFontNames = function(fontMap, isDirect)
 {
-    var Count = this.Content.length;
-    for (var Index = 0; Index < Count; Index++)
-        this.Content[Index].Get_AllFontNames( AllFonts );
+	for (let index = 0, count = this.Content.length; index < count; ++index)
+	{
+		this.Content[index].Get_AllFontNames(fontMap, isDirect);
+	}
 };
 CParagraphContentWithParagraphLikeContent.prototype.Clear_TextFormatting = function()
 {

@@ -3160,9 +3160,12 @@ ParaRun.prototype.Create_FontMap = function(Map)
     }
 };
 
-ParaRun.prototype.Get_AllFontNames = function(AllFonts)
+ParaRun.prototype.Get_AllFontNames = function(fontMap, isDirect)
 {
-	this.Pr.Document_Get_AllFontNames(AllFonts);
+	if (false === isDirect)
+		this.Get_CompiledPr(false).Document_Get_AllFontNames(fontMap);
+	else
+		this.Pr.Document_Get_AllFontNames(fontMap);
 
 	var Count = this.Content.length;
 	for (var Index = 0; Index < Count; Index++)
@@ -3170,9 +3173,9 @@ ParaRun.prototype.Get_AllFontNames = function(AllFonts)
 		var Item = this.Content[Index];
 
 		if (para_Drawing === Item.Type)
-			Item.documentGetAllFontNames(AllFonts);
+			Item.documentGetAllFontNames(fontMap);
 		else if (para_FootnoteReference === Item.Type || para_EndnoteReference === Item.Type)
-			Item.GetAllFontNames(AllFonts);
+			Item.GetAllFontNames(fontMap);
 	}
 };
 
