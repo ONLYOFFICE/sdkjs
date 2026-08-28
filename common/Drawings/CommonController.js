@@ -11574,9 +11574,14 @@
 			return nResult;
 		};
 		CDrawingControllerStateBase.prototype.saveDocumentSelectionState = function() {
-			if(this.controller && this.controller.saveDocumentState) {
-				this.controller.saveDocumentState();
+			if(!this.controller || !this.controller.saveDocumentState) {
+				return;
 			}
+			const curState = this.controller.curState;
+			if(curState instanceof CInkDrawState || curState instanceof CInkEraseState) {
+				return;
+			}
+			this.controller.saveDocumentState();
 		};
 
 		function CInkEraseState(drawingObjects) {
@@ -11636,7 +11641,6 @@
 							}
 						}
 					}
-					this.saveDocumentSelectionState();
 					this.controller.checkInkState();
 					this.inkDrawer.restoreState(this.startState);
 
@@ -11702,7 +11706,6 @@
 			if(oControllerState === this) {
 				return;
 			}
-			this.saveDocumentSelectionState();
 			this.controller.resetSelection();
 			this.changeControllerState(this);
 			let oDrawingState = oControllerState;

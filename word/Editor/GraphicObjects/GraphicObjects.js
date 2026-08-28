@@ -2391,10 +2391,41 @@ CGraphicObjects.prototype =
 		{
 			if(this.document)
 			{
-				this.document.LoadDocumentState(this.startDocState);
+				if(this.isStartDocStateAlive())
+				{
+					this.document.LoadDocumentState(this.startDocState);
+				}
+				else
+				{
+					this.document.SetDocPosType(AscCommonWord.docpostype_Content);
+					this.document.RemoveSelection();
+					this.document.NeedUpdateTarget = true;
+					this.document.UpdateSelection();
+				}
 			}
 			this.startDocState = null;
 		}
+	},
+
+	isStartDocStateAlive: function() {
+		if(AscCommonWord.docpostype_DrawingObjects !== this.startDocState.CurPos.Type)
+		{
+			return true;
+		}
+		const selectionState = this.startDocState.DrawingsSelectionState;
+		if(!selectionState || !selectionState.selection)
+		{
+			return true;
+		}
+		const selection = selectionState.selection;
+		for(let index = 0; index < selection.length; ++index)
+		{
+			if(selection[index].object.IsUseInDocument())
+			{
+				return true;
+			}
+		}
+		return false;
 	},
 
     documentUpdateRulersState: function()
