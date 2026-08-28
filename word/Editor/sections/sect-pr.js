@@ -110,6 +110,8 @@ var section_footnote_RestartEachPage   = 0x02;
 		// Настройки отступов
 		this.SetPageMargins(Other.PageMargins.Left, Other.PageMargins.Top, Other.PageMargins.Right, Other.PageMargins.Bottom);
 		this.SetGutter(Other.PageMargins.Gutter);
+		this.SetPageMarginHeader(Other.PageMargins.Header);
+		this.SetPageMarginFooter(Other.PageMargins.Footer);
 		
 		// Настройки границ
 		this.Set_Borders_Left(Other.Borders.Left);
