@@ -14961,7 +14961,8 @@ function isAllowPasteLink(pastedWb) {
 		this._fixSelectionOfMergedCells(null, valid);
 		this.updateSelectionWithSparklines();
 		this._updateSelectionNameAndInfo();
-		this._scrollToRange();
+		var ac = this.model.selectionRange.activeCell;
+		this._scrollToRange(new asc_Range(ac.col, ac.row, ac.col, ac.row));
 	};
 
 	WorksheetView.prototype.changeSelectionStartPoint = function (x, y, isCoord, isCtrl) {
