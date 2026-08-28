@@ -236,6 +236,9 @@
 				let nSourceX = aInRect[0] * g_dKoef_pt_to_mm;
 				let nSourceY = aInRect[3] * g_dKoef_pt_to_mm;
 				
+				let nScale = this.GetOriginViewScale();
+				oTr.Scale(1 / nScale, 1 / nScale);
+
 				oTr.tx = nSourceX;
 				oTr.ty = nSourceY;
 			}

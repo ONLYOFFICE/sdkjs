@@ -7304,8 +7304,8 @@ var CPresentation = CPresentation || function(){};
 
         if (sType == AscPDF.STAMP_TYPES.Signature) {
             if (oImage) {
-                nExtX   = Math.max(1, oImage.Image.width * g_dKoef_pix_to_mm);
-                nExtY   = Math.max(1, oImage.Image.height * g_dKoef_pix_to_mm);
+                nExtX   = Math.max(1, oImage.Image.width * g_dKoef_pix_to_mm * g_dKoef_mm_to_pt);
+                nExtY   = Math.max(1, oImage.Image.height * g_dKoef_pix_to_mm * g_dKoef_mm_to_pt);
                 let nKoeff  = Math.min(1.0, 1.0 / Math.max(nExtX / nPageW, nExtY / nPageH));
     
                 nExtX = Math.max(5, nExtX * nKoeff); 
