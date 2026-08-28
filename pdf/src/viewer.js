@@ -4953,16 +4953,18 @@
 					let nStartPos = oMemory.GetCurPosition();
 					oMemory.Skip(4);
 
-					// xml string length will be here
+					// binary length will be here
 					let nStrLengthPos = oMemory.GetCurPosition();
 					oMemory.Skip(4);
 
-					drawing.WriteToBinary(oMemory);
+					if (!drawing.IsIntersectWithRedact()) {
+						drawing.WriteToBinary(oMemory);
+					}
 
-					// write xml string length
+					// write binary length
 					let nEndPos = oMemory.GetCurPosition();
 					oMemory.Seek(nStrLengthPos);
-					oMemory.WriteLong(nEndPos - nStrLengthPos - 4); // subtract 4 because it should be string length, without counting length command
+					oMemory.WriteLong(nEndPos - nStrLengthPos - 4); // subtract the length command itself
 					oMemory.Seek(nEndPos);
 
 					let aRedactIds = drawing.GetRedactIds();
