@@ -9469,7 +9469,8 @@
 						t.dynamicArrayManager.changeFormula(null, cell.formulaParsed, cell);
 					}
 					cell.setFormulaInternal(null);
-					let oUndoRedoData_CellData_New = ignoreNoEmpty ? new AscCommonExcel.UndoRedoData_CellData(cell.getValueData(), null) : null;
+					let oUndoRedoData_CellData_New = ignoreNoEmpty ? new AscCommonExcel.UndoRedoData_CellData(
+						new UndoRedoData_CellValueData(null, new AscCommonExcel.CCellValue()), null) : null;
 					AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_RemoveCell, sheetId, new Asc.Range(nCol, nRow, nCol, nRow), new UndoRedoData_CellSimpleData(nRow, nCol, oUndoRedoData_CellData, oUndoRedoData_CellData_New));
 				}
 				t.workbook.dependencyFormulas.addToChangedCell(cell);
