@@ -30634,7 +30634,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/SetUserId.js
 	 */
 	ApiComment.prototype.SetUserId = function (userId) {
-		userId = GetStringParameter(userId, null);
+		userId = GetStringParameter(userId, null, false);
 		if (!userId)
 			throwException(new Error("The userId parameter must be valid string"));
 
@@ -30975,7 +30975,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiCommentReply/Methods/SetUserId.js
 	 */
 	ApiCommentReply.prototype.SetUserId = function (userId) {
-		userId = GetStringParameter(userId, null);
+		userId = GetStringParameter(userId, null, false);
 		if (!userId)
 			throwException(new Error("The userId parameter must be valid string"));
 
