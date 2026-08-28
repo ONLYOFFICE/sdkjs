@@ -1328,7 +1328,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.SelectNextForm = function(checkFunc) {
 		if (!this.Viewer.file.nativeFile['CheckPerm'](AscPDF.USER_PERMISSIONS.fillForms)) {
 			Asc.editor.sendEvent("asc_onAskEditPassword");
-			return;
+			return false;
 		}
 
         let oViewer         = editor.getDocumentRenderer();
@@ -1337,7 +1337,7 @@ var CPresentation = CPresentation || function(){};
         let oActionsQueue   = this.GetActionsQueue();
 		
 		if (this.IsEditFieldsMode() || aWidgets.length == 0)
-            return;
+            return false;
 
 		let nFormsCount = this.widgets.length;
         let nCurIdx = this.widgets.indexOf(this.activeForm);
@@ -1356,11 +1356,11 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (!oNextForm)
-            return;
+            return false;
 
         let _t = this;
 		if (!this.checkFieldFont(oNextForm, function(){_t.SelectNextForm(checkFunc);}))
-			return;
+			return false;
 
 		switch (oNextForm.GetType()) {
 			case AscPDF.FIELD_TYPES.text:
@@ -1423,6 +1423,8 @@ var CPresentation = CPresentation || function(){};
         }
         else
             callbackAfterFocus.bind(this)();
+
+		return true;
     };
 	/**
 	 * Selects the previous visible form which satisfies the optional filter.
@@ -1431,7 +1433,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.SelectPrevForm = function(checkFunc) {
 		if (!this.Viewer.file.nativeFile['CheckPerm'](AscPDF.USER_PERMISSIONS.fillForms)) {
 			Asc.editor.sendEvent("asc_onAskEditPassword");
-			return;
+			return false;
 		}
 		
         let oViewer         = editor.getDocumentRenderer();
@@ -1440,7 +1442,7 @@ var CPresentation = CPresentation || function(){};
         let oActionsQueue   = this.GetActionsQueue();
 		
 		if (this.IsEditFieldsMode() || aWidgets.length == 0)
-            return;
+            return false;
 
 		let nFormsCount = this.widgets.length;
         let nCurIdx = this.widgets.indexOf(this.activeForm);
@@ -1460,11 +1462,11 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (!oNextForm)
-            return;
+            return false;
 
         let _t = this;
 		if (!this.checkFieldFont(oNextForm, function(){_t.SelectPrevForm(checkFunc);}))
-			return;
+			return false;
 
         switch (oNextForm.GetType()) {
 			case AscPDF.FIELD_TYPES.text:
@@ -1526,6 +1528,8 @@ var CPresentation = CPresentation || function(){};
         }
         else
             callbackAfterFocus.bind(this)();
+
+		return true;
     };
     CPDFDoc.prototype.NavigateToField = function(oField) {
         let oViewer     = Asc.editor.getDocumentRenderer();
@@ -5658,6 +5662,15 @@ var CPresentation = CPresentation || function(){};
 				case AscPDF.FIELD_TYPES.combobox: {
 					Asc.editor.sendEvent("asc_onShowPDFFormsActions", oForm);
 				}
+				case AscPDF.FIELD_TYPES.radiobutton: {
+					let res = this.SelectPrevForm(function(form) {
+						return oForm.GetFullName() == form.GetFullName();
+					});
+
+					if (res) {
+						this.EnterDownActiveField();
+					}
+				}
             }
 
             if (oContent) {
@@ -5722,6 +5735,15 @@ var CPresentation = CPresentation || function(){};
                 }
 				case AscPDF.FIELD_TYPES.combobox: {
 					Asc.editor.sendEvent("asc_onShowPDFFormsActions", oForm);
+				}
+				case AscPDF.FIELD_TYPES.radiobutton: {
+					let res = this.SelectNextForm(function(form) {
+						return oForm.GetFullName() == form.GetFullName();
+					});
+
+					if (res) {
+						this.EnterDownActiveField();
+					}
 				}
             }
 
