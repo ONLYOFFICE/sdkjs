@@ -1612,7 +1612,6 @@ var CPresentation = CPresentation || function(){};
         
 		let oViewer		= editor.getDocumentRenderer();
 		let oDrDoc 		= this.GetDrawingDocument();
-		let oController	= this.GetController();
 		let oForm   	= this.activeForm;
 
         if (!oForm)
@@ -1621,13 +1620,13 @@ var CPresentation = CPresentation || function(){};
         if (false == oForm.IsInForm())
             return;
 
-        oForm.SetInForm(false);
-		this.RemoveSelection();
-				
         if ([AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(oForm.GetType())) {
-            oForm.onMouseUp();
+            this.OnMouseUpField(oForm);
         }
         else {
+			oForm.SetInForm(false);
+			this.RemoveSelection();
+
             oForm.UpdateScroll && oForm.UpdateScroll(false); // remove scroll
 
             if (oForm.IsNeedCommit()) {

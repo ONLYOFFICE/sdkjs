@@ -644,6 +644,13 @@
 		let drDoc  = doc.GetDrawingDocument();
 		let drController = doc.GetController();
 		
+		if (codePoints.length == 1 && codePoints[0] == 32
+		&& doc.IsFillingFormMode() && doc.activeForm
+		&& (doc.activeForm.GetType() == AscPDF.FIELD_TYPES.checkbox || doc.activeForm.GetType() == AscPDF.FIELD_TYPES.radiobutton)) {
+			doc.EnterDownActiveField();
+			return;
+		}
+
 		let textController = doc.getTextController(true);
 		if (!textController)
 			return false;
