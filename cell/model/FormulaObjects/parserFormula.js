@@ -760,7 +760,17 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cNumber.prototype.tocString = function () {
 		// scientific number should be transformed to Upper case string
 		// 1e+307 -> '1E+307'
-		var s = ("" + this.value).replace('e', 'E');
+
+		let val = this.value;
+		let s = "" + val;
+
+		// round to MS/LO 15 significant digits, otherwise the IEEE-754 tail leaks on
+		if (Number.isFinite(val) && val !== 0 && s.length > cExcelSignificantDigits + 1) {
+			s = "" + parseFloat(val.toPrecision(cExcelSignificantDigits));
+		}
+
+		s = s.replace('e', 'E');
+
 		var sep = FormulaSeparators.digitSeparator;
 		if (sep !== '.') {
 			s = s.replace('.', sep);
