@@ -1209,7 +1209,7 @@
                     return;
                 }
                 
-                editor.sendEvent("asc_onShowPDFFormsActions", this, x, y);
+                Asc.editor.sendEvent("asc_onShowPDFFormsActions", this);
                 this.content.MoveCursorToStartPos();
             }
 

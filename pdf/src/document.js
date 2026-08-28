@@ -5643,7 +5643,7 @@ var CPresentation = CPresentation || function(){};
         oDrDoc.UpdateTargetFromPaint = true;
 
         let oContent;
-        if (oForm && !oForm.IsNeedDrawHighlight())
+        if (oForm && oForm.IsInForm())
         {
             switch (oForm.GetType())
             {
@@ -5651,12 +5651,13 @@ var CPresentation = CPresentation || function(){};
                     oForm.MoveSelectUp();
                     break;
                 case AscPDF.FIELD_TYPES.text: {
-                    if (oForm.IsInForm()) {
-                        oForm.MoveCursorUp(isShiftKey, isCtrlKey);
-                        oContent = oForm.GetDocContent();
-                    }
+                    oForm.MoveCursorUp(isShiftKey, isCtrlKey);
+					oContent = oForm.GetDocContent();
                     break;
                 }
+				case AscPDF.FIELD_TYPES.combobox: {
+					Asc.editor.sendEvent("asc_onShowPDFFormsActions", oForm);
+				}
             }
 
             if (oContent) {
@@ -5707,7 +5708,7 @@ var CPresentation = CPresentation || function(){};
         oDrDoc.UpdateTargetFromPaint = true;
 
         let oContent;
-        if (oForm && !oForm.IsNeedDrawHighlight())
+        if (oForm && oForm.IsInForm())
         {
             switch (oForm.GetType())
             {
@@ -5715,13 +5716,13 @@ var CPresentation = CPresentation || function(){};
                     oForm.MoveSelectDown();
                     break;
                 case AscPDF.FIELD_TYPES.text: {
-                    if (oForm.IsInForm()) {
-                        oForm.MoveCursorDown(isShiftKey, isCtrlKey);
-                        oContent = oForm.GetDocContent();
-                    }
-                    
+                    oForm.MoveCursorDown(isShiftKey, isCtrlKey);
+					oContent = oForm.GetDocContent();
                     break;
                 }
+				case AscPDF.FIELD_TYPES.combobox: {
+					Asc.editor.sendEvent("asc_onShowPDFFormsActions", oForm);
+				}
             }
 
             if (oContent) {
