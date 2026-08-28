@@ -2890,7 +2890,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 	this.DocumentOutline.Update();
 	this.MathTrackHandler.Update();
 	
-    this.private_ClearSearchOnRecalculate();
+    this.ClearSearchOnChange();
 
     // Обновляем позицию курсора
     this.NeedUpdateTarget = this.Action.Start ? this.Action.ScrollToTarget : true;
@@ -3265,7 +3265,7 @@ CDocument.prototype.RecalculateWithParams = function(oRecalcData, isForceStrictR
 };
 CDocument.prototype.RecalculateByChanges = function(arrChanges, nStartIndex, nEndIndex, isForceStrictRecalc, nNoTimerPageIndex)
 {
-	this.private_ClearSearchOnRecalculate();
+	this.ClearSearchOnChange();
 
 	// Обновляем позицию курсора
 	this.NeedUpdateTarget = true;
@@ -5063,7 +5063,7 @@ CDocument.prototype.private_CheckUnusedFields = function()
 			oSeparateChar.SetUse(false);
 	}
 };
-CDocument.prototype.private_ClearSearchOnRecalculate = function()
+CDocument.prototype.ClearSearchOnChange = function()
 {
 	if (!this.SearchEngine.ClearOnRecalc)
 		return;
@@ -28260,14 +28260,12 @@ CDocument.prototype.ReplaceSearchElement = function(NewStr, bAll, Id, bInterface
 	{
 		this.StartAction(bAll ? AscDFH.historydescription_Document_ReplaceAll : AscDFH.historydescription_Document_ReplaceSingle);
 
+		this.SearchEngine.ClearOnRecalc = false;
+
 		for (var nIndex = 0; nIndex < nReplacedCount; ++nIndex)
 		{
 			this.SearchEngine.Replace(NewStr, arrReplaceId[nIndex], false);
 		}
-
-		// Если остались элементы поиска, тогда не очищаем текущий поиск
-		if (this.SearchEngine.Count)
-			this.SearchEngine.ClearOnRecalc = false;
 
 		this.Recalculate(true);
 		this.SearchEngine.ClearOnRecalc = true;
