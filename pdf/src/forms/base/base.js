@@ -114,9 +114,7 @@
         this._kids          = [];
         this._apIdx         = undefined; // form index on the page in the original file (in the getInteractiveForms method array), used to get appearance
         this._borderStyle   = undefined;
-        this._lineWidth     = undefined;        // In older versions of this specification, this property was borderWidth
         this._borderWidth   = undefined;       
-        this._strokeColor   = undefined;     // In older versions of this specification, this property was borderColor. The use of borderColor is now discouraged, although it is still valid for backward compatibility.
         this._borderColor   = undefined;
         this._fillColor     = undefined;
         this._bgColor       = undefined;          // prop for old versions (fillColor)
@@ -1144,8 +1142,8 @@
         let nHeight = aOringRect[3] - aOringRect[1];
 
         let color;
-        if (this._strokeColor != null) {
-            color = this.GetRGBColor(this._strokeColor);
+        if (this._borderColor != null) {
+            color = this.GetRGBColor(this._borderColor);
             oGraphicsPDF.SetStrokeStyle(color.r, color.g, color.b);
         }
 
@@ -2028,14 +2026,14 @@
 
         AscCommon.History.Add(new CChangesPDFFormBorderColor(this, this.GetBorderColor(), aColor));
 
-        this._strokeColor = this._borderColor = aColor;
+        this._borderColor = aColor;
         this.SetWasChanged(true);
         this.AddToRedraw();
 
         return true;
     };
     CBaseField.prototype.GetBorderColor = function() {
-        return this._strokeColor;
+        return this._borderColor;
     };
     CBaseField.prototype.SetBackgroundColor = function(aColor) {
         if (aColor && aColor.length == 0) {
@@ -2256,7 +2254,7 @@
             return true;
     };
     CBaseField.prototype.GetBordersWidth = function() {
-        let nLineWidth = this._lineWidth != undefined ? this._lineWidth : 1;
+        let nLineWidth = this._borderWidth != undefined ? this._borderWidth : 1;
 
         if (nLineWidth == 0 || this._borderStyle == undefined) {
             return {
@@ -2356,14 +2354,13 @@
             AscCommon.History.Add(new CChangesPDFFormBorderWidth(this, this._borderWidth, nWidth));
 
             this._borderWidth = nWidth;
-            this._lineWidth = nWidth;
 
             this.SetWasChanged(true);
             this.SetNeedRecalc(true);
         }
     };
     CBaseField.prototype.GetBorderWidth = function() {
-        return this._borderWidth || this._lineWidth;
+        return this._borderWidth;
     };
     /**
      * Returns a canvas with origin view (from appearance stream) of current form.

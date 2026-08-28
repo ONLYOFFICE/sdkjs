@@ -473,7 +473,7 @@ CChangesPDFFormBorderColor.prototype.Type = AscDFH.historyitem_Pdf_Form_Border_C
 CChangesPDFFormBorderColor.prototype.private_SetValue = function(Value)
 {
 	let oForm = this.Class;
-	oForm._strokeColor = Value;
+	oForm._borderColor = Value;
 	oForm.AddToRedraw();
 };
 
@@ -911,8 +911,6 @@ CChangesPDFFormBorderWidth.prototype.private_SetValue = function(Value)
 	let oField = this.Class;
 
 	oField._borderWidth = Value;
-	oField._lineWidth = Value;
-
 	oField.SetNeedRecalc(true);
 };
 
