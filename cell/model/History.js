@@ -547,6 +547,8 @@ CHistory.prototype.Can_Redo = function()
 /** @returns {boolean} */
 CHistory.prototype.Undo = function(Options)
 {
+	this.CheckUnionLastPoints();
+
   // Check if Undo can be performed
   if (true !== this.Can_Undo()) {
     return false;
@@ -1050,59 +1052,83 @@ CHistory.prototype.Set_Additional_ExtendDocumentToPos = function()
 
 CHistory.prototype.CheckUnionLastPoints = function()
 {
-	// Don't merge history points if save occurred at the previous point
-	if ( this.Points.length < 2)
+	if (this.Points.length < 2 || this.Index !== this.Points.length - 1)
 		return;
 
-	var Point1 = this.Points[this.Points.length - 2];
-	var Point2 = this.Points[this.Points.length - 1];
+	// Don't merge history points if save occurred at the previous point
+	if (null !== this.SavedIndex && this.SavedIndex >= this.Points.length - 2)
+		return;
+
+	let point1 = this.Points[this.Points.length - 2];
+	let point2 = this.Points[this.Points.length - 1];
+
+	if (AscDFH.historydescription_Document_CompositeInputReplace === point2.Description)
+	{
+		if (AscDFH.historydescription_Document_CompositeInput === point1.Description
+			|| AscDFH.historydescription_Document_CompositeInputReplace === point1.Description)
+			this.private_UnionLastPoints(point1, point2);
+
+		return;
+	}
+
+	if (AscDFH.historydescription_Spreadsheet_ParagraphAdd !== point1.Description
+		|| AscDFH.historydescription_Spreadsheet_ParagraphAdd !== point2.Description)
+		return;
 
 	// Don't merge words with more than 63 elements
-	if ( Point1.Items.length > 63 )
+	if (point1.Items.length > 63)
 		return;
 
-	var PrevItem = null;
-	var Class = null;
-	for ( var Index = 0; Index < Point1.Items.length; Index++ )
+	if (this.private_CanUnionLastPoints(point1, point2))
+		this.private_UnionLastPoints(point1, point2);
+};
+
+CHistory.prototype.private_CanUnionLastPoints = function(point1, point2)
+{
+	let points = [point1, point2];
+	let unionClass = null;
+	let prevChange = null;
+	for (let pointIndex = 0; pointIndex < points.length; ++pointIndex)
 	{
-		var Item = Point1.Items[Index];
+		let items = points[pointIndex].Items;
+		for (let index = 0; index < items.length; ++index)
+		{
+			let item = items[index];
+			if (AscCH.historyitem_Unknown === item.Type)
+				continue;
 
-		if ( null === Class )
-			Class = Item.Class;
-		else if ( Class != Item.Class || "undefined" === typeof(Class.Check_HistoryUninon) || false === Class.Check_HistoryUninon(PrevItem.Data, Item.Data) )
-			return;
+			let change = item.Data || item.Class;
+			let changeClass = change && change.GetClass ? change.GetClass() : null;
+			if (!changeClass || !changeClass.Check_HistoryUninon)
+				return false;
 
-		PrevItem = Item;
+			if (null === unionClass)
+				unionClass = changeClass;
+			else if (unionClass !== changeClass || !unionClass.Check_HistoryUninon(prevChange, change))
+				return false;
+
+			prevChange = change;
+		}
 	}
 
-	for ( var Index = 0; Index < Point2.Items.length; Index++ )
+	return null !== prevChange;
+};
+
+CHistory.prototype.private_UnionLastPoints = function(point1, point2)
+{
+	point1.Items = point1.Items.concat(point2.Items);
+	for (let sheetId in point2.UpdateRigions)
 	{
-		var Item = Point2.Items[Index];
-
-		if ( Class != Item.Class || "undefined" === typeof(Class.Check_HistoryUninon) || false === Class.Check_HistoryUninon(PrevItem.Data, Item.Data) )
-			return;
-
-		PrevItem = Item;
+		let range = point2.UpdateRigions[sheetId];
+		if (point1.UpdateRigions[sheetId])
+			point1.UpdateRigions[sheetId].union2(range);
+		else
+			point1.UpdateRigions[sheetId] = range.clone();
 	}
+	point1.Time = point2.Time;
 
-	var NewPoint =
-	{
-		State : Point1.State,
-		Items : Point1.Items.concat(Point2.Items),
-		Time  : Point1.Time,
-		Additional : {}
-	};
-
-	if ( this.SavedIndex >= this.Points.length - 2 && null !== this.SavedIndex )
-		this.Set_SavedIndex(this.Points.length - 3);
-
-	this.Points.splice( this.Points.length - 2, 2, NewPoint );
-	if ( this.Index >= this.Points.length )
-	{
-		var DiffIndex = -this.Index + (this.Points.length - 1);
-		this.Index    += DiffIndex;
-		this.RecIndex += Math.max( -1, this.RecIndex + DiffIndex);
-	}
+	this.Points.length = this.Points.length - 1;
+	this.Index = this.Points.length - 1;
 };
 
 CHistory.prototype.Add_RecalcTableGrid = function()
@@ -1117,6 +1143,8 @@ CHistory.prototype.Create_NewPoint = function(nDescription)
 
 	if (null !== this.SavedIndex && this.Index < this.SavedIndex)
 		this.Set_SavedIndex(this.Index);
+
+	this.CheckUnionLastPoints();
 
 	var Items = [];
 	var UpdateRigions = {};

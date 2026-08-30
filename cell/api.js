@@ -3082,6 +3082,7 @@ var editor;
 		if (arrChanges) {
 			deleteIndex = null;
 		} else {
+			History.CheckUnionLastPoints();
 			let ser = this.wbModel.SerializeHistory();
 			arrChanges = ser[0];
 			arrChangesaSerializable = ser[1];
