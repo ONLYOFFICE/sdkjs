@@ -563,7 +563,7 @@ var editor;
 					if (typeof Blob !== 'undefined' && typeof FileReader !== 'undefined') {
 						AscCommon.loadFileContent(url['output.txt'], function (httpRequest) {
 							var cp = {
-								'codepage': AscCommon.c_oAscCodePageNone, "delimiter": AscCommon.c_oAscCsvDelimiter.Comma,
+								'codepage': AscCommon.c_oAscCodePageNone, "delimiter": [AscCommon.c_oAscCsvDelimiter.Comma],
 								'encodings': AscCommon.getEncodingParams()
 							};
 
@@ -604,7 +604,7 @@ var editor;
 			let bom = AscCommon.getEncodingByBOM(data);
 			let cp = {
 				'codepage': bom.encoding,
-				"delimiter": AscCommon.c_oAscCsvDelimiter.Comma,
+				"delimiter": [AscCommon.c_oAscCsvDelimiter.Comma],
 				'encodings': AscCommon.getEncodingParams(),
 				'data': AscCommon.c_oAscCodePageNone !== bom.encoding ? data.subarray(bom.size) : data
 			};
@@ -1470,7 +1470,7 @@ var editor;
 		if (t.handlers.hasTrigger("asc_onAdvancedOptions")) {
 			// ToDo delimiter is only "," for now http://bugzilla.onlyoffice.com/show_bug.cgi?id=31009
 			var cp = {
-				'codepage': AscCommon.c_oAscCodePageNone, "delimiter": AscCommon.c_oAscCsvDelimiter.Comma,
+				'codepage': AscCommon.c_oAscCodePageNone, "delimiter": [AscCommon.c_oAscCsvDelimiter.Comma],
 				'encodings': AscCommon.getEncodingParams()
 			};
 			if (data && typeof Blob !== 'undefined' && typeof FileReader !== 'undefined') {
