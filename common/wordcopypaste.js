@@ -1928,7 +1928,7 @@ CopyProcessor.prototype =
 
 			editor.WordControl.m_oLogicDocument.CalculateComments();
 
-			const isWriteHTMLSlideImage = !elementsContent.DocContent;
+			const isWriteHTMLSlideImage = !(elementsContent.DocContent && elementsContent.DocContent.Elements.length);
 			var slide;
 			for (var i = 0; i < selected_slides.length; ++i) {
 				slide = selected_slides[i];

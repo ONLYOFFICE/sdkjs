@@ -49,14 +49,22 @@
 	OutlineSelectedContentManager.prototype.getOutlineView = function () {
 		return this.presentation.GetOutlineView();
 	};
-	OutlineSelectedContentManager.prototype.getSelectedShapeCount = function (contents) {
-		let shapeCount = 0;
-		for (let i = 0; i < contents.length; i += 1) {
-			if (contents[i].content) {
-				shapeCount += 1;
+	OutlineSelectedContentManager.prototype.isSlideCopy = function () {
+		let selectedShapesWithContent = 0;
+		return !!this.getOutlineView().forEachSelectedContent(function (selectProps) {
+			const content = selectProps.content;
+			const outlineParagraph = selectProps.outlineParagraph;
+			if (content) {
+				selectedShapesWithContent += 1;
+				const shape = content.Is_DrawingShape(true);
+				if (shape && shape.isGeneralTitle() && content.IsSelectedAll()) {
+					return true;
+				}
+			} else if (outlineParagraph && outlineParagraph.IsSelectedAll()) {
+				return true;
 			}
-		}
-		return shapeCount;
+			return selectedShapesWithContent > 1;
+		});
 	};
 	OutlineSelectedContentManager.prototype.extractTextFromContent = function (docContent) {
 		const docSelectedContentManager = new DocSelectedContentManager(this.presentation, this.sourceFormattingContent, this.endFormattingContent, this.imagesSelectedContent, docContent);
@@ -96,8 +104,7 @@
 		if (!docContent) {
 			return;
 		}
-		const contents = outlineView.getSelectionContentsInfo();
-		if (this.getSelectedShapeCount(contents) > 1) {
+		if (this.isSlideCopy()) {
 			this.fillMultipleParagraphs();
 		} else {
 			this.fillDocContent();

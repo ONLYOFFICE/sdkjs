@@ -298,15 +298,7 @@
 	};
 	CSelectedContent.prototype.ReplaceContent = function(oDocContent, isSelect)
 	{
-		if (this.Elements.length <= 0)
-			return;
-
-		oDocContent.ClearContent(false);
-		for (let nPos = 0, nCount = this.Elements.length; nPos < nCount; ++nPos)
-		{
-			let oElement = this.Elements[nPos].Element;
-			oDocContent.AddToContent(nPos, oElement);
-		}
+		this.ReplaceElements(oDocContent);
 
 		if (true === isSelect)
 		{
@@ -319,6 +311,18 @@
 		}
 
 		oDocContent.SetThisElementCurrent();
+	};
+	CSelectedContent.prototype.ReplaceElements = function(oDocContent)
+	{
+		if (this.Elements.length <= 0)
+			return;
+
+		oDocContent.ClearContent(false);
+		for (let nPos = 0, nCount = this.Elements.length; nPos < nCount; ++nPos)
+		{
+			let oElement = this.Elements[nPos].Element;
+			oDocContent.AddToContent(nPos, oElement);
+		}
 	};
 	CSelectedContent.prototype.GetPasteHelperElement = function()
 	{

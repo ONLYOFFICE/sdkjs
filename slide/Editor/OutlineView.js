@@ -1225,6 +1225,9 @@
 				selectedContent.EndCollect(outlineView.getPresentation());
 				inserted = oThis.insertIntoSourceContent(content, selectedContent);
 				outlineView.setSavedRealContentState(content, selectProps.index, selectProps.count, selectProps.direction);
+				if (shape.parent) {
+					shape.parent.graphicObjects.resetSelection();
+				}
 			}
 			return inserted;
 		});
@@ -2100,35 +2103,6 @@
 			return "";
 		}
 		return docContent.GetSelectedText(false, oPr);
-	};
-
-	OutlineView.prototype.getSelectionContentsInfo = function () {
-		const manager = new ForEachSelectManager(this);
-		const content = this.getDocContent();
-		if (!content) {
-			return [];
-		}
-		if (content.IsSelectionUse()) {
-			return manager.getSelectionUseContentsInfo();
-		}
-		const contentPos = content.GetContentPosition(false, false);
-		const outlineParagraph = content.Content[content.CurPos.ContentPos];
-		const sourceParagraph = manager.getSourceParagraph(outlineParagraph);
-		if (sourceParagraph) {
-			return [{
-				startPos: contentPos,
-				startParagraph: sourceParagraph,
-				endPos: contentPos,
-				endParagraph: sourceParagraph,
-				content: sourceParagraph.GetParent(),
-				direction: AscWord.Direction.FORWARD
-			}];
-		}
-		return [{
-			content: null,
-			outlineParagraph: outlineParagraph,
-			direction: AscWord.Direction.FORWARD
-		}];
 	};
 
 	OutlineView.prototype.remove = function (bOnAddText) {

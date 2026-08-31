@@ -94,7 +94,7 @@
 		}
 		const docContent = this.sourceContent;
 		const docContentForDraw = new AscFormat.CDrawingDocContent(docContent.Parent, docContent.DrawingDocument, 0, 0, 20000, 20000);
-		selectedContent.ReplaceContent(docContentForDraw);
+		selectedContent.ReplaceElements(docContentForDraw);
 		this.trimContent(docContentForDraw);
 		if (docContentForDraw.Content.length === 0) {
 			return null;
