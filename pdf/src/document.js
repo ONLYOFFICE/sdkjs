@@ -1645,13 +1645,6 @@ var CPresentation = CPresentation || function(){};
             oDrDoc.TargetEnd(); // hide cursor
             oForm.AddToRedraw();
         }
-
-		if (this.IsFillingFormMode()) {
-			let oRoles = this.GetFormRoles();
-			this.SelectNextForm(function(field) {
-				return oRoles.CanFillField(field);
-			});
-		}
     };
     CPDFDoc.prototype.OnMouseDown = function(x, y, e) {
         Asc.editor.sendEvent('asc_onHidePdfFormsActions');
@@ -4614,6 +4607,12 @@ var CPresentation = CPresentation || function(){};
             }
             else {
                 this.EnterDownActiveField();
+				if (this.IsFillingFormMode()) {
+					let oRoles = this.GetFormRoles();
+					this.SelectNextForm(function(field) {
+						return oRoles.CanFillField(field);
+					});
+				}
             }
         }
         else if (oFreeText && oFreeText.IsInTextBox()) {
