@@ -1841,32 +1841,40 @@
 	};
 
 	/**
-	 * Private method to collect objects of a specific type from the presentation.
-	 * Calls the specified method on slides, slide masters, and/or slide layouts,
-	 * depending on the provided flags.
+	 * @private
+	 *
+	 * Collects objects of a specific type from the presentation.
+	 * Calls the specified method on the specified presentation sources.
+	 *
+	 * @param {Object} data - Collection parameters.
+	 * @param {string} data.name - The name of the method to call on each source. "slide", "master" or "layout".
+	 * @param {string[]} data.sources - Presentation sources to collect objects from.
+	 * @returns {Array} The collected objects.
 	 */
-	ApiPresentation.prototype._collectAllObjects = function (methodName, isSlides, isMasters, isLayouts) {
+	ApiPresentation.prototype._collectAllObjects = function (data) {
+		let methodName = data.name;
+		let sources = data.sources;
 		let objects = [];
 
-		function collectObjects(sources) {
-			sources.forEach(function (source) {
-				source[methodName]().forEach(function (obj) {
+		function collectObjects(items) {
+			items.forEach(function (item) {
+				item[methodName]().forEach(function (obj) {
 					objects.push(obj);
 				});
 			});
 		}
 
-		if (isSlides === true)
+		if (sources.includes('slide'))
 			collectObjects(this.GetAllSlides());
 
-		if (isMasters === true || isLayouts === true)
+		if (sources.includes('master')|| sources.includes('layout'))
 		{
 			let masters = this.GetAllSlideMasters();
 
-			if (isMasters === true)
+			if (sources.includes('master'))
 				collectObjects(masters);
 
-			if (isLayouts === true)
+			if (sources.includes('layout'))
 			{
 				masters.forEach(function (master) {
 					collectObjects(master.GetAllLayouts());
@@ -1876,103 +1884,126 @@
 
 		return objects;
 	};
+
 	/**
 	 * Returns an array with all the OLE objects from the presentation slides,
-	 * excluding slide layouts and master slides.
+	 * excluding slide layouts and slide masters.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiOleObject[]}
-     * @since 9.0.0
+	 * @since 9.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllOleObjects.js
 	 */
 	ApiPresentation.prototype.GetAllOleObjects = function () {
-		return this._collectAllObjects('GetAllOleObjects', true);
+		return this._collectAllObjects({
+			name: 'GetAllOleObjects',
+			sources: ['slide']
+		});
 	};
 
 	/**
 	 * Returns an array with all tables from the presentation slides,
-	 * excluding slide layouts and master slides.
+	 * excluding slide layouts and slide masters.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTable[]} An array with all tables from the current presentation.
-     * @since 9.1.0
+	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllTables.js
 	 */
 	ApiPresentation.prototype.GetAllTables = function () {
-		return this._collectAllObjects('GetAllTables', true);
+		return this._collectAllObjects({
+			name: 'GetAllTables',
+			sources: ['slide']
+		});
 	};
 
 	/**
 	 * Returns an array with all the chart objects from the presentation slides,
-	 * excluding slide layouts and master slides.
+	 * excluding slide layouts and slide masters.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiChart[]}
-     * @since 9.0.0
+	 * @since 9.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllCharts.js
 	 */
 	ApiPresentation.prototype.GetAllCharts = function () {
-		return this._collectAllObjects('GetAllCharts', true);
+		return this._collectAllObjects({
+			name: 'GetAllCharts',
+			sources: ['slide']
+		});
 	};
 
 	/**
 	 * Returns an array with all the shape objects from the presentation slides,
-	 * excluding slide layouts and master slides.
+	 * excluding slide layouts and slide masters.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiShape[]}
-     * @since 9.0.0
+	 * @since 9.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllShapes.js
 	 */
 	ApiPresentation.prototype.GetAllShapes = function () {
-		return this._collectAllObjects('GetAllShapes', true);
+		return this._collectAllObjects({
+			name: 'GetAllShapes',
+			sources: ['slide']
+		});
 	};
 
 	/**
 	 * Returns an array with all the image objects from the presentation slides,
-	 * excluding slide layouts and master slides.
+	 * excluding slide layouts and slide masters.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiImage[]}
-     * @since 9.0.0
+	 * @since 9.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllImages.js
 	 */
 	ApiPresentation.prototype.GetAllImages = function () {
-		return this._collectAllObjects('GetAllImages', true);
+		return this._collectAllObjects({
+			name: 'GetAllImages',
+			sources: ['slide']
+		});
 	};
 
 	/**
 	 * Returns all drawing objects from the presentation slides,
-	 * excluding slide layouts and master slides.
+	 * excluding slide layouts and slide masters.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @returns {Drawing[]}
-     * @since 9.0.0
+	 * @since 9.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllDrawings.js
 	 */
 	ApiPresentation.prototype.GetAllDrawings = function () {
-		return this._collectAllObjects('GetAllDrawings', true);
+		return this._collectAllObjects({
+			name: 'GetAllDrawings',
+			sources: ['slide']
+		});
 	};
 
 	/**
-	 * Returns a collection of drawing objects from the presentation slides,
-	 * excluding slide layouts and master slides filtered by their names.
+	 * Returns a collection of drawing objects from the presentation slides filtered by their names,
+	 * excluding drawing objects from slide layouts and slide masters.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
-	 * @param {string[]} ids - An array of drawing names to filter by.
-	 * @return {Drawing[]}
+	 * @param {string[]} names - An array of drawing names to filter by.
+	 * @returns {Drawing[]}
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetDrawingsByName.js
 	 */
-	ApiPresentation.prototype.GetDrawingsByName = function(ids)
+	ApiPresentation.prototype.GetDrawingsByName = function(names)
 	{
-		let drawings = this._collectAllObjects('GetAllDrawings', true);
-		let filterDrawings = drawings.filter(function(drawing){
-			return ids.includes(drawing.GetName())
-		})
+		let drawings = this._collectAllObjects({
+			name: 'GetAllDrawings',
+			sources: ['slide']
+		});
+
+		let filterDrawings = drawings.filter(function(drawing) {
+			return names.includes(drawing.GetName());
+		});
+
 		return filterDrawings;
 	};
-
 	/**
 	 * Returns the document information:
 	 * <b>Application</b> - the application the document has been created with.
