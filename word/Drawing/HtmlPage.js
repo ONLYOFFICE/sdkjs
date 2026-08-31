@@ -1571,6 +1571,8 @@ function CEditorPage(api)
 			this.m_oScrollHor_.bind("scrollhorizontal", function(evt)
 			{
 				oThis.horizontalScroll(this, evt.scrollD, evt.maxScrollX);
+				if (evt.userScroll)
+					oThis.onUserScroll();
 			});
 			this.m_oScrollHorApi = this.m_oScrollHor_;
 		}

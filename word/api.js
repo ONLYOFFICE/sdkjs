@@ -8609,10 +8609,18 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.ViewScrollToX             = function(x)
 	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (logicDocument && logicDocument.IsDocumentEditor())
+			logicDocument.StopFollowUser();
+
 		this.WordControl.m_oScrollHorApi.scrollToX(x);
 	};
 	asc_docs_api.prototype.ViewScrollToY             = function(y)
 	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (logicDocument && logicDocument.IsDocumentEditor())
+			logicDocument.StopFollowUser();
+
 		this.WordControl.m_oScrollVerApi.scrollToY(y);
 	};
 	asc_docs_api.prototype.GetDocWidthPx             = function()
@@ -14998,13 +15006,13 @@ background-repeat: no-repeat;\
 		logicDocument.ScrollToTarget();
 	};
 
-	asc_docs_api.prototype.asc_scrollToForeignCursor = function(userId)
+	asc_docs_api.prototype.asc_followUser = function(userId)
 	{
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument || !logicDocument.IsDocumentEditor())
 			return;
 
-		logicDocument.ScrollToForeignCursor(userId);
+		logicDocument.FollowUser(userId);
 	};
 
 	//-------------------------------------------------------------export---------------------------------------------------
@@ -15867,7 +15875,7 @@ background-repeat: no-repeat;\
 	
 	asc_docs_api.prototype['getJsApi'] = asc_docs_api.prototype.getJsApi;
 	asc_docs_api.prototype['scrollToTarget'] = asc_docs_api.prototype.scrollToTarget;
-	asc_docs_api.prototype['asc_scrollToForeignCursor'] = asc_docs_api.prototype.asc_scrollToForeignCursor;
+	asc_docs_api.prototype['asc_followUser'] = asc_docs_api.prototype.asc_followUser;
 	
 	CContextMenuData.prototype['get_Type']    = CContextMenuData.prototype.get_Type;
 	CContextMenuData.prototype['get_X']       = CContextMenuData.prototype.get_X;

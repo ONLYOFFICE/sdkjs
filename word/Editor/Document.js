@@ -1387,6 +1387,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 
     this.NeedUpdateTarget = false;
 	this.ViewPosition     = null;  // Позиция, куда мы должны проскроллиться после пересчета (если задана)
+	this.FollowUserId     = null;  // UserId which we follow (null if we don't follow anyone)
 
     // Флаг, который контролирует нужно ли обновлять наш курсор у остальных редакторов нашего документа.
     // Также следим за частотой обновления, чтобы оно проходило не чаще одного раза в секунду.
@@ -2244,6 +2245,7 @@ CDocument.prototype.FinalizeAction = function(checkEmptyAction, additional)
 	
 	if (!this.private_CheckEmptyPointsInAction(checkEmptyAction))
 	{
+		this.StopFollowUser();
 		this.History.DiscardRedoPoints();
 		
 		if (!window['AscCommon'].g_specialPasteHelper.pasteStart)
@@ -10483,6 +10485,7 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
 		return;
 
+	this.StopFollowUser();
 	this.private_UpdateTargetForCollaboration();
 
 	// Сбрасываем проверку Drag-n-Drop
@@ -14719,6 +14722,8 @@ CDocument.prototype.Viewer_OnChangePosition = function()
 };
 CDocument.prototype.OnUserScroll = function()
 {
+	this.StopFollowUser();
+
 	if (this.Api.isGroupActions())
 	{
 		this.Api.setUserScrollGroupActions(true);
@@ -15238,6 +15243,7 @@ CDocument.prototype.private_UpdateCurPage = function()
 };
 CDocument.prototype.ScrollToTarget = function()
 {
+	this.StopFollowUser();
 	this.ForceScrollToSelectionEnd = true;
 	this.DrawingDocument.scrollToTarget();
 };
@@ -16751,10 +16757,16 @@ CDocument.prototype.Update_ForeignCursor = function(CursorInfo, UserId, Show, Us
 
 	if (true === Show)
 		this.CollaborativeEditing.Update_ForeignCursorPosition(UserId, Run, InRunPos, true);
+
+	if (this.GetFollowUserId() === UserId)
+		this.ScrollToForeignCursor(UserId);
 };
-CDocument.prototype.Remove_ForeignCursor = function(UserId)
+CDocument.prototype.Remove_ForeignCursor = function(userId)
 {
-	this.CollaborativeEditing.Remove_ForeignCursor(UserId);
+	if (this.GetFollowUserId() === userId)
+		this.StopFollowUser();
+
+	this.CollaborativeEditing.Remove_ForeignCursor(userId);
 };
 /**
  * Scroll the view to the given foreign cursor, aligning it near the top of the screen
@@ -16769,6 +16781,50 @@ CDocument.prototype.ScrollToForeignCursor = function(userId)
 
 	this.AlignViewPositionToTop(FOREIGN_CURSOR_SCROLL_TOP_OFFSET, anchorPos);
 	return true;
+};
+/**
+ * Toggle following another user. Calling with the same user (or without a user) stops following.
+ * While following, the view is re-scrolled to that user's cursor on every update
+ * @param userId {string} Connection id or short id of the user to follow
+ * @returns {boolean} Whether following is now active
+ */
+CDocument.prototype.FollowUser = function(userId)
+{
+	if (!userId || userId === this.FollowUserId)
+	{
+		this.private_SetFollowUserId(null);
+		return false;
+	}
+
+	this.private_SetFollowUserId(userId);
+	this.ScrollToForeignCursor(userId);
+	return true;
+};
+CDocument.prototype.StopFollowUser = function()
+{
+	this.private_SetFollowUserId(null);
+};
+CDocument.prototype.GetFollowUserId = function()
+{
+	return this.FollowUserId;
+};
+CDocument.prototype.private_SetFollowUserId = function(userId)
+{
+	userId = userId ? userId : null;
+	if (this.FollowUserId === userId)
+		return;
+
+	let prevUserId = this.FollowUserId;
+	this.FollowUserId = userId;
+
+	if (!this.Api)
+		return;
+
+	if (prevUserId)
+		this.Api.sendEvent("asc_onUnfollowUser", prevUserId);
+
+	if (userId)
+		this.Api.sendEvent("asc_onFollowUser", userId);
 };
 CDocument.prototype.private_UpdateTargetForCollaboration = function()
 {
