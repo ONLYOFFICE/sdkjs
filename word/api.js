@@ -5559,9 +5559,25 @@ background-repeat: no-repeat;\
 		if (logicDocument.IsSelectionLocked(AscCommon.changestype_HdrFtr))
 			return;
 		
+		// Special hack to preserve the current page (we move to the first page of the header on any change)
+		let curHdrFtr = logicDocument.HdrFtr.GetCurHdrFtr();
+		let page      = curHdrFtr ? curHdrFtr.GetPage() : -1;
+		
+		if (-1 !== page)
+		{
+			logicDocument.TurnOff_InterfaceEvents();
+		}
+		
 		logicDocument.StartAction(AscDFH.historydescription_Document_SetHdrFtrDistance);
 		logicDocument.Document_SetHdrFtrDistance(value, isHeader);
 		logicDocument.FinalizeAction();
+		
+		if (-1 !== page)
+		{
+			logicDocument.Set_CurPage(page);
+			curHdrFtr.SetPage(page);
+			logicDocument.TurnOn_InterfaceEvents(true);
+		}
 	};
 
 	asc_docs_api.prototype.HeadersAndFooters_DifferentFirstPage = function(isOn)

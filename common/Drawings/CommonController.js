@@ -121,6 +121,8 @@
 			image.spPr.xfrm.setOffY(y);
 			image.spPr.xfrm.setExtX(extX);
 			image.spPr.xfrm.setExtY(extY);
+			image.spPr.xfrm.setFlipH(false);
+			image.spPr.xfrm.setFlipV(false);
 
 			var blip_fill = new AscFormat.CBlipFill();
 			blip_fill.setRasterImageId(rasterImageId);
@@ -487,6 +489,8 @@
 				}
 				object.spPr.xfrm.setExtX(object.extX);
 				object.spPr.xfrm.setExtY(object.extY);
+				object.spPr.xfrm.setFlipH(false);
+				object.spPr.xfrm.setFlipV(false);
 				if (bNoResetAutofit !== true) {
 					object.ResetParametersWithResize();
 				}
@@ -11574,9 +11578,14 @@
 			return nResult;
 		};
 		CDrawingControllerStateBase.prototype.saveDocumentSelectionState = function() {
-			if(this.controller && this.controller.saveDocumentState) {
-				this.controller.saveDocumentState();
+			if(!this.controller || !this.controller.saveDocumentState) {
+				return;
 			}
+			const curState = this.controller.curState;
+			if(curState instanceof CInkDrawState || curState instanceof CInkEraseState) {
+				return;
+			}
+			this.controller.saveDocumentState();
 		};
 
 		function CInkEraseState(drawingObjects) {
@@ -11636,7 +11645,6 @@
 							}
 						}
 					}
-					this.saveDocumentSelectionState();
 					this.controller.checkInkState();
 					this.inkDrawer.restoreState(this.startState);
 
@@ -11702,7 +11710,6 @@
 			if(oControllerState === this) {
 				return;
 			}
-			this.saveDocumentSelectionState();
 			this.controller.resetSelection();
 			this.changeControllerState(this);
 			let oDrawingState = oControllerState;

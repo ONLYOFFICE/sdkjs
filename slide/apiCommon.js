@@ -2245,6 +2245,8 @@ CAscAnimatedExportSettings.prototype["asc_setAutoDownload"] = CAscAnimatedExport
 CAscAnimatedExportSettings.prototype["asc_getAutoDownload"] = CAscAnimatedExportSettings.prototype.asc_getAutoDownload;
 CAscAnimatedExportSettings.prototype["asc_setRangeOptions"] = CAscAnimatedExportSettings.prototype.asc_setRangeOptions;
 CAscAnimatedExportSettings.prototype["asc_getRangeOptions"] = CAscAnimatedExportSettings.prototype.asc_getRangeOptions;
+CAscAnimatedExportSettings["fromJSON"] = CAscAnimatedExportSettings.fromJSON;
+CAscAnimatedExportSettings.prototype["toJSON"] = CAscAnimatedExportSettings.prototype.toJSON;
 
 window["Asc"]["c_oAscAnimatedExportPreset"] = window["Asc"].c_oAscAnimatedExportPreset = c_oAscAnimatedExportPreset;
 c_oAscAnimatedExportPreset["P240"] = c_oAscAnimatedExportPreset.P240;

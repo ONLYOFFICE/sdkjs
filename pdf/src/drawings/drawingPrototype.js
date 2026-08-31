@@ -475,41 +475,18 @@
         return fontMap;
     };
     CPdfDrawingPrototype.prototype.CheckTextOnOpen = function() {};
-    CPdfDrawingPrototype.prototype.StartRedactClip = function(oGraphicsWord) {
-        function normRect(r) {
-			const x1 = Math.min(r[0], r[2]);
-			const y1 = Math.min(r[1], r[3]);
-			const x2 = Math.max(r[0], r[2]);
-			const y2 = Math.max(r[1], r[3]);
-			return [x1, y1, x2, y2];
-		}
+    CPdfDrawingPrototype.prototype.IsIntersectWithRedact = function() {
+        let aDrawingRect = normRect(this.GetRect());
+        let aRectsList = getRedactRects(this);
 
-        let _t = this;
+        return aRectsList.some(function(aRedactRect) {
+            return isRectsIntersect(aDrawingRect, aRedactRect);
+        });
+    };
+    CPdfDrawingPrototype.prototype.StartRedactClip = function(oGraphicsWord) {
         let oDoc = Asc.editor.getPDFDoc();
         let nPage = this.GetPage();
-        let aRedactIds = this.GetRedactIds();
-        
-        let aRedactAnnots = [];
-        oDoc.annots.forEach(function(annot) {
-            if (!annot.IsRedact() || !annot.GetRedactId() || annot.GetPage() != _t.GetPage()) {
-                return;
-            }
-
-            let sRedactId = annot.GetRedactId();
-            if (aRedactIds.includes(sRedactId)) {
-                aRedactAnnots.push(annot);
-            }
-        });
-
-        const aRectsList = [];
-        aRedactAnnots.forEach(function(annot) {
-            const aQuadsParts = annot.GetQuads();
-
-            aQuadsParts.forEach(function(quads) {
-                const r = normRect([quads[0], quads[1], quads[6], quads[7]]);
-                aRectsList.push(r);
-            });
-        });
+        let aRectsList = getRedactRects(this);
 
         let unredactedPolygon = null;
         let zoom = AscCommon.AscBrowser.convertToRetinaValue(oGraphicsWord.m_lWidthPix) / (oDoc.GetPageWidthMM(nPage) * g_dKoef_mm_to_pix);
@@ -757,6 +734,47 @@
         if (!oGroup)
             oDoc.SetMouseDownObject(this);
     };
+
+	function normRect(r) {
+		const x1 = Math.min(r[0], r[2]);
+		const y1 = Math.min(r[1], r[3]);
+		const x2 = Math.max(r[0], r[2]);
+		const y2 = Math.max(r[1], r[3]);
+		return [x1, y1, x2, y2];
+	}
+    function getRedactRects(oDrawing) {
+        let oDoc = Asc.editor.getPDFDoc();
+        let nPage = oDrawing.GetPage();
+        let aRedactIds = oDrawing.GetRedactIds();
+        let aRectsList = [];
+
+        if (aRedactIds.length == 0) {
+            return aRectsList;
+        }
+
+        oDoc.annots.forEach(function(annot) {
+            if (!annot.IsRedact() || !annot.GetRedactId() || annot.GetPage() != nPage) {
+                return;
+            }
+
+            let sRedactId = annot.GetRedactId();
+            if (!aRedactIds.includes(sRedactId)) {
+                return;
+            }
+
+            const aQuadsParts = annot.GetQuads();
+            aQuadsParts.forEach(function(quads) {
+                const r = normRect([quads[0], quads[1], quads[6], quads[7]]);
+                aRectsList.push(r);
+            });
+        });
+
+        return aRectsList;
+    }
+    function isRectsIntersect(a, b) {
+        return a[0] < b[2] && a[2] > b[0] &&
+            a[1] < b[3] && a[3] > b[1];
+    }
 
     /////////////////////////////
     /// saving

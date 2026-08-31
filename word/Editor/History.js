@@ -487,6 +487,9 @@ CHistory.prototype =
 
 		this.Points[this.Index].Items.push(Item);
 
+		if (this.Document && this.Document.ClearSearchOnChange)
+			this.Document.ClearSearchOnChange();
+
 		if (!this.CollaborativeEditing || !_Class)
 			return;
 		

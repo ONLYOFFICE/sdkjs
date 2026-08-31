@@ -15971,13 +15971,21 @@ window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo, csv_da
 
     window.checkPasswordFromPlugin = false;
 	let data = undefined;
-	if (csv_data && AscCommon.CryptoProvider)
+	if (csv_data)
 	{
-		var bufferArray = AscCommon.CryptoProvider.getOpenedFile(csv_data);
+		let bufferArray = undefined;
+		if (AscCommon.CryptoProvider)
+		{
+			bufferArray = AscCommon.CryptoProvider.getOpenedFile(csv_data);
+		}
+		else if (window["AscDesktopEditor"] && (typeof csv_data === "string") && (0 === csv_data.indexOf("binary_content://")))
+		{
+			bufferArray = window["AscDesktopEditor"]["GetOpenedFile"](csv_data);
+		}
 		if (bufferArray)
 			data = new Uint8Array(bufferArray);
 	}
-    _editor._onNeedParams(data, (_code == 90 || _code == 91) ? true : undefined);
+	_editor._onNeedParams(data, (_code == 90 || _code == 91) ? true : undefined);
 };
 
 window["asc_IsNeedBuildCryptedFile"] = function()

@@ -58,7 +58,7 @@
 		this.ReplacedId    = [];
 		this.CurId         = -1;
 		this.Direction     = true; // направление true - вперед, false - назад
-		this.ClearOnRecalc = true; // Флаг, говорящий о том, запустился ли пересчет из-за Replace
+		this.ClearOnRecalc = true; // flag: false when need to replace search results
 		this.Selection     = false;
 		this.Footnotes     = [];
 		this.Endnotes      = [];
@@ -304,7 +304,8 @@
 	};
 	DocumentSearch.prototype.ReplaceAll = function(NewStr, bUpdateStates)
 	{
-		this.RemoveEvent = false;
+		this.RemoveEvent   = false;
+		this.ClearOnRecalc = false;
 
 		for (var Id = this.Id; Id >= 0; --Id)
 		{
@@ -312,7 +313,8 @@
 				this.Replace(NewStr, Id, true);
 		}
 
-		this.RemoveEvent = true;
+		this.ClearOnRecalc = true;
+		this.RemoveEvent   = true;
 
 		this.Clear();
 	};
