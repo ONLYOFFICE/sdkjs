@@ -30595,7 +30595,7 @@
 	 */
 	ApiComment.prototype.SetUserId = function (userId) {
 		userId = GetStringParameter(userId, null, false);
-		if (!userId)
+		if (userId === null)
 			throwException(new Error("The userId parameter must be valid string"));
 
 		this.Comment.GetData().m_sUserId = userId;
@@ -30936,7 +30936,7 @@
 	 */
 	ApiCommentReply.prototype.SetUserId = function (userId) {
 		userId = GetStringParameter(userId, null, false);
-		if (!userId)
+		if (userId === null)
 			throwException(new Error("The userId parameter must be valid string"));
 
 		this.Data.m_sUserId = userId;
