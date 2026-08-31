@@ -15402,7 +15402,8 @@
 
 		for (let i = 0; i < uniqueCells.length; ++i)
 		{
-			cells.push(new ApiTableCell(uniqueCells[i]));
+			let cell = uniqueCells[i];
+			cells.push(this.GetCell(cell.GetRow().GetIndex(), cell.GetIndex()));
 		}
 
 		return cells;

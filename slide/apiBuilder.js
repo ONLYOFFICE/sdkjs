@@ -8654,55 +8654,6 @@
 	};
 
 	/**
-	 * Returns all cells from the columns that contain the currently selected cells.
-	 * This method identifies which columns contain selected cells and then returns all cells
-	 * in those columns, not just the selected cells themselves.
-	 * @memberof ApiTable
-	 * @typeofeditors ["CPE"]
-	 * @returns {ApiTableCell[]} - An array of all cells from the columns that contain selected cells.
-	 * @since 9.5.0
-	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedColumnsCells.js
-	 */
-	ApiTable.prototype.GetSelectedColumnsCells = function () {
-		let cells = [];
-
-		if (!this.Table.IsTextSelectionUse())
-			return cells;
-
-		let selection = this.Table.GetSelectionArray();
-		let uniqueCells = [];
-
-		for (let i = 0; i < selection.length; ++i)
-		{
-			let pos = selection[i];
-			let column = this.Table.GetColumn(pos.Cell, pos.Row);
-
-			column.forEach(function (cell){
-				if (!uniqueCells.includes(cell))
-					uniqueCells.push(cell);
-			});
-		}
-
-		uniqueCells.sort(function (a, b){
-			let firstRowIndex	= a.GetRow().GetIndex();
-			let secondRowIndex	= b.GetRow().GetIndex();
-			let rowDiff			= firstRowIndex - secondRowIndex;
-
-			if (rowDiff !== 0)
-				return rowDiff;
-
-			return a.GetIndex() - b.GetIndex();
-		});
-
-		for (let i = 0; i < uniqueCells.length; ++i)
-		{
-			cells.push(new ApiTableCell(uniqueCells[i]));
-		}
-
-		return cells;
-	};
-
-	/**
 	 * Returns the rows that contain the currently selected cells of the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
