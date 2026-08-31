@@ -8890,9 +8890,9 @@ var CPresentation = CPresentation || function(){};
 			return true;
 		}
 
-		// form roles: in filling mode an active field may be changed only by its role
+		// form roles: in filling mode an active field may be changed only by its role, other actions regected
 		if (nCheckType !== AscCommon.changestype_Document_Settings && nCheckType !== AscDFH.historydescription_Pdf_ClearAllSpecialForms) {
-			if (this.IsFillingFormMode() && this.activeForm && false === this.GetFormRoles().CanFillField(this.activeForm)) {
+			if (this.IsFillingFormMode() && (!this.activeForm || this.activeForm && false === this.GetFormRoles().CanFillField(this.activeForm))) {
 				return true;
 			}
 			else if (!this.IsEditFieldsMode() && !this.IsFillingFormMode() && this.activeForm) {
