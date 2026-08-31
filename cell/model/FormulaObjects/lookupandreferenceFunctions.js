@@ -1550,7 +1550,7 @@ function (window, undefined) {
 					if (res.type === cElementType.error) {
 						// the whole result collapses to one error anyway - stop calculating and
 						// building rows for the discarded array right here
-						return new cError(cErrorType.bad_reference);
+						return res;
 					}
 					retArr.addElement(res);
 				}
@@ -3460,9 +3460,11 @@ function (window, undefined) {
 			}
 			let indexVal = indexNum.getValue();
 			// Excel truncates a fractional index_num toward zero - 2.7 and 2.999 both address row 2,
-			// 3.99 addresses row 3 - but a value that sits within about 1e-9 of an integer counts as that
-			// integer: 2.999999 still reads row 2 while 2.9999999999 reads row 3 (all measured).
-			number = (Math.abs(indexVal - Math.round(indexVal)) < 1e-9 ?
+			// 3.99 addresses row 3 - but a value near enough to an integer counts as that integer, and
+			// the distance that still counts is absolute: 2.9999998 and 999.9999998 both round up, while
+			// 2.99999976 and 999.9999997 truncate (measured), so the tolerance sits just under 2.4e-7.
+			// 2^-22 is the value inside that window.
+			number = (Math.abs(indexVal - Math.round(indexVal)) < 2.384185791015625e-7 ?
 				Math.round(indexVal) : Math.trunc(indexVal)) - 1;
 
 			if (isNaN(number)) {
@@ -5000,7 +5002,7 @@ function (window, undefined) {
 					if (res.type === cElementType.error) {
 						// the whole result collapses to one error anyway - stop calculating and
 						// building rows for the discarded array right here
-						return new cError(cErrorType.bad_reference);
+						return res;
 					}
 					retArr.addElement(res);
 				}
