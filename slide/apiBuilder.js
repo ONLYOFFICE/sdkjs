@@ -1846,14 +1846,14 @@
 	 * Collects objects of a specific type from the presentation.
 	 * Calls the specified method on the specified presentation sources.
 	 *
-	 * @param {Object} data - Collection parameters.
-	 * @param {string} data.name - The name of the method to call on each source. "slide", "master" or "layout".
-	 * @param {string[]} data.sources - Presentation sources to collect objects from.
+	 * @param {string} methodName - The name of the method to call on each source.
+	 * @param {Object} pr - Collection parameters.
+	 * @param {boolean} pr.slide - Whether to collect objects from slides.
+	 * @param {boolean} pr.master - Whether to collect objects from slide masters.
+	 * @param {boolean} pr.layout - Whether to collect objects from slide layouts.
 	 * @returns {Array} The collected objects.
 	 */
-	ApiPresentation.prototype._collectAllObjects = function (data) {
-		let methodName = data.name;
-		let sources = data.sources;
+	ApiPresentation.prototype._collectAllObjects = function (methodName, pr) {
 		let objects = [];
 
 		function collectObjects(items) {
@@ -1864,17 +1864,17 @@
 			});
 		}
 
-		if (sources.includes('slide'))
+		if (pr && pr.slide)
 			collectObjects(this.GetAllSlides());
 
-		if (sources.includes('master')|| sources.includes('layout'))
+		if (pr && (pr.master || pr.layout))
 		{
 			let masters = this.GetAllSlideMasters();
 
-			if (sources.includes('master'))
+			if (pr.master)
 				collectObjects(masters);
 
-			if (sources.includes('layout'))
+			if (pr.layout)
 			{
 				masters.forEach(function (master) {
 					collectObjects(master.GetAllLayouts());
@@ -1895,10 +1895,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllOleObjects.js
 	 */
 	ApiPresentation.prototype.GetAllOleObjects = function () {
-		return this._collectAllObjects({
-			name: 'GetAllOleObjects',
-			sources: ['slide']
-		});
+    	return this._collectAllObjects('GetAllOleObjects', {slide: true});
 	};
 
 	/**
@@ -1911,10 +1908,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllTables.js
 	 */
 	ApiPresentation.prototype.GetAllTables = function () {
-		return this._collectAllObjects({
-			name: 'GetAllTables',
-			sources: ['slide']
-		});
+    	return this._collectAllObjects('GetAllTables', {slide: true});
 	};
 
 	/**
@@ -1927,10 +1921,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllCharts.js
 	 */
 	ApiPresentation.prototype.GetAllCharts = function () {
-		return this._collectAllObjects({
-			name: 'GetAllCharts',
-			sources: ['slide']
-		});
+		return this._collectAllObjects('GetAllCharts', {slide: true});
 	};
 
 	/**
@@ -1943,10 +1934,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllShapes.js
 	 */
 	ApiPresentation.prototype.GetAllShapes = function () {
-		return this._collectAllObjects({
-			name: 'GetAllShapes',
-			sources: ['slide']
-		});
+   		return this._collectAllObjects('GetAllShapes', {slide: true});
 	};
 
 	/**
@@ -1959,10 +1947,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllImages.js
 	 */
 	ApiPresentation.prototype.GetAllImages = function () {
-		return this._collectAllObjects({
-			name: 'GetAllImages',
-			sources: ['slide']
-		});
+    	return this._collectAllObjects('GetAllImages', {slide: true});
 	};
 
 	/**
@@ -1975,10 +1960,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllDrawings.js
 	 */
 	ApiPresentation.prototype.GetAllDrawings = function () {
-		return this._collectAllObjects({
-			name: 'GetAllDrawings',
-			sources: ['slide']
-		});
+		return this._collectAllObjects('GetAllDrawings', {slide: true});
 	};
 
 	/**
@@ -1993,10 +1975,7 @@
 	 */
 	ApiPresentation.prototype.GetDrawingsByName = function(names)
 	{
-		let drawings = this._collectAllObjects({
-			name: 'GetAllDrawings',
-			sources: ['slide']
-		});
+		let drawings = this._collectAllObjects('GetAllDrawings', {slide: true});
 
 		let filterDrawings = drawings.filter(function(drawing) {
 			return names.includes(drawing.GetName());
@@ -2004,6 +1983,7 @@
 
 		return filterDrawings;
 	};
+
 	/**
 	 * Returns the document information:
 	 * <b>Application</b> - the application the document has been created with.
